@@ -1,0 +1,97 @@
+From 6e1450ef0f9d66679587092cef2e83e6deb1575f Mon Sep 17 00:00:00 2001
+From: Mark Andrews <marka@isc.org>
+Date: Tue, 2 Dec 2025 11:02:34 +1100
+Subject: [PATCH 1/4] Allow rndc addzone to replace automatic empty zones
+
+Check if the found zone is an automatic zone and if so remove it
+from the view prior to adding the new zone.  If the addzone fails
+restore the automatic zone to the view.
+---
+ bin/named/server.c | 34 +++++++++++++++++++++++++++++++++-
+ lib/dns/view.c     |  4 +++-
+ 2 files changed, 36 insertions(+), 2 deletions(-)
+
+--- a/bin/named/server.c
++++ b/bin/named/server.c
+@@ -13946,6 +13946,7 @@ do_addzone(named_server_t *server, ns_cf
+ 	   bool redirect, isc_buffer_t **text) {
+ 	isc_result_t result, tresult;
+ 	dns_zone_t *zone = NULL;
++	dns_zone_t *oldzone = NULL;
+ #ifndef HAVE_LMDB
+ 	FILE *fp = NULL;
+ 	bool cleanup_config = false;
+@@ -13964,7 +13965,13 @@ do_addzone(named_server_t *server, ns_cf
+ 	} else {
+ 		result = dns_view_findzone(view, name, DNS_ZTFIND_EXACT, &zone);
+ 		if (result == ISC_R_SUCCESS) {
+-			result = ISC_R_EXISTS;
++			if (dns_zone_getautomatic(zone)) {
++				oldzone = zone;
++				zone = NULL;
++				result = ISC_R_NOTFOUND;
++			} else {
++				result = ISC_R_EXISTS;
++			}
+ 		}
+ 	}
+ 	if (result != ISC_R_NOTFOUND) {
+@@ -13973,6 +13980,10 @@ do_addzone(named_server_t *server, ns_cf
+ 
+ 	isc_loopmgr_pause(named_g_loopmgr);
+ 
++	if (oldzone != NULL) {
++		dns_view_delzone(view, oldzone);
++	}
++
+ #ifndef HAVE_LMDB
+ 	/*
+ 	 * Make sure we can open the configuration save file
+@@ -14077,6 +14088,11 @@ do_addzone(named_server_t *server, ns_cf
+ 		/* Remove the zone from the zone table */
+ 		dns_view_delzone(view, zone);
+ 		goto cleanup;
++	} else if (oldzone != NULL) {
++		/*
++		 * We no longer need to keep the old zone around.
++		 */
++		dns_zone_detach(&oldzone);
+ 	}
+ 
+ 	/* Flag the zone as having been added at runtime */
+@@ -14093,6 +14109,22 @@ do_addzone(named_server_t *server, ns_cf
+ 
+ cleanup:
+ 
++	if (oldzone != NULL) {
++		/*
++		 * Restore the old zone.
++		 */
++		dns_view_thaw(view);
++		tresult = dns_view_addzone(view, oldzone);
++		dns_view_freeze(view);
++		dns_zone_detach(&oldzone);
++
++		if (tresult != ISC_R_SUCCESS && tresult != ISC_R_SHUTTINGDOWN) {
++			TCHECK(putstr(text, "\nUnable to restore automatic "
++					    "empty zone: "));
++			TCHECK(putstr(text, isc_result_totext(result)));
++		}
++	}
++
+ #ifndef HAVE_LMDB
+ 	if (fp != NULL) {
+ 		(void)isc_stdio_close(fp);
+--- a/lib/dns/view.c
++++ b/lib/dns/view.c
+@@ -778,7 +778,9 @@ dns_view_delzone(dns_view_t *view, dns_z
+ 
+ 	REQUIRE(DNS_VIEW_VALID(view));
+ 
+-	dns_zone_prepare_shutdown(zone);
++	if (!dns_zone_getautomatic(zone)) {
++		dns_zone_prepare_shutdown(zone);
++	}
+ 
+ 	rcu_read_lock();
+ 	zonetable = rcu_dereference(view->zonetable);

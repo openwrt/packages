@@ -264,7 +264,7 @@ define GoPackage/Build/Configure
 	$(SHELL) $(GO_INCLUDE_DIR)golang-build.sh configure
 endef
 
-# $(1) additional arguments for go command line (optional)
+# 1: additional arguments for go command line (optional)
 define GoPackage/Build/Compile
 	$(GO_GENERAL_BUILD_CONFIG_VARS) \
 	$(GO_PKG_BUILD_CONFIG_VARS) \

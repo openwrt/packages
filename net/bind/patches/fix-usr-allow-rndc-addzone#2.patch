@@ -1,0 +1,123 @@
+From cb9cb3c8d9f1c8e5e6a0fb55fea8dba43ea5d529 Mon Sep 17 00:00:00 2001
+From: Mark Andrews <marka@isc.org>
+Date: Tue, 2 Dec 2025 11:05:51 +1100
+Subject: [PATCH 2/4] Check if adding new zone can replace an automatic empty
+ zone
+
+---
+ bin/tests/system/addzone/ns6/added.db      | 25 ++++++++++++++
+ bin/tests/system/addzone/ns6/named.conf.j2 | 40 ++++++++++++++++++++++
+ bin/tests/system/addzone/tests.sh          | 29 ++++++++++++++++
+ 3 files changed, 94 insertions(+)
+ create mode 100644 bin/tests/system/addzone/ns6/added.db
+ create mode 100644 bin/tests/system/addzone/ns6/named.conf.j2
+
+--- /dev/null
++++ b/bin/tests/system/addzone/ns6/added.db
+@@ -0,0 +1,25 @@
++; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
++;
++; SPDX-License-Identifier: MPL-2.0
++;
++; This Source Code Form is subject to the terms of the Mozilla Public
++; License, v. 2.0.  If a copy of the MPL was not distributed with this
++; file, you can obtain one at https://mozilla.org/MPL/2.0/.
++;
++; See the COPYRIGHT file distributed with this work for additional
++; information regarding copyright ownership.
++
++$TTL 300	; 5 minutes
++@                       IN SOA	mname1. . (
++				1          ; serial
++				20         ; refresh (20 seconds)
++				20         ; retry (20 seconds)
++				1814400    ; expire (3 weeks)
++				3600       ; minimum (1 hour)
++				)
++			NS	ns2
++ns2			A	10.53.0.2
++			MX	10 mail
++
++a			A	10.0.0.1
++mail			A	10.0.0.2
+--- /dev/null
++++ b/bin/tests/system/addzone/ns6/named.conf.j2
+@@ -0,0 +1,40 @@
++/*
++ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
++ *
++ * SPDX-License-Identifier: MPL-2.0
++ *
++ * This Source Code Form is subject to the terms of the Mozilla Public
++ * License, v. 2.0.  If a copy of the MPL was not distributed with this
++ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
++ *
++ * See the COPYRIGHT file distributed with this work for additional
++ * information regarding copyright ownership.
++ */
++
++options {
++	port @PORT@;
++	pid-file "named.pid";
++	listen-on { 10.53.0.6; };
++	listen-on-v6 { none; };
++	allow-query { any; };
++	recursion yes;
++	allow-new-zones yes;
++	dnssec-validation no;
++};
++
++include "../../_common/rndc.key";
++
++controls {
++	inet 10.53.0.6 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
++};
++
++template primary {
++	type primary;
++	file "$view-$name.db";
++	initial-file "added.db";
++};
++
++zone "." {
++	type hint;
++	file "../../_common/root.hint";
++};
+--- a/bin/tests/system/addzone/tests.sh
++++ b/bin/tests/system/addzone/tests.sh
+@@ -68,6 +68,35 @@ n=$((n + 1))
+ if [ $ret != 0 ]; then echo_i "failed"; fi
+ status=$((status + ret))
+ 
++echo_i "adding new zone which replaces an automatic empty zone ($n)"
++ret=0
++$DIG $DIGOPTS @10.53.0.6 168.192.in-addr.arpa SOA >dig.out.pre.$n || ret=1
++grep 'status: NOERROR' dig.out.pre.$n >/dev/null || ret=1
++grep '168\.192\.in-addr\.arpa\..86400.IN.SOA.168\.192\.IN-ADDR\.ARPA\. \. 0 28800 7200 604800 86400' dig.out.pre.$n >/dev/null || ret=1
++$RNDCCMD 10.53.0.6 addzone '168.192.in-addr.arpa { type primary; file "added.db"; };' 2>&1 | sed 's/^/I:ns6 /'
++_check_adding_new_zone() (
++  $DIG $DIGOPTS @10.53.0.6 a.168.192.in-addr.arpa a >dig.out.ns6.$n \
++    && grep 'status: NOERROR' dig.out.ns6.$n >/dev/null \
++    && grep '^a.168.192.in-addr.arpa' dig.out.ns6.$n >/dev/null
++)
++retry_quiet 10 _check_adding_new_zone || ret=1
++n=$((n + 1))
++if [ $ret != 0 ]; then echo_i "failed"; fi
++status=$((status + ret))
++
++echo_i "adding new zone which replaces an automatic empty zone with bad file ($n)"
++ret=0
++$DIG $DIGOPTS @10.53.0.6 10.in-addr.arpa SOA >dig.out.pre.$n || ret=1
++grep 'status: NOERROR' dig.out.pre.$n >/dev/null || ret=1
++grep '10\.in-addr\.arpa\..86400.IN.SOA.10\.IN-ADDR\.ARPA\. \. 0 28800 7200 604800 86400' dig.out.pre.$n >/dev/null || ret=1
++$RNDCCMD 10.53.0.6 addzone '10.in-addr.arpa { type primary; file "bad.db"; };' 2>&1 | sed 's/^/I:ns6 /'
++$DIG $DIGOPTS @10.53.0.6 10.in-addr.arpa SOA >dig.out.post.$n || ret=1
++grep 'status: NOERROR' dig.out.post.$n >/dev/null || ret=1
++grep '10\.in-addr\.arpa\..86400.IN.SOA.10\.IN-ADDR\.ARPA\. \. 0 28800 7200 604800 86400' dig.out.post.$n >/dev/null || ret=1
++n=$((n + 1))
++if [ $ret != 0 ]; then echo_i "failed"; fi
++status=$((status + ret))
++
+ nextpart ns2/named.run >/dev/null
+ echo_i "checking addzone errors are logged correctly"
+ ret=0
