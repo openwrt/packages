@@ -221,7 +221,6 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-sha2 \
 	+strongswan-mod-sha3 \
 	+strongswan-mod-smp \
-	+strongswan-mod-socket-default \
 	+strongswan-mod-sql \
 	+strongswan-mod-sqlite \
 	+strongswan-mod-sshkey \
@@ -278,7 +277,7 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-revocation \
 	+strongswan-mod-sha1 \
 	+strongswan-mod-sha2 \
-	+strongswan-mod-socket-default \
+	@(PACKAGE_strongswan-mod-socket-default||PACKAGE_strongswan-mod-socket-dynamic) \
 	+strongswan-mod-sshkey \
 	+strongswan-mod-updown \
 	+strongswan-mod-x509 \
@@ -310,7 +309,7 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-pubkey \
 	+strongswan-mod-random \
 	+strongswan-mod-sha1 \
-	+strongswan-mod-socket-default \
+	@(PACKAGE_strongswan-mod-socket-default||PACKAGE_strongswan-mod-socket-dynamic) \
 	+strongswan-mod-stroke \
 	+strongswan-mod-updown
 endef
@@ -337,7 +336,7 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-pubkey \
 	+strongswan-mod-random \
 	+strongswan-mod-sha1 \
-	+strongswan-mod-socket-default \
+	@(PACKAGE_strongswan-mod-socket-default||PACKAGE_strongswan-mod-socket-dynamic) \
 	+strongswan-mod-stroke \
 	+strongswan-mod-updown \
 	+strongswan-mod-x509 \
@@ -352,7 +351,7 @@ endef
 define Package/strongswan-charon
 $(call Package/strongswan/Default)
   TITLE+= IKEv1/IKEv2 keying daemon
-  DEPENDS:= strongswan
+  DEPENDS:= strongswan @(PACKAGE_strongswan-mod-socket-default||PACKAGE_strongswan-mod-socket-dynamic)
 endef
 
 define Package/strongswan-charon/description
