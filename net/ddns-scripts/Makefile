@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ddns-scripts
 PKG_VERSION:=2.8.2
-PKG_RELEASE:=89
+PKG_RELEASE:=90
 
 PKG_LICENSE:=GPL-2.0
 
@@ -425,24 +425,6 @@ define Package/ddns-scripts/install
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_DATA) ./files/etc/uci-defaults/50-ddns-migrate-retry-count \
 		$(1)/etc/uci-defaults/
-endef
-
-define Package/ddns-scripts/postinst
-#!/bin/sh
-if [ -z "$${IPKG_INSTROOT}" ]; then
-	/etc/init.d/ddns enabled
-	/etc/init.d/ddns start
-fi
-exit 0
-endef
-
-define Package/ddns-scripts/prerm
-#!/bin/sh
-if [ -n "$${IPKG_INSTROOT}" ]; then
-	/etc/init.d/ddns stop
-	/etc/init.d/ddns disable
-fi
-exit 0
 endef
 
 
