@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ddns-scripts
 PKG_VERSION:=2.8.2
-PKG_RELEASE:=87
+PKG_RELEASE:=88
 
 PKG_LICENSE:=GPL-2.0
 
@@ -126,13 +126,13 @@ endef
 
 define Package/ddns-scripts-hetzner-cloud
   $(call Package/ddns-scripts/Default)
-  TITLE:=Extension for hetzner.com cloud API
+  TITLE:=Extension for hetzner.cloud API
   DEPENDS:=ddns-scripts +curl
   PROVIDES:=ddns-scripts_hetzner-cloud
 endef
 
 define Package/ddns-scripts-hetzner-cloud/description
-  Dynamic DNS Client scripts extension for 'hetzner.com cloud API'.
+  Dynamic DNS Client scripts extension for 'hetzner.cloud API'.
 endef
 
 define Package/ddns-scripts-namesilo
@@ -457,7 +457,7 @@ define Package/ddns-scripts-services/install
 	rm $(1)/usr/share/ddns/default/cloud.google.com-v1.json
 	rm $(1)/usr/share/ddns/default/freedns.42.pl.json
 	rm $(1)/usr/share/ddns/default/godaddy.com-v1.json
-	rm $(1)/usr/share/ddns/default/hetzner.com.json
+	rm $(1)/usr/share/ddns/default/hetzner.cloud.json
 	rm $(1)/usr/share/ddns/default/namesilo.com-v1.json
 	rm $(1)/usr/share/ddns/default/digitalocean.com-v2.json
 	rm $(1)/usr/share/ddns/default/dnspod.cn.json
@@ -582,7 +582,7 @@ fi
 exit 0
 endef
 
-define Package/ddns-scripts-hetzner/install
+define Package/ddns-scripts-hetzner-cloud/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_hetzner_cloud.sh \
 		$(1)/usr/lib/ddns
@@ -592,7 +592,7 @@ define Package/ddns-scripts-hetzner/install
 		$(1)/usr/share/ddns/default
 endef
 
-define Package/ddns-scripts-hetzner/prerm
+define Package/ddns-scripts-hetzner-cloud/prerm
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
 	/etc/init.d/ddns stop
@@ -947,7 +947,7 @@ $(eval $(call BuildPackage,ddns-scripts-cloudflare))
 $(eval $(call BuildPackage,ddns-scripts-gcp))
 $(eval $(call BuildPackage,ddns-scripts-freedns))
 $(eval $(call BuildPackage,ddns-scripts-godaddy))
-$(eval $(call BuildPackage,ddns-scripts-hetzner))
+$(eval $(call BuildPackage,ddns-scripts-hetzner-cloud))
 $(eval $(call BuildPackage,ddns-scripts-namesilo))
 $(eval $(call BuildPackage,ddns-scripts-digitalocean))
 $(eval $(call BuildPackage,ddns-scripts-dnspod))
