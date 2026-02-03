@@ -269,8 +269,8 @@ define Package/zabbix-frontend-server
   TITLE+= frontend server
   DEPENDS:= \
     @PACKAGE_php8 \
-    +ZABBIX_MYSQL:php8-mod-mysqli \
-    +ZABBIX_POSTGRESQL:php8-mod-pgsql \
+    @ZABBIX_MYSQL:php8-mod-mysqli \
+    @ZABBIX_POSTGRESQL:php8-mod-pgsql \
     @(!ZABBIX_SQLITE) \
     +php8-cgi \
     +php8-mod-gd \
