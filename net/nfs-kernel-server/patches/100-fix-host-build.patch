@@ -1,0 +1,22 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -363,9 +363,6 @@ CPPFLAGS="${nfsutils_save_CPPFLAGS}"
+ AC_CHECK_HEADER(uuid/uuid.h, ,
+ 	AC_MSG_ERROR([Cannot find needed header file uuid/uuid.h. Install libuuid-devel]))
+ 
+-dnl check for libevent libraries and headers
+-AC_LIBEVENT
+-
+ dnl Check for sqlite3
+ AC_SQLITE3_VERS
+ 
+@@ -445,9 +442,6 @@ if test "$enable_gss" = yes; then
+   dnl 'gss' requires getnameinfo - at least for gssd_proc.c
+   AC_CHECK_FUNC([getnameinfo], , [AC_MSG_ERROR([GSSAPI support requires 'getnameinfo' function])])
+ 
+-  dnl check for libevent libraries and headers
+-  AC_LIBEVENT
+-
+   dnl Check for Kerberos V5
+   AC_KERBEROS_V5
+ 

@@ -8,23 +8,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dovecot-pigeonhole
-PKG_VERSION_PLUGIN:=0.5.21
-PKG_VERSION_DOVECOT:=$(shell make --no-print-directory -C ../dovecot/ val.PKG_VERSION V=s)
-PKG_VERSION:=$(PKG_VERSION_DOVECOT)-$(PKG_VERSION_PLUGIN)
+PKG_VERSION:=0.5.21.1
 PKG_RELEASE:=1
 
 DOVECOT_VERSION:=2.3
 
-PKG_SOURCE:=dovecot-$(DOVECOT_VERSION)-pigeonhole-$(PKG_VERSION_PLUGIN).tar.gz
+PKG_SOURCE:=dovecot-$(DOVECOT_VERSION)-pigeonhole-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pigeonhole.dovecot.org/releases/$(DOVECOT_VERSION)
-PKG_HASH:=1ca71d2659076712058a72030288f150b2b076b0306453471c5261498d3ded27
+PKG_HASH:=0377db284b620723de060431115fb2e7791e1df4321411af718201d6925c4692
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING COPYING.LGPL
 PKG_CPE_ID:=cpe:/a:dovecot:pigeonhole
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/dovecot-$(DOVECOT_VERSION)-pigeonhole-$(PKG_VERSION_PLUGIN)
+PKG_BUILD_DIR:=$(BUILD_DIR)/dovecot-$(DOVECOT_VERSION)-pigeonhole-$(PKG_VERSION)
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -34,7 +32,7 @@ define Package/dovecot-pigeonhole
   SECTION:=mail
   CATEGORY:=Mail
   DEPENDS:=+dovecot
-  EXTRA_DEPENDS:=dovecot (>= $(PKG_VERSION_DOVECOT))
+  EXTRA_DEPENDS:=dovecot (>=2.3.0), dovecot (<2.4.0)
   TITLE:=Mail filtering facilities for Dovecot
   URL:=https://pigeonhole.dovecot.org/
 endef
@@ -56,7 +54,7 @@ define Package/dovecot-pigeonhole/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/dovecot/* $(1)/usr/lib/dovecot/
 	$(CP) $(PKG_INSTALL_DIR)/usr/libexec/dovecot/* $(1)/usr/libexec/dovecot/
-	find $(1)/usr/lib/dovecot/ -name "*.a" -o -name "*.la" | xargs rm
+	find $(1)/usr/lib/dovecot/ -name "*.a" -o -name "*.la" | $(XARGS) rm
 endef
 
 $(eval $(call BuildPackage,dovecot-pigeonhole))

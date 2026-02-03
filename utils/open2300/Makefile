@@ -32,7 +32,7 @@ define Package/open2300
 endef
 
 define Package/open2300/description
-  This is an utility suite used to communicate with and collect data from a WS23XX wheather station.
+  This is an utility suite used to communicate with and collect data from a WS23XX weather station.
 endef
 
 MAKE_FLAGS += \

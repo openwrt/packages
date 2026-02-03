@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx-util
 PKG_VERSION:=1.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Peter Stadler <peter.stadler@student.uibk.ac.at>
 
 include $(INCLUDE_DIR)/package.mk
@@ -17,11 +17,6 @@ define Package/nginx-ssl-util/default
   SUBMENU:=Web Servers/Proxies
   TITLE:=Nginx configurator including SSL
   DEPENDS:=+libstdcpp +libuci +libubus +libubox +libpthread +libopenssl
-  # TODO: remove after a transition period (together with below and pkg nginx):
-  # It actually removes nginx-util (replacing it by a dummy pkg) to avoid
-  # conflicts with nginx-ssl-util*
-  DEPENDS+= +nginx-util
-  EXTRA_DEPENDS:=nginx-util (>=1.4-2)
 endef
 
 
@@ -128,19 +123,3 @@ Package/nginx-ssl-util-nopcre/conffiles = $(Package/nginx-ssl-util/conffiles)
 
 $(eval $(call BuildPackage,nginx-ssl-util))
 $(eval $(call BuildPackage,nginx-ssl-util-nopcre))
-
-
-# TODO: remove after a transition period (together with above and pkg nginx):
-# It replaces nginx-util by a dummy pkg for a smooth upgrade of nginx*
-
-define Package/nginx-util
-  TITLE:=Dummy package for removing nginx-util when upgrading.
-  DEPENDS:=+libstdcpp +libubus +libubox +libpthread
-  PKGARCH:=all
-endef
-
-define Package/nginx-util/install
-	$(INSTALL_DIR) $(1)/usr/bin
-endef
-
-$(eval $(call BuildPackage,nginx-util))

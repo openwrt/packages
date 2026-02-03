@@ -1,113 +1,119 @@
 #!/bin/sh /etc/rc.common
-# Copyright 2023 MOSSDeF, Stan Grishin (stangri@melmac.ca)
-# shellcheck disable=SC3043
+# Copyright 2023-2025 MOSSDeF, Stan Grishin (stangri@melmac.ca)
+# shellcheck disable=SC2015,SC3023,SC3043
 
 # shellcheck disable=SC2034
-START=94
+START=20
 # shellcheck disable=SC2034
 USE_PROCD=1
 LC_ALL=C
 
-[ -n "${IPKG_INSTROOT}" ] && return 0
-
 if type extra_command 1>/dev/null 2>&1; then
 	extra_command 'allow' 'Allows domain in current block-list and config'
 	extra_command 'check' 'Checks if specified domain is found in current block-list'
+	extra_command 'check_tld' 'Checks if any TLDs are found in current block-list'
+	extra_command 'check_leading_dot' 'Checks if leading-dot domains are found in current block-list'
 	extra_command 'check_lists' 'Checks if specified domain is found in enabled block-lists'
 	extra_command 'dl' 'Force-downloads all enabled block-list'
 	extra_command 'killcache' 'Delete all cached files'
-	extra_command 'pause' 'Pauses AdBlocking for specified number of seconds (default: 60)'
+	extra_command 'pause' 'Pauses ad-blocking for specified number of seconds (default: 60)'
 	extra_command 'show_blocklist' 'List currently blocked domains'
-	extra_command 'sizes' 'Displays the file-sizes of enabled block-lists'
+	extra_command 'sizes' 'Displays the file-sizes of configured block-lists'
 	extra_command 'version' 'Show version information'
-else
-# shellcheck disable=SC2034
-	EXTRA_COMMANDS='allow check dl killcache pause sizes status_service version'
-# shellcheck disable=SC2034
-	EXTRA_HELP='	allow	Allows domain(s) in current block-list and config
-	check	Checks if specified domain is found in current block-list
-	check_lists	Checks if specified domain is found in enabled block-lists
-	dl	Force-downloads all enabled block-list
-	pause	Pauses AdBlocking for specified number of seconds (default: 60)
-	show_blocklist	List currently blocked domains
-	sizes	Displays the file-sizes of enabled block-lists
-	version	Show version information'
 fi
 
 readonly packageName='adblock-fast'
 readonly PKG_VERSION='dev-test'
-readonly packageCompat='2'
+readonly packageCompat='11'
 readonly serviceName="$packageName $PKG_VERSION"
+readonly packageMemoryThreshold='33554432'
 readonly packageConfigFile="/etc/config/${packageName}"
+readonly dnsmasqUnifiedFile="/var/run/${packageName}/${packageName}.dnsmasq"
 readonly dnsmasqAddnhostsFile="/var/run/${packageName}/dnsmasq.addnhosts"
 readonly dnsmasqAddnhostsCache="/var/run/${packageName}/dnsmasq.addnhosts.cache"
 readonly dnsmasqAddnhostsGzip="${packageName}.dnsmasq.addnhosts.gz"
-readonly dnsmasqAddnhostsFilter='s|^|127.0.0.1 |;s|$||'
-readonly dnsmasqAddnhostsFilterIPv6='s|^|:: |;s|$||'
-readonly dnsmasqAddnhostsOutputFilter='s|^127.0.0.1 ||;s|^:: ||;'
-readonly dnsmasqConfFile="/tmp/dnsmasq.d/${packageName}"
+readonly dnsmasqAddnhostsOutputFormatFilter='s|^|127.0.0.1 |;s|$||'
+readonly dnsmasqAddnhostsOutputFormatFilterIPv6='s|^|:: |;s|$||'
+readonly dnsmasqAddnhostsOutputParseFilter='s|^127.0.0.1 ||;s|^:: ||;'
+readonly dnsmasqConfFile="$dnsmasqUnifiedFile"
 readonly dnsmasqConfCache="/var/run/${packageName}/dnsmasq.conf.cache"
 readonly dnsmasqConfGzip="${packageName}.dnsmasq.conf.gz"
-readonly dnsmasqConfFilter='s|^|local=/|;s|$|/|'
-readonly dnsmasqConfOutputFilter='s|local=/||;s|/$||;'
-readonly dnsmasqIpsetFile="/tmp/dnsmasq.d/${packageName}.ipset"
+readonly dnsmasqConfOutputFormatFilter='s|^|local=/|;s|$|/|'
+readonly dnsmasqConfOutputParseFilter='s|local=/||;s|/$||;'
+readonly dnsmasqIpsetFile="$dnsmasqUnifiedFile"
 readonly dnsmasqIpsetCache="/var/run/${packageName}/dnsmasq.ipset.cache"
 readonly dnsmasqIpsetGzip="${packageName}.dnsmasq.ipset.gz"
-readonly dnsmasqIpsetFilter='s|^|ipset=/|;s|$|/adb|'
-readonly dnsmasqIpsetOutputFilter='s|ipset=/||;s|/adb$||;'
-readonly dnsmasqNftsetFile="/tmp/dnsmasq.d/${packageName}.nftset"
+readonly dnsmasqIpsetOutputFormatFilter='s|^|ipset=/|;s|$|/adb|'
+readonly dnsmasqIpsetOutputParseFilter='s|ipset=/||;s|/adb$||;'
+readonly dnsmasqNftsetFile="$dnsmasqUnifiedFile"
 readonly dnsmasqNftsetCache="/var/run/${packageName}/dnsmasq.nftset.cache"
 readonly dnsmasqNftsetGzip="${packageName}.dnsmasq.nftset.gz"
-readonly dnsmasqNftsetFilter='s|^|nftset=/|;s|$|/4#inet#fw4#adb4|'
-readonly dnsmasqNftsetFilterIPv6='s|^|nftset=/|;s|$|/4#inet#fw4#adb4,6#inet#fw4#adb6|'
-readonly dnsmasqNftsetOutputFilter='s|nftset=/||;s|/4#inet#adb#adb4||;'
+readonly dnsmasqNftsetOutputFormatFilter='s|^|nftset=/|;s|$|/4#inet#fw4#adb4|'
+readonly dnsmasqNftsetOutputFormatFilterIPv6='s|^|nftset=/|;s|$|/4#inet#fw4#adb4,6#inet#fw4#adb6|'
+readonly dnsmasqNftsetOutputParseFilter='s|nftset=/||;s|/4#.*$||;'
 readonly dnsmasqServersFile="/var/run/${packageName}/dnsmasq.servers"
 readonly dnsmasqServersCache="/var/run/${packageName}/dnsmasq.servers.cache"
 readonly dnsmasqServersGzip="${packageName}.dnsmasq.servers.gz"
-readonly dnsmasqServersFilter='s|^|server=/|;s|$|/|'
-readonly dnsmasqServersOutputFilter='s|server=/||;s|/$||;'
+readonly dnsmasqServersOutputFormatFilter='s|^|server=/|;s|$|/|'
+readonly dnsmasqServersAllowFilter='s|(.*)|server=/\1/#|'
+readonly dnsmasqServersBlockedCountFilter='\|/#|d'
+readonly dnsmasqServersOutputParseFilter='s|server=/||;s|/.*$||;'
 readonly smartdnsDomainSetFile="/var/run/${packageName}/smartdns.domainset"
 readonly smartdnsDomainSetCache="/var/run/${packageName}/smartdns.domainset.cache"
 readonly smartdnsDomainSetConfig="/var/run/${packageName}/smartdns.domainset.conf"
 readonly smartdnsDomainSetGzip="${packageName}.smartdns.domainset.gz"
 readonly smartdnsDomainSetFilter=''
-readonly smartdnsDomainSetOutputFilter=''
+readonly smartdnsDomainSetOutputParseFilter=''
 readonly smartdnsIpsetFile="/var/run/${packageName}/smartdns.ipset"
 readonly smartdnsIpsetCache="/var/run/${packageName}/smartdns.ipset.cache"
 readonly smartdnsIpsetConfig="/var/run/${packageName}/smartdns.ipset.conf"
 readonly smartdnsIpsetGzip="${packageName}.smartdns.ipset.gz"
 readonly smartdnsIpsetFilter=''
-readonly smartdnsIpsetOutputFilter=''
+readonly smartdnsIpsetOutputParseFilter=''
 readonly smartdnsNftsetFile="/var/run/${packageName}/smartdns.nftset"
 readonly smartdnsNftsetCache="/var/run/${packageName}/smartdns.nftset.cache"
 readonly smartdnsNftsetConfig="/var/run/${packageName}/smartdns.nftset.conf"
 readonly smartdnsNftsetGzip="${packageName}.smartdns.nftset.gz"
 readonly smartdnsNftsetFilter=''
-readonly smartdnsNftsetOutputFilter=''
+readonly smartdnsNftsetOutputParseFilter=''
 readonly unboundFile="/var/lib/unbound/adb_list.${packageName}"
 readonly unboundCache="/var/run/${packageName}/unbound.cache"
 readonly unboundGzip="${packageName}.unbound.gz"
-readonly unboundFilter='s|^|local-zone: "|;s|$|." always_nxdomain|'
-readonly unboundOutputFilter='s|^local-zone: "||;s|." always_nxdomain$||;'
+readonly unboundOutputFormatFilter='s|^|local-zone: "|;s|$|." always_nxdomain|'
+readonly unboundOutputParseFilter='s|^local-zone: "||;s|." always_nxdomain$||;'
+# Grep pattern generators (for invalid entry removal)
+readonly dnsmasqConfGrepPattern='s|^|^local=/|;s|$|/$|'
+readonly dnsmasqIpsetGrepPattern='s|^|^ipset=/|;s|$|/adb$|'
+readonly dnsmasqNftsetGrepPattern='s|^|^nftset=/|;s|$|/4#.*$|'
+readonly dnsmasqServersGrepPattern='s|^|^server=/|;s|$|/$|'
+readonly dnsmasqAddnhostsGrepPatternIPv4='s|^|^127\.0\.0\.1 |'
+readonly dnsmasqAddnhostsGrepPatternIPv6='s|^|^:: |'
+readonly ALLOWED_TMP="/var/${packageName}.allowed.tmp"
 readonly A_TMP="/var/${packageName}.a.tmp"
 readonly B_TMP="/var/${packageName}.b.tmp"
 readonly SED_TMP="/var/${packageName}.sed.tmp"
 readonly uciConfigFile="/etc/config/${packageName}"
-readonly runningConfigFile="/dev/shm/${packageName}.config"
-readonly runningErrorFile="/dev/shm/${packageName}.error"
-readonly runningStatusFile="/dev/shm/${packageName}.status"
+readonly runningConfigFile="/dev/shm/${packageName}"
+readonly runningStatusFile="/dev/shm/${packageName}.status.json"
+readonly runningStatusFileLock="/var/lock/${packageName}.lock"
 readonly hostsFilter='/localhost/d;/^#/d;/^[^0-9]/d;s/^0\.0\.0\.0.//;s/^127\.0\.0\.1.//;s/[[:space:]]*#.*$//;s/[[:cntrl:]]$//;s/[[:space:]]//g;/[`~!@#\$%\^&\*()=+;:"'\'',<>?/\|[{}]/d;/]/d;/\./!d;/^$/d;/[^[:alnum:]_.-]/d;'
-readonly domainsFilter='/^#/d;s/[[:space:]]*#.*$//;s/[[:space:]]*$//;s/[[:cntrl:]]$//;/[[:space:]]/d;/[`~!@#\$%\^&\*()=+;:"'\'',<>?/\|[{}]/d;/]/d;/^$/d;/[^[:alnum:]_.-]/d;'
+# Restrictive filter (commented out due to over-filtering)
+#readonly domainsFilter='/^#/d;s/[[:space:]]*#.*|[[:space:]]*$|[[:cntrl:]]$//g;/^[[:space:]]*$/d;/^-|^\.|\.\.|-$|\.$|^[0-9.]+$|^[^[:alnum:]]|[`~!@#\$%\^&\*()=+;:"'"'"',<>?/\|{}]/d;/\./!d'
+readonly domainsFilter='/^#/d;s/[[:space:]]*#.*|[[:space:]]*$|[[:cntrl:]]$//g;/^[[:space:]]*$/d;/^[^[:alnum:]._-]|[`~!@#\$%\^&\*()=+;:"'"'"',<>?/\|{}]/d'
 readonly adBlockPlusFilter='/^#/d;/^!/d;s/[[:space:]]*#.*$//;s/^||//;s/\^$//;s/[[:space:]]*$//;s/[[:cntrl:]]$//;/[[:space:]]/d;/[`~!@#\$%\^&\*()=+;:"'\'',<>?/\|[{}]/d;/]/d;/\./!d;/^$/d;/[^[:alnum:]_.-]/d;'
 readonly dnsmasqFileFilter='\|^server=/[[:alnum:]_.-].*/|!d;s|server=/||;s|/.*$||'
 readonly dnsmasq2FileFilter='\|^local=/[[:alnum:]_.-].*/|!d;s|local=/||;s|/.*$||'
 readonly dnsmasq3FileFilter='\|^address=/[[:alnum:]_.-].*/|!d;s|address=/||;s|/.*$||'
-readonly _ERROR_='\033[0;31mERROR\033[0m'
+readonly _DOT_='.'
+readonly __DOT__='[w]'
 readonly _OK_='\033[0;32m\xe2\x9c\x93\033[0m'
-readonly _FAIL_='\033[0;31m\xe2\x9c\x97\033[0m'
 readonly __OK__='\033[0;32m[\xe2\x9c\x93]\033[0m'
+readonly _FAIL_='\033[0;31m\xe2\x9c\x97\033[0m'
 readonly __FAIL__='\033[0;31m[\xe2\x9c\x97]\033[0m'
-readonly _WARNING_='\033[0;33mWARNING\033[0m'
+readonly _WARN_='\033[0;33m\xe2\x9c\x94\033[0m'
+readonly __WARN__='\033[0;33m[\xe2\x9c\x94]\033[0m'
+readonly _ERROR_='\033[0;31m[ERROR]\033[0m'
+readonly _WARNING_='\033[0;33m[WARN]\033[0m'
 # shellcheck disable=SC2155
 readonly ipset="$(command -v ipset)"
 # shellcheck disable=SC2155
@@ -117,49 +123,119 @@ readonly canaryDomainsiCloud='mask.icloud.com mask-h2.icloud.com'
 readonly triggersReload='parallel_downloads debug download_timeout allowed_domain blocked_domain allowed_url blocked_url dns config_update_enabled config_update_url dnsmasq_config_file_url curl_additional_param curl_max_file_size curl_retry'
 readonly triggersRestart='compressed_cache compressed_cache_dir force_dns led force_dns_port'
 
+# Silence "Command failed: Not found" for redundant procd service delete calls
+__UBUS_BIN="$(command -v ubus || echo /bin/ubus)"
+ubus() {
+	if [ "$1" = "call" ] && [ "$2" = "service" ] && [ "$3" = "delete" ]; then
+		"$__UBUS_BIN" "$@" >/dev/null 2>&1 || true
+	else
+		"$__UBUS_BIN" "$@"
+	fi
+}
+
 dl_command=
 dl_flag=
 isSSLSupported=
+loadEnvironmentFlag=
+loadPackageConfigFlag=
+outputAllowFilter=
+outputBlockedCountFilter=
 outputFilter=
 outputFilterIPv6=
 outputFile=
 outputGzip=
 outputCache=
-outputOutputFilter=
+stripToDomainsFilter=
+triggerStatus=
 awk='awk'
-load_environment_flag=
 allowed_url=
 blocked_url=
 fw4_restart_flag=
+adbf_boot_flag=
+dnsmasq_features=
+dnsmasq_ubus=
+
+# package config variables
+allow_non_ascii=
+canary_domains_icloud=
+canary_domains_mozilla=
+compressed_cache=
+config_update_enabled=
+debug_init_script=
+debug_performance=
+enabled=
+force_dns=
+ipv6_enabled=
+parallel_downloads=
+procd_trigger_wan6=
+sanity_check=
+update_config_sizes=
+allowed_domain=
+blocked_domain=
+compressed_cache_dir=
+config_update_url=
+curl_additional_param=
+curl_max_file_size=
+curl_retry=
+dns=
+dnsmasq_config_file_url=
+dnsmasq_instance=
+download_timeout=
+force_dns_interface=
+force_dns_port=
+heartbeat_domain=
+heartbeat_sleep_timeout=
+led=
+pause_timeout=
+procd_boot_wan_timeout=
+smartdns_instance=
+verbosity=
 
 # shellcheck disable=SC1091
-. /lib/functions.sh
+. "${IPKG_INSTROOT}/lib/functions.sh"
 # shellcheck disable=SC1091
-. /lib/functions/network.sh
+. "${IPKG_INSTROOT}/lib/functions/network.sh"
 # shellcheck disable=SC1091
-. /usr/share/libubox/jshn.sh
+. "${IPKG_INSTROOT}/usr/share/libubox/jshn.sh"
 
 append_newline() { is_newline_ending "$1" || echo '' >> "$1"; }
 check_ipset() { { command -v ipset && /usr/sbin/ipset help hash:net; } >/dev/null 2>&1; }
 check_nft() { command -v nft >/dev/null 2>&1; }
 check_dnsmasq() { command -v dnsmasq >/dev/null 2>&1; }
-check_dnsmasq_ipset() {
-	local o;
-	check_dnsmasq || return 1
-	o="$(dnsmasq -v 2>/dev/null)"
-	check_ipset && ! echo "$o" | grep -q 'no-ipset' && echo "$o" | grep -q 'ipset'
+check_dnsmasq_feature () {
+	[ -z "$dnsmasq_features" ] && dnsmasq_features="$(dnsmasq --version | grep -m1 'Compile time options:' | cut -d: -f2) "
+	case "$1" in
+		idn) [ "${dnsmasq_features#* IDN }" != "$dnsmasq_features" ];;
+		ipset) [ "${dnsmasq_features#* ipset }" != "$dnsmasq_features" ];;
+		nftset) [ "${dnsmasq_features#* nftset }" != "$dnsmasq_features" ];;
+	esac
 }
-check_dnsmasq_nftset() {
-	local o;
-	check_dnsmasq || return 1
-	o="$(dnsmasq -v 2>/dev/null)"
-	check_nft && ! echo "$o" | grep -q 'no-nftset' && echo "$o" | grep -q 'nftset'
-}
+check_dnsmasq_ipset() { check_ipset && check_dnsmasq_feature 'ipset'; }
+check_dnsmasq_nftset() { check_nft && check_dnsmasq_feature 'nftset'; }
 check_smartdns() { command -v smartdns >/dev/null 2>&1; }
 check_smartdns_ipset() { check_smartdns && check_ipset; }
 check_smartdns_nftset() { check_smartdns && check_nft; }
 check_unbound() { command -v unbound >/dev/null 2>&1; }
-config_cache() {
+append_url() {
+	local cfg="$1" allow_var="${2:-allowed_url}" block_var="${3:-blocked_url}"
+	local old_value
+	local en action url
+	config_get_bool en "$cfg" enabled '1'
+	config_get action "$cfg" action 'block'
+	config_get url "$cfg" url
+	if [ "$en" = '1' ]; then
+		if [ "$action" = 'allow' ]; then
+			old_value=$(eval echo "\$$allow_var")
+			old_value="${old_value:+$old_value }${url}"
+			eval "$allow_var"="\$old_value"
+		else
+			old_value=$(eval echo "\$$block_var")
+			old_value="${old_value:+$old_value }${url}"
+			eval "$block_var"="\$old_value"
+		fi
+	fi
+}
+adb_config_cache() {
 	local param="$1" var="$2"
 	local _reload="$triggersReload"
 	local _restart="$triggersRestart"
@@ -171,7 +247,6 @@ config_cache() {
 		get)
 			case "$var" in
 			trigger_fw4)
-				ret='false'
 				if [ -s "$runningConfigFile" ]; then
 					local UCI_CONFIG_DIR="${runningConfigFile%/*}"
 					is_fw4_restart_needed && ret='true'
@@ -183,23 +258,26 @@ config_cache() {
 				local old_allowed_url old_blocked_url
 				if [ ! -s "$runningConfigFile" ]; then
 					ret='on_boot'
-				elif cmp -s "$uciConfigFile" "$runningConfigFile"; then
-					ret='restart'
-				else
+				elif ! cmp -s "$uciConfigFile" "$runningConfigFile"; then
+#					ret='restart'
+#				else
+					local current_allowed_url current_blocked_url
+					config_load "$uciConfigFile"
+					config_foreach append_url 'file_url' current_allowed_url current_blocked_url
+					if [ -z "$allowed_url" ] || [ -z "$blocked_url" ]; then 
+						config_load "$runningConfigFile"
+						config_foreach append_url 'file_url' allowed_url blocked_url
+					fi
 					for i in $_reload; do
 						local val_current val_old UCI_CONFIG_DIR
 						case "$i" in
 							allowed_url)
-								val_current="$allowed_url"
-								config_load "$runningConfigFile"
-								config_foreach append_url 'file_url' old_allowed_url old_blocked_url
-								val_old="$old_allowed_url"
+								val_current="$current_allowed_url"
+								val_old="$allowed_url"
 							;;
 							blocked_url)
-								val_current="$blocked_url"
-								config_load "$runningConfigFile"
-								config_foreach append_url 'file_url' old_allowed_url old_blocked_url
-								val_old="$old_blocked_url"
+								val_current="$current_blocked_url"
+								val_old="$blocked_url"
 							;;
 							*)
 								UCI_CONFIG_DIR=
@@ -239,35 +317,43 @@ config_cache() {
 	;;
 	esac
 }
+count_blocked_domains() {
+	if [ -n "$outputBlockedCountFilter" ]; then
+		[ -f "$outputFile" ] && sed "$outputBlockedCountFilter" "$outputFile" | wc -l || echo '0'
+	else
+		[ -f "$outputFile" ] && wc -l < "$outputFile" || echo '0'
+	fi
+}
 debug() { local __i __j; for __i in "$@"; do eval "__j=\$$__i"; echo "${__i}: ${__j} "; done; }
+debug_log() { local __i __j; for __i in "$@"; do eval "__j=\$$__i"; logger -t "$packageName" "${__i}: ${__j} "; done; }
 dns_set_output_values() {
 	case "$1" in
 		dnsmasq.addnhosts)
-			outputFilter="$dnsmasqAddnhostsFilter"
+			outputFilter="$dnsmasqAddnhostsOutputFormatFilter"
 			outputFile="$dnsmasqAddnhostsFile"
 			outputCache="$dnsmasqAddnhostsCache"
 			outputGzip="${compressed_cache_dir}/${dnsmasqAddnhostsGzip}"
-			outputOutputFilter="$dnsmasqAddnhostsOutputFilter"
-			if [ "$ipv6_enabled" -ne '0' ]; then
+			outputParseFilter="$dnsmasqAddnhostsOutputParseFilter"
+			if [ -n "$ipv6_enabled" ]; then
 				outputFilterIPv6="$dnsmasqAddnhostsFilterIPv6"
 			fi
 		;;
 		dnsmasq.conf)
-			outputFilter="$dnsmasqConfFilter"
+			outputFilter="$dnsmasqConfOutputFormatFilter"
 			outputFile="$dnsmasqConfFile"
 			outputCache="$dnsmasqConfCache"
 			outputGzip="${compressed_cache_dir}/${dnsmasqConfGzip}"
-			outputOutputFilter="$dnsmasqConfOutputFilter"
+			outputParseFilter="$dnsmasqConfOutputParseFilter"
 		;;
 		dnsmasq.ipset)
-			outputFilter="$dnsmasqIpsetFilter"
+			outputFilter="$dnsmasqIpsetOutputFormatFilter"
 			outputFile="$dnsmasqIpsetFile"
 			outputCache="$dnsmasqIpsetCache"
 			outputGzip="${compressed_cache_dir}/${dnsmasqIpsetGzip}"
-			outputOutputFilter="$dnsmasqIpsetOutputFilter"
+			outputParseFilter="$dnsmasqIpsetOutputParseFilter"
 		;;
 		dnsmasq.nftset)
-			if [ "$ipv6_enabled" -ne '0' ]; then
+			if [ -n "$ipv6_enabled" ]; then
 				outputFilter="$dnsmasqNftsetFilterIPv6"
 			else
 				outputFilter="$dnsmasqNftsetFilter"
@@ -275,14 +361,16 @@ dns_set_output_values() {
 			outputFile="$dnsmasqNftsetFile"
 			outputCache="$dnsmasqNftsetCache"
 			outputGzip="${compressed_cache_dir}/${dnsmasqNftsetGzip}"
-			outputOutputFilter="$dnsmasqNftsetOutputFilter"
+			outputParseFilter="$dnsmasqNftsetOutputParseFilter"
 		;;
 		dnsmasq.servers)
 			outputFilter="$dnsmasqServersFilter"
 			outputFile="$dnsmasqServersFile"
 			outputCache="$dnsmasqServersCache"
 			outputGzip="${compressed_cache_dir}/${dnsmasqServersGzip}"
-			outputOutputFilter="$dnsmasqServersOutputFilter"
+			outputParseFilter="$dnsmasqServersOutputParseFilter"
+			outputAllowFilter="$dnsmasqServersAllowFilter"
+			outputBlockedCountFilter="$dnsmasqServersBlockedCountFilter"
 		;;
 		smartdns.domainset)
 			outputFilter="$smartdnsDomainSetFilter"
@@ -290,7 +378,7 @@ dns_set_output_values() {
 			outputCache="$smartdnsDomainSetCache"
 			outputGzip="${compressed_cache_dir}/${smartdnsDomainSetGzip}"
 			outputConfig="$smartdnsDomainSetConfig"
-			outputOutputFilter="$smartdnsDomainSetOutputFilter"
+			outputParseFilter="$smartdnsDomainSetOutputParseFilter"
 		;;
 		smartdns.ipset)
 			outputFilter="$smartdnsIpsetFilter"
@@ -298,7 +386,7 @@ dns_set_output_values() {
 			outputCache="$smartdnsIpsetCache"
 			outputGzip="${compressed_cache_dir}/${smartdnsIpsetGzip}"
 			outputConfig="$smartdnsIpsetConfig"
-			outputOutputFilter="$smartdnsIpsetOutputFilter"
+			outputParseFilter="$smartdnsIpsetOutputParseFilter"
 		;;
 		smartdns.nftset)
 			outputFilter="$smartdnsNftsetFilter"
@@ -306,23 +394,24 @@ dns_set_output_values() {
 			outputCache="$smartdnsNftsetCache"
 			outputGzip="${compressed_cache_dir}/${smartdnsNftsetGzip}"
 			outputConfig="$smartdnsNftsetConfig"
-			outputOutputFilter="$smartdnsNftsetOutputFilter"
+			outputParseFilter="$smartdnsNftsetOutputParseFilter"
 		;;
 		unbound.adb_list)
 			outputFilter="$unboundFilter"
 			outputFile="$unboundFile"
 			outputCache="$unboundCache"
 			outputGzip="${compressed_cache_dir}/${unboundGzip}"
-			outputOutputFilter="$unboundOutputFilter"
+			outputParseFilter="$unboundOutputParseFilter"
 		;;
 	esac
+	resolver 'on_load'
 }
 dnsmasq_hup() { killall -q -s HUP dnsmasq; }
 dnsmasq_kill() { killall -q -s KILL dnsmasq; }
 dnsmasq_restart() { /etc/init.d/dnsmasq restart >/dev/null 2>&1; }
 is_enabled() { uci_get "$1" 'config' 'enabled' '0'; }
 is_fw4_restart_needed() {
-	[ "$fw4_restart_flag" = 'true' ] && return 0
+	[ -n "$fw4_restart_flag" ] && return 0
 	local dns force_dns
 	dns="$(uci_get "$packageName" 'config' 'dns' 'dnsmasq.servers')"
 	force_dns="$(uci_get "$packageName" 'config' 'force_dns' '1')"
@@ -340,23 +429,31 @@ is_fw4_restart_needed() {
 		return 1
 	fi
 }
-is_integer() {
-	case "$1" in
-		(*[!0123456789]*) return 1;;
-		('')              return 1;;
-		(*)               return 0;;
-	esac
-}
+is_integer() { case "$1" in ''|*[!0-9]*) return 1;; esac; [ "$1" -ge 1 ] && [ "$1" -le 65535 ] || return 1; return 0; }
 is_greater() { test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"; }
 is_greater_or_equal() { test "$(printf '%s\n' "$@" | sort -V | head -n 1)" = "$2"; }
 # shellcheck disable=SC3057
 is_https_url() { [ "${1:0:8}" = "https://" ]; }
 is_newline_ending() { [ "$(tail -c1 "$1" | wc -l)" -ne '0' ]; }
+is_port_listening() {
+	local hex
+	is_integer "$1" || return 1
+	hex="$(printf '%04X' "$1")"
+	# TCP: state 0A == LISTEN
+	if awk -v h="$hex" 'NR>1{split($2,a,":"); if (toupper(a[2])==h && $4=="0A") {found=1}} END{exit found?0:1}' /proc/net/tcp /proc/net/tcp6 2>/dev/null; then
+		return 0
+	fi
+	# UDP: presence indicates a bound socket
+	if awk -v h="$hex" 'NR>1{split($2,a,":"); if (toupper(a[2])==h) {found=1}} END{exit found?0:1}' /proc/net/udp /proc/net/udp6 2>/dev/null; then
+		return 0
+	fi
+	return 1
+}
 is_present() { command -v "$1" >/dev/null 2>&1; }
 is_running() {
 	local i j
-	i="$(json 'get' 'status')"
-	j="$(ubus_get_data 'status')"
+	i="$(json get status)"
+	j="$(ubus_get_data status)"
 	if [ "$i" = 'statusStopped' ] || [ -z "${i}${j}" ]; then
 		return 1
 	else
@@ -364,80 +461,131 @@ is_running() {
 	fi
 }
 ipset() { "$ipset" "$@" >/dev/null 2>&1; }
-get_ram_free() { ubus call system info | jsonfilter -e '@.memory.free'; }
-get_ram_total() { ubus call system info | jsonfilter -e '@.memory.total'; }
+get_mem_available() {
+	local ram swap
+	ram="$( ubus call system info | jsonfilter -e '@.memory.available' )"
+	swap="$( ubus call system info | jsonfilter -e '@.swap.free' )"
+	echo "$((ram + swap))";
+}
+get_mem_total() {
+	local ram swap
+	ram="$( ubus call system info | jsonfilter -e '@.memory.total' )"
+	swap="$( ubus call system info | jsonfilter -e '@.swap.total' )"
+	echo "$((ram + swap))";
+}
 led_on(){ if [ -n "${1}" ] && [ -e "${1}/trigger" ]; then echo 'default-on' > "${1}/trigger" 2>&1; fi; }
 led_off(){ if [ -n "${1}" ] &&  [ -e "${1}/trigger" ]; then echo 'none' > "${1}/trigger" 2>&1; fi; }
 logger() { /usr/bin/logger -t "$packageName" "$@"; }
+logger_debug() { [ -n "$debug_performance" ] && /usr/bin/logger -t "$packageName [$$]" "$@"; }
 nft() { "$nft" "$@" >/dev/null 2>&1; }
-output_ok() { output 1 "$_OK_"; output 2 "$__OK__\\n"; }
-output_okn() { output 1 "$_OK_\\n"; output 2 "$__OK__\\n"; }
-output_fail() { output 1 "$_FAIL_"; output 2 "$__FAIL__\\n"; }
-output_failn() { output 1 "$_FAIL_\\n"; output 2 "$__FAIL__\\n"; }
+output_dot() { output 1 "$_DOT_"; output 2 "$__DOT__"; }
+output_ok() { output 1 "$_OK_"; output 2 "$__OK__\n"; }
+output_okn() { output 1 "$_OK_\n"; output 2 "$__OK__\n"; }
+output_warn() { output 1 "$_WARN_"; output 2 "$__WARN__\n"; }
+output_warnn() { output 1 "$_WARN_\n"; output 2 "$__WARN__\n"; }
+output_fail() { output 1 "$_FAIL_"; output 2 "$__FAIL__\n"; }
+output_failn() { output 1 "$_FAIL_\n"; output 2 "$__FAIL__\n"; }
+output_dns() {
+	case "$dns" in
+		dnsmasq.*) output 2 "[DNSM] $*";;
+		smartdns.*) output 2 "[SMRT] $*";;
+		unbound.*) output 2 "[UNBD] $*";;
+	esac
+}
+output_error() { output "${_ERROR_} $*!\n"; }
+output_warning() { output "${_WARNING_} $*!\n"; }
 print_json_bool() { json_init; json_add_boolean "$1" "$2"; json_dump; json_cleanup; }
 print_json_int() { json_init; json_add_int "$1" "$2"; json_dump; json_cleanup; }
 print_json_string() { json_init; json_add_string "$1" "$2"; json_dump; json_cleanup; }
+sanitize_domain() { printf '%s' "$1" | sed -E 's#^[a-z]+://##; s#/.*$##; s/:.*$//'; }
 sanitize_dir() { [ -d "$(readlink -fn "$1")" ] && readlink -fn "$1"; }
 smartdns_restart() { /etc/init.d/smartdns restart >/dev/null 2>&1; }
-str_contains() { test "$1" != "$(str_replace "$1" "$2" '')"; }
-str_contains_word() { echo "$1" | grep -q -w "$2"; }
+# shellcheck disable=SC3060
+str_contains() { [ "${1//$2}" != "$1" ]; }
+str_contains_word() { echo "$1" | grep -qw "$2"; }
+str_first_word() { echo "${1%% *}"; }
 # shellcheck disable=SC2018,SC2019
 str_to_lower() { echo "$1" | tr 'A-Z' 'a-z'; }
 # shellcheck disable=SC2018,SC2019
 str_to_upper() { echo "$1" | tr 'a-z' 'A-Z'; }
-str_replace() { printf "%b" "$1" | sed -e "s/$(printf "%b" "$2")/$(printf "%b" "$3")/g"; }
-ubus_get_data() { ubus call service list "{ 'name': '$packageName' }" | jsonfilter -e "@['${packageName}'].instances.main.data.${1}"; }
-ubus_get_ports() { ubus call service list "{ 'name': '$packageName' }" | jsonfilter -e "@['${packageName}'].instances.main.data.firewall.*.dest_port"; }
+# shellcheck disable=SC3060
+str_replace() { echo "${1//$2/$3}"; }
+ubus_get_data() { ubus call service list "{\"name\":\"$packageName\"}" | jsonfilter -e "@['${packageName}'].instances.main.data.${1}"; }
+ubus_get_ports() { ubus call service list "{\"name\":\"$packageName\"}" | jsonfilter -e "@['${packageName}'].instances.main.data.firewall.*.dest_port"; }
 uci_get_protocol() { uci_get 'network' "$1" 'proto'; }
 unbound_restart() { /etc/init.d/unbound restart >/dev/null 2>&1; }
 
 json() {
-# shellcheck disable=SC2034
-	local action="$1" param="$2" value="$3"
-	shift 3
-# shellcheck disable=SC2124
-	local extras="$@" line
-	local status message error stats
-	local ret i
-	if [ -s "$runningStatusFile" ]; then
-		json_load_file "$runningStatusFile" 2>/dev/null
-		json_select 'data' 2>/dev/null
-		for i in status message error stats; do
-			json_get_var "$i" "$i" 2>/dev/null
-		done
-	fi
-	case "$action" in
-		get)
-			printf "%b" "$(eval echo "\$$param")"
-			return
-		;;
-		add)
-			line="$(eval echo "\$$param")"
-			eval "$param"='${line:+$line }${value}${extras:+|$extras}'
-		;;
-		del)
-			case "$param" in
-				all)
-					unset status message error stats;;
-				*)
-					unset "$param";;
-			esac
-		;;
-		set)
-			eval "$param"='${value}${extras:+|$extras}'
-		;;
-	esac
-	json_init
-	json_add_object 'data'
-	json_add_string version "$PKG_VERSION"
-	json_add_string status "$status"
-	json_add_string message "$message"
-	json_add_string error "$error"
-	json_add_string stats "$stats"
-	json_close_object
-	mkdir -p "${runningStatusFile%/*}"
-	json_dump > "$runningStatusFile"
-	sync
+	{
+		flock -x 209
+		local status message stats i
+		local action="$1" param="$2" value="$3"; shift 3; local info="$*";
+		local _current_namespace="$_JSON_PREFIX"
+		json_set_namespace "${packageName//-/_}_"
+		[ "$param" = 'error' ] && param='errors'
+		[ "$param" = 'warning' ] && param='warnings'
+		{ json_load_file "$runningStatusFile" || json_init; } >/dev/null 2>&1
+		{ json_select 'data' || { json_add_object 'data'; json_close_object; json_select 'data'; }; } >/dev/null 2>&1
+		case "${action}:${param}" in
+			'get:errors'|'get:warnings')
+				json_select "$param" >/dev/null 2>&1 || return
+				if [ -z "$value" ]; then
+					json_get_keys i
+				else
+					json_select "$value" >/dev/null 2>&1
+					case "${info:-code}" in
+						'code'|'info') json_get_var 'i' "$info" >/dev/null 2>&1;;
+					esac
+				fi
+				printf "%b" "$i"
+				json_set_namespace "$_current_namespace"
+				return
+			;;
+			get:*)
+				json_get_var 'i' "$param" >/dev/null 2>&1
+				printf "%b" "$i"
+				json_set_namespace "$_current_namespace"
+				return
+			;;
+			'add:errors'|'add:warnings')
+				{ json_select "$param" || json_add_array "$param"; } >/dev/null 2>&1
+				json_add_object ""
+				json_add_string 'code' "$value"
+				json_add_string 'info' "$info"
+				json_close_object
+				json_select ..
+			;;
+			add:*)
+				json_add_string "$param" "$value"
+			;;
+			'del:all')
+				json_add_string status ''
+				json_add_string message ''
+				json_add_string stats ''
+				json_add_array errors
+				json_close_array
+				json_add_array warnings
+				json_close_array
+			;;
+			'del:errors'|'del:warnings')
+				json_add_array "$param"
+				json_close_array
+			;;
+			del:*)
+				json_add_string "$param" ''
+			;;
+			'set:status'|'set:message'|'set:stats')
+				json_add_string "$param" "$value"
+			;;
+		esac
+		json_add_string 'version' "$PKG_VERSION"
+		json_add_string 'packageCompat' "$packageCompat"
+		json_select ..
+		mkdir -p "${runningStatusFile%/*}"
+		json_dump > "$runningStatusFile"
+		sync
+		json_set_namespace "$_current_namespace"
+	} 209>"$runningStatusFileLock"
 }
 
 get_local_filesize() {
@@ -453,45 +601,36 @@ get_local_filesize() {
 }
 
 get_url_filesize() {
-	local url="$1" size size_command
+	local url="$1" size size_command timeout_sec=2
 	[ -n "$url" ] || return 0
-	is_present 'curl' || return 0
-	size_command='curl --silent --insecure --fail --head --request GET'
-#	size="$($size_command "$url" | grep -Po '^[cC]ontent-[lL]ength: \K\w+')"
-	size="$($size_command "$url" | grep -Eo '^[cC]ontent-[lL]ength: (.*)' | awk '{print $2}')"
-# shellcheck disable=SC3037
+				if is_present 'curl'; then
+								# shellcheck disable=SC1017
+								size_command='curl --silent --insecure --fail --head --request GET'
+								size="$($size_command --connect-timeout $timeout_sec "$url" | awk -F": " '{IGNORECASE=1}/content-length/ {gsub(/\r/, ""); print $2}' )"
+				fi
+
+				# Check if size is empty and fallback to uclient-fetch if necessary
+				if [ -z "$size" ] && is_present 'uclient-fetch' ; then
+								# shellcheck disable=SC1017
+								size_command='uclient-fetch --spider'
+								size="$($size_command --timeout $timeout_sec "$url" -O /dev/null 2>&1 | sed -n '/^Download/ s/.*(\([0-9]*\) bytes).*/\1/p')"
+				fi
+	# shellcheck disable=SC3037
 	echo -en "$size"
 }
 
-output() {
-# Target verbosity level with the first parameter being an integer
-	is_integer() {
-		case "$1" in
-			(*[!0123456789]*) return 1;;
-			('')              return 1;;
-			(*)               return 0;;
-		esac
-	}
-	local msg memmsg logmsg text
-	local sharedMemoryOutput="/dev/shm/$packageName-output"
-	if [ -z "$verbosity" ] && [ -n "$packageName" ]; then
-		verbosity="$(uci_get "$packageName" 'config' 'verbosity' '2')"
-	fi
-	if [ $# -ne 1 ] && is_integer "$1"; then
-		if [ $((verbosity & $1)) -gt 0 ] || [ "$verbosity" = "$1" ]; then shift; text="$*"; else return 0; fi
-	fi
-	text="${text:-$*}";
-	[ -t 1 ] && printf "%b" "$text"
 # shellcheck disable=SC3060
-	msg="${text//$serviceName /service }";
-	if [ "$(printf "%b" "$msg" | wc -l)" -gt 0 ]; then
-		[ -s "$sharedMemoryOutput" ] && memmsg="$(cat "$sharedMemoryOutput")"
-		logmsg="$(printf "%b" "${memmsg}${msg}" | sed 's/\x1b\[[0-9;]*m//g')"
-		logger -t "${packageName:-service} [$$]" "$(printf "%b" "$logmsg")"
-		rm -f "$sharedMemoryOutput"
-	else
-		printf "%b" "$msg" >> "$sharedMemoryOutput"
-	fi
+output() {
+	[ -z "$verbosity" ] && verbosity="$(uci_get "$packageName" 'config' 'verbosity' '1')"
+	[ "$#" -ne '1' ] && {
+		case "$1" in [0-9]) [ $((verbosity & $1)) -gt 0 ] && shift || return 0;; esac }
+	local msg="$*" queue="/dev/shm/$packageName-output"
+	[ -t 1 ] && printf "%b" "$msg"
+	[ "$msg" != "${msg//\\n}" ] && {
+		[ -s "$queue" ] && msg="$(cat "$queue")${msg}" && rm -f "$queue"
+		msg="$(printf "%b" "$msg" | sed 's/\x1b\[[0-9;]*m//g')"
+		logger -t "$packageName [$$]" "$(printf "%b" "$msg")"
+	} || printf "%b" "$msg" >> "$queue"
 }
 
 uci_add_list_if_new() {
@@ -511,69 +650,78 @@ uci_changes() {
 	local PACKAGE="$1"
 	local CONFIG="$2"
 	local OPTION="$3"
-	if [ -s "${UCI_CONFIG_DIR:-/etc/config/}${PACKAGE}" ]; then
-		/sbin/uci ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} changes "$PACKAGE${CONFIG:+.$CONFIG}${OPTION:+.$OPTION}"
-	fi
+	[ -s "${UCI_CONFIG_DIR:-/etc/config/}${PACKAGE}" ] && \
+	[ -n "$(/sbin/uci ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} changes "$PACKAGE${CONFIG:+.$CONFIG}${OPTION:+.$OPTION}")" ]
 }
 
 get_text() {
-	local r
-	case "$1" in
-		errorConfigValidationFail) r="$packageName config validation failed";;
-		errorServiceDisabled) r="$packageName is currently disabled";;
+	local r="$1"; shift;
+	case "$r" in
+		errorConfigValidationFail) printf "The %s config validation failed" "$packageName";;
+		errorServiceDisabled) printf "The %s is currently disabled" "$packageName";;
 		errorNoDnsmasqIpset) 
-			r="dnsmasq ipset support is enabled in $packageName, but dnsmasq is either not installed or installed dnsmasq does not support ipset";;
+			printf "The dnsmasq ipset support is enabled in %s, but dnsmasq is either not installed or installed dnsmasq does not support ipset" "$packageName";;
 		errorNoIpset) 
-			r="dnsmasq ipset support is enabled in $packageName, but ipset is either not installed or installed ipset does not support 'hash:net' type";;
+			printf "The dnsmasq ipset support is enabled in %s, but ipset is either not installed or installed ipset does not support 'hash:net' type" "$packageName";;
 		errorNoDnsmasqNftset) 
-			r="dnsmasq nft set support is enabled in $packageName, but dnsmasq is either not installed or installed dnsmasq does not support nft set";;
-		errorNoNft) r="dnsmasq nft sets support is enabled in $packageName, but nft is not installed";;
-		errorNoWanGateway) r="The ${serviceName} failed to discover WAN gateway";;
-		errorOutputDirCreate) r="failed to create directory for %s file";;
-		errorOutputFileCreate) r="failed to create $outputFile file";;
-		errorFailDNSReload) r="failed to restart/reload DNS resolver";;
-		errorSharedMemory) r="failed to access shared memory";;
-		errorSorting) r="failed to sort data file";;
-		errorOptimization) r="failed to optimize data file";;
-		errorAllowListProcessing) r="failed to process allow-list";;
-		errorDataFileFormatting) r="failed to format data file";;
-		errorMovingDataFile) r="failed to move data file '${A_TMP}' to '${outputFile}'";;
-		errorCreatingCompressedCache) r="failed to create compressed cache";;
-		errorRemovingTempFiles) r="failed to remove temporary files";;
-		errorRestoreCompressedCache) r="failed to unpack compressed cache";;
-		errorRestoreCache) r="failed to move '$outputCache' to '$outputFile'";;
-		errorOhSnap) r="failed to create block-list or restart DNS resolver";;
-		errorStopping) r="failed to stop $serviceName";;
-		errorDNSReload) r="failed to reload/restart DNS resolver";;
-		errorDownloadingConfigUpdate) r="failed to download Config Update file";;
-		errorDownloadingList) r="failed to download";;
-		errorParsingConfigUpdate) r="failed to parse Config Update file";;
-		errorParsingList) r="failed to parse";;
-		errorNoSSLSupport) r="no HTTPS/SSL support on device";;
-		errorCreatingDirectory) r="failed to create output/cache/gzip file directory";;
-		errorDetectingFileType) r="failed to detect format";;
-		errorNothingToDo) r="no blocked list URLs nor blocked-domains enabled";;
-		errorTooLittleRam) r="free ram (%s) is not enough to process all enabled block-lists";;
+			printf "The dnsmasq nft set support is enabled in %s, but dnsmasq is either not installed or installed dnsmasq does not support nft set" "$packageName";;
+		errorNoNft) printf "The dnsmasq nft sets support is enabled in %s, but nft is not installed" "$packageName";;
+		errorNoWanGateway) printf "The %s failed to discover WAN gateway" "$serviceName";;
+		errorOutputDirCreate) printf "Failed to create directory for %s file" "$@";;
+		errorOutputFileCreate) printf "Failed to create %s file" "$@";;
+		errorFailDNSReload) printf "Failed to restart/reload DNS resolver";;
+		errorSharedMemory) printf "Failed to access shared memory";;
+		errorSorting) printf "Failed to sort data file";;
+		errorOptimization) printf "Failed to optimize data file";;
+		errorAllowListProcessing) printf "Failed to process allow-list";;
+		errorDataFileFormatting) printf "Failed to format data file";;
+		errorCopyingDataFile) printf "Failed to copy data file to '%s'" "$@";;
+		errorMovingDataFile) printf "Failed to move data file to '%s'" "$@";;
+		errorCreatingCompressedCache) printf "Failed to create compressed cache";;
+		errorRemovingTempFiles) printf "Failed to remove temporary files";;
+		errorRestoreCompressedCache) printf "Failed to unpack compressed cache";;
+		errorRestoreCache) printf "Failed to move '%s' to '%s'" "$outputCache" "$outputFile";;
+		errorOhSnap) printf "Failed to create block-list or restart DNS resolver";;
+		errorStopping) printf "Failed to stop %s" "$serviceName";;
+		errorDNSReload) printf "Failed to reload/restart DNS resolver";;
+		errorDownloadingConfigUpdate) printf "Failed to download Config Update file";;
+		errorDownloadingList) printf "Failed to download %s" "$@";;
+		errorParsingConfigUpdate) printf "Failed to parse Config Update file";;
+		errorParsingList) printf "Failed to parse";;
+		errorNoSSLSupport) printf "No HTTPS/SSL support on device";;
+		errorCreatingDirectory) printf "Failed to create output/cache/gzip file directory";;
+		errorDetectingFileType) printf "Failed to detect format";;
+		errorNothingToDo) printf "No blocked list URLs nor blocked-domains enabled";;
+		errorTooLittleRam) printf "Free ram (%s) is not enough to process all enabled block-lists" "$@";;
+		errorCreatingBackupFile) printf "Failed to create backup file %s" "$@";;
+		errorDeletingDataFile) printf "Failed to delete data file %s" "$@";;
+		errorRestoringBackupFile) printf "Failed to restore backup file %s" "$@";;
+		errorNoOutputFile) printf "Failed to create final block-list %s" "$@";;
+		errorNoHeartbeat) printf "Heartbeat domain is not accessible after resolver restart";;
 
-		statusNoInstall) r="$serviceName is not installed or not found";;
-		statusStopped) r="Stopped";;
-		statusStarting) r="Starting";;
-		statusRestarting) r="Restarting";;
-		statusForceReloading) r="Force Reloading";;
-		statusDownloading) r="Downloading";;
-		statusProcessing) r="Processing";;
-		statusFail) r="failed to start";;
-		statusSuccess) r="Success";;
+		statusNoInstall) printf "The %s is not installed or not found" "$serviceName";;
+		statusStopped) printf "stopped";;
+		statusStarting) printf "starting";;
+		statusRestarting) printf "restarting";;
+		statusForceReloading) printf "force-reloading";;
+		statusDownloading) printf "downloading";;
+		statusProcessing) printf "processing";;
+		statusFail) printf "failed to start";;
+		statusSuccess) printf "success";;
+		statusTriggerBootWait) printf "waiting for trigger (on_boot)";;
+		statusTriggerStartWait) printf "waiting for trigger (on_start)";;
 
 		warningExternalDnsmasqConfig)
-			r="use of external dnsmasq config file detected, please set 'dns' option to 'dnsmasq.conf'";;
-		warningMissingRecommendedPackages) r="some recommended packages are missing";;
-		warningInvalidCompressedCacheDir) r="invalid compressed cache directory '%s'";;
-		warningFreeRamCheckFail) r="can't detect free RAM";;
+			printf "Use of external dnsmasq config file detected, please set 'dns' option to 'dnsmasq.conf'";;
+		warningMissingRecommendedPackages) printf "Some recommended packages are missing";;
+		warningInvalidCompressedCacheDir) printf "Invalid compressed cache directory '%s'" "$@";;
+		warningFreeRamCheckFail) printf "Can't detect free RAM";;
+		warningSanityCheckTLD) printf "Sanity check discovered TLDs in %s" "$@";;
+		warningSanityCheckLeadingDot) printf "Sanity check discovered leading dots in %s" "$@";;
+		warningInvalidDomainsRemoved) printf "Removed %s invalid domain entries from block-list (domains starting with -/./numbers or containing invalid patterns)" "$@";;
+
+		*) printf "Unknown error/warning '%s'" "$@";;
 	esac
-	shift
-# shellcheck disable=SC2059
-	printf "$r" "$@"
 }
 
 load_network() {
@@ -585,16 +733,19 @@ load_network() {
 		network_flush_cache
 		network_find_wan wan_if
 		if [ -n "$wan_if" ]; then
-			output "WAN interface found: '${wan_if}'.\\n"
+			output 1 "WAN interface found: '${wan_if}'.\n"
+			output 2 "[BOOT] WAN interface found: '${wan_if}'.\n"
 			break
 		fi
 		if [ "$counter" -gt "$wan_if_timeout" ]; then
-			output "WAN interface timeout, assuming 'wan'.\\n"
+			output 1 "WAN interface timeout, assuming 'wan'.\n"
+			output 2 "[BOOT] WAN interface timeout, assuming 'wan'.\n"
 			wan_if='wan'
 			break
 		fi
 		counter=$((counter+1))
-		output "Waiting to discover WAN Interface...\\n"
+		output 1 "Waiting to discover WAN Interface...\n"
+		output 2 "[BOOT] Waiting to discover WAN Interface...\n"
 		sleep 1
 	done
 
@@ -606,35 +757,18 @@ load_network() {
 		network_flush_cache
 		network_get_gateway wan_gw "$wan_if"
 		if [ -n "$wan_gw" ]; then
-			output "WAN gateway found: '${wan_gw}.'\\n"
+			output 1 "WAN gateway found: '${wan_gw}.'\n"
+			output 2 "[BOOT] WAN gateway found: '${wan_gw}.'\n"
 			return 0
 		fi
 		counter=$((counter+1))
-		output "Waiting to discover $wan_if gateway...\\n"
+		output 1 "Waiting to discover $wan_if gateway...\n"
+		output 2 "[BOOT] Waiting to discover $wan_if gateway...\n"
 		sleep 1
 	done
 	json add error 'errorNoWanGateway'
-	output "${_ERROR_}: $(get_text 'errorNoWanGateway')!\\n"; return 1;
-}
-
-append_url() {
-	local cfg="$1" allow_var="${2:-allowed_url}" block_var="${3:-blocked_url}"
-	local old_value
-	local en action url
-	config_get_bool en "$cfg" enabled '1'
-	config_get action "$cfg" action 'block'
-	config_get url "$cfg" url
-	if [ "$en" = '1' ]; then
-		if [ "$action" = 'allow' ]; then
-			old_value=$(eval echo "\$$allow_var")
-			old_value="${old_value:+$old_value }${url}"
-			eval "$allow_var"="\$old_value"
-		else
-			old_value=$(eval echo "\$$block_var")
-			old_value="${old_value:+$old_value }${url}"
-			eval "$block_var"="\$old_value"
-		fi
-	fi
+	output_error "$(get_text 'errorNoWanGateway')"
+	return 1
 }
 
 detect_file_type() {
@@ -648,170 +782,85 @@ detect_file_type() {
 		echo 'dnsmasq2'
 	elif grep -q '^address=' "$file"; then
 		echo 'dnsmasq3'
-	elif grep -q '^0\.0\.0\.0' "$file" || grep -q '^127\.0\.0\.1' "$file"; then
+	elif grep -q -e '^0\.0\.0\.0\s' -e '^127\.0\.0\.1\s' "$file"; then
 		echo 'hosts'
 	elif [ -n "$(sed "$domainsFilter" "$file" | head -1)" ]; then
 		echo 'domains'
 	fi
 }
 
-load_environment() {
-	local i j
-	local validation_result="$1" param="$2"
+load_package_config() {
+	config_load    "$packageName"
+	config_get_bool allow_non_ascii          'config' 'allow_non_ascii'         '0'
+	config_get_bool canary_domains_icloud    'config' 'canary_domains_icloud'   '0'
+	config_get_bool canary_domains_mozilla   'config' 'canary_domains_mozilla'  '0'
+	config_get_bool compressed_cache         'config' 'compressed_cache'        '0'
+	config_get_bool config_update_enabled    'config' 'config_update_enabled'   '0'
+	config_get_bool debug_init_script        'config' 'debug_init_script'       '0'
+	config_get_bool debug_performance        'config' 'debug_performance'       '0'
+	config_get_bool dnsmasq_sanity_check     'config' 'dnsmasq_sanity_check'    '1'
+	config_get_bool dnsmasq_validity_check   'config' 'dnsmasq_validity_check'  '0'
+	config_get_bool enabled                  'config' 'enabled'                 '0'
+	config_get_bool force_dns                'config' 'force_dns'               '1'
+	config_get_bool ipv6_enabled             'config' 'ipv6_enabled'            '0'
+	config_get_bool parallel_downloads       'config' 'parallel_downloads'      '1'
+	config_get_bool procd_trigger_wan6       'config' 'procd_trigger_wan6'      '0'
+	config_get_bool update_config_sizes      'config' 'update_config_sizes'     '1'
+	config_get      allowed_domain           'config' 'allowed_domain'
+	config_get      blocked_domain           'config' 'blocked_domain'
+	config_get      compressed_cache_dir     'config' 'compressed_cache_dir'    '/etc'
+	config_get      config_update_url        'config' 'config_update_url'       'https://cdn.jsdelivr.net/gh/openwrt/packages/net/adblock-fast/files/adblock-fast.config.update'
+	config_get      curl_additional_param    'config' 'curl_additional_param'
+	config_get      curl_max_file_size       'config' 'curl_max_file_size'
+	config_get      curl_retry               'config' 'curl_retry'              '3'
+	config_get      dns                      'config' 'dns'                     'dnsmasq.servers'
+	config_get      dnsmasq_config_file_url  'config' 'dnsmasq_config_file_url'
+	config_get      dnsmasq_instance         'config' 'dnsmasq_instance'        '*'
+	config_get      download_timeout         'config' 'download_timeout'        '20'
+	config_get      force_dns_interface      'config' 'force_dns_interface'     'lan'
+	config_get      force_dns_port           'config' 'force_dns_port'          '53 853'
+	config_get      heartbeat_domain         'config' 'heartbeat_domain'        'heartbeat.melmac.ca'
+	config_get      heartbeat_sleep_timeout  'config' 'heartbeat_sleep_timeout' '10'
+	config_get      led                      'config' 'led'                     
+	config_get      pause_timeout            'config' 'pause_timeout'           '20'
+	config_get      procd_boot_wan_timeout   'config' 'procd_boot_wan_timeout'  '60'
+	config_get      smartdns_instance        'config' 'smartdns_instance'       '*'
+	config_get      verbosity                'config' 'verbosity'               '2'
 
-	[ -z "$load_environment_flag" ] || return 0
+	[ "$allow_non_ascii" = '1' ]         || unset allow_non_ascii
+	[ "$canary_domains_icloud" = '1' ]   || unset canary_domains_icloud
+	[ "$canary_domains_mozilla" = '1' ]  || unset canary_domains_mozilla
+	[ "$compressed_cache" = '1' ]        || unset compressed_cache
+	[ "$config_update_enabled" = '1' ]   || unset config_update_enabled
+	[ "$debug_init_script" = '1' ]       || unset debug_init_script
+	[ "$debug_performance" = '1' ]       || unset debug_performance
+	[ "$dnsmasq_sanity_check" = '1' ]    || unset dnsmasq_sanity_check
+	[ "$dnsmasq_validity_check" = '1' ]  || unset dnsmasq_validity_check
+	[ "$enabled" = '1' ]                 || unset enabled
+	[ "$force_dns" = '1' ]               || unset force_dns
+	[ "$ipv6_enabled" = '1' ]            || unset ipv6_enabled
+	[ "$parallel_downloads" = '1' ]      || unset parallel_downloads
+	[ "$procd_trigger_wan6" = '1' ]      || unset procd_trigger_wan6
+	[ "$update_config_sizes" = '1' ]     || unset update_config_sizes
 
-	if [ "$validation_result" != '0' ]; then
-		json add error 'errorConfigValidationFail'
-		output "${_ERROR_}: $(get_text 'errorConfigValidationFail')!\\n"
-		output "Please check if the '$packageConfigFile' contains correct values for config options.\\n"
-		return 1
-	fi
-
-	if [ "$enabled" -eq 0 ]; then
-		json add error 'errorServiceDisabled'
-		output "${_ERROR_}: $(get_text 'errorServiceDisabled')!\\n"
-		output "Run the following commands before starting service again:\\n"
-		output "uci set ${packageName}.config.enabled='1'; uci commit $packageName;\\n"
-		return 1
-	fi
-
-	if [ "$debug" -ne '0' ]; then
-		exec 1>>"/tmp/$packageName.log"
-		exec 2>&1
-		set -x
-	fi
-
-# TODO: check for resolver and error out on start
-
-	if [ -n "$dnsmasq_config_file_url" ]; then
-		case "$dns" in
-			dnsmasq.conf) :;;
-			*)
-				if [ "$param" != 'quiet' ]; then
-					json add warning 'warningExternalDnsmasqConfig'
-					output "${_WARNING_}: $(get_text 'warningExternalDnsmasqConfig')!\\n"
-				fi
-			;;
-		esac
-	fi
-
-	case "$dns" in
-		dnsmasq.*)
-			if dnsmasq -v 2>/dev/null | grep -q 'no-IDN' || ! dnsmasq -v 2>/dev/null | grep -q -w 'IDN'; then
-				allow_non_ascii='0'
-			fi
-		;;
-		smartdns.*)
-			allow_non_ascii='0'
-		;;
-		unbound.*)
-			allow_non_ascii='1'
-		;;
-	esac
-
-	case "$dns" in
-		dnsmasq.ipset)
-			if dnsmasq -v 2>/dev/null | grep -q 'no-ipset' || ! dnsmasq -v 2>/dev/null | grep -q -w 'ipset'; then
-				if [ "$param" != 'quiet' ]; then
-					json add error 'errorNoDnsmasqIpset'
-					output "${_ERROR_}: $(get_text 'errorNoDnsmasqIpset')!\\n"
-				fi
-				dns='dnsmasq.servers'
-			fi
-			if ! ipset help hash:net; then
-				if [ "$param" != 'quiet' ]; then
-					json add error 'errorNoIpset'
-					output "${_ERROR_}: $(get_text 'errorNoIpset')!\\n"
-				fi
-				dns='dnsmasq.servers'
-			fi
-		;;
-		dnsmasq.nftset)
-			if dnsmasq -v 2>/dev/null | grep -q 'no-nftset' || ! dnsmasq -v 2>/dev/null | grep -q -w 'nftset'; then
-				if [ "$param" != 'quiet' ]; then
-					json add error 'errorNoDnsmasqNftset'
-					output "${_ERROR_}: $(get_text 'errorNoDnsmasqNftset')!\\n"
-				fi
-				dns='dnsmasq.servers'
-			fi
-			if [ -z "$nft" ]; then
-				if [ "$param" != 'quiet' ]; then
-					json add error 'errorNoNft'
-					output "${_ERROR_}: $(get_text 'errorNoNft')!\\n"
-				fi
-				dns='dnsmasq.servers'
-			fi
-		;;
-		smartdns.ipset)
-			if ! ipset help hash:net; then
-				if [ "$param" != 'quiet' ]; then
-					json add error 'errorNoIpset'
-					output "${_ERROR_}: $(get_text 'errorNoIpset')!\\n"
-				fi
-				dns='smartdns.domainset'
-			fi
-		;;
-		smartdns.nftset)
-			if [ -z "$nft" ]; then
-				if [ "$param" != 'quiet' ]; then
-					json add error 'errorNoNft'
-					output "${_ERROR_}: $(get_text 'errorNoNft')!\\n"
-				fi
-				dns='smartdns.domainset'
-			fi
-		;;
-	esac
-
+	dns_set_output_values "$dns"
+	[ "$heartbeat_domain" = '-' ] && unset heartbeat_domain || heartbeat_domain="$(sanitize_domain "$heartbeat_domain")"
 	if [ "$(sanitize_dir "$compressed_cache_dir")" = '/' ]; then
 		compressed_cache_dir=''
 	elif [ -n "$(sanitize_dir "$compressed_cache_dir")" ]; then
 		compressed_cache_dir="$(sanitize_dir "$compressed_cache_dir")"
 	else
-		json add warning 'warningInvalidCompressedCacheDir' "$compressed_cache_dir"
-		output "${_WARNING_}: $(get_text 'warningInvalidCompressedCacheDir' "$compressed_cache_dir")!\\n"
 		compressed_cache_dir="/etc"
 	fi
 
-	dns_set_output_values "$dns"
+	unset loadEnvironmentFlag
+	loadPackageConfigFlag='true'
+}
 
-	[ "$dns" = 'dnsmasq.addnhosts' ]  || rm -f "$dnsmasqAddnhostsFile" "$dnsmasqAddnhostsCache" "${compressed_cache_dir}/${dnsmasqAddnhostsGzip}"
-	[ "$dns" = 'dnsmasq.conf' ]       || rm -f "$dnsmasqConfFile" "$dnsmasqConfCache" "${compressed_cache_dir}/${dnsmasqConfGzip}"
-	[ "$dns" = 'dnsmasq.ipset' ]      || rm -f "$dnsmasqIpsetFile" "$dnsmasqIpsetCache" "${compressed_cache_dir}/${dnsmasqIpsetGzip}"
-	[ "$dns" = 'dnsmasq.nftset' ]     || rm -f "$dnsmasqNftsetFile" "$dnsmasqNftsetCache" "${compressed_cache_dir}/${dnsmasqNftsetGzip}"
-	[ "$dns" = 'dnsmasq.servers' ]    || rm -f "$dnsmasqServersFile" "$dnsmasqServersCache" "${compressed_cache_dir}/${dnsmasqServersGzip}"
-	[ "$dns" = 'smartdns.domainset' ] || rm -f "$smartdnsDomainSetFile" "$smartdnsDomainSetCache" "${compressed_cache_dir}/${smartdnsDomainSetGzip}" "$smartdnsDomainSetConfig"
-	[ "$dns" = 'smartdns.ipset' ]     || rm -f "$smartdnsIpsetFile" "$smartdnsIpsetCache" "${compressed_cache_dir}/${smartdnsIpsetGzip}" "$smartdnsIpsetConfig"
-	[ "$dns" = 'smartdns.nftset' ]    || rm -f "$smartdnsNftsetFile" "$smartdnsNftsetCache" "${compressed_cache_dir}/${smartdnsNftsetGzip}" "$smartdnsNftsetConfig"
-	[ "$dns" = 'unbound.adb_list' ]   || rm -f "$unboundFile" "$unboundCache" "${compressed_cache_dir}/${unboundGzip}"
-
-	for i in "$runningConfigFile" "$runningErrorFile" "$runningStatusFile" "$outputFile" "$outputCache" "$outputGzip" "$outputConfig"; do
-		[ -n "$i" ] || continue
-		if ! mkdir -p "${i%/*}"; then
-			if [ "$param" != 'quiet' ]; then
-				json add error 'errorOutputDirCreate' "$i"
-				output "${_ERROR_}: $(get_text 'errorOutputDirCreate' "$i")!\\n"
-			fi
-		fi
-	done
-
-	is_present 'gawk' && awk='gawk'
-	if ! is_present '/usr/libexec/grep-gnu' || ! is_present '/usr/libexec/sed-gnu' || \
-		! is_present '/usr/libexec/sort-coreutils' || ! is_present 'gawk'; then
-			local s
-			is_present 'gawk' || s="${s:+$s }gawk"
-			is_present '/usr/libexec/grep-gnu' || s="${s:+$s }grep"
-			is_present '/usr/libexec/sed-gnu' || s="${s:+$s }sed"
-			is_present '/usr/libexec/sort-coreutils' || s="${s:+$s }coreutils-sort"
-			if [ "$param" != 'quiet' ]; then
-				json add warning 'warningMissingRecommendedPackages' "$s"
-				output "${_WARNING_}: $(get_text 'warningMissingRecommendedPackages'), install them by running:\\n"
-				output "opkg update; opkg --force-overwrite install $s;\\n"
-			fi
-	fi
+load_dl_command() {
 	# Prefer curl because it supports the file:// scheme.
 	if is_present 'curl'; then
-		dl_command='curl --silent --insecure'
+		dl_command='curl -f --silent --insecure'
 		dl_command="${dl_command}${curl_additional_param:+ $curl_additional_param}"
 		dl_command="${dl_command}${curl_max_file_size:+ --max-filesize $curl_max_file_size}"
 		dl_command="${dl_command}${curl_retry:+ --retry $curl_retry}"
@@ -834,18 +883,177 @@ load_environment() {
 		dl_command="${dl_command}${download_timeout:+ --timeout $download_timeout}"
 		dl_flag="-O"
 	fi
-	led="${led:+/sys/class/leds/$led}"
 	if curl --version 2>/dev/null | grep -q "Protocols: .*https.*" \
 		|| wget --version 2>/dev/null | grep -q "+ssl"; then
-		isSSLSupported=1
+		isSSLSupported='true'
 	else
 		unset isSSLSupported
 	fi
+}
+
+load_environment() {
+	local i j
+	local param="$1" validation_result="$2"
+
+	[ -z "$loadEnvironmentFlag" ] || return 0
+	[ -n "$loadPackageConfigFlag" ] || load_package_config
+
+	if [ -z "$enabled" ]; then
+		json add error 'errorServiceDisabled'
+		output_error "$(get_text 'errorServiceDisabled')"
+		output "Run the following commands before starting service again:\n"
+		output "uci set ${packageName}.config.enabled='1'; uci commit $packageName;\n"
+		return 1
+	fi
+
+	if [ -n "$validation_result" ] && [ "$validation_result" != '0' ]; then
+		output 1 "$_FAIL_\n"
+		json add error 'errorConfigValidationFail'
+		output_error "$(get_text 'errorConfigValidationFail')"
+		output "Please check if the '$packageConfigFile' contains correct values for config options.\n"
+		return 1
+	fi
+
+	if [ -n "$debug_init_script" ]; then
+		exec 1>>"/tmp/$packageName.log"
+		exec 2>&1
+		set -x
+	fi
+
+	# Check for resolver presence and error out on start
+	case "$dns" in
+		dnsmasq.*)
+			if ! check_dnsmasq; then
+				[ "$param" != 'quiet' ] && { json add error 'errorDNSReload'; output_error "Resolver 'dnsmasq' not found"; }
+				return 1
+			fi
+			if check_dnsmasq_feature 'idn'; then
+				allow_non_ascii=''
+			fi
+		;;
+		smartdns.*)
+			if ! check_smartdns; then
+				[ "$param" != 'quiet' ] && { json add error 'errorDNSReload'; output_error "Resolver 'smartdns' not found"; }
+				return 1
+			fi
+			allow_non_ascii=''
+		;;
+		unbound.*)
+			if ! check_unbound; then
+				[ "$param" != 'quiet' ] && { json add error 'errorDNSReload'; output_error "Resolver 'unbound' not found"; }
+				return 1
+			fi
+			allow_non_ascii='true'
+		;;
+	esac
+
+	case "$dns" in
+		dnsmasq.ipset)
+			if ! check_dnsmasq_feature 'ipset'; then
+				if [ "$param" != 'quiet' ]; then
+					json add error 'errorNoDnsmasqIpset'
+#					output_error "$(get_text 'errorNoDnsmasqIpset')"
+				fi
+				dns='dnsmasq.servers'
+			fi
+			if ! ipset help hash:net; then
+				if [ "$param" != 'quiet' ]; then
+					json add error 'errorNoIpset'
+#					output_error "$(get_text 'errorNoIpset')"
+				fi
+				dns='dnsmasq.servers'
+			fi
+		;;
+		dnsmasq.nftset)
+			if ! check_dnsmasq_feature 'nftset'; then
+				if [ "$param" != 'quiet' ]; then
+					json add error 'errorNoDnsmasqNftset'
+#					output_error "$(get_text 'errorNoDnsmasqNftset')"
+				fi
+				dns='dnsmasq.servers'
+			fi
+			if [ -z "$nft" ]; then
+				if [ "$param" != 'quiet' ]; then
+					json add error 'errorNoNft'
+#					output_error "$(get_text 'errorNoNft')"
+				fi
+				dns='dnsmasq.servers'
+			fi
+		;;
+		smartdns.ipset)
+			if ! ipset help hash:net; then
+				if [ "$param" != 'quiet' ]; then
+					json add error 'errorNoIpset'
+#					output_error "$(get_text 'errorNoIpset')"
+				fi
+				dns='smartdns.domainset'
+			fi
+		;;
+		smartdns.nftset)
+			if [ -z "$nft" ]; then
+				if [ "$param" != 'quiet' ]; then
+					json add error 'errorNoNft'
+#					output_error "$(get_text 'errorNoNft')"
+				fi
+				dns='smartdns.domainset'
+			fi
+		;;
+	esac
+
+	if [ -n "$dnsmasq_config_file_url" ]; then
+		unset update_config_sizes
+		case "$dns" in
+			dnsmasq.conf) :;;
+			*)
+				dns='dnsmasq.conf'
+				if [ "$param" != 'quiet' ]; then
+					json add warning 'warningExternalDnsmasqConfig'
+				fi
+			;;
+		esac
+	fi
+
+	[ "$dns" = 'dnsmasq.addnhosts' ]  || rm -f "$dnsmasqAddnhostsFile" "$dnsmasqAddnhostsCache" "${compressed_cache_dir}/${dnsmasqAddnhostsGzip}"
+	[ "$dns" = 'dnsmasq.conf' ]       || rm -f "$dnsmasqConfCache" "${compressed_cache_dir}/${dnsmasqConfGzip}"
+	[ "$dns" = 'dnsmasq.ipset' ]      || rm -f "$dnsmasqIpsetCache" "${compressed_cache_dir}/${dnsmasqIpsetGzip}"
+	[ "$dns" = 'dnsmasq.nftset' ]     || rm -f "$dnsmasqNftsetCache" "${compressed_cache_dir}/${dnsmasqNftsetGzip}"
+	[ "$dns" = 'dnsmasq.servers' ]    || rm -f "$dnsmasqServersFile" "$dnsmasqServersCache" "${compressed_cache_dir}/${dnsmasqServersGzip}"
+	[ "$dns" = 'smartdns.domainset' ] || rm -f "$smartdnsDomainSetFile" "$smartdnsDomainSetCache" "${compressed_cache_dir}/${smartdnsDomainSetGzip}" "$smartdnsDomainSetConfig"
+	[ "$dns" = 'smartdns.ipset' ]     || rm -f "$smartdnsIpsetFile" "$smartdnsIpsetCache" "${compressed_cache_dir}/${smartdnsIpsetGzip}" "$smartdnsIpsetConfig"
+	[ "$dns" = 'smartdns.nftset' ]    || rm -f "$smartdnsNftsetFile" "$smartdnsNftsetCache" "${compressed_cache_dir}/${smartdnsNftsetGzip}" "$smartdnsNftsetConfig"
+	[ "$dns" = 'unbound.adb_list' ]   || rm -f "$unboundFile" "$unboundCache" "${compressed_cache_dir}/${unboundGzip}"
+
+	for i in "$runningConfigFile" "$runningStatusFile" "$outputFile" "$outputCache" "$outputGzip" "$outputConfig"; do
+		[ -n "$i" ] || continue
+		if ! mkdir -p "${i%/*}"; then
+			if [ "$param" != 'quiet' ]; then
+				json add error 'errorOutputDirCreate' "$i"
+			fi
+		fi
+	done
+
+	is_present 'gawk' && awk='gawk'
+	if ! is_present '/usr/libexec/grep-gnu' || ! is_present '/usr/libexec/sed-gnu' || \
+		! is_present '/usr/libexec/sort-coreutils' || ! is_present 'gawk'; then
+			local s
+			is_present 'gawk' || { json add warning 'warningMissingRecommendedPackages' 'gawk'; s="${s:+$s }gawk"; }
+			is_present '/usr/libexec/grep-gnu' || { json add warning 'warningMissingRecommendedPackages' 'grep'; s="${s:+$s }grep"; }
+			is_present '/usr/libexec/sed-gnu' || { json add warning 'warningMissingRecommendedPackages' 'sed'; s="${s:+$s }sed"; }
+			is_present '/usr/libexec/sort-coreutils' || { json add warning 'warningMissingRecommendedPackages' 'coreutils-sort'; s="${s:+$s }coreutils-sort"; }
+			if [ "$param" != 'quiet' ]; then
+				output_warning "$(get_text 'warningMissingRecommendedPackages'), install them by running:"
+				output "opkg update; opkg --force-overwrite install $s;"
+			fi
+	fi
+
+	load_dl_command
+
+	led="${led:+/sys/class/leds/$led}"
 	config_load "$packageName"
-	config_foreach append_url 'file_url'
-	load_environment_flag=1
-	cache 'test' && return 0 
-	cache 'test_gzip' && return 0
+	config_foreach append_url 'file_url' allowed_url blocked_url
+	loadEnvironmentFlag='true'
+	adb_file 'test_cache' && return 0
+	adb_file 'test_gzip' && return 0
 	if [ "$param" = 'on_boot' ]; then
 		load_network "$param"
 		return "$?"
@@ -855,33 +1063,86 @@ load_environment() {
 }
 
 resolver() {
+	_dnsmasq_instance_get_confdir() {
+		local cfg_file
+		[ -z "$dnsmasq_ubus" ] && dnsmasq_ubus="$(ubus call service list '{"name":"dnsmasq"}')"
+		cfg_file="$(echo "$dnsmasq_ubus" | jsonfilter -e "@.dnsmasq.instances.${1}.command" \
+			| awk '{gsub(/\\\//,"/");gsub(/[][",]/,"");for(i=1;i<=NF;i++)if($i=="-C"){print $(i+1);exit}}')"
+		awk -F= '/^conf-dir=/{print $2; exit}' "$cfg_file"
+	}
 	_dnsmasq_instance_config() {
-		local cfg="$1" param="$2"
+		local cfg="$1" param="$2" confdir
 		[ -s "/etc/config/dhcp" ] || return 0
+		[ -n "$(uci_get dhcp "$cfg")" ] || return 1
 		case "$param" in
 			dnsmasq.addnhosts)
+				# clean up other dnsmasq configs
+				confdir="$(_dnsmasq_instance_get_confdir "$cfg")"
+				[ -n "$confdir" ] && rm -f "${confdir}/${packageName}"
+				uci_remove_list 'dhcp' "$cfg" 'addnmount' "$dnsmasqConfFile"
 				if [ "$(uci_get 'dhcp' "$cfg" 'serversfile')" = "$dnsmasqServersFile" ]; then
 					uci_remove 'dhcp' "$cfg" 'serversfile'
 				fi
+				# add dnsmasq addnhosts config
 				uci_add_list_if_new 'dhcp' "$cfg" 'addnhosts' "$dnsmasqAddnhostsFile"
 			;;
-			cleanup|dnsmasq.conf|dnsmasq.ipset|dnsmasq.nftset|unbound.adb_list)
+			cleanup|unbound.adb_list)
+				# clean up all dnsmasq configs
+				confdir="$(_dnsmasq_instance_get_confdir "$cfg")"
+				[ -n "$confdir" ] && rm -f "${confdir}/${packageName}"
 				uci_remove_list 'dhcp' "$cfg" 'addnhosts' "$dnsmasqAddnhostsFile"
+				uci_remove_list 'dhcp' "$cfg" 'addnmount' "$dnsmasqConfFile"
 				if [ "$(uci_get 'dhcp' "$cfg" 'serversfile')" = "$dnsmasqServersFile" ]; then
 					uci_remove 'dhcp' "$cfg" 'serversfile'
 				fi
 			;;
-			dnsmasq.servers)
+			dnsmasq.conf|dnsmasq.ipset|dnsmasq.nftset)
+				# clean up other dnsmasq configs
 				uci_remove_list 'dhcp' "$cfg" 'addnhosts' "$dnsmasqAddnhostsFile"
+				if [ "$(uci_get 'dhcp' "$cfg" 'serversfile')" = "$dnsmasqServersFile" ]; then
+					uci_remove 'dhcp' "$cfg" 'serversfile'
+				fi
+				# add dnsmasq conf addnmount to point to adblock-fast file
+				uci_add_list_if_new 'dhcp' "$cfg" 'addnmount' "$dnsmasqConfFile"
+				# add softlink to adblock-fast file
+				confdir="$(_dnsmasq_instance_get_confdir "$cfg")"
+				[ -n "$confdir" ] || return 1
+				ln -sf "$dnsmasqConfFile" "${confdir}/${packageName}"
+				chmod 660 "${confdir}/${packageName}"
+				chown -h root:dnsmasq "${confdir}/${packageName}" >/dev/null 2>/dev/null
+			;;
+			dnsmasq.servers)
+				# clean up other dnsmasq configs
+				uci_remove_list 'dhcp' "$cfg" 'addnhosts' "$dnsmasqAddnhostsFile"
+				confdir="$(_dnsmasq_instance_get_confdir "$cfg")"
+				[ -n "$confdir" ] && rm -f "${confdir}/${packageName}"
+				uci_remove_list 'dhcp' "$cfg" 'addnmount' "$dnsmasqConfFile"
+				# add dnsmasq servers config
 				if [ "$(uci_get 'dhcp' "$cfg" 'serversfile')" != "$dnsmasqServersFile" ]; then
 					uci_set 'dhcp' "$cfg" 'serversfile' "$dnsmasqServersFile"
 				fi
 			;;
 		esac
 	}
-	_smartdns_instance_config() {
+# shellcheck disable=SC2317
+	_dnsmasq_instance_append_force_dns_port() {
+		local cfg="$1" instance_port
+		[ -s "/etc/config/dhcp" ] || return 0
+		[ -n "$(uci_get 'dhcp' "$cfg")" ] || return 1
+		config_get instance_port "$cfg" 'port' '53'
+		str_contains_word "$force_dns_port" "$instance_port" || force_dns_port="${force_dns_port:+$force_dns_port }${instance_port}"
+	}
+	_smartdns_instance_append_force_dns_port() {
+		local cfg="$1" instance_port
 		[ -s "/etc/config/smartdns" ] || return 0
+		[ -n "$(uci_get 'smartdns' "$cfg")" ] || return 1
+		config_get instance_port "$cfg" 'port' '53'
+		str_contains_word "$force_dns_port" "$instance_port" || force_dns_port="${force_dns_port:+$force_dns_port }${instance_port}"
+	}
+	_smartdns_instance_config() {
 		local cfg="$1" param="$2"
+		[ -s "/etc/config/smartdns" ] || return 0
+		[ -n "$(uci_get 'smartdns' "$cfg")" ] || return 1
 		case "$param" in
 			cleanup)
 				uci_remove_list 'smartdns' "$cfg" 'conf_files' "$outputConfig"
@@ -899,21 +1160,30 @@ resolver() {
 			;;
 			smartdns.nftset)
 				local nftset="#4:inet#fw4#adb4"
-				[ "$ipv6_enabled" -ne '0' ] && nftset="${nftset},#6:inet#fw4#adb6"
+				[ -n "$ipv6_enabled" ] && nftset="${nftset},#6:inet#fw4#adb6"
 				{ echo "domain-set -name adblock-fast -file $outputFile"; \
 				echo "domain-rules /domain-set:adblock-fast/ -nftset $nftset"; } > "$outputConfig"
 				uci_add_list_if_new 'smartdns' "$cfg" 'conf_files' "$outputConfig"
 			;;
 		esac
 	}
+# shellcheck disable=SC2317,SC2329
+	_unbound_instance_append_force_dns_port() {
+		[ -s "/etc/config/unbound" ] || return 0
+		[ -n "$(uci_get 'unbound' "$cfg")" ] || return 1
+		local cfg="$1" instance_port
+		config_get instance_port "$cfg" 'listen_port' '53'
+		str_contains_word "$force_dns_port" "$instance_port" || force_dns_port="${force_dns_port:+$force_dns_port }${instance_port}"
+	}
 	
-	local param output_text i
+	local i resolver_name="${dns%%.*}"
+	[ -z "$1" ] && return 0
 	case $1 in
 		cleanup)
 			rm -f "$dnsmasqAddnhostsFile" "$dnsmasqAddnhostsCache" "${compressed_cache_dir}/${dnsmasqAddnhostsGzip}"
-			rm -f "$dnsmasqConfFile" "$dnsmasqConfCache" "${compressed_cache_dir}/${dnsmasqConfGzip}"
-			rm -f "$dnsmasqIpsetFile" "$dnsmasqIpsetCache" "${compressed_cache_dir}/${dnsmasqIpsetGzip}"
-			rm -f "$dnsmasqNftsetFile" "$dnsmasqNftsetCache" "${compressed_cache_dir}/${dnsmasqNftsetGzip}"
+			rm -f "$dnsmasqConfCache" "${compressed_cache_dir}/${dnsmasqConfGzip}"
+			rm -f "$dnsmasqIpsetCache" "${compressed_cache_dir}/${dnsmasqIpsetGzip}"
+			rm -f "$dnsmasqNftsetCache" "${compressed_cache_dir}/${dnsmasqNftsetGzip}"
 			rm -f "$dnsmasqServersFile" "$dnsmasqServersCache" "${compressed_cache_dir}/${dnsmasqServersGzip}"
 			rm -f "$smartdnsDomainSetFile" "$smartdnsDomainSetCache" "${compressed_cache_dir}/${smartdnsDomainSetGzip}" "$smartdnsDomainSetConfig"
 			rm -f "$smartdnsIpsetFile" "$smartdnsIpsetCache" "${compressed_cache_dir}/${smartdnsIpsetGzip}" "$smartdnsIpsetConfig"
@@ -922,131 +1192,196 @@ resolver() {
 			if [ -s "/etc/config/dhcp" ]; then
 				config_load 'dhcp'
 				config_foreach _dnsmasq_instance_config 'dnsmasq' 'cleanup'
-				[ -n "$(uci_changes 'dhcp')" ] && uci_commit 'dhcp'
+				uci_changes 'dhcp' && uci_commit 'dhcp'
 			fi
 			if [ -s "/etc/config/smartdns" ]; then
 				config_load 'smartdns'
 				config_foreach _smartdns_instance_config 'smartdns' 'cleanup'
-				[ -n "$(uci_changes 'smartdns')" ] && uci_commit 'smartdns'
+				uci_changes 'smartdns' && uci_commit 'smartdns'
 			fi
 		;;
+		on_load)
+			:
+		;;
+		on_stop|quiet|quiet_restart)
+			eval "${resolver_name}_restart"
+			return $?
+		;;
 		on_start)
-			if [ ! -s "$outputFile" ]; then
+			if ! adb_file 'test'; then
 				json set status 'statusFail'
-				json add error 'errorOutputFileCreate'
-				output "${_ERROR_}: $(get_text 'errorOutputFileCreate')!\\n"
+				json add error 'errorOutputFileCreate' "$outputFile"
 				return 1
 			fi
-
-			config_load 'dhcp'
-			if [ "$dnsmasq_instance" = "*" ]; then
-				config_foreach _dnsmasq_instance_config 'dnsmasq' "$dns"
-			elif [ -n "$dnsmasq_instance" ]; then
-				for i in $dnsmasq_instance; do
-					_dnsmasq_instance_config "@dnsmasq[$i]" "$dns" || _dnsmasq_instance_config "$i" "$dns"
-				done
-			fi
-			config_load 'smartdns'
-			if [ "$smartdns_instance" = "*" ]; then
-				config_foreach _smartdns_instance_config 'smartdns' "$dns"
-			elif [ -n "$smartdns_instance" ]; then
-				for i in $smartdns_instance; do
-					_smartdns_instance_config "@smartdns[$i]" "$dns" || _smartdns_instance_config "$i" "$dns"
-				done
-			fi
-
+			output 1 "Cycling $resolver_name "
+			resolver 'update_config' && \
+			resolver 'test' && \
+			resolver 'sanity' && \
+			resolver 'restart' && \
+			resolver 'heartbeat' || resolver 'revert'
+			output 1 '\n'
+		;;
+		test)
 			case "$dns" in
 				dnsmasq.*)
-					chmod 660 "$outputFile"
-					chown root:dnsmasq "$outputFile" >/dev/null 2>/dev/null
-					param='dnsmasq_restart'
-					output_text='Restarting dnsmasq'
+					output_dns "Testing $dns configuration "
+					if dnsmasq --test >/dev/null 2>/dev/null; then
+						output_ok
+						return 0
+					else
+						output_fail
+						return 1
+					fi
 				;;
 				smartdns.*)
-					chmod 660 "$outputFile" "$outputConfig"
-					chown root:root "$outputFile" "$outputConfig" >/dev/null 2>/dev/null
-					param='smartdns_restart'
-					output_text='Restarting SmartDNS'
+					return 0
 				;;
 				unbound.*)
-					chmod 660 "$outputFile"
-					chown root:unbound "$outputFile" >/dev/null 2>/dev/null
-					param='unbound_restart'
-					output_text='Restarting Unbound'
+					return 0
 				;;
 			esac
-
-			if [ -n "$(uci_changes dhcp)" ]; then 
-				uci_commit 'dhcp'
-				if ! str_contains "$param" 'dnsmasq_restart'; then
-					param="${param:+"$param; dnsmasq_restart"}"
-					output_text="${output_text}/dnsmasq"
-				fi
-			fi
-			if [ -n "$(uci_changes smartdns)" ]; then 
-				uci_commit 'smartdns'
-				if ! str_contains "$param" 'smartdns_restart'; then
-					param="${param:+"$param; "}smartdns_restart"
-					output_text="${output_text}/smartDNS"
-				fi
-			fi
-			output 1 "$output_text "
-			output 2 "$output_text "
-			json set message "$output_text"
-			if eval "$param"; then
+		;;
+		restart)
+			output_dns "Restarting $resolver_name "
+			json set message "Restarting $resolver_name"
+			if eval "${resolver_name}_restart"; then
 				json set status 'statusSuccess'
 				led_on "$led"
-				output_okn
+				output_ok
+				return 0
 			else 
 				output_fail
 				json set status 'statusFail'
 				json add error 'errorDNSReload'
-				output "${_ERROR_}: $(get_text 'errorDNSReload')!\\n"
 				return 1
 			fi
 		;;
-		on_stop)
+		sanity)
+			[ -n "$sanity_check" ] || return 0
+			output_dns "Sanity check for $dns TLDs "
+			if ! grep -qvE '\.|server:' "$outputFile"; then
+				output_ok
+			else
+				json add warning 'warningSanityCheckTLD' "$outputFile"
+				output_warn
+			fi
+			output_dns "Sanity check for $dns leading dots "
 			case "$dns" in
 				dnsmasq.*)
-					param='dnsmasq_restart'
+					if ! grep -q '/\.' "$outputFile"; then
+						output_ok
+					else
+						json add warning 'warningSanityCheckLeadingDot' "$outputFile"
+						output_warn
+					fi
 				;;
 				smartdns.*)
-					param='smartdns_restart'
+					if ! grep -q '^\.' "$outputFile"; then
+						output_ok
+					else
+						json add warning 'warningSanityCheckLeadingDot' "$outputFile"
+						output_warn
+					fi
 				;;
 				unbound.*)
-					param='unbound_restart'
+					if ! grep -q '"\.' "$outputFile"; then
+						output_ok
+					else
+						json add warning 'warningSanityCheckLeadingDot' "$outputFile"
+						output_warn
+					fi
 				;;
 			esac
-			if [ -n "$(uci_changes dhcp)" ]; then 
-				uci_commit 'dhcp'
-				str_contains "$param" 'dnsmasq_restart' || param="${param:+"$param; dnsmasq_restart"}"
-			fi
-			if [ -n "$(uci_changes smartdns)" ]; then 
-				uci_commit 'smartdns'
-				str_contains "$param" 'smartdns_restart' || param="${param:+"$param; "}smartdns_restart"
-			fi
-			eval "$param"
-			return $?
 		;;
-		quiet|quiet_restart)
+		heartbeat)
+			[ -n "$heartbeat_domain" ] || return 0
+			is_integer "$heartbeat_sleep_timeout" || return 0
+			output_dns "Probing $heartbeat_domain for $heartbeat_sleep_timeout seconds "
+			json set message "Testing resolver on $heartbeat_domain"
+			local i=0
+			while [ "$i" -lt "$heartbeat_sleep_timeout" ]; do
+				if nslookup "$heartbeat_domain" >/dev/null 2>&1; then
+					output_ok
+					return 0
+				fi
+				output_dot
+				i=$((i+1))
+				sleep 1
+			done
+			output_fail
+			json set status 'statusFail'
+			json add error 'errorNoHeartbeat'
+			return 1
+		;;
+		revert)
+			output 1 "Resetting/Restarting $resolver_name "
+			output_dns "Resetting $resolver_name "
+			resolver 'cleanup'
+			output_ok
+			output_dns "Restarting $resolver_name "
+			if eval "${resolver_name}_restart"; then
+				led_off "$led"
+				output_ok
+				return 0
+			else
+				output_fail
+				json set status 'statusFail'
+				json add error 'errorDNSReload'
+				return 1
+			fi
+		;;
+		update_config)
+			output_dns "Updating $resolver_name configuration "
 			case "$dns" in
 				dnsmasq.*)
-					param='dnsmasq_restart'
+					config_load 'dhcp'
+					if [ "$dnsmasq_instance" = "*" ]; then
+						config_foreach _dnsmasq_instance_config 'dnsmasq' "$dns"
+						config_foreach _dnsmasq_instance_append_force_dns_port 'dnsmasq'
+					elif [ -n "$dnsmasq_instance" ]; then
+						for i in $dnsmasq_instance; do
+							_dnsmasq_instance_config "@dnsmasq[$i]" "$dns" || _dnsmasq_instance_config "$i" "$dns"
+							_dnsmasq_instance_append_force_dns_port "@dnsmasq[$i]" || _dnsmasq_instance_append_force_dns_port "$i"
+						done
+					fi
+					uci_changes 'dhcp' && uci_commit 'dhcp'
+					if adb_file 'test'; then
+						chmod 660 "$outputFile"
+						chown root:dnsmasq "$outputFile" >/dev/null 2>/dev/null
+					else
+						json set status 'statusFail'
+						json add error 'errorNoOutputFile' "$outputFile"
+						return 1
+					fi
 				;;
 				smartdns.*)
-					param='smartdns_restart'
+					config_load 'smartdns'
+					if [ "$smartdns_instance" = "*" ]; then
+						config_foreach _smartdns_instance_config 'smartdns' "$dns"
+						config_foreach _smartdns_instance_append_force_dns_port 'smartdns'
+					elif [ -n "$smartdns_instance" ]; then
+						for i in $smartdns_instance; do
+							_smartdns_instance_config "@smartdns[$i]" "$dns" || _smartdns_instance_config "$i" "$dns"
+							_smartdns_instance_append_force_dns_port "@smartdns[$i]" || _smartdns_instance_append_force_dns_port "$i"
+						done
+					fi
+					uci_changes 'smartdns' && uci_commit 'smartdns'
+					chmod 660 "$outputFile" "$outputConfig"
+					chown root:root "$outputFile" "$outputConfig" >/dev/null 2>/dev/null
 				;;
 				unbound.*)
-					param='unbound_restart'
+					config_load 'unbound'
+					config_foreach _unbound_instance_append_force_dns_port 'unbound'
+					chmod 660 "$outputFile"
+					chown root:unbound "$outputFile" >/dev/null 2>/dev/null
 				;;
 			esac
-			eval "$param"
-			return $?
+			output_ok
 		;;
 	esac
 }
 
-cache() {
+adb_file() {
 	local R_TMP
 	case "$1" in
 		create|backup)
@@ -1057,7 +1392,11 @@ cache() {
 			[ -s "$outputCache" ] && mv "$outputCache" "$outputFile" >/dev/null 2>/dev/null
 			return $?
 		;;
-		test)
+		test|test_file)
+			[ -s "$outputFile" ]
+			return $?
+		;;
+		test_cache)
 			[ -s "$outputCache" ]
 			return $?
 		;;
@@ -1066,8 +1405,9 @@ cache() {
 			return $?
 		;;
 		create_gzip)
+			[ -s "$outputFile" ] || return 1
 			rm -f "$outputGzip" >/dev/null 2>/dev/null
-			R_TMP="$(mktemp -u -q -t ${packageName}_tmp.XXXXXXXX)"
+			R_TMP="$(mktemp -q -t "${packageName}_tmp.XXXXXXXX")"
 			if gzip < "$outputFile" > "$R_TMP"; then
 				if mv "$R_TMP" "$outputGzip"; then
 					rm -f "$R_TMP"
@@ -1084,16 +1424,20 @@ cache() {
 			[ -s "$outputGzip" ] && gzip -dc < "$outputGzip" > "$outputCache"
 			return $?
 		;;
+		remove_cache)
+			rm -f "$outputCache" >/dev/null 2>/dev/null
+		;;
+		remove_gzip)
+			rm -f "$outputGzip" >/dev/null 2>/dev/null
+		;;
 	esac
 }
 
 process_file_url_wrapper() {
 	if [ "$2" != '0' ]; then
 		json add error 'errorConfigValidationFail'
-		output "${_ERROR_}: $(get_text 'errorConfigValidationFail')!\\n"
-		output "Please check if the '$packageConfigFile' contains correct values for config options.\\n"
 	fi
-	if [ "$parallel_downloads" -gt 0 ]; then
+	if [ -n "$parallel_downloads" ]; then
 		process_file_url "$1" &
 	else
 		process_file_url "$1"
@@ -1101,6 +1445,17 @@ process_file_url_wrapper() {
 }
 
 process_file_url() {
+	_sanitize_source() {
+		local type="$1" file="$2"
+		case "$type" in
+			hosts)
+				sed -i '/# Title: StevenBlack/,/# Custom host records are listed here/d' "$file"
+#				sed -i -E '/^(.*)[\t ](local|localhost|localhost.localdomain)$/d;/^255.255.255.255[\t ]broadcasthost$/d;/^0.0.0.0[\t ]0.0.0.0$/d' "$file"
+#				sed -i -E '/^(.*)[\t ](ip6-localhost|ip6-loopback|ip6-localnet|ip6-mcastprefix|ip6-allnodes|ip6-allrouters|ip6-allhosts)/d' "$file"
+			;;
+		esac
+	}
+# url and action are set by load_validate_file_url_section or passed as 2nd and 3rd parameter
 	local cfg="$1" new_size
 	local label type D_TMP R_TMP filter
 	if [ -z "$cfg" ] || [ -n "${2}${3}" ]; then
@@ -1116,7 +1471,7 @@ process_file_url() {
 	label="${name:-$label}"
 	label="List: $label"
 	case "$action" in
-		allow) type='Allowed'; D_TMP="$A_TMP"
+		allow) type='Allowed'; D_TMP="$ALLOWED_TMP"
 		;;
 		block) type='Blocked'; D_TMP="$B_TMP"
 		;;
@@ -1125,23 +1480,21 @@ process_file_url() {
 	esac
 	if is_https_url "$url" && [ -z "$isSSLSupported" ]; then
 		output 1 "$_FAIL_"
-		output 2 "[DL] $type $label $__FAIL__\\n"
-		echo "errorNoSSLSupport|${1}" >> "$runningErrorFile"
+		output 2 "[ DL ] $type $label $__FAIL__\n"
+		json add error 'errorNoSSLSupport' "${name:-$url}"
 		return 0
 	fi
-	while [ -z "$R_TMP" ] || [ -e "$R_TMP" ]; do
-		R_TMP="$(mktemp -u -q -t ${packageName}_tmp.XXXXXXXX)"
-	done
+	R_TMP="$(mktemp -q -t "${packageName}_tmp.XXXXXXXX")"
 	if [ -z "$url" ] || ! $dl_command "$url" "$dl_flag" "$R_TMP" 2>/dev/null || \
 		[ ! -s "$R_TMP" ]; then
 		output 1 "$_FAIL_"
-		output 2 "[DL] $type $label $__FAIL__\\n"
-		echo "errorDownloadingList|${url}" >> "$runningErrorFile"
+		output 2 "[ DL ] $type $label $__FAIL__\n"
+		json add error 'errorDownloadingList' "${name:-$url}"
 	else
 		append_newline "$R_TMP"
 		[ -n "$cfg" ] && new_size="$(get_local_filesize "$R_TMP")"
 		if [ -n "$new_size" ] && [ "$size" != "$new_size" ]; then
-			uci_set "$packageName" "$cfg" 'size' "$size"
+			uci_set "$packageName" "$cfg" 'size' "$new_size"
 		fi
 		format="$(detect_file_type "$R_TMP")"
 		case "$format" in
@@ -1150,11 +1503,14 @@ process_file_url() {
 			dnsmasq2) filter="$dnsmasq2FileFilter";;
 			dnsmasq3) filter="$dnsmasq3FileFilter";;
 			domains) filter="$domainsFilter";;
-			hosts) filter="$hostsFilter";;
+			hosts)
+				filter="$hostsFilter"
+				_sanitize_source 'hosts' "$R_TMP"
+			;;
 			*)
 				output 1 "$_FAIL_"
-				output 2 "[DL] $type $label $__FAIL__\\n"
-				echo "errorDetectingFileType|${url}" >> "$runningErrorFile"
+				output 2 "[ DL ] $type $label $__FAIL__\n"
+				json add error 'errorDetectingFileType' "${name:-$url}"
 				rm -f "$R_TMP"
 				return 0
 			;;
@@ -1164,13 +1520,13 @@ process_file_url() {
 		fi
 		if [ ! -s "$R_TMP" ]; then
 			output 1 "$_FAIL_"
-			output 2 "[DL] $type $label ($format) $__FAIL__\\n"
-			echo "errorParsingList|${url}" >> "$runningErrorFile"
+			output 2 "[ DL ] $type $label ($format) $__FAIL__\n"
+			json add error 'errorParsingList' "${name:-$url}"
 		else
 			append_newline "$R_TMP"
 			cat "${R_TMP}" >> "$D_TMP"
 			output 1 "$_OK_"
-			output 2 "[DL] $type $label ($format) $__OK__\\n"
+			output 2 "[ DL ] $type $label ($format) $__OK__\n"
 		fi
 	fi
 	rm -f "$R_TMP"
@@ -1181,36 +1537,30 @@ download_dnsmasq_file() {
 	json set message "$(get_text 'statusDownloading')..."
 	json set status 'statusDownloading'
 
-	rm -f "$A_TMP" "$B_TMP" "$SED_TMP" "$outputFile" "$outputCache" "$outputGzip"
-	if [ "$(get_ram_free)" -lt 32 ]; then
-		output 3 'Low free memory, restarting resolver '
+	rm -f "$ALLOWED_TMP" "$A_TMP" "$B_TMP" "$SED_TMP" "$outputFile" "$outputCache" "$outputGzip"
+	if [ "$(get_mem_available)" -lt "$packageMemoryThreshold" ]; then
+		output 'Low free memory, restarting resolver '
 		if resolver 'quiet_restart'; then
 			output_okn
 		else 
 			output_failn
 		fi
 	fi
-	touch "$A_TMP" "$B_TMP" "$SED_TMP"
+	touch "$ALLOWED_TMP" "$A_TMP" "$B_TMP" "$SED_TMP"
 	output 1 'Downloading dnsmasq file '
-	rm -f "$runningErrorFile"
 	process_file_url '' "$dnsmasq_config_file_url" 'file'
-	if [ -s "$runningErrorFile" ]; then
-		while IFS= read -r line; do
-			json add error "$line"
-		done < "$runningErrorFile"
-		rm -f "$runningErrorFile"
-	fi
-	output 2 'Moving dnsmasq file '
+	output_dns 'Moving dnsmasq file '
 	if mv "$B_TMP" "$outputFile"; then
-		output 2 "$__OK__\\n"
+		output_ok
 	else
-		output 2 "$__FAIL__\\n"
-		json add error 'errorMovingDataFile'
+		output_fail
+		json add error 'errorMovingDataFile' "$i"
 	fi
 	output 1 '\n'
 }
 
 download_lists() {
+# shellcheck disable=SC2317,SC2329
 	_ram_check() {
 		_config_calculate_sizes() {
 			local cfg="$1"
@@ -1223,161 +1573,185 @@ download_lists() {
 			[ -n "$size" ] && total_sizes=$((total_sizes+size))
 		}
 		local i free_mem total_sizes
-		free_mem="$(get_ram_free)"
+		free_mem="$(get_mem_available)"
 		if [ -z "$free_mem" ]; then
-			json add warnning 'warningFreeRamCheckFail'
-			output "${_WARNING_}: $(get_text 'warningFreeRamCheckFail')!\\n"
+			json add warning 'warningFreeRamCheckFail'
+			output_warning "$(get_text 'warningFreeRamCheckFail')"
 			return 0
 		fi
 		config_load "$packageName"
 		config_foreach _config_calculate_sizes 'file_url'
 		if [ $((free_mem)) -lt $((total_sizes * 2)) ]; then
 			json add error 'errorTooLittleRam' "$free_mem"
-			output "${_ERROR_}: $(get_text 'errorTooLittleRam' "$free_mem")!\\n"
 			return 1
 		else
 			return 0
 		fi
 	}
 	local hf j=0 R_TMP
+	local step_title start_time end_time elapsed
 
 	_ram_check || return 1
 
 	json set message "$(get_text 'statusDownloading')..."
 	json set status 'statusDownloading'
 
-	rm -f "$A_TMP" "$B_TMP" "$SED_TMP" "$outputFile" "$outputCache" "$outputGzip"
-	if [ "$(get_ram_total)" -lt 33554432 ]; then
-		output 3 'Low free memory, restarting resolver '
+	rm -f "$ALLOWED_TMP" "$A_TMP" "$B_TMP" "$SED_TMP" "$outputFile" "$outputCache" "$outputGzip"
+	if [ "$(get_mem_total)" -lt "$packageMemoryThreshold" ]; then
+		output 'Low free memory, restarting resolver '
 		if resolver 'quiet_restart'; then
 			output_okn
 		else 
 			output_failn
 		fi
 	fi
-	touch "$A_TMP" "$B_TMP" "$SED_TMP"
+	touch "$ALLOWED_TMP" "$A_TMP" "$B_TMP" "$SED_TMP"
 	output 1 'Downloading lists '
-	rm -f "$runningErrorFile"
 	config_load "$packageName"
 	config_foreach load_validate_file_url_section 'file_url' process_file_url_wrapper
 	wait
-	if [ -n "$(uci_changes "$packageName")" ]; then 
-		output 2 "Saving updated file size(s) "
-		if uci_commit "$packageName"; then output_okn; else output_failn; fi
+	if uci_changes "$packageName"; then
+		output 2 "[PROC] Saving updated file sizes "
+		if [ -n "$update_config_sizes" ] && uci_commit "$packageName"; then output_ok; else output_fail; fi
 	fi
 	output 1 '\n'
 
-	if [ -s "$runningErrorFile" ]; then
-		while IFS= read -r line; do
-			json add error "$line"
-		done < "$runningErrorFile"
-		rm -f "$runningErrorFile"
-	fi
-
-	if [ "$canary_domains_icloud" -ne '0' ]; then
+	if [ -n "$canary_domains_icloud" ]; then
 		canaryDomains="${canaryDomains:+$canaryDomains }${canaryDomainsiCloud}"
 	fi
-	if [ "$canary_domains_mozilla" -ne '0' ]; then
+	if [ -n "$canary_domains_mozilla" ]; then
 		canaryDomains="${canaryDomains:+$canaryDomains }${canaryDomainsMozilla}"
 	fi
 
-	append_newline "$B_TMP"
-	for hf in $blocked_domain $canaryDomains; do
-		printf "%s\n" "$(echo "$hf" | sed "$domainsFilter")" >> "$B_TMP"
-	done
-	allowed_domain="${allowed_domain}
-$(sed '/^[[:space:]]*$/d' "$A_TMP")"
-	for hf in ${allowed_domain}; do
-		hf="$(echo "$hf" | sed 's/\./\\./g')"
-		echo "/(^|\.)${hf}$/d;" >> "$SED_TMP"
-	done
+	output 1 'Processing downloads '
 
+	start_time=$(date +%s)
+	step_title='Sorting combined block-list'
+	output 2 "[PROC] $step_title "
+	json set status 'statusProcessing'
+	json set message "$(get_text 'statusProcessing'): $step_title"
+	append_newline "$B_TMP"
+	{
+		for hf in $blocked_domain $canaryDomains; do
+			[ -n "$hf" ] && echo "$hf"
+		done
+	} | sed "$domainsFilter" >> "$B_TMP"
 	sed -i '/^[[:space:]]*$/d' "$B_TMP"
 	[ ! -s "$B_TMP" ] && return 1
 
-	output 1 'Processing downloads '
-	output 2 'Sorting combined list '
-	json set status 'statusProcessing'
-	json set message "$(get_text 'statusProcessing'): sorting combined list"
-	if [ "$allow_non_ascii" -gt 0 ]; then
+	if [ -n "$allow_non_ascii" ]; then
 		if sort -u "$B_TMP" > "$A_TMP"; then
 			output_ok
 		else
-			output_failn
+			output_fail
 			json add error 'errorSorting'
 		fi
 	else
 		if sort -u "$B_TMP" | grep -E -v '[^a-zA-Z0-9=/.-]' > "$A_TMP"; then
 			output_ok
 		else
-			output_failn
+			output_fail
 			json add error 'errorSorting'
 		fi
 	fi
+	end_time=$(date +%s)
+	elapsed=$(( end_time - start_time ))
+	logger_debug "[PERF-DEBUG] ${step_title} took ${elapsed}s"
 
-	if [ "$dns" = 'dnsmasq.conf' ] || \
-		 [ "$dns" = 'dnsmasq.ipset' ] || \
-		 [ "$dns" = 'dnsmasq.nftset' ] || \
-		 [ "$dns" = 'dnsmasq.servers' ] || \
-		 [ "$dns" = 'smartdns.domainset' ] || \
-		 [ "$dns" = 'smartdns.ipset' ] || \
-		 [ "$dns" = 'smartdns.nftset' ] || \
-		 [ "$dns" = 'unbound.adb_list' ]; then
-		# TLD optimization written by Dirk Brenken (dev@brenken.org)
-		output 2 'Optimizing combined list '
-		json set message "$(get_text 'statusProcessing'): optimizing combined list"
-# 	sed -E 'G;:t;s/(.*)(\.)(.*)(\n)(.*)/\1\4\5\2\3/;tt;s/(.*)\n(\.)(.*)/\3\2\1/' is actually slower than command below
+	case "$dns" in
+		'dnsmasq.conf' | 'dnsmasq.ipset' | 'dnsmasq.nftset' | 'dnsmasq.servers' | \
+		'smartdns.domainset' | 'smartdns.ipset' | 'smartdns.nftset' | \
+		'unbound.adb_list' )
+			start_time=$(date +%s)
+			step_title='Optimizing combined block-list'
+			output 2 "[PROC] ${step_title} "
+			json set message "$(get_text 'statusProcessing'): ${step_title}"
 # shellcheck disable=SC2016
-		if $awk -F "." '{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' "$A_TMP" > "$B_TMP"; then
-			if sort "$B_TMP" > "$A_TMP"; then
-				if $awk '{if(NR=1){tld=$NF};while(getline){if($NF!~tld"\\."){print tld;tld=$NF}}print tld}' "$A_TMP" > "$B_TMP"; then
-					if $awk -F "." '{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' "$B_TMP" > "$A_TMP"; then
-						if sort -u "$A_TMP" > "$B_TMP"; then
-							output_ok
+			if $awk -F "." '{for(i=NF;i>0;i--) printf "%s%s", $i, (i>1?".":"\n")}' "$A_TMP" > "$B_TMP"; then
+				if sort "$B_TMP" > "$A_TMP"; then
+					if $awk '
+						NR==1 {prev=$0; print; next}
+						{
+							len=length(prev)
+							if(substr($0,1,len)==prev && substr($0,len+1,1)==".") next
+							print
+							prev=$0
+						}
+					' "$A_TMP" > "$B_TMP"; then
+						if $awk -F "." '{for(i=NF;i>0;i--) printf "%s%s", $i, (i>1?".":"\n")}' "$B_TMP" > "$A_TMP"; then
+							if sort -u "$A_TMP" > "$B_TMP"; then
+								output_ok
+							else
+								output_fail
+								json add error 'errorOptimization'
+								mv "$A_TMP" "$B_TMP"
+							fi
 						else
-							output_failn
+							output_fail
 							json add error 'errorOptimization'
-							mv "$A_TMP" "$B_TMP"
 						fi
 					else
-						output_failn
+						output_fail
 						json add error 'errorOptimization'
+						mv "$A_TMP" "$B_TMP"
 					fi
 				else
-					output_failn
+					output_fail
 					json add error 'errorOptimization'
-					mv "$A_TMP" "$B_TMP"
 				fi
 			else
-				output_failn
+				output_fail
 				json add error 'errorOptimization'
+				mv "$A_TMP" "$B_TMP"
+			fi
+			end_time=$(date +%s)
+			elapsed=$(( end_time - start_time ))
+			logger_debug "[PERF-DEBUG] ${step_title} took ${elapsed}s"
+		;;
+		*)
+			mv "$A_TMP" "$B_TMP"
+		;;
+	esac
+
+	if [ -n "$allowed_domain" ] || [ -s "$ALLOWED_TMP" ]; then
+		start_time=$(date +%s)
+		step_title='Removing allowed domains from combined block-list'
+		output 2 "[PROC] ${step_title} "
+		json set message "$(get_text 'statusProcessing'): ${step_title}"
+		local allowed_domains_from_dl
+		[ -s "$ALLOWED_TMP" ] && allowed_domains_from_dl="$(sed '/^[[:space:]]*$/d' "$ALLOWED_TMP")"
+		allowed_domain="${allowed_domain}${allowed_domains_from_dl:+ $allowed_domains_from_dl}"
+		for hf in ${allowed_domain}; do
+			hf="$(echo "$hf" | sed 's/\./\\./g')"
+			echo "/(^|\.)${hf}$/d;"
+		done > "$SED_TMP"
+		# if only doing exact matches, may be faster to add $hf to $ALLOWED_TMP and then
+		# grep -vFf "$ALLOWED_TMP" "$B_TMP" > "$A_TMP" && mv "$A_TMP" "$B_TMP"
+		if [ -s "$SED_TMP" ]; then
+			if sed -E -f "$SED_TMP" "$B_TMP" > "$A_TMP" && mv "$A_TMP" "$B_TMP"; then
+				output_ok
+			else
+				output_fail
+				json add error 'errorAllowListProcessing'
 			fi
 		else
-			output_failn
-			json add error 'errorOptimization'
-			mv "$A_TMP" "$B_TMP"
-		fi
-	else
-		mv "$A_TMP" "$B_TMP"
-	fi
-
-	if [ -s "$SED_TMP" ]; then
-		output 2 'Allowing domains '
-		json set message "$(get_text 'statusProcessing'): allowing domains"
-		if sed -i -E -f "$SED_TMP" "$B_TMP"; then
-			output_ok
-		else
-			output_failn
+			output_fail
 			json add error 'errorAllowListProcessing'
 		fi
+		end_time=$(date +%s)
+		elapsed=$(( end_time - start_time ))
+		logger_debug "[PERF-DEBUG] ${step_title} took ${elapsed}s"
 	fi
-	output 2 'Formatting merged file '
-	json set message "$(get_text 'statusProcessing'): formatting merged file"
+
+	start_time=$(date +%s)
+	step_title='Formatting combined block-list file'
+	output 2 "[PROC] ${step_title} "
+	json set message "$(get_text 'statusProcessing'): ${step_title}"
 	if [ -z "$outputFilterIPv6" ]; then
 		if sed "$outputFilter" "$B_TMP" > "$A_TMP"; then
 			output_ok
 		else
-			output_failn
+			output_fail
 			json add error 'errorDataFileFormatting'
 		fi
 	else
@@ -1387,290 +1761,144 @@ $(sed '/^[[:space:]]*$/d' "$A_TMP")"
 					sed "$outputFilterIPv6" "$B_TMP" >> "$A_TMP"; then
 					output_ok
 				else
-					output_failn
+					output_fail
 					json add error 'errorDataFileFormatting'
 				fi
 			;;
 		esac
 	fi
+	end_time=$(date +%s)
+	elapsed=$(( end_time - start_time ))
+	logger_debug "[PERF-DEBUG] ${step_title} took ${elapsed}s"
 
-	case "$dns" in
-		dnsmasq.addnhosts)
-			output 2 'Creating dnsmasq addnhosts file '
-			json set message "$(get_text 'statusProcessing'): creating dnsmasq addnhosts file"
-		;;
-		dnsmasq.conf)
-			output 2 'Creating dnsmasq config file '
-			json set message "$(get_text 'statusProcessing'): creating dnsmasq config file"
-		;;
-		dnsmasq.ipset)
-			output 2 'Creating dnsmasq ipset file '
-			json set message "$(get_text 'statusProcessing'): creating dnsmasq ipset file"
-		;;
-		dnsmasq.nftset)
-			output 2 'Creating dnsmasq nft set file '
-			json set message "$(get_text 'statusProcessing'): creating dnsmasq nft set file"
-		;;
-		dnsmasq.servers)
-			output 2 'Creating dnsmasq servers file '
-			json set message "$(get_text 'statusProcessing'): creating dnsmasq servers file"
-		;;
-		smartdns.domainset)
-			output 2 'Creating smartdns domain-set file '
-			json set message "$(get_text 'statusProcessing'): creating smartdns domain-set file"
-		;;
-		smartdns.ipset)
-			output 2 'Creating smartdns domain-set file '
-			json set message "$(get_text 'statusProcessing'): creating smartdns ipset file"
-		;;
-		smartdns.nftset)
-			output 2 'Creating smartdns domain-set file '
-			json set message "$(get_text 'statusProcessing'): creating smartdns nft set file"
-		;;
-		unbound.adb_list)
-			output 2 'Creating Unbound adb_list file '
-			json set message "$(get_text 'statusProcessing'): creating Unbound adb_list file"
-		;;
-	esac
-
-	if mv "$A_TMP" "$outputFile"; then
-		output_ok
+	if [ -n "$outputAllowFilter" ] && [ -n "$allowed_domain" ]; then
+		rm -f "$SED_TMP"; touch "$SED_TMP";
+		start_time=$(date +%s)
+		step_title="Explicitly allowing domains in ${dns}"
+		output 2 "[PROC] ${step_title} "
+		json set message "$(get_text 'statusProcessing'): ${step_title}"
+		for hf in ${allowed_domain}; do
+			echo "$hf" | sed -E "$outputAllowFilter" >> "$SED_TMP"
+		done
+		if [ -s "$SED_TMP" ]; then
+			if cat "$SED_TMP" "$A_TMP" > "$B_TMP"; then
+				output_ok
+			else
+				output_fail
+				json add error 'errorAllowListProcessing'
+			fi
+		else
+			output_fail
+			json add error 'errorAllowListProcessing'
+		fi
+		end_time=$(date +%s)
+		elapsed=$(( end_time - start_time ))
+		logger_debug "[PERF-DEBUG] ${step_title} took ${elapsed}s"
 	else
-		output_failn
-		json add error 'errorMovingDataFile'
+		mv "$A_TMP" "$B_TMP"
 	fi
+
+	start_time=$(date +%s)
+	step_title="Setting up ${dns} file"
+	output 2 "[PROC] ${step_title} "
+	json set message "$(get_text 'statusProcessing'): ${step_title}"
+
 	case "$dns" in
 		unbound.adb_list)
+			if mv "$B_TMP" "$outputFile"; then
+				output_ok
+			else
+				output_fail
+				json add error 'errorMovingDataFile' "$outputFile"
+			fi
 			sed -i '1 i\server:' "$outputFile"
 		;;
+		*)
+			if mv "$B_TMP" "$outputFile"; then
+				output_ok
+			else
+				output_fail
+				json add error 'errorMovingDataFile' "$outputFile"
+			fi
+		;;
 	esac
-	if [ "$compressed_cache" -gt 0 ]; then
-		output 2 'Creating compressed cache '
-		json set message "$(get_text 'statusProcessing'): creating compressed cache"
-		if cache 'create_gzip'; then
-			output_ok
-		else
-			output_failn
-			json add error 'errorCreatingCompressedCache'
-		fi
-	else
-		rm -f "$outputGzip"
+
+	# Validate and remove invalid domain entries (RFC 1123 compliant)
+	if [ -n "$dnsmasq_validity_check" ]; then
+		case "$dns" in
+			dnsmasq.conf|dnsmasq.ipset|dnsmasq.nftset|dnsmasq.servers|dnsmasq.addnhosts)
+				start_time=$(date +%s)
+				step_title='Validating domain entries'
+				output 2 "[PROC] ${step_title} "
+				json set message "$(get_text 'statusProcessing'): ${step_title}"
+				invalid_file="/tmp/${packageName}.invalid.tmp"
+				rm -f "$invalid_file"
+				# Fast validation: remove entries where domain:
+				# - starts with dash or dot (invalid per RFC)
+				# - is all numeric with dots (IP-like, invalid for domain)
+				# - has consecutive dots
+				# - ends with dash or dot (invalid per RFC)
+				sed "$outputParseFilter" "$outputFile" | \
+					grep -E '^-|^\.|^[0-9.]+$|\.\.|-$|\.$' > "$invalid_file" 2>/dev/null || true
+				if [ -s "$invalid_file" ]; then
+					invalid_count=$(wc -l < "$invalid_file" 2>/dev/null || echo 0)
+					if [ "$invalid_count" -gt 0 ]; then
+						# Create pattern file for grep -vFf (fastest removal method)
+						# Use appropriate prefix based on dns type
+						case "$dns" in
+							dnsmasq.conf)
+								sed "$dnsmasqConfGrepPattern" "$invalid_file" > "${invalid_file}.pat" 2>/dev/null
+							;;
+							dnsmasq.ipset)
+								sed "$dnsmasqIpsetGrepPattern" "$invalid_file" > "${invalid_file}.pat" 2>/dev/null
+							;;
+							dnsmasq.nftset)
+								sed "$dnsmasqNftsetGrepPattern" "$invalid_file" > "${invalid_file}.pat" 2>/dev/null
+							;;
+							dnsmasq.servers)
+								sed "$dnsmasqServersGrepPattern" "$invalid_file" > "${invalid_file}.pat" 2>/dev/null
+							;;
+							dnsmasq.addnhosts)
+								# Create patterns for both IPv4 and IPv6 formats
+								{ sed "$dnsmasqAddnhostsGrepPatternIPv4" "$invalid_file"; sed "$dnsmasqAddnhostsGrepPatternIPv6" "$invalid_file"; } > "${invalid_file}.pat" 2>/dev/null
+							;;
+						esac
+						# Remove invalid entries
+						grep -vFf "${invalid_file}.pat" "$outputFile" > "${outputFile}.valid" 2>/dev/null && \
+							mv "${outputFile}.valid" "$outputFile" 2>/dev/null
+						# Report (limit to first 20 for performance)
+						logger -t "$packageName" "Removed $invalid_count invalid entries from ${dns}."
+						json add warning 'warningInvalidDomainsRemoved' "$invalid_count"
+						rm -f "${invalid_file}.pat"
+					fi
+					rm -f "$invalid_file"
+				fi
+				if [ "${invalid_count:-0}" -gt 0 ]; then
+					output_warn
+				else
+					output_ok
+				fi
+				end_time=$(date +%s)
+				elapsed=$(( end_time - start_time ))
+				logger_debug "[PERF-DEBUG] ${step_title} took ${elapsed}s"
+			;;
+		esac
 	fi
-	output 2 'Removing temporary files '
-	json set message "$(get_text 'statusProcessing'): removing temporary files"
-	rm -f "/tmp/${packageName}_tmp.*" "$A_TMP" "$B_TMP" "$SED_TMP" "$outputCache" || j=1
-	if [ $j -eq 0 ]; then
+
+	step_title='Removing temporary files'
+	output 2 "[PROC] ${step_title} "
+	json set message "$(get_text 'statusProcessing'): ${step_title}"
+	if rm -f "/tmp/${packageName}_tmp."* "$ALLOWED_TMP" "$A_TMP" "$B_TMP" "$SED_TMP" "$outputCache"; then
 		output_ok
 	else
-		output_failn
+		output_fail
 		json add error 'errorRemovingTempFiles'
 	fi
 	output 1 '\n'
 }
 
-adb_allow() {
-	local c hf string="$1"
-	local validation_result="$3"
-	load_environment "$validation_result" 'quiet' || return 1
-	if [ ! -s "$outputFile" ]; then
-		output "No block-list ('$outputFile') found.\\n"
-		return 0
-	elif [ -z "$string" ]; then
-		output "Usage: /etc/init.d/${packageName} allow 'domain' ...\\n"
-		return 0
-	elif [ -n "$dnsmasq_config_file_url" ]; then
-		output "Allowing individual domains is not possible when using external dnsmasq config file.\\n"
-		return 0
-	fi
-	case "$dns" in
-		dnsmasq.*)
-			output 1 "Allowing domain(s) and restarting dnsmasq "
-			output 2 "Allowing domain(s) \\n"
-			for c in $string; do
-				output 2 "  $c "
-				hf="$(echo "$c" | sed 's/\./\\./g')"
-				if sed -i "\:\(/\|\.\)${hf}/:d" "$outputFile" && \
-					uci_add_list_if_new "${packageName}" 'config' 'allowed_domain' "$c"; then
-						output_ok
-				else
-					output_fail
-				fi
-			done
-			if [ "$compressed_cache" -gt 0 ]; then
-				output 2 'Creating compressed cache '
-				if cache 'create_gzip'; then
-					output_ok
-				else
-					output_failn
-				fi
-			fi
-			output 2 "Committing changes to config "
-			if uci_commit "$packageName"; then
-				allowed_domain="$(uci_get "$packageName" 'config' 'allowed_domain')"
-				config_cache 'create'
-				json set stats "$serviceName is blocking $(wc -l < "$outputFile") domains (with ${dns})"
-				output_ok; 
-				if [ "$dns" = 'dnsmasq.ipset' ]; then
-					output 2 "Flushing adb ipset "
-					if ipset -q -! flush adb; then output_ok; else output_fail; fi
-				fi
-				if [ "$dns" = 'dnsmasq.nftset' ]; then
-					output 2 "Flushing adb nft sets "
-					nft flush set inet fw4 adb6
-					if nft flush set inet fw4 adb4; then output_ok; else output_fail; fi
-				fi
-				output 2 "Restarting dnsmasq "
-				if dnsmasq_restart; then output_okn; else output_failn; fi
-			else 
-				output_fail; 
-			fi
-		;;
-		smartdns.*)
-			output 1 "Allowing domain(s) and restarting smartdns "
-			output 2 "Allowing domain(s) \\n"
-			for c in $string; do 
-				output 2 "  $c "
-				hf="$(echo "$c" | sed 's/\./\\./g')"
-				if sed -i "\:\(\"\|\.\)${hf}\":d" "$outputFile" && \
-					uci_add_list_if_new "$packageName" 'config' 'allowed_domain' "$string"; then
-						output_ok
-				else
-					output_fail
-				fi
-			done
-			if [ "$compressed_cache" -gt 0 ]; then
-				output 2 'Creating compressed cache '
-				if cache 'create_gzip'; then
-					output_ok
-				else
-					output_failn
-				fi
-			fi
-			output 2 "Committing changes to config "
-			if uci_commit "$packageName"; then
-				allowed_domain="$(uci_get "$packageName" 'config' 'allowed_domain')"
-				config_cache 'create'
-				json set stats "$serviceName is blocking $(wc -l < "$outputFile") domains (with ${dns})"
-				output_ok; 
-				output 2 "Restarting Unbound "
-				if unbound_restart; then output_okn; else output_failn; fi
-			else 
-				output_fail; 
-			fi
-		;;
-		unbound.*)
-			output 1 "Allowing domain(s) and restarting Unbound "
-			output 2 "Allowing domain(s) \\n"
-			for c in $string; do 
-				output 2 "  $c "
-				hf="$(echo "$c" | sed 's/\./\\./g')"
-				if sed -i "\:\(\"\|\.\)${hf}\":d" "$outputFile" && \
-					uci_add_list_if_new "$packageName" 'config' 'allowed_domain' "$string"; then
-						output_ok
-				else
-					output_fail
-				fi
-			done
-			if [ "$compressed_cache" -gt 0 ]; then
-				output 2 'Creating compressed cache '
-				if cache 'create_gzip'; then
-					output_ok
-				else
-					output_failn
-				fi
-			fi
-			output 2 "Committing changes to config "
-			if uci_commit "$packageName"; then
-				allowed_domain="$(uci_get "$packageName" 'config' 'allowed_domain')"
-				config_cache 'create'
-				json set stats "$serviceName is blocking $(wc -l < "$outputFile") domains (with ${dns})"
-				output_ok; 
-				output 2 "Restarting Unbound "
-				if unbound_restart; then output_okn; else output_failn; fi
-			else 
-				output_fail; 
-			fi
-		;;
-	esac
-}
-
-adb_check() {
-	local c param="$1"
-	local validation_result="$3"
-	load_environment "$validation_result" 'quiet' || return 1
-	if [ ! -s "$outputFile" ]; then
-		output "No block-list ('$outputFile') found.\\n"
-		return 0
-	elif [ -z "$param" ]; then
-		output "Usage: /etc/init.d/${packageName} check 'domain' ...\\n"
-		return 0
-	fi
-	for string in ${param}; do
-		c="$(grep -c "$string" "$outputFile")"
-		if [ "$c" -gt 0 ]; then
-			if [ "$c" -eq 1 ]; then
-				output "Found 1 match for '$string' in '$outputFile'.\\n"
-			else
-				output "Found $c matches for '$string' in '$outputFile'.\\n"
-			fi
-			if [ "$c" -le 20 ]; then
-				grep "$string" "$outputFile" | sed "$outputOutputFilter"
-			fi
-		else
-			output "The '$string' is not found in current block-list ('$outputFile').\\n"
-		fi
-	done
-}
-
-adb_check_lists() {
-	_check_list() {
-		local cfg="$1"
-		local en size url R_TMP string c
-		config_get_bool en "$cfg" enabled '1'
-		config_get action "$cfg" action 'block'
-		config_get url "$cfg" url
-		[ "$en" = '0' ] && return 0
-		[ "$action" != 'block' ] && return 0
-		if is_https_url "$url" && [ -z "$isSSLSupported" ]; then
-			output "[DL] $url $__FAIL__\\n"
-		fi
-		while [ -z "$R_TMP" ] || [ -e "$R_TMP" ]; do
-			R_TMP="$(mktemp -u -q -t ${packageName}_tmp.XXXXXXXX)"
-		done
-		if [ -z "$url" ] || ! $dl_command "$url" "$dl_flag" "$R_TMP" 2>/dev/null || \
-			[ ! -s "$R_TMP" ]; then
-			output "[DL] $url $__FAIL__\\n"
-		else
-			append_newline "$R_TMP"
-			for string in ${param}; do
-				c="$(grep -c "$string" "$R_TMP")"
-				if [ "$c" -gt 0 ]; then
-					if [ "$c" -eq 1 ]; then
-						output "Found 1 match for '$string' in '$url'.\\n"
-					else
-						output "Found $c matches for '$string' in '$url'.\\n"
-					fi
-					grep "$string" "$R_TMP"
-				else
-					output "The '$string' is not found in '$url'.\\n"
-				fi
-			done
-		rm -f "$R_TMP"
-		fi
-	}
-	local param="$1"
-	local validation_result="$3"
-	load_environment "$validation_result" 'quiet' || return 1
-	if [ -z "$param" ]; then
-		output "Usage: /etc/init.d/${packageName} check_lists 'domain' ...\\n"
-		return 0
-	fi
-	config_load "$packageName"
-	config_foreach _check_list 'file_url'
-	return 0
-}
-
 adb_config_update() {
+# shellcheck disable=SC2317,SC2329
 	_cleanup_missing_urls() {
 		local cfg="$1" url size
 		config_get url "$cfg" url
@@ -1679,53 +1907,765 @@ adb_config_update() {
 		fi
 	}
 	local R_TMP label
-	local param validation_result="$3"
-	case "$1" in
-		on_boot) param="$1";;
-		*) param='quiet';;
-	esac
-	load_environment "$validation_result" "$param" || return 1
+	local param="${1:-quiet}"
+	load_package_config
+	load_dl_command
 	label="${config_update_url##*//}"
 	label="${label%%/*}";
-	[ "$config_update_enabled" -ne '0' ] || return 0
+	[ -n "$enabled" ] || return 0
+	[ -n "$config_update_enabled" ] || return 0
 
 	if [ "$param" != 'download' ]; then
-		cache 'test' && return 0 
-		cache 'test_gzip' && return 0 
+		adb_file 'test' && return 0 
+		adb_file 'test_cache' && return 0 
+		adb_file 'test_gzip' && return 0 
 	fi
+
 	output 1 'Updating config '
-	while [ -z "$R_TMP" ] || [ -e "$R_TMP" ]; do
-		R_TMP="$(mktemp -u -q -t ${packageName}_tmp.XXXXXXXX)"
-	done
+	output 2 "[ DL ] Config Update: $label "
+	R_TMP="$(mktemp -q -t "${packageName}_tmp.XXXXXXXX")"
 	if ! $dl_command "$config_update_url" "$dl_flag" "$R_TMP" 2>/dev/null || [ ! -s "$R_TMP" ]; then
 		append_newline "$R_TMP"
-		output 1 "$_FAIL_\\n"
-		output 2 "[DL] Config  Update:  $label $__FAIL__\\n"
+		output_failn
 		json add error 'errorDownloadingConfigUpdate'
 	else
 		if [ -s "$R_TMP" ] && sed -f "$R_TMP" -i "$packageConfigFile" 2>/dev/null; then
-			output 1 "$_OK_\\n"
-			output 2 "[DL] Config  Update:  $label $__OK__\\n"
+			output_okn
 		else
-			output 1 "$_FAIL_\\n"
-			output 2 "[DL] Config  Update:  $label $__FAIL__\\n"
+			output_failn
 			json add error 'errorParsingConfigUpdate'
 		fi
 	fi
 	rm -f "$R_TMP"
 	config_load "$packageName"
 	config_foreach _cleanup_missing_urls 'file_url'
-	[ -n "$(uci_changes "$packageName")" ] && uci_commit "$packageName"
+	uci_changes "$packageName" && uci_commit "$packageName"
 	return 0
 }
 
-adb_show_blocklist() {
-	local validation_result="$3"
-	load_environment "$validation_result" 'quiet' || return 1
-	sed "$outputOutputFilter" "$outputFile"
+# shellcheck disable=SC2120
+start_service() {
+	local status error param="${1:-on_start}"
+	local action p iface k
+	status="$(json get status)"
+	error="$(json get error)"
+	json del all
+
+	case "$param" in
+		on_boot)
+			if adb_file 'test_gzip' || adb_file 'test_cache'; then
+				unset adbf_boot_flag
+			else
+				return 0
+			fi
+		;;
+	esac
+
+	adb_config_update "$param"
+	load_environment "$param" "$(load_validate_config)" || return 1
+
+	action="$(adb_config_cache get trigger_service)"
+	fw4_restart_flag="$(adb_config_cache get trigger_fw4)"
+
+	if [ -n "$error" ]; then
+		action='download'
+	elif ! adb_file 'test'; then 
+		if adb_file 'test_gzip' || adb_file 'test_cache'; then
+			action='restore'
+		else
+			action='download'
+		fi
+	elif [ "$status" = "statusSuccess" ]; then
+		action='skip'
+	fi
+
+	case "${action}:${param}" in
+		on_boot:*|*:on_boot|*:on_pause)
+			if adb_file 'test_gzip' || adb_file 'test_cache'; then
+				action='restore'
+			else
+				action='download'
+			fi
+		;;
+		download:*|*:download)
+			action='download';;
+		restart:*)
+			action='restart';;
+		restore:*)
+			action='restore';;
+		skip:*)
+			action='skip';;
+		*:*) 
+			action='download';;
+	esac
+
+	if [ "$action" = 'restore' ]; then
+		output 1 "Starting $serviceName...\n"
+		output 2 "[INIT] Starting $serviceName...\n"
+		json set status 'statusStarting'
+		if adb_file 'test_gzip' && ! adb_file 'test_cache' &&  ! adb_file 'test'; then
+			output 1 'Found compressed cache file, unpacking it '
+			output 2 '[INIT] Found compressed cache file, unpacking it '
+			json set message 'found compressed cache file, unpacking it.'
+			if adb_file 'unpack_gzip'; then
+				output_okn
+			else
+				output_failn
+				output_error "$(get_text 'errorRestoreCompressedCache')"
+				action='download'
+			fi
+		fi
+		if adb_file 'test_cache' && ! adb_file 'test'; then
+			output 1 'Found cache file, reusing it '
+			output 2 '[INIT] Found cache file, reusing it '
+			json set message 'found cache file, reusing it.'
+			if adb_file 'restore'; then 
+				unset sanity_check
+				unset heartbeat_domain
+				output_okn
+				resolver 'on_start'
+			else
+				output_failn
+				output_error "$(get_text 'errorRestoreCache')"
+				action='download'
+			fi
+		fi
+	fi
+
+	if [ "$action" = 'download' ]; then
+		if [ -z "$blocked_url" ] && [ -z "$blocked_domain" ]; then
+			json set status 'statusFail'
+			json add error 'errorNothingToDo'
+		else
+			if ! adb_file 'test' || adb_file 'test_cache' || adb_file 'test_gzip'; then
+				output 1 "Force-reloading $serviceName...\n"
+				output 2 "[INIT] Force-reloading $serviceName...\n"
+				json set status 'statusForceReloading'
+			else
+				output 1 "Starting $serviceName...\n"
+				output 2 "[INIT] Starting $serviceName...\n"
+				json set status 'statusStarting'
+			fi
+			resolver 'cleanup'
+			if [ "$dns" = 'dnsmasq.conf' ] && [ -n "$dnsmasq_config_file_url" ]; then
+				download_dnsmasq_file
+			else
+				download_lists
+			fi
+			resolver 'on_start'
+		fi
+	fi
+
+	if [ "$action" = 'restart' ]; then
+		output 1 "Restarting $serviceName...\n"
+		output 2 "[INIT] Restarting $serviceName...\n"
+		json set status 'statusRestarting'
+		unset sanity_check
+		unset heartbeat_domain
+		resolver 'on_start'
+	fi
+
+	if [ "$action" = 'start' ]; then
+		output 1 "Starting $serviceName...\n"
+		output 2 "[INIT] Starting $serviceName...\n"
+		json set status 'statusStarting'
+		unset sanity_check
+		unset heartbeat_domain
+		resolver 'on_start'
+	fi
+
+	if adb_file 'test' && [ "$(json get status)" != "statusFail" ]; then
+		json del message
+		json set status 'statusSuccess'
+		json set stats "$serviceName is blocking $(count_blocked_domains) domains (with ${dns})"
+		status_service 'on_start_success'
+	else
+		json set status 'statusFail'
+		json add error 'errorOhSnap'
+		status_service 'on_start_failure'
+		resolver 'revert'
+	fi
+
+	adb_config_cache 'create'
+
+	procd_open_instance 'main'
+	procd_set_param command /bin/true
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_open_data
+	json_add_string 'version' "$PKG_VERSION"
+	json_add_string	'status' "$(json get status)"
+	json_add_int		'packageCompat' "$packageCompat"
+	json_add_int		'entries' "$(count_blocked_domains)"
+	json_add_array 'errors'
+		for k in $(json get errors); do
+			json_add_object "$k"
+			json_add_string 'code' "$(json get error "$k" 'code')"
+			json_add_string 'info' "$(json get error "$k" 'info')"
+			json_close_object
+		done
+	json_close_array
+	json_add_array 'warnings'
+		for k in $(json get warnings); do
+			json_add_object "$k"
+			json_add_string 'code' "$(json get warning "$k" 'code')"
+			json_add_string 'info' "$(json get warning "$k" 'info')"
+			json_close_object
+		done
+	json_close_array
+	json_add_array firewall
+	if [ -n "$force_dns" ]; then
+# shellcheck disable=SC3060
+		for p in ${force_dns_port/,/ }; do
+			if is_port_listening "$p"; then
+				for iface in $force_dns_interface; do
+					json_add_object ''
+					json_add_string type 'redirect'
+					json_add_string target 'DNAT'
+					json_add_string src "$iface"
+					json_add_string proto 'tcp udp'
+					json_add_string src_dport '53'
+					json_add_string dest_port "$p"
+					json_add_string family 'any'
+					json_add_boolean reflection '0'
+					json_close_object
+				done
+			else
+				for iface in $force_dns_interface; do
+					json_add_object ''
+					json_add_string type 'rule'
+					json_add_string src "$iface"
+					json_add_string dest '*'
+					json_add_string proto 'tcp udp'
+					json_add_string dest_port "$p"
+					json_add_string target 'REJECT'
+					json_close_object
+				done
+			fi
+		done
+	fi
+	case "$dns" in
+		dnsmasq.ipset|smartdns.ipset)
+			json_add_object ''
+			json_add_string type 'ipset'
+			json_add_string name 'adb'
+			json_add_string match 'dest_net'
+			json_add_string storage 'hash'
+			json_close_object
+			for iface in $force_dns_interface; do
+				json_add_object ''
+				json_add_string type 'rule'
+				json_add_string ipset 'adb'
+				json_add_string src "$iface"
+				json_add_string dest '*'
+				json_add_string proto 'tcp udp'
+				json_add_string target 'REJECT'
+				json_close_object
+			done
+		;;
+		dnsmasq.nftset|smartdns.nftset)
+			json_add_object ''
+			json_add_string type 'ipset'
+			json_add_string name 'adb4'
+			json_add_string family '4'
+			json_add_string match 'dest_net'
+			json_close_object
+			for iface in $force_dns_interface; do
+				json_add_object ''
+				json_add_string type 'rule'
+				json_add_string ipset 'adb4'
+				json_add_string src "$iface"
+				json_add_string dest '*'
+				json_add_string proto 'tcp udp'
+				json_add_string target 'REJECT'
+				json_close_object
+			done
+			if [ -n "$ipv6_enabled" ]; then
+				json_add_object ''
+				json_add_string type 'ipset'
+				json_add_string name 'adb6'
+				json_add_string family '6'
+				json_add_string match 'dest_net'
+				json_close_object
+				for iface in $force_dns_interface; do
+					json_add_object ''
+					json_add_string type 'rule'
+					json_add_string ipset 'adb6'
+					json_add_string src "$iface"
+					json_add_string dest '*'
+					json_add_string proto 'tcp udp'
+					json_add_string target 'REJECT'
+					json_close_object
+				done
+			fi
+		;;
+	esac
+	json_close_array
+	procd_close_data
+	procd_close_instance
+	return 0
 }
 
-adb_sizes() {
+status_service() {
+	local param="$1"
+	local c status message error warning stats text
+	local code info
+	load_package_config
+	status="$(json get status)"
+	message="$(json get message)"
+	error="$(json get error)"
+	warning="$(json get warning)"
+	stats="$(json get stats)"
+	if [ "$status" = "statusSuccess" ]; then
+		output 1 "* $stats\n"
+		output 2 "[STAT] $stats\n"
+	else
+		[ -n "$status" ] && status="$(get_text "$status")"
+		status="${status}${status:+${message:+: $message}}"
+		case "$(adb_file 'test_cache'; echo $?:$(adb_file 'test_gzip'; echo $?))" in
+			"0:0")
+				message="cache file and compressed cache file found"
+				;;
+			"0:1")
+				message="cache file found"
+				;;
+			"1:0")
+				message="compressed cache file found"
+				;;
+			*)
+				unset message
+				;;
+		esac
+		status="${status}${status:+${message:+ ($message)}}"
+	[ -n "$status" ] && output "$serviceName $status.\n"
+	fi
+	[ "$param" != 'quiet' ] || return 0
+	if [ -n "$error" ]; then
+		for c in $error; do
+			code="$(json get error "$c" 'code')"
+			info="$(json get error "$c" 'info')"
+			output_error "$(get_text "$code" "$info")"
+		done
+	fi
+	if [ -n "$warning" ]; then
+		for c in $warning; do
+			code="$(json get warning "$c" 'code')"
+			info="$(json get warning "$c" 'info')"
+			output_warning "$(get_text "$code" "$info")"
+		done
+	fi
+}
+
+# shellcheck disable=SC2120
+stop_service() {
+	load_package_config
+	if adb_file 'test'; then
+		output 1 "Stopping $serviceName... "
+		output 2 "[STOP] Stopping $serviceName... "
+		adb_file 'create'
+		if resolver 'on_stop'; then
+			ipset -q -! flush adb > /dev/null 2>&1
+			ipset -q -! destroy adb > /dev/null 2>&1
+			nft delete set inet fw4 adb4 > /dev/null 2>&1
+			nft delete set inet fw4 adb6 > /dev/null 2>&1
+			led_off "$led"
+			output_okn
+			json set status 'statusStopped'
+			json del message
+		else 
+			output_failn;
+			json set status 'statusFail'
+			json add error 'errorStopping'
+			output_error "$(get_text 'errorStopping')"
+		fi
+	fi
+	return 0
+}
+
+boot() {
+#	ubus -t 30 wait_for network.interface 2>/dev/null
+	adbf_boot_flag=1
+	rc_procd start_service 'on_boot' && service_started 'on_boot'
+}
+reload_service() { rc_procd start_service 'reload'; }
+restart_service() { rc_procd start_service 'restart'; }
+service_stopped() { is_fw4_restart_needed && procd_set_config_changed firewall; }
+service_triggers() {
+	local wan wan6 i
+	if [ -n "$adbf_boot_flag" ]; then
+		output 1 'Setting trigger (on_boot) '
+		output 2 '[TRIG] Setting trigger (on_boot) '
+		procd_add_raw_trigger "interface.*.up" 5000 "/etc/init.d/${packageName}" start && output_okn || output_failn
+		triggerStatus='statusTriggerBootWait'
+	else
+	procd_open_validate
+		load_validate_file_url_section
+	procd_close_validate
+		network_flush_cache
+		network_find_wan wan
+		wan="${wan:-wan}"
+		if [ -n "$procd_trigger_wan6" ]; then
+			network_find_wan6 wan6
+			wan6="${wan6:-wan6}"
+		fi
+		output 1 "Setting trigger${wan6:+s} for $wan ${wan6:+$wan6 }"
+		output 2 "[TRIG] Setting trigger${wan6:+s} for $wan ${wan6:+$wan6 }"
+		for i in $wan $wan6; do
+			procd_add_interface_trigger "interface.*" "$i" "/etc/init.d/${packageName}" start && output_ok || output_fail
+		done
+		output 1 '\n'
+		procd_add_config_trigger "config.change" "$packageName" "/etc/init.d/${packageName}" reload
+		triggerStatus='statusTriggerStartWait'
+	fi
+}
+
+service_started() {
+	local start_time end_time elapsed step_title
+	if [ -n "$compressed_cache" ] && ! adb_file 'test_gzip' && adb_file 'test'; then
+		start_time=$(date +%s)
+		step_title="Creating ${dns} compressed cache"
+		output 1 "${step_title} "
+		output 2 "[PROC] ${step_title} "
+		json set message "$(get_text 'statusProcessing'): ${step_title}"
+		if adb_file 'create_gzip'; then
+			output_okn
+		else
+			output_failn
+			json add error 'errorCreatingCompressedCache'
+		fi
+		end_time=$(date +%s)
+		elapsed=$(( end_time - start_time ))
+		logger_debug "[PERF-DEBUG] ${step_title} took ${elapsed}s"
+	else
+		adb_file 'remove_gzip'
+	fi
+	is_fw4_restart_needed && procd_set_config_changed firewall
+	[ -z "$(json get status)" ] && json set status "$triggerStatus"
+}
+
+allow() {
+	local c hf string="$1"
+	load_package_config
+	if ! adb_file 'test'; then
+		output "No block-list ('$outputFile') found.\n"
+		return 0
+	elif [ -z "$string" ]; then
+		output "Usage: /etc/init.d/${packageName} allow 'domain' ...\n"
+		return 0
+	elif [ -n "$dnsmasq_config_file_url" ]; then
+		output "Allowing individual domains is not possible when using external dnsmasq config file.\n"
+		return 0
+	fi
+	case "$dns" in
+		dnsmasq.*)
+			output 1 'Allowing domains and restarting dnsmasq '
+			output 2 '[PROC] Allowing domains \n'
+			for c in $string; do
+				output 2 "  $c "
+				hf="$(echo "$c" | sed 's/\./\\./g')"
+				if sed -i "\:\(/\|\.\)${hf}/:d" "$outputFile"; then
+						output_ok
+				else
+					output_fail
+				fi
+				if [ -n "$outputAllowFilter" ]; then
+					if echo "$c" | sed -E "$outputAllowFilter" >> "$outputFile"; then
+							output_ok
+					else
+						output_fail
+					fi
+				fi
+				if uci_add_list_if_new "${packageName}" 'config' 'allowed_domain' "$c"; then
+						output_ok
+				else
+					output_fail
+				fi
+			done
+			if [ -n "$compressed_cache" ]; then
+				output 2 '[PROC] Creating compressed cache '
+				if adb_file 'create_gzip'; then
+					output_ok
+				else
+					output_fail
+				fi
+			fi
+			output 2 '[PROC] Committing changes to config '
+			if uci_commit "$packageName"; then
+				allowed_domain="$(uci_get "$packageName" 'config' 'allowed_domain')"
+				adb_config_cache 'create'
+				json set stats "$serviceName is blocking $(count_blocked_domains) domains (with ${dns})"
+				output_ok
+				if [ "$dns" = 'dnsmasq.ipset' ]; then
+					output 2 '[PROC] Flushing adb ipset '
+					if ipset -q -! flush adb; then output_ok; else output_fail; fi
+				fi
+				if [ "$dns" = 'dnsmasq.nftset' ]; then
+					output 2 '[PROC] Flushing adb nft sets '
+					nft flush set inet fw4 adb6
+					if nft flush set inet fw4 adb4; then output_ok; else output_fail; fi
+				fi
+				output_dns 'Restarting dnsmasq '
+				if dnsmasq_restart; then output_ok; else output_fail; fi
+			else
+				output_fail
+			fi
+			output 1 '\n'
+		;;
+		smartdns.*)
+			output 1 'Allowing domains and restarting smartdns '
+			output 2 '[PROC] Allowing domains \n'
+			for c in $string; do 
+				output 2 "  $c "
+				hf="$(echo "$c" | sed 's/\./\\./g')"
+				if sed -i "\:\(\"\|\.\)${hf}\":d" "$outputFile" && \
+					uci_add_list_if_new "$packageName" 'config' 'allowed_domain' "$string"; then
+						output_ok
+				else
+					output_fail
+				fi
+			done
+			if [ -n "$compressed_cache" ]; then
+				output 2 '[PROC] Creating compressed cache '
+				if adb_file 'create_gzip'; then
+					output_ok
+				else
+					output_fail
+				fi
+			fi
+			output 2 '[PROC] Committing changes to config '
+			if uci_commit "$packageName"; then
+				allowed_domain="$(uci_get "$packageName" 'config' 'allowed_domain')"
+				adb_config_cache 'create'
+				json set stats "$serviceName is blocking $(count_blocked_domains) domains (with ${dns})"
+				output_ok; 
+				output_dns 'Restarting SmartDNS '
+				if smartdns_restart; then output_ok; else output_fail; fi
+			else 
+				output_fail
+			fi
+			output 1 '\n'
+		;;
+		unbound.*)
+			output 1 'Allowing domains and restarting Unbound '
+			output 2 '[PROC] Allowing domains \n'
+			for c in $string; do 
+				output 2 "  $c "
+				hf="$(echo "$c" | sed 's/\./\\./g')"
+				if sed -i "\:\(\"\|\.\)${hf}\":d" "$outputFile" && \
+					uci_add_list_if_new "$packageName" 'config' 'allowed_domain' "$string"; then
+						output_ok
+				else
+					output_fail
+				fi
+			done
+			if [ -n "$compressed_cache" ]; then
+				output 2 '[PROC] Creating compressed cache '
+				if adb_file 'create_gzip'; then
+					output_ok
+				else
+					output_failn
+				fi
+			fi
+			output 2 '[PROC] Committing changes to config '
+			if uci_commit "$packageName"; then
+				allowed_domain="$(uci_get "$packageName" 'config' 'allowed_domain')"
+				adb_config_cache 'create'
+				json set stats "$serviceName is blocking $(count_blocked_domains) domains (with ${dns})"
+				output_ok; 
+				output_dns 'Restarting Unbound '
+				if unbound_restart; then output_ok; else output_fail; fi
+			else
+				output_fail
+			fi
+			output 1 '\n'
+		;;
+	esac
+}
+
+check() {
+	local c param="$1"
+	load_package_config
+	if ! adb_file 'test'; then
+		output "No block-list ('$outputFile') found.\n"
+		return 0
+	elif [ -z "$param" ]; then
+		output "Usage: /etc/init.d/${packageName} check 'domain' ...\n"
+		return 0
+	fi
+	for string in ${param}; do
+		c="$(grep -c -E "$string" "$outputFile")"
+		if [ "$c" -gt 0 ]; then
+			if [ "$c" -eq 1 ]; then
+				output 1 "Found 1 match for '$string' in '$outputFile'.\n"
+				output 2 "[PROC] Found 1 match for '$string' in '$outputFile'.\n"
+			else
+				output 1 "Found $c matches for '$string' in '$outputFile'.\n"
+				output 2 "[PROC] Found $c matches for '$string' in '$outputFile'.\n"
+			fi
+			if [ "$c" -le 20 ]; then
+				grep "$string" "$outputFile" | sed "$outputParseFilter"
+			fi
+		else
+			output 1 "The '$string' is not found in current block-list ('$outputFile').\n"
+			output 2 "[PROC] The '$string' is not found in current block-list ('$outputFile').\n"
+		fi
+	done
+}
+
+check_tld() {
+	local c param="$1"
+	load_package_config
+	if ! adb_file 'test'; then
+		output "No block-list ('$outputFile') found.\n"
+		return 0
+	fi
+	c="$(grep -cvE '\.|server:' "$outputFile")"
+	if [ "$c" -gt 0 ]; then
+		if [ "$c" -eq 1 ]; then
+			output 1 "Found 1 match for TLD in '$outputFile'.\n"
+			output 2 "[PROC] Found 1 match for TLD in '$outputFile'.\n"
+		else
+			output 1 "Found $c matches for TLDs in '$outputFile'.\n"
+			output 2 "[PROC] Found $c matches for TLDs in '$outputFile'.\n"
+		fi
+		if [ "$c" -le 20 ]; then
+			grep -vE '\.|server:' "$outputFile" | sed "$outputParseFilter"
+		fi
+	else
+		output 1 "No TLD was found in current block-list ('$outputFile').\n"
+		output 2 "[PROC] No TLD was found in current block-list ('$outputFile').\n"
+	fi
+}
+
+check_leading_dot() {
+	local c param="$1"
+	local string
+	load_package_config
+	if ! adb_file 'test'; then
+		output "No block-list ('$outputFile') found.\n"
+		return 0
+	fi
+	case "$dns" in
+		dnsmasq.*)	string='/\.';;
+		smartdns.*)	string='^\.';;
+		unbound.*)	string='"\.';;
+	esac
+	c="$(grep -c "$string" "$outputFile")"
+	if [ "$c" -gt 0 ]; then
+		if [ "$c" -eq 1 ]; then
+			output 1 "Found 1 match for leading-dot domain in '$outputFile'.\n"
+			output 2 "[PROC] Found 1 match for leading-dot domain in '$outputFile'.\n"
+		else
+			output 1 "Found $c matches for leading-dot domains in '$outputFile'.\n"
+			output 2 "[PROC] Found $c matches for leading-dot domains in '$outputFile'.\n"
+		fi
+		if [ "$c" -le 20 ]; then
+			grep "$string" "$outputFile" | sed "$outputParseFilter"
+		fi
+	else
+		output 1 "No leading-dot domain was found in current block-list ('$outputFile').\n"
+		output 2 "[PROC] No leading-dot domain was found in current block-list ('$outputFile').\n"
+	fi
+}
+
+check_lists() {
+# shellcheck disable=SC2317,SC2329
+	_check_list() {
+		local cfg="$1"
+		local en size url name R_TMP string c
+		config_get_bool en "$cfg" enabled '1'
+		config_get action "$cfg" action 'block'
+		config_get url "$cfg" url
+		config_get name "$cfg" name
+		name="${name:-$url}"
+
+		[ "$en" = '0' ] && return 0
+		[ "$action" != 'block' ] && return 0
+
+		output 1 "Checking ${name}: "
+		output 2 "[ DL ] $name "
+
+		if is_https_url "$url" && [ -z "$isSSLSupported" ]; then
+			output_failn
+			return 1
+		fi
+		R_TMP="$(mktemp -q -t "${packageName}_tmp.XXXXXXXX")"
+		if [ -z "$url" ] || ! $dl_command "$url" "$dl_flag" "$R_TMP" 2>/dev/null || \
+			[ ! -s "$R_TMP" ]; then
+			output_failn
+			return 1
+		else
+			output 2 "$__OK__\n"
+		fi
+		append_newline "$R_TMP"
+		for string in ${param}; do
+			c="$(grep -c -E "$string" "$R_TMP")"
+			if [ "$c" -gt 0 ]; then
+				if [ "$c" -eq 1 ]; then
+					output 1 "found 1 match for '$string'.\n"
+					output 2 "[PROC] Found 1 match for '$string' in '$url'.\n"
+				else
+					output 1 "found $c matches for '$string'.\n"
+					output 2 "[PROC] Found $c matches for '$string' in '$url'.\n"
+				fi
+				grep "$string" "$R_TMP"
+			else
+				output 1 "'$string' not found.\n"
+				output 2 "[PROC] The '$string' is not found in '$url'.\n"
+			fi
+		done
+	rm -f "$R_TMP"
+	}
+	local param="$1"
+	load_package_config
+	load_dl_command
+	if [ -z "$param" ]; then
+		output "Usage: /etc/init.d/${packageName} check_lists 'domain' ...\n"
+		return 0
+	fi
+	config_load "$packageName"
+	config_foreach _check_list 'file_url'
+	return 0
+}
+
+dl() { rc_procd start_service 'download' && service_started 'download'; }
+
+killcache() {
+	load_package_config
+	rm -f "$dnsmasqAddnhostsCache" "${compressed_cache_dir}/${dnsmasqAddnhostsGzip}"
+	rm -f "$dnsmasqConfCache" "${compressed_cache_dir}/${dnsmasqConfGzip}"
+	rm -f "$dnsmasqIpsetCache" "${compressed_cache_dir}/${dnsmasqIpsetGzip}"
+	rm -f "$dnsmasqNftsetCache" "${compressed_cache_dir}/${dnsmasqNftsetGzip}"
+	rm -f "$dnsmasqServersCache" "${compressed_cache_dir}/${dnsmasqServersGzip}"
+	rm -f "$smartdnsDomainSetCache" "${compressed_cache_dir}/${smartdnsDomainSetGzip}"
+	rm -f "$smartdnsIpsetCache" "${compressed_cache_dir}/${smartdnsIpsetGzip}"
+	rm -f "$smartdnsNftsetCache" "${compressed_cache_dir}/${smartdnsNftsetGzip}"
+	rm -f "$unboundCache" "${compressed_cache_dir}/${unboundGzip}"
+	resolver 'cleanup'
+	return 0
+}
+
+pause() {
+	load_package_config
+	local timeout="${1:-$pause_timeout}"
+	stop_service 'on_pause'
+	output 1 "Sleeping for $timeout seconds... "
+	output 2 "[PROC] Sleeping for $timeout seconds... "
+	if is_integer "$timeout" && sleep "$timeout"; then
+		output_okn
+	else
+		output_failn
+	fi
+	start_service 'on_pause'
+}
+
+show_blocklist() {
+	load_package_config
+	sed "$stripToDomainsFilter" "$outputFile"
+}
+
+sizes() {
+# shellcheck disable=SC2329
 	_config_add_url_size() {
 		local cfg="$1" url name size
 		config_get url "$cfg" url
@@ -1740,426 +2680,35 @@ adb_sizes() {
 		fi
 	}
 	local i
-	local validation_result="$3"
-	load_environment "$validation_result" 'quiet' || return 1
+	load_package_config
+	load_dl_command
 	config_load "$packageName"
 	config_foreach _config_add_url_size 'file_url'
-	[ -n "$(uci_changes "$packageName")" ] && uci_commit "$packageName"
+	[ -n "$update_config_sizes" ] && uci_changes "$packageName" && uci_commit "$packageName"
 }
 
-# shellcheck disable=SC2120
-adb_start() {
-	local action status error message stats c iface
-	local param="$1" validation_result="$3"
-
-	load_environment "$validation_result" "$param" || return 1
-
-	status="$(json get 'status')"
-	error="$(json get 'error')"
-	message="$(json get 'message')"
-	stats="$(json get 'stats')"
-	action="$(config_cache get 'trigger_service')"
-	fw4_restart_flag="$(config_cache get 'trigger_fw4')"
-
-	if [ "$action" = 'on_boot' ] || [ "$param" = 'on_boot' ] || [ "$param" = 'on_pause' ]; then
-		if cache 'test_gzip' || cache 'test'; then
-			action='restore'
-		else
-			action='download'
-		fi
-	elif [ "$action" = 'download' ] || [ "$param" = 'download' ] || [ -n "$error" ]; then
-		action='download'
-	elif [ ! -s "$outputFile" ]; then 
-		if cache 'test_gzip' || cache 'test'; then
-			action='restore'
-		else
-			action='download'
-		fi
-	elif [ "$action" = 'restart' ] || [ "$param" = 'restart' ]; then
-		action='restart'
-	elif [ -s "$outputFile" ] && [ "$status" = "statusSuccess" ] && [ -z "$error" ]; then
-		status_service 'quiet'
-		return 0
-	else
-		action='download'
-	fi
-
-	json del all
-	config_cache 'create'
-
-	if [ "$action" = 'restore' ]; then
-		output 0 "Starting $serviceName... "
-		output 3 "Starting $serviceName...\\n"
-		json set status 'statusStarting'
-		if cache 'test_gzip' && ! cache 'test' && [ ! -s "$outputFile" ]; then
-			output 3 'Found compressed cache file, unpacking it '
-			json set message 'found compressed cache file, unpacking it.'
-			if cache 'unpack_gzip'; then
-				output_okn
-			else
-				output_failn
-				json add error 'errorRestoreCompressedCache'
-				output "${_ERROR_}: $(get_text 'errorRestoreCompressedCache')!\\n"
-				action='download'
-			fi
-		fi
-		if cache 'test' && [ ! -s "$outputFile" ]; then
-			output 3 'Found cache file, reusing it '
-			json set message 'found cache file, reusing it.'
-			if cache 'restore'; then 
-				output_okn
-				resolver 'on_start'
-			else
-				output_failn
-				json add error 'errorRestoreCache'
-				output "${_ERROR_}: $(get_text 'errorRestoreCache')!\\n"
-				action='download'
-			fi
-		fi
-	fi
-	if [ "$action" = 'download' ]; then
-		if [ -z "$blocked_url" ] && [ -z "$blocked_domain" ]; then
-			json set status 'statusFail'
-			json add error 'errorNothingToDo'
-			output "${_ERROR_}: $(get_text 'errorNothingToDo')!\\n"
-		else
-			if [ -s "$outputFile" ] || cache 'test' || cache 'test_gzip'; then
-				output 0 "Force-reloading $serviceName... "
-				output 3 "Force-reloading $serviceName...\\n"
-				json set status 'statusForceReloading'
-			else
-				output 0 "Starting $serviceName... "
-				output 3 "Starting $serviceName...\\n"
-				json set status 'statusStarting'
-			fi
-			resolver 'cleanup'
-			if [ "$dns" = 'dnsmasq.conf' ] && [ -n "$dnsmasq_config_file_url" ]; then
-				download_dnsmasq_file
-			else
-				download_lists
-			fi
-			resolver 'on_start'
-		fi
-	fi
-	if [ "$action" = 'restart' ]; then
-		output 0 "Restarting $serviceName... "
-		output 3 "Restarting $serviceName...\\n"
-		json set status 'statusRestarting'
-		resolver 'on_start'
-	fi
-	if [ "$action" = 'start' ]; then
-		output 0 "Starting $serviceName... "
-		output 3 "Starting $serviceName...\\n"
-		json set status 'statusStarting'
-		resolver 'on_start'
-	fi
-	if [ -s "$outputFile" ] && [ "$(json get status)" != "statusFail" ]; then
-		output 0 "$__OK__\\n";
-		json del message
-		json set status 'statusSuccess'
-		json set stats "$serviceName is blocking $(wc -l < "$outputFile") domains (with ${dns})"
-		status_service 'quiet'
-
-	else
-		output 0 "$__FAIL__\\n";
-		json set status 'statusFail'
-		json add error 'errorOhSnap'
-		status_service 'quiet'
-	fi
-
-	procd_open_instance 'main'
-	procd_set_param command /bin/true
-	procd_set_param stdout 1
-	procd_set_param stderr 1
-	procd_open_data
-	json_add_string 'status' "$(json get status)"
-	json_add_string 'errors' "$(json get error)"
-	json_add_string 'warnings' "$(json get warning)"
-	if [ -s "$outputFile" ]; then
-		json_add_int 'entries' "$(wc -l < "$outputFile")"
-	else
-		json_add_int 'entries' '0'
-	fi
-	json_add_array firewall
-	if [ "$force_dns" -ne '0' ]; then
-# shellcheck disable=SC3060
-		for c in ${force_dns_port/,/ }; do
-			if netstat -tuln | grep LISTEN | grep ":${c}" >/dev/null 2>&1; then
-				for iface in $force_dns_interface; do
-					json_add_object ""
-					json_add_string type redirect
-					json_add_string target DNAT
-					json_add_string src "$iface"
-					json_add_string proto "tcp udp"
-					json_add_string src_dport "$c"
-					json_add_string dest_port "$c"
-					json_add_string family any
-					json_add_boolean reflection 0
-					json_close_object
-				done
-			else
-				for iface in $force_dns_interface; do
-					json_add_object ""
-					json_add_string type rule
-					json_add_string src "$iface"
-					json_add_string dest "*"
-					json_add_string proto "tcp udp"
-					json_add_string dest_port "$c"
-					json_add_string target REJECT
-					json_close_object
-				done
-			fi
-		done
-	fi
-	case "$dns" in
-		dnsmasq.ipset|smartdns.ipset)
-			json_add_object ""
-			json_add_string type ipset
-			json_add_string name adb
-			json_add_string match dest_net
-			json_add_string storage hash
-			json_close_object
-			for iface in $force_dns_interface; do
-				json_add_object ""
-				json_add_string type rule
-				json_add_string ipset adb
-				json_add_string src "$iface"
-				json_add_string dest "*"
-				json_add_string proto "tcp udp"
-				json_add_string target REJECT
-				json_close_object
-			done
-		;;
-		dnsmasq.nftset|smartdns.nftset)
-			json_add_object ""
-			json_add_string type ipset
-			json_add_string name adb4
-			json_add_string family 4
-			json_add_string match dest_net
-			json_close_object
-			for iface in $force_dns_interface; do
-				json_add_object ""
-				json_add_string type rule
-				json_add_string ipset adb4
-				json_add_string src "$iface"
-				json_add_string dest "*"
-				json_add_string proto "tcp udp"
-				json_add_string target REJECT
-				json_close_object
-			done
-			if [ "$ipv6_enabled" -ne '0' ]; then
-				json_add_object ""
-				json_add_string type ipset
-				json_add_string name adb6
-				json_add_string family 6
-				json_add_string match dest_net
-				json_close_object
-				for iface in $force_dns_interface; do
-					json_add_object ""
-					json_add_string type rule
-					json_add_string ipset adb6
-					json_add_string src "$iface"
-					json_add_string dest "*"
-					json_add_string proto "tcp udp"
-					json_add_string target REJECT
-					json_close_object
-				done
-			fi
-		;;
-	esac
-	json_close_array
-	procd_close_data
-	procd_close_instance
-	return 0
-}
-
-adb_status() {
-	local param="$1"
-	local c status message error warning stats text
-	status="$(json get status)"
-	message="$(json get message)"
-	error="$(json get error)"
-	warning="$(json get warning)"
-	stats="$(json get stats)"
-	if [ "$status" = "statusSuccess" ]; then
-		output "$stats "; output_okn;
-	else
-		[ -n "$status" ] && status="$(get_text "$status")"
-		if [ -n "$status" ] && [ -n "$message" ]; then 
-			status="${status}: $message"
-		fi
-		[ -n "$status" ] && output "$serviceName $status!\\n"
-	fi
-	if [ "$param" != 'quiet' ] && [ -n "$error" ]; then
-		for c in $error; do
-			local error_param="${c##*|}"
-			local error_code="${c%|*}"
-			output "${_ERROR_}: $(get_text "$error_code" "$error_param")!\\n"
-		done
-	fi
-	if [ "$param" != 'quiet' ] && [ -n "$warning" ]; then
-		for c in $warning; do
-			local warning_param="${c##*|}"
-			local warning_code="${c%|*}"
-			output "${_WARNING_}: $(get_text "$warning_code" "$warning_param").\\n"
-		done
-	fi
-	return 0
-}
-
-# shellcheck disable=SC2120
-adb_stop() {
-	local validation_result="$3"
-	load_environment "$validation_result" 'quiet' || return 0
-	if [ -s "$outputFile" ]; then
-		output "Stopping $serviceName... "
-		cache 'create'
-		if resolver 'on_stop'; then
-			ipset -q -! flush adb
-			ipset -q -! destroy adb
-			nft delete set inet fw4 adb4
-			nft delete set inet fw4 adb6
-			led_off "$led"
-			output 0 "$__OK__\\n"; output_okn;
-			json set status 'statusStopped'
-			json del message
-		else 
-			output 0 "$__FAIL__\\n"; output_fail;
-			json set status 'statusFail'
-			json add error 'errorStopping'
-			output "${_ERROR_}: $(get_text 'errorStopping')!\\n"
-		fi
-	fi
-	return 0
-}
-
-adb_pause() {
-	local timeout="${1:-$pause_timeout}"
-	local validation_result="$3"
-	adb_stop 'on_pause' '' "$validation_result"
-	output "Sleeping for $timeout seconds... "
-	if is_integer "$timeout" && sleep "$timeout"; then
-		output_okn
-	else
-		output_failn
-	fi
-	adb_start 'on_pause' '' "$validation_result"
-}
-
-allow() { load_validate_config 'config' adb_allow "'$*'"; }
-boot() {
-	local procd_boot_delay
-	ubus -t 30 wait_for network.interface 2>/dev/null
-	config_load "$packageName"
-	config_get procd_boot_delay 'config' 'procd_boot_delay' '0'
-# shellcheck disable=SC2154
-	{ is_integer "$procd_boot_delay" && sleep "$procd_boot_delay"; \
-		rc_procd start_service 'on_boot' && service_started 'on_boot'; } &
-}
-check() { load_validate_config 'config' adb_check "'$*'"; }
-check_lists() { load_validate_config 'config' adb_check_lists "'$*'"; }
-dl() { rc_procd start_service 'download'; }
-killcache() {
-	local compressed_cache_dir
-	config_load "$packageName"
-	config_get compressed_cache_dir 'config' 'compressed_cache_dir' '/etc'
-	if [ "$(sanitize_dir "$compressed_cache_dir")" = '/' ]; then
-		compressed_cache_dir=''
-	elif [ -n "$(sanitize_dir "$compressed_cache_dir")" ]; then
-		compressed_cache_dir="$(sanitize_dir "$compressed_cache_dir")"
-	else
-		compressed_cache_dir="/etc"
-	fi
-	rm -f "$dnsmasqAddnhostsCache" "${compressed_cache_dir}/${dnsmasqAddnhostsGzip}"
-	rm -f "$dnsmasqConfCache" "${compressed_cache_dir}/${dnsmasqConfGzip}"
-	rm -f "$dnsmasqIpsetCache" "${compressed_cache_dir}/${dnsmasqIpsetGzip}"
-	rm -f "$dnsmasqNftsetCache" "${compressed_cache_dir}/${dnsmasqNftsetGzip}"
-	rm -f "$dnsmasqServersCache" "${compressed_cache_dir}/${dnsmasqServersGzip}"
-	rm -f "$smartdnsDomainSetCache" "${compressed_cache_dir}/${smartdnsDomainSetGzip}"
-	rm -f "$smartdnsIpsetCache" "${compressed_cache_dir}/${smartdnsIpsetGzip}"
-	rm -f "$smartdnsNftsetCache" "${compressed_cache_dir}/${smartdnsNftsetGzip}"
-	rm -f "$unboundCache" "${compressed_cache_dir}/${unboundGzip}"
-	resolver 'cleanup'
-	return 0
-}
-show_blocklist() { load_validate_config 'config' adb_show_blocklist "'$*'"; }
-reload_service() { rc_procd start_service 'restart'; }
-restart_service() { rc_procd start_service 'restart'; }
-service_started() { is_fw4_restart_needed && procd_set_config_changed firewall; }
-service_stopped() { is_fw4_restart_needed && procd_set_config_changed firewall; }
-service_triggers() {
-	local wan wan6 i
-	local procd_trigger_wan6
-	config_load "$packageName"
-	config_get_bool procd_trigger_wan6 'config' 'procd_trigger_wan6' '0'
-	network_flush_cache
-	network_find_wan wan
-	wan="${wan:-wan}"
-	if [ "$procd_trigger_wan6" -ne '0' ]; then
-		network_find_wan6 wan6
-		wan6="${wan6:-wan6}"
-	fi
-	for i in "$wan" "$wan6"; do
-		[ -n "$i" ] && procd_add_interface_trigger "interface.*" "$i" "/etc/init.d/${packageName}" start
-	done
-	procd_add_config_trigger "config.change" "$packageName" "/etc/init.d/${packageName}" reload
-}
-sizes() { load_validate_config 'config' adb_sizes "''"; }
-start_service() { 
-	load_validate_config 'config' adb_config_update "'$*'"
-	load_validate_config 'config' adb_start "'$*'"
-}
-status_service() { adb_status "$@"; }
-stop_service() { load_validate_config 'config' adb_stop "'$*'"; }
-pause() { load_validate_config 'config' adb_pause "'$*'"; }
 version() { echo "$PKG_VERSION"; }
 
+# shellcheck disable=SC2120
 load_validate_file_url_section() {
 	uci_load_validate "$packageName" "$packageName" "$1" "$2" \
 		'enabled:bool:1' \
 		'action:or("allow", "block"):block' \
 		'size:or(uinteger, "")' \
 		'name:string' \
-		'url:string'
+		'url:string' \
+	;
 }
 
 load_validate_config() {
-	local enabled
-	local force_dns
-	local force_dns_interface
-	local force_dns_port
-	local parallel_downloads
-	local debug
-	local compressed_cache
-	local compressed_cache_dir
-	local ipv6_enabled
-	local allow_non_ascii
-	local canary_domains_icloud
-	local canary_domains_mozilla
-	local config_update_enabled
-	local config_update_url
-	local download_timeout
-	local pause_timeout
-	local curl_additional_param
-	local curl_max_file_size
-	local curl_retry
-	local verbosity
-	local procd_trigger_wan6
-	local procd_boot_wan_timeout
-	local procd_lan_interface_name
-	local led
-	local dns
-	local dnsmasq_instance
-	local allowed_domain
-	local blocked_domain
-	local dnsmasq_config_file_url
 	uci_load_validate "$packageName" "$packageName" "$1" "${2}${3:+ $3}" \
 		'enabled:bool:0' \
 		'force_dns:bool:1' \
 		'force_dns_interface:list(network):lan' \
 		'force_dns_port:list(integer):53,853' \
 		'parallel_downloads:bool:1' \
-		'debug:bool:0' \
+		'debug_init_script:bool:0' \
+		'debug_performance:bool:0' \
 		'compressed_cache:bool:0' \
 		'compressed_cache_dir:directory:/etc' \
 		'ipv6_enabled:bool:0' \
@@ -2180,7 +2729,13 @@ load_validate_config() {
 		'dns:or("dnsmasq.addnhosts", "dnsmasq.conf", "dnsmasq.ipset", "dnsmasq.nftset", "dnsmasq.servers", "smartdns.domainset", "smartdns.ipset", "smartdns.nftset", "unbound.adb_list"):dnsmasq.servers' \
 		'dnsmasq_instance:list(or(integer, string)):*' \
 		'smartdns_instance:list(or(integer, string)):*' \
+		'heartbeat_domain:or("-", string):heartbeat.melmac.ca' \
+		'heartbeat_sleep_timeout:range(1,60):10' \
+		'dnsmasq_sanity_check:bool:1' \
+		'dnsmasq_validity_check:bool:0' \
+		'update_config_sizes:bool:1' \
 		'allowed_domain:list(string)' \
 		'blocked_domain:list(string)' \
-		'dnsmasq_config_file_url:string'
+		'dnsmasq_config_file_url:string' \
+	;
 }

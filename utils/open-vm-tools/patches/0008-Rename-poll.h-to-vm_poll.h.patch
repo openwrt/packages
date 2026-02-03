@@ -40,7 +40,7 @@ Signed-off-by: Natanael Copa <ncopa@alpinelinux.org>
  #include "unicodeOperations.h"
 --- a/lib/include/asyncsocket.h
 +++ b/lib/include/asyncsocket.h
-@@ -175,7 +175,7 @@ typedef struct AsyncSocket AsyncSocket;
+@@ -177,7 +177,7 @@ typedef struct AsyncSocket AsyncSocket;
   * Or the client can specify its favorite poll class and locking behavior.
   * Use of IVmdbPoll is only supported for regular sockets and for Attach.
   */

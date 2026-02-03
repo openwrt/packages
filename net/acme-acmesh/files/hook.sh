@@ -39,6 +39,53 @@ link_certs() {
 	fi
 }
 
+handle_signal() {
+	local notify_op=$1
+	local label_op=$2
+	wait_notify() {
+		# wait for acme.sh child job to die, *then* notify about status
+		wait
+		log warn "$label_op aborted: $main_domain"
+		$NOTIFY "${notify_op}-failed"
+		exit 1
+	}
+
+	trap wait_notify TERM
+	# try to kill the cgroup
+	local cgroup=$(cut -d : -f 3 /proc/$$/cgroup)
+	if [[ "$cgroup" == '/services/acme/*' ]]; then
+		# send SIGTERM to all processes in this process's cgroup. this
+		# relies on procd's having set up the cgroup for the instance.
+		read -r -d '' pids < /sys/fs/cgroup${cgroup}/cgroup.procs 
+		kill -TERM $pids 2> /dev/null
+	fi
+
+	# if we're here, either the cgroup wasn't as exected to be set up by
+	# procd or killing the cgroup PIDs failed. try to kill the process
+	# group, assuming this process is the group leader. this is actually
+	# unlikely since procd doesn't set service PGIDs (so they aren't group
+	# leaders).
+	kill -TERM -$$ 2> /dev/null
+
+	# if we're here, cgroup-based killing was avoided or didn't work and
+	# PGID-based killing didn't work. fall back to the raciest option.
+	trap "" TERM
+	term_descendants() {
+		local pids=$@
+		local pid=
+		# `pgrep -P` returns nothing if given a non-existent PID
+		# (even if the PID has live children), so children must
+		# be killed first
+		for pid in $pids; do
+			term_descendants $(pgrep -P "$pid")
+			kill -TERM "$pid" 2> /dev/null
+		done
+	}
+	term_descendants $(jobs -p)
+
+	wait_notify
+}
+
 case $1 in
 get)
 	set --
@@ -58,6 +105,7 @@ get)
 
 	log info "Running ACME for $main_domain with validation_method $validation_method"
 
+	staging_moved=0
 	if [ -e "$domain_dir" ]; then
 		if [ "$staging" = 0 ] && grep -q "acme-staging" "$domain_dir/$main_domain.conf"; then
 			mv "$domain_dir" "$domain_dir.staging"
@@ -66,10 +114,11 @@ get)
 		else
 			set -- "$@" --renew --home "$state_dir" -d "$main_domain"
 			log info "$ACME $*"
-			trap '$NOTIFY renew-failed;exit 1' INT
-			$ACME "$@"
+			trap "handle_signal renew Renewal" INT TERM
+			$ACME "$@" &
+			wait $!
 			status=$?
-			trap - INT
+			trap - INT TERM
 
 			case $status in
 			0)
@@ -107,6 +156,10 @@ get)
 		set -- "$@" --days "$days"
 	fi
 
+	if [ "$cert_profile" ]; then
+		set -- "$@" --cert-profile "$cert_profile"
+	fi
+
 	case "$validation_method" in
 	"dns")
 		set -- "$@" --dns "$dns"
@@ -123,7 +176,10 @@ get)
 		fi
 		;;
 	"standalone")
-		set -- "$@" --standalone --listen-v6
+		set -- "$@" --standalone --listen-v6 --httpport "$listen_port"
+		;;
+	"alpn")
+		set -- "$@" --alpn --listen-v6 --tlsport "$listen_port"
 		;;
 	"webroot")
 		mkdir -p "$CHALLENGE_DIR"
@@ -137,12 +193,13 @@ get)
 	set -- "$@" --issue --home "$state_dir"
 
 	log info "$ACME $*"
-	trap '$NOTIFY issue-failed;exit 1' INT
+	trap "handle_signal issue Issuance" INT TERM
 	"$ACME" "$@" \
 		--pre-hook "$NOTIFY prepare" \
-		--renew-hook "$NOTIFY renewed"
+		--renew-hook "$NOTIFY renewed" &
+	wait $!
 	status=$?
-	trap - INT
+	trap - INT TERM
 
 	case $status in
 	0)

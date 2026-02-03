@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmraa
 PKG_VERSION:=2.2.0
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/eclipse/mraa/tar.gz/v$(PKG_VERSION)?
@@ -20,7 +20,7 @@ PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>, Hirokazu MORIKAWA <morikw2@gm
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
 
-PKG_BUILD_DEPENDS:=swig/host
+PKG_BUILD_DEPENDS:=python-setuptools/host swig/host
 CMAKE_INSTALL:=1
 PKG_BUILD_FLAGS:=no-mips16
 PYTHON3_PKG_BUILD:=0

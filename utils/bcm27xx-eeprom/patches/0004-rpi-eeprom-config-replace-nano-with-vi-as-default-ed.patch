@@ -13,7 +13,7 @@ Signed-off-by: Álvaro Fernández Rojas <noltari@gmail.com>
 
 --- a/rpi-eeprom-config
 +++ b/rpi-eeprom-config
-@@ -186,8 +186,8 @@ def edit_config(eeprom=None):
+@@ -184,8 +184,8 @@ def edit_config(eeprom=None):
      """
      Implements something like 'git commit' for editing EEPROM configs.
      """
@@ -24,7 +24,7 @@ Signed-off-by: Álvaro Fernández Rojas <noltari@gmail.com>
      if 'EDITOR' in os.environ:
          editor = os.environ['EDITOR']
  
-@@ -517,7 +517,7 @@ Operating modes:
+@@ -515,7 +515,7 @@ Operating modes:
  
     To cancel the pending update run 'sudo rpi-eeprom-update -r'
  

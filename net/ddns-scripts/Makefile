@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ddns-scripts
 PKG_VERSION:=2.8.2
-PKG_RELEASE:=46
+PKG_RELEASE:=87
 
 PKG_LICENSE:=GPL-2.0
 
@@ -25,7 +25,7 @@ endef
 define Package/ddns-scripts
   $(call Package/ddns-scripts/Default)
   TITLE:=Dynamic DNS Client scripts (with IPv6 support)
-  DEPENDS:=+ddns-scripts-services
+  DEPENDS:=+ddns-scripts-services +resolveip +ip
 endef
 
 define Package/ddns-scripts/description
@@ -109,7 +109,7 @@ define Package/ddns-scripts-freedns
 endef
 
 define Package/ddns-scripts-freedns/description
-  Dynamic DNS Client scripts extension for "freedns.42.pl".
+  Dynamic DNS Client scripts extension for 'freedns.42.pl'.
 endef
 
 
@@ -121,28 +121,48 @@ define Package/ddns-scripts-godaddy
 endef
 
 define Package/ddns-scripts-godaddy/description
-  Dynamic DNS Client scripts extension for "godaddy.com API v1".
+  Dynamic DNS Client scripts extension for 'godaddy.com API v1'.
 endef
 
+define Package/ddns-scripts-hetzner-cloud
+  $(call Package/ddns-scripts/Default)
+  TITLE:=Extension for hetzner.com cloud API
+  DEPENDS:=ddns-scripts +curl
+  PROVIDES:=ddns-scripts_hetzner-cloud
+endef
+
+define Package/ddns-scripts-hetzner-cloud/description
+  Dynamic DNS Client scripts extension for 'hetzner.com cloud API'.
+endef
+
+define Package/ddns-scripts-namesilo
+  $(call Package/ddns-scripts/Default)
+  TITLE:=Extension for namesilo.com API v1
+  DEPENDS:=ddns-scripts +curl
+  PROVIDES:=ddns-scripts_namesilo.com-v1
+endef
+
+define Package/ddns-scripts-namesilo/description
+  Dynamic DNS Client scripts extension for 'namesilo.com API v1'.
+endef
 
 define Package/ddns-scripts-digitalocean
   $(call Package/ddns-scripts/Default)
-  TITLE:=Extention for digitalocean.com API v2
+  TITLE:=Extension for digitalocean.com API v2
   DEPENDS:=ddns-scripts +curl
   PROVIDES:=ddns-scripts_digitalocean.com-v2
 endef
 
 define Package/ddns-scripts-digitalocean/description
-  Dynamic DNS Client scripts extension for "digitalocean.com API v2".
+  Dynamic DNS Client scripts extension for digitalocean.com API v2.
   The script directly updates a DNS record using the DO API.
   It requires:
-  "option dns_server" to be set to the server to be used by nsupdate.
-  "option domain" the dns domain to update the record for (eg. A-record: home.<example.com>)
-  "option username" the dns record name to update (eg. A-record: <home>.example.com)
-  "option param_opt" the id of the dns record to update (check using chrome inspector in the DO dns tab)
-  "option password" the api token generated in the DO panel
+  'option dns_server' to be set to the server to be used by nsupdate.
+  'option domain' the dns domain to update the record for (eg. A-record: home.<example.com>)
+  'option username' the dns record name to update (eg. A-record: <home>.example.com)
+  'option param_opt' the id of the dns record to update (check using chrome inspector in the DO dns tab)
+  'option password' the api token generated in the DO panel
 endef
-
 
 define Package/ddns-scripts-dnspod
   $(call Package/ddns-scripts/Default)
@@ -155,6 +175,17 @@ define Package/ddns-scripts-dnspod/description
 endef
 
 
+define Package/ddns-scripts-dnspod-v3
+  $(call Package/ddns-scripts/Default)
+  TITLE:=Extension for dnspod.tencentcloudapi.com (aka: dnspod.cn) API v3
+  DEPENDS:=ddns-scripts +curl +openssl-util
+endef
+
+define Package/ddns-scripts-dnspod-v3/description
+  Dynamic DNS Client scripts extension for dnspod.tencentcloudapi.com API v3 (require curl)
+endef
+
+
 define Package/ddns-scripts-noip
   $(call Package/ddns-scripts/Default)
   TITLE:=Extension for no-ip.com
@@ -163,7 +194,7 @@ define Package/ddns-scripts-noip
 endef
 
 define Package/ddns-scripts-noip/description
-  Dynamic DNS Client scripts extension for "no-ip.com".
+  Dynamic DNS Client scripts extension for 'no-ip.com'.
 endef
 
 define Package/ddns-scripts-ns1
@@ -173,10 +204,10 @@ define Package/ddns-scripts-ns1
 endef
 
 define Package/ddns-scripts-ns1/description
-  Dynamic DNS Client scripts extension for "ns1.com".
+  Dynamic DNS Client scripts extension for 'ns1.com'.
   It requires:
-  "option username" to be a valid zone for ns1.com
-  "option password" to be a valid API key for ns1.com
+  'option username' to be a valid zone for ns1.com
+  'option password' to be a valid API key for ns1.com
 endef
 
 
@@ -192,9 +223,9 @@ define Package/ddns-scripts-nsupdate/description
   The script directly updates a PowerDNS (or maybe bind server) via nsupdate
   from bind-client package.
   It requires:
-  "option dns_server" to be set to the server to be used by nsupdate.
-  "option username" should be set to the key name and
-  "option password" to the base64 encoded shared secret.
+  'option dns_server' to be set to the server to be used by nsupdate.
+  'option username' should be set to the key name and
+  'option password' to the base64 encoded shared secret.
 endef
 
 
@@ -206,12 +237,12 @@ define Package/ddns-scripts-route53
 endef
 
 define Package/ddns-scripts-route53/description
-  Dynamic DNS Client scripts extension for Amazon AWS "route53 API v1".
+  Dynamic DNS Client scripts extension for Amazon AWS 'route53 API v1'.
   Note: You must also install ca-certificate or ca-bundle.
   It requires:
-  "option username" to be a valid AWS access key id
-  "option password" to be the matching AWS secret key id
-  "option domain" to contain the hosted zone ID
+  'option username' to be a valid AWS access key id
+  'option password' to be the matching AWS secret key id
+  'option domain' to contain the hosted zone ID
 endef
 
 
@@ -223,11 +254,11 @@ define Package/ddns-scripts-cnkuai
 endef
 
 define Package/ddns-scripts-cnkuai/description
-  Dynamic DNS Client scripts extension for "cnkuai.cn".
+  Dynamic DNS Client scripts extension for 'cnkuai.cn'.
   It requires:
-  "option username" to be a valid CnKuai control panel id
-  "option password" to be the matching CnKuai control panel password
-  "option domain" to contain the domain
+  'option username' to be a valid CnKuai control panel id
+  'option password' to be the matching CnKuai control panel password
+  'option domain' to contain the domain
 endef
 
 
@@ -238,10 +269,25 @@ define Package/ddns-scripts-gandi
 endef
 
 define Package/ddns-scripts-gandi/description
-  Dynamic DNS Client scripts extension for "gandi.net".
+  Dynamic DNS Client scripts extension for 'gandi.net'.
   It requires:
-  "option username" to be a valid subdomain for gandi.net
-  "option password" to be a valid API key for gandi.net
+  'option username' to be a valid subdomain for gandi.net
+  'option password' to be a valid API key for gandi.net
+endef
+
+
+define Package/ddns-scripts-beget
+  $(call Package/ddns-scripts/Default)
+  TITLE:=Beget API
+  DEPENDS:=ddns-scripts +curl
+endef
+
+define Package/ddns-scripts-beget/description
+  Dynamic DNS Client scripts extension for 'beget.com'.
+  It requires:
+  'option domain' to contain the domain
+  'option username' to be a valid username for beget.com
+  'option password' to be a valid API key for beget.com
 endef
 
 
@@ -252,13 +298,27 @@ define Package/ddns-scripts-pdns
 endef
 
 define Package/ddns-scripts-pdns/description
-  Dynamic DNS Client scripts extension for "PowerDNS" via API.
+  Dynamic DNS Client scripts extension for 'PowerDNS' via API.
   It requires:
-  "option param_opt(Optional Parameter)" to be a valid root URL for the PowerDNS webserver
-  "option username" to be a valid subdomain for the PowerDNS domain
-  "option password" to be a valid API key for the PowerDNS webserver
+  'option param_opt(Optional Parameter)' to be a valid root URL for the PowerDNS webserver
+  'option username' to be a valid subdomain for the PowerDNS domain
+  'option password' to be a valid API key for the PowerDNS webserver
 endef
 
+define Package/ddns-scripts-scaleway
+  $(call Package/ddns-scripts/Default)
+  TITLE:=Extension for Scaleway DNS API
+  DEPENDS:=ddns-scripts +curl
+endef
+
+define Package/ddns-scripts-scaleway/description
+  Dynamic DNS Client scripts extension for Scaleway.
+  Parameters:
+  'option username'  The zone in which the RR is to be set
+  'option password'  The Scaleway API token with sufficient access rights
+  'option domain'    The domain to be updated
+  'option param_opt' (Optional) The TTL of the RR
+endef
 
 define Package/ddns-scripts-transip
   $(call Package/ddns-scripts/Default)
@@ -267,14 +327,14 @@ define Package/ddns-scripts-transip
 endef
 
 define Package/ddns-scripts-transip/description
-  Dynamic DNS Client scripts extension for "transip.nl".
+  Dynamic DNS Client scripts extension for 'transip.nl'.
   Note: You must also install ca-certificate or ca-bundle.
   It requires:
-  "option username" to be a valid username for transip.nl
-  "option password" to be a valid matching private key
-  "option domain" to contain the base domain
-  "option param_enc" to contain the name of the DNS record to update
-  "option param_opt" to contain the TTL of the DNS record to update
+  'option username' to be a valid username for transip.nl
+  'option password' to be a valid matching private key
+  'option domain' to contain the base domain
+  'option param_enc' to contain the name of the DNS record to update
+  'option param_opt' to contain the TTL of the DNS record to update
 endef
 
 define Package/ddns-scripts-one
@@ -283,14 +343,49 @@ define Package/ddns-scripts-one
 	DEPENDS:=ddns-scripts +curl
 endef
 
-define Package/ddns-scrtips-one/description
-	Dynamic DNS Client scripts extension for "one.com".
+define Package/ddns-scripts-one/description
+	Dynamic DNS Client scripts extension for 'one.com'.
 	It requires:
-	"option username" to be a valid Email for one.com Control Panel
-	"option password" to be the matching one.com Control Panel password
-	"option domain" to contain the domain / subdomain
+	'option username' to be a valid Email for one.com Control Panel
+	'option password' to be the matching one.com Control Panel password
+	'option domain' to contain the domain / subdomain
 endef
 
+
+define Package/ddns-scripts-porkbun
+	$(call Package/ddns-scripts/Default)
+	TITLE:=Extension for porkbun.com API v3
+	DEPENDS:=ddns-scripts +curl
+	PROVIDES:=ddns-scripts_porkbun.com-v3
+endef
+
+define Package/ddns-scripts-porkbun/description
+	Dynamic DNS Client scripts extension for porkbun.com API v3 (require curl)
+	It requires:
+	'option username' to be a Porkbun API key
+	'option password' to be the corresponding Porkbun API secret key
+	'option domain' to be the FQDN for which to configure DDNS
+endef
+
+define Package/ddns-scripts-huaweicloud
+  $(call Package/ddns-scripts/Default)
+  TITLE:=Extension for huaweicloud.com API
+  DEPENDS:=ddns-scripts +curl +openssl-util
+endef
+
+define Package/ddns-scripts-huaweicloud/description
+  Dynamic DNS Client scripts extension for huaweicloud.com API (require curl and openssl)
+endef
+
+define Package/ddns-scripts-aliyun
+	$(call Package/ddns-scripts/Default)
+	TITLE:=Extension for Aliyun DNS API
+	DEPENDS:=ddns-scripts +curl +openssl-util
+endef
+
+define Package/ddns-scripts-aliyun/description
+	Dynamic DNS Client scripts extension for aliyun.com API
+endef
 
 define Build/Configure
 endef
@@ -326,6 +421,10 @@ define Package/ddns-scripts/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) ./files/usr/bin/ddns.sh \
 		$(1)/usr/bin/ddns
+
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_DATA) ./files/etc/uci-defaults/50-ddns-migrate-retry-count \
+		$(1)/etc/uci-defaults/
 endef
 
 define Package/ddns-scripts/postinst
@@ -358,17 +457,25 @@ define Package/ddns-scripts-services/install
 	rm $(1)/usr/share/ddns/default/cloud.google.com-v1.json
 	rm $(1)/usr/share/ddns/default/freedns.42.pl.json
 	rm $(1)/usr/share/ddns/default/godaddy.com-v1.json
+	rm $(1)/usr/share/ddns/default/hetzner.com.json
+	rm $(1)/usr/share/ddns/default/namesilo.com-v1.json
 	rm $(1)/usr/share/ddns/default/digitalocean.com-v2.json
 	rm $(1)/usr/share/ddns/default/dnspod.cn.json
+	rm $(1)/usr/share/ddns/default/dnspod.cn-v3.json
 	rm $(1)/usr/share/ddns/default/no-ip.com.json
 	rm $(1)/usr/share/ddns/default/bind-nsupdate.json
 	rm $(1)/usr/share/ddns/default/route53-v1.json
 	rm $(1)/usr/share/ddns/default/cnkuai.cn.json
 	rm $(1)/usr/share/ddns/default/gandi.net.json
+	rm $(1)/usr/share/ddns/default/beget.com.json
 	rm $(1)/usr/share/ddns/default/pdns.json
+	rm $(1)/usr/share/ddns/default/scaleway.com.json
 	rm $(1)/usr/share/ddns/default/transip.nl.json
 	rm $(1)/usr/share/ddns/default/ns1.com.json
 	rm $(1)/usr/share/ddns/default/one.com.json
+	rm $(1)/usr/share/ddns/default/porkbun.com-v3.json
+	rm $(1)/usr/share/ddns/default/huaweicloud.com.json
+	rm $(1)/usr/share/ddns/default/aliyun.com.json
 endef
 
 
@@ -475,6 +582,41 @@ fi
 exit 0
 endef
 
+define Package/ddns-scripts-hetzner/install
+	$(INSTALL_DIR) $(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/update_hetzner_cloud.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/hetzner.com.json \
+		$(1)/usr/share/ddns/default
+endef
+
+define Package/ddns-scripts-hetzner/prerm
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
+endef
+
+define Package/ddns-scripts-namesilo/install
+	$(INSTALL_DIR) $(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/update_namesilo_com_v1.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/namesilo.com-v1.json \
+		$(1)/usr/share/ddns/default
+endef
+
+define Package/ddns-scripts-namesilo/prerm
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
+endef
 
 define Package/ddns-scripts-digitalocean/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
@@ -494,7 +636,6 @@ fi
 exit 0
 endef
 
-
 define Package/ddns-scripts-dnspod/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_dnspod_cn.sh \
@@ -506,6 +647,25 @@ define Package/ddns-scripts-dnspod/install
 endef
 
 define Package/ddns-scripts-dnspod/prerm
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
+endef
+
+
+define Package/ddns-scripts-dnspod-v3/install
+	$(INSTALL_DIR) $(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/update_dnspod_cn_v3.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/dnspod.cn-v3.json \
+		$(1)/usr/share/ddns/default/
+endef
+
+define Package/ddns-scripts-dnspod-v3/prerm
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
 	/etc/init.d/ddns stop
@@ -628,6 +788,25 @@ exit 0
 endef
 
 
+define Package/ddns-scripts-beget/install
+	$(INSTALL_DIR) $(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/update_beget_com.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/beget.com.json \
+		$(1)/usr/share/ddns/default
+endef
+
+define Package/ddns-scripts-beget/prerm
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
+endef
+
+
 define Package/ddns-scripts-pdns/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_pdns.sh \
@@ -639,6 +818,25 @@ define Package/ddns-scripts-pdns/install
 endef
 
 define Package/ddns-scripts-pdns/prerm
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
+endef
+
+
+define Package/ddns-scripts-scaleway/install
+	$(INSTALL_DIR) $(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/update_scaleway_com.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/scaleway.com.json \
+		$(1)/usr/share/ddns/default
+endef
+
+define Package/ddns-scripts-scaleway/prerm
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
 	/etc/init.d/ddns stop
@@ -685,6 +883,62 @@ exit 0
 endef
 
 
+define Package/ddns-scripts-porkbun/install
+	$(INSTALL_DIR) $(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/update_porkbun_v3.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/porkbun.com-v3.json \
+		$(1)/usr/share/ddns/default/
+endef
+
+define Package/ddns-scripts-porkbun/prerm
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
+endef
+
+
+define Package/ddns-scripts-huaweicloud/install
+	$(INSTALL_DIR) $(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/update_huaweicloud_com.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/huaweicloud.com.json \
+		$(1)/usr/share/ddns/default/
+endef
+
+define Package/ddns-scripts-huaweicloud/prerm
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
+endef
+
+define Package/ddns-scripts-aliyun/install
+	$(INSTALL_DIR) $(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/update_aliyun_com.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/aliyun.com.json \
+		$(1)/usr/share/ddns/default/
+endef
+
+define Package/ddns-scripts-aliyun/prerm
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
+endef
+
+
 $(eval $(call BuildPackage,ddns-scripts))
 $(eval $(call BuildPackage,ddns-scripts-services))
 $(eval $(call BuildPackage,ddns-scripts-utils))
@@ -693,14 +947,22 @@ $(eval $(call BuildPackage,ddns-scripts-cloudflare))
 $(eval $(call BuildPackage,ddns-scripts-gcp))
 $(eval $(call BuildPackage,ddns-scripts-freedns))
 $(eval $(call BuildPackage,ddns-scripts-godaddy))
+$(eval $(call BuildPackage,ddns-scripts-hetzner))
+$(eval $(call BuildPackage,ddns-scripts-namesilo))
 $(eval $(call BuildPackage,ddns-scripts-digitalocean))
 $(eval $(call BuildPackage,ddns-scripts-dnspod))
+$(eval $(call BuildPackage,ddns-scripts-dnspod-v3))
 $(eval $(call BuildPackage,ddns-scripts-noip))
 $(eval $(call BuildPackage,ddns-scripts-nsupdate))
 $(eval $(call BuildPackage,ddns-scripts-route53))
 $(eval $(call BuildPackage,ddns-scripts-cnkuai))
 $(eval $(call BuildPackage,ddns-scripts-gandi))
+$(eval $(call BuildPackage,ddns-scripts-beget))
 $(eval $(call BuildPackage,ddns-scripts-pdns))
+$(eval $(call BuildPackage,ddns-scripts-scaleway))
 $(eval $(call BuildPackage,ddns-scripts-transip))
 $(eval $(call BuildPackage,ddns-scripts-ns1))
 $(eval $(call BuildPackage,ddns-scripts-one))
+$(eval $(call BuildPackage,ddns-scripts-porkbun))
+$(eval $(call BuildPackage,ddns-scripts-huaweicloud))
+$(eval $(call BuildPackage,ddns-scripts-aliyun))

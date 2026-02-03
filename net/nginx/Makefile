@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
-PKG_VERSION:=1.26.1
-PKG_RELEASE:=1
+PKG_VERSION:=1.26.3
+PKG_RELEASE:=3
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://nginx.org/download/
-PKG_HASH:=f9187468ff2eb159260bfd53867c25ff8e334726237acf227b9e870e53d3e36b
+PKG_HASH:=69ee2b237744036e61d24b836668aad3040dda461fe6f570f1787eab570c75aa
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de> \
 				Christian Marangi <ansuelsmth@gmail.com>
 PKG_LICENSE:=2-clause BSD-like license
-PKG_CPE_ID:=cpe:/a:nginx:nginx
+PKG_CPE_ID:=cpe:/a:f5:nginx_open_source
 
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
@@ -37,7 +37,8 @@ PKG_MOD_EXTRA := \
 	brotli \
 	headers-more \
 	ts \
-	ubus
+	ubus \
+	njs
 # official and 3rd-party modules
 PKG_MOD_ALL := \
 	$(PKG_MOD_EXTRA) \
@@ -95,10 +96,7 @@ define Package/nginx/default
   CATEGORY:=Network
   SUBMENU:=Web Servers/Proxies
   TITLE:=Nginx web server
-  URL:=http://nginx.org/
-  DEPENDS:=+libopenssl +libpthread
-  # TODO: add PROVIDES when removing nginx
-  # PROVIDES:=nginx
+  URL:=https://nginx.org/
 endef
 
 define Package/nginx/description
@@ -113,11 +111,19 @@ endef
 define Package/nginx-ssl
   $(Package/nginx/default)
   TITLE += with SSL support
+  DEPENDS:= \
+    +USE_GLIBC:libcrypt-compat \
+    +libopenssl \
+    +NGINX_PCRE:libpcre2 \
+    +libpthread \
+    +NGINX_DAV:libxml2 \
+    +NGINX_PCRE:nginx-ssl-util \
+    +!NGINX_PCRE:nginx-ssl-util-nopcre \
+    +NGINX_HTTP_GZIP:zlib
+  EXTRA_DEPENDS:=nginx-ssl-util$(if $(CONFIG_NGINX_PCRE),,-nopcre) (>=1.5-r1)
+  PROVIDES:=nginx
   VARIANT:=ssl
-  DEPENDS+= +NGINX_PCRE:libpcre2 \
-	+NGINX_PCRE:nginx-ssl-util +!NGINX_PCRE:nginx-ssl-util-nopcre \
-	+NGINX_HTTP_GZIP:zlib +NGINX_DAV:libxml2
-  EXTRA_DEPENDS:=nginx-ssl-util$(if $(CONFIG_NGINX_PCRE),,-nopcre) (>=1.5-1) (<2)
+  DEFAULT_VARIANT:=1
   CONFLICTS:=nginx-full
 endef
 
@@ -164,10 +170,17 @@ endef
 define Package/nginx-full
   $(Package/nginx/default)
   TITLE += with ALL config selected
-  DEPENDS+=+libpcre2 +nginx-ssl-util +zlib +libxml2
-  EXTRA_DEPENDS:=nginx-ssl-util (>=1.5-1) (<2)
+  DEPENDS:= \
+    +USE_GLIBC:libcrypt-compat \
+    +libopenssl \
+    +libpcre2 \
+    +libpthread \
+    +libxml2 \
+    +nginx-ssl-util \
+    +zlib
+  EXTRA_DEPENDS:=nginx-ssl-util (>=1.5-r1)
+  PROVIDES=nginx
   VARIANT:=full
-  PROVIDES += nginx-ssl
 endef
 
 Package/nginx-full/description = $(Package/nginx/description) \
@@ -186,9 +199,7 @@ define Package/nginx-mod-luci
   SUBMENU:=Web Servers/Proxies
   TITLE:=Support file for Nginx
   URL:=http://nginx.org/
-  DEPENDS:=+uwsgi +uwsgi-luci-support +nginx-ssl +nginx-mod-ubus
-  # TODO: add PROVIDES when removing nginx-mod-luci-ssl
-  # PROVIDES:=nginx-mod-luci-ssl
+  DEPENDS:=+uwsgi +uwsgi-luci-support +nginx +nginx-mod-ubus
 endef
 
 define Package/nginx-mod-luci/description
@@ -212,23 +223,22 @@ define Package/nginx-mod-luci/install
 endef
 
 define Download/nginx-mod-geoip2
-  SOURCE_DATE:=2020-01-22
-  VERSION:=1cabd8a1f68ea3998f94e9f3504431970f848fbf
-  URL:=https://github.com/leev/ngx_http_geoip2_module.git
-  MIRROR_HASH:=f3d2a1af5c34812b5a34453457ba6a4d8093c92085aa7f76c46a1c4185c9735c
+  SOURCE_VERSION:=3.4
+  URL:=https://github.com/leev/ngx_http_geoip2_module
+  MIRROR_HASH:=22d67e35067faed200ea398581dd0dc9d599bc6ab4c0ea2034a1ea55666fdc1d
   PROTO:=git
 endef
 
 define Package/nginx-mod-lua-resty-lrucache
   $(call Package/nginx/default)
-  DEPENDS:=@HAS_LUAJIT_ARCH +luajit2
   TITLE:=Nginx Lua OpenResty lrucache module
+  DEPENDS:=@HAS_LUAJIT_ARCH +luajit2
 endef
 
 define Package/nginx-mod-lua-resty-core
   $(call Package/nginx/default)
-  DEPENDS:=+nginx-mod-lua-resty-lrucache
   TITLE:=Nginx Lua OpenResty core module
+  DEPENDS:=+nginx-mod-lua-resty-lrucache
 endef
 
 define Package/nginx-mod-lua-resty-lrucache/install
@@ -248,16 +258,15 @@ endef
 
 define Download/nginx-mod-headers-more
   SOURCE_DATE:=2022-07-17
-  VERSION:=bea1be3bbf6af28f6aa8cf0c01c07ee1637e2bd0
+  SOURCE_VERSION:=bea1be3bbf6af28f6aa8cf0c01c07ee1637e2bd0
   URL:=https://github.com/openresty/headers-more-nginx-module.git
   MIRROR_HASH:=569abadc137b5b52bdcc33b00aa21f6d266cb84fb891795da2c4e101c4898abe
   PROTO:=git
 endef
 
-
 define Download/nginx-mod-brotli
   SOURCE_DATE:=2020-04-23
-  VERSION:=25f86f0bac1101b6512135eac5f93c49c63609e3
+  SOURCE_VERSION:=25f86f0bac1101b6512135eac5f93c49c63609e3
   URL:=https://github.com/google/ngx_brotli.git
   MIRROR_HASH:=680c56be79e7327cb8df271646119333d2f6965a3472bc7043721625fa4488f5
   PROTO:=git
@@ -265,7 +274,7 @@ endef
 
 define Download/nginx-mod-rtmp
   SOURCE_DATE:=2018-12-07
-  VERSION:=f0ea62342a4eca504b311cd5df910d026c3ea4cf
+  SOURCE_VERSION:=f0ea62342a4eca504b311cd5df910d026c3ea4cf
   URL:=https://github.com/ut0mt8/nginx-rtmp-module.git
   MIRROR_HASH:=9c98d886ae4ea3708bb0bca55f8df803418a407e0ffc6df56341bd76ad39cba8
   PROTO:=git
@@ -273,7 +282,7 @@ endef
 
 define Download/nginx-mod-ts
   SOURCE_DATE:=2017-12-04
-  VERSION:=ef2f874d95cc75747eb625a292524a702aefb0fd
+  SOURCE_VERSION:=ef2f874d95cc75747eb625a292524a702aefb0fd
   URL:=https://github.com/arut/nginx-ts-module.git
   MIRROR_HASH:=3f144d4615a4aaa1215435cd06ae4054ea12206d5b38306321420f7acc62aca8
   PROTO:=git
@@ -281,7 +290,7 @@ endef
 
 define Download/nginx-mod-naxsi
   SOURCE_DATE:=2022-09-14
-  VERSION:=d714f1636ea49a9a9f4f06dba14aee003e970834
+  SOURCE_VERSION:=d714f1636ea49a9a9f4f06dba14aee003e970834
   URL:=https://github.com/nbs-system/naxsi.git
   MIRROR_HASH:=b0cef5fbf842f283eb5f0686ddd1afcd07d83abd7027c8cfb3e84a2223a34797
   PROTO:=git
@@ -289,7 +298,7 @@ endef
 
 define Download/nginx-mod-lua
   SOURCE_DATE:=2023-08-19
-  VERSION:=c89469e920713d17d703a5f3736c9335edac22bf
+  SOURCE_VERSION:=c89469e920713d17d703a5f3736c9335edac22bf
   URL:=https://github.com/openresty/lua-nginx-module.git
   MIRROR_HASH:=c3bdf1b23f0a63991b5dcbd1f8ee150e6f893b43278e8600e4e0bb42a6572db4
   PROTO:=git
@@ -297,7 +306,7 @@ endef
 
 define Download/nginx-mod-lua-resty-core
   SOURCE_DATE:=2023-09-09
-  VERSION:=2e2b2adaa61719972fe4275fa4c3585daa0dcd84
+  SOURCE_VERSION:=2e2b2adaa61719972fe4275fa4c3585daa0dcd84
   URL:=https://github.com/openresty/lua-resty-core.git
   MIRROR_HASH:=c5f3df92fd72eac5b54497c039aca0f0d9ea1d87223f1e3a54365ba565991874
   PROTO:=git
@@ -305,7 +314,7 @@ endef
 
 define Download/nginx-mod-lua-resty-lrucache
   SOURCE_DATE:=2023-08-06
-  VERSION:=52f5d00403c8b7aa8a4d4f3779681976b10a18c1
+  SOURCE_VERSION:=52f5d00403c8b7aa8a4d4f3779681976b10a18c1
   URL:=https://github.com/openresty/lua-resty-lrucache.git
   MIRROR_HASH:=0833e0114948af4edb216c5c34b3f1919f534b298f4fa29739544f7c9bb8a08d
   PROTO:=git
@@ -313,7 +322,7 @@ endef
 
 define Download/nginx-mod-dav-ext
   SOURCE_DATE:=2018-12-17
-  VERSION:=f5e30888a256136d9c550bf1ada77d6ea78a48af
+  SOURCE_VERSION:=f5e30888a256136d9c550bf1ada77d6ea78a48af
   URL:=https://github.com/arut/nginx-dav-ext-module.git
   MIRROR_HASH:=c574e60ffab5f6e5d8bea18aab0799c19cd9a84f3d819b787e9af4f0e7867b52
   PROTO:=git
@@ -321,9 +330,17 @@ endef
 
 define Download/nginx-mod-ubus
   SOURCE_DATE:=2020-09-06
-  VERSION:=b2d7260dcb428b2fb65540edb28d7538602b4a26
+  SOURCE_VERSION:=b2d7260dcb428b2fb65540edb28d7538602b4a26
   URL:=https://github.com/Ansuel/nginx-ubus-module.git
   MIRROR_HASH:=515bb9d355ad80916f594046a45c190a68fb6554d6795a54ca15cab8bdd12fda
+  PROTO:=git
+endef
+
+define Download/nginx-mod-njs
+  SOURCE_DATE:=2024-10-03
+  SOURCE_VERSION:=c5a29a7af8894ee1ec44ebda71ef0ea1f2a31af6
+  URL:=https://github.com/nginx/njs.git
+  MIRROR_HASH:=6c94ec6b1c119e0c7a85ec395a4987a8a61739e1f9256ce6d92a16804c5d4637
   PROTO:=git
 endef
 
@@ -331,7 +348,7 @@ define Module/Download
   define Download/nginx-mod-$(1) +=
 
     SUBDIR:=nginx-mod-$(1)
-    FILE:=nginx-mod-$(1)-$$$$(subst -,.,$$$$(SOURCE_DATE))~$$$$(call version_abbrev,$$$$(VERSION)).tar.zst
+    FILE:=nginx-mod-$(1)-$$$$(subst -,.,$$$$(SOURCE_DATE))~$$$$(call version_abbrev,$$$$(SOURCE_VERSION)).tar.zst
   endef
 endef
 $(foreach m,$(PKG_MOD_EXTRA),$(eval $(call Module/Download,$(m))))
@@ -380,12 +397,12 @@ endef
 
 # $(1) module name
 # $(2) module additional dependency
-# $(3) module so name (stripped of the finaly _module.so)
+# $(3) module so name (stripped of the finally _module.so)
 # $(4) module description
 define BuildModule
   define Package/nginx-mod-$(1)
     $(call Package/nginx/default)
-    DEPENDS:=+nginx-ssl $(2)
+    DEPENDS:=+nginx $(2)
     TITLE:=Nginx $(1) module
   endef
 
@@ -413,7 +430,8 @@ ifneq ($(CONFIG_PACKAGE_nginx-mod-lua),)
 					LUAJIT_LIB=$(STAGING_DIR)/usr/lib
 endif
 
-CONFIGURE_VARS += CONFIG_BIG_ENDIAN=$(CONFIG_BIG_ENDIAN)
+CONFIGURE_VARS += LIBXML2_INC=$(STAGING_DIR)/usr/include/libxml2 \
+			CONFIG_BIG_ENDIAN=$(CONFIG_BIG_ENDIAN)
 
 CONFIGURE_ARGS += \
 	--crossbuild=Linux::$(ARCH) \
@@ -473,7 +491,8 @@ CONFIGURE_ARGS += \
 	$(if $(CONFIG_PACKAGE_nginx-mod-stream),--with-stream=dynamic --with-stream_ssl_module --with-stream_ssl_preread_module) \
 	$(if $(call IsEnabled,NGINX_STREAM_REAL_IP),--with-stream_realip_module) \
 	$(if $(CONFIG_PACKAGE_nginx-mod-naxsi),--add-dynamic-module=$(PKG_BUILD_DIR)/nginx-mod-naxsi/naxsi_src) \
-	$(foreach m,$(filter-out lua-resty-core lua-resty-lrucache naxsi,$(PKG_MOD_EXTRA)), \
+	$(if $(CONFIG_PACKAGE_nginx-mod-njs),--add-dynamic-module=$(PKG_BUILD_DIR)/nginx-mod-njs/nginx) \
+	$(foreach m,$(filter-out lua-resty-core lua-resty-lrucache naxsi njs,$(PKG_MOD_EXTRA)), \
 		$(if $(CONFIG_PACKAGE_nginx-mod-$(m)),--add-dynamic-module=$(PKG_BUILD_DIR)/nginx-mod-$(m)))
 
 $(eval $(call BuildPackage,nginx-ssl))
@@ -485,7 +504,7 @@ $(eval $(call BuildModule,stream,+@NGINX_STREAM_CORE_MODULE, \
 	ngx_stream, Add support for NGINX request streaming.))
 $(eval $(call BuildModule,lua,+nginx-mod-lua-resty-core,ngx_http_lua, \
 	Enable Lua module (luajit2 based, OpenResty patches)))
-$(eval $(call BuildModule,ubus,+libubus +libjson-c +libblobmsg-json +@NGINX_UBUS, \
+$(eval $(call BuildModule,ubus,+libubus +libjson-c +libblobmsg-json, \
 	ngx_http_ubus,Enable UBUS api support directly from the server.))
 $(eval $(call BuildModule,dav-ext,+@NGINX_DAV +libxml2,ngx_http_dav_ext, \
 	Enable the WebDAV methods PROPFIND OPTIONS LOCK UNLOCK.))
@@ -501,31 +520,5 @@ $(eval $(call BuildModule,naxsi,,ngx_http_naxsi, \
 	Enable NAXSI module.))
 $(eval $(call BuildModule,geoip2,+@NGINX_STREAM_CORE_MODULE +nginx-mod-stream +libmaxminddb,ngx_http_geoip2 ngx_stream_geoip2, \
 	Enable MaxMind GeoIP2 module.))
-
-# TODO: remove after a transition period (together with pkg nginx-util):
-# It is for smoothly substituting nginx and nginx-mod-luci-ssl (by nginx-ssl
-# respectively nginx-mod-luci). Add above commented PROVIDES when removing.
-
-define Package/nginx
-  TITLE:=Dummy package for transition when upgrading.
-  DEPENDS:=+nginx-ssl
-  PKGARCH:=all
-endef
-
-define Package/nginx/install
-	$(INSTALL_DIR) $(1)/usr/bin
-endef
-
-$(eval $(call BuildPackage,nginx))
-
-define Package/nginx-mod-luci-ssl
-  TITLE:=Dummy package for transition when upgrading.
-  DEPENDS:=+nginx-mod-luci
-  PKGARCH:=all
-endef
-
-define Package/nginx-mod-luci-ssl/install
-	$(INSTALL_DIR) $(1)/usr/bin
-endef
-
-$(eval $(call BuildPackage,nginx-mod-luci-ssl))
+$(eval $(call BuildModule,njs,+zlib +libxml2 +libxslt +libpcre2,ngx_http_js, \
+	Enable NJS module.))

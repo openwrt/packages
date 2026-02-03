@@ -10,20 +10,9 @@ of the ucontext.h C-API.
 Thus additionally link libmariadb to libucontext which is a library
 providing these system calls on platforms not supporting them out of
 the box - like musl based platforms.
---- a/libmariadb/CMakeLists.txt
-+++ b/libmariadb/CMakeLists.txt
-@@ -417,7 +417,7 @@ ELSE()
-   SET_TARGET_PROPERTIES(libmariadb PROPERTIES LINKER_LANGUAGE C)
- ENDIF()
- 
--TARGET_LINK_LIBRARIES(libmariadb LINK_PRIVATE ${SYSTEM_LIBS})
-+TARGET_LINK_LIBRARIES(libmariadb LINK_PRIVATE ${SYSTEM_LIBS} ${LIBUCONTEXT_POSIX} ${LIBUCONTEXT})
- 
- SIGN_TARGET(libmariadb)
- 
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -230,6 +230,14 @@ IF(UNIX)
+@@ -264,11 +264,19 @@ IF(UNIX)
    SEARCH_LIBRARY(LIBPTHREAD pthread_getspecific "pthread;pthreads")
    SEARCH_LIBRARY(LIBNSL gethostbyname_r "nsl_r;nsl")
    SEARCH_LIBRARY(LIBSOCKET setsockopt socket)
@@ -36,24 +25,31 @@ the box - like musl based platforms.
 +    UNSET(LIBUCONTEXT_POSIX)
 +  ENDIF()
    FIND_PACKAGE(Threads)
-   SET(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${LIBNSL} ${LIBBIND} ${LIBICONV} ${LIBZ}
-     ${LIBSOCKET} ${CMAKE_DL_LIBS} ${LIBM} ${LIBPTHREAD})
+   SET(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${LIBNSL} ${LIBBIND} ${LIBICONV} ${ZLIB_LIBRARY} 
+-      ${LIBSOCKET} ${CMAKE_DL_LIBS} ${LIBM} ${LIBPTHREAD})
++      ${LIBSOCKET} ${LIBUCONTEXT} ${LIBUCONTEXT_POSIX} ${CMAKE_DL_LIBS} ${LIBM} ${LIBPTHREAD})
+   SET(SYSTEM_LIBS ${SYSTEM_LIBS} ${LIBNSL} ${LIBBIND} ${LIBICONV} 
+-    ${LIBSOCKET} ${CMAKE_DL_LIBS} ${LIBM} ${LIBPTHREAD})
++    ${LIBSOCKET} ${LIBUCONTEXT} ${LIBUCONTEXT_POSIX} ${CMAKE_DL_LIBS} ${LIBM} ${LIBPTHREAD})
+   #remove possible dups from required libraries
+   LIST(LENGTH CMAKE_REQUIRED_LIBRARIES rllength)
+   IF(${rllength} GREATER 0)
 --- a/include/ma_config.h.in
 +++ b/include/ma_config.h.in
-@@ -28,6 +28,7 @@
+@@ -29,6 +29,7 @@
  #cmakedefine HAVE_SYS_UN_H 1
  #cmakedefine HAVE_UNISTD_H 1
  #cmakedefine HAVE_UCONTEXT_H 1
 +#cmakedefine HAVE_LIBUCONTEXT_POSIX 1
+ #cmakedefine HAVE_BOOST_CONTEXT_H 1
  
  /*
-  * function definitions - processed in LibmysqlFunctions.txt 
 --- a/include/ma_context.h
 +++ b/include/ma_context.h
-@@ -31,7 +31,7 @@
- #define MY_CONTEXT_USE_X86_64_GCC_ASM
- #elif defined(__GNUC__) && __GNUC__ >= 3 && defined(__i386__)
- #define MY_CONTEXT_USE_I386_GCC_ASM
+@@ -61,7 +61,7 @@
+ #define MY_CONTEXT_USE_AARCH64_GCC_ASM
+ #elif defined(HAVE_BOOST_CONTEXT_H)
+ #define MY_CONTEXT_USE_BOOST_CONTEXT
 -#elif defined(HAVE_UCONTEXT_H)
 +#elif defined(HAVE_UCONTEXT_H) || defined(HAVE_LIBUCONTEXT_POSIX)
  #define MY_CONTEXT_USE_UCONTEXT

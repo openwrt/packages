@@ -914,6 +914,13 @@ unbound_conf() {
   fi
 
 
+  case $moduleopts in
+  *respip*)
+    modulestring="respip $modulestring"
+    ;;
+  esac
+
+
   {
     # Print final module string
     echo "  module-config: \"$modulestring\""

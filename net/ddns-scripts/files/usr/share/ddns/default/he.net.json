@@ -1,11 +1,11 @@
 {
 	"name": "he.net",
 	"ipv4": {
-		"url": "http://[DOMAIN]:[PASSWORD]@dyn.dns.he.net/nic/update?hostname=[DOMAIN]&myip=[IP]",
+		"url": "https://dyn.dns.he.net/nic/update?hostname=[DOMAIN]&password=[PASSWORD]&myip=[IP]",
 		"answer": "good|nochg"
 	},
 	"ipv6": {
-		"url": "http://[DOMAIN]:[PASSWORD]@dyn.dns.he.net/nic/update?hostname=[DOMAIN]&myip=[IP]",
+		"url": "https://dyn.dns.he.net/nic/update?hostname=[DOMAIN]&password=[PASSWORD]&myip=[IP]",
 		"answer": "good|nochg"
 	}
 }

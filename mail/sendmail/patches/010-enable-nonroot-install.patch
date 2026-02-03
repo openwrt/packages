@@ -13,3 +13,122 @@
  
  depend:
  
+--- a/devtools/M4/UNIX/executable.m4
++++ b/devtools/M4/UNIX/executable.m4
+@@ -31,7 +31,7 @@ ifdef(`bldLINK_SOURCES', `bldMAKE_SOURCE
+ ifdef(`bldNO_INSTALL', ,
+ `install-`'bldCURRENT_PRODUCT: bldCURRENT_PRODUCT ifdef(`bldTARGET_INST_DEP', `bldTARGET_INST_DEP')
+ 	ifdef(`confMKDIR', `if [ ! -d ${DESTDIR}${bldINSTALL_DIR`'BINDIR} ]; then confMKDIR -p ${DESTDIR}${bldINSTALL_DIR`'BINDIR}; else :; fi ')
+-	${INSTALL} -c -o ${bldBIN_TYPE`'BINOWN} -g ${bldBIN_TYPE`'BINGRP} -m ${bldBIN_TYPE`'BINMODE} bldCURRENT_PRODUCT ${DESTDIR}${bldINSTALL_DIR`'BINDIR}
++	${INSTALL} -c -m ${bldBIN_TYPE`'BINMODE} bldCURRENT_PRODUCT ${DESTDIR}${bldINSTALL_DIR`'BINDIR}
+ ifdef(`bldTARGET_LINKS', `bldMAKE_TARGET_LINKS(${bldINSTALL_DIR`'BINDIR}/bldCURRENT_PRODUCT, ${bldCURRENT_PRODUCT`'TARGET_LINKS})')')
+ 
+ strip-`'bldCURRENT_PRODUCT: bldCURRENT_PRODUCT
+--- a/devtools/M4/UNIX/library.m4
++++ b/devtools/M4/UNIX/library.m4
+@@ -28,7 +28,7 @@ ifdef(`bldLINK_SOURCES', `bldMAKE_SOURCE
+ 
+ install-`'bldCURRENT_PRODUCT: bldCURRENT_PRODUCT.a
+ ifdef(`bldINSTALLABLE', `	ifdef(`confMKDIR', `if [ ! -d ${DESTDIR}${bldINSTALL_DIR`'LIBDIR} ]; then confMKDIR -p ${DESTDIR}${bldINSTALL_DIR`'LIBDIR}; else :; fi ')
+-	${INSTALL} -c -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} bldCURRENT_PRODUCT.a ${DESTDIR}${LIBDIR}')
++	${INSTALL} -c -m ${LIBMODE} bldCURRENT_PRODUCT.a ${DESTDIR}${LIBDIR}')
+ 
+ bldCURRENT_PRODUCT-clean:
+ 	rm -f ${OBJS} bldCURRENT_PRODUCT.a ${MANPAGES}
+--- a/devtools/M4/UNIX/manpage.m4
++++ b/devtools/M4/UNIX/manpage.m4
+@@ -69,10 +69,10 @@ ifdef(`confNO_MAN_INSTALL', `divert(-1)'
+ define(`bldMAN_INSTALL_CMD',
+ `ifdef(`confDONT_INSTALL_CATMAN', `dnl',
+ `	ifdef(`confMKDIR', `if [ ! -d ${DESTDIR}${MAN'bldGET_MAN_SOURCE_NUM($1)`SRC} ]; then confMKDIR -p ${DESTDIR}${MAN'bldGET_MAN_SOURCE_NUM($1)`SRC}; else :; fi ')
+-	${INSTALL} -c -o ${MANOWN} -g ${MANGRP} -m ${MANMODE} bldGET_MAN_BASE_NAME($1).`${MAN'bldGET_MAN_SOURCE_NUM($1)`SRC}' `${DESTDIR}${MAN'bldGET_MAN_SOURCE_NUM($1)}/bldGET_MAN_BASE_NAME($1)`.${MAN'bldGET_MAN_SOURCE_NUM($1)`EXT}'')
++	${INSTALL} -c -m ${MANMODE} bldGET_MAN_BASE_NAME($1).`${MAN'bldGET_MAN_SOURCE_NUM($1)`SRC}' `${DESTDIR}${MAN'bldGET_MAN_SOURCE_NUM($1)}/bldGET_MAN_BASE_NAME($1)`.${MAN'bldGET_MAN_SOURCE_NUM($1)`EXT}'')
+ ifdef(`confINSTALL_RAWMAN',
+ `	ifdef(`confMKDIR', `if [ ! -d ${DESTDIR}${MAN'bldGET_MAN_SOURCE_NUM($1)`MAN} ]; then confMKDIR -p ${DESTDIR}${MAN'bldGET_MAN_SOURCE_NUM($1)`MAN}; else :; fi ')
+-	${INSTALL} -c -o ${MANOWN} -g ${MANGRP} -m ${MANMODE} bldGET_MAN_BASE_NAME($1).bldGET_MAN_SOURCE_NUM($1) `${DESTDIR}${MAN'bldGET_MAN_SOURCE_NUM($1)`MAN}'/bldGET_MAN_BASE_NAME($1)`.${MAN'bldGET_MAN_SOURCE_NUM($1)`EXT}'', `dnl')'
++	${INSTALL} -c -m ${MANMODE} bldGET_MAN_BASE_NAME($1).bldGET_MAN_SOURCE_NUM($1) `${DESTDIR}${MAN'bldGET_MAN_SOURCE_NUM($1)`MAN}'/bldGET_MAN_BASE_NAME($1)`.${MAN'bldGET_MAN_SOURCE_NUM($1)`EXT}'', `dnl')'
+ )dnl
+ bldFOREACH(`bldMAN_INSTALL_CMD(', `bldMAN_PAGES')
+ ifdef(`confNO_MAN_INSTALL', `divert(0)', `dnl')
+--- a/libmilter/Makefile.m4
++++ b/libmilter/Makefile.m4
+@@ -33,8 +33,8 @@ MFAPI=	${SRCDIR}/inc`'lude/libmilter/mfa
+ MFDEF=	${SRCDIR}/inc`'lude/libmilter/mfdef.h
+ install-mfapi: ${MFAPI}
+ 	if [ ! -d ${DESTDIR}${INCLUDEDIR}/libmilter ]; then mkdir -p ${DESTDIR}${INCLUDEDIR}/libmilter; else :; fi
+-	${INSTALL} -c -o ${INCOWN} -g ${INCGRP} -m ${INCMODE} ${MFAPI} ${DESTDIR}${INCLUDEDIR}/libmilter/mfapi.h
+-	${INSTALL} -c -o ${INCOWN} -g ${INCGRP} -m ${INCMODE} ${MFDEF} ${DESTDIR}${INCLUDEDIR}/libmilter/mfdef.h
++	${INSTALL} -c -m ${INCMODE} ${MFAPI} ${DESTDIR}${INCLUDEDIR}/libmilter/mfapi.h
++	${INSTALL} -c -m ${INCMODE} ${MFDEF} ${DESTDIR}${INCLUDEDIR}/libmilter/mfdef.h
+ divert(0)
+ 
+ bldFINISH
+--- a/mail.local/Makefile.m4
++++ b/mail.local/Makefile.m4
+@@ -30,7 +30,7 @@ install:
+ force-install: install-mail.local ifdef(`confNO_MAN_BUILD',, `install-docs')
+ 
+ install-mail.local: mail.local
+-	${INSTALL} -c -o ${UBINOWN} -g ${UBINGRP} -m ${UBINMODE} mail.local ${DESTDIR}${EBINDIR}
++	${INSTALL} -c -m ${UBINMODE} mail.local ${DESTDIR}${EBINDIR}
+ divert
+ 
+ bldFINISH
+--- a/rmail/Makefile.m4
++++ b/rmail/Makefile.m4
+@@ -31,7 +31,7 @@ defeat-install:
+ force-install: install-rmail ifdef(`confNO_MAN_BUILD',, `install-docs')
+ 
+ install-rmail: rmail
+-	${INSTALL} -c -o ${UBINOWN} -g ${UBINGRP} -m ${UBINMODE} rmail ${DESTDIR}${UBINDIR}
++	${INSTALL} -c -m ${UBINMODE} rmail ${DESTDIR}${UBINDIR}
+ divert
+ 
+ bldFINISH
+--- a/sendmail/Makefile.m4
++++ b/sendmail/Makefile.m4
+@@ -60,8 +60,6 @@ ${DESTDIR}${MSPQ}:
+ 	@echo "You must have set up a new user ${MSPQOWN} and a new group ${GBINGRP}"
+ 	@echo "as explained in sendmail/SECURITY."
+ 	mkdir -p ${DESTDIR}${MSPQ}
+-	chown ${MSPQOWN} ${DESTDIR}${MSPQ}
+-	chgrp ${GBINGRP} ${DESTDIR}${MSPQ}
+ 	chmod 0770 ${DESTDIR}${MSPQ}
+ 
+ divert(0)
+@@ -73,7 +71,7 @@ ifdef(`confNO_STATISTICS_INSTALL',, `bld
+ divert(bldTARGETS_SECTION)
+ 
+ install-set-user-id: bldCURRENT_PRODUCT ifdef(`confNO_HELPFILE_INSTALL',, `install-hf') ifdef(`confNO_STATISTICS_INSTALL',, `install-st') ifdef(`confNO_MAN_BUILD',, `install-docs')
+-	${INSTALL} -c -o ${S`'BINOWN} -g ${S`'BINGRP} -m ${S`'BINMODE} bldCURRENT_PRODUCT ${DESTDIR}${M`'BINDIR}
++	${INSTALL} -c -m ${S`'BINMODE} bldCURRENT_PRODUCT ${DESTDIR}${M`'BINDIR}
+ 	for i in ${sendmailTARGET_LINKS}; do \
+ 		rm -f $$i; \
+ 		${LN} ${LNOPTS} ${M`'BINDIR}/sendmail $$i; \
+@@ -81,7 +79,7 @@ install-set-user-id: bldCURRENT_PRODUCT
+ 
+ define(`confMTA_LINKS', `${DESTDIR}${UBINDIR}/newaliases ${DESTDIR}${UBINDIR}/mailq ${DESTDIR}${UBINDIR}/hoststat ${DESTDIR}${UBINDIR}/purgestat')
+ install-sm-mta: bldCURRENT_PRODUCT
+-	${INSTALL} -c -o ${M`'BINOWN} -g ${M`'BINGRP} -m ${M`'BINMODE} bldCURRENT_PRODUCT ${DESTDIR}${M`'BINDIR}/sm-mta
++	${INSTALL} -c -m ${M`'BINMODE} bldCURRENT_PRODUCT ${DESTDIR}${M`'BINDIR}/sm-mta
+ 	for i in confMTA_LINKS; do \
+ 		rm -f $$i; \
+ 		${LN} ${LNOPTS} ${M`'BINDIR}/sm-mta $$i; \
+@@ -89,14 +87,14 @@ install-sm-mta: bldCURRENT_PRODUCT
+ 
+ install-hf:
+ 	if [ ! -d ${DESTDIR}${HFDIR} ]; then mkdir -p ${DESTDIR}${HFDIR}; else :; fi
+-	${INSTALL} -c -o ${UBINOWN} -g ${UBINGRP} -m 444 helpfile ${DESTDIR}${HFFILE}
++	${INSTALL} -c -m 444 helpfile ${DESTDIR}${HFFILE}
+ 
+ install-st: statistics
+ 	if [ ! -d ${DESTDIR}${STDIR} ]; then mkdir -p ${DESTDIR}${STDIR}; else :; fi
+-	${INSTALL} -c -o ${SBINOWN} -g ${UBINGRP} -m ifdef(`confSTMODE', `confSTMODE', `0600') statistics ${DESTDIR}${STPATH}
++	${INSTALL} -c -m ifdef(`confSTMODE', `confSTMODE', `0600') statistics ${DESTDIR}${STPATH}
+ 
+ install-submit-st: statistics ${DESTDIR}${MSPQ}
+-	${INSTALL} -c -o ${MSPQOWN} -g ${GBINGRP} -m ifdef(`confSTMODE', `confSTMODE', `0600') statistics ${DESTDIR}${MSPQ}/${MSPSTFILE}
++	${INSTALL} -c -m ifdef(`confSTMODE', `confSTMODE', `0600') statistics ${DESTDIR}${MSPQ}/${MSPSTFILE}
+ 
+ divert(0)
+ bldPRODUCT_END

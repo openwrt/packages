@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gkrellmd
-PKG_VERSION:=2.3.11
+PKG_VERSION:=2.4.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=gkrellm-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://gkrellm.srcbox.net/releases
-PKG_HASH:=1ee0643ed9ed99f88c1504c89d9ccb20780cf29319c904b68e80a8e7c8678c06
+PKG_HASH:=6f83665760b936ad4b55f9182b1ec7601faf38a0f25ea1e4bddc9965088f032d
 PKG_BUILD_DIR:=$(BUILD_DIR)/gkrellm-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Peter Denison <openwrt@marshadder.org>

@@ -8,6 +8,10 @@
 
 socket = require("socket")
 
+-- get configs
+
+local omit_zero_values = os.getenv("OMIT_ZERO_VALUES") == "1"
+
 -- Parsing
 
 function space_split(s)
@@ -32,20 +36,30 @@ end
 -- Metric printing
 
 function print_metric(metric, labels, value)
-  local label_string = ""
-  if labels then
-    for label,value in pairs(labels) do
-      label_string =  label_string .. label .. '="' .. value .. '",'
-    end
-    label_string = "{" .. string.sub(label_string, 1, -2) .. "}"
+  if type(value) == "nil" then
+    return
   end
-  output(string.format("%s%s %s", metric, label_string, value))
+  out:write(metric)
+  if labels then
+    out:write("{")
+    coma = ""
+    for label,value in pairs(labels) do
+      out:write(coma, label, '="', value, '"')
+      coma = ","
+    end
+    out:write("}")
+  end
+  out:write(" ", value, "\n")
 end
 
 function metric(name, mtype, labels, value)
-  output("# TYPE " .. name .. " " .. mtype)
+  out:write("# TYPE ", name, " ", mtype, "\n")
+  -- omit_zero_vales config supress time series always being zero
+  local printall = not (mtype == "counter" and omit_zero_values)
   local outputter = function(labels, value)
-    print_metric(name, labels, value)
+    if printall or tonumber(value) ~= 0 then
+      print_metric(name, labels, value)
+    end
   end
   if value then
     outputter(labels, value)
@@ -59,7 +73,7 @@ function timed_scrape(collector)
   local status, err = pcall(collector.scrape)
   if not status then
     success = 0
-    io.stderr:write(err)
+    io.stderr:write(err .. '\n')
   end
   return (socket.gettime() - start_time), success
 end
@@ -80,15 +94,18 @@ end
 -- Web server-specific functions
 
 function handle_request(env)
+  -- use buffered output instead uhttpd.send()
+  out = io.open("/proc/self/fd/1", "a+")
+  out:setvbuf("full")
   if env.PATH_INFO ~= '/metrics' then
-    uhttpd.send("Status: 404 Not Found\r\n")
-    uhttpd.send("Server: lua-metrics\r\n")
-    uhttpd.send("Content-Type: text/plain\r\n\r\n")
-    uhttpd.send("ERROR: File Not Found.")
+    out:write("Status: 404 Not Found\r\n")
+    out:write("Server: lua-metrics\r\n")
+    out:write("Content-Type: text/plain\r\n\r\n")
+    out:write("ERROR: File Not Found.")
   else
-    uhttpd.send("Status: 200 OK\r\n")
-    uhttpd.send("Server: lua-metrics\r\n")
-    uhttpd.send("Content-Type: text/plain; version=0.0.4\r\n\r\n")
+    out:write("Status: 200 OK\r\n")
+    out:write("Server: lua-metrics\r\n")
+    out:write("Content-Type: text/plain; version=0.0.4\r\n\r\n")
     local cols = {}
     for c in env.QUERY_STRING:gmatch("collect[^=]*=([^&]+)") do
       cols[#cols+1] = c
@@ -98,6 +115,7 @@ function handle_request(env)
     end
     run_all_collectors(cols)
   end
+  out:flush()
 end
 
 -- Main program
@@ -112,9 +130,7 @@ for c in ls_fd:lines() do
 end
 ls_fd:close()
 
-output = function (str) uhttpd.send(str.."\n") end
-
 if arg ~= nil then
-  output = print
+  out = io.output()
   run_all_collectors(col_names)
 end

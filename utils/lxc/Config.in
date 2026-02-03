@@ -8,6 +8,7 @@ config LXC_KERNEL_OPTIONS
 	select KERNEL_NAMESPACES
 	select KERNEL_DEVPTS_MULTIPLE_INSTANCES
 	select KERNEL_POSIX_MQUEUE
+	select KERNEL_CGROUP_DEVICE
 	select KERNEL_CGROUP_SCHED
 	select KERNEL_FAIR_GROUP_SCHED
 	select KERNEL_RT_GROUP_SCHED
@@ -16,6 +17,7 @@ config LXC_KERNEL_OPTIONS
 	select KERNEL_MEMCG_KMEM
 	select KERNEL_CPUSETS
 	select PACKAGE_kmod-ikconfig
+	select PACKAGE_kmod-unix-diag
 	help
 	  Select needed kernel options for LXC related utilities. Options
 	  include cgroups, namespaces and other miscellaneous options. These
@@ -50,6 +52,10 @@ config LXC_NETWORKING
 	default n
 	select PACKAGE_kmod-veth
 	select PACKAGE_kmod-macvlan
+	select PACKAGE_kmod-inet-diag
+	select PACKAGE_kmod-ipt-checksum
+	select PACKAGE_kmod-netlink-diag
+	select PACKAGE_kmod-packet-diag
 	help
 	  Enable "veth pair device" and "macvlan"
 

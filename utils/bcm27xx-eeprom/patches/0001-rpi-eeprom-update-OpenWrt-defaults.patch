@@ -14,7 +14,7 @@ Signed-off-by: Álvaro Fernández Rojas <noltari@gmail.com>
 
 --- a/rpi-eeprom-update
 +++ b/rpi-eeprom-update
-@@ -25,7 +25,7 @@ fi
+@@ -27,7 +27,7 @@ fi
  
  # Selects the release sub-directory
  FIRMWARE_RELEASE_STATUS=${FIRMWARE_RELEASE_STATUS:-default}
@@ -27,9 +27,11 @@ Signed-off-by: Álvaro Fernández Rojas <noltari@gmail.com>
 +++ b/rpi-eeprom-update-default
 @@ -1,7 +1,7 @@
  
- FIRMWARE_ROOT=/lib/firmware/raspberrypi/bootloader
- FIRMWARE_RELEASE_STATUS="default"
+-FIRMWARE_ROOT=/usr/lib/firmware/raspberrypi/bootloader
+-FIRMWARE_RELEASE_STATUS="default"
 -FIRMWARE_BACKUP_DIR="/var/lib/raspberrypi/bootloader/backup"
++FIRMWARE_ROOT=/lib/firmware/raspberrypi/bootloader
++FIRMWARE_RELEASE_STATUS="latest"
 +FIRMWARE_BACKUP_DIR="${FIRMWARE_ROOT}/backup"
  EEPROM_CONFIG_HOOK=
  

@@ -36,7 +36,7 @@ endef
 
 define Package/libowipcalc/description
   The owipcalc library supports a number of calculations and tests to work
-  with ip-address ranges, this is useful for programms that e.g. need to
+  with ip-address ranges, this is useful for programs that e.g. need to
   partition ipv6-prefixes into small subnets or to calculate address ranges
   for dhcp pools.
 endef

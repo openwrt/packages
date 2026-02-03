@@ -9,14 +9,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libtins
 PKG_VERSION:=4.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 PKG_SOURCE_URL:=https://github.com/mfontanini/libtins
 PKG_MIRROR_HASH:=85c5a15beca56552ba3f33e10f2a82ee4c47be2b3334d163304362188a37b13a
 
-PKG_MAINTAINER:= Steven Hessing <steven.hessing@gmail.com>
+PKG_MAINTAINER:=
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=LICENSE
 

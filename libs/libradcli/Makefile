@@ -19,6 +19,8 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/radcli-$(PKG_VERSION)
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
+PKG_CONFIG_DEPENDS := CONFIG_RADCLI_TLS
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/libradcli
@@ -30,11 +32,15 @@ define Package/libradcli
   DEPENDS:= +RADCLI_TLS:libgnutls +libnettle
 endef
 
-define Package/libradcli/decription
+define Package/libradcli/description
   The radcli library is a library for writing RADIUS Clients. The library's
   approach is to allow writing RADIUS-aware application in less than 50 lines
   of C code. It was based originally on freeradius-client and is source 
   compatible with it.
+endef
+
+define Package/libradcli/config
+        source "$(SOURCE)/Config.in"
 endef
 
 CONFIGURE_ARGS+= \

@@ -421,6 +421,21 @@ config_pool() {
 	swanctl_xappend1 "}"
 }
 
+config_mschapv2_secret() {
+	local conf="$1"
+
+	local id
+	local secret
+
+	config_get id "$conf" id
+	config_get secret "$conf" secret
+
+	swanctl_xappend1 "eap-${conf} {"
+	swanctl_xappend2 "id = $id"
+	swanctl_xappend2 "secret = $secret"
+	swanctl_xappend1 "}"
+}
+
 config_remote() {
 	local conf="$1"
 
@@ -435,6 +450,7 @@ config_remote() {
 	local auth_method
 	local keyingtries
 	local dpddelay
+	local encap
 	local inactivity
 	local keyexchange
 	local fragmentation
@@ -443,8 +459,12 @@ config_remote() {
 	local local_key
 	local ca_cert
 	local rekeytime
+	local overtime
+	local send_cert
+	local send_certreq
 	local remote_ca_certs
 	local pools
+	local eap_id
 
 	config_get_bool enabled "$conf" enabled 0
 	[ $enabled -eq 0 ] && return
@@ -457,6 +477,7 @@ config_remote() {
 	config_get local_ip "$conf" local_ip "%any"
 	config_get keyingtries "$conf" keyingtries "3"
 	config_get dpddelay "$conf" dpddelay "30s"
+	config_get_bool encap "$conf" encap 0
 	config_get inactivity "$conf" inactivity
 	config_get keyexchange "$conf" keyexchange "ikev2"
 	config_get fragmentation "$conf" fragmentation "yes"
@@ -466,6 +487,9 @@ config_remote() {
 	config_get ca_cert "$conf" ca_cert ""
 	config_get rekeytime "$conf" rekeytime
 	config_get overtime "$conf" overtime
+	config_get send_cert "$conf" send_cert
+	config_get_bool send_certreq "$conf" send_certreq 1
+	config_get eap_id "$conf" eap_id "%any"
 
 	config_list_foreach "$conf" local_sourceip append_var local_sourceip ","
 	config_list_foreach "$conf" remote_ca_certs append_var remote_ca_certs ","
@@ -525,11 +549,16 @@ config_remote() {
 	[ -n "$fragmentation" ] && swanctl_xappend2 "fragmentation = $fragmentation"
 	[ -n "$pools" ] && swanctl_xappend2 "pools = $pools"
 
+	local local_auth_method="$auth_method"
+	if [ "$auth_method" = "eap-mschapv2" ] || [ "$auth_method" = "eap-tls" ]; then
+		local_auth_method="pubkey"
+	fi
+
 	swanctl_xappend2 "local {"
-	swanctl_xappend3 "auth = $auth_method"
+	swanctl_xappend3 "auth = $local_auth_method"
 
 	[ -n "$local_identifier" ] && swanctl_xappend3 "id = \"$local_identifier\""
-	[ "$auth_method" = pubkey ] && [ -n "$local_cert" ] && \
+	[ "$local_auth_method" = pubkey ] && [ -n "$local_cert" ] && \
 	    swanctl_xappend3 "certs = $local_cert"
 	swanctl_xappend2 "}"
 
@@ -537,6 +566,9 @@ config_remote() {
 	swanctl_xappend3 "auth = $auth_method"
 	[ -n "$remote_identifier" ] && swanctl_xappend3 "id = \"$remote_identifier\""
 	[ -n "$remote_ca_certs" ] && swanctl_xappend3 "cacerts = \"$remote_ca_certs\""
+	if [ "$auth_method" = "eap-mschapv2" ] || [ "$auth_method" = "eap-tls" ]; then
+		swanctl_xappend3 "eap_id = $eap_id"
+	fi
 	swanctl_xappend2 "}"
 
 	swanctl_xappend2 "children {"
@@ -560,6 +592,9 @@ config_remote() {
 		;;
 	esac
 
+	[ -n "$send_cert" ] && swanctl_xappend2 "send_cert = $send_cert"
+	[ $send_certreq -eq 1 ] && swanctl_xappend2 "send_certreq = yes" || swanctl_xappend2 "send_certreq = no"
+
 	[ $mobike -eq 1 ] && swanctl_xappend2 "mobike = yes" || swanctl_xappend2 "mobike = no"
 
 	if [ -n "$rekeytime" ]; then
@@ -573,6 +608,7 @@ config_remote() {
 
 	swanctl_xappend2 "proposals = $ike_proposal"
 	[ -n "$dpddelay" ] && swanctl_xappend2 "dpd_delay = $dpddelay"
+	[ $encap -eq 1 ] && swanctl_xappend2 "encap = yes" || swanctl_xappend2 "encap = no"
 	[ "$keyingtries" = "%forever" ] && swanctl_xappend2 "keyingtries = 0" || swanctl_xappend2 "keyingtries = $keyingtries"
 
 	swanctl_xappend1 "}"
@@ -603,13 +639,15 @@ config_remote() {
 		fi
 		swanctl_xappend1 "}"
 		swanctl_xappend0 "}"
+	elif [ "$auth_method" = eap-mschapv2 ]; then
+		# EAP-MSCHAPv2 secrets are handled in config_mschapv2_secrets globally
+		:  # empty command
+	elif [ "$auth_method" = eap-tls ]; then
+		# EAP-TLS approved client certs are restricted by remote_ca_certs option
+		:  # empty command
 	else
 		fatal "AuthenticationMode $auth_mode not supported"
 	fi
-
-	swanctl_xappend0 "pools {"
-	config_list_foreach "$conf" pools config_pool
-	swanctl_xappend0 "}"
 
 	swanctl_xappend0 ""
 }
@@ -686,6 +724,17 @@ prepare_env() {
 	config_load ipsec
 	config_foreach config_ipsec ipsec
 	config_foreach config_remote remote
+	
+	swanctl_xappend0 "# Global config"
+	swanctl_xappend0 ""
+	
+	swanctl_xappend0 "pools {"
+	config_foreach config_pool pools
+	swanctl_xappend0 "}"
+
+	swanctl_xappend0 "secrets {"
+	config_foreach config_mschapv2_secret mschapv2_secrets
+	swanctl_xappend0 "}"
 
 	do_postamble
 }

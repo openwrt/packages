@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=btop
-PKG_VERSION:=1.3.2
+PKG_VERSION:=1.4.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL=https://codeload.github.com/aristocratos/btop/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=331d18488b1dc7f06cfa12cff909230816a24c57790ba3e8224b117e3f0ae03e
+PKG_HASH:=4beb90172c6acaac08c1b4a5112fb616772e214a7ef992bcbd461453295a58be
 
 PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
 PKG_LICENSE:=Apache-2.0
@@ -47,6 +47,8 @@ define Package/btop/install
 
 	$(INSTALL_DIR) $(1)/etc/profile.d
 	$(CP) $(CURDIR)/files/btop.sh $(1)/etc/profile.d/
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(CP) $(CURDIR)/files/btop.uci $(1)/etc/uci-defaults/90-btop-migrate-alias
 endef
 
 $(eval $(call BuildPackage,btop))

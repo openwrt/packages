@@ -6,9 +6,10 @@
 
 trap_with_arg() {
 	func="$1" ; shift
+	pid="$1" ; shift
 	for sig ; do
 		# shellcheck disable=SC2064
-		trap "$func $sig" "$sig"
+		trap "$func $sig $pid" "$sig"
 	done
 }
 
@@ -23,7 +24,7 @@ func_trap() {
 		mm_monitor_cache_remove "$object"
 	done < ${MODEMMANAGER_MONITOR_CACHE}
 
-	kill "-${1}" "$CHILD" 2>/dev/null
+	kill "-${1}" "$2" 2>/dev/null
 }
 
 mm_monitor_get_sysfspath() {
@@ -116,8 +117,6 @@ main() {
 	local step=1
 	local mmrunning=0
 
-	trap_with_arg func_trap INT TERM KILL
-
 	mkdir -p "${MODEMMANAGER_RUNDIR}"
 	chmod 0755 "${MODEMMANAGER_RUNDIR}"
 
@@ -127,7 +126,7 @@ main() {
 		mm_log "info" "Checking if ModemManager is available..."
 
 		if ! /usr/bin/mmcli -L >/dev/null 2>&1; then
-			mm_log "info" "ModemManager not yet available"
+			mm_log "info" "ModemManager not yet available (count=${n})"
 		else
 			mmrunning=1
 			break
@@ -140,16 +139,18 @@ main() {
 		return
 	}
 
-	/usr/bin/mmcli -M | {
+	sh -c "echo \$\$; exec /usr/bin/mmcli -M" | {
+		read -r monitor_pid
+		trap_with_arg func_trap "$monitor_pid" SIGINT SIGTERM SIGKILL
 		local line
 		while read -r line; do
 			mm_log "debug" "Monitor cache line: ${line}"
 			mm_monitor_cache "$line"
 		done
 	} &
-	CHILD="$!"
-
-	wait $CHILD
+	child="$!"
+	trap_with_arg func_trap "$child" SIGINT SIGTERM SIGKILL
+	wait $child
 }
 
 main "$@"

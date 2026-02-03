@@ -11,12 +11,29 @@ FRESHCLAM_CONFIGFILE="/tmp/clamav/freshclam.conf"
 validate_freshclam_section() {
 	uci_load_validate freshclam freshclam "$1" "$2" \
 		'freshclam_config_file:string' \
-		'UpdateLogFile:string' \
+		'LogTime:string' \
+		'LogVerbose:string' \
+		'LogSyslog:string' \
+		'Debug:string' \
+		'LogFacility:string' \
+		'Foreground:string' \
+		'PidFile:string' \
 		'DatabaseMirror:string' \
 		'NotifyClamd:string' \
 		'DatabaseOwner:string' \
 		'CompressLocalDatabase:string' \
-		'DatabaseDirectory:string:'
+		'DatabaseDirectory:string' \
+		'DNSDatabaseInfo:string' \
+		'ScriptedUpdates:string' \
+		'DatabaseCustomURL:string' \
+		'ConnectTimeout:string' \
+		'ReceiveTimeout:string' \
+		'PrivateMirror:string' \
+		'Checks:string' \
+		'TestDatabases:string' \
+		'Bytecode:string' \
+		'ExtraDatabase:string' \
+		'ExcludeDatabase:string'
 }
 
 start_freshclam_instance() {
@@ -29,19 +46,35 @@ start_freshclam_instance() {
 
 	mkdir -p "$DatabaseDirectory"
 	mkdir -p /etc/clamav
-	touch /tmp/freshclam.log
 	touch /tmp/freshclam.pid
 
 	mkdir -p "$(dirname $FRESHCLAM_CONFIGFILE)"
 	ln -sf "$freshclam_config_file" "$FRESHCLAM_CONFIGFILE"
 
 	{
-	echo "UpdateLogFile " "$UpdateLogFile"
-	echo "DatabaseMirror " "$DatabaseMirror"
-	echo "NotifyClamd " "$NotifyClamd"
-	echo "DatabaseOwner " "$DatabaseOwner"
-	echo "CompressLocalDatabase " "$CompressLocalDatabase"
-	echo "DatabaseDirectory " "$DatabaseDirectory"
+	[ -n "$LogTime" ] 				&& echo "LogTime " "$LogTime"
+	[ -n "$LogVerbose" ] 			&& echo "LogVerbose " "$LogVerbose"
+	[ -n "$LogSyslog" ] 			&& echo "LogSyslog " "$LogSyslog"
+	[ -n "$Debug" ] 				&& echo "Debug " "$Debug"
+	[ -n "$LogFacility" ] 			&& echo "LogFacility " "$LogFacility"
+	[ -n "$Foreground" ] 			&& echo "Foreground " "$Foreground"
+	[ -n "$PidFile" ] 				&& echo "PidFile " "$PidFile"
+	[ -n "$DatabaseMirror" ] 		&& echo "DatabaseMirror " "$DatabaseMirror"
+	[ -n "$NotifyClamd" ] 			&& echo "NotifyClamd " "$NotifyClamd"
+	[ -n "$DatabaseOwner" ] 		&& echo "DatabaseOwner " "$DatabaseOwner"
+	[ -n "$CompressLocalDatabase" ]	&& echo "CompressLocalDatabase " "$CompressLocalDatabase"
+	[ -n "$DatabaseDirectory" ] 	&& echo "DatabaseDirectory " "$DatabaseDirectory"
+	[ -n "$DNSDatabaseInfo" ] 		&& echo "DNSDatabaseInfo " "$DNSDatabaseInfo"
+	[ -n "$ScriptedUpdates" ] 		&& echo "ScriptedUpdates " "$ScriptedUpdates"
+	[ -n "$DatabaseCustomURL" ] 	&& echo "DatabaseCustomURL " "$DatabaseCustomURL"
+	[ -n "$ConnectTimeout" ] 		&& echo "ConnectTimeout " "$ConnectTimeout"
+	[ -n "$ReceiveTimeout" ] 		&& echo "ReceiveTimeout " "$ReceiveTimeout"
+	[ -n "$PrivateMirror" ] 		&& echo "PrivateMirror " "$PrivateMirror"
+	[ -n "$Checks" ] 				&& echo "Checks " "$Checks"
+	[ -n "$TestDatabases" ] 		&& echo "TestDatabases " "$TestDatabases"
+	[ -n "$Bytecode" ] 				&& echo "Bytecode " "$Bytecode"
+	[ -n "$ExtraDatabase" ] 		&& echo "ExtraDatabase " "$ExtraDatabase"
+	[ -n "$ExcludeDatabase" ]		&& echo "ExcludeDatabase " "$ExcludeDatabase"
 	} > "$FRESHCLAM_CONFIGFILE"
 
 	procd_open_instance

@@ -2,11 +2,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
 
-PKG_VERSION:=0.21.2
-PKG_RELEASE:=1
+PKG_VERSION:=0.25.1
+PKG_RELEASE:=2
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/gnunet
-PKG_HASH:=8c2351268e9b8ba2ad288b8b337ce399f79c18e3ffd960803f4ed5de7dda9fa1
+PKG_HASH:=21336c16cd57f91f9d5fd5359482d9151a7cdf0d6396f8b61828c17ccc668f5c
 
 PKG_LICENSE:=AGPL-3.0
 PKG_LICENSE_FILES:=COPYING
@@ -21,30 +21,15 @@ PKG_INSTALL:=1
 PKG_BUILD_DEPENDS:=sqlite3
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/meson.mk
 include $(INCLUDE_DIR)/nls.mk
 
-# always pass --with-sqlite3 as configure fails when trying --without-sqlite3
-CONFIGURE_ARGS+= \
-	--with-libiconv-prefix="$(ICONV_PREFIX)" \
-	--with-libintl-prefix="$(INTL_PREFIX)" \
-	--with-ltdl \
-	$(if $(CONFIG_PACKAGE_$(PKG_NAME)-pgsql),--with-postgresql="$(STAGING_DIR)/usr/bin/pg_config",--without-postgresql) \
-	--with-sqlite3="$(STAGING_DIR)/usr" \
-	--disable-testruns \
-	--disable-documentation \
-	--enable-experimental \
-	--with-extractor=$(STAGING_DIR)/usr \
-	--with-gnutls=$(STAGING_DIR)/usr \
-	--with-jose=$(STAGING_DIR)/usr \
-	--with-libcurl=$(STAGING_DIR)/usr \
-	--with-ogg=$(STAGING_DIR)/usr \
-	--with-opus=$(STAGING_DIR)/usr \
-	--with-pabc=$(STAGING_DIR)/usr \
-	--with-png=$(STAGING_DIR)/usr \
-	--with-pulse=$(STAGING_DIR)/usr \
-	--with-microhttpd=$(STAGING_DIR)/usr
+MESON_ARGS += \
+	-Dexclude-manpages=true \
+	-Dexclude-handbook=true \
+	-Dexperimental=true
 
-# upstream now provides --with-pulseaudio but doesn't detect rpath
+# upstream now provides --with-pulse= but doesn't detect rpath
 TARGET_LDFLAGS+= -Wl,-rpath-link=$(STAGING_DIR)/usr/lib/pulseaudio
 
 define Package/gnunet/Default
@@ -149,13 +134,13 @@ define Package/gnunet/install
 	$(INSTALL_DIR) $(1)/usr/share/gnunet/config.d $(1)/usr/share/gnunet/hellos
 
 	( for bin in arm cadet core config ecc identity nat nat-auto nat-server nse \
-	    scalarproduct scrypt statistics uri; do \
+	    pils scalarproduct scrypt statistics uri; do \
 		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gnunet-$$$$bin $(1)/usr/bin/ || exit 1; \
 	done )
 
 	( for lib in arm block blockgroup cadet \
 	    core datacache dht dns hello \
-	    identity natauto natnew nse peerstore regexblock regex \
+	    identity natauto natnew nse peerstore pils regexblock regex \
 	    scalarproduct set seti setu statistics transportapplication \
 	    transportcommunicator transportcore transportmonitor util; do \
 		$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgnunet$$$$lib.so* $(1)/usr/lib/ || exit 1; \
@@ -168,7 +153,7 @@ define Package/gnunet/install
 	( for lex in communicator-unix daemon-topology helper-nat-client \
 	    helper-nat-server service-arm service-cadet service-core \
 	    service-dht service-identity service-nat service-nat-auto service-nse \
-	    service-peerstore service-regex \
+	    service-peerstore service-pils service-regex \
 	    service-scalarproduct-alice service-scalarproduct-bob service-scalarproduct-ecc-alice \
 	    service-scalarproduct-ecc-bob service-set service-seti service-setu service-statistics \
 	    service-transport timeout; do \
@@ -176,7 +161,7 @@ define Package/gnunet/install
 	done )
 
 	( for conf in arm cadet core datacache dht dhtu identity \
-	    nat nat-auto nse peerstore regex \
+	    nat nat-auto nse peerstore pils regex \
 	    scalarproduct set seti setu statistics tlds topology transport util; do \
 		$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/gnunet/config.d/$$$$conf.conf $(1)/usr/share/gnunet/config.d || exit 1; \
 	done )
@@ -194,14 +179,13 @@ endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/gnunet $(1)/usr/lib/pkgconfig
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.{la,so}* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.{a,so}* $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/*.pc $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/gnunet/*.h $(1)/usr/include/gnunet
 endef
 
 BIN_abd:=abd
 LIB_abd:=abd
-PLUGIN_abd:=gnsrecord_abd
 LIBEXEC_abd:=service-abd
 CONF_abd:=abd
 DEPENDS_abd:=+gnunet-gns
@@ -256,7 +240,7 @@ DEPENDS_gns:=+gnunet-vpn +iptables-mod-extra
 USERID_gns:=:gnunetdns=452
 BIN_gns:=gns namecache namestore namestore-dbtool namestore-zonefile resolver revocation zoneimport
 LIB_gns:=gns gnsrecord namecache namestore revocation
-PLUGIN_gns:=block_dns block_gns block_revocation gnsrecord_conversation gnsrecord_dns gnsrecord_gns namecache_flat
+PLUGIN_gns:=block_dns block_gns block_revocation gnsrecord_dns gnsrecord_gns namecache_flat
 LIBEXEC_gns:=dns2gns helper-dns service-dns service-gns service-namecache service-namestore service-resolver service-revocation service-zonemaster
 CONF_gns:=dns gns namecache namestore resolver revocation zonemaster
 FILE_MODES_gns:=/usr/lib/gnunet/libexec/gnunet-helper-dns:root:gnunetdns:4750 /usr/lib/gnunet/libexec/gnunet-service-dns:gnunet:gnunetdns:2750
@@ -270,13 +254,14 @@ LIB_datastore:=datastore
 LIBEXEC_datastore:=service-datastore
 CONF_datastore:=datastore
 
+DEPENDS_messenger:=+gnunet-gns
 BIN_messenger:=messenger
 LIB_messenger:=messenger
 LIBEXEC_messenger:=service-messenger
 CONF_messenger:=messenger
 PLUGIN_messenger:=gnsrecord_messenger
 
-DEPENDS_reclaim:=+gnunet-gns +gnunet-sqlite +libpbc +libgabe +jansson
+DEPENDS_reclaim:=+gnunet-gns +gnunet-sqlite +jansson
 BIN_reclaim:=did reclaim
 LIB_reclaim:=consensus did reclaim secretsharing
 LIBEXEC_reclaim:=service-consensus service-reclaim service-secretsharing
@@ -329,7 +314,6 @@ PLUGIN_gns-sqlite:=namecache_sqlite namestore_sqlite
 
 DEPENDS_peerstore-sqlite:=+gnunet-sqlite
 PLUGIN_peerstore-sqlite:=peerstore_sqlite
-CONFLICTS_peerstore-sqlite:=gnunet-peerstore-flat
 
 DEPENDS_dhtcache-sqlite:=+gnunet-sqlite
 PLUGIN_dhtcache-sqlite:=datacache_sqlite
@@ -391,7 +375,7 @@ $(eval $(call PostInstFixSUIDPerms,gnunet-vpn))
 
 $(eval $(call BuildPackage,gnunet))
 $(eval $(call BuildComponent,abd,credential service components,))
-$(eval $(call BuildComponent,auction,auction components,))
+#$(eval $(call BuildComponent,auction,auction components,))
 $(eval $(call BuildComponent,conversation,conversation component,))
 $(eval $(call BuildComponent,curl,cURL wrapper component,))
 $(eval $(call BuildComponent,datastore,data storage components,))
@@ -417,5 +401,5 @@ $(eval $(call BuildComponent,gns-sqlite,libsqlite3 gns plugins,))
 $(eval $(call BuildComponent,peerstore-sqlite,libsqlite3 peerstore plugin,))
 $(eval $(call BuildComponent,communicator-tcp,tng transport TCP communicator,y))
 $(eval $(call BuildComponent,communicator-udp,tng transport UDP communicator,y))
-$(eval $(call BuildComponent,utils,administration utililties,))
+$(eval $(call BuildComponent,utils,administration utilities,))
 $(eval $(call BuildComponent,vpn,vpn components,y))

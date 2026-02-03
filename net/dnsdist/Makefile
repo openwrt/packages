@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dnsdist
-PKG_VERSION:=1.9.6
+PKG_VERSION:=2.0.1
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://downloads.powerdns.com/releases/
-PKG_HASH:=f6c48d95525693fea6bd9422f3fdf69a77c75b06f02ed14ff0f42072f72082c9
+PKG_HASH:=144e2356d07d6577a570782a6f79f426125344221dbdc4ddaaa7f9d468d51900
 
 PKG_MAINTAINER:=Peter van Dijk <peter.van.dijk@powerdns.com>, Remi Gacogne <remi.gacogne@powerdns.com>
 PKG_LICENSE:=GPL-2.0-only
@@ -16,7 +16,7 @@ PKG_CPE_ID:=cpe:/a:powerdns:dnsdist
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
-PKG_BUILD_DEPENDS:=boost
+PKG_BUILD_DEPENDS:=boost python-yaml/host
 
 PKG_CONFIG_DEPENDS:= \
   CONFIG_DNSDIST_GNUTLS \
@@ -164,6 +164,7 @@ CONFIGURE_ARGS+= \
 	$(if $(call IsEnabled,DNSDIST_IPCIPHER),--enable,--disable)-ipcipher \
 	$(if $(call IsEnabled,DNSDIST_EBPF),--with,--without)-ebpf \
 	$(if $(call IsEnabled,DNSDIST_DNS_OVER_HTTPS),--enable-dns-over-https,) \
+	PYTHON=python3
 
 $(eval $(call BuildPackage,dnsdist))
 $(eval $(call BuildPackage,dnsdist-full))

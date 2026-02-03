@@ -33,7 +33,7 @@ Signed-off-by: Xue Liu <liuxuenetmail@gmail.com>
 +++ b/CMakeLists.txt
 @@ -0,0 +1,77 @@
 +# -- Minimum required version
-+cmake_minimum_required (VERSION 3.2)
++cmake_minimum_required (VERSION 3.30)
 +
 +# -- Project name
 +project (lora_gateway)

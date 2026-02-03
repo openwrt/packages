@@ -34,7 +34,7 @@ This commit prevents the call to btd_adv_manager_refresh for non-LE devices.
 
 --- a/src/adapter.c
 +++ b/src/adapter.c
-@@ -643,7 +643,9 @@ static void settings_changed(struct btd_
+@@ -661,7 +661,9 @@ static void settings_changed(struct btd_
  		 */
  		if (!adapter->discovery_discoverable)
  			store_adapter_info(adapter);
@@ -43,5 +43,5 @@ This commit prevents the call to btd_adv_manager_refresh for non-LE devices.
 +		if (adapter->supported_settings & MGMT_SETTING_LE)
 +			btd_adv_manager_refresh(adapter->adv_manager);
  	}
- 
- 	if (changed_mask & MGMT_SETTING_BONDABLE) {
+ 	if (changed_mask & MGMT_SETTING_CONNECTABLE)
+ 		g_dbus_emit_property_changed(dbus_conn, adapter->path,

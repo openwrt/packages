@@ -7,19 +7,18 @@
 
 include $(TOPDIR)/rules.mk
 PKG_NAME:=frr
-PKG_VERSION:=9.0.0
-PKG_RELEASE:=7
-PKG_SOURCE_DATE:=2023-08-12
+PKG_VERSION:=10.4.1
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_DATE).tar.gz
-PKG_SOURCE_VERSION:=9852228d1e87bdbad13e0fed8313203f00bf26af
-PKG_SOURCE_URL:=https://codeload.github.com/FRRouting/frr/tar.gz/$(PKG_SOURCE_VERSION)?
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/FRRouting/frr/tar.gz/$(PKG_NAME)-$(PKG_VERSION)?
+PKG_HASH:=8e4003eaba168626c5ea7a6735f2c85c87b04214e6f8c8f2715b21f8ae40970b
 
-PKG_HASH:=6e611cd86ae9787a4b8d71411fdc38ad1fe843a839756c9c386848ffde81f6cf
+
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_SOURCE_VERSION)
-HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)-$(PKG_SOURCE_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_NAME)-$(PKG_VERSION)
+HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)-$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_LICENSE:=GPL-2.0-only LGPL-2.1-only
 PKG_CPE_ID:=cpe:/a:ffrouting:ffrouting
@@ -38,6 +37,7 @@ PKG_DAEMON_AVAILABLE:= \
 	pathd \
 	pbrd \
 	pimd \
+	pim6d \
 	ripd \
 	ripngd \
 	staticd \
@@ -131,7 +131,7 @@ define BuildDaemon
 ifeq ($(1),bgpd)
 	KCONFIG:=CONFIG_TCP_MD5SIG=y
 endif
-	DEPENDS+=$(2)
+	DEPENDS+=$(2) +frr-watchfrr +frr-zebra
     endef
 #	if [ "$(1)" == "bfdd" ]; then \
 #	export HAVE_BFDD == 1 ; fi
@@ -198,9 +198,11 @@ define Package/frr/install
 	$(INSTALL_BIN) ./files/frr $(1)/etc/init.d/
 	$(INSTALL_DIR) $(1)/usr/bin $(1)/etc/frr
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/vtysh $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/mgmtd $(1)/usr/sbin/
 	$(INSTALL_CONF) ./files/vtysh.conf $(1)/etc/frr/
 	$(INSTALL_DIR) $(1)/usr/lib $(1)/etc/frr
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libfrr.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libmgmt_be_nb.so* $(1)/usr/lib/
 	$(if $(CONFIG_FRR_SNMP),$(CP) $(PKG_INSTALL_DIR)/usr/lib/libfrrsnmp.so* $(1)/usr/lib/,)
 	$(INSTALL_CONF) ./files/{frr.conf,daemons} $(1)/etc/frr/
 endef
@@ -212,8 +214,9 @@ define Package/frr-watchfrr/install
 endef
 
 define Package/frr-zebra/install
-	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/usr/sbin $(1)/usr/lib
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/zebra $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/libmlag_pb.so* $(1)/usr/lib/
 endef
 
 define Package/frr-pythontools/install
@@ -241,6 +244,7 @@ $(eval $(call BuildDaemon,ospf6d,@IPV6))
 $(eval $(call BuildDaemon,pathd,))
 $(eval $(call BuildDaemon,pbrd,))
 $(eval $(call BuildDaemon,pimd,))
+$(eval $(call BuildDaemon,pim6d,))
 $(eval $(call BuildDaemon,ripd,))
 $(eval $(call BuildDaemon,ripngd,@IPV6))
 $(eval $(call BuildDaemon,staticd,))

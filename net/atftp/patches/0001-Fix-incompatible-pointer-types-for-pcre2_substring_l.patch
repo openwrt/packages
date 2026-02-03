@@ -1,0 +1,32 @@
+From 7f45d2c5e217433039c827d29aaa9f704b773119 Mon Sep 17 00:00:00 2001
+From: Florian Eckert <fe@dev.tdt.de>
+Date: Tue, 2 Sep 2025 13:45:41 +0200
+Subject: [PATCH] Fix incompatible-pointer-types for
+ pcre2_substring_list_free
+
+This change fixes the following compilation build error for gcc14:
+
+tftpd_pcre.c:109:37: error: passing argument 1 of 'pcre2_substring_list_free_8' from incompatible pointer type [-Wincompatible-pointer-types]
+  109 |           pcre2_substring_list_free((const PCRE2_UCHAR **)substrlist);
+      |                                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                                     |
+      |                                     const PCRE2_UCHAR8 ** {aka const unsigned char **}
+In file included from tftpd_pcre.h:24,
+                 from tftpd_pcre.c:35:
+
+Signed-off-by: Florian Eckert <fe@dev.tdt.de>
+---
+ tftpd_pcre.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/tftpd_pcre.c
++++ b/tftpd_pcre.c
+@@ -106,7 +106,7 @@ tftpd_pcre_self_t *tftpd_pcre_open(char
+                logger(LOG_DEBUG,"file: %s line: %d substring: %d value: %s",
+                       filename, linecount, subnum, substrlist[subnum]);
+           }
+-          pcre2_substring_list_free((const PCRE2_UCHAR **)substrlist);
++          pcre2_substring_list_free((PCRE2_UCHAR **)substrlist);
+ 
+           if (matches != 3)
+           {

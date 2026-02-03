@@ -17,7 +17,7 @@ PKG_HASH:=13f93ce9bea8016c253b34afc6bd6a75993e5c40672ed5405a9c832f0d4a00bc
 PKG_LICENSE:=Apache-2.0 BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.APACHE LICENSE.BSD
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
-PKG_CPE_ID:=cpe:/a:cryptography_project:cryptography
+PKG_CPE_ID:=cpe:/a:cryptography.io:cryptography
 
 PKG_BUILD_DEPENDS:=libffi/host python-cffi/host python-setuptools-rust/host
 

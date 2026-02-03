@@ -6,13 +6,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-selinux
-PKG_VERSION:=3.6
+PKG_VERSION:=3.9
 PKG_RELEASE:=1
 
 SRC_NAME:=libselinux
 PKG_SOURCE:=$(SRC_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/SELinuxProject/selinux/releases/download/$(PKG_VERSION)
-PKG_HASH:=ba4e0ef34b270e7672a5e5f1b523fe2beab3a40bb33d9389f4ad3a8728f21b52
+PKG_HASH:=e7ee2c01dba64a0c35c9d7c9c0e06209d8186b325b0638a0d83f915cc3c101e8
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)/$(SRC_NAME)-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Thomas Petazzoni <thomas.petazzoni@bootlin.com>
@@ -20,7 +20,9 @@ PKG_LICENSE:=libselinux-1.0
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:selinuxproject:libselinux
 
-PKG_BUILD_DEPENDS:=swig/host
+PKG_BUILD_DEPENDS:= \
+	swig/host \
+	python-setuptools/host
 PKG_BUILD_PARALLEL:=1
 PYTHON3_PKG_BUILD:=0
 

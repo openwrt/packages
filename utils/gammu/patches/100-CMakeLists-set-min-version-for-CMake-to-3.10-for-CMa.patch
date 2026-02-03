@@ -1,0 +1,24 @@
+From 60ac0441d1dd459392c72cadeacfee9bf89e9780 Mon Sep 17 00:00:00 2001
+From: Christian Marangi <ansuelsmth@gmail.com>
+Date: Sun, 23 Nov 2025 12:33:05 +0100
+Subject: [PATCH] CMakeLists: set min version for CMake to 3.10 for CMake >=
+ 4.0
+
+Set minimum version for CMake to 3.10 for CMake >= 4.0 version support.
+
+Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
+---
+ CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -2,7 +2,7 @@
+ # Copyright (c) 2007 - 2018 Michal Cihar
+ # vim: expandtab sw=4 ts=4 sts=4:
+ 
+-cmake_minimum_required (VERSION 3.0)
++cmake_minimum_required (VERSION 3.10)
+ INCLUDE (CMakeForceCompiler)
+ 
+ project (Gammu C)

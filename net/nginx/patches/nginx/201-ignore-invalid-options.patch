@@ -1,6 +1,6 @@
 --- a/auto/options
 +++ b/auto/options
-@@ -413,8 +413,7 @@ $0: warning: the \"--with-sha1-asm\" opt
+@@ -415,8 +415,7 @@ $0: warning: the \"--with-sha1-asm\" opt
          --test-build-solaris-sendfilev)  NGX_TEST_BUILD_SOLARIS_SENDFILEV=YES ;;
  
          *)

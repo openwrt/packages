@@ -27,7 +27,7 @@ define Package/nasm
 endef
 
 define Package/nasm/description
-  NASM, the Netwide Assembler: an assembler targetting the
+  NASM, the Netwide Assembler: an assembler targeting the
   Intel x86 series of processors, with portable source.
 endef
 

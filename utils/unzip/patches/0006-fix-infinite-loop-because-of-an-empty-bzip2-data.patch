@@ -1,0 +1,31 @@
+From d354ffc9e0d1920dfc54cf13f1fc5d89405ee3f1 Mon Sep 17 00:00:00 2001
+From: OpenWrt community <openwrt-devel@lists.openwrt.org>
+Date: Mon, 30 Oct 2023 14:49:12 +0100
+Subject: [PATCH] fix: infinite loop because of an empty bzip2 data
+
+https://nvd.nist.gov/vuln/detail/CVE-2015-7697
+
+CVE: CVE-2015-7697
+---
+ extract.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/extract.c b/extract.c
+index d816603..ad8b3f7 100644
+--- a/extract.c
++++ b/extract.c
+@@ -2728,6 +2728,12 @@ __GDEF
+     int repeated_buf_err;
+     bz_stream bstrm;
+ 
++    if (G.incnt <= 0 && G.csize <= 0L) {
++        /* avoid an infinite loop */
++        Trace((stderr, "UZbunzip2() got empty input\n"));
++        return 2;
++    }
++
+ #if (defined(DLL) && !defined(NO_SLIDE_REDIR))
+     if (G.redirect_slide)
+         wsize = G.redirect_size, redirSlide = G.redirect_buffer;
+-- 
+

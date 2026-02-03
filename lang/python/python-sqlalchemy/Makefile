@@ -8,18 +8,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-sqlalchemy
-PKG_VERSION:=2.0.23
-PKG_RELEASE:=1
+PKG_VERSION:=2.0.44
+PKG_RELEASE:=2
 
-PYPI_NAME:=SQLAlchemy
-PKG_HASH:=c1bda93cbbe4aa2aa0aa8655c5aeda505cd219ff3e8da91d1d329e143e4aff69
+PYPI_NAME:=sqlalchemy
+PKG_HASH:=0ae7454e1ab1d780aee69fd2aae7d6b8670a581d8847f2d1e0f7ddfbf47e5a22
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:sqlalchemy:sqlalchemy
 
-PKG_BUILD_DEPENDS:=python-cython/host
+PKG_BUILD_DEPENDS:= \
+	python3/host \
+	python-setuptools/host \
+	python-wheel/host \
+	python-cython/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

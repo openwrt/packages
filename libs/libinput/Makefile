@@ -5,13 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libinput
-PKG_VERSION:=1.25.0
+PKG_VERSION:=1.28.1
 PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://gitlab.freedesktop.org/libinput/libinput.git
-PKG_SOURCE_VERSION:=$(PKG_VERSION)
-PKG_MIRROR_HASH:=e2c4a46292a17d2e037ba4eb439c135e9834041993ac641e23c71fd5ddfceb72
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://gitlab.freedesktop.org/$(PKG_NAME)/$(PKG_NAME)/-/archive/$(PKG_VERSION)
+PKG_HASH:=a13f8c9a7d93df3c85c66afd135f0296701d8d32f911991b7aa4273fdd6a42a3
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=MIT
@@ -26,7 +25,7 @@ define Package/libinput
   CATEGORY:=Libraries
   TITLE:=a library to handle input devices
   URL:=https://freedesktop.org/wiki/Software/libinput/
-  DEPENDS:=+libevdev +mtdev +libudev
+  DEPENDS:=+libevdev +mtdev +libudev +libwacom
 endef
 
 define Package/libinput/description
@@ -39,7 +38,7 @@ endef
 
 MESON_ARGS += \
 	-Depoll-dir=no \
-	-Dlibwacom=false \
+	-Dlibwacom=true \
 	-Ddebug-gui=false \
 	-Dtests=false \
 	-Dzshcompletiondir=no

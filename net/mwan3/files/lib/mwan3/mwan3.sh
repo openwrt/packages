@@ -996,7 +996,7 @@ mwan3_interface_hotplug_shutdown()
 	interface="$1"
 	ifdown="$2"
 	[ -f $MWAN3TRACK_STATUS_DIR/$interface/STATUS ] && {
-		status=$(cat $MWAN3TRACK_STATUS_DIR/$interface/STATUS)
+		readfile status $MWAN3TRACK_STATUS_DIR/$interface/STATUS
 	}
 
 	[ "$status" != "online" ] && [ "$ifdown" != 1 ] && return
@@ -1076,8 +1076,9 @@ mwan3_set_iface_hotplug_state() {
 
 mwan3_get_iface_hotplug_state() {
 	local iface=$1
-
-	cat "$MWAN3_STATUS_DIR/iface_state/$iface" 2>/dev/null || echo "offline"
+	local state=offline
+	readfile state "$MWAN3_STATUS_DIR/iface_state/$iface"
+	echo "$state"
 }
 
 mwan3_report_iface_status()
@@ -1101,13 +1102,13 @@ mwan3_report_iface_status()
 	fi
 
 	if [ -f "$MWAN3TRACK_STATUS_DIR/${1}/STATUS" ]; then
-		status="$(cat "$MWAN3TRACK_STATUS_DIR/${1}/STATUS")"
+		readfile status "$MWAN3TRACK_STATUS_DIR/${1}/STATUS"
 	else
 		status="unknown"
 	fi
 
 	if [ "$status" = "online" ]; then
-		online=$(get_online_time "$1")
+		get_online_time online "$1"
 		network_get_uptime uptime "$1"
 		online="$(printf '%02dh:%02dm:%02ds\n' $((online/3600)) $((online%3600/60)) $((online%60)))"
 		uptime="$(printf '%02dh:%02dm:%02ds\n' $((uptime/3600)) $((uptime%3600/60)) $((uptime%60)))"
@@ -1127,7 +1128,7 @@ mwan3_report_iface_status()
 		[ "$result" = "0" ] && result=""
 	fi
 
-	tracking="$(mwan3_get_mwan3track_status $1)"
+	mwan3_get_mwan3track_status tracking $1
 	if [ -n "$result" ]; then
 		echo " interface $1 is $status and tracking is $tracking ($result)"
 	else

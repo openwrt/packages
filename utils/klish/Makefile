@@ -49,7 +49,7 @@ define Package/klish/description
  klish is able to run using clish XML configuration files although
  current clish users may expect some changes in behavior.
  Konf and konfd are klish utilities that are used to store configuration
- informations in a way which is similar to what's found on CISCO devices.
+ information in a way which is similar to what's found on CISCO devices.
  More information about these tools is to be found on the klish web site.
 endef
 

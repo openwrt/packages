@@ -1,36 +1,27 @@
 #!/bin/sh
 # vpn handler called by travelmate
-# Copyright (c) 2020-2023 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2020-2025 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # set (s)hellcheck exceptions
 # shellcheck disable=all
 
-# Please note: you have to setup the package 'wireguard' or 'openvpn' before using this script
-
-. "/lib/functions.sh"
-
 export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-
 vpn="${1}"
 vpn_action="${2}"
 vpn_service="${3}"
 vpn_iface="${4}"
 vpn_instance="${5}"
-trm_maxwait="$(uci_get travelmate global trm_maxwait "30")"
-trm_captiveurl="$(uci_get travelmate global trm_captiveurl "http://detectportal.firefox.com")"
-trm_useragent="$(uci_get travelmate global trm_useragent "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/118.0")"
-trm_ubuscmd="$(command -v ubus)"
-trm_jsoncmd="$(command -v jsonfilter)"
-trm_logger="$(command -v logger)"
-trm_fetch="$(command -v curl)"
-trm_vpnfile="/var/state/travelmate.vpn"
+trm_funlib="/usr/lib/travelmate-functions.sh"
+if [ -z "${trm_bver}" ]; then
+	. "${trm_funlib}"
+	f_conf
+fi
 
 f_net() {
 	local json_rc
-
-	json_rc="$(${trm_fetch} --user-agent "${trm_useragent}" --referer "http://www.example.com" --header "Cache-Control: no-cache, no-store, must-revalidate, max-age=0" --write-out "%{response_code}" --silent --output /dev/null --max-time $((trm_maxwait / 6)) "${trm_captiveurl}")"
+	json_rc="$(${trm_fetchcmd} ${trm_fetchparm} --user-agent "${trm_useragent}" --header "Cache-Control: no-cache, no-store, must-revalidate, max-age=0" --write-out "%{response_code}" --output /dev/null "${trm_captiveurl}")"
 	if [ "${json_rc}" = "200" ] || [ "${json_rc}" = "204" ]; then
 		json_rc="net ok"
 	fi
@@ -41,27 +32,31 @@ if [ "${vpn}" = "1" ] && [ "${vpn_action%_*}" = "enable" ]; then
 	if [ "${vpn_action}" = "enable_keep" ]; then
 		vpn_status="$("${trm_ubuscmd}" -S call network.interface."${vpn_iface}" status 2>/dev/null | "${trm_jsoncmd}" -ql1 -e '@.up')"
 	fi
+	f_log "info" "start vpn processing (vpn: ${vpn:-"-"}, action: ${vpn_action:-"-"}, interface: ${vpn_iface:-"-"}, instance: ${vpn_instance:-"-"}, status: ${vpn_status:-"-"})"
 	if [ "${vpn_action}" = "enable" ] || [ "${vpn_status}" != "true" ]; then
 		if [ "${vpn_status}" != "true" ]; then
 			/sbin/ifdown "${vpn_iface}"
 			"${trm_ubuscmd}" -S call network.interface."${vpn_iface}" remove >/dev/null 2>&1
+			if [ "${vpn_service}" = "openvpn" ] && [ -n "${vpn_instance}" ] && [ -x "/etc/init.d/openvpn" ]; then
+				if /etc/init.d/openvpn running "${vpn_instance}"; then
+					/etc/init.d/openvpn stop "${vpn_instance}"
+				fi
+				/etc/init.d/openvpn start "${vpn_instance}"
+			fi
 		fi
-		if [ "${vpn_service}" = "openvpn" ] && [ -n "${vpn_instance}" ] && [ -x "/etc/init.d/openvpn" ] && /etc/init.d/openvpn running "${vpn_instance}"; then
-			/etc/init.d/openvpn stop "${vpn_instance}"
-			sleep 1
-		fi
-		if [ "${vpn_service}" = "openvpn" ] && [ -n "${vpn_instance}" ] && [ -x "/etc/init.d/openvpn" ] && ! /etc/init.d/openvpn running "${vpn_instance}"; then
-			/etc/init.d/openvpn start "${vpn_instance}"
-		fi
+		sleep 1
 		/sbin/ifup "${vpn_iface}"
+		if ! "${trm_ubuscmd}" -t "$((trm_maxwait / 6))" wait_for network.interface."${vpn_iface}" >/dev/null 2>&1; then
+			f_log "info" "travelmate vpn interface '${vpn_iface}' does not appear on ubus on ifup event"
+		fi
 		cnt=0
-		while true; do
+		while :; do
 			vpn_status="$("${trm_ubuscmd}" -S call network.interface."${vpn_iface}" status 2>/dev/null | "${trm_jsoncmd}" -ql1 -e '@.up')"
 			if [ "${vpn_status}" = "true" ]; then
 				net_status="$(f_net)"
 				if [ "${net_status}" = "net ok" ]; then
 					: >"${trm_vpnfile}"
-					"${trm_logger}" -p "info" -t "trm-vpn  [${$}]" "${vpn_service} client connection enabled '${vpn_iface}/${vpn_instance:-"-"}'" 2>/dev/null
+					f_log "info" "${vpn_service} client connection enabled '${vpn_iface}/${vpn_instance:-"-"}'"
 					break
 				fi
 			fi
@@ -72,11 +67,11 @@ if [ "${vpn}" = "1" ] && [ "${vpn_action%_*}" = "enable" ]; then
 					/etc/init.d/openvpn stop "${vpn_instance}"
 				fi
 				rm -f "${trm_vpnfile}"
-				"${trm_logger}" -p "info" -t "trm-vpn  [${$}]" "${vpn_service} client connection can't be established '${vpn_iface}/${vpn_instance:-"-", rc: ${net_status:-"-"}}'" 2>/dev/null
+				f_log "info" "${vpn_service} client connection can't be established '${vpn_iface}/${vpn_instance:-"-", rc: ${net_status:-"-"}}'"
 				return 1
 			fi
-			sleep 1
 			cnt="$((cnt + 1))"
+			sleep 1
 		done
 	fi
 elif { [ "${vpn}" != "1" ] && [ "${vpn_action%_*}" = "enable" ]; } || [ "${vpn_action}" = "disable" ]; then
@@ -86,5 +81,5 @@ elif { [ "${vpn}" != "1" ] && [ "${vpn_action%_*}" = "enable" ]; } || [ "${vpn_a
 		/etc/init.d/openvpn stop "${vpn_instance}"
 	fi
 	rm -f "${trm_vpnfile}"
-	"${trm_logger}" -p "info" -t "trm-vpn  [${$}]" "${vpn_service} client connection disabled '${vpn_iface}/${vpn_instance:-"-"}'" 2>/dev/null
+	f_log "info" "${vpn_service} client connection disabled '${vpn_iface}/${vpn_instance:-"-"}'"
 fi

@@ -55,8 +55,8 @@ ifeq ($(PKG_VERSION),13.3.0)
   PKG_HASH:=0845e9621c9543a13f484e94584a49ffc0129970e9914624235fc1d061a0c083
 endif
 
-ifeq ($(PKG_VERSION),14.2.0)
-	PKG_HASH:=a7b39bc69cbf9e25826c5a60ab26477001f7c08d85cec04bc0e29cabed6f3cc9
+ifeq ($(PKG_VERSION),14.3.0)
+	PKG_HASH:=e0dc77297625631ac8e50fa92fffefe899a4eb702592da5c32ef04e2293aca3a
 endif
 
 PATCH_DIR:=patches-$(GCC_MAJOR_VERSION).x
@@ -115,7 +115,7 @@ endif
 GMPSRC=gmp-6.1.0
 
 define Download/gmp
-  URL:=ftp://gcc.gnu.org/pub/gcc/infrastructure/
+  URL:=https://gcc.gnu.org/pub/gcc/infrastructure/
   FILE:=$(GMPSRC).tar.bz2
   HASH:=498449a994efeba527885c10405993427995d3f86b8768d8cdf8d9dd7c6b73e8
 endef
@@ -124,7 +124,7 @@ $(eval $(call Download,gmp))
 MPCSRC=mpc-1.0.3
 
 define Download/mpc
-  URL:=ftp://gcc.gnu.org/pub/gcc/infrastructure/
+  URL:=https://gcc.gnu.org/pub/gcc/infrastructure/
   FILE:=$(MPCSRC).tar.gz
   HASH:=617decc6ea09889fb08ede330917a00b16809b8db88c29c31bfbb49cbf88ecc3
 endef
@@ -133,7 +133,7 @@ $(eval $(call Download,mpc))
 MPFRSRC=mpfr-3.1.4
 
 define Download/mpfr
-  URL:=ftp://gcc.gnu.org/pub/gcc/infrastructure/
+  URL:=https://gcc.gnu.org/pub/gcc/infrastructure/
   FILE:=$(MPFRSRC).tar.bz2
   HASH:=d3103a80cdad2407ed581f3618c4bed04e0c92d1cf771a65ead662cc397f7775
 endef

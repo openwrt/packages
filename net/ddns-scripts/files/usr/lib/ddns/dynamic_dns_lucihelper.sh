@@ -26,6 +26,7 @@ Commands:
  start               start given SECTION
  reload              force running ddns processes to reload changed configuration
  restart             restart all ddns processes
+ stop                stop given SECTION
 
 Parameters:
  -6                  => use_ipv6=1          (default 0)
@@ -39,7 +40,7 @@ Parameters:
  -s SCRIPT           => ip_script=SCRIPT; ip_source="script"
  -t                  => force_dnstcp=1      (default 0)
  -u URL              => ip_url=URL; ip_source="web"
- -S SECTION          SECTION to start
+ -S SECTION          SECTION to [start|stop]
 
  -h                  => show this help and exit
  -L                  => use_logfile=1    (default 0)
@@ -147,19 +148,28 @@ case "$1" in
 		;;
 	start)
 		[ -z "$SECTION" ] &&  usage_err "command 'start': 'SECTION' not set"
-		if [ $VERBOSE -eq 0 ]; then	# start in background
-			$DDNSPRG -v 0 -S $SECTION -- start &
+		if [ "$VERBOSE" -eq 0 ]; then	# start in background
+			("$DDNSPRG" -v 0 -S "$SECTION" -- start >/dev/null 2>&1 &)
 		else
-			$DDNSPRG -v $VERBOSE -S $SECTION -- start
+			"$DDNSPRG" -v "$VERBOSE" -S "$SECTION" -- start
 		fi
 		;;
 	reload)
-		$DDNSPRG -- reload
+		"$DDNSPRG" -- reload
 		;;
 	restart)
-		$DDNSPRG -- stop
+		"$DDNSPRG" -- stop
 		sleep 1
-		$DDNSPRG -- start
+		"$DDNSPRG" -- start >/dev/null 2>&1
+		;;
+	stop)
+		if [ -n "$SECTION" ]; then
+			# section stop
+			"$DDNSPRG" -S "$SECTION" -- stop
+		else
+			# global stop
+			"$DDNSPRG" -- stop
+		fi
 		;;
 	*)
 		__RET=255
@@ -167,6 +177,6 @@ case "$1" in
 esac
 
 # remove out and err file
-[ -f $DATFILE ] && rm -f $DATFILE
-[ -f $ERRFILE ] && rm -f $ERRFILE
+[ -f "$DATFILE" ] && rm -f "$DATFILE"
+[ -f "$ERRFILE" ] && rm -f "$ERRFILE"
 return $__RET

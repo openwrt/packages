@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=yaml
 PKG_VERSION:=0.2.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pyyaml.org/download/libyaml/
@@ -17,7 +17,7 @@ PKG_HASH:=c642ae9b75fee120b2d96c712538bd2cf283228d2337df2cf2988e3c02678ef4
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=MIT
-PKG_LICENSE_FILES:=COPYING
+PKG_LICENSE_FILES:=License
 PKG_CPE_ID:=cpe:/a:pyyaml_project:pyyaml
 
 PKG_INSTALL:=1

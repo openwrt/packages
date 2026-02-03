@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libconfig
-PKG_VERSION:=1.7.3
+PKG_VERSION:=1.8.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://hyperrealm.github.io/libconfig/dist/
-PKG_HASH:=545166d6cac037744381d1e9cc5a5405094e7bfad16a411699bcff40bbb31ee7
+PKG_HASH:=87c6f382994b245f9213be34a2bf19c8ee7d033d7abaa51e88fbb7bad79e2dc6
 
 PKG_MAINTAINER:=Felix Fietkau <nbd@nbd.name>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -47,6 +47,7 @@ endef
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--disable-static \
+	--disable-examples \
 	--disable-cxx
 
 define Build/InstallDev

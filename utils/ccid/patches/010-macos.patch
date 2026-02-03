@@ -1,11 +1,11 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -83,7 +83,7 @@ AC_CHECK_FUNCS(select strerror strncpy m
+@@ -82,7 +82,7 @@ AC_CHECK_FUNCS(strlcpy strlcat secure_ge
  # Select OS specific versions of source files.
  AC_SUBST(BUNDLE_HOST)
  AC_SUBST(DYN_LIB_EXT)
 -BUNDLE_HOST=`uname | sed -e s,/,_,`
 +BUNDLE_HOST=Linux
  DYN_LIB_EXT="so"
- case "$BUNDLE_HOST" in
- Darwin)
+ AS_CASE([$BUNDLE_HOST],
+ 	[Darwin], [BUNDLE_HOST=MacOS DYN_LIB_EXT="dylib"],

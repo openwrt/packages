@@ -1,0 +1,5 @@
+config simple-captive-portal main
+        #option interface guest
+        #option port_redirect 8888
+        #option port_portal 8889
+        #option timeout 86400

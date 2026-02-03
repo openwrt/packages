@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=arp-scan
 PKG_VERSION:=1.10.0
-PKG_RELEASE:=2
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/royhills/arp-scan/tar.gz/$(PKG_VERSION)?
@@ -74,11 +74,13 @@ endef
 define Package/arp-scan-database/install
 	$(INSTALL_DIR) $(1)/usr/share/arp-scan
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/ieee-oui.txt $(1)/usr/share/arp-scan/
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/mac-vendor.txt $(1)/usr/share/arp-scan/
+	$(INSTALL_DIR) $(1)/etc/arp-scan
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/mac-vendor.txt $(1)/etc/arp-scan/
 endef
 
 define Package/arp-scan-database/postrm
 	$(RM) -rf $(1)/usr/share/arp-scan
+	$(RM) -rf $(1)/etc/arp-scan
 endef
 
 $(eval $(call BuildPackage,arp-scan-database))

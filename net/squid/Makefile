@@ -8,19 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=squid
-PKG_VERSION:=6.10
+PKG_VERSION:=7.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://www2.pl.squid-cache.org/Versions/v6/ \
-	http://www.squid-cache.org/Versions/v6/
-PKG_HASH:=0b07b187e723f04770dd25beb89aec12030a158696aa8892d87c8b26853408a7
+PKG_SOURCE_URL:=https://github.com/squid-cache/squid/releases/download/SQUID_$(subst .,_,$(PKG_VERSION))
+PKG_HASH:=763b5a78561cedc4e47634fa42b8e6b8d46c87c949a151b4e7ac2396d2f97dea
 
 PKG_MAINTAINER:=Marko Ratkaj <markoratkaj@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_CPE_ID:=cpe:/a:squid-cache:squid
 
-PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
@@ -36,7 +34,7 @@ endef
 define Package/squid
   $(call Package/squid/Default)
   MENU:=1
-  DEPENDS:=+libpthread +librt +libltdl +libstdcpp +libatomic +USE_GLIBC:libbsd
+  DEPENDS:= +USE_GLIBC:libcrypt-compat +USE_GLIBC:libbsd +libpthread +librt +libltdl +libstdcpp +libatomic
   DEPENDS+= +SQUID_use-gnutls:libgnutls +SQUID_use-openssl:libopenssl
   DEPENDS+= +SQUID_with-libcap:libcap
   DEPENDS+= +SQUID_with-nettle:libnettle
@@ -59,12 +57,6 @@ endef
 define Package/squid/conffiles
 /etc/config/squid
 /etc/squid/squid.conf
-endef
-
-define Package/squid-mod-cachemgr
-  $(call Package/squid/Default)
-  DEPENDS:=squid
-  TITLE:=Web based proxy manager and reporting tool
 endef
 
 CONFIGURE_ARGS += \
@@ -107,10 +99,7 @@ CONFIGURE_ARGS += \
 
 CONFIGURE_VARS += \
 	ac_cv_header_linux_netfilter_ipv4_h=yes \
-	ac_cv_epoll_works=yes
-
-TARGET_CFLAGS += -Wno-error
-TARGET_LDFLAGS += -latomic
+	squid_cv_epoll_works=yes
 
 define Package/squid/install
 	$(INSTALL_DIR) $(1)/usr/sbin
@@ -137,10 +126,4 @@ define Package/squid/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/squid/errors/templates/* $(1)/usr/share/squid/errors/templates/
 endef
 
-define Package/squid-mod-cachemgr/install
-	$(INSTALL_DIR) $(1)/www/cgi-bin/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/squid/cachemgr.cgi $(1)/www/cgi-bin/
-endef
-
 $(eval $(call BuildPackage,squid))
-$(eval $(call BuildPackage,squid-mod-cachemgr))

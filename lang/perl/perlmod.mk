@@ -8,7 +8,7 @@ endif
 include $(PERL_INCLUDE_DIR)/perlver.mk
 
 ifneq ($(PKG_NAME),perl)
-  PKG_VERSION:=$(PKG_VERSION)+perl$(PERL_VERSION2)
+  PKG_VERSION:=$(PKG_VERSION).$(PERL_VERSION2)
 endif
 
 PERL_VERSION:=$(PERL_VERSION2)

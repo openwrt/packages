@@ -1,13 +1,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fluent-bit
-PKG_VERSION:=3.1.3
+PKG_VERSION:=4.2.0
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/fluent/fluent-bit.git
 PKG_SOURCE_VERSION=v$(PKG_VERSION)
-PKG_MIRROR_HASH:=85b861693a9ed597e4e55e30330dd2fb96daa997eb71424a55ccc28de92eef78
+PKG_MIRROR_HASH:=cad2d94cf7a720a3910c781f80187e2c399aa8acbfa1046aa7445a4d1495fafd
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
@@ -20,7 +20,8 @@ define Package/fluent-bit
   CATEGORY:=Administration
   TITLE:=Fast and Lightweight Logs and Metrics processor
   URL:=https://fluentbit.io/
-  DEPENDS:= +libyaml +libopenssl +libcurl +libatomic +musl-fts +flex +bison
+  DEPENDS:= +libyaml +libopenssl +libcurl +libstdcpp +libatomic +musl-fts +flex +bison \
+	    +libsasl2
 endef
 
 define Package/fluent-bit/description
@@ -41,7 +42,10 @@ CMAKE_OPTIONS+= \
 	-DFLB_CHUNK_TRACE=No \
 	-DFLB_BACKTRACE=No \
 	-DFLB_WASM=No \
-	-DFLB_LUAJIT=No
+	-DFLB_LUAJIT=No \
+	-DWITH_SASL=No \
+	-DWITH_ZLIB=No \
+	-DWITH_ZSTD=No
 
 define Package/fluent-bit/install
 	$(INSTALL_DIR) $(1)/usr/sbin

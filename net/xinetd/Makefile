@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2015 OpenWrt.org
+# Copyright (C) 2006-2025 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,19 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xinetd
-PKG_VERSION:=2.3.15
-PKG_RELEASE:=16
+PKG_VERSION:=2.3.15.4
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=$(PKG_NAME)-2-3-15
-PKG_SOURCE_URL:=https://github.com/xinetd-org/xinetd
-PKG_MIRROR_HASH:=f2fc2c6decb2334848c277915e10dee7463aacd1411d61c953ff908aaad8d275
+PKG_SOURCE_VERSION:=$(PKG_VERSION)
+PKG_SOURCE_URL:=https://github.com/openSUSE/xinetd
+PKG_MIRROR_HASH:=7268c75ce6f4cd64fa62172849c5361d38f05b6be0fac889ed2012d3d9547639
 
 PKG_MAINTAINER:=Florian Eckert <fe@dev.tdt.de>
 PKG_LICENSE:=xinetd
 PKG_LICENSE_FILES:=COPYRIGHT
 PKG_CPE_ID:=cpe:/a:xinetd:xinetd
 
+PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -29,7 +30,8 @@ define Package/xinetd
   SECTION:=net
   CATEGORY:=Network
   TITLE:=A powerful and secure super-server
-  URL:=https://github.com/xinetd-org
+  URL:=https://github.com/openSUSE/xinetd
+  DEPENDS:= +USE_GLIBC:libcrypt-compat
 endef
 
 define Package/xinetd/description
@@ -45,17 +47,11 @@ define Package/xinetd/conffiles
 /etc/xinetd.d
 endef
 
-TARGET_CFLAGS += -DNO_RPC
-TARGET_CPPFLAGS += -DHAVE_RLIM_T
-
 CONFIGURE_ARGS += \
 	--without-libwrap \
-	--with-loadavg
-
-CONFIGURE_VARS += \
-	ac_cv_header_rpc_pmap_clnt_h=no \
-	ac_cv_header_rpc_rpc_h=no \
-	ac_cv_header_rpc_rpcent_h=no
+	--with-loadavg \
+	--without-rpc \
+	--without-labeled-networking
 
 define Package/xinetd/install
 	$(INSTALL_DIR) $(1)/usr/sbin

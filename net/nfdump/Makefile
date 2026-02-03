@@ -6,17 +6,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nfdump
-PKG_VERSION:=1.7.4
+PKG_VERSION:=1.7.7
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 PKG_SOURCE_URL:=https://github.com/phaag/nfdump
-PKG_MIRROR_HASH:=83eacf974c0ca9e81df1bcac9e5fcfa89e520d0bd002fcebeee93390e2a3f55e
+PKG_MIRROR_HASH:=9b0b0c3f44e2a70f44684f3f87d248870901cf8a47275a2c6bee5884e9734884
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:nfdump_project:nfdump
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -46,6 +47,7 @@ TARGET_LDFLAGS += -Wl,--as-needed $(if $(CONFIG_USE_MUSL),-lfts)
 define Package/nfdump/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libnfdump-$(PKG_VERSION).so $(1)/usr/lib/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libnffile-$(PKG_VERSION).so $(1)/usr/lib/
 
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/

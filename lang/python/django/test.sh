@@ -1,6 +1,6 @@
 #!/bin/sh
 
-[ "$1" = "python3-django" ] || exit 0
+[ "python3-django" = "$1" ] || exit 0
 
 GOT_VER=$(/usr/bin/django-admin version)
 [ "$GOT_VER" = "$2" ] || {

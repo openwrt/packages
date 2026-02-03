@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010-2015 OpenWrt.org
+# Copyright (C) 2010-2025 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=less
-PKG_VERSION:=661
+PKG_VERSION:=685
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= @GNU/less \
 	http://www.greenwoodsoftware.com/less
-PKG_HASH:=2b5f0167216e3ef0ffcb0c31c374e287eb035e4e223d5dae315c2783b6e738ed
+PKG_HASH:=2701041e767e697ee420ce0825641cedc8f20b51576abe99d92c1666d332e9dc
 
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
-PKG_MAINTAINER:=Julen Landa Alustiza <julen@zokormazo.info>
+PKG_MAINTAINER:=
 PKG_CPE_ID:=cpe:/a:gnu:less
 
 PKG_INSTALL:=1

@@ -8,21 +8,32 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-idna
-PKG_VERSION:=3.6
+PKG_VERSION:=3.11
 PKG_RELEASE:=1
 
 PYPI_NAME:=idna
-PKG_HASH:=9ecdbbd083b06798ae1e86adcbfe8ab1479cf864e4ee30fe4e46a003d12491ca
+PKG_HASH:=795dafcc9c04ed0c1fb032c2aa73654d8e8c5023a7df64a53f39190ada629902
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.md
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
-PKG_BUILD_DEPENDS:=python-flit-core/host
+PKG_BUILD_DEPENDS:= \
+	python3/host \
+	python-setuptools/host \
+	python-flit-core/host
+HOST_BUILD_DEPENDS:= \
+	python3/host \
+	python-setuptools/host \
+	python-build/host \
+	python-installer/host \
+	python-flit-core/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 include ../python3-package.mk
+include ../python3-host-build.mk
 
 define Package/python3-idna
   SECTION:=lang
@@ -43,3 +54,4 @@ endef
 $(eval $(call Py3Package,python3-idna))
 $(eval $(call BuildPackage,python3-idna))
 $(eval $(call BuildPackage,python3-idna-src))
+$(eval $(call HostBuild))

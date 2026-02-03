@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libsoup3
-PKG_VERSION:=3.4.4
+PKG_VERSION:=3.6.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=libsoup-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNOME/libsoup/$(basename $(PKG_VERSION))
-PKG_HASH:=291c67725f36ed90ea43efff25064b69c5a2d1981488477c05c481a3b4b0c5aa
+PKG_HASH:=6891765aac3e949017945c3eaebd8cc8216df772456dc9f460976fbdb7ada234
 PKG_BUILD_DIR:=$(BUILD_DIR)/libsoup-$(PKG_VERSION)
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
@@ -44,7 +44,7 @@ MESON_ARGS += \
 	-Dinstalled_tests=false \
 	-Dsysprof=disabled
 
-define package/libsoup3/decription
+define package/libsoup3/description
 Libsoup is an HTTP library implementation in C
 endef
 

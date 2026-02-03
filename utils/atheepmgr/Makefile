@@ -5,13 +5,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=atheepmgr
-PKG_VERSION:=2.1.1
-PKG_RELEASE:=2
+PKG_VERSION:=2.2.1
+PKG_RELEASE:=1
 
 PKG_SOURCE_VERSION:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/rsa9000/$(PKG_NAME).git
-PKG_MIRROR_HASH:=c221ba20fce2e08bd5aefa46e9e89c3d9ab879e2ecc8f87e87afd0b0b72aa9cd
+PKG_MIRROR_HASH:=3a4544ea1e1d5a6543ab6eaa82a9c80cda81690ee42616f0ecab22fd992f4ac3
 
 PKG_MAINTAINER:=Sergey Ryazanov <ryazanov.s.a@gmail.com>
 PKG_LICENSE:=ISC

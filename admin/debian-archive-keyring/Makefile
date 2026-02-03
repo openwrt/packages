@@ -7,7 +7,7 @@ PKG_HASH:=6e93a87b9e50bd81518880ec07a62f95d7d8452f4aa703f5b0a3076439f1022c
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION)_all.deb
-PKG_SOURCE_URL:=http://ftp.debian.org/debian/pool/main/d/$(PKG_NAME)/
+PKG_SOURCE_URL:=https://ftp.debian.org/debian/pool/main/d/$(PKG_NAME)/
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>

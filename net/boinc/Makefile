@@ -18,7 +18,7 @@ PKG_MIRROR_HASH:=9482abc4fae339bd28b9101987574f52c46bd426967a224173cdd89deb73ef4
 PKG_MAINTAINER:=Christian Dreihsig <christian.dreihsig@t-online.de>, Steffen Moeller <moeller@debian.org>
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
-PKG_CPE_ID:=cpe:/a:rom_walton:boinc
+PKG_CPE_ID:=cpe:/a:universityofcalifornia:boinc_client
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=0

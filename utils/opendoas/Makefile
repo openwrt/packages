@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=opendoas
 PKG_VERSION:=6.8.2
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/Duncaen/OpenDoas/releases/download/v$(PKG_VERSION)
@@ -22,7 +22,7 @@ define Package/opendoas
   CATEGORY:=Utilities
   TITLE:=Portable OpenBSD doas to execute commands as another user
   URL:=https://github.com/Duncaen/OpenDoas
-  DEPENDS:=+BUSYBOX_CONFIG_PAM:libpam
+  DEPENDS:= +USE_GLIBC:libcrypt-compat +BUSYBOX_CONFIG_PAM:libpam
 endef
 
 define Package/opendoas/description

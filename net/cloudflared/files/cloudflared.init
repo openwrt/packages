@@ -9,6 +9,7 @@ PROG="/usr/bin/cloudflared"
 
 append_param_arg() {
 	local value
+
 	config_get value "config" "$1" $2
 	[ -n "$value" ] && procd_append_param command "--${1//_/-}" "$value"
 }
@@ -17,6 +18,8 @@ start_service() {
 	config_load "$CONF"
 
 	local enabled
+	local token
+
 	config_get_bool enabled "config" "enabled"
 	[ "$enabled" -eq "1" ] || return 1
 
@@ -24,8 +27,6 @@ start_service() {
 	procd_set_param command "$PROG" "tunnel"
 	procd_append_param command "--no-autoupdate"
 
-	append_param_arg "config" "/etc/cloudflared/config.yml"
-	append_param_arg "origincert" "/etc/cloudflared/cert.pem"
 	append_param_arg "edge_bind_address"
 	append_param_arg "edge_ip_version"
 	append_param_arg "grace_period"
@@ -37,8 +38,19 @@ start_service() {
 	append_param_arg "loglevel"
 	append_param_arg "logfile"
 
+	config_get token "config" "token"
+	if [ -z "$token" ]; then
+		# Locally-managed tunnels
+		append_param_arg "config" "/etc/cloudflared/config.yml"
+		append_param_arg "origincert" "/etc/cloudflared/cert.pem"
+	fi
+
 	procd_append_param command "run"
-	append_param_arg "token"
+
+	if [ -n "$token" ]; then
+		# Remotely-managed tunnel (recommended by Cloudflare)
+		procd_append_param command "--token" "$token"
+	fi
 
 	procd_set_param respawn
 	procd_set_param stderr 1
@@ -46,11 +58,7 @@ start_service() {
 	procd_close_instance
 }
 
-reload_service() {
-	stop
-	start
-}
-
 service_triggers() {
 	procd_add_reload_trigger "$CONF"
+	procd_add_interface_trigger "interface.*.up" "wan" /etc/init.d/cloudflared restart
 }

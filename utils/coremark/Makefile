@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=coremark
-PKG_SOURCE_DATE:=2023-01-25
-PKG_SOURCE_VERSION:=d5fad6bd094899101a4e5fd53af7298160ced6ab
+PKG_SOURCE_DATE:=2025-05-01
+PKG_SOURCE_VERSION:=1f483d5b8316753a742cbf5590caf5bd0a4e4777
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_DATE).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/eembc/coremark/tar.gz/$(PKG_SOURCE_VERSION)?
-PKG_HASH:=76f3b98fc940d277521023dc6e106551ef4a2180fa4c3da8cd5bf933aa494ef2
+PKG_HASH:=4067e7f260218df13f2875d8f821a8ff32a84153c6e0759d7c89f96c0a8bf987
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_SOURCE_VERSION)
 
 PKG_MAINTAINER:=Lim Guo Wei <limguowei@gmail.com> \
@@ -43,7 +43,7 @@ define Package/coremark/config
 		depends on PACKAGE_coremark
 		default y
 		help
-			This enables additional optmizations using the -O3 compilation flag.
+			This enables additional optimizations using the -O3 compilation flag.
 
 	config COREMARK_ENABLE_MULTITHREADING
 		bool "Enable multithreading support"
@@ -70,8 +70,8 @@ endif
 
 define Build/Compile
 	$(SED) 's|EXE = .exe|EXE =|' $(PKG_BUILD_DIR)/posix/core_portme.mak
-	mkdir $(PKG_BUILD_DIR)/$(ARCH)
-	$(CP) -r $(PKG_BUILD_DIR)/linux/* $(PKG_BUILD_DIR)/$(ARCH)
+	mkdir -p $(PKG_BUILD_DIR)/$(ARCH)
+	$(CP) $(PKG_BUILD_DIR)/linux/* $(PKG_BUILD_DIR)/$(ARCH)/
 	$(MAKE) -C $(PKG_BUILD_DIR) PORT_DIR=$(ARCH) $(MAKE_FLAGS) \
 		PORT_CFLAGS="$(TARGET_CFLAGS)" XCFLAGS="$(EXTRA_CFLAGS)" compile
 endef

@@ -8,24 +8,25 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tiff
-PKG_VERSION:=4.6.0
+PKG_VERSION:=4.7.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.osgeo.org/libtiff
-PKG_HASH:=88b3979e6d5c7e32b50d7ec72fb15af724f6ab2cbf7e10880c360a77e4b5d99a
+PKG_HASH:=f698d94f3103da8ca7438d84e0344e453fe0ba3b7486e04c5bf7a9a3fabe9b69
 
 PKG_MAINTAINER:=Jiri Slachta <jiri@slachta.eu>
 PKG_LICENSE:=libtiff
-PKG_LICENSE_FILES:=COPYRIGHT
+PKG_LICENSE_FILES:=LICENSE.md
 PKG_CPE_ID:=cpe:/a:libtiff:libtiff
 
+include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
 define Package/tiff/Default
   TITLE:=TIFF
-  URL:=http://simplesystems.org/libtiff/
+  URL:=https://libtiff.gitlab.io/libtiff/
 endef
 
 define Package/libtiff
@@ -43,8 +44,20 @@ $(call Package/tiff/Default)
   CATEGORY:=Utilities
   SUBMENU:=Image Manipulation
   TITLE+= utilities
-  DEPENDS:=+libtiff
+  DEPENDS:=+libtiff +libstdcpp
 endef
+
+CMAKE_HOST_OPTIONS += \
+	-DCMAKE_REQUIRED_LIBRARIES="-lm" \
+	-Dld-version-script=OFF \
+	-Dold-jpeg=OFF \
+	-Djbig=OFF \
+	-Dlzma=OFF \
+	-Dzstd=OFF \
+	-Dwebp=OFF \
+	-Djpeg12=OFF \
+	-Dcxx=OFF \
+	-Dlibdeflate=OFF
 
 CMAKE_OPTIONS += \
 	-Dld-version-script=OFF \
@@ -73,5 +86,6 @@ define Package/tiff-utils/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
 endef
 
+$(eval $(call HostBuild))
 $(eval $(call BuildPackage,libtiff))
 $(eval $(call BuildPackage,tiff-utils))

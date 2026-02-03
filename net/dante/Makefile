@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dante
-PKG_VERSION:=1.4.3
-PKG_RELEASE:=3
+PKG_VERSION:=1.4.4
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.inet.no/dante/files/
-PKG_HASH:=418a065fe1a4b8ace8fbf77c2da269a98f376e7115902e76cda7e741e4846a5d
+PKG_HASH:=1973c7732f1f9f0a4c0ccf2c1ce462c7c25060b25643ea90f9b98f53a813faec
 
 PKG_MAINTAINER:=David Yang <mmyangfl@gmail.com>
 PKG_LICENSE:=BSD-4-Clause
@@ -21,6 +21,7 @@ PKG_LICENSE:=BSD-4-Clause
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+PKG_BUILD_DEPENDS:=USE_MUSL:libtirpc
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -30,8 +31,9 @@ CONFIGURE_ARGS += \
 	--disable-libwrap
 
 CONFIGURE_VARS += \
-	ac_cv_search_pam_start="" \
-	ac_cv_func_sched_setscheduler=no
+	ac_cv_search_pam_start=""
+
+TARGET_CFLAGS += $(if $(CONFIG_USE_MUSL),-I"$(STAGING_DIR)/usr/include/tirpc")
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
@@ -44,6 +46,7 @@ endef
 define Package/dante/default
   TITLE:=Dante SOCKS
   URL:=http://www.inet.no/dante/
+  DEPENDS:= +USE_GLIBC:libcrypt-compat
 endef
 
 define Package/dante/default/description

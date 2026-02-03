@@ -7,9 +7,9 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=xtables-addons
-PKG_VERSION:=3.26
-PKG_RELEASE:=1
-PKG_HASH:=0b52df2117bacf2e32d1d3f98d09dbf88b274390733d3955699b108acaf9f2a6
+PKG_VERSION:=3.27
+PKG_RELEASE:=3
+PKG_HASH:=e47ea8febe73c12ecab09d2c93578c5dc72d76f17fdf673397758f519cce6828
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://inai.de/files/xtables-addons/
@@ -61,8 +61,7 @@ endef
 # 2: extension/module display name used in package title/description
 # 3: list of extensions to package
 # 4: list of modules to package
-# 5: module load priority
-# 6: module depends
+# 5: module depends
 define BuildTemplate
 
  ifneq ($(3),)
@@ -195,10 +194,20 @@ define Package/iptgeoip/install
 endef
 
 
-#$(eval $(call BuildTemplate,SUFFIX,DESCRIPTION,EXTENSION,MODULE,PRIORITY,DEPENDS))
+define KernelPackage/nf-nathelper-rtsp
+  SUBMENU:=Netfilter Extensions
+  TITLE:=Conntrack and NAT for rtsp
+  DEPENDS:=+kmod-nf-conntrack +kmod-nf-nat
+  FILES:=$(PKG_BUILD_DIR)/extensions/rtsp/nf_conntrack_rtsp.$(LINUX_KMOD_SUFFIX) \
+    $(PKG_BUILD_DIR)/extensions/rtsp/nf_nat_rtsp.$(LINUX_KMOD_SUFFIX)
+  AUTOLOAD:=$(call AutoProbe,nf_conntrack_rtsp nf_nat_rtsp)
+  PROVIDES:=kmod-ipt-nathelper-rtsp
+endef
 
-$(eval $(call BuildTemplate,compat-xtables,API compatibilty layer,,compat_xtables,+IPV6:kmod-ip6tables))
-$(eval $(call BuildTemplate,nathelper-rtsp,RTSP Conntrack and NAT,,rtsp/nf_conntrack_rtsp rtsp/nf_nat_rtsp,+kmod-ipt-conntrack-extra +kmod-ipt-nat))
+
+#$(eval $(call BuildTemplate,SUFFIX,DESCRIPTION,EXTENSION,MODULE,DEPENDS))
+
+$(eval $(call BuildTemplate,compat-xtables,API compatibility layer,,compat_xtables,+IPV6:kmod-ip6tables))
 
 $(eval $(call BuildTemplate,account,ACCOUNT,xt_ACCOUNT,ACCOUNT/xt_ACCOUNT,+kmod-ipt-compat-xtables))
 $(eval $(call BuildTemplate,asn,asn,xt_asn,xt_asn,))
@@ -211,7 +220,7 @@ $(eval $(call BuildTemplate,fuzzy,fuzzy,xt_fuzzy,xt_fuzzy,))
 $(eval $(call BuildTemplate,geoip,geoip,xt_geoip,xt_geoip,))
 $(eval $(call BuildTemplate,iface,iface,xt_iface,xt_iface,))
 $(eval $(call BuildTemplate,ipmark,IPMARK,xt_IPMARK,xt_IPMARK,+kmod-ipt-compat-xtables))
-$(eval $(call BuildTemplate,ipp2p,IPP2P,xt_ipp2p,xt_ipp2p,+kmod-ipt-compat-xtables))
+$(eval $(call BuildTemplate,ipp2p,IPP2P,xt_ipp2p,xt_ipp2p,+kmod-ipt-compat-xtables +kmod-lib-textsearch))
 $(eval $(call BuildTemplate,ipv4options,ipv4options,xt_ipv4options,xt_ipv4options,))
 $(eval $(call BuildTemplate,length2,length2,xt_length2,xt_length2,+kmod-ipt-compat-xtables))
 $(eval $(call BuildTemplate,logmark,LOGMARK,xt_LOGMARK,xt_LOGMARK,+kmod-ipt-compat-xtables))
@@ -226,3 +235,4 @@ $(eval $(call BuildTemplate,tarpit,TARPIT,xt_TARPIT,xt_TARPIT,+kmod-ipt-compat-x
 $(eval $(call BuildPackage,iptaccount))
 $(eval $(call BuildPackage,iptasn))
 $(eval $(call BuildPackage,iptgeoip))
+$(eval $(call KernelPackage,nf-nathelper-rtsp))

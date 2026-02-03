@@ -4,7 +4,7 @@
 # Create a symlink to webroot
 if [ -d /www/ ] && [ ! -L /www/.well-known/acme-challenge ] && [ ! -d /www/.well-known/acme-challenge/ ]; then
 	mkdir -p /www/.well-known/
-	ln -s /var/run/acme/challenge/ /www/.well-known/acme-challenge
+	ln -s /var/run/acme/challenge/.well-known/acme-challenge /www/.well-known/acme-challenge
 fi
 
 # migrate deprecated opts
@@ -53,5 +53,10 @@ config_load acme
 config_foreach handle_cert cert
 uci_commit
 
-grep -q '/etc/init.d/acme' /etc/crontabs/root 2>/dev/null && exit 0
-echo "0 0 * * * /etc/init.d/acme start" >>/etc/crontabs/root
+# Migrate '/etc/init.d/acme start' to '/etc/init.d/acme renew'
+grep -q '/etc/init.d/acme start' /etc/crontabs/root 2>/dev/null && {
+	grep -q '/etc/init.d/acme' /etc/crontabs/root 2>/dev/null || echo "0 0 * * * /etc/init.d/acme renew" >>/etc/crontabs/root
+	sed '/0 0 * * * \/etc\/init.d\/acme start/d' /etc/crontabs/root
+}
+
+exit 0

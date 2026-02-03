@@ -1,0 +1,9 @@
+{
+	"name": "hetzner.cloud",
+	"ipv4": {
+		"url": "update_hetzner_cloud.sh"
+	},
+	"ipv6": {
+		"url": "update_hetzner_cloud.sh"
+	}
+}

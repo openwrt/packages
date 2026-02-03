@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=canutils
-PKG_VERSION:=2023.03
+PKG_VERSION:=2025.01
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 PKG_SOURCE_URL:=https://github.com/linux-can/can-utils
-PKG_MIRROR_HASH:=bea66321c9cea53f44ace2357ca3829a77dbf5d399a09ed0798a659d682d1afa
+PKG_MIRROR_HASH:=d7941dba33718b6375afef1202491d065355ad361c6fda0aa464260012a1d67d
 
 PKG_MAINTAINER:=Anton Glukhov <anton.a.glukhov@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
-PKG_LICENSE_FILES:=COPYING
+PKG_LICENSE_FILES:=LICENSES/BSD-3-Clause LICENSES/GPL-2.0-only.txt LICENSES/Linux-syscall-note.txt
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -48,11 +48,12 @@ define GenPlugin
 endef
 
 FILES:= \
-	asc2log bcmserver canbusload \
+	asc2log bcmserver canbusload can-calc-bit-timing \
 	candump canfdtest cangen cangw canlogserver canplayer \
-	cansend cansniffer isotpdump isotpperf isotprecv isotpsend \
-	isotpserver isotpsniffer isotptun j1939acd j1939cat j1939spy j1939sr \
-	log2asc log2long slcan_attach slcand slcanpty testj1939
+	cansend cansequence cansniffer isotpdump isotpperf isotprecv \
+	isotpsend isotpserver isotpsniffer isotptun j1939acd j1939cat \
+	j1939spy j1939sr j1939-timedate-cli j1939-timedate-srv log2asc \
+	log2long mcp251xfd-dump slcan_attach slcand slcanpty testj1939
 
 $(foreach a,$(FILES),$(eval $(call GenPlugin,$(a))))
 

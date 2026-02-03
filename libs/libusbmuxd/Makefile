@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libusbmuxd
-PKG_VERSION:=2.1.0
+PKG_VERSION:=2.1.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://github.com/libimobiledevice/libusbmuxd/releases/download/$(PKG_VERSION)
-PKG_HASH:=c35bf68f8e248434957bd5b234c389b02206a06ecd9303a7fb931ed7a5636b16
+PKG_HASH:=5546f1aba1c3d1812c2b47d976312d00547d1044b84b6a461323c621f396efce
 
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_CPE_ID:=cpe:/a:libimobiledevice:libusbmuxd
@@ -56,7 +56,7 @@ define Package/libusbmuxd-utils
   $(call Package/libusbmuxd/Default)
   SECTION:=utils
   CATEGORY:=Utilities
-  TITLE+= utilies
+  TITLE+= utilities
   DEPENDS:=+libusbmuxd
   LICENSE:=GPL-2.0-or-later
 endef

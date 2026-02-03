@@ -8,9 +8,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=opensc
-PKG_VERSION:=0.25.1
+PKG_VERSION:=0.26.1
 PKG_RELEASE:=1
-PKG_HASH:=23cbaae8bd7c8eb589b68c0a961dfb0d02007bea3165a3fc5efe2621d549b37b
+PKG_HASH:=f16291a031d86e570394762e9f35eaf2fcbc2337a49910f3feae42d54e1688cb
 
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
@@ -62,7 +62,7 @@ define Package/libpkcs11-spy
   DEPENDS:=+libopenssl +libpthread
 endef
 
-define Package/libpkcs11-spy/dscription
+define Package/libpkcs11-spy/description
   PKCS#11 spying wrapper
 endef
 

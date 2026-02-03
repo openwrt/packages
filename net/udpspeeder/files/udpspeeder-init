@@ -93,6 +93,7 @@ start_instance() {
 	procd_append_param command --queue-len "${queue_len}"
 	procd_append_param command --log-level "${log_level}"
 	procd_append_param command --fifo "${fifo}"
+	procd_append_param command --disable-color
 	
 #	procd_set_param respawn ${respawn_threshold:-3600} ${respawn_timeout:-5} ${respawn_retry:-5}
 	procd_close_instance

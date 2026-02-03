@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=portaudio
-PKG_VERSION:=190600_20161030
+PKG_VERSION:=19.7.0
 PKG_RELEASE:=2
 
-PKG_SOURCE:=pa_stable_v$(PKG_VERSION).tgz
-PKG_SOURCE_URL:=http://www.portaudio.com/archives/
-PKG_HASH:=f5a21d7dcd6ee84397446fa1fa1a0675bb2e8a4a6dceb4305a8404698d8d1513
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/PortAudio/portaudio
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+PKG_MIRROR_HASH:=ddfa5d2a9a26d3337d337231c3403497373dfb1259a9ac7a6810db1e6c529f08
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=MIT
@@ -28,7 +28,7 @@ include $(INCLUDE_DIR)/cmake.mk
 define Package/portaudio
   SECTION:=sound
   CATEGORY:=Sound
-  DEPENDS:=+alsa-lib +libpthread +librt
+  DEPENDS:=+alsa-lib
   TITLE:=Portable cross-platform audio I/O
   URL:=http://www.portaudio.com/
 endef

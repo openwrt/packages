@@ -37,6 +37,7 @@ proto_openconnect_init_config() {
 	proto_config_add_string "csd_wrapper"
 	proto_config_add_string "proxy"
 	proto_config_add_array 'form_entry:regex("[^:]+:[^=]+=.*")'
+	proto_config_add_string "script"
 	no_device=1
 	available=1
 }
@@ -73,6 +74,7 @@ proto_openconnect_setup() {
 		token_secret \
 		usergroup \
 		username \
+		script \
 
 	ifname="vpn-$config"
 
@@ -84,7 +86,7 @@ proto_openconnect_setup() {
 		[ -n $uri ] && server=$(echo $uri | awk -F[/:] '{print $4}')
 
 		logger -t "openconnect" "adding host dependency for $server at $config"
-		while resolveip -t 10 "$server" > "$tmpfile" && [ "$trials" -gt 0 ]; do
+		while ! resolveip -t 10 "$server" > "$tmpfile" && [ "$trials" -gt 0 ]; do
 			sleep 5
 			trials=$((trials - 1))
 		done
@@ -101,7 +103,8 @@ proto_openconnect_setup() {
 	[ -n "$port" ] && port=":$port"
 	[ -z "$uri" ] && uri="$server$port"
 
-	append_args "$uri" -i "$ifname" --non-inter --syslog --script /lib/netifd/vpnc-script
+	append_args "$uri" -i "$ifname" --non-inter --syslog
+	[ -n "$script" ] && append_args --script "$script"
 	[ "$pfs" = 1 ] && append_args --pfs
 	[ "$no_dtls" = 1 ] && append_args --no-dtls
 	[ -n "$mtu" ] && append_args --mtu "$mtu"

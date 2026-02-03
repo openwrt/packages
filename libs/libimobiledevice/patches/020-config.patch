@@ -1,6 +1,6 @@
 --- a/common/userpref.c
 +++ b/common/userpref.c
-@@ -173,7 +173,7 @@ const char *userpref_get_config_dir()
+@@ -174,7 +174,7 @@ const char *userpref_get_config_dir()
  #ifdef __APPLE__
  	base_config_dir = strdup("/var/db");
  #else

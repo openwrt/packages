@@ -83,6 +83,7 @@ modemmanager_connected_method_ppp_ipv4() {
 
 	proto_run_command "${interface}" /usr/sbin/pppd \
 		"${ttyname}" \
+		ifname "ppp-${interface}" \
 		115200 \
 		nodetach \
 		noaccomp \
@@ -245,7 +246,11 @@ modemmanager_connected_method_static_ipv6() {
 	[ -n "${gateway}" ] && {
 		echo "adding default IPv6 route via ${gateway}"
 		proto_add_ipv6_route "${gateway}" "128"
-		proto_add_ipv6_route "::0" "0" "${gateway}" "" "" "${address}/${prefix}"
+		[ "$sourcefilter" = "0" ] && {
+			proto_add_ipv6_route "::0" "0" "${gateway}"
+		} || {
+			proto_add_ipv6_route "::0" "0" "${gateway}" "" "" "${address}/${prefix}"
+		}
 	}
 	[ -n "${dns1}" ] && {
 		echo "adding primary DNS at ${dns1}"
@@ -308,48 +313,181 @@ modemmanager_set_allowed_mode() {
 	}
 }
 
-modemmanager_check_state() {
+modemmanager_check_state_failed() {
 	local device="$1"
-	local modemstatus="$2"
-	local pincode="$3"
+	local interface="$2"
+	local modemstatus="$3"
 
-	local state reason
+	local reason
 
-	state="$(modemmanager_get_field "${modemstatus}" "state")"
-	state="${state%% *}"
-	reason="$(modemmanager_get_field "${modemstatus}" "state-failed-reason")"
+	reason="$(modemmanager_get_field "${modemstatus}" "modem.generic.state-failed-reason")"
+
+	case "$reason" in
+		"sim-missing")
+			echo "SIM missing"
+			proto_notify_error "${interface}" MM_FAILED_REASON_SIM_MISSING
+			proto_block_restart "${interface}"
+			return 1
+			;;
+		*)
+			proto_notify_error "${interface}" MM_FAILED_REASON_UNKNOWN
+			proto_block_restart "${interface}"
+			return 1
+			;;
+	esac
+}
+
+modemmanager_check_state_lock_simpin() {
+	local interface="$1"
+	local unlock_value="$2"
+
+	[ $unlock_value -ge 2 ] && return 0
+
+	echo "please check PIN (remaining attempts: ${unlock_value})"
+	proto_notify_error "${interface}" MM_CHECK_UNLOCK_PIN
+	proto_block_restart "${interface}"
+	return 1
+}
+
+modemmanager_check_state_lock_simpuk() {
+	local interface="$1"
+	local unlock_value="$2"
+
+	echo "unlock with PUK required (remaining attempts: ${unlock_value})"
+	proto_notify_error "${interface}" MM_CHECK_UNLOCK_PIN
+	proto_block_restart "${interface}"
+	return 1
+}
+
+modemmanager_check_state_lock_sim() {
+	local interface="$1"
+	local unlock_lock="$2"
+	local unlock_value="$3"
+
+	case "$unlock_lock" in
+		"sim-pin")
+			modemmanager_check_state_lock_simpin \
+				"$interface" \
+				"$unlock_value"
+			[ "$?" -ne "0" ] && return 1
+			;;
+		"sim-puk")
+			modemmanager_check_state_lock_simpuk \
+				"$interface" \
+				"$unlock_value"
+			[ "$?" -ne "0" ] && return 1
+			;;
+		*)
+			echo "PIN/PUK check '$unlock_lock' not implemented"
+			;;
+	esac
+
+	return 0
+}
+
+modemmanager_check_state_locked() {
+	local device="$1"
+	local interface="$2"
+	local modemstatus="$3"
+	local pincode="$4"
+
+	local unlock_required unlock_retries unlock_retry unlock_lock
+	local unlock_value unlock_match
+
+	if [ -z "$pincode" ]; then
+		echo "PIN required"
+		proto_notify_error "${interface}" MM_PINCODE_REQUIRED
+		proto_block_restart "${interface}"
+		return 1
+	fi
+
+	unlock_required="$(modemmanager_get_field "${modemstatus}" "modem.generic.unlock-required")"
+	unlock_retries="$(modemmanager_get_multivalue_field "${modemstatus}" "modem.generic.unlock-retries")"
+
+	# Output of unlock-retries:
+	#   'sim-pin (3), sim-puk (10), sim-pin2 (3), sim-puk2 (10)'
+	# Replace alle '<spaces>' of unlock-retures with '', so we could
+	# iterate in the for loop. Replace result is:
+	#   'sim-pin(3),sim-puk(10),sim-pin2(3),sim-puk2(10)'
+	unlock_match=0
+	for unlock_retry in $(echo "${unlock_retries// /}" | tr "," "\n"); do
+		unlock_lock="${unlock_retry%%(*}"
+
+		# extract x value from 'sim-puk(x)' || 'sim-pin(x)'
+		unlock_value="${unlock_retry##*(}"
+		unlock_value="${unlock_value:0:-1}"
+
+		[ "$unlock_lock" = "$unlock_required" ] && {
+			unlock_match=1
+			modemmanager_check_state_lock_sim \
+				"$interface" \
+				"$unlock_lock" \
+				"$unlock_value"
+				[ "$?" -ne "0" ] && return 1
+		}
+	done
+
+	if [ "$unlock_match" = "0" ]; then
+		echo "unable to check PIN/PUK attempts"
+		proto_notify_error "${interface}" MM_CHECK_UNLOCK_UNKNOWN
+		proto_block_restart "${interface}"
+		return 1
+	fi
+
+	mmcli --modem="${device}" -i any --pin=${pincode} || {
+		proto_notify_error "${interface}" MM_PINCODE_WRONG
+		proto_block_restart "${interface}"
+		return 1
+	}
+
+	# Give the modem time to change to the initializing state after
+	# unlocking 
+	sleep 1
+
+	return 0
+}
+
+modemmanager_check_pin_state() {
+	local device="$1"
+	local interface="$2"
+	local modemstatus="$3"
+	local pincode="$4"
+
+	local state modemstatus
+
+	local timeout=20
+	local count=0
+
+	state="$(modemmanager_get_field "${modemstatus}" "modem.generic.state")"
 
 	case "$state" in
 		"failed")
-			case "$reason" in
-				"sim-missing")
-					echo "SIM missing"
-					proto_notify_error "${interface}" MM_FAILED_REASON_SIM_MISSING
-					proto_block_restart "${interface}"
-					return 1
-					;;
-				*)
-					proto_notify_error "${interface}" MM_FAILED_REASON_UNKNOWN
-					proto_block_restart "${interface}"
-					return 1
-					;;
-			esac
+			modemmanager_check_state_failed "$device" \
+				"$interface" \
+				"$modemstatus"
+			[ "$?" -ne "0" ] && return 1
 			;;
 		"locked")
-			if [ -n "$pincode" ]; then
-				mmcli --modem="${device}" -i any --pin=${pincode} || {
-					proto_notify_error "${interface}" MM_PINCODE_WRONG
-					proto_block_restart "${interface}"
-					return 1
-				}
-			else
-				echo "PIN required"
-				proto_notify_error "${interface}" MM_PINCODE_REQUIRED
-				proto_block_restart "${interface}"
-				return 1
-			fi
+			modemmanager_check_state_locked "$device" \
+				"$interface" \
+				"$modemstatus" \
+				"$pincode"
+			[ "$?" -ne "0" ] && return 1
 			;;
 	esac
+
+	# After the SIM has been successfully unlocked, it is initialized.
+	# This can take longer on some modems, so we must wait until the
+	# modem is ready to execute the next commands.
+	while [ $count -lt "$timeout" ]; do
+		modemstatus=$(mmcli --modem="${device}" --output-keyvalue)
+		state="$(modemmanager_get_field "${modemstatus}" "modem.generic.state")"
+
+		[ "$state" != "initializing" ] && return 0
+		count=$((count + 1))
+		echo "waiting for SIM initializing (${count}s)"
+		sleep 1
+	done
 }
 
 modemmanager_set_preferred_mode() {
@@ -388,13 +526,6 @@ modemmanager_init_epsbearer() {
 	local connectargs="$3"
 	local apn="$4"
 
-	[ "$eps" != 'none' ] && [ -z "${apn}" ] && {
-		echo "No '$eps' init eps bearer apn configured"
-		proto_notify_error "${interface}" MM_INIT_EPS_BEARER_APN_NOT_CONFIGURED
-		proto_block_restart "${interface}"
-		return 1
-	}
-
 	if [ "$eps" = "none" ]; then
 		echo "Deleting inital EPS bearer..."
 	else
@@ -412,6 +543,26 @@ modemmanager_init_epsbearer() {
 	# Wait here so that the modem can set the init EPS bearer
 	# for registration
 	sleep 2
+}
+
+modemmanager_set_plmn() {
+	local device="$1"
+	local interface="$2"
+	local plmn="$3"
+	local force_connection="$4"
+
+	mmcli --modem="${device}" \
+		--timeout 120 \
+		--3gpp-register-in-operator="${plmn}" || {
+		if [ -n "${force_connection}" ] && [ "${force_connection}" -eq 1 ]; then
+			echo "3GPP operator registration failed -> attempting restart"
+				proto_notify_error "${interface}" MM_INTERFACE_RESTART
+			else
+				proto_notify_error "${interface}" MM_3GPP_OPERATOR_REGISTRATION_FAILED
+				proto_block_restart "${interface}"
+		fi
+		return 1
+	}
 }
 
 proto_modemmanager_setup() {
@@ -459,7 +610,7 @@ proto_modemmanager_setup() {
 	}
 	echo "modem available at ${modempath}"
 
-	modemmanager_check_state "$device" "${modemstatus}" "$pincode"
+	modemmanager_check_pin_state "$device" "$interface" "${modemstatus}" "$pincode"
 	[ "$?" -ne "0" ] && return 1
 
 	# always cleanup before attempting a new connection, just in case
@@ -470,60 +621,11 @@ proto_modemmanager_setup() {
 		return 1
 	}
 
-	[ -z "${plmn}" ] || {
-		echo "starting network registraion with plmn '${plmn}'..."
-		mmcli --modem="${device}" \
-			--timeout 120 \
-			--3gpp-register-in-operator="${plmn}" || {
-
-			if [ -n "${force_connection}" ] && [ "${force_connection}" -eq 1 ]; then
-				echo "3GPP operator registration failed -> attempting restart"
-				proto_notify_error "${interface}" MM_INTERFACE_RESTART
-			else
-				proto_notify_error "${interface}" MM_3GPP_OPERATOR_REGISTRATION_FAILED
-				proto_block_restart "${interface}"
-			fi
-			return 1
-		}
-	}
-
-	if [ -z "${allowedmode}" ]; then
-		modemmanager_set_allowed_mode "$device" "$interface" "any"
-	else
-		case "$allowedmode" in
-			"2g")
-				modemmanager_set_allowed_mode "$device" \
-					"$interface" "2g"
-				;;
-			"3g")
-				modemmanager_set_allowed_mode "$device" \
-					"$interface" "3g"
-				;;
-			"4g")
-				modemmanager_set_allowed_mode "$device" \
-					"$interface" "4g"
-				;;
-			"5g")
-				modemmanager_set_allowed_mode "$device" \
-					"$interface" "5g"
-				;;
-			*)
-				modemmanager_set_preferred_mode "$device" \
-					"$interface" "${allowedmode}" "${preferredmode}"
-				;;
-		esac
-		# check error for allowed_mode and preferred_mode function call
-		[ "$?" -ne "0" ] && return 1
-	fi
-
 	# set initial eps bearer settings
-	[ -z "${init_epsbearer}" ] || {
+	if [ -z "${init_epsbearer}" ]; then
+		modemmanager_init_epsbearer "none" "$device" "" "$apn"
+	else
 		case "$init_epsbearer" in
-			"none")
-				connectargs=""
-				modemmanager_init_epsbearer "none" \
-					"$device" "${connectargs}" "$apn"
-				;;
 			"default")
 				cliauth=""
 				for auth in $allowedauth; do
@@ -555,7 +657,49 @@ proto_modemmanager_setup() {
 		esac
 		# check error for init_epsbearer function call
 		[ "$?" -ne "0" ] && return 1
-	}
+	fi
+
+	if [ -z "${allowedmode}" ]; then
+		modemmanager_set_allowed_mode "$device" "$interface" "any"
+	else
+		case "$allowedmode" in
+			"2g")
+				modemmanager_set_allowed_mode "$device" \
+					"$interface" "2g"
+				;;
+			"3g")
+				modemmanager_set_allowed_mode "$device" \
+					"$interface" "3g"
+				;;
+			"4g")
+				modemmanager_set_allowed_mode "$device" \
+					"$interface" "4g"
+				;;
+			"5g")
+				modemmanager_set_allowed_mode "$device" \
+					"$interface" "5g"
+				;;
+			"any")
+				modemmanager_set_allowed_mode "$device" \
+					"$interface" "any"
+				;;
+			*)
+				modemmanager_set_preferred_mode "$device" \
+					"$interface" "${allowedmode}" "${preferredmode}"
+				;;
+		esac
+		# check error for allowed_mode and preferred_mode function call
+		[ "$?" -ne "0" ] && return 1
+	fi
+
+	if [ -z "${plmn}" ]; then
+		modemmanager_set_plmn "$device" "$interface" "" "$force_connection"
+		[ "$?" -ne "0" ] && return 1
+	else
+		echo "starting network registration with plmn '${plmn}'..."
+		modemmanager_set_plmn "$device" "$interface" "$plmn" "$force_connection"
+		[ "$?" -ne "0" ] && return 1
+	fi
 
 	# setup connect args; APN mandatory (even if it may be empty)
 	echo "starting connection with apn '${apn}'..."
@@ -724,8 +868,14 @@ proto_modemmanager_teardown() {
 	mmcli --modem="${device}" --simple-disconnect ||
 		proto_notify_error "${interface}" DISCONNECT_FAILED
 
-	# disable
-	mmcli --modem="${device}" --disable
+	# Variable is set to '1' if modem should be disabled on ifdown,
+	# otherwise it stays connected.
+	local disable="$(uci_get network "$interface" disable_modem "1")"
+	if [ "${disable}" -eq 0 ]; then
+		echo "Skipping modem disable"
+	else
+		mmcli --modem="${device}" --disable
+	fi
 
 	# low power, only if requested
 	[ "${lowpower:-0}" -lt 1 ] ||

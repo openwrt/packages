@@ -1,6 +1,6 @@
 --- a/conserver/consent.c
 +++ b/conserver/consent.c
-@@ -1269,7 +1269,7 @@ AddrsMatch(char *addr1, char *addr2)
+@@ -1308,7 +1308,7 @@ AddrsMatch(char *addr1, char *addr2)
  {
  #if USE_IPV6
      int error, ret = 0;
@@ -9,7 +9,7 @@
  #else
      /* so, since we might use inet_addr, we're going to use
       * (in_addr_t)(-1) as a sign of an invalid ip address.
-@@ -1307,17 +1307,19 @@ AddrsMatch(char *addr1, char *addr2)
+@@ -1346,17 +1346,19 @@ AddrsMatch(char *addr1, char *addr2)
  	goto done;
      }
  

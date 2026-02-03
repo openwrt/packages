@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=external-protocol
 PKG_VERSION:=20231119
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
 
@@ -12,6 +12,7 @@ define Package/external-protocol
   SECTION:=net
   CATEGORY:=Network
   TITLE:=externally managed protocol
+  DEPENDS:=+ip
   PKGARCH:=all
 endef
 
@@ -22,7 +23,7 @@ define Package/external-protocol/description
   netbird for example. External protocol is supposed
   to be managed with external software, not directly.
 
-  external protocol works automaticly on the background
+  external protocol works automatically on the background
   and sets up netifd details when interface comes up or
   goes down. This allows one to easily add interface to
   a firewall zone.

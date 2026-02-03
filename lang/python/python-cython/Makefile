@@ -8,18 +8,25 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-cython
-PKG_VERSION:=3.0.10
+PKG_VERSION:=3.1.5
 PKG_RELEASE:=1
 
 PYPI_NAME:=Cython
-PKG_HASH:=dcc96739331fb854dcf503f94607576cfe8488066c61ca50dfd55836f132de99
+PYPI_SOURCE_NAME:=cython
+PKG_HASH:=7e73c7e6da755a8dffb9e0e5c4398e364e37671778624188444f1ff0d9458112
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE.txt
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
 PKG_HOST_ONLY:=1
-HOST_BUILD_DEPENDS:=python3/host python-build/host python-installer/host python-wheel/host
+HOST_BUILD_DEPENDS:= \
+        python3/host \
+        python-build/host \
+        python-installer/host \
+        python-wheel/host \
+        python-setuptools/host \
+        python-packaging/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

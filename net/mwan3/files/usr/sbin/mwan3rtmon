@@ -107,7 +107,10 @@ mwan3_rtmon_route_handle()
 		local iface=$1
 		tbl=$($IP route list table $tid 2>/dev/null)$'\n'
 
-		if [ -n "$iface" ] && [ "$(mwan3_get_mwan3track_status $iface)" != "active" ]; then
+		local status
+		mwan3_get_mwan3track_status status $iface
+
+		if [ -n "$iface" ] && [ "$status" != "active" ]; then
 			LOG debug "interface $iface is disabled - skipping '$route_line'";
 			return
 		fi

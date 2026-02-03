@@ -7,13 +7,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sendmail
-PKG_VERSION:=8.16.1
+PKG_VERSION:=8.18.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME).$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=ftp://ftp.sendmail.org/pub/sendmail
-PKG_HASH:=7886d5dc4b436b86175f32b5b9c7305c80787749847e2909bf99123ecc4e64ba
-PKG_MAINTAINER:=Val Kulkov <val.kulkov@gmail.com>
+PKG_SOURCE_URL:=https://ftp.sendmail.org
+PKG_HASH:=1a085faa8ace52cffde2f5e9bc611bdb5f81481caaabf46f0437b719ca089d2f
+PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
 PKG_LICENSE:=Sendmail
 PKG_LICENSE_FILES:=LICENSE
@@ -49,10 +49,6 @@ SITECONFIG:=site.$(TARGET_OS).m4
 #        cp: not writing through dangling symlink
 #        ...
 #        lede/source/include/toplevel.mk:206: recipe for target 'package/feeds/packages/libmilter/compile' failed
-#
-# ANYONE WHO IS READING THIS MAKEFILE AND WHO HAS THE KNOWLEDGE AND DESIRE
-# TO COMPLETE PORTING OF SENDMAIL TO LEDE/OPENWRT PLATFORM IS ENCOURAGED
-# TO DO SO AND TAKE OVER THE MAINTAINERSHIP OF THIS PACKAGE FROM VAL KULKOV.
 #
 #define Package/sendmail
 #  SECTION:=mail
@@ -131,4 +127,3 @@ endef
 
 $(eval $(call BuildPackage,libmilter-sendmail))
 #$(eval $(call BuildPackage,sendmail))
-

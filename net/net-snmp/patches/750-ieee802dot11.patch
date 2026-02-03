@@ -1,6 +1,6 @@
 --- /dev/null
 +++ b/agent/mibgroup/ieee802dot11.c
-@@ -0,0 +1,4916 @@
+@@ -0,0 +1,4917 @@
 +/****************************************************************************
 +*                                                                           *
 +*  File Name:           ieee802dot11.c                                      *
@@ -25,6 +25,7 @@
 +/****************************************************************************
 +*                               Includes                                    *
 +****************************************************************************/
++#include <inttypes.h>
 +#include <net-snmp/net-snmp-config.h>
 +#include <net-snmp/net-snmp-includes.h>
 +#include <net-snmp/agent/net-snmp-agent-includes.h>

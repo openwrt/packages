@@ -3,7 +3,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pservice
-PKG_VERSION:=2017-08-29
+PKG_VERSION:=2017.08.29
 PKG_RELEASE=3
 
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>

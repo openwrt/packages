@@ -1,0 +1,29 @@
+From e083653d2d18018fe6ef42f757bc06462de87f28 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Florian=20H=C3=BClsmann?= <fh@cbix.de>
+Date: Sat, 30 Mar 2024 12:43:55 +0100
+Subject: [PATCH] Fix liblo 0.32 header compatibility
+
+---
+ plugins/osc/OSCNode.cpp | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/plugins/osc/OSCNode.cpp
++++ b/plugins/osc/OSCNode.cpp
+@@ -141,7 +141,7 @@ bool ExtractSlotValueFromPair(const stri
+  * @param user_data a pointer to the OSCNode object.
+  */
+ int OSCDataHandler(const char *osc_address, const char *types, lo_arg **argv,
+-                   int argc, void *, void *user_data) {
++                   int argc, lo_message, void *user_data) {
+   OLA_DEBUG << "Got OSC message for " << osc_address << ", types are " << types;
+ 
+   OSCNode *node = reinterpret_cast<OSCNode*>(user_data);
+@@ -150,7 +150,7 @@ int OSCDataHandler(const char *osc_addre
+ 
+   if (argc == 1) {
+     if (type == "b") {
+-      lo_blob blob = argv[0];
++      lo_blob blob = (lo_blob)argv[0];
+       unsigned int size = min(static_cast<uint32_t>(DMX_UNIVERSE_SIZE),
+                               lo_blob_datasize(blob));
+       node->SetUniverse(

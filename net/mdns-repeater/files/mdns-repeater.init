@@ -11,6 +11,7 @@ start_service() {
 	local interfaces
 	config_get interfaces main interface
 	procd_open_instance
+	procd_set_param respawn
 	procd_set_param command $PROG -f $interfaces
 	# -f generates a lot of debug output
 	# no forwarding of stderr to logs

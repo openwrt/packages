@@ -1,3 +1,24 @@
+From da7f1292838f087e2179705f2778f78ddd85cba8 Mon Sep 17 00:00:00 2001
+From: "Daniel F. Dickinson" <dfdpublic@wildtechgarden.ca>
+Date: Wed, 17 Dec 2025 18:28:37 -0500
+Subject: [PATCH] zabbix_agentd: Tweak config file for OpenWrt
+
+Note: original patch had no header, header added 2025-12-16, while
+bumping package version. Modified 2025-12-25. Modified 2026-01-21.
+
+1. Use syslog not a file for logging
+2. Place PidFile under /var/run/zabbix
+3. Only start passive agent by default
+4. Do not do active checks by default
+5. Use the system hostname as hostname (except on zabbix server)
+6. Include configurations under /etc/zabbix_agentd.conf.d/
+7. Drop privileges to the zabbix-agent user (instead of zabbix)
+
+Signed-off-by: Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
+---
+ conf/zabbix_agentd.conf | 19 +++++++------------
+ 1 file changed, 7 insertions(+), 12 deletions(-)
+
 --- a/conf/zabbix_agentd.conf
 +++ b/conf/zabbix_agentd.conf
 @@ -3,12 +3,11 @@
@@ -10,8 +31,8 @@
 -# Mandatory: no
 -# Default:
 -# PidFile=/tmp/zabbix_agentd.pid
-+# We do not need PidFile with procd
-+# PidFile=/var/run/zabbix_agentd.pid
++# Zabbix always creates a PidFile. Make sure it is where we want it.
++PidFile=/var/run/zabbix-agent/zabbix_agentd.pid
 +
 +# use syslog
 +LogType=system
@@ -53,13 +74,19 @@
  ### Option: HostnameItem
  #	Item used for generating Hostname if it is undefined. Ignored if Hostname is defined.
  #	Does not support UserParameters or aliases.
-@@ -326,8 +320,8 @@ Hostname=Zabbix server
+@@ -315,7 +309,7 @@ Hostname=Zabbix server
+ #
+ # Mandatory: no
+ # Default:
+-# User=zabbix
++User=zabbix-agent
+ 
+ ####### USER-DEFINED MONITORED PARAMETERS #######
+ 
+@@ -545,5 +539,5 @@ Hostname=Zabbix server
  # Include=
  
  # Include=/usr/local/etc/zabbix_agentd.userparams.conf
 -# Include=/usr/local/etc/zabbix_agentd.conf.d/
  # Include=/usr/local/etc/zabbix_agentd.conf.d/*.conf
 +Include=/etc/zabbix_agentd.conf.d/
- 
- ####### USER-DEFINED MONITORED PARAMETERS #######
- 

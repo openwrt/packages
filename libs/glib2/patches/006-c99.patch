@@ -1,6 +1,6 @@
 --- a/meson.build
 +++ b/meson.build
-@@ -1160,7 +1160,7 @@ if host_system == 'windows' and (cc.get_
+@@ -1189,7 +1189,7 @@ if host_system == 'windows' and (cc.get_
    glib_conf.set('HAVE_C99_SNPRINTF', false)
    glib_conf.set('HAVE_C99_VSNPRINTF', false)
    glib_conf.set('HAVE_UNIX98_PRINTF', false)

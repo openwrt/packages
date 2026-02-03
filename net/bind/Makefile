@@ -9,8 +9,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bind
-PKG_VERSION:=9.20.0
-PKG_RELEASE:=1
+PKG_VERSION:=9.20.18
+PKG_RELEASE:=2
 USERID:=bind=57:bind=57
 
 PKG_MAINTAINER:=Noah Meyerhans <frodo@morgul.net>
@@ -22,10 +22,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:= \
 	https://www.mirrorservice.org/sites/ftp.isc.org/isc/bind9/$(PKG_VERSION) \
 	https://ftp.isc.org/isc/bind9/$(PKG_VERSION)
-PKG_HASH:=cc580998017b51f273964058e8cb3aa5482bc785243dea71e5556ec565a13347
-
-PKG_FIXUP:=autoreconf
-PKG_REMOVE_FILES:=aclocal.m4 libtool.m4
+PKG_HASH:=dfc546c990ac4515529cd45c4dd995862b18ae8a2d0cb29208e8896a5d325331
 
 PKG_INSTALL:=1
 PKG_BUILD_FLAGS:=no-mips16
@@ -34,10 +31,14 @@ PKG_BUILD_PARALLEL:=1
 PKG_CONFIG_DEPENDS := \
 	CONFIG_BIND_LIBJSON \
 	CONFIG_BIND_LIBXML2 \
+	CONFIG_BIND_JEMALLOC \
 	CONFIG_BIND_ENABLE_DOH \
 	CONFIG_BIND_ENABLE_GSSAPI
 
-PKG_BUILD_DEPENDS += BIND_LIBXML2:libxml2 BIND_LIBJSON:libjson-c
+PKG_BUILD_DEPENDS += \
+	BIND_LIBXML2:libxml2 \
+	BIND_LIBJSON:libjson-c \
+	BIND_JEMALLOC:libjemalloc
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -66,7 +67,8 @@ define Package/bind-libs
 	+BIND_ENABLE_GSSAPI:krb5-libs \
 	+BIND_ENABLE_GSSAPI:libcomerr \
 	+BIND_LIBXML2:libxml2 \
-	+BIND_LIBJSON:libjson-c
+	+BIND_LIBJSON:libjson-c \
+	+BIND_JEMALLOC:libjemalloc
   TITLE:=bind shared libraries
   URL:=https://www.isc.org/software/bind
 endef
@@ -74,7 +76,8 @@ endef
 define Package/bind-server
   $(call Package/bind/Default)
   TITLE+= DNS server
-  DEPENDS+= +libcap
+  DEPENDS+= +libcap \
+	+bind-rndc
 endef
 
 define Package/bind-server/config
@@ -142,9 +145,8 @@ define Package/bind-ddns-confgen
   TITLE+= administration tools (ddns-confgen and tsig-keygen only)
 endef
 
-export BUILD_CC="$(TARGET_CC)"
-
-TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
+TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed \
+	-Wl,-rpath-link,$(PKG_BUILD_DIR)/lib/ns/.libs
 
 CONFIGURE_ARGS += \
 	--disable-geoip \
@@ -170,6 +172,14 @@ else
 		--with-libxml2=no
 endif
 
+ifdef CONFIG_BIND_JEMALLOC
+	CONFIGURE_ARGS += \
+		--with-jemalloc=yes
+else
+	CONFIGURE_ARGS += \
+		--without-jemalloc
+endif
+
 ifdef CONFIG_BIND_ENABLE_DOH
 	CONFIGURE_ARGS += \
 		--enable-doh
@@ -186,19 +196,6 @@ else
 		--without-gssapi
 endif
 
-CONFIGURE_VARS += \
-	BUILD_CC="$(TARGET_CC)" \
-
-define Build/Compile
-	$(MAKE) -C $(PKG_BUILD_DIR)/lib/dns \
-		BUILD_CC="$(HOSTCC)" \
-		CC="$(HOSTCC)" \
-		CFLAGS="-O2" \
-		LIBS="" \
-		gen
-	$(call Build/Compile/Default)
-endef
-
 define Package/bind-libs/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so* $(1)/usr/lib
@@ -208,30 +205,14 @@ define Package/bind-server/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/named $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/bind
-	$(CP) \
-		./files/bind/db.0 \
-		./files/bind/db.127 \
-		./files/bind/db.255 \
-		./files/bind/db.local \
-		./files/bind/db.root \
-		./files/bind/bind.keys \
-		$(1)/etc/bind/
-	sed -e '1s/ broadcast / empty rfc1918 /' \
-		< ./files/bind/db.0 \
-		> $(1)/etc/bind/db.empty
-	$(CP) ./files/bind/named.conf.example $(1)/etc/bind/named.conf
+	$(INSTALL_DATA) ./files/bind/db.root $(1)/etc/bind
+	$(INSTALL_DATA) ./files/bind/named.conf $(1)/etc/bind
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/named.init $(1)/etc/init.d/named
-	find $(1)/etc/bind/ -name ".svn" | xargs rm -rf
 endef
 
 define Package/bind-server/conffiles
-/etc/bind/db.0
-/etc/bind/db.127
-/etc/bind/db.255
-/etc/bind/db.local
-/etc/bind/db.root
-/etc/bind/named.conf
+/etc/bind
 endef
 
 define Package/bind-server-filter-aaaa/install

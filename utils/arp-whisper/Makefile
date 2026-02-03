@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=arp-whisper
 PKG_VERSION:=0.1.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/FacundoAcevedo/arp-whisper/tar.gz/v$(PKG_VERSION)?
@@ -19,6 +19,8 @@ PKG_LICENSE_FILES:=LICENCE
 PKG_BUILD_DEPENDS:=rust/host
 PKG_BUILD_PARALLEL:=1
 
+RUST_PKG_LOCKED:=0
+
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/rust/rust-package.mk
 
@@ -26,13 +28,13 @@ define Package/arp-whisper
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=ARP responses based on MAC-IP pairs
-  DEPENDS:=$(RUST_ARCH_DEPENDS) 
+  DEPENDS:=$(RUST_ARCH_DEPENDS)
   URL:=https://github.com/FacundoAcevedo/arp-whisper
 endef
 
 define Package/arp-whisper/description
   arp-whisper listens to ARP requests on a network interface and responds
-  to them based on a list of IP-MAC address mappings defined in a 
+  to them based on a list of IP-MAC address mappings defined in a
   configuration file.
 endef
 

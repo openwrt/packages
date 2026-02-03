@@ -1,1 +1,1 @@
-alias btop="btop --utf-force"
+alias btop="btop --force-utf"

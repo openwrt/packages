@@ -6,13 +6,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=owut
-PKG_SOURCE_DATE:=2024-08-09
+PKG_SOURCE_DATE:=2026-01-13
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=8a6becd89d6f35737130686cd141d2054adddd1d
+PKG_SOURCE_VERSION:=2526d84be888d5c4bcc65e42fc03a7a8ac6276f1
 PKG_SOURCE_URL:=https://github.com/efahl/owut.git
-PKG_MIRROR_HASH:=4522759ee8a0979ebe63320c251f344356ce1e793d0d71ec77ee948902bff879
+PKG_MIRROR_HASH:=1bebd070d64614f6c89567e29382fe0f8e15b5afebf21fa1bc724cb4a0a5bd69
 
 PKG_MAINTAINER:=Eric Fahlgren <ericfahlgren@gmail.com>
 PKG_LICENSE:=GPL-2.0-only
@@ -53,7 +53,7 @@ endef
 
 define Package/owut/install
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_CONF) $(PKG_BUILD_DIR)/files/owut.defaults $(1)/etc/uci-defaults/attendedsysupgrade-owut
+	$(INSTALL_CONF) $(PKG_BUILD_DIR)/files/owut.defaults $(1)/etc/uci-defaults/51-attendedsysupgrade-owut
 
 	$(INSTALL_DIR) $(1)/etc/owut.d
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/pre-install.sh $(1)/etc/owut.d/pre-install.sh
@@ -65,6 +65,7 @@ define Package/owut/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/owut $(1)/usr/bin
 
 	sed -i -e "s/%%VERSION%%/$(PKG_VERSION)-r$(PKG_RELEASE)/" $(1)/usr/bin/owut
+	sed -i -e "s/%%VERSION%%/$(PKG_VERSION)-r$(PKG_RELEASE)/" $(1)/usr/share/ucode/utils/argparse.uc
 endef
 
 $(eval $(call BuildPackage,owut))

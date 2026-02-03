@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=htop
-PKG_VERSION:=3.3.0
-PKG_RELEASE:=2
+PKG_VERSION:=3.4.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/htop-dev/htop/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=1e5cc328eee2bd1acff89f860e3179ea24b85df3ac483433f92a29977b14b045
+PKG_HASH:=af9ec878f831b7c27d33e775c668ec79d569aa781861c995a0fbadc1bdb666cf
 
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
@@ -63,7 +63,8 @@ CONFIGURE_ARGS += \
 	--disable-delayacct \
 	--disable-unicode \
 	--disable-unwind \
-	--disable-hwloc
+	--disable-hwloc \
+	--with-curses=ncursesw
 
 CONFIGURE_VARS += \
 	ac_cv_file__proc_stat=yes \

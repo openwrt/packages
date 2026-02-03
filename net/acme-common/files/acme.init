@@ -1,9 +1,11 @@
 #!/bin/sh /etc/rc.common
 
+START=20
 USE_PROCD=1
 run_dir=/var/run/acme
 export CHALLENGE_DIR=$run_dir/challenge
 export CERT_DIR=/etc/ssl/acme
+LAST_LISTEN_PORT=
 NFT_HANDLE=
 HOOK=/usr/lib/acme/hook
 LOG_TAG=acme
@@ -11,15 +13,20 @@ LOG_TAG=acme
 # shellcheck source=net/acme/files/functions.sh
 . "$IPKG_INSTROOT/usr/lib/acme/functions.sh"
 
-cleanup() {
-	log debug "cleaning up"
-	if [ -e $run_dir/lock ]; then
-		rm $run_dir/lock
-	fi
+extra_command "abort" "Abort running certificate issuances/renewals"
+extra_command "renew" "Run certificate issuances/renewals"
+
+delete_nft_rule() {
 	if [ "$NFT_HANDLE" ]; then
 		# $NFT_HANDLE contains the string 'handle XX' so pass it unquoted to nft
 		nft delete rule inet fw4 input $NFT_HANDLE
+		NFT_HANDLE=
 	fi
+}
+
+cleanup() {
+	log debug "cleaning up"
+	delete_nft_rule
 }
 
 load_options() {
@@ -30,15 +37,15 @@ load_options() {
 	if [ -z "$staging" ]; then
 		config_get_bool staging "$section" use_staging 0
 	fi
-	export staging
+	procd_append_param env staging="$staging"
 	config_get calias "$section" calias
-	export calias
+	procd_append_param env calias="$calias"
 	config_get dalias "$section" dalias
-	export dalias
+	procd_append_param env dalias="$dalias"
 	config_get domains "$section" domains
-	export domains
+	procd_append_param env domains="$domains"
 	main_domain="$(first_arg $domains)"
-	export main_domain
+	procd_append_param env main_domain="$main_domain"
 	config_get keylength "$section" keylength
 	if [ "$keylength" ]; then
 		log warn "Option \"keylength\" is deprecated, please use key_type (e.g., ec256, rsa2048) instead."
@@ -49,36 +56,20 @@ load_options() {
 	else
 		config_get key_type "$section" key_type ec256
 	fi
-	export key_type
-	config_get dns "$section" dns
-	export dns
+	procd_append_param env key_type="$key_type"
 	config_get acme_server "$section" acme_server
-	export acme_server
+	procd_append_param env acme_server="$acme_server"
 	config_get days "$section" days
-	export days
-	config_get standalone "$section" standalone
-	[ -n "$standalone" ] && log warn "Option \"standalone\" is deprecated."
+	procd_append_param env days="$days"
+	config_get cert_profile "$section" cert_profile
+	procd_append_param env cert_profile="$cert_profile"
 	config_get dns_wait "$section" dns_wait
-	export dns_wait
+	procd_append_param env dns_wait="$dns_wait"
 	config_get webroot "$section" webroot
 	if [ "$webroot" ]; then
 		log warn "Option \"webroot\" is deprecated, please remove it and change your web server's config so it serves ACME challenge requests from $CHALLENGE_DIR."
 		CHALLENGE_DIR=$webroot
 	fi
-
-	config_get validation_method "$section" validation_method
-	# if validation_method isn't set then guess it
-	if [ -z "$validation_method" ]; then
-		if [ -n "$dns" ]; then
-			validation_method="dns"
-		elif [ "$standalone" = 1 ]; then
-			validation_method="standalone"
-		else
-			validation_method="webroot"
-		fi
-		log warn "Please set \"option validation_method $validation_method\"."
-	fi
-	export validation_method
 }
 
 first_arg() {
@@ -91,27 +82,74 @@ get_cert() {
 	config_get_bool enabled "$section" enabled 1
 	[ "$enabled" = 1 ] || return
 
-	load_options "$section"
+	# load `listen_port` here rather than in `load_options` so we can
+	# return early without leaving a dangling `procd_open_instance`; the
+	# check requires loading `validation_method` as well, which in turn
+	# requires loading `dns` and `standalone`
+	config_get validation_method "$section" validation_method
+	config_get dns "$section" dns
+	config_get standalone "$section" standalone
+	[ -n "$standalone" ] && log warn "Option \"standalone\" is deprecated."
+	# if validation_method isn't set then guess it
+	if [ -z "$validation_method" ]; then
+		if [ -n "$dns" ]; then
+			validation_method="dns"
+		elif [ "$standalone" = 1 ]; then
+			validation_method="standalone"
+		else
+			validation_method="webroot"
+		fi
+		log warn "Please set \"option validation_method $validation_method\"."
+	fi
 	if [ "$validation_method" = "webroot" ]; then
 		mkdir -p "$CHALLENGE_DIR"
 	fi
+	case "$validation_method" in
+	standalone)
+		config_get listen_port "$section" listen_port 80
+		;;
+	alpn)
+		config_get listen_port "$section" listen_port 443
+		;;
+	*)
+		config_get listen_port "$section" listen_port
+		;;
+	esac
+	if [ "$listen_port" != "$LAST_LISTEN_PORT" ]; then
+		delete_nft_rule
 
-	if [ "$validation_method" = "standalone" ] && [ -z "$NFT_HANDLE" ]; then
-		if ! NFT_HANDLE=$(nft -a -e insert rule inet fw4 input tcp dport 80 counter accept comment ACME | grep -o 'handle [0-9]\+'); then
-			return 1
+		if [ "$listen_port" ]; then
+			if ! NFT_HANDLE=$(nft -a -e insert rule inet fw4 input tcp dport "$listen_port" counter accept comment ACME | grep -o 'handle [0-9]\+'); then
+				return 1
+			fi
+			log debug "added nft rule: $NFT_HANDLE"
 		fi
-		log debug "added nft rule: $NFT_HANDLE"
+
+		LAST_LISTEN_PORT="$listen_port"
 	fi
 
+	procd_open_instance "$section"
+	procd_set_param command "$HOOK" get
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_set_param env CHALLENGE_DIR="$CHALLENGE_DIR" CERT_DIR="$CERT_DIR"
+	procd_append_param env account_email="$account_email" state_dir="$state_dir" debug="$debug"
+	procd_append_param env dns="$dns" validation_method="$validation_method" listen_port="$listen_port"
+
+	load_options "$section"
+
 	load_credentials() {
-		eval export "$1"
+		# use `eval` to correctly strip quotes around credential values
+		eval procd_append_param env "$1"
 	}
 	config_list_foreach "$section" credentials load_credentials
 
-	"$HOOK" get
+	procd_close_instance
 }
 
 load_globals() {
+	[ -z "$account_email" ] || return 1  # only read the first acme section
+
 	section=$1
 
 	config_get account_email "$section" account_email
@@ -132,19 +170,37 @@ load_globals() {
 
 	config_get_bool debug "$section" debug 0
 	export debug
-
-	# only look for the first acme section
-	return 1
 }
 
 start_service() {
-	mkdir -p $run_dir
-	exec 200>$run_dir/lock
-	if ! flock -n 200; then
-		log err "Another ACME instance is already running."
-		exit 1
-	fi
+	grep -q '/etc/init.d/acme' /etc/crontabs/root 2>/dev/null || {
+		echo "0 0 * * * /etc/init.d/acme renew" >>/etc/crontabs/root
+	}
+}
 
+service_started() {
+	echo 'Nightly certificate renewal enabled. To renew now, run `service acme renew`.'
+}
+
+stop_service() {
+	sed -i '\|/etc/init.d/acme|d' /etc/crontabs/root
+	running && stop_aborted="Running certificate renewal(s) aborted and a"
+}
+
+service_stopped() {
+	if enabled; then
+		untilboot=' until next boot. To disable permanently, run `service acme disable`'
+	fi
+	echo "${stop_aborted:-A}utomatic nightly renewal disabled$untilboot."
+	echo 'To re-enable nightly renewal, run `service acme start`. To issue/renew now, run `service acme renew`.'
+}
+
+service_triggers() {
+	procd_add_config_trigger config.change acme \
+		/etc/init.d/acme renew
+}
+
+load_and_run() {
 	trap cleanup EXIT
 
 	config_load acme
@@ -153,7 +209,22 @@ start_service() {
 	config_foreach get_cert cert
 }
 
-service_triggers() {
-	procd_add_config_trigger config.change acme \
-		/etc/init.d/acme start
+renew() {
+	echo "Starting certificate issuance/renewal in the background; see system log for progress."
+	echo 'Issuances/renewals can be aborted with `service acme abort`.'
+	rc_procd load_and_run
+}
+
+abort() {
+	procd_lock
+	if running "$@"; then
+		procd_kill "$(basename ${basescript:-$initscript})" "$1"
+		echo "Aborting certificate issuance(s)/renewal(s); see system log for confirmation."
+	elif [ -z "$1" ]; then
+		echo "No certificate issuances/renewals running to abort!"
+		exit 1
+	else
+		echo "No certificate issuance/renewal \"$1\" running to abort!"
+		exit 1
+	fi
 }

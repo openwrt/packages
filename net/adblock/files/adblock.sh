@@ -1,6 +1,6 @@
 #!/bin/sh
 # dns based ad/abuse domain blocking
-# Copyright (c) 2015-2024 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2015-2026 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # (s)hellcheck exceptions
@@ -11,127 +11,162 @@
 export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 
-adb_ver="4.2.1"
 adb_enabled="0"
 adb_debug="0"
-adb_forcedns="0"
+adb_nftforce="0"
+adb_nftdevforce=""
+adb_nftportforce=""
+adb_nftallow="0"
+adb_nftmacallow=""
+adb_nftdevallow=""
+adb_nftblock="0"
+adb_nftmacblock=""
+adb_nftdevblock=""
+adb_allowdnsv4=""
+adb_allowdnsv6=""
+adb_blockdnsv4=""
+adb_blockdnsv6=""
+adb_dnsshift="0"
 adb_dnsflush="0"
 adb_dnstimeout="20"
 adb_safesearch="0"
-adb_safesearchlist=""
-adb_safesearchmod="0"
 adb_report="0"
 adb_trigger=""
-adb_triggerdelay="0"
-adb_backup="1"
+adb_triggerdelay="5"
 adb_mail="0"
-adb_mailcnt="0"
 adb_jail="0"
+adb_map="0"
+adb_tld="1"
 adb_dns=""
-adb_dnsprefix="adb_list"
-adb_locallist="blacklist whitelist iplist"
-adb_tmpbase="/tmp"
-adb_backupdir="${adb_tmpbase}/adblock-Backup"
-adb_reportdir="${adb_tmpbase}/adblock-Report"
-adb_jaildir="/tmp"
+adb_dnspid=""
+adb_locallist="allowlist blocklist"
+adb_basedir="/tmp"
+adb_finaldir=""
+adb_backupdir="/tmp/adblock-backup"
+adb_reportdir="/tmp/adblock-report"
 adb_pidfile="/var/run/adblock.pid"
-adb_blacklist="/etc/adblock/adblock.blacklist"
-adb_whitelist="/etc/adblock/adblock.whitelist"
+adb_allowlist="/etc/adblock/adblock.allowlist"
+adb_blocklist="/etc/adblock/adblock.blocklist"
 adb_mailservice="/etc/adblock/adblock.mail"
-adb_dnsfile="${adb_dnsprefix}.overall"
-adb_dnsjail="${adb_dnsprefix}.jail"
-adb_srcarc="/etc/adblock/adblock.sources.gz"
-adb_srcfile="${adb_tmpbase}/adb_sources.json"
-adb_rtfile="${adb_tmpbase}/adb_runtime.json"
-adb_sort="$(command -v sort)"
-adb_awk="$(command -v gawk)"
-adb_loggercmd="$(command -v logger)"
-adb_dumpcmd="$(command -v tcpdump)"
-adb_lookupcmd="$(command -v nslookup)"
-adb_fetchutil=""
+adb_dnsfile="adb_list.overall"
+adb_feedfile="/etc/adblock/adblock.feeds"
+adb_customfeedfile="/etc/adblock/adblock.custom.feeds"
+adb_rtfile="/var/run/adb_runtime.json"
+adb_fetchcmd=""
 adb_fetchinsecure=""
-adb_zonelist=""
-adb_portlist=""
+adb_fetchparm=""
+adb_etagparm=""
+adb_geoparm=""
+adb_geourl="http://ip-api.com/json"
 adb_repiface=""
-adb_replisten="53"
+adb_repport="53"
 adb_repchunkcnt="5"
 adb_repchunksize="1"
 adb_represolve="0"
-adb_lookupdomain="example.com"
-adb_action="${1:-"start"}"
+adb_lookupdomain="localhost"
+adb_action="${1}"
 adb_packages=""
-adb_sources=""
 adb_cnt=""
 
-# load & check adblock environment
+# command selector
+#
+f_cmd() {
+	local cmd pri_cmd="${1}" sec_cmd="${2}"
+
+	cmd="$(command -v "${pri_cmd}" 2>/dev/null)"
+	if [ ! -x "${cmd}" ]; then
+		if [ -n "${sec_cmd}" ]; then
+			[ "${sec_cmd}" = "optional" ] && return
+			cmd="$(command -v "${sec_cmd}" 2>/dev/null)"
+		fi
+		if [ -x "${cmd}" ]; then
+			printf "%s" "${cmd}"
+		else
+			f_log "emerg" "command '${pri_cmd:-"-"}'/'${sec_cmd:-"-"}' not found"
+		fi
+	else
+		printf "%s" "${cmd}"
+	fi
+}
+
+# load adblock environment
 #
 f_load() {
-	local bg_pid iface port ports cpu core
+	local bg_pid port filter tcpdump_filter cpu core
 
-	adb_sysver="$(ubus -S call system board 2>/dev/null | jsonfilter -q -e '@.model' -e '@.release.description' |
-		"${adb_awk}" 'BEGIN{RS="";FS="\n"}{printf "%s, %s",$1,$2}')"
-	adb_memory="$("${adb_awk}" '/^MemTotal|^MemFree|^MemAvailable/{ORS="/"; print int($2/1000)}' "/proc/meminfo" 2>/dev/null |
-		"${adb_awk}" '{print substr($0,1,length($0)-1)}')"
-
+	adb_packages="$("${adb_ubuscmd}" -S call rpc-sys packagelist '{ "all": true }' 2>/dev/null)"
+	adb_bver="$(printf "%s" "${adb_packages}" | "${adb_jsoncmd}" -ql1 -e '@.packages.adblock')"
+	adb_fver="$(printf "%s" "${adb_packages}" | "${adb_jsoncmd}" -ql1 -e '@.packages["luci-app-adblock"]')"
+	adb_sysver="$("${adb_ubuscmd}" -S call system board 2>/dev/null |
+		"${adb_jsoncmd}" -ql1 -e '@.model' -e '@.release.target' -e '@.release.distribution' -e '@.release.version' -e '@.release.revision' |
+		"${adb_awkcmd}" 'BEGIN{RS="";FS="\n"}{printf "%s, %s, %s %s (%s)",$1,$2,$3,$4,$5}')"
 	f_conf
 
-	cpu="$(grep -c '^processor' /proc/cpuinfo 2>/dev/null)"
-	core="$(grep -cm1 '^core id' /proc/cpuinfo 2>/dev/null)"
-	[ "${cpu}" = "0" ] && cpu="1"
-	[ "${core}" = "0" ] && core="1"
-	adb_cores="$((cpu * core))"
-
-	if [ "${adb_action}" != "report" ]; then
-		f_dns
-		f_fetch
+	if [ -z "${adb_cores}" ]; then
+		cpu="$("${adb_grepcmd}" -c '^processor' /proc/cpuinfo 2>/dev/null)"
+		core="$("${adb_grepcmd}" -cm1 '^core id' /proc/cpuinfo 2>/dev/null)"
+		[ "${cpu}" = "0" ] && cpu="1"
+		[ "${core}" = "0" ] && core="1"
+		adb_cores="$((cpu * core))"
+		[ "${adb_cores}" -gt "16" ] && adb_cores="16"
 	fi
 
 	if [ "${adb_enabled}" = "0" ]; then
 		f_extconf
 		f_temp
+		f_nftremove
 		f_rmdns
 		f_jsnup "disabled"
 		f_log "info" "adblock is currently disabled, please set the config option 'adb_enabled' to '1' to use this service"
 		exit 0
 	fi
 
+	if [ "${adb_action}" != "report" ] && [ "${adb_action}" != "mail" ]; then
+		f_dns
+		f_fetch
+	fi
+
 	if [ "${adb_report}" = "1" ] && [ ! -x "${adb_dumpcmd}" ]; then
-		f_log "info" "Please install the package 'tcpdump' or 'tcpdump-mini' to use the reporting feature"
-	elif [ "${adb_report}" = "0" ] && [ "${adb_action}" = "report" ]; then
-		f_log "info" "Please enable the 'DNS Report' option to use the reporting feature"
-		exit 0
-	fi
+		f_log "info" "please install the package 'tcpdump' or 'tcpdump-mini' to use the reporting feature"
+	elif [ -x "${adb_dumpcmd}" ]; then
+		bg_pid="$("${adb_pgrepcmd}" -nf "${adb_reportdir}/adb_report.pcap")"
+		if [ -n "${bg_pid}" ] && { [ "${adb_report}" = "0" ] || [ "${adb_action}" = "stop" ] || [ "${adb_action}" = "restart" ]; }; then
+			if kill -HUP "${bg_pid}" 2>/dev/null; then
+				for cnt in 1 2 3; do
+					kill -0 "${bg_pid}" >/dev/null 2>&1 || break
+					sleep 1
+				done
+			fi
+			bg_pid="$("${adb_pgrepcmd}" -nf "${adb_reportdir}/adb_report.pcap")"
+			rm -f "${adb_reportdir}"/adb_report.pcap*
+		fi
 
-	bg_pid="$(pgrep -f "^${adb_dumpcmd}.*adb_report\\.pcap$" | "${adb_awk}" '{ORS=" "; print $1}')"
-	if [ -x "${adb_dumpcmd}" ] && { [ "${adb_report}" = "0" ] || { [ -n "${bg_pid}" ] && { [ "${adb_action}" = "stop" ] || [ "${adb_action}" = "restart" ]; }; }; }; then
-		if [ -n "${bg_pid}" ]; then
-			kill -HUP "${bg_pid}" 2>/dev/null
-			while kill -0 "${bg_pid}" 2>/dev/null; do
-				sleep 1
+		if [ "${adb_report}" = "1" ] && [ -z "${bg_pid}" ] && [ "${adb_action}" != "report" ] && [ "${adb_action}" != "stop" ]; then
+			[ ! -d "${adb_reportdir}" ] && mkdir -p "${adb_reportdir}"
+			if [ -z "${adb_repiface}" ]; then
+				network_get_device adb_repiface "lan"
+				[ -z "${adb_repiface}" ] && network_get_physdev adb_repiface "lan"
+				uci_set adblock global adb_repiface "${adb_repiface:-"any"}"
+				f_uci "adblock"
+			fi
+			for port in ${adb_repport}; do
+				[ -n "${filter}" ] && filter="${filter} or "
+				filter="${filter}(udp port ${port}) or (tcp port ${port})"
 			done
-			unset bg_pid
-		fi
-	fi
-
-	if [ -x "${adb_dumpcmd}" ] && [ "${adb_report}" = "1" ] && [ -z "${bg_pid}" ] && [ "${adb_action}" != "report" ] && [ "${adb_action}" != "stop" ]; then
-		for port in ${adb_replisten}; do
-			[ -z "${ports}" ] && ports="port ${port}" || ports="${ports} or port ${port}"
-		done
-		if [ -z "${adb_repiface}" ]; then
-			network_get_device iface "lan"
-			[ -z "${iface}" ] && network_get_physdev iface "lan"
-			[ -n "${iface}" ] && adb_repiface="${iface}"
-			[ -n "${adb_repiface}" ] && { uci_set adblock global adb_repiface "${adb_repiface}"; f_uci "adblock"; }
-		fi
-		if [ -n "${adb_reportdir}" ] && [ ! -d "${adb_reportdir}" ]; then
-			mkdir -p "${adb_reportdir}"
-			f_log "info" "report directory '${adb_reportdir}' created"
-		fi
-		if [ -n "${adb_repiface}" ] && [ -d "${adb_reportdir}" ]; then
-			("${adb_dumpcmd}" --immediate-mode -nn -p -s0 -l -i ${adb_repiface} ${ports} -C${adb_repchunksize} -W${adb_repchunkcnt} -w "${adb_reportdir}/adb_report.pcap" >/dev/null 2>&1 &)
-			bg_pid="$(pgrep -f "^${adb_dumpcmd}.*adb_report\\.pcap$" | "${adb_awk}" '{ORS=" "; print $1}')"
-		else
-			f_log "info" "Please set the name of the reporting network device 'adb_repiface' manually"
+			tcpdump_filter="(${filter}) and greater 28"
+			if [ -n "${adb_repiface}" ] && [ -d "${adb_reportdir}" ]; then
+				(
+					"${adb_dumpcmd}" --immediate-mode -nn -p -s0 -i "${adb_repiface}" \
+					"${tcpdump_filter}" \
+					-C "${adb_repchunksize}" -W "${adb_repchunkcnt}" \
+					-w "${adb_reportdir}/adb_report.pcap" >/dev/null 2>&1 &
+				)
+				sleep 1
+				bg_pid="$("${adb_pgrepcmd}" -nf "${adb_reportdir}/adb_report.pcap")"
+				f_log "info" "tcpdump backgound process started (interface: ${adb_repiface}, port: ${adb_repport}, dir: ${adb_reportdir}, pid: ${bg_pid})"
+			else
+				f_log "info" "please set the reporting interface 'adb_repiface' and reporting directory 'adb_reportdir' manually"
+			fi
 		fi
 	fi
 }
@@ -140,80 +175,124 @@ f_load() {
 #
 f_env() {
 	adb_starttime="$(date "+%s")"
-	f_log "info" "adblock instance started ::: action: ${adb_action}, priority: ${adb_nice:-"0"}, pid: ${$}"
-	f_jsnup "running"
+	f_log "info" "adblock instance started ::: action: ${adb_action}, priority: ${adb_nicelimit:-"0"}, pid: ${$}"
+	f_jsnup "processing"
 	f_extconf
 	f_temp
-
-	if [ "${adb_dnsflush}" = "1" ] || [ "${adb_memory##*/}" -lt "64" ]; then
-		printf "%b" "${adb_dnsheader}" >"${adb_dnsdir}/${adb_dnsfile}"
-		f_dnsup
-	fi
-
-	if [ ! -r "${adb_srcfile}" ]; then
-		if [ -r "${adb_srcarc}" ]; then
-			zcat "${adb_srcarc}" >"${adb_srcfile}"
+	f_nftadd
+	json_init
+	if [ -s "${adb_customfeedfile}" ]; then
+		if json_load_file "${adb_customfeedfile}" >/dev/null 2>&1; then
+			return
 		else
-			f_log "err" "adblock source archive not found"
+			f_log "info" "can't load adblock custom feed file"
 		fi
 	fi
-	if [ -r "${adb_srcfile}" ] && [ "${adb_action}" != "report" ]; then
-		json_init
-		json_load_file "${adb_srcfile}"
+	if [ -s "${adb_feedfile}" ] && json_load_file "${adb_feedfile}" >/dev/null 2>&1; then
+		return
 	else
-		f_log "err" "adblock source file not found"
+		f_log "err" "can't load adblock feed file"
 	fi
 }
 
 # load adblock config
 #
 f_conf() {
-	local cnt="0" cnt_max="10"
-
-	[ ! -r "/etc/config/adblock" ] && f_log "err" "no valid adblock config found, please re-install the package via opkg with the '--force-reinstall --force-maintainer' options"
-
 	config_cb() {
 		option_cb() {
-			local option="${1}"
-			local value="${2}"
-			eval "${option}=\"${value}\""
+			local option="${1}" value="${2//\"/\\\"}"
+
+			case "${option}" in
+				*[!a-zA-Z0-9_]*)
+					;;
+				*)
+					eval "${option}=\"\${value}\""
+					;;
+			esac
 		}
 		list_cb() {
-			local option="${1}"
-			local value="${2}"
-			if [ "${option}" = "adb_sources" ]; then
-				eval "${option}=\"$(printf "%s" "${adb_sources}") ${value}\""
-			elif [ "${option}" = "adb_hag_sources" ]; then
-				eval "${option}=\"$(printf "%s" "${adb_hag_sources}") ${value}\""
-			elif [ "${option}" = "adb_hst_sources" ]; then
-				eval "${option}=\"$(printf "%s" "${adb_hst_sources}") ${value}\""
-			elif [ "${option}" = "adb_stb_sources" ]; then
-				eval "${option}=\"$(printf "%s" "${adb_stb_sources}") ${value}\""
-			elif [ "${option}" = "adb_utc_sources" ]; then
-				eval "${option}=\"$(printf "%s" "${adb_utc_sources}") ${value}\""
-			elif [ "${option}" = "adb_denyip" ]; then
-				eval "${option}=\"$(printf "%s" "${adb_denyip}") ${value}\""
-			elif [ "${option}" = "adb_allowip" ]; then
-				eval "${option}=\"$(printf "%s" "${adb_allowip}") ${value}\""
-			elif [ "${option}" = "adb_safesearchlist" ]; then
-				eval "${option}=\"$(printf "%s" "${adb_safesearchlist}") ${value}\""
-			elif [ "${option}" = "adb_zonelist" ]; then
-				eval "${option}=\"$(printf "%s" "${adb_zonelist}") ${value}\""
-			elif [ "${option}" = "adb_portlist" ]; then
-				eval "${option}=\"$(printf "%s" "${adb_portlist}") ${value}\""
-			fi
+			local append option="${1}" value="${2//\"/\\\"}"
+
+			case "${option}" in
+				*[!a-zA-Z0-9_]*)
+					;;
+				*)
+					eval "append=\"\${${option}}\""
+					if [ -n "${append}" ]; then
+						eval "${option}=\"${append} ${value}\""
+					else
+						eval "${option}=\"${value}\""
+					fi
+					;;
+			esac
 		}
 	}
 	config_load adblock
+}
 
-	if [ -z "${adb_fetchutil}" ] || [ -z "${adb_dns}" ]; then
-		while [ -z "${adb_packages}" ] && [ "${cnt}" -le "${cnt_max}" ]; do
-			adb_packages="$(opkg list-installed 2>/dev/null)"
-			cnt="$((cnt + 1))"
-			sleep 1
-		done
-		[ -z "${adb_packages}" ] && f_log "err" "local opkg package repository is not available, please set 'adb_fetchutil' and 'adb_dns' manually"
-	fi
+# domain validation
+#
+f_chkdom() {
+	local type prefix column separator check
+
+	case "${1}" in
+		"feed"|"local")
+			type="${1}"
+			case "${2}" in
+				[0-9])
+					prefix=""
+					column="${2}"
+					separator="${3:-[[:space:]]+}"
+					;;
+				*)
+					prefix="${2}"
+					column="${3}"
+					separator="${4:-[[:space:]]+}"
+					;;
+			esac
+			;;
+		"google")
+			type="${1}"
+			prefix=""
+			column="${2}"
+			separator="${3:-[[:space:]]+}"
+			;;
+	esac
+
+	check="${adb_lookupdomain//./\\.}"
+	"${adb_awkcmd}" -v type="${type}" -v pre="${prefix}" -v col="${column}" -v chk="${check}" -F "${separator}" '
+	{
+		domain = $col
+		# remove carriage returns and trim the input
+		gsub(/\r|^[[:space:]]+|[[:space:]]+$/, "", domain)
+		# add www. for google safe search
+		if (type=="google" && domain ~ /^\.+/) { sub(/^\.+/, "", domain); domain="www."domain }
+		# check optional search prefix
+		if (pre != "" && $1 != pre) next
+		# skip empty lines, comments and special domains
+		if (domain == "" || domain ~ ("^(#|localhost|loopback|" chk ")")) next
+		# no domain with trailing dot
+		if (substr(domain, length(domain), 1) == ".") next
+		# check total length (253 characters)
+		if (length(domain) > 253) next
+		n = split(domain, L, ".")
+		valid = 1
+		for (i = 1; i <= n; i++) {
+			l = L[i]
+			len = length(l)
+			# label length 1–63
+			if (len < 1 || len > 63) { valid = 0; break }
+			# no leading/trailing hyphen
+			if (l ~ /^-/ || l ~ /-$/) { valid = 0; break }
+			# ASCII + hyphen
+			if (l !~ /^[A-Za-z0-9-]+$/) { valid = 0; break }
+		}
+		# TLD must start with a letter or "xn--"
+		if (valid && L[n] !~ /^[A-Za-z]/ && L[n] !~ /^xn--/) valid = 0
+		if (valid) print tolower(domain)
+	}'
+
+	f_log "debug" "f_chkdom ::: name: ${src_name}, type: ${type}, prefix: ${prefix:-"-"}, column: ${column:-"-"}, separator: ${separator:-"-"}"
 }
 
 # status helper function
@@ -232,370 +311,323 @@ f_char() {
 # load dns backend config
 #
 f_dns() {
-	local util utils dns_up cnt="0"
+	local dns dns_list dns_section dns_info free_mem dir
+
+	free_mem="$("${adb_awkcmd}" '/^MemAvailable/{printf "%s",int($2/1000)}' "/proc/meminfo" 2>/dev/null)"
+	if [ "${adb_action}" = "boot" ] && [ -z "${adb_trigger}" ]; then
+		sleep ${adb_triggerdelay:-"5"}
+	fi
 
 	if [ -z "${adb_dns}" ]; then
-		utils="knot-resolver bind unbound dnsmasq raw"
-		for util in ${utils}; do
-			if [ "${util}" = "raw" ] || printf "%s" "${adb_packages}" | grep -q "^${util}"; then
-				if [ "${util}" = "knot-resolver" ]; then
-					util="kresd"
-				elif [ "${util}" = "bind" ]; then
-					util="named"
-				fi
-				if [ "${util}" = "raw" ] || [ -x "$(command -v "${util}")" ]; then
-					adb_dns="${util}"
-					uci_set adblock global adb_dns "${util}"
+		dns_list="knot-resolver bind-server unbound-daemon smartdns dnsmasq-full dnsmasq-dhcpv6 dnsmasq"
+		for dns in ${dns_list}; do
+			if printf "%s" "${adb_packages}" | "${adb_jsoncmd}" -ql1 -e "@.packages[\"${dns}\"]" >/dev/null 2>&1; then
+				case "${dns}" in
+					"knot-resolver")
+						dns="kresd"
+						;;
+					"bind-server")
+						dns="named"
+						;;
+					"unbound-daemon")
+						dns="unbound"
+						;;
+					"dnsmasq-full" | "dnsmasq-dhcpv6")
+						dns="dnsmasq"
+						;;
+				esac
+
+				if [ -x "$(command -v "${dns}")" ]; then
+					adb_dns="${dns}"
+					uci_set adblock global adb_dns "${dns}"
 					f_uci "adblock"
 					break
 				fi
 			fi
 		done
-	elif [ "${adb_dns}" != "raw" ] && [ ! -x "$(command -v "${adb_dns}")" ]; then
-		unset adb_dns
 	fi
 
-	if [ -n "${adb_dns}" ]; then
-		case "${adb_dns}" in
-			"dnsmasq")
-				adb_dnscachecmd="-"
-				adb_dnsinstance="${adb_dnsinstance:-"0"}"
-				adb_dnsuser="${adb_dnsuser:-"dnsmasq"}"
-				adb_dnsdir="${adb_dnsdir:-"/tmp/dnsmasq.d"}"
-				adb_dnsheader="${adb_dnsheader:-""}"
-				adb_dnsdeny="${adb_dnsdeny:-"${adb_awk} '{print \"local=/\"\$0\"/\"}'"}"
-				adb_dnsallow="${adb_dnsallow:-"${adb_awk} '{print \"local=/\"\$0\"/#\"}'"}"
-				adb_dnssafesearch="${adb_dnssafesearch:-"${adb_awk} -v item=\"\$item\" '{print \"address=/\"\$0\"/\"item\"\";print \"local=/\"\$0\"/\"}'"}"
-				adb_dnsstop="${adb_dnsstop:-"address=/#/\nlocal=/#/"}"
-				;;
-			"unbound")
-				adb_dnscachecmd="$(command -v unbound-control || printf "%s" "-")"
-				adb_dnsinstance="${adb_dnsinstance:-"0"}"
-				adb_dnsuser="${adb_dnsuser:-"unbound"}"
-				adb_dnsdir="${adb_dnsdir:-"/var/lib/unbound"}"
-				adb_dnsheader="${adb_dnsheader:-""}"
-				adb_dnsdeny="${adb_dnsdeny:-"${adb_awk} '{print \"local-zone: \\042\"\$0\"\\042 always_nxdomain\"}'"}"
-				adb_dnsallow="${adb_dnsallow:-"${adb_awk} '{print \"local-zone: \\042\"\$0\"\\042 always_transparent\"}'"}"
-				adb_dnssafesearch="${adb_dnssafesearch:-"${adb_awk} -v item=\"\$item\" '{type=\"AAAA\";if(match(item,/^([0-9]{1,3}\.){3}[0-9]{1,3}$/)){type=\"A\"}}{print \"local-data: \\042\"\$0\" \"type\" \"item\"\\042\"}'"}"
-				adb_dnsstop="${adb_dnsstop:-"local-zone: \".\" always_nxdomain"}"
-				;;
-			"named")
-				adb_dnscachecmd="$(command -v rndc || printf "%s" "-")"
-				adb_dnsinstance="${adb_dnsinstance:-"0"}"
-				adb_dnsuser="${adb_dnsuser:-"bind"}"
-				adb_dnsdir="${adb_dnsdir:-"/var/lib/bind"}"
-				adb_dnsheader="${adb_dnsheader:-"\$TTL 2h\n@ IN SOA localhost. root.localhost. (1 6h 1h 1w 2h)\n  IN NS  localhost.\n"}"
-				adb_dnsdeny="${adb_dnsdeny:-"${adb_awk} '{print \"\"\$0\" CNAME .\\n*.\"\$0\" CNAME .\"}'"}"
-				adb_dnsallow="${adb_dnsallow:-"${adb_awk} '{print \"\"\$0\" CNAME rpz-passthru.\\n*.\"\$0\" CNAME rpz-passthru.\"}'"}"
-				adb_dnsdenyip="${adb_dnsdenyip:-"${adb_awk} '{print \"\"\$0\".rpz-client-ip CNAME .\"}'"}"
-				adb_dnsallowip="${adb_dnsallowip:-"${adb_awk} '{print \"\"\$0\".rpz-client-ip CNAME rpz-passthru.\"}'"}"
-				adb_dnssafesearch="${adb_dnssafesearch:-"${adb_awk} -v item=\"\$item\" '{print \"\"\$0\" CNAME \"item\".\\n*.\"\$0\" CNAME \"item\".\"}'"}"
-				adb_dnsstop="${adb_dnsstop:-"* CNAME ."}"
-				;;
-			"kresd")
-				adb_dnscachecmd="-"
-				adb_dnsinstance="${adb_dnsinstance:-"0"}"
-				adb_dnsuser="${adb_dnsuser:-"root"}"
-				adb_dnsdir="${adb_dnsdir:-"/etc/kresd"}"
-				adb_dnsheader="${adb_dnsheader:-"\$TTL 2h\n@ IN SOA localhost. root.localhost. (1 6h 1h 1w 2h)\n"}"
-				adb_dnsdeny="${adb_dnsdeny:-"${adb_awk} '{print \"\"\$0\" CNAME .\\n*.\"\$0\" CNAME .\"}'"}"
-				adb_dnsallow="${adb_dnsallow:-"${adb_awk} '{print \"\"\$0\" CNAME rpz-passthru.\\n*.\"\$0\" CNAME rpz-passthru.\"}'"}"
-				adb_dnssafesearch="${adb_dnssafesearch:-"${adb_awk} -v item=\"\$item\" '{type=\"AAAA\";if(match(item,/^([0-9]{1,3}\.){3}[0-9]{1,3}$/)){type=\"A\"}}{print \"\"\$0\" \"type\" \"item\"\"}'"}"
-				adb_dnsstop="${adb_dnsstop:-"* CNAME ."}"
-				;;
-			"raw")
-				adb_dnscachecmd="-"
-				adb_dnsinstance="${adb_dnsinstance:-"0"}"
-				adb_dnsuser="${adb_dnsuser:-"root"}"
-				adb_dnsdir="${adb_dnsdir:-"/tmp"}"
-				adb_dnsheader="${adb_dnsheader:-""}"
-				adb_dnsdeny="${adb_dnsdeny:-"0"}"
-				adb_dnsallow="${adb_dnsallow:-"1"}"
-				adb_dnssafesearch="${adb_dnssafesearch:-"0"}"
-				adb_dnsstop="${adb_dnsstop:-"0"}"
-				;;
-		esac
-	fi
-
-	if [ "${adb_dns}" != "raw" ] && { [ -z "${adb_dns}" ] || [ ! -x "$(command -v "${adb_dns}")" ]; }; then
+	if [ "${adb_dns}" != "raw" ] && [ ! -x "$(command -v "${adb_dns}")" ]; then
 		f_log "err" "dns backend not found, please set 'adb_dns' manually"
 	fi
 
-	if [ "${adb_dns}" != "raw" ] && { [ "${adb_dnsdir}" = "${adb_tmpbase}" ] || [ "${adb_dnsdir}" = "${adb_backupdir}" ] || [ "${adb_dnsdir}" = "${adb_reportdir}" ]; }; then
-		f_log "err" "dns directory '${adb_dnsdir}' has been misconfigured, it must not point to the 'adb_tmpbase', 'adb_backupdir', 'adb_reportdir'"
-	fi
-
-	if [ "${adb_action}" = "start" ] && [ -z "${adb_trigger}" ]; then
-		sleep ${adb_triggerdelay}
-	fi
-
-	if [ "${adb_dns}" != "raw" ] && [ "${adb_action}" != "stop" ]; then
-		while [ "${cnt}" -le 30 ]; do
-			dns_up="$(ubus -S call service list "{\"name\":\"${adb_dns}\"}" 2>/dev/null | jsonfilter -l1 -e "@[\"${adb_dns}\"].instances.*.running" 2>/dev/null)"
-			if [ "${dns_up}" = "true" ]; then
-				break
+	case "${adb_dns}" in
+		"dnsmasq")
+			adb_dnscachecmd="-"
+			adb_dnsinstance="${adb_dnsinstance:-"0"}"
+			adb_dnsuser="${adb_dnsuser:-"dnsmasq"}"
+			adb_dnsdir="${adb_dnsdir:-""}"
+			adb_dnsheader="${adb_dnsheader:-""}"
+			adb_dnsdeny="${adb_dnsdeny:-"${adb_awkcmd} '{print \"local=/\"\$0\"/\"}'"}"
+			adb_dnsallow="${adb_dnsallow:-"${adb_awkcmd} '{print \"local=/\"\$0\"/#\"}'"}"
+			adb_dnssafesearch="${adb_dnssafesearch:-"${adb_awkcmd} -v item=\"\$item\" '{print \"address=/\"\$0\"/\"item\"\";print \"local=/\"\$0\"/\"}'"}"
+			adb_dnsstop="${adb_dnsstop:-"address=/#/\nlocal=/#/"}"
+			if [ -z "${adb_dnsdir}" ]; then
+				dns_section="$("${adb_ubuscmd}" -S call uci get "{\"config\":\"dhcp\", \"section\":\"@dnsmasq[${adb_dnsinstance}]\", \"type\":\"dnsmasq\"}" 2>/dev/null)"
+				dns_info="$(printf "%s" "${dns_section}" | "${adb_jsoncmd}" -l1 -e '@.values["confdir"]')"
+				if [ -n "${dns_info}" ]; then
+					adb_dnsdir="${dns_info}"
+				else
+					dns_info="$(printf "%s" "${dns_section}" | "${adb_jsoncmd}" -l1 -e '@.values[".name"]')"
+					[ -n "${dns_info}" ] && adb_dnsdir="/tmp/dnsmasq.${dns_info}.d"
+				fi
 			fi
-			sleep 1
-			cnt="$((cnt + 1))"
-		done
-	fi
+			;;
+		"unbound")
+			adb_dnscachecmd="$(command -v unbound-control || printf "%s" "-")"
+			adb_dnsinstance="${adb_dnsinstance:-"0"}"
+			adb_dnsuser="${adb_dnsuser:-"unbound"}"
+			adb_dnsdir="${adb_dnsdir:-"/var/lib/unbound"}"
+			adb_dnsheader="${adb_dnsheader:-""}"
+			adb_dnsdeny="${adb_dnsdeny:-"${adb_awkcmd} '{print \"local-zone: \\042\"\$0\"\\042 always_nxdomain\"}'"}"
+			adb_dnsallow="${adb_dnsallow:-"${adb_awkcmd} '{print \"local-zone: \\042\"\$0\"\\042 always_transparent\"}'"}"
+			adb_dnssafesearch="${adb_dnssafesearch:-"${adb_awkcmd} -v item=\"\$item\" '{type=\"AAAA\";if(match(item,/^([0-9]{1,3}\.){3}[0-9]{1,3}$/)){type=\"A\"}}{print \"local-data: \\042\"\$0\" \"type\" \"item\"\\042\"}'"}"
+			adb_dnsstop="${adb_dnsstop:-"local-zone: \".\" always_nxdomain"}"
+			;;
+		"named")
+			adb_dnscachecmd="$(command -v rndc || printf "%s" "-")"
+			adb_dnsinstance="${adb_dnsinstance:-"0"}"
+			adb_dnsuser="${adb_dnsuser:-"bind"}"
+			adb_dnsdir="${adb_dnsdir:-"/var/lib/bind"}"
+			adb_dnsheader="${adb_dnsheader:-"\$TTL 2h\n@ IN SOA localhost. root.localhost. (1 6h 1h 1w 2h)\n  IN NS  localhost.\n"}"
+			adb_dnsdeny="${adb_dnsdeny:-"${adb_awkcmd} '{print \"\"\$0\" CNAME .\\n*.\"\$0\" CNAME .\"}'"}"
+			adb_dnsallow="${adb_dnsallow:-"${adb_awkcmd} '{print \"\"\$0\" CNAME rpz-passthru.\\n*.\"\$0\" CNAME rpz-passthru.\"}'"}"
+			adb_dnssafesearch="${adb_dnssafesearch:-"${adb_awkcmd} -v item=\"\$item\" '{print \"\"\$0\" CNAME \"item\".\\n*.\"\$0\" CNAME \"item\".\"}'"}"
+			adb_dnsstop="${adb_dnsstop:-"* CNAME ."}"
+			;;
+		"kresd")
+			adb_dnscachecmd="-"
+			adb_dnsinstance="${adb_dnsinstance:-"0"}"
+			adb_dnsuser="${adb_dnsuser:-"root"}"
+			adb_dnsdir="${adb_dnsdir:-"/tmp/kresd"}"
+			adb_dnsheader="${adb_dnsheader:-"\$TTL 2h\n@ IN SOA localhost. root.localhost. (1 6h 1h 1w 2h)\n"}"
+			adb_dnsdeny="${adb_dnsdeny:-"${adb_awkcmd} '{print \"\"\$0\" CNAME .\\n*.\"\$0\" CNAME .\"}'"}"
+			adb_dnsallow="${adb_dnsallow:-"${adb_awkcmd} '{print \"\"\$0\" CNAME rpz-passthru.\\n*.\"\$0\" CNAME rpz-passthru.\"}'"}"
+			adb_dnssafesearch="${adb_dnssafesearch:-"${adb_awkcmd} -v item=\"\$item\" '{print \"\"\$0\" CNAME \"item\".\\n*.\"\$0\" CNAME \"item\".\"}'"}"
+			adb_dnsstop="${adb_dnsstop:-"* CNAME ."}"
+			;;
+		"smartdns")
+			adb_dnscachecmd="-"
+			adb_dnsinstance="${adb_dnsinstance:-"0"}"
+			adb_dnsuser="${adb_dnsuser:-"root"}"
+			adb_dnsdir="${adb_dnsdir:-"/tmp/smartdns"}"
+			adb_dnsheader="${adb_dnsheader:-""}"
+			adb_dnsdeny="${adb_dnsdeny:-"${adb_awkcmd} '{print \"address /\"\$0\"/#\"}'"}"
+			adb_dnsallow="${adb_dnsallow:-"${adb_awkcmd} '{print \"address /\"\$0\"/-\"}'"}"
+			adb_dnssafesearch="${adb_dnssafesearch:-"${adb_awkcmd} -v item=\"\$item\" '{print \"cname /\"\$0\"/\"item\"\"}'"}"
+			adb_dnsstop="${adb_dnsstop:-"address #"}"
+			;;
+		"raw")
+			adb_dnscachecmd="-"
+			adb_dnsinstance="${adb_dnsinstance:-"0"}"
+			adb_dnsuser="${adb_dnsuser:-"root"}"
+			adb_dnsdir="${adb_dnsdir:-"/tmp"}"
+			adb_dnsheader="${adb_dnsheader:-""}"
+			adb_dnsdeny="${adb_dnsdeny:-"0"}"
+			adb_dnsallow="${adb_dnsallow:-"0"}"
+			adb_dnssafesearch="${adb_dnssafesearch:-"0"}"
+			adb_dnsstop="${adb_dnsstop:-"0"}"
+			;;
+	esac
 
+	if [ "${adb_dnsshift}" = "0" ]; then
+		adb_finaldir="${adb_dnsdir}"
+	else
+		adb_finaldir="${adb_backupdir}"
+	fi
 	if [ "${adb_action}" != "stop" ]; then
-		if [ -n "${adb_dnsdir}" ] && [ ! -d "${adb_dnsdir}" ]; then
-			if mkdir -p "${adb_dnsdir}"; then
-				f_log "info" "dns backend directory '${adb_dnsdir}' created"
-			else
-				f_log "err" "dns backend directory '${adb_dnsdir}' could not be created"
-			fi
-		fi
-		[ ! -f "${adb_dnsdir}/${adb_dnsfile}" ] && printf "%b" "${adb_dnsheader}" >"${adb_dnsdir}/${adb_dnsfile}"
-
-		if [ "${dns_up}" != "true" ]; then
-			if ! f_dnsup 4; then
-				f_log "err" "dns backend '${adb_dns}' not running or executable"
-			fi
-		fi
-
-		if [ "${adb_backup}" = "1" ] && [ -n "${adb_backupdir}" ] && [ ! -d "${adb_backupdir}" ]; then
-			if mkdir -p "${adb_backupdir}"; then
-				f_log "info" "backup directory '${adb_backupdir}' created"
-			else
-				f_log "err" "backup directory '${adb_backupdir}' could not be created"
-			fi
-		fi
-
-		if [ -n "${adb_jaildir}" ] && [ ! -d "${adb_jaildir}" ]; then
-			if mkdir -p "${adb_jaildir}"; then
-				f_log "info" "jail directory '${adb_jaildir}' created"
-			else
-				f_log "err" "jail directory '${adb_jaildir}' could not be created"
-			fi
+		for dir in "${adb_dnsdir:-"/tmp"}" "${adb_backupdir:-"/tmp"}"; do
+			[ ! -d "${dir}" ] && mkdir -p "${dir}"
+		done
+		if [ "${adb_dnsflush}" = "1" ] || [ "${free_mem}" -lt "64" ]; then
+			printf "%b" "${adb_dnsheader}" >"${adb_finaldir}/${adb_dnsfile}"
+			f_dnsup
+		elif [ ! -f "${adb_finaldir}/${adb_dnsfile}" ]; then
+			printf "%b" "${adb_dnsheader}" >"${adb_finaldir}/${adb_dnsfile}"
 		fi
 	fi
-	f_log "debug" "f_dns    ::: dns: ${adb_dns}, dns_dir: ${adb_dnsdir}, dns_file: ${adb_dnsfile}, dns_user: ${adb_dnsuser}, dns_instance: ${adb_dnsinstance}, backup: ${adb_backup}, backup_dir: ${adb_backupdir}, jail_dir: ${adb_jaildir}"
+
+	f_log "debug" "f_dns    ::: dns: ${adb_dns}, dns_instance: ${adb_dnsinstance}, dns_user: ${adb_dnsuser}, dns_dir: ${adb_dnsdir}, backup_dir: ${adb_backupdir}, final_dir: ${adb_finaldir}"
 }
 
 # load fetch utility
 #
 f_fetch() {
-	local util utils insecure cnt="0"
+	local fetch fetch_list insecure update="0"
 
-	if [ -z "${adb_fetchutil}" ]; then
-		utils="aria2c curl wget uclient-fetch"
-		for util in ${utils}; do
-			if { [ "${util}" = "uclient-fetch" ] && printf "%s" "${adb_packages}" | grep -q "^libustream-"; } ||
-				{ [ "${util}" = "wget" ] && printf "%s" "${adb_packages}" | grep -q "^wget -"; } ||
-				[ "${util}" = "curl" ] || [ "${util}" = "aria2c" ]; then
-				if [ -x "$(command -v "${util}")" ]; then
-					adb_fetchutil="${util}"
-					uci_set adblock global adb_fetchutil "${util}"
+	adb_fetchcmd="$(command -v "${adb_fetchcmd}")"
+	if [ ! -x "${adb_fetchcmd}" ]; then
+		fetch_list="curl wget-ssl libustream-openssl libustream-wolfssl libustream-mbedtls"
+		for fetch in ${fetch_list}; do
+			if printf "%s" "${adb_packages}" | "${adb_grepcmd}" -q "\"${fetch}"; then
+				case "${fetch}" in
+					"wget-ssl")
+						fetch="wget"
+						;;
+					"libustream-openssl" | "libustream-wolfssl" | "libustream-mbedtls")
+						fetch="uclient-fetch"
+						;;
+				esac
+				if [ -x "$(command -v "${fetch}")" ]; then
+					update="1"
+					adb_fetchcmd="$(command -v "${fetch}")"
+					uci_set adblock global adb_fetchcmd "${fetch}"
 					f_uci "adblock"
 					break
 				fi
 			fi
 		done
-	elif [ ! -x "$(command -v "${adb_fetchutil}")" ]; then
-		unset adb_fetchutil
 	fi
-	case "${adb_fetchutil}" in
-		"aria2c")
-			[ "${adb_fetchinsecure}" = "1" ] && insecure="--check-certificate=false"
-			adb_fetchparm="${adb_fetchparm:-"${insecure} --timeout=20 --allow-overwrite=true --auto-file-renaming=false --log-level=warn --dir=/ -o"}"
-			;;
+
+	[ ! -x "${adb_fetchcmd}" ] && f_log "err" "download utility with SSL support not found, please set 'adb_fetchcmd' manually"
+
+	case "${adb_fetchcmd##*/}" in
 		"curl")
 			[ "${adb_fetchinsecure}" = "1" ] && insecure="--insecure"
 			adb_fetchparm="${adb_fetchparm:-"${insecure} --connect-timeout 20 --fail --silent --show-error --location -o"}"
-			;;
-		"uclient-fetch")
-			[ "${adb_fetchinsecure}" = "1" ] && insecure="--no-check-certificate"
-			adb_fetchparm="${adb_fetchparm:-"${insecure} --timeout=20 -O"}"
+			adb_etagparm="--connect-timeout 5 --silent --location --head"
+			adb_geoparm="--connect-timeout 5 --silent --location"
 			;;
 		"wget")
 			[ "${adb_fetchinsecure}" = "1" ] && insecure="--no-check-certificate"
 			adb_fetchparm="${adb_fetchparm:-"${insecure} --no-cache --no-cookies --max-redirect=0 --timeout=20 -O"}"
+			adb_etagparm="--timeout=5 --spider --server-response"
+			adb_geoparm="--timeout=5 --quiet -O-"
+			;;
+		"uclient-fetch")
+			[ "${adb_fetchinsecure}" = "1" ] && insecure="--no-check-certificate"
+			adb_fetchparm="${adb_fetchparm:-"${insecure} --timeout=20 -O"}"
+			adb_geoparm="--timeout=5 --quiet -O-"
 			;;
 	esac
-	if [ -n "${adb_fetchutil}" ] && [ -n "${adb_fetchparm}" ]; then
-		adb_fetchutil="$(command -v "${adb_fetchutil}")"
-	else
-		f_log "err" "download utility with SSL support not found, please install 'uclient-fetch' with a 'libustream-*' variant or another download utility like 'wget', 'curl' or 'aria2'"
-	fi
-	f_log "debug" "f_fetch  ::: fetch_util: ${adb_fetchutil:-"-"}, fetch_parm: ${adb_fetchparm:-"-"}"
+
+	f_log "debug" "f_fetch  ::: update: ${update}, cmd: ${adb_fetchcmd:-"-"}"
 }
 
 # create temporary files, directories and set dependent options
 #
 f_temp() {
-	if [ -d "${adb_tmpbase}" ]; then
-		adb_tmpdir="$(mktemp -p "${adb_tmpbase}" -d)"
+	if [ -d "${adb_basedir}" ]; then
+		adb_tmpdir="$(mktemp -p "${adb_basedir}" -d)"
 		adb_tmpload="$(mktemp -p "${adb_tmpdir}" -tu)"
 		adb_tmpfile="$(mktemp -p "${adb_tmpdir}" -tu)"
 		adb_srtopts="--temporary-directory=${adb_tmpdir} --compress-program=gzip --parallel=${adb_cores}"
 	else
-		f_log "err" "the temp base directory '${adb_tmpbase}' does not exist/is not mounted yet, please create the directory or raise the 'adb_triggerdelay' to defer the adblock start"
+		f_log "err" "the base directory '${adb_basedir}' does not exist/is not mounted yet, please create the directory or raise the 'adb_triggerdelay' to defer the adblock start"
 	fi
 	[ ! -s "${adb_pidfile}" ] && printf "%s" "${$}" >"${adb_pidfile}"
-	f_log "debug" "f_temp   ::: tmp_base: ${adb_tmpbase:-"-"}, tmp_dir: ${adb_tmpdir:-"-"}, sort_options: ${adb_srtopts}, pid_file: ${adb_pidfile:-"-"}"
 }
 
 # remove temporary files and directories
 #
 f_rmtemp() {
-	[ -d "${adb_tmpdir}" ] && rm -rf "${adb_tmpdir}"
-	rm -f "${adb_srcfile}"
+	rm -rf "${adb_tmpdir}"
 	: >"${adb_pidfile}"
-	f_log "debug" "f_rmtemp ::: tmp_dir: ${adb_tmpdir:-"-"}, src_file: ${adb_srcfile:-"-"}, pid_file: ${adb_pidfile:-"-"}"
 }
 
 # remove dns related files
 #
 f_rmdns() {
-	local status
-
-	status="$(ubus -S call service list '{"name":"adblock"}' 2>/dev/null | jsonfilter -l1 -e '@["adblock"].instances.*.running' 2>/dev/null)"
-	if [ "${adb_dns}" = "raw" ] || { [ -n "${adb_dns}" ] && [ -n "${status}" ]; }; then
-		: >"${adb_rtfile}"
-		[ "${adb_backup}" = "1" ] && rm -f "${adb_backupdir}/${adb_dnsprefix}".*.gz
-		printf "%b" "${adb_dnsheader}" >"${adb_dnsdir}/${adb_dnsfile}"
-		f_dnsup 4
-	fi
+	printf "%b" "${adb_dnsheader}" >"${adb_finaldir}/${adb_dnsfile}"
+	f_dnsup
 	f_rmtemp
-	f_log "debug" "f_rmdns  ::: dns: ${adb_dns}, status: ${status:-"-"}, dns_dir: ${adb_dnsdir}, dns_file: ${adb_dnsfile}, rt_file: ${adb_rtfile}, backup_dir: ${adb_backupdir:-"-"}"
+	if [ "${adb_action}" = "stop" ] || [ "${adb_enabled}" = "0" ]; then
+		"${adb_findcmd}" "${adb_backupdir}" -maxdepth 1 -type f -name '*.gz' -exec rm -f {} +
+	fi
 }
 
 # commit uci changes
 #
 f_uci() {
-	local change config="${1}"
+	local config="${1}"
 
-	if [ -n "${config}" ]; then
-		change="$(uci -q changes "${config}" | "${adb_awk}" '{ORS=" "; print $0}')"
-		if [ -n "${change}" ]; then
-			uci_commit "${config}"
-			case "${config}" in
-				"firewall")
-					"/etc/init.d/firewall" reload >/dev/null 2>&1
-					;;
-				"resolver")
-					printf "%b" "${adb_dnsheader}" >"${adb_dnsdir}/${adb_dnsfile}"
-					f_count
-					f_jsnup "running"
-					"/etc/init.d/${adb_dns}" reload >/dev/null 2>&1
-					;;
-			esac
+	if [ -n "$(uci -q changes "${config}")" ]; then
+		uci_commit "${config}"
+		if [ "${config}" = "resolver" ]; then
+			printf "%b" "${adb_dnsheader}" >"${adb_finaldir}/${adb_dnsfile}"
+			adb_cnt="0"
+			f_jsnup "processing"
+			"/etc/init.d/${adb_dns}" reload >/dev/null 2>&1
 		fi
-		f_log "debug" "f_uci    ::: config: ${config}, change: ${change}"
 	fi
 }
 
 # get list counter
 #
 f_count() {
-	local file mode="${1}" name="${2}"
+	local mode="${1}" file="${2}" var="${3}"
 
 	adb_cnt="0"
-	case "${mode}" in
-		"iplist")
-			[ -s "${adb_tmpdir}/tmp.add.${name}" ] && adb_cnt="$(wc -l 2>/dev/null <"${adb_tmpdir}/tmp.add.${name}")"
-			;;
-		"blacklist")
-			[ -s "${adb_tmpfile}.${name}" ] && adb_cnt="$(wc -l 2>/dev/null <"${adb_tmpfile}.${name}")"
-			;;
-		"whitelist")
-			[ -s "${adb_tmpdir}/tmp.raw.${name}" ] && { adb_cnt="$(wc -l 2>/dev/null <"${adb_tmpdir}/tmp.raw.${name}")"; : >"${adb_tmpdir}/tmp.raw.${name}"; }
-			;;
-		"safesearch")
-			[ -s "${adb_tmpdir}/tmp.safesearch.${name}" ] && adb_cnt="$(wc -l 2>/dev/null <"${adb_tmpdir}/tmp.safesearch.${name}")"
-			;;
-		"merge")
-			[ -s "${adb_tmpdir}/${adb_dnsfile}" ] && adb_cnt="$(wc -l 2>/dev/null <"${adb_tmpdir}/${adb_dnsfile}")"
-			;;
-		"download" | "backup" | "restore")
-			[ -s "${src_tmpfile}" ] && adb_cnt="$(wc -l 2>/dev/null <"${src_tmpfile}")"
-			;;
-		"final")
-			if [ -s "${adb_dnsdir}/${adb_dnsfile}" ]; then
-				adb_cnt="$(wc -l 2>/dev/null <"${adb_dnsdir}/${adb_dnsfile}")"
-				if [ -s "${adb_tmpdir}/tmp.add.whitelist" ]; then
-					adb_cnt="$((adb_cnt - $(wc -l 2>/dev/null <"${adb_tmpdir}/tmp.add.whitelist")))"
+	if [ -s "${file}" ]; then
+		adb_cnt="$("${adb_wccmd}" -l 2>/dev/null <"${file}")"
+		if [ -n "${var}" ]; then
+			printf "%s" "${adb_cnt}"
+		else
+			if [ "${mode}" = "final" ]; then
+				if [ -s "${adb_tmpdir}/tmp.add.allowlist" ]; then
+					adb_cnt="$((adb_cnt - $("${adb_wccmd}" -l 2>/dev/null <"${adb_tmpdir}/tmp.add.allowlist")))"
 				fi
 				for file in "${adb_tmpdir}/tmp.safesearch".*; do
 					if [ -r "${file}" ]; then
-						adb_cnt="$((adb_cnt - $(wc -l 2>/dev/null <"${file}")))"
+						adb_cnt="$((adb_cnt - $("${adb_wccmd}" -l 2>/dev/null <"${file}")))"
 					fi
 				done
-				[ -n "${adb_dnsheader}" ] && adb_cnt="$(((adb_cnt - $(printf "%b" "${adb_dnsheader}" | grep -c "^")) / 2))"
+				[ -n "${adb_dnsheader}" ] && adb_cnt="$(((adb_cnt - $(printf "%b" "${adb_dnsheader}" | "${adb_grepcmd}" -c "^")) / 2))"
 			fi
-			;;
-	esac
+		fi
+	fi
 }
 
 # set external config options
 #
 f_extconf() {
-	local config config_dir config_file section zone port fwcfg
+	local config section
 
 	case "${adb_dns}" in
 		"dnsmasq")
 			config="dhcp"
-			config_dir="$(uci_get dhcp "@dnsmasq[${adb_dnsinstance}]" confdir | grep -Fo "${adb_dnsdir}")"
-			if [ "${adb_enabled}" = "1" ] && [ -z "${config_dir}" ]; then
-				uci_set dhcp "@dnsmasq[${adb_dnsinstance}]" confdir "${adb_dnsdir}" 2>/dev/null
+			if [ "${adb_dnsshift}" = "1" ] &&
+				! uci_get ${config} @dnsmasq[${adb_dnsinstance}] addnmount | "${adb_grepcmd}" -q "${adb_backupdir}"; then
+				uci -q add_list ${config}.@dnsmasq[${adb_dnsinstance}].addnmount="${adb_backupdir}"
+			elif [ "${adb_dnsshift}" = "0" ] &&
+				uci_get ${config} @dnsmasq[${adb_dnsinstance}] addnmount | "${adb_grepcmd}" -q "${adb_backupdir}"; then
+				uci -q del_list ${config}.@dnsmasq[${adb_dnsinstance}].addnmount="${adb_backupdir}"
 			fi
 			;;
 		"kresd")
 			config="resolver"
-			config_file="$(uci_get resolver kresd rpz_file | grep -Fo "${adb_dnsdir}/${adb_dnsfile}")"
-			if [ "${adb_enabled}" = "1" ] && [ -z "${config_file}" ]; then
-				uci -q add_list resolver.kresd.rpz_file="${adb_dnsdir}/${adb_dnsfile}"
-			elif [ "${adb_enabled}" = "0" ] && [ -n "${config_file}" ]; then
-				uci -q del_list resolver.kresd.rpz_file="${adb_dnsdir}/${adb_dnsfile}"
+			if [ "${adb_enabled}" = "1" ] &&
+				! uci_get ${config} kresd rpz_file | "${adb_grepcmd}" -q "${adb_dnsdir}/${adb_dnsfile}"; then
+				uci -q add_list ${config}.kresd.rpz_file="${adb_dnsdir}/${adb_dnsfile}"
+			elif [ "${adb_enabled}" = "0" ] &&
+				uci_get ${config} kresd rpz_file | "${adb_grepcmd}" -q "${adb_dnsdir}/${adb_dnsfile}"; then
+				uci -q del_list ${config}.kresd.rpz_file="${adb_dnsdir}/${adb_dnsfile}"
+			fi
+			;;
+		"smartdns")
+			config="smartdns"
+			if [ "${adb_enabled}" = "1" ] &&
+				! uci_get ${config} @${config}[${adb_dnsinstance}] conf_files | "${adb_grepcmd}" -q "${adb_dnsdir}/${adb_dnsfile}"; then
+				uci -q add_list ${config}.@${config}[${adb_dnsinstance}].conf_files="${adb_dnsdir}/${adb_dnsfile}"
+			elif [ "${adb_enabled}" = "0" ] &&
+				uci_get ${config} @${config}[${adb_dnsinstance}] conf_files | "${adb_grepcmd}" -q "${adb_dnsdir}/${adb_dnsfile}"; then
+				uci -q del_list ${config}.@${config}[${adb_dnsinstance}].conf_files="${adb_dnsdir}/${adb_dnsfile}"
 			fi
 			;;
 	esac
-	f_uci "${config}"
-
-	config="firewall"
-	fwcfg="$(uci -qNX show "${config}" | "${adb_awk}" 'BEGIN{FS="[.=]"};/adblock_/{if(zone==$2){next}else{ORS=" ";zone=$2;print zone}}')"
-	if [ "${adb_enabled}" = "1" ] && [ "${adb_forcedns}" = "1" ] &&
-		/etc/init.d/firewall enabled; then
-		for zone in ${adb_zonelist}; do
-			for port in ${adb_portlist}; do
-				if ! printf "%s" "${fwcfg}" | grep -q "adblock_${zone}${port}[ |\$]"; then
-					uci -q batch <<-EOC
-						set firewall."adblock_${zone}${port}"="redirect"
-						set firewall."adblock_${zone}${port}".name="Adblock DNS (${zone}, ${port})"
-						set firewall."adblock_${zone}${port}".src="${zone}"
-						set firewall."adblock_${zone}${port}".proto="tcp udp"
-						set firewall."adblock_${zone}${port}".src_dport="${port}"
-						set firewall."adblock_${zone}${port}".dest_port="${port}"
-						set firewall."adblock_${zone}${port}".target="DNAT"
-						set firewall."adblock_${zone}${port}".family="any"
-					EOC
-				fi
-				fwcfg="${fwcfg/adblock_${zone}${port}[ |\$]/}"
-			done
-		done
-		fwcfg="${fwcfg#"${fwcfg%%[![:space:]]*}"}"
-		fwcfg="${fwcfg%"${fwcfg##*[![:space:]]}"}"
-	fi
-	if [ "${adb_enabled}" = "0" ] || [ "${adb_forcedns}" = "0" ] || [ -n "${fwcfg}" ]; then
-		for section in ${fwcfg}; do
-			uci_remove firewall "${section}"
-		done
-	fi
 	f_uci "${config}"
 }
 
 # restart dns backend
 #
 f_dnsup() {
-	local rset dns_service dns_up dns_pid restart_rc cnt="0" out_rc="4" in_rc="${1:-0}"
+	local restart_rc cnt="0" out_rc="4"
 
-	if [ "${adb_dns}" = "raw" ]; then
+	adb_dnspid=""
+	if [ "${adb_dns}" = "raw" ] || [ -z "${adb_dns}" ]; then
 		out_rc="0"
 	else
-		if [ "${in_rc}" = "0" ] && [ "${adb_dnsflush}" = "0" ]; then
+		if [ "${adb_dnsflush}" = "0" ]; then
 			case "${adb_dns}" in
 				"unbound")
 					if [ -x "${adb_dnscachecmd}" ] && [ -d "${adb_tmpdir}" ] && [ -f "${adb_dnsdir}/unbound.conf" ]; then
@@ -626,26 +658,13 @@ f_dnsup() {
 		fi
 	fi
 	if [ "${restart_rc}" = "0" ]; then
-		rset="/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower(\$1)}"
 		while [ "${cnt}" -le "${adb_dnstimeout}" ]; do
-			dns_service="$(ubus -S call service list "{\"name\":\"${adb_dns}\"}")"
-			dns_up="$(printf "%s" "${dns_service}" | jsonfilter -l1 -e "@[\"${adb_dns}\"].instances.*.running")"
-			dns_pid="$(printf "%s" "${dns_service}" | jsonfilter -l1 -e "@[\"${adb_dns}\"].instances.*.pid")"
-			if [ "${dns_up}" = "true" ] && [ -n "${dns_pid}" ] && ! ls "/proc/${dns_pid}/fd/${adb_dnsdir}/${adb_dnsfile}" >/dev/null 2>&1; then
-				if [ -x "${adb_lookupcmd}" ] && [ -n "$(printf "%s" "${adb_lookupdomain}" | "${adb_awk}" "${rset}")" ]; then
-					if "${adb_lookupcmd}" "${adb_lookupdomain}" >/dev/null 2>&1; then
-						out_rc="0"
-						break
-					fi
-				else
-					sleep ${adb_dnstimeout}
-					cnt=${adb_dnstimeout}
-					out_rc="0"
-					break
-				fi
+			if "${adb_lookupcmd}" "${adb_lookupdomain}." >/dev/null 2>&1; then
+				out_rc="0"
+				break
 			fi
 			cnt="$((cnt + 1))"
-			sleep 1
+			sleep 2
 		done
 		if [ "${out_rc}" = "0" ] && [ "${adb_dns}" = "unbound" ]; then
 			if [ -x "${adb_dnscachecmd}" ] && [ -d "${adb_tmpdir}" ] && [ -s "${adb_tmpdir}/adb_cache.dump" ]; then
@@ -654,231 +673,370 @@ f_dnsup() {
 			fi
 		fi
 	fi
-	f_log "debug" "f_dnsup  ::: dns: ${adb_dns}, cache_cmd: ${adb_dnscachecmd:-"-"}, lookup_cmd: ${adb_lookupcmd:-"-"}, lookup_domain: ${adb_lookupdomain:-"-"}, restart_rc: ${restart_rc:-"-"}, dns_flush: ${adb_dnsflush}, dns_timeout: ${adb_dnstimeout}, dns_cnt: ${cnt}, in_rc: ${in_rc}, out_rc: ${out_rc}"
+	adb_dnspid="$("${adb_ubuscmd}" -S call service list 2>/dev/null | "${adb_jsoncmd}" -l1 -e "@[\"${adb_dns}\"].instances.*.pid")"
+
+	f_log "debug" "f_dnsup  ::: dns: ${adb_dns}, cache_cmd: ${adb_dnscachecmd:-"-"}, lookup_domain: ${adb_lookupdomain:-"-"}, restart_rc: ${restart_rc:-"-"}, dns_flush: ${adb_dnsflush}, dns_timeout: ${adb_dnstimeout}, dns_pid: ${adb_dnspid}, dns_cnt: ${cnt}, rc: ${out_rc}"
 	return "${out_rc}"
+}
+
+# handle etag http header
+#
+f_etag() {
+	local http_head http_code etag_id etag_cnt out_rc="4" feed="${1}" feed_url="${2}" feed_suffix="${3}" feed_cnt="${4:-"1"}"
+
+	[ ! -f "${adb_backupdir}/adblock.etag" ] && : >"${adb_backupdir}/adblock.etag"
+	http_head="$("${adb_fetchcmd}" ${adb_etagparm} "${feed_url}${feed_suffix}" 2>&1)"
+	http_code="$(printf "%s" "${http_head}" | "${adb_awkcmd}" 'tolower($0)~/^http\/[0123\.]+ /{printf "%s",$2}')"
+	etag_id="$(printf "%s" "${http_head}" | "${adb_awkcmd}" 'tolower($0)~/^[[:space:]]*etag: /{gsub("\"","");printf "%s",$2}')"
+	if [ -z "${etag_id}" ]; then
+		etag_id="$(printf "%s" "${http_head}" | "${adb_awkcmd}" 'tolower($0)~/^[[:space:]]*last-modified: /{gsub(/[Ll]ast-[Mm]odified:|[[:space:]]|,|:/,"");printf "%s\n",$1}')"
+	fi
+	etag_cnt="$("${adb_grepcmd}" -c "^${feed} " "${adb_backupdir}/adblock.etag")"
+	if [ "${http_code}" = "200" ] && [ "${etag_cnt}" = "${feed_cnt}" ] && [ -n "${etag_id}" ] &&
+		"${adb_grepcmd}" -q "^${feed} ${feed_suffix}[[:space:]]\+${etag_id}\$" "${adb_backupdir}/adblock.etag"; then
+		out_rc="0"
+	elif [ -n "${etag_id}" ]; then
+		if [ "${feed_cnt}" -lt "${etag_cnt}" ]; then
+			"${adb_sedcmd}" -i "/^${feed} /d" "${adb_backupdir}/adblock.etag"
+		else
+			"${adb_sedcmd}" -i "/^${feed} ${feed_suffix//\//\\/}/d" "${adb_backupdir}/adblock.etag"
+		fi
+		printf "%-80s%s\n" "${feed} ${feed_suffix}" "${etag_id}" >>"${adb_backupdir}/adblock.etag"
+		out_rc="2"
+	fi
+
+	f_log "debug" "f_etag   ::: feed: ${feed}, suffix: ${feed_suffix:-"-"}, http_code: ${http_code:-"-"}, feed/etag: ${feed_cnt}/${etag_cnt:-"0"}, rc: ${out_rc}"
+	return "${out_rc}"
+}
+
+# add adblock-related nft rules
+#
+f_nftadd() {
+	local devices device port file="${adb_tmpdir}/adb_nft.add"
+
+	# only proceed if at least one feature is enabled
+	#
+	if [ "${adb_nftallow}" = "0" ] && [ "${adb_nftblock}" = "0" ] && [ "${adb_nftforce}" = "0" ]; then
+		return
+	fi
+
+	{
+		# nft header (tables, sets, base and regular chains)
+		#
+		printf "%s\n\n" "#!${adb_nftcmd} -f"
+		if "${adb_nftcmd}" -t list table inet adblock >/dev/null 2>&1; then
+			printf "%s\n" "delete table inet adblock"
+		fi
+		printf "%s\n" "add table inet adblock"
+		if [ "${adb_nftallow}" = "1" ] && [ -n "${adb_nftmacallow}" ]; then
+			printf "%s\n" "add set inet adblock mac_allow { type ether_addr; flags interval; auto-merge; elements = { ${adb_nftmacallow// /, } }; }"
+		fi
+		if [ "${adb_nftblock}" = "1" ] && [ -n "${adb_nftmacblock}" ]; then
+			printf "%s\n" "add set inet adblock mac_block { type ether_addr; flags interval; auto-merge; elements = { ${adb_nftmacblock// /, } }; }"
+		fi
+		printf "%s\n" "add chain inet adblock pre-routing { type nat hook prerouting priority -150; policy accept; }"
+		printf "%s\n" "add chain inet adblock _reject"
+
+		# reject chain rules
+		#
+		printf "%s\n" "add rule inet adblock _reject meta l4proto tcp counter reject with tcp reset"
+		printf "%s\n" "add rule inet adblock _reject counter reject with icmpx host-unreachable"
+
+		# external allow rules
+		#
+		if [ "${adb_nftallow}" = "1" ]; then
+			if [ -n "${adb_nftmacallow}" ]; then
+				[ -n "${adb_allowdnsv4}" ] && printf "%s\n" "add rule inet adblock pre-routing meta nfproto ipv4 ether saddr @mac_allow meta l4proto { udp, tcp } th dport 53 counter dnat to ${adb_allowdnsv4}:53"
+				[ -n "${adb_allowdnsv6}" ] && printf "%s\n" "add rule inet adblock pre-routing meta nfproto ipv6 ether saddr @mac_allow meta l4proto { udp, tcp } th dport 53 counter dnat to [${adb_allowdnsv6}]:53"
+			fi
+			for device in ${adb_nftdevallow}; do
+				[ -n "${adb_allowdnsv4}" ] && printf "%s\n" "add rule inet adblock pre-routing iifname \"${device}\" meta nfproto ipv4 meta l4proto { udp, tcp } th dport 53 counter dnat to ${adb_allowdnsv4}:53"
+				[ -n "${adb_allowdnsv6}" ] && printf "%s\n" "add rule inet adblock pre-routing iifname \"${device}\" meta nfproto ipv6 meta l4proto { udp, tcp } th dport 53 counter dnat to [${adb_allowdnsv6}]:53"
+			done
+		fi
+
+		# external block rules
+		#
+		if [ "${adb_nftblock}" = "1" ]; then
+			if [ -n "${adb_nftmacblock}" ]; then
+				[ -n "${adb_blockdnsv4}" ] && printf "%s\n" "add rule inet adblock pre-routing meta nfproto ipv4 ether saddr @mac_block meta l4proto { udp, tcp } th dport 53 counter dnat to ${adb_blockdnsv4}:53"
+				[ -n "${adb_blockdnsv6}" ] && printf "%s\n" "add rule inet adblock pre-routing meta nfproto ipv6 ether saddr @mac_block meta l4proto { udp, tcp } th dport 53 counter dnat to [${adb_blockdnsv6}]:53"
+			fi
+			for device in ${adb_nftdevblock}; do
+				[ -n "${adb_blockdnsv4}" ] && printf "%s\n" "add rule inet adblock pre-routing iifname \"${device}\" meta nfproto ipv4 meta l4proto { udp, tcp } th dport 53 counter dnat to ${adb_blockdnsv4}:53"
+				[ -n "${adb_blockdnsv6}" ] && printf "%s\n" "add rule inet adblock pre-routing iifname \"${device}\" meta nfproto ipv6 meta l4proto { udp, tcp } th dport 53 counter dnat to [${adb_blockdnsv6}]:53"
+			done
+		fi
+
+		# local dns enforcement
+		#
+		if [ "${adb_nftforce}" = "1" ]; then
+			# device/vlan exceptions
+			#
+			for device in ${adb_nftdevallow} ${adb_nftdevblock}; do
+				case " ${devices} " in
+					*" ${device} "*)
+						;;
+					*)	devices="${devices} ${device}"
+						printf "%s\n" "add rule inet adblock pre-routing iifname \"${device}\" return"
+						;;
+				esac
+			done
+			# mac exceptions
+			#
+			for device in ${adb_nftdevforce}; do
+				if [ "${adb_nftallow}" = "1" ] && [ -n "${adb_nftmacallow}" ]; then
+					printf "%s\n" "add rule inet adblock pre-routing iifname \"${device}\" ether saddr @mac_allow return"
+				fi
+				if [ "${adb_nftblock}" = "1" ] && [ -n "${adb_nftmacblock}" ]; then
+					printf "%s\n" "add rule inet adblock pre-routing iifname \"${device}\" ether saddr @mac_block return"
+				fi
+				# dns enforce rules
+				#
+				for port in ${adb_nftportforce}; do
+					if [ "${port}" = "53" ]; then
+						printf "%s\n" "add rule inet adblock pre-routing iifname \"${device}\" meta nfproto { ipv4, ipv6 } meta l4proto { udp, tcp } th dport ${port} counter redirect to :${port}"
+					else
+						printf "%s\n" "add rule inet adblock pre-routing iifname \"${device}\" meta nfproto { ipv4, ipv6 } meta l4proto { udp, tcp } th dport ${port} counter goto _reject"
+					fi
+				done
+			done
+		fi
+	} >"${file}"
+	if "${adb_nftcmd}" -f "${file}" >/dev/null 2>&1; then
+		f_log "info" "adblock-related nft rules added"
+	else
+		f_log "err" "failed to add adblock-related nft rules"
+	fi
+}
+
+# remove adblock-related nft rules
+#
+f_nftremove() {
+	local file="${adb_tmpdir}/adb_nft.remove"
+
+	if "${adb_nftcmd}" -t list table inet adblock >/dev/null 2>&1; then
+		{
+			printf "%s\n" "#!${adb_nftcmd} -f"
+			printf "%s\n" "delete table inet adblock"
+		} >"${file}"
+
+		if "${adb_nftcmd}" -f "${file}" >/dev/null 2>&1; then
+			f_log "info" "adblock-related nft rules removed"
+		else
+			f_log "err" "failed to remove adblock-related nft rules"
+		fi
+	fi
 }
 
 # backup/restore/remove blocklists
 #
 f_list() {
-	local hold file rset item array safe_url safe_ips safe_cname safe_domains ip out_rc mode="${1}" src_name="${2:-"${src_name}"}" in_rc="${src_rc:-0}" cnt ffiles="-maxdepth 1 -name ${adb_dnsprefix}.*.gz"
+	local file rset item array safe_url safe_ips safe_cname safe_domains ip out_rc file_name mode="${1}" src_name="${2:-"${src_name}"}" in_rc="${src_rc:-0}" use_cname="0" ffiles="-maxdepth 1 -name adb_list.*.gz"
 
 	case "${mode}" in
-		"iplist")
+		"blocklist" | "allowlist")
 			src_name="${mode}"
-			if [ "${adb_dns}" = "named" ]; then
-				rset="BEGIN{FS=\"[.:]\";pfx=\"32\"}{if(match(\$0,/:/))pfx=\"128\"}{printf \"%s.\",pfx;for(seg=NF;seg>=1;seg--)if(seg==1)printf \"%s\n\",\$seg;else if(\$seg>=0)printf \"%s.\",\$seg; else printf \"%s.\",\"zz\"}"
-				if [ -n "${adb_allowip}" ]; then
-					: >"${adb_tmpdir}/tmp.raw.${src_name}"
-					for ip in ${adb_allowip}; do
-						printf "%s" "${ip}" | "${adb_awk}" "${rset}" >>"${adb_tmpdir}/tmp.raw.${src_name}"
-					done
-					eval "${adb_dnsallowip}" "${adb_tmpdir}/tmp.raw.${src_name}" >"${adb_tmpdir}/tmp.add.${src_name}"
-					out_rc="${?}"
-				fi
-				if [ -n "${adb_denyip}" ] && { [ -z "${out_rc}" ] || [ "${out_rc}" = "0" ]; }; then
-					: >"${adb_tmpdir}/tmp.raw.${src_name}"
-					for ip in ${adb_denyip}; do
-						printf "%s" "${ip}" | "${adb_awk}" "${rset}" >>"${adb_tmpdir}/tmp.raw.${src_name}"
-					done
-					eval "${adb_dnsdenyip}" "${adb_tmpdir}/tmp.raw.${src_name}" >>"${adb_tmpdir}/tmp.add.${src_name}"
-					out_rc="${?}"
-				fi
-				: >"${adb_tmpdir}/tmp.raw.${src_name}"
-			fi
-			;;
-		"blacklist" | "whitelist")
-			src_name="${mode}"
-			if [ "${src_name}" = "blacklist" ] && [ -f "${adb_blacklist}" ]; then
-				rset="/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower(\$1)}"
-				"${adb_awk}" "${rset}" "${adb_blacklist}" >"${adb_tmpdir}/tmp.raw.${src_name}"
-				if [ -s "${adb_whitelist}" ]; then
-					"${adb_awk}" 'NR==FNR{member[$1];next}!($1 in member)' "${adb_whitelist}" "${adb_tmpdir}/tmp.raw.${src_name}" >"${adb_tmpdir}/tmp.deduplicate.${src_name}"
-				else
-					cat "${adb_tmpdir}/tmp.raw.${src_name}" >"${adb_tmpdir}/tmp.deduplicate.${src_name}"
-				fi
-				"${adb_awk}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' "${adb_tmpdir}/tmp.deduplicate.${src_name}" >"${adb_tmpdir}/tmp.raw.${src_name}"
-				"${adb_sort}" ${adb_srtopts} -u "${adb_tmpdir}/tmp.raw.${src_name}" 2>/dev/null >"${adb_tmpfile}.${src_name}"
-				out_rc="${?}"
-				: > "${adb_tmpdir}/tmp.raw.${src_name}"
-			elif [ "${src_name}" = "whitelist" ] && [ -f "${adb_whitelist}" ]; then
-				rset="/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower(\$1)}"
-				printf "%s\n" "${adb_lookupdomain}" | "${adb_awk}" "${rset}" >"${adb_tmpdir}/tmp.raw.${src_name}"
-				"${adb_awk}" "${rset}" "${adb_whitelist}" >>"${adb_tmpdir}/tmp.raw.${src_name}"
-				out_rc="${?}"
-				if [ "${out_rc}" = "0" ]; then
-					rset="/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower(\$1)}"
-					"${adb_awk}" "${rset}" "${adb_tmpdir}/tmp.raw.${src_name}" >"${adb_tmpdir}/tmp.rem.${src_name}"
-					out_rc="${?}"
-					if [ "${out_rc}" = "0" ] && [ "${adb_dnsallow}" != "1" ]; then
-						eval "${adb_dnsallow}" "${adb_tmpdir}/tmp.raw.${src_name}" >"${adb_tmpdir}/tmp.add.${src_name}"
-						out_rc="${?}"
-						if [ "${out_rc}" = "0" ] && [ "${adb_jail}" = "1" ] && [ "${adb_dnsstop}" != "0" ]; then
-							rm -f "${adb_jaildir}/${adb_dnsjail}"
-							[ -n "${adb_dnsheader}" ] && printf "%b" "${adb_dnsheader}" >>"${adb_jaildir}/${adb_dnsjail}"
-							cat "${adb_tmpdir}/tmp.add.${src_name}" >>"${adb_jaildir}/${adb_dnsjail}"
-							printf "%b\n" "${adb_dnsstop}" >>"${adb_jaildir}/${adb_dnsjail}"
-						fi
-					fi
-				fi
-			fi
-			;;
-		"safesearch")
 			case "${src_name}" in
-				"google")
-					rset="/^\\.([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{printf \"%s\n%s\n\",tolower(\"www\"\$1),tolower(substr(\$1,2,length(\$1)))}"
-					safe_url="https://www.google.com/supported_domains"
-					safe_cname="forcesafesearch.google.com"
-					safe_domains="${adb_tmpdir}/tmp.load.safesearch.${src_name}"
-					if [ "${adb_backup}" = "1" ] && [ -s "${adb_backupdir}/safesearch.${src_name}.gz" ]; then
-						zcat "${adb_backupdir}/safesearch.${src_name}.gz" >"${safe_domains}"
-						out_rc="${?}"
-					else
-						"${adb_fetchutil}" ${adb_fetchparm} "${safe_domains}" "${safe_url}" 2>/dev/null
-						out_rc="${?}"
-						if [ "${adb_backup}" = "1" ] && [ "${out_rc}" = "0" ]; then
-							gzip -cf "${safe_domains}" >"${adb_backupdir}/safesearch.${src_name}.gz"
+				"blocklist")
+					if [ -f "${adb_blocklist}" ]; then
+						file_name="${adb_tmpfile}.${src_name}"
+						f_chkdom local 1 < "${adb_blocklist}" >"${adb_tmpdir}/tmp.raw.${src_name}"
+						if [ -s "${adb_allowlist}" ]; then
+							"${adb_awkcmd}" 'NR==FNR{member[$1];next}!($1 in member)' "${adb_allowlist}" "${adb_tmpdir}/tmp.raw.${src_name}" >"${adb_tmpdir}/tmp.deduplicate.${src_name}"
+						else
+							"${adb_mvcmd}" -f "${adb_tmpdir}/tmp.raw.${src_name}" "${adb_tmpdir}/tmp.deduplicate.${src_name}"
+						fi
+						if [ "${adb_tld}" = "1" ]; then
+							"${adb_awkcmd}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' "${adb_tmpdir}/tmp.deduplicate.${src_name}" |
+								"${adb_sortcmd}" ${adb_srtopts} -u >"${file_name}"
+							out_rc="${?}"
+						else
+							"${adb_sortcmd}" ${adb_srtopts} -u "${adb_tmpdir}/tmp.deduplicate.${src_name}" 2>/dev/null >"${file_name}"
 							out_rc="${?}"
 						fi
 					fi
-					if [ "${out_rc}" = "0" ]; then
-						if [ -x "${adb_lookupcmd}" ]; then
-							safe_ips="$("${adb_lookupcmd}" "${safe_cname}" 2>/dev/null | "${adb_awk}" '/^Address[ 0-9]*: /{ORS=" ";print $NF}')"
-							[ -n "${safe_ips}" ] && "${adb_awk}" "${rset}" "${safe_domains}" >"${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
-						fi
+					;;
+				"allowlist")
+					if [ -f "${adb_allowlist}" ] && [ "${adb_dnsallow}" != "0" ]; then
+						file_name="${adb_tmpdir}/tmp.raw.${src_name}"
+						[ "${adb_lookupdomain}" != "localhost" ] && { printf "%s\n" "${adb_lookupdomain}" | f_chkdom local 1; } >"${file_name}"
+						f_chkdom local 1 < "${adb_allowlist}" >>"${file_name}"
+						f_chkdom local 1 < "${file_name}" >"${adb_tmpdir}/tmp.rem.${src_name}"
+						eval "${adb_dnsallow}" "${file_name}" >"${adb_tmpdir}/tmp.add.${src_name}"
 						out_rc="${?}"
+						if [ "${adb_jail}" = "1" ] && [ "${adb_dnsstop}" != "0" ]; then
+							printf "%b" "${adb_dnsheader}" >"${adb_tmpdir}/${adb_dnsfile}"
+							"${adb_catcmd}" "${adb_tmpdir}/tmp.add.${src_name}" >>"${adb_tmpdir}/${adb_dnsfile}"
+							printf "%b\n" "${adb_dnsstop}" >>"${adb_tmpdir}/${adb_dnsfile}"
+						fi
 					fi
+					;;
+			esac
+			;;
+		"safesearch")
+			file_name="${adb_tmpdir}/tmp.safesearch.${src_name}"
+			if [ "${adb_dns}" = "named" ] || [ "${adb_dns}" = "kresd" ] || [ "${adb_dns}" = "smartdns" ]; then
+				use_cname="1"
+			fi
+			case "${src_name}" in
+				"google")
+					safe_url="https://www.google.com/supported_domains"
+					safe_cname="forcesafesearch.google.com"
+					if [ -s "${adb_backupdir}/safesearch.${src_name}.gz" ]; then
+						"${adb_zcatcmd}" "${adb_backupdir}/safesearch.${src_name}.gz" >"${adb_tmpdir}/tmp.load.safesearch.${src_name}"
+					else
+						"${adb_fetchcmd}" ${adb_fetchparm} "${adb_tmpdir}/tmp.load.safesearch.${src_name}" "${safe_url}" 2>/dev/null
+						if [ -s "${adb_tmpdir}/tmp.load.safesearch.${src_name}" ]; then
+							"${adb_gzipcmd}" -cf "${adb_tmpdir}/tmp.load.safesearch.${src_name}" >"${adb_backupdir}/safesearch.${src_name}.gz"
+						fi
+					fi
+					[ -s "${adb_tmpdir}/tmp.load.safesearch.${src_name}" ] && safe_domains="$(f_chkdom google 1 < "${adb_tmpdir}/tmp.load.safesearch.${src_name}")"
 					;;
 				"bing")
 					safe_cname="strict.bing.com"
 					safe_domains="www.bing.com"
-					if [ -x "${adb_lookupcmd}" ]; then
-						safe_ips="$("${adb_lookupcmd}" "${safe_cname}" 2>/dev/null | "${adb_awk}" '/^Address[ 0-9]*: /{ORS=" ";print $NF}')"
-						[ -n "${safe_ips}" ] && printf "%s\n" ${safe_domains} >"${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
-					fi
-					out_rc="${?}"
+					;;
+				"brave")
+					safe_cname="forcesafe.search.brave.com"
+					safe_domains="search.brave.com"
 					;;
 				"duckduckgo")
 					safe_cname="safe.duckduckgo.com"
 					safe_domains="duckduckgo.com"
-					if [ -x "${adb_lookupcmd}" ]; then
-						safe_ips="$("${adb_lookupcmd}" "${safe_cname}" 2>/dev/null | "${adb_awk}" '/^Address[ 0-9]*: /{ORS=" ";print $NF}')"
-						[ -n "${safe_ips}" ] && printf "%s\n" ${safe_domains} >"${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
-					fi
-					out_rc="${?}"
 					;;
 				"pixabay")
 					safe_cname="safesearch.pixabay.com"
 					safe_domains="pixabay.com"
-					if [ -x "${adb_lookupcmd}" ]; then
-						safe_ips="$("${adb_lookupcmd}" "${safe_cname}" 2>/dev/null | "${adb_awk}" '/^Address[ 0-9]*: /{ORS=" ";print $NF}')"
-						[ -n "${safe_ips}" ] && printf "%s\n" ${safe_domains} >"${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
-					fi
-					out_rc="${?}"
 					;;
 				"yandex")
 					safe_cname="familysearch.yandex.ru"
 					safe_domains="ya.ru yandex.ru yandex.com yandex.com.tr yandex.ua yandex.by yandex.ee yandex.lt yandex.lv yandex.md yandex.uz yandex.tm yandex.tj yandex.az yandex.kz"
-					if [ -x "${adb_lookupcmd}" ]; then
-						safe_ips="$("${adb_lookupcmd}" "${safe_cname}" 2>/dev/null | "${adb_awk}" '/^Address[ 0-9]*: /{ORS=" ";print $NF}')"
-						[ -n "${safe_ips}" ] && printf "%s\n" ${safe_domains} >"${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
-					fi
-					out_rc="${?}"
 					;;
 				"youtube")
-					if [ "${adb_safesearchmod}" = "0" ]; then
-						safe_cname="restrict.youtube.com"
-					else
-						safe_cname="restrictmoderate.youtube.com"
-					fi
+					safe_cname="restrict.youtube.com"
 					safe_domains="www.youtube.com m.youtube.com youtubei.googleapis.com youtube.googleapis.com www.youtube-nocookie.com"
-					if [ -x "${adb_lookupcmd}" ]; then
-						safe_ips="$("${adb_lookupcmd}" "${safe_cname}" 2>/dev/null | "${adb_awk}" '/^Address[ 0-9]*: /{ORS=" ";print $NF}')"
-						[ -n "${safe_ips}" ] && printf "%s\n" ${safe_domains} >"${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
-					fi
-					out_rc="${?}"
 					;;
 			esac
-			if [ "${out_rc}" = "0" ] && [ -s "${adb_tmpdir}/tmp.raw.safesearch.${src_name}" ]; then
-				: >"${adb_tmpdir}/tmp.safesearch.${src_name}"
-				[ "${adb_dns}" = "named" ] && array="${safe_cname}" || array="${safe_ips}"
+			if [ -n "${safe_domains}" ] && [ -n "${safe_cname}" ]; then
+				if [ "${use_cname}" = "0" ]; then
+					safe_ips="$("${adb_lookupcmd}" "${safe_cname}" 2>/dev/null | "${adb_awkcmd}" '/^Address[ 0-9]*: /{ORS=" ";print $NF}')"
+				fi
+				if [ -n "${safe_ips}" ] || [ "${use_cname}" = "1" ]; then
+					printf "%s\n" ${safe_domains} >"${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
+					[ "${use_cname}" = "1" ] && array="${safe_cname}" || array="${safe_ips}"
+				fi
+			fi
+			if [ -s "${adb_tmpdir}/tmp.raw.safesearch.${src_name}" ]; then
+				: >"${file_name}"
 				for item in ${array}; do
-					if ! eval "${adb_dnssafesearch}" "${adb_tmpdir}/tmp.raw.safesearch.${src_name}" >>"${adb_tmpdir}/tmp.safesearch.${src_name}"; then
-						: >"${adb_tmpdir}/tmp.safesearch.${src_name}"
+					if ! eval "${adb_dnssafesearch}" "${adb_tmpdir}/tmp.raw.safesearch.${src_name}" >>"${file_name}"; then
+						: >"${file_name}"
 						break
 					fi
 				done
-				out_rc="${?}"
 				: >"${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
+				out_rc="0"
+			fi
+			;;
+		"prepare")
+			file_name="${src_tmpfile}"
+			if [ -s "${src_tmpload}" ]; then
+				if [ "${adb_tld}" = "1" ]; then
+					f_chkdom ${src_rset} < "${src_tmpload}" |
+						"${adb_awkcmd}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' |
+						"${adb_sortcmd}" ${adb_srtopts} -u >"${src_tmpfile}" 2>/dev/null
+				else
+					f_chkdom ${src_rset} < "${src_tmpload}" |
+						"${adb_sortcmd}" ${adb_srtopts} -u >"${src_tmpfile}" 2>/dev/null
+				fi
+				out_rc="${?}"
+				if [ "${out_rc}" = "0" ] && [ -s "${src_tmpfile}" ]; then
+					f_list backup
+				elif [ "${adb_action}" != "boot" ] && [ "${adb_action}" != "start" ]; then
+					f_log "info" "preparation of '${src_name}' failed, rc: ${src_rc}"
+					f_list restore
+					out_rc="${?}"
+					: >"${src_tmpfile}"
+				fi
+			else
+				f_log "info" "download of '${src_name}' failed, url: ${src_url}, rule: ${src_rset:-"-"}, categories: ${src_cat:-"-"}, rc: ${src_rc}"
+				if [ "${adb_action}" != "boot" ] && [ "${adb_action}" != "start" ]; then
+					f_list restore
+					out_rc="${?}"
+				fi
 			fi
 			;;
 		"backup")
-			(
-				gzip -cf "${src_tmpfile}" >"${adb_backupdir}/${adb_dnsprefix}.${src_name}.gz"
-				out_rc="${?}"
-			) &
+			file_name="${src_tmpfile}"
+			"${adb_gzipcmd}" -cf "${src_tmpfile}" >"${adb_backupdir}/adb_list.${src_name}.gz"
+			out_rc="${?}"
 			;;
 		"restore")
-			if [ -n "${src_name}" ] && [ -s "${adb_backupdir}/${adb_dnsprefix}.${src_name}.gz" ]; then
-				zcat "${adb_backupdir}/${adb_dnsprefix}.${src_name}.gz" >"${src_tmpfile}"
+			file_name="${src_tmpfile}"
+			if [ -n "${src_name}" ] && [ -s "${adb_backupdir}/adb_list.${src_name}.gz" ]; then
+				"${adb_zcatcmd}" "${adb_backupdir}/adb_list.${src_name}.gz" >"${src_tmpfile}"
 				out_rc="${?}"
 			elif [ -z "${src_name}" ]; then
-				cnt="1"
-				for file in "${adb_backupdir}/${adb_dnsprefix}".*.gz; do
+				for file in "${adb_backupdir}/adb_list."*.gz; do
 					if [ -r "${file}" ]; then
 						name="${file##*/}"
 						name="${name%.*}"
-						zcat "${file}" >"${adb_tmpfile}.${name}" &
-						hold="$((cnt % adb_cores))"
-						if [ "${hold}" = "0" ]; then
-							wait
-						fi
-						cnt="$((cnt + 1))"
+						"${adb_zcatcmd}" "${file}" >"${adb_tmpfile}.${name}"
+						out_rc="${?}"
+						[ "${out_rc}" != "0" ] && break
 					fi
 				done
-				wait
-				out_rc="${?}"
 			else
 				out_rc=4
 			fi
-			if [ "${adb_action}" != "start" ] && [ "${adb_action}" != "resume" ] && [ -n "${src_name}" ] && [ "${out_rc}" != "0" ]; then
-				adb_sources="${adb_sources/${src_name}}"
+			if [ "${adb_action}" != "boot" ] && [ "${adb_action}" != "start" ] && [ "${adb_action}" != "restart" ] &&
+				[ "${adb_action}" != "resume" ] && [ -n "${src_name}" ] && [ "${out_rc}" != "0" ]; then
+				adb_feed="${adb_feed/${src_name}/}"
 			fi
 			;;
 		"remove")
-			[ "${adb_backup}" = "1" ] && rm "${adb_backupdir}/${adb_dnsprefix}.${src_name}.gz" 2>/dev/null
+			rm "${adb_backupdir}/adb_list.${src_name}.gz" 2>/dev/null
 			out_rc="${?}"
-			adb_sources="${adb_sources/${src_name}}"
+			adb_feed="${adb_feed/${src_name}/}"
 			;;
 		"merge")
-			if [ "${adb_backup}" = "1" ]; then
-				for src_name in ${adb_sources}; do
-					ffiles="${ffiles} -a ! -name ${adb_dnsprefix}.${src_name}.gz"
-				done
-				if [ "${adb_safesearch}" = "1" ] && [ "${adb_dnssafesearch}" != "0" ]; then
-					ffiles="${ffiles} -a ! -name safesearch.google.gz"
-				fi
-				find "${adb_backupdir}" ${ffiles} -print0 2>/dev/null | xargs -0 rm 2>/dev/null
+			src_name=""
+			file_name="${adb_tmpdir}/${adb_dnsfile}"
+			for file in ${adb_feed}; do
+				ffiles="${ffiles} -a ! -name adb_list.${file}.gz"
+			done
+			if [ "${adb_safesearch}" = "1" ] && [ "${adb_dnssafesearch}" != "0" ]; then
+				ffiles="${ffiles} -a ! -name safesearch.google.gz"
 			fi
-			unset src_name
-			"${adb_sort}" ${adb_srtopts} -mu "${adb_tmpfile}".* 2>/dev/null >"${adb_tmpdir}/${adb_dnsfile}"
+			"${adb_findcmd}" "${adb_backupdir}" ${ffiles} -print0 2>/dev/null | xargs -0 rm 2>/dev/null
+			"${adb_sortcmd}" ${adb_srtopts} -mu "${adb_tmpfile}".* 2>/dev/null >"${file_name}"
 			out_rc="${?}"
 			rm -f "${adb_tmpfile}".*
 			;;
 		"final")
-			unset src_name
-			{ [ -n "${adb_dnsheader}" ] && printf "%b" "${adb_dnsheader}" >"${adb_dnsdir}/${adb_dnsfile}"; } || : >"${adb_dnsdir}/${adb_dnsfile}"
-			[ -s "${adb_tmpdir}/tmp.add.iplist" ] && cat "${adb_tmpdir}/tmp.add.iplist" >>"${adb_dnsdir}/${adb_dnsfile}"
-			[ -s "${adb_tmpdir}/tmp.add.whitelist" ] && cat "${adb_tmpdir}/tmp.add.whitelist" >>"${adb_dnsdir}/${adb_dnsfile}"
-			for file in "${adb_tmpdir}/tmp.safesearch".*; do
-				[ -r "${file}" ] && cat "${file}" >>"${adb_dnsdir}/${adb_dnsfile}"
-			done
-			{ [ "${adb_dnsdeny}" != "0" ] && eval "${adb_dnsdeny}" "${adb_tmpdir}/${adb_dnsfile}" >>"${adb_dnsdir}/${adb_dnsfile}"; } || mv "${adb_tmpdir}/${adb_dnsfile}" "${adb_dnsdir}/${adb_dnsfile}"
-			out_rc="${?}"
+			src_name=""
+			file_name="${adb_finaldir}/${adb_dnsfile}"
+			rm -f "${file_name}"
+			[ -n "${adb_dnsheader}" ] && printf "%b" "${adb_dnsheader}" >>"${file_name}"
+			[ -s "${adb_tmpdir}/tmp.add.allowlist" ] && "${adb_sortcmd}" ${adb_srtopts} -u "${adb_tmpdir}/tmp.add.allowlist" >>"${file_name}"
+			[ "${adb_safesearch}" = "1" ] && "${adb_catcmd}" "${adb_tmpdir}/tmp.safesearch."* 2>/dev/null >>"${file_name}"
+			if [ "${adb_dnsdeny}" != "0" ]; then
+				eval "${adb_dnsdeny}" "${adb_tmpdir}/${adb_dnsfile}" >>"${file_name}"
+			else
+				"${adb_catcmd}" "${adb_tmpdir}/${adb_dnsfile}" >>"${file_name}"
+			fi
+			if [ "${adb_dnsshift}" = "1" ] && [ ! -L "${adb_dnsdir}/${adb_dnsfile}" ]; then
+				ln -fs "${file_name}" "${adb_dnsdir}/${adb_dnsfile}"
+			elif [ "${adb_dnsshift}" = "0" ] && [ -s "${adb_backupdir}/${adb_dnsfile}" ]; then
+				rm -f "${adb_backupdir}/${adb_dnsfile}"
+			fi
+			out_rc="0"
 			;;
 	esac
-	f_count "${mode}" "${src_name}"
+	f_count "${mode}" "${file_name}"
 	out_rc="${out_rc:-"${in_rc}"}"
+
 	f_log "debug" "f_list   ::: name: ${src_name:-"-"}, mode: ${mode}, cnt: ${adb_cnt}, in_rc: ${in_rc}, out_rc: ${out_rc}"
 	return "${out_rc}"
 }
@@ -886,50 +1044,60 @@ f_list() {
 # top level domain compression
 #
 f_tld() {
-	local cnt cnt_tld cnt_rem source="${1}" temp_tld="${1}.tld"
+	local cnt_tld cnt_rem source="${1}" temp_tld="${1}.tld"
 
-	if "${adb_awk}" '{if(NR==1){tld=$NF};while(getline){if(index($NF,tld".")==0){print tld;tld=$NF}}print tld}' "${source}" |
-		"${adb_awk}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' >"${temp_tld}"; then
-		cnt_tld="$(wc -l 2>/dev/null <"${temp_tld}")"
-		if [ -s "${adb_tmpdir}/tmp.rem.whitelist" ]; then
-			"${adb_awk}" 'NR==FNR{del[$0];next};!($0 in del)' "${adb_tmpdir}/tmp.rem.whitelist" "${temp_tld}" >"${source}"
-			cnt_rem="$(wc -l 2>/dev/null <"${source}")"
+	if "${adb_awkcmd}" '{if(NR==1){tld=$NF};while(getline){if(index($NF,tld".")==0){print tld;tld=$NF}}print tld}' "${source}" |
+		"${adb_awkcmd}" 'BEGIN{FS="."}{out=$NF;for(i=NF-1;i>=1;i--)out=out"."$i;print out}' >"${temp_tld}"; then
+		[ "${adb_debug}" = "1" ] && cnt_tld="$(f_count tld "${temp_tld}" "var")"
+		if [ -s "${adb_tmpdir}/tmp.rem.allowlist" ]; then
+			"${adb_awkcmd}" 'NR==FNR{del[$0];next}!($0 in del)' "${adb_tmpdir}/tmp.rem.allowlist" "${temp_tld}" > "${source}"
+			[ "${adb_debug}" = "1" ] && cnt_rem="$(f_count tld "${source}" "var")"
 		else
-			mv -f "${temp_tld}" "${source}"
+			"${adb_mvcmd}" -f "${temp_tld}" "${source}"
 		fi
 	fi
-	: > "${temp_tld}"
-	f_log "debug" "f_tld    ::: source: ${source}, cnt: ${adb_cnt:-"-"}, cnt_tld: ${cnt_tld:-"-"}, cnt_rem: ${cnt_rem:-"-"}"
+
+	f_log "debug" "f_tld    ::: name: -, cnt: ${adb_cnt:-"-"}, cnt_tld: ${cnt_tld:-"-"}, cnt_rem: ${cnt_rem:-"-"}"
 }
 
 # suspend/resume adblock processing
 #
 f_switch() {
-	local status entry done="false" mode="${1}"
+	local status done="false" mode="${1}"
 
 	json_init
 	json_load_file "${adb_rtfile}" >/dev/null 2>&1
 	json_select "data" >/dev/null 2>&1
 	json_get_var status "adblock_status"
-	if [ "${mode}" = "suspend" ] && [ "${status}" = "enabled" ]; then
-		f_env
-		printf "%b" "${adb_dnsheader}" >"${adb_dnsdir}/${adb_dnsfile}"
-		if [ "${adb_jail}" = "1" ] && [ "${adb_jaildir}" = "${adb_dnsdir}" ]; then
-			printf "%b" "${adb_dnsheader}" >"${adb_jaildir}/${adb_dnsjail}"
-		elif [ -f "${adb_dnsdir}/${adb_dnsjail}" ]; then
-			rm -f "${adb_dnsdir}/${adb_dnsjail}"
+	f_env
+	if [ "${status}" = "enabled" ] && [ "${mode}" = "suspend" ]; then
+		if [ "${adb_dnsshift}" = "0" ] && [ -f "${adb_finaldir}/${adb_dnsfile}" ]; then
+			mv -f "${adb_finaldir}/${adb_dnsfile}" "${adb_backupdir}/${adb_dnsfile}"
+			printf "%b" "${adb_dnsheader}" >"${adb_finaldir}/${adb_dnsfile}"
+			done="true"
+		elif [ "${adb_dnsshift}" = "1" ] && [ -L "${adb_dnsdir}/${adb_dnsfile}" ]; then
+			rm -f "${adb_dnsdir}/${adb_dnsfile}"
+			printf "%b" "${adb_dnsheader}" >"${adb_dnsdir}/${adb_dnsfile}"
+			done="true"
 		fi
-		f_count
-		done="true"
-	elif [ "${mode}" = "resume" ] && [ "${status}" = "paused" ]; then
-		f_env
-		f_main
-		done="true"
+	elif [ "${status}" = "paused" ] && [ "${mode}" = "resume" ]; then
+		if [ "${adb_dnsshift}" = "0" ] && [ -f "${adb_backupdir}/${adb_dnsfile}" ]; then
+			mv -f "${adb_backupdir}/${adb_dnsfile}" "${adb_finaldir}/${adb_dnsfile}"
+			f_count "final" "${adb_finaldir}/${adb_dnsfile}"
+			done="true"
+		elif [ "${adb_dnsshift}" = "1" ] && [ ! -L "${adb_finaldir}/${adb_dnsfile}" ]; then
+			ln -fs "${adb_finaldir}/${adb_dnsfile}" "${adb_dnsdir}/${adb_dnsfile}"
+			f_count "final" "${adb_finaldir}/${adb_dnsfile}"
+			done="true"
+		fi
 	fi
 	if [ "${done}" = "true" ]; then
-		[ "${mode}" = "suspend" ] && f_dnsup
+		f_dnsup
 		f_jsnup "${mode}"
-		f_log "info" "${mode} adblock processing"
+		f_log "info" "${mode} adblock service"
+	else
+		f_count "final" "${adb_finaldir}/${adb_dnsfile}"
+		f_jsnup "${status}"
 	fi
 	f_rmtemp
 }
@@ -939,59 +1107,73 @@ f_switch() {
 f_query() {
 	local search result prefix suffix field query_start query_end query_timeout=30 domain="${1}" tld="${1#*.}"
 
-	if [ -z "${domain}" ] || [ "${domain}" = "${tld}" ]; then
+	if [ -z "${domain}" ]; then
 		printf "%s\n" "::: invalid input, please submit a single (sub-)domain :::"
 	else
 		case "${adb_dns}" in
 			"dnsmasq")
-				prefix=".*[\\/\\.]"
-				suffix="(\\/)"
+				prefix='local=.*[\/\.]'
+				suffix='\/'
 				field="2"
 				;;
 			"unbound")
-				prefix=".*[\"\\.]"
-				suffix="(always_nxdomain)"
+				prefix='local-zone: .*["\.]'
+				suffix='" always_nxdomain'
 				field="3"
 				;;
 			"named")
-				prefix="[^\\*].*[\\.]"
-				suffix="( \\.)"
+				prefix=""
+				suffix=' CNAME \.'
 				field="1"
 				;;
 			"kresd")
-				prefix="[^\\*].*[\\.]"
-				suffix="( \\.)"
+				prefix=""
+				suffix=' CNAME \.'
 				field="1"
 				;;
+			"smartdns")
+				prefix='address .*.*[\/\.]'
+				suffix='\/#'
+				field="3"
+				;;
 			"raw")
-				prefix=".*[\\.]"
+				prefix=""
 				suffix=""
 				field="1"
 				;;
 		esac
 		query_start="$(date "+%s")"
-		while [ "${domain}" != "${tld}" ]; do
+		while :; do
 			search="${domain//[+*~%\$&\"\']/}"
 			search="${search//./\\.}"
-			result="$("${adb_awk}" -F '/|\"|\t| ' "/^(${search}|${prefix}+${search}.*${suffix})$/{i++;if(i<=9){printf \"  + %s\n\",\$${field}}else if(i==10){printf \"  + %s\n\",\"[...]\";exit}}" "${adb_dnsdir}/${adb_dnsfile}")"
+			result="$("${adb_awkcmd}" -F '/|\"|\t| ' "/^(${prefix}${search}${suffix})$/{i++;if(i<=9){printf \"  + %s\n\",\$${field}}else if(i==10){printf \"  + %s\n\",\"[...]\";exit}}" "${adb_finaldir}/${adb_dnsfile}")"
 			printf "%s\n%s\n%s\n" ":::" "::: domain '${domain}' in active blocklist" ":::"
 			printf "%s\n\n" "${result:-"  - no match"}"
+			[ "${domain}" = "${tld}" ] && break
 			domain="${tld}"
 			tld="${domain#*.}"
 		done
-		if [ "${adb_backup}" = "1" ] && [ -d "${adb_backupdir}" ]; then
+		if [ -d "${adb_backupdir}" ]; then
 			search="${1//[+*~%\$&\"\']/}"
 			search="${search//./\\.}"
-			printf "%s\n%s\n%s\n" ":::" "::: domain '${1}' in backups and black-/whitelist" ":::"
-			for file in "${adb_backupdir}/${adb_dnsprefix}".*.gz "${adb_blacklist}" "${adb_whitelist}"; do
+			printf "%s\n%s\n%s\n" ":::" "::: domain '${1}' in backups and in local block-/allowlist" ":::"
+			for file in "${adb_backupdir}/adb_list".*.gz "${adb_blocklist}" "${adb_allowlist}"; do
 				suffix="${file##*.}"
 				if [ "${suffix}" = "gz" ]; then
-					zcat "${file}" 2>/dev/null |
-						"${adb_awk}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' | "${adb_awk}" -v f="${file##*/}" "BEGIN{rc=1};/^($search|.*\\.${search})$/{i++;if(i<=3){printf \"  + %-30s%s\n\",f,\$1;rc=0}else if(i==4){printf \"  + %-30s%s\n\",f,\"[...]\"}};END{exit rc}"
+					if [ "${adb_tld}" = "1" ]; then
+						"${adb_zcatcmd}" "${file}" 2>/dev/null |
+							"${adb_awkcmd}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' |
+							"${adb_awkcmd}" -v f="${file##*/}" "BEGIN{rc=1};/^($search|.*\\.${search})$/{i++;if(i<=3){printf \"  + %-30s%s\n\",f,\$1;rc=0}else if(i==4){printf \"  + %-30s%s\n\",f,\"[...]\"}};END{exit rc}"
+					else
+						"${adb_zcatcmd}" "${file}" 2>/dev/null |
+							"${adb_awkcmd}" -v f="${file##*/}" "BEGIN{rc=1};/^($search|.*\\.${search})$/{i++;if(i<=3){printf \"  + %-30s%s\n\",f,\$1;rc=0}else if(i==4){printf \"  + %-30s%s\n\",f,\"[...]\"}};END{exit rc}"
+					fi
+					rc="${?}"
 				else
-					"${adb_awk}" -v f="${file##*/}" "BEGIN{rc=1};/^($search|.*\\.${search})$/{i++;if(i<=3){printf \"  + %-30s%s\n\",f,\$1;rc=0}else if(i==4){printf \"  + %-30s%s\n\",f,\"[...]\"}};END{exit rc}" "${file}"
+					"${adb_awkcmd}" -v f="${file##*/}" "BEGIN{rc=1};/^($search|.*\\.${search})$/{i++;if(i<=3){printf \"  + %-30s%s\n\",f,\$1;rc=0}else if(i==4){printf \"  + %-30s%s\n\",f,\"[...]\"}};END{exit rc}" "${file}"
+					rc="${?}"
 				fi
-				if [ "${?}" = "0" ]; then
+				if [ "${rc}" = "0" ]; then
 					result="true"
 					query_end="$(date "+%s")"
 					if [ "$((query_end - query_start))" -gt "${query_timeout}" ]; then
@@ -1008,70 +1190,104 @@ f_query() {
 # update runtime information
 #
 f_jsnup() {
-	local entry sources runtime utils bg_pid status="${1:-"enabled"}"
+	local pids object feeds end_time runtime dns dns_ver dns_mem free_mem custom_feed="0" status="${1:-"enabled"}"
+	local duration jail="0" nft_unfiltered="0" nft_filtered="0" nft_force="0"
 
-	adb_memory="$("${adb_awk}" '/^MemTotal|^MemFree|^MemAvailable/{ORS="/"; print int($2/1000)}' "/proc/meminfo" 2>/dev/null |
-		"${adb_awk}" '{print substr($0,1,length($0)-1)}')"
-
+	if [ -n "${adb_dnspid}" ]; then
+		pids="$("${adb_pgrepcmd}" -P "${adb_dnspid}" 2>/dev/null)"
+		for pid in ${adb_dnspid} ${pids}; do
+			dns_mem="$((dns_mem + $("${adb_awkcmd}" '/^VmSize/{printf "%s", $2}' "/proc/${pid}/status" 2>/dev/null)))"
+		done
+		case "${adb_dns}" in
+			"kresd")
+				dns="knot-resolver"
+				;;
+			"named")
+				dns="bind-server"
+				;;
+			"unbound")
+				dns="unbound-daemon"
+				;;
+			"dnsmasq")
+				dns='dnsmasq", "dnsmasq-full", "dnsmasq-dhcpv6'
+				;;
+		esac
+		dns_ver="$(printf "%s" "${adb_packages}" | "${adb_jsoncmd}" -ql1 -e "@.packages[\"${dns:-"${adb_dns}"}\"]")"
+		dns_mem="$("${adb_awkcmd}" -v mem="${dns_mem}" 'BEGIN{printf "%.2f", mem/1024}' 2>/dev/null)"
+	fi
+	free_mem="$("${adb_awkcmd}" '/^MemAvailable/{printf "%.2f", $2/1024}' "/proc/meminfo" 2>/dev/null)"
+	adb_cnt="$("${adb_awkcmd}" -v cnt="${adb_cnt}" 'BEGIN{res="";pos=0;for(i=length(cnt);i>0;i--){res=substr(cnt,i,1)res;pos++;if(pos==3&&i>1){res=" "res;pos=0;}}; printf"%s",res}')"
+	[ -s "${adb_customfeedfile}" ] && custom_feed="1"
+	if [ "${adb_nftforce}" = "1" ] && [ -n "${adb_nftdevforce}" ] && [ -n "${adb_nftportforce}" ]; then
+		nft_force="1"
+	fi
+	if [ "${adb_nftallow}" = "1" ] \
+		&& { [ -n "${adb_nftmacallow}" ] || [ -n "${adb_nftdevallow}" ]; } \
+		&& { [ -n "${adb_allowdnsv4}" ] || [ -n "${adb_allowdnsv6}" ]; }; then
+		nft_unfiltered="1"
+	fi
+	if [ "${adb_nftblock}" = "1" ] \
+		&& { [ -n "${adb_nftmacblock}" ] || [ -n "${adb_nftdevblock}" ]; } \
+		&& { [ -n "${adb_blockdnsv4}" ] || [ -n "${adb_blockdnsv6}" ]; }; then
+		nft_filtered="1"
+	fi
 	case "${status}" in
-		"enabled" | "error")
-			adb_endtime="$(date "+%s")"
-			if [ "$(((adb_endtime - adb_starttime) / 60))" -lt 60 ]; then
-				runtime="${adb_action}, $(((adb_endtime - adb_starttime) / 60))m $(((adb_endtime - adb_starttime) % 60))s, ${adb_memory:-0}, $(date -Iseconds)"
-			else
-				runtime="${adb_action}, n/a, ${adb_memory:-0}, $(date -Iseconds)"
+		"enabled")
+			if [ -n "${adb_starttime}" ] && [ "${adb_action}" != "boot" ]; then
+				end_time="$(date "+%s")"
+				duration="$(((end_time - adb_starttime) / 60))m $(((end_time - adb_starttime) % 60))s"
 			fi
-			[ "${status}" = "error" ] && adb_cnt="0"
-			;;
-		"suspend")
-			status="paused"
+			runtime="mode: ${adb_action}, $(date -Iseconds), duration: ${duration:-"-"}, ${free_mem:-0} MB available"
 			;;
 		"resume")
-			status=""
+			status="enabled"
+			;;
+		"suspend")
+			adb_cnt="0"
+			status="paused"
+			;;
+		*)
+			adb_cnt="0"
 			;;
 	esac
+
 	json_init
 	if json_load_file "${adb_rtfile}" >/dev/null 2>&1; then
-		utils="download: $(readlink -fn "${adb_fetchutil}"), sort: $(readlink -fn "${adb_sort}"), awk: $(readlink -fn "${adb_awk}")"
-		[ -z "${adb_cnt}" ] && { json_get_var adb_cnt "blocked_domains"; adb_cnt="${adb_cnt%% *}"; }
+		[ -z "${adb_cnt}" ] && json_get_var adb_cnt "blocked_domains"
 		[ -z "${runtime}" ] && json_get_var runtime "last_run"
+		if [ "${status}" = "enabled" ]; then
+			if [ "${adb_jail}" = "1" ] && [ "${adb_dnsstop}" != "0" ]; then
+				jail="1"
+				adb_cnt="0"
+				feeds="restrictive jail (allowlist-only)"
+			else
+				feeds="$(printf "%s\n" ${adb_feed// /, } | ${adb_sortcmd} | xargs)"
+			fi
+		fi
 	fi
-	if [ "${adb_jail}" = "1" ] && [ "${adb_jaildir}" = "${adb_dnsdir}" ]; then
-		adb_cnt="0"
-		sources="restrictive_jail"
-	else
-		sources="$(printf "%s\n" ${adb_sources} | "${adb_sort}" | "${adb_awk}" '{ORS=" ";print $0}')"
-	fi
-
-	: >"${adb_rtfile}"
+	printf "%s\n" "{}" >"${adb_rtfile}"
 	json_init
 	json_load_file "${adb_rtfile}" >/dev/null 2>&1
-	json_init
-	json_add_string "adblock_status" "${status:-"enabled"}"
-	json_add_string "adblock_version" "${adb_ver}"
-	json_add_string "blocked_domains" "${adb_cnt:-0}"
-	json_add_array "active_sources"
-	for entry in ${sources}; do
-		json_add_object
-		json_add_string "source" "${entry}"
-		json_close_object
+	json_add_string "adblock_status" "${status}"
+	json_add_string "frontend_ver" "${adb_fver}"
+	json_add_string "backend_ver" "${adb_bver}"
+	json_add_string "blocked_domains" "${adb_cnt:-"0"}"
+	json_add_array "active_feeds"
+	for object in ${feeds:-"-"}; do
+		json_add_string "${object}" "${object}"
 	done
 	json_close_array
-	json_add_string "dns_backend" "${adb_dns:-"-"} (${adb_dnscachecmd##*/}), ${adb_dnsdir:-"-"}"
-	json_add_string "run_utils" "${utils:-"-"}"
+	json_add_string "dns_backend" "${adb_dns:-"-"} (${dns_ver:-"-"}), ${adb_finaldir:-"-"}, ${dns_mem:-"0"} MB"
 	json_add_string "run_ifaces" "trigger: ${adb_trigger:-"-"}, report: ${adb_repiface:-"-"}"
-	json_add_string "run_directories" "base: ${adb_tmpbase}, backup: ${adb_backupdir}, report: ${adb_reportdir}, jail: ${adb_jaildir}"
-	json_add_string "run_flags" "backup: $(f_char ${adb_backup}), flush: $(f_char ${adb_dnsflush}), force: $(f_char ${adb_forcedns}), search: $(f_char ${adb_safesearch}), report: $(f_char ${adb_report}), mail: $(f_char ${adb_mail}), jail: $(f_char ${adb_jail})"
+	json_add_string "run_directories" "base: ${adb_basedir}, dns: ${adb_dnsdir}, backup: ${adb_backupdir}, report: ${adb_reportdir}"
+	json_add_string "run_flags" "shift: $(f_char ${adb_dnsshift}), custom feed: $(f_char ${custom_feed}), ext. DNS (std/prot): $(f_char ${nft_unfiltered})/$(f_char ${nft_filtered}), force: $(f_char ${nft_force}), flush: $(f_char ${adb_dnsflush}), tld: $(f_char ${adb_tld}), search: $(f_char ${adb_safesearch}), report: $(f_char ${adb_report}), mail: $(f_char ${adb_mail}), jail: $(f_char ${jail})"
 	json_add_string "last_run" "${runtime:-"-"}"
-	json_add_string "system" "${adb_sysver}"
+	json_add_string "system_info" "cores: ${adb_cores}, fetch: ${adb_fetchcmd##*/}, ${adb_sysver}"
 	json_dump >"${adb_rtfile}"
 
-	if [ "${adb_mail}" = "1" ] && [ -x "${adb_mailservice}" ] &&
-		{ [ "${status}" = "error" ] || { [ "${status}" = "enabled" ] && [ "${adb_cnt}" -le "${adb_mailcnt}" ]; }; }; then
-		("${adb_mailservice}" "${adb_ver}" >/dev/null 2>&1) &
-		bg_pid="${!}"
+	if [ "${adb_mail}" = "1" ] && [ -x "${adb_mailservice}" ] && [ "${status}" = "enabled" ]; then
+		"${adb_mailservice}" >/dev/null 2>&1
 	fi
-	f_log "debug" "f_jsnup  ::: status: ${status:-"-"}, cnt: ${adb_cnt}, mail: ${adb_mail}, mail_service: ${adb_mailservice}, mail_cnt: ${adb_mailcnt}, mail_pid: ${bg_pid:-"-"}"
 }
 
 # write to syslog
@@ -1080,10 +1296,10 @@ f_log() {
 	local class="${1}" log_msg="${2}"
 
 	if [ -n "${log_msg}" ] && { [ "${class}" != "debug" ] || [ "${adb_debug}" = "1" ]; }; then
-		[ -x "${adb_loggercmd}" ] && "${adb_loggercmd}" -p "${class}" -t "adblock-${adb_ver}[${$}]" "${log_msg}" || \
-			printf "%s %s %s\n" "${class}" "adblock-${adb_ver}[${$}]" "${log_msg}"
-		if [ "${class}" = "err" ]; then
-			f_rmdns
+		[ -x "${adb_loggercmd}" ] && "${adb_loggercmd}" -p "${class}" -t "adblock-${adb_bver}[${$}]" "${log_msg::256}" ||
+			printf "%s %s %s\n" "${class}" "adblock-${adb_bver}[${$}]" "${log_msg::256}"
+		if [ "${class}" = "err" ] || [ "${class}" = "emerg" ]; then
+			[ "${adb_action}" != "mail" ] && f_rmdns
 			f_jsnup "error"
 			exit 1
 		fi
@@ -1093,19 +1309,30 @@ f_log() {
 # main function for blocklist processing
 #
 f_main() {
-	local src_tmpload src_tmpfile src_name src_rset src_url src_log src_arc src_cat src_item src_list src_entries src_suffix src_rc entry cnt
+	local src_tmpload src_tmpfile src_name src_domain src_rset src_url src_cat src_item src_list src_entries src_suffix src_rc entry cnt
 
-	f_log "debug" "f_main   ::: memory: ${adb_memory:-0}, cores: ${adb_cores}, safe_search: ${adb_safesearch}, force_dns: ${adb_forcedns}, awk: ${adb_awk}"
-
-	# white- and blacklist preparation
+	# allow- and blocklist preparation
 	#
+	cnt="1"
 	for entry in ${adb_locallist}; do
-		(f_list "${entry}" "${entry}") &
+		(
+			f_list "${entry}" "${entry}"
+		) &
+		[ "${cnt}" -gt "${adb_cores}" ] && wait -n
+		cnt="$((cnt + 1))"
 	done
+	wait
 
-	if [ "${adb_dns}" != "raw" ] && [ "${adb_jail}" = "1" ] && [ "${adb_jaildir}" = "${adb_dnsdir}" ]; then
-		printf "%b" "${adb_dnsheader}" >"${adb_dnsdir}/${adb_dnsfile}"
-		chown "${adb_dnsuser}" "${adb_jaildir}/${adb_dnsjail}" 2>/dev/null
+	# jail mode preparation
+	#
+	if [ "${adb_jail}" = "1" ] && [ "${adb_dnsstop}" != "0" ]; then
+		"${adb_mvcmd}" -f "${adb_tmpdir}/${adb_dnsfile}" "${adb_finaldir}/${adb_dnsfile}"
+		chown "${adb_dnsuser}" "${adb_finaldir}/${adb_dnsfile}" 2>/dev/null
+		if [ "${adb_dnsshift}" = "1" ] && [ ! -L "${adb_dnsdir}/${adb_dnsfile}" ]; then
+			ln -fs "${adb_finaldir}/${adb_dnsfile}" "${adb_dnsdir}/${adb_dnsfile}"
+		elif [ "${adb_dnsshift}" = "0" ] && [ -s "${adb_backupdir}/${adb_dnsfile}" ]; then
+			rm -f "${adb_backupdir}/${adb_dnsfile}"
+		fi
 		if f_dnsup; then
 			if [ "${adb_action}" != "resume" ]; then
 				f_jsnup "enabled"
@@ -1116,152 +1343,150 @@ f_main() {
 		fi
 		f_rmtemp
 		return
-	elif [ -f "${adb_dnsdir}/${adb_dnsjail}" ]; then
-		rm -f "${adb_dnsdir}/${adb_dnsjail}"
-		f_dnsup
 	fi
 
 	# safe search preparation
 	#
 	if [ "${adb_safesearch}" = "1" ] && [ "${adb_dnssafesearch}" != "0" ]; then
-		[ -z "${adb_safesearchlist}" ] && adb_safesearchlist="google bing duckduckgo pixabay yandex youtube"
+		[ -z "${adb_safesearchlist}" ] && adb_safesearchlist="google bing brave duckduckgo pixabay yandex youtube"
 		cnt="1"
 		for entry in ${adb_safesearchlist}; do
-			(f_list safesearch "${entry}") &
-			hold="$((cnt % adb_cores))"
-			[ "${hold}" = "0" ] && wait
+			(
+				f_list safesearch "${entry}"
+			) &
+			[ "${cnt}" -gt "${adb_cores}" ] && wait -n
 			cnt="$((cnt + 1))"
 		done
+		wait
 	fi
-	wait
 
 	# main loop
 	#
 	cnt="1"
-	for src_name in ${adb_sources}; do
+	for src_name in ${adb_feed}; do
 		if ! json_select "${src_name}" >/dev/null 2>&1; then
-			adb_sources="${adb_sources/${src_name}/}"
+			adb_feed="${adb_feed/${src_name}/}"
 			continue
 		fi
+
+		# get feed information
+		#
 		json_get_var src_url "url" >/dev/null 2>&1
 		json_get_var src_rset "rule" >/dev/null 2>&1
 		json_select ..
 		src_tmpcat="${adb_tmpload}.${src_name}.cat"
 		src_tmpload="${adb_tmpload}.${src_name}.load"
-		src_tmpsort="${adb_tmpload}.${src_name}.sort"
+		src_tmparchive="${adb_tmpload}.${src_name}.archive"
 		src_tmpfile="${adb_tmpfile}.${src_name}"
 		src_rc=4
 
 		# basic pre-checks
 		#
-		if [ -z "${src_url}" ] || [ -z "${src_rset}" ]; then
+		if [ -z "${src_url}" ] || [ -z "${src_rset}" ] ||
+			[ "${src_rset%% *}" != "feed" ]; then
 			f_list remove
 			continue
 		fi
 
-		# backup mode
+		# add domains of active feed URLs to the allowlist
 		#
-		if [ "${adb_backup}" = "1" ] && { [ "${adb_action}" = "start" ] || [ "${adb_action}" = "resume" ]; }; then
-			if f_list restore && [ -s "${src_tmpfile}" ]; then
-				continue
-			fi
+		src_domain="${src_url#*://}"
+		src_domain="${src_domain%%/*}"
+		if [ -n "${src_domain}" ] && [ "${adb_dnsallow}" != "0" ] && ! "${adb_grepcmd}" -qxF "${src_domain}" "${adb_tmpdir}/tmp.raw.allowlist"; then
+			printf "%s\n" "${src_domain}" >>"${adb_tmpdir}/tmp.raw.allowlist"
+			eval "${adb_dnsallow}" "${adb_tmpdir}/tmp.raw.allowlist" >>"${adb_tmpdir}/tmp.add.allowlist"
 		fi
 
 		# download queue processing
 		#
-		unset src_cat src_entries
-		if [ "${src_name}" = "utcapitole" ] && [ -n "${adb_utc_sources}" ]; then
-			src_cat="${adb_utc_sources}"
-			if [ -n "${src_cat}" ]; then
-				(
-					src_arc="${adb_tmpdir}/${src_url##*/}"
-					src_log="$("${adb_fetchutil}" ${adb_fetchparm} "${src_arc}" "${src_url}" 2>&1)"
-					src_rc="${?}"
-					if [ "${src_rc}" = "0" ] && [ -s "${src_arc}" ]; then
-						src_suffix="$(eval printf "%s" \"\$\{adb_src_suffix_${src_name}:-\"domains\"\}\")"
-						src_list="$(tar -tzf "${src_arc}" 2>/dev/null)"
-						for src_item in ${src_cat}; do
-							src_entries="${src_entries} $(printf "%s" "${src_list}" | grep -E "${src_item}/${src_suffix}$")"
-						done
-						if [ -n "${src_entries}" ]; then
-							tar -xOzf "${src_arc}" ${src_entries} 2>/dev/null >"${src_tmpload}"
-							src_rc="${?}"
-						fi
-						: >"${src_arc}"
-					else
-						src_log="$(printf "%s" "${src_log}" | "${adb_awk}" '{ORS=" ";print $0}')"
-						f_log "info" "download of '${src_name}' failed, url: ${src_url}, rule: ${src_rset:-"-"}, categories: ${src_cat:-"-"}, rc: ${src_rc}, log: ${src_log:-"-"}"
-					fi
-					if [ "${src_rc}" = "0" ] && [ -s "${src_tmpload}" ]; then
-						"${adb_awk}" "${src_rset}" "${src_tmpload}" | sed "s/\r//g" | "${adb_awk}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' >"${src_tmpsort}"
-						: >"${src_tmpload}"
-						"${adb_sort}" ${adb_srtopts} -u "${src_tmpsort}" 2>/dev/null >"${src_tmpfile}"
-						src_rc="${?}"
-						: >"${src_tmpsort}"
-						if [ "${src_rc}" = "0" ] && [ -s "${src_tmpfile}" ]; then
-							f_list download
-							[ "${adb_backup}" = "1" ] && f_list backup
-						elif [ "${adb_backup}" = "1" ] && [ "${adb_action}" != "start" ]; then
-							f_log "info" "archive preparation of '${src_name}' failed, categories: ${src_cat:-"-"}, entries: ${src_entries}, rc: ${src_rc}"
-							f_list restore
-							: >"${src_tmpfile}"
-						fi
-					elif [ "${adb_backup}" = "1" ] && [ "${adb_action}" != "start" ]; then
-						f_log "info" "archive extraction of '${src_name}' failed, categories: ${src_cat:-"-"}, entries: ${src_entries}, rc: ${src_rc}"
-						f_list restore
-					fi
-				) &
-			fi
-		else
-			if [ "${src_name}" = "1hosts" ] && [ -n "${adb_hst_sources}" ]; then
-				src_cat="${adb_hst_sources}"
-			elif [ "${src_name}" = "hagezi" ] && [ -n "${adb_hag_sources}" ]; then
-				src_cat="${adb_hag_sources}"
-			elif [ "${src_name}" = "stevenblack" ] && [ -n "${adb_stb_sources}" ]; then
-				src_cat="${adb_stb_sources}"
-			elif { [ "${src_name}" = "1hosts" ] && [ -z "${adb_hst_sources}" ]; } ||
-				{ [ "${src_name}" = "hagezi" ] && [ -z "${adb_hag_sources}" ]; } ||
-				{ [ "${src_name}" = "stevenblack" ] && [ -z "${adb_stb_sources}" ]; }; then
-				continue
-			fi
+		src_cat=""
+		src_entries=""
+		[ "${src_name}" = "1hosts" ] && src_cat="${adb_hst_feed}"
+		[ "${src_name}" = "hagezi" ] && src_cat="${adb_hag_feed}"
+		[ "${src_name}" = "stevenblack" ] && src_cat="${adb_stb_feed}"
+		if [ -n "${src_cat}" ]; then
 			(
-				for suffix in ${src_cat:-${src_url}}; do
-					if [ "${src_url}" != "${suffix}" ]; then
-						src_log="$("${adb_fetchutil}" ${adb_fetchparm} "${src_tmpcat}" "${src_url}${suffix}" 2>&1)"
-						src_rc="${?}"
-						if [ "${src_rc}" = "0" ] && [ -s "${src_tmpcat}" ]; then
-							cat "${src_tmpcat}" >>"${src_tmpload}"
-							: >"${src_tmpcat}"
+				# restore handling on boot, resume or (re-)start
+				#
+				if [ "${adb_action}" = "boot" ] || [ "${adb_action}" = "start" ] || [ "${adb_action}" = "restart" ] || [ "${adb_action}" = "resume" ]; then
+					if f_list restore && [ -s "${src_tmpfile}" ]; then
+						continue
+					fi
+				fi
+				# etag handling on reload
+				#
+				if [ -n "${adb_etagparm}" ] && [ "${adb_action}" = "reload" ]; then
+					etag_rc="0"
+					src_cnt="$(printf "%s" "${src_cat}" | "${adb_wccmd}" -w)"
+					for suffix in ${src_cat}; do
+						if ! f_etag "${src_name}" "${src_url}" "${suffix}" "${src_cnt}"; then
+							etag_rc="$((etag_rc + 1))"
 						fi
-					else
-						src_log="$("${adb_fetchutil}" ${adb_fetchparm} "${src_tmpload}" "${src_url}" 2>&1)"
-						src_rc="${?}"
+					done
+					if [ "${etag_rc}" = "0" ]; then
+						if f_list restore; then
+							continue
+						fi
+					fi
+				fi
+				# normal download
+				#
+				for suffix in ${src_cat}; do
+					"${adb_fetchcmd}" ${adb_fetchparm} "${src_tmpcat}" "${src_url}${suffix}" >/dev/null 2>&1
+					src_rc="${?}"
+					if [ "${src_rc}" = "0" ] && [ -s "${src_tmpcat}" ]; then
+						"${adb_catcmd}" "${src_tmpcat}" >>"${src_tmpload}"
+						: >"${src_tmpcat}"
 					fi
 				done
-				if [ "${src_rc}" = "0" ] && [ -s "${src_tmpload}" ]; then
-					"${adb_awk}" "${src_rset}" "${src_tmpload}" | sed "s/\r//g" |
-						"${adb_awk}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' >"${src_tmpsort}"
-					: >"${src_tmpload}"
-					"${adb_sort}" ${adb_srtopts} -u "${src_tmpsort}" 2>/dev/null >"${src_tmpfile}"
-					src_rc="${?}"
-					: >"${src_tmpsort}"
-					if [ "${src_rc}" = "0" ] && [ -s "${src_tmpfile}" ]; then
-						f_list download
-						[ "${adb_backup}" = "1" ] && f_list backup
-					elif [ "${adb_backup}" = "1" ] && [ "${adb_action}" != "start" ]; then
-						f_log "info" "preparation of '${src_name}' failed, rc: ${src_rc}"
-						f_list restore
-						: >"${src_tmpfile}"
+				f_list prepare
+			) &
+		else
+			(
+				[ "${src_name}" = "utcapitole" ] && src_cat="${adb_utc_feed}"
+				# restore handling on boot, resume or (re-)start
+				#
+				if [ "${adb_action}" = "boot" ] || [ "${adb_action}" = "start" ] || [ "${adb_action}" = "restart" ] || [ "${adb_action}" = "resume" ]; then
+					if f_list restore && [ -s "${src_tmpfile}" ]; then
+						continue
+					fi
+				fi
+				# etag handling on reload
+				#
+				if [ -n "${adb_etagparm}" ] && [ "${adb_action}" = "reload" ]; then
+					if f_etag "${src_name}" "${src_url}"; then
+						if f_list restore && [ -s "${src_tmpfile}" ]; then
+							continue
+						fi
+					fi
+				fi
+				# normal download
+				#
+				if [ "${src_name}" = "utcapitole" ]; then
+					if [ -n "${src_cat}" ]; then
+						"${adb_fetchcmd}" ${adb_fetchparm} "${src_tmparchive}" "${src_url}" >/dev/null 2>&1
+						src_rc="${?}"
+						if [ "${src_rc}" = "0" ] && [ -s "${src_tmparchive}" ]; then
+							src_suffix="$(eval printf "%s" \"\$\{adb_src_suffix_${src_name}:-\"domains\"\}\")"
+							src_list="$(tar -tzf "${src_tmparchive}" 2>/dev/null)"
+							for src_item in ${src_cat}; do
+								src_entries="${src_entries} $(printf "%s" "${src_list}" | "${adb_grepcmd}" -E "${src_item}/${src_suffix}$")"
+							done
+							if [ -n "${src_entries}" ]; then
+								tar -xOzf "${src_tmparchive}" ${src_entries} 2>/dev/null >"${src_tmpload}"
+								src_rc="${?}"
+							fi
+							: >"${src_tmparchive}"
+						fi
 					fi
 				else
-					src_log="$(printf "%s" "${src_log}" | "${adb_awk}" '{ORS=" ";print $0}')"
-					f_log "info" "download of '${src_name}' failed, url: ${src_url}, rule: ${src_rset:-"-"}, categories: ${src_cat:-"-"}, rc: ${src_rc}, log: ${src_log:-"-"}"
-					[ "${adb_backup}" = "1" ] && [ "${adb_action}" != "start" ] && f_list restore
+					"${adb_fetchcmd}" ${adb_fetchparm} "${src_tmpload}" "${src_url}" >/dev/null 2>&1
+					src_rc="${?}"
 				fi
+				f_list prepare
 			) &
 		fi
-		hold="$((cnt % adb_cores))"
-		[ "${hold}" = "0" ] && wait
+		[ "${cnt}" -gt "${adb_cores}" ] && wait -n
 		cnt="$((cnt + 1))"
 	done
 	wait
@@ -1269,12 +1494,12 @@ f_main() {
 	# tld compression and dns restart
 	#
 	if f_list merge && [ -s "${adb_tmpdir}/${adb_dnsfile}" ]; then
-		f_tld "${adb_tmpdir}/${adb_dnsfile}"
+		[ "${adb_tld}" = "1" ] && f_tld "${adb_tmpdir}/${adb_dnsfile}"
 		f_list final
 	else
-		printf "%b" "${adb_dnsheader}" >"${adb_dnsdir}/${adb_dnsfile}"
+		printf "%b" "${adb_dnsheader}" >"${adb_finaldir}/${adb_dnsfile}"
 	fi
-	chown "${adb_dnsuser}" "${adb_dnsdir}/${adb_dnsfile}" 2>/dev/null
+	chown "${adb_dnsuser}" "${adb_finaldir}/${adb_dnsfile}" 2>/dev/null
 	if f_dnsup; then
 		[ "${adb_action}" != "resume" ] && f_jsnup "enabled"
 		f_log "info" "blocklist with overall ${adb_cnt} blocked domains loaded successfully (${adb_sysver})"
@@ -1287,62 +1512,112 @@ f_main() {
 # trace dns queries via tcpdump and prepare a report
 #
 f_report() {
-	local report_raw report_txt content status total start end start_date start_time end_date end_time blocked percent top_list top array item index hold ports value key key_list cnt="0" resolve="-nn" action="${1}" top_count="${2:-"10"}" res_count="${3:-"50"}" search="${4:-"+"}"
+	local report_raw report_txt content status total start end start_date start_time end_date end_time blocked percent top_list top array item index ports value key key_list
+	local ip request requests iface_v4 iface_v6 ip_v4 ip_v6 map_jsn cnt="0" resolve="-nn" action="${1}" top_count="${2:-"10"}" res_count="${3:-"50"}" search="${4:-"+"}"
 
 	report_raw="${adb_reportdir}/adb_report.raw"
 	report_srt="${adb_reportdir}/adb_report.srt"
-	report_jsn="${adb_reportdir}/adb_report.json"
+	report_jsn="${adb_reportdir}/adb_report.jsn"
 	report_txt="${adb_reportdir}/adb_mailreport.txt"
+	top_tmpclients="${adb_reportdir}/top_clients.tmp"
+	top_tmpdomains="${adb_reportdir}/top_domains.tmp"
+	top_tmpblocked="${adb_reportdir}/top_blocked.tmp"
+	map_jsn="${adb_reportdir}/adb_map.jsn"
 
-	# build json file
+	# build report
 	#
 	if [ "${action}" != "json" ]; then
-		: >"${report_raw}"
-		: >"${report_srt}"
-		: >"${report_txt}"
-		: >"${report_jsn}"
+		: >"${report_raw}" >"${report_srt}" >"${report_txt}" >"${report_jsn}"
+		: >"${top_tmpclients}" >"${top_tmpdomains}" >"${top_tmpblocked}"
 		[ "${adb_represolve}" = "1" ] && resolve=""
 		for file in "${adb_reportdir}/adb_report.pcap"*; do
 			(
-				if [ "${adb_repiface}" = "any" ]; then
-					"${adb_dumpcmd}" "${resolve}" --immediate-mode -T domain -tttt -r "${file}" 2>/dev/null |
-					"${adb_awk}" -v cnt="${cnt}" '!/\.lan\. |PTR\? | SOA\? | Flags /&&/ A[A]*\? |NXDomain|0\.0\.0\.0|[0-9]\/[0-9]\/[0-9]/{sub(/\.[0-9]+$/,"",$6);
-						type=substr($(NF-1),length($(NF-1)));
-						if(type=="."&&$(NF-2)!="CNAME")
-							{domain=substr($(NF-1),1,length($(NF-1))-1);type="RQ"}
-						else
-							{if($(NF-1)~/[0-9]\/[0-9]\/[0-9]/||$(NF-1)=="0.0.0.0"){type="NX"}else{type="OK"};domain=""};
-						printf "%08d\t%s\t%s\t%s\t%-25s\t%s\n",$9,type,$1,substr($2,1,8),$6,domain}' >>"${report_raw}"
-				else
-					"${adb_dumpcmd}" "${resolve}" --immediate-mode -T domain -tttt -r "${file}" 2>/dev/null |
-					"${adb_awk}" -v cnt="${cnt}" '!/\.lan\. |PTR\? | SOA\? | Flags /&&/ A[A]*\? |NXDomain|0\.0\.0\.0|[0-9]\/[0-9]\/[0-9]/{sub(/\.[0-9]+$/,"",$4);
-						type=substr($(NF-1),length($(NF-1)));
-						if(type=="."&&$(NF-2)!="CNAME")
-							{domain=substr($(NF-1),1,length($(NF-1))-1);type="RQ"}
-						else
-							{if($(NF-1)~/[0-9]\/[0-9]\/[0-9]/||$(NF-1)=="0.0.0.0"){type="NX"}else{type="OK"};domain=""};
-						printf "%08d\t%s\t%s\t%s\t%-25s\t%s\n",$7,type,$1,substr($2,1,8),$4,domain}' >>"${report_raw}"
-				fi
+				"${adb_dumpcmd}" ${resolve} --immediate-mode -tttt -T domain -r "${file}" 2>/dev/null |
+				"${adb_awkcmd}" -v repiface="${adb_repiface}" '
+					BEGIN {
+						pending = 0
+					}
+					# ignore Reverse DNS
+					/\.in-addr\.arpa/ || /\.ip6\.arpa/ { next }
+					# domain request parser
+					/\+[[:space:]]+(A\?|AAAA\?)/ {
+						# drop unresolved previous query
+						if (pending)
+							pending = 0
+						date = $1
+						split($2, t, ":")
+						time = t[1] ":" t[2] ":" substr(t[3],1,2)
+						interface = repiface
+						client = $4
+						if (repiface == "any") {
+							interface = $3
+							client = $6
+						}
+						sub(/\.[0-9]+$/, "", client)
+						domain = $(NF-1)
+						sub(/[,\.]+$/, "", domain)
+						if (domain ~ /\.lan$/) next
+						if (domain !~ /\./) next
+						qtype = $(NF-2)
+						sub(/\?$/, "", qtype)
+						last_date = date
+						last_time = time
+						last_client = client
+						last_interface = interface
+						last_domain = domain
+						last_qtype  = qtype
+						pending  = 1
+						next
+					}
+					# ok answer
+					/[0-9]+[[:space:]]+[0-9]+\/[0-9]+\/[0-9]+[[:space:]]+(A|AAAA|CNAME)[[:space:]]/ {
+						if (pending) {
+							printf "%s\t%s\t%s\t%s\t%s\t%s\tOK\n",
+							last_date, last_time, last_client, last_interface, last_qtype, last_domain
+							pending = 0
+						}
+						next
+					}
+					# nxdomain answer
+					/ NXDomain/ {
+						if (pending) {
+							printf "%s\t%s\t%s\t%s\t%s\t%s\tNX\n",
+							last_date, last_time, last_client, last_interface, last_qtype, last_domain
+							pending = 0
+						}
+						next
+					}
+					# servfail answer
+					/ ServFail/ {
+						if (pending) {
+							printf "%s\t%s\t%s\t%s\t%s\t%s\tSF\n",
+							last_date, last_time, last_client, last_interface, last_qtype, last_domain
+							pending = 0
+						}
+						next
+					}
+					END {
+						# no fallback
+					}
+				' >> "${report_raw}"
 			) &
-			hold="$((cnt % adb_cores))"
-			[ "${hold}" = "0" ] && wait
+			[ "${cnt}" -gt "${adb_cores}" ] && wait -n
 			cnt="$((cnt + 1))"
 		done
 		wait
 		if [ -s "${report_raw}" ]; then
-			"${adb_sort}" ${adb_srtopts} -k3,3 -k4,4 -k1,1 -k2,2 -u -r "${report_raw}" |
-				"${adb_awk}" '{currA=($1+0);currB=$1;currC=$2;if(reqA==currB){reqA=0;printf "%-90s\t%s\n",d,$2}else if(currC=="RQ"){reqA=currA;d=$3"\t"$4"\t"$5"\t"$6}}' |
-				"${adb_sort}" ${adb_srtopts} -u -r >"${report_srt}"
-			: >"${report_raw}"
+			"${adb_sortcmd}" ${adb_srtopts} -ru "${report_raw}" > "${report_srt}"
+			rm -f "${report_raw}"
 		fi
 
+		# build json
+		#
 		if [ -s "${report_srt}" ]; then
-			start="$("${adb_awk}" 'END{printf "%s_%s",$1,$2}' "${report_srt}")"
-			end="$("${adb_awk}" 'NR==1{printf "%s_%s",$1,$2}' "${report_srt}")"
-			total="$(wc -l <"${report_srt}")"
-			blocked="$("${adb_awk}" '{if($5=="NX")cnt++}END{printf "%s",cnt}' "${report_srt}")"
-			percent="$("${adb_awk}" -v t="${total}" -v b="${blocked}" 'BEGIN{printf "%.2f%s",b/t*100,"%"}')"
-			: >"${report_jsn}"
+			start="$("${adb_awkcmd}" 'END{printf "%s_%s",$1,$2}' "${report_srt}")"
+			end="$("${adb_awkcmd}" 'NR==1{printf "%s_%s",$1,$2}' "${report_srt}")"
+			total="$(f_count tld "${report_srt}" "var")"
+			blocked="$("${adb_awkcmd}" '{if($7=="NX")cnt++}END{printf "%s",cnt}' "${report_srt}")"
+			percent="$("${adb_awkcmd}" -v t="${total}" -v b="${blocked}" 'BEGIN{ if(t>0) printf "%.2f%s",b/t*100,"%"; else printf "0.00%%"}')"
 			{
 				printf "%s\n" "{ "
 				printf "\t%s\n" "\"start_date\": \"${start%_*}\", "
@@ -1352,33 +1627,180 @@ f_report() {
 				printf "\t%s\n" "\"total\": \"${total}\", "
 				printf "\t%s\n" "\"blocked\": \"${blocked}\", "
 				printf "\t%s\n" "\"percent\": \"${percent}\", "
-			} >>"${report_jsn}"
+			} >"${report_jsn}"
+
+			# build top list counters
+			#
+			"${adb_awkcmd}" '
+				{
+					client = $3
+					iface = $4
+					qtype = $5
+					domain = $6
+					rc = $7
+					# normalize domain
+					gsub(/[\.]+$/, "", domain)
+					domain = tolower(domain)
+					# total client counter
+					clients[client]++
+					# remember OK per domain
+					if (rc == "OK") {
+						ok_domain[domain] = 1
+						ok_rr[domain SUBSEP qtype] = 1
+					}
+					# remember NX per domain
+					if (rc == "NX") {
+						nx_domain[domain]++
+						nx_rr[domain SUBSEP qtype]++
+					}
+					# total queries per domain
+					all_domain[domain]++
+				}
+				END {
+					# top clients
+					for (c in clients)
+						printf "%d %s\n", clients[c], c > "'"${top_tmpclients}"'"
+					# domains & blocked domains
+					for (d in all_domain) {
+					if (ok_domain[d]) {
+						printf "%d %s\n", all_domain[d], d > "'"${top_tmpdomains}"'"
+						continue
+					}
+					if (nx_domain[d]) {
+						printf "%d %s\n", nx_domain[d], d > "'"${top_tmpblocked}"'"
+					}
+				}
+			}' "${report_srt}"
+
+			# build json top lists
+			#
 			top_list="top_clients top_domains top_blocked"
 			for top in ${top_list}; do
-				printf "\t%s" "\"${top}\": [ " >>"${report_jsn}"
+				printf "\t\"%s\": [ " "${top}" >>"${report_jsn}"
 				case "${top}" in
-					"top_clients")
-						"${adb_awk}" '{print $3}' "${report_srt}" | "${adb_sort}" ${adb_srtopts} | uniq -c |
-							"${adb_sort}" ${adb_srtopts} -nr |
-							"${adb_awk}" "{ORS=\" \";if(NR==1)printf \"\n\t\t{\n\t\t\t\\\"count\\\": \\\"%s\\\",\n\t\t\t\\\"address\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2; else if(NR<=${top_count})printf \",\n\t\t{\n\t\t\t\\\"count\\\": \\\"%s\\\",\n\t\t\t\\\"address\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2}" >>"${report_jsn}"
-						;;
-					"top_domains")
-						"${adb_awk}" '{if($5!="NX")print $4}' "${report_srt}" | "${adb_sort}" ${adb_srtopts} | uniq -c |
-							"${adb_sort}" ${adb_srtopts} -nr |
-							"${adb_awk}" "{ORS=\" \";if(NR==1)printf \"\n\t\t{\n\t\t\t\\\"count\\\": \\\"%s\\\",\n\t\t\t\\\"address\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2; else if(NR<=${top_count})printf \",\n\t\t{\n\t\t\t\\\"count\\\": \\\"%s\\\",\n\t\t\t\\\"address\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2}" >>"${report_jsn}"
-						;;
-					"top_blocked")
-						"${adb_awk}" '{if($5=="NX")print $4}' "${report_srt}" |
-							"${adb_sort}" ${adb_srtopts} | uniq -c | "${adb_sort}" ${adb_srtopts} -nr |
-							"${adb_awk}" "{ORS=\" \";if(NR==1)printf \"\n\t\t{\n\t\t\t\\\"count\\\": \\\"%s\\\",\n\t\t\t\\\"address\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2; else if(NR<=${top_count})printf \",\n\t\t{\n\t\t\t\\\"count\\\": \\\"%s\\\",\n\t\t\t\\\"address\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2}" >>"${report_jsn}"
-						;;
+					top_clients)
+						"${adb_sortcmd}" ${adb_srtopts} -nr "${top_tmpclients}" |
+						"${adb_awkcmd}" -v top_count="${top_count}" '
+							BEGIN { ORS=""; OFS="" }
+							NR==1 {
+								printf "\n\t\t{\n\t\t\t\"count\": \"%s\",\n\t\t\t\"address\": \"%s\"\n\t\t}", $1, $2
+							}
+							NR>1 && NR<=top_count {
+								printf ",\n\t\t{\n\t\t\t\"count\": \"%s\",\n\t\t\t\"address\": \"%s\"\n\t\t}", $1, $2
+							}
+						' >>"${report_jsn}"
+					;;
+					top_domains)
+						"${adb_sortcmd}" ${adb_srtopts} -nr "${top_tmpdomains}" |
+						"${adb_awkcmd}" -v top_count="${top_count}" '
+							BEGIN { ORS=""; OFS="" }
+							NR==1 {
+								printf "\n\t\t{\n\t\t\t\"count\": \"%s\",\n\t\t\t\"address\": \"%s\"\n\t\t}", $1, $2
+							}
+							NR>1 && NR<=top_count {
+								printf ",\n\t\t{\n\t\t\t\"count\": \"%s\",\n\t\t\t\"address\": \"%s\"\n\t\t}", $1, $2
+							}
+						' >>"${report_jsn}"
+					;;
+					top_blocked)
+						"${adb_sortcmd}" ${adb_srtopts} -nr "${top_tmpblocked}" |
+						"${adb_awkcmd}" -v top_count="${top_count}" '
+							BEGIN { ORS=""; OFS="" }
+							NR==1 {
+								printf "\n\t\t{\n\t\t\t\"count\": \"%s\",\n\t\t\t\"address\": \"%s\"\n\t\t}", $1, $2
+							}
+							NR>1 && NR<=top_count {
+								printf ",\n\t\t{\n\t\t\t\"count\": \"%s\",\n\t\t\t\"address\": \"%s\"\n\t\t}", $1, $2
+							}
+						' >>"${report_jsn}"
+					;;
 				esac
-				printf "\n\t%s\n" "]," >>"${report_jsn}"
+				printf "\n\t],\n" >>"${report_jsn}"
 			done
+			rm -f "${top_tmpclients}" "${top_tmpdomains}" "${top_tmpblocked}"
+
+			# build json request list
+			#
 			search="${search//./\\.}"
 			search="${search//[+*~%\$&\"\' ]/}"
-			"${adb_awk}" "BEGIN{i=0;printf \"\t\\\"requests\\\": [\n\"}/(${search})/{i++;if(i==1)printf \"\n\t\t{\n\t\t\t\\\"date\\\": \\\"%s\\\",\n\t\t\t\\\"time\\\": \\\"%s\\\",\n\t\t\t\\\"client\\\": \\\"%s\\\",\n\t\t\t\\\"domain\\\": \\\"%s\\\",\n\t\t\t\\\"rc\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2,\$3,\$4,\$5;else if(i<=${res_count})printf \",\n\t\t{\n\t\t\t\\\"date\\\": \\\"%s\\\",\n\t\t\t\\\"time\\\": \\\"%s\\\",\n\t\t\t\\\"client\\\": \\\"%s\\\",\n\t\t\t\\\"domain\\\": \\\"%s\\\",\n\t\t\t\\\"rc\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2,\$3,\$4,\$5}END{printf \"\n\t]\n}\n\"}" "${adb_reportdir}/adb_report.srt" >>"${report_jsn}"
-			: >"${report_srt}"
+			"${adb_awkcmd}" "
+				BEGIN {
+					i = 0
+					printf \"\t\\\"requests\\\": [\n\"
+				}
+				(/(${search})/ && NF == 7) {
+					i++
+					if (i == 1) {
+						printf \"\n\t\t{\
+						\n\t\t\t\\\"date\\\": \\\"%s\\\",\
+						\n\t\t\t\\\"time\\\": \\\"%s\\\",\
+						\n\t\t\t\\\"client\\\": \\\"%s\\\",\
+						\n\t\t\t\\\"iface\\\": \\\"%s\\\",\
+						\n\t\t\t\\\"type\\\": \\\"%s\\\",\
+						\n\t\t\t\\\"domain\\\": \\\"%s\\\",\
+						\n\t\t\t\\\"rc\\\": \\\"%s\\\"\
+						\n\t\t}\",
+						\$1, \$2, \$3, \$4, \$5, \$6, \$7
+					}
+					else if (i <= ${res_count}) {
+						printf \",\n\t\t{\
+						\n\t\t\t\\\"date\\\": \\\"%s\\\",\
+						\n\t\t\t\\\"time\\\": \\\"%s\\\",\
+						\n\t\t\t\\\"client\\\": \\\"%s\\\",\
+						\n\t\t\t\\\"iface\\\": \\\"%s\\\",\
+						\n\t\t\t\\\"type\\\": \\\"%s\\\",\
+						\n\t\t\t\\\"domain\\\": \\\"%s\\\",\
+						\n\t\t\t\\\"rc\\\": \\\"%s\\\"\
+						\n\t\t}\",
+						\$1, \$2, \$3, \$4, \$5, \$6, \$7
+					}
+				}
+				END {
+					printf \"\n\t]\n}\n\"
+				}
+			" "${adb_reportdir}/adb_report.srt" >> "${report_jsn}"
+			rm -f "${report_srt}"
+		fi
+
+		# retrieve/prepare map data
+		#
+		if [ "${adb_map}" = "1" ] && [ -s "${report_jsn}" ]; then
+			cnt="1"
+			network_find_wan iface_v4
+			network_get_ipaddr ip_v4 "${iface_v4}"
+			network_find_wan6 iface_v6
+			network_get_ipaddr6 ip_v6 "${iface_v6}"
+			printf "%s" ",[{}" >"${map_jsn}"
+			f_fetch
+			for ip in ${ip_v4} ${ip_v6}; do
+				"${adb_fetchcmd}" ${adb_geoparm} "${adb_geourl}/${ip}" 2>/dev/null |
+					"${adb_awkcmd}" -v feed="homeIP" '{printf ",{\"%s\": %s}\n",feed,$0}' >>"${map_jsn}"
+				cnt="$((cnt + 1))"
+			done
+			if [ -s "${map_jsn}" ] && [ "${cnt}" -lt "45" ] && [ "$("${adb_catcmd}" "${map_jsn}")" != ",[{}" ]; then
+				json_init
+				if json_load_file "${report_jsn}" >/dev/null 2>&1; then
+					json_select "requests" >/dev/null 2>&1
+					json_get_keys requests >/dev/null 2>&1
+					for request in ${requests}; do
+						json_select "${request}" >/dev/null 2>&1
+						json_get_keys details >/dev/null 2>&1
+						json_get_var rc "rc" >/dev/null 2>&1
+						json_get_var domain "domain" >/dev/null 2>&1
+						if [ "${rc}" = "NX" ] && ! "${adb_catcmd}" "${map_jsn}" 2>/dev/null | "${adb_grepcmd}" -qxF "${domain}"; then
+							(
+								"${adb_fetchcmd}" ${adb_geoparm} "${adb_geourl}/${domain}" 2>/dev/null |
+									"${adb_awkcmd}" -v feed="${domain}" '{printf ",{\"%s\": %s}\n",feed,$0}' >>"${map_jsn}"
+							) &
+							[ "${cnt}" -gt "${adb_cores}" ] && wait -n
+							cnt="$((cnt + 1))"
+							[ "${cnt}" -ge "45" ] && break
+						fi
+						json_select ".."
+					done
+					wait
+				fi
+			fi
 		fi
 	fi
 
@@ -1420,32 +1842,41 @@ f_report() {
 				done
 			elif json_get_type status "${top}" && [ "${top}" = "requests" ] && [ "${status}" = "array" ]; then
 				printf "%s\n%s\n%s\n" ":::" "::: Latest DNS Queries" ":::" >>"${report_txt}"
-				printf "%-15s%-15s%-45s%-80s%s\n" "Date" "Time" "Client" "Domain" "Answer" >>"${report_txt}"
+				printf "%-11s%-9s%-40s%-15s%-5s%-70s%s\n" "Date" "Time" "Client" "Interface" "Type" "Domain" "Answer" >>"${report_txt}"
 				json_select "${top}"
 				index="1"
 				while json_get_type status "${index}" && [ "${status}" = "object" ]; do
 					json_get_values item "${index}"
-					printf "%-15s%-15s%-45s%-80s%s\n" ${item} >>"${report_txt}"
+					printf "%-11s%-9s%-40s%-15s%-5s%-70s%s\n" ${item} >>"${report_txt}"
 					index="$((index + 1))"
 				done
 			fi
 			json_select ".."
 		done
-		content="$(cat "${report_txt}" 2>/dev/null)"
-		: >"${report_txt}"
+		content="$("${adb_catcmd}" "${report_txt}" 2>/dev/null)"
+		rm -f "${report_txt}"
 	fi
 
 	# report output
 	#
-	if [ "${action}" = "cli" ]; then
-		printf "%s\n" "${content}"
-	elif [ "${action}" = "json" ]; then
-		cat "${report_jsn}"
-	elif [ "${action}" = "mail" ] && [ "${adb_mail}" = "1" ] && [ -x "${adb_mailservice}" ]; then
-		("${adb_mailservice}" "${adb_ver}" "${content}" >/dev/null 2>&1) &
-		bg_pid="${!}"
-	fi
-	f_log "debug" "f_report ::: action: ${action}, top_count: ${top_count}, res_count: ${res_count}, search: ${search}, dump_util: ${adb_dumpcmd}, rep_dir: ${adb_reportdir}, rep_iface: ${adb_repiface:-"-"}, rep_listen: ${adb_replisten}, rep_chunksize: ${adb_repchunksize}, rep_chunkcnt: ${adb_repchunkcnt}, rep_resolve: ${adb_represolve}"
+	case "${action}" in
+		"cli")
+			printf "%s\n" "${content}"
+			;;
+		"json")
+			if [ "${adb_map}" = "1" ]; then
+				jsn="$("${adb_catcmd}" ${report_jsn} ${map_jsn} 2>/dev/null)"
+				[ -n "${jsn}" ] && printf "[%s]]\n" "${jsn}"
+			else
+				jsn="$("${adb_catcmd}" ${report_jsn} 2>/dev/null)"
+				[ -n "${jsn}" ] && printf "[%s]\n" "${jsn}"
+			fi
+			;;
+		"mail")
+			[ "${adb_mail}" = "1" ] && [ -x "${adb_mailservice}" ] && "${adb_mailservice}" "${content}" >/dev/null 2>&1
+			rm -f "${report_txt}"
+			;;
+	esac
 }
 
 # source required system libraries
@@ -1458,17 +1889,37 @@ else
 	f_log "err" "system libraries not found"
 fi
 
+# reference required system utilities
+#
+adb_wccmd="$(f_cmd wc)"
+adb_mvcmd="$(f_cmd mv)"
+adb_catcmd="$(f_cmd cat)"
+adb_zcatcmd="$(f_cmd zcat)"
+adb_awkcmd="$(f_cmd gawk awk)"
+adb_sortcmd="$(f_cmd sort)"
+adb_grepcmd="$(f_cmd grep)"
+adb_gzipcmd="$(f_cmd gzip)"
+adb_pgrepcmd="$(f_cmd pgrep)"
+adb_sedcmd="$(f_cmd sed)"
+adb_findcmd="$(f_cmd find)"
+adb_jsoncmd="$(f_cmd jsonfilter)"
+adb_ubuscmd="$(f_cmd ubus)"
+adb_loggercmd="$(f_cmd logger)"
+adb_lookupcmd="$(f_cmd nslookup)"
+adb_dumpcmd="$(f_cmd tcpdump optional)"
+adb_mailcmd="$(f_cmd msmtp optional)"
+adb_logreadcmd="$(f_cmd logread optional)"
+adb_nftcmd="$(f_cmd nft)"
+
 # handle different adblock actions
 #
 f_load
 case "${adb_action}" in
 	"stop")
+		f_temp
+		f_jsnup "stopped"
+		f_nftremove
 		f_rmdns
-		;;
-	"restart")
-		f_rmdns
-		f_env
-		f_main
 		;;
 	"suspend")
 		[ "${adb_dns}" != "raw" ] && f_switch suspend
@@ -1482,7 +1933,14 @@ case "${adb_action}" in
 	"query")
 		f_query "${2}"
 		;;
-	"start" | "reload")
+	"boot" | "start" | "reload")
+		f_env
+		f_main
+		;;
+	"restart")
+		f_jsnup "processing"
+		f_nftremove
+		f_rmdns
 		f_env
 		f_main
 		;;

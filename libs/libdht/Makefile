@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libdht
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/jech/dht
@@ -20,6 +20,7 @@ define Package/libdht
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Kademlia Distributed Hash Table (DHT) library
+  DEPENDS:= +USE_GLIBC:libcrypt-compat
 endef
 
 define Build/InstallDev

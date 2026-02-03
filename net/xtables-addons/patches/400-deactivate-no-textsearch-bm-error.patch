@@ -1,0 +1,23 @@
+From: Mieczyslaw Nalewaj <namiltd@yahoo.com>
+Date: Thu, 15 May 2025 14:59:18 +0200
+Subject: xtables-addons: deactivate 'no TEXTSEARCH_BM' error
+
+If ipp2p (and kmod-lib-textsearch) is disabled the error
+"error CONFIG_TEXTSEARCH=y/m is required.." is displayed.
+This is because all modules are always compiled.
+So to make compilation possible with ipp2p disabled, the message
+was disabled.
+
+Signed-off-by: Mieczyslaw Nalewaj <namiltd@yahoo.com>
+
+--- a/extensions/xt_ipp2p.c
++++ b/extensions/xt_ipp2p.c
+@@ -14,7 +14,7 @@
+ #include "xt_ipp2p.h"
+ #include "compat_xtables.h"
+ #if !defined(CONFIG_TEXTSEARCH_BM) && !defined(CONFIG_TEXTSEARCH_BM_MODULE)
+-#	error CONFIG_TEXTSEARCH_BM=y/m is required for ipp2p. Either enable textsearch in your kernel ".config" file, or disable ipp2p in the "mconfig" file in Xtables-addons.
++//#	error CONFIG_TEXTSEARCH_BM=y/m is required for ipp2p. Either enable textsearch in your kernel ".config" file, or disable ipp2p in the "mconfig" file in Xtables-addons.
+ #endif
+ 
+ //#define IPP2P_DEBUG_ARES

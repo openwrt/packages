@@ -1,23 +1,192 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2010-2012 OpenWrt.org
+# Copyright (C) 2010-2025 OpenWrt.org
 
-START=80
+START=85
 STOP=10
-
 USE_PROCD=1
+PROG_netatalk='/usr/sbin/netatalk'
+
+# Default config file location
+config_file='/etc/afp.conf'
+
+# Config file contents and status
+afpd_config=''
+config_overwrite=''
+config_error=0
+setup_error=0
+# Log tag
+log_tag='afpd-init'
+
+# Configuration dictionary
+valid_global='|'
+valid_global=$valid_global'ad_domain|admin_auth_user|admin_group|force_user|force_group|k5_keytab|k5_service|k5_realm|'
+valid_global=$valid_global'nt_domain|nt_separator|save_password|set_password|uam_list|uam_path|mac_charset|unix_charset|'
+valid_global=$valid_global'vol_charset|passwd_file|passwd_minlen|afp_interfaces|afp_listen|afp_port|appletalk|'
+valid_global=$valid_global'cnid_listen|cnid_server|ddp_address|ddp_zone|disconnect_time|dsireadbuf|hostname|'
+valid_global=$valid_global'max_connections|sleep_time|chmod_request|dircachesize|extmap_file|'
+valid_global=$valid_global'force_xattr_with_sticky_bit|guest_account|ignored_attributes|legacy_icon|login_message|'
+valid_global=$valid_global'mimic_model|vol_dbpath|zeroconf_name|log_file|log_level|map_acls|ldap_auth_method|'
+valid_global=$valid_global'ldap_auth_dn|ldap_auth_pw|ldap_uri|ldap_userbase|ldap_userscope|ldap_groupbase|'
+valid_global=$valid_global'ldap_groupscope|ldap_uuid_attr|ldap_name_attr|ldap_group_attr|ldap_uuid_string|'
+valid_global=$valid_global'ldap_uuid_encoding|ldap_user_filter|ldap_group_filter|vol_dbnest|fce_ignore_names|'
+valid_homes='|basedir_regex|path|home_name|'
+valid_volume='|'
+valid_volume=$valid_volume'mac_charset|unix_charset|vol_charset|casefold|chmod_request|force_xattr_with_sticky_bit|'
+valid_volume=$valid_volume'ignored_attributes|login_message|vol_dbpath|path|server_name|vol_size_limit|valid_users|'
+valid_volume=$valid_volume'invalid_users|hosts_allow|hosts_deny|ea|password|file_perm|directory_perm|umask|preexec|'
+valid_volume=$valid_volume'postexec|root_preexec|root_postexec|rolist|rwlist|veto_files|acls|case_sensitive|prodos|'
+valid_volume=$valid_volume'read_only|time_machine|vol_dbnest|cnid_scheme|volume_name|'
+valid_share='share_name'
+
+NL=$'\n'
+
+generate_config() {
+	# Save name of sections
+	config_name=''
+	global_name=''
+	homes_name=''
+	volume_names=''
+	# Volume name validation
+	share_names=''
+	fixed_names=''
+
+	# Call-back per section
+	config_cb() {
+		section_type="$1"
+		section_name="$2"
+
+		# Call-back per option
+		option_cb() {
+			local name="$1"
+			local value="$2"
+			# Validate options against dictionary of possible values
+			if [ "$section_type" = 'setup' -a "$CONFIG_SECTION" = "$config_name" ]; then
+				if [ "$name" = 'config_overwrite' ]; then
+					if [ "$value" = "0" -o "$value" = "1" ]; then
+						config_overwrite=$value
+					else
+						# Garbage on this option means we should not proceed no matter what
+						logger -p err -t $log_tag "Invalid SETUP config_overwrite option: $value"
+						setup_error=1
+					fi
+				elif [ "$name" = 'config_file' ]; then
+					config_file="$value"
+				else
+					config_error=1 && logger -p err -t $log_tag "Invalid SETUP configuration option: $name:$value"
+				fi
+			elif [ "$section_type" = 'global' -a "$CONFIG_SECTION" = "$global_name" ]; then
+					case "$valid_global" in
+						*'|'$name'|'*) afpd_config=$afpd_config"${name//_/ } = $value$NL" ;;
+						*) config_error=1 && logger -p err -t $log_tag "Invalid GLOBAL configuration option: $name:$value" ;;
+					esac
+			elif [ "$section_type" = 'homes' -a "$CONFIG_SECTION" = "$homes_name" ]; then
+					case "$valid_homes" in
+						*'|'$name'|'*) afpd_config=$afpd_config"${name//_/ } = $value$NL" ;;
+						*) config_error=1 && logger -p err -t $log_tag "Invalid HOMES configuration option: $name:$value" ;;
+					esac
+			elif [ "$section_type" = 'volume' ]; then
+				if [ "$name" = "$valid_share" ]; then
+					# Special case - share name... check for duplicates... track changes... fix heading.
+					case "||$share_names" in
+						*'||'$value'||'*) config_error=1 && logger -p err -t $log_tag "Duplicated share name $CONFIG_SECTION-$name:$value" ;;
+						*) ;;
+					esac
+					share_names=$share_names"$value||"
+					fixed_names=$fixed_names"$CONFIG_SECTION "
+					afpd_config="${afpd_config//\[\[$CONFIG_SECTION\]\]/[$value]}"
+				else
+					case "$valid_volume" in
+						*'|'$name'|'*) afpd_config=$afpd_config"${name//_/ } = $value$NL" ;;
+						*) config_error=1 && logger -p err -t $log_tag "Invalid VOLUME $CONFIG_SECTION configuration option: $name:$value" ;;
+					esac
+				fi
+			else
+				config_error=1 && logger -p err -t $log_tag "Invalid option. Section: $CONFIG_SECTION ($section_type), option: $name:$value" 
+			fi
+		}
+
+		# Call-back per list - error, we don't use lists
+		list_cb() {
+			config_error=1 && logger -p err -t $log_tag "Invalid list in $CONFIG_SECTION: $1:$2"
+		}
+
+		# Identify sections and create section headers (placeholder for volumes)
+		if [ "$section_type" = 'setup' ]; then
+			# Find the name of the first (and only?) setup (control) section
+			if [ -z "$config_name" ]; then
+				config_name=$section_name
+			else
+				config_error=1 && logger -p err -t $log_tag 'Multiple SETUP sections defined'
+			fi
+		elif [ "$section_type" = 'global' ]; then
+			# Find the name of the first (and only?) global section
+			if [ -z "$global_name" ]; then
+				global_name=$section_name
+				[ -z "$afpd_config" ] || afpd_config=$afpd_config"$NL"
+				afpd_config=$afpd_config"[Global]$NL"
+			else
+				config_error=1 && logger -p err -t $log_tag 'Multiple GLOBAL sections defined'
+			fi
+		elif [ "$section_type" = 'homes' ]; then
+			# Find the name of the first (and only?) homes section
+			if [ -z "$homes_name" ]; then
+				homes_name=$section_name
+				[ -z "$afpd_config" ] || afpd_config=$afpd_config"$NL"
+				afpd_config=$afpd_config"[Homes]$NL"
+			else
+				config_error=1 && logger -p err -t $log_tag 'Multiple HOMES sections defined'
+			fi
+		elif [ "$section_type" = 'volume' ]; then
+			# Collect the names of the volume sections
+			volume_names=$volume_names"$section_name "
+			[ -z "$afpd_config" ] || afpd_config=$afpd_config"$NL"
+			afpd_config=$afpd_config"[[$section_name]]$NL"
+		elif [ "$section_type" != '' ]; then
+			# It's not the end of file
+			config_error=1 && logger -p err -t $log_tag "Invalid $section_type section defined"
+		fi
+	}
+
+	# Load config (trigger callbacks)
+	config_load afpd
+
+	# config_overwrite is messed up... don't know what to do
+	if [ "$setup_error" -eq 1 ]; then
+		exit 1
+	fi
+	# So, should we? Shouldn't? Nobody said but gave us share details.
+	[ -z "$config_overwrite" ] && [ -n "$volume_names" -o -n "$homes_name" ] && { 
+		logger -p warn -t $log_tag "No valid config_overwrite at SETUP config. Ignoring defined VOLUMES and/or HOMES" 
+	}
+
+	# Only update configuration file if UCI config asks for it
+	build_config=$(expr "${config_overwrite}" == "1")
+	if [ "$build_config" -eq 1 ]; then
+		# One last check for valid volume names
+		[ "$volume_names" = "$fixed_names" ] || { 
+			config_error=1 && logger -p err -t $log_tag "Not all volumes have valid option $valid_share"
+		}
+		# Continue only if configuration was decent - any errors were logged already
+		if [ "$config_error" -eq 1 ]; then
+			exit 1
+		fi
+		# Create file
+		mkdir -p `dirname "$config_file"`
+		echo "$afpd_config" > "$config_file"
+		logger -p info -t $log_tag "Configuration written to $config_file"
+	else
+		logger -p info -t $log_tag 'Configuration not modified - setup:config_overwrite=0 or missing'
+	fi
+}
 
 start_service() {
-        mkdir -p /var/netatalk/CNID/
+	mkdir -p /var/netatalk/CNID/
+
+	generate_config
 
 	procd_open_instance
-	procd_set_param command /usr/sbin/afpd -d -F /etc/afp.conf
-	procd_set_param file /etc/afp.conf
-	procd_set_param respawn
-	procd_close_instance
-
-	procd_open_instance
-	procd_set_param command /usr/sbin/cnid_metad -d
+	procd_set_param command $PROG_netatalk -d -F $config_file
+	procd_set_param file $config_file
 	procd_set_param respawn
 	procd_close_instance
 }
-

@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=crowdsec-firewall-bouncer
-PKG_VERSION:=0.0.29
+PKG_VERSION:=0.0.34
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/crowdsecurity/cs-firewall-bouncer/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=d3b1b8d43fd063629c3875c6b17fa853e548ae43b0db8e770c98228872931a70
+PKG_HASH:=5bd62250f40fc0a05d2431f3ea1cb211d7fc4cc755b53a23585aa2cede8ff985
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
@@ -23,7 +23,6 @@ PKG_BUILD_FLAGS:=no-mips16
 PKG_BUILD_DIR:=$(BUILD_DIR)/cs-firewall-bouncer-$(PKG_VERSION)
 
 CSFB_BUILD_VERSION?=v$(PKG_VERSION)
-CSFB_BUILD_GOVERSION:=$(shell go version | cut -d " " -f3 | sed -E 's/[go]+//g')
 CSFB_BUILD_TIMESTAMP:=$(shell date +%F"_"%T)
 CSFB_BUILD_TAG:=openwrt-$(PKG_VERSION)-$(PKG_RELEASE)
 CSFB_VERSION_PKG:=github.com/crowdsecurity/cs-firewall-bouncer/pkg/version
@@ -32,8 +31,7 @@ GO_PKG:=github.com/crowdsecurity/cs-firewall-bouncer
 GO_PKG_INSTALL_ALL:=1
 GO_PKG_LDFLAGS_X:=$(CSFB_VERSION_PKG).Version=$(CSFB_BUILD_VERSION) \
 	$(CSFB_VERSION_PKG).BuildDate=$(CSFB_BUILD_TIMESTAMP) \
-	$(CSFB_VERSION_PKG).Tag=$(CSFB_BUILD_TAG) \
-	$(CSFB_VERSION_PKG).GoVersion=$(CSFB_BUILD_GOVERSION)
+	$(CSFB_VERSION_PKG).Tag=$(CSFB_BUILD_TAG)
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk

@@ -1,7 +1,7 @@
 Description: set a static version string rather than discern it from git
 --- a/meson.build
 +++ b/meson.build
-@@ -19,6 +19,7 @@ add_project_arguments(
+@@ -20,6 +20,7 @@ add_project_arguments(
  
  conf = configuration_data()
  conf.set_quoted('PACKAGE_NAME', meson.project_name())
@@ -9,7 +9,7 @@ Description: set a static version string rather than discern it from git
  
  build_arping = get_option('BUILD_ARPING')
  build_clockdiff = get_option('BUILD_CLOCKDIFF')
-@@ -148,10 +149,10 @@ foreach h : [
+@@ -149,10 +150,10 @@ foreach h : [
  	endif
  endforeach
  

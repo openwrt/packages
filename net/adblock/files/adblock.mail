@@ -1,6 +1,6 @@
 #!/bin/sh
 # send mail script for adblock notifications
-# Copyright (c) 2015-2022 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2015-2026 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # Please note: you have to manually install and configure the package 'msmtp' before using this script
@@ -8,50 +8,26 @@
 # set (s)hellcheck exceptions
 # shellcheck disable=all
 
-LC_ALL=C
-PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-
-[ -r "/lib/functions.sh" ] && . "/lib/functions.sh"
+[ -r "/usr/bin/adblock.sh" ] && . "/usr/bin/adblock.sh" "mail"
 
 adb_debug="$(uci_get adblock global adb_debug "0")"
 adb_mailsender="$(uci_get adblock global adb_mailsender "no-reply@adblock")"
 adb_mailreceiver="$(uci_get adblock global adb_mailreceiver)"
 adb_mailtopic="$(uci_get adblock global adb_mailtopic "adblock notification")"
 adb_mailprofile="$(uci_get adblock global adb_mailprofile "adb_notify")"
-adb_ver="${1}"
-adb_mail="$(command -v msmtp)"
-adb_logger="$(command -v logger)"
-adb_logread="$(command -v logread)"
-adb_rc="1"
 
-f_log() {
-	local class="${1}" log_msg="${2}"
-
-	if [ -x "${adb_logger}" ]; then
-		"${adb_logger}" -p "${class}" -t "adblock-${adb_ver}[${$}]" "${log_msg}"
-	else
-		printf "%s %s %s\n" "${class}" "adblock-${adb_ver}[${$}]" "${log_msg}"
-	fi
-}
-
-if [ -z "${adb_mailreceiver}" ]; then
-	f_log "err" "please set the mail receiver with the 'adb_mailreceiver' option"
-	exit ${adb_rc}
-fi
+[ -z "${adb_mailreceiver}" ] && f_log "info" "please set the mail receiver with the 'adb_mailreceiver' option"
 [ "${adb_debug}" = "1" ] && debug="--debug"
 
 adb_mailhead="From: ${adb_mailsender}\nTo: ${adb_mailreceiver}\nSubject: ${adb_mailtopic}\nReply-to: ${adb_mailsender}\nMime-Version: 1.0\nContent-Type: text/html;charset=utf-8\nContent-Disposition: inline\n\n"
 
 # info preparation
 #
-sys_info="$(
-	strings /etc/banner 2>/dev/null
-	ubus call system board | sed -e 's/\"release\": {//' | sed -e 's/^[ \t]*//' | sed -e 's/[{}\",]//g' | sed -e 's/[ ]/  \t/' | sed '/^$/d' 2>/dev/null
-)"
+sys_info="$("${adb_catcmd}" /etc/banner 2>/dev/null; "${adb_ubuscmd}" call system board | "${adb_awkcmd}" 'BEGIN{FS="[{}\"]"}{if($2=="kernel"||$2=="hostname"||$2=="system"||$2=="model"||$2=="description")printf "  + %-12s: %s\n",$2,$4}' 2>/dev/null)"
 adb_info="$(/etc/init.d/adblock status 2>/dev/null)"
-rep_info="${2}"
-if [ -x "${adb_logread}" ]; then
-	log_info="$("${adb_logread}" -l 100 -e "adblock-" | awk '{NR=1;max=120;if(length($0)>max+1)while($0){if(NR==1){print substr($0,1,max)}else{print substr($0,1,max)}{$0=substr($0,max+1);NR=NR+1}}else print}')"
+rep_info="${1}"
+if [ -x "${adb_logreadcmd}" ]; then
+	log_info="$("${adb_logreadcmd}" -l 100 -e "adblock-" | "${adb_awkcmd}" '{NR=1;max=120;if(length($0)>max+1)while($0){if(NR==1){print substr($0,1,max)}else{print substr($0,1,max)}{$0=substr($0,max+1);NR=NR+1}}else print}')"
 fi
 
 # mail body
@@ -67,11 +43,14 @@ adb_mailtext="${adb_mailtext}</pre></body></html>"
 
 # send mail
 #
-if [ -x "${adb_mail}" ]; then
-	printf "%b" "${adb_mailhead}${adb_mailtext}" 2>/dev/null | "${adb_mail}" ${debug} -a "${adb_mailprofile}" "${adb_mailreceiver}" >/dev/null 2>&1
-	adb_rc=${?}
-	f_log "info" "mail sent to '${adb_mailreceiver}' with rc '${adb_rc}'"
+if [ -x "${adb_mailcmd}" ]; then
+	printf "%b" "${adb_mailhead}${adb_mailtext}" 2>/dev/null | "${adb_mailcmd}" ${debug} -a "${adb_mailprofile}" "${adb_mailreceiver}" >/dev/null 2>&1
+	if [ "${?}" = "0" ]; then
+		f_log "info" "mail successfully sent to '${adb_mailreceiver}'"
+	else
+		f_log "info" "failed to send mail to '${adb_mailreceiver}' with rc '${?}'"
+	fi
 else
-	f_log "err" "msmtp mail daemon not found"
+	f_log "info" "msmtp mail daemon not found"
 fi
-exit ${adb_rc}
+exit 0

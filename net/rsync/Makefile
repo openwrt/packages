@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rsync
-PKG_VERSION:=3.3.0
-PKG_RELEASE:=2
+PKG_VERSION:=3.4.1
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.samba.org/pub/$(PKG_NAME)/src
-PKG_HASH:=7399e9a6708c32d678a72a63219e96f23be0be2336e50fd1348498d07041df90
+PKG_HASH:=2924bcb3a1ed8b551fc101f740b9f0fe0a202b115027647cf69850d65fd88c52
 
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -67,6 +67,7 @@ define Package/rsyncd
   SUBMENU:=File Transfer
   TITLE:=Rsync daemon
   DEPENDS:=+rsync
+  USERID:=rsyncd=976:rsyncd=976
   URL:=https://rsync.samba.org/
 endef
 
@@ -75,7 +76,7 @@ define Package/rrsync
   CATEGORY:=Network
   SUBMENU:=File Transfer
   TITLE:=Restricted rsync script
-  DEPENDS:=+rsync +perlbase-file +perl @(PACKAGE_openssh-server||PACKAGE_openssh-server-pam)
+  DEPENDS:=+rsync python3-light @(PACKAGE_openssh-server||PACKAGE_openssh-server-pam||(PACKAGE_dropbear&&DROPBEAR_SVR_PUBKEY_OPTIONS))
   URL:=https://www.samba.org/ftp/unpacked/rsync/support/rrsync
 endef
 
@@ -108,6 +109,8 @@ define Package/rsyncd/install
 	$(INSTALL_DATA) ./files/rsyncd.conf $(1)/etc/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/rsyncd.init $(1)/etc/init.d/rsyncd
+	$(INSTALL_DIR) $(1)/etc/capabilities
+	$(INSTALL_DATA) ./files/rsyncd.json $(1)/etc/capabilities
 endef
 
 define Package/rrsync/description

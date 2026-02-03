@@ -8,18 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ntp
-PKG_VERSION:=4.2.8p17
-PKG_RELEASE:=1
+PKG_REALVERSION:=4.2.8p18
+PKG_VERSION:=$(subst p,_p,$(PKG_REALVERSION))
+PKG_RELEASE:=3
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_REALVERSION).tar.gz
 PKG_SOURCE_URL:=http://www.eecis.udel.edu/~ntp/ntp_spool/ntp4/ntp-4.2/
-PKG_HASH:=103dd272e6a66c5b8df07dce5e9a02555fcd6f1397bdfb782237328e89d3a866
+PKG_HASH:=cf84c5f3fb1a295284942624d823fffa634144e096cfc4f9969ac98ef5f468e5
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_REALVERSION)
 
+PKG_MAINTAINER:=
 PKG_LICENSE:=NTP
 PKG_LICENSE_FILES:=COPYRIGHT html/copyright.html
 PKG_CPE_ID:=cpe:/a:ntp:ntp
 
-PKG_FIXUP:=autoreconf
 PKG_LIBTOOL_PATHS:=. sntp
 PKG_CHECK_FORMAT_SECURITY:=0
 PKG_BUILD_PARALLEL:=1
@@ -31,7 +33,6 @@ define Package/ntpd/Default
   SECTION:=net
   CATEGORY:=Network
   TITLE:=ISC ntp
-  MAINTAINER:=Peter Wagner <tripolar@gmx.at>
   URL:=http://www.ntp.org/
   DEPENDS:=+libopenssl +libpthread +libcap
 endef

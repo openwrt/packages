@@ -19,7 +19,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-v$(PKG_VERSION)
 PKG_MAINTAINER:=Marko Ratkaj <markoratkaj@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
-PKG_CPE_ID:=cpe:/a:libuv_project:libuv
+PKG_CPE_ID:=cpe:/a:libuv:libuv
 
 CMAKE_BINARY_SUBDIR:=out/cmake
 
@@ -29,7 +29,7 @@ include $(INCLUDE_DIR)/cmake.mk
 define Package/libuv
   SECTION:=libs
   CATEGORY:=Libraries
-  TITLE:=Cross-platform asychronous I/O library
+  TITLE:=Cross-platform asynchronous I/O library
   URL:=https://libuv.org/
   DEPENDS:=+libpthread +librt
   ABI_VERSION:=1

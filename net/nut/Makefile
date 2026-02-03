@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nut
-PKG_VERSION:=2.8.1
+PKG_VERSION:=2.8.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.networkupstools.org/source/2.8/
-PKG_HASH:=7da48ee23b1f0d8d72560bb0af84f5c5ae4dbe35452b84cb49840132e47f099c
+PKG_SOURCE_URL:=https://www.networkupstools.org/source/2.8/
+PKG_HASH:=a2fe55bc2d90b4a848d6ff8bac361e6d1c97f899a545219cad707d17a27ff127
 PKG_LICENSE:=GPL-2.0-or-later GPL-3.0-or-later GPL-1.0-or-later Artistic-1.0-Perl
 PKG_LICENSE_FILES:=LICENSE-GPL2 LICENSE-GPL3 COPYING
 PKG_FIXUP:=autoreconf
@@ -396,21 +396,26 @@ endef
 # to a newer version of nut. Do not edit this manually.
 #
 # DO NOT EDIT (except to update with a fresh cut/paste)!
+NUTSW_DRIVERLIST_DUMMY_UPS = dummy-ups
+NUTSW_DRIVERLIST = $(NUTSW_DRIVERLIST_DUMMY_UPS) \
+ clone clone-outlet failover apcupsd-ups skel
 SERIAL_DRIVERLIST = al175 bcmxcp belkin belkinunv bestfcom	\
- bestfortress bestuferrups bestups dummy-ups etapro everups	 \
- gamatronic genericups isbmex liebert liebert-esp2 masterguard metasys	\
- mge-utalk microdowell mge-shut oneac optiups powercom rhino	 \
- safenet skel solis tripplite tripplitesu upscode2 victronups powerpanel \
- blazer_ser clone clone-outlet ivtscd apcsmart apcsmart-old apcupsd-ups riello_ser	\
+ bestfortress bestuferrups bestups etapro everups 	\
+ gamatronic genericups isbmex liebert liebert-esp2 liebert-gxe masterguard metasys	\
+ mge-utalk microdowell microsol-apc mge-shut nutdrv_hashx oneac optiups powercom powervar_cx_ser rhino	\
+ safenet nutdrv_siemens-sitop solis tripplite tripplitesu upscode2 victronups powerpanel \
+ blazer_ser ivtscd apcsmart apcsmart-old riello_ser sms_ser bicker_ser ve-direct \
  nutdrv_qx
+SERIAL_DRIVERLIST += nhs_ser
 SNMP_DRIVERLIST = snmp-ups
 USB_LIBUSB_DRIVERLIST = usbhid-ups bcmxcp_usb tripplite_usb \
- blazer_usb richcomm_usb riello_usb \
+ blazer_usb richcomm_usb riello_usb powervar_cx_usb \
  nutdrv_atcl_usb \
  nutdrv_qx
 NEONXML_DRIVERLIST = netxml-ups
 # END: DO NOT EDIT!
-SERIAL_DRIVERLIST_IGNORE:=skel clone-outlet nutdrv_qx
+NUTSW_DRIVERLIST_IGNORE:=skel clone-outlet
+SERIAL_DRIVERLIST_IGNORE:=nutdrv_qx
 # nutdrv_qx can be either USB or serial. Given most routers have USB
 # instead of serial ports, and not wanting two identical packages with
 # different names that conflict with each other, only the option for the
@@ -418,11 +423,20 @@ SERIAL_DRIVERLIST_IGNORE:=skel clone-outlet nutdrv_qx
 # tiny bit of space and build it without USB support, remove nutdrv_qx
 # from the previous line.
 
+$(foreach d,$(filter-out $(NUTSW_DRIVERLIST_IGNORE),$(NUTSW_DRIVERLIST)),$(eval $(call DriverPackage,software,$(d))))
 $(foreach d,$(filter-out $(SERIAL_DRIVERLIST_IGNORE),$(SERIAL_DRIVERLIST)),$(eval $(call DriverPackage,serial,$(d))))
 $(foreach d,$(SNMP_DRIVERLIST),$(eval $(call DriverPackage,snmp,$(d))))
 $(foreach d,$(USB_LIBUSB_DRIVERLIST),$(eval $(call DriverPackage,usb,$(d))))
 $(foreach d,$(NEONXML_DRIVERLIST),$(eval $(call DriverPackage,neon,$(d))))
 
+$(eval $(call DriverDescription,software,dummy-ups,\
+	Driver for multi-purpose UPS emulation))
+$(eval $(call DriverDescription,software,clone,\
+	UPS driver clone))
+$(eval $(call DriverDescription,software,failover,\
+	UPS Failover Driver))
+$(eval $(call DriverDescription,software,apcupsd-ups,\
+	Driver for apcupsd client access))
 $(eval $(call DriverDescription,serial,al175,\
 	Driver for Eltek UPS models with AL175 alarm module))
 $(eval $(call DriverDescription,serial,bcmxcp,\
@@ -439,8 +453,6 @@ $(eval $(call DriverDescription,serial,bestuferrups,\
 	Driver for Best Power Micro-Ferrups))
 $(eval $(call DriverDescription,serial,bestups,\
 	Driver for Best Power / SOLA (Phoenixtec protocol) UPS equipment))
-$(eval $(call DriverDescription,serial,dummy-ups,\
-	Driver for multi-purpose UPS emulation))
 $(eval $(call DriverDescription,serial,etapro,\
 	Driver for ETA UPS equipment))
 $(eval $(call DriverDescription,serial,everups,\
@@ -455,6 +467,8 @@ $(eval $(call DriverDescription,serial,liebert,\
 	Driver for Liebert contact-closure UPS equipment))
 $(eval $(call DriverDescription,serial,liebert-esp2,\
 	Driver for Liebert UPS, using the ESP-II serial protocol))
+$(eval $(call DriverDescription,serial,liebert-gxe,\
+	Driver for Liebert GXE series UPS, using the YDN23 serial protocol))
 $(eval $(call DriverDescription,serial,masterguard,\
 	Driver for Masterguard UPS equipment))
 $(eval $(call DriverDescription,serial,metasys,\
@@ -463,18 +477,26 @@ $(eval $(call DriverDescription,serial,mge-utalk,\
 	Driver for MGE UPS SYSTEMS UTalk protocol equipment))
 $(eval $(call DriverDescription,serial,microdowell,\
 	Driver for Microdowell Enterprise UPS series))
+$(eval $(call DriverDescription,serial,microsol-apc,\
+	Driver for APC Back-UPS BR UPS equipment))
 $(eval $(call DriverDescription,serial,mge-shut,\
 	Driver for SHUT Protocol UPS equipment))
+$(eval $(call DriverDescription,serial,nutdrv_hashx,\
+	Driver for #* protocol serial based UPS equipment))
 $(eval $(call DriverDescription,serial,oneac,\
 	Driver for Oneac UPS equipment))
 $(eval $(call DriverDescription,serial,optiups,\
 	Driver for Opti-UPS (Viewsonic) UPS and Zinto D (ONLINE-USV) equipment))
 $(eval $(call DriverDescription,serial,powercom,\
 	Driver for serial Powercom/Trust/Advice UPS equipment))
+$(eval $(call DriverDescription,serial,powervar_cx_ser,\
+	Driver for Powervar UPM Series UPS equipment with Serial connection))
 $(eval $(call DriverDescription,serial,rhino,\
 	Driver for Brazilian Microsol RHINO UPS equipment))
 $(eval $(call DriverDescription,serial,safenet,\
 	Driver for SafeNet compatible UPS equipment))
+$(eval $(call DriverDescription,serial,nutdrv_siemens-sitop,\
+	Driver for the Siemens SITOP UPS500 series UPS))
 $(eval $(call DriverDescription,serial,solis,\
 	Driver for Brazilian Microsol SOLIS UPS equipment))
 $(eval $(call DriverDescription,serial,tripplite,\
@@ -489,18 +511,22 @@ $(eval $(call DriverDescription,serial,powerpanel,\
 	Driver for PowerPanel Plus compatible UPS equipment))
 $(eval $(call DriverDescription,serial,blazer_ser,\
 	Driver for Megatec/Q1 protocol serial based UPS equipment))
-$(eval $(call DriverDescription,serial,clone,\
-	UPS driver clone))
 $(eval $(call DriverDescription,serial,ivtscd,\
 	Driver for the IVT Solar Controller Device))
 $(eval $(call DriverDescription,serial,apcsmart,\
 	Driver for American Power Conversion Smart Protocol UPS equipment))
 $(eval $(call DriverDescription,serial,apcsmart-old,\
 	Driver for American Power Conversion Smart Protocol UPS equipment))
-$(eval $(call DriverDescription,serial,apcupsd-ups,\
-	Driver for apcupsd client access))
 $(eval $(call DriverDescription,serial,riello_ser,\
 	Driver for Riello UPS Protocol UPS equipment))
+$(eval $(call DriverDescription,serial,sms_ser,\
+	Driver for SMS UPS Protocol 1Phase.))
+$(eval $(call DriverDescription,serial,bicker_ser,\
+	Driver for Bicker DC UPS via serial port connections))
+$(eval $(call DriverDescription,serial,ve-direct,\
+	Driver for Victron UPS unit running on VE.Direct serial protocol))
+$(eval $(call DriverDescription,serial,nhs_ser,\
+	Driver for NHS Nobreaks, senoidal line, with serial port))
 $(eval $(call DriverDescription,snmp,snmp-ups,\
 	Multi-MIB Driver for SNMP UPS equipment))
 $(eval $(call DriverDescription,usb,usbhid-ups,\
@@ -515,6 +541,8 @@ $(eval $(call DriverDescription,usb,richcomm_usb,\
 	Driver for UPS equipment using Richcomm dry-contact to USB solution))
 $(eval $(call DriverDescription,usb,riello_usb,\
 	Driver for Riello UPS Protocol UPS equipment via USB))
+$(eval $(call DriverDescription,usb,powervar_cx_usb,\
+	Driver for Powervar GTS and UPM Series UPS equipment with USB connection))
 $(eval $(call DriverDescription,usb,nutdrv_atcl_usb,\
 	Driver for ATCL FOR UPS equipment))
 $(eval $(call DriverDescription,usb,nutdrv_qx,\
@@ -544,8 +572,11 @@ CONFIGURE_ARGS += \
 	--without-linux-i2c \
 	--$(if $(CONFIG_NUT_SSL),with,without)-ssl $(if $(CONFIG_NUT_SSL),--with-openssl) \
 	--without-libltdl \
+	--enable-docs-changelog=no \
 	--without-macosx_ups \
+	--without-nut_monitor \
 	--with-statepath=/var/run/nut \
+	--with-pidpath=/var/run \
 	--with-drvpath=/lib/nut \
 	--with-user=root \
 	--with-group=root \
@@ -574,6 +605,7 @@ $(eval $(call BuildPackage,nut-upssched))
 $(eval $(call BuildPackage,nut-web-cgi))
 $(eval $(call BuildPackage,nut-avahi-service))
 $(foreach d,$(filter-out $(SERIAL_DRIVERLIST_IGNORE),$(SERIAL_DRIVERLIST)),$(eval $(call BuildPackage,nut-driver-$(d))))
+$(foreach d,$(filter-out $(NUTSW_DRIVERLIST_IGNORE),$(NUTSW_DRIVERLIST)),$(eval $(call BuildPackage,nut-driver-$(d))))
 $(foreach d,$(SNMP_DRIVERLIST),$(eval $(call BuildPackage,nut-driver-$(d))))
 $(foreach d,$(USB_LIBUSB_DRIVERLIST),$(eval $(call BuildPackage,nut-driver-$(d))))
 $(foreach d,$(NEONXML_DRIVERLIST),$(eval $(call BuildPackage,nut-driver-$(d))))

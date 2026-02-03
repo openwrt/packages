@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=selinux-python
-PKG_VERSION:=3.5
+PKG_VERSION:=3.9
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/SELinuxProject/selinux/releases/download/$(PKG_VERSION)
-PKG_HASH:=8245bb4dae59333461f19ca0c79a829081f07972fa5e3ad4c2b2b917dd71d96b
+PKG_HASH:=dcfa5f1919dcb7e7b775851994eb5c83b7580dc496cd2d1f73867dfa074d2339
 
 PKG_MAINTAINER:=Thomas Petazzoni <thomas.petazzoni@bootlin.com>
 PKG_LICENSE:=GPL-2.0-only

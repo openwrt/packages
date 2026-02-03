@@ -1,0 +1,73 @@
+name: 'Pull Request Labeler'
+on:
+  pull_request_target:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  labeler:
+    name: Pull Request Labeler
+    runs-on: ubuntu-slim
+    steps:
+      - uses: actions/labeler@v6
+        with:
+          repo-token: '${{ secrets.GITHUB_TOKEN }}'
+          sync-labels: true
+
+      - name: Checkout PR code
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Fetch base
+        run: git fetch origin ${{ github.event.pull_request.base.sha }}
+
+      - name: Check for PKG_VERSION changes
+        id: check_version
+        # Check for new packages (any Makefile with status 'A' - Added)
+        # Check for dropped packages (any Makefile with status 'D' - Deleted)
+        run: |
+          if git diff --name-only --diff-filter=A "${{ github.event.pull_request.base.sha }}"...HEAD -- '**/Makefile' | grep -q .; then
+            echo "New package detected."
+            echo "new_package=true" >> $GITHUB_OUTPUT
+          fi
+
+          if git diff --name-only --diff-filter=D "${{ github.event.pull_request.base.sha }}"...HEAD -- '**/Makefile' | grep -q .; then
+            echo "Dropped package detected."
+            echo "dropped_package=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Add 'Add package' label
+        if: steps.check_version.outputs.new_package == 'true'
+        uses: buildsville/add-remove-label@v2.0.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          labels: "Add package"
+          type: add
+
+      - name: Remove 'Add package' label
+        if: steps.check_version.outputs.new_package != 'true'
+        uses: buildsville/add-remove-label@v2.0.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          labels: "Add package"
+          type: remove
+
+      - name: Add 'Drop package' label
+        if: steps.check_version.outputs.dropped_package == 'true'
+        uses: buildsville/add-remove-label@v2.0.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          labels: "Drop package"
+          type: add
+
+      - name: Remove 'Drop package' label
+        if: steps.check_version.outputs.dropped_package != 'true'
+        uses: buildsville/add-remove-label@v2.0.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          labels: "Drop package"
+          type: remove

@@ -4,7 +4,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=prometheus-node-exporter-ucode
 PKG_VERSION:=2024.02.07
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Andre Heider <a.heider@gmail.com>
 PKG_LICENSE:=Apache-2.0
@@ -44,7 +44,7 @@ endef
 define Package/$(PKG_NAME)/description
   Provides node metrics as Prometheus scraping endpoint.
 
-  This service is a lightweight rewrite in ucode of the offical Prometheus node_exporter.
+  This service is a lightweight rewrite in ucode of the official Prometheus node_exporter.
 endef
 
 $(eval $(call BuildPackage,prometheus-node-exporter-ucode))

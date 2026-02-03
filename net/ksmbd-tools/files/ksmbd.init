@@ -12,6 +12,28 @@ config_get_sane()
 	set -- "$(echo "$1" | tr -d '<>[]{};%?=#\n')"
 }
 
+config_get_ram()
+{
+	ramsize=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+	if [ "$ramsize" -lt 65537 ];then
+		printf "\tsmb2 max read = 64K\n"
+		printf "\tsmb2 max write = 64K\n"
+		printf "\tsmb2 max trans = 64K\n"
+		printf "\tcache read buffers = no\n"
+		printf "\tcache trans buffers = no\n"
+	elif [ "$ramsize" -lt 134073 ];then
+		printf "\tsmb2 max read = 128K\n"
+		printf "\tsmb2 max write = 128K\n"
+		printf "\tsmb2 max trans = 128K\n"
+		printf "\tcache read buffers = no\n"
+		printf "\tcache trans buffers = no\n"
+	elif [ "$ramsize" -lt 262146 ];then
+		printf "\tsmb2 max read = 1M\n"
+		printf "\tsmb2 max write = 1M\n"
+		printf "\tsmb2 max trans = 1M\n"
+	fi
+}
+
 smb_header()
 {
 	config_get_sane SMBD_IFACE "$1" interface "lan"
@@ -32,6 +54,7 @@ smb_header()
 
 	config_get_sane workgroup "$1" workgroup "WORKGROUP"
 	config_get_sane description "$1" description "Ksmbd on OpenWrt"
+	config_get_bool ALLOW_GUEST_IPC "$1" allow_guest_ipc 0
 	config_get_bool ALLOW_LEGACY_PROTOCOLS "$1" allow_legacy_protocols 0
 
 	sed -e "s#|NAME|#$hostname#g" \
@@ -41,8 +64,14 @@ smb_header()
 	    /etc/ksmbd/ksmbd.conf.template > /var/etc/ksmbd/ksmbd.conf
 		
 	{
+		config_get_ram
+		
 		printf "\n######### Dynamic written config options #########\n"
 
+		if [ "$ALLOW_GUEST_IPC" -eq 1 ]; then
+			logger -p daemon.info -t 'ksmbd' "Guest access to the IPC$ share is enabled!"
+			printf "\tguest ok = yes\n"
+		fi
 		if [ "$ALLOW_LEGACY_PROTOCOLS" -eq 1 ]; then
 			logger -p daemon.info -t 'ksmbd' "Legacy Protocols allowed, don't use this option for secure environments!"
 			printf "\tserver min protocol = NT1\n"

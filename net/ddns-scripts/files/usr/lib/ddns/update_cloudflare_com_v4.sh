@@ -6,14 +6,23 @@
 #.based on Ben Kulbertis cloudflare-update-record.sh found at http://gist.github.com/benkulbertis
 #.and on George Johnson's cf-ddns.sh found at https://github.com/gstuartj/cf-ddns.sh
 #.2016-2018 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
-# CloudFlare API documentation at https://api.cloudflare.com/
+# CloudFlare API documentation, section DNS at https://developers.cloudflare.com/api/resources/dns/
 #
 # This script is parsed by dynamic_dns_functions.sh inside send_update() function
 #
 # using following options from /etc/config/ddns
-# option username  - your cloudflare e-mail
-# option password  - cloudflare api key, you can get it from cloudflare.com/my-account/
-# option domain    - "hostname@yourdomain.TLD"	# syntax changed to remove split_FQDN() function and tld_names.dat.gz
+# option username  - "Bearer" or your Cloudflare e-mail, depending on the type of credentials used
+#                    for API Token, use "Bearer"; otherwise, with Global API Key, use your Cloudflare e-mail
+# option password  - Your API Token or your Global API Key, you can create/get either at
+#                    https://dash.cloudflare.com/profile/api-tokens
+# option domain    - "hostname@yourdomain.TLD"
+# option param_opt - (Optional) key=value pairs that are separated by space
+#                    if duplicate keys found, only the last occurrence will be used
+#                    example: "zone_id=123456789 dns_record_id=987654321"
+#                    current supported keys:
+#                    1. zone_id (API: GET https://api.cloudflare.com/client/v4/zones)
+#                       note: zone_id must be specified if dns_record_id is specified
+#                    2. dns_record_id (API: GET https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records)
 #
 # The proxy status would not be changed by this script. Please change it in Cloudflare dashboard manually.
 #
@@ -26,27 +35,58 @@
 [ -z "$password" ] && write_log 14 "Service section not configured correctly! Missing secret as 'password'"
 [ $use_https -eq 0 ] && use_https=1	# force HTTPS
 
-# used variables
-local __HOST __DOMAIN __TYPE __URLBASE __PRGBASE __RUNPROG __DATA __IPV6 __ZONEID __RECID __PROXIED
-local __URLBASE="https://api.cloudflare.com/client/v4"
-local __TTL=120
+# parse param_opt
+if [ -n "$param_opt" ]; then
+	for pair in $param_opt; do
+		case $pair in
+		zone_id=*)
+			zone_id=${pair#*=}
+			write_log 7 "User defined zone_id: $zone_id"
+			;;
+		dns_record_id=*)
+			dns_record_id=${pair#*=}
+			write_log 7 "User defined dns_record_id: $dns_record_id"
+			;;
+		*)
+			# Ignore others
+			;;
+		esac
+	done
+fi
 
-# split __HOST __DOMAIN from $domain
-# given data:
-# @example.com for "domain record"
-# host.sub@example.com for a "host record"
-__HOST=$(printf %s "$domain" | cut -d@ -f1)
-__DOMAIN=$(printf %s "$domain" | cut -d@ -f2)
+# If dns_record_id is specified, zone_id must also be specified
+if [ -n "$dns_record_id" ] && [ -z "$zone_id" ]; then
+	write_log 4 "zone_id cannot be empty if dns_record_id is specified"
+	return 127
+fi
+
+# used variables
+local __HOST __DOMAIN __TYPE __URLBASE __PRGBASE __RUNPROG __DATA __IPV6 __ZONEID __RECID
+local __URLBASE="https://api.cloudflare.com/client/v4"
+
+if echo "$domain" | grep -Fq '@'; then
+	# split __HOST __DOMAIN from $domain
+	# given data:
+	# @example.com for "domain record"
+	# host.sub@example.com for a "host record"
+	__HOST=$(printf %s "$domain" | cut -d@ -f1)
+	__DOMAIN=$(printf %s "$domain" | cut -d@ -f2)
+else
+	__DOMAIN=$domain
+fi
 
 # Cloudflare v4 needs:
 # __DOMAIN = the base domain i.e. example.com
 # __HOST   = the FQDN of record to modify
 # i.e. example.com for the "domain record" or host.sub.example.com for "host record"
 
+if [ -z "$__HOST" ]; then
 # handling domain record then set __HOST = __DOMAIN
-[ -z "$__HOST" ] && __HOST=$__DOMAIN
+	__HOST=$__DOMAIN
+else
 # handling host record then rebuild fqdn host@domain.tld => host.domain.tld
-[ "$__HOST" != "$__DOMAIN" ] && __HOST="${__HOST}.${__DOMAIN}"
+	__HOST="${__HOST}.${__DOMAIN}"
+fi
 
 # set record type
 [ $use_ipv6 -eq 0 ] && __TYPE="A" || __TYPE="AAAA"
@@ -73,11 +113,11 @@ cloudflare_transfer() {
 		}
 
 		__CNT=$(( $__CNT + 1 ))	# increment error counter
-		# if error count > retry_count leave here
-		[ $retry_count -gt 0 -a $__CNT -gt $retry_count ] && \
-			write_log 14 "Transfer failed after $retry_count retries"
+		# if error count > retry_max_count leave here
+		[ $retry_max_count -gt 0 -a $__CNT -gt $retry_max_count ] && \
+			write_log 14 "Transfer failed after $retry_max_count retries"
 
-		write_log 4 "Transfer failed - retry $__CNT/$retry_count in $RETRY_SECONDS seconds"
+		write_log 4 "Transfer failed - retry $__CNT/$retry_max_count in $RETRY_SECONDS seconds"
 		sleep $RETRY_SECONDS &
 		PID_SLEEP=$!
 		wait $PID_SLEEP	# enable trap-handler
@@ -97,8 +137,8 @@ __PRGBASE="$CURL -RsS -o $DATFILE --stderr $ERRFILE"
 # force network/interface-device to use for communication
 if [ -n "$bind_network" ]; then
 	local __DEVICE
-	network_get_physdev __DEVICE $bind_network || \
-		write_log 13 "Can not detect local device using 'network_get_physdev $bind_network' - Error: '$?'"
+	network_get_device __DEVICE $bind_network || \
+		write_log 13 "Can not detect local device using 'network_get_device $bind_network' - Error: '$?'"
 	write_log 7 "Force communication via device '$__DEVICE'"
 	__PRGBASE="$__PRGBASE --interface $__DEVICE"
 fi
@@ -134,14 +174,20 @@ else
 fi
 __PRGBASE="$__PRGBASE --header 'Content-Type: application/json' "
 
+# read zone id for registered domain.TLD
+__RUNPROG="$__PRGBASE --request GET '$__URLBASE/zones?name=$__DOMAIN'"
+cloudflare_transfer || return 1
+
 if [ -n "$zone_id" ]; then
-	__ZONEID="$zone_id"
+	# validate user defined zone id
+	__ZONEID=$(jsonfilter -i $DATFILE -e "@.result[@.id='$zone_id'].id")
+	[ -z "$__ZONEID" ] && {
+		write_log 4 "Invalid user defined zone_id for domain.tld: '$__DOMAIN'"
+		return 127
+	}
 else
-	# read zone id for registered domain.TLD
-	__RUNPROG="$__PRGBASE --request GET '$__URLBASE/zones?name=$__DOMAIN'"
-	cloudflare_transfer || return 1
 	# extract zone id
-	__ZONEID=$(grep -o '"id":\s*"[^"]*' $DATFILE | grep -o '[^"]*$' | head -1)
+	__ZONEID=$(jsonfilter -i $DATFILE -e "@.result.*.id" | head -1)
 	[ -z "$__ZONEID" ] && {
 		write_log 4 "Could not detect 'zone id' for domain.tld: '$__DOMAIN'"
 		return 127
@@ -151,12 +197,29 @@ fi
 # read record id for A or AAAA record of host.domain.TLD
 __RUNPROG="$__PRGBASE --request GET '$__URLBASE/zones/$__ZONEID/dns_records?name=$__HOST&type=$__TYPE'"
 cloudflare_transfer || return 1
-# extract record id
-__RECID=$(grep -o '"id":\s*"[^"]*' $DATFILE | grep -o '[^"]*$' | head -1)
-[ -z "$__RECID" ] && {
-	write_log 4 "Could not detect 'record id' for host.domain.tld: '$__HOST'"
-	return 127
-}
+
+if [ -n "$dns_record_id" ]; then
+	# validate user defined record id
+	__RECID=$(jsonfilter -i $DATFILE -e "@.result[@.id='$dns_record_id'].id")
+	[ -z "$__RECID" ] && {
+		write_log 4 "Invalid user defined dns_record_id for host.domain.tld: '$__HOST'"
+		return 127
+	}
+else
+	# extract record id
+	__RECID=$(jsonfilter -i $DATFILE -e "@.result.*.id" | head -1)
+	[ -z "$__RECID" ] && {
+		write_log 4 "Could not detect 'record id' for host.domain.tld: '$__HOST'"
+		return 127
+	}
+fi
+
+# If dns_record_id is specified, grab the stored IP for that specific record
+# So that the IP checking behavior below works even for domains with multiple IPs
+if [ -n "$dns_record_id" ]; then
+	__RUNPROG="$__PRGBASE --request GET '$__URLBASE/zones/$__ZONEID/dns_records/$__RECID'"
+	cloudflare_transfer || return 1
+fi
 
 # extract current stored IP
 __DATA=$(grep -o '"content":\s*"[^"]*' $DATFILE | grep -o '[^"]*$' | head -1)
@@ -186,16 +249,14 @@ __DATA=$(grep -o '"content":\s*"[^"]*' $DATFILE | grep -o '[^"]*$' | head -1)
 
 # update is needed
 # let's build data to send
-# set proxied parameter
-__PROXIED=$(grep -o '"proxied":\s*[^",]*' $DATFILE | grep -o '[^:]*$')
 
 # use file to work around " needed for json
 cat > $DATFILE << EOF
-{"id":"$__ZONEID","type":"$__TYPE","name":"$__HOST","content":"$__IP","ttl":$__TTL,"proxied":$__PROXIED}
+{"content":"$__IP"}
 EOF
 
 # let's complete transfer command
-__RUNPROG="$__PRGBASE --request PUT --data @$DATFILE '$__URLBASE/zones/$__ZONEID/dns_records/$__RECID'"
+__RUNPROG="$__PRGBASE --request PATCH --data @$DATFILE '$__URLBASE/zones/$__ZONEID/dns_records/$__RECID'"
 cloudflare_transfer || return 1
 
 return 0

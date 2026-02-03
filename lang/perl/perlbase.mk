@@ -468,7 +468,7 @@ $(eval $(call BuildPackage,perlbase-dynaloader))
 define Package/perlbase-encode
 $(call Package/perlbase-template)
 TITLE:=Encode perl module
-DEPENDS+=+perlbase-essential +perlbase-mime +perlbase-utf8 +perlbase-xsloader
+DEPENDS+=+perlbase-essential +perlbase-mime +perlbase-storable +perlbase-utf8 +perlbase-xsloader
 endef
 
 define Package/perlbase-encode/install
@@ -567,7 +567,7 @@ $(eval $(call BuildPackage,perlbase-experimental))
 define Package/perlbase-extutils
 $(call Package/perlbase-template)
 TITLE:=ExtUtils perl module
-DEPENDS+=+perlbase-autosplit +perlbase-base +perlbase-config +perlbase-cwd +perlbase-dirhandle +perlbase-encode +perlbase-essential +perlbase-file +perlbase-io +perlbase-ipc +perlbase-ostype +perlbase-symbol +perlbase-text
+DEPENDS+=+perlbase-autosplit +perlbase-base +perlbase-config +perlbase-cwd +perlbase-dirhandle +perlbase-encode +perlbase-essential +perlbase-file +perlbase-io +perlbase-ipc +perlbase-ostype +perlbase-symbol +perlbase-text +perlbase-version
 endef
 
 define Package/perlbase-extutils/install

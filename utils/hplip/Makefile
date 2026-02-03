@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hplip
-PKG_VERSION:=3.23.12
+PKG_VERSION:=3.25.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/hplip
-PKG_HASH:=a76c2ac8deb31ddb5f0da31398d25ac57440928a0692dcb060a48daa718e69ed
+PKG_HASH:=a6af314a7af0572f2ab6967b2fe68760e64d74628ef0e6237f8504d81047edbe
 
 PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>
 PKG_LICENSE:=GPL-2.0 GPL-2.0-or-later

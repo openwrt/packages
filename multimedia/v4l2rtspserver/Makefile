@@ -7,19 +7,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=v4l2rtspserver
-PKG_VERSION:=0.3.10
-PKG_RELEASE:=9
+PKG_VERSION:=0.3.12
+PKG_RELEASE:=1
 
 #cannot use codeload as this uses submodules
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/mpromonet/v4l2rtspserver
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_MIRROR_HASH:=34bb8f34adfe72572abe3496f144ee3075ebd25180878e0131b783d881ceea62
+PKG_MIRROR_HASH:=445facb458ed6f59c319246e8244f8353ab64f053e08e56380edc1aed0806a7d
 
 PKG_BUILD_FLAGS:=gc-sections lto
 
-LIVE555_VERSION:=2023.01.19
-LIVE555_HASH:=a7c64913f7f7007c5fdc29ea811e3ca781f262271b3e42afdd4bc1041d86fa99
+LIVE555_VERSION:=2024.08.01
+LIVE555_HASH:=839ab7437d01e629f8094ea1ec8c7a7bb504c7deed9edfc9e17ac34f9a1a193f
 LIVE555_FILE:=live.$(LIVE555_VERSION).tar.gz
 
 PKG_MAINTAINER:=Roger Dammit <rogerdammit@gmail.com>
@@ -33,7 +33,7 @@ define Package/v4l2rtspserver
 	SECTION:=multimedia
 	CATEGORY:=Multimedia
 	TITLE:=v4l2rtspserver
-	DEPENDS:=+libstdcpp
+	DEPENDS:=+libstdcpp +alsa-lib
 	URL:=https://github.com/mpromonet/v4l2rtspserver
 endef
 
@@ -54,7 +54,6 @@ endef
 TARGET_LDFLAGS += -Wl,--as-needed
 
 CMAKE_OPTIONS += \
-	-DALSA=OFF \
 	-DSTATICSTDCPP=OFF \
 	-DWITH_SSL=OFF \
 	-DLIVE555CFLAGS="SOCKLEN_T=socklen_t;_LARGEFILE_SOURCE=1;_FILE_OFFSET_BITS=64;LOCALE_NOT_USED;NO_SSTREAM=1;ALLOW_RTSP_SERVER_PORT_REUSE=1;NO_STD_LIB=1;VERSION=\"$(PKG_VERSION)\""

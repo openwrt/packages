@@ -1,0 +1,57 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+
+USE_PROCD=1
+PROG=/usr/bin/go2rtc
+CONF=go2rtc
+
+start_service() {
+	local disable_jail
+	local user
+	local group
+	local limit_nofile
+	local allow_config_edit
+	local ycfg=/etc/go2rtc.yaml
+
+	config_load "$CONF"
+	config_get_bool disable_jail daemon disable_jail 0
+	config_get user daemon user go2rtc
+	config_get group daemon group go2rtc
+	config_get limit_nofile daemon limit_nofile ''
+	config_get_bool allow_config_edit daemon allow_config_edit 0
+
+	chown "$user:$group" "$ycfg"
+	if [[ "$allow_config_edit" -ne 0 ]]; then
+		chmod 640 "$ycfg"
+	else
+		chmod 440 "$ycfg"
+	fi
+
+	procd_open_instance
+	procd_set_param command "$PROG" -config "$ycfg"
+	procd_set_param user "$user"
+	procd_set_param group "$group"
+	procd_set_param respawn
+	procd_set_param capabilities "/etc/capabilities/go2rtc.json"
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+
+	[[ -n "$limit_nofile" ]] && procd_append_param limits nofile="$limit_nofile"
+
+	if [[ "$disable_jail" -eq 0 ]]; then
+		procd_add_jail go2rtc log
+
+		procd_add_jail_mount /etc/TZ
+		procd_add_jail_mount /etc/ssl/certs
+		procd_add_jail_mount /usr/bin/ffmpeg
+
+		if [[ "$allow_config_edit" -ne 0 ]]; then
+			procd_add_jail_mount_rw "$ycfg"
+		else
+			procd_add_jail_mount "$ycfg"
+		fi
+	fi
+
+	procd_close_instance
+}

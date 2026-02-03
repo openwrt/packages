@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libnpupnp
-PKG_VERSION:=6.1.3
+PKG_VERSION:=6.2.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.lesbonscomptes.com/upmpdcli/downloads
-PKG_HASH:=80c3d5adc388e59057be52c4c33d7708efe05318487c09e342e7a1f4a83aa792
+PKG_HASH:=1cc1222512d480826d2923cc7b98b7361183a2add8c6b646a7fa32c2f34b32b3
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=LGPL-2.1-or-later

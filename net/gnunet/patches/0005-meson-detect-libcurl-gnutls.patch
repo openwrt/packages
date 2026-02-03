@@ -1,0 +1,101 @@
+From a4a4f5e02ac1cc396bbd1fb8e0c0c460a833512e Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 10 Oct 2025 01:15:11 +0100
+Subject: [PATCH 5/8] meson: detect libcurl-gnutls
+
+Instead of only checking if cURL is built against gnuTLS, also test of
+there is a dedicated libcurl-gnutls library and favor using it.
+---
+ meson.build | 67 +++++++++++++++++++++++++++++++++++++++++------------
+ 1 file changed, 52 insertions(+), 15 deletions(-)
+
+--- a/meson.build
++++ b/meson.build
+@@ -189,10 +189,17 @@ if not sqlite_dep.found()
+         error('Sqlite version >= 3.35.0 requried')
+     endif
+ endif
+-curl_dep = dependency('libcurl', version: '>=7.85.0', required: false)
+-if not curl_dep.found()
+-    curl_dep = cc.find_library('curl', required: true)
+-    curl_version_check = '''#include <curl/curl.h>
++
++curl_gnutls_dep = dependency(
++    'libcurl-gnutls',
++    version: '>=7.85.0',
++    required: false,
++)
++if not curl_gnutls_dep.found()
++    curl_gnutls_dep = cc.find_library('curl-gnutls', required: false)
++endif
++
++curl_version_check = '''#include <curl/curl.h>
+   int main(int argc, char **argv) {
+     #if LIBCURL_VERSION_NUM < 0x075500
+       #error "cURL version >= 7.85.0 required"
+@@ -200,12 +207,34 @@ if not curl_dep.found()
+     return 0;
+     }
+   '''
+-    if not cc.compiles(
+-        curl_version_check,
+-        name: 'cURL version check',
+-        dependencies: curl_dep,
+-    )
+-        error('cURL version >=7.85.0 required')
++
++# If libcurl-gnutls found, use it and we know it has gnutls support
++curl_is_gnutls = false
++if curl_gnutls_dep.found()
++    curl_dep = curl_gnutls_dep
++    curl_is_gnutls = true
++    # Check version for libcurl-gnutls if it was found via find_library
++    if curl_gnutls_dep.type_name() != 'pkgconfig'
++        if not cc.compiles(
++            curl_version_check,
++            name: 'cURL-gnutls version check',
++            dependencies: curl_dep,
++        )
++            error('libcurl-gnutls version >=7.85.0 required')
++        endif
++    endif
++else
++    # Fall back to regular libcurl
++    curl_dep = dependency('libcurl', version: '>=7.85.0', required: false)
++    if not curl_dep.found()
++        curl_dep = cc.find_library('curl', required: true)
++        if not cc.compiles(
++            curl_version_check,
++            name: 'cURL version check',
++            dependencies: curl_dep,
++        )
++            error('cURL version >=7.85.0 required')
++        endif
+     endif
+ endif
+ zlib_dep = dependency('zlib', required: false)
+@@ -487,11 +516,19 @@ curl_ssl_check = '''#include <curl/curl.
+     }
+   '''
+ 
+-curl_gnutls_available = cc.compiles(
+-    curl_ssl_check,
+-    name: 'cURL gnutls check',
+-    dependencies: curl_dep,
+-)
++# Check if we found libcurl-gnutls (has gnutls support by definition)
++curl_gnutls_available = false
++if curl_is_gnutls
++    curl_gnutls_available = true
++else
++    # Fall back to compile-time check for regular libcurl with gnutls support
++    curl_gnutls_available = cc.compiles(
++        curl_ssl_check,
++        name: 'cURL gnutls check',
++        dependencies: curl_dep,
++    )
++endif
++
+ private_config.set('curl_gnutls', 0)
+ if curl_gnutls_available
+     private_config.set('curl_gnutls', 1)

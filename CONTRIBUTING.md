@@ -11,31 +11,34 @@ guidelines:
   be updated regularly with supported versions.
 - Have no dependencies outside the OpenWrt core packages or this repository
   feed.
-- Have been tested to compile with the correct includes and dependencies.
-  Please also test with "Compile with full language support" found under
-  "General Build Settings" set if language support is relevant to your package.
-- Best of all -- it works as expected!
+- The compilation has been successfully tested with the appropriate includes and dependencies. 
+  Additionally, if language support is relevant to your package, please enable the "Compile with full language support" option found under "Global Build Settings" in "menuconfig" and conduct further tests.
+- Most important -- the packaged software is tested to work as expected!
 
 ## Package Sources (archives and repositories)
 
-- PKG_SOURCE should reference the smallest available archive. In order of
-  preference: xz (most compressed), bzip2, gz and zip. As a last resort,
-  downloads from source repositories can be used.
-- PKG_SOURCE_URL should link to an official release archive. Use of HTTPS&#x3A;
-  is preferred. If a source archive is not available, a locally generated
+- <strong>PKG_SOURCE</strong> should reference the smallest available archive. In order of
+  preference: 
+  1. xz (most compressed), 
+  1. bzip2, gz and zip. 
+  1. As a last resort downloads from source repositories can be used.
+- <strong>PKG_SOURCE_URL</strong> should link to an official release archive. Use of `https://`
+  is preferred. 
+  
+  If a source archive is not available, a locally generated
   archive fetched using git, svn, cvs or in rare circumstances, hg or bzr.
 - Convenience macros for popular mirrors are defined. Using these macros will
   make your package downloads more robust by mapping to a list of possible
   source mirrors for archive availability.
-  - @SF - SourceForge (downloads.sourceforge.net) with 5 retries due to
+  - `@SF` - SourceForge (downloads.sourceforge.net) with 5 retries due to
     re-directs
-  - @GITHUB - GitHub (raw.githubusercontent.com) with 5 retries due to
+  - `@GITHUB` - GitHub (raw.githubusercontent.com) with 5 retries due to
     re-directs
-  - @GNU - 8 regional servers
-  - @GNOME - 8 regional servers
-  - @SAVANNAH - 8 regional servers
-  - @APACHE - 8 regional servers
-  - @KERNEL - Linux kernel archives & mirrors
+  - `@GNU` - 8 regional servers
+  - `@GNOME` - 8 regional servers
+  - `@SAVANNAH` - 8 regional servers
+  - `@APACHE` - 8 regional servers
+  - `@KERNEL` - Linux kernel archives & mirrors
 - Please _DO NOT_ use an archive which changes over time. A version labeled
   "latest" is not constant each download. Also, using the head of a branch will
   create unpredictable results which can be different each build.
@@ -47,17 +50,17 @@ guidelines:
   contract to OpenWrt. Assigning a Copyright to yourself or organization you
   represent is acceptable.
 - A (PKG\_)MAINTAINER definition listing either yourself and/or another person
-  responsible for this package (E.g.: PKG_MAINTAINER:= Joe D. Hacker
-  `<jdh@jdhs-email-provider.org`>). Listing multiple maintainers is encouraged in
+  responsible for this package (E.g.: `PKG_MAINTAINER:= Joe D. Hacker
+  <jdh@jdhs-email-provider.org>`). Listing multiple maintainers is encouraged in
   order to keep the package active and up-to-date. Leaving this blank will also
   be accepted, however the review process may not be as quick as one with a
   maintainer.
-- A PKG_LICENSE tag declaring the main license of the package.  (E.g.:
+- A <strong>PKG_LICENSE</strong> tag declaring the main license of the package.  (E.g.:
   PKG_LICENSE:=GPL-2.0-or-later) Please use SPDX identifiers if possible (see
   list at the bottom).
-- An optional PKG_LICENSE_FILES tag including the filenames of the
+- An optional <strong>PKG_LICENSE_FILES</strong> tag including the filenames of the
   license-files in the source-package.  (E.g.: PKG_LICENSE_FILES:=COPYING)
-- PKG_RELEASE should be initially set to 1 or reset to 1 if the software
+- <strong>PKG_RELEASE</strong> should be initially set to `1` or reset to `1` if the software
   version is changed. You should increment it if the package itself has
   changed. For example, modifying a support script, changing configure options
   like --disable_ or --enable\_ switches, or if you changed something in the
@@ -65,17 +68,17 @@ guidelines:
   correcting md5sums, changing mirror URLs, adding a maintainer field or updating
   a comment or copyright year in a Makefile do not require a change to
   PKG_RELEASE.
-- Avoid reuse of PKG_NAME in call, define and eval lines to improve
+- Avoid reuse of <strong>PKG_NAME</strong> in call, define and eval lines to improve
   readability.
 
 ### Commits in your pull-requests should
 
-- Have a useful commit subject prefixed with the package name (E.g.: "foopkg:
-  Add libzot dependency").
+- Have a useful commit subject prefixed with the package name (E.g.: `foopkg:
+  add libzot dependency`).
 - Include Signed-off-by tag in the commit comments.  See: [Sign your
   work](https://openwrt.org/submitting-patches#sign_your_work)
-- Author and sign-off must match and be a real name or known identity and
-  a real email address. GitHub private email addresses will not be accepted.
+- Author and sign-off must match and be a real name and real email address.
+  GitHub private email addresses will not be accepted.
 - Follow all [Submission Guidelines](https://openwrt.org/submitting-patches#submission_guidelines)
   requirements, including maximum characters per line.
 
@@ -119,7 +122,7 @@ commenting and amending the proposed changes.
 
 ## If you have commit access
 
-- Do NOT use git push --force.
+- Do NOT use `git push --force`.
 - Do NOT commit to other maintainer's packages without their consent.
 - Use Pull Requests if you are unsure and to suggest changes to other
   maintainers.
@@ -127,19 +130,19 @@ commenting and amending the proposed changes.
 ### Gaining commit access
 
 - We will gladly grant commit access to responsible contributors who have made
-  useful pull requests and / or feedback or patches to this repository or
+  useful pull requests and/or feedback or patches to this repository or
   OpenWrt in general. Please include your request for commit access in your next
   pull request or ticket.
 
 ## Release Branches
 
 - Old stable branches were named after the following pattern "for-XX.YY" (e.g.
-  for-14.07) before the LEDE split.  During the LEDE split there was only one
-  release branch with the name "lede-17.01".  After merging the LEDE fork with
+  for-14.07) before the LEDE split. During the LEDE split there was only one
+  release branch with the name "lede-17.01". After merging the LEDE fork with
   OpenWrt the release branches are named according to the following pattern
-  "openwrt-XX.YY" (e.g. openwrt-18.06).
+  "openwrt-XX.YY" (e.g. `openwrt-18.06`).
 - These branches are built with the respective OpenWrt release and are created
-  during the release stabilisation phase.
+  during the release stabilization phase.
 - Please ONLY cherry-pick or commit security and bug-fixes to these branches.
 - Do NOT add new packages and do NOT do major upgrades of packages here.
 - If you are unsure if your change is suitable, please use a pull request.
@@ -200,9 +203,7 @@ created packages and runs a script called `test.sh` located next to the package
 Makefile. The script is executed with the two arguments `PKG_NAME` and
 `PKG_VERSION`. The `PKG_NAME` can be used to distinguish package variants, e.g.
 `foobar` vs. `foobar-full`. The `PKG_VERSION` can be used for a trivial test
-checking if `foobar --version` prints the correct version. `PKG_VERSION` is the
-OpenWrt version and therefore includes the `PKG_RELEASE`, which isn't usually
-part of the running programs version.
+checking if `foobar --version` prints the correct version.
 
 The following snippet shows a script that tests different binaries depending on
 what IPK package was installed. The `gpsd` Makefile produces both a `gpsd` and
