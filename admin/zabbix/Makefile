@@ -335,13 +335,13 @@ endif
 
 else
 
-define Build/Prepare
-	true
-endef
 define Build/Configure
 	true
 endef
 define Build/Compile
+	true
+endef
+define Build/Install
 	true
 endef
 
