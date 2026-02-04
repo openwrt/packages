@@ -35,22 +35,27 @@ readonly dnsmasqAddnhostsGzip="${packageName}.dnsmasq.addnhosts.gz"
 readonly dnsmasqAddnhostsOutputFormatFilter='s|^|127.0.0.1 |;s|$||'
 readonly dnsmasqAddnhostsOutputFormatFilterIPv6='s|^|:: |;s|$||'
 readonly dnsmasqAddnhostsOutputParseFilter='s|^127.0.0.1 ||;s|^:: ||;'
+readonly dnsmasqAddnhostsGrepPatternIPv4='s|^|^127\.0\.0\.1 |'
+readonly dnsmasqAddnhostsGrepPatternIPv6='s|^|^:: |'
 readonly dnsmasqConfFile="$dnsmasqUnifiedFile"
 readonly dnsmasqConfCache="/var/run/${packageName}/dnsmasq.conf.cache"
 readonly dnsmasqConfGzip="${packageName}.dnsmasq.conf.gz"
 readonly dnsmasqConfOutputFormatFilter='s|^|local=/|;s|$|/|'
 readonly dnsmasqConfOutputParseFilter='s|local=/||;s|/$||;'
+readonly dnsmasqConfGrepPattern='s|^|^local=/|;s|$|/$|'
 readonly dnsmasqIpsetFile="$dnsmasqUnifiedFile"
 readonly dnsmasqIpsetCache="/var/run/${packageName}/dnsmasq.ipset.cache"
 readonly dnsmasqIpsetGzip="${packageName}.dnsmasq.ipset.gz"
 readonly dnsmasqIpsetOutputFormatFilter='s|^|ipset=/|;s|$|/adb|'
 readonly dnsmasqIpsetOutputParseFilter='s|ipset=/||;s|/adb$||;'
+readonly dnsmasqIpsetGrepPattern='s|^|^ipset=/|;s|$|/adb$|'
 readonly dnsmasqNftsetFile="$dnsmasqUnifiedFile"
 readonly dnsmasqNftsetCache="/var/run/${packageName}/dnsmasq.nftset.cache"
 readonly dnsmasqNftsetGzip="${packageName}.dnsmasq.nftset.gz"
 readonly dnsmasqNftsetOutputFormatFilter='s|^|nftset=/|;s|$|/4#inet#fw4#adb4|'
 readonly dnsmasqNftsetOutputFormatFilterIPv6='s|^|nftset=/|;s|$|/4#inet#fw4#adb4,6#inet#fw4#adb6|'
 readonly dnsmasqNftsetOutputParseFilter='s|nftset=/||;s|/4#.*$||;'
+readonly dnsmasqNftsetGrepPattern='s|^|^nftset=/|;s|$|/4#.*$|'
 readonly dnsmasqServersFile="/var/run/${packageName}/dnsmasq.servers"
 readonly dnsmasqServersCache="/var/run/${packageName}/dnsmasq.servers.cache"
 readonly dnsmasqServersGzip="${packageName}.dnsmasq.servers.gz"
@@ -58,36 +63,31 @@ readonly dnsmasqServersOutputFormatFilter='s|^|server=/|;s|$|/|'
 readonly dnsmasqServersAllowFilter='s|(.*)|server=/\1/#|'
 readonly dnsmasqServersBlockedCountFilter='\|/#|d'
 readonly dnsmasqServersOutputParseFilter='s|server=/||;s|/.*$||;'
+readonly dnsmasqServersGrepPattern='s|^|^server=/|;s|$|/$|'
 readonly smartdnsDomainSetFile="/var/run/${packageName}/smartdns.domainset"
 readonly smartdnsDomainSetCache="/var/run/${packageName}/smartdns.domainset.cache"
 readonly smartdnsDomainSetConfig="/var/run/${packageName}/smartdns.domainset.conf"
 readonly smartdnsDomainSetGzip="${packageName}.smartdns.domainset.gz"
-readonly smartdnsDomainSetFilter=''
+readonly smartdnsDomainSetOutputFormatFilter=''
 readonly smartdnsDomainSetOutputParseFilter=''
 readonly smartdnsIpsetFile="/var/run/${packageName}/smartdns.ipset"
 readonly smartdnsIpsetCache="/var/run/${packageName}/smartdns.ipset.cache"
 readonly smartdnsIpsetConfig="/var/run/${packageName}/smartdns.ipset.conf"
 readonly smartdnsIpsetGzip="${packageName}.smartdns.ipset.gz"
-readonly smartdnsIpsetFilter=''
+readonly smartdnsIpsetOutputFormatFilter=''
 readonly smartdnsIpsetOutputParseFilter=''
 readonly smartdnsNftsetFile="/var/run/${packageName}/smartdns.nftset"
 readonly smartdnsNftsetCache="/var/run/${packageName}/smartdns.nftset.cache"
 readonly smartdnsNftsetConfig="/var/run/${packageName}/smartdns.nftset.conf"
 readonly smartdnsNftsetGzip="${packageName}.smartdns.nftset.gz"
-readonly smartdnsNftsetFilter=''
+readonly smartdnsNftsetOutputFormatFilter=''
 readonly smartdnsNftsetOutputParseFilter=''
 readonly unboundFile="/var/lib/unbound/adb_list.${packageName}"
 readonly unboundCache="/var/run/${packageName}/unbound.cache"
 readonly unboundGzip="${packageName}.unbound.gz"
 readonly unboundOutputFormatFilter='s|^|local-zone: "|;s|$|." always_nxdomain|'
 readonly unboundOutputParseFilter='s|^local-zone: "||;s|." always_nxdomain$||;'
-# Grep pattern generators (for invalid entry removal)
-readonly dnsmasqConfGrepPattern='s|^|^local=/|;s|$|/$|'
-readonly dnsmasqIpsetGrepPattern='s|^|^ipset=/|;s|$|/adb$|'
-readonly dnsmasqNftsetGrepPattern='s|^|^nftset=/|;s|$|/4#.*$|'
-readonly dnsmasqServersGrepPattern='s|^|^server=/|;s|$|/$|'
-readonly dnsmasqAddnhostsGrepPatternIPv4='s|^|^127\.0\.0\.1 |'
-readonly dnsmasqAddnhostsGrepPatternIPv6='s|^|^:: |'
+
 readonly ALLOWED_TMP="/var/${packageName}.allowed.tmp"
 readonly A_TMP="/var/${packageName}.a.tmp"
 readonly B_TMP="/var/${packageName}.b.tmp"
@@ -97,9 +97,10 @@ readonly runningConfigFile="/dev/shm/${packageName}"
 readonly runningStatusFile="/dev/shm/${packageName}.status.json"
 readonly runningStatusFileLock="/var/lock/${packageName}.lock"
 readonly hostsFilter='/localhost/d;/^#/d;/^[^0-9]/d;s/^0\.0\.0\.0.//;s/^127\.0\.0\.1.//;s/[[:space:]]*#.*$//;s/[[:cntrl:]]$//;s/[[:space:]]//g;/[`~!@#\$%\^&\*()=+;:"'\'',<>?/\|[{}]/d;/]/d;/\./!d;/^$/d;/[^[:alnum:]_.-]/d;'
-# Restrictive filter (commented out due to over-filtering)
-#readonly domainsFilter='/^#/d;s/[[:space:]]*#.*|[[:space:]]*$|[[:cntrl:]]$//g;/^[[:space:]]*$/d;/^-|^\.|\.\.|-$|\.$|^[0-9.]+$|^[^[:alnum:]]|[`~!@#\$%\^&\*()=+;:"'"'"',<>?/\|{}]/d;/\./!d'
-readonly domainsFilter='/^#/d;s/[[:space:]]*#.*|[[:space:]]*$|[[:cntrl:]]$//g;/^[[:space:]]*$/d;/^[^[:alnum:]._-]|[`~!@#\$%\^&\*()=+;:"'"'"',<>?/\|{}]/d'
+# Validating domains filter
+readonly domainsFilter='/^#/d;s/[[:space:]]*#.*|[[:space:]]*$|[[:cntrl:]]$//g;/^[[:space:]]*$/d;/^-|^\.|\.\.|-$|\.$|^[0-9.]+$|^[^[:alnum:]]|[`~!@#\$%\^&\*()=+;:"'"'"',<>?/\|{}]/d;/\./!d'
+# Lax domains filter
+#readonly domainsFilter='/^#/d;s/[[:space:]]*#.*|[[:space:]]*$|[[:cntrl:]]$//g;/^[[:space:]]*$/d;/^[^[:alnum:]._-]|[`~!@#\$%\^&\*()=+;:"'"'"',<>?/\|{}]/d;/\./!d'
 readonly adBlockPlusFilter='/^#/d;/^!/d;s/[[:space:]]*#.*$//;s/^||//;s/\^$//;s/[[:space:]]*$//;s/[[:cntrl:]]$//;/[[:space:]]/d;/[`~!@#\$%\^&\*()=+;:"'\'',<>?/\|[{}]/d;/]/d;/\./!d;/^$/d;/[^[:alnum:]_.-]/d;'
 readonly dnsmasqFileFilter='\|^server=/[[:alnum:]_.-].*/|!d;s|server=/||;s|/.*$||'
 readonly dnsmasq2FileFilter='\|^local=/[[:alnum:]_.-].*/|!d;s|local=/||;s|/.*$||'
@@ -163,6 +164,8 @@ compressed_cache=
 config_update_enabled=
 debug_init_script=
 debug_performance=
+dnsmasq_sanity_check=
+dnsmasq_validity_check=
 enabled=
 force_dns=
 ipv6_enabled=
@@ -335,7 +338,7 @@ dns_set_output_values() {
 			outputGzip="${compressed_cache_dir}/${dnsmasqAddnhostsGzip}"
 			outputParseFilter="$dnsmasqAddnhostsOutputParseFilter"
 			if [ -n "$ipv6_enabled" ]; then
-				outputFilterIPv6="$dnsmasqAddnhostsFilterIPv6"
+				outputFilterIPv6="$dnsmasqAddnhostsOutputFormatFilterIPv6"
 			fi
 		;;
 		dnsmasq.conf)
@@ -354,9 +357,9 @@ dns_set_output_values() {
 		;;
 		dnsmasq.nftset)
 			if [ -n "$ipv6_enabled" ]; then
-				outputFilter="$dnsmasqNftsetFilterIPv6"
+				outputFilter="$dnsmasqNftsetOutputFormatFilterIPv6"
 			else
-				outputFilter="$dnsmasqNftsetFilter"
+				outputFilter="$dnsmasqNftsetOutputFormatFilter"
 			fi
 			outputFile="$dnsmasqNftsetFile"
 			outputCache="$dnsmasqNftsetCache"
@@ -364,7 +367,7 @@ dns_set_output_values() {
 			outputParseFilter="$dnsmasqNftsetOutputParseFilter"
 		;;
 		dnsmasq.servers)
-			outputFilter="$dnsmasqServersFilter"
+			outputFilter="$dnsmasqServersOutputFormatFilter"
 			outputFile="$dnsmasqServersFile"
 			outputCache="$dnsmasqServersCache"
 			outputGzip="${compressed_cache_dir}/${dnsmasqServersGzip}"
@@ -373,7 +376,7 @@ dns_set_output_values() {
 			outputBlockedCountFilter="$dnsmasqServersBlockedCountFilter"
 		;;
 		smartdns.domainset)
-			outputFilter="$smartdnsDomainSetFilter"
+			outputFilter="$smartdnsDomainSetOutputFormatFilter"
 			outputFile="$smartdnsDomainSetFile"
 			outputCache="$smartdnsDomainSetCache"
 			outputGzip="${compressed_cache_dir}/${smartdnsDomainSetGzip}"
@@ -381,7 +384,7 @@ dns_set_output_values() {
 			outputParseFilter="$smartdnsDomainSetOutputParseFilter"
 		;;
 		smartdns.ipset)
-			outputFilter="$smartdnsIpsetFilter"
+			outputFilter="$smartdnsIpsetOutputFormatFilter"
 			outputFile="$smartdnsIpsetFile"
 			outputCache="$smartdnsIpsetCache"
 			outputGzip="${compressed_cache_dir}/${smartdnsIpsetGzip}"
@@ -389,7 +392,7 @@ dns_set_output_values() {
 			outputParseFilter="$smartdnsIpsetOutputParseFilter"
 		;;
 		smartdns.nftset)
-			outputFilter="$smartdnsNftsetFilter"
+			outputFilter="$smartdnsNftsetOutputFormatFilter"
 			outputFile="$smartdnsNftsetFile"
 			outputCache="$smartdnsNftsetCache"
 			outputGzip="${compressed_cache_dir}/${smartdnsNftsetGzip}"
@@ -397,7 +400,7 @@ dns_set_output_values() {
 			outputParseFilter="$smartdnsNftsetOutputParseFilter"
 		;;
 		unbound.adb_list)
-			outputFilter="$unboundFilter"
+			outputFilter="$unboundOutputFormatFilter"
 			outputFile="$unboundFile"
 			outputCache="$unboundCache"
 			outputGzip="${compressed_cache_dir}/${unboundGzip}"
@@ -1300,7 +1303,7 @@ resolver() {
 			json set message "Testing resolver on $heartbeat_domain"
 			local i=0
 			while [ "$i" -lt "$heartbeat_sleep_timeout" ]; do
-				if nslookup "$heartbeat_domain" >/dev/null 2>&1; then
+				if resolveip "$heartbeat_domain" >/dev/null 2>&1; then
 					output_ok
 					return 0
 				fi
