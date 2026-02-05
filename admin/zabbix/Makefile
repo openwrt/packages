@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
 PKG_VERSION:=7.0.22
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://cdn.zabbix.com/zabbix/sources/stable/$(basename $(PKG_VERSION))/ \
@@ -32,7 +32,7 @@ PKG_CONFIG_DEPENDS:= \
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
-define Package/zabbix-proxy/config
+define Package/zabbix-proxy-nossl/config
 comment "Database Software"
 
 choice
@@ -269,8 +269,8 @@ define Package/zabbix-frontend-server
   TITLE+= frontend server
   DEPENDS:= \
     @PACKAGE_php8 \
-    +ZABBIX_MYSQL:php8-mod-mysqli \
-    +ZABBIX_POSTGRESQL:php8-mod-pgsql \
+    @ZABBIX_MYSQL:php8-mod-mysqli \
+    @ZABBIX_POSTGRESQL:php8-mod-pgsql \
     @(!ZABBIX_SQLITE) \
     +php8-cgi \
     +php8-mod-gd \
@@ -451,19 +451,9 @@ define Package/zabbix-server/install-extra
 	$(INSTALL_BIN) ./files/zabbix_server.defaults $$(1)/etc/uci-defaults/90_zabbix_server
 endef
 
-$(foreach zvariant,nossl openssl gnutls,\
-  $(eval $(call Package/zabbix-daemon/files,agentd,\
-    $(zvariant),\
-    ,\
-    $(call Package/zabbix-agentd/install-extra))))
-$(foreach zvariant,nossl openssl gnutls,\
-  $(eval $(call Package/zabbix-daemon/files,server,\
-    $(zvariant),\
-    $(call Package/zabbix-server/conffiles-extra),\
-    $(call Package/zabbix-server/install-extra))))
-$(foreach zvariant,nossl openssl gnutls,\
-  $(eval $(call Package/zabbix-daemon/files,proxy,\
-    $(zvariant))))
+$(foreach zvariant,nossl openssl gnutls,$(eval $(call Package/zabbix-daemon/files,agentd,$(zvariant),,$(call Package/zabbix-agentd/install-extra))))
+$(foreach zvariant,nossl openssl gnutls,$(eval $(call Package/zabbix-daemon/files,server,$(zvariant),$(call Package/zabbix-server/conffiles-extra),$(call Package/zabbix-server/install-extra))))
+$(foreach zvariant,nossl openssl gnutls,$(eval $(call Package/zabbix-daemon/files,proxy,$(zvariant))))
 
 # Due to nested defines, eval, and call, the extra spaces for the nested define
 # is essential.
@@ -475,9 +465,7 @@ define Package/zabbix-server/postinst/Default
          endef
 endef
 
-$(foreach zvariant,nossl openssl gnutls,\
-  $(eval $(call Package/zabbix-server/postinst/Default,\
-    $(zvariant))))
+$(foreach zvariant,nossl openssl gnutls,$(eval $(call Package/zabbix-server/postinst/Default,$(zvariant))))
 
 define Package/zabbix-program/files
         define Package/zabbix-$(1)-$(2)/install
@@ -485,12 +473,8 @@ define Package/zabbix-program/files
         endef
 endef
 
-$(foreach zvariant,nossl openssl gnutls,\
-  $(eval $(call Package/zabbix-program/files,sender,\
-    $(zvariant))))
-$(foreach zvariant,nossl openssl gnutls,\
-  $(eval $(call Package/zabbix-program/files,get,\
-    $(zvariant))))
+$(foreach zvariant,nossl openssl gnutls,$(eval $(call Package/zabbix-program/files,sender,$(zvariant))))
+$(foreach zvariant,nossl openssl gnutls,$(eval $(call Package/zabbix-program/files,get,$(zvariant))))
 
 define Package/zabbix-extra-mac80211/install
 	$(call Package/zabbix/install/zabbix.conf.d,$(1),mac80211)
