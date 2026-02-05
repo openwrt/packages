@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
 PKG_VERSION:=7.0.22
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://cdn.zabbix.com/zabbix/sources/stable/$(basename $(PKG_VERSION))/ \
@@ -247,6 +247,7 @@ endef
 define Package/zabbix-extra-network
   $(call Package/zabbix/Default)
   TITLE+= discovery/userparameters for network
+  PKGARCH:=all
   DEPENDS:= \
     +libubus-lua \
     +lua \
@@ -257,6 +258,7 @@ endef
 define Package/zabbix-extra-wifi
   $(call Package/zabbix/Default)
   TITLE+= discovery/userparameters for wifi
+  PKGARCH:=all
   DEPENDS:= \
     +libiwinfo-lua \
     +libubus-lua +lua \
@@ -267,6 +269,7 @@ endef
 define Package/zabbix-frontend-server
   $(call Package/zabbix/Default)
   TITLE+= frontend server
+  PKGARCH:=all
   DEPENDS:= \
     @PACKAGE_php8 \
     @ZABBIX_MYSQL:php8-mod-mysqli \
