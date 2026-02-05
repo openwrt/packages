@@ -10,6 +10,7 @@ hag;threat-intelligence;wildcard/tif-onlydomains.txt
 hag;threat-intelligence.medium;wildcard/tif.medium-onlydomains.txt
 hag;threat-intelligence.mini;wildcard/tif.mini-onlydomains.txt
 hag;anti.piracy;wildcard/anti.piracy-onlydomains.txt
+hag;blocklist-referral;wildcard/blocklist-referral-onlydomains.txt
 hag;doh;wildcard/doh-onlydomains.txt
 hag;doh-vpn-proxy-bypass;wildcard/doh-vpn-proxy-bypass-onlydomains.txt
 hag;dyndns;wildcard/dyndns-onlydomains.txt
