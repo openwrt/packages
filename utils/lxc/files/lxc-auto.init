@@ -43,6 +43,32 @@ stop_container() {
 
 start() {
 	config_load lxc-auto
+	
+	local wait_dnsmasq
+	local dnsmasq_timeout
+	config_get_bool wait_dnsmasq global wait_dnsmasq 0
+	config_get dnsmasq_timeout global dnsmasq_timeout 30
+	
+	if [ "$wait_dnsmasq" -eq 1 ]; then
+		local count=0
+
+		while [ $count -lt $dnsmasq_timeout ]; do
+			local dnsmasq_running=$(ubus call service list '{"name":"dnsmasq"}' 2>/dev/null | jsonfilter -e '@.dnsmasq.instances.*.running')
+
+			if [ "$dnsmasq_running" = "true" ]; then
+				logger -t lxc-auto "dnsmasq service confirmed running via procd"
+				break
+			fi
+
+			sleep 1
+			count=$((count + 1))
+		done
+
+		if [ $count -ge $dnsmasq_timeout ]; then
+			logger -t lxc-auto "WARNING: dnsmasq not running after ${dnsmasq_timeout}s, starting containers anyway"
+		fi
+	fi
+	config_load lxc-auto
 	config_foreach start_container container
 }
 
