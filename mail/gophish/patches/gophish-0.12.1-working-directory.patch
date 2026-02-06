@@ -1,0 +1,37 @@
+From 84d8e8f622313a7a03617724bde86f53d10b1232 Mon Sep 17 00:00:00 2001
+From: "W. Michael Petullo" <mike@flyn.org>
+Date: Wed, 3 Jan 2024 11:40:45 -0600
+Subject: [PATCH] Add command-line option to set working directory
+
+Signed-off-by: W. Michael Petullo <mike@flyn.org>
+---
+ gophish.go | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+--- a/gophish.go
++++ b/gophish.go
+@@ -50,6 +50,7 @@ const (
+ )
+ 
+ var (
++	wd            = kingpin.Flag("working-directory", "Working directory for service.").Default(".").String()
+ 	configPath    = kingpin.Flag("config", "Location of config.json.").Default("./config.json").String()
+ 	disableMailer = kingpin.Flag("disable-mailer", "Disable the mailer (for use with multi-system deployments)").Bool()
+ 	mode          = kingpin.Flag("mode", fmt.Sprintf("Run the binary in one of the modes (%s, %s or %s)", modeAll, modeAdmin, modePhish)).
+@@ -63,10 +64,15 @@ func main() {
+ 
+ 	kingpin.Version(version)
+ 
+-	// Parse the CLI flags and load the config
++	// Parse the CLI flags, set working directory, and load the config
+ 	kingpin.CommandLine.HelpFlag.Short('h')
+ 	kingpin.Parse()
+ 
++	err := os.Chdir(*wd)
++	if err != nil {
++		log.Fatal(err)
++	}
++
+ 	// Load the config
+ 	conf, err := config.LoadConfig(*configPath)
+ 	// Just warn if a contact address hasn't been configured
