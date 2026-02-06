@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ddns-scripts
 PKG_VERSION:=2.8.2
-PKG_RELEASE:=88
+PKG_RELEASE:=89
 
 PKG_LICENSE:=GPL-2.0
 
@@ -588,7 +588,7 @@ define Package/ddns-scripts-hetzner-cloud/install
 		$(1)/usr/lib/ddns
 
 	$(INSTALL_DIR) $(1)/usr/share/ddns/default
-	$(INSTALL_DATA) ./files/usr/share/ddns/default/hetzner.com.json \
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/hetzner.cloud.json \
 		$(1)/usr/share/ddns/default
 endef
 
