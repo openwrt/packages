@@ -1,0 +1,14 @@
+--- a/src/openssl.c
++++ b/src/openssl.c
+@@ -1044,7 +1044,11 @@ ssl_check_certificate (int fd, const cha
+   if (opt.check_cert == CHECK_CERT_QUIET && pinsuccess)
+     return success;
+ 
++#ifdef OPENSSL_NO_DEPRECATED_3_0
++  cert = SSL_get1_peer_certificate (conn);
++#else
+   cert = SSL_get_peer_certificate (conn);
++#endif
+   if (!cert)
+     {
+       logprintf (LOG_NOTQUIET, _("%s: No certificate presented by %s.\n"),
