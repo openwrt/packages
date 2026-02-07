@@ -6,9 +6,9 @@
 # 2026 Lin Fan <im dot linfan at gmail dot com>
 #
 # using following options from /etc/config/ddns
-# username - sub domain
+# domain   - domain     (e.g. example.com)
+# username - sub domain (e.g. www)
 # password - api key
-# domain   - domain
 #
 # optional parameters (param_opt) from /etc/config/ddns
 # ttl - ttl in seconds  (e.g. ttl=7200,   default '3600')
@@ -73,11 +73,11 @@ fmt=$(echo ${param_opt_fmt:-json} | tr 'A-Z' 'a-z')
 	. /usr/share/libubox/jshn.sh
 }
 
-# check xmlstarlet (optional)
+# check xmllint (optional)
 [ "$fmt" == "xml" ] && {
-	XMLSTARLET=$(command -v xmlstarlet)
-	[ -z "$XMLSTARLET" ] && {
-		write_log 7 "Suggestion: install 'xmlstarlet' to parse XML response accurately"
+	XMLLINT=$(command -v xmllint)
+	[ -z "$XMLLINT" ] && {
+		write_log 7 "Suggestion: install 'libxml2-utils' to parse XML response accurately"
 	}
 }
 
@@ -106,9 +106,9 @@ get_code() {
 	}
 
 	# xml
-	[ -n "$XMLSTARLET" ] && {
-		# try xmlstarlet first
-		$XMLSTARLET sel -t -v "/namesilo/reply/code" 2>/dev/null
+	[ -n "$XMLLINT" ] && {
+		# try xmllint first
+		$XMLLINT --xpath "string(/namesilo/reply/code)" - 2>/dev/null
 	} || {
 		# fallback to grep/sed
 		grep -o '<code>.*</code>' | sed 's/<code>//;s/<\/code>//' 2>/dev/null
@@ -129,9 +129,9 @@ get_detail() {
 	}
 
 	# xml
-	[ -n "$XMLSTARLET" ] && {
-		# try xmlstarlet first
-		$XMLSTARLET sel -t -v "/namesilo/reply/detail" 2>/dev/null
+	[ -n "$XMLLINT" ] && {
+		# try xmllint first
+		$XMLLINT --xpath "string(/namesilo/reply/detail)" - 2>/dev/null
 	} || {
 		# fallback to grep/sed
 		grep -o '<detail>.*</detail>' | sed 's/<detail>//;s/<\/detail>//' 2>/dev/null
@@ -166,15 +166,15 @@ get_rrid() {
 	}
 
 	# xml
-	[ -n "$XMLSTARLET" ] && {
-		# try xmlstarlet first
-		$XMLSTARLET sel -t -v "/namesilo/reply/resource_record/record_id[../host='${username}'][../type='${type}']" 2>/dev/null
+	[ -n "$XMLLINT" ] && {
+		# try xmllint first
+		$XMLLINT --xpath "string(/namesilo/reply/resource_record[host='$username'][type='$type']/record_id)" - 2>/dev/null
 	} || {
 		# fallback to grep/sed
 		local record
 		for record in $(sed "s/<resource_record>/\n<resource_record>/g" |
 						grep -o "<resource_record>.*<host>$username</host>.*</resource_record>") ; do
-			local rtyp=$(printf "%s\n" "$record" | sed  "s/.*<type>//;s/<\/type>.*//")
+			local rtyp=$(printf "%s\n" "$record" | sed "s/.*<type>//;s/<\/type>.*//")
 			[ "$rtyp" == "$type" ] && {
 				printf "%s\n" "$record" | sed "s/.*<record_id>//;s/<\/record_id>.*//"
 				return
