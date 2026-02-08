@@ -6,7 +6,7 @@ config OPENVPN_mbedtls_ENABLE_LZO
 
 config OPENVPN_mbedtls_ENABLE_LZ4
 	bool "Enable LZ4 compression support"
-	default y
+	default n
 
 #config OPENVPN_mbedtls_ENABLE_EUREPHIA
 #	bool "Enable support for the eurephia plug-in"
