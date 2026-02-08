@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-cryptography
-PKG_VERSION:=41.0.7
+PKG_VERSION:=46.0.4
 PKG_RELEASE:=1
 
 PYPI_NAME:=cryptography
-PKG_HASH:=13f93ce9bea8016c253b34afc6bd6a75993e5c40672ed5405a9c832f0d4a00bc
+PKG_HASH:=bfd019f60f8abc2ed1b9be4ddc21cfef059c841d86d710bb69909a688cbb8f59
 
 PKG_LICENSE:=Apache-2.0 BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.APACHE LICENSE.BSD
@@ -35,7 +35,6 @@ define Package/python3-cryptography
       +libopenssl \
       +libopenssl-legacy \
       +python3-light \
-      +python3-email \
       +python3-urllib \
       +python3-cffi \
       $(RUST_ARCH_DEPENDS)
