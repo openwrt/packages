@@ -1,0 +1,14 @@
+--- a/src/btop_config.cpp
++++ b/src/btop_config.cpp
+@@ -800,10 +800,7 @@ namespace Config {
+ 			if (xdg_state_home_ptr != nullptr) {
+ 				xdg_state_home = std::make_optional(fs::path(xdg_state_home_ptr));
+ 			} else {
+-				const auto* home_ptr = std::getenv("HOME");
+-				if (home_ptr != nullptr) {
+-					xdg_state_home = std::make_optional(fs::path(home_ptr) / ".local" / "state");
+-				}
++				xdg_state_home = std::make_optional(fs::path("/tmp/log"));
+ 			}
+ 		}
+ 
