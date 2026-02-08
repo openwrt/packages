@@ -19,7 +19,7 @@ PKG_LICENSE_FILES:=LICENSE.APACHE LICENSE.BSD
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 PKG_CPE_ID:=cpe:/a:cryptography.io:cryptography
 
-PKG_BUILD_DEPENDS:=libffi/host python-cffi/host python-setuptools-rust/host
+PKG_BUILD_DEPENDS:=libffi/host python-cffi/host python-setuptools-rust/host python-maturin/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
