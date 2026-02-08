@@ -11,7 +11,7 @@ config OPENVPN_wolfssl_ENABLE_LZO
 
 config OPENVPN_wolfssl_ENABLE_LZ4
 	bool "Enable LZ4 compression support"
-	default y
+	default n
 
 config OPENVPN_wolfssl_ENABLE_X509_ALT_USERNAME
 	bool "Enable the --x509-username-field feature"
