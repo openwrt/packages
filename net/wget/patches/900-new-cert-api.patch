@@ -4,7 +4,7 @@
    if (opt.check_cert == CHECK_CERT_QUIET && pinsuccess)
      return success;
  
-+#ifdef OPENSSL_NO_DEPRECATED_3_0
++#if OPENSSL_API_LEVEL >= 30000
 +  cert = SSL_get1_peer_certificate (conn);
 +#else
    cert = SSL_get_peer_certificate (conn);
