@@ -1,0 +1,12 @@
+diff -dur aircrack-ng-1.7/src/airodump-ng/airodump-ng.c aircrack-ng-1.7-bugfix/src/airodump-ng/airodump-ng.c
+--- a/src/airodump-ng/airodump-ng.c	2022-05-10 19:01:46.000000000 -0400
++++ b/src/airodump-ng/airodump-ng.c	2024-04-03 17:37:35.496429825 -0400
+@@ -4429,7 +4429,7 @@
+ 	char * vcursor = value;
+ 	int ret = 0;
+ 
+-	if (buffer == NULL || *buffer == '\0' || name == NULL || *name != '\0'
++	if (buffer == NULL || *buffer == '\0' || name == NULL || *name == '\0'
+ 		|| value == NULL)
+ 	{
+ 		return (0);
