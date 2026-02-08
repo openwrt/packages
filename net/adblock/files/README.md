@@ -135,56 +135,61 @@ Available commands:
 ## Adblock Config Options
 * Usually the auto pre-configured adblock setup works quite well and no manual overrides are needed
 
-| Option             | Default                            | Description/Valid Values                                                                       |
-| :----------------- | :--------------------------------- | :--------------------------------------------------------------------------------------------- |
-| adb_enabled        | 1, enabled                         | set to 0 to disable the adblock service                                                        |
-| adb_feedfile       | /etc/adblock/adblock.feeds         | full path to the used adblock feed file                                                        |
-| adb_dns            | -, auto-detected                   | 'dnsmasq', 'unbound', 'named', 'kresd', 'smartdns' or 'raw'                                    |
-| adb_fetchcmd       | -, auto-detected                   | 'uclient-fetch', 'wget' or 'curl'                                                              |
-| adb_fetchparm      | -, auto-detected                   | manually override the config options for the selected download utility                         |
-| adb_fetchinsecure  | 0, disabled                        | don't check SSL server certificates during download                                            |
-| adb_trigger        | -, not set                         | trigger network interface or 'not set' to use a time-based startup                             |
-| adb_triggerdelay   | 5                                  | additional trigger delay in seconds before adblock processing begins                           |
-| adb_debug          | 0, disabled                        | set to 1 to enable the debug output                                                            |
-| adb_nicelimit      | 0, standard prio.                  | valid nice level range 0-19 of the adblock processes                                           |
-| adb_dnsshift       | 0, disabled                        | shift the blocklist to the backup directory and only set a soft link to this file in memory    |
-| adb_dnsdir         | -, auto-detected                   | path for the generated blocklist file 'adb_list.overall'                                       |
-| adb_dnstimeout     | 20                                 | timeout in seconds to wait for a successful DNS backend restart                                |
-| adb_dnsinstance    | 0, first instance                  | set the relevant dnsmasq backend instance used by adblock                                      |
-| adb_dnsflush       | 0, disabled                        | set to 1 to flush the DNS Cache before & after adblock processing                              |
-| adb_lookupdomain   | localhost                          | domain to check for a successful DNS backend restart                                           |
-| adb_report         | 0, disabled                        | set to 1 to enable the background tcpdump gathering process for reporting                      |
-| adb_map            | 0, disabled                        | enable a GeoIP Map with blocked domains                                                        |
-| adb_reportdir      | /tmp/adblock-report                | path for DNS related report files                                                              |
-| adb_repiface       | -, auto-detected                   | name of the reporting interface or 'any' used by tcpdump                                       |
-| adb_repport        | 53                                 | list of reporting port(s) used by tcpdump                                                      |
-| adb_repchunkcnt    | 5                                  | report chunk count used by tcpdump                                                             |
-| adb_repchunksize   | 1                                  | report chunk size used by tcpdump in MB                                                        |
-| adb_represolve     | 0, disabled                        | resolve reporting IP addresses using reverse DNS (PTR) lookups                                 |
-| adb_tld            | 1, enabled                         | set to 0 to disable the top level domain compression (tld) function                            |
-| adb_basedir        | /tmp                               | path for all adblock related runtime operations, e.g. downloading, sorting, merging etc.       |
-| adb_backupdir      | /tmp/adblock-backup                | path for adblock backups                                                                       |
-| adb_safesearch     | 0, disabled                        | enforce SafeSearch for google, bing, brave, duckduckgo, yandex, youtube and pixabay            |
-| adb_safesearchlist | -, not set                         | limit SafeSearch to certain provider (see above)                                               |
-| adb_mail           | 0, disabled                        | set to 1 to enable notification E-Mails in case of a processing errors                         |
-| adb_mailreceiver   | -, not set                         | receiver address for adblock notification E-Mails                                              |
-| adb_mailsender     | no-reply@adblock                   | sender address for adblock notification E-Mails                                                |
-| adb_mailtopic      | adblock notification               | topic for adblock notification E-Mails                                                         |
-| adb_mailprofile    | adb_notify                         | mail profile used in 'msmtp' for adblock notification E-Mails                                  |
-| adb_jail           | 0                                  | jail mode - only domains on the allowlist are permitted, all other DNS requests are rejected   |
-| adb_nftforce       | 0, disabled                        | redirect all local DNS queries from specified LAN zones to the local DNS resolver              |
-| adb_nftdevforce    | -, not set                         | firewall LAN Devices/VLANs that should be forced locally                                       |
-| adb_nftportforce   | -, not set                         | firewall ports that should be forced locally                                                   |
-| adb_nftallow       | 0, disabled                        | routes MACs or interfaces to an unfiltered external DNS resolver, bypassing local adblock      |
-| adb_nftmacallow    | -, not set                         | listed MAC addresses will always use the configured unfiltered DNS server                      |
-| adb_nftdevallow    | -, not set                         | entire interfaces or VLANs will be routed to the unfiltered DNS server                         |
-| adb_allowdnsv4     | -, not set                         | IPv4 DNS resolver applied to MACs and interfaces using the unfiltered DNS policy               |
-| adb_allowdnsv6     | -, not set                         | IPv6 DNS resolver applied to MACs and interfaces using the unfiltered DNS policy               |
-| adb_nftblock       | 0, disabled                        | routes MACs or interfaces to a filtered external DNS resolver, bypassing local adblock         |
-| adb_nftmacblock    | -, not set                         | listed MAC addresses will always use the configured filtered DNS server                        |
-| adb_nftdevblock    | -, not set                         | entire interfaces or VLANs will be routed to the filtered DNS server                           |
-| adb_blockdnsv4     | -, not set                         | IPv4 DNS resolver applied to MACs and interfaces using the filtered DNS policy                 |
-| adb_blockdnsv6     | -, not set                         | IPv6 DNS resolver applied to MACs and interfaces using the filtered DNS policy                 |
+| Option               | Default                            | Description/Valid Values                                                                           |
+| :------------------- | :--------------------------------- | :------------------------------------------------------------------------------------------------- |
+| adb_enabled          | 1, enabled                         | set to 0 to disable the adblock service                                                            |
+| adb_feedfile         | /etc/adblock/adblock.feeds         | full path to the used adblock feed file                                                            |
+| adb_dns              | -, auto-detected                   | 'dnsmasq', 'unbound', 'named', 'kresd', 'smartdns' or 'raw'                                        |
+| adb_fetchcmd         | -, auto-detected                   | 'uclient-fetch', 'wget' or 'curl'                                                                  |
+| adb_fetchparm        | -, auto-detected                   | manually override the config options for the selected download utility                             |
+| adb_fetchinsecure    | 0, disabled                        | don't check SSL server certificates during download                                                |
+| adb_trigger          | -, not set                         | trigger network interface or 'not set' to use a time-based startup                                 |
+| adb_triggerdelay     | 5                                  | additional trigger delay in seconds before adblock processing begins                               |
+| adb_debug            | 0, disabled                        | set to 1 to enable the debug output                                                                |
+| adb_nicelimit        | 0, standard prio.                  | valid nice level range 0-19 of the adblock processes                                               |
+| adb_dnsshift         | 0, disabled                        | shift the blocklist to the backup directory and only set a soft link to this file in memory        |
+| adb_dnsdir           | -, auto-detected                   | path for the generated blocklist file 'adb_list.overall'                                           |
+| adb_dnstimeout       | 20                                 | timeout in seconds to wait for a successful DNS backend restart                                    |
+| adb_dnsinstance      | 0, first instance                  | set the relevant dnsmasq backend instance used by adblock                                          |
+| adb_dnsflush         | 0, disabled                        | set to 1 to flush the DNS Cache before & after adblock processing                                  |
+| adb_lookupdomain     | localhost                          | domain to check for a successful DNS backend restart                                               |
+| adb_report           | 0, disabled                        | set to 1 to enable the background tcpdump gathering process for reporting                          |
+| adb_map              | 0, disabled                        | enable a GeoIP Map with blocked domains                                                            |
+| adb_reportdir        | /tmp/adblock-report                | path for DNS related report files                                                                  |
+| adb_repiface         | -, auto-detected                   | name of the reporting interface or 'any' used by tcpdump                                           |
+| adb_repport          | 53                                 | list of reporting port(s) used by tcpdump                                                          |
+| adb_repchunkcnt      | 5                                  | report chunk count used by tcpdump                                                                 |
+| adb_repchunksize     | 1                                  | report chunk size used by tcpdump in MB                                                            |
+| adb_represolve       | 0, disabled                        | resolve reporting IP addresses using reverse DNS (PTR) lookups                                     |
+| adb_tld              | 1, enabled                         | set to 0 to disable the top level domain compression (tld) function                                |
+| adb_basedir          | /tmp                               | path for all adblock related runtime operations, e.g. downloading, sorting, merging etc.           |
+| adb_backupdir        | /tmp/adblock-backup                | path for adblock backups                                                                           |
+| adb_safesearch       | 0, disabled                        | enforce SafeSearch for google, bing, brave, duckduckgo, yandex, youtube and pixabay                |
+| adb_safesearchlist   | -, not set                         | limit SafeSearch to certain provider (see above)                                                   |
+| adb_mail             | 0, disabled                        | set to 1 to enable notification E-Mails in case of a processing errors                             |
+| adb_mailreceiver     | -, not set                         | receiver address for adblock notification E-Mails                                                  |
+| adb_mailsender       | no-reply@adblock                   | sender address for adblock notification E-Mails                                                    |
+| adb_mailtopic        | adblock notification               | topic for adblock notification E-Mails                                                             |
+| adb_mailprofile      | adb_notify                         | mail profile used in 'msmtp' for adblock notification E-Mails                                      |
+| adb_jail             | 0                                  | jail mode - only domains on the allowlist are permitted, all other DNS requests are rejected       |
+| adb_nftforce         | 0, disabled                        | redirect all local DNS queries from specified LAN zones to the local DNS resolver                  |
+| adb_nftdevforce      | -, not set                         | firewall LAN Devices/VLANs that should be forced locally                                           |
+| adb_nftportforce     | -, not set                         | firewall ports that should be forced locally                                                       |
+| adb_nftallow         | 0, disabled                        | routes MACs or interfaces to an unfiltered external DNS resolver, bypassing local adblock          |
+| adb_nftmacallow      | -, not set                         | listed MAC addresses will always use the configured unfiltered DNS server                          |
+| adb_nftdevallow      | -, not set                         | entire interfaces or VLANs will be routed to the unfiltered DNS server                             |
+| adb_allowdnsv4       | -, not set                         | IPv4 DNS resolver applied to MACs and interfaces using the unfiltered DNS policy                   |
+| adb_allowdnsv6       | -, not set                         | IPv6 DNS resolver applied to MACs and interfaces using the unfiltered DNS policy                   |
+| adb_nftremote        | 0, disabled                        | routes MACs to an unfiltered external DNS resolver, bypassing local adblock                        |
+| adb_nftmacremote     | -, not set                         | Allows listed MACs to remotely access an unfiltered external DNS resolver, bypassing local adblock |
+| adb_nftremotetimeout | 15                                 | Time limit in minutes for remote DNS access of the listed MAC addresses                            |
+| adb_remotednsv4      | -, not set                         | IPv4 DNS resolver applied to MACs using the unfiltered remote DNS policy                           |
+| adb_remotednsv6      | -, not set                         | IPv6 DNS resolver applied to MACs using the unfiltered remote DNS policy                           |
+| adb_nftblock         | 0, disabled                        | routes MACs or interfaces to a filtered external DNS resolver, bypassing local adblock             |
+| adb_nftmacblock      | -, not set                         | listed MAC addresses will always use the configured filtered DNS server                            |
+| adb_nftdevblock      | -, not set                         | entire interfaces or VLANs will be routed to the filtered DNS server                               |
+| adb_blockdnsv4       | -, not set                         | IPv4 DNS resolver applied to MACs and interfaces using the filtered DNS policy                     |
+| adb_blockdnsv6       | -, not set                         | IPv6 DNS resolver applied to MACs and interfaces using the filtered DNS policy                     |
 
 <a id="examples"></a>
 ## Examples
@@ -291,6 +296,19 @@ force DNS ensures that all DNS traffic on your network by specific devices or en
 This mode guarantees that adblock’s filtering pipeline is always applied.  
 
 adblock's firewall rules are based on nftables in a separate isolated nftables table (inet adblock) and chains (prerouting), with MAC addresses stored in a nftables set. The configuration is carried out centrally in LuCI on the ‘Firewall Settings’ tab in adblock.  
+
+**Remote DNS Allow (Temporary MAC‑Based Bypass)**  
+This additional firewall feature lets selected client devices temporarily bypass local DNS blocking and use an external, unfiltered DNS resolver. It is designed for situations where a device needs short‑term access to content normally blocked by the adblock rules.  
+
+A lightweight CGI endpoint handles the workflow:  
+* the client opens the URL, e.g. https://\<ROUTER-IP\>cgi-bin/adblock (preferably transferred via QR code shown in LuCI)
+* the script automatically detects the device’s MAC address
+* if the MAC is authorized, the script displays the current status:
+  * not in the nftables set → option to request a temporary allow (“Renew”)
+  * already active → shows remaining timeout
+* when renewing, the CGI adds the MAC to an nftables Set with a per‑entry timeout
+
+The CGI interface is mobile‑friendly and includes a LuCI‑style loading spinner during the renew process, giving immediate visual feedback while the nftables entry is created. All operations are atomic and safe even when multiple devices renew access in parallel.  
 
 **Jail mode (allowlist-only):**  
 Enforces a strict allowlist‑only DNS policy in which only domains listed in the allowlist file are resolved, while every other query is rejected. This mode is intended for highly restrictive environments and depends on a carefully maintained allowlist, typically managed manually.  
