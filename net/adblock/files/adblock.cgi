@@ -23,7 +23,7 @@ query_mode="$(printf "%s" "${query_str}" | sed -n 's/.*mode=\([^&]*\).*/\1/p' 2>
 #
 if [ -z "${query_mac}" ]; then
 	query_ip="${REMOTE_ADDR}"
-	query_mac="$(ip neigh show 2>/dev/null | awk -v ip="${query_ip}" '$1==ip {print $5}' 2>/dev/null)"
+	query_mac="$(ip neigh show 2>/dev/null | awk -v ip="${query_ip}" '$1==ip {print $5; exit}' 2>/dev/null)"
 fi
 
 # validate MAC address
