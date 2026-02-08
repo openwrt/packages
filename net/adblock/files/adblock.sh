@@ -22,8 +22,13 @@ adb_nftdevallow=""
 adb_nftblock="0"
 adb_nftmacblock=""
 adb_nftdevblock=""
+adb_nftremote="0"
+adb_nftremotetimeout="15"
+adb_nftmacremote=""
 adb_allowdnsv4=""
 adb_allowdnsv6=""
+adb_remotednsv4=""
+adb_remotednsv6=""
 adb_blockdnsv4=""
 adb_blockdnsv6=""
 adb_dnsshift="0"
@@ -716,7 +721,7 @@ f_nftadd() {
 
 	# only proceed if at least one feature is enabled
 	#
-	if [ "${adb_nftallow}" = "0" ] && [ "${adb_nftblock}" = "0" ] && [ "${adb_nftforce}" = "0" ]; then
+	if [ "${adb_nftallow}" = "0" ] && [ "${adb_nftblock}" = "0" ] && [ "${adb_nftremote}" = "0" ] && [ "${adb_nftforce}" = "0" ]; then
 		return
 	fi
 
@@ -728,9 +733,18 @@ f_nftadd() {
 			printf "%s\n" "delete table inet adblock"
 		fi
 		printf "%s\n" "add table inet adblock"
+		# allow Set
+		#
 		if [ "${adb_nftallow}" = "1" ] && [ -n "${adb_nftmacallow}" ]; then
 			printf "%s\n" "add set inet adblock mac_allow { type ether_addr; flags interval; auto-merge; elements = { ${adb_nftmacallow// /, } }; }"
 		fi
+		# remote allow Set with timeout, for MACs that should be temporary allowed to bypass dns blocking
+		#
+		if [ "${adb_nftremote}" = "1" ] && [ -n "${adb_nftmacremote}" ]; then
+			printf "%s\n" "add set inet adblock mac_remote { type ether_addr; flags timeout; timeout ${adb_nftremotetimeout}m; }"
+		fi
+		# block Set
+		#
 		if [ "${adb_nftblock}" = "1" ] && [ -n "${adb_nftmacblock}" ]; then
 			printf "%s\n" "add set inet adblock mac_block { type ether_addr; flags interval; auto-merge; elements = { ${adb_nftmacblock// /, } }; }"
 		fi
@@ -753,6 +767,13 @@ f_nftadd() {
 				[ -n "${adb_allowdnsv4}" ] && printf "%s\n" "add rule inet adblock pre-routing iifname \"${device}\" meta nfproto ipv4 meta l4proto { udp, tcp } th dport 53 counter dnat to ${adb_allowdnsv4}:53"
 				[ -n "${adb_allowdnsv6}" ] && printf "%s\n" "add rule inet adblock pre-routing iifname \"${device}\" meta nfproto ipv6 meta l4proto { udp, tcp } th dport 53 counter dnat to [${adb_allowdnsv6}]:53"
 			done
+		fi
+
+		# external remote allow rules
+		#
+		if [ "${adb_nftremote}" = "1" ]; then
+			[ -n "${adb_remotednsv4}" ] && printf "%s\n" "add rule inet adblock pre-routing meta nfproto ipv4 ether saddr @mac_remote meta l4proto { udp, tcp } th dport 53 counter dnat to ${adb_remotednsv4}:53"
+			[ -n "${adb_remotednsv6}" ] && printf "%s\n" "add rule inet adblock pre-routing meta nfproto ipv6 ether saddr @mac_remote meta l4proto { udp, tcp } th dport 53 counter dnat to [${adb_remotednsv6}]:53"
 		fi
 
 		# external block rules
@@ -1191,7 +1212,7 @@ f_query() {
 #
 f_jsnup() {
 	local pids object feeds end_time runtime dns dns_ver dns_mem free_mem custom_feed="0" status="${1:-"enabled"}"
-	local duration jail="0" nft_unfiltered="0" nft_filtered="0" nft_force="0"
+	local duration jail="0" nft_unfiltered="0" nft_filtered="0" nft_remote="0" nft_force="0"
 
 	if [ -n "${adb_dnspid}" ]; then
 		pids="$("${adb_pgrepcmd}" -P "${adb_dnspid}" 2>/dev/null)"
@@ -1230,6 +1251,10 @@ f_jsnup() {
 		&& { [ -n "${adb_nftmacblock}" ] || [ -n "${adb_nftdevblock}" ]; } \
 		&& { [ -n "${adb_blockdnsv4}" ] || [ -n "${adb_blockdnsv6}" ]; }; then
 		nft_filtered="1"
+	fi
+	if [ "${adb_nftremote}" = "1" ] && [ -n "${adb_nftmacremote}" ] \
+		&& { [ -n "${adb_remotednsv4}" ] || [ -n "${adb_remotednsv6}" ]; }; then
+		nft_remote="1"
 	fi
 	case "${status}" in
 		"enabled")
@@ -1280,7 +1305,7 @@ f_jsnup() {
 	json_add_string "dns_backend" "${adb_dns:-"-"} (${dns_ver:-"-"}), ${adb_finaldir:-"-"}, ${dns_mem:-"0"} MB"
 	json_add_string "run_ifaces" "trigger: ${adb_trigger:-"-"}, report: ${adb_repiface:-"-"}"
 	json_add_string "run_directories" "base: ${adb_basedir}, dns: ${adb_dnsdir}, backup: ${adb_backupdir}, report: ${adb_reportdir}"
-	json_add_string "run_flags" "shift: $(f_char ${adb_dnsshift}), custom feed: $(f_char ${custom_feed}), ext. DNS (std/prot): $(f_char ${nft_unfiltered})/$(f_char ${nft_filtered}), force: $(f_char ${nft_force}), flush: $(f_char ${adb_dnsflush}), tld: $(f_char ${adb_tld}), search: $(f_char ${adb_safesearch}), report: $(f_char ${adb_report}), mail: $(f_char ${adb_mail}), jail: $(f_char ${jail})"
+	json_add_string "run_flags" "shift: $(f_char ${adb_dnsshift}), custom feed: $(f_char ${custom_feed}), ext. DNS (std/prot/remote): $(f_char ${nft_unfiltered})/$(f_char ${nft_filtered})/$(f_char ${nft_remote}), force: $(f_char ${nft_force}), flush: $(f_char ${adb_dnsflush}), tld: $(f_char ${adb_tld}), search: $(f_char ${adb_safesearch}), report: $(f_char ${adb_report}), mail: $(f_char ${adb_mail}), jail: $(f_char ${jail})"
 	json_add_string "last_run" "${runtime:-"-"}"
 	json_add_string "system_info" "cores: ${adb_cores}, fetch: ${adb_fetchcmd##*/}, ${adb_sysver}"
 	json_dump >"${adb_rtfile}"
@@ -1941,6 +1966,7 @@ case "${adb_action}" in
 		f_main
 		;;
 	"restart")
+		f_temp
 		f_jsnup "processing"
 		f_nftremove
 		f_rmdns
