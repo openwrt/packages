@@ -23,7 +23,7 @@ config OPENVPN_wolfssl_ENABLE_X509_ALT_USERNAME
 
 config OPENVPN_wolfssl_ENABLE_MANAGEMENT
 	bool "Enable management server support"
-	default n
+	default y
 
 #config OPENVPN_wolfssl_ENABLE_PKCS11
 #	bool "Enable pkcs11 support"
