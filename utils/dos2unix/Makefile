@@ -5,13 +5,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dos2unix
-PKG_VERSION:=7.5.3
+PKG_VERSION:=7.5.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://waterlan.home.xs4all.nl/dos2unix/ \
                 @SF/dos2unix
-PKG_HASH:=28a4b0d9f9179da4e44c567b9c01f818b070a20827115fffd96f760dcfa0f3b2
+PKG_HASH:=f811a2b9e4a0c936c61ef7c1732993d1820e5cf011f4d93861885ccb8101ca21
 
 PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
 PKG_LICENSE:=BSD-2-Clause
