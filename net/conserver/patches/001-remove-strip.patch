@@ -22,7 +22,7 @@
  
 --- a/console/Makefile.in
 +++ b/console/Makefile.in
-@@ -10,7 +10,7 @@ mandir = @mandir@
+@@ -11,7 +11,7 @@ mandir = @mandir@
  
  ### Installation programs and flags
  INSTALL = @INSTALL@
