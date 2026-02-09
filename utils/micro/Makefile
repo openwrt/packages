@@ -3,12 +3,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=micro
-PKG_VERSION:=2.0.14
+PKG_VERSION:=2.0.15
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/zyedidia/micro/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=40177579beb3846461036387b649c629395584a4bbe970f61ba7591bd9c0185a
+PKG_HASH:=612c775321c268c8f9e1767505ff378bca9b9ab66f5c41b69ecb2464ecf15084
 
 PKG_MAINTAINER:=Gregory Gullin <garuwex@gmail.com>
 PKG_LICENSE:=MIT
