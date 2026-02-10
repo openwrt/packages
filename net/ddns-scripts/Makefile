@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ddns-scripts
 PKG_VERSION:=2.8.2
-PKG_RELEASE:=92
+PKG_RELEASE:=93
 
 PKG_LICENSE:=GPL-2.0
 
@@ -387,6 +387,16 @@ define Package/ddns-scripts-aliyun/description
 	Dynamic DNS Client scripts extension for aliyun.com API
 endef
 
+define Package/ddns-scripts-servercow
+	$(call Package/ddns-scripts/Default)
+	TITLE:=Extension for Servercow DNS API
+	DEPENDS:=ddns-scripts +curl +openssl-util
+endef
+
+define Package/ddns-scripts-servercow/description
+	Dynamic DNS Client scripts extension for servercow.de API
+endef
+
 define Build/Configure
 endef
 
@@ -458,6 +468,7 @@ define Package/ddns-scripts-services/install
 	rm $(1)/usr/share/ddns/default/porkbun.com-v3.json
 	rm $(1)/usr/share/ddns/default/huaweicloud.com.json
 	rm $(1)/usr/share/ddns/default/aliyun.com.json
+	rm $(1)/usr/share/ddns/default/servercow.de.json
 endef
 
 
@@ -920,6 +931,23 @@ fi
 exit 0
 endef
 
+define Package/ddns-scripts-servercow/install
+	$(INSTALL_DIR) $(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/update_servercow_de.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/servercow.de.json \
+		$(1)/usr/share/ddns/default/
+endef
+
+define Package/ddns-scripts-servercow/prerm
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
+endef
 
 $(eval $(call BuildPackage,ddns-scripts))
 $(eval $(call BuildPackage,ddns-scripts-services))
@@ -948,3 +976,4 @@ $(eval $(call BuildPackage,ddns-scripts-one))
 $(eval $(call BuildPackage,ddns-scripts-porkbun))
 $(eval $(call BuildPackage,ddns-scripts-huaweicloud))
 $(eval $(call BuildPackage,ddns-scripts-aliyun))
+$(eval $(call BuildPackage,ddns-scripts-servercow))
