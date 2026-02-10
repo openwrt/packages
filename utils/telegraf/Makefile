@@ -32,6 +32,7 @@ endif
 TELEGRAF_SMALL_PLUGINS:=custom \
 	inputs.cpu \
 	inputs.ethtool \
+	inputs.http \
 	inputs.internal \
 	inputs.interrupts \
 	inputs.ipset \
@@ -43,7 +44,6 @@ TELEGRAF_SMALL_PLUGINS:=custom \
 	inputs.ping \
 	inputs.processes \
 	inputs.procstat \
-	inputs.prometheus \
 	inputs.sensors \
 	inputs.snmp \
 	inputs.socket_listener \
