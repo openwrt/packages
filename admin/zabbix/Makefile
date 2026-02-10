@@ -133,7 +133,7 @@ define Package/zabbix-get/Default
     $(ICONV_DEPENDS) \
     +libpcre2 \
     +zlib
-  PROVIDES:=@zabbix-get
+  PROVIDES:=zabbix-get
 endef
 
 define Package/zabbix-get-nossl
