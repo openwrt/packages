@@ -6,12 +6,12 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=golang1.25
-GO_VERSION_MAJOR_MINOR:=1.25
-GO_VERSION_PATCH:=7
+PKG_NAME:=golang1.26
+GO_VERSION_MAJOR_MINOR:=1.26
+GO_VERSION_PATCH:=0
 GO_VERSION_RC:=
 GO_BOOTSTRAP_VERSION:=bootstrap
-PKG_HASH:=178f2832820274b43e177d32f06a3ebb0129e427dd20a5e4c88df2c1763cf10a
+PKG_HASH:=c9132a8a1f6bd2aa4aad1d74b8231d95274950483a4950657ee6c56e6e817790
 
 PKG_VERSION:=$(GO_VERSION_MAJOR_MINOR)$(if $(GO_VERSION_RC),.0)$(if $(GO_VERSION_PATCH),.$(GO_VERSION_PATCH))
 PKG_FILE_VERSION:=$(GO_VERSION_MAJOR_MINOR)$(if $(GO_VERSION_RC),rc$(GO_VERSION_RC))$(if $(GO_VERSION_PATCH),.$(GO_VERSION_PATCH))
@@ -57,7 +57,6 @@ HOST_GO_VALID_OS_ARCH:= \
   freebsd/amd64 \
   freebsd/arm \
   freebsd/arm64 \
-  freebsd/riscv64 \
   illumos/amd64 \
   ios/amd64 \
   ios/arm64 \
@@ -84,6 +83,7 @@ HOST_GO_VALID_OS_ARCH:= \
   openbsd/arm \
   openbsd/arm64 \
   openbsd/ppc64 \
+  openbsd/riscv64 \
   plan9/386 \
   plan9/amd64 \
   plan9/arm \
@@ -91,7 +91,6 @@ HOST_GO_VALID_OS_ARCH:= \
   wasip1/wasm \
   windows/386 \
   windows/amd64 \
-  windows/arm \
   windows/arm64
 
 include $(INCLUDE_DIR)/host-build.mk
