@@ -410,6 +410,24 @@ list_running_instances() {
 	fi
 }
 
+signal_instance() {
+	local instance_name="$1"
+	local process_name="$2"
+	local signal_command="$3"
+	local signal="$4"
+	local pidfile="$5"
+	local secondary_command="$6"
+
+	if [ -s "$pidfile" ]; then
+		$signal_command | logger -t nut-server
+	elif pgrep "$process_name" >/dev/null 2>/dev/null; then
+		procd_send_signal nut-server "$instance_name" "$signal" 2>&1 | logger -t nut-server
+	fi
+	if [ -n "$secondary_command" ] && procd_running "$instance_name"; then
+		$secondary_command 2>&1 | logger -t nut-server
+	fi
+}
+
 stop_ups_driver() {
 	local ups="$1" # The ups (driver instance)
 	local requested="$2"
@@ -423,6 +441,7 @@ stop_ups_driver() {
 	srv_statepath
 	build_ups_config "$ups"
 
+	# If we don't have UPS configuration simply stop all instances
 	if [ "$haveupscfg" != "1" ]; then
 		if procd_running nut-server '*' >/dev/null 2>&1; then
 			procd_kill nut-server '*' 2>&1 | logger -t nut-server
@@ -433,13 +452,9 @@ stop_ups_driver() {
 	config_get driver "$ups" driver "usbhid-ups"
 
 	if procd_running nut-server "$ups"; then
-		if [ -s "${STATEPATH}/${driver}-${ups}".pid ]; then
-			/lib/nut/"${driver}" -c exit -a "${ups}" 2>&1 | logger -t nut-server
-		elif pgrep "${driver}" >/dev/null 2>/dev/null; then
-			procd_send_signal nut-server "${driver}" TERM 2>&1 | logger -t nut-server
-		fi
+		signal_instance "$ups" "$driver" "/lib/nut/'${driver}' -c exit -a '${ups}'" "TERM" "${STATEPATH}/${driver}-${ups}.pid"
 		if procd_running nut-server upsd >/dev/null 2>&1; then
-			procd_kill nut-server upsd 2>&1 | logger -t nut-server
+			signal_instance upsd upsd "upsd -c stop" "TERM" "${STATEPATH}/upsd.pid" "procd_kill upsd"
 		fi
 	fi
 }
@@ -467,12 +482,7 @@ reload_ups_driver() {
 
 	# Try to reload, otherwise exit politely, then stop and restart procd instance
 	if procd_running nut-server "$ups"; then
-		if [ -s "${STATEPATH}/${driver}-${ups}".pid ]; then
-			# should be respawned by procd
-			/lib/nut/"${driver}" -c reload-or-exit -a "${ups}" 2>&1 | logger -t nut-server
-		elif pgrep "${driver}" >/dev/null 2>/dev/null; then
-			procd_send_signal nut-server "${driver}" TERM 2>&1 | logger -t nut-server
-		fi
+		signal_instance "$ups" "$driver" "/lib/nut/'${driver}' -c reload-or-exit -a '${ups}'" HUP "${STATEPATH}/${driver}-${ups}.pid"
 	fi
 	/etc/init.d/nut-server start "$ups" 2>&1 | logger -t nut-server
 }
@@ -512,23 +522,25 @@ reload_service() {
 		done
 	fi
 
+	# If nut-server was started but has no instances (even upsd)
 	if server_active; then
 		logger -t nut-server "nut-server active with no instances"
 		/etc/init.d/nut-server start 2>&1 | logger -t nut-server
+	# Otherwise, if we have at least one instance running
 	elif procd_running nut-server; then
+		# If server (upsd) is running
 		if procd_running nut-server upsd; then
 			# Try to signal server (upsd) to reload configuration
-			if [ -s "${STATEPATH}/upsd.pid" ]; then
-				upsd -c reload 2>&1 | logger -t nut-server
-			elif pgrep upsd >/dev/null 2>/dev/null; then
-				procd_send_signal nut-server upsd HUP 2>&1 | logger -t nut-server
-			fi
+			signal_instance "upsd" "upsd" "upsd -c reload" HUP "${STATEPATH}/upsd.pid"
+		# If server (upsd) is not running
 		else
+			# Start server (upsd)
 			/etc/init.d/nut-server start "upsd" 2>&1 | logger -t nut-server
 		fi
 		config_foreach reload_ups_driver driver
 
 		# Stop any driver instances which are no longer configured
+		# We can only reliably do this for instances managed by procd
 		for instance in $(list_running_instances "nut-server"|sed -e 's/upsd//'); do
 			unset driver
 			config_get driver "$instance" driver
@@ -536,6 +548,7 @@ reload_service() {
 				procd_kill nut-server "$instance" 2>&1 | logger -t nut-server
 			fi
 		done
+	# Nut-server is not started, so start it
 	else
 		/etc/init.d/nut-server start 2>&1 | logger -t nut-server
 	fi
@@ -547,21 +560,13 @@ stop_service() {
 
 	case $@ in
 	"")
+		# If nut-server was started but has no instances (even upsd)
 		if server_active; then
 			logger -t nut-server "nut-server active with no instances"
 			procd_kill nut-server 2>&1 | logger -t nut-server
 		elif procd_running nut-server; then # if have at least one instance
-			if procd_running nut-server upsd; then
-				# Try to exit politely, then stop procd instance
-				if [ -s "${STATEPATH}/upsd.pid" ]; then
-					upsd -c stop 2>&1 | logger -t nut-server
-				elif pgrep upsd >/dev/null 2>/dev/null; then
-					procd_send_signal nut-server upsd TERM 2>&1 | logger -t nut-server
-				fi
-				if procd_running nut-server upsd >/dev/null 2>&1; then
-					procd_kill nut-server upsd 2>&1 | logger -t nut-server
-				fi
-			fi
+			signal_instance "upsd" "upsd" "upsd -c stop" TERM "${STATEPATH}/upsd.pid" "procd_kill nut-server upsd"
+
 			config_foreach stop_ups_driver driver
 
 			# Also stop any driver instances which are no longer configured
@@ -571,6 +576,7 @@ stop_service() {
 				fi
 			done
 
+			# If nut-server active but has no instances (even upsd)
 			if server_active >/dev/null 2>&1; then
 				procd_kill nut-server 2>&1 | logger -t nut-server
 			fi
@@ -578,12 +584,8 @@ stop_service() {
 		;;
 	*upsd*)
 		if procd_running nut-server upsd; then
-			# Try to exit politely, then stop procd instance
-			if [ -s "${STATEPATH}/upsd.pid" ]; then
-				upsd -c stop 2>&1 | logger -t nut-server
-			elif pgrep upsd >/dev/null 2>/dev/null; then
-				procd_send_signal nut-server upsd TERM 2>&1 | logger -t nut-server
-			fi
+			signal_instance "upsd" "upsd" "upsd -c stop" TERM "${STATEPATH}/upsd.pid" "procd_kill nut-server upsd"
+			# If nut-server is active with no instances
 			if server_active; then
 				procd_kill nut-server 2>&1 | logger -t nut-server
 			fi
