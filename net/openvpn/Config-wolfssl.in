@@ -17,10 +17,6 @@ config OPENVPN_wolfssl_ENABLE_X509_ALT_USERNAME
 	bool "Enable the --x509-username-field feature"
 	default n
 
-#config OPENVPN_wolfssl_ENABLE_EUREPHIA
-#	bool "Enable support for the eurephia plug-in"
-#	default n
-
 config OPENVPN_wolfssl_ENABLE_MANAGEMENT
 	bool "Enable management server support"
 	default y
