@@ -4,14 +4,13 @@
 #
 # shellcheck disable=SC3043 # ash supports local
 
-PROG=/usr/bin/AdGuardHome
-
-USE_PROCD=1
-
 # matches dnsmasq
 START=19
 # stops before networking stops
 STOP=89
+
+PROG=/usr/bin/AdGuardHome
+USE_PROCD=1
 
 config_cb() {
 	[ $# -eq 0 ] && return
