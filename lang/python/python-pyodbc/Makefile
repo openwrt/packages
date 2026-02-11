@@ -5,18 +5,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pyodbc
-PKG_VERSION:=5.0.1
+PKG_VERSION:=5.3.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=pyodbc
-PKG_HASH:=03d7d0b04d5a9156099ce8d03e92f3956783746fa9234eb6f5b5cfc12b645011
+PKG_HASH:=2fe0e063d8fb66efd0ac6dc39236c4de1a45f17c33eaded0d553d21c199f4d05
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.txt
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
 # for odbc_config
-PKG_BUILD_DEPENDS:=unixodbc/host
+PKG_BUILD_DEPENDS:= \
+	python-setuptools/host \
+	unixodbc/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
