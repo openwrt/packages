@@ -2,6 +2,7 @@
 
 # shellcheck shell=ash
 
+# shellcheck disable=SC2034
 START=82
 STOP=28
 USE_PROCD=1
@@ -151,6 +152,7 @@ nut_upsmon_add() {
 }
 
 build_config() {
+	# shellcheck disable=SC2174
 	mkdir -m 0750 -p "$(dirname "$UPSMON_C")"
 
 	config_load nut_monitor
@@ -174,6 +176,7 @@ interface_triggers() {
 
 	config_get triggerlist "upsmon" triggerlist
 
+	# shellcheck disable=SC1091
 	. "${IPKG_INSTROOT}"/lib/functions/network.sh
 
 	if [ -n "$triggerlist" ]; then
@@ -221,7 +224,7 @@ pgrepkill() {
 
 	[ $# -eq 2 ] || return 1
 
-	pids="$(pgrep "$1")"
+	pids="$(pgrep "$1" 2>/dev/null)" || return 0
 
 	for pid in $pids; do
 		kill -"$2" "$pid"
@@ -259,7 +262,7 @@ reload_service() {
 	else
 		if procd_running nut-monitor upsmon; then
 			if [ -s "$PIDFILE" ]; then
-				upsmon -c stop | logger -t nut-monitor
+				upsmon -c stop 2>&1 | logger -t nut-monitor
 			else
 				pgrepkill upsmon TERM >/dev/null 2>/dev/null
 			fi
@@ -270,7 +273,7 @@ reload_service() {
 
 stop_service() {
 	if [ -s "$PIDFILE" ]; then
-		upsmon -c stop | logger -t nut-monitor
+		upsmon -c stop 2>&1 | logger -t nut-monitor
 		procd_kill nut-monitor 2>/dev/null | logger -t nut-monitor
 	else
 		pgrepkill upsmon TERM >/dev/null 2>/dev/null

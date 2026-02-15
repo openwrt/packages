@@ -276,6 +276,67 @@ build_config() {
 	[ -n "$RUNAS" ] && chgrp "$(id -gn "$RUNAS")" "$UPS_C"
 }
 
+ensure_usb_ups_access() {
+	local ups="$1"
+	local vendorid
+	local productid
+	local runas=nut
+
+	runas="$RUNAS"
+
+	config_load nut_server
+	config_get vendorid "$ups" vendorid
+	config_get productid "$ups" productid
+	config_get serial "$ups" serial
+
+	[ -n "$vendorid" ] || return
+	[ -n "$productid" ] || return
+
+	local NL='
+'
+
+	find /sys/devices -name idVendor -a -path '*usb*'| while IFS="$NL" read -r vendor_path; do
+			local usb_bus usb_dev device_path
+
+			# Filter by vendor ID first
+			if [ "$(cat "$vendor_path" 2>/dev/null)" != "$vendorid" ]; then
+				continue
+			fi
+
+			device_path="$(dirname "$vendor_path")"
+
+			# Then filter by product ID
+			if [ "$(cat "$device_path/idProduct" 2>/dev/null)" != "$productid" ]; then
+				continue
+			fi
+
+			# Next filter by serial, if provided
+			if [ -n "$serial" ] && [ "$serial" != "$(cat "$device_path"/serial)" ]; then
+				continue
+			fi
+
+			usb_bus="$(printf "%03d" "$(cat "$device_path"/busnum)")"
+			usb_dev="$(printf "%03d" "$(cat "$device_path"/devnum)")"
+
+			# usb_bus and usb_dev must each be at least 001
+			# a missing value will be present as 000 due to 'printf "%03d"'
+			local MISSING_USB_NUM="000"
+			if [ "$usb_bus" != "$MISSING_USB_NUM" ] && [ "$usb_dev" != "$MISSING_USB_NUM" ]; then
+				chmod 0660 /dev/bus/usb/"$usb_bus"/"$usb_dev"
+				chown "${runas:-root}":"$(id -gn "${runas:-root}")" /dev/bus/usb/"$usb_bus"/"$usb_dev"
+			fi
+
+			# Serial numbers are defined as unique, so do not loop further if serial
+			# was present and matched
+			if [ -n "$serial" ]; then
+				break
+				# If a serial number is not provided we need all vendor:product matches
+				# to have permissions for NUT as we do not know the matching method here
+			fi
+		done
+}
+
+# Must be called from start_service
 start_ups_driver() {
 	local ups="$1"
 	local requested="$2"
@@ -295,8 +356,10 @@ start_ups_driver() {
 		return 0
 	fi
 
+	# Depends on config_load from start_service
 	srv_statepath
 	srv_runas
+	ensure_usb_ups_access "$ups"
 
 	config_get driver "$ups" driver "usbhid-ups"
 	procd_open_instance "$ups"
@@ -373,7 +436,8 @@ start_service() {
 
 	[ "$should_start_srv" = "1" ] || return 0
 
-	case $@ in
+	# We only start one service (upsd or one driver) from a given invocation
+	case "$1" in
 	"")
 		config_foreach start_ups_driver driver
 		start_server_instance upsd
@@ -382,7 +446,7 @@ start_service() {
 		start_server_instance upsd
 		;;
 	*)
-		config_foreach start_ups_driver driver "$@"
+		config_foreach start_ups_driver driver "$1"
 		;;
 	esac
 }
@@ -423,7 +487,7 @@ signal_instance() {
 	elif pgrep "$process_name" >/dev/null 2>/dev/null; then
 		procd_send_signal nut-server "$instance_name" "$signal" 2>&1 | logger -t nut-server
 	fi
-	if [ -n "$secondary_command" ] && procd_running "$instance_name"; then
+	if [ -n "$secondary_command" ] && procd_running nut-server "$instance_name"; then
 		$secondary_command 2>&1 | logger -t nut-server
 	fi
 }
@@ -454,7 +518,7 @@ stop_ups_driver() {
 	if procd_running nut-server "$ups"; then
 		signal_instance "$ups" "$driver" "/lib/nut/'${driver}' -c exit -a '${ups}'" "TERM" "${STATEPATH}/${driver}-${ups}.pid"
 		if procd_running nut-server upsd >/dev/null 2>&1; then
-			signal_instance upsd upsd "upsd -c stop" "TERM" "${STATEPATH}/upsd.pid" "procd_kill upsd"
+			signal_instance upsd upsd "upsd -c stop" "TERM" "${STATEPATH}/upsd.pid" "procd_kill nut-server upsd"
 		fi
 	fi
 }
@@ -515,8 +579,8 @@ reload_service() {
 		config_foreach stop_ups_driver driver
 
 		# Also stop any driver instances which are no longer configured
-		for instance in $(list_running_instances "nut-server"|sed -e 's/upsd//'); do
-			if procd_running nut-server "$instance" >/dev/null 2>&1; then
+		for instance in $(list_running_instances "nut-server"); do
+			if [ "$instance" != "upsd" ] && procd_running nut-server "$instance" >/dev/null 2>&1; then
 				procd_kill nut-server "$instance" 2>&1 | logger -t nut-server
 			fi
 		done
@@ -541,7 +605,10 @@ reload_service() {
 
 		# Stop any driver instances which are no longer configured
 		# We can only reliably do this for instances managed by procd
-		for instance in $(list_running_instances "nut-server"|sed -e 's/upsd//'); do
+		for instance in $(list_running_instances "nut-server"); do
+			if [ "$instance" = "upsd" ]; then
+				continue
+			fi
 			unset driver
 			config_get driver "$instance" driver
 			if [ -z "$driver" ] && procd_running nut-server "$instance" >/dev/null 2>&1; then
@@ -558,7 +625,8 @@ stop_service() {
 	config_load nut_server
 	srv_statepath
 
-	case $@ in
+	# We only handle the first parameter passed
+	case "$1" in
 	"")
 		# If nut-server was started but has no instances (even upsd)
 		if server_active; then
@@ -570,8 +638,8 @@ stop_service() {
 			config_foreach stop_ups_driver driver
 
 			# Also stop any driver instances which are no longer configured
-			for instance in $(list_running_instances "nut-server"|sed -e 's/upsd//'); do
-				if procd_running nut-server "$instance" >/dev/null 2>&1; then
+			for instance in $(list_running_instances "nut-server"); do
+				if [ "$instance" != "upsd" ] && procd_running nut-server "$instance" >/dev/null 2>&1; then
 					procd_kill nut-server "$instance" 2>&1 | logger -t nut-server
 				fi
 			done
@@ -592,7 +660,8 @@ stop_service() {
 		fi
 		;;
 	*)
-		config_foreach stop_ups_driver driver "$@"
+		# We only handle the first parameter, so do not pass in all parameters
+		config_foreach stop_ups_driver driver "$1"
 		;;
 	esac
 }
