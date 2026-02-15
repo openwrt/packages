@@ -1,22 +1,22 @@
 #
-# Copyright (C) 2015-2025 OpenWrt.org
+# Copyright (C) 2015-2026 OpenWrt.org
 #
 # SPDX-License-Identifier: GPL-2.0-only
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vim
-PKG_VERSION:=9.1.1918
-PKG_XXD_VERSION:=2025.08.24
-PKG_RELEASE:=3
-VIMVER:=91
+PKG_VERSION:=9.2.0
+PKG_XXD_VERSION:=2025.11.26
+PKG_RELEASE:=1
+VIMVER:=92
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/vim/vim.git
 PKG_SOURCE_VERSION=v$(PKG_VERSION)
-PKG_MIRROR_HASH:=51c2d2492d884c879c61b1451f4690f221b2dbccacfe3ddf8abde4d6fcc5e2bf
+PKG_MIRROR_HASH:=92c6fe490fba758bc0a626863713d65c078d2abdbd030e9e423bdf372565d58e
 
-PKG_MAINTAINER:=Marko Ratkaj <markoratkaj@gmail.com>
+PKG_MAINTAINER:=
 PKG_LICENSE:=Vim
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:vim:vim
@@ -31,7 +31,7 @@ define Package/vim/Default
   CATEGORY:=Utilities
   DEPENDS:=+libncurses
   TITLE:=Vi IMproved - enhanced vi editor
-  URL:=http://www.vim.org/
+  URL:=https://www.vim.org/
   SUBMENU:=Editors
 endef
 
@@ -72,8 +72,8 @@ define Package/xxd
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=make a hexdump or do the reverse
-  URL:=http://www.vim.org/
-  VERSION:=$(PKG_XXD_VERSION)
+  URL:=https://www.vim.org/
+  VERSION:=$(PKG_XXD_VERSION)-r$(PKG_RELEASE)
 endef
 
 define Package/vim/conffiles
