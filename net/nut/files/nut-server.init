@@ -276,6 +276,35 @@ build_config() {
 	[ -n "$RUNAS" ] && chgrp "$(id -gn "$RUNAS")" "$UPS_C"
 }
 
+ensure_usb_ups_access() {
+	local ups="$1"
+	local vendorid
+	local productid
+	local runas=nut
+	local usb_bus usb_dev
+
+	runas="$RUNAS"
+
+	config_get vendorid "$ups" vendorid
+	config_get productid "$ups" productid
+
+	[ -n "$vendorid" ] || return
+	[ -n "$productid" ] || return
+
+	device_paths="$(find /sys/devices -name idVendor -a -path '*usb*' -a -exec sh -c "if [ \"\$(cat \$1)\" = \"$vendorid\" ]; then echo \$(dirname \$1); fi" ash {} \;)"
+	for device_path in $device_paths; do
+		if [ "$(cat "$device_path/idProduct" 2>/dev/null)" = "$productid" ]; then
+			usb_bus="$(printf "%03d" "$(cat "$device_path"/busnum)")"
+			usb_dev="$(printf "%03d" "$(cat "$device_path"/devnum)")"
+		fi
+	done
+
+	if [ -n "$usb_bus" ] && [ -n "$usb_dev" ]; then
+		chmod 0660 /dev/bus/usb/"$usb_bus"/"$usb_dev"
+		chown "${runas:-root}":"$(id -gn "${runas:-root}")" /dev/bus/usb/"$usb_bus"/"$usb_dev"
+	fi
+}
+
 start_ups_driver() {
 	local ups="$1"
 	local requested="$2"
@@ -297,6 +326,8 @@ start_ups_driver() {
 
 	srv_statepath
 	srv_runas
+
+	ensure_usb_ups_access "$ups"
 
 	config_get driver "$ups" driver "usbhid-ups"
 	procd_open_instance "$ups"
