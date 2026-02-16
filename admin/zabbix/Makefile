@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
 PKG_VERSION:=7.0.22
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://cdn.zabbix.com/zabbix/sources/stable/$(basename $(PKG_VERSION))/ \
@@ -271,10 +271,10 @@ define Package/zabbix-frontend-server
   TITLE+= frontend server
   PKGARCH:=all
   DEPENDS:= \
-    @PACKAGE_php8 \
-    @ZABBIX_MYSQL:php8-mod-mysqli \
-    @ZABBIX_POSTGRESQL:php8-mod-pgsql \
+    php8 \
     @(!ZABBIX_SQLITE) \
+    +ZABBIX_MYSQL:php8-mod-mysqli \
+    +ZABBIX_POSTGRESQL:php8-mod-pgsql \
     +php8-cgi \
     +php8-mod-gd \
     +php8-mod-bcmath \
