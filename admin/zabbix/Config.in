@@ -10,7 +10,7 @@ choice
 endchoice
 
 choice
-        prompt "Select SSL Library"
+        prompt "Select SSL Library for non-full variants"
         default ZABBIX_GNUTLS
 
         config ZABBIX_GNUTLS
@@ -19,3 +19,32 @@ choice
         config ZABBIX_OPENSSL
                 bool "OpenSSL"
 endchoice
+
+menu "Additional functionality/support for non-full variants"
+
+        config ZABBIX_CURL
+                bool "cURL support (default SSL)"
+                default n
+                depends on !(ZABBIX_CURL_GNUTLS || ZABBIX_GNUTLS)
+
+        config ZABBIX_CURL_GNUTLS
+                bool "cURL support (GnuTLS)"
+                default n
+                depends on ZABBIX_GNUTLS
+
+        config ZABBIX_LDAP
+                bool "LDAP support"
+                depends on ZABBIX_OPENSSL
+                default n
+
+        config ZABBIX_NETSNMP
+                bool "NetSNMP support (OpenSSL)"
+                default n
+                depends on !ZABBIX_NETSNMP_NOSSL && ZABBIX_OPENSSL
+
+        config ZABBIX_NETSNMP_NOSSL
+                bool "NetSNMP support (noSSL)"
+                default n
+                depends on !(ZABBIX_OPENSSL || PACKAGE_zabbix-agentd-full || PACKAGE_zabbix-server-full || PACKAGE_zabbix-proxy-full)
+
+endmenu
