@@ -8,6 +8,9 @@
 # extended and partial rewritten
 #.2014-2018 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
 #
+# 2026 Wayne King
+# Added use_api_check option for providers with proxied records (e.g., Cloudflare)
+#
 # function timeout
 # copied from http://www.ict.griffith.edu.au/anthony/software/timeout.sh
 # @author Anthony Thyssen  6 April 2011
@@ -985,8 +988,39 @@ get_registered_ip() {
 	[ $is_glue -eq 1 -a -z "$BIND_HOST" ] && write_log 14 "Lookup of glue records is only supported using BIND host"
 	write_log 7 "Detect registered/public IP"
 
+	# Ensure use_api_check defaults to 0 if not set
+	[ -z "$use_api_check" ] && use_api_check=0
+
 	# set correct regular expression
 	[ $use_ipv6 -eq 0 ] && __REGEX="$IPV4_REGEX" || __REGEX="$IPV6_REGEX"
+
+	# Attempt API check if enabled
+	if [ "$use_api_check" -eq 1 ]; then
+		local __SCRIPT
+		if [ -n "$update_script" ]; then
+			__SCRIPT="$update_script"
+		elif [ "$service_name" != "custom" ] && [ -n "$service_name" ]; then
+			local __SANITIZED
+			__SANITIZED=$(echo "$service_name" | sed 's/[.-]/_/g')
+			__SCRIPT="/usr/lib/ddns/update_${__SANITIZED}.sh"
+		fi
+		if [ -n "$__SCRIPT" ] && [ -f "$__SCRIPT" ]; then
+			write_log 7 "Using provider API for registered IP check via '$__SCRIPT'"
+			REGISTERED_IP=""
+			GET_REGISTERED_IP=1
+			. "$__SCRIPT"
+			__ERR=$?
+			unset GET_REGISTERED_IP
+			if [ $__ERR -eq 0 ] && [ -n "$REGISTERED_IP" ]; then
+				write_log 7 "Registered IP '$REGISTERED_IP' detected via provider API"
+				[ -z "$IPFILE" ] || echo "$REGISTERED_IP" > "$IPFILE"
+				eval "$1=\"$REGISTERED_IP\""
+				return 0
+			else
+				write_log 4 "API check failed (error: '$__ERR') - falling back to DNS lookup"
+			fi
+		fi
+	fi
 
 	if [ -n "$BIND_HOST" ]; then
 		__PROG="$BIND_HOST"
