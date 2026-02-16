@@ -1,0 +1,8 @@
+config ZABBIX_BUILD_SUPPORT_BIN
+  bool
+  depends on (PACKAGE_zabbix-agentd || PACKAGE_zabbix-proxy || PACKAGE_zabbix-server)
+  default y
+  help
+    This option exists to prevent trying to build get and/or sender when none
+    of agentd, server, or proxy are being built. In that case get and sender are
+    not built by the Zabbix build system.
