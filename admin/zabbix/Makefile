@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
 PKG_VERSION:=7.0.22
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://cdn.zabbix.com/zabbix/sources/stable/$(basename $(PKG_VERSION))/ \
@@ -26,17 +26,16 @@ PKG_BUILD_PARALLEL:=1
 
 PKG_CONFIG_DEPENDS:= \
   CONFIG_ZABBIX_MYSQL \
-  CONFIG_ZABBIX_POSTGRESQL \
-  CONFIG_ZABBIX_SQLITE
+  CONFIG_ZABBIX_POSTGRESQL
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
-define Package/zabbix-proxy-nossl/config
+define Package/zabbix-server-nossl/config
 comment "Database Software"
 
 choice
-        prompt "Selected Database Software"
+        prompt "Select Database Software"
         default ZABBIX_POSTGRESQL
 
         config ZABBIX_MYSQL
@@ -44,9 +43,6 @@ choice
 
         config ZABBIX_POSTGRESQL
                 bool "PostgreSQL"
-
-        config ZABBIX_SQLITE
-                bool "SQLite"
 endchoice
 endef
 
@@ -66,15 +62,15 @@ define Package/zabbix-agentd/Default
     +libevent2-pthreads \
     +libpcre2 \
     +zlib
-  PROVIDES:=zabbix-agentd
+  PROVIDES:=@zabbix-agentd
   USERID:=zabbix-agent=53:zabbix-agent=53
 endef
 
-define Package/zabbix-agentd-nossl
+define Package/zabbix-agentd-tiny
   $(call Package/zabbix-agentd/Default)
   TITLE+= (no SSL)
-  VARIANT:=nossl
-  DEFAULT_VARIANT:=1
+  PROVIDES+= zabbix-agentd-nossl
+  VARIANT:=tiny
 endef
 
 define Package/zabbix-agentd-openssl
@@ -91,6 +87,7 @@ define Package/zabbix-agentd-gnutls
   DEPENDS+= +libgnutls
   PROVIDES+= zabbix-agentd-ssl
   VARIANT:=gnutls
+  DEFAULT_VARIANT:=1
 endef
 
 define Package/zabbix-sender/Default
@@ -100,14 +97,14 @@ define Package/zabbix-sender/Default
     $(ICONV_DEPENDS) \
     +libpcre2 \
     +zlib
-  PROVIDES:=zabbix-sender
+  PROVIDES:=@zabbix-sender
 endef
 
-define Package/zabbix-sender-nossl
+define Package/zabbix-sender-tiny
   $(call Package/zabbix-sender/Default)
   TITLE+= (no SSL)
-  VARIANT:=nossl
-  DEFAULT_VARIANT:=1
+  PROVIDES+= zabbix-sender-nossl
+  VARIANT:=tiny
 endef
 
 define Package/zabbix-sender-openssl
@@ -124,6 +121,7 @@ define Package/zabbix-sender-gnutls
   DEPENDS+= +libgnutls
   PROVIDES+= zabbix-sender-ssl
   VARIANT:=gnutls
+  DEFAULT_VARIANT:=1
 endef
 
 define Package/zabbix-get/Default
@@ -133,14 +131,14 @@ define Package/zabbix-get/Default
     $(ICONV_DEPENDS) \
     +libpcre2 \
     +zlib
-  PROVIDES:=zabbix-get
+  PROVIDES:=@zabbix-get
 endef
 
-define Package/zabbix-get-nossl
+define Package/zabbix-get-tiny
   $(call Package/zabbix-get/Default)
   TITLE+= (no SSL)
-  VARIANT:=nossl
-  DEFAULT_VARIANT:=1
+  PROVIDES+= zabbix-get-nossl
+  VARIANT:=tiny
 endef
 
 define Package/zabbix-get-openssl
@@ -157,14 +155,13 @@ define Package/zabbix-get-gnutls
   DEPENDS+= +libgnutls
   PROVIDES+= zabbix-get-ssl
   VARIANT:=gnutls
+  DEFAULT_VARIANT:=1
 endef
 
 define Package/zabbix-server-or-proxy/Default
   $(call Package/zabbix/Default)
   DEPENDS:= \
     $(ICONV_DEPENDS) \
-    +ZABBIX_MYSQL:libmariadbclient \
-    +ZABBIX_POSTGRESQL:libpq \
     +fping \
     +libevent2 \
     +libevent2-pthreads \
@@ -177,15 +174,17 @@ endef
 define Package/zabbix-server/Default
   $(call Package/zabbix-server-or-proxy/Default)
   TITLE+= server
-  DEPENDS+= @(!ZABBIX_SQLITE)
-  PROVIDES:=zabbix-server
+  DEPENDS:=\
+    +ZABBIX_MYSQL:libmariadbclient \
+    +ZABBIX_POSTGRESQL:libpq
+  PROVIDES:=@zabbix-server
 endef
 
-define Package/zabbix-server-nossl
+define Package/zabbix-server-small
   $(call Package/zabbix-server/Default)
   TITLE+= (no SSL)
+  PROVIDES+= zabbix-server-nossl
   VARIANT:=nossl
-  DEFAULT_VARIANT:=1
 endef
 
 define Package/zabbix-server-openssl
@@ -202,24 +201,40 @@ define Package/zabbix-server-gnutls
   DEPENDS+= +libgnutls
   PROVIDES+= zabbix-server-ssl
   VARIANT:=gnutls
+  DEFAULT_VARIANT:=1
 endef
 
 define Package/zabbix-proxy/Default
   $(call Package/zabbix-server-or-proxy/Default)
   TITLE+= proxy
-  DEPENDS+= +ZABBIX_SQLITE:libsqlite3
-  PROVIDES:=zabbix-proxy
+  PROVIDES:=@zabbix-proxy
 endef
 
-define Package/zabbix-proxy-nossl
+define Package/zabbix-proxy-tiny
   $(call Package/zabbix-proxy/Default)
+  TITLE+= sqlite3 (no SSL)
+  DEPENDS+= libsqlite3
+  PROVIDES += zabbix-proxy-nossl
+  VARIANT:=tiny
+endef
+
+define Package/zabbix-proxy-sql-server/Default
+  $(call Package/zabbix-proxy/Default)
+  TITLE+= sql
+  DEPENDS:=\
+    +ZABBIX_MYSQL:libmariadbclient \
+    +ZABBIX_POSTGRESQL:libpq
+endef
+
+define Package/zabbix-proxy-small
+  $(call Package/zabbix-proxy-sql-server/Default)
   TITLE+= (no SSL)
+  PROVIDES+= zabbix-proxy-nossl
   VARIANT:=nossl
-  DEFAULT_VARIANT:=1
 endef
 
 define Package/zabbix-proxy-openssl
-  $(call Package/zabbix-proxy/Default)
+  $(call Package/zabbix-proxy-sql-server/Default)
   TITLE+= (with OpenSSL)
   DEPENDS+= +libopenssl
   PROVIDES+= zabbix-proxy-ssl
@@ -227,11 +242,12 @@ define Package/zabbix-proxy-openssl
 endef
 
 define Package/zabbix-proxy-gnutls
-  $(call Package/zabbix-proxy/Default)
+  $(call Package/zabbix-proxy-sql-server/Default)
   TITLE+= (with GnuTLS)
   DEPENDS+= +libgnutls
   PROVIDES+= zabbix-proxy-ssl
   VARIANT:=gnutls
+  DEFAULT_VARIANT:=1
 endef
 
 define Package/zabbix-extra-mac80211
@@ -272,7 +288,6 @@ define Package/zabbix-frontend-server
   PKGARCH:=all
   DEPENDS:= \
     php8 \
-    @(!ZABBIX_SQLITE) \
     +ZABBIX_MYSQL:php8-mod-mysqli \
     +ZABBIX_POSTGRESQL:php8-mod-pgsql \
     +php8-cgi \
@@ -313,18 +328,23 @@ ifneq ($(BUILD_VARIANT),no-configure)
 
 CONFIGURE_ARGS+= \
 	--enable-agent \
-	$(if $(CONFIG_ZABBIX_SQLITE),--disable-server,--enable-server) \
 	--enable-proxy \
 	$(call autoconf_bool,CONFIG_IPV6,ipv6) \
 	--disable-java \
-	$(if $(CONFIG_ZABBIX_MYSQL),--with-mysql) \
-	$(if $(CONFIG_ZABBIX_POSTGRESQL),--with-postgresql) \
-	$(if $(CONFIG_ZABBIX_SQLITE),--with-sqlite3=$(STAGING_DIR)/usr) \
 	--with-libevent=$(STAGING_DIR)/usr/include \
 	--with-libpcre2=$(STAGING_DIR)/usr/include \
 	--with-zlib=$(STAGING_DIR)/usr/include
 
-ifeq ($(BUILD_VARIANT),nossl)
+ifeq ($(BUILD_VARIANT),tiny)
+	--disable-server
+	--with-sqlite3=$(STAGING_DIR)/usr
+else
+  --enable-server
+	$(if $(CONFIG_ZABBIX_MYSQL),--with-mysql) \
+	$(if $(CONFIG_ZABBIX_POSTGRESQL),--with-postgresql)
+endif
+
+ifneq ($(filter tiny nossl,$(BUILD_VARIANT)),)
 	CONFIGURE_ARGS+= --with-openssl="no" --with-gnutls="no"
 endif
 
@@ -454,9 +474,9 @@ define Package/zabbix-server/install-extra
 	$(INSTALL_BIN) ./files/zabbix_server.defaults $$(1)/etc/uci-defaults/90_zabbix_server
 endef
 
-$(foreach zvariant,nossl openssl gnutls,$(eval $(call Package/zabbix-daemon/files,agentd,$(zvariant),,$(call Package/zabbix-agentd/install-extra))))
-$(foreach zvariant,nossl openssl gnutls,$(eval $(call Package/zabbix-daemon/files,server,$(zvariant),$(call Package/zabbix-server/conffiles-extra),$(call Package/zabbix-server/install-extra))))
-$(foreach zvariant,nossl openssl gnutls,$(eval $(call Package/zabbix-daemon/files,proxy,$(zvariant))))
+$(foreach zvariant,tiny openssl gnutls,$(eval $(call Package/zabbix-daemon/files,agentd,$(zvariant),,$(call Package/zabbix-agentd/install-extra))))
+$(foreach zvariant,small openssl gnutls,$(eval $(call Package/zabbix-daemon/files,server,$(zvariant),$(call Package/zabbix-server/conffiles-extra),$(call Package/zabbix-server/install-extra))))
+$(foreach zvariant,tiny small openssl gnutls,$(eval $(call Package/zabbix-daemon/files,proxy,$(zvariant))))
 
 # Due to nested defines, eval, and call, the extra spaces for the nested define
 # is essential.
@@ -468,7 +488,7 @@ define Package/zabbix-server/postinst/Default
          endef
 endef
 
-$(foreach zvariant,nossl openssl gnutls,$(eval $(call Package/zabbix-server/postinst/Default,$(zvariant))))
+$(foreach zvariant,small openssl gnutls,$(eval $(call Package/zabbix-server/postinst/Default,$(zvariant))))
 
 define Package/zabbix-program/files
         define Package/zabbix-$(1)-$(2)/install
@@ -476,8 +496,8 @@ define Package/zabbix-program/files
         endef
 endef
 
-$(foreach zvariant,nossl openssl gnutls,$(eval $(call Package/zabbix-program/files,sender,$(zvariant))))
-$(foreach zvariant,nossl openssl gnutls,$(eval $(call Package/zabbix-program/files,get,$(zvariant))))
+$(foreach zvariant,tiny openssl gnutls,$(eval $(call Package/zabbix-program/files,sender,$(zvariant))))
+$(foreach zvariant,tiny openssl gnutls,$(eval $(call Package/zabbix-program/files,get,$(zvariant))))
 
 define Package/zabbix-extra-mac80211/install
 	$(call Package/zabbix/install/zabbix.conf.d,$(1),mac80211)
@@ -517,19 +537,20 @@ define Package/zabbix-frontend-server/install
 	$(CP) $(PKG_BUILD_DIR)/ui/* $(1)/www/zabbix
 endef
 
-$(eval $(call BuildPackage,zabbix-agentd-nossl))
+$(eval $(call BuildPackage,zabbix-agentd-tiny))
 $(eval $(call BuildPackage,zabbix-agentd-openssl))
 $(eval $(call BuildPackage,zabbix-agentd-gnutls))
-$(eval $(call BuildPackage,zabbix-get-nossl))
+$(eval $(call BuildPackage,zabbix-get-tiny))
 $(eval $(call BuildPackage,zabbix-get-openssl))
 $(eval $(call BuildPackage,zabbix-get-gnutls))
-$(eval $(call BuildPackage,zabbix-sender-nossl))
+$(eval $(call BuildPackage,zabbix-sender-tiny))
 $(eval $(call BuildPackage,zabbix-sender-openssl))
 $(eval $(call BuildPackage,zabbix-sender-gnutls))
-$(eval $(call BuildPackage,zabbix-proxy-nossl))
+$(eval $(call BuildPackage,zabbix-proxy-tiny))
+$(eval $(call BuildPackage,zabbix-proxy-small))
 $(eval $(call BuildPackage,zabbix-proxy-openssl))
 $(eval $(call BuildPackage,zabbix-proxy-gnutls))
-$(eval $(call BuildPackage,zabbix-server-nossl))
+$(eval $(call BuildPackage,zabbix-server-small))
 $(eval $(call BuildPackage,zabbix-server-openssl))
 $(eval $(call BuildPackage,zabbix-server-gnutls))
 $(eval $(call BuildPackage,zabbix-extra-mac80211))
