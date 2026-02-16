@@ -23,7 +23,7 @@ PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/libgcrypt
+define Package/libgcrypt/default
   SECTION:=libs
   CATEGORY:=Libraries
   DEPENDS:=+libgpg-error
@@ -31,9 +31,10 @@ define Package/libgcrypt
   URL:=https://www.gnupg.org/related_software/libgcrypt/
   LICENSE:=LGPL-2.1-or-later
   LICENSE_FILES:=COPYING.LIB
+  PROVIDES:=libgcrypt
 endef
 
-define Package/libgcrypt/description
+define Package/libgcrypt/default/description
  This is a general purpose cryptographic library based on the code from
  GnuPG. It provides functions for all cryptographic building blocks:
  symmetric ciphers (AES, DES, Arcfour, CAST5), hash algorithms (MD5, SHA-1,
@@ -44,12 +45,43 @@ define Package/libgcrypt/description
  RC2, SEED, Camellia, CRC, MD4, TIGER-192, Whirlpool, ElGamal, ECC).
 endef
 
+define Package/libgcrypt
+  $(call Package/libgcrypt/default)
+  PROVIDES+=libgcrypt-mini
+endef
+
+define Package/libgcrypt/description
+$(call Package/libgcrypt/Default/description)
+ .
+ This package contains the full-featured libgcrypt.
+endef
+
+define Package/libgcrypt-mini
+  $(call Package/libgcrypt/default)
+  TITLE+= (mini)
+  VARIANT:=mini
+endef
+
+define Package/libgcrypt-mini/description
+$(call Package/libgcrypt/Default/description)
+ .
+ This package contains a minimal-featured libgcrypt.
+ It was tested to work with vpnc.
+endef
+
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
 	--disable-asm \
 	--disable-doc \
 	--with-gpg-error-prefix="$(STAGING_DIR)/usr"
+
+ifeq ($(BUILD_VARIANT),mini)
+CONFIGURE_ARGS += \
+	--enable-ciphers='des,aes' \
+	--enable-pubkey-ciphers='' \
+	--enable-digests='md5,sha1,blake2'
+endif
 
 TARGET_CFLAGS += $(FPIC)
 
@@ -69,4 +101,7 @@ define Package/libgcrypt/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgcrypt.so.* $(1)/usr/lib/
 endef
 
+Package/libgcrypt-mini/install = $(Package/libgcrypt/install)
+
 $(eval $(call BuildPackage,libgcrypt))
+$(eval $(call BuildPackage,libgcrypt-mini))
