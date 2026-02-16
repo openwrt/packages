@@ -1,0 +1,37 @@
+choice
+        prompt "Select SSL Library"
+
+        default ZABBIX_OPENSSL
+
+        config ZABBIX_GNUTLS
+                bool "GnuTLS"
+
+        config ZABBIX_NOSSL
+                bool "NoSSL"
+
+        config ZABBIX_OPENSSL
+                bool "OpenSSL"
+endchoice
+
+menu "Modify features for non-core variants"
+
+        config ZABBIX_CURL
+                bool "cURL support (default SSL)"
+                default y
+                depends on !ZABBIX_GNUTLS && !ZABBIX_NOSSL
+
+        config ZABBIX_CURL_GNUTLS
+                bool "cURL support (GnuTLS)"
+                default n
+                depends on !ZABBIX_CURL
+
+        config ZABBIX_LDAP
+                bool "LDAP support"
+                depends on ZABBIX_OPENSSL
+                default y
+
+        config ZABBIX_NETSNMP
+                bool "NetSNMP support (OpenSSL)"
+                depends on ZABBIX_OPENSSL
+                default y
+endmenu
