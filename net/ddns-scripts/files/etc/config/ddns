@@ -18,6 +18,7 @@ config service "myddns_ipv4"
 	option interface	"wan"
 	option ip_source	"network"
 	option ip_network	"wan"
+	option use_api_check    "0"
 
 config service "myddns_ipv6"
 	option update_url	"http://[USERNAME]:[PASSWORD]@your.provider.net/nic/update?hostname=[DOMAIN]&myip=[IP]"
@@ -29,4 +30,4 @@ config service "myddns_ipv6"
 	option interface	"wan6"
 	option ip_source	"network"
 	option ip_network	"wan6"
-
+	option use_api_check    "0"
