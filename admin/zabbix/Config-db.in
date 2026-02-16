@@ -1,0 +1,13 @@
+choice
+        prompt "Select Database Software for Zabbix"
+        default ZABBIX_POSTGRESQL
+
+        config ZABBIX_MYSQL
+                bool "MySQL/MariaDB"
+
+        config ZABBIX_POSTGRESQL
+                bool "PostgreSQL"
+
+        config ZABBIX_SQLITE
+                bool "SQLite3"
+endchoice
