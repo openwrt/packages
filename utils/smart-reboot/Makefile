@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=smart-reboot
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -9,7 +9,7 @@ define Package/smart-reboot
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Smart reboot based on network idle state
-  DEPENDS:=+busybox +uci
+	DEPENDS:=+busybox +uci +ucode
 endef
 
 define Package/smart-reboot/description

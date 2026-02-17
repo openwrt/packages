@@ -1,108 +1,137 @@
-#!/bin/sh
+#!/usr/bin/ucode
+'use strict';
 
-CFG="smart-reboot"
-SECTION="settings"
-LOCK_FILE="/var/lock/smart-reboot.lock"
+import * as fs from "fs";
 
-. /lib/functions.sh
+const CFG = "smart-reboot";
+const SECTION = "settings";
+const LOCK_FILE = "/var/lock/smart-reboot.lock";
 
-log() {
-	logger -t smart-reboot "$*"
+function shquote(s) {
+	return "'" + replace(s, /'/g, "'\\''") + "'";
 }
 
-set_last_auto_reboot() {
-	local ts
-	ts="$(date '+%Y-%m-%d %H:%M:%S')"
-	uci -q set ${CFG}.${SECTION}.last_auto_reboot="$ts"
-	uci -q commit ${CFG}
+function cmd_out(cmd) {
+	let f = fs.popen(cmd, "r");
+	if (!f)
+		return "";
+
+	let out = f.read("all") ?? "";
+	f.close();
+	return trim(out);
 }
 
-cfg_get() {
-	local key="$1"
-	local def="$2"
-	local out
-	out="$(uci -q get ${CFG}.${SECTION}.${key})"
-	[ -n "$out" ] && echo "$out" || echo "$def"
+function cfg_get(key, def) {
+	let val = cmd_out(`uci -q get ${CFG}.${SECTION}.${key}`);
+	return length(val) ? val : def;
 }
 
-sum_iface_bytes() {
-	local total="0"
-	local iface
-
-	for iface in "$@"; do
-		[ -n "$iface" ] || continue
-		[ -d "/sys/class/net/$iface" ] || continue
-		rx="$(cat "/sys/class/net/$iface/statistics/rx_bytes" 2>/dev/null)"
-		tx="$(cat "/sys/class/net/$iface/statistics/tx_bytes" 2>/dev/null)"
-		rx="${rx:-0}"
-		tx="${tx:-0}"
-		total=$((total + rx + tx))
-	done
-
-	echo "$total"
+function logger(msg) {
+	system(`logger -t smart-reboot ${shquote(msg)}`);
 }
 
-main() {
-	local enabled hour minute sample_seconds byte_threshold ifaces all_ifaces time
-	local start_bytes end_bytes delta
-	local now_h now_m
+function set_last_auto_reboot() {
+	system("uci -q set smart-reboot.settings.last_auto_reboot=\"$(date '+%Y-%m-%d %H:%M:%S')\"; uci -q commit smart-reboot");
+}
 
-	lock -n "$LOCK_FILE" || exit 0
+function list_all_ifaces() {
+	let out = [];
+	for (let path in fs.glob("/sys/class/net/*")) {
+		let name = fs.basename(path);
+		if (name && name != "lo")
+			push(out, name);
+	}
+	return out;
+}
 
-	enabled="$(cfg_get enabled 0)"
-	[ "$enabled" = "1" ] || {
-		lock -u "$LOCK_FILE"
-		exit 0
+function parse_ifaces(raw) {
+	if (!raw)
+		return [];
+	return filter(split(raw, /[ \t\r\n]+/), v => length(v));
+}
+
+function sum_iface_bytes(ifaces) {
+	let total = 0;
+
+	for (let iface in ifaces) {
+		if (!iface)
+			continue;
+
+		let rx = trim(fs.readfile(`/sys/class/net/${iface}/statistics/rx_bytes`) ?? "0");
+		let tx = trim(fs.readfile(`/sys/class/net/${iface}/statistics/tx_bytes`) ?? "0");
+		total += int(rx || "0") + int(tx || "0");
 	}
 
-	time="$(cfg_get time '')"
-	case "$time" in
-		[0-1][0-9]:[0-5][0-9]|2[0-3]:[0-5][0-9])
-			hour="${time%:*}"
-			minute="${time#*:}"
-			hour=$((10#$hour))
-			minute=$((10#$minute))
-		;;
-		*)
-			hour="$(cfg_get hour 4)"
-			minute="$(cfg_get minute 0)"
-		;;
-	esac
-	sample_seconds="$(cfg_get sample_seconds 120)"
-	byte_threshold="$(cfg_get byte_threshold 262144)"
-	all_ifaces="$(cfg_get all_ifaces 0)"
-	ifaces="$(uci -q get ${CFG}.${SECTION}.ifaces)"
-
-	if [ "$all_ifaces" = "1" ]; then
-		ifaces="$(ls /sys/class/net 2>/dev/null | grep -v '^lo$')"
-	elif [ -z "$ifaces" ]; then
-		ifaces="$(uci -q get network.wan.device)"
-	fi
-
-	now_h="$(date +%H | sed 's/^0//')"
-	now_m="$(date +%M | sed 's/^0//')"
-	[ -n "$now_h" ] || now_h=0
-	[ -n "$now_m" ] || now_m=0
-
-	if [ "$now_h" -ne "$hour" ] || [ "$now_m" -ne "$minute" ]; then
-		lock -u "$LOCK_FILE"
-		exit 0
-	fi
-
-	start_bytes="$(sum_iface_bytes $ifaces)"
-	sleep "$sample_seconds"
-	end_bytes="$(sum_iface_bytes $ifaces)"
-
-	delta=$((end_bytes - start_bytes))
-	if [ "$delta" -le "$byte_threshold" ]; then
-		log "Network idle detected (delta=${delta} bytes, threshold=${byte_threshold}), rebooting now"
-		set_last_auto_reboot
-		/sbin/reboot
-	else
-		log "Skip reboot, network is active (delta=${delta} bytes, threshold=${byte_threshold})"
-	fi
-
-	lock -u "$LOCK_FILE"
+	return total;
 }
 
-main "$@"
+function parse_time(time_str) {
+	if (!time_str || index(time_str, ":") < 0)
+		return null;
+
+	let parts = split(time_str, ":");
+	if (length(parts) != 2)
+		return null;
+
+	let hour = int(parts[0]);
+	let minute = int(parts[1]);
+
+	if (hour < 0 || hour > 23 || minute < 0 || minute > 59)
+		return null;
+
+	return { hour, minute };
+}
+
+function main() {
+	if (system(`lock -n ${LOCK_FILE} >/dev/null 2>&1`) != 0)
+		return 0;
+
+	let enabled = cfg_get("enabled", "0");
+	if (enabled != "1") {
+		system(`lock -u ${LOCK_FILE}`);
+		return 0;
+	}
+
+	let parsed = parse_time(cfg_get("time", ""));
+	let hour = parsed ? parsed.hour : int(cfg_get("hour", "4"));
+	let minute = parsed ? parsed.minute : int(cfg_get("minute", "0"));
+
+	let sample_seconds = int(cfg_get("sample_seconds", "120"));
+	let byte_threshold = int(cfg_get("byte_threshold", "262144"));
+	let all_ifaces = cfg_get("all_ifaces", "0");
+	let ifaces = parse_ifaces(cmd_out(`uci -q get ${CFG}.${SECTION}.ifaces`));
+
+	if (all_ifaces == "1") {
+		ifaces = list_all_ifaces();
+	}
+	else if (!length(ifaces)) {
+		let wan_dev = cmd_out("uci -q get network.wan.device");
+		if (length(wan_dev))
+			ifaces = [ wan_dev ];
+	}
+
+	let now = localtime(time());
+	if (now.hour != hour || now.min != minute) {
+		system(`lock -u ${LOCK_FILE}`);
+		return 0;
+	}
+
+	let start_bytes = sum_iface_bytes(ifaces);
+	system(`sleep ${sample_seconds}`);
+	let end_bytes = sum_iface_bytes(ifaces);
+	let delta = end_bytes - start_bytes;
+
+	if (delta <= byte_threshold) {
+		logger(`Network idle detected (delta=${delta} bytes, threshold=${byte_threshold}), rebooting now`);
+		set_last_auto_reboot();
+		system("/sbin/reboot");
+	}
+	else {
+		logger(`Skip reboot, network is active (delta=${delta} bytes, threshold=${byte_threshold})`);
+	}
+
+	system(`lock -u ${LOCK_FILE}`);
+	return 0;
+}
+
+exit(main());
