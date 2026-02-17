@@ -12,6 +12,7 @@ start_service() {
 
 	procd_set_param env NB_STATE_DIR="/root/.config/netbird"
 	procd_append_param env NB_DISABLE_SSH_CONFIG="1"
+	procd_append_param env NB_DNS_STATE_FILE="/var/lib/netbird/state.json"
 
 	procd_set_param pidfile /var/run/netbird.pid
 	procd_close_instance
