@@ -124,9 +124,9 @@ function main() {
 		ifaces = list_all_ifaces();
 	}
 	else if (!length(ifaces)) {
-		let wan_dev = cursor.get("network", "wan", "device");
-		if (length(wan_dev))
-			ifaces = [ wan_dev ];
+		logger("No monitored interfaces configured. Set smart-reboot.settings.ifaces or enable all_ifaces.");
+		system(`lock -u ${LOCK_FILE}`);
+		return 0;
 	}
 
 	let now = localtime(time());
