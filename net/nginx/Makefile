@@ -199,7 +199,7 @@ define Package/nginx-mod-luci
   SUBMENU:=Web Servers/Proxies
   TITLE:=Support file for Nginx
   URL:=http://nginx.org/
-  DEPENDS:=+uwsgi +uwsgi-luci-support +nginx +nginx-mod-ubus
+  DEPENDS:=nginx +uwsgi +uwsgi-luci-support +nginx-mod-ubus
 endef
 
 define Package/nginx-mod-luci/description
@@ -402,7 +402,7 @@ endef
 define BuildModule
   define Package/nginx-mod-$(1)
     $(call Package/nginx/default)
-    DEPENDS:=+nginx $(2)
+    DEPENDS:=nginx $(2)
     TITLE:=Nginx $(1) module
   endef
 
