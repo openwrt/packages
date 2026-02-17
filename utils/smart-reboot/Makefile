@@ -6,10 +6,10 @@ PKG_RELEASE:=4
 include $(INCLUDE_DIR)/package.mk
 
 define Package/smart-reboot
-  SECTION:=utils
-  CATEGORY:=Utilities
-  TITLE:=Smart reboot based on network idle state
-	DEPENDS:=+busybox +uci +ucode
+	SECTION:=utils
+	CATEGORY:=Utilities
+	TITLE:=Smart reboot based on network idle state
+	DEPENDS:=+busybox +uci +ucode +ucode-mod-uci +ucode-mod-log
 endef
 
 define Package/smart-reboot/description
@@ -21,6 +21,7 @@ define Package/smart-reboot/conffiles
 endef
 
 define Build/Compile
+	true
 endef
 
 define Package/smart-reboot/install

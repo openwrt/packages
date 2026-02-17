@@ -1,6 +1,8 @@
 #!/usr/bin/ucode
 'use strict';
 
+import * as uci from "uci";
+import * as log from "log";
 import * as fs from "fs";
 
 const CFG = "smart-reboot";
@@ -21,17 +23,28 @@ function cmd_out(cmd) {
 	return trim(out);
 }
 
+let cursor = uci.cursor();
+
 function cfg_get(key, def) {
-	let val = cmd_out(`uci -q get ${CFG}.${SECTION}.${key}`);
-	return length(val) ? val : def;
+	let val = cursor.get(CFG, SECTION, key);
+
+	if (val == null)
+		return def;
+
+	if (type(val) == "string" && !length(val))
+		return def;
+
+	return val;
 }
 
 function logger(msg) {
-	system(`logger -t smart-reboot ${shquote(msg)}`);
+	log.syslog(log.LOG_INFO, msg);
 }
 
 function set_last_auto_reboot() {
-	system("uci -q set smart-reboot.settings.last_auto_reboot=\"$(date '+%Y-%m-%d %H:%M:%S')\"; uci -q commit smart-reboot");
+	let ts = cmd_out("date '+%Y-%m-%d %H:%M:%S'");
+	cursor.set(CFG, SECTION, "last_auto_reboot", ts);
+	cursor.commit(CFG);
 }
 
 function list_all_ifaces() {
@@ -47,6 +60,10 @@ function list_all_ifaces() {
 function parse_ifaces(raw) {
 	if (!raw)
 		return [];
+
+	if (type(raw) == "array")
+		return raw;
+
 	return filter(split(raw, /[ \t\r\n]+/), v => length(v));
 }
 
@@ -83,6 +100,8 @@ function parse_time(time_str) {
 }
 
 function main() {
+	log.openlog("smart-reboot", log.LOG_PID);
+
 	if (system(`lock -n ${LOCK_FILE} >/dev/null 2>&1`) != 0)
 		return 0;
 
@@ -99,13 +118,13 @@ function main() {
 	let sample_seconds = int(cfg_get("sample_seconds", "120"));
 	let byte_threshold = int(cfg_get("byte_threshold", "262144"));
 	let all_ifaces = cfg_get("all_ifaces", "0");
-	let ifaces = parse_ifaces(cmd_out(`uci -q get ${CFG}.${SECTION}.ifaces`));
+	let ifaces = parse_ifaces(cfg_get("ifaces", []));
 
 	if (all_ifaces == "1") {
 		ifaces = list_all_ifaces();
 	}
 	else if (!length(ifaces)) {
-		let wan_dev = cmd_out("uci -q get network.wan.device");
+		let wan_dev = cursor.get("network", "wan", "device");
 		if (length(wan_dev))
 			ifaces = [ wan_dev ];
 	}
