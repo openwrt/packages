@@ -1,0 +1,58 @@
+From 9ac6ea431fdc68940785814fc799d7a157bb4323 Mon Sep 17 00:00:00 2001
+From: Wesley Gimenes <wehagy@proton.me>
+Date: Wed, 25 Feb 2026 06:36:10 -0300
+Subject: [PATCH] [client] update gvisor to fix build with Go 1.26.x
+Upstream-Status: Submitted [https://github.com/netbirdio/netbird/pull/5447]
+
+Building the client with the Go 1.26.x you see the error:
+
+```
+[...]
+/builder/dl/go-mod-cache/gvisor.dev/gvisor@v0.0.0-20251031020517-ecfcdd2f171c/pkg/sync/runtime_constants_go126.go:22:2: WaitReasonSelect redeclared in this block
+	/builder/dl/go-mod-cache/gvisor.dev/gvisor@v0.0.0-20251031020517-ecfcdd2f171c/pkg/sync/runtime_constants_go125.go:22:2: other declaration of WaitReasonSelect
+/builder/dl/go-mod-cache/gvisor.dev/gvisor@v0.0.0-20251031020517-ecfcdd2f171c/pkg/sync/runtime_constants_go126.go:23:2: WaitReasonChanReceive redeclared in this block
+	/builder/dl/go-mod-cache/gvisor.dev/gvisor@v0.0.0-20251031020517-ecfcdd2f171c/pkg/sync/runtime_constants_go125.go:23:2: other declaration of WaitReasonChanReceive
+/builder/dl/go-mod-cache/gvisor.dev/gvisor@v0.0.0-20251031020517-ecfcdd2f171c/pkg/sync/runtime_constants_go126.go:24:2: WaitReasonSemacquire redeclared in this block
+	/builder/dl/go-mod-cache/gvisor.dev/gvisor@v0.0.0-20251031020517-ecfcdd2f171c/pkg/sync/runtime_constants_go125.go:24:2: other declaration of WaitReasonSemacquire
+[...]
+```
+
+Fixes: https://github.com/netbirdio/netbird/issues/5290 ("Does not build with Go 1.26rc3")
+
+Signed-off-by: Wesley Gimenes <wehagy@proton.me>
+---
+ go.mod | 6 ++----
+ go.sum | 4 ++--
+ 2 files changed, 4 insertions(+), 6 deletions(-)
+
+--- a/go.mod
++++ b/go.mod
+@@ -1,8 +1,6 @@
+ module github.com/netbirdio/netbird
+ 
+-go 1.25
+-
+-toolchain go1.25.5
++go 1.25.5
+ 
+ require (
+ 	cunicu.li/go-rosenpass v0.4.0
+@@ -125,7 +123,7 @@ require (
+ 	gorm.io/driver/postgres v1.5.7
+ 	gorm.io/driver/sqlite v1.5.7
+ 	gorm.io/gorm v1.25.12
+-	gvisor.dev/gvisor v0.0.0-20251031020517-ecfcdd2f171c
++	gvisor.dev/gvisor v0.0.0-20260219192049-0f2374377e89
+ )
+ 
+ require (
+--- a/go.sum
++++ b/go.sum
+@@ -852,5 +852,5 @@ gorm.io/gorm v1.25.12 h1:I0u8i2hWQItBq1W
+ gorm.io/gorm v1.25.12/go.mod h1:xh7N7RHfYlNc5EmcI/El95gXusucDrQnHXe0+CgWcLQ=
+ gotest.tools/v3 v3.5.1 h1:EENdUnS3pdur5nybKYIh2Vfgc8IUNBjxDPSjtiJcOzU=
+ gotest.tools/v3 v3.5.1/go.mod h1:isy3WKz7GK6uNw/sbHzfKBLvlvXwUyV06n6brMxxopU=
+-gvisor.dev/gvisor v0.0.0-20251031020517-ecfcdd2f171c h1:pfzmXIkkDgydR4ZRP+e1hXywZfYR21FA0Fbk6ptMkiA=
+-gvisor.dev/gvisor v0.0.0-20251031020517-ecfcdd2f171c/go.mod h1:/mc6CfwbOm5KKmqoV7Qx20Q+Ja8+vO4g7FuCdlVoAfQ=
++gvisor.dev/gvisor v0.0.0-20260219192049-0f2374377e89 h1:mGJaeA61P8dEHTqdvAgc70ZIV3QoUoJcXCRyyjO26OA=
++gvisor.dev/gvisor v0.0.0-20260219192049-0f2374377e89/go.mod h1:QkHjoMIBaYtpVufgwv3keYAbln78mBoCuShZrPrer1Q=
