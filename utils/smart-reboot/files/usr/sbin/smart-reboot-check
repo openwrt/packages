@@ -1,0 +1,108 @@
+#!/bin/sh
+
+CFG="smart-reboot"
+SECTION="settings"
+LOCK_FILE="/var/lock/smart-reboot.lock"
+
+. /lib/functions.sh
+
+log() {
+	logger -t smart-reboot "$*"
+}
+
+set_last_auto_reboot() {
+	local ts
+	ts="$(date '+%Y-%m-%d %H:%M:%S')"
+	uci -q set ${CFG}.${SECTION}.last_auto_reboot="$ts"
+	uci -q commit ${CFG}
+}
+
+cfg_get() {
+	local key="$1"
+	local def="$2"
+	local out
+	out="$(uci -q get ${CFG}.${SECTION}.${key})"
+	[ -n "$out" ] && echo "$out" || echo "$def"
+}
+
+sum_iface_bytes() {
+	local total="0"
+	local iface
+
+	for iface in "$@"; do
+		[ -n "$iface" ] || continue
+		[ -d "/sys/class/net/$iface" ] || continue
+		rx="$(cat "/sys/class/net/$iface/statistics/rx_bytes" 2>/dev/null)"
+		tx="$(cat "/sys/class/net/$iface/statistics/tx_bytes" 2>/dev/null)"
+		rx="${rx:-0}"
+		tx="${tx:-0}"
+		total=$((total + rx + tx))
+	done
+
+	echo "$total"
+}
+
+main() {
+	local enabled hour minute sample_seconds byte_threshold ifaces all_ifaces time
+	local start_bytes end_bytes delta
+	local now_h now_m
+
+	lock -n "$LOCK_FILE" || exit 0
+
+	enabled="$(cfg_get enabled 0)"
+	[ "$enabled" = "1" ] || {
+		lock -u "$LOCK_FILE"
+		exit 0
+	}
+
+	time="$(cfg_get time '')"
+	case "$time" in
+		[0-1][0-9]:[0-5][0-9]|2[0-3]:[0-5][0-9])
+			hour="${time%:*}"
+			minute="${time#*:}"
+			hour=$((10#$hour))
+			minute=$((10#$minute))
+		;;
+		*)
+			hour="$(cfg_get hour 4)"
+			minute="$(cfg_get minute 0)"
+		;;
+	esac
+	sample_seconds="$(cfg_get sample_seconds 120)"
+	byte_threshold="$(cfg_get byte_threshold 262144)"
+	all_ifaces="$(cfg_get all_ifaces 0)"
+	ifaces="$(uci -q get ${CFG}.${SECTION}.ifaces)"
+
+	if [ "$all_ifaces" = "1" ]; then
+		ifaces="$(ls /sys/class/net 2>/dev/null | grep -v '^lo$')"
+	elif [ -z "$ifaces" ]; then
+		ifaces="$(uci -q get network.wan.device)"
+	fi
+
+	now_h="$(date +%H | sed 's/^0//')"
+	now_m="$(date +%M | sed 's/^0//')"
+	[ -n "$now_h" ] || now_h=0
+	[ -n "$now_m" ] || now_m=0
+
+	if [ "$now_h" -ne "$hour" ] || [ "$now_m" -ne "$minute" ]; then
+		lock -u "$LOCK_FILE"
+		exit 0
+	fi
+
+	start_bytes="$(sum_iface_bytes $ifaces)"
+	sleep "$sample_seconds"
+	end_bytes="$(sum_iface_bytes $ifaces)"
+
+	delta=$((end_bytes - start_bytes))
+	if [ "$delta" -le "$byte_threshold" ]; then
+		log "Network idle detected (delta=${delta} bytes, threshold=${byte_threshold}), rebooting now"
+		set_last_auto_reboot
+		/sbin/reboot
+	else
+		log "Skip reboot, network is active (delta=${delta} bytes, threshold=${byte_threshold})"
+	fi
+
+	lock -u "$LOCK_FILE"
+}
+
+main "$@"
