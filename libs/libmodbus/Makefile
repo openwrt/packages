@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/stephane/libmodbus/releases/download/v$(PKG_VERSION)/
-PKG_HASH:=15b4b2e0f68122c2da9b195de5c330489a9c97d40b4a95d2822378dc14d780e7
+PKG_HASH:=a7a2c4f6e7e3c9bd49a574e9f30f6f87b8f162a58c7a67cb1c75470991b7680a
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 
