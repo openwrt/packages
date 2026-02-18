@@ -1,4 +1,5 @@
-
 config ampr-ripd 'network'
-	option tunnet 44.127.254.0/255.255.255.0
-
+	option enabled '0'
+	option amprhost '44.127.254.254'
+	option amprmask '255.255.255.0'
+	option amprnet '44.127.254.0'
