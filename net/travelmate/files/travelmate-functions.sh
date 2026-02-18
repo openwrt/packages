@@ -1,5 +1,5 @@
 # travelmate shared function library/include, a wlan connection manager for travel router
-# Copyright (c) 2016-2025 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2016-2026 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # set (s)hellcheck exceptions
@@ -28,7 +28,6 @@ trm_maxautoadd="5"
 trm_timeout="60"
 trm_radio=""
 trm_revradio="0"
-trm_scanmode="active"
 trm_connection=""
 trm_ssidfilter=""
 trm_ovpninfolist=""
@@ -44,6 +43,8 @@ trm_vpnfile="/var/state/travelmate.vpn"
 trm_mailfile="/var/state/travelmate.mail"
 trm_refreshfile="/var/state/travelmate.refresh"
 trm_pidfile="/var/run/travelmate.pid"
+trm_scanfile="/var/run/travelmate.scan"
+trm_tmpfile="/var/run/travelmate.tmp"
 
 # gather system information
 #
@@ -81,60 +82,43 @@ f_cmd() {
 	fi
 }
 
-# load travelmate environment
+# load travelmate config
 #
 f_conf() {
-	local device
+	 unset trm_stalist trm_radiolist trm_uplinklist trm_vpnifacelist trm_uplinkcfg trm_activesta trm_ssidfilter
 
-	[ "${trm_action}" = "stop" ] && return 0
+	 config_cb() {
+		option_cb() {
+			local option="${1}" value="${2//\"/\\\"}"
 
-	unset trm_stalist trm_radiolist trm_uplinklist trm_vpnifacelist trm_uplinkcfg trm_activesta trm_opensta trm_ssidfilter
-	config_cb() {
-		local name="${1}" type="${2}"
-
-		if [ "${name}" = "travelmate" ] && [ "${type}" = "global" ]; then
-			option_cb() {
-				local option="${1}" value="${2//\"/\\\"}"
-
-				case "${option}" in
-					*[!a-zA-Z0-9_]*)
-						;;
-					*)
-						eval "${option}=\"\${value}\""
-						;;
-				esac
-			}
-			list_cb() {
-				local option="${1}" value="${2//\"/\\\"}"
-
-				case "${option}" in
-					trm_vpnifacelist)
-						case " ${trm_vpnifacelist} " in
-						*" ${value} "*)
-							;;
-						*)
-							trm_vpnifacelist="${trm_vpnifacelist} ${value}"
-							;;
-						esac
+			case "${option}" in
+				*[!a-zA-Z0-9_]*)
 					;;
-					trm_ssidfilter)
-						case " ${trm_ssidfilter} " in
-						*" ${value} "*)
-							;;
-						*)
-							trm_ssidfilter="${trm_ssidfilter} ${value}"
-							;;
-						esac
+				*)
+					eval "${option}=\"\${value}\""
 					;;
-				esac
-			}
-		elif [ "${name}" = "uplink" ]; then
-			if [ "$(uci_get "travelmate.${type}.opensta")" = "1" ]; then
-				trm_opensta="$((${trm_opensta:-0} + 1))"
-			fi
-		fi
+			esac
+		}
+		list_cb() {
+			local option="${1}" value="${2//\"/\\\"}"
+
+			 case "${option}" in
+				*[!a-zA-Z0-9_]*)
+					;;
+				*)
+					eval "append=\"\${${option}}\""
+					if [ -n "${append}" ]; then
+						eval "${option}=\"${append} ${value}\""
+					else
+						eval "${option}=\"${value}\""
+					fi
+					;;
+			esac
+		}
 	}
 	config_load travelmate
+
+	[ "${trm_action}" = "stop" ] && return 0
 
 	if [ "${trm_enabled}" != "1" ]; then
 		f_log "info" "travelmate is currently disabled, please set 'trm_enabled' to '1' to use this service"
@@ -177,7 +161,7 @@ f_rmpid() {
 	local ppid pid
 
 	if [ -s "${trm_pidfile}" ]; then
-		ppid="$("${trm_catcmd}" "${trm_pidfile}" 2>/dev/null)"
+		ppid="$(< "${trm_pidfile}")"
 		if [ -n "${ppid}" ]; then
 			pid="$("${trm_pgrepcmd}" -nf "sleep ${trm_timeout} 0" -P ${ppid} 2>/dev/null)"
 			[ -n "${pid}" ] && "${trm_killcmd}" -INT ${pid} 2>/dev/null
@@ -310,7 +294,7 @@ f_vpn() {
 # mac helper function
 #
 f_mac() {
-	local result ifname macaddr action="${1}" section="${2}"
+	local raw result ifname macaddr action="${1}" section="${2}"
 
 	if [ "${action}" = "set" ]; then
 		macaddr="$(f_getval "macaddr")"
@@ -324,14 +308,16 @@ f_mac() {
 			uci_set "wireless" "${section}" "macaddr" "${result}"
 		else
 			uci_remove "wireless" "${section}" "macaddr" 2>/dev/null
-			ifname="$("${trm_ubuscmd}" -S call network.wireless status 2>/dev/null | "${trm_jsoncmd}" -ql1 -e '@.*.interfaces[@.config.mode="sta"].ifname')"
-			result="$("${trm_iwcmd}" dev "${ifname}" info 2>/dev/null | "${trm_awkcmd}" '/addr /{printf "%s",toupper($2)}')"
+			raw="$("${trm_ubuscmd}" -S call network.wireless status 2>/dev/null)"
+			ifname="$(printf "%s" "${raw}" | "${trm_jsoncmd}" -ql1 -e '@.*.interfaces[@.config.mode="sta"].ifname')"
+			result="$(printf "%s" "${raw}" | "${trm_jsoncmd}" -ql1 -e '@.*.interfaces[@.config.mode="sta"].config.macaddr')"
 		fi
 	elif [ "${action}" = "get" ]; then
 		result="$(uci_get "wireless" "${section}" "macaddr")"
 		if [ -z "${result}" ]; then
-			ifname="$("${trm_ubuscmd}" -S call network.wireless status 2>/dev/null | "${trm_jsoncmd}" -ql1 -e '@.*.interfaces[@.config.mode="sta"].ifname')"
-			result="$("${trm_iwcmd}" dev "${ifname}" info 2>/dev/null | "${trm_awkcmd}" '/addr /{printf "%s",toupper($2)}')"
+			raw="$("${trm_ubuscmd}" -S call network.wireless status 2>/dev/null)"
+			ifname="$(printf "%s" "${raw}" | "${trm_jsoncmd}" -ql1 -e '@.*.interfaces[@.config.mode="sta"].ifname')"
+			result="$(printf "%s" "${raw}" | "${trm_jsoncmd}" -ql1 -e '@.*.interfaces[@.config.mode="sta"].config.macaddr')"
 		fi
 	fi
 	printf "%s" "${result}"
@@ -393,7 +379,6 @@ f_ctrack() {
 			fi
 		fi
 	fi
-	f_log "debug" "f_ctrack    ::: uplink_config: ${trm_uplinkcfg:-"-"}, action: ${action:-"-"}"
 }
 
 # get openvpn information
@@ -496,7 +481,6 @@ f_getcfg() {
 		fi
 		cnt="$((cnt + 1))"
 	done
-	f_log "debug" "f_getcfg    ::: uplink_config: ${trm_uplinkcfg:-"-"}"
 }
 
 # get travelmate option value in 'uplink' sections
@@ -508,7 +492,6 @@ f_getval() {
 		result="$(uci_get "travelmate" "${trm_uplinkcfg}" "${t_option}")"
 		printf "%s" "${result}"
 	fi
-	f_log "debug" "f_getval    ::: uplink_config: ${trm_uplinkcfg:-"-"}, option: ${t_option:-"-"}, result: ${result:-"-"}"
 }
 
 # set 'wifi-device' sections
@@ -619,7 +602,7 @@ f_addsta() {
 				;;
 		esac
 	done
-	if [ "${trm_maxautoadd}" = "0" ] || [ "${trm_opensta:-0}" -lt "${trm_maxautoadd}" ]; then
+	if [ "${trm_maxautoadd}" = "0" ] || [ "${trm_autoaddcnt:-0}" -lt "${trm_maxautoadd}" ]; then
 		config_cb() {
 			local type="${1}" name="${2}"
 
@@ -668,7 +651,11 @@ f_addsta() {
 				set travelmate."${trm_cfg}".vpn="1"
 			EOC
 		fi
-		trm_opensta="$((trm_opensta + 1))"
+
+		cnt="$(uci_get "travelmate" "global" "trm_autoaddcnt" "0")"
+		cnt="$((cnt + 1))"
+		uci_set "travelmate" "global" "trm_autoaddcnt" "${cnt}"
+
 		[ -n "$(uci -q changes "travelmate")" ] && uci_commit "travelmate"
 		[ -n "$(uci -q changes "wireless")" ] && uci_commit "wireless"
 		f_wifi
@@ -678,7 +665,7 @@ f_addsta() {
 		f_log "info" "open uplink '${radio}/${essid}' added to wireless config"
 		printf "%s" "${wifi_cfg}-${radio}"
 	fi
-	f_log "debug" "f_addsta    ::: radio: ${radio:-"-"}, essid: ${essid}, opensta/maxautoadd: ${trm_opensta:-"-"}/${trm_maxautoadd:-"-"}, new_uplink: ${new_uplink}, offset: ${offset}"
+	f_log "debug" "f_addsta    ::: radio: ${radio:-"-"}, essid: ${essid}, autoaddcnt/maxautoadd: ${cnt:-"${trm_autoaddcnt}"}/${trm_maxautoadd:-"-"}, new_uplink: ${new_uplink}, offset: ${offset}"
 }
 
 # check net status
@@ -726,7 +713,7 @@ f_net() {
 # check interface status
 #
 f_check() {
-	local ifname radio dev_status result login_script login_script_args cp_domain wait_time="0" enabled="1" mode="${1}" status="${2}" sta_radio="${3}" sta_essid="${4}" sta_bssid="${5}"
+	local raw ifname radio dev_status result login_script login_script_args cp_domain wait_time="0" enabled="1" mode="${1}" status="${2}" sta_radio="${3}" sta_essid="${4}" sta_bssid="${5}"
 
 	if [ "${mode}" = "initial" ] || [ "${mode}" = "dev" ]; then
 		json_get_var station_id "station_id"
@@ -775,7 +762,12 @@ f_check() {
 			else
 				ifname="$(printf "%s" "${dev_status}" | "${trm_jsoncmd}" -ql1 -e '@.*.interfaces[@.config.mode="sta"].ifname')"
 				if [ -n "${ifname}" ] && [ "${enabled}" = "1" ]; then
-					trm_ifquality="$("${trm_iwcmd}" dev "${ifname}" link 2>/dev/null | "${trm_awkcmd}" '/signal:/ {val=2*($2+100); printf "%s", (val>100 ? 100 : val)}')"
+					raw="$("${trm_ubuscmd}" -S call iwinfo info "{\"device\":\"${ifname}\"}" 2>/dev/null | "${trm_jsoncmd}" -ql1 -e '@.signal')"
+					if [ -n "${raw}" ] && [ "${raw}" -ge "-120" ]; then
+						trm_ifquality="$(( 2 * (raw + 100) ))"
+						[ "${trm_ifquality}" -gt "100" ] && trm_ifquality="100"
+						[ "${trm_ifquality}" -lt "0" ] && trm_ifquality="0"
+					fi
 					if [ -z "${trm_ifquality}" ]; then
 						trm_ifstatus="$("${trm_ubuscmd}" -S call network.interface dump 2>/dev/null | "${trm_jsoncmd}" -ql1 -e "@.interface[@.device=\"${ifname}\"].up")"
 						if { [ -n "${trm_connection}" ] && [ "${trm_ifstatus}" = "false" ]; } || [ "${wait_time}" -eq "${trm_maxwait}" ]; then
@@ -897,7 +889,7 @@ f_getstatus() {
 #
 f_genstatus() {
 	local vpn vpn_iface section last_date sta_iface sta_radio sta_essid sta_bssid sta_mac dev_status status="${trm_ifstatus}" ntp_done="0" vpn_done="0" mail_done="0"
-#set -x
+
 	if [ "${status}" = "true" ]; then
 		status="connected, ${trm_connection:-"-"}"
 		dev_status="$("${trm_ubuscmd}" -S call network.wireless status 2>/dev/null)"
@@ -940,7 +932,7 @@ f_genstatus() {
 	json_add_string "station_mac" "${sta_mac:-"-"}"
 	json_add_string "station_interfaces" "${sta_iface:-"-"}, ${vpn_iface:-"-"}"
 	json_add_string "station_subnet" "$(f_subnet)"
-	json_add_string "run_flags" "scan: ${trm_scanmode}, captive: $(f_char ${trm_captive}), proactive: $(f_char ${trm_proactive}), netcheck: $(f_char ${trm_netcheck}), autoadd: $(f_char ${trm_autoadd}), randomize: $(f_char ${trm_randomize})"
+	json_add_string "run_flags" "captive: $(f_char ${trm_captive}), proactive: $(f_char ${trm_proactive}), netcheck: $(f_char ${trm_netcheck}), autoadd: $(f_char ${trm_autoadd}), randomize: $(f_char ${trm_randomize})"
 	json_add_string "ext_hooks" "ntp: $(f_char ${ntp_done}), vpn: $(f_char ${vpn_done}), mail: $(f_char ${mail_done})"
 	json_add_string "last_run" "${last_date}"
 	json_add_string "system" "${trm_sysver}"
@@ -954,7 +946,7 @@ f_genstatus() {
 			f_mail
 		fi
 	fi
-	#set +x
+
 	f_log "debug" "f_genstatus ::: section: ${section:-"-"}, status: ${status:-"-"}, sta_iface: ${sta_iface:-"-"}, sta_radio: ${sta_radio:-"-"}, sta_essid: ${sta_essid:-"-"}, sta_bssid: ${sta_bssid:-"-"}, ntp: ${ntp_done}, vpn: ${vpn:-"0"}/${vpn_done}, mail: ${trm_mail}/${mail_done}"
 }
 
@@ -1001,10 +993,100 @@ f_log() {
 	fi
 }
 
+# wifi scan function
+#
+f_scan() {
+	local result key keylist ssid bssid quality wpa_arr cipher_arr auth_arr radio="${1}" mode="${2}"
+
+	result="$("${trm_ubuscmd}" -S call iwinfo scan "{\"device\":\"${radio}\"}" 2>/dev/null)"
+	[ -z "${result}" ] && return 0
+
+	json_load "${result}" || return 0
+	json_select results 2>/dev/null || return 0
+
+	json_get_keys keylist
+	for key in ${keylist}; do
+		json_select "${key}" 2>/dev/null || continue
+		json_get_var bssid bssid
+		json_get_var ssid ssid
+		json_get_var signal signal
+		json_get_var channel channel
+
+		ssid="$(printf "%s" "${ssid}" | "${trm_awkcmd}" '{
+			gsub(/[\x00-\x1F\x7F]/, "");  # nur Steuerzeichen entfernen
+			sub(/^[ \t]+/, "");
+			sub(/[ \t]+$/, "");
+			print
+		}')"
+		if [ -z "${ssid}" ]; then
+			ssid="hidden"
+		else
+			ssid="${ssid//\"/\\\"}"
+			ssid="\"${ssid}\""
+		fi
+
+		bssid="$(printf "%s" "${bssid}" | "${trm_awkcmd}" '{print toupper($0)}')"
+
+		quality="$(( 2 * (signal + 100) ))"
+		[ "${quality}" -gt "100" ] && quality="100"
+		[ "${quality}" -lt "0" ] && quality="0"
+
+		json_select encryption 2>/dev/null
+		json_get_values wpa_arr wpa 2>/dev/null
+		json_get_values cipher_arr ciphers 2>/dev/null
+		json_get_values auth_arr authentication 2>/dev/null
+		json_select .. 2>/dev/null
+		wpa_versions="$(printf "%s" "${wpa_arr:-"-"}" | "${trm_awkcmd}" '
+			{
+				gsub(/[\[\],]/, "");
+				for (i=1; i<=NF; i++) {
+					if ($i == 1) out = out "WPA1+";
+					if ($i == 2) out = out "WPA2+";
+					if ($i == 3) out = out "WPA3+";
+				}
+				sub(/\+$/, "", out);
+				print (out == "" ? "-" : out);
+			}
+		')"
+		cipher="$(printf "%s" "${cipher_arr:-"-"}" | "${trm_awkcmd}" '
+			{
+				gsub(/[\[\]"]/, "");
+				gsub(/,/, " ");
+				gsub(/[ \t]+/, " ");
+				$0 = toupper($0);
+				gsub(/ /, "+");
+				print ($0=="" ? "-" : $0)
+			}
+		')"
+		auth="$(printf "%s" "${auth_arr:-"-"}" | "${trm_awkcmd}" '
+			{
+				gsub(/[\[\]"]/, "");
+				gsub(/,/, " ");
+				gsub(/[ \t]+/, " ");
+				$0 = toupper($0);
+				gsub(/ /, "+");
+				print ($0=="" ? "-" : $0)
+			}
+		')"
+
+		case "${mode}" in
+			full)
+				printf "%s %s %s %s %s %s %s\n" \
+					"${quality:-"0"}" "${channel:-"0"}" "${bssid:-"-"}" "${wpa_versions:-"-"}" "${cipher:-"-"}" "${auth:-"-"}" "${ssid}"
+			;;
+			*)
+				printf "%s %s %s %s %s\n" \
+					"${quality:-"0"}" "${wpa_versions:-"-"}" "-" "${bssid:-"-"}" "${ssid}"
+			;;
+		esac
+		json_select .. 2>/dev/null
+	done
+}
+
 # main function for connection handling
 #
 f_main() {
-	local radio radio_num radio_phy cnt retrycnt scan_dev scan_mode scan_list scan_essid scan_bssid scan_rsn scan_wpa scan_open scan_quality
+	local radio radio_num radio_phy cnt retrycnt scan_dev scan_list scan_essid scan_bssid scan_rsn scan_wpa scan_quality scan_open
 	local station_id section sta sta_essid sta_bssid sta_radio sta_mac open_sta open_essid config_radio config_essid config_bssid
 
 	f_check "initial" "false"
@@ -1067,33 +1149,11 @@ f_main() {
 					f_log "debug" "f_main-5    ::: sta_radio: ${sta_radio}, sta_essid: \"${sta_essid}\", sta_bssid: ${sta_bssid:-"-"}"
 				fi
 				if [ -z "${scan_list}" ]; then
-					radio_num="${radio//[a-z]/}"
-					radio_phy="phy${radio_num}"
-					[ "${trm_scanmode}" != "passive" ] && scan_mode=""
-
-					scan_dev="$("${trm_iwcmd}" dev | "${trm_awkcmd}" -v phy="${radio_phy}" '/Interface/{iface=$2} /type/{if(($2=="AP"||$2=="managed")&&iface ~ "^"phy"-"){printf"%s",iface;exit}}')"
-					if [ -z "${scan_dev}" ]; then
-						"${trm_iwcmd}" phy "${radio_phy}" interface add "trmscan${radio_num}" type managed >/dev/null 2>&1
-						"${trm_ipcmd}" link set "trmscan${radio_num}" up >/dev/null 2>&1
-						scan_dev="trmscan${radio_num}"
-					fi
-					scan_list="$(printf "%b" "$("${trm_iwcmd}" dev "${scan_dev}" scan ${scan_mode} 2>/dev/null |
-						"${trm_awkcmd}" '/^BSS /{if(bssid!=""){if(ssid=="")ssid="unknown";printf "%s %s %s %s %s\n",signal,rsn,wpa,bssid,ssid};bssid=toupper(substr($2,1,17));ssid="";signal="";rsn="-";wpa="-"}
-						/signal:/{signal=(2*($2+100)>100 ? 100 : 2*($2+100))}
-						/SSID:/{$1="";sub(/^ /,"",$0);ssid="\""$0"\""}
-						/WPA:/{wpa="+"}
-						/RSN:/{rsn="+"}
-						END{if(bssid!=""){if(ssid=="")ssid="unknown";printf "%s %s %s %s %s\n",signal,rsn,wpa,bssid,ssid}}' | "${trm_sortcmd}" -rn)")"
-					f_log "debug" "f_main-6    ::: radio: ${radio}, scan_device: ${scan_dev}, scan_mode: ${trm_scanmode:-"active"}, scan_cnt: $(printf "%s" "${scan_list}" | "${trm_grepcmd}" -c "^")"
-
-					if [ "${scan_dev}" = "trmscan${radio_num}" ]; then
-						"${trm_ipcmd}" link set "trmscan${radio_num}" down >/dev/null 2>&1
-						"${trm_iwcmd}" dev "trmscan${radio_num}" del >/dev/null 2>&1
-					fi
-					if [ -z "${scan_list}" ]; then
-						f_log "info" "no scan results on '${radio}'"
-						continue 2
-					fi
+					scan_list="$(f_scan "${radio}" | "${trm_sortcmd}" -rn)"
+				fi
+				if [ -z "${scan_list}" ]; then
+					f_log "info" "no scan results on '${radio}'"
+					continue 2
 				fi
 
 				# scan loop
@@ -1105,11 +1165,11 @@ f_main() {
 						scan_open="-"
 					fi
 					if [ -n "${scan_quality}" ] && [ -n "${scan_open}" ] && [ -n "${scan_bssid}" ] && [ -n "${scan_essid}" ]; then
-						f_log "debug" "f_main-7    ::: radio(sta/scan): ${sta_radio}/${radio}, essid(sta/scan): \"${sta_essid}\"/${scan_essid}, bssid(sta/scan): ${sta_bssid}/${scan_bssid}, quality(min/scan): ${trm_minquality}/${scan_quality}, open: ${scan_open}"
+						f_log "debug" "f_main-6    ::: radio(sta/scan): ${sta_radio}/${radio}, essid(sta/scan): \"${sta_essid}\"/${scan_essid}, bssid(sta/scan): ${sta_bssid}/${scan_bssid}, quality(min/scan): ${trm_minquality}/${scan_quality}, open: ${scan_open}"
 						if [ "${scan_quality}" -lt "${trm_minquality}" ]; then
 							continue 2
 						elif [ "${scan_quality}" -ge "${trm_minquality}" ]; then
-							if [ "${trm_autoadd}" = "1" ] && [ "${scan_open}" = "+" ] && [ "${scan_essid}" != "unknown" ]; then
+							if [ "${trm_autoadd}" = "1" ] && [ "${scan_open}" = "+" ] && [ "${scan_essid}" != "hidden" ]; then
 								open_essid="${scan_essid%?}"
 								open_essid="${open_essid:1}"
 								open_sta="$(f_addsta "${radio}" "${open_essid}")"
@@ -1122,7 +1182,7 @@ f_main() {
 								fi
 							fi
 							if { { [ "${scan_essid}" = "\"${sta_essid}\"" ] && { [ -z "${sta_bssid}" ] || [ "${scan_bssid}" = "${sta_bssid}" ]; }; } ||
-								{ [ "${scan_bssid}" = "${sta_bssid}" ] && [ "${scan_essid}" = "unknown" ]; }; } && [ "${radio}" = "${sta_radio}" ]; then
+								{ [ "${scan_bssid}" = "${sta_bssid}" ] && [ "${scan_essid}" = "hidden" ]; }; } && [ "${radio}" = "${sta_radio}" ]; then
 								if [ -n "${config_radio}" ]; then
 									f_vpn "disable"
 									uci_set "wireless" "${trm_activesta}" "disabled" "1"
@@ -1186,12 +1246,10 @@ fi
 
 # reference required system utilities
 #
-trm_catcmd="$(f_cmd cat)"
 trm_awkcmd="$(f_cmd gawk awk)"
 trm_sortcmd="$(f_cmd sort)"
 trm_grepcmd="$(f_cmd grep)"
 trm_pgrepcmd="$(f_cmd pgrep)"
-trm_sleepcmd="$(f_cmd sleep)"
 trm_killcmd="$(f_cmd kill)"
 trm_jsoncmd="$(f_cmd jsonfilter)"
 trm_lookupcmd="$(f_cmd nslookup)"
@@ -1199,9 +1257,6 @@ trm_ubuscmd="$(f_cmd ubus)"
 trm_logcmd="$(f_cmd logger)"
 trm_wificmd="$(f_cmd wifi)"
 trm_fetchcmd="$(f_cmd curl)"
-trm_ipcmd="$(f_cmd ip)"
-trm_iwcmd="$(f_cmd iw)"
-trm_wpacmd="$(f_cmd wpa_supplicant)"
 trm_ifstatuscmd="$(f_cmd ifstatus)"
 trm_ipcalccmd="$(f_cmd ipcalc.sh)"
 trm_mailcmd="$(f_cmd msmtp optional)"
