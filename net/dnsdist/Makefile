@@ -35,7 +35,7 @@ define Package/dnsdist/Default
 	  +libatomic \
 	  +libcap \
 	  +libstdcpp \
-	  @HAS_LUAJIT_ARCH +luajit
+	  $(if $(and $(HAS_LUAJIT_ARCH),$(filter-out aarch64,$(ARCH))), +luajit, +liblua)
   URL:=https://dnsdist.org/
   VARIANT:=$(1)
   PROVIDES:=dnsdist
@@ -147,7 +147,7 @@ TARGET_CXXFLAGS+=-Os -fvisibility=hidden -flto -fno-ipa-cp -DNDEBUG \
 
 CONFIGURE_ARGS+= \
 	--with-pic \
-	--with-lua=luajit \
+	$(if $(and $(HAS_LUAJIT_ARCH),$(filter-out aarch64,$(ARCH))),--with-lua=luajit,--with-lua) \
 	--with-libcap \
 	--without-xsk \
 	$(if $(call IsEnabled,DNSDIST_PIE),,--disable-hardening) \
