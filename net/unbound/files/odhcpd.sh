@@ -52,6 +52,7 @@ odhcpd_zonedata() {
     local dns_ls_del=$UB_VARDIR/dhcp_dns.del
     local dns_ls_new=$UB_VARDIR/dhcp_dns.new
     local dns_ls_old=$UB_VARDIR/dhcp_dns.old
+    local dns_ls_com=$UB_VARDIR/dhcp_dns.common
     local dhcp_ls_new=$UB_VARDIR/dhcp_lease.new
 
     if [ ! -f $UB_DHCP_CONF ] || [ ! -f $dns_ls_old ] ; then
@@ -95,17 +96,31 @@ odhcpd_zonedata() {
       ;;
 
     longtime)
+      # Only process true lease changes to reduce Unbound reloads and memory spikes
       awk -v conffile=$UB_DHCP_CONF -v pipefile=$dns_ls_new \
           -v domain=$dhcp_domain -v bslaac=$dhcp4_slaac6 \
           -v bisolt=0 -v bconf=1 -v exclude_ipv6_ga=$exclude_ipv6_ga \
           -f /usr/lib/unbound/odhcpd.awk $dhcp_ls_new
 
-      awk '{ print $1 }' $dns_ls_old | sort | uniq > $dns_ls_del
-      cp $dns_ls_new $dns_ls_add
-      cp $dns_ls_new $dns_ls_old
-      cat $dns_ls_del | $UB_CONTROL_CFG local_datas_remove
-      cat $dns_ls_add | $UB_CONTROL_CFG local_datas
-      rm -f $dns_ls_new $dns_ls_del $dns_ls_add $dhcp_ls_new
+      awk '{ print $1 }' $dns_ls_old | sort | uniq > "${dns_ls_del}.0"
+      cp "$dns_ls_new" "${dns_ls_add}.0"
+      cp "$dns_ls_new" "$dns_ls_old"
+
+      # Determine common elements (in joined data+ptr records) 
+      cat "${dns_ls_add}.0" "${dns_ls_del}.0" | tr '\n' $'\034' | sed -E 's/( IN PTR [^'$'\034'']+)'$'\034''/\1\n/g' | \
+          sort | uniq -d > "${dns_ls_com}"
+
+      # Filter out common records from del and add lists
+      tr '\n' $'\034' <"${dns_ls_del}.0" | sed -E 's/( IN PTR [^'$'\034'']+)'$'\034''/\1\n/g' | \
+          grep -vF --file="${dns_ls_com}" | sed -E 's/'$'\034''/\n/g; s/^ //' >"${dns_ls_del}"
+      tr '\n' $'\034' <"${dns_ls_add}.0" | sed -E 's/( IN PTR [^'$'\034'']+)'$'\034''/\1\n/g' | \
+          grep -vF --file="${dns_ls_com}" | sed -E 's/'$'\034''/\n/g; s/^ //' >"${dns_ls_add}"
+
+      # Apply only real changes
+      [ -s "${dns_ls_del}" ] && cat "${dns_ls_del}" | $UB_CONTROL_CFG local_datas_remove
+      [ -s "${dns_ls_add}" ] && cat "${dns_ls_add}" | $UB_CONTROL_CFG local_datas
+
+      rm -f "$dns_ls_new" "$dns_ls_del" "$dns_ls_add" "$dhcp_ls_new" "${dns_ls_del}.0" "${dns_ls_add}.0" "${dns_ls_com}"
       ;;
 
     increment)
