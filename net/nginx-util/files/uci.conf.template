@@ -27,6 +27,7 @@ http {
 	gzip on;
 	gzip_vary on;
 	gzip_proxied any;
+	gzip_types *;
 
 	root /www;
 
