@@ -19,6 +19,7 @@ proto_openfortivpn_init_config() {
 	proto_config_add_string "local_ip"
 	proto_config_add_string "username"
 	proto_config_add_string "password"
+	proto_config_add_string "password2"
 	proto_config_add_int "persist_int"
 	proto_config_add_string "trusted_cert"
 	proto_config_add_string "remote_status_check"
@@ -33,9 +34,9 @@ proto_openfortivpn_setup() {
 
 	local msg ifname ip server_ips pwfile callfile
 
-	local peeraddr port tunlink local_ip username password persist_int \
+	local peeraddr port tunlink local_ip username password password2 persist_int \
 	      trusted_cert remote_status_check saml_login saml_login_port
-	json_get_vars host peeraddr port tunlink local_ip username password persist_int \
+	json_get_vars host peeraddr port tunlink local_ip username password password2 persist_int \
 		      trusted_cert remote_status_check saml_login saml_login_port
 
 	ifname="vpn-$config"
@@ -127,6 +128,7 @@ proto_openfortivpn_setup() {
 	        mkdir -p '/var/etc/openfortivpn'
 	        pwfile="/var/etc/openfortivpn/$config.passwd"
 	        echo "$password" > "$pwfile"
+			[ -n "$password2" ] && echo "$password2" >> "$pwfile"
 	}
 
 	[ -n "$local_ip" ] || local_ip=192.0.2.1
