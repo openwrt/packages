@@ -3,8 +3,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=prometheus-node-exporter-ucode
-PKG_VERSION:=2024.02.07
-PKG_RELEASE:=2
+PKG_VERSION:=2025.12.04
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Andre Heider <a.heider@gmail.com>
 PKG_LICENSE:=Apache-2.0
@@ -65,10 +65,14 @@ define Collector
 endef
 
 $(eval $(call Collector,dnsmasq,Dnsmasq collector,@dnsmasq))
+$(eval $(call Collector,hwmon,hwmon collector,))
 $(eval $(call Collector,ltq-dsl,Lantiq/Intel/MaxLinear DSL collector,@ltq-dsl-app))
 $(eval $(call Collector,netstat,netstat collector,))
+$(eval $(call Collector,odhcp6c,odhcp6c statistics collector,@odhcp6c))
 $(eval $(call Collector,openwrt,OpenWrt collector,))
+$(eval $(call Collector,realtek-poe,RealTek PoE collector,@realtek-poe))
 $(eval $(call Collector,snmp6,snmp6 collector,))
+$(eval $(call Collector,thermal,thermal collector,))
 $(eval $(call Collector,uci_dhcp_host,UCI DHCP host collector,))
 $(eval $(call Collector,wifi,Wi-Fi collector,+ucode-mod-nl80211))
 $(eval $(call Collector,wireguard,Wireguard collector,+rpcd-mod-wireguard))

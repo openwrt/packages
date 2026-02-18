@@ -156,8 +156,10 @@ global.handle_request = function(env) {
 
 	httpstatus("200 OK");
 
-	let duration = gauge("node_scrape_collector_duration_seconds");
-	let success = gauge("node_scrape_collector_success");
+	let duration = gauge("node_scrape_collector_duration_seconds",
+		"node_exporter: Duration of a collector scrape.");
+	let success = gauge("node_scrape_collector_success",
+		"node_exporter: Whether a collector succeeded.");
 
 	for (let col in cols) {
 		let ok = false;
