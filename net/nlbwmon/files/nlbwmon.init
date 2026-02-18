@@ -61,6 +61,8 @@ parse_config() {
 
 	config_get dir "$cfg" database_directory /var/lib/nlbwmon
 
+	chown -R nlbwmon:nlbwmon "$dir"
+
 	mkdir -p "$dir"
 	procd_append_param command -o "$dir"
 
@@ -86,6 +88,13 @@ start_service() {
 
 	config_load nlbwmon
 	config_foreach parse_config nlbwmon
+
+	[ -x /sbin/ujail -a -e /etc/capabilities/dbus.json ] && {
+		procd_add_jail nlbwmon
+		procd_set_param user nlbwmon
+		procd_set_param group nlbwmon
+		procd_set_param capabilities /etc/capabilities/nlbwmon.json
+	}
 
 	procd_close_instance
 }
