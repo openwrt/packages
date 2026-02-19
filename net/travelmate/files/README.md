@@ -52,7 +52,7 @@ automatically (re)connnects to configured APs/hotspots as they become available.
 * [OpenWrt](https://openwrt.org), tested/compatible with current stable and latest OpenWrt snapshot
 * The `luci-app-travelmate` ensures these packages are present:
   * 'dnsmasq' as dns backend
-  * 'iw' for wlan scanning
+  * 'ubus iwinfo' for wlan scanning
   * 'curl' for connection checking and all kinds of captive portal magic,
      e.g. cp detection and auto-logins
   * a 'wpad' variant to support various WPA encrypted networks
@@ -94,7 +94,6 @@ automatically (re)connnects to configured APs/hotspots as they become available.
 | trm_laniface       | -, lan                             | logical LAN network interface, default is 'lan'                                                       |
 | trm_radio          | -, not set                         | restrict travelmate to certain radio(s)                                                               |
 | trm_revradio       | 0, disabled                        | change the radio processing order, e.g. 'radio1 radio0'                                               |
-| trm_scanmode       | -, active                          | send active probe requests or passively listen for beacon frames with 'passive'                       |
 | trm_captive        | 1, enabled                         | check the internet availability and handle captive portal redirections                                |
 | trm_netcheck       | 0, disabled                        | treat missing internet availability as an error                                                       |
 | trm_proactive      | 0, disabled                        | proactively scan and switch to a higher prioritized uplink, despite of an already existing connection |

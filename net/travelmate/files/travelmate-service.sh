@@ -1,6 +1,6 @@
 #!/bin/sh
 # travelmate service script, a wlan connection manager for travel router
-# Copyright (c) 2016-2025 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2016-2026 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # set (s)hellcheck exceptions
@@ -20,7 +20,7 @@ f_conf
 while :; do
 	if [ "${trm_action}" = "stop" ]; then
 		if [ -s "${trm_pidfile}" ]; then
-			f_log "info" "travelmate instance stopped ::: action: ${trm_action}, pid: $(cat ${trm_pidfile} 2>/dev/null)"
+			f_log "info" "travelmate instance stopped ::: action: ${trm_action}, pid: $(< ${trm_pidfile})"
 			: >"${trm_rtfile}"
 			: >"${trm_pidfile}"
 		fi
@@ -31,7 +31,7 @@ while :; do
 		trm_action=""
 	fi
 	while :; do
-		"${trm_sleepcmd}" "${trm_timeout}" 0 >/dev/null 2>&1
+		sleep "${trm_timeout}" 0 >/dev/null 2>&1
 		rc="${?}"
 		if [ "${rc}" != "0" ]; then
 			[ "$(f_getgw)" = "false" ] && rc="0"

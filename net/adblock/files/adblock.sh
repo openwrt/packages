@@ -22,8 +22,13 @@ adb_nftdevallow=""
 adb_nftblock="0"
 adb_nftmacblock=""
 adb_nftdevblock=""
+adb_nftremote="0"
+adb_nftremotetimeout="15"
+adb_nftmacremote=""
 adb_allowdnsv4=""
 adb_allowdnsv6=""
+adb_remotednsv4=""
+adb_remotednsv6=""
 adb_blockdnsv4=""
 adb_blockdnsv6=""
 adb_dnsshift="0"
@@ -92,7 +97,7 @@ f_cmd() {
 # load adblock environment
 #
 f_load() {
-	local bg_pid iface port filter tcpdump_filter cpu core
+	local bg_pid port filter tcpdump_filter cpu core
 
 	adb_packages="$("${adb_ubuscmd}" -S call rpc-sys packagelist '{ "all": true }' 2>/dev/null)"
 	adb_bver="$(printf "%s" "${adb_packages}" | "${adb_jsoncmd}" -ql1 -e '@.packages.adblock')"
@@ -144,13 +149,10 @@ f_load() {
 		if [ "${adb_report}" = "1" ] && [ -z "${bg_pid}" ] && [ "${adb_action}" != "report" ] && [ "${adb_action}" != "stop" ]; then
 			[ ! -d "${adb_reportdir}" ] && mkdir -p "${adb_reportdir}"
 			if [ -z "${adb_repiface}" ]; then
-				network_get_device iface "lan"
-				[ -z "${iface}" ] && network_get_physdev iface "lan"
-				if [ -n "${iface}" ]; then
-					adb_repiface="${iface}"
-					uci_set adblock global adb_repiface "${adb_repiface}"
-					f_uci "adblock"
-				fi
+				network_get_device adb_repiface "lan"
+				[ -z "${adb_repiface}" ] && network_get_physdev adb_repiface "lan"
+				uci_set adblock global adb_repiface "${adb_repiface:-"any"}"
+				f_uci "adblock"
 			fi
 			for port in ${adb_repport}; do
 				[ -n "${filter}" ] && filter="${filter} or "
@@ -164,10 +166,11 @@ f_load() {
 					-C "${adb_repchunksize}" -W "${adb_repchunkcnt}" \
 					-w "${adb_reportdir}/adb_report.pcap" >/dev/null 2>&1 &
 				)
+				sleep 1
 				bg_pid="$("${adb_pgrepcmd}" -nf "${adb_reportdir}/adb_report.pcap")"
-				f_log "info" "tcpdump backgound process started (interface: '${adb_repiface}', port: ${adb_repport}, pid: ${bg_pid})"
+				f_log "info" "tcpdump backgound process started (interface: ${adb_repiface}, port: ${adb_repport}, dir: ${adb_reportdir}, pid: ${bg_pid})"
 			else
-				f_log "info" "please set the name of the reporting network device 'adb_repiface' manually"
+				f_log "info" "please set the reporting interface 'adb_repiface' and reporting directory 'adb_reportdir' manually"
 			fi
 		fi
 	fi
@@ -718,7 +721,7 @@ f_nftadd() {
 
 	# only proceed if at least one feature is enabled
 	#
-	if [ "${adb_nftallow}" = "0" ] && [ "${adb_nftblock}" = "0" ] && [ "${adb_nftforce}" = "0" ]; then
+	if [ "${adb_nftallow}" = "0" ] && [ "${adb_nftblock}" = "0" ] && [ "${adb_nftremote}" = "0" ] && [ "${adb_nftforce}" = "0" ]; then
 		return
 	fi
 
@@ -730,9 +733,18 @@ f_nftadd() {
 			printf "%s\n" "delete table inet adblock"
 		fi
 		printf "%s\n" "add table inet adblock"
+		# allow Set
+		#
 		if [ "${adb_nftallow}" = "1" ] && [ -n "${adb_nftmacallow}" ]; then
 			printf "%s\n" "add set inet adblock mac_allow { type ether_addr; flags interval; auto-merge; elements = { ${adb_nftmacallow// /, } }; }"
 		fi
+		# remote allow Set with timeout, for MACs that should be temporary allowed to bypass dns blocking
+		#
+		if [ "${adb_nftremote}" = "1" ] && [ -n "${adb_nftmacremote}" ]; then
+			printf "%s\n" "add set inet adblock mac_remote { type ether_addr; flags timeout; timeout ${adb_nftremotetimeout}m; }"
+		fi
+		# block Set
+		#
 		if [ "${adb_nftblock}" = "1" ] && [ -n "${adb_nftmacblock}" ]; then
 			printf "%s\n" "add set inet adblock mac_block { type ether_addr; flags interval; auto-merge; elements = { ${adb_nftmacblock// /, } }; }"
 		fi
@@ -755,6 +767,13 @@ f_nftadd() {
 				[ -n "${adb_allowdnsv4}" ] && printf "%s\n" "add rule inet adblock pre-routing iifname \"${device}\" meta nfproto ipv4 meta l4proto { udp, tcp } th dport 53 counter dnat to ${adb_allowdnsv4}:53"
 				[ -n "${adb_allowdnsv6}" ] && printf "%s\n" "add rule inet adblock pre-routing iifname \"${device}\" meta nfproto ipv6 meta l4proto { udp, tcp } th dport 53 counter dnat to [${adb_allowdnsv6}]:53"
 			done
+		fi
+
+		# external remote allow rules
+		#
+		if [ "${adb_nftremote}" = "1" ]; then
+			[ -n "${adb_remotednsv4}" ] && printf "%s\n" "add rule inet adblock pre-routing meta nfproto ipv4 ether saddr @mac_remote meta l4proto { udp, tcp } th dport 53 counter dnat to ${adb_remotednsv4}:53"
+			[ -n "${adb_remotednsv6}" ] && printf "%s\n" "add rule inet adblock pre-routing meta nfproto ipv6 ether saddr @mac_remote meta l4proto { udp, tcp } th dport 53 counter dnat to [${adb_remotednsv6}]:53"
 		fi
 
 		# external block rules
@@ -1193,7 +1212,7 @@ f_query() {
 #
 f_jsnup() {
 	local pids object feeds end_time runtime dns dns_ver dns_mem free_mem custom_feed="0" status="${1:-"enabled"}"
-	local duration jail="0" nft_unfiltered="0" nft_filtered="0" nft_force="0"
+	local duration jail="0" nft_unfiltered="0" nft_filtered="0" nft_remote="0" nft_force="0"
 
 	if [ -n "${adb_dnspid}" ]; then
 		pids="$("${adb_pgrepcmd}" -P "${adb_dnspid}" 2>/dev/null)"
@@ -1232,6 +1251,10 @@ f_jsnup() {
 		&& { [ -n "${adb_nftmacblock}" ] || [ -n "${adb_nftdevblock}" ]; } \
 		&& { [ -n "${adb_blockdnsv4}" ] || [ -n "${adb_blockdnsv6}" ]; }; then
 		nft_filtered="1"
+	fi
+	if [ "${adb_nftremote}" = "1" ] && [ -n "${adb_nftmacremote}" ] \
+		&& { [ -n "${adb_remotednsv4}" ] || [ -n "${adb_remotednsv6}" ]; }; then
+		nft_remote="1"
 	fi
 	case "${status}" in
 		"enabled")
@@ -1282,7 +1305,7 @@ f_jsnup() {
 	json_add_string "dns_backend" "${adb_dns:-"-"} (${dns_ver:-"-"}), ${adb_finaldir:-"-"}, ${dns_mem:-"0"} MB"
 	json_add_string "run_ifaces" "trigger: ${adb_trigger:-"-"}, report: ${adb_repiface:-"-"}"
 	json_add_string "run_directories" "base: ${adb_basedir}, dns: ${adb_dnsdir}, backup: ${adb_backupdir}, report: ${adb_reportdir}"
-	json_add_string "run_flags" "shift: $(f_char ${adb_dnsshift}), custom feed: $(f_char ${custom_feed}), ext. DNS (std/prot): $(f_char ${nft_unfiltered})/$(f_char ${nft_filtered}), force: $(f_char ${nft_force}), flush: $(f_char ${adb_dnsflush}), tld: $(f_char ${adb_tld}), search: $(f_char ${adb_safesearch}), report: $(f_char ${adb_report}), mail: $(f_char ${adb_mail}), jail: $(f_char ${jail})"
+	json_add_string "run_flags" "shift: $(f_char ${adb_dnsshift}), custom feed: $(f_char ${custom_feed}), ext. DNS (std/prot/remote): $(f_char ${nft_unfiltered})/$(f_char ${nft_filtered})/$(f_char ${nft_remote}), force: $(f_char ${nft_force}), flush: $(f_char ${adb_dnsflush}), tld: $(f_char ${adb_tld}), search: $(f_char ${adb_safesearch}), report: $(f_char ${adb_report}), mail: $(f_char ${adb_mail}), jail: $(f_char ${jail})"
 	json_add_string "last_run" "${runtime:-"-"}"
 	json_add_string "system_info" "cores: ${adb_cores}, fetch: ${adb_fetchcmd##*/}, ${adb_sysver}"
 	json_dump >"${adb_rtfile}"
@@ -1526,17 +1549,16 @@ f_report() {
 	top_tmpblocked="${adb_reportdir}/top_blocked.tmp"
 	map_jsn="${adb_reportdir}/adb_map.jsn"
 
-
 	# build report
 	#
 	if [ "${action}" != "json" ]; then
-		: >"${report_raw}" >"${report_srt}" >"${report_txt}" >"${report_jsn}"
+		: >"${report_raw}" >"${report_srt}" >"${report_txt}" >"${report_jsn}" >"${map_jsn}"
 		: >"${top_tmpclients}" >"${top_tmpdomains}" >"${top_tmpblocked}"
 		[ "${adb_represolve}" = "1" ] && resolve=""
 		for file in "${adb_reportdir}/adb_report.pcap"*; do
 			(
 				"${adb_dumpcmd}" ${resolve} --immediate-mode -tttt -T domain -r "${file}" 2>/dev/null |
-				"${adb_awkcmd}" '
+				"${adb_awkcmd}" -v repiface="${adb_repiface}" '
 					BEGIN {
 						pending = 0
 					}
@@ -1550,26 +1572,33 @@ f_report() {
 						date = $1
 						split($2, t, ":")
 						time = t[1] ":" t[2] ":" substr(t[3],1,2)
+						interface = repiface
 						client = $4
+						if (repiface == "any") {
+							interface = $3
+							client = $6
+						}
 						sub(/\.[0-9]+$/, "", client)
 						domain = $(NF-1)
 						sub(/[,\.]+$/, "", domain)
 						if (domain ~ /\.lan$/) next
+						if (domain !~ /\./) next
 						qtype = $(NF-2)
 						sub(/\?$/, "", qtype)
 						last_date = date
 						last_time = time
 						last_client = client
+						last_interface = interface
 						last_domain = domain
 						last_qtype  = qtype
 						pending  = 1
 						next
 					}
 					# ok answer
-					/[0-9]+[[:space:]]+[0-9]+\/[0-9]+\/[0-9]+[[:space:]]+(A|AAAA|CNAME)[[:space:]]/ {
+						/ (A|AAAA|CNAME) / && !/NXDomain/ && !/ServFail/ {
 						if (pending) {
-							printf "%s\t%s\t%s\t%s\t%s\tOK\n",
-							last_date, last_time, last_client, last_qtype, last_domain
+							printf "%s\t%s\t%s\t%s\t%s\t%s\tOK\n",
+							last_date, last_time, last_client, last_interface, last_qtype, last_domain
 							pending = 0
 						}
 						next
@@ -1577,8 +1606,8 @@ f_report() {
 					# nxdomain answer
 					/ NXDomain/ {
 						if (pending) {
-							printf "%s\t%s\t%s\t%s\t%s\tNX\n",
-							last_date, last_time, last_client, last_qtype, last_domain
+							printf "%s\t%s\t%s\t%s\t%s\t%s\tNX\n",
+							last_date, last_time, last_client, last_interface, last_qtype, last_domain
 							pending = 0
 						}
 						next
@@ -1586,14 +1615,14 @@ f_report() {
 					# servfail answer
 					/ ServFail/ {
 						if (pending) {
-							printf "%s\t%s\t%s\t%s\t%s\tSF\n",
-							last_date, last_time, last_client, last_qtype, last_domain
+							printf "%s\t%s\t%s\t%s\t%s\t%s\tSF\n",
+							last_date, last_time, last_client, last_interface, last_qtype, last_domain
 							pending = 0
 						}
 						next
 					}
 					END {
-    					# no fallback
+						# no fallback
 					}
 				' >> "${report_raw}"
 			) &
@@ -1612,7 +1641,7 @@ f_report() {
 			start="$("${adb_awkcmd}" 'END{printf "%s_%s",$1,$2}' "${report_srt}")"
 			end="$("${adb_awkcmd}" 'NR==1{printf "%s_%s",$1,$2}' "${report_srt}")"
 			total="$(f_count tld "${report_srt}" "var")"
-			blocked="$("${adb_awkcmd}" '{if($6=="NX")cnt++}END{printf "%s",cnt}' "${report_srt}")"
+			blocked="$("${adb_awkcmd}" '{if($7=="NX")cnt++}END{printf "%s",cnt}' "${report_srt}")"
 			percent="$("${adb_awkcmd}" -v t="${total}" -v b="${blocked}" 'BEGIN{ if(t>0) printf "%.2f%s",b/t*100,"%"; else printf "0.00%%"}')"
 			{
 				printf "%s\n" "{ "
@@ -1630,9 +1659,10 @@ f_report() {
 			"${adb_awkcmd}" '
 				{
 					client = $3
-					qtype = $4
-					domain = $5
-					rc = $6
+					iface = $4
+					qtype = $5
+					domain = $6
+					rc = $7
 					# normalize domain
 					gsub(/[\.]+$/, "", domain)
 					domain = tolower(domain)
@@ -1723,30 +1753,31 @@ f_report() {
 					i = 0
 					printf \"\t\\\"requests\\\": [\n\"
 				}
-				# Only process lines that match the search AND have exactly 6 fields
-				(/(${search})/ && NF == 6) {
+				(/(${search})/ && NF == 7) {
 					i++
 					if (i == 1) {
 						printf \"\n\t\t{\
 						\n\t\t\t\\\"date\\\": \\\"%s\\\",\
 						\n\t\t\t\\\"time\\\": \\\"%s\\\",\
 						\n\t\t\t\\\"client\\\": \\\"%s\\\",\
+						\n\t\t\t\\\"iface\\\": \\\"%s\\\",\
 						\n\t\t\t\\\"type\\\": \\\"%s\\\",\
 						\n\t\t\t\\\"domain\\\": \\\"%s\\\",\
 						\n\t\t\t\\\"rc\\\": \\\"%s\\\"\
 						\n\t\t}\",
-						\$1, \$2, \$3, \$4, \$5, \$6
+						\$1, \$2, \$3, \$4, \$5, \$6, \$7
 					}
 					else if (i <= ${res_count}) {
 						printf \",\n\t\t{\
 						\n\t\t\t\\\"date\\\": \\\"%s\\\",\
 						\n\t\t\t\\\"time\\\": \\\"%s\\\",\
 						\n\t\t\t\\\"client\\\": \\\"%s\\\",\
+						\n\t\t\t\\\"iface\\\": \\\"%s\\\",\
 						\n\t\t\t\\\"type\\\": \\\"%s\\\",\
 						\n\t\t\t\\\"domain\\\": \\\"%s\\\",\
 						\n\t\t\t\\\"rc\\\": \\\"%s\\\"\
 						\n\t\t}\",
-						\$1, \$2, \$3, \$4, \$5, \$6
+						\$1, \$2, \$3, \$4, \$5, \$6, \$7
 					}
 				}
 				END {
@@ -1760,28 +1791,31 @@ f_report() {
 		#
 		if [ "${adb_map}" = "1" ] && [ -s "${report_jsn}" ]; then
 			cnt="1"
-			network_find_wan iface_v4
-			network_get_ipaddr ip_v4 "${iface_v4}"
-			network_find_wan6 iface_v6
-			network_get_ipaddr6 ip_v6 "${iface_v6}"
-			printf "%s" ",[{}" >"${map_jsn}"
-			f_fetch
+			network_find_wan iface_v4 && network_get_ipaddr ip_v4 "${iface_v4}"
+			network_find_wan6 iface_v6 && network_get_ipaddr6 ip_v6 "${iface_v6}"
+			if [ -n "${ip_v4}" ] || [ -n "${ip_v6}" ]; then
+				f_fetch
+				printf "%s" ",[{}" >"${map_jsn}"
+			fi
 			for ip in ${ip_v4} ${ip_v6}; do
-				"${adb_fetchcmd}" ${adb_geoparm} "${adb_geourl}/${ip}" 2>/dev/null |
-					"${adb_awkcmd}" -v feed="homeIP" '{printf ",{\"%s\": %s}\n",feed,$0}' >>"${map_jsn}"
+				(
+					"${adb_fetchcmd}" ${adb_geoparm} "${adb_geourl}/${ip}" 2>/dev/null |
+						"${adb_awkcmd}" -v feed="homeIP" '{printf ",{\"%s\": %s}\n",feed,$0}' >>"${map_jsn}"
+				) &
+				[ "${cnt}" -gt "${adb_cores}" ] && wait -n
 				cnt="$((cnt + 1))"
 			done
-			if [ -s "${map_jsn}" ] && [ "${cnt}" -lt "45" ] && [ "$("${adb_catcmd}" "${map_jsn}")" != ",[{}" ]; then
+			wait
+			if [ -s "${map_jsn}" ] && [ "${cnt}" -lt "45" ]; then
 				json_init
 				if json_load_file "${report_jsn}" >/dev/null 2>&1; then
 					json_select "requests" >/dev/null 2>&1
 					json_get_keys requests >/dev/null 2>&1
 					for request in ${requests}; do
 						json_select "${request}" >/dev/null 2>&1
-						json_get_keys details >/dev/null 2>&1
 						json_get_var rc "rc" >/dev/null 2>&1
 						json_get_var domain "domain" >/dev/null 2>&1
-						if [ "${rc}" = "NX" ] && ! "${adb_catcmd}" "${map_jsn}" 2>/dev/null | "${adb_grepcmd}" -qxF "${domain}"; then
+						if [ "${rc}" = "NX" ] && ! "${adb_grepcmd}" -q "\"${domain}\":" "${map_jsn}"; then
 							(
 								"${adb_fetchcmd}" ${adb_geoparm} "${adb_geourl}/${domain}" 2>/dev/null |
 									"${adb_awkcmd}" -v feed="${domain}" '{printf ",{\"%s\": %s}\n",feed,$0}' >>"${map_jsn}"
@@ -1836,12 +1870,12 @@ f_report() {
 				done
 			elif json_get_type status "${top}" && [ "${top}" = "requests" ] && [ "${status}" = "array" ]; then
 				printf "%s\n%s\n%s\n" ":::" "::: Latest DNS Queries" ":::" >>"${report_txt}"
-				printf "%-11s%-9s%-40s%-5s%-70s%s\n" "Date" "Time" "Client" "Type" "Domain" "Answer" >>"${report_txt}"
+				printf "%-11s%-9s%-40s%-15s%-5s%-70s%s\n" "Date" "Time" "Client" "Interface" "Type" "Domain" "Answer" >>"${report_txt}"
 				json_select "${top}"
 				index="1"
 				while json_get_type status "${index}" && [ "${status}" = "object" ]; do
 					json_get_values item "${index}"
-					printf "%-11s%-9s%-40s%-5s%-70s%s\n" ${item} >>"${report_txt}"
+					printf "%-11s%-9s%-40s%-15s%-5s%-70s%s\n" ${item} >>"${report_txt}"
 					index="$((index + 1))"
 				done
 			fi
@@ -1858,7 +1892,7 @@ f_report() {
 			printf "%s\n" "${content}"
 			;;
 		"json")
-			if [ "${adb_map}" = "1" ]; then
+			if [ "${adb_map}" = "1" ] && [ -s "${map_jsn}" ]; then
 				jsn="$("${adb_catcmd}" ${report_jsn} ${map_jsn} 2>/dev/null)"
 				[ -n "${jsn}" ] && printf "[%s]]\n" "${jsn}"
 			else
@@ -1932,6 +1966,7 @@ case "${adb_action}" in
 		f_main
 		;;
 	"restart")
+		f_temp
 		f_jsnup "processing"
 		f_nftremove
 		f_rmdns

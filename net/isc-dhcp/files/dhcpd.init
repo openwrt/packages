@@ -167,13 +167,18 @@ create_empty_zone() {
 	chown bind:bind "$zpath" || return 1
 	chmod 0664 "$zpath" || return 1
 
-	# if the zone doesn't exist, we need to add it, otherwise we need to
-	# create it.
+	# if the zone doesn't exist, or a RFC-1918 in-addr.arpa zone, then
+	# we need to add it, otherwise we need to create it.
 	if ! rndc zonestatus $zone >/dev/null 2>&1; then
 		command="addzone"
 	else
 		command="modzone"
 	fi
+
+	case "$zone" in
+		10.in-addr.arpa|1[6789].172.in-addr.arpa|2[0-9].172.in-addr.arpa|3[01].172.in-addr.arpa|168.192.in-addr.arpa)
+		command="addzone" ;;
+	esac
 
 	if ! error=$(rndc $command $zone "{
 		type primary;
@@ -719,14 +724,15 @@ reload_service() {
 }
 
 add_interface_trigger() {
-	local cfg=$1
-	local trigger ignore
+	local cfg="$1"
+	local net ignore ifname
 
-	config_get trigger "$cfg" interface
+	config_get net "$cfg" interface
 	config_get_bool ignore "$cfg" ignore 0
 
-	if [ -n "$trigger" ] && [ $ignore -eq 0 ]; then
-		procd_add_reload_interface_trigger "$trigger"
+	if [ -n "$net" ] && [ $ignore -eq 0 ]; then
+		network_get_device ifname "$net"
+		procd_add_reload_interface_trigger "$ifname"
 	fi
 }
 

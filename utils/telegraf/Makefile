@@ -3,12 +3,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=telegraf
-PKG_VERSION:=1.37.1
+PKG_VERSION:=1.37.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/influxdata/telegraf/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=14e9ba382999a5065a86344af73891b977aa8bbedf39f17d1f549b3e7575b645
+PKG_HASH:=5f36c0fb34f50f6a587e9fc0924521a8dc37189d338d5eab26ed386ff1cb623b
 
 PKG_MAINTAINER:=Niklas Thorild <niklas@thorild.se>
 PKG_LICENSE:=MIT
@@ -23,7 +23,7 @@ GO_PKG_BUILD_PKG:=github.com/influxdata/telegraf/cmd/telegraf
 GO_PKG_LDFLAGS_X := \
   github.com/influxdata/telegraf/internal.Version=$(PKG_VERSION) \
   github.com/influxdata/telegraf/internal.Branch=HEAD \
-  github.com/influxdata/telegraf/internal.Commit=3352c0d5
+  github.com/influxdata/telegraf/internal.Commit=a6b212be
 
 ifeq ($(CONFIG_mips)$(CONFIG_mipsel),y)
   TARGET_LDFLAGS += -static
@@ -32,6 +32,7 @@ endif
 TELEGRAF_SMALL_PLUGINS:=custom \
 	inputs.cpu \
 	inputs.ethtool \
+	inputs.http \
 	inputs.internal \
 	inputs.interrupts \
 	inputs.ipset \
@@ -43,7 +44,6 @@ TELEGRAF_SMALL_PLUGINS:=custom \
 	inputs.ping \
 	inputs.processes \
 	inputs.procstat \
-	inputs.prometheus \
 	inputs.sensors \
 	inputs.snmp \
 	inputs.socket_listener \

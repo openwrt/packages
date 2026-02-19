@@ -128,7 +128,7 @@ GO_PKG_INSTALL_BIN_PATH?=/usr/bin
 
 GO_PKG_WORK_DIR_NAME:=.go_work
 GO_PKG_BUILD_DIR=$(PKG_BUILD_DIR)/$(GO_PKG_WORK_DIR_NAME)/build
-GO_PKG_BUILD_BIN_DIR=$(GO_PKG_BUILD_DIR)/bin$(if $(GO_HOST_TARGET_DIFFERENT),/$(GO_OS_ARCH))
+GO_PKG_BUILD_BIN_DIR=$(GO_PKG_BUILD_DIR)/bin$(if $(GO_HOST_TARGET_DIFFERENT),/$(subst /,_,$(GO_OS_ARCH)))
 
 GO_PKG_BUILD_DEPENDS_PATH:=/usr/share/gocode
 GO_PKG_BUILD_DEPENDS_SRC=$(STAGING_DIR)$(GO_PKG_BUILD_DEPENDS_PATH)/src
@@ -251,7 +251,9 @@ GO_PKG_INSTALL_ARGS= \
 	$(if $(strip $(GO_PKG_DEFAULT_GCFLAGS)),-gcflags "all=$(GO_PKG_DEFAULT_GCFLAGS)") \
 	$(if $(strip $(GO_PKG_DEFAULT_ASMFLAGS)),-asmflags "all=$(GO_PKG_DEFAULT_ASMFLAGS)") \
 	$(if $(GO_PKG_ENABLE_PIE),-buildmode pie) \
+	$(if $(filter $(GO_ARCH),366),-installsuffix "$(GO_386)") \
 	$(if $(filter $(GO_ARCH),arm),-installsuffix "v$(GO_ARM)") \
+	$(if $(filter $(GO_ARCH),arm64),-installsuffix "$(GO_ARM64)") \
 	$(if $(filter $(GO_ARCH),mips mipsle),-installsuffix "$(GO_MIPS)") \
 	$(if $(filter $(GO_ARCH),mips64 mips64le),-installsuffix "$(GO_MIPS64)") \
 	$(if $(strip $(GO_PKG_GCFLAGS)),-gcflags "$(GO_PKG_GCFLAGS) $(GO_PKG_DEFAULT_GCFLAGS)") \
@@ -264,7 +266,7 @@ define GoPackage/Build/Configure
 	$(SHELL) $(GO_INCLUDE_DIR)golang-build.sh configure
 endef
 
-# $(1) additional arguments for go command line (optional)
+# 1: additional arguments for go command line (optional)
 define GoPackage/Build/Compile
 	$(GO_GENERAL_BUILD_CONFIG_VARS) \
 	$(GO_PKG_BUILD_CONFIG_VARS) \

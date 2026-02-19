@@ -6,8 +6,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adblock
-PKG_VERSION:=4.5.0
-PKG_RELEASE:=3
+PKG_VERSION:=4.5.1
+PKG_RELEASE:=2
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
 
@@ -61,6 +61,9 @@ define Package/adblock/install
 	$(INSTALL_CONF) ./files/adblock.categories $(1)/etc/adblock
 	$(INSTALL_CONF) ./files/adblock.feeds $(1)/etc/adblock
 	$(INSTALL_CONF) ./files/adblock.custom.feeds $(1)/etc/adblock
+
+	$(INSTALL_DIR) $(1)/www/cgi-bin
+	$(INSTALL_BIN) ./files/adblock.cgi $(1)/www/cgi-bin/adblock
 
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/95-adblock-housekeeping $(1)/etc/uci-defaults

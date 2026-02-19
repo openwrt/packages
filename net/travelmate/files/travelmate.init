@@ -1,5 +1,5 @@
 #!/bin/sh /etc/rc.common
-# Copyright (c) 2016-2025 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2016-2026 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # set (s)hellcheck exceptions
@@ -14,8 +14,6 @@ extra_command "setup" "[<iface>] [<zone>] [<metric>] Setup the travelmate uplink
 trm_init="/etc/init.d/travelmate"
 trm_service="/usr/bin/travelmate-service.sh"
 trm_funlib="/usr/lib/travelmate-functions.sh"
-trm_pidfile="/var/run/travelmate.pid"
-trm_scanfile="/var/run/travelmate.scan"
 
 if [ -z "${IPKG_INSTROOT}" ]; then
 	if [ "${action}" = "boot" ] && "${trm_init}" running; then
@@ -61,35 +59,33 @@ status_service() {
 }
 
 scan() {
-	local result scan_dev scan_mode radio_num radio_phy radio="${1:-"radio0"}"
+	local result radio="${1:-radio0}"
 
-	radio_num="${radio//[a-z]/}"
-	radio_phy="phy${radio_num}"
-	scan_mode="$(uci_get travelmate global trm_scanmode "active")"
-	[ "${scan_mode}" != "passive" ] && scan_mode=""
-
-	scan_dev="$(iw dev | awk -v phy="${radio_phy}" '/Interface/{iface=$2} /type/{if(($2=="AP"||$2=="managed")&&iface ~ "^"phy"-"){printf"%s",iface;exit}}')"
-	if [ -z "${scan_dev}" ]; then
-		iw phy "${radio_phy}" interface add "trmscan${radio_num}" type managed >/dev/null 2>&1
-		ip link set "trmscan${radio_num}" up >/dev/null 2>&1
-		scan_dev="trmscan${radio_num}"
+	result="$(f_scan "${radio}" full)"
+	if [ -z "${result}" ]; then
+		: > "${trm_tmpfile}"
+		mv -f  "${trm_tmpfile}" "${trm_scanfile}"
+		return 0
 	fi
-	result="$(iw dev "${scan_dev}" scan ${scan_mode} 2>/dev/null |
-		awk '/^BSS /{if(bssid!=""){printf "%3s %3s %17s %s %s %10s %30s %s\n",signal,channel,bssid,rsn,wpa,cipher,auth,ssid};signal="";channel="";rsn="-";wpa="-";cipher="-";auth="-";ssid="";bssid=toupper(substr($2,1,17))}
-		/signal:/{signal=(2*($2+100)>100 ? 100 : 2*($2+100))}
-		/SSID:/{$1="";sub(/^ /,"",$0);ssid=$0}
-		/freq:/{channel=int($2);if(channel>=2400&&channel<=2500)channel=int((channel-2407)/5);else if(channel>=4900&&channel<=5900)channel=int((channel-5000)/5);else if(channel>=5925&&channel<=7125)channel=int(((channel-5950)/5)+1)}
-		/WPA:/{wpa="+"}
-		/RSN:/{rsn="+"}
-		/Group cipher:/{cipher=$4}
-		/Authentication suites:/{auth="";for(i=4;i<=NF;i++){auth=auth (i==4?"":",")$i}}
-		END{if(bssid!=""){printf "%3s %3s %17s %s %s %10s %30s %s\n",signal,channel,bssid,rsn,wpa,cipher,auth,ssid}}' | sort -rn)"
-	[ -n "${result}" ] && printf "%b\n" "${result}" > "${trm_scanfile}" || : > "${trm_scanfile}"
 
-	if [ "${scan_dev}" = "trmscan${radio_num}" ]; then
-		ip link set "trmscan${radio_num}" down >/dev/null 2>&1
-		iw dev "trmscan${radio_num}" del >/dev/null 2>&1
-	fi
+	printf "%s\n" "${result}" | "${trm_awkcmd}" '
+	{
+		quality = $1
+		channel = $2
+		bssid   = $3
+		rsn     = $4
+		cipher  = $5
+		auth    = $6
+		ssid = ""
+		for (i=7; i<=NF; i++) {
+			ssid = ssid $i " "
+		}
+		sub(/[ \t]+$/, "", ssid)
+		printf "%3s %3s %17s %-12s %-10s %-10s %s\n",
+			quality, channel, bssid, rsn, cipher, auth, ssid
+	}' | "${trm_sortcmd}" -rn > "${trm_tmpfile}"
+
+	mv -f  "${trm_tmpfile}" "${trm_scanfile}"
 }
 
 setup() {
@@ -162,7 +158,7 @@ service_triggers() {
 	local iface delay
 
 	iface="$(uci_get travelmate global trm_iface)"
-	delay="$(uci_get travelmate global trm_triggerdelay "2")"
+	delay="$(uci_get travelmate global trm_triggerdelay "5")"
 	PROCD_RELOAD_DELAY=$((delay * 1000))
 
 	if [ -n "${iface}" ]; then
