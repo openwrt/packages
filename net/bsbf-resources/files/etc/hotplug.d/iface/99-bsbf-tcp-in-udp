@@ -1,0 +1,12 @@
+#!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2025-2026 Chester A. Unal <chester.a.unal@arinc9.com>
+
+[ "$ACTION" = "ifup" ] || exit
+
+case "$INTERFACE" in
+	wan*|wwan*|ifWan*|mob*_*)
+		[ "$DEVICE" = qmimux* ] && { bsbf-tcp-in-udp l3 "$DEVICE"; exit; }
+		bsbf-tcp-in-udp l2 "$DEVICE"
+		;;
+esac

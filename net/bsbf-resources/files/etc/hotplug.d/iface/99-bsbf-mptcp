@@ -1,0 +1,8 @@
+#!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2025-2026 Chester A. Unal <chester.a.unal@arinc9.com>
+
+[ "$ACTION" = "ifdown" ] || exit
+
+DEVICE=$(ubus call network.interface."$INTERFACE" status | grep -m1 '"device"' | cut -d'"' -f4)
+bsbf-mptcp-helper remove "$DEVICE"
