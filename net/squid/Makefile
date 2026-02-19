@@ -56,7 +56,6 @@ endef
 
 define Package/squid/conffiles
 /etc/config/squid
-/etc/squid/squid.conf
 endef
 
 CONFIGURE_ARGS += \
