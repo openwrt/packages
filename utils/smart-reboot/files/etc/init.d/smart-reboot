@@ -55,12 +55,12 @@ reload_service() {
 start_service() {
 	[ -f "$CRON_FILE" ] || touch "$CRON_FILE"
 	gen_schedule
-	/etc/init.d/cron restart >/dev/null 2>&1
+	/etc/init.d/cron reload >/dev/null 2>&1 || /etc/init.d/cron restart >/dev/null 2>&1
 }
 
 stop_service() {
 	cron_cleanup
-	/etc/init.d/cron restart >/dev/null 2>&1
+	/etc/init.d/cron reload >/dev/null 2>&1 || /etc/init.d/cron restart >/dev/null 2>&1
 }
 
 service_triggers() {
