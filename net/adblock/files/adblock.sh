@@ -1428,6 +1428,7 @@ f_main() {
 		src_entries=""
 		[ "${src_name}" = "1hosts" ] && src_cat="${adb_hst_feed}"
 		[ "${src_name}" = "hagezi" ] && src_cat="${adb_hag_feed}"
+		[ "${src_name}" = "ipfire_dbl" ] && src_cat="${adb_ipf_feed}"
 		[ "${src_name}" = "stevenblack" ] && src_cat="${adb_stb_feed}"
 		if [ -n "${src_cat}" ]; then
 			(

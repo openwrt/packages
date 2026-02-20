@@ -29,6 +29,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | games_tracking      |         | S    | tracking         | [Link](https://www.gameindustry.eu)                                               |
 | hagezi              |         | VAR  | compilation      | [Link](https://github.com/hagezi/dns-blocklists)                                  |
 | hblock              |         | XL   | compilation      | [Link](https://hblock.molinero.dev)                                               |
+| ipfire_dbl          |         | VAR  | compilation      | [Link](https://www.ipfire.org/dbl)                                                |
 | oisd_big            |         | XXL  | general          | [Link](https://oisd.nl)                                                           |
 | oisd_nsfw           |         | XXL  | porn             | [Link](https://oisd.nl)                                                           |
 | oisd_nsfw_small     |         | M    | porn             | [Link](https://oisd.nl)                                                           |
