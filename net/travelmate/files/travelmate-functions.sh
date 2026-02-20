@@ -85,6 +85,8 @@ f_cmd() {
 # load travelmate config
 #
 f_conf() {
+	local device
+
 	 unset trm_stalist trm_radiolist trm_uplinklist trm_vpnifacelist trm_uplinkcfg trm_activesta trm_ssidfilter
 
 	 config_cb() {
@@ -1013,7 +1015,7 @@ f_scan() {
 		json_get_var channel channel
 
 		ssid="$(printf "%s" "${ssid}" | "${trm_awkcmd}" '{
-			gsub(/[\x00-\x1F\x7F]/, "");  # nur Steuerzeichen entfernen
+			gsub(/[[:cntrl:]]/, "");
 			sub(/^[ \t]+/, "");
 			sub(/[ \t]+$/, "");
 			print
@@ -1086,9 +1088,11 @@ f_scan() {
 # main function for connection handling
 #
 f_main() {
-	local radio radio_num radio_phy cnt retrycnt scan_dev scan_list scan_essid scan_bssid scan_rsn scan_wpa scan_quality scan_open
-	local station_id section sta sta_essid sta_bssid sta_radio sta_mac open_sta open_essid config_radio config_essid config_bssid
+	local radio cnt retrycnt scan_list scan_essid scan_bssid scan_rsn scan_wpa scan_quality scan_open station_id
+	local section sta sta_essid sta_bssid sta_radio sta_mac open_sta open_essid config_radio config_essid config_bssid
 
+	# initial check
+	#
 	f_check "initial" "false"
 	if [ "${trm_proactive}" = "0" ]; then
 		if [ "${trm_connection%%/*}" = "net ok" ]; then
@@ -1098,6 +1102,9 @@ f_main() {
 		fi
 	fi
  	f_log "debug" "f_main-1    ::: status: ${trm_ifstatus}, connection: ${trm_connection%%/*}, proactive: ${trm_proactive}"
+
+	# proactive connection handling
+	#
 	if [ "${trm_ifstatus}" != "true" ] || [ "${trm_proactive}" = "1" ]; then
 		config_load wireless
 		config_foreach f_setif wifi-iface "${trm_proactive}"
