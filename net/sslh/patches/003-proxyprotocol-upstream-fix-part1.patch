@@ -1,0 +1,291 @@
+From 77dc76a0f2fe0db7f8636df48e25c28179454a4e Mon Sep 17 00:00:00 2001
+From: yrutschle <git1@rutschle.net>
+Date: Sun, 1 Feb 2026 18:02:03 +0100
+Subject: [PATCH] Change IPv4 to IPv6 addresses when using proxyprotocol and
+ protocols are different (Fix #515)
+
+---
+ ChangeLog       |  3 +++
+ common.c        |  6 +++---
+ proxyprotocol.c | 50 ++++++++++++++++++++++++++++++++++++++++++++++---
+ t/run           | 42 +++++++++++++++++++++++++++++++++--------
+ t/test_pp1.cfg  |  8 ++++----
+ t/test_pp3.cfg  | 44 +++++++++++++++++++++++++++++++++++++++++++
+ 6 files changed, 135 insertions(+), 18 deletions(-)
+ create mode 100644 t/test_pp3.cfg
+
+--- a/ChangeLog
++++ b/ChangeLog
+@@ -1,6 +1,9 @@
+ vNEXT:
+ 	Fix segmentation fault in sslh-fork.
+ 
++	Mixed IPv4/IPv6 proxyprotocol setups will move both
++	addresses to IPv6 format on the server side.
++
+ v2.3.0:
+ 	Added `max_connections` setting to `listen` and
+ 	`protocol` configuration; see the
+--- a/common.c
++++ b/common.c
+@@ -428,9 +428,9 @@ static int connect_inet(struct connectio
+                            cnx->proto->port);
+     }
+     for (a = cnx->proto->saddr; a; a = a->ai_next) {
+-        /* When transparent or using proxyprotocol, make sure both 
+-         * connections use the same address family (e.g. IP4 on both sides) */
+-        if ((transparent || cnx->proto->proxyprotocol_is_present) && (a->ai_family != from.ai_addr->sa_family))
++        /* When transparent, make sure both connections use
++         * the same address family (e.g. IP4 on both sides) */
++        if (transparent && (a->ai_family != from.ai_addr->sa_family))
+             continue;
+         print_message(msg_connections_try, "trying to connect to %s family %d len %d\n",
+                     sprintaddr(buf, sizeof(buf), a),
+--- a/proxyprotocol.c
++++ b/proxyprotocol.c
+@@ -89,6 +89,32 @@ static int get_info(int fd, sockpeer_t s
+ }
+ 
+ 
++/* Turns an IPv4 address string into an IPv6 address string (i.e. prepends
++ * "::fff:", in place. Assumes the buffer is big enough, but won't go over len */
++static void pp_ipv4_to_ipv6(char* addr, int len)
++{
++    char tmp[108]; /* magic number from proxy_protocol.h */
++
++    int res = snprintf(tmp, sizeof(tmp), "::ffff:%s", addr);
++    if (res >= sizeof(tmp)) {
++        print_message(msg_int_error, "Error converting IPv4 address to IPv6 address");
++        return;
++    }
++    memcpy(addr, tmp, res);
++}
++
++/* Returns the address family (ip4 or ip6) of the server-side of a connection
++ * */
++static int get_serverside_family(struct connection* cnx)
++{
++    struct sockaddr addr;
++    socklen_t addrlen = sizeof(addr);
++
++    int res = getpeername(cnx->q[1].fd, &addr, &addrlen);
++    CHECK_RES_RETURN(res, "getpeername", -1);
++
++    return addr.sa_family;
++}
+ 
+ int pp_write_header(int pp_version, struct connection* cnx)
+ {
+@@ -98,6 +124,9 @@ int pp_write_header(int pp_version, stru
+     uint16_t pp1_hdr_len;
+     int32_t error;
+ 
++    int src_family = AF_UNSPEC;
++    int dst_family = AF_UNSPEC;
++
+     struct sockaddr_storage ss;
+     struct addrinfo addr;
+     int res;
+@@ -110,19 +139,34 @@ int pp_write_header(int pp_version, stru
+              &pp_info_in_v1.src_addr,
+              &pp_info_in_v1.src_port);
+     if (res == -1) return -1;
+-    pp_info_in_v1.address_family = family_to_pp(addr.ai_addr->sa_family);
++    src_family = addr.ai_addr->sa_family;
+ 
+-    res = get_info(cnx->q[1].fd, SOCK,
++    res = get_info(cnx->q[0].fd, SOCK,
+              &addr,
+              &pp_info_in_v1.dst_addr,
+              &pp_info_in_v1.dst_port
+             );
+     if (res == -1) return -1;
+ 
++    dst_family = get_serverside_family(cnx);
++
++    pp_info_in_v1.address_family = family_to_pp(AF_INET);
++
++    /*
++     * If src IPv6/dst IPv4 or src IPv4/dst IPv6,
++     * convert IPv4 to v4-mapped IPv6 (::ffff:a.b.c.d)
++     * (refer to rfc4291, 2.2.3 for mixed-format)
++     */
++    if (src_family != dst_family) {
++        pp_ipv4_to_ipv6(pp_info_in_v1.dst_addr, sizeof(pp_info_in_v1.dst_addr));
++        pp_ipv4_to_ipv6(pp_info_in_v1.src_addr, sizeof(pp_info_in_v1.src_addr));
++        pp_info_in_v1.address_family = family_to_pp(AF_INET6);
++    }
++
+     uint8_t *pp1_hdr = pp_create_hdr(pp_version, &pp_info_in_v1, &pp1_hdr_len, &error);
+ 
+     if (!pp1_hdr) {
+-        print_message(msg_system_error, "pp_create_hrd:%d:%s\n", error, pp_strerror(error));
++        print_message(msg_system_error, "pp_create_hdr:%d:%s\n", error, pp_strerror(error));
+         return -1;
+     }
+     defer_write_before(&cnx->q[1], pp1_hdr, pp1_hdr_len);
+--- a/t/run
++++ b/t/run
+@@ -10,6 +10,7 @@
+ #  ./run        # run all tests
+ #  ./run -l     # list all tests
+ #  ./run 1 3 5  # run specified tests
++#  ./run --binary sslh-ev    # run only one binary
+ 
+ use strict;
+ use IO::Socket::INET6;
+@@ -17,9 +18,13 @@ use Test::More qw/no_plan/;
+ use Conf::Libconfig 1.0.3;
+ use Getopt::Long;
+ 
+-my ($coverage, $list_tests);
++# --cover: request test coverage analysis (not implemented)
++# --binary: specify which binary to run (default: all)
++# --list: list all available tests (do not run any)
++my ($coverage, $list_tests, $param_binary);
+ GetOptions(
+     'cover' => \$coverage,
++    'binary=s' => \$param_binary,
+     'list' => \$list_tests,
+ );
+ 
+@@ -192,7 +197,8 @@ sub run_ending_test
+ 
+ # Runs one test for one probe. Start echosrv's if required.
+ # Connect to port specified in the test, otherwise to the
+-# first port in the sslh configuration.
++# first port in the sslh configuration; to host specified in
++# the test, otherwise to localhost
+ # run sslh, connect, write the test pattern, read the result,
+ # check it connected to the right echosrv, check the data
+ # was transfered ok.
+@@ -206,9 +212,10 @@ sub run_test_probe
+ 
+     my $expected = $test->{expected};
+ 
++    my $sslh_host = $test->{host} // "localhost";
+     my $sslh_port = $test->{port} // $conf->value("listen")->[0]->{port};
+-    print "test_probe [$expected] $sslh_port\n";
+-    my $cnx = new IO::Socket::INET(PeerHost => "localhost:$sslh_port");
++    print "test_probe [$expected] $sslh_host:$sslh_port\n";
++    my $cnx = new IO::Socket::INET(PeerHost => "$sslh_host:$sslh_port");
+     warn "t: $!\n" unless $cnx;
+     return unless $cnx;
+ 
+@@ -316,6 +323,7 @@ my @tests = (
+         data_expected => "^PROXY TCP4 127.0.0.1 127.0.0.1 \\d+ \\d+\x0D\x0AINPUT_DATA",
+     },
+ 
++
+     # check socks5 does not
+     {
+         desc => "Server-side ProxyProtocol not active",
+@@ -325,6 +333,19 @@ my @tests = (
+         expected => "socks5",
+     },
+ 
++
++    # Check pp with IPv4 to IPv6 works.
++    {
++        desc => "Server-side IPv4 to IPv6 ProxyProtocol active",
++        host => "ip4-localhost",
++        run => \&run_test_probe,
++        cfg => "test_pp3.cfg",
++        data =>  "SSH-2.0 hello",
++        expected => "ssh",
++        data_expected => "^PROXY TCP6 ::ffff:127.0.0.1 ::ffff:127.0.0.1 \\d+ 8080\x0D\x0AINPUT_DATA",
++    },
++
++
+     # test_pp2.cfg has proxyprotocol on port 8080
+     {
+         desc => "Client-side ProxyProtocol active",
+@@ -388,10 +409,15 @@ if ($list_tests) {
+ 
+ ################################################################################
+ # Run selected tests
+-foreach my $test (@tests) {
+-    warn "Running test: $test->{desc}\n";
+-    my $binary = 'sslh-ev';
+-    my $code = ($test->{run})->($binary, $test);
++
++my @binaries = qw/sslh-fork sslh-select sslh-ev/;
++@binaries = $param_binary if defined $param_binary;
++
++foreach my $binary (@binaries) {
++    foreach my $test (@tests) {
++        warn "Running test: $test->{desc}\n";
++        my $code = ($test->{run})->($binary, $test);
++    }
+ }
+ 
+ stop_echosrv();
+--- a/t/test_pp1.cfg
++++ b/t/test_pp1.cfg
+@@ -29,15 +29,15 @@ verbose-int-error: 1; # internal errors,
+ # Options:
+ listen:
+ (
+-    { host: "localhost"; port: "8080"; keepalive: true; }
++    { host: "ip4-localhost"; port: "8080"; keepalive: true; }
+ );
+ 
+ 
+ protocols:
+ (
+-     { name: "ssh";  host: "localhost"; port: "9000"; proxyprotocol: 1; },
+-     { name: "socks5";  host: "localhost"; port: "9001"; },
+-     { name: "anyprot";  host: "localhost"; port: "9099";  }
++     { name: "ssh";  host: "ip4-localhost"; port: "9000"; proxyprotocol: 1; },
++     { name: "socks5";  host: "ip4-localhost"; port: "9001"; },
++     { name: "anyprot";  host: "ip4-localhost"; port: "9099";  }
+ );
+ 
+ on_timeout: "ssh";
+--- /dev/null
++++ b/t/test_pp3.cfg
+@@ -0,0 +1,44 @@
++# Testing for server-side ProxyProtocol
++
++foreground: true;
++inetd: false;
++numeric: true;
++transparent: false;
++timeout: 10;   # Probe test writes slowly
++pidfile: "/tmp/sslh_test.pid";
++
++syslog_facility: "auth"; 
++
++# Logging configuration
++# Value: 1: stdout; 2: syslog; 3: both
++# Defaults should be sensible. Generally, you want *-error
++# to be always enabled, to know if something is going wrong.
++verbose-config: 1; #  print configuration at startup
++verbose-config-error: 1;  # print configuration errors
++verbose-connections: 1; # trace established incoming address to forward address
++verbose-connections-error: 1; # connection errors
++verbose-connections-try: 1; # connection attempts towards targets
++verbose-fd: 0; # file descriptor activity, open/close/whatnot
++verbose-packets: 1; # hexdump packets on which probing is done
++verbose-probe-info: 1; # what's happening during the probe process
++verbose-probe-error: 1; # failures and problems during probing
++verbose-system-error: 1; # system call problem, i.e.  malloc, fork, failing
++verbose-int-error: 1; # internal errors, the kind that should never happen
++
++# List of interfaces on which we should listen
++# Options:
++listen:
++(
++    { host: "ip4-localhost"; port: "8080"; keepalive: true; }
++);
++
++
++protocols:
++(
++     { name: "ssh";  host: "ip6-localhost"; port: "9000"; proxyprotocol: 1; },
++     { name: "socks5";  host: "ip6-localhost"; port: "9001"; },
++     { name: "anyprot";  host: "ip6-localhost"; port: "9099";  }
++);
++
++on_timeout: "ssh";
++
