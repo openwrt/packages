@@ -89,14 +89,20 @@
 		"size": "S",
 		"descr": "tracking"
 	},
+	"hagezi": {
+		"url": "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/",
+		"rule": "feed 1",
+		"size": "VAR",
+		"descr": "compilation"
+	},
 	"hblock": {
 		"url": "https://hblock.molinero.dev/hosts_domains.txt",
 		"rule": "feed 1",
 		"size": "XL",
 		"descr": "compilation"
 	},
-	"hagezi": {
-		"url": "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/",
+	"ipfire_dbl": {
+		"url": "https://dbl.ipfire.org/lists/",
 		"rule": "feed 1",
 		"size": "VAR",
 		"descr": "compilation"
