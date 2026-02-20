@@ -40,10 +40,11 @@ start_service() {
 	[ $keepalive -gt 0 ] && procd_append_param command -k $keepalive
 
 	procd_add_jail prometheus-node-exporter-ucode log procfs sysfs ubus
-	procd_add_jail_mount "/usr/lib/uhttpd_ucode.so"
 	procd_add_jail_mount "/lib/libubus.so*"
 	procd_add_jail_mount "/lib/libuci.so*"
-	procd_add_jail_mount "/usr/lib/ucode"
+	procd_add_jail_mount "/lib/libustream-ssl.so"
+	procd_add_jail_mount "/usr/lib/uhttpd_ucode.so"
+	procd_add_jail_mount "/usr/lib/ucode/*.so"
 	procd_add_jail_mount "/usr/lib/libnl*.so*"
 	procd_add_jail_mount "/usr/share/ucode/node-exporter"
 	procd_add_jail_mount "/etc/config"
