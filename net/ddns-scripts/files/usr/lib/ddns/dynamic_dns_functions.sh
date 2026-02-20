@@ -680,11 +680,37 @@ do_transfer() {
 	local __ERR=0
 	local __CNT=0	# error counter
 	local __PROG  __RUNPROG
+	local __URL_HOST __DNS_HAS_AAAA=0
 
 	[ $# -ne 1 ] && write_log 12 "Error in 'do_transfer()' - wrong number of parameters"
 
 	# Use ip_network as default for bind_network if not separately specified
 	[ -z "$bind_network" ] && [ "$ip_source" = "network" ] && [ "$ip_network" ] && bind_network="$ip_network"
+
+	# Check if URL host supports IPv6 when use_ipv6 is enabled
+	if [ "$use_ipv6" -eq 1 ]; then
+		# Extract hostname from URL
+		__URL_HOST=$(echo "$__URL" | sed -e 's|^[^/]*//||' -e 's|/.*$||' -e 's|:.*$||')
+		__DNS_HAS_AAAA=0
+		
+		# Try to resolve IPv6 address for the host
+		if [ -n "$BIND_HOST" ]; then
+			$BIND_HOST -t AAAA "$__URL_HOST" >"$DATFILE" 2>"$ERRFILE" && grep -q "has IPv6 address" "$DATFILE" && __DNS_HAS_AAAA=1
+		elif [ -n "$KNOT_HOST" ]; then
+			$KNOT_HOST -t AAAA "$__URL_HOST" >"$DATFILE" 2>"$ERRFILE" && grep -q "has IPv6 address" "$DATFILE" && __DNS_HAS_AAAA=1
+		elif [ -n "$DRILL" ]; then
+			$DRILL AAAA "$__URL_HOST" >"$DATFILE" 2>"$ERRFILE" && grep -E "^$__URL_HOST\.|^$__URL_HOST[[:space:]]" "$DATFILE" | grep -q "$IPV6_REGEX" && __DNS_HAS_AAAA=1
+		elif [ -n "$HOSTIP" ]; then
+			$HOSTIP -6 "$__URL_HOST" >"$DATFILE" 2>"$ERRFILE" && grep -q "$IPV6_REGEX" "$DATFILE" && __DNS_HAS_AAAA=1
+		elif [ -n "$NSLOOKUP" ]; then
+			$NSLOOKUP "$__URL_HOST" >"$DATFILE" 2>"$ERRFILE" && grep -q "$IPV6_REGEX" "$DATFILE" && __DNS_HAS_AAAA=1
+		fi
+		
+		# If host doesn't support IPv6, we'll use IPv4 instead
+		if [ $__DNS_HAS_AAAA -eq 0 ]; then
+			write_log 6 "Update URL host '$__URL_HOST' does not support IPv6, using IPv4 for transfer"
+		fi
+	fi
 
 	# lets prefer GNU Wget because it does all for us - IPv4/IPv6/HTTPS/PROXY/force IP version
 	if [ -n "$WGET_SSL" ] && [ $USE_CURL -eq 0 ]; then 			# except global option use_curl is set to "1"
@@ -699,9 +725,18 @@ do_transfer() {
 			write_log 7 "Force communication via IP '$__BINDIP'"
 			__PROG="$__PROG --bind-address=$__BINDIP"
 		fi
-		# force ip version to use
-		if [ $force_ipversion -eq 1 ]; then
-			[ $use_ipv6 -eq 0 ] && __PROG="$__PROG -4" || __PROG="$__PROG -6"	# force IPv4/IPv6
+		# forced IP version
+		if [ "$force_ipversion" -eq 1 ]; then
+			if [ "$use_ipv6" -eq 0 ]; then
+				__PROG="$__PROG -4"
+			elif [ $__DNS_HAS_AAAA -eq 1 ]; then
+				__PROG="$__PROG -6"	# only force IPv6 if host supports it
+			else
+				__PROG="$__PROG -4"	# fallback to IPv4 if host doesn't support IPv6
+			fi
+		# unforced IP version	
+		elif [ "$use_ipv6" -eq 1 ] && [ $__DNS_HAS_AAAA -eq 1 ]; then
+			__PROG="$__PROG -6"	# use IPv6 if available
 		fi
 		# set certificate parameters
 		if [ $use_https -eq 1 ]; then
@@ -743,9 +778,18 @@ do_transfer() {
 			write_log 7 "Force communication via device '$__DEVICE'"
 			__PROG="$__PROG --interface $__DEVICE"
 		fi
-		# force ip version to use
-		if [ $force_ipversion -eq 1 ]; then
-			[ $use_ipv6 -eq 0 ] && __PROG="$__PROG -4" || __PROG="$__PROG -6"	# force IPv4/IPv6
+		# forced IP version
+		if [ "$force_ipversion" -eq 1 ]; then
+			if [ "$use_ipv6" -eq 0 ]; then
+				__PROG="$__PROG -4"
+			elif [ $__DNS_HAS_AAAA -eq 1 ]; then
+				__PROG="$__PROG -6"	# only force IPv6 if host supports it
+			else
+				__PROG="$__PROG -4"	# fallback to IPv4 if host doesn't support IPv6
+			fi
+		# unforced IP version	
+		elif [ "$use_ipv6" -eq 1 ] && [ $__DNS_HAS_AAAA -eq 1 ]; then
+			__PROG="$__PROG -6"	# use IPv6 if available
 		fi
 		# set certificate parameters
 		if [ $use_https -eq 1 ]; then
@@ -779,9 +823,18 @@ do_transfer() {
 		# force network/ip not supported
 		[ -n "$__BINDIP" ] && \
 			write_log 14 "uclient-fetch: FORCE binding to specific address not supported"
-		# force ip version to use
-		if [ $force_ipversion -eq 1 ]; then
-			[ $use_ipv6 -eq 0 ] && __PROG="$__PROG -4" || __PROG="$__PROG -6"       # force IPv4/IPv6
+		# forced IP version
+		if [ "$force_ipversion" -eq 1 ]; then
+			if [ "$use_ipv6" -eq 0 ]; then
+				__PROG="$__PROG -4"
+			elif [ $__DNS_HAS_AAAA -eq 1 ]; then
+				__PROG="$__PROG -6"	# only force IPv6 if host supports it
+			else
+				__PROG="$__PROG -4"	# fallback to IPv4 if host doesn't support IPv6
+			fi
+		# unforced IP version	
+		elif [ "$use_ipv6" -eq 1 ] && [ $__DNS_HAS_AAAA -eq 1 ]; then
+			__PROG="$__PROG -6"	# use IPv6 if available
 		fi
 		# https possibly not supported
 		[ $use_https -eq 1 -a -z "$UCLIENT_FETCH_SSL" ] && \
