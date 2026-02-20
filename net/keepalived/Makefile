@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=keepalived
 PKG_VERSION:=2.3.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.keepalived.org/software
@@ -350,7 +350,7 @@ mkdir -m 700 -p "$(USER_HOME)/.ssh"
 chown "$(USER)":"$(USER)" "$(USER_HOME)" -R
 
 [ ! -d "$(SUDO_DIR)" ] && mkdir "$(SUDO_DIR)"
-echo "$(USER) ALL= NOPASSWD:/usr/bin/rsync" > "$(SUDO_FILE)"
+echo "$(USER) ALL= NOPASSWD:/usr/bin/rsync,/bin/mkdir" > "$(SUDO_FILE)"
 EOF
 
 	[ -z "$${IPKG_INSTROOT}" ] && [ -f "$${DEFAULT_SCRIPT}" ] && sh "$${DEFAULT_SCRIPT}"
