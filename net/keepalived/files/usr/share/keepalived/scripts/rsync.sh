@@ -56,7 +56,7 @@ ha_sync_send() {
 	ssh_remote="$RSYNC_USER@$address"
 
 	# shellcheck disable=SC2086
-	timeout 10 ssh $ssh_options $ssh_remote mkdir -m 755 -p "$dirs_list /tmp" || {
+	timeout 10 ssh $ssh_options $ssh_remote sudo mkdir -m 755 -p "$dirs_list /tmp" || {
 		log_err "can not connect to $address. check key or connection"
 		update_last_sync_time "$cfg"
 		update_last_sync_status "$cfg" "SSH Connection Failed"
