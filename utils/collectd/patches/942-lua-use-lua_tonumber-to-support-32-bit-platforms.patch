@@ -1,0 +1,95 @@
+From 64fd0a49960f7fbe1366e80ca32062007472c022 Mon Sep 17 00:00:00 2001
+From: Max Chernoff <git@maxchernoff.ca>
+Date: Mon, 23 Jun 2025 01:32:09 -0600
+Subject: [PATCH] fix(lua): Use `lua_tonumber` to support 32-bit platforms
+
+Previously, `luaC_tovalue` used `lua_tointeger` for variables of type
+"derive", "counter", and "absolute". However, on 32-bit platforms,
+`lua_Integer` may be only 32 bits wide [1], so if you set `values` to a
+value larger than 2^31-1 from Lua, the value of `lua_tointeger` will be
+unspecified [2].
+
+This commit changes the code to use `lua_tonumber` on 32-bit platforms,
+which returns a float, which will then be cast to the (typedef'ed to
+`[u]int64_t`) integer types `derive_t`, `counter_t`, and `absolute_t`,
+ensuring that large values are not truncated.
+
+When `lua_Integer` is 64 bits wide, the code will still use
+`lua_tointeger` to ensure that integers between 2^53 and 2^63-1 do not
+lose precision on newer versions of Lua with dedicated integer
+types [3].
+
+Submitted upstream at https://github.com/collectd/collectd/pull/4369.
+
+[1]: https://www.lua.org/manual/5.1/manual.html#lua_Integer
+
+[2]: https://www.lua.org/manual/5.1/manual.html#lua_tointeger
+
+[3]: https://www.lua.org/manual/5.3/manual.html#8.1
+
+Signed-off-by: Max Chernoff <git@maxchernoff.ca>
+---
+ src/utils_lua.c | 45 ++++++++++++++++++++++++++++++++-------------
+ 1 file changed, 32 insertions(+), 13 deletions(-)
+
+--- a/src/utils_lua.c
++++ b/src/utils_lua.c
+@@ -169,12 +169,22 @@ value_t luaC_tovalue(lua_State *L, int i
+ 
+   if (ds_type == DS_TYPE_GAUGE)
+     v.gauge = (gauge_t)lua_tonumber(L, /* stack pos = */ -1);
+-  else if (ds_type == DS_TYPE_DERIVE)
+-    v.derive = (derive_t)lua_tointeger(L, /* stack pos = */ -1);
+-  else if (ds_type == DS_TYPE_COUNTER)
+-    v.counter = (counter_t)lua_tointeger(L, /* stack pos = */ -1);
+-  else if (ds_type == DS_TYPE_ABSOLUTE)
+-    v.absolute = (absolute_t)lua_tointeger(L, /* stack pos = */ -1);
++  else if (ds_type == DS_TYPE_DERIVE) {
++    if (sizeof(lua_Integer) < sizeof(derive_t))
++      v.derive = (derive_t)lua_tonumber(L, /* stack pos = */ -1);
++    else
++      v.derive = (derive_t)lua_tointeger(L, /* stack pos = */ -1);
++  } else if (ds_type == DS_TYPE_COUNTER) {
++    if (sizeof(lua_Integer) < sizeof(counter_t))
++      v.counter = (counter_t)lua_tonumber(L, /* stack pos = */ -1);
++    else
++      v.counter = (counter_t)lua_tointeger(L, /* stack pos = */ -1);
++  } else if (ds_type == DS_TYPE_ABSOLUTE) {
++    if (sizeof(lua_Integer) < sizeof(absolute_t))
++      v.absolute = (absolute_t)lua_tonumber(L, /* stack pos = */ -1);
++    else
++      v.absolute = (absolute_t)lua_tointeger(L, /* stack pos = */ -1);
++  }
+ 
+   return v;
+ } /* }}} value_t luaC_tovalue */
+@@ -267,13 +277,22 @@ int luaC_pushvalue(lua_State *L, value_t
+ {
+   if (ds_type == DS_TYPE_GAUGE)
+     lua_pushnumber(L, (lua_Number)v.gauge);
+-  else if (ds_type == DS_TYPE_DERIVE)
+-    lua_pushinteger(L, (lua_Integer)v.derive);
+-  else if (ds_type == DS_TYPE_COUNTER)
+-    lua_pushinteger(L, (lua_Integer)v.counter);
+-  else if (ds_type == DS_TYPE_ABSOLUTE)
+-    lua_pushinteger(L, (lua_Integer)v.absolute);
+-  else
++  else if (ds_type == DS_TYPE_DERIVE) {
++    if (sizeof(lua_Integer) < sizeof(derive_t))
++      lua_pushnumber(L, (lua_Number)v.derive);
++    else
++      lua_pushinteger(L, (lua_Integer)v.derive);
++  } else if (ds_type == DS_TYPE_COUNTER) {
++    if (sizeof(lua_Integer) < sizeof(counter_t))
++      lua_pushnumber(L, (lua_Number)v.counter);
++    else
++      lua_pushinteger(L, (lua_Integer)v.counter);
++  } else if (ds_type == DS_TYPE_ABSOLUTE) {
++    if (sizeof(lua_Integer) < sizeof(absolute_t))
++      lua_pushnumber(L, (lua_Number)v.absolute);
++    else
++      lua_pushinteger(L, (lua_Integer)v.absolute);
++  } else
+     return -1;
+   return 0;
+ } /* }}} int luaC_pushvalue */
