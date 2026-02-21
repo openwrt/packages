@@ -2153,8 +2153,10 @@ f_mail() {
 # log monitor
 #
 f_monitor() {
-	local daemon logread_cmd loglimit_cmd logread_filter nft_expiry line ip_proto ip proto log_count idx base cidr rdap_log rdap_rc rdap_idx rdap_info
+	local logread_cmd loglimit_cmd logread_filter nft_expiry line ip_proto ip proto log_count idx base cidr rdap_log rdap_rc rdap_idx rdap_info
 
+	# log reading configuration
+	#
 	if [ -f "${ban_logreadfile}" ] && [ -x "${ban_logreadcmd}" ] && [ "${ban_logreadcmd##*/}" = "tail" ]; then
 		logread_cmd="${ban_logreadcmd} -qf ${ban_logreadfile} 2>/dev/null"
 		loglimit_cmd="${ban_logreadcmd} -qn ${ban_loglimit} ${ban_logreadfile} 2>/dev/null"
@@ -2165,9 +2167,13 @@ f_monitor() {
 		logread_filter=""
 	fi
 
+	# start log monitoring
+	#
 	if [ -n "${logread_cmd}" ] && [ -n "${loglimit_cmd}" ] && [ -n "${ban_logterm}" ] && [ "${ban_loglimit}" != "0" ]; then
 		f_log "info" "start detached banIP log service (${ban_logreadcmd})"
-		[ -n "${ban_nftexpiry}" ] && nft_expiry="timeout $(printf "%s" "${ban_nftexpiry}" | "${ban_grepcmd}" -oE "([0-9]+[d|h|m|s])+$")"
+		if printf "%s" "${ban_nftexpiry}" | grep -qE '^([1-9][0-9]*(ms|s|m|h|d|w))+$'; then
+			nft_expiry="timeout ${ban_nftexpiry}"
+		fi
 
 		# retrieve/cache current allowlist/blocklist content
 		#

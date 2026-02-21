@@ -189,7 +189,7 @@ Available commands:
 | ban_nftloglevel         | option | warn                          | nft loglevel, values: emerg, alert, crit, err, warn, notice, info, debug                                          |
 | ban_nftpriority         | option | -100                          | nft priority for the banIP table (the prerouting table is fixed to priority -150)                                 |
 | ban_nftpolicy           | option | memory                        | nft policy for banIP-related Sets, values: memory, performance                                                    |
-| ban_nftexpiry           | option | -                             | expiry time for auto added blocklist members, e.g. '5m', '2h' or '1d'                                             |
+| ban_nftexpiry           | option | -                             | expiry time (ms|s|m|h|d|w) for auto added blocklist members, e.g. '5m', '2h' or '1d'                              |
 | ban_nftretry            | option | 5                             | number of Set load attempts in case of an error                                                                   |
 | ban_nftcount            | option | 0                             | enable nft counter for every Set element                                                                          |
 | ban_bcp38               | option | 0                             | block packets with spoofed source IP addresses in all supported chains                                            |
