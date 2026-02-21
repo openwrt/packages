@@ -4,10 +4,12 @@ PKG_NAME:=vzlogger
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=https://github.com/volkszaehler/vzlogger.git
 PKG_RELEASE:=1
-PKG_LICENSE:=GPL-3.0-or-later
-PKG_LICENSE_FILES:=COPYING
 PKG_SOURCE_DATE:=2025-10-06
 PKG_SOURCE_VERSION:=fdad271ea3884f1ee970a8b0b6c42451d93f20a4
+
+PKG_MAINTAINER:=Andy Voigt <a.voigt@mailbox.org>
+PKG_LICENSE:=GPL-3.0-or-later
+PKG_LICENSE_FILES:=COPYING
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk

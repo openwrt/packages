@@ -4,10 +4,12 @@ PKG_NAME:=libsml
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=https://github.com/volkszaehler/libsml.git
 PKG_RELEASE:=1
-PKG_LICENSE:=GPL-3.0-or-later
-PKG_LICENSE_FILES:=LICENSE
 PKG_SOURCE_DATE:=2025-09-27
 PKG_SOURCE_VERSION:=9ff113e448efd1b14f871e556ce189a797032447
+
+PKG_MAINTAINER:=Andy Voigt <a.voigt@mailbox.org>
+PKG_LICENSE:=GPL-3.0-or-later
+PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
 
