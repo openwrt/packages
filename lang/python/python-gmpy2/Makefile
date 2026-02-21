@@ -16,7 +16,7 @@ PKG_HASH:=bc297f1fd8c377ae67a4f493fc0f926e5d1b157e5c342e30a4d84dc7b9f95d96
 
 PKG_LICENSE:=LGPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING.LESSER
-PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
+PKG_MAINTAINER:=
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

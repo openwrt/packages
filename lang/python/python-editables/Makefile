@@ -16,7 +16,7 @@ PKG_HASH:=309627d9b5c4adc0e668d8c6fa7bac1ba7c8c5d415c2d27f60f081f8e80d1de2
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.txt
-PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
+PKG_MAINTAINER:=
 
 PKG_HOST_ONLY:=1
 HOST_BUILD_DEPENDS:=python3/host python-build/host python-installer/host python-flit-core/host

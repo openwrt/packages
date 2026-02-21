@@ -16,7 +16,7 @@ PKG_HASH:=deb4163ef11f75b520d822d9505c1f462761b4309b1bb713d08689759ea8b899
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
+PKG_MAINTAINER:=
 
 PKG_HOST_ONLY:=1
 HOST_BUILD_DEPENDS:=python3/host python-build/host python-installer/host python-poetry-core/host

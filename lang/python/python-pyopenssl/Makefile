@@ -16,7 +16,7 @@ PKG_HASH:=6b2cba5cc46e822750ec3e5a81ee12819850b11303630d575e98108a079c2b12
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
+PKG_MAINTAINER:=
 PKG_CPE_ID:=cpe:/a:pyopenssl_project:pyopenssl
 
 include ../pypi.mk
