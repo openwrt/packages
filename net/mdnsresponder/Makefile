@@ -33,7 +33,7 @@ define Package/mDNSResponder/Default
   CATEGORY:=Network
   SUBMENU:=IP Addresses and Names
   TITLE:=mDNS
-  URL:=http://developer.apple.com/networking/bonjour/
+  URL:=https://developer.apple.com/bonjour/
 endef
 
 define Package/mDNSResponder/Default/description

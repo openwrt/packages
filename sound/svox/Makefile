@@ -13,7 +13,7 @@ PKG_VERSION:=$(subst +git,.,$(PKG_REAL_VERSION))
 PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_REAL_VERSION).orig.tar.gz
-PKG_SOURCE_URL:=http://ftp.debian.org/debian/pool/non-free/s/svox
+PKG_SOURCE_URL:=https://deb.debian.org/debian/pool/non-free/s/svox
 PKG_HASH:=337b25e6ccb3764f0df1e176470b883c90e40e98840d4133340fcc89eb3cea0c
 
 PKG_BUILD_DIR :=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_REAL_VERSION)

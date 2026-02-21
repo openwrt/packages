@@ -27,7 +27,7 @@ define Package/igmpproxy
   SUBMENU:=Routing and Redirection
   DEPENDS:=+USE_GLIBC:librt
   TITLE:=Multicast Routing Daemon
-  URL:=http://sourceforge.net/projects/igmpproxy
+  URL:=https://github.com/pali/igmpproxy
 endef
 
 define Package/igmpproxy/description

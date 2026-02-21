@@ -21,7 +21,7 @@ define Package/python3-vobject
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=VObject
-  URL:=http://eventable.github.io/vobject/
+  URL:=https://py-vobject.github.io/
   DEPENDS:=+python3 +python3-dateutil
 endef
 

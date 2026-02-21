@@ -12,7 +12,7 @@ PKG_VERSION:=2.5.2
 PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://ftp.daper.net/pub/soft/moc/stable/
+PKG_SOURCE_URL:=https://ftp.daper.net/pub/soft/moc/stable/
 PKG_HASH:=f3a68115602a4788b7cfa9bbe9397a9d5e24c68cb61a57695d1c2c3ecf49db08
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>

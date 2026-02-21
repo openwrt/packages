@@ -28,7 +28,7 @@ define Package/conserver
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Connect multiple user to a serial console with logging
-  URL:=http://www.conserver.com/
+  URL:=https://conserver.com/
   DEPENDS:=+libopenssl
   MAINTAINER:=Bjørn Mork <bjorn@mork.no>
   VARIANT:=default

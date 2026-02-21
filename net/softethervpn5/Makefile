@@ -29,7 +29,7 @@ define Package/softethervpn5/Default
   CATEGORY:=Network
   SUBMENU:=VPN
   TITLE:=softethervpn5 v$(PKG_VERSION)
-  URL:=http://www.softether.org/
+  URL:=https://www.softether.org/
 endef
 
 define Package/softethervpn5/Default/description

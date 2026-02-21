@@ -12,7 +12,7 @@ PKG_VERSION:=1.2.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://downloads.us.xiph.org/releases/speex/
+PKG_SOURCE_URL:=https://downloads.xiph.org/releases/speex/
 PKG_HASH:=4b44d4f2b38a370a2d98a78329fefc56a0cf93d1c1be70029217baae6628feea
 
 PKG_FIXUP:=autoreconf
@@ -27,7 +27,7 @@ define Package/libspeex
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Open source speech compression codec library
-  URL:=http://www.speex.org/
+  URL:=https://www.speex.org/
   MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 endef
 

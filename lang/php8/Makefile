@@ -57,7 +57,7 @@ define Package/php8/Default
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=PHP8 Hypertext preprocessor
-  URL:=http://www.php.net/
+  URL:=https://www.php.net/
   DEPENDS:=php8
 endef
 

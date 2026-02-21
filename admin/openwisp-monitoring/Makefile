@@ -28,7 +28,7 @@ define Package/openwisp-monitoring
   SECTION:=admin
   SUBMENU:=openwisp
   DEPENDS:=+netjson-monitoring +openwisp-config
-  URL:=http://openwisp.org
+  URL:=https://openwisp.org
 endef
 
 define Package/netjson-monitoring
@@ -38,7 +38,7 @@ define Package/netjson-monitoring
   SUBMENU:=openwisp
   DEPENDS:=+libubus-lua +lua-cjson +rpcd
   DEPENDS+=+NETJSON_MONITORING_IWINFO:rpcd-mod-iwinfo
-  URL:=http://openwisp.org
+  URL:=https://openwisp.org
 endef
 
 define Package/netjson-monitoring/config

@@ -12,7 +12,7 @@ PKG_VERSION:=1.18
 PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://humdi.net/vnstat
+PKG_SOURCE_URL:=https://humdi.net/vnstat
 PKG_HASH:=d7193592b9e7445fa5cbe8af7d3b39982f165ee8fc58041ff41f509b37c687d5
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 
@@ -26,7 +26,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/vnstat/Default
   SECTION:=net
   CATEGORY:=Network
-  URL:=http://humdi.net/vnstat/
+  URL:=https://humdi.net/vnstat/
 endef
 
 define Package/vnstat

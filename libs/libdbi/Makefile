@@ -28,7 +28,7 @@ define Package/libdbi
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Database Independent Abstraction Layer library
-  URL:=http://libdbi.sourceforge.net/
+  URL:=https://libdbi.sourceforge.net/
 endef
 
 define Package/libdbi/description
