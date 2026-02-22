@@ -1,0 +1,158 @@
+#!/bin/sh /etc/rc.common
+# Init script for ptp4l daemon, from linuxptp package
+
+START=45
+USE_PROCD=1
+
+PROG=/usr/sbin/ptp4l
+HELPER=/usr/sbin/sysclock-discipline-check
+CONFIGFILE=/var/etc/ptp4l.conf
+
+ID=ptp4l
+
+log() {
+	local loglvl=$1; shift; local msg="$*"
+	logger -t ptp4l-init -p daemon.$loglvl "$msg"
+}
+
+is_clock_disciplined() {
+	local output rc
+
+	if ! [ -x "$HELPER" ]; then
+		echo "Helper $HELPER not found or not executable." >&2
+		echo "Error: Clock sync helper tool missing." # This goes to stdout
+		return 2
+	fi
+
+	output=$($HELPER)
+	rc=$?
+	echo $output
+
+	[ $rc -eq 2 ] && log err "ERROR: $HELPER call unsuccessful (rc=$rc): $output"
+	return $rc
+}
+
+wait_disciplined() {
+	local check_msg interval is_synced=0 rc role
+
+	config_get role $ID "role" ""
+	config_get interval $ID "clock_sync_check_interval" "15"
+
+	log info "Preparing to start with role:$role -> first checking if system clock is disciplined (has been syncronized)..."
+	while [ $is_synced -eq 0 ]; do
+		check_msg=$(is_clock_disciplined); rc=$?
+
+		if [ $rc -eq 0 ]; then
+			is_synced=1
+			log info "sysclock-discipline-check: $check_msg. Continuing."
+			return 0
+		elif [ $rc -eq 1 ]; then
+			log info "sysclock-discipline-check: $check_msg. Waiting..."
+		else
+			log crit "Clock sync check FAILED: $check_msg."
+			log err "ptp4l will NOT start. Resolve issue, or set 'require_clock_sync' to 0"
+			return 1
+		fi
+		sleep $interval
+	done
+}
+
+handle_interface() {
+	local cfg=$1 delay_mechanism interface ifname transport
+
+	config_get interface $cfg "interface" ""
+	[ -z $interface ] && { log err "Required 'interface' option missing in 'ptp_interface' section"; exit 1; }
+
+	network_get_device ifname $interface
+	[ -z $ifname ] && { log err "Cannot resolve UCI interface '$interface' to kernel-compatible ifname."; exit 1; }
+
+	config_get transport $cfg "transport" "UDPv4"
+	config_get delay_mechanism $cfg "delay_mechanism" "E2E"
+
+	echo "" 
+	echo "[$ifname]"
+	[ $transport != "UDPv4" ] && echo "network_transport $transport"
+	[ $delay_mechanism != "E2E" ] && echo "delay_mechanism $delay_mechanism"
+	config_list_foreach $cfg "interface_opts" echo
+}
+
+handle_global() {
+	local cfg=$1 role
+
+	config_get role $cfg "role" "auto"
+
+	echo "[global]"
+
+	case "$role" in
+		server) printf "serverOnly 1\n";;
+		client) printf "clientOnly 1\n";;
+		auto) printf "";;
+		*) log err "Invalid role: $role! valid values: 'auto', 'client', 'server'"; return 1;;
+	esac
+
+	config_list_foreach $cfg "global_opts" echo
+}
+
+make_configfile() {
+	local cfg=$1 rc
+
+	. /lib/functions/network.sh
+
+	(
+		handle_global $cfg || exit 1
+		config_foreach handle_interface ptp_interface
+	) > "$CONFIGFILE"
+	rc=$? 
+
+	return $rc
+}
+
+make_cmdline() {
+	local cfg=$1 loglvl quiet 
+
+	config_get loglvl $cfg "loglvl" "6"
+
+	echo $PROG
+	echo "-l $loglvl"
+	echo "-f $CONFIGFILE"
+	echo "-m"
+	echo "-q"
+
+	config_list_foreach $cfg "extra_args" echo
+}
+
+start_service() {
+	local clocksync_wanted rc role should_have_disciplined_clock=0
+
+	config_load linuxptp
+
+	cmdline=$(make_cmdline $ID)
+
+	procd_open_instance "ptp4l"
+	procd_set_param command $cmdline
+	procd_set_param file $CONFIGFILE
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_close_instance
+
+	config_get role $ID "role" "auto"
+	[ $role = "server" ] && should_have_disciplined_clock=1
+	config_get_bool clocksync_wanted $ID "require_clock_sync" "$should_have_disciplined_clock"
+
+	if [ $clocksync_wanted = 1 ]; then
+		wait_disciplined || return 1
+	fi
+
+	make_configfile $ID; rc=$?
+	if [ $rc -ne 0 ] || [ ! -s $CONFIGFILE ]; then
+		 log err "Failed to generate $CONFIGFILE. Aborting."
+		 rm -f $CONFIGFILE
+		 return 1
+	fi
+
+	log info "Starting ptp4l: $cmdline"
+}
+
+stop_service() {
+	log info "ptp4l exitting (if running)"
+}
