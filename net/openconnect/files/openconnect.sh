@@ -23,6 +23,7 @@ proto_openconnect_init_config() {
 	proto_config_add_string "vpn_protocol"
 	proto_config_add_boolean "pfs"
 	proto_config_add_boolean "no_dtls"
+	proto_config_add_boolean "no_external_auth"
 	proto_config_add_string "interface"
 	proto_config_add_string "username"
 	proto_config_add_string "serverhash"
@@ -59,6 +60,7 @@ proto_openconnect_setup() {
 		vpn_protocol \
 		mtu \
 		no_dtls \
+		no_external_auth \
 		os \
 		password \
 		password2 \
@@ -107,6 +109,7 @@ proto_openconnect_setup() {
 	[ -n "$script" ] && append_args --script "$script"
 	[ "$pfs" = 1 ] && append_args --pfs
 	[ "$no_dtls" = 1 ] && append_args --no-dtls
+	[ "$no_external_auth" = 1 ] && append_args --no-external-auth
 	[ -n "$mtu" ] && append_args --mtu "$mtu"
 
 	# migrate to standard config files
