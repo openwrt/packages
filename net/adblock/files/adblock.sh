@@ -586,7 +586,7 @@ f_count() {
 # set external config options
 #
 f_extconf() {
-	local config section
+	local config
 
 	case "${adb_dns}" in
 		"dnsmasq")
@@ -853,7 +853,7 @@ f_nftremove() {
 # backup/restore/remove blocklists
 #
 f_list() {
-	local file rset item array safe_url safe_ips safe_cname safe_domains ip out_rc file_name mode="${1}" src_name="${2:-"${src_name}"}" in_rc="${src_rc:-0}" use_cname="0" ffiles="-maxdepth 1 -name adb_list.*.gz"
+	local file files item array safe_url safe_ips safe_cname safe_domains ip out_rc file_name mode="${1}" src_name="${2:-"${src_name}"}" in_rc="${src_rc:-0}" use_cname="0"
 
 	case "${mode}" in
 		"blocklist" | "allowlist")
@@ -1009,7 +1009,7 @@ f_list() {
 					fi
 				done
 			else
-				out_rc=4
+				out_rc="4"
 			fi
 			if [ "${adb_action}" != "boot" ] && [ "${adb_action}" != "start" ] && [ "${adb_action}" != "restart" ] &&
 				[ "${adb_action}" != "resume" ] && [ -n "${src_name}" ] && [ "${out_rc}" != "0" ]; then
@@ -1024,16 +1024,29 @@ f_list() {
 		"merge")
 			src_name=""
 			file_name="${adb_tmpdir}/${adb_dnsfile}"
+
+			# remove stale backup files
+			#
+			files="-maxdepth 1 -type f -name *.gz"
 			for file in ${adb_feed}; do
-				ffiles="${ffiles} -a ! -name adb_list.${file}.gz"
+				files="${files} ! -name adb_list.${file}.gz"
 			done
 			if [ "${adb_safesearch}" = "1" ] && [ "${adb_dnssafesearch}" != "0" ]; then
-				ffiles="${ffiles} -a ! -name safesearch.google.gz"
+				files="${files} ! -name safesearch.google.gz"
 			fi
-			"${adb_findcmd}" "${adb_backupdir}" ${ffiles} -print0 2>/dev/null | xargs -0 rm 2>/dev/null
-			"${adb_sortcmd}" ${adb_srtopts} -mu "${adb_tmpfile}".* 2>/dev/null >"${file_name}"
-			out_rc="${?}"
-			rm -f "${adb_tmpfile}".*
+			"${adb_findcmd}" "${adb_backupdir}" ${files} -print0 2>/dev/null | xargs -0r rm -f 2>/dev/null
+
+			# merge files
+			#
+			files="$(printf "%s\n" "${adb_tmpfile}".*)"
+			if [ "${files}" = "${adb_tmpfile}.*" ]; then
+				: > "${file_name}"
+				out_rc="4"
+			else
+				"${adb_sortcmd}" ${adb_srtopts} -mu ${files} > "${file_name}"
+				out_rc="${?}"
+			fi
+			rm -f "${adb_tmpfile}".* 2>/dev/null
 			;;
 		"final")
 			src_name=""
@@ -1524,6 +1537,7 @@ f_main() {
 		f_list final
 	else
 		printf "%b" "${adb_dnsheader}" >"${adb_finaldir}/${adb_dnsfile}"
+		f_log "info" "no merge input, only header written to ${adb_finaldir}/${adb_dnsfile}"
 	fi
 	chown "${adb_dnsuser}" "${adb_finaldir}/${adb_dnsfile}" 2>/dev/null
 	if f_dnsup; then
@@ -1538,7 +1552,7 @@ f_main() {
 # trace dns queries via tcpdump and prepare a report
 #
 f_report() {
-	local report_raw report_txt content status total start end start_date start_time end_date end_time blocked percent top_list top array item index ports value key key_list
+	local report_raw report_txt content status total start end start_date start_time end_date end_time blocked percent top_list top array item index value key key_list
 	local ip request requests iface_v4 iface_v6 ip_v4 ip_v6 map_jsn cnt="0" resolve="-nn" action="${1}" top_count="${2:-"10"}" res_count="${3:-"50"}" search="${4:-"+"}"
 
 	report_raw="${adb_reportdir}/adb_report.raw"
