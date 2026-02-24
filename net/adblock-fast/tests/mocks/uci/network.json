@@ -1,0 +1,18 @@
+{
+	"interface": [
+		{
+			".name": "loopback",
+			".type": "interface",
+			"device": "lo",
+			"proto": "static",
+			"ipaddr": "127.0.0.1",
+			"netmask": "255.0.0.0"
+		},
+		{
+			".name": "wan",
+			".type": "interface",
+			"device": "eth0",
+			"proto": "dhcp"
+		}
+	]
+}

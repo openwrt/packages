@@ -1,0 +1,53 @@
+Test that show_blocklist() outputs parsed domains to stdout.
+
+-- Testcase --
+import adb from 'adblock-fast';
+import { popen } from 'fs';
+let ti = adb._test_internals;
+
+// Build the blocklist
+adb.env.load_config();
+ti.set_cfg('dns', 'dnsmasq.servers');
+ti.set_cfg('dnsmasq_sanity_check', false);
+ti.set_cfg('dnsmasq_validity_check', false);
+ti.set_cfg('heartbeat_domain', null);
+ti.set_cfg('config_update_enabled', false);
+ti.set_cfg('update_config_sizes', false);
+ti.env.dns_set_output_values('dnsmasq.servers');
+ti.append_urls();
+ti.download_lists();
+
+// show_blocklist() uses system() to run sed parse_filter on the output file,
+// which outputs plain domains to stdout. Count lines and check a few domains.
+let cmd = sprintf("sed '%s' %s", ti.dns_output.parse_filter, ti.dns_output.file);
+let p = popen(cmd, 'r');
+let out = p ? (p.read('all') || '') : '';
+if (p) p.close();
+
+let domains = filter(split(out, '\n'), l => length(l) > 0);
+let count = length(domains);
+
+let must_have = [
+	'ad.doubleclick.test.example.com',
+	'common-shared-1.test.example.com',
+	'adhost-zero-1.test.example.org',
+];
+
+let domain_set = {};
+for (let d in domains) domain_set[d] = true;
+
+let results = [];
+push(results, sprintf('domain_count: %d', count));
+for (let d in must_have) {
+	push(results, sprintf('%s: %s', d, domain_set[d] ? 'PRESENT' : 'MISSING'));
+}
+
+print(join('\n', results) + '\n');
+-- End --
+
+-- Expect stdout --
+domain_count: 162
+ad.doubleclick.test.example.com: PRESENT
+common-shared-1.test.example.com: PRESENT
+adhost-zero-1.test.example.org: PRESENT
+-- End --
