@@ -1,0 +1,44 @@
+{
+	"config": [
+		{
+			".name": "config",
+			".type": "config",
+			"enabled": "1",
+			"dns": "dnsmasq.servers",
+			"verbosity": "2",
+			"force_dns": "0",
+			"compressed_cache": "0",
+			"config_update_enabled": "0",
+			"ipv6_enabled": "0",
+			"canary_domains_icloud": "0",
+			"canary_domains_mozilla": "0",
+			"dnsmasq_sanity_check": "0",
+			"dnsmasq_validity_check": "0",
+			"parallel_downloads": "0",
+			"allow_non_ascii": "0",
+			"update_config_sizes": "0",
+			"heartbeat_domain": "-",
+			"download_timeout": "10",
+			"curl_retry": "1",
+			"compressed_cache_dir": "TESTDIR/cache"
+		}
+	],
+	"file_url": [
+		{
+			".name": "blocked_domains",
+			".type": "file_url",
+			"enabled": "1",
+			"url": "file://TESTDIR/data/domains.txt",
+			"action": "block",
+			"name": "Test Domains"
+		},
+		{
+			".name": "blocked_hosts",
+			".type": "file_url",
+			"enabled": "1",
+			"url": "file://TESTDIR/data/hosts.txt",
+			"action": "block",
+			"name": "Test Hosts"
+		}
+	]
+}

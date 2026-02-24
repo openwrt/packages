@@ -1,0 +1,26 @@
+[Adblock Plus 2.0]
+! Title: Test ABP blocklist
+! Last modified: 2024-01-01
+! Homepage: https://test.example.com
+
+||abp-tracker-1.test.example.com^
+||abp-tracker-2.test.example.com^
+||abp-tracker-3.test.example.com^
+||abp-tracker-4.test.example.com^
+||abp-tracker-5.test.example.com^
+||abp-tracker-6.test.example.com^
+||abp-tracker-7.test.example.com^
+||abp-tracker-8.test.example.com^
+||abp-tracker-9.test.example.com^
+||abp-tracker-10.test.example.com^
+||abp-tracker-11.test.example.com^$third-party
+||abp-tracker-12.test.example.com^$third-party
+||abp-tracker-13.test.example.com^
+||abp-tracker-14.test.example.com^
+||abp-tracker-15.test.example.com^
+! Comment between entries
+||abp-tracker-16.test.example.com^
+||abp-tracker-17.test.example.com^
+||abp-tracker-18.test.example.com^
+||abp-tracker-19.test.example.com^
+||abp-tracker-20.test.example.com^
