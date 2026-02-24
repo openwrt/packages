@@ -1,0 +1,23 @@
+{
+	"dnsmasq": [
+		{
+			".name": "cfg01411c",
+			".type": "dnsmasq",
+			".anonymous": true,
+			"domainneeded": "1",
+			"localise_queries": "1",
+			"rebind_protection": "1",
+			"rebind_localhost": "1",
+			"local": "/lan/",
+			"domain": "lan",
+			"expandhosts": "1",
+			"cachesize": "1000",
+			"authoritative": "1",
+			"readethers": "1",
+			"leasefile": "/tmp/dhcp.leases",
+			"resolvfile": "/tmp/resolv.conf.d/resolv.conf.auto",
+			"localservice": "1",
+			"ednspacket_max": "1232"
+		}
+	]
+}
