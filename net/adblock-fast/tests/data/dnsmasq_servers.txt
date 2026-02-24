@@ -1,0 +1,10 @@
+server=/dnsmasq-input-1.test.example.com/
+server=/dnsmasq-input-2.test.example.com/
+server=/dnsmasq-input-3.test.example.com/
+server=/dnsmasq-input-4.test.example.com/
+server=/dnsmasq-input-5.test.example.com/
+server=/dnsmasq-input-6.test.example.com/
+server=/dnsmasq-input-7.test.example.com/
+server=/dnsmasq-input-8.test.example.com/
+server=/dnsmasq-input-9.test.example.com/
+server=/dnsmasq-input-10.test.example.com/
