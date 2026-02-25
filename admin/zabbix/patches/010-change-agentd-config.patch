@@ -56,7 +56,7 @@ Signed-off-by: Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
  
  ##### Active checks related
  
-@@ -164,8 +162,6 @@ Server=127.0.0.1
+@@ -166,8 +164,6 @@ Server=127.0.0.1
  # Default:
  # ServerActive=
  
@@ -65,7 +65,7 @@ Signed-off-by: Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
  ### Option: Hostname
  #	List of comma delimited unique, case sensitive hostnames.
  #	Required for active checks and must match hostnames as configured on the server.
-@@ -175,8 +171,6 @@ ServerActive=127.0.0.1
+@@ -177,8 +173,6 @@ ServerActive=127.0.0.1
  # Default:
  # Hostname=
  
@@ -74,7 +74,7 @@ Signed-off-by: Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
  ### Option: HostnameItem
  #	Item used for generating Hostname if it is undefined. Ignored if Hostname is defined.
  #	Does not support UserParameters or aliases.
-@@ -315,7 +309,7 @@ Hostname=Zabbix server
+@@ -317,7 +311,7 @@ Hostname=Zabbix server
  #
  # Mandatory: no
  # Default:
@@ -83,7 +83,7 @@ Signed-off-by: Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
  
  ####### USER-DEFINED MONITORED PARAMETERS #######
  
-@@ -545,5 +539,5 @@ Hostname=Zabbix server
+@@ -547,5 +541,5 @@ Hostname=Zabbix server
  # Include=
  
  # Include=/usr/local/etc/zabbix_agentd.userparams.conf
