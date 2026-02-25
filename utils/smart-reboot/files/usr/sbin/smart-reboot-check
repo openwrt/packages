@@ -102,12 +102,21 @@ function parse_time(time_str) {
 function main() {
 	log.openlog("smart-reboot", log.LOG_PID);
 
-	if (system(`lock -n ${LOCK_FILE} >/dev/null 2>&1`) != 0)
+	let lockfd = fs.open(LOCK_FILE, "w+");
+	if (!lockfd || !lockfd.lock("xn"))
 		return 0;
+
+	function cleanup() {
+		if (lockfd) {
+			lockfd.lock("u");
+			lockfd.close();
+			lockfd = null;
+		}
+	}
 
 	let enabled = cfg_get("enabled", "0");
 	if (enabled != "1") {
-		system(`lock -u ${LOCK_FILE}`);
+		cleanup();
 		return 0;
 	}
 
@@ -125,18 +134,18 @@ function main() {
 	}
 	else if (!length(ifaces)) {
 		logger("No monitored interfaces configured. Set smart-reboot.settings.ifaces or enable all_ifaces.");
-		system(`lock -u ${LOCK_FILE}`);
+		cleanup();
 		return 0;
 	}
 
 	let now = localtime(time());
 	if (now.hour != hour || now.min != minute) {
-		system(`lock -u ${LOCK_FILE}`);
+		cleanup();
 		return 0;
 	}
 
 	let start_bytes = sum_iface_bytes(ifaces);
-	system(`sleep ${sample_seconds}`);
+	sleep(sample_seconds * 1000);
 	let end_bytes = sum_iface_bytes(ifaces);
 	let delta = end_bytes - start_bytes;
 
@@ -149,7 +158,7 @@ function main() {
 		logger(`Skip reboot, network is active (delta=${delta} bytes, threshold=${byte_threshold})`);
 	}
 
-	system(`lock -u ${LOCK_FILE}`);
+	cleanup();
 	return 0;
 }
 
