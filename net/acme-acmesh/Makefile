@@ -58,7 +58,6 @@ endef
 
 define Package/acme-acmesh-dnsapi/description
  This package provides DNS API integration for ACME (Letsencrypt) client.
- scripts are from acme.sh
 endef
 
 define Package/acme-acmesh-dnsapi/install
