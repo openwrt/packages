@@ -85,7 +85,6 @@ get)
 	fi
 	set --
 	[ "$debug" = 1 ] && set -- "$@" -v
-#uacme doesn't rotate privkey
 	case $key_type in
 	ec*)
 		keylength=${key_type#ec}
@@ -130,6 +129,10 @@ get)
 		set -- "$@" --days "$days"
 	fi
 
+	if [ "$cert_profile" ]; then
+		set -- "$@" --profile "$cert_profile"
+	fi
+
 	# uacme handles challange select by hook script
 	case "$validation_method" in
 	"alpn")
@@ -150,6 +153,9 @@ get)
 		if [ "$dns_wait" ]; then
 			export dns_wait
 		fi
+		;;
+	"dns-persist")
+		set -- "$@" -h "$HOOKDIR/client/dns_persist.sh"
 		;;
 	"standalone")
 		set -- "$@" --standalone --listen-v6
@@ -173,7 +179,7 @@ get)
 
 	log info "$ACME $*"
 	trap '$NOTIFY issue-failed;exit 1' INT
-	"$ACME" "$@" 2>&1
+	"$ACME" "$@" -k 2>&1
 	status=$?
 	trap - INT
 
