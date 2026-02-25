@@ -43,15 +43,18 @@ fi
 . /usr/lib/acme/functions.sh
 . /usr/lib/acme/client/dnsapi_helper.sh
 ACCOUNT_CONF_PATH=$UACME_CONFDIR/accounts.conf
-DOMAIN_CONF=$UACME_CONFDIR/$IDENT.conf
+DOMAIN_CONF_DIR=$UACME_CONFDIR/$IDENT
+DOMAIN_CONF=$DOMAIN_CONF_DIR/dnsapi.conf
 ACMESH_DNSSCIRPT_DIR=${ACMESH_DNSSCIRPT_DIR:-/usr/lib/acme/client/dnsapi}
 
 #import dns hook script 
+dns=${dns:-$(head -n 1 $DOMAIN_CONF_DIR/selected_api)} # use different file to not hurt acme.sh config file struct
 if [ ! -f "$ACMESH_DNSSCIRPT_DIR/$dns.sh" ]; then
-    echo "dns file $dns doesn't exit" > tee /tmp/dnshooklog
+    echo "dns file $dns doesn't exit" 1>&2
     exit 1
 fi
 . /usr/lib/acme/client/dnsapi/$dns.sh
+echo $dns > "$DOMAIN_CONF_DIR/selected_api"
 case "$METHOD" in
     "begin")
         (umask 077 ; touch -a "$DOMAIN_CONF")
