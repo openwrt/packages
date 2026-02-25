@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=acme
-PKG_VERSION:=4.0.0
+PKG_VERSION:=4.0.1
 
 PKG_MAINTAINER:=Toke Høiland-Jørgensen <toke@toke.dk>
 PKG_LICENSE:=GPL-3.0-only
@@ -19,13 +19,13 @@ include $(INCLUDE_DIR)/package.mk
 define Package/acme
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+acme-acmesh
-  TITLE:=Shorthand package for acme-acmesh
+  DEPENDS:=+!PACKAGE_uacme:acme-acmesh
+  TITLE:=Virtual package for any acme clients, default to acme-acmesh
   PKGARCH:=all
 endef
 
 define Package/acme/description
-Shorthand package for acme-acmesh.
+Shorthand package for proper acme backend, default to acme.sh and support uacme
 endef
 
 define Package/acme/install
