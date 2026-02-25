@@ -1,0 +1,28 @@
+#!/bin/bash
+# Test: Disabled service detection
+. "$(dirname "$0")/../lib/setup.sh"
+
+oneTimeTearDown() { rm -rf "${MOCK_ROOT:-}"; }
+
+testDisabledService() {
+	cp "$MOCK_ROOT/etc/config/pbr" "$MOCK_ROOT/etc/config/pbr.bak"
+	sed -i "s/option enabled '1'/option enabled '0'/" "$MOCK_ROOT/etc/config/pbr"
+
+	_CONFIG_LOADED_PKG=""
+	loadPackageConfigFlag=""
+	load_package_config
+
+	assertNull "enabled is unset when service disabled" "${enabled:-}"
+
+	cp "$MOCK_ROOT/etc/config/pbr.bak" "$MOCK_ROOT/etc/config/pbr"
+}
+
+testEnabledService() {
+	_CONFIG_LOADED_PKG=""
+	loadPackageConfigFlag=""
+	load_package_config
+
+	assertNotNull "enabled is set when service enabled" "$enabled"
+}
+
+. shunit2
