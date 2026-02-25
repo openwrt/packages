@@ -4,7 +4,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pbr
-PKG_VERSION:=1.2.0
+PKG_VERSION:=1.2.2
 PKG_RELEASE:=6
 PKG_LICENSE:=AGPL-3.0-or-later
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.ca>
@@ -15,13 +15,8 @@ define Package/pbr/default
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=Routing and Redirection
-  TITLE:=Policy Based Routing Service
-  URL:=https://github.com/stangri/pbr/
-  DEPENDS:=+ip-full +jshn +jsonfilter +resolveip
-	DEPENDS+=+!BUSYBOX_DEFAULT_AWK:gawk
-	DEPENDS+=+!BUSYBOX_DEFAULT_GREP:grep
-	DEPENDS+=+!BUSYBOX_DEFAULT_SED:sed
-  PROVIDES:=pbr
+  TITLE:=Policy Based Routing Service with nft/nft set support
+  URL:=https://github.com/mossdef-org/pbr/
   PKGARCH:=all
 endef
 

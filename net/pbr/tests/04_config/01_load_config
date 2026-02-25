@@ -1,0 +1,58 @@
+#!/bin/bash
+# Test: Package config loading
+. "$(dirname "$0")/../lib/setup.sh"
+
+oneTimeTearDown() { rm -rf "${MOCK_ROOT:-}"; }
+
+testLoadBasicConfig() {
+	load_package_config
+	assertNotNull "enabled is set" "$enabled"
+	assertEquals "verbosity" "2" "$verbosity"
+	assertEquals "uplink_interface4" "wan" "$uplink_interface4"
+	assertEquals "uplink_ip_rules_priority" "30000" "$uplink_ip_rules_priority"
+	assertEquals "procd_boot_trigger_delay" "5000" "$procd_boot_trigger_delay"
+}
+
+testLoadHexValues() {
+	load_package_config
+	assertEquals "fw_mask hex" "0x00ff0000" "$fw_mask"
+	assertEquals "uplink_mark hex" "0x00010000" "$uplink_mark"
+}
+
+testFwMaskXor() {
+	load_package_config
+	assertNotNull "fw_maskXor computed" "${fw_maskXor:-}"
+	assertEquals "fw_maskXor value" "0xff00ffff" "$fw_maskXor"
+}
+
+testIpv6DisabledConfig() {
+	load_package_config
+	assertNull "ipv6_enabled unset when 0" "${ipv6_enabled:-}"
+	assertNull "uplink_interface6 unset" "${uplink_interface6:-}"
+}
+
+testStrictEnforcement() {
+	load_package_config
+	assertNotNull "strict_enforcement set" "${strict_enforcement:-}"
+}
+
+testNftSetParams() {
+	load_package_config
+	echo "$nftSetParams" | grep -q 'auto-merge'
+	assertTrue "nft auto-merge enabled" $?
+	echo "$nftSetParams" | grep -q 'flags interval'
+	assertTrue "nft flags interval enabled" $?
+}
+
+testLoadPackageConfigFlag() {
+	load_package_config
+	assertEquals "flag set" "true" "$loadPackageConfigFlag"
+}
+
+testIgnoredInterfaceList() {
+	load_package_config
+	echo "$ignored_interface" | grep -qF 'loopback'
+	assertTrue "loopback in ignored_interface" $?
+}
+
+. shunit2

@@ -1,0 +1,55 @@
+#!/bin/bash
+# Test: Network gateway discovery
+. "$(dirname "$0")/../lib/setup.sh"
+
+oneTimeTearDown() { rm -rf "${MOCK_ROOT:-}"; }
+
+# Override ip function for gateway fallback tests
+ip() {
+	case "$*" in
+		"-4 a list dev eth0")
+			echo "    inet 192.168.1.100/24 brd 192.168.1.255 scope global eth0"
+			;;
+		"-6 a list dev eth0")
+			echo "    inet6 fd00::100/64 scope global"
+			;;
+		*) echo "" ;;
+	esac
+}
+
+testGateway4FromMock() {
+	load_package_config
+	local gw4=""
+	pbr_get_gateway4 gw4 "wan" "eth0"
+	assertEquals "Gateway4 from mock" "192.168.1.1" "$gw4"
+}
+
+testGateway4Fallback() {
+	load_package_config
+	MOCK_NET_wan_gateway=""
+	local gw4=""
+	pbr_get_gateway4 gw4 "wan" "eth0"
+	assertEquals "Gateway4 from ip fallback" "192.168.1.100" "$gw4"
+	MOCK_NET_wan_gateway="192.168.1.1"
+}
+
+testGateway6FromMock() {
+	load_package_config
+	ipv6_enabled='1'
+	uplink_interface6='wan6'
+	local gw6=""
+	pbr_get_gateway6 gw6 "wan6" "eth0"
+	assertEquals "Gateway6 from mock" "fd00::1" "$gw6"
+}
+
+testPbrFindIface() {
+	uplink_interface4="wan"
+	uplink_interface6="wan6"
+	local found=""
+	pbr_find_iface found "wan"
+	assertEquals "Find wan" "wan" "$found"
+	pbr_find_iface found "wan6"
+	assertEquals "Find wan6" "wan6" "$found"
+}
+
+. shunit2
