@@ -1,0 +1,72 @@
+#!/bin/bash
+# Test: WAN/interface type detection functions
+. "$(dirname "$0")/../lib/setup.sh"
+
+oneTimeTearDown() { rm -rf "${MOCK_ROOT:-}"; }
+
+testIsWan4() {
+	assertTrue "Standard wan" "is_wan4 'wan'"
+	assertTrue "wan prefix" "is_wan4 'wanX'"
+	assertFalse "wan6 is not wan4" "is_wan4 'wan6'"
+	assertFalse "Ends with wan6" "is_wan4 'mwan6'"
+	assertFalse "LAN not wan4" "is_wan4 'lan'"
+	assertFalse "Wireguard not wan4" "is_wan4 'wg0'"
+}
+
+testIsWan6() {
+	ipv6_enabled='1'
+	assertTrue "Standard wan6" "is_wan6 'wan6'"
+	assertTrue "Ends with wan6" "is_wan6 'mwan6'"
+	assertFalse "wan is not wan6" "is_wan6 'wan'"
+	assertFalse "LAN not wan6" "is_wan6 'lan'"
+}
+
+testIsWan6Disabled() {
+	unset ipv6_enabled
+	assertFalse "wan6 without ipv6 disabled" "is_wan6 'wan6'"
+}
+
+testIsWan() {
+	ipv6_enabled='1'
+	assertTrue "wan matches" "is_wan 'wan'"
+	assertTrue "wan6 matches" "is_wan 'wan6'"
+	assertFalse "LAN not wan" "is_wan 'lan'"
+	assertFalse "Wireguard not wan" "is_wan 'wg0'"
+}
+
+testIsUplink() {
+	uplink_interface4="wan"
+	uplink_interface6="wan6"
+	ipv6_enabled='1'
+	assertTrue "wan is uplink4" "is_uplink4 'wan'"
+	assertFalse "wan6 is not uplink4" "is_uplink4 'wan6'"
+	assertTrue "wan6 is uplink6" "is_uplink6 'wan6'"
+	assertFalse "wan is not uplink6" "is_uplink6 'wan'"
+	assertTrue "wan is uplink" "is_uplink 'wan'"
+	assertTrue "wan6 is uplink" "is_uplink 'wan6'"
+	assertFalse "wg0 is not uplink" "is_uplink 'wg0'"
+}
+
+testIsTor() {
+	assertTrue "Lowercase tor" "is_tor 'tor'"
+	assertTrue "Uppercase TOR" "is_tor 'TOR'"
+	assertTrue "Mixed case Tor" "is_tor 'Tor'"
+	assertFalse "Not tor" "is_tor 'vpn'"
+}
+
+testIsIgnoreTarget() {
+	assertTrue "Lowercase ignore" "is_ignore_target 'ignore'"
+	assertTrue "Uppercase IGNORE" "is_ignore_target 'IGNORE'"
+	assertTrue "Mixed case" "is_ignore_target 'Ignore'"
+	assertFalse "Not ignore" "is_ignore_target 'wan'"
+}
+
+testIsList() {
+	assertTrue "Comma-separated" "is_list 'a,b'"
+	assertTrue "Space-separated" "is_list 'a b'"
+	assertTrue "Multiple commas" "is_list 'a,b,c'"
+	assertFalse "Single value" "is_list 'single'"
+	assertFalse "Empty string" "is_list ''"
+}
+
+. shunit2
