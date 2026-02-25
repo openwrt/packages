@@ -1,0 +1,48 @@
+#!/bin/bash
+# Test: Interface support detection
+. "$(dirname "$0")/../lib/setup.sh"
+
+oneTimeTearDown() { rm -rf "${MOCK_ROOT:-}"; }
+
+setUp() {
+	load_package_config
+	lan_device="br-lan"
+	supported_interface=""
+	ignored_interface="loopback"
+	uplink_interface4="wan"
+	uplink_interface6=""
+}
+
+testIgnoredInterface() {
+	assertTrue "loopback is ignored" "is_ignored_interface 'loopback'"
+	assertFalse "wan is not ignored" "is_ignored_interface 'wan'"
+	assertFalse "wg0 is not ignored" "is_ignored_interface 'wg0'"
+}
+
+testIsLan() {
+	assertTrue "lan is LAN" "is_lan 'lan'"
+	assertFalse "wan is not LAN" "is_lan 'wan'"
+}
+
+testWanIsSupported() {
+	assertTrue "wan is supported" "is_supported_interface 'wan'"
+}
+
+testLanNotSupported() {
+	assertFalse "lan not supported" "is_supported_interface 'lan'"
+}
+
+testLoopbackNotSupported() {
+	assertFalse "loopback not supported" "is_supported_interface 'loopback'"
+}
+
+testWireguardSupported() {
+	assertTrue "wg0 supported" "is_supported_interface 'wg0'"
+}
+
+testExplicitlySupportedInterface() {
+	supported_interface="custom_iface"
+	assertTrue "Explicitly supported" "is_supported_interface 'custom_iface'"
+}
+
+. shunit2
