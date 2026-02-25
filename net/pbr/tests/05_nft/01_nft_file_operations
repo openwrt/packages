@@ -1,0 +1,64 @@
+#!/bin/bash
+# Test: nft file operations (create, add, match, delete)
+. "$(dirname "$0")/../lib/setup.sh"
+
+oneTimeTearDown() { rm -rf "${MOCK_ROOT:-}"; }
+
+setUp() {
+	mkdir -p "$(dirname "$nftTempFile")" 2>/dev/null || true
+	mkdir -p "$(dirname "$nftMainFile")" 2>/dev/null || true
+	rm -f "$nftTempFile" "$nftMainFile"
+	load_package_config
+}
+
+tearDown() {
+	rm -f "$nftTempFile" "$nftMainFile"
+}
+
+testNftFileCreate() {
+	nft_file 'create' 'main'
+	assertTrue "nft temp file created" "[ -f '$nftTempFile' ]"
+	assertTrue "Has nft shebang" "grep -q '#!/usr/sbin/nft -f' '$nftTempFile'"
+}
+
+testNftFileChains() {
+	nft_file 'create' 'main'
+	assertTrue "dstnat chain" "grep -q 'add chain inet fw4 pbr_dstnat' '$nftTempFile'"
+	assertTrue "forward chain" "grep -q 'add chain inet fw4 pbr_forward' '$nftTempFile'"
+	assertTrue "output chain" "grep -q 'add chain inet fw4 pbr_output' '$nftTempFile'"
+	assertTrue "prerouting chain" "grep -q 'add chain inet fw4 pbr_prerouting' '$nftTempFile'"
+}
+
+testNftFileJumpRules() {
+	nft_file 'create' 'main'
+	assertTrue "jump to dstnat" "grep -q 'jump pbr_dstnat' '$nftTempFile'"
+	assertTrue "jump to prerouting" "grep -q 'jump pbr_prerouting' '$nftTempFile'"
+	assertTrue "jump to output" "grep -q 'jump pbr_output' '$nftTempFile'"
+	assertTrue "jump to forward" "grep -q 'jump pbr_forward' '$nftTempFile'"
+}
+
+testNftFileGuardRules() {
+	nft_file 'create' 'main'
+	assertTrue "Guard rule" "grep -q 'meta mark & 0x00ff0000 != 0 return' '$nftTempFile'"
+}
+
+testNftFileAdd() {
+	nft_file 'create' 'main'
+	nft_file 'add' 'main' 'add rule inet fw4 pbr_prerouting ip saddr 192.168.1.0/24 goto pbr_mark_0x00010000'
+	assertTrue "Added rule present" "grep -q '192.168.1.0/24' '$nftTempFile'"
+}
+
+testNftFileMatch() {
+	nft_file 'create' 'main'
+	assertTrue "Match existing" "nft_file 'match' 'temp' 'pbr_prerouting'"
+	assertFalse "Match missing" "nft_file 'match' 'temp' 'nonexistent_xyz'"
+}
+
+testNftFileDelete() {
+	nft_file 'create' 'main'
+	nft_file 'delete' 'main'
+	assertFalse "Temp file deleted" "[ -f '$nftTempFile' ]"
+	assertFalse "Main file deleted" "[ -f '$nftMainFile' ]"
+}
+
+. shunit2

@@ -18,21 +18,25 @@ if type extra_command >/dev/null 2>&1; then
 		Use '-p' option to automatically upload data under PBR paste.ee account
 			WARNING: while paste.ee uploads are unlisted, they are still publicly available
 		List domain names after options to include their lookup in report"
+	extra_command 'support' "Show diagnostic info and mask sensitive data"
 	extra_command 'version' "Show version information"
 else
 # shellcheck disable=SC2034
-	EXTRA_COMMANDS='netifd on_interface_reload status version'
+	EXTRA_COMMANDS='help netifd on_interface_reload status version'
 # shellcheck disable=SC2034
-	EXTRA_HELP="	status	Generates output required to troubleshoot routing issues
-		Use '-d' option for more detailed output
-		Use '-p' option to automatically upload data under PBR paste.ee account
-			WARNING: while paste.ee uploads are unlisted, they are still publicly available
-		List domain names after options to include their lookup in report"
+	EXTRA_HELP="
+\tstatus\tGenerates output required to troubleshoot routing issues
+\t\tUse '-d' option for more detailed output
+\t\tUse '-p' option to automatically upload data under PBR paste.ee account
+\t\t\tWARNING: while paste.ee uploads are unlisted, they are still publicly available
+\t\tList domain names after options to include their lookup in report
+\tsupport\tShow diagnostic info and mask sensitive data
+"
 fi
 
 readonly packageName='pbr'
 readonly PKG_VERSION='dev-test'
-readonly packageCompat='24'
+readonly packageCompat='25'
 readonly serviceName="$packageName $PKG_VERSION"
 readonly packageConfigFile="/etc/config/${packageName}"
 readonly packageDebugFile="/var/run/${packageName}.debug"
@@ -201,8 +205,8 @@ resolverWorkingFlag=
 # shellcheck disable=SC1091
 . "${IPKG_INSTROOT}/usr/share/libubox/jshn.sh"
 
-debug() { local i j; for i in "$@"; do eval "j=\$$i"; logger "${packageName:+-t $packageName}" "${i}: ${j} "; done; }
-str_contains() { [ "${1//$2}" != "$1" ]; }
+debug() { local i j; for i in "$@"; do eval "j=\$$i"; logger "${packageName:+-t ${packageName}}" "${i}: ${j} "; done; }
+str_contains() { [ "${1//${2}}" != "$1" ]; }
 str_contains_word() { echo "$1" | grep -qw "$2"; }
 str_extras_to_underscore() { echo "$1" | sed -E 's/[\. ~`!@#$%^&*()+=,<>?;:\/\\-]/_/g; s/_+/_/g'; }
 str_extras_to_space() { echo "$1" | tr ',;{}' ' '; }
@@ -210,7 +214,7 @@ str_first_value_interface() { local i; for i in $1; do is_supported_interface "$
 str_first_value_ipv4() { local i; for i in $1; do is_ipv4 "$i" && { echo "$i"; break; }; done; }
 str_first_value_ipv6() { local i; for i in $1; do is_ipv6 "$i" && { echo "$i"; break; }; done; }
 str_first_word() { echo "${1%% *}"; }
-str_replace() { echo "${1//$2/$3}"; }
+str_replace() { echo "${1//${2}/${3}}"; }
 str_to_dnsmasq_nftset() { echo "$1" | tr ' ' '/'; }
 str_to_lower() { echo "$1" | tr 'A-Z' 'a-z'; }
 str_to_upper() { echo "$1" | tr 'a-z' 'A-Z'; }
@@ -262,7 +266,7 @@ pbr_get_gateway4() {
 }
 pbr_get_gateway6() {
 	local iface="$2" dev="$3" gw
-	is_wan "$iface" && iface="$uplink_interface6"
+	is_uplink4 "$iface" && iface="$uplink_interface6"
 	network_get_gateway6 gw "$iface" true
 	if [ -z "$gw" ] || [ "$gw" = '::/0' ] || [ "$gw" = '::0/0' ] || [ "$gw" = '::' ]; then
 		gw="$(ip -6 a list dev "$dev" 2>/dev/null | grep inet6 | grep 'scope global' | awk '{print $2}')"
@@ -277,7 +281,7 @@ filter_options() {
 			opt="${opt/_negative}"
 		fi
 		eval "is_$opt" "${v/\!}" || continue
-		_ret="${_ret:+$_ret }$v"
+		_ret="${_ret:+${_ret} }$v"
 	done
 	echo "$_ret"
 	return 0
@@ -285,7 +289,7 @@ filter_options() {
 inline_set() {
 	local value="$1" inline_set i
 	for i in $value; do
-		inline_set="${inline_set:+$inline_set, }${i#[@\!]}"
+		inline_set="${inline_set:+${inline_set}, }${i#[@\!]}"
 	done
 	echo "$inline_set"
 }
@@ -301,13 +305,6 @@ is_config_enabled() {
 	config_foreach _check_config "$cfg"
 	return "$_cfg_enabled"
 }
-uci_get_device() {
-	local __tmp
-	__tmp="$(uci_get 'network' "$2" 'device')"
-	[ -z "$__tmp" ] && unset "$1" && return 1
-	eval "$1=$__tmp"
-}
-uci_get_protocol() { uci_get 'network' "$1" 'proto'; }
 is_default_dev() { [ "$1" = "$(ip -4 route show default | awk '{for(i=1;i<=NF;i++) if($i=="dev"){print $(i+1);exit}}')" ]; }
 is_netifd_interface_default() {
 	is_netifd_interface "$1" || return 1
@@ -339,20 +336,20 @@ is_mac_address() { echo "$1" | grep -qE '^([0-9A-Fa-f]{2}:){5}([0-9A-Fa-f]{2})$'
 is_mac_address_bad_notation() { echo "$1" | grep -qE '^([0-9A-Fa-f]{2}-){5}([0-9A-Fa-f]{2})$'; }
 is_negated() { [ "${1:0:1}" = '!' ]; }
 is_netifd_table() { grep -q "ip.table.*$1" /etc/config/network; }
-is_netifd_interface() { local iface="$1"; [ -n "$(uci_get 'network' "$iface" 'ip4table')" ]; }
+is_netifd_interface() { local iface="$1"; [ -n "$(uci_get 'network' "$iface" 'ip4table')" ] || [ -n "$(uci_get 'network' "$iface" 'ip6table')" ]; }
 is_oc() { local p; network_get_protocol p "$1"; [ "${p:0:11}" = "openconnect" ]; }
 is_ovpn() { local d; uci_get_device d "$1"; [ "${d:0:3}" = "tun" ] || [ "${d:0:3}" = "tap" ] || [ -f "/sys/devices/virtual/net/${d}/tun_flags" ]; }
 is_ovpn_valid() { local dev_net dev_ovpn; uci_get_device dev_net "$1"; dev_ovpn="$(uci_get 'openvpn' "$1" 'dev')"; [ -n "$dev_net" ] && [ -n "$dev_ovpn" ] && [ "$dev_net" = "$dev_ovpn" ]; }
-is_phys_dev(){ [ "${1:0:1}" = "@" ] && [ -L "/sys/class/net/${1#@}" ]; }
+is_phys_dev() { [ "${1:0:1}" = "@" ] && [ -L "/sys/class/net/${1#@}" ]; }
 is_present() { command -v "$1" >/dev/null 2>&1; }
 is_service_running() { is_service_running_nft; }
 is_service_running_nft() { [ -x "$nft" ] && [ -n "$(get_mark_nft_chains)" ]; }
 is_supported_iface_dev() { local n dev; for n in $ifacesSupported; do network_get_device dev "$n"; [ "$1" = "$dev" ] && return 0; done; return 1; }
-is_supported_protocol(){ grep -qi "^${1:--}" /etc/protocols;}
+is_supported_protocol() { grep -qi "^${1:--}" /etc/protocols;}
 is_pptp() { local p; network_get_protocol p "$1"; [ "${p:0:4}" = "pptp" ]; }
 is_softether() { local d; network_get_device d "$1"; [ "${d:0:4}" = "vpn_" ]; }
 is_split_uplink() { [ -n "$ipv6_enabled" ] && [ "$uplink_interface4" != "$uplink_interface6" ]; }
-is_supported_interface() { { is_lan "$1" || is_disabled_interface "$1"; } && return 1; str_contains_word "$supported_interface" "$1" || { ! is_ignored_interface "$1" && { is_wan "$1" || is_wan6 "$1" || is_tunnel "$1"; }; } || is_ignore_target "$1" || is_xray "$1"; }
+is_supported_interface() { { is_lan "$1" || is_disabled_interface "$1"; } && return 1; str_contains_word "$supported_interface" "$1" || { ! is_ignored_interface "$1" && { is_uplink "$1" || is_wan "$1" || is_tunnel "$1"; }; } || is_ignore_target "$1" || is_xray "$1"; }
 is_netbird() { local d; network_get_device d "$1"; [ "${d:0:2}" = "wt" ]; }
 is_tailscale() { local d; network_get_device d "$1"; [ "${d:0:9}" = "tailscale" ]; }
 is_tor() { [ "$(str_to_lower "$1")" = "tor" ]; }
@@ -364,8 +361,12 @@ is_url_file() { [ "$1" != "${1#file://}" ]; }
 is_url_ftp() { [ "$1" != "${1#ftp://}" ]; }
 is_url_http() { [ "$1" != "${1#http://}" ]; }
 is_url_https() { [ "$1" != "${1#https://}" ]; }
-is_wan() { [ "$1" = "$uplink_interface4" ]; }
-is_wan6() { [ -n "$ipv6_enabled" ] && [ "$1" = "$uplink_interface6" ]; }
+is_uplink4() { [ "$1" = "$uplink_interface4" ]; }
+is_uplink6() { [ -n "$ipv6_enabled" ] && [ "$1" = "$uplink_interface6" ]; }
+is_uplink() { is_uplink4 "$1" || is_uplink6 "$1"; }
+is_wan6() { [ -n "$ipv6_enabled" ] || return 1; case "$1" in wan*6|*wan6) return 0;; *) return 1;; esac; }
+is_wan4() { case "$1" in wan*6|*wan6) return 1;; wan*|*wan) return 0;; *) return 1;; esac; }
+is_wan() { is_wan4 "$1" || is_wan6 "$1"; }
 is_wg() { local p lp; network_get_protocol p "$1"; uci_get_listen_port lp "$1"; [ -z "$lp" ] && [ "${p:0:9}" = "wireguard" ]; }
 is_wg_server() { local p lp; network_get_protocol p "$1"; uci_get_listen_port lp "$1"; [ -n "$lp" ] && [ "${p:0:9}" = "wireguard" ]; }
 is_xray() { [ -n "$(get_xray_traffic_port "$1")" ]; }
@@ -378,7 +379,7 @@ get_ss_traffic_ports() { local i="$(jsonfilter -i "$ssConfigFile" -q -e "@.inbou
 get_tor_dns_port() { local i="$(grep -m1 DNSPort "$torConfigFile" | awk -F: '{print $2}')"; echo "${i:-9053}"; }
 # shellcheck disable=SC2155
 get_tor_traffic_port() { local i="$(grep -m1 TransPort "$torConfigFile" | awk -F: '{print $2}')"; echo "${i:-9040}"; }
-get_xray_traffic_port() { local i="${1//$xrayIfacePrefix}"; [ "$i" = "$1" ] && unset i; echo "$i"; }
+get_xray_traffic_port() { local i="${1//${xrayIfacePrefix}}"; [ "$i" = "$1" ] && unset i; echo "$i"; }
 get_rt_tables_id() { local iface="$1"; grep "${ipTablePrefix}_${iface}\$" "$rtTablesFile" | awk '{print $1;}'; }
 get_rt_tables_next_id() { echo "$(($(sort -r -n "$rtTablesFile" | grep -o -E -m 1 "^[0-9]+")+1))"; }
 get_rt_tables_non_pbr_next_id() { echo "$(($(grep -v "${ipTablePrefix}_" "$rtTablesFile" | sort -r -n  | grep -o -E -m 1 "^[0-9]+")+1))"; }
@@ -387,17 +388,25 @@ resolveip_to_nftset() { resolver 'wait' && resolveip "$@" | sed -n 'H;${x;s/\n/,
 resolveip_to_nftset4() { resolveip_to_nftset -4 "$@"; }
 resolveip_to_nftset6() { [ -n "$ipv6_enabled" ] && resolveip_to_nftset -6 "$@"; }
 # shellcheck disable=SC2016
-ipv4_leases_to_nftset(){ [ -s '/tmp/dhcp.leases' ] && awk -v arg="$1" 'BEGIN{fs=""};$0~arg{printf fs$3;fs=","}' /tmp/dhcp.leases;}
+ipv4_leases_to_nftset() { [ -s '/tmp/dhcp.leases' ] && awk -v arg="$1" 'BEGIN{fs=""};$0~arg{printf fs$3;fs=","}' /tmp/dhcp.leases;}
 # shellcheck disable=SC2016
-ipv6_leases_to_nftset(){ [ -s '/tmp/hosts/odhcpd' ] && awk -v arg="$1" 'BEGIN{fs=""};$0~arg{printf fs$1;fs=","}' /tmp/hosts/odhcpd;}
+ipv6_leases_to_nftset() { [ -s '/tmp/hosts/odhcpd' ] && awk -v arg="$1" 'BEGIN{fs=""};$0~arg{printf fs$1;fs=","}' /tmp/hosts/odhcpd;}
 # shellcheck disable=SC3037
 ports_to_nftset() { echo -en "$1"; }
 get_mark_nft_chains() { "$nft" list table inet "$nftTable" 2>/dev/null | grep chain | grep "${nftPrefix}_mark_" | awk '{ print $2 }'; }
 get_nft_sets() { "$nft" list table inet "$nftTable" 2>/dev/null | grep 'set' | grep "${nftPrefix}_" | awk '{ print $2 }'; }
 __ubus_get() { ubus call service list "{ 'name': '$packageName' }" | jsonfilter -e "$1"; }
 ubus_get_status() { __ubus_get "@.${packageName}.instances.main.data.status.${1}"; }
-ubus_get_interface() { __ubus_get "@.${packageName}.instances.main.data.gateways[@.name='${1}']${2:+.$2}"; }
+ubus_get_interface() { __ubus_get "@.${packageName}.instances.main.data.gateways[@.name='${1}']${2:+.${2}}"; }
 ubus_get_gateways() { __ubus_get "@.${packageName}.instances.main.data.gateways"; }
+config_get_list() { config_get "$@"; }
+uci_get_device() {
+	local __tmp
+	__tmp="$(uci_get 'network' "$2" 'device')"
+	[ -z "$__tmp" ] && unset "$1" && return 1
+	eval "$1=$__tmp"
+}
+uci_get_protocol() { uci_get 'network' "$1" 'proto'; }
 uci_add_list_if_new() {
 	local PACKAGE="$1"
 	local CONFIG="$2"
@@ -415,7 +424,7 @@ uci_changes() {
 	local CONFIG="$2"
 	local OPTION="$3"
 	[ -s "${UCI_CONFIG_DIR:-/etc/config/}${PACKAGE}" ] && \
-	[ -n "$(/sbin/uci ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} changes "$PACKAGE${CONFIG:+.$CONFIG}${OPTION:+.$OPTION}")" ]
+	[ -n "$(/sbin/uci ${UCI_CONFIG_DIR:+-c ${UCI_CONFIG_DIR}} changes "$PACKAGE${CONFIG:+.${CONFIG}}${OPTION:+.${OPTION}}")" ]
 }
 uci_get_listen_port() {
 	local __tmp
@@ -437,6 +446,115 @@ check_dnsmasq_nftset() {
 	[ -z "$dnsmasq_features" ] && dnsmasq_features="$(dnsmasq --version | grep -m1 'Compile time options:' | cut -d: -f2) "
 	[ "${dnsmasq_features#* nftset }" != "$dnsmasq_features" ]
 }
+
+# mwan4 detection and integration functions
+mwan4_is_installed() {
+	[ -x /etc/init.d/mwan4 ] && [ -f /etc/config/mwan4 ]
+}
+
+mwan4_is_running() {
+	mwan4_is_installed && /etc/init.d/mwan4 running >/dev/null 2>&1
+}
+
+mwan4_get_iface_list() {
+	# Get list of enabled mwan4 interfaces from UCI config
+	# Output: space-separated list of interface names
+	local iface_list=""
+	mwan4_is_installed || return 1
+
+	_mwan4_collect_iface() {
+		local en
+		config_get_bool en "$1" 'enabled' '0'
+		[ "$en" -gt '0' ] && iface_list="${iface_list}${1} "
+	}
+	config_load 'mwan4'
+	config_foreach _mwan4_collect_iface 'interface'
+
+	echo "${iface_list% }"
+}
+
+mwan4_get_strategy_list() {
+	# Get list of mwan4 strategies from UCI config
+	# Output: space-separated list of strategy names
+	local strategy_list=""
+	mwan4_is_installed || return 1
+
+	_mwan4_collect_strategy() { strategy_list="${strategy_list}${1} "; }
+	config_load 'mwan4'
+	config_foreach _mwan4_collect_strategy 'strategy'
+
+	echo "${strategy_list% }"
+}
+
+mwan4_get_iface_mark_chain() {
+	# Get the nftables marking chain name for a specific mwan4 interface
+	# $1 = interface name
+	# Output: chain name (e.g., "mwan4_iface_in_wan")
+	local iface="$1"
+	[ -z "$iface" ] && return 1
+	mwan4_is_running || return 1
+
+	# Check if the chain exists in nftables
+	if "$nft" list chain inet fw4 "mwan4_iface_in_${iface}" >/dev/null 2>&1; then
+		echo "mwan4_iface_in_${iface}"
+		return 0
+	fi
+	return 1
+}
+
+mwan4_get_iface_nft_sets() {
+	# Get the nftables set names used by a specific mwan4 interface
+	# $1 = interface name
+	# Output: space-separated list of set names
+	local iface="$1"
+	local family=""
+	local sets=""
+	[ -z "$iface" ] && return 1
+	mwan4_is_installed || return 1
+
+	# Get the family (ipv4/ipv6) for the interface
+	config_load 'mwan4'
+	config_get family "$iface" 'family' 'ipv4'
+
+	# The sets used by mwan4 per interface family
+	for settype in connected custom dynamic; do
+		if "$nft" list set inet fw4 "mwan4_${settype}_${family}" >/dev/null 2>&1; then
+			sets="${sets}mwan4_${settype}_${family} "
+		fi
+	done
+
+	echo "${sets% }"
+}
+
+mwan4_get_strategy_chain() {
+	# Get the nftables strategy chain name for a specific mwan4 strategy
+	# $1 = strategy name
+	# $2 = family (ipv4 or ipv6, defaults to ipv4)
+	# Output: chain name (e.g., "mwan4_strategy_balanced_ipv4")
+	local strategy="$1"
+	local family="${2:-ipv4}"
+	[ -z "$strategy" ] && return 1
+	mwan4_is_running || return 1
+
+	# Check if the chain exists in nftables
+	if "$nft" list chain inet fw4 "mwan4_strategy_${strategy}_${family}" >/dev/null 2>&1; then
+		echo "mwan4_strategy_${strategy}_${family}"
+		return 0
+	fi
+	return 1
+}
+
+mwan4_get_mmx_mask() {
+	# Get the MMX (Multi-WAN Mark) mask used by mwan4
+	# Output: hex mask value (e.g., "0x3F00")
+	mwan4_is_installed || return 1
+
+	local mask
+	config_load 'mwan4'
+	config_get mask 'globals' 'mmx_mask' '0x3F00'
+	echo "$mask"
+}
+
 print_json_bool() { json_init; json_add_boolean "$1" "$2"; json_dump; json_cleanup; }
 print_json_string() { json_init; json_add_string "$1" "$2"; json_dump; json_cleanup; }
 try() {
@@ -515,7 +633,7 @@ get_text() {
 		warningOutdatedLuciPackage) printf "The WebUI application is outdated (version %s), please update it" "$1";;
 		warningDnsmasqInstanceNoConfdir) printf "Dnsmasq instance '%s' targeted in settings, but it doesn't have its own confdir" "$1";;
 		warningDhcpLanForce) printf "Please set 'dhcp.%s.force=1' to speed up service start-up" "$1";;
-		warningSummary) printf "Warnings encountered, please check %s" "$(get_url '#WarningMessagesDetails')";;
+		warningSummary) printf "Warnings encountered, please check %s" "$(get_url '#warning-messages-details')";;
 		warningIncompatibleDHCPOption6) printf "Incompatible DHCP Option 6 for interface '%s'" "$1";;
 		warningNetifdMissingInterfaceLocal) printf "Netifd setup: option netifd_interface_local is missing, assuming '%s'" "$1";;
 		warningUplinkDown) printf "Uplink/WAN interface is still down, going back to boot mode";;
@@ -571,9 +689,9 @@ load_package_config() {
 	config_get_bool enabled                   'config' 'enabled'                  '0'
 	config_get      fw_mask                   'config' 'fw_mask'                  '00ff0000'
 	config_get      icmp_interface            'config' 'icmp_interface'
-	config_get      ignored_interface         'config' 'ignored_interface'
+	config_get_list ignored_interface         'config' 'ignored_interface'
 	config_get_bool ipv6_enabled              'config' 'ipv6_enabled'             '0'
-	config_get      lan_device                'config' 'lan_device'               'br-lan'
+	config_get_list lan_device                'config' 'lan_device'               'br-lan'
 	config_get_bool nft_rule_counter          'config' 'nft_rule_counter'         '0'
 	config_get_bool nft_set_auto_merge        'config' 'nft_set_auto_merge'       '1'
 	config_get_bool nft_set_counter           'config' 'nft_set_counter'          '0'
@@ -586,10 +704,10 @@ load_package_config() {
 	config_get      prefixlength              'config' 'prefixlength'             '1'
 	config_get      procd_boot_trigger_delay  'config' 'procd_boot_trigger_delay' '5000'
 	config_get      procd_reload_delay        'config' 'procd_reload_delay'       '0'
-	config_get      resolver_instance         'config' 'resolver_instance'        '*'
+	config_get_list resolver_instance         'config' 'resolver_instance'        '*'
 	config_get      resolver_set              'config' 'resolver_set'
 	config_get_bool strict_enforcement        'config' 'strict_enforcement'       '1'
-	config_get      supported_interface       'config' 'supported_interface'
+	config_get_list supported_interface       'config' 'supported_interface'
 	config_get      uplink_interface          'config' 'uplink_interface'         'wan'
 	config_get      uplink_interface6         'config' 'uplink_interface6'        'wan6'
 	config_get      uplink_ip_rules_priority  'config' 'uplink_ip_rules_priority' '30000'
@@ -620,9 +738,9 @@ load_package_config() {
 
 	local nft_set_flags
 	case "${nft_set_flags_interval}:${nft_set_flags_timeout}" in
-		1:1) nft_set_flags="flags interval, timeout${nft_set_timeout:+; timeout $nft_set_timeout}";;
+		1:1) nft_set_flags="flags interval, timeout${nft_set_timeout:+; timeout ${nft_set_timeout}}";;
 		1:0) nft_set_flags='flags interval';;
-		0:1) nft_set_flags="flags timeout${nft_set_timeout:+; timeout $nft_set_timeout}";;
+		0:1) nft_set_flags="flags timeout${nft_set_timeout:+; timeout ${nft_set_timeout}}";;
 		0:0) nft_set_flags='';;
 	esac
 
@@ -639,10 +757,10 @@ load_package_config() {
 	nftSetParams=" \
 		${nft_set_auto_merge:+ auto-merge;} \
 		${nft_set_counter:+ counter;} \
-		${nft_set_flags:+ $nft_set_flags;} \
-		${nft_set_gc_interval:+ gc_interval "$nft_set_gc_interval";} \
-		${nft_set_policy:+ policy "$nft_set_policy";} \
-		${nft_set_timeout:+ timeout "$nft_set_timeout";} \
+		${nft_set_flags:+ ${nft_set_flags};} \
+		${nft_set_gc_interval:+ gc_interval "${nft_set_gc_interval}";} \
+		${nft_set_policy:+ policy "${nft_set_policy}";} \
+		${nft_set_timeout:+ timeout "${nft_set_timeout}";} \
 		"
 
 	if [ -x "$agh" ] && [ ! -s "$aghConfigFile" ]; then
@@ -706,7 +824,7 @@ load_environment() {
 		return "$_ret"
 	}
 	local param="$1" validation_result="$2"
-	[ -z "$loadEnvironmentFlag" ] || return 0
+	[ -n "$loadEnvironmentFlag" ] && return 0
 	case "$param" in
 		on_boot|on_start)
 			output 1 "Loading environment ($param) "
@@ -779,7 +897,7 @@ load_network() {
 			[ -n "$uplinkGW6" ] && output 2 "Found uplink IPv6 gateway (${param}): $uplinkGW6 $__OK__\n"
 		;;
 	esac
-	uplinkGW="${uplinkGW4:-$uplinkGW6}"
+	uplinkGW="${uplinkGW4:-${uplinkGW6}}"
 }
 
 is_wan_up() {
@@ -799,6 +917,9 @@ is_wan_up() {
 	fi
 }
 
+# nft() overrides the nft binary: all calls append to the atomic nft file.
+# This captures both internal rules and user include script output.
+# Use nft_call() for direct nft binary access.
 nft() { [ -n "$*" ] && nft_file 'add' 'main' "$@"; }
 nft4() { nft "$@"; }
 nft6() { [ -n "$ipv6_enabled" ] || return 0; nft "$@"; }
@@ -840,7 +961,7 @@ nft_file() {
 			echo "" >> "$nftTempFile"
 			# Insert PBR guards at the top of pbr chains so first PBR match wins, while preserving foreign marks.
 			for chain in $chainsList; do
-				echo "add rule inet $nftTable ${nftPrefix}_${chain} ${nftRuleParams:+$nftRuleParams }meta mark & $fw_mask != 0 return" >> "$nftTempFile"
+				echo "add rule inet $nftTable ${nftPrefix}_${chain} ${nftRuleParams:+${nftRuleParams} }meta mark & $fw_mask != 0 return" >> "$nftTempFile"
 			done
 		;;
 		create:netifd)
@@ -874,6 +995,7 @@ nft_file() {
 			if nft_call -c -f "$nftTempFile" && \
 				cp -f "$nftTempFile" "$nftMainFile"; then
 				output_okn
+				fw4 -q reload >/dev/null 2>&1
 			else
 				json add error 'errorNftMainFileInstall' "$nftTempFile"
 				output_failn
@@ -915,8 +1037,8 @@ nftset() {
 	local command="$1" iface="$2" target="${3:-dst}" type="${4:-ip}" uid="$5" comment="$6" param="$7" mark="$7"
 	local nftset4 nftset6 i param4 param6
 	local ipv4_error=1 ipv6_error=1
-	nftset4="${nftPrefix}${iface:+_$iface}_4${target:+_$target}${type:+_$type}${uid:+_$uid}"
-	nftset6="${nftPrefix}${iface:+_$iface}_6${target:+_$target}${type:+_$type}${uid:+_$uid}"
+	nftset4="${nftPrefix}${iface:+_${iface}}_4${target:+_${target}}${type:+_${type}}${uid:+_${uid}}"
+	nftset6="${nftPrefix}${iface:+_${iface}}_6${target:+_${target}}${type:+_${type}}${uid:+_${uid}}"
 
 	if [ "${#nftset4}" -gt '255' ]; then
 		json add error 'errorNftsetNameTooLong' "$nftset4"
@@ -949,8 +1071,8 @@ nftset() {
 		;;
 		add_dnsmasq_element)
 			[ -n "$ipv6_enabled" ] || unset nftset6
-			grep -qxF "nftset=/${param}/4#inet#${nftTable}#${nftset4}${nftset6:+,6#inet#${nftTable}#$nftset6} # $comment" "$packageDnsmasqFile" && return 0
-			echo "nftset=/${param}/4#inet#${nftTable}#${nftset4}${nftset6:+,6#inet#${nftTable}#$nftset6} # $comment" >> "$packageDnsmasqFile" && ipv4_error=0
+			grep -qxF "nftset=/${param}/4#inet#${nftTable}#${nftset4}${nftset6:+,6#inet#${nftTable}#${nftset6}} # $comment" "$packageDnsmasqFile" && return 0
+			echo "nftset=/${param}/4#inet#${nftTable}#${nftset4}${nftset6:+,6#inet#${nftTable}#${nftset6}} # $comment" >> "$packageDnsmasqFile" && ipv4_error=0
 		;;
 		create)
 			case "$type" in
@@ -1044,59 +1166,45 @@ cleanup() {
 				sync
 			;;
 			main_table)
-				# Get all rules to delete in one pass (format: "priority suppress_prefixlength_value table_name")
-				ip -4 rule show | awk '
-					/lookup[[:space:]]+main[[:space:]]+suppress_prefixlength[[:space:]]+[0-9]+/ { 
-						sub(":", "", $1)
-						match($0, /suppress_prefixlength[[:space:]]+([0-9]+)/, arr)
-						print $1 " " arr[1] " main"
-					}
-					/lookup '"$ipTablePrefix"'_/ { 
-						sub(":", "", $1)
-						match($0, /lookup[[:space:]]+([^[:space:]]+)/, arr)
-						print $1 " 0 " arr[1]
-					}
-				' | while read -r prio len table; do
-					if [ "$table" != "main" ] && is_netifd_table "$table"; then
-						continue  # Skip netifd-managed tables
-					fi
-					if [ "$len" = "0" ]; then
-						# pbr table rule - try priority deletion first
-						ip -4 rule del priority "$prio" 2>/dev/null
-					else
-						# suppress_prefixlength rule - try priority first, then full spec
-						if ! ip -4 rule del priority "$prio" 2>/dev/null; then
-							ip -4 rule del lookup main suppress_prefixlength "$len" priority "$prio" 2>/dev/null || \
-							ip -4 rule del table main suppress_prefixlength "$len" priority "$prio" 2>/dev/null
-						fi
-					fi
+				# Delete rules by priority range instead of parsing table names.
+				# pbr rules occupy: uplink_ip_rules_priority (down) for interfaces,
+				# uplink_ip_rules_priority+1 for suppress_prefixlength.
+				local prio_min prio_max prio table line
+				# max interfaces = fw_mask / uplink_mark (e.g. 0x00ff0000/0x00010000 = 255)
+				local max_ifaces="$((fw_mask / uplink_mark))"
+				prio_max="$((uplink_ip_rules_priority))"
+				prio_min="$((uplink_ip_rules_priority - max_ifaces))"
+				[ "$prio_min" -lt 1 ] && prio_min="1"
+				ip -4 rule show | while IFS= read -r line; do
+					prio="${line%%:*}"
+					[ "$prio" -ge "$prio_min" ] 2>/dev/null && [ "$prio" -le "$prio_max" ] 2>/dev/null || continue
+					# Skip netifd-managed fwmark rules (but not WG sport rules)
+					case "$line" in
+						*fwmark*"lookup ${ipTablePrefix}_"*)
+							table="${line##*lookup }"
+							table="${table%% *}"
+							is_netifd_table "$table" && continue
+							;;
+					esac
+					ip -4 rule del priority "$prio" 2>/dev/null
 				done
+				# Legacy: remove suppress_prefixlength rules created without explicit priority
+				ip -4 rule del lookup 'main' suppress_prefixlength "$prefixlength" 2>/dev/null
 				# Always attempt IPv6 cleanup regardless of current ipv6_enabled setting
 				# since rules might exist from when IPv6 was previously enabled
-				ip -6 rule show 2>/dev/null | awk '
-					/lookup[[:space:]]+main[[:space:]]+suppress_prefixlength[[:space:]]+[0-9]+/ { 
-						sub(":", "", $1)
-						match($0, /suppress_prefixlength[[:space:]]+([0-9]+)/, arr)
-						print $1 " " arr[1] " main"
-					}
-					/lookup '"$ipTablePrefix"'_/ { 
-						sub(":", "", $1)
-						match($0, /lookup[[:space:]]+([^[:space:]]+)/, arr)
-						print $1 " 0 " arr[1]
-					}
-				' | while read -r prio len table; do
-					if [ "$table" != "main" ] && is_netifd_table "$table"; then
-						continue  # Skip netifd-managed tables
-					fi
-					if [ "$len" = "0" ]; then
-						ip -6 rule del priority "$prio" 2>/dev/null
-					else
-						if ! ip -6 rule del priority "$prio" 2>/dev/null; then
-							ip -6 rule del lookup main suppress_prefixlength "$len" priority "$prio" 2>/dev/null || \
-							ip -6 rule del table main suppress_prefixlength "$len" priority "$prio" 2>/dev/null
-						fi
-					fi
+				ip -6 rule show 2>/dev/null | while IFS= read -r line; do
+					prio="${line%%:*}"
+					[ "$prio" -ge "$prio_min" ] 2>/dev/null && [ "$prio" -le "$prio_max" ] 2>/dev/null || continue
+					case "$line" in
+						*fwmark*"lookup ${ipTablePrefix}_"*)
+							table="${line##*lookup }"
+							table="${table%% *}"
+							is_netifd_table "$table" && continue
+							;;
+					esac
+					ip -6 rule del priority "$prio" 2>/dev/null
 				done
+				ip -6 rule del lookup 'main' suppress_prefixlength "$prefixlength" 2>/dev/null
 			;;
 			main_chains)
 				for i in $chainsList dstnat; do
@@ -1170,14 +1278,17 @@ json() {
 
 resolver() {
 	_dnsmasq_instance_get_confdir() {
-		local cfg_file
+		local cfg cfg_file
+		cfg="$(uci -q show "dhcp.${1}" | awk -F'[.=]' 'NR==1{print $2}')"
 		[ -z "$dnsmasq_ubus" ] && dnsmasq_ubus="$(ubus call service list '{"name":"dnsmasq"}')"
-		cfg_file="$(echo "$dnsmasq_ubus" | jsonfilter -e "@.dnsmasq.instances.${1}.command" \
+		cfg_file="$(echo "$dnsmasq_ubus" | jsonfilter -e "@.dnsmasq.instances.${cfg}.command" \
 			| awk '{gsub(/\\\//,"/");gsub(/[][",]/,"");for(i=1;i<=NF;i++)if($i=="-C"){print $(i+1);exit}}')"
 		awk -F= '/^conf-dir=/{print $2; exit}' "$cfg_file"
 	}
 	_dnsmasq_instance_config() {
 		local cfg="$1" param="$2" confdir
+		[ -s "/etc/config/dhcp" ] || return 0
+		[ -n "$(uci_get dhcp "$cfg")" ] || return 1
 		case "$param" in
 			cleanup)
 				# clean up all dnsmasq configs
@@ -1271,8 +1382,8 @@ resolver() {
 					else
 						config_foreach _dnsmasq_instance_config 'dnsmasq' 'cleanup'
 						for i in $resolver_instance; do
-							_dnsmasq_instance_config "@dnsmasq[$i]" \
-							|| _dnsmasq_instance_config "$i"
+							_dnsmasq_instance_config "@dnsmasq[$i]" 'setup' \
+							|| _dnsmasq_instance_config "$i" 'setup'
 						done
 					fi
 				;;
@@ -1373,9 +1484,13 @@ netifd() {
 						uci_set 'network' "${rt_name}_ipv4" 'priority' "${lan_priority}"
 					fi
 					if [ -n "$ipv6_enabled" ] && [ -n "$netifd_interface_default6" ]; then
+						local ipv6_default_lookup="${ipTablePrefix}_${netifd_interface_default6}"
+						if is_split_uplink && [ "$netifd_interface_default6" = "$uplink_interface6" ]; then
+							ipv6_default_lookup="${ipTablePrefix}_${uplink_interface4}"
+						fi
 						uci_add 'network' 'rule6' "${rt_name}_ipv6"
 						uci_set 'network' "${rt_name}_ipv6" 'in' "${iface}"
-						uci_set 'network' "${rt_name}_ipv6" 'lookup' "${ipTablePrefix}_${netifd_interface_default6}"
+						uci_set 'network' "${rt_name}_ipv6" 'lookup' "$ipv6_default_lookup"
 						uci_set 'network' "${rt_name}_ipv6" 'priority' "${lan_priority}"
 					fi
 					lan_priority="$((lan_priority + 1))"
@@ -1393,7 +1508,7 @@ netifd() {
 		local splitUplinkSecondIface
 
 		if is_split_uplink; then
-			if is_wan "$iface" || is_wan6 "$iface"; then
+			if is_uplink4 "$iface" || is_uplink6 "$iface"; then
 				if [ -n "$_uplinkMark" ] && [ -n "$_uplinkPriority" ] && [ -n "$_uplinkTableID" ]; then
 					_mark="$_uplinkMark"
 					_priority="$_uplinkPriority"
@@ -1415,7 +1530,7 @@ netifd() {
 			case "$action" in
 				install)
 					output 2 "Setting up netifd extensions for $iface... "
-					if ! is_split_uplink || ! is_wan6 "$iface"; then
+					if ! is_split_uplink || ! is_uplink6 "$iface"; then
 						uci_set 'network' "${iface}" 'ip4table' "${rt_name}"
 						uci_add 'network' 'rule' "${rt_name}_ipv4"
 						uci_set 'network' "${rt_name}_ipv4" 'priority' "${_priority}"
@@ -1423,7 +1538,7 @@ netifd() {
 						uci_set 'network' "${rt_name}_ipv4" 'mark' "${_mark}"
 						uci_set 'network' "${rt_name}_ipv4" 'mask' "${fw_mask}"
 					fi
-					if [ -n "$ipv6_enabled" ] && { ! is_split_uplink || ! is_wan "$iface"; }; then
+					if [ -n "$ipv6_enabled" ] && { ! is_split_uplink || ! is_uplink4 "$iface"; }; then
 						uci_set 'network' "${iface}" 'ip6table' "${rt_name}"
 						uci_add 'network' 'rule6' "${rt_name}_ipv6"
 						uci_set 'network' "${rt_name}_ipv6" 'priority' "${_priority}"
@@ -1431,7 +1546,7 @@ netifd() {
 						uci_set 'network' "${rt_name}_ipv6" 'mark' "${_mark}"
 						uci_set 'network' "${rt_name}_ipv6" 'mask' "${fw_mask}"
 					fi
-					if ! is_split_uplink || ! is_wan6 "$iface"; then
+					if ! is_split_uplink || ! is_uplink6 "$iface"; then
 					[ "$rt_name" = 'main' ] || sed -i "\#${rt_name}\$#d" "$rtTablesFile" >/dev/null 2>&1
 					[ "$rt_name" = 'main' ] || echo "${_tid} ${rt_name}" >> "$rtTablesFile"
 						nft_file 'sed' 'temp' "\#${_mark}#d"
@@ -1443,18 +1558,18 @@ netifd() {
 					fi
 					local dscp="$(uci_get "$packageName" 'config' "${iface}_dscp")"
 					if [ "${dscp:-0}" -ge '1' ] && [ "${dscp:-0}" -le '63' ]; then
-						if ! is_split_uplink || ! is_wan6 "$iface"; then
+						if ! is_split_uplink || ! is_uplink6 "$iface"; then
 							nft add rule inet "$nftTable" "${nftPrefix}_prerouting ${nftIPv4Flag} dscp ${dscp} ${nftRuleParams} goto ${nftPrefix}_mark_${_mark}"
 						fi
-						if [ -n "$ipv6_enabled" ] && { ! is_split_uplink || ! is_wan "$iface"; }; then
+						if [ -n "$ipv6_enabled" ] && { ! is_split_uplink || ! is_uplink4 "$iface"; }; then
 							nft add rule inet "$nftTable" "${nftPrefix}_prerouting ${nftIPv6Flag} dscp ${dscp} ${nftRuleParams} goto ${nftPrefix}_mark_${_mark}"
 						fi
 					fi
 					if [ "$iface" = "$icmp_interface" ]; then
-						if ! is_split_uplink || ! is_wan6 "$iface"; then
+						if ! is_split_uplink || ! is_uplink6 "$iface"; then
 							nft add rule inet "$nftTable" "${nftPrefix}_output ${nftIPv4Flag} protocol icmp ${nftRuleParams} goto ${nftPrefix}_mark_${_mark}"
 						fi
-						if [ -n "$ipv6_enabled" ] && { ! is_split_uplink || ! is_wan "$iface"; }; then
+						if [ -n "$ipv6_enabled" ] && { ! is_split_uplink || ! is_uplink4 "$iface"; }; then
 							nft add rule inet "$nftTable" "${nftPrefix}_output ${nftIPv6Flag} protocol icmp ${nftRuleParams} goto ${nftPrefix}_mark_${_mark}"
 						fi
 					fi
@@ -1528,7 +1643,7 @@ netifd() {
 	esac
 
 	nft_file 'create' 'netifd'
-	output 1 "Netifd extensions $action ${target_iface:+on $target_iface }"
+	output 1 "Netifd extensions $action ${target_iface:+on ${target_iface} }"
 	uci_remove 'network' 'rule' "main_ipv4"  2>/dev/null
 	uci_remove 'network' 'rule6' "main_ipv6" 2>/dev/null
 	config_load 'network'
@@ -1557,7 +1672,7 @@ netifd() {
 	uci_commit "$packageName"
 	uci_commit 'network'
 	sync
-	output "Restarting network ${action:+(on_$action) }"
+	output "Restarting network ${action:+(on_${action}) }"
 	{ /etc/init.d/network 'reload'; /etc/init.d/firewall 'reload'; } >/dev/null 2>&1 && output_okbn || output_failn
 }
 
@@ -1606,11 +1721,11 @@ dns_policy_routing() {
 			value="$src_addr"
 			first_value="$(str_first_word "$value")"
 			if is_phys_dev "$first_value"; then
-				param4="${param4:+$param4 }iifname ${negation:+$negation }{ $(inline_set "$value") }"
-				param6="${param6:+$param6 }iifname ${negation:+$negation }{ $(inline_set "$value") }"
+				param4="${param4:+${param4} }iifname ${negation:+${negation} }{ $(inline_set "$value") }"
+				param6="${param6:+${param6} }iifname ${negation:+${negation} }{ $(inline_set "$value") }"
 			elif is_mac_address "$first_value"; then
-				param4="${param4:+$param4 }ether saddr ${negation:+$negation }{ $(inline_set "$value") }"
-				param6="${param6:+$param6 }ether saddr ${negation:+$negation }{ $(inline_set "$value") }"
+				param4="${param4:+${param4} }ether saddr ${negation:+${negation} }{ $(inline_set "$value") }"
+				param6="${param6:+${param6} }ether saddr ${negation:+${negation} }{ $(inline_set "$value") }"
 			elif is_domain "$first_value"; then
 				local inline_set_ipv4='' inline_set_ipv6='' d=''
 				for d in $value; do
@@ -1620,17 +1735,17 @@ dns_policy_routing() {
 					if [ -z "${resolved_ipv4}${resolved_ipv6}" ]; then
 						json add error 'errorFailedToResolve' "$d"
 					else
-					[ -n "$resolved_ipv4" ] && inline_set_ipv4="${inline_set_ipv4:+$inline_set_ipv4, }$resolved_ipv4"
-					[ -n "$resolved_ipv6" ] && inline_set_ipv6="${inline_set_ipv6:+$inline_set_ipv6, }$resolved_ipv6"
+					[ -n "$resolved_ipv4" ] && inline_set_ipv4="${inline_set_ipv4:+${inline_set_ipv4}, }$resolved_ipv4"
+					[ -n "$resolved_ipv6" ] && inline_set_ipv6="${inline_set_ipv6:+${inline_set_ipv6}, }$resolved_ipv6"
 					fi
 				done
 				[ -n "$inline_set_ipv4" ] || inline_set_ipv4_empty_flag='true'
 				[ -n "$inline_set_ipv6" ] || inline_set_ipv6_empty_flag='true'
-				param4="${param4:+$param4 }${nftIPv4Flag} saddr ${negation:+$negation }{ $inline_set_ipv4 }"
-				param6="${param6:+$param6 }${nftIPv6Flag} saddr ${negation:+$negation }{ $inline_set_ipv6 }"
+				param4="${param4:+${param4} }${nftIPv4Flag} saddr ${negation:+${negation} }{ $inline_set_ipv4 }"
+				param6="${param6:+${param6} }${nftIPv6Flag} saddr ${negation:+${negation} }{ $inline_set_ipv6 }"
 			else
-				param4="${param4:+$param4 }${nftIPv4Flag} saddr ${negation:+$negation }{ $(inline_set "$value") }"
-				param6="${param6:+$param6 }${nftIPv6Flag} saddr ${negation:+$negation }{ $(inline_set "$value") }"
+				param4="${param4:+${param4} }${nftIPv4Flag} saddr ${negation:+${negation} }{ $(inline_set "$value") }"
+				param6="${param6:+${param6} }${nftIPv6Flag} saddr ${negation:+${negation} }{ $(inline_set "$value") }"
 			fi
 		fi
 
@@ -1740,17 +1855,17 @@ policy_routing() {
 			fi
 			first_value_src="$(str_first_word "$value")"
 			if is_phys_dev "$first_value_src"; then
-				param4="${param4:+$param4 }iifname ${negation:+$negation }{ $(inline_set "$value") }"
-				param6="${param6:+$param6 }iifname ${negation:+$negation }{ $(inline_set "$value") }"
+				param4="${param4:+${param4} }iifname ${negation:+${negation} }{ $(inline_set "$value") }"
+				param6="${param6:+${param6} }iifname ${negation:+${negation} }{ $(inline_set "$value") }"
 			elif is_mac_address "$first_value_src"; then
-				param4="${param4:+$param4 }ether saddr ${negation:+$negation }{ $(inline_set "$value") }"
-				param6="${param6:+$param6 }ether saddr ${negation:+$negation }{ $(inline_set "$value") }"
+				param4="${param4:+${param4} }ether saddr ${negation:+${negation} }{ $(inline_set "$value") }"
+				param6="${param6:+${param6} }ether saddr ${negation:+${negation} }{ $(inline_set "$value") }"
 			elif is_domain "$first_value_src"; then
 				local target='src' type='ip'
 				if resolver 'create_resolver_set' "$iface" "$target" "$type" "$uid" "$name" && \
 					resolver 'add_resolver_element' "$iface" "$target" "$type" "$uid" "$name" "$value"; then
-					param4="${param4:+$param4 }${nftIPv4Flag} saddr ${negation:+$negation }@${nftPrefix}_${iface}_4_${target}_${type}_${uid}${nftset_suffix}"
-					param6="${param6:+$param6 }${nftIPv6Flag} saddr ${negation:+$negation }@${nftPrefix}_${iface}_6_${target}_${type}_${uid}${nftset_suffix}"
+					param4="${param4:+${param4} }${nftIPv4Flag} saddr ${negation:+${negation} }@${nftPrefix}_${iface}_4_${target}_${type}_${uid}${nftset_suffix}"
+					param6="${param6:+${param6} }${nftIPv6Flag} saddr ${negation:+${negation} }@${nftPrefix}_${iface}_6_${target}_${type}_${uid}${nftset_suffix}"
 				else
 					local inline_set_ipv4='' inline_set_ipv6='' d=''
 					unset src_inline_set_ipv4_empty_flag
@@ -1762,18 +1877,18 @@ policy_routing() {
 						if [ -z "${resolved_ipv4}${resolved_ipv6}" ]; then
 							json add error 'errorFailedToResolve' "$d"
 						else
-						[ -n "$resolved_ipv4" ] && inline_set_ipv4="${inline_set_ipv4:+$inline_set_ipv4, }$resolved_ipv4"
-						[ -n "$resolved_ipv6" ] && inline_set_ipv6="${inline_set_ipv6:+$inline_set_ipv6, }$resolved_ipv6"
+						[ -n "$resolved_ipv4" ] && inline_set_ipv4="${inline_set_ipv4:+${inline_set_ipv4}, }$resolved_ipv4"
+						[ -n "$resolved_ipv6" ] && inline_set_ipv6="${inline_set_ipv6:+${inline_set_ipv6}, }$resolved_ipv6"
 						fi
 					done
 					[ -n "$inline_set_ipv4" ] || src_inline_set_ipv4_empty_flag='true'
 					[ -n "$inline_set_ipv6" ] || src_inline_set_ipv6_empty_flag='true'
-					param4="${param4:+$param4 }${nftIPv4Flag} saddr ${negation:+$negation }{ $inline_set_ipv4 }"
-					param6="${param6:+$param6 }${nftIPv6Flag} saddr ${negation:+$negation }{ $inline_set_ipv6 }"
+					param4="${param4:+${param4} }${nftIPv4Flag} saddr ${negation:+${negation} }{ $inline_set_ipv4 }"
+					param6="${param6:+${param6} }${nftIPv6Flag} saddr ${negation:+${negation} }{ $inline_set_ipv6 }"
 				fi
 			else
-				param4="${param4:+$param4 }${nftIPv4Flag} saddr ${negation:+$negation }{ $(inline_set "$value") }"
-				param6="${param6:+$param6 }${nftIPv6Flag} saddr ${negation:+$negation }{ $(inline_set "$value") }"
+				param4="${param4:+${param4} }${nftIPv4Flag} saddr ${negation:+${negation} }{ $(inline_set "$value") }"
+				param6="${param6:+${param6} }${nftIPv6Flag} saddr ${negation:+${negation} }{ $(inline_set "$value") }"
 			fi
 		fi
 
@@ -1785,14 +1900,14 @@ policy_routing() {
 			fi
 			first_value_dest="$(str_first_word "$value")"
 			if is_phys_dev "$first_value_dest"; then
-				param4="${param4:+$param4 }oifname ${negation:+$negation }{ $(inline_set "$value") }"
-				param6="${param6:+$param6 }oifname ${negation:+$negation }{ $(inline_set "$value") }"
+				param4="${param4:+${param4} }oifname ${negation:+${negation} }{ $(inline_set "$value") }"
+				param6="${param6:+${param6} }oifname ${negation:+${negation} }{ $(inline_set "$value") }"
 			elif is_domain "$first_value_dest"; then
 				local target='dst' type='ip'
 				if resolver 'create_resolver_set' "$iface" "$target" "$type" "$uid" "$name" && \
 					resolver 'add_resolver_element' "$iface" "$target" "$type" "$uid" "$name" "$value"; then
-					param4="${param4:+$param4 }${nftIPv4Flag} daddr ${negation:+$negation }@${nftPrefix}_${iface}_4_${target}_${type}_${uid}${nftset_suffix}"
-					param6="${param6:+$param6 }${nftIPv6Flag} daddr ${negation:+$negation }@${nftPrefix}_${iface}_6_${target}_${type}_${uid}${nftset_suffix}"
+					param4="${param4:+${param4} }${nftIPv4Flag} daddr ${negation:+${negation} }@${nftPrefix}_${iface}_4_${target}_${type}_${uid}${nftset_suffix}"
+					param6="${param6:+${param6} }${nftIPv6Flag} daddr ${negation:+${negation} }@${nftPrefix}_${iface}_6_${target}_${type}_${uid}${nftset_suffix}"
 				else
 					local inline_set_ipv4='' inline_set_ipv6='' d=''
 					unset dest_inline_set_ipv4_empty_flag
@@ -1804,18 +1919,18 @@ policy_routing() {
 						if [ -z "${resolved_ipv4}${resolved_ipv6}" ]; then
 							json add error 'errorFailedToResolve' "$d"
 						else
-						[ -n "$resolved_ipv4" ] && inline_set_ipv4="${inline_set_ipv4:+$inline_set_ipv4, }$resolved_ipv4"
-						[ -n "$resolved_ipv6" ] && inline_set_ipv6="${inline_set_ipv6:+$inline_set_ipv6, }$resolved_ipv6"
+						[ -n "$resolved_ipv4" ] && inline_set_ipv4="${inline_set_ipv4:+${inline_set_ipv4}, }$resolved_ipv4"
+						[ -n "$resolved_ipv6" ] && inline_set_ipv6="${inline_set_ipv6:+${inline_set_ipv6}, }$resolved_ipv6"
 						fi
 					done
 					[ -n "$inline_set_ipv4" ] || dest_inline_set_ipv4_empty_flag='true'
 					[ -n "$inline_set_ipv6" ] || dest_inline_set_ipv6_empty_flag='true'
-					param4="${param4:+$param4 }${nftIPv4Flag} daddr ${negation:+$negation }{ $inline_set_ipv4 }"
-					param6="${param6:+$param6 }${nftIPv6Flag} daddr ${negation:+$negation }{ $inline_set_ipv6 }"
+					param4="${param4:+${param4} }${nftIPv4Flag} daddr ${negation:+${negation} }{ $inline_set_ipv4 }"
+					param6="${param6:+${param6} }${nftIPv6Flag} daddr ${negation:+${negation} }{ $inline_set_ipv6 }"
 				fi
 			else
-				param4="${param4:+$param4 }${nftIPv4Flag} daddr ${negation:+$negation }{ $(inline_set "$value") }"
-				param6="${param6:+$param6 }${nftIPv6Flag} daddr ${negation:+$negation }{ $(inline_set "$value") }"
+				param4="${param4:+${param4} }${nftIPv4Flag} daddr ${negation:+${negation} }{ $(inline_set "$value") }"
+				param6="${param6:+${param6} }${nftIPv6Flag} daddr ${negation:+${negation} }{ $(inline_set "$value") }"
 			fi
 		fi
 
@@ -1825,8 +1940,8 @@ policy_routing() {
 			else
 				unset negation; value="$src_port";
 			fi
-			param4="${param4:+$param4 }${proto_i:+$proto_i }sport ${negation:+$negation }{ $(inline_set "$value") }"
-			param6="${param6:+$param6 }${proto_i:+$proto_i }sport ${negation:+$negation }{ $(inline_set "$value") }"
+			param4="${param4:+${param4} }${proto_i:+${proto_i} }sport ${negation:+${negation} }{ $(inline_set "$value") }"
+			param6="${param6:+${param6} }${proto_i:+${proto_i} }sport ${negation:+${negation} }{ $(inline_set "$value") }"
 		fi
 
 		if [ -n "$dest_port" ]; then
@@ -1835,8 +1950,8 @@ policy_routing() {
 			else
 				unset negation; value="$dest_port";
 			fi
-			param4="${param4:+$param4 }${proto_i:+$proto_i }dport ${negation:+$negation }{ $(inline_set "$value") }"
-			param6="${param6:+$param6 }${proto_i:+$proto_i }dport ${negation:+$negation }{ $(inline_set "$value") }"
+			param4="${param4:+${param4} }${proto_i:+${proto_i} }dport ${negation:+${negation} }{ $(inline_set "$value") }"
+			param6="${param6:+${param6} }${proto_i:+${proto_i} }dport ${negation:+${negation} }{ $(inline_set "$value") }"
 		fi
 
 		if is_tor "$iface"; then
@@ -1918,7 +2033,7 @@ dns_policy_process() {
 		if is_url "$i"; then
 			i="$(process_url "$i")"
 		fi
-		j="${j:+$j }$i"
+		j="${j:+${j} }$i"
 	done
 	src_addr="$j"
 
@@ -1931,9 +2046,9 @@ dns_policy_process() {
 		for d in $(uci -q get network."$dest_dns_interface".dns); do
 				if ! is_family_mismatch "$src_addr" "$d"; then
 					if is_ipv4 "$d"; then
-						dest_dns_ipv4="${dest_dns_ipv4:-$d}"
+						dest_dns_ipv4="${dest_dns_ipv4:-${d}}"
 					elif is_ipv6 "$d"; then
-						dest_dns_ipv6="${dest_dns_ipv6:-$d}"
+						dest_dns_ipv6="${dest_dns_ipv6:-${d}}"
 					fi
 				fi
 			done
@@ -2006,7 +2121,7 @@ policy_process() {
 		if is_url "$i"; then
 			i="$(process_url "$i")"
 		fi
-		j="${j:+$j }$i"
+		j="${j:+${j} }$i"
 	done
 	src_addr="$j"
 
@@ -2015,7 +2130,7 @@ policy_process() {
 		if is_url "$i"; then
 			i="$(process_url "$i")"
 		fi
-		j="${j:+$j }$i"
+		j="${j:+${j} }$i"
 	done
 	dest_addr="$j"
 
@@ -2040,8 +2155,8 @@ policy_process() {
 							continue
 					fi
 					policy_routing "$name" "$interface" "$filtered_value_src_addr" "$src_port" "$filtered_value_dest_addr" "$dest_port" "$proto" "$chain" "$uid"
-					processed_value_src_addr="${processed_value_src_addr:+$processed_value_src_addr }$filtered_value_src_addr"
-					processed_value_dest_addr="${processed_value_dest_addr:+$processed_value_dest_addr }$filtered_value_dest_addr"
+					processed_value_src_addr="${processed_value_src_addr:+${processed_value_src_addr} }$filtered_value_src_addr"
+					processed_value_dest_addr="${processed_value_dest_addr:+${processed_value_dest_addr} }$filtered_value_dest_addr"
 				fi
 			done
 		fi
@@ -2104,17 +2219,17 @@ interface_routing() {
 				fi
 
 				if ! nft_file 'match' 'temp' "${nftPrefix}_mark_${mark}"; then
-					try nft add chain inet "$nftTable" "${nftPrefix}_mark_${mark}" || ipv4_error=1
-					try nft add rule inet "$nftTable" "${nftPrefix}_mark_${mark} ${nftRuleParams} meta mark set (meta mark & ${fw_maskXor}) | ${mark}" || ipv4_error=1
-					try nft add rule inet "$nftTable" "${nftPrefix}_mark_${mark} return" || ipv4_error=1
+					nft add chain inet "$nftTable" "${nftPrefix}_mark_${mark}"
+					nft add rule inet "$nftTable" "${nftPrefix}_mark_${mark} ${nftRuleParams} meta mark set (meta mark & ${fw_maskXor}) | ${mark}"
+					nft add rule inet "$nftTable" "${nftPrefix}_mark_${mark} return"
 				fi
 
 				dscp="$(uci_get "$packageName" 'config' "${iface}_dscp" '0')"
 				if [ "$dscp" -ge '1' ] && [ "$dscp" -le '63' ]; then
-					try nft add rule inet "$nftTable" "${nftPrefix}_prerouting ${nftIPv4Flag} dscp ${dscp} ${nftRuleParams} goto ${nftPrefix}_mark_${mark}" || s=1
+					nft add rule inet "$nftTable" "${nftPrefix}_prerouting ${nftIPv4Flag} dscp ${dscp} ${nftRuleParams} goto ${nftPrefix}_mark_${mark}"
 				fi
 				if [ "$iface" = "$icmp_interface" ]; then
-					try nft add rule inet "$nftTable" "${nftPrefix}_output ${nftIPv4Flag} protocol icmp ${nftRuleParams} goto ${nftPrefix}_mark_${mark}" || s=1
+					nft add rule inet "$nftTable" "${nftPrefix}_output ${nftIPv4Flag} protocol icmp ${nftRuleParams} goto ${nftPrefix}_mark_${mark}"
 				fi
 			fi
 
@@ -2142,17 +2257,17 @@ interface_routing() {
 				fi
 
 				if ! nft_file 'match' 'temp' "${nftPrefix}_mark_${mark}"; then
-					try nft add chain inet "$nftTable" "${nftPrefix}_mark_${mark}" || ipv6_error=1
-					try nft add rule inet "$nftTable" "${nftPrefix}_mark_${mark} ${nftRuleParams} meta mark set (meta mark & ${fw_maskXor}) | ${mark}" || ipv6_error=1
-					try nft add rule inet "$nftTable" "${nftPrefix}_mark_${mark} return" || ipv6_error=1
+					nft add chain inet "$nftTable" "${nftPrefix}_mark_${mark}"
+					nft add rule inet "$nftTable" "${nftPrefix}_mark_${mark} ${nftRuleParams} meta mark set (meta mark & ${fw_maskXor}) | ${mark}"
+					nft add rule inet "$nftTable" "${nftPrefix}_mark_${mark} return"
 				fi
 
 				dscp="$(uci_get "$packageName" 'config' "${iface}_dscp" '0')"
 				if [ "$dscp" -ge '1' ] && [ "$dscp" -le '63' ]; then
-					try nft add rule inet "$nftTable" "${nftPrefix}_prerouting ${nftIPv6Flag} dscp ${dscp} ${nftRuleParams} goto ${nftPrefix}_mark_${mark}" || s=1
+					nft add rule inet "$nftTable" "${nftPrefix}_prerouting ${nftIPv6Flag} dscp ${dscp} ${nftRuleParams} goto ${nftPrefix}_mark_${mark}"
 				fi
 				if [ "$iface" = "$icmp_interface" ]; then
-					try nft add rule inet "$nftTable" "${nftPrefix}_output ${nftIPv6Flag} protocol icmp ${nftRuleParams} goto ${nftPrefix}_mark_${mark}" || s=1
+					nft add rule inet "$nftTable" "${nftPrefix}_output ${nftIPv6Flag} protocol icmp ${nftRuleParams} goto ${nftPrefix}_mark_${mark}"
 				fi
 			fi
 
@@ -2171,10 +2286,8 @@ interface_routing() {
 		;;
 		delete|destroy)
 			is_netifd_interface "$iface" && return 0
-			ip -4 rule del table 'main' suppress_prefixlength "$prefixlength" prio "$((priority - 1))" >/dev/null 2>&1
 			ip -4 rule del table 'main' prio "$((priority - 1000))" >/dev/null 2>&1
 			ip -4 rule del table "$tid" prio "$priority" >/dev/null 2>&1
-			ip -6 rule del table 'main' suppress_prefixlength "$prefixlength" prio "$((priority - 1))" >/dev/null 2>&1
 			ip -6 rule del table 'main' prio "$((priority - 1000))" >/dev/null 2>&1
 			ip -6 rule del table "$tid" prio "$priority" >/dev/null 2>&1
 			ip -4 rule flush table "$tid" >/dev/null 2>&1
@@ -2275,12 +2388,6 @@ process_interface() {
 				return 0
 			;;
 			create_global_rules)
-				ip -4 rule del lookup 'main' suppress_prefixlength "$prefixlength" priority "$ifacePriority" >/dev/null 2>&1
-				try ip -4 rule add lookup 'main' suppress_prefixlength "$prefixlength" priority "$ifacePriority" || ipv4_error=1
-				if [ -n "$ipv6_enabled" ]; then
-					ip -6 rule del lookup 'main' suppress_prefixlength "$prefixlength" priority "$ifacePriority" >/dev/null 2>&1
-					try ip -6 rule add lookup 'main' suppress_prefixlength "$prefixlength" priority "$ifacePriority" || ipv6_error=1
-				fi
 				_wg_server() {
 					local iface="$1"
 					if is_wg_server "$iface" && ! is_ignored_interface "$iface"; then
@@ -2289,17 +2396,27 @@ process_interface() {
 						config_get listen_port "$iface" 'listen_port'
 						if [ "$disabled" != '1' ] && [ -n "$listen_port" ]; then
 							if [ -n "$uplink_interface4" ]; then
-								ip rule del sport "$listen_port" table "${ipTablePrefix}_${uplink_interface4}" >/dev/null 2>&1
-								ip rule add sport "$listen_port" table "${ipTablePrefix}_${uplink_interface4}" >/dev/null 2>&1
+								#ip rule del sport "$listen_port" table "${ipTablePrefix}_${uplink_interface4}" priority "$ifacePriority" >/dev/null 2>&1
+								ip rule add sport "$listen_port" table "${ipTablePrefix}_${uplink_interface4}" priority "$ifacePriority" >/dev/null 2>&1
 								if [ -n "$ipv6_enabled" ]; then
-									ip -6 rule del sport "$listen_port" table "${ipTablePrefix}_${uplink_interface4}" >/dev/null 2>&1
-									ip -6 rule add sport "$listen_port" table "${ipTablePrefix}_${uplink_interface4}" >/dev/null 2>&1
+									#ip -6 rule del sport "$listen_port" table "${ipTablePrefix}_${uplink_interface4}" priority "$ifacePriority" >/dev/null 2>&1
+									ip -6 rule add sport "$listen_port" table "${ipTablePrefix}_${uplink_interface4}" priority "$ifacePriority" >/dev/null 2>&1
 								fi
+								ifacePriority="$((ifacePriority - 1))"
 							fi
 						fi
 					fi
 				}
 				config_foreach _wg_server 'interface'
+
+				#ip -4 rule del priority "$ifacePriority" >/dev/null 2>&1
+				#ip -4 rule del lookup 'main' suppress_prefixlength "$prefixlength" >/dev/null 2>&1
+				try ip -4 rule add lookup 'main' suppress_prefixlength "$prefixlength" priority "$ifacePriority" || ipv4_error=1
+				if [ -n "$ipv6_enabled" ]; then
+					#ip -6 rule del priority "$ifacePriority" >/dev/null 2>&1
+					#ip -6 rule del lookup 'main' suppress_prefixlength "$prefixlength" >/dev/null 2>&1
+					try ip -6 rule add lookup 'main' suppress_prefixlength "$prefixlength" priority "$ifacePriority" || ipv6_error=1
+				fi
 				return 0
 			;;
 		esac
@@ -2344,7 +2461,7 @@ process_interface() {
 
 	network_get_device dev4 "$iface"
 	[ -z "$dev4" ] && network_get_physdev dev4 "$iface"
-	if is_wan "$iface" && [ -n "$uplink_interface6" ]; then
+	if is_uplink4 "$iface" && [ -n "$uplink_interface6" ]; then
 		network_get_device dev6 "$uplink_interface6"
 		[ -z "$dev6" ] && network_get_physdev dev6 "$uplink_interface6"
 	fi
@@ -2357,7 +2474,7 @@ process_interface() {
 	local splitUplinkSecondIface
 
 	if is_split_uplink; then
-		if is_wan "$iface" || is_wan6 "$iface"; then
+		if is_uplink4 "$iface" || is_uplink6 "$iface"; then
 			if [ -n "$_uplinkMark" ] && [ -n "$_uplinkPriority" ] && [ -n "$_uplinkTableID" ]; then
 				_mark="$_uplinkMark"
 				_priority="$_uplinkPriority"
@@ -2380,7 +2497,7 @@ process_interface() {
 			eval "enum_mark_${iface//-/_}"='$_mark'
 			eval "enum_priority_${iface//-/_}"='$_priority'
 			eval "enum_tid_${iface//-/_}"='$_tid'
-			ifacesTriggers="${ifacesTriggers:+$ifacesTriggers }$iface"
+			ifacesTriggers="${ifacesTriggers:+${ifacesTriggers} }$iface"
 		;;
 		create)
 			if [ -z "$splitUplinkSecondIface" ]; then
@@ -2395,9 +2512,9 @@ process_interface() {
 			dispGw4="${gw4:-0.0.0.0}"
 			dispGw6="${gw6:-::/0}"
 			if is_split_uplink; then
-				if is_wan "$iface"; then
+				if is_uplink4 "$iface"; then
 					gw6=""; dev6=""
-				elif is_wan6 "$iface"; then
+				elif is_uplink6 "$iface"; then
 					gw4=""; dev4=""
 				fi
 			fi
@@ -2408,11 +2525,11 @@ process_interface() {
 			if is_netifd_interface_default "$iface"; then
 				[ "$verbosity" = '1' ] && dispStatus="$_OKB_" || dispStatus="$__OKB__"
 			fi
-			displayText="${iface}/${dispDev:+$dispDev/}${dispGw4}${ipv6_enabled:+/$dispGw6}"
+			displayText="${iface}/${dispDev:+${dispDev}/}${dispGw4}${ipv6_enabled:+/${dispGw6}}"
 			output 2 "Setting up routing for '$displayText' "
 			if interface_routing 'create' "$_tid" "$_mark" "$iface" "$gw4" "$dev4" "$gw6" "$dev6" "$_priority"; then
 				json_add_gateway 'create' "$_tid" "$_mark" "$iface" "$gw4" "$dev4" "$gw6" "$dev6" "$_priority" "$dispStatus"
-				gatewaySummary="${gatewaySummary}${displayText}${dispStatus:+ $dispStatus}\n"
+				gatewaySummary="${gatewaySummary}${displayText}${dispStatus:+ ${dispStatus}}\n"
 				if is_netifd_interface "$iface"; then output_okb; else output_ok; fi
 			else
 				json add error 'errorFailedSetup' "$displayText"
@@ -2428,9 +2545,9 @@ process_interface() {
 			eval "mark_${iface//-/_}"='$_mark'
 			eval "tid_${iface//-/_}"='$_tid'
 			if is_split_uplink; then
-				if is_wan "$iface"; then
+				if is_uplink4 "$iface"; then
 					dev6=""
-				elif is_wan6 "$iface"; then
+				elif is_uplink6 "$iface"; then
 					dev4=""
 				fi
 			fi
@@ -2441,7 +2558,7 @@ process_interface() {
 			if is_netifd_interface_default "$iface"; then
 				[ "$verbosity" = '1' ] && dispStatus="$_OKB_" || dispStatus="$__OKB__"
 			fi
-			displayText="${iface}/${dispDev:+$dispDev/}"
+			displayText="${iface}/${dispDev:+${dispDev}/}"
 			interface_routing 'create_user_set' "$_tid" "$_mark" "$iface" "" "$dev4" "" "$dev6" "$_priority"
 		;;
 		destroy)
@@ -2453,9 +2570,9 @@ process_interface() {
 			eval "mark_${iface//-/_}"='$_mark'
 			eval "tid_${iface//-/_}"='$_tid'
 			if is_split_uplink; then
-				if is_wan "$iface"; then
+				if is_uplink4 "$iface"; then
 					dev6=""
-				elif is_wan6 "$iface"; then
+				elif is_uplink6 "$iface"; then
 					dev4=""
 				fi
 			fi
@@ -2466,7 +2583,7 @@ process_interface() {
 			if is_netifd_interface_default "$iface"; then
 				[ "$verbosity" = '1' ] && dispStatus="$_OKB_" || dispStatus="$__OKB__"
 			fi
-			displayText="${iface}/${dispDev:+$dispDev}"
+			displayText="${iface}/${dispDev:+${dispDev}}"
 			output 2 "Removing routing for '$displayText' "
 			interface_routing 'destroy' "$_tid" "$_mark" "$iface" "" "$dev4" "" "$dev6" "$_priority"
 			if is_netifd_interface "$iface"; then output_okb; else output_ok; fi
@@ -2484,9 +2601,9 @@ process_interface() {
 			dispGw4="${gw4:-0.0.0.0}"
 			dispGw6="${gw6:-::/0}"
 			if is_split_uplink; then
-				if is_wan "$iface"; then
+				if is_uplink4 "$iface"; then
 					gw6=""; dev6=""
-				elif is_wan6 "$iface"; then
+				elif is_uplink6 "$iface"; then
 					gw4=""; dev4=""
 				fi
 			fi
@@ -2497,8 +2614,8 @@ process_interface() {
 			if is_netifd_interface_default "$iface"; then
 				[ "$verbosity" = '1' ] && dispStatus="$_OKB_" || dispStatus="$__OKB__"
 			fi
-			displayText="${iface}/${dispDev:+$dispDev/}${dispGw4}${ipv6_enabled:+/$dispGw6}"
-			gatewaySummary="${gatewaySummary}${displayText}${dispStatus:+ $dispStatus}\n"
+			displayText="${iface}/${dispDev:+${dispDev}/}${dispGw4}${ipv6_enabled:+/${dispGw6}}"
+			gatewaySummary="${gatewaySummary}${displayText}${dispStatus:+ ${dispStatus}}\n"
 		;;
 		reload_interface)
 			if [ -z "$splitUplinkSecondIface" ]; then
@@ -2513,9 +2630,9 @@ process_interface() {
 			dispGw4="${gw4:-0.0.0.0}"
 			dispGw6="${gw6:-::/0}"
 			if is_split_uplink; then
-				if is_wan "$iface"; then
+				if is_uplink4 "$iface"; then
 					gw6=""; dev6=""
-				elif is_wan6 "$iface"; then
+				elif is_uplink6 "$iface"; then
 					gw4=""; dev4=""
 				fi
 			fi
@@ -2526,12 +2643,12 @@ process_interface() {
 			if is_netifd_interface_default "$iface"; then
 				[ "$verbosity" = '1' ] && dispStatus="$_OKB_" || dispStatus="$__OKB__"
 			fi
-			displayText="${iface}/${dispDev:+$dispDev/}${dispGw4}${ipv6_enabled:+/$dispGw6}"
+			displayText="${iface}/${dispDev:+${dispDev}/}${dispGw4}${ipv6_enabled:+/${dispGw6}}"
 			if [ "$iface" = "$reloadedIface" ]; then
 				output 2 "Reloading routing for '$displayText' "
 				if interface_routing 'reload_interface' "$_tid" "$_mark" "$iface" "$gw4" "$dev4" "$gw6" "$dev6" "$_priority"; then
 					json_add_gateway 'reload_interface' "$_tid" "$_mark" "$iface" "$gw4" "$dev4" "$gw6" "$dev6" "$_priority" "$dispStatus"
-					gatewaySummary="${gatewaySummary}${displayText}${dispStatus:+ $dispStatus}\n"
+					gatewaySummary="${gatewaySummary}${displayText}${dispStatus:+ ${dispStatus}}\n"
 					if is_netifd_interface "$iface"; then output_okb; else output_ok; fi
 				else
 					json add error 'errorFailedReload' "$displayText"
@@ -2539,13 +2656,13 @@ process_interface() {
 				fi
 			else
 				json_add_gateway 'skip_interface' "$_tid" "$_mark" "$iface" "$gw4" "$dev4" "$gw6" "$dev6" "$_priority" "$dispStatus"
-				gatewaySummary="${gatewaySummary}${displayText}${dispStatus:+ $dispStatus}\n"
+				gatewaySummary="${gatewaySummary}${displayText}${dispStatus:+ ${dispStatus}}\n"
 			fi
 		;;
 	esac
 
 	if is_split_uplink && [ -z "$splitUplinkSecondIface" ]; then
-		if is_wan "$iface" || is_wan6 "$iface"; then
+		if is_uplink4 "$iface" || is_uplink6 "$iface"; then
 			_uplinkTableID="$_tid"
 		fi
 	fi
@@ -2638,6 +2755,10 @@ start_service() {
 			local tid enum_tid
 			tid="$(get_rt_tables_id "$reloadedIface")"
 			enum_tid="$(eval echo "\$enum_tid_${reloadedIface//-/_}")"
+			if is_split_uplink && is_uplink6 "$reloadedIface" && { [ -z "$tid" ] || [ -z "$enum_tid" ]; }; then
+				tid="$(get_rt_tables_id "$uplink_interface4")"
+				enum_tid="$(eval echo "\$enum_tid_${uplink_interface4//-/_}")"
+			fi
 			if [ "$tid" = "$enum_tid" ]; then
 				serviceStartTrigger='on_interface_reload'
 			else
@@ -2730,7 +2851,6 @@ start_service() {
 				output_1_newline
 			fi
 			nft_file 'install' 'main'
-			resolver 'compare_hash' && resolver 'restart'
 		;;
 	esac
 
@@ -2761,15 +2881,15 @@ start_service() {
 	procd_close_instance
 }
 
-service_running() { procd_set_config_changed firewall; }
+service_running() { is_service_running; }
 service_started() {
 	[ -n "$pbrBootFlag" ] && return 0
 	local error warning c
 	if nft_file 'exists' 'main'; then
-		procd_set_config_changed firewall
-		[ -n "$gatewaySummary" ] && output "$serviceName (fw4 nft file mode) started with gateways:\n${gatewaySummary}"
+		resolver 'compare_hash' && resolver 'restart'
+		[ -n "$gatewaySummary" ] && output "$serviceName started with gateways:\n${gatewaySummary}"
 	else
-		output "$serviceName FAILED TO START in fw4 nft file mode!!!\n"
+		output "$serviceName FAILED TO START!!!\n"
 		output "Check the output of nft -c -f $nftTempFile\n"
 	fi
 	warning="$(json get warning)"
@@ -2779,7 +2899,7 @@ service_started() {
 			info="$(json get warning "$c" 'info')"
 			output_warning "$(get_text "$code" "$info")"
 		done
-		output_warning "$(get_text 'warningSummary' "$(get_url '#WarningMessagesDetails')")"
+		output_warning "$(get_text 'warningSummary' "$(get_url '#warning-messages-details')")"
 	fi
 	error="$(json get error)"
 	if [ -n "$error" ]; then
@@ -2788,7 +2908,7 @@ service_started() {
 			info="$(json get error "$c" 'info')"
 			output_error "$(get_text "$code" "$info")"
 		done
-		output_error "$(get_text 'errorSummary' "$(get_url '#ErrorMessagesDetails')")"
+		output_error "$(get_text 'errorSummary' "$(get_url '#error-messages-details')")"
 	fi
 	touch "$packageLockFile"
 	if [ -n "$error" ]; then
@@ -2845,7 +2965,7 @@ stop_service() {
 	fi
 	output 'Resetting routing '
 	if nft_file 'delete' 'main' && \
-		cleanup 'main_table' 'rt_tables' 'main_chains' && \
+		cleanup 'main_table' 'rt_tables' && \
 		ip route flush cache; then
 		output_okn
 	else
@@ -2886,13 +3006,13 @@ status_service() {
 	if [ -n "$uplink_interface4" ]; then
 		network_get_device dev4 "$uplink_interface4"
 		[ -z "$dev4" ] && network_get_physdev dev4 "$uplink_interface4"
-		status="${status}Uplink (IPv4): ${uplink_interface4}${dev4:+/$dev4}/${uplinkGW4:-0.0.0.0}.\n"
+		status="${status}Uplink (IPv4): ${uplink_interface4}${dev4:+/${dev4}}/${uplinkGW4:-0.0.0.0}.\n"
 	fi
 	if [ -n "$uplink_interface6" ]; then
 		network_get_device dev6 "$uplink_interface6"
 		[ -z "$dev6" ] && network_get_physdev dev6 "$uplink_interface6"
 		[ -z "$dev6" ] && dev6="$dev4"
-		status="${status}Uplink (IPv6): ${uplink_interface6}${dev6:+/$dev6}/${uplinkGW6:-::/0}.\n"
+		status="${status}Uplink (IPv6): ${uplink_interface6}${dev6:+/${dev6}}/${uplinkGW6:-::/0}.\n"
 	fi
 
 	echo "$_SEPARATOR_"
@@ -2936,9 +3056,9 @@ status_service() {
 	wanTID=$(($(get_rt_tables_next_id)-tableCount))
 	for tid in main $(seq "$wanTID" $((wanTID + tableCount - 1))); do
 		status_table="$(grep "^${tid}[[:space:]]" "$rtTablesFile" | awk '{print $2}')"
-		echo "IPv4 table ${tid}${status_table:+ ($status_table)} routes:"
+		echo "IPv4 table ${tid}${status_table:+ (${status_table})} routes:"
 		ip -4 route show table "$tid" | sed 's/^/    /'
-		echo "IPv4 table ${tid}${status_table:+ ($status_table)} rules:"
+		echo "IPv4 table ${tid}${status_table:+ (${status_table})} rules:"
 		ip -4 rule list table "$tid" | sed 's/^/    /'
 		if [ -n "$ipv6_enabled" ]; then
 			echo "$_SEPARATOR_"
@@ -2951,9 +3071,114 @@ status_service() {
 	done
 }
 
+print_config_masked() {
+	local file="$1"
+	[ ! -f "/etc/config/$file" ] && return
+	printf "\n===== %s config =====\n" "$file"
+
+	awk -v sq="'" '
+		BEGIN {
+			masklist = "^(endpoint_host|key|password|preshared_key|private_key|psk|public_key|token|username)$"
+		}
+
+		/^[ \t]*(option|list)[ \t]+/ {
+			orig = $0
+
+			# capture indentation
+			match(orig, /^[ \t]*/)
+			indent = substr(orig, RSTART, RLENGTH)
+
+			# capture kind: "option" or "list"
+			tmp = orig
+			sub(/^[ \t]*/, "", tmp)
+			kind = tmp
+			sub(/[ \t].*$/, "", kind)
+
+			# remove leading indent + kind
+			line = orig
+			sub(/^[ \t]*(option|list)[ \t]+/, "", line)
+
+			# extract key name
+			key = line
+			sub(/[ \t].*$/, "", key)
+
+			# extract value (rest after key)
+			sub(/^[^ \t]+[ \t]+/, "", line)
+			val = line
+			sub(/^[ \t]+/, "", val)
+			sub(/[ \t]+$/, "", val)
+
+			# If this key is in masklist, mask the value (preserve dots and length)
+			if (key ~ masklist) {
+				q = ""
+				if (val ~ "^" sq ".*" sq "$")      { q = sq; val = substr(val, 2, length(val)-2) }
+				else if (val ~ /^".*"$/)           { q = "\""; val = substr(val, 2, length(val)-2) }
+
+				masked = val
+				gsub(/[^.]/, "*", masked)
+
+				if (q != "")
+					print indent kind " " key " " q masked q
+				else
+					print indent kind " " key " " masked
+				next
+			}
+
+			# Otherwise print unchanged for now
+			print orig
+			next
+		}
+
+		{ print }
+	' "/etc/config/$file" \
+	| awk '
+		# Do NOT mask IPs (v4) in allowed_ips (option or list)
+		/^[ \t]*(option|list)[ \t]+allowed_ips[ \t]+/ {
+			print
+			next
+		}
+
+		{
+			line = $0
+
+			# Mask digits inside IPv4-looking tokens, keep dots
+			while (match(line, /([0-9]{1,3}\.){3}[0-9]{1,3}/)) {
+				ip = substr(line, RSTART, RLENGTH)
+				masked = ip
+				gsub(/[0-9]/, "*", masked)
+				line = substr(line, 1, RSTART-1) masked substr(line, RSTART+RLENGTH)
+			}
+
+			print line
+		}
+	' \
+	| sed -E 's/([a-fA-F0-9:]{2,}:){1,7}[a-fA-F0-9]{2,}/***/g'
+}
+
+support() {
+	echo "Setting counters and verbosity for diagnostics..."
+	uci set pbr.config.nft_rule_counter='1'
+	uci set pbr.config.nft_set_counter='1'
+	uci set pbr.config.verbosity='2'
+	uci commit pbr
+
+	for cfg in dhcp firewall network pbr; do
+		print_config_masked "$cfg"
+	done
+
+	printf "\n===== ubus call system board =====\n"
+	ubus call system board
+
+	printf "\n===== /etc/init.d/pbr restart =====\n"
+	/etc/init.d/pbr restart
+
+	printf "\n===== /etc/init.d/pbr status (after restart) =====\n"
+	/etc/init.d/pbr status
+}
+
 # shellcheck disable=SC2120
 load_validate_config() {
-	uci_load_validate "$packageName" "$packageName" "$1" "${2}${3:+ $3}" \
+	uci_load_validate "$packageName" "$packageName" "$1" "${2}${3:+ ${3}}" \
 		'enabled:bool:0' \
 		'strict_enforcement:bool:1' \
 		'ipv6_enabled:bool:0' \
@@ -2961,7 +3186,7 @@ load_validate_config() {
 		'resolver_instance:list(or(integer, string)):*' \
 		'verbosity:range(0,2):2' \
 		'uplink_mark:regex("[A-Fa-f0-9]{8}"):00010000' \
-		'uplink_ip_rules_priority:uinteger:30000' \
+		'uplink_ip_rules_priority:range(99,32765):30000' \
 		'fw_mask:regex("[A-Fa-f0-9]{8}"):00ff0000' \
 		'icmp_interface:or("", tor, uci("network", "@interface"))' \
 		'ignored_interface:list(or(tor, uci("network", "@interface")))' \
@@ -2991,7 +3216,7 @@ load_validate_dns_policy() {
 	local src_addr
 	local dest_dns
 	local dest_dns_port
-	uci_load_validate "$packageName" 'dns_policy' "$1" "${2}${3:+ $3}" \
+	uci_load_validate "$packageName" 'dns_policy' "$1" "${2}${3:+ ${3}}" \
 		'name:string:Untitled' \
 		'enabled:bool:1' \
 		'src_addr:list(neg(or(host,network,macaddr,string)))' \
@@ -3011,7 +3236,7 @@ load_validate_policy() {
 	local src_port
 	local dest_addr
 	local dest_port
-	uci_load_validate "$packageName" 'policy' "$1" "${2}${3:+ $3}" \
+	uci_load_validate "$packageName" 'policy' "$1" "${2}${3:+ ${3}}" \
 		'name:string:Untitled' \
 		'enabled:bool:1' \
 		'interface:or("ignore", "tor", regex("xray_.*"), uci("network", "@interface")):wan' \
@@ -3028,7 +3253,7 @@ load_validate_policy() {
 load_validate_include() {
 	local path=
 	local enabled=
-	uci_load_validate "$packageName" 'include' "$1" "${2}${3:+ $3}" \
+	uci_load_validate "$packageName" 'include' "$1" "${2}${3:+ ${3}}" \
 		'path:file' \
 		'enabled:bool:0' \
 	;
