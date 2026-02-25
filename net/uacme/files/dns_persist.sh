@@ -13,13 +13,16 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # General Public License for more details.
 #
+# Part of this is copied from acme.sh
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-CHALLENGE_PATH="${CHALLENGE_DIR:-/var/run/acme/challenge}"
-mkdir -p "${CHALLENGE_PATH}/.well-known/acme-challenge"
+# noop challange 'solver' for challenge type select
+
 ARGS=5
 E_BADARGS=85
+LOG_TAG=acme-uacme-dns-persist
 
 if test $# -ne "$ARGS"
 then
@@ -33,32 +36,13 @@ IDENT=$3
 TOKEN=$4
 AUTH=$5
 
-case "$METHOD" in
-    "begin")
-        case "$TYPE" in
-            http-01)
-                printf "%s" "${AUTH}" > "${CHALLENGE_PATH}/.well-known/acme-challenge/${TOKEN}"
-                exit $?
-                ;;
-            *)
-                exit 1
-                ;;
-        esac
-        ;;
+if [ "$TYPE" != "dns-persist-01" ]; then
+    echo "skipping $TYPE" 1>&2
+    exit 1
+fi
 
-    "done"|"failed")
-        case "$TYPE" in
-            http-01)
-                rm "${CHALLENGE_PATH}/.well-known/acme-challenge/${TOKEN}"
-                exit $?
-                ;;
-            *)
-                exit 1
-                ;;
-        esac
-        ;;
+if [ "$METHOD" = "failed" ]; then
+   logger -t "$LOG_TAG" -p "daemon.info" -- "Create TXT record $AUTH at _validation-persist.$IDENT to authorize domain"
+fi
 
-    *)
-        echo "$0: invalid method" 1>&2 
-        exit 1
-esac
+exit 0
