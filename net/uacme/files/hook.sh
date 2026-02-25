@@ -113,7 +113,7 @@ get)
 	staging_moved=0
 	is_renew=0
 	if [ -e "$domain_dir" ]; then
-		if [ "$staging" = 0 ] && grep -q "acme-staging" "$domain_dir/$main_domain.conf"; then
+		if [ "$staging" = 0 ] && [ -e $domain_dir/this_is_staging ]; then
 			mv "$domain_dir" "$domain_dir.staging"
 			mv "$state_dir/private/$main_domain" "$state_dir/private/$main_domain.staging"
 			log info "Certificates are previously issued from a staging server, but staging option is disabled, moved to $domain_dir.staging."
@@ -180,30 +180,32 @@ get)
 	case $status in
 	0)
 		link_certs "$domain_dir" "$main_domain"
-		if [ -e is_renew ]; then
-			$NOTIFY issued
-		else
+		if [ "$is_renew" = 1 ]; then
 			$NOTIFY renewed
+		else
+			$NOTIFY issued
+			if [ "$staging" = 1 ]; then
+				touch $domain_dir/this_is_staging
+			fi
 		fi
 		;;
 	1)
-		#server didn't run so don't do anything
+		#cert is not due to renewl so don't do anything
 		if [ "$staging_moved" = 1 ]; then
 			log err "Staging certificate '$domain_dir' restored"
 			mv "$domain_dir.staging" "$domain_dir"
-			log err "Staging certificate restored"
 		fi
 		log debug "not due to renewal"
 		;;
 	*)
-		if [ -e is_renew ]; then
+		if [ "$is_renew" = 1 ]; then
 			$NOTIFY renew-failed
 			exit 1;
 		fi
 		if [ "$staging_moved" = 1 ]; then
 			log err "Staging certificate '$domain_dir' restored"
 			mv "$domain_dir.staging" "$domain_dir"
-			log err "Staging certificate restored"
+			mv "$state_dir/private/$main_domain.staging" "$state_dir/private/$main_domain"
 		elif [ -d "$domain_dir" ]; then
 			failed_dir="$domain_dir.failed-$(date +%s)"
 			mv "$domain_dir" "$failed_dir"
