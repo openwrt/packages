@@ -36,16 +36,30 @@ handle_cert() {
 	local standalone=$(uci_get acme "$section" standalone)
 	[ -n "$standalone" ] && uci_remove acme "$section" standalone
 	local dns=$(uci_get acme "$section" dns)
+	local tls=$(uci_get acme "$section" tls)
 	local validation_method=$(uci_get acme "$section" validation_method)
 	if [ -z "$validation_method" ]; then
 		if [ -n "$dns" ]; then
 			validation_method="dns"
 		elif [ "$standalone" = 1 ]; then
 			validation_method="standalone"
+		elif [ "$tls" = 1 ]; then
+			validation_method="alpn"
 		else
 			validation_method="webroot"
 		fi
 		uci_set acme "$section" validation_method "$validation_method"
+	fi
+
+	#uacme migration
+	local ACME_URL=$(uci_get acme "$section" acme_uri)
+	if [ -n "$ACME_URL" ]; then
+		uci_remove acme "$section" acme_uri
+		uci_set acme "$section" acme_server
+	fi
+	local ACME_STAGING_URL=$(uci_get acme "$section" acme_staging_url)
+	if [ -n "$ACME_STAGING_URL" ]; then
+		uci_remove acme "$section" acme_staging_url
 	fi
 }
 
