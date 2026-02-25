@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=uacme
-PKG_VERSION:=1.7.6
+PKG_VERSION:=1.8.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ndilieto/uacme/tar.gz/upstream/$(PKG_VERSION)?
-PKG_HASH:=d11a86ac2a0dbf285de27dff4193c65f7f3736da3d0480049af50d305940e0d6
+PKG_HASH:=de7588577f8298dcb0d42dfaa9452a918fa692c4e165060207ac22f72fb0425d
 
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -111,6 +111,7 @@ define Package/uacme/install
 
 	$(INSTALL_BIN) ./files/hook.sh $(1)/usr/lib/acme/hook
 	$(INSTALL_BIN) ./files/httpchalhook.sh $(1)/usr/lib/acme/client/httpchalhook.sh
+	$(INSTALL_BIN) ./files/dns_persist.sh $(1)/usr/lib/acme/client/dns_persist.sh
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/uacme $(1)/usr/sbin/uacme
 endef
 
@@ -128,9 +129,10 @@ define Package/uacme-dnsapi-adapter/install
 	$(INSTALL_DIR) \
 	 $(1)/usr/lib/acme/client
 
-  $(INSTALL_BIN) ./files/dnschalhook.sh $(1)/usr/lib/acme/client/dnschalhook.sh
-  $(INSTALL_BIN) ./files/dnsapi_helper.sh $(1)/usr/lib/acme/client/dnsapi_helper.sh
+	$(INSTALL_BIN) ./files/dnschalhook.sh $(1)/usr/lib/acme/client/dnschalhook.sh
+	$(INSTALL_BIN) ./files/dnsapi_helper.sh $(1)/usr/lib/acme/client/dnsapi_helper.sh
 endef
 
 $(eval $(call BuildPackage,uacme))
 $(eval $(call BuildPackage,uacme-ualpn))
+$(eval $(call BuildPackage,uacme-dnsapi-adapter))
