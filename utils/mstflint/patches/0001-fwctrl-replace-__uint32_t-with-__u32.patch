@@ -1,0 +1,30 @@
+From 630513e058a321b32d691a6a765a218bcc00b5fa Mon Sep 17 00:00:00 2001
+From: Til Kaiser <mail@tk154.de>
+Date: Thu, 26 Feb 2026 15:25:05 +0100
+Subject: [PATCH] fwctrl: replace __uint32_t with __u32
+
+musl doesn't provide __uint32_t, so compilation
+fails when building with musl.
+
+This header already uses Linux UAPI types, so use __u32 here too.
+
+Signed-off-by: Til Kaiser <mail@tk154.de>
+---
+ include/mtcr_ul/fwctrl_ioctl.h | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+--- a/include/mtcr_ul/fwctrl_ioctl.h
++++ b/include/mtcr_ul/fwctrl_ioctl.h
+@@ -153,9 +153,9 @@ struct fwctl_rpc {
+ struct mlx5_umem_buff {
+ 	void *buff;
+ 	size_t size;
+-	__uint32_t umem_id;
+-	__uint32_t umem_mkey;
+-	__uint32_t rsc_id;
++	__u32 umem_id;
++	__u32 umem_mkey;
++	__u32 rsc_id;
+ };
+ 
+ struct fwctl_rsc_umem_reg {
