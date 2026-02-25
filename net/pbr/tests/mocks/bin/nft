@@ -1,0 +1,31 @@
+#!/bin/bash
+# Mock nft binary for pbr tests
+case "$1" in
+	list)
+		case "$*" in
+			"list table inet fw4"|"list table inet fw4 2>&1")
+				cat <<'EOF'
+table inet fw4 {
+	chain input { }
+	chain forward { }
+	chain output { }
+	chain dstnat { }
+	chain mangle_prerouting { }
+	chain mangle_output { }
+	chain mangle_forward { }
+}
+EOF
+				;;
+			*)
+				echo "table inet fw4 {}"
+				;;
+		esac
+		;;
+	-c)
+		# Syntax check - always succeed
+		exit 0
+		;;
+	*)
+		exit 0
+		;;
+esac
