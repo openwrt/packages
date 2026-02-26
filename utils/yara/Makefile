@@ -31,7 +31,7 @@ define Package/yara
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Pattern matching swiss knife for malware researchers
-  URL:=http://virustotal.github.io/yara/
+  URL:=https://virustotal.github.io/yara/
   DEPENDS:= +libopenssl
   DEPENDS+= +YARA_module_magic:file
   DEPENDS+= +YARA_module_cuckoo:jansson

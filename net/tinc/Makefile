@@ -36,7 +36,7 @@ define Package/tinc
   CATEGORY:=Network
   DEPENDS:=+kmod-tun +liblzo +libopenssl +librt +zlib
   TITLE:=VPN tunneling daemon
-  URL:=http://www.tinc-vpn.org/
+  URL:=https://tinc-vpn.org/
   SUBMENU:=VPN
 endef
 

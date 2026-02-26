@@ -29,7 +29,7 @@ include ../../lang/python/python3-package.mk
 #
 
 define Package/selinux-python/Default
-  URL:=http://selinuxproject.org/page/Main_Page
+  URL:=https://github.com/selinuxproject
   DEPENDS:=+python3-light
 endef
 

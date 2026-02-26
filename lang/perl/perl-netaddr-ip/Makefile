@@ -26,7 +26,7 @@ define Package/perl-netaddr-ip
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=NetAddr::IP - Manages IPv4 and IPv6 addresses and subnets
-  URL:=http://search.cpan.org/dist/NetAddr::IP/
+  URL:=https://metacpan.org/dist/NetAddr-IP/
   DEPENDS:=perl +perlbase-essential +perlbase-test
 endef
 

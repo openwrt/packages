@@ -27,7 +27,7 @@ include $(INCLUDE_DIR)/nls.mk
 define Package/idn2/Default
   SECTION:=net
   CATEGORY:=Network
-  URL:=http://www.gnu.org/software/libidn/
+  URL:=https://www.gnu.org/software/libidn/
 endef
 
 define Package/idn2/Default/description

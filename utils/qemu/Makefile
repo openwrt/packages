@@ -54,7 +54,7 @@ define Package/qemu-ga
   CATEGORY:=Utilities
   SUBMENU:=Virtualization
   TITLE:=QEMU Guest Agent
-  URL:=http://www.qemu.org
+  URL:=https://www.qemu.org
   DEPENDS:= +glib2 +virtio-console-helper +libstdcpp +libudev $(QEMU_DEPS_IN_GUEST)
 endef
 
@@ -75,7 +75,7 @@ define Package/qemu-bridge-helper
   CATEGORY:=Utilities
   SUBMENU:=Virtualization
   TITLE:=QEMU bridge helper
-  URL:=http://www.qemu.org
+  URL:=https://www.qemu.org
   DEPENDS:=+glib2 $(QEMU_DEPS_IN_HOST)
 endef
 
@@ -92,7 +92,7 @@ define Package/qemu-img
  CATEGORY:=Utilities
  SUBMENU:=Virtualization
  TITLE:=QEMU Image utility
- URL:=http://www.qemu.org
+ URL:=https://www.qemu.org
  DEPENDS:=+glib2 +QEMU_ZSTD:libzstd $(QEMU_DEPS_IN_HOST)
 endef
 
@@ -107,7 +107,7 @@ define Package/qemu-nbd
  CATEGORY:=Utilities
  SUBMENU:=Virtualization
  TITLE:=QEMU Network Block Device Utility
- URL:=http://www.qemu.org
+ URL:=https://www.qemu.org
  DEPENDS:=+glib2 +QEMU_ZSTD:libzstd $(QEMU_DEPS_IN_HOST) +kmod-nbd
 endef
 
@@ -125,7 +125,7 @@ define qemu-firmware
     CATEGORY:=Utilities
     SUBMENU:=Virtualization
     TITLE:=$(qemu-firmware-$(1)-title)
-    URL:=http://www.qemu.org
+    URL:=https://www.qemu.org
     DEPENDS:=$(QEMU_DEPS_IN_HOST)
   endef
 
@@ -191,7 +191,7 @@ define qemu-target
     CATEGORY:=Utilities
     SUBMENU:=Virtualization
     TITLE:=QEMU target $(1)
-    URL:=http://www.qemu.org
+    URL:=https://www.qemu.org
     DEPENDS:= +glib2 +libpthread +zlib +libbpf $(QEMU_DEPS_IN_HOST) $(qemu-target-$(1)-deps) \
 	+QEMU_UI_VNC:qemu-keymaps \
 	+QEMU_UI_VNC:libpng \

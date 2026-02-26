@@ -27,7 +27,7 @@ define Package/pptpd
   CATEGORY:=Network
   DEPENDS:=+kmod-ppp +kmod-gre +kmod-mppe +ppp
   TITLE:=PopTop pptp server
-  URL:=http://poptop.sourceforge.net/
+  URL:=https://poptop.sourceforge.net/
   SUBMENU:=VPN
 endef
 

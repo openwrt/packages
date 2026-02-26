@@ -38,7 +38,7 @@ define Package/glib2
   CATEGORY:=Libraries
   DEPENDS:=$(ICONV_DEPENDS) $(INTL_DEPENDS) +zlib +libpthread +libffi +libattr +libpcre2
   TITLE:=glib 2.0
-  URL:=http://www.gtk.org/
+  URL:=https://gtk.org/
 endef
 
 define Package/glib2/description

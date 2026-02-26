@@ -12,7 +12,7 @@ PKG_VERSION:=1.0.5
 PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=https://www.netfilter.org/projects/libnetfilter_queue/files
+PKG_SOURCE_URL:=https://netfilter.org/pub/libnetfilter_queue/
 PKG_HASH:=f9ff3c11305d6e03d81405957bdc11aea18e0d315c3e3f48da53a24ba251b9f5
 
 PKG_FIXUP:=autoreconf
@@ -30,7 +30,7 @@ define Package/libnetfilter-queue
   CATEGORY:=Libraries
   DEPENDS:=+libmnl +libnfnetlink
   TITLE:=Userspace API to packets queued by kernel packet filter
-  URL:=https://www.netfilter.org/projects/libnetfilter_queue/
+  URL:=https://netfilter.org/projects/libnetfilter_queue/
   ABI_VERSION:=1
 endef
 

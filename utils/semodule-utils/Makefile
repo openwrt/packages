@@ -27,7 +27,7 @@ define Package/semodule-utils/Default
   CATEGORY:=Utilities
   DEPENDS:=+libsepol
   TITLE:=SELinux policy module utility
-  URL:=http://selinuxproject.org/page/Main_Page
+  URL:=https://github.com/selinuxproject
 endef
 
 define Package/semodule-utils/Default/description

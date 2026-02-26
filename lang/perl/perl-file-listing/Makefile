@@ -28,7 +28,7 @@ define Package/perl-file-listing
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Parse directory listing
-  URL:=http://search.cpan.org/dist/File-Listing/
+  URL:=https://metacpan.org/dist/File-Listing/
   DEPENDS:=perl +perl-http-date +perlbase-essential
 endef
 

@@ -28,7 +28,7 @@ DISABLE_NLS:=
 define Package/lcdproc/Default
   SECTION:=utils
   CATEGORY:=Utilities
-  URL:=http://lcdproc.org/
+  URL:=https://lcdproc.org/
 endef
 
 define Package/lcdproc/Default-description

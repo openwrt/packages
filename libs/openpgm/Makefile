@@ -30,15 +30,14 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/openpgm
   TITLE:=OpenPGM, an implementation of the PGM protocol
-  URL:=http://openpgm.googlecode.com/
+  URL:=https://github.com/steve-o/openpgm
   SECTION:=libs
   CATEGORY:=Libraries
 endef
 
 define Package/openpgm/description
   OpenPGM is a library implementing the PGM reliable multicast
-  network protocol. For more information about OpenPGM, see:
-  http://openpgm.googlecode.com/
+  network protocol.
 endef
 
 CONFIGURE_VARS += ac_cv_file__proc_cpuinfo=yes \

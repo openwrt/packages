@@ -12,9 +12,7 @@ PKG_VERSION:=3.8.2
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:= \
-	https://de.postfix.org/ftpmirror/official/ \
-	http://ftp.porcupine.org/mirrors/postfix-release/official/
+PKG_SOURCE_URL:=https://de.postfix.org/ftpmirror/official/
 PKG_HASH:=6790903cdbb5e0e47196691eb9a5f2cf8050262def941e039e6d4bf4043a5e30
 
 PKG_MAINTAINER:=Denis Shulyaka <Shulyaka@gmail.com>
@@ -43,7 +41,7 @@ define Package/postfix
   USERID:= \
   	postfix=25:postfix=25 \
   	postdrop=26:postdrop=26
-  URL:=http://www.postfix.org/
+  URL:=https://www.postfix.org/
   DEPENDS:=+POSTFIX_CDB:tinycdb +POSTFIX_TLS:libopenssl +POSTFIX_SASL:libsasl2 +POSTFIX_LDAP:libopenldap +POSTFIX_DB:libdb47 +POSTFIX_SQLITE:libsqlite3 +POSTFIX_MYSQL:libmysqlclient +POSTFIX_PGSQL:libpq +POSTFIX_EAI:icu +POSTFIX_PCRE:libpcre2
   MENU:=1
 endef

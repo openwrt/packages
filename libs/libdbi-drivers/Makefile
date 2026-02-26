@@ -27,7 +27,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/libdbi-drivers/default
   SECTION:=libs
   CATEGORY:=Libraries
-  URL:=http://libdbi-drivers.sourceforge.net/
+  URL:=https://libdbi-drivers.sourceforge.net/
 endef
 
 define Package/libdbi-drivers

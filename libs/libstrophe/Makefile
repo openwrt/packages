@@ -34,7 +34,7 @@ define Package/libstrophe
 	SECTION:=libs
 	CATEGORY:=Libraries
 	TITLE:=XMPP client library
-	URL:=http://strophe.im/libstrophe
+	URL:=https://strophe.im/libstrophe
 	DEPENDS:= +libopenssl +libstrophe-libxml2:libxml2 +libstrophe-expat:libexpat +zlib
 	MENU:=1
 endef

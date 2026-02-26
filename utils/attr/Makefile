@@ -25,7 +25,7 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/attr/Default
   TITLE:=Extended attributes (xattr) manipulation
-  URL:=http://savannah.nongnu.org/projects/attr
+  URL:=https://savannah.nongnu.org/projects/attr
   SUBMENU:=Filesystem
 endef
 

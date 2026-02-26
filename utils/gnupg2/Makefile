@@ -34,7 +34,7 @@ define Package/gnupg2/Default
   SUBMENU:=Encryption
   DEPENDS:=+libgpg-error +libnpth +libassuan +libksba +libgcrypt +zlib +libncurses +libreadline $(ICONV_DEPENDS) $(INTL_DEPENDS)
   TITLE:=GNU privacy guard (version 2) - a free PGP replacement
-  URL:=http://www.gnupg.org/
+  URL:=https://gnupg.org/
 endef
 
 define Package/gnupg2

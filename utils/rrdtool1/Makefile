@@ -27,7 +27,7 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/rrdtool1/Default
   TITLE:=Round Robin Database (RRD)
-  URL:=http://oss.oetiker.ch/rrdtool/
+  URL:=https://oss.oetiker.ch/rrdtool/
 endef
 
 define Package/rrdtool1/description/Default

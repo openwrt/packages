@@ -12,7 +12,7 @@ PKG_VERSION:=1.5
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://www.intra2net.com/en/developer/libftdi/download/
+PKG_SOURCE_URL:=https://www.intra2net.com/en/developer/libftdi/download/
 PKG_HASH:=7c7091e9c86196148bd41177b4590dccb1510bfe6cea5bf7407ff194482eb049
 
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
@@ -30,7 +30,7 @@ define Package/libftdi1
   CATEGORY:=Libraries
   DEPENDS:=+libusb-1.0
   TITLE:=Library to talk to FTDI chips
-  URL:=http://www.intra2net.com/en/developer/libftdi/
+  URL:=https://www.intra2net.com/en/developer/libftdi/
 endef
 
 define Package/libftdi1/description
@@ -44,7 +44,7 @@ define Package/ftdi_eeprom
   CATEGORY:=Utilities
   DEPENDS:=+confuse +libftdi1
   TITLE:=Tool for reading/erasing/flashing FTDI USB chip eeproms
-  URL:=http://www.intra2net.com/en/developer/libftdi/
+  URL:=https://www.intra2net.com/en/developer/libftdi/
 endef
 
 define Package/ftdi_eeprom/description

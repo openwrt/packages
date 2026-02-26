@@ -26,7 +26,7 @@ define Package/rpcbind
   CATEGORY:=Network
   DEPENDS:=+libtirpc +RPCBIND_LIBWRAP:libwrap
   TITLE:=Universal addresses to RPC mapper
-  URL:=http://rpcbind.sourceforge.net/
+  URL:=https://rpcbind.sourceforge.net/
   USERID:=rpc=65533:rpc=65533
 endef
 
