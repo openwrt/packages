@@ -1,0 +1,35 @@
+#!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2025-2026 Chester A. Unal <chester.a.unal@arinc9.com>
+
+# Only run if a network interface from a USB device is being added.
+[ "$ACTION" = "add" ] && echo "$DEVPATH" | grep -q usb || exit
+
+# Exclude wwan and qmimux network interfaces which a DHCP client wouldn't work
+# on.
+case "$DEVICENAME" in
+	wwan*|qmimux*) exit ;;
+esac
+
+# Decide on the metric value. Start from 1 and work up to 8.
+metric=1
+while [ $metric -le 8 ]; do
+	# Break if this metric isn't in use.
+	uci show network | grep -q ".metric='$metric'" || break
+
+	# Exit if this metric is in use for the same network interface.
+	[ "$(uci get network.wan_"$DEVICENAME".metric)" = "$metric" ] && exit
+
+	# Add 1 to metric if another network uses this metric.
+	metric=$((metric + 1))
+done
+# If there are no available metrics, exit with code 1.
+[ "$metric" -gt 8 ] && exit 1
+
+uci set network.wan_"$DEVICENAME"=interface
+uci set network.wan_"$DEVICENAME".device="$DEVICENAME"
+uci set network.wan_"$DEVICENAME".proto='dhcp'
+uci set network.wan_"$DEVICENAME".peerdns='0'
+uci set network.wan_"$DEVICENAME".metric="$metric"
+uci commit network
+ifup wan_"$DEVICENAME"
