@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2025-2026 Chester A. Unal <chester.a.unal@arinc9.com>
+
+set bsbf_bonding_byp4 {
+	typeof ip daddr
+	flags interval
+	elements = { 0.0.0.0/8, 10.0.0.0/8,
+		     100.64.0.0/10, 127.0.0.0/8,
+		     169.254.0.0/16, 172.16.0.0/12,
+		     192.0.0.0/24, 192.0.2.0/24,
+		     192.88.99.0/24, 192.168.0.0/16,
+		     198.18.0.0/15, 198.51.100.0/24,
+		     203.0.113.0/24, 224.0.0.0/4,
+		     240.0.0.0/4 }
+}
+
+chain bsbf_bonding_prerouting_mangle {
+	type filter hook prerouting priority mangle + 1; policy accept;
+	ip daddr @bsbf_bonding_byp4 return
+	fib daddr type != local meta l4proto { tcp, udp } tproxy ip to 127.0.0.1:12345 meta mark set 0x00000001
+}
