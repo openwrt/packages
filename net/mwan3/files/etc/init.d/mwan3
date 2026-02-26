@@ -41,6 +41,13 @@ start_service() {
 	mwan3_set_policies_iptables
 	mwan3_set_user_rules
 
+	procd_open_instance
+	procd_set_param command /usr/sbin/mwan3d
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_set_param respawn
+	procd_close_instance
+
 	procd_open_instance rtmon_ipv4
 	procd_set_param command /usr/sbin/mwan3rtmon ipv4
 	procd_set_param respawn
