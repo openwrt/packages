@@ -1,0 +1,88 @@
+#!/bin/sh /etc/rc.common
+
+USE_PROCD=1
+START=95
+STOP=10
+
+SERVICE_NAME="arvancloud-cloudlogs"
+PROG=/usr/sbin/arvancloud-cloudlogs
+
+. /lib/functions.sh
+
+service_triggers() {
+	procd_add_reload_trigger arvancloud-cloudlogs
+}
+
+resolve_section() {
+	# Prefer named section 'main' if present; otherwise use first anonymous section
+	local named="arvancloud-cloudlogs.main.enabled"
+	local try_named
+	try_named=$(uci -q get $named 2>/dev/null)
+	if [ "$?" -eq 0 ]; then
+		SECTION="arvancloud-cloudlogs.main"
+		return 0
+	fi
+	SECTION="arvancloud-cloudlogs.@arvancloud-cloudlogs[0]"
+	return 0
+}
+
+uci_get_cfg() {
+	# uci_get_cfg <option> <default>
+	local opt="$1"
+	local def="$2"
+	local val
+	val=$(uci -q get "$SECTION.$opt" 2>/dev/null)
+	[ -n "$val" ] && {
+		echo "$val"
+		return 0
+	}
+	echo "$def"
+	return 0
+}
+
+start_service() {
+	# Load configuration from the first anonymous section of type arvancloud-cloudlogs
+	resolve_section
+	enabled=$(uci_get_cfg enabled 0)
+	api_key=$(uci_get_cfg api_key '')
+	device_name=$(uci_get_cfg device_name '')
+	max_buffer_size=$(uci_get_cfg max_buffer_size '')
+	max_buffer_bytes=$(uci_get_cfg max_buffer_bytes '')
+	flush_interval_sec=$(uci_get_cfg flush_interval_sec '')
+	min_batch_size=$(uci_get_cfg min_batch_size '')
+	allow_partial_process=$(uci_get_cfg allow_partial_process '')
+
+	[ "$enabled" = "1" ] || {
+		echo "$SERVICE_NAME: disabled in UCI, run 'uci set arvancloud-cloudlogs.main.enabled=1' to be enable"
+		return 0
+	}
+
+	[ -n "$api_key" ] || {
+		echo "$SERVICE_NAME: api_key is not configured"
+		return 1
+	}
+
+	procd_open_instance
+	procd_set_param command "$PROG"
+	# Only append CLI args when provided in UCI and not empty
+	[ -n "$device_name" ] && procd_append_param command -d "$device_name"
+	[ -n "$max_buffer_size" ] && procd_append_param command -b "$max_buffer_size"
+	[ -n "$max_buffer_bytes" ] && procd_append_param command -m "$max_buffer_bytes"
+	[ -n "$flush_interval_sec" ] && procd_append_param command -f "$flush_interval_sec"
+	[ -n "$min_batch_size" ] && procd_append_param command -t "$min_batch_size"
+	[ -n "$allow_partial_process" ] && procd_append_param command -p "$allow_partial_process"
+	procd_set_param env CLOUDLOGS_API_KEY="$api_key"
+	procd_set_param respawn 5 1 5
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_close_instance
+}
+
+reload_service() {
+	stop
+	start
+}
+
+stop_service() {
+	return 0
+}
