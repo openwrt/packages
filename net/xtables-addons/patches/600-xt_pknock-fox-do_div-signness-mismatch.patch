@@ -1,0 +1,42 @@
+From 3c5c336fc0e47fea9baa912fc8d314ae9d1fa521 Mon Sep 17 00:00:00 2001
+From: Qingfang Deng <dqfext@gmail.com>
+Date: Mon, 29 Dec 2025 07:26:07 +0100
+Subject: [PATCH] xt_pknock: fix do_div() signness mismatch
+
+do_div() expects an unsigned 64-bit dividend, but time64_t is signed. On
+32-bit arch, this triggers a warnning:
+
+In file included from ./arch/arm/include/asm/div64.h:107,
+                 from ./include/linux/math.h:6,
+                 from ./include/linux/math64.h:6,
+                 from ./include/linux/time.h:6,
+                 from ./include/linux/stat.h:19,
+                 from ./include/linux/module.h:13,
+                 from ./xtables-addons-3.30/extensions/pknock/xt_pknock.c:10:
+./xtables-addons-3.30/extensions/pknock/xt_pknock.c: In function 'has_secret':
+./include/asm-generic/div64.h:222:35: warning: comparison of distinct pointer types lacks a cast [-Wcompare-distinct-pointer-types]
+  222 |         (void)(((typeof((n)) *)0) == ((uint64_t *)0));  \
+      |                                   ^~
+./xtables-addons-3.30/extensions/pknock/xt_pknock.c:747:17: note: in expansion of macro 'do_div'
+  747 |                 do_div(t, 60);
+      |
+
+Change the type of variable `t` to uint64_t to fix this.
+
+Fixes: 397b282dba9a ("xt_pknock: use walltime for building hash")
+Signed-off-by: Qingfang Deng <dqfext@gmail.com>
+---
+ extensions/pknock/xt_pknock.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/extensions/pknock/xt_pknock.c
++++ b/extensions/pknock/xt_pknock.c
+@@ -743,7 +743,7 @@ has_secret(const unsigned char *secret,
+ 
+ 	/* Time needs to be in minutes relative to epoch. */
+ 	{
+-		time64_t t = ktime_get_real_seconds();
++		uint64_t t = ktime_get_real_seconds();
+ 		do_div(t, 60);
+ 		epoch_min = t;
+ 	}

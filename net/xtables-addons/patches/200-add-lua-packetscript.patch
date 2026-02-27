@@ -1038,58 +1038,61 @@
 +#endif /* CONTROLLER_H_ */
 --- /dev/null
 +++ b/extensions/LUA/Kbuild
-@@ -0,0 +1,51 @@
+@@ -0,0 +1,54 @@
 +# -*- Makefile -*-
 +
 +# Adding debug options
-+EXTRA_CFLAGS += -DDEBUG
++ccflags-y += -DDEBUG
 +
 +obj-m += xt_LUA.o
 +
-+EXTRA_CFLAGS += -I$(src)/prot_buf_new
++ccflags-y += -I$(src)/prot_buf_new
++
 +xt_LUA-y += xt_LUA_target.o \
 +
 +xt_LUA-y += nf_lua.o \
-+			prot_buf_helpers.o \
-+			byte_array.o \
-+			controller.o \
-+			prot_buf_ethernet.o \
-+			prot_buf_icmp.o \
-+			prot_buf_ip.o \
-+			prot_buf_raw.o \
-+			prot_buf_tcp.o \
-+			prot_buf_udp.o \
-+			prot_buf_tftp.o \
-+			prot_buf_dynamic.o \
++                       prot_buf_helpers.o \
++                       byte_array.o \
++                       controller.o \
++                       prot_buf_ethernet.o \
++                       prot_buf_icmp.o \
++                       prot_buf_ip.o \
++                       prot_buf_raw.o \
++                       prot_buf_tcp.o \
++                       prot_buf_udp.o \
++                       prot_buf_tftp.o \
++                       prot_buf_dynamic.o \
 +
 +
 +# Enable <stddef.h> <stdarg.h>
-+EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
-+# Adding Lua Support
-+EXTRA_CFLAGS += -I$(src)/lua -I$(src)/lua/include 
++ccflags-y += -I$(src)/prot_buf_new
++# Adding Lua Support (embedded Lua and libc shims)
++ccflags-y += -I$(src)/lua -I$(src)/lua/include
++ccflags-y += -isystem $(shell $(CC) -print-file-name=include)
++
 +xt_LUA-y += lua/lapi.o \
-+			lua/lbaselib.o \
-+			lua/lcode.o \
-+			lua/ldebug.o \
-+			lua/ldo.o \
-+			lua/ldump.o \
-+			lua/lfunc.o \
-+			lua/lgc.o \
-+			lua/llex.o \
-+			lua/lmem.o \
-+			lua/lobject.o \
-+			lua/lopcodes.o \
-+			lua/lparser.o \
-+			lua/lstate.o \
-+			lua/lstring.o \
-+			lua/lstrlib.o \
-+			lua/ltable.o \
-+			lua/ltablib.o \
-+			lua/ltm.o \
-+			lua/lundump.o \
-+			lua/lvm.o \
-+			lua/lzio.o \
-+			lua/lauxlib.o \
++                       lua/lbaselib.o \
++                       lua/lcode.o \
++                       lua/ldebug.o \
++                       lua/ldo.o \
++                       lua/ldump.o \
++                       lua/lfunc.o \
++                       lua/lgc.o \
++                       lua/llex.o \
++                       lua/lmem.o \
++                       lua/lobject.o \
++                       lua/lopcodes.o \
++                       lua/lparser.o \
++                       lua/lstate.o \
++                       lua/lstring.o \
++                       lua/lstrlib.o \
++                       lua/ltable.o \
++                       lua/ltablib.o \
++                       lua/ltm.o \
++                       lua/lundump.o \
++                       lua/lvm.o \
++                       lua/lzio.o \
++                       lua/lauxlib.o \
 --- /dev/null
 +++ b/extensions/LUA/libxt_LUA.c
 @@ -0,0 +1,191 @@
@@ -18169,7 +18172,7 @@
 +obj-${build_LUA}         += LUA/
 --- a/mconfig
 +++ b/mconfig
-@@ -25,3 +25,4 @@ build_pknock=m
+@@ -27,3 +27,4 @@ build_pknock=m
  build_psd=m
  build_quota2=m
  build_rtsp=m

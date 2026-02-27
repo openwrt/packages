@@ -7,11 +7,11 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=xtables-addons
-PKG_VERSION:=3.27
-PKG_RELEASE:=3
-PKG_HASH:=e47ea8febe73c12ecab09d2c93578c5dc72d76f17fdf673397758f519cce6828
+PKG_VERSION:=3.30
+PKG_RELEASE:=1
+PKG_HASH:=d43400322980390180bef05eb6f798af49285987c217b7f1c6332da74920d9a4
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.zst
 PKG_SOURCE_URL:=https://inai.de/files/xtables-addons/
 PKG_BUILD_DEPENDS:=iptables
 
@@ -205,32 +205,29 @@ define KernelPackage/nf-nathelper-rtsp
 endef
 
 
-#$(eval $(call BuildTemplate,SUFFIX,DESCRIPTION,EXTENSION,MODULE,DEPENDS))
-
-$(eval $(call BuildTemplate,compat-xtables,API compatibility layer,,compat_xtables,+IPV6:kmod-ip6tables))
-
-$(eval $(call BuildTemplate,account,ACCOUNT,xt_ACCOUNT,ACCOUNT/xt_ACCOUNT,+kmod-ipt-compat-xtables))
+# compat_xtables removed (module no longer exists in 3.30)
+$(eval $(call BuildTemplate,account,ACCOUNT,xt_ACCOUNT,ACCOUNT/xt_ACCOUNT,))
 $(eval $(call BuildTemplate,asn,asn,xt_asn,xt_asn,))
-$(eval $(call BuildTemplate,chaos,CHAOS,xt_CHAOS,xt_CHAOS,+kmod-ipt-compat-xtables +kmod-ipt-delude +kmod-ipt-tarpit))
+$(eval $(call BuildTemplate,chaos,CHAOS,xt_CHAOS,xt_CHAOS,+kmod-ipt-delude +kmod-ipt-tarpit))
 $(eval $(call BuildTemplate,condition,Condition,xt_condition,xt_condition,))
-$(eval $(call BuildTemplate,delude,DELUDE,xt_DELUDE,xt_DELUDE,+kmod-ipt-compat-xtables))
-$(eval $(call BuildTemplate,dhcpmac,DHCPMAC,xt_DHCPMAC,xt_DHCPMAC,+kmod-ipt-compat-xtables))
-$(eval $(call BuildTemplate,dnetmap,DNETMAP,xt_DNETMAP,xt_DNETMAP,+kmod-ipt-compat-xtables +kmod-ipt-nat))
+$(eval $(call BuildTemplate,delude,DELUDE,xt_DELUDE,xt_DELUDE,))
+$(eval $(call BuildTemplate,dhcpmac,DHCPMAC,xt_DHCPMAC,xt_DHCPMAC,))
+$(eval $(call BuildTemplate,dnetmap,DNETMAP,xt_DNETMAP,xt_DNETMAP,+kmod-ipt-nat))
 $(eval $(call BuildTemplate,fuzzy,fuzzy,xt_fuzzy,xt_fuzzy,))
 $(eval $(call BuildTemplate,geoip,geoip,xt_geoip,xt_geoip,))
 $(eval $(call BuildTemplate,iface,iface,xt_iface,xt_iface,))
-$(eval $(call BuildTemplate,ipmark,IPMARK,xt_IPMARK,xt_IPMARK,+kmod-ipt-compat-xtables))
-$(eval $(call BuildTemplate,ipp2p,IPP2P,xt_ipp2p,xt_ipp2p,+kmod-ipt-compat-xtables +kmod-lib-textsearch))
+$(eval $(call BuildTemplate,ipmark,IPMARK,xt_IPMARK,xt_IPMARK,))
+$(eval $(call BuildTemplate,ipp2p,IPP2P,xt_ipp2p,xt_ipp2p,+kmod-lib-textsearch))
 $(eval $(call BuildTemplate,ipv4options,ipv4options,xt_ipv4options,xt_ipv4options,))
-$(eval $(call BuildTemplate,length2,length2,xt_length2,xt_length2,+kmod-ipt-compat-xtables))
-$(eval $(call BuildTemplate,logmark,LOGMARK,xt_LOGMARK,xt_LOGMARK,+kmod-ipt-compat-xtables))
+$(eval $(call BuildTemplate,length2,length2,xt_length2,xt_length2,))
+$(eval $(call BuildTemplate,logmark,LOGMARK,xt_LOGMARK,xt_LOGMARK,))
 $(eval $(call BuildTemplate,lscan,lscan,xt_lscan,xt_lscan,))
 $(eval $(call BuildTemplate,lua,Lua PacketScript,xt_LUA,LUA/xt_LUA,+kmod-ipt-conntrack-extra))
 $(eval $(call BuildTemplate,proto,PROTO,xt_PROTO,xt_PROTO,))
 $(eval $(call BuildTemplate,psd,psd,xt_psd,xt_psd,))
 $(eval $(call BuildTemplate,quota2,quota2,xt_quota2,xt_quota2,))
-$(eval $(call BuildTemplate,sysrq,SYSRQ,xt_SYSRQ,xt_SYSRQ,+kmod-ipt-compat-xtables +kmod-crypto-hash))
-$(eval $(call BuildTemplate,tarpit,TARPIT,xt_TARPIT,xt_TARPIT,+kmod-ipt-compat-xtables))
+$(eval $(call BuildTemplate,sysrq,SYSRQ,xt_SYSRQ,xt_SYSRQ,+kmod-crypto-hash))
+$(eval $(call BuildTemplate,tarpit,TARPIT,xt_TARPIT,xt_TARPIT,))
 
 $(eval $(call BuildPackage,iptaccount))
 $(eval $(call BuildPackage,iptasn))
