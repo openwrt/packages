@@ -283,6 +283,8 @@ main() {
 			wait $!
 		}
 		sleep_time=$interval
+		network_flush_cache
+		mwan3_get_src_ip SRC_IP $INTERFACE
 		for track_ip in $track_ips; do
 			if [ $host_up_count -lt $reliability ]; then
 				case "$track_method" in
