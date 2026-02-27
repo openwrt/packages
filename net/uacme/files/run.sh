@@ -9,26 +9,30 @@
 # Initial Author: Toke Høiland-Jørgensen <toke@toke.dk>
 # Adapted for uacme: Lucian Cristian <lucian.cristian@gmail.com>
 # Adapted for custom CA and TLS-ALPN-01: Peter Putzer <openwrt@mundschenk.at>
+# Readapted uacme implementation: Sebastian Bogaci <sebastian.bogaci@gmail.com>
+#   - removed acme.sh code base as this wrapper should support only uacme package
+#   - fixed get_listeners()
+#   - added option to support tls-alpn-01 ACME challenge
+#   - added option to set which interface to open for ACME challenge (normal is 'wan')
+#   - tested only with uhttpd
 
 CHECK_CRON=$1
 
-#check for installed packages, for now, support only one
-if [ -e "/usr/lib/acme/acme.sh" ]; then
-    ACME=/usr/lib/acme/acme.sh
-    APP=acme
-elif [ -e "/usr/sbin/uacme" ]; then
+#check for installed package, support only uacme
+if [ -e "/usr/sbin/uacme" ]; then
     ACME=/usr/sbin/uacme
     HPROGRAM=/usr/share/uacme/uacme.sh
     APP=uacme
 else
-    echo "Please install ACME or uACME package"
+    echo "Please install uACME package"
     return 1
 fi
 
-export CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+#export CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 export NO_TIMESTAMP=1
 
 UHTTPD_LISTEN_HTTP=
+UHTTPD_REDIRECT_HTTPS=
 PRODUCTION_STATE_DIR='/etc/acme'
 STAGING_STATE_DIR='/etc/acme/staging'
 
@@ -42,6 +46,7 @@ FW_RULE=
 USER_CLEANUP=
 ACME_URL=
 ACME_STAGING_URL=
+ACME_INTERFACE=
 
 . /lib/functions.sh
 
@@ -67,11 +72,13 @@ debug()
     [ "$DEBUG" -eq "1" ] && logger -t $APP -s -p daemon.debug "$@"
 }
 
-get_listeners() {
+get_listeners()
+{
     local proto rq sq listen remote state program
-    netstat -nptl 2>/dev/null | while read proto listen program; do
+    netstat -nptl 2>/dev/null | while read proto rq sq listen remote state program; do
         case "$proto#$listen#$program" in
-            tcp#*:80#[0-9]*/*) echo -n "${program%% *} " ;;
+            tcp#*:80#[0-9]*/*) echo -n "${program%% *} " ;
+            break;
         esac
     done
 }
@@ -86,66 +93,66 @@ pre_checks()
 
     debug "port80 listens: $listeners"
 
-    for listener in $(get_listeners); do
-	pid="${listener%/*}"
-	cmd="${listener#*/}"
+    for listener in $listeners; do
+    pid="${listener%/*}"
+    cmd="${listener#*/}"
 
-	case "$cmd" in
-	    uhttpd)
-		debug "Found uhttpd listening on port 80"
-		if [ "$APP" = "acme" ]; then
-		    UHTTPD_LISTEN_HTTP=$(uci get uhttpd.main.listen_http)
-		    if [ -z "$UHTTPD_LISTEN_HTTP" ]; then
-			err "$main_domain: Unable to find uhttpd listen config."
-			err "Manually disable uhttpd or set webroot to continue."
-			return 1
-		    fi
-		    uci set uhttpd.main.listen_http=''
-		    uci commit uhttpd || return 1
-		    if ! /etc/init.d/uhttpd reload ; then
-			uci set uhttpd.main.listen_http="$UHTTPD_LISTEN_HTTP"
-			uci commit uhttpd
-			return 1
-		    fi
-		fi
-	    ;;
-	    nginx*)
-		debug "Found nginx listening on port 80"
-		NGINX_WEBSERVER=1
-		if [ "$APP" = "acme" ]; then
-		    local tries=0
-		    while grep -sq "$cmd" "/proc/$pid/cmdline" && kill -0 "$pid"; do
-		    /etc/init.d/nginx stop
-			if [ $tries -gt 10 ]; then
-			    debug "Can't stop nginx. Terminating script."
-			    return 1
-			fi
-		    debug "Waiting for nginx to stop..."
-		    tries=$((tries + 1))
-		    sleep 1
-		    done
-		fi
+    case "$cmd" in
+        uhttpd)
+            debug "Found uhttpd listening on port 80"
+            UHTTPD_REDIRECT_HTTPS=$(uci get uhttpd.main.redirect_https)
+            if [ ! -z "$UHTTPD_REDIRECT_HTTPS" ]; then
+                if [ "$UHTTPD_REDIRECT_HTTPS" -eq "1" ]; then
+                    uci set uhttpd.main.redirect_https='0'
+                    uci commit uhttpd
+                    /etc/init.d/uhttpd reload
+                    debug "disabled uhttpd redirect https config"
+                else
+                    debug "uhttpd redirect https is disabled, skipping re-config"
+                fi
+            fi
             ;;
-	    "")
-		err "Nothing listening on port 80."
-		err "Standalone mode not supported, setup uhttpd or nginx"
-		return 1
+        nginx*)
+            debug "Found nginx listening on port 80"
+            NGINX_WEBSERVER=1
+            local tries=0
+            while grep -sq "$cmd" "/proc/$pid/cmdline" && kill -0 "$pid"; do
+            /etc/init.d/nginx stop
+            if [ $tries -gt 10 ]; then
+                debug "Can't stop nginx. Terminating script."
+                return 1
+            fi
+            debug "Waiting for nginx to stop..."
+            tries=$((tries + 1))
+            sleep 1
+            done
             ;;
-            *)
-		err "$main_domain: unsupported (apache/haproxy?) daemon is listening on port 80."
-		err "if webroot is set on your current webserver comment line 132 (return 1) from this script."
-		return 1
+        "")
+            err "Nothing listening on port 80."
+            err "Standalone mode not supported, setup uhttpd or nginx"
+            return 1
             ;;
-	esac
+        *)
+            err "$main_domain: unsupported (apache/haproxy?) daemon is listening on port 80."
+            err "if webroot is set on your current webserver comment line 132 (return 1) from this script."
+            return 1
+            ;;
+    esac
     done
 
     FW_RULE=$(uci add firewall rule) || return 1
-    uci set firewall."$FW_RULE".name='uacme: temporarily allow incoming http'
     uci set firewall."$FW_RULE".enabled='1'
     uci set firewall."$FW_RULE".target='ACCEPT'
-    uci set firewall."$FW_RULE".src='wan'
+    debug "the ACME interface is: $ACME_INTERFACE"
+    uci set firewall."$FW_RULE".src="$ACME_INTERFACE"
     uci set firewall."$FW_RULE".proto='tcp'
-    uci set firewall."$FW_RULE".dest_port='80'
+    if [ "$tls" -eq "1" ]; then
+        uci set firewall."$FW_RULE".name='uacme: temporarily allow incoming https'
+        uci set firewall."$FW_RULE".dest_port='443'
+    else
+        uci set firewall."$FW_RULE".name='uacme: temporarily allow incoming http'
+        uci set firewall."$FW_RULE".dest_port='80'
+    fi
     uci commit firewall
     /etc/init.d/firewall reload
 
@@ -158,31 +165,35 @@ post_checks()
     log "Running post checks (cleanup)."
     # $FW_RULE contains the string to identify firewall rule created earlier
     if [ -n "$FW_RULE" ]; then
-	uci delete firewall."$FW_RULE"
-	uci commit firewall
-	/etc/init.d/firewall reload
+        uci delete firewall."$FW_RULE"
+        uci commit firewall
+        /etc/init.d/firewall reload
     fi
 
     if [ -e /etc/init.d/uhttpd ] && [ "$UPDATE_UHTTPD" -eq 1 ]; then
-	uci commit uhttpd
-	/etc/init.d/uhttpd reload
-	log "Restarting uhttpd..."
+        if [ "$UHTTPD_REDIRECT_HTTPS" -eq "1" ]; then
+            uci set uhttpd.main.redirect_https="$UHTTPD_REDIRECT_HTTPS"
+            debug "re-enabled uhttpd redirect https config"
+        fi
+        uci commit uhttpd
+        /etc/init.d/uhttpd restart
+        log "Restarting uhttpd..."
     fi
 
     if [ -e /etc/init.d/nginx ] && ( [ "$NGINX_WEBSERVER" -eq 1 ] || [ "$UPDATE_NGINX" -eq 1 ]; ); then
-	NGINX_WEBSERVER=0
-	/etc/init.d/nginx restart
-	log "Restarting nginx..."
+        NGINX_WEBSERVER=0
+        /etc/init.d/nginx restart
+        log "Restarting nginx..."
     fi
 
     if [ -e /etc/init.d/haproxy ] && [ "$UPDATE_HAPROXY" -eq 1 ]; then
-	/etc/init.d/haproxy restart
-	log "Restarting haproxy..."
+        /etc/init.d/haproxy restart
+        log "Restarting haproxy..."
     fi
 
     if [ -n "$USER_CLEANUP" ] && [ -f "$USER_CLEANUP" ]; then
-	log "Running user-provided cleanup script from $USER_CLEANUP."
-	"$USER_CLEANUP" || return 1
+        log "Running user-provided cleanup script from $USER_CLEANUP."
+        "$USER_CLEANUP" || return 1
     fi
 }
 
@@ -252,253 +263,188 @@ issue_cert()
 
     [ "$enabled" -eq "1" ] || return 0
 
-    if [ "$APP" = "uacme" ]; then
-	[ "$DEBUG" -eq "1" ] && debug="--verbose --verbose"
-	[ "$tls" -eq "1" ] && HPROGRAM=/usr/share/uacme/ualpn.sh
-    elif [ "$APP" = "acme" ]; then
-	[ "$DEBUG" -eq "1" ] && acme_args="$acme_args --debug"
-    fi
+    [ "$DEBUG" -eq "1" ] && debug="--verbose --verbose" && echo "debug: $debug"
+    [ "$tls" -eq "1" ] && HPROGRAM="/usr/share/uacme/ualpn.sh" && echo "HPROGRAM: $HPROGRAM"
+
     if [ "$use_staging" -eq "1" ]; then
-	STATE_DIR="$STAGING_STATE_DIR";
-
-	# Check if we should use a custom stagin URL
-        if [ "$APP" = "uacme" -a -n "$ACME_STAGING_URL" ]; then
-        	ACME="$ACME --acme-url $ACME_STAGING_URL"
-	else
-		staging="--staging";
-	fi
+        STATE_DIR="$STAGING_STATE_DIR";
+        staging="--staging";
+        # Check if we should use a custom stagin URL
+        if [ -n "$ACME_STAGING_URL" ]; then
+            ACME="$ACME --acme-url $ACME_STAGING_URL"
+        fi
     else
-	STATE_DIR="$PRODUCTION_STATE_DIR";
-	staging="";
-
-	if [ "$APP" = "uacme" -a -n "$ACME_URL" ]; then
-		ACME="$ACME --acme-url $ACME_URL"
-	fi
+        STATE_DIR="$PRODUCTION_STATE_DIR";
+        staging="";
+        if [ -n "$ACME_URL" ]; then
+            ACME="$ACME --acme-url $ACME_URL"
+        fi
     fi
 
     set -- $domains
     main_domain=$1
 
     if [ -n "$user_setup" ] && [ -f "$user_setup" ]; then
-	log "Running user-provided setup script from $user_setup."
-	"$user_setup" "$main_domain" || return 2
+    log "Running user-provided setup script from $user_setup."
+    "$user_setup" "$main_domain" || return 2
     else
-	[ -n "$webroot" ] || [ -n "$dns" ] || [ -n "$tls" ] || pre_checks "$main_domain" || return 2
+    pre_checks "$main_domain" || [ -n "$webroot" ] || [ -n "$dns" ] || [ -n "$tls" ] || return 2
     fi
 
     log "Running $APP for $main_domain"
 
     if [ "$APP" = "uacme" ]; then
-	if [ ! -f  "$STATE_DIR/private/key.pem" ]; then
-	    log "Create a new ACME account with email $ACCOUNT_EMAIL use staging=$use_staging"
-	    $ACME $debug --confdir "$STATE_DIR" $staging --yes new $ACCOUNT_EMAIL
-	fi
-
-	if [ -f "$STATE_DIR/$main_domain/cert.pem" ]; then
-	    log "Found previous cert config, use staging=$use_staging. Issuing renew."
-	    export CHALLENGE_PATH="$webroot"
-	    $ACME $debug --confdir "$STATE_DIR" $staging --never-create issue $domains --hook=$HPROGRAM; ret=$?
-	    post_checks
-	    return $ret
-	fi
+    if [ ! -f  "$STATE_DIR/private/key.pem" ]; then
+        log "Create a new ACME account with email $ACCOUNT_EMAIL use staging=$use_staging"
+        $ACME $debug --confdir "$STATE_DIR" $staging --yes new $ACCOUNT_EMAIL
     fi
-    if [ "$APP" = "acme" ]; then
-	handle_credentials() {
-	    local credential="$1"
-	    eval export "$credential"
-	}
-	config_list_foreach "$section" credentials handle_credentials
 
-	if [ -e "$STATE_DIR/$main_domain" ]; then
-	    if [ "$use_staging" -eq "0" ] && is_staging "$main_domain"; then
-		log "Found previous cert issued using staging server. Moving it out of the way."
-		mv "$STATE_DIR/$main_domain" "$STATE_DIR/$main_domain.staging"
-	    else
-		log "Found previous cert config. Issuing renew."
-		$ACME --home "$STATE_DIR" --renew -d "$main_domain" "$acme_args"; ret=$?
-		post_checks
-		return $ret
-	    fi
-	fi
+    if [ -f "$STATE_DIR/$main_domain/cert.pem" ]; then
+        log "Found previous cert config, use staging=$use_staging. Issuing renew."
+        export CHALLENGE_PATH="$webroot"
+        $ACME $debug --confdir "$STATE_DIR" $staging --never-create --hook="$HPROGRAM" issue $domains; ret=$?
+        log "purging old expired certificates"
+        rm -v $STATE_DIR/$main_domain/cert-*
+        post_checks
+        return $ret
+    fi
     fi
 
     acme_args="$acme_args --bits $keylength"
     acme_args="$acme_args $(for d in $domains; do echo -n " $d "; done)"
     if [ "$APP" = "acme" ]; then
-	[ -n "$ACCOUNT_EMAIL" ] && acme_args="$acme_args --accountemail $ACCOUNT_EMAIL"
-	[ "$use_staging" -eq "1" ] && acme_args="$acme_args --staging"
+    [ -n "$ACCOUNT_EMAIL" ] && acme_args="$acme_args --accountemail $ACCOUNT_EMAIL"
+    [ "$use_staging" -eq "1" ] && acme_args="$acme_args --staging"
     fi
     if [ -n "$dns" ]; then
 #TO-DO
-	if [ "$APP" = "acme" ]; then
-	    log "Using dns mode"
-	    acme_args="$acme_args --dns $dns"
-	else
-	    log "Using dns mode, dns-01 is not wrapped yet"
-	    return 2
-#	    uacme_args="$uacme_args --dns $dns"
-	fi
+        log "Using dns mode, dns-01 is not wrapped yet"
+        return 2
+#        uacme_args="$uacme_args --dns $dns"
     elif [ -n "$tls" ]; then
-	if [ "$APP" = "uacme" ]; then
-            log "Using TLS mode"
-	else
-            log "TLS not supported by $APP"
-            return 2
-	fi
+        log "Using TLS mode"
     elif [ -z "$webroot" ]; then
-	if [ "$APP" = "acme" ]; then
-	    log "Using standalone mode"
-	    acme_args="$acme_args --standalone --listen-v6"
-	else
-	    log "Standalone not supported by $APP"
-	    return 2
-	fi
+        log "Standalone not supported by $APP"
+        return 2
     else
-	if [ ! -d "$webroot" ]; then
-	    err "$main_domain: Webroot dir '$webroot' does not exist!"
-	    post_checks
-	    return 2
-	fi
-	log "Using webroot dir: $webroot"
-	if [ "$APP" = "uacme" ]; then
-	    export CHALLENGE_PATH="$webroot"
-	else
-	    acme_args="$acme_args --webroot $webroot"
-	fi
+        if [ ! -d "$webroot" ]; then
+            err "$main_domain: Webroot dir '$webroot' does not exist!"
+            post_checks
+            return 2
+        fi
+        log "Using webroot dir: $webroot"
+        export CHALLENGE_PATH="$webroot"
     fi
 
-    if [ "$APP" = "uacme" ]; then
-	workdir="--confdir"
-	HOOK="--hook=$HPROGRAM"
-    else
-	workdir="--home"
-    fi
+    workdir="--confdir"
+    HOOK="--hook=$HPROGRAM"
 
     $ACME $debug $workdir "$STATE_DIR" $staging issue $acme_args $HOOK; ret=$?
     if [ "$ret" -ne 0 ]; then
-	failed_dir="$STATE_DIR/${main_domain}.failed-$(date +%s)"
-	err "Issuing cert for $main_domain failed. Moving state to $failed_dir"
-	[ -d "$STATE_DIR/$main_domain" ] && mv "$STATE_DIR/$main_domain" "$failed_dir"
-	[ -d "$STATE_DIR/private/$main_domain" ] && mv "$STATE_DIR/private/$main_domain" "$failed_dir"
-	post_checks
-	return $ret
+    failed_dir="$STATE_DIR/${main_domain}.failed-$(date +%s)"
+    err "Issuing cert for $main_domain failed. Moving state to $failed_dir"
+    [ -d "$STATE_DIR/$main_domain" ] && mv "$STATE_DIR/$main_domain" "$failed_dir"
+    [ -d "$STATE_DIR/private/$main_domain" ] && mv "$STATE_DIR/private/$main_domain" "$failed_dir"
+    post_checks
+    return $ret
     fi
 
     if [ -e /etc/init.d/uhttpd ] && [ "$update_uhttpd" -eq "1" ]; then
-	if [ "$APP" = "uacme" ]; then
-	    uci set uhttpd.main.key="$STATE_DIR/private/${main_domain}/key.pem"
-	    uci set uhttpd.main.cert="$STATE_DIR/${main_domain}/cert.pem"
-	else
-	    uci set uhttpd.main.key="$STATE_DIR/${main_domain}/${main_domain}.key"
-	    uci set uhttpd.main.cert="$STATE_DIR/${main_domain}/fullchain.cer"
-	fi
-	# commit and reload is in post_checks
+        uci set uhttpd.main.key="$STATE_DIR/private/${main_domain}/key.pem"
+        uci set uhttpd.main.cert="$STATE_DIR/${main_domain}/cert.pem"
+        # commit and reload is in post_checks
     fi
 
     local nginx_updated
     nginx_updated=0
     if command -v nginx-util 2>/dev/null && [ "$update_nginx" -eq "1" ]; then
-	nginx_updated=1
-	for domain in $domains; do
-	    if [ "$APP" = "uacme" ]; then
-		nginx-util add_ssl "${domain}" uacme "$STATE_DIR/${main_domain}/cert.pem" \
-		    "$STATE_DIR/private/${main_domain}/key.pem" || nginx_updated=0
-	    else
-		nginx-util add_ssl "${domain}" acme "$STATE_DIR/${main_domain}/fullchain.cer" \
-		    "$STATE_DIR/${main_domain}/${main_domain}.key" || nginx_updated=0
-	    fi
-	done
-	# reload is in post_checks
+    nginx_updated=1
+    for domain in $domains; do
+        nginx-util add_ssl "${domain}" uacme "$STATE_DIR/${main_domain}/cert.pem" \
+            "$STATE_DIR/private/${main_domain}/key.pem" || nginx_updated=0
+    done
+    # reload is in post_checks
     fi
 
     if [ "$nginx_updated" -eq "0" ] && [ -w /etc/nginx/nginx.conf ] && [ "$update_nginx" -eq "1" ]; then
-	if [ "$APP" = "uacme" ]; then
-	    sed -i "s#ssl_certificate\ .*#ssl_certificate $STATE_DIR/${main_domain}/cert.pem;#g" /etc/nginx/nginx.conf
-	    sed -i "s#ssl_certificate_key\ .*#ssl_certificate_key $STATE_DIR/private/${main_domain}/key.pem;#g" /etc/nginx/nginx.conf
-	else
-	    sed -i "s#ssl_certificate\ .*#ssl_certificate $STATE_DIR/${main_domain}/fullchain.cer;#g" /etc/nginx/nginx.conf
-	    sed -i "s#ssl_certificate_key\ .*#ssl_certificate_key $STATE_DIR/${main_domain}/${main_domain}.key;#g" /etc/nginx/nginx.conf
-	fi
-	# commit and reload is in post_checks
+        sed -i "s#ssl_certificate\ .*#ssl_certificate $STATE_DIR/${main_domain}/cert.pem;#g" /etc/nginx/nginx.conf
+        sed -i "s#ssl_certificate_key\ .*#ssl_certificate_key $STATE_DIR/private/${main_domain}/key.pem;#g" /etc/nginx/nginx.conf
+        # commit and reload is in post_checks
     fi
 
     if [ -e /etc/init.d/haproxy ] && [ "$update_haproxy" -eq 1 ]; then
-	if [ "$APP" = "uacme" ]; then
-	    cat $STATE_DIR/${main_domain}/cert.pem $STATE_DIR/private/${main_domain}/key.pem > $STATE_DIR/${main_domain}/full_haproxy.pem
-	else
-	    cat $STATE_DIR/${main_domain}/fullchain.cer $STATE_DIR/${main_domain}/${main_domain}.key > $STATE_DIR/${main_domain}/full_haproxy.pem
-	fi
+        cat $STATE_DIR/${main_domain}/cert.pem $STATE_DIR/private/${main_domain}/key.pem > $STATE_DIR/${main_domain}/full_haproxy.pem
     fi
 
     post_checks
 }
 
 issue_cert_with_retries() {
-	local section="$1"
-	local use_staging
-	local retries
-	local use_auto_staging
-	local infinite_retries
-	config_get_bool use_staging "$section" use_staging
-	config_get_bool use_auto_staging "$section" use_auto_staging
-	config_get_bool enabled "$section" enabled
-	config_get retries "$section" retries
+    local section="$1"
+    local use_staging
+    local retries
+    local use_auto_staging
+    local infinite_retries
+    config_get_bool use_staging "$section" use_staging
+    config_get_bool use_auto_staging "$section" use_auto_staging
+    config_get_bool enabled "$section" enabled
+    config_get retries "$section" retries
 
-	[ -z "$retries" ] && retries=1
-	[ -z "$use_auto_staging" ] && use_auto_staging=0
-	[ "$retries" -eq "0" ] && infinite_retries=1
-	[ "$enabled" -eq "1" ] || return 0
+    [ -z "$retries" ] && retries=1
+    [ -z "$use_auto_staging" ] && use_auto_staging=0
+    [ "$retries" -eq "0" ] && infinite_retries=1
+    [ "$enabled" -eq "1" ] || return 0
 
-	while true; do
-		issue_cert "$1"; ret=$?
+    while true; do
+        issue_cert "$1"; ret=$?
 
-		if [ "$ret" -eq "2" ]; then
-			# An error occurred while retrieving the certificate.
-			retries="$((retries-1))"
+        if [ "$ret" -eq "2" ]; then
+            # An error occurred while retrieving the certificate.
+            retries="$((retries-1))"
 
-			if [ "$use_auto_staging" -eq "1" ] && [ "$use_staging" -eq "0" ]; then
-				log "Production certificate could not be obtained. Switching to staging server."
-				use_staging=1
-				uci set "acme.$1.use_staging=1"
-				uci commit acme
-			fi
+            if [ "$use_auto_staging" -eq "1" ] && [ "$use_staging" -eq "0" ]; then
+                log "Production certificate could not be obtained. Switching to staging server."
+                use_staging=1
+                uci set "acme.$1.use_staging=1"
+                uci commit acme
+            fi
 
-			if [ -z "$infinite_retries" ] && [ "$retries" -lt "1" ]; then
-				log "An error occurred while retrieving the certificate. Retries exceeded."
-				return "$ret"
-			fi
+            if [ -z "$infinite_retries" ] && [ "$retries" -lt "1" ]; then
+                log "An error occurred while retrieving the certificate. Retries exceeded."
+                return "$ret"
+            fi
 
-			if [ "$use_staging" -eq "1" ]; then
-				# The "Failed Validations" limit of LetsEncrypt is 60 per hour. This
-				# means one failure every minute. Here we wait 2 minutes to be within
-				# limits for sure.
-				sleeptime=120
-			else
-				# There is a "Failed Validation" limit of LetsEncrypt is 5 failures per
-				# account, per hostname, per hour. This means one failure every 12
-				# minutes. Here we wait 25 minutes to be within limits for sure.
-				sleeptime=1500
-			fi
+            if [ "$use_staging" -eq "1" ]; then
+                # The "Failed Validations" limit of LetsEncrypt is 60 per hour. This
+                # means one failure every minute. Here we wait 2 minutes to be within
+                # limits for sure.
+                sleeptime=120
+            else
+                # There is a "Failed Validation" limit of LetsEncrypt is 5 failures per
+                # account, per hostname, per hour. This means one failure every 12
+                # minutes. Here we wait 25 minutes to be within limits for sure.
+                sleeptime=1500
+            fi
 
-			log "An error occurred while retrieving the certificate. Retrying in $sleeptime seconds."
-			sleep "$sleeptime"
-			continue
-		else
-			if [ "$use_auto_staging" -eq "1" ]; then
-				if [ "$use_staging" -eq "0" ]; then
-					log "Production certificate obtained. Exiting."
-				else
-					log "Staging certificate obtained. Continuing with production server."
-					use_staging=0
-					uci set "acme.$1.use_staging=0"
-					uci commit acme
-					continue
-				fi
-			fi
+            log "An error occurred while retrieving the certificate. Retrying in $sleeptime seconds."
+            sleep "$sleeptime"
+            continue
+        else
+            if [ "$use_auto_staging" -eq "1" ]; then
+                if [ "$use_staging" -eq "0" ]; then
+                    log "Production certificate obtained. Exiting."
+                else
+                    log "Staging certificate obtained. Continuing with production server."
+                    use_staging=0
+                    uci set "acme.$1.use_staging=0"
+                    uci commit acme
+                    continue
+                fi
+            fi
 
-			return "$ret"
-		fi
-	done
+            return "$ret"
+        fi
+    done
 }
 
 load_vars()
@@ -511,6 +457,7 @@ load_vars()
     DEBUG=$(config_get "$section" debug)
     ACME_URL=$(config_get "$section" acme_url)
     ACME_STAGING_URL=$(config_get "$section" acme_staging_url)
+    ACME_INTERFACE=$(config_get "$section" acme_interface)
 }
 
 if [ -z "$INCLUDE_ONLY" ]; then
