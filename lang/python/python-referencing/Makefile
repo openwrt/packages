@@ -16,7 +16,7 @@ PKG_HASH:=689e64fe121843dcfd57b71933318ef1f91188ffb45367332700a86ac8fd6161
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
-PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
+PKG_MAINTAINER:=
 
 PKG_BUILD_DEPENDS:=python-hatchling/host python-hatch-vcs/host
 
