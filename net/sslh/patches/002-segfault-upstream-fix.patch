@@ -1,0 +1,121 @@
+From 894eacfb421aac93ea2846b1404173f3c44b9a9e Mon Sep 17 00:00:00 2001
+From: yrutschle <git1@rutschle.net>
+Date: Wed, 29 Oct 2025 19:39:04 +0100
+Subject: [PATCH] Fix sslh-fork segmentation fault (Fix #508)
+
+---
+ ChangeLog     |  3 +++
+ common.h      |  2 +-
+ sslh-ev.c     |  2 +-
+ sslh-fork.c   | 21 +++++++++++++++++++--
+ sslh-main.c   |  5 +----
+ sslh-select.c |  2 +-
+ 6 files changed, 26 insertions(+), 9 deletions(-)
+
+--- a/ChangeLog
++++ b/ChangeLog
+@@ -1,3 +1,6 @@
++vNEXT:
++	Fix segmentation fault in sslh-fork.
++
+ v2.3.0:
+ 	Added `max_connections` setting to `listen` and
+ 	`protocol` configuration; see the
+--- a/common.h
++++ b/common.h
+@@ -197,7 +197,7 @@ extern int hosts_ctl();
+ #endif
+ 
+ /* sslh-fork.c */
+-void start_shoveler(int);
++void main_inetd(void);
+ 
+ void main_loop(struct listen_endpoint *listen_sockets, int num_addr_listen);
+ 
+--- a/sslh-ev.c
++++ b/sslh-ev.c
+@@ -221,7 +221,7 @@ void main_loop(struct listen_endpoint li
+     ev_run(EV_A_ 0);
+ }
+ 
+-void start_shoveler(int listen_socket) {
++void main_inetd(void) {
+     print_message(msg_config_error, "inetd mode is not supported in libev mode\n");
+     exit(1);
+ }
+--- a/sslh-fork.c
++++ b/sslh-fork.c
+@@ -69,7 +69,7 @@ int shovel(struct connection *cnx)
+ 
+ /* Child process that finds out what to connect to and proxies 
+  */
+-void start_shoveler(int in_socket)
++static void start_shoveler(int in_socket, struct listen_endpoint* endpoint)
+ {
+    fd_set fds;
+    struct timeval tv;
+@@ -79,6 +79,7 @@ void start_shoveler(int in_socket)
+ 
+    init_cnx(&cnx);
+    cnx.q[0].fd = in_socket;
++   cnx.endpoint = endpoint;
+ 
+    FD_ZERO(&fds);
+    FD_SET(in_socket, &fds);
+@@ -130,6 +131,22 @@ void start_shoveler(int in_socket)
+    exit(0);
+ }
+ 
++
++void main_inetd(void)
++{
++    struct listen_endpoint endpoint = {0};
++    struct sslhcfg_listen_item endpoint_cfg = {0};
++
++    /* Empty configuration: no connection limits, not proxyprotocol... */
++    endpoint.endpoint_cfg = &endpoint_cfg;
++
++    close(fileno(stderr)); /* Make sure no error will go to client */
++    tcp_init();
++    start_shoveler(0, &endpoint);
++    exit(0);
++}
++
++
+ static pid_t *listener_pid;
+ static int listener_pid_number = 0;
+ 
+@@ -252,7 +269,7 @@ void tcp_listener(struct listen_endpoint
+                  /* Shoveler processes don't need to hog file descriptors */
+                  for (i = 0; i < num_endpoints; i++)
+                      close(endpoint[i].socketfd);
+-                 start_shoveler(in_socket);
++                 start_shoveler(in_socket, endpoint);
+                  exit(0);
+ 
+         default: /* In parent process */
+--- a/sslh-main.c
++++ b/sslh-main.c
+@@ -308,10 +308,7 @@ int main(int argc, char *argv[], char* e
+ 
+    if (cfg.inetd)
+    {
+-       close(fileno(stderr)); /* Make sure no error will go to client */
+-       tcp_init();
+-       start_shoveler(0);
+-       exit(0);
++       main_inetd();  /* Does not return */
+    }
+ 
+    printsettings();
+--- a/sslh-select.c
++++ b/sslh-select.c
+@@ -292,7 +292,7 @@ void main_loop(struct listen_endpoint li
+ }
+ 
+ 
+-void start_shoveler(int listen_socket) {
++void main_inetd(void) {
+     print_message(msg_config_error, "inetd mode is not supported in select mode\n");
+     exit(1);
+ }
