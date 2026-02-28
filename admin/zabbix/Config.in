@@ -1,54 +1,37 @@
 choice
-        prompt "Select Database Software"
-        default ZABBIX_POSTGRESQL
+        prompt "Select SSL Library"
 
-        config ZABBIX_MYSQL
-                bool "MySQL/MariaDB"
-
-        config ZABBIX_POSTGRESQL
-                bool "PostgreSQL"
-endchoice
-
-choice
-        prompt "Select SSL Library for non-full variants"
-        default ZABBIX_GNUTLS
+        default ZABBIX_OPENSSL
 
         config ZABBIX_GNUTLS
                 bool "GnuTLS"
+
+        config ZABBIX_NOSSL
+                bool "NoSSL"
 
         config ZABBIX_OPENSSL
                 bool "OpenSSL"
 endchoice
 
-menu "Additional functionality/support for non-full variants"
+menu "Modify features for non-core variants"
 
         config ZABBIX_CURL
                 bool "cURL support (default SSL)"
-                default n
-                depends on !(ZABBIX_CURL_GNUTLS || ZABBIX_GNUTLS)
+                default y
+                depends on !ZABBIX_GNUTLS && !ZABBIX_NOSSL
 
         config ZABBIX_CURL_GNUTLS
                 bool "cURL support (GnuTLS)"
                 default n
-                depends on ZABBIX_GNUTLS
+                depends on !ZABBIX_CURL
 
         config ZABBIX_LDAP
                 bool "LDAP support"
                 depends on ZABBIX_OPENSSL
-                default n
+                default y
 
         config ZABBIX_NETSNMP
                 bool "NetSNMP support (OpenSSL)"
+                default y if ZABBIX_OPENSSL
                 default n
-                depends on !ZABBIX_NETSNMP_NOSSL && ZABBIX_OPENSSL
-
-        config ZABBIX_NETSNMP_NOSSL
-                bool "NetSNMP support (noSSL)"
-                default n
-                depends on !ZABBIX_OPENSSL && \
-                        PACKAGE_zabbix-agentd-full-sqlite-ssl=0 && \
-                        PACKAGE_zabbix-server-full-db-ssl=0 && \
-                        PACKAGE_zabbix-proxy-full-sqlite-ssl=0 && \
-                        PACKAGE_zabbix-proxy-full-db-ssl=0
-
 endmenu
