@@ -11,7 +11,6 @@ fi
 
 # Transition from older versions of pbr
 sed -i "s/resolver_ipset/resolver_set/g" /etc/config/pbr
-sed -i "s/iptables_rule_option/rule_create_option/g" /etc/config/pbr
 sed -i "s/'FORWARD'/'forward'/g" /etc/config/pbr
 sed -i "s/'INPUT'/'input'/g" /etc/config/pbr
 sed -i "s/'OUTPUT'/'output'/g" /etc/config/pbr
