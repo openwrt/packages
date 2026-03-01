@@ -3,8 +3,9 @@
 START=50
 
 USE_PROCD=1
-PROG=/usr/sbin/gpsd
+PROG=/usr/sbin/gpsd-wrapper
 NAME=gpsd
+SOCKET=/var/run/gpsd.sock
 
 LOG_LEVEL="0"
 
@@ -36,7 +37,7 @@ gpsd_instance()
 	procd_append_param command -S "$port"
 	procd_append_param command -D "$LOG_LEVEL"
 	[ "$readonly" = "1" ] && procd_append_param command -b
-	procd_append_param command -F /var/run/gpsd.sock
+	procd_append_param command -F "$SOCKET"
 	for device in $devices; do
 		procd_append_param command "$device"
 	done
@@ -54,13 +55,4 @@ start_service()
 service_triggers() {
 	procd_add_reload_trigger "$NAME"
 	procd_add_validation validate_section_gpsd
-}
-
-service_started() {
-	local enabled
-
-	enabled="$(uci_get gpsd core enabled 0)"
-	[ "$enabled" = "0" ] && return
-
-	env -i ACTION="STARTED" /sbin/hotplug-call gpsd
 }
