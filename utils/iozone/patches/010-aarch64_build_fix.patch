@@ -1,0 +1,14 @@
+--- a/src/current/makefile
++++ b/src/current/makefile
+@@ -217,10 +217,9 @@ linux-powerpc64: iozone_linux-powerpc64.
+ #
+ # GNU 'C' compiler Linux build with threads, largefiles, async I/O
+ #
+-linux-arm:	iozone_linux-arm.o  libbif.o libasync.o fileop_linux-arm.o pit_server.o
++linux-arm:	iozone_linux-arm.o  libbif.o libasync.o pit_server.o
+ 	$(CC) -O3 $(LDFLAGS) iozone_linux-arm.o libbif.o libasync.o \
+ 		-lrt -lpthread -o iozone
+-	$(CC) -O3 -Dlinux fileop_linux-arm.o -o fileop
+ 	$(CC) -O3 -Dlinux pit_server.o -o pit_server
+ #
+ # GNU 'C' or Clang compiler Linux build with threads, largefiles, async I/O
