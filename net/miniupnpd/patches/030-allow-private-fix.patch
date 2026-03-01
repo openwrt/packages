@@ -1,0 +1,18 @@
+From 9ff3c71bfb6c7f7bf525d6bda447387de7257aff Mon Sep 17 00:00:00 2001
+From: Vlad Starodubtsev <vlad.starodubtsev@keenetic.com>
+Date: Wed, 6 Aug 2025 19:04:18 +0300
+Subject: [PATCH] miniupnpd: fix ALLOWPRIVATEIPV4MASK condition
+
+Fixed usage of private/reserved WAN addresses if they are allowed in the configuration.
+
+--- a/upnpsoap.c
++++ b/upnpsoap.c
+@@ -370,7 +370,7 @@ GetExternalIPAddress(struct upnphttp * h
+ 				ext_if_name);
+ 			ext_ip_addr[0] = '\0';
+ 		} else if (addr_is_reserved(&addr)) {
+-			if (!GETFLAG(ALLOWPRIVATEIPV4MASK)) {
++			if (GETFLAG(ALLOWPRIVATEIPV4MASK)) {
+ 				syslog(LOG_WARNING, "IGNORED : private/reserved address %s is not suitable for external IP", ext_ip_addr);
+ 			} else {
+ 				syslog(LOG_NOTICE, "private/reserved address %s is not suitable for external IP", ext_ip_addr);
