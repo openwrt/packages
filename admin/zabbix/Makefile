@@ -45,6 +45,10 @@ define Package/zabbix-proxy/config
   source "$(SOURCE)/Config-db.in"
 endef
 
+define Package/zabbix-get/config
+  source "$(SOURCE)/Config-build.in"
+endef
+
 define Package/zabbix/Default
   SECTION:=admin
   CATEGORY:=Administration
@@ -139,6 +143,7 @@ define Package/zabbix-get
   $(call Package/zabbix/Default)
   TITLE+= get (with TLS)
   DEPENDS:= \
+    @(ZABBIX_BUILD_SUPPORT_BIN) \
     $(ICONV_DEPENDS) \
     +ZABBIX_GNUTLS:libgnutls \
     +ZABBIX_OPENSSL:libopenssl \
@@ -223,6 +228,7 @@ define Package/zabbix-sender
   $(call Package/zabbix/Default)
   TITLE+= sender (with TLS)
   DEPENDS:= \
+    @(ZABBIX_BUILD_SUPPORT_BIN) \
     $(ICONV_DEPENDS) \
     +ZABBIX_GNUTLS:libgnutls \
     +ZABBIX_OPENSSL:libopenssl \
@@ -383,7 +389,8 @@ CONFIGURE_ARGS+= \
 	$(if $(CONFIG_ZABBIX_NETSNMP),--with-net-snmp="$(STAGING_DIR)/usr",--with-net-snmp="no") \
 	$(if $(CONFIG_ZABBIX_OPENSSL),--with-openssl="$(STAGING_DIR)/usr",--with-openssl="no") \
 	$(if $(CONFIG_ZABBIX_POSTGRESQL),--with-postgresql,--with-postgresql="no") \
-	$(if $(CONFIG_ZABBIX_SQLITE),--with-sqlite3,--with-sqlite3="no")
+	$(if $(CONFIG_ZABBIX_SQLITE),--with-sqlite3,--with-sqlite3="no") \
+  --enable-year2038
 
 ifeq ($(CONFIG_ZABBIX_CURL),y)
 CONFIGURE_ARGS += \

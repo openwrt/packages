@@ -32,6 +32,6 @@ menu "Modify features for non-core variants"
 
         config ZABBIX_NETSNMP
                 bool "NetSNMP support (OpenSSL)"
-                default y if ZABBIX_OPENSSL
-                default n
+                depends on ZABBIX_OPENSSL
+                default y
 endmenu
