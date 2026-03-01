@@ -1,9 +1,13 @@
 #!/bin/sh /etc/rc.common
 
+# shellcheck shell=ash
+
+# shellcheck disable=SC2034
 START=82
 STOP=28
 USE_PROCD=1
 UPSMON_C=/var/etc/nut/upsmon.conf
+PIDFILE=/var/run/upsmon.pid
 
 nut_upsmon_conf() {
 	local cfg="$1"
@@ -148,6 +152,7 @@ nut_upsmon_add() {
 }
 
 build_config() {
+	# shellcheck disable=SC2174
 	mkdir -m 0750 -p "$(dirname "$UPSMON_C")"
 
 	config_load nut_monitor
@@ -171,6 +176,7 @@ interface_triggers() {
 
 	config_get triggerlist "upsmon" triggerlist
 
+	# shellcheck disable=SC1091
 	. "${IPKG_INSTROOT}"/lib/functions/network.sh
 
 	if [ -n "$triggerlist" ]; then
@@ -204,24 +210,75 @@ start_service() {
 	procd_set_param respawn 10 20 6
 	procd_set_param stderr 1
 	procd_set_param stdout 0
-	procd_set_param command /usr/sbin/upsmon -D
+	procd_set_param env NUT_QUIET_INIT_UPSNOTIFY=true
+	procd_set_param reload_signal HUP
+	procd_set_param command /usr/sbin/upsmon -FF
 	procd_close_instance
 
 	return 0
 }
 
+# pkill is not available, and pgrep does not accept --signal
+pgrepkill() {
+	local pids
+
+	[ $# -eq 2 ] || return 1
+
+	pids="$(pgrep "$1" 2>/dev/null)" || return 0
+
+	for pid in $pids; do
+		kill -"$2" "$pid"
+	done
+}
+
 reload_service() {
-	if pgrep upsmon >/dev/null 2>/dev/null; then
-		local runas=nutmon
-		build_config
-		/usr/sbin/upsmon -c reload
+	local should_stop
+
+	# shellcheck disable=SC1091
+	. /lib/functions/procd.sh
+
+	build_config
+
+	should_stop=0
+
+	[ "$havemon" = 1 ] || should_stop=1
+	[ "$havems" = 1 ] || should_stop=1
+	interface_triggers "check_interface_up" || should_stop=1
+
+	if [ "$should_stop" = "0" ]; then
+		if procd_running nut-monitor upsmon; then
+			if [ -s "$PIDFILE" ]; then
+				upsmon -c reload 2>&1 | logger -t nut-monitor
+				# We don't care about the exit code
+				return
+			elif pgrep upsmon >/dev/null 2>/dev/null; then
+				procd_send_signal nut-monitor upsmon HUP 2>&1 | logger -t nut-monitor
+				# We don't care about the exit code
+				return
+			fi
+		else
+			/etc/init.d/nut-monitor start
+		fi
 	else
-		restart
+		if procd_running nut-monitor upsmon; then
+			if [ -s "$PIDFILE" ]; then
+				upsmon -c stop 2>&1 | logger -t nut-monitor
+			else
+				pgrepkill upsmon TERM >/dev/null 2>/dev/null
+			fi
+			procd_kill nut-monitor upsmon 2>/dev/null | logger -t nut-monitor
+		fi
 	fi
 }
 
 stop_service() {
-	upsmon -c stop
+	if [ -s "$PIDFILE" ]; then
+		upsmon -c stop 2>&1 | logger -t nut-monitor
+		procd_kill nut-monitor 2>/dev/null | logger -t nut-monitor
+	else
+		pgrepkill upsmon TERM >/dev/null 2>/dev/null
+		procd_kill nut-monitor 2>/dev/null | logger -t nut-monitor
+	fi
 }
 
 service_triggers() {
