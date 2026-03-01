@@ -18,6 +18,10 @@ PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:fail2ban:fail2ban
 
+PKG_BUILD_DEPENDS:= \
+	python3/host \
+	python-setuptools/host
+
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python3-package.mk
 
