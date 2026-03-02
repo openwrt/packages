@@ -1,48 +1,55 @@
 #!/bin/sh
 
-OPENVPN_PKG="openvpn"
-NETWORK_PKG="network"
+OPENVPN_PKG="/etc/config/openvpn"
+NETWORK_PKG="/etc/config/network"
 
-# Exit if no openvpn config exists
-uci -q show "$OPENVPN_PKG" >/dev/null || exit 0
+[ -f "$OPENVPN_PKG" ] || exit 0
 
-uci batch <<EOF
-$(
+awk '
+function section_exists(name) {
+	cmd = "uci -q get network." name " >/dev/null 2>&1"
+	return (system(cmd) == 0)
+}
 
-# Find named openvpn sections
-uci show "$OPENVPN_PKG" | \
-sed -n "s/^$OPENVPN_PKG\.\\([^=]*\\)=openvpn$/\\1/p" | \
-while read -r sec; do
-	iface="$sec"
+BEGIN {
+	in_section=0
+	secname = ""
+}
 
-	# Skip if interface already exists
-	uci -q get $NETWORK_PKG.$iface >/dev/null && continue
+/^config[ \t]+openvpn[ \t]+/ {
+	# get section name
+	secname = $3
+	gsub(/'\''/, "", secname)
 
-	# Create interface in network 
-	echo "set $NETWORK_PKG.$iface=interface"
-	# Set the interface protocol to 'openvpn'
-	echo "set $NETWORK_PKG.$iface.proto='openvpn'"
+	if (section_exists(secname)) {
+		in_section=0
+		next
+	}
 
-	# Copy options, skipping the section header
-	uci show "$OPENVPN_PKG.$sec" | \
-	while IFS='=' read -r key val; do
-		case "$key" in
-			# section declaration: openvpn.vpn0=openvpn
-			"$OPENVPN_PKG.$sec") continue ;;
-			"$OPENVPN_PKG.$sec.proto")
-				echo "set $NETWORK_PKG.$iface.ovpnproto=$val"
-				continue
-				;;
-		esac
+	in_section=1
 
-		opt="${key##*.}"
+	sub(/^config[ \t]+openvpn/, "config interface")
+	print
+	print "\toption proto '\''openvpn'\''"
+	next
+}
 
-		echo "set $NETWORK_PKG.$iface.$opt=$val"
-	done
-done
+# Start of another section
+/^config[ \t]+/ {
+	in_section=0
+}
 
-echo "commit $NETWORK_PKG"
-)
-EOF
+# Inside openvpn section, rename proto
+in_section && /^[ \t]*option[ \t]+proto[ \t]/ {
+	sub(/option[ \t]+proto/, "option ovpnproto")
+	print
+	next
+}
+
+# Inside openvpn section; copy as-is
+in_section {
+	print
+}
+' "$OPENVPN_PKG" >> "$NETWORK_PKG"
 
 exit 0
