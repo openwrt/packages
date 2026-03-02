@@ -1,5 +1,5 @@
 #!/bin/sh /etc/rc.common
-# Copyright 2019-2023 Stan Grishin (stangri@melmac.ca)
+# Copyright 2019-2026 Stan Grishin (stangri@melmac.ca)
 # shellcheck disable=SC1091,SC3043,SC3060
 
 # shellcheck disable=SC2034
@@ -67,7 +67,6 @@ global_log_limit=
 
 dnsmasq_restart() { /etc/init.d/dnsmasq restart >/dev/null 2>&1; }
 is_alnum() { case "$1" in (*[![:alnum:]_\ @]*|"") return 1;; esac; }
-is_fw4_restart_needed() { [ "$(uci_get "$packageName" 'config' 'force_dns' '1')" = '1' ]; }
 is_mac_address() { expr "$1" : '[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]$' >/dev/null; }
 is_integer() { case "$1" in ''|*[!0-9]*) return 1;; esac; [ "$1" -ge 1 ] && [ "$1" -le 65535 ] || return 1; return 0; }
 is_ipv4() { expr "$1" : '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >/dev/null; }
@@ -112,7 +111,7 @@ output_ok() { output "$_OK_"; }
 output_okn() { output "${_OK_}\\n"; }
 output_fail() { output "$_FAIL_"; }
 output_failn() { output "${_FAIL_}\\n"; }
-str_contains() { [ "${1//$2}" != "$1" ]; }
+str_contains() { [ "${1//${2}}" != "$1" ]; }
 str_contains_word() { echo "$1" | grep -qw "$2"; }
 uci_add_list_if_new() {
 	local PACKAGE="$1"
@@ -131,7 +130,7 @@ uci_changes() {
 	local CONFIG="$2"
 	local OPTION="$3"
 	[ -s "${UCI_CONFIG_DIR:-/etc/config/}${PACKAGE}" ] && \
-	[ -n "$(/sbin/uci ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} changes "$PACKAGE${CONFIG:+.$CONFIG}${OPTION:+.$OPTION}")" ]
+	[ -n "$(/sbin/uci ${UCI_CONFIG_DIR:+-c ${UCI_CONFIG_DIR}} changes "$PACKAGE${CONFIG:+.${CONFIG}}${OPTION:+.${OPTION}}")" ]
 }
 version() { echo "$PKG_VERSION"; }
 
@@ -224,8 +223,8 @@ load_package_config() {
 	config_get global_statistic_interval   'config' 'statistic_interval' '0'
 	config_get global_log_limit            'config' 'log_limit' '0'
 	config_get global_source_addr          'config' 'source_addr'
-	[ "$canary_domains_icloud" = '1' ]  && canaryDomains="${canaryDomains:+$canaryDomains }${canaryDomainsiCloud}"
-	[ "$canary_domains_mozilla" = '1' ] && canaryDomains="${canaryDomains:+$canaryDomains }${canaryDomainsMozilla}"
+	[ "$canary_domains_icloud" = '1' ]  && canaryDomains="${canaryDomains:+${canaryDomains} }${canaryDomainsiCloud}"
+	[ "$canary_domains_mozilla" = '1' ] && canaryDomains="${canaryDomains:+${canaryDomains} }${canaryDomainsMozilla}"
 	[ "$force_dns" = '1' ]              || unset force_dns
 	[ "$procd_trigger_wan6" = '1' ]     || unset procd_trigger_wan6
 }
@@ -266,7 +265,8 @@ start_instance() {
 		config_load 'dhcp'
 		config_foreach dnsmasq_doh_server 'dnsmasq' 'add' "${listen_addr}" "${listen_port}"
 		config_foreach dnsmasq_instance_append_force_dns_port 'dnsmasq'
-	elif [ -n "$dnsmasq_config_update" ]; then
+	elif is_alnum "$dnsmasq_config_update"; then
+		config_load 'dhcp'
 		for i in $dnsmasq_config_update; do
 			dnsmasq_doh_server "@dnsmasq[$i]" 'add' "${listen_addr}" "${listen_port}" || \
 				dnsmasq_doh_server "${i}" 'add' "${listen_addr}" "${listen_port}"
@@ -335,7 +335,7 @@ start_service() {
 
 	[ "$param" = 'on_boot' ] && hdp_boot_flag='true' && return 0
 
-	output "Starting $serviceName instances ${param:+$param }"
+	output "Starting $serviceName instances ${param:+${param} }"
 	load_package_config "$param"
 	dhcp_backup 'create'
 	config_load "$packageName"
@@ -352,7 +352,7 @@ start_service() {
 	fi
 	case "$param" in
 		on_boot|on_config_update|on_hotplug)
-			output "Restarting dnsmasq ${param:+$param }"
+			output "Restarting dnsmasq ${param:+${param} }"
 			if dnsmasq_restart; then
 				output_okn
 			else
@@ -369,7 +369,7 @@ stop_service() {
 	local param="$1"
 	local canaryDomains
 	local _error=
-	output "Stopping $serviceName ${param:+$param }"
+	output "Stopping $serviceName ${param:+${param} }"
 	load_package_config "$param"
 	dhcp_backup 'restore'
 	if uci_changes 'dhcp'; then
@@ -395,7 +395,7 @@ service_triggers() {
 			network_find_wan6 wan6
 			wan6="${wan6:-wan6}"
 		fi
-		output "Setting trigger${wan6:+s} for $wan ${wan6:+$wan6 }"
+		output "Setting trigger${wan6:+s} for $wan ${wan6:+${wan6} }"
 		for i in $wan $wan6; do
 			procd_add_interface_trigger "interface.*" "$i" "/etc/init.d/${packageName}" reload 'on_interface_trigger' && output_ok || output_fail
 		done
@@ -410,13 +410,14 @@ restart() { reload "$@"; }
 
 dnsmasq_instance_append_force_dns_port() {
 	local cfg="$1" instance_port
-	[ -n "$(uci_get 'dhcp' "$cfg")" ] || return 1
+	[ "$(uci_get 'dhcp' "$cfg")" = "dnsmasq" ] || return 1
 	config_get instance_port "$cfg" 'port' '53'
-		str_contains_word "$force_dns_port" "$instance_port" || force_dns_port="${force_dns_port:+$force_dns_port }${instance_port}"
+		str_contains_word "$force_dns_port" "$instance_port" || force_dns_port="${force_dns_port:+${force_dns_port} }${instance_port}"
 }
 
 dnsmasq_doh_server() {
 	local cfg="$1" param="$2" address="${3:-127.0.0.1}" port="$4" i
+	[ "$(uci_get 'dhcp' "$cfg")" = "dnsmasq" ] || return 1
 	case "$param" in
 		add)
 			if [ -n "$force_dns" ]; then
@@ -447,7 +448,7 @@ dnsmasq_doh_server() {
 dhcp_backup() {
 	_dnsmasq_create_server_backup() {
 		local cfg="$1" i
-		[ -n "$(uci_get 'dhcp' "$cfg")" ] || return 1
+		[ "$(uci_get 'dhcp' "$cfg")" = "dnsmasq" ] || return 1
 	#	uci_remove 'dhcp' "$cfg" 'doh_server' # this removes outdated doh_server entries, but causes unnecessary dnsmasq restarts
 		if [ -z "$(uci_get 'dhcp' "$cfg" 'doh_backup_noresolv')" ]; then
 			if [ -z "$(uci_get 'dhcp' "$cfg" 'noresolv')" ]; then
@@ -473,7 +474,7 @@ dhcp_backup() {
 # shellcheck disable=SC2317
 	_dnsmasq_restore_server_backup() {
 		local cfg="$1" i
-		[ -n "$(uci_get 'dhcp' "$cfg")" ] || return 0
+		[ "$(uci_get 'dhcp' "$cfg")" = "dnsmasq" ] || return 0
 		if [ -n "$(uci_get 'dhcp' "$cfg" 'doh_backup_noresolv')" ]; then
 			if [ "$(uci_get 'dhcp' "$cfg" 'doh_backup_noresolv')" = "-1" ]; then
 				uci_remove 'dhcp' "$cfg" 'noresolv'
