@@ -1,0 +1,39 @@
+#!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2025-2026 Chester A. Unal <chester.a.unal@arinc9.com>
+
+# Only run if a non-virtual network interface is being added.
+[ "$ACTION" = "add" ] && echo "$DEVPATH" | grep -qv virtual || exit
+
+# Exclude MBIM and QMI network interfaces which a DHCP client wouldn't work on.
+grep -E "(mbim|qmi)" /sys"${DEVPATH%/*/*}/uevent" && exit
+
+# Exit if a network with the network interface already exists.
+uci_network=$(uci show network)
+echo "$uci_network" | grep -q ".device='$DEVICENAME'" && exit
+
+# Decide on the metric value. Start from 1 and work up to 8.
+metric=1
+while [ $metric -le 8 ]; do
+	# Break if this metric isn't in use.
+	echo "$uci_network" | grep -q ".metric='$metric'" || break
+
+	# Add 1 to metric if another network uses this metric.
+	metric=$((metric + 1))
+done
+# If there are no available metrics, exit with code 1.
+[ "$metric" -gt 8 ] && exit 1
+
+# Decide on the network name. Start from wan1.
+index=1
+while echo "$uci_network" | grep -q "wan$index"; do
+	index=$((index + 1))
+done
+
+uci set network.wan$index=interface
+uci set network.wan$index.device="$DEVICENAME"
+uci set network.wan$index.proto='dhcp'
+uci set network.wan$index.peerdns='0'
+uci set network.wan$index.metric="$metric"
+uci commit network
+ifup wan$index
