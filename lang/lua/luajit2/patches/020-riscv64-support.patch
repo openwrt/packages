@@ -1504,7 +1504,7 @@ Co-authored-by: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
  
  ifneq (,$(findstring LJ_TARGET_PS3 1,$(TARGET_TESTARCH)))
    TARGET_SYS= PS3
-@@ -498,6 +503,9 @@ ifeq (ppc,$(TARGET_LJARCH))
+@@ -495,6 +500,9 @@ ifeq (ppc,$(TARGET_LJARCH))
      DASM_AFLAGS+= -D ELFV2
    endif
  endif
@@ -1574,7 +1574,7 @@ Co-authored-by: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
  #if LJ_TARGET_PS3
 --- a/src/jit/bcsave.lua
 +++ b/src/jit/bcsave.lua
-@@ -103,6 +103,7 @@ local map_arch = {
+@@ -105,6 +105,7 @@ local map_arch = {
    mips64r6 =	{ e = "be", b = 64, m = 8, f = 0xa0000407, },
    mips64r6el =	{ e = "le", b = 64, m = 8, f = 0xa0000407, },
    s390x =	{ e = "be", b = 64, m = 22, },
@@ -2586,7 +2586,7 @@ Co-authored-by: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
 \ No newline at end of file
 --- a/src/lib_jit.c
 +++ b/src/lib_jit.c
-@@ -697,6 +697,104 @@ JIT_PARAMDEF(JIT_PARAMINIT)
+@@ -706,6 +706,104 @@ JIT_PARAMDEF(JIT_PARAMINIT)
  #include <sys/utsname.h>
  #endif
  
@@ -2691,7 +2691,7 @@ Co-authored-by: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
  /* Arch-dependent CPU feature detection. */
  static uint32_t jit_cpudetect(void)
  {
-@@ -769,6 +867,29 @@ static uint32_t jit_cpudetect(void)
+@@ -778,6 +876,29 @@ static uint32_t jit_cpudetect(void)
  #endif
  #elif LJ_TARGET_S390X
    /* No optional CPU features to detect (for now). */
@@ -2752,7 +2752,7 @@ Co-authored-by: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
  #else
  #error "Architecture not supported (in this version), see: https://luajit.org/status.html#architectures"
  #endif
-@@ -501,6 +505,20 @@
+@@ -506,6 +510,20 @@
  #define LJ_ARCH_NUMMODE		LJ_NUMMODE_DUAL
  #define LJ_TARGET_GC64		1
  #define LJ_ARCH_NOJIT		1	/* NYI */
@@ -2773,7 +2773,7 @@ Co-authored-by: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
  
  #else
  #error "No target architecture defined"
-@@ -585,6 +603,10 @@
+@@ -590,6 +608,10 @@
  #error "Only n64 ABI supported for MIPS64"
  #undef LJ_TARGET_MIPS
  #endif
@@ -2786,7 +2786,7 @@ Co-authored-by: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
  
 --- a/src/lj_asm.c
 +++ b/src/lj_asm.c
-@@ -227,6 +227,8 @@ static Reg rset_pickrandom(ASMState *as,
+@@ -231,6 +231,8 @@ static Reg rset_pickrandom(ASMState *as,
  #include "lj_emit_ppc.h"
  #elif LJ_TARGET_MIPS
  #include "lj_emit_mips.h"
@@ -2795,7 +2795,7 @@ Co-authored-by: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
  #else
  #error "Missing instruction emitter for target CPU"
  #endif
-@@ -1710,6 +1712,8 @@ static void asm_loop(ASMState *as)
+@@ -1719,6 +1721,8 @@ static void asm_loop(ASMState *as)
  #include "lj_asm_mips.h"
  #elif LJ_TARGET_S390X
  #include "lj_asm_s390x.h"
@@ -6729,9 +6729,9 @@ Co-authored-by: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
 +#if LJ_TARGET_RISCV64
 +void lj_vm_fence_rw_rw();
 +#endif
- LJ_ASMF double lj_vm_foldarith(double x, double y, int op);
+ LJ_ASMF LJ_CONSTF double lj_vm_foldarith(double x, double y, int op);
  #if LJ_HASJIT
- LJ_ASMF double lj_vm_foldfpm(double x, int op);
+ LJ_ASMF LJ_CONSTF double lj_vm_foldfpm(double x, int op);
 --- a/src/lj_vmmath.c
 +++ b/src/lj_vmmath.c
 @@ -69,7 +69,8 @@ double lj_vm_foldarith(double x, double
