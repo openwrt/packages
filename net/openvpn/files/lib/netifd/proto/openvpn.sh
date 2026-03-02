@@ -152,9 +152,11 @@ proto_openvpn_setup() {
 	# ${tls_exit:+--tls-exit} \
 
 	json_get_var dev_type dev_type
+	json_get_var ovpnproto ovpnproto
 	# shellcheck disable=SC2086
 	proto_run_command "$config" openvpn \
 		$([ -z "$dev_type" ] && echo " --dev-type tun") \
+		$([ -z "$ovpnproto" ] && echo " --proto $ovpnproto") \
 		--cd "$cd_dir" \
 		--status "/var/run/openvpn.$config.status" \
 		--syslog "openvpn_$config" \

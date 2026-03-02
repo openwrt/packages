@@ -65,7 +65,6 @@ management_external_key
 mark
 mode
 mtu_disc
-ovpnproto
 peer_fingerprint
 pkcs11_id
 pkcs11_providers

@@ -79,7 +79,6 @@ const OPENVPN_STRING_PARAMS = [
 	{ name: 'mark' },
 	{ name: 'mode' },
 	{ name: 'mtu_disc' },
-	{ name: 'ovpnproto' },
 	{ name: 'peer_fingerprint' },
 	{ name: 'pkcs11_id' },
 	{ name: 'pkcs11_providers' },
@@ -360,6 +359,9 @@ function build_exec_params(cfg) {
 					add_param(params, k.name, item);
 		}
 	}
+
+	if (cfg['ovpnproto'])
+		add_param(params, 'proto', cfg['ovpnproto']);
 
 	return params;
 }
