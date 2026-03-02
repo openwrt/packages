@@ -1,0 +1,88 @@
+#!/bin/bash
+# Test: print_config_masked - IP masking logic
+. "$(dirname "$0")/../lib/setup.sh"
+
+oneTimeTearDown() { rm -rf "${MOCK_ROOT:-}"; }
+
+# Apply the IP-masking awk pass from print_config_masked to a single input line.
+# Mirrors the second awk block in print_config_masked so we can test it in isolation
+# without needing to write files to /etc/config/.
+_mask_ips() {
+	printf '%s\n' "$1" | awk '
+		/^[ \t]*(option|list)[ \t]+allowed_ips[ \t]+/ { print; next }
+		{
+			line = $0; result = ""
+			while (match(line, /([0-9]{1,3}\.){3}[0-9]{1,3}/)) {
+				ip = substr(line, RSTART, RLENGTH)
+				result = result substr(line, 1, RSTART-1)
+				line = substr(line, RSTART+RLENGTH)
+				if (ip ~ /^(10\.|127\.|192\.168\.)/ || ip ~ /^172\.(1[6-9]|2[0-9]|3[01])\./)
+					result = result ip
+				else { masked = ip; gsub(/[0-9]/, "*", masked); result = result masked }
+			}
+			print result line
+		}
+	'
+}
+
+testPublicIPIsMasked() {
+	assertEquals "Public IP masked" \
+		"	option gateway '*.*.*.*'" \
+		"$(_mask_ips "	option gateway '1.2.3.4'")"
+}
+
+testRFC1918_10_preserved() {
+	assertEquals "10.x not masked" \
+		"	option gateway '10.0.0.1'" \
+		"$(_mask_ips "	option gateway '10.0.0.1'")"
+}
+
+testRFC1918_192_168_preserved() {
+	assertEquals "192.168.x not masked" \
+		"	option gateway '192.168.1.254'" \
+		"$(_mask_ips "	option gateway '192.168.1.254'")"
+}
+
+testRFC1918_172_16_preserved() {
+	assertEquals "172.16.x not masked" \
+		"	option gateway '172.16.0.1'" \
+		"$(_mask_ips "	option gateway '172.16.0.1'")"
+}
+
+testRFC1918_172_31_preserved() {
+	assertEquals "172.31.x not masked" \
+		"	option gateway '172.31.255.254'" \
+		"$(_mask_ips "	option gateway '172.31.255.254'")"
+}
+
+testBorderBelow_172_16_masked() {
+	assertEquals "172.15.x is not RFC1918 - masked" \
+		"	option gateway '***.**.*.*'" \
+		"$(_mask_ips "	option gateway '172.15.0.1'")"
+}
+
+testBorderAbove_172_31_masked() {
+	assertEquals "172.32.x is not RFC1918 - masked" \
+		"	option gateway '***.**.*.*'" \
+		"$(_mask_ips "	option gateway '172.32.0.1'")"
+}
+
+testLoopbackPreserved() {
+	assertEquals "127.x loopback not masked" \
+		"	option dns '127.0.0.1'" \
+		"$(_mask_ips "	option dns '127.0.0.1'")"
+}
+
+testAllowedIPsLineNotMasked() {
+	assertEquals "allowed_ips line bypasses IP masking" \
+		"	option allowed_ips '8.8.8.8/32'" \
+		"$(_mask_ips "	option allowed_ips '8.8.8.8/32'")"
+}
+
+testMixedLinePrivateAndPublic() {
+	assertEquals "Private preserved, public masked on same line" \
+		"	option foo '192.168.1.1 *.*.*.*'" \
+		"$(_mask_ips "	option foo '192.168.1.1 8.8.8.8'")"
+}
+
+. shunit2
