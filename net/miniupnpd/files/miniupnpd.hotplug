@@ -40,6 +40,6 @@ fi
 
 [ "$DEVICE" != "$ifname" ] && [ "$DEVICE" != "$ifname6" ] && exit 0
 
-grep -qs "^ext_ifname=$ifname" "$tmpconf" && grep -qs "^ext_ifname6=$ifname6" "$tmpconf" && exit 0
+grep -qs "^ext_ifname=$ifname" "$tmpconf" && grep -qs "^ext_ifname6=${ifname6:-$ifname}" "$tmpconf" && exit 0
 
 /etc/init.d/miniupnpd restart
