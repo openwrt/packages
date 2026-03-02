@@ -4,7 +4,12 @@ log() {
 	logger -s -p "${2:-daemon.notice}" -t "upnpd" "$1" || echo "upnpd: $1" >&2
 }
 
+# Skip migration with existing settings (v2.0) or with no config (v1.0) UCI section
+# Enables the creation of a merged v1.0/v2.0 config file
+{ uci -q get upnpd.settings >/dev/null || ! uci -q get upnpd.config >/dev/null; } && exit 0
+
 log "Check UCI options in /etc/config/upnpd to be migrated to v2.0"
+cp /etc/config/upnpd /tmp
 
 # Set missing enabled option to fix previously different defaults in LuCI/config (0) and init UCI (1)
 if ! uci -q get upnpd.config.enabled >/dev/null; then
@@ -152,6 +157,14 @@ if ! uci -q get upnpd.@internal_network[0] >/dev/null; then
 	uci -q delete upnpd.config.internal_iface
 fi
 
+# Rename UCI section config -> settings (v2.0)
+if uci -q get upnpd.config >/dev/null; then
+	log "Rename UCI section config -> settings (v2.0)" && uci rename upnpd.config="settings" ||
+		log "Error renaming the UCI section" daemon.err
+fi
+
 uci commit upnpd >/dev/null
+
+log "Previous v1.0 config file was copied to /tmp/upnpd (until next reboot)"
 
 exit 0
