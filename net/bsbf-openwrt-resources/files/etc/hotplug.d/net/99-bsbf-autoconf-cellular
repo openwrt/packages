@@ -1,0 +1,53 @@
+#!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Chester A. Unal <chester.a.unal@arinc9.com>
+
+# Only run if an MBIM or QMI network interface is being added.
+[ "$ACTION" = "add" ] && cur_proto=$(grep -oE "(mbim|qmi)" /sys"${DEVPATH%/*/*}/uevent") || exit
+
+# Find the device path.
+if echo "$DEVPATH" | grep -q usb; then
+	devpath=/sys"${DEVPATH%/*/*/*}"
+elif echo "$DEVPATH" | grep -q mhi; then
+	devpath=/sys"${DEVPATH%/*/*/*/*/*}"
+else
+	devpath=/sys"${DEVPATH%/*/*/*/*}"
+fi
+
+# If a network with the device path already exists, set control model to the
+# current detected one and exit.
+uci_network=$(uci show network)
+section=$(echo "$uci_network" | grep ".devpath='$devpath'" | cut -d. -f2)
+if [ -n "$section" ]; then
+	uci set network.$section.proto="$cur_proto"
+	uci commit network
+	ifup $section
+	exit
+fi
+
+# Decide on the metric value. Start from 1 and work up to 8.
+metric=1
+while [ $metric -le 8 ]; do
+	# Break if this metric isn't in use.
+	echo "$uci_network" | grep -q ".metric='$metric'" || break
+
+	# Add 1 to metric if another network uses this metric.
+	metric=$((metric + 1))
+done
+# If there are no available metrics, exit with code 1.
+[ "$metric" -gt 8 ] && exit 1
+
+# Decide on the network name. Start from wwan1.
+index=1
+while echo "$uci_network" | grep -q "wwan$index"; do
+	index=$((index + 1))
+done
+
+uci set network.wwan$index=interface
+uci set network.wwan$index.devpath="$devpath"
+uci set network.wwan$index.proto="$cur_proto"
+uci set network.wwan$index.apn='internet'
+uci set network.wwan$index.peerdns='0'
+uci set network.wwan$index.metric="$metric"
+uci commit network
+ifup wwan$index
