@@ -12,7 +12,7 @@ PKG_VERSION:=1.0.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://www.netfilter.org/projects/libnetfilter_log/files/
+PKG_SOURCE_URL:=https://netfilter.org/pub/libnetfilter_log/
 PKG_HASH:=e3f408575614d849e4726b45e90c7ebb0e6744b04859555a9ce6ec40744ffeea
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 
@@ -28,7 +28,7 @@ define Package/libnetfilter-log
   CATEGORY:=Libraries
   DEPENDS:=+libnfnetlink +kmod-nfnetlink-log +libmnl
   TITLE:=API to receive to-be-logged packets from the kernel nfnetlink_log subsystem
-  URL:=http://www.netfilter.org/projects/libnetfilter_log/
+  URL:=https://netfilter.org/projects/libnetfilter_log/
   ABI_VERSION:=1
 endef
 

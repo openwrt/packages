@@ -11,7 +11,7 @@ PKG_VERSION:=4.6.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=@SF/hamlib
+PKG_SOURCE_URL:=https://github.com/Hamlib/Hamlib/releases/download/$(PKG_VERSION)/
 PKG_HASH:=90d6f1dba59417c00f8f4545131c7efd31930cd0e178598980a8210425e3852e
 
 PKG_MAINTAINER:=Vasilis Tsiligiannis <acinonyx@openwrt.gr>
@@ -25,7 +25,7 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/hamlib/Default
   TITLE:=Ham Radio Control
-  URL:=http://hamlib.sourceforge.net
+  URL:=https://hamlib.github.io/
 endef
 
 define Package/hamlib/Default/description

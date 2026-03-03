@@ -15,7 +15,7 @@ PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://mirror.netcologne.de/gentoo/distfiles/
+PKG_SOURCE_URL:=https://dev.gentoo.org/~mschiff/distfiles/
 PKG_SOURCE_SUBDIR=$(PKG_NAME)-$(PKG_VERSION)
 PKG_HASH:=d6a9d26740ef75565cb1ed8ff11e327d240e6734748b2d1d2e96c126849e4733
 

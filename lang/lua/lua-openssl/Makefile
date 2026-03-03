@@ -28,7 +28,7 @@ define Package/lua-openssl
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Lua openSSL binding
-  URL:=http://github.com/zhaozg/lua-openssl
+  URL:=https://github.com/zhaozg/lua-openssl
   DEPENDS:=+lua +libopenssl +librt
 endef
 

@@ -29,7 +29,7 @@ define Package/sstp-client
   SUBMENU:=VPN
   DEPENDS=+libevent2 +libopenssl +ppp +resolveip
   TITLE:=SSTP-Client is a SSTP client for Linux.
-  URL:=http://sstp-client.sourceforge.net/
+  URL:=https://gitlab.com/sstp-project/sstp-client
 endef
 
 define Package/sstp-client/description

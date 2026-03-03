@@ -30,7 +30,7 @@ define Package/lualanes
 	SECTION:=lang
 	CATEGORY:=Languages
 	TITLE:=LuaLanes
-	URL:=http://lualanes.github.io/lanes/
+	URL:=https://lualanes.github.io/lanes/
 	DEPENDS:=+lua +luac +liblua +libpthread
 endef
 

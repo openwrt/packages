@@ -16,7 +16,7 @@ PKG_VERSION:=1.2
 PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.spreadspace.org/tcpproxy/releases/
+PKG_SOURCE_URL:=https://www.spreadspace.org/tcpproxy/releases/
 PKG_HASH:=446104b3abefda73b1255e5197702acbeb36b3aada251ad39e1e5ab55292683b
 PKG_MAINTAINER:=Christian Pointner <equinox@spreadspace.org>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -29,7 +29,7 @@ define Package/tcpproxy
   CATEGORY:=Network
   SUBMENU:=Routing and Redirection
   TITLE:=IPv4/IPv6 tcp connection proxy
-  URL:=http://www.spreadspace.org/tcpproxy/
+  URL:=https://www.spreadspace.org/tcpproxy/
 endef
 
 define Package/tcpproxy/conffiles
