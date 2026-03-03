@@ -1,0 +1,193 @@
+Test that all 9 DNS modes produce valid output files containing
+domains from both the domains.txt and hosts.txt test data files.
+
+-- Testcase --
+import adb from 'adblock-fast';
+import { readfile, dirname, mkdir } from 'fs';
+let ti = adb._test_internals;
+
+let modes = [
+	'dnsmasq.servers',
+	'dnsmasq.conf',
+	'dnsmasq.ipset',
+	'dnsmasq.nftset',
+	'dnsmasq.addnhosts',
+	'smartdns.domainset',
+	'smartdns.ipset',
+	'smartdns.nftset',
+	'unbound.adb_list',
+];
+
+// Known-good domains that MUST appear in every output
+let must_have = [
+	'ad.doubleclick.test.example.com',
+	'tracker.analytics.test.example.com',
+	'common-shared-1.test.example.com',
+	'common-shared-10.test.example.com',
+	'adhost-zero-1.test.example.org',
+	'adhost-loopback-1.test.example.org',
+	'parent-dedup-1.test.example.com',
+];
+
+// Domains that MUST NOT appear (invalid entries or subdomain-deduped)
+let must_not_have = [
+	'localhost',
+	'nodot',
+	'child.parent-dedup-1.test.example.com',
+	'sub.child.parent-dedup-2.test.example.com',
+	'deep.sub.parent-dedup-3.test.example.com',
+];
+
+let results = [];
+
+for (let mode in modes) {
+	// Reset module state for each mode
+	ti.env._config_loaded = false;
+	ti.env._loaded = false;
+	ti.env.dnsmasq_features = '';
+	ti.env._detected = false;
+	ti.env.dnsmasq_ubus = null;
+	ti.status_data.errors = [];
+	ti.status_data.warnings = [];
+	ti.status_data.status = '';
+	ti.status_data.message = '';
+	ti.status_data.stats = '';
+
+	// Load config from mock UCI
+	adb.env.load_config();
+
+	// Override DNS mode via set_cfg (load() reassigns cfg, so direct ref is stale)
+	ti.set_cfg('dns', mode);
+	ti.set_cfg('enabled', true);
+	ti.set_cfg('dnsmasq_sanity_check', false);
+	ti.set_cfg('dnsmasq_validity_check', false);
+	ti.set_cfg('heartbeat_domain', null);
+	ti.set_cfg('config_update_enabled', false);
+	ti.set_cfg('update_config_sizes', false);
+	ti.env.dns_set_output_values(mode);
+
+	// Collect file_url sections
+	ti.append_urls();
+
+	// Ensure output directory exists
+	let out_file = ti.dns_output.file;
+	let out_dir = dirname(out_file);
+	mkdir(out_dir);
+
+	// Run the download and processing pipeline
+	let ok = ti.download_lists();
+
+	if (!ok) {
+		push(results, sprintf('%s: FAIL (download_lists returned false)', mode));
+		if (length(ti.status_data.errors))
+			push(results, sprintf('  errors: %J', ti.status_data.errors));
+		continue;
+	}
+
+	// Read output
+	let content = readfile(out_file);
+	if (!content || !length(content)) {
+		push(results, sprintf('%s: FAIL (empty output file %s)', mode, out_file));
+		continue;
+	}
+
+	let lines = filter(split(content, '\n'), l => length(l) > 0);
+	let line_count = length(lines);
+
+	// Extract domains using the mode's parse_filter
+	let dm = ti.dns_modes[mode];
+	let domains = {};
+	let bad_format = 0;
+
+	for (let line in lines) {
+		let domain;
+		switch (mode) {
+		case 'dnsmasq.servers':
+			let m1 = match(line, /^server=\/([^\/]+)\/$/);
+			domain = m1 ? m1[1] : null;
+			break;
+		case 'dnsmasq.conf':
+			let m2 = match(line, /^local=\/([^\/]+)\/$/);
+			domain = m2 ? m2[1] : null;
+			break;
+		case 'dnsmasq.ipset':
+			let m3 = match(line, /^ipset=\/([^\/]+)\/adb$/);
+			domain = m3 ? m3[1] : null;
+			break;
+		case 'dnsmasq.nftset':
+			let m4 = match(line, /^nftset=\/([^\/]+)\/4#/);
+			domain = m4 ? m4[1] : null;
+			break;
+		case 'dnsmasq.addnhosts':
+			let m5 = match(line, /^127\.0\.0\.1 (.+)$/);
+			domain = m5 ? m5[1] : null;
+			break;
+		case 'smartdns.domainset':
+		case 'smartdns.ipset':
+		case 'smartdns.nftset':
+			domain = match(line, /^[a-zA-Z0-9._-]+$/) ? line : null;
+			break;
+		case 'unbound.adb_list':
+			let m6 = match(line, /^local-zone: "([^"]+)\." always_nxdomain$/);
+			domain = m6 ? m6[1] : null;
+			if (!domain && line == 'server:') domain = '__header__';
+			break;
+		}
+		if (domain && domain != '__header__')
+			domains[domain] = true;
+		else if (!domain)
+			bad_format++;
+	}
+
+	let domain_count = length(keys(domains));
+
+	// Check must_have domains
+	let missing = [];
+	for (let d in must_have) {
+		if (!domains[d])
+			push(missing, d);
+	}
+
+	// Check must_not_have domains
+	let unwanted = [];
+	for (let d in must_not_have) {
+		if (domains[d])
+			push(unwanted, d);
+	}
+
+	// dnsmasq.addnhosts doesn't do subdomain dedup (not in needs_optimization list)
+	let skip_dedup = (mode == 'dnsmasq.addnhosts');
+	if (skip_dedup) {
+		unwanted = filter(unwanted, d =>
+			d != 'child.parent-dedup-1.test.example.com' &&
+			d != 'sub.child.parent-dedup-2.test.example.com' &&
+			d != 'deep.sub.parent-dedup-3.test.example.com');
+	}
+
+	if (length(missing) == 0 && length(unwanted) == 0 && bad_format == 0 && domain_count > 100)
+		push(results, sprintf('%s: PASS (%d domains)', mode, domain_count));
+	else {
+		let detail = sprintf('%s: FAIL (%d domains, %d bad_format', mode, domain_count, bad_format);
+		if (length(missing))
+			detail += sprintf(', missing: %J', missing);
+		if (length(unwanted))
+			detail += sprintf(', unwanted: %J', unwanted);
+		detail += ')';
+		push(results, detail);
+	}
+}
+
+print(join('\n', results) + '\n');
+-- End --
+
+-- Expect stdout --
+dnsmasq.servers: PASS (162 domains)
+dnsmasq.conf: PASS (162 domains)
+dnsmasq.ipset: PASS (162 domains)
+dnsmasq.nftset: PASS (162 domains)
+dnsmasq.addnhosts: PASS (165 domains)
+smartdns.domainset: PASS (162 domains)
+smartdns.ipset: PASS (162 domains)
+smartdns.nftset: PASS (162 domains)
+unbound.adb_list: PASS (162 domains)
+-- End --

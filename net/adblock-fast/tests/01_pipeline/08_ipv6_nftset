@@ -1,0 +1,54 @@
+Test that dnsmasq.nftset with ipv6_enabled includes IPv6 set reference.
+
+-- Testcase --
+import adb from 'adblock-fast';
+import { readfile } from 'fs';
+let ti = adb._test_internals;
+
+adb.env.load_config();
+ti.set_cfg('dns', 'dnsmasq.nftset');
+ti.set_cfg('ipv6_enabled', true);
+ti.set_cfg('dnsmasq_sanity_check', false);
+ti.set_cfg('dnsmasq_validity_check', false);
+ti.set_cfg('heartbeat_domain', null);
+ti.set_cfg('config_update_enabled', false);
+ti.set_cfg('update_config_sizes', false);
+ti.env.dns_set_output_values('dnsmasq.nftset');
+ti.append_urls();
+
+let ok = ti.download_lists();
+if (!ok) {
+	print('download_lists failed\n');
+} else {
+	let content = readfile(ti.dns_output.file) || '';
+	let lines = filter(split(content, '\n'), l => length(l) > 0);
+
+	// With IPv6 enabled, nftset format should include ,6#inet#fw4#adb6
+	let ipv6_lines = filter(lines, l => match(l, /6#inet#fw4#adb6/));
+	let ipv4_only = filter(lines, l => match(l, /4#inet#fw4#adb4/) && !match(l, /6#inet#fw4#adb6/));
+
+	let results = [];
+	push(results, sprintf('total_lines: %d', length(lines)));
+	push(results, sprintf('with_ipv6_set: %d', length(ipv6_lines)));
+	push(results, sprintf('ipv4_only: %d', length(ipv4_only)));
+
+	// All lines should have both IPv4 and IPv6 set references
+	push(results, sprintf('all_dual_stack: %s', (length(ipv6_lines) == length(lines)) ? 'YES' : 'NO'));
+
+	// Spot-check format
+	let test_domain = 'ad.doubleclick.test.example.com';
+	let expected = 'nftset=/' + test_domain + '/4#inet#fw4#adb4,6#inet#fw4#adb6';
+	let has_entry = index(content, expected) >= 0;
+	push(results, sprintf('correct_format: %s', has_entry ? 'YES' : 'NO'));
+
+	print(join('\n', results) + '\n');
+}
+-- End --
+
+-- Expect stdout --
+total_lines: 162
+with_ipv6_set: 162
+ipv4_only: 0
+all_dual_stack: YES
+correct_format: YES
+-- End --

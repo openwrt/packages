@@ -1,0 +1,42 @@
+Test that detect_file_type() correctly identifies all supported list formats.
+
+-- Testcase --
+import adb from 'adblock-fast';
+import { writefile, mkdir } from 'fs';
+let ti = adb._test_internals;
+
+adb.env.load_config();
+
+let test_dir = '' + TESTDIR + '/fmt_test';
+mkdir(test_dir);
+
+let tests = [
+	['domains', 'example.com\nad.tracker.net\nmalware.bad.org\n'],
+	['hosts', '0.0.0.0 example.com\n127.0.0.1 tracker.net\n0.0.0.0 malware.org\n'],
+	['adblockplus', '[Adblock Plus]\n||example.com^\n||tracker.net^\n'],
+	['dnsmasq', 'server=/example.com/\nserver=/tracker.net/\n'],
+];
+
+let results = [];
+
+for (let t in tests) {
+	let name = t[0];
+	let content = t[1];
+	let path = test_dir + '/' + name + '.txt';
+	writefile(path, content);
+	let detected = ti.detect_file_type(path);
+	if (detected == name)
+		push(results, sprintf('%s: PASS', name));
+	else
+		push(results, sprintf('%s: FAIL (detected as %s)', name, detected));
+}
+
+print(join('\n', results) + '\n');
+-- End --
+
+-- Expect stdout --
+domains: PASS
+hosts: PASS
+adblockplus: PASS
+dnsmasq: PASS
+-- End --
