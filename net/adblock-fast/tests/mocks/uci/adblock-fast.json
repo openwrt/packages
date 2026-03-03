@@ -19,6 +19,7 @@
 			"update_config_sizes": "0",
 			"heartbeat_domain": "-",
 			"download_timeout": "10",
+			"pause_timeout": "20",
 			"curl_retry": "1",
 			"compressed_cache_dir": "TESTDIR/cache"
 		}
