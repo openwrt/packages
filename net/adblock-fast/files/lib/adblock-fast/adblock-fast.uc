@@ -234,6 +234,24 @@ function mkdir_p(path) {
 	return mkdir(path) != null;
 }
 
+function move_file(src, dst) {
+	if (rename(src, dst) == true) return true;
+	// rename failed (possibly cross-filesystem); fall back to copy + unlink
+	let src_f = open(src, 'r');
+	if (!src_f) return false;
+	let dst_f = open(dst, 'w');
+	if (!dst_f) { src_f.close(); return false; }
+	let ok = true, chunk;
+	while ((chunk = src_f.read(65536)) && length(chunk)) {
+		if (dst_f.write(chunk) == null) { ok = false; break; }
+	}
+	src_f.close();
+	dst_f.close();
+	if (!ok) { unlink(dst); return false; }
+	unlink(src);
+	return true;
+}
+
 function is_present(cmd) {
 	if (index(cmd, '/') >= 0)
 		return access(cmd, 'x') == true;
@@ -756,12 +774,12 @@ function adb_file(action) {
 	case 'create':
 	case 'backup':
 		if (stat(dns_output.file)?.size > 0)
-			return rename(dns_output.file, dns_output.cache) == true;
+			return move_file(dns_output.file, dns_output.cache);
 		return false;
 	case 'restore':
 	case 'use':
 		if (stat(dns_output.cache)?.size > 0)
-			return rename(dns_output.cache, dns_output.file) == true;
+			return move_file(dns_output.cache, dns_output.file);
 		return false;
 	case 'test':
 	case 'test_file':
@@ -1653,7 +1671,7 @@ function download_dnsmasq_file() {
 	output.info('Downloading dnsmasq file ');
 	process_file_url(null, cfg.dnsmasq_config_file_url, 'file');
 	output.dns('Moving dnsmasq file ');
-	if (rename(tmp.b, dns_output.file)) {
+	if (move_file(tmp.b, dns_output.file)) {
 		output.ok();
 	} else {
 		output.fail();
@@ -1878,7 +1896,7 @@ function download_lists() {
 	output.verbose('[PROC] ' + step_title + ' ');
 	status_data.message = get_text('statusProcessing') + ': ' + step_title;
 
-	if (rename(tmp.b, dns_output.file)) {
+	if (move_file(tmp.b, dns_output.file)) {
 		output.ok();
 	} else {
 		output.fail();
@@ -2730,6 +2748,7 @@ function get_init_status(name) {
 		stats: svc_data?.stats || '',
 		entries: svc_data?.entries || 0,
 		dns: svc_data?.dns || cfg.dns,
+		pause_timeout: cfg.pause_timeout,
 		outputFile: svc_data?.outputFile || dns_output.file,
 		outputCache: svc_data?.outputCache || dns_output.cache,
 		outputGzip: gzip_path,
