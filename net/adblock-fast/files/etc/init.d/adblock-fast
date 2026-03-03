@@ -15,7 +15,7 @@ if type extra_command 1>/dev/null 2>&1; then
 	extra_command 'check_lists' 'Checks if specified domain is found in enabled block-lists'
 	extra_command 'dl' 'Force-downloads all enabled block-list'
 	extra_command 'killcache' 'Delete all cached files'
-	extra_command 'pause' 'Pauses ad-blocking for specified number of seconds (default: 60)'
+	extra_command 'pause' 'Pauses ad-blocking for specified number of seconds (default: 20)'
 	extra_command 'show_blocklist' 'List currently blocked domains'
 	extra_command 'sizes' 'Displays the file-sizes of configured block-lists'
 	extra_command 'version' 'Show version information'
@@ -108,7 +108,7 @@ load_validate_config() {
 		'config_update_enabled:bool:0' \
 		'config_update_url:string:https://cdn.jsdelivr.net/gh/openwrt/packages/net/adblock-fast/files/adblock-fast.config.update' \
 		'download_timeout:range(1,60):20' \
-		'pause_timeout:range(1,60):20' \
+		'pause_timeout:range(1,600):20' \
 		'curl_additional_param:or("", string)' \
 		'curl_max_file_size:or("", uinteger)' \
 		'curl_retry:range(0,30):3' \
