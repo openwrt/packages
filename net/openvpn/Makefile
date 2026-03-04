@@ -91,14 +91,6 @@ define Build/Configure
 endef
 
 define Package/openvpn-$(BUILD_VARIANT)/install
-	$(INSTALL_DIR) \
-		$(1)/etc/init.d \
-		$(1)/etc/config \
-		$(1)/etc/openvpn \
-		$(1)/lib/functions \
-		$(1)/usr/libexec \
-		$(1)/etc/hotplug.d/openvpn
-
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) \
 		$(PKG_INSTALL_DIR)/usr/sbin/openvpn \
