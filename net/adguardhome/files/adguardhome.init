@@ -48,7 +48,10 @@ start_service() {
 	fi
 
 	local config_file='/etc/adguardhome/adguardhome.yaml'
+	local gc=0
 	local group='adguardhome'
+	local maxprocs=0
+	local memlimit=0
 	local user='adguardhome'
 	local verbose=0
 	local work_dir='/var/lib/adguardhome'
@@ -70,6 +73,9 @@ start_service() {
 	procd_open_instance
 
 	procd_set_param command "$PROG"
+	[ "$gc" -le 0 ] || procd_append_param env GOGC="$gc"
+	[ "$maxprocs" -le 0 ] || procd_append_param env GOMAXPROCS="$maxprocs"
+	[ "$memlimit" -le 0 ] || procd_append_param env GOMEMLIMIT="$memlimit"
 	procd_append_param command --config "$config_file"
 	procd_append_param command --logfile syslog
 	procd_append_param command --no-check-update
