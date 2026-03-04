@@ -92,34 +92,32 @@ endef
 
 define Package/openvpn-$(BUILD_VARIANT)/install
 	$(INSTALL_DIR) \
-		$(1)/usr/sbin \
-		$(1)/usr/share/openvpn \
 		$(1)/etc/init.d \
 		$(1)/etc/config \
 		$(1)/etc/openvpn \
-		$(1)/etc/uci-defaults \
 		$(1)/lib/functions \
-		$(1)/lib/netifd/proto \
-		$(1)/lib/upgrade/keep.d \
 		$(1)/usr/libexec \
 		$(1)/etc/hotplug.d/openvpn
 
+	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) \
 		$(PKG_INSTALL_DIR)/usr/sbin/openvpn \
 		$(1)/usr/sbin/
 
+	$(INSTALL_DIR) $(1)/lib/netifd/proto
 	$(INSTALL_BIN) \
 		files/lib/netifd/proto/openvpn.sh \
 		$(1)/lib/netifd/proto/
 
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) \
 		files/etc/uci-defaults/60_openvpn_migrate.sh \
 		$(1)/etc/uci-defaults/
 
+	$(INSTALL_DIR) $(1)/usr/share/openvpn
 	$(INSTALL_DATA) \
 		files/openvpn.options \
 		$(1)/usr/share/openvpn/openvpn.options
-
 	$(INSTALL_BIN) \
 		files/up.uc files/down.uc files/route-pre-down.uc files/route-up.uc \
 		files/ipchange.uc \
@@ -127,6 +125,7 @@ define Package/openvpn-$(BUILD_VARIANT)/install
 		files/auth-user-pass-verify.uc files/tls-verify.uc \
 		$(1)/usr/share/openvpn/
 
+	$(INSTALL_DIR) $(1)/lib/upgrade/keep.d
 	$(INSTALL_DATA) \
 		files/openvpn.sysupgrade \
 		$(1)/lib/upgrade/keep.d/openvpn
