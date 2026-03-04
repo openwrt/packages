@@ -111,10 +111,16 @@ define Package/openvpn-$(BUILD_VARIANT)/install
 		files/openvpn.options \
 		$(1)/usr/share/openvpn/openvpn.options
 	$(INSTALL_BIN) \
-		files/up.uc files/down.uc files/route-pre-down.uc files/route-up.uc \
+		files/up.uc\
+		files/down.uc \
+		files/route-pre-down.uc \
+		files/route-up.uc \
 		files/ipchange.uc \
-		files/client-connect.uc files/client-disconnect.uc files/client-crresponse.uc \
-		files/auth-user-pass-verify.uc files/tls-verify.uc \
+		files/client-connect.uc \
+		files/client-disconnect.uc \
+		files/client-crresponse.uc \
+		files/auth-user-pass-verify.uc \
+		files/tls-verify.uc \
 		$(1)/usr/share/openvpn/
 
 	$(INSTALL_DIR) $(1)/lib/upgrade/keep.d
