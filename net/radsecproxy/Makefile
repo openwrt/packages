@@ -15,7 +15,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/radsecproxy/radsecproxy/releases/download/$(PKG_VERSION)/
 PKG_HASH:=e08e4e04d188deafd0b55b2f66b1e7fff9bdb553fb170846590317d02c9dc5db
 
-PKG_MAINTAINER:=Toke Høiland-Jørgensen <toke@toke.dk>
+PKG_MAINTAINER:=
 PKG_LICENSE:=BSD-3-CLAUSE
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:uninett:radsecproxy
