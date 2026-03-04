@@ -125,8 +125,8 @@ define Package/openvpn-$(BUILD_VARIANT)/install
 
 	$(INSTALL_DIR) $(1)/lib/upgrade/keep.d
 	$(INSTALL_DATA) \
-		files/openvpn.sysupgrade \
-		$(1)/lib/upgrade/keep.d/openvpn
+		files/lib/upgrade/keep.d/openvpn \
+		$(1)/lib/upgrade/keep.d/
 endef
 
 $(eval $(call BuildPackage,openvpn-openssl))
