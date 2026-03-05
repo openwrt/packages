@@ -37,7 +37,7 @@ option_builder() {
 				list) proto_config_add_array "$f:list" ;;
 			esac
 		elif [ "$action" = "build" ]; then
-			[ "${f#*:}" = "d" ] && [ "$allow_deprecated" = 0 ] && continue
+			[ "${f#*:}" = "d" ] && [ "$ALLOW_DEPRECATED" = 0 ] && continue
 			case "$opt_type" in
 				bool)
 					json_get_var v "$f"
@@ -97,12 +97,13 @@ proto_openvpn_init_config() {
 
 proto_openvpn_setup() {
 	local config="$1"
-	local allow_deprecated exec_params
-	allow_deprecated=0
+	local exec_params
 
 	exec_params=
 
-	json_get_var allow_deprecated allow_deprecated
+	# alllow deprecated OpenVPN configuration values by default
+	json_get_var ALLOW_DEPRECATED allow_deprecated
+	[ -z "$ALLOW_DEPRECATED" ] && ALLOW_DEPRECATED=0
 
 	# Build exec params from configured options we get from ubus values stored during init_config
 	option_builder build OPENVPN_BOOLS bool
