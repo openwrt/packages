@@ -1,9 +1,16 @@
-'use strict';
+#! /usr/bin/ucode -S
 
 import { popen, readfile } from 'fs';
 import { cursor } from 'uci';
+import * as uloop from 'uloop';
 
 const ubus = require('ubus').connect();
+
+if (uloop.init() != true) {
+	warn('uloop.init() failed');
+
+	exit(1);
+}
 
 function get_str_raw(iface, property) {
 	return readfile(sprintf('/var/run/mwan3track/%s/%s', iface, property));
@@ -40,6 +47,17 @@ function ucibool(val) {
 			return !!int(val);
 	}
 }
+
+const interfaces = {};
+
+cursor().foreach('mwan3', 'interface', interface => {
+	interfaces[interface['.name']] = {
+		'config': {
+			'enabled': ucibool(interface['enabled']),
+			'track_ip': interface['track_ip'],
+		},
+	};
+});
 
 function get_mwan3track_status(iface, uci_track_ips, procd) {
 	if (length(uci_track_ips) == 0) {
@@ -116,44 +134,42 @@ function get_policies(version) {
 }
 
 function interfaces_status(request) {
-	const uci = cursor();
 	const procd = ubus.call('service', 'list', { 'name': 'mwan3' })?.mwan3?.instances;
-	const interfaces = {};
-	uci.foreach('mwan3', 'interface', intf => {
-		const ifname = intf['.name'];
-		if (request.args.interface != null && request.args.interface != ifname) {
+	const result = {};
+	for (let interface_name, interface_data in interfaces) {
+		if (request.args.interface != null && request.args.interface != interface_name) {
 			return;
 		}
-		const netstatus = ubus.call(sprintf('network.interface.%s', ifname), 'status', {});
+		const netstatus = ubus.call(sprintf('network.interface.%s', interface_name), 'status', {});
 		const uptime = get_uptime();
-		const uci_track_ips = intf['track_ip'];
-		const track_status = get_mwan3track_status(ifname, uci_track_ips, procd);
+		const uci_track_ips = interface_data.config.track_ip;
+		const track_status = get_mwan3track_status(interface_name, uci_track_ips, procd);
 		const track_ips = [];
 		for (let ip in uci_track_ips) {
 			push(track_ips, {
 				'ip': ip,
-				'status': get_str(ifname, sprintf('TRACK_%s', ip)) || 'unknown',
-				'latency': get_int(ifname, sprintf('LATENCY_%s', ip)),
-				'packetloss': get_int(ifname, sprintf('LOSS_%s', ip)),
+				'status': get_str(interface_name, sprintf('TRACK_%s', ip)) || 'unknown',
+				'latency': get_int(interface_name, sprintf('LATENCY_%s', ip)),
+				'packetloss': get_int(interface_name, sprintf('LOSS_%s', ip)),
 			});
 		}
-		interfaces[ifname] = {
-			'age': get_x_time(uptime, ifname, 'TIME'),
-			'online': get_x_time(uptime, ifname, 'ONLINE'),
-			'offline': get_x_time(uptime, ifname, 'OFFLINE'),
+		result[interface_name] = {
+			'age': get_x_time(uptime, interface_name, 'TIME'),
+			'online': get_x_time(uptime, interface_name, 'ONLINE'),
+			'offline': get_x_time(uptime, interface_name, 'OFFLINE'),
 			'uptime': netstatus?.uptime || 0,
-			'score': get_int(ifname, 'SCORE'),
-			'lost': get_int(ifname, 'LOST'),
-			'turn': get_int(ifname, 'TURN'),
-			'status': get_str(ifname, 'STATUS') || 'unknown',
-			'enabled': ucibool(intf['enabled']),
+			'score': get_int(interface_name, 'SCORE'),
+			'lost': get_int(interface_name, 'LOST'),
+			'turn': get_int(interface_name, 'TURN'),
+			'status': get_str(interface_name, 'STATUS') || 'unknown',
+			'enabled': interface_data.config.enabled,
 			'running': track_status == 'active',
 			'tracking': track_status,
 			'up': netstatus?.up || false,
 			'track_ip': track_ips,
 		};
-	});
-	return interfaces;
+	}
+	return result;
 }
 
 const methods = {
@@ -199,4 +215,24 @@ const methods = {
 	}
 };
 
-return { 'mwan3': methods };
+if (ubus.publish('mwan3', methods) == null) {
+	warn(`Error registering mwan3 service: ${ubus.error()}\n`);
+
+	exit(1);
+}
+
+while (true) {
+	const result = uloop.run();
+
+	if (result == null) {
+		warn(`Error occurred during uloop execution: ${uloop.error()}\n`);
+
+		exit(1);
+	} else if (result != 0) {
+		warn(`Unhandled signal: ${result}; shut down service\n`);
+
+		uloop.end();
+
+		break;
+	}
+}
