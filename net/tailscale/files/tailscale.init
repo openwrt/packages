@@ -31,7 +31,7 @@ start_service() {
   procd_set_param env TS_DEBUG_FIREWALL_MODE="$fw_mode"
 
   # Disable logging to log.tailscale.com
-  procd_set_param env TS_NO_LOGS_NO_SUPPORT=true
+  procd_append_param env TS_NO_LOGS_NO_SUPPORT=true
 
   # Set the port to listen on for incoming VPN packets.
   # Remote nodes will automatically be informed about the new port number,
