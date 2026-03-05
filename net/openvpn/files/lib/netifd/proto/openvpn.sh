@@ -163,7 +163,7 @@ proto_openvpn_setup() {
 	# ${tls_exit:+--tls-exit} \
 
 	# shellcheck disable=SC2086
-	proto_run_command "$config" openvpn $exec_params
+	eval "proto_run_command '$config' openvpn $exec_params"
 
 	# last param wins; user provided status or syslog supersedes these.
 }
