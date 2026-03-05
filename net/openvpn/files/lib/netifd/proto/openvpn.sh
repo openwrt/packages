@@ -159,6 +159,43 @@ proto_openvpn_setup() {
 	# Testing option
 	# ${tls_exit:+--tls-exit} \
 
+	# Check 'script_security' option
+	json_get_var script_security script_security
+	[ -z "$script_security" ] && {
+		script_security=3
+	}
+
+	# Add default hotplug handling if 'script_security' option is equal '3'
+	if [ "$script_security" -eq '3' ]; then
+		logger -t "openvpn(proto)" \
+			-p daemon.info "Enabled default hotplug processing, as the openvpn configuration 'script_security' is '3'"
+
+		append exec_params " --setenv INTERFACE $config"
+		append exec_params " --script-security 3"
+
+		append exec_params "--up '/usr/libexec/openvpn-hotplug'"
+		[ -n "$up" ] && append exec_params "--setenv user_up '$up'"
+
+		append exec_params "--down '/usr/libexec/openvpn-hotplug'"
+		[ -n "$down" ] && append exec_params "--setenv user_down '$down'"
+
+		append exec_params "--route-up '/usr/libexec/openvpn-hotplug'"
+		[ -n "$route_up" ] && append exec_params "--setenv user_route_up '$route_up'"
+
+		append exec_params "--route-pre-down '/usr/libexec/openvpn-hotplug'"
+		[ -n "$route_pre_down" ] && append exec_params "--setenv user_route_pre_down '$route_pre_down'"
+
+		json_get_var client client
+		json_get_var tls_client tls_client
+		if [ "$client" = 1 ] || [ "$tls_client" = 1 ]; then
+			append exec_params "--ipchange '/usr/libexec/openvpn-hotplug'"
+			[ -n "$ip_change" ] && append exec_params "--setenv user_ipchange '$ipchange'"
+		fi
+	else
+		logger -t "openvpn(proto)" \
+			-p daemon.warn "Default hotplug processing disabled, as the openvpn configuration 'script_security' is less than '3'"
+	fi
+
 	# shellcheck disable=SC2086
 	proto_run_command "$config" openvpn $exec_params
 
