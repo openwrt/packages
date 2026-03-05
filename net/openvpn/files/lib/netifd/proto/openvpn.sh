@@ -139,7 +139,7 @@ proto_openvpn_setup() {
 		umask 022
 		append exec_params " --auth-user-pass $auth_file"
 	elif [ -n "$auth_user_pass" ]; then
-		auth_file="$auth_user_pass"
+		append exec_params " --auth-user-pass $auth_user_pass"
 	fi
 
 	# shellcheck disable=SC2154
