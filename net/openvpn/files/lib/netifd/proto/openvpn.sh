@@ -101,6 +101,11 @@ proto_openvpn_setup() {
 
 	exec_params=
 
+	json_get_var dev_type dev_type
+	[ -z "$dev_type" ] && append exec_params " --dev-type tun"
+	json_get_var ovpnproto ovpnproto
+	[ -n "$ovpnproto" ] && append exec_params " --proto $ovpnproto"
+
 	# alllow deprecated OpenVPN configuration values by default
 	json_get_var ALLOW_DEPRECATED allow_deprecated
 	[ -z "$ALLOW_DEPRECATED" ] && ALLOW_DEPRECATED=0
@@ -150,12 +155,8 @@ proto_openvpn_setup() {
 	# Testing option
 	# ${tls_exit:+--tls-exit} \
 
-	json_get_var dev_type dev_type
-	json_get_var ovpnproto ovpnproto
 	# shellcheck disable=SC2086
 	proto_run_command "$config" openvpn \
-		$([ -z "$dev_type" ] && echo " --dev-type tun") \
-		$([ -z "$ovpnproto" ] && echo " --proto $ovpnproto") \
 		--cd "$cd_dir" \
 		--status "/var/run/openvpn.$config.status" \
 		--syslog "openvpn_$config" \
