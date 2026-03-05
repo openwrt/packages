@@ -97,7 +97,7 @@ proto_openvpn_init_config() {
 
 proto_openvpn_setup() {
 	local config="$1"
-	local exec_params
+	local exec_params cd_dir
 
 	exec_params=
 
@@ -105,6 +105,14 @@ proto_openvpn_setup() {
 	[ -z "$dev_type" ] && append exec_params " --dev-type tun"
 	json_get_var ovpnproto ovpnproto
 	[ -n "$ovpnproto" ] && append exec_params " --proto $ovpnproto"
+
+	# shellcheck disable=SC2154
+	cd_dir="${config_file%/*}"
+	[ "$cd_dir" = "$config_file" ] && cd_dir="/"
+	append exec_params " --cd $cd_dir"
+	append exec_params " --status /var/run/openvpn.$config.status"
+	append exec_params " --syslog openvpn_$config"
+	append exec_params " --tmp-dir /var/run"
 
 	# alllow deprecated OpenVPN configuration values by default
 	json_get_var ALLOW_DEPRECATED allow_deprecated
@@ -148,20 +156,11 @@ proto_openvpn_setup() {
 		append exec_params " --auth-user-pass $auth_user_pass"
 	fi
 
-	# shellcheck disable=SC2154
-	cd_dir="${config_file%/*}"
-	[ "$cd_dir" = "$config_file" ] && cd_dir="/"
-
 	# Testing option
 	# ${tls_exit:+--tls-exit} \
 
 	# shellcheck disable=SC2086
-	proto_run_command "$config" openvpn \
-		--cd "$cd_dir" \
-		--status "/var/run/openvpn.$config.status" \
-		--syslog "openvpn_$config" \
-		--tmp-dir "/var/run" \
-		$exec_params
+	proto_run_command "$config" openvpn $exec_params
 
 	# last param wins; user provided status or syslog supersedes these.
 }
