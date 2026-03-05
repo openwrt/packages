@@ -240,6 +240,8 @@ define Package/ffmpeg/Default/description
  FFmpeg licensing / patent issues are complex. It is the responsibility of the
  user to understand any requirements in this regard with its usage. See:
  https://ffmpeg.org/legal.html for further information.
+
+ Patented codecs and technologies are available when CONFIG_BUILD_PATENTED=y.
 endef
 
 
@@ -339,7 +341,7 @@ endef
 define Package/libffmpeg-audio-dec/description
 $(call Package/ffmpeg/Default/description)
  .
- This package contains FFmpeg shared libraries for audio decoding
+ This package contains FFmpeg shared libraries for audio decoding.
 endef
 
 
