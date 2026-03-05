@@ -162,6 +162,28 @@ proto_openvpn_setup() {
 	# Testing option
 	# ${tls_exit:+--tls-exit} \
 
+	# Add hotplug handling
+	append exec_params " --script-security 3"
+
+	append exec_params " --up '/usr/libexec/openvpn-hotplug up $config'"
+	[ -n "$up" ] && append exec_params " --setenv user_up '$up'"
+
+	append exec_params " --down '/usr/libexec/openvpn-hotplug down $config'"
+	[ -n "$down" ] && append exec_params " --setenv user_down '$down'"
+
+	append exec_params " --route-up '/usr/libexec/openvpn-hotplug route-up $config'"
+	[ -n "$route_up" ] && append exec_params " --setenv user_route_up '$route_up'"
+
+	append exec_params " --route-pre-down '/usr/libexec/openvpn-hotplug route-pre-down $config'"
+	[ -n "$route_pre_down" ] && append exec_params " --setenv user_route_pre_down '$route_pre_down'"
+
+	json_get_var client client
+	json_get_var tls_client tls_client
+	if [ "$client" = 1 ] || [ "$tls_client" = 1 ]; then
+		append exec_params " --ipchange '/usr/libexec/openvpn-hotplug ipchange $config'"
+		[ -n "$ip_change" ] && append exec_params " --setenv user_ipchange '$ipchange'"
+	fi
+
 	# shellcheck disable=SC2086
 	eval "proto_run_command '$config' openvpn $exec_params"
 
