@@ -93,9 +93,7 @@ proto_openvpn_init_config() {
 	option_builder add OPENVPN_PARAMS_STRING string
 	option_builder add OPENVPN_PARAMS_FILE file
 	option_builder add OPENVPN_LIST list
-
 }
-
 
 proto_openvpn_setup() {
 	local config="$1"
@@ -164,7 +162,6 @@ proto_openvpn_setup() {
 		$exec_params
 
 	# last param wins; user provided status or syslog supersedes these.
-
 }
 
 proto_openvpn_renew() {
@@ -173,7 +170,6 @@ proto_openvpn_renew() {
 
 	sigusr1="$(kill -l SIGUSR1)"
 	[ -n "$sigusr1" ] && proto_kill_command "$config" "$sigusr1"
-
 }
 
 proto_openvpn_teardown() {
@@ -184,7 +180,6 @@ proto_openvpn_teardown() {
 		"/var/run/openvpn.$iface.status" 
 	proto_kill_command "$iface"
 }
-
 
 [ -n "$INCLUDE_ONLY" ] || {
 	add_protocol openvpn
