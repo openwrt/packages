@@ -16,7 +16,7 @@ PKG_HASH:=6279836d581513a26f1bf235f9acd333bc9115683f14f7e8fae46c98fc50e015
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
+PKG_MAINTAINER:=
 
 PKG_BUILD_DEPENDS:=python-hatchling/host python-hatch-vcs/host python-hatch-fancy-pypi-readme/host
 
