@@ -132,6 +132,7 @@ snmpd_access_default_add() {
 	config_get mode "$cfg" Mode
 	[ -n "$mode" ] || return 0
 	config_get community "$cfg" CommunityName
+	[ -n "$community" ] || return 0
 	config_get oidrestrict "$cfg" RestrictOID
 	config_get oid "$cfg" RestrictedOID
 	echo -n "$mode $community default" >> $CONFIGFILE
@@ -145,6 +146,7 @@ snmpd_access_HostName_add() {
 	config_get mode "$cfg" Mode
 	[ -n "$mode" ] || return 0
 	config_get community "$cfg" CommunityName
+	[ -n "$community" ] || return 0
 	config_get oidrestrict "$cfg" RestrictOID
 	config_get oid "$cfg" RestrictedOID
 	echo -n "$mode $community $hostname" >> $CONFIGFILE
@@ -159,6 +161,7 @@ snmpd_access_HostIP_add() {
 	config_get mode "$cfg" Mode
 	[ -n "$mode" ] || return 0
 	config_get community "$cfg" CommunityName
+	[ -n "$community" ] || return 0
 	config_get oidrestrict "$cfg" RestrictOID
 	config_get oid "$cfg" RestrictedOID
 	echo -n "$mode $community $host_ip/$ip_mask" >> $CONFIGFILE
