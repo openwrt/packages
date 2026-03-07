@@ -17,6 +17,9 @@ start_service() {
 	[ -x /sbin/ujail ] && {
 		procd_add_jail snowflake-proxy ronly
 		procd_add_jail_mount /etc/ssl/certs
+		# change the following if specifying non default paths with the -geoipdb or -geoip6db command parameters 
+		procd_add_jail_mount /usr/share/tor/geoip
+		procd_add_jail_mount /usr/share/tor/geoip6
 		procd_set_param no_new_privs 1
 	}
 	procd_close_instance
