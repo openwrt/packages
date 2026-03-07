@@ -160,6 +160,7 @@ snmpd_access_HostIP_add() {
 	config_get host_ip "$cfg" HostIP
 	[ -n "$host_ip" ] || return 0
 	config_get ip_mask "$cfg" IPMask
+	[ -n "$ip_mask" ] || return 0
 	config_get mode "$cfg" Mode
 	[ -n "$mode" ] || return 0
 	config_get community "$cfg" CommunityName
