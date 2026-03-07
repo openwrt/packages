@@ -14,11 +14,22 @@ else
 	devpath=/sys"${DEVPATH%/*/*/*/*}"
 fi
 
-# If a network with the device path already exists, set control model to the
-# current detected one and exit.
 uci_network=$(uci show network)
+
+# Delete the interface name if it's already set somewhere.
+device_section=$(echo "$uci_network" | grep ".device='$DEVICENAME'" | cut -d. -f2)
+if [ -n "$device_section" ]; then
+	uci delete network.$device_section.device
+	uci commit network
+fi
+
+# If a network with the device path already exists, set the interface name and
+# control model to the current detected one, bring up the network, and exit.
+# Setting the interface name is solely for the ease of matching the network to
+# the corresponding interface.
 section=$(echo "$uci_network" | grep ".devpath='$devpath'" | cut -d. -f2)
 if [ -n "$section" ]; then
+	uci set network.$section.device="$DEVICENAME"
 	uci set network.$section.proto="$cur_proto"
 	uci commit network
 	ifup $section
@@ -44,6 +55,7 @@ while echo "$uci_network" | grep -q "wwan$index"; do
 done
 
 uci set network.wwan$index=interface
+uci set network.wwan$index.device="$DEVICENAME"
 uci set network.wwan$index.devpath="$devpath"
 uci set network.wwan$index.proto="$cur_proto"
 uci set network.wwan$index.apn='internet'
