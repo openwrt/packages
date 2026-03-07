@@ -158,6 +158,7 @@ snmpd_access_HostName_add() {
 snmpd_access_HostIP_add() {
 	local cfg="$1"
 	config_get host_ip "$cfg" HostIP
+	[ -n "$host_ip" ] || return 0
 	config_get ip_mask "$cfg" IPMask
 	config_get mode "$cfg" Mode
 	[ -n "$mode" ] || return 0
