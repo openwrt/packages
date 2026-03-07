@@ -102,6 +102,7 @@ start_service() {
 	procd_add_jail_mount /etc/hosts
 	procd_add_jail_mount /etc/ssl/certs
 	config_list_foreach config jail_mount procd_add_jail_mount
+	config_list_foreach config jail_mount_rw procd_add_jail_mount_rw
 
 	procd_close_instance
 }
