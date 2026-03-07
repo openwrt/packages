@@ -1,0 +1,26 @@
+openwrt-hardening-base
+----------------------
+Low-risk sysctl hardening intended for broad compatibility.
+
+openwrt-hardening-strict
+------------------------
+Adds stricter kernel hardening settings on top of the base profile.
+
+Not included on purpose
+-----------------------
+The following settings are intentionally NOT enabled by these packages because
+they are either irreversible, more likely to break services, or too deployment-
+specific for a generic package:
+
+- kernel.modules_disabled=1
+- TCP congestion control changes
+- qdisc / traffic shaping tuning
+- firewall policy changes
+- conntrack timeout changes
+
+Operational note
+----------------
+These packages install /etc/sysctl.d snippets. Installation applies the settings
+at runtime via the normal OpenWrt sysctl restart path. Removing the package
+removes the configuration for future boots, but runtime kernel values may persist
+until reboot.
