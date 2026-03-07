@@ -18,7 +18,9 @@ PKG_BUILD_FLAGS:=no-mips16
 
 GO_PKG:=github.com/netbirdio/netbird
 GO_PKG_BUILD_PKG:=$(GO_PKG)/client
+GO_PKG_LDFLAGS:=-s -w
 GO_PKG_LDFLAGS_X:=$(GO_PKG)/version.version=$(PKG_VERSION)
+GO_PARAMS_EXTRA:=-trimpath
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
@@ -48,6 +50,7 @@ define Package/netbird/install
 	$(call GoPackage/Package/Install/Bin,$(PKG_INSTALL_DIR))
 	$(INSTALL_DIR) $(1)/usr/bin $(1)/etc/init.d
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/client $(1)/usr/bin/netbird
+	strip --strip-all $(1)/usr/bin/netbird
 	$(INSTALL_BIN) ./files/netbird.init $(1)/etc/init.d/netbird
 endef
 
