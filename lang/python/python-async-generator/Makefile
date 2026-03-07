@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-async-generator
 PKG_VERSION:=1.10
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=async_generator
 PKG_HASH:=6ebb3d106c12920aaae42ccb6f787ef5eefdcdd166ea3d628fa8476abe712144
 
-PKG_LICENSE:=Apache-2.0|MIT
-PKG_LICENSE_FILES:=LICENSE.APACHE2|LICENSE.MIT
+PKG_LICENSE:=Apache-2.0 MIT
+PKG_LICENSE_FILES:=LICENSE.APACHE2 LICENSE.MIT
 PKG_MAINTAINER:=Julien Malik <julien.malik@paraiso.me>
 
 include ../pypi.mk

@@ -9,14 +9,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libstrophe
 PKG_VERSION:=0.13.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/strophe/libstrophe/releases/download/$(PKG_VERSION)
 PKG_HASH:=86c0abd348ae66feb40b6886f2c7f04525f1d5b20a48c10d4db4ed532dc63f22
 
 PKG_MAINTAINER:=Chih-Wei Chen <changeway@gmail.com>
-PKG_LICENSE:=MIT OR GPL-3.0-only
+PKG_LICENSE:=GPL-3.0-only MIT
 PKG_LICENSE_FILES:=COPYING
 
 PKG_FIXUP:=autoreconf
