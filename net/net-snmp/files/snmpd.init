@@ -143,6 +143,7 @@ snmpd_access_default_add() {
 snmpd_access_HostName_add() {
 	local cfg="$1"
 	config_get hostname "$cfg" HostName
+	[ -n "$hostname" ] || return 0
 	config_get mode "$cfg" Mode
 	[ -n "$mode" ] || return 0
 	config_get community "$cfg" CommunityName
