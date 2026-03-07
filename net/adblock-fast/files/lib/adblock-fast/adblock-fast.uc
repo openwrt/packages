@@ -470,8 +470,8 @@ function logger_debug(msg) {
 // ── Output Management ───────────────────────────────────────────────
 
 let _write = function(level, ...args) {
-	if (!cfg.verbosity)
-		cfg.verbosity = int(uci(pkg.name).get(pkg.name, 'config', 'verbosity') || '1');
+	if (cfg.verbosity == null)
+		cfg.verbosity = 1;
 	let msg = join('', args);
 	if (level != null && (cfg.verbosity & level) == 0) return;
 
@@ -2248,7 +2248,7 @@ function status_service(param) {
 		if (status) output.print(pkg.service_name + ' ' + status + '.\\n');
 	}
 
-	if (param == 'quiet' || param == 'on_start_success' || param == 'on_start_failure') return;
+	if (param == 'quiet') return;
 
 	for (let e in status_data.errors)
 		output.error(get_text(e.code, e.info));
@@ -2736,14 +2736,14 @@ function get_init_status(name) {
 		packageCompat: int(pkg.compat),
 
 		// Live-computed (cheap stat/uci checks)
-		enabled: service_enabled(pkg.name),
+		enabled: service_enabled(pkg.name) && !!cfg.enabled,
 		running: (stat(pkg.run_file)?.size > 0),
 		outputFileExists: (stat(svc_data?.outputFile || dns_output.file)?.size > 0) || false,
 		outputCacheExists: (stat(svc_data?.outputCache || dns_output.cache)?.size > 0) || false,
 		outputGzipExists: gzip_path ? (stat(gzip_path)?.size > 0) || false : false,
 
 		// From procd ubus data (pre-computed at start/dl time)
-		status: svc_data?.status || '',
+		status: svc_data?.status || 'statusStopped',
 		message: svc_data?.message || '',
 		stats: svc_data?.stats || '',
 		entries: svc_data?.entries || 0,
