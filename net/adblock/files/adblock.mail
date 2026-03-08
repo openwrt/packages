@@ -44,7 +44,7 @@ adb_mailtext="${adb_mailtext}</pre></body></html>"
 # send mail
 #
 if [ -x "${adb_mailcmd}" ]; then
-	printf "%b" "${adb_mailhead}${adb_mailtext}" 2>/dev/null | "${adb_mailcmd}" ${debug} -a "${adb_mailprofile}" "${adb_mailreceiver}" >/dev/null 2>&1
+	printf "%b" "${adb_mailhead}${adb_mailtext}" 2>/dev/null | "${adb_mailcmd}" ${debug} -a "${adb_mailprofile}" "${adb_mailreceiver}" 2>>"${adb_errorlog}"
 	if [ "${?}" = "0" ]; then
 		f_log "info" "mail successfully sent to '${adb_mailreceiver}'"
 	else
