@@ -11,6 +11,7 @@ START=20
 USE_PROCD=1
 
 if type extra_command >/dev/null 2>&1; then
+	extra_command 'enable_forward' "Enables forwarding from LAN > WAN, can be used if the router is stuck in Disabled state"
 	extra_command 'netifd' "Netifd extensions operations"
 	extra_command 'on_interface_reload' "Run service on indicated interface reload"
 	extra_command 'status' "Generates output required to troubleshoot routing issues
@@ -338,8 +339,7 @@ is_negated() { [ "${1:0:1}" = '!' ]; }
 is_netifd_table() { grep -q "ip.table.*$1" /etc/config/network; }
 is_netifd_interface() { local iface="$1"; [ -n "$(uci_get 'network' "$iface" 'ip4table')" ] || [ -n "$(uci_get 'network' "$iface" 'ip6table')" ]; }
 is_oc() { local p; network_get_protocol p "$1"; [ "${p:0:11}" = "openconnect" ]; }
-is_ovpn() { local d; uci_get_device d "$1"; [ "${d:0:3}" = "tun" ] || [ "${d:0:3}" = "tap" ] || [ -f "/sys/devices/virtual/net/${d}/tun_flags" ]; }
-is_ovpn_valid() { local dev_net dev_ovpn; uci_get_device dev_net "$1"; dev_ovpn="$(uci_get 'openvpn' "$1" 'dev')"; [ -n "$dev_net" ] && [ -n "$dev_ovpn" ] && [ "$dev_net" = "$dev_ovpn" ]; }
+is_ovpn() { local d p; uci_get_device d "$1"; network_get_protocol p "$1"; [ "${d:0:3}" = "tun" ] || [ "${d:0:3}" = "tap" ] || [ "${p:0:7}" = "openvpn" ] || [ -f "/sys/devices/virtual/net/${d}/tun_flags" ]; }
 is_phys_dev() { [ "${1:0:1}" = "@" ] && [ -L "/sys/class/net/${1#@}" ]; }
 is_present() { command -v "$1" >/dev/null 2>&1; }
 is_service_running() { is_service_running_nft; }
@@ -370,7 +370,7 @@ is_wan() { is_wan4 "$1" || is_wan6 "$1"; }
 is_wg() { local p lp; network_get_protocol p "$1"; uci_get_listen_port lp "$1"; [ -z "$lp" ] && [ "${p:0:9}" = "wireguard" ]; }
 is_wg_server() { local p lp; network_get_protocol p "$1"; uci_get_listen_port lp "$1"; [ -n "$lp" ] && [ "${p:0:9}" = "wireguard" ]; }
 is_xray() { [ -n "$(get_xray_traffic_port "$1")" ]; }
-dnsmasq_kill() { pidof dnsmasq >/dev/null && kill -HUP $(pidof dnsmasq); }
+dnsmasq_kill() { pidof dnsmasq >/dev/null && kill -HUP "$(pidof dnsmasq)"; }
 dnsmasq_restart() { output 3 'Restarting dnsmasq '; if /etc/init.d/dnsmasq restart >/dev/null 2>&1; then output_okn; else output_failn; fi; }
 exists_lockfile() { [ -e "$packageLockFile" ]; }
 # shellcheck disable=SC2155
@@ -403,6 +403,12 @@ config_get_list() { config_get "$@"; }
 uci_get_device() {
 	local __tmp
 	__tmp="$(uci_get 'network' "$2" 'device')"
+	[ -z "$__tmp" ] && unset "$1" && return 1
+	eval "$1=$__tmp"
+}
+uci_get_dev() {
+	local __tmp
+	__tmp="$(uci_get 'network' "$2" 'dev')"
 	[ -z "$__tmp" ] && unset "$1" && return 1
 	eval "$1=$__tmp"
 }
@@ -557,6 +563,22 @@ mwan4_get_mmx_mask() {
 
 print_json_bool() { json_init; json_add_boolean "$1" "$2"; json_dump; json_cleanup; }
 print_json_string() { json_init; json_add_string "$1" "$2"; json_dump; json_cleanup; }
+
+stop_forward() {
+	if [ -n "$strict_enforcement" ] && [ "$(cat /proc/sys/net/ipv4/ip_forward)" != "0" ]; then
+		/sbin/sysctl -w net.ipv4.ip_forward=0 >/dev/null 2>&1
+		/sbin/sysctl -w net.ipv6.conf.all.forwarding=0 >/dev/null 2>&1
+		output "Forwarding is disabled\n"
+	fi
+}
+enable_forward() {
+	if [ "$(cat /proc/sys/net/ipv4/ip_forward)" != "1" ]; then
+		/sbin/sysctl -w net.ipv4.ip_forward=1 >/dev/null 2>&1
+		/sbin/sysctl -w net.ipv6.conf.all.forwarding=1 >/dev/null 2>&1
+		output "Forwarding is enabled\n"
+	fi
+}
+
 try() {
 	if ! "$@" >/dev/null 2>&1; then
 		json add error 'errorTryFailed' "$*"
@@ -1327,8 +1349,8 @@ resolver() {
 				store_hash) return 0;;
 				wait)
 					[ -n "$resolverWorkingFlag" ] && return 0
-					local timeout="${iface:-30}" count=0
-					local hostname="$(uci_get 'system' '@system[0]' 'hostname' 'OpenWrt')"
+					local timeout="${iface:-30}" count=0 hostname
+					hostname="$(uci_get 'system' '@system[0]' 'hostname' 'OpenWrt')"
 					while [ "$count" -lt "$timeout" ]; do
 						if resolveip "$hostname" >/dev/null 2>&1; then
 							resolverWorkingFlag='true'
@@ -1426,8 +1448,8 @@ resolver() {
 				;;
 				wait)
 					[ -n "$resolverWorkingFlag" ] && return 0
-					local timeout="${iface:-30}" count=0
-					local hostname="$(uci_get 'system' '@system[0]' 'hostname' 'OpenWrt')"
+					local timeout="${iface:-30}" count=0 hostname
+					hostname="$(uci_get 'system' '@system[0]' 'hostname' 'OpenWrt')"
 					while [ "$count" -lt "$timeout" ]; do
 						if resolveip "$hostname" >/dev/null 2>&1; then
 							resolverWorkingFlag='true'
@@ -2044,14 +2066,14 @@ dns_policy_process() {
 	if is_supported_interface "$dest_dns_interface"; then
 		local d
 		for d in $(uci -q get network."$dest_dns_interface".dns); do
-				if ! is_family_mismatch "$src_addr" "$d"; then
-					if is_ipv4 "$d"; then
-						dest_dns_ipv4="${dest_dns_ipv4:-${d}}"
-					elif is_ipv6 "$d"; then
-						dest_dns_ipv6="${dest_dns_ipv6:-${d}}"
-					fi
+			if ! is_family_mismatch "$src_addr" "$d"; then
+				if is_ipv4 "$d"; then
+					dest_dns_ipv4="${dest_dns_ipv4:-${d}}"
+				elif is_ipv6 "$d"; then
+					dest_dns_ipv6="${dest_dns_ipv6:-${d}}"
 				fi
-			done
+			fi
+		done
 	fi
 
 	unset processDnsPolicyError
@@ -2204,6 +2226,27 @@ interface_routing() {
 				sync
 			fi
 
+			# Create the nft mark chain before any DSCP/ICMP rules that goto it
+			if ! nft_file 'match' 'temp' "${nftPrefix}_mark_${mark}"; then
+				nft add chain inet "$nftTable" "${nftPrefix}_mark_${mark}"
+				nft add rule inet "$nftTable" "${nftPrefix}_mark_${mark} ${nftRuleParams} meta mark set (meta mark & ${fw_maskXor}) | ${mark}"
+				nft add rule inet "$nftTable" "${nftPrefix}_mark_${mark} return"
+			fi
+
+			dscp="$(uci_get "$packageName" 'config' "${iface}_dscp" '0')"
+			if [ "$dscp" -ge '1' ] && [ "$dscp" -le '63' ]; then
+				nft add rule inet "$nftTable" "${nftPrefix}_prerouting ${nftIPv4Flag} dscp ${dscp} ${nftRuleParams} goto ${nftPrefix}_mark_${mark}"
+				if [ -n "$ipv6_enabled" ]; then
+					nft add rule inet "$nftTable" "${nftPrefix}_prerouting ${nftIPv6Flag} dscp ${dscp} ${nftRuleParams} goto ${nftPrefix}_mark_${mark}"
+				fi
+			fi
+			if [ "$iface" = "$icmp_interface" ]; then
+				nft add rule inet "$nftTable" "${nftPrefix}_output ${nftIPv4Flag} protocol icmp ${nftRuleParams} goto ${nftPrefix}_mark_${mark}"
+				if [ -n "$ipv6_enabled" ]; then
+					nft add rule inet "$nftTable" "${nftPrefix}_output ${nftIPv6Flag} protocol icmp ${nftRuleParams} goto ${nftPrefix}_mark_${mark}"
+				fi
+			fi
+
 			if [ -n "$dev4" ]; then
 				ipv4_error=0
 				ip -4 rule flush table "$tid" >/dev/null 2>&1
@@ -2216,14 +2259,6 @@ interface_routing() {
 						try ip -4 route replace default via "$gw4" dev "$dev4" table "$tid" || ipv4_error=1
 					fi
 					try ip -4 rule replace fwmark "${mark}/${fw_mask}" table "$tid" priority "$priority" || ipv4_error=1
-				fi
-
-				dscp="$(uci_get "$packageName" 'config' "${iface}_dscp" '0')"
-				if [ "$dscp" -ge '1' ] && [ "$dscp" -le '63' ]; then
-					nft add rule inet "$nftTable" "${nftPrefix}_prerouting ${nftIPv4Flag} dscp ${dscp} ${nftRuleParams} goto ${nftPrefix}_mark_${mark}"
-				fi
-				if [ "$iface" = "$icmp_interface" ]; then
-					nft add rule inet "$nftTable" "${nftPrefix}_output ${nftIPv4Flag} protocol icmp ${nftRuleParams} goto ${nftPrefix}_mark_${mark}"
 				fi
 			elif [ -n "$strict_enforcement" ] && ! { is_split_uplink && [ "$iface" = "$uplink_interface6" ]; }; then
 				ipv4_error=0
@@ -2255,27 +2290,12 @@ interface_routing() {
 					fi
 					try ip -6 rule replace fwmark "${mark}/${fw_mask}" table "$tid" priority "$priority" || ipv6_error=1
 				fi
-
-				dscp="$(uci_get "$packageName" 'config' "${iface}_dscp" '0')"
-				if [ "$dscp" -ge '1' ] && [ "$dscp" -le '63' ]; then
-					nft add rule inet "$nftTable" "${nftPrefix}_prerouting ${nftIPv6Flag} dscp ${dscp} ${nftRuleParams} goto ${nftPrefix}_mark_${mark}"
-				fi
-				if [ "$iface" = "$icmp_interface" ]; then
-					nft add rule inet "$nftTable" "${nftPrefix}_output ${nftIPv6Flag} protocol icmp ${nftRuleParams} goto ${nftPrefix}_mark_${mark}"
-				fi
 			elif [ -n "$ipv6_enabled" ] && [ -n "$strict_enforcement" ] && ! { is_split_uplink && [ "$iface" = "$uplink_interface4" ]; }; then
 				ipv6_error=0
 				ip -6 rule flush table "$tid" >/dev/null 2>&1
 				ip -6 route flush table "$tid" >/dev/null 2>&1
 				try ip -6 route replace unreachable default table "$tid" || ipv6_error=1
 				try ip -6 rule replace fwmark "${mark}/${fw_mask}" table "$tid" priority "$priority" || ipv6_error=1
-			fi
-
-			# Always create the nft mark chain so policies can reference it
-			if ! nft_file 'match' 'temp' "${nftPrefix}_mark_${mark}"; then
-				nft add chain inet "$nftTable" "${nftPrefix}_mark_${mark}"
-				nft add rule inet "$nftTable" "${nftPrefix}_mark_${mark} ${nftRuleParams} meta mark set (meta mark & ${fw_maskXor}) | ${mark}"
-				nft add rule inet "$nftTable" "${nftPrefix}_mark_${mark} return"
 			fi
 
 			if [ "$ipv4_error" -eq '0' ] || [ "$ipv6_error" -eq '0' ]; then
@@ -2458,7 +2478,8 @@ process_interface() {
 	if is_wg_server "$iface" && ! is_ignored_interface "$iface"; then
 		case "$action" in
 			destroy)
-				local listen_port="$(uci_get 'network' "$iface" 'listen_port')"
+				local listen_port
+				listen_port="$(uci_get 'network' "$iface" 'listen_port')"
 				if [ -n "$listen_port" ]; then
 					ip rule del sport "$listen_port" table "pbr_${uplink_interface4}" >/dev/null 2>&1
 					ip -6 rule del sport "$listen_port" table "pbr_${uplink_interface4}" >/dev/null 2>&1
@@ -2474,12 +2495,13 @@ process_interface() {
 		return 1
 	fi
 
-	if is_ovpn "$iface" && ! is_ovpn_valid "$iface"; then
-		: # output_warning 'warningInvalidOVPNConfig' "$iface"
+	if is_ovpn "$iface"; then
+		uci_get_device dev4 "$iface"
+		[ -z "$dev4" ] && uci_get_dev dev4 "$iface"
+	else
+		network_get_device dev4 "$iface"
+		[ -z "$dev4" ] && network_get_physdev dev4 "$iface"
 	fi
-
-	network_get_device dev4 "$iface"
-	[ -z "$dev4" ] && network_get_physdev dev4 "$iface"
 	if is_uplink4 "$iface" && [ -n "$uplink_interface6" ]; then
 		network_get_device dev6 "$uplink_interface6"
 		[ -z "$dev6" ] && network_get_physdev dev6 "$uplink_interface6"
@@ -2747,6 +2769,7 @@ start_service() {
 	local i k
 
 	load_package_config "$param"
+	stop_forward
 	[ "$param" = 'on_boot' ] && pbrBootFlag=1 && return 0
 	json init
 	load_environment "${param:-on_start}" "$(load_validate_config)" || return 1
@@ -2898,6 +2921,7 @@ start_service() {
 	fi
 	procd_close_data
 	procd_close_instance
+	enable_forward
 }
 
 service_running() { is_service_running; }
@@ -2956,6 +2980,7 @@ service_triggers() {
 		procd_open_trigger
 			procd_add_config_trigger "config.change" 'openvpn' "/etc/init.d/${packageName}" reload 'on_openvpn_change'
 			procd_add_config_trigger "config.change" "${packageName}" "/etc/init.d/${packageName}" reload
+			procd_add_config_trigger "config.change" "network" "/etc/init.d/${packageName}" reload
 			if [ -n "$ifacesTriggers" ]; then
 				output 1 "Setting interface triggers "
 				for n in $ifacesTriggers; do
@@ -3009,6 +3034,16 @@ stop_service() {
 	fi
 }
 
+restart() {
+	load_package_config
+	stop_forward
+	stop
+	# it takes time before routes are cleaned up, if started immediately a leak can occur
+	[ -n "$strict_enforcement" ] && sleep 2
+	start
+	enable_forward
+}
+
 version() { echo "$PKG_VERSION"; }
 
 status_service() {
@@ -3036,6 +3071,7 @@ status_service() {
 
 	echo "$_SEPARATOR_"
 	echo "$packageName - environment"
+	# shellcheck disable=SC3037
 	echo -en "$status"
 	echo "$_SEPARATOR_"
 	dnsmasq --version 2>/dev/null | sed '/^$/,$d'
