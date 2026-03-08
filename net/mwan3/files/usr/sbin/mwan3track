@@ -246,9 +246,9 @@ main() {
 	validate_track_method $track_method || {
 		track_method=ping
 		if validate_track_method $track_method; then
-			LOG warn "Using ping to track interface $INTERFACE avaliability"
+			LOG warn "Using ping to track interface $INTERFACE availability"
 		else
-			LOG err "No track method avaliable"
+			LOG err "No track method available"
 			exit 1
 		fi
 	}
