@@ -26,7 +26,7 @@ define Package/zile
   CATEGORY:=Utilities
   DEPENDS:=+libncursesw
   TITLE:=very small emacs-like editor
-  URL:=http://www.gnu.org/software/zile/
+  URL:=https://www.gnu.org/software/zile/
   SUBMENU:=Editors
 endef
 

@@ -29,7 +29,7 @@ define Package/libvorbisidec
   CATEGORY:=Libraries
   TITLE:=A fixed-point Ogg/Vorbis decoder library
   DEPENDS:= +libogg
-  URL:=http://wiki.xiph.org/index.php/Tremor
+  URL:=https://wiki.xiph.org/index.php/Tremor
 endef
 
 define Package/libvorbisidec/description

@@ -14,7 +14,7 @@ PKG_MAINTAINER:=Dirk Chang <dirk@kooiot.com>
 PKG_LICENSE:=MIT
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.inf.puc-rio.br/~roberto/lpeg/
+PKG_SOURCE_URL:=https://www.inf.puc-rio.br/~roberto/lpeg/
 PKG_HASH:=48d66576051b6c78388faad09b70493093264588fcd0f258ddaab1cdd4a15ffe
 
 include $(INCLUDE_DIR)/package.mk
@@ -24,7 +24,7 @@ define Package/lpeg
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=LPeg
-  URL:=http://www.inf.puc-rio.br/~roberto/lpeg/
+  URL:=https://www.inf.puc-rio.br/~roberto/lpeg/
   DEPENDS:=+lua
 endef
 

@@ -9,7 +9,7 @@ PKG_VERSION:=1.27
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).orig.tar.xz
-PKG_SOURCE_URL:=http://archive.ubuntu.com/ubuntu/pool/universe/g/$(PKG_NAME)
+PKG_SOURCE_URL:=https://archive.ubuntu.com/ubuntu/pool/universe/g/$(PKG_NAME)
 PKG_HASH:=dd8af32d9be5afd7a9b9c34014e44358c3bfb193a612a2cb6547499bb1f76698
 
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>

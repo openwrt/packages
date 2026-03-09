@@ -10,7 +10,7 @@ PKG_VERSION:=2.0.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://downloads.xiph.org/releases/ices/
+PKG_SOURCE_URL:=https://downloads.xiph.org/releases/ices/
 PKG_HASH:=e620c67c8b311520b1d6a8a89d7fd1d1d08f299534d274b8a1a36ed33a7ee4a8
 
 PKG_LICENSE:=GPL-2.0
@@ -28,7 +28,7 @@ define Package/ices
   SECTION:=sound
   CATEGORY:=Sound
   TITLE:=ices client for Icecast media streaming servers
-  URL:=http://www.icecast.org/ices/
+  URL:=https://www.icecast.org/ices/
   DEPENDS:=+libshout +libxml2 +zlib +libogg +libvorbis +alsa-lib $(ICONV_DEPENDS)
 endef
 
