@@ -1,0 +1,131 @@
+#!/bin/sh /etc/rc.common
+#
+# Copyright (C) 2021-2026  sirpdboy  <herboy2008@gmail.com> 
+#
+# This file is part of ddns-go .
+#
+# This is free software, licensed under the Apache License, Version 2.0 .
+#
+
+START=99
+USE_PROCD=1
+NAME=ddns-go
+PROG=/usr/bin/ddns-go
+CONFDIR=/etc/ddns-go
+CONF=$CONFDIR/ddns-go-config.yaml
+LOG_FILE=/var/log/ddns-go.log
+LOG_MAX_SIZE=102400  # 100KB in bytes
+
+init_yaml() {
+    [ -d "$CONFDIR" ] || mkdir -p "$CONFDIR" 2>/dev/null
+    if [ ! -s "$CONF" ]; then
+        cat /usr/share/ddns-go/ddns-go-default.yaml > "$CONF"
+    fi
+}
+
+setup_log_rotation() {
+    if [ -f "$LOG_FILE" ]; then
+        local log_size=$(stat -c%s "$LOG_FILE" 2>/dev/null || wc -c < "$LOG_FILE")
+        if [ "$log_size" -gt "$LOG_MAX_SIZE" ]; then
+            tail -c "$LOG_MAX_SIZE" "$LOG_FILE" > "${LOG_FILE}.tmp"
+            mv "${LOG_FILE}.tmp" "$LOG_FILE"
+        fi
+    fi
+}
+
+get_tz() {
+    [ -e "/etc/localtime" ] && return
+    
+    local tz=""
+    for tzfile in /etc/TZ /var/etc/TZ; do
+        [ -e "$tzfile" ] && tz=$(cat "$tzfile" 2>/dev/null) && break
+    done
+    
+    [ -n "$tz" ] && echo "$tz"
+}
+
+build_args() {
+    local cfg="$1"
+    local args=""
+    
+    config_get port "$cfg" port '9876'
+    args="-l :$port"
+    
+    config_get time "$cfg" time '300'
+    [ -n "$time" ] && args="$args -f $time"
+    
+    config_get ctimes "$cfg" ctimes '5'
+    [ -n "$ctimes" ] && args="$args -cacheTimes $ctimes"
+    
+    config_get dns "$cfg" dns '223.5.5.5'
+    [ -n "$dns" ] && args="$args -dns $dns"
+    
+    config_get_bool noweb "$cfg" noweb 0
+    [ "$noweb" -eq 1 ] && args="$args -noweb"
+    
+    config_get_bool skipverify "$cfg" skipverify 0
+    [ "$skipverify" -eq 1 ] && args="$args -skipVerify"
+    
+    echo "$args"
+}
+
+start_instance() {
+    local cfg="$1"
+    config_get_bool enabled "$cfg" enabled 1
+    [ "$enabled" -eq 0 ] && return 0
+    config_get delay "$cfg" delay 0
+    if [ "$delay" -gt 0 ]; then
+        local uptime=$(awk -F. '{print $1}' /proc/uptime)
+        [ "$uptime" -lt 120 ] && sleep "$delay"
+    fi
+    
+    init_yaml
+    
+    chown ddns-go "$CONFDIR" 2>/dev/null
+    chown ddns-go "$CONF" 2>/dev/null
+    
+    setup_log_rotation
+    
+    local tz_env=""
+    local tz=$(get_tz)
+    [ -n "$tz" ] && tz_env="TZ=\"$tz\""
+    
+    local args=$(build_args "$cfg")
+    
+    procd_open_instance
+    [ -n "$tz_env" ] && procd_set_param env "$tz_env"
+    
+    procd_set_param command /bin/sh -c "
+		${PROG} -l :$port -c \"$CONF\" ${args} >> /var/log/ddns-go.log 2>&1 &
+		DDNS_GO_PID=\$!
+		{
+			while true; do
+				LOG_SIZE=\$(ls -l /var/log/ddns-go.log | awk '{print int(\$5/1024)}')
+				if [ \$LOG_SIZE -gt 100 ]; then
+					tail -n 100 /var/log/ddns-go.log > /var/log/ddns-go.log.tmp
+					mv /var/log/ddns-go.log.tmp /var/log/ddns-go.log
+				fi
+				sleep 3600
+			done
+		} &
+		LOG_MANAGEMENT_PID=\$!
+		trap \"kill -TERM \$DDNS_GO_PID; kill -TERM \$LOG_MANAGEMENT_PID; exit\" SIGINT SIGTERM EXIT
+		wait \$DDNS_GO_PID
+	"
+	[[ "x$logger" == x1 ]] && procd_set_param stderr 1
+
+    procd_set_param respawn
+    procd_close_instance
+}
+
+start_service() {
+	config_load 'ddns-go'
+    config_foreach start_instance 'basic'
+}
+
+
+service_triggers() {
+      procd_add_reload_trigger "ddns-go"
+}
+
+
