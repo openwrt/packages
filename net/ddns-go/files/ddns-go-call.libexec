@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2023-2025 sirpdboy herboy2008@gmail.com https://github.com/sirpdboy/luci-app-ddns-go
+# Copyright (C) 2023-2025 sirpdboy herboy2008@gmail.com 
 # 
 
 logfile="/var/log/ddns-go.log"
