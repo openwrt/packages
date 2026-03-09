@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=containerd
 PKG_VERSION:=1.7.22
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:linuxfoundation:containerd
@@ -36,6 +36,10 @@ define Package/containerd/description
 An industry-standard container runtime with an emphasis on simplicity, robustness and portability
 endef
 
+define Package/containerd/conffiles
+/etc/containerd/config.toml
+endef
+
 GO_PKG_INSTALL_EXTRA:=\
 	vendor/google.golang.org/protobuf/internal/editiondefaults/editions_defaults.binpb \
 	Makefile \
@@ -60,6 +64,8 @@ Build/Compile=$(call Build/Compile/Default)
 define Package/containerd/install
 	$(INSTALL_DIR) $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/{ctr,containerd,containerd-stress,containerd-shim,containerd-shim-runc-v1,containerd-shim-runc-v2} $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/containerd.init $(1)/etc/init.d/containerd
 endef
 
 $(eval $(call BuildPackage,containerd))
