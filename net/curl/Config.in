@@ -140,7 +140,7 @@ config LIBCURL_THREADED_RESOLVER
 
 config LIBCURL_ZLIB
 	bool "Enable zlib support"
-	default n
+	default y
 
 config LIBCURL_ZSTD
 	bool "Enable zstd support"
