@@ -16,7 +16,7 @@ PKG_HASH:=3046a53b0e40d4b676c3b774c73411d7184ae2745fe8ce5e45c0f33d3ddb71a7
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>, Peter Stadler <peter.stadler@student.uibk.ac.at>
 PKG_LICENSE:=BSD-3-Clause
-PKG_LICENSE_FILES:=LICENSE LICENSE.python
+PKG_LICENSE_FILES:=AUTHORS LICENSE LICENSE.python
 PKG_CPE_ID:=cpe:/a:djangoproject:django
 
 include ../pypi.mk
@@ -27,10 +27,9 @@ define Package/python3-django
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
-  TITLE:=The web framework for perfectionists with deadlines.
+  TITLE:=The web framework for perfectionists with deadlines
   URL:=https://www.djangoproject.com/
-  DEPENDS:= +python3 +python3-pytz +python3-sqlparse +python3-asgiref
-  CONFLICTS:=python3-django1
+  DEPENDS:= +python3 +python3-asgiref +python3-sqlparse
   PROVIDES:=django
 endef
 
