@@ -50,11 +50,24 @@ option_builder() {
 				file)
 					json_get_var v "$f"
 					[ -f "$v" ] || continue
-					[ -n "$v" ] && append exec_params " --${f//_/-} $v"
+					[ -n "$v" ] && append exec_params " --${f//_/-} \"$v\""
 					;;
 				list)
-					json_get_values v "$f"
-					[ -n "${v}" ] && append exec_params "$(for d in $v; do echo " --${f//_/-} $d"; done)"
+					local type
+					json_get_type type "$f"
+					case "$type" in
+					object|array)
+						local keys key
+						json_select "$f"
+						json_get_keys keys
+						for key in $keys; do
+							json_get_var val "$key"
+							append exec_params " --${f//_/-} \"$val\""
+						done
+						json_select ..
+						;;
+					*)  ;;
+					esac
 					;;
 			esac
 		fi
@@ -114,7 +127,6 @@ proto_openvpn_setup() {
 	append exec_params " --syslog openvpn_$config"
 	append exec_params " --tmp-dir /var/run"
 
-	# alllow deprecated OpenVPN configuration values by default
 	json_get_var ALLOW_DEPRECATED allow_deprecated
 	[ -z "$ALLOW_DEPRECATED" ] && ALLOW_DEPRECATED=0
 
@@ -196,10 +208,10 @@ proto_openvpn_setup() {
 			-p daemon.warn "Default hotplug processing disabled, as the openvpn configuration 'script_security' is less than '3'"
 	fi
 
-	# shellcheck disable=SC2086
-	proto_run_command "$config" openvpn $exec_params
+	eval "set -- $exec_params"
+	proto_run_command "$config" openvpn "$@"
 
-	# last param wins; user provided status or syslog supersedes these.
+	# last param wins; user provided status or syslog supersedes.
 }
 
 proto_openvpn_renew() {

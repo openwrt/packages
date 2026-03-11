@@ -73,7 +73,6 @@ port_share
 proto_force
 providers
 pull_filter
-push
 push_remove
 redirect_gateway
 redirect_private
