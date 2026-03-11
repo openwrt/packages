@@ -448,6 +448,23 @@ function proto_setup(proto) {
 		}
 	}
 
+	// hotplug handler scripts
+	if (cfg.script_security >= 2) {
+		push(params, '--setenv', 'INTERFACE', iface);
+		push(params, '--up', '/usr/libexec/openvpn-hotplug');
+		if (cfg.up) push(params, '--setenv', 'user_up', cfg.up);
+		push(params, '--down', '/usr/libexec/openvpn-hotplug');
+		if (cfg.down) push(params, '--setenv', 'user_down', cfg.down);
+		push(params, '--route-up', '/usr/libexec/openvpn-hotplug');
+		if (cfg.route_up) push(params, '--setenv', 'user_route_up', cfg.route_up);
+		push(params, '--route-pre-down', '/usr/libexec/openvpn-hotplug');
+		if (cfg.route_pre_down) push(params, '--setenv', 'user_route_pre_down', cfg.route_pre_down);
+		if (cfg.client || cfg.tls_client) {
+			push(params, '--ipchange', '/usr/libexec/openvpn-hotplug');
+			if (cfg.ipchange) push(params, '--setenv', 'user_ipchange', cfg.ipchange);
+		}
+	}
+
 	// assemble the final command line
 	let cmd = [
 		OPENVPN,
