@@ -87,7 +87,6 @@ const OPENVPN_STRING_PARAMS = [
 	{ name: 'proto_force' },
 	{ name: 'providers' },
 	{ name: 'pull_filter' },
-	{ name: 'push' },
 	{ name: 'push_remove' },
 	{ name: 'redirect_gateway' },
 	{ name: 'redirect_private' },
@@ -303,7 +302,10 @@ function add_param(params, key, value) {
 	let flag = `--${replace(key, '_', '-')}`;
 	push(params, flag);
 	if (value)
-		push(params, value);
+		if (key === "push")
+			push(params, `"${value}"`);
+		else
+			push(params, value);
 }
 
 function build_exec_params(cfg) {
