@@ -84,6 +84,7 @@ PROTO_STRINGS='
 username
 password
 cert_password
+ovpnproto
 '
 
 proto_openvpn_init_config() {
@@ -119,6 +120,7 @@ proto_openvpn_setup() {
 	json_get_var ovpnproto ovpnproto
 	[ -n "$ovpnproto" ] && append exec_params " --proto $ovpnproto"
 
+	json_get_var config_file config
 	# shellcheck disable=SC2154
 	cd_dir="${config_file%/*}"
 	[ "$cd_dir" = "$config_file" ] && cd_dir="/"
@@ -140,10 +142,7 @@ proto_openvpn_setup() {
 
 	proto_add_dynamic_defaults
 
-	json_get_var username username
-	json_get_var password password
-	json_get_var cert_password cert_password
-	json_get_var config_file config
+	json_get_vars username password cert_password
 
 	mkdir -p /var/run
 	# combine into --askpass:
@@ -179,12 +178,15 @@ proto_openvpn_setup() {
 
 	# Add default hotplug handling if 'script_security' option is equal '3'
 	if [ "$script_security" -eq '3' ]; then
+		local up down route_up route_pre_down
+		local client tls_client
 		logger -t "openvpn(proto)" \
 			-p daemon.info "Enabled default hotplug processing, as the openvpn configuration 'script_security' is '3'"
 
 		append exec_params " --setenv INTERFACE $config"
 		append exec_params " --script-security 3"
 
+		json_get_vars up down route_up route_pre_down
 		append exec_params "--up '/usr/libexec/openvpn-hotplug'"
 		[ -n "$up" ] && append exec_params "--setenv user_up '$up'"
 
@@ -197,11 +199,11 @@ proto_openvpn_setup() {
 		append exec_params "--route-pre-down '/usr/libexec/openvpn-hotplug'"
 		[ -n "$route_pre_down" ] && append exec_params "--setenv user_route_pre_down '$route_pre_down'"
 
-		json_get_var client client
-		json_get_var tls_client tls_client
+		json_get_vars client tls_client
 		if [ "$client" = 1 ] || [ "$tls_client" = 1 ]; then
 			append exec_params "--ipchange '/usr/libexec/openvpn-hotplug'"
-			[ -n "$ip_change" ] && append exec_params "--setenv user_ipchange '$ipchange'"
+			json_get_var ipchange ipchange
+			[ -n "$ipchange" ] && append exec_params "--setenv user_ipchange '$ipchange'"
 		fi
 	else
 		logger -t "openvpn(proto)" \
