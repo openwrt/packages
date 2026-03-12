@@ -8,6 +8,7 @@ const OPENVPN_PASS   = '/var/run/openvpn.%s.pass';
 const OPENVPN_AUTH   = '/var/run/openvpn.%s.auth';
 const OPENVPN_PID    = '/var/run/openvpn.%s.pid';
 const OPENVPN_STATUS = '/var/run/openvpn.%s.status';
+const OPENVPN_CONF   = '/var/run/openvpn.%s.conf';
 
 
 function openvpn_exists() {
@@ -442,7 +443,7 @@ function proto_setup(proto) {
 	if (cfg.config && cfg.config !== '') {
 		if (index(cfg.config, '/') >= 0) {
 			let parts = split(cfg.config, '/');
-			parts.pop();
+			pop(parts);
 			cd_dir = join('/', parts);
 			if (cd_dir == '') cd_dir = `/etc/openvpn/${iface}`;
 		}
@@ -467,18 +468,25 @@ function proto_setup(proto) {
 
 	// assemble the final command line
 	let cmd = [
-		OPENVPN,
 		'--cd', cd_dir,
 		'--status', statusfile,
 		'--syslog', sprintf('openvpn_%s', iface),
 		'--tmp-dir', '/var/run',
 		'--writepid', sprintf(OPENVPN_PID, iface),
-		// join(' ', params)
 		...params
 	];
 
+	// netifd has an argv array length hard limit of 64 including final \0
+	if (length(cmd) > 63) {
+		let conffile = sprintf(OPENVPN_CONF, iface);
+		fs.writefile(conffile, replace(join(' ', cmd), '--', '\n'));
+		cmd = [
+			'--config', conffile,
+		];
+	}
+
 	// run_command needs an argv array
-	proto.run_command(cmd);
+	proto.run_command([OPENVPN, ...cmd]);
 
 	// do not call proto.update_link() here - OpenVPN will handle if_up
 }
@@ -506,6 +514,7 @@ function proto_teardown(proto) {
 	fs.unlink(sprintf(OPENVPN_AUTH, iface));
 	fs.unlink(sprintf(OPENVPN_STATUS, iface));
 	fs.unlink(sprintf(OPENVPN_PID, iface));
+	fs.unlink(sprintf(OPENVPN_CONF, iface));
 
 	let link_data = {
 		ifname: iface
