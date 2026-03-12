@@ -21,6 +21,7 @@ define Package/bsbf-mptcp
   SECTION:=net
   CATEGORY:=Network
   TITLE:=bsbf-mptcp
+  URL:=https://github.com/bondingshouldbefree/
   DEPENDS:=+fping +ip-full
 endef
 
@@ -28,12 +29,14 @@ define Package/bsbf-netspeed
   SECTION:=net
   CATEGORY:=Network
   TITLE:=bsbf-netspeed
+  URL:=https://github.com/bondingshouldbefree/
 endef
 
 define Package/bsbf-plpmtu
   SECTION:=net
   CATEGORY:=Network
   TITLE:=bsbf-plpmtu
+  URL:=https://github.com/bondingshouldbefree/
   DEPENDS:=+fping +plp-mtu-discovery
 endef
 
@@ -41,12 +44,14 @@ define Package/bsbf-quectel-usbnet
   SECTION:=net
   CATEGORY:=Network
   TITLE:=bsbf-quectel-usbnet
+  URL:=https://github.com/bondingshouldbefree/
 endef
 
 define Package/bsbf-route
   SECTION:=net
   CATEGORY:=Network
   TITLE:=bsbf-route
+  URL:=https://github.com/bondingshouldbefree/
   DEPENDS:=+fping
 endef
 
@@ -54,6 +59,7 @@ define Package/bsbf-tcp-in-udp
   SECTION:=net
   CATEGORY:=Network
   TITLE:=bsbf-tcp-in-udp
+  URL:=https://github.com/bondingshouldbefree/
   DEPENDS:=+ethtool +tc-full +tcp-in-udp
 endef
 
