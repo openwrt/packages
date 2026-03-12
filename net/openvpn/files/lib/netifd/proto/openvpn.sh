@@ -128,6 +128,7 @@ proto_openvpn_setup() {
 	append exec_params " --status /var/run/openvpn.$config.status"
 	append exec_params " --syslog openvpn_$config"
 	append exec_params " --tmp-dir /var/run"
+	[ -n "$config_file" ] && append exec_params " --config \"$config_file\""
 
 	json_get_var ALLOW_DEPRECATED allow_deprecated
 	[ -z "$ALLOW_DEPRECATED" ] && ALLOW_DEPRECATED=0
