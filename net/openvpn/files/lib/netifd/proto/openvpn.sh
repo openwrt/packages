@@ -111,6 +111,7 @@ proto_openvpn_init_config() {
 
 proto_openvpn_setup() {
 	local config="$1"
+	local conf_file="/var/run/openvpn.$config.conf"
 	local exec_params cd_dir
 
 	exec_params=
@@ -238,7 +239,10 @@ proto_openvpn_setup() {
 	fi
 
 	eval "set -- $exec_params"
-	proto_run_command "$config" openvpn "$@"
+	umask 077
+	printf "%b\n" "${exec_params//--/\\n}" > "$conf_file"
+	umask 022
+	proto_run_command "$config" openvpn --config "$conf_file"
 
 	# last param wins; user provided status or syslog supersedes.
 }
@@ -254,6 +258,7 @@ proto_openvpn_renew() {
 proto_openvpn_teardown() {
 	local iface="$1"
 	rm -f \
+		"/var/run/openvpn.$iface.conf" \
 		"/var/run/openvpn.$iface.pass" \
 		"/var/run/openvpn.$iface.auth" \
 		"/var/run/openvpn.$iface.status" 
