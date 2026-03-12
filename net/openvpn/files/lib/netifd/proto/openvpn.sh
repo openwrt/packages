@@ -41,16 +41,16 @@ option_builder() {
 			case "$opt_type" in
 				bool)
 					json_get_var v "$f"
-					[ "$v" = 1 ] && append exec_params " --${f//_/-}"
+					[ "$v" = 1 ] && append exec_params "--${f//_/-}"
 					;;
 				uinteger|integer|string)
 					json_get_var v "$f"
-					[ -n "$v" ] && append exec_params " --${f//_/-} $v"
+					[ -n "$v" ] && append exec_params "--${f//_/-} $v"
 					;;
 				file)
 					json_get_var v "$f"
 					[ -f "$v" ] || continue
-					[ -n "$v" ] && append exec_params " --${f//_/-} \"$v\""
+					[ -n "$v" ] && append exec_params "--${f//_/-} \"$v\""
 					;;
 				list)
 					local type
@@ -62,7 +62,7 @@ option_builder() {
 						json_get_keys keys
 						for key in $keys; do
 							json_get_var val "$key"
-							append exec_params " --${f//_/-} \"$val\""
+							append exec_params "--${f//_/-} \"$val\""
 						done
 						json_select ..
 						;;
@@ -116,19 +116,19 @@ proto_openvpn_setup() {
 	exec_params=
 
 	json_get_var dev_type dev_type
-	[ -z "$dev_type" ] && append exec_params " --dev-type tun"
+	[ -z "$dev_type" ] && append exec_params "--dev-type tun"
 	json_get_var ovpnproto ovpnproto
-	[ -n "$ovpnproto" ] && append exec_params " --proto $ovpnproto"
+	[ -n "$ovpnproto" ] && append exec_params "--proto $ovpnproto"
 
 	json_get_var config_file config
 	# shellcheck disable=SC2154
 	cd_dir="${config_file%/*}"
 	[ "$cd_dir" = "$config_file" ] && cd_dir="/"
-	append exec_params " --cd $cd_dir"
-	append exec_params " --status /var/run/openvpn.$config.status"
-	append exec_params " --syslog openvpn_$config"
-	append exec_params " --tmp-dir /var/run"
-	[ -n "$config_file" ] && append exec_params " --config \"$config_file\""
+	append exec_params "--cd $cd_dir"
+	append exec_params "--status /var/run/openvpn.$config.status"
+	append exec_params "--syslog openvpn_$config"
+	append exec_params "--tmp-dir /var/run"
+	[ -n "$config_file" ] && append exec_params "--config \"$config_file\""
 
 	json_get_var ALLOW_DEPRECATED allow_deprecated
 	[ -z "$ALLOW_DEPRECATED" ] && ALLOW_DEPRECATED=0
@@ -152,9 +152,9 @@ proto_openvpn_setup() {
 		umask 077
 		printf '%s\n' "${cert_password:-}" > "$cp_file"
 		umask 022
-		append exec_params " --askpass $cp_file"
+		append exec_params "--askpass $cp_file"
 	elif [ -n "$askpass" ]; then
-		append exec_params " --askpass $askpass"
+		append exec_params "--askpass $askpass"
 	fi
 
 	# combine into --auth-user-pass:
@@ -163,9 +163,9 @@ proto_openvpn_setup() {
 		umask 077
 		printf '%s\n' "${username:-}" "${password:-}" > "$auth_file"
 		umask 022
-		append exec_params " --auth-user-pass $auth_file"
+		append exec_params "--auth-user-pass $auth_file"
 	elif [ -n "$auth_user_pass" ]; then
-		append exec_params " --auth-user-pass $auth_user_pass"
+		append exec_params "--auth-user-pass $auth_user_pass"
 	fi
 
 	# Testing option
@@ -187,8 +187,8 @@ proto_openvpn_setup() {
 		logger -t "openvpn(proto)" \
 			-p daemon.info "Enabled default hotplug processing, as the openvpn configuration 'script_security' is '3'"
 
-		append exec_params " --setenv INTERFACE $config"
-		append exec_params " --script-security 3"
+		append exec_params "--setenv INTERFACE $config"
+		append exec_params "--script-security 3"
 
 		json_get_vars up down route_up route_pre_down
 		json_get_vars tls_crypt_v2_verify mode learn_address client_connect
