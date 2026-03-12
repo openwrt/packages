@@ -108,6 +108,8 @@ start_service() {
 }
 
 service_triggers() {
+	procd_add_reload_trigger 'adguardhome'
+
 	if [ -n "$ADGUARDHOME_BOOT" ]; then
 		# Wait for interfaces to be up before starting AdGuard Home for real.
 		# Prevents issues like https://github.com/openwrt/packages/issues/21868.
