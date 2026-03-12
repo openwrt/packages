@@ -460,6 +460,27 @@ function proto_setup(proto) {
 		if (cfg.route_up) push(params, '--setenv', 'user_route_up', cfg.route_up);
 		push(params, '--route-pre-down', '/usr/libexec/openvpn-hotplug');
 		if (cfg.route_pre_down) push(params, '--setenv', 'user_route_pre_down', cfg.route_pre_down);
+		push(params, '--tls-crypt-v2-verify', '/usr/libexec/openvpn-hotplug');
+		if (cfg.tls_crypt_v2_verify) push(params, '--setenv', 'user_tls_crypt_v2_verify', cfg.tls_crypt_v2_verify);
+
+		if (cfg.mode === 'server') {
+			push(params, '--learn-address', '/usr/libexec/openvpn-hotplug');
+			if (cfg.learn_address) push(params, '--setenv', 'user_learn_address', cfg.learn_address);
+			push(params, '--client-connect', '/usr/libexec/openvpn-hotplug');
+			if (cfg.client_connect) push(params, '--setenv', 'user_client_connect', cfg.client_connect);
+			push(params, '--client-crresponse', '/usr/libexec/openvpn-hotplug');
+			if (cfg.client_crresponse) push(params, '--setenv', 'user_client_crresponse', cfg.client_crresponse);
+			push(params, '--client-disconnect', '/usr/libexec/openvpn-hotplug');
+			if (cfg.client_disconnect) push(params, '--setenv', 'user_client_disconnect', cfg.client_disconnect);
+			push(params, '--auth-user-pass-verify', '/usr/libexec/openvpn-hotplug', 'via-file');
+			if (cfg.auth_user_pass_verify) push(params, '--setenv', 'user_auth_user_pass_verify', cfg.auth_user_pass_verify);
+		}
+
+		if (cfg.tls_client || cfg.tls_server) {
+			push(params, '--tls-verify', '/usr/libexec/openvpn-hotplug');
+			if (cfg.tls_verify) push(params, '--setenv', 'user_tls_verify', cfg.tls_verify);
+		}
+
 		if (cfg.client || cfg.tls_client) {
 			push(params, '--ipchange', '/usr/libexec/openvpn-hotplug');
 			if (cfg.ipchange) push(params, '--setenv', 'user_ipchange', cfg.ipchange);
