@@ -37,7 +37,7 @@ define Package/bsbf-bonding
   SECTION:=net
   CATEGORY:=Network
   TITLE:=bsbf-bonding
-  DEPENDS:=+bsbf-mptcp +bsbf-route +bsbf-tcp-in-udp +xray-core
+  DEPENDS:=+bsbf-mptcp +bsbf-plpmtu +bsbf-route +bsbf-tcp-in-udp +xray-core
 endef
 
 define Package/bsbf-bonding/description

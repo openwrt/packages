@@ -11,9 +11,9 @@ PKG_MAINTAINER:=Chester A. Unal <chester.a.unal@arinc9.com>
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/bondingshouldbefree/bsbf-resources.git
-PKG_SOURCE_DATE:=2026-03-09
-PKG_SOURCE_VERSION:=4d8b5138a44d4df21b42f0e2c694c50b10b50173
-PKG_MIRROR_HASH:=de7645897e1cfbc8c50afc81e6a6942aec2bf65d19a62cfd18a24e93ad5f4030
+PKG_SOURCE_DATE:=2026-03-12
+PKG_SOURCE_VERSION:=b09038a13af33c1428a783d3e759a1cfc4d36b30
+PKG_MIRROR_HASH:=7aa66af4d10d274b15be243a5783d67a71266a1649598d2b0db1581ec7c0f112
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -28,6 +28,13 @@ define Package/bsbf-netspeed
   SECTION:=net
   CATEGORY:=Network
   TITLE:=bsbf-netspeed
+endef
+
+define Package/bsbf-plpmtu
+  SECTION:=net
+  CATEGORY:=Network
+  TITLE:=bsbf-plpmtu
+  DEPENDS:=+fping +plp-mtu-discovery
 endef
 
 define Package/bsbf-quectel-usbnet
@@ -73,6 +80,14 @@ define Package/bsbf-netspeed/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/resources-client/bsbf-netspeed $(1)/usr/sbin
 endef
 
+define Package/bsbf-plpmtu/install
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
+	$(INSTALL_BIN) ./files/etc/hotplug.d/iface/99-bsbf-plpmtu $(1)/etc/hotplug.d/iface
+
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/resources-shared/bsbf-plpmtu $(1)/usr/sbin
+endef
+
 define Package/bsbf-quectel-usbnet/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/etc/init.d/bsbf-quectel-usbnet $(1)/etc/init.d
@@ -99,6 +114,7 @@ endef
 
 $(eval $(call BuildPackage,bsbf-mptcp))
 $(eval $(call BuildPackage,bsbf-netspeed))
+$(eval $(call BuildPackage,bsbf-plpmtu))
 $(eval $(call BuildPackage,bsbf-quectel-usbnet))
 $(eval $(call BuildPackage,bsbf-route))
 $(eval $(call BuildPackage,bsbf-tcp-in-udp))
