@@ -9,14 +9,14 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=ovpn-dco
-PKG_VERSION:=0.2.20250801
+PKG_VERSION:=0.2.20251017
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL= \
 	https://build.openvpn.net/downloads/releases \
 	https://codeload.github.com/OpenVPN/ovpn-dco/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=542677e69266e99babb560408b61705ef38a7c469eb820a81f609171faa61b20
+PKG_HASH:=af88c9bc73b350e0cada9aa5b21c5d4b598f9a9868f0b78b2d06026183a67032
 
 PKG_MAINTAINER:=Jianhui Zhao <zhaojh329@gmail.com>
 PKG_LICENSE:=GPL-2.0-only
