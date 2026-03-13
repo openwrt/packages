@@ -1,4 +1,6 @@
 #!/bin/sh /etc/rc.common
+#
+# shellcheck disable=SC3043 # ash supports local
 
 START=90
 STOP=10
@@ -30,9 +32,12 @@ start_service() {
 	local enabled=0
 	local debug=0
 	local ext_address=''
+	local gc=0
 	local global_rate=''
 	local keys='/etc/strelaysrv'
 	local listen=':22067'
+	local maxprocs=0
+	local memlimit=0
 	local message_timeout=''
 	local nat=0
 	local nat_lease=''
@@ -64,8 +69,12 @@ start_service() {
 	procd_open_instance
 
 	procd_set_param command "$PROG"
-	[ "$debug" -eq 0 ] || \
-		procd_append_param command -debug
+
+	[ "$gc" -le 0 ] || procd_append_param env GOGC="$gc"
+	[ "$maxprocs" -le 0 ] || procd_append_param env GOMAXPROCS="$maxprocs"
+	[ "$memlimit" -le 0 ] || procd_append_param env GOMEMLIMIT="$memlimit"
+
+	[ "$debug" -eq 0 ] || procd_append_param command -debug
 	[ -z "$ext_address" ] || \
 		procd_append_param command -ext-address="$ext_address"
 	[ -z "$global_rate" ] || \
