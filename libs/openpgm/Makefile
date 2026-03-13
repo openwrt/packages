@@ -24,7 +24,6 @@ PKG_AUTOMAKE_PATHS:=$(MAKE_PATH)
 PKG_MAINTAINER:=Ye Holmes <yeholmes@outlook.com>
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=$(MAKE_PATH)/LICENSE
-PKG_CPE_ID:=cpe:/a:openpgm:openpgm
 
 include $(INCLUDE_DIR)/package.mk
 
