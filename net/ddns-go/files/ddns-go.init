@@ -15,12 +15,10 @@ CONFDIR=/etc/ddns-go
 CONF=$CONFDIR/ddns-go-config.yaml
 
 init_yaml() {
-    [ -d "$CONFDIR" ] || mkdir -p "$CONFDIR" 2>/dev/null
-    if [ ! -s "$CONF" ]; then
-        touch "$CONF"
-        chown ddns-go "$CONFDIR"
-        chown ddns-go "$CONF"
-    fi
+    [ -d "$CONFDIR" ] || mkdir -p "$CONFDIR"
+    chown -R ddns-go:ddns-go "$CONFDIR"
+    chmod 755 "$CONFDIR"
+    [ -f "$CONF" ] && chmod 644 "$CONF"
 }
 
 build_args() {
