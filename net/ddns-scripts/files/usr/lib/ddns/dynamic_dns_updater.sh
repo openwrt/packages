@@ -19,14 +19,9 @@ usage() {
 	cat << EOF
 
 Usage:
- $MYPROG [options] -- command
-
-Commands:
-start                Start SECTION or NETWORK or all
-stop                 Stop SECTION or NETWORK or all
+ $MYPROG [options]
 
 Parameters:
- -n NETWORK          Start/Stop sections in background monitoring NETWORK, force VERBOSE=0
  -S SECTION          SECTION to start
                      use either -N NETWORK or -S SECTION
 
@@ -53,7 +48,6 @@ while getopts ":hv:dn:S:V" OPT; do
 		h)	usage; exit 0;;
 		v)	VERBOSE=$OPTARG;;
 		d)	DRY_RUN=1;;
-		n)	NETWORK=$OPTARG;;
 		S)	SECTION_ID=$OPTARG;;
 		V)	printf %s\\n "ddns-scripts $VERSION"; exit 0;;
 		:)	usage_err "option -$OPTARG missing argument";;
@@ -63,41 +57,7 @@ while getopts ":hv:dn:S:V" OPT; do
 done
 shift $((OPTIND - 1 ))	# OPTIND is 1 based
 
-[ -n "$NETWORK" -a -n "$SECTION_ID" ] && usage_err "use either option '-N' or '-S' not both"
-[ $# -eq 0 ] && usage_err "missing command"
-[ $# -gt 1 ] && usage_err "to much commands"
-
-case "$1" in
-	start)
-		if [ -n "$NETWORK" ]; then
-			start_daemon_for_all_ddns_sections "$NETWORK"
-			exit 0
-		fi
-		if [ -z "$SECTION_ID" ]; then
-			start_daemon_for_all_ddns_sections
-			exit 0
-		fi
-		;;
-	stop)
-		if [ -n "$SECTION_ID" ]; then
-			stop_section_processes "$SECTION_ID"
-			exit 0
-		fi
-		if [ -n "$NETWORK" ]; then
-			stop_daemon_for_all_ddns_sections "$NETWORK"
-			exit 0
-		else
-			stop_daemon_for_all_ddns_sections
-			exit 0
-		fi
-		exit 1
-		;;
-	kill)
-		killall dynamic_dns_updater.sh 2>/dev/null
-		exit $?
-		;;
-	*)	usage_err "unknown command - $1";;
-esac
+[ -z "$SECTION_ID" ] && usage_err "option '-N' is missing"
 
 # set file names
 PIDFILE="$ddns_rundir/$SECTION_ID.pid"	# Process ID file
