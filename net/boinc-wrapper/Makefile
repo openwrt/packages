@@ -16,7 +16,6 @@ PKG_HASH:=a93ae0a9e640a893e78f523c6d93f31b1d5812092f85af4e9ce964846373f55d
 PKG_MAINTAINER:=Vitalii Koshura <lestat.de.lionkur@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
-PKG_CPE_ID:=cpe:/a:boinc-wrapper:boinc-wrapper
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=0
