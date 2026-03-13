@@ -1,11 +1,42 @@
 #!/bin/sh
 
-# there are other ACTIONs like ifupdate we don't need
-case "$ACTION" in
-	ifup)					# OpenWrt is giving a network not phys. Interface
-		/etc/init.d/ddns enabled && /usr/lib/ddns/dynamic_dns_updater.sh -n "$INTERFACE" -- start
+. /lib/functions.sh
+
+start_ddns_service() {
+	local cfg="$1"
+	local interface_event="$2"
+	local action="$3"
+
+	local interface
+
+	config_get interface $cfg interface
+	[ -z "$interface" ] && return
+
+	[ "$interface" != "$interface_event" ] && return
+
+	case "$action" in
+	ifup)
+		/etc/init.d/ddns start "$cfg"
 		;;
 	ifdown)
-		/usr/lib/ddns/dynamic_dns_updater.sh -n "$INTERFACE" -- stop
+		/etc/init.d/ddns stop "$cfg"
+		;;
+	esac
+}
+
+ddns_service() {
+	local action="$1"
+	local interface="$2"
+
+	config_load ddns
+	config_foreach start_ddns_service "service" "$interface" "$action"
+}
+
+case "$ACTION" in
+	ifup)
+		/etc/init.d/ddns enabled && ddns_service "ifup" "$INTERFACE"
+		;;
+	ifdown)
+		ddns_service "ifdown" "$INTERFACE"
 		;;
 esac
