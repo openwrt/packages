@@ -16,7 +16,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-v$(PKG_VERSION)
 PKG_MAINTAINER:=Antonio Pastor <antonio.pastor@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
-PKG_CPE_ID:=cpe:/a:iniparser:iniparser
+PKG_CPE_ID:=cpe:/a:ndevilla:iniparser
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
