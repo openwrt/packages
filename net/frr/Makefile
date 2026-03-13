@@ -21,7 +21,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_NAME)-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)-$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_LICENSE:=GPL-2.0-only LGPL-2.1-only
-PKG_CPE_ID:=cpe:/a:ffrouting:ffrouting
+PKG_CPE_ID:=cpe:/a:frrouting:frrouting
 
 PKG_DAEMON_AVAILABLE:= \
 	babeld \
