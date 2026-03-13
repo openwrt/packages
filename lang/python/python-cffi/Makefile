@@ -16,7 +16,7 @@ PKG_HASH:=44d1b5909021139fe36001ae048dbdde8214afa20200eda0f64c068cac5d5529
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
+PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
 
 HOST_BUILD_DEPENDS:= \
 	python3/host \
