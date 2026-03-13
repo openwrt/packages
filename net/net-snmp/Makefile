@@ -8,13 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=net-snmp
-PKG_VERSION:=5.9.4
-PKG_RELEASE:=11
+PKG_VERSION:=5.9.5.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/net-snmp
-PKG_HASH:=8b4de01391e74e3c7014beb43961a2d6d6fa03acc34280b9585f4930745b0544
-
+PKG_HASH:=16707719f833184a4b72835dac359ae188123b06b5e42817c00790d7dc1384bf
 PKG_MAINTAINER:=Stijn Tintel <stijn@linux-ipv6.be>
 PKG_LICENSE:=MIT BSD-3-Clause-Clear
 PKG_LICENSE_FILES:=COPYING
@@ -316,7 +315,7 @@ Package/snmpd-ssl/conffiles = $(Package/snmpd-nossl/conffiles)
 
 define Package/libnetsnmp-nossl/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libnetsnmp{,agent,helpers,mibs}.so.* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libnetsnmp{,agent,helpers,mibs}.so* $(1)/usr/lib/
 endef
 Package/libnetsnmp-ssl/install = $(Package/libnetsnmp-nossl/install)
 
