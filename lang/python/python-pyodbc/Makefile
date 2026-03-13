@@ -13,7 +13,7 @@ PKG_HASH:=2fe0e063d8fb66efd0ac6dc39236c4de1a45f17c33eaded0d553d21c199f4d05
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.txt
-PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
 # for odbc_config
 PKG_BUILD_DEPENDS:= \
