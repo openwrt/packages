@@ -18,7 +18,7 @@ PKG_HASH:=7c9eba99aed3e6594d8c3e85861f1c6aaf450c218621528bc989d3b3e7a26307
 PK_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
-PKG_CPE_ID:=cpe:/a:libexif:libexif
+PKG_CPE_ID:=cpe:/a:libexif_project:libexif
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
