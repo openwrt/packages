@@ -1,15 +1,15 @@
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -88,7 +88,7 @@ DISTCLEANFILES = buildinfo.txt
+@@ -72,7 +72,7 @@ DISTCLEANFILES = buildinfo.txt
  bin_SCRIPTS = curl-config
  
  SUBDIRS = lib docs src scripts
--DIST_SUBDIRS = $(SUBDIRS) tests packages include docs
-+DIST_SUBDIRS = $(SUBDIRS) packages include
+-DIST_SUBDIRS = $(SUBDIRS) tests projects include docs
++DIST_SUBDIRS = $(SUBDIRS) projects include
  
  pkgconfigdir = $(libdir)/pkgconfig
  pkgconfig_DATA = libcurl.pc
-@@ -184,12 +184,9 @@ rpm:
+@@ -142,12 +142,9 @@ check-docs:
  if BUILD_DOCS
  install-data-hook:
  	(cd include && $(MAKE) install)

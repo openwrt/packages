@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/nls.mk
 
 PKG_NAME:=curl
-PKG_VERSION:=8.15.0
-PKG_RELEASE:=2
+PKG_VERSION:=8.19.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/curl/curl/releases/download/curl-$(subst .,_,$(PKG_VERSION))/ \
 	https://curl.se/download/
-PKG_HASH:=6cd0a8a5b126ddfda61c94dc2c3fc53481ba7a35461cf7c5ab66aa9d6775b609
+PKG_HASH:=4eb41489790d19e190d7ac7e18e82857cdd68af8f4e66b292ced562d333f11df
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
