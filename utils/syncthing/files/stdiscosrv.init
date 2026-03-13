@@ -1,4 +1,6 @@
 #!/bin/sh /etc/rc.common
+#
+# shellcheck disable=SC3043 # ash supports local
 
 START=90
 STOP=10
@@ -35,9 +37,12 @@ start_service() {
 	local db_dir="$conf_dir/discovery.db"
 	local db_flush_interval=''
 	local debug=0
+	local gc=0
 	local http=0
 	local key="$conf_dir/key.pem"
 	local listen=':8443'
+	local maxprocs=0
+	local memlimit=0
 	local metrics_listen=''
 	local nice=0
 	local user='syncthing'
@@ -54,6 +59,11 @@ start_service() {
 	procd_open_instance
 
 	procd_set_param command "$PROG"
+
+	[ "$gc" -le 0 ] || procd_append_param env GOGC="$gc"
+	[ "$maxprocs" -le 0 ] || procd_append_param env GOMAXPROCS="$maxprocs"
+	[ "$memlimit" -le 0 ] || procd_append_param env GOMEMLIMIT="$memlimit"
+
 	procd_append_param command --cert="$cert"
 	[ "$compression" -eq 0 ] || \
 		procd_append_param command --compression
