@@ -19,7 +19,7 @@ PKG_HASH:=20d8d339b8fb1f6c79cee20559dc6ffb5dfee84db9e589f4eb214f6d2c873ef5
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
-PKG_CPE_ID:=cpe:/a:memcachedb:memcached
+PKG_CPE_ID:=cpe:/a:memcached:memcached
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
