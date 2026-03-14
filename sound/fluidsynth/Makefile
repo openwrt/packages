@@ -11,6 +11,7 @@ PKG_HASH:=7fb0e328c66a24161049e2b9e27c3b6e51a6904b31b1a647f73cc1f322523e88
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=LGPL-2.1
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:fluidsynth:fluidsynth
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
