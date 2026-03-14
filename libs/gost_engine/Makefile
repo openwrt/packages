@@ -13,6 +13,7 @@ PKG_MIRROR_HASH:=ad88b0bc4ede265bc91757f0bb9777a381f8e271faa43992a054ddd5f435ad8
 PKG_MAINTAINER:=Artur Petrov <github@phpchain.ru>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:gost_engine_project:gost_engine
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
