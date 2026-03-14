@@ -11,6 +11,7 @@ PKG_HASH:=571658f175d61724269c1a20626c1e39424af59b7bcf7ff94135d03b790bbecb
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
+PKG_CPE_ID:=cpe:/a:podman_project:podman
 
 PKG_BUILD_DEPENDS:=golang/host protobuf/host btrfs-progs
 PKG_BUILD_PARALLEL:=1
