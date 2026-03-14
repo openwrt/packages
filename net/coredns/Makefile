@@ -12,6 +12,7 @@ PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Vladimir Ermakov <vooon341@gmail.com>
+PKG_CPE_ID:=cpe:/a:coredns.io:coredns
 
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
