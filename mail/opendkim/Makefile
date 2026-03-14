@@ -17,6 +17,7 @@ PKG_MAINTAINER:=Val Kulkov <val.kulkov@gmail.com>
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE LICENSE.Sendmail
+PKG_CPE_ID:=cpe:/a:opendkim:opendkim
 
 PKG_INSTALL:=1
 PKG_BUILD_DEPENDS:=openssl
