@@ -1,6 +1,6 @@
 --- a/Makefile.pre.in
 +++ b/Makefile.pre.in
-@@ -746,6 +746,7 @@ profile-gen-stamp: profile-clean-stamp
+@@ -850,6 +850,7 @@ profile-gen-stamp: profile-clean-stamp
  
  # Run task with profile generation build to create profile information.
  profile-run-stamp:
@@ -8,7 +8,7 @@
  	@echo "Running code to generate profile data (this can take a while):"
  	# First, we need to create a clean build with profile generation
  	# enabled.
-@@ -759,6 +760,7 @@ profile-run-stamp:
+@@ -863,6 +864,7 @@ profile-run-stamp:
  	# This is an expensive target to build and it does not have proper
  	# makefile dependency information.  So, we create a "stamp" file
  	# to record its completion and avoid re-running it.
@@ -18,7 +18,7 @@
  # Compile Python binary with profile guided optimization.
 --- a/configure.ac
 +++ b/configure.ac
-@@ -1905,7 +1905,7 @@ fi
+@@ -1862,7 +1862,7 @@ fi
  
  AC_ARG_VAR([PROFILE_TASK], [Python args for PGO generation task])
  AC_MSG_CHECKING([PROFILE_TASK])
