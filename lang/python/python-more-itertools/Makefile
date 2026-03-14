@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=more-itertools
 PKG_HASH:=626c369fa0eb37bac0291bce8259b332fd59ac792fa5497b59837309cd5b114a
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
+PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 

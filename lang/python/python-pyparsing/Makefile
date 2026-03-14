@@ -15,7 +15,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=pyparsing
 PKG_HASH:=ede28a1a32462f5a9705e07aea48001a08f7cf81a021585011deba701581a0db
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
+PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 

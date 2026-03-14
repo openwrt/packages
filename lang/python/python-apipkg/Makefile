@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=apipkg
 PKG_HASH:=f8c021adafc9132ac2fba9fd3c5768365d0a8c10aa375fb15e329f1fce8a5f01
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
+PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
