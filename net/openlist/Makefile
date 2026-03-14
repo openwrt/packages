@@ -16,6 +16,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/OpenList-$(PKG_VERSION)
 PKG_LICENSE:=AGPL-3.0-only
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
+PKG_CPE_ID:=cpe:/a:oplist:openlist
 
 PKG_BUILD_DEPENDS:=golang/host fuse
 PKG_BUILD_PARALLEL:=1
