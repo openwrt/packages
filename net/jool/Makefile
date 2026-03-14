@@ -13,6 +13,7 @@ PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:jool:jool
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/NICMx/Jool.git
