@@ -11,6 +11,7 @@ PKG_HASH:=7d6fab70cf844bf6769077bd5d7a74893f8ffd4dfb42861745750c63c2a5c92c
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:webmproject:libwebp
 
 CMAKE_INSTALL:=1
 PKG_BUILD_FLAGS:=lto
