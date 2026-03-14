@@ -18,6 +18,7 @@ PKG_HASH:=6239e6035645b21bc9bf7f02004db334dce3fe6d85428ee4fe7e180c2d948230
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:apache:xerces-c\+\+
 
 include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/package.mk
