@@ -10,6 +10,7 @@ PKG_HASH:=988fd6b232dafa04b8b8198723efeaccdb3c6aa9c1c7936219d5791a8b7a8646
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=LGPLv2-or-later
+PKG_CPE_ID:=cpe:/a:projectatomic:bubblewrap
 
 PKG_FORTIFY_SOURCE:=0
 
