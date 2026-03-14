@@ -6,11 +6,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-mako
-PKG_VERSION:=1.3.0
+PKG_VERSION:=1.3.5
 PKG_RELEASE:=1
 
 PYPI_NAME:=Mako
-PKG_HASH:=e3a9d388fd00e87043edbe8792f45880ac0114e9c4adc69f6e9bfb2c55e3b11b
+PKG_HASH:=48dbc20568c1d276a2698b36d968fa76161bf127194907ea6fc594fa81f943bc
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT
