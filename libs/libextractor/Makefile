@@ -19,6 +19,7 @@ PKG_HASH:=bb8f312c51d202572243f113c6b62d8210301ab30cbaee604f9837d878cdf755
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
+PKG_CPE_ID:=cpe:/a:gnu:libextractor
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
