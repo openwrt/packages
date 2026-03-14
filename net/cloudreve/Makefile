@@ -16,6 +16,7 @@ PKG_MIRROR_HASH:=d88edc8af20a5cce662689a297123d1b4d504b0ca0499942068bdbb3c9ec8ea
 PKG_LICENSE:=GPL-3.0-only
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
+PKG_CPE_ID:=cpe:/a:cloudreve:cloudreve
 
 PKG_BUILD_DEPENDS:=golang/host node/host node-yarn/host
 PKG_BUILD_PARALLEL:=1
