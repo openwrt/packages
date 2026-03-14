@@ -19,6 +19,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/nDPI-$(PKG_VERSION)
 PKG_MAINTAINER:=Banglang Huang <banglang.huang@foxmail.com>, Toni Uhlig <matzeton@googlemail.com>
 PKG_LICENSE:=LGPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:ntop:ndpi
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=autogen.sh
