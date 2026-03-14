@@ -18,6 +18,7 @@ PKG_HASH:=e272afe7717e22790c383f3164480627a567c714ccb80c1ee96f62c9929d8225
 PKG_MAINTAINER:=Tibor Dudlák <tibor.dudlak@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:latchset:jose
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/meson.mk
