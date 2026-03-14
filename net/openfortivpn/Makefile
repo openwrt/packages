@@ -18,6 +18,7 @@ PKG_HASH:=ecacfc7f18d87f4ff503198177e51a83316b59b4646f31caa8140fdbfaa40389
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later OpenSSL
 PKG_LICENSE_FILES:=LICENSE LICENSE.OpenSSL
+PKG_CPE_ID:=cpe:/a:openfortivpn_project:openfortivpn
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
