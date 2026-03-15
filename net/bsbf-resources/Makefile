@@ -11,9 +11,9 @@ PKG_MAINTAINER:=Chester A. Unal <chester.a.unal@arinc9.com>
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/bondingshouldbefree/bsbf-resources.git
-PKG_SOURCE_DATE:=2026-03-03
-PKG_SOURCE_VERSION:=4a589d806f6a51cdde3d92db2182e156c5a34687
-PKG_MIRROR_HASH:=bfaaaaefff104d7249f4af53115552941b73ca506ee5f505c60e90ff60a00029
+PKG_SOURCE_DATE:=2026-03-12
+PKG_SOURCE_VERSION:=b09038a13af33c1428a783d3e759a1cfc4d36b30
+PKG_MIRROR_HASH:=7aa66af4d10d274b15be243a5783d67a71266a1649598d2b0db1581ec7c0f112
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -21,6 +21,7 @@ define Package/bsbf-mptcp
   SECTION:=net
   CATEGORY:=Network
   TITLE:=bsbf-mptcp
+  URL:=https://github.com/bondingshouldbefree/
   DEPENDS:=+fping +ip-full
 endef
 
@@ -28,18 +29,29 @@ define Package/bsbf-netspeed
   SECTION:=net
   CATEGORY:=Network
   TITLE:=bsbf-netspeed
+  URL:=https://github.com/bondingshouldbefree/
+endef
+
+define Package/bsbf-plpmtu
+  SECTION:=net
+  CATEGORY:=Network
+  TITLE:=bsbf-plpmtu
+  URL:=https://github.com/bondingshouldbefree/
+  DEPENDS:=+fping +plp-mtu-discovery
 endef
 
 define Package/bsbf-quectel-usbnet
   SECTION:=net
   CATEGORY:=Network
   TITLE:=bsbf-quectel-usbnet
+  URL:=https://github.com/bondingshouldbefree/
 endef
 
 define Package/bsbf-route
   SECTION:=net
   CATEGORY:=Network
   TITLE:=bsbf-route
+  URL:=https://github.com/bondingshouldbefree/
   DEPENDS:=+fping
 endef
 
@@ -47,6 +59,7 @@ define Package/bsbf-tcp-in-udp
   SECTION:=net
   CATEGORY:=Network
   TITLE:=bsbf-tcp-in-udp
+  URL:=https://github.com/bondingshouldbefree/
   DEPENDS:=+ethtool +tc-full +tcp-in-udp
 endef
 
@@ -71,6 +84,14 @@ endef
 define Package/bsbf-netspeed/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/resources-client/bsbf-netspeed $(1)/usr/sbin
+endef
+
+define Package/bsbf-plpmtu/install
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
+	$(INSTALL_BIN) ./files/etc/hotplug.d/iface/99-bsbf-plpmtu $(1)/etc/hotplug.d/iface
+
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/resources-shared/bsbf-plpmtu $(1)/usr/sbin
 endef
 
 define Package/bsbf-quectel-usbnet/install
@@ -99,6 +120,7 @@ endef
 
 $(eval $(call BuildPackage,bsbf-mptcp))
 $(eval $(call BuildPackage,bsbf-netspeed))
+$(eval $(call BuildPackage,bsbf-plpmtu))
 $(eval $(call BuildPackage,bsbf-quectel-usbnet))
 $(eval $(call BuildPackage,bsbf-route))
 $(eval $(call BuildPackage,bsbf-tcp-in-udp))

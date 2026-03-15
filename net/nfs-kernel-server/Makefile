@@ -7,15 +7,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nfs-kernel-server
-PKG_VERSION:=2.8.5
+PKG_VERSION:=2.8.7
 PKG_RELEASE:=1
-PKG_HASH:=b13ca4a9df44186bdbe107514b22732d4243f785f95daf2fb86afc1edba15bbb
+PKG_HASH:=59d0f1e17b18efaa60ea3ccf89a9cad3217f8d3b23c18d2fe34b25c8969d60ae
 
 PKG_SOURCE:=nfs-utils-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/utils/nfs-utils/$(PKG_VERSION)
 MAINTAINER:=John Audia <therealgraysky@proton.me>
 PKG_LICENSE:=GPL-2.0-or-later
-PKG_CPE_ID:=cpe:/a:nfs_project:nfs-utils
+PKG_CPE_ID:=cpe:/a:linux-nfs:nfs-utils
 
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/nfs-utils-$(PKG_VERSION)
 PKG_BUILD_DIR:=$(BUILD_DIR)/nfs-utils-$(PKG_VERSION)

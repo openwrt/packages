@@ -284,7 +284,7 @@ f_chkdom() {
 		# add www. for google safe search
 		if (type=="google" && domain ~ /^\.+/) { sub(/^\.+/, "", domain); domain="www."domain }
 		# check optional search prefix
-		if (pre != "" && $1 != pre) next
+		if (pre != "" && index($0, pre) != 1) next
 		# skip empty lines, comments and special domains
 		if (domain == "" || domain ~ ("^(#|localhost|loopback|" chk ")")) next
 		# no domain with trailing dot
@@ -1239,8 +1239,9 @@ f_switch() {
 		# resume via external DNS bridge
 		#
 		if [ "${adb_nftbridge}" = "1" ] && "${adb_nftcmd}" list chain inet adblock dns-bridge >/dev/null 2>&1; then
-			"${adb_nftcmd}" flush chain inet adblock dns-bridge 2>>"${adb_errorlog}"
-			[ "${?}" = "0" ] && done="nft"
+			if "${adb_nftcmd}" flush chain inet adblock dns-bridge 2>>"${adb_errorlog}"; then
+				done="nft"
+			fi
 			f_count "final" "${adb_finaldir}/${adb_dnsfile}"
 
 		# resume via local DNS
@@ -1627,7 +1628,7 @@ f_main() {
 				done
 				f_list prepare
 			) &
-		
+
 		# normal handling for feeds without categories
 		#
 		else
@@ -1826,44 +1827,43 @@ f_report() {
 			#
 			"${adb_awkcmd}" '
 				{
+					if (NF < 7) {
+						next
+					}
 					client = $3
-					iface = $4
-					qtype = $5
 					domain = $6
 					rc = $7
-					# normalize domain
-					gsub(/[\.]+$/, "", domain)
+
+					if (domain == "" || domain == "-") {
+						next
+					}
+
+					sub(/[\.]+$/, "", domain)
 					domain = tolower(domain)
-					# total client counter
+
 					clients[client]++
-					# remember OK per domain
 					if (rc == "OK") {
-						ok_domain[domain] = 1
-						ok_rr[domain SUBSEP qtype] = 1
+						ok_domain[domain]++
 					}
-					# remember NX per domain
-					if (rc == "NX") {
+					else if (rc == "NX") {
 						nx_domain[domain]++
-						nx_rr[domain SUBSEP qtype]++
 					}
-					# total queries per domain
 					all_domain[domain]++
 				}
-				END {
-					# top clients
-					for (c in clients)
-						printf "%d %s\n", clients[c], c > "'"${top_tmpclients}"'"
-					# domains & blocked domains
-					for (d in all_domain) {
-					if (ok_domain[d]) {
-						printf "%d %s\n", all_domain[d], d > "'"${top_tmpdomains}"'"
-						continue
+			END {
+				for (c in clients) {
+					printf "%d %s\n", clients[c], c > "'"${top_tmpclients}"'"
+				}
+				for (d in all_domain) {
+					if (d in ok_domain) {
+						printf "%d %s\n", ok_domain[d], d > "'"${top_tmpdomains}"'"
 					}
-					if (nx_domain[d]) {
+					if (d in nx_domain) {
 						printf "%d %s\n", nx_domain[d], d > "'"${top_tmpblocked}"'"
 					}
 				}
-			}' "${report_srt}"
+			}
+			' "${report_srt}"
 
 			# build json top lists
 			#

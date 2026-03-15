@@ -15,6 +15,7 @@ define Package/bsbf-autoconf-cellular
   SECTION:=net
   CATEGORY:=Network
   TITLE:=bsbf-autoconf-cellular
+  URL:=https://github.com/bondingshouldbefree/
 endef
 
 define Package/bsbf-autoconf-cellular/description
@@ -26,6 +27,7 @@ define Package/bsbf-autoconf-dhcp
   SECTION:=net
   CATEGORY:=Network
   TITLE:=bsbf-autoconf-dhcp
+  URL:=https://github.com/bondingshouldbefree/
 endef
 
 define Package/bsbf-autoconf-dhcp/description
@@ -37,7 +39,8 @@ define Package/bsbf-bonding
   SECTION:=net
   CATEGORY:=Network
   TITLE:=bsbf-bonding
-  DEPENDS:=+bsbf-mptcp +bsbf-route +bsbf-tcp-in-udp +xray-core
+  URL:=https://github.com/bondingshouldbefree/
+  DEPENDS:=+bsbf-mptcp +bsbf-plpmtu +bsbf-route +bsbf-tcp-in-udp +xray-core
 endef
 
 define Package/bsbf-bonding/description

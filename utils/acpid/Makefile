@@ -18,7 +18,7 @@ PKG_HASH:=2d095c8cfcbc847caec746d62cdc8d0bff1ec1bc72ef7c674c721e04da6ab333
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
-PKG_CPE_ID:=cpe:/a:tedfelix:acpid
+PKG_CPE_ID:=cpe:/a:tedfelix:acpid2
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1

@@ -8,15 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pytz
-PKG_VERSION:=2025.2
+PKG_VERSION:=2026.1
 PKG_RELEASE:=1
 
 PYPI_NAME:=pytz
-PKG_HASH:=360b9e3dbb49a209c21ad61809c7fb453643e048b38924c765813546746e81c3
+PKG_HASH:=10413c35476919b4c07bda6b9810c6e24d914378c430070bdb1869e18a37eee5
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.txt
+
+PKG_BUILD_DEPENDS:=python-setuptools/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

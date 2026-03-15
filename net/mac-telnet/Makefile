@@ -17,6 +17,7 @@ PKG_BUILD_FLAGS:=gc-sections
 
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
+PKG_CPE_ID:=cpe:/a:mac-telnet_project:mac-telnet
 
 include $(INCLUDE_DIR)/package.mk
 

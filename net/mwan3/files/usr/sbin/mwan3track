@@ -74,6 +74,10 @@ validate_track_method() {
 			fi
 			;;
 		arping)
+			[ "$FAMILY" = "ipv6" ] && {
+				LOG warn "arping does not support IPv6. Please use another track method."
+				return 1
+			}
 			command -v arping 1>/dev/null 2>&1 || {
 				LOG warn "Missing arping. Please install iputils-arping package."
 				return 1
@@ -242,9 +246,9 @@ main() {
 	validate_track_method $track_method || {
 		track_method=ping
 		if validate_track_method $track_method; then
-			LOG warn "Using ping to track interface $INTERFACE avaliability"
+			LOG warn "Using ping to track interface $INTERFACE availability"
 		else
-			LOG err "No track method avaliable"
+			LOG err "No track method available"
 			exit 1
 		fi
 	}
@@ -310,19 +314,21 @@ main() {
 						result=$?
 					;;
 					httping)
+						local ipv6_opt
+						[ "$FAMILY" = "ipv6" ] && ipv6_opt="-6"
 						if [ $check_quality -eq 0 ]; then
 							if [ "$httping_ssl" -eq 1 ]; then
-								WRAP httping -c $count -t $timeout -q "https://$track_ip" &> /dev/null &
+								WRAP httping $ipv6_opt -c $count -t $timeout -q "https://$track_ip" &> /dev/null &
 							else
-								WRAP httping -c $count -t $timeout -q "http://$track_ip" &> /dev/null &
+								WRAP httping $ipv6_opt -c $count -t $timeout -q "http://$track_ip" &> /dev/null &
 							fi
 							wait $!
 							result=$?
 						else
 							if [ "$httping_ssl" -eq 1 ]; then
-								WRAP httping -c $count -t $timeout "https://$track_ip" 2> /dev/null > $TRACK_OUTPUT &
+								WRAP httping $ipv6_opt -c $count -t $timeout "https://$track_ip" 2> /dev/null > $TRACK_OUTPUT &
 							else
-								WRAP httping -c $count -t $timeout "http://$track_ip" 2> /dev/null > $TRACK_OUTPUT &
+								WRAP httping $ipv6_opt -c $count -t $timeout "http://$track_ip" 2> /dev/null > $TRACK_OUTPUT &
 							fi
 							wait $!
 							ping_status=$?

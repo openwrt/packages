@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-chardet
-PKG_VERSION:=5.2.0
-PKG_RELEASE:=4
+PKG_VERSION:=7.0.1
+PKG_RELEASE:=1
 
 PYPI_NAME:=chardet
-PKG_HASH:=1b3b6ff479a8c414bc3fa2c0852995695c4a026dcd6d0633b2dd092ca39c1cf7
+PKG_HASH:=6fce895c12c5495bb598e59ae3cd89306969b4464ec7b6dd609b9c86e3397fe3
 
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=LICENSE
@@ -22,8 +22,12 @@ HOST_BUILD_DEPENDS:= \
 	python-build/host \
 	python-installer/host \
 	python-wheel/host \
-	python-setuptools/host
-PKG_BUILD_DEPENDS:=python-setuptools/host
+	python-hatch-vcs/host \
+	python-hatchling/host
+
+PKG_BUILD_DEPENDS:= \
+	python-hatch-vcs/host \
+	python-hatchling/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -38,7 +42,7 @@ define Package/python3-chardet
   MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
   URL:=https://github.com/chardet/chardet
   TITLE:=Universal encoding detector
-  DEPENDS:=+python3-light +python3-logging
+  DEPENDS:=+python3-light +python3-logging +python3-codecs
 endef
 
 define Package/python3-chardet/description

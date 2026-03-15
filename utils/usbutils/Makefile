@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=usbutils
 PKG_VERSION:=017
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/utils/usb/usbutils
@@ -31,14 +31,15 @@ define Package/usbutils
   DEPENDS:=+libusb-1.0 +libudev +librt +libpthread +usbids
   TITLE:=USB devices listing utilities
   URL:=http://www.linux-usb.org/
+  ALTERNATIVES:=200:/usr/bin/lsusb:/usr/libexec/lsusb-usbutils
 endef
 
 CONFIGURE_ARGS+= \
 	--datadir=/usr/share/hwdata
 
 define Package/usbutils/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/lsusb $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/libexec
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/lsusb $(1)/usr/libexec/lsusb-usbutils
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/usbreset $(1)/usr/bin/
 endef
 
