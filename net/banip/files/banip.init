@@ -22,17 +22,14 @@ ban_lock="/var/run/banip.lock"
 if [ -z "${IPKG_INSTROOT}" ]; then
 	if [ "${action}" = "boot" ] && "${ban_init}" running; then
 		exit 0
-	elif { [ "${action}" = "stop" ] || [ "${action}" = "report" ] || [ "${action}" = "search" ] ||
-		[ "${action}" = "content" ] || [ "${action}" = "lookup" ]; } && ! "${ban_init}" running; then
+	elif { [ "${action}" = "stop" ] || [ "${action}" = "report" ] || [ "${action}" = "search" ] || [ "${action}" = "content" ]; } && ! "${ban_init}" running; then
 		exit 0
 	fi
 	if [ ! -d "${ban_lock}" ] &&
-		{ [ "${action}" = "boot" ] || [ "${action}" = "start" ] || [ "${action}" = "restart" ] ||
-		[ "${action}" = "reload" ] || [ "${action}" = "lookup" ] || [ "${action}" = "search" ]; }; then
-		mkdir -p "${ban_lock}"	
+		{ [ "${action}" = "boot" ] || [ "${action}" = "start" ] || [ "${action}" = "restart" ] || [ "${action}" = "reload" ] || [ "${action}" = "search" ]; }; then
+		mkdir -p "${ban_lock}"
 	elif [ -d "${ban_lock}" ] &&
-		{ [ "${action}" = "boot" ] || [ "${action}" = "start" ] || [ "${action}" = "restart" ] ||
-		[ "${action}" = "reload" ] || [ "${action}" = "lookup" ] || [ "${action}" = "search" ]; }; then
+		{ [ "${action}" = "boot" ] || [ "${action}" = "start" ] || [ "${action}" = "restart" ] || [ "${action}" = "reload" ] || [ "${action}" = "search" ]; }; then
 		exit 1
 	fi
 	. "${ban_funlib}"

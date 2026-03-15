@@ -168,13 +168,6 @@
 		"chain": "in",
 		"descr": "real-time IP blocklist"
 	},
-	"nixspam":{
-		"url_4": "https://www.nixspam.net/download/nixspam-ip.dump.gz",
-		"rule": "feed 1",
-		"chain": "in",
-		"descr": "iX spam protection",
-		"flag": "gz"
-	},
 	"proxy":{
 		"url_4": "https://iplists.firehol.org/files/proxylists.ipset",
 		"rule": "feed 1",

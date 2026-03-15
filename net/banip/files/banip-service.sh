@@ -49,6 +49,7 @@ f_getfeed
 #
 cnt="1"
 for feed in allowlist ${ban_feed} blocklist; do
+
 	# local feeds (sequential processing)
 	#
 	if [ "${feed}" = "allowlist" ] || [ "${feed}" = "blocklist" ]; then
@@ -82,13 +83,13 @@ for feed in allowlist ${ban_feed} blocklist; do
 
 	# skip incomplete feeds
 	#
-	if { [ -z "$feed_url_4" ] && [ -z "$feed_url_6" ]; } || \
-		{ { [ -n "$feed_url_4" ] || [ -n "$feed_url_6" ]; } && [ -z "$feed_rule" ]; }; then 
+	if { [ -z "${feed_url_4}" ] && [ -z "${feed_url_6}" ]; } || \
+		{ { [ -n "${feed_url_4}" ] || [ -n "${feed_url_6}" ]; } && [ -z "${feed_rule}" ]; }; then
 		f_log "info" "skip incomplete feed '${feed}'"
 		continue
 	fi
 
-	# handle IPv4/IPv6 feeds
+	# handle IPv4 feeds
 	#
 	if [ "${ban_protov4}" = "1" ] && [ -n "${feed_url_4}" ] && [ -n "${feed_rule}" ]; then
 		feed_ipv="4"
@@ -111,6 +112,9 @@ for feed in allowlist ${ban_feed} blocklist; do
 			fi
 		fi
 	fi
+
+	# handle IPv6 feeds
+	#
 	if [ "${ban_protov6}" = "1" ] && [ -n "${feed_url_6}" ] && [ -n "${feed_rule}" ]; then
 		feed_ipv="6"
 		if [ "${feed}" = "country" ] && [ "${ban_countrysplit}" = "1" ]; then
