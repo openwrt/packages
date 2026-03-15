@@ -7,7 +7,7 @@
 	},
 	"adguard": {
 		"url": "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
-		"rule": "feed 3 [|^]",
+		"rule": "feed || 3 [|^]",
 		"size": "L",
 		"descr": "general"
 	},
