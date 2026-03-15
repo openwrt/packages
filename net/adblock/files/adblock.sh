@@ -284,7 +284,7 @@ f_chkdom() {
 		# add www. for google safe search
 		if (type=="google" && domain ~ /^\.+/) { sub(/^\.+/, "", domain); domain="www."domain }
 		# check optional search prefix
-		if (pre != "" && $1 != pre) next
+		if (pre != "" && index($0, pre) != 1) next
 		# skip empty lines, comments and special domains
 		if (domain == "" || domain ~ ("^(#|localhost|loopback|" chk ")")) next
 		# no domain with trailing dot
@@ -1628,7 +1628,7 @@ f_main() {
 				done
 				f_list prepare
 			) &
-		
+
 		# normal handling for feeds without categories
 		#
 		else
