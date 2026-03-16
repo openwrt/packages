@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nerdctl
 PKG_VERSION:=1.7.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/containerd/nerdctl/tar.gz/v$(PKG_VERSION)?
@@ -33,6 +33,10 @@ endef
 define Package/nerdctl/description
   Docker-compatible CLI for containerd, with support for Compose, Rootless,
   eStargz, OCIcrypt, IPFS, ...
+endef
+
+define Package/nerdctl/conffiles
+/etc/nerdctl/nerdctl.toml
 endef
 
 $(eval $(call GoBinPackage,nerdctl))
