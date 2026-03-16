@@ -1,0 +1,28 @@
+From f8c109f7156418abcc964a0df1ea2f5642c49077 Mon Sep 17 00:00:00 2001
+From: Christian Marangi <ansuelsmth@gmail.com>
+Date: Tue, 25 Nov 2025 00:38:51 +0100
+Subject: [PATCH] CMakeLists: update min version to 3.10 for CMake >= 4.0
+ support
+
+Update minimum version of CMake to 3.10 for CMake >= 4.0 version
+support.
+
+New CMake require 3.5 as the minimum version with that increased to 3.10
+in the next CMake release.
+
+Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
+---
+ libyuv/CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/libyuv/CMakeLists.txt
++++ b/libyuv/CMakeLists.txt
+@@ -3,7 +3,7 @@
+ # Run with -DTEST=ON to build unit tests
+ 
+ PROJECT ( YUV C CXX )	# "C" is required even for C++ projects
+-CMAKE_MINIMUM_REQUIRED( VERSION 2.8.12 )
++CMAKE_MINIMUM_REQUIRED( VERSION 3.10 )
+ OPTION( TEST "Built unit tests" OFF )
+ 
+ SET ( ly_base_dir	${PROJECT_SOURCE_DIR} )

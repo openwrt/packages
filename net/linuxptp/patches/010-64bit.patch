@@ -1,0 +1,12 @@
+--- a/ts2phc_pps_sink.c
++++ b/ts2phc_pps_sink.c
+@@ -4,6 +4,9 @@
+  * @note Copyright (C) 2019 Balint Ferencz <fernya@sch.bme.hu>
+  * @note SPDX-License-Identifier: GPL-2.0+
+  */
++#ifndef __SANE_USERSPACE_TYPES__
++#define __SANE_USERSPACE_TYPES__	/* For PPC64, to get LL64 types */
++#endif
+ #include <errno.h>
+ #include <linux/ptp_clock.h>
+ #include <poll.h>

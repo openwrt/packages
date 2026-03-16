@@ -1,0 +1,19 @@
+--- a/eoip.c
++++ b/eoip.c
+@@ -44,6 +44,7 @@
+ #include <signal.h>
+ #include <assert.h>
+ #include <pthread.h>
++#include <libgen.h>
+ #include <limits.h>
+ #include <asm/byteorder.h>
+ #include "minIni.h"
+@@ -205,7 +206,7 @@ static void *thr_rx(void *threadid)
+ 	    ret = select(raw_socket+1, &rfds, NULL, NULL, NULL);
+ 	    assert(rxringbufused == 0);
+ 	    while (rxringbufused < MAXRINGBUF) {
+-		rxringpayload[rxringbufused] = recvfrom(raw_socket, rxringbufptr[rxringbufused], MAXPAYLOAD, 0, &saddr[rxringbufused], &saddr_size);
++		rxringpayload[rxringbufused] = recvfrom(raw_socket, rxringbufptr[rxringbufused], MAXPAYLOAD, 0, (struct sockaddr *)&saddr[rxringbufused], &saddr_size);
+ 		if (rxringpayload[rxringbufused] < 0)
+ 		    break;
+ 		if (rxringpayload[rxringbufused] >= 28)

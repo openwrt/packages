@@ -1,0 +1,27 @@
+From: traffic-millions <60914101+traffic-millions@users.noreply.github.com>
+Date: Tue, 3 Mar 2020 11:15:48 +0800
+Subject: avahi_dns_packet_consume_uint32: fix potential undefined behavior
+
+avahi_dns_packet_consume_uint32 left shifts uint8_t values by 8, 16 and 24 bits to combine them into a 32-bit value. This produces an undefined behavior warning with gcc -fsanitize when fed input values of 128 or 255 however in testing no actual unexpected behavior occurs in practice and the 32-bit uint32_t is always correctly produced as the final value is immediately stored into a uint32_t and the compiler appears to handle this "correctly".
+
+Cast the intermediate values to uint32_t to prevent this warning and ensure the intended result is explicit.
+
+Closes: #267
+Closes: #268
+Reference: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=19304
+Origin: upstream, 0.9, commit:b897ca43ac100d326d118e5877da710eb7f836f9
+---
+ avahi-core/dns.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/avahi-core/dns.c
++++ b/avahi-core/dns.c
+@@ -455,7 +455,7 @@ int avahi_dns_packet_consume_uint32(Avah
+         return -1;
+ 
+     d = (uint8_t*) (AVAHI_DNS_PACKET_DATA(p) + p->rindex);
+-    *ret_v = (d[0] << 24) | (d[1] << 16) | (d[2] << 8) | d[3];
++    *ret_v = ((uint32_t)d[0] << 24) | ((uint32_t)d[1] << 16) | ((uint32_t)d[2] << 8) | (uint32_t)d[3];
+     p->rindex += sizeof(uint32_t);
+ 
+     return 0;

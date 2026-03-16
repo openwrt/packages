@@ -1,0 +1,21 @@
+From 1fe5da089ffcba6ef6560d5c3e67149035f55cb6 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Fri, 17 Oct 2025 14:41:32 -0700
+Subject: [PATCH] fix wrong format for 32-bit and 64-bit time
+
+Just cast the whole thing.
+---
+ src/digitemp.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/src/digitemp.c
++++ b/src/digitemp.c
+@@ -2744,7 +2744,7 @@ int main( int argc, char *argv[] )
+     if( (time(NULL) > last_time + sample_delay) && (sample_delay > 0) )
+     {
+       fprintf(stderr, "Warning: delay (-d) is less than the time needed to ");
+-      fprintf(stderr, "read all of the attached sensors. It took %ld seconds", (long int) time(NULL) - last_time );
++      fprintf(stderr, "read all of the attached sensors. It took %ld seconds", (long int) (time(NULL) - last_time) );
+       fprintf(stderr, " to read the sensors\n" );
+     }
+ 

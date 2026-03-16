@@ -1,0 +1,92 @@
+From c31d49234f0c7a81b69d525e249b154e11c486a9 Mon Sep 17 00:00:00 2001
+From: Michal Vasilek <michal.vasilek@nic.cz>
+Date: Thu, 12 Aug 2021 15:57:01 +0200
+Subject: [PATCH] utils: use internal which implementation
+
+* removes runtime dependency on which
+* fixes aa-unconfined when ss is installed outside {/usr,}/bin
+
+Signed-off-by: Michal Vasilek <michal.vasilek@nic.cz>
+---
+ utils/aa-unconfined        |  2 +-
+ utils/apparmor/easyprof.py |  8 +++-----
+ utils/apparmor/sandbox.py  | 10 ++++------
+ 3 files changed, 8 insertions(+), 12 deletions(-)
+
+--- a/utils/aa-unconfined
++++ b/utils/aa-unconfined
+@@ -125,7 +125,7 @@ def escape_special_chars(data):
+ pids = set()
+ if paranoid:
+     pids = get_all_pids()
+-elif args.with_ss or (not args.with_netstat and (os.path.exists('/bin/ss') or os.path.exists('/usr/bin/ss'))):
++elif args.with_ss or (not args.with_netstat and (aa.which("ss") is not None)):
+     pids = get_pids_ss()
+ else:
+     pids = get_pids_netstat()
+--- a/utils/apparmor/easyprof.py
++++ b/utils/apparmor/easyprof.py
+@@ -22,6 +22,8 @@ import subprocess
+ import sys
+ import tempfile
+ 
++from apparmor.aa import which
++
+ #
+ # TODO: move this out to the common library
+ #
+@@ -294,13 +296,9 @@ class AppArmorEasyProfile:
+         if os.path.isfile(self.conffile):
+             self._get_defaults()
+ 
+-        self.parser_path = '/sbin/apparmor_parser'
++        self.parser_path = which('apparmor_parser')
+         if opt.parser_path:
+             self.parser_path = opt.parser_path
+-        elif not os.path.exists(self.parser_path):
+-            rc, self.parser_path = cmd(['which', 'apparmor_parser'])
+-            if rc != 0:
+-                self.parser_path = None
+ 
+         self.parser_base = "/etc/apparmor.d"
+         if opt.parser_base:
+--- a/utils/apparmor/sandbox.py
++++ b/utils/apparmor/sandbox.py
+@@ -9,6 +9,7 @@
+ # ------------------------------------------------------------------
+ 
+ from apparmor.common import AppArmorException, debug, error, msg, cmd
++from apparmor.aa import which
+ import apparmor.easyprof
+ import optparse
+ import os
+@@ -31,8 +32,7 @@ def check_requirements(binary):
+ 
+     for e in exes:
+         debug("Searching for '%s'" % e)
+-        rc, report = cmd(['which', e])
+-        if rc != 0:
++        if which(e) is None:
+             error("Could not find '%s'" % e, do_exit=False)
+             return False
+ 
+@@ -306,8 +306,7 @@ class SandboxXephyr(SandboxXserver):
+     def start(self):
+         for e in ['Xephyr', 'matchbox-window-manager']:
+             debug("Searching for '%s'" % e)
+-            rc, report = cmd(['which', e])
+-            if rc != 0:
++            if which(e) is None:
+                 raise AppArmorException("Could not find '%s'" % e)
+ 
+         '''Run any setup code'''
+@@ -567,8 +566,7 @@ EndSection
+ 
+     def start(self):
+         debug("Searching for '%s'" % 'xpra')
+-        rc, report = cmd(['which', 'xpra'])
+-        if rc != 0:
++        if which('xpra') is None:
+             raise AppArmorException("Could not find '%s'" % 'xpra')
+ 
+         if self.driver == "xdummy":

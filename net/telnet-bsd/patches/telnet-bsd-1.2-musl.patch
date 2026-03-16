@@ -1,0 +1,36 @@
+--- a/telnet/misc-proto.h
++++ b/telnet/misc-proto.h
+@@ -63,7 +63,7 @@
+ #ifndef	__MISC_PROTO__
+ #define	__MISC_PROTO__
+ 
+-#include <sys/cdefs.h>
++#define	__P(protos) protos /* full-blown ANSI C */
+ 
+ void auth_encrypt_init __P((char *, char *, char *, int));
+ void auth_encrypt_user __P((char *));
+--- a/telnet/ring.h
++++ b/telnet/ring.h
+@@ -28,8 +28,8 @@
+  *
+  */
+ 
+-#include <sys/cdefs.h>
+ #include <sys/types.h>
++#define	__P(protos) protos /* full-blown ANSI C */
+ #define P __P
+ 
+ /*
+--- a/telnetd/sys_term.c
++++ b/telnetd/sys_term.c
+@@ -838,8 +838,10 @@ cleanup (int sig)
+    * receive another signal while we're in that function. */
+   sigfillset(&sigset);
+   sigprocmask(SIG_SETMASK, &sigset, &sigset);
++#if defined(logwtmp)
+   if (logout (p))
+     logwtmp (p, "", "");
++#endif
+   sigprocmask(SIG_SETMASK, &sigset, NULL);
+ #ifdef PARANOID_TTYS
+   /*

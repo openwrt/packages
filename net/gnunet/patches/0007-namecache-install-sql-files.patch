@@ -1,0 +1,31 @@
+From 94aa64ed0363e8c62f126cfe42843468cc775132 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 10 Oct 2025 01:33:41 +0100
+Subject: [PATCH 7/8] namecache: install sql files
+
+---
+ src/plugin/namecache/meson.build | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+--- a/src/plugin/namecache/meson.build
++++ b/src/plugin/namecache/meson.build
+@@ -1,3 +1,19 @@
++configure_file(
++    input: 'namecache-0001.sql',
++    output: 'namecache-0001.sql',
++    configuration: cdata,
++    install: true,
++    install_dir: get_option('datadir') / 'gnunet' / 'sql',
++)
++
++configure_file(
++    input: 'namecache-drop.sql',
++    output: 'namecache-drop.sql',
++    configuration: cdata,
++    install: true,
++    install_dir: get_option('datadir') / 'gnunet' / 'sql',
++)
++
+ shared_module(
+     'gnunet_plugin_namecache_sqlite',
+     ['plugin_namecache_sqlite.c'],

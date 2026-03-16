@@ -1,0 +1,11 @@
+--- a/module/netatop.c
++++ b/module/netatop.c
+@@ -1617,7 +1617,7 @@ getsockopt(struct sock *sk, int cmd, void __user *user, int *len)
+ 
+  	   case NETATOP_GETCNT_TGID:
+ 		tasktype = 'g';		
+-		// fall through
++		fallthrough;
+  	   case NETATOP_GETCNT_PID:
+ 		if (*len < sizeof(pid_t))
+ 			return -EINVAL;

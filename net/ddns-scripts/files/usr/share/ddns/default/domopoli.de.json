@@ -1,0 +1,7 @@
+{
+	"name": "domopoli.de",
+	"ipv4": {
+		"url": "http://[USERNAME]:[PASSWORD]@http://dyndns.domopoli.de/nic/update?hostname=[DOMAIN]&myip=[IP]",
+		"answer": "good|nochg"
+	}
+}

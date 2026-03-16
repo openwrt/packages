@@ -1,0 +1,260 @@
+{
+	"asn":{
+		"url_4": "https://asn.ipinfo.app/api/text/list/",
+		"url_6": "https://asn.ipinfo.app/api/text/list/",
+		"rule": "feed 1",
+		"chain": "in",
+		"descr": "ASN IP segments"
+	},
+	"backscatterer":{
+		"url_4": "http://wget-mirrors.uceprotect.net/rbldnsd-all/ips.backscatterer.org.gz",
+		"rule": "feed 1",
+		"chain": "in",
+		"descr": "backscatterer IPs",
+		"flag": "gz"
+	},
+	"becyber":{
+		"url_4": "https://raw.githubusercontent.com/duggytuxy/Data-Shield_IPv4_Blocklist/refs/heads/main/prod_data-shield_ipv4_blocklist.txt",
+		"rule": "feed 1",
+		"chain": "in",
+		"descr": "malicious attacker IPs"
+	},
+	"binarydefense":{
+		"url_4": "https://iplists.firehol.org/files/bds_atif.ipset",
+		"rule": "feed 1",
+		"chain": "in",
+		"descr": "binary defense banlist"
+	},
+	"bogon":{
+		"url_4": "https://www.team-cymru.org/Services/Bogons/fullbogons-ipv4.txt",
+		"url_6": "https://www.team-cymru.org/Services/Bogons/fullbogons-ipv6.txt",
+		"rule": "feed 1",
+		"chain": "in",
+		"descr": "bogon prefixes"
+	},
+	"bruteforceblock":{
+		"url_4": "https://danger.rulez.sk/projects/bruteforceblocker/blist.php",
+		"rule": "feed 1",
+		"chain": "in",
+		"descr": "bruteforceblocker IPs"
+	},
+	"cinsscore":{
+		"url_4": "https://cinsscore.com/list/ci-badguys.txt",
+		"rule": "feed 1",
+		"chain": "in",
+		"descr": "suspicious attacker IPs"
+	},
+	"country":{
+		"url_4": "https://www.ipdeny.com/ipblocks/data/aggregated/",
+		"url_6": "https://www.ipdeny.com/ipv6/ipaddresses/aggregated/",
+		"rule": "feed 1",
+		"chain": "in",
+		"descr": "country blocks"
+	},
+	"debl":{
+		"url_4": "https://lists.blocklist.de/lists/all.txt",
+		"url_6": "https://lists.blocklist.de/lists/all.txt",
+		"rule": "feed 1",
+		"chain": "in",
+		"descr": "fail2ban IP blocklist"
+	},
+	"dns":{
+		"url_4": "https://public-dns.info/nameservers-all.txt",
+		"url_6": "https://public-dns.info/nameservers-all.txt",
+		"rule": "feed 1",
+		"chain": "out",
+		"descr": "public DNS-Server",
+		"flag": "tcp udp 53 853"
+	},
+	"doh":{
+		"url_4": "https://raw.githubusercontent.com/dibdot/DoH-IP-blocklists/master/doh-ipv4.txt",
+		"url_6": "https://raw.githubusercontent.com/dibdot/DoH-IP-blocklists/master/doh-ipv6.txt",
+		"rule": "feed 1",
+		"chain": "out",
+		"descr": "public DoH-Server",
+		"flag": "tcp udp 80 443"
+	},
+	"drop":{
+		"url_4": "https://www.spamhaus.org/drop/drop.txt",
+		"url_6": "https://www.spamhaus.org/drop/dropv6.txt",
+		"rule": "feed 1",
+		"chain": "in",
+		"descr": "spamhaus drop compilation"
+	},
+	"dshield":{
+		"url_4": "https://feeds.dshield.org/block.txt",
+		"rule": "feed 13",
+		"chain": "in",
+		"descr": "dshield IP blocklist"
+	},
+	"etcompromised":{
+		"url_4": "https://iplists.firehol.org/files/et_compromised.ipset",
+		"rule": "feed 1",
+		"chain": "in",
+		"descr": "ET compromised hosts"
+	},
+	"feodo":{
+		"url_4": "https://feodotracker.abuse.ch/downloads/ipblocklist.txt",
+		"rule": "feed 1",
+		"chain": "in",
+		"descr": "feodo tracker"
+	},
+	"firehol1":{
+		"url_4": "https://iplists.firehol.org/files/firehol_level1.netset",
+		"rule": "feed 1",
+		"chain": "in",
+		"descr": "firehol level 1 compilation"
+	},
+	"firehol2":{
+		"url_4": "https://iplists.firehol.org/files/firehol_level2.netset",
+		"rule": "feed 1",
+		"chain": "in",
+		"descr": "firehol level 2 compilation"
+	},
+	"firehol3":{
+		"url_4": "https://iplists.firehol.org/files/firehol_level3.netset",
+		"rule": "feed 1",
+		"chain": "in",
+		"descr": "firehol level 3 compilation"
+	},
+	"firehol4":{
+		"url_4": "https://iplists.firehol.org/files/firehol_level4.netset",
+		"rule": "feed 1",
+		"chain": "in",
+		"descr": "firehol level 4 compilation"
+	},
+	"greensnow":{
+		"url_4": "https://blocklist.greensnow.co/greensnow.txt",
+		"rule": "feed 1",
+		"chain": "in",
+		"descr": "suspicious server IPs"
+	},
+	"hagezi":{
+		"url_4": "https://raw.githubusercontent.com/hagezi/dns-blocklists/refs/heads/main/ips/tif.txt",
+		"rule": "feed 1",
+		"chain": "out",
+		"descr": "Threat IP blocklist",
+		"flag": "tcp udp 80 443"
+	},
+	"ipblackhole":{
+		"url_4": "https://blackhole.monster/blackhole-today",
+		"rule": "feed 1",
+		"chain": "in",
+		"descr": "blackhole IP blocklist"
+	},
+	"ipexdbl":{
+		"url_4": "https://raw.githubusercontent.com/ZEROF/ipextractor/main/ipexdbl.txt",
+		"rule": "feed 1",
+		"chain": "in",
+		"descr": "IPEX dynamic blocklists"
+	},
+	"ipsum":{
+		"url_4": "https://raw.githubusercontent.com/stamparm/ipsum/master/levels/3.txt",
+		"rule": "feed 1",
+		"chain": "in",
+		"descr": "malicious IPs"
+	},
+	"ipthreat":{
+		"url_4": "https://lists.ipthreat.net/file/ipthreat-lists/threat/threat-30.txt.gz",
+		"rule": "feed 1",
+		"chain": "in",
+		"descr": "hacker and botnet IPs",
+		"flag": "gz"
+	},
+	"myip":{
+		"url_4": "https://myip.ms/files/blacklist/general/latest_blacklist.txt",
+		"url_6": "https://myip.ms/files/blacklist/general/latest_blacklist.txt",
+		"rule": "feed 1",
+		"chain": "in",
+		"descr": "real-time IP blocklist"
+	},
+	"proxy":{
+		"url_4": "https://iplists.firehol.org/files/proxylists.ipset",
+		"rule": "feed 1",
+		"chain": "in",
+		"descr": "open proxies"
+	},
+	"threat":{
+		"url_4": "https://rules.emergingthreats.net/fwrules/emerging-Block-IPs.txt",
+		"rule": "feed 1",
+		"chain": "in",
+		"descr": "emerging threats"
+	},
+	"threatview":{
+		"url_4": "https://threatview.io/Downloads/IP-High-Confidence-Feed.txt",
+		"rule": "feed 1",
+		"chain": "in",
+		"descr": "malicious IPs"
+	},
+	"tor":{
+		"url_4": "https://www.dan.me.uk/torlist/?exit",
+		"url_6": "https://www.dan.me.uk/torlist/?exit",
+		"rule": "feed 1",
+		"chain": "in",
+		"descr": "tor exit nodes"
+	},
+	"turris":{
+		"url_4": "https://view.sentinel.turris.cz/greylist-data/greylist-latest.csv",
+		"url_6": "https://view.sentinel.turris.cz/greylist-data/greylist-latest.csv",
+		"rule": "feed 1 ,",
+		"chain": "in",
+		"descr": "turris sentinel blocklist"
+	},
+	"uceprotect1":{
+		"url_4": "http://wget-mirrors.uceprotect.net/rbldnsd-all/dnsbl-1.uceprotect.net.gz",
+		"rule": "feed 1",
+		"chain": "in",
+		"descr": "spam protection level 1",
+		"flag": "gz"
+	},
+	"uceprotect2":{
+		"url_4": "http://wget-mirrors.uceprotect.net/rbldnsd-all/dnsbl-2.uceprotect.net.gz",
+		"rule": "feed 1",
+		"chain": "in",
+		"descr": "spam protection level 2",
+		"flag": "gz"
+	},
+	"uceprotect3":{
+		"url_4": "http://wget-mirrors.uceprotect.net/rbldnsd-all/dnsbl-3.uceprotect.net.gz",
+		"rule": "feed 1",
+		"chain": "in",
+		"descr": "spam protection level 3",
+		"flag": "gz"
+	},
+	"urlhaus":{
+		"url_4": "https://urlhaus.abuse.ch/downloads/ids/",
+		"rule": "suricata 1",
+		"chain": "in",
+		"descr": "urlhaus IDS IPs"
+	},
+	"urlvir":{
+		"url_4": "https://iplists.firehol.org/files/urlvir.ipset",
+		"rule": "feed 1",
+		"chain": "in",
+		"descr": "malware related IPs"
+	},
+	"voip":{
+		"url_4": "https://voipbl.org/update/",
+		"rule": "feed 1",
+		"chain": "in",
+		"descr": "VoIP fraud blocklist"
+	},
+	"vpn":{
+		"url_4": "https://raw.githubusercontent.com/X4BNet/lists_vpn/refs/heads/main/output/vpn/ipv4.txt",
+		"rule": "feed 1",
+		"chain": "in",
+		"descr": "vpn IPs"
+	},
+	"vpndc":{
+		"url_4": "https://raw.githubusercontent.com/X4BNet/lists_vpn/refs/heads/main/output/datacenter/ipv4.txt",
+		"rule": "feed 1",
+		"chain": "in",
+		"descr": "vpn datacenter IPs"
+	},
+	"webclient":{
+		"url_4": "https://iplists.firehol.org/files/firehol_webclient.netset",
+		"rule": "feed 1",
+		"chain": "in",
+		"descr": "malware related IPs"
+	}
+}

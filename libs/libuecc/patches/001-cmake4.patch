@@ -1,0 +1,26 @@
+From b3812bf5ab1777193c4b85863311c33997d141f9 Mon Sep 17 00:00:00 2001
+From: Sven Eckelmann <sven@narfation.org>
+Date: Mon, 1 Sep 2025 10:21:38 +0200
+Subject: [PATCH] Fix build with CMake 4
+
+CMake 4 dropped support for policies which were introduced before version
+3.5. Trying to build uisng cmake 4 results in:
+...
+Just increasing minimum version to 3.18 (from 2020-07-15) fixes this
+problem. This version is low enough to still support Debian bullseye or
+Ubuntu 22.04.
+...
+Fixes: #1
+Signed-off-by: Sven Eckelmann <sven@narfation.org>
+---
+ CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-cmake_minimum_required(VERSION 2.6)
++cmake_minimum_required(VERSION 3.18)
+ project(LIBUECC C)
+ set(PROJECT_VERSION 7)
+ 

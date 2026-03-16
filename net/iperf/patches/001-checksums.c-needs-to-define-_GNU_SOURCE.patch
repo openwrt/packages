@@ -1,0 +1,43 @@
+From: Julien Olivain <ju.o@free.fr>
+Date: Mon, 11 Nov 2024 11:41:28 +0100
+Subject: [PATCH] checksums.c needs to define _GNU_SOURCE
+
+When compiling with musl libc [1], iperf2 fail to build with error:
+
+    checksums.c: In function 'udpchecksum':
+    checksums.c:175:17: error: 'const struct udphdr' has no member named 'check'
+      175 |     if (!udp_hdr->check) {
+          |                 ^~
+
+This failure was introduced in commit [2], in version 2.2.1. This is
+due to the switch from using <linux/udp.h> (which always define "struct
+udphdr" members), to <netinet/udp.h> which define members in musl libc
+only when _GNU_SOURCE is defined. See [3].
+
+Note: those use of udphdr members in checksums.c were introduced in
+commit [4], in version 2.1.1.
+
+This commit fixes the issue by defining _GNU_SOURCE in checksums.c.
+
+This issue was found in the iperf integration in Buildroot Linux [5].
+
+[1] https://www.musl-libc.org/
+[2] https://sourceforge.net/p/iperf2/code/ci/2a5fe6ffd4519ef3c6fc95704096646f897bd124/
+[3] https://git.musl-libc.org/cgit/musl/tree/include/netinet/udp.h?h=v1.2.5#n11
+[4] https://sourceforge.net/p/iperf2/code/ci/2ba97baecb4930e373ee5f51fc84115246e85096/
+[5] https://buildroot.org/
+
+Signed-off-by: Julien Olivain <ju.o@free.fr>
+
+--- a/src/checksums.c
++++ b/src/checksums.c
+@@ -47,6 +47,9 @@
+  * by Robert J. McMahon (rjmcmahon@rjmcmahon.com, bob.mcmahon@broadcom.com)
+  * -------------------------------------------------------------------
+  */
++#ifndef _GNU_SOURCE
++#define _GNU_SOURCE
++#endif
+ #include "headers.h"
+ 
+ /*

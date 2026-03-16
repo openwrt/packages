@@ -1,0 +1,20 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Andy Chiang <AndyChiang_git@outlook.com>
+Date: Mon, 10 Nov 2025 08:40:56 +0700
+Subject: [PATCH] cmake: adjust for cmake 4.x compatibility
+
+Adjust for cmake 4.x compatibility
+
+Signed-off-by: Andy Chiang <AndyChiang_git@outlook.com>
+---
+ CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-cmake_minimum_required(VERSION 2.8.12)
++cmake_minimum_required(VERSION 3.10)
+ 
+ if(POLICY CMP0048)
+ 	cmake_policy(SET CMP0048 NEW)

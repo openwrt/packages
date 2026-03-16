@@ -1,0 +1,9 @@
+{
+	"name": "afraid.org-basicauth",
+	"ipv4": {
+		"url": "https://[USERNAME]:[PASSWORD]@freedns.afraid.org/nic/update?hostname=[DOMAIN]&myip=[IP]"
+	},
+	"ipv6": {
+		"url": "https://[USERNAME]:[PASSWORD]@freedns.afraid.org/nic/update?hostname=[DOMAIN]&myip=[IP]"
+	}
+}

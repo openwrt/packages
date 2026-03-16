@@ -1,0 +1,44 @@
+--- a/fsck_hfs.tproj/dfalib/Scavenger.h
++++ b/fsck_hfs.tproj/dfalib/Scavenger.h
+@@ -48,7 +48,7 @@
+ #endif
+ #include <sys/errno.h>
+ #include <sys/param.h>
+-#include <sys/sysctl.h>
++#include <linux/sysctl.h>
+ #include <sys/mount.h>
+ #include <hfs/hfs_mount.h>
+ 
+--- a/fsck_hfs.tproj/fsck_hfs.c
++++ b/fsck_hfs.tproj/fsck_hfs.c
+@@ -30,7 +30,7 @@
+ #include <sys/ioctl.h>
+ #if !LINUX
+ #include <sys/disk.h>
+-#include <sys/sysctl.h>
++#include <linux/sysctl.h>
+ #include <setjmp.h>
+ #endif
+ #include <hfs/hfs_mount.h>
+--- a/fsck_hfs.tproj/utilities.c
++++ b/fsck_hfs.tproj/utilities.c
+@@ -70,7 +70,7 @@
+ #include <string.h>
+ #include <unistd.h> 
+ #include <stdlib.h>
+-#include <sys/sysctl.h>
++#include <linux/sysctl.h>
+ 
+ #include "fsck_hfs.h"
+ 
+--- a/newfs_hfs.tproj/makehfs.c
++++ b/newfs_hfs.tproj/makehfs.c
+@@ -38,7 +38,7 @@
+ #endif
+ #include <sys/errno.h>
+ #include <sys/stat.h>
+-#include <sys/sysctl.h>
++#include <linux/sysctl.h>
+ #if !LINUX
+ #include <sys/vmmeter.h>
+ #endif

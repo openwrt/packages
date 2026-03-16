@@ -1,0 +1,11 @@
+--- a/Makefile
++++ b/Makefile
+@@ -165,7 +165,7 @@ CFLAGS += -std=c11 -Wall -Wextra -Wshado
+ CFLAGS += $(CFLAGS_OPTIMIZATION)
+ CFLAGS += $(CFLAGS_CURSES)
+ 
+-LDLIBS += $(LDLIBS_CURSES) -lpthread
++LDLIBS += $(LDLIBS_CURSES) -lpthread -lfts
+ 
+ # static compilation needs libgpm development package
+ ifeq ($(strip $(O_STATIC)),1)

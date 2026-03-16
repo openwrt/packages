@@ -1,0 +1,107 @@
+#!/bin/sh /etc/rc.common
+# Copyright 2021-2023 Stan Grishin (stangri@melmac.ca)
+# shellcheck disable=SC3043,SC3060
+
+# shellcheck disable=SC2034
+START=80
+# shellcheck disable=SC2034
+USE_PROCD=1
+
+readonly PKG_VERSION='dev-test'
+readonly packageName='nebula-service'
+readonly serviceName="$packageName $PKG_VERSION"
+readonly PROG=/usr/sbin/nebula
+readonly _OK_='\033[0;32m\xe2\x9c\x93\033[0m'
+readonly _FAIL_='\033[0;31m\xe2\x9c\x97\033[0m'
+
+extra_command 'version' 'Show version information'
+
+version() { echo "Version: $PKG_VERSION"; }
+
+output() {
+	local msg memmsg logmsg
+	local sharedMemoryOutput="/dev/shm/$packageName-output"
+	[ -t 1 ] && printf "%b" "$@"
+	msg="${1//$serviceName /service }";
+	if [ "$(printf "%b" "$msg" | wc -l)" -gt 0 ]; then
+		[ -s "$sharedMemoryOutput" ] && memmsg="$(cat "$sharedMemoryOutput")"
+		logmsg="$(printf "%b" "${memmsg}${msg}" | sed 's/\x1b\[[0-9;]*m//g')"
+		logger -t "$packageName" "$(printf "%b" "$logmsg")"
+		rm -f "$sharedMemoryOutput"
+	else
+		printf "%b" "$msg" >> "$sharedMemoryOutput"
+	fi
+}
+output_ok() { output "$_OK_"; }
+output_okn() { output "${_OK_}\\n"; }
+output_fail() { output "$_FAIL_"; }
+output_failn() { output "${_FAIL_}\\n"; }
+
+# https://gist.github.com/pkuczynski/8665367
+# shellcheck disable=SC2086,SC2155
+parse_yaml() {
+	local prefix=$2
+	local s='[[:space:]]*' w='[a-zA-Z0-9_-]*' fs="$(echo @|tr @ '\034'|tr -d '\015')"
+	sed -ne "s|^\($s\)\($w\)$s:$s\"\(.*\)\"$s\$|\1$fs\2$fs\3|p" \
+	-e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\1$fs\2$fs\3|p" "$1" |
+	awk "-F$fs" '{
+		indent = length($1)/2;
+		vname[indent] = $2;
+		for (i in vname) {if (i > indent) {delete vname[i]}}
+		if (length($3) > 0) {
+			vn=""; for (i=0; i<indent; i++) {vn=(vn)(vname[i])("_")}
+			printf("%s%s%s=\"%s\"\n", "'$prefix'", vn, $2, $3);
+		}
+	}'
+}
+
+start_instance() {
+	local config_file="$1"
+	local yaml_listen_host yaml_listen_port
+	if [ ! -x "$PROG" ]; then
+		echo "Nebula binary not found! Please install 'nebula' package."
+		output_fail
+		return 1
+	fi
+	if [ ! -s "$config_file" ]; then
+		output_fail
+		return 1
+	fi
+	if ! eval "$(parse_yaml "$config_file" "yaml_")"; then
+		output_fail
+		return 1
+	else
+		procd_open_instance
+		procd_set_param command ${PROG} -config "${config_file}"
+		procd_set_param stderr 1
+		procd_set_param stdout 1
+		procd_set_param respawn
+		procd_open_data
+		json_add_array firewall
+			json_add_object ""
+			json_add_string type rule
+			json_add_string name "${config_file##*/}"
+			json_add_string src "*"
+			json_add_string dest_ip "${yaml_listen_host:-0.0.0.0}"
+			json_add_string dest_port "${yaml_listen_port:-4242}"
+			json_add_string proto udp
+			json_add_string target ACCEPT
+			json_close_object
+		json_close_array
+		procd_close_data
+		procd_close_instance
+	output_ok
+	fi
+}
+
+start_service() {
+	local f
+	output "Starting $packageName instances "
+	for f in /etc/nebula/*.yml; do
+		start_instance "$f"
+	done
+	output '\n'
+}
+
+service_started() { procd_set_config_changed firewall; }
+service_stopped() { procd_set_config_changed firewall; }

@@ -1,0 +1,26 @@
+--- a/src/osflags
++++ b/src/osflags
+@@ -18,13 +18,6 @@ link)
+ 		windows32)
+ 			echo '-lws2_32 -liphlpapi';
+ 		;;
+-		Linux)
+-			FLAGS="";
+-			[ -e /usr/include/selinux/selinux.h ] && FLAGS="$FLAGS -lselinux";
+-			"$PKG_CONFIG" --exists libsystemd-daemon && FLAGS="$FLAGS $($PKG_CONFIG --libs libsystemd-daemon)";
+-			"$PKG_CONFIG" --exists libsystemd && FLAGS="$FLAGS $($PKG_CONFIG --libs libsystemd)";
+-			echo $FLAGS;
+-		;;
+ 	esac
+ 	;;
+ cflags)
+@@ -40,9 +33,6 @@ cflags)
+ 		;;
+ 		Linux)
+ 			FLAGS="-D_GNU_SOURCE"
+-			[ -e /usr/include/selinux/selinux.h ] && FLAGS="$FLAGS -DHAVE_SETCON";
+-			"$PKG_CONFIG" --exists libsystemd-daemon && FLAGS="$FLAGS -DHAVE_SYSTEMD";
+-			"$PKG_CONFIG" --exists libsystemd && FLAGS="$FLAGS -DHAVE_SYSTEMD";
+ 			echo $FLAGS;
+ 		;;
+ 		GNU/kFreeBSD|GNU)

@@ -1,0 +1,11 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -17,7 +17,7 @@ endif
+ 
+ # build the following subdirectories
+ SUBDIRS = cgilib-0.4 gd1.3 $(SUBDIRS_1) $(SUBDIRS_2) \
+-          src doc examples contrib tcl
++          src examples contrib tcl
+ 
+ # the following files are not mentioned in any other Makefile
+ # LWT 24Jul03 - removed redundant spec file listed

@@ -1,0 +1,118 @@
+menu "Configuration"
+        depends on PACKAGE_libopen62541
+
+config LIBOPEN62541_UA_ENABLE_SUBSCRIPTIONS
+	bool "Enable subscriptions support"
+	default y
+
+config LIBOPEN62541_UA_ENABLE_SUBSCRIPTIONS_EVENTS
+        bool "Use events for subscriptions (EXPERIMENTAL)"
+	depends on LIBOPEN62541_UA_ENABLE_SUBSCRIPTIONS && (LIBOPEN62541_NAMESPACEZERO_FULL || LIBOPEN62541_NAMESPACEZERO_REDUCED)
+
+config LIBOPEN62541_UA_ENABLE_SUBSCRIPTIONS_ALARMS_CONDITIONS
+        bool "Use alarms and conditions for subscriptions (EXPERIMENTAL)"
+        depends on LIBOPEN62541_UA_ENABLE_SUBSCRIPTIONS_EVENTS && LIBOPEN62541_NAMESPACEZERO_FULL
+
+config LIBOPEN62541_UA_ENABLE_METHODCALLS
+	bool "Enable the Method service set"
+	default y
+
+config LIBOPEN62541_UA_ENABLE_PARSING
+	bool "Enable parsing human readable formats of builtin data types"
+	default y
+
+config LIBOPEN62541_UA_ENABLE_NODEMANAGEMENT
+        bool "Enable dynamic addition and removal of nodes at runtime"
+        default y
+
+config LIBOPEN62541_UA_ENABLE_IMMUTABLE_NODES
+        bool "Enable immutable nodes"
+        default y
+
+config LIBOPEN62541_UA_ENABLE_DISCOVERY
+        bool "Enable Discovery Service (LDS)"
+        default y
+
+config LIBOPEN62541_UA_ENABLE_DISCOVERY_MULTICAST
+        bool "Enable Discovery Service with multicast support (LDS-ME)"
+        default y
+	depends on LIBOPEN62541_UA_ENABLE_DISCOVERY
+
+config LIBOPEN62541_UA_ENABLE_DISCOVERY_SEMAPHORE
+        bool "Enable Discovery Semaphore support"
+        default y
+	depends on LIBOPEN62541_UA_ENABLE_DISCOVERY
+
+choice
+        prompt "Encryption library"
+        default LIBOPEN62541_NOENCRYPTION
+
+        config LIBOPEN62541_NOENCRYPTION
+                bool "No encryption"
+
+        config LIBOPEN62541_MBDEDTLS
+                bool "Encryption support using mbed TLS"
+
+        config LIBOPEN62541_OPENSSL
+                bool "Encryption support using OpenSSL"
+endchoice
+
+config LIBOPEN62541_UA_ENABLE_ENCRYPTION_TPM2
+	bool "Enable TPM support"
+	depends on LIBOPEN62541_UA_ENABLE_PUBSUB_ENCRYPTION
+
+choice
+	prompt "Namespace zero definition"
+
+	default LIBOPEN62541_NAMESPACEZERO_FULL
+
+	config LIBOPEN62541_NAMESPACEZERO_FULL
+		bool "Full namespace zero"
+
+	config LIBOPEN62541_NAMESPACEZERO_REDUCED
+		bool "Small namespace zero still passing CTT"
+
+	config LIBOPEN62541_NAMESPACEZERO_MINIMAL
+		bool "Barebones namespace zero"
+
+endchoice
+
+config LIBOPEN62541_UA_ENABLE_TYPEDESCRIPTION
+        bool "Add the type and member names to the UA_DataType structure"
+        default y
+
+config LIBOPEN62541_UA_ENABLE_STATUSCODE_DESCRIPTIONS
+        bool "Compile the human-readable name of the StatusCodes into the binary"
+        default y
+
+config LIBOPEN62541_UA_ENABLE_HISTORIZING
+	bool "Enable historical access"
+
+config LIBOPEN62541_UA_ENABLE_PUBSUB
+        bool "Enable OPC UA PubSub support (EXPERIMENTAL)"
+
+config LIBOPEN62541_UA_ENABLE_PUBSUB_DELTAFRAMES
+        bool "PubSub messages differentiate between keyframe and deltaframe messages"
+	depends on LIBOPEN62541_UA_ENABLE_PUBSUB
+
+config LIBOPEN62541_UA_ENABLE_PUBSUB_FILE_CONFIG
+        bool "Enable loading OPC UA PubSub configuration from File/ByteString"
+	depends on LIBOPEN62541_UA_ENABLE_PUBSUB
+
+config LIBOPEN62541_UA_ENABLE_PUBSUB_INFORMATIONMODEL
+        bool "Enable the information model representation of the PubSub configuration"
+	depends on LIBOPEN62541_UA_ENABLE_PUBSUB && (LIBOPEN62541_NAMESPACEZERO_FULL || LIBOPEN62541_NAMESPACEZERO_REDUCED)
+
+config LIBOPEN62541_UA_ENABLE_PUBSUB_MONITORING
+        bool "Enable the experimental PubSub monitoring"
+	depends on LIBOPEN62541_UA_ENABLE_PUBSUB
+
+config LIBOPEN62541_UA_ENABLE_PUBSUB_ETH_UADP
+        bool "Enable the OPC UA Ethernet PubSub support to transport UADP NetworkMessages as payload of Ethernet II frame without IP or UDP headers"
+	depends on LIBOPEN62541_UA_ENABLE_PUBSUB
+
+config LIBOPEN62541_UA_ENABLE_PUBSUB_ENCRYPTION
+        bool "Enable PubSub encryption"
+        depends on LIBOPEN62541_UA_ENABLE_PUBSUB
+
+endmenu

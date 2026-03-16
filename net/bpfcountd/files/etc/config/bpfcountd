@@ -1,0 +1,13 @@
+config bpfcountd 'eth0_in'
+	option ifname 'eth0'
+	option prefilter 'inbound'
+	option filterfile '/etc/bpfcountd.filters'
+	option buffersize '2097152'
+	option disabled '1'
+
+config bpfcountd 'eth0_out'
+	option ifname 'eth0'
+	option prefilter 'outbound'
+	option filterfile '/etc/bpfcountd.filters'
+	option buffersize '2097152'
+	option disabled '1'

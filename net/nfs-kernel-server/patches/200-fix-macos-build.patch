@@ -1,0 +1,17 @@
+fix stat64 issue for modern macos versions (including macos arm64)
+
+--- a/tools/rpcgen/rpc_main.c
++++ b/tools/rpcgen/rpc_main.c
+@@ -68,6 +68,12 @@
+ # endif
+ #endif
+ 
++#ifdef __APPLE__
++# if __DARWIN_ONLY_64_BIT_INO_T
++#  define stat64 stat
++# endif
++#endif
++
+ struct commandline
+   {
+     int cflag;			/* xdr C routines */

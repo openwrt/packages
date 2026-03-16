@@ -1,0 +1,11 @@
+{
+	"name": "simply.com",
+	"ipv4": {
+		"url": "https://[USERNAME]:[PASSWORD]@api.simply.com/2/ddns/?hostname=[DOMAIN]&myip=[IP]",
+		"answer": "good|nochg"
+	},
+	"ipv6": {
+		"url": "https://[USERNAME]:[PASSWORD]@api.simply.com/2/ddns/?hostname=[DOMAIN]&myip=[IP]",
+		"answer": "good|nochg"
+	}
+}

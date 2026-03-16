@@ -1,0 +1,104 @@
+#!/bin/sh
+# Copyright 2021-2023 Stan Grishin (stangri@melmac.ca)
+# shellcheck disable=SC1091,SC2039,SC2034,SC3043
+readonly PKG_VERSION='dev-test'
+readonly PROG=/usr/sbin/nebula
+readonly packageName='nebula-proto'
+
+[ -x "$PROG" ] || { log "Main nebula executable '/usr/sbin/nebula' not found"; exit 1; }
+
+[ -n "$INCLUDE_ONLY" ] || {
+	. /lib/functions.sh
+	. /lib/functions/network.sh
+	. ../netifd-proto.sh
+	init_proto "$@"
+}
+
+log() { logger -t "$packageName" "$*"; }
+# https://gist.github.com/pkuczynski/8665367
+# shellcheck disable=SC2086,SC2155
+yaml_parse() {
+	local prefix=$2
+	local s='[[:space:]]*' w='[a-zA-Z0-9_-]*' fs="$(echo @|tr @ '\034'|tr -d '\015')"
+	sed -ne "s|^\($s\)\($w\)$s:$s\"\(.*\)\"$s\$|\1$fs\2$fs\3|p" \
+	-e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\1$fs\2$fs\3|p" "$1" |
+	awk "-F$fs" '{
+		indent = length($1)/2;
+		vname[indent] = $2;
+		for (i in vname) {if (i > indent) {delete vname[i]}}
+		if (length($3) > 0) {
+			vn=""; for (i=0; i<indent; i++) {vn=(vn)(vname[i])("_")}
+			printf("%s%s%s=\"%s\"\n", "'$prefix'", vn, $2, $3);
+		}
+	}'
+}
+
+proto_nebula_init_config() {
+	available=1
+	no_device=1
+	proto_config_add_string "config_file"
+}
+
+proto_nebula_setup() {
+	local interface="$1" config_file address addresses
+	local yaml_listen_host yaml_listen_port yaml_tun_dev
+
+	config_load network
+	config_get config_file "${interface}" "config_file"
+	proto_init_update "${interface}" 1
+
+	[ -s "$config_file" ] || { log "Config file not found or empty!"; return 1; }
+	eval "$(yaml_parse "$config_file" "yaml_")"
+	yaml_tun_dev="${yaml_tun_dev%"${yaml_tun_dev##*[![:space:]]}"}"
+	[ "$yaml_tun_dev" = "$interface" ] || { log "Tunnel device in config file (${yaml_tun_dev}) doesn't match interface name (${interface})!"; return 1; }
+
+	log "Setting up ${interface} from $(basename "$config_file")."
+	proto_run_command "$interface" "$PROG" -config "$config_file"
+	# TODO: if lighthouse, open local port 4242
+	# TODO: else get local subnet from local_range variable, if not,
+	# TODO: iterate over each lighthouse/hosts and append /24
+	# TODO: ip route add "$yaml_local_range" "$yaml_tun_dev"
+	proto_add_data
+	json_add_array firewall
+		json_add_object ""
+		json_add_string type rule
+		json_add_string name "$interface"
+		json_add_string src "*"
+		json_add_string dest_ip "${yaml_listen_host:-0.0.0.0}"
+		json_add_string dest_port "${yaml_listen_port:-4242}"
+		json_add_string proto udp
+		json_add_string target ACCEPT
+		json_close_object
+	json_close_array
+	proto_close_data
+	addresses="$(ip -4 a list dev "$interface" 2>/dev/null | grep inet | awk '{print $2}' | awk -F "/" '{print $1}')"
+	log "Running ${interface} from $(basename "$config_file")${addresses+:  with addresses: $addresses}."
+	for address in ${addresses}; do
+		case "${address}" in
+			*:*/*)
+				proto_add_ipv6_address "${address%%/*}" "${address##*/}"
+				;;
+			*.*/*)
+				proto_add_ipv4_address "${address%%/*}" "${address##*/}"
+				;;
+			*:*)
+				proto_add_ipv6_address "${address%%/*}" "128"
+				;;
+			*.*)
+				proto_add_ipv4_address "${address%%/*}" "32"
+				;;
+		esac
+	done
+
+	proto_send_update "$interface"
+}
+
+proto_nebula_teardown() {
+	local interface="$1"
+	proto_kill_command "${interface}"
+	log "Killed interface ${interface}."
+}
+
+[ -n "$INCLUDE_ONLY" ] || {
+	add_protocol nebula
+}

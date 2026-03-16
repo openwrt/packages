@@ -1,0 +1,20 @@
+From: Barry Warsaw <barry@python.org>
+Date: Fri, 18 Nov 2016 17:07:47 -0500
+Subject: Set --disable-pip-version-check=True by default.
+
+Patch-Name: disable-pip-version-check.patch
+---
+ src/pip/_internal/cli/cmdoptions.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/src/pip/_internal/cli/cmdoptions.py
++++ b/src/pip/_internal/cli/cmdoptions.py
+@@ -895,7 +895,7 @@ disable_pip_version_check: Callable[...,
+     "--disable-pip-version-check",
+     dest="disable_pip_version_check",
+     action="store_true",
+-    default=False,
++    default=True,
+     help="Don't periodically check PyPI to determine whether a new version "
+     "of pip is available for download. Implied with --no-index.",
+ )

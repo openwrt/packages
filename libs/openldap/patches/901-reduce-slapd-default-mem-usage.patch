@@ -1,0 +1,11 @@
+--- a/servers/slapd/slapd.conf
++++ b/servers/slapd/slapd.conf
+@@ -59,7 +59,7 @@ database config
+ #######################################################################
+ 
+ database	mdb
+-maxsize		1073741824
++maxsize		8388608
+ suffix		"dc=my-domain,dc=com"
+ rootdn		"cn=Manager,dc=my-domain,dc=com"
+ # Cleartext passwords, especially for the rootdn, should

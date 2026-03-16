@@ -1,0 +1,19 @@
+--- a/wsdd2.c
++++ b/wsdd2.c
+@@ -543,7 +543,15 @@ static int netlink_recv(struct endpoint
+ 	char buf[PAGE_SIZE];
+ 	struct sockaddr_nl sa;
+ 	struct iovec iov = { buf, sizeof buf };
+-	struct msghdr msg = { &sa, sizeof sa, &iov, 1, NULL, 0, 0 };
++	struct msghdr msg = {
++		.msg_name = &sa,
++		.msg_namelen = sizeof(sa),
++		.msg_iov = &iov,
++		.msg_iovlen = 1,
++		.msg_control = NULL,
++		.msg_controllen = 0,
++		.msg_flags = 0,
++	};
+ 	ssize_t msglen = recvmsg(ep->sock, &msg, 0);
+ 
+ 	DEBUG(2, W, "%s: %zd bytes", __func__, msglen);

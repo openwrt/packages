@@ -1,0 +1,3 @@
+/etc/openfortivpn/user-cert-*.pem
+/etc/openfortivpn/user-key-*.pem
+/etc/openfortivpn/ca-*.pem

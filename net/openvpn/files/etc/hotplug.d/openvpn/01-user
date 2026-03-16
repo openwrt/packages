@@ -1,0 +1,61 @@
+#!/bin/sh
+
+main() {
+	local command
+
+	[ -e "/etc/openvpn.user" ] && {
+		env -i ACTION="$ACTION" INSTANCE="$INSTANCE" \
+			/bin/sh \
+			/etc/openvpn.user \
+			$*
+	}
+
+	# Wrap user defined scripts on up|down|route-up|route-pre-down|ipchange|etc
+	# events. Scripts set with up|down|route-up|route-pre-down|ipchange|etc
+	# in the openvpn config are also executed with the command=user_xxxx
+	case "$ACTION" in
+	up)
+		command=$user_up
+		;;
+	down)
+		command=$user_down
+		;;
+	route-up)
+		command=$user_route_up
+		;;
+	route-pre-down)
+		command=$user_route_pre_down
+		;;
+	ipchange)
+		command=$user_ipchange
+		;;
+	learn-address)
+		command=$user_learn_address
+		;;
+	client-connect)
+		command=$user_client_connect
+		;;
+	client-crresponse)
+		command=$user_client_crresponse
+		;;
+	client-disconnect)
+		command=$user_client_disconnect
+		;;
+	tls-crypt-v2-verify)
+		command=$user_tls_crypt_v2_verify
+		;;
+	tls-verify)
+		command=$user_tls_verify
+		;;
+	auth-user-pass-verify)
+		command=$user_auth_user_pass_verify
+		;;
+	esac
+
+	if [ -n "$command" ]; then
+		shift
+		exec /bin/sh -c "$command $*"
+	fi
+}
+
+main

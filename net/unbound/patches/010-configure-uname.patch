@@ -1,0 +1,14 @@
+OpenWrt (modification):
+Fix cross compile errors by inserting an environment variable for the
+target. Use "uname" on host only if "UNAME" variable is empty.
+--- a/configure.ac
++++ b/configure.ac
+@@ -904,7 +904,7 @@ if test x_$ub_test_python != x_no; then
+    fi
+ fi
+ 
+-if test "`uname`" = "NetBSD"; then
++if test "${UNAME:-`uname`}" = "NetBSD"; then
+ 	NETBSD_LINTFLAGS='"-D__RENAME(x)=" -D_NETINET_IN_H_'
+ 	AC_SUBST(NETBSD_LINTFLAGS)
+ fi

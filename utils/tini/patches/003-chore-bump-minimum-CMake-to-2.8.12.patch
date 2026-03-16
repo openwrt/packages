@@ -1,0 +1,21 @@
+From 41685c0ade9793a6ca51ad9f908f92ea5bbb49a9 Mon Sep 17 00:00:00 2001
+From: Bjorn Neergaard <bneergaard@mirantis.com>
+Date: Fri, 27 Jan 2023 08:07:51 -0700
+Subject: [PATCH 1/2] chore: bump minimum CMake to 2.8.12
+
+This is both the last version supported by current CMake, and the
+version in use on Enterprise Linux 7.
+
+Signed-off-by: Bjorn Neergaard <bneergaard@mirantis.com>
+---
+ CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-cmake_minimum_required (VERSION 2.8.0)
++cmake_minimum_required (VERSION 2.8.12)
+ project (tini C)
+ 
+ # Config

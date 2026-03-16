@@ -1,0 +1,19 @@
+#!/bin/sh
+
+[ -s "/etc/config/dnsproxy" ] || exit 0
+
+# Migrate options 'listen_addr' 'listen_port' to list type
+sed -i -e "s,option listen_addr,list listen_addr,g" \
+       -e "s,option listen_port,list listen_port,g" "/etc/config/dnsproxy"
+
+# Migrate 'all_servers' and 'fastest_addr' to 'upstream_mode'
+if [ "$(uci -q get "dnsproxy.global.all_servers")" = "1" ]; then
+	uci -q set "dnsproxy.global.upstream_mode"="parallel"
+elif [ "$(uci -q get "dnsproxy.global.fastest_addr")" = "1" ]; then
+	uci -q set "dnsproxy.global.upstream_mode"="fastest_addr"
+fi
+uci -q delete "dnsproxy.global.all_servers"
+uci -q delete "dnsproxy.global.fastest_addr"
+uci -q commit "dnsproxy"
+
+exit 0

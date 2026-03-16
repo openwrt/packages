@@ -1,0 +1,7 @@
+{
+	"name": "changeip.com",
+	"ipv4": {
+		"url": "http://[USERNAME]:[PASSWORD]@nic.changeip.com/nic/update?u=[USERNAME]&p=[PASSWORD]&cmd=update&hostname=[DOMAIN]&ip=[IP]",
+		"answer": "Successful"
+	}
+}

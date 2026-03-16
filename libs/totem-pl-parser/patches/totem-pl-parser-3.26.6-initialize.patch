@@ -1,0 +1,11 @@
+--- a/plparse/totem-pl-parser.c
++++ b/plparse/totem-pl-parser.c
+@@ -1760,7 +1760,7 @@ totem_pl_parser_glob_is_ignored (TotemPl
+ {
+ 	GHashTableIter iter;
+ 	gpointer key;
+-	int ret;
++	int ret = -1;
+ 
+ 	g_mutex_lock (&parser->priv->ignore_mutex);
+ 	g_hash_table_iter_init (&iter, parser->priv->ignore_globs);

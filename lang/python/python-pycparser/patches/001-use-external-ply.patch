@@ -1,0 +1,35 @@
+--- a/pycparser/c_lexer.py
++++ b/pycparser/c_lexer.py
+@@ -8,8 +8,8 @@
+ #------------------------------------------------------------------------------
+ import re
+ 
+-from .ply import lex
+-from .ply.lex import TOKEN
++from ply import lex
++from ply.lex import TOKEN
+ 
+ 
+ class CLexer(object):
+--- a/pycparser/c_parser.py
++++ b/pycparser/c_parser.py
+@@ -6,7 +6,7 @@
+ # Eli Bendersky [https://eli.thegreenplace.net/]
+ # License: BSD
+ #------------------------------------------------------------------------------
+-from .ply import yacc
++from ply import yacc
+ 
+ from . import c_ast
+ from .c_lexer import CLexer
+--- a/setup.py
++++ b/setup.py
+@@ -61,7 +61,7 @@ setup(
+         'Programming Language :: Python :: 3.13',
+     ],
+     python_requires=">=3.8",
+-    packages=['pycparser', 'pycparser.ply'],
++    packages=['pycparser'],
+     package_data={'pycparser': ['*.cfg']},
+     cmdclass={'install': install, 'sdist': sdist},
+ )

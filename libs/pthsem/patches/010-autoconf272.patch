@@ -1,0 +1,30 @@
+From 3ec1a1c22142c547bc7f44622291bf0abdc322f1 Mon Sep 17 00:00:00 2001
+From: Fabrice Fontaine <fontaine.fabrice@gmail.com>
+Date: Sun, 25 Feb 2024 14:33:02 +0100
+Subject: [PATCH] acinclude.m4: fix build with autoconf >= 2.72
+
+Move fi statement where it belongs to fix the following build failure
+with autoconf >= 2.72:
+
+checking for stack setup via makecontext... ./configure: line 15863: syntax error near unexpected token `;;'
+
+Fixes:
+ - http://autobuild.buildroot.org/results/013e0d3f72582ce3675f65786c014518682d703b
+
+Signed-off-by: Fabrice Fontaine <fontaine.fabrice@gmail.com>
+---
+ acinclude.m4 | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/acinclude.m4
++++ b/acinclude.m4
+@@ -1426,8 +1426,8 @@ ac_cv_stacksetup_$1='guessed:(skaddr),(s
+ ])
+ dnl #   restore original compile environment
+ CFLAGS="$OCFLAGS"
+-])dnl
+ fi
++])dnl
+ dnl #   extract result ingredients of single cached result value
+ type=`echo $ac_cv_stacksetup_$1 | sed -e 's;:.*$;;'`
+ addr=`echo $ac_cv_stacksetup_$1 | sed -e 's;^.*:;;' -e 's;,.*$;;'`

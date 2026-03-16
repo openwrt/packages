@@ -1,0 +1,36 @@
+menu "Configuration"
+	depends on PACKAGE_modemmanager
+
+config MODEMMANAGER_WITH_NETIFD
+	bool "Include netifd support"
+	default y
+	help
+	  Provide ModemManager with netifd support
+	  
+config MODEMMANAGER_WITH_MBIM
+	bool "Include MBIM support"
+	default y
+	help
+	  Compile ModemManager with MBIM support
+
+config MODEMMANAGER_WITH_QMI
+	bool "Include QMI support"
+	default y
+	help
+	  Compile ModemManager with QMI support
+
+config MODEMMANAGER_WITH_QRTR
+	bool "Include QRTR support"
+	default y
+	depends on MODEMMANAGER_WITH_QMI
+	select LIBQMI_WITH_QRTR_GLIB
+	help
+	  Compile ModemManager with QRTR support
+
+config MODEMMANAGER_WITH_AT_COMMAND_VIA_DBUS
+	bool "Allow AT commands via DBus"
+	default n
+	help
+	  Compile ModemManager allowing AT commands without debug flag
+
+endmenu

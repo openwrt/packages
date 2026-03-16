@@ -1,0 +1,33 @@
+Test that check() correctly identifies blocked and unblocked domains.
+check() output goes to stderr via output.info/output.print when is_tty=true.
+
+-- Testcase --
+import adb from 'adblock-fast';
+let ti = adb._test_internals;
+
+// Build the blocklist
+adb.env.load_config();
+ti.set_cfg('dns', 'dnsmasq.servers');
+ti.set_cfg('dnsmasq_sanity_check', false);
+ti.set_cfg('dnsmasq_validity_check', false);
+ti.set_cfg('heartbeat_domain', null);
+ti.set_cfg('config_update_enabled', false);
+ti.set_cfg('update_config_sizes', false);
+ti.env.dns_set_output_values('dnsmasq.servers');
+ti.append_urls();
+ti.download_lists();
+
+// Enable tty mode so output goes to stderr (captured by test framework)
+// Use verbosity=2 to get verbose output (which includes [PROC] prefix)
+ti.state.is_tty = true;
+ti.set_cfg('verbosity', 2);
+
+// Now test check()
+adb.check('ad.doubleclick.test.example.com this-domain-not-in-list.test.example.com');
+-- End --
+
+-- Expect stderr --
+[PROC] Found 1 match for 'ad.doubleclick.test.example.com' in 'TESTDIR/var_run/adblock-fast/dnsmasq.servers'.
+ad.doubleclick.test.example.com
+[PROC] The 'this-domain-not-in-list.test.example.com' is not found in current block-list ('TESTDIR/var_run/adblock-fast/dnsmasq.servers').
+-- End --

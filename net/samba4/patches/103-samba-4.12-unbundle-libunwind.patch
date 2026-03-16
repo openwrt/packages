@@ -1,0 +1,31 @@
+--- a/lib/util/wscript_configure
++++ b/lib/util/wscript_configure
+@@ -12,17 +12,17 @@ conf.CHECK_FUNCS_IN('backtrace backtrace
+ conf.CHECK_HEADERS('execinfo.h')
+ 
+ conf.SET_TARGET_TYPE('LIBUNWIND', 'EMPTY')
+-if Options.options.with_libunwind:
+-    if conf.check_cfg(package='libunwind-generic',
+-                      args='--cflags --libs',
+-                      msg='Checking for libunwind',
+-                      uselib_store='LIBUNWIND',
+-                      mandatory=False):
+-        if conf.CHECK_HEADERS('libunwind.h'):
+-            conf.SET_TARGET_TYPE('LIBUNWIND', 'SYSLIB')
+-    else:
+-        raise Errors.WafError('--with-libunwind specified but libunwind not found')
+-elif Options.options.with_libunwind == None:
++#if Options.options.with_libunwind:
++    #if conf.check_cfg(package='libunwind-generic',
++                      #args='--cflags --libs',
++                      #msg='Checking for libunwind',
++                      #uselib_store='LIBUNWIND',
++                      #mandatory=False):
++        #if conf.CHECK_HEADERS('libunwind.h'):
++            #conf.SET_TARGET_TYPE('LIBUNWIND', 'SYSLIB')
++    #else:
++        #raise Errors.WafError('--with-libunwind specified but libunwind not found')
++if Options.options.with_libunwind == None:
+     if not conf.CONFIG_SET('HAVE_BACKTRACE_SYMBOLS') \
+        and not Options.options.disable_fault_handling:
+         raise Errors.WafError(

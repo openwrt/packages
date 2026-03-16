@@ -1,0 +1,15 @@
+https://github.com/void-linux/void-packages/commit/0d9556b8593d6e67027fb1c83d176b7f899547e5
+--- a/lib/sigsegv.c
++++ b/lib/sigsegv.c
+@@ -246,8 +246,10 @@ int libsigsegv_version = LIBSIGSEGV_VERS
+ /* Because of the union, both definitions should be equivalent.  */
+ #    if 0
+ #     define SIGSEGV_FAULT_STACKPOINTER  ((ucontext_t *) ucp)->uc_mcontext.regs->gpr[1]
+-#    else
++#    elif defined(__GLIBC__)
+ #     define SIGSEGV_FAULT_STACKPOINTER  ((ucontext_t *) ucp)->uc_mcontext.uc_regs->gregs[1]
++#    else
++#    define SIGSEGV_FAULT_STACKPOINTER  ((ucontext_t *) ucp)->uc_mcontext.gregs[1]
+ #    endif
+ #   endif
+ #  endif

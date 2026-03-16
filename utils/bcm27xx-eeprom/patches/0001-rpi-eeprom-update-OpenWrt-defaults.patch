@@ -1,0 +1,38 @@
+From a7c4e8f246dc58b4c83293b11f6443528065dc70 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=C3=81lvaro=20Fern=C3=A1ndez=20Rojas?= <noltari@gmail.com>
+Date: Mon, 23 Mar 2020 10:10:55 +0100
+Subject: [PATCH] rpi-eeprom-update: OpenWrt defaults
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Álvaro Fernández Rojas <noltari@gmail.com>
+---
+ rpi-eeprom-update         | 4 ++--
+ rpi-eeprom-update-default | 4 ++--
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+--- a/rpi-eeprom-update
++++ b/rpi-eeprom-update
+@@ -27,7 +27,7 @@ fi
+ 
+ # Selects the release sub-directory
+ FIRMWARE_RELEASE_STATUS=${FIRMWARE_RELEASE_STATUS:-default}
+-FIRMWARE_BACKUP_DIR=${FIRMWARE_BACKUP_DIR:-/var/lib/raspberrypi/bootloader/backup}
++FIRMWARE_BACKUP_DIR=${FIRMWARE_BACKUP_DIR:-${FIRMWARE_ROOT}/backup}
+ ENABLE_VL805_UPDATES=${ENABLE_VL805_UPDATES:-1}
+ CM4_ENABLE_RPI_EEPROM_UPDATE=${CM4_ENABLE_RPI_EEPROM_UPDATE:-0}
+ RPI_EEPROM_UPDATE_CONFIG_TOOL="${RPI_EEPROM_UPDATE_CONFIG_TOOL:-raspi-config}"
+--- a/rpi-eeprom-update-default
++++ b/rpi-eeprom-update-default
+@@ -1,7 +1,7 @@
+ 
+-FIRMWARE_ROOT=/usr/lib/firmware/raspberrypi/bootloader
+-FIRMWARE_RELEASE_STATUS="default"
+-FIRMWARE_BACKUP_DIR="/var/lib/raspberrypi/bootloader/backup"
++FIRMWARE_ROOT=/lib/firmware/raspberrypi/bootloader
++FIRMWARE_RELEASE_STATUS="latest"
++FIRMWARE_BACKUP_DIR="${FIRMWARE_ROOT}/backup"
+ EEPROM_CONFIG_HOOK=
+ 
+ # BOOTFS can be set here to override auto-detection in rpi-eeprom-update

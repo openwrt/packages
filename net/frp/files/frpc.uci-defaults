@@ -1,0 +1,19 @@
+#!/bin/sh
+
+. /lib/functions.sh
+
+upgrade() {
+	local section=$1
+	local name
+	[ "$section" != "common" ] || return 0
+	config_get name $section name
+	if [ -z "$name" ]; then
+		uci_set frpc "$section" name "$section"
+		uci_commit frpc
+	fi
+}
+
+config_load frpc
+config_foreach upgrade conf
+
+exit 0

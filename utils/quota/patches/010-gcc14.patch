@@ -1,0 +1,10 @@
+--- a/common.h
++++ b/common.h
+@@ -7,6 +7,7 @@
+ #ifndef GUARD_COMMON_H
+ #define GUARD_COMMON_H
+ 
++#include <libgen.h>
+ #include <time.h>
+ #include <stdarg.h>
+ 

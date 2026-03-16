@@ -1,0 +1,24 @@
+From 937b2e633754c1234cc0037e47c77f7735704a12 Mon Sep 17 00:00:00 2001
+From: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Date: Tue, 7 Jun 2022 17:55:59 +0200
+Subject: [PATCH] GNUmakefile: comment out D_FORTIFY_SOURCE
+
+Fixes:
+<command-line>: error: "_FORTIFY_SOURCE" redefined [-Werror]
+<command-line>: note: this is the location of the previous definition
+cc1: all warnings being treated as errors
+---
+ GNUmakefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/GNUmakefile
++++ b/GNUmakefile
+@@ -160,7 +160,7 @@ $(eval $(call CHECK_CFLAGS,common_CFLAGS
+ $(eval $(call CHECK_CFLAGS,common_CFLAGS,-Werror=format-security))
+ $(eval $(call CHECK_CFLAGS,common_CFLAGS,-Wno-disabled-macro-expansion))
+ $(eval $(call CHECK_CFLAGS,common_CFLAGS,-Wno-format-nonliteral))
+-$(eval $(call CHECK_CFLAGS,CPPFLAGS,-D_FORTIFY_SOURCE=2))
++# $(eval $(call CHECK_CFLAGS,CPPFLAGS,-D_FORTIFY_SOURCE=2))
+ $(eval $(call CHECK_CFLAGS,CPPFLAGS,-D_GLIBCXX_ASSERTIONS))
+ # $(eval $(call CHECK_CFLAGS,CFLAGS,-Wp$$(comma)-D_FORTIFY_SOURCE=2))
+ # $(eval $(call CHECK_CFLAGS,CFLAGS,-Wp$$(comma)-D_GLIBCXX_ASSERTIONS))

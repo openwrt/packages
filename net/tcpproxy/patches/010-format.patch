@@ -1,0 +1,11 @@
+--- a/src/log.c
++++ b/src/log.c
+@@ -244,7 +244,7 @@ void log_print_hex_dump(log_prio_t prio,
+     for(i=0; i < len; i++) {
+       if(((i+1)*3) >= (MSG_LENGTH_MAX - offset))
+         break;
+-      snprintf(ptr, 3, "%02X ", buf[i]);
++      snprintf(ptr, 4, "%02X ", buf[i]);
+       ptr+=3;
+     }
+   }

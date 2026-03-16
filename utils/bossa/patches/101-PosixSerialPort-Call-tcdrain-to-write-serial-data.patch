@@ -1,0 +1,24 @@
+From 0fd3078b4863002e5d384d7e453d668841414abe Mon Sep 17 00:00:00 2001
+From: Kay Sievers <kay@vrfy.org>
+Date: Wed, 13 Jan 2021 01:34:08 +0100
+Subject: [PATCH] PosixSerialPort: Call tcdrain() to write serial data
+GithubPR: 150
+
+---
+ src/PosixSerialPort.cpp | 5 +----
+ 1 file changed, 1 insertion(+), 4 deletions(-)
+
+--- a/src/PosixSerialPort.cpp
++++ b/src/PosixSerialPort.cpp
+@@ -290,10 +290,7 @@ PosixSerialPort::put(int c)
+ void
+ PosixSerialPort::flush()
+ {
+-    // There isn't a reliable way to flush on a file descriptor
+-    // so we just wait it out.  One millisecond is the USB poll
+-    // interval so that should cover it.
+-    usleep(1000);
++    tcdrain(_devfd);
+ }
+ 
+ bool

@@ -1,0 +1,97 @@
+From 1e451ddc15af1a4e19318c8b1ced46c5c41610d3 Mon Sep 17 00:00:00 2001
+From: Khem Raj <raj.khem@gmail.com>
+Date: Wed, 14 Jul 2021 18:08:30 -0700
+Subject: [PATCH] correct signature of closefrom() API
+
+glibc 2.34 introduced this function and finds this error which has been
+all along.
+
+Upstream-Status: Pending
+
+Signed-off-by: Khem Raj <raj.khem@gmail.com>
+---
+ src/util/sys_compat.c |  6 +++---
+ src/util/sys_defs.h   | 12 ++++++------
+ 2 files changed, 9 insertions(+), 9 deletions(-)
+
+--- a/src/util/sys_compat.c
++++ b/src/util/sys_compat.c
+@@ -286,7 +286,7 @@ int     dup2_pass_on_exec(int oldd, int
+ 
+ /* closefrom() - closes all file descriptors from the given one up */
+ 
+-int     closefrom(int lowfd)
++void     closefrom(int lowfd)
+ {
+     int     fd_limit = open_limit(0);
+     int     fd;
+@@ -298,14 +298,14 @@ int     closefrom(int lowfd)
+      */
+     if (lowfd < 0) {
+ 	errno = EBADF;
+-	return (-1);
++	return;
+     }
+     if (fd_limit > 500)
+ 	fd_limit = 500;
+     for (fd = lowfd; fd < fd_limit; fd++)
+ 	(void) close(fd);
+ 
+-    return (0);
++    return;
+ }
+ 
+ #endif
+--- a/src/util/sys_defs.h
++++ b/src/util/sys_defs.h
+@@ -1519,7 +1519,7 @@ extern int setsid(void);
+ #endif
+ 
+ #ifndef HAS_CLOSEFROM
+-extern int closefrom(int);
++extern void closefrom(int);
+ 
+ #endif
+ 
+@@ -1573,7 +1573,7 @@ typedef int pid_t;
+ 
+  /*
+   * Clang-style attribute tests.
+-  * 
++  *
+   * XXX Without the unconditional test below, gcc 4.6 will barf on ``elif
+   * defined(__clang__) && __has_attribute(__whatever__)'' with error message
+   * ``missing binary operator before token "("''.
+@@ -1587,7 +1587,7 @@ typedef int pid_t;
+   * warn for missing initializations and other trouble. However, OPENSTEP4
+   * gcc 2.7.x cannot handle this so we define this only if NORETURN isn't
+   * already defined above.
+-  * 
++  *
+   * Data point: gcc 2.7.2 has __attribute__ (Wietse Venema) but gcc 2.6.3 does
+   * not (Clive Jones). So we'll set the threshold at 2.7.
+   */
+@@ -1663,12 +1663,12 @@ typedef int pid_t;
+   * write to output parameters (for example, stat- or scanf-like functions)
+   * or from functions that have other useful side effects (for example,
+   * fseek- or rename-like functions).
+-  * 
++  *
+   * DO NOT use this for functions that write to a stream; it is entirely
+   * legitimate to detect write errors with fflush() or fclose() only. On the
+   * other hand most (but not all) functions that read from a stream must
+   * never ignore result values.
+-  * 
++  *
+   * XXX Prepending "(void)" won't shut up GCC. Clang behaves as expected.
+   */
+ #if ((__GNUC__ == 3 && __GNUC_MINOR__ >= 4) || __GNUC__ > 3)
+@@ -1749,7 +1749,7 @@ typedef const char *CONST_CHAR_STAR;
+   * Safety. On some systems, ctype.h misbehaves with non-ASCII or negative
+   * characters. More importantly, Postfix uses the ISXXX() macros to ensure
+   * protocol compliance, so we have to rule out non-ASCII characters.
+-  * 
++  *
+   * XXX The (unsigned char) casts in isalnum() etc arguments are unnecessary
+   * because the ISASCII() guard already ensures that the values are
+   * non-negative; the casts are done anyway to shut up chatty compilers.

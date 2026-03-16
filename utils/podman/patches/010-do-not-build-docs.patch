@@ -1,0 +1,20 @@
+--- a/Makefile
++++ b/Makefile
+@@ -234,7 +234,7 @@ GV_VERSION=$(shell $(GO) list -m -f
+ default: all
+ 
+ .PHONY: all
+-all: binaries docs
++all: binaries
+ 
+ .PHONY: binaries
+ ifeq ($(GOOS),freebsd)
+@@ -868,7 +868,7 @@ rpm-install: package  ## Install rpm pac
+ 	/usr/bin/podman info  # will catch a broken conmon
+ 
+ .PHONY: install
+-install: install.bin install.remote install.man install.systemd  ## Install binaries to system locations
++install: install.bin install.remote install.systemd  ## Install binaries to system locations
+ 
+ .PHONY: install.remote
+ install.remote:

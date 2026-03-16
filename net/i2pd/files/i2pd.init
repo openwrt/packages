@@ -1,0 +1,81 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2017 OpenWrt.org
+# Copyright (C) 2021-2022 PurpleI2P team
+
+USE_PROCD=1
+
+START=90
+STOP=10
+
+# default params
+PROG=/usr/bin/i2pd
+USER="i2pd"
+GROUP="i2pd"
+PIDFILE=/var/run/i2pd.pid
+DATADIR=/var/lib/i2pd
+CONFFILE=/etc/i2pd/i2pd.conf
+
+start_instance() {
+	local data_dir netdb_dir addressbook_dir cfg="$1"
+
+	config_get data_dir "$cfg" data_dir "$DATADIR"
+	config_get netdb_dir "$cfg" netdb_dir
+	config_get addressbook_dir "$cfg" addressbook_dir
+
+	## Setting up data dir
+	if [ ! -d "$data_dir" ]; then
+		mkdir -p "$data_dir"
+		ln -s /usr/share/i2pd/certificates "$data_dir/certificates"
+		ln -s /etc/i2pd/i2pd.conf "$data_dir/i2pd.conf"
+		ln -s /etc/i2pd/tunnels.conf "$data_dir/tunnels.conf"
+		ln -s /etc/i2pd/tunnels.d "$data_dir/tunnels.d"
+	fi
+
+	if [ -n "$netdb_dir" ]; then
+		if [ ! -d "$netdb_dir" ]; then
+			mkdir -p "$netdb_dir"
+		fi
+		ln -s "$netdb_dir" "$data_dir/netDb"
+	fi
+
+	if [ -n "$addressbook_dir" ]; then
+		if [ ! -d "$addressbook_dir" ]; then
+			mkdir -p "$addressbook_dir"
+		fi
+		ln -s "$addressbook_dir" "$data_dir/addressbook"
+	fi
+
+	## We need permissions
+	chown "$USER:$GROUP" "$data_dir"
+
+	if [ -n "$netdb_dir" ]; then
+		chown "$USER:$GROUP" "$netdb_dir"
+	fi
+
+	if [ -n "$addressbook_dir" ]; then
+		chown "$USER:$GROUP" "$addressbook_dir"
+	fi
+
+	touch "$PIDFILE"
+	chown "$USER:adm" "$PIDFILE"
+
+	procd_open_instance
+	procd_set_param command "$PROG" --datadir="$data_dir" --conf="$CONFFILE" --pidfile "$PIDFILE"
+	## Don't know about i2pd user's HOME
+	procd_set_param env "HOME=$data_dir"
+	procd_set_param limits nofile=4096
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_set_param user "$USER"
+	procd_set_param pidfile "$PIDFILE"
+	procd_close_instance
+}
+
+start_service() {
+	config_load "i2pd"
+	config_foreach start_instance "i2pd"
+}
+
+reload_service() {
+	procd_send_signal i2pd
+}

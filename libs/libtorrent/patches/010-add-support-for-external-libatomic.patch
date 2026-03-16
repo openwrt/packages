@@ -1,0 +1,28 @@
+From a7da5a3981d8fd2fadc5146da4ab5ad33de5482e Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Tue, 6 May 2025 13:53:04 -0700
+Subject: [PATCH] add support for external libatomic
+
+Needed on some 32-bit platforms where 64-bit atomics are provided by
+libatomic.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+----
+--- a/scripts/check_atomic.m4
++++ b/scripts/check_atomic.m4
+@@ -30,15 +30,7 @@ AC_DEFUN([CHECK_ATOMIC], [
+   AC_LINK_IFELSE([AC_LANG_SOURCE([_CHECK_ATOMIC_testbody])],[
+       AC_MSG_RESULT([yes])
+     ],[
+-      AC_MSG_RESULT([no])
+       ATOMIC_LIBS=-latomic
+-      AC_MSG_CHECKING([whether std::atomic needs -latomic])
+-      AC_LINK_IFELSE([AC_LANG_SOURCE([_CHECK_ATOMIC_testbody])],[
+-          AC_MSG_RESULT([yes])
+-        ],[
+-          AC_MSG_RESULT([no])
+-          AC_MSG_FAILURE([cannot figure out how to use std::atomic])
+-        ])
+     ])
+ 
+   AC_LANG_POP

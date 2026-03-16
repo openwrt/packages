@@ -1,0 +1,20 @@
+--- a/util/ulockmgr_server.c
++++ b/util/ulockmgr_server.c
+@@ -124,7 +124,7 @@ static int receive_message(int sock, voi
+ 	return res;
+ }
+ 
+-static int closefrom(int minfd)
++static int closefrom2(int minfd)
+ {
+ 	DIR *dir = opendir("/proc/self/fd");
+ 	if (dir) {
+@@ -384,7 +384,7 @@ int main(int argc, char *argv[])
+ 		dup2(nullfd, 1);
+ 	}
+ 	close(3);
+-	closefrom(5);
++	closefrom2(5);
+ 	while (1) {
+ 		char c;
+ 		int sock;

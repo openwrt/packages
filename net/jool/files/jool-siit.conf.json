@@ -1,0 +1,55 @@
+{
+	"comment": {
+		"description": "Sample full SIIT configuration.",
+		"notes": [
+			"192.0.2/24, 198.51.100/24 and 2001:db8::/32 are",
+			"documentation blocks (RFC 5737 and RFC 3849), and you",
+			"WILL need to change or remove them for your setup."
+		],
+		"last update": "2022-02-09"
+	},
+
+	"instance": "sample-siit",
+	"framework": "netfilter",
+
+	"global": {
+		"manually-enabled": true,
+		"pool6": "2001:db8:0::/96",
+		"lowest-ipv6-mtu": 1280,
+		"logging-debug": false,
+		"zeroize-traffic-class": false,
+		"override-tos": false,
+		"tos": 0,
+		"mtu-plateaus": [
+			65535, 32000, 17914, 8166,
+			4352, 2002, 1492, 1006,
+			508, 296, 68
+		],
+		"amend-udp-checksum-zero": false,
+		"eam-hairpin-mode": "intrinsic",
+		"randomize-rfc6791-addresses": true,
+		"rfc6791v6-prefix": null,
+		"rfc6791v4-prefix": null
+	},
+
+	"eamt": [
+		{
+			"comment": "Comments allowed here too.",
+			"ipv6 prefix": "2001:db8:1::/128",
+			"ipv4 prefix": "192.0.2.0"
+		}, {
+			"ipv6 prefix": "2001:db8:2::",
+			"ipv4 prefix": "192.0.2.1/32"
+		}, {
+			"ipv6 prefix": "2001:db8:3::/124",
+			"ipv4 prefix": "192.0.2.16/28"
+		}
+	],
+
+	"comment": "This comment is relevant to denylist4 maybe.",
+	"denylist4": [
+		"198.51.100.0",
+		"198.51.100.2/32",
+		"198.51.100.32/27"
+	]
+}

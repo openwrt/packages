@@ -1,0 +1,30 @@
+--- a/src/exim.c
++++ b/src/exim.c
+@@ -660,13 +660,15 @@ exim_nullstd(void)
+ {
+ int devnull = -1;
+ struct stat statbuf;
++const char devnullpath[] = "/dev/null";
++
+ for (int i = 0; i <= 2; i++)
+   {
+   if (fstat(i, &statbuf) < 0 && errno == EBADF)
+     {
+-    if (devnull < 0) devnull = open("/dev/null", O_RDWR);
++    if (devnull < 0) devnull = open(devnullpath, O_RDWR);
+     if (devnull < 0) log_write_die(0, LOG_MAIN, "%s",
+-      string_open_failed("/dev/null", NULL));
++      string_open_failed("%s", devnullpath));
+     if (devnull != i) (void)dup2(devnull, i);
+     }
+   }
+--- a/src/local_scan.h
++++ b/src/local_scan.h
+@@ -29,6 +29,7 @@ store.c
+ settings, and the store functions. */
+ 
+ #include <stdarg.h>
++#include <stdlib.h>
+ #include <sys/types.h>
+ #pragma GCC visibility push(default)
+ #include "config.h"

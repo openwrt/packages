@@ -1,0 +1,30 @@
+if PACKAGE_rsync
+
+	config RSYNC_xattr
+		bool
+		prompt "Enable xattr support"
+		default y if USE_FS_ACL_ATTR
+		default n
+
+	config RSYNC_acl
+		bool
+		prompt "Enable ACL support"
+		default y if USE_FS_ACL_ATTR
+		default n
+
+	config RSYNC_zstd
+		bool
+		prompt "Enable zstd stream compression"
+		default n
+
+	config RSYNC_lz4
+		bool
+		prompt "Enable lz4, extremely fast compression"
+		default n
+
+	config RSYNC_xxhash
+		bool
+		prompt "Enable xxhash, extremely fast hash"
+		default n
+
+endif

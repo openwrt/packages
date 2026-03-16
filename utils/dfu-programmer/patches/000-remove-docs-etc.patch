@@ -1,0 +1,9 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -28,5 +28,5 @@ AC_FUNC_MEMCMP
+ # Checks for libusb.
+ AC_SEARCH_LIBS(libusb_init, usb-1.0,, [AC_MSG_ERROR([libusb 1.0 not found])])
+ 
+-AC_CONFIG_FILES(fedora/dfu-programmer.spec Makefile docs/Makefile src/Makefile)
++AC_CONFIG_FILES(src/Makefile)
+ AC_OUTPUT

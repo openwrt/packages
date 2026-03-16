@@ -1,0 +1,7 @@
+{
+	"name": "dnsmadeeasy.com",
+	"ipv4": {
+		"url": "http://cp.dnsmadeeasy.com/servlet/updateip?username=[USERNAME]&password=[PASSWORD]&id=[DOMAIN]&ip=[IP]",
+		"answer": "success|ip-same"
+	}
+}

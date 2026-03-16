@@ -1,0 +1,53 @@
+From beab76b5708862f44d9acbe7a92db45e2f99259f Mon Sep 17 00:00:00 2001
+From: Nate Karstens <nate.karstens@garmin.com>
+Date: Tue, 1 Aug 2017 17:06:01 -0500
+Subject: [PATCH 4/8] Indicate loopback interface to mDNS core
+
+Tells the mDNS core if an interface is a loopback interface,
+similar to AddInterfaceToList() in the MacOS implementation.
+
+Upstream-Status: Submitted [dts@apple.com]
+
+Signed-off-by: Nate Karstens <nate.karstens@garmin.com>
+Signed-off-by: Alex Kiernan <alex.kiernan@gmail.com>
+---
+ mDNSPosix/mDNSPosix.c | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+--- a/mDNSPosix/mDNSPosix.c
++++ b/mDNSPosix/mDNSPosix.c
+@@ -1348,7 +1348,7 @@ mDNSlocal void CleanRecentInterfaces(voi
+ // Creates a PosixNetworkInterface for the interface whose IP address is
+ // intfAddr and whose name is intfName and registers it with mDNS core.
+ mDNSlocal int SetupOneInterface(mDNS *const m, struct sockaddr *intfAddr, struct sockaddr *intfMask,
+-    const mDNSu8 *intfHaddr, mDNSu16 intfHlen, const char *intfName, int intfIndex)
++    const mDNSu8 *intfHaddr, mDNSu16 intfHlen, const char *intfName, int intfIndex, int intfFlags)
+ {
+     int err = 0;
+     PosixNetworkInterface *intf;
+@@ -1411,6 +1411,7 @@ mDNSlocal int SetupOneInterface(mDNS *co
+ 
+         intf->coreIntf.Advertise = m->AdvertiseLocalAddresses;
+         intf->coreIntf.McastTxRx = mDNStrue;
++        intf->coreIntf.Loopback = ((intfFlags & IFF_LOOPBACK) != 0) ? mDNStrue : mDNSfalse;
+ 
+         // Set up the extra fields in PosixNetworkInterface.
+         assert(intf->intfName != NULL);         // intf->intfName already set up above
+@@ -1561,7 +1562,7 @@ mDNSlocal int SetupInterfaceList(mDNS *c
+                     }
+ #endif
+                     if (SetupOneInterface(m, i->ifa_addr, i->ifa_netmask,
+-                                          hwaddr, hwaddr_len, i->ifa_name, ifIndex) == 0)
++                                          hwaddr, hwaddr_len, i->ifa_name, ifIndex, i->ifa_flags) == 0)
+                     {
+                         if (i->ifa_addr->sa_family == AF_INET)
+                             foundav4 = mDNStrue;
+@@ -1578,7 +1579,7 @@ mDNSlocal int SetupInterfaceList(mDNS *c
+         // if ((m->HostInterfaces == NULL) && (firstLoopback != NULL))
+         if (!foundav4 && firstLoopback)
+             (void) SetupOneInterface(m, firstLoopback->ifa_addr, firstLoopback->ifa_netmask,
+-                NULL, 0, firstLoopback->ifa_name, firstLoopbackIndex);
++                NULL, 0, firstLoopback->ifa_name, firstLoopbackIndex, firstLoopback->ifa_flags);
+     }
+ 
+     // Clean up.

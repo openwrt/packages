@@ -1,0 +1,39 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+USE_PROCD=1
+PROG=/usr/sbin/vallumd
+
+add_topic() {
+	procd_append_param command -t "$1"
+}
+
+start_service() {
+	local enabled mqtt_ca mqtt_host mqtt_pass mqtt_port mqtt_tls mqtt_user
+
+	config_load "vallumd"
+	config_get_bool enabled "mqtt" "enabled" 1
+	[ "$enabled" -gt 0 ] || return 1
+
+	config_get mqtt_ca "mqtt" "ca"
+	config_get mqtt_host "mqtt" "host"
+	config_get mqtt_pass "mqtt" "pass"
+	config_get mqtt_port "mqtt" "port"
+	config_get mqtt_tls "mqtt" "tls"
+	config_get mqtt_user "mqtt" "user"
+
+	procd_open_instance
+
+	procd_set_param command $PROG
+
+	[ -n "$mqtt_host" ] && procd_append_param command -h "$mqtt_host"
+	[ -n "$mqtt_pass" ] && procd_append_param command -P "$mqtt_pass"
+	[ -n "$mqtt_port" ] && procd_append_param command -p "$mqtt_port"
+	[ -n "$mqtt_user" ] && procd_append_param command -u "$mqtt_user"
+	[ $mqtt_tls -gt 0 ] && procd_append_param command -T -c "$mqtt_ca"
+	config_list_foreach mqtt topics add_topic
+
+	procd_set_param respawn
+
+	procd_close_instance
+}

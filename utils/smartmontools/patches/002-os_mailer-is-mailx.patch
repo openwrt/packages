@@ -1,0 +1,11 @@
+--- a/configure
++++ b/configure
+@@ -7621,7 +7621,7 @@ fi
+ # Set platform-specific modules and symbols
+ os_libs=
+ os_dltools='curl wget lynx svn'
+-os_mailer=mail
++os_mailer=mailx
+ os_hostname="'hostname' 'uname -n'"
+ os_dnsdomainname=
+ os_nisdomainname="'domainname'"

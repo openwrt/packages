@@ -1,0 +1,67 @@
+--- a/contrib/i2pd.conf
++++ b/contrib/i2pd.conf
+@@ -8,16 +8,16 @@
+ 
+ ## Tunnels config file
+ ## Default: ~/.i2pd/tunnels.conf or /var/lib/i2pd/tunnels.conf
+-# tunconf = /var/lib/i2pd/tunnels.conf
++tunconf = /etc/i2pd/tunnels.conf
+ 
+ ## Tunnels config files path
+ ## Use that path to store separated tunnels in different config files.
+ ## Default: ~/.i2pd/tunnels.d or /var/lib/i2pd/tunnels.d
+-# tunnelsdir = /var/lib/i2pd/tunnels.d
++tunnelsdir = /etc/i2pd/tunnels.d
+ 
+ ## Path to certificates used for verifying .su3, families
+ ## Default: ~/.i2pd/certificates or /var/lib/i2pd/certificates
+-# certsdir = /var/lib/i2pd/certificates
++certsdir = /usr/share/i2pd/certificates
+ 
+ ## Where to write pidfile (default: /run/i2pd.pid, not used in Windows)
+ # pidfile = /run/i2pd.pid
+@@ -35,7 +35,7 @@
+ # logfile = /var/log/i2pd/i2pd.log
+ ## Log messages above this level (debug, info, *warn, error, critical, none)
+ ## If you set it to none, logging will be disabled
+-# loglevel = warn
++loglevel = none
+ ## Write full CLF-formatted date and time to log (default: write only time)
+ # logclftime = true
+ 
+@@ -120,7 +120,7 @@ ipv6 = false
+ ## Enable the Web Console (default: true)
+ # enabled = true
+ ## Address and port service will listen on (default: 127.0.0.1:7070)
+-# address = 127.0.0.1
++address = 192.168.1.1
+ # port = 7070
+ ## Path to web console (default: /)
+ # webroot = /
+@@ -140,7 +140,7 @@ ipv6 = false
+ ## Enable the HTTP proxy (default: true)
+ # enabled = true
+ ## Address and port service will listen on (default: 127.0.0.1:4444)
+-# address = 127.0.0.1
++address = 192.168.1.1
+ # port = 4444
+ ## Optional keys file for proxy local destination (default: http-proxy-keys.dat)
+ # keys = http-proxy-keys.dat
+@@ -156,7 +156,7 @@ ipv6 = false
+ ## Enable the SOCKS proxy (default: true)
+ # enabled = true
+ ## Address and port service will listen on (default: 127.0.0.1:4447)
+-# address = 127.0.0.1
++address = 192.168.1.1
+ # port = 4447
+ ## Optional keys file for proxy local destination (default: socks-proxy-keys.dat)
+ # keys = socks-proxy-keys.dat
+@@ -170,7 +170,7 @@ ipv6 = false
+ 
+ [sam]
+ ## Enable the SAM bridge (default: true)
+-# enabled = false
++enabled = false
+ ## Address and ports service will listen on (default: 127.0.0.1:7656, udp: 7655)
+ # address = 127.0.0.1
+ # port = 7656

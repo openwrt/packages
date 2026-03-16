@@ -1,0 +1,11 @@
+--- a/test/mtdev-test.c
++++ b/test/mtdev-test.c
+@@ -38,7 +38,7 @@
+ #endif
+ 
+ /* year-proof millisecond event time */
+-typedef uint64_t mstime_t;
++typedef unsigned long long mstime_t;
+ 
+ static int use_event(const struct input_event *ev)
+ {

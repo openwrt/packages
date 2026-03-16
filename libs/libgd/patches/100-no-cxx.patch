@@ -1,0 +1,26 @@
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -18,7 +18,6 @@ SET (LIBGD_SRC_FILES
+ 	gd_io_dp.c
+ 	gd_io_file.c
+ 	gd_io_ss.c
+-	gd_io_stream.cxx
+ 	gd_jpeg.c
+ 	gd_matrix.c
+ 	gd_nnquant.c
+@@ -44,7 +43,6 @@ SET (LIBGD_SRC_FILES
+ 	gdfx.c
+ 	gdhelpers.c
+ 	gdkanji.c
+-	gdpp.cxx
+ 	gdtables.c
+ 	gdxpm.c
+ 	wbmp.c
+@@ -193,7 +191,6 @@ install(FILES
+ 	gdfonts.h
+ 	gdfontt.h
+ 	gdfx.h
+-	gdpp.h
+ 	DESTINATION include)
+ 
+ CONFIGURE_FILE(../config/gdlib.pc.cmake gdlib.pc @ONLY)

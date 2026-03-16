@@ -1,0 +1,23 @@
+--- a/src/modules/rlm_krb5/configure
++++ b/src/modules/rlm_krb5/configure
+@@ -4003,12 +4003,6 @@ if test "x$smart_lib" != "x"; then
+ fi
+ 
+ 	if test "x$ac_cv_lib_krb5_krb5_is_thread_safe" = xyes; then
+-		if test "$cross_compiling" = yes; then :
+-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+-as_fn_error $? "cannot run test program while cross compiling
+-See \`config.log' for more details" "$LINENO" 5; }
+-else
+   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ /* end confdefs.h.  */
+ #include <krb5.h>
+@@ -4028,7 +4022,6 @@ $as_echo "$as_me: WARNING: libkrb5 is no
+ fi
+ rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+   conftest.$ac_objext conftest.beam conftest.$ac_ext
+-fi
+ 
+ 	fi
+ else

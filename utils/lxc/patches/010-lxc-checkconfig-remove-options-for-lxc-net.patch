@@ -1,0 +1,19 @@
+--- a/src/lxc/cmd/lxc-checkconfig.in
++++ b/src/lxc/cmd/lxc-checkconfig.in
+@@ -250,16 +250,10 @@ if { [ "${KVER_MAJOR}" -gt 3 ] && [ "${K
+     printf "CONFIG_NF_NAT_IPV6: " && is_enabled CONFIG_NF_NAT_IPV6 && is_probed nf_nat_ipv6
+ fi
+ echo
+-printf "CONFIG_IP_NF_TARGET_MASQUERADE: " && is_enabled CONFIG_IP_NF_TARGET_MASQUERADE && is_probed nf_nat_masquerade_ipv4
+-echo
+-printf "CONFIG_IP6_NF_TARGET_MASQUERADE: " && is_enabled CONFIG_IP6_NF_TARGET_MASQUERADE && is_probed nf_nat_masquerade_ipv6
+-echo
+ printf "CONFIG_NETFILTER_XT_TARGET_CHECKSUM: " && is_enabled CONFIG_NETFILTER_XT_TARGET_CHECKSUM && is_probed xt_CHECKSUM
+ echo
+ printf "CONFIG_NETFILTER_XT_MATCH_COMMENT: " && is_enabled CONFIG_NETFILTER_XT_MATCH_COMMENT && is_probed xt_comment
+ echo
+-printf "FUSE (for use with lxcfs): " && is_enabled CONFIG_FUSE_FS && is_probed fuse
+-echo
+ 
+ echo "
+ --- Checkpoint/Restore ---"

@@ -1,0 +1,11 @@
+--- a/src/dsp/cpu.h
++++ b/src/dsp/cpu.h
+@@ -124,7 +124,7 @@
+ //------------------------------------------------------------------------------
+ // MIPS defines.
+ 
+-#if defined(__mips__) && !defined(__mips64) && defined(__mips_isa_rev) && \
++#if defined(__mips__) && !defined(__mips16) && !defined(__mips64) && defined(__mips_isa_rev) && \
+     (__mips_isa_rev >= 1) && (__mips_isa_rev < 6)
+ #define WEBP_USE_MIPS32
+ #if (__mips_isa_rev >= 2)

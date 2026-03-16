@@ -1,0 +1,207 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2025 Brian 'redbeard' Harrington <redbeard@dead-city.org>
+# This is free software, licensed under the MIT License
+
+START=99
+USE_PROCD=1
+
+PROG=/usr/bin/radius-mac
+CONFIG_BASE_DIR="/etc" # Directory for generated .ini files
+
+# Helper to determine the path for the generated .ini file
+# $1: section_name (from UCI, e.g., 'default', 'guest_server')
+# $2: variable name to store the result (output parameter)
+get_cfg_file_path() {
+    local section_name="$1"
+    local __result_var="$2"
+    local cfg_path
+
+    if [ "$section_name" = "default" ]; then
+        cfg_path="$CONFIG_BASE_DIR/radius-mac.ini"
+    else
+        cfg_path="$CONFIG_BASE_DIR/radius-mac-$section_name.ini"
+    fi
+    eval "$__result_var='$cfg_path'"
+}
+
+# Validation helper functions
+_log_error() {
+    logger -t radius-mac-init "Error: $1"
+}
+
+_is_valid_number_in_range() {
+    local val="$1"
+    local min="$2"
+    local max="$3"
+    local context="$4" # For logging
+
+    if ! echo "$val" | grep -qE '^[0-9]+$'; then
+        _log_error "$context: Value '$val' is not a number."
+        return 1
+    fi
+    if [ "$val" -lt "$min" ] || [ "$val" -gt "$max" ]; then
+        _log_error "$context: Value '$val' is out of range ($min-$max)."
+        return 1
+    fi
+    return 0
+}
+
+_is_valid_string_length() {
+    local val="$1"
+    local min_len="$2"
+    local max_len="$3"
+    local context="$4" # For logging
+    local len=${#val}
+
+    if [ "$len" -lt "$min_len" ] || [ "$len" -gt "$max_len" ]; then
+        _log_error "$context: Length '$len' is out of range ($min_len-$max_len)."
+        return 1
+    fi
+    return 0
+}
+
+_is_valid_ipv4() {
+    local val="$1"
+    local context="$2"
+    # Basic regex, not exhaustive
+    if ! echo "$val" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
+        _log_error "$context: Value '$val' is not a valid IPv4 address format."
+        return 1
+    fi
+    # Further checks for valid octets (0-255) could be added here if needed
+    return 0
+}
+
+_is_valid_mac_address() {
+    local val="$1"
+    local context="$2"
+    if ! echo "$val" | grep -qEi '^([0-9a-f]{2}[:-]){5}[0-9a-f]{2}$'; then
+        _log_error "$context: Value '$val' is not a valid MAC address format."
+        return 1
+    fi
+    return 0
+}
+
+# Client callback function for processing radius-mac-client sections
+client_cb() {
+    local client_section="$1" # UCI section name of the client
+    local server_section_name="$2"
+    local cfg_file="$3"
+    local client_server_link mac description vlan
+
+    config_get client_server_link "$client_section" server
+    if [ "$client_server_link" = "$server_section_name" ]; then
+        config_get mac "$client_section" mac
+        config_get description "$client_section" description
+        config_get vlan "$client_section" vlan
+
+        # Validate client options
+        local client_validation_ok=1
+        [ -z "$mac" ] && { _log_error "Client section '$client_section' for server '$server_section_name': Missing MAC address."; client_validation_ok=0; }
+        [ -n "$mac" ] && _is_valid_mac_address "$mac" "Client '$client_section' MAC" || client_validation_ok=0
+        [ -n "$description" ] && _is_valid_string_length "$description" 1 256 "Client '$client_section' description" || client_validation_ok=0
+        [ -n "$vlan" ] && _is_valid_number_in_range "$vlan" 1 4094 "Client '$client_section' vlan" || client_validation_ok=0
+
+        if [ "$client_validation_ok" -eq 1 ] && [ -n "$mac" ]; then
+            echo "[$mac]" >> "$cfg_file"
+            [ -n "$description" ] && echo "description=$description" >> "$cfg_file"
+            [ -n "$vlan" ] && echo "vlan=$vlan" >> "$cfg_file"
+            echo "" >> "$cfg_file"
+        else
+            _log_error "Client section '$client_section' for server '$server_section_name' has validation errors or missing MAC. Skipping."
+        fi
+    fi
+}
+
+# Generates the .ini file for a given server instance
+# $1: server_section_name (UCI section name of the radius-mac-server)
+# Returns 0 on success, 1 on critical validation failure for server options
+generate_ini_file() {
+    local server_section_name="$1"
+    local cfg_file
+    local address port secret default_vlan
+    local validation_ok=1
+
+    get_cfg_file_path "$server_section_name" cfg_file
+
+    # Clear/create the file
+    > "$cfg_file"
+
+    # Server options from radius-mac-server section
+    config_get address "$server_section_name" address
+    config_get port "$server_section_name" port
+    config_get secret "$server_section_name" secret
+    config_get default_vlan "$server_section_name" default_vlan
+
+    # Validate server options
+    [ -n "$address" ] && _is_valid_ipv4 "$address" "Server '$server_section_name' address" || validation_ok=0
+    [ -n "$port" ] && _is_valid_number_in_range "$port" 1 65535 "Server '$server_section_name' port" || validation_ok=0
+    [ -n "$secret" ] && _is_valid_string_length "$secret" 1 256 "Server '$server_section_name' secret" || validation_ok=0
+    [ -n "$default_vlan" ] && _is_valid_number_in_range "$default_vlan" 1 4094 "Server '$server_section_name' default_vlan" || validation_ok=0
+
+    if [ "$validation_ok" -eq 0 ]; then
+        _log_error "Critical validation failed for server '$server_section_name'. Configuration not generated."
+        return 1
+    fi
+
+    # Write validated server options
+    # Ensure required options are present (example: address, port, secret are usually essential)
+    if [ -z "$address" ] || [ -z "$port" ] || [ -z "$secret" ]; then
+        _log_error "Server '$server_section_name': Missing one or more required fields (address, port, secret)."
+        return 1
+    fi
+
+    # Write validated server options with [server] header
+    echo "[server]" >> "$cfg_file"
+    echo "address=$address" >> "$cfg_file"
+    echo "port=$port" >> "$cfg_file"
+    echo "secret=$secret" >> "$cfg_file"
+    [ -n "$default_vlan" ] && echo "default_vlan=$default_vlan" >> "$cfg_file"
+
+    echo "" >> "$cfg_file"  # Blank line
+    echo "; Clients:" >> "$cfg_file"
+    echo "" >> "$cfg_file" # Blank line before clients
+
+    # Client options from radius-mac-client sections linked to this server
+    config_foreach client_cb radius-mac-client "$server_section_name" "$cfg_file"
+
+    return 0
+}
+
+# Callback for starting a single instance, called by config_foreach
+# $1: server_section_name (UCI section name of the radius-mac-server)
+start_one_instance() {
+    local section_name="$1"
+    local cfg_file
+    local enabled
+
+    config_get_bool enabled "$section_name" enabled 1 # Check if the server instance itself is enabled
+    get_cfg_file_path "$section_name" cfg_file
+
+    if [ "$enabled" -eq 0 ]; then
+        rm -f "$cfg_file" # Clean up config for disabled instance
+        return 1
+    fi
+
+    if ! generate_ini_file "$section_name"; then
+        _log_error "Failed to generate configuration for '$section_name' due to validation errors. Instance will not start."
+        # Ensure potentially partially written or empty file is removed if generation failed critically
+        rm -f "$cfg_file"
+        return 1
+    fi
+
+    procd_open_instance "$section_name"
+    procd_set_param command "$PROG" -c "$cfg_file"
+    procd_set_param respawn
+    procd_set_param pidfile "/var/run/radius-mac-$section_name.pid"
+    procd_close_instance
+}
+
+start_service() {
+    config_load radius-mac
+    config_foreach start_one_instance radius-mac-server
+}
+
+service_triggers() {
+    procd_add_reload_trigger radius-mac
+}

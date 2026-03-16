@@ -1,0 +1,37 @@
+#!/bin/bash
+# Test: IPv4 address validation
+. "$(dirname "$0")/../lib/setup.sh"
+
+oneTimeTearDown() { rm -rf "${MOCK_ROOT:-}"; }
+
+testIpv4ValidStandard() {
+	assertTrue "Standard private IP" "is_ipv4 '192.168.1.1'"
+	assertTrue "Class A private" "is_ipv4 '10.0.0.1'"
+	assertTrue "Class B private" "is_ipv4 '172.16.0.1'"
+	assertTrue "Google DNS" "is_ipv4 '8.8.8.8'"
+	assertTrue "All zeros" "is_ipv4 '0.0.0.0'"
+	assertTrue "All ones" "is_ipv4 '255.255.255.255'"
+	assertTrue "Simple IP" "is_ipv4 '1.2.3.4'"
+}
+
+testIpv4ValidCIDR() {
+	assertTrue "CIDR /8" "is_ipv4 '10.0.0.0/8'"
+	assertTrue "CIDR /24" "is_ipv4 '192.168.1.0/24'"
+	assertTrue "CIDR /32" "is_ipv4 '10.0.0.1/32'"
+	assertTrue "Default route" "is_ipv4 '0.0.0.0/0'"
+}
+
+testIpv4Invalid() {
+	assertFalse "Octet > 255" "is_ipv4 '256.1.1.1'"
+	assertFalse "Last octet > 255" "is_ipv4 '1.2.3.256'"
+	assertFalse "Not an IP" "is_ipv4 'not_an_ip'"
+	assertFalse "Empty string" "is_ipv4 ''"
+	assertFalse "Only 3 octets" "is_ipv4 '192.168.1'"
+	assertFalse "5 octets" "is_ipv4 '192.168.1.1.1'"
+	assertFalse "CIDR > 32" "is_ipv4 '192.168.1.1/33'"
+	assertFalse "IPv6 loopback" "is_ipv4 '::1'"
+	assertFalse "IPv6 link-local" "is_ipv4 'fe80::1'"
+	assertFalse "Domain name" "is_ipv4 'example.com'"
+}
+
+. shunit2

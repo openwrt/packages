@@ -1,0 +1,107 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2025-2026 Chester A. Unal <chester.a.unal@arinc9.com>
+
+# Get the interface of lan network.
+lan_network_interface="$(uci -q get network.lan.device)"
+
+# Check if lan is a bridge.
+[ -n "$lan_network_interface" ] && lan_section=$(uci show network | grep "name='$lan_network_interface'" | cut -d. -f2)
+if [ -n "$lan_section" ]; then
+	# Save all interfaces.
+	lan_interfaces=$(uci get network.$lan_section.ports)
+
+	# Set biggest number interface as lan network.
+	lan_network_interface="$(echo $lan_interfaces | tr ' ' '\n' | grep '[0-9]\+$' | sort -V | tail -n1)"
+	# If there are no interfaces with numbers, use the first interface on
+	# the list.
+	[ -z "$lan_network_interface" ] && lan_network_interface="$(echo $lan_interfaces | tr ' ' '\n' | head -n1)"
+	uci set network.lan.device="$lan_network_interface"
+
+	# Remove bridge interface.
+	uci delete network.$lan_section
+fi
+
+# Get the interface of wan network.
+wan_network_interface="$(uci -q get network.wan.device)"
+
+# Check if wan is a bridge.
+[ -n "$wan_network_interface" ] && wan_section=$(uci show network | grep "name='$wan_network_interface'" | cut -d. -f2)
+if [ -n "$wan_section" ]; then
+	# Save all interfaces.
+	wan_network_interface="$(uci get network.$wan_section.ports)"
+
+	# Remove bridge interface.
+	uci delete network.$wan_section
+fi
+
+# Add a wan network entry for wan network's interface(s) and lan network
+# interfaces other than the one used for lan, if there are any.
+final_wan_interfaces="$wan_network_interface $(echo $lan_interfaces | tr ' ' '\n' | grep -v "^$lan_network_interface$")"
+
+# If there are no suitable wan interfaces, exit with code 1.
+[ -z "$(echo "$final_wan_interfaces" | tr ' ' '\n')" ] && exit 1
+
+# Delete existing wan and wan6 networks.
+uci delete network.wan
+uci -q delete network.wan6
+fw_section=$(uci show firewall | grep "name='wan'" | cut -d. -f2)
+
+# If firewall section for wan doesn't exist, create one.
+if [ -n "$fw_section" ]; then
+	uci -q del_list firewall.$fw_section.network='wan'
+	uci -q del_list firewall.$fw_section.network='wan6'
+else
+	fw_section=$(uci add firewall zone)
+	uci set firewall.@rule[-1].name='wan'
+	uci set firewall.@rule[-1].input='REJECT'
+	uci set firewall.@rule[-1].output='ACCEPT'
+	uci set firewall.@rule[-1].forward='DROP'
+	uci set firewall.@rule[-1].masq='1'
+	uci set firewall.@rule[-1].mtu_fix='1'
+fi
+
+index=1
+for dev in $final_wan_interfaces; do
+	uci -q delete network.wan$index
+	uci set network.wan$index=interface
+	uci set network.wan$index.device="$dev"
+	uci set network.wan$index.proto='dhcp'
+	uci set network.wan$index.peerdns='0'
+	uci set network.wan$index.metric="$index"
+
+	# Add every wan network entry to firewall wan zone.
+	uci add_list firewall.$fw_section.network="wan$index"
+
+	index=$((index + 1))
+done
+
+# dnsmasq Configuration
+# As we don't want to use the DNS servers advertised by WANs, set up DNS
+# forwarding. Use 8.8.8.8 and 8.8.4.4.
+uci -q del_list dhcp.@dnsmasq[0].server='8.8.8.8'
+uci -q del_list dhcp.@dnsmasq[0].server='8.8.4.4'
+uci add_list dhcp.@dnsmasq[0].server='8.8.8.8'
+uci add_list dhcp.@dnsmasq[0].server='8.8.4.4'
+
+# xray Configuration
+uci set xray.enabled.enabled='1'
+
+# Add rule to use routing table 100 for transparent proxy traffic.
+rule_section=$(uci show network | grep "mark='1'" | cut -d. -f2)
+[ -n "$rule_section" ] && uci delete network.$rule_section
+uci add network rule
+uci set network.@rule[-1].priority='0'
+uci set network.@rule[-1].lookup='100'
+uci set network.@rule[-1].mark='1'
+
+# Add route to route transparent proxy traffic to the loopback interface.
+route_section=$(uci show network | grep "table='100'" | cut -d. -f2)
+[ -n "$route_section" ] && uci delete network.$route_section
+uci add network route
+uci set network.@route[-1].interface='loopback'
+uci set network.@route[-1].type='local'
+uci set network.@route[-1].target='0.0.0.0/0'
+uci set network.@route[-1].table='100'
+
+# Commit changes.
+uci commit

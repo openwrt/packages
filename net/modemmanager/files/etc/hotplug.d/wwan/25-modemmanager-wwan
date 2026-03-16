@@ -1,0 +1,15 @@
+#!/bin/sh
+# Copyright (C) 2021 Aleksander Morgado <aleksander@aleksander.es>
+
+# Load hotplug common utilities
+. /usr/share/ModemManager/modemmanager.common
+
+# We require a device name
+[ -n "$DEVNAME" ] || exit
+
+# Always make sure the rundir exists
+mkdir -m 0755 -p "${MODEMMANAGER_RUNDIR}"
+
+# Report wwan
+mm_log "info" "${ACTION} wwan control port ${DEVNAME}: event processed"
+mm_report_event "${ACTION}" "${DEVNAME}" "wwan" "/sys${DEVPATH}"

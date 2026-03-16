@@ -1,0 +1,42 @@
+From 765d8da0f9285a6a9aacc4de7479b471781b67b9 Mon Sep 17 00:00:00 2001
+From: Michel Promonet <michel.promonet@free.fr>
+Date: Sat, 21 Sep 2024 23:33:17 +0200
+Subject: [PATCH] remove useless verbose
+
+---
+ v4l2rtspserver/inc/ALSACapture.h      | 5 ++---
+ v4l2rtspserver/src/V4l2RTSPServer.cpp | 2 +-
+ 2 files changed, 3 insertions(+), 4 deletions(-)
+
+--- a/v4l2rtspserver/inc/ALSACapture.h
++++ b/v4l2rtspserver/inc/ALSACapture.h
+@@ -22,8 +22,8 @@
+ 
+ struct ALSACaptureParameters 
+ {
+-	ALSACaptureParameters(const char* devname, const std::list<snd_pcm_format_t> & formatList, unsigned int sampleRate, unsigned int channels, int verbose) : 
+-		m_devName(devname), m_formatList(formatList), m_sampleRate(sampleRate), m_channels(channels), m_verbose(verbose) {
++	ALSACaptureParameters(const char* devname, const std::list<snd_pcm_format_t> & formatList, unsigned int sampleRate, unsigned int channels) : 
++		m_devName(devname), m_formatList(formatList), m_sampleRate(sampleRate), m_channels(channels) {
+ 			
+ 	}
+ 		
+@@ -31,7 +31,6 @@ struct ALSACaptureParameters
+ 	std::list<snd_pcm_format_t> m_formatList;		
+ 	unsigned int     m_sampleRate;
+ 	unsigned int     m_channels;
+-	int              m_verbose;
+ };
+ 
+ class ALSACapture  : public DeviceInterface
+--- a/v4l2rtspserver/src/V4l2RTSPServer.cpp
++++ b/v4l2rtspserver/src/V4l2RTSPServer.cpp
+@@ -209,7 +209,7 @@ StreamReplicator* V4l2RTSPServer::Create
+ 		// Init audio capture
+ 		LOG(NOTICE) << "Create ALSA Source..." << audioDevice;
+ 		
+-		ALSACaptureParameters param(audioDevice.c_str(), audioFmtList, audioFreq, audioNbChannels, verbose);
++		ALSACaptureParameters param(audioDevice.c_str(), audioFmtList, audioFreq, audioNbChannels);
+ 		ALSACapture* audioCapture = ALSACapture::createNew(param);
+ 		if (audioCapture) 
+ 		{

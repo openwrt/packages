@@ -1,0 +1,52 @@
+--- a/telnet/utilities.c
++++ b/telnet/utilities.c
+@@ -739,22 +739,22 @@ printsub(char direction, unsigned char *
+ 		case ENV_VAR:
+ 		  if (pointer[1] == TELQUAL_SEND)
+ 		    goto def_case;
+-		  fprintf(NetTrace, "\" VAR " + noquote);
++		  fprintf(NetTrace, "%s", "\" VAR " + noquote);
+ 		  noquote = 2;
+ 		  break;
+ 
+ 		case ENV_VALUE:
+-		  fprintf(NetTrace, "\" VALUE " + noquote);
++		  fprintf(NetTrace, "%s", "\" VALUE " + noquote);
+ 		  noquote = 2;
+ 		  break;
+ 
+ 		case ENV_ESC:
+-		  fprintf(NetTrace, "\" ESC " + noquote);
++		  fprintf(NetTrace, "%s", "\" ESC " + noquote);
+ 		  noquote = 2;
+ 		  break;
+ 
+ 		case ENV_USERVAR:
+-		  fprintf(NetTrace, "\" USERVAR " + noquote);
++		  fprintf(NetTrace, "%s", "\" USERVAR " + noquote);
+ 		  noquote = 2;
+ 		  break;
+ 
+--- a/telnetd/utility.c
++++ b/telnetd/utility.c
+@@ -897,17 +897,17 @@ printsub(char direction, unsigned char *
+ 			case ENV_VAR:
+ 			    if (pointer[1] == TELQUAL_SEND)
+ 				goto def_case;
+-			    netoprintf("\" VAR " + noquote);
++			    netoprintf("%s", "\" VAR " + noquote);
+ 			    noquote = 2;
+ 			    break;
+ 
+ 			case ENV_VALUE:
+-			    netoprintf("\" VALUE " + noquote);
++			    netoprintf("%s", "\" VALUE " + noquote);
+ 			    noquote = 2;
+ 			    break;
+ 
+ 			case ENV_ESC:
+-			    netoprintf("\" ESC " + noquote);
++			    netoprintf("%s", "\" ESC " + noquote);
+ 			    noquote = 2;
+ 			    break;
+ 

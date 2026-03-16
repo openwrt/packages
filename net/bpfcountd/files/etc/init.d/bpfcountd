@@ -1,0 +1,92 @@
+#!/bin/sh /etc/rc.common
+# SPDX-License-Identifier: MIT
+# Copyright (C) 2022 Linus Lüssing <linus.luessing@c0d3.blue>
+
+USE_PROCD=1
+START=20
+STOP=90
+
+UNIXSOCKDIR=/var/run/bpfcountd
+
+bpfcountd_start() {
+	local cfg="$1"
+	local disabled
+
+	local ifname
+	local prefilter
+	local filterfile
+	local buffersize
+
+	config_get_bool disabled "$cfg" disabled 0
+	[ "$disabled" -gt 0 ] && return 0
+
+	mkdir -p "$UNIXSOCKDIR"
+
+	config_get ifname "$cfg" "ifname"
+	config_get prefilter "$cfg" "prefilter"
+	config_get filterfile "$cfg" "filterfile"
+	config_get buffersize "$cfg" "buffersize"
+
+	[ -z "$ifname" ] && {
+		echo "Error: no ifname specified for $cfg" >&2
+		return 0
+	}
+	[ -z "$filterfile" ] && {
+		echo "Error: no filterfile specified for $cfg" >&2
+		return 0
+	}
+
+	procd_open_instance "$cfg"
+
+	procd_set_param command /usr/sbin/bpfcountd
+	procd_append_param command -i "$ifname"
+	procd_append_param command -f "$filterfile"
+	procd_append_param command -u $UNIXSOCKDIR/"$cfg".sock
+	[ -n "$prefilter" ] && procd_append_param command -F "$prefilter"
+	[ -n "$buffersize" ] && procd_append_param command -b "$buffersize"
+
+	procd_set_param respawn ${respawn_threshold:-3600} ${respawn_timeout:-5} ${respawn_retry:-5}
+
+	procd_set_param stderr 1
+	procd_close_instance
+}
+
+start_service() {
+	local cfg="$1"
+	local instance_found=0
+
+	. /lib/functions/network.sh
+
+	config_cb() {
+		local type="$1"
+		local name="$2"
+		if [ "$type" = "bpfcountd" ]; then
+			if [ -n "$cfg" -a "$cfg" = "$name" ]; then
+				instance_found=1
+			fi
+		fi
+	}
+
+	config_load bpfcountd
+
+	if [ -n "$cfg" ]; then
+		[ "$instance_found" -gt 0 ] || return
+		bpfcountd_start "$cfg"
+	else
+		config_foreach bpfcountd_start bpfcountd
+	fi
+}
+
+stop_service() {
+	local cfg="$1"
+
+	if [ -n "$cfg" ]; then
+		rm $UNIXSOCKDIR/$cfg.sock
+	else
+		rm $UNIXSOCKDIR/*.sock
+	fi
+}
+
+service_triggers() {
+	procd_add_reload_trigger bpfcountd
+}

@@ -1,0 +1,9 @@
+{
+	"name": "bind-nsupdate",
+	"ipv4": {
+		"url": "update_nsupdate.sh"
+	},
+	"ipv6": {
+		"url": "update_nsupdate.sh"
+	}
+}

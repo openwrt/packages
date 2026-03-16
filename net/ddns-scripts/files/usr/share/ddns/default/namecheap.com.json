@@ -1,0 +1,6 @@
+{
+	"name": "namecheap.com",
+	"ipv4": {
+		"url": "http://dynamicdns.park-your-domain.com/update?host=[USERNAME]&domain=[DOMAIN]&password=[PASSWORD]&ip=[IP]"
+	}
+}

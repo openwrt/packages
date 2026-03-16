@@ -1,0 +1,9 @@
+{
+	"name": "no-ip.pl",
+	"ipv4": {
+		"url": "http://[USERNAME]:[PASSWORD]@update.no-ip.pl/?hostname=[DOMAIN]"
+	},
+	"ipv6": {
+		"url": "http://[USERNAME]:[PASSWORD]@update.no-ip.pl/?hostname=[DOMAIN]"
+	}
+}

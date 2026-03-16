@@ -1,0 +1,22 @@
+--- a/src/cipher.c
++++ b/src/cipher.c
+@@ -345,7 +345,7 @@ int32_t cipher_aesctr_crypt(cipher_t* c,
+     log_printf(ERROR, "failed to set cipher CTR: size doesn't fit");
+     return -1;
+   }
+-  ctr_crypt(&params->ctx_, (nettle_crypt_func *)(aes_encrypt), AES_BLOCK_SIZE, params->ctr_.buf_, (ilen < olen) ? ilen : olen, out, in);
++  ctr_crypt(&params->ctx_, (nettle_cipher_func *)(aes_encrypt), AES_BLOCK_SIZE, params->ctr_.buf_, (ilen < olen) ? ilen : olen, out, in);
+ #else  // USE_GCRYPT is the default
+   err = gcry_cipher_setctr(params->handle_, params->ctr_.buf_, C_AESCTR_CTR_LENGTH);
+   if(err) {
+--- a/src/key_derivation.c
++++ b/src/key_derivation.c
+@@ -482,7 +482,7 @@ int key_derivation_aesctr_generate(key_d
+     return -1;
+   }
+   memset(key, 0, len);
+-  ctr_crypt(&params->ctx_, (nettle_crypt_func *)(aes_encrypt), AES_BLOCK_SIZE, params->ctr_.buf_, len, key, key);
++  ctr_crypt(&params->ctx_, (nettle_cipher_func *)(aes_encrypt), AES_BLOCK_SIZE, params->ctr_.buf_, len, key, key);
+ #else  // USE_GCRYPT is the default
+   gcry_error_t err = gcry_cipher_reset(params->handle_);
+   if(err) {

@@ -1,0 +1,117 @@
+--- a/src/main/threads.c
++++ b/src/main/threads.c
+@@ -275,6 +275,7 @@ static void ssl_locking_function(int mod
+  */
+ int tls_mutexes_init(void)
+ {
++#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+ 	int i, num;
+ 
+ 	rad_assert(ssl_mutexes == NULL);
+@@ -292,6 +293,7 @@ int tls_mutexes_init(void)
+ 	}
+ 
+ 	CRYPTO_set_locking_callback(ssl_locking_function);
++#endif
+ 
+ 	return 0;
+ }
+--- a/src/main/tls.c
++++ b/src/main/tls.c
+@@ -59,6 +59,7 @@ USES_APPLE_DEPRECATED_API	/* OpenSSL API
+ #    include <openssl/evp.h>
+ #  endif
+ #  include <openssl/ssl.h>
++#  include <openssl/dh.h>
+ 
+ #if OPENSSL_VERSION_NUMBER >= 0x30000000L
+ #  include <openssl/provider.h>
+@@ -2943,7 +2944,7 @@ int cbtls_verify(int ok, X509_STORE_CTX
+ 	int		my_ok = ok;
+ 
+ 	ASN1_INTEGER	*sn = NULL;
+-	ASN1_TIME	*asn_time = NULL;
++	const ASN1_TIME	*asn_time = NULL;
+ 	VALUE_PAIR	**certs;
+ 	char **identity;
+ #ifdef HAVE_OPENSSL_OCSP_H
+@@ -3035,7 +3036,7 @@ int cbtls_verify(int ok, X509_STORE_CTX
+ 	 *	Get the Expiration Date
+ 	 */
+ 	buf[0] = '\0';
+-	asn_time = X509_get_notAfter(client_cert);
++	asn_time = X509_get0_notAfter(client_cert);
+ 	if (certs && (lookup <= 1) && asn_time &&
+ 	    (asn_time->length < (int) sizeof(buf))) {
+ 		memcpy(buf, (char*) asn_time->data, asn_time->length);
+@@ -3048,7 +3049,7 @@ int cbtls_verify(int ok, X509_STORE_CTX
+ 	 *	Get the Valid Since Date
+ 	 */
+ 	buf[0] = '\0';
+-	asn_time = X509_get_notBefore(client_cert);
++	asn_time = X509_get0_notBefore(client_cert);
+ 	if (certs && (lookup <= 1) && asn_time &&
+ 	    (asn_time->length < (int) sizeof(buf))) {
+ 		memcpy(buf, (char*) asn_time->data, asn_time->length);
+@@ -3655,10 +3656,12 @@ static int set_ecdh_curve(SSL_CTX *ctx,
+  */
+ int tls_global_init(TLS_UNUSED bool spawn_flag, TLS_UNUSED bool check)
+ {
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+ 	SSL_load_error_strings();	/* readable error messages (examples show call before library_init) */
+ 	SSL_library_init();		/* initialize library */
+ 	OpenSSL_add_all_algorithms();	/* required for SHA2 in OpenSSL < 0.9.8o and 1.0.0.a */
+ 	CONF_modules_load_file(NULL, NULL, 0);
++#endif
+ 
+ #if OPENSSL_VERSION_NUMBER >= 0x30000000L
+ 	EVP_set_default_properties(NULL, "-fips");
+@@ -3762,6 +3765,7 @@ int tls_global_version_check(char const
+  */
+ void tls_global_cleanup(void)
+ {
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+ #if OPENSSL_VERSION_NUMBER < 0x10000000L
+ 	ERR_remove_state(0);
+ #elif OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+@@ -3787,6 +3791,7 @@ void tls_global_cleanup(void)
+ 	ERR_free_strings();
+ 	EVP_cleanup();
+ 	CRYPTO_cleanup_all_ex_data();
++#endif
+ }
+ 
+ 
+--- a/src/main/version.c
++++ b/src/main/version.c
+@@ -54,7 +54,7 @@ int ssl_check_consistency(void)
+ {
+ 	long ssl_linked;
+ 
+-	ssl_linked = SSLeay();
++	ssl_linked = OpenSSL_version_num();
+ 
+ 	/*
+ 	 *	Major mismatch, that's bad.
+@@ -165,7 +165,7 @@ char const *ssl_version_num(void)
+ {
+ 	long ssl_linked;
+ 
+-	ssl_linked = SSLeay();
++	ssl_linked = OpenSSL_version_num();
+ 	return ssl_version_by_num((uint32_t)ssl_linked);
+ }
+ 
+@@ -201,10 +201,10 @@ char const *ssl_version(void)
+ {
+ 	static char buffer[256];
+ 
+-	uint32_t v = SSLeay();
++	uint32_t v = OpenSSL_version_num();
+ 
+ 	snprintf(buffer, sizeof(buffer), "%s 0x%.8x (%s)",
+-		 SSLeay_version(SSLEAY_VERSION),		/* Not all builds include a useful version number */
++		 OpenSSL_version(OPENSSL_VERSION),		/* Not all builds include a useful version number */
+ 		 v,
+ 		 ssl_version_by_num(v));
+ 

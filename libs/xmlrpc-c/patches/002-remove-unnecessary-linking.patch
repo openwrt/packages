@@ -1,0 +1,37 @@
+--- a/src/Makefile
++++ b/src/Makefile
+@@ -183,7 +183,7 @@ $(LIBXMLRPC_SERVER): \
+   $(call shliblefn, libxmlrpc)
+ $(LIBXMLRPC_SERVER): LIBOBJECTS = $(LIBXMLRPC_SERVER_MODS:%=%.osh)
+ $(LIBXMLRPC_SERVER): LIBDEP = \
+-   -L. -lxmlrpc $(XML_PARSER_LIBDEP) $(LIBXMLRPC_UTIL_LIBDEP)
++   -L. -lxmlrpc $(LIBXMLRPC_UTIL_LIBDEP)
+ 
+ LIBXMLRPC_SERVER_ABYSS = $(call shlibfn, libxmlrpc_server_abyss)
+ 
+@@ -197,7 +197,7 @@ $(LIBXMLRPC_SERVER_ABYSS): LIBOBJECTS =
+ $(LIBXMLRPC_SERVER_ABYSS): LIBDEP = \
+   -L. -lxmlrpc_server \
+   -L$(LIBXMLRPC_ABYSS_DIR) -lxmlrpc_abyss \
+-  -L. -lxmlrpc $(XML_PARSER_LIBDEP) $(LIBXMLRPC_UTIL_LIBDEP)
++  -L. -lxmlrpc $(LIBXMLRPC_UTIL_LIBDEP)
+ ifeq ($(MSVCRT),yes)
+   $(LIBXMLRPC_SERVER_ABYSS):  LIBDEP += -lws2_32 -lwsock32
+ endif
+@@ -212,7 +212,7 @@ $(LIBXMLRPC_SERVER_CGI): \
+ $(LIBXMLRPC_SERVER_CGI): LIBOBJECTS = $(LIBXMLRPC_SERVER_CGI_MODS:%=%.osh)
+ $(LIBXMLRPC_SERVER_CGI): LIBDEP = \
+   -L. -lxmlrpc_server \
+-  -L. -lxmlrpc $(XML_PARSER_LIBDEP) $(LIBXMLRPC_UTIL_LIBDEP)
++  -L. -lxmlrpc $(LIBXMLRPC_UTIL_LIBDEP)
+ 
+ LIBXMLRPC_CLIENT = $(call shlibfn, libxmlrpc_client)
+ 
+@@ -237,7 +237,6 @@ $(LIBXMLRPC_CLIENT): LIBOBJECTS = \
+ LIBXMLRPC_CLIENT_LIBDEP = \
+   -Lblddir/src -Lblddir/lib/libutil \
+   -lxmlrpc -lxmlrpc_util \
+-  $(XML_PARSER_LIBDEP) \
+   $(TRANSPORT_LIBDEP) \
+ 
+ $(LIBXMLRPC_CLIENT): LIBDEP = \

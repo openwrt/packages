@@ -1,0 +1,13 @@
+diff --git a/src/installer/destinations.py b/src/installer/destinations.py
+index a3c1967..9f733c8 100644
+--- a/src/installer/destinations.py
++++ b/src/installer/destinations.py
+@@ -164,7 +164,7 @@ class SchemeDictionaryDestination(WheelDestination):
+         target_path = self._path_with_destdir(scheme, path)
+         if os.path.exists(target_path):
+             message = f"File already exists: {target_path}"
+-            raise FileExistsError(message)
++            os.remove(target_path)
+ 
+         parent_folder = os.path.dirname(target_path)
+         if not os.path.exists(parent_folder):

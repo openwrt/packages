@@ -1,0 +1,11 @@
+#!/bin/bash
+# Mock readlink for pbr tests
+# Returns /usr/libexec/ip-full for /sbin/ip to pass the ip-full check
+case "$*" in
+	*/sbin/ip)
+		echo "/usr/libexec/ip-full"
+		;;
+	*)
+		command readlink "$@" 2>/dev/null || echo "$1"
+		;;
+esac

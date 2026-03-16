@@ -1,0 +1,50 @@
+--- a/utils/v4l2-tracer/retrace.cpp
++++ b/utils/v4l2-tracer/retrace.cpp
+@@ -10,10 +10,7 @@ extern struct retrace_context ctx_retrac
+ void retrace_mmap(json_object *mmap_obj, bool is_mmap64)
+ {
+ 	json_object *mmap_args_obj;
+-	if (is_mmap64)
+-		json_object_object_get_ex(mmap_obj, "mmap64", &mmap_args_obj);
+-	else
+-		json_object_object_get_ex(mmap_obj, "mmap", &mmap_args_obj);
++	json_object_object_get_ex(mmap_obj, "mmap", &mmap_args_obj);
+ 
+ 	json_object *len_obj;
+ 	json_object_object_get_ex(mmap_args_obj, "len", &len_obj);
+@@ -46,10 +43,7 @@ void retrace_mmap(json_object *mmap_obj,
+ 		return;
+ 
+ 	void *buf_address_retrace_pointer = nullptr;
+-	if (is_mmap64)
+-		buf_address_retrace_pointer = mmap64(0, len, prot, flags, fd_retrace, off);
+-	else
+-		buf_address_retrace_pointer = mmap(0, len, prot, flags, fd_retrace, off);
++	buf_address_retrace_pointer = mmap(0, len, prot, flags, fd_retrace, off);
+ 
+ 	if (buf_address_retrace_pointer == MAP_FAILED) {
+ 		if (is_mmap64)
+@@ -116,10 +110,7 @@ void retrace_open(json_object *jobj, boo
+ 	int fd_trace = json_object_get_int(fd_trace_obj);
+ 
+ 	json_object *open_args_obj;
+-	if (is_open64)
+-		json_object_object_get_ex(jobj, "open64", &open_args_obj);
+-	else
+-		json_object_object_get_ex(jobj, "open", &open_args_obj);
++	json_object_object_get_ex(jobj, "open", &open_args_obj);
+ 
+ 	json_object *path_obj;
+ 	std::string path_trace;
+@@ -148,10 +139,7 @@ void retrace_open(json_object *jobj, boo
+ 		mode = s2number(json_object_get_string(mode_obj));
+ 
+ 	int fd_retrace = 0;
+-	if (is_open64)
+-		fd_retrace = open64(path_retrace.c_str(), oflag, mode);
+-	else
+-		fd_retrace = open(path_retrace.c_str(), oflag, mode);
++	fd_retrace = open(path_retrace.c_str(), oflag, mode);
+ 
+ 	if (fd_retrace <= 0) {
+ 		line_info("\n\tCan't open: %s", path_retrace.c_str());

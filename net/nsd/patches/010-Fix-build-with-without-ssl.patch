@@ -1,0 +1,43 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Eneas U de Queiroz <cotequeiroz@gmail.com>
+Date: Thu, 9 Feb 2023 13:48:31 -0300
+Subject: [PATCH] Fix build with --without-ssl
+
+Don't include COMMON_OBJ when compiling nsd-control without SSL.
+
+Without SSL, nsd-control's only purpose is to print out an error
+message.  There's no need to include any other object files then.
+
+*** THIS PATCH SHOULD NOT BE APPLIED TO NSD'S NEXT RELEASE ***
+
+Signed-off-by: Eneas U de Queiroz <cotequeiroz@gmail.com>
+
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -85,7 +85,7 @@ NSD_OBJ=$(COMMON_OBJ) $(XFRD_OBJ) difffi
+ ALL_OBJ=$(NSD_OBJ) nsd-checkconf.o nsd-checkzone.o nsd-control.o nsd-mem.o xfr-inspect.o
+ NSD_CHECKCONF_OBJ=$(COMMON_OBJ) nsd-checkconf.o
+ NSD_CHECKZONE_OBJ=$(COMMON_OBJ) $(XFRD_OBJ) dbaccess.o dbcreate.o difffile.o ipc.o mini_event.o netio.o server.o zonec.o zparser.o zlexer.o nsd-checkzone.o verify.o
+-NSD_CONTROL_OBJ=$(COMMON_OBJ) nsd-control.o
++NSD_CONTROL_OBJ=@NSD_CONTROL_COMMON_OBJ@ nsd-control.o
+ CUTEST_OBJ=$(COMMON_OBJ) $(XFRD_OBJ) dbaccess.o dbcreate.o difffile.o ipc.o mini_event.o netio.o server.o verify.o zonec.o zparser.o zlexer.o cutest_dname.o cutest_dns.o cutest_iterated_hash.o cutest_run.o cutest_radtree.o cutest_rbtree.o cutest_namedb.o cutest_options.o cutest_region.o cutest_rrl.o cutest_udb.o cutest_udbrad.o cutest_util.o cutest_bitset.o cutest_popen3.o cutest_iter.o cutest_event.o cutest.o qtest.o
+ NSD_MEM_OBJ=$(COMMON_OBJ) $(XFRD_OBJ) dbaccess.o dbcreate.o difffile.o ipc.o mini_event.o netio.o verify.o server.o zonec.o zparser.o zlexer.o nsd-mem.o
+ all:	$(TARGETS) $(MANUALS)
+--- a/configure.ac
++++ b/configure.ac
+@@ -1015,6 +1015,7 @@ AC_SUBST(ratelimit_default)
+ # we need SSL for TSIG (and maybe also for NSEC3).
+ CHECK_SSL
+ if test x$HAVE_SSL = x"yes"; then
++	AC_SUBST(NSD_CONTROL_COMMON_OBJ,'$(COMMON_OBJ)')
+ 	ACX_LIB_SSL
+ 	# remove space after -ldl if there.
+ 	LIBS=`echo "$LIBS" | sed -e 's/ $//'`
+@@ -1091,6 +1092,7 @@ AC_INCLUDES_DEFAULT
+ else
+ 	AC_MSG_WARN([No SSL, therefore remote-control is disabled])
+ 	AC_MSG_WARN([No SSL, therefore TLS is disabled])
++	AC_SUBST(NSD_CONTROL_COMMON_OBJ,)
+ fi
+ 
+ AC_ARG_ENABLE(nsec3, AS_HELP_STRING([--disable-nsec3],[Disable NSEC3 support]))

@@ -1,0 +1,131 @@
+#!/bin/sh /etc/rc.common
+# Copyright 2023-2026 MOSSDeF, Stan Grishin (stangri@melmac.ca)
+# shellcheck disable=SC2015,SC3043
+
+# shellcheck disable=SC2034
+START=20
+USE_PROCD=1
+LC_ALL=C
+
+if type extra_command 1>/dev/null 2>&1; then
+	extra_command 'allow' 'Allows domain in current block-list and config'
+	extra_command 'check' 'Checks if specified domain is found in current block-list'
+	extra_command 'check_tld' 'Checks if any TLDs are found in current block-list'
+	extra_command 'check_leading_dot' 'Checks if leading-dot domains are found in current block-list'
+	extra_command 'check_lists' 'Checks if specified domain is found in enabled block-lists'
+	extra_command 'dl' 'Force-downloads all enabled block-list'
+	extra_command 'killcache' 'Delete all cached files'
+	extra_command 'pause' 'Pauses ad-blocking for specified number of seconds (default: 20)'
+	extra_command 'show_blocklist' 'List currently blocked domains'
+	extra_command 'sizes' 'Displays the file-sizes of configured block-lists'
+	extra_command 'version' 'Show version information'
+fi
+
+readonly packageName='adblock-fast'
+readonly _ucode="ucode -S -L /lib/${packageName} /lib/${packageName}/cli.uc --"
+_procd_svc_data=
+_fw4_restart=
+
+# shellcheck disable=SC1091
+. "${IPKG_INSTROOT}/lib/functions.sh"
+# shellcheck disable=SC1091
+. "${IPKG_INSTROOT}/lib/functions/network.sh"
+
+boot() { rc_procd start_service 'on_boot' && service_started 'on_boot'; }
+start_service() {
+	local param="${1:-on_start}"
+	_procd_svc_data="$($_ucode start "$param")"
+}
+service_data() { [ -n "$_procd_svc_data" ] && eval "$_procd_svc_data"; }
+stop_service() { eval "$($_ucode stop)"; }
+reload_service() { rc_procd start_service 'reload'; }
+restart_service() { rc_procd start_service 'restart'; }
+status_service() { $_ucode status "$@"; }
+service_stopped() { [ "$_fw4_restart" = 1 ] && procd_set_config_changed firewall; }
+service_started() { [ "$_fw4_restart" = 1 ] && procd_set_config_changed firewall; }
+service_triggers() {
+	local wan wan6 procd_trigger_wan6 i
+	if [ ! -s "/dev/shm/${packageName}" ]; then
+		procd_add_raw_trigger "interface.*.up" 5000 "/etc/init.d/${packageName}" start
+	else		
+		network_flush_cache
+		network_find_wan wan
+		wan="${wan:-wan}"
+		procd_trigger_wan6="$(uci -q get "${packageName}.config.procd_trigger_wan6")"
+		if [ "$procd_trigger_wan6" = '1' ]; then
+			network_find_wan6 wan6
+			wan6="${wan6:-wan6}"
+		fi
+		for i in $wan $wan6; do
+			procd_add_interface_trigger "interface.*" "$i" "/etc/init.d/${packageName}" start "on_${i}"
+		done
+		procd_add_config_trigger "config.change" "$packageName" "/etc/init.d/${packageName}" reload
+		procd_open_validate
+			load_validate_config
+			load_validate_file_url_section
+		procd_close_validate
+	fi
+}
+allow()             { $_ucode allow "$@"; }
+check()             { $_ucode check "$@"; }
+check_tld()         { $_ucode check_tld "$@"; }
+check_leading_dot() { $_ucode check_leading_dot "$@"; }
+check_lists()       { $_ucode check_lists "$@"; }
+dl()                { rc_procd start_service 'download' && service_started; }
+killcache()         { $_ucode killcache "$@"; }
+pause()             { $_ucode pause "$@"; }
+show_blocklist()    { $_ucode show_blocklist "$@"; }
+sizes()             { $_ucode sizes "$@"; }
+version()           { $_ucode version "$@"; }
+
+# shellcheck disable=SC2120
+load_validate_file_url_section() {
+	uci_load_validate "$packageName" 'file_url' "$1" "$2" \
+		'enabled:bool:1' \
+		'action:or("allow", "block"):block' \
+		'size:or(uinteger, "")' \
+		'name:string' \
+		'url:string' \
+	;
+}
+
+# shellcheck disable=SC2120
+load_validate_config() {
+	uci_load_validate "$packageName" "$packageName" "$1" "${2}${3:+ ${3}}" \
+		'enabled:bool:0' \
+		'force_dns:bool:1' \
+		'force_dns_interface:list(network):lan' \
+		'force_dns_port:list(integer):53,853' \
+		'parallel_downloads:bool:1' \
+		'debug_init_script:bool:0' \
+		'debug_performance:bool:0' \
+		'compressed_cache:bool:0' \
+		'compressed_cache_dir:directory:/etc' \
+		'ipv6_enabled:bool:0' \
+		'allow_non_ascii:bool:0' \
+		'canary_domains_icloud:bool:0' \
+		'canary_domains_mozilla:bool:0' \
+		'config_update_enabled:bool:0' \
+		'config_update_url:string:https://cdn.jsdelivr.net/gh/openwrt/packages/net/adblock-fast/files/adblock-fast.config.update' \
+		'download_timeout:range(1,60):20' \
+		'pause_timeout:range(1,600):20' \
+		'curl_additional_param:or("", string)' \
+		'curl_max_file_size:or("", uinteger)' \
+		'curl_retry:range(0,30):3' \
+		'verbosity:range(0,2):2' \
+		'procd_trigger_wan6:bool:0' \
+		'procd_boot_wan_timeout:integer:60' \
+		'led:or("", "none", file, device, string)' \
+		'dns:or("dnsmasq.addnhosts", "dnsmasq.conf", "dnsmasq.ipset", "dnsmasq.nftset", "dnsmasq.servers", "smartdns.domainset", "smartdns.ipset", "smartdns.nftset", "unbound.adb_list"):dnsmasq.servers' \
+		'dnsmasq_instance:list(or("*", "-", uinteger, uci("dhcp", "@dnsmasq"))):*' \
+		'smartdns_instance:list(or("*", "-", uinteger, uci("smartdns", "@smartdns"))):*' \
+		'heartbeat_domain:or("-", string):heartbeat.melmac.ca' \
+		'heartbeat_sleep_timeout:range(1,60):10' \
+		'dnsmasq_sanity_check:bool:1' \
+		'dnsmasq_validity_check:bool:0' \
+		'update_config_sizes:bool:1' \
+		'allowed_domain:list(string)' \
+		'blocked_domain:list(string)' \
+		'dnsmasq_config_file_url:string' \
+	;
+}

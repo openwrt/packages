@@ -1,0 +1,61 @@
+--- a/nginx-mod-njs/auto/explicit_bzero
++++ b/nginx-mod-njs/auto/explicit_bzero
+@@ -7,7 +7,7 @@
+ 
+ njs_feature="explicit_bzero()"
+ njs_feature_name=NJS_HAVE_EXPLICIT_BZERO
+-njs_feature_run=yes
++njs_feature_run=no
+ njs_feature_incs=
+ njs_feature_libs=
+ njs_feature_test="#include <strings.h>
+--- a/nginx-mod-njs/auto/getrandom
++++ b/nginx-mod-njs/auto/getrandom
+@@ -7,7 +7,7 @@
+ 
+ njs_feature="getrandom()"
+ njs_feature_name=NJS_HAVE_GETRANDOM
+-njs_feature_run=yes
++njs_feature_run=no
+ njs_feature_incs=
+ njs_feature_libs=
+ njs_feature_test="#include <unistd.h>
+@@ -76,6 +76,7 @@ if [ $njs_found = no ]; then
+ 
+     njs_feature="getentropy()"
+     njs_feature_name=NJS_HAVE_GETENTROPY
++    njs_feature_run=no
+     njs_feature_test="#include <unistd.h>
+ 
+                       int main(void) {
+--- a/nginx-mod-njs/auto/memalign
++++ b/nginx-mod-njs/auto/memalign
+@@ -8,7 +8,7 @@
+ 
+ njs_feature="posix_memalign()"
+ njs_feature_name=NJS_HAVE_POSIX_MEMALIGN
+-njs_feature_run=yes
++njs_feature_run=no
+ njs_feature_incs=
+ njs_feature_libs=
+ njs_feature_test="#include <stdlib.h>
+@@ -31,7 +31,7 @@ if [ $njs_found = no ]; then
+ 
+     njs_feature="memalign()"
+     njs_feature_name=NJS_HAVE_MEMALIGN
+-    njs_feature_run=yes
++    njs_feature_run=no
+     njs_feature_incs=
+     njs_feature_libs=
+     njs_feature_test="#include <stdlib.h>
+--- a/nginx-mod-njs/auto/time
++++ b/nginx-mod-njs/auto/time
+@@ -5,7 +5,7 @@
+ 
+ njs_feature="clock_gettime(CLOCK_MONOTONIC)"
+ njs_feature_name=NJS_HAVE_CLOCK_MONOTONIC
+-njs_feature_run=yes
++njs_feature_run=no
+ njs_feature_incs=
+ njs_feature_libs=
+ njs_feature_test="#include <time.h>

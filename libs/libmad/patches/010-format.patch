@@ -1,0 +1,29 @@
+From cb1e56cb691e0f9ebcad595632ef484389830431 Mon Sep 17 00:00:00 2001
+From: Mangix <mangixjohn@icloud.com>
+Date: Thu, 27 Jun 2024 20:13:07 +0000
+Subject: [PATCH] minimad: fix format under 32-bit
+
+This is pointer subtraction. Use proper macro for this. 32-bit needs to be %d.
+---
+ minimad.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+--- a/minimad.c
++++ b/minimad.c
+@@ -19,6 +19,7 @@
+  * $Id: minimad.c,v 1.4 2004/01/23 09:41:32 rob Exp $
+  */
+ 
++# include <inttypes.h>
+ # include <stdio.h>
+ # include <unistd.h>
+ # include <sys/stat.h>
+@@ -174,7 +175,7 @@ enum mad_flow error(void *data,
+ {
+   struct buffer *buffer = data;
+ 
+-  fprintf(stderr, "decoding error 0x%04x (%s) at byte offset %u\n",
++  fprintf(stderr, "decoding error 0x%04x (%s) at byte offset %" PRIdPTR "\n",
+ 	  stream->error, mad_stream_errorstr(stream),
+ 	  stream->this_frame - buffer->start);
+ 

@@ -1,0 +1,26 @@
+Don't check xsltproc manpages
+
+Signed-off-by: Bian Naimeng <biannm@cn.fujitsu.com>
+
+--- a/lib/talloc/wscript
++++ b/lib/talloc/wscript
+@@ -48,7 +48,7 @@ def configure(conf):
+         conf.env.PKGCONFIGDIR = '${LIBDIR}/pkgconfig'
+         conf.env.TALLOC_VERSION = VERSION
+ 
+-    conf.CHECK_XSLTPROC_MANPAGES()
++    #conf.CHECK_XSLTPROC_MANPAGES()
+ 
+     conf.CHECK_HEADERS('sys/auxv.h')
+     conf.CHECK_FUNCS('getauxval')
+--- a/lib/tdb/wscript
++++ b/lib/tdb/wscript
+@@ -95,7 +95,7 @@ def configure(conf):
+         not conf.env.disable_tdb_mutex_locking):
+         conf.define('USE_TDB_MUTEX_LOCKING', 1)
+ 
+-    conf.CHECK_XSLTPROC_MANPAGES()
++    #conf.CHECK_XSLTPROC_MANPAGES()
+ 
+     conf.SAMBA_CHECK_PYTHON()
+     conf.SAMBA_CHECK_PYTHON_HEADERS()

@@ -1,0 +1,42 @@
+#!/bin/sh
+# shellcheck disable=SC3043
+
+readonly pbrFunctionsFile='/etc/init.d/pbr'
+if [ -s "$pbrFunctionsFile" ]; then
+# shellcheck source=../../etc/init.d/pbr
+	. "$pbrFunctionsFile"
+else
+	printf "%b: pbr init.d file (%s) not found! \n" '\033[0;31mERROR\033[0m' "$pbrFunctionsFile"
+fi
+
+# Transition from older versions of pbr
+sed -i "s/resolver_ipset/resolver_set/g" /etc/config/pbr
+sed -i "s/'FORWARD'/'forward'/g" /etc/config/pbr
+sed -i "s/'INPUT'/'input'/g" /etc/config/pbr
+sed -i "s/'OUTPUT'/'output'/g" /etc/config/pbr
+sed -i "s/'PREROUTING'/'prerouting'/g" /etc/config/pbr
+sed -i "s/'POSTROUTING'/'postrouting'/g" /etc/config/pbr
+sed -i "s/option fw_mask '0x\(.*\)'/option fw_mask '\1'/g" /etc/config/pbr
+sed -i "s/option wan_mark '0x\(.*\)'/option wan_mark '\1'/g" /etc/config/pbr
+sed -i "s|option path '/etc/pbr/|option path '/usr/share/pbr/|g" /etc/config/pbr
+sed -i "/procd_lan_interface/d" /etc/config/pbr
+sed -i "s|procd_lan_device|lan_device|g" /etc/config/pbr
+sed -i "s|procd_wan_interface|uplink_interface|g" /etc/config/pbr
+sed -i "s|procd_wan6_interface|uplink_interface6|g" /etc/config/pbr
+sed -i "s|wan_ip_rules_priority|uplink_ip_rules_priority|g" /etc/config/pbr
+sed -i "s|wan_mark|uplink_mark|g" /etc/config/pbr
+
+# Transition from pre-1.1.7 versions
+# shellcheck disable=SC2317,SC2329
+_remove_wg_server_client() {
+	local path
+	config_get path "$1" 'path'
+	if [ "$path" = '/usr/share/pbr/pbr.user.wg_server_and_client' ]; then
+		uci_remove pbr "$1"
+	fi
+}
+config_load pbr
+config_foreach _remove_wg_server_client include
+[ -n "$(uci changes pbr)" ] && uci_commit pbr
+
+exit 0

@@ -1,0 +1,55 @@
+Test that allowed_domain config option removes domains and subdomains from output.
+
+-- Testcase --
+import adb from 'adblock-fast';
+import { readfile } from 'fs';
+let ti = adb._test_internals;
+
+adb.env.load_config();
+ti.set_cfg('dns', 'dnsmasq.servers');
+ti.set_cfg('dnsmasq_sanity_check', false);
+ti.set_cfg('dnsmasq_validity_check', false);
+ti.set_cfg('heartbeat_domain', null);
+ti.set_cfg('config_update_enabled', false);
+ti.set_cfg('update_config_sizes', false);
+ti.set_cfg('allowed_domain', 'ad.doubleclick.test.example.com tracker.analytics.test.example.com');
+ti.env.dns_set_output_values('dnsmasq.servers');
+ti.append_urls();
+
+let ok = ti.download_lists();
+if (!ok) {
+	print('download_lists failed\n');
+} else {
+	let content = readfile(ti.dns_output.file) || '';
+
+	// These should be removed by allowed_domain
+	let allowed = [
+		'ad.doubleclick.test.example.com',
+		'tracker.analytics.test.example.com',
+	];
+	// This should still be present
+	let blocked = [
+		'pixel.tracking.test.example.com',
+		'beacon.metrics.test.example.com',
+	];
+
+	let results = [];
+	for (let a in allowed) {
+		// Check for block format "server=/domain/\n" — not allow format "server=/domain/#\n"
+		let found = index(content, 'server=/' + a + '/\n') >= 0;
+		push(results, sprintf('allowed %s: %s', a, found ? 'STILL PRESENT (BAD)' : 'REMOVED'));
+	}
+	for (let b in blocked) {
+		let found = index(content, 'server=/' + b + '/\n') >= 0;
+		push(results, sprintf('blocked %s: %s', b, found ? 'PRESENT' : 'MISSING'));
+	}
+	print(join('\n', results) + '\n');
+}
+-- End --
+
+-- Expect stdout --
+allowed ad.doubleclick.test.example.com: REMOVED
+allowed tracker.analytics.test.example.com: REMOVED
+blocked pixel.tracking.test.example.com: PRESENT
+blocked beacon.metrics.test.example.com: PRESENT
+-- End --

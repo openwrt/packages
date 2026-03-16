@@ -1,0 +1,4 @@
+#!/bin/sh
+#compatibility script for traditional customization
+
+/sbin/reboot

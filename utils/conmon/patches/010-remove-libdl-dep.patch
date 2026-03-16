@@ -1,0 +1,11 @@
+--- a/meson.build
++++ b/meson.build
+@@ -87,7 +87,7 @@ executable('conmon',
+             'src/utils.h',
+             'src/seccomp_notify.c',
+             'src/seccomp_notify.h'],
+-           dependencies : [glib, libdl, sd_journal, seccomp],
++           dependencies : [glib, sd_journal, seccomp],
+            install : true,
+            install_dir : join_paths(get_option('libexecdir'), 'podman'),
+ )

@@ -1,0 +1,11 @@
+--- a/ports/unix/Makefile
++++ b/ports/unix/Makefile
+@@ -31,7 +31,7 @@ QSTR_DEFS += qstrdefsport.h
+ QSTR_GLOBAL_DEPENDENCIES += $(VARIANT_DIR)/mpconfigvariant.h
+ 
+ # OS name, for simple autoconfig
+-UNAME_S := $(shell uname -s)
++UNAME_S := Linux
+ 
+ # include py core make definitions
+ include $(TOP)/py/py.mk

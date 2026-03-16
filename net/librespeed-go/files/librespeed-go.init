@@ -1,0 +1,97 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2022 Tianling Shen <cnsztl@immortalwrt.org>
+
+USE_PROCD=1
+START=99
+
+CONF="librespeed-go"
+PROG="/usr/bin/librespeed-go"
+TMPCONF="/var/run/$CONF/settings.json"
+
+mount_jail_file() {
+	local cfg="$1"
+	local isdir="${2:-0}"
+	local rw="${3:-0}"
+	local reload="${4:-0}"
+
+	local value
+	config_get value "config" "$cfg"
+	[ -n "$value" ] || return 1
+
+	if [ "$isdir" = "1" ]; then
+		mkdir -p "$value"
+		chown -R librespeed "$value"
+	else
+		mkdir -p "${value%/*}"
+		touch "$value"
+		chown librespeed "$value"
+	fi
+
+	if [ "$rw" = "1" ]; then
+		procd_add_jail_mount_rw "$value"
+	else
+		procd_add_jail_mount "$value"
+	fi
+
+	[ "$reload" = "0" ] || procd_append_param file "$value"
+}
+
+start_service() {
+	config_load "$CONF"
+
+	local enabled
+	config_get_bool enabled "config" "enabled" "0"
+	[ "$enabled" -eq "1" ] || return 1
+
+	mkdir -p "${TMPCONF%/*}"
+
+	json_init
+	option_cb() {
+		local name="$1"
+		local value="$2"
+
+		case "$name" in
+		"enabled") ;;
+		"enable_tls"|"enable_http2"|"redact_ip_addresses")
+			json_add_boolean "$name" "$value" ;;
+		*)
+			json_add_string "$name" "$value" ;;
+		esac
+	}
+	config_load "$CONF"
+	json_dump > "$TMPCONF"
+	chown librespeed "$TMPCONF"
+
+	procd_open_instance "$CONF"
+	procd_set_param command "$PROG"
+	procd_append_param command -c "$TMPCONF"
+
+	procd_set_param limits core="unlimited"
+	procd_set_param limits nofile="1000000 1000000"
+	procd_set_param respawn
+	procd_set_param stderr 1
+	procd_set_param user librespeed
+
+	procd_add_jail "$CONF" log
+	procd_add_jail_mount "$TMPCONF"
+
+	mount_jail_file "assets_path" "1"
+	mount_jail_file "database_file" "0" "1"
+	mount_jail_file "tls_cert_file" "0" "0" "1"
+	mount_jail_file "tls_key_file" "0" "0" "1"
+
+	procd_close_instance
+}
+
+stop_service() {
+	rm -rf "${TMPCONF%/*}"
+}
+
+reload_service() {
+	stop
+	start
+}
+
+service_triggers() {
+	procd_add_reload_trigger "$CONF"
+}

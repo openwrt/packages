@@ -1,0 +1,24 @@
+#!/bin/sh /etc/rc.common
+
+START=94
+
+USE_PROCD=1
+PROG=/usr/sbin/timelord
+
+start_service() {
+	config_load timelord
+
+	config_get disabled timelord disabled '0'
+	[ "$disabled" = "0" ] || { 
+		logger -p info -t timelord "Disabled by config" && exit 
+	}
+	config_get nbpname timelord nbpname
+	[ -z "$nbpname" ] || nbpname="-n $nbpname"
+	config_get localtime timelord localtime
+	[ -z "$localtime" ] || localtime="-l"
+
+	procd_open_instance
+	procd_set_param command $PROG -d $localtime $nbpname
+	procd_set_param respawn
+	procd_close_instance
+}

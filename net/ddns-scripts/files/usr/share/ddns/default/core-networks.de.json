@@ -1,0 +1,11 @@
+{
+	"name": "core-networks.de",
+	"ipv4": {
+		"url": "http://[USERNAME]:[PASSWORD]@dyndns.core-networks.de/?hostname=[DOMAIN]&myip=[IP]&keepipv6=1",
+		"answer": "good"
+	},
+	"ipv6": {
+		"url": "http://[USERNAME]:[PASSWORD]@dyndns.core-networks.de/?hostname=[DOMAIN]&myip=[IP]&keepipv4=1",
+		"answer": "good"
+	}
+}

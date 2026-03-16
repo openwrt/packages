@@ -1,0 +1,11 @@
+--- a/setup.py
++++ b/setup.py
+@@ -11,7 +11,7 @@ import os.path
+ 
+ 
+ # Library linkage
+-lib_dirs = ['.', '/usr/lib64', '/usr/lib', '/usr/local/lib']
++lib_dirs = ['.', os.environ["STAGING_DIR"] + '/usr/lib']
+ include_dirs = []
+ 
+ with suppress(KeyError):

@@ -1,0 +1,256 @@
+comment "Generic options"
+  depends on PACKAGE_tvheadend
+
+config TVHEADEND_OPTIMIZE_SPEED
+  bool "Optimize for speed"
+  depends on PACKAGE_tvheadend && (arm || aarch64 || x86_64)
+  default n
+  help
+    Optimize tvheadend for speed instead of size. This option adds -O3 and LTO (Link Time Optimization).
+    Note: No benchmarks were performed when this option was added. Speed improvements (if any) are not known.
+
+config TVHEADEND_MEMORYINFO
+  bool "Memory info"
+  depends on PACKAGE_tvheadend
+  default n
+  help
+    Add htsmsg/htsmsg_field to Memory Information Entries tab.
+    Note: impacts performance.
+
+config TVHEADEND_TRACE
+  bool "Low level debug trace"
+  depends on PACKAGE_tvheadend
+  default n
+  help
+    Support low level debug trace for tvheadend subsystems.
+    For a list of available subsystems, run "tvheadend --subsystems" in OpenWRT console.
+    Note: Selecting this option does not automatically enable trace logging.
+    It only includes support for --trace command line option and GUI.
+
+choice
+  prompt "Regular Expression"
+  depends on PACKAGE_tvheadend
+  default TVHEADEND_REGEX_PCRE2
+  config TVHEADEND_REGEX_POSIX
+    bool "POSIX (internal)"
+    help
+      Use internal POSIX Regular Expressions.
+      Note: Some EPG parsers will not work with POSIX RegEx.
+  config TVHEADEND_REGEX_PCRE2
+    bool "PCRE2 (libpcre2)"
+    select PACKAGE_libpcre2
+    help
+      Use more advanced Perl-Compatible Regular Expressions, provided by libpcre2.
+endchoice
+
+config TVHEADEND_AVAHI_SUPPORT
+  bool "Avahi client"
+  depends on PACKAGE_tvheadend
+  select PACKAGE_libavahi-client
+  default n
+  help
+    Enables the opensource implementation of Apple's zero configuration protocol.
+    Tvheadend will advertise itself on the network using this protocol.
+
+config TVHEADEND_TIMESHIFT
+  bool "Timeshift"
+  depends on PACKAGE_tvheadend
+  default y
+  help
+    Allow continuous recording of a selected TV channel in a circular memory or file buffer,
+    and allow clients playing that live TV channel to pause/rewind/replay/ffwd within the limits of the buffer.
+    Note: Timeshift must be supported by the clients too.
+    Note: Timeshift recording is continuous. It must be stopped manually. Recording on flash-based storage is NOT recommended!
+
+comment "Input & output support"
+  depends on PACKAGE_tvheadend
+
+# BUG in tvheadend. Can't be disabled.
+#config TVHEADEND_TSFILE
+#  bool "ts file streaming"
+#  depends on PACKAGE_tvheadend
+#  default n
+#  help
+#    Support creation of a virtual TV network that streams from a file.
+#    This is done manually with --tsfile_tuners <no> and --tsfile <file> command line arguments
+#    and is not supported by OpenWrt tvheadend configuration and startup script.
+
+config TVHEADEND_LINUXDVB_SUPPORT
+  bool "DVB tuners"
+  depends on PACKAGE_tvheadend
+  default y
+  help
+    Include support for DVB tuners.
+    Note: Kernel driver(s) and firmware must also be installed. These are not available as OpenWrt packages.
+
+config TVHEADEND_DVBSCAN_SUPPORT
+  bool "Include DVB-scan tables"
+  depends on TVHEADEND_LINUXDVB_SUPPORT
+  default TVHEADEND_LINUXDVB_SUPPORT
+  help
+    Download and include DVB scan tables into the package.
+
+config TVHEADEND_IPTV
+  bool "IPTV client"
+  depends on PACKAGE_tvheadend
+  default y
+  help
+    Include IP-TV client.
+
+config TVHEADEND_SATIP_CLIENT
+  bool "SAT>IP client"
+  depends on PACKAGE_tvheadend
+  default y
+  help
+    Include SAT>IP client. This allows tvheadend to receive streams from a SAT>IP server.
+    
+config TVHEADEND_SATIP_SERVER
+  bool "SAT>IP server"
+  depends on PACKAGE_tvheadend
+  default y
+  help
+    Include SAT>IP server. This allows tvheadend to stream to SAT>IP clients.
+    
+config TVHEADEND_HDHOMERUN_CLIENT
+  bool "HDHomeRun client"
+  depends on PACKAGE_tvheadend
+  default y
+  help
+    Include HDHomeRun client.
+    HDHomeRun is a network-attached digital television tuner box.
+
+config TVHEADEND_HDHOMERUN_SERVER
+  bool "HDHomeRun server emulation"
+  depends on PACKAGE_tvheadend
+  default y
+  help
+    Support emulating a HDHomeRun device (live TV only).
+    HDHomeRun is a network-attached digital television tuner box.
+    This option will allow tvheadend to act as a server and stream live TV to HDHomeRun clients.
+
+comment "Hardware descrambling"
+  depends on PACKAGE_tvheadend
+
+config TVHEADEND_DVB_DDCI
+  bool "DVB CI cards from Digital Devices"
+  depends on PACKAGE_tvheadend
+  depends on TVHEADEND_LINUXDVB_SUPPORT
+  default n
+  help
+    Support DVB CI (Common Interface) adapter cards from Digital Devices.
+    Note: Kernel drivers are required for the adapter cards. These are not available as OpenWrt packages.
+    Note: Not tested due to lack of hardware.
+
+comment "Software descrambling and some codecs are only available with BUILD_PATENTED."
+  depends on PACKAGE_tvheadend
+  depends on !BUILD_PATENTED
+
+comment "Software descrambling, SoftCAM (Software Conditional Access Module)"
+  depends on PACKAGE_tvheadend
+  depends on BUILD_PATENTED
+
+config TVHEADEND_CSA
+  bool "CSA decoding"
+  depends on PACKAGE_tvheadend
+  depends on BUILD_PATENTED
+  select PACKAGE_libdvbcsa
+  default n
+  help
+    Support CSA (Common Scrambling Algorithm). Uses libdvbcsa package.
+
+config TVHEADEND_CONSTCW
+  bool "CCW"
+  depends on TVHEADEND_CSA
+  default TVHEADEND_CSA
+  help
+    Support Constant Control Word.
+
+config TVHEADEND_CAPMT
+  bool "capmt client"
+  depends on TVHEADEND_CSA
+  default n
+  help
+    Support capmt (Linux Network DVBAPI) protocol.
+
+config TVHEADEND_NEWCAMD
+  bool "CWC newcamd client"
+  depends on TVHEADEND_CSA
+  default n
+  help
+    Support Control Word Client newcamd protocol.
+
+config TVHEADEND_CCCAM
+  bool "CCCam client"
+  depends on TVHEADEND_CSA
+  default n
+
+## Transcoding | Uncomment these options.
+##comment "Transcoding and codecs"
+##  depends on PACKAGE_tvheadend
+##
+##config TVHEADEND_LIBFFMPEG
+##  bool "ffmpeg transcoding"
+##  depends on PACKAGE_tvheadend
+##  depends on BUILD_PATENTED
+##  select PACKAGE_libffmpeg-full
+##  default n
+##  help
+##    Use ffmpeg libraries for transcoding.
+##
+##config TVHEADEND_LIBX264
+##  bool "x264"
+##  depends on PACKAGE_tvheadend
+##  depends on BUILD_PATENTED
+##  select PACKAGE_libx264
+##  default n
+##  help
+##    Make x264 video codec available for transcoding. Uses libx264 package.
+##
+##config TVHEADEND_LIBX265
+##  bool "x265"
+##  depends on PACKAGE_tvheadend
+##  depends on BUILD_PATENTED
+##  default n
+##  help
+##    Make x265 video codec available for transcoding. Uses static (built-in) libx265.
+##
+##config TVHEADEND_LIBVPX
+##  bool "VP8, VP9"
+##  depends on PACKAGE_tvheadend
+##  select PACKAGE_libvpx
+##  default n
+##  help
+##    Make VP8 and VP9 video codecs available for transcoding. Uses libvpx package.
+##
+##config TVHEADEND_LIBTHEORA
+##  bool "Theora"
+##  depends on PACKAGE_tvheadend
+##  select PACKAGE_libtheora
+##  default n
+##  help
+##    Make Theora video codec available for transcoding. Uses libtheora package.
+##
+##config TVHEADEND_LIBFDKAAC
+##  bool "AAC"
+##  depends on PACKAGE_tvheadend
+##  depends on BUILD_PATENTED
+##  select PACKAGE_fdk-aac
+##  default n
+##  help
+##    Make AAC audio codec available for transcoding. Uses fdk-aac package.
+##
+##config TVHEADEND_LIBVORBIS
+##  bool "Vorbis"
+##  depends on PACKAGE_tvheadend
+##  select PACKAGE_libvorbis
+##  default n
+##  help
+##    Make Vorbis audio codec available for transcoding. Uses libvorbis package.
+##
+##config TVHEADEND_LIBOPUS
+##  bool "Opus"
+##  depends on PACKAGE_tvheadend
+##  select PACKAGE_libopusenc
+##  default n
+##  help
+##    Make Opus audio codec available for transcoding. Uses libopusenc package.

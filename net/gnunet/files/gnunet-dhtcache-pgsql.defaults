@@ -1,0 +1,10 @@
+#!/bin/sh
+
+uci -q get gnunet.dhtcache || uci set gnunet.dhtcache=gnunet-config
+
+uci -q batch <<EOF
+	set gnunet.dhtcache.DATABASE=postgres
+	set gnunet.datacache_postgres=gnunet-config
+	set gnunet.datacache_postgres.CONFIG=postgres://gnunet@%2Ftmp%2Frun%2Fpostgresql/gnunet
+	commit gnunet
+EOF

@@ -1,0 +1,25 @@
+From b47102bf6066e5342fdbb69bd767cd70a0a59bf9 Mon Sep 17 00:00:00 2001
+From: Yaakov Selkowitz <yselkowi@redhat.com>
+Date: Sun, 19 Feb 2023 21:28:10 -0500
+Subject: [PATCH] Fix build with GCC 13
+
+As in previous versions, libstdc++ in GCC 13 has trimmed internal
+inclusion of standard headers, necessitating their proper inclusion
+when used:
+
+https://gcc.gnu.org/gcc-13/porting_to.html
+---
+ Common/DtaOptions.h | 2 ++
+ 1 file changed, 2 insertions(+)
+
+--- a/Common/DtaOptions.h
++++ b/Common/DtaOptions.h
+@@ -21,6 +21,8 @@ along with sedutil.  If not, see <http:/
+ #ifndef _DTAOPTIONS_H
+ #define	_DTAOPTIONS_H
+ 
++#include <stdint.h>
++
+ /** Output modes */
+ typedef enum _sedutiloutput {
+ 	sedutilNormal,

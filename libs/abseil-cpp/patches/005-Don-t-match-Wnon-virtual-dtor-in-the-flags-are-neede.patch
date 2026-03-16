@@ -1,0 +1,29 @@
+# From https://git.openembedded.org/meta-openembedded/tree/meta-oe/recipes-devtools/abseil-cpp
+From 9cb5e5d15c142e5cc43a2c1db87c8e4e5b6d38a5 Mon Sep 17 00:00:00 2001
+From: Derek Mauro <dmauro@google.com>
+Date: Mon, 5 Aug 2024 07:35:05 -0700
+Subject: [PATCH] Don't match -Wnon-virtual-dtor in the "flags are needed to
+ suppress warnings in headers". It should fall through to the "don't impose
+ our warnings on others" case. Do this by matching on "-Wno-*" instead of
+ "-Wno*".
+
+Fixes #1737
+
+PiperOrigin-RevId: 659548798
+Change-Id: I49d7ba7ddcd7be30f946fca90ba9be467181e854
+Upstream-Status: Backport [https://github.com/abseil/abseil-cpp/commit/9cb5e5d15c142e5cc43a2c1db87c8e4e5b6d38a5]
+---
+ CMake/AbseilHelpers.cmake | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/CMake/AbseilHelpers.cmake
++++ b/CMake/AbseilHelpers.cmake
+@@ -195,7 +195,7 @@ function(absl_cc_library)
+         # specified platform. Filter both of them out before the successor
+         # reaches the "^-m" filter.
+         set(skip_next_cflag ON)
+-      elseif(${cflag} MATCHES "^(-Wno|/wd)")
++      elseif(${cflag} MATCHES "^(-Wno-|/wd)")
+         # These flags are needed to suppress warnings that might fire in our headers.
+         set(PC_CFLAGS "${PC_CFLAGS} ${cflag}")
+       elseif(${cflag} MATCHES "^(-W|/w[1234eo])")

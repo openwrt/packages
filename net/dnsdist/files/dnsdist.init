@@ -1,0 +1,26 @@
+#!/bin/sh /etc/rc.common
+START=99
+
+USE_PROCD=1
+
+start_service() {
+	config_load dnsdist
+	local cfg=general
+	local enabled
+	local user
+	local group
+
+	config_get_bool enabled "$cfg" 'enabled' 1
+	config_get user "$cfg" user root
+	config_get group "$cfg" group root
+
+	[ $enabled -gt 0 ] || return 1
+
+	procd_open_instance
+	procd_set_param command dnsdist --supervised -C /etc/dnsdist.conf
+	[ "$user" != root ] && procd_append_param command -u "$user"
+	[ "$group" != root ] && procd_append_param command -g "$group"
+	procd_set_param file /etc/dnsdist.conf
+	procd_set_param respawn
+	procd_close_instance
+}

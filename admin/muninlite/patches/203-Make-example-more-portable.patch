@@ -1,0 +1,18 @@
+From e0f0687247958a19911d0f874fd8bff3b50fbede Mon Sep 17 00:00:00 2001
+From: daald <daald@users.noreply.github.com>
+Date: Thu, 14 Dec 2023 02:29:15 +0100
+Subject: [PATCH 203/204] Make example more portable
+
+Co-authored-by: Kenyon Ralph <kenyon@kenyonralph.com>
+---
+ muninlite.conf | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/muninlite.conf
++++ b/muninlite.conf
+@@ -3,4 +3,4 @@ NTP_PEER="pool.ntp.org"
+ DF_IGNORE_FILESYSTEM_REGEX="(none|unknown|rootfs|iso9660|squashfs|udf|romfs|ramfs|debugfs|cgroup_root|devtmpfs)"
+ 
+ #INTERFACE_NAMES_OVERRIDE="eth0"
+-#INTERFACE_NAMES_OVERRIDE="$(sed 's/^ *//; s/:.*$//; / /d' /proc/net/dev | grep -P '^(eth|wlan|en)')"
++#INTERFACE_NAMES_OVERRIDE="$(sed 's/^ *//; s/:.*$//; / /d' /proc/net/dev | grep -E '^(eth|wlan|en)')"

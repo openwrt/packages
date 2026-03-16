@@ -1,0 +1,11 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -1004,7 +1004,7 @@ AC_DEFINE_UNQUOTED(AVAHI_AUTOIPD_GROUP,"
+ #
+ # Avahi runtime dir
+ #
+-avahi_runtime_dir="/run"
++avahi_runtime_dir="${localstatedir}/run"
+ avahi_socket="${avahi_runtime_dir}/avahi-daemon/socket"
+ AC_SUBST(avahi_runtime_dir)
+ AC_SUBST(avahi_socket)

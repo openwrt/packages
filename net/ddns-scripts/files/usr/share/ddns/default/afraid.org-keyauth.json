@@ -1,0 +1,9 @@
+{
+	"name": "afraid.org-keyauth",
+	"ipv4": {
+		"url": "https://freedns.afraid.org/dynamic/update.php?[PASSWORD]&address=[IP]"
+	},
+	"ipv6": {
+		"url": "https://freedns.afraid.org/dynamic/update.php?[PASSWORD]&address=[IP]"
+	}
+}

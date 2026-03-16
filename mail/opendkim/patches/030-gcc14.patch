@@ -1,0 +1,10 @@
+--- a/libopendkim/util.c
++++ b/libopendkim/util.c
+@@ -22,6 +22,7 @@
+ #include <netdb.h>
+ #include <resolv.h>
+ #include <stdlib.h>
++#include <stdio.h>
+ 
+ /* libopendkim includes */
+ #include "dkim-internal.h"

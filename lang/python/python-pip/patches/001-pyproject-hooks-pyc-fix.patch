@@ -1,0 +1,19 @@
+--- a/src/pip/_vendor/pyproject_hooks/_in_process/__init__.py
++++ b/src/pip/_vendor/pyproject_hooks/_in_process/__init__.py
+@@ -11,8 +11,14 @@ try:
+ except AttributeError:
+     # Python 3.8 compatibility
+     def _in_proc_script_path():
+-        return resources.path(__package__, '_in_process.py')
++        filename = '_in_process.pyc'
++        if resources.is_resource(__package__, '_in_process.py'):
++            filename = '_in_process.py'
++        return resources.path(__package__, filename)
+ else:
+     def _in_proc_script_path():
++        filename = '_in_process.pyc'
++        if resources.files(__package__).joinpath('_in_process.py').is_file():
++            filename = '_in_process.py'
+         return resources.as_file(
+-            resources.files(__package__).joinpath('_in_process.py'))
++            resources.files(__package__).joinpath(filename))

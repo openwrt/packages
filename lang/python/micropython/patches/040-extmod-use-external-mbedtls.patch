@@ -1,0 +1,100 @@
+From 9717338f1917fa5db63fe7c9758639417ab06f61 Mon Sep 17 00:00:00 2001
+From: yangfl <yangfl@users.noreply.github.com>
+Date: Mon, 4 Jan 2021 23:09:41 +0800
+Subject: [PATCH 06/10] extmod: Use system mbedtls
+
+---
+ extmod/extmod.mk | 77 ++----------------------------------------------
+ 1 file changed, 2 insertions(+), 75 deletions(-)
+
+--- a/extmod/extmod.mk
++++ b/extmod/extmod.mk
+@@ -235,86 +235,8 @@ SRC_THIRDPARTY_C += $(addprefix $(AXTLS_
+ 	crypto/sha1.c \
+ 	)
+ else ifeq ($(MICROPY_SSL_MBEDTLS),1)
+-MBEDTLS_DIR = lib/mbedtls
+-MBEDTLS_CONFIG_FILE ?= \"mbedtls/mbedtls_config_port.h\"
+-GIT_SUBMODULES += $(MBEDTLS_DIR)
+-CFLAGS_EXTMOD += -DMBEDTLS_CONFIG_FILE=$(MBEDTLS_CONFIG_FILE)
+-CFLAGS_EXTMOD += -DMICROPY_SSL_MBEDTLS=1 -I$(TOP)/$(MBEDTLS_DIR)/include
+-SRC_THIRDPARTY_C += lib/mbedtls_errors/mp_mbedtls_errors.c
+-SRC_THIRDPARTY_C += $(addprefix $(MBEDTLS_DIR)/library/,\
+-	aes.c \
+-	aesni.c \
+-	asn1parse.c \
+-	asn1write.c \
+-	base64.c \
+-	bignum_core.c \
+-	bignum_mod.c \
+-	bignum_mod_raw.c \
+-	bignum.c \
+-	camellia.c \
+-	ccm.c \
+-	chacha20.c \
+-	chachapoly.c \
+-	cipher.c \
+-	cipher_wrap.c \
+-	nist_kw.c \
+-	aria.c \
+-	cmac.c \
+-	constant_time.c \
+-	mps_reader.c \
+-	mps_trace.c \
+-	ctr_drbg.c \
+-	debug.c \
+-	des.c \
+-	dhm.c \
+-	ecdh.c \
+-	ecdsa.c \
+-	ecjpake.c \
+-	ecp.c \
+-	ecp_curves.c \
+-	entropy.c \
+-	entropy_poll.c \
+-	gcm.c \
+-	hmac_drbg.c \
+-	md5.c \
+-	md.c \
+-	oid.c \
+-	padlock.c \
+-	pem.c \
+-	pk.c \
+-	pkcs12.c \
+-	pkcs5.c \
+-	pkparse.c \
+-	pk_wrap.c \
+-	pkwrite.c \
+-	platform.c \
+-	platform_util.c \
+-	poly1305.c \
+-	ripemd160.c \
+-	rsa.c \
+-	rsa_alt_helpers.c \
+-	sha1.c \
+-	sha256.c \
+-	sha512.c \
+-	ssl_cache.c \
+-	ssl_ciphersuites.c \
+-	ssl_client.c \
+-	ssl_cookie.c \
+-	ssl_debug_helpers_generated.c \
+-	ssl_msg.c \
+-	ssl_ticket.c \
+-	ssl_tls.c \
+-	ssl_tls12_client.c \
+-	ssl_tls12_server.c \
+-	timing.c \
+-	x509.c \
+-	x509_create.c \
+-	x509_crl.c \
+-	x509_crt.c \
+-	x509_csr.c \
+-	x509write_crt.c \
+-	x509write_csr.c \
+-	)
++CFLAGS_EXTMOD += -DMICROPY_SSL_MBEDTLS=1
++LDFLAGS_MOD += -lmbedx509 -lmbedtls -lmbedcrypto
+ endif
+ endif
+ 

@@ -1,0 +1,26 @@
+--- a/Modules/_ssl.c
++++ b/Modules/_ssl.c
+@@ -4827,7 +4827,11 @@ _ssl__SSLContext_cert_store_stats_impl(P
+     int x509 = 0, crl = 0, ca = 0, i;
+ 
+     store = SSL_CTX_get_cert_store(self->ctx);
++#if !defined(LIBRESSL_VERSION_NUMBER)
+     objs = X509_STORE_get1_objects(store);
++#else
++    objs = X509_STORE_get0_objects(store);
++#endif
+     if (objs == NULL) {
+         PyErr_SetString(PyExc_MemoryError, "failed to query cert store");
+         return NULL;
+@@ -4883,7 +4887,11 @@ _ssl__SSLContext_get_ca_certs_impl(PySSL
+     }
+ 
+     store = SSL_CTX_get_cert_store(self->ctx);
++#if !defined(LIBRESSL_VERSION_NUMBER)
+     objs = X509_STORE_get1_objects(store);
++#else
++    objs = X509_STORE_get0_objects(store);
++#endif
+     if (objs == NULL) {
+         PyErr_SetString(PyExc_MemoryError, "failed to query cert store");
+         goto error;

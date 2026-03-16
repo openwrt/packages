@@ -1,0 +1,19 @@
+# Convert the join list into networks
+nets=$(uci -q get zerotier.@zerotier[0].join)
+
+if [ -n "$nets" ]; then
+  for net in ${nets}; do
+    sid=$(uci add zerotier network)
+    uci set zerotier.${sid}.id=${net}
+  done
+  uci delete zerotier.@zerotier[0].join
+
+  # Rename local conf (only if defined)
+  uci -q rename zerotier.@zerotier[0].local_conf='local_conf_path' || true
+
+  # Rename configuration to global
+  uci rename zerotier.@zerotier[0]='global'
+
+  # Commit all changes
+  uci commit zerotier
+fi

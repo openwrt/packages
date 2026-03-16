@@ -1,0 +1,35 @@
+From 473009abbdbc1dbee86a049ef55955da56952cc8 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 10 Oct 2025 00:50:32 +0100
+Subject: [PATCH 2/8] meson: convert cURL version detection to compile-time
+ test
+
+Use compile-time test instead of relying on testing the cURL version
+at runtime. This is done to make cross-compilation possible again.
+---
+ meson.build | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
+
+--- a/meson.build
++++ b/meson.build
+@@ -194,14 +194,17 @@ if not curl_dep.found()
+     curl_dep = cc.find_library('curl', required: true)
+     curl_version_check = '''#include <curl/curl.h>
+   int main(int argc, char **argv) {
+-    return (LIBCURL_VERSION_NUM >= 0x075500) ? 0 : 1;
++    #if LIBCURL_VERSION_NUM < 0x075500
++      #error "cURL version >= 7.85.0 required"
++    #endif
++    return 0;
+     }
+   '''
+-    if cc.run(
++    if not cc.compiles(
+         curl_version_check,
+         name: 'cURL version check',
+         dependencies: curl_dep,
+-    ).returncode() != 0
++    )
+         error('cURL version >=7.85.0 required')
+     endif
+ endif

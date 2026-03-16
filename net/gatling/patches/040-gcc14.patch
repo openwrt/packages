@@ -1,0 +1,30 @@
+--- a/common.c
++++ b/common.c
+@@ -9,6 +9,7 @@
+ #include <libowfat/ip6.h>
+ #include <libowfat/fmt.h>
+ 
++#include <alloca.h>
+ #include <stdlib.h>
+ #include <fcntl.h>
+ #include <unistd.h>
+--- a/ftp.c
++++ b/ftp.c
+@@ -21,6 +21,7 @@
+ #include <time.h>
+ #include <dirent.h>
+ #include <fnmatch.h>
++#include <alloca.h>
+ #include <assert.h>
+ 
+ #include "havealloca.h"
+--- a/pssl.c
++++ b/pssl.c
+@@ -2,6 +2,7 @@
+ #include <string.h>
+ #include <stdio.h>
+ #include <stdlib.h>
++#include <sys/uio.h>
+ #include <sys/socket.h>
+ #include <sys/poll.h>
+ #include <netdb.h>

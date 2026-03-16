@@ -1,0 +1,95 @@
+--- a/configure.in
++++ b/configure.in
+@@ -12,6 +12,8 @@ ALL_LINGUAS="de"
+ AC_SUBST(PACKAGE)
+ AC_SUBST(VERSION)
+ 
++AC_CHECK_HEADERS([pty.h utmp.h])
++
+ if test x"$ac_default_prefix" = x"/usr"
+ then
+ 	if test x"${mandir}" = x'${prefix}/man'
+--- a/telnet/commands.c
++++ b/telnet/commands.c
+@@ -29,11 +29,13 @@
+ 
+ #include "telnet_locl.h"
+ #include <err.h>
++#include <unistd.h>
+ 
+ #if	defined(IPPROTO_IP) && defined(IP_TOS)
+ int tos = -1;
+ #endif /* defined(IPPROTO_IP) && defined(IP_TOS) */
+ 
++extern char **environ;
+ char *hostname;
+ 
+ typedef int (*intrtn_t) __P ((int, char **));
+--- a/telnet/ring.h
++++ b/telnet/ring.h
+@@ -29,6 +29,7 @@
+  */
+ 
+ #include <sys/cdefs.h>
++#include <sys/types.h>
+ #define P __P
+ 
+ /*
+--- a/telnetd/setproctitle.c
++++ b/telnetd/setproctitle.c
+@@ -72,6 +72,7 @@ char setproctitle_rcsid[] =
+ static char **Argv = NULL;		/* pointer to argument vector */
+ static char *LastArgv = NULL;		/* end of argv */
+ static char Argv0[128];			/* program name */
++extern char **environ;
+ 
+ void
+ initsetproctitle(int argc, char **argv, char **envp)
+@@ -86,10 +87,10 @@ initsetproctitle(int argc, char **argv,
+ 
+ 	for (i = 0; envp[i] != NULL; i++)
+ 		continue;
+-	__environ = (char **) malloc(sizeof (char *) * (i + 1));
++	environ = (char **) malloc(sizeof (char *) * (i + 1));
+ 	for (i = 0; envp[i] != NULL; i++)
+-		__environ[i] = strdup(envp[i]);
+-	__environ[i] = NULL;
++		environ[i] = strdup(envp[i]);
++	environ[i] = NULL;
+ 
+ 	/*
+ 	**  Save start and extent of argv for setproctitle.
+--- a/telnetd/sys_term.c
++++ b/telnetd/sys_term.c
+@@ -27,8 +27,15 @@
+  * SUCH DAMAGE.
+  */
+ 
++#include <config.h>
++
++#include <sys/types.h>
++#ifdef HAVE_UTMP_H 
+ #include <utmp.h>
++#endif
++#ifdef HAVE_PTY_H
+ #include <pty.h>
++#endif
+ 
+ #include "telnetd.h"
+ #include "pathnames.h"
+@@ -820,6 +827,7 @@ addarg (struct argv_stuff *avs, const ch
+ void
+ cleanup (int sig)
+ {
++#if !defined(__FreeBSD__) || __FreeBSD__ < 9
+   sigset_t sigset;
+   char *p;
+   (void) sig;
+@@ -847,6 +855,7 @@ cleanup (int sig)
+   *p = 'p';
+   chmod (line, 0666);
+   chown (line, 0, 0);
++#endif
+   shutdown (net, 2);
+   exit (1);
+ }

@@ -1,0 +1,7 @@
+menu "Configuration"
+
+config PYTHON3_HOST_PIP_CACHE_WORLD_READABLE
+	bool "Ensure host pip cache is world-readable"
+	default n
+
+endmenu

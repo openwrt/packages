@@ -1,0 +1,17 @@
+. /lib/functions.sh
+
+gpsd_migrate_device() {
+	local device
+
+	device="$(uci_get gpsd core device)"
+
+	[ -z "$device" ] && return
+
+	uci_add_list gpsd core devices "$device"
+	uci_remove gpsd core device
+	uci_commit gpsd
+}
+
+gpsd_migrate_device
+
+exit 0

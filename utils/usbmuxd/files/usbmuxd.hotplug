@@ -1,0 +1,24 @@
+case "$ACTION" in
+	bind)
+		dev=/sys$DEVPATH
+
+		[ ! -f /tmp/iPhone.lock ] && [ -d ${dev}/net ] &&
+		{
+			readlink ${dev}/driver | grep -q ipheth &&
+			{
+				sleep 5
+				carrier_path=${dev}/net/*/carrier
+				carrier=`cat ${carrier_path}`
+
+				[ "${carrier}" = "0" ] &&
+				{
+					touch /tmp/iPhone.lock
+					logger -p daemon.error -t iPhone ${carrier_path} = ${carrier}
+					logger -p daemon.error -t iPhone `/usr/bin/usbreset iPhone`
+					/etc/init.d/usbmuxd restart
+					sleep 5 && rm -f /tmp/iPhone.lock &
+				}
+			}
+		}
+		;;
+esac

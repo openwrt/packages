@@ -1,0 +1,24 @@
+From c5ac7e90cfd0596bb443c41fbaa296ab6cd5eaff Mon Sep 17 00:00:00 2001
+From: sonoro1234 <sonoroster@gmail.com>
+Date: Sun, 20 Jul 2025 19:01:55 +0200
+Subject: [PATCH] cmake for c++20 in master branch
+
+---
+ CMakeLists.txt | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -3,9 +3,10 @@
+ # Redistribution and use of this file is allowed according to the terms of the MIT license.
+ # For details see the COPYRIGHT file distributed with LuaDist.
+ # Please note that the package source code is licensed under its own license.
+-
++CMAKE_MINIMUM_REQUIRED(VERSION 3.18)
+ PROJECT(lanes C)
+-CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
++set(C_STANDARD 20)
++
+ 
+ 
+ FIND_PACKAGE(Lua51 REQUIRED)

@@ -1,0 +1,84 @@
+if PACKAGE_coredns
+
+config COREDNS_PLUGIN_GEOIP
+	bool "GeoIP plugin"
+	default n
+
+config COREDNS_PLUGIN_TLS
+	bool "TLS plugin"
+	default y
+
+config COREDNS_PLUGIN_QUIC
+	bool "QUIC plugin"
+	default n
+
+config COREDNS_PLUGIN_ROUTE53
+	bool "Route53 plugin"
+	default n
+
+config COREDNS_PLUGIN_AZURE
+	bool "Azure plugin"
+	default n
+
+config COREDNS_PLUGIN_CLOUDDNS
+	bool "CloudDNS plugin"
+	default n
+
+config COREDNS_PLUGIN_K8S_EXTERNAL
+	bool "k8s_external plugin"
+	default n
+
+config COREDNS_PLUGIN_KUBERNETES
+	bool "Kubernetes plugin"
+	default n
+
+config COREDNS_PLUGIN_ETCD
+	bool "Etcd plugin"
+	default n
+
+config COREDNS_PLUGIN_GRPC
+	bool "gRPC plugin"
+	default n
+
+config COREDNS_PLUGIN_ON
+	bool "On event plugin"
+	default n
+
+config COREDNS_PLUGIN_NOMAD
+	bool "Nomad plugin"
+	default n
+
+config COREDNS_PLUGIN_WGSD
+	bool "WireGuard Service Discovery plugin"
+	default y if PACKAGE_wgsd-coredns
+	select COREDNS_REQUIRE_GO_GET
+	help
+		wgsd is a CoreDNS plugin that serves WireGuard peer information via DNS-SD (RFC6763) semantics.
+		This enables use cases such as:
+
+		- Building a mesh of WireGuard peers from a central registry
+		- Dynamic discovery of WireGuard Endpoint addressing (both IP address and port number)
+		- NAT-to-NAT WireGuard connectivity where UDP hole punching is supported.
+
+config COREDNS_PLUGIN_NETBOX
+	bool "Netbox plugin"
+	default n
+	select COREDNS_REQUIRE_GO_GET
+
+config COREDNS_PLUGIN_FANOUT
+	bool "Fanout plugin"
+	default n
+	select COREDNS_REQUIRE_GO_GET
+
+config COREDNS_PLUGIN_FINALIZE
+	bool "Finalize plugin"
+	default n
+	select COREDNS_REQUIRE_GO_GET
+
+config COREDNS_REQUIRE_GO_GET
+	bool
+	default n
+	help
+		Custom plugins require `go get ./...` to pull dependencies.
+
+endif

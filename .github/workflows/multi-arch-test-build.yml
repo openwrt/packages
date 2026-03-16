@@ -1,0 +1,31 @@
+name: Test and Build
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  formalities:
+    name: Test Formalities
+    runs-on: ubuntu-slim
+    steps:
+      - name: HyperStickler
+        uses: georgesapkin/hyperstickler@v1-rc.1
+        with:
+          check_branch: false
+          check_signoff: true
+          feedback_url: 'https://github.com/openwrt/actions-shared-workflows/issues'
+          guideline_url: 'https://openwrt.org/submitting-patches#submission_guidelines'
+          # This still needs a fine-grained token related to:
+          # https://github.com/openwrt/packages/pull/28011
+          # job_step: 2
+          # post_comment: true
+          # warn_on_no_modify: true
+
+  build:
+    name: Feeds Package Test Build
+    needs: formalities
+    uses: openwrt/actions-shared-workflows/.github/workflows/multi-arch-test-build.yml@main

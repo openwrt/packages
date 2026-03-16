@@ -1,0 +1,44 @@
+--- a/utils/blkmapd/device-discovery.c
++++ b/utils/blkmapd/device-discovery.c
+@@ -64,7 +64,7 @@
+ #define EVENT_BUFSIZE (1024 * EVENT_SIZE)
+ 
+ #define RPCPIPE_DIR	NFS_STATEDIR "/rpc_pipefs"
+-#define PID_FILE	"/run/blkmapd.pid"
++#define PID_FILE	"/tmp/run/blkmapd.pid"
+ 
+ #define CONF_SAVE(w, f) do {			\
+ 	char *p = f;				\
+--- a/utils/gssd/gssd.h
++++ b/utils/gssd/gssd.h
+@@ -44,7 +44,7 @@
+ #define DNOTIFY_SIGNAL		(SIGRTMIN + 3)
+ 
+ #define GSSD_DEFAULT_CRED_DIR			"/tmp"
+-#define GSSD_USER_CRED_DIR			"/run/user/%U"
++#define GSSD_USER_CRED_DIR			"/tmp/run/user/%U"
+ #define GSSD_DEFAULT_CRED_PREFIX		"krb5cc"
+ #define GSSD_DEFAULT_MACHINE_CRED_SUFFIX	"machine"
+ #define GSSD_DEFAULT_KEYTAB_FILE		"/etc/krb5.keytab"
+--- a/utils/statd/sm-notify.c
++++ b/utils/statd/sm-notify.c
+@@ -913,7 +913,7 @@ static int record_pid(void)
+ 	int fd;
+ 
+ 	(void)snprintf(pid, sizeof(pid), "%d\n", (int)getpid());
+-	fd = open("/run/sm-notify.pid", O_CREAT|O_EXCL|O_WRONLY, 0600);
++	fd = open("/tmp/run/sm-notify.pid", O_CREAT|O_EXCL|O_WRONLY, 0600);
+ 	if (fd < 0)
+ 		return 0;
+ 
+--- a/utils/statd/statd.c
++++ b/utils/statd/statd.c
+@@ -161,7 +161,7 @@ usage(void)
+ 	fprintf(stderr,"      -H                   Specify a high-availability callout program.\n");
+ }
+ 
+-static const char *pidfile = "/run/rpc.statd.pid";
++static const char *pidfile = "/tmp/run/rpc.statd.pid";
+ 
+ int pidfd = -1;
+ static void create_pidfile(void)

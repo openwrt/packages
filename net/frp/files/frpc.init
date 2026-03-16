@@ -1,0 +1,80 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+USE_PROCD=1
+
+NAME=frpc
+PROG=/usr/bin/$NAME
+
+_err() {
+	echo "$*" >&2
+	logger -p daemon.err -t "$NAME" "$*"
+}
+
+config_cb() {
+	[ $# -eq 0 ] && return
+
+	local type="$1"
+	local name="$2"
+	if [ "$type" = "conf" ]; then
+		echo "[$name]" >> "$conf_file"
+		option_cb() {
+			local option="$1"
+			local value="$2"
+			[ "$option" = "name" ] && \
+			sed -i "s/$CONFIG_SECTION/$value/g" "$conf_file" || \
+			echo "$option = $value" >> "$conf_file";
+		}
+		list_cb() {
+			local name="$1"
+			local value="$2"
+			[ "$name" = "_" ] && echo "$value" >> "$conf_file"
+		}
+	else
+		[ "$type" = "init" ] && init_cfg="$name"
+		option_cb() { return 0; }
+		list_cb() { return 0; }
+	fi
+}
+
+service_triggers()
+{
+	procd_add_reload_trigger "$NAME"
+}
+
+start_service() {
+	local init_cfg=" "
+	local conf_file="/var/etc/$NAME.ini"
+
+	> "$conf_file"
+	config_load "$NAME"
+
+	local stdout stderr user group respawn env conf_inc
+	uci_validate_section "$NAME" init "$init_cfg" \
+		'stdout:bool:1' \
+		'stderr:bool:1' \
+		'user:string' \
+		'group:string' \
+		'respawn:bool:1' \
+		'env:list(string)' \
+		'conf_inc:list(string)'
+
+	local err=$?
+	[ $err -ne 0 ] && {
+		_err "uci_validate_section returned $err"
+		return 1
+	}
+
+	[ -n "$conf_inc" ] && config_list_foreach "$init_cfg" conf_inc cat >> "$conf_file"
+
+	procd_open_instance
+	procd_set_param command "$PROG" -c "$conf_file"
+	procd_set_param file $conf_file
+	procd_set_param stdout $stdout
+	procd_set_param stderr $stderr
+	[ -n "$user" ] && procd_set_param user "$user"
+	[ -n "$group" ] && procd_set_param group "$group"
+	[ $respawn -eq 1 ] && procd_set_param respawn
+	[ -n "$env" ] && config_list_foreach "$init_cfg" env "procd_append_param env"
+	procd_close_instance
+}

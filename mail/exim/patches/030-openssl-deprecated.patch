@@ -1,0 +1,76 @@
+--- a/src/dane-openssl.c
++++ b/src/dane-openssl.c
+@@ -1122,8 +1122,8 @@ if (dane->selectors[DANESSL_USAGE_DANE_T
+      * Check that setting the untrusted chain updates the expected
+      * structure member at the expected offset.
+      */
+-    X509_STORE_CTX_trusted_stack(ctx, dane->roots);
+-    X509_STORE_CTX_set_chain(ctx, dane->chain);
++    X509_STORE_CTX_set0_trusted_stack(ctx, dane->roots);
++    X509_STORE_CTX_set0_untrusted(ctx, dane->chain);
+     OPENSSL_assert(dane->chain == X509_STORE_CTX_get0_untrusted(ctx));
+     }
+   }
+--- a/src/tls-openssl.c
++++ b/src/tls-openssl.c
+@@ -23,7 +23,10 @@ functions from the OpenSSL library. */
+ #include <openssl/lhash.h>
+ #include <openssl/ssl.h>
+ #include <openssl/err.h>
++#include <openssl/bn.h>
++#include <openssl/dh.h>
+ #include <openssl/rand.h>
++#include <openssl/rsa.h>
+ #include <openssl/ec.h>
+ #ifndef DISABLE_OCSP
+ # include <openssl/ocsp.h>
+@@ -909,8 +912,9 @@ pkey = EVP_RSA_gen(2048);
+ 
+ X509_set_version(x509, 2);				/* N+1 - version 3 */
+ ASN1_INTEGER_set(X509_get_serialNumber(x509), 1);
+-X509_gmtime_adj(X509_get_notBefore(x509), 0);
+-X509_gmtime_adj(X509_get_notAfter(x509), (long)2 * 60 * 60);	/* 2 hour */
++X509_gmtime_adj(X509_getm_notBefore(x509), 0);
++X509_gmtime_adj(X509_getm_notAfter(x509), (long)2 * 60 * 60);	/* 2 hour */
++
+ X509_set_pubkey(x509, pkey);
+ 
+ name = X509_get_subject_name(x509);
+@@ -5031,8 +5035,8 @@ return string_fmt_append(g,
+     "                          Runtime: %s\n"
+     "                                 : %s\n",
+ 	     OPENSSL_VERSION_TEXT,
+-	     SSLeay_version(SSLEAY_VERSION),
+-	     SSLeay_version(SSLEAY_BUILT_ON));
++	     OpenSSL_version(OPENSSL_VERSION),
++	     OpenSSL_version(OPENSSL_BUILT_ON));
+   /* third line is 38 characters for the %s and the line is 73 chars long;
+   the OpenSSL output includes a "built on: " prefix already. */
+ }
+@@ -5074,8 +5078,6 @@ if (pidnow != pidlast)
+   is unique for each thread", this doesn't apparently apply across processes,
+   so our own warning from vaguely_random_number_fallback() applies here too.
+   Fix per PostgreSQL. */
+-  if (pidlast != 0)
+-    RAND_cleanup();
+   pidlast = pidnow;
+   }
+ 
+--- a/src/tlscert-openssl.c
++++ b/src/tlscert-openssl.c
+@@ -219,13 +219,13 @@ return mod ? tls_field_from_dn(cp, mod)
+ uschar *
+ tls_cert_not_before(void * cert, const uschar * mod)
+ {
+-return asn1_time_copy(X509_get_notBefore((X509 *)cert), mod);
++return asn1_time_copy(X509_getm_notBefore((X509 *)cert), mod);
+ }
+ 
+ uschar *
+ tls_cert_not_after(void * cert, const uschar * mod)
+ {
+-return asn1_time_copy(X509_get_notAfter((X509 *)cert), mod);
++return asn1_time_copy(X509_getm_notAfter((X509 *)cert), mod);
+ }
+ 
+ uschar *

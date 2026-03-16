@@ -1,0 +1,31 @@
+From 32e503365205cac479ad2110d72d18b2072fd93c Mon Sep 17 00:00:00 2001
+From: Rudi Heitbaum <rudi@heitbaum.com>
+Date: Fri, 28 Mar 2025 19:10:02 +1100
+Subject: [PATCH 2/2] chore: allow CMake though to 3.10
+
+This is allows the build with cmake-4.0.0 without deprecation warnings.
+
+use min...max syntax to allow build with newer cmake.
+ref: https://cmake.org/cmake/help/latest/command/cmake_minimum_required.html
+
+Fixes:
+CMake Error at CMakeLists.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.5 has been removed from CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+
+  Or, add -DCMAKE_POLICY_VERSION_MINIMUM=3.5 to try configuring anyway.
+---
+ CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-cmake_minimum_required (VERSION 2.8.12)
++cmake_minimum_required (VERSION 2.8.12...3.10)
+ project (tini C)
+ 
+ # Config

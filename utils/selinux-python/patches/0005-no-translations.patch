@@ -1,0 +1,8 @@
+--- a/Makefile
++++ b/Makefile
+@@ -1,4 +1,4 @@
+-SUBDIRS = sepolicy audit2allow semanage sepolgen chcat po
++SUBDIRS = sepolicy audit2allow semanage sepolgen chcat
+ 
+ all install relabel clean indent test:
+ 	@for subdir in $(SUBDIRS); do \

@@ -1,0 +1,21 @@
+From 9fc45a2cf3b78573a568abf538a6e6f4bd30b2d7 Mon Sep 17 00:00:00 2001
+From: Alex Kiernan <alex.kiernan@gmail.com>
+Date: Wed, 27 Sep 2023 11:45:26 +0100
+Subject: [PATCH] Add missing limits.h
+
+Upstream-Status: Pending
+Signed-off-by: Alex Kiernan <alex.kiernan@gmail.com>
+---
+ mDNSShared/PlatformCommon.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+--- a/mDNSShared/PlatformCommon.c
++++ b/mDNSShared/PlatformCommon.c
+@@ -32,6 +32,7 @@
+ #include <time.h>
+ #include <sys/time.h>           // Needed for #include <sys/time.h>().
+ #include <assert.h>
++#include <limits.h>
+ 
+ 
+ #include "mDNSEmbeddedAPI.h"    // Defines the interface provided to the client layer above
