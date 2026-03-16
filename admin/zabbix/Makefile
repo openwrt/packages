@@ -42,11 +42,29 @@ define Package/zabbix-agentd/config
 endef
 
 define Package/zabbix-proxy/config
-  source "$(SOURCE)/Config-db.in"
+	choice
+		prompt "Select Database Software for Zabbix"
+		default ZABBIX_POSTGRESQL
+
+		config ZABBIX_MYSQL
+			bool "MySQL/MariaDB"
+
+		config ZABBIX_POSTGRESQL
+			bool "PostgreSQL"
+
+		config ZABBIX_SQLITE
+			bool "SQLite3"
+	endchoice
 endef
 
 define Package/zabbix-get/config
-  source "$(SOURCE)/Config-build.in"
+	config ZABBIX_BUILD_SUPPORT_BIN
+		bool
+		default y
+		help
+			This option exists to prevent trying to build get and/or sender when none
+			of agentd, server, or proxy are being built. In that case get and sender are
+			not built by the Zabbix build system.
 endef
 
 define Package/zabbix/Default
