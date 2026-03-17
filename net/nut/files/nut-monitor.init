@@ -9,118 +9,110 @@ USE_PROCD=1
 UPSMON_C=/var/etc/nut/upsmon.conf
 PIDFILE=/var/run/upsmon.pid
 
+# Upstream NUT event type names (in the order listed in
+# https://networkupstools.org/docs/man/upsmon.conf.html)
+NUT_EVENT_TYPES=" ONLINE ONBATT LOWBATT FSD COMMOK COMMBAD SHUTDOWN REPLBATT NOCOMM NOPARENT CAL NOTCAL OFF NOTOFF BYPASS NOTBYPASS ECO NOTECO OVER NOTOVER TRIM NOTTRIM BOOST NOTBOOST OTHER NOTOTHER SUSPEND_STARTING SUSPEND_FINISHED "
+
+nut_get_notifications() {
+	local event="$1"
+	local defaultnotify="$2"
+
+	if [ "${NUT_EVENT_TYPES#*" $event "}" != "${NUT_EVENT_TYPES}" ]; then
+		config_get val "$event" message
+		[ -n "$val" ] && echo "NOTIFYMSG $event \"$val\"" >>"$UPSMON_C"
+		config_get val "$event" flag "$defaultnotify"
+		[ -n "$val" ] && echo "NOTIFYFLAG $event $val" >>"$UPSMON_C"
+	else
+		logger -t nut-monitor -s "$event is not a valid NUT message event type"
+	fi
+}
+
 nut_upsmon_conf() {
 	local cfg="$1"
-	local RUNAS val optval
+	local RUNAS val optval defaultnotify
 
-	echo "# Config file automatically generated from UCI config" > "$UPSMON_C"
+	echo "# Config file automatically generated from UCI config" >"$UPSMON_C"
 
 	config_get RUNAS "$cfg" runas "nutmon"
-	[ -n "$RUNAS" ] && echo "RUN_AS_USER $RUNAS" >> "$UPSMON_C"
+	[ -n "$RUNAS" ] && echo "RUN_AS_USER $RUNAS" >>"$UPSMON_C"
 	runas="$RUNAS"
 
-	config_get val "$cfg" minsupplies 1
-	echo "MINSUPPLIES $val" >> "$UPSMON_C"
-
-	config_get val "$cfg" shutdowncmd "/usr/sbin/nutshutdown"
-	echo "SHUTDOWNCMD \"$val\"" >> "$UPSMON_C"
-
-	config_get val "$cfg" notifycmd
-	[ -n "$val" ] && echo "NOTIFYCMD \"$val\"" >> "$UPSMON_C"
-
-	config_get val "$cfg" pollfreq 5
-	echo "POLLFREQ $val" >> "$UPSMON_C"
-
-	config_get val "$cfg" pollfreqalert 5
-	echo "POLLFREQALERT $val" >> "$UPSMON_C"
-
-	config_get val "$cfg" hostsync 15
-	echo "HOSTSYNC $val" >> "$UPSMON_C"
-
 	config_get val "$cfg" deadtime 15
-	echo "DEADTIME $val" >> "$UPSMON_C"
-
-	echo "POWERDOWNFLAG /var/run/killpower" >> "$UPSMON_C"
-
-	config_get val "$cfg" onlinemsg
-	[ -n "$val" ] && echo "NOTIFYMSG ONLINE \"$val\"" >> "$UPSMON_C"
-	config_get val "$cfg" onbattmsg
-	[ -n "$val" ] && echo "NOTIFYMSG ONBATT \"$val\"" >> "$UPSMON_C"
-	config_get val "$cfg" lowbattmsg
-	[ -n "$val" ] && echo "NOTIFYMSG LOWBATT \"$val\"" >> "$UPSMON_C"
-	config_get val "$cfg" fsdmsg
-	[ -n "$val" ] && echo "NOTIFYMSG FSD \"$val\"" >> "$UPSMON_C"
-	config_get val "$cfg" commokmsg
-	[ -n "$val" ] && echo "NOTIFYMSG COMMOK \"$val\"" >> "$UPSMON_C"
-	config_get val "$cfg" commbadmsg
-	[ -n "$val" ] && echo "NOTIFYMSG COMMBAD \"$val\"" >> "$UPSMON_C"
-	config_get val "$cfg" shutdownmsg
-	[ -n "$val" ] && echo "NOTIFYMSG SHUTDOWN \"$val\"" >> "$UPSMON_C"
-	config_get val "$cfg" replbattmsg
-	[ -n "$val" ] && echo "NOTIFYMSG REPLBATT \"$val\"" >> "$UPSMON_C"
-	config_get val "$cfg" nocommmsg
-	[ -n "$val" ] && echo "NOTIFYMSG NOCOMM \"$val\"" >> "$UPSMON_C"
-	config_get val "$cfg" noparentmsg
-	[ -n "$val" ] && echo "NOTIFYMSG NOPARENT \"$val\"" >> "$UPSMON_C"
-
-	notifylist() {
-		local value="$1"
-		append optval "$value" "+"
-	}
-
-	setnotify() {
-		local cfg="$1"
-		local optname="$2"
-		local optval
-		config_list_foreach "$cfg" "$optname" notifylist
-		if [ -z "$optval" ]; then
-			# If no list fallback to trying option, fallback to default
-			config_get optval "$cfg" "$optname" "$default"
-			if [ -n "$optval" ]; then
-				echo "$optval"
-			else
-				# No default, so do the NUT default
-				echo "SYSLOG"
-			fi
-		else
-			echo "$optval"
-		fi
-        }
-
-	local default optval
-	val=""
-	config_list_foreach "$cfg" defaultnotify notifylist
-	default="$optval"
-	{
-		echo "NOTIFYFLAG ONLINE $(setnotify "$cfg" onlinenotify)" ; \
-		echo "NOTIFYFLAG ONBATT $(setnotify "$cfg" onbattnotify)" ; \
-		echo "NOTIFYFLAG LOWBATT $(setnotify "$cfg" lowbatnotify)" ; \
-		echo "NOTIFYFLAG FSD $(setnotify "$cfg" fsdnotify)" ; \
-		echo "NOTIFYFLAG COMMOK $(setnotify "$cfg" commoknotify)" ; \
-		echo "NOTIFYFLAG COMMBAD $(setnotify "$cfg" commbadnotify)" ; \
-		echo "NOTIFYFLAG SHUTDOWN $(setnotify "$cfg" shutdownnotify)" ; \
-		echo "NOTIFYFLAG REPLBATT $(setnotify "$cfg" replbattnotify)" ; \
-		echo "NOTIFYFLAG NOCOMM $(setnotify "$cfg" nocommnotify)" ; \
-		echo "NOTIFYFLAG NOPARENT $(setnotify "$cfg" noparentnotify)" ; \
-	} >> "$UPSMON_C"
-
-	config_get val "$cfg" rbwarntime 43200
-	echo "RBWARNTIME $val" >> "$UPSMON_C"
-
-	config_get val "$cfg" nocommwarntime 300
-	echo "NOCOMMWARNTIME $val" >> "$UPSMON_C"
+	echo "DEADTIME $val" >>"$UPSMON_C"
 
 	config_get val "$cfg" finaldelay 5
-	echo "FINALDELAY $val" >> "$UPSMON_C"
+	echo "FINALDELAY $val" >>"$UPSMON_C"
+
+	config_get val "$cfg" hostsync 15
+	echo "HOSTSYNC $val" >>"$UPSMON_C"
+
+	config_get val "$cfg" minsupplies 1
+	echo "MINSUPPLIES $val" >>"$UPSMON_C"
+
+	config_get val "$cfg" nocommwarntime 300
+	echo "NOCOMMWARNTIME $val" >>"$UPSMON_C"
+
+	config_get val "$cfg" pollfaillogthrottlemax -1
+	echo "POLLFAIL_LOG_THROTTLE_MAX $val" >>"$UPSMON_C"
+
+	config_get val "$cfg" notifycmd
+	[ -n "$val" ] && echo "NOTIFYCMD \"$val\"" >>"$UPSMON_C"
+
+	config_get val "$cfg" pollfreq 5
+	echo "POLLFREQ $val" >>"$UPSMON_C"
+
+	config_get val "$cfg" pollfreqalert 5
+	echo "POLLFREQALERT $val" >>"$UPSMON_C"
+
+	echo "POWERDOWNFLAG /var/run/killpower" >>"$UPSMON_C"
+
+	config_get val "$cfg" offduration 30
+	echo "OFFDURATION $val" >>"$UPSMON_C"
+
+	config_get val "$cfg" overduration -1
+	echo "OVERDURATION $val" >>"$UPSMON_C"
+
+	config_get val "$cfg" oblbduration 0
+	echo "OBLBDURATION $val" >>"$UPSMON_C"
+
+	config_get val "$cfg" rbwarntime 43200
+	echo "RBWARNTIME $val" >>"$UPSMON_C"
+
+	config_get val "$cfg" alarmcritical 1
+	echo "ALARMCRITICAL $val" >>"$UPSMON_C"
+
+	config_get val "$cfg" shutdownexit 0
+	echo "SHUTDOWNEXIT $val" >>"$UPSMON_C"
+
+	config_get val "$cfg" shutdowncmd "/usr/sbin/nutshutdown"
+	echo "SHUTDOWNCMD \"$val\"" >>"$UPSMON_C"
 
 	config_get val "$cfg" certpath
-	if [ -n "$val" ]; then echo "CERTPATH $val" >> "$UPSMON_C"; fi
+	if [ -n "$val" ]; then echo "CERTPATH $val" >>"$UPSMON_C"; fi
 
 	config_get_bool val "$cfg" certverify 0
-	if [ -n "$val" ]; then echo "CERTVERIFY $val" >> "$UPSMON_C"; fi
+	if [ -n "$val" ]; then echo "CERTVERIFY $val" >>"$UPSMON_C"; fi
 
 	config_get_bool val "$cfg" forcessl 0
-	if [ -n "$val" ]; then echo "FORCESSL $val" >> "$UPSMON_C"; fi
+	if [ -n "$val" ]; then echo "FORCESSL $val" >>"$UPSMON_C"; fi
+
+	# debugmin must be a positive integer or zero
+	config_get val "$cfg" debugmin 0
+	case "$val" in
+		''|*[!0-9]*) ;;
+		*) echo "DEBUG_MIN $val" >>"$UPSMON_C" ;;
+	esac
+
+	config_get val "$cfg" defaultnotify "SYSLOG"
+	defaultnotify="$val"
+	config_foreach nut_get_notifications notifications "$val"
+
+	# Otherwise the default is WALL+SYSLOG
+	for event in $NUT_EVENT_TYPES; do
+		if ! grep -q "NOTIFYFLAG $event" "$UPSMON_C"; then
+			echo "NOTIFYFLAG $event $defaultnotify" >>"$UPSMON_C"
+		fi
+	done
 
 	havemon=1
 }
@@ -142,11 +134,13 @@ nut_upsmon_add() {
 	config_get powervalue "$cfg" powervalue 1
 	config_get username "$cfg" username
 	config_get password "$cfg" password
+	config_get type "$cfg" type "${type:-secondary}"
+
 	system="$upsname@$hostname"
 	if [ -n "$port" ]; then
-	    system="$system:$port";
+		system="$system:$port"
 	fi
-	echo "MONITOR $system $powervalue $username $password $type" >> "$UPSMON_C"
+	echo "MONITOR $system $powervalue $username $password $type" >>"$UPSMON_C"
 
 	havems=1
 }
@@ -157,8 +151,12 @@ build_config() {
 
 	config_load nut_monitor
 	config_foreach nut_upsmon_conf upsmon
-	config_foreach nut_upsmon_add master master
-	config_foreach nut_upsmon_add slave slave
+	config_foreach nut_upsmon_add primary primary
+	config_foreach nut_upsmon_add secondary secondary
+	config_foreach nut_upsmon_add monitor
+	# master and slave are legacy section names. Prefer monitor.
+	config_foreach nut_upsmon_add master primary
+	config_foreach nut_upsmon_add slave secondary
 
 	[ ! -s /var/etc/nut/nut.conf ] && {
 		echo "MODE=netclient" >>/var/etc/nut/nut.conf

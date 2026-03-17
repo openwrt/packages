@@ -1,41 +1,29 @@
 #config upsmon 'upsmon'
 #	option runas nutmon
+#	option deadtime 15
+#	option finaldelay 5 # final delay
+#	option hostsync 15
 #	option minsupplies 1
-#	option shutdowncmd '/usr/sbin/nutshutdown'
-#	option notifycmd /path/to/cmd
-#	list defaultnotify SYSLOG # can be SYSLOG or EXEC or IGNORE
+#	option nocommwarntime 300 # no communications warn time
+#	option pollfaillogthrottlemax -1
+#	option notifycmd '/path/to/cmd'
 #	option pollfreq 5
 #	option pollfreqalert 5
-# 	option hostsync 15
-#	option deadtime 15
-#	option onlinemsg "online message"
-#	option onbattmsg "on battery message"
-#	option lowbattmsg "low battery message"
-#	option fsdmsg "forced shutdown message"
-#	option comokmsg "communications restored message"
-#	option combadmsg "communications bad message"
-#	option shutdowmsg "shutdown message"
-#	option replbattmsg "replace battery message"
-#	option nocommmsg "no communications message"
-#	option noparentmsg "no parent message"
-#	list onlinenotify SYSLOG # can be SYSLOG or EXEC or IGNORE
-#	list onbattnotify SYSLOG # can be SYSLOG or EXEC or IGNORE
-#	list lowbattnotify SYSLOG # can be SYSLOG or EXEC or IGNORE
-#	list fsdnotify SYSLOG # can be SYSLOG or EXEC or IGNORE
-#	list comoknotify SYSLOG # can be SYSLOG or EXEC or IGNORE
-#	list combadnotify SYSLOG # can be SYSLOG or EXEC or IGNORE
-#	list shutdownotify SYSLOG # can be SYSLOG or EXEC or IGNORE
-#	list replbattnotify SYSLOG # can be SYSLOG or EXEC or IGNORE
-#	list nocommnotify SYSLOG # can be SYSLOG or EXEC or IGNORE
-#	list noparentnotify SYSLOG # can be SYSLOG or EXEC or IGNORE
-#	option rbwarntime 4200 # replace battery warn time
-#	option nocommwarntime 300 # no communications warn time
-#	option finaldelay 5 # final delay
+#	option offduration 30
+#	option overduration -1
+#	option oblbduration 0
+#	option shutdowncmd '/usr/sbin/nutshutdown'
+#	option rbwarntime 43200 # replace battery warn time
+#	option alarmcritical 1
+#	option shutdownexit 0
 #	option certpath /path/to/ca/dir
 #	option certverify 0
 #	option forcessl 0
+#	option debugmin 0
+# option defaultnotify SYSLOG
 
-#config master
+#config monitor
+#	option type primary
 #	option upsname upsname
 #	option hostname localhost
 #	option port # optional port number
@@ -43,10 +31,27 @@
 #	option username upsuser
 #	option password upspassword
 
-#config slave
+#config monitor
+#	option type secondary
 #	option upsname upsname
 #	option hostname localhost
 #	option port # optional port number
 #	option powervalue 1
 #	option username upsuser
 #	option password upspassword
+
+#config notifications 'COMMOK'
+#	option message "Communications with UPS %s established"
+#	option flag "SYSLOG"
+
+#config notifications 'COMMBAD'
+#	option message "Communications with UPS %s lost"
+#	option flag "SYSLOG+EXEC"
+
+#config notifications 'ONLINE'
+#	option message "UPS %s is on line power"
+#	option flag "SYSLOG"
+
+#config notifications 'ONBATT'
+#	option message "UPS %s is on battery power"
+#	option flag "SYSLOG+EXEC"
