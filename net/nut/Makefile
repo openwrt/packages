@@ -156,7 +156,7 @@ part of UPS monitoring--shutting down the system when the power goes
 out. It can call out to other helper programs for notification purposes
 during power events. upsmon can monitor multiple systems using a single
 process. Every UPS that is defined in the upsmon.conf configuration file
-is assigned a power value and a type (slave or master).
+is assigned a power value and a type (secondary or primary).
 endef
 
 define Package/nut-upsmon/conffiles

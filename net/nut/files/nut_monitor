@@ -83,7 +83,7 @@
 #	option forcessl 0
 #	option debugmin 0
 
-#config master
+#config primary
 #	option upsname upsname
 #	option hostname localhost
 #	option port # optional port number
@@ -91,7 +91,7 @@
 #	option username upsuser
 #	option password upspassword
 
-#config slave
+#config secondary
 #	option upsname upsname
 #	option hostname localhost
 #	option port # optional port number

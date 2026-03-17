@@ -240,8 +240,12 @@ build_config() {
 
 	config_load nut_monitor
 	config_foreach nut_upsmon_conf upsmon
-	config_foreach nut_upsmon_add master master
-	config_foreach nut_upsmon_add slave slave
+	config_foreach nut_upsmon_add primary primary
+	config_foreach nut_upsmon_add secondary secondary
+
+	# handle deprecated configuration names
+	config_foreach nut_upsmon_add master primary
+	config_foreach nut_upsmon_add slave secondary
 
 	[ ! -s /var/etc/nut/nut.conf ] && {
 		echo "MODE=netclient" >>/var/etc/nut/nut.conf
