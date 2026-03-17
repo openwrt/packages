@@ -16,6 +16,7 @@ PKG_MAINTAINER:=Jeronimo Pellegrini <j_p@aleph0.info>
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:call-cc:chicken
 
 include $(INCLUDE_DIR)/package.mk
 
