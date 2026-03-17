@@ -10,6 +10,107 @@
 	exit
 }
 
+. /lib/functions.sh
+. /lib/netifd/netifd-proto.sh
+
+mask2prefix() {
+	local mask="$1"
+	local n=0
+	local IFS=.
+	for o in $mask; do
+		case $o in
+			255) n=$((n+8)) ;;
+			254) n=$((n+7)) ;;
+			252) n=$((n+6)) ;;
+			248) n=$((n+5)) ;;
+			240) n=$((n+4)) ;;
+			224) n=$((n+3)) ;;
+			192) n=$((n+2)) ;;
+			128) n=$((n+1)) ;;
+			0)   break     ;;
+			*)   break     ;;
+		esac
+	done
+	echo "$n"
+}
+
+parse_cidr6() {
+	local val="$1"
+	local def_plen="$2"
+	local addr="${val%/*}"
+	local plen="${val#*/}"
+	[ "$addr" = "$plen" ] && plen="$def_plen"
+	echo "$addr $plen"
+}
+
+case "$script_type" in
+	up)
+		proto_init_update "$dev" 1
+
+		[ -n "$ifconfig_local" ] && proto_add_ipv4_address "$ifconfig_local" "${ifconfig_netmask:-255.255.255.255}"
+
+		[ -n "$trusted_ip" ] && [ -n "$route_net_gateway" ] && {
+			proto_add_ipv4_route "$trusted_ip" 32 "$route_net_gateway"
+		}
+
+		[ -n "$route_vpn_gateway" ] && proto_add_ipv4_route "0.0.0.0" 0 "$route_vpn_gateway"
+
+		for i in $(seq 1 32); do
+			eval "net=\$route_network_$i mask=\$route_netmask_$i gw=\$route_gateway_$i"
+			[ -z "$net" ] && break
+			[ -z "$mask" ] && continue
+
+			plen=$(mask2prefix "$mask")
+			proto_add_ipv4_route "$net" "$plen" "$gw"
+		done
+
+		if [ -n "$ifconfig_ipv6_local" ]; then
+			read -r v6addr v6plen <<-EOF
+				$(parse_cidr6 "$ifconfig_ipv6_local" "${ifconfig_ipv6_netbits:-128}")
+			EOF
+			proto_add_ipv6_address "$v6addr" "$v6plen"
+		fi
+
+		[ -n "$trusted_ip6" ] && [ -n "$route_ipv6_gateway" ] && {
+			proto_add_ipv6_route "$trusted_ip6" 128 "$route_ipv6_gateway"
+		}
+
+		[ -n "$ifconfig_ipv6_remote" ] && proto_add_ipv6_route "::" 0 "$ifconfig_ipv6_remote"
+
+		for i in $(seq 1 32); do
+			eval "net=\$route_ipv6_network_$i gw=\$route_ipv6_gateway_$i"
+			[ -z "$net" ] && break
+
+			read -r v6net v6plen <<-EOF
+				$(parse_cidr6 "$net" 128)
+			EOF
+			proto_add_ipv6_route "$v6net" "$v6plen" "$gw"
+		done
+
+		[ -n "$tun_mtu" ] && json_add_int mtu "$tun_mtu"
+
+		for i in $(seq 1 32); do
+			eval "option=\$foreign_option_$i"
+			[ -z "$option" ] && break
+
+			set -- $option
+			[ "$1" != "dhcp-option" ] && continue
+
+			case "$2" in
+				DNS)           proto_add_dns_server "$3" ;;
+				DOMAIN*)       proto_add_dns_search "$3" ;; # Matches DOMAIN and DOMAIN-SEARCH
+			esac
+		done
+
+		proto_send_update "$INTERFACE"
+	;;
+
+	down)
+		proto_init_update "$dev" 0
+		proto_send_update "$INTERFACE"
+	;;
+esac
+
 ACTION="$script_type"
 INSTANCE="$INTERFACE"
 
