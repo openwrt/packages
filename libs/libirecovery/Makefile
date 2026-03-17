@@ -16,6 +16,7 @@ PKG_HASH:=d25f4b85c24df206efbbbd2d6d45d1637229e756c52d535eef047a163799f67c
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:libimobiledevice:libirecovery
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
