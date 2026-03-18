@@ -15,7 +15,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=maxminddb
 PKG_HASH:=81e54e53408bd502650e5969ccba16780af659ec1db1c44b2c997e4330a5ed96
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
+PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 

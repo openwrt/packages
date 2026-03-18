@@ -10,8 +10,8 @@ main() {
 			$*
 	}
 
-	# Wrap user defined scripts on up|down|route-up|route-pre-down|ipchange
-	# events. Scripts set with up|down|route-up|route-pre-down|ipchange
+	# Wrap user defined scripts on up|down|route-up|route-pre-down|ipchange|etc
+	# events. Scripts set with up|down|route-up|route-pre-down|ipchange|etc
 	# in the openvpn config are also executed with the command=user_xxxx
 	case "$ACTION" in
 	up)
@@ -28,6 +28,27 @@ main() {
 		;;
 	ipchange)
 		command=$user_ipchange
+		;;
+	learn-address)
+		command=$user_learn_address
+		;;
+	client-connect)
+		command=$user_client_connect
+		;;
+	client-crresponse)
+		command=$user_client_crresponse
+		;;
+	client-disconnect)
+		command=$user_client_disconnect
+		;;
+	tls-crypt-v2-verify)
+		command=$user_tls_crypt_v2_verify
+		;;
+	tls-verify)
+		command=$user_tls_verify
+		;;
+	auth-user-pass-verify)
+		command=$user_auth_user_pass_verify
 		;;
 	esac
 

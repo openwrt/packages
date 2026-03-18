@@ -9,6 +9,9 @@ color green "\<(package|config|option|list)\>"
 # Comments.
 color cyan "(^|[[:blank:]])#.*"
 
+# Unterminated strings.
+color lightmagenta ""([^"\]|\\.)*[^"\]|'([^'\]|\\.)*[^'\]"
+
 # Strings.
 color yellow ""([^"\]|\\.)*"|'([^'\]|\\.)*'"
 

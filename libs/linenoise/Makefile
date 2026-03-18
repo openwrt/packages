@@ -17,6 +17,7 @@ PKG_MIRROR_HASH:=e32bcc55c6fb1d849883d03a2ec6bc869d3cab5da827e1d7560e712be718e50
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:antirez:linenoise
 
 include $(INCLUDE_DIR)/package.mk
 

@@ -19,7 +19,7 @@ request_decode() {
 	value="${request#*=}"
 	token="$(uci -q get banip.global.ban_remotetoken)"
 
-	if [ -n "${key}" ] && [ -n "${value}" ] && [ "${key}" = "${token}" ] && /etc/init.d/banip running; then
+	if [ -n "${token}" ] && [ -n "${key}" ] && [ -n "${value}" ] && [ "${key}" = "${token}" ] && /etc/init.d/banip running; then
 		[ -r "/usr/lib/banip-functions.sh" ] && { . "/usr/lib/banip-functions.sh"; f_conf; }
 		if [ "${ban_remotelog}" = "1" ] && [ -x "${ban_logreadcmd}" ] && [ -n "${ban_logterm%%??}" ] && [ "${ban_loglimit}" != "0" ]; then
 			f_log "info" "received a suspicious remote IP '${value}'"

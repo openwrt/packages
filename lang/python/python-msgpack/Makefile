@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=msgpack
 PKG_HASH:=3b60763c1373dd60f398488069bcdc703cd08a711477b5d480eecc9f9626f47e
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
+PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=COPYING
 

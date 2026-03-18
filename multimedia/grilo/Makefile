@@ -16,6 +16,7 @@ PKG_HASH:=0869c81d19ab139c667d79567c14ddcb6cb5cbfc0108d04cade287eb29536706
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:gnome:grilo
 
 PKG_BUILD_DEPENDS:=vala/host
 

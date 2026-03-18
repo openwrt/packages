@@ -18,7 +18,7 @@ PKG_HASH:=368bfdd782e4b9c7163baadd621359c82b162734864b667051ff6bcb57b9edff
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
+PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:augeas:augeas

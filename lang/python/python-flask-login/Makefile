@@ -16,7 +16,7 @@ PYPI_NAME:=Flask-Login
 PYTHON3_PKG_WHEEL_NAME:=flask_login
 PKG_HASH:=5e23d14a607ef12806c699590b89d0f0e0d67baeec599d75947bf9c147330333
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
+PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
