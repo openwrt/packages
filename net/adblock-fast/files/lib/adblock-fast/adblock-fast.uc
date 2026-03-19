@@ -14,7 +14,7 @@ import { connect } from 'ubus';
 const pkg = {
 	name: 'adblock-fast',
 	version: 'dev-test',
-	compat: '13',
+	compat: '14',
 	memory_threshold: 33554432,
 	config_file: '/etc/config/adblock-fast',
 	dnsmasq_file: '/var/run/adblock-fast/adblock-fast.dnsmasq',
@@ -182,7 +182,6 @@ let env = {
 
 	// Guard flags
 	_detected: false,
-	_config_loaded: false,
 	_loaded: false,
 };
 
@@ -312,7 +311,7 @@ env.get_downloader = function() {
 	let command, flag, ssl_supported;
 	if (is_present('curl')) {
 		command = 'curl -f --silent --insecure';
-		if (cfg.curl_additional_param) command += ' ' + cfg.curl_additional_param;
+		if (cfg.curl_additional_param) command += ' ' + shell_quote(cfg.curl_additional_param);
 		if (cfg.curl_max_file_size) command += ' --max-filesize ' + cfg.curl_max_file_size;
 		if (cfg.curl_retry) command += ' --retry ' + cfg.curl_retry;
 		if (cfg.download_timeout) command += ' --connect-timeout ' + cfg.download_timeout;
@@ -847,6 +846,7 @@ const config_schema = { // ucode-lsp disable
 	heartbeat_sleep_timeout: ['string', '10'],
 	led:                     ['string'],
 	pause_timeout:           ['string', '20'],
+	rpcd_token:              ['string'],
 	procd_boot_wan_timeout:  ['string', '60'],
 	// Integers
 	verbosity:               ['int', 2],
@@ -900,15 +900,11 @@ function parse_options(raw, schema) { // ucode-lsp disable
 // ── env.load_config ─────────────────────────────────────────────────
 
 env.load_config = function() {
-	if (env._config_loaded) return;
-	state.is_tty = system('[ -t 2 ]') == 0 ? true : false;
+	if (state.is_tty == null)
+		state.is_tty = system('[ -t 2 ]') == 0 ? true : false;
 	let raw = uci(pkg.name, true).get_all(pkg.name, 'config') || {};
 	cfg = parse_options(raw, config_schema);
 	env.dns_set_output_values(cfg.dns);
-	env._loaded = false;
-	env._detected = false;
-	env._dl_cache = null;
-	env._config_loaded = true;
 };
 
 // ── load_dl_command ─────────────────────────────────────────────────
@@ -2717,7 +2713,7 @@ function get_network_trigger_info() {
 
 function get_init_status(name) {
 	name = name || pkg.name;
-	env.load('rpcd');
+	env.load_config();
 
 	// Read pre-computed data from procd service (like PBR)
 	let conn = connect();
@@ -2736,7 +2732,7 @@ function get_init_status(name) {
 		packageCompat: int(pkg.compat),
 
 		// Live-computed (cheap stat/uci checks)
-		enabled: service_enabled(pkg.name) && !!cfg.enabled,
+		enabled: service_enabled(pkg.name) && uci(pkg.name, true).get(pkg.name, 'config', 'enabled') == '1',
 		running: (stat(pkg.run_file)?.size > 0),
 		outputFileExists: (stat(svc_data?.outputFile || dns_output.file)?.size > 0) || false,
 		outputCacheExists: (stat(svc_data?.outputCache || dns_output.cache)?.size > 0) || false,
@@ -2780,7 +2776,7 @@ function get_init_status(name) {
 function get_init_list(name) {
 	name = name || pkg.name;
 	let result = {};
-	let enabled_val = (uci(pkg.name).get(pkg.name, 'config', 'enabled') ?? '0');
+	let enabled_val = (uci(pkg.name, true).get(pkg.name, 'config', 'enabled') ?? '0');
 	result[name] = { enabled: (enabled_val == '1') };
 	return result;
 }
@@ -2806,7 +2802,7 @@ function get_platform_support(name) {
 
 function get_file_url_filesizes(name) {
 	name = name || pkg.name;
-	env.load('rpcd');
+	env.load_config();
 
 	let files = [];
 	uci(pkg.name).foreach(pkg.name, 'file_url', (s) => {
