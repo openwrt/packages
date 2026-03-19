@@ -42,7 +42,6 @@ let results = [];
 
 for (let mode in modes) {
 	// Reset module state for each mode
-	ti.env._config_loaded = false;
 	ti.env._loaded = false;
 	ti.env.dnsmasq_features = '';
 	ti.env._detected = false;
