@@ -15,7 +15,7 @@ PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
-PKG_CPE_ID:=cpe:/a:bogofilter:bogofilter
+PKG_CPE_ID:=cpe:/a:bogofilter_project:bogofilter
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_NAME)-$(PKG_VERSION2).tar.bz2
 PKG_SOURCE_URL:=https://gitlab.com/bogofilter/bogofilter/-/archive/$(PKG_NAME)-$(PKG_VERSION2)
