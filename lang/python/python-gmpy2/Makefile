@@ -8,15 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-gmpy2
-PKG_VERSION:=2.1.5
+PKG_VERSION:=2.3.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=gmpy2
-PKG_HASH:=bc297f1fd8c377ae67a4f493fc0f926e5d1b157e5c342e30a4d84dc7b9f95d96
+PKG_HASH:=2d943cc9051fcd6b15b2a09369e2f7e18c526bc04c210782e4da61b62495eb4a
 
 PKG_LICENSE:=LGPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING.LESSER
-PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
+
+PKG_BUILD_DEPENDS:= \
+	python-setuptools/host \
+	python-setuptools-scm/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -28,7 +32,7 @@ define Package/python3-gmpy2
   SUBMENU:=Python
   TITLE:=GMP/MPIR, MPFR, and MPC interface
   URL:=https://github.com/aleaxit/gmpy
-  DEPENDS:=+libgmp +libmpc +libmpfr +python3-light
+  DEPENDS:=+libgmp +libmpc +libmpfr +python3-light +python3-email python3-urllib
 endef
 
 define Package/python3-gmpy2/description
