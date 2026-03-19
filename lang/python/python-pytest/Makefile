@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pytest
-PKG_VERSION:=7.4.0
+PKG_VERSION:=9.0.2
 PKG_RELEASE:=1
 
 PYPI_NAME:=pytest
-PKG_HASH:=b4bf8c45bd59934ed84001ad51e11b4ee40d40a1229d2c79f9c592b0a3f6bd8a
+PKG_HASH:=75186651a92bd89611d1d9fc20f0b4345fd827c41ccd5c299a868a05d70edf11
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT
@@ -34,7 +34,8 @@ define Package/python3-pytest
 	+python3 \
 	+python3-iniconfig \
 	+python3-packaging \
-	+python3-pluggy
+	+python3-pluggy \
+	+python3-pygments
 endef
 
 define Package/python3-pytest/description
