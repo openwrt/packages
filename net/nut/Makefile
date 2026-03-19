@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nut
 PKG_VERSION:=2.8.4
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.networkupstools.org/source/2.8/
@@ -17,6 +17,8 @@ PKG_HASH:=a2fe55bc2d90b4a848d6ff8bac361e6d1c97f899a545219cad707d17a27ff127
 PKG_LICENSE:=GPL-2.0-or-later GPL-3.0-or-later GPL-1.0-or-later Artistic-1.0-Perl
 PKG_LICENSE_FILES:=LICENSE-GPL2 LICENSE-GPL3 COPYING
 PKG_FIXUP:=autoreconf
+
+PKG_MAINTAINER:=Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
 
 PKG_INSTALL:=1
 
@@ -156,7 +158,7 @@ part of UPS monitoring--shutting down the system when the power goes
 out. It can call out to other helper programs for notification purposes
 during power events. upsmon can monitor multiple systems using a single
 process. Every UPS that is defined in the upsmon.conf configuration file
-is assigned a power value and a type (slave or master).
+is assigned a power value and a type (secondary or primary).
 endef
 
 define Package/nut-upsmon/conffiles
