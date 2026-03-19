@@ -18,7 +18,7 @@ PKG_MAINTAINER:=André Gaul <andre@gaul.io>, \
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
-PKG_CPE_ID:=cpe:/a:icecast:icecast
+PKG_CPE_ID:=cpe:/a:xiph:icecast
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:= 1
