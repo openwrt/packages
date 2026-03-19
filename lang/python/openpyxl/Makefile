@@ -14,6 +14,7 @@ PKG_RELEASE:=1
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENCE.rst
+PKG_CPE_ID:=cpe:/a:python:openpyxl
 
 PYPI_NAME:=openpyxl
 PKG_HASH:=e47805627aebcf860edb4edf7987b1309c1b3632f3750538ed962bbcc3bd7449
