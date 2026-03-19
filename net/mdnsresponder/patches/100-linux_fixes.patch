@@ -23,7 +23,7 @@
  
  #if __APPLE__
  #undef daemon
-@@ -194,6 +199,18 @@ int main(int argc, char **argv)
+@@ -210,6 +215,18 @@ int main(int argc, char **argv)
  
      Reconfigure(&mDNSStorage);
  
@@ -42,7 +42,7 @@
      // Now that we're finished with anything privileged, switch over to running as "nobody"
      if (mStatus_NoError == err)
      {
-@@ -209,6 +226,21 @@ int main(int argc, char **argv)
+@@ -225,6 +242,21 @@ int main(int argc, char **argv)
              {
                  LogMsg("WARNING: mdnsd continuing as root because setuid to \"nobody\" failed with %s", strerror(errno));
              }
@@ -64,7 +64,7 @@
          }
          else
          {
-@@ -216,6 +248,11 @@ int main(int argc, char **argv)
+@@ -232,6 +264,11 @@ int main(int argc, char **argv)
          }
      }
  
@@ -78,7 +78,7 @@
  
 --- a/mDNSPosix/mDNSPosix.c
 +++ b/mDNSPosix/mDNSPosix.c
-@@ -1223,6 +1223,29 @@ mDNSlocal int SetupSocket(struct sockadd
+@@ -1237,6 +1237,29 @@ mDNSlocal int SetupSocket(struct sockadd
              if (err < 0) { err = errno; perror("setsockopt - IP_MULTICAST_TTL"); }
          }
  
@@ -108,7 +108,7 @@
          // And start listening for packets
          if (err == 0)
          {
-@@ -1298,6 +1321,29 @@ mDNSlocal int SetupSocket(struct sockadd
+@@ -1312,6 +1335,29 @@ mDNSlocal int SetupSocket(struct sockadd
              if (err < 0) { err = errno; perror("setsockopt - IPV6_MULTICAST_HOPS"); }
          }
  
@@ -138,7 +138,7 @@
          // And start listening for packets
          if (err == 0)
          {
-@@ -1899,8 +1945,12 @@ mDNSexport mStatus mDNSPlatformInit(mDNS
+@@ -1956,8 +2002,12 @@ mDNSexport mStatus mDNSPlatformInit(mDNS
      if (err == mStatus_NoError) err = SetupSocket(&sa, zeroIPPort, 0, &m->p->unicastSocket6);
  #endif
  
@@ -149,8 +149,8 @@
      if (err == mStatus_NoError) err = SetupInterfaceList(m);
 +#endif /* !__linux__ */
  
+ #ifndef UNICAST_DISABLED
      // Tell mDNS core about DNS Servers
-     mDNS_Lock(m);
 --- a/mDNSShared/dnsextd_parser.y
 +++ b/mDNSShared/dnsextd_parser.y
 @@ -15,6 +15,8 @@
