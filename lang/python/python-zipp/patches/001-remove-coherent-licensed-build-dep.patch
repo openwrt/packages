@@ -1,0 +1,10 @@
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -3,7 +3,6 @@ requires = [
+ 	"setuptools>=77",
+ 	"setuptools_scm[toml]>=3.4.1",
+ 	# jaraco/skeleton#174
+-	"coherent.licensed",
+ ]
+ build-backend = "setuptools.build_meta"
+ 
