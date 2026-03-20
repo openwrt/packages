@@ -19,7 +19,6 @@ PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>, \
 		Mike Brady <mikebrady@eircom.net>
 PKG_LICENSE:=LGPL-2.1
 PKG_LICENSE_FILES:=LICENCE
-PKG_CPE_ID:=cpe:/a:sox:sox
 
 CMAKE_INSTALL:=1
 

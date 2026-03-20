@@ -16,6 +16,7 @@ PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Daniel Salzman <daniel.salzman@nic.cz>
 PKG_LICENSE:=BSD-3-Clause
+PKG_CPE_ID:=cpe:/a:libedit_project:libedit
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(RELEASE_DATE)-$(VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(RELEASE_DATE)-$(VERSION).tar.gz

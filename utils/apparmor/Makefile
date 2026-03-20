@@ -14,6 +14,7 @@ PKG_MIRROR_HASH:=0f47852e1559607c2e62919a781d2f8226acbdb0df00b025be7ebc79e5c9bc8
 PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:apparmor:apparmor
 
 PKG_BUILD_DEPENDS:=swig/host python-setuptools-scm/host
 

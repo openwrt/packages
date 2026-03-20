@@ -165,69 +165,6 @@ load_all_config_options()
 	return 0
 }
 
-# read's all service sections from ddns config
-# $1 = Name of variable to store
-load_all_service_sections() {
-	local __DATA=""
-	config_cb()
-	{
-		# only look for section type "service", ignore everything else
-		[ "$1" = "service" ] && __DATA="$__DATA $2"
-	}
-	config_load "ddns"
-
-	eval "$1=\"$__DATA\""
-	return
-}
-
-# starts updater script for all given sections or only for the one given
-# $1 = interface (Optional: when given only scripts are started
-# configured for that interface)
-# used by /etc/hotplug.d/iface/95-ddns on IFUP
-# and by /etc/init.d/ddns start
-start_daemon_for_all_ddns_sections()
-{
-	local event_if sections section_id configured_if
-	event_if="$1"
-
-	load_all_service_sections sections
-	for section_id in $sections; do
-		config_get configured_if "$section_id" interface "wan"
-		[ -z "$event_if" ] || [ "$configured_if" = "$event_if" ] || continue
-		/usr/lib/ddns/dynamic_dns_updater.sh -v "$VERBOSE" -S "$section_id" -- start &
-	done
-}
-
-# stop sections process incl. childs (sleeps)
-# $1 = section
-stop_section_processes() {
-	local pid_file
-	pid_file="$ddns_rundir/$1.pid"
-	[ $# -ne 1 ] && write_log 12 "Error: 'stop_section_processes()' requires exactly one parameter"
-
-	[ -e "$pid_file" ] && {
-		xargs kill < "$pid_file" 2>/dev/null && return 1
-	}
-	return 0 # nothing killed
-}
-
-# stop updater script for all defines sections or only for one given
-# $1 = interface (optional)
-# used by /etc/hotplug.d/iface/95-ddns on 'ifdown'
-# and by /etc/init.d/ddns stop
-# needed because we also need to kill "sleep" child processes
-stop_daemon_for_all_ddns_sections() {
-	local event_if sections section_id configured_if
-	event_if="$1"
-
-	load_all_service_sections sections
-	for section_id in $sections;	do
-		config_get configured_if "$section_id" interface "wan"
-		[ -z "$event_if" ] || [ "$configured_if" = "$event_if" ] || continue
-		stop_section_processes "$section_id"
-	done
-}
-
 # reports to console, logfile, syslog
 # $1	loglevel 7 == Debug to 0 == EMERG
 #	value +10 will exit the scripts

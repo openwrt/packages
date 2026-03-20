@@ -1,31 +1,51 @@
 #!/bin/sh /etc/rc.common
+
+USE_PROCD=1
 START=95
 STOP=10
 
-boot() {
-	return 0
+PROG=/usr/lib/ddns/dynamic_dns_updater.sh
+
+start_ddns() {
+	local cfg="$1"
+
+	local enabled
+
+	config_get_bool enabled $cfg enabled '0'
+	[ "$enabled" = "0" ] && return
+
+	procd_open_instance "$cfg"
+	procd_set_param command $PROG
+	procd_append_param command -S "$cfg"
+	procd_set_param respawn
+	procd_close_instance
 }
 
-kill() {
-	/usr/lib/ddns/dynamic_dns_updater.sh -- kill
-	return 0
+start_ddns_service() {
+	local cfg="$1"
+	local section="$2"
+
+	# start section if no section name is specified
+	[ -z "$section" ] && {
+		start_ddns "$cfg"
+		return
+	}
+
+	# start 'exactly' this section if a section name is specified
+	[ "$section" = "$cfg" ] && {
+		start_ddns "$cfg"
+		return
+	}
 }
 
-reload() {
-	restart
+start_service() {
+	local section="$1"
+
+	config_load ddns
+	config_foreach start_ddns_service "service" "$section"
 }
 
-restart() {
-	/usr/lib/ddns/dynamic_dns_updater.sh -- stop
-	sleep 1	# give time to shutdown
-	/usr/lib/ddns/dynamic_dns_updater.sh -- start
-}
-
-start() {
-	/usr/lib/ddns/dynamic_dns_updater.sh -- start
-}
-
-stop() {
-	/usr/lib/ddns/dynamic_dns_updater.sh -- stop
-	return 0
+service_triggers()
+{
+	procd_add_reload_trigger ddns
 }

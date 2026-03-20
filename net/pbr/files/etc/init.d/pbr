@@ -468,6 +468,7 @@ mwan4_get_iface_list() {
 	local iface_list=""
 	mwan4_is_installed || return 1
 
+	# shellcheck disable=SC2329
 	_mwan4_collect_iface() {
 		local en
 		config_get_bool en "$1" 'enabled' '0'
@@ -485,6 +486,7 @@ mwan4_get_strategy_list() {
 	local strategy_list=""
 	mwan4_is_installed || return 1
 
+# shellcheck disable=SC2329
 	_mwan4_collect_strategy() { strategy_list="${strategy_list}${1} "; }
 	config_load 'mwan4'
 	config_foreach _mwan4_collect_strategy 'strategy'
@@ -704,6 +706,7 @@ process_url() {
 }
 
 load_package_config() {
+	[ -n "$loadPackageConfigFlag" ] && return 0
 	local param="$1"
 	config_load "$packageName"
 	config_get      config_compat             'config' 'config_compat'
@@ -850,7 +853,7 @@ load_environment() {
 	case "$param" in
 		on_boot|on_start)
 			output 1 "Loading environment ($param) "
-			[ -n "$loadPackageConfigFlag" ] || load_package_config "$param"
+			load_package_config "$param"
 			if [ -z "$enabled" ]; then
 				output 1 "$_FAIL_\n"
 				json add error 'errorServiceDisabled'
@@ -872,11 +875,11 @@ load_environment() {
 			output 1 "$_OK_\n"
 		;;
 		on_triggers)
-			[ -n "$loadPackageConfigFlag" ] || load_package_config "$param"
+			load_package_config "$param"
 		;;
 		on_interface_reload|on_reload|on_stop|*)
 			output 1 "Loading environment ($param) "
-			[ -n "$loadPackageConfigFlag" ] || load_package_config "$param"
+			load_package_config "$param"
 			load_network "$param"
 			resolver 'check_support'
 			output 1 "$_OK_\n"
@@ -1481,6 +1484,7 @@ resolver() {
 
 netifd() {
 	# Usage: netifd install [iface] | netifd remove [iface] | netifd uninstall
+	# shellcheck disable=SC2329
 	_netifd_process_interface() {
 		local iface="$1" action="${2:-install}"
 		# Normalize table name for split uplink scenarios
@@ -1578,6 +1582,7 @@ netifd() {
 						nft add rule inet "$nftTable" "${nftPrefix}_mark_${_mark} ${nftRuleParams} meta mark set (meta mark & ${fw_maskXor}) | ${_mark}"
 						nft add rule inet "$nftTable" "${nftPrefix}_mark_${_mark} return"
 					fi
+					# shellcheck disable=SC2155
 					local dscp="$(uci_get "$packageName" 'config' "${iface}_dscp")"
 					if [ "${dscp:-0}" -ge '1' ] && [ "${dscp:-0}" -le '63' ]; then
 						if ! is_split_uplink || ! is_uplink6 "$iface"; then
@@ -1614,16 +1619,20 @@ netifd() {
 		fi
 	}
 
-	load_package_config
-	json 'init'
-
+	local _uplinkMark _uplinkPriority _uplinkTableID
 	local action="${1:-install}"
 	local target_iface="$2"
+
+	load_package_config "on_netifd_${action}"
+	json 'init'
+
+	# shellcheck disable=SC2155
 	local lan_priority="$((uplink_ip_rules_priority + 1000))"
+	# shellcheck disable=SC2155
 	local mark="$(printf '0x%06x' "$uplink_mark")"
 	local priority="$uplink_ip_rules_priority"
+	# shellcheck disable=SC2155
 	local tid="$(get_rt_tables_non_pbr_next_id)"
-	local _uplinkMark _uplinkPriority _uplinkTableID
 
 	case "$action" in
 		check)
@@ -1694,8 +1703,12 @@ netifd() {
 	uci_commit "$packageName"
 	uci_commit 'network'
 	sync
-	output "Restarting network ${action:+(on_${action}) }"
-	{ /etc/init.d/network 'reload'; /etc/init.d/firewall 'reload'; } >/dev/null 2>&1 && output_okbn || output_failn
+	output "Reloading network and firewall ${action:+(on_${action}) }"
+	if { /etc/init.d/network 'reload' && /etc/init.d/firewall 'reload'; } >/dev/null 2>&1; then
+		output_okbn
+	else
+		output_failn
+	fi
 }
 
 # original idea by @egc112: https://github.com/egc112/OpenWRT-egc-add-on/tree/main/stop-dns-leak
@@ -1707,6 +1720,12 @@ dns_policy_routing() {
 	local name="$1" src_addr="$2" dest_dns="$3" uid="$4" dest_dns_port="$5"
 	local dest_dns_ipv4="$6" dest_dns_ipv6="$7"
 	local chain='dstnat' iface='dns'
+
+	if [ -z "$src_addr" ]; then
+		processDnsPolicyError='true'
+		json add error 'errorPolicyNoSrcDest' "$name"
+		return 1
+	fi
 
 	if [ -z "${dest_dns_ipv4}${dest_dns_ipv6}" ]; then
 		processDnsPolicyError='true'
@@ -1815,6 +1834,12 @@ policy_routing() {
 	chain="$(str_to_lower "$8")"
 	chain="${chain:-prerouting}"
 	mark=$(eval echo "\$mark_${iface//-/_}")
+
+	if [ -z "${src_addr}${dest_addr}${src_port}${dest_port}${proto}" ]; then
+		processPolicyError='true'
+		json add error 'errorPolicyNoSrcDest' "$name"
+		return 1
+	fi
 
 	if [ -z "$ipv6_enabled" ] && \
 		{ is_ipv6 "$(str_first_word "$src_addr")" || is_ipv6 "$(str_first_word "$dest_addr")"; }; then
@@ -1991,8 +2016,14 @@ policy_routing() {
 			for dest_i in dest_udp_53 dest_tcp_80 dest_udp_80 dest_tcp_443 dest_udp_443; do
 				eval "dest4=\$$dest_i"
 				eval "dest6=\$$dest_i"
-				nft4 "$param4" "$dest4" || ipv4_error='1'
-				nft6 "$param6" "$dest6" || ipv6_error='1'
+				if [ "$filter_group_src_addr" != 'ipv6' ] && [ "$filter_group_src_addr" != 'ipv6_negative' ] && \
+					[ "$filter_group_dest_addr" != 'ipv6' ] && [ "$filter_group_dest_addr" != 'ipv6_negative' ]; then
+					nft4 "$param4" "$dest4" || ipv4_error='1'
+				fi
+				if [ "$filter_group_src_addr" != 'ipv4' ] && [ "$filter_group_src_addr" != 'ipv4_negative' ] && \
+					[ "$filter_group_dest_addr" != 'ipv4' ] && [ "$filter_group_dest_addr" != 'ipv4_negative' ]; then
+					nft6 "$param6" "$dest6" || ipv6_error='1'
+				fi
 				if [ -n "$ipv6_enabled" ] && [ "$ipv4_error" -eq '1' ] && [ "$ipv6_error" -eq '1' ]; then
 					processPolicyError='true'
 					json add error 'errorPolicyProcessInsertionFailed' "$name"
@@ -2078,10 +2109,6 @@ dns_policy_process() {
 
 	unset processDnsPolicyError
 	output 2 "Routing '$name' DNS to $dest_dns:$dest_dns_port "
-	if [ -z "$src_addr" ]; then
-		json add error 'errorPolicyNoSrcDest' "$name"
-		output_fail; return 1;
-	fi
 	if [ -z "$dest_dns" ]; then
 		json add error 'errorPolicyNoDns' "$name"
 		output_fail; return 1;
@@ -2253,7 +2280,9 @@ interface_routing() {
 				ip -4 route flush table "$tid" >/dev/null 2>&1
 
 				if [ -n "$gw4" ] || [ -n "$strict_enforcement" ]; then
-					if [ -z "$gw4" ]; then
+					if [ -z "$gw4" ] && ip address show dev "$dev4" 2>/dev/null | grep -q "POINTOPOINT"; then
+						try ip -4 route replace default dev "$dev4" table "$tid" || ipv4_error=1
+					elif [ -z "$gw4" ]; then
 						try ip -4 route replace unreachable default table "$tid" || ipv4_error=1
 					else
 						try ip -4 route replace default via "$gw4" dev "$dev4" table "$tid" || ipv4_error=1
@@ -2274,7 +2303,9 @@ interface_routing() {
 				ip -6 route flush table "$tid" >/dev/null 2>&1
 
 				if { [ -n "$gw6" ] && [ "$gw6" != "::/0" ]; } || [ -n "$strict_enforcement" ]; then
-					if [ -z "$gw6" ] || [ "$gw6" = "::/0" ]; then
+					if { [ -z "$gw6" ] || [ "$gw6" = "::/0" ]; } && ip address show dev "$dev6" 2>/dev/null | grep -q "POINTOPOINT"; then
+						try ip -6 route replace default dev "$dev6" table "$tid" metric "$uplink_interface6_metric" || ipv6_error=1
+					elif [ -z "$gw6" ] || [ "$gw6" = "::/0" ]; then
 						try ip -6 route replace unreachable default table "$tid" || ipv6_error=1
 					elif ip -6 route list table main | grep -q " dev $dev6 "; then
 						if ip -6 address show dev "$dev6" | grep -q "BROADCAST"; then
@@ -2338,7 +2369,9 @@ interface_routing() {
 				ip -4 rule flush fwmark "${mark}/${fw_mask}" table "$tid" >/dev/null 2>&1
 				ip -4 route flush table "$tid" >/dev/null 2>&1
 				if [ -n "$gw4" ] || [ -n "$strict_enforcement" ]; then
-					if [ -z "$gw4" ]; then
+					if [ -z "$gw4" ] && ip address show dev "$dev4" 2>/dev/null | grep -q "POINTOPOINT"; then
+						try ip -4 route replace default dev "$dev4" table "$tid" || ipv4_error=1
+					elif [ -z "$gw4" ]; then
 						try ip -4 route replace unreachable default table "$tid" || ipv4_error=1
 					else
 						try ip -4 route replace default via "$gw4" dev "$dev4" table "$tid" || ipv4_error=1
@@ -2358,7 +2391,9 @@ interface_routing() {
 				ip -6 rule flush fwmark "${mark}/${fw_mask}" table "$tid" >/dev/null 2>&1
 				ip -6 route flush table "$tid" >/dev/null 2>&1
 				if { [ -n "$gw6" ] && [ "$gw6" != "::/0" ]; } || [ -n "$strict_enforcement" ]; then
-					if [ -z "$gw6" ] || [ "$gw6" = "::/0" ]; then
+					if { [ -z "$gw6" ] || [ "$gw6" = "::/0" ]; } && ip address show dev "$dev6" 2>/dev/null | grep -q "POINTOPOINT"; then
+						try ip -6 route replace default dev "$dev6" table "$tid" metric "$uplink_interface6_metric" || ipv6_error=1
+					elif [ -z "$gw6" ] || [ "$gw6" = "::/0" ]; then
 						try ip -6 route replace unreachable default table "$tid" || ipv6_error=1
 					elif ip -6 route list table main | grep -q " dev $dev6 "; then
 						if ip -6 address show dev "$dev6" | grep -q "BROADCAST"; then
@@ -2427,6 +2462,7 @@ process_interface() {
 				return 0
 			;;
 			create_global_rules)
+			# shellcheck disable=SC2329
 				_wg_server() {
 					local iface="$1"
 					if is_wg_server "$iface" && ! is_ignored_interface "$iface"; then
@@ -2750,17 +2786,17 @@ user_file_process() {
 }
 
 boot() {
+	load_package_config 'on_boot'
 	nft_file 'delete' 'main'
-	rc_procd start_service 'on_boot' && service_started 'on_boot'
+	[ -n "$enabled" ] || return 0
+	rc_procd start_service 'on_boot'
+	service_started 'on_boot'
 }
 
 on_interface_reload() {
-	if ! exists_lockfile; then
-		logger -t "$packageName" "Reload on interface change aborted: service is stopped."
-		return 0
-	else
-		rc_procd start_service 'on_interface_reload' "$1"
-	fi
+	exists_lockfile || return 1
+	rc_procd start_service 'on_interface_reload' "$1"
+	service_started 'on_interface_reload'
 }
 
 start_service() {
@@ -2768,12 +2804,15 @@ start_service() {
 	local resolverStoredHash resolverNewHash reloadedIface
 	local i k
 
-	load_package_config "$param"
-	stop_forward
 	[ "$param" = 'on_boot' ] && pbrBootFlag=1 && return 0
-	json init
-	load_environment "${param:-on_start}" "$(load_validate_config)" || return 1
 
+	json init
+	load_package_config "$param"
+
+	trap 'enable_forward' EXIT
+	stop_forward
+
+	load_environment "${param:-on_start}" "$(load_validate_config)" || return 1
 	output "Processing environment (${param:-on_start}) "
 	if ! is_wan_up "$param"; then
 		output_failn
@@ -2898,7 +2937,7 @@ start_service() {
 
 	json_add_int 'packageCompat' "$packageCompat"
 	json_add_object 'status'
-	[ -n "$gatewaySummary" ] && json_add_string 'gateways' "$gatewaySummary" || json add error 'errorNoGateways'
+	if [ -n "$gatewaySummary" ]; then json_add_string 'gateways' "$gatewaySummary"; else json_add_error 'errorNoGateways'; fi
 	json_close_object
 	json_add_array 'errors'
 		for k in $(json get errors); do
@@ -2921,13 +2960,14 @@ start_service() {
 	fi
 	procd_close_data
 	procd_close_instance
-	enable_forward
 }
 
 service_running() { is_service_running; }
 service_started() {
-	[ -n "$pbrBootFlag" ] && return 0
 	local error warning c
+	enable_forward
+	trap - EXIT
+	[ -n "$pbrBootFlag" ] && return 0
 	if nft_file 'exists' 'main'; then
 		resolver 'compare_hash' && resolver 'restart'
 		[ -n "$gatewaySummary" ] && output "$serviceName started with gateways:\n${gatewaySummary}"
@@ -2964,12 +3004,15 @@ service_started() {
 }
 service_stopped() { procd_set_config_changed firewall; }
 
-# shellcheck disable=SC2015
 service_triggers() {
 	local n
 	if [ -n "$pbrBootFlag" ]; then
 		output "Setting trigger (on_boot) "
-		procd_add_raw_trigger "interface.*.up" "$procd_boot_trigger_delay" "/etc/init.d/${packageName}" start && output_okn || output_failn
+		if procd_add_raw_trigger "interface.*.up" "$procd_boot_trigger_delay" "/etc/init.d/${packageName}" start; then
+			output_okn
+		else
+			output_failn
+		fi
 	else
 		PROCD_RELOAD_DELAY=$(( procd_reload_delay * 1000 ))
 		procd_open_validate
@@ -2985,7 +3028,11 @@ service_triggers() {
 				output 1 "Setting interface triggers "
 				for n in $ifacesTriggers; do
 					output 2 "Setting interface trigger for $n "
-					procd_add_interface_trigger "interface.*" "$n" "/etc/init.d/${packageName}" on_interface_reload "$n" && output_ok || output_fail
+					if procd_add_interface_trigger "interface.*" "$n" "/etc/init.d/${packageName}" on_interface_reload "$n"; then
+						output_ok
+					else
+						output_fail
+					fi
 				done
 				output_1_newline
 			fi
@@ -2996,7 +3043,6 @@ service_triggers() {
 	fi
 }
 
-# shellcheck disable=SC2015
 stop_service() {
 	local i nft_file_mode
 	json init
@@ -3035,13 +3081,15 @@ stop_service() {
 }
 
 restart() {
-	load_package_config
+	load_package_config 'on_restart'
+	trap 'enable_forward' EXIT
 	stop_forward
 	stop
 	# it takes time before routes are cleaned up, if started immediately a leak can occur
 	[ -n "$strict_enforcement" ] && sleep 2
 	start
 	enable_forward
+	trap - EXIT
 }
 
 version() { echo "$PKG_VERSION"; }
