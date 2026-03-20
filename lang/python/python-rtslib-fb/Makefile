@@ -39,9 +39,6 @@ define Package/python3-rtslib-fb
   DEPENDS:=+python3-light +python3-pyudev +python3-uuid +python3-ctypes
 endef
 
-define Package/python3-rtslib-fb-src
-  TITLE:=rtslib-fb source package
-endef
 
 define Package/python3-rtslib-fb/description
  rtslib-fb is a Python object API for configuring the Linux LIO target subsystem.

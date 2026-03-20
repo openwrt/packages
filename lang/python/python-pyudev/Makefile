@@ -32,9 +32,6 @@ define Package/python3-pyudev
   DEPENDS:=+python3-light +python3-ctypes +libudev-zero
 endef
 
-define Package/python3-pyudev-src
-  TITLE:=pyudev source package
-endef
 
 define Package/python3-pyudev/description
  pyudev is a pure Python binding for libudev.
