@@ -11,9 +11,9 @@ PKG_MAINTAINER:=Chester A. Unal <chester.a.unal@arinc9.com>
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/bondingshouldbefree/bsbf-resources.git
-PKG_SOURCE_DATE:=2026-03-12
-PKG_SOURCE_VERSION:=b09038a13af33c1428a783d3e759a1cfc4d36b30
-PKG_MIRROR_HASH:=7aa66af4d10d274b15be243a5783d67a71266a1649598d2b0db1581ec7c0f112
+PKG_SOURCE_DATE:=2026-03-24
+PKG_SOURCE_VERSION:=e75046628f430c584a6f3ef12fbef4b87fad5aa4
+PKG_MIRROR_HASH:=16dd14add99ae73a473d967330509b0308076ef63e4608c78b43248a274a79a3
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -44,6 +44,13 @@ define Package/bsbf-quectel-usbnet
   SECTION:=net
   CATEGORY:=Network
   TITLE:=bsbf-quectel-usbnet
+  URL:=https://github.com/bondingshouldbefree/
+endef
+
+define Package/bsbf-rate-limiting
+  SECTION:=net
+  CATEGORY:=Network
+  TITLE:=bsbf-rate-limiting
   URL:=https://github.com/bondingshouldbefree/
 endef
 
@@ -102,6 +109,11 @@ define Package/bsbf-quectel-usbnet/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/resources-client/bsbf-quectel-usbnet $(1)/usr/sbin
 endef
 
+define Package/bsbf-rate-limiting/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/resources-client/bsbf-rate-limiting $(1)/usr/sbin
+endef
+
 define Package/bsbf-route/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/etc/init.d/bsbf-route $(1)/etc/init.d
@@ -122,5 +134,6 @@ $(eval $(call BuildPackage,bsbf-mptcp))
 $(eval $(call BuildPackage,bsbf-netspeed))
 $(eval $(call BuildPackage,bsbf-plpmtu))
 $(eval $(call BuildPackage,bsbf-quectel-usbnet))
+$(eval $(call BuildPackage,bsbf-rate-limiting))
 $(eval $(call BuildPackage,bsbf-route))
 $(eval $(call BuildPackage,bsbf-tcp-in-udp))
