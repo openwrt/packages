@@ -40,7 +40,8 @@ define Package/bsbf-bonding
   CATEGORY:=Network
   TITLE:=bsbf-bonding
   URL:=https://github.com/bondingshouldbefree/
-  DEPENDS:=+bsbf-mptcp +bsbf-plpmtu +bsbf-route +bsbf-tcp-in-udp +xray-core
+  DEPENDS:=+bsbf-mptcp +bsbf-plpmtu +bsbf-rate-limiting +bsbf-route \
+    +bsbf-tcp-in-udp +xray-core
 endef
 
 define Package/bsbf-bonding/description
