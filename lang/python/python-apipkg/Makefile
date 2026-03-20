@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-apipkg
-PKG_VERSION:=3.0.1
+PKG_VERSION:=3.0.2
 PKG_RELEASE:=1
 
 PYPI_NAME:=apipkg
-PKG_HASH:=f8c021adafc9132ac2fba9fd3c5768365d0a8c10aa375fb15e329f1fce8a5f01
+PKG_HASH:=c7aa61a4f82697fdaa667e70af1505acf1f7428b1c27b891d204ba7a8a3c5e0d
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT
