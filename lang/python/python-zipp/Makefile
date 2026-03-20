@@ -1,17 +1,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-zipp
-PKG_VERSION:=3.16.2
+PKG_VERSION:=3.23.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=zipp
-PKG_HASH:=ebc15946aa78bd63458992fc81ec3b6f7b1e92d51c35e6de1c3804e73b799147
+PKG_HASH:=a07157588a12518c9d4034df3fbbee09c814741a33ff63c05fa29d26a2404166
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_DEPENDS:=python-setuptools-scm/host  # setuptools_scm[toml] >= 3.4.1
+PKG_BUILD_DEPENDS:=python-setuptools/host python-setuptools-scm/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
