@@ -8,17 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-incremental
-PKG_VERSION:=24.7.2
-PKG_RELEASE:=2
+PKG_VERSION:=24.11.0
+PKG_RELEASE:=1
 
 PYPI_NAME:=incremental
-PKG_HASH:=fb4f1d47ee60efe87d4f6f0ebb5f70b9760db2b2574c59c8e8912be4ebd464c9
+PKG_HASH:=87d3480dbb083c1d736222511a8cf380012a8176c2456d01ef483242abbbcf8c
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
-HOST_BUILD_DEPENDS:=python3/host python-build/host python-installer/host python-wheel/host
+HOST_BUILD_DEPENDS:=python3/host python-build/host python-installer/host python-hatchling/host
+PKG_BUILD_DEPENDS:=python3/host python-build/host python-installer/host python-hatchling/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -32,7 +33,7 @@ define Package/python3-incremental
   SUBMENU:=Python
   TITLE:=Versions your Python projects
   URL:=https://github.com/twisted/incremental
-  DEPENDS:=+python3-light +python3-pkg-resources
+  DEPENDS:=+python3-light +python3-packaging
 endef
 
 define Package/python3-incremental/description
