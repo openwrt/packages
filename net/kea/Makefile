@@ -19,6 +19,7 @@ PKG_HASH:=29f4e44fa48f62fe15158d17411e003496203250db7b3459c2c79c09f379a541
 PKG_MAINTAINER:=Philip Prindeville <philipp@redfish-solutions.com>, Noah Meyerhans <frodo@morgul.net>
 PKG_LICENSE:=MPL-2.0
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:isc:kea
 
 PKG_BUILD_FLAGS:=gc-sections
 
