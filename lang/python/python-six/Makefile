@@ -8,15 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-six
-PKG_VERSION:=1.16.0
+PKG_VERSION:=1.17.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=six
-PKG_HASH:=1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926
+PKG_HASH:=ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
+
+PKG_BUILD_DEPENDS:=python-setuptools/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
