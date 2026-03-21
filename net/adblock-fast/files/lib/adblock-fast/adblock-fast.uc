@@ -157,7 +157,6 @@ const canary = {
 
 let state = {
 	script_name: pkg.name,
-	is_tty: false,
 	output_queue: '',
 	fw4_restart: false,
 };
@@ -474,9 +473,8 @@ let _write = function(level, ...args) {
 	let msg = join('', args);
 	if (level != null && (cfg.verbosity & level) == 0) return;
 
-	// Print to stderr (terminal)
-	if (state.is_tty)
-		warn(replace(msg, /\\n/g, '\n'));
+	// Print to stderr (terminal / console)
+	warn(replace(msg, /\\n/g, '\n'));
 
 	// Queue for logger: flush on newline
 	if (index(msg, '\\n') >= 0 || index(msg, '\n') >= 0) {
@@ -900,8 +898,6 @@ function parse_options(raw, schema) { // ucode-lsp disable
 // ── env.load_config ─────────────────────────────────────────────────
 
 env.load_config = function() {
-	if (state.is_tty == null)
-		state.is_tty = system('[ -t 2 ]') == 0 ? true : false;
 	let raw = uci(pkg.name, true).get_all(pkg.name, 'config') || {};
 	cfg = parse_options(raw, config_schema);
 	env.dns_set_output_values(cfg.dns);
@@ -2306,6 +2302,10 @@ function start(args) {
 		output.info('Starting ' + pkg.service_name + '...\\n');
 		output.verbose('[INIT] Starting ' + pkg.service_name + '...\\n');
 		status_data.status = 'statusStarting';
+		// Ensure cache/output directories exist (on_boot skips _setup_directories)
+		for (let f in [dns_output.file, dns_output.cache]) {
+			if (f) mkdir_p(dirname(f));
+		}
 		if (adb_file('test_gzip') && !adb_file('test_cache') && !adb_file('test')) {
 			output.info('Found compressed cache file, unpacking it ');
 			output.verbose('[INIT] Found compressed cache file, unpacking it ');
