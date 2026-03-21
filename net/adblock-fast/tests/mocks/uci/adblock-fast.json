@@ -5,7 +5,7 @@
 			".type": "config",
 			"enabled": "1",
 			"dns": "dnsmasq.servers",
-			"verbosity": "2",
+			"verbosity": "0",
 			"force_dns": "0",
 			"compressed_cache": "0",
 			"config_update_enabled": "0",
