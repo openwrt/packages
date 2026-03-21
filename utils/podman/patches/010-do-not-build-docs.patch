@@ -1,6 +1,6 @@
 --- a/Makefile
 +++ b/Makefile
-@@ -230,7 +230,7 @@ GV_VERSION=v0.7.4
+@@ -234,7 +234,7 @@ GVPROXY_VERSION=$(shell $(GO) list -m -f
  default: all
  
  .PHONY: all
@@ -8,13 +8,13 @@
 +all: binaries
  
  .PHONY: binaries
- ifeq ($(shell uname -s),FreeBSD)
-@@ -853,7 +853,7 @@ rpm-install: package  ## Install rpm pac
+ ifeq ($(GOOS),freebsd)
+@@ -868,7 +868,7 @@ rpm-install: package  ## Install rpm pac
  	/usr/bin/podman info  # will catch a broken conmon
  
  .PHONY: install
 -install: install.bin install.remote install.man install.systemd  ## Install binaries to system locations
 +install: install.bin install.remote install.systemd  ## Install binaries to system locations
  
- .PHONY: install.catatonit
- install.catatonit:
+ .PHONY: install.remote
+ install.remote:
