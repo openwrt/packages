@@ -4,7 +4,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=prometheus-node-exporter-lua
-PKG_VERSION:=2025.11.22
+PKG_VERSION:=2026.03.13
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
@@ -279,6 +279,17 @@ define Package/prometheus-node-exporter-lua-nft-counters/install
 	$(INSTALL_DATA) ./files/usr/lib/lua/prometheus-collectors/nft_counters.lua $(1)/usr/lib/lua/prometheus-collectors/
 endef
 
+define Package/prometheus-node-exporter-lua-unbound
+  $(call Package/prometheus-node-exporter-lua/Default)
+  TITLE+= (unbound stats collector)
+  DEPENDS:=prometheus-node-exporter-lua +unbound-control
+endef
+
+define Package/prometheus-node-exporter-lua-unbound/install
+	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
+	$(INSTALL_DATA) ./files/usr/lib/lua/prometheus-collectors/unbound.lua $(1)/usr/lib/lua/prometheus-collectors/
+endef
+
 $(eval $(call BuildPackage,prometheus-node-exporter-lua))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-bmx7))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-dawn))
@@ -300,3 +311,4 @@ $(eval $(call BuildPackage,prometheus-node-exporter-lua-realtek-poe))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-mwan3))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-ethtool))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-nft-counters))
+$(eval $(call BuildPackage,prometheus-node-exporter-lua-unbound))
