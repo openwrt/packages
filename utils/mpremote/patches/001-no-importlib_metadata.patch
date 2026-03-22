@@ -1,5 +1,0 @@
---- a/requirements.txt
-+++ b/requirements.txt
-@@ -1,2 +1 @@
- pyserial >= 3.3
--importlib_metadata >= 1.4
