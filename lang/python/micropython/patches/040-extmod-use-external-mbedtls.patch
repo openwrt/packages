@@ -9,7 +9,7 @@ Subject: [PATCH 06/10] extmod: Use system mbedtls
 
 --- a/extmod/extmod.mk
 +++ b/extmod/extmod.mk
-@@ -235,86 +235,8 @@ SRC_THIRDPARTY_C += $(addprefix $(AXTLS_
+@@ -242,91 +242,12 @@ SRC_THIRDPARTY_C += $(addprefix $(AXTLS_
  	crypto/sha1.c \
  	)
  else ifeq ($(MICROPY_SSL_MBEDTLS),1)
@@ -18,6 +18,12 @@ Subject: [PATCH 06/10] extmod: Use system mbedtls
 -GIT_SUBMODULES += $(MBEDTLS_DIR)
 -CFLAGS_EXTMOD += -DMBEDTLS_CONFIG_FILE=$(MBEDTLS_CONFIG_FILE)
 -CFLAGS_EXTMOD += -DMICROPY_SSL_MBEDTLS=1 -I$(TOP)/$(MBEDTLS_DIR)/include
++CFLAGS_EXTMOD += -DMICROPY_SSL_MBEDTLS=1
++LDFLAGS_MOD += -lmbedx509 -lmbedtls -lmbedcrypto
+ ifeq ($(MICROPY_PY_SSL_ECDSA_SIGN_ALT),1)
+ CFLAGS_EXTMOD += -DMICROPY_PY_SSL_ECDSA_SIGN_ALT=1
+ LDFLAGS_EXTMOD += -Wl,--wrap=mbedtls_ecdsa_write_signature
+ endif
 -SRC_THIRDPARTY_C += lib/mbedtls_errors/mp_mbedtls_errors.c
 -SRC_THIRDPARTY_C += $(addprefix $(MBEDTLS_DIR)/library/,\
 -	aes.c \
@@ -63,6 +69,7 @@ Subject: [PATCH 06/10] extmod: Use system mbedtls
 -	pkcs12.c \
 -	pkcs5.c \
 -	pkparse.c \
+-	pk_ecc.c \
 -	pk_wrap.c \
 -	pkwrite.c \
 -	platform.c \
@@ -93,8 +100,6 @@ Subject: [PATCH 06/10] extmod: Use system mbedtls
 -	x509write_crt.c \
 -	x509write_csr.c \
 -	)
-+CFLAGS_EXTMOD += -DMICROPY_SSL_MBEDTLS=1
-+LDFLAGS_MOD += -lmbedx509 -lmbedtls -lmbedcrypto
  endif
  endif
  
