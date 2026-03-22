@@ -132,7 +132,7 @@ Available commands:
 	enable          Enable service autostart
 	disable         Disable service autostart
 	enabled         Check if service is started on boot
-	report          [text|json|mail] Print banIP related Set statistics
+	report          [text|json|mail|gen] Print banIP related Set statistics
 	search          [<IPv4 address>|<IPv6 address>] Check if an element exists in a banIP Set
 	content         [<Set name>] [true|false] Listing of all or only elements with hits of a given banIP Set
 	running         Check if service is running
@@ -438,7 +438,7 @@ To make this work, banIP uses the following external components:
 **CGI interface to receive remote logging events**
 banIP ships a basic cgi interface in '/www/cgi-bin/banip' to receive remote logging events (disabled by default). The cgi interface evaluates logging events via GET or POST request (see examples below). To enable the cgi interface set the following options:
 
-    * set 'ban_remotelog' to '1' to enbale the cgi interface
+    * set 'ban_remotelog' to '1' to enable the cgi interface
     * set 'ban_remotetoken' to a secret transfer token, allowed token characters consist of '[A-Za-z]', '[0-9]', '.' and ':'
 
   Examples to transfer remote logging events from an internal server to banIP via cgi interface:
