@@ -7,21 +7,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=atlas-sw-probe
-PKG_VERSION:=5080
-PKG_RELEASE:=2
+PKG_VERSION:=5120
+PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/RIPE-NCC/ripe-atlas-software-probe.git
 PKG_SOURCE:=ripe-atlas-software-probe-$(PKG_VERSION).tar.gz
-
-PKG_MIRROR_HASH:=ad8b012803f98abbf1594384c5a4e27de9e9c112d43da272e73dd10591a566e1
-PKG_SOURCE_VERSION:=67b0736887d33d1c42557e7c7694cbd4e5d8e6ee
+PKG_SOURCE_URL:=https://codeload.github.com/RIPE-NCC/ripe-atlas-software-probe/tar.gz/refs/tags/$(PKG_VERSION)?
+PKG_HASH:=d399f793d1576d7856023c2fde69453a0e5dbd537b03669b9767eb86957021f2
+PKG_BUILD_DIR:=$(BUILD_DIR)/ripe-atlas-software-probe-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=LICENSE
-
-PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -35,8 +31,8 @@ endef
 
 define Package/atlas-sw-probe/description
   RIPE Atlas SW probe is software variant of RIPE Atlas Probe.
-  It contains utilities which helps actively measure
-  Internet connectivity through ping, traceroute, DNS, SSL/TLS, NTP, and HTTP.
+  It contains utilities which help actively measure Internet
+  connectivity through ping, traceroute, DNS, SSL/TLS, NTP, and HTTP.
   Data are then collected, aggregated and published by the RIPE NCC.
 endef
 
@@ -53,7 +49,6 @@ define Package/atlas-sw-probe-rpc/description
 endef
 
 Build/Compile:=:
-Build/Install:=:
 
 define Package/atlas-sw-probe-rpc/postinst
 #!/bin/sh
@@ -70,58 +65,129 @@ endef
 define Package/atlas-sw-probe/conffiles
 /etc/atlas/
 /etc/config/atlas
-/usr/libexec/atlas-probe-scripts/state/config.txt
 endef
 
 TMP_BASE_DIR:=/tmp/ripe_atlas_probe
 SCRIPTS_DIR:=/usr/libexec/atlas-probe-scripts
+PROBE_BIN_DIR:=/usr/libexec/atlas-probe/bin
+PROBE_TYPE:=openwrt-sw-probe
+
+# sed substitutions for .in template files
+# Mapping derived from upstream RIPE-NCC/ripe-atlas-software-probe/openwrt/
+# autotools configure flags; OpenWrt has no /storage/ split, so the two
+# *_sysconfdir variables both resolve to /etc here.
+SUBST_SED := \
+	-e 's|@probe_scripts_path@|$(PROBE_TYPE)|g' \
+	-e 's|@atlas_libexecdir@|$(SCRIPTS_DIR)|g' \
+	-e 's|@atlas_scriptsdir@|$(SCRIPTS_DIR)/bin|g' \
+	-e 's|@atlas_datadir@|$(SCRIPTS_DIR)|g' \
+	-e 's|@atlas_sysconfdir@|/etc/atlas|g' \
+	-e 's|@atlas_spooldir@|$(TMP_BASE_DIR)|g' \
+	-e 's|@atlas_rundir@|$(TMP_BASE_DIR)|g' \
+	-e 's|@atlas_measurementdir@|$(PROBE_BIN_DIR)|g' \
+	-e 's|@sysconfdir@|/etc|g' \
+	-e 's|@storage_sysconfdir@|/etc|g' \
+	-e 's|@tmpdir@|/tmp|g' \
+	-e 's|@ripe_atlas_user@|atlas|g' \
+	-e 's|@ripe_atlas_group@|atlas|g' \
+	-e 's|@ripe_atlas_measurement@|atlas|g' \
+	-e 's|@VERSION@|$(PKG_VERSION)|g'
+
+define Build/Prepare
+	$(call Build/Prepare/Default,)
+	# Generate scripts from .in templates
+	$(foreach f, \
+		bin/config.sh.in \
+		bin/paths.lib.sh.in \
+		bin/common-pre.sh.in \
+		bin/common.sh.in \
+		bin/reginit.sh.in \
+		bin/resolvconf.in \
+		bin/ripe-atlas.in \
+		config/common/FIRMWARE_APPS_VERSION.in, \
+		sed $(SUBST_SED) "$(PKG_BUILD_DIR)/$(f)" \
+			> "$(PKG_BUILD_DIR)/$(patsubst %.in,%,$(f))"; \
+		chmod 755 "$(PKG_BUILD_DIR)/$(patsubst %.in,%,$(f))";)
+endef
 
 define Package/atlas-sw-probe/install
-	$(INSTALL_DIR) $(1)/$(SCRIPTS_DIR)
-	$(INSTALL_DIR) $(1)/$(SCRIPTS_DIR)/{etc,state,bin/arch,bin/bin}
+	$(INSTALL_DIR) $(1)/$(SCRIPTS_DIR)/bin
+	$(INSTALL_DIR) $(1)/$(SCRIPTS_DIR)/bin/arch/$(PROBE_TYPE)
+	$(INSTALL_DIR) $(1)/$(SCRIPTS_DIR)/bin/arch/linux
+	$(INSTALL_DIR) $(1)/$(SCRIPTS_DIR)/bin/arch/openwrt
+	$(INSTALL_DIR) $(1)/$(SCRIPTS_DIR)/etc
+	$(INSTALL_DIR) $(1)/$(SCRIPTS_DIR)/state
 
-	# Copy config
-	$(CP) $(PKG_BUILD_DIR)/atlas-config/etc/* $(1)/$(SCRIPTS_DIR)/etc/
+	# Main ATLAS entry script (generated from ripe-atlas.in, installed as ATLAS)
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/ripe-atlas $(1)/$(SCRIPTS_DIR)/bin/ATLAS
 
-	# Copy firmware version
-	$(CP) $(PKG_BUILD_DIR)/atlas-config/state/FIRMWARE_APPS_VERSION $(1)/$(SCRIPTS_DIR)/state/
+	# Generated scripts installed flat in bin/
+	$(INSTALL_BIN) \
+		$(PKG_BUILD_DIR)/bin/resolvconf \
+		$(PKG_BUILD_DIR)/bin/common-pre.sh \
+		$(PKG_BUILD_DIR)/bin/common.sh \
+		$(PKG_BUILD_DIR)/bin/config.sh \
+		$(PKG_BUILD_DIR)/bin/paths.lib.sh \
+		$(PKG_BUILD_DIR)/bin/reginit.sh \
+		$(1)/$(SCRIPTS_DIR)/bin/
 
-	# Set probe mode
+	# Static library scripts
+	$(INSTALL_BIN) \
+		$(PKG_BUILD_DIR)/bin/array.lib.sh \
+		$(PKG_BUILD_DIR)/bin/atlas_log.lib.sh \
+		$(PKG_BUILD_DIR)/bin/class.lib.sh \
+		$(PKG_BUILD_DIR)/bin/json.lib.sh \
+		$(PKG_BUILD_DIR)/bin/support.lib.sh \
+		$(1)/$(SCRIPTS_DIR)/bin/
+
+	# Arch-specific scripts: install flat in bin/ (used by ripe-atlas/ATLAS entry)
+	# and in arch/ subdir (hardcoded by arch reginit/common scripts)
+	$(INSTALL_BIN) \
+		$(PKG_BUILD_DIR)/bin/arch/$(PROBE_TYPE)/$(PROBE_TYPE)-ATLAS.sh \
+		$(PKG_BUILD_DIR)/bin/arch/$(PROBE_TYPE)/$(PROBE_TYPE)-reginit.sh \
+		$(1)/$(SCRIPTS_DIR)/bin/
+	$(CP) \
+		$(PKG_BUILD_DIR)/bin/arch/$(PROBE_TYPE)/$(PROBE_TYPE)-ATLAS.sh \
+		$(PKG_BUILD_DIR)/bin/arch/$(PROBE_TYPE)/$(PROBE_TYPE)-common.sh \
+		$(PKG_BUILD_DIR)/bin/arch/$(PROBE_TYPE)/$(PROBE_TYPE)-reginit.sh \
+		$(1)/$(SCRIPTS_DIR)/bin/arch/$(PROBE_TYPE)/
+	$(INSTALL_BIN) \
+		$(PKG_BUILD_DIR)/bin/arch/linux/linux-functions.sh \
+		$(1)/$(SCRIPTS_DIR)/bin/arch/linux/
+	$(INSTALL_BIN) \
+		$(PKG_BUILD_DIR)/bin/arch/openwrt/openwrt-common.sh \
+		$(1)/$(SCRIPTS_DIR)/bin/arch/openwrt/
+
+	# Config: reg_servers and known_hosts
+	$(CP) \
+		$(PKG_BUILD_DIR)/config/common/reg_servers.sh.dev \
+		$(PKG_BUILD_DIR)/config/common/reg_servers.sh.test \
+		$(PKG_BUILD_DIR)/config/probe/known_hosts.reg \
+		$(PKG_BUILD_DIR)/config/probe/reg_servers.sh.prod \
+		$(1)/$(SCRIPTS_DIR)/etc/
+
+	# State: firmware version, probe mode, initial config
+	$(CP) $(PKG_BUILD_DIR)/config/common/FIRMWARE_APPS_VERSION \
+		$(1)/$(SCRIPTS_DIR)/state/
 	echo "prod" > $(1)/$(SCRIPTS_DIR)/state/mode
-
-	# Copy scripts
-	$(CP) $(PKG_BUILD_DIR)/bin/{ATLAS,resolvconf} $(1)/$(SCRIPTS_DIR)/bin/
-	$(CP) $(PKG_BUILD_DIR)/bin/*.sh $(1)/$(SCRIPTS_DIR)/bin/
-	$(CP) $(PKG_BUILD_DIR)/bin/arch/{linux,openwrt-sw-probe} $(1)/$(SCRIPTS_DIR)/bin/arch/
-
-	# Create config info
-	echo "DEVICE_NAME=openwrt-sw-probe" > $(1)/$(SCRIPTS_DIR)/bin/config.sh
-	echo "ATLAS_BASE=$(SCRIPTS_DIR)" >> $(1)/$(SCRIPTS_DIR)/bin/config.sh
-	echo "ATLAS_STATIC=$(SCRIPTS_DIR)" >> $(1)/$(SCRIPTS_DIR)/bin/config.sh
-	echo "SUB_ARCH=openwrt-$(ARCH)-$(PKG_VERSION)-$(PKG_RELEASE)" >> $(1)/$(SCRIPTS_DIR)/bin/bin/config.sh
-
-	# Enable sending interface traffic statistics as Atlas measurement results
 	echo "RXTXRPT=yes" > $(1)/$(SCRIPTS_DIR)/state/config.txt
 
-	# Fix permission
-	chmod 755 $(1)/$(SCRIPTS_DIR)/bin
-
-	# Add registration instruction
-	$(INSTALL_DIR) $(1)/etc/atlas/
-	$(CP) ./files/atlas.readme $(1)/etc/atlas/
-
-	# Create softlinks for writable dirs
+	# Writable runtime dirs as symlinks into /tmp
 	$(LN) $(TMP_BASE_DIR)/crons $(1)/$(SCRIPTS_DIR)/crons
 	$(LN) $(TMP_BASE_DIR)/data $(1)/$(SCRIPTS_DIR)/data
 	$(LN) $(TMP_BASE_DIR)/run $(1)/$(SCRIPTS_DIR)/run
 	$(LN) $(TMP_BASE_DIR)/status $(1)/$(SCRIPTS_DIR)/status
 
-	# Copy init and config
-	$(INSTALL_DIR) $(1)/etc/init.d/
-	$(INSTALL_BIN) ./files/atlas.init $(1)/etc/init.d/atlas
+	# Sub-architecture config used by reginit
+	$(INSTALL_DIR) $(1)/$(SCRIPTS_DIR)/bin/bin
+	echo "SUB_ARCH=openwrt-$(ARCH)-$(PKG_VERSION)-$(PKG_RELEASE)" \
+		> $(1)/$(SCRIPTS_DIR)/bin/bin/config.sh
 
-	$(INSTALL_DIR) $(1)/etc/config/
+	# OpenWrt init, UCI config and readme
+	$(INSTALL_DIR) $(1)/etc/init.d/ $(1)/etc/config/ $(1)/etc/atlas/
+	$(INSTALL_BIN) ./files/atlas.init $(1)/etc/init.d/atlas
 	$(INSTALL_CONF) ./files/atlas.conf $(1)/etc/config/atlas
+	$(CP) ./files/atlas.readme $(1)/etc/atlas/
 endef
 
 define Package/atlas-sw-probe-rpc/install
