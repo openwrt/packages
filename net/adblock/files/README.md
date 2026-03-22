@@ -1,12 +1,12 @@
 <!-- markdownlint-disable -->
 
-# DNS based ad/abuse domain blocking  
+# DNS based ad/abuse domain blocking
 
 <a id="description"></a>
 ## Description
-A lot of people already use adblocker plugins within their desktop browsers, but what if you are using your (smart) phone, tablet, watch or any other (wlan) gadget!? Getting rid of annoying ads, trackers and other abuse sites (like facebook) is simple: block them with your router.  
+A lot of people already use adblocker plugins within their desktop browsers, but what if you are using your (smart) phone, tablet, watch or any other (wlan) gadget!? Getting rid of annoying ads, trackers and other abuse sites (like facebook) is simple: block them with your router.
 
-When the DNS server on your router receives DNS requests, you will sort out queries that ask for the resource records of ad servers and return a simple 'NXDOMAIN'. This is nothing but **N**on-e**X**istent Internet or Intranet domain name, if a domain name cannot be resolved using the DNS server, a condition called the 'NXDOMAIN' occurred.  
+When the DNS server on your router receives DNS requests, you will sort out queries that ask for the resource records of ad servers and return a simple 'NXDOMAIN'. This is nothing but **N**on-e**X**istent Internet or Intranet domain name, if a domain name cannot be resolved using the DNS server, a condition called the 'NXDOMAIN' occurred.
 
 <a id="main-features"></a>
 ## Main Features
@@ -47,13 +47,13 @@ When the DNS server on your router receives DNS requests, you will sort out quer
 | winspy              |         | S    | win_telemetry    | [Link](https://github.com/crazy-max/WindowsSpyBlocker)                            |
 | yoyo                |         | S    | general          | [Link](https://pgl.yoyo.org/adservers)                                            |
 
-* List of supported and fully pre-configured adblock sources, already active sources are pre-selected.  
-  <b><em>To avoid OOM errors, please do not select too many lists!</em></b>  
-  List size information with the respective domain ranges as follows:  
-    • <b>S</b> (-10k), <b>M</b> (10k-30k) and <b>L</b> (30k-80k) should work for 128 MByte devices  
-    • <b>XL</b> (80k-200k) should work for 256-512 MByte devices  
-    • <b>XXL</b> (200k-) needs more RAM and Multicore support, e.g. x86 or raspberry devices  
-    • <b>VAR</b> (50k-900k) variable size depending on the selection  
+* List of supported and fully pre-configured adblock sources, already active sources are pre-selected.
+  <b><em>To avoid OOM errors, please do not select too many lists!</em></b>
+  List size information with the respective domain ranges as follows:
+    • <b>S</b> (-10k), <b>M</b> (10k-30k) and <b>L</b> (30k-80k) should work for 128 MByte devices
+    • <b>XL</b> (80k-200k) should work for 256-512 MByte devices
+    • <b>XXL</b> (200k-) needs more RAM and Multicore support, e.g. x86 or raspberry devices
+    • <b>VAR</b> (50k-900k) variable size depending on the selection
 * Zero-conf like automatic installation & setup, usually no manual changes needed
 * Simple but yet powerful adblock engine: adblock does not use error prone external iptables rulesets, http pixel server instances and things like that
 * Supports six different DNS backend formats: dnsmasq, unbound, named (bind), kresd, smartdns or raw (e.g. used by dnscrypt-proxy)
@@ -74,12 +74,12 @@ When the DNS server on your router receives DNS requests, you will sort out quer
 * Supports firewall‑based temporary DNS Bridging, to ensure a Zero‑Downtime during adblock-related DNS Restarts
 * Connection checks during blocklist update to ensure a reliable DNS backend service
 * Minimal status & error logging to syslog, enable debug logging to receive more output
-* Procd based init system support ('start', 'stop', 'restart', 'reload', 'enable', 'disable', 'running', 'status', 'suspend', 'resume', 'query', 'report')
+* Procd based init system support ('start', 'stop', 'restart', 'reload', 'enable', 'disable', 'running', 'status', 'suspend', 'resume', 'search', 'report')
 * Auto-Startup via procd network interface trigger or via classic time based startup
 * Suspend & Resume adblock temporarily without blocklist re-processing
 * Provides comprehensive runtime information
-* Provides a detailed DNS Query Report with DNS related information about client requests, top (blocked) domains and more
-* Provides a powerful query function to quickly find blocked (sub-)domains, e.g. to allow certain domains
+* Provides a detailed DNS Report with DNS related information about client requests, top (blocked) domains and more
+* Provides a powerful search function to quickly find blocked (sub-)domains, e.g. to allow certain domains
 * Implements a jail mode - only domains on the allowlist are permitted, all other DNS requests are rejected
 * Automatic blocklist backup & restore, these backups will be used in case of download errors and during startup
 * Send notification E-Mails, see example configuration below
@@ -95,7 +95,7 @@ When the DNS server on your router receives DNS requests, you will sort out quer
 * For E-Mail notifications you need to install and setup the additional 'msmtp' package
 * For DNS reporting you need to install the additional package 'tcpdump-mini' or 'tcpdump'
 
-**Please note:**  
+**Please note:**
 * Devices with less than 128MB of RAM are **_not_** supported
 * For performance reasons, adblock depends on gnu sort and gawk
 * Before update from former adblock releases please make a backup of your local allow- and blocklists. In the latest adblock these lists have been renamed to '/etc/adblock/adblock.allowlist' and '/etc/adblock/adblock.blocklist'. There is no automatic content transition to the new files.
@@ -114,7 +114,7 @@ When the DNS server on your router receives DNS requests, you will sort out quer
 * The most important adblock functions are accessible via CLI as well.
 
 ```
-~# /etc/init.d/adblock 
+~# /etc/init.d/adblock
 Syntax: /etc/init.d/adblock [command]
 
 Available commands:
@@ -127,7 +127,7 @@ Available commands:
 	enabled         Check if service is started on boot
 	suspend         Suspend adblock processing
 	resume          Resume adblock processing
-	query           <domain> Query active blocklists and backups for a specific domain
+	search          <domain> Search active blocklists and backups for a specific domain
 	report          [<cli>|<mail>|<gen>|<json>] Print DNS statistics
 	running         Check if service is running
 	status          Service status
@@ -202,11 +202,11 @@ Available commands:
 <a id="examples"></a>
 ## Examples
 
-**Change the DNS backend to 'unbound':**  
+**Change the DNS backend to 'unbound':**
 No further configuration is needed, adblock deposits the final blocklist 'adb_list.overall' in '/var/lib/unbound' by default.
 To preserve the DNS cache after adblock processing please install the additional package 'unbound-control'.
 
-**Change the DNS backend to 'bind':**  
+**Change the DNS backend to 'bind':**
 Adblock deposits the final blocklist 'adb_list.overall' in '/var/lib/bind' by default.
 To preserve the DNS cache after adblock processing please install the additional package 'bind-rndc'.
 To use the blocklist please modify '/etc/bind/named.conf':
@@ -224,13 +224,13 @@ and at the end of the file add:
   };
 ```
 
-**Change the DNS backend to 'kresd':**  
+**Change the DNS backend to 'kresd':**
 Adblock deposits the final blocklist 'adb_list.overall' in '/tmp/kresd', no further configuration needed.
 
-**Change the DNS backend to 'smartdns':**  
+**Change the DNS backend to 'smartdns':**
 No further configuration is needed, adblock deposits the final blocklist 'adb_list.overall' in '/tmp/smartdns' by default.
 
-**Service status output:**  
+**Service status output:**
 In LuCI you'll see the realtime status in the 'Runtime' section on the overview page.
 To get the status in the CLI, just call _/etc/init.d/adblock status_ or _/etc/init.d/adblock status\_service_:
 
@@ -253,59 +253,59 @@ root@blackhole:~# /etc/init.d/adblock status
 <a id="best-practice-and-tweaks"></a>
 ## Best practice and tweaks
 
-**Recommendation for low memory systems**  
-adblock keeps all working data in RAM to avoid unnecessary flash wear. On devices with only 128–256 MB RAM, you can reduce memory pressure with the following optimizations:  
+**Recommendation for low memory systems**
+adblock keeps all working data in RAM to avoid unnecessary flash wear. On devices with only 128–256 MB RAM, you can reduce memory pressure with the following optimizations:
 * Use external storage: Set adb_basedir, adb_backupdir and adb_reportdir to a USB drive or SSD to offload temporary and persistent data
 * Limit CPU parallelism: Set adb_cores=1 to reduce peak memory usage during feed processing
 * Enable blocklist shifting: Activate adb_dnsshift to store the generated blocklist on external storage and keep only a symlink in RAM
 * Use firewall‑based DNS redirection: Route DNS queries via nftables to external filtered DNS resolvers and keep only a minimal local blocklist active
 
-**Sensible choice of blocklists**  
-The following feeds are just my personal recommendation as an initial setup:  
+**Sensible choice of blocklists**
+The following feeds are just my personal recommendation as an initial setup:
 * 'adguard', 'adguard_tracking' and 'certpl'
 
-In total, this feed selection blocks about 280K domains. It may also be useful to include compilations like hagezi, stevenblack or oisd.  
-Please note: don't just blindly activate too many feeds at once, sooner or later this will lead to OOM conditions.  
+In total, this feed selection blocks about 280K domains. It may also be useful to include compilations like hagezi, stevenblack or oisd.
+Please note: don't just blindly activate too many feeds at once, sooner or later this will lead to OOM conditions.
 
-**DNS reporting, enable the GeoIP Map**  
-adblock includes a powerful reporting tool on the DNS Report tab which shows the latest DNS statistics generated by tcpdump. To get the latest statistics always press the "Refresh" button.  
+**DNS reporting, enable the GeoIP Map**
+adblock includes a powerful reporting tool on the DNS Report tab which shows the latest DNS statistics generated by tcpdump. To get the latest statistics always press the "Refresh" button.
 In addition to a tabular overview adblock reporting includes a GeoIP map in a modal popup window/iframe that shows the geolocation of your own uplink addresses (in green) and the locations of blocked domains in red. To enable the GeoIP Map set the following option in "Advanced Report Settings" config tab: set 'adb_map' to '1' to include the external components listed below and activate the GeoIP map.
 
-To make this work, adblock uses the following external components:  
+To make this work, adblock uses the following external components:
 * [Leaflet](https://leafletjs.com/) is a lightweight open-source JavaScript library for interactive maps
 * [OpenStreetMap](https://www.openstreetmap.org/) provides the map data under an open-source license
 * [CARTO basemap styles](https://github.com/CartoDB/basemap-styles) based on [OpenMapTiles](https://openmaptiles.org/schema)
 * The free and quite fast [IP Geolocation API](https://ip-api.com/) to resolve the required IP/geolocation information (max. 45 blocked Domains per request)
 
-**External adblock test**  
-In addition to the built‑in DNS reporting and GeoIP map, adblock users can verify the effectiveness of their configuration with an external test page. The [Adblock Test](https://adblock.turtlecute.org/) provides a simple way to check whether your current adblock setup is working as expected. It loads a series of test elements (ads, trackers, and other resources) and reports whether they are successfully blocked by your configuration.  
+**External adblock test**
+In addition to the built‑in DNS reporting and GeoIP map, adblock users can verify the effectiveness of their configuration with an external test page. The [Adblock Test](https://adblock.turtlecute.org/) provides a simple way to check whether your current adblock setup is working as expected. It loads a series of test elements (ads, trackers, and other resources) and reports whether they are successfully blocked by your configuration.
 
-The test runs entirely in the browser and does not require additional configuration. For best results, open the page in the same environment where adblock is active and review the results displayed.  
+The test runs entirely in the browser and does not require additional configuration. For best results, open the page in the same environment where adblock is active and review the results displayed.
 
-**Firewall‑Based DNS Control**  
-adblock provides several advanced firewall‑integrated features that allow you to enforce DNS policies directly at the network layer. These mechanisms operate independently of the local DNS resolver and ensure that DNS traffic follows your filtering rules, even when clients attempt to bypass them.  
+**Firewall‑Based DNS Control**
+adblock provides several advanced firewall‑integrated features that allow you to enforce DNS policies directly at the network layer. These mechanisms operate independently of the local DNS resolver and ensure that DNS traffic follows your filtering rules, even when clients attempt to bypass them.
 * Unfiltered external DNS Routing: routes DNS queries from selected devices or interfaces to an external unfiltered DNS resolver
 * Filtered external DNS Routing: routes DNS queries from selected devices or interfaces to an external filtered DNS resolver
 * Force DNS: blocks or redirects all external DNS traffic to ensure that clients use the local resolver
 
-The DNS routing allows you to apply external DNS (unfiltered and/or filtered) to specific devices or entire network segments. DNS queries from these targets are transparently redirected to a chosen external resolver (IPv4 and/or IPv6):  
+The DNS routing allows you to apply external DNS (unfiltered and/or filtered) to specific devices or entire network segments. DNS queries from these targets are transparently redirected to a chosen external resolver (IPv4 and/or IPv6):
 * MAC‑based targeting for individual devices
 * Interface/VLAN targeting for entire segments
 * Separate IPv4/IPv6 resolver selection
 * Transparent DNS redirection without client‑side configuration
-This mode is ideal for guest networks, IoT devices, or environments where certain clients require stricter/lesser DNS filtering.  
+This mode is ideal for guest networks, IoT devices, or environments where certain clients require stricter/lesser DNS filtering.
 
 force DNS ensures that all DNS traffic on your network by specific devices or entire network segments is processed by the local resolver. Any attempt to use external DNS servers is blocked or redirected.
 * Blocks external DNS on port 53 and redirects DNS queries to the local resolver when appropriate
 * Also prevents DNS bypassing by clients with hardcoded DNS settings on other ports, e.g. on port 853
-This mode guarantees that adblock’s filtering pipeline is always applied.  
+This mode guarantees that adblock’s filtering pipeline is always applied.
 
-adblock's firewall rules are based on nftables in a separate isolated nftables table (inet adblock) and chains (prerouting), with MAC addresses stored in a nftables set. The configuration is carried out centrally in LuCI on the ‘Firewall Settings’ tab in adblock.  
+adblock's firewall rules are based on nftables in a separate isolated nftables table (inet adblock) and chains (prerouting), with MAC addresses stored in a nftables set. The configuration is carried out centrally in LuCI on the ‘Firewall Settings’ tab in adblock.
 
-**Remote DNS Allow (Temporary MAC‑Based Bypass)**  
-This additional firewall feature lets selected client devices temporarily bypass local DNS blocking and use an external, unfiltered DNS resolver. It is designed for situations where a device needs short‑term access to content normally blocked by the adblock rules.  
+**Remote DNS Allow (Temporary MAC‑Based Bypass)**
+This additional firewall feature lets selected client devices temporarily bypass local DNS blocking and use an external, unfiltered DNS resolver. It is designed for situations where a device needs short‑term access to content normally blocked by the adblock rules.
 
-A lightweight CGI endpoint handles the workflow:  
+A lightweight CGI endpoint handles the workflow:
 * The client opens the URL, e.g. https://\<ROUTER-IP\>cgi-bin/adblock (preferably transferred via QR code shown in LuCI)
 * The script automatically detects the device’s MAC address
 * If the MAC is authorized, the script displays the current status:
@@ -313,16 +313,16 @@ A lightweight CGI endpoint handles the workflow:
   * Already active → shows remaining timeout
 * When renewing, the CGI adds the MAC to an nftables Set with a per‑entry timeout
 
-The CGI interface is mobile‑friendly and includes a LuCI‑style loading spinner during the renew process, giving immediate visual feedback while the nftables entry is created. All operations are atomic and safe even when multiple devices renew access in parallel.  
+The CGI interface is mobile‑friendly and includes a LuCI‑style loading spinner during the renew process, giving immediate visual feedback while the nftables entry is created. All operations are atomic and safe even when multiple devices renew access in parallel.
 
-**Temporary DNS Bridging (Zero‑Downtime during DNS Restarts)**  
+**Temporary DNS Bridging (Zero‑Downtime during DNS Restarts)**
 Adblock can optionally enable a temporary DNS bridging mode to avoid DNS downtime during DNS backend restarts.
-When this feature is enabled, all DNS queries from LAN clients are briefly redirected to an external fallback resolver until the local DNS backend becomes available again. This ensures that DNS resolution continues to work seamlessly for all clients, even while adblock reloads blocklists or restarts the DNS service. Just set the options 'adb_nftbridge', 'adb_bridgednsv4' and 'adb_bridgednsv6' accordingly.   
+When this feature is enabled, all DNS queries from LAN clients are briefly redirected to an external fallback resolver until the local DNS backend becomes available again. This ensures that DNS resolution continues to work seamlessly for all clients, even while adblock reloads blocklists or restarts the DNS service. Just set the options 'adb_nftbridge', 'adb_bridgednsv4' and 'adb_bridgednsv6' accordingly.
 
-**Jail mode (allowlist-only):**  
-Enforces a strict allowlist‑only DNS policy in which only domains listed in the allowlist file are resolved, while every other query is rejected. This mode is intended for highly restrictive environments and depends on a carefully maintained allowlist, typically managed manually.  
+**Jail mode (allowlist-only):**
+Enforces a strict allowlist‑only DNS policy in which only domains listed in the allowlist file are resolved, while every other query is rejected. This mode is intended for highly restrictive environments and depends on a carefully maintained allowlist, typically managed manually.
 
-**Enable E-Mail notification via 'msmtp':**  
+**Enable E-Mail notification via 'msmtp':**
 To use the email notification you have to install & configure the package 'msmtp'.
 Modify the file '/etc/msmtprc':
 <pre><code>
@@ -343,7 +343,7 @@ password        xxx
 </code></pre>
 Finally enable E-Mail support, add a valid E-Mail receiver address in LuCI and setup an appropriate cron job.
 
-**Automatic adblock feed updates and E-Mail reports**  
+**Automatic adblock feed updates and E-Mail reports**
 For a regular, automatic update of the used feeds or other regular adblock tasks set up a cron job. In LuCI you find the cron settings under 'System' => 'Scheduled Tasks'. On the command line the cron file is located at '/etc/crontabs/root':
 
 Example 1
@@ -364,8 +364,8 @@ Example 3
 00 03 * * * /etc/init.d/adblock report mail
 ```
 
-**Change/add adblock feeds**  
-The adblock blocklist feeds are stored in an external JSON file '/etc/adblock/adblock.feeds'. All custom changes should be stored in an external JSON file '/etc/adblock/adblock.custom.feeds' (empty by default). It's recommended to use the LuCI based Custom Feed Editor to make changes to this file.  
+**Change/add adblock feeds**
+The adblock blocklist feeds are stored in an external JSON file '/etc/adblock/adblock.feeds'. All custom changes should be stored in an external JSON file '/etc/adblock/adblock.custom.feeds' (empty by default). It's recommended to use the LuCI based Custom Feed Editor to make changes to this file.
 A valid JSON source object contains the following information, e.g.:
 
 ```json
@@ -379,23 +379,23 @@ A valid JSON source object contains the following information, e.g.:
 	[...]
 ```
 
-Add a unique feed name (no spaces, no special chars) and make the required changes: adapt at least the URL, check/change the rule, the size and the description for a new feed.  
+Add a unique feed name (no spaces, no special chars) and make the required changes: adapt at least the URL, check/change the rule, the size and the description for a new feed.
 The rule consist of max. 4 individual, space separated parameters:
 1. type: always 'feed' (required)
 2. prefix: an optional search term (a string literal, no regex) to identify valid domain list entries, e.g. '0.0.0.0'
 3. column: the domain column within the feed file, e.g. '2' (required)
 4. separator: an optional field separator, default is the character class '[[:space:]]'
 
-**Enable debug mode**  
-Adblock provides an optional debug mode that writes diagnostic information to the system log and captures internal error output in a dedicated error logfile - by default located in the adblock base directory as '/tmp/adb_error.log'. The log file is automatically cleared at the beginning of each run. Under normal conditions, all error messages are discarded to keep regular runs clean and silent. To enable debug mode, set the option 'adb_debug' to '1'. When enabled, the script produces significantly more log output to assist with troubleshooting.  
+**Enable debug mode**
+Adblock provides an optional debug mode that writes diagnostic information to the system log and captures internal error output in a dedicated error logfile - by default located in the adblock base directory as '/tmp/adb_error.log'. The log file is automatically cleared at the beginning of each run. Under normal conditions, all error messages are discarded to keep regular runs clean and silent. To enable debug mode, set the option 'adb_debug' to '1'. When enabled, the script produces significantly more log output to assist with troubleshooting.
 
-## Support  
+## Support
 Please join the adblock discussion in this [forum thread](https://forum.openwrt.org/t/adblock-support-thread/507) or contact me by mail <dev@brenken.org>
 
-## Removal  
+## Removal
 Stop all adblock related services with _/etc/init.d/adblock stop_ and remove the adblock package if necessary.
 
-## Donations  
+## Donations
 You like this project - is there a way to donate? Generally speaking "No" - I have a well-paying full-time job and my OpenWrt projects are just a hobby of mine in my spare time.
 
 If you still insist to donate some bucks ...

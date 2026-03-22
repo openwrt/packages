@@ -10,7 +10,7 @@ USE_PROCD=1
 
 extra_command "suspend" "Suspend adblock processing"
 extra_command "resume" "Resume adblock processing"
-extra_command "query" "<domain> Query active blocklists and backups for a specific domain"
+extra_command "search" "<domain> Search active blocklists and backups for a specific domain"
 extra_command "report" "[<cli>|<mail>|<gen>|<json>] Print DNS statistics"
 
 adb_init="/etc/init.d/adblock"
@@ -23,7 +23,7 @@ if [ -z "${IPKG_INSTROOT}" ]; then
 	elif [ -s "${adb_pidfile}" ] &&
 		{ [ "${action}" = "start" ] || [ "${action}" = "stop" ] || [ "${action}" = "restart" ] ||
 		[ "${action}" = "reload" ] || [ "${action}" = "report" ] || [ "${action}" = "suspend" ] ||
-		[ "${action}" = "resume" ] || [ "${action}" = "query" ]; }; then
+		[ "${action}" = "resume" ] || [ "${action}" = "search" ]; }; then
 		exit 1
 	fi
 fi
@@ -69,8 +69,8 @@ resume() {
 	rc_procd start_service resume
 }
 
-query() {
-	rc_procd "${adb_script}" query "${1}"
+search() {
+	rc_procd "${adb_script}" search "${1}"
 }
 
 report() {
