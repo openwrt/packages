@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpremote
-PKG_VERSION:=1.21.0
+PKG_VERSION:=1.27.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=mpremote
-PKG_HASH:=65bc94511f6ff499e901ab59462a5f0744ff7e2cf71d8c75700d14a89c54ed61
+PKG_HASH:=6bb75774648091dad6833af4f86c5bf6505f8d7aec211380f9e6996c01d23cb5
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
@@ -29,7 +29,7 @@ define Package/mpremote
   CATEGORY:=Utilities
   TITLE:=Interacting remotely with MicroPython devices
   URL:=https://github.com/micropython/micropython
-  DEPENDS:=+python3-light +python3-urllib +python3-pyserial
+  DEPENDS:=+python3-light +python3-urllib +python3-pyserial +python3-platformdirs
 endef
 
 define Package/mpremote/description
