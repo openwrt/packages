@@ -8,11 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pyopenssl
-PKG_VERSION:=23.3.0
+PKG_VERSION:=26.0.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=pyOpenSSL
-PKG_HASH:=6b2cba5cc46e822750ec3e5a81ee12819850b11303630d575e98108a079c2b12
+PYPI_SOURCE_NAME:=pyopenssl
+PKG_HASH:=f293934e52936f2e3413b89c6ce36df66a0b34ae1ea3a053b8c5020ff2f513fc
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
@@ -32,7 +33,8 @@ define Package/python3-pyopenssl
   DEPENDS:= \
       +python3-light \
       +python3-openssl \
-      +python3-cryptography
+      +python3-cryptography \
+      +python3-typing-extensions
 endef
 
 define Package/python3-pyopenssl/description
