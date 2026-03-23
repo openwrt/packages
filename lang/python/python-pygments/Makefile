@@ -1,0 +1,40 @@
+# This is free software, licensed under the GNU General Public License v2.
+# See /LICENSE for more information.
+#
+
+include $(TOPDIR)/rules.mk
+
+PKG_NAME:=python-pygments
+PKG_VERSION:=2.19.2
+PKG_RELEASE:=1
+
+PYPI_NAME:=pygments
+PKG_HASH:=636cb2477cec7f8952536970bc533bc43743542f70392ae026374600add5b887
+
+PKG_LICENSE:=BSD-2-Clause
+PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:pygments:pygments
+
+PKG_BUILD_DEPENDS:=python-hatchling/host
+
+include ../pypi.mk
+include $(INCLUDE_DIR)/package.mk
+include ../python3-package.mk
+
+define Package/python3-pygments
+  SECTION:=lang
+  CATEGORY:=Languages
+  SUBMENU:=Python
+  TITLE:=Pygments syntax highlighter
+  URL:=https://pygments.org/
+  DEPENDS:=+python3-light +python3-email
+endef
+
+define Package/python3-pygments/description
+  Pygments is a syntax highlighting library written in Python.
+  It supports over 500 languages and text formats.
+endef
+
+$(eval $(call Py3Package,python3-pygments))
+$(eval $(call BuildPackage,python3-pygments))
+$(eval $(call BuildPackage,python3-pygments-src))
