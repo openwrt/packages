@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
 PKG_VERSION:=6.1.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ffmpeg.org/releases/
@@ -240,6 +240,8 @@ define Package/ffmpeg/Default/description
  FFmpeg licensing / patent issues are complex. It is the responsibility of the
  user to understand any requirements in this regard with its usage. See:
  https://ffmpeg.org/legal.html for further information.
+
+ Patented codecs and technologies are available when CONFIG_BUILD_PATENTED=y.
 endef
 
 
@@ -339,7 +341,7 @@ endef
 define Package/libffmpeg-audio-dec/description
 $(call Package/ffmpeg/Default/description)
  .
- This package contains FFmpeg shared libraries for audio decoding
+ This package contains FFmpeg shared libraries for audio decoding.
 endef
 
 

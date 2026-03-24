@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=micropython
-PKG_VERSION:=1.23.0
+PKG_VERSION:=1.27.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/micropython/micropython/releases/download/v$(PKG_VERSION)
-PKG_HASH:=0ab283c2fc98d466c1ff26692bee46abaeeab55d488a36fc3cb6372cb8fb390d
+PKG_HASH:=9874b20646c3bbe81d524f779a16875e5d088b7065e175ffd2aa2a02f50573c9
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT
@@ -86,6 +86,13 @@ endif
 ifeq ($(ARCH),riscv64)
   MAKE_FLAGS += CFLAGS_EXTRA=-Wno-error=clobbered
 endif
+
+TARGET_CFLAGS += \
+	-DMBEDTLS_CONFIG_FILE=\\\"mbedtls/build_info.h\\\"
+
+# FIXME: remove this asap; this fixes some build issues with mbedtls from OpenWrt
+TARGET_CFLAGS += \
+	-Wno-error=implicit-function-declaration
 
 MAKE_PATH = ports/unix
 

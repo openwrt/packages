@@ -3,13 +3,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=snapcast
-PKG_VERSION:=0.34.0
+PKG_VERSION:=0.35.0
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/snapcast/snapcast.git
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_MIRROR_HASH=b47c44e208708cbfd6fb89b5874ed05ffa165b959904ccc11b03073bf9b55b0a
+PKG_MIRROR_HASH=b21791cda7f0b403b45401ea3c8b742013d81b5f7fff524bf93365db92320140
 
 PKG_MAINTAINER:=Szabolcs Hubai <szab.hu@gmail.com>, David Andreoletti <david@andreoletti.net>
 PKG_LICENSE:=GPL-3.0-or-later

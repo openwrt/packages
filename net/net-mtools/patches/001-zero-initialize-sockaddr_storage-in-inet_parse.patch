@@ -1,0 +1,38 @@
+From 96de688226f20dbd3ba1c6e5f711655e13332c08 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Sat, 21 Mar 2026 14:16:17 +0000
+Subject: [PATCH] Zero-initialize sockaddr_storage in inet_parse()
+
+inet_parse() only sets sin6_family, sin6_addr, and sin6_port, leaving
+sin6_scope_id and sin6_flowinfo uninitialized. When the caller's
+inet_addr_t is on the stack, these fields contain garbage which the
+kernel may interpret - e.g., a non-zero sin6_scope_id causes bind() to
+fail with ENODEV when the garbage value doesn't match any interface
+index.
+
+Zero the entire struct before populating it.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ inet.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+--- a/inet.c
++++ b/inet.c
+@@ -3,6 +3,7 @@
+  */
+ 
+ #include <errno.h>
++#include <string.h>
+ #include <arpa/inet.h>
+ 
+ #include "inet.h"
+@@ -54,6 +55,8 @@ int inet_parse(inet_addr_t *ina, const c
+ 		return -1;
+ 	}
+ 
++	memset(ina, 0, sizeof(*ina));
++
+ 	if (inet_pton(AF_INET6, address, &sin6->sin6_addr) > 0) {
+ 		sin6->sin6_family = AF_INET6;
+ 		sin6->sin6_port = htons(port);

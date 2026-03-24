@@ -8,15 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-bidict
-PKG_VERSION:=0.22.1
+PKG_VERSION:=0.23.1
 PKG_RELEASE:=1
 
 PYPI_NAME:=bidict
-PKG_HASH:=1e0f7f74e4860e6d0943a05d4134c63a2fad86f3d4732fb265bd79e4e856d81d
+PKG_HASH:=03069d763bc387bbd20e7d49914e75fc4132a41937fa3405417e1a5a2d006d71
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MPL-2.0
 PKG_LICENSE_FILES:=LICENSE
+
+PKG_BUILD_DEPENDS:=python-setuptools/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

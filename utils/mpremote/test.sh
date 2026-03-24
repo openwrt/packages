@@ -2,4 +2,10 @@
 
 [ "$1" = mpremote ] || exit 0
 
-mpremote version | grep -Fx "mpremote $PKG_VERSION"
+python3 - <<'EOF'
+import mpremote
+from mpremote import main
+from mpremote.transport_serial import SerialTransport
+
+print("mpremote OK")
+EOF

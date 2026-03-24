@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-attrs
-PKG_VERSION:=23.1.0
+PKG_VERSION:=26.1.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=attrs
-PKG_HASH:=6279836d581513a26f1bf235f9acd333bc9115683f14f7e8fae46c98fc50e015
+PKG_HASH:=d03ceb89cb322a8fd706d4fb91940737b6642aa36998fe130a9bc96c985eff32
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
@@ -30,7 +30,7 @@ define Package/python3-attrs
   SUBMENU:=Python
   TITLE:=Classes Without Boilerplate
   URL:=https://www.attrs.org/
-  DEPENDS:=+python3-light
+  DEPENDS:=+python3-light +python3-codecs
 endef
 
 define Package/python3-attrs/description
