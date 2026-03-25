@@ -62,7 +62,7 @@ option_builder() {
 						json_get_keys keys
 						for key in $keys; do
 							json_get_var val "$key"
-							append exec_params "--${f//_/-} \"$val\""
+							append exec_params "--${f//_/-} $val"
 						done
 						json_select ..
 						;;
