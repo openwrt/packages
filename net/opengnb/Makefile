@@ -1,14 +1,21 @@
+#
+# Copyright 2026 Charles Chan <hollidgelongsun157@gmail.com>
+#
+# This is free software, licensed under the GNU General Public License v3.0-or-later
+# See /LICENSE for more information.
+#
+
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=opengnb
-PKG_VERSION:=1.6.3
+PKG_VERSION:=1.6.4
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/opengnb/opengnb/archive/refs/tags/ver$(PKG_VERSION).tar.gz?
-PKG_HASH:=218dcb7c52a734f5819c965ee54b87544c811712c1f467790bde7e83818b9f5a
+PKG_SOURCE:=$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://github.com/opengnb/opengnb/archive/refs/tags/
+PKG_HASH:=227be9cee64b4e4250273e8ad4440e7213b7ef511f8a813948e5132f1cc4a3b2
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-ver$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_MAINTAINER:= Charles Chan <hollidgelongsun157@gmail.com>
 PKG_LICENSE:= GPL-3.0-or-later
@@ -22,7 +29,7 @@ define Package/opengnb
   SUBMENU:=VPN
   TITLE:=OpenGNB - P2P Decentralized Virtual Network
   URL:=https://github.com/opengnb/opengnb
-  DEPENDS:=+libpthread +kmod-tun
+  DEPENDS:=+libpthread +kmod-tun +zlib +miniupnpc +libnatpmp
 endef
 
 define Package/opengnb/description
@@ -31,11 +38,11 @@ define Package/opengnb/description
 endef
 
 define Build/Compile
-	$(MAKE) -C $(PKG_BUILD_DIR) \
+	$(MAKE) -C $(PKG_BUILD_DIR)      \
 		$(TARGET_CONFIGURE_OPTS) \
-		CFLAGS="$(TARGET_CFLAGS) -I. -I./src -I./libs -I./libs/miniupnpc -I./libs/libnatpmp -I./libs/zlib -D_GNU_SOURCE -DNO_GZIP=1 -DGNB_OPENWRT_BUILD=1" \
-		LDFLAGS="$(TARGET_LDFLAGS) -pthread" \
-		-f Makefile.openwrt \
+		CFLAGS="$(TARGET_CFLAGS) -I. -I./src -I./libs -I$(STAGING_DIR)/usr/include -I$(STAGING_DIR)/usr/include/miniupnpc -D_GNU_SOURCE -DNO_GZIP=1 -DGNB_OPENWRT_BUILD=1" \
+		LDFLAGS="$(TARGET_LDFLAGS) -L$(STAGING_DIR)/usr/lib -lz -lminiupnpc -lnatpmp -pthread" \
+		-f Makefile.openwrt      \
 		all
 endef
 
