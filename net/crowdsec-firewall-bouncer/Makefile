@@ -88,7 +88,7 @@ define Package/crowdsec-firewall-bouncer/install
 endef
 
 define Package/crowdsec-firewall-bouncer/conffiles
-/etc/config/crowdsec
+/etc/config/crowdsec-firewall-bouncer
 endef
 
 $(eval $(call GoBinPackage,crowdsec-firewall-bouncer))
