@@ -23,9 +23,8 @@ option_builder() {
 
 	for f in $(eval echo \$"$list_var")
 	do
-		f=${f%%:*}
-
 		if [ "$action" = "add" ]; then
+			f=${f%%:*}
 			case "$opt_type" in
 				bool) proto_config_add_boolean "$f:bool" ;;
 				protobool) proto_config_add_boolean "$f:protobool" ;;
@@ -38,6 +37,7 @@ option_builder() {
 			esac
 		elif [ "$action" = "build" ]; then
 			[ "${f#*:}" = "d" ] && [ "$ALLOW_DEPRECATED" = 0 ] && continue
+			f=${f%%:*}
 			case "$opt_type" in
 				bool)
 					json_get_var v "$f"
@@ -45,12 +45,19 @@ option_builder() {
 					;;
 				uinteger|integer|string)
 					json_get_var v "$f"
-					[ -n "$v" ] && append exec_params "--${f//_/-} $v"
+					case $f in
+						push_remove)
+							[ -n "$v" ] && append exec_params "--${f//_/-} '$v'"
+						;;
+						*)
+							[ -n "$v" ] && append exec_params "--${f//_/-} $v"
+						;;
+					esac
 					;;
 				file)
 					json_get_var v "$f"
 					[ -f "$v" ] || continue
-					[ -n "$v" ] && append exec_params "--${f//_/-} \"$v\""
+					[ -n "$v" ] && append exec_params "--${f//_/-} '$v'"
 					;;
 				list)
 					local type
@@ -62,7 +69,14 @@ option_builder() {
 						json_get_keys keys
 						for key in $keys; do
 							json_get_var val "$key"
-							append exec_params "--${f//_/-} \"$val\""
+							case $f in
+								push)
+									append exec_params "--${f//_/-} '$val'"
+								;;
+								*)
+									append exec_params "--${f//_/-} $val"
+								;;
+							esac
 						done
 						json_select ..
 						;;
