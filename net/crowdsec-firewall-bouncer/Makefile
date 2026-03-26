@@ -81,7 +81,7 @@ define Package/crowdsec-firewall-bouncer/install
 	$(call GoPackage/Package/Install/Bin,$(1))
 
 	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_CONF) ./files/crowdsec.config $(1)/etc/config/crowdsec
+	$(INSTALL_CONF) ./files/crowdsec-firewall-bouncer.config $(1)/etc/config/crowdsec-firewall-bouncer
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/crowdsec-firewall-bouncer.initd $(1)/etc/init.d/crowdsec-firewall-bouncer
