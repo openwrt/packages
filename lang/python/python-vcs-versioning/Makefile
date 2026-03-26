@@ -22,6 +22,7 @@ PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_HOST_ONLY:=1
 HOST_BUILD_DEPENDS:= \
 	python3/host \
+	python-build/host \
 	python-hatchling/host \
 	python-installer/host \
 	python-packaging/host \
