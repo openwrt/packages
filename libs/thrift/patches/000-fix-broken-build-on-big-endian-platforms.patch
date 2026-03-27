@@ -1,0 +1,23 @@
+From b7a1d8b1c5ffe09a9da77d4cf4dd613fee2718b6 Mon Sep 17 00:00:00 2001
+From: Patrick Gansterer <paroga@paroga.com>
+Date: Thu, 5 Jun 2025 16:56:38 +0200
+Subject: [PATCH] FIX broken build on big endian platforms
+
+Client: cpp
+Patch: Patrick Gansterer
+
+This closes #3162
+
+--- a/lib/cpp/src/thrift/protocol/TProtocol.h
++++ b/lib/cpp/src/thrift/protocol/TProtocol.h
+@@ -170,8 +170,8 @@ static inline To bitwise_cast(From from)
+       | (((n) & 0x0000ff00ul) << 8)  \
+       | (((n) & 0x000000fful) << 24) )
+ #  define bswap_16(n) \
+-      ( (((n) & (static_cast<unsigned short>(0xff00ul)) >> 8)  \
+-      | (((n) & (static_cast<unsigned short>(0x00fful)) << 8)  )
++      ( (((n) & static_cast<unsigned short>(0xff00ul)) >> 8)  \
++      | (((n) & static_cast<unsigned short>(0x00fful)) << 8)  )
+ #  define THRIFT_htolell(n) bswap_64(n)
+ #  define THRIFT_letohll(n) bswap_64(n)
+ #  define THRIFT_htolel(n) bswap_32(n)
