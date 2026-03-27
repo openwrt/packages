@@ -1,0 +1,256 @@
+#!/bin/sh
+
+log() {
+	logger -s -p "${2:-daemon.notice}" -t "upnpd" "$1" || echo "upnpd: $1" >&2
+}
+
+# Skip migration with existing settings (v2.0) or with no config (v1.0) UCI section
+# Enables the creation of a merged v1.0/v2.0 config file
+{ uci -q get upnpd.settings >/dev/null || ! uci -q get upnpd.config >/dev/null; } && exit 0
+
+log "Check UCI options in /etc/config/upnpd to be migrated to v2.0"
+cp /etc/config/upnpd /tmp
+
+# Set missing enabled option to fix previously different defaults in LuCI/config (0) and init UCI (1)
+if ! uci -q get upnpd.config.enabled >/dev/null; then
+	uci -q set upnpd.config.enabled="1"
+fi
+
+# Migrate boolean options to only use 0/1 for LuCI support
+for option in enabled ipv6_disable system_uptime; do
+	if uci -q get upnpd.config.$option >/dev/null; then
+		uci get upnpd.config.$option | grep -q -E -x "0|off|false|no|disabled" && uci set upnpd.config.$option="0"
+		uci get upnpd.config.$option | grep -q -E -x "1|on|true|yes|enabled" && uci set upnpd.config.$option="1"
+	fi
+done
+
+# Migrate enable_upnp/enable_natpmp -> enable_protocols: Combined option
+if uci -q get upnpd.config.enable_upnp >/dev/null || uci -q get upnpd.config.enable_natpmp >/dev/null; then
+	log "enable_upnp/enable_natpmp -> enable_protocols: Combined option"
+	if ! uci -q get upnpd.config.enable_upnp | grep -q -E -x "0|off|false|no|disabled"; then
+		uci -q get upnpd.config.enable_natpmp | grep -q -E -x "0|off|false|no|disabled" &&
+			uci set upnpd.config.enable_protocols="upnp-igd" ||
+			uci set upnpd.config.enable_protocols="all"
+	elif ! uci -q get upnpd.config.enable_natpmp | grep -q -E -x "0|off|false|no|disabled"; then
+		uci set upnpd.config.enable_protocols="pcp+nat-pmp"
+	else
+		uci set upnpd.config.enable_protocols="all"
+		uci set upnpd.config.enabled="0"
+	fi
+	uci -q delete upnpd.config.enable_upnp
+	uci -q delete upnpd.config.enable_natpmp
+fi
+
+# Rename use_stun -> allow_cgnat
+if uci -q get upnpd.config.use_stun >/dev/null; then
+	log "use_stun -> allow_cgnat"
+	uci rename upnpd.config.use_stun="allow_cgnat"
+fi
+
+# Migrate force_forwarding=1 (in X-Wrt since 2021) to new similar option allow_cgnat=allow-filtered for cross-upgrades
+if uci -q get upnpd.config.force_forwarding >/dev/null; then
+	log "force_forwarding=1 -> allow_cgnat=allow-filtered: New daemon option"
+	uci get upnpd.config.force_forwarding | grep -q -E -x "1|on|true|yes|enabled" &&
+		uci set upnpd.config.allow_cgnat="allow-filtered"
+	uci delete upnpd.config.force_forwarding
+fi
+
+# Remove known incompatible (not CGNAT filtering test capable) STUN servers and include stun_port in stun_host
+if uci -q get upnpd.config.stun_host | grep -q -E "stun[0-9]?.l.google.com|stun.cloudflare.com"; then
+	log "stun_host: Incompatible STUN server ($(uci -q get upnpd.config.stun_host)) found, remove to set default"
+	uci delete upnpd.config.stun_host
+	uci -q delete upnpd.config.stun_port
+elif uci -q get upnpd.config.stun_port >/dev/null; then
+	uci -q get upnpd.config.stun_host >/dev/null && [ "$(uci -q get upnpd.config.stun_port)" != "3478" ] &&
+		log "stun_port: Include stun_port in stun_host, and remove option" &&
+		uci set upnpd.config.stun_host="$(uci -q get upnpd.config.stun_host | cut -d ":" -f 1):$(uci -q get upnpd.config.stun_port)"
+	uci delete upnpd.config.stun_port
+fi
+
+# Migrate secure_mode=1/0 -> allow_third_party_mapping=0/upnp-igd: Invert/extend to PCP
+if uci -q get upnpd.config.secure_mode >/dev/null; then
+	log "secure_mode=1/0 -> allow_third_party_mapping=0/upnp-igd: Invert/ex PCP"
+	uci get upnpd.config.secure_mode | grep -q -E -x "0|off|false|no|disabled" &&
+		uci set upnpd.config.allow_third_party_mapping="upnp-igd" ||
+		uci set upnpd.config.allow_third_party_mapping="0"
+	uci delete upnpd.config.secure_mode
+fi
+
+# Migrate log_output=0/1 -> log_output=default/debug: Now info also allowed
+if uci -q get upnpd.config.log_output >/dev/null; then
+	log "log_output=0/1 -> log_output=default/debug: Now info also allowed"
+	uci get upnpd.config.log_output | grep -q -E -x "1|on|true|yes|enabled" &&
+		uci set upnpd.config.log_output="debug"
+	uci get upnpd.config.log_output | grep -q -E -x "0|off|false|no|disabled" &&
+		uci set upnpd.config.log_output="default"
+fi
+
+# Rename upnp_lease_file -> lease_file: To original daemon name, and remove if UCI default set
+if uci -q get upnpd.config.upnp_lease_file >/dev/null; then
+	if [ "$(uci -q get upnpd.config.upnp_lease_file)" = "/var/run/miniupnpd.leases" ]; then
+		log "upnp_lease_file -> lease_file: Remove option as UCI default set"
+		uci delete upnpd.config.upnp_lease_file
+	else
+		log "upnp_lease_file -> lease_file"
+		uci rename upnpd.config.upnp_lease_file="lease_file"
+	fi
+fi
+if uci -q get upnpd.config.upnp_lease_file6 >/dev/null; then
+	uci delete upnpd.config.upnp_lease_file6
+fi
+
+# Migrate igdv1=1/0 -> upnp_igd_compat=igdv1/igdv2: Extensible/clearer
+if uci -q get upnpd.config.igdv1 >/dev/null; then
+	log "igdv1=1/0 -> upnp_igd_compat=igdv1/igdv2"
+	uci get upnpd.config.igdv1 | grep -q -E -x "1|on|true|yes|enabled" &&
+		uci set upnpd.config.upnp_igd_compat="igdv1" ||
+		uci set upnpd.config.upnp_igd_compat="igdv2"
+	uci delete upnpd.config.igdv1
+fi
+
+# Migrate download/upload -> download_kbps/upload_kbps: Convert to kbit/s
+if uci -q get upnpd.config.download >/dev/null; then
+	download="$(uci -q get upnpd.config.download)"
+	if [ "$download" != "1024" ] && [ "$download" -ge "1" ] 2>/dev/null; then
+		log "download -> download_kbps: Convert to kbit/s"
+		download_kbps="$((download * 8 * 1000 / 1024))"
+		uci set upnpd.config.download_kbps="$download_kbps"
+	fi
+	uci delete upnpd.config.download
+fi
+if uci -q get upnpd.config.upload >/dev/null; then
+	upload="$(uci -q get upnpd.config.upload)"
+	if [ "$upload" != "512" ] && [ "$upload" -ge "1" ] 2>/dev/null; then
+		log "upload -> upload_kbps: Convert to kbit/s"
+		upload_kbps="$((upload * 8 * 1000 / 1024))"
+		uci set upnpd.config.upload_kbps="$upload_kbps"
+	fi
+	uci delete upnpd.config.upload
+fi
+
+# Rename port -> http_port: Remove if UCI default set
+if uci -q get upnpd.config.port >/dev/null; then
+	if [ "$(uci -q get upnpd.config.port)" = "5000" ]; then
+		log "port -> http_port: Remove option as UCI default set"
+		uci delete upnpd.config.port
+	else
+		log "port -> http_port"
+		uci rename upnpd.config.port="http_port"
+	fi
+fi
+
+# Migrate notify_interval <= 900 s: Remove to set minimum of 900 (default)
+if [ "$(uci -q get upnpd.config.notify_interval)" -le "900" ] 2>/dev/null; then
+	log "notify_interval <= 900 s: Remove to set minimum of 900 (default)"
+	uci delete upnpd.config.notify_interval
+fi
+
+# Migrate ACL to new section, note that an empty ACL is now rejected alone
+# a) Empty/unmodified ACL: Enable appropriate preset, add/update template entries
+# b) Modified ACL:
+#    - Add missing entry action to avoid adding inverted actions when changing via LuCI
+#    - Update entry action allow/deny -> accept/reject
+#    - Update entry port options to only use the LuCI (and daemon) supported hyphen (-) as port range separator
+#    - Not using a preset, add template entries
+if uci -q get upnpd.@acl_entry[0] >/dev/null; then
+	log "Error migrating ACL, as the new UCI section already exists" daemon.err
+elif ! uci -q get upnpd.@perm_rule[0] >/dev/null; then
+	log "Empty ACL: Enable preset, add templates, empty ACL now rejected alone"
+	access_preset=accept-all-ports
+	ignore_acl=1
+	addtemplateentries=1
+elif ! uci -q get upnpd.@perm_rule[2] >/dev/null &&
+	[ "$(uci -q get upnpd.@perm_rule[0].int_addr)" = "0.0.0.0/0" ] &&
+	[ "$(uci -q get upnpd.@perm_rule[0].int_ports)" = "1024-65535" ] &&
+	[ "$(uci -q get upnpd.@perm_rule[0].ext_ports)" = "1024-65535" ] &&
+	[ "$(uci -q get upnpd.@perm_rule[0].action)" = "allow" ] &&
+	[ "$(uci -q get upnpd.@perm_rule[1].int_addr)" = "0.0.0.0/0" ] &&
+	[ "$(uci -q get upnpd.@perm_rule[1].int_ports)" = "0-65535" ] &&
+	[ "$(uci -q get upnpd.@perm_rule[1].ext_ports)" = "0-65535" ] &&
+	[ "$(uci -q get upnpd.@perm_rule[1].action)" = "deny" ]; then
+	log "Unmodified ACL: Enable preset, update templates, empty ACL rejected"
+	access_preset=accept-high-ports
+	ignore_acl=1
+	addtemplateentries=1
+	uci delete upnpd.@perm_rule[-1]
+	uci delete upnpd.@perm_rule[-1]
+else
+	log "Modified ACL: Migrate entries/section, empty ACL now rejected alone"
+	addtemplateentries=1
+	entrynr=0
+	while uci -q get upnpd.@perm_rule[$entrynr] >/dev/null; do
+		comment="$(uci -q get upnpd.@perm_rule[$entrynr].comment)"
+		int_addr="$(uci -q get upnpd.@perm_rule[$entrynr].int_addr)"
+		int_port="$(uci -q get upnpd.@perm_rule[$entrynr].int_ports)"
+		ext_port="$(uci -q get upnpd.@perm_rule[$entrynr].ext_ports)"
+		action="$(uci -q get upnpd.@perm_rule[$entrynr].action)"
+		echo "$int_port" | grep -q ":" &&
+			log "ACL entry: Update int_port to use hyphen (-) as port range separator" &&
+			int_port="$(echo "$int_port" | tr ":" "-")"
+		echo "$ext_port" | grep -q ":" &&
+			log "ACL entry: Update ext_port to use hyphen (-) as port range separator" &&
+			ext_port="$(echo "$ext_port" | tr ":" "-")"
+		[ "$action" = "" ] && log "ACL entry: Add missing action option" && action=reject
+		[ "$action" = "allow" ] && action=accept
+		[ "$action" = "deny" ] && action=reject
+		uci batch >/dev/null <<-EOF
+			add upnpd acl_entry
+			set upnpd.@acl_entry[-1].comment="${comment:-unspecified}"
+			set upnpd.@acl_entry[-1].int_addr="${int_addr:-0.0.0.0/0}"
+			set upnpd.@acl_entry[-1].int_port="$int_port"
+			set upnpd.@acl_entry[-1].ext_port="$ext_port"
+			set upnpd.@acl_entry[-1].action="$action"
+		EOF
+		entrynr=$((entrynr + 1))
+	done
+	if [ "${int_addr:-0.0.0.0/0}" = "0.0.0.0/0" ] && [ "${int_port:-0-65535}" = "0-65535" ] &&
+		[ "${ext_port:-0-65535}" = "0-65535" ] && [ "$action" = "reject" ]; then
+		log "ACL entry: Remove no longer useful reject by default entry"
+		uci delete upnpd.@acl_entry[-1]
+	fi
+	while uci -q delete upnpd.@perm_rule[-1]; do :; done
+fi
+if [ "$addtemplateentries" = "1" ]; then
+	uci batch >/dev/null <<-EOF
+		add upnpd acl_entry
+		add upnpd acl_entry
+		set upnpd.@acl_entry[-2].comment="High ports"
+		set upnpd.@acl_entry[-2].int_addr="0.0.0.0/0"
+		set upnpd.@acl_entry[-2].int_port="1024-65535"
+		set upnpd.@acl_entry[-2].ext_port="1024-65535"
+		set upnpd.@acl_entry[-2].action="ignore"
+		set upnpd.@acl_entry[-1].comment="Low/system ports"
+		set upnpd.@acl_entry[-1].int_addr="0.0.0.0/0"
+		set upnpd.@acl_entry[-1].int_port="1-1023"
+		set upnpd.@acl_entry[-1].ext_port="1-1023"
+		set upnpd.@acl_entry[-1].action="ignore"
+	EOF
+	uci -q get upnpd.@acl_entry[-3] >/dev/null &&
+		uci reorder upnpd.@acl_entry[-2]=0 && uci reorder upnpd.@acl_entry[-1]=1
+fi
+
+# Migrate internal_iface option to new internal_network section
+if ! uci -q get upnpd.@internal_network[0] >/dev/null; then
+	ifnr=0
+	for interface in $(uci -q get upnpd.config.internal_iface || echo lan); do
+		log "Create new internal_network section for $interface"
+		uci add upnpd internal_network >/dev/null
+		uci set upnpd.@internal_network[$ifnr].interface="$interface"
+		[ "$access_preset" != "" ] && uci set upnpd.@internal_network[$ifnr].access_preset="$access_preset"
+		[ "$ignore_acl" = "1" ] && uci set upnpd.@internal_network[$ifnr].ignore_acl="1"
+		ifnr=$((ifnr + 1))
+	done
+	uci -q delete upnpd.config.internal_iface
+fi
+
+# Rename UCI section config -> settings (v2.0)
+if uci -q get upnpd.config >/dev/null; then
+	log "Rename UCI section config -> settings (v2.0)" && uci rename upnpd.config="settings" ||
+		log "Error renaming the UCI section" daemon.err
+fi
+
+uci commit upnpd >/dev/null
+
+log "Previous v1.0 config file was copied to /tmp/upnpd (until next reboot)"
+
+exit 0
