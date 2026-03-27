@@ -5,7 +5,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adblock-fast
 PKG_VERSION:=1.2.2
-PKG_RELEASE:=14
+PKG_RELEASE:=16
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.ca>
 PKG_LICENSE:=AGPL-3.0-or-later
 
@@ -24,6 +24,7 @@ define Package/adblock-fast
 	+ucode-mod-fs \
 	+ucode-mod-uci \
 	+ucode-mod-ubus \
+	+ucode-mod-uloop \
 	+!BUSYBOX_DEFAULT_AWK:gawk \
 	+!BUSYBOX_DEFAULT_GREP:grep \
 	+!BUSYBOX_DEFAULT_SED:sed \
