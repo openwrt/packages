@@ -102,7 +102,7 @@ start_proxy() {
 	proxy_atom "$1" Group
 	proxy_atom "$1" Port 8888
 	proxy_atom "$1" Listen
-	proxy_atom "$1" Bind
+	proxy_list "$1" Bind
 	proxy_atom "$1" Timeout
 
 	proxy_string "$1" ErrorFile_400 "ErrorFile 400"
