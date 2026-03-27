@@ -1,23 +1,43 @@
 #config upsmon 'upsmon'
 #	option runas nutmon
-#	option minsupplies 1
-#	option shutdowncmd '/usr/sbin/nutshutdown'
-#	option notifycmd /path/to/cmd
-#	list defaultnotify SYSLOG # can be SYSLOG or EXEC or IGNORE
-#	option pollfreq 5
-#	option pollfreqalert 5
-# 	option hostsync 15
 #	option deadtime 15
+#	option finaldelay 5 # final delay
+#	option hostsync 15
+#	option minsupplies 1
+#	option nocommwarntime 300 # no communications warn time
+#	option pollfaillogthrottlemax -1
+#	option notifycmd /path/to/cmd
 #	option onlinemsg "online message"
 #	option onbattmsg "on battery message"
 #	option lowbattmsg "low battery message"
 #	option fsdmsg "forced shutdown message"
-#	option comokmsg "communications restored message"
-#	option combadmsg "communications bad message"
+#	option commokmsg "communications restored message"
+#	option commbadmsg "communications bad message"
 #	option shutdowmsg "shutdown message"
+#	option shutdowhostsyncmsg "shutdown_hostsync message"
 #	option replbattmsg "replace battery message"
 #	option nocommmsg "no communications message"
 #	option noparentmsg "no parent message"
+#	option calmsg "cal message"
+#	option notcalmsg "not cal message"
+#	option offmsg "off message"
+#	option notoffmsg "not off message"
+#	option bypassmsg "bypass message"
+#	option notbypassmsg "not bypass message"
+#	option ecomsg "eco message"
+#	option notecomsg "not eco message"
+#	option alarmmsg "alarm message"
+#	option notlarmmsg "not larm message"
+#	option overmsg "over message"
+#	option notovermsg "not over message"
+#	option trimmsg "trim message"
+#	option nottrimmsg "not trim message"
+#	option boostmsg "boost message"
+#	option notboostmsg "not boost message"
+#	option othermsg "other message"
+#	option notothermsg "not other message"
+#	option suspendstaringmsg "suspend staring message"
+#	option suspendfinishedmsg "suspend finished message"
 #	list onlinenotify SYSLOG # can be SYSLOG or EXEC or IGNORE
 #	list onbattnotify SYSLOG # can be SYSLOG or EXEC or IGNORE
 #	list lowbattnotify SYSLOG # can be SYSLOG or EXEC or IGNORE
@@ -28,14 +48,42 @@
 #	list replbattnotify SYSLOG # can be SYSLOG or EXEC or IGNORE
 #	list nocommnotify SYSLOG # can be SYSLOG or EXEC or IGNORE
 #	list noparentnotify SYSLOG # can be SYSLOG or EXEC or IGNORE
-#	option rbwarntime 4200 # replace battery warn time
-#	option nocommwarntime 300 # no communications warn time
-#	option finaldelay 5 # final delay
+#	list calnotify SYSLOG # can be SYLOG or EXEC or IGNORE
+#	list notcalnotify SYSLOG # can be SYLOG or EXEC or IGNORE
+#	list offnotify SYSLOG # can be SYLOG or EXEC or IGNORE
+#	list notoffnotify SYSLOG # can be SYLOG or EXEC or IGNORE
+#	list bypassnotify SYSLOG # can be SYLOG or EXEC or IGNORE
+#	list notbypassnotify SYSLOG # can be SYLOG or EXEC or IGNORE
+#	list econotify SYSLOG # can be SYLOG or EXEC or IGNORE
+#	list noteconotify SYSLOG # can be SYLOG or EXEC or IGNORE
+#	list alarmnotify SYSLOG # can be SYLOG or EXEC or IGNORE
+#	list notify SYSLOG # can be SYLOG or EXEC or IGNORE
+#	list overnotify SYSLOG # can be SYLOG or EXEC or IGNORE
+#	list notovernotify SYSLOG # can be SYLOG or EXEC or IGNORE
+#	list trimnotify SYSLOG # can be SYLOG or EXEC or IGNORE
+#	list nottrimnotify SYSLOG # can be SYLOG or EXEC or IGNORE
+#	list boostnotify SYSLOG # can be SYLOG or EXEC or IGNORE
+#	list notboostnotify SYSLOG # can be SYLOG or EXEC or IGNORE
+#	list othernotify SYSLOG # can be SYLOG or EXEC or IGNORE
+#	list notothernotify SYSLOG # can be SYLOG or EXEC or IGNORE
+#	list suspendstaringnotify SYSLOG # can be SYLOG or EXEC or IGNORE
+#	list suspendfinishednotify SYSLOG # can be SYLOG or EXEC or IGNORE
+#	list defaultnotify SYSLOG # can be SYSLOG or EXEC or IGNORE
+#	option pollfreq 5
+#	option pollfreqalert 5
+#	option offduration 30
+#	option overduration -1
+#	option oblbduration 0
+#	option shutdowncmd '/usr/sbin/nutshutdown'
+#	option rbwarntime 43200 # replace battery warn time
+#	option alarmcritical 1
+#	option shutdownexit 0
 #	option certpath /path/to/ca/dir
 #	option certverify 0
 #	option forcessl 0
+#	option debugmin 0
 
-#config master
+#config primary
 #	option upsname upsname
 #	option hostname localhost
 #	option port # optional port number
@@ -43,7 +91,7 @@
 #	option username upsuser
 #	option password upspassword
 
-#config slave
+#config secondary
 #	option upsname upsname
 #	option hostname localhost
 #	option port # optional port number
