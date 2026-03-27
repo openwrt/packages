@@ -88,6 +88,7 @@ sed \
 	-e "s|import { readfile, writefile, popen, stat, unlink, rename, open, glob, mkdir, mkstemp, symlink, chmod, chown, realpath, lsdir, access, dirname } from 'fs';|let _fs = require('fs'), readfile = _fs.readfile, writefile = _fs.writefile, popen = _fs.popen, stat = _fs.stat, unlink = _fs.unlink, rename = _fs.rename, open = _fs.open, glob = _fs.glob, mkdir = _fs.mkdir, mkstemp = _fs.mkstemp, symlink = _fs.symlink, chmod = _fs.chmod, chown = _fs.chown, realpath = _fs.realpath, lsdir = _fs.lsdir, access = _fs.access, dirname = _fs.dirname;|" \
 	-e "s|import { cursor } from 'uci';|let _uci = require('uci'), cursor = _uci.cursor;|" \
 	-e "s|import { connect } from 'ubus';|let _ubus = require('ubus'), connect = _ubus.connect;|" \
+	-e "s|import \* as uloop from 'uloop';|let uloop = null;|" \
 	-e "s|dnsmasq_file: '/var/run/adblock-fast/adblock-fast.dnsmasq'|dnsmasq_file: '${TESTDIR}/var_run/adblock-fast/adblock-fast.dnsmasq'|" \
 	-e "s|config_file: '/etc/config/adblock-fast'|config_file: '${TESTDIR}/etc/adblock-fast'|" \
 	-e "s|run_file: '/dev/shm/adblock-fast'|run_file: '${TESTDIR}/shm/adblock-fast'|" \
