@@ -427,6 +427,36 @@ $(call Package/strongswan/description/Default)
  eap-peap, tnc-tnccs
 endef
 
+define Package/strongswan-updown-iptables
+$(call Package/strongswan/Default)
+  TITLE+= updown iptables
+  DEPENDS:= strongswan \
+    +strongswan-mod-updown \
+    +iptables \
+    +IPV6:ip6tables \
+    +iptables-mod-ipsec \
+    +kmod-ipt-ipsec
+endef
+
+define Package/strongswan-updown-iptables/description
+$(call Package/strongswan/description/Default)
+ This package contains the hotplug script for updown to add iptables rules.
+endef
+
+define Package/strongswan-updown-nftables
+$(call Package/strongswan/Default)
+  TITLE+= updown iptables
+  DEPENDS:= strongswan \
+    +strongswan-mod-updown \
+    +nftables \
+    +kmod-nft-xfrm
+endef
+
+define Package/strongswan-updown-nftables/description
+$(call Package/strongswan/description/Default)
+ This package contains the hotplug script for updown to add nftables rules.
+endef
+
 define BuildPlugin
   define Package/strongswan-mod-$(1)
     $$(call Package/strongswan/Default)
@@ -587,6 +617,30 @@ define Package/strongswan-libtls/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/libtls.so.* $(1)/usr/lib/ipsec/
 endef
 
+define Package/strongswan-updown-iptables/install
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/ipsec
+	$(CP) ./files/etc/hotplug.d/ipsec/02-iptables \
+		$(1)/etc/hotplug.d/ipsec/02-iptables
+endef
+
+define Package/strongswan-updown-nftables/install
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/ipsec
+	$(CP) ./files/etc/hotplug.d/ipsec/02-nftables \
+		$(1)/etc/hotplug.d/ipsec/02-nftables
+
+	$(INSTALL_DIR) $(1)/usr/share/nftables.d/chain-pre/input
+	$(LN) /tmp/strongswan/nftables.d/pre-input.nft \
+		$(1)/usr/share/nftables.d/chain-pre/input/10_strongswan.nft
+
+	$(INSTALL_DIR) $(1)/usr/share/nftables.d/chain-pre/output
+	$(LN) /tmp/strongswan/nftables.d/pre-output.nft \
+		$(1)/usr/share/nftables.d/chain-pre/output/10_strongswan.nft
+
+	$(INSTALL_DIR) $(1)/usr/share/nftables.d/chain-pre/forward
+	$(LN) /tmp/strongswan/nftables.d/pre-forward.nft \
+		$(1)/usr/share/nftables.d/chain-pre/forward/10_strongswan.nft
+endef
+
 define Plugin/duplicheck/install
 	$(INSTALL_DIR) $(1)/usr/lib/ipsec/plugins
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/duplicheck $(1)/usr/lib/ipsec/
@@ -616,6 +670,8 @@ define Plugin/updown/install
 	$(INSTALL_DIR) $(1)/usr/lib/ipsec/plugins
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/_updown $(1)/usr/lib/ipsec/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/plugins/libstrongswan-updown.so $(1)/usr/lib/ipsec/plugins/
+
+	$(CP) ./files/usr/lib/ipsec/_updown-owrt $(1)/usr/lib/ipsec
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/ipsec
 	$(CP) ./files/etc/hotplug.d/ipsec/01-user \
 		$(1)/etc/hotplug.d/ipsec/01-user
@@ -650,6 +706,8 @@ $(eval $(call BuildPackage,strongswan-pki))
 $(eval $(call BuildPackage,strongswan-swanctl))
 $(eval $(call BuildPackage,strongswan-gencerts))
 $(eval $(call BuildPackage,strongswan-libtls))
+$(eval $(call BuildPackage,strongswan-updown-iptables))
+$(eval $(call BuildPackage,strongswan-updown-nftables))
 $(eval $(call BuildPlugin,addrblock,RFC 3779 address block constraint support,))
 $(eval $(call BuildPlugin,aes,AES crypto,))
 $(eval $(call BuildPlugin,af-alg,AF_ALG crypto interface to Linux Crypto API,+kmod-crypto-user))
@@ -722,7 +780,7 @@ $(eval $(call BuildPlugin,sshkey,SSH key decoding,))
 $(eval $(call BuildPlugin,stroke,Stroke,+strongswan-charon +strongswan-ipsec))
 $(eval $(call BuildPlugin,test-vectors,crypto test vectors,))
 $(eval $(call BuildPlugin,unity,Cisco Unity extension,))
-$(eval $(call BuildPlugin,updown,updown firewall,+iptables +IPV6:ip6tables +iptables-mod-ipsec +kmod-ipt-ipsec))
+$(eval $(call BuildPlugin,updown,script execution,))
 $(eval $(call BuildPlugin,vici,Versatile IKE Configuration Interface,))
 $(eval $(call BuildPlugin,whitelist,peer identity whitelisting,))
 $(eval $(call BuildPlugin,wolfssl,WolfSSL crypto,+PACKAGE_strongswan-mod-wolfssl:libwolfssl))
