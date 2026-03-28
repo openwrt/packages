@@ -1,0 +1,33 @@
+Index: vzlogger-2025-10-06-fdad271/modules/CompilerFlags.cmake
+===================================================================
+--- vzlogger-2022-08-20-fdad271.orig/modules/CompilerFlags.cmake
++++ vzlogger-2022-08-20-fdad271/modules/CompilerFlags.cmake
+@@ -8,7 +8,7 @@ if(NOT WIN32)
+     message(STATUS "using gcc compiler ${CMAKE_CXX_COMPILER_ID}")
+     include (CheckCXXSourceCompiles)
+ 
+-    set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -W -Wall -Wextra -Werror -Wnon-virtual-dtor -Wno-system-headers")
++    set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -W -Wall -Wextra -Wnon-virtual-dtor -Wno-system-headers")
+     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated")
+     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
+     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Winit-self -Wmissing-include-dirs -Wno-pragmas -Wredundant-decls")
+@@ -32,7 +32,7 @@ if(NOT WIN32)
+     # release flags
+     # Releases are made with the release build. Optimize code.
+     set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wno-unused-parameter")
+-    #set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Werror -Wno-non-virtual-dtor")
++    #set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wno-non-virtual-dtor")
+     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wno-redundant-decls")
+     #set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wno-non-virtual-dtor")
+ 
+@@ -59,7 +59,7 @@ if(NOT WIN32)
+     set(CMAKE_CXX_FLAGS_PROFILE "${CMAKE_CXX_FLAGS_PROFILE} -ftest-coverage")
+ 
+     # Experimental
+-    set(CMAKE_CXX_FLAGS_EXPERIMENTAL "-O0 -pg -g -ggdb -Wall -Werror -W -Wshadow")
++    set(CMAKE_CXX_FLAGS_EXPERIMENTAL "-O0 -pg -g -ggdb -Wall -W -Wshadow")
+     set(CMAKE_CXX_FLAGS_EXPERIMENTAL "${CMAKE_CXX_FLAGS_EXPERIMENTAL} -Wunused-variable")
+     set(CMAKE_CXX_FLAGS_EXPERIMENTAL "${CMAKE_CXX_FLAGS_EXPERIMENTAL} -Wunused-parameter")
+     set(CMAKE_CXX_FLAGS_EXPERIMENTAL "${CMAKE_CXX_FLAGS_EXPERIMENTAL} -Wunused-function")
+-- 
+2.53.0
