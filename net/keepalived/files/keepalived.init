@@ -211,12 +211,17 @@ print_track_script_indent() {
 	local curr_track_elem="$2"
 	local indent="$3"
 
-	local name
+	local name value weight direction
 	config_get name "$section" name
-	[ "$name" != "$curr_track_elem" ] && return 0
-	[ -z "$name" ] && return 0
 
-	printf '%b%s\n' "$indent" "$name" >> "$KEEPALIVED_CONF"
+	config_get weight "$section" weight
+	config_get direction "$section" direction
+
+	[ "$direction" != "reverse" ] && [ "$direction" != "noreverse" ] && unset direction
+
+	printf '%b%s' "$indent" "$name" >> "$KEEPALIVED_CONF"
+	[ -n "$weight" ] && printf ' weight %s' "$weight ${direction:+${direction}}" >> "$KEEPALIVED_CONF"
+	printf '\n' >> "$KEEPALIVED_CONF"
 }
 
 print_track_elem_indent() {
@@ -341,15 +346,15 @@ vrrp_sync_group() {
 	local track_script_val
 	config_get track_script_val "$1" track_script
 	if [ -n "$track_script_val" ]; then
-			printf '%btrack_script {\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
-			for t in $track_script_val; do
-					config_foreach print_track_script_indent vrrp_script "$t" "$INDENT_2"
-			done
-			printf '%b}\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
+		printf '%btrack_script {\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
+		for t in $track_script_val; do
+			config_foreach print_track_script_indent vrrp_script "$t" "$INDENT_2"
+		done
+		printf '%b}\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
 	fi
 
 	print_notify "GROUP" "$name" "$INDENT_1" notify_backup notify_master \
-			notify_fault notify
+		notify_fault notify
 
 	config_section_close
 }
@@ -671,4 +676,3 @@ start_service() {
 	procd_set_param respawn
 	procd_close_instance
 }
-
