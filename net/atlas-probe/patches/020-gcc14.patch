@@ -1,6 +1,6 @@
 --- a/networking/telnetd.c
 +++ b/networking/telnetd.c
-@@ -133,6 +133,7 @@
+@@ -134,6 +134,7 @@
  #include <string.h>
  #include <unistd.h>
  #include <linux/reboot.h>
