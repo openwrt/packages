@@ -213,6 +213,7 @@ print_track_script_indent() {
 
 	local name value weight direction
 	config_get name "$section" name
+	if [ -z "$name" ] && return 0
 
 	config_get weight "$section" weight
 	config_get direction "$section" direction
