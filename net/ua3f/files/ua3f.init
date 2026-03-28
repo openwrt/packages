@@ -1,0 +1,105 @@
+#!/bin/sh /etc/rc.common
+# shellcheck disable=SC2034,SC3043
+
+USE_PROCD=1
+START=99
+
+NAME="ua3f"
+PROG="/usr/bin/$NAME"
+
+start_service() {
+    config_load "$NAME"
+
+    local enabled
+    config_get_bool enabled "enabled" "enabled" "0"
+    [ "$enabled" -eq "1" ] || return 0
+
+    local server_mode
+    local port
+    local bind
+    local ua
+    local log_level
+    local ua_regex
+    local partial_replace
+    local rewrite_mode
+    local header_rewrite
+    local body_rewrite
+    local url_redirect
+    local set_ttl
+    local set_ipid
+    local del_tcpts
+    local set_tcp_init_window
+    config_get server_mode "main" "server_mode" "TPROXY"
+    config_get port "main" "port" "1080"
+    config_get bind "main" "bind" "127.0.0.1"
+    config_get ua "main" "ua" "FFF"
+    config_get ua_regex "main" "ua_regex" ""
+    config_get_bool partial_replace "main" "partial_replace" 0
+    config_get log_level "main" "log_level" "WARN"
+    config_get rewrite_mode "main" "rewrite_mode" "GLOBAL"
+    config_get header_rewrite "main" "header_rewrite" ""
+    config_get body_rewrite "main" "body_rewrite" ""
+    config_get url_redirect "main" "url_redirect" ""
+    config_get_bool set_ttl "main" "set_ttl" 0
+    config_get_bool set_ipid "main" "set_ipid" 0
+    config_get_bool del_tcpts "main" "del_tcpts" 0
+    config_get_bool set_tcp_init_window "main" "set_tcp_init_window" 0
+
+    local desync_ports
+    local desync_reorder
+    local desync_reorder_bytes
+    local desync_reorder_packets
+    local desync_inject
+    local desync_inject_ttl
+    config_get desync_ports "main" "desync_ports" ""
+    config_get_bool desync_reorder "main" "desync_reorder" 0
+    config_get_bool desync_inject "main" "desync_inject" 0
+    if [ "$desync_reorder" -eq "1" ]; then
+        config_get desync_reorder_bytes "main" "desync_reorder_bytes" "1500"
+        config_get desync_reorder_packets "main" "desync_reorder_packets" "8"
+    fi
+    if [ "$desync_inject" -eq "1" ]; then
+        config_get desync_inject_ttl "main" "desync_inject_ttl" "3"
+    fi
+
+    procd_open_instance "$NAME"
+    procd_set_param command "$PROG"
+    procd_append_param command -m "$server_mode"
+    procd_append_param command -p "$port"
+    procd_append_param command -b "$bind"
+    procd_append_param command -f "$ua"
+    procd_append_param command -r "$ua_regex"
+    procd_append_param command -l "$log_level"
+    procd_append_param command -x "$rewrite_mode"
+    procd_append_param command -header-rewrite "$header_rewrite"
+    procd_append_param command -body-rewrite "$body_rewrite"
+    procd_append_param command -url-redirect "$url_redirect"
+    [ "$partial_replace" = "1" ] && procd_append_param command -s
+
+    procd_append_param env UA3F_TTL="$set_ttl"
+    procd_append_param env UA3F_IPID="$set_ipid"
+    procd_append_param env UA3F_TCPTS="$del_tcpts"
+    procd_append_param env UA3F_TCP_INIT_WINDOW="$set_tcp_init_window"
+    procd_append_param env UA3F_DESYNC_REORDER="$desync_reorder"
+    procd_append_param env UA3F_DESYNC_REORDER_BYTES="$desync_reorder_bytes"
+    procd_append_param env UA3F_DESYNC_REORDER_PACKETS="$desync_reorder_packets"
+    procd_append_param env UA3F_DESYNC_INJECT="$desync_inject"
+    procd_append_param env UA3F_DESYNC_INJECT_TTL="$desync_inject_ttl"
+    procd_append_param env UA3F_DESYNC_PORTS="$desync_ports"
+
+    procd_set_param respawn
+    procd_set_param stdout 1
+    procd_set_param stderr 1
+    procd_set_param pidfile "/var/run/$NAME.pid"
+
+    procd_close_instance
+}
+
+reload_service() {
+    stop
+    start
+}
+
+service_triggers() {
+    procd_add_reload_trigger "$NAME"
+}
