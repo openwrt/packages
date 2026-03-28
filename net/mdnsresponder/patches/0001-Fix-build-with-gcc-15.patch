@@ -1,0 +1,32 @@
+From c84f185f29d0839b97177aecb0a78b9717947973 Mon Sep 17 00:00:00 2001
+From: Nguyen Dat Tho <tho3.nguyen@lge.com>
+Date: Wed, 9 Apr 2025 13:05:24 +0900
+Subject: [PATCH] Fix build with gcc-15
+
+To fix error:
+In file included from ../mDNSCore/mDNS.c:76:
+../mDNSShared/CommonServices.h:856:13: error: 'bool' cannot be defined via 'typedef'
+  856 | typedef int bool;
+      |             ^~~~
+../mDNSShared/CommonServices.h:856:13: note: 'bool' is a keyword with '-std=c23' onwards
+../mDNSShared/CommonServices.h:856:1: warning: useless type name in empty declaration
+
+Upstream-Status: Pending (An owner of this repository has limited the ability to open a pull request to users that are collaborators on this repository.)
+
+Signed-off-by: Nguyen Dat Tho <tho3.nguyen@lge.com>
+---
+ mDNSShared/CommonServices.h | 3 +++
+ 1 file changed, 3 insertions(+)
+
+--- a/mDNSShared/CommonServices.h
++++ b/mDNSShared/CommonServices.h
+@@ -192,6 +192,9 @@ extern "C" {
+ 
+     #include    <stdint.h>
+     #include    <arpa/inet.h>
++#if defined __STDC__ && defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L
++    #include    <stdbool.h>
++#endif
+ 
+ #elif ( TARGET_OS_SOLARIS )
+ 
