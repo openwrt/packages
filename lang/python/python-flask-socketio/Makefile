@@ -15,7 +15,7 @@ PYPI_NAME:=Flask-SocketIO
 PYPI_SOURCE_NAME:=flask_socketio
 PKG_HASH:=d946c944a1074ccad8e99485a6f5c79bc5789e3ea4df0bb9c864939586c51ec4
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 

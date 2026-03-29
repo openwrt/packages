@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=python-augeas
 PKG_HASH:=d2334710e12bdec8b6633a7c2b72df4ca24ab79094a3c9e699494fdb62054a10
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
 
