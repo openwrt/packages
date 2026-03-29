@@ -8,15 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-sniffio
-PKG_VERSION:=1.3.0
-PKG_RELEASE:=2
+PKG_VERSION:=1.3.1
+PKG_RELEASE:=1
 
 PYPI_NAME:=sniffio
-PKG_HASH:=e60305c5e5d314f5389259b7f22aaa33d8f7dee49763119234af3755c55b9101
+PKG_HASH:=f4324edc670a0f49750a81b895f35c3adb843cca46f0530f79fc1babb23789dc
 
 PKG_LICENSE:=Apache-2.0 MIT
 PKG_LICENSE_FILES:=LICENSE.APACHE2 LICENSE.MIT
 PKG_MAINTAINER:=Julien Malik <julien.malik@paraiso.me>
+PKG_BUILD_DEPENDS:=python-setuptools/host python-setuptools-scm/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
