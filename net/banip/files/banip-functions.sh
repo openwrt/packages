@@ -333,8 +333,10 @@ f_conf() {
 
 	for rir in ${ban_region}; do
 		while read -r ccode region country; do
-			if [ "${rir}" = "${region}" ] && ! printf "%s" "${ban_country}" | "${ban_grepcmd}" -qw "${ccode}"; then
-				ban_country="${ban_country} ${ccode}"
+			if [ "${rir}" = "${region}" ]; then
+				case " ${ban_country} " in *" ${ccode} "*) ;; *)
+					ban_country="${ban_country} ${ccode}"
+				;; esac
 			fi
 		done <"${ban_countryfile}"
 	done
@@ -514,7 +516,7 @@ f_getdl() {
 	if { [ "${ban_autodetect}" = "1" ] && [ -z "${ban_fetchcmd}" ]; } || [ ! -x "${ban_fetchcmd}" ]; then
 		fetch_list="curl wget-ssl libustream-openssl libustream-wolfssl libustream-mbedtls"
 		for fetch in ${fetch_list}; do
-			if printf "%s" "${ban_packages}" | "${ban_grepcmd}" -q "\"${fetch}"; then
+			case "${ban_packages}" in *"\"${fetch}"*)
 				case "${fetch}" in
 					"wget-ssl")
 						fetch="wget"
@@ -530,7 +532,7 @@ f_getdl() {
 					uci_commit "banip"
 					break
 				fi
-			fi
+			;; esac
 		done
 	fi
 
@@ -622,11 +624,11 @@ f_getdev() {
 			network_get_device dev "${iface}"
 			if [ -n "${dev}" ]; then
 				dev_del="${dev_del/${dev} / }"
-				if ! printf " %s " "${ban_dev}" | "${ban_grepcmd}" -q " ${dev} "; then
+				case " ${ban_dev} " in *" ${dev} "*) ;; *)
 					ban_dev="${ban_dev}${dev} "
 					uci_add_list banip global ban_dev "${dev}"
 					f_log "info" "add device '${dev}' to config"
-				fi
+				;; esac
 			fi
 		done
 		for dev in ${dev_del}; do
@@ -658,16 +660,20 @@ f_getup() {
 			elif [ "${ban_autoallowuplink}" = "ip" ]; then
 				network_get_ipaddr uplink "${iface}"
 			fi
-			if [ -n "${uplink}" ] && ! printf " %s " "${ban_uplink}" | "${ban_grepcmd}" -q " ${uplink} "; then
-				ban_uplink="${ban_uplink}${uplink} "
+			if [ -n "${uplink}" ]; then
+				case " ${ban_uplink} " in *" ${uplink} "*) ;; *)
+					ban_uplink="${ban_uplink}${uplink} "
+				;; esac
 			fi
 			if [ "${ban_autoallowuplink}" = "subnet" ]; then
 				network_get_subnet6 uplink "${iface}"
 			elif [ "${ban_autoallowuplink}" = "ip" ]; then
 				network_get_ipaddr6 uplink "${iface}"
 			fi
-			if [ -n "${uplink%fe80::*}" ] && ! printf " %s " "${ban_uplink}" | "${ban_grepcmd}" -q " ${uplink} "; then
-				ban_uplink="${ban_uplink}${uplink} "
+			if [ -n "${uplink%fe80::*}" ]; then
+				case " ${ban_uplink} " in *" ${uplink} "*) ;; *)
+					ban_uplink="${ban_uplink}${uplink} "
+				;; esac
 			fi
 		done
 		ban_uplink="$(f_trim "${ban_uplink}")"
@@ -786,15 +792,21 @@ f_nftinit() {
 			"tcp" | "udp")
 				if [ -z "${tmp_proto}" ]; then
 					tmp_proto="${flag}"
-				elif ! printf "%s" "${tmp_proto}" | "${ban_grepcmd}" -qw "${flag}"; then
-					tmp_proto="${tmp_proto}, ${flag}"
+				else
+					case ", ${tmp_proto}, " in
+						*", ${flag}, "*) ;;
+						*) tmp_proto="${tmp_proto}, ${flag}" ;;
+					esac
 				fi
 				;;
 			"${flag//[![:digit:]-]/}")
 				if [ -z "${tmp_port}" ]; then
 					tmp_port="${flag}"
-				elif ! printf "%s" "${tmp_port}" | "${ban_grepcmd}" -qw "${flag}"; then
-					tmp_port="${tmp_port}, ${flag}"
+				else
+					case ", ${tmp_port}, " in
+						*", ${flag}, "*) ;;
+						*) tmp_port="${tmp_port}, ${flag}" ;;
+					esac
 				fi
 				;;
 		esac
@@ -990,38 +1002,51 @@ f_down() {
 
 	# set feed complete flag
 	#
-	if printf "%s" "${ban_feedcomplete}" | "${ban_grepcmd}" -q "${feed%%.*}"; then
-		feed_complete="true"
-	fi
+	case " ${ban_feedcomplete} " in
+		*" ${feed%%.*} "*) feed_complete="true" ;;
+	esac
 
 	# set feed direction
 	#
-	if printf "%s" "${ban_feedin}" | "${ban_grepcmd}" -q "${feed%%.*}"; then
-		feed_policy="in"
-		feed_direction="inbound"
-	elif printf "%s" "${ban_feedout}" | "${ban_grepcmd}" -q "${feed%%.*}"; then
-		feed_policy="out"
-		feed_direction="outbound"
-	elif printf "%s" "${ban_feedinout}" | "${ban_grepcmd}" -q "${feed%%.*}"; then
-		feed_policy="inout"
-		feed_direction="inbound outbound"
-	else
-		feed_policy="${feed_chain}"
-		case "${feed_chain}" in
-			"in")
-				feed_direction="inbound"
-				;;
-			"out")
+	case " ${ban_feedin} " in
+		*" ${feed%%.*} "*)
+			feed_policy="in"
+			feed_direction="inbound"
+		;;
+		*)
+		case " ${ban_feedout} " in
+			*" ${feed%%.*} "*)
+				feed_policy="out"
 				feed_direction="outbound"
-				;;
-			"inout")
-				feed_direction="inbound outbound"
-				;;
+			;;
 			*)
-				feed_direction="inbound"
+			case " ${ban_feedinout} " in
+				*" ${feed%%.*} "*)
+					feed_policy="inout"
+					feed_direction="inbound outbound"
 				;;
+				*)
+					feed_policy="${feed_chain}"
+					case "${feed_chain}" in
+						"in")
+							feed_direction="inbound"
+						;;
+						"out")
+							feed_direction="outbound"
+						;;
+						"inout")
+							feed_direction="inbound outbound"
+						;;
+						*)
+							feed_direction="inbound"
+						;;
+					esac
+				;;
+			esac
+			;;
 		esac
-	fi
+		;;
+	esac
 
 	# prepare feed flags
 	#
@@ -1033,25 +1058,34 @@ f_down() {
 			"tcp" | "udp")
 				if [ -z "${tmp_proto}" ]; then
 					tmp_proto="${flag}"
-				elif ! printf "%s" "${tmp_proto}" | "${ban_grepcmd}" -qw "${flag}"; then
-					tmp_proto="${tmp_proto}, ${flag}"
+				else
+					case ", ${tmp_proto}, " in
+						*", ${flag}, "*) ;;
+						*) tmp_proto="${tmp_proto}, ${flag}" ;;
+					esac
 				fi
 				;;
 			"${flag//[![:digit:]-]/}")
 				if [ -z "${tmp_port}" ]; then
 					tmp_port="${flag}"
-				elif ! printf "%s" "${tmp_port}" | "${ban_grepcmd}" -qw "${flag}"; then
-					tmp_port="${tmp_port}, ${flag}"
+				else
+					case ", ${tmp_port}, " in
+						*", ${flag}, "*) ;;
+						*) tmp_port="${tmp_port}, ${flag}" ;;
+					esac
 				fi
 				;;
 		esac
 	done
 
-	if ! printf "%s" "${ban_feedreset}" | "${ban_grepcmd}" -q "${feed%%.*}"; then
+	case " ${ban_feedreset} " in
+		*" ${feed%%.*} "*) ;;
+		*)
 		if [ -n "${tmp_proto}" ] && [ -n "${tmp_port}" ]; then
 			feed_dport="meta l4proto { ${tmp_proto} } th dport { ${tmp_port} }"
 		fi
-	fi
+		;;
+	esac
 
 	# chain/rule maintenance
 	#
@@ -1519,7 +1553,7 @@ f_restore() {
 # remove staled Sets
 #
 f_rmset() {
-	local feedlist tmp_del table_json feed country asn table_sets handles handle expr del_set feed_rc
+	local feedlist tmp_del table_json feed country asn table_sets handles handle expr del_set feed_rc _rmset_skip
 
 	f_getfeed
 	json_get_keys feedlist
@@ -1529,29 +1563,39 @@ f_rmset() {
 	{
 		printf "%s\n\n" "#!${ban_nftcmd} -f"
 		for feed in ${table_sets}; do
-			if ! printf "%s" "allowlist blocklist ${ban_feed}" | "${ban_grepcmd}" -q "${feed%.*}" ||
-				! printf "%s" "allowlist blocklist ${feedlist}" | "${ban_grepcmd}" -q "${feed%.*}" ||
-				{ [ "${feed%.*}" = "country" ] && [ "${ban_countrysplit}" = "1" ]; } ||
-				{ [ "${feed%.*}" = "asn" ] && [ "${ban_asnsplit}" = "1" ]; } ||
-				{ [ "${feed%.*}" != "allowlist" ] && [ "${feed%.*}" != "blocklist" ] && [ "${ban_allowlistonly}" = "1" ] &&
-					! printf "%s" "${ban_feedin}" | "${ban_grepcmd}" -q "allowlist" &&
-					! printf "%s" "${ban_feedout}" | "${ban_grepcmd}" -q "allowlist"; }; then
+			_rmset_skip="0"
+			case " allowlist blocklist ${ban_feed} " in *" ${feed%.*} "*) ;; *) _rmset_skip="1" ;; esac
+			case " allowlist blocklist ${feedlist} " in *" ${feed%.*} "*) ;; *) _rmset_skip="1" ;; esac
+			{ [ "${feed%.*}" = "country" ] && [ "${ban_countrysplit}" = "1" ]; } && _rmset_skip="1"
+			{ [ "${feed%.*}" = "asn" ] && [ "${ban_asnsplit}" = "1" ]; } && _rmset_skip="1"
+			if [ "${feed%.*}" != "allowlist" ] && [ "${feed%.*}" != "blocklist" ] && [ "${ban_allowlistonly}" = "1" ]; then
+				case " ${ban_feedin} " in *" allowlist "*) ;; *)
+					case " ${ban_feedout} " in *" allowlist "*) ;; *) _rmset_skip="1" ;; esac
+				;; esac
+			fi
+			if [ "${_rmset_skip}" = "1" ]; then
 				case "${feed%%.*}" in
 					"country")
 						country="${feed%.*}"
 						country="${country#*.}"
-						if [ "${ban_countrysplit}" = "1" ] && printf "%s" "${ban_feed}" | "${ban_grepcmd}" -q "${feed%%.*}" &&
-							printf "%s" "${ban_country}" | "${ban_grepcmd}" -q "${country}"; then
-							continue
-						fi
+						case " ${ban_feed} " in *" ${feed%%.*} "*)
+							case " ${ban_country} " in *" ${country} "*)
+								if [ "${ban_countrysplit}" = "1" ]; then
+									continue
+								fi
+							;; esac
+						;; esac
 						;;
 					"asn")
 						asn="${feed%.*}"
 						asn="${asn#*.}"
-						if [ "${ban_asnsplit}" = "1" ] && printf "%s" "${ban_feed}" | "${ban_grepcmd}" -q "${feed%%.*}" &&
-							printf "%s" "${ban_asn}" | "${ban_grepcmd}" -q "${asn}"; then
-							continue
-						fi
+						case " ${ban_feed} " in *" ${feed%%.*} "*)
+							case " ${ban_asn} " in *" ${asn} "*)
+								if [ "${ban_asnsplit}" = "1" ]; then
+									continue
+								fi
+							;; esac
+						;; esac
 						;;
 				esac
 				[ -z "${del_set}" ] && del_set="${feed}" || del_set="${del_set}, ${feed}"
@@ -2304,67 +2348,69 @@ f_monitor() {
 		allow_v6="$("${ban_nftcmd}" list set inet banIP allowlist.v6 2>/dev/null)"
 		block_v4="$("${ban_nftcmd}" list set inet banIP blocklist.v4 2>/dev/null)"
 		block_v6="$("${ban_nftcmd}" list set inet banIP blocklist.v6 2>/dev/null)"
+		local_blocked=""
 
 		# log monitoring loop
 		#
 		pipeline_cmd="${logread_cmd}"
 		[ -n "${logread_filter}" ] && pipeline_cmd="${pipeline_cmd} | ${logread_filter}"
-		eval "${pipeline_cmd}" | while read -r line; do
-			proto=""
+		eval "${pipeline_cmd}" | "${ban_awkcmd}" '
+			{
+				gsub(/[<>[\]]/, "", $0)
+				sub(/%.*/, "", $0)
+				sub(/:[0-9]+([ >]|$)/, "\\1", $0)
+				if (match($0, /([0-9]{1,3}\.){3}[0-9]{1,3}/, m4)) {
+					if (m4[0] !~ /^127\./ && m4[0] !~ /^0\./) {
+						print m4[0] " .v4"
+						fflush()
+						next
+					}
+				}
+				if (match($0, /([A-Fa-f0-9]{1,4}:){2,7}[A-Fa-f0-9]{1,4}/, m6)) {
+					if (m6[0] ~ /^[0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}$/) next
+					if (m6[0] !~ /^([A-Fa-f0-9]{2}:){5}[A-Fa-f0-9]{2}$/) {
+						print m6[0] " .v6"
+						fflush()
+						next
+					}
+				}
+			}' | while read -r ip proto; do
 			base=""
 			: >"${ban_rdapfile}"
-
-			# IP detection
-			#
-			ip_proto=$(printf "%s" "${line}" | "${ban_awkcmd}" '
-				{
-					gsub(/[<>[\]]/, "", $0)
-					sub(/%.*/, "", $0)
-					sub(/:[0-9]+([ >]|$)/, "\\1", $0)
-					if (match($0, /([0-9]{1,3}\.){3}[0-9]{1,3}/, m4)) {
-						if (m4[0] !~ /^127\./ && m4[0] !~ /^0\./) {
-							print m4[0] " .v4"
-							exit
-						}
-					}
-					if (match($0, /([A-Fa-f0-9]{1,4}:){2,7}[A-Fa-f0-9]{1,4}/, m6)) {
-						if (m6[0] ~ /^[0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}$/) next
-						if (m6[0] !~ /^([A-Fa-f0-9]{2}:){5}[A-Fa-f0-9]{2}$/) {
-							print m6[0] " .v6"
-							exit
-						}
-					}
-				}'
-			)
-			ip="${ip_proto% *}"
-			proto="${ip_proto#* }"
 
 			# process detected IP
 			#
 			if [ -n "${proto}" ]; then
 				case "${proto}" in
 					.v4)
-						case "${allow_v4} ${block_v4}" in
-							*" ${ip} "* )
-								continue
-							;;
+						case "${allow_v4} ${block_v4} ${local_blocked}" in
+							*" ${ip} "*) continue ;;
 						esac
 					;;
 					.v6)
-						case "${allow_v6} ${block_v6}" in
-							*" ${ip} "* )
-								continue
-							;;
+						case "${allow_v6} ${block_v6} ${local_blocked}" in
+							*" ${ip} "*) continue ;;
 						esac
 					;;
 				esac
-				f_log "info" "suspicious IP '${ip}'"
-				log_count="$(${loglimit_cmd} | "${ban_grepcmd}" -F -c "suspicious IP '${ip}'")"
+				ip_var="${ip//./_}"
+				ip_var="${ip_var//:/_}"
+				eval "_cnt_${ip_var}=\$((\${_cnt_${ip_var}:-0} + 1))"
+				eval "log_count=\${_cnt_${ip_var}}"
+				if [ "${log_count}" = "1" ]; then
+					_ban_ipcnt=$((_ban_ipcnt + 1))
+					if [ "${_ban_ipcnt}" -ge 10000 ]; then
+						f_log "info" "monitor counter limit reached (10000 unique IPs), resetting"
+						for _v in $(set | "${ban_grepcmd}" -o '^_cnt_[^ =]*' 2>/dev/null); do
+							unset "${_v}"
+						done
+						_ban_ipcnt=0
+					fi
+				fi
 				if [ "${log_count}" -ge "${ban_logcount}" ]; then
 					if "${ban_nftcmd}" add element inet banIP "blocklist${proto}" { ${ip} ${nft_expiry} } >/dev/null 2>&1; then
-						f_log "info" "add IP '${ip}' (expiry: ${ban_nftexpiry:-"-"}) to blocklist${proto} set"
-						[ "${proto}" = ".v4" ] && block_v4="$("${ban_nftcmd}" list set inet banIP blocklist.v4 2>/dev/null)"
-						[ "${proto}" = ".v6" ] && block_v6="$("${ban_nftcmd}" list set inet banIP blocklist.v6 2>/dev/null)"
+						f_log "info" "add IP '${ip}' (cnt:${log_count}, expiry: ${ban_nftexpiry:-"-"}) to blocklist${proto} set"
+						local_blocked="${local_blocked} ${ip} "
 					else
 						f_log "info" "failed to add IP '${ip}' to blocklist${proto} set"
 					fi
@@ -2398,6 +2444,8 @@ f_monitor() {
 						printf "%-45s%s\n" "${ip}" "# added on $(date "+%Y-%m-%d %H:%M:%S")" >>"${ban_blocklist}"
 						f_log "info" "add IP '${ip}' to local blocklist"
 					fi
+				else
+					f_log "info" "suspicious IP '${ip}' (cnt:${log_count}/${ban_logcount})"
 				fi
 			fi
 		done
