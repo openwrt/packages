@@ -8,11 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-engineio
-PKG_VERSION:=4.5.1
+PKG_VERSION:=4.13.1
 PKG_RELEASE:=1
 
 PYPI_NAME:=python-engineio
-PKG_HASH:=b167a1b208fcdce5dbe96a61a6ca22391cfa6715d796c22de93e3adf9c07ae0c
+PYPI_SOURCE_NAME:=python_engineio
+PKG_HASH:=0a853fcef52f5b345425d8c2b921ac85023a04dfcf75d7b74696c61e940fd066
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT
@@ -36,7 +37,8 @@ define Package/python3-engineio
 	+python3-asyncio \
 	+python3-logging \
 	+python3-openssl \
-	+python3-urllib
+	+python3-urllib \
+	+python3-simple-websocket
 endef
 
 define Package/python3-engineio/description
