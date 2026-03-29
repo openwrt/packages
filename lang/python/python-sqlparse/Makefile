@@ -1,18 +1,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sqlparse
-PKG_VERSION:=0.4.4
+PKG_VERSION:=0.5.5
 PKG_RELEASE:=1
 
 PYPI_NAME:=sqlparse
-PKG_HASH:=d446183e84b8349fa3061f0fe7f06ca94ba65b426946ffebe6e3e8295332420c
+PKG_HASH:=e20d4a9b0b8585fdf63b10d30066c7c94c5d7a7ec47c889a2d83a3caa93ff28e
 
 PKG_MAINTAINER:=Peter Stadler <peter.stadler@student.uibk.ac.at>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:sqlparse_project:sqlparse
 
-PKG_BUILD_DEPENDS:=python-flit-core/host
+PKG_BUILD_DEPENDS:=python-hatchling/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
