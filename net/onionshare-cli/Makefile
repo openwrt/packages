@@ -15,7 +15,7 @@ PYPI_NAME:=onionshare-cli
 PYPI_SOURCE_NAME:=onionshare_cli
 PKG_HASH:=47320a5f270b3629586c249fb2ae1c2f67682cb53c5013a8af9702d0d6e50193
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=LICENSE
 

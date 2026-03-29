@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=iniconfig
 PKG_HASH:=2d91e135bf72d31a410b17c16da610a82cb55f6b0477d1a902134b24a455b8b3
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 

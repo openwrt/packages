@@ -7,7 +7,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=zipp
 PKG_HASH:=a07157588a12518c9d4034df3fbbee09c814741a33ff63c05fa29d26a2404166
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 

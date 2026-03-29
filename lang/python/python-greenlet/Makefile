@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=greenlet
 PKG_HASH:=2eaf067fc6d886931c7962e8c6bede15d2f01965560f3359b27c80bde2d151f2
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 

@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=Flask-HTTPAuth
 PKG_HASH:=66568a05bc73942c65f1e2201ae746295816dc009edd84b482c44c758d75097a
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 

@@ -16,7 +16,7 @@ PKG_SOURCE_VERSION:=$(PKG_VERSION)
 PKG_SOURCE_URL:=https://github.com/RIPE-NCC/ripe-atlas-probe-busybox
 PKG_MIRROR_HASH:=5cb9c17f381e57105bb4ff7c83923619478f970ab9b43ff90a2ed9b1c3879fe0
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=LICENSE
 

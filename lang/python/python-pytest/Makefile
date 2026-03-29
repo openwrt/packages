@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=pytest
 PKG_HASH:=75186651a92bd89611d1d9fc20f0b4345fd827c41ccd5c299a868a05d70edf11
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
