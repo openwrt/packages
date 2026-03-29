@@ -5,13 +5,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-decorator
-PKG_VERSION:=4.4.2
+PKG_VERSION:=5.2.1
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com> 
 PKG_CPE_ID:=cpe:/a:python:decorator
 
 PYPI_NAME:=decorator
-PKG_HASH:=e3a62f0520172440ca0dcc823749319382e377f37f140a0b99ef45fecb84bfe7
+PKG_HASH:=65f266143752f734b0a7cc83c46f4618af75b8c5911b00ccb61d0ac9b6da0360
+
+PKG_BUILD_DEPENDS:=python-setuptools/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
