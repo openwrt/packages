@@ -475,7 +475,7 @@ vrrp_script() {
 
 	config_section_open "vrrp_script" "$name"
 
-	print_elems_indent "$1" "$INDENT_1" script interval weight fall rise
+	print_elems_indent "$1" "$INDENT_1" script interval weight fall rise timeout
 
 	config_section_close
 }
