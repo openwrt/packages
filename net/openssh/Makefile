@@ -146,6 +146,7 @@ endef
 define Package/openssh-sftp-server
 	$(call Package/openssh/Default)
 	TITLE+= SFTP server
+	DEFAULT:=y if (BUILDBOT && !SMALL_FLASH)
 endef
 
 define Package/openssh-sftp-server/description
