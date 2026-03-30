@@ -215,16 +215,14 @@ print_track_script_indent() {
 
 	local name value weight direction
 	config_get name "$section" name
-	[ "$name" != "$curr_track_elem" ] && return 0
+	if [ -z "$name" ] && return 0
 
-	config_get value "$section" value
 	config_get weight "$section" weight
 	config_get direction "$section" direction
 
-	[ -z "$value" ] && return 0
 	[ "$direction" != "reverse" ] && [ "$direction" != "noreverse" ] && unset direction
 
-	printf '%b%s' "$indent" "$value" >> "$KEEPALIVED_CONF"
+	printf '%b%s' "$indent" "$name" >> "$KEEPALIVED_CONF"
 	[ -n "$weight" ] && printf ' weight %s' "$weight ${direction:+${direction}}" >> "$KEEPALIVED_CONF"
 	printf '\n' >> "$KEEPALIVED_CONF"
 }
@@ -333,7 +331,7 @@ vrrp_sync_group() {
 	config_get group "$1" group
 	[ -z "$group" ] && return 0
 
-	# Check if we have 'vrrp_instance's defined for 
+	# Check if we have 'vrrp_instance's defined for
 	# each member and remove names with not vrrp_instance defined
 	for m in $group; do
 		vrrp_instance_check "$m" && valid_group="$valid_group $m"
@@ -670,4 +668,3 @@ start_service() {
 	procd_set_param respawn
 	procd_close_instance
 }
-
