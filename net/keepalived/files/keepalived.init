@@ -345,6 +345,17 @@ vrrp_sync_group() {
 
 	print_elems_indent "$1" "$INDENT_1" no_val_smtp_alert no_val_global_tracking
 
+	# Handle track_script list for sync group
+	local track_script_val
+	config_get track_script_val "$1" track_script
+	if [ -n "$track_script_val" ]; then
+		printf '%btrack_script {\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
+		for t in $track_script_val; do
+			config_foreach print_track_script_indent vrrp_script "$t" "$INDENT_2"
+		done
+		printf '%b}\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
+	fi
+
 	print_notify "GROUP" "$name" "$INDENT_1" notify_backup notify_master \
 		notify_fault notify
 
