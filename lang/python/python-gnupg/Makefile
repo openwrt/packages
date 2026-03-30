@@ -30,7 +30,7 @@ define Package/python3-gnupg
   SUBMENU:=Python
   TITLE:=A wrapper for GnuPG
   URL:=https://github.com/vsajip/python-gnupg
-  DEPENDS:=+python3-light +python3-logging +python3-email +python3-urllib
+  DEPENDS:=+python3-light +python3-logging +python3-email
 endef
 
 define Package/python3-gnupg/description
