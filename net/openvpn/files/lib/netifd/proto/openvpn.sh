@@ -92,6 +92,7 @@ option_builder() {
 # Not real config params used by openvpn - only by our proto handler
 PROTO_BOOLS='
 allow_deprecated
+ipv6
 '
 
 PROTO_STRINGS='
@@ -191,6 +192,7 @@ proto_openvpn_setup() {
 
 	# Add default hotplug handling if 'script_security' option is equal '3'
 	if [ "$script_security" -eq '3' ]; then
+		local ipv6
 		local up down route_up route_pre_down
 		local client tls_client tls_server
 		local tls_crypt_v2_verify mode learn_address client_connect
@@ -205,6 +207,11 @@ proto_openvpn_setup() {
 		json_get_vars up down route_up route_pre_down
 		json_get_vars tls_crypt_v2_verify mode learn_address client_connect
 		json_get_vars client_crresponse client_disconnect auth_user_pass_verify
+
+		json_get_vars ipv6
+		#default ipv6 is enabled
+		[ -n "$ipv6" ] || ipv6=1
+		append exec_params "--setenv IPV6 '$ipv6'"
 
 		json_get_vars ifconfig_noexec route_noexec
 		[ -z "$ifconfig_noexec" ] && append exec_params "--ifconfig-noexec"

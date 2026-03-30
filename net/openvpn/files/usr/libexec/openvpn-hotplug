@@ -49,13 +49,17 @@ case "$script_type" in
 
 		[ -n "$ifconfig_local" ] && proto_add_ipv4_address "$ifconfig_local" "${ifconfig_netmask:-255.255.255.255}"
 
-		[ -n "$trusted_ip" ] && [ -n "$route_net_gateway" ] && {
-			proto_add_ipv4_route "$trusted_ip" 32 "$route_net_gateway"
+		[ -n "$trusted_ip" ] && {
+			if [ -n "$route_net_gateway" -a "$route_net_gateway" != "0.0.0.0" ]; then
+				proto_add_ipv4_route "$trusted_ip" 32 "$route_net_gateway"
+			fi
 		}
 
 		[ -n "$route_vpn_gateway" ] && proto_add_ipv4_route "0.0.0.0" 0 "$route_vpn_gateway"
 
-		for i in $(seq 1 32); do
+		i=0
+		while :; do
+			i=$((i+1))
 			eval "net=\$route_network_$i mask=\$route_netmask_$i gw=\$route_gateway_$i"
 			[ -z "$net" ] && break
 			[ -z "$mask" ] && continue
@@ -64,32 +68,40 @@ case "$script_type" in
 			proto_add_ipv4_route "$net" "$plen" "$gw"
 		done
 
-		if [ -n "$ifconfig_ipv6_local" ]; then
-			read -r v6addr v6plen <<-EOF
-				$(parse_cidr6 "$ifconfig_ipv6_local" "${ifconfig_ipv6_netbits:-128}")
-			EOF
-			proto_add_ipv6_address "$v6addr" "$v6plen"
+		if [ "$IPV6" = "1" ]; then
+			if [ -n "$ifconfig_ipv6_local" ]; then
+				read -r v6addr v6plen <<-EOF
+					$(parse_cidr6 "$ifconfig_ipv6_local" "${ifconfig_ipv6_netbits:-128}")
+				EOF
+				proto_add_ipv6_address "$v6addr" "$v6plen"
+			fi
+
+			[ -n "$trusted_ip6" ] && {
+				if [ -n "$route_ipv6_gateway" -a "$route_ipv6_gateway" != "::" ]; then
+					proto_add_ipv6_route "$trusted_ip6" 128 "$route_ipv6_gateway"
+				fi
+			}
+
+			[ -n "$ifconfig_ipv6_remote" ] && proto_add_ipv6_route "::" 0 "$ifconfig_ipv6_remote"
+
+			i=0
+			while :; do
+				i=$((i+1))
+				eval "net=\$route_ipv6_network_$i gw=\$route_ipv6_gateway_$i"
+				[ -z "$net" ] && break
+
+				read -r v6net v6plen <<-EOF
+					$(parse_cidr6 "$net" 128)
+				EOF
+				proto_add_ipv6_route "$v6net" "$v6plen" "$gw"
+			done
 		fi
-
-		[ -n "$trusted_ip6" ] && [ -n "$route_ipv6_gateway" ] && {
-			proto_add_ipv6_route "$trusted_ip6" 128 "$route_ipv6_gateway"
-		}
-
-		[ -n "$ifconfig_ipv6_remote" ] && proto_add_ipv6_route "::" 0 "$ifconfig_ipv6_remote"
-
-		for i in $(seq 1 32); do
-			eval "net=\$route_ipv6_network_$i gw=\$route_ipv6_gateway_$i"
-			[ -z "$net" ] && break
-
-			read -r v6net v6plen <<-EOF
-				$(parse_cidr6 "$net" 128)
-			EOF
-			proto_add_ipv6_route "$v6net" "$v6plen" "$gw"
-		done
 
 		[ -n "$tun_mtu" ] && json_add_int mtu "$tun_mtu"
 
-		for i in $(seq 1 32); do
+		i=0
+		while :; do
+			i=$((i+1))
 			eval "option=\$foreign_option_$i"
 			[ -z "$option" ] && break
 
