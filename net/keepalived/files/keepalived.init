@@ -422,7 +422,7 @@ vrrp_instance() {
 		[ -z "$optval" ] && continue
 		printf '%b%s {\n' "${INDENT_1}" "$opt" >> "$KEEPALIVED_CONF"
 		for t in $optval; do
-			config_foreach print_track_script_indent track_script "$t" "$INDENT_2"
+			config_foreach print_track_script_indent vrrp_script "$t" "$INDENT_2"
 		done
 		printf '%b}\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
 	done
