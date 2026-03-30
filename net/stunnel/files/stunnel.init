@@ -338,6 +338,11 @@ global_defs() {
 	# If the first globals section has alt_config_file, don't process any more globals
 	[ -z "$HAVE_ALT_CONF_FILE" ] || return 0
 
+	pid_dir="$(dirname "$PID_FILE")"
+	mkdir -p "$pid_dir"
+	[ -z "$setuid" ] || chown "$setuid" "$pid_dir"
+	[ -z "$setgid" ] || chown ":$setgid" "$pid_dir"
+
 	# If "alt_config_file" specified in the first globals section, use that instead
 	[ -z "$alt_config_file" ] || [ -n "$CONF_FILE_CREATED" ] || {
 		# Symlink "alt_config_file" since it's a bit easier and safer
@@ -348,11 +353,6 @@ global_defs() {
 		HAVE_ALT_CONF_FILE=1
 		return 0
 	}
-
-	pid_dir="$(dirname "$PID_FILE")"
-	mkdir -p "$pid_dir"
-	[ -z "$setuid" ] || chown "$setuid" "$pid_dir"
-	[ -z "$setgid" ] || chown ":$setgid" "$pid_dir"
 
 	create_conf_file
 	print_global_options
