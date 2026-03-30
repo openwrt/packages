@@ -8,7 +8,7 @@
 define Package/python3-email
 $(call Package/python3/Default)
   TITLE+= email module
-  DEPENDS:=+python3-light
+  DEPENDS:=+python3-light +python3-urllib
 endef
 
 define Package/python3-email/description

@@ -32,7 +32,7 @@ define Package/python3-gmpy2
   SUBMENU:=Python
   TITLE:=GMP/MPIR, MPFR, and MPC interface
   URL:=https://github.com/aleaxit/gmpy
-  DEPENDS:=+libgmp +libmpc +libmpfr +python3-light +python3-email python3-urllib
+  DEPENDS:=+libgmp +libmpc +libmpfr +python3-light +python3-email
 endef
 
 define Package/python3-gmpy2/description

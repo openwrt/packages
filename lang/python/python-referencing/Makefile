@@ -33,7 +33,6 @@ define Package/python3-referencing
   DEPENDS:= \
     +python3-light \
     +python3-email \
-    +python3-urllib \
     +python3-attrs \
     +python3-rpds-py
 endef

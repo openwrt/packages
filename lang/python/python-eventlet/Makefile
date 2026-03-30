@@ -41,8 +41,7 @@ define Package/python3-eventlet
 	+python3-greenlet \
 	+python3-email \
 	+python3-logging \
-	+python3-openssl \
-	+python3-urllib
+	+python3-openssl
 endef
 
 define Package/python3-eventlet/description
