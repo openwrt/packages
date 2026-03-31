@@ -331,7 +331,7 @@ vrrp_sync_group() {
 	config_get group "$1" group
 	[ -z "$group" ] && return 0
 
-	# Check if we have 'vrrp_instance's defined for
+	# Check if we have 'vrrp_instance's defined for 
 	# each member and remove names with not vrrp_instance defined
 	for m in $group; do
 		vrrp_instance_check "$m" && valid_group="$valid_group $m"
