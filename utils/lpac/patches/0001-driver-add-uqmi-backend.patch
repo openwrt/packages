@@ -27,8 +27,8 @@ Signed-off-by: David Bauer <david.bauer@uniberg.com>
 
 --- a/driver/CMakeLists.txt
 +++ b/driver/CMakeLists.txt
-@@ -52,6 +52,9 @@ if(LPAC_WITH_APDU_AT)
-     target_sources(euicc-drivers PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/apdu/at.c)
+@@ -62,6 +62,9 @@ if(LPAC_WITH_APDU_AT_WIN32)
+     )
  endif()
  
 +set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DLPAC_WITH_APDU_UQMI")
@@ -325,19 +325,19 @@ Signed-off-by: David Bauer <david.bauer@uniberg.com>
 +extern const struct euicc_driver driver_apdu_uqmi;
 --- a/driver/driver.c
 +++ b/driver/driver.c
-@@ -26,6 +26,9 @@
+@@ -28,6 +28,9 @@
  #ifdef LPAC_WITH_APDU_AT
- #include "driver/apdu/at.h"
+ #    include "driver/apdu/at.h"
  #endif
 +#ifdef LPAC_WITH_APDU_UQMI
 +#include "driver/apdu/uqmi.h"
 +#endif
  #ifdef LPAC_WITH_HTTP_CURL
- #include "driver/http/curl.h"
+ #    include "driver/http/curl.h"
  #endif
-@@ -51,6 +54,9 @@ static const struct euicc_driver *driver
- #ifdef LPAC_WITH_APDU_AT
-     &driver_apdu_at,
+@@ -59,6 +62,9 @@ static const struct euicc_driver *driver
+ #ifdef LPAC_WITH_APDU_AT_WIN32
+     &driver_apdu_at_win32,
  #endif
 +#ifdef LPAC_WITH_APDU_UQMI
 +    &driver_apdu_uqmi,

@@ -3,12 +3,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lpac
-PKG_VERSION:=2.2.1
-PKG_RELEASE:=2
+PKG_VERSION:=2.3.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/estkme-group/lpac/tar.gz/refs/tags/v$(PKG_VERSION)?
-PKG_HASH:=3d87080a625b10430eebb82f89e2d24e16a84a8435a9c40b3718fd88c82028ba
+PKG_HASH:=661dffbd1e9e5732dab4a0bb0a9837d4906c8c66bd748bda262fe3e8d3e420f6
 
 PKG_MAINTAINER:=David Bauer <david.bauer@uniberg.com>
 PKG_LICENSE:=AGPL-3.0-only LGPL-2.0-only
@@ -23,10 +23,11 @@ define Package/lpac
   CATEGORY:=Utilities
   TITLE:=eUICC eSIM LPA written in C
   DEPENDS:= \
+    +libcurl \
     +LPAC_WITH_PCSC:libpcsclite \
     +LPAC_WITH_PCSC:pcscd \
     +LPAC_WITH_MBIM:libmbim \
-    +libcurl
+    +LPAC_WITH_UQMI:uqmi
   URL:=https://github.com/estkme-group/lpac
 endef
 
