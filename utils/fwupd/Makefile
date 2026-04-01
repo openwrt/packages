@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fwupd
 PKG_VERSION:=2.1.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/fwupd/fwupd/releases/download/$(PKG_VERSION)
@@ -36,6 +36,16 @@ define Package/fwupd/Default
   CATEGORY:=Utilities
   TITLE:=fwupd
   URL:=https://fwupd.org
+endef
+
+define Package/fwupd/Default/description
+  A simple system daemon to allow session software to easily update firmware on
+  your local machine.
+endef
+
+define Package/fwupd-libs
+  $(call Package/fwupd/Default)
+  TITLE:=fwupd-libs
   DEPENDS:= \
 	+glib2 \
 	+dbus \
@@ -52,16 +62,6 @@ define Package/fwupd/Default
 	+FWUPD_PLUGIN_MODEMMANAGER:modemmanager \
 	+FWUPD_PLUGIN_MODEMMANAGER:libqmi \
 	+FWUPD_PLUGIN_MODEMMANAGER:libmbim
-endef
-
-define Package/fwupd/Default/description
-  A simple system daemon to allow session software to easily update firmware on
-  your local machine.
-endef
-
-define Package/fwupd-libs
-  $(call Package/fwupd/Default)
-  TITLE:=fwupd-libs
 endef
 
 define Package/fwupd-libs/description
