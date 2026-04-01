@@ -63,6 +63,9 @@ igmp_add_network() {
 }
 
 igmp_add_firewall_routing() {
+	local direction zone ssdp
+	local ssdp_target="DROP"
+
 	config_get direction $1 direction
 	config_get zone $1 zone
 
@@ -70,7 +73,14 @@ igmp_add_firewall_routing() {
 		return 0
 	fi
 
-# First drop SSDP packets then accept all other multicast
+	# Old logic to drop SSDP in any case removed. Added new config option to enable SSDP in case needed.
+	# However, default behaviour is unchanged.
+
+	config_get_bool ssdp $1 ssdp 0
+
+	if [ $ssdp -gt 0 ]; then
+		ssdp_target="ACCEPT"
+	fi
 
 	json_add_object ""
 	json_add_string type rule
@@ -79,7 +89,7 @@ igmp_add_firewall_routing() {
 	json_add_string family ipv4
 	json_add_string proto udp
 	json_add_string dest_ip "239.255.255.250"
-	json_add_string target DROP
+	json_add_string target "$ssdp_target"
 	json_close_object
 
 	json_add_object ""
