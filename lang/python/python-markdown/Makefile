@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-markdown
-PKG_VERSION:=3.10
+PKG_VERSION:=3.10.2
 PKG_RELEASE:=1
 
 PYPI_NAME:=markdown
-PKG_HASH:=37062d4f2aa4b2b6b32aefb80faa300f82cc790cb949a35b8caede34f2b68c0e
+PKG_HASH:=994d51325d25ad8aa7ce4ebaec003febcce822c3f8c911e3b17c52f7f589f950
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
