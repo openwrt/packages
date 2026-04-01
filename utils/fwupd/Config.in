@@ -1,5 +1,4 @@
 menu "Select fwupd options"
-	depends on PACKAGE_fwupd-libs
 
 config FWUPD_FIRMWARE_PACKAGER
 	bool "firmware packager"
