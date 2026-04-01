@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-execnet
-PKG_VERSION:=2.0.2
+PKG_VERSION:=2.1.2
 PKG_RELEASE:=1
 
 PYPI_NAME:=execnet
-PKG_HASH:=cc59bc4423742fd71ad227122eb0dd44db51efb3dc4095b45ac9a08c770096af
+PKG_HASH:=63d83bfdd9a23e35b9c6a3261412324f964c2ec8dcd8d3c6916ee9373e0befcd
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT
