@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pyrsistent
-PKG_VERSION:=0.19.3
+PKG_VERSION:=0.20.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=pyrsistent
-PKG_HASH:=1a2994773706bbb4995c31a97bc94f1418314923bd1048c6d964837040376440
+PKG_HASH:=4c48f78f62ab596c679086084d0dd13254ae4f3d6c72a83ffdf5ebdef8f265a4
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=MIT
