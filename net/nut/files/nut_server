@@ -11,7 +11,7 @@
 #	option password upspassword
 #	option actions optional-action
 #	list instcmd optional-instant-command
-#	option upsmon slave|master
+#	option upsmon secondary|primary
 
 #config listen_address
 #	option address ::1
