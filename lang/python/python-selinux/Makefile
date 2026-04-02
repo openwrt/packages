@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-selinux
 PKG_VERSION:=3.8.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 SRC_NAME:=libselinux
 PKG_SOURCE:=$(SRC_NAME)-$(PKG_VERSION).tar.gz
@@ -51,7 +51,7 @@ endef
 MAKE_VARS += \
 	$(PYTHON3_VARS) \
 	$(HOST_PYTHON3_PIP_VARS) \
-	PYTHON_SETUP_ARGS=--no-compile
+	PYTHON_SETUP_ARGS="--no-compile --no-build-isolation"
 
 MAKE_FLAGS += \
 	SHLIBDIR=/usr/lib
