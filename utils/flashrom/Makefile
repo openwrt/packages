@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=flashrom
-PKG_VERSION:=1.3.0
-PKG_RELEASE:=2
+PKG_VERSION:=1.7.0
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.bz2
+PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://download.flashrom.org/releases
-PKG_HASH:=a053234453ccd012e79f3443bdcc61625cf97b7fd7cb4cdd8bfbffbe8b149623
+PKG_HASH:=4328ace9833f7efe7c334bdd73482cde8286819826cc00149e83fba96bf3ab4f
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-v$(PKG_VERSION)
 
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>

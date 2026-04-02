@@ -1,0 +1,51 @@
+From 3e016738aadf6b02abb3357d6be2fde9560dbd07 Mon Sep 17 00:00:00 2001
+From: Florian Larysch <fl@n621.de>
+Date: Mon, 13 Apr 2026 01:40:52 +0200
+Subject: [PATCH] libflashrom: fix build on big-endian targets
+
+Commit f74f02e2 ("Add guard for compare_region_with_dump()") added
+little-endian-only compile guards to that function because it was only
+used on little-endian systems and caused -Wunused-function to trip on
+other targets.
+
+When b0b975d0 ("libflashrom: Add new layout_compare() function with
+test") introduced flashrom_layout_compare(), it included the new
+function within those guards too, but this isn't necessary:
+compare_region_with_dump() is not sensitive to endianess and adding that
+new dependent actually made the original reason for adding the guard
+obsolete.
+
+However, now building on big-endian architectures fails because
+cli_classic.c unconditionally refers to flashrom_layout_compare().
+
+Resolve this by simply removing the guard.
+
+Fixes: https://ticket.coreboot.org/issues/635
+
+Change-Id: If3e6828e6445e0708e1174728f91053e48a097ba
+Signed-off-by: Florian Larysch <fl@n621.de>
+Reviewed-on: https://review.coreboot.org/c/flashrom/+/92156
+Tested-by: build bot (Jenkins) <no-reply@coreboot.org>
+Reviewed-by: Anastasia Klimchuk <aklm@chromium.org>
+---
+ libflashrom.c | 2 --
+ 1 file changed, 2 deletions(-)
+
+--- a/libflashrom.c
++++ b/libflashrom.c
+@@ -462,7 +462,6 @@ bool flashrom_flag_get(const struct flas
+ 	}
+ }
+ 
+-#ifdef __FLASHROM_LITTLE_ENDIAN__
+ static int compare_region_with_dump(const struct romentry *const a, const struct romentry *const b)
+ {
+ 	if (a->region.start != b->region.start
+@@ -508,7 +507,6 @@ int flashrom_layout_compare(const struct
+ 
+ 	return 0;
+ }
+-#endif /* __FLASHROM_LITTLE_ENDIAN__ */
+ 
+ int flashrom_layout_read_from_ifd(struct flashrom_layout **const layout, struct flashctx *const flashctx,
+ 				  const void *const dump, const size_t len)
