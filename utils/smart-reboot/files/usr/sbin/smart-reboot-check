@@ -1,0 +1,165 @@
+#!/usr/bin/ucode
+'use strict';
+
+import * as uci from "uci";
+import * as log from "log";
+import * as fs from "fs";
+
+const CFG = "smart-reboot";
+const SECTION = "settings";
+const LOCK_FILE = "/var/lock/smart-reboot.lock";
+
+function shquote(s) {
+	return "'" + replace(s, /'/g, "'\\''") + "'";
+}
+
+function cmd_out(cmd) {
+	let f = fs.popen(cmd, "r");
+	if (!f)
+		return "";
+
+	let out = f.read("all") ?? "";
+	f.close();
+	return trim(out);
+}
+
+let cursor = uci.cursor();
+
+function cfg_get(key, def) {
+	let val = cursor.get(CFG, SECTION, key);
+
+	if (val == null)
+		return def;
+
+	if (type(val) == "string" && !length(val))
+		return def;
+
+	return val;
+}
+
+function logger(msg) {
+	log.syslog(log.LOG_INFO, msg);
+}
+
+function set_last_auto_reboot() {
+	let ts = cmd_out("date '+%Y-%m-%d %H:%M:%S'");
+	cursor.set(CFG, SECTION, "last_auto_reboot", ts);
+	cursor.commit(CFG);
+}
+
+function list_all_ifaces() {
+	let out = [];
+	for (let path in fs.glob("/sys/class/net/*")) {
+		let name = fs.basename(path);
+		if (name && name != "lo")
+			push(out, name);
+	}
+	return out;
+}
+
+function parse_ifaces(raw) {
+	if (!raw)
+		return [];
+
+	if (type(raw) == "array")
+		return raw;
+
+	return filter(split(raw, /[ \t\r\n]+/), v => length(v));
+}
+
+function sum_iface_bytes(ifaces) {
+	let total = 0;
+
+	for (let iface in ifaces) {
+		if (!iface)
+			continue;
+
+		let rx = trim(fs.readfile(`/sys/class/net/${iface}/statistics/rx_bytes`) ?? "0");
+		let tx = trim(fs.readfile(`/sys/class/net/${iface}/statistics/tx_bytes`) ?? "0");
+		total += int(rx || "0") + int(tx || "0");
+	}
+
+	return total;
+}
+
+function parse_time(time_str) {
+	if (!time_str || index(time_str, ":") < 0)
+		return null;
+
+	let parts = split(time_str, ":");
+	if (length(parts) != 2)
+		return null;
+
+	let hour = int(parts[0]);
+	let minute = int(parts[1]);
+
+	if (hour < 0 || hour > 23 || minute < 0 || minute > 59)
+		return null;
+
+	return { hour, minute };
+}
+
+function main() {
+	log.openlog("smart-reboot", log.LOG_PID);
+
+	let lockfd = fs.open(LOCK_FILE, "w+");
+	if (!lockfd || !lockfd.lock("xn"))
+		return 0;
+
+	function cleanup() {
+		if (lockfd) {
+			lockfd.lock("u");
+			lockfd.close();
+			lockfd = null;
+		}
+	}
+
+	let enabled = cfg_get("enabled", "0");
+	if (enabled != "1") {
+		cleanup();
+		return 0;
+	}
+
+	let parsed = parse_time(cfg_get("time", ""));
+	let hour = parsed ? parsed.hour : int(cfg_get("hour", "4"));
+	let minute = parsed ? parsed.minute : int(cfg_get("minute", "0"));
+
+	let sample_seconds = int(cfg_get("sample_seconds", "120"));
+	let byte_threshold = int(cfg_get("byte_threshold", "262144"));
+	let all_ifaces = cfg_get("all_ifaces", "0");
+	let ifaces = parse_ifaces(cfg_get("ifaces", []));
+
+	if (all_ifaces == "1") {
+		ifaces = list_all_ifaces();
+	}
+	else if (!length(ifaces)) {
+		logger("No monitored interfaces configured. Set smart-reboot.settings.ifaces or enable all_ifaces.");
+		cleanup();
+		return 0;
+	}
+
+	let now = localtime(time());
+	if (now.hour != hour || now.min != minute) {
+		cleanup();
+		return 0;
+	}
+
+	let start_bytes = sum_iface_bytes(ifaces);
+	sleep(sample_seconds * 1000);
+	let end_bytes = sum_iface_bytes(ifaces);
+	let delta = end_bytes - start_bytes;
+
+	if (delta <= byte_threshold) {
+		logger(`Network idle detected (delta=${delta} bytes, threshold=${byte_threshold}), rebooting now`);
+		set_last_auto_reboot();
+		system("/sbin/reboot");
+	}
+	else {
+		logger(`Skip reboot, network is active (delta=${delta} bytes, threshold=${byte_threshold})`);
+	}
+
+	cleanup();
+	return 0;
+}
+
+exit(main());
