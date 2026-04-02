@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-hatchling
 PKG_VERSION:=1.29.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=hatchling
 PKG_HASH:=793c31816d952cee405b83488ce001c719f325d9cda69f1fc4cd750527640ea6
@@ -44,7 +44,7 @@ define Package/python3-hatchling
   URL:=https://hatch.pypa.io/latest/
   DEPENDS:= \
       +python3-light \
-      +python3-email \
+      +python3-urllib \
       +python3-editables \
       +python3-packaging \
       +python3-pathspec \

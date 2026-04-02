@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-gnupg
 PKG_VERSION:=0.5.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=python-gnupg
 PKG_SOURCE:=python_gnupg-$(PKG_VERSION).tar.gz
@@ -30,7 +30,7 @@ define Package/python3-gnupg
   SUBMENU:=Python
   TITLE:=A wrapper for GnuPG
   URL:=https://github.com/vsajip/python-gnupg
-  DEPENDS:=+python3-light +python3-logging +python3-email
+  DEPENDS:=+python3-light +python3-logging +python3-urllib
 endef
 
 define Package/python3-gnupg/description
