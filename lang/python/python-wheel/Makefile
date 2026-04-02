@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-wheel
 PKG_VERSION:=0.45.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=wheel
 PKG_HASH:=661e1abd9198507b1409a20c02106d9670b2576e916d58f520316666abca6729
@@ -34,7 +34,7 @@ define Package/python3-wheel
   SUBMENU:=Python
   TITLE:=A built-package format for Python
   URL:=https://github.com/pypa/wheel
-  DEPENDS:=+python3-light +python3-email +python3-logging +python3-setuptools
+  DEPENDS:=+python3-light +python3-urllib +python3-logging +python3-setuptools
   BUILDONLY:=1
 endef
 

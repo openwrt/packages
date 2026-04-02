@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-flit-core
 PKG_VERSION:=3.12.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=flit-core
 PYPI_SOURCE_NAME:=flit_core
@@ -34,7 +34,7 @@ define Package/python3-flit-core
   SUBMENU:=Python
   TITLE:=Distribution-building parts of Flit
   URL:=https://github.com/pypa/flit
-  DEPENDS:=+python3-light +python3-email +python3-logging
+  DEPENDS:=+python3-light +python3-urllib +python3-logging
   BUILDONLY:=1
 endef
 

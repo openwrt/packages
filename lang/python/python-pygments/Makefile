@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pygments
 PKG_VERSION:=2.20.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=pygments
 PKG_HASH:=6757cd03768053ff99f3039c1a36d6c0aa0b263438fcab17520b30a303a82b5f
@@ -27,7 +27,7 @@ define Package/python3-pygments
   SUBMENU:=Python
   TITLE:=Pygments syntax highlighter
   URL:=https://pygments.org/
-  DEPENDS:=+python3-light +python3-email
+  DEPENDS:=+python3-light +python3-urllib
 endef
 
 define Package/python3-pygments/description

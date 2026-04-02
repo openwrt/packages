@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-eventlet
 PKG_VERSION:=0.40.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=eventlet
 PKG_HASH:=69bef712b1be18b4930df6f0c495d2a882bf7b63aa111e7b6eeff461cfcaf26f
@@ -39,7 +39,7 @@ define Package/python3-eventlet
 	+python3-light \
 	+python3-dns \
 	+python3-greenlet \
-	+python3-email \
+	+python3-urllib \
 	+python3-logging \
 	+python3-openssl
 endef

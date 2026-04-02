@@ -34,7 +34,6 @@ define Package/fail2ban
   +nftables \
   +python3-light \
   +python3-ctypes \
-  +python3-email \
   +python3-logging \
   +python3-sqlite3 \
   +python3-urllib

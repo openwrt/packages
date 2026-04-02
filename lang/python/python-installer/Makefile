@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-installer
 PKG_VERSION:=0.7.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PYPI_NAME:=installer
 PKG_HASH:=a26d3e3116289bb08216e0d0f7d925fcef0b0194eedfa0c944bcaaa106c4b631
@@ -35,7 +35,7 @@ define Package/python3-installer
   SUBMENU:=Python
   TITLE:=A library for installing Python wheels
   URL:=https://github.com/pypa/installer
-  DEPENDS:=+python3-light +python3-email
+  DEPENDS:=+python3-light +python3-urllib
   BUILDONLY:=1
 endef
 
