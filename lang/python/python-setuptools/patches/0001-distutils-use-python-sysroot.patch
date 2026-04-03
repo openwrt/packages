@@ -20,8 +20,6 @@ Signed-off-by: Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
  setuptools/_distutils/sysconfig.py         | 15 +++++++++++----
  2 files changed, 15 insertions(+), 5 deletions(-)
 
-diff --git a/setuptools/_distutils/command/build_ext.py b/setuptools/_distutils/command/build_ext.py
-index df623d7..068bc6b 100644
 --- a/setuptools/_distutils/command/build_ext.py
 +++ b/setuptools/_distutils/command/build_ext.py
 @@ -156,7 +156,10 @@ class build_ext(Command):
@@ -32,12 +30,10 @@ index df623d7..068bc6b 100644
 +            libdir = sysconfig.get_config_var('LIBDIR')
 +            if "_python_sysroot" in os.environ:
 +                libdir = os.environ.get("_python_sysroot") + libdir
-+            yield libdir 
++            yield libdir
  
      def finalize_options(self) -> None:  # noqa: C901
          from distutils import sysconfig
-diff --git a/setuptools/_distutils/sysconfig.py b/setuptools/_distutils/sysconfig.py
-index 7ddc869..7bd2fa9 100644
 --- a/setuptools/_distutils/sysconfig.py
 +++ b/setuptools/_distutils/sysconfig.py
 @@ -37,10 +37,17 @@ else:
