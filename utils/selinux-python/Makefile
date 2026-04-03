@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=selinux-python
 PKG_VERSION:=3.9
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/SELinuxProject/selinux/releases/download/$(PKG_VERSION)
@@ -55,7 +55,7 @@ endef
 MAKE_VARS = \
 	$(PYTHON3_VARS) \
 	$(HOST_PYTHON3_PIP_VARS) \
-	PYTHON_SETUP_ARGS=--no-compile
+	PYTHON_SETUP_ARGS="--no-compile --no-build-isolation"
 
 define Build/Compile
 	$(call Build/Compile/Default,all)
