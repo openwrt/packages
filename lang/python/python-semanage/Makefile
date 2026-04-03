@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-semanage
 PKG_VERSION:=3.9
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 SRC_NAME:=libsemanage
 PKG_SOURCE:=$(SRC_NAME)-$(PKG_VERSION).tar.gz
@@ -51,7 +51,10 @@ define Package/python3-semanage/description
 endef
 
 MAKE_VARS += \
-	$(PYTHON3_VARS)
+	$(PYTHON3_VARS) \
+	$(HOST_PYTHON3_PIP_VARS) \
+	PYCEXT=.cpython-$(PYTHON3_VERSION_MAJOR)$(PYTHON3_VERSION_MINOR)$(ABIFLAGS)-$(MULTIARCH).so \
+	PYTHON_SETUP_ARGS="--no-compile --no-build-isolation"
 
 define Build/Compile
 	$(call Build/Compile/Default,pywrap)
