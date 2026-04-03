@@ -6,13 +6,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=avahi
-PKG_VERSION:=0.8
-PKG_RELEASE:=10
+PKG_VERSION:=0.9_rc3
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/avahi/avahi/releases/download/v$(PKG_VERSION) \
-		https://avahi.org/download
-PKG_HASH:=060309d7a333d38d951bc27598c677af1796934dbd98e1024e7ad8de798fedda
+# upstream uses a hyphen in the tag but apk requires underscores
+PKG_SOURCE:=$(PKG_NAME)-$(subst _rc,-rc,$(PKG_VERSION)).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/avahi/avahi/tar.gz/v$(subst _rc,-rc,$(PKG_VERSION))?
+PKG_HASH:=9f2ff92864c56364d711eb2acec4c0455d1375d8c3266e420611730a2c9ccba5
+
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(subst _rc,-rc,$(PKG_VERSION))
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -42,6 +44,18 @@ define Package/avahi/Default/description
  This kind of technology is already found in MacOS X
  (branded 'Rendezvous', 'Bonjour' and sometimes 'ZeroConf')
  and is very convenient.
+endef
+
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	( cd $(PKG_BUILD_DIR); \
+		if [ ! -f po/Makefile.in.in ]; then \
+			echo 'all:' > po/Makefile.in.in; \
+			echo 'install:' >> po/Makefile.in.in; \
+			echo 'clean:' >> po/Makefile.in.in; \
+			echo '.PHONY: all install clean' >> po/Makefile.in.in; \
+		fi \
+	)
 endef
 
 define Package/libavahi/Default
@@ -275,7 +289,9 @@ CONFIGURE_ARGS += \
 	--with-avahi-group=avahi \
 	--with-avahi-priv-access-group=avahi \
 	--with-autoipd-user=avahi \
-	--with-autoipd-group=avahi
+	--with-autoipd-group=avahi \
+	--disable-libsystemd \
+	--disable-nls
 
 ifeq ($(BUILD_VARIANT),dbus)
 CONFIGURE_ARGS += \
@@ -305,8 +321,10 @@ endef
 
 define Package/libavahi-dbus-support/install
 	$(call Package/libavahi/install,$(1))
-	$(INSTALL_DIR) $(1)/etc/dbus-1/system.d
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/dbus-1/system.d/* $(1)/etc/dbus-1/system.d
+	if [ -d $(PKG_INSTALL_DIR)/etc/dbus-1/system.d ] && [ -n "$$$$(ls -A $(PKG_INSTALL_DIR)/etc/dbus-1/system.d 2>/dev/null)" ]; then \
+		$(INSTALL_DIR) $(1)/etc/dbus-1/system.d; \
+		$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/dbus-1/system.d/* $(1)/etc/dbus-1/system.d; \
+	fi
 endef
 
 Package/libavahi-nodbus-support/install=$(Package/libavahi/install)
