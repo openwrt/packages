@@ -7,15 +7,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=atlas-sw-probe
-PKG_VERSION:=5080
-PKG_RELEASE:=2
+PKG_VERSION:=5120
+PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/RIPE-NCC/ripe-atlas-software-probe.git
 PKG_SOURCE:=ripe-atlas-software-probe-$(PKG_VERSION).tar.gz
-
-PKG_MIRROR_HASH:=ad8b012803f98abbf1594384c5a4e27de9e9c112d43da272e73dd10591a566e1
-PKG_SOURCE_VERSION:=67b0736887d33d1c42557e7c7694cbd4e5d8e6ee
+PKG_SOURCE_URL:=https://codeload.github.com/RIPE-NCC/ripe-atlas-software-probe/tar.gz/refs/tags/$(PKG_VERSION)?
+PKG_HASH:=d399f793d1576d7856023c2fde69453a0e5dbd537b03669b9767eb86957021f2
+PKG_BUILD_DIR:=$(BUILD_DIR)/ripe-atlas-software-probe-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
