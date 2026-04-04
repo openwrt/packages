@@ -143,6 +143,18 @@ define Package/kea-hook-lease-cmds/description
 endef
 
 ###### *************************************************************************
+define Package/kea-hook-pingcheck
+	$(call Package/kea/Default)
+	TITLE+=Ping check hook library
+	DEPENDS:=+kea-libs
+endef
+define Package/kea-hook-pingcheck/description
+	The Ping check hook library adds the abilitity to perform a "ping check"
+	of a candidate IPv4 address prior to offering it to a DHCP client.
+endef
+
+
+###### *************************************************************************
 define Package/kea-hook-runscript
 	$(call Package/kea/Default)
 	TITLE+=Run Script hook library
@@ -244,6 +256,11 @@ define Package/kea-hook-lease-cmds/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/kea/hooks/libdhcp_lease_cmds.so $(1)/usr/lib/kea/hooks
 endef
 
+define Package/kea-hook-pingcheck/install
+	$(INSTALL_DIR) $(1)/usr/lib/kea/hooks
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/kea/hooks/libdhcp_ping_check.so $(1)/usr/lib/kea/hooks
+endef
+
 define Package/kea-hook-runscript/install
 	$(INSTALL_DIR) $(1)/usr/lib/kea/hooks
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/kea/hooks/libdhcp_run_script.so $(1)/usr/lib/kea/hooks
@@ -293,6 +310,7 @@ $(eval $(call BuildPackage,kea-dhcp-ddns))
 $(eval $(call BuildPackage,kea-admin))
 $(eval $(call BuildPackage,kea-hook-ha))
 $(eval $(call BuildPackage,kea-hook-lease-cmds))
+$(eval $(call BuildPackage,kea-hook-pingcheck))
 $(eval $(call BuildPackage,kea-hook-runscript))
 $(eval $(call BuildPackage,kea-lfc))
 $(eval $(call BuildPackage,kea-perfdhcp))
