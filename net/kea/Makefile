@@ -142,6 +142,17 @@ define Package/kea-hook-lease-cmds/description
 	The lease commands hook library.
 endef
 
+###### *************************************************************************
+define Package/kea-hook-runscript
+	$(call Package/kea/Default)
+	TITLE+=Run Script hook library
+	DEPENDS:=+kea-libs
+endef
+define Package/kea-hook-runscript/description
+	The Run Script hook library allows executing external scripts
+	at various points in the DHCP processing.
+endef
+
 ##### *************************************************************************
 define Package/kea-lfc
 	$(call Package/kea/Default)
@@ -233,6 +244,13 @@ define Package/kea-hook-lease-cmds/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/kea/hooks/libdhcp_lease_cmds.so $(1)/usr/lib/kea/hooks
 endef
 
+define Package/kea-hook-runscript/install
+	$(INSTALL_DIR) $(1)/usr/lib/kea/hooks
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/kea/hooks/libdhcp_run_script.so $(1)/usr/lib/kea/hooks
+	$(INSTALL_DIR) $(1)/etc/kea/scripts
+	$(CP) ./files/kea-runscripts-README $(1)/etc/kea/scripts/README
+endef
+
 define Package/kea-ctrl/install
 	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/kea
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/keactrl $(1)/usr/sbin/keactrl
@@ -275,6 +293,7 @@ $(eval $(call BuildPackage,kea-dhcp-ddns))
 $(eval $(call BuildPackage,kea-admin))
 $(eval $(call BuildPackage,kea-hook-ha))
 $(eval $(call BuildPackage,kea-hook-lease-cmds))
+$(eval $(call BuildPackage,kea-hook-runscript))
 $(eval $(call BuildPackage,kea-lfc))
 $(eval $(call BuildPackage,kea-perfdhcp))
 $(eval $(call BuildPackage,kea-shell))
