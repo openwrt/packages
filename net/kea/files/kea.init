@@ -38,6 +38,7 @@ start_kea() {
 	procd_set_param command "$cmd" -c "$cnf"
 	procd_set_param env KEA_LOCKFILE_DIR=/tmp
 	procd_append_param env KEA_PIDFILE_DIR=/tmp
+	procd_append_param env KEA_HOOK_SCRIPTS_PATH=/etc/kea/scripts
 	procd_set_param file "$cnf"
 	procd_set_param stderr 1
 	procd_set_param stdout 1
