@@ -8,15 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-xmltodict
-PKG_VERSION:=0.13.0
+PKG_VERSION:=1.0.4
 PKG_RELEASE:=1
 
 PYPI_NAME:=xmltodict
-PKG_HASH:=341595a488e3e01a85a9d8911d8912fd922ede5fecc4dce437eb4b6c8d037e56
+PKG_HASH:=6d94c9f834dd9e44514162799d344d815a3a4faec913717a9ecbfa5be1bb8e61
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
+
+PKG_BUILD_DEPENDS:=python-setuptools/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
