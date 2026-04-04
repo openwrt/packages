@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=atlas-probe
-PKG_VERSION:=2.6.3
-PKG_RELEASE:=3
+PKG_VERSION:=2.6.4
+PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=$(PKG_VERSION)
-PKG_SOURCE_URL:=https://github.com/RIPE-NCC/ripe-atlas-probe-busybox
-PKG_MIRROR_HASH:=5cb9c17f381e57105bb4ff7c83923619478f970ab9b43ff90a2ed9b1c3879fe0
+PKG_SOURCE:=ripe-atlas-probe-measurements-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/RIPE-NCC/ripe-atlas-probe-measurements/tar.gz/refs/tags/$(PKG_VERSION)?
+PKG_HASH:=5c674d4765bba8424286d7412ef03c787d2dde4182013e582ed4c4b998bbc476
+PKG_BUILD_DIR:=$(BUILD_DIR)/ripe-atlas-probe-measurements-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
