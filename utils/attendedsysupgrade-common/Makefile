@@ -18,27 +18,8 @@ define Package/attendedsysupgrade-common
 endef
 
 define Package/attendedsysupgrade-common/description
-	Common needed files for attendedsysupgrade tool
-
-	Manages dependencies and brings settings used by clients.
-
-	UCI options:
-
-	* attendedsysupgrade.server.url
-	  URL of compatible upgrade server [1]
-
-	* attendedsysupgrade.client.upgrade_packages
-	  Client should request image also if no new release but new packages
-	  upgrade are available.
-
-	* attendedsysupgrade.client.advanced_mode
-	  Offer advanced options like editing packages before request and show
-	  additional information.
-
-	* attendedsysupgrade.client.auto_search
-	  Tells the client to automattically search for upgrades
-
-	[1]: https://github.com/aparcar/asu
+	Common files needed for the attendedsysupgrade tool. Manages dependencies and brings settings used by clients.
+	UCI options include defining the URL of a compatible upgrade server, requesting an image even if there’s no new release but new package upgrades are available, offering advanced options like editing packages before a request and displaying additional information, and instructing the client to automatically search for upgrades.
 endef
 
 define Build/Compile
