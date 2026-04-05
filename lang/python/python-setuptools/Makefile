@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-setuptools
 PKG_VERSION:=80.9.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PYPI_NAME:=setuptools
 PKG_HASH:=f36b47402ecde768dbfafc46e8e4207b4360c654f1f3bb84475f0a28628fb19c
