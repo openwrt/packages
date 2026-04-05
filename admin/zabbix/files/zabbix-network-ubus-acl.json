@@ -1,5 +1,5 @@
 {
-	"user": "zabbix",
+	"user": "zabbix-agent",
 	"access": {
 		"network.interface": {
 			"methods": [
