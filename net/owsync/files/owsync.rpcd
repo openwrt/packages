@@ -1,0 +1,133 @@
+#!/bin/sh
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Pierre Gaufillet <pierre.gaufillet@bergamote.eu>
+#
+# owsync rpcd handler - provides ubus status interface
+# Usage: ubus call owsync status
+
+. /usr/share/libubox/jshn.sh
+
+case "$1" in
+	list)
+		# List available methods and their parameters
+		json_init
+		json_add_object "status"
+		json_close_object
+		json_dump
+		;;
+	call)
+		case "$2" in
+			status)
+				# Get owsync service status
+
+				# Initialize variables
+				status="STOPPED"
+				pid=0
+				enabled=0
+				uptime=0
+				encryption_enabled=0
+				peer_count=0
+				sync_dir=""
+				db_path=""
+				db_last_modified=0
+
+				# Check if owsync is enabled via standalone config or ha-cluster
+				if [ -f /etc/config/owsync ]; then
+					owsync_enabled=$(uci -q get owsync.config.enabled)
+					if [ "$owsync_enabled" = "1" ]; then
+						enabled=1
+					fi
+				fi
+
+				# Also check ha-cluster config
+				if [ -f /etc/config/ha-cluster ]; then
+					ha_enabled=$(uci -q get ha-cluster.config.enabled)
+					sync_method=$(uci -q get ha-cluster.config.sync_method)
+					if [ "$ha_enabled" = "1" ] && [ "$sync_method" = "owsync" ]; then
+						enabled=1
+					fi
+				fi
+
+				# Check if running
+				svc_pid=$(pgrep -o "owsync" 2>/dev/null)
+				if [ -n "$svc_pid" ]; then
+					status="RUNNING"
+					pid=$svc_pid
+
+					# Calculate uptime from /proc/PID/stat
+					start_time=$(awk '{print $22}' /proc/$svc_pid/stat 2>/dev/null)
+					if [ -n "$start_time" ]; then
+						uptime_jiffies=$(awk '{print $1 * 100}' /proc/uptime 2>/dev/null)
+						uptime=$(awk "BEGIN{print int(($uptime_jiffies - $start_time) / 100)}")
+					fi
+				fi
+
+				# Get config from generated runtime config or UCI
+				# Runtime config is at /tmp/owsync.conf (when using ha-cluster)
+				if [ -f /tmp/owsync.conf ]; then
+					config_file="/tmp/owsync.conf"
+				elif [ -f /etc/owsync/owsync.conf ]; then
+					config_file="/etc/owsync/owsync.conf"
+				else
+					config_file=""
+				fi
+
+				if [ -n "$config_file" ]; then
+					# Parse config file for status info
+					sync_dir=$(grep "^sync_dir=" "$config_file" 2>/dev/null | cut -d= -f2)
+					db_path=$(grep "^database=" "$config_file" 2>/dev/null | cut -d= -f2)
+
+					# Check encryption mode
+					plain_mode=$(grep "^plain_mode=" "$config_file" 2>/dev/null | cut -d= -f2)
+					if [ "$plain_mode" != "1" ] && [ "$plain_mode" != "true" ]; then
+						encryption_enabled=1
+					fi
+
+					# Count peers
+					peer_count=$(grep -c "^peer=" "$config_file" 2>/dev/null || echo 0)
+				fi
+
+				# Fallback to UCI if config not found
+				if [ -z "$sync_dir" ] && [ -f /etc/config/owsync ]; then
+					sync_dir=$(uci -q get owsync.config.sync_dir)
+				fi
+
+				# Default database path
+				db_path="${db_path:-/var/lib/owsync/owsync.db}"
+
+				# Get database last modified time
+				if [ -f "$db_path" ]; then
+					db_last_modified=$(date -r "$db_path" +%s 2>/dev/null || echo 0)
+				fi
+
+				# Build JSON response
+				json_init
+				json_add_string status "$status"
+				json_add_int pid "$pid"
+				json_add_boolean enabled "$enabled"
+				json_add_int uptime "$uptime"
+
+				json_add_object database
+				json_add_string path "$db_path"
+				json_add_int last_modified "$db_last_modified"
+				json_close_object
+
+				json_add_object config
+				json_add_boolean encryption_enabled "$encryption_enabled"
+				json_add_int peer_count "$peer_count"
+				json_add_string sync_dir "$sync_dir"
+				json_close_object
+
+				json_dump
+				;;
+
+			*)
+				json_init
+				json_add_boolean success 0
+				json_add_string error "Unknown method: $2"
+				json_dump
+				exit 1
+				;;
+		esac
+		;;
+esac
