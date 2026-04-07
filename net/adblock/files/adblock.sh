@@ -1861,7 +1861,7 @@ f_report() {
 					# ignore Reverse DNS
 					/\.in-addr\.arpa/ || /\.ip6\.arpa/ { next }
 					# domain request parser
-					/\+[[:space:]]+(A\?|AAAA\?)/ {
+					/\+[[:space:]]+(\[.*\][[:space:]]+)?(A\?|AAAA\?)/ {
 						# drop unresolved previous query
 						if (pending)
 							pending = 0
