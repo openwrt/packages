@@ -1,4 +1,4 @@
-From 9675bd17ae35744696c90b423b0c19905349c8a1 Mon Sep 17 00:00:00 2001
+From 01f97133493eb0066993a1f5c57d20747ec8f15b Mon Sep 17 00:00:00 2001
 From: "Daniel F. Dickinson" <dfdpublic@wildtechgarden.ca>
 Date: Wed, 17 Dec 2025 06:39:16 -0500
 Subject: [PATCH] Make zabbix_server config suitable for OpenWrt
@@ -8,11 +8,14 @@ Subject: [PATCH] Make zabbix_server config suitable for OpenWrt
    Zabbix server running without privileges
 3. If started as root, drop privileges to zabbix-server user (instead of
    zabbix)
+4. Set the fping location properly for OpenWrt (/usr/bin not /usr/sbin)
+5. Configure fping as the ipv6 fping as well
+6. For privacy, disable the public API call to check Zabbix version
 
 Signed-off-by: Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
 ---
- conf/zabbix_server.conf | 8 +++++++-
- 1 file changed, 7 insertions(+), 1 deletion(-)
+ conf/zabbix_server.conf | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
 
 --- a/conf/zabbix_server.conf
 +++ b/conf/zabbix_server.conf
