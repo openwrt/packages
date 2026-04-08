@@ -134,6 +134,7 @@ conf_section() {
 			echo "Access-Control-Allow-Origin = $cors" >> "$cfgfile"
 		fi
 		;;
+  # TODO: Add sharing configuration
 	esac
 
 	echo "" >> "$cfgfile"
@@ -142,7 +143,7 @@ conf_section() {
 add_missing_sections() {
 	local cfgfile="$1"
 
-	for section in server encoding auth rights storage web logging headers; do
+	for section in server encoding auth rights storage web logging headers sharing; do
 		if ! grep -q "\[$section\]" "$cfgfile"; then
 			echo "[$section]" >> "$cfgfile"
 			case $section in
