@@ -61,7 +61,7 @@ upnpd() {
 	local external_iface external_iface6 external_zone external_ip internal_iface
 	local upload download log_output port config_file serial_number model_number
 	local use_stun stun_host stun_port uuid notify_interval presentation_url
-	local upnp_lease_file upnp_lease_file6 ipv6_disable
+	local upnp_lease_file upnp_lease_file6 ipv6_disable external_allow_private_ipv4
 
 	local enabled
 	config_get_bool enabled config enabled 1
@@ -88,6 +88,7 @@ upnpd() {
 	config_get upnp_lease_file config upnp_lease_file
 	config_get upnp_lease_file6 config upnp_lease_file6
 	config_get ipv6_disable config ipv6_disable 0
+	config_get_bool external_allow_private_ipv4 config external_allow_private_ipv4 0
 
 	local conf ifname ifname6
 
@@ -140,6 +141,7 @@ upnpd() {
 		upnpd_write_bool igdv1 0 force_igd_desc_v1
 		upnpd_write_bool use_stun 0 ext_perform_stun
 		upnpd_write_bool ipv6_disable $ipv6_disable
+		upnpd_write_bool external_allow_private_ipv4 0 ext_allow_private_ipv4
 
 		[ "$use_stun" -eq 0 ] || {
 			[ -n "$stun_host" ] && echo "ext_stun_host=$stun_host"
