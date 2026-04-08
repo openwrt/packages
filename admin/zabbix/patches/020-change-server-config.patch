@@ -1,4 +1,4 @@
-From 9675bd17ae35744696c90b423b0c19905349c8a1 Mon Sep 17 00:00:00 2001
+From ca45744e63b957d83cdbc2a28588077cbf8b5639 Mon Sep 17 00:00:00 2001
 From: "Daniel F. Dickinson" <dfdpublic@wildtechgarden.ca>
 Date: Wed, 17 Dec 2025 06:39:16 -0500
 Subject: [PATCH] Make zabbix_server config suitable for OpenWrt
@@ -8,11 +8,14 @@ Subject: [PATCH] Make zabbix_server config suitable for OpenWrt
    Zabbix server running without privileges
 3. If started as root, drop privileges to zabbix-server user (instead of
    zabbix)
+4. Set the fping location properly for OpenWrt (/usr/bin not /usr/sbin)
+5. Configure fping as the ipv6 fping as well
+6. For privacy, disable the public API call to check Zabbix version
 
 Signed-off-by: Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
 ---
- conf/zabbix_server.conf | 8 +++++++-
- 1 file changed, 7 insertions(+), 1 deletion(-)
+ conf/zabbix_server.conf | 15 +++++++++++----
+ 1 file changed, 11 insertions(+), 4 deletions(-)
 
 --- a/conf/zabbix_server.conf
 +++ b/conf/zabbix_server.conf
@@ -52,7 +55,24 @@ Signed-off-by: Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
  ### Option: SocketDir
  #	IPC socket directory.
  #		Directory to store IPC sockets used by internal Zabbix services.
-@@ -698,7 +704,7 @@ LogSlowQueries=3000
+@@ -610,7 +616,7 @@ Timeout=4
+ #
+ # Mandatory: no
+ # Default:
+-# FpingLocation=/usr/sbin/fping
++FpingLocation=/usr/bin/fping
+ 
+ ### Option: Fping6Location
+ #	Location of fping6.
+@@ -620,6 +626,7 @@ Timeout=4
+ # Mandatory: no
+ # Default:
+ # Fping6Location=/usr/sbin/fping6
++Fping6Location=
+ 
+ ### Option: SSHKeyLocation
+ #	Location of public and private keys for SSH checks and actions.
+@@ -698,7 +705,7 @@ LogSlowQueries=3000
  #
  # Mandatory: no
  # Default:
@@ -61,3 +81,12 @@ Signed-off-by: Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
  
  ### Option: SSLCertLocation
  #	Location of SSL client certificates.
+@@ -1050,7 +1057,7 @@ EnableGlobalScripts=0
+ #
+ # Mandatory: no
+ # Default:
+-# AllowSoftwareUpdateCheck=1
++AllowSoftwareUpdateCheck=0
+ 
+ ### Option: SMSDevices
+ #	List of comma delimited modem files allowed to use Zabbix server
