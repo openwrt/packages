@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pip
 PKG_VERSION:=23.3.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=pip
 PKG_HASH:=1fcaa041308d01f14575f6d0d2ea4b75a3e2871fe4f9c694976f908768e14174
@@ -18,6 +18,8 @@ PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.txt
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 PKG_CPE_ID:=cpe:/a:pypa:pip
+
+PKG_BUILD_DEPENDS:=python-setuptools/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
