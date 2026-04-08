@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=openssh
 PKG_REALVERSION:=10.3p1
 PKG_VERSION:=10.3_p1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_REALVERSION).tar.gz
 PKG_SOURCE_URL:=https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/ \
@@ -22,8 +22,6 @@ PKG_LICENSE:=BSD ISC
 PKG_LICENSE_FILES:=LICENCE
 PKG_CPE_ID:=cpe:/a:openbsd:openssh
 
-#While bumping new version, make sure that it works without it, so it can be removed.
-PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=
 
 include $(INCLUDE_DIR)/package.mk
