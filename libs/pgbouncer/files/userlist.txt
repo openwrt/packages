@@ -1,0 +1,9 @@
+; PgBouncer User list
+; Format: "username" "password_hash"
+;
+; Generate password hash:
+; echo -n "passwordusername" | md5sum
+; add "md5" before password string
+;
+; Example:
+; "myuser" "md5d8578edf8458ce06fbc5bb76a58c5ca4"
