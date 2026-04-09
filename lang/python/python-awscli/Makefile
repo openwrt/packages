@@ -1,11 +1,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-awscli
-PKG_VERSION:=1.29.7
+PKG_VERSION:=1.44.76
 PKG_RELEASE:=1
 
 PYPI_NAME:=awscli
-PKG_HASH:=b3a7076cb317a21410a2d41734ba338add80f0480804cf9d68cbc52b1d39612a
+PKG_HASH:=33029e2928306c4bdec425a5fac54aadc343dee6c8e7152948c33d7f21d7099a
 
 PKG_MAINTAINER:=Daniel Danzberger <daniel@dd-wrt.com>
 PKG_LICENSE:=Apache-2.0
