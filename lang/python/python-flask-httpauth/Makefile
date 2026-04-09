@@ -8,11 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-flask-httpauth
-PKG_VERSION:=4.8.0
+PKG_VERSION:=4.8.1
 PKG_RELEASE:=1
 
-PYPI_NAME:=Flask-HTTPAuth
-PKG_HASH:=66568a05bc73942c65f1e2201ae746295816dc009edd84b482c44c758d75097a
+PYPI_NAME:=flask-httpauth
+PYPI_SOURCE_NAME:=flask_httpauth
+PKG_HASH:=88499b22f1353893743c3cd68f2ca561c4ad9ef75cd6bcc7f621161cd0e80744
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT
