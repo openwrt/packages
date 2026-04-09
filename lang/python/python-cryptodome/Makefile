@@ -5,11 +5,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-cryptodome
-PKG_VERSION:=3.18.0
+PKG_VERSION:=3.23.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=pycryptodome
-PKG_HASH:=c9adee653fc882d98956e33ca2c1fb582e23a8af7ac82fee75bd6113c55a0413
+PKG_HASH:=447700a657182d60338bab09fdb27518f8856aecd80ae4c6bdddb67ff5da44ef
 
 PKG_LICENSE:=Public-Domain BSD-2-Clause
 PKG_LICENSE_FILES:=LICENSE.rst
