@@ -285,6 +285,7 @@ define Py3Build/Install/Default
 	$(call Python3/Run, \
 		$(PKG_BUILD_DIR), \
 		-m installer \
+			--overwrite-existing \
 			--destdir "$(PKG_INSTALL_DIR)" \
 			--no-compile-bytecode \
 			--prefix /usr \
