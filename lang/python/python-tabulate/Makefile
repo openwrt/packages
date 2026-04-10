@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-tabulate
 PKG_VERSION:=0.10.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=tabulate
 PKG_HASH:=e2cfde8f79420f6deeffdeda9aaec3b6bc5abce947655d17ac662b126e48a60d
@@ -35,7 +35,7 @@ define Package/python3-tabulate
   SUBMENU:=Python
   TITLE:=Pretty-print tabular data
   URL:=https://pypi.org/project/tabulate
-  DEPENDS:=+python3-light +python3-email
+  DEPENDS:=+python3-light +python3-urllib
 endef
 
 define Package/python3-tabulate/description

@@ -9,11 +9,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pyparsing
-PKG_VERSION:=3.1.1
+PKG_VERSION:=3.3.2
 PKG_RELEASE:=1
 
 PYPI_NAME:=pyparsing
-PKG_HASH:=ede28a1a32462f5a9705e07aea48001a08f7cf81a021585011deba701581a0db
+PKG_HASH:=c777f4d763f140633dcb6d8a3eda953bf7a214dc4eff598413c070bcdc117cbc
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT
@@ -31,7 +31,7 @@ define Package/python3-pyparsing
   SUBMENU:=Python
   TITLE:=Define and execute parsing grammars
   URL:=https://github.com/pyparsing/pyparsing/
-  DEPENDS:=+python3-light
+  DEPENDS:=+python3-light +python3-unittest
 endef
 
 define Package/python3-pyparsing/description

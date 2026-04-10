@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-openpyxl
-PKG_VERSION:=3.0.10
+PKG_VERSION:=3.1.5
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
@@ -17,7 +17,7 @@ PKG_LICENSE_FILES:=LICENCE.rst
 PKG_CPE_ID:=cpe:/a:python:openpyxl
 
 PYPI_NAME:=openpyxl
-PKG_HASH:=e47805627aebcf860edb4edf7987b1309c1b3632f3750538ed962bbcc3bd7449
+PKG_HASH:=cf0e3cf56142039133628b5acffe8ef0c12bc902d2aadd3e0fe5878dc08d1050
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-referencing
 PKG_VERSION:=0.37.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=referencing
 PKG_HASH:=44aefc3142c5b842538163acb373e24cce6632bd54bdb01b21ad5863489f50d8
@@ -32,7 +32,7 @@ define Package/python3-referencing
   URL:=https://github.com/python-jsonschema/referencing
   DEPENDS:= \
     +python3-light \
-    +python3-email \
+    +python3-urllib \
     +python3-attrs \
     +python3-rpds-py
 endef

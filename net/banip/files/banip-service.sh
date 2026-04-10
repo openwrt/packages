@@ -7,7 +7,8 @@
 # shellcheck disable=all
 
 ban_action="${1}"
-ban_starttime="$(date "+%s")"
+read -r ban_starttime _ < "/proc/uptime"
+ban_starttime="${ban_starttime%%.*}"
 ban_funlib="/usr/lib/banip-functions.sh"
 [ -z "${ban_bver}" ] && . "${ban_funlib}"
 
@@ -61,10 +62,20 @@ for feed in allowlist ${ban_feed} blocklist; do
 
 	# skip external feeds in allowlistonly mode
 	#
-	if [ "${ban_allowlistonly}" = "1" ] &&
-		! printf "%s" "${ban_feedin}" | "${ban_grepcmd}" -q "allowlist" &&
-		! printf "%s" "${ban_feedout}" | "${ban_grepcmd}" -q "allowlist"; then
-		continue
+	if [ "${ban_allowlistonly}" = "1" ]; then
+		case "${ban_feedin}" in
+			*" allowlist "*)
+				;;
+			*)
+				case "${ban_feedout}" in
+					*" allowlist "*)
+						;;
+					*)
+						continue
+						;;
+				esac
+				;;
+		esac
 	fi
 
 	# external feeds (parallel processing on multicore hardware)
@@ -77,7 +88,7 @@ for feed in allowlist ${ban_feed} blocklist; do
 	fi
 	json_objects="url_4 url_6 rule chain flag"
 	for object in ${json_objects}; do
-		eval json_get_var feed_"${object}" '${object}' >/dev/null 2>&1
+		json_get_var "feed_${object}" "${object}" >/dev/null 2>&1
 	done
 	json_select ..
 
@@ -95,11 +106,15 @@ for feed in allowlist ${ban_feed} blocklist; do
 		feed_ipv="4"
 		if [ "${feed}" = "country" ] && [ "${ban_countrysplit}" = "1" ]; then
 			for country in ${ban_country}; do
-				f_down "${feed}.${country}" "${feed_ipv}" "${feed_url_4}" "${feed_rule}" "${feed_chain:-"in"}" "${feed_flag}"
+				(f_down "${feed}.${country}" "${feed_ipv}" "${feed_url_4}" "${feed_rule}" "${feed_chain:-"in"}" "${feed_flag}") &
+				[ "${cnt}" -gt "${ban_cores}" ] && wait -n
+				cnt="$((cnt + 1))"
 			done
 		elif [ "${feed}" = "asn" ] && [ "${ban_asnsplit}" = "1" ]; then
 			for asn in ${ban_asn}; do
-				f_down "${feed}.${asn}" "${feed_ipv}" "${feed_url_4}" "${feed_rule}" "${feed_chain:-"in"}" "${feed_flag}"
+				(f_down "${feed}.${asn}" "${feed_ipv}" "${feed_url_4}" "${feed_rule}" "${feed_chain:-"in"}" "${feed_flag}") &
+				[ "${cnt}" -gt "${ban_cores}" ] && wait -n
+				cnt="$((cnt + 1))"
 			done
 		else
 			if [ "${feed_url_4}" = "${feed_url_6}" ]; then
@@ -119,11 +134,15 @@ for feed in allowlist ${ban_feed} blocklist; do
 		feed_ipv="6"
 		if [ "${feed}" = "country" ] && [ "${ban_countrysplit}" = "1" ]; then
 			for country in ${ban_country}; do
-				f_down "${feed}.${country}" "${feed_ipv}" "${feed_url_6}" "${feed_rule}" "${feed_chain:-"in"}" "${feed_flag}"
+				(f_down "${feed}.${country}" "${feed_ipv}" "${feed_url_6}" "${feed_rule}" "${feed_chain:-"in"}" "${feed_flag}") &
+				[ "${cnt}" -gt "${ban_cores}" ] && wait -n
+				cnt="$((cnt + 1))"
 			done
 		elif [ "${feed}" = "asn" ] && [ "${ban_asnsplit}" = "1" ]; then
 			for asn in ${ban_asn}; do
-				f_down "${feed}.${asn}" "${feed_ipv}" "${feed_url_6}" "${feed_rule}" "${feed_chain:-"in"}" "${feed_flag}"
+				(f_down "${feed}.${asn}" "${feed_ipv}" "${feed_url_6}" "${feed_rule}" "${feed_chain:-"in"}" "${feed_flag}") &
+				[ "${cnt}" -gt "${ban_cores}" ] && wait -n
+				cnt="$((cnt + 1))"
 			done
 		else
 			(f_down "${feed}" "${feed_ipv}" "${feed_url_6}" "${feed_rule}" "${feed_chain:-"in"}" "${feed_flag}") &

@@ -83,7 +83,7 @@ When the DNS server on your router receives DNS requests, you will sort out quer
 * Implements a jail mode - only domains on the allowlist are permitted, all other DNS requests are rejected
 * Automatic blocklist backup & restore, these backups will be used in case of download errors and during startup
 * Send notification E-Mails, see example configuration below
-* Add new adblock feeds on your own with the 'Custom Feed Editor' in LuCI or via CLI, see example below
+* Add new adblock  feeds on your own with the 'Custom Feed Editor' in LuCI or via CLI, see example below
 * Strong LuCI support, all relevant options are exposed to the web frontend
 
 <a id="prerequisites"></a>
@@ -95,7 +95,7 @@ When the DNS server on your router receives DNS requests, you will sort out quer
 * For E-Mail notifications you need to install and setup the additional 'msmtp' package
 * For DNS reporting you need to install the additional package 'tcpdump-mini' or 'tcpdump'
 
-**Please note:**
+**Please note:**  
 * Devices with less than 128MB of RAM are **_not_** supported
 * For performance reasons, adblock depends on gnu sort and gawk
 * Before update from former adblock releases please make a backup of your local allow- and blocklists. In the latest adblock these lists have been renamed to '/etc/adblock/adblock.allowlist' and '/etc/adblock/adblock.blocklist'. There is no automatic content transition to the new files.
@@ -306,10 +306,10 @@ adblock's firewall rules are based on nftables in a separate isolated nftables t
 This additional firewall feature lets selected client devices temporarily bypass local DNS blocking and use an external, unfiltered DNS resolver. It is designed for situations where a device needs short‑term access to content normally blocked by the adblock rules.
 
 A lightweight CGI endpoint handles the workflow:
-* The client opens the URL, e.g. https://\<ROUTER-IP\>cgi-bin/adblock (preferably transferred via QR code shown in LuCI)
+* The client opens the URL, e.g. http(s)://\<ROUTER-IP\>cgi-bin/adblock (preferably transferred via QR code shown in LuCI)
 * The script automatically detects the device’s MAC address
 * If the MAC is authorized, the script displays the current status:
-  * Not in the nftables set → option to request a temporary allow (“Renew”)
+  * Not in the nftables set → option to request a temporary allow (“Bypass”)
   * Already active → shows remaining timeout
 * When renewing, the CGI adds the MAC to an nftables Set with a per‑entry timeout
 

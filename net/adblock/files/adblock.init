@@ -18,13 +18,17 @@ adb_script="/usr/bin/adblock.sh"
 adb_pidfile="/var/run/adblock.pid"
 
 if [ -z "${IPKG_INSTROOT}" ]; then
-	if [ "${action}" = "boot" ] && "${adb_init}" running; then
-		exit 0
-	elif [ -s "${adb_pidfile}" ] &&
-		{ [ "${action}" = "start" ] || [ "${action}" = "stop" ] || [ "${action}" = "restart" ] ||
-		[ "${action}" = "reload" ] || [ "${action}" = "report" ] || [ "${action}" = "suspend" ] ||
-		[ "${action}" = "resume" ] || [ "${action}" = "search" ]; }; then
-		exit 1
+	case "${action}" in
+		"boot")
+			"${adb_init}" running && exit 0
+			;;
+	esac
+	if [ -s "${adb_pidfile}" ]; then
+		case "${action}" in
+			"start"|"stop"|"restart"|"reload"|"report"|"suspend"|"resume"|"search")
+				exit 1
+				;;
+		esac
 	fi
 fi
 
@@ -88,22 +92,22 @@ status_service() {
 	json_load_file "/var/run/adb_runtime.json" >/dev/null 2>&1
 	json_get_keys keylist
 	if [ -n "${keylist}" ]; then
-		printf "%s\n" "::: adblock runtime information"
+		printf '%s\n' "::: adblock runtime information"
 		for key in ${keylist}; do
 			json_get_var value "${key}" >/dev/null 2>&1
 			if [ "${key}" = "active_feeds" ]; then
 				json_get_values values "${key}" >/dev/null 2>&1
 				value="${values}"
 			fi
-			printf "  + %-15s : %s\n" "${key}" "${value:-"-"}"
+			printf '  + %-15s : %s\n' "${key}" "${value:-"-"}"
 		done
 	else
-		printf "%s\n" "::: no adblock runtime information available"
+		printf '%s\n' "::: no adblock runtime information available"
 	fi
 }
 
 service_triggers() {
-	local iface delay
+	local iface delay trigger
 
 	delay="$(uci_get adblock global adb_triggerdelay "5")"
 	trigger="$(uci_get adblock global adb_trigger)"

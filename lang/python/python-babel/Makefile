@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-babel
-PKG_VERSION:=2.17.0
-PKG_RELEASE:=2
+PKG_VERSION:=2.18.0
+PKG_RELEASE:=1
 
 PYPI_NAME:=babel
-PKG_HASH:=0c54cffb19f690cdcc52a3b50bcbf71e07a808d1c80d549f2459b9d2cf0afb9d
+PKG_HASH:=b80b99a14bd085fcacfa15c9165f651fbb3406e66cc603abf11c5750937c992d
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
@@ -40,7 +40,7 @@ define Package/python3-babel
   URL:=https://babel.pocoo.org/
   DEPENDS:= \
     +python3-decimal \
-    +python3-email \
+    +python3-urllib \
     +python3-light \
     +python3-logging \
     +python3-urllib

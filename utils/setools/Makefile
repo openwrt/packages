@@ -6,14 +6,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=setools
-PKG_VERSION:=4.5.1
+PKG_VERSION:=4.6.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://github.com/SELinuxProject/setools/releases/download/$(PKG_VERSION)
-PKG_HASH:=25e47d00bbffd6046f55409c9ba3b08d9b1d5788cc159ea247d9e0ced8e482e7
+PKG_HASH:=97319aabaf9d4237841ee60dcc9b2f291e73a761f317fd13e293ea2367d5806c
 
-PKG_BUILD_DEPENDS:=python-cython/host # Cython>=0.27
+PKG_BUILD_DEPENDS:=python-cython/host # Cython>=0.29.14
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=GPL-2.0-only LGPL-2.1-only
@@ -45,7 +45,7 @@ define Package/python3-setools
   SUBMENU:=Python
   TITLE:=SETools Python bindings
   URL:=http://selinuxproject.org/page/Main_Page
-  DEPENDS:=+python3-light +python3-logging +python3-pkg-resources +libselinux +libsepol
+  DEPENDS:=+python3-light +python3-logging +libselinux +libsepol
 endef
 
 define Package/python3-setools/description

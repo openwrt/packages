@@ -1,5 +1,7 @@
 #!/bin/sh
 
+[ "$1" = python3-et_xmlfile ] || exit 0
+
 EXPECTED_VER="$2"
 
 python3 - << EOF
@@ -8,6 +10,7 @@ import sys
 from io import BytesIO
 from xml.etree.ElementTree import Element
 
+import et_xmlfile
 from et_xmlfile import xmlfile
 
 if (et_xmlfile.__version__ != "$EXPECTED_VER"):

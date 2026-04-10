@@ -16,21 +16,52 @@ nft_authorized="0"
 # parse query
 #
 query_str="${QUERY_STRING}"
-query_mac="$(printf "%s" "${query_str}" | sed -n 's/.*mac=\([^&]*\).*/\1/p' 2>/dev/null)"
-query_mode="$(printf "%s" "${query_str}" | sed -n 's/.*mode=\([^&]*\).*/\1/p' 2>/dev/null)"
+query_mac="${query_str#*mac=}"
+query_mac="${query_mac%%&*}"
+query_mode="${query_str#*mode=}"
+query_mode="${query_mode%%&*}"
+[ "${query_mac}" = "${query_str}" ] && query_mac=""
+[ "${query_mode}" = "${query_str}" ] && query_mode=""
+
+# URL decode helper
+#
+urldecode() {
+	printf '%b' "${1//%/\\x}"
+}
+
+# lowercase helper
+#
+tolower() {
+	local low="${1}"
+
+	low="${low//A/a}"
+	low="${low//B/b}"
+	low="${low//C/c}"
+	low="${low//D/d}"
+	low="${low//E/e}"
+	low="${low//F/f}"
+	printf '%s' "${low}"
+}
 
 # determine MAC if not provided
 #
 if [ -z "${query_mac}" ]; then
 	query_ip="${REMOTE_ADDR}"
 	query_mac="$(ip neigh show 2>/dev/null | awk -v ip="${query_ip}" '$1==ip {print $5; exit}' 2>/dev/null)"
+else
+	query_mac="$(urldecode "${query_mac}")"
 fi
 
 # validate MAC address
 #
-printf '%s\n' "${query_mac}" | grep -Eq '^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$' 2>/dev/null \
-	&& query_mac="$(printf '%s\n' "${query_mac}" | awk '{ print tolower($0) }' 2>/dev/null)" \
-	|| query_mac=""
+case "${query_mac}" in
+	[0-9A-Fa-f][0-9A-Fa-f]:[0-9A-Fa-f][0-9A-Fa-f]:[0-9A-Fa-f][0-9A-Fa-f]:[0-9A-Fa-f][0-9A-Fa-f]:[0-9A-Fa-f][0-9A-Fa-f]:[0-9A-Fa-f][0-9A-Fa-f])
+		query_mac="$(tolower "${query_mac}")"
+		;;
+	*)
+		query_mac=""
+		;;
+esac
 
 # validate mode
 #
@@ -38,8 +69,8 @@ printf '%s\n' "${query_mac}" | grep -Eq '^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$' 2
 
 # output header and start html
 #
-printf "%s\n\n" "Content-Type: text/html"
-printf "%s\n" "<!DOCTYPE html>
+printf '%s\n\n' "Content-Type: text/html"
+printf '%s\n' "<!DOCTYPE html>
 <html>
 <head>
 <meta charset=\"utf-8\">
@@ -104,7 +135,6 @@ printf "%s\n" "<!DOCTYPE html>
 	.btn:hover {
 		background: #6bb6ff;
 	}
-
 	.spinner {
 		margin: 1.5rem auto;
 		width: 40px;
@@ -134,15 +164,6 @@ function stopRefresh() {
 		refreshTimer = null;
 	}
 }
-
-function setStatus(mac) {
-	window.location.href = '?mac=' + mac;
-}
-
-function showSpinner() {
-	var s = document.getElementById('spinner');
-	if (s) s.style.display = 'block';
-}
 </script>
 
 </head>
@@ -151,34 +172,44 @@ function showSpinner() {
 <h1>Adblock Remote Allow</h1>
 "
 
-# check if remote allow is enabled
+# check if remote allow is enabled and MAC addresses are configured
 #
 if [ "${nft_remote}" != "1" ] || [ -z "${nft_macremote}" ]; then
-	printf "%s\n" "<div class=\"msg err\">Remote allow is not enabled or no MAC addresses configured</div></div></body></html>"
+	printf '%s\n' "
+		<div class=\"msg err\">
+			Adblock Remote Allow is not enabled or no MAC addresses configured
+		</div>
+	</div></body></html>"
 	exit 0
 fi
 if [ -z "${query_mac}" ]; then
-	printf "%s\n" "<div class=\"msg err\">Could not determine MAC address</div></div></body></html>"
+	printf '%s\n' "
+		<div class=\"msg err\">
+			MAC address could not be determined
+		</div>
+	</div></body></html>"
 	exit 0
 fi
 
 # check MAC authorization
 #
-for mac in ${nft_macremote}; do
-	mac="$(printf '%s' "${mac}" | awk '{ print tolower($0) }')"
-	if [ "${mac}" = "${query_mac}" ]; then
+nft_macremote="$(tolower "${nft_macremote}")"
+case " ${nft_macremote} " in
+	*" ${query_mac} "*)
 		nft_authorized="1"
-		break
-	fi
-done
+		;;
+esac
 if [ "${nft_authorized}" = "0" ]; then
-	printf "%s\n" "<div class=\"msg err\">MAC ${query_mac} is not authorized to use remote allow</div></div></body></html>"
+	printf '%s\n' "
+		<div class=\"msg err\">
+			This device (${query_mac}) is not registered for Adblock Remote Allow
+		</div>
+	</div></body></html>"
 	exit 0
 fi
 
 # extract remaining timeout
 #
-# extract remaining timeout (strip ms part)
 remaining="$(nft list set inet adblock mac_remote 2>/dev/null | \
 	awk -v mac="${query_mac}" '
 		$0 ~ mac {
@@ -197,33 +228,34 @@ remaining="$(nft list set inet adblock mac_remote 2>/dev/null | \
 # show renew option
 #
 if [ -z "${query_mode}" ] && [ -z "${remaining}" ]; then
-	printf "%s\n" "<script>stopRefresh();</script>
+	printf '%s\n' "<script>stopRefresh();</script>
 		<div class=\"msg ok\">
-			MAC ${query_mac} is currently not in the remote allow Set<br><br>
-			<a class=\"btn\" href=\"?mac=${query_mac}&mode=renew\">Renew Set Entry</a>
+			This device currently does not bypass ad blocking<br>
+			<a class=\"btn\" href=\"?mac=${query_mac}&mode=renew\">Bypass</a>
 		</div>
 	</div></body></html>"
 	exit 0
 fi
 
-# add MAC
+# add MAC and redirect to main page to show remaining time
 #
-if [ -z "${remaining}" ]; then
-	printf "%s\n" "
+if [ -z "${remaining}" ] && [ "${query_mode}" = "renew" ]; then
+	printf '%s\n' "
 		<div class=\"msg ok\">
-			Renewing remote allow for MAC ${query_mac}<br><br>
+			Adding device...<br>
 			<div class=\"spinner\"></div>
 		</div>
 	</div></body></html>"
-	nft add element inet adblock mac_remote "{ ${query_mac} }" >/dev/null 2>&1
-	printf "%s\n" "<script>setStatus('${query_mac}');</script>"
+	nft add element inet adblock mac_remote "{ ${query_mac//[!0-9a-f:]} }" >/dev/null 2>&1
+	printf '%s\n' "<script>window.location.href='?mac=${query_mac}';</script>"
+	exit 0
 fi
 
-# success message
+# show remaining time
 #
-printf "%s\n" "
+printf '%s\n' "
 	<div class=\"msg ok\">
-		MAC ${query_mac} is temporarily allowed<br>
+		This device temporarily bypasses ad blocking<br>
 		Remaining time: ${remaining:-${nft_remotetimeout}m}
 	</div>
 	<script>startRefresh();</script>
