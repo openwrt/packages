@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=openssh
 PKG_REALVERSION:=10.3p1
 PKG_VERSION:=10.3_p1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_REALVERSION).tar.gz
 PKG_SOURCE_URL:=https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/ \
@@ -199,6 +199,10 @@ CONFIGURE_VARS += LD="$(TARGET_CC)" PATH_PASSWD_PROG="/bin/passwd"
 
 ifeq ($(BUILD_VARIANT),with-pam)
 TARGET_LDFLAGS += -lpthread
+endif
+
+ifeq ($(CONFIG_PACKAGE_libopenssl-devcrypto),y)
+TARGET_CFLAGS += -DALLOW_CRYPTODEV_IOCTL
 endif
 
 define Build/Compile
