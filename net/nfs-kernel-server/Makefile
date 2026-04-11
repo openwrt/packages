@@ -7,9 +7,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nfs-kernel-server
-PKG_VERSION:=2.8.7
+PKG_VERSION:=2.9.1
 PKG_RELEASE:=1
-PKG_HASH:=59d0f1e17b18efaa60ea3ccf89a9cad3217f8d3b23c18d2fe34b25c8969d60ae
+PKG_HASH:=302846343bf509f8f884c23bdbd0fe853b7f7cbb6572060a9082279d13b21a2c
 
 PKG_SOURCE:=nfs-utils-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/utils/nfs-utils/$(PKG_VERSION)
@@ -21,8 +21,8 @@ HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/nfs-utils-$(PKG_VERSION)
 PKG_BUILD_DIR:=$(BUILD_DIR)/nfs-utils-$(PKG_VERSION)
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
-PKG_BUILD_DEPENDS:=$(PKG_NAME)/host libevent2
-HOST_BUILD_DEPENDS:=libtirpc/host
+PKG_BUILD_DEPENDS:=$(PKG_NAME)/host libevent2 libnl
+HOST_BUILD_DEPENDS:=libtirpc/host libnl/host
 PKG_CONFIG_DEPENDS:=CONFIG_IPV6
 
 include $(INCLUDE_DIR)/host-build.mk
