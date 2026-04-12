@@ -125,7 +125,6 @@ conf_section() {
 		;;
 	logging)
 		conf_getline "$cfg" "$cfgfile" level info 0
-		conf_getline "$cfg" "$cfgfile" trace_on_debug 0 1
 		conf_getline "$cfg" "$cfgfile" mask_passwords 1 1
 		;;
 	headers)
