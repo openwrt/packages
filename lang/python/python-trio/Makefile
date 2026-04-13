@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-trio
-PKG_VERSION:=0.22.2
+PKG_VERSION:=0.33.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=trio
-PKG_HASH:=3887cf18c8bcc894433420305468388dac76932e9668afa1c49aa3806b6accb3
+PKG_HASH:=a29b92b73f09d4b48ed249acd91073281a7f1063f09caba5dc70465b5c7aa970
 
 PKG_LICENSE:=Apache-2.0 MIT
 PKG_LICENSE_FILES:=LICENSE.APACHE2 LICENSE.MIT
@@ -31,7 +31,10 @@ define Package/python3-trio
   DEPENDS:= \
     +python3-light \
     +python3-attrs \
+    +python3-ctypes \
     +python3-idna \
+    +python3-logging \
+    +python3-openssl \
     +python3-outcome \
     +python3-sniffio \
     +python3-sortedcontainers
