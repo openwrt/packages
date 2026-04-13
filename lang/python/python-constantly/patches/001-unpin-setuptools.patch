@@ -3,7 +3,16 @@
 @@ -1,5 +1,5 @@
  [build-system]
 -requires = ["setuptools>=68.2", "versioneer[toml]==0.29"]
-+requires = ["setuptools", "versioneer[toml]==0.29"]
++requires = ["setuptools"]
  build-backend = "setuptools.build_meta"
  
  [project]
+@@ -27,7 +27,7 @@ name = "constantly"
+ maintainers = [{name = "Twisted Matrix Labs Developers"}]
+ urls = {Homepage = "https://github.com/twisted/constantly"}
+ requires-python = ">= 3.8"
+-dynamic = ["version"]
++version = "23.10.4"
+ 
+ [tool.setuptools]
+ include-package-data = false
