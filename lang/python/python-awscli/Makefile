@@ -7,7 +7,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=awscli
 PKG_HASH:=009010f85e5198b7ad2860cc9c66c8a378be46d35dde1e14f8c1f245cfe6aece
 
-PKG_MAINTAINER:=Daniel Danzberger <daniel@dd-wrt.com>
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE.txt
 

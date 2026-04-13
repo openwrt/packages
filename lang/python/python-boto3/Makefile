@@ -7,7 +7,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=boto3
 PKG_HASH:=2d22c70de5726918676a06f1a03acfb4d5d9ea92fc759354800b67b22aaeef19
 
-PKG_MAINTAINER:=Daniel Danzberger <daniel@dd-wrt.com>
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 

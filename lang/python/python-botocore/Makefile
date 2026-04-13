@@ -7,7 +7,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=botocore
 PKG_HASH:=cbb59ee464662039b0c2c95a520cdf85b1e8ce00b72375ab9cd9f842cc001301
 
-PKG_MAINTAINER:=Daniel Danzberger <daniel@dd-wrt.com>
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE.txt
 

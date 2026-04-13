@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=psycopg2
 PKG_HASH:=964d31caf728e217c697ff77ea69c2ba0865fa41ec20bb00f0977e62fdcc52e3
 
-PKG_MAINTAINER:=Daniel Danzberger <daniel@dd-wrt.com>
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=LGPL-3.0-or-later
 PKG_LICENSE_FILES:=LICENSE
 
