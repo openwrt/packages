@@ -9,7 +9,7 @@ PKG_SOURCE_URL:=https://github.com/HardySimpson/zlog
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
 PKG_MIRROR_HASH:=501d89c6883de14e8e6c53e1597f425814b3b467b31da04c50390d4924efecf3
 
-PKG_MAINTAINER:=
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:zlog_project:zlog

@@ -14,7 +14,7 @@ PKG_SOURCE_URL:=https://github.com/taglib/taglib
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 PKG_MIRROR_HASH:=2422e6c4ce9ea59882b6a9c078309bb95d6c11537b769f2ff22bc2fa977c56f3
 
-PKG_MAINTAINER:=
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING.LGPL
 PKG_CPE_ID:=cpe:/a:taglib:taglib

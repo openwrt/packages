@@ -16,7 +16,7 @@ PKG_SOURCE_VERSION:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=https://github.com/apple-oss-distributions/mDNSResponder
 PKG_MIRROR_HASH:=6d019ca318d189233b10e7d4a51ec6952547a87c3b81646c094021490d5990a7
 
-PKG_MAINTAINER:=
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_CPE_ID:=cpe:/a:apple:mdnsresponder
 

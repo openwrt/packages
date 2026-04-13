@@ -15,7 +15,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://lsm.foobar.fi/download
 PKG_HASH:=527d9c363aa62b9fc511b42c5a06f774a8767c4b5330db4d959c10b46b0dede7
 
-PKG_MAINTAINER:=
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=GPL-2.0-only
 
 PKG_INSTALL:=1

@@ -17,7 +17,7 @@ PKG_SOURCE_URL:=https://github.com/libfuse/libfuse/releases/download/fuse-$(PKG_
 PKG_HASH:=de8190448909aa97a222d435bc130aae98331bed4215e9f4519b4b5b285a1d63
 PKG_BUILD_DIR:=$(BUILD_DIR)/fuse-$(PKG_VERSION)
 
-PKG_MAINTAINER:=
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_CPE_ID:=cpe:/a:fuse_project:fuse
 
 PKG_CONFIG_DEPENDS:=CONFIG_PACKAGE_fuse3-utils

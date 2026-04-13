@@ -15,7 +15,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/sctp/lksctp-tools/tar.gz/v$(PKG_VERSION)?
 PKG_HASH:=8738bf17ecffbbe2440a6e2ffaf1cbcebb633fc99d63d88761af35c02a571893
 
-PKG_MAINTAINER:=
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 

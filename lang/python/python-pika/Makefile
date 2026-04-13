@@ -12,7 +12,7 @@ PKG_HASH:=b2a327ddddf8570b4965b3576ac77091b850262d34ce8c1d8cb4e4146aa4145f
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
 PKG_BUILD_DEPENDS:=python-setuptools/host
 

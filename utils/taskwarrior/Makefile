@@ -16,7 +16,7 @@ PKG_SOURCE_URL:=https://www.taskwarrior.org/download
 PKG_HASH:=b1d3a7f000cd0fd60640670064e0e001613c9e1cb2242b9b3a9066c78862cfec
 PKG_BUILD_DIR:=$(BUILD_DIR)/task-$(PKG_VERSION)
 
-PKG_MAINTAINER:=
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 

@@ -16,7 +16,7 @@ PKG_SOURCE_URL:=https://github.com/vim/vim.git
 PKG_SOURCE_VERSION=v$(PKG_VERSION)
 PKG_MIRROR_HASH:=92c6fe490fba758bc0a626863713d65c078d2abdbd030e9e423bdf372565d58e
 
-PKG_MAINTAINER:=
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=Vim
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:vim:vim
