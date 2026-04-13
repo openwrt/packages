@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-awesomeversion
-PKG_VERSION:=23.5.0
+PKG_VERSION:=25.8.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=awesomeversion
-PKG_HASH:=a505558316010d2d10d487226f79c1157204af00fa462fdcf948e347011dd491
+PKG_HASH:=e6cd08c90292a11f30b8de401863dcde7bc66a671d8173f9066ebd15d9310453
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENCE.md
 
-PKG_BUILD_DEPENDS:=python-poetry-core/host
+PKG_BUILD_DEPENDS:=python-hatchling/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
