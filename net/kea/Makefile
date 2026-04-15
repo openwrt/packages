@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=kea
 PKG_VERSION:=3.0.2
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ftp.isc.org/isc/kea/$(PKG_VERSION)
@@ -63,7 +63,7 @@ endef
 define Package/kea-libs
 	$(call Package/kea/Default)
 	TITLE+=Libraries
-	DEPENDS:=+libopenssl +log4cplus +boost
+	DEPENDS:=+libopenssl +libstdcpp +log4cplus-any +boost
 endef
 define Package/kea-libs/description
 		Kea required Libraries.
