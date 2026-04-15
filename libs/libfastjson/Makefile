@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libfastjson
 PKG_VERSION:=1.2304.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.rsyslog.com/libfastjson
@@ -29,6 +29,7 @@ define Package/libfastjson
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=A fast JSON library for C
+  DEPENDS:=+USE_GLIBC:libm
   URL:=https://github.com/rsyslog/libfastjson
 endef
 
