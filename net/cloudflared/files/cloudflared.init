@@ -59,6 +59,10 @@ start_service() {
 }
 
 service_triggers() {
+	config_load "$CONF"
 	procd_add_reload_trigger "$CONF"
-	procd_add_interface_trigger "interface.*.up" "wan" /etc/init.d/cloudflared restart
+	config_get interfaces "config" "interfaces" "wan"
+	for ifname in $interfaces; do
+		procd_add_interface_trigger "interface.*.up" "$ifname" /etc/init.d/cloudflared restart
+	done
 }
