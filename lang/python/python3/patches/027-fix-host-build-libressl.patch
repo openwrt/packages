@@ -12,7 +12,7 @@
  
  struct py_ssl_error_code {
      const char *mnemonic;
-@@ -4896,7 +4899,11 @@ _ssl__SSLContext_cert_store_stats_impl(P
+@@ -4898,7 +4901,11 @@ _ssl__SSLContext_cert_store_stats_impl(P
      int x509 = 0, crl = 0, ca = 0, i;
  
      store = SSL_CTX_get_cert_store(self->ctx);
@@ -24,7 +24,7 @@
      if (objs == NULL) {
          PyErr_SetString(PyExc_MemoryError, "failed to query cert store");
          return NULL;
-@@ -4952,7 +4959,11 @@ _ssl__SSLContext_get_ca_certs_impl(PySSL
+@@ -4954,7 +4961,11 @@ _ssl__SSLContext_get_ca_certs_impl(PySSL
      }
  
      store = SSL_CTX_get_cert_store(self->ctx);
