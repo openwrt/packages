@@ -1,11 +1,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-lru-dict
-PKG_VERSION:=1.3.0
+PKG_VERSION:=1.4.1
 PKG_RELEASE:=1
 
 PYPI_NAME:=lru-dict
-PKG_HASH:=54fd1966d6bd1fcde781596cb86068214edeebff1db13a2cea11079e3fd07b6b
+PYPI_SOURCE_NAME:=lru_dict
+PKG_HASH:=cc518ff2d38cc7a8ab56f9a6ae557f91e2e1524b57ed8e598e97f45a2bd708fc
+
+PKG_BUILD_DEPENDS:=python-setuptools/host
 
 PKG_MAINTAINER:=Timothy Ace <openwrt@timothyace.com>
 PKG_LICENSE:=MIT
