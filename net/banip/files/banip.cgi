@@ -34,13 +34,13 @@ request_decode() {
 	# validate value as an IP address, otherwise ignore the request
 	#
 	case "${value}" in
-		[0-9]*.[0-9]*.[0-9]*.[0-9]*)
-			;;
-		[0-9A-Fa-f]*:*[0-9A-Fa-f])
-			;;
-		*)
-			return
-			;;
+	[0-9]*.[0-9]*.[0-9]*.[0-9]*) ;;
+
+	[0-9A-Fa-f]*:*[0-9A-Fa-f]) ;;
+
+	*)
+		return
+		;;
 	esac
 
 	# only log if token matches and banip is running, otherwise ignore the request

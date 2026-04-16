@@ -22,20 +22,20 @@ ban_lock="/var/run/banIP/banIP.lock"
 
 if [ -z "${IPKG_INSTROOT}" ]; then
 	case "${action}" in
-		"boot")
-			"${ban_init}" running && exit 0
-			;;
-		"stop"|"report"|"content")
-			"${ban_init}" running || exit 0
-			;;
+	"boot")
+		"${ban_init}" running && exit 0
+		;;
+	"stop" | "report" | "content")
+		"${ban_init}" running || exit 0
+		;;
 	esac
 	case "${action}" in
-		"boot"|"start"|"restart"|"reload"|"search")
-			if [ -d "${ban_lock}" ]; then
-				exit 1
-			fi
-			mkdir -p "${ban_lock}"
-			;;
+	"boot" | "start" | "restart" | "reload" | "search")
+		if [ -d "${ban_lock}" ]; then
+			exit 1
+		fi
+		mkdir -p "${ban_lock}"
+		;;
 	esac
 	. "${ban_funlib}"
 fi

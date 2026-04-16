@@ -7,7 +7,7 @@
 # shellcheck disable=all
 
 ban_action="${1}"
-read -r ban_starttime _ < "/proc/uptime"
+read -r ban_starttime _ <"/proc/uptime"
 ban_starttime="${ban_starttime%%.*}"
 ban_funlib="/usr/lib/banip-functions.sh"
 [ -z "${ban_bver}" ] && . "${ban_funlib}"
@@ -64,17 +64,17 @@ for feed in allowlist ${ban_feed} blocklist; do
 	#
 	if [ "${ban_allowlistonly}" = "1" ]; then
 		case "${ban_feedin}" in
-			*" allowlist "*)
-				;;
+		*" allowlist "*) ;;
+
+		*)
+			case "${ban_feedout}" in
+			*" allowlist "*) ;;
+
 			*)
-				case "${ban_feedout}" in
-					*" allowlist "*)
-						;;
-					*)
-						continue
-						;;
-				esac
+				continue
 				;;
+			esac
+			;;
 		esac
 	fi
 
@@ -94,7 +94,7 @@ for feed in allowlist ${ban_feed} blocklist; do
 
 	# skip incomplete feeds
 	#
-	if { [ -z "${feed_url_4}" ] && [ -z "${feed_url_6}" ]; } || \
+	if { [ -z "${feed_url_4}" ] && [ -z "${feed_url_6}" ]; } ||
 		{ { [ -n "${feed_url_4}" ] || [ -n "${feed_url_6}" ]; } && [ -z "${feed_rule}" ]; }; then
 		f_log "info" "skip incomplete feed '${feed}'"
 		continue
