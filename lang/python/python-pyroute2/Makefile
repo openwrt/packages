@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pyroute2
-PKG_VERSION:=0.9.5
+PKG_VERSION:=0.9.6
 PKG_RELEASE:=1
 
 PYPI_NAME:=pyroute2
-PKG_HASH:=a198ccbe545b031b00b10da4b44df33d548db04af944be8107c05a215ba03872
+PKG_HASH:=6bc5e2ea9a372ded682b4ede4028ba00236bd6e35b42d833f39a96b219ef1db2
 
 PKG_MAINTAINER:=Martin Matějek <martin.matejek@nic.cz>
 PKG_LICENSE:=GPL-2.0-or-later Apache-2.0
