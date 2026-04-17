@@ -143,12 +143,12 @@ get)
 		export dns
 		set -- "$@" -h "$HOOKDIR/client/dnschalhook.sh"
 		if [ "$dalias" ]; then
-			set -- "$@" --domain-alias "$dalias"
+			export dalias
 			if [ "$calias" ]; then
 				log err "Both domain and challenge aliases are defined. Ignoring the challenge alias."
 			fi
 		elif [ "$calias" ]; then
-			set -- "$@" --challenge-alias "$calias"
+			export calias
 		fi
 		if [ "$dns_wait" ]; then
 			export dns_wait
