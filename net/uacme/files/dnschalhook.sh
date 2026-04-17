@@ -55,11 +55,18 @@ if [ ! -f "$ACMESH_DNSSCIRPT_DIR/$dns.sh" ]; then
 fi
 . /usr/lib/acme/client/dnsapi/$dns.sh
 echo $dns > "$DOMAIN_CONF_DIR/selected_api"
+
+TXTDOMAIN=_acme-challenge.$IDENT
+if [ "$dalias" ]; then
+    TXTDOMAIN=$dalias
+elif [ "$calias" ]; then
+    TXTDOMAIN=_acme-challenge.$calias
+fi
 case "$METHOD" in
     "begin")
         (umask 077 ; touch -a "$DOMAIN_CONF")
         log info logging $DOMAIN_CONF
-        ${dns}_add _acme-challenge.$IDENT $AUTH
+        ${dns}_add $TXTDOMAIN $AUTH
         RESULT=$?
         if [ $RESULT -eq 0 ]; then
             sleep ${dns_wait:-"30s"}
@@ -69,7 +76,7 @@ case "$METHOD" in
         fi
         ;;
     "done"|"failed")
-        ${dns}_rm _acme-challenge.$IDENT $AUTH
+        ${dns}_rm $TXTDOMAIN $AUTH
         exit $?
         ;;
     *)
