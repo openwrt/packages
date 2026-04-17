@@ -21,7 +21,10 @@ adb_mailprofile="$(uci_get adblock global adb_mailprofile "adb_notify")"
 
 # info preparation
 #
-sys_info="$(strings /etc/banner 2>/dev/null; "${adb_ubuscmd}" call system board | "${adb_awkcmd}" 'BEGIN{FS="[{}\"]"}{if($2=="kernel"||$2=="hostname"||$2=="system"||$2=="model"||$2=="description")printf "  + %-12s: %s\n",$2,$4}' 2>/dev/null)"
+sys_info="$(
+	strings /etc/banner 2>/dev/null
+	"${adb_ubuscmd}" call system board | "${adb_awkcmd}" 'BEGIN{FS="[{}\"]"}{if($2=="kernel"||$2=="hostname"||$2=="system"||$2=="model"||$2=="description")printf "  + %-12s: %s\n",$2,$4}' 2>/dev/null
+)"
 adb_info="$(/etc/init.d/adblock status 2>/dev/null)"
 rep_info="${1}"
 if [ -x "${adb_logreadcmd}" ]; then

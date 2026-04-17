@@ -19,64 +19,64 @@ for option in ${old_options}; do
 		old_values="$(uci -q get ${config}.global.${option})"
 		for value in ${old_values}; do
 			case "${option}" in
-				"adb_sources")
-					if ! uci -q get ${config}.global.adb_feed | grep -q "${value}"; then
-						uci -q add_list ${config}.global.adb_feed="${value}"
-					fi
+			"adb_sources")
+				if ! uci -q get ${config}.global.adb_feed | grep -q "${value}"; then
+					uci -q add_list ${config}.global.adb_feed="${value}"
+				fi
 				;;
-				"adb_hag_sources")
-					if ! uci -q get ${config}.global.adb_hag_feed | grep -q "${value}"; then
-						uci -q add_list ${config}.global.adb_hag_feed="${value}"
-					fi
+			"adb_hag_sources")
+				if ! uci -q get ${config}.global.adb_hag_feed | grep -q "${value}"; then
+					uci -q add_list ${config}.global.adb_hag_feed="${value}"
+				fi
 				;;
-				"adb_hst_sources")
-					if ! uci -q get ${config}.global.adb_hst_feed | grep -q "${value}"; then
-						uci -q add_list ${config}.global.adb_hst_feed="${value}"
-					fi
+			"adb_hst_sources")
+				if ! uci -q get ${config}.global.adb_hst_feed | grep -q "${value}"; then
+					uci -q add_list ${config}.global.adb_hst_feed="${value}"
+				fi
 				;;
-				"adb_stb_sources")
-					if ! uci -q get ${config}.global.adb_stb_feed | grep -q "${value}"; then
-						uci -q add_list ${config}.global.adb_stb_feed="${value}"
-					fi
+			"adb_stb_sources")
+				if ! uci -q get ${config}.global.adb_stb_feed | grep -q "${value}"; then
+					uci -q add_list ${config}.global.adb_stb_feed="${value}"
+				fi
 				;;
-				"adb_utc_sources")
-					if ! uci -q get ${config}.global.adb_utc_feed | grep -q "${value}"; then
-						uci -q add_list ${config}.global.adb_utc_feed="${value}"
-					fi
+			"adb_utc_sources")
+				if ! uci -q get ${config}.global.adb_utc_feed | grep -q "${value}"; then
+					uci -q add_list ${config}.global.adb_utc_feed="${value}"
+				fi
 				;;
-				"adb_fetchutil")
-					uci -q set ${config}.global.adb_fetchcmd="${value}"
+			"adb_fetchutil")
+				uci -q set ${config}.global.adb_fetchcmd="${value}"
 				;;
-				"adb_tmpbase")
-					uci -q set ${config}.global.adb_basedir="${value}"
+			"adb_tmpbase")
+				uci -q set ${config}.global.adb_basedir="${value}"
 				;;
-				"adb_nice")
-					uci -q set ${config}.global.adb_nicelimit="${value}"
+			"adb_nice")
+				uci -q set ${config}.global.adb_nicelimit="${value}"
 				;;
-				"adb_hag_feed")
-					inplace="1"
-					if ! printf "%s" "${value}" | grep -qE "^(wildcard/|domains/)"; then
-						uci -q del_list ${config}.global.adb_hag_feed="${value}"
-						uci -q add_list ${config}.global.adb_hag_feed="wildcard/${value}"
-					fi
+			"adb_hag_feed")
+				inplace="1"
+				if ! printf '%s' "${value}" | grep -qE "^(wildcard/|domains/)"; then
+					uci -q del_list ${config}.global.adb_hag_feed="${value}"
+					uci -q add_list ${config}.global.adb_hag_feed="wildcard/${value}"
+				fi
 				;;
-				"adb_forcedns" | "adb_dnsforce")
-					uci -q set ${config}.global.adb_nftforce="${value}"
+			"adb_forcedns" | "adb_dnsforce")
+				uci -q set ${config}.global.adb_nftforce="${value}"
 				;;
-				"adb_zonelist")
-					if ! uci -q get ${config}.global.adb_nftdevforce | grep -q "${value}"; then
-						uci -q add_list ${config}.global.adb_nftdevforce="${value}"
-					fi
+			"adb_zonelist")
+				if ! uci -q get ${config}.global.adb_nftdevforce | grep -q "${value}"; then
+					uci -q add_list ${config}.global.adb_nftdevforce="${value}"
+				fi
 				;;
-				"adb_portlist")
-					if ! uci -q get ${config}.global.adb_nftportforce | grep -q "${value}"; then
-						uci -q add_list ${config}.global.adb_nftportforce="${value}"
-					fi
+			"adb_portlist")
+				if ! uci -q get ${config}.global.adb_nftportforce | grep -q "${value}"; then
+					uci -q add_list ${config}.global.adb_nftportforce="${value}"
+				fi
 				;;
-				"adb_replisten")
-					if ! uci -q get ${config}.global.adb_repport | grep -q "${value}"; then
-						uci -q add_list ${config}.global.adb_repport="${value}"
-					fi
+			"adb_replisten")
+				if ! uci -q get ${config}.global.adb_repport | grep -q "${value}"; then
+					uci -q add_list ${config}.global.adb_repport="${value}"
+				fi
 				;;
 			esac
 		done

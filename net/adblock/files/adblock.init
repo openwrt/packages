@@ -15,19 +15,21 @@ extra_command "report" "[<cli>|<mail>|<gen>|<json>] Print DNS statistics"
 
 adb_init="/etc/init.d/adblock"
 adb_script="/usr/bin/adblock.sh"
-adb_pidfile="/var/run/adblock.pid"
+adb_rundir="/var/run/adblock"
+adb_pidfile="/var/run/adblock/adblock.pid"
 
 if [ -z "${IPKG_INSTROOT}" ]; then
+	[ ! -d "${adb_rundir}" ] && mkdir -p "${adb_rundir}"
 	case "${action}" in
-		"boot")
-			"${adb_init}" running && exit 0
-			;;
+	"boot")
+		"${adb_init}" running && exit 0
+		;;
 	esac
 	if [ -s "${adb_pidfile}" ]; then
 		case "${action}" in
-			"start"|"stop"|"restart"|"reload"|"report"|"suspend"|"resume"|"search")
-				exit 1
-				;;
+		"start" | "stop" | "restart" | "reload" | "report" | "suspend" | "resume" | "search")
+			exit 1
+			;;
 		esac
 	fi
 fi
@@ -89,7 +91,7 @@ status_service() {
 	local key keylist value values
 
 	json_init
-	json_load_file "/var/run/adb_runtime.json" >/dev/null 2>&1
+	json_load_file "/var/run/adblock/adblock.runtime.json" >/dev/null 2>&1
 	json_get_keys keylist
 	if [ -n "${keylist}" ]; then
 		printf '%s\n' "::: adblock runtime information"

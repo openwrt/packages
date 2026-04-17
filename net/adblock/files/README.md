@@ -67,7 +67,7 @@ When the DNS server on your router receives DNS requests, you will sort out quer
 * Provides a 'DNS Blocklist Shift', where the generated final DNS blocklist is moved to the backup directory and only a soft link to this file is set in memory. As long as your backup directory is located on an external drive, you should activate this option to save valuable RAM.
 * Feed parsing by a very fast & secure domain validator, all domain rules and feed information are placed in an external JSON file ('/etc/adblock/adblock.feeds')
 * Overall duplicate removal in generated blocklist file 'adb_list.overall'
-* Additional local allowlist for manual overrides, located in '/etc/adblock/adblock.allowlist' (only exact matches).
+* Additional local allowlist for manual overrides, located in '/etc/adblock/adblock.allowlist'
 * Additional local blocklist for manual overrides, located in '/etc/adblock/adblock.blocklist'
 * Implements firewall‑based DNS Control to force DNS interfaces/ports and to redirect to external unfiltered/filtered DNS server
 * Includes firewall‑based Remote DNS Allow, a CGI-Interface to allow certain MACs temporary bypass the local adblock DNS
