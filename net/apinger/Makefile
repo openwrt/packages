@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=apinger
 PKG_SOURCE_DATE:=2015-04-09
 PKG_SOURCE_VERSION:=78eb328721ba1a10571c19df95acddcb5f0c17c8
-PKG_RELEASE:=8
+PKG_RELEASE:=9
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/Jajcus/apinger
@@ -35,14 +35,12 @@ define Package/apinger
 endef
 
 define Package/apinger/description
-	Alarm Pinger (apinger) is a little tool which monitors various IP devices by
-	simple ICMP echo requests. There are various other tools, that can do this,
-	but most of them are shell or perl scripts, spawning many processes, thus much
-	CPU-expensive, especially when one wants continuous monitoring and fast
-	response on target failure.  Alarm Pinger is a single program written in C, so
-	it doesn't need much CPU power even when monitoring many targets with frequent
-	probes.  Alarm Pinger supports both IPv4 and IPv6. The code have been tested
-	on Linux and FreeBSD.
+	A little tool which monitors various IP devices by simple ICMP echo requests.
+	There are various other tools that can do this, but most of them are shell
+	or perl scripts, spawning many processes, thus much CPU-expensive. Alarm
+	Pinger is a single program written in C, so it doesn't need much CPU power
+	even when monitoring many targets with frequent probes. Supports both IPv4
+	and IPv6. Tested on Linux and FreeBSD.
 endef
 
 define Package/apinger/conffiles
@@ -88,4 +86,3 @@ endef
 
 $(eval $(call BuildPackage,apinger))
 $(eval $(call BuildPackage,apinger-rrd))
-
