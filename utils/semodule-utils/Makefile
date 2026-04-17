@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=semodule-utils
-PKG_VERSION:=3.9
+PKG_VERSION:=3.10
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/SELinuxProject/selinux/releases/download/$(PKG_VERSION)
-PKG_HASH:=729be36e4726c5d0833732681a94b2e0e4aff973c076504e41f8547abb6c5424
+PKG_HASH:=1c2f14cc098cbb4d75912d131c5f747e70246e1042e72f2ab40e28f53cf45c10
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=GPL-2.0-only
