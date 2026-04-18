@@ -25,7 +25,7 @@ endef
 define Package/ipq-art-editor/description
   Utility to update MAC addresses, customer data, and raw bytes in
   Qualcomm IPQ ART partitions/files and recalculate ART checksum.
-  Supports IPQ60xx and IPQ80xx platforms
+  Supports IPQ60xx and IPQ80xx platforms.
 endef
 
 TARGET_CFLAGS += -Wall -Wextra
