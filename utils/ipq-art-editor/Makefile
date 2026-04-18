@@ -4,7 +4,7 @@ PKG_NAME:=ipq-art-editor
 PKG_VERSION:=1.0.1
 PKG_RELEASE:=1
 
-PKG_SOURCE:=1.0.1.tar.gz
+PKG_SOURCE:=$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/gvvsnrnaveen/ipq-art-editor/archive/refs/tags/
 PKG_HASH:=a6cb8191f9f06c7538c5ee7328c850a8ecd085573460e1afeae4e3b82f7b559e
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
