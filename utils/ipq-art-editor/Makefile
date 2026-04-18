@@ -19,6 +19,7 @@ define Package/ipq-art-editor
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=IPQ ART partition editor utility
+  URL:=https://github.com/gvvsnrnaveen/ipq-art-editor
 endef
 
 define Package/ipq-art-editor/description
