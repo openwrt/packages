@@ -31,9 +31,9 @@ endef
 TARGET_CFLAGS += -Wall -Wextra
 
 define Build/Compile
-	$(MAKE) -C $(PKG_BUILD_DIR)/src \
+	$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR)/src \
 		$(TARGET_CONFIGURE_OPTS) \
-		CFLAGS="$(TARGET_CFLAGS)" \
+		CFLAGS+=" $(TARGET_CFLAGS)" \
 		LDFLAGS="$(TARGET_LDFLAGS)"
 endef
 
