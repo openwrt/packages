@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=openvpn
 
 PKG_VERSION:=2.7.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=\
 	https://build.openvpn.net/downloads/releases/ \
@@ -42,6 +42,7 @@ define Package/openvpn/Default
 	   +OPENVPN_$(1)_ENABLE_LZ4:liblz4 \
 	   +OPENVPN_$(1)_ENABLE_IPROUTE2:ip \
 	   +OPENVPN_$(1)_ENABLE_DCO:libnl-genl \
+	   +OPENVPN_$(1)_ENABLE_DCO:kmod-ovpn-backports \
 	   $(3)
   VARIANT:=$(1)
   PROVIDES:=openvpn openvpn-crypto
