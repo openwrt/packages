@@ -1,0 +1,28 @@
+--- a/klish/ksession/kcontext.c
++++ b/klish/ksession/kcontext.c
+@@ -4,7 +4,10 @@
+ #include <assert.h>
+ #include <sys/types.h>
+ #include <unistd.h>
+-
++#undef stdin
++#undef stdout
++#undef stderr
++
+ #include <faux/str.h>
+ #include <faux/conv.h>
+ #include <faux/list.h>
+--- a/klish/ksession/kexec.c
++++ b/klish/ksession/kexec.c
+@@ -14,7 +14,10 @@
+ #include <termios.h>
+ #include <signal.h>
+ #include <errno.h>
+-
++#undef stdin
++#undef stdout
++#undef stderr
++
+ #include <faux/list.h>
+ #include <faux/buf.h>
+ #include <faux/eloop.h>
