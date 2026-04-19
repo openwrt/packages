@@ -33,6 +33,7 @@ PKG_MOD_EXTRA := \
 	lua-resty-core \
 	lua-resty-lrucache \
 	rtmp \
+	dav \
 	dav-ext \
 	naxsi \
 	brotli \
@@ -167,6 +168,38 @@ rm -f "$$(uci get "nginx.$${LAN_NAME}.ssl_certificate")"
 rm -f "$$(uci get "nginx.$${LAN_NAME}.ssl_certificate_key")"
 exit 0
 endef
+
+define Package/nginx-dav
+  $(Package/nginx/default)
+  TITLE += with WebDAV support
+  DEPENDS:= \
+    +USE_GLIBC:libcrypt-compat \
+    +libopenssl \
+    +NGINX_PCRE:libpcre2 \
+    +libpthread \
+    +libxml2 \
+    +NGINX_PCRE:nginx-ssl-util \
+    +!NGINX_PCRE:nginx-ssl-util-nopcre \
+    +NGINX_HTTP_GZIP:zlib
+  EXTRA_DEPENDS:=nginx-ssl-util$(if $(CONFIG_NGINX_PCRE),,-nopcre) (>=1.5-r1)
+  PROVIDES:=nginx
+  VARIANT:=dav
+  CONFLICTS:=nginx-full
+endef
+
+Package/nginx-dav/description = $(Package/nginx/description) \
+  This variant is compiled with WebDAV support enabled. To enable additional module \
+  select them in the nginx default configuration menu.
+
+define Package/nginx-dav/config
+	source "$(SOURCE)/Config_dav.in"
+endef
+
+Package/nginx-dav/conffiles = $(Package/nginx/conffiles)
+
+Package/nginx-dav/install = $(Package/nginx-ssl/install)
+
+Package/nginx-dav/prerm = $(Package/nginx-ssl/prerm)
 
 define Package/nginx-full
   $(Package/nginx/default)
@@ -329,6 +362,14 @@ define Download/nginx-mod-dav-ext
   PROTO:=git
 endef
 
+define Download/nginx-mod-dav
+	SOURCE_DATE:=2026-04-06
+	SOURCE_VERSION:=1.0
+	URL:=https://github.com/martin-nedev/nginx-dav-module.git
+	MIRROR_HASH:=08a3f290a5df0894e27bf6889070644e5395453cb08fc368332bada6d67bfe67
+	PROTO:=git
+endef
+
 define Download/nginx-mod-ubus
   SOURCE_DATE:=2020-09-06
   SOURCE_VERSION:=b2d7260dcb428b2fb65540edb28d7538602b4a26
@@ -387,10 +428,10 @@ define Build/Prepare
 	mkdir -p $(PKG_BUILD_DIR)
 	$(PKG_UNPACK)
 
-	$(foreach m,$(filter-out $(PKG_MOD_PATCHED),$(PKG_MOD_EXTRA)),$(if $(CONFIG_PACKAGE_nginx-mod-$(m)),
+	$(foreach m,$(filter-out $(PKG_MOD_PATCHED),$(PKG_MOD_EXTRA)),$(if $(or $(CONFIG_PACKAGE_nginx-mod-$(m)),$(and $(filter dav,$(m)),$(filter dav,$(BUILD_VARIANT)))),
 		$(call Module/Build/Prepare,$(m))
 	))
-	$(foreach m,$(PKG_MOD_PATCHED),$(if $(or $(CONFIG_PACKAGE_nginx-mod-$(m)),$(QUILT)),
+	$(foreach m,$(PKG_MOD_PATCHED),$(if $(or $(CONFIG_PACKAGE_nginx-mod-$(m)),$(QUILT),$(and $(filter dav,$(m)),$(filter dav,$(BUILD_VARIANT)))),
 		$(call Module/Build/Prepare,$(m))
 	))
 	$(Build/Patch)
@@ -412,13 +453,16 @@ define BuildModule
   endef
 
   define Package/nginx-mod-$(1)/install
-	$(INSTALL_DIR) $$(1)/usr/lib/nginx/modules
-	$(INSTALL_DIR) $$(1)/etc/nginx/module.d
-	$(foreach m,$(3),
-	  $(CP) $$(PKG_INSTALL_DIR)/usr/lib/nginx/modules/$(m)_module.so $$(1)/usr/lib/nginx/modules && \
-	  echo "load_module /usr/lib/nginx/modules/$(m)_module.so;" > $$(1)/etc/nginx/module.d/$(m).module
+	$(if $(filter dav,$(1)), \
+		true, \
+		$(INSTALL_DIR) $$(1)/usr/lib/nginx/modules \
+		$(INSTALL_DIR) $$(1)/etc/nginx/module.d \
+		$(foreach m,$(3), \
+		  $(CP) $$(PKG_INSTALL_DIR)/usr/lib/nginx/modules/$(m)_module.so $$(1)/usr/lib/nginx/modules && \
+		  echo "load_module /usr/lib/nginx/modules/$(m)_module.so;" > $$(1)/etc/nginx/module.d/$(m).module \
+		) \
+		$(call Module/nginx-mod-$(1)/install,$$(1)) \
 	)
-	$(call Module/nginx-mod-$(1)/install,$$(1))
   endef
 
   $$(eval $$(call BuildPackage,nginx-mod-$(1)))
@@ -482,7 +526,7 @@ CONFIGURE_ARGS += \
 	$(if $(call IsEnabled,NGINX_HTTP_GZIP_STATIC),--with-http_gzip_static_module) \
 	$(if $(call IsEnabled,NGINX_STUB_STATUS),--with-http_stub_status_module) \
 	$(if $(call IsEnabled,NGINX_FLV),--with-http_flv_module) \
-	$(if $(call IsEnabled,NGINX_DAV),--with-http_dav_module) \
+	$(if $(and $(call IsEnabled,NGINX_DAV),$(if $(filter dav,$(BUILD_VARIANT)),,1)),--with-http_dav_module) \
 	$(if $(call IsEnabled,NGINX_HTTP_AUTH_REQUEST),--with-http_auth_request_module) \
 	$(if $(call IsEnabled,NGINX_HTTP_QUIC),--with-http_v3_module) \
 	$(if $(call IsEnabled,NGINX_HTTP_V2),--with-http_v2_module) \
@@ -493,10 +537,12 @@ CONFIGURE_ARGS += \
 	$(if $(call IsEnabled,NGINX_STREAM_REAL_IP),--with-stream_realip_module) \
 	$(if $(CONFIG_PACKAGE_nginx-mod-naxsi),--add-dynamic-module=$(PKG_BUILD_DIR)/nginx-mod-naxsi/naxsi_src) \
 	$(if $(CONFIG_PACKAGE_nginx-mod-njs),--add-dynamic-module=$(PKG_BUILD_DIR)/nginx-mod-njs/nginx) \
-	$(foreach m,$(filter-out lua-resty-core lua-resty-lrucache naxsi njs,$(PKG_MOD_EXTRA)), \
-		$(if $(CONFIG_PACKAGE_nginx-mod-$(m)),--add-dynamic-module=$(PKG_BUILD_DIR)/nginx-mod-$(m)))
+	$(if $(filter dav,$(BUILD_VARIANT)),--add-module=$(PKG_BUILD_DIR)/nginx-mod-dav) \
+	$(foreach m,$(filter-out dav lua-resty-core lua-resty-lrucache naxsi njs,$(PKG_MOD_EXTRA)), \
+	$(if $(CONFIG_PACKAGE_nginx-mod-$(m)),--add-dynamic-module=$(PKG_BUILD_DIR)/nginx-mod-$(m)))
 
 $(eval $(call BuildPackage,nginx-ssl))
+$(eval $(call BuildPackage,nginx-dav))
 $(eval $(call BuildPackage,nginx-full))
 $(eval $(call BuildPackage,nginx-mod-luci))
 $(eval $(call BuildPackage,nginx-mod-lua-resty-lrucache))
