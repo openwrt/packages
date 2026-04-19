@@ -24,9 +24,10 @@ ban_allowlist="/etc/banip/banip.allowlist"
 ban_blocklist="/etc/banip/banip.blocklist"
 ban_mailtemplate="/etc/banip/banip.tpl"
 ban_pidfile="${ban_rundir}/banIP.pid"
-ban_rtfile="${ban_rundir}/banIP_runtime.json"
-ban_rdapfile="${ban_rundir}/banIP_rdap.json"
+ban_rtfile="${ban_rundir}/banIP.runtime.json"
+ban_rdapfile="${ban_rundir}/banIP.rdap.json"
 ban_lock="${ban_rundir}/banIP.lock"
+ban_etaglock="${ban_rundir}/banIP.etag.lock"
 ban_rdapurl="https://rdap.db.ripe.net/ip/"
 ban_geourl="http://ip-api.com/batch"
 ban_errorlog="/dev/null"
@@ -231,6 +232,8 @@ f_trim() {
 f_rmpid() {
 	local ppid pid pids_next pids_all childs newchilds
 
+	# kill process group of pid in pidfile and all child processes
+	#
 	ppid="$("${ban_catcmd}" "${ban_pidfile}" 2>>"${ban_errorlog}")"
 	if [ -n "${ppid}" ]; then
 		pids_next="$("${ban_pgrepcmd}" -P "${ppid}" 2>>"${ban_errorlog}")"
@@ -256,7 +259,7 @@ f_rmpid() {
 			kill -INT "${pid}" >/dev/null 2>&1
 		done
 	fi
-	: >"${ban_rdapfile}" >"${ban_pidfile}"
+	: >"${ban_pidfile}"
 }
 
 # write log messages
@@ -747,18 +750,39 @@ f_etag() {
 	local http_head http_code etag_id etag_cnt out_rc="4" feed="${1}" feed_url="${2}" feed_suffix="${3}" feed_cnt="${4:-"1"}"
 
 	if [ -n "${ban_etagparm}" ]; then
+
+		# ensure etag file exists
+		#
 		[ ! -f "${ban_backupdir}/banIP.etag" ] && : >"${ban_backupdir}/banIP.etag"
+
+		# fetch http headers and extract http code and etag/last-modified header
+		#
 		http_head="$("${ban_fetchcmd}" ${ban_etagparm} "${feed_url}" 2>&1)"
 		http_code="$(printf '%s' "${http_head}" | "${ban_awkcmd}" 'tolower($0)~/^http\/[0123\.]+ /{printf "%s",$2}')"
 		etag_id="$(printf '%s' "${http_head}" | "${ban_awkcmd}" 'tolower($0)~/^[[:space:]]*etag: /{gsub("\"","");printf "%s",$2}')"
+
+		# if etag header is not present, try to use last-modified header as fallback for change detection
+		#
 		if [ -z "${etag_id}" ]; then
 			etag_id="$(printf '%s' "${http_head}" | "${ban_awkcmd}" 'tolower($0)~/^[[:space:]]*last-modified: /{gsub(/[Ll]ast-[Mm]odified:|[[:space:]]|,|:/,"");printf "%s\n",$1}')"
 		fi
+
+		# acquire exclusive lock on etag file to serialize concurrent read-modify-write from parallel feeds
+		#
+		exec 9>"${ban_etaglock}"
+		"${ban_flockcmd}" -x 9
+
+		# compare http code and etag id with stored values, update etag file and return code accordingly
+		#
 		etag_cnt="$("${ban_grepcmd}" -c "^${feed} " "${ban_backupdir}/banIP.etag")"
 		if [ "${http_code}" = "200" ] && [ "${etag_cnt}" = "${feed_cnt}" ] && [ -n "${etag_id}" ] &&
 			"${ban_grepcmd}" -q "^${feed} ${feed_suffix}[[:space:]]\+${etag_id}\$" "${ban_backupdir}/banIP.etag"; then
 			out_rc="0"
 		elif [ -n "${etag_id}" ]; then
+
+			# if feed count is less than etag count, it means the feed source has been removed or disabled, so remove all entries for this feed,
+			# otherwise only remove the entry with the matching feed suffix (feed url) to allow multiple sources for the same feed
+			#
 			if [ "${feed_cnt}" -lt "${etag_cnt}" ]; then
 				"${ban_sedcmd}" -i "/^${feed} /d" "${ban_backupdir}/banIP.etag"
 			else
@@ -767,6 +791,10 @@ f_etag() {
 			printf '%-50s%s\n' "${feed} ${feed_suffix}" "${etag_id}" >>"${ban_backupdir}/banIP.etag"
 			out_rc="2"
 		fi
+
+		# release lock
+		#
+		exec 9>&-
 	fi
 
 	f_log "debug" "f_etag    ::: feed: ${feed}, suffix: ${feed_suffix:-"-"}, http_code: ${http_code:-"-"}, feed/etag: ${feed_cnt}/${etag_cnt:-"0"}, rc: ${out_rc}"
@@ -991,9 +1019,9 @@ f_nftinit() {
 # handle downloads
 #
 f_down() {
-	local log_inbound log_outbound start_ts end_ts tmp_raw tmp_load tmp_file split_file table_json handles handle etag_rc etag_cnt element_count
-	local expr cnt_set cnt_dl restore_rc feed_direction feed_policy feed_rc feed_comp feed_complete feed_target feed_dport chain flag
-	local tmp_proto tmp_port asn country feed="${1}" feed_ipv="${2}" feed_url="${3}" feed_rule="${4}" feed_chain="${5}" feed_flag="${6}"
+	local log_inbound log_outbound start_ts end_ts tmp_raw tmp_load tmp_file split_file table_json handles handle etag_rc etag_cnt element_count tmp_allow feed_name
+	local expr cnt_set cnt_dl restore_rc feed_direction feed_policy feed_rc feed_comp feed_complete feed_target feed_dport chain flag tmp_flush tmp_nft
+	local tmp_split tmp_proto tmp_port asn country feed="${1}" feed_ipv="${2}" feed_url="${3}" feed_rule="${4}" feed_chain="${5}" feed_flag="${6}"
 
 	read -r start_ts _ <"/proc/uptime"
 	start_ts="${start_ts%%.*}"
@@ -1849,7 +1877,7 @@ f_lookup() {
 #
 f_report() {
 	local report_jsn report_txt tmp_val table_json item sep table_sets set_cnt set_inbound set_outbound set_cntinbound set_cntoutbound set_proto set_dport set_details
-	local expr detail jsnval timestamp autoadd_allow autoadd_block sum_sets sum_setinbound sum_setoutbound sum_cntelements sum_cntinbound sum_cntoutbound quantity
+	local cnt ip expr detail jsnval timestamp autoadd_allow autoadd_block sum_sets sum_setinbound sum_setoutbound sum_cntelements sum_cntinbound sum_cntoutbound quantity
 	local chunk map_jsn chain set_elements set_json sum_setelements sum_synflood sum_udpflood sum_icmpflood sum_ctinvalid sum_tcpinvalid sum_setports sum_bcp38 output="${1}"
 
 	f_conf
@@ -2407,7 +2435,7 @@ f_mail() {
 f_monitor() {
 	local nft_expiry ip proto idx base cidr rdap_log rdap_rc rdap_idx rdap_info log_type allow_v4 allow_v6 block_v4 block_v6
 	local file cache_ts date_stamp time_now time_elapsed cache_interval rdap_interval rdap_tsfile rdap_lock rdap_jobs
-	local block_cache block_cache_limit block_cache_cnt
+	local rdap_ts block_cache block_cache_limit block_cache_cnt
 
 	# intervals for periodic cache refresh and RDAP queries
 	#
@@ -2477,7 +2505,7 @@ f_monitor() {
 
 		# clean up stale RDAP lock/done markers from previous runs
 		#
-		"${ban_rmcmd}" -f "${ban_rdapfile}".*.lock "${ban_rdapfile}".*.done >/dev/null 2>&1
+		"${ban_rmcmd}" -f "${ban_rdapfile}".*
 
 		# log monitoring loop
 		# awk handles IP extraction, counting and threshold detection internally,
@@ -2553,7 +2581,7 @@ f_monitor() {
 					cache_ts="${time_now}"
 					block_cache=""
 					block_cache_cnt="0"
-					"${ban_rmcmd}" -f "${ban_rdapfile}".*.done >/dev/null 2>&1
+					"${ban_rmcmd}" -f "${ban_rdapfile}".*.done
 					f_log "debug" "f_monitor ::: refreshed monitor cache at ${date_stamp}"
 				fi
 
@@ -2634,7 +2662,7 @@ f_monitor() {
 								#
 								: >"${rdap_lock}"
 								(
-									flock -x 9
+									"${ban_flockcmd}" -x 9
 									read -r rdap_ts <"${rdap_tsfile}" 2>/dev/null
 									rdap_ts="${rdap_ts:-0}"
 									read -r time_now _ <"/proc/uptime"
@@ -2730,6 +2758,7 @@ ban_mailcmd="$(f_cmd msmtp optional)"
 ban_nftcmd="$(f_cmd nft)"
 ban_pgrepcmd="$(f_cmd pgrep)"
 ban_xargscmd="$(f_cmd xargs)"
+ban_flockcmd="$(f_cmd flock)"
 ban_sedcmd="$(f_cmd sed)"
 ban_ubuscmd="$(f_cmd ubus)"
 ban_zcatcmd="$(f_cmd zcat)"
