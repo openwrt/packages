@@ -406,6 +406,10 @@ function pid_from_file(path) {
 	return data;
 }
 
+function shell_quote(value) {
+	return "'" + replace(`${value}`, "'", "'\\''") + "'";
+}
+
 function proto_setup(proto) {
 	if (!openvpn_exists()) {
 		warn('OpenVPN binary not found at ' + OPENVPN + '\n');
@@ -475,14 +479,25 @@ function proto_setup(proto) {
 		let ipv6 = cfg.ipv6;
 		if (ipv6 == null || ipv6 === '')
 			ipv6 = 1;
+		let defaultroute = cfg.defaultroute;
+		if (defaultroute == null || defaultroute === '')
+			defaultroute = 1;
+		// Leave OpenVPN's native address handling enabled by default, but keep
+		// route state in netifd by default for routing consumers.
+		let route_noexec;
+		if (cfg.route_noexec == null || cfg.route_noexec === '') {
+			route_noexec = 1;
+			push(params, '--route-noexec');
+		}
+		else {
+			route_noexec = is_true(cfg.route_noexec) ? 1 : 0;
+		}
 
 		push(params, '--setenv', 'INTERFACE', iface);
 		push(params, '--setenv', 'IPV6', `${ipv6}`);
+		push(params, '--setenv', 'DEFAULTROUTE', `${defaultroute}`);
+		push(params, '--setenv', 'NETIFD_ROUTE_NOEXEC', `${route_noexec}`);
 		push(params, '--script-security', `${script_security}`);
-		if (cfg.ifconfig_noexec == null || cfg.ifconfig_noexec === '')
-			push(params, '--ifconfig-noexec');
-		if (cfg.route_noexec == null || cfg.route_noexec === '')
-			push(params, '--route-noexec');
 		push(params, '--up', '/usr/libexec/openvpn-hotplug');
 		if (cfg.up) push(params, '--setenv', 'user_up', cfg.up);
 		push(params, '--down', '/usr/libexec/openvpn-hotplug');
@@ -558,10 +573,13 @@ function proto_renew(proto) {
 
 function proto_teardown(proto) {
 	let iface = proto.iface;
+	let pid = pid_from_file(sprintf(OPENVPN_PID, iface));
 
-	// Allow OpenVPN's down script to process
-
-	sleep(700);
+	if (pid)
+		system(sprintf('daemon_pid=%s /usr/libexec/openvpn-hotplug cleanup %s', shell_quote(pid), shell_quote(iface)));
+	else
+		system(sprintf('/usr/libexec/openvpn-hotplug cleanup %s 1', shell_quote(iface)));
+	proto.update_link(false);
 
 	// best-effort cleanup
 	fs.unlink(sprintf(OPENVPN_PASS, iface));
@@ -570,14 +588,7 @@ function proto_teardown(proto) {
 	fs.unlink(sprintf(OPENVPN_PID, iface));
 	fs.unlink(sprintf(OPENVPN_CONF, iface));
 
-	let link_data = {
-		ifname: iface
-	};
-
 	proto.kill_command();
-
-	// remove the link
-	proto.update_link(true, link_data);
 }
 
 netifd.add_proto({

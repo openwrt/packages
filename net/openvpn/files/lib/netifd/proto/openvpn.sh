@@ -105,6 +105,7 @@ openvpn_is_hotplug_hook_option() {
 # Not real config params used by openvpn - only by our proto handler
 PROTO_BOOLS='
 allow_deprecated
+defaultroute
 ipv6
 '
 
@@ -215,6 +216,7 @@ proto_openvpn_setup() {
 		local client tls_client tls_server
 		local tls_crypt_v2_verify mode learn_address client_connect
 		local client_crresponse client_disconnect auth_user_pass_verify
+		local defaultroute route_noexec
 
 		logger -t "openvpn(proto)" \
 			-p daemon.info "Enabled default hotplug processing, as the openvpn configuration 'script_security' is '$script_security'"
@@ -226,14 +228,21 @@ proto_openvpn_setup() {
 		json_get_vars tls_crypt_v2_verify mode learn_address client_connect
 		json_get_vars client_crresponse client_disconnect auth_user_pass_verify
 
-		json_get_vars ipv6
+		json_get_vars ipv6 defaultroute route_noexec
 		#default ipv6 is enabled
 		[ -n "$ipv6" ] || ipv6=1
+		[ -n "$defaultroute" ] || defaultroute=1
+		# Leave OpenVPN's native address handling enabled by default, but keep
+		# route state in netifd by default for routing consumers.
+		if [ -z "$route_noexec" ]; then
+			route_noexec=1
+			append exec_params "--route-noexec"
+		else
+			[ "$route_noexec" = 1 ] || route_noexec=0
+		fi
 		append exec_params "--setenv IPV6 '$ipv6'"
-
-		json_get_vars ifconfig_noexec route_noexec
-		[ -z "$ifconfig_noexec" ] && append exec_params "--ifconfig-noexec"
-		[ -z "$route_noexec" ] && append exec_params "--route-noexec"
+		append exec_params "--setenv DEFAULTROUTE '$defaultroute'"
+		append exec_params "--setenv NETIFD_ROUTE_NOEXEC '$route_noexec'"
 
 		append exec_params "--up '/usr/libexec/openvpn-hotplug'"
 		[ -n "$up" ] && append exec_params "--setenv user_up '$up'"
@@ -302,6 +311,17 @@ proto_openvpn_renew() {
 
 proto_openvpn_teardown() {
 	local iface="$1"
+	local pid
+
+	pid="$(cat "/var/run/openvpn.$iface.pid" 2>/dev/null)"
+	if [ -n "$pid" ]; then
+		daemon_pid="$pid" /usr/libexec/openvpn-hotplug cleanup "$iface"
+	else
+		/usr/libexec/openvpn-hotplug cleanup "$iface" 1
+	fi
+	proto_init_update "*" 0
+	proto_send_update "$iface"
+
 	rm -f \
 		"/var/run/openvpn.$iface.conf" \
 		"/var/run/openvpn.$iface.pass" \

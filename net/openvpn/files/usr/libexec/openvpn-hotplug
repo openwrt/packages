@@ -1,5 +1,11 @@
 #!/bin/sh
 
+if [ "$1" = "cleanup" ]; then
+	script_type=cleanup
+	INTERFACE="$2"
+	CLEANUP_FORCE="$3"
+fi
+
 [ -z "$script_type" ] && {
 	logger -t "openvpn(proto)" -p daemon.warn "hotplug: variable 'script_type' not found"
 	exit
@@ -12,6 +18,23 @@
 
 . /lib/functions.sh
 . /lib/netifd/netifd-proto.sh
+. /usr/share/libubox/jshn.sh
+
+# OpenVPN exports these script variables in lowercase; keep uppercase copies
+# for internal state handling.
+DAEMON_START_TIME="${daemon_start_time:-0}"
+DAEMON_PID="${daemon_pid:-}"
+
+SERVER_ROUTE_IPV4_TARGET=
+SERVER_ROUTE_IPV4_GATEWAY=
+SERVER_ROUTE_IPV4_GATEWAY_DEV=
+SERVER_ROUTE_IPV4_START=
+SERVER_ROUTE_IPV4_PID=
+SERVER_ROUTE_IPV6_TARGET=
+SERVER_ROUTE_IPV6_GATEWAY=
+SERVER_ROUTE_IPV6_GATEWAY_DEV=
+SERVER_ROUTE_IPV6_START=
+SERVER_ROUTE_IPV6_PID=
 
 mask2prefix() {
 	local mask="$1"
@@ -43,30 +66,557 @@ parse_cidr6() {
 	echo "$addr $plen"
 }
 
+route_path_for_target() {
+	local family="$1"
+	local target="$2"
+	local output key
+
+	route_path_gateway=
+	route_path_dev=
+
+	[ -n "$target" ] || return 1
+
+	output="$(ip "-$family" route get "$target" 2>/dev/null)" || return 1
+
+	set -- $output
+	while [ "$#" -gt 0 ]; do
+		key="$1"
+		case "$key" in
+			via)
+				shift
+				route_path_gateway="$1"
+			;;
+			dev)
+				shift
+				route_path_dev="$1"
+			;;
+		esac
+		[ "$#" -gt 0 ] && shift
+	done
+
+	[ -n "$route_path_gateway$route_path_dev" ]
+}
+
+remove_server_route() {
+	local family="$1"
+	local prefix="$2"
+	local target="$3"
+	local gateway="$4"
+	local gateway_dev="$5"
+
+	[ -n "$target" ] || return 0
+
+	if [ -n "$gateway" ] && [ -n "$gateway_dev" ]; then
+		ip "-$family" route del "$target/$prefix" via "$gateway" dev "$gateway_dev" >/dev/null 2>&1 && return 0
+	fi
+
+	if [ -n "$gateway" ]; then
+		ip "-$family" route del "$target/$prefix" via "$gateway" >/dev/null 2>&1 && return 0
+	fi
+
+	if [ -n "$gateway_dev" ]; then
+		ip "-$family" route del "$target/$prefix" dev "$gateway_dev" >/dev/null 2>&1 && return 0
+	fi
+
+	[ -n "$gateway$gateway_dev" ] && return 0
+
+	ip "-$family" route del "$target/$prefix" >/dev/null 2>&1
+
+	return 0
+}
+
+server_route_exists() {
+	local family="$1"
+	local prefix="$2"
+	local target="$3"
+	local output
+
+	[ -n "$target" ] || return 1
+
+	output="$(ip "-$family" route show "$target/$prefix" 2>/dev/null)"
+	[ -n "$output" ]
+}
+
+routefix_is_uint() {
+	case "$1" in
+		''|*[!0-9]*)
+			return 1
+		;;
+	esac
+
+	return 0
+}
+
+server_route_start_time() {
+	printf '%s\n' "$DAEMON_START_TIME"
+}
+
+server_route_pid() {
+	printf '%s\n' "$DAEMON_PID"
+}
+
+# Avoid overwriting route state written by a newer OpenVPN reconnect if an
+# older hook runs late.
+server_route_state_is_newer() {
+	local state_start="$1"
+	local state_pid="$2"
+	local current_start current_pid
+
+	current_start="$(server_route_start_time)"
+	current_pid="$(server_route_pid)"
+
+	routefix_is_uint "$state_start" || return 1
+	routefix_is_uint "$current_start" || return 1
+	[ "$state_start" -gt 0 ] || return 1
+	[ "$current_start" -gt 0 ] || return 1
+
+	[ "$state_start" -gt "$current_start" ] && return 0
+
+	if [ "$state_start" = "$current_start" ] &&
+		routefix_is_uint "$state_pid" &&
+		routefix_is_uint "$current_pid"; then
+		[ "$state_pid" -gt "$current_pid" ] && return 0
+	fi
+
+	return 1
+}
+
+# Only remove saved routes from the OpenVPN process which created them. This
+# prevents stale down/route-pre-down hooks from deleting a newer reconnect's
+# route state.
+server_route_state_owned_by_current() {
+	local state_start="$1"
+	local state_pid="$2"
+	local current_start current_pid
+
+	current_start="$(server_route_start_time)"
+	current_pid="$(server_route_pid)"
+
+	if routefix_is_uint "$state_start" && routefix_is_uint "$current_start" && [ "$state_start" -gt 0 ] && [ "$current_start" -gt 0 ]; then
+		[ "$state_start" = "$current_start" ] || return 1
+	fi
+
+	if [ -n "$state_pid" ] && [ -n "$current_pid" ]; then
+		[ "$state_pid" = "$current_pid" ] || return 1
+	fi
+
+	return 0
+}
+
+set_server_route_data() {
+	local suffix="$1"
+	local target="$2"
+	local gateway="$3"
+	local gateway_dev="$4"
+	local start pid
+
+	if [ "$#" -ge 5 ]; then
+		start="$5"
+	else
+		start="$(server_route_start_time)"
+	fi
+
+	if [ "$#" -ge 6 ]; then
+		pid="$6"
+	else
+		pid="$(server_route_pid)"
+	fi
+
+	case "$suffix" in
+		ipv4)
+			SERVER_ROUTE_IPV4_TARGET="$target"
+			SERVER_ROUTE_IPV4_GATEWAY="$gateway"
+			SERVER_ROUTE_IPV4_GATEWAY_DEV="$gateway_dev"
+			SERVER_ROUTE_IPV4_START="$start"
+			SERVER_ROUTE_IPV4_PID="$pid"
+		;;
+		ipv6)
+			SERVER_ROUTE_IPV6_TARGET="$target"
+			SERVER_ROUTE_IPV6_GATEWAY="$gateway"
+			SERVER_ROUTE_IPV6_GATEWAY_DEV="$gateway_dev"
+			SERVER_ROUTE_IPV6_START="$start"
+			SERVER_ROUTE_IPV6_PID="$pid"
+		;;
+	esac
+}
+
+server_route_data_available() {
+	[ -n "$SERVER_ROUTE_IPV4_TARGET$SERVER_ROUTE_IPV6_TARGET" ]
+}
+
+add_openvpn_data() {
+	proto_add_data
+	[ -n "$DAEMON_PID" ] && json_add_string daemon_pid "$DAEMON_PID"
+	[ -n "$dev" ] && json_add_string ifname "$dev"
+	add_server_route_data_object \
+		server_route_ipv4 \
+		"$SERVER_ROUTE_IPV4_TARGET" \
+		"$SERVER_ROUTE_IPV4_GATEWAY" \
+		"$SERVER_ROUTE_IPV4_GATEWAY_DEV" \
+		"$SERVER_ROUTE_IPV4_START" \
+		"$SERVER_ROUTE_IPV4_PID"
+	add_server_route_data_object \
+		server_route_ipv6 \
+		"$SERVER_ROUTE_IPV6_TARGET" \
+		"$SERVER_ROUTE_IPV6_GATEWAY" \
+		"$SERVER_ROUTE_IPV6_GATEWAY_DEV" \
+		"$SERVER_ROUTE_IPV6_START" \
+		"$SERVER_ROUTE_IPV6_PID"
+	proto_close_data
+}
+
+add_server_route_data_object() {
+	local name="$1"
+	local target="$2"
+	local gateway="$3"
+	local gateway_dev="$4"
+	local start="$5"
+	local pid="$6"
+
+	[ -n "$target" ] || return 0
+
+	json_add_object "$name"
+	json_add_string target "$target"
+	json_add_string gateway "$gateway"
+	json_add_string gateway_dev "$gateway_dev"
+	json_add_string daemon_start_time "$start"
+	json_add_string daemon_pid "$pid"
+	json_close_object
+}
+
+add_server_route_data() {
+	server_route_data_available || return 0
+
+	# Store the manually installed peer routes in netifd data so later hook
+	# invocations can remove only the route owned by this daemon generation.
+	add_openvpn_data
+}
+
+apply_tun_mtu() {
+	[ -n "$dev" ] || return 0
+	[ -n "$tun_mtu" ] || return 0
+	routefix_is_uint "$tun_mtu" || return 0
+
+	/sbin/ip link set dev "$dev" mtu "$tun_mtu"
+}
+
+read_server_route_state() {
+	local suffix="$1"
+	local object="server_route_$suffix"
+	local json_data
+
+	route_state_target=
+	route_state_gateway=
+	route_state_gateway_dev=
+	route_state_start=
+	route_state_pid=
+
+	# The route state is published through proto_add_data() and read back from
+	# netifd because up/route-up/down are separate OpenVPN hook invocations.
+	json_data="$(ubus call network.interface."$INTERFACE" status 2>/dev/null)" || return 1
+	json_load "$json_data" 2>/dev/null || return 1
+	json_select data >/dev/null 2>&1 || return 1
+	json_select "$object" >/dev/null 2>&1 || return 1
+
+	json_get_var route_state_target target
+	json_get_var route_state_gateway gateway
+	json_get_var route_state_gateway_dev gateway_dev
+	json_get_var route_state_start daemon_start_time
+	json_get_var route_state_pid daemon_pid
+
+	[ -n "$route_state_target" ] || return 1
+	[ -n "$route_state_gateway$route_state_gateway_dev" ] || return 1
+
+	return 0
+}
+
+install_server_route() {
+	local family="$1"
+	local prefix="$2"
+	local target="$3"
+	local suffix="ipv$family"
+	local gateway
+	local gateway_dev state_loaded=0
+
+	# Keep a host route to the VPN peer before netifd installs pushed default
+	# routes. Resolve the peer path itself rather than assuming the default
+	# route gateway also reaches the peer.
+	[ -n "$target" ] || return 0
+
+	if read_server_route_state "$suffix"; then
+		state_loaded=1
+		if server_route_state_is_newer "$route_state_start" "$route_state_pid"; then
+			set_server_route_data \
+				"$suffix" "$route_state_target" \
+				"$route_state_gateway" "$route_state_gateway_dev" \
+				"$route_state_start" "$route_state_pid"
+			return 0
+		fi
+	fi
+
+	if route_path_for_target "$family" "$target"; then
+		gateway="$route_path_gateway"
+		gateway_dev="$route_path_dev"
+	fi
+
+	if [ "$gateway_dev" = "$dev" ]; then
+		gateway=
+		gateway_dev=
+	fi
+
+	[ -n "$gateway$gateway_dev" ] || return 0
+	[ "$gateway_dev" != "$dev" ] || return 0
+
+	if [ "$state_loaded" = 1 ]; then
+		if [ "$route_state_target" != "$target" ] ||
+			[ "$route_state_gateway" != "$gateway" ] ||
+			[ "$route_state_gateway_dev" != "$gateway_dev" ]; then
+			remove_server_route \
+				"$family" "$prefix" "$route_state_target" \
+				"$route_state_gateway" "$route_state_gateway_dev"
+			state_loaded=0
+		elif server_route_exists "$family" "$prefix" "$target"; then
+			set_server_route_data \
+				"$suffix" "$route_state_target" \
+				"$route_state_gateway" "$route_state_gateway_dev" \
+				"$route_state_start" "$route_state_pid"
+			return 0
+		fi
+	fi
+
+	# Leave pre-existing peer host routes untouched so teardown does not remove
+	# routes that were not created by this hotplug run.
+	server_route_exists "$family" "$prefix" "$target" && return 0
+
+	if [ -n "$gateway_dev" ] && [ "$gateway_dev" != "$dev" ]; then
+		if [ -n "$gateway" ]; then
+			ip "-$family" route add "$target/$prefix" via "$gateway" dev "$gateway_dev" >/dev/null 2>&1 || return 0
+		else
+			ip "-$family" route add "$target/$prefix" dev "$gateway_dev" >/dev/null 2>&1 || return 0
+		fi
+		set_server_route_data "$suffix" "$target" "$gateway" "$gateway_dev"
+		return 0
+	fi
+
+	if [ -n "$gateway" ]; then
+		if ip "-$family" route add "$target/$prefix" via "$gateway" >/dev/null 2>&1; then
+			set_server_route_data "$suffix" "$target" "$gateway" "$gateway_dev"
+		fi
+		return 0
+	fi
+
+	return 0
+}
+
+# OpenVPN exports route_redirect_gateway_* when redirect-gateway requests
+# default route handling; 1 means redirect-gateway and 2 includes block-local.
+redirect_gateway_ipv4_enabled() {
+	[ "$route_redirect_gateway_ipv4" = "1" ] && return 0
+	[ "$route_redirect_gateway_ipv4" = "2" ] && return 0
+	[ "$redirect_gateway" = "1" ] && return 0
+	[ "$redirect_gateway" = "2" ] && return 0
+
+	return 1
+}
+
+redirect_gateway_ipv6_enabled() {
+	[ "$route_redirect_gateway_ipv6" = "1" ] && return 0
+	[ "$route_redirect_gateway_ipv6" = "2" ] && return 0
+
+	return 1
+}
+
+# When netifd default-route handling is disabled, netifd ignores the VPN
+# default and normal WAN routing keeps the OpenVPN peer reachable.
+default_route_enabled() {
+	[ "$DEFAULTROUTE" != "0" ]
+}
+
+route_noexec_enabled() {
+	[ "$NETIFD_ROUTE_NOEXEC" = "1" ]
+}
+
+ipv4_def1_route() {
+	local net="$1"
+	local mask="$2"
+
+	[ "$mask" = "128.0.0.0" ] || return 1
+	[ "$net" = "0.0.0.0" ] && return 0
+	[ "$net" = "128.0.0.0" ] && return 0
+
+	return 1
+}
+
+ipv4_default_route() {
+	local net="$1"
+	local mask="$2"
+
+	[ "$net" = "0.0.0.0" ] && [ "$mask" = "0.0.0.0" ] && return 0
+	ipv4_def1_route "$net" "$mask" && return 0
+
+	return 1
+}
+
+ipv4_default_route_requested() {
+	local i net mask
+
+	i=0
+	while :; do
+		i=$((i+1))
+		eval "net=\$route_network_$i mask=\$route_netmask_$i"
+		[ -z "$net" ] && break
+		[ -z "$mask" ] && continue
+
+		ipv4_default_route "$net" "$mask" && return 0
+	done
+
+	return 1
+}
+
+ipv6_default_route() {
+	case "$1" in
+		::|::/0|::/1|8000::/1|::/3|2000::/4|3000::/4|fc00::/7)
+			return 0
+		;;
+	esac
+
+	return 1
+}
+
+ipv6_default_route_requested() {
+	local i net
+
+	redirect_gateway_ipv6_enabled && return 0
+
+	i=0
+	while :; do
+		i=$((i+1))
+		eval "net=\$route_ipv6_network_$i"
+		[ -z "$net" ] && break
+
+		ipv6_default_route "$net" && return 0
+	done
+
+	return 1
+}
+
+install_needed_ipv4_server_route() {
+	route_noexec_enabled || return 0
+	default_route_enabled || return 0
+	if ipv4_default_route_requested || redirect_gateway_ipv4_enabled; then
+		install_server_route 4 32 "$trusted_ip"
+	fi
+}
+
+install_needed_ipv6_server_route() {
+	route_noexec_enabled || return 0
+	default_route_enabled || return 0
+	ipv6_default_route_requested && install_server_route 6 128 "$trusted_ip6"
+}
+
+add_openvpn_ipv4_routes() {
+	local i net mask gw plen added=1
+
+	route_noexec_enabled || return 1
+
+	if default_route_enabled &&
+		redirect_gateway_ipv4_enabled &&
+		! ipv4_default_route_requested; then
+		gw="${route_vpn_gateway:-$route_gateway_1}"
+		proto_add_ipv4_route "0.0.0.0" 1 "$gw"
+		proto_add_ipv4_route "128.0.0.0" 1 "$gw"
+		added=0
+	fi
+
+	i=0
+	while :; do
+		i=$((i+1))
+		eval "net=\$route_network_$i mask=\$route_netmask_$i gw=\$route_gateway_$i"
+		[ -z "$net" ] && break
+		[ -z "$mask" ] && continue
+
+		if ! default_route_enabled && ipv4_default_route "$net" "$mask"; then
+			continue
+		fi
+
+		plen=$(mask2prefix "$mask")
+		proto_add_ipv4_route "$net" "$plen" "$gw"
+		added=0
+	done
+
+	return "$added"
+}
+
+add_openvpn_ipv6_routes() {
+	local i net gw v6net v6plen added=1
+
+	route_noexec_enabled || return 1
+
+	if [ -n "$ifconfig_ipv6_remote" ]; then
+		if default_route_enabled; then
+			proto_add_ipv6_route "::" 0 "$ifconfig_ipv6_remote"
+			added=0
+		fi
+	fi
+
+	i=0
+	while :; do
+		i=$((i+1))
+		eval "net=\$route_ipv6_network_$i gw=\$route_ipv6_gateway_$i"
+		[ -z "$net" ] && break
+
+		if ! default_route_enabled && ipv6_default_route "$net"; then
+			continue
+		fi
+
+		read -r v6net v6plen <<-EOF
+			$(parse_cidr6 "$net" 128)
+		EOF
+		proto_add_ipv6_route "$v6net" "$v6plen" "$gw"
+		added=0
+	done
+
+	return "$added"
+}
+
+remove_saved_server_route() {
+	local family="$1"
+	local prefix="$2"
+	local suffix="$3"
+	local force="$4"
+
+	read_server_route_state "$suffix" || return 0
+
+	if [ "$force" != "1" ]; then
+		server_route_state_owned_by_current \
+			"$route_state_start" "$route_state_pid" || return 0
+	fi
+
+	remove_server_route \
+		"$family" "$prefix" "$route_state_target" \
+		"$route_state_gateway" "$route_state_gateway_dev"
+}
+
+remove_saved_server_routes() {
+	local force="$1"
+
+	remove_saved_server_route 4 32 ipv4 "$force"
+	remove_saved_server_route 6 128 ipv6 "$force"
+}
+
 case "$script_type" in
 	up)
-		proto_init_update "$dev" 1
+		install_needed_ipv4_server_route
+		install_needed_ipv6_server_route
 
+		proto_init_update "$dev" 1
+		apply_tun_mtu
+
+		# Keep netifd's interface state in sync even when OpenVPN configured the
+		# address itself; otherwise netifd may flush it before OpenVPN adds routes.
 		[ -n "$ifconfig_local" ] && proto_add_ipv4_address "$ifconfig_local" "${ifconfig_netmask:-255.255.255.255}"
 
-		[ -n "$trusted_ip" ] && {
-			if [ -n "$route_net_gateway" -a "$route_net_gateway" != "0.0.0.0" ]; then
-				proto_add_ipv4_route "$trusted_ip" 32 "$route_net_gateway"
-			fi
-		}
-
-		[ -n "$route_vpn_gateway" ] && proto_add_ipv4_route "0.0.0.0" 0 "$route_vpn_gateway"
-
-		i=0
-		while :; do
-			i=$((i+1))
-			eval "net=\$route_network_$i mask=\$route_netmask_$i gw=\$route_gateway_$i"
-			[ -z "$net" ] && break
-			[ -z "$mask" ] && continue
-
-			plen=$(mask2prefix "$mask")
-			proto_add_ipv4_route "$net" "$plen" "$gw"
-		done
+		add_openvpn_ipv4_routes
 
 		if [ "$IPV6" = "1" ]; then
 			if [ -n "$ifconfig_ipv6_local" ]; then
@@ -76,28 +626,10 @@ case "$script_type" in
 				proto_add_ipv6_address "$v6addr" "$v6plen"
 			fi
 
-			[ -n "$trusted_ip6" ] && {
-				if [ -n "$route_ipv6_gateway" -a "$route_ipv6_gateway" != "::" ]; then
-					proto_add_ipv6_route "$trusted_ip6" 128 "$route_ipv6_gateway"
-				fi
-			}
-
-			[ -n "$ifconfig_ipv6_remote" ] && proto_add_ipv6_route "::" 0 "$ifconfig_ipv6_remote"
-
-			i=0
-			while :; do
-				i=$((i+1))
-				eval "net=\$route_ipv6_network_$i gw=\$route_ipv6_gateway_$i"
-				[ -z "$net" ] && break
-
-				read -r v6net v6plen <<-EOF
-					$(parse_cidr6 "$net" 128)
-				EOF
-				proto_add_ipv6_route "$v6net" "$v6plen" "$gw"
-			done
+			add_openvpn_ipv6_routes
 		fi
 
-		[ -n "$tun_mtu" ] && json_add_int mtu "$tun_mtu"
+		add_openvpn_data
 
 		i=0
 		while :; do
@@ -117,9 +649,36 @@ case "$script_type" in
 		proto_send_update "$INTERFACE"
 	;;
 
+	route-up)
+		install_needed_ipv4_server_route
+		install_needed_ipv6_server_route
+
+		route_update=1
+		proto_init_update "$dev" 1
+		proto_set_keep 1
+		apply_tun_mtu
+		add_openvpn_ipv4_routes && route_update=0
+		if [ "$IPV6" = "1" ]; then
+			add_openvpn_ipv6_routes && route_update=0
+		fi
+		server_route_data_available && route_update=0
+		add_server_route_data
+		[ "$route_update" = 0 ] && proto_send_update "$INTERFACE"
+	;;
+
 	down)
+		remove_saved_server_routes
 		proto_init_update "$dev" 0
 		proto_send_update "$INTERFACE"
+	;;
+
+	route-pre-down)
+		remove_saved_server_routes
+	;;
+
+	cleanup)
+		remove_saved_server_routes "$CLEANUP_FORCE"
+		exit 0
 	;;
 esac
 
