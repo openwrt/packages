@@ -391,11 +391,11 @@ vrrp_instance() {
 		config_get "$opt" "$1" "$opt"
 		eval optval=\$$opt
 		[ -z "$optval" ] && continue
-		printf '%b%s {\n' "${INDENT_1}" "$opt" >> "$KEEPALIVED_CONF"
+		config_section_open "$opt" "" "$INDENT_1"
 		for a in $optval; do
 			config_foreach print_ipaddress_indent ipaddress "$a" "$INDENT_2"
 		done
-		printf '%b}\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
+		config_section_close "$INDENT_1"
 	done
 
 	# Handle virtual_routes
@@ -403,11 +403,11 @@ vrrp_instance() {
 		config_get "$opt" "$1" "$opt"
 		eval optval=\$$opt
 		[ -z "$optval" ] && continue
-		printf '%b%s {\n' "${INDENT_1}" "$opt" >> "$KEEPALIVED_CONF"
+		config_section_open "$opt" "" "$INDENT_1"
 		for r in $optval; do
 			config_foreach print_route_indent route "$r" "$INDENT_2"
 		done
-		printf '%b}\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
+		config_section_close "$INDENT_1"
 	done
 
 	# Handle track_script lists
@@ -415,11 +415,11 @@ vrrp_instance() {
 		config_get "$opt" "$1" "$opt"
 		eval optval=\$$opt
 		[ -z "$optval" ] && continue
-		printf '%b%s {\n' "${INDENT_1}" "$opt" >> "$KEEPALIVED_CONF"
+		config_section_open "$opt" "" "$INDENT_1"
 		for t in $optval; do
 			config_foreach print_track_script_indent track_script "$t" "$INDENT_2"
 		done
-		printf '%b}\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
+		config_section_close "$INDENT_1"
 	done
 
 	# Handle track_interface lists
@@ -427,11 +427,11 @@ vrrp_instance() {
 		config_get "$opt" "$1" "$opt"
 		eval optval=\$$opt
 		[ -z "$optval" ] && continue
-		printf '%b%s {\n' "${INDENT_1}" "$opt" >> "$KEEPALIVED_CONF"
+		config_section_open "$opt" "" "$INDENT_1"
 		for t in $optval; do
 			config_foreach print_track_elem_indent track_interface "$t" "$INDENT_2"
 		done
-		printf '%b}\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
+		config_section_close "$INDENT_1"
 	done
 
 	# Handle track_bfd lists
@@ -439,11 +439,11 @@ vrrp_instance() {
 		config_get "$opt" "$1" "$opt"
 		eval optval=\$$opt
 		[ -z "$optval" ] && continue
-		printf '%b%s {\n' "${INDENT_1}" "$opt" >> "$KEEPALIVED_CONF"
+		config_section_open "$opt" "" "$INDENT_1"
 		for t in $optval; do
 			config_foreach print_track_bfd_indent bfd_instance "$t" "$INDENT_2"
 		done
-		printf '%b}\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
+		config_section_close "$INDENT_1"
 	done
 
 	# Handle simple lists of strings (with no spaces in between)
@@ -451,11 +451,11 @@ vrrp_instance() {
 		config_get "$opt" "$1" "$opt"
 		eval optval=\$$opt
 		[ -z "$optval" ] && continue
-		printf '%b%s {\n' "${INDENT_1}" "$opt" >> "$KEEPALIVED_CONF"
+		config_section_open "$opt" "" "$INDENT_1"
 		for t in $optval; do
 			config_foreach print_unicast_peer_indent peer "$t" "$INDENT_2"
 		done
-		printf '%b}\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
+		config_section_close "$INDENT_1"
 	done
 	unset optval
 
