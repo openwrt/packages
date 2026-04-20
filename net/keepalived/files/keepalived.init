@@ -270,7 +270,7 @@ print_unicast_peer_indent() {
 	local section="$1"
 	local curr_track_elem="$2"
 	local indent="$3"
-	local name address
+	local name address max_ttl min_ttl
 
 	config_get name "$section" name
 	[ "$name" != "$curr_track_elem" ] && return 0
@@ -278,7 +278,15 @@ print_unicast_peer_indent() {
 	config_get address "$section" address
 	[ -z "$address" ] && return 0
 
-	printf '%b%s\n' "${indent}" "$address">> "$KEEPALIVED_CONF"
+	printf '%b%s' "${indent}" "$address" >> "$KEEPALIVED_CONF"
+	
+	config_get min_ttl "$section" min_ttl
+	config_get max_ttl "$section" max_ttl
+	
+	[ -n "$min_ttl" ] && printf ' min_ttl %s' "$min_ttl" >> "$KEEPALIVED_CONF"
+	[ -n "$max_ttl" ] && printf ' max_ttl %s' "$max_ttl" >> "$KEEPALIVED_CONF"
+	printf '\n' >> "$KEEPALIVED_CONF"
+	
 }
 
 static_routes() {
