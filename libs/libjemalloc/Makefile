@@ -1,13 +1,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=jemalloc
-PKG_VERSION:=5.3.0
+PKG_VERSION:=5.3.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/jemalloc/jemalloc/archive/refs/tags/
 PKG_SOURCE_URL_FILE:=$(PKG_VERSION).tar.gz
-PKG_HASH:=ef6f74fd45e95ee4ef7f9e19ebe5b075ca6b7fbe0140612b2a161abafb7ee179
+PKG_HASH:=7b30f6116f11d736badd48c903cba2b3344a88d62e3a7b892434f870e860b1c0
 
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
