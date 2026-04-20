@@ -297,6 +297,23 @@ function is_true(v) {
 	return v === true || v === '1' || v === 1 || v === 'true';
 }
 
+function is_hotplug_hook_param(name) {
+	return index([
+		'up',
+		'down',
+		'route_up',
+		'route_pre_down',
+		'ipchange',
+		'learn_address',
+		'client_connect',
+		'client_crresponse',
+		'client_disconnect',
+		'auth_user_pass_verify',
+		'tls_crypt_v2_verify',
+		'tls_verify'
+	], name) >= 0;
+}
+
 function add_param(params, key, value) {
 	// key: option name (underscored), value: single string
 	let flag = `--${replace(key, '_', '-')}`;
@@ -336,6 +353,7 @@ function build_exec_params(cfg) {
 
 	for (let k in OPENVPN_FILE_PARAMS) {
 		if (k?.deprecated && !allow_deprecated) continue;
+		if (is_hotplug_hook_param(k.name)) continue;
 		let val = cfg[k.name];
 		if (val && type(val) == 'string') {
 			if (fs.access(val, fs.F_OK))
@@ -448,9 +466,23 @@ function proto_setup(proto) {
 		}
 	}
 
+	let script_security = cfg.script_security;
+	if (script_security == null || script_security === '')
+		script_security = 2;
+
 	// hotplug handler scripts
-	if (cfg.script_security >= 2) {
+	if (script_security >= 2) {
+		let ipv6 = cfg.ipv6;
+		if (ipv6 == null || ipv6 === '')
+			ipv6 = 1;
+
 		push(params, '--setenv', 'INTERFACE', iface);
+		push(params, '--setenv', 'IPV6', `${ipv6}`);
+		push(params, '--script-security', `${script_security}`);
+		if (cfg.ifconfig_noexec == null || cfg.ifconfig_noexec === '')
+			push(params, '--ifconfig-noexec');
+		if (cfg.route_noexec == null || cfg.route_noexec === '')
+			push(params, '--route-noexec');
 		push(params, '--up', '/usr/libexec/openvpn-hotplug');
 		if (cfg.up) push(params, '--setenv', 'user_up', cfg.up);
 		push(params, '--down', '/usr/libexec/openvpn-hotplug');
@@ -471,8 +503,10 @@ function proto_setup(proto) {
 			if (cfg.client_crresponse) push(params, '--setenv', 'user_client_crresponse', cfg.client_crresponse);
 			push(params, '--client-disconnect', '/usr/libexec/openvpn-hotplug');
 			if (cfg.client_disconnect) push(params, '--setenv', 'user_client_disconnect', cfg.client_disconnect);
-			push(params, '--auth-user-pass-verify', '/usr/libexec/openvpn-hotplug', 'via-file');
-			if (cfg.auth_user_pass_verify) push(params, '--setenv', 'user_auth_user_pass_verify', cfg.auth_user_pass_verify);
+			if (cfg.auth_user_pass_verify) {
+				push(params, '--auth-user-pass-verify', '/usr/libexec/openvpn-hotplug', 'via-file');
+				push(params, '--setenv', 'user_auth_user_pass_verify', cfg.auth_user_pass_verify);
+			}
 		}
 
 		if (cfg.tls_client || cfg.tls_server) {
