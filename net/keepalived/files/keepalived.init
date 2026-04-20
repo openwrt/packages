@@ -16,13 +16,17 @@ INDENT_4="${INDENT_1}${INDENT_1}${INDENT_1}${INDENT_1}"
 config_section_open() {
 	local tag="$1"
 	local name="$2"
+	local indent="$3"
 
+	[ -n "$indent" ] && printf '%b' "$indent" >> "$KEEPALIVED_CONF"
 	printf '%s' "$tag" >> "$KEEPALIVED_CONF"
 	[ -n "$name" ] && printf ' %s' "$name" >> "$KEEPALIVED_CONF"
 	printf ' {\n' >> "$KEEPALIVED_CONF"
 }
 
 config_section_close() {
+	local indent="$1"
+	[ -n "$indent" ] && printf '%b' "$indent" >> "$KEEPALIVED_CONF"
 	printf '}\n\n' >> "$KEEPALIVED_CONF"
 }
 
