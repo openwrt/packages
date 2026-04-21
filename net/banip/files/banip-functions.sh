@@ -142,6 +142,9 @@ f_system() {
 f_cmd() {
 	local cmd pri_cmd="${1}" sec_cmd="${2}"
 
+	# check primary command,
+	# if not found check secondary command if provided, otherwise log error
+	#
 	cmd="$(command -v "${pri_cmd}" 2>>"${ban_errorlog}")"
 	if [ ! -x "${cmd}" ]; then
 		if [ -n "${sec_cmd}" ]; then
@@ -815,10 +818,14 @@ f_nftload() {
 f_nftinit() {
 	local wan_dev vlan_allow vlan_block log_ct log_icmp log_syn log_udp log_tcp flag tmp_proto tmp_port allow_dport feed_rc="0" file="${1}"
 
+	# format wan devices, allowed and blocked vlans as nft sets
+	#
 	wan_dev="$(printf '%s' "${ban_dev}" | "${ban_sedcmd}" 's/^/\"/;s/$/\"/;s/ /\", \"/g')"
 	[ -n "${ban_vlanallow}" ] && vlan_allow="$(printf '%s' "${ban_vlanallow%%?}" | "${ban_sedcmd}" 's/^/\"/;s/$/\"/;s/ /\", \"/g')"
 	[ -n "${ban_vlanblock}" ] && vlan_block="$(printf '%s' "${ban_vlanblock%%?}" | "${ban_sedcmd}" 's/^/\"/;s/$/\"/;s/ /\", \"/g')"
 
+	# format allowed protocols and ports
+	#
 	for flag in ${ban_allowflag}; do
 		case "${flag}" in
 		"tcp" | "udp")
@@ -853,6 +860,8 @@ f_nftinit() {
 		allow_dport="meta l4proto { ${tmp_proto} } th dport { ${tmp_port} }"
 	fi
 
+	# build log rules for pre-routing chains if enabled, with dynamic log level and prefix
+	#
 	if [ "${ban_logprerouting}" = "1" ]; then
 		log_icmp="log level ${ban_nftloglevel} prefix \"banIP/pre-icmp/drop: \" limit rate 10/second"
 		log_syn="log level ${ban_nftloglevel} prefix \"banIP/pre-syn/drop: \" limit rate 10/second"
@@ -996,6 +1005,8 @@ f_down() {
 	local expr cnt_set cnt_dl restore_rc feed_direction feed_policy feed_rc feed_comp feed_complete feed_target feed_dport chain flag tmp_flush tmp_nft
 	local tmp_split tmp_proto tmp_port asn country feed="${1}" feed_ipv="${2}" feed_url="${3}" feed_rule="${4}" feed_chain="${5}" feed_flag="${6}"
 
+	# get feed start timestamp and prepare temporary file names based on feed name and type
+	#
 	read -r start_ts _ <"/proc/uptime"
 	start_ts="${start_ts%%.*}"
 	feed="${feed}.v${feed_ipv}"
@@ -1878,7 +1889,7 @@ f_lookup() {
 f_report() {
 	local report_jsn report_txt tmp_val table_json item sep table_sets set_cnt set_inbound set_outbound set_cntinbound set_cntoutbound set_proto set_dport set_details
 	local cnt ip expr detail jsnval timestamp autoadd_allow autoadd_block sum_sets sum_setinbound sum_setoutbound sum_cntelements sum_cntinbound sum_cntoutbound quantity
-	local chunk map_jsn chain set_elements set_json sum_setelements sum_synflood sum_udpflood sum_icmpflood sum_ctinvalid sum_tcpinvalid sum_setports sum_bcp38 output="${1}"
+	local chunk jsn map_jsn chain set_elements set_json sum_setelements sum_synflood sum_udpflood sum_icmpflood sum_ctinvalid sum_tcpinvalid sum_setports sum_bcp38 output="${1}"
 
 	f_conf
 	f_mkdir "${ban_reportdir}"
@@ -1887,10 +1898,10 @@ f_report() {
 	map_jsn="${ban_reportdir}/ban_map.jsn"
 
 	if [ "${output}" != "json" ]; then
+
 		# json output preparation
 		#
-		: >"${report_jsn}"
-		: >"${map_jsn}"
+		: >"${report_txt}" >"${report_jsn}" >"${map_jsn}"
 		table_json="$("${ban_nftcmd}" -tj list table inet banIP 2>>"${ban_errorlog}")"
 		table_sets="$(printf '%s' "${table_json}" | "${ban_jsoncmd}" -qe '@.nftables[@.set.family="inet"].set.name')"
 		sum_sets="0"
@@ -1983,9 +1994,9 @@ f_report() {
 			if [ -s "${report_jsn}.${item}" ]; then
 				printf '%s' "${sep}" >>"${report_jsn}"
 				"${ban_catcmd}" "${report_jsn}.${item}" >>"${report_jsn}"
-				"${ban_rmcmd}" -f "${report_jsn}.${item}"
 				sep=", "
 			fi
+			"${ban_rmcmd}" -f "${report_jsn}.${item}"
 		done
 		printf '\n%s\n' "} }" >>"${report_jsn}"
 
@@ -2138,8 +2149,8 @@ f_report() {
 						for item in ${table_sets}; do
 							if [ -s "${map_jsn}.${item}" ]; then
 								"${ban_catcmd}" "${map_jsn}.${item}" >>"${map_jsn}"
-								"${ban_rmcmd}" -f "${map_jsn}.${item}"
 							fi
+							"${ban_rmcmd}" -f "${map_jsn}.${item}"
 						done
 					fi
 				fi
@@ -2234,7 +2245,6 @@ f_report() {
 	case "${output}" in
 	"text")
 		[ -s "${report_txt}" ] && "${ban_catcmd}" "${report_txt}"
-		: >"${report_txt}"
 		;;
 	"json")
 		if [ "${ban_nftcount}" = "1" ] && [ "${ban_map}" = "1" ]; then
@@ -2247,15 +2257,12 @@ f_report() {
 		;;
 	"mail")
 		[ -n "${ban_mailreceiver}" ] && [ -x "${ban_mailcmd}" ] && f_mail
-		: >"${report_txt}"
 		;;
 	"gen")
 		printf '%s\n' "1" >"${ban_rundir}/banIP.report"
 		;;
-	*)
-		: >"${report_txt}"
-		;;
 	esac
+	: >"${report_txt}"
 }
 
 f_search() {
