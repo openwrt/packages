@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sispmctl
-PKG_VERSION:=4.8
+PKG_VERSION:=4.12
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)
-PKG_HASH:=0f8391f7e95cbf1fb96a68686a1dcf1e16747b050ae1b8ff90653c99976068db
+PKG_HASH:=e757863a4838da6e1ca72a57adc5aca6fc47ffbddc72a69052d8abd743d57082
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
