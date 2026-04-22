@@ -4,7 +4,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=telegraf
 PKG_VERSION:=1.38.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/influxdata/telegraf/tar.gz/v$(PKG_VERSION)?
@@ -24,7 +24,7 @@ GO_PKG_LDFLAGS_X := \
   github.com/influxdata/telegraf/internal.Version=$(PKG_VERSION) \
   github.com/influxdata/telegraf/internal.Branch=HEAD
 
-ifeq ($(CONFIG_mips)$(CONFIG_mipsel),y)
+ifneq ($(filter arm mips mipsel,$(ARCH)),)
   TARGET_LDFLAGS += -static
 endif
 
