@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shadow
-PKG_VERSION:=4.8.1
-PKG_RELEASE:=3
+PKG_VERSION:=4.19.4
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/shadow-maint/shadow/releases/download/$(PKG_VERSION)
-PKG_HASH:=a3ad4630bdc41372f02a647278a8c3514844295d36eefe68ece6c3a641c1ae62
+PKG_HASH:=ce57a313e315a0a7cb04a8f50cc20753e994e487bbe9b78a2a824ca75cb486c0
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
@@ -29,8 +29,8 @@ include $(INCLUDE_DIR)/nls.mk
 
 SHADOW_APPLETS := \
 	chage chfn chgpasswd chpasswd chsh expiry faillog gpasswd \
-	groupadd groupdel groupmems groupmod groups grpck grpconv grpunconv \
-	lastlog login logoutd newgidmap newgrp newuidmap newusers nologin \
+	groupadd groupdel groupmems groupmod grpck grpconv grpunconv \
+	login logoutd newgrp newusers nologin \
 	passwd pwck pwconv pwunconv su \
 	useradd userdel usermod vipw
 
@@ -42,6 +42,10 @@ CONFIGURE_ARGS += \
 	--without-attr \
 	--without-tcb \
 	--without-nscd \
+	--without-sssd \
+	--without-libbsd \
+	--disable-logind \
+	--disable-subordinate-ids \
 	--with-bcrypt
 
 CONFIGURE_VARS += \
