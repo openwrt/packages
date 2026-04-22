@@ -1,3 +1,3 @@
 #!/bin/sh
 
-less --version | grep -F "$PKG_VERSION"
+[ -x /usr/libexec/less-gnu ] || { echo "FAIL: /usr/libexec/less-gnu not installed"; exit 1; }
