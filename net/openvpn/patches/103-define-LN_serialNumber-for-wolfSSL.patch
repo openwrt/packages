@@ -1,6 +1,6 @@
 --- a/src/openvpn/ssl_verify_openssl.c
 +++ b/src/openvpn/ssl_verify_openssl.c
-@@ -253,6 +253,9 @@ backend_x509_get_username(char *common_n
+@@ -258,6 +258,9 @@ backend_x509_get_username(char *common_n
              return FAILURE;
          }
      }
@@ -9,4 +9,4 @@
 +#endif
      else if (strcmp(LN_serialNumber, x509_username_field) == 0)
      {
-         ASN1_INTEGER *asn1_i = X509_get_serialNumber(peer_cert);
+         const ASN1_INTEGER *asn1_i = X509_get_serialNumber(peer_cert);
