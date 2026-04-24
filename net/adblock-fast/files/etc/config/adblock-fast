@@ -41,8 +41,8 @@ config adblock-fast 'config'
 
 config file_url
 	option name 'Hagezi - Pro'
-	option url 'https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/domains/pro.txt'
-	option size '12522070'
+	option url 'https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/wildcard/pro-onlydomains.txt'
+	option size '3476485'
 	option action 'block'
 	option enabled '0'
 
