@@ -18169,7 +18169,7 @@
 +obj-${build_LUA}         += LUA/
 --- a/mconfig
 +++ b/mconfig
-@@ -25,3 +25,4 @@ build_pknock=m
+@@ -27,3 +27,4 @@ build_pknock=m
  build_psd=m
  build_quota2=m
  build_rtsp=m
