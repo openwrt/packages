@@ -92,6 +92,7 @@ option_builder() {
 # Not real config params used by openvpn - only by our proto handler
 PROTO_BOOLS='
 allow_deprecated
+defaultroute
 ipv6
 '
 
@@ -161,72 +162,30 @@ proto_openvpn_setup() {
 	json_get_vars auth_user_pass askpass username password cert_password
 
 	mkdir -p /var/run
-	# combine into --askpass:
-	if [ -n "$cert_password" ]; then
-		cp_file="/var/run/openvpn.$config.pass"
-		umask 077
-		printf '%s\n' "${cert_password:-}" > "$cp_file"
-		umask 022
-		append exec_params "--askpass $cp_file"
-	elif [ -n "$askpass" ]; then
-		append exec_params "--askpass $askpass"
-	fi
-
-	# combine into --auth-user-pass:
-	if [ -n "$username" ] || [ -n "$password" ]; then
-		auth_file="/var/run/openvpn.$config.auth"
-		umask 077
-		printf '%s\n' "${username:-}" "${password:-}" > "$auth_file"
-		umask 022
-		append exec_params "--auth-user-pass $auth_file"
-	elif [ -n "$auth_user_pass" ]; then
-		append exec_params "--auth-user-pass $auth_user_pass"
-	fi
 
 	# Testing option
 	# ${tls_exit:+--tls-exit} \
 
 	# Check 'script_security' option
 	json_get_var script_security script_security
-	[ -z "$script_security" ] && script_security=3
+	[ -z "$script_security" ] && script_security=2
 
-	# Add default hotplug handling if 'script_security' option is equal '3'
-	if [ "$script_security" -eq '3' ]; then
-		local ipv6
+	# Add default hotplug handling if 'script_security' option is ge '3'
+	if [ "$script_security" -ge '2' ]; then
 		local up down route_up route_pre_down
 		local client tls_client tls_server
 		local tls_crypt_v2_verify mode learn_address client_connect
 		local client_crresponse client_disconnect auth_user_pass_verify
 
-		logger -t "openvpn(proto)" \
-			-p daemon.info "Enabled default hotplug processing, as the openvpn configuration 'script_security' is '3'"
-
-		append exec_params "--setenv INTERFACE $config"
-		append exec_params "--script-security 3"
-
 		json_get_vars up down route_up route_pre_down
 		json_get_vars tls_crypt_v2_verify mode learn_address client_connect
 		json_get_vars client_crresponse client_disconnect auth_user_pass_verify
 
-		json_get_vars ipv6
-		#default ipv6 is enabled
-		[ -n "$ipv6" ] || ipv6=1
-		append exec_params "--setenv IPV6 '$ipv6'"
-
 		json_get_vars ifconfig_noexec route_noexec
-		[ -z "$ifconfig_noexec" ] && append exec_params "--ifconfig-noexec"
-		[ -z "$route_noexec" ] && append exec_params "--route-noexec"
 
-		append exec_params "--up '/usr/libexec/openvpn-hotplug'"
 		[ -n "$up" ] && append exec_params "--setenv user_up '$up'"
-
-		append exec_params "--down '/usr/libexec/openvpn-hotplug'"
 		[ -n "$down" ] && append exec_params "--setenv user_down '$down'"
-
-		append exec_params "--route-up '/usr/libexec/openvpn-hotplug'"
 		[ -n "$route_up" ] && append exec_params "--setenv user_route_up '$route_up'"
-
-		append exec_params "--route-pre-down '/usr/libexec/openvpn-hotplug'"
 		[ -n "$route_pre_down" ] && append exec_params "--setenv user_route_pre_down '$route_pre_down'"
 
 		append exec_params "--tls-crypt-v2-verify '/usr/libexec/openvpn-hotplug'"
@@ -260,16 +219,80 @@ proto_openvpn_setup() {
 			json_get_var tls_verify tls_verify
 			[ -n "$tls_verify" ] && append exec_params "--setenv user_tls_verify '$tls_verify'"
 		fi
-	else
-		logger -t "openvpn(proto)" \
-			-p daemon.warn "Default hotplug processing disabled, as the openvpn configuration 'script_security' is less than '3'"
 	fi
 
 	eval "set -- $exec_params"
 	umask 077
 	printf "%b\n" "${exec_params//--/\\n}" > "$conf_file"
 	umask 022
-	proto_run_command "$config" openvpn --config "$conf_file"
+
+	is_openvpn_client() {
+		grep -qE '^[[:space:]]*remote[[:space:]]+' "$conf_file" "$config_file" && return 0
+	}
+
+	local ipv6 defaultroute
+	exec_params=
+
+	# combine into --askpass:
+	if [ -n "$cert_password" ]; then
+		cp_file="/var/run/openvpn.$config.pass"
+		umask 077
+		printf '%s\n' "${cert_password:-}" > "$cp_file"
+		umask 022
+		append exec_params "--askpass $cp_file"
+	elif [ -n "$askpass" ]; then
+		append exec_params "--askpass $askpass"
+	fi
+
+	# combine into --auth-user-pass:
+	if [ -n "$username" ] || [ -n "$password" ]; then
+		auth_file="/var/run/openvpn.$config.auth"
+		umask 077
+		printf '%s\n' "${username:-}" "${password:-}" > "$auth_file"
+		umask 022
+		append exec_params "--auth-user-pass $auth_file"
+	elif [ -n "$auth_user_pass" ]; then
+		append exec_params "--auth-user-pass $auth_user_pass"
+	fi
+
+	#Always Override Options
+	append exec_params "--setenv INTERFACE $config"
+	append exec_params "--script-security 3"
+	append exec_params "--ifconfig-noexec"
+	append exec_params "--route-noexec"
+	append exec_params "--up '/usr/libexec/openvpn-hotplug'"
+	append exec_params "--down '/usr/libexec/openvpn-hotplug'"
+	append exec_params "--route-up '/usr/libexec/openvpn-hotplug'"
+	append exec_params "--route-pre-down '/usr/libexec/openvpn-hotplug'"
+	append exec_params "--persist-tun"
+	append exec_params "--persist-key"
+
+	#filter out dup options
+	sed -i '/^[[:space:]]*script-security[[:space:]]*/s/^/# /' "$conf_file" "$config_file"
+	sed -i '/^[[:space:]]*ifconfig-noexec[[:space:]]*/s/^/# /' "$conf_file" "$config_file"
+	sed -i '/^[[:space:]]*route-noexec[[:space:]]*/s/^/# /' "$conf_file" "$config_file"
+	sed -i '/^[[:space:]]*up[[:space:]]/s/^/# /' "$conf_file" "$config_file"
+	sed -i '/^[[:space:]]*down[[:space:]]/s/^/# /' "$conf_file" "$config_file"
+	sed -i '/^[[:space:]]*route-up[[:space:]]/s/^/# /' "$conf_file" "$config_file"
+	sed -i '/^[[:space:]]*route-pre-down[[:space:]]/s/^/# /' "$conf_file" "$config_file"
+	sed -i '/^[[:space:]]*persist-tun[[:space:]]*/s/^/# /' "$conf_file" "$config_file"
+	sed -i '/^[[:space:]]*persist-key[[:space:]]*/s/^/# /' "$conf_file" "$config_file"
+
+	json_get_vars ipv6 defaultroute
+	#default ipv6 is enabled
+	[ -n "$ipv6" ] || ipv6=1
+	append exec_params "--setenv IPV6 $ipv6"
+
+	if is_openvpn_client; then
+		append exec_params "--redirect-gateway def1 ipv6"
+		[ -n "$defaultroute" ] || defaultroute=1
+		sed -i '/^[[:space:]]*redirect-gateway[[:space:]]*/s/^/# /' "$conf_file" "$config_file"
+	else
+		defaultroute=0
+	fi
+	append exec_params "--setenv DEFAULTROUTE $defaultroute"
+
+	proto_run_command "$config" openvpn $exec_params --config "$conf_file"
 
 	# last param wins; user provided status or syslog supersedes.
 }
@@ -284,12 +307,18 @@ proto_openvpn_renew() {
 
 proto_openvpn_teardown() {
 	local iface="$1"
+
+	proto_kill_command "$iface"
 	rm -f \
 		"/var/run/openvpn.$iface.conf" \
 		"/var/run/openvpn.$iface.pass" \
 		"/var/run/openvpn.$iface.auth" \
 		"/var/run/openvpn.$iface.status" 
-	proto_kill_command "$iface"
+
+	/usr/libexec/openvpn-hotplug cleanup "$iface"
+
+	proto_init_update "*" 0
+	proto_send_update "$iface"
 }
 
 [ -n "$INCLUDE_ONLY" ] || {
