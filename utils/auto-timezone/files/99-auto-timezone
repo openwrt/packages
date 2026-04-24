@@ -1,0 +1,42 @@
+#!/bin/sh
+
+log() {
+    logger -t "auto-timezone" "$*"
+}
+
+if [ "${INTERFACE}" = "loopback" ]; then
+    exit 0
+fi
+if [ "${ACTION}" != "ifup" ] && [ "${ACTION}" != "ifupdate" ]; then
+    exit 0
+fi
+if [ "${ACTION}" = "ifupdate" ] && [ -z "${IFUPDATE_ADDRESSES}" ] && [ -z "${IFUPDATE_DATA}" ]; then
+    exit 0
+fi
+
+endpoint="$(uci -q get auto-timezone.endpoint)"
+if [ $? -ne 0 ]; then
+    log "Endpoint not set"
+    exit 1
+fi
+
+timezone_iana=$(wget --timeout=5 -qO- ${endpoint})
+if [ $? -ne 0 ]; then
+    log "Failed to get timezone"
+    exit 1
+fi
+
+timezone_posix="$(tail -n1 /usr/share/zoneinfo/${timezone_iana})"
+if [ $? -ne 0 ]; then
+    log "Invalid timezone"
+    exit 1
+fi
+
+if [ "${timezone_iana}" != "$(uci get system.@system[0].zonename)" ] || [  "${timezone_posix}" != "$(uci get system.@system[0].timezone)" ]; then
+    log "Updating timezone, IANA: ${timezone_iana}, POSIX: ${timezone_posix}"
+    uci set system.@system[0].zonename="${timezone_iana}"
+    uci set system.@system[0].timezone="${timezone_posix}"
+    uci commit system
+    /etc/init.d/system reload
+    /etc/init.d/cron restart
+fi
