@@ -3,6 +3,7 @@ config main 'config'
 	option canary_domains_mozilla '1'
 	option dnsmasq_config_update '*'
 	option force_dns '1'
+	option notrack_dns '1'
 	list force_dns_port '53'
 	list force_dns_port '853'
 # ports listed below are used by some
