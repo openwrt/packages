@@ -27,6 +27,7 @@ readonly BOOTSTRAP_GOOGLE='8.8.8.8,8.8.4.4,2001:4860:4860::8888,2001:4860:4860::
 readonly DEFAULT_BOOTSTRAP="${BOOTSTRAP_CF},${BOOTSTRAP_GOOGLE}"
 readonly canaryDomainsMozilla='use-application-dns.net'
 readonly canaryDomainsiCloud='mask.icloud.com mask-h2.icloud.com'
+readonly NOTRACK_NFT_FILE='/usr/share/nftables.d/ruleset-post/20-https-dns-proxy-notrack.nft'
 
 # Silence "Command failed: Not found" for redundant procd service delete calls
 __UBUS_BIN="$(command -v ubus || echo /bin/ubus)"
@@ -46,6 +47,8 @@ canary_domains_mozilla=
 dnsmasq_config_update=
 force_dns=
 force_dns_port=
+notrack_dns=
+notrack_ports=
 force_dns_src_interface=
 procd_trigger_wan6=
 global_listen_addr=
@@ -132,6 +135,34 @@ uci_changes() {
 	[ -s "${UCI_CONFIG_DIR:-/etc/config/}${PACKAGE}" ] && \
 	[ -n "$(/sbin/uci ${UCI_CONFIG_DIR:+-c ${UCI_CONFIG_DIR}} changes "$PACKAGE${CONFIG:+.${CONFIG}}${OPTION:+.${OPTION}}")" ]
 }
+notrack_nft() {
+	case "$1" in
+		update)
+			local port_set="$2"
+			local new_content existing_content
+			if [ -z "$port_set" ]; then
+				notrack_nft remove
+				return
+			fi
+			new_content="$(cat <<-EOF
+				chain raw_output_https_dns_proxy {
+					type filter hook output priority raw; policy accept;
+					meta l4proto { tcp, udp } th dport { ${port_set} } ip daddr 127.0.0.0/8 notrack
+					meta l4proto { tcp, udp } th sport { ${port_set} } ip saddr 127.0.0.0/8 notrack
+				}
+			EOF
+			)"
+			existing_content="$(cat "$NOTRACK_NFT_FILE" 2>/dev/null)"
+			[ "$new_content" = "$existing_content" ] && return 0
+			echo "$new_content" > "$NOTRACK_NFT_FILE"
+		;;
+		remove)
+			[ -f "$NOTRACK_NFT_FILE" ] || return 0
+			rm -f "$NOTRACK_NFT_FILE"
+		;;
+	esac
+}
+
 version() { echo "$PKG_VERSION"; }
 
 xappend() { PROG_param="$PROG_param $1"; }
@@ -202,6 +233,7 @@ load_package_config() {
 	config_get_bool canary_domains_icloud  'config' 'canary_domains_icloud' '1'
 	config_get_bool canary_domains_mozilla 'config' 'canary_domains_mozilla' '1'
 	config_get_bool force_dns              'config' 'force_dns' '1'
+	config_get_bool notrack_dns            'config' 'notrack_dns' '1'
 	config_get_bool procd_trigger_wan6     'config' 'procd_trigger_wan6' '0'
 	config_get_bool global_force_http1     'config' 'force_http1' '0'
 	config_get_bool global_force_http3     'config' 'force_http3' '0'
@@ -226,6 +258,7 @@ load_package_config() {
 	[ "$canary_domains_icloud" = '1' ]  && canaryDomains="${canaryDomains:+${canaryDomains} }${canaryDomainsiCloud}"
 	[ "$canary_domains_mozilla" = '1' ] && canaryDomains="${canaryDomains:+${canaryDomains} }${canaryDomainsMozilla}"
 	[ "$force_dns" = '1' ]              || unset force_dns
+	[ "$notrack_dns" = '1' ]            || unset notrack_dns
 	[ "$procd_trigger_wan6" = '1' ]     || unset procd_trigger_wan6
 }
 
@@ -321,6 +354,7 @@ start_instance() {
 # shellcheck disable=SC2181
 	if [ "$?" -eq 0 ]; then
 		output_ok
+		notrack_ports="${notrack_ports:+${notrack_ports}, }${listen_port}"
 		port="$((port+1))"
 	else
 		output_fail
@@ -360,6 +394,11 @@ start_service() {
 			fi
 		;;
 	esac
+	if [ -n "$notrack_dns" ] && [ -n "$notrack_ports" ]; then
+		notrack_nft update "$notrack_ports"
+	else
+		notrack_nft remove
+	fi
 #	if ! is_resolver_working; then
 #		rc_procd stop_service 'on_failed_health_check' && service_stopped 'on_failed_health_check'
 #	fi
@@ -376,6 +415,7 @@ stop_service() {
 		uci_commit 'dhcp'
 		dnsmasq_restart || _error=1
 	fi
+	notrack_nft remove
 # shellcheck disable=SC2015
 	[ -z "$_error" ] && output_okn || output_failn
 }
@@ -404,8 +444,8 @@ service_triggers() {
 	fi
 }
 
-service_started() { [ -n "$force_dns" ] && procd_set_config_changed firewall; }
-service_stopped() { [ -n "$force_dns" ] && procd_set_config_changed firewall; }
+service_started() { { [ -n "$force_dns" ] || [ -n "$notrack_dns" ]; } && procd_set_config_changed firewall; }
+service_stopped() { { [ -n "$force_dns" ] || [ -n "$notrack_dns" ]; } && procd_set_config_changed firewall; }
 restart() { reload "$@"; }
 
 dnsmasq_instance_append_force_dns_port() {
