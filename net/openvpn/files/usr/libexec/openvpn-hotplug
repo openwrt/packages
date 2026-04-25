@@ -120,6 +120,8 @@ case "$script_type" in
 	up)
 		proto_init_update "$dev" 1
 
+		[ -n "$tun_mtu" ] && /sbin/ip link set dev $dev mtu $tun_mtu
+
 		[ -n "$ifconfig_local" ] && proto_add_ipv4_address "$ifconfig_local" "${ifconfig_netmask:-255.255.255.255}"
 
 		if [ -n "$trusted_ip" -a "$DEFAULTROUTE" = "1" ]; then
@@ -175,8 +177,6 @@ case "$script_type" in
 				proto_add_ipv6_route "$v6net" "$v6plen" "$gw"
 			done
 		fi
-
-		[ -n "$tun_mtu" ] && json_add_int mtu "$tun_mtu"
 
 		i=0
 		while :; do
