@@ -1,0 +1,29 @@
+From 0a9270e907ca1241a0b2f1ed031b6cc04e234b7e Mon Sep 17 00:00:00 2001
+From: Amnon Paz <pazamnon@gmail.com>
+Date: Sat, 25 Apr 2026 20:53:16 +0300
+Subject: [PATCH] Fix time cb signature
+
+---
+ src/ots.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/src/ots.c
++++ b/src/ots.c
+@@ -1507,7 +1507,7 @@ static int openssl_ts_resp_ctx_set_seria
+ };
+ 
+ static int
+-openssl_time_cb(TS_RESP_CTX *ctx, void *data, time_t *sec, long *usec)
++openssl_time_cb(TS_RESP_CTX *ctx, void *data, long *sec, long *usec)
+ {
+   int        err;
+   TS_CB_ARG *arg;
+@@ -1527,7 +1527,7 @@ openssl_time_cb(TS_RESP_CTX *ctx, void *
+   err = lua_pcall(L, 1, 2, 0);
+   if (err == 0) {
+     if (lua_isnumber(L, -2)) {
+-      *sec = (time_t)luaL_checkinteger(L, -2);
++      *sec = (long)luaL_checkinteger(L, -2);
+       *usec = (long)luaL_optinteger(L, -1, 0);
+       lua_pop(L, 2); /* remove callback returned value */
+       return 1;
