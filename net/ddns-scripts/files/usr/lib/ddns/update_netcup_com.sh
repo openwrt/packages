@@ -32,7 +32,7 @@
 # Constants
 # ---------------------------------------------------------------------------
 
-readonly __NETCUP_ENDPOINT="https://ccp.netcup.net/run/webservice/servers/endpoint.php?JSON"
+__NETCUP_ENDPOINT="https://ccp.netcup.net/run/webservice/servers/endpoint.php?JSON"
 
 # ---------------------------------------------------------------------------
 # Validate required configuration variables
