@@ -12,13 +12,22 @@ local labels = {
     target = b.release.target
 }
 
+local os_info = {
+    id = string.lower(b.release.distribution),
+    name = b.release.distribution,
+    pretty_name = b.release.distribution .. " " .. b.release.version,
+    version = b.release.version,
+    version_id = b.release.version,
+    build_id = b.release.revision,
+}
+
 local b = nil
 local u = nil
 local ubus = nil
 
 local function scrape()
     metric("node_openwrt_info", "gauge", labels, 1)
+    metric("node_os_info", "gauge", os_info, 1)
 end
 
 return { scrape = scrape }
-
