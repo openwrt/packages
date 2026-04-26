@@ -10,17 +10,19 @@ PGBOUNCER_USER=pgbouncer
 PGBOUNCER_GROUP=pgbouncer
 
 boot() {
-    setup_user
+    setup_user || return 1
     start "$@"
 }
 
 setup_user() {
     if ! grep -q "^${PGBOUNCER_GROUP}:" /etc/group; then
-        echo "${PGBOUNCER_GROUP}:x:888:" >> /etc/group
+        echo "pgbouncer: required group '${PGBOUNCER_GROUP}' does not exist; create it during package installation" >&2
+        return 1
     fi
 
     if ! grep -q "^${PGBOUNCER_USER}:" /etc/passwd; then
-        echo "${PGBOUNCER_USER}:x:888:888:PgBouncer:/var/lib/pgbouncer:/bin/false" >> /etc/passwd
+        echo "pgbouncer: required user '${PGBOUNCER_USER}' does not exist; create it during package installation" >&2
+        return 1
     fi
 
     mkdir -p /var/log/pgbouncer
@@ -32,16 +34,16 @@ setup_user() {
     chown -R ${PGBOUNCER_USER}:${PGBOUNCER_GROUP} /var/lib/pgbouncer
     chown -R ${PGBOUNCER_USER}:${PGBOUNCER_GROUP} /etc/pgbouncer
 
-    chmod 755 /var/log/pgbouncer
-    chmod 755 /var/run/pgbouncer
-    chmod 755 /var/lib/pgbouncer
-    chmod 755 /etc/pgbouncer
-    chmod 644 /etc/pgbouncer/pgbouncer.ini
+    chmod 750 /var/log/pgbouncer
+    chmod 750 /var/run/pgbouncer
+    chmod 750 /var/lib/pgbouncer
+    chmod 750 /etc/pgbouncer
+    chmod 640 /etc/pgbouncer/pgbouncer.ini
     chmod 600 /etc/pgbouncer/userlist.txt
 }
 
 start_service() {
-    setup_user
+    setup_user || return 1
 
     if [ -f /var/run/pgbouncer/pgbouncer.pid ]; then
         local pid=$(cat /var/run/pgbouncer/pgbouncer.pid 2>/dev/null)
