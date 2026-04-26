@@ -13,6 +13,9 @@
 	init_proto "$@"
 }
 
+CONF_DIR="/var/run"
+CONF_PREFIX="${CONF_DIR}/openvpn."
+
 # Helper to DRY up repeated option handling in init/setup
 option_builder() {
 	# option_builder <action:add|build> <LIST_VAR_NAME> <type>
@@ -125,11 +128,86 @@ proto_openvpn_init_config() {
 	option_builder add OPENVPN_LIST list
 }
 
+# rewrite_config_line <dst> <old_path> <new_path>
+# Replace a `config <old_path>` line in <dst> with `config <new_path>`.
+# Handles absolute path, relative filename, no quotes / single quotes / double quotes,
+# and optional trailing whitespace.
+rewrite_config_line() {
+	local dst="$1"
+	local old="$2"
+	local new="$3"
+	local fname="${old##*/}"
+
+	# absolute path, three quote styles
+	sed -i "s|^\([[:space:]]*config[[:space:]]\+\)${old}[[:space:]]*$|\1${new}|"         "$dst"
+	sed -i "s|^\([[:space:]]*config[[:space:]]\+\)'${old}'[[:space:]]*$|\1${new}|"       "$dst"
+	sed -i "s|^\([[:space:]]*config[[:space:]]\+\)\"${old}\"[[:space:]]*$|\1${new}|"     "$dst"
+	# relative filename, three quote styles
+	sed -i "s|^\([[:space:]]*config[[:space:]]\+\)${fname}[[:space:]]*$|\1${new}|"       "$dst"
+	sed -i "s|^\([[:space:]]*config[[:space:]]\+\)'${fname}'[[:space:]]*$|\1${new}|"     "$dst"
+	sed -i "s|^\([[:space:]]*config[[:space:]]\+\)\"${fname}\"[[:space:]]*$|\1${new}|"   "$dst"
+}
+
+# Recursively copy config files referenced by `config` directives.
+# Updates the `config` paths in the destination file to point to the copies.
+# Appends all copied files to the global CONFIG_FILES variable.
+#
+# Usage: copy_config_recursive <dst_file> <visited>
+#   dst_file: the already-copied config file to scan for `config` lines
+#   visited:  pipe-delimited list of source paths already processed (cycle guard)
+copy_config_recursive() {
+	local dst="$1"
+	local visited="$2"
+	local ref dst_ref fname
+
+	while IFS= read -r ref; do
+		# skip empty lines
+		[ -n "$ref" ] || continue
+
+		# expand relative path to absolute using cd_dir
+		case "$ref" in
+			/*) ;;
+			*) ref="$cd_dir/$ref" ;;
+		esac
+
+		# cycle guard
+		case "$visited" in
+			*"|$ref|"*) continue ;;
+		esac
+
+		[ -f "$ref" ] || continue
+
+		fname="${ref##*/}"
+		dst_ref="${CONF_PREFIX}${config}.user_${fname}"
+
+		cp "$ref" "$dst_ref" || {
+			logger -t "openvpn_$config(proto)" -p daemon.err "failed to copy config '$ref' to '$dst_ref'"
+			continue
+		}
+
+		# rewrite the `config` line in the parent file to point to the copy
+		rewrite_config_line "$dst" "$ref" "$dst_ref"
+
+		# accumulate file list
+		CONFIG_FILES="$CONFIG_FILES $dst_ref"
+
+		# recurse
+		copy_config_recursive "$dst_ref" "$visited|$ref|"
+
+	done <<EOF
+$(grep -E '^[[:space:]]*config[[:space:]]+' "$dst" \
+	| grep -v "${CONF_PREFIX}" \
+	| sed "s/^[[:space:]]*config[[:space:]]*//" \
+	| sed "s/^['\"]//;s/[[:space:]]*['\"][[:space:]]*$//;s/[[:space:]]*$//")
+EOF
+}
+
 proto_openvpn_setup() {
 	local config="$1"
-	local conf_file="/var/run/openvpn.$config.conf"
+	local conf_file="${CONF_PREFIX}$config.conf"
 	local exec_params cd_dir
 
+	mkdir -p "$CONF_DIR"
 	exec_params=
 
 	json_get_var dev_type dev_type
@@ -142,7 +220,7 @@ proto_openvpn_setup() {
 	cd_dir="${config_file%/*}"
 	[ "$cd_dir" = "$config_file" ] && cd_dir="/"
 	append exec_params "--cd $cd_dir"
-	append exec_params "--status /var/run/openvpn.$config.status"
+	append exec_params "--status ${CONF_PREFIX}$config.status"
 	append exec_params "--syslog openvpn_$config"
 	append exec_params "--tmp-dir /tmp"
 
@@ -161,8 +239,6 @@ proto_openvpn_setup() {
 
 	json_get_vars auth_user_pass askpass username password cert_password
 
-	mkdir -p /var/run
-
 	# Testing option
 	# ${tls_exit:+--tls-exit} \
 
@@ -170,7 +246,7 @@ proto_openvpn_setup() {
 	json_get_var script_security script_security
 	[ -z "$script_security" ] && script_security=2
 
-	# Add default hotplug handling if 'script_security' option is ge '3'
+	# Add default hotplug handling if 'script_security' option is ge '2'
 	if [ "$script_security" -ge '2' ]; then
 		local up down route_up route_pre_down
 		local client tls_client tls_server
@@ -221,13 +297,30 @@ proto_openvpn_setup() {
 		fi
 	fi
 
+	# Write first-phase params to conf_file
 	eval "set -- $exec_params"
 	umask 077
 	printf "%b\n" "${exec_params//--/\\n}" > "$conf_file"
 	umask 022
 
+	local CONFIG_FILES="$conf_file"
+	# Copy user config and recursively copy all referenced config files,
+	# rewriting `config` directives to point to the copies in CONF_DIR.
+	local user_conf="${CONF_PREFIX}$config.user.conf"
+	if [ -n "$config_file" -a -e "$config_file" ]; then
+		cp "$config_file" "$user_conf" || {
+			logger -t "openvpn_$config(proto)" -p daemon.err "failed to copy config '$config_file'"
+			return 1
+		}
+		CONFIG_FILES="$CONFIG_FILES $user_conf"
+		copy_config_recursive "$user_conf" ""
+
+		# Update the `config` reference in conf_file to point to the copied user_conf.
+		rewrite_config_line "$conf_file" "$config_file" "$user_conf"
+	fi
+
 	is_openvpn_client() {
-		grep -qE '^[[:space:]]*remote[[:space:]]+' "$conf_file" "$config_file" && return 0
+		grep -qE '^[[:space:]]*remote[[:space:]]+' $CONFIG_FILES && return 0
 	}
 
 	local ipv6 defaultroute
@@ -235,7 +328,7 @@ proto_openvpn_setup() {
 
 	# combine into --askpass:
 	if [ -n "$cert_password" ]; then
-		cp_file="/var/run/openvpn.$config.pass"
+		cp_file="${CONF_PREFIX}$config.pass"
 		umask 077
 		printf '%s\n' "${cert_password:-}" > "$cp_file"
 		umask 022
@@ -246,7 +339,7 @@ proto_openvpn_setup() {
 
 	# combine into --auth-user-pass:
 	if [ -n "$username" ] || [ -n "$password" ]; then
-		auth_file="/var/run/openvpn.$config.auth"
+		auth_file="${CONF_PREFIX}$config.auth"
 		umask 077
 		printf '%s\n' "${username:-}" "${password:-}" > "$auth_file"
 		umask 022
@@ -267,16 +360,16 @@ proto_openvpn_setup() {
 	append exec_params "--persist-tun"
 	append exec_params "--persist-key"
 
-	#filter out dup options
-	sed -i '/^[[:space:]]*script-security[[:space:]]*/s/^/# /' "$conf_file" "$config_file"
-	sed -i '/^[[:space:]]*ifconfig-noexec[[:space:]]*/s/^/# /' "$conf_file" "$config_file"
-	sed -i '/^[[:space:]]*route-noexec[[:space:]]*/s/^/# /' "$conf_file" "$config_file"
-	sed -i '/^[[:space:]]*up[[:space:]]/s/^/# /' "$conf_file" "$config_file"
-	sed -i '/^[[:space:]]*down[[:space:]]/s/^/# /' "$conf_file" "$config_file"
-	sed -i '/^[[:space:]]*route-up[[:space:]]/s/^/# /' "$conf_file" "$config_file"
-	sed -i '/^[[:space:]]*route-pre-down[[:space:]]/s/^/# /' "$conf_file" "$config_file"
-	sed -i '/^[[:space:]]*persist-tun[[:space:]]*/s/^/# /' "$conf_file" "$config_file"
-	sed -i '/^[[:space:]]*persist-key[[:space:]]*/s/^/# /' "$conf_file" "$config_file"
+	# filter out dup options - applied to all copied config files
+	sed -i '/^[[:space:]]*script-security[[:space:]]*/s/^/# /'   $CONFIG_FILES
+	sed -i '/^[[:space:]]*ifconfig-noexec[[:space:]]*/s/^/# /'   $CONFIG_FILES
+	sed -i '/^[[:space:]]*route-noexec[[:space:]]*/s/^/# /'      $CONFIG_FILES
+	sed -i '/^[[:space:]]*up[[:space:]]/s/^/# /'                 $CONFIG_FILES
+	sed -i '/^[[:space:]]*down[[:space:]]/s/^/# /'               $CONFIG_FILES
+	sed -i '/^[[:space:]]*route-up[[:space:]]/s/^/# /'           $CONFIG_FILES
+	sed -i '/^[[:space:]]*route-pre-down[[:space:]]/s/^/# /'     $CONFIG_FILES
+	sed -i '/^[[:space:]]*persist-tun[[:space:]]*/s/^/# /'       $CONFIG_FILES
+	sed -i '/^[[:space:]]*persist-key[[:space:]]*/s/^/# /'       $CONFIG_FILES
 
 	json_get_vars ipv6 defaultroute
 	#default ipv6 is enabled
@@ -286,7 +379,7 @@ proto_openvpn_setup() {
 	if is_openvpn_client; then
 		append exec_params "--redirect-gateway def1 ipv6"
 		[ -n "$defaultroute" ] || defaultroute=1
-		sed -i '/^[[:space:]]*redirect-gateway[[:space:]]*/s/^/# /' "$conf_file" "$config_file"
+		sed -i '/^[[:space:]]*redirect-gateway[[:space:]]*/s/^/# /' $CONFIG_FILES
 	else
 		defaultroute=0
 	fi
@@ -309,11 +402,7 @@ proto_openvpn_teardown() {
 	local iface="$1"
 
 	proto_kill_command "$iface"
-	rm -f \
-		"/var/run/openvpn.$iface.conf" \
-		"/var/run/openvpn.$iface.pass" \
-		"/var/run/openvpn.$iface.auth" \
-		"/var/run/openvpn.$iface.status" 
+	[ -n "$iface" ] && rm -f "${CONF_PREFIX}${iface}."*
 
 	/usr/libexec/openvpn-hotplug cleanup "$iface"
 
