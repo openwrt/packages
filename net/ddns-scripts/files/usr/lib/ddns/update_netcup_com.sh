@@ -127,7 +127,7 @@ netcup_check_response() {
 	local __context="$1"
 	local __status __statuscode __shortmsg
 
-	json_load "$(cat "$DATFILE")"
+	json_load_file "$DATFILE"
 	json_get_var __status     "status"
 	json_get_var __statuscode "statuscode"
 	json_get_var __shortmsg   "shortmessage"
