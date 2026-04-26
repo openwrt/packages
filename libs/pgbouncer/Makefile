@@ -23,7 +23,7 @@ define Package/pgbouncer
   SUBMENU:=Database
   TITLE:=Lightweight connection pooler for PostgreSQL
   URL:=https://www.pgbouncer.org/
-  DEPENDS:=+libevent2 +libc +libpthread +libopenssl +libpq +pgsql-cli +pgsql-server
+  DEPENDS:=+libevent2 +libc +libpthread +libopenssl +libpq
 endef
 
 define Package/pgbouncer/description
@@ -48,8 +48,8 @@ define Build/Compile
 endef
 
 define Build/Install
-	$(INSTALL_DIR) $(PKG_BUILD_DIR)/ipkg-install/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/pgbouncer $(PKG_BUILD_DIR)/ipkg-install/usr/bin/
+	$(INSTALL_DIR) $(PKG_INSTALL_DIR)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/pgbouncer $(PKG_INSTALL_DIR)/usr/bin/
 endef
 
 define Package/pgbouncer/conffiles
