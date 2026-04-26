@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-flask-babel
-PKG_VERSION:=3.1.0
+PKG_VERSION:=4.0.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=flask-babel
 PYPI_SOURCE_NAME:=flask_babel
-PKG_HASH:=be015772c5d7f046f3b99c508dcf618636eb93d21b713b356db79f3e79f69f39
+PKG_HASH:=dbeab4027a3f4a87678a11686496e98e1492eb793cbdd77ab50f4e9a2602a593
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=BSD-3-Clause

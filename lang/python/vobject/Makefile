@@ -4,12 +4,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vobject
-PKG_VERSION:=0.9.6.1
-PKG_RELEASE:=2
+PKG_VERSION:=0.9.9
+PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
 
 PYPI_NAME:=$(PKG_NAME)
-PKG_HASH:=96512aec74b90abb71f6b53898dd7fe47300cc940104c4f79148f0671f790101
+PKG_HASH:=ac44e5d7e2079d84c1d52c50a615b9bec4b1ba958608c4c7fe40cbf33247b38e
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -27,6 +28,11 @@ endef
 
 define Package/python3-vobject/description
   vCard and vCalendar support for Python
+endef
+
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	$(SED) 's/version = attr:.*/version = $(PKG_VERSION)/' $(PKG_BUILD_DIR)/setup.cfg
 endef
 
 $(eval $(call Py3Package,python3-vobject))

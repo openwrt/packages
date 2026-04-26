@@ -31,8 +31,8 @@ config proxies 'proxies'
 # Docker doesn't work well out of the box with fw4. This is because Docker relies on a compatibility layer that
 # naively translates iptables rules. For the best compatibility replace the following dependencies:
 # `firewall4` -> `firewall`
-# `iptables-nft` -> `iptables-legacy`
-# `ip6tables-nft` -> `ip6tables-legacy`
+# `iptables-nft` -> `iptables-zz-legacy`
+# `ip6tables-nft` -> `ip6tables-zz-legacy`
 
 # Docker undermines the fw3 rules. By default all external source IPs are allowed to connect to the Docker host.
 # See https://docs.docker.com/network/iptables/ for more details.

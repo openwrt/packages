@@ -5,7 +5,7 @@
 // Main ucode module for adblock-fast.
 // All business logic lives here; the init script is a thin procd wrapper.
 
-import { readfile, writefile, popen, stat, unlink, rename, open, glob, mkdir, mkstemp, symlink, chmod, chown, realpath, lsdir, access, dirname } from 'fs';
+import { readfile, writefile, popen, stat, unlink, rename, open, glob, mkdir, symlink, chmod, chown, realpath, lsdir, access, dirname } from 'fs';
 import { cursor } from 'uci';
 import { connect } from 'ubus';
 import * as uloop from 'uloop';
@@ -199,6 +199,17 @@ let dns_output = {
 
 // Config values loaded by env.load_config()
 let cfg = {};
+
+// RAM mirror of UCI config for sizes (used when update_config_sizes is false)
+function ram_uci(name) {
+	let confdir = '/var/run/' + name + '/uci';
+	let mirror = confdir + '/' + name;
+	if (!stat(mirror)) {
+		system('mkdir -p ' + confdir);
+		writefile(mirror, readfile('/etc/config/' + name) || '');
+	}
+	return cursor(confdir);
+}
 
 // ── Shell / System Helpers ──────────────────────────────────────────
 
@@ -1609,12 +1620,14 @@ function process_file_url(section, url_override, action_override, predownloaded)
 		// Ensure newline at end
 		ensure_trailing_newline(r_tmp);
 
-		// Update size in config if changed
+		// Update size in config or RAM mirror
 		if (section) {
 			let new_size = get_local_filesize(r_tmp);
-			if (new_size != null && ('' + size_val) != ('' + new_size))
-				uci(pkg.name).set(pkg.name, section, 'size', '' + new_size);
-			uci(pkg.name).save(pkg.name);
+			if (new_size != null && ('' + size_val) != ('' + new_size)) {
+				let c = cfg.update_config_sizes ? uci(pkg.name) : ram_uci(pkg.name);
+				c.set(pkg.name, section, 'size', '' + new_size);
+				c.save(pkg.name);
+			}
 		}
 
 		let format = detect_file_type(r_tmp);
@@ -1690,9 +1703,10 @@ function download_lists() {
 		output.warning(get_text('warningFreeRamCheckFail'));
 	} else {
 		let total_sizes = 0;
+		let c = cfg.update_config_sizes ? uci(pkg.name) : ram_uci(pkg.name);
 		uci(pkg.name).foreach(pkg.name, 'file_url', (s) => {
 			if (s.enabled == '0') return;
-			let sz = s.size;
+			let sz = c.get(pkg.name, s['.name'], 'size');
 			if (!sz && s.url) sz = get_url_filesize(s.url);
 			if (sz) total_sizes += int('' + sz);
 		});
@@ -1740,26 +1754,29 @@ function download_lists() {
 		if (length(jobs) > 0) {
 			uloop.init();
 			let pending = length(jobs);
-			for (let job in jobs) {
+			for (let i = 0; i < length(jobs); i++) {
+				let job = jobs[i];
 				let dl_cmd = sprintf('%s %s %s %s 2>/dev/null',
 					dlt.command, shell_quote(job.url), dlt.flag, shell_quote(job.r_tmp));
 				uloop.process('/bin/sh', ['-c', dl_cmd], {}, () => {
+					process_file_url(job.cfg_name, null, null, job.r_tmp);
 					if (--pending == 0) uloop.end();
 				});
 			}
 			uloop.run();
 			uloop.done();
-			for (let job in jobs)
-				process_file_url(job.cfg_name, null, null, job.r_tmp);
 		}
 	} else {
 		for (let cfg_name in download_cfgs)
 			process_file_url(cfg_name);
 	}
 
-	if (uci_has_changes(pkg.name)) {
-		output.verbose('[PROC] Saving updated file sizes ');
-		if (cfg.update_config_sizes && uci(pkg.name).commit(pkg.name))
+	let c = cfg.update_config_sizes ? uci(pkg.name) : ram_uci(pkg.name);
+	if (length(c.changes(pkg.name) || [])) {
+		output.verbose(cfg.update_config_sizes
+			? '[PROC] Saving updated file sizes '
+			: '[PROC] Saving updated file sizes to RAM ');
+		if (c.commit(pkg.name))
 			output.ok();
 		else
 			output.fail();
@@ -2734,19 +2751,19 @@ function show_blocklist() {
 
 function sizes() {
 	env.load_config();
+	let c = cfg.update_config_sizes ? uci(pkg.name) : ram_uci(pkg.name);
 	uci(pkg.name).foreach(pkg.name, 'file_url', (s) => {
 		let size = get_url_filesize(s.url);
 		output.print((s.name || s.url) + (size ? ': ' + size : '') + ' ');
 		if (size) {
-			uci(pkg.name).set(pkg.name, s['.name'], 'size', '' + size);
+			c.set(pkg.name, s['.name'], 'size', '' + size);
 			output.okn();
 		} else {
 			output.failn();
 		}
 	});
-	uci(pkg.name).save(pkg.name);
-	if (cfg.update_config_sizes && length(uci(pkg.name).changes(pkg.name) || []))
-		uci(pkg.name).commit(pkg.name);
+	c.save(pkg.name);
+	c.commit(pkg.name);
 }
 
 // ── get_network_trigger_info (for service_triggers) ─────────────────
@@ -2854,9 +2871,17 @@ function get_file_url_filesizes(name) {
 	env.load_config();
 
 	let files = [];
+	let c = cfg.update_config_sizes ? uci(pkg.name) : ram_uci(pkg.name);
 	uci(pkg.name).foreach(pkg.name, 'file_url', (s) => {
-		let size = s.size;
-		if (!size && s.url) size = get_url_filesize(s.url);
+		let size = c.get(pkg.name, s['.name'], 'size');
+		if (!size && s.url) {
+			size = get_url_filesize(s.url);
+			if (size) {
+				c.set(pkg.name, s['.name'], 'size', '' + size);
+				c.save(pkg.name);
+				c.commit(pkg.name);
+			}
+		}
 		push(files, { name: s.name || s.url, url: s.url, size: size || '' });
 	});
 
