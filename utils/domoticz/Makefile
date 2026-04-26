@@ -21,7 +21,7 @@ PKG_LICENSE_FILES:=License.txt
 PKG_CPE_ID:=cpe:/a:domoticz:domoticz
 
 PKG_BUILD_DEPENDS:=python3 minizip cereal boost jwt-cpp
-PKG_BUILD_FLAGS:=no-mips16 lto
+PKG_BUILD_FLAGS:=no-mips16
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
