@@ -134,8 +134,10 @@ netcup_check_response() {
 
 	if [ "$__status" != "success" ]; then
 		json_cleanup
-		write_log 14 "netcup DDNS: $__context failed (status='$__status' code=$__statuscode): $__shortmsg"
+		write_log 3 "netcup DDNS: $__context failed (status='$__status' code=$__statuscode): $__shortmsg"
+		return 1
 	fi
+	return 0
 }
 
 # ---------------------------------------------------------------------------
@@ -154,16 +156,21 @@ json_add_object "param"
 	json_add_string "apipassword"    "$password"
 json_close_object
 
-netcup_post || write_log 14 "netcup DDNS: HTTP request failed during login"
-netcup_check_response "login"
+if ! netcup_post; then
+	write_log 3 "netcup DDNS: HTTP request failed during login"
+	return 1
+fi
+netcup_check_response "login" || return 1
 
 json_select "responsedata"
 json_get_var __SESSION_ID "apisessionid"
 json_select ".."
 json_cleanup
 
-[ -z "$__SESSION_ID" ] && \
-	write_log 14 "netcup DDNS: login succeeded but no session ID was returned"
+if [ -z "$__SESSION_ID" ]; then
+	write_log 3 "netcup DDNS: login succeeded but no session ID was returned"
+	return 1
+fi
 
 write_log 6 "netcup DDNS: login successful"
 
@@ -178,8 +185,11 @@ json_add_object "param"
 	json_add_string "apisessionid"   "$__SESSION_ID"
 json_close_object
 
-netcup_post || write_log 14 "netcup DDNS: HTTP request failed during infoDnsRecords"
-netcup_check_response "infoDnsRecords"
+if ! netcup_post; then
+	write_log 3 "netcup DDNS: HTTP request failed during infoDnsRecords"
+	return 1
+fi
+netcup_check_response "infoDnsRecords" || return 1
 
 # --- Step 3: Find the record matching our hostname and type ----------------
 #
@@ -216,8 +226,10 @@ done
 
 json_cleanup
 
-[ -z "$__MATCH_ID" ] && \
-	write_log 14 "netcup DDNS: no [$__RRTYPE] record found for hostname '$__REC_HOSTNAME' in zone '$__ZONE'"
+if [ -z "$__MATCH_ID" ]; then
+	write_log 3 "netcup DDNS: no [$__RRTYPE] record found for hostname '$__REC_HOSTNAME' in zone '$__ZONE'"
+	return 1
+fi
 
 # --- Step 4: Update the matched record with the new IP ---------------------
 
@@ -242,8 +254,12 @@ json_add_object "param"
 	json_close_object
 json_close_object
 
-netcup_post || write_log 14 "netcup DDNS: HTTP request failed during updateDnsRecords"
-netcup_check_response "updateDnsRecords"
+if ! netcup_post; then
+	write_log 3 "netcup DDNS: HTTP request failed during updateDnsRecords"
+	return 1
+fi
+
+netcup_check_response "updateDnsRecords" || return 1
 json_cleanup
 
 write_log 6 "netcup DDNS: '$__REC_HOSTNAME.$__ZONE' [$__RRTYPE] updated to $__IP"
