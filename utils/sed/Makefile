@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sed
-PKG_VERSION:=4.9
+PKG_VERSION:=4.10
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/sed
-PKG_HASH:=6e226b732e1cd739464ad6862bd1a1aba42d7982922da7a53519631d24975181
+PKG_HASH:=b8e72182b2ec96a3574e2998c47b7aaa64cc20ce000d8e9ac313cc07cecf28c7
 
 PKG_MAINTAINER:=Russell Senior <russell@personaltelco.net>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -43,7 +43,13 @@ endef
 
 CONFIGURE_ARGS += \
 	--disable-acl \
+	--disable-xattr \
 	--without-selinux
+
+define Build/Compile
+	sed -i 's/SUBDIRS = po . gnulib-tests/SUBDIRS = po ./' $(PKG_BUILD_DIR)/Makefile
+	$(call Build/Compile/Default,)
+endef
 
 define Package/sed/install
 	$(INSTALL_DIR) $(1)/usr/libexec
