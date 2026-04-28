@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=lua-openssl
 PKG_SOURCE_VERSION:=0.11.1
 PKG_VERSION:=$(subst -,.,$(PKG_SOURCE_VERSION))
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/zhaozg/lua-openssl.git
@@ -23,13 +23,17 @@ PKG_LICENSE_FILES:=LICENSE
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
+CMAKE_OPTIONS += \
+	-DLUA_INCLUDE_DIR=$(STAGING_DIR)/usr/include \
+	-DLUA_LIBRARY=$(STAGING_DIR)/usr/lib/liblua.so
+
 define Package/lua-openssl
   SUBMENU:=Lua
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Lua openSSL binding
   URL:=http://github.com/zhaozg/lua-openssl
-  DEPENDS:=+lua +libopenssl +librt
+  DEPENDS:=+liblua +libopenssl +librt
 endef
 
 define Package/lua-openssl/description
