@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://prosody.im/downloads/source
-PKG_HASH:=1dc0c3dcebdf26e579aff3c320d72e93495e295b832dd37163447d8a71c34ff1
+PKG_HASH:=47d712273c2f29558c412f6cdaec073260bbc26b7dda243db580330183d65856
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=MIT/X11
