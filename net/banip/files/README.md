@@ -111,7 +111,7 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 * Install the LuCI companion package 'luci-app-banip' which also installs the main 'banip' package as a dependency
 * Enable the banIP system service (System -> Startup) and enable banIP itself (banIP -> General Settings)
 * It's strongly recommended to use the LuCI frontend to easily configure all aspects of banIP, the application is located in LuCI under the 'Services' menu
-* It's also recommended to configure a 'Startup Trigger Interface' to depend on your WAN ifup events during boot or restart of your router
+* It's also recommended to configure a 'Startup Trigger Interface' to depend on your WAN ifup events during boot or restart of your router. Avoid IPv6 (wan6) interfaces here, as IPv6/netifd is chatty and would trigger frequent unnecessary banIP restarts
 * To be able to use banIP in a meaningful way, you must activate the service and possibly also activate a few blocklist feeds
 * If you're using a complex network setup, e.g. special tunnel interfaces, than untick the 'Auto Detection' option under the 'General Settings' tab and set the required options manually
 * Start the service with '/etc/init.d/banip start' and check everything is working by running '/etc/init.d/banip status', also check the 'Processing Log' tab
@@ -179,7 +179,7 @@ Available commands:
 | ban_dev                 | list   | - / autodetect                | wan device(s), e.g. 'eth2'                                                                                        |
 | ban_vlanallow           | list   | -                             | always allow certain VLAN forwards, e.g. br-lan.20                                                                |
 | ban_vlanblock           | list   | -                             | always block certain VLAN forwards, e.g. br-lan.10                                                                |
-| ban_trigger             | list   | -                             | logical reload trigger interface(s), e.g. 'wan'                                                                   |
+| ban_trigger             | list   | -                             | logical reload trigger interface(s), e.g. 'wan' (avoid IPv6 interfaces)                                           |
 | ban_triggerdelay        | option | 20                            | trigger timeout during interface reload and boot                                                                  |
 | ban_deduplicate         | option | 1                             | deduplicate IP addresses across all active Sets (see optional feed flag 'dup' below)                              |
 | ban_splitsize           | option | 0                             | split the processing/loading of Sets in chunks of n lines/members (saves RAM)                                     |

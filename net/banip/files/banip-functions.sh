@@ -28,6 +28,7 @@ ban_rtfile="${ban_rundir}/banIP.runtime.json"
 ban_rdapfile="${ban_rundir}/banIP.rdap.json"
 ban_lock="${ban_rundir}/banIP.lock"
 ban_etaglock="${ban_rundir}/banIP.etag.lock"
+ban_deduplock="${ban_rundir}/banIP.deduplicate.lock"
 ban_rdapurl="https://rdap.db.ripe.net/ip/"
 ban_geourl="http://ip-api.com/batch"
 ban_errorlog="/dev/null"
@@ -221,7 +222,7 @@ f_trim() {
 f_rmpid() {
 	local ppid pid pids_next pids_all childs newchilds
 
-	# kill process group of pid in pidfile and all child processes
+	# kill all descendant processes of the pid in pidfile
 	#
 	ppid="$("${ban_catcmd}" "${ban_pidfile}" 2>>"${ban_errorlog}")"
 	if [ -n "${ppid}" ]; then
@@ -863,11 +864,11 @@ f_nftinit() {
 	# build log rules for pre-routing chains if enabled, with dynamic log level and prefix
 	#
 	if [ "${ban_logprerouting}" = "1" ]; then
-		log_icmp="log level ${ban_nftloglevel} prefix \"banIP/pre-icmp/drop: \" limit rate 10/second"
-		log_syn="log level ${ban_nftloglevel} prefix \"banIP/pre-syn/drop: \" limit rate 10/second"
-		log_udp="log level ${ban_nftloglevel} prefix \"banIP/pre-udp/drop: \" limit rate 10/second"
-		log_tcp="log level ${ban_nftloglevel} prefix \"banIP/pre-tcp/drop: \" limit rate 10/second"
-		log_ct="log level ${ban_nftloglevel} prefix \"banIP/pre-ct/drop: \" limit rate 10/second"
+		log_icmp="limit rate 10/second log level ${ban_nftloglevel} prefix \"banIP/pre-icmp/drop: \""
+		log_syn="limit rate 10/second log level ${ban_nftloglevel} prefix \"banIP/pre-syn/drop: \""
+		log_udp="limit rate 10/second log level ${ban_nftloglevel} prefix \"banIP/pre-udp/drop: \""
+		log_tcp="limit rate 10/second log level ${ban_nftloglevel} prefix \"banIP/pre-tcp/drop: \""
+		log_ct="limit rate 10/second log level ${ban_nftloglevel} prefix \"banIP/pre-ct/drop: \""
 	fi
 
 	{
@@ -1020,8 +1021,8 @@ f_down() {
 
 	# set log target
 	#
-	[ "${ban_loginbound}" = "1" ] && log_inbound="log level ${ban_nftloglevel} prefix \"banIP/inbound/${ban_blockpolicy}/${feed}: \" limit rate 10/second"
-	[ "${ban_logoutbound}" = "1" ] && log_outbound="log level ${ban_nftloglevel} prefix \"banIP/outbound/reject/${feed}: \" limit rate 10/second"
+	[ "${ban_loginbound}" = "1" ] && log_inbound="limit rate 10/second log level ${ban_nftloglevel} prefix \"banIP/inbound/${ban_blockpolicy}/${feed}: \""
+	[ "${ban_logoutbound}" = "1" ] && log_outbound="limit rate 10/second log level ${ban_nftloglevel} prefix \"banIP/outbound/reject/${feed}: \""
 
 	# set feed target
 	#
@@ -1277,7 +1278,7 @@ f_down() {
 						if [ "${ban_logoutbound}" = "1" ]; then
 							printf '%s\n' "add rule inet banIP _outbound ip daddr != @${feed} ${log_outbound}"
 						fi
-						printf '%s\n' "add rule inet banIP _outbound ip daddr != @${feed} counter goto _reject"
+						printf '%s\n' "add rule inet banIP _outbound ip daddr != @${feed} counter ${feed_target}"
 					else
 						printf '%s\n' "add rule inet banIP _outbound ip daddr @${feed} counter accept"
 					fi
@@ -1319,12 +1320,22 @@ f_down() {
 			"4MAC")
 				"${ban_awkcmd}" '{gsub(/\r/,"")}/^([0-9A-f]{2}:){5}[0-9A-f]{2}(\/([0-9]|[1-3][0-9]|4[0-8]))?([[:space:]]+([1-9][0-9]?[0-9]?\.){1}([0-9]{1,3}\.){2}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\/(1?[0-9]|2?[0-9]|3?[0-2]))?([[:space:]]+#.*$|[[:space:]]*$)|[[:space:]]+#.*$|$)/{if(!$2||$2~/#/)$2="0.0.0.0/0";if(!seen[$1]++)printf "%s . %s, ",tolower($1),$2}' "${ban_blocklist}" >"${tmp_file}"
 				printf '%s\n' "add set inet banIP ${feed} { type ether_addr . ipv4_addr; flags interval; auto-merge; policy ${ban_nftpolicy}; ${element_count}; $(f_getelements "${tmp_file}") }"
-				[ -z "${feed_direction##*outbound*}" ] && printf '%s\n' "add rule inet banIP _outbound ether saddr . ip saddr @${feed} counter goto _reject"
+				if [ -z "${feed_direction##*outbound*}" ]; then
+					if [ "${ban_logoutbound}" = "1" ]; then
+						printf '%s\n' "add rule inet banIP _outbound ether saddr . ip saddr @${feed} ${log_outbound}"
+					fi
+					printf '%s\n' "add rule inet banIP _outbound ether saddr . ip saddr @${feed} counter goto _reject"
+				fi
 				;;
 			"6MAC")
 				"${ban_awkcmd}" '{gsub(/\r/,"")}/^([0-9A-f]{2}:){5}[0-9A-f]{2}(\/([0-9]|[1-3][0-9]|4[0-8]))?([[:space:]]+([0-9A-f]{0,4}:){1,7}[0-9A-f]{0,4}:?(\/(1?[0-2][0-8]|[0-9][0-9]))?([[:space:]]+#.*$|[[:space:]]*$)|[[:space:]]+#.*$|$)/{if(!$2||$2~/#/)$2="::/0";if(!seen[$1]++)printf "%s . %s, ",tolower($1),$2}' "${ban_blocklist}" >"${tmp_file}"
 				printf '%s\n' "add set inet banIP ${feed} { type ether_addr . ipv6_addr; flags interval; auto-merge; policy ${ban_nftpolicy}; ${element_count}; $(f_getelements "${tmp_file}") }"
-				[ -z "${feed_direction##*outbound*}" ] && printf '%s\n' "add rule inet banIP _outbound ether saddr . ip6 saddr @${feed} counter goto _reject"
+				if [ -z "${feed_direction##*outbound*}" ]; then
+					if [ "${ban_logoutbound}" = "1" ]; then
+						printf '%s\n' "add rule inet banIP _outbound ether saddr . ip6 saddr @${feed} ${log_outbound}"
+					fi
+					printf '%s\n' "add rule inet banIP _outbound ether saddr . ip6 saddr @${feed} counter goto _reject"
+				fi
 				;;
 			"4")
 				f_chkip ${feed_ipv} local 1 <"${ban_blocklist}" >"${tmp_file}"
@@ -1460,8 +1471,11 @@ f_down() {
 		#
 		if [ "${ban_deduplicate}" = "1" ] && [ "${feed_url}" != "local" ] && [ -z "${feed_complete}" ]; then
 			f_chkip ${feed_ipv} ${feed_rule} <"${tmp_load}" >"${tmp_raw}"
-			"${ban_awkcmd}" 'NR==FNR{member[$0];next}!($0 in member)' "${ban_tmpfile}.deduplicate" "${tmp_raw}" 2>>"${ban_errorlog}" | tee -a "${ban_tmpfile}.deduplicate" >"${tmp_split}"
-			feed_rc="${?}"
+			{
+				"${ban_flockcmd}" -x 8
+				"${ban_awkcmd}" 'NR==FNR{member[$0];next}!($0 in member)' "${ban_tmpfile}.deduplicate" "${tmp_raw}" 2>>"${ban_errorlog}" | tee -a "${ban_tmpfile}.deduplicate" >"${tmp_split}"
+				feed_rc="${?}"
+			} 8>"${ban_deduplock}"
 		else
 			f_chkip ${feed_ipv} ${feed_rule} <"${tmp_load}" >"${tmp_split}"
 			feed_rc="${?}"
@@ -2060,7 +2074,7 @@ f_report() {
 					done
 					json_select ".."
 				done
-				"${ban_sedcmd}" -i ':a;$!N;1,1ba;P;$d;D' "${report_jsn}"
+				"${ban_sedcmd}" -i '$d' "${report_jsn}"
 				printf '%s\n' "}, \
 					\"timestamp\": \"${timestamp}\", \
 					\"autoadd_allow\": \"$("${ban_grepcmd}" -c "added on ${timestamp% *}" "${ban_allowlist}")\", \
@@ -2287,9 +2301,9 @@ f_search() {
 	#
 	res="$(printf '%s' "${input}" | "${ban_awkcmd}" '
 	{
-		if (match($0,/([1-9][0-9]{0,2}\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\/([12]?[0-9]|3[012]))?[[:space:]]*$/)) {
+		if (match($0,/(([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])(\/([0-9]|[12][0-9]|3[012]))?[[:space:]]*$/)) {
 			printf "v4 %s",substr($0,RSTART,RLENGTH)
-		} else if (match($0,/(([0-9A-Fa-f]{0,4}:){1,7}[0-9A-Fa-f]{0,4}:?(\/(1?[0-2][0-8]|[0-9][0-9]))?)/)) {
+		} else if (match($0,/(([0-9A-Fa-f]{0,4}:){1,7}[0-9A-Fa-f]{0,4}:?(\/([0-9]|[1-9][0-9]|1[01][0-9]|12[0-8]))?)/)) {
 			printf "v6 %s",substr($0,RSTART,RLENGTH)
 		}
 	}')"
@@ -2664,10 +2678,10 @@ f_monitor() {
 						# only spawn new RDAP subshell if current number of in-flight RDAP lookups is below ban_cores limit
 						#
 						if [ "${rdap_jobs}" -lt "${ban_cores}" ]; then
-							(
+							: >"${rdap_lock}"
+							( 
 								# rate limiting via shared timestamp file
 								#
-								: >"${rdap_lock}"
 								(
 									"${ban_flockcmd}" -x 9
 									read -r rdap_ts <"${rdap_tsfile}" 2>/dev/null
@@ -2703,11 +2717,16 @@ f_monitor() {
 											base="${idx}"
 											continue
 										else
-											if [ -n "${base%%::*}" ] && [ "${base%%.*}" != "127" ] && [ "${base%%.*}" != "0" ]; then
-												cidr="${base}/${idx}"
-												if "${ban_nftcmd}" add element inet banIP "blocklist${proto}" { ${cidr} ${nft_expiry} } >/dev/null 2>&1; then
-													f_log "info" "add IP range '${cidr}' (source: ${rdap_info:-"n/a"} ::: expiry: ${ban_nftexpiry:-"-"}) to blocklist${proto} set"
-												fi
+											case "${base}" in
+											"" | "::"* | "127."* | "0."* | "fe80:"*)
+												base=""
+												continue
+												;;
+											esac
+											[ -z "${base}" ] && continue
+											cidr="${base}/${idx}"
+											if "${ban_nftcmd}" add element inet banIP "blocklist${proto}" { ${cidr} ${nft_expiry} } >/dev/null 2>&1; then
+												f_log "info" "add IP range '${cidr}' (source: ${rdap_info:-"n/a"} ::: expiry: ${ban_nftexpiry:-"-"}) to blocklist${proto} set"
 											fi
 											base=""
 										fi
@@ -2715,8 +2734,8 @@ f_monitor() {
 								else
 									f_log "info" "rdap request failed (rc: ${rdap_rc:-"-"}/log: ${rdap_log:-"-"}) for IP '${ip}'"
 								fi
-								"${ban_rmcmd}" -f "${ban_rdapfile}.${ip}" "${rdap_lock}"
 								: >"${ban_rdapfile}.${ip}.done"
+								"${ban_rmcmd}" -f "${ban_rdapfile}.${ip}" "${rdap_lock}"
 							) &
 						fi
 					fi
