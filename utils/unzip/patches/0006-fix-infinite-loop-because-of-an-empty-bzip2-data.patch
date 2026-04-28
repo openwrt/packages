@@ -10,8 +10,6 @@ CVE: CVE-2015-7697
  extract.c | 6 ++++++
  1 file changed, 6 insertions(+)
 
-diff --git a/extract.c b/extract.c
-index d816603..ad8b3f7 100644
 --- a/extract.c
 +++ b/extract.c
 @@ -2728,6 +2728,12 @@ __GDEF
@@ -27,5 +25,3 @@ index d816603..ad8b3f7 100644
  #if (defined(DLL) && !defined(NO_SLIDE_REDIR))
      if (G.redirect_slide)
          wsize = G.redirect_size, redirSlide = G.redirect_buffer;
--- 
-

@@ -10,11 +10,9 @@ CVE: CVE-2016-9844
  zipinfo.c | 13 ++++++++++++-
  1 file changed, 12 insertions(+), 1 deletion(-)
 
-diff --git a/zipinfo.c b/zipinfo.c
-index a92bca9..0148255 100644
 --- a/zipinfo.c
 +++ b/zipinfo.c
-@@ -1921,7 +1921,18 @@ static int zi_short(__G)   /* return PK-type error code */
+@@ -1921,7 +1921,18 @@ static int zi_short(__G)   /* return PK-
          ush  dnum=(ush)((G.crec.general_purpose_bit_flag>>1) & 3);
          methbuf[3] = dtype[dnum];
      } else if (methnum >= NUM_METHODS) {   /* unknown */
@@ -34,5 +32,3 @@ index a92bca9..0148255 100644
      }
  
      for (k = 0;  k < 15;  ++k)
--- 
-

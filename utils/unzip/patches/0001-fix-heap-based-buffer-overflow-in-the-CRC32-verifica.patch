@@ -11,8 +11,6 @@ CVE: CVE-2014-8139
  extract.c | 17 ++++++++++++++---
  1 file changed, 14 insertions(+), 3 deletions(-)
 
-diff --git a/extract.c b/extract.c
-index 1acd769..df0fa1c 100644
 --- a/extract.c
 +++ b/extract.c
 @@ -1,5 +1,5 @@
@@ -31,7 +29,7 @@ index 1acd769..df0fa1c 100644
     static ZCONST char Far InvalidComprDataEAs[] =
       " invalid compressed data for EAs\n";
  #  if (defined(WIN32) && defined(NTSD_EAS))
-@@ -2023,7 +2025,8 @@ static int TestExtraField(__G__ ef, ef_len)
+@@ -2023,7 +2025,8 @@ static int TestExtraField(__G__ ef, ef_l
          ebID = makeword(ef);
          ebLen = (unsigned)makeword(ef+EB_LEN);
  
@@ -41,7 +39,7 @@ index 1acd769..df0fa1c 100644
             /* Discovered some extra field inconsistency! */
              if (uO.qflag)
                  Info(slide, 1, ((char *)slide, "%-22s ",
-@@ -2158,11 +2161,19 @@ static int TestExtraField(__G__ ef, ef_len)
+@@ -2158,11 +2161,19 @@ static int TestExtraField(__G__ ef, ef_l
                  }
                  break;
              case EF_PKVMS:
@@ -62,5 +60,3 @@ index 1acd769..df0fa1c 100644
                  break;
              case EF_PKW32:
              case EF_PKUNIX:
--- 
-

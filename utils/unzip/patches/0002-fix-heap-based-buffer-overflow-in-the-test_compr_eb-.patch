@@ -11,11 +11,9 @@ CVE: CVE-2014-8140
  extract.c | 13 ++++++++++---
  1 file changed, 10 insertions(+), 3 deletions(-)
 
-diff --git a/extract.c b/extract.c
-index df0fa1c..ec31e60 100644
 --- a/extract.c
 +++ b/extract.c
-@@ -2232,10 +2232,17 @@ static int test_compr_eb(__G__ eb, eb_size, compr_offset, test_uc_ebdata)
+@@ -2232,10 +2232,17 @@ static int test_compr_eb(__G__ eb, eb_si
      if (compr_offset < 4)                /* field is not compressed: */
          return PK_OK;                    /* do nothing and signal OK */
  
@@ -36,5 +34,3 @@ index df0fa1c..ec31e60 100644
  
      if (
  #ifdef INT_16BIT
--- 
-

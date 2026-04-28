@@ -12,11 +12,9 @@ CVE: CVE-2014-8141
  process.c | 68 +++++++++++++++++++++++++++++++++++++++++--------------
  2 files changed, 59 insertions(+), 18 deletions(-)
 
-diff --git a/fileio.c b/fileio.c
-index ba0a1d0..36bfea3 100644
 --- a/fileio.c
 +++ b/fileio.c
-@@ -176,6 +176,8 @@ static ZCONST char Far FilenameTooLongTrunc[] =
+@@ -176,6 +176,8 @@ static ZCONST char Far FilenameTooLongTr
  #endif
  static ZCONST char Far ExtraFieldTooLong[] =
    "warning:  extra field too long (%d).  Ignoring...\n";
@@ -25,7 +23,7 @@ index ba0a1d0..36bfea3 100644
  
  #ifdef WINDLL
     static ZCONST char Far DiskFullQuery[] =
-@@ -2295,7 +2297,12 @@ int do_string(__G__ length, option)   /* return PK-type error code */
+@@ -2295,7 +2297,12 @@ int do_string(__G__ length, option)   /*
              if (readbuf(__G__ (char *)G.extra_field, length) == 0)
                  return PK_EOF;
              /* Looks like here is where extra fields are read */
@@ -39,8 +37,6 @@ index ba0a1d0..36bfea3 100644
  #ifdef UNICODE_SUPPORT
              G.unipath_filename = NULL;
              if (G.UzO.U_flag < 2) {
-diff --git a/process.c b/process.c
-index 1e9a1e1..e3a3f8c 100644
 --- a/process.c
 +++ b/process.c
 @@ -1,5 +1,5 @@
@@ -149,5 +145,3 @@ index 1e9a1e1..e3a3f8c 100644
          ef_buf += (eb_len + EB_HEADSIZE);
          ef_len -= (eb_len + EB_HEADSIZE);
      }
--- 
-
