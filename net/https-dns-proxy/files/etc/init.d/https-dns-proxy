@@ -145,20 +145,25 @@ notrack_nft() {
 				return
 			fi
 			new_content="$(cat <<-EOF
-				chain raw_output_https_dns_proxy {
-					type filter hook output priority raw; policy accept;
-					meta l4proto { tcp, udp } th dport { ${port_set} } ip daddr 127.0.0.0/8 notrack
-					meta l4proto { tcp, udp } th sport { ${port_set} } ip saddr 127.0.0.0/8 notrack
+				table inet https_dns_proxy_notrack {
+					chain raw_output {
+						type filter hook output priority raw; policy accept;
+						meta l4proto { tcp, udp } th dport { ${port_set} } ip daddr 127.0.0.0/8 notrack
+						meta l4proto { tcp, udp } th sport { ${port_set} } ip saddr 127.0.0.0/8 notrack
+					}
 				}
 			EOF
 			)"
 			existing_content="$(cat "$NOTRACK_NFT_FILE" 2>/dev/null)"
-			[ "$new_content" = "$existing_content" ] && return 0
-			echo "$new_content" > "$NOTRACK_NFT_FILE"
+			if [ "$new_content" != "$existing_content" ]; then
+				echo "$new_content" > "$NOTRACK_NFT_FILE"
+			fi
+			[ -s "$NOTRACK_NFT_FILE" ] && nft -c -f "$NOTRACK_NFT_FILE"
 		;;
 		remove)
-			[ -f "$NOTRACK_NFT_FILE" ] || return 0
-			rm -f "$NOTRACK_NFT_FILE"
+			[ -f "$NOTRACK_NFT_FILE" ] && rm -f "$NOTRACK_NFT_FILE"
+			nft delete table inet https_dns_proxy_notrack 2>/dev/null
+			[ ! -s "$NOTRACK_NFT_FILE" ]
 		;;
 	esac
 }
@@ -395,7 +400,12 @@ start_service() {
 		;;
 	esac
 	if [ -n "$notrack_dns" ] && [ -n "$notrack_ports" ]; then
-		notrack_nft update "$notrack_ports"
+		output "Updating notrack rules "
+		if notrack_nft update "$notrack_ports"; then
+			output_okn
+		else
+			output_failn
+		fi
 	else
 		notrack_nft remove
 	fi
