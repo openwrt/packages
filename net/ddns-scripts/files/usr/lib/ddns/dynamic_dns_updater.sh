@@ -23,7 +23,7 @@ Usage:
 
 Parameters:
  -S SECTION          SECTION to start
-                     use either -N NETWORK or -S SECTION
+                     SECTION is the UCI section name/id to start
 
  -h                  show this help and exit
  -V                  show version and exit
@@ -57,7 +57,7 @@ while getopts ":hv:dn:S:V" OPT; do
 done
 shift $((OPTIND - 1 ))	# OPTIND is 1 based
 
-[ -z "$SECTION_ID" ] && usage_err "option '-N' is missing"
+[ -z "$SECTION_ID" ] && usage_err "option '-S' is missing"
 
 # set file names
 PIDFILE="$ddns_rundir/$SECTION_ID.pid"	# Process ID file
