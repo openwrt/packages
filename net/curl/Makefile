@@ -50,9 +50,7 @@ PKG_CONFIG_DEPENDS:= \
   CONFIG_LIBCURL_LDAPS \
   CONFIG_LIBCURL_POP3 \
   CONFIG_LIBCURL_RTSP \
-  CONFIG_LIBCURL_NO_RTSP \
   CONFIG_LIBCURL_SMB \
-  CONFIG_LIBCURL_NO_SMB \
   CONFIG_LIBCURL_SMTP \
   CONFIG_LIBCURL_TELNET \
   CONFIG_LIBCURL_TFTP \
@@ -69,45 +67,117 @@ PKG_CONFIG_DEPENDS:= \
   CONFIG_LIBCURL_UNIX_SOCKETS \
   CONFIG_LIBCURL_VERBOSE \
   CONFIG_LIBCURL_NTLM \
-  $(if $(CONFIG_LIBCURL_OPENSSL), \
+  $(if $(filter openssl,$(BUILD_VARIANT)), \
 	CONFIG_OPENSSL_ENGINE \
 	CONFIG_OPENSSL_WITH_COMPRESSION \
 	CONFIG_OPENSSL_WITH_NPN)
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/curl/Default
+define Package/curl
   SECTION:=net
   CATEGORY:=Network
   URL:=https://curl.se/
   MAINTAINER:=
-endef
-
-define Package/curl
-  $(call Package/curl/Default)
   SUBMENU:=File Transfer
   DEPENDS:=+libcurl
   TITLE:=A client-side URL transfer utility
 endef
 
-define Package/libcurl
-  $(call Package/curl/Default)
+define Package/libcurl/Default
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:= +LIBCURL_WOLFSSL:libwolfssl +LIBCURL_OPENSSL:libopenssl +LIBCURL_GNUTLS:libgnutls +LIBCURL_MBEDTLS:libmbedtls
-  DEPENDS += +LIBCURL_ZLIB:zlib +LIBCURL_ZSTD:libzstd +LIBCURL_THREADED_RESOLVER:libpthread +LIBCURL_LDAP:libopenldap
-  DEPENDS += +LIBCURL_LIBIDN2:libidn2 +LIBCURL_SSH2:libssh2 +LIBCURL_HTTP2:libnghttp2 +LIBCURL_HTTP3:libnghttp3 +LIBCURL_HTTP3:libngtcp2 +ca-bundle
+  MAINTAINER:=
+  DEPENDS:= +LIBCURL_ZLIB:zlib \
+            +LIBCURL_ZSTD:libzstd \
+            +LIBCURL_THREADED_RESOLVER:libpthread \
+            +LIBCURL_LDAP:libopenldap \
+            +LIBCURL_LIBIDN2:libidn2 \
+            +LIBCURL_SSH2:libssh2 \
+            +LIBCURL_HTTP2:libnghttp2 \
+            +ca-bundle
   TITLE:=A client-side URL transfer library
   MENU:=1
   ABI_VERSION:=4
 endef
 
-define Package/libcurl/config
-  source "$(SOURCE)/Config.in"
+define Package/libcurl-nossl
+  $(call Package/libcurl/Default)
+  PROVIDES:=libcurl
+  VARIANT:=nossl
+  TITLE+= (No SSL)
 endef
 
+define Package/libcurl-nossl/config
+  if PACKAGE_libcurl-nossl
+    source "$(SOURCE)/Config.in"
+  endif
+endef
+
+define Package/libcurl-wolfssl
+  $(call Package/libcurl/Default)
+  DEPENDS+= +libwolfssl
+  PROVIDES:=libcurl
+  VARIANT:=wolfssl
+  TITLE+= (wolfSSL)
+endef
+
+define Package/libcurl-wolfssl/config
+  if PACKAGE_libcurl-wolfssl
+    source "$(SOURCE)/Config.in"
+  endif
+endef
+
+define Package/libcurl-gnutls
+  $(call Package/libcurl/Default)
+  DEPENDS+= +libgnutls
+  PROVIDES:=libcurl
+  VARIANT:=gnutls
+  TITLE+= (GnuTLS)
+endef
+
+define Package/libcurl-gnutls/config
+  if PACKAGE_libcurl-gnutls
+    source "$(SOURCE)/Config.in"
+  endif
+endef
+
+define Package/libcurl-openssl
+  $(call Package/libcurl/Default)
+  DEPENDS+= +libopenssl +LIBCURL_HTTP3:libnghttp3 +LIBCURL_HTTP3:libngtcp2
+  PROVIDES:=libcurl
+  VARIANT:=openssl
+  TITLE+= (OpenSSL)
+endef
+
+define Package/libcurl-openssl/config
+  if PACKAGE_libcurl-openssl
+    source "$(SOURCE)/Config.in"
+  endif
+endef
+
+define Package/libcurl-mbedtls
+  $(call Package/libcurl/Default)
+  DEPENDS+= +libmbedtls
+  PROVIDES:=libcurl
+  VARIANT:=mbedtls
+  DEFAULT_VARIANT:=1
+  TITLE+= (mbedTLS)
+endef
+
+define Package/libcurl-mbedtls/config
+  if PACKAGE_libcurl-mbedtls
+    source "$(SOURCE)/Config.in"
+  endif
+endef
+
+LIBCURL_WITH_HTTP3 := $(if $(filter openssl,$(BUILD_VARIANT)),$(CONFIG_LIBCURL_HTTP3))
+LIBCURL_WITH_LDAPS := $(if $(filter-out nossl,$(BUILD_VARIANT)),$(CONFIG_LIBCURL_LDAPS))
+LIBCURL_WITH_SMB := $(if $(filter gnutls openssl,$(BUILD_VARIANT)),$(CONFIG_LIBCURL_SMB))
+LIBCURL_WITH_NTLM := $(if $(filter-out nossl,$(BUILD_VARIANT)),$(CONFIG_LIBCURL_NTLM))
+
 TARGET_CFLAGS += $(FPIC)
-TARGET_CPPFLAGS += $(if $(CONFIG_LIBCURL_NTLM),,-DCURL_DISABLE_NTLM)
+TARGET_CPPFLAGS += $(if $(LIBCURL_WITH_NTLM),,-DCURL_DISABLE_NTLM)
 TARGET_LDFLAGS += -Wl,--gc-sections
 
 CONFIGURE_ARGS += \
@@ -127,18 +197,18 @@ CONFIGURE_ARGS += \
 	\
 	$(call autoconf_bool,CONFIG_IPV6,ipv6) \
 	\
-	$(if $(CONFIG_LIBCURL_WOLFSSL)$(CONFIG_LIBCURL_GNUTLS)$(CONFIG_LIBCURL_OPENSSL)$(CONFIG_LIBCURL_MBEDTLS),,--without-ssl) \
-	$(if $(CONFIG_LIBCURL_WOLFSSL),--with-wolfssl="$(STAGING_DIR)/usr",--without-wolfssl) \
-	$(if $(CONFIG_LIBCURL_GNUTLS),--with-gnutls="$(STAGING_DIR)/usr",--without-gnutls) \
-	$(if $(CONFIG_LIBCURL_OPENSSL),--with-openssl="$(STAGING_DIR)/usr",--without-openssl) \
-	$(if $(CONFIG_LIBCURL_MBEDTLS),--with-mbedtls="$(STAGING_DIR)/usr",--without-mbedtls) \
+	$(if $(filter nossl,$(BUILD_VARIANT)),--without-ssl) \
+	$(if $(filter wolfssl,$(BUILD_VARIANT)),--with-wolfssl="$(STAGING_DIR)/usr",--without-wolfssl) \
+	$(if $(filter gnutls,$(BUILD_VARIANT)),--with-gnutls="$(STAGING_DIR)/usr",--without-gnutls) \
+	$(if $(filter openssl,$(BUILD_VARIANT)),--with-openssl="$(STAGING_DIR)/usr",--without-openssl) \
+	$(if $(filter mbedtls,$(BUILD_VARIANT)),--with-mbedtls="$(STAGING_DIR)/usr",--without-mbedtls) \
 	\
 	$(if $(CONFIG_LIBCURL_LIBIDN2),--with-libidn2="$(STAGING_DIR)/usr",--without-libidn2) \
 	$(if $(CONFIG_LIBCURL_SSH2),--with-libssh2="$(STAGING_DIR)/usr",--without-libssh2) \
 	$(if $(CONFIG_LIBCURL_ZLIB),--with-zlib="$(STAGING_DIR)/usr",--without-zlib) \
 	$(if $(CONFIG_LIBCURL_ZSTD),--with-zstd="$(STAGING_DIR)/usr",--without-zstd) \
 	$(if $(CONFIG_LIBCURL_HTTP2),--with-nghttp2="$(STAGING_DIR)/usr",--without-nghttp2) \
-	$(if $(CONFIG_LIBCURL_HTTP3),--with-nghttp3="$(STAGING_DIR)/usr" --with-ngtcp2="$(STAGING_DIR)/usr",--without-nghttp3 --without-ngtcp2) \
+	$(if $(LIBCURL_WITH_HTTP3),--with-nghttp3="$(STAGING_DIR)/usr" --with-ngtcp2="$(STAGING_DIR)/usr",--without-nghttp3 --without-ngtcp2) \
 	\
 	$(call autoconf_bool,CONFIG_LIBCURL_DICT,dict) \
 	$(call autoconf_bool,CONFIG_LIBCURL_FILE,file) \
@@ -147,10 +217,10 @@ CONFIGURE_ARGS += \
 	$(call autoconf_bool,CONFIG_LIBCURL_HTTP,http) \
 	$(call autoconf_bool,CONFIG_LIBCURL_IMAP,imap) \
 	$(call autoconf_bool,CONFIG_LIBCURL_LDAP,ldap) \
-	$(call autoconf_bool,CONFIG_LIBCURL_LDAPS,ldaps) \
+	$(call autoconf_bool,LIBCURL_WITH_LDAPS,ldaps) \
 	$(call autoconf_bool,CONFIG_LIBCURL_POP3,pop3) \
 	$(call autoconf_bool,CONFIG_LIBCURL_RTSP,rtsp) \
-	$(call autoconf_bool,CONFIG_LIBCURL_SMB,smb) \
+	$(call autoconf_bool,LIBCURL_WITH_SMB,smb) \
 	$(call autoconf_bool,CONFIG_LIBCURL_SMTP,smtp) \
 	$(call autoconf_bool,CONFIG_LIBCURL_TELNET,telnet) \
 	$(call autoconf_bool,CONFIG_LIBCURL_TFTP,tftp) \
@@ -187,5 +257,15 @@ define Package/libcurl/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libcurl.so.* $(1)/usr/lib/
 endef
 
-$(eval $(call BuildPackage,libcurl))
+Package/libcurl-nossl/install = $(Package/libcurl/install)
+Package/libcurl-wolfssl/install = $(Package/libcurl/install)
+Package/libcurl-gnutls/install = $(Package/libcurl/install)
+Package/libcurl-openssl/install = $(Package/libcurl/install)
+Package/libcurl-mbedtls/install = $(Package/libcurl/install)
+
+$(eval $(call BuildPackage,libcurl-nossl))
+$(eval $(call BuildPackage,libcurl-wolfssl))
+$(eval $(call BuildPackage,libcurl-gnutls))
+$(eval $(call BuildPackage,libcurl-openssl))
+$(eval $(call BuildPackage,libcurl-mbedtls))
 $(eval $(call BuildPackage,curl))

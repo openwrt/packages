@@ -9,12 +9,7 @@ menu "Modify features for non-core variants"
 		bool "cURL support (default SSL)"
 		default y if ZABBIX_ENABLE_ZABBIX
 		default n
-		depends on !ZABBIX_GNUTLS && !ZABBIX_NOSSL
-
-	config ZABBIX_CURL_GNUTLS
-		bool "cURL support (GnuTLS)"
-		default n
-		depends on !ZABBIX_CURL
+		depends on !ZABBIX_NOSSL
 
 	config ZABBIX_LDAP
 		bool "LDAP support"

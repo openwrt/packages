@@ -1,5 +1,3 @@
-if PACKAGE_libcurl
-
 comment "SSL support"
 
 choice
@@ -8,18 +6,23 @@ choice
 
 	config LIBCURL_MBEDTLS
 		bool "mbed TLS"
+		depends on PACKAGE_libcurl-mbedtls
 
 	config LIBCURL_WOLFSSL
 		bool "wolfSSL"
+		depends on PACKAGE_libcurl-wolfssl
 
 	config LIBCURL_OPENSSL
 		bool "OpenSSL"
+		depends on PACKAGE_libcurl-openssl
 
 	config LIBCURL_GNUTLS
 		bool "GNUTLS"
+		depends on PACKAGE_libcurl-gnutls
 
 	config LIBCURL_NOSSL
 		bool "No SSL support"
+		depends on PACKAGE_libcurl-nossl
 
 endchoice
 
@@ -64,7 +67,7 @@ config LIBCURL_LDAP
 
 config LIBCURL_LDAPS
 	bool "Enable LDAPS support"
-	depends on LIBCURL_LDAP && !LIBCURL_NOSSL
+	depends on LIBCURL_LDAP
 	default y
 
 config LIBCURL_POP3
@@ -75,10 +78,8 @@ config LIBCURL_RTSP
 	bool "RTSP protocol"
 	depends on LIBCURL_HTTP
 	default n
-config LIBCURL_NO_RTSP
-	string "RTSP require HTTP protocol"
-	depends on !LIBCURL_HTTP
-	default "!"
+	help
+		RTSP require HTTP protocol
 
 config LIBCURL_SSH2
 	bool "SCP / SFTP protocol"
@@ -86,12 +87,10 @@ config LIBCURL_SSH2
 
 config LIBCURL_SMB
 	bool "SMB protocol (CIFS)"
-	depends on LIBCURL_CRYPTO_AUTH && (LIBCURL_GNUTLS || LIBCURL_OPENSSL)
+	depends on LIBCURL_CRYPTO_AUTH
 	default n
-config LIBCURL_NO_SMB
-	string "SMB require 'cryptographic authentication' and either 'GnuTLS' or 'OpenSSL'"
-	depends on !LIBCURL_CRYPTO_AUTH || (!LIBCURL_GNUTLS && !LIBCURL_OPENSSL)
-	default "!"
+	help
+		SMB require 'cryptographic authentication' and either 'GnuTLS' or 'OpenSSL'
 
 config LIBCURL_SMTP
 	bool "SMTP / SMTPS protocol"
@@ -111,7 +110,6 @@ config LIBCURL_HTTP2
 
 config LIBCURL_HTTP3
 	bool "HTTP/3 protocol"
-	depends on LIBCURL_OPENSSL
 	default n
 
 comment "Miscellaneous"
@@ -167,10 +165,9 @@ config LIBCURL_VERBOSE
 
 config LIBCURL_NTLM
 	bool "Enable NTLM support"
-	depends on LIBCURL_CRYPTO_AUTH && !LIBCURL_NOSSL
+	depends on LIBCURL_CRYPTO_AUTH
 	default n
 
 config LIBCURL_HTTP_AUTH
 	bool "Enable HTTP authentication support"
 	default y
-endif
