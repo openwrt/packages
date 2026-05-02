@@ -1,6 +1,6 @@
 --- a/src/openvpn/ssl_mbedtls.c
 +++ b/src/openvpn/ssl_mbedtls.c
-@@ -1573,11 +1573,7 @@ show_available_curves(void)
+@@ -1579,11 +1579,7 @@ show_available_curves(void)
  const char *
  get_ssl_library_version(void)
  {
