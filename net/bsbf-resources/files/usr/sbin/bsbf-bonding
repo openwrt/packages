@@ -1,0 +1,96 @@
+#!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Chester A. Unal <chester.a.unal@arinc9.com>
+
+usage() {
+	echo "Usage: $0 --status | --enable | --disable | --uninstall"
+	exit 1
+}
+
+[ $# -ne 1 ] && usage
+
+case "$1" in
+--status)
+	for service in bsbf-mptcp xray; do
+		service "$service" status >/dev/null || disabled=1
+	done
+	service bsbf-bonding-nft enabled || disabled=1
+	[ -n "$disabled" ] && echo "disabled" && exit 1
+	echo "enabled"
+	;;
+--enable)
+	# Source /etc/bsbf/bsbf-bonding.conf. Exit if server_ipv4, server_port,
+	# or uuid is empty.
+	. /etc/bsbf/bsbf-bonding.conf
+	if [ -z "$server_ipv4" ] || [ -z "$server_port" ] || [ -z "$uuid" ]; then
+		echo "server_ipv4, server_port, and uuid on /etc/bsbf/bsbf-bonding.conf must not be empty."
+		exit 1
+	fi
+
+	# Configure xray.
+	ucode -l fs -D infile="/usr/share/bsbf/xray.json" \
+	      -D outfile="/etc/xray/config.json" \
+	      -D addr="$server_ipv4" \
+	      -D port="$server_port" \
+	      -D id="$uuid" \
+	      -e '
+	  let j = json(fs.readfile(infile));
+	  j.outbounds[0].settings.address = addr;
+	  j.outbounds[0].settings.port = port;
+	  j.outbounds[0].settings.id = id;
+	  fs.writefile(outfile, sprintf("%.2J\n", j));'
+
+	# Flush the MPTCP endpoint table.
+	ip mp e f
+
+	# Enable and (re)start init.d services.
+	service bsbf-bonding-nft enable
+	service bsbf-mptcp enable
+	service xray enable
+	service bsbf-mptcp restart 2>/dev/null
+	service xray restart 2>/dev/null
+
+	# (Re-)add nftables rules.
+	nft delete table bsbf_bonding 2>/dev/null
+	nft -f /usr/share/bsbf/bsbf_bonding.nft
+	;;
+--disable)
+	# Delete nftables rules.
+	nft delete table bsbf_bonding 2>/dev/null
+
+	# Disable and stop init.d services.
+	service bsbf-bonding-nft disable
+	service bsbf-mptcp disable
+	service xray disable
+	service bsbf-mptcp stop 2>/dev/null
+	service xray stop 2>/dev/null
+
+	# Delete bsbf-mptcp files.
+	rm -f /run/bsbf-mptcp-*
+
+	# Flush the MPTCP endpoint table.
+	ip mp e f
+	;;
+--uninstall)
+	# Uninstall BSBF packages.
+	apk del bsbf-bonding bsbf-client-web bsbf-mptcp bsbf-rate-limiting
+
+	# Delete nftables rules.
+	nft delete table bsbf_bonding 2>/dev/null
+
+	# Restore xray.
+	rm -f /etc/xray/config.json
+	uci set xray.enabled.enabled='0'
+	uci commit
+	service xray restart 2>/dev/null
+
+	# Delete bsbf-mptcp files.
+	rm -f /run/bsbf-mptcp-*
+
+	# Flush the MPTCP endpoint table.
+	ip mp e f
+	;;
+*)
+	usage
+	;;
+esac

@@ -50,10 +50,10 @@ uci delete network.wan
 uci -q delete network.wan6
 fw_section=$(uci show firewall | grep "name='wan'" | cut -d. -f2)
 
-# If firewall section for wan doesn't exist, create one.
 if [ -n "$fw_section" ]; then
 	uci -q del_list firewall.$fw_section.network='wan'
 	uci -q del_list firewall.$fw_section.network='wan6'
+# If firewall section for wan doesn't exist, create one.
 else
 	fw_section=$(uci add firewall zone)
 	uci set firewall.@rule[-1].name='wan'
@@ -79,7 +79,7 @@ for dev in $final_wan_interfaces; do
 	index=$((index + 1))
 done
 
-# dnsmasq Configuration
+# Configure dnsmasq.
 # As we don't want to use the DNS servers advertised by WANs, set up DNS
 # forwarding. Use 8.8.8.8 and 8.8.4.4.
 uci -q del_list dhcp.@dnsmasq[0].server='8.8.8.8'
@@ -87,7 +87,7 @@ uci -q del_list dhcp.@dnsmasq[0].server='8.8.4.4'
 uci add_list dhcp.@dnsmasq[0].server='8.8.8.8'
 uci add_list dhcp.@dnsmasq[0].server='8.8.4.4'
 
-# xray Configuration
+# Configure xray.
 uci set xray.enabled.enabled='1'
 
 # Add rule to use routing table 100 for transparent proxy traffic.
@@ -109,3 +109,6 @@ uci set network.@route[-1].table='100'
 
 # Commit changes.
 uci commit
+
+# Enable bonding.
+bsbf-bonding --enable

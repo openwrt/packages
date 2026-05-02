@@ -11,18 +11,39 @@ PKG_MAINTAINER:=Chester A. Unal <chester.a.unal@arinc9.com>
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/bondingshouldbefree/bsbf-resources.git
-PKG_SOURCE_DATE:=2026-03-24
-PKG_SOURCE_VERSION:=e75046628f430c584a6f3ef12fbef4b87fad5aa4
-PKG_MIRROR_HASH:=16dd14add99ae73a473d967330509b0308076ef63e4608c78b43248a274a79a3
+PKG_SOURCE_DATE:=2026-05-06
+PKG_SOURCE_VERSION:=e80c165c77765f297aa47742de450c5dcb0f43d3
+PKG_MIRROR_HASH:=8518847ef901034548abc17317a37055c5894242b576ba64da519e4aa51b2494
 
 include $(INCLUDE_DIR)/package.mk
+
+define Package/bsbf-bonding
+  SECTION:=net
+  CATEGORY:=Network
+  TITLE:=bsbf-bonding
+  URL:=https://github.com/bondingshouldbefree/
+  DEPENDS:=+bsbf-client-web +bsbf-mptcp +bsbf-rate-limiting +xray-core
+endef
+
+define Package/bsbf-bonding/description
+  bsbf-bonding configures the system for the BondingShouldBeFree bonding
+  solution client.
+endef
+
+define Package/bsbf-client-web
+  SECTION:=net
+  CATEGORY:=Network
+  TITLE:=bsbf-client-web
+  URL:=https://github.com/bondingshouldbefree/
+  DEPENDS:=+curl +uhttpd
+endef
 
 define Package/bsbf-mptcp
   SECTION:=net
   CATEGORY:=Network
   TITLE:=bsbf-mptcp
   URL:=https://github.com/bondingshouldbefree/
-  DEPENDS:=+fping +ip-full
+  DEPENDS:=+curl +fping +ip-full +mptcpize
 endef
 
 define Package/bsbf-netspeed
@@ -30,14 +51,6 @@ define Package/bsbf-netspeed
   CATEGORY:=Network
   TITLE:=bsbf-netspeed
   URL:=https://github.com/bondingshouldbefree/
-endef
-
-define Package/bsbf-plpmtu
-  SECTION:=net
-  CATEGORY:=Network
-  TITLE:=bsbf-plpmtu
-  URL:=https://github.com/bondingshouldbefree/
-  DEPENDS:=+fping +plp-mtu-discovery
 endef
 
 define Package/bsbf-quectel-usbnet
@@ -52,34 +65,38 @@ define Package/bsbf-rate-limiting
   CATEGORY:=Network
   TITLE:=bsbf-rate-limiting
   URL:=https://github.com/bondingshouldbefree/
-endef
-
-define Package/bsbf-route
-  SECTION:=net
-  CATEGORY:=Network
-  TITLE:=bsbf-route
-  URL:=https://github.com/bondingshouldbefree/
-  DEPENDS:=+fping
-endef
-
-define Package/bsbf-tcp-in-udp
-  SECTION:=net
-  CATEGORY:=Network
-  TITLE:=bsbf-tcp-in-udp
-  URL:=https://github.com/bondingshouldbefree/
-  DEPENDS:=+ethtool +tc-full +tcp-in-udp
+  DEPENDS:=+tc
 endef
 
 define Build/Compile
 endef
 
+define Package/bsbf-bonding/install
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/etc/init.d/bsbf-bonding-nft $(1)/etc/init.d
+
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/etc/uci-defaults/99-bsbf-bonding $(1)/etc/uci-defaults
+
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) ./files/usr/sbin/bsbf-bonding $(1)/usr/sbin
+
+	$(INSTALL_DIR) $(1)/usr/share/bsbf
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/resources-client/bsbf_bonding.nft $(1)/usr/share/bsbf
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/resources-client/xray.json $(1)/usr/share/bsbf
+endef
+
+define Package/bsbf-client-web/install
+	$(INSTALL_DIR) $(1)/www/bsbf-client-web
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/resources-client/bsbf-client-web/index.html $(1)/www/bsbf-client-web
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/resources-client/bsbf-client-web/index.js $(1)/www/bsbf-client-web
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/resources-client/bsbf-client-web/styles.css $(1)/www/bsbf-client-web
+
+	$(INSTALL_DIR) $(1)/www/cgi-bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/resources-client/bsbf-client-web/cgi-bin/bsbf-client-web $(1)/www/cgi-bin
+endef
+
 define Package/bsbf-mptcp/install
-	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_CONF) ./files/etc/config/bsbf-mptcp $(1)/etc/config
-
-	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
-	$(INSTALL_BIN) ./files/etc/hotplug.d/iface/99-bsbf-mptcp $(1)/etc/hotplug.d/iface
-
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/etc/init.d/bsbf-mptcp $(1)/etc/init.d
 
@@ -91,14 +108,6 @@ endef
 define Package/bsbf-netspeed/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/resources-client/bsbf-netspeed $(1)/usr/sbin
-endef
-
-define Package/bsbf-plpmtu/install
-	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
-	$(INSTALL_BIN) ./files/etc/hotplug.d/iface/99-bsbf-plpmtu $(1)/etc/hotplug.d/iface
-
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/resources-shared/bsbf-plpmtu $(1)/usr/sbin
 endef
 
 define Package/bsbf-quectel-usbnet/install
@@ -114,26 +123,9 @@ define Package/bsbf-rate-limiting/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/resources-client/bsbf-rate-limiting $(1)/usr/sbin
 endef
 
-define Package/bsbf-route/install
-	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/etc/init.d/bsbf-route $(1)/etc/init.d
-
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/resources-client/bsbf-route $(1)/usr/sbin
-endef
-
-define Package/bsbf-tcp-in-udp/install
-	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
-	$(INSTALL_BIN) ./files/etc/hotplug.d/iface/99-bsbf-tcp-in-udp $(1)/etc/hotplug.d/iface
-
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/resources-client/bsbf-tcp-in-udp $(1)/usr/sbin
-endef
-
+$(eval $(call BuildPackage,bsbf-bonding))
+$(eval $(call BuildPackage,bsbf-client-web))
 $(eval $(call BuildPackage,bsbf-mptcp))
 $(eval $(call BuildPackage,bsbf-netspeed))
-$(eval $(call BuildPackage,bsbf-plpmtu))
 $(eval $(call BuildPackage,bsbf-quectel-usbnet))
 $(eval $(call BuildPackage,bsbf-rate-limiting))
-$(eval $(call BuildPackage,bsbf-route))
-$(eval $(call BuildPackage,bsbf-tcp-in-udp))
