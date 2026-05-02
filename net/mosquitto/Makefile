@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mosquitto
 PKG_VERSION:=2.0.22
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://mosquitto.org/files/source/
@@ -214,13 +214,13 @@ endef
 # This installs files on the target.  Compare with Build/InstallDev
 define Package/libmosquitto-ssl/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/libmosquitto.so.* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libmosquitto.so.* $(1)/usr/lib/
 endef
 Package/libmosquitto-nossl/install = $(Package/libmosquitto-ssl/install)
 
 define Package/libmosquittopp/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/libmosquittopp.so.* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libmosquittopp.so.* $(1)/usr/lib/
 endef
 
 # Applies to all...
