@@ -19,23 +19,37 @@ adb_rundir="/var/run/adblock"
 adb_pidfile="/var/run/adblock/adblock.pid"
 
 if [ -z "${IPKG_INSTROOT}" ]; then
+
+	# ensure runtime directory exists
+	#
 	[ ! -d "${adb_rundir}" ] && mkdir -p "${adb_rundir}"
+
+	# check for running instance and handle boot trigger
+	#
 	case "${action}" in
 	"boot")
 		"${adb_init}" running && exit 0
 		;;
 	esac
+
+	# reset pidfile if no/stale process is found,
+	# otherwise exit with error to prevent multiple instances
+	#
 	if [ -s "${adb_pidfile}" ]; then
-		case "${action}" in
-		"start" | "stop" | "restart" | "reload" | "report" | "suspend" | "resume" | "search")
-			exit 1
-			;;
-		esac
+		pid="$(cat "${adb_pidfile}" 2>/dev/null)"
+		if [ -n "${pid}" ] && kill -0 "${pid}" 2>/dev/null; then
+			case "${action}" in
+			"start" | "stop" | "restart" | "reload" | "report" | "suspend" | "resume" | "search")
+				exit 1
+				;;
+			esac
+		else
+			: >"${adb_pidfile}"
+		fi
 	fi
 fi
 
 boot() {
-	: >"${adb_pidfile}"
 	rc_procd start_service boot
 }
 
@@ -88,7 +102,7 @@ status() {
 }
 
 status_service() {
-	local key keylist value values
+	local key keylist type value values
 
 	json_init
 	json_load_file "/var/run/adblock/adblock.runtime.json" >/dev/null 2>&1
@@ -96,10 +110,12 @@ status_service() {
 	if [ -n "${keylist}" ]; then
 		printf '%s\n' "::: adblock runtime information"
 		for key in ${keylist}; do
-			json_get_var value "${key}" >/dev/null 2>&1
-			if [ "${key}" = "active_feeds" ]; then
+			json_get_type type "${key}" >/dev/null 2>&1
+			if [ "${type}" = "array" ]; then
 				json_get_values values "${key}" >/dev/null 2>&1
 				value="${values}"
+			else
+				json_get_var value "${key}" >/dev/null 2>&1
 			fi
 			printf '  + %-15s : %s\n' "${key}" "${value:-"-"}"
 		done

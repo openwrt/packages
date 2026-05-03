@@ -6,7 +6,7 @@
 ## Description
 A lot of people already use adblocker plugins within their desktop browsers, but what if you are using your (smart) phone, tablet, watch or any other (wlan) gadget!? Getting rid of annoying ads, trackers and other abuse sites (like facebook) is simple: block them with your router.
 
-When the DNS server on your router receives DNS requests, you will sort out queries that ask for the resource records of ad servers and return a simple 'NXDOMAIN'. This is nothing but **N**on-e**X**istent Internet or Intranet domain name, if a domain name cannot be resolved using the DNS server, a condition called the 'NXDOMAIN' occurred.
+When the DNS server on your router receives DNS requests, you will sort out queries that ask for the resource records of ad servers and return a simple `NXDOMAIN`. This is nothing but **N**on-e**X**istent Internet or Intranet domain name, if a domain name cannot be resolved using the DNS server, a condition called the `NXDOMAIN` occurred.
 
 <a id="main-features"></a>
 ## Main Features
@@ -63,18 +63,18 @@ When the DNS server on your router receives DNS requests, you will sort out quer
 * The download engine supports ETAG headers to download only updated feeds
 * Supports a wide range of router modes, even AP modes are supported
 * Full IPv4 and IPv6 support
-* Provides top level domain compression ('tld compression'), this feature removes thousands of needless host entries from the blocklist and lowers the memory footprint for the DNS backend
-* Provides a 'DNS Blocklist Shift', where the generated final DNS blocklist is moved to the backup directory and only a soft link to this file is set in memory. As long as your backup directory is located on an external drive, you should activate this option to save valuable RAM.
-* Feed parsing by a very fast & secure domain validator, all domain rules and feed information are placed in an external JSON file ('/etc/adblock/adblock.feeds')
-* Overall duplicate removal in generated blocklist file 'adb_list.overall'
-* Additional local allowlist for manual overrides, located in '/etc/adblock/adblock.allowlist'
-* Additional local blocklist for manual overrides, located in '/etc/adblock/adblock.blocklist'
+* Provides top level domain compression (`tld compression`), this feature removes thousands of needless host entries from the blocklist and lowers the memory footprint for the DNS backend
+* Provides a `DNS Blocklist Shift`, where the generated final DNS blocklist is moved to the backup directory and only a soft link to this file is set in memory. As long as your backup directory is located on an external drive, you should activate this option to save valuable RAM.
+* Feed parsing by a very fast & secure domain validator, all domain rules and feed information are placed in an external JSON file (`/etc/adblock/adblock.feeds`)
+* Overall duplicate removal in generated blocklist file `adb_list.overall`
+* Additional local allowlist for manual overrides, located in `/etc/adblock/adblock.allowlist`
+* Additional local blocklist for manual overrides, located in `/etc/adblock/adblock.blocklist`
 * Implements firewall‑based DNS Control to force DNS interfaces/ports and to redirect to external unfiltered/filtered DNS server
 * Includes firewall‑based Remote DNS Allow, a CGI-Interface to allow certain MACs temporary bypass the local adblock DNS
 * Supports firewall‑based temporary DNS Bridging, to ensure a Zero‑Downtime during adblock-related DNS Restarts
 * Connection checks during blocklist update to ensure a reliable DNS backend service
 * Minimal status & error logging to syslog, enable debug logging to receive more output
-* Procd based init system support ('start', 'stop', 'restart', 'reload', 'enable', 'disable', 'running', 'status', 'suspend', 'resume', 'search', 'report')
+* Procd based init system support (`start`, `stop`, `restart`, `reload`, `enable`, `disable`, `running`, `status`, `suspend`, `resume`, `search`, `report`)
 * Auto-Startup via procd network interface trigger or via classic time based startup
 * Suspend & Resume adblock temporarily without blocklist re-processing
 * Provides comprehensive runtime information
@@ -83,31 +83,31 @@ When the DNS server on your router receives DNS requests, you will sort out quer
 * Implements a jail mode - only domains on the allowlist are permitted, all other DNS requests are rejected
 * Automatic blocklist backup & restore, these backups will be used in case of download errors and during startup
 * Send notification E-Mails, see example configuration below
-* Add new adblock  feeds on your own with the 'Custom Feed Editor' in LuCI or via CLI, see example below
+* Add new adblock  feeds on your own with the `Custom Feed Editor` in LuCI or via CLI, see example below
 * Strong LuCI support, all relevant options are exposed to the web frontend
 
 <a id="prerequisites"></a>
 ## Prerequisites
 * **[OpenWrt](https://openwrt.org)**, latest stable release or a development snapshot
 * A usual setup with a working DNS backend
-* A download utility with SSL support: 'wget', 'uclient-fetch' with one of the 'libustream-*' ssl libraries or 'curl' is required
-* A certificate store such as 'ca-bundle' or 'ca-certificates', as adblock checks the validity of the SSL certificates of all download sites by default
-* For E-Mail notifications you need to install and setup the additional 'msmtp' package
-* For DNS reporting you need to install the additional package 'tcpdump-mini' or 'tcpdump'
+* A download utility with SSL support: `wget`, `uclient-fetch` with one of the `libustream-*` ssl libraries or `curl` is required
+* A certificate store such as `ca-bundle` or `ca-certificates`, as adblock checks the validity of the SSL certificates of all download sites by default
+* For E-Mail notifications you need to install and setup the additional `msmtp` package
+* For DNS reporting you need to install the additional package `tcpdump-mini` or `tcpdump`
 
 **Please note:**  
 * Devices with less than 128MB of RAM are **_not_** supported
 * For performance reasons, adblock depends on gnu sort and gawk
-* Before update from former adblock releases please make a backup of your local allow- and blocklists. In the latest adblock these lists have been renamed to '/etc/adblock/adblock.allowlist' and '/etc/adblock/adblock.blocklist'. There is no automatic content transition to the new files.
+* Before update from former adblock releases please make a backup of your local allow- and blocklists. In the latest adblock these lists have been renamed to `/etc/adblock/adblock.allowlist` and `/etc/adblock/adblock.blocklist`. There is no automatic content transition to the new files.
 * The uci configuration of adblock is automatically migrated during package installation via the uci-defaults mechanism using a housekeeping script
 
 <a id="installation-and-usage"></a>
 ## Installation & Usage
 * Make a backup and update your local opkg/apk repository
-* Install the LuCI companion package 'luci-app-adblock' which also installs the main 'adblock' package as a dependency
+* Install the LuCI companion package `luci-app-adblock` which also installs the main `adblock` package as a dependency
 * Enable the adblock system service (System -> Startup) and enable adblock itself (adblock -> General Settings)
-* It's strongly recommended to use the LuCI frontend to easily configure all aspects of adblock, the application is located in LuCI under the 'Services' menu
-* It's also strongly recommended to configure a ‘Startup Trigger Interface’ to ensure automatic adblock startup on WAN-ifup events during boot or reboot of your router
+* It's strongly recommended to use the LuCI frontend to easily configure all aspects of adblock, the application is located in LuCI under the `Services` menu
+* It's also recommended to configure a `Startup Trigger Interface` to depend on your WAN ifup events during boot or restart of your router. Avoid IPv6 (wan6) interfaces here, as IPv6/netifd is chatty and would trigger frequent unnecessary adblock restarts
 
 <a id="adblock-cli-interface"></a>
 ## Adblock CLI interface
@@ -143,17 +143,18 @@ Available commands:
 | :------------------- | :--------------------------------- | :------------------------------------------------------------------------------------------------- |
 | adb_enabled          | 1, enabled                         | set to 0 to disable the adblock service                                                            |
 | adb_feedfile         | /etc/adblock/adblock.feeds         | full path to the used adblock feed file                                                            |
-| adb_dns              | -, auto-detected                   | 'dnsmasq', 'unbound', 'named', 'kresd', 'smartdns' or 'raw'                                        |
+| adb_dns              | -, auto-detected                   | `dnsmasq`, `unbound`, `named`, `kresd`, `smartdns` or `raw`                                        |
 | adb_cores            | -, auto-detected                   | limit the cpu cores used by adblock to save RAM                                                    |
-| adb_fetchcmd         | -, auto-detected                   | 'uclient-fetch', 'wget' or 'curl'                                                                  |
+| adb_fetchcmd         | -, auto-detected                   | `uclient-fetch`, `wget` or `curl`                                                                  |
 | adb_fetchparm        | -, auto-detected                   | manually override the config options for the selected download utility                             |
+| adb_fetchretry       | 5                                  | number of download attempts in case of an error (not supported by uclient-fetch)                   |
 | adb_fetchinsecure    | 0, disabled                        | don't check SSL server certificates during download                                                |
-| adb_trigger          | -, not set                         | trigger network interface or 'not set' to use a time-based startup                                 |
+| adb_trigger          | -, not set                         | logical reload trigger interface(s), e.g. `wan` (avoid IPv6 interfaces)                            |
 | adb_triggerdelay     | 5                                  | additional trigger delay in seconds before adblock processing begins                               |
 | adb_debug            | 0, disabled                        | set to 1 to enable the debug output                                                                |
 | adb_nicelimit        | 0, standard prio.                  | valid nice level range 0-19 of the adblock processes                                               |
 | adb_dnsshift         | 0, disabled                        | shift the blocklist to the backup directory and only set a soft link to this file in memory        |
-| adb_dnsdir           | -, auto-detected                   | path for the generated blocklist file 'adb_list.overall'                                           |
+| adb_dnsdir           | -, auto-detected                   | path for the generated blocklist file `adb_list.overall`                                           |
 | adb_dnstimeout       | 20                                 | timeout in seconds to wait for a successful DNS backend restart                                    |
 | adb_dnsinstance      | 0, first instance                  | set the relevant dnsmasq backend instance used by adblock                                          |
 | adb_dnsflush         | 0, disabled                        | set to 1 to flush the DNS Cache before & after adblock processing                                  |
@@ -161,7 +162,7 @@ Available commands:
 | adb_report           | 0, disabled                        | set to 1 to enable the background tcpdump gathering process for reporting                          |
 | adb_map              | 0, disabled                        | enable a GeoIP Map with blocked domains                                                            |
 | adb_reportdir        | /tmp/adblock-report                | path for DNS related report files                                                                  |
-| adb_repiface         | -, auto-detected                   | name of the reporting interface or 'any' used by tcpdump                                           |
+| adb_repiface         | -, auto-detected                   | name of the reporting interface or `any` used by tcpdump                                           |
 | adb_repport          | 53                                 | list of reporting port(s) used by tcpdump                                                          |
 | adb_repchunkcnt      | 5                                  | report chunk count used by tcpdump                                                                 |
 | adb_repchunksize     | 1                                  | report chunk size used by tcpdump in MB                                                            |
@@ -175,7 +176,7 @@ Available commands:
 | adb_mailreceiver     | -, not set                         | receiver address for adblock notification E-Mails                                                  |
 | adb_mailsender       | no-reply@adblock                   | sender address for adblock notification E-Mails                                                    |
 | adb_mailtopic        | adblock notification               | topic for adblock notification E-Mails                                                             |
-| adb_mailprofile      | adb_notify                         | mail profile used in 'msmtp' for adblock notification E-Mails                                      |
+| adb_mailprofile      | adb_notify                         | mail profile used in `msmtp` for adblock notification E-Mails                                      |
 | adb_jail             | 0                                  | jail mode - only domains on the allowlist are permitted, all other DNS requests are rejected       |
 | adb_nftforce         | 0, disabled                        | redirect all local DNS queries from specified LAN zones to the local DNS resolver                  |
 | adb_nftdevforce      | -, not set                         | firewall LAN Devices/VLANs that should be forced locally                                           |
@@ -202,17 +203,17 @@ Available commands:
 <a id="examples"></a>
 ## Examples
 
-**Change the DNS backend to 'unbound':**  
-No further configuration is needed, adblock deposits the final blocklist 'adb_list.overall' in '/var/lib/unbound' by default.
-To preserve the DNS cache after adblock processing please install the additional package 'unbound-control'.
+**Change the DNS backend to `unbound`:**  
+No further configuration is needed, adblock deposits the final blocklist `adb_list.overall` in `/var/lib/unbound` by default.
+To preserve the DNS cache after adblock processing please install the additional package `unbound-control`.
 
-**Change the DNS backend to 'bind':**  
-Adblock deposits the final blocklist 'adb_list.overall' in '/var/lib/bind' by default.
-To preserve the DNS cache after adblock processing please install the additional package 'bind-rndc'.
-To use the blocklist please modify '/etc/bind/named.conf':
+**Change the DNS backend to `bind`:**  
+Adblock deposits the final blocklist `adb_list.overall` in `/var/lib/bind` by default.
+To preserve the DNS cache after adblock processing please install the additional package `bind-rndc`.
+To use the blocklist please modify `/etc/bind/named.conf`:
 
 ```
-in the 'options' namespace add:
+in the `options` namespace add:
   response-policy { zone "rpz"; };
 
 and at the end of the file add:
@@ -224,14 +225,14 @@ and at the end of the file add:
   };
 ```
 
-**Change the DNS backend to 'kresd':**  
-Adblock deposits the final blocklist 'adb_list.overall' in '/tmp/kresd', no further configuration needed.
+**Change the DNS backend to `kresd`:**  
+Adblock deposits the final blocklist `adb_list.overall` in `/tmp/kresd`, no further configuration needed.
 
-**Change the DNS backend to 'smartdns':**  
-No further configuration is needed, adblock deposits the final blocklist 'adb_list.overall' in '/tmp/smartdns' by default.
+**Change the DNS backend to `smartdns`:**  
+No further configuration is needed, adblock deposits the final blocklist `adb_list.overall` in `/tmp/smartdns` by default.
 
 **Service status output:**  
-In LuCI you'll see the realtime status in the 'Runtime' section on the overview page.
+In LuCI you'll see the realtime status in the `Runtime` section on the overview page.
 To get the status in the CLI, just call _/etc/init.d/adblock status_ or _/etc/init.d/adblock status\_service_:
 
 ```sh
@@ -262,14 +263,14 @@ adblock keeps all working data in RAM to avoid unnecessary flash wear. On device
 
 **Sensible choice of blocklists**  
 The following feeds are just my personal recommendation as an initial setup:
-* 'adguard', 'adguard_tracking' and 'certpl'
+* `adguard`, `adguard_tracking` and `certpl`
 
 In total, this feed selection blocks about 280K domains. It may also be useful to include compilations like hagezi, stevenblack or oisd.
-Please note: don't just blindly activate too many feeds at once, sooner or later this will lead to OOM conditions.
+Please note: don`t just blindly activate too many feeds at once, sooner or later this will lead to OOM conditions.
 
 **DNS reporting, enable the GeoIP Map**  
 adblock includes a powerful reporting tool on the DNS Report tab which shows the latest DNS statistics generated by tcpdump. To get the latest statistics always press the "Refresh" button.
-In addition to a tabular overview adblock reporting includes a GeoIP map in a modal popup window/iframe that shows the geolocation of your own uplink addresses (in green) and the locations of blocked domains in red. To enable the GeoIP Map set the following option in "Advanced Report Settings" config tab: set 'adb_map' to '1' to include the external components listed below and activate the GeoIP map.
+In addition to a tabular overview adblock reporting includes a GeoIP map in a modal popup window/iframe that shows the geolocation of your own uplink addresses (in green) and the locations of blocked domains in red. To enable the GeoIP Map set the following option in "Advanced Report Settings" config tab: set `adb_map` to `1` to include the external components listed below and activate the GeoIP map.
 
 To make this work, adblock uses the following external components:
 * [Leaflet](https://leafletjs.com/) is a lightweight open-source JavaScript library for interactive maps
@@ -317,14 +318,25 @@ The CGI interface is mobile‑friendly and includes a LuCI‑style loading spinn
 
 **Temporary DNS Bridging (Zero‑Downtime during DNS Restarts)**  
 Adblock can optionally enable a temporary DNS bridging mode to avoid DNS downtime during DNS backend restarts.
-When this feature is enabled, all DNS queries from LAN clients are briefly redirected to an external fallback resolver until the local DNS backend becomes available again. This ensures that DNS resolution continues to work seamlessly for all clients, even while adblock reloads blocklists or restarts the DNS service. Just set the options 'adb_nftbridge', 'adb_bridgednsv4' and 'adb_bridgednsv6' accordingly.
+When this feature is enabled, all DNS queries from LAN clients are briefly redirected to an external fallback resolver until the local DNS backend becomes available again. This ensures that DNS resolution continues to work seamlessly for all clients, even while adblock reloads blocklists or restarts the DNS service. Just set the options `adb_nftbridge`, `adb_bridgednsv4` and `adb_bridgednsv6` accordingly.
 
 **Jail mode (allowlist-only):**  
 Enforces a strict allowlist‑only DNS policy in which only domains listed in the allowlist file are resolved, while every other query is rejected. This mode is intended for highly restrictive environments and depends on a carefully maintained allowlist, typically managed manually.
 
-**Enable E-Mail notification via 'msmtp':**  
-To use the email notification you have to install & configure the package 'msmtp'.
-Modify the file '/etc/msmtprc':
+**Download options**  
+By default adblock uses the following pre-configured download options:
+
+```
+    * curl: --connect-timeout 20 --retry-delay 10 --retry 4 --retry-all-errors --fail --silent --show-error --location -o
+    * wget: --no-cache --no-cookies --timeout=20 --waitretry=10 --tries=5 --retry-connrefused --max-redirect=0 -O
+    * uclient-fetch: --timeout=20 -O
+```
+
+To override the default set `adb_fetchretry`, `adb_fetchinsecure` or globally `adb_fetchparm` to your needs.
+
+**Enable E-Mail notification via `msmtp`:**  
+To use the email notification you have to install & configure the package `msmtp`.
+Modify the file `/etc/msmtprc`:
 <pre><code>
 [...]
 defaults
@@ -344,7 +356,7 @@ password        xxx
 Finally enable E-Mail support, add a valid E-Mail receiver address in LuCI and setup an appropriate cron job.
 
 **Automatic adblock feed updates and E-Mail reports**  
-For a regular, automatic update of the used feeds or other regular adblock tasks set up a cron job. In LuCI you find the cron settings under 'System' => 'Scheduled Tasks'. On the command line the cron file is located at '/etc/crontabs/root':
+For a regular, automatic update of the used feeds or other regular adblock tasks set up a cron job. In LuCI you find the cron settings under `System` => `Scheduled Tasks`. On the command line the cron file is located at `/etc/crontabs/root`:
 
 Example 1
 ```sh
@@ -365,7 +377,7 @@ Example 3
 ```
 
 **Change/add adblock feeds**  
-The adblock blocklist feeds are stored in an external JSON file '/etc/adblock/adblock.feeds'. All custom changes should be stored in an external JSON file '/etc/adblock/adblock.custom.feeds' (empty by default). It's recommended to use the LuCI based Custom Feed Editor to make changes to this file.
+The adblock blocklist feeds are stored in an external JSON file `/etc/adblock/adblock.feeds`. All custom changes should be stored in an external JSON file `/etc/adblock/adblock.custom.feeds` (empty by default). It's recommended to use the LuCI based Custom Feed Editor to make changes to this file.
 A valid JSON source object contains the following information, e.g.:
 
 ```json
@@ -381,13 +393,13 @@ A valid JSON source object contains the following information, e.g.:
 
 Add a unique feed name (no spaces, no special chars) and make the required changes: adapt at least the URL, check/change the rule, the size and the description for a new feed.
 The rule consist of max. 4 individual, space separated parameters:
-1. type: always 'feed' (required)
-2. prefix: an optional search term (a string literal, no regex) to identify valid domain list entries, e.g. '0.0.0.0'
-3. column: the domain column within the feed file, e.g. '2' (required)
-4. separator: an optional field separator, default is the character class '[[:space:]]'
+1. type: always `feed` (required)
+2. prefix: an optional search term (a string literal, no regex) to identify valid domain list entries, e.g. `0.0.0.0`
+3. column: the domain column within the feed file, e.g. `2` (required)
+4. separator: an optional field separator, default is the character class `[[:space:]]`
 
 **Enable debug mode**  
-Adblock provides an optional debug mode that writes diagnostic information to the system log and captures internal error output in a dedicated error logfile - by default located in the adblock base directory as '/tmp/adb_error.log'. The log file is automatically cleared at the beginning of each run. Under normal conditions, all error messages are discarded to keep regular runs clean and silent. To enable debug mode, set the option 'adb_debug' to '1'. When enabled, the script produces significantly more log output to assist with troubleshooting.
+Adblock provides an optional debug mode that writes diagnostic information to the system log and captures internal error output in a dedicated error logfile - by default located in the adblock base directory as `/tmp/adb_error.log`. The log file is automatically cleared at the beginning of each run. Under normal conditions, all error messages are discarded to keep regular runs clean and silent. To enable debug mode, set the option `adb_debug` to `1`. When enabled, the script produces significantly more log output to assist with troubleshooting.
 
 ## Support
 Please join the adblock discussion in this [forum thread](https://forum.openwrt.org/t/adblock-support-thread/507) or contact me by mail <dev@brenken.org>
