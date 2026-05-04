@@ -156,6 +156,7 @@ notrack_nft() {
 			)"
 			existing_content="$(cat "$NOTRACK_NFT_FILE" 2>/dev/null)"
 			if [ "$new_content" != "$existing_content" ]; then
+				mkdir -p "${NOTRACK_NFT_FILE%/*}"
 				echo "$new_content" > "$NOTRACK_NFT_FILE"
 			fi
 			[ -s "$NOTRACK_NFT_FILE" ] && nft -c -f "$NOTRACK_NFT_FILE"
