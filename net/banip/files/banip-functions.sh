@@ -261,9 +261,9 @@ f_log() {
 
 	if [ -n "${log_msg}" ] && { [ "${class}" != "debug" ] || [ "${ban_debug}" = "1" ]; }; then
 		if [ -x "${ban_logcmd}" ]; then
-			"${ban_logcmd}" -p "${class}" -t "banIP-${ban_bver}[${$}]" "${log_msg::256}"
+			"${ban_logcmd}" -p "${class}" -t "banIP-${ban_bver}[${$}]" "${log_msg::512}"
 		else
-			printf '%s %s %s\n' "${class}" "banIP-${ban_bver}[${$}]" "${log_msg::256}"
+			printf '%s %s %s\n' "${class}" "banIP-${ban_bver}[${$}]" "${log_msg::512}"
 		fi
 	fi
 	if [ "${class}" = "err" ] || [ "${class}" = "emerg" ]; then
@@ -541,7 +541,7 @@ f_getdl() {
 	case "${ban_fetchcmd##*/}" in
 	"curl")
 		[ "${ban_fetchinsecure}" = "1" ] && insecure="--insecure"
-		ban_fetchparm="${ban_fetchparm:-"${insecure} --connect-timeout 20 --retry-delay 10 --retry ${ban_fetchretry} --retry-max-time $((ban_fetchretry * 20)) --retry-all-errors --fail --silent --show-error --location -o"}"
+		ban_fetchparm="${ban_fetchparm:-"${insecure} --connect-timeout 20 --retry-delay 10 --retry $((ban_fetchretry - 1)) --retry-max-time $(((ban_fetchretry - 1) * 20)) --retry-all-errors --fail --silent --show-error --location -o"}"
 		ban_rdapparm="--connect-timeout 5 --silent --location -o"
 		ban_etagparm="--connect-timeout 5 --silent --location --head"
 		ban_geoparm="--connect-timeout 5 --silent --location --data"
@@ -561,7 +561,7 @@ f_getdl() {
 		;;
 	esac
 
-	f_log "debug" "f_getdl   ::: auto/update: ${ban_autodetect}/${update}, cmd: ${ban_fetchcmd:-"-"}"
+	f_log "debug" "f_getdl   ::: auto/update: ${ban_autodetect}/${update}, cmd: ${ban_fetchcmd:-"-"}, parm: ${ban_fetchparm:-"-"}, rdapparm: ${ban_rdapparm:-"-"}, etagparm: ${ban_etagparm:-"-"}, geoparm: ${ban_geoparm:-"-"}"
 }
 
 # get wan interfaces
@@ -2162,7 +2162,7 @@ f_report() {
 										chunk="${chunk} ${ip}"
 										quantity="$((quantity + 1))"
 										if [ "${quantity}" -eq "100" ]; then
-											"${ban_fetchcmd}" ${ban_geoparm} "[ ${chunk%%?} ]" "${ban_geourl}" 2>>"${ban_errorlog}" |
+											"${ban_fetchcmd}" ${ban_geoparm} "[ ${chunk} ]" "${ban_geourl}" 2>>"${ban_errorlog}" |
 												"${ban_jsoncmd}" -qe '@[*&&@.status="success"]' | "${ban_awkcmd}" -v feed="${item//_v/.v}" '{printf ",{\"%s\": %s}\n",feed,$0}' >"${map_jsn}.${item}"
 											chunk=""
 											quantity="0"

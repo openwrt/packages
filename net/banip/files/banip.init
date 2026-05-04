@@ -21,6 +21,9 @@ ban_pidfile="/var/run/banIP/banIP.pid"
 ban_lock="/var/run/banIP/banIP.lock"
 
 if [ -z "${IPKG_INSTROOT}" ]; then
+
+	# check for running instance and handle boot trigger
+	#
 	case "${action}" in
 	"boot")
 		"${ban_init}" running && exit 0
@@ -29,10 +32,19 @@ if [ -z "${IPKG_INSTROOT}" ]; then
 		"${ban_init}" running || exit 0
 		;;
 	esac
+
+	# reset pidfile if no/stale process is found,
+	# otherwise exit with error to prevent multiple instances
+	#
 	case "${action}" in
 	"boot" | "start" | "restart" | "reload" | "search")
 		if [ -d "${ban_lock}" ]; then
-			exit 1
+			pid="$(cat "${ban_pidfile}" 2>/dev/null)"
+			if [ -n "${pid}" ] && kill -0 "${pid}" 2>/dev/null; then
+				exit 1
+			else
+				rm -rf "${ban_lock}"
+			fi
 		fi
 		mkdir -p "${ban_lock}"
 		;;
@@ -41,7 +53,6 @@ if [ -z "${IPKG_INSTROOT}" ]; then
 fi
 
 boot() {
-	: >"${ban_pidfile}"
 	rc_procd start_service boot
 }
 
