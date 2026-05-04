@@ -1,0 +1,32 @@
+From a279a1453094d0abfc847aa790bc82addc14cc62 Mon Sep 17 00:00:00 2001
+From: Remi Gacogne <remi.gacogne@powerdns.com>
+Date: Thu, 16 Oct 2025 15:11:56 +0200
+Subject: [PATCH] dnsdist: Fix build error when only protobuf is enabled
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The build fails with:
+```
+../dnsdist-protobuf.cc: In member function ‘void DNSDistProtoBufMessage::serialize(std::string&) const’:
+../dnsdist-protobuf.cc:205:7: error: ‘vinfolog’ was not declared in this scope
+  205 |       vinfolog("Error while parsing the RRs from a response packet to add them to the protobuf message: %s", exp.what());
+      |       ^~~~~~~~
+```
+because of a missing header.
+
+Signed-off-by: Remi Gacogne <remi.gacogne@powerdns.com>
+---
+ dnsdist-protobuf.cc | 1 +
+ 1 file changed, 1 insertion(+)
+
+--- a/dnsdist-protobuf.cc
++++ b/dnsdist-protobuf.cc
+@@ -25,6 +25,7 @@
+ #include "base64.hh"
+ #include "dnsdist.hh"
+ #include "dnsdist-protobuf.hh"
++#include "dolog.hh"
+ #include "protozero.hh"
+ 
+ DNSDistProtoBufMessage::DNSDistProtoBufMessage(const DNSQuestion& dnsquestion) :
