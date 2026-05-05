@@ -34,6 +34,7 @@ PKG_MOD_EXTRA := \
 	lua-resty-lrucache \
 	rtmp \
 	dav-ext \
+	dav-std \
 	naxsi \
 	brotli \
 	headers-more \
@@ -329,6 +330,14 @@ define Download/nginx-mod-dav-ext
   PROTO:=git
 endef
 
+define Download/nginx-mod-dav-std
+	SOURCE_DATE:=2026-05-04
+	SOURCE_VERSION:=8a43ea995b68f527f42802ac93d62aff2ea52bd9
+	URL:=https://github.com/martin-nedev/nginx-dav-std-module.git
+	MIRROR_HASH:=0a5683d8ca793648f59ec47a7608288d927c0591b93c15bf02f79d12d7a83299
+	PROTO:=git
+endef
+
 define Download/nginx-mod-ubus
   SOURCE_DATE:=2020-09-06
   SOURCE_VERSION:=b2d7260dcb428b2fb65540edb28d7538602b4a26
@@ -403,7 +412,7 @@ endef
 define BuildModule
   define Package/nginx-mod-$(1)
     $(call Package/nginx/default)
-    DEPENDS:=nginx $(2)
+    DEPENDS:=$(2)
     TITLE:=Nginx $(1) module
   endef
 
@@ -501,25 +510,27 @@ $(eval $(call BuildPackage,nginx-full))
 $(eval $(call BuildPackage,nginx-mod-luci))
 $(eval $(call BuildPackage,nginx-mod-lua-resty-lrucache))
 $(eval $(call BuildPackage,nginx-mod-lua-resty-core))
-$(eval $(call BuildModule,stream,+@NGINX_STREAM_CORE_MODULE, \
-	ngx_stream, Add support for NGINX request streaming.))
-$(eval $(call BuildModule,lua,+nginx-mod-lua-resty-core,ngx_http_lua, \
+$(eval $(call BuildModule,stream,nginx +@NGINX_STREAM_CORE_MODULE,ngx_stream, \
+	Add support for NGINX request streaming.))
+$(eval $(call BuildModule,lua,nginx +nginx-mod-lua-resty-core,ngx_http_lua, \
 	Enable Lua module (luajit2 based, OpenResty patches)))
-$(eval $(call BuildModule,ubus,+libubus +libjson-c +libblobmsg-json, \
-	ngx_http_ubus,Enable UBUS api support directly from the server.))
-$(eval $(call BuildModule,dav-ext,+@NGINX_DAV +libxml2,ngx_http_dav_ext, \
+$(eval $(call BuildModule,ubus,nginx +libubus +libjson-c +libblobmsg-json,ngx_http_ubus, \
+	Enable UBUS api support directly from the server.))
+$(eval $(call BuildModule,dav-ext,PACKAGE_nginx-ssl&&NGINX_DAV:nginx !(PACKAGE_nginx-ssl&&NGINX_DAV):nginx-full +libxml2,ngx_http_dav_ext, \
 	Enable the WebDAV methods PROPFIND OPTIONS LOCK UNLOCK.))
-$(eval $(call BuildModule,headers-more,,ngx_http_headers_more_filter, \
+$(eval $(call BuildModule,dav-std,nginx-ssl @!NGINX_DAV,ngx_http_dav, \
+	A WebDAV module for nginx.))
+$(eval $(call BuildModule,headers-more,nginx,ngx_http_headers_more_filter, \
 	Set and clear input and output headers...more than "add"!))
-$(eval $(call BuildModule,rtmp,,ngx_rtmp, \
+$(eval $(call BuildModule,rtmp,nginx,ngx_rtmp, \
 	Add support for NGINX-based Media Streaming Server module. DASH enhanced))
-$(eval $(call BuildModule,ts,,ngx_http_ts, \
+$(eval $(call BuildModule,ts,nginx,ngx_http_ts, \
 	Add support for MPEG-TS Live Module module.))
-$(eval $(call BuildModule,brotli,,ngx_http_brotli_filter ngx_http_brotli_static, \
+$(eval $(call BuildModule,brotli,nginx,ngx_http_brotli_filter ngx_http_brotli_static, \
 	Add support for brotli compression module.))
-$(eval $(call BuildModule,naxsi,,ngx_http_naxsi, \
+$(eval $(call BuildModule,naxsi,nginx,ngx_http_naxsi, \
 	Enable NAXSI module.))
-$(eval $(call BuildModule,geoip2,+@NGINX_STREAM_CORE_MODULE +nginx-mod-stream +libmaxminddb,ngx_http_geoip2 ngx_stream_geoip2, \
+$(eval $(call BuildModule,geoip2,nginx +@NGINX_STREAM_CORE_MODULE +nginx-mod-stream +libmaxminddb,ngx_http_geoip2 ngx_stream_geoip2, \
 	Enable MaxMind GeoIP2 module.))
-$(eval $(call BuildModule,njs,+zlib +libxml2 +libxslt +libpcre2,ngx_http_js, \
+$(eval $(call BuildModule,njs,nginx +zlib +libxml2 +libxslt +libpcre2,ngx_http_js, \
 	Enable NJS module.))
