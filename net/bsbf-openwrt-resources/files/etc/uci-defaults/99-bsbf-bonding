@@ -4,8 +4,10 @@
 # Get the interface of lan network.
 lan_network_interface="$(uci -q get network.lan.device)"
 
-# Check if lan is a bridge.
-[ -n "$lan_network_interface" ] && lan_section=$(uci show network | grep "name='$lan_network_interface'" | cut -d. -f2)
+# If the interface exists, check if it is a bridge.
+[ -n "$lan_network_interface" ] && for section in $(uci show network | grep "name='$lan_network_interface'" | cut -d. -f2); do
+	[ "$(uci -q get network.$section.type)" = bridge ] && lan_section="$section" && break
+done
 if [ -n "$lan_section" ]; then
 	# Save all interfaces.
 	lan_interfaces=$(uci get network.$lan_section.ports)
@@ -24,8 +26,10 @@ fi
 # Get the interface of wan network.
 wan_network_interface="$(uci -q get network.wan.device)"
 
-# Check if wan is a bridge.
-[ -n "$wan_network_interface" ] && wan_section=$(uci show network | grep "name='$wan_network_interface'" | cut -d. -f2)
+# If the interface exists, check if it is a bridge.
+[ -n "$wan_network_interface" ] && for section in $(uci show network | grep "name='$wan_network_interface'" | cut -d. -f2); do
+	[ "$(uci -q get network.$section.type)" = bridge ] && wan_section="$section" && break
+done
 if [ -n "$wan_section" ]; then
 	# Save all interfaces.
 	wan_network_interface="$(uci get network.$wan_section.ports)"
