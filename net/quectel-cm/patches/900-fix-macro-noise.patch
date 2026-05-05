@@ -1,0 +1,13 @@
+--- a/mbim-cm.c
++++ b/mbim-cm.c
+@@ -1574,7 +1574,9 @@ static int mbim_status_code(MBIM_MESSAGE
+         if (pCmdDone) { mbim_dump(&pCmdDone->MessageHeader, (mbim_verbose == 0)); } \
+         mbim_free(pRequest); mbim_free(pCmdDone); \
+         mbim_debug("%s:%d err=%d, Status=%d", __func__, __LINE__, err, _status); \
+-        if (err) return err; if (_status) return _status; return 8888; \
++        if (err) return err; \
++        if (_status) return _status; \
++        return 8888; \
+     } \
+ } while(0)
+ 
