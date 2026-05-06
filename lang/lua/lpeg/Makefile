@@ -8,14 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lpeg
-PKG_VERSION:=1.0.2
+PKG_VERSION:=1.1.0
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Dirk Chang <dirk@kooiot.com>
 PKG_LICENSE:=MIT
+PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.inf.puc-rio.br/~roberto/lpeg/
-PKG_HASH:=48d66576051b6c78388faad09b70493093264588fcd0f258ddaab1cdd4a15ffe
+PKG_HASH:=4b155d67d2246c1ffa7ad7bc466c1ea899bbc40fef0257cc9c03cecbaed4352a
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -23,21 +24,22 @@ define Package/lpeg
   SUBMENU:=Lua
   SECTION:=lang
   CATEGORY:=Languages
-  TITLE:=LPeg
+  TITLE:=Pattern-matching library for Lua
   URL:=http://www.inf.puc-rio.br/~roberto/lpeg/
   DEPENDS:=+lua
 endef
 
 define Package/lpeg/description
-	LPeg is a new pattern-matching library for Lua, based on Parsing Expression Grammars (PEGs)
+  LPeg is a pattern-matching library for Lua based on Parsing Expression Grammars (PEGs).
 endef
 
-define Build/Configure
-endef
-
-# add make variable overrides here
 MAKE_FLAGS += \
 	COPT="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS) -O2"
+
+define Build/InstallDev
+	$(INSTALL_DIR) $(1)/usr/lib/lua
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lpeg.so $(1)/usr/lib/lua
+endef
 
 define Package/lpeg/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua
