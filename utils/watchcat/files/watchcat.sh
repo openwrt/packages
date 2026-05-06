@@ -87,6 +87,8 @@ watchcat_restart_network_iface() {
 	local network
 	network="$(find_config "$1")"
 	logger -p daemon.info -t "watchcat[$$]" "Restarting network interface: \"$1\" (network: \"$network\")."
+	ifdown "$network"
+	sleep 1
 	ifup "$network"
 }
 
@@ -235,7 +237,7 @@ watchcat_ping() {
 			if [ "$ping_result" -eq 0 ]; then
 				time_lastcheck_withinternet="$time_now"
 			else
-				logger -p daemon.info -t "watchcat[$$]" "Could not reach $host for $((time_now - time_lastcheck_withinternet)). Rebooting after reaching $failure_period"
+				logger -p daemon.info -t "watchcat[$$]" "Could not reach $host for $((time_now - time_lastcheck_withinternet)) seconds. Will reboot after $failure_period seconds of failed reachability"
 			fi
 		done
 
