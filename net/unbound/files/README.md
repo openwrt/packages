@@ -203,6 +203,7 @@ One instance is supported currently.
 | --- | ------- | ----- | ----------- | ------- |
 | add_extra_dns | 0 | level | Read OpenWrt traditional options for `dnsmasq`.<br>`0`: Disabled<br>`1`: Use only domain<br>`2`: Use domain, mxhost, and srvhost<br>`3`: Use all cname, domain, mxhost, and srvhost | local-data: |
 | add_local_fqdn | 0 | level | Each level puts a  more detailed router entry within the LAN DNS (except link).<br>`0`: Disabled<br>`1`: Host name on the primary address<br>`2`: Host name on all addresses<br>`3`: FQDN and host name on all addresses<br>`4`: FQDN defined by "iface.hostname.domain" |  local-zone: local-data: |
+| add_search | (empty) | | Additional zones to add to `/etc/resolv.conf`'s `search` directive | - |
 | add_wan_fqdn | 0 | level | Same as `add_local_fqdn` but on WAN as listed in `iface_wan` | local-zone: local-data: |
 | dns64 | 0 | boolean | Enable DNS64 RFC6052 to bridge IPv4 and IPv6 networks. | module: dns64 |
 | dns64_prefix | 64:ff9b::/96 | subnet | DNS64 RFC6052 IPv4 in IPv6 well known prefix. | dns64-prefix: |
