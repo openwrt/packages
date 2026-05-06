@@ -1,0 +1,43 @@
+From ef75e4d5e517ed12d6057b2211d401fa1ce84f4a Mon Sep 17 00:00:00 2001
+From: Lukas Zeller <luz@plan44.ch>
+Date: Tue, 17 Sep 2024 00:53:40 +0200
+Subject: [PATCH] pkproto.c: fix use-after-free that did cause pagekite to
+ SIGSEGV occasionally, with higher probability on faster/multicore systems
+
+Observation:
+- programs using libpagekitec did crash with SIGSEGV on startup on RPi3,4
+  while having worked fine for years on RPi1+2
+
+Explantation:
+- the final "judgement" test were done on pointers into the `copy` buffer
+  freed on line 766 instead of on the safe copies of those strings in `kite`
+  and `kite_r`.
+- this opened a very short race condition window, however the crash was
+  caught happening while a tight loop (`pkb_start_blockers`) fired up 16
+  of those threads in rapid succession.
+  So probably if the next thread got to allocate memory before the
+  "judgements" tests, accessing the just freed `copy` would cause a segfault.
+
+Fix:
+- check the safe copies of the strings instead of pointers into freed `copy`.
+
+Signed-off-by: Lukas Zeller <luz@plan44.ch>
+---
+ libpagekite/pkproto.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+--- a/libpagekite/pkproto.c
++++ b/libpagekite/pkproto.c
+@@ -766,9 +766,9 @@ char *pk_parse_kite_request(
+   free(copy);
+ 
+   /* Pass judgement */
+-  if ('\0' == *public_domain) return pk_err_null(ERR_PARSE_NO_KITENAME);
+-  if ('\0' == *bsalt) return pk_err_null(ERR_PARSE_NO_BSALT);
+-  if ('\0' == *fsalt) return pk_err_null(ERR_PARSE_NO_FSALT);
++  if ('\0' == *(kite->public_domain)) return pk_err_null(ERR_PARSE_NO_KITENAME);
++  if ('\0' == *(kite_r->bsalt)) return pk_err_null(ERR_PARSE_NO_BSALT);
++  if ('\0' == *(kite_r->fsalt)) return pk_err_null(ERR_PARSE_NO_FSALT);
+   return kite->public_domain;
+ }
+ 
