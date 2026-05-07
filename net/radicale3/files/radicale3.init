@@ -1,7 +1,5 @@
 #!/bin/sh /etc/rc.common
 # shellcheck shell=ash
-# cspell:words CFGDIR SYSCFG USRCFG cfgfile chgrp defval getline hostlist
-# cspell:words htpasswd radicale tmpconf tmpusers multifilesystem
 
 # shellcheck disable=SC2034
 START=99
