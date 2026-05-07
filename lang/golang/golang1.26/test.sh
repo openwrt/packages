@@ -7,3 +7,17 @@ case "$1" in
 esac
 
 go version | grep -F " go$PKG_VERSION "
+
+cat <<'EOF' > hello.go
+package main
+
+import "fmt"
+
+func main() {
+	fmt.Println("Hello, World!")
+}
+
+EOF
+
+go run hello.go
+rm hello.go
