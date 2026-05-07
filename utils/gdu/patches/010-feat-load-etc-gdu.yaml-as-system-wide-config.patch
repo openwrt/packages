@@ -1,0 +1,181 @@
+From 4a2254be6ab14163e2077d195f6bb8d6a36afd19 Mon Sep 17 00:00:00 2001
+From: graysky <therealgraysky@proton.me>
+Date: Thu, 14 May 2026 09:05:09 -0400
+Subject: [PATCH] feat: load /etc/gdu.yaml as system-wide config (#567)
+
+* feat: load /etc/gdu.yaml as system-wide config
+
+Load /etc/gdu.yaml before the user config so admins can set
+org-wide defaults. User config (~/.gdu.yaml or --config-file)
+still takes full precedence.
+
+Useful for example on OpenWrt where no-unicode: true should be set
+for all users.
+
+* fix(test): correct app.Flags import path in main_test.go
+
+Use github.com/dundee/gdu/v5/cmd/gdu/app instead of the
+non-existent github.com/dundee/gdu/v5/pkg/app to match
+the import already used in main.go.
+
+* fix: add consts
+
+---------
+
+Co-authored-by: graysky <therealgraysky AT proton DOT me>
+Co-authored-by: Daniel Milde <daniel@milde.cz>
+---
+ cmd/gdu/main.go      | 39 ++++++++++++++++++++------
+ cmd/gdu/main_test.go | 66 +++++++++++++++++++++++++++++++++++++++++++-
+ 2 files changed, 96 insertions(+), 9 deletions(-)
+
+--- a/cmd/gdu/main.go
++++ b/cmd/gdu/main.go
+@@ -19,6 +19,11 @@ import (
+ 	"github.com/dundee/gdu/v5/pkg/device"
+ )
+ 
++const (
++	osWindows = "windows"
++	osPlan9   = "plan9"
++)
++
+ var (
+ 	af        *app.Flags
+ 	configErr error
+@@ -109,15 +114,33 @@ func init() {
+ 	setDefaults()
+ }
+ 
+-func initConfig() {
+-	setConfigFilePath()
+-	data, err := os.ReadFile(af.CfgFile)
++var systemConfigPath = "/etc/gdu.yaml"
++
++func loadConfig(path string) error {
++	data, err := os.ReadFile(path)
+ 	if err != nil {
+-		configErr = err
+-		return // config file does not exist, return
++		return err
++	}
++	return yaml.Unmarshal(data, &af)
++}
++
++func initConfig() {
++	// Load system-wide config first (ignored on Windows/Plan9 and when absent).
++	if runtime.GOOS != osWindows && runtime.GOOS != osPlan9 {
++		if err := loadConfig(systemConfigPath); err != nil && !os.IsNotExist(err) {
++			configErr = err
++			return
++		}
+ 	}
+ 
+-	configErr = yaml.Unmarshal(data, &af)
++	// Load user config; its values overwrite whatever the system config set.
++	setConfigFilePath()
++	if err := loadConfig(af.CfgFile); err != nil {
++		if !os.IsNotExist(err) {
++			configErr = err
++		}
++		return
++	}
+ }
+ 
+ func setDefaults() {
+@@ -195,7 +218,7 @@ func runE(command *cobra.Command, args [
+ 		}
+ 	}
+ 
+-	if runtime.GOOS == "windows" && af.LogFile == "/dev/null" {
++	if runtime.GOOS == osWindows && af.LogFile == "/dev/null" {
+ 		af.LogFile = "nul"
+ 	}
+ 
+@@ -223,7 +246,7 @@ func runE(command *cobra.Command, args [
+ 	istty := isatty.IsTerminal(os.Stdout.Fd())
+ 
+ 	// we are not able to analyze disk usage on Windows and Plan9
+-	if runtime.GOOS == "windows" || runtime.GOOS == "plan9" {
++	if runtime.GOOS == osWindows || runtime.GOOS == osPlan9 {
+ 		af.ShowApparentSize = true
+ 	}
+ 
+--- a/cmd/gdu/main_test.go
++++ b/cmd/gdu/main_test.go
+@@ -1,6 +1,12 @@
+ package main
+ 
+-import "testing"
++import (
++	"os"
++	"path/filepath"
++	"testing"
++
++	"github.com/dundee/gdu/v5/cmd/gdu/app"
++)
+ 
+ func TestNoViewFileFlagRegistered(t *testing.T) {
+ 	flag := rootCmd.Flags().Lookup("no-view-file")
+@@ -45,3 +51,61 @@ func TestInteractiveFlagCanBeSet(t *test
+ 		t.Fatal("expected Interactive to be true after setting flag")
+ 	}
+ }
++
++func TestInitConfigMalformedSystemConfig(t *testing.T) {
++	// Write invalid YAML to a temp file and point systemConfigPath at it.
++	tmp := filepath.Join(t.TempDir(), "gdu.yaml")
++	if err := os.WriteFile(tmp, []byte(":\tinvalid: yaml: {"), 0o600); err != nil {
++		t.Fatalf("could not write temp config: %v", err)
++	}
++
++	origPath := systemConfigPath
++	origErr := configErr
++	origAf := af
++	t.Cleanup(func() {
++		systemConfigPath = origPath
++		configErr = origErr
++		af = origAf
++	})
++
++	systemConfigPath = tmp
++	af = &app.Flags{}
++	configErr = nil
++
++	initConfig()
++
++	if configErr == nil {
++		t.Fatal("expected configErr to be set for malformed system config, got nil")
++	}
++}
++
++func TestInitConfigMalformedUserConfig(t *testing.T) {
++	// Write invalid YAML to a temp file and pass it via --config-file.
++	tmp := filepath.Join(t.TempDir(), "user.yaml")
++	if err := os.WriteFile(tmp, []byte(":\tinvalid: yaml: {"), 0o600); err != nil {
++		t.Fatalf("could not write temp config: %v", err)
++	}
++
++	origArgs := os.Args
++	origPath := systemConfigPath
++	origErr := configErr
++	origAf := af
++	t.Cleanup(func() {
++		os.Args = origArgs
++		systemConfigPath = origPath
++		configErr = origErr
++		af = origAf
++	})
++
++	// Point system config at a nonexistent path so it is skipped cleanly.
++	systemConfigPath = filepath.Join(t.TempDir(), "nonexistent.yaml")
++	os.Args = []string{"gdu", "--config-file=" + tmp}
++	af = &app.Flags{}
++	configErr = nil
++
++	initConfig()
++
++	if configErr == nil {
++		t.Fatal("expected configErr to be set for malformed user config, got nil")
++	}
++}
