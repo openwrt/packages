@@ -4,7 +4,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=radicale3
-PKG_VERSION:=3.7.1
+PKG_VERSION:=3.7.2
 PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-3.0-or-later
@@ -13,7 +13,7 @@ PKG_CPE_ID:=cpe:/a:radicale:radicale
 
 PYPI_NAME:=Radicale
 PYPI_SOURCE_NAME:=radicale
-PKG_HASH:=cabb87ad9f0b6aaa724f0621810c0e0c0421ef04ef2617e988d9da63859cd8ad
+PKG_HASH:=2c61de17ee4105a998dd250a79732b83313f74aa396bd40b71e7438b695e0edc
 
 PKG_MAINTAINER:=Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
 
@@ -29,8 +29,7 @@ define Package/radicale3
   TITLE:=Radicale 3.x CalDAV/CardDAV server
   USERID:=radicale3=226:radicale3=226
   DEPENDS:=+python3 +python3-dateutil +python3-vobject +python3-setuptools \
-    +python3-defusedxml +python3-libpass +python3-requests +python3-pika \
-    +python3-packaging
+    +python3-defusedxml +python3-libpass +python3-requests +python3-pika
   PROVIDES:=radicale radicale2
 endef
 
