@@ -1,9 +1,6 @@
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 
-# cspell:words TOPDIR PYPI Radicale conffiles dateutil defusedxml libpass
-# cspell:words setuptools vobject
-
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=radicale3
