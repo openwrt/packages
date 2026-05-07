@@ -463,7 +463,8 @@ dnsmasq_instance_append_force_dns_port() {
 	local cfg="$1" instance_port
 	[ "$(uci_get 'dhcp' "$cfg")" = "dnsmasq" ] || return 1
 	config_get instance_port "$cfg" 'port' '53'
-		str_contains_word "$force_dns_port" "$instance_port" || force_dns_port="${force_dns_port:+${force_dns_port} }${instance_port}"
+	[ "$instance_port" = "0" ] && return 0
+	str_contains_word "$force_dns_port" "$instance_port" || force_dns_port="${force_dns_port:+${force_dns_port} }${instance_port}"
 }
 
 dnsmasq_doh_server() {

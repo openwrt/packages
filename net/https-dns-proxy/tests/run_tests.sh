@@ -505,6 +505,11 @@ force_dns_port="53 853"
 dnsmasq_instance_append_force_dns_port "cfg01"
 assert_eq "append_force_dns_port: already present port 53 not duplicated" "53 853" "$force_dns_port"
 
+uci_set "dhcp" "cfg03" ".type" "dnsmasq"
+uci_set "dhcp" "cfg03" "port" "0"
+dnsmasq_instance_append_force_dns_port "cfg03"
+assert_eq "append_force_dns_port: disabled dnsmasq port 0 ignored" "53 853" "$force_dns_port"
+
 uci_set "dhcp" "cfg02" ".type" "dnsmasq"
 uci_set "dhcp" "cfg02" "port" "5353"
 dnsmasq_instance_append_force_dns_port "cfg02"
