@@ -1,6 +1,6 @@
 #!/bin/sh /etc/rc.common
 
-# shellcheck shell=ash
+# shellcheck shell=busybox
 
 # shellcheck disable=SC2034
 START=82
@@ -99,8 +99,8 @@ nut_upsmon_conf() {
 	# debugmin must be a positive integer or zero
 	config_get val "$cfg" debugmin 0
 	case "$val" in
-		''|*[!0-9]*) ;;
-		*) echo "DEBUG_MIN $val" >>"$UPSMON_C" ;;
+	'' | *[!0-9]*) ;;
+	*) echo "DEBUG_MIN $val" >>"$UPSMON_C" ;;
 	esac
 
 	config_get val "$cfg" defaultnotify "SYSLOG"

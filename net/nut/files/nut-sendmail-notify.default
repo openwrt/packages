@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# shellcheck shell=busybox
+
+# shellcheck disable=SC1091
 . "${IPKG_INSTROOT}"/lib/functions.sh
 
 REMOVEDEFAULTNOTIFY=0
@@ -12,11 +15,11 @@ upsmon() {
 
 	config_get val "$cfg" defaultnotify
 	if [ -n "$val" ]; then
-		if echo "$val" |grep -q "IGNORE"; then
+		if echo "$val" | grep -q "IGNORE"; then
 			REMOVEDEFAULTNOTIFY=1
 		else
 			SKIPADDSYSLOG=1
-			if echo "$val" |grep -q "EXEC"; then
+			if echo "$val" | grep -q "EXEC"; then
 				SKIPADDEXEC=1
 			fi
 		fi

@@ -1,13 +1,18 @@
 #!/bin/sh /etc/rc.common
 # Copyright © 2012 OpenWrt.org
 #
+# shellcheck shell=busybox
+#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
+
+# shellcheck disable=SC2034
 START=87
 STOP=23
 USE_PROCD=1
 
+# shellcheck disable=SC2034
 DEFAULT=/etc/default/nut
 UPSCGI_C=/var/etc/nut/hosts.conf
 UPSCGI_S=/var/etc/nut/upsset.conf
@@ -38,14 +43,17 @@ nut_upscgi_add() {
 	config_get pass "$cfg" password
 	system="$upsname@$hostname"
 	if [ -n "$port" ]; then
-	    system="$system:$port";
+		system="$system:$port"
 	fi
 	config_get displayname "$cfg" displayname
-	echo "MONITOR $system \"$displayname\"" >> "$UPSCGI_C"
+	echo "MONITOR $system \"$displayname\"" >>"$UPSCGI_C"
 }
 
 service_reload() {
-	mkdir -m 0755 -p "$(dirname "$UPSCGI_C")"
+	if [ ! -d "$(dirname "$UPSCGI_C")" ]; then
+		mkdir -p "$(dirname "$UPSCGI_C")"
+		chmod 0755 "$(dirname "$UPSCGI_C")"
+	fi
 	rm -f "$UPSCGI_C"
 	rm -f "$UPSCGI_S"
 
