@@ -1,0 +1,78 @@
+#!/bin/sh
+
+# In recent (relevant) versions of shellcheck busybox is a valid shell type
+# shellcheck shell=busybox
+
+# uci-defaults script to set notify flags to enable execution of notifycmd
+# (set separate scripts) unless the user has configured that notifications
+# should be ignored.
+
+# IPKG_INSTROOT is intentionally only set when building an image and
+# is intentionally empty on a live OpenWrt device
+
+# Shellcheck source paths intentionally point to the location of files of
+# the scripts in the development environment (where shellcheck is used), not
+# on the live OpenWrt device
+
+# In the nut-upssched package, this script lives in
+# /etc/uci-defaults/70-notify-exec
+# In the nut-sendmail-notify package, this script lives in
+# /etc/uci-defaults/71-notify-exec
+# The difference in names is required to avoid conflicting files should both
+# packages be installed on the same device.
+
+# Only run this uci-defaults script on a live OpenWrt device
+[ -z "${IPKG_INSTROOT}" ] || exit 0
+
+# shellcheck source=net/nut/files/functions.sh.functions
+. /lib/functions.sh || {
+	logger -s -t nut-notify-exec "FATAL: Unable to source 'functions.sh'." || true
+	exit 1
+}
+
+# Flags for whether defaultnotify option is set to IGNORE
+DEFAULTNOTIFY_IS_IGNORE="false"
+
+# Load and process nut_monitor (upsmon) configuration
+config_load nut_monitor || {
+	logger -s -t nut-notify-exec "FATAL: Loading 'nut_monitor' failed" || true
+	exit 1
+}
+
+config_get val "upsmon" defaultnotify
+# shellcheck disable=SC2154
+if [ "${val}" = "IGNORE" ]; then
+	DEFAULTNOTIFY_IS_IGNORE="true"
+else
+	# Ensure upsmon type section with the name upsmon exists (creating if
+	# needed, doing nothing if a upsmon type section named 'upsmon' already
+	# exists).
+	uci set "nut_monitor.upsmon=upsmon" || {
+		logger -s -t nut-notify-exec "Failed to ensure an upsmon section named upsmon exists" || true
+		exit 1
+	}
+fi
+
+# Set default notifications to enable notifycmd unless set to ignore
+if [ "${DEFAULTNOTIFY_IS_IGNORE}" = "true" ]; then
+	defaultnotify="IGNORE"
+# We only support IGNORE, SYSLOG, and EXEC options to defaultnotify
+# Since we want logging (SYSLOG) and require EXEC so that /usr/sbin/upssched
+# gets called by NUT, we enforce EXEC as well, producing SYSLOG+EXEC, unless
+# the user is ignoring all notifications.
+else
+	defaultnotify="SYSLOG+EXEC"
+fi
+
+uci set "nut_monitor.upsmon.defaultnotify"="$defaultnotify" || {
+	logger -s -t nut-notify-exec "FATAL: Failed to set 'defaultnotify' for 'upsmon'" || true
+	uci revert nut_monitor || true
+	exit 1
+}
+
+uci commit nut_monitor || {
+	logger -s -t nut-notify-exec "ERROR: Failed to commit changes to nut_monitor" || true
+	exit 1
+}
+
+exit 0

@@ -1,10 +1,17 @@
 #config driver_global 'driver_global'
-#	option user nut
+#	option driverpath /usr/libexec/nut # compile-time default
 
 #config driver 'upsname'
-#	option driver usbhid-ups
-#	option port auto
-#	option enable_usb_serial 0
+#	option driver usbhid-ups # example
+#	option port auto # example
+#	option enable_usb_serial 0 # example
+#
+# ### NOTE ###
+# For USB UPSes it is necessary to properly configure
+# productid and vendorid (and serial number if you have
+# more than one device with the same productid and vendorid) in
+# nut_server so that the hotplug script can give NUT
+# permissions to access the UPS device(s)
 
 #config user
 #	option username upsuser
@@ -14,13 +21,16 @@
 #	option upsmon secondary|primary
 
 #config listen_address
-#	option address ::1
-#	option port 3493
+#	option address ::1 # example
+#	option port 3493 # compile-time default
 
+# defaults for the upsd section are compile time defaults
+# We only support one 'upsd' section and it must be named 'upsd'
 #config upsd 'upsd'
 #	option maxage 15
 #	option statepath /var/run/nut
 #	option maxconn 1024
 #	option runas nut
+# option interface_reload_delay 3000 # in milliseconds
 # NB: certificates only apply to SSL-enabled version
 #       option certfile /usr/local/etc/upsd.pem

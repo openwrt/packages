@@ -1,12 +1,131 @@
 #!/bin/sh
 
-{
-exec /usr/sbin/sendmail root <<EOF
-From: root
-To: root
-Subject: UPS $NOTIFYTYPE Notification
+# In recent (relevant) versions of shellcheck busybox is a valid shell type
+# shellcheck shell=busybox
 
-$1
+# ## SAMPLE SCRIPT ##
+#
+# To be replaced by more tailored script created by user / admin
+
+# Example of a script for notification via sendmail, triggered by upsmon state
+# changes. Primarily a placeholder for a more tailored user-generated script.
+
+# IPKG_INSTROOT is intentionally only set when building an image and
+# is intentionally empty on a live OpenWrt device
+
+# shellcheck source=net/nut/files/functions.sh.functions
+. "${IPKG_INSTROOT}"/lib/functions.sh || {
+	logger -s -t nut-sendmail-notify "Unable to source 'functions.sh' in 'nut-sendmail-notify'. Bailing"
+	exit 1
+}
+
+# 'shellcheck' complains about nut-common.sh due to a case pattern it does not understand, even
+# though it is correctly POSIX compliant
+# shellcheck disable=SC1094
+# shellcheck source=net/nut/files/nut-common.sh.functions
+. "${IPKG_INSTROOT}"/lib/functions/nut/nut-common.sh || {
+	logger -s -t nut-sendmail-notify "Unable to source 'nut-common.sh' in 'nut-sendmail-notify'. Bailing"
+	exit 1
+}
+
+# function to log reason message was not sent
+log_send_failure_and_exit() {
+	local reason="$1"
+	local syslog_id="nut-sendmail-notify"
+	local message_prefix="Message was not sent"
+	logger -s -t "$syslog_id" "${message_prefix}: $reason" || {
+		printf "%s: %s: %s, and logging failed\n" "$syslog_id" "$message_prefix" "$reason" >&2
+	}
+	exit 1
+}
+
+# 'shellcheck' and 'shfmt' get confused by () and space in the case
+# pattern, but () and space are correct for POSIX shells
+# shellcheck disable=SC1072,SC1073,SC1085,SC1009
+check_safe_body_string() {
+	case "$1" in
+	# Disallow newline (single line body only). Also disallows a single dot on a line (so no
+	# SMTP dot injection)
+	*"
+"*)
+		log_send_failure_and_exit "Illegal character in body line for message"
+		;;
+	# We allow as permissive a possible set of characters for the body text
+	# as possible, without allowing shell injection or requiring more complex
+	# parsing of the body line. We also avoid % for possible printf
+	# substitutions
+	# Some AI code reviewers get confused by \(\) and \space in the case
+	# pattern, but this is correct for busybox ash in modern OpenWrt
+	# and does not allow \ through the validation.
+	*[!a-zA-Z0-9_:!@#^+,*=~.?\(\)/\ -]*)
+		log_send_failure_and_exit "Illegal character in body line for message"
+		;;
+	esac
+	return 0
+}
+
+NUT_NOTIFICATION_DATE="$(date -R)" || {
+	log_send_failure_and_exit "Failed to get current date and time"
+}
+
+email_content="From: root
+To: root
+Subject: SUBJECT_PREFIX Notification
+Date: MESSAGE_DATE
+Content-Type: text/plain; charset=utf-8
+
+ONE_BODY_LINE
 .
-EOF
-} &
+"
+
+# Set IFS to empty to prevent word splitting
+OLD_IFS="$IFS"
+
+# Restore IFS to allow word-splitting, and reenable globbing, for if this
+# script is sourced
+# We want this expanded at sourcing time, not execution time
+# shellcheck disable=SC2064
+trap "IFS='$OLD_IFS'; set +f" EXIT
+
+set -f
+IFS=
+# / is NOTIFYTYPE, NUT_NOTIFICATION_DATE, or $1 are not a security risk,
+# because in a POSIX shell variable parameter expansion substitution, the
+# content to be substituted (after the second /) inside quotes is taken
+# literally. This has been tested on ash with the following simple
+# script commands
+#
+# sub_val="sub/val"
+# original="An original with old_val message"
+# new="${original/old_val/$sub_val}"
+# echo "$new"
+# The result output is
+# An original with sub/val message
+#
+# As we are using a single replacement, not global, the presence of a slash (/)
+# is not an issue.
+email_content="${email_content/SUBJECT_PREFIX/$NOTIFYTYPE}"
+email_content="${email_content/MESSAGE_DATE/$NUT_NOTIFICATION_DATE}"
+email_content="${email_content/ONE_BODY_LINE/$1}"
+
+# Mail is only sent if NOTIFYTYPE is set and a body line has been included as a
+# parameter ($1), and the {} succeeds (none of the checks exit with
+# log_send_failure_and_exit)
+if [ -n "$NOTIFYTYPE" ] && [ -n "$1" ] && {
+	command -v sendmail || log_send_failure_and_exit "'sendmail' is not available"
+	# setsid is available in OpenWrt old stable, stable, and current tip, since before 14a27ac99d
+	command -v setsid || log_send_failure_and_exit "'setsid' is not available"
+	# NOTIFYTYPE comes from an UCI section name, so validate for that
+	check_safe_uci_name "$NOTIFYTYPE" || log_send_failure_and_exit "Illegal name for notification type name."
+	check_safe_date "$NUT_NOTIFICATION_DATE" || log_send_failure_and_exit "Illegal string for notification date."
+	check_safe_body_string "$1" || log_send_failure_and_exit "Illegal characters, or more than one line for message body."
+}; then
+	printf '%s' "$email_content" | setsid sendmail root || {
+		log_send_failure_and_exit "Output to sendmail and initiating sendmail of notification failed."
+	}
+else
+	exit 1
+fi
+
+# IFS and globbing will be restored by EXIT trap above
+exit 0

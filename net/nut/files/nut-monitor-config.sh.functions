@@ -1,0 +1,359 @@
+#!/bin/sh
+# Shebang line included so editors and shellcheck/shfmt know this contains
+# shell code
+
+# Helper functions for NUT monitor (upsmon) configuration handling
+
+# In recent (relevant) versions of shellcheck busybox is a valid shell type
+# shellcheck shell=busybox
+
+# Pre-requisite sourcing for functions this script uses
+# * /lib/functions has been sourced
+# * /lib/functions/nut/nut-common.sh has been sourced
+# * /lib/functions/nut/nut-service.sh has been sourced
+
+# Upstream NUT event type names (in the order listed in
+# https://networkupstools.org/docs/man/upsmon.conf.html)
+# NUT_EVENT_TYPES is used later without quotes for intentional word-splitting
+# Globbing is disabled in that case
+NUT_EVENT_TYPES="ONLINE ONBATT LOWBATT FSD COMMOK COMMBAD SHUTDOWN REPLBATT"
+append NUT_EVENT_TYPES "NOCOMM NOPARENT CAL NOTCAL OFF NOTOFF BYPASS NOTBYPASS"
+append NUT_EVENT_TYPES "ECO NOTECO OVER NOTOVER TRIM NOTTRIM BOOST NOTBOOST"
+append NUT_EVENT_TYPES "OTHER NOTOTHER SUSPEND_STARTING SUSPEND_FINISHED"
+
+# Upstream NUT upsmon.conf option names (in the order listed in
+# https://networkupstools.org/docs/man/upsmon.conf.html)
+# except MONITOR, NOTIFYMSG, NOTIFYFLAG, and RUN_AS_USER which are handled
+# separately
+NUT_UPSMON_OPTIONS="DEADTIME FINALDELAY HOSTSYNC MINSUPPLIES NOCOMMWARNTIME"
+append NUT_UPSMON_OPTIONS "POLLFAIL_LOG_THROTTLE_MAX NOTIFYCMD POLLFREQ"
+append NUT_UPSMON_OPTIONS "POLLFREQALERT POWERDOWNFLAG OFFDURATION OVERDURATION"
+append NUT_UPSMON_OPTIONS "OBLBDURATION RBWARNTIME SHUTDOWNCMD SHUTDOWNEXIT"
+append NUT_UPSMON_OPTIONS "CERTPATH CERTFILE CERTIDENT CERTHOST DEBUG_MIN"
+
+NUT_UPSMON_BOOL_OPTIONS="ALARMCRITICAL CERTVERIFY FORCESSL"
+
+# Location of NUT's UPS monitoring client (upsmon) configuration
+UPSMON_C=/var/etc/nut/upsmon.conf
+# Location of NUT's mode configuration
+NUT_CONF=/var/etc/nut/nut.conf
+# Path to PID file for upsmon
+# shellcheck disable=SC2034
+PIDFILE=/var/run/upsmon.pid
+
+# config_load is done by the sourcing script, before executing any functions in
+# this file
+
+# Get notification configuration
+# In nut_monitor UCI configuration a 'notification'-type config section must
+# be named with the name of a NUT_EVENT_TYPE. This NUT_EVENT_TYPE maps to
+# a notification event type emitted by upsmon.
+nut_get_notifications() {
+	local event="$1"
+	local defaultnotify="$2"
+	local config_file="$3"
+	local event_types val
+
+	# Try to remove the name of the UCI section surrounded by spaces.
+	# If this differs from the NUT_EVENT_TYPE contents, then the section
+	# is a valid NUT event type, so use it.
+	event_types=" $NUT_EVENT_TYPES "
+	if [ "${event_types#*" $event "}" != "${event_types}" ]; then
+		config_get val "$event" message
+		if [ -n "$val" ]; then
+			if ! printf 'NOTIFYMSG %s %s\n' "$event" "$val" >>"$config_file"; then
+				log_error "upsmon section '$event' failed to write 'NOTIFYMSG' for '$event'" nut-monitor-config.sh nut-monitor-config
+				return 1
+			fi
+		fi
+		config_get val "$event" flag "$defaultnotify"
+		if [ -n "$val" ]; then
+			if ! printf 'NOTIFYFLAG %s %s\n' "$event" "$val" >>"$config_file"; then
+				log_error "upsmon section '$event' failed to write 'NOTIFYFLAG' for '$event'" nut-monitor-config.sh nut-monitor-config
+				return 1
+			fi
+			event_notify_flags_not_found="${event_notify_flags_not_found/$event/}"
+		fi
+	else
+		log_error "$event is not a valid NUT message event type" nut-monitor-config.sh nut-monitor-config
+		return 1
+	fi
+}
+
+upsmon_conf_get_write() {
+	local cfg="$1"
+	local config_file="$2"
+	local uci_option="$3"
+	local nut_option="$4"
+	local is_bool="$5" # optional parameter
+	local default="$6"
+	local val
+
+	if [ -n "$is_bool" ] && [ "$is_bool" = "true" ]; then
+		# Will always get a value - either 0 or 1
+		config_get_bool val "$cfg" "$uci_option" "$default"
+	else
+		config_get val "$cfg" "$uci_option" "$default"
+	fi
+
+	if [ -n "$val" ]; then
+		printf "%s %s\n" "$nut_option" "$val" >>"$config_file" || {
+			log_error "upsmon section '$cfg' failed to write '$nut_option'" nut-monitor-config.sh nut-monitor-config
+			return 1
+		}
+		return 0
+	else
+		# Will never trigger for a bool
+		return 2
+	fi
+}
+
+# Generate upsmon.conf
+nut_upsmon_conf() {
+	local config_file="$1"
+	local cfg="upsmon"
+	local val defaultnotify nut_option uci_option conf_ret
+	local event_notify_flags_not_found upsmon_bool_options nut_bool
+	upsmon_bool_options=" $NUT_UPSMON_BOOL_OPTIONS "
+
+	# Note that we use '-u $RUNAS' on the daemon command line in preference to
+	# the RUN_AS_USER configuration in "$config_file"
+
+	# Word-splitting is intentional here, and we know NUT_UPSMON_OPTIONS and
+	# NUT_UPSMON_BOOL_OPTIONS are safe because we define them.
+	set -f
+	for nut_option in $NUT_UPSMON_OPTIONS $NUT_UPSMON_BOOL_OPTIONS; do
+		nut_bool="false"
+		# The nut_option and corresponding uci_option are known to be
+		# pure 7-bit ASCII
+		# We use tr because ash does not support *global* replacement using
+		# parameter expansion
+		# shellcheck disable=SC2019,SC2018
+		uci_option="$(echo "$nut_option" | tr 'A-Z_' 'a-z')"
+		case "$nut_option" in
+		# integer: negative values allowed
+		POLLFAIL_LOG_THROTTLE_MAX | \
+		OFFDURATION | \
+		OVERDURATION | \
+		OBLBDURATION)
+			config_get val "$cfg" "$uci_option"
+			case "${val#[-]}" in
+			*[!0123456789]*)
+				log_error "upsmon section '$cfg' bad value for '$uci_option'" nut-monitor-config.sh nut-monitor-config
+				return 1
+				;;
+			'')
+				# Ignore options with no configuration
+				:
+				;;
+			*)
+				if ! printf "%s %s\n" "$nut_option" "$val" >>"$config_file"; then
+					log_error "upsmon section '$cfg' failed to write '$nut_option'" nut-monitor-config.sh nut-monitor-config
+					return 1
+				fi
+				;;
+			esac
+			;;
+		# integer: negative values not allowed
+		DEADTIME | \
+		DEBUG_MIN | \
+		FINALDELAY | \
+		HOSTSYNC | \
+		MINSUPPLIES | \
+		NOCOMMWARNTIME | \
+		POLLFREQ | \
+		POLLFREQALERT | \
+		RBWARNTIME)
+			config_get val "$cfg" "$uci_option"
+			case "$val" in
+			*[!0123456789]*)
+				log_error "upsmon section '$cfg' bad value for '$uci_option'" nut-monitor-config.sh nut-monitor-config
+				return 1
+				;;
+			'')
+				# Ignore options with no configuration
+				:
+				;;
+			*)
+				if ! printf "%s %s\n" "$nut_option" "$val" >>"$config_file"; then
+					log_error "upsmon section '$cfg' failed to write '$nut_option'" nut-monitor-config.sh nut-monitor-config
+					return 1
+				fi
+				;;
+			esac
+			;;
+		SHUTDOWNCMD)
+			upsmon_conf_get_write "$cfg" "$config_file" "$uci_option" "$nut_option"
+			conf_ret=$?
+			case "$conf_ret" in
+			1)
+				return 1
+				;;
+			2)
+				if ! printf "%s %s\n" "$nut_option" "/usr/sbin/nutshutdown" >>"$config_file"; then
+					log_error "upsmon section '$cfg' failed to write 'SHUTDOWNCMD'" nut-monitor-config.sh nut-monitor-config
+					return 1
+				fi
+				;;
+			esac
+			;;
+		ALARMCRITICAL)
+			upsmon_conf_get_write "$cfg" "$config_file" "$uci_option" "$nut_option" "true" "1"
+			conf_ret=$?
+			if [ "$conf_ret" -eq 1 ]; then
+				return 1
+			fi
+			;;
+		POWERDOWNFLAG)
+			upsmon_conf_get_write "$cfg" "$config_file" "$uci_option" "$nut_option" "false" "$NUT_KILLPOWER"
+			conf_ret=$?
+			if [ "$conf_ret" -eq 1 ]; then
+				return 1
+			fi
+			;;
+		*)
+			if [ "${upsmon_bool_options/$nut_option/}" != "${upsmon_bool_options}" ]; then
+				nut_bool="true"
+			fi
+			upsmon_conf_get_write "$cfg" "$config_file" "$uci_option" "$nut_option" "$nut_bool"
+			conf_ret=$?
+			if [ "$conf_ret" -eq 1 ]; then
+				return 1
+			fi
+			;;
+		esac
+	done
+	set +f
+
+	event_notify_flags_not_found="$NUT_EVENT_TYPES"
+	config_get val "$cfg" defaultnotify "SYSLOG"
+	defaultnotify="$val"
+	config_foreach nut_get_notifications notifications "$val" "$config_file"
+
+	# Otherwise the default is WALL+SYSLOG
+	event_notify_flags_not_found="$(printf "%s" "$event_notify_flags_not_found" | tr -s ' ')"
+	# We intentionally word-split on event_notify_flags-not-found to iterate
+	# over event types.
+	set -f
+	for event in $event_notify_flags_not_found; do
+		if ! printf "NOTIFYFLAG %s %s\n" "$event" "$defaultnotify" >>"$config_file"; then
+			log_error "upsmon section '$cfg' failed to write 'NOTIFYFLAG' for '$event'" nut-monitor-config.sh nut-monitor-config
+			return 1
+		fi
+	done
+	set +f
+	return 0
+}
+
+nut_upsmon_add() {
+	local cfg="$1"
+	local config_file="$2"
+	local upsname
+	local hostname
+	local port
+	local powervalue
+	local username
+	local password
+	local system
+	local type
+
+	config_get upsname "$cfg" upsname "$cfg"
+	config_get hostname "$cfg" hostname localhost
+	config_get port "$cfg" port
+	config_get powervalue "$cfg" powervalue 1
+	config_get username "$cfg" username
+	config_get password "$cfg" password
+	config_get type "$cfg" type secondary
+
+	system="$upsname@$hostname"
+	if [ -n "$port" ]; then
+		system="$system:$port"
+	fi
+
+	if [ -z "$username" ] || [ -z "$password" ]; then
+		log_error "upsmon section '$cfg' missing value(s) for MONITOR line" nut-monitor-config.sh nut-monitor-config
+		upsmon_conf_fail="true"
+	else
+		# Write MONITOR line (including password) to config_file (upsmon.conf)
+		if ! printf "MONITOR %s %s %s %s %s\n" "$system" "$powervalue" "$username" "$password" "$type" >>"$config_file"; then
+			log_error "upsmon section '$cfg' failed to write MONITOR line for '$system'" nut-monitor-config.sh nut-monitor-config
+			upsmon_conf_fail="true"
+		else
+			have_monitor_line="true"
+		fi
+	fi
+}
+
+build_config() {
+	local conf_group
+	local upsmon_conf_fail="false"
+	local have_monitor_line="false"
+
+	RUNAS="${RUNAS:-nutmon}"
+	conf_group="$(id -gn "$RUNAS")"
+
+	if [ -z "$conf_group" ]; then
+		log_error "upsmon build_config failed to find group for the RUNAS user ('$RUNAS')" nut-monitor-config.sh nut-monitor-config
+		upsmon_conf_fail="true"
+	else
+		# This directory is shared with the nut-server which run as as a
+		# different user and group, so must be all readable. We set the
+		# ownership and permissions on individual files more restrictively, as
+		# needed.
+		# shellcheck disable=SC2174
+		umask 022
+		mkdir -p "$(dirname "$UPSMON_C")"
+
+		umask 127
+		touch "$UPSMON_C.new"
+		chgrp "$conf_group" "$UPSMON_C.new"
+		printf "%s\n" "# Config file automatically generated from UCI config" >>"$UPSMON_C.new"
+
+		if nut_upsmon_conf "$UPSMON_C.new"; then
+			# upsmon_conf_fail will be set in this function's context by nut_upsmon_add, on error
+			config_foreach nut_upsmon_add monitor "$UPSMON_C.new"
+			if [ "$upsmon_conf_fail" = "true" ]; then
+				log_error "'monitor' type sections must be correctly configured" nut-monitor-config.sh nut-monitor-config
+				return 1
+			fi
+			if [ "$have_monitor_line" = "false" ]; then
+				log_msg "Must have at least one 'monitor' type section" nut-monitor-config.sh nut-monitor-config warn
+				return 1
+			fi
+		else
+			log_error "upsmon section name 'upsmon' not correctly configured" nut-monitor-config.sh nut-monitor-config
+			return 1
+		fi
+	fi
+
+	# In the event of configuration failure, stop the
+	# service and remove the ephemeral configuration files
+	if [ "$upsmon_conf_fail" = "true" ]; then
+		# If we no longer have configuration, stop the service
+		return 1
+	else
+		# Atomically make the new config the active config
+		mv -f "$UPSMON_C.new" "$UPSMON_C" || return 1
+	fi
+
+	# Failure to write nut.conf is not hard-fatal although it means the NUT will
+	# not start the service.
+	# Also, we only write nut.conf if there is not one already
+	if [ ! -s "$NUT_CONF" ]; then
+		umask 133
+		if ! printf "MODE=netclient\n" >"$NUT_CONF"; then
+			log_error "upsmon creation of nut.conf failed" nut-monitor-config.sh nut-monitor-config
+			return 1
+		fi
+	else
+		# Otherwise if nut-server is already configured, make sure both
+		# nut-server and nut-monitor (this service) are started
+		if grep -q 'MODE=netserver' "$NUT_CONF"; then
+			# In modern OpenWrt 'sed -i' modifies the specified files, without backup
+			sed -i -e 's/netserver/both/' "$NUT_CONF" || {
+				log_error "Failed to update nut.conf to support both upsmon and upsd" nut-monitor-config.sh nut-monitor-config
+			}
+		fi
+	fi
+	return 0
+}

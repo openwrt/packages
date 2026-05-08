@@ -1,286 +1,218 @@
 #!/bin/sh /etc/rc.common
 
-# shellcheck shell=ash
+# In recent (relevant) versions of shellcheck busybox is a valid shell type
+# shellcheck shell=busybox
 
 # shellcheck disable=SC2034
 START=82
 STOP=28
 USE_PROCD=1
-UPSMON_C=/var/etc/nut/upsmon.conf
-PIDFILE=/var/run/upsmon.pid
 
-# Upstream NUT event type names (in the order listed in
-# https://networkupstools.org/docs/man/upsmon.conf.html)
-NUT_EVENT_TYPES=" ONLINE ONBATT LOWBATT FSD COMMOK COMMBAD SHUTDOWN REPLBATT NOCOMM NOPARENT CAL NOTCAL OFF NOTOFF BYPASS NOTBYPASS ECO NOTECO OVER NOTOVER TRIM NOTTRIM BOOST NOTBOOST OTHER NOTOTHER SUSPEND_STARTING SUSPEND_FINISHED "
+# IPKG_INSTROOT is intentionally only set when building an image and
+# is intentionally empty on a live OpenWrt device
 
-nut_get_notifications() {
-	local event="$1"
-	local defaultnotify="$2"
+# Shellcheck source paths intentionally point to the location of files of
+# the scripts in the development environment (where shellcheck is used), not
+# on the live OpenWrt device
 
-	if [ "${NUT_EVENT_TYPES#*" $event "}" != "${NUT_EVENT_TYPES}" ]; then
-		config_get val "$event" message
-		[ -n "$val" ] && echo "NOTIFYMSG $event \"$val\"" >>"$UPSMON_C"
-		config_get val "$event" flag "$defaultnotify"
-		[ -n "$val" ] && echo "NOTIFYFLAG $event $val" >>"$UPSMON_C"
-	else
-		logger -t nut-monitor -s "$event is not a valid NUT message event type"
-	fi
+# shellcheck source=net/nut/files/functions.sh.functions
+. "${IPKG_INSTROOT}"/lib/functions.sh || {
+	# Before our sourcing error logging definitions are sourced
+	logger -s -t nut-monitor "Unable to source 'functions.sh' in 'nut-monitor'. Bailing"
+	exit 1
 }
 
-nut_upsmon_conf() {
-	local cfg="$1"
-	local RUNAS val optval defaultnotify
-
-	echo "# Config file automatically generated from UCI config" >"$UPSMON_C"
-
-	config_get RUNAS "$cfg" runas "nutmon"
-	[ -n "$RUNAS" ] && echo "RUN_AS_USER $RUNAS" >>"$UPSMON_C"
-	runas="$RUNAS"
-
-	config_get val "$cfg" deadtime 15
-	echo "DEADTIME $val" >>"$UPSMON_C"
-
-	config_get val "$cfg" finaldelay 5
-	echo "FINALDELAY $val" >>"$UPSMON_C"
-
-	config_get val "$cfg" hostsync 15
-	echo "HOSTSYNC $val" >>"$UPSMON_C"
-
-	config_get val "$cfg" minsupplies 1
-	echo "MINSUPPLIES $val" >>"$UPSMON_C"
-
-	config_get val "$cfg" nocommwarntime 300
-	echo "NOCOMMWARNTIME $val" >>"$UPSMON_C"
-
-	config_get val "$cfg" pollfaillogthrottlemax -1
-	echo "POLLFAIL_LOG_THROTTLE_MAX $val" >>"$UPSMON_C"
-
-	config_get val "$cfg" notifycmd
-	[ -n "$val" ] && echo "NOTIFYCMD \"$val\"" >>"$UPSMON_C"
-
-	config_get val "$cfg" pollfreq 5
-	echo "POLLFREQ $val" >>"$UPSMON_C"
-
-	config_get val "$cfg" pollfreqalert 5
-	echo "POLLFREQALERT $val" >>"$UPSMON_C"
-
-	echo "POWERDOWNFLAG /var/run/killpower" >>"$UPSMON_C"
-
-	config_get val "$cfg" offduration 30
-	echo "OFFDURATION $val" >>"$UPSMON_C"
-
-	config_get val "$cfg" overduration -1
-	echo "OVERDURATION $val" >>"$UPSMON_C"
-
-	config_get val "$cfg" oblbduration 0
-	echo "OBLBDURATION $val" >>"$UPSMON_C"
-
-	config_get val "$cfg" rbwarntime 43200
-	echo "RBWARNTIME $val" >>"$UPSMON_C"
-
-	config_get val "$cfg" alarmcritical 1
-	echo "ALARMCRITICAL $val" >>"$UPSMON_C"
-
-	config_get val "$cfg" shutdownexit 0
-	echo "SHUTDOWNEXIT $val" >>"$UPSMON_C"
-
-	config_get val "$cfg" shutdowncmd "/usr/sbin/nutshutdown"
-	echo "SHUTDOWNCMD \"$val\"" >>"$UPSMON_C"
-
-	config_get val "$cfg" certpath
-	if [ -n "$val" ]; then echo "CERTPATH $val" >>"$UPSMON_C"; fi
-
-	config_get_bool val "$cfg" certverify 0
-	if [ -n "$val" ]; then echo "CERTVERIFY $val" >>"$UPSMON_C"; fi
-
-	config_get_bool val "$cfg" forcessl 0
-	if [ -n "$val" ]; then echo "FORCESSL $val" >>"$UPSMON_C"; fi
-
-	# debugmin must be a positive integer or zero
-	config_get val "$cfg" debugmin 0
-	case "$val" in
-		''|*[!0-9]*) ;;
-		*) echo "DEBUG_MIN $val" >>"$UPSMON_C" ;;
-	esac
-
-	config_get val "$cfg" defaultnotify "SYSLOG"
-	defaultnotify="$val"
-	config_foreach nut_get_notifications notifications "$val"
-
-	# Otherwise the default is WALL+SYSLOG
-	for event in $NUT_EVENT_TYPES; do
-		if ! grep -q "NOTIFYFLAG $event" "$UPSMON_C"; then
-			echo "NOTIFYFLAG $event $defaultnotify" >>"$UPSMON_C"
-		fi
-	done
-
-	havemon=1
+# 'shellcheck' complains about nut-common.sh due to a case pattern it does not understand, even
+# though it is correctly POSIX compliant
+# shellcheck disable=SC1094
+# shellcheck source=net/nut/files/nut-common.sh.functions
+. "${IPKG_INSTROOT}"/lib/functions/nut/nut-common.sh || {
+	# Before our sourcing error logging definitions are sourced
+	logger -s -t nut-monitor "Unable to source 'nut-common.sh' in 'nut-monitor'. Bailing"
+	exit 1
 }
 
-nut_upsmon_add() {
-	local cfg="$1"
-	local type="$2"
-	local upsname
-	local hostname
-	local port
-	local powervalue
-	local username
-	local password
-	local system
-
-	config_get upsname "$cfg" upsname
-	config_get hostname "$cfg" hostname localhost
-	config_get port "$cfg" port
-	config_get powervalue "$cfg" powervalue 1
-	config_get username "$cfg" username
-	config_get password "$cfg" password
-	config_get type "$cfg" type "${type:-secondary}"
-
-	system="$upsname@$hostname"
-	if [ -n "$port" ]; then
-		system="$system:$port"
-	fi
-	echo "MONITOR $system $powervalue $username $password $type" >>"$UPSMON_C"
-
-	havems=1
+# shellcheck source=/dev/null
+. "${IPKG_INSTROOT}"/usr/share/libubox/jshn.sh || {
+	log_source_error "jshn.sh" "nut-monitor" "nut-monitor"
+	exit 1
 }
 
-build_config() {
-	# shellcheck disable=SC2174
-	mkdir -m 0750 -p "$(dirname "$UPSMON_C")"
-
-	config_load nut_monitor
-	config_foreach nut_upsmon_conf upsmon
-	config_foreach nut_upsmon_add primary primary
-	config_foreach nut_upsmon_add secondary secondary
-	config_foreach nut_upsmon_add monitor
-	# master and slave are legacy section names. Prefer monitor.
-	config_foreach nut_upsmon_add master primary
-	config_foreach nut_upsmon_add slave secondary
-
-	[ ! -s /var/etc/nut/nut.conf ] && {
-		echo "MODE=netclient" >>/var/etc/nut/nut.conf
-		chmod 640 /var/etc/nut/nut.conf
-		chgrp "$(id -gn "${runas:-nutmon}")" /var/etc/nut/nut.conf
-	}
-
-	[ -s "$UPSMON_C" ] && chmod 640 "$UPSMON_C"
-	[ -s "$UPSMON_C" ] && chgrp "$(id -gn "${runas:-nutmon}")" "$UPSMON_C"
+# shellcheck source=net/nut/files/nut-service.sh.functions
+. "${IPKG_INSTROOT}"/lib/functions/nut/nut-service.sh || {
+	log_source_error "nut-service.sh" "nut-monitor" "nut-monitor"
+	exit 1
 }
 
-interface_triggers() {
+# /lib/functions/network.sh exists on live OpenWrt systems (base-files), but
+# not our development environment. We do not run the script in a development
+# environment as it depends on cross-compiled binaries and files being in
+# location and having live target names.
+# shellcheck disable=SC1091
+# shellcheck source=/dev/null
+. "${IPKG_INSTROOT}"/lib/functions/network.sh || {
+	log_source_error "network.sh" "nut-monitor" "nut-monitor"
+	exit 1
+}
+
+# defines NUT_EVENT_TYPES PIDFILE UPSMON_C
+# shellcheck source=net/nut/files/nut-monitor-config.sh.functions
+. "${IPKG_INSTROOT}"/lib/functions/nut/nut-monitor-config.sh || {
+	log_source_error "nut-monitor-config.sh" "nut-monitor" "nut-monitor"
+	exit 1
+}
+
+restore_umask_on_exit
+
+service_preconditions() {
 	local action="$1"
-	local triggerlist trigger
+	# action can be one of start, stop, or reload
 
-	config_get triggerlist "upsmon" triggerlist
-
-	# shellcheck disable=SC1091
-	. "${IPKG_INSTROOT}"/lib/functions/network.sh
-
-	if [ -n "$triggerlist" ]; then
-		for trigger in $triggerlist; do
-			if [ "$action" = "add_trigger" ]; then
-				procd_add_interface_trigger "interface.*" "$trigger" /etc/init.d/nut-monitor restart
-			else
-				network_is_up "$trigger" && return 0
-			fi
-		done
-	else
-		if [ "$action" = "add_trigger" ]; then
-			procd_add_raw_trigger "interface.*.up" 2000 /etc/init.d/nut-monitor restart
-		else
-			ubus call network.device status | grep -q '"up": true' && return 0
+	case "$action" in
+	start | reload)
+		# NUT_KILLPOWER is an external sentinel that indicates a forced shutdown
+		if [ -f "$NUT_KILLPOWER" ]; then
+			return 1
 		fi
+
+		config_load nut_monitor || {
+			log_config_load_error "nut_monitor" "nut-monitor" "nut-monitor"
+			exit 1
+		}
+
+		if have_section_of_type "upsmon"; then
+			# Find the RUNAS user for upsmon
+			if ! find_runas "upsmon" "nut_monitor" "nutmon" || [ -z "$RUNAS" ]; then
+				log_error_exit "Failed to determine RUNAS user" "nut-monitor" "nut-monitor"
+			fi
+		else
+			# If we do not have a 'upsmon' section in nut_monitor, use defaults
+			log_msg "No upsmon section so no RUNAS user, falling back to nutmon" "nut-monitor" "nut-monitor" "notice"
+			RUNAS=nutmon
+		fi
+
+		build_config || return 1
+		interface_triggers "check_interface_up" || return 1
+		return 0
+		;;
+	*)
+		return 0
+		;;
+	esac
+}
+
+start_monitor_instance() {
+	procd_open_instance upsmon
+	procd_set_param respawn
+	procd_set_param stderr 0 # stderr is just a dup of stdout + syslog
+	procd_set_param stdout 1
+	procd_set_param env NUT_QUIET_INIT_UPSNOTIFY=true
+	procd_set_param reload_signal HUP
+	procd_set_param command /usr/sbin/upsmon
+	procd_append_param command -FF
+	if [ -n "$RUNAS" ]; then
+		# upsmon needs root for some actions (like
+		# shutting down the system, but forks
+		# and drops root for most of its operation)
+		procd_append_param command -u "$RUNAS"
 	fi
-	[ "$action" = "add_trigger" ] || return 1
+	procd_close_instance
+}
+
+perform_instance_action() {
+	local active_upsmon_action="$1"
+	shift || true
+	local active_upsmon_signal="$1"
+	shift || true
+	local action_command="$1"
+	shift || true
+	local action_arg="$1"
+	shift || true
+	local active_upsmon_secondary_command="$1"
+	shift || true
+
+	# If nut-monitor is running but has no instances (even upsmon)
+	if service_active_no_instances "nut-monitor"; then
+		log_msg "nut-monitor active with no instances" "nut-monitor" "nut-monitor" "info"
+		if [ -n "$action_command" ]; then
+			"$action_command" "$action_arg"
+		fi
+	# The only possible instance of nut-monitor in this package is a single
+	# upsmon instance. Therefore we do not need to check for other instances
+	elif procd_running nut-monitor upsmon; then
+		# If nut-monitor has an active upsmon instance
+		signal_instance "upsmon" \
+			"upsmon" \
+			"$active_upsmon_action" \
+			"$active_upsmon_signal" "$PIDFILE" "" \
+			"nut-monitor" \
+			"$active_upsmon_secondary_command" \
+			"$@"
+	fi
+}
+
+manage_service() {
+	local action="$1"
+
+	# We only support one instance of upsmon, and its UCI
+	# section must be named 'upsmon'
+
+	service_preconditions "$action" || return 1
+	case "$action" in
+	start)
+		start_monitor_instance
+		;;
+	reload)
+		# We need to use rpc_procd to start an instance from service_reload
+		perform_instance_action "reload" "HUP" "rc_procd" "start_monitor_instance"
+		;;
+	stop)
+		# Note that the middle procd_kill is *without* upsmon which stops the procd
+		# service entirely, not just the instances (so reload triggers will have
+		# no effect until the service is started again).
+		perform_instance_action "stop" "TERM" "procd_kill" "nut-monitor" "procd_kill" "nut-monitor" "upsmon"
+		rm -f "$UPSMON_C"
+		;;
+	stop-instance)
+		# Stop the upsmon instance but leave nut-monitor procd service active
+		perform_instance_action "stop" "TERM" "" "" "procd_kill" "nut-monitor" "upsmon"
+		rm -f "$UPSMON_C"
+		;;
+	*)
+		# Do not abort on unknown $action, but log it.
+		log_error "Unknown action: '$action'" "nut-monitor" nut-monitor
+		;;
+	esac
+}
+
+stop_and_cleanup_on_error() {
+	manage_service stop-instance
+	rm -f "$UPSMON_C.new"
 }
 
 start_service() {
-	local runas=nutmon
-	local havemon havems
-	build_config
-
-	[ "$havemon" != 1 ] && return 1
-	[ "$havems" != 1 ] && return 1
-	interface_triggers "check_interface_up" || return 0
-
-	procd_open_instance "upsmon"
-	procd_set_param respawn 10 20 6
-	procd_set_param stderr 1
-	procd_set_param stdout 0
-	procd_set_param env NUT_QUIET_INIT_UPSNOTIFY=true
-	procd_set_param reload_signal HUP
-	procd_set_param command /usr/sbin/upsmon -FF
-	procd_close_instance
-
-	return 0
-}
-
-# pkill is not available, and pgrep does not accept --signal
-pgrepkill() {
-	local pids
-
-	[ $# -eq 2 ] || return 1
-
-	pids="$(pgrep "$1" 2>/dev/null)" || return 0
-
-	for pid in $pids; do
-		kill -"$2" "$pid"
-	done
+	manage_service start || stop_and_cleanup_on_error
 }
 
 reload_service() {
-	local should_stop
-
-	# shellcheck disable=SC1091
-	. /lib/functions/procd.sh
-
-	build_config
-
-	should_stop=0
-
-	[ "$havemon" = 1 ] || should_stop=1
-	[ "$havems" = 1 ] || should_stop=1
-	interface_triggers "check_interface_up" || should_stop=1
-
-	if [ "$should_stop" = "0" ]; then
-		if procd_running nut-monitor upsmon; then
-			if [ -s "$PIDFILE" ]; then
-				upsmon -c reload 2>&1 | logger -t nut-monitor
-				# We don't care about the exit code
-				return
-			elif pgrep upsmon >/dev/null 2>/dev/null; then
-				procd_send_signal nut-monitor upsmon HUP 2>&1 | logger -t nut-monitor
-				# We don't care about the exit code
-				return
-			fi
-		else
-			/etc/init.d/nut-monitor start
-		fi
-	else
-		if procd_running nut-monitor upsmon; then
-			if [ -s "$PIDFILE" ]; then
-				upsmon -c stop 2>&1 | logger -t nut-monitor
-			else
-				pgrepkill upsmon TERM >/dev/null 2>/dev/null
-			fi
-			procd_kill nut-monitor upsmon 2>/dev/null | logger -t nut-monitor
-		fi
-	fi
+	manage_service reload || stop_and_cleanup_on_error
 }
 
 stop_service() {
-	if [ -s "$PIDFILE" ]; then
-		upsmon -c stop 2>&1 | logger -t nut-monitor
-		procd_kill nut-monitor 2>/dev/null | logger -t nut-monitor
-	else
-		pgrepkill upsmon TERM >/dev/null 2>/dev/null
-		procd_kill nut-monitor 2>/dev/null | logger -t nut-monitor
-	fi
+	manage_service stop
 }
 
 service_triggers() {
-	config_load nut_monitor
-	interface_triggers "add_trigger"
+	# No config, or error loading config is fatal
+	config_load nut_monitor || {
+		log_config_load_error "nut_monitor" "nut-monitor" "nut-monitor"
+		exit 1
+	}
+
+	config_get interface_reload_delay upsmon interface_reload_delay $DEFAULT_PROCD_INTERFACE_RELOAD_DELAY
+
+	interface_triggers "add_trigger" "upsmon" || {
+		log_error_exit "Failed to add interface triggers" nut-monitor nut-monitor
+	}
 	procd_add_reload_trigger "nut_monitor"
 }
