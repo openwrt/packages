@@ -100,13 +100,32 @@ get_notification_flags() {
 # shellcheck disable=SC2329,SC2317
 process_upsmon_section() {
 	local cfg="$1"
-	local notify_type flag_name notify_msg notify_section
+	local notify_type flag_name notify_msg notify_section val
 	local notification_name notify_flags_as_var upsmon_final_flags
 	# List of notification messages options in existing (to be converted)
 	# UCI config for nut_monitor
 	local nut_notify_message_types="onlinemsg onbattmsg lowbattmsg fsdmsg commokmsg"
 	append nut_notify_message_types "commbadmsg shutdownmsg replbattmsg"
 	append nut_notify_message_types "nocommmsmsg nocommmsg noparentmsg"
+	local nocomm_exists="false"
+
+	# Get hotsync (typo) value if present
+	config_get val "$cfg" hotsync
+	# Get hostsync value, only using hotsync as default if hostsync does not exist
+	config_get val "$cfg" hostsync "$val"
+
+	if [ -n "$val" ]; then
+		if ! uci -q set nut_monitor."$cfg".hostsync="$val"; then
+			log_migration_error "Failed to set hostsync value"
+		fi
+	fi
+
+	# Remove invalid hotsync option unconditionally
+	uci -q delete nut_monitor."$cfg".hotsync || true
+
+	if uci -q get nut_monitor.NOCOMM; then
+		nocomm_exists="true"
+	fi
 
 	# We need word-splitting to iterate over nut_notify_message_types
 	# This is a local variable defined by us, so it is safe to do this.
@@ -120,9 +139,25 @@ process_upsmon_section() {
 		# so we use tr.
 		notification_name="$(printf '%s' "$notification_name" | tr '[:lower:]' '[:upper:]')"
 		# Transform wrong NOCOMMS to NOCOMM (typo in nocommsmsg which should
-		# have been nocommmsg in previous script)
+		# have been nocommmsg in previous script), preferring NOCOMM (correct
+		# version) if both exist
 		if [ "$notification_name" = "NOCOMMMS" ]; then
 			notification_name="NOCOMM"
+		fi
+		if [ "$notification_name" = "NOCOMM" ]; then
+			if [ "$nocomm_exists" = "true" ]; then
+				# Do not delete or overwrite pre-existing NOCOMM section
+				continue
+			fi
+			if uci -q get nut_monitor."$notification_name"; then
+				uci -q delete nut_monitor."$notification_name" || {
+					log_migration_error "Failed to remove duplicate NOCOMM section"
+					# We don't want to prevent other sections from being processed
+					# if this one fails, so do not error exit, but keep going.
+					continue
+				}
+				printf "'%s': WARN: '%s'\n" "nut-monitor-migrate" "Removed duplicate NOCOMM section, likely from NOCOMMS typo" >&2
+			fi
 		fi
 		config_get notify_msg "$cfg" "$notify_type"
 		config_get notify_flags_as_var "$cfg" "$flag_name"

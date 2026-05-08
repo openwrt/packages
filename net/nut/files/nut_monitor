@@ -1,4 +1,16 @@
-#config upsmon 'upsmon'
+# **NOTE**: Due to the presence of passwords in this file, restrictive file
+# permissions on this file in actual use in /etc/config/nut_monitor should be
+# used. For example:
+# chown root:root /etc/config/nut_monitor
+# chmod 0600 /etc/config/nut_monitor
+
+# We only support one instance of upsmon, and its UCI
+# section must be named 'upsmon'
+
+# defaults for the upsmon section are compile time defaults
+# except /path/to/dir values which have no default
+# and defaultnotify which is an UCI specific setting
+#config upsmon upsmon
 #	option runas nutmon
 #	option deadtime 15
 #	option finaldelay 5 # final delay
@@ -20,7 +32,8 @@
 #	option certverify 0
 #	option forcessl 0
 #	option debugmin 0
-# option defaultnotify SYSLOG
+#	option defaultnotify SYSLOG
+# option interface_reload_delay 3000 # in milliseconds
 
 #config monitor
 #	option type primary
@@ -40,6 +53,14 @@
 #	option username upsuser
 #	option password upspassword
 
+# notification config sections must be named with an uppercase valid
+# NUT event type, from the list at
+# https://networkupstools.org/docs/man/upsmon.conf.html
+#
+# Empty notifications sections will emit a default NOTIFYFLAG <event> SYSLOG
+# line, as otherwise the NUT default of SYSLOG+WALL would be used, and the
+# `wall` command is not present in OpenWrt by default
+
 #config notifications 'COMMOK'
 #	option message "Communications with UPS %s established"
 #	option flag "SYSLOG"
@@ -49,9 +70,12 @@
 #	option flag "SYSLOG+EXEC"
 
 #config notifications 'ONLINE'
-#	option message "UPS %s is on line power"
-#	option flag "SYSLOG"
+#	option flag "IGNORE"
 
 #config notifications 'ONBATT'
 #	option message "UPS %s is on battery power"
+#	option flag "SYSLOG+EXEC"
+
+#config notifications 'SHUTDOWN'
+#	option message "UPS %s shutting down"
 #	option flag "SYSLOG+EXEC"

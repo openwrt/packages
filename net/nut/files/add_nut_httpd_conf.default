@@ -1,0 +1,28 @@
+#!/bin/sh
+
+# In recent (relevant) versions of shellcheck busybox is a valid shell type
+# shellcheck shell=busybox
+
+# UCI default script to set default password to access the NUT CGI pages
+# to be the system password for the root user (as with LuCI)
+
+# $p$root is not an actual password, it is a reference to the password
+# for root in the system password (/etc/shadow) password file
+
+# Only add this default user:password (reference) for NUT CGI if there is
+# not an existing password configuration for the NUT CGI, include for other
+# users.
+
+[ -z "$IPKG_INSTROOT" ] || exit 0
+
+touch /etc/httpd.conf
+grep -q '^/cgi-bin/nut' /etc/httpd.conf 2>/dev/null || {
+	# The SC2016 shellcheck directive is required as shellcheck thinks the
+	# $p$root is a variable that gets expanded
+	# shellcheck disable=SC2016
+	echo '/cgi-bin/nut:root:$p$root' >>/etc/httpd.conf
+	if ! /etc/init.d/uhttpd restart; then
+		logger -s -t nut-cgi "Failed to restart uhttpd after http.conf update"
+		exit 1
+	fi
+}

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nut
 PKG_VERSION:=2.8.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.networkupstools.org/source/2.8/
@@ -69,9 +69,12 @@ define Package/nut-server/install
 	$(INSTALL_DIR) $(1)/etc/nut
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_DIR) $(1)/lib/functions/nut
 	$(INSTALL_DIR) $(1)/usr/share/nut
 	$(INSTALL_BIN) ./files/nut-server.init $(1)/etc/init.d/nut-server
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/upsd $(1)/usr/sbin
+	$(INSTALL_DATA) ./files/nut-server-config.sh.functions $(1)/lib/functions/nut/nut-server-config.sh
+	$(INSTALL_DATA) ./files/nut-server-service.sh.functions $(1)/lib/functions/nut/nut-server-service.sh
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/upsd $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/nut/cmdvartab $(1)/usr/share/nut/
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/nut_server $(1)/etc/config/nut_server
@@ -84,15 +87,15 @@ define Package/nut-server/install
 	# Mangle libhid.usermap into a format (hotplug shell script) useful for OpenWrt
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/usb
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/tty
-	$(INSTALL_BIN) ./files/nut_serial.hotplug $(1)/etc/hotplug.d/tty/40-nut_serial
-	$(INSTALL_BIN) ./files/30-libhid-ups.head $(1)/etc/hotplug.d/usb/30-libhid-ups
-	$(CP) $(PKG_INSTALL_DIR)/etc/hotplug/usb/libhid.usermap $(PKG_BUILD_DIR)/30-libhid-ups.middle
+	$(INSTALL_BIN) ./files/nut-serial.hotplug $(1)/etc/hotplug.d/tty/40-nut-serial
+	$(CP) ./files/libhid-ups.hotplug $(PKG_BUILD_DIR)/30-libhid-ups
+	$(CP) $(PKG_INSTALL_DIR)/etc/hotplug/usb/libhid.usermap $(PKG_BUILD_DIR)/libhid-ups.parsed-usermap
 	$(SED) '/^$$$$/d' \
 		-e '/^#/d' \
 		-E -e 's:^[^ ][^ ]*  *0x0003  *0x0{0,3}([^ ][^ ]*)  *0x0{0,3}*([^ ][^ ]*).*:\1/\2/* | \\:' \
-		$(PKG_BUILD_DIR)/30-libhid-ups.middle
-	tail -n+2 $(PKG_BUILD_DIR)/30-libhid-ups.middle >>$(1)/etc/hotplug.d/usb/30-libhid-ups
-	cat ./files/30-libhid-ups.tail >>$(1)/etc/hotplug.d/usb/30-libhid-ups
+		$(PKG_BUILD_DIR)/libhid-ups.parsed-usermap
+	$(SED) 's^### insert libhid-ups.parsed-usermap content here ###^\ncat "$(PKG_BUILD_DIR)/libhid-ups.parsed-usermap"^e' $(PKG_BUILD_DIR)/30-libhid-ups
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/30-libhid-ups $(1)/etc/hotplug.d/usb/30-libhid-ups
 endef
 
 define Package/nut-common
@@ -117,6 +120,9 @@ endef
 define Package/nut-common/install
 	$(INSTALL_DIR) $(1)/etc/nut
 	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_DIR) $(1)/lib/functions/nut
+	$(INSTALL_DATA) ./files/nut-common.sh.functions $(1)/lib/functions/nut/nut-common.sh
+	$(INSTALL_DATA) ./files/nut-service.sh.functions $(1)/lib/functions/nut/nut-service.sh
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libupsclient.so* $(1)/usr/lib/
 	ln -sf /var/etc/nut/nut.conf $(1)/etc/nut/nut.conf
 endef
@@ -161,12 +167,19 @@ process. Every UPS that is defined in the upsmon.conf configuration file
 is assigned a power value and a type (secondary or primary).
 endef
 
+define Package/nut-upsmon/conffiles
+/etc/config/nut_monitor
+/etc/nut/upsmon.conf
+endef
+
 define Package/nut-upsmon/install
 	$(INSTALL_DIR) $(1)/etc/nut
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_DIR) $(1)/lib/functions/nut
+	$(INSTALL_DIR) $(1)/usr/bin $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/nut-monitor.init $(1)/etc/init.d/nut-monitor
+	$(INSTALL_DATA) ./files/nut-monitor-config.sh.functions $(1)/lib/functions/nut/nut-monitor-config.sh
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/upsmon $(1)/usr/sbin/
 	$(INSTALL_BIN) ./files/nutshutdown $(1)/usr/sbin/nutshutdown
 	$(INSTALL_DATA) ./files/nut-monitor-migrate.default $(1)/etc/uci-defaults/80-nut-monitor-migrate
@@ -195,7 +208,8 @@ endef
 define Package/nut-upsmon-sendmail-notify/install
 	$(INSTALL_DIR) $(1)/usr/bin $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/nut-sendmail-notify $(1)/usr/bin/
-	$(INSTALL_DATA) ./files/nut-sendmail-notify.default $(1)/etc/uci-defaults/nut-sendmail-notify
+	$(INSTALL_DATA) ./files/nut-sendmail-notify.default $(1)/etc/uci-defaults/81-nut-sendmail-notify
+	$(INSTALL_DATA) ./files/nut-notify-exec.default $(1)/etc/uci-defaults/71-nut-notify-exec
 endef
 
 define Package/nut-upsc
@@ -289,6 +303,10 @@ other uses that are possible.
 You can alternatively write your own script and save some space.
 endef
 
+define Package/nut-upssched/conffiles
+/etc/nut/upssched.conf
+endef
+
 define Package/nut-upssched/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_DIR) $(1)/usr/sbin
@@ -297,7 +315,8 @@ define Package/nut-upssched/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/upssched-cmd $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/upssched $(1)/usr/sbin/
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/nut/upssched.conf.sample $(1)/etc/nut/upssched.conf
-	$(INSTALL_DATA) ./files/nut-sched.default $(1)/etc/uci-defaults/nut-upssched
+	$(INSTALL_DATA) ./files/nut-sched.default $(1)/etc/uci-defaults/80-nut-upssched
+	$(INSTALL_DATA) ./files/nut-notify-exec.default $(1)/etc/uci-defaults/70-nut-notify-exec
 endef
 
 define Package/nut-upssched/conffiles
@@ -317,6 +336,7 @@ commands from any web browser. Javascript and cookies are not required.
 endef
 
 define Package/nut-web-cgi/conffiles
+/etc/uci-defaults/add_nut_httpd_conf
 /etc/nut/hosts.conf
 /etc/nut/upsset.conf
 /etc/nut/upsstats.html
@@ -331,12 +351,9 @@ define Package/nut-web-cgi/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/html/* $(1)/www/nut/
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/cgi-bin/* $(1)/www/cgi-bin/nut
-	$(INSTALL_CONF) ./files/add_nut_httpd_conf $(1)/etc/uci-defaults/add_nut_httpd_conf
+	$(INSTALL_CONF) ./files/add_nut_httpd_conf.default $(1)/etc/uci-defaults/add_nut_httpd_conf
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/nut/upsstats.html.sample $(1)/etc/nut/upsstats.html
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/nut/upsstats-single.html.sample $(1)/etc/nut/upsstats-single.html
-	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/nut/upsset.conf.sample $(1)/etc/nut/upsset.conf.disable
-	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/nut/upsset.conf.sample $(1)/etc/nut/upsset.conf.enable
-	$(SED) 's/### \?//' $(1)/etc/nut/upsset.conf.enable
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/nut_cgi $(1)/etc/config/nut_cgi
 	$(INSTALL_DIR) $(1)/etc/init.d

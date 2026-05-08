@@ -1,0 +1,384 @@
+#!/bin/sh
+# Shebang line included so editors and shellcheck/shfmt know this contains
+# shell code
+
+# Create configuration for upsd and UPS drivers for NUT
+
+# In recent (relevant) versions of shellcheck busybox is a valid shell type
+# shellcheck shell=busybox
+
+# Pre-requisite sourcing for functions this script uses
+# * /lib/functions.sh has been sourced
+# * /lib/functions/nut/nut-service.sh has been sourced
+
+# * /lib/functions/nut/nut-common.sh must be source and find_statepath executed
+#   before build_config is called
+
+# Ensure find_statepath from nut-service.sh is executed
+# before srv_config in this file.
+
+# Ephemeral files, recreated on each OpenWrt boot
+USERS_C=/var/etc/nut/upsd.users # NUT user and password file
+UPSD_C=/var/etc/nut/upsd.conf   # NUT upsd (UPS daemon) configuration
+UPS_C=/var/etc/nut/ups.conf     # NUT UPS configuration (ini-style section per UPS)
+NUT_CONF=/var/etc/nut/nut.conf  # NUT mode config
+
+# config_load is done by the sourcing script, before executing any functions in
+# this file
+
+# Writes configuration values to the UPS run-time configuration file
+get_write_ups_config() {
+	local ups="$1"
+	local var="$2"
+	local def="$3"
+	local flag="$4"
+	local config_file="$5"
+	local val
+
+	if [ -z "$flag" ] || [ "$flag" = "0" ]; then
+		config_get val "$ups" "$var" "$def"
+		[ -n "$val" ] && printf "%s = %s\n" "$var" "$val" >>"$config_file"
+	else
+		config_get_bool val "$ups" "$var" "$def"
+		# In NUT config a flag is either present or not present
+		# present is true, not present is false. Map UCI bool to NUT flags.
+		if [ "$val" = "1" ]; then
+			printf "%s\n" "$var" >>"$config_file"
+		fi
+	fi
+}
+
+# Add upsd listen address and port to the run-time configuration
+listen_address() {
+	local srv="$1"
+	local config_file="$2"
+	local address port
+
+	config_get address "$srv" address "::1"
+	config_get port "$srv" port
+	if [ -n "$port" ]; then
+		printf "LISTEN %s %s\n" "$address" "$port" >>"$config_file"
+	else
+		printf "LISTEN %s\n" "$address" >>"$config_file"
+	fi
+}
+
+# Adds upsd (NUT server) run-time configuration
+srv_config() {
+	local srv="$1"
+	local config_file="$2"
+	local maxage maxconn certfile
+
+	config_get maxage "$srv" maxage
+	[ -n "$maxage" ] && printf "MAXAGE %s\n" "$maxage" >>"$config_file"
+
+	[ -n "$STATEPATH" ] && printf "STATEPATH %s\n" "$STATEPATH" >>"$config_file"
+
+	config_get maxconn "$srv" maxconn
+	[ -n "$maxconn" ] && printf "MAXCONN %s\n" "$maxconn" >>"$config_file"
+
+	#NOTE: certs only apply to SSL-enabled version
+	config_get certfile "$srv" certfile
+	[ -n "$certfile" ] && printf "CERTFILE %s\n" "$certfile" >>"$config_file"
+}
+
+nut_user_instcmd() {
+	local val="$1"
+	local config_file="$2"
+	printf "  instcmds = %s\n" "$val" >>"$config_file"
+}
+
+# Adds run-time configuration for NUT users to the upsd.users file
+nut_user_add() {
+	local user="$1"
+	local config_file="$2"
+	local a
+	local val
+
+	config_get val "$user" username "$user"
+	printf "[%s]\n" "$val" >>"$config_file"
+
+	config_get val "$user" password
+	[ -n "$val" ] && printf "  password = %s\n" "$val" >>"$config_file"
+
+	config_get val "$user" actions
+	set -f
+	for a in $val; do
+		printf "  actions = %s\n" "$a" >>"$config_file"
+	done
+	set +f
+
+	# The name instcmd is use for both the UCI option and the callback function
+	config_list_foreach "$user" instcmd nut_user_instcmd "$config_file"
+
+	config_get val "$user" upsmon
+	if [ -n "$val" ]; then
+		printf "  upsmon %s\n" "$val" >>"$config_file"
+	fi
+}
+
+# Builds upsd (NUT server) run-time configuration
+build_server_config() {
+	local conf_group="$1"
+	local nut_conf_err="false"
+
+	umask 022
+	mkdir -p "$(dirname "$UPSD_C")" || {
+		log_error "Failed to create directory for upsd configuration file '$UPSD_C'" nut-server-config.sh nut-server-config
+		return 1
+	}
+
+	rm -f "$USERS_C.new"
+	rm -f "$UPSD_C.new"
+
+	umask 117
+	echo "# Config file automatically generated from UCI config" >"$USERS_C.new"
+	echo "# Config file automatically generated from UCI config" >"$UPSD_C.new"
+	restore_umask
+
+	# For nut_user and listen_address, the section type and callback function
+	# are named the same
+	config_foreach nut_user_add user "$USERS_C.new"
+	config_foreach listen_address listen_address "$UPSD_C.new"
+	if have_section_of_type "upsd"; then
+		config_foreach srv_config upsd "$UPSD_C.new"
+	else
+		# If config 'nut_server' does not have a 'upsd' section, use a default
+		# configuration
+		[ -n "$STATEPATH" ] && printf "STATEPATH %s\n" "$STATEPATH" >>"$UPSD_C.new"
+	fi
+
+	# Failure to write nut.conf is not hard-fatal although it means the NUT will
+	# not start the service.
+	# Also, we only write nut.conf if there is not one already
+	if [ ! -s "$NUT_CONF" ] || grep -q '^MODE=none' "$NUT_CONF"; then
+		umask 133
+		if ! printf "MODE=netserver\n" >"$NUT_CONF"; then
+			log_error "nut-server creation of nut.conf failed" nut-server-config.sh nut-server-config
+			return 1
+		fi
+	else
+		# Otherwise if nut-server is already configured, make sure both
+		# nut-server (this service) and nut-monitor are started
+		if grep -q '^MODE=netclient' "$NUT_CONF"; then
+			# In modern OpenWrt 'sed -i' modifies the specified files, without backup
+			sed -i -e 's/^MODE=netclient/MODE=both/' "$NUT_CONF" || {
+				log_error "Failed to update nut.conf to support both upsmon and upsd" nut-server-config.sh nut-server-config
+				nut_conf_err="true"
+			}
+		fi
+	fi
+
+	if [ "$nut_conf_err" = "false" ] && [ -n "$conf_group" ]; then
+		chgrp "$conf_group" "$USERS_C.new" || {
+			log_error "failed to set group on '$USERS_C.new'" nut-server-config.sh nut-server-config
+			nut_conf_err="true"
+		}
+		chgrp "$conf_group" "$UPSD_C.new" || {
+			log_error "failed to set group on '$UPSD_C.new'" nut-server-config.sh nut-server-config
+			nut_conf_err="true"
+		}
+	fi
+
+	# shellcheck disable=SC2034
+	[ "$nut_conf_err" = "false" ] || return 1
+}
+
+# shellcheck disable=SC2317,SC2329
+nut_ups_defoverride() {
+	local overvar="$1"
+	local defover="$2"
+	local config_file="$3"
+	local ups="$4"
+	local overtype
+	local overval
+
+	# tr is used as global replace in variable parameter expansion is not
+	# available in ash.
+	overtype="$(printf "%s" "$overvar" | tr '_' '.')"
+
+	config_get overval "$ups" "${defover}_${overvar}"
+	[ -n "$overval" ] && printf "%s.%s = %s\n" "${defover}" "${overtype}" "$overval" >>"$config_file"
+}
+
+# From documentation and fixing of nut_ups_other (previously other or do_other)
+# function (below) in https://github.com/rpavlik in
+# https://github.com/openwrt/packages/pull/28308
+#
+# For each value "x" in the per-driver ($ups) list "other", get the value of
+#   per-driver config variable "other_x", and if it is not empty,
+#   write "x = {value of other_x}" to the config file.
+# For each value "x" in the per-driver ($ups) list "otherflag", get the value of
+#   per-driver config variable "otherflag_x", and if it is true, write
+#  "x" to the config file.
+
+# shellcheck disable=SC2317,SC2329
+nut_ups_other() {
+	local othervar="$1"
+	local othervarflag="$2"
+	local config_file="$3"
+	local ups="$4"
+	local otherval
+
+	if [ "$othervarflag" = "otherflag" ]; then
+		config_get_bool otherval "${ups}" "${othervarflag}_${othervar}"
+		[ "$otherval" = "1" ] && printf "%s\n" "${othervar}" >>"$config_file"
+	else
+		config_get otherval "${ups}" "${othervarflag}_${othervar}"
+		[ -n "$otherval" ] && printf "%s = %s\n" "${othervar}" "$otherval" >>"$config_file"
+	fi
+}
+
+# Builds UPS-specific run-time configuration
+build_ups_config() {
+	local ups="$1"
+	local config_file="$2"
+
+	printf "[%s]\n" "$ups" >>"$config_file"
+
+	get_write_ups_config "$ups" bus "" "" "$config_file"
+	get_write_ups_config "$ups" cable "" "" "$config_file"
+	get_write_ups_config "$ups" community "" "" "$config_file"
+	get_write_ups_config "$ups" desc "" "" "$config_file"
+	get_write_ups_config "$ups" driver "usbhid-ups" "" "$config_file"
+	get_write_ups_config "$ups" ignorelb 0 1 "$config_file"
+	get_write_ups_config "$ups" interruptonly 0 1 "$config_file"
+	get_write_ups_config "$ups" interruptsize "" "" "$config_file"
+	get_write_ups_config "$ups" maxreport "" "" "$config_file"
+	get_write_ups_config "$ups" maxstartdelay "" "" "$config_file"
+	get_write_ups_config "$ups" mfr "" "" "$config_file"
+	get_write_ups_config "$ups" model "" "" "$config_file"
+	get_write_ups_config "$ups" nolock 0 1 "$config_file"
+	get_write_ups_config "$ups" notransferoids 0 1 "$config_file"
+	get_write_ups_config "$ups" offdelay "" "" "$config_file"
+	get_write_ups_config "$ups" ondelay "" "" "$config_file"
+	get_write_ups_config "$ups" pollfreq "" "" "$config_file"
+	get_write_ups_config "$ups" port "auto" "" "$config_file"
+	get_write_ups_config "$ups" product "" "" "$config_file"
+	get_write_ups_config "$ups" productid "" "" "$config_file"
+	get_write_ups_config "$ups" retrydelay "" "" "$config_file"
+	get_write_ups_config "$ups" sdorder "" "" "$config_file"
+	get_write_ups_config "$ups" sdtime "" "" "$config_file"
+	get_write_ups_config "$ups" serial "" "" "$config_file"
+	get_write_ups_config "$ups" shutdown_delay "" "" "$config_file"
+	get_write_ups_config "$ups" snmp_version "" "" "$config_file"
+	get_write_ups_config "$ups" snmp_retries "" "" "$config_file"
+	get_write_ups_config "$ups" snmp_timeout "" "" "$config_file"
+	get_write_ups_config "$ups" synchronous "" "" "$config_file"
+	get_write_ups_config "$ups" usd "" "" "$config_file"
+	get_write_ups_config "$ups" vendor "" "" "$config_file"
+	get_write_ups_config "$ups" vendorid "" "" "$config_file"
+
+	# Params specific to NetXML driver
+	get_write_ups_config "$ups" login "" "" "$config_file"
+	get_write_ups_config "$ups" password "" "" "$config_file"
+	get_write_ups_config "$ups" subscribe 0 1 "$config_file"
+
+	config_list_foreach "$ups" override nut_ups_defoverride override "$config_file" "$ups"
+	config_list_foreach "$ups" default nut_ups_defoverride default "$config_file" "$ups"
+
+	# For each entry in the "$ups" list "other", get the
+	# variable "other_${entry}", and if not empty, write
+	# "${entry} = ${value of other_${entry}}" to the config file.
+	config_list_foreach "$ups" other nut_ups_other other "$config_file" "$ups"
+
+	# For each entry in the "$ups" list "otherflag", get the
+	# variable "otherflag_${entry}", and if true, write "${entry}" to
+	# the config file.
+	config_list_foreach "$ups" otherflag nut_ups_other otherflag "$config_file" "$ups"
+
+	echo "" >>"$config_file"
+	# shellcheck disable=SC2034
+	haveupscfg=true
+}
+
+# Add global drivers settings to run-time config
+build_global_driver_config() {
+	local cfg="$1"
+	local config_file="$2"
+
+	# Global driver config
+	get_write_ups_config "$cfg" chroot "" "" "$config_file"
+	get_write_ups_config "$cfg" driverpath "" "" "$config_file"
+	get_write_ups_config "$cfg" maxstartdelay "" "" "$config_file"
+	get_write_ups_config "$cfg" maxretry "" "" "$config_file"
+	get_write_ups_config "$cfg" retrydelay "" "" "$config_file"
+	get_write_ups_config "$cfg" pollinterval "" "" "$config_file"
+	get_write_ups_config "$cfg" synchronous "" "" "$config_file"
+	echo "" >>"$config_file"
+}
+
+# Orchestrate the run-time configuration building process
+build_config() {
+	local conf_group
+	# 'pseudo-global' to allow config_foreach build_ups_config to signal that
+	# at least one UPS section was configured. We do not want return 1 in
+	# the config_foreach as that would abort processing for other UPS sections.
+	local haveupscfg="false"
+
+	if [ -z "$RUNAS" ]; then
+		log_error "RUNAS is empty; cannot determine group for configuration files" nut-server-config.sh nut-server-config
+		return 1
+	fi
+
+	if ! conf_group="$(id -gn "$RUNAS")"; then
+		log_error "Failed to determine group for user '$RUNAS'" nut-server-config.sh nut-server-config
+		return 1
+	fi
+	[ -n "$conf_group" ] || return 1
+
+	# shellcheck disable=SC2153
+	[ -d "$STATEPATH" ] || {
+		umask 007
+		mkdir -p "$STATEPATH" || {
+			# We hard fail here, as we cannot rely on service state if
+			# STATEPATH does not exist
+			log_error "Failed to create ${STATEPATH}." nut-server nut-server
+			# return so we can do cleanup
+			return 1
+		}
+		if [ -n "$conf_group" ]; then
+			chown "root:${conf_group}" "$STATEPATH" || {
+				log_error "Failed to change owner:group on STATEPATH ('$STATEPATH')" nut-server-config.sh nut-server-config
+				return 1
+			}
+		fi
+	}
+
+	# At this point we know STATEPATH exists and we have either created it with
+	# the required owner, group, and permissions, or it was created elsewhere.
+	# We do not second-guess other sources of creating this STATEPATH and
+	# presume that as long as we have read and traversal access, that the
+	# permissions are intentional. As 'stat' is not available by default in
+	# OpenWrt we just check if we can read and traverse the directory.
+	if [ ! -r "$STATEPATH" ] || [ ! -x "$STATEPATH" ]; then
+		log_error "We do not have access to STATEPATH '$STATEPATH'." nut-server-config.sh nut-server-config
+		return 1
+	fi
+
+	# This directory is shared with the nut-monitor which runs as a different
+	# user and group, so must be all readable. We set the ownership and
+	# permissions on individual files more restrictively, as needed
+	# shellcheck disable=SC2174
+	umask 022
+	mkdir -p "$(dirname "$UPS_C")"
+	rm -f "$UPS_C"
+	umask 137
+	echo "# Config file automatically generated from UCI config" >"$UPS_C.new"
+	chgrp "$conf_group" "$UPS_C.new" || {
+		log_error "Failed to change group on UPS_C.new (new UPS config)" nut-server-config.sh nut-server-config
+		return 1
+	}
+
+	config_foreach build_global_driver_config driver_global "$UPS_C.new"
+	config_foreach build_ups_config driver "$UPS_C.new"
+
+	if ! build_server_config "$conf_group"; then
+		log_msg "Failed to configure upsd. Not starting." nut-server-config.sh nut-server-config warn
+		return 1
+	elif [ "$haveupscfg" = "false" ]; then
+		log_msg "No configured UPS. Not starting upsd." nut-server-config.sh nut-server-config warn
+		return 2
+	fi
+	return 0
+}

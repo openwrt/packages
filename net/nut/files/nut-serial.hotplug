@@ -1,0 +1,187 @@
+#!/bin/sh
+
+# In recent versions of shellcheck, busybox is a valid shell type
+# shellcheck shell=busybox
+
+# OpenWrt hotplug script to set permissions on USB serial
+# ports to allow NUT to access UPSes attached via
+# USB-to-serial cables
+
+# OpenWrt hotplug calls this script with DEVNAME and
+# ACTION set in the environment
+
+# IPKG_INSTROOT is intentionally only set when building an image and
+# is intentionally empty on a live OpenWrt device
+
+# shellcheck source=net/nut/files/functions.sh.functions
+. "${IPKG_INSTROOT}"/lib/functions.sh || {
+	# Before our sourcing error logging definitions are sourced
+	logger -s -t nut-serial-hotplug "Unable to source 'functions.sh' in 'nut-serial' hotplug. Bailing"
+	exit 1
+}
+
+# 'shellcheck' complains about nut-common.sh due to a case pattern it does not understand, even
+# though it is correctly POSIX compliant
+# shellcheck disable=SC1094
+# shellcheck source=net/nut/files/nut-common.sh.functions
+. "${IPKG_INSTROOT}"/lib/functions/nut/nut-common.sh || {
+	# Before our sourcing error logging definitions are sourced
+	logger -s -t nut-serial-hotplug "Unable to source 'nut-common.sh' in 'nut-serial' hotplug. Bailing"
+	exit 1
+}
+
+# shellcheck source=net/nut/files/nut-service.sh.functions
+. "${IPKG_INSTROOT}"/lib/functions/nut/nut-service.sh || {
+	log_source_error "nut-service.sh" "nut-serial" "nut-serial-hotplug"
+	exit 1
+}
+
+# 'shellcheck' does not understand config_foreach and therefore treats
+# functions and variables referenced only from config_foreach as not reachable,
+# or never invoked.
+# shellcheck disable=SC2317,SC2329
+nut_set_serial_port_permissions() {
+	local devname="$1" # Must be full path (e.g. /dev/...)
+	local ups="$2"
+	local device_group
+
+	# Get group of RUNAS user, to set the group of the hotplugged device node
+	# If RUNAS user does not exist, exit with an error.
+	device_group="$(id -gn "${RUNAS:-nut}")" || {
+		log_error "Unable to find group for '$RUNAS'. Skipping ups '$ups'" nut-serial nut-serial-hotplug
+		return 1
+	}
+
+	# Guard against disappearing device (e.g. due to 'bouncing' device)
+	if [ -e "$devname" ]; then
+		if ! chgrp "$device_group" "$devname"; then
+			log_error "Unable to set group on '$devname'" nut-serial nut-serial-hotplug
+			return 1
+		fi
+	else
+		log_error "'$devname' disappeared before setting group" nut-serial nut-serial-hotplug
+		return 1
+	fi
+
+	# Device could disappear between chgrp and chmod
+	if [ -e "$devname" ]; then
+		if ! chmod g+rw "$devname"; then
+			log_error "Unable to set permissions on '$devname'" nut-serial nut-serial-hotplug
+			return 1
+		fi
+	else
+		log_error "'$devname' disappeared before setting permissions" nut-serial nut-serial-hotplug
+		return 1
+	fi
+	return 0
+}
+
+# If enable_usb_serial is set, set the permissions on applicable USB
+# serial devices to allow NUT access
+# We do not exit with error as that would stop processing of other UPS config
+# sections.
+# We use 'did_set_perms' as a 'pseudo-global' from nut_on_hotplug_add in order
+# to return a value to config_foreach
+
+# 'shellcheck' does not understand config_foreach and therefore treats
+# functions and variables referenced only from config_foreach as not reachable,
+# or never invoked.
+# shellcheck disable=SC2317,SC2329
+nut_serial() {
+	local ups="$1" # UCI section name is also the UPS configuration name
+	local enable_usb_serial port normal_devname
+
+	config_get_bool enable_usb_serial "$ups" enable_usb_serial 0
+	config_get port "$ups" port
+
+	[ "$enable_usb_serial" = "1" ] && {
+		# If port is specified only change tty's matching port
+		if [ -n "$port" ] && [ "${port#/dev/}" = "${port}" ]; then
+			port="/dev/$port"
+		fi
+		# Normalize DEVNAME
+		normal_devname="$DEVNAME"
+		if [ -n "$DEVNAME" ] && [ "${DEVNAME#/dev/}" = "${DEVNAME}" ]; then
+			normal_devname="/dev/$DEVNAME"
+		fi
+		# Empty port from configuration means match any device.
+		if [ "$port" = "$normal_devname" ] || [ "$port" = "" ]; then
+			if nut_set_serial_port_permissions "$normal_devname" "$ups"; then
+				did_set_perms="true"
+			fi
+		fi
+	}
+}
+
+nut_on_hotplug_add() {
+	# We use did_set_perms as a 'pseudo-global'. It is visible and can be
+	# modified by called functions, but the changes do not propagate up from
+	# this function.
+	local did_set_perms="false"
+
+	config_load nut_server || {
+		log_config_load_error "nut_server" "nut-serial" "nut-serial-hotplug"
+		exit 1
+	}
+
+	# Only find statepath and runas once per event
+	# sets RUNAS
+	find_runas "upsd" "nut_server" || {
+		log_error_exit "Failed to set RUNAS" nut-serial nut-serial-hotplug
+	}
+
+	# Check if serial USB UPS for each NUT driver instance (UPS), and if so
+	# configure permissions to allow NUT to access the port
+	config_foreach nut_serial driver
+
+	# If we set permissions on a device that may have a UPS attached, run
+	# the UPS (NUT) server reload to check for UPS configuration and
+	# attempt to reload the driver and/or server
+	if [ "$did_set_perms" = "true" ]; then
+		# Informational and not an error
+		logger -t nut-serial-hotplug "Successfully set permissions for serial device(s)"
+		# We shouldn't get here if hotplug is disabled (race condition if we do), so log it as an error
+		if ! allow_hotplug_restart; then
+			log_error "Did not restart NUT after setting permissions as hotplug restart is disabled" nut-serial nut-serial-hotplug
+			# Disabled hotplug is an allowed state
+			return 0
+		fi
+		if ! /etc/init.d/nut-server enabled; then
+			# shellcheck disable=SC2153
+			log_error "NUT server disabled when processing hotplug event 'add' for '$DEVNAME'." nut-serial nut-serial-hotplug
+			# Disabled nut-server is an allowed state
+			return 0
+		else
+			# Initscript should have its own logging
+			/etc/init.d/nut-server reload || return 1
+		fi
+	fi
+	return 0
+}
+
+# Do not do any hotplug actions if hotplug is disabled. Not an error but log
+# for information
+if ! allow_hotplug_restart; then
+	# Informational and not an error
+	logger -t nut-serial-hotplug "Did not set permissions on serial port hotplug as NUT hotplug is disabled"
+	exit 0
+fi
+
+if ! [ "$(id -u)" = "0" ]; then
+	log_error_exit "Cannot set update device node on serial port hotplug. Hotplug not running as root." nut-serial nut-serial-hotplug
+fi
+
+# Only act on hotplug events with ACTION 'add' and where
+# the hotplugged device is a USB serial port
+# shellcheck disable=SC2153
+if [ "$ACTION" = "add" ] && [ -n "$DEVNAME" ]; then
+	# On add of a USB serial port with name
+	# ttyUSB* or ttyAMA* or ttyACM* or ttyGS*
+	case "$DEVNAME" in
+	ttyUSB* | ttyAMA* | ttyACM* | ttyGS*)
+		nut_on_hotplug_add || exit 1
+		;;
+	esac
+fi
+
+exit 0

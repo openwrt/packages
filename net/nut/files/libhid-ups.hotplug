@@ -1,0 +1,347 @@
+#!/bin/sh
+
+# In recent (relevant) versions of shellcheck busybox is a valid shell type
+# shellcheck shell=busybox
+
+# IPKG_INSTROOT is intentionally only set when building an image and
+# is intentionally empty on a live OpenWrt device
+
+# The shellcheck source directives are used during development by external
+# tools to find the source files on the development system. They do not
+# affect runtime behaviour.
+
+# Also the filenames in the shellcheck source directives may differ from the
+# production names that are sourced on live OpenWrt devices.
+
+# shellcheck source=net/nut/files/functions.sh.functions
+. "${IPKG_INSTROOT}"/lib/functions.sh || {
+	# Before our sourcing error logging definitions are sourced
+	logger -s -t nut-usb-hotplug "Unable to source 'functions.sh' in 'libhid-ups' hotplug. Bailing"
+	exit 1
+}
+
+# 'shellcheck' complains about nut-common.sh due to a case pattern it does not understand, even
+# though it is correctly POSIX compliant
+# shellcheck disable=SC1094
+# shellcheck source=net/nut/files/nut-common.sh.functions
+. "${IPKG_INSTROOT}"/lib/functions/nut/nut-common.sh || {
+	# Before our sourcing error logging definitions are sourced
+	logger -s -t nut-usb-hotplug "Unable to source 'nut-common.sh' in 'libhid-ups' hotplug. Bailing"
+	exit 1
+}
+
+# shellcheck source=net/nut/files/nut-service.sh.functions
+. "${IPKG_INSTROOT}"/lib/functions/nut/nut-service.sh || {
+	log_source_error "nut-service.sh" "libhid-ups" nut-usb-hotplug
+	exit 1
+}
+
+# shellcheck source=net/nut/files/nut-server-service.sh.functions
+. "${IPKG_INSTROOT}"/lib/functions/nut/nut-server-service.sh || {
+	log_source_error "nut-server-service.sh" "libhid-ups" nut-usb-hotplug
+	exit 1
+}
+
+config_load nut_server || {
+	log_config_load_error "nut_server" "libhid-ups" nut-usb-hotplug
+	exit 1
+}
+
+# shellcheck disable=SC2329,SC2317
+start_stop_driver() {
+	local ups="$1"
+	local known_devname="$2"
+
+	# ACTION and DEVNAME come from the calling hotplug event
+	# shellcheck disable=SC2153
+	case "$ACTION" in
+	add)
+		# Skip hotplug if it is disabled or NUT is shutting down
+		if ! allow_hotplug_restart; then
+			logger -s -t nut-usb-hotplug "Hotplug restart disabled starting '$ups' when processing '$ACTION' for '$DEVNAME'"
+			# This is a configuration not an error
+			return 0
+		fi
+
+		# Set permissions to allow the UPS device to start
+		# In some cases this may be enough for the UPS to start working
+		if ! ensure_usb_ups_access "$ups" "$known_devname"; then
+			logger -s -t nut-usb-hotplug "Unable to enable access to '$ups' when processing '$ACTION' for '$DEVNAME'"
+			return 0
+		fi
+
+		# Start the newly hotplugged UPS
+		# The initscript is effectively a noop if the UPS is already started
+		# (does not stop and restart, in that case).
+		# We check enabled again here, in case of a race condition since
+		# our last check.
+		if /etc/init.d/nut-server enabled; then
+			if ! /etc/init.d/nut-server start "$ups"; then
+				logger -s -t nut-usb-hotplug "Failed to start '$ups' processing '$ACTION' for '$DEVNAME'"
+				return 0
+			fi
+		else
+			logger -s -t nut-usb-hotplug "Hotplug became disabled while processing '$ACTION' for '$DEVNAME'."
+			return 0
+		fi
+		;;
+	remove)
+		# Stop the newly removed UPS, even if hotplug is disabled.
+		# We stop only the removed UPS as we want the NUT service and other
+		# UPS (if any) to remain up.
+		/etc/init.d/nut-server stop "$ups" || {
+			logger -s -t nut-usb-hotplug "Failed to stop nut-driver instance (UPS) '$ups'."
+			return 0
+		}
+		;;
+	*)
+		# Ignore all other hotplug ACTION types
+		return 0
+		;;
+	esac
+	# We do not return 0 here as it is unnecessary (all case branches, including
+	# catch-all have a return) and shellcheck will complain if we do.
+}
+
+# We do not exit with error as that would abort processing for any other
+# drivers/devices
+
+# shellcheck disable=SC2329,SC2317
+nut_driver_config() {
+	local ups="$1"
+	local try_match="$2"
+	local cfg_vendorid cfg_productid
+
+	# Configuration might not have a vendorid. This is allowed, and in that case
+	# we keep going as we will restart this UPS with no match.
+	config_get cfg_vendorid "$ups" vendorid
+	if [ -n "$cfg_vendorid" ] && ! check_valid_hex_number "${cfg_vendorid/0x/}"; then
+		logger -s -t nut-usb-hotplug "Configured vendorid for '$ups' is not valid"
+		nd_driver_config_error=true
+		return 0
+	fi
+
+	case "$cfg_vendorid" in
+	'')
+		# Configuration might not have a vendorid. This is allowed, and in that
+		# case we keep going as we may restart this UPS with no match.
+		;;
+	0x*)
+		cfg_vendorid="$(printf "%04x" "$cfg_vendorid")"
+		;;
+	*)
+		cfg_vendorid="$(printf "%04x" "0x$cfg_vendorid")"
+		;;
+	esac
+
+	# Configuration might not have a productid. This is allowed, and in that case
+	# we keep going as we will restart this UPS with no match.
+	config_get cfg_productid "$ups" productid
+	if [ -n "$cfg_productid" ] && ! check_valid_hex_number "${cfg_productid/0x/}"; then
+		logger -s -t nut-usb-hotplug "Configured productid for '$ups' is not valid"
+		nd_driver_config_error=true
+		return 0
+	fi
+	case "$cfg_productid" in
+	'')
+		# Configuration might not have a productid. This is allowed, and in that
+		# case we keep going as we may restart this UPS with no match.
+		;;
+	0x*)
+		cfg_productid="$(printf "%04x" "$cfg_productid")"
+		;;
+	*)
+		cfg_productid="$(printf "%04x" "0x$cfg_productid")"
+		;;
+	esac
+
+	# ACTION and DEVNAME come from the calling hotplug event
+
+	# If we could not match a device in the previous round, or the configuration
+	# for the UPS does not have a vendorid and productid, start this UPS
+	# without checking for a match
+	if [ "$try_match" = "no" ]; then
+		if [ "$ACTION" = "add" ]; then
+			if ! allow_hotplug_restart; then
+				logger -s -t nut-usb-hotplug "Hotplug restart disabled starting '$ups' when processing '$ACTION' for '$DEVNAME'"
+				return 0
+			fi
+			# We check enabled again here, in case of a race condition since
+			# our last check.
+			if /etc/init.d/nut-server enabled; then
+				# If we don't have a specific match, attempt a reload rather
+				# than restart of '$ups'. The nut-server initscript will do a
+				# start if the reload fails.
+				/etc/init.d/nut-server reload "$ups" || {
+					log_error "Failed to reload unmatched driver instance (UPS) '$ups' in nut_driver_config" libhid-ups nut-usb-hotplug
+					nd_driver_config_error=true
+					return 0
+				}
+			else
+				# Initscript should have its own logging, and we do not exit with
+				# error as that would abort processing other devices
+				logger -s -t nut-usb-hotplug "NUT server disabled when processing '$ACTION' for '$DEVNAME'."
+				return 0
+			fi
+		else
+			# We do not stop running UPS that do not match on vendorid
+			# and productid on a removal event as that would mean all UPS would
+			# be stopped if one nomatch UPS were to be removed. This would
+			# be bad.
+			return 0
+		fi
+	elif [ -n "$cfg_vendorid" ] && [ -n "$cfg_productid" ] && [ -n "$pvendid" ] && [ -n "$pprodid" ]; then
+		if ! check_valid_hex_number "$pvendid"; then
+			logger -s -t nut-usb-hotplug "Hotplug vendor id for '$ups' is not valid"
+			nd_driver_config_error=true
+			return 0
+		fi
+		if ! check_valid_hex_number "$pprodid"; then
+			logger -s -t nut-usb-hotplug "Hotplug product id for '$ups' is not valid"
+			nd_driver_config_error=true
+			return 0
+		fi
+		if [ "$(printf "%04x" 0x"$pvendid")" = "$cfg_vendorid" ] &&
+			[ "$(printf "%04x" 0x"$pprodid")" = "$cfg_productid" ]; then
+			# Round 1: If we have a match for hotplug event and the UCI config
+			# start this UPS and record that fact, otherwise skip this UCI UPS
+			# for this round
+			# Initscript should have its own logging
+			if ! start_stop_driver "$ups" "/dev/$DEVNAME"; then
+				log_error "Error starting matched driver instance (UPS) in nut_driver_config" libhid-ups nut-usb-hotplug
+				nd_driver_config_error=true
+				return 0
+			fi
+			# shellcheck disable=SC2317
+			nd_found=true
+			return 0
+		fi
+	fi
+	# We do not return 0 here as it is unnecessary (all if branches have a
+	# return) and shellcheck will complain if we do.
+}
+
+perform_libhid_action() {
+	# Variable to indicate NUT driver instance (UPS) section found
+	local nd_found=false
+	local nd_driver_config_error=false
+	local pvendid pprodid
+
+	# Only find statepath and runas once per event
+	# defines STATEPATH
+	find_statepath "upsd" "nut_server" || {
+		logger -s -t nut-usb-hotplug "Failed to set STATEPATH"
+		return 1
+	}
+	# sets RUNAS
+	find_runas "upsd" "nut_server" || {
+		logger -s -t nut-usb-hotplug "Failed to set RUNAS"
+		return 1
+	}
+
+	# PRODUCT comes from the calling hotplug event, and
+	# is of the form vendorid/productid/other
+	# The code below uses shell parameter expansion to split out
+	# vendorid as pvendid and  productid as pprodid
+
+	# We disable the check for possible misspelling as the variables names
+	# are similar, but PRODUCT, pvendid, and pprodid are correct.
+	# shellcheck disable=SC2153
+
+	# PRODUCT from hotplug has the form aaaa/bbbb/cccc, where aaaa, bbbb,
+	# cccc are 1-4 hex digits.
+
+	# From PRODUCT, strip final / and everything after it (e.g. /cccc)
+	pvendid=${PRODUCT%/*}
+	# pvendid is now of form aaaa/bbbb
+	# Strip final / and anything after (e.g. /bbbb), leaving aaaa in pvendid
+	pvendid=${pvendid%/*}
+	# From PRODUCT, strip final / and everything after it (e.g. /cccc)
+	pprodid=${PRODUCT%/*}
+	# pprodid is now of form aaaa/bbbb
+	# Strip everything before and including the remaining / (e.g. aaaa/)
+	# This leaves bbbb in pprodid
+	pprodid=${pprodid##*/}
+
+	# Attempt to find and (re)start a UPS with a match for the
+	# pvendid and pprodid we have parsed.
+	config_foreach nut_driver_config driver yes
+
+	[ "$nd_driver_config_error" = "false" ] || return 1
+	# Only if we cannot find a matching UPS (driver instance) configuration
+	# do we try again, this time restarting all UPS (driver) instances
+	# This is for the event the device matching configuration for NUT does
+	# not use USB vendorid and productid (and possibly serial number), which
+	# is all we have to work with in this script (and sourced scripts)
+	if [ "$nd_found" = "false" ]; then
+		config_foreach nut_driver_config driver no
+	fi
+
+	[ "$nd_driver_config_error" = "false" ] || return 1
+	# Calls nut-server start for upsd, which has checks for the existence of a
+	# ups driver and upsd configuration and will not start if configuration
+	# is missing. In addition any UPS for which configuration has been removed
+	# and not already stopped, will be stopped. This is preferable to doing
+	# nothing on removals.
+	if ! allow_hotplug_restart; then
+		logger -s -t nut-usb-hotplug "Hotplug restart disabled when processing '$ACTION' for '$DEVNAME'"
+		return 0
+	fi
+	# We check enabled again here, in case of a race condition since
+	# our last check.
+	if /etc/init.d/nut-server enabled; then
+		# Initscript should have its own logging
+		if ! /etc/init.d/nut-server start upsd; then
+			return 1
+		fi
+		return 0
+	else
+		logger -s -t nut-usb-hotplug "NUT server disabled when processing '$ACTION' for '$DEVNAME'."
+		return 0
+	fi
+	# We do not return 0 here as it is unnecessary (all if branches have a
+	# return) and shellcheck will complain if we do.
+}
+
+# PRODUCT comes from the calling hotplug event, and
+# is of the form vendorid/productid/other
+
+# This is an incomplete script which gets filled by libhid-ups.parsed-usermap.
+# This confuses shellcheck and reviewers, hence the disables below.
+# shellcheck disable=SC1073,SC1072
+case "$PRODUCT" in
+### insert libhid-ups.parsed-usermap content here ###
+# The result is cases of the form
+# "vendorid/productid/other" ) | \
+# to be matched against the PRODUCT from the calling hotplug event
+# and does NOT use ';;' (so falls through to code below).
+# The empty string matches when PRODUCT is empty, but does not match
+# when PRODUCT is neither empty nor one of the case targets, above
+
+"")
+	# Skip hotplug actions if NUT hotplug is disabled
+	# Uses NUT_DISABLE_HOTPLUG_PATH,  defined in nut-service.sh and sourced
+	# NUT_DISABLE_HOTPLUG_PATH is an external sentinel used to indicate NUT
+	# hotplug is disabled.
+	if ! allow_hotplug_restart; then
+		logger -s -t nut-usb-hotplug "Hotplug restart disabled when processing '$ACTION' for '$DEVNAME'"
+		exit 0
+	fi
+	# We check enabled again here, in case of a race condition since
+	# our last check.
+	if ! /etc/init.d/nut-server enabled; then
+		logger -s -t nut-usb-hotplug "NUT server disabled when processing '$ACTION' for '$DEVNAME'."
+		exit 0
+	fi
+	if ! perform_libhid_action; then
+		exit 1
+	fi
+	exit 0
+	;;
+*)
+	# We intentionally do nothing when PRODUCT is neither empty, nor matches
+	# the libhid-ups.parsed-usermap content cases. In that case the PRODUCT is
+	# for a device other than a UPS supported by NUT's libhid-ups.
+	exit 0
+	;;
+esac
