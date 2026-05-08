@@ -1,6 +1,6 @@
 --- a/usr/share/debootstrap/functions
 +++ b/usr/share/debootstrap/functions
-@@ -78,7 +78,6 @@ progress_next () {
+@@ -81,7 +81,6 @@ progress_next () {
  }
  
  wgetprogress () {
