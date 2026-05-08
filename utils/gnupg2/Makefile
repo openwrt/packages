@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnupg
-PKG_VERSION:=2.4.8
+PKG_VERSION:=2.5.19
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://gnupg.org/ftp/gcrypt/gnupg
-PKG_HASH:=b58c80d79b04d3243ff49c1c3fc6b5f83138eb3784689563bcdd060595318616
+PKG_HASH:=722aa8a426dd9b44e0d194b73bfee3a3e617d65674cd4d1d062e6df29f1788c6
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-3.0-or-later
