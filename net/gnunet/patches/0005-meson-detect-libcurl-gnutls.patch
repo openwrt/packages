@@ -11,7 +11,7 @@ there is a dedicated libcurl-gnutls library and favor using it.
 
 --- a/meson.build
 +++ b/meson.build
-@@ -189,10 +189,17 @@ if not sqlite_dep.found()
+@@ -194,10 +194,17 @@ if not sqlite_dep.found()
          error('Sqlite version >= 3.35.0 requried')
      endif
  endif
@@ -33,7 +33,7 @@ there is a dedicated libcurl-gnutls library and favor using it.
    int main(int argc, char **argv) {
      #if LIBCURL_VERSION_NUM < 0x075500
        #error "cURL version >= 7.85.0 required"
-@@ -200,12 +207,34 @@ if not curl_dep.found()
+@@ -205,12 +212,34 @@ if not curl_dep.found()
      return 0;
      }
    '''
@@ -74,11 +74,11 @@ there is a dedicated libcurl-gnutls library and favor using it.
      endif
  endif
  zlib_dep = dependency('zlib', required: false)
-@@ -487,11 +516,19 @@ curl_ssl_check = '''#include <curl/curl.
+@@ -489,13 +518,22 @@ curl_ssl_check = '''#include <curl/curl.
      }
    '''
  
--curl_gnutls_available = cc.compiles(
+-result = cc.run(
 -    curl_ssl_check,
 -    name: 'cURL gnutls check',
 -    dependencies: curl_dep,
@@ -88,14 +88,18 @@ there is a dedicated libcurl-gnutls library and favor using it.
 +if curl_is_gnutls
 +    curl_gnutls_available = true
 +else
-+    # Fall back to compile-time check for regular libcurl with gnutls support
-+    curl_gnutls_available = cc.compiles(
++    # Fall back to runtime check for regular libcurl with gnutls support
++    result = cc.run(
 +        curl_ssl_check,
 +        name: 'cURL gnutls check',
 +        dependencies: curl_dep,
 +    )
++    curl_gnutls_available = result.returncode() == 0
 +endif
 +
  private_config.set('curl_gnutls', 0)
- if curl_gnutls_available
+-if result.returncode() == 0
++if curl_gnutls_available
      private_config.set('curl_gnutls', 1)
+ endif
+ 
