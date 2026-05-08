@@ -42,8 +42,7 @@ build_config_string() {
 	CONFIGSTR=" -i $ifname "
 	export_bool syslog $cfg "--syslog"
 	export_bool verbose $cfg "--verbose"
-	# We need the --no-daemon parameter as with PROCD the process has to run in the background
-	CONFIGSTR="$CONFIGSTR--no-daemon "
+	CONFIGSTR="$CONFIGSTR--no-daemon "		# required for procd; keep process in foreground
 	export_bool no_promisc $cfg "--no-promisc"
 	export_bool no_dns $cfg "--no-dns"
 	export_bool no_macs $cfg "--no-macs"
@@ -58,6 +57,10 @@ build_config_string() {
 	config_get hosts_max $cfg hosts_max
 	CONFIGSTR="$CONFIGSTR${hosts_max:+--hosts-max "$hosts_max"} "
 	config_get hosts_keep $cfg hosts_keep
+	CONFIGSTR="$CONFIGSTR${hosts_keep:+--hosts-keep "$hosts_keep"} "
+	config_get ports_max $cfg ports_max
+	CONFIGSTR="$CONFIGSTR${ports_max:+--ports-max "$ports_max"} "
+	config_get ports_keep $cfg ports_keep
 	CONFIGSTR="$CONFIGSTR${ports_keep:+--ports-keep "$ports_keep"} "
 	config_get highest_port $cfg highest_port
 	CONFIGSTR="$CONFIGSTR${highest_port:+--highest-port "$highest_port"} "
