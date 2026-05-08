@@ -1,13 +1,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cni-plugins
-PKG_VERSION:=1.1.1
-PKG_RELEASE:=2
+PKG_VERSION:=1.9.1
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 PKG_SOURCE_URL:=https://github.com/containernetworking/plugins
-PKG_MIRROR_HASH:=4372700fa1fb159235586432800f228d92246d13571f5a29aa9bc58291eac6d9
+PKG_MIRROR_HASH:=26cbc77b2cd9e929cadd058787c5fed39fa5bce48f78b40bf6970f0a06d07a57
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>, Paul Spooren <mail@aparcar.org>
 PKG_LICENSE:=Apache-2.0
