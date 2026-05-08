@@ -1,3 +1,9 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Jean-Michel Lacroix <lacroix@lepine-lacroix.info>
+Date: Mon, 1 Jan 2018 00:00:00 +0000
+Subject: [PATCH] darkstat: do not use NI_IDN
+
+---
 --- a/dns.c
 +++ b/dns.c
 @@ -347,9 +347,6 @@ dns_main(void)
