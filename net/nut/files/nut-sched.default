@@ -1,53 +1,69 @@
 #!/bin/sh
 
-. "${IPKG_INSTROOT}"/lib/functions.sh
+# In recent (relevant) versions of shellcheck busybox is a valid shell type
+# shellcheck shell=busybox
 
-REMOVEDEFAULTNOTIFY=0
-SKIPADDSYSLOG=0
-SKIPADDEXEC=0
-SKIPADDNOTIFYCMD=0
+# uci-defaults script to setup upsmon notifications using upssched
+# applied during install or on first boot after install, if setting on install
+# fails. Expects nut-notify-exec to also be run in uci-defaults.
 
-upsmon() {
-	local cfg="$1"
-	local val
+# IPKG_INSTROOT is intentionally only set when building an image and
+# is intentionally empty on a live OpenWrt device
 
-	config_get val "$cfg" notifycmd
-	if [ -n "$val" ]; then
-		SKIPADDNOTIFYCMD=1
-	fi
+# Shellcheck source paths intentionally point to the location of files of
+# the scripts in the development environment (where shellcheck is used), not
+# on the live OpenWrt device.
 
-	config_get val "$cfg" defaultnotify
-	if [ -n "$val" ]; then
-		if echo "$val" |grep -q "IGNORE"; then
-			REMOVEDEFAULTNOTIFY=1
-		else
-			SKIPADDSYSLOG=1
-			if echo "$val" |grep -q "EXEC"; then
-				SKIPADDEXEC=1
-			fi
-		fi
-	fi
+# This script lives in the nut-upssched package, which is independent of the
+# nut-sendmail-notify package in which nut-sendmail-notify.default lives
+# In the nut-upssched package, this script lives in
+# /etc/uci-defaults/80-nut-sched
+
+# The separate packages limit the opportunities for code-sharing across the
+# scripts.
+
+# Only run this uci-defaults script on a live OpenWrt device
+[ -z "${IPKG_INSTROOT}" ] || exit 0
+
+# shellcheck source=net/nut/files/functions.sh.functions
+. /lib/functions.sh || {
+	logger -s -t nut-sched "FATAL: Unable to source 'functions.sh'" || true
+	exit 1
 }
 
-config_load nut_monitor
-config_foreach upsmon upsmon
+# Flags for existing notifycmd
+SKIP_ADD_NOTIFYCMD="false"
 
-uci set nut_monitor.@upsmon[-1]=upsmon
+# Load and process nut_monitor (upsmon) configuration
+config_load nut_monitor || {
+	logger -s -t nut-sched "FATAL: loading 'nut_monitor' failed" || true
+	exit 1
+}
 
-if [ "$SKIPADDNOTIFYCMD" != "1" ]; then
-	uci set nut_monitor.@upsmon[-1].notifycmd=/usr/sbin/upssched
+config_get val "upsmon" notifycmd
+# shellcheck disable=SC2154
+if [ -n "${val}" ]; then
+	SKIP_ADD_NOTIFYCMD="true"
 fi
 
-if [ "$REMOVEDEFAULTNOTIFY" = "1" ]; then
-	uci delete nut_monitor.@upsmon[-1].defaultnotify || true
+# If notification command is not set, set it
+if [ "${SKIP_ADD_NOTIFYCMD}" = "false" ]; then
+	# Ensure upsmon type section with the name upsmon exists
+	uci set "nut_monitor.upsmon=upsmon" || {
+		logger -s -t nut-sched "Failed to ensure an upsmon section named upsmon exists" || true
+		exit 1
+	}
+
+	uci set "nut_monitor.upsmon.notifycmd=/usr/sbin/upssched" || {
+		logger -s -t nut-sched "Failed to set notifycmd to upssched" || true
+		uci revert nut_monitor || true
+		exit 1
+	}
+
+	uci commit nut_monitor || {
+		logger -s -t nut-sched "Failed to commit changes to nut_monitor" || true
+		exit 1
+	}
 fi
 
-if [ "$SKIPADDEXEC" != "1" ]; then
-	uci add_list nut_monitor.@upsmon[-1].defaultnotify="EXEC"
-fi
-
-if [ "$SKIPADDSYSLOG" != "1" ]; then
-	uci add_list nut_monitor.@upsmon[-1].defaultnotify="SYSLOG"
-fi
-
-uci commit nut_monitor
+exit 0
