@@ -29,16 +29,17 @@ export_bool () {
 }
 
 set_config_string(){
-	mkdir -p $RUN_D
+	mkdir -p "$RUN_D"
+	chown "$USER:$GROUP" "$RUN_D"
 	. /lib/functions/network.sh
 	config_load $CONFIGNAME
 	config_foreach build_config_string darkstat
 }
 
 build_config_string() {
-	local cfg="$1"                                 
+	local cfg="$1"
 	config_get interface $cfg interface
-	network_get_device ifname "$interface"       
+	network_get_device ifname "$interface"
 	CONFIGSTR=" -i $ifname "
 	export_bool syslog $cfg "--syslog"
 	export_bool verbose $cfg "--verbose"
