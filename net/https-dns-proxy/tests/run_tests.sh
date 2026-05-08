@@ -180,7 +180,20 @@ logger() { :; }
 # Override ubus to return nothing (init script defines its own wrapper)
 __UBUS_BIN="true"
 
+# Mock `nft`: track invocations and return success by default. Tests can
+# override __nft_rc to simulate failure.
+__nft_calls_file="$TESTDIR/nft_calls"
+__nft_rc=0
+: > "$__nft_calls_file"
+nft() {
+	printf '%s\n' "$*" >> "$__nft_calls_file"
+	return "$__nft_rc"
+}
+
 # ── Source the init script (skip the shebang line) ──────────────────
+#
+# Patch the readonly NOTRACK_NFT_FILE path so tests can write under
+# $TESTDIR instead of /usr/share/nftables.d/ruleset-post/.
 
 INIT_SCRIPT="./files/etc/init.d/https-dns-proxy"
 if [ ! -f "$INIT_SCRIPT" ]; then
@@ -188,10 +201,15 @@ if [ ! -f "$INIT_SCRIPT" ]; then
 	exit 1
 fi
 
+PATCHED_INIT="$TESTDIR/https-dns-proxy.patched"
+NOTRACK_TEST_FILE="$TESTDIR/usr/share/nftables.d/ruleset-post/20-https-dns-proxy-notrack.nft"
+sed "s|^readonly NOTRACK_NFT_FILE=.*|readonly NOTRACK_NFT_FILE='$NOTRACK_TEST_FILE'|" \
+	"$INIT_SCRIPT" > "$PATCHED_INIT"
+
 # Source all functions. The #!/bin/sh /etc/rc.common line is harmless
 # when we've already defined the framework stubs above.
 # shellcheck disable=SC1090
-. "$INIT_SCRIPT"
+. "$PATCHED_INIT"
 
 ###############################################################################
 #                            TEST CATEGORIES                                  #
@@ -610,6 +628,71 @@ load_package_config
 
 assert_eq "load_package_config: canary disabled → canaryDomains empty" "" "$canaryDomains"
 assert_eq "load_package_config: force_dns=0 → unset" "" "$force_dns"
+
+printf "\n##\n## 10: notrack_nft (regression: missing nftables.d/ruleset-post dir)\n##\n\n"
+
+# Reset state — ensure parent dir does NOT exist (this is the apk-install
+# bug: post-install runs `start` before fw4 has created the directory).
+rm -rf "$TESTDIR/usr/share"
+__nft_rc=0
+: > "$__nft_calls_file"
+
+assert_eq "notrack_nft: NOTRACK_NFT_FILE patched to test path" "$NOTRACK_TEST_FILE" "$NOTRACK_NFT_FILE"
+
+# Pre-condition: parent dir genuinely missing
+[ ! -d "$(dirname "$NOTRACK_TEST_FILE")" ]
+assert_rc "notrack_nft: parent dir absent before update" 0 $?
+
+# THE REGRESSION: previously this failed with
+#   "can't create .../20-https-dns-proxy-notrack.nft: nonexistent directory"
+notrack_nft update "53 5053"
+assert_rc "notrack_nft update creates parent dir on first call" 0 $?
+
+[ -f "$NOTRACK_TEST_FILE" ]
+assert_rc "notrack_nft update wrote nft snippet file" 0 $?
+
+[ -d "$(dirname "$NOTRACK_TEST_FILE")" ]
+assert_rc "notrack_nft update created parent dir" 0 $?
+
+# Content should reference the table, hook, and ports we passed
+grep -q "table inet https_dns_proxy_notrack" "$NOTRACK_TEST_FILE"
+assert_rc "notrack_nft snippet declares the wrapper table" 0 $?
+
+grep -q "type filter hook output priority raw" "$NOTRACK_TEST_FILE"
+assert_rc "notrack_nft snippet declares raw output hook" 0 $?
+
+grep -q "53 5053" "$NOTRACK_TEST_FILE"
+assert_rc "notrack_nft snippet contains supplied ports" 0 $?
+
+# Syntax check should have been invoked
+grep -q -- "-c -f $NOTRACK_TEST_FILE" "$__nft_calls_file"
+assert_rc "notrack_nft update invokes 'nft -c -f' on the snippet" 0 $?
+
+# ── Idempotence: same content → no extra write churn ──
+# We can't easily detect a no-op write, but we can confirm the function
+# still succeeds when the file already exists with matching content.
+notrack_nft update "53 5053"
+assert_rc "notrack_nft update idempotent on identical content" 0 $?
+
+# ── Empty port_set → routes to remove ──
+notrack_nft update ""
+[ ! -f "$NOTRACK_TEST_FILE" ]
+assert_rc "notrack_nft update '' removes the snippet file" 0 $?
+
+# ── Explicit remove ──
+mkdir -p "$(dirname "$NOTRACK_TEST_FILE")"
+echo "stale" > "$NOTRACK_TEST_FILE"
+: > "$__nft_calls_file"
+notrack_nft remove
+[ ! -f "$NOTRACK_TEST_FILE" ]
+assert_rc "notrack_nft remove deletes the snippet file" 0 $?
+
+grep -q "delete table inet https_dns_proxy_notrack" "$__nft_calls_file"
+assert_rc "notrack_nft remove invokes 'nft delete table'" 0 $?
+
+# ── remove is a no-op when file already absent ──
+notrack_nft remove
+assert_rc "notrack_nft remove succeeds when file already absent" 0 $?
 
 ###############################################################################
 #                         SHELL SCRIPT SYNTAX                                 #

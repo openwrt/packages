@@ -18,7 +18,8 @@ start_service() {
 	local pld lport
 
 	#create mpd directories from config
-	pld=$(grep ^playlist_directory "$CONFIGFILE" | cut -d "\"" -f 2 | sed "s/~/\/root/g")
+	pld=$(grep ^playlist_directory "$CONFIGFILE" | head -1 | cut -d '"' -f 2 | sed "s/~/\/root/g")
+	[ -z "$pld" ] && pld="/tmp/mpd"
 	if [ ! -d "$pld" ]; then
 		mkdir -m 0755 -p "$pld"
 		chown $USER:$GROUP $pld

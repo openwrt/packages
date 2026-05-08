@@ -1,7 +1,5 @@
 #!/bin/sh /etc/rc.common
 # shellcheck shell=ash
-# cspell:words CFGDIR SYSCFG USRCFG cfgfile chgrp defval getline hostlist
-# cspell:words htpasswd radicale tmpconf tmpusers multifilesystem
 
 # shellcheck disable=SC2034
 START=99
@@ -19,7 +17,7 @@ conf_line() {
 	local value="$3"
 
 	if [ -n "$value" ]; then
-		echo "$option = $value" >> "$cfgfile"
+		echo "$option = $value" >>"$cfgfile"
 	fi
 }
 
@@ -59,7 +57,7 @@ conf_section() {
 	local hostlist=""
 	local value
 
-	echo "[$cfg]" >> "$cfgfile"
+	echo "[$cfg]" >>"$cfgfile"
 
 	case $cfg in
 	server)
@@ -130,13 +128,13 @@ conf_section() {
 	headers)
 		config_get cors "$cfg" cors
 		if [ -n "$cors" ]; then
-			echo "Access-Control-Allow-Origin = $cors" >> "$cfgfile"
+			echo "Access-Control-Allow-Origin = $cors" >>"$cfgfile"
 		fi
 		;;
-  # TODO: Add sharing configuration
+		# TODO: Add sharing configuration
 	esac
 
-	echo "" >> "$cfgfile"
+	echo "" >>"$cfgfile"
 }
 
 add_missing_sections() {
@@ -144,21 +142,21 @@ add_missing_sections() {
 
 	for section in server encoding auth rights storage web logging headers sharing; do
 		if ! grep -q "\[$section\]" "$cfgfile"; then
-			echo "[$section]" >> "$cfgfile"
+			echo "[$section]" >>"$cfgfile"
 			case $section in
 			server)
-				echo "hosts = 127.0.0.1:5232, [::1]:5232" >> "$cfgfile"
+				echo "hosts = 127.0.0.1:5232, [::1]:5232" >>"$cfgfile"
 				;;
 			auth)
-				echo "type = htpasswd" >> "$cfgfile"
-				echo "htpasswd_filename = $USRCFG" >> "$cfgfile"
-				echo "htpasswd_encryption = plain" >> "$cfgfile"
+				echo "type = htpasswd" >>"$cfgfile"
+				echo "htpasswd_filename = $USRCFG" >>"$cfgfile"
+				echo "htpasswd_encryption = plain" >>"$cfgfile"
 				;;
 			storage)
-				echo "filesystem_folder = $DATADIR" >> "$cfgfile"
+				echo "filesystem_folder = $DATADIR" >>"$cfgfile"
 				;;
 			esac
-			echo "" >> "$cfgfile"
+			echo "" >>"$cfgfile"
 		fi
 	done
 }
@@ -171,7 +169,7 @@ add_user() {
 	config_get name "$cfg" name
 	config_get password "$cfg" password
 
-	[ -n "$name" ] && echo "$name:$password" >> "$tmpfile"
+	[ -n "$name" ] && echo "$name:$password" >>"$tmpfile"
 }
 
 build_users() {
@@ -199,8 +197,8 @@ build_config() {
 	chmod 0750 "$CFGDIR"
 	chgrp radicale3 "$CFGDIR"
 
-	cat "$tmpconf" > "$SYSCFG"
-	cat "$tmpusers" > "$USRCFG"
+	cat "$tmpconf" >"$SYSCFG"
+	cat "$tmpusers" >"$USRCFG"
 	chmod 0640 "$SYSCFG" "$USRCFG"
 	chgrp radicale3 "$SYSCFG" "$USRCFG"
 

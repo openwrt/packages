@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=prosody
-PKG_VERSION:=0.12.4
+PKG_VERSION:=0.12.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://prosody.im/downloads/source
-PKG_HASH:=47d712273c2f29558c412f6cdaec073260bbc26b7dda243db580330183d65856
+PKG_HASH:=e06db3cfa8811d0b9fa7713a3b430189f62a1f90e6a4940771b1e16ce64e8e44
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=MIT/X11
@@ -48,7 +48,7 @@ endef
 TARGET_CFLAGS += $(FPIC)
 TARGET_LDFLAGS += -shared
 
-MAKE_FLAGS += LD="$(TARGET_CC)"
+MAKE_FLAGS += LD="$(TARGET_CC)" TARGET="../util/"
 
 define Build/Configure
 	# this is *NOT* GNU autoconf stuff
@@ -57,6 +57,7 @@ define Build/Configure
 		--with-lua="$(STAGING_DIR_HOSTPKG)" \
 		--with-lua-include="$(STAGING_DIR)/usr/include" \
 		--with-lua-lib="$(STAGING_DIR)/usr/lib" \
+		--idn-library=idn \
 		--cflags="$(TARGET_CFLAGS)" \
 		--ldflags="$(TARGET_LDFLAGS)" \
 		--c-compiler="$(CC)" \
@@ -84,8 +85,6 @@ define Package/prosody/install
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/prosody/modules/*.lua $(1)/usr/lib/prosody/modules/
 	$(INSTALL_DIR) $(1)/usr/lib/prosody/modules/adhoc
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/prosody/modules/adhoc/*.lua $(1)/usr/lib/prosody/modules/adhoc/
-	$(INSTALL_DIR) $(1)/usr/lib/prosody/modules/mod_s2s
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/prosody/modules/mod_s2s/*.lua $(1)/usr/lib/prosody/modules/mod_s2s/
 	$(INSTALL_DIR) $(1)/usr/lib/prosody/modules/muc
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/prosody/modules/muc/*.lua $(1)/usr/lib/prosody/modules/muc/
 	$(INSTALL_DIR) $(1)/usr/lib/prosody/modules/mod_pubsub
@@ -107,6 +106,10 @@ define Package/prosody/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/prosody/util/*.so $(1)/usr/lib/prosody/util/
 	$(INSTALL_DIR) $(1)/usr/lib/prosody/util/sasl
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/prosody/util/sasl/*.lua $(1)/usr/lib/prosody/util/sasl/
+	$(INSTALL_DIR) $(1)/usr/lib/prosody/util/human
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/prosody/util/human/*.lua $(1)/usr/lib/prosody/util/human/
+	$(INSTALL_DIR) $(1)/usr/lib/prosody/util/prosodyctl
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/prosody/util/prosodyctl/*.lua $(1)/usr/lib/prosody/util/prosodyctl/
 	#$(CP) $(PKG_INSTALL_DIR)/usr/lib/prosody/util/sasl/*.so $(1)/usr/lib/prosody/util/sasl/
 endef
 
