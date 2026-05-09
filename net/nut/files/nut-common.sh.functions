@@ -1,0 +1,34 @@
+#!/bin/sh /etc/rc.common
+
+# Common helper functions for NUT server initscript
+
+# shellcheck shell=ash
+
+srv_statepath() {
+	local statepath
+
+	config_get statepath upsd statepath /var/run/nut
+	STATEPATH="$statepath"
+}
+
+srv_runas() {
+	local runas
+
+	[ -n "$RUNAS" ] && return 0
+
+	config_get runas upsd runas nut
+	RUNAS="$runas"
+}
+
+prevent_hotplug_restart() {
+	# Avoid hotplug inadvertently restarting driver during
+	# forced shutdown
+
+	config_load nut_server
+	srv_statepath
+
+	[ -f /var/run/killpower ] && return 0
+	if [ -d "${STATEPATH}" ] && [ -f "${STATEPATH}"/disable-hotplug ]; then
+		return 0
+	fi
+}

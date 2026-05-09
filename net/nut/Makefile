@@ -69,8 +69,12 @@ define Package/nut-server/install
 	$(INSTALL_DIR) $(1)/etc/nut
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_DIR) $(1)/lib/functions/nut
 	$(INSTALL_DIR) $(1)/usr/share/nut
 	$(INSTALL_BIN) ./files/nut-server.init $(1)/etc/init.d/nut-server
+	$(INSTALL_DATA) ./files/nut-common.sh/functions $(1)/lib/functions/nut/nut-common.sh
+	$(INSTALL_DATA) ./files/nut-config.sh/functions $(1)/lib/functions/nut/nut-config.sh
+	$(INSTALL_DATA) ./files/nut-service.sh/functions $(1)/lib/functions/nut/nut-service.sh
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/upsd $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/nut/cmdvartab $(1)/usr/share/nut/
 	$(INSTALL_DIR) $(1)/etc/config

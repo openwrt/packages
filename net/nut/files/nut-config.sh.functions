@@ -1,0 +1,268 @@
+#!/bin/sh /etc/rc.common
+
+# Create configuration for upsd and UPS drivers for NUT
+
+# shellcheck shell=ash
+
+# Ephemeral files, recreated on each OpenWrt boot
+USERS_C=/var/etc/nut/upsd.users
+UPSD_C=/var/etc/nut/upsd.conf
+UPS_C=/var/etc/nut/ups.conf
+
+# shellcheck source=net/nut/files/nut-common.sh.functions
+. /lib/functions/nut/nut-common.sh
+
+get_write_ups_config() {
+	local ups="$1"
+	local var="$2"
+	local def="$3"
+	local flag="$4"
+	local val
+
+	[ -z "$flag" ] && {
+		config_get val "$ups" "$var" "$def"
+		[ -n "$val" ] && [ "$val" != "0" ] && echo "$var = $val" >>"$UPS_C"
+	}
+
+	[ -n "$flag" ] && {
+		config_get_bool val "$ups" "$var" "$def"
+		[ "$val" = 1 ] && echo "$var" >>"$UPS_C"
+	}
+}
+
+listen_address() {
+	local srv="$1"
+
+	config_get address "$srv" address "::1"
+	config_get port "$srv" port
+	# shellcheck disable=SC2154
+	echo "LISTEN $address $port" >>"$UPSD_C"
+}
+
+srv_config() {
+	local srv="$1"
+	local maxage maxconn certfile runas statepath
+
+	# Note runas support requires you make sure USB device file is readable by
+	# the runas user
+	config_get runas "$srv" runas nut
+	RUNAS="$runas"
+
+	config_get statepath "$srv" statepath /var/run/nut
+	STATEPATH="$statepath"
+
+	config_get maxage "$srv" maxage
+	[ -n "$maxage" ] && echo "MAXAGE $maxage" >>"$UPSD_C"
+
+	[ -n "$statepath" ] && echo "STATEPATH $statepath" >>"$UPSD_C"
+
+	config_get maxconn "$srv" maxconn
+	[ -n "$maxconn" ] && echo "MAXCONN $maxconn" >>"$UPSD_C"
+
+	#NOTE: certs only apply to SSL-enabled version
+	config_get certfile "$srv" certfile
+	[ -n "$certfile" ] && echo "CERTFILE $certfile" >>"$UPSD_C"
+}
+
+nut_user_add() {
+	local user="$1"
+	local a
+	local val
+
+	config_get val "$user" username "$1"
+	echo "[$val]" >>"$USERS_C"
+
+	config_get val "$user" password
+	echo "  password = $val" >>"$USERS_C"
+
+	config_get val "$user" actions
+	for a in $val; do
+		echo "  actions = $a" >>"$USERS_C"
+	done
+
+	instcmd() {
+		# shellcheck disable=2317
+		local val="$1"
+		# shellcheck disable=2317
+		echo "  instcmds = $val" >>"$USERS_C"
+	}
+
+	config_list_foreach "$user" instcmd instcmd
+
+	config_get val "$user" upsmon
+	if [ -n "$val" ]; then
+		echo "  upsmon $val" >>"$USERS_C"
+	fi
+}
+
+build_server_config() {
+	# UPS_C is created in build_config which calls this function
+	chmod 0640 "$UPS_C"
+
+	mkdir -p "$(dirname "$UPSD_C")"
+	rm -f "$USERS_C"
+	rm -f "$UPSD_C"
+	rm -f /var/etc/nut/nut.conf
+
+	echo "# Config file automatically generated from UCI config" >"$USERS_C"
+	echo "# Config file automatically generated from UCI config" >"$UPSD_C"
+
+	config_foreach nut_user_add user
+	config_foreach listen_address listen_address
+	config_foreach srv_config upsd
+	echo "MODE=netserver" >>/var/etc/nut/nut.conf
+
+	chmod 0640 "$USERS_C"
+	chmod 0640 "$UPSD_C"
+	chmod 0644 /var/etc/nut/nut.conf
+
+	if [ -n "$RUNAS" ]; then
+		chgrp "$(id -gn "$RUNAS")" "$USERS_C"
+		chgrp "$(id -gn "$RUNAS")" "$UPSD_C"
+	fi
+	# shellcheck disable=SC2034
+	havesrvcfg=1
+}
+
+build_ups_config() {
+	local ups="$1"
+
+	config_load nut_server
+
+	echo "[$ups]" >>"$UPS_C"
+
+	get_write_ups_config "$ups" bus
+	get_write_ups_config "$ups" cable
+	get_write_ups_config "$ups" community
+	get_write_ups_config "$ups" desc
+	get_write_ups_config "$ups" driver "usbhid-ups"
+	get_write_ups_config "$ups" ignorelb 0 1
+	get_write_ups_config "$ups" interruptonly 0 1
+	get_write_ups_config "$ups" interruptsize
+	get_write_ups_config "$ups" maxreport
+	get_write_ups_config "$ups" maxstartdelay
+	get_write_ups_config "$ups" mfr
+	get_write_ups_config "$ups" model
+	get_write_ups_config "$ups" nolock 0 1
+	get_write_ups_config "$ups" notransferoids 0 1
+	get_write_ups_config "$ups" offdelay
+	get_write_ups_config "$ups" ondelay
+	get_write_ups_config "$ups" pollfreq
+	get_write_ups_config "$ups" port "auto"
+	get_write_ups_config "$ups" product
+	get_write_ups_config "$ups" productid
+	get_write_ups_config "$ups" retrydelay
+	get_write_ups_config "$ups" sdorder
+	get_write_ups_config "$ups" sdtime
+	get_write_ups_config "$ups" serial
+	get_write_ups_config "$ups" shutdown_delay
+	get_write_ups_config "$ups" snmp_version
+	get_write_ups_config "$ups" snmp_retries
+	get_write_ups_config "$ups" snmp_timeout
+	get_write_ups_config "$ups" synchronous
+	get_write_ups_config "$ups" usd
+	get_write_ups_config "$ups" vendor
+	get_write_ups_config "$ups" vendorid
+
+	# Params specific to NetXML driver
+	get_write_ups_config "$ups" login
+	get_write_ups_config "$ups" password
+	get_write_ups_config "$ups" subscribe 0 1
+
+	# shellcheck disable=SC2317
+	defoverride() {
+		local overvar="$1"
+		local defover="$2"
+		local overtype
+		local overval
+
+		overtype="$(echo "$overvar" | tr '_' '.')"
+
+		config_get overval "${defover}_${overvar}" value
+		[ -n "$overval" ] && echo "${defover}.${overtype} = $overval" >>"$UPS_C"
+	}
+
+	config_list_foreach "$ups" override defoverride override
+	config_list_foreach "$ups" default defoverride default
+
+	other() {
+		# shellcheck disable=SC2317
+		local othervar="$1"
+		# shellcheck disable=SC2317
+		local othervarflag="$2"
+		# shellcheck disable=SC2317
+		local otherval
+
+		# shellcheck disable=SC2317
+		if [ "$othervarflag" = "otherflag" ]; then
+			config_get_bool otherval "${othervarflag}_${othervar}" value
+			[ "$otherval" = "1" ] && echo "${othervar}" >>"$UPS_C"
+		else
+			config_get otherval "${othervarflag}_${othervar}" value
+			[ -n "$otherval" ] && echo "${othervar} = $otherval" >>"$UPS_C"
+		fi
+	}
+
+	config_list_foreach "$ups" other other other
+	config_list_foreach "$ups" otherflag other otherflag
+	echo "" >>$UPS_C
+	# shellcheck disable=SC2034
+	haveupscfg=1
+}
+
+build_global_driver_config() {
+	local cfg="$1"
+
+	# Global driver config
+	get_write_ups_config "$cfg" chroot
+	get_write_ups_config "$cfg" driverpath
+	get_write_ups_config "$cfg" maxstartdelay
+	get_write_ups_config "$cfg" maxretry
+	get_write_ups_config "$cfg" retrydelay
+	get_write_ups_config "$cfg" pollinterval
+	get_write_ups_config "$cfg" synchronous
+	config_get runas "$cfg" user nut
+	RUNAS="$runas"
+
+	echo "" >>"$UPS_C"
+}
+
+build_config() {
+	local STATEPATH=/var/run/nut
+
+	mkdir -p "$(dirname "$UPS_C")"
+	rm -f "$UPS_C"
+	echo "# Config file automatically generated from UCI config" >"$UPS_C"
+	chmod 0640 "$UPS_C"
+
+	config_load nut_server
+
+	srv_runas
+	srv_statepath
+
+	[ -d "${STATEPATH}" ] || {
+		mkdir -p "${STATEPATH}" || {
+			logger -t nut-server "ERROR: failed to create ${STATEPATH}"
+			exit 1
+		}
+	}
+	chmod 0770 "${STATEPATH}" || {
+		logger -t nut-server "ERROR: failed to set proper permissions on ${STATEPATH}"
+		exit 1
+	}
+
+	if [ -n "$RUNAS" ]; then
+		chown root:"$(id -gn "$RUNAS")" "${STATEPATH}"
+	fi
+
+	SRV_RUNAS="$RUNAS"
+	config_foreach build_global_driver_config driver_global
+	if [ "$SRV_RUNAS" != "$RUNAS" ]; then
+		echo "WARNING: for proper communication drivers and server must 'runas' the same user" | logger -t nut-server
+	fi
+
+	config_foreach build_ups_config driver
+
+	build_server_config
+	[ -n "$RUNAS" ] && chgrp "$(id -gn "$RUNAS")" "$UPS_C"
+}
