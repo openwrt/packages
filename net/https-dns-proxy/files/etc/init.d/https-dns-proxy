@@ -145,13 +145,11 @@ notrack_nft() {
 				return
 			fi
 			new_content="$(cat <<-EOF
-				table inet https_dns_proxy_notrack {
-					chain raw_output {
-						type filter hook output priority raw; policy accept;
-						meta l4proto { tcp, udp } th dport { ${port_set} } ip daddr 127.0.0.0/8 notrack
-						meta l4proto { tcp, udp } th sport { ${port_set} } ip saddr 127.0.0.0/8 notrack
-					}
-				}
+				add table inet https_dns_proxy_notrack
+				flush table inet https_dns_proxy_notrack
+				add chain inet https_dns_proxy_notrack raw_output { type filter hook output priority raw; policy accept; }
+				add rule inet https_dns_proxy_notrack raw_output meta l4proto { tcp, udp } th dport { ${port_set} } ip daddr 127.0.0.0/8 notrack
+				add rule inet https_dns_proxy_notrack raw_output meta l4proto { tcp, udp } th sport { ${port_set} } ip saddr 127.0.0.0/8 notrack
 			EOF
 			)"
 			existing_content="$(cat "$NOTRACK_NFT_FILE" 2>/dev/null)"
@@ -162,9 +160,9 @@ notrack_nft() {
 			[ -s "$NOTRACK_NFT_FILE" ] && nft -c -f "$NOTRACK_NFT_FILE"
 		;;
 		remove)
-			[ -f "$NOTRACK_NFT_FILE" ] && rm -f "$NOTRACK_NFT_FILE"
-			nft delete table inet https_dns_proxy_notrack 2>/dev/null
-			[ ! -s "$NOTRACK_NFT_FILE" ]
+			rm -f "$NOTRACK_NFT_FILE"
+			nft delete table inet https_dns_proxy_notrack >/dev/null 2>&1
+			! nft list table inet https_dns_proxy_notrack >/dev/null 2>&1 && [ ! -s "$NOTRACK_NFT_FILE" ]
 		;;
 	esac
 }
@@ -426,7 +424,7 @@ stop_service() {
 		uci_commit 'dhcp'
 		dnsmasq_restart || _error=1
 	fi
-	notrack_nft remove
+	notrack_nft remove || _error=1
 # shellcheck disable=SC2015
 	[ -z "$_error" ] && output_okn || output_failn
 }
@@ -463,7 +461,8 @@ dnsmasq_instance_append_force_dns_port() {
 	local cfg="$1" instance_port
 	[ "$(uci_get 'dhcp' "$cfg")" = "dnsmasq" ] || return 1
 	config_get instance_port "$cfg" 'port' '53'
-		str_contains_word "$force_dns_port" "$instance_port" || force_dns_port="${force_dns_port:+${force_dns_port} }${instance_port}"
+	[ "$instance_port" = "0" ] && return 0
+	str_contains_word "$force_dns_port" "$instance_port" || force_dns_port="${force_dns_port:+${force_dns_port} }${instance_port}"
 }
 
 dnsmasq_doh_server() {
