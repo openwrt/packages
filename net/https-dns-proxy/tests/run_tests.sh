@@ -505,6 +505,11 @@ force_dns_port="53 853"
 dnsmasq_instance_append_force_dns_port "cfg01"
 assert_eq "append_force_dns_port: already present port 53 not duplicated" "53 853" "$force_dns_port"
 
+uci_set "dhcp" "cfg03" ".type" "dnsmasq"
+uci_set "dhcp" "cfg03" "port" "0"
+dnsmasq_instance_append_force_dns_port "cfg03"
+assert_eq "append_force_dns_port: disabled dnsmasq port 0 ignored" "53 853" "$force_dns_port"
+
 uci_set "dhcp" "cfg02" ".type" "dnsmasq"
 uci_set "dhcp" "cfg02" "port" "5353"
 dnsmasq_instance_append_force_dns_port "cfg02"
@@ -690,9 +695,14 @@ assert_rc "notrack_nft remove deletes the snippet file" 0 $?
 grep -q "delete table inet https_dns_proxy_notrack" "$__nft_calls_file"
 assert_rc "notrack_nft remove invokes 'nft delete table'" 0 $?
 
-# ── remove is a no-op when file already absent ──
+# ── remove is a no-op when file already absent and table already gone ──
+# Mock `nft` to return non-zero so `nft list table` reports "no such table"
+# (the real-world post-delete state); the new remove logic returns 0 only
+# when both the file and the live table are absent.
+__nft_rc=1
 notrack_nft remove
-assert_rc "notrack_nft remove succeeds when file already absent" 0 $?
+assert_rc "notrack_nft remove succeeds when file and table both absent" 0 $?
+__nft_rc=0
 
 ###############################################################################
 #                         SHELL SCRIPT SYNTAX                                 #
