@@ -8,8 +8,14 @@
 
 trm_init="/etc/init.d/travelmate"
 trm_funlib="/usr/lib/travelmate-functions.sh"
-trm_ntplock="/var/lock/travelmate.ntp.lock"
+trm_ntplock="/var/run/travelmate/travelmate.ntp.lock"
 
+# ensure runtime directory exists
+#
+[ ! -d "${trm_ntplock%/*}" ] && mkdir -p "${trm_ntplock%/*}"
+
+# check for ntp hotplug event and travelmate service autostart condition
+#
 if mkdir "${trm_ntplock}" 2>/dev/null; then
 	if [ "${ACTION}" = "stratum" ] && "${trm_init}" enabled; then
 		. "${trm_funlib}"

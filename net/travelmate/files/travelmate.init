@@ -61,10 +61,14 @@ status_service() {
 scan() {
 	local result radio="${1:-radio0}"
 
+	case "${radio}" in
+	*[!a-z0-9]*) return 1 ;;
+	esac
+
 	result="$(f_scan "${radio}" full)"
 	if [ -z "${result}" ]; then
-		: > "${trm_tmpfile}"
-		mv -f  "${trm_tmpfile}" "${trm_scanfile}"
+		: >"${trm_tmpfile}"
+		mv -f "${trm_tmpfile}" "${trm_scanfile}"
 		return 0
 	fi
 
@@ -83,20 +87,20 @@ scan() {
 		sub(/[ \t]+$/, "", ssid)
 		printf "%3s %3s %17s %-12s %-10s %-10s %s\n",
 			quality, channel, bssid, rsn, cipher, auth, ssid
-	}' | "${trm_sortcmd}" -rn > "${trm_tmpfile}"
+	}' | "${trm_sortcmd}" -rn >"${trm_tmpfile}"
 
-	mv -f  "${trm_tmpfile}" "${trm_scanfile}"
+	mv -f "${trm_tmpfile}" "${trm_scanfile}"
 }
 
 setup() {
 	local rc cnt net iface input="${1:-"trm_wwan"}" zone="${2:-"wan"}" metric="${3:-"100"}"
 
-	input="${input//[+*~%&\$@\"\' ]/}"
-	zone="${zone//[+*~%&\$@\"\' ]/}"
-	metric="${metric//[^0-9]/}"
+	input="${input//[!a-zA-Z0-9_]/}"
+	zone="${zone//[!a-zA-Z0-9_]/}"
+	metric="${metric//[!0-9]/}"
 	iface="$(uci_get travelmate global trm_iface)"
- 
-	if [ -n "${iface}" ] && [ "${iface}" = "${input}" ]; then
+
+	if [ -z "${input}" ] || { [ -n "${iface}" ] && [ "${iface}" = "${input}" ]; }; then
 		return 1
 	fi
 
@@ -124,19 +128,23 @@ setup() {
 	fi
 
 	cnt="0"
-	while [ -n "$(uci_get firewall @zone[${cnt}] name)" ]; do
-		if [ "$(uci_get firewall @zone[${cnt}] name)" = "${zone}" ]; then
+	zone_name="$(uci_get firewall @zone[${cnt}] name)"
+	while [ -n "${zone_name}" ]; do
+		if [ "${zone_name}" = "${zone}" ]; then
 			net="$(uci_get firewall @zone[${cnt}] network)"
-			if ! printf "%s" "${net}" | grep -qw "${input}"; then
-				uci -q add_list firewall.@zone[${cnt}].network="${input}"
-			fi
-			if ! printf "%s" "${net}" | grep -qw "${input}6"; then
-				uci -q add_list firewall.@zone[${cnt}].network="${input}6"
-			fi
+			case " ${net} " in
+			*" ${input} "*) ;;
+			*) uci -q add_list firewall.@zone[${cnt}].network="${input}" ;;
+			esac
+			case " ${net} " in
+			*" ${input}6 "*) ;;
+			*) uci -q add_list firewall.@zone[${cnt}].network="${input}6" ;;
+			esac
 			[ -n "$(uci -q changes "firewall")" ] && uci_commit firewall
 			break
 		fi
 		cnt="$((cnt + 1))"
+		zone_name="$(uci_get firewall @zone[${cnt}] name)"
 	done
 
 	cnt="0"

@@ -13,6 +13,7 @@ vpn_action="${2}"
 vpn_service="${3}"
 vpn_iface="${4}"
 vpn_instance="${5}"
+vpn_status=""
 trm_funlib="/usr/lib/travelmate-functions.sh"
 if [ -z "${trm_bver}" ]; then
 	. "${trm_funlib}"
@@ -21,7 +22,7 @@ fi
 
 f_net() {
 	local json_rc
-	json_rc="$(${trm_fetchcmd} ${trm_fetchparm} --user-agent "${trm_useragent}" --header "Cache-Control: no-cache, no-store, must-revalidate, max-age=0" --write-out "%{response_code}" --output /dev/null "${trm_captiveurl}")"
+	json_rc="$("${trm_fetchcmd}" ${trm_fetchparm} --user-agent "${trm_useragent}" --header "Cache-Control: no-cache, no-store, must-revalidate, max-age=0" --write-out "%{response_code}" --output /dev/null "${trm_captiveurl}")"
 	if [ "${json_rc}" = "200" ] || [ "${json_rc}" = "204" ]; then
 		json_rc="net ok"
 	fi
@@ -49,7 +50,7 @@ if [ "${vpn}" = "1" ] && [ "${vpn_action%_*}" = "enable" ]; then
 		if ! "${trm_ubuscmd}" -t "$((trm_maxwait / 6))" wait_for network.interface."${vpn_iface}" >/dev/null 2>&1; then
 			f_log "info" "travelmate vpn interface '${vpn_iface}' does not appear on ubus on ifup event"
 		fi
-		cnt=0
+		cnt="0"
 		while :; do
 			vpn_status="$("${trm_ubuscmd}" -S call network.interface."${vpn_iface}" status 2>/dev/null | "${trm_jsoncmd}" -ql1 -e '@.up')"
 			if [ "${vpn_status}" = "true" ]; then
@@ -67,8 +68,8 @@ if [ "${vpn}" = "1" ] && [ "${vpn_action%_*}" = "enable" ]; then
 					/etc/init.d/openvpn stop "${vpn_instance}"
 				fi
 				rm -f "${trm_vpnfile}"
-				f_log "info" "${vpn_service} client connection can't be established '${vpn_iface}/${vpn_instance:-"-", rc: ${net_status:-"-"}}'"
-				return 1
+				f_log "info" "${vpn_service} client connection can't be established '${vpn_iface}/${vpn_instance:-"-"}, rc: ${net_status:-"-"}'"
+				exit 1
 			fi
 			cnt="$((cnt + 1))"
 			sleep 1

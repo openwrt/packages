@@ -36,11 +36,10 @@ automatically (re)connnects to configured APs/hotspots as they become available.
 * VPN hook supports 'wireguard' or 'openvpn' client setups to handle VPN (re)connections automatically
 * Email hook via 'msmtp' sends notification e-mails after every successful uplink connect
 * Proactively scan and switch to a higher priority uplink, replacing an existing connection
-* Connection tracking logs start and end date of an uplink connection
 * Check router subnet vs. uplink subnet, to show conflicts with router LAN network
-* Automatically disable the uplink after n minutes, e.g. for timed connections
-* Automatically (re)enable the uplink after n minutes, e.g. after failed login attempts
 * (Optional) Generate a random unicast MAC address for each uplink connection
+* (Optional) Evil twin protection by skipping access points with locally-administered (LAA) BSSIDs
+* Configurable retry limit per uplink, with optional unlimited retry mode
 * NTP time sync before sending emails
 * procd init and ntp-hotplug support
 * Runtime information available via LuCI & via 'status' init command
@@ -100,8 +99,9 @@ automatically (re)connnects to configured APs/hotspots as they become available.
 | trm_autoadd        | 0, disabled                        | automatically add open uplinks like hotel captive portals to your wireless config                     |
 | trm_ssidfilter     | -, not set                         | list of SSID patterns for filtering/skipping specific open uplinks, e.g. 'Chromecast*'                |
 | trm_randomize      | 0, disabled                        | generate a random unicast MAC address for each uplink connection                                      |
+| trm_eviltwin       | 0, disabled                        | detect and skip access points with locally administered (LAA) BSSIDs to mitigate evil twin attacks    |
 | trm_triggerdelay   | 2                                  | additional trigger delay in seconds before travelmate processing begins                               |
-| trm_maxretry       | 3                                  | retry limit to connect to an uplink                                                                   |
+| trm_maxretry       | 3                                  | retry limit to connect to an uplink, set to '0' for unlimited retries                                 |
 | trm_minquality     | 35                                 | minimum signal quality threshold as percent for conditional uplink (dis-) connections                 |
 | trm_maxwait        | 30                                 | how long should travelmate wait for a successful wlan uplink connection                               |
 | trm_timeout        | 60                                 | overall retry timeout in seconds                                                                      |
@@ -123,17 +123,13 @@ automatically (re)connnects to configured APs/hotspots as they become available.
 
 | Option             | Default                            | Description/Valid Values                                                                              |
 | :----------------- | :--------------------------------- | :---------------------------------------------------------------------------------------------------- |
-| enabled            | 1, enabled                         | enable or disable the uplink, automatically set if the retry limit or the conn. expiry was reached    |
+| enabled            | 1, enabled                         | enable or disable the uplink, automatically set if the retry limit was reached                        |
 | device             | -, not set                         | match the 'device' in the wireless config section                                                     |
 | ssid               | -, not set                         | match the 'ssid' in the wireless config section                                                       |
 | bssid              | -, not set                         | match the 'bssid' in the wireless config section                                                      |
-| con_start          | -, not set                         | connection start (will be automatically set after a successful ntp sync)                              |
-| con_end            | -, not set                         | connection end (will be automatically set after a successful ntp sync)                                |
-| con_start_expiry   | 0, disabled                        | automatically disable the uplink after n minutes, e.g. for timed connections                          |
-| con_end_expiry     | 0, disabled                        | automatically (re-)enable the uplink after n minutes, e.g. after failed login attempts                |
 | script             | -, not set                         | reference to an external auto login script for captive portals                                        |
 | script_args        | -, not set                         | optional runtime args for the auto login script                                                       |
-| macaddr            | -, not set                         | use a specified MAC address for the uplink
+| macaddr            | -, not set                         | use a specified MAC address for the uplink                                                            |
 | vpn                | 0, disabled                        | automatically handle VPN (re-) connections                                                            |
 | vpnservice         | -, not set                         | reference the already configured 'wireguard' or 'openvpn' client instance as vpn provider             |
 | vpniface           | -, not set                         | the logical vpn interface, e.g. 'wg0' or 'tun0'                                                       |
@@ -196,7 +192,8 @@ Hopefully more scripts for different captive portals will be provided by the com
 
 ## Runtime information
 
-**Receive Travelmate runtime information:**
+Travelmate stores all runtime files (pid, scan results, status JSON, etc.) under `/var/run/travelmate/`. The runtime status is exposed both via the LuCI status panel and the init command:
+
 <pre><code>
 root@2go:~# /etc/init.d/travelmate status
 ::: travelmate runtime information
@@ -207,7 +204,7 @@ root@2go:~# /etc/init.d/travelmate status
   + station_mac        : 42:40:45:EC:B3:D1
   + station_interfaces : wwan, -
   + station_subnet     : 10.168.20.0 (lan: 10.200.1.0)
-  + run_flags          : scan: active, captive: ✔, proactive: ✔, netcheck: ✘, autoadd: ✘, randomize: ✔
+  + run_flags          : captive: ✔, proactive: ✔, netcheck: ✘, autoadd: ✘, randomize: ✔, eviltwin: ✘
   + ext_hooks          : ntp: ✔, vpn: ✘, mail: ✔
   + last_run           : 2025.12.11-09:08:24
   + system             : Cudy TR3000 v1, mediatek/filogic, OpenWrt SNAPSHOT (r32287-1c7ec8ab19)

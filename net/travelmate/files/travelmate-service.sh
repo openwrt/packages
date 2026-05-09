@@ -20,7 +20,7 @@ f_conf
 while :; do
 	if [ "${trm_action}" = "stop" ]; then
 		if [ -s "${trm_pidfile}" ]; then
-			f_log "info" "travelmate instance stopped ::: action: ${trm_action}, pid: $(< ${trm_pidfile})"
+			f_log "info" "travelmate instance stopped ::: action: ${trm_action}, pid: $("${trm_catcmd}" "${trm_pidfile}")"
 			: >"${trm_rtfile}"
 			: >"${trm_pidfile}"
 		fi
