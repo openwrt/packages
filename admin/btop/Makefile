@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=btop
-PKG_VERSION:=1.4.6
-PKG_RELEASE:=2
+PKG_VERSION:=1.4.7
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL=https://codeload.github.com/aristocratos/btop/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=4beb90172c6acaac08c1b4a5112fb616772e214a7ef992bcbd461453295a58be
+PKG_HASH:=933de2e4d1b2211a638be463eb6e8616891bfba73aef5d38060bd8319baeefc6
 
 PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
 PKG_LICENSE:=Apache-2.0
