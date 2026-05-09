@@ -1,17 +1,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fluidsynth
-PKG_VERSION:=2.4.7
+PKG_VERSION:=2.5.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/FluidSynth/fluidsynth/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=7fb0e328c66a24161049e2b9e27c3b6e51a6904b31b1a647f73cc1f322523e88
+PKG_HASH:=72f5720328fe44e2e5c67813885f0a6b4b004d048bd2eeeb0c0064074ebff530
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=LGPL-2.1
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:fluidsynth:fluidsynth
+
+# fluidsynth >= 2.5 build-depends on the gcem header-only constexpr math
+# library; the OpenWrt 'gcem' package installs its headers and CMake
+# config files into staging so find_package(GCEM) resolves there.
+PKG_BUILD_DEPENDS:=gcem
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
