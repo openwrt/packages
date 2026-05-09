@@ -62,12 +62,13 @@ endef
 define Package/zabbix-get/config
 	config ZABBIX_BUILD_SUPPORT_BIN
 		bool
-		depends on (PACKAGE_zabbix-agentd || PACKAGE_zabbix-proxy || PACKAGE_zabbix-server) && ZABBIX_ENABLE_ZABBIX
+		depends on PACKAGE_zabbix-agentd && ZABBIX_ENABLE_ZABBIX
 		default y
 		help
-			This option exists to prevent trying to build get and/or sender when none
-			of agentd, server, or proxy are being built. In that case get and sender are
-			not built by the Zabbix build system.
+			This option exists to prevent trying to build get and/or sender when the
+			of agent is not being built. In that case get and sender are not built by
+			the Zabbix build system. This is not a dependency DEPENDS because the
+			binaries do not require the agent to function.
 endef
 
 define Package/zabbix/Default
