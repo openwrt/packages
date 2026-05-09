@@ -1,5 +1,5 @@
 #!/bin/sh /etc/rc.common
-# Copyright © 2012 OpenWrt.org
+# Copyright © 2012-2026 OpenWrt.org
 #
 # shellcheck shell=busybox
 #
