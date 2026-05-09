@@ -1,8 +1,10 @@
+# SPDX-License-Identifier: GPL-2.0-only
+
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pdns
 PKG_VERSION:=4.9.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://downloads.powerdns.com/releases/
@@ -176,13 +178,13 @@ TARGET_CXX+=-std=c++17
 CONFIGURE_ARGS+= \
 	--sysconfdir=/etc/powerdns \
 	--libdir=/usr/lib/powerdns  \
+	--with-boost=$(STAGING_DIR)/usr/include \
 	--with-dynmodules="$(foreach backend,$(PDNS_BACKENDS),$(if $(CONFIG_PACKAGE_pdns-backend-$(backend)),$(PDNS_BACKEND_$(backend)_LIB),))" \
 	--with-lua="lua" \
 	--with-modules="bind" \
 	--with-mysql-lib=$(STAGING_DIR)/usr \
 	--with-mysql-includes=$(STAGING_DIR)/usr \
 	$(if $(CONFIG_PACKAGE_pdns-tools),--enable-tools,) \
-	--with-protobuf \
 	--without-libsodium \
 	--enable-experimental-pkcs11 \
 	--enable-lua-records \
