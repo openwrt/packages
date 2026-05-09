@@ -4,19 +4,19 @@
 
 # shellcheck shell=ash
 
+# config_load nut_server is already called by sourcing script
+# srv_statepath and srv_runas which set STATEPATH and RUNAS
+# are also already run by sourcing script
+
 # shellcheck source=net/nut/files/nut-common.sh.functions
 . /lib/functions/nut/nut-common.sh
 
+# Ensure the RUNAS user (server under which upsd and drivers run), has
+# access to the USB UPS device
 ensure_usb_ups_access() {
 	local ups="$1"
 	local vendorid
 	local productid
-	local runas=nut
-
-	config_load nut_server
-	srv_runas
-
-	runas="$RUNAS"
 
 	config_get vendorid "$ups" vendorid
 	config_get productid "$ups" productid
@@ -28,10 +28,17 @@ ensure_usb_ups_access() {
 	local NL='
 '
 
+	# Loop on the idVendor of all USB devices attached to the system
 	find /sys/devices -name idVendor -a -path '*usb*' | while IFS="$NL" read -r vendor_path; do
 		local usb_bus usb_dev device_path
 
 		# Filter by vendor ID first
+
+		if [ -z "$(cat "$vendor_path")" ]; then
+			logger -s -t nut-server "ERROR: could not read vendor ID from $vendor_path"
+			continue
+		fi
+
 		if [ "$(cat "$vendor_path" 2>/dev/null)" != "$vendorid" ]; then
 			continue
 		fi
@@ -39,11 +46,23 @@ ensure_usb_ups_access() {
 		device_path="$(dirname "$vendor_path")"
 
 		# Then filter by product ID
+
+		if [ -z "$(cat "$device_path/idProduct")" ]; then
+			logger -s -t nut-server "ERROR: could not read product ID from $device_path/idProduct"
+			continue
+		fi
+
 		if [ "$(cat "$device_path/idProduct" 2>/dev/null)" != "$productid" ]; then
 			continue
 		fi
 
-		# Next filter by serial, if provided
+		# Next filter by serial (number), if provided
+
+		if [ -z "$(cat "$device_path/serial")" ]; then
+			logger -s -t nut-server "ERROR: could not read serial (number) from $device_path/serial"
+			continue
+		fi
+
 		if [ -n "$serial" ] && [ "$serial" != "$(cat "$device_path"/serial)" ]; then
 			continue
 		fi
@@ -56,7 +75,7 @@ ensure_usb_ups_access() {
 		local MISSING_USB_NUM="000"
 		if [ "$usb_bus" != "$MISSING_USB_NUM" ] && [ "$usb_dev" != "$MISSING_USB_NUM" ]; then
 			chmod 0660 /dev/bus/usb/"$usb_bus"/"$usb_dev"
-			chown "${runas:-root}":"$(id -gn "${runas:-root}")" /dev/bus/usb/"$usb_bus"/"$usb_dev"
+			chown "${RUNAS:-root}":"$(id -gn "${RUNAS:-root}")" /dev/bus/usb/"$usb_bus"/"$usb_dev"
 		fi
 
 		# Serial numbers are defined as unique, so do not loop further if serial
@@ -64,11 +83,14 @@ ensure_usb_ups_access() {
 		if [ -n "$serial" ]; then
 			break
 			# If a serial number is not provided we need all vendor:product matches
-			# to have permissions for NUT as we do not know the matching method here
+			# to have permissions for NUT as we do not know the method used
+			# to match UPS device to a configuration, in this script
 		fi
 	done
 }
 
+# Detect if upsd is running under procd, even if it has no instances
+# (that is no UPS drivers running)
 server_active() {
 	local nut_server_active
 
@@ -76,6 +98,7 @@ server_active() {
 	[ "$nut_server_active" = "{ }" ] && return 0
 }
 
+# Emit list of running UPS driver instances
 list_running_instances() {
 	local service="$1"
 	local running_instances
@@ -92,6 +115,7 @@ list_running_instances() {
 	fi
 }
 
+# Send a signal to a UPS driver or server instance
 signal_instance() {
 	local instance_name="$1"
 	local process_name="$2"
@@ -100,12 +124,19 @@ signal_instance() {
 	local pidfile="$5"
 	local secondary_command="$6"
 
+	# Prefer sending signal using '$signal_command', which requires a
+	#   PID file exists
+	# Otherwise, send signal(s) the process(es) with the instance name
 	if [ -s "$pidfile" ]; then
+		logger -t nut-server "Sending signal_command '$signal_command' to $instance_name"
 		$signal_command | logger -t nut-server
 	elif pgrep "$process_name" >/dev/null 2>/dev/null; then
+		logger -t nut-server "Sending signal $signal to $instance_name"
 		procd_send_signal nut-server "$instance_name" "$signal" 2>&1 | logger -t nut-server
 	fi
+
 	if [ -n "$secondary_command" ] && procd_running nut-server "$instance_name"; then
+		logger -t nut-server "Issuing secondary_command '$secondary_command' for $instance_name"
 		$secondary_command 2>&1 | logger -t nut-server
 	fi
 }

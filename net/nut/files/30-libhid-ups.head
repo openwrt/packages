@@ -4,13 +4,15 @@ nut_driver_config() {
 	local cfg="$1"
 	local nomatch="$2"
 
-	config_get runas "$cfg" runas "nut"
+	. /lib/functions/nut/nut-common.sh
+	srv_runas
+
 	config_get vendorid "$cfg" vendorid
 	config_get productid "$cfg" productid
 
 	[ "$ACTION" = "add" ] && [ -n "$DEVNAME" ] && {
 		chmod 0660 /dev/"$DEVNAME"
-		chown "${runas:-root}":"$(id -gn "${runas:-root}")" /dev/"$DEVNAME"
+		chown "${RUNAS:-root}":"$(id -gn "${RUNAS:-root}")" /dev/"$DEVNAME"
 	}
 
 	if [ "$nomatch" = "1" ]; then

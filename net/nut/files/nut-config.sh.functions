@@ -4,6 +4,10 @@
 
 # shellcheck shell=ash
 
+# config_load nut_server is already called by sourcing script
+# srv_statepath and srv_runas which set STATEPATH and RUNAS
+# are also already run by sourcing script
+
 # Ephemeral files, recreated on each OpenWrt boot
 USERS_C=/var/etc/nut/upsd.users
 UPSD_C=/var/etc/nut/upsd.conf
@@ -12,6 +16,7 @@ UPS_C=/var/etc/nut/ups.conf
 # shellcheck source=net/nut/files/nut-common.sh.functions
 . /lib/functions/nut/nut-common.sh
 
+# Writes configuration values to the UPS run-time configuration file
 get_write_ups_config() {
 	local ups="$1"
 	local var="$2"
@@ -30,6 +35,7 @@ get_write_ups_config() {
 	}
 }
 
+# Add upsd listen address and port to the run-time configuration
 listen_address() {
 	local srv="$1"
 
@@ -39,17 +45,10 @@ listen_address() {
 	echo "LISTEN $address $port" >>"$UPSD_C"
 }
 
+# Adds upsd (NUT server) run-time configuration
 srv_config() {
 	local srv="$1"
-	local maxage maxconn certfile runas statepath
-
-	# Note runas support requires you make sure USB device file is readable by
-	# the runas user
-	config_get runas "$srv" runas nut
-	RUNAS="$runas"
-
-	config_get statepath "$srv" statepath /var/run/nut
-	STATEPATH="$statepath"
+	local maxage maxconn certfile
 
 	config_get maxage "$srv" maxage
 	[ -n "$maxage" ] && echo "MAXAGE $maxage" >>"$UPSD_C"
@@ -64,6 +63,7 @@ srv_config() {
 	[ -n "$certfile" ] && echo "CERTFILE $certfile" >>"$UPSD_C"
 }
 
+# Adds run-time configuration for NUT users to the upsd.users file
 nut_user_add() {
 	local user="$1"
 	local a
@@ -95,6 +95,7 @@ nut_user_add() {
 	fi
 }
 
+# Builds upsd (NUT server) run-time configuration
 build_server_config() {
 	# UPS_C is created in build_config which calls this function
 	chmod 0640 "$UPS_C"
@@ -124,10 +125,9 @@ build_server_config() {
 	havesrvcfg=1
 }
 
+# Builds UPS-specific run-time configuration
 build_ups_config() {
 	local ups="$1"
-
-	config_load nut_server
 
 	echo "[$ups]" >>"$UPS_C"
 
@@ -185,7 +185,18 @@ build_ups_config() {
 	config_list_foreach "$ups" override defoverride override
 	config_list_foreach "$ups" default defoverride default
 
-	other() {
+	# From documentation and fixing of do_other function by
+	# in https://github.com/rpavlik in
+	# https://github.com/openwrt/packages/pull/28308
+	#
+	# For each value "x" in the per-driver list "other", get the
+	#   per-driver config variable "other_x", and if it is not empty,
+	#   write "x = {value of other_x}" to the config file.
+	# For each value "x" in the per-driver list "otherflag", get the
+	#   per-driver config variable "otherflag_x", and if it is true, write
+	#  "x" to the config file.
+
+	do_other() {
 		# shellcheck disable=SC2317
 		local othervar="$1"
 		# shellcheck disable=SC2317
@@ -195,21 +206,33 @@ build_ups_config() {
 
 		# shellcheck disable=SC2317
 		if [ "$othervarflag" = "otherflag" ]; then
-			config_get_bool otherval "${othervarflag}_${othervar}" value
+			config_get_bool otherval "${ups}" "${othervarflag}_${othervar}" value
 			[ "$otherval" = "1" ] && echo "${othervar}" >>"$UPS_C"
 		else
-			config_get otherval "${othervarflag}_${othervar}" value
+			config_get otherval "${ups}" "${othervarflag}_${othervar}" value
 			[ -n "$otherval" ] && echo "${othervar} = $otherval" >>"$UPS_C"
 		fi
 	}
 
-	config_list_foreach "$ups" other other other
-	config_list_foreach "$ups" otherflag other otherflag
+	config_list_foreach "$ups" other do_other other
+	config_list_foreach "$ups" otherflag do_other otherflag
+
+	# For each entry in the list "other", get the
+	# variable "other_${entry}", and if not empty, write
+	# "${entry} = ${value of other_${entry}}" to the config file.
+	config_list_foreach "$ups" other do_other other
+
+	# For each entry in the list "otherflag", get the
+	# variable "otherflag_${entry}", and if true, write "${entry}" to
+	# the config file.
+	config_list_foreach "$ups" otherflag do_other otherflag
+
 	echo "" >>$UPS_C
 	# shellcheck disable=SC2034
 	haveupscfg=1
 }
 
+# Add global drivers settings to run-time config
 build_global_driver_config() {
 	local cfg="$1"
 
@@ -227,27 +250,26 @@ build_global_driver_config() {
 	echo "" >>"$UPS_C"
 }
 
+# Orchestrate the run-time configuration building process
 build_config() {
-	local STATEPATH=/var/run/nut
 
 	mkdir -p "$(dirname "$UPS_C")"
 	rm -f "$UPS_C"
 	echo "# Config file automatically generated from UCI config" >"$UPS_C"
 	chmod 0640 "$UPS_C"
 
-	config_load nut_server
-
-	srv_runas
-	srv_statepath
-
 	[ -d "${STATEPATH}" ] || {
 		mkdir -p "${STATEPATH}" || {
-			logger -t nut-server "ERROR: failed to create ${STATEPATH}"
+			# We hard fail here, as we cannot rely on service state if
+			# STATEPATH does not exit
+			logger -s -t nut-server "ERROR: failed to create ${STATEPATH}"
 			exit 1
 		}
 	}
 	chmod 0770 "${STATEPATH}" || {
-		logger -t nut-server "ERROR: failed to set proper permissions on ${STATEPATH}"
+		# We hard fail here, as we cannot rely on service state if
+		# STATEPATH does not have the appropriate permissions
+		logger -s -t nut-server "ERROR: failed to set proper permissions on ${STATEPATH}"
 		exit 1
 	}
 
@@ -258,8 +280,11 @@ build_config() {
 	SRV_RUNAS="$RUNAS"
 	config_foreach build_global_driver_config driver_global
 	if [ "$SRV_RUNAS" != "$RUNAS" ]; then
-		echo "WARNING: for proper communication drivers and server must 'runas' the same user" | logger -t nut-server
+		# We soft-fail here as this should be a recoverable error, once
+		# RUNAS is adjusted
+		echo "WARNING: for proper communication drivers and server must 'runas' the same user" | logger -s -t nut-server
 	fi
+	RUNAS="$SRV_RUNAS"
 
 	config_foreach build_ups_config driver
 

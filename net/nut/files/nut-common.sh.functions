@@ -4,6 +4,9 @@
 
 # shellcheck shell=ash
 
+# config_load nut_server is already called by sourcing script
+
+# Store path for NUT working data in the global variable STATEPATH
 srv_statepath() {
 	local statepath
 
@@ -11,6 +14,8 @@ srv_statepath() {
 	STATEPATH="$statepath"
 }
 
+# Store user under which to run server (upsd) and driver processes in
+# global variable 'RUNAS'
 srv_runas() {
 	local runas
 
@@ -24,7 +29,6 @@ prevent_hotplug_restart() {
 	# Avoid hotplug inadvertently restarting driver during
 	# forced shutdown
 
-	config_load nut_server
 	srv_statepath
 
 	[ -f /var/run/killpower ] && return 0
