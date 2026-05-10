@@ -368,7 +368,7 @@ start_ups_driver() {
 	procd_set_param stdout 0 # Subset of stderr
 	procd_set_param env NUT_QUIET_INIT_UPSNOTIFY=true
 	procd_set_param env NUT_STATEPATH="${STATEPATH}"
-	procd_set_param command /lib/nut/"${driver}" -FF -a "$ups" ${RUNAS:+-u "$RUNAS"}
+	procd_set_param command /usr/libexec/nut/"${driver}" -FF -a "$ups" ${RUNAS:+-u "$RUNAS"}
 	procd_close_instance
 	haveupscfg=1
 }
@@ -516,7 +516,7 @@ stop_ups_driver() {
 	config_get driver "$ups" driver "usbhid-ups"
 
 	if procd_running nut-server "$ups"; then
-		signal_instance "$ups" "$driver" "/lib/nut/'${driver}' -c exit -a '${ups}'" "TERM" "${STATEPATH}/${driver}-${ups}.pid"
+		signal_instance "$ups" "$driver" "/usr/libexec/nut/'${driver}' -c exit -a '${ups}'" "TERM" "${STATEPATH}/${driver}-${ups}.pid"
 		if procd_running nut-server upsd >/dev/null 2>&1; then
 			signal_instance upsd upsd "upsd -c stop" "TERM" "${STATEPATH}/upsd.pid" "procd_kill nut-server upsd"
 		fi
@@ -546,7 +546,7 @@ reload_ups_driver() {
 
 	# Try to reload, otherwise exit politely, then stop and restart procd instance
 	if procd_running nut-server "$ups"; then
-		signal_instance "$ups" "$driver" "/lib/nut/'${driver}' -c reload-or-exit -a '${ups}'" HUP "${STATEPATH}/${driver}-${ups}.pid"
+		signal_instance "$ups" "$driver" "/usr/libexec/nut/'${driver}' -c reload-or-exit -a '${ups}'" HUP "${STATEPATH}/${driver}-${ups}.pid"
 	fi
 	/etc/init.d/nut-server start "$ups" 2>&1 | logger -t nut-server
 }
