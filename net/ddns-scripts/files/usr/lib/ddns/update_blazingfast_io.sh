@@ -189,7 +189,7 @@ blazingfast_transfer
 
 # verify success from API response
 __DATA=$(jsonfilter -i "$DATFILE" -e "@.info[0]" 2>/dev/null)
-echo "$__DATA" | grep -q "updated successfully" && {
+echo "$__DATA" | grep -q "dnsrecordupdated" && {
 	write_log 7 "Record updated: $domain -> $__IP"
 	return 0
 }
