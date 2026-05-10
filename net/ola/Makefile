@@ -2,15 +2,13 @@
 # Copyright (C) 2006-2015 OpenWrt.org
 # Copyright (C) 2015-2017 Christian Beier <dontmind@freeshell.org>
 #
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
-#
+# SPDX-License-Identifier: GPL-2.0-only
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ola
 PKG_VERSION:=0.10.9
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
@@ -26,7 +24,7 @@ PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_FLAGS:=no-mips16
 
-HOST_BUILD_DEPENDS:=protobuf/host
+HOST_BUILD_DEPENDS:=protobuf-compat/host
 PKG_BUILD_DEPENDS:=ola/host
 
 include $(INCLUDE_DIR)/host-build.mk
@@ -37,7 +35,7 @@ define Package/ola
   CATEGORY:=Network
   TITLE:=Open Lighting Architecture Daemon
   URL:=https://www.openlighting.org/
-  DEPENDS:=+protobuf +libftdi1 +libusb-1.0 +libuuid +libstdcpp +libpthread +librt +zlib +libncurses +liblo +libmicrohttpd
+  DEPENDS:=+protobuf-compat +libftdi1 +libusb-1.0 +libuuid +libstdcpp +libpthread +librt +zlib +libncurses +liblo +libmicrohttpd
 endef
 
 define Package/ola/description
@@ -46,37 +44,49 @@ define Package/ola/description
   protocols. It enables software controllers talk to DMX hardware.
 endef
 
-CONFIGURE_ARGS += \
-	--disable-dependency-tracking \
-	--disable-static \
-	--disable-fatal-warnings \
-	--disable-unittests \
-	--without-dns-sd \
-	--with-ola-protoc-plugin="$(STAGING_DIR_HOSTPKG)/bin/ola_protoc_plugin"
-
 HOST_CONFIGURE_ARGS += \
 	--disable-all-plugins \
+	--disable-doxygen-doc \
+	--disable-doxygen-html \
+	--disable-examples \
+	--disable-http  \
+	--disable-libusb \
 	--disable-osc \
 	--disable-uart \
-	--disable-libusb \
-	--disable-http  \
-	--disable-examples \
 	--disable-unittests \
-	--disable-doxygen-html \
-	--disable-doxygen-doc \
-	--with-protoc=$(STAGING_DIR_HOSTPKG)/bin/protoc
+	--with-protoc=$(STAGING_DIR_HOSTPKG)/bin/protoc-compat
+
+CONFIGURE_ARGS += \
+	--disable-dependency-tracking \
+	--without-dns-sd \
+	--disable-fatal-warnings \
+	--disable-static \
+	--disable-unittests \
+	--with-ola-protoc-plugin="$(STAGING_DIR_HOSTPKG)/bin/ola_protoc_plugin" \
+	--with-protoc=$(STAGING_DIR_HOSTPKG)/bin/protoc-compat
+
+HOST_CONFIGURE_VARS += \
+	PKG_CONFIG_PATH="$(STAGING_DIR_HOSTPKG)/usr/protobuf-compat/lib/pkgconfig:$(PKG_CONFIG_PATH)" \
+	CPPFLAGS="-I$(STAGING_DIR_HOSTPKG)/usr/protobuf-compat/include $(HOST_CPPFLAGS)" \
+	CXXFLAGS="-I$(STAGING_DIR_HOSTPKG)/usr/protobuf-compat/include $(HOST_CXXFLAGS)" \
+	LDFLAGS="-L$(STAGING_DIR_HOSTPKG)/usr/protobuf-compat/lib $(HOST_LDFLAGS)"
+
+CONFIGURE_VARS += \
+	PKG_CONFIG_PATH="$(STAGING_DIR)/usr/protobuf-compat/lib/pkgconfig:$(PKG_CONFIG_PATH)" \
+	CPPFLAGS="-I$(STAGING_DIR)/usr/protobuf-compat/include $(TARGET_CPPFLAGS)" \
+	CXXFLAGS="-I$(STAGING_DIR)/usr/protobuf-compat/include $(TARGET_CXXFLAGS)" \
+	LDFLAGS="-L$(STAGING_DIR)/usr/protobuf-compat/lib $(TARGET_LDFLAGS)"
 
 # only build the ola_protoc thingy
 define Host/Compile
 	cd $(HOST_BUILD_DIR); \
-		$(MAKE) protoc/ola_protoc_plugin
+	$(MAKE) protoc/ola_protoc_plugin
 endef
 
 define Host/Install
 	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/bin
 	$(CP) $(HOST_BUILD_DIR)/protoc/ola_protoc_plugin $(STAGING_DIR_HOSTPKG)/bin
 endef
-
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
