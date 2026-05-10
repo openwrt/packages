@@ -1,15 +1,13 @@
 #
 # Copyright (C) 2023 Jeffery To
 #
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
-#
+# SPDX-License-Identifier: GPL-2.0-only
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-semantic-version
 PKG_VERSION:=2.10.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=semantic-version
 PYPI_SOURCE_NAME:=semantic_version
@@ -19,13 +17,13 @@ PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
-PKG_HOST_ONLY:=1
 HOST_BUILD_DEPENDS:= \
 	python3/host \
 	python-setuptools/host \
 	python-build/host \
 	python-installer/host \
 	python-wheel/host
+PKG_BUILD_DEPENDS:=python-setuptools/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -40,12 +38,11 @@ define Package/python3-semantic-version
   TITLE:=Library implementing the 'SemVer' scheme
   URL:=https://github.com/rbarrois/python-semanticversion
   DEPENDS:=+python3-light
-  BUILDONLY:=1
 endef
 
 define Package/python3-semantic-version/description
-This small python library provides a few tools to handle SemVer in
-Python. It follows strictly the 2.0.0 version of the SemVer scheme.
+  This small python library provides a few tools to handle SemVer in
+  Python. It follows strictly the 2.0.0 version of the SemVer scheme.
 endef
 
 $(eval $(call Py3Package,python3-semantic-version))
