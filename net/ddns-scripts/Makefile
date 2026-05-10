@@ -295,6 +295,7 @@ define Package/ddns-scripts-blazingfast
   TITLE:=Extension for blazingfast.io Anycast DNS API
   DEPENDS:=ddns-scripts +curl
   PROVIDES:=ddns-scripts_blazingfast.io
+  MAINTAINER:=Fotios Kitsantas <fkitsantas@icloud.com>
 endef
 
 define Package/ddns-scripts-blazingfast/description
