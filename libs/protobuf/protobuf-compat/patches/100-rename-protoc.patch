@@ -1,0 +1,9 @@
+--- a/cmake/protoc.cmake
++++ b/cmake/protoc.cmake
+@@ -12,5 +12,5 @@ add_executable(protoc ${protoc_files} ${
+ target_link_libraries(protoc libprotoc libprotobuf)
+ add_executable(protobuf::protoc ALIAS protoc)
+ 
+-set_target_properties(protoc PROPERTIES
++set_target_properties(protoc PROPERTIES OUTPUT_NAME protoc-compat
+     VERSION ${protobuf_VERSION})
