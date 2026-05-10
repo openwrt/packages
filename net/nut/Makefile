@@ -383,9 +383,9 @@ define DriverPackage
 
         endef
         define Package/nut-driver-$(2)/install
-		$(INSTALL_DIR) $$(1)/lib/nut
-		$(CP) $$(PKG_INSTALL_DIR)/lib/nut/$(2) $$(1)/lib/nut/
-		$(if $(filter $(2),clone),$(CP) $$(PKG_INSTALL_DIR)/lib/nut/$(2)-outlet $$(1)/lib/nut/)
+		$(INSTALL_DIR) $$(1)/usr/libexec/nut
+		$(CP) $$(PKG_INSTALL_DIR)/usr/libexec/nut/$(2) $$(1)/usr/libexec/nut/
+		$(if $(filter $(2),clone),$(CP) $$(PKG_INSTALL_DIR)/usr/libexec/nut/$(2)-outlet $$(1)/usr/libexec/nut/)
         endef
 endef
 define DriverDescription
@@ -582,7 +582,7 @@ CONFIGURE_ARGS += \
 	--without-nut_monitor \
 	--with-statepath=/var/run/nut \
 	--with-pidpath=/var/run \
-	--with-drvpath=/lib/nut \
+	--with-drvpath=/usr/libexec/nut \
 	--with-user=nut \
 	--with-group=nut \
 	$(if $(CONFIG_PACKAGE_nut-web-cgi),--with-gd-includes="`pkg-config --cflags gdlib`") \

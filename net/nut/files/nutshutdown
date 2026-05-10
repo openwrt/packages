@@ -14,7 +14,7 @@ shutdown_instance() {
 
 	# Only FSD if killpower was indicated
 	if [ -f /var/run/killpower ]; then
-		/lib/nut/"${driver}" -a "$cfg" -k
+		/usr/libexec/nut/"${driver}" -a "$cfg" -k
 	fi
 }
 
