@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ddns-scripts
 PKG_VERSION:=2.8.3
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_LICENSE:=GPL-2.0
 
@@ -290,6 +290,22 @@ define Package/ddns-scripts-beget/description
   'option password' to be a valid API key for beget.com
 endef
 
+define Package/ddns-scripts-blazingfast
+  $(call Package/ddns-scripts/Default)
+  TITLE:=Extension for blazingfast.io Anycast DNS API
+  DEPENDS:=ddns-scripts +curl +ca-bundle
+  PROVIDES:=ddns-scripts_blazingfast.io
+  MAINTAINER:=Fotios Kitsantas <fkitsantas@icloud.com>
+endef
+
+define Package/ddns-scripts-blazingfast/description
+  Dynamic DNS Client scripts extension for blazingfast.io Anycast DNS API (requires curl)
+  It requires:
+  'option username'  to be a valid blazingfast.io client area username
+  'option password'  to be the matching blazingfast.io client area password
+  'option domain'    to contain the full DNS record name to update (e.g. uk.nightmare.gr)
+  'option param_opt' to contain service_id=X zone_id=Y record_id=Z
+endef
 
 define Package/ddns-scripts-pdns
   $(call Package/ddns-scripts/Default)
@@ -468,6 +484,7 @@ define Package/ddns-scripts-services/install
 	rm $(1)/usr/share/ddns/default/dnspod.cn-v3.json
 	rm $(1)/usr/share/ddns/default/no-ip.com.json
 	rm $(1)/usr/share/ddns/default/bind-nsupdate.json
+	rm $(1)/usr/share/ddns/default/blazingfast.io.json
 	rm $(1)/usr/share/ddns/default/route53-v1.json
 	rm $(1)/usr/share/ddns/default/cnkuai.cn.json
 	rm $(1)/usr/share/ddns/default/gandi.net.json
@@ -829,6 +846,23 @@ fi
 exit 0
 endef
 
+define Package/ddns-scripts-blazingfast/install
+	$(INSTALL_DIR) $(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/update_blazingfast_io.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/blazingfast.io.json \
+		$(1)/usr/share/ddns/default/
+endef
+
+define Package/ddns-scripts-blazingfast/prerm
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
+endef
 
 define Package/ddns-scripts-pdns/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
@@ -999,6 +1033,7 @@ $(eval $(call BuildPackage,ddns-scripts-route53))
 $(eval $(call BuildPackage,ddns-scripts-cnkuai))
 $(eval $(call BuildPackage,ddns-scripts-gandi))
 $(eval $(call BuildPackage,ddns-scripts-beget))
+$(eval $(call BuildPackage,ddns-scripts-blazingfast))
 $(eval $(call BuildPackage,ddns-scripts-pdns))
 $(eval $(call BuildPackage,ddns-scripts-scaleway))
 $(eval $(call BuildPackage,ddns-scripts-transip))
