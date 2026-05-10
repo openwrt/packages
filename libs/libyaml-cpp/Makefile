@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libyaml-cpp
 PKG_VERSION:=0.7.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=yaml-cpp-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/jbeder/yaml-cpp/tar.gz/yaml-cpp-$(PKG_VERSION)?
@@ -46,7 +46,7 @@ CMAKE_OPTIONS += \
 
 define Package/libyaml-cpp/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libyaml-cpp.so.$(ABI_VERSION) $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libyaml-cpp.so.$(ABI_VERSION)* $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,libyaml-cpp))
