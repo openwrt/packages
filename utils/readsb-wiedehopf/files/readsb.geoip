@@ -1,0 +1,443 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# Copyright (C) 2026 OpenWrt.org
+#
+# readsb-geoip -- best-effort fill of empty readsb lat/lon from
+# public-IP geolocation.
+#
+# City-level only; for accurate CPR / range decoding, set lat/lon
+# manually with `readsb-setup` or `uci set readsb.main.lat=...`.
+# Non-interactive: only writes when both values are empty (or with
+# --force) and then commits UCI.
+#
+# Usage:
+#   readsb-geoip [<section>]            -- fill empty lat/lon (default:
+#                                          first readsb section);
+#                                          idempotent
+#
+# Read-only inspection (no UCI changes):
+#   readsb-geoip --self-test            -- PASS/FAIL diagnostic of HTTP
+#                                          client, jsonfilter, network,
+#                                          provider response
+#   readsb-geoip --dry-run [<section>]  -- everything except `uci commit`
+#
+# Mutating (commits to UCI; does NOT restart the daemon):
+#   readsb-geoip [<section>]            -- the default action above
+#   readsb-geoip --force [<section>]    -- overwrite existing lat/lon
+#                                          (DESTRUCTIVE)
+#
+# Modifiers (combine with any of the above):
+#   --verbose                           -- promote debug-level lines to
+#                                          info (visible in `logread -e
+#                                          readsb`)
+#
+#   readsb-geoip -h, --help             -- this options banner
+#
+# After any mutating run: `service readsb reload`.
+#
+# Exit codes:
+#   0  success (lat/lon written, already set, or --self-test all PASS)
+#   1  --self-test reported FAIL / fatal runtime error
+#   2  --self-test reported WARN(s) only / missing tooling at runtime
+#
+# Full reference:
+#   https://github.com/openwrt/packages/blob/master/utils/readsb-wiedehopf/README.md
+
+# -h reachable without sourcing functions.sh / before `set -u`.
+print_help() {
+	sed -n '/^# readsb-geoip /,/^$/p' "$0" | sed 's/^# \{0,1\}//'
+}
+
+case ${1:-} in
+	-h|--help) print_help; exit 0 ;;
+esac
+
+set -u
+
+# Use the package's shared logger with a geoip-specific tag.
+READSB_LOG_TAG="readsb-geoip"
+. /usr/lib/readsb/functions.sh
+
+# Verbose mode promotes _debug to _log (info).
+verbose=0
+_verbose_apply() {
+	[ "$verbose" = "1" ] || return 0
+	_debug() { _log "$@"; }
+}
+
+# Stage breadcrumb. EXIT trap surfaces where we died -- a `set -u` trip
+# inside vendor library code otherwise exits silently with rc=1.
+last_stage="init"
+on_exit() {
+	local rc=$? hint=""
+	case "$last_stage" in
+		done|*/done) _log "exit rc=$rc stage='$last_stage'"; return ;;
+	esac
+	[ "$rc" -ne 0 ] && hint=" (likely set -u on unset var; rerun: sh -x /usr/sbin/readsb-geoip --verbose --dry-run 2>&1 | logger -t readsb-trace)"
+	if [ "$rc" -ne 0 ]; then
+		_err "exit rc=$rc stage='$last_stage'${hint}"
+	else
+		_log "exit rc=$rc stage='$last_stage'"
+	fi
+}
+trap on_exit EXIT
+
+force=0
+dry_run=0
+self_test=0
+section=""
+for arg in "$@"; do
+	case "$arg" in
+		-h|--help)   print_help; exit 0 ;;
+		--force)     force=1 ;;
+		--dry-run)   dry_run=1 ;;
+		--verbose)   verbose=1 ;;
+		--self-test) self_test=1 ;;
+		-*)          _warn "ignoring unknown option: $arg" ;;
+		*)           [ -z "$section" ] && section="$arg" ;;
+	esac
+done
+_verbose_apply
+
+last_stage="tool-detect"
+have_uclient=0; have_wget=0; have_jsonfilter=0
+command -v uclient-fetch >/dev/null 2>&1 && have_uclient=1
+command -v wget          >/dev/null 2>&1 && have_wget=1
+command -v jsonfilter    >/dev/null 2>&1 && have_jsonfilter=1
+
+_log "starting (force=$force dry_run=$dry_run verbose=$verbose self_test=$self_test section='${section:-<all>}' uclient-fetch=$have_uclient wget=$have_wget jsonfilter=$have_jsonfilter)"
+
+# Self-test reports tooling problems via PASS/FAIL output; the normal
+# path needs jsonfilter and at least one HTTP client.
+if [ "$self_test" -ne 1 ]; then
+	if [ "$have_jsonfilter" != "1" ]; then
+		_err "jsonfilter not installed (opkg install jsonfilter)"
+		last_stage="missing-jsonfilter/done"
+		exit 0
+	fi
+	if [ "$have_uclient" = "0" ] && [ "$have_wget" = "0" ]; then
+		_err "no HTTP client found (need uclient-fetch or wget)"
+		last_stage="missing-http-client/done"
+		exit 0
+	fi
+fi
+
+# Strict numeric check; rejects argv-injection payloads in coords.
+is_coord() {
+	printf '%s' "$1" | awk '
+		/^[+-]?([0-9]+\.?[0-9]*|\.[0-9]+)$/ { exit 0 }
+		{ exit 1 }
+	'
+}
+
+in_range() {
+	awk -v v="$1" -v b="$2" 'BEGIN { exit !(v+0 >= -b && v+0 <= b) }'
+}
+
+# Strip anything outside [0-9a-fA-F:.] -- defends syslog from injection
+# via a malicious provider response.
+sanitize_ip() {
+	printf '%s' "$1" | tr -cd '0-9a-fA-F:.'
+}
+
+# fetch <url>: stdout = response body (may be empty). Always rc 0.
+fetch() {
+	local url=$1 body="" rc client_err=""
+
+	if [ "$have_uclient" = "1" ]; then
+		# mktemp gives a 0600 atomically-created file -- avoids the
+		# symlink-attack window of a predictable /tmp name.
+		local tmp_err
+		tmp_err=$(mktemp 2>/dev/null) || tmp_err=""
+		if [ -n "$tmp_err" ]; then
+			body=$(uclient-fetch -qO- --timeout=8 "$url" 2>"$tmp_err"); rc=$?
+			client_err=$(head -n 5 "$tmp_err" 2>/dev/null | tr '\n' ' ')
+			rm -f "$tmp_err"
+		else
+			body=$(uclient-fetch -qO- --timeout=8 "$url" 2>/dev/null); rc=$?
+			client_err="(stderr suppressed: mktemp unavailable)"
+		fi
+		if [ "$rc" -ne 0 ] || [ -z "$body" ]; then
+			_log "uclient-fetch $url failed (rc=$rc body_len=${#body}): ${client_err:-no stderr}"
+			body=""
+		fi
+	fi
+
+	if [ -z "$body" ] && [ "$have_wget" = "1" ]; then
+		body=$(wget -qO- --timeout=8 "$url" 2>/dev/null); rc=$?
+		[ -z "$body" ] && _log "wget $url failed (rc=$rc)"
+	fi
+
+	printf '%s' "$body"
+}
+
+# parse_provider <body> <lat-jsonpath> <lon-jsonpath> [<ip-jsonpath>]
+# Echoes "lat lon ip" on success (ip = "-" if absent), empty otherwise.
+parse_provider() {
+	local body=$1 lat_path=$2 lon_path=$3 ip_path=${4:-} lat lon ip="-"
+	[ -z "$body" ] && return 1
+	lat=$(printf '%s' "$body" | jsonfilter -e "$lat_path" 2>/dev/null)
+	lon=$(printf '%s' "$body" | jsonfilter -e "$lon_path" 2>/dev/null)
+	[ -n "$lat" ] && [ -n "$lon" ] || return 1
+	if [ -n "$ip_path" ]; then
+		ip=$(printf '%s' "$body" | jsonfilter -e "$ip_path" 2>/dev/null)
+		ip=$(sanitize_ip "$ip")
+		[ -n "$ip" ] || ip="-"
+	fi
+	printf '%s %s %s\n' "$lat" "$lon" "$ip"
+}
+
+lookup() {
+	local body coords lat="" lon="" ip="-" provider=""
+
+	body=$(fetch "https://ipapi.co/json/")
+	coords=$(parse_provider "$body" '@.latitude' '@.longitude' '@.ip') && provider="ipapi.co"
+	if [ -z "$coords" ] && [ -n "$body" ]; then
+		# ipapi.co rate-limit body: {"error":true,"reason":"RateLimited"}
+		local err_reason
+		err_reason=$(printf '%s' "$body" | jsonfilter -e '@.reason' 2>/dev/null)
+		_warn "ipapi.co returned no lat/lon (body_len=${#body}${err_reason:+ reason=\"$err_reason\"})"
+	fi
+
+	if [ -z "$coords" ]; then
+		_debug "trying fallback provider ip-api.com"
+		body=$(fetch "https://ip-api.com/json/?fields=status,message,query,lat,lon")
+		coords=$(parse_provider "$body" '@.lat' '@.lon' '@.query') && provider="ip-api.com"
+		if [ -z "$coords" ] && [ -n "$body" ]; then
+			local status msg
+			status=$(printf '%s' "$body" | jsonfilter -e '@.status'  2>/dev/null)
+			msg=$(printf    '%s' "$body" | jsonfilter -e '@.message' 2>/dev/null)
+			_warn "ip-api.com returned no lat/lon (body_len=${#body} status=${status:-?} message=\"${msg:-}\")"
+		fi
+	fi
+
+	[ -n "$coords" ] || { _warn "all geoip providers returned empty"; return 1; }
+	set -- $coords
+	lat=$1; lon=$2; ip=${3:--}
+	is_coord "$lat" && is_coord "$lon" || { _warn "$provider returned non-numeric coords (lat=$lat lon=$lon ip=$ip); rejecting"; return 1; }
+	in_range "$lat" 90 && in_range "$lon" 180 || { _warn "$provider returned out-of-range coords (lat=$lat lon=$lon ip=$ip); rejecting"; return 1; }
+	_log "geoip provider $provider returned lat=$lat lon=$lon public_ip=$ip"
+	printf '%s\n' "$coords"
+}
+
+update_section() {
+	local sec=$1
+	local cur_lat cur_lon coords lat lon
+
+	cur_lat=$(uci -q get "readsb.${sec}.lat") || cur_lat=""
+	cur_lon=$(uci -q get "readsb.${sec}.lon") || cur_lon=""
+
+	if [ "$force" -ne 1 ] && [ -n "$cur_lat" ] && [ -n "$cur_lon" ]; then
+		_debug "section '${sec}' already has lat=$cur_lat lon=$cur_lon; skipping"
+		return 0
+	fi
+
+	_log "looking up coordinates for section '${sec}' (cur_lat='${cur_lat}' cur_lon='${cur_lon}' force=$force)"
+
+	coords=$(lookup) || {
+		_warn "geoip lookup failed for '${sec}'; lat/lon left unset (set manually: uci set readsb.${sec}.lat=...; uci set readsb.${sec}.lon=...; uci commit readsb)"
+		return 1
+	}
+	set -- $coords
+	lat=$1; lon=$2
+
+	if [ "$dry_run" = "1" ]; then
+		_notice "[dry-run] would set readsb.${sec}.lat=${lat} readsb.${sec}.lon=${lon}"
+		return 0
+	fi
+
+	uci set "readsb.${sec}.lat=${lat}"
+	uci set "readsb.${sec}.lon=${lon}"
+	uci commit readsb
+	_notice "auto-detected location for '${sec}': lat=${lat} lon=${lon} (city-level only; for accurate CPR set exact coords with 'readsb-setup' or 'uci set readsb.${sec}.lat=...; uci set readsb.${sec}.lon=...; uci commit readsb')"
+}
+
+# Source /lib/functions.sh and config_load with set -u disabled --
+# vendor library code references several variables that may be unset.
+load_uci_safely() {
+	last_stage="${1:-uci}/source-functions.sh"
+	: "${IPKG_INSTROOT:=}"
+	set +u
+	. /lib/functions.sh
+	last_stage="${1:-uci}/config-load"
+	config_load readsb
+	set -u
+}
+
+# --- self-test -------------------------------------------------------------
+self_test_fail=0
+self_test_warn=0
+st_emit() {
+	# st_emit <PASS|FAIL|WARN|SKIP> <name> <detail>
+	local status=$1 name=$2 detail=$3
+	case "$status" in
+		FAIL) self_test_fail=$((self_test_fail + 1)); _err  "self-test FAIL: $name${detail:+ -- $detail}" ;;
+		WARN) self_test_warn=$((self_test_warn + 1)); _warn "self-test WARN: $name${detail:+ -- $detail}" ;;
+		*)                                            _log  "self-test $status: $name${detail:+ -- $detail}" ;;
+	esac
+	printf '[%s] %-30s %s\n' "$status" "$name" "$detail"
+}
+
+# st_check_provider <name> <url> <lat-path> <lon-path> <ip-path> [<extra-status-paths...>]
+# Sets $st_provider / $st_lat / $st_lon / $st_ip on PASS (caller declares).
+st_check_provider() {
+	local name=$1 url=$2 lat_path=$3 lon_path=$4 ip_path=$5
+	shift 5
+	local body coords
+	body=$(fetch "$url")
+	if [ -z "$body" ]; then
+		st_emit FAIL "HTTPS: $name" "no response (TLS/network failure; see log above)"
+		return 1
+	fi
+	coords=$(parse_provider "$body" "$lat_path" "$lon_path" "$ip_path")
+	if [ -n "$coords" ]; then
+		set -- $coords
+		st_lat=$1; st_lon=$2; st_ip=${3:--}
+		st_emit PASS "HTTPS: $name" "lat=$st_lat lon=$st_lon public_ip=$st_ip"
+		[ -z "$st_provider" ] && st_provider=$name
+		return 0
+	fi
+	# Aggregate any provider-supplied status/reason fields for diagnostics.
+	local detail="connected but no coords (body_len=${#body}"
+	for path in "$@"; do
+		local key=${path#@.} val
+		val=$(printf '%s' "$body" | jsonfilter -e "$path" 2>/dev/null)
+		[ -n "$val" ] && detail="$detail $key=$val"
+	done
+	detail="$detail)"
+	st_emit WARN "HTTPS: $name" "$detail"
+	return 1
+}
+
+run_self_test() {
+	local st_provider="" st_lat="" st_lon="" st_ip=""
+
+	_log "self-test starting"
+	echo "readsb-geoip self-test"
+	echo "----------------------"
+
+	if [ "$have_jsonfilter" = "1" ]; then
+		st_emit PASS "jsonfilter installed" "$(command -v jsonfilter)"
+	else
+		st_emit FAIL "jsonfilter installed" "missing; opkg install jsonfilter"
+	fi
+
+	if [ "$have_uclient" = "1" ] || [ "$have_wget" = "1" ]; then
+		st_emit PASS "HTTP client available" "uclient-fetch=$have_uclient wget=$have_wget"
+	else
+		st_emit FAIL "HTTP client available" "neither uclient-fetch nor wget; opkg install uclient-fetch"
+	fi
+
+	if [ -s /etc/ssl/certs/ca-certificates.crt ]; then
+		st_emit PASS "CA bundle present" "/etc/ssl/certs/ca-certificates.crt"
+	elif [ -d /etc/ssl/certs ] && [ "$(ls -1 /etc/ssl/certs 2>/dev/null | wc -l)" -gt 0 ]; then
+		st_emit WARN "CA bundle present" "/etc/ssl/certs/ca-certificates.crt missing; some certs in /etc/ssl/certs"
+	else
+		st_emit FAIL "CA bundle present" "no CA store; opkg install ca-bundle ca-certificates"
+	fi
+
+	if command -v nslookup >/dev/null 2>&1; then
+		for host in ipapi.co ip-api.com; do
+			if nslookup "$host" >/dev/null 2>&1; then
+				st_emit PASS "DNS: $host" "resolved"
+			else
+				st_emit FAIL "DNS: $host" "nslookup failed (DNS down or host blocked)"
+			fi
+		done
+	else
+		st_emit SKIP "DNS resolution" "nslookup not installed; HTTPS tests below cover connectivity"
+	fi
+
+	if [ "$have_jsonfilter" != "1" ] || \
+	   { [ "$have_uclient" != "1" ] && [ "$have_wget" != "1" ]; }; then
+		echo
+		echo "Aborting connectivity tests: missing prerequisites above."
+		_err "self-test aborted: missing prerequisites (fail=$self_test_fail warn=$self_test_warn)"
+		return 1
+	fi
+
+	st_check_provider "ipapi.co"   "https://ipapi.co/json/"                                    '@.latitude' '@.longitude' '@.ip'    '@.reason' || true
+	st_check_provider "ip-api.com" "https://ip-api.com/json/?fields=status,message,query,lat,lon" '@.lat'      '@.lon'       '@.query' '@.status' '@.message' || true
+
+	if [ -n "$st_provider" ]; then
+		if is_coord "$st_lat" && is_coord "$st_lon" && \
+		   in_range "$st_lat" 90 && in_range "$st_lon" 180; then
+			st_emit PASS "coord validation" "lat=$st_lat lon=$st_lon in range"
+		else
+			st_emit FAIL "coord validation" "$st_provider returned bad coords (lat=$st_lat lon=$st_lon)"
+		fi
+	else
+		st_emit FAIL "coord validation" "no provider returned usable coords"
+	fi
+
+	if [ -f /etc/config/readsb ]; then
+		load_uci_safely "self-test"
+		local _sec_count=0 _need=0
+		_st_count() { _sec_count=$((_sec_count + 1)); }
+		_st_need() {
+			local en lat lon
+			config_get_bool en "$1" enabled 0
+			[ "$en" -eq 1 ] || return 0
+			config_get lat "$1" lat
+			config_get lon "$1" lon
+			[ -n "$lat" ] && [ -n "$lon" ] || _need=$((_need + 1))
+		}
+		config_foreach _st_count readsb
+		config_foreach _st_need  readsb
+		if [ "$_sec_count" -eq 0 ]; then
+			st_emit WARN "UCI sections" "no readsb sections found (run 'readsb-setup' to create one)"
+		elif [ "$_need" -eq 0 ]; then
+			st_emit PASS "UCI sections" "$_sec_count section(s); all enabled instances already have lat/lon"
+		else
+			st_emit PASS "UCI sections" "$_sec_count section(s); $_need enabled instance(s) need geoip"
+		fi
+	else
+		st_emit FAIL "UCI sections" "readsb UCI config missing -- reinstall readsb-wiedehopf or run 'readsb-setup'"
+	fi
+
+	echo "----------------------"
+	echo "Result: fail=$self_test_fail warn=$self_test_warn"
+	if [ "$self_test_fail" -gt 0 ]; then
+		_err "self-test complete (fail=$self_test_fail warn=$self_test_warn)"
+	elif [ "$self_test_warn" -gt 0 ]; then
+		_warn "self-test complete (fail=$self_test_fail warn=$self_test_warn)"
+	else
+		_notice "self-test complete (fail=0 warn=0)"
+	fi
+}
+
+if [ "$self_test" = "1" ]; then
+	run_self_test
+	last_stage="self-test/done"
+	[ "$self_test_fail" -gt 0 ] && exit 1
+	[ "$self_test_warn" -gt 0 ] && exit 2
+	exit 0
+fi
+
+if [ -n "$section" ]; then
+	last_stage="update-section($section)"
+	_log "updating single section '$section' (force=$force dry_run=$dry_run)"
+	update_section "$section"
+	rc=$?
+	last_stage="update-section($section)/done"
+	exit $rc
+fi
+
+load_uci_safely "main"
+
+last_stage="count-sections"
+sec_count=0
+count_sec() { sec_count=$((sec_count + 1)); }
+config_foreach count_sec readsb
+_debug "loaded /etc/config/readsb (sections=$sec_count)"
+if [ "$sec_count" -eq 0 ]; then
+	_warn "no readsb sections defined; nothing to do (run 'readsb-setup' to bootstrap)"
+	last_stage="no-sections/done"
+	exit 0
+fi
+
+last_stage="update-all"
+config_foreach update_section readsb
+last_stage="done"
+_debug "all sections processed"

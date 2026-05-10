@@ -1,0 +1,781 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-only
+# Copyright (C) 2026 OpenWrt.org
+
+# readsb-feeder -- inspect / operate aggregator feeder sections.
+#
+# Adds, removes, enables, disables and probes per-aggregator outbound
+# `config feeder '<name>'` sections in /etc/config/readsb. Each enabled
+# section becomes one outbound TCP connection at daemon startup.
+#
+# Usage:
+#   readsb-feeder                           -- interactive feeder wizard
+#
+# Read-only inspection (no UCI changes):
+#   readsb-feeder --list                    -- show all 'config feeder' sections
+#   readsb-feeder --show <name>             -- dump one section
+#   readsb-feeder --url [<name>]            -- public stats URL(s) per feeder
+#   readsb-feeder --probe [<name>]          -- TCP-probe each enabled feeder
+#   readsb-feeder --health [<name>]         -- per-feeder runtime health
+#                                              (probe + cmdline + log scan)
+#   readsb-feeder --presets                 -- list built-in preset names
+#   readsb-feeder --examples                -- sample feeder UCI blocks
+#   readsb-feeder --companions [<preset>]   -- optional companion package(s)
+#
+# Mutating (commits to UCI; does NOT restart the daemon):
+#   readsb-feeder --add <name> <preset> [k=v]...
+#   readsb-feeder --set <name> <k>=<v>...
+#   readsb-feeder --enable  <name>
+#   readsb-feeder --disable <name>
+#   readsb-feeder --remove  <name>
+#
+#   readsb-feeder -h, --help                -- this options banner
+#
+# After any mutation: `service readsb reload`.
+#
+# Exit codes:
+#   0  success (--probe / --health: ALL targets reachable; --health also
+#      requires LIVE in cmdline AND no recent errors)
+#   1  usage error / unknown option
+#   2  one or more targets unreachable / DEGRADED / mutation failed
+#   3  no feeder sections defined / named section not found
+#
+# Full reference:
+#   https://github.com/openwrt/packages/blob/master/utils/readsb-wiedehopf/README.md
+
+# -h / --help must work before sourcing functions.sh so help is reachable
+# when the package is staged but not yet installed.
+case ${1:-} in
+	-h|--help)
+		sed -n '/^# readsb-feeder /,/^$/p' "$0" | sed 's/^# \{0,1\}//'
+		exit 0
+		;;
+esac
+
+# shellcheck source=files/readsb.functions.sh
+. /usr/lib/readsb/functions.sh
+# shellcheck source=/dev/null
+. /lib/functions.sh
+
+READSB_LOG_TAG=readsb-feeder
+
+# Stderr message shared by `url` and `probe` when nothing matched.
+_no_match() {
+	local want=$1 verb=$2
+	if [ -n "$want" ]; then
+		echo "no feeder named '$want' found (or it is disabled)" >&2
+	else
+		echo "no enabled feeder sections${verb:+ to $verb}" >&2
+	fi
+}
+
+# Post-mutation message every mutating command emits (notice + stdout).
+_emit_mutation() {
+	local what=$1
+	_notice "$what"
+	echo "$what; run 'service readsb reload' to apply"
+}
+
+# Commit pending UCI; fail with a uniform error and rc 2.
+_commit() {
+	uci -q commit readsb || { echo "readsb-feeder: uci commit failed" >&2; return 2; }
+}
+
+# --- command: --list -------------------------------------------------------
+cmd_list() {
+	local main_uuid total=0
+	main_uuid=$(uci -q get readsb.main.uuid)
+
+	printf '%-16s %-6s %-12s %-32s %-5s %s\n' \
+		NAME ENABLED PRESET HOST PORT PROTOCOL
+
+	_emit() {
+		local fcfg=$1
+		if readsb_feeder_resolve "$fcfg" "$main_uuid"; then
+			printf '%-16s %-6s %-12s %-32s %-5s %s\n' \
+				"$fcfg" "$readsb_feeder_enabled" "$readsb_feeder_preset" \
+				"$readsb_feeder_host" "$readsb_feeder_port" "$readsb_feeder_proto"
+		else
+			printf '%-16s %-6s %-12s %-32s %-5s %s\n' \
+				"$fcfg" "$readsb_feeder_enabled" "${readsb_feeder_preset:-?}" \
+				"<malformed>" "?" "?"
+		fi
+		total=$((total + 1))
+	}
+
+	config_load readsb
+	config_foreach _emit feeder
+
+	if [ "$total" -eq 0 ]; then
+		echo "no feeder sections defined" >&2
+		echo "add one interactively: readsb-feeder" >&2
+		echo "or non-interactively:  readsb-feeder --add <name> <preset>" >&2
+		return 3
+	fi
+	return 0
+}
+
+# --- command: --url --------------------------------------------------------
+cmd_url() {
+	local want=$1 main_uuid printed=0 missing=0
+	main_uuid=$(uci -q get readsb.main.uuid)
+
+	_one() {
+		local fcfg=$1 url
+		[ -z "$want" ] || [ "$want" = "$fcfg" ] || return 0
+		readsb_feeder_resolve "$fcfg" "$main_uuid" || return 0
+		[ "$readsb_feeder_enabled" -eq 1 ] || [ -n "$want" ] || return 0
+		if url=$(readsb_feeder_status_url "$readsb_feeder_preset" "$readsb_feeder_uuid"); then
+			printf '%-16s %s\n' "$fcfg" "$url"
+			printed=$((printed + 1))
+		else
+			printf '%-16s (no public per-UUID stats URL published)\n' "$fcfg" >&2
+			missing=$((missing + 1))
+		fi
+	}
+
+	config_load readsb
+	config_foreach _one feeder
+
+	if [ "$printed" -eq 0 ] && [ "$missing" -eq 0 ]; then
+		_no_match "$want"
+		return 3
+	fi
+	[ "$missing" -gt 0 ] && return 2
+	return 0
+}
+
+# --- command: --probe ------------------------------------------------------
+# Pure-busybox TCP reachability probe (bash /dev/tcp, falling back to
+# nc -z). Some upstream firewalls (notably feed1.adsbexchange.com:30004)
+# drop SYN+close drive-by probes while accepting persistent feeder
+# streams; the caller therefore checks the kernel's actual socket state
+# via `readsb_connector_active` first and only falls through here when
+# no live socket exists.
+_probe_tcp() {
+	local host=$1 port=$2
+	if (exec 9<>"/dev/tcp/$host/$port") 2>/dev/null; then
+		exec 9<&- 9>&-
+		return 0
+	fi
+	command -v nc >/dev/null 2>&1 || return 2
+	nc -z -w 3 "$host" "$port" >/dev/null 2>&1
+}
+
+cmd_probe() {
+	local want=$1 main_uuid bad=0 probed=0 rsb_pid
+	main_uuid=$(uci -q get readsb.main.uuid)
+	rsb_pid=$(readsb_pid)
+
+	_one() {
+		local fcfg=$1 rc
+		[ -z "$want" ] || [ "$want" = "$fcfg" ] || return 0
+		readsb_feeder_resolve "$fcfg" "$main_uuid" || return 0
+		[ "$readsb_feeder_enabled" -eq 1 ] || [ -n "$want" ] || return 0
+		probed=$((probed + 1))
+
+		# Active-socket-first: if the kernel shows readsb has a live
+		# ESTABLISHED socket to this remote, we have our answer without
+		# sending any new packets.
+		if [ -n "$rsb_pid" ] && readsb_connector_active \
+		   "$readsb_feeder_host" "$readsb_feeder_port" "$rsb_pid"; then
+			printf '%-16s LIVE  %s:%s (readsb has active socket -- no probe sent)\n' \
+				"$fcfg" "$readsb_feeder_host" "$readsb_feeder_port"
+			return 0
+		fi
+
+		# No active socket -- now we genuinely need the probe to
+		# distinguish "configured but not yet connected" from "unreachable".
+		_probe_tcp "$readsb_feeder_host" "$readsb_feeder_port"
+		rc=$?
+		case $rc in
+			0) printf '%-16s OK    %s:%s\n' "$fcfg" "$readsb_feeder_host" "$readsb_feeder_port" ;;
+			2) printf '%-16s SKIP  %s:%s (no /dev/tcp and no nc, and no active socket)\n' \
+				   "$fcfg" "$readsb_feeder_host" "$readsb_feeder_port" >&2
+			   _warn "probe '$fcfg' skipped: no /dev/tcp and no nc to test $readsb_feeder_host:$readsb_feeder_port"
+			   bad=$((bad + 1)) ;;
+			*) printf '%-16s FAIL  %s:%s\n' "$fcfg" "$readsb_feeder_host" "$readsb_feeder_port" >&2
+			   _warn "probe '$fcfg' unreachable: $readsb_feeder_host:$readsb_feeder_port"
+			   bad=$((bad + 1)) ;;
+		esac
+	}
+
+	config_load readsb
+	config_foreach _one feeder
+
+	if [ "$probed" -eq 0 ]; then
+		_no_match "$want" probe
+		return 3
+	fi
+	if [ "$bad" -gt 0 ]; then
+		_warn "probe summary: $bad of $probed feeder(s) unreachable"
+		return 2
+	fi
+	_log "probe summary: $probed feeder(s) reachable"
+	return 0
+}
+
+# --- command: --health -----------------------------------------------------
+# Per-feeder runtime check. Combines four signals into one state token
+# per feeder:
+#   1) TCP drive-by probe (can false-negative on firewalls)
+#   2) presence in the live daemon's --net-connector cmdline
+#   3) kernel-side ESTABLISHED socket owned by readsb pid with matching
+#      remote port (ground truth -- catches probe false-negatives)
+#   4) recent error-event count for host:port in syslog
+#
+# States:
+#   LIVE         in cmdline AND (probe ok OR active socket), 0 errors
+#   DEGRADED     LIVE-shaped but with recent errors (or no probe tool +
+#                no active socket)
+#   UNREACHABLE  in cmdline AND probe FAIL AND no active socket
+#   NOT-LOADED   in UCI (enabled=1) but missing from cmdline
+#                -- run `service readsb reload`
+#   DISABLED     enabled=0 in UCI; only shown when explicitly named
+#
+# Without <name>: walks every section; exit 0 only when every enabled
+# feeder is LIVE; exit 2 on any DEGRADED/UNREACHABLE/NOT-LOADED.
+# With <name>: same but for one section; rc 3 when <name> doesn't exist.
+cmd_health() {
+	local want=$1 main_uuid checked=0 bad=0
+	main_uuid=$(uci -q get readsb.main.uuid)
+
+	# Daemon-level preface: if not running, every feeder is by
+	# definition not live. Bail with rc 2.
+	local rsb_pid
+	rsb_pid=$(readsb_pid)
+	if [ -z "$rsb_pid" ]; then
+		echo "readsb-feeder --health: daemon not running" >&2
+		echo "  fix: /etc/init.d/readsb start" >&2
+		echo "  see: readsb-setup --health   (full daemon-down report)" >&2
+		return 2
+	fi
+
+	printf '%-16s %-11s %-32s %s\n' NAME STATE 'HOST:PORT' DETAILS
+
+	_one_health() {
+		local fcfg=$1 rc state details errors hostport
+		[ -z "$want" ] || [ "$want" = "$fcfg" ] || return 0
+		readsb_feeder_resolve "$fcfg" "$main_uuid" || {
+			# Malformed section -- still report it.
+			printf '%-16s %-11s %-32s %s\n' \
+				"$fcfg" 'MALFORMED' '?:?' "${readsb_feeder_error:-?}" >&2
+			bad=$((bad + 1))
+			checked=$((checked + 1))
+			return 0
+		}
+		hostport="$readsb_feeder_host:$readsb_feeder_port"
+
+		# Disabled sections only when the operator asked for that name.
+		if [ "$readsb_feeder_enabled" -ne 1 ]; then
+			[ -n "$want" ] || return 0
+			printf '%-16s %-11s %-32s %s\n' \
+				"$fcfg" 'DISABLED' "$hostport" 'enabled=0 in UCI'
+			checked=$((checked + 1))
+			return 0
+		fi
+
+		checked=$((checked + 1))
+
+		# Probe + cmdline + log scan in parallel-ish (sequential but
+		# cheap). Each is a separate signal -- we combine below.
+		_probe_tcp "$readsb_feeder_host" "$readsb_feeder_port"
+		rc=$?
+		errors=$(readsb_log_count_errors_for \
+			"$readsb_feeder_host" "$readsb_feeder_port")
+
+		if readsb_connector_live \
+			"$readsb_feeder_host" "$readsb_feeder_port"; then
+			# In cmdline. Authoritative liveness comes from the kernel:
+			# does readsb actually have an ESTABLISHED socket to that
+			# remote port right now? If yes, the feed IS up regardless
+			# of what the drive-by probe said.
+			local active=0
+			if readsb_connector_active \
+				"$readsb_feeder_host" "$readsb_feeder_port" "$rsb_pid"; then
+				active=1
+			fi
+			case $rc in
+				0)
+					if [ "${errors:-0}" -gt 0 ]; then
+						state=DEGRADED
+						details="$errors recent error event(s) -- see logread -e readsb"
+						bad=$((bad + 1))
+					else
+						state=LIVE
+						if [ "$active" = 1 ]; then
+							details='cmdline ok, tcp ok, socket active, log clean'
+						else
+							details='cmdline ok, tcp ok, log clean'
+						fi
+					fi
+					;;
+				2)
+					# Probe tool unavailable. Active-socket check is the
+					# better signal here when present.
+					if [ "$active" = 1 ]; then
+						if [ "${errors:-0}" -gt 0 ]; then
+							state=DEGRADED
+							details="socket active; $errors recent error event(s)"
+							bad=$((bad + 1))
+						else
+							state=LIVE
+							details='probe unavailable; readsb has active socket (kernel /proc check)'
+						fi
+					else
+						state=DEGRADED
+						details='probe skipped (no /dev/tcp and no nc) and no active socket'
+						bad=$((bad + 1))
+					fi
+					;;
+				*)
+					# Drive-by probe FAILED. Cross-check kernel state.
+					if [ "$active" = 1 ]; then
+						if [ "${errors:-0}" -gt 0 ]; then
+							state=DEGRADED
+							details="probe blocked but socket active; $errors recent error(s)"
+							bad=$((bad + 1))
+						else
+							state=LIVE
+							details='active socket in /proc/net/tcp (drive-by probe blocked at upstream)'
+						fi
+					else
+						state=UNREACHABLE
+						details='cmdline ok, TCP probe FAILED, no active socket'
+						bad=$((bad + 1))
+					fi
+					;;
+			esac
+		else
+			# Not in cmdline -- the daemon hasn't loaded this connector.
+			# Probe result still useful (is the upstream alive at all?).
+			case $rc in
+				0)  details='upstream reachable -- run: service readsb reload' ;;
+				2)  details='probe skipped (no /dev/tcp and no nc)' ;;
+				*)  details='upstream unreachable AND not in cmdline' ;;
+			esac
+			state=NOT-LOADED
+			bad=$((bad + 1))
+		fi
+
+		printf '%-16s %-11s %-32s %s\n' "$fcfg" "$state" "$hostport" "$details"
+
+		# When DEGRADED, surface the most recent matching log line so
+		# the operator doesn't have to grep syslog manually.
+		if [ "$state" = DEGRADED ] && [ "${errors:-0}" -gt 0 ]; then
+			local last
+			last=$(readsb_log_last_error_for \
+				"$readsb_feeder_host" "$readsb_feeder_port")
+			[ -n "$last" ] && printf '%-16s %s\n' '' "  last: $last"
+		fi
+	}
+
+	config_load readsb
+	config_foreach _one_health feeder
+
+	if [ "$checked" -eq 0 ]; then
+		_no_match "$want" check
+		return 3
+	fi
+	if [ "$bad" -gt 0 ]; then
+		_warn "health summary: $bad of $checked feeder(s) DEGRADED / UNREACHABLE / NOT-LOADED"
+		return 2
+	fi
+	_log "health summary: $checked feeder(s) LIVE"
+	return 0
+}
+
+# --- command: --presets ----------------------------------------------------
+cmd_presets() {
+	local p
+	for p in $(readsb_feeder_presets); do
+		# shellcheck disable=SC2046
+		set -- $(readsb_feeder_preset "$p")
+		printf '%-16s %s:%s (%s)\n' "$p" "$1" "$2" "$3"
+	done
+	printf '%-16s (user-supplied host/port/protocol)\n' custom
+}
+
+# --- command: --companions -------------------------------------------------
+# Show optional companion package(s) for a single preset, or for every
+# enabled feeder when called without args. Read-only.
+cmd_companions() {
+	local want=$1 reported=0 main_uuid
+
+	if [ -n "$want" ]; then
+		if [ "$want" != custom ] && ! readsb_is_preset "$want"; then
+			echo "readsb-feeder --companions: unknown preset '$want'" >&2
+			echo "  see: readsb-feeder --presets" >&2
+			return 1
+		fi
+		if readsb_recommend_optional_pkgs "$want"; then
+			return 0
+		fi
+		echo "preset '$want' has no optional companion packages"
+		return 0
+	fi
+
+	# All-enabled-feeders mode.
+	main_uuid=$(uci -q get readsb.main.uuid)
+	_one() {
+		local fcfg=$1
+		readsb_feeder_resolve "$fcfg" "$main_uuid" || return 0
+		[ "$readsb_feeder_enabled" -eq 1 ] || return 0
+		[ "$readsb_feeder_preset" = custom ] && return 0
+		[ -n "$(readsb_feeder_optional_pkgs "$readsb_feeder_preset")" ] || return 0
+		readsb_recommend_optional_pkgs "$readsb_feeder_preset" "feeder '$fcfg'"
+		echo
+		reported=$((reported + 1))
+	}
+
+	config_load readsb
+	config_foreach _one feeder
+
+	if [ "$reported" -eq 0 ]; then
+		echo "no enabled feeder sections have optional companion packages"
+		echo "(see: readsb-feeder --companions <preset>, or readsb-feeder --presets)"
+	fi
+	return 0
+}
+
+# --- command: --examples ---------------------------------------------------
+# Print sample feeder UCI blocks for paste/redirection / scripted setups.
+cmd_examples() {
+	local p
+	cat <<'EOF'
+# Sample feeder UCI blocks. Pipe into uci-batch for a scripted setup,
+# or copy/paste into your provisioning system. For interactive use
+# prefer `readsb-feeder` (no args) or `readsb-setup`.
+
+EOF
+	for p in $(readsb_feeder_presets); do
+		printf "config feeder '%s'\n" "$p"
+		printf "\toption enabled '0'\n"
+		printf "\toption preset '%s'\n" "$p"
+		printf "\toption silent_fail '1'\n\n"
+	done
+	cat <<'EOF'
+config feeder 'mycustom'
+	option enabled '0'
+	option preset 'custom'
+	option host 'feed.example.com'
+	option port '30004'
+	option protocol 'beast_reduce_plus_out'
+EOF
+}
+
+# --- command: --show -------------------------------------------------------
+cmd_show() {
+	local name=$1
+	if [ -z "$name" ]; then
+		echo "usage: readsb-feeder --show <name>" >&2
+		return 1
+	fi
+	if ! readsb_section_exists "$name"; then
+		echo "no feeder section named '$name'" >&2
+		return 3
+	fi
+	uci show "readsb.${name}"
+}
+
+# --- mutating helpers ------------------------------------------------------
+# Whitelist of options accepted by `add` and `set`.
+_feeder_opt_ok() {
+	case $1 in
+		enabled|preset|host|port|protocol|uuid|silent_fail) return 0 ;;
+	esac
+	return 1
+}
+
+# Validate a `key=value` token; sets $key/$val on success.
+_parse_kv() {
+	case $1 in
+		*=*) ;;
+		*) echo "readsb-feeder: not a key=value token: '$1'" >&2; return 1 ;;
+	esac
+	key=${1%%=*}
+	val=${1#*=}
+	if ! _feeder_opt_ok "$key"; then
+		echo "readsb-feeder: option '$key' not allowed on feeder sections" >&2
+		echo "  allowed: enabled preset host port protocol uuid silent_fail" >&2
+		return 1
+	fi
+	case $key in
+		enabled|silent_fail)
+			case $val in 0|1) ;; *)
+				echo "readsb-feeder: '$key' must be 0 or 1 (got '$val')" >&2
+				return 1 ;;
+			esac ;;
+		port)
+			case $val in ''|*[!0-9]*)
+				echo "readsb-feeder: 'port' must be numeric (got '$val')" >&2
+				return 1 ;;
+			esac
+			if [ "$val" -lt 1 ] || [ "$val" -gt 65535 ]; then
+				echo "readsb-feeder: 'port' out of range 1..65535" >&2
+				return 1
+			fi ;;
+		uuid)
+			if [ -n "$val" ] && ! readsb_is_uuid "$val"; then
+				echo "readsb-feeder: 'uuid' is not RFC4122 (8-4-4-4-12 hex)" >&2
+				return 1
+			fi ;;
+	esac
+	return 0
+}
+
+# --- command: --add --------------------------------------------------------
+cmd_add() {
+	# busybox-ash exits the whole script on `shift N` past argv length,
+	# even with `|| true`. Check first.
+	if [ $# -lt 2 ]; then
+		echo "usage: readsb-feeder --add <name> <preset> [key=value]..." >&2
+		return 1
+	fi
+	local name=$1 preset=$2; shift 2
+	local key val have_host=0 have_port=0
+
+	if ! wiz_v_uci_name "$name"; then
+		echo "readsb-feeder: invalid section name '$name'" >&2
+		echo "  must start with a letter, then letters/digits/_ only" >&2
+		return 1
+	fi
+	if readsb_section_exists "$name"; then
+		echo "readsb-feeder: section '$name' already exists" >&2
+		echo "  use 'readsb-feeder --set $name ...' to modify it" >&2
+		return 1
+	fi
+
+	if [ "$preset" != custom ] && ! readsb_is_preset "$preset"; then
+		echo "readsb-feeder: unknown preset '$preset'" >&2
+		echo "  see: readsb-feeder --presets" >&2
+		return 1
+	fi
+
+	# Validate every k=v before mutating UCI; track host/port for custom.
+	for kv in "$@"; do
+		_parse_kv "$kv" || return 1
+		[ "$key" = host ] && have_host=1
+		[ "$key" = port ] && have_port=1
+	done
+	if [ "$preset" = custom ]; then
+		if [ "$have_host" -eq 0 ] || [ "$have_port" -eq 0 ]; then
+			echo "readsb-feeder: 'custom' preset requires host=... and port=..." >&2
+			return 1
+		fi
+	fi
+
+	uci -q add readsb feeder >/dev/null || { echo "readsb-feeder: uci add failed" >&2; return 2; }
+	uci -q rename "readsb.@feeder[-1]=${name}" || { echo "readsb-feeder: uci rename failed" >&2; return 2; }
+	uci -q set "readsb.${name}.preset=${preset}"
+	# Default enabled=0 unless the caller overrides via key=value below.
+	uci -q set "readsb.${name}.enabled=0"
+	for kv in "$@"; do
+		_parse_kv "$kv" || return 1
+		uci -q set "readsb.${name}.${key}=${val}"
+	done
+	_commit || return 2
+	_emit_mutation "feeder '$name' added (preset=$preset)"
+	readsb_warn_companions "$preset" "$name"
+}
+
+# --- command: --set --------------------------------------------------------
+cmd_set() {
+	if [ $# -lt 2 ]; then
+		echo "usage: readsb-feeder --set <name> <key>=<value> [<key>=<value>]..." >&2
+		return 1
+	fi
+	local name=$1; shift
+	local key val
+
+	if ! readsb_section_exists "$name"; then
+		echo "readsb-feeder: no section named '$name'" >&2
+		return 3
+	fi
+	# Two-pass: validate everything before mutating UCI.
+	for kv in "$@"; do _parse_kv "$kv" || return 1; done
+	for kv in "$@"; do
+		_parse_kv "$kv" || return 1
+		if [ -z "$val" ]; then
+			uci -q delete "readsb.${name}.${key}"
+		else
+			uci -q set "readsb.${name}.${key}=${val}"
+		fi
+	done
+	_commit || return 2
+	_emit_mutation "feeder '$name' updated: $*"
+}
+
+# --- commands: --enable / --disable ---------------------------------------
+cmd_enable_disable() {
+	local name=$1 want=$2 preset
+	if [ -z "$name" ]; then
+		echo "usage: readsb-feeder $( [ "$want" = 1 ] && echo --enable || echo --disable ) <name>" >&2
+		return 1
+	fi
+	if ! readsb_section_exists "$name"; then
+		echo "readsb-feeder: no section named '$name'" >&2
+		return 3
+	fi
+	uci -q set "readsb.${name}.enabled=${want}"
+	_commit || return 2
+	_emit_mutation "feeder '$name' enabled=${want}"
+	# Surface companion-package warnings on enable; nothing to warn about on disable.
+	if [ "$want" = 1 ]; then
+		preset=$(uci -q get "readsb.${name}.preset")
+		readsb_warn_companions "$preset" "$name"
+	fi
+}
+
+# --- command: --remove -----------------------------------------------------
+cmd_remove() {
+	local name=$1
+	if [ -z "$name" ]; then
+		echo "usage: readsb-feeder --remove <name>" >&2
+		return 1
+	fi
+	if ! readsb_section_exists "$name"; then
+		echo "readsb-feeder: no section named '$name' (already gone)" >&2
+		return 0
+	fi
+	uci -q delete "readsb.${name}" || { echo "readsb-feeder: uci delete failed" >&2; return 2; }
+	_commit || return 2
+	_emit_mutation "feeder '$name' removed"
+}
+
+# --- command: bare invocation -> wizard -----------------------------------
+# Interactive feeder builder. Delegates to cmd_add() once values are
+# gathered, so validation is identical between the wizard and --add.
+cmd_wizard() {
+	wiz_available || {
+		echo "readsb-feeder: needs an interactive terminal to run the wizard" >&2
+		echo "  use 'readsb-feeder --add <name> <preset> [k=v]...' instead" >&2
+		return 1
+	}
+
+	local name preset enabled silent want_uuid uuid host port proto
+	local preset_list
+	preset_list=$(readsb_feeder_presets)
+
+	wiz_say ""
+	wiz_say "=== readsb-feeder ==="
+	wiz_say "Add one new aggregator feeder."
+	wiz_say "Abort at any prompt: 'q', 'quit', 'exit' (or Ctrl-D)."
+	wiz_say "Aborting before the apply step makes no UCI changes."
+	wiz_say ""
+
+	# 1. preset
+	wiz_say "Available presets (host:port baked in):"
+	wiz_choose preset "choose a preset" $preset_list custom || return 1
+
+	# 1a. Early heads-up about optional companion package(s); offer to
+	#     install/enable any that are missing or stopped right now.
+	if [ "$preset" != custom ] \
+	   && [ -n "$(readsb_feeder_optional_pkgs "$preset")" ]; then
+		wiz_say ""
+		wiz_say "--- optional companion package(s) -----------"
+		readsb_recommend_optional_pkgs "$preset" >/dev/tty
+		wiz_say "---------------------------------------------"
+		wiz_offer_install_companions "$preset" || return 1
+		wiz_say ""
+	fi
+
+	# 2. section name -- default to preset name; reject duplicates.
+	while :; do
+		wiz_ask_validated name "UCI section name" "$preset" wiz_v_uci_name \
+			"name must start with a letter; letters/digits/_ only" || return 1
+		if readsb_section_exists "$name"; then
+			wiz_say "  '$name' already exists -- pick another"
+			continue
+		fi
+		break
+	done
+
+	# 3. custom preset extras
+	host= port= proto=
+	if [ "$preset" = custom ]; then
+		wiz_ask_validated host  "feed host" "" wiz_v_host \
+			"host must be non-empty and contain no whitespace" || return 1
+		wiz_ask_validated port  "feed port" "30004" wiz_v_port \
+			"port must be a number 1..65535" || return 1
+		wiz_ask  proto "feed protocol" "beast_reduce_plus_out" || return 1
+	fi
+
+	# 4. enable + silent_fail
+	wiz_yesno enabled "enable this feeder now?" Y || return 1
+	wiz_yesno silent  "silently retry on connection failures? (recommended)" Y || return 1
+
+	# 5. per-feeder UUID override (rare).
+	wiz_yesno want_uuid "override UUID for this feeder only?" N || return 1
+	uuid=
+	if [ "$want_uuid" = 1 ]; then
+		wiz_ask_validated uuid "per-feeder UUID (RFC4122 8-4-4-4-12 hex)" "" \
+			wiz_v_uuid "not RFC4122; expected 8-4-4-4-12 hex" || return 1
+	fi
+
+	# 6. summary + confirm
+	wiz_say ""
+	wiz_say "--- summary -------------------------------"
+	wiz_say "  section : $name"
+	wiz_say "  preset  : $preset"
+	wiz_say "  enabled : $enabled"
+	wiz_say "  silent  : $silent"
+	[ "$preset" = custom ] && {
+		wiz_say "  host    : $host"
+		wiz_say "  port    : $port"
+		wiz_say "  proto   : $proto"
+	}
+	[ -n "$uuid" ] && wiz_say "  uuid    : $uuid"
+	wiz_say "-------------------------------------------"
+	wiz_confirm "commit this feeder?" || { wiz_say "aborted; nothing changed"; return 1; }
+
+	# 7. delegate to cmd_add for the actual UCI work.
+	local extras
+	extras="enabled=$enabled silent_fail=$silent"
+	[ -n "$uuid" ] && extras="$extras uuid=$uuid"
+	if [ "$preset" = custom ]; then
+		extras="$extras host=$host port=$port protocol=$proto"
+	fi
+	# shellcheck disable=SC2086
+	cmd_add "$name" "$preset" $extras || return $?
+
+	# 8. post-commit reminder for optional companion package(s); offer
+	#    install/enable for anything still missing or stopped.
+	if [ "$preset" != custom ] \
+	   && [ -n "$(readsb_feeder_optional_pkgs "$preset")" ]; then
+		wiz_say ""
+		wiz_say "--- companion package follow-up -------------"
+		readsb_recommend_optional_pkgs "$preset" "feeder '$name'" >/dev/tty
+		wiz_say "---------------------------------------------"
+		wiz_offer_install_companions "$preset" "feeder '$name'" || return 1
+	fi
+}
+
+# --- dispatch --------------------------------------------------------------
+# Bare invocation runs the wizard; all commands are --flag style.
+# Guard the shift: busybox-ash exits the script if `shift` consumes
+# more args than exist, even with `|| true`.
+sub=${1:-__wizard}
+[ $# -ge 1 ] && shift
+case $sub in
+	__wizard)     cmd_wizard ;;
+	--list)       cmd_list ;;
+	--show)       cmd_show "${1:-}" ;;
+	--url)        cmd_url "${1:-}" ;;
+	--probe)      cmd_probe "${1:-}" ;;
+	--health)     cmd_health "${1:-}" ;;
+	--presets)    cmd_presets ;;
+	--companions) cmd_companions "${1:-}" ;;
+	--examples)   cmd_examples ;;
+	--add)        cmd_add "$@" ;;
+	--set)        cmd_set "$@" ;;
+	--enable)     cmd_enable_disable "${1:-}" 1 ;;
+	--disable)    cmd_enable_disable "${1:-}" 0 ;;
+	--remove)     cmd_remove "${1:-}" ;;
+	*)
+		echo "readsb-feeder: unknown command '$sub'" >&2
+		echo "" >&2
+		sed -n '/^# readsb-feeder /,/^$/p' "$0" | sed 's/^# \{0,1\}//' >&2
+		exit 1
+		;;
+esac
