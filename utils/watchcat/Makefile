@@ -9,9 +9,9 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=watchcat
 PKG_VERSION:=1
-PKG_RELEASE:=22
+PKG_RELEASE:=23
 
-PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>
+PKG_MAINTAINER:=Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
 PKG_LICENSE:=GPL-2.0
 
 include $(INCLUDE_DIR)/package.mk

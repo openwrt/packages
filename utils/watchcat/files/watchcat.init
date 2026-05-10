@@ -1,5 +1,8 @@
 #!/bin/sh /etc/rc.common
 
+# shellcheck shell=busybox
+
+# shellcheck disable=SC2034
 USE_PROCD=1
 
 START=97
@@ -19,12 +22,13 @@ append_string() {
 time_to_seconds() {
 	time=$1
 
-	{ [ "$time" -ge 1 ] 2> /dev/null && seconds="$time"; } ||
-		{ [ "${time%s}" -ge 1 ] 2> /dev/null && seconds="${time%s}"; } ||
-		{ [ "${time%m}" -ge 1 ] 2> /dev/null && seconds=$((${time%m} * 60)); } ||
-		{ [ "${time%h}" -ge 1 ] 2> /dev/null && seconds=$((${time%h} * 3600)); } ||
-		{ [ "${time%d}" -ge 1 ] 2> /dev/null && seconds=$((${time%d} * 86400)); }
+	{ [ "$time" -ge 1 ] 2>/dev/null && seconds="$time"; } ||
+		{ [ "${time%s}" -ge 1 ] 2>/dev/null && seconds="${time%s}"; } ||
+		{ [ "${time%m}" -ge 1 ] 2>/dev/null && seconds=$((${time%m} * 60)); } ||
+		{ [ "${time%h}" -ge 1 ] 2>/dev/null && seconds=$((${time%h} * 3600)); } ||
+		{ [ "${time%d}" -ge 1 ] 2>/dev/null && seconds=$((${time%d} * 86400)); }
 
+	# shellcheck disable=SC2086
 	echo $seconds
 	unset seconds
 	unset time
@@ -73,6 +77,7 @@ config_watchcat() {
 				append_string "warn" "pingperiod cannot be a negative value." "; "
 			fi
 
+			# shellcheck disable=SC2154
 			if [ "$mmifacename" != "null" ] && [ "$period" -lt 30 ]; then
 				append_string "error" "Check interval is less than 30s. For robust operation with ModemManager modem interfaces it is recommended to set the period to at least 30s."
 			fi
@@ -104,12 +109,14 @@ config_watchcat() {
 		;;
 	ping_reboot)
 		procd_open_instance "watchcat_${1}"
+		# shellcheck disable=SC2154
 		procd_set_param command /usr/bin/watchcat.sh "ping_reboot" "$period" "$forcedelay" "$pinghosts" "$pingperiod" "$pingsize" "$addressfamily" "$interface"
 		procd_set_param respawn "${respawn_threshold:-3600}" "${respawn_timeout:-5}" "${respawn_retry:-5}"
 		procd_close_instance
 		;;
 	restart_iface)
 		procd_open_instance "watchcat_${1}"
+		# shellcheck disable=SC2154
 		procd_set_param command /usr/bin/watchcat.sh "restart_iface" "$period" "$pinghosts" "$pingperiod" "$pingsize" "$interface" "$mmifacename" "$unlockbands" "$addressfamily"
 		procd_set_param respawn "${respawn_threshold:-3600}" "${respawn_timeout:-5}" "${respawn_retry:-5}"
 		procd_close_instance
