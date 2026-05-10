@@ -1,0 +1,1397 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-only
+# Copyright (C) 2026 OpenWrt.org
+
+# readsb-setup -- master CLI for readsb-wiedehopf.
+#
+# Bare invocation runs the interactive first-boot wizard
+# (lat/lon -> UUID -> SDR tuning -> aggregator feeders -> reload).
+# Each step is skippable; re-runs are idempotent.
+#
+# Read-only flags (no UCI changes):
+#   --status   configuration check (essentials, mode, ports, SDRs,
+#              feeders, companion packages); exit 0 OK / 1 missing
+#   --health   runtime health (daemon process, host load, live data,
+#              per-feeder probe + per-source log scan); exit 0/1/2
+#   --stats    most recent periodic stats block (signal/preambles/
+#              decoded msgs/tracks/CPU); exit 0/1/2/3
+#   --config   pretty-printed /etc/config/readsb (+ companion configs)
+#   -h/--help  master orientation banner (every CLI + every flag)
+#
+# Full reference:
+#   https://github.com/openwrt/packages/blob/master/utils/readsb-wiedehopf/README.md
+
+# --help -- print the post-install welcome banner. Static heredoc with
+# no dependencies (works in recovery), then two dynamic sections when
+# functions.sh is available: companion packages installed / not installed.
+print_banner() {
+	cat <<'BANNER'
+
+============================================================
+ readsb-wiedehopf -- Mode-S/ADS-B/TIS decoder for OpenWrt
+============================================================
+ Upstream      : https://github.com/wiedehopf/readsb
+ Packaging     : https://github.com/openwrt/packages
+                 (utils/readsb-wiedehopf)
+ Maintainer    : Dr Bill Mcilhargey
+                 <19168174+billmcilhargey@users.noreply.github.com>
+ License       : GPL-3.0-or-later AND BSD-3-Clause (upstream)
+                 GPL-2.0-only (OpenWrt packaging)
+ Bug reports   : https://github.com/openwrt/packages/issues
+                 (please prefix the title with [readsb-wiedehopf])
+ Documentation : readsb-setup --help   (this banner)
+                 readsb-setup --status / --health / --stats
+                 man-style README shipped with the package source
+
+============================================================
+ getting started
+============================================================
+ The daemon starts with safe defaults at install time, but
+ to actually receive aircraft you need at minimum a station
+ location and (for most aggregators) a UUID.
+
+ Configure interactively:
+   readsb-setup              -- guided first-boot wizard
+   readsb-feeder             -- guided add of one new feeder
+
+ Inspect / verify (read-only, no prompts):
+   readsb-setup --status     -- configuration check (essentials, mode,
+                                ports, SDRs, feeders, companion packages)
+   readsb-setup --health     -- runtime health (process metrics, live
+                                data flow, feeder probe + per-source
+                                log scan: readsb + each installed
+                                companion package)
+   readsb-setup --stats      -- ONLY the most recent periodic stats
+                                block (signal, decoded msgs, tracks,
+                                CPU); same parser as --health, no other
+                                output -- ideal for cron/quick-check
+   readsb-setup --config     -- pretty-printed /etc/config/readsb
+                                + /etc/config/<pkg> for each installed
+                                companion package
+   readsb-setup -h, --help   -- show this banner
+
+ Aggregator feeder management (each accepts -h / --help):
+   readsb-feeder --list        -- show configured feeders
+   readsb-feeder --show <n>    -- dump one feeder section
+   readsb-feeder --presets     -- list built-in preset names
+   readsb-feeder --examples    -- print sample feeder UCI blocks
+   readsb-feeder --companions  -- optional companion packages per preset
+   readsb-feeder --url   [<n>] -- public per-station stats URL(s)
+   readsb-feeder --probe [<n>] -- TCP-probe each enabled feeder
+   readsb-feeder --health [<n>] -- per-feeder runtime check (probe +
+                                cmdline + recent error log scan)
+   readsb-feeder --add <n> <preset> [k=v]...
+                               -- non-interactive feeder creation
+   readsb-feeder --set <n> <k>=<v>...
+                               -- modify an existing feeder
+   readsb-feeder --enable  <n> -- shortcut for: --set <n> enabled=1
+   readsb-feeder --disable <n> -- shortcut for: --set <n> enabled=0
+   readsb-feeder --remove  <n> -- delete a feeder section
+
+ Other helpers (each accepts -h / --help):
+   readsb-uuid               -- interactive UUID wizard (shows current,
+                                offers generate/regenerate)
+   readsb-uuid --print       -- print the current UUID; nothing if unset
+   readsb-uuid --auto        -- print existing or generate (no prompts;
+                                safe for cron / scripts)
+   readsb-uuid --force       -- regenerate even if set (DESTRUCTIVE)
+   readsb-geoip              -- auto-fill empty lat/lon from public IP
+   readsb-geoip --force      -- overwrite existing lat/lon
+   readsb-geoip --dry-run    -- everything except 'uci commit'
+   readsb-geoip --self-test  -- read-only PASS/FAIL diagnostic
+
+ Daemon control:
+   service readsb {start|stop|restart|reload|status}
+   logread -e readsb         -- daemon + helper logs
+
+ Full reference:
+  https://github.com/openwrt/packages/blob/master/utils/readsb-wiedehopf/README.md
+BANNER
+
+	# Sourcing functions.sh is safe in postinst (its own files are
+	# unpacked first); skip cleanly if absent.
+	if [ -r /usr/lib/readsb/functions.sh ]; then
+		# shellcheck disable=SC1091
+		. /usr/lib/readsb/functions.sh
+		_banner_print_companions
+	fi
+
+	cat <<'BANNER'
+============================================================
+
+BANNER
+}
+
+# Print one block per known optional companion package, separated into
+# "installed" vs "not installed". Banner-only.
+_banner_print_companions() {
+	local pkg purpose init init_path state \
+		installed_lines='' missing_lines='' all_pkgs
+
+	all_pkgs=$(readsb_companion_pkgs_all 2>/dev/null)
+	[ -n "$all_pkgs" ] || return 0
+
+	for pkg in $all_pkgs; do
+		purpose=$(readsb_pkg_purpose "$pkg")
+		[ -n "$purpose" ] || purpose="(no description available)"
+
+		if readsb_pkg_installed "$pkg"; then
+			# shellcheck disable=SC2046
+			set -- $(readsb_pkg_status "$pkg" 2>/dev/null)
+			state=${1:-no-service}
+			init=${2:-}
+			init_path=
+			[ -n "$init" ] && init_path="/etc/init.d/$init"
+
+			installed_lines="${installed_lines}  $pkg
+    purpose      : $purpose
+"
+			if [ -n "$init_path" ]; then
+				local extras controls
+				extras=$(readsb_pkg_extra_actions "$pkg")
+				controls="start|stop|restart|reload|status|enable|disable"
+				if [ -n "$extras" ]; then
+					for x in $extras; do
+						controls="$controls|$x"
+					done
+				fi
+				installed_lines="${installed_lines}    init script  : $init_path
+    state        : $state
+    controls     : $init_path {$controls}
+"
+			else
+				installed_lines="${installed_lines}    init script  : (none -- library/data package)
+"
+			fi
+			installed_lines="${installed_lines}    package help : opkg info $pkg   |   opkg files $pkg
+"
+			# If the package ships a same-named binary on PATH, point
+			# the operator at its own --help / -h.
+			if command -v "$pkg" >/dev/null 2>&1; then
+				installed_lines="${installed_lines}    cli help     : $pkg --help    (or: $pkg -h)
+"
+			fi
+			installed_lines="${installed_lines}
+"
+		else
+			missing_lines="${missing_lines}  $pkg -- NOT INSTALLED
+    purpose : $purpose
+    install : opkg update && opkg install $pkg
+"
+		fi
+	done
+
+	if [ -n "$installed_lines" ]; then
+		printf '\n[ optional companion packages: installed ]\n'
+		printf '%s' "$installed_lines"
+	fi
+	if [ -n "$missing_lines" ]; then
+		printf '\n[ optional companion packages: not installed ]\n'
+		printf '%s' "$missing_lines"
+		printf '\n'
+	fi
+}
+
+mode=wizard
+case ${1:-} in
+	-h|--help)   print_banner; exit 0 ;;
+	--status)    mode=status ;;
+	--health)    mode=health ;;
+	--stats)     mode=stats ;;
+	--config)    mode=config ;;
+	'')          ;;
+	*)
+		echo "readsb-setup: unexpected argument '$1'" >&2
+		echo "" >&2
+		print_banner >&2
+		exit 1
+		;;
+esac
+
+# shellcheck source=files/readsb.functions.sh
+. /usr/lib/readsb/functions.sh
+
+READSB_LOG_TAG=readsb-setup
+
+# --- --config mode ---------------------------------------------------------
+# Pretty-printed dump of the live UCI config. Read-only.
+if [ "$mode" = config ]; then
+	echo "============================================================"
+	echo " readsb-wiedehopf -- /etc/config/readsb"
+	echo "============================================================"
+
+	if ! uci -q show readsb >/dev/null 2>&1; then
+		echo "  (no readsb UCI config found; install/reinstall the package)"
+		exit 1
+	fi
+
+	echo
+	echo "[ main section ]"
+	if uci -q show readsb.main >/dev/null 2>&1; then
+		uci -q show readsb.main 2>/dev/null \
+			| grep -v "=readsb$" \
+			| sed 's/^readsb\.main\./  /' \
+			| sort
+	else
+		echo "  (no main section -- config is broken)"
+	fi
+
+	echo
+	echo "[ feeder sections ]"
+	feeders=$(uci -q show readsb 2>/dev/null \
+		| awk -F. '/^readsb\.[^.]+=feeder$/ { sub(/=feeder$/, "", $2); print $2 }' \
+		| sort -u)
+	if [ -z "$feeders" ]; then
+		echo "  (none configured -- run: readsb-setup, or: readsb-feeder)"
+	else
+		for f in $feeders; do
+			echo "  config feeder '$f'"
+			uci -q show "readsb.$f" 2>/dev/null \
+				| grep -v "=feeder$" \
+				| sed "s|^readsb\.${f}\.|    |" \
+				| sort
+			echo
+		done
+	fi
+
+	# Per-companion config dumps. Iterate every known companion, but
+	# only emit when the package is installed AND ships a UCI config we
+	# know how to dump.
+	for cpkg in $(readsb_companion_pkgs_all 2>/dev/null); do
+		readsb_pkg_installed "$cpkg" || continue
+		cuci=$(readsb_pkg_uci_config "$cpkg")
+		[ -n "$cuci" ] || continue
+		[ -f "/etc/config/$cuci" ] || continue
+		uci -q show "$cuci" >/dev/null 2>&1 || continue
+
+		echo
+		echo "============================================================"
+		echo " companion: $cpkg -- /etc/config/$cuci"
+		echo "============================================================"
+		# Group output by section: emit one header per section, then the
+		# option/list lines indented under it. No per-package schema baked
+		# in; works for any section type via `uci show <cfg>`.
+		uci -q show "$cuci" 2>/dev/null | awk -v cfg="$cuci" '
+			BEGIN { prefix = cfg "." }
+			{
+				# Each line is one of:
+				#   <cfg>.<sec>=<type>          (section)
+				#   <cfg>.<sec>.<key>=<val>     (option)
+				# Avoid `-F.` because section/option names may have
+				# underscores or hyphens but never dots, and values may
+				# contain anything.
+				if (substr($0, 1, length(prefix)) != prefix) next
+				rest = substr($0, length(prefix)+1)
+				eq = index(rest, "=")
+				if (eq == 0) next
+				lhs = substr(rest, 1, eq-1)
+				rhs = substr(rest, eq+1)
+				dot = index(lhs, ".")
+				if (dot == 0) {
+					sec = lhs
+					type[sec] = rhs
+					if (!(sec in seen)) { seen[sec] = 1; order[++nsec] = sec }
+				} else {
+					sec = substr(lhs, 1, dot-1)
+					key = substr(lhs, dot+1)
+					opts[sec] = opts[sec] key "=" rhs "\n"
+					if (!(sec in seen)) { seen[sec] = 1; order[++nsec] = sec }
+				}
+			}
+			END {
+				for (i = 1; i <= nsec; i++) {
+					s = order[i]
+					t = (s in type) ? type[s] : "?"
+					printf("  config %s '\''%s'\''\n", t, s)
+					n = split(opts[s], lines, "\n")
+					sorted_n = 0
+					for (j = 1; j <= n; j++) if (lines[j] != "") sorted[++sorted_n] = lines[j]
+					# small-set insertion sort: stable output
+					for (j = 1; j < sorted_n; j++) {
+						for (k = j+1; k <= sorted_n; k++) {
+							if (sorted[k] < sorted[j]) {
+								tmp = sorted[j]; sorted[j] = sorted[k]; sorted[k] = tmp
+							}
+						}
+					}
+					for (j = 1; j <= sorted_n; j++) print "    " sorted[j]
+					delete sorted; sorted_n = 0
+					print ""
+				}
+			}
+		'
+	done
+
+	echo "============================================================"
+	echo "  see also: readsb-setup --status   (configuration check)"
+	echo "            readsb-setup --health   (runtime check)"
+	echo "            readsb-setup --stats    (most recent stats block)"
+	echo "            uci show readsb         (machine-readable form)"
+	echo "============================================================"
+	exit 0
+fi
+
+# --- --stats mode ----------------------------------------------------------
+# ONLY the most recent periodic stats block emitted by readsb -- a
+# focused subset of --health for operators who just want "how is
+# reception/decoding doing right now?" without the surrounding noise.
+# Source: `readsb_render_stats_summary` in functions.sh.
+#
+# Exit codes:
+#   0  block displayed
+#   1  logread unavailable
+#   2  daemon not running
+#   3  no complete block currently buffered
+if [ "$mode" = stats ]; then
+	echo "============================================================"
+	echo " readsb-wiedehopf -- recent stats"
+	echo "============================================================"
+
+	if ! command -v logread >/dev/null 2>&1; then
+		echo
+		echo "  logread is unavailable on this system; cannot read the"
+		echo "  recent syslog buffer for the stats block."
+		echo "============================================================"
+		exit 1
+	fi
+
+	rsb_pid=$(readsb_pid)
+	if [ -z "$rsb_pid" ]; then
+		echo
+		echo "  daemon state    : NOT RUNNING (no stats are being produced)"
+		echo "  hint            : /etc/init.d/readsb start"
+		echo "                    (then wait <stats_every>s -- default 60s --"
+		echo "                     before re-running: readsb-setup --stats)"
+		echo "============================================================"
+		exit 2
+	fi
+
+	echo
+	if readsb_render_stats_summary "  "; then
+		echo
+		echo "============================================================"
+		echo "  for runtime health (process / feeders / log scan):"
+		echo "      readsb-setup --health"
+		echo "  for the raw daemon block (unparsed syslog lines):"
+		echo "      logread -e readsb | awk '/Statistics:/,/ms for network input/'"
+		echo "============================================================"
+		exit 0
+	fi
+
+	# Diagnose: `option stats '0'` is the most common cause of a quiet
+	# buffer right after a restart.
+	stats_uci=$(uci -q get readsb.main.stats 2>/dev/null)
+	stats_every_uci=$(uci -q get readsb.main.stats_every 2>/dev/null)
+	echo "  last stats block: (none in current syslog buffer)"
+	echo
+	if [ "$stats_uci" = "0" ]; then
+		echo "  reason          : readsb.main.stats='0' -- periodic stats"
+		echo "                    block emission is DISABLED in UCI."
+		echo "  to enable       : uci set readsb.main.stats=1; uci commit readsb"
+		echo "                    service readsb reload"
+	else
+		echo "  likely cause    : the daemon just (re)started and has not"
+		echo "                    completed its first stats interval yet,"
+		echo "                    or the syslog ring buffer rotated past"
+		echo "                    the most recent block."
+		echo "  stats_every     : ${stats_every_uci:-60} (UCI default 60s)"
+		echo "  retry           : wait one stats_every interval, then re-run"
+		echo "                    'readsb-setup --stats'"
+	fi
+	echo "============================================================"
+	exit 3
+fi
+
+# --- --status mode ---------------------------------------------------------
+# Read-only inspection. Exits non-zero if any essential UCI value is
+# missing. All blocks degrade gracefully ("(n/a)") on missing /proc /
+# JSON / log buffer.
+
+# --- small inline helpers (only used by --status) --------------------------
+
+# Format an integer number of seconds as "Nd Nh Nm" / "Nh Nm" / "Nm Ns"
+# / "Ns". Empty / non-numeric input -> "(n/a)".
+_status_human_secs() {
+	local s=$1 d h m
+	case $s in
+		''|*[!0-9]*) echo '(n/a)'; return 0 ;;
+	esac
+	d=$((s / 86400)); s=$((s % 86400))
+	h=$((s / 3600));  s=$((s % 3600))
+	m=$((s / 60));    s=$((s % 60))
+	if   [ $d -gt 0 ]; then printf '%dd %dh %dm\n' "$d" "$h" "$m"
+	elif [ $h -gt 0 ]; then printf '%dh %dm %ds\n' "$h" "$m" "$s"
+	elif [ $m -gt 0 ]; then printf '%dm %ds\n'     "$m" "$s"
+	else                    printf '%ds\n'         "$s"
+	fi
+}
+
+# Pretty-print KiB as "12.4 MB" / "256 KB" / "1.2 GB". Non-numeric
+# input -> "(n/a)".
+_status_human_kb() {
+	local k=$1
+	case $k in
+		''|*[!0-9]*) echo '(n/a)'; return 0 ;;
+	esac
+	if   [ "$k" -ge 1048576 ]; then awk -v k="$k" 'BEGIN { printf "%.1f GB\n", k/1048576 }'
+	elif [ "$k" -ge 1024 ];    then awk -v k="$k" 'BEGIN { printf "%.1f MB\n", k/1024 }'
+	else                            printf '%d KB\n' "$k"
+	fi
+}
+
+# Echo first line of /proc/uptime first field as integer seconds.
+_status_sys_uptime_secs() {
+	local u
+	[ -r /proc/uptime ] || { echo ''; return 1; }
+	read -r u _ < /proc/uptime
+	# strip fractional part
+	echo "${u%%.*}"
+}
+
+# Echo /proc/loadavg first three fields, space-separated.
+_status_loadavg() {
+	local a b c _
+	[ -r /proc/loadavg ] || { echo '(n/a)'; return 1; }
+	read -r a b c _ < /proc/loadavg
+	echo "$a $b $c"
+}
+
+# Echo "<MemTotal_kb> <MemAvailable_kb>" or empty on failure.
+_status_meminfo_kb() {
+	[ -r /proc/meminfo ] || return 1
+	awk '/^MemTotal:/{t=$2} /^MemAvailable:/{a=$2}
+	     END { if (t) printf "%d %d\n", t, (a?a:0) }' /proc/meminfo
+}
+
+# Set globals from /proc/<pid>/{stat,status}. CLK_TCK-aware. On
+# success: _PRC_AGE_S, _PRC_CPU_S, _PRC_CPU_PCT, _PRC_RSS_KB,
+# _PRC_THREADS, _PRC_VSZ_KB. Returns 1 on failure.
+_status_proc_metrics() {
+	local pid=$1 stat after sys_up_s clk after_no_paren
+	local utime stime starttime sys_up_j proc_age_j cpu_j
+	[ -n "$pid" ] && [ -r "/proc/$pid/stat" ] || return 1
+	stat=$(cat "/proc/$pid/stat" 2>/dev/null) || return 1
+	# Strip "<pid> (comm) " prefix safely (comm may contain spaces or
+	# parens). Everything after the LAST ')' is field 3 onwards.
+	after_no_paren=${stat##*) }
+	# shellcheck disable=SC2086
+	set -- $after_no_paren
+	# Original field N (>= 3) is now positional $((N - 2)).
+	# utime=14 -> $12, stime=15 -> $13, starttime=22 -> $20
+	utime=${12:-0}; stime=${13:-0}; starttime=${20:-0}
+	clk=$(getconf CLK_TCK 2>/dev/null); [ -n "$clk" ] && [ "$clk" -gt 0 ] 2>/dev/null || clk=100
+	sys_up_s=$(_status_sys_uptime_secs)
+	[ -n "$sys_up_s" ] || return 1
+	sys_up_j=$((sys_up_s * clk))
+	proc_age_j=$((sys_up_j - starttime))
+	[ "$proc_age_j" -gt 0 ] || proc_age_j=1
+	cpu_j=$((utime + stime))
+	_PRC_AGE_S=$((proc_age_j / clk))
+	_PRC_CPU_S=$((cpu_j / clk))
+	# integer percent across process lifetime
+	_PRC_CPU_PCT=$((cpu_j * 100 / proc_age_j))
+
+	if [ -r "/proc/$pid/status" ]; then
+		_PRC_RSS_KB=$(awk '/^VmRSS:/{print $2; exit}' "/proc/$pid/status")
+		_PRC_VSZ_KB=$(awk '/^VmSize:/{print $2; exit}' "/proc/$pid/status")
+		_PRC_THREADS=$(awk '/^Threads:/{print $2; exit}' "/proc/$pid/status")
+	fi
+	[ -n "$_PRC_RSS_KB" ]  || _PRC_RSS_KB=0
+	[ -n "$_PRC_VSZ_KB" ]  || _PRC_VSZ_KB=0
+	[ -n "$_PRC_THREADS" ] || _PRC_THREADS=1
+	return 0
+}
+
+# Extract the value of --flag=VALUE (or --flag VALUE) from a cmdline
+# string. Echoes empty if not present.
+_status_cmdline_arg() {
+	local cmdline=$1 flag=$2
+	# Try --flag=value first.
+	echo "$cmdline" | awk -v f="--$flag=" '
+		{
+			for (i = 1; i <= NF; i++) {
+				if (substr($i, 1, length(f)) == f) {
+					print substr($i, length(f) + 1); exit
+				}
+			}
+		}'
+}
+
+# Count occurrences of "--flag=" in a cmdline.
+_status_cmdline_count() {
+	local cmdline=$1 flag=$2
+	echo "$cmdline" | tr ' ' '\n' | grep -c -- "^--$flag="
+}
+
+# Echo first JSON string value matching "key" : "<...>". Top-level only,
+# coarse extractor (no nested-object handling) -- adequate for the small
+# flat files readsb writes (receiver.json + the few top-level fields of
+# aircraft.json).
+_status_json_str() {
+	local file=$1 key=$2
+	[ -r "$file" ] || return 1
+	sed -n "s/.*\"${key}\"[[:space:]]*:[[:space:]]*\"\\([^\"]*\\)\".*/\\1/p" \
+		"$file" | head -1
+}
+
+# Echo first JSON numeric value matching "key" : <num>. Top-level coarse
+# extractor; same caveats as _status_json_str.
+_status_json_num() {
+	local file=$1 key=$2
+	[ -r "$file" ] || return 1
+	sed -n "s/.*\"${key}\"[[:space:]]*:[[:space:]]*\\(-\\{0,1\\}[0-9.][0-9.]*\\).*/\\1/p" \
+		"$file" | head -1
+}
+
+if [ "$mode" = status ]; then
+	# Configuration check ("is this box set up correctly?"). Static /
+	# structural inspection only -- runtime/live questions live in
+	# --health. Sections, top-down:
+	#   [ identity & location ]   -- UUID + lat/lon (sets `missing` count)
+	#   [ daemon ]                -- enabled / running / mode / version
+	#   [ ports ]                 -- UCI-configured listen ports (compact)
+	#   [ SDR ]                   -- USB enumeration + per-device strings
+	#                                + tuning options
+	#   [ feeders ]               -- count + `readsb-feeder --list` rows
+	#   [ optional companion packages ]
+	#
+	# Exit non-zero only when an essential UCI value (UUID / lat / lon)
+	# is missing. For runtime / "is it actually working" questions the
+	# closing footer points at `readsb-setup --health`.
+	missing=0
+
+	cur_lat=$(uci -q get readsb.main.lat 2>/dev/null)
+	cur_lon=$(uci -q get readsb.main.lon 2>/dev/null)
+	cur_uuid=$(uci -q get readsb.main.uuid 2>/dev/null)
+	cur_gain=$(uci -q get readsb.main.gain 2>/dev/null)
+	cur_ppm=$(uci -q get readsb.main.ppm 2>/dev/null)
+	cur_agc=$(uci -q get readsb.main.enable_agc 2>/dev/null)
+	cur_bias=$(uci -q get readsb.main.enable_biastee 2>/dev/null)
+	enabled=$(uci -q get readsb.main.enabled 2>/dev/null)
+	fc=$(readsb_count_feeders)
+	sc=$(readsb_count_sdrs)
+	running=no
+	[ -x /etc/init.d/readsb ] && /etc/init.d/readsb running 2>/dev/null && running=yes
+
+	echo "============================================================"
+	echo " readsb-wiedehopf -- status (configuration check)"
+	echo "============================================================"
+
+	# --- [ identity & location ] --------------------------------------
+	echo
+	echo "[ identity & location ]"
+	hostname=$(uci -q get system.@system[0].hostname 2>/dev/null)
+	[ -n "$hostname" ] || hostname=$(cat /proc/sys/kernel/hostname 2>/dev/null)
+	[ -n "$hostname" ] || hostname='(unknown)'
+	printf '  hostname        : %s\n' "$hostname"
+	if readsb_is_uuid "$cur_uuid"; then
+		printf '  station UUID    : %s\n' "$cur_uuid"
+	else
+		printf '  station UUID    : MISSING (run: readsb-uuid)\n'
+		missing=$((missing + 1))
+	fi
+	if [ -n "$cur_lat" ] && [ -n "$cur_lon" ]; then
+		printf '  location        : lat=%s lon=%s\n' "$cur_lat" "$cur_lon"
+	else
+		printf '  location        : MISSING (run: readsb-setup, or: readsb-geoip)\n'
+		missing=$((missing + 1))
+	fi
+
+	# --- [ daemon ] ---------------------------------------------------
+	echo
+	echo "[ daemon ]"
+	printf '  service enabled : %s\n' "${enabled:-(unset)}"
+	printf '  daemon running  : %s\n' "$running"
+
+	# Configured mode (UCI snapshot). For LIVE mode (what the running
+	# daemon is actually doing right now), see `readsb-setup --health`.
+	_dt_uci=$(uci -q get readsb.main.device_type)
+	_no_uci=$(uci -q get readsb.main.net_only)
+	if [ "$_no_uci" = 1 ] || [ -z "$_dt_uci" ]; then
+		printf '  mode (UCI)      : net-only\n'
+	else
+		printf '  mode (UCI)      : SDR (%s)\n' "$_dt_uci"
+	fi
+
+	# Version is purely structural here -- read from the opkg control
+	# file. (`readsb-setup --health` cross-checks against the LIVE
+	# version reported in receiver.json so drift is visible.)
+	if [ -r /usr/lib/opkg/info/readsb-wiedehopf.control ]; then
+		rsb_version=$(awk -F': *' '/^Version:/{print $2; exit}' \
+			/usr/lib/opkg/info/readsb-wiedehopf.control)
+		printf '  version (opkg)  : %s\n' "${rsb_version:-(unknown)}"
+	fi
+
+	# Defensive: if UCI intent (device_type set, net_only=0) disagrees
+	# with what hotplug actually sees, surface it. This is the most
+	# common config-drift hazard at install time on devices that
+	# enumerate the SDR slowly.
+	_sdr_now=$(readsb_count_sdrs 2>/dev/null || echo 0)
+	if [ "$_no_uci" != 1 ] && [ -n "$_dt_uci" ] && [ "$_sdr_now" -eq 0 ]; then
+		printf '  ! mismatch      : UCI says SDR (%s) but no RTL-SDR is attached\n' "$_dt_uci"
+		printf '                    fix: attach the SDR, or set net_only=1\n'
+	elif [ "$_sdr_now" -gt 0 ] && [ -z "$_dt_uci" ]; then
+		printf '  ! mismatch      : %s RTL-SDR(s) attached but UCI device_type is unset\n' "$_sdr_now"
+		printf '                    fix: /etc/init.d/readsb restart   (re-runs hotplug seeding)\n'
+	fi
+
+	# --- [ ports ] ----------------------------------------------------
+	# Listen ports as configured in UCI (compact list -- only those
+	# that are actually set, no `(off)` rows). For the LIVE port set
+	# (what the daemon is actually accepting on right now) see
+	# `readsb-setup --health`.
+	echo
+	echo "[ ports (UCI-configured) ]"
+	_emit_port() {
+		local label=$1 ucikey=$2 v
+		v=$(uci -q get "readsb.main.$ucikey")
+		[ -n "$v" ] && printf '  %-15s : %s\n' "$label" "$v"
+	}
+	_emit_port 'beast-out'      net_bo_port
+	_emit_port 'beast-in'       net_bi_port
+	_emit_port 'raw-in'         net_ri_port
+	_emit_port 'raw-out'        net_ro_port
+	_emit_port 'SBS'            net_sbs_port
+	_emit_port 'json'           net_json_port
+	_emit_port 'api'            net_api_port
+	_emit_port 'beast-reduce'   net_beast_reduce_out_port
+	# Fall-through note when nothing is set.
+	if ! uci -q show readsb.main 2>/dev/null \
+		| grep -q -E 'net_(bo|bi|ri|ro|sbs|json|api|beast_reduce_out)_port='; then
+		printf '  (no listen ports configured -- net-out only)\n'
+	fi
+
+	# --- [ SDR ] ------------------------------------------------------
+	echo
+	echo "[ SDR ]"
+	printf '  detected        : %s\n' "$sc"
+	if [ "$sc" -gt 0 ]; then
+		# enumerate per-device serial / vendor / product strings
+		_sdr_describe() {
+			local d=$1 vid=$2 pid=$3 ser='NOSERIAL' vendor='' product=''
+			[ -r "$d/serial" ]   && read -r ser     < "$d/serial"
+			[ -r "$d/manufacturer" ] && read -r vendor  < "$d/manufacturer"
+			[ -r "$d/product" ]      && read -r product < "$d/product"
+			# fall back to USB IDs when string descriptors are absent
+			[ -n "$vendor" ]  || vendor='(no vendor str)'
+			[ -n "$product" ] || product='(no product str)'
+			[ -n "$ser" ]     || ser='NOSERIAL'
+			printf '    %s:%s  serial=%-12s  %s / %s\n' \
+				"$vid" "$pid" "\"$ser\"" "$vendor" "$product"
+		}
+		readsb_for_each_sdr _sdr_describe
+		printf '  gain            : %s\n' "${cur_gain:-(unset, default auto)}"
+		printf '  ppm             : %s\n' "${cur_ppm:-0}"
+		printf '  AGC             : %s\n' "${cur_agc:-0}"
+		printf '  bias-T          : %s\n' "${cur_bias:-0}"
+	else
+		printf '  (net-only deployment -- no RTL-SDR attached)\n'
+	fi
+
+	# --- [ feeders ] --------------------------------------------------
+	echo
+	echo "[ feeders ]"
+	if [ "$fc" -gt 0 ]; then
+		printf '  config feeder   : %s section(s)\n\n' "$fc"
+		readsb-feeder --list 2>/dev/null | sed 's/^/  /'
+	else
+		printf '  (no feeders configured -- run: readsb-setup, or:\n'
+		printf '   readsb-feeder)\n'
+	fi
+
+	# --- [ optional companion packages ] ------------------------------
+	echo
+	echo "[ optional companion packages ]"
+	have_companions=0
+	main_uuid_for_status=$cur_uuid
+	_status_companions() {
+		local fcfg=$1 pkg pkgs state init purpose
+		readsb_feeder_resolve "$fcfg" "$main_uuid_for_status" || return 0
+		[ "$readsb_feeder_enabled" -eq 1 ] || return 0
+		[ "$readsb_feeder_preset" = custom ] && return 0
+		pkgs=$(readsb_feeder_optional_pkgs "$readsb_feeder_preset")
+		[ -n "$pkgs" ] || return 0
+
+		have_companions=1
+		printf '  feeder %-16s preset %s:\n' "'$fcfg'" "$readsb_feeder_preset"
+		for pkg in $pkgs; do
+			# shellcheck disable=SC2046
+			set -- $(readsb_pkg_status "$pkg" 2>/dev/null)
+			state=${1:-missing}
+			init=${2:-}
+			purpose=$(readsb_pkg_purpose "$pkg")
+			[ -n "$purpose" ] || purpose="(no description available)"
+			case $state in
+				missing)
+					printf '    %s -- NOT INSTALLED\n' "$pkg"
+					printf '      purpose : %s\n' "$purpose"
+					printf '      install : opkg update && opkg install %s\n' "$pkg"
+					;;
+				stopped)
+					printf '    %s -- installed but NOT RUNNING (init: %s)\n' "$pkg" "$init"
+					printf '      purpose : %s\n' "$purpose"
+					printf '      enable  : /etc/init.d/%s enable\n' "$init"
+					printf '      start   : /etc/init.d/%s start\n' "$init"
+					printf '      logs    : logread -e %s\n' "$init"
+					;;
+				running)
+					printf '    %s -- installed and running (init: %s)\n' "$pkg" "$init"
+					local extras x
+					extras=$(readsb_pkg_extra_actions "$pkg")
+					for x in $extras; do
+						printf '      %-7s : /etc/init.d/%s %s\n' "$x" "$init" "$x"
+					done
+					;;
+				no-service)
+					printf '    %s -- installed (no service component)\n' "$pkg"
+					;;
+			esac
+		done
+		# Mirror missing/stopped fix-it hints to syslog.
+		readsb_warn_companions "$readsb_feeder_preset" "$fcfg"
+	}
+
+	# /lib/functions.sh needed for config_load/config_foreach. Loaded
+	# here (not at file top) so the wizard path doesn't pay for it.
+	# shellcheck disable=SC1091
+	. /lib/functions.sh
+	config_load readsb
+	config_foreach _status_companions feeder
+
+	if [ "$have_companions" = 0 ]; then
+		printf '  (none recommended for the currently enabled feeder presets)\n'
+	fi
+
+	echo
+	echo "============================================================"
+	if [ "$missing" -gt 0 ]; then
+		echo "  $missing essential setting(s) missing -- run 'readsb-setup' to fix"
+		echo "  for runtime health (process metrics, live data flow,"
+		echo "  feeder probe, log scan) run:  readsb-setup --health"
+		echo "============================================================"
+		exit 1
+	fi
+	echo "  all essentials present"
+	echo "  for runtime health (process metrics, live data flow,"
+	echo "  feeder probe, log scan) run:  readsb-setup --health"
+	echo "============================================================"
+	exit 0
+fi
+
+# --- --health mode --------------------------------------------------------
+# Runtime check ("is this box working right now?"). Live-only;
+# structural questions live in --status.
+#
+# Exit codes:
+#   0  HEALTHY  -- daemon running, enabled feeders LIVE+reachable, no errors
+#   1  DEGRADED -- daemon running but at least one issue
+#   2  DOWN     -- daemon not running
+if [ "$mode" = health ]; then
+	rsb_pid=$(readsb_pid)
+	if [ -z "$rsb_pid" ]; then
+		echo "============================================================"
+		echo " readsb-wiedehopf -- runtime health"
+		echo "============================================================"
+		echo
+		echo "[ daemon process ]"
+		echo "  state           : NOT RUNNING"
+		echo "  hint            : /etc/init.d/readsb start"
+		echo "                    (then re-run: readsb-setup --health)"
+		echo
+		echo "============================================================"
+		echo "  health summary  : DOWN (daemon not running)"
+		echo "============================================================"
+		exit 2
+	fi
+
+	rsb_cmdline=$(readsb_cmdline "$rsb_pid")
+	degraded=0
+
+	echo "============================================================"
+	echo " readsb-wiedehopf -- runtime health"
+	echo "============================================================"
+
+	# --- [ daemon process ] -------------------------------------------
+	echo
+	echo "[ daemon process ]"
+	printf '  PID             : %s\n' "$rsb_pid"
+	_PRC_AGE_S= _PRC_CPU_S= _PRC_CPU_PCT= _PRC_RSS_KB= _PRC_VSZ_KB= _PRC_THREADS=
+	if _status_proc_metrics "$rsb_pid"; then
+		printf '  process uptime  : %s\n' "$(_status_human_secs "$_PRC_AGE_S")"
+		printf '  CPU lifetime    : %s used (~%s%% avg of one core)\n' \
+			"$(_status_human_secs "$_PRC_CPU_S")" "$_PRC_CPU_PCT"
+		printf '  resident memory : %s   (virtual: %s)\n' \
+			"$(_status_human_kb "$_PRC_RSS_KB")" \
+			"$(_status_human_kb "$_PRC_VSZ_KB")"
+		printf '  threads         : %s\n' "$_PRC_THREADS"
+	else
+		printf '  process metrics : (proc fs unavailable)\n'
+	fi
+
+	# --- [ host load ] ------------------------------------------------
+	echo
+	echo "[ host load ]"
+	sys_up_s=$(_status_sys_uptime_secs)
+	printf '  system uptime   : %s\n' "$(_status_human_secs "$sys_up_s")"
+	printf '  load average    : %s   (1m / 5m / 15m)\n' "$(_status_loadavg)"
+	mem_kb=$(_status_meminfo_kb)
+	if [ -n "$mem_kb" ]; then
+		# shellcheck disable=SC2086
+		set -- $mem_kb
+		mem_total=$1; mem_avail=$2
+		printf '  memory          : %s total / %s available\n' \
+			"$(_status_human_kb "$mem_total")" \
+			"$(_status_human_kb "$mem_avail")"
+	else
+		printf '  memory          : (n/a)\n'
+	fi
+	if [ -r /proc/sys/kernel/osrelease ]; then
+		read -r kver < /proc/sys/kernel/osrelease
+		printf '  kernel          : %s\n' "$kver"
+	fi
+
+	# --- [ runtime ] --------------------------------------------------
+	echo
+	echo "[ runtime ]"
+	# Live version from receiver.json + drift check vs opkg.
+	live_version=
+	[ -r /var/run/readsb/receiver.json ] && \
+		live_version=$(_status_json_str /var/run/readsb/receiver.json version)
+	opkg_version=
+	[ -r /usr/lib/opkg/info/readsb-wiedehopf.control ] && \
+		opkg_version=$(awk -F': *' '/^Version:/{print $2; exit}' \
+			/usr/lib/opkg/info/readsb-wiedehopf.control)
+	if [ -n "$live_version" ]; then
+		printf '  version (live)  : %s\n' "$live_version"
+		# Compare upstream version tokens only. The daemon emits its
+		# upstream version possibly followed by build metadata
+		# ("3.16.11 compiled on 260509"); opkg appends a packaging
+		# release suffix ("3.16.11-22") and may carry an epoch prefix
+		# ("1:3.16.11-22"). Reduce both to the bare upstream token
+		# before comparing -- otherwise drift fires falsely.
+		live_bare=${live_version%% *}
+		opkg_bare=${opkg_version#*:}
+		opkg_bare=${opkg_bare%%-*}
+		if [ -n "$opkg_bare" ] && [ -n "$live_bare" ] && \
+		   [ "$opkg_bare" != "$live_bare" ]; then
+			printf '  ! version drift : opkg has %s but daemon is running %s\n' \
+				"$opkg_version" "$live_version"
+			printf '                    fix: /etc/init.d/readsb restart\n'
+			degraded=1
+		fi
+	else
+		printf '  version         : (receiver.json unavailable)\n'
+	fi
+
+	# Live mode (what the daemon is actually doing).
+	dt_live=$(_status_cmdline_arg "$rsb_cmdline" device-type)
+	if echo " $rsb_cmdline " | grep -q -- ' --net-only'; then
+		rsb_mode='net-only'
+	elif [ -n "$dt_live" ]; then
+		rsb_mode="SDR ($dt_live)"
+	else
+		rsb_mode='net-only'
+	fi
+	printf '  mode (live)     : %s\n' "$rsb_mode"
+
+	# Drift check between UCI intent and live cmdline.
+	_dt_uci=$(uci -q get readsb.main.device_type)
+	_no_uci=$(uci -q get readsb.main.net_only)
+	case "$rsb_mode" in
+		net-only*)
+			if [ -n "$_dt_uci" ] && [ "$_no_uci" != 1 ]; then
+				printf '  ! mode drift    : UCI says SDR (%s) but daemon is net-only\n' "$_dt_uci"
+				printf '                    fix: /etc/init.d/readsb restart\n'
+				degraded=1
+			fi
+			;;
+	esac
+
+	# Live listen ports (compact -- only those actually present).
+	_emit_live_port() {
+		local label=$1 flag=$2 v
+		v=$(_status_cmdline_arg "$rsb_cmdline" "$flag")
+		[ -n "$v" ] && printf '  %-15s : %s\n' "$label" "$v"
+	}
+	_emit_live_port 'beast-out'    net-bo-port
+	_emit_live_port 'beast-in'     net-bi-port
+	_emit_live_port 'raw-in'       net-ri-port
+	_emit_live_port 'raw-out'      net-ro-port
+	_emit_live_port 'SBS'          net-sbs-port
+	_emit_live_port 'json'         net-json-port
+	_emit_live_port 'api'          net-api-port
+	_emit_live_port 'beast-reduce' net-bro-port
+
+	# Condensed flag list (excluding the per-feeder --net-connector spam).
+	flags=$(echo "$rsb_cmdline" | tr ' ' '\n' \
+		| awk 'NR>1 && $0 !~ /^--net-connector=/' \
+		| tr '\n' ' ' | sed 's/ *$//')
+	[ -n "$flags" ] && printf '  active flags    : %s\n' "$flags"
+
+	# --- [ live data flow ] -------------------------------------------
+	echo
+	echo "[ live data flow ]"
+	if [ -r /var/run/readsb/aircraft.json ]; then
+		ac_count=$(grep -c '"hex"' /var/run/readsb/aircraft.json 2>/dev/null)
+		[ -n "$ac_count" ] || ac_count=0
+		ac_msgs=$(_status_json_num /var/run/readsb/aircraft.json messages)
+		ac_now=$(_status_json_num /var/run/readsb/aircraft.json now)
+		printf '  aircraft tracked: %s\n' "$ac_count"
+		printf '  total messages  : %s\n' "${ac_msgs:-(n/a)}"
+		if [ -n "$ac_now" ]; then
+			ac_now_int=${ac_now%%.*}
+			snapshot_age=$(( $(date +%s 2>/dev/null || echo 0) - ac_now_int ))
+			[ "$snapshot_age" -lt 0 ] 2>/dev/null && snapshot_age=0
+			printf '  snapshot age    : %ds (aircraft.json mtime tick)\n' "$snapshot_age"
+			# A snapshot more than 30s old means write_json is wedged or
+			# the daemon is hung -- always degraded.
+			if [ "$snapshot_age" -gt 30 ]; then
+				printf '  ! data stale    : aircraft.json has not been refreshed in %ds\n' "$snapshot_age"
+				degraded=1
+			fi
+		fi
+	else
+		printf '  aircraft.json   : (n/a -- write_json disabled or daemon not yet ready)\n'
+	fi
+	if [ -r /var/run/readsb/receiver.json ]; then
+		rcv_refresh=$(_status_json_num /var/run/readsb/receiver.json refresh)
+		rcv_lat=$(_status_json_num /var/run/readsb/receiver.json lat)
+		rcv_lon=$(_status_json_num /var/run/readsb/receiver.json lon)
+		if [ -n "$rcv_refresh" ]; then
+			refresh_ms=${rcv_refresh%%.*}
+			printf '  json refresh    : every %d ms\n' "$refresh_ms"
+		fi
+		if [ -n "$rcv_lat" ] && [ -n "$rcv_lon" ]; then
+			printf '  receiver lat/lon: %s, %s   (live, from receiver.json)\n' \
+				"$rcv_lat" "$rcv_lon"
+		fi
+	fi
+
+	# --- [ outbound feeders ] -----------------------------------------
+	echo
+	echo "[ outbound feeders ]"
+	uci_feeders=$(readsb_count_feeders)
+	live_connectors=$(_status_cmdline_count "$rsb_cmdline" net-connector)
+	printf '  net-connectors  : %s live (UCI configured: %s)\n' \
+		"${live_connectors:-0}" "$uci_feeders"
+
+	# Defer the per-feeder breakdown to readsb-feeder --health -- it
+	# already does the TCP probe + cmdline-presence + log scan with the
+	# right granularity. We summarize and bubble up the rc.
+	if [ "$uci_feeders" -gt 0 ]; then
+		# Capture stdout so we can both display and grade it.
+		_health_feeder_out=$(readsb-feeder --health 2>&1)
+		_health_feeder_rc=$?
+		# Indent the per-feeder report by two spaces for visual nesting.
+		echo "$_health_feeder_out" | sed 's/^/  /'
+		case $_health_feeder_rc in
+			0) ;;                    # all LIVE+reachable
+			2) degraded=1 ;;         # any DEGRADED / UNREACHABLE / drift
+			3) ;;                    # no enabled feeders
+			*) degraded=1 ;;
+		esac
+	else
+		printf '  (no feeders configured -- run: readsb-setup, or: readsb-feeder)\n'
+	fi
+
+	# --- [ recent log scan: readsb ] ----------------------------------
+	echo
+	echo "[ recent log scan: readsb ]"
+	if command -v logread >/dev/null 2>&1; then
+		# Parsed read-out of the most recent COMPLETE periodic stats
+		# block. Falls back below to the single-line "Statistics:" header
+		# when no complete block is currently buffered.
+		if readsb_render_stats_summary "  "; then
+			# Renderer flips readsb_stats_loss_seen=1 when the daemon
+			# reported non-zero samples_dropped/lost; propagate to our
+			# DEGRADED grade so cron/monitoring notice USB overruns.
+			[ "$readsb_stats_loss_seen" = 1 ] && degraded=1
+		else
+			# No complete block buffered -- keep the old one-line
+			# fallback so something is always shown.
+			last_stats=$(readsb_log_last_stats)
+			if [ -n "$last_stats" ]; then
+				printf '  last stats line :\n'
+				printf '    %s\n' "$last_stats"
+			else
+				printf '  last stats block: (none in current syslog buffer)\n'
+			fi
+		fi
+		err_total=$(readsb_log_count_errors)
+		printf '  error events    : %s (in last 200 readsb-tagged lines)\n' "$err_total"
+		if [ "$err_total" -gt 0 ]; then
+			# Show one representative line. Pattern mirrors
+			# readsb_log_count_errors -- see functions.sh for why we
+			# avoid a blanket daemon.err match.
+			err_sample=$(readsb_log_recent 200 | awk '
+				/daemon\.warn|daemon\.crit|daemon\.alert|daemon\.emerg|Bad connection|connection lost|dropping data|[^0-9][1-9][0-9]* samples (dropped|lost)/ { last = $0 }
+				END { if (last) print last }
+			')
+			[ -n "$err_sample" ] && printf '  most recent     :\n    %s\n' "$err_sample"
+			degraded=1
+		fi
+	else
+		printf '  (logread unavailable on this system)\n'
+	fi
+
+	# --- [ recent log scan: <companion> ] -----------------------------
+	# One section per *installed* companion that declares a syslog tag.
+	# Skipped silently otherwise.
+	if command -v logread >/dev/null 2>&1; then
+		comp_pkgs=$(readsb_companion_pkgs_all 2>/dev/null)
+		for cpkg in $comp_pkgs; do
+			readsb_pkg_installed "$cpkg" || continue
+			ctag=$(readsb_pkg_log_tag "$cpkg")
+			[ -n "$ctag" ] || continue
+
+			echo
+			echo "[ recent log scan: $cpkg ]"
+			last_line=$(readsb_pkg_log_last_line "$ctag")
+			if [ -n "$last_line" ]; then
+				printf '  last log line   :\n'
+				printf '    %s\n' "$last_line"
+			else
+				printf '  last log line   : (none in current syslog buffer)\n'
+			fi
+			cerr=$(readsb_pkg_log_count_errors "$ctag")
+			printf '  error events    : %s (in last 200 %s-tagged lines)\n' \
+				"$cerr" "$ctag"
+			if [ "$cerr" -gt 0 ]; then
+				cerr_sample=$(readsb_pkg_log_last_error "$ctag")
+				[ -n "$cerr_sample" ] && printf '  most recent     :\n    %s\n' "$cerr_sample"
+				# Flag DEGRADED so cron/monitoring sees the issue.
+				degraded=1
+			fi
+		done
+	fi
+
+	echo
+	echo "============================================================"
+	if [ "$degraded" -eq 0 ]; then
+		echo "  health summary  : HEALTHY"
+		echo "============================================================"
+		exit 0
+	fi
+	echo "  health summary  : DEGRADED -- see warnings above"
+	echo "  for static/config questions run:  readsb-setup --status"
+	echo "  for the stats block alone run:    readsb-setup --stats"
+	echo "  for per-feeder detail run:        readsb-feeder --health [<n>]"
+	echo "============================================================"
+	exit 1
+fi
+
+# --- wizard mode (default) -------------------------------------------------
+
+wiz_available || {
+	echo "readsb-setup: no controlling tty; run interactively from a shell" >&2
+	echo "  for a non-interactive state summary use:  readsb-setup --status" >&2
+	exit 2
+}
+
+wiz_say ""
+wiz_say "============================================================"
+wiz_say " readsb-wiedehopf -- guided setup"
+wiz_say "============================================================"
+wiz_say "Configures location, station UUID, SDR tuning, aggregator"
+wiz_say "feeders, and reloads the service. Each step is skippable;"
+wiz_say "re-runs are idempotent."
+wiz_say ""
+wiz_say "To abort at any prompt: type 'q', 'quit', or 'exit' (Ctrl-D"
+wiz_say "also works). Aborting before the apply step makes no changes."
+wiz_say ""
+wiz_say "Read-only inspection (no prompts):"
+wiz_say "  readsb-setup --status     -- configuration check (essentials,"
+wiz_say "                              mode, ports, SDRs, feeders, companions)"
+wiz_say "  readsb-setup --health     -- runtime health (process metrics,"
+wiz_say "                              live data flow, feeder probe + log scan)"
+wiz_say "  readsb-setup --stats      -- only the most recent stats block"
+wiz_say "                              (signal, decoded msgs, tracks, CPU)"
+wiz_say "  readsb-setup --config     -- pretty-printed /etc/config/readsb"
+wiz_say "                              (+ each installed companion's UCI config)"
+wiz_say "  readsb-setup --help       -- re-print the post-install banner"
+wiz_say ""
+wiz_say "Per-area CLIs (each accepts -h / --help):"
+wiz_say "  readsb-feeder             -- guided add of one new feeder"
+wiz_say "  readsb-feeder --list      -- show configured feeders"
+wiz_say "  readsb-feeder --probe     -- TCP-probe each enabled feeder"
+wiz_say "  readsb-feeder --health    -- per-feeder runtime check (probe +"
+wiz_say "                              cmdline + recent error log scan)"
+wiz_say "  readsb-feeder --url       -- public per-station stats URL(s)"
+wiz_say "  readsb-uuid               -- interactive UUID wizard"
+wiz_say "  readsb-uuid --print       -- just print the current UUID"
+wiz_say "  readsb-geoip              -- auto-fill lat/lon from public IP"
+wiz_say ""
+wiz_say "(see 'readsb-setup --help' for the full command list)"
+wiz_say ""
+
+
+changes_made=0
+sc=$(readsb_count_sdrs)
+
+# Set readsb.main.<key>=<val>; bail with rc 2 on UCI failure.
+_set_main() {
+	uci -q set "readsb.main.$1=$2" || { _err "uci set $1 failed"; exit 2; }
+}
+_commit_main() {
+	uci -q commit readsb || { _err "uci commit failed"; exit 2; }
+}
+
+# Run readsb-uuid (sibling binary, always installed); on success update
+# changes_made and announce the new UUID.
+_run_uuid() {
+	local flags=$1 new_uuid
+	if readsb-uuid $flags >/dev/null; then
+		new_uuid=$(uci -q get readsb.main.uuid)
+		wiz_say "  UUID: $new_uuid"
+		changes_made=1
+	else
+		wiz_say "  readsb-uuid failed"
+	fi
+}
+
+# --- step 1: location ------------------------------------------------------
+wiz_say "[1/5] station location (lat/lon)"
+cur_lat=$(uci -q get readsb.main.lat 2>/dev/null)
+cur_lon=$(uci -q get readsb.main.lon 2>/dev/null)
+if [ -n "$cur_lat" ] && [ -n "$cur_lon" ]; then
+	wiz_say "  current: lat=$cur_lat lon=$cur_lon"
+	wiz_yesno upd "  change location?" N || exit 1
+else
+	wiz_say "  no location set yet; readsb needs lat/lon for CPR decoding"
+	upd=1
+fi
+
+if [ "$upd" = 1 ]; then
+	wiz_say "  source:"
+	wiz_choose loc_src "  pick a source" \
+		"auto-detect from public IP (city-level, requires WAN)" \
+		"enter coordinates manually" \
+		"skip" || exit 1
+	case $loc_src in
+		auto-detect*)
+			wiz_say "  running readsb-geoip --force ..."
+			readsb-geoip --force
+			rc=$?
+			if [ "$rc" = 0 ]; then
+				changes_made=1
+				_notice "geoip auto-fill OK"
+				wiz_say "  geoip done"
+			else
+				_warn "geoip auto-fill failed (rc=$rc); user can retry"
+				wiz_say "  geoip failed; you can re-run later or set lat/lon manually"
+			fi
+			;;
+		enter*)
+			wiz_ask_validated lat "  latitude (-90 .. 90)" "$cur_lat" wiz_v_lat \
+				"latitude must be a number between -90 and 90" || exit 1
+			wiz_ask_validated lon "  longitude (-180 .. 180)" "$cur_lon" wiz_v_lon \
+				"longitude must be a number between -180 and 180" || exit 1
+			_set_main lat "$lat"
+			_set_main lon "$lon"
+			_commit_main
+			_notice "set lat=$lat lon=$lon"
+			changes_made=1
+			;;
+		*) ;;
+	esac
+fi
+wiz_say ""
+
+# --- step 2: UUID ----------------------------------------------------------
+wiz_say "[2/5] station UUID"
+cur_uuid=$(uci -q get readsb.main.uuid 2>/dev/null)
+if readsb_is_uuid "$cur_uuid"; then
+	wiz_say "  current: $cur_uuid"
+	wiz_yesno regen "  regenerate? (loses any aggregator registration tied to this UUID)" N || exit 1
+	[ "$regen" = 1 ] && _run_uuid -f
+else
+	wiz_say "  no station UUID set"
+	wiz_yesno gen "  generate one now?" Y || exit 1
+	[ "$gen" = 1 ] && _run_uuid --auto
+fi
+wiz_say ""
+
+# --- step 3: SDR tuning ----------------------------------------------------
+# Auto-skipped on net-only deployments.
+wiz_say "[3/5] SDR tuning"
+if [ "$sc" -eq 0 ]; then
+	wiz_say "  no RTL-SDR detected on USB; skipping (net-only deployment)"
+	wiz_say "  (re-run 'readsb-setup' after plugging an SDR to tune gain etc.)"
+else
+	wiz_say "  $sc RTL-SDR(s) detected"
+	cur_gain=$(uci -q get readsb.main.gain 2>/dev/null)
+	cur_ppm=$(uci -q get readsb.main.ppm 2>/dev/null)
+	cur_agc=$(uci -q get readsb.main.enable_agc 2>/dev/null)
+	cur_bias=$(uci -q get readsb.main.enable_biastee 2>/dev/null)
+	wiz_say "  current: gain=${cur_gain:-auto} ppm=${cur_ppm:-0} agc=${cur_agc:-0} bias-t=${cur_bias:-0}"
+	wiz_yesno tune "  tune SDR settings?" N || exit 1
+	if [ "$tune" = 1 ]; then
+		wiz_ask_validated new_gain "  gain ('auto', 'max', or 0..50 dB)" "${cur_gain:-auto}" wiz_v_gain \
+			"gain must be 'auto', 'max', or a number 0..50" || exit 1
+		wiz_ask_validated new_ppm "  PPM correction (-100..100, 0 for none)" "${cur_ppm:-0}" wiz_v_ppm \
+			"PPM must be a number between -100 and 100" || exit 1
+
+		wiz_yesno new_agc "  enable AGC? (most setups: no)" \
+			"$([ "$cur_agc" = 1 ] && echo Y || echo N)" || exit 1
+		wiz_yesno new_bias "  enable bias-T? (powers an LNA on the antenna line; default: no)" \
+			"$([ "$cur_bias" = 1 ] && echo Y || echo N)" || exit 1
+
+		_set_main gain          "$new_gain"
+		_set_main ppm           "$new_ppm"
+		_set_main enable_agc    "$new_agc"
+		_set_main enable_biastee "$new_bias"
+		_commit_main
+		_notice "set gain=$new_gain ppm=$new_ppm agc=$new_agc bias-t=$new_bias"
+		changes_made=1
+	fi
+fi
+wiz_say ""
+
+# --- step 4: feeders -------------------------------------------------------
+# Management menu loop: add / manage existing / done.
+wiz_say "[4/5] aggregator feeders"
+
+# Reused after each mutating action so state is always fresh.
+_step4_show_state() {
+	local _fc
+	_fc=$(readsb_count_feeders)
+	if [ "$_fc" -gt 0 ]; then
+		wiz_say "  $_fc 'config feeder' section(s) currently configured:"
+		readsb-feeder --list 2>/dev/null | sed 's/^/    /' >/dev/tty
+	else
+		wiz_say "  no feeders defined yet"
+	fi
+}
+
+# Echo space-separated names of all `config feeder` sections (sorted).
+_step4_feeder_names() {
+	uci -q show readsb 2>/dev/null \
+		| awk -F. '/^readsb\.[^.]+=feeder$/ { sub(/=feeder$/, "", $2); print $2 }' \
+		| sort -u
+}
+
+_step4_show_state
+wiz_say ""
+
+while :; do
+	fc=$(readsb_count_feeders)
+	if [ "$fc" -gt 0 ]; then
+		wiz_choose action "  next feeder action" \
+			"add a new feeder" \
+			"manage an existing feeder" \
+			"done with feeders" \
+			|| exit 1
+	else
+		wiz_choose action "  next feeder action" \
+			"add a new feeder" \
+			"done with feeders" \
+			|| exit 1
+	fi
+
+	case $action in
+		add*)
+			if readsb-feeder; then
+				changes_made=1
+			else
+				wiz_say "  feeder add cancelled"
+			fi
+			wiz_say ""
+			_step4_show_state
+			wiz_say ""
+			;;
+		manage*)
+			# shellcheck disable=SC2046
+			set -- $(_step4_feeder_names)
+			if [ "$#" -eq 0 ]; then
+				wiz_say "  (no feeder sections to manage)"
+				wiz_say ""
+				continue
+			fi
+			wiz_choose target "  pick a feeder" "$@" "back" || continue
+			[ "$target" = back ] && continue
+
+			cur_enabled=$(uci -q get "readsb.${target}.enabled")
+			cur_preset=$(uci -q get "readsb.${target}.preset")
+			wiz_say "  '$target': preset=${cur_preset:-?} enabled=${cur_enabled:-0}"
+
+			wiz_choose op "  action for '$target'" \
+				"enable" \
+				"disable" \
+				"remove" \
+				"back" \
+				|| continue
+
+			case $op in
+				enable)
+					if readsb-feeder --enable "$target" >/dev/tty 2>&1; then
+						changes_made=1
+						# Enabling triggers syslog companion warnings;
+						# also offer interactive install while we have a tty.
+						cur_preset=$(uci -q get "readsb.${target}.preset")
+						wiz_offer_install_companions "$cur_preset" "feeder '$target'" || exit 1
+					fi
+					;;				disable)
+					if readsb-feeder --disable "$target" >/dev/tty 2>&1; then
+						changes_made=1
+					fi
+					;;
+				remove)
+					wiz_yesno yn "  really remove feeder '$target'?" N || continue
+					if [ "$yn" = 1 ]; then
+						if readsb-feeder --remove "$target" >/dev/tty 2>&1; then
+							changes_made=1
+						fi
+					fi
+					;;
+				back) ;;
+			esac
+			wiz_say ""
+			_step4_show_state
+			wiz_say ""
+			;;
+		done*)
+			break
+			;;
+	esac
+done
+wiz_say ""
+
+# --- step 5: apply ---------------------------------------------------------
+wiz_say "[5/5] apply changes"
+if [ "$changes_made" = 0 ]; then
+	wiz_say "  no changes were made; nothing to reload"
+	wiz_say ""
+	wiz_say "done. Run 'readsb-setup --status' any time for a summary."
+	exit 0
+fi
+
+if [ -x /etc/init.d/readsb ]; then
+	wiz_yesno do_reload "  run 'service readsb reload' now?" Y || do_reload=0
+	if [ "$do_reload" = 1 ]; then
+		if /etc/init.d/readsb reload; then
+			_notice "applied changes via 'service readsb reload'"
+			wiz_say "  reload OK"
+		else
+			_warn "'service readsb reload' returned non-zero"
+			wiz_say "  reload failed; check 'logread -e readsb'"
+		fi
+	else
+		_notice "changes committed but reload deferred by user"
+		wiz_say "  remember to run 'service readsb reload' to apply"
+	fi
+else
+	wiz_say "  /etc/init.d/readsb not present; nothing to reload"
+fi
+wiz_say ""
+wiz_say "done. Useful follow-ups:"
+wiz_say "  readsb-setup --status     -- configuration check (essentials)"
+wiz_say "  readsb-setup --health     -- runtime health (is it working?)"
+wiz_say "  readsb-setup --config     -- pretty-printed /etc/config/readsb"
+wiz_say "                              (+ each installed companion's UCI config)"
+wiz_say "  readsb-setup --help       -- re-print the post-install banner"
+wiz_say "  readsb-feeder --list      -- see what's configured"
+wiz_say "  readsb-feeder --health    -- per-feeder probe + log scan"
+wiz_say "  readsb-feeder --url       -- public stats URLs"
+wiz_say "  readsb-feeder --companions -- optional companion packages per feeder"
+wiz_say "  logread -e readsb         -- daemon + helper logs"
+exit 0

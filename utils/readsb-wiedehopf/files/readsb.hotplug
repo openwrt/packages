@@ -1,0 +1,152 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# Copyright (C) 2026 OpenWrt.org
+#
+# /etc/hotplug.d/usb/30-readsb -- auto-configure readsb on RTL-SDR USB
+# add/remove. Pins by serial. Per-section opt-out: option hotplug '0'.
+#
+# Triggered by procd hotplug; not a user CLI. For interactive setup
+# of the matched section see `readsb-setup`.
+
+. /usr/lib/readsb/functions.sh
+
+[ "$ACTION" = "add" ] || [ "$ACTION" = "remove" ] || exit 0
+[ -n "$DEVICENAME" ] || exit 0
+
+sysdev="/sys/bus/usb/devices/$DEVICENAME"
+[ -r "$sysdev/idVendor" ] && [ -r "$sysdev/idProduct" ] || exit 0
+
+read -r vid < "$sysdev/idVendor"
+read -r pid < "$sysdev/idProduct"
+readsb_is_sdr_id "$vid:$pid" || exit 0
+
+_debug "hotplug $ACTION: $DEVICENAME ($vid:$pid)"
+
+event_serial=""
+if [ -r "$sysdev/serial" ]; then
+	read -r event_serial < "$sysdev/serial"
+	event_serial=$(readsb_sanitize_serial "$event_serial")
+fi
+
+[ -f /etc/config/readsb ] || exit 0
+
+. /lib/functions.sh
+config_load readsb
+
+target=""
+find_first() { [ -z "$target" ] && target="$1"; }
+config_foreach find_first readsb
+if [ -z "$target" ]; then
+	_warn "hotplug: no readsb UCI section found; run 'readsb-setup' first -- cannot auto-configure $vid:$pid"
+	exit 0
+fi
+
+config_get hotplug "$target" hotplug 1
+[ "$hotplug" = "1" ] || exit 0
+
+check_driver_collision() {
+	local m conflict=""
+	for m in dvb_usb_rtl28xxu rtl2832 rtl2832_sdr rtl8192cu rtl8xxxu; do
+		[ -d "/sys/module/$m" ] && conflict="${conflict:+$conflict, }$m"
+	done
+	[ -z "$conflict" ] || _warn "hotplug: kernel driver(s) loaded that block librtlsdr: $conflict"
+}
+
+check_freq() {
+	local f mhz
+	config_get f "$target" freq
+	[ -z "$f" ] && return 0
+	mhz=$(readsb_freq_to_mhz "$f")
+	[ "$mhz" = "1090" ] && return 0
+	_warn "hotplug: '$target' freq=$f; ADS-B requires 1090 MHz"
+}
+
+case "$ACTION" in
+add)
+	check_driver_collision
+	check_freq
+
+	sdr_count=$(readsb_count_sdrs)
+
+	config_get device_type "$target" device_type
+	config_get device      "$target" device
+	config_get net_only    "$target" net_only 0
+	config_get enabled     "$target" enabled 0
+
+	changed=0
+	[ "$device_type" = "rtlsdr" ] || {
+		uci set "readsb.${target}.device_type=rtlsdr"; changed=1
+	}
+
+	if [ -z "$device" ]; then
+		if [ "$sdr_count" -le 1 ]; then
+			uci set "readsb.${target}.device=${event_serial:-0}"
+			changed=1
+		else
+			# Multi-SDR auto-pin by serial-matches-freq convention.
+			# Recipe in README.md ("Multi-SDR setup").
+			config_get freq_cfg "$target" freq
+			want_serial=$(readsb_freq_to_mhz "$freq_cfg")
+			match=""
+			if [ -n "$want_serial" ]; then
+				for s in $(readsb_list_sdrs); do
+					[ "$s" = "$want_serial" ] && { match=$s; break; }
+				done
+			fi
+			if [ -n "$match" ]; then
+				uci set "readsb.${target}.device=$match"
+				changed=1
+				_notice "hotplug: $sdr_count RTL-SDRs attached; auto-pinned device='$match' by serial-matches-freq convention (freq=${freq_cfg:-1090})"
+			else
+				_warn "hotplug: $sdr_count RTL-SDRs attached ($(readsb_list_sdrs | tr '\n' ' ')); no serial matches freq=${freq_cfg:-1090}; set 'option device <serial>' to choose one (tip: 'rtl_eeprom -s 1090' to label by frequency)"
+			fi
+		fi
+	fi
+
+	[ "$net_only" = "1" ] && { uci set "readsb.${target}.net_only=0"; changed=1; }
+	[ "$enabled"  = "1" ] || { uci set "readsb.${target}.enabled=1";  changed=1; }
+
+	msg="RTL-SDR ($vid:$pid serial=${event_serial:-none}) added [${sdr_count} total]: SDR mode"
+	;;
+
+remove)
+	config_get device_type "$target" device_type
+	config_get device      "$target" device
+	config_get net_only    "$target" net_only 0
+
+	sdr_count=$(readsb_count_sdrs)
+	changed=0
+
+	if [ "$sdr_count" -gt 0 ]; then
+		# Other SDRs remain. Only un-pin if the removed one was pinned.
+		if [ -n "$device" ] && [ -n "$event_serial" ] && [ "$device" = "$event_serial" ]; then
+			uci set "readsb.${target}.device="
+			changed=1
+			msg="RTL-SDR ($vid:$pid serial=$event_serial) removed; cleared device pin ($sdr_count remaining)"
+		else
+			exit 0
+		fi
+	else
+		# Last SDR removed; revert to net-only.
+		[ "$device_type" = "rtlsdr" ] && { uci set "readsb.${target}.device_type="; changed=1; }
+		[ -n "$device" ]              && { uci set "readsb.${target}.device=";      changed=1; }
+		[ "$net_only"   = "1" ]       || { uci set "readsb.${target}.net_only=1";   changed=1; }
+		msg="RTL-SDR ($vid:$pid serial=${event_serial:-none}) removed; net-only mode"
+	fi
+	;;
+esac
+
+[ "$changed" = "1" ] || exit 0
+
+if ! uci commit readsb; then
+	_err "hotplug: 'uci commit readsb' failed; UCI may be inconsistent"
+	exit 1
+fi
+_notice "$msg"
+[ -n "$READSB_HOTPLUG_SEED" ] && exit 0
+if /etc/init.d/readsb enabled; then
+	/etc/init.d/readsb restart \
+		|| _err "hotplug: '/etc/init.d/readsb restart' failed (rc=$?)"
+fi
+exit 0

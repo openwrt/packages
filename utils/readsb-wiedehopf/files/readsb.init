@@ -1,0 +1,427 @@
+#!/bin/sh /etc/rc.common
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# Copyright (C) 2026 OpenWrt.org
+#
+# /etc/init.d/readsb -- procd init script for the readsb daemon.
+#
+#   service readsb {start|stop|restart|reload|status|enable|disable}
+#   logread -e readsb         -- daemon + helper logs
+#
+# This is NOT the configuration tool. To set up location, UUID, SDR
+# tuning and aggregator feeders use:
+#   readsb-setup [-h]   readsb-feeder [-h]
+#   readsb-uuid  [-h]   readsb-geoip  [-h]
+
+START=90
+STOP=10
+USE_PROCD=1
+
+. /usr/lib/readsb/functions.sh
+
+# UCI bool/value -> CLI flag helpers. UCI uses underscore_style; readsb
+# uses --dash-style.
+#
+# Note: do NOT use ${var//_/-} here -- that is a bash extension. BusyBox
+# ash without CONFIG_ASH_BASH_COMPAT misparses `${2//_/-}` as positional
+# parameter `2//_/-` and emits "sh: out of range" on every invocation
+# during postinst (`/etc/init.d/readsb start`). Use `tr` instead.
+_uci2flag() {
+	echo "$1" | tr '_' '-'
+}
+
+append_bool() {
+	local v
+	config_get_bool tbool "$1" "$2" "$3"
+	v=$(_uci2flag "$2")
+	[ "$tbool" = "1" ] && procd_append_param command "--$v"
+}
+
+append_bool_no() {
+	local v
+	config_get_bool tbool "$1" "$2" "$3"
+	v=$(_uci2flag "$2")
+	[ "$tbool" = "0" ] && procd_append_param command "--no-$v"
+	[ "$tbool" = "1" ] && procd_append_param command "--$v"
+}
+
+append_param() {
+	local v
+	config_get tparam "$1" "$2"
+	v=$(_uci2flag "$2")
+	[ -n "$tparam" ] && procd_append_param command "--$v=$tparam"
+}
+
+# read_first_set <var_to_set> <cfg_section> <option_name>
+# First-writer-wins: only set <var> if currently empty.
+read_first_set() {
+	local _name=$1 _cfg=$2 _opt=$3 _v
+	eval "_v=\$$_name"
+	[ -z "$_v" ] || return 0
+	config_get _v "$_cfg" "$_opt"
+	[ -n "$_v" ] && eval "$_name=\$_v"
+}
+
+# Translate one `config feeder <name>` UCI section into one
+# --net-connector=<host>,<port>,<protocol>[,uuid=<uuid>][,silent_fail][,<extra>]
+# argument. Bad/unknown sections are warned-and-skipped.
+feeder_to_connector() {
+	local fcfg=$1 main=$2
+	local enabled global_uuid silent extra conn
+
+	config_get_bool enabled "$fcfg" enabled 0
+	[ "$enabled" -eq 1 ] || return 0
+
+	config_get global_uuid "$main" uuid
+	if ! readsb_feeder_resolve "$fcfg" "$global_uuid"; then
+		_warn "feeder '$fcfg' $readsb_feeder_error; skipping"
+		return 0
+	fi
+
+	if [ -n "$readsb_feeder_uuid" ] && ! readsb_is_uuid "$readsb_feeder_uuid"; then
+		_warn "feeder '$fcfg' uuid '$readsb_feeder_uuid' is not 8-4-4-4-12 hex; sending anyway"
+	fi
+
+	conn="$readsb_feeder_host,$readsb_feeder_port,$readsb_feeder_proto"
+	[ -n "$readsb_feeder_uuid" ] && conn="$conn,uuid=$readsb_feeder_uuid"
+
+	# silent_fail defaults to 1: brief outages should not flood syslog.
+	config_get_bool silent "$fcfg" silent_fail 1
+	[ "$silent" -eq 1 ] && conn="$conn,silent_fail"
+	config_get extra "$fcfg" extra
+	[ -n "$extra" ] && conn="$conn,$extra"
+
+	procd_append_param command --net-connector="$conn"
+	if [ -n "$readsb_feeder_uuid" ]; then
+		_debug "feeder '$fcfg' -> $readsb_feeder_host:$readsb_feeder_port ($readsb_feeder_proto) [uuid set]"
+	else
+		_debug "feeder '$fcfg' -> $readsb_feeder_host:$readsb_feeder_port ($readsb_feeder_proto) [no uuid]"
+	fi
+}
+
+start_instance() {
+	local cfg=$1
+	local enabled gain_val sys_log_level extra_args
+	local device_type net_only bo_log mode_log sdr_mode
+
+	config_get_bool enabled "$cfg" enabled 0
+	if [ "$enabled" -ne 1 ]; then
+		_notice "instance '$cfg' disabled in UCI; set 'option enabled 1'"
+		return 0
+	fi
+
+	# readsb requires --device-type to precede any SDR-specific option;
+	# net-only mode must NOT pass them at all.
+	config_get device_type "$cfg" device_type
+	config_get_bool net_only "$cfg" net_only 0
+	if [ -n "$device_type" ] && [ "$net_only" -ne 1 ]; then
+		sdr_mode=1
+	else
+		sdr_mode=0
+	fi
+
+	started=1
+	mkdir -p /var/run/readsb 2>/dev/null
+
+	procd_open_instance "$cfg"
+	procd_set_param command /usr/bin/readsb --quiet
+	procd_set_param respawn 3600 15 100
+	procd_set_param nice -5
+	procd_set_param stderr 1
+	procd_set_param stdout 1
+
+	if [ "$sdr_mode" -eq 1 ]; then
+		procd_append_param command "--device-type=$device_type"
+
+		for param in beast_serial device freq ppm sdr_buffer_size; do
+			append_param "$cfg" "$param"
+		done
+
+		append_bool "$cfg" dcfilter 0
+		append_bool "$cfg" enable_agc 0
+		append_bool "$cfg" enable_biastee 0
+		append_bool "$cfg" gnss 0
+		append_bool "$cfg" modeac 0
+		append_bool "$cfg" modeac_auto 0
+		append_param "$cfg" preamble_threshold
+
+		# gain=auto + system log_level=debug -> auto-verbose (UCI untouched)
+		config_get gain_val "$cfg" gain
+		if [ -n "$gain_val" ]; then
+			if [ "$gain_val" = "auto" ]; then
+				sys_log_level=$(uci -q get system.@system[0].log_level)
+				case "$sys_log_level" in
+					debug|7) gain_val="auto-verbose" ;;
+				esac
+			fi
+			procd_append_param command --gain="$gain_val"
+		fi
+	fi
+
+	append_bool "$cfg" beast_crc_off 0
+	append_bool "$cfg" beast_df045_on 0
+	append_bool "$cfg" beast_df1117_on 0
+	append_bool "$cfg" beast_fec_off 0
+	append_bool "$cfg" beast_mlat_off 0
+	append_bool "$cfg" beast_modeac 0
+	append_bool "$cfg" db_file_lt 0
+	append_bool "$cfg" forward_mlat 0
+	append_bool "$cfg" forward_mlat_sbs 0
+	append_bool "$cfg" metric 0
+	append_bool "$cfg" net 1
+	append_bool "$cfg" net_asterix_reduce 0
+	append_bool "$cfg" net_beast_reduce_optimize_for_mlat 0
+	append_bool "$cfg" net_ingest 0
+	append_bool "$cfg" net_json_port_include_noposition 0
+	append_bool "$cfg" net_only 0
+	append_bool "$cfg" net_receiver_id 0
+	append_bool "$cfg" net_sbs_reduce 0
+	append_bool "$cfg" net_verbatim 0
+	append_bool "$cfg" no_fix_df 0
+	append_bool "$cfg" onlyaddr 0
+	append_bool "$cfg" stats 0
+	append_bool "$cfg" stats_range 0
+	append_bool "$cfg" tar1090_use_api 0
+	append_bool "$cfg" write_json_globe_index 0
+	append_bool "$cfg" write_json_gzip 0
+	append_bool "$cfg" write_receiver_id_json 0
+	append_bool "$cfg" write_state_only_on_exit 0
+	append_bool_no "$cfg" fix 1
+
+	for param in \
+		ac_hash_bits \
+		api_shutdown_delay \
+		beast_baudrate \
+		db_file \
+		debug \
+		decode_threads \
+		full_trace_dir \
+		heatmap \
+		heatmap_dir \
+		jaero_timeout \
+		json_location_accuracy \
+		json_reliable \
+		json_separate_alt_ground \
+		json_trace_hist_only \
+		json_trace_interval \
+		lat \
+		lon \
+		max_range \
+		net_api_port \
+		net_asterix_in_port \
+		net_asterix_out_port \
+		net_beast_reduce_filter_alt \
+		net_beast_reduce_filter_dist \
+		net_beast_reduce_interval \
+		net_beast_reduce_out_port \
+		net_bi_port \
+		net_bind_address \
+		net_bo_port \
+		net_buffer \
+		net_connector_delay \
+		net_garbage \
+		net_heartbeat \
+		net_json_port \
+		net_json_port_interval \
+		net_ri_port \
+		net_ro_port \
+		net_ro_interval \
+		net_ro_interval_beast_reduce \
+		net_ro_size \
+		net_sbs_in_port \
+		net_sbs_jaero_in_port \
+		net_sbs_jaero_port \
+		net_sbs_port \
+		net_uat_in_port \
+		net_uat_replay_port \
+		net_vrs_interval \
+		net_vrs_port \
+		position_persistence \
+		process_only \
+		range_outline_hours \
+		show_only \
+		stats_every \
+		uuid_file \
+		write_globe_history \
+		write_json \
+		write_json_every \
+		write_prom \
+		write_state \
+		write_state_every
+	do
+		append_param "$cfg" "$param"
+	done
+
+	# Each enabled `config feeder` becomes one --net-connector line.
+	config_foreach feeder_to_connector feeder "$cfg"
+
+	# Passthrough for flags not exposed as a UCI option.
+	config_get extra_args "$cfg" extra_args
+	for arg in $extra_args; do
+		procd_append_param command "$arg"
+	done
+
+	procd_close_instance
+
+	config_get bo_log "$cfg" net_bo_port
+	if [ "$sdr_mode" -eq 1 ]; then
+		mode_log="sdr=$device_type"
+	else
+		mode_log="net-only"
+	fi
+	_notice "starting '$cfg' ($mode_log, beast_out=${bo_log:-off})"
+
+	# Defensive: surface the pin-mismatch case where SDR(s) are present
+	# on USB but UCI told us net-only. Operator can then 'restart' to
+	# re-pin via the next start_service.
+	if [ "$sdr_mode" -eq 0 ] && readsb_is_sdr_present; then
+		_warn "instance '$cfg': $(readsb_count_sdrs) RTL-SDR(s) attached on USB but starting net-only (UCI device_type='${device_type}' net_only='${net_only}'); run '/etc/init.d/readsb restart' to re-pin"
+	fi
+}
+
+# Replay ACTION=add for SDRs already attached at boot. Hotplug only fires
+# on live USB events. READSB_HOTPLUG_SEED suppresses the recursive restart.
+seed_hotplug_state() {
+	local hp=/etc/hotplug.d/usb/30-readsb d
+	[ -x "$hp" ] || return 0
+	_debug "seeding hotplug state for already-attached USB devices"
+	for d in /sys/bus/usb/devices/*; do
+		[ -r "$d/idVendor" ] || continue
+		READSB_HOTPLUG_SEED=1 ACTION=add DEVICENAME=${d##*/} \
+			sh "$hp" >/dev/null 2>&1
+	done
+}
+
+# --- USB-settle wait -------------------------------------------------------
+# Off by default. Honored when at least one section sets `option hotplug 1`.
+USB_WAIT_TIMEOUT_DEFAULT=0
+USB_WAIT_INTERVAL_DEFAULT=2
+usb_wait_timeout=""
+usb_wait_interval=""
+hotplug_enabled_any=0
+read_usb_wait_opts() {
+	local hp
+	config_get_bool hp "$1" hotplug 1
+	[ "$hp" = "1" ] && hotplug_enabled_any=1
+	read_first_set usb_wait_timeout  "$1" usb_wait_timeout
+	read_first_set usb_wait_interval "$1" usb_wait_interval
+}
+
+# --- no-USB reconciler -----------------------------------------------------
+# Normalize hotplug-managed sections back to net-only at boot when the
+# previously-pinned SDR is no longer present.
+no_usb_reconciled=0
+reconcile_no_usb_section() {
+	local cfg=$1 hp dt dev no
+	config_get_bool hp "$cfg" hotplug 1
+	[ "$hp" = "1" ] || return 0
+	config_get dt  "$cfg" device_type
+	config_get dev "$cfg" device
+	config_get no  "$cfg" net_only 0
+
+	local changed=0
+	[ -n "$dt" ]    && { uci set "readsb.${cfg}.device_type="; changed=1; }
+	[ -n "$dev" ]   && { uci set "readsb.${cfg}.device=";      changed=1; }
+	[ "$no" = "1" ] || { uci set "readsb.${cfg}.net_only=1";   changed=1; }
+
+	if [ "$changed" = "1" ]; then
+		no_usb_reconciled=1
+		_notice "no USB SDR; reconciled '$cfg' to net-only (was device_type='${dt}' device='${dev}' net_only='${no}')"
+	fi
+}
+
+reconcile_for_no_usb() {
+	no_usb_reconciled=0
+	config_foreach reconcile_no_usb_section readsb
+	if [ "$no_usb_reconciled" = "1" ]; then
+		# Reconcile is idempotent; the next start_service finds nothing to change.
+		uci commit readsb
+		config_load readsb
+	fi
+}
+
+# --- geoip wait ------------------------------------------------------------
+# WAN often isn't routable when START=90 fires. Skip when nothing needs lookup.
+GEOIP_WAIT_TIMEOUT_DEFAULT=60
+GEOIP_WAIT_INTERVAL_DEFAULT=10
+geoip_wait_timeout=""
+geoip_wait_interval=""
+needs_geoip=0
+check_geoip_needed() {
+	local cfg=$1 enabled lat lon
+	config_get_bool enabled "$cfg" enabled 0
+	[ "$enabled" -eq 1 ] || return 0
+	config_get lat "$cfg" lat
+	config_get lon "$cfg" lon
+	[ -n "$lat" ] && [ -n "$lon" ] || needs_geoip=1
+}
+read_geoip_wait_opts() {
+	read_first_set geoip_wait_timeout  "$1" geoip_wait_timeout
+	read_first_set geoip_wait_interval "$1" geoip_wait_interval
+}
+# Probe used by readsb_wait_until.
+geoip_probe() {
+	/usr/sbin/readsb-geoip >/dev/null 2>&1
+	config_load readsb
+	needs_geoip=0
+	config_foreach check_geoip_needed readsb
+	[ "$needs_geoip" -eq 0 ]
+}
+
+start_service() {
+	started=0
+	config_load readsb
+
+	usb_wait_timeout=""
+	usb_wait_interval=""
+	hotplug_enabled_any=0
+	config_foreach read_usb_wait_opts readsb
+	[ -n "$usb_wait_timeout" ]  || usb_wait_timeout=$USB_WAIT_TIMEOUT_DEFAULT
+	[ -n "$usb_wait_interval" ] || usb_wait_interval=$USB_WAIT_INTERVAL_DEFAULT
+	if [ "$hotplug_enabled_any" -eq 1 ] && [ "$usb_wait_timeout" -gt 0 ]; then
+		readsb_wait_until "USB SDR" "$usb_wait_timeout" "$usb_wait_interval" \
+			readsb_is_sdr_present
+	fi
+
+	# Seed runs after the USB wait so it sees devices that just appeared.
+	# May uci-commit, so reload UCI before geoip checks.
+	seed_hotplug_state
+	config_load readsb
+	if [ "$hotplug_enabled_any" = "1" ] && ! readsb_is_sdr_present; then
+		reconcile_for_no_usb
+	fi
+
+	if [ -x /usr/sbin/readsb-geoip ]; then
+		needs_geoip=0
+		config_foreach check_geoip_needed readsb
+		if [ "$needs_geoip" -eq 1 ]; then
+			config_foreach read_geoip_wait_opts readsb
+			[ -n "$geoip_wait_timeout" ]  || geoip_wait_timeout=$GEOIP_WAIT_TIMEOUT_DEFAULT
+			[ -n "$geoip_wait_interval" ] || geoip_wait_interval=$GEOIP_WAIT_INTERVAL_DEFAULT
+
+			if [ "$geoip_wait_timeout" -le 0 ]; then
+				_debug "running readsb-geoip (no wait)"
+				/usr/sbin/readsb-geoip >/dev/null 2>&1
+				config_load readsb
+			else
+				readsb_wait_until "geoip" "$geoip_wait_timeout" "$geoip_wait_interval" \
+					geoip_probe \
+					|| _warn "starting without coordinates (set lat/lon manually for accuracy)"
+			fi
+		fi
+	fi
+
+	config_foreach start_instance readsb
+	if [ "$started" -eq 0 ]; then
+		_warn "no enabled readsb instance; enable with 'uci set readsb.@readsb[0].enabled=1; uci commit readsb' or run 'readsb-setup'"
+	fi
+}
+
+service_triggers() {
+	procd_add_reload_trigger readsb
+}
+
+reload_service() {
+	stop
+	start
+}
