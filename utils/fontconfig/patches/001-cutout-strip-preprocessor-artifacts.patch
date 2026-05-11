@@ -1,0 +1,11 @@
+--- a/src/cutout.py
++++ b/src/cutout.py
+@@ -19,6 +19,8 @@ if __name__== '__main__':
+ 
+             if write and l:
+                 stripped = re.sub(r'^\s+', '', l)
++                if stripped.startswith('#'):
++                    continue
+                 stripped = re.sub(r'\s*,\s*', ',', stripped)
+                 if not stripped.isspace() and stripped:
+                     out.write('%s\n' % stripped)
