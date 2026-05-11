@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008-2016 OpenWrt.org
+# Copyright (C) 2008-2026 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=radsecproxy
-PKG_VERSION:=1.9.1
+PKG_VERSION:=1.11.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/radsecproxy/radsecproxy/releases/download/$(PKG_VERSION)/
-PKG_HASH:=e08e4e04d188deafd0b55b2f66b1e7fff9bdb553fb170846590317d02c9dc5db
+PKG_HASH:=1fe3f25a392b74db1fe62868e19e883acd1dc0e1f318715299920fcc5e166f97
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=BSD-3-CLAUSE
