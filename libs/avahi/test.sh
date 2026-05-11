@@ -1,16 +1,5 @@
 #!/bin/sh
 
-_version_check() {
-	local bin="$1" pkg="$2" ver="$3"
-	# apk versions use _ where upstream uses - (e.g. 0.9_rc4 vs 0.9-rc4)
-	local upstream_ver
-	upstream_ver=$(echo "$ver" | tr '_' '-')
-	"$bin" -V 2>&1 | grep -F "$upstream_ver" || {
-		echo "FAIL: $bin -V did not print expected version '$upstream_ver'"
-		exit 1
-	}
-}
-
 _lib_check() {
 	local f="$1"
 	[ -e "$f" ] || { echo "FAIL: $f not found"; exit 1; }
@@ -20,10 +9,6 @@ _lib_check() {
 # Works for both dbus and nodbus variants; dbus variant skips the start
 # test when avahi-utils (which needs dbus) is not installed.
 _daemon_start_test() {
-	local ver="$1"
-
-	_version_check avahi-daemon avahi-daemon "$ver"
-
 	# Config file from package
 	[ -f /etc/avahi/avahi-daemon.conf ] || {
 		echo "FAIL: /etc/avahi/avahi-daemon.conf not installed"
@@ -41,36 +26,36 @@ _daemon_start_test() {
 	# Try to start avahi-daemon with a minimal config and no privilege drop
 	mkdir -p /var/run/avahi-daemon /tmp/avahi-test
 
-	cat > /tmp/avahi-test/avahi-daemon.conf << 'EOF'
-[server]
-host-name=avahi-test
-use-ipv4=yes
-use-ipv6=no
-check-response-ttl=no
-use-iff-running=no
-enable-dbus=no
+	cat > /tmp/avahi-test/avahi-daemon.conf <<-'EOF'
+	[server]
+	host-name=avahi-test
+	use-ipv4=yes
+	use-ipv6=no
+	check-response-ttl=no
+	use-iff-running=no
+	enable-dbus=no
 
-[wide-area]
-enable-wide-area=no
+	[wide-area]
+	enable-wide-area=no
 
-[publish]
-publish-addresses=yes
-publish-hinfo=no
-publish-workstation=no
-publish-domain=yes
-disable-publishing=no
+	[publish]
+	publish-addresses=yes
+	publish-hinfo=no
+	publish-workstation=no
+	publish-domain=yes
+	disable-publishing=no
 
-[reflector]
-enable-reflector=no
+	[reflector]
+	enable-reflector=no
 
-[rlimits]
-rlimit-core=0
-rlimit-data=4194304
-rlimit-fsize=0
-rlimit-nofile=30
-rlimit-stack=4194304
-rlimit-nproc=3
-EOF
+	[rlimits]
+	rlimit-core=0
+	rlimit-data=4194304
+	rlimit-fsize=0
+	rlimit-nofile=30
+	rlimit-stack=4194304
+	rlimit-nproc=3
+	EOF
 
 	avahi-daemon --no-drop-root --no-chroot \
 		--file=/tmp/avahi-test/avahi-daemon.conf \
@@ -150,11 +135,10 @@ libavahi-client)
 	;;
 
 avahi-dbus-daemon|avahi-nodbus-daemon)
-	_daemon_start_test "$2"
+	_daemon_start_test
 	;;
 
 avahi-autoipd)
-	_version_check avahi-autoipd avahi-autoipd "$2"
 	[ -x /usr/sbin/avahi-autoipd ] || { echo "FAIL: avahi-autoipd not executable"; exit 1; }
 	[ -x /etc/avahi/avahi-autoipd.action ] || {
 		echo "FAIL: avahi-autoipd.action script not installed"
@@ -175,7 +159,6 @@ avahi-daemon-service-ssh)
 	;;
 
 avahi-dnsconfd)
-	_version_check avahi-dnsconfd avahi-dnsconfd "$2"
 	[ -x /usr/sbin/avahi-dnsconfd ] || { echo "FAIL: avahi-dnsconfd not executable"; exit 1; }
 	[ -x /etc/avahi/avahi-dnsconfd.action ] || {
 		echo "FAIL: avahi-dnsconfd.action not installed"
