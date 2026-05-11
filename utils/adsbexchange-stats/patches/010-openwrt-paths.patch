@@ -1,0 +1,136 @@
+From: OpenWrt packages
+Subject: [PATCH] adapt json-status for OpenWrt + readsb integration
+
+Patch contents are GPL-2.0-only (matches the surrounding OpenWrt feed);
+the patched file (json-status) remains under the upstream MIT license.
+
+Five minimal hooks:
+
+* OpenWrt-tuned defaults for JSON_PATHS and UUID_FILE.
+* Source $ADSBX_ENV_FILE (rendered by /etc/init.d/adsbexchange-stats from
+  /etc/config/{adsbexchange-stats,readsb}) before the existing
+  /etc/default/... override, so UCI wins. The helper sourced from the
+  env file defines adsbx_curl_upload / adsbx_record_upload / adsbx_warn.
+* Make TEMP_DIR env-overridable with a defensive `mkdir -p` before the
+  touch test. Required because /run is not symlinked to /var/run on
+  every OpenWrt build (notably some GL.iNet QSDK derivatives).
+* Default VER_OK to 0 in the curl-version DNS-cache gate, and brace-group
+  the perl pipeline so both child stderrs are silenced. perl is not in
+  this package's DEPENDS (DNS_CACHE was already gated separately on
+  `command -v perl`); the wrap just suppresses the cosmetic error spam.
+* Wrap the curl POST with adsbx_curl_upload when present so per-cycle
+  metrics are captured for the periodic summary. Falls back to upstream
+  behavior when the helper is absent.
+
+No behavior change when ADSBX_ENV_FILE is unset and TEMP_DIR is unset.
+---
+--- a/json-status
++++ b/json-status
+@@ -16,8 +16,8 @@
+ DNS_IGNORE_LOCAL=0
+
+ # List all paths, IN PREFERRED ORDER, separated by a SPACE
+-# By default, only use the json from the feed client
+-JSON_PATHS=("/run/adsbexchange-feed")
++# OpenWrt default: readsb's write_json dir first, then common fallbacks
++JSON_PATHS=("/var/run/readsb" "/run/adsbexchange-feed" "/run/dump1090" "/run/dump1090-fa")
+
+ ######################################################################################################################
+ # If you know what you're doing, and you want to override the search path, you can do it easily in
+@@ -28,9 +28,14 @@
+ ######################################################################################################################
+
+ # UUID file
+-UUID_FILE="/boot/adsbx-uuid"
+-if [[ ! -f "$UUID_FILE" ]]; then
+-    UUID_FILE="/usr/local/share/adsbexchange/adsbx-uuid"
++UUID_FILE="/var/run/adsbexchange-stats/uuid"
++
++# OpenWrt: source the env file rendered by /etc/init.d/adsbexchange-stats
++# from /etc/config/{adsbexchange-stats,readsb}. Path is supplied via
++# $ADSBX_ENV_FILE so nothing here is hard-coded under /etc; the manual
++# /etc/default/adsbexchange-stats override path below still works.
++if [ -n "$ADSBX_ENV_FILE" ] && [ -r "$ADSBX_ENV_FILE" ]; then
++    . "$ADSBX_ENV_FILE"
+ fi
+
+ # source local overrides (commonly the JSON_PATH, or DNS cache settings)
+@@ -52,10 +57,21 @@
+
+ JSON_DIR=""
+
+-TEMP_DIR="/run/adsbexchange-stats/"
++# OpenWrt: scratch dir is env-overridable so /etc/init.d/adsbexchange-stats
++# can point this at $ADSBX_RUNTIME_DIR (default /var/run/adsbexchange-stats),
++# which the init script mkdir -p's at start_instance time. Required because
++# /run is not symlinked to /var/run on every OpenWrt build (notably some
++# GL.iNet QSDK derivatives), so the upstream default would 404 on touch with:
++#   ERROR: Unable to write to /run/adsbexchange-stats//tmp.json, aborting!
++# `:=` only assigns when unset/empty so a manual /etc/default override wins.
++: "${TEMP_DIR:=/run/adsbexchange-stats/}"
+ TMPFILE="${TEMP_DIR}/tmp.json"
+ NEWFILE="${TEMP_DIR}/new.json"
+
++# Defensive: re-create the scratch dir before the touch test. Cheap, and
++# survives a transient tmpfs remount or an out-of-band rm -rf.
++mkdir -p "$TEMP_DIR" 2>/dev/null
++
+ # Sanity to make sure we can write to our scratch dir in /run
+ T=$(touch $TMPFILE 2>&1)
+ RV=$?
+@@ -215,7 +231,20 @@
+
+-VER_OK=$( echo "$CURL_VER" | perl -ne '@v=split(/\./); if ($v[0] == 7) { if ($v[1] >= 22) { printf("1");exit; } else { printf("0");exit; } } if ($v[0] > 7) { pr
+-intf("1");exit; } printf("0");exit;')
+-if [ $VER_OK -ne 1 ]; then
++VER_OK=$( { echo "$CURL_VER" | perl -ne '@v=split(/\./); if ($v[0] == 7) { if ($v[1] >= 22) { printf("1");exit; } else { printf("0");exit; } } if ($v[0] > 7) { pr
++intf("1");exit; } printf("0");exit;' ; } 2>/dev/null )
++# OpenWrt: perl is not in DEPENDS. Three failure modes appear here:
++#   1. `perl: command not found` from bash's failed exec.
++#   2. `echo: write error: Broken pipe` -- when perl's exec fails the
++#      read end of the echo|perl pipe is closed before echo writes,
++#      so echo gets SIGPIPE/EPIPE and bash logs it.
++#   3. VER_OK ends up empty so `[ $VER_OK -ne 1 ]` aborts with
++#      `[: -ne: unary operator expected`.
++# Brace-grouping the pipeline as `{ ... ; } 2>/dev/null` redirects
++# both the echo and perl child stderrs (a single `perl ... 2>/dev/null`
++# only catches perl's, leaving echo's SIGPIPE message visible).
++# `${VER_OK:-0}` handles the unary-operator abort by defaulting to 0
++# (treated as "too old"); DNS_CACHE was already disabled earlier by
++# the `command -v perl` check, so behavior is unchanged.
++if [ "${VER_OK:-0}" -ne 1 ]; then
+ 	echo "WARNING: curl version is too old ($CURL_VER < 7.22.0), not using script's DNS cache."
+ 	DNS_CACHE=0
+ fi
+@@ -358,12 +387,27 @@
+     gzip -c <$NEWFILE >$TEMP_DIR/upload.gz
+     sleep 0.314
+
+-	# Push up the data.  'curl' will wait no more than $MAX_CURL_TIME seconds for upload to complete
+-	curl -m $MAX_CURL_TIME $CURL_EXTRA -sS -X POST -H "adsbx-uuid: ${UUID}" -H "Content_Encoding: gzip" --data-binary @- $REMOTE_URL 2>&1 <$TEMP_DIR/upload.gz
+-	RV=$?
++	# OpenWrt: route the upload through adsbx_curl_upload (defined in
++	# $ADSBX_ENV_FILE) so per-cycle metrics are captured and curl -v
++	# headers can be surfaced at debug log_level. Falls back to the
++	# original behavior when the helper is absent (manual / non-procd).
++	if command -v adsbx_curl_upload >/dev/null 2>&1; then
++		adsbx_curl_upload "$TEMP_DIR/upload.gz"
++		RV=$?
++		ADSBX_AIRCRAFT=$(jq -r '.aircraft | length' < "$NEWFILE" 2>/dev/null || echo 0)
++		ADSBX_GZ_BYTES=$(stat --printf="%s" "$TEMP_DIR/upload.gz" 2>/dev/null || echo 0)
++		adsbx_record_upload "$ADSBX_AIRCRAFT" "$ADSBX_GZ_BYTES"
++	else
++		curl -m $MAX_CURL_TIME $CURL_EXTRA -sS -X POST -H "adsbx-uuid: ${UUID}" -H "Content_Encoding: gzip" --data-binary @- $REMOTE_URL 2>&1 <$TEMP_DIR/upload.gz
++		RV=$?
++	fi
+
+ 	if [ $RV -ne 0 ]; then
+-		echo "WARNING: curl process returned non-zero ($RV): [$CURL]; Sleeping a little extra."
++		if command -v adsbx_warn >/dev/null 2>&1; then
++			adsbx_warn "curl returned non-zero ($RV); backing off"
++		else
++			echo "WARNING: curl process returned non-zero ($RV): [$CURL]; Sleeping a little extra."
++		fi
+ 		sleep $(( 5 + RANDOM % 15 ))
+ 	fi
+ done
