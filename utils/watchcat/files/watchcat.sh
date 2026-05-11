@@ -8,11 +8,13 @@
 
 # shellcheck shell=busybox
 
+# source=/dev/null is required as /lib/network/config.sh exists on the target
+# system, but not on the system on which shell check is run.
 # shellcheck source=/dev/null
-. /lib/network/config.sh
+. /lib/network/config.sh # Provides find_config on the OpenWrt target system
 
 get_ping_size() {
-	ps=$1
+	local ps="$1"
 	case "$ps" in
 	small)
 		ps="1"
@@ -37,12 +39,11 @@ get_ping_size() {
 		echo "Corresponding ping packet sizes (bytes): small=1, windows=32, standard=56, big=248, huge=1492, jumbo=9000" 1>&2
 		;;
 	esac
-	# shellcheck disable=SC2086
-	echo $ps
+	echo "$ps"
 }
 
 get_ping_family_flag() {
-	family=$1
+	local family="$1"
 	case "$family" in
 	any)
 		family=""
@@ -54,15 +55,19 @@ get_ping_family_flag() {
 		family="-6"
 		;;
 	*)
-		echo "Error: invalid address_family \"$family\". address_family should be one of: any, ipv4, ipv6" 1>&2
+		printf "Error: invalid address_family \"%s\". address_family should be one of: any, ipv4, ipv6" "$family" 1>&2
 		;;
 	esac
-	echo "$family"
+	printf "%s\n" "$family"
 }
 
 reboot_now() {
-	reboot &
+	# Attempt to reboot, but background so we can do a force reboot after a
+	# delay, in case the reboot attempt fails.
+	( reboot & )
 
+	# Do a forced reboot if the normal reboot has not yet completed after
+	# a delay.
 	[ "$1" -ge 1 ] && {
 		sleep "$1"
 		echo 1 >/proc/sys/kernel/sysrq
@@ -71,10 +76,12 @@ reboot_now() {
 }
 
 watchcat_periodic() {
-	failure_period="$1"
-	force_reboot_delay="$2"
+	local reboot_period="$1"
+	local force_reboot_delay="$2"
 
-	sleep "$failure_period" && reboot_now "$force_reboot_delay"
+	# After reboot_period (from service start), attempt a reboot, and if it doesn't succeed within
+	# the time specified by force_reboot_delay, do a forced reboot
+	sleep "$reboot_period" && reboot_now "$force_reboot_delay"
 }
 
 watchcat_restart_modemmanager_iface() {
@@ -105,15 +112,18 @@ watchcat_restart_all_network() {
 }
 
 watchcat_monitor_network() {
-	failure_period="$1"
-	ping_hosts="$2"
-	ping_frequency_interval="$3"
-	ping_size="$4"
-	iface="$5"
-	mm_iface_name="$6"
-	mm_iface_unlock_bands="$7"
-	address_family="$8"
-	script="$9"
+	local failure_period="$1"
+	local ping_hosts="$2"
+	local ping_frequency_interval="$3"
+	local ping_size="$4"
+	local iface="$5"
+	local mm_iface_name="$6"
+	local mm_iface_unlock_bands="$7"
+	local address_family="$8"
+	local script="$9"
+
+	local time_now time_lastcheck time_lastcheck_withinternet time_diff host
+	local ping_result
 
 	time_now="$(cat /proc/uptime)"
 	time_now="${time_now%%.*}"
@@ -141,18 +151,18 @@ watchcat_monitor_network() {
 		time_now="${time_now%%.*}"
 		time_lastcheck="$time_now"
 
+		# quoting ping_hosts is not necessary as hostnames, by definition, do not contain spaces or quotes
+		# in addition, adding quotes would break the for loop
 		for host in $ping_hosts; do
 			if [ "$iface" != "" ]; then
 				ping_result="$(
-					# shellcheck disable=SC2086
-					ping $ping_family -I "$iface" -s "$ping_size" -c 1 "$host" &>/dev/null
-					echo $?
+					ping $ping_family -I "$iface" -s "$ping_size" -c 1 "$host" >/dev/null 2>&1
+					printf "%s\n" "$?"
 				)"
 			else
 				ping_result="$(
-					# shellcheck disable=SC2086
-					ping $ping_family -s "$ping_size" -c 1 "$host" &>/dev/null
-					echo $?
+					ping $ping_family -s "$ping_size" -c 1 "$host" >/dev/null 2>&1
+					printf "%s\n" "$?"
 				)"
 			fi
 
@@ -191,13 +201,16 @@ watchcat_monitor_network() {
 }
 
 watchcat_ping() {
-	failure_period="$1"
-	force_reboot_delay="$2"
-	ping_hosts="$3"
-	ping_frequency_interval="$4"
-	ping_size="$5"
-	address_family="$6"
-	iface="$7"
+	local failure_period="$1"
+	local force_reboot_delay="$2"
+	local ping_hosts="$3"
+	local ping_frequency_interval="$4"
+	local ping_size="$5"
+	local address_family="$6"
+	local iface="$7"
+
+	local time_now time_lastcheck time_lastcheck_withinternet time_diff host
+	local ping_result
 
 	time_now="$(cat /proc/uptime)"
 	time_now="${time_now%%.*}"
@@ -225,17 +238,17 @@ watchcat_ping() {
 		time_now="${time_now%%.*}"
 		time_lastcheck="$time_now"
 
+		# quoting ping_hosts is not necessary as hostnames, by definition, do not contain spaces or quotes
+		# in addition, adding quotes would break the for loop
 		for host in $ping_hosts; do
 			if [ "$iface" != "" ]; then
 				ping_result="$(
-					# shellcheck disable=SC2086
-					ping $ping_family -I "$iface" -s "$ping_size" -c 1 "$host" &>/dev/null
+					ping $ping_family -I "$iface" -s "$ping_size" -c 1 "$host" >/dev/null 2>&1
 					echo $?
 				)"
 			else
 				ping_result="$(
-					# shellcheck disable=SC2086
-					ping $ping_family -s "$ping_size" -c 1 "$host" &>/dev/null
+					ping $ping_family -s "$ping_size" -c 1 "$host" >/dev/null 2>&1
 					echo $?
 				)"
 			fi
@@ -269,13 +282,13 @@ ping_reboot)
 	;;
 restart_iface)
 	# args from init script: period pinghosts pingperiod pingsize interface mmifacename unlockbands addressfamily
-	watchcat_monitor_network "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" ""
+	watchcat_monitor_network "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
 	;;
 run_script)
 	# args from init script: period pinghosts pingperiod pingsize interface addressfamily script
 	watchcat_monitor_network "$2" "$3" "$4" "$5" "$6" "" "" "$7" "$8"
 	;;
 *)
-	echo "Error: invalid mode selected: $mode"
+	printf "Error: invalid mode selected: %s\n" "$mode"
 	;;
 esac

@@ -1,9 +1,13 @@
 #!/bin/sh
 
-. /lib/functions.sh
+# shellcheck shell=busybox
+
+# shellcheck source=/dev/null
+. "${IPKG_INSTROOT}"/lib/functions.sh
 
 upgrade_watchcat() {
 	local cfg="$1"
+	local period mode pinghosts forcedelay
 
 	config_get period "$cfg" period
 	config_get mode "$cfg" mode

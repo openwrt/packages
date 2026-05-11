@@ -20,7 +20,8 @@ append_string() {
 }
 
 time_to_seconds() {
-	time=$1
+	local time="$1"
+	local seconds
 
 	{ [ "$time" -ge 1 ] 2>/dev/null && seconds="$time"; } ||
 		{ [ "${time%s}" -ge 1 ] 2>/dev/null && seconds="${time%s}"; } ||
@@ -28,13 +29,13 @@ time_to_seconds() {
 		{ [ "${time%h}" -ge 1 ] 2>/dev/null && seconds=$((${time%h} * 3600)); } ||
 		{ [ "${time%d}" -ge 1 ] 2>/dev/null && seconds=$((${time%d} * 86400)); }
 
-	# shellcheck disable=SC2086
-	echo $seconds
-	unset seconds
-	unset time
+	printf "%s" "$seconds"
 }
 
 config_watchcat() {
+	local period mode pinghosts pingperiod forcedely pingsize interface
+	local mmifacename unlockbands addressfamily script
+
 	# Read config
 	config_get period "$1" period "120"
 	config_get mode "$1" mode "ping_reboot"
@@ -62,7 +63,7 @@ config_watchcat() {
 	[ "$period" -ge 1 ] ||
 		append_string "error" "period has invalid format. Use time value(ex: '30'; '4m'; '6h'; '2d')" "; "
 
-	# ping_reboot mode and restart_iface mode specific checks
+	# ping_reboot mode,restart_iface mode, and run_script specific checks
 	if [ "$mode" = "ping_reboot" ] || [ "$mode" = "restart_iface" ] || [ "$mode" = "run_script" ]; then
 		if [ -z "$error" ]; then
 			pingperiod_default="$((period / 5))"
@@ -77,7 +78,6 @@ config_watchcat() {
 				append_string "warn" "pingperiod cannot be a negative value." "; "
 			fi
 
-			# shellcheck disable=SC2154
 			if [ "$mmifacename" != "null" ] && [ "$period" -lt 30 ]; then
 				append_string "error" "Check interval is less than 30s. For robust operation with ModemManager modem interfaces it is recommended to set the period to at least 30s."
 			fi
@@ -109,14 +109,12 @@ config_watchcat() {
 		;;
 	ping_reboot)
 		procd_open_instance "watchcat_${1}"
-		# shellcheck disable=SC2154
 		procd_set_param command /usr/bin/watchcat.sh "ping_reboot" "$period" "$forcedelay" "$pinghosts" "$pingperiod" "$pingsize" "$addressfamily" "$interface"
 		procd_set_param respawn "${respawn_threshold:-3600}" "${respawn_timeout:-5}" "${respawn_retry:-5}"
 		procd_close_instance
 		;;
 	restart_iface)
 		procd_open_instance "watchcat_${1}"
-		# shellcheck disable=SC2154
 		procd_set_param command /usr/bin/watchcat.sh "restart_iface" "$period" "$pinghosts" "$pingperiod" "$pingsize" "$interface" "$mmifacename" "$unlockbands" "$addressfamily"
 		procd_set_param respawn "${respawn_threshold:-3600}" "${respawn_timeout:-5}" "${respawn_retry:-5}"
 		procd_close_instance
