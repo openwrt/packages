@@ -502,11 +502,15 @@ _status_proc_metrics() {
 	return 0
 }
 
-# Extract the value of --flag=VALUE (or --flag VALUE) from a cmdline
-# string. Echoes empty if not present.
+# Extract the value of --flag=VALUE from a cmdline string. Only the
+# `--flag=VALUE` form is recognized; the space-separated `--flag VALUE`
+# form is intentionally NOT supported here because readsb's own init
+# script always emits the `=`-joined form (see append_param() in
+# readsb.init), and supporting the split form would require lookahead
+# state that this small awk extractor deliberately avoids. Echoes
+# empty if not present.
 _status_cmdline_arg() {
 	local cmdline=$1 flag=$2
-	# Try --flag=value first.
 	echo "$cmdline" | awk -v f="--$flag=" '
 		{
 			for (i = 1; i <= NF; i++) {

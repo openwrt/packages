@@ -146,12 +146,20 @@ cmd_url() {
 }
 
 # --- command: --probe ------------------------------------------------------
-# Pure-busybox TCP reachability probe (bash /dev/tcp, falling back to
-# nc -z). Some upstream firewalls (notably feed1.adsbexchange.com:30004)
-# drop SYN+close drive-by probes while accepting persistent feeder
-# streams; the caller therefore checks the kernel's actual socket state
-# via `readsb_connector_active` first and only falls through here when
-# no live socket exists.
+# TCP reachability probe. The `/dev/tcp/<host>/<port>` virtual device
+# is a bash/ksh feature that BusyBox ash does NOT implement, so on a
+# stock OpenWrt `/bin/sh` (busybox-ash) the redirection silently fails
+# and we fall through to `nc -z`. The /dev/tcp branch is kept because
+# it costs nothing (it's just an `exec` redirection) and lets ash
+# environments that have been swapped for bash -- or callers running
+# this helper directly under bash -- short-circuit without forking nc.
+# When neither is available the probe returns rc 2 ("can't tell").
+#
+# Some upstream firewalls (notably feed1.adsbexchange.com:30004) drop
+# SYN+close drive-by probes while accepting persistent feeder streams;
+# the caller therefore checks the kernel's actual socket state via
+# `readsb_connector_active` first and only falls through here when no
+# live socket exists.
 _probe_tcp() {
 	local host=$1 port=$2
 	if (exec 9<>"/dev/tcp/$host/$port") 2>/dev/null; then
