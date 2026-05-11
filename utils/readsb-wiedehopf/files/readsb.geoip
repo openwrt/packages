@@ -109,17 +109,20 @@ command -v jsonfilter    >/dev/null 2>&1 && have_jsonfilter=1
 _log "starting (force=$force dry_run=$dry_run verbose=$verbose self_test=$self_test section='${section:-<all>}' uclient-fetch=$have_uclient wget=$have_wget jsonfilter=$have_jsonfilter)"
 
 # Self-test reports tooling problems via PASS/FAIL output; the normal
-# path needs jsonfilter and at least one HTTP client.
+# path needs jsonfilter and at least one HTTP client. Per the script's
+# documented exit-code contract, missing tooling exits rc=2 so that
+# automation (cron, init-script geoip wait, etc.) does not treat the
+# run as success when no lookup can possibly occur.
 if [ "$self_test" -ne 1 ]; then
 	if [ "$have_jsonfilter" != "1" ]; then
 		_err "jsonfilter not installed (opkg install jsonfilter)"
 		last_stage="missing-jsonfilter/done"
-		exit 0
+		exit 2
 	fi
 	if [ "$have_uclient" = "0" ] && [ "$have_wget" = "0" ]; then
 		_err "no HTTP client found (need uclient-fetch or wget)"
 		last_stage="missing-http-client/done"
-		exit 0
+		exit 2
 	fi
 fi
 
@@ -247,9 +250,22 @@ update_section() {
 		return 0
 	fi
 
-	uci set "readsb.${sec}.lat=${lat}"
-	uci set "readsb.${sec}.lon=${lon}"
-	uci commit readsb
+	# Mutating UCI: surface any failure (set or commit) instead of
+	# emitting a success notice on a half-written / un-committed change.
+	# Returning non-zero lets callers (cron, init-script geoip wait,
+	# --self-test piping) treat this as the failure it actually is.
+	if ! uci set "readsb.${sec}.lat=${lat}"; then
+		_err "failed to set readsb.${sec}.lat (uci set rc=$?); aborting"
+		return 1
+	fi
+	if ! uci set "readsb.${sec}.lon=${lon}"; then
+		_err "failed to set readsb.${sec}.lon (uci set rc=$?); aborting"
+		return 1
+	fi
+	if ! uci commit readsb; then
+		_err "uci commit readsb failed (rc=$?); lat/lon for '${sec}' may not be persisted"
+		return 1
+	fi
 	_notice "auto-detected location for '${sec}': lat=${lat} lon=${lon} (city-level only; for accurate CPR set exact coords with 'readsb-setup' or 'uci set readsb.${sec}.lat=...; uci set readsb.${sec}.lon=...; uci commit readsb')"
 }
 

@@ -31,14 +31,14 @@ _uci2flag() {
 }
 
 append_bool() {
-	local v
+	local v tbool
 	config_get_bool tbool "$1" "$2" "$3"
 	v=$(_uci2flag "$2")
 	[ "$tbool" = "1" ] && procd_append_param command "--$v"
 }
 
 append_bool_no() {
-	local v
+	local v tbool
 	config_get_bool tbool "$1" "$2" "$3"
 	v=$(_uci2flag "$2")
 	[ "$tbool" = "0" ] && procd_append_param command "--no-$v"
@@ -46,7 +46,7 @@ append_bool_no() {
 }
 
 append_param() {
-	local v
+	local v tparam
 	config_get tparam "$1" "$2"
 	v=$(_uci2flag "$2")
 	[ -n "$tparam" ] && procd_append_param command "--$v=$tparam"
