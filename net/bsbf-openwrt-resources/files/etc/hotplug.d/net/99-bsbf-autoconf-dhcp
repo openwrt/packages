@@ -29,5 +29,11 @@ uci set network.wan_"$DEVICENAME".device="$DEVICENAME"
 uci set network.wan_"$DEVICENAME".proto='dhcp'
 uci set network.wan_"$DEVICENAME".peerdns='0'
 uci set network.wan_"$DEVICENAME".metric="$metric"
-uci commit network
+
+# Add wan network entry to firewall wan zone.
+fw_section=$(uci show firewall | grep "name='wan'" | cut -d. -f2)
+[ -n "$fw_section" ] && uci add_list firewall.$fw_section.network="wan_$DEVICENAME"
+
+uci commit
+service firewall reload
 ifup wan_"$DEVICENAME"
