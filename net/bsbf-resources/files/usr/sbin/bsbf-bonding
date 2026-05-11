@@ -51,12 +51,11 @@ case "$1" in
 	service xray restart 2>/dev/null
 
 	# (Re-)add nftables rules.
-	nft delete table bsbf_bonding 2>/dev/null
 	nft -f /usr/share/bsbf/bsbf_bonding.nft
 	;;
 --disable)
 	# Delete nftables rules.
-	nft delete table bsbf_bonding 2>/dev/null
+	nft destroy table bsbf_bonding
 
 	# Disable and stop init.d services.
 	service bsbf-bonding-nft disable
@@ -76,7 +75,7 @@ case "$1" in
 	apk del bsbf-bonding bsbf-client-web bsbf-mptcp bsbf-rate-limiting
 
 	# Delete nftables rules.
-	nft delete table bsbf_bonding 2>/dev/null
+	nft destroy table bsbf_bonding
 
 	# Restore xray.
 	rm -f /etc/xray/config.json
