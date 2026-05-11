@@ -87,12 +87,12 @@ f_cmd() {
 	local cmd pri_cmd="${1}" sec_cmd="${2}"
 
 	cmd="$(command -v "${pri_cmd}" 2>/dev/null)"
-	if [ ! -x "${cmd}" ]; then
+	if [ -z "${cmd}" ]; then
 		if [ -n "${sec_cmd}" ]; then
 			[ "${sec_cmd}" = "optional" ] && return
 			cmd="$(command -v "${sec_cmd}" 2>/dev/null)"
 		fi
-		if [ -x "${cmd}" ]; then
+		if [ -n "${cmd}" ]; then
 			printf '%s' "${cmd}"
 		else
 			f_log "emerg" "command '${pri_cmd:-"-"}'/'${sec_cmd:-"-"}' not found"
@@ -116,7 +116,7 @@ f_load() {
 		adb_errorlog="/dev/null"
 	fi
 
-	# fetch installed packages amd system information
+	# fetch installed packages and system information
 	#
 	adb_packages="$("${adb_ubuscmd}" -S call rpc-sys packagelist '{ "all": true }' 2>>"${adb_errorlog}")"
 	adb_bver="$(printf '%s' "${adb_packages}" | "${adb_jsoncmd}" -ql1 -e '@.packages.adblock')"
@@ -179,7 +179,7 @@ f_load() {
 				)
 				sleep 1
 				bg_pid="$("${adb_pgrepcmd}" -nf "${adb_reportdir}/adb_report.pcap")"
-				f_log "info" "tcpdump backgound process started for interface: ${adb_repiface}, port: ${adb_repport}, dir: ${adb_reportdir}, pid: ${bg_pid}"
+				f_log "info" "tcpdump background process started for interface: ${adb_repiface}, port: ${adb_repport}, dir: ${adb_reportdir}, pid: ${bg_pid}"
 			else
 				f_log "info" "please set the reporting interface 'adb_repiface' and reporting directory 'adb_reportdir' manually"
 			fi
@@ -251,7 +251,7 @@ f_conf() {
 # domain validation
 #
 f_chkdom() {
-	local type prefix column separator check
+	local type prefix column separator
 
 	case "${1}" in
 	"feed" | "local")
@@ -277,8 +277,7 @@ f_chkdom() {
 		;;
 	esac
 
-	check="${adb_lookupdomain//./\\.}"
-	"${adb_awkcmd}" -v type="${type}" -v pre="${prefix}" -v col="${column}" -v chk="${check}" -F "${separator}" '
+	"${adb_awkcmd}" -v type="${type}" -v pre="${prefix}" -v col="${column}" -v chk="${adb_lookupdomain}" -F "${separator}" '
 	{
 		domain = $col
 		# remove carriage returns and trim the input
@@ -288,7 +287,7 @@ f_chkdom() {
 		# check optional search prefix
 		if (pre != "" && index($0, pre) != 1) next
 		# skip empty lines, comments and special domains
-		if (domain == "" || domain ~ ("^(#|localhost|loopback|" chk ")")) next
+		if (domain == "" || domain ~ /^(#|localhost|loopback)/ || index(domain, chk) == 1) next
 		# no domain with trailing dot
 		if (substr(domain, length(domain), 1) == ".") next
 		# check total length (253 characters)
@@ -342,7 +341,7 @@ f_dns() {
 					;;
 				esac
 
-				if [ -x "$(command -v "${dns}")" ]; then
+				if command -v "${dns}" >/dev/null 2>&1; then
 					adb_dns="${dns}"
 					uci_set adblock global adb_dns "${dns}"
 					f_uci "adblock"
@@ -352,7 +351,7 @@ f_dns() {
 		done
 	fi
 
-	if [ "${adb_dns}" != "raw" ] && [ ! -x "$(command -v "${adb_dns}")" ]; then
+	if [ "${adb_dns}" != "raw" ] && ! command -v "${adb_dns}" >/dev/null 2>&1; then
 		f_log "err" "dns backend not found, please set 'adb_dns' manually"
 	fi
 
@@ -391,7 +390,7 @@ f_dns() {
 		}
 		;;
 	"unbound")
-		adb_dnscachecmd="$(command -v unbound-control)"
+		adb_dnscachecmd="$(f_cmd unbound-control optional)"
 		adb_dnsinstance=""
 		adb_dnsuser="unbound"
 		adb_dnsdir="${adb_dnsdir:-"/var/lib/unbound"}"
@@ -415,7 +414,7 @@ f_dns() {
 		}
 		;;
 	"named")
-		adb_dnscachecmd="$(command -v rndc)"
+		adb_dnscachecmd="$(f_cmd rndc optional)"
 		adb_dnsinstance=""
 		adb_dnsuser="bind"
 		adb_dnsdir="${adb_dnsdir:-"/var/lib/bind"}"
@@ -539,8 +538,8 @@ f_dns() {
 f_fetch() {
 	local fetch fetch_list insecure update="0"
 
-	adb_fetchcmd="$(command -v "${adb_fetchcmd}")"
-	if [ ! -x "${adb_fetchcmd}" ]; then
+	adb_fetchcmd="$(command -v "${adb_fetchcmd}" 2>/dev/null)"
+	if [ -z "${adb_fetchcmd}" ]; then
 		fetch_list="curl wget-ssl libustream-openssl libustream-wolfssl libustream-mbedtls"
 		for fetch in ${fetch_list}; do
 			case "${adb_packages}" in *"\"${fetch}\""*)
@@ -552,9 +551,9 @@ f_fetch() {
 					fetch="uclient-fetch"
 					;;
 				esac
-				if [ -x "$(command -v "${fetch}")" ]; then
+				adb_fetchcmd="$(command -v "${fetch}" 2>/dev/null)"
+				if [ -n "${adb_fetchcmd}" ]; then
 					update="1"
-					adb_fetchcmd="$(command -v "${fetch}")"
 					uci_set adblock global adb_fetchcmd "${fetch}"
 					f_uci "adblock"
 					break
@@ -564,7 +563,7 @@ f_fetch() {
 		done
 	fi
 
-	[ ! -x "${adb_fetchcmd}" ] && f_log "err" "download utility with SSL support not found, please set 'adb_fetchcmd' manually"
+	[ -z "${adb_fetchcmd}" ] && f_log "err" "download utility with SSL support not found, please set 'adb_fetchcmd' manually"
 
 	case "${adb_fetchcmd##*/}" in
 	"curl")
@@ -849,9 +848,16 @@ f_etag() {
 
 		# compare http code and etag id with stored values, update etag file and return code accordingly
 		#
-		etag_cnt="$("${adb_grepcmd}" -c "^${feed} " "${adb_backupdir}/adblock.etag")"
+		etag_cnt="$("${adb_awkcmd}" -v f="${feed}" '$1 == f { n++ } END { print n+0 }' "${adb_backupdir}/adblock.etag")"
 		if [ "${http_code}" = "200" ] && [ "${etag_cnt}" = "${feed_cnt}" ] && [ -n "${etag_id}" ] &&
-			"${adb_grepcmd}" -q "^${feed} ${feed_suffix}[[:space:]]\+${etag_id}\$" "${adb_backupdir}/adblock.etag"; then
+			"${adb_awkcmd}" -v f="${feed}" -v s="${feed_suffix}" -v e="${etag_id}" '
+			BEGIN { rc = 1; p = f " " s }
+			index($0, p) == 1 {
+				rest = substr($0, length(p) + 1)
+				sub(/^[[:space:]]+/, "", rest)
+				if (rest == e) { rc = 0; exit }
+			}
+			END { exit rc }' "${adb_backupdir}/adblock.etag"; then
 			out_rc="0"
 		elif [ -n "${etag_id}" ]; then
 
@@ -859,11 +865,16 @@ f_etag() {
 			# otherwise only remove the entry with the matching feed suffix (feed url) to allow multiple sources for the same feed
 			#
 			if [ "${feed_cnt}" -lt "${etag_cnt}" ]; then
-				"${adb_sedcmd}" -i "/^${feed} /d" "${adb_backupdir}/adblock.etag"
+				"${adb_awkcmd}" -v f="${feed}" '$1 != f' \
+					"${adb_backupdir}/adblock.etag" >"${adb_backupdir}/adblock.etag.new"
 			else
-				"${adb_sedcmd}" -i "/^${feed} ${feed_suffix//\//\\/}/d" "${adb_backupdir}/adblock.etag"
+				"${adb_awkcmd}" -v f="${feed}" -v s="${feed_suffix}" '
+					BEGIN { p = f " " s }
+					index($0, p) != 1' \
+					"${adb_backupdir}/adblock.etag" >"${adb_backupdir}/adblock.etag.new"
 			fi
-			printf '%-80s%s\n' "${feed} ${feed_suffix}" "${etag_id}" >>"${adb_backupdir}/adblock.etag"
+			"${adb_mvcmd}" -f "${adb_backupdir}/adblock.etag.new" "${adb_backupdir}/adblock.etag"
+			printf '%s\t%s\n' "${feed} ${feed_suffix}" "${etag_id}" >>"${adb_backupdir}/adblock.etag"
 			out_rc="2"
 		fi
 
@@ -1227,14 +1238,22 @@ f_list() {
 		"boot" | "start" | "restart" | "resume") ;;
 
 		*)
-			[ -n "${src_name}" ] && [ "${out_rc}" != "0" ] && adb_feed="${adb_feed/${src_name}/}"
+			if [ -n "${src_name}" ] && [ "${out_rc}" != "0" ]; then
+				adb_feed=" ${adb_feed} "
+				adb_feed="${adb_feed// ${src_name} / }"
+				adb_feed="${adb_feed# }"
+				adb_feed="${adb_feed% }"
+			fi
 			;;
 		esac
 		;;
 	"remove")
 		"${adb_rmcmd}" "${adb_backupdir}/adb_list.${src_name}.gz" 2>>"${adb_errorlog}"
 		out_rc="${?}"
-		adb_feed="${adb_feed/${src_name}/}"
+		adb_feed=" ${adb_feed} "
+		adb_feed="${adb_feed// ${src_name} / }"
+		adb_feed="${adb_feed# }"
+		adb_feed="${adb_feed% }"
 		;;
 	"merge")
 		src_name=""
@@ -1806,7 +1825,10 @@ f_main() {
 		# check if feed is defined in configuration, if not remove it from feed list and continue with next one
 		#
 		if ! json_select "${src_name}" >/dev/null 2>&1; then
-			adb_feed="${adb_feed/${src_name}/}"
+			adb_feed=" ${adb_feed} "
+			adb_feed="${adb_feed// ${src_name} / }"
+			adb_feed="${adb_feed# }"
+			adb_feed="${adb_feed% }"
 			continue
 		fi
 
@@ -1960,10 +1982,10 @@ f_main() {
 						src_rc="${?}"
 						if [ "${src_rc}" = "0" ] && [ -s "${src_tmparchive}" ]; then
 							src_suffix="${adb_src_suffix_utcapitole:-"domains"}"
-							src_list="$(tar -tzf "${src_tmparchive}" 2>>"${adb_errorlog}")"
-							for src_item in ${src_cat}; do
-								src_entries="${src_entries} $(printf '%s' "${src_list}" | "${adb_grepcmd}" -E "${src_item}/${src_suffix}$")"
-							done
+							src_entries="$(tar -tzf "${src_tmparchive}" 2>>"${adb_errorlog}" | "${adb_awkcmd}" \
+								-v cats="${src_cat}" -v sfx="${src_suffix}" '
+									BEGIN { n = split(cats, c, " ") }
+									{ for (i = 1; i <= n; i++) if ($0 ~ "(^|/)" c[i] "/" sfx "$") print }')"
 							if [ -n "${src_entries}" ]; then
 								tar -xOzf "${src_tmparchive}" ${src_entries} 2>>"${adb_errorlog}" >"${src_tmpload}"
 								src_rc="${?}"
@@ -2092,9 +2114,6 @@ f_report() {
 							pending = 0
 						}
 						next
-					}
-					END {
-						# no fallback
 					}
 				' >"${report_raw}.${cnt}"
 			) &
