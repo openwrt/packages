@@ -61,5 +61,11 @@ uci set network.wwan$index.proto="$cur_proto"
 uci set network.wwan$index.apn='internet'
 uci set network.wwan$index.peerdns='0'
 uci set network.wwan$index.metric="$metric"
-uci commit network
+
+# Add wwan network entry to firewall wan zone.
+fw_section=$(uci show firewall | grep "name='wan'" | cut -d. -f2)
+[ -n "$fw_section" ] && uci add_list firewall.$fw_section.network="wwan$index"
+
+uci commit
+service firewall reload
 ifup wwan$index
