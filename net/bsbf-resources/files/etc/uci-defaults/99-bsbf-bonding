@@ -66,6 +66,9 @@ fi
 
 index=1
 for dev in $final_wan_interfaces; do
+	# Only metrics 1 to 8 must be allocated for WAN so do not add any more.
+	[ "$index" -gt 8 ] && break
+
 	uci -q delete network.wan$index
 	uci set network.wan$index=interface
 	uci set network.wan$index.device="$dev"
