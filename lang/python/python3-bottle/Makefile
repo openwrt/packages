@@ -1,9 +1,7 @@
 #
 # Copyright (C) 2015 OpenWrt.org
 #
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
-#
+# SPDX-License-Identifier: GPL-2.0-only
 
 include $(TOPDIR)/rules.mk
 
@@ -14,6 +12,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=bottle
 PKG_HASH:=787e78327e12b227938de02248333d788cfe45987edca735f8f88e03472c3f47
 
+HOST_BUILD_DEPENDS:=python-setuptools/host
 PKG_BUILD_DEPENDS:=python-setuptools/host
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
@@ -43,3 +42,4 @@ endef
 $(eval $(call Py3Package,python3-bottle))
 $(eval $(call BuildPackage,python3-bottle))
 $(eval $(call BuildPackage,python3-bottle-src))
+$(eval $(call HostBuild))
