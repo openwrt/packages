@@ -15,7 +15,7 @@ PKG_LICENSE_FILES:=LICENSE
 
 HOST_BUILD_DEPENDS:= \
 	python-ajsonrpc/host \
-	python-bottle/host \
+	python3-bottle/host \
 	python-build/host \
 	python-click/host \
 	python-installer/host \
