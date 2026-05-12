@@ -49,16 +49,16 @@ get_ping_family_flag() {
 		family=""
 		;;
 	ipv4)
-		family="-4"
+		family="4"
 		;;
 	ipv6)
-		family="-6"
+		family="6"
 		;;
 	*)
 		printf "Error: invalid address_family \"%s\". address_family should be one of: any, ipv4, ipv6" "$family" 1>&2
 		;;
 	esac
-	printf "%s\n" "$family"
+	printf "%s" "$family"
 }
 
 reboot_now() {
@@ -73,6 +73,50 @@ reboot_now() {
 		echo 1 >/proc/sys/kernel/sysrq
 		echo b >/proc/sysrq-trigger # Will immediately reboot the system without syncing or unmounting your disks.
 	}
+}
+
+check_hosts() {
+	local ping_hosts="$1"
+	local time_now="$2"
+	local time_lastcheck_withinternet="$3"
+	local failure_period="$4"
+	local ping_family="$5"
+	local iface="$6"
+	local ping_size="$7"
+	local callback="$8"
+	local script="$9"
+
+	local host
+
+	# Avoid globbing while (intentionally) word-splitting in ash
+	set -f
+
+	# word splitting is intentional (in fact it is required) here
+	# shellcheck disable=SC2086
+	set -- $1
+
+	# restore default (pathname expansion/globbing)
+	set +f
+
+	local all_hosts_reachable="true"
+
+	while [ "$1" ]; do
+		host="$1"
+		shift || true
+
+		if ping ${ping_family:+-"${ping_family}"} ${iface:+-I "${iface}"} -s "$ping_size" -c 1 "$host" >/dev/null 2>&1; then
+			:
+		else
+			"$callback" "$host" "$iface" "$time_now" "$time_lastcheck_withinternet" "$failure_period" "$script"
+			all_hosts_reachable="false"
+		fi
+	done
+
+	if [ "$all_hosts_reachable" = "true" ]; then
+		time_lastcheck_withinternet="$time_now"
+	fi
+
+	echo "$time_lastcheck_withinternet"
 }
 
 watchcat_periodic() {
@@ -111,6 +155,33 @@ watchcat_restart_all_network() {
 	/etc/init.d/network restart
 }
 
+watchcat_ping_cb() {
+	local host="$1"
+	local iface="$2"
+	local time_now="$3"
+	local time_lastcheck_withinternet="$4"
+	local failure_period="$5"
+
+	logger -p daemon.info -t "watchcat[$$]" "Could not reach $host for $((time_now - time_lastcheck_withinternet)). Rebooting after reaching $failure_period"
+}
+
+watchcat_monitor_network_cb() {
+	local host="$1"
+	local iface="$2"
+	local time_now="$3"
+	local time_lastcheck_withinternet="$4"
+	local failure_period="$5"
+	local script="$6"
+
+	if [ "$script" != "" ]; then
+		logger -p daemon.info -t "watchcat[$$]" "Could not reach $host via \"$iface\" for \"$((time_now - time_lastcheck_withinternet))\" seconds. Running script after reaching \"$failure_period\" seconds"
+	elif [ "$iface" != "" ]; then
+		logger -p daemon.info -t "watchcat[$$]" "Could not reach $host via \"$iface\" for \"$((time_now - time_lastcheck_withinternet))\" seconds. Restarting \"$iface\" after reaching \"$failure_period\" seconds"
+	else
+		logger -p daemon.info -t "watchcat[$$]" "Could not reach $host for \"$((time_now - time_lastcheck_withinternet))\" seconds. Restarting networking after reaching \"$failure_period\" seconds"
+	fi
+}
+
 watchcat_monitor_network() {
 	local failure_period="$1"
 	local ping_hosts="$2"
@@ -123,7 +194,6 @@ watchcat_monitor_network() {
 	local script="$9"
 
 	local time_now time_lastcheck time_lastcheck_withinternet time_diff host
-	local ping_result
 
 	time_now="$(cat /proc/uptime)"
 	time_now="${time_now%%.*}"
@@ -151,33 +221,8 @@ watchcat_monitor_network() {
 		time_now="${time_now%%.*}"
 		time_lastcheck="$time_now"
 
-		# quoting ping_hosts is not necessary as hostnames, by definition, do not contain spaces or quotes
-		# in addition, adding quotes would break the for loop
-		for host in $ping_hosts; do
-			if [ "$iface" != "" ]; then
-				ping_result="$(
-					ping $ping_family -I "$iface" -s "$ping_size" -c 1 "$host" >/dev/null 2>&1
-					printf "%s\n" "$?"
-				)"
-			else
-				ping_result="$(
-					ping $ping_family -s "$ping_size" -c 1 "$host" >/dev/null 2>&1
-					printf "%s\n" "$?"
-				)"
-			fi
-
-			if [ "$ping_result" -eq 0 ]; then
-				time_lastcheck_withinternet="$time_now"
-			else
-				if [ "$script" != "" ]; then
-					logger -p daemon.info -t "watchcat[$$]" "Could not reach $host via \"$iface\" for \"$((time_now - time_lastcheck_withinternet))\" seconds. Running script after reaching \"$failure_period\" seconds"
-				elif [ "$iface" != "" ]; then
-					logger -p daemon.info -t "watchcat[$$]" "Could not reach $host via \"$iface\" for \"$((time_now - time_lastcheck_withinternet))\" seconds. Restarting \"$iface\" after reaching \"$failure_period\" seconds"
-				else
-					logger -p daemon.info -t "watchcat[$$]" "Could not reach $host for \"$((time_now - time_lastcheck_withinternet))\" seconds. Restarting networking after reaching \"$failure_period\" seconds"
-				fi
-			fi
-		done
+		time_lastcheck_withinternet="$(check_hosts "$ping_hosts" "$time_now" "$time_lastcheck_withinternet" "$failure_period" "$ping_family" \
+			"$iface" "$ping_size" watchcat_monitor_network_cb "$script")"
 
 		[ "$((time_now - time_lastcheck_withinternet))" -ge "$failure_period" ] && {
 			if [ "$script" != "" ]; then
@@ -210,7 +255,6 @@ watchcat_ping() {
 	local iface="$7"
 
 	local time_now time_lastcheck time_lastcheck_withinternet time_diff host
-	local ping_result
 
 	time_now="$(cat /proc/uptime)"
 	time_now="${time_now%%.*}"
@@ -238,27 +282,8 @@ watchcat_ping() {
 		time_now="${time_now%%.*}"
 		time_lastcheck="$time_now"
 
-		# quoting ping_hosts is not necessary as hostnames, by definition, do not contain spaces or quotes
-		# in addition, adding quotes would break the for loop
-		for host in $ping_hosts; do
-			if [ "$iface" != "" ]; then
-				ping_result="$(
-					ping $ping_family -I "$iface" -s "$ping_size" -c 1 "$host" >/dev/null 2>&1
-					echo $?
-				)"
-			else
-				ping_result="$(
-					ping $ping_family -s "$ping_size" -c 1 "$host" >/dev/null 2>&1
-					echo $?
-				)"
-			fi
-
-			if [ "$ping_result" -eq 0 ]; then
-				time_lastcheck_withinternet="$time_now"
-			else
-				logger -p daemon.info -t "watchcat[$$]" "Could not reach $host for $((time_now - time_lastcheck_withinternet)). Rebooting after reaching $failure_period"
-			fi
-		done
+		time_lastcheck_withinternet="$(check_hosts "$ping_hosts" "$time_now" "$time_lastcheck_withinternet" "$failure_period" "$ping_family" \
+			"$iface" "$ping_size" watchcat_ping_cb)"
 
 		[ "$((time_now - time_lastcheck_withinternet))" -ge "$failure_period" ] && reboot_now "$force_reboot_delay"
 	done
