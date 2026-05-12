@@ -22,7 +22,9 @@ PKG_CPE_ID:=cpe:/a:bottlepy:bottle
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 include ../python3-package.mk
+include ../python3-host-build.mk
 
 define Package/python3-bottle
 	SECTION:=lang
