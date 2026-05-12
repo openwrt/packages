@@ -118,7 +118,7 @@ ifeq ($(BUILD_VARIANT),tiny)
 ifeq ($(CONFIG_SMALL_FLASH),)
 GO_PKG_TAGS:=with_gvisor
 endif
-GO_PKG_TAGS:=$(GO_PKG_TAGS),with_quic,with_utls,with_clash_api
+GO_PKG_TAGS:=$(GO_PKG_TAGS),with_quic,with_utls,with_clash_api,with_ccm,with_ocm,with_naive_outbound,badlinkname,tfogo_checklinkname0
 else
 GO_PKG_TAGS:=$(subst $(space),$(comma),$(strip \
 	$(if $(CONFIG_SINGBOX_WITH_ACME),with_acme) \
