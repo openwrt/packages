@@ -6,6 +6,7 @@
 START=82
 STOP=28
 USE_PROCD=1
+
 UPSMON_C=/var/etc/nut/upsmon.conf
 PIDFILE=/var/run/upsmon.pid
 

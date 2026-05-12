@@ -12,7 +12,6 @@ START=87
 STOP=23
 USE_PROCD=1
 
-# shellcheck disable=SC2034
 DEFAULT=/etc/default/nut
 UPSCGI_C=/var/etc/nut/hosts.conf
 UPSCGI_S=/var/etc/nut/upsset.conf
