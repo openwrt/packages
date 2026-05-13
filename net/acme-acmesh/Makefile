@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=acme-acmesh
 PKG_VERSION:=3.1.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/acmesh-official/acme.sh/tar.gz/$(PKG_VERSION)?
@@ -29,7 +29,8 @@ define Package/acme-acmesh
   TITLE:=ACME client acme.sh wrapper script
   URL:=https://acme.sh
   PKGARCH:=all
-  PROVIDES:=acme-client
+  PROVIDES:=@acme
+  DEFAULT_VARIANT:=1
 endef
 
 define Package/acme-acmesh/description
