@@ -17,6 +17,7 @@ PKG_HASH:=0ba2a1a4b16afe7bceb2c07e9ce99a8c2c3508e5dec290dbb643384bd6beb7e2
 
 PKG_MAINTAINER:=Robert Marko <robimarko@gmail.com>
 PKG_LICENSE:=AFL-2.1
+PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:freedesktop:dbus
 
 PKG_BUILD_PARALLEL:=1

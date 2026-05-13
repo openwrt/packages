@@ -17,6 +17,7 @@ PKG_HASH:=204b13487158b8e46bf6dd207757a52621148fdd1d2467ebd104de17493bab25
 
 PKG_MAINTAINER:=Sergey Urushkin <urusha.v1.0@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
+PKG_LICENSE_FILES:=COPYING
 
 PKG_FIXUP:=autoreconf
 

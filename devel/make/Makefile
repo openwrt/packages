@@ -17,6 +17,7 @@ PKG_HASH:=dd16fb1d67bfab79a72f5e8390735c49e3e8e70b4945a15ab1f81ddb78658fb3
 
 PKG_MAINTAINER:=Heinrich Schuchardt <xypron.glpk@gmx.de>
 PKG_LICENSE:=GPL-3.0-or-later
+PKG_LICENSE_FILES:=AUTHORS COPYING
 PKG_CPE_ID:=cpe:/a:gnu:make
 
 PKG_INSTALL:=1

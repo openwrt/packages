@@ -2,14 +2,15 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bubblewrap
 PKG_VERSION:=0.11.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/containers/$(PKG_NAME)/releases/download/v$(PKG_VERSION)
 PKG_HASH:=69abc30005d2186baf7737feacd8da35633b93cf5af38838ecff17c5f8e924f6
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
-PKG_LICENSE:=LGPLv2-or-later
+PKG_LICENSE:=LGPL-2.0-or-later
+PKG_LICENSE_FILES:=COPYING LICENSE
 PKG_CPE_ID:=cpe:/a:projectatomic:bubblewrap
 
 PKG_FORTIFY_SOURCE:=0
