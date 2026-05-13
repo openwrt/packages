@@ -11,9 +11,9 @@ PKG_MAINTAINER:=Chester A. Unal <chester.a.unal@arinc9.com>
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/bondingshouldbefree/bsbf-resources.git
-PKG_SOURCE_DATE:=2026-05-11
-PKG_SOURCE_VERSION:=d4bad00854218e3ac8490ad288da6db9baf6cf1a
-PKG_MIRROR_HASH:=0927c07f092375db09d1911bd516c466f3eff6a0aca4e78332dc1837e966c1a2
+PKG_SOURCE_DATE:=2026-05-14
+PKG_SOURCE_VERSION:=3eece0a10ff73ca94bdedeacd063869c267aa3ca
+PKG_MIRROR_HASH:=d3e1094f27ba49a1f99045fb27724aaea51813260eaafebe255780336da57931
 
 include $(INCLUDE_DIR)/package.mk
 
