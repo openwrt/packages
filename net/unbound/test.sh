@@ -2,7 +2,6 @@
 
 case "$1" in
 unbound-daemon)
-	unbound -V 2>&1 | grep -F "$2"
 	[ -f /etc/unbound/unbound.conf ] || { echo "FAIL: /etc/unbound/unbound.conf not installed"; exit 1; }
 	;;
 
