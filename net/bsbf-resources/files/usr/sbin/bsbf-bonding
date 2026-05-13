@@ -71,11 +71,17 @@ case "$1" in
 	ip mp e f
 	;;
 --uninstall)
-	# Uninstall BSBF packages.
-	apk del bsbf-bonding bsbf-client-web bsbf-mptcp bsbf-rate-limiting
-
 	# Delete nftables rules.
 	nft destroy table bsbf_bonding
+
+	# Stop bsbf-mptcp init.d service.
+	service bsbf-mptcp stop 2>/dev/null
+
+	# Delete bsbf-mptcp files.
+	rm -f /run/bsbf-mptcp-*
+
+	# Flush the MPTCP endpoint table.
+	ip mp e f
 
 	# Restore xray.
 	rm -f /etc/xray/config.json
@@ -83,11 +89,9 @@ case "$1" in
 	uci commit
 	service xray restart 2>/dev/null
 
-	# Delete bsbf-mptcp files.
-	rm -f /run/bsbf-mptcp-*
-
-	# Flush the MPTCP endpoint table.
-	ip mp e f
+	# Uninstall bsbf-bonding, bsbf-client-web, bsbf-mptcp, and
+	# bsbf-rate-limiting.
+	apk del bsbf-bonding bsbf-client-web bsbf-mptcp bsbf-rate-limiting
 	;;
 *)
 	usage
