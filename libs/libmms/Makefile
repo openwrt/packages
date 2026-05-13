@@ -7,14 +7,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmms
 PKG_VERSION:=0.6.4
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/libmms
 PKG_HASH:=3c05e05aebcbfcc044d9e8c2d4646cd8359be39a3f0ba8ce4e72a9094bee704f
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
-PKG_LICENSE:=LGPLv2.1
+PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING.LIB
 PKG_CPE_ID:=cpe:/a:libmms_project:libmms
 

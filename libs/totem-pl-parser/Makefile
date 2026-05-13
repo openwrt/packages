@@ -7,14 +7,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=totem-pl-parser
 PKG_VERSION:=3.26.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=totem-pl-parser-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNOME/totem-pl-parser/$(basename $(PKG_VERSION))
 PKG_HASH:=60d517c1acabe54ae337f64451264fc76730696eaae26b5480fb37166689b5f3
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
-PKG_LICENSE:=LGPL-2-or-later
+PKG_LICENSE:=LGPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING.LIB
 
 PKG_BUILD_DEPENDS:=glib2/host

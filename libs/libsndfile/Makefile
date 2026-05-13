@@ -9,14 +9,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libsndfile
 PKG_VERSION:=1.2.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/libsndfile/libsndfile/releases/download/$(PKG_VERSION)
 PKG_HASH:=3799ca9924d3125038880367bf1468e53a1b7e3686a934f098b7e1d286cdb80e
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
-PKG_LICENSE:=LGPLv2.1
+PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:libsndfile_project:libsndfile
 
