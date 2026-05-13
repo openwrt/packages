@@ -193,7 +193,7 @@ service_preconditions() {
 	fi
 
 	[ "$should_start_srv" = "1" ] || {
-		logger -t nut-server "Missing configuration or interface. Not starting."
+		logger -s -t nut-server "Missing configuration or interface. Not starting."
 		return 1
 	}
 
