@@ -1,14 +1,28 @@
 #!/bin/sh /etc/rc.common
 START=10
 USE_PROCD=1
-EXTRA_COMMANDS='firewall'
+EXTRA_COMMANDS='flush_guests'
 
-firewall() {
-    local INTF PORT_REDIRECT TIMEOUT
+add_exempt() {
+    [ -z "${1}" ] || /usr/sbin/nft add element inet simple-captive-portal exempt_macs { "${1}" }
+}
+
+add_interface() {
+    [ -z "${1}" ] || /usr/sbin/nft add element inet simple-captive-portal portal_ifs { "${1}" }
+}
+
+service_triggers() {
+    procd_add_reload_trigger "simple-captive-portal"
+}
+
+start_service() {
+    local INTF INTF_COUNT PORT_REDIRECT PORT_PORTAL TIMEOUT
     config_load "simple-captive-portal"
     config_get INTF main interface
     [ -z "${INTF}" ] && exit 0
+    config_get INTF_COUNT main interface_LENGTH
     config_get PORT_REDIRECT main port_redirect 8888
+    config_get PORT_PORTAL main port_portal 8889
     config_get TIMEOUT main timeout 86400
 
     /usr/sbin/nft -f- <<EOF
@@ -20,33 +34,35 @@ table inet simple-captive-portal {
         timeout ${TIMEOUT}s
     }
 
+    set exempt_macs {
+        type ether_addr
+    }
+
+    set portal_ifs {
+        type ifname
+    }
+
     chain prerouting {
         type nat hook prerouting priority mangle; policy drop;
-        iif != ${INTF} accept
+        iifname != @portal_ifs accept
+        ether saddr @exempt_macs accept
         ether saddr @guest_macs accept
         tcp dport 80 redirect to ${PORT_REDIRECT}
         fib daddr . iif type { local, broadcast, multicast } accept
         reject
     }
 }
+flush set inet simple-captive-portal exempt_macs
+flush set inet simple-captive-portal portal_ifs
 EOF
-}
+    config_list_foreach main exempt add_exempt
 
-boot() {
-    BOOT=1
-    start "$@"
-}
-
-start_service() {
-    # firewall() called by hotplug on boot
-    [ -z "${BOOT}" ] && firewall
-
-    local INTF PORT_REDIRECT PORT_PORTAL
-    config_load "simple-captive-portal"
-    config_get INTF main interface
-    [ -z "${INTF}" ] && exit 0
-    config_get PORT_REDIRECT main port_redirect 8888
-    config_get PORT_PORTAL main port_portal 8889
+    # Detect whether the interface is an option or a list
+    if [ -n "${INTF_COUNT}" ]; then
+        config_list_foreach main interface add_interface
+    else
+        add_interface "${INTF}"
+    fi
 
     procd_open_instance redirect
     procd_set_param command /usr/sbin/uhttpd -f -c /dev/null -k0 -h /etc/simple-captive-portal/ -l / -L /usr/share/simple-captive-portal/redirect.lua -p "${PORT_REDIRECT}"
@@ -78,4 +94,13 @@ start_service() {
     procd_set_param stdout 1
     procd_set_param stderr 1
     procd_close_instance
+}
+
+stop_service() {
+    # Delete the rule that blocks traffic
+    /usr/sbin/nft delete chain inet simple-captive-portal prerouting &> /dev/null
+}
+
+flush_guests() {
+    /usr/sbin/nft flush set inet simple-captive-portal guest_macs
 }
