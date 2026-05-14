@@ -192,6 +192,8 @@ define Package/unbound-daemon/conffiles
 /etc/unbound/unbound.conf
 /etc/unbound/unbound_ext.conf
 /etc/unbound/unbound_srv.conf
+/etc/unbound/unbound_ext-*.conf
+/etc/unbound/unbound_srv-*.conf
 endef
 
 define Build/InstallDev
