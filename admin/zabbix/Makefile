@@ -26,7 +26,6 @@ PKG_BUILD_PARALLEL:=1
 
 PKG_CONFIG_DEPENDS:= \
   CONFIG_ZABBIX_CURL \
-  CONFIG_ZABBIX_CURL_GNUTLS \
   CONFIG_ZABBIX_ENABLE_ZABBIX \
   CONFIG_ZABBIX_GNUTLS \
   CONFIG_ZABBIX_LDAP \
@@ -131,7 +130,6 @@ define Package/zabbix-agentd
   TITLE+= (full/with TLS)
   DEPENDS+= \
     +ZABBIX_CURL:libcurl \
-    +ZABBIX_CURL_GNUTLS:libcurl-gnutls \
     +ZABBIX_GNUTLS:libgnutls \
     +ZABBIX_LDAP:libopenldap \
     +ZABBIX_NETSNMP:libnetsnmp-ssl \
@@ -212,7 +210,6 @@ define Package/zabbix-proxy
   TITLE+= (full/with OpenSSL)
   DEPENDS+= \
     +ZABBIX_CURL:libcurl \
-    +ZABBIX_CURL_GNUTLS:libcurl-gnutls \
     +ZABBIX_GNUTLS:libgnutls \
     +ZABBIX_LDAP:libopenldap \
     +ZABBIX_MYSQL:libmariadbclient \
@@ -274,7 +271,6 @@ define Package/zabbix-server
   DEPENDS+= \
     @(!ZABBIX_SQLITE) \
     +ZABBIX_CURL:libcurl \
-    +ZABBIX_CURL_GNUTLS:libcurl-gnutls \
     +ZABBIX_GNUTLS:libgnutls \
     +ZABBIX_LDAP:libopenldap \
     +ZABBIX_MYSQL:libmariadbclient \
@@ -399,6 +395,7 @@ CONFIGURE_ARGS+= \
 	$(if $(CONFIG_PACKAGE_zabbix-agentd),--enable-agent,--disable-agent) \
 	$(if $(CONFIG_PACKAGE_zabbix-proxy),--enable-proxy,--disable-proxy) \
 	$(if $(CONFIG_PACKAGE_zabbix-server),--enable-server,--disable-server) \
+	$(if $(CONFIG_ZABBIX_CURL),--with-libcurl,--with-libcurl="no") \
 	$(if $(CONFIG_ZABBIX_GNUTLS),--with-gnutls="$(STAGING_DIR)/usr",--with-gnutls="no") \
 	$(if $(CONFIG_ZABBIX_LDAP),--with-ldap="$(STAGING_DIR)/usr",--with-ldap="no") \
 	$(if $(CONFIG_ZABBIX_MYSQL),--with-mysql,--with-mysql="no") \
@@ -407,28 +404,6 @@ CONFIGURE_ARGS+= \
 	$(if $(CONFIG_ZABBIX_POSTGRESQL),--with-postgresql,--with-postgresql="no") \
 	$(if $(CONFIG_ZABBIX_SQLITE),--with-sqlite3,--with-sqlite3="no") \
   --enable-year2038
-
-ifeq ($(CONFIG_ZABBIX_CURL),y)
-CONFIGURE_ARGS += \
-  --with-libcurl
-endif
-
-ifeq ($(CONFIG_ZABBIX_CURL_GNUTLS),y)
-CONFIGURE_VARS += \
-  ac_cv_path__libcurl_config="/bin/true" \
-  LIBCURL_CPPFLAGS="-I$(STAGING_DIR)/usr/include" \
-  LIBCURL_LDFLAGS="-L$(STAGING_DIR)/usr/lib" \
-  LIBCURL_LIBS="-lcurl-gnutls" \
-  libcurl_cv_lib_curl_usable=yes \
-  libcurl_cv_lib_curl_version=8.14.1 \
-  libcurl_cv_lib_curl_version_ok=yes
-CONFIGURE_ARGS += --with-libcurl="yes"
-endif
-
-ifeq ($(CONFIG_ZABBIX_CURL)$(CONFIG_ZABBIX_CURL_GNUTLS),)
-CONFIGURE_ARGS += \
-  --with-libcurl="no"
-endif
 
 endif
 
