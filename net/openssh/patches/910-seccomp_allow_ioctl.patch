@@ -1,0 +1,62 @@
+From 275730c69326cefeb62aedc3a08cec88ff9c295e Mon Sep 17 00:00:00 2001
+From: Kenneth Kasilag <kenneth@kasilag.me>
+Date: Sat, 11 Apr 2026 03:29:42 +0000
+Subject: [PATCH] openssh: allow cryptodev ioctls
+
+When OpenSSL is built with the devcrypto engine, crypto
+operations are serviced via ioctl() calls on /dev/crypto.
+
+The pre-auth child inherits the open fd from the monitor
+but the seccomp filter only whitelists FIONREAD and
+TIOCGWINSZ, causing any cryptodev ioctl to trigger SIGSYS.
+
+The child is killed immediately after authentication
+succeeds, during the keystate transfer phase where it
+first attempts to perform a cipher or MAC operation
+through the devcrypto engine:
+```
+  monitor_child_preauth: preauth child terminated
+  by signal 31
+```
+
+As this was tested on the Airoha AN7581 with Cortex-A53
+cores, signal 31 on aarch64 is SIGSYS, confirming seccomp
+violation rather than a code defect.
+
+Add a BPF rule that allows ioctl commands with type byte
+'c' (0x63), which is the ioctl type used by all cryptodev
+operations (CIOCGSESSION, CIOCCRYPT, CIOCFSESSION, etc.).
+
+The rule matches on the type byte rather than the exact
+ioctl command values because cryptodev is an out-of-tree
+kernel module and its header is not available at OpenSSH
+build time.
+
+The rule is gated on ALLOW_CRYPTODEV_IOCTL, defined by
+the build system only when libopenssl-devcrypto is enabled.
+
+Signed-off-by: Kenneth Kasilag <kenneth@kasilag.me>
+---
+ sandbox-seccomp-filter.c     | 11 +++++++++++
+ 1 files changed, 11 insertions(+)
+
+--- a/sandbox-seccomp-filter.c
++++ b/sandbox-seccomp-filter.c
+@@ -452,6 +452,17 @@ static const struct sock_filter preauth_
+ 	SC_ALLOW_ARG(__NR_socketcall, 0, SYS_SHUTDOWN),
+ 	SC_DENY(__NR_socketcall, EACCES),
+ #endif
++#if defined(__NR_ioctl) && defined(ALLOW_CRYPTODEV_IOCTL)
++	/* Allow ioctls with type 'c' for /dev/crypto */
++	BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_ioctl, 0, 6),
++	BPF_STMT(BPF_LD+BPF_W+BPF_ABS,
++	    offsetof(struct seccomp_data, args[1])),
++	BPF_STMT(BPF_ALU+BPF_AND+BPF_K, 0x0000FF00),
++	BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, 0x00006300, 0, 1),
++	BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ALLOW),
++	BPF_STMT(BPF_LD+BPF_W+BPF_ABS,
++	    offsetof(struct seccomp_data, nr)),
++#endif
+ #if defined(__NR_ioctl) && defined(__s390__)
+ 	/* Allow ioctls for ICA crypto card on s390 */
+ 	SC_ALLOW_ARG(__NR_ioctl, 1, Z90STAT_STATUS_MASK),
