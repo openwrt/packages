@@ -20,6 +20,7 @@ PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_CPE_ID:=cpe:/a:cryptography.io:cryptography
 
 PKG_BUILD_DEPENDS:=libffi/host python-cffi/host python-maturin/host python-setuptools/host
+PKG_BUILD_FLAGS:=no-mips16
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
