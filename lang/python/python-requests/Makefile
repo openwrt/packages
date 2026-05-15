@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-requests
-PKG_VERSION:=2.33.1
+PKG_VERSION:=2.34.2
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
@@ -17,7 +17,7 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:python:requests
 
 PYPI_NAME:=requests
-PKG_HASH:=18817f8c57c6263968bc123d237e3b8b08ac046f5456bd1e307ee8f4250d3517
+PKG_HASH:=f288924cae4e29463698d6d60bc6a4da69c89185ad1e0bcc4104f584e960b9ed
 
 HOST_BUILD_DEPENDS:= \
   python-chardet/host \
