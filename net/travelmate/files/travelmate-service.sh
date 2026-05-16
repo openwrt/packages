@@ -12,12 +12,20 @@ export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 trm_funlib="/usr/lib/travelmate-functions.sh"
 trm_action="${1}"
-[ -z "${trm_bver}" ] && . "${trm_funlib}"
-f_conf
+
+# source required system libraries and perform initial checks
+#
+if [ -z "${trm_bver}" ]; then
+	. "${trm_funlib}"
+	f_conf
+fi
 
 # control travelmate actions
 #
 while :; do
+
+	# handle service stop and start actions, then execute main loop
+	#
 	if [ "${trm_action}" = "stop" ]; then
 		if [ -s "${trm_pidfile}" ]; then
 			f_log "info" "travelmate instance stopped ::: action: ${trm_action}, pid: $("${trm_catcmd}" "${trm_pidfile}")"
@@ -30,6 +38,9 @@ while :; do
 		f_main
 		trm_action=""
 	fi
+
+	# wait for next action
+	#
 	while :; do
 		sleep "${trm_timeout}" 0 >/dev/null 2>&1
 		rc="${?}"
