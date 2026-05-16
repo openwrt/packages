@@ -135,15 +135,14 @@ f_conf() {
 	#
 	if [ "${trm_action}" = "stop" ]; then
 		return 0
-	elif [ "${trm_enabled}" != "1" ]; then
-		f_log "info" "travelmate is currently disabled, please set 'trm_enabled' to '1' to use this service"
-		/etc/init.d/travelmate stop
 	elif [ -z "${trm_iface}" ]; then
 		f_log "info" "travelmate is currently not configured, please use the 'Interface Wizard' in LuCI"
 		/etc/init.d/travelmate stop
+		return 0
 	elif ! "${trm_ubuscmd}" -t "${trm_maxwait}" wait_for network.wireless network.interface."${trm_iface}" >/dev/null 2>&1; then
 		f_log "info" "travelmate interface '${trm_iface}' does not appear on ubus, please check your network setup"
 		/etc/init.d/travelmate stop
+		return 0
 	fi
 
 	# apply wifi-device config, commit and reload on changes
@@ -1189,13 +1188,13 @@ f_log() {
 
 	if [ -n "${log_msg}" ] && { [ "${class}" != "debug" ] || [ "${trm_debug}" = "1" ]; }; then
 		if [ -x "${trm_logcmd}" ]; then
-			"${trm_logcmd}" -p "${class}" -t "trm-${trm_bver}[${$}]" "${log_msg::512}"
+			"${trm_logcmd}" -p "${class}" -t "trm-${trm_bver:-"-"}[${$}]" "${log_msg::512}"
 		else
-			printf "%s %s %s\n" "${class}" "trm-${trm_bver}[${$}]" "${log_msg::512}" >&2
+			printf "%s %s %s\n" "${class}" "trm-${trm_bver:-"-"}[${$}]" "${log_msg::512}" >&2
 		fi
 		if [ "${class}" = "err" ] || [ "${class}" = "emerg" ]; then
 			trm_ifstatus="error"
-			f_genstatus
+			[ -s "${trm_rtfile}" ] && f_genstatus
 			: >"${trm_pidfile}"
 			exit 1
 		fi
@@ -1488,16 +1487,6 @@ f_main() {
 	fi
 }
 
-# source required system libraries
-#
-if [ -r "/lib/functions.sh" ] && [ -r "/lib/functions/network.sh" ] && [ -r "/usr/share/libubox/jshn.sh" ]; then
-	. "/lib/functions.sh"
-	. "/lib/functions/network.sh"
-	. "/usr/share/libubox/jshn.sh"
-else
-	f_log "err" "system libraries not found"
-fi
-
 # reference required system utilities
 #
 trm_catcmd="$(f_cmd cat)"
@@ -1514,8 +1503,23 @@ trm_ifstatuscmd="$(f_cmd ifstatus)"
 trm_ipcalccmd="$(f_cmd ipcalc.sh)"
 trm_mailcmd="$(f_cmd msmtp optional)"
 
-f_system
-if [ "${trm_action}" != "stop" ]; then
+# source required system libraries
+#
+if [ -r "/lib/functions.sh" ] && [ -r "/lib/functions/network.sh" ] && [ -r "/usr/share/libubox/jshn.sh" ]; then
+	. "/lib/functions.sh"
+	. "/lib/functions/network.sh"
+	. "/usr/share/libubox/jshn.sh"
+else
+	f_log "err" "system libraries not found"
+fi
+
+# initial system check
+#
+[ -S "/var/run/ubus/ubus.sock" ] && f_system
+
+# entry point
+#
+if [ -n "${trm_action}" ] && [ "${trm_action}" != "stop" ]; then
 	[ ! -d "/etc/travelmate" ] && f_log "err" "no travelmate config directory"
 	[ ! -r "/etc/config/travelmate" ] && f_log "err" "no travelmate config"
 	[ "$(uci_get travelmate global trm_enabled)" = "0" ] && f_log "err" "travelmate is disabled"
