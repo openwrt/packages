@@ -21,9 +21,9 @@ case "$1" in
 --enable)
 	# Source /etc/bsbf/bsbf-bonding.conf. Exit if server_ipv4, server_port,
 	# or uuid is empty.
-	. /etc/bsbf/bsbf-bonding.conf
+	[ -f /etc/bsbf/bsbf-bonding.conf ] && . /etc/bsbf/bsbf-bonding.conf
 	if [ -z "$server_ipv4" ] || [ -z "$server_port" ] || [ -z "$uuid" ]; then
-		echo "server_ipv4, server_port, and uuid on /etc/bsbf/bsbf-bonding.conf must not be empty."
+		echo "server_ipv4, server_port, and uuid on /etc/bsbf/bsbf-bonding.conf must not be empty. Populate them and then run 'bsbf-bonding --enable'." >&2
 		exit 1
 	fi
 
