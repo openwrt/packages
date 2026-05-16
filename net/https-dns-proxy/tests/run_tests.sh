@@ -4,7 +4,7 @@
 # Tests helper functions, validation logic, dnsmasq integration,
 # and UCI migration by mocking OpenWrt's rc.common framework.
 #
-# Usage: cd source.openwrt.melmac.ca/https-dns-proxy && bash tests/run_tests.sh
+# Usage: cd source.mossdef.org/https-dns-proxy && bash tests/run_tests.sh
 
 set -o pipefail
 
@@ -703,6 +703,41 @@ __nft_rc=1
 notrack_nft remove
 assert_rc "notrack_nft remove succeeds when file and table both absent" 0 $?
 __nft_rc=0
+
+# ── nft binary absent: notrack_nft is a no-op ──
+# Without firewall4/nftables installed, the package should not error;
+# `command -v nft` returns non-zero and notrack_nft returns 0 immediately.
+rm -rf "$TESTDIR/usr/share"
+__saved_nft_def="$(typeset -f nft 2>/dev/null || declare -f nft)"
+unset -f nft
+mkdir -p "$TESTDIR/empty-path"
+__saved_path="$PATH"
+PATH="$TESTDIR/empty-path"
+
+notrack_nft update "53"
+assert_rc "notrack_nft update is a no-op when nft binary is absent" 0 $?
+
+[ ! -f "$NOTRACK_TEST_FILE" ]
+assert_rc "notrack_nft did not write snippet when nft is absent" 0 $?
+
+PATH="$__saved_path"
+eval "$__saved_nft_def"
+
+# ── mkdir failure path returns non-zero ──
+# Place a regular file at the would-be parent dir so mkdir -p must fail.
+# Defensive logic should return 1 instead of falling through to a broken
+# redirection.
+rm -rf "$TESTDIR/usr/share"
+mkdir -p "$(dirname "$(dirname "$NOTRACK_TEST_FILE")")"
+: > "$(dirname "$NOTRACK_TEST_FILE")"
+
+notrack_nft update "53" 2>/dev/null
+assert_rc "notrack_nft update returns 1 when parent dir cannot be created" 1 $?
+
+[ ! -f "$NOTRACK_TEST_FILE" ]
+assert_rc "notrack_nft did not write snippet on mkdir failure" 0 $?
+
+rm -f "$(dirname "$NOTRACK_TEST_FILE")"
 
 ###############################################################################
 #                         SHELL SCRIPT SYNTAX                                 #
