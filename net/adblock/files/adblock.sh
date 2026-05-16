@@ -1722,13 +1722,13 @@ f_log() {
 
 	if [ -n "${log_msg}" ] && { [ "${class}" != "debug" ] || [ "${adb_debug}" = "1" ]; }; then
 		if [ -x "${adb_loggercmd}" ]; then
-			"${adb_loggercmd}" -p "${class}" -t "adblock-${adb_bver}[${$}]" "${log_msg::512}"
+			"${adb_loggercmd}" -p "${class}" -t "adblock-${adb_bver:-"-"}[${$}]" "${log_msg::512}"
 		else
-			printf '%s %s %s\n' "${class}" "adblock-${adb_bver}[${$}]" "${log_msg::512}"
+			printf '%s %s %s\n' "${class}" "adblock-${adb_bver:-"-"}[${$}]" "${log_msg::512}" >&2
 		fi
 		if [ "${class}" = "err" ] || [ "${class}" = "emerg" ]; then
 			[ "${adb_action}" != "mail" ] && f_rmdns
-			f_jsnup "error"
+			[ -s "${adb_rtfile}" ] && f_jsnup "error"
 			exit 1
 		fi
 	fi
@@ -2435,16 +2435,6 @@ f_report() {
 	esac
 }
 
-# source required system libraries
-#
-if [ -r "/lib/functions.sh" ] && [ -r "/lib/functions/network.sh" ] && [ -r "/usr/share/libubox/jshn.sh" ]; then
-	. "/lib/functions.sh"
-	. "/lib/functions/network.sh"
-	. "/usr/share/libubox/jshn.sh"
-else
-	f_log "err" "system libraries not found"
-fi
-
 # create runtime directory if it doesn't exist
 #
 [ ! -d "${adb_rundir}" ] && mkdir -p "${adb_rundir}"
@@ -2474,9 +2464,22 @@ adb_mailcmd="$(f_cmd msmtp optional)"
 adb_logreadcmd="$(f_cmd logread optional)"
 adb_nftcmd="$(f_cmd nft)"
 
+# source required system libraries
+#
+if [ -r "/lib/functions.sh" ] && [ -r "/lib/functions/network.sh" ] && [ -r "/usr/share/libubox/jshn.sh" ]; then
+	. "/lib/functions.sh"
+	. "/lib/functions/network.sh"
+	. "/usr/share/libubox/jshn.sh"
+else
+	f_log "err" "system libraries not found"
+fi
+
+# initial system load
+#
+[ -S "/var/run/ubus/ubus.sock" ] && f_load
+
 # handle different adblock actions
 #
-f_load
 case "${adb_action}" in
 "stop")
 	f_temp
