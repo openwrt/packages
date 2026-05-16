@@ -1,4 +1,12 @@
 if PACKAGE_rsyslog
+	config RSYSLOG_libyaml
+		bool "Enable libyaml support (YAML config + file-based rate-limit policies)"
+		default n
+		help
+		  Enable libyaml support in rsyslog. Required to load YAML
+		  (.yaml/.yml) configuration files and to load rate-limiting
+		  policies from external files. Disable to drop the libyaml
+		  runtime dependency (~50KB).
 	config RSYSLOG_gssapi_krb5
 		bool "Enable GSSAPI Kerberos 5 support"
 		default n
