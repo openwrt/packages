@@ -3,7 +3,7 @@
 # Copyright (C) 2026 Chester A. Unal <chester.a.unal@arinc9.com>
 
 # Only run if an MBIM or QMI network interface is being added.
-[ "$ACTION" = "add" ] && cur_proto=$(grep -oE "(mbim|qmi)" /sys"${DEVPATH%/*/*}/uevent") || exit
+[ "$ACTION" = "add" ] && cur_proto=$(grep "^DRIVER=" /sys${DEVPATH%/*/*}/uevent | grep -oE "mbim|qmi") || exit
 
 # Find the device path.
 if echo "$DEVPATH" | grep -q usb; then
@@ -45,8 +45,8 @@ while [ $metric -le 8 ]; do
 	# Add 1 to metric if another network uses this metric.
 	metric=$((metric + 1))
 done
-# If there are no available metrics, exit with code 1.
-[ "$metric" -gt 8 ] && exit 1
+# Exit if there are no available metrics.
+[ "$metric" -gt 8 ] && exit
 
 # Decide on the network name. Start from wwan1.
 index=1
@@ -59,7 +59,6 @@ uci set network.wwan$index.device="$DEVICENAME"
 uci set network.wwan$index.devpath="$devpath"
 uci set network.wwan$index.proto="$cur_proto"
 uci set network.wwan$index.apn='internet'
-uci set network.wwan$index.peerdns='0'
 uci set network.wwan$index.metric="$metric"
 
 # Add wwan network entry to firewall wan zone.
