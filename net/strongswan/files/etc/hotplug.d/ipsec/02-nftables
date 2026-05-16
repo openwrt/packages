@@ -1,0 +1,378 @@
+#!/bin/sh
+# default updown script
+#
+# Copyright (C) 2003-2004 Nigel Meteringham
+# Copyright (C) 2003-2004 Tuomo Soini
+# Copyright (C) 2002-2004 Michael Richardson
+# Copyright (C) 2005-2007 Andreas Steffen <andreas.steffen@strongswan.org>
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+
+# CAUTION:  Installing a new version of strongSwan will install a new
+# copy of this script, wiping out any custom changes you make.  If
+# you need changes, make a copy of this under another name, and customize
+# that, and use the (left/right)updown parameters in ipsec.conf to make
+# strongSwan use yours instead of this default one.
+#      PLUTO_VERSION
+#              indicates  what  version of this interface is being
+#              used.  This document describes version  1.1.   This
+#              is upwardly compatible with version 1.0.
+#
+#       PLUTO_VERB
+#              specifies the name of the operation to be performed
+#              (prepare-host, prepare-client, up-host, up-client,
+#              down-host, or down-client).  If the address family
+#              for security gateway to security gateway communica-
+#              tions is IPv6, then a suffix of -v6 is added to the
+#              verb.
+#
+#       PLUTO_CONNECTION
+#              is the name of the  connection  for  which  we  are
+#              routing.
+#
+#       PLUTO_INTERFACE
+#              is the name of the ipsec interface to be used.
+#
+#       PLUTO_REQID
+#              is the reqid of the AH|ESP policy
+#
+#       PLUTO_PROTO
+#              is the negotiated IPsec protocol, ah|esp
+#
+#       PLUTO_IPCOMP
+#              is not empty if IPComp was negotiated
+#
+#       PLUTO_UNIQUEID
+#              is the unique identifier of the associated IKE_SA
+#
+#       PLUTO_ME
+#              is the IP address of our host.
+#
+#       PLUTO_MY_ID
+#              is the ID of our host.
+#
+#       PLUTO_MY_CLIENT
+#              is the IP address / count of our client subnet.  If
+#              the  client  is  just  the  host,  this will be the
+#              host's own IP address / max (where max  is  32  for
+#              IPv4 and 128 for IPv6).
+#
+#       PLUTO_MY_SOURCEIP
+#       PLUTO_MY_SOURCEIP4_$i
+#       PLUTO_MY_SOURCEIP6_$i
+#              contains IPv4/IPv6 virtual IP received from a responder,
+#              $i enumerates from 1 to the number of IP per address family.
+#              PLUTO_MY_SOURCEIP is a legacy variable and equal to the first
+#              virtual IP, IPv4 or IPv6.
+#
+#       PLUTO_MY_PROTOCOL
+#              is the IP protocol that will be transported.
+#
+#       PLUTO_MY_PORT
+#              is  the  UDP/TCP  port  to  which  the IPsec SA  is
+#              restricted on our side.  For ICMP/ICMPv6 this contains the
+#              message type, and PLUTO_PEER_PORT the message code.
+#
+#       PLUTO_PEER
+#              is the IP address of our peer.
+#
+#       PLUTO_PEER_ID
+#              is the ID of our peer.
+#
+#       PLUTO_PEER_CLIENT
+#              is the IP address / count of the peer's client sub-
+#              net.   If the client is just the peer, this will be
+#              the peer's own IP address / max (where  max  is  32
+#              for IPv4 and 128 for IPv6).
+#
+#       PLUTO_PEER_SOURCEIP
+#       PLUTO_PEER_SOURCEIP4_$i
+#       PLUTO_PEER_SOURCEIP6_$i
+#              contains IPv4/IPv6 virtual IP sent to an initiator,
+#              $i enumerates from 1 to the number of IP per address family.
+#              PLUTO_PEER_SOURCEIP is a legacy variable and equal to the first
+#              virtual IP, IPv4 or IPv6.
+#
+#       PLUTO_PEER_PROTOCOL
+#              is the IP protocol that will be transported.
+#
+#       PLUTO_PEER_PORT
+#              is  the  UDP/TCP  port  to  which  the IPsec SA  is
+#              restricted on the peer side.  For ICMP/ICMPv6 this contains the
+#              message code, and PLUTO_MY_PORT the message type.
+#
+#       PLUTO_XAUTH_ID
+#              is an optional user ID employed by the XAUTH protocol
+#
+#       PLUTO_MARK_IN
+#              is an optional XFRM mark set on the inbound IPsec SA
+#
+#       PLUTO_MARK_OUT
+#              is an optional XFRM mark set on the outbound IPsec SA
+#
+#       PLUTO_IF_ID_IN
+#              is an optional XFRM interface ID set on the inbound IPsec SA
+#
+#       PLUTO_IF_ID_OUT
+#              is an optional XFRM interface ID set on the outbound IPsec SA
+#
+#       PLUTO_UDP_ENC
+#              contains the remote UDP port in the case of ESP_IN_UDP
+#              encapsulation
+#
+#       PLUTO_DNS4_$i
+#       PLUTO_DNS6_$i
+#              contains IPv4/IPv6 DNS server attribute received from a
+#              responder, $i enumerates from 1 to the number of servers per
+#              address family.
+#
+
+# define a minimum PATH environment in case it is not set
+PATH="/sbin:/bin:/usr/sbin:/usr/bin:/usr/sbin"
+export PATH
+
+LOG_VPN=1
+LOG_TAG="hotplug.d/ipsec/02-nftables"
+LOG_PRIO="daemon.notice"
+
+PRE_INPUT_FILE="/tmp/strongswan/nftables.d/pre-input.nft"
+PRE_INPUT_RULES_DIR="/tmp/strongswan/nftables.d/pre-input-rules.d"
+PRE_OUTPUT_FILE="/tmp/strongswan/nftables.d/pre-output.nft"
+PRE_OUTPUT_RULES_DIR="/tmp/strongswan/nftables.d/pre-output-rules.d"
+PRE_FORWARD_FILE="/tmp/strongswan/nftables.d/pre-forward.nft"
+PRE_FORWARD_RULES_DIR="/tmp/strongswan/nftables.d/pre-forward-rules.d"
+
+log_connection() {
+	local action="$1"
+	local mask="$2"
+	local client="$3"
+
+	local message=""
+
+	if [ "$LOG_VPN" -eq "1" ]; then
+		if [ "$PLUTO_PEER_CLIENT" = "$PLUTO_PEER/$mask" ]; then
+			message="[$action] + $PLUTO_PEER_ID $PLUTO_PEER -- $PLUTO_ME"
+		else
+			message="[$action] + $PLUTO_PEER_ID $PLUTO_PEER_CLIENT == $PLUTO_PEER -- $PLUTO_ME"
+		fi
+
+		if [ -n "$client" ]; then
+			message="$message == $client"
+		fi
+
+		logger -t $LOG_TAG \
+			-p $LOG_PRIO \
+			"$message"
+	fi
+}
+
+main() {
+	local command="$1"
+
+	case "$PLUTO_VERB:$command" in
+		#
+		# IPv4
+		#
+		up-host:iptables)
+			printf "meta iifname %s meta ipsec exists ipsec in reqid %s ip saddr %s ip daddr %s accept\n" \
+				"${PLUTO_INTERFACE}" \
+				"${PLUTO_REQID}" \
+				"${PLUTO_PEER_CLIENT}" \
+				"${PLUTO_ME}" > "${PRE_INPUT_RULES_DIR}/ipv4-${PLUTO_REQID}.nft"
+			printf "meta oifname %s meta ipsec exists ipsec out reqid %s ip saddr %s ip daddr %s accept\n" \
+				"${PLUTO_INTERFACE}" \
+				"${PLUTO_REQID}" \
+				"${PLUTO_ME}" \
+				"${PLUTO_PEER_CLIENT}"  > "${PRE_OUTPUT_RULES_DIR}/ipv4-${PLUTO_REQID}.nft"
+			# allow IPIP traffic because of the implicit SA created by the kernel if
+			# IPComp is used (for small inbound packets that are not compressed)
+			if [ -n "$PLUTO_IPCOMP" ]; then
+				printf "protocol %s meta iifname %s meta ipsec exists ipsec in reqid %s ip saddr %s ip daddr %s accept\n" \
+				"4" \
+				"${PLUTO_INTERFACE}" \
+				"${PLUTO_REQID}" \
+				"${PLUTO_PEER}" \
+				"${PLUTO_ME}" >> "${PRE_INPUT_RULES_DIR}/ipv4-${PLUTO_REQID}.nft"
+			fi
+			log_connection "up-host" "32" ""
+			;;
+		down-host:iptables)
+			rm -rf "${PRE_INPUT_RULES_DIR}/ipv4-${PLUTO_REQID}.nft"
+			rm -rf "${PRE_OUTPUT_RULES_DIR}/ipv4-${PLUTO_REQID}.nft"
+			log_connection "down-host" "32" ""
+			;;
+		up-client:iptables)
+			if [ "$PLUTO_PEER_CLIENT" != "$PLUTO_MY_SOURCEIP/32" ]; then
+				printf "meta oifname %s meta ipsec exists ipsec out reqid %s ip saddr %s ip daddr %s accept\n" \
+					"${PLUTO_INTERFACE}" \
+					"${PLUTO_REQID}" \
+					"${PLUTO_MY_CLIENT}" \
+					"${PLUTO_PEER_CLIENT}" > "${PRE_FORWARD_RULES_DIR}/ipv4-${PLUTO_REQID}.nft"
+				printf "meta iifname %s meta ipsec exists ipsec in reqid %s ip saddr %s ip daddr %s accept\n" \
+					"${PLUTO_INTERFACE}" \
+					"${PLUTO_REQID}" \
+					"${PLUTO_PEER_CLIENT}" \
+					"${PLUTO_MY_CLIENT}" >> "${PRE_FORWARD_RULES_DIR}/ipv4-${PLUTO_REQID}.nft"
+			fi
+			# a virtual IP requires an INPUT and OUTPUT rule on the host
+			# or sometimes host access via the internal IP is needed
+			if [ -n "$PLUTO_MY_SOURCEIP" -o -n "$PLUTO_HOST_ACCESS" ]; then
+				printf "meta iifname %s meta ipsec exists ipsec in reqid %s ip saddr %s ip daddr %s accept\n" \
+					"${PLUTO_INTERFACE}" \
+					"${PLUTO_REQID}" \
+					"${PLUTO_PEER_CLIENT}" \
+					"${PLUTO_MY_CLIENT}" > "${PRE_INPUT_RULES_DIR}/ipv4-${PLUTO_REQID}.nft"
+				printf "meta oifname %s ipsec out reqid %s ip saddr %s ip daddr %s accept\n" \
+					"${PLUTO_INTERFACE}" \
+					"${PLUTO_REQID}" \
+					"${PLUTO_MY_CLIENT}" \
+					"${PLUTO_PEER_CLIENT}" > "${PRE_OUTPUT_RULES_DIR}/ipv4-${PLUTO_REQID}.nft"
+			fi
+			# allow IPIP traffic because of the implicit SA created by the kernel if
+			# IPComp is used (for small inbound packets that are not compressed).
+			if [ -n "$PLUTO_IPCOMP" ]; then
+				printf "protocol %s meta iifname %s meta ipsec exists ipsec in reqid %s ip saddr %s ip daddr %s\n" \
+					"4" \
+					"${PLUTO_INTERFACE}" \
+					"${PLUTO_REQID}" \
+					"${PLUTO_PEER}" \
+					"${PLUTO_ME}" >> "${PRE_INPUT_RULES_DIR}/ipv4-${PLUTO_REQID}.nft"
+			fi
+			log_connection "up-client" "32" "$PLUTO_MY_CLIENT"
+			;;
+		down-client:iptables)
+			if [ "$PLUTO_PEER_CLIENT" != "$PLUTO_MY_SOURCEIP/32" ]; then
+				rm -rf "${PRE_FORWARD_RULES_DIR}/ipv4-${PLUTO_REQID}.nft"
+			fi
+			if [ -n "$PLUTO_MY_SOURCEIP" -o -n "$PLUTO_HOST_ACCESS" ]; then
+				rm -rf "${PRE_INPUT_RULES_DIR}/ipv4-${PLUTO_REQID}.nft"
+				rm -rf "${PRE_OUTPUT_RULES_DIR}/ipv4-${PLUTO_REQID}.nft"
+			fi
+			if [ -n "$PLUTO_IPCOMP" ]; then
+				rm -rf "${PRE_INPUT_RULES_DIR}/ipv4-${PLUTO_REQID}.nft"
+			fi
+			log_connection "down-client" "32" "$PLUTO_MY_CLIENT"
+			;;
+		#
+		# IPv6
+		#
+		up-host-v6:iptables)
+			printf "meta iifname %s meta ipsec exists ipsec in reqid %s ip6 saddr %s ip6 daddr %s accept\n" \
+				"${PLUTO_INTERFACE}" \
+				"${PLUTO_REQID}" \
+				"${PLUTO_PEER_CLIENT}" \
+				"${PLUTO_ME}" > "${PRE_INPUT_RULES_DIR}/ipv6-${PLUTO_REQID}.nft"
+			printf "meta oifname %s meta ipsec exists ipsec out reqid %s ip6 saddr %s ip6 daddr %s accept\n" \
+				"${PLUTO_INTERFACE}" \
+				"${PLUTO_REQID}" \
+				"${PLUTO_ME}" \
+				"${PLUTO_PEER_CLIENT}"  > "${PRE_OUTPUT_RULES_DIR}/ipv6-${PLUTO_REQID}.nft"
+			# allow IPIP traffic because of the implicit SA created by the kernel if
+			# IPComp is used (for small inbound packets that are not compressed)
+			if [ -n "$PLUTO_IPCOMP" ]; then
+				printf "protocol %s meta iifname %s meta ipsec exists ipsec in reqid %s ip6 saddr %s ip6 daddr %s accept\n" \
+				"41" \
+				"${PLUTO_INTERFACE}" \
+				"${PLUTO_REQID}" \
+				"${PLUTO_PEER}" \
+				"${PLUTO_ME}" >> "${PRE_INPUT_RULES_DIR}/ipv6-${PLUTO_REQID}.nft"
+			fi
+			log_connection "up-host-v6" "128" ""
+			;;
+		down-host-v6:iptables)
+			rm -rf "${PRE_INPUT_RULES_DIR}/ipv4-${PLUTO_REQID}.nft"
+			rm -rf "${PRE_OUTPUT_RULES_DIR}/ipv4-${PLUTO_REQID}.nft"
+			log_connection "down-host" "32" ""
+			;;
+		up-client-v6:iptables)
+			if [ "$PLUTO_PEER_CLIENT" != "$PLUTO_MY_SOURCEIP/32" ]; then
+				printf "meta oifname %s meta ipsec exists ipsec out reqid %s ip6 saddr %s ip6 daddr %s accept\n" \
+					"${PLUTO_INTERFACE}" \
+					"${PLUTO_REQID}" \
+					"${PLUTO_MY_CLIENT}" \
+					"${PLUTO_PEER_CLIENT}" > "${PRE_FORWARD_RULES_DIR}/ipv6-${PLUTO_REQID}.nft"
+				printf "meta iifname %s meta ipsec exists ipsec in reqid %s ip6 saddr %s ip6 daddr %s accept\n" \
+					"${PLUTO_INTERFACE}" \
+					"${PLUTO_REQID}" \
+					"${PLUTO_PEER_CLIENT}" \
+					"${PLUTO_MY_CLIENT}" >> "${PRE_FORWARD_RULES_DIR}/ipv6-${PLUTO_REQID}.nft"
+			fi
+			# a virtual IP requires an INPUT and OUTPUT rule on the host
+			# or sometimes host access via the internal IP is needed
+			if [ -n "$PLUTO_MY_SOURCEIP" -o -n "$PLUTO_HOST_ACCESS" ]; then
+				printf "meta iifname %s meta ipsec exists ipsec in reqid %s ip6 saddr %s ip6 daddr %s accept\n" \
+					"${PLUTO_INTERFACE}" \
+					"${PLUTO_REQID}" \
+					"${PLUTO_PEER_CLIENT}" \
+					"${PLUTO_MY_CLIENT}" > "${PRE_INPUT_RULES_DIR}/ipv6-${PLUTO_REQID}.nft"
+				printf "meta oifname %s ipsec out reqid %s ip6 saddr %s ip6 daddr %s accept\n" \
+					"${PLUTO_INTERFACE}" \
+					"${PLUTO_REQID}" \
+					"${PLUTO_MY_CLIENT}" \
+					"${PLUTO_PEER_CLIENT}" > "${PRE_OUTPUT_RULES_DIR}/ipv6-${PLUTO_REQID}.nft"
+			fi
+			# allow IPIP traffic because of the implicit SA created by the kernel if
+			# IPComp is used (for small inbound packets that are not compressed).
+			if [ -n "$PLUTO_IPCOMP" ]; then
+				printf "protocol %s meta iifname %s meta ipsec exists ipsec in reqid %s ip6 saddr %s ip6 daddr %s\n" \
+					"41" \
+					"${PLUTO_INTERFACE}" \
+					"${PLUTO_REQID}" \
+					"${PLUTO_PEER}" \
+					"${PLUTO_ME}" >> "${PRE_INPUT_RULES_DIR}/ipv4-${PLUTO_REQID}.nft"
+			fi
+			log_connection "up-client-v6" "128" "$PLUTO_MY_CLIENT"
+			;;
+		down-client-v6:iptables)
+			if [ "$PLUTO_PEER_CLIENT" != "$PLUTO_MY_SOURCEIP/32" ]; then
+				rm -rf "${PRE_FORWARD_RULES_DIR}/ipv4-${PLUTO_REQID}.nft"
+			fi
+			if [ -n "$PLUTO_MY_SOURCEIP" -o -n "$PLUTO_HOST_ACCESS" ]; then
+				rm -rf "${PRE_INPUT_RULES_DIR}/ipv4-${PLUTO_REQID}.nft"
+				rm -rf "${PRE_OUTPUT_RULES_DIR}/ipv4-${PLUTO_REQID}.nft"
+			fi
+			if [ -n "$PLUTO_IPCOMP" ]; then
+				rm -rf "${PRE_INPUT_RULES_DIR}/ipv4-${PLUTO_REQID}.nft"
+			fi
+			log_connection "down-client-v6" "128" "$PLUTO_MY_CLIENT"
+			;;
+		*)
+			exit 0
+			;;
+	esac
+
+	# Generate nft input include file for fw4
+	rm -rf "$PRE_INPUT_FILE"
+	for f in $PRE_INPUT_RULES_DIR/*; do
+		cat $f >> "$PRE_INPUT_FILE"
+	done
+
+	# Generate nft output include file for fw4
+	rm -rf "$PRE_OUTPUT_FILE"
+	for f in $PRE_OUTPUT_RULES_DIR/*; do
+		cat $f >> "$PRE_OUTPUT_FILE"
+	done
+
+	# Generate nft forward include file for fw4
+	rm -rf "$PRE_FORWARD_FILE"
+	for f in $PRE_FORWARD_RULES_DIR/*; do
+		cat $f >> "$PRE_FORWARD_FILE"
+	done
+
+	# Reload fw4 to reread nft strongswan rules
+	/etc/init.d/firewall reload
+}
+
+mkdir -p "$PRE_INPUT_RULES_DIR"
+mkdir -p "$PRE_OUTPUT_RULES_DIR"
+mkdir -p "$PRE_FORWARD_RULES_DIR"
+
+main "$2"
