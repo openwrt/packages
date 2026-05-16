@@ -2,14 +2,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025-2026 Chester A. Unal <chester.a.unal@arinc9.com>
 
-# Only run if a non-virtual network interface is being added.
-[ "$ACTION" = "add" ] && echo "$DEVPATH" | grep -qv virtual || exit
+# Only run if a cdc_ether, r8152, rndis_host, or ipheth network interface is
+# being added.
+[ "$ACTION" = "add" ] && grep -E '^DRIVER=(cdc_ether|r8152|rndis_host|ipheth)$' /sys${DEVPATH%/*/*}/uevent || exit
 
-# Exclude MBIM and QMI network interfaces which a DHCP client wouldn't work on.
-grep -E "(mbim|qmi)" /sys"${DEVPATH%/*/*}/uevent" && exit
+# UCI section names must only contain [a-zA-Z0-9_]. Replace any other character
+# with an underscore.
+sec_name=$(echo "$DEVICENAME" | sed 's/[^a-zA-Z0-9_]/_/g')
 
-# If a network with the same name already exists, exit.
-uci get network.wan_"$DEVICENAME" && exit
+# Exit if a network with the same name already exists.
+uci get network.wan_"$sec_name" && exit
 
 # Decide on the metric value. Start from 1 and work up to 8.
 uci_network=$(uci show network)
@@ -21,19 +23,18 @@ while [ $metric -le 8 ]; do
 	# Add 1 to metric if another network uses this metric.
 	metric=$((metric + 1))
 done
-# If there are no available metrics, exit with code 1.
-[ "$metric" -gt 8 ] && exit 1
+# Exit if there are no available metrics.
+[ "$metric" -gt 8 ] && exit
 
-uci set network.wan_"$DEVICENAME"=interface
-uci set network.wan_"$DEVICENAME".device="$DEVICENAME"
-uci set network.wan_"$DEVICENAME".proto='dhcp'
-uci set network.wan_"$DEVICENAME".peerdns='0'
-uci set network.wan_"$DEVICENAME".metric="$metric"
+uci set network.wan_"$sec_name"=interface
+uci set network.wan_"$sec_name".device="$DEVICENAME"
+uci set network.wan_"$sec_name".proto='dhcp'
+uci set network.wan_"$sec_name".metric="$metric"
 
 # Add wan network entry to firewall wan zone.
 fw_section=$(uci show firewall | grep "name='wan'" | cut -d. -f2)
-[ -n "$fw_section" ] && uci add_list firewall.$fw_section.network="wan_$DEVICENAME"
+[ -n "$fw_section" ] && uci add_list firewall.$fw_section.network="wan_$sec_name"
 
 uci commit
 service firewall reload
-ifup wan_"$DEVICENAME"
+ifup wan_"$sec_name"
