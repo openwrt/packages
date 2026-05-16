@@ -3,7 +3,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=https-dns-proxy
 PKG_VERSION:=2026.03.18
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/aarond10/https_dns_proxy/
@@ -58,6 +58,7 @@ define Package/https-dns-proxy/install
 	$(INSTALL_CONF) ./files/etc/config/https-dns-proxy $(1)/etc/config/https-dns-proxy
 	$(INSTALL_DIR) $(1)/etc/uci-defaults/
 	$(INSTALL_BIN) ./files/etc/uci-defaults/50-https-dns-proxy-migrate-options.sh $(1)/etc/uci-defaults/50-https-dns-proxy-migrate-options.sh
+	$(INSTALL_DIR) $(1)/usr/share/nftables.d/ruleset-post
 endef
 
 $(eval $(call BuildPackage,https-dns-proxy))
