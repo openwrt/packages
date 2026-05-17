@@ -29,7 +29,7 @@ define Package/espeak
   CATEGORY:=Sound
   DEPENDS:=+portaudio
   TITLE:=Speech synthesizer
-  URL:=http://espeak.sourceforge.net/
+  URL:=https://espeak.sourceforge.net/
 endef
 
 define Package/espeak/description

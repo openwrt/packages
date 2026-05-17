@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openlist
-PKG_VERSION:=4.1.10
+PKG_VERSION:=4.2.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/OpenListTeam/OpenList/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=0e85b2e9f97c819a79a054c2de1f505b0b0d78e1c8ce6783e12da85ea519840c
+PKG_HASH:=95d4a30f9669837a4c92daf88f74d223eca773e3445c270681c67e2b3dc3ac31
 PKG_BUILD_DIR:=$(BUILD_DIR)/OpenList-$(PKG_VERSION)
 
 PKG_LICENSE:=AGPL-3.0-only
@@ -52,13 +52,13 @@ define Package/openlist/conffiles
 /etc/config/openlist
 endef
 
-WEB_VERSION:=4.1.10
+WEB_VERSION:=4.2.1
 WEB_FILE:=$(PKG_NAME)-frontend-dist-v$(WEB_VERSION).tar.gz
 define Download/openlist-web
 	URL:=https://github.com/OpenListTeam/OpenList-Frontend/releases/download/v$(WEB_VERSION)/
 	URL_FILE:=$(WEB_FILE)
 	FILE:=$(WEB_FILE)
-	HASH:=7df4b3a94eb054963e5eb4addab8d74bdf027c4c02f9a83845ceb7a9eccbc674
+	HASH:=e63cf21666f9c0ef41e46e5dfe05055c81e1531a668e577ced39f296952f5bd3
 endef
 
 define Build/Prepare

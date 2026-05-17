@@ -27,7 +27,7 @@ include $(INCLUDE_DIR)/cmake.mk
 
 define Package/liblo/Default
   TITLE:=Lightweight Open Sound Control (OSC)
-  URL:=http://liblo.sourceforge.net/
+  URL:=https://liblo.sourceforge.net/
 endef
 
 define Package/liblo

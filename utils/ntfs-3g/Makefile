@@ -82,7 +82,7 @@ define Package/ntfs-3g-low/description
 
   A driver variant using the fuse low-level interface missing some of the
   enhanced functionality for streams or the like. You might want to check:
-  http://www.tuxera.com/community/ntfs-3g-manual/
+  https://github.com/tuxera/ntfs-3g/wiki
 
 endef
 

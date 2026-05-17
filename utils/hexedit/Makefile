@@ -31,7 +31,7 @@ define Package/hexedit
   SUBMENU:=Editors
   SECTION:=utils
   CATEGORY:=Utilities
-  URL:=http://rigaux.org/hexedit.html
+  URL:=https://rigaux.org/hexedit.html
   DEPENDS:=+libncurses
 endef
 

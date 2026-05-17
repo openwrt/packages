@@ -27,7 +27,7 @@ define Package/p910nd
   CATEGORY:=Network
   SUBMENU:=Printing
   TITLE:=A small non-spooling printer server
-  URL:=http://p910nd.sourceforge.net
+  URL:=https://github.com/kenyapcomau/p910nd
   USERID:=p910nd=393:lp=7
 endef
 

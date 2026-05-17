@@ -26,7 +26,7 @@ define Package/luasocket/default
   SUBMENU:=Lua
   SECTION:=lang
   CATEGORY:=Languages
-  URL:=http://w3.impa.br/~diego/software/luasocket
+  URL:=https://lunarmodules.github.io/luasocket/
 endef
 
 define Package/luasocket

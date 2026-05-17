@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 _BASENAME:=LuaBitOp
 
 PKG_SOURCE:=$(_BASENAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://bitop.luajit.org/download/
+PKG_SOURCE_URL:=https://bitop.luajit.org/download/
 PKG_HASH:=d514a3d2cefa76c8d11c1b9ec740d5fae316a9c9764e1e12ddea21e4982fab4b
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(_BASENAME)-$(PKG_VERSION)
 PKG_LICENSE:=MIT
@@ -26,7 +26,7 @@ define Package/luabitop
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=luabitop
-  URL:=http://bitop.luajit.org/
+  URL:=https://bitop.luajit.org/
   DEPENDS:=+liblua
 endef
 

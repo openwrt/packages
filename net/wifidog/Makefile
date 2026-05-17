@@ -31,7 +31,7 @@ define Package/wifidog/Default
   CATEGORY:=Network
   DEPENDS:=+iptables-mod-extra +iptables-mod-ipopt +iptables-mod-nat-extra +libpthread
   TITLE:=A wireless captive portal solution
-  URL:=http://www.wifidog.org
+  URL:=https://github.com/wifidog
 endef
 
 define Package/wifidog

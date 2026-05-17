@@ -35,7 +35,7 @@ define Package/python3-semanage
   CATEGORY:=Languages
   TITLE:=SELinux policy management library bindings
   DEPENDS:=+python3-light +libsemanage
-  URL:=http://selinuxproject.org/page/Main_Page
+  URL:=https://github.com/selinuxproject
 endef
 
 define Package/python3-semanage/description

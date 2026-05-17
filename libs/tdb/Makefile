@@ -30,7 +30,7 @@ define Package/tdb
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Trivial Database
-  URL:=http://sourceforge.net/projects/tdb/
+  URL:=https://tdb.samba.org/
   MAINTAINER:=
 endef
 

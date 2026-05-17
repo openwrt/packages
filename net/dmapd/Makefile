@@ -31,7 +31,7 @@ define Package/dmapd
   CATEGORY:=Network
   DEPENDS:=+libdmapsharing +libdb47 +vips +libgst1pbutils +totem-pl-parser
   TITLE:= dmapd
-  URL:=http://www.flyn.org/projects/dmapd/
+  URL:=https://www.flyn.org/projects/dmapd/
   USERID:=dmapd=56:dmapd=56
 endef
 

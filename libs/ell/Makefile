@@ -1,13 +1,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ell
-PKG_VERSION:=0.82
+PKG_VERSION:=0.83
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://git.kernel.org/pub/scm/libs/ell/ell.git
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
-PKG_MIRROR_HASH:=2c918e0a9451729830f7ccb502b651c58f764ec37a172447613d4d66c12e22b1
+PKG_MIRROR_HASH:=a590b3ef07f05aa62e8cf4081a07fbb1f835eb6d77e945d7b39afdb1746f4c7a
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-2.0-only

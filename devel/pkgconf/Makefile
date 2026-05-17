@@ -10,7 +10,7 @@ PKG_VERSION:=1.8.0
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://distfiles.dereferenced.org/pkgconf
+PKG_SOURCE_URL:=https://distfiles.ariadne.space/pkgconf
 PKG_HASH:=ef9c7e61822b7cb8356e6e9e1dca58d9556f3200d78acab35e4347e9d4c2bbaf
 
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
@@ -25,14 +25,14 @@ define Package/libpkgconf
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=libpkgconf
-  URL:=http://pkgconf.org/
+  URL:=https://github.com/pkgconf/pkgconf
 endef
 
 define Package/pkgconf
   SECTION:=devel
   CATEGORY:=Development
   TITLE:=pkgconf
-  URL:=http://pkgconf.org/
+  URL:=https://github.com/pkgconf/pkgconf
   DEPENDS:=+libpkgconf
 endef
 

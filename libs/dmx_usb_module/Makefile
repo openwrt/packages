@@ -26,7 +26,7 @@ define KernelPackage/usb-serial-dmx_usb_module
 	CATEGORY:=Kernel modules
 	SUBMENU:=USB Support
 	TITLE:=Support for FTDI RS485 based DMX modules
-	URL:=http://www.erwinrol.com/open-dmx-usb-linux-driver/
+	URL:=https://www.erwinrol.com/page/projects/open-dmx-usb/
 	FILES:=$(PKG_BUILD_DIR)/dmx_usb.$(LINUX_KMOD_SUFFIX)
 	AUTOLOAD:=$(call AutoProbe,dmx_usb)
 	DEPENDS+=kmod-usb-serial

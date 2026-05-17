@@ -26,7 +26,7 @@ include ../../lang/golang/golang-package.mk
 
 define Package/restic-rest-server
   TITLE:=restic REST server
-  URL:=http://github.com/restic/rest-server
+  URL:=https://github.com/restic/rest-server
   DEPENDS:=$(GO_ARCH_DEPENDS)
   SECTION:=net
   CATEGORY:=Network

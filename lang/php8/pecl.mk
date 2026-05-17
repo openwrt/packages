@@ -7,7 +7,7 @@ define Package/php8-pecl/Default
   SUBMENU:=PHP8
   SECTION:=lang
   CATEGORY:=Languages
-  URL:=http://pecl.php.net/
+  URL:=https://pecl.php.net/
   DEPENDS:=php8
 endef
 

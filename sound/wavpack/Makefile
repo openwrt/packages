@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wavpack
-PKG_VERSION:=5.8.1
+PKG_VERSION:=5.9.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.wavpack.com/
-PKG_HASH:=7322775498602c8850afcfc1ae38f99df4cbcd51386e873d6b0f8047e55c0c26
+PKG_HASH:=b5291bc4e6d69ebbd3da3800c5bf4a70f19bb92679b23e09b3b612c1e648d1ff
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=BSD-3c

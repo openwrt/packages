@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=coreutils
-PKG_VERSION:=9.9
-PKG_RELEASE:=2
+PKG_VERSION:=9.11
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/coreutils
-PKG_HASH:=19bcb6ca867183c57d77155eae946c5eced88183143b45ca51ad7d26c628ca75
+PKG_HASH:=394024eda0a5955217ceda9cd1201e65dc8fa3aa29c2951135a49521d57c3cc3
 
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -124,6 +124,7 @@ CONFIGURE_ARGS += \
 	--disable-assert \
 	--disable-rpath \
 	--disable-libsmack \
+	--enable-install-program=kill,uptime \
 	--enable-libcap \
 	--without-linux-crypto \
 	--without-openssl \

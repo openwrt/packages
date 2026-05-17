@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=privoxy
-PKG_VERSION:=4.0.0
+PKG_VERSION:=4.1.0
 PKG_REAL_VERSION:=$(PKG_VERSION)-stable
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-stable-src.tar.gz
 PKG_SOURCE_URL:=@SF/ijbswa
-PKG_HASH:=c08e2ba0049307017bf9d8a63dd2a0dfb96aa0cdeb34ae007776e63eba62a26f
+PKG_HASH:=23e4686e5848c74cb680c09c2811f0357739ecfe641f9c4072ee42399092c97b
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_REAL_VERSION)
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -56,7 +56,7 @@ define Package/privoxy
   CATEGORY:=Network
   SUBMENU:=Web Servers/Proxies
   TITLE:=Privoxy WEB Proxy
-  URL:=http://www.privoxy.org/
+  URL:=https://www.privoxy.org/
   USERID:=privoxy=8118:privoxy=8118
   MENU:=1
   DEPENDS:=+!PRIVOXY_no_pcre:libpcre2 +!PRIVOXY_no_pthread:libpthread +!PRIVOXY_no_zlib:zlib

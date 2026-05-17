@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=leptonica
-PKG_VERSION:=1.86.0
-PKG_RELEASE:=2
+PKG_VERSION:=1.87.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.leptonica.org/source/
-PKG_HASH:=1fa08e40bb37fd45802d5e6e7b43927449a5c47d4608ef99d3bd3f0fa76baedc
+PKG_HASH:=c73363397f96eb1295602bf44d708a994ad42046c791bf03ea0505d829bdb6a7
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=BSD-2-Clause

@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=git-lfs
-PKG_VERSION:=3.5.1
+PKG_VERSION:=3.7.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/git-lfs/git-lfs/releases/download/v$(PKG_VERSION)
-PKG_HASH:=fc19c7316e80a6ef674aa4e1863561c1263cd4ce0588b9989e4be9461664d752
+PKG_HASH:=8f56058622edfea1d111e50e9844ef2f5ce670b2dbe4d55d48e765c943af4351
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT

@@ -37,7 +37,7 @@ define Package/mini_snmpd
   SECTION:=net
   CATEGORY:=Network
   TITLE:=A tiny SNMP server for embedded systems
-  URL:=http://troglobit.github.io/mini-snmpd.html
+  URL:=https://troglobit.com/projects/mini-snmpd/
 # uncomment if you just want the binary, not the init script
 # openwrt requires init script runtime dependencies be defined for make menuconfig
 # (e.g busybox sysntpd)

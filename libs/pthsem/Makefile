@@ -12,7 +12,7 @@ PKG_VERSION:=2.0.8
 PKG_RELEASE:=8
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.auto.tuwien.ac.at/~mkoegler/pth/
+PKG_SOURCE_URL:=https://www.auto.tuwien.ac.at/~mkoegler/pth/
 PKG_HASH:=4024cafdd5d4bce2b1778a6be5491222c3f6e7ef1e43971264c451c0012c5c01
 
 PKG_MAINTAINER:=Othmar Truniger <github@truniger.ch>
@@ -30,7 +30,7 @@ define Package/pthsem
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=GNU pth extended with semaphore support
-  URL:=http://www.auto.tuwien.ac.at/~mkoegler/index.php/pth
+  URL:=https://www.auto.tuwien.ac.at/~mkoegler/index.php/pth
 endef
 
 define Package/pthsem/description

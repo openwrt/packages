@@ -27,7 +27,7 @@ define Package/libmms
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=MMS stream protocol library
-  URL:=http://libmms.sourceforge.net
+  URL:=https://sourceforge.net/projects/libmms/
 endef
 
 define Package/libmms/description

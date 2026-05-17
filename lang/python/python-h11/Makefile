@@ -1,6 +1,4 @@
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
-#
+# SPDX-License-Identifier: GPL-2.0-only
 
 include $(TOPDIR)/rules.mk
 
@@ -16,11 +14,14 @@ PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.txt
 
+HOST_BUILD_DEPENDS:=python-setuptools/host
 PKG_BUILD_DEPENDS:=python-setuptools/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 include ../python3-package.mk
+include ../python3-host-build.mk
 
 define Package/python3-h11
   SUBMENU:=Python
@@ -39,3 +40,4 @@ endef
 $(eval $(call Py3Package,python3-h11))
 $(eval $(call BuildPackage,python3-h11))
 $(eval $(call BuildPackage,python3-h11-src))
+$(eval $(call HostBuild))

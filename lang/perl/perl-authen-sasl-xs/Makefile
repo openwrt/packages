@@ -29,7 +29,7 @@ define Package/perl-authen-sasl-xs
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Authen::XS hooks into libsasl.
-  URL:=http://search.cpan.org/dist/$(PKG_SOURCE_NAME)/
+  URL:=https://metacpan.org/dist/Authen-SASL-XS/
   DEPENDS:=perl +perlbase-dynaloader +perl-authen-sasl +libsasl2
 endef
 

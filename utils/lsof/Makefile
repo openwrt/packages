@@ -29,7 +29,7 @@ define Package/lsof
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=LiSt Open Files - a diagnostic tool
-  URL:=http://people.freebsd.org/~abe/
+  URL:=https://lsof.readthedocs.io/en/latest/
 endef
 
 CONFIGURE_ARGS += --without-selinux --without-libtirpc

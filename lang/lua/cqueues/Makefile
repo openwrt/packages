@@ -29,7 +29,7 @@ define Package/cqueues/default
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=cqueues for $(1)
-  URL:=http://25thandclement.com/~william/projects/cqueues.html
+  URL:=https://25thandclement.com/~william/projects/cqueues.html
   DEPENDS:=+libopenssl
 endef
 

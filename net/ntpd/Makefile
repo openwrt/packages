@@ -13,7 +13,7 @@ PKG_VERSION:=$(subst p,_p,$(PKG_REALVERSION))
 PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_REALVERSION).tar.gz
-PKG_SOURCE_URL:=http://www.eecis.udel.edu/~ntp/ntp_spool/ntp4/ntp-4.2/
+PKG_SOURCE_URL:=https://www.eecis.udel.edu/~ntp/ntp_spool/ntp4/ntp-4.2/
 PKG_HASH:=cf84c5f3fb1a295284942624d823fffa634144e096cfc4f9969ac98ef5f468e5
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_REALVERSION)
 
@@ -33,7 +33,7 @@ define Package/ntpd/Default
   SECTION:=net
   CATEGORY:=Network
   TITLE:=ISC ntp
-  URL:=http://www.ntp.org/
+  URL:=https://www.ntp.org/
   DEPENDS:=+libopenssl +libpthread +libcap
 endef
 

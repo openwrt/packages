@@ -33,7 +33,7 @@ define Package/tcpreplay/default
   SUBMENU:=Tcpreplay
   SECTION:=net
   CATEGORY:=Network
-  URL:=http://tcpreplay.appneta.com/
+  URL:=https://tcpreplay.appneta.com/
   MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
   DEPENDS:=+librt +libpcap +libdnet +libbpf +libxdp +USE_MUSL:musl-fts
 endef

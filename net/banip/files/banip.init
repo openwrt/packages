@@ -69,7 +69,6 @@ start_service() {
 		procd_close_instance
 	else
 		f_log "err" "banIP service autostart is disabled"
-		rm -rf "${ban_lock}"
 	fi
 }
 

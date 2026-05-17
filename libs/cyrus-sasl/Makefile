@@ -32,7 +32,7 @@ define Package/libsasl2/Default
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=A general purpose authentication library
-  URL:=http://asg.web.cmu.edu/sasl/
+  URL:=https://github.com/cyrusimap/cyrus-sasl
 endef
 
 define Package/libsasl2

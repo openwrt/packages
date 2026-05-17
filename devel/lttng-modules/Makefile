@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lttng-modules
-PKG_VERSION:=2.13.9
+PKG_VERSION:=2.15.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://lttng.org/files/$(PKG_NAME)/
-PKG_HASH:=bf808b113544287cfe837a6382887fa66354ef5cc8216460cebbef3d27dc3581
+PKG_HASH:=4eab35edeaa84ddefa243f2f842af1482325062ee008fb511a3ff191b9aa09ac
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=LGPL-2.1 GPL-2.0 MIT

@@ -30,7 +30,7 @@ define Package/perl-parse-yapp
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Yet Another Parser Parser For Perl
-  URL:=http://search.cpan.org/dist/Parse-Yapp/
+  URL:=https://metacpan.org/dist/Parse-Yapp/
   DEPENDS:=perl +perlbase-essential +perlbase-test
 endef
 

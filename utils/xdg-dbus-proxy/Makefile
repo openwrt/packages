@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xdg-dbus-proxy
-PKG_VERSION:=0.1.6
+PKG_VERSION:=0.1.7
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/flatpak/$(PKG_NAME)/releases/download/$(PKG_VERSION)
-PKG_HASH:=131bf59fce7c7ee7ecbc5d9106d6750f4f597bfe609966573240f7e4952973a1
+PKG_HASH:=3ad3d27ba574e178acb5e4d438ba36ace25e3564f899c36f31c56f82c7adbbe7
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=LGPLv2-or-later

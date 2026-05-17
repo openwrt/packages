@@ -8,10 +8,8 @@ PKG_RELEASE:=3
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
 		https://ftp.gwdg.de/pub/samba/stable/ \
-		https://ftp.heanet.ie/mirrors/ftp.samba.org/stable/ \
 		https://ftp.riken.jp/net/samba/samba/stable/ \
-		http://www.nic.funet.fi/index/samba/pub/samba/stable/ \
-		http://samba.mirror.bit.nl/samba/ftp/stable/ \
+		https://www.nic.funet.fi/index/samba/pub/samba/stable/ \
 		https://download.samba.org/pub/samba/stable/
 PKG_HASH:=12195811d4542f661536e9055b44d58c53020412beafaae205e227bf72f6a497
 

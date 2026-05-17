@@ -11,8 +11,7 @@ PKG_NAME:=mutt
 PKG_VERSION:=2.1.5
 PKG_RELEASE:=2
 
-PKG_SOURCE_URL:=https://bitbucket.org/mutt/mutt/downloads/ \
-		http://ftp.mutt.org/pub/mutt/
+PKG_SOURCE_URL:=http://ftp.mutt.org/pub/mutt/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_HASH:=92a309e47e363a97d62425bcb71adceae5ab5c4c413dbcac37fa98ed70c12be0
 

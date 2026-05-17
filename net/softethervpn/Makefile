@@ -90,7 +90,7 @@ define Package/softethervpn/default
   CATEGORY:=Network
   SUBMENU:=VPN
   TITLE:=Free Cross-platform Multi-protocol VPN server and client
-  URL:=http://www.softether.org/
+  URL:=https://www.softether.org/
 endef
 
 define Package/softethervpn/description

@@ -33,7 +33,7 @@ define Package/libxslt
   CATEGORY:=Libraries
   DEPENDS:=+libxml2 $(ICONV_DEPENDS)
   TITLE:=Gnome XSLT library
-  URL:=http://xmlsoft.org/XSLT/
+  URL:=https://gitlab.gnome.org/GNOME/libxslt
 endef
 
 define Package/libxslt/description
@@ -45,7 +45,7 @@ define Package/libexslt
   CATEGORY:=Libraries
   DEPENDS:=+libxslt
   TITLE:=Gnome XSLT library Extension
-  URL:=http://xmlsoft.org/XSLT/EXSLT/
+  URL:=https://gitlab.gnome.org/GNOME/libxslt
 endef
 
 define Package/libexslt/description
@@ -57,7 +57,7 @@ define Package/xsltproc
   CATEGORY:=Utilities
   DEPENDS:=+libxslt +PACKAGE_xsltproc:libexslt
   TITLE:=Gnome XSLT xsltproc Utility
-  URL:=http://xmlsoft.org/XSLT/
+  URL:=https://gitlab.gnome.org/GNOME/libxslt
 endef
 
 define Package/xsltproc/description

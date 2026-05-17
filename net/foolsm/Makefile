@@ -29,7 +29,7 @@ define Package/foolsm
   CATEGORY:=Network
   DEPENDS:=+msmtp
   TITLE:=A link state monitor
-  URL:=http://lsm.foobar.fi/
+  URL:=https://lsm.foobar.fi/
 endef
 
 define Package/foolsm/description

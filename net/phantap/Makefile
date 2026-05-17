@@ -2,7 +2,7 @@
 # Copyright (C) 2019 Etienne Champetier <champetier.etienne@gmail.com>
 #
 # This is free software, licensed under the GNU General Public License v3.
-# See <http://www.gnu.org/licenses/> for more information.
+# See <https://www.gnu.org/licenses/> for more information.
 
 include $(TOPDIR)/rules.mk
 

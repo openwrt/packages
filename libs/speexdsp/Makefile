@@ -12,7 +12,7 @@ PKG_VERSION:=1.2.0
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://downloads.us.xiph.org/releases/speex/
+PKG_SOURCE_URL:=https://downloads.xiph.org/releases/speex/
 PKG_HASH:=682042fc6f9bee6294ec453f470dadc26c6ff29b9c9e9ad2ffc1f4312fd64771
 
 PKG_FIXUP:=autoreconf
@@ -24,7 +24,7 @@ define Package/libspeexdsp
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Open source speech compression codec library output to DSP
-  URL:=http://www.speex.org/
+  URL:=https://www.speex.org/
   MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 endef
 

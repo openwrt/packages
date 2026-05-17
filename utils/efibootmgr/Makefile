@@ -35,7 +35,7 @@ define Package/efibootmgr/description
 
   Details on the EFI Boot Manager are available from the
   EFI Specification, v1.02 or above, available from:
-  http://www.uefi.org
+  https://uefi.org
 
   Note: efibootmgr requires either the efivarfs or the legacy
   efivars kernel module to be loaded prior to use.

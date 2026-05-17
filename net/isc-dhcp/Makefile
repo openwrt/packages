@@ -20,8 +20,8 @@ PKG_CPE_ID:=cpe:/a:isc:dhcp
 
 PKG_SOURCE:=$(UPSTREAM_NAME)-$(PKG_REALVERSION).tar.gz
 PKG_SOURCE_URL:=https://ftp.isc.org/isc/dhcp/$(PKG_REALVERSION) \
-		http://ftp.funet.fi/pub/mirrors/ftp.isc.org/isc/dhcp/$(PKG_REALVERSION) \
-		http://ftp.iij.ad.jp/pub/network/isc/dhcp/$(PKG_REALVERSION)
+		https://ftp.funet.fi/pub/mirrors/ftp.isc.org/isc/dhcp/$(PKG_REALVERSION) \
+		https://ftp.iij.ad.jp/pub/network/isc/dhcp/$(PKG_REALVERSION)
 PKG_HASH:=0ac416bb55997ca8632174fd10737fd61cdb8dba2752160a335775bc21dc73c7
 
 PKG_FIXUP:=autoreconf

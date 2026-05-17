@@ -23,7 +23,7 @@ define Package/owut
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=owut - an OpenWrt Upgrade Tool
-  URL:=http://github.com/efahl/owut
+  URL:=https://github.com/efahl/owut
   DEPENDS:=+attendedsysupgrade-common \
     +rpcd-mod-file \
     +ucode +ucode-mod-fs +ucode-mod-ubus \

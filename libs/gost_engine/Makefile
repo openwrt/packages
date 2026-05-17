@@ -20,7 +20,7 @@ include $(INCLUDE_DIR)/cmake.mk
 define Package/gost_engine/Default
   $(call Package/openssl/engine/Default)
   TITLE:=GOST engine for OpenSSL
-  URL:=http://www.openssl.org/
+  URL:=https://github.com/gost-engine/engine
 endef
 
 define Package/gost_engine/Default/description
@@ -32,7 +32,6 @@ define Package/libopenssl-gost_engine
     $(call Package/gost_engine/Default)
     $(call Package/openssl/engine/Default)
     TITLE+= (library)
-    URL:=https://github.com/gost-engine/engine/
 endef
 
 define Package/libopenssl-gost_engine/description

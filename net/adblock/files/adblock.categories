@@ -25,6 +25,7 @@ hag;tracker.apple;wildcard/native.apple-onlydomains.txt
 hag;tracker.huawei;wildcard/native.huawei-onlydomains.txt
 hag;tracker.lgwebos;wildcard/native.lgwebos-onlydomains.txt
 hag;tracker.oppo-realme;wildcard/native.oppo-realme-onlydomains.txt
+hag;tracker.roku;wildcard/native.roku-onlydomains.txt
 hag;tracker.samsung;wildcard/native.samsung-onlydomains.txt
 hag;tracker.tiktok;wildcard/native.tiktok-onlydomains.txt
 hag;tracker.tiktok.extended;wildcard/native.tiktok.extended-onlydomains.txt
@@ -36,6 +37,9 @@ hag;popupads;wildcard/popupads-onlydomains.txt
 hag;urlshortener;wildcard/urlshortener-onlydomains.txt
 hag;abusetlds;wildcard/spam-tlds-onlydomains.txt
 hag;social;wildcard/social-onlydomains.txt
+hag;dga-7days;domains/dga7.txt
+hag;dga-14days;domains/dga14.txt
+hag;dga-30days;domains/dga30.txt
 hag;nrd-7days;domains/nrd7.txt
 hag;nrd-14days;domains/nrd14-8.txt
 hag;nrd-21days;domains/nrd21-15.txt
@@ -52,14 +56,16 @@ ipf;malware;malware/domains.txt
 ipf;phishing;phishing/domains.txt
 ipf;piracy;piracy/domains.txt
 ipf;porn;porn/domains.txt
+ipf;shopping;shopping/domains.txt
 ipf;smart-tv;smart-tv/domains.txt
 ipf;social;social/domains.txt
+ipf;streaming;streaming/domains.txt
 ipf;violence;violence/domains.txt
 stb;standard;hosts
 stb;standard-fakenews;alternates/fakenews/hosts
 stb;standard-fakenews-gambling;alternates/fakenews-gambling/hosts
 stb;standard-fakenews-gambling-porn;alternates/fakenews-gambling-porn/hosts
-stb;standard-fakenews-gambling-porn-social;alternates/fakenews-porn-social/hosts
+stb;standard-fakenews-gambling-porn-social;alternates/fakenews-gambling-porn-social/hosts
 stb;standard-fakenews-gambling-social;alternates/fakenews-gambling-social/hosts
 stb;standard-fakenews-porn;alternates/fakenews-porn/hosts
 stb;standard-fakenews-porn-social;alternates/fakenews-porn-social/hosts
@@ -74,7 +80,7 @@ stb;standard-social;alternates/social/hosts
 stb;fakenews;alternates/fakenews-only/hosts
 stb;fakenews-gambling;alternates/fakenews-gambling-only/hosts
 stb;fakenews-gambling-porn;alternates/fakenews-gambling-porn-only/hosts
-stb;fakenews-gambling-porn-social;alternates/fakenews-porn-social-only/hosts
+stb;fakenews-gambling-porn-social;alternates/fakenews-gambling-porn-social-only/hosts
 stb;fakenews-gambling-social;alternates/fakenews-gambling-social-only/hosts
 stb;fakenews-porn;alternates/fakenews-porn-only/hosts
 stb;fakenews-porn-social;alternates/fakenews-porn-social-only/hosts

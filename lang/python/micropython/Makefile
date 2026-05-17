@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=micropython
-PKG_VERSION:=1.27.0
+PKG_VERSION:=1.28.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/micropython/micropython/releases/download/v$(PKG_VERSION)
-PKG_HASH:=9874b20646c3bbe81d524f779a16875e5d088b7065e175ffd2aa2a02f50573c9
+PKG_HASH:=4e43c59657b8da33b4bc503509a827cc3ea6cb66c446475c57776cf4467ba215
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT

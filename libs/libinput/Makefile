@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libinput
-PKG_VERSION:=1.28.1
+PKG_VERSION:=1.31.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://gitlab.freedesktop.org/$(PKG_NAME)/$(PKG_NAME)/-/archive/$(PKG_VERSION)
-PKG_HASH:=a13f8c9a7d93df3c85c66afd135f0296701d8d32f911991b7aa4273fdd6a42a3
+PKG_HASH:=e010b02021b8fe9f3e696a4a2059c0243f0c90f2f9d4bcf4c88d2f9613c52b0b
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=MIT

@@ -30,7 +30,7 @@ define Package/libaio
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Linux kernel AIO interface access library
-  URL:=http://lse.sourceforge.net/io/aio.html
+  URL:=https://lse.sourceforge.net/io/aio.html
 endef
 
 define Build/InstallDev

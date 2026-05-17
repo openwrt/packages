@@ -12,7 +12,7 @@ PKG_VERSION:=0.34.1
 PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://siag.nu/pub/pen/
+PKG_SOURCE_URL:=https://siag.nu/pub/pen/
 PKG_HASH:=2b640795029df9d1672e17202c109cc5d42538f6754a6070dc27da640881e864
 
 PKG_LICENSE:=GPL-2.0-or-later
@@ -29,7 +29,7 @@ define Package/pen
   CATEGORY:=Network
   DEPENDS:=+libopenssl
   TITLE:=Simple TCP load balancer
-  URL:=http://siag.nu/pen/
+  URL:=https://siag.nu/pen/
 endef
 
 define Package/pen/description

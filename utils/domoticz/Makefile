@@ -30,7 +30,7 @@ define Package/domoticz
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Open Source Home Automation System
-  URL:=http://domoticz.com/
+  URL:=https://domoticz.com/
   USERID:=domoticz=6144:domoticz=6144
   DEPENDS:= \
 	+boost \
