@@ -1501,6 +1501,7 @@ trm_wificmd="$(f_cmd wifi)"
 trm_fetchcmd="$(f_cmd curl)"
 trm_ifstatuscmd="$(f_cmd ifstatus)"
 trm_ipcalccmd="$(f_cmd ipcalc.sh)"
+trm_lookupcmd="$(f_cmd nslookup)"
 trm_mailcmd="$(f_cmd msmtp optional)"
 
 # source required system libraries
