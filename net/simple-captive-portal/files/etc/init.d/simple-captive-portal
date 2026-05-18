@@ -21,7 +21,7 @@ table inet simple-captive-portal {
     }
 
     chain prerouting {
-        type nat hook prerouting priority mangle; policy drop;
+        type nat hook prerouting priority mangle - 5; policy drop;
         iif != ${INTF} accept
         ether saddr @guest_macs accept
         tcp dport 80 redirect to ${PORT_REDIRECT}
