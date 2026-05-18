@@ -66,10 +66,10 @@ CONFIGURE_ARGS += \
 	--with-protoc=$(STAGING_DIR_HOSTPKG)/bin/protoc-compat
 
 HOST_CONFIGURE_VARS += \
-	PKG_CONFIG_PATH="$(STAGING_DIR_HOSTPKG)/usr/protobuf-compat/lib/pkgconfig:$(PKG_CONFIG_PATH)" \
-	CPPFLAGS="-I$(STAGING_DIR_HOSTPKG)/usr/protobuf-compat/include $(HOST_CPPFLAGS)" \
-	CXXFLAGS="-I$(STAGING_DIR_HOSTPKG)/usr/protobuf-compat/include $(HOST_CXXFLAGS)" \
-	LDFLAGS="-L$(STAGING_DIR_HOSTPKG)/usr/protobuf-compat/lib $(HOST_LDFLAGS)"
+	PKG_CONFIG_PATH="$(STAGING_DIR_HOSTPKG)/usr/protobuf-compat/lib/pkgconfig:$(STAGING_DIR_HOST)/lib/pkgconfig:$(PKG_CONFIG_PATH)" \
+	CPPFLAGS="-I$(STAGING_DIR_HOSTPKG)/usr/protobuf-compat/include -I$(STAGING_DIR_HOST)/include $(HOST_CPPFLAGS)" \
+	CXXFLAGS="-I$(STAGING_DIR_HOSTPKG)/usr/protobuf-compat/include -I$(STAGING_DIR_HOST)/include $(HOST_CXXFLAGS)" \
+	LDFLAGS="-L$(STAGING_DIR_HOSTPKG)/usr/protobuf-compat/lib -L$(STAGING_DIR_HOST)/lib $(HOST_LDFLAGS)"
 
 CONFIGURE_VARS += \
 	PKG_CONFIG_PATH="$(STAGING_DIR)/usr/protobuf-compat/lib/pkgconfig:$(PKG_CONFIG_PATH)" \
