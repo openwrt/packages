@@ -5,7 +5,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=postgresql
-PKG_VERSION:=18.3
+PKG_VERSION:=18.4
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=PostgreSQL
@@ -14,7 +14,7 @@ PKG_CPE_ID:=cpe:/a:postgresql:postgresql
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://ftp.postgresql.org/pub/source/v$(PKG_VERSION)
 
-PKG_HASH:=d95663fbbf3a80f81a9d98d895266bdcb74ba274bcc04ef6d76630a72dee016f
+PKG_HASH:=81a81ec695fb0c7901407defaa1d2f7973617154cf27ba74e3a7ab8e64436094
 
 PKG_BUILD_FLAGS:=no-mips16
 PKG_FIXUP:=autoreconf
