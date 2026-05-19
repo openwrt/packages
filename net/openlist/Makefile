@@ -39,7 +39,6 @@ define Package/openlist
   TITLE:=A file list program that supports multiple storage
   URL:=https://docs.oplist.org
   DEPENDS:=$(GO_ARCH_DEPENDS) +ca-bundle
-  PROVIDES:=alist
 endef
 
 define Package/openlist/description
