@@ -135,6 +135,8 @@ define Build/Compile
 	# make depend is required to avoid race conditions: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=996953
 	+$(MAKE) -C $(PKG_BUILD_DIR) depend
 	+$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR)
+	# miniperl may lack execute permission on some build systems, fix it for extension builds
+	chmod +x $(PKG_BUILD_DIR)/miniperl
 endef
 
 ifeq ($(CONFIG_arc),)
