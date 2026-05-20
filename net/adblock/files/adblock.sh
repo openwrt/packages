@@ -821,7 +821,7 @@ f_dnsup() {
 # handle etag http header
 #
 f_etag() {
-	local http_head http_code etag_id etag_cnt out_rc="4" feed="${1}" feed_url="${2}" feed_suffix="${3}" feed_cnt="${4:-"1"}"
+	local http_head http_code etag_id etag_cnt etag_match out_rc="4" feed="${1}" feed_url="${2}" feed_suffix="${3}" feed_cnt="${4:-"1"}"
 
 	if [ -n "${adb_etagparm}" ]; then
 
@@ -848,16 +848,20 @@ f_etag() {
 
 		# compare http code and etag id with stored values, update etag file and return code accordingly
 		#
-		etag_cnt="$("${adb_awkcmd}" -v f="${feed}" '$1 == f { n++ } END { print n+0 }' "${adb_backupdir}/adblock.etag")"
-		if [ "${http_code}" = "200" ] && [ "${etag_cnt}" = "${feed_cnt}" ] && [ -n "${etag_id}" ] &&
-			"${adb_awkcmd}" -v f="${feed}" -v s="${feed_suffix}" -v e="${etag_id}" '
-			BEGIN { rc = 1; p = f " " s }
-			index($0, p) == 1 {
-				rest = substr($0, length(p) + 1)
-				sub(/^[[:space:]]+/, "", rest)
-				if (rest == e) { rc = 0; exit }
-			}
-			END { exit rc }' "${adb_backupdir}/adblock.etag"; then
+		etag_cnt="$("${adb_awkcmd}" -v f="${feed}" -v s="${feed_suffix}" -v e="${etag_id}" '
+		BEGIN { matched = 0; cnt = 0; p = f " " s }
+		$1 == f { cnt++ }
+		index($0, p) == 1 {
+			rest = substr($0, length(p) + 1)
+			sub(/^[[:space:]]+/, "", rest)
+			if (rest == e) { matched = 1 }
+		}
+		END { print cnt; exit !matched }' "${adb_backupdir}/adblock.etag")"
+		etag_match="${?}"
+
+		# compare http code, etag count and etag id; update etag file and return code accordingly
+		#
+		if [ "${http_code}" = "200" ] && [ "${etag_cnt}" = "${feed_cnt}" ] && [ -n "${etag_id}" ] && [ "${etag_match}" = "0" ]; then
 			out_rc="0"
 		elif [ -n "${etag_id}" ]; then
 
@@ -869,8 +873,8 @@ f_etag() {
 					"${adb_backupdir}/adblock.etag" >"${adb_backupdir}/adblock.etag.new"
 			else
 				"${adb_awkcmd}" -v f="${feed}" -v s="${feed_suffix}" '
-					BEGIN { p = f " " s }
-					index($0, p) != 1' \
+				BEGIN { p = f " " s }
+				index($0, p) != 1' \
 					"${adb_backupdir}/adblock.etag" >"${adb_backupdir}/adblock.etag.new"
 			fi
 			"${adb_mvcmd}" -f "${adb_backupdir}/adblock.etag.new" "${adb_backupdir}/adblock.etag"
@@ -2046,6 +2050,7 @@ f_report() {
 		: >"${report_srt}" >"${report_txt}" >"${report_jsn}" >"${map_jsn}"
 		: >"${top_tmpclients}" >"${top_tmpdomains}" >"${top_tmpblocked}"
 		[ "${adb_represolve}" = "1" ] && resolve=""
+		[ "${action}" = "gen" ] && printf '%s\n' "0" >"${adb_rundir}/adblock.report"
 		cnt="1"
 		for file in "${adb_reportdir}/adb_report.pcap"*; do
 			[ -s "${file}" ] || continue
