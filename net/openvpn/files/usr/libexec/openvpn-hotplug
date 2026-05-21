@@ -45,13 +45,14 @@ parse_cidr6() {
 
 case "$script_type" in
 	up)
+		nohostroute="$(uci_get network "$INTERFACE" nohostroute)"
 		proto_init_update "$dev" 1
 
 		[ -n "$ifconfig_local" ] && proto_add_ipv4_address "$ifconfig_local" "${ifconfig_netmask:-255.255.255.255}"
 
 		[ -n "$trusted_ip" ] && {
-			if [ -n "$route_net_gateway" -a "$route_net_gateway" != "0.0.0.0" ]; then
-				proto_add_ipv4_route "$trusted_ip" 32 "$route_net_gateway"
+			if [ -n "$route_net_gateway" -a "$route_net_gateway" != "0.0.0.0" -a "${nohostroute}" != "1" ]; then
+				proto_add_host_dependency "$INTERFACE" "$trusted_ip"
 			fi
 		}
 
@@ -77,8 +78,10 @@ case "$script_type" in
 			fi
 
 			[ -n "$trusted_ip6" ] && {
-				if [ -n "$route_ipv6_gateway" -a "$route_ipv6_gateway" != "::" ]; then
-					proto_add_ipv6_route "$trusted_ip6" 128 "$route_ipv6_gateway"
+				# to detect net_gateway_ipv6, source routing on wan6 has to be disabled
+				# consider removing check for net_gateway_ipv6
+				if [ -n "$net_gateway_ipv6" -a "$net_gateway_ipv6" != "::" -a "${nohostroute}" != "1" ]; then
+					proto_add_host_dependency "$INTERFACE" "$trusted_ip6"
 				fi
 			}
 
