@@ -93,7 +93,7 @@ server_route_exists() {
 
 	[ -n "$target" ] || return 1
 
-	output="$(ip "-$family" route show "$target/$prefix" 2>/dev/null)"
+	output="$(ip "-$family" route show "$target/$prefix" ${METRIC:+metric $METRIC} 2>/dev/null)"
 	[ -n "$output" ]
 }
 
@@ -126,8 +126,8 @@ case "$script_type" in
 
 		if [ -n "$trusted_ip" -a "$DEFAULTROUTE" = "1" ]; then
 			if route_path_for_target 4 "$trusted_ip" && ! server_route_exists 4 32 "$trusted_ip"; then
-				ip -4 route add $trusted_ip ${route_path_gateway:+via $route_path_gateway} ${route_path_dev:+dev $route_path_dev}
-				SERVER_ROUTE_IPV4_CLEANUP_CMD="ip -4 route del $trusted_ip ${route_path_gateway:+via $route_path_gateway} ${route_path_dev:+dev $route_path_dev}"
+				ip -4 route add $trusted_ip ${route_path_gateway:+via $route_path_gateway} ${route_path_dev:+dev $route_path_dev} ${METRIC:+metric $METRIC}
+				SERVER_ROUTE_IPV4_CLEANUP_CMD="ip -4 route del $trusted_ip ${route_path_gateway:+via $route_path_gateway} ${route_path_dev:+dev $route_path_dev} ${METRIC:+metric $METRIC}"
 			fi
 		fi
 
@@ -156,8 +156,8 @@ case "$script_type" in
 
 			if [ -n "$trusted_ip6" -a "$DEFAULTROUTE" = "1" ]; then
 				if route_path_for_target 6 "$trusted_ip6" && ! server_route_exists 6 128 "$trusted_ip6"; then
-					ip -6 route add $trusted_ip6 ${route_path_gateway:+via $route_path_gateway} ${route_path_dev:+dev $route_path_dev}
-					SERVER_ROUTE_IPV6_CLEANUP_CMD="ip -6 route del $trusted_ip6 ${route_path_gateway:+via $route_path_gateway} ${route_path_dev:+dev $route_path_dev}"
+					ip -6 route add $trusted_ip6 ${route_path_gateway:+via $route_path_gateway} ${route_path_dev:+dev $route_path_dev} ${METRIC:+metric $METRIC}
+					SERVER_ROUTE_IPV6_CLEANUP_CMD="ip -6 route del $trusted_ip6 ${route_path_gateway:+via $route_path_gateway} ${route_path_dev:+dev $route_path_dev} ${METRIC:+metric $METRIC}"
 				fi
 			fi
 

@@ -106,6 +106,10 @@ cert_password
 ovpnproto
 '
 
+PROTO_INTS='
+metric
+'
+
 proto_openvpn_init_config() {
 	available=1
 	no_device=1
@@ -120,6 +124,7 @@ proto_openvpn_init_config() {
 	# Add proto config options - netifd compares these for changes between interface events
 	option_builder add PROTO_BOOLS protobool
 	option_builder add PROTO_STRINGS string
+	option_builder add PROTO_INTS integer
 	option_builder add OPENVPN_BOOLS bool
 	option_builder add OPENVPN_UINTS uinteger
 	option_builder add OPENVPN_INTS integer
@@ -323,7 +328,7 @@ proto_openvpn_setup() {
 		grep -qE '^[[:space:]]*remote[[:space:]]+' $CONFIG_FILES && return 0
 	}
 
-	local ipv6 defaultroute
+	local ipv6 defaultroute metric
 	exec_params=
 
 	# combine into --askpass:
@@ -371,10 +376,12 @@ proto_openvpn_setup() {
 	sed -i '/^[[:space:]]*persist-tun[[:space:]]*/s/^/# /'       $CONFIG_FILES
 	sed -i '/^[[:space:]]*persist-key[[:space:]]*/s/^/# /'       $CONFIG_FILES
 
-	json_get_vars ipv6 defaultroute
+	json_get_vars ipv6 defaultroute metric
 	#default ipv6 is enabled
 	[ -n "$ipv6" ] || ipv6=1
 	append exec_params "--setenv IPV6 $ipv6"
+
+	[ -n "$ipv6" ] && append exec_params "--setenv METRIC $metric"
 
 	if is_openvpn_client; then
 		append exec_params "--redirect-gateway def1 ipv6"
