@@ -1,0 +1,170 @@
+-- SPDX-License-Identifier: GPL-2.0
+--
+-- Copyright (c) 2019 Xue Liu <liuxuenetmail@gmail.com>
+--
+
+#!/usr/bin/env lua
+
+require("uloop")
+require("ubus")
+local json = require("dkjson")
+local uci = require("uci")
+
+x = uci.cursor()
+
+uloop.init()
+
+local conn = ubus.connect()
+if not conn then
+	error("Failed to connect to ubus")
+end
+
+local lora_global_ubus = conn:call("uci", "get", {config = "lora-global"})
+
+local lora_global_table = lora_global_ubus["values"]
+
+local lora_global = {}
+local gateway_conf = {}
+local sx1301_conf = {}
+local radio_0 = {}
+local radio_1 = {}
+
+--
+-- chan_x
+--
+for key, val in pairs(lora_global_table) do
+	if string.match(key, 'chan_[%a]*', 1) then
+    local chan = {}
+		for k, v in pairs(val) do
+			if string.match(k, '%.[%a]*', 1) == nil then
+        if tonumber(v) then
+          chan[k] = tonumber(v)
+        elseif v == "true" then
+          chan[k] = true
+        elseif v == "false" then
+          chan[k] = false
+        else
+          chan[k] = v
+        end
+			end
+		end
+    sx1301_conf[key] = chan
+	end
+end
+
+--
+-- tx_lut_x
+--
+for key, val in pairs(lora_global_table) do
+	if string.match(key, 'tx_lut_[%d]?', 1) then
+    	local tx_lut = {}
+		for k, v in pairs(val) do
+			if string.match(k, '%.[%a]*', 1) == nil then
+        if tonumber(v) then
+        	tx_lut[k] = tonumber(v)
+        elseif v == "true" then
+        	tx_lut[k] = true
+        elseif v == "false" then
+        	tx_lut[k] = false
+        else
+        	tx_lut[k] = v
+        end
+			end
+		end
+    	sx1301_conf[key] = tx_lut
+	end
+end
+
+--
+-- radio_0
+--
+if lora_global_table["radio_0"] then
+	for k, v in pairs(lora_global_table["radio_0"]) do
+		if string.match(k, '%.[%a]*', 1) == nil then
+    		if tonumber(v) then
+				radio_0[k] = tonumber(v)
+			elseif v == "true" then
+    			radio_0[k] = true
+    		elseif v == "false" then
+				radio_0[k] = false
+			else
+				radio_0[k] = v
+			end
+		end
+	end
+else
+	error("UCI configuration has no item radio_0, Please check your configuration")
+end
+
+--
+-- radio_1
+--
+if lora_global_table["radio_1"] then
+	for k, v in pairs(lora_global_table["radio_1"]) do
+		if string.match(k, '%.[%a]*', 1) == nil then
+    		if tonumber(v) then
+				radio_1[k] = tonumber(v)
+			elseif v == "true" then
+        		radio_1[k] = true
+    		elseif v == "false" then
+    			radio_1[k] = false
+    		else
+				radio_1[k] = v
+			end
+		end
+	end
+else
+	error("UCI configuration has no item radio_1, Please check your configuration")
+end
+
+--
+-- gateway_conf
+--
+if lora_global_table["gateway_conf"] then
+	for k, v in pairs(lora_global_table["gateway_conf"]) do
+		-- filter out internal uci options
+		if string.match(k, '%.[%a]*', 1) == nil then
+			if tonumber(v) then
+				gateway_conf[k] = tonumber(v)
+			elseif v == "true" then
+				gateway_conf[k] = true
+			elseif v == "false" then
+				gateway_conf[k] = false
+			else
+				gateway_conf[k] = v
+			end
+		end
+	end
+else
+	error("UCI configuration has no item gateway_conf, Please check your configuration")
+end
+
+--
+-- SX1301_conf
+--
+if lora_global_table["SX1301_conf"] then
+	for k, v in pairs(lora_global_table["SX1301_conf"]) do
+		if string.match(k, '%.[%a]*', 1) == nil then
+			if tonumber(v) then
+				sx1301_conf[k] = tonumber(v)
+			elseif v == "true" then
+				sx1301_conf[k] = true
+    		elseif v == "false" then
+    			sx1301_conf[k] = false
+			else
+				sx1301_conf[k] = v
+			end
+		end
+	end
+else
+	error("UCI configuration has no item SX1301_conf, Please check your configuration")
+end
+
+sx1301_conf["radio_0"] = radio_0
+sx1301_conf["radio_1"] = radio_1
+lora_global["gateway_conf"] = gateway_conf
+lora_global["SX1301_conf"] = sx1301_conf
+
+local lora_global_text = json.encode(lora_global, { indent = true })
+
+print(lora_global_text)
