@@ -18,7 +18,7 @@ PKG_HASH:=2c7e8ca23e6864eb20eff5d44738bfa123aed8cd21ed6d98e533d751eee28d9c
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE.txt
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
-PKG_CPE_ID:=cpe:/a:erlang:erlang\/otp
+PKG_CPE_ID:=cpe:/a:erlang:erlang
 
 PKG_BUILD_DEPENDS:=erlang/host openssl unixodbc/host
 PKG_BUILD_FLAGS:=no-mips16
