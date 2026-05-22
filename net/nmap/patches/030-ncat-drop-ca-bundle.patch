@@ -23,7 +23,7 @@ Also remove references to NCAT_CA_CERTS_FILE and NCAT_CA_CERTS_PATH in order to 
  ifneq ($(NOLUA),yes)
 --- a/ncat/ncat_posix.c
 +++ b/ncat/ncat_posix.c
-@@ -357,28 +357,17 @@ void set_lf_mode(void)
+@@ -409,28 +409,17 @@ void set_lf_mode(void)
  
  #ifdef HAVE_OPENSSL
  

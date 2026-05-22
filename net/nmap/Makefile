@@ -13,26 +13,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nmap
-PKG_VERSION:=7.95
+PKG_VERSION:=7.99
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Nuno Gonçalves <nunojpg@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://nmap.org/dist/
-PKG_HASH:=e14ab530e47b5afd88f1c8a2bac7f89cd8fe6b478e22d255c5b9bddb7a1c5778
+PKG_HASH:=df512492ffd108e53a27a06f26d8635bbe89e0e569455dc8ffef058c035d51b2
 
 PKG_LICENSE:=NPSL-0.94-or-NPSL-0.95
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:nmap:nmap
 
 PKG_BUILD_PARALLEL:=1
-PKG_BUILD_DEPENDS:=python-setuptools/host
 PKG_INSTALL:=1
-PYTHON3_PKG_BUILD:=0
-PYTHON3_PKG_FORCE_DISTUTILS_SETUP:=1
 
 include $(INCLUDE_DIR)/package.mk
-include ../../lang/python/python3-package.mk
 
 NMAP_DEPENDS:=+libpcap +libstdcpp +zlib +libpcre2
 NCAT_DEPENDS:=+libpcap
@@ -102,11 +98,6 @@ $(call Package/nmap/default)
   TITLE:=Nping (with OpenSSL support)
 endef
 
-define Package/ndiff
-$(call Package/nmap/default)
-  DEPENDS:=+python3-light +python3-xml
-  TITLE:=Utility to compare the results of Nmap scans
-endef
 
 CONFIGURE_ARGS += \
 	--with-libdnet=included \
@@ -146,17 +137,12 @@ endif
 CONFIGURE_VARS += \
 	ac_cv_dnet_bsd_bpf=no
 
-PYTHON3_PKG_SETUP_DIR:=ndiff
-PYTHON3_PKG_SETUP_ARGS:=
-
 define Build/Compile
-	$(call Build/Compile/Default,)
-	$(call Py3Build/Compile)
+    $(call Build/Compile/Default,)
 endef
 
 define Build/Install
-	$(call Build/Install/Default,)
-	$(call Py3Build/Install)
+    $(call Build/Install/Default,)
 endef
 
 define Package/nmap/install
@@ -193,11 +179,6 @@ endef
 
 Package/nping-ssl/install=$(Package/nping/install)
 
-define Py3Package/ndiff/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ndiff $(1)/usr/bin/
-endef
-
 $(eval $(call BuildPackage,nmap))
 $(eval $(call BuildPackage,nmap-ssl))
 $(eval $(call BuildPackage,nmap-full))
@@ -206,7 +187,3 @@ $(eval $(call BuildPackage,ncat-ssl))
 $(eval $(call BuildPackage,ncat-full))
 $(eval $(call BuildPackage,nping))
 $(eval $(call BuildPackage,nping-ssl))
-
-$(eval $(call Py3Package,ndiff))
-$(eval $(call BuildPackage,ndiff))
-$(eval $(call BuildPackage,ndiff-src))
