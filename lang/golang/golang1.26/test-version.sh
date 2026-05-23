@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: GPL-2.0-only
 
-# shellckeck shell=busybox
+# shellcheck shell=busybox
 
 case "$PKG_NAME" in
 golang?.??-doc|\
