@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=boinc
 PKG_VERSION:=8.2.11
 PKG_VERSION_SHORT:=$(shell echo $(PKG_VERSION)| cut -f1,2 -d.)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/BOINC/boinc
@@ -43,7 +43,7 @@ define Package/boinc/description
   desktop computers. The developers' web site at the University of
   Berkeley serves as a common portal to the otherwise independently run
   projects.
- 
+
   This package provides the BOINC core client program that is
   required to participate in any project that uses BOINC to control what
   projects to join and to determine constraints for the computation
