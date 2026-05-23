@@ -53,6 +53,7 @@ start_service() {
    procd_add_jail_mount /etc/TZ
    procd_add_jail_mount /proc/cpuinfo /proc/meminfo
    procd_add_jail_mount /etc/ssl/certs/ca-certificates.crt
+   procd_add_jail_mount /etc/os-release
    procd_add_jail_mount $PRESETDIR
    procd_add_jail_mount_rw $BOINCDIR
 
