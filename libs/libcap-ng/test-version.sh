@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# shellckeck shell=busybox
+# shellcheck shell=busybox
 
 case "$1" in
 libcap-ng|\

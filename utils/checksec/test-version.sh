@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# shellckeck shell=busybox
+# shellcheck shell=busybox
 
 # checksec reported version doesn't match package version as of 3.1.0
 
