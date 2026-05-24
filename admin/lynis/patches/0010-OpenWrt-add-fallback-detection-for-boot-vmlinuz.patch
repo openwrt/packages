@@ -1,0 +1,42 @@
+From 4d934788b219d855ccc4cd72cd20976b738109b2 Mon Sep 17 00:00:00 2001
+From: graysky <therealgraysky AT proton DOT me>
+Date: Sun, 24 May 2026 06:46:26 -0400
+Subject: [PATCH] [OpenWrt] add fallback detection for /boot/vmlinuz
+
+Some systems (e.g. OpenWrt) trigger a false positive exception
+in KRNL-5830 when Lynis cannot determine the kernel version
+from /boot/vmlinuz.
+
+Add a fallback via file when FINDVERSION remains empty. This avoids
+unnecessary exceptions while preserving current behavior for existing
+distributions.
+---
+ include/tests_kernel | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+--- a/include/tests_kernel
++++ b/include/tests_kernel
+@@ -645,6 +645,7 @@
+             if [ -n "${FIND}" ]; then
+                 if [ -f ${ROOTDIR}boot/vmlinuz -a ! -L ${ROOTDIR}boot/vmlinuz ]; then
+                     LogText "Result: found /boot/vmlinuz (not symlinked)"
++		    FOUND_VMLINUZ=${ROOTDIR}boot/vmlinuz
+                     NEXTLINE=0
+                     FINDVERSION=""
+                     for I in $(file ${ROOTDIR}boot/vmlinuz-linux); do
+@@ -656,6 +657,15 @@
+                             if [ "${I}" = "version" ]; then NEXTLINE=1; fi
+                         fi
+                     done
++		    # Fallback method for distributions where the
++		    # previous parsing logic fails (e.g. OpenWrt)
++		    if [ -z "${FINDVERSION}" ]; then
++			    FINDVERSION=$(${FILEBINARY} -b "${FOUND_VMLINUZ}" | ${AWKBINARY} '{ if ($1=="Linux" && $7=="version") { print $8 } }')
++			    if [ -n "${FINDVERSION}" ]; then
++				    LogText "Result: found version on disk via file utility: ${FINDVERSION}"
++			    fi
++		    fi
++
+                     if [ -n "${FINDVERSION}" ]; then
+                         CURRENT_KERNEL=$(uname -r)
+                         if [ ! "${CURRENT_KERNEL}" = "${FINDVERSION}" ]; then

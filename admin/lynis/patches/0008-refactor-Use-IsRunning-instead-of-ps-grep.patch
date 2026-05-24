@@ -1,0 +1,87 @@
+From 9f25b293a639be7b9f92cb41b4a0fa50e2678a58 Mon Sep 17 00:00:00 2001
+From: macie <macie@users.noreply.github.com>
+Date: Sun, 23 Mar 2025 21:38:41 +0100
+Subject: [PATCH 8/9] refactor: Use IsRunning instead of `ps | grep`
+
+Command `ps ax | grep '<WORD1>|<WORD2>' | grep -v 'grep'` can be directly
+transformed to `IsRunning '<WORD1>' || IsRunning '<WORD2>'`.
+
+`IsRunning` supports BusyBox `ps` (without `-ax` option, see: <https://github.com/mirror/busybox/blob/master/procps/ps.c>).
+---
+ include/tests_databases   | 6 ++----
+ include/tests_logging     | 3 +--
+ include/tests_squid       | 3 +--
+ include/tests_storage_nfs | 3 +--
+ include/tests_time        | 3 +--
+ 5 files changed, 6 insertions(+), 12 deletions(-)
+
+--- a/include/tests_databases
++++ b/include/tests_databases
+@@ -44,8 +44,7 @@
+     # Description : Check if MySQL is being used
+     Register --test-no DBS-1804 --weight L --network NO --category security --description "Checking active MySQL process"
+     if [ ${SKIPTEST} -eq 0 ]; then
+-        FIND=$(${PSBINARY} ax | ${GREPBINARY} -E "mariadb|mysqld|mysqld_safe" | ${GREPBINARY} -v "grep")
+-        if [ -z "${FIND}" ]; then
++        if ! IsRunning 'mariadb' && ! IsRunning 'mysqld' && ! IsRunning 'mysqld_safe'; then
+             if [ ${DEBUG} -eq 1 ]; then Display --indent 2 --text "- MySQL process status" --result "${STATUS_NOT_FOUND}" --color WHITE --debug; fi
+             LogText "Result: MySQL process not active"
+         else
+@@ -248,8 +247,7 @@
+     #               reco: recovery (optional)
+     Register --test-no DBS-1840 --weight L --network NO --category security --description "Checking active Oracle processes"
+     if [ ${SKIPTEST} -eq 0 ]; then
+-        FIND=$(${PSBINARY} ax | ${GREPBINARY} -E "ora_pmon|ora_smon|tnslsnr" | ${GREPBINARY} -v "grep")
+-        if [ -z "${FIND}" ]; then
++        if ! IsRunning 'ora_pmon' && ! IsRunning 'ora_smon' && ! IsRunning 'tnslsnr'; then
+             if [ ${DEBUG} -eq 1 ]; then Display --indent 2 --text "- Oracle processes status" --result "${STATUS_NOT_FOUND}" --color WHITE --debug; fi
+             LogText "Result: Oracle process(es) not active"
+         else
+--- a/include/tests_logging
++++ b/include/tests_logging
+@@ -45,8 +45,7 @@
+     Register --test-no LOGG-2130 --weight L --network NO --category security --description "Check for running syslog daemon"
+     if [ ${SKIPTEST} -eq 0 ]; then
+         LogText "Test: Searching for a logging daemon"
+-        FIND=$(${PSBINARY} ax | ${GREPBINARY} -E "syslogd|syslog-ng|metalog|systemd-journal" | ${GREPBINARY} -v "grep")
+-        if [ -z "${FIND}" ]; then
++        if ! IsRunning 'syslogd' && ! IsRunning 'syslog-ng' && ! IsRunning 'metalog' && ! IsRunning 'systemd-journal'; then
+             Display --indent 2 --text "- Checking for a running log daemon" --result "${STATUS_WARNING}" --color RED
+             LogText "Result: Could not find a syslog daemon like syslog, syslog-ng, rsyslog, metalog, systemd-journal"
+             ReportSuggestion "${TEST_NO}" "Check if any syslog daemon is running and correctly configured."
+--- a/include/tests_squid
++++ b/include/tests_squid
+@@ -41,8 +41,7 @@
+         LogText "Test: Searching for a Squid daemon"
+         FOUND=0
+         # Check running processes
+-        FIND=$(${PSBINARY} ax | ${GREPBINARY} -E "(squid|squid3) " | ${GREPBINARY} -v "grep")
+-        if [ -n "${FIND}" ]; then
++        if IsRunning 'squid' || IsRunning 'squid3'; then
+             SQUID_DAEMON_RUNNING=1
+             LogText "Result: Squid daemon is running"
+             Display --indent 2 --text "- Checking running Squid daemon" --result "${STATUS_FOUND}" --color GREEN
+--- a/include/tests_storage_nfs
++++ b/include/tests_storage_nfs
+@@ -93,8 +93,7 @@
+     Register --test-no STRG-1920 --weight L --network NO --category security --description "Checking NFS daemon"
+     if [ ${SKIPTEST} -eq 0 ]; then
+         LogText "Test: Checking running NFS daemon"
+-        FIND=$(${PSBINARY} ax | ${GREPBINARY} "nfsd" | ${GREPBINARY} -v "grep")
+-        if [ -z "${FIND}" ]; then
++        if ! IsRunning 'nfsd'; then
+             LogText "Output: NFS daemon is not running"
+             Display --indent 2 --text "- Check running NFS daemon" --result "${STATUS_NOT_FOUND}" --color WHITE
+         else
+--- a/include/tests_time
++++ b/include/tests_time
+@@ -122,8 +122,7 @@
+         fi
+ 
+         # Check timedate daemon (systemd)
+-        FIND=$(${PSBINARY} ax | ${GREPBINARY} "systemd-timesyncd" | ${GREPBINARY} -v "grep")
+-        if [  -n "${FIND}" ]; then
++        if IsRunning 'systemd-timesyncd'; then
+             FOUND=1; NTP_DAEMON_RUNNING=1; NTP_CONFIG_TYPE_DAEMON=1; NTP_DAEMON="systemd-timesyncd"
+             Display --indent 2 --text "- NTP daemon found: systemd (timesyncd)" --result "${STATUS_FOUND}" --color GREEN
+             LogText "Result: Found running systemd-timesyncd in process list"

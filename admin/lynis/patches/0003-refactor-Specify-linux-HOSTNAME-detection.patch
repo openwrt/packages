@@ -1,0 +1,51 @@
+From 5ff39b5ffba427c75394b7c7b7f5fcd0b3fb13d2 Mon Sep 17 00:00:00 2001
+From: macie <macie@users.noreply.github.com>
+Date: Sat, 8 Feb 2025 17:16:37 +0100
+Subject: [PATCH 3/9] refactor: Specify linux HOSTNAME detection
+
+This is the first step to fix error on OpenWrt without changing current
+behavior.
+---
+ lynis | 25 +++++++++++++++----------
+ 1 file changed, 15 insertions(+), 10 deletions(-)
+
+--- a/lynis
++++ b/lynis
+@@ -514,22 +514,27 @@ ${NORMAL}
+     . ${INCLUDEDIR}/osdetection
+     Display --indent 2 --text "- Detecting OS... " --result "${STATUS_DONE}" --color GREEN
+ 
+-    # Check hostname and get timestamp
++    # Detect hostname and domain
++    FQDN=$(hostname 2> /dev/null)
+     case ${OS} in
+         HP-UX)
+-                    HOSTNAME=$(hostname) ;;
++            HOSTNAME=$(hostname) ;;
++        Linux)
++            HOSTNAME=$(hostname -s 2> /dev/null)
++            if [ -z "${HOSTNAME}" ]; then
++                HOSTNAME="${FQDN:-no-hostname}"
++            fi
++            if [ "${HOSTNAME}" = "${FQDN}" ]; then
++                FQDN=$(hostname -f 2> /dev/null)
++            fi
++            ;;
+         Solaris)
+-                    HOSTNAME=$(uname -n) ;;
++            HOSTNAME=$(uname -n) ;;
+         *)
+-                    HOSTNAME=$(hostname -s 2> /dev/null) ;;
++            HOSTNAME=$(hostname -s 2> /dev/null) ;;
+     esac
+     if [ -z "${HOSTNAME}" ]; then
+-        HOSTNAME=$(hostname 2> /dev/null)
+-        if [ -z "${HOSTNAME}" ]; then HOSTNAME="no-hostname"; fi
+-    fi
+-    FQDN=$(hostname 2> /dev/null)
+-    if [ "${OS}" = "Linux" -a "${HOSTNAME}" = "${FQDN}" ]; then
+-        FQDN=$(hostname -f 2> /dev/null)
++        HOSTNAME="${FQDN:-no-hostname}"
+     fi
+ #
+ #################################################################################

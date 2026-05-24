@@ -1,0 +1,27 @@
+From dc26caa98a7c77e9f1b5b2f02bdeba5174d98167 Mon Sep 17 00:00:00 2001
+From: macie <macie@users.noreply.github.com>
+Date: Sat, 8 Feb 2025 12:35:41 +0100
+Subject: [PATCH 1/9] feat: Detect OpenWrt OS
+
+HARDWARE value is a name of compilation target
+(SoC type). This will simplify selection of proper installer
+version for OS upgrade.
+---
+ include/osdetection | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+--- a/include/osdetection
++++ b/include/osdetection
+@@ -434,6 +434,12 @@
+                             OS_VERSION=$(grep "^VERSION_ID=" /etc/os-release | awk -F= '{print $2}' | tr -d '"')
+                             OS_NAME="openSUSE"
+                         ;;
++                        "openwrt")
++                            LINUX_VERSION='OpenWrt'
++                            HARDWARE=$(grep '^OPENWRT_BOARD=' /etc/os-release | awk -F= '{print $2}' | tr -d '"')
++                            OS_NAME=$(grep '^NAME=' /etc/os-release | awk -F= '{print $2}' | tr -d '"')
++                            OS_VERSION=$(grep '^VERSION=' /etc/os-release | awk -F= '{print $2}' | tr -d '"')
++                        ;;
+                         "osmc")
+                             LINUX_VERSION="OSMC"
+                             LINUX_VERSION_LIKE="Debian"

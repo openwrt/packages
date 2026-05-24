@@ -1,0 +1,142 @@
+From 627b66d56e4b4213ced866199d17859f62fb7553 Mon Sep 17 00:00:00 2001
+From: macie <macie@users.noreply.github.com>
+Date: Sun, 23 Mar 2025 21:53:54 +0100
+Subject: [PATCH 9/9] fix: Support BusyBox ps
+
+BusyBox not implements flags `-ax` (see: <https://github.com/mirror/busybox/blob/master/procps/ps.c>)
+Calling it throws an error: `/bin/ps: unrecognized option: a`.
+
+`IsRunning` function cannot be used here due to complex searching rules.
+---
+ include/tests_mail_messaging   | 12 ++++++++++--
+ include/tests_memory_processes |  8 ++++++--
+ include/tests_scheduling       | 12 ++++++++++--
+ include/tests_time             | 19 ++++++++++++++++---
+ 4 files changed, 42 insertions(+), 9 deletions(-)
+
+--- a/include/tests_mail_messaging
++++ b/include/tests_mail_messaging
+@@ -244,8 +244,12 @@
+     Register --test-no MAIL-8814 --weight L --network NO --category security --description "Check postfix process status"
+     if [ ${SKIPTEST} -eq 0  ]; then
+         LogText "Test: check Postfix status"
++        PSOPTIONS="ax"
++        if [ "${SHELL_IS_BUSYBOX}" -eq 1 ]; then
++            PSOPTIONS="-w"
++        fi
+         # Some other processes also use master, therefore it should include both master and postfix
+-        FIND1=$(${PSBINARY} ax | ${GREPBINARY} "master" | ${GREPBINARY} "postfix" | ${GREPBINARY} -v "grep")
++        FIND1=$(${PSBINARY} ${PSOPTIONS} | ${GREPBINARY} "master" | ${GREPBINARY} "postfix" | ${GREPBINARY} -v "grep")
+         if [ -n "${FIND1}" ]; then
+             LogText "Result: found running Postfix process"
+             Display --indent 2 --text "- Postfix status" --result "${STATUS_RUNNING}" --color GREEN
+@@ -414,7 +418,11 @@
+     Register --test-no MAIL-8920 --preqs-met ${PREQS_MET} --weight L --network NO --category security --description "Check OpenSMTPD status"
+     if [ ${SKIPTEST} -eq 0  ]; then
+         LogText "Test: check smtpd status"
+-        FIND=$(${PSBINARY} ax | ${GREPBINARY} -E "(/smtpd|smtpd: \[priv\]|smtpd: smtp)" | ${GREPBINARY} -v "grep")
++        PSOPTIONS="ax"
++        if [ "${SHELL_IS_BUSYBOX}" -eq 1 ]; then
++            PSOPTIONS="-w"
++        fi
++        FIND=$(${PSBINARY} ${PSOPTIONS} | ${GREPBINARY} -E "(/smtpd|smtpd: \[priv\]|smtpd: smtp)" | ${GREPBINARY} -v "grep")
+         if [ ! "${FIND}" = "" ]; then
+             LogText "Result: found running smtpd process"
+             Display --indent 2 --text "- OpenSMTPD status" --result "${STATUS_RUNNING}" --color GREEN
+--- a/include/tests_memory_processes
++++ b/include/tests_memory_processes
+@@ -72,7 +72,9 @@
+     if [ ! "${OS}" = "Solaris" ]; then PREQS_MET="YES"; else PREQS_MET="NO"; fi
+     Register --test-no PROC-3612 --preqs-met ${PREQS_MET} --weight L --network NO --category security --description "Check dead or zombie processes"
+     if [ ${SKIPTEST} -eq 0 ]; then
+-        if [ "${OS}" = "AIX" ]; then
++        if [ "${SHELL_IS_BUSYBOX}" -eq 1 ]; then
++            FIND=$(${PSBINARY} -w | ${AWKBINARY} '{ if ($4 ~ /Z|X/) print $1 }' | ${XARGSBINARY})
++        elif [ "${OS}" = "AIX" ]; then
+             FIND=$(${PSBINARY} -Ae -o pid,stat,comm | ${AWKBINARY} '{ if ($2 ~ /Z|X/) print $1 }' | ${XARGSBINARY})
+         else
+             FIND=$(${PSBINARY} x -o pid,stat,comm | ${AWKBINARY} '{ if ($2 ~ /Z|X/) print $1 }' | ${XARGSBINARY})
+@@ -96,7 +98,9 @@
+     if [ ! "${OS}" = "Solaris" ]; then PREQS_MET="YES"; else PREQS_MET="NO"; fi
+     Register --test-no PROC-3614 --preqs-met ${PREQS_MET} --weight L --network NO --category security --description "Check heavy IO waiting based processes"
+     if [ ${SKIPTEST} -eq 0 ]; then
+-        if [ "${OS}" = "AIX" ]; then
++        if [ "${SHELL_IS_BUSYBOX}" -eq 1 ]; then
++            FIND=$(${PSBINARY} -w | ${AWKBINARY} '{ if ($4 ~ /D/) print $1 }' | ${XARGSBINARY})
++        elif [ "${OS}" = "AIX" ]; then
+             FIND=$(${PSBINARY} -Ae -o pid,stat,comm | ${AWKBINARY} '{ if ($2=="D") print $1 }' | ${XARGSBINARY})
+         else
+             FIND=$(${PSBINARY} x -o pid,stat,comm | ${AWKBINARY} '{ if ($2=="D") print $1 }' | ${XARGSBINARY})
+--- a/include/tests_scheduling
++++ b/include/tests_scheduling
+@@ -34,7 +34,11 @@
+     # Description : Check cron daemon
+     Register --test-no SCHD-7702 --weight L --network NO --category security --description "Check status of cron daemon"
+     if [ ${SKIPTEST} -eq 0 ]; then
+-        FIND=$(${PSBINARY} aux | ${GREPBINARY} -E "( cron$|/cron(d)? )")
++        PSOPTIONS="aux"
++        if [ "${SHELL_IS_BUSYBOX}" -eq 1 ]; then
++            PSOPTIONS="-w"
++        fi
++        FIND=$(${PSBINARY} ${PSOPTIONS} | ${GREPBINARY} -E "( cron$|/cron(d)? )")
+         if IsEmpty "${FIND}"; then
+             LogText "Result: no cron daemon found"
+         else
+@@ -199,7 +203,11 @@
+     Register --test-no SCHD-7718 --weight L --network NO --category security --description "Check at users"
+     if [ ${SKIPTEST} -eq 0 ]; then
+         LogText "Test: Checking atd status"
+-        FIND=$(${PSBINARY} ax | ${GREPBINARY} "/atd" | ${GREPBINARY} -v "grep")
++        PSOPTIONS="ax"
++        if [ "${SHELL_IS_BUSYBOX}" -eq 1 ]; then
++            PSOPTIONS="-w"
++        fi
++        FIND=$(${PSBINARY} ${PSOPTIONS} | ${GREPBINARY} "/atd" | ${GREPBINARY} -v "grep")
+         if [ -n "${FIND}" ]; then
+             LogText "Result: at daemon active"
+             Display --indent 2 --text "- Checking atd status" --result "${STATUS_RUNNING}" --color GREEN
+--- a/include/tests_time
++++ b/include/tests_time
+@@ -81,10 +81,14 @@
+ 
+         # Check for OpenNTPD, ntpctl comes with a "regular" install
+         if [ -n "${NTPCTLBINARY}" ]; then
++            PSOPTIONS="ax"
++            if [ "${SHELL_IS_BUSYBOX}" -eq 1 ]; then
++                PSOPTIONS="-w"
++            fi
+             # In contrast to timectl, "synchronised: yes" is not grepped.
+             # Reason: openntpd syncs only if large time corrections are not required or -s is passed.
+             #         This might be not intended by the administrator (-s is NOT the default!)
+-            FIND=$(${PSBINARY} ax | ${GREPBINARY} "ntpd: ntp engine" | ${GREPBINARY} -v "grep")
++            FIND=$(${PSBINARY} ${PSOPTIONS} | ${GREPBINARY} "ntpd: ntp engine" | ${GREPBINARY} -v "grep")
+             # Status code 0 is when communication over the socket is successful
+             if ${NTPCTLBINARY} -s status > /dev/null 2> /dev/null; then
+                 FOUND=1; NTP_DAEMON_RUNNING=1; NTP_CONFIG_TYPE_DAEMON=1; NTP_DAEMON="openntpd"
+@@ -107,7 +111,11 @@
+         # Check running processes (ntpd from ntp.org)
+         # As checking by process name is ambiguous (openntpd has the same process name),
+         # this check will be skipped if openntpd has been found.
+-        FIND=$(${PSBINARY} ax | ${GREPBINARY} "ntpd" | ${GREPBINARY} -v "dntpd" | ${GREPBINARY} -v "ntpd: " | ${GREPBINARY} -v "grep")
++        PSOPTIONS="ax"
++        if [ "${SHELL_IS_BUSYBOX}" -eq 1 ]; then
++            PSOPTIONS="-w"
++        fi
++        FIND=$(${PSBINARY} ${PSOPTIONS} | ${GREPBINARY} "ntpd" | ${GREPBINARY} -v "dntpd" | ${GREPBINARY} -v "ntpd: " | ${GREPBINARY} -v "grep")
+         if [ "${NTP_DAEMON}" != "openntpd" ] && [  -n "${FIND}" ]; then
+             FOUND=1; NTPD_RUNNING=1; NTP_DAEMON_RUNNING=1; NTP_CONFIG_TYPE_DAEMON=1
+             NTP_DAEMON="ntpd"
+@@ -122,7 +130,12 @@
+         fi
+ 
+         # Check timedate daemon (systemd)
+-        if IsRunning 'systemd-timesyncd'; then
++        PSOPTIONS="ax"
++        if [ "${SHELL_IS_BUSYBOX}" -eq 1 ]; then
++            PSOPTIONS="-w"
++        fi
++        FIND=$(${PSBINARY} ${PSOPTIONS} | ${GREPBINARY} "systemd-timesyncd" | ${GREPBINARY} -v "grep")
++        if [  -n "${FIND}" ]; then
+             FOUND=1; NTP_DAEMON_RUNNING=1; NTP_CONFIG_TYPE_DAEMON=1; NTP_DAEMON="systemd-timesyncd"
+             Display --indent 2 --text "- NTP daemon found: systemd (timesyncd)" --result "${STATUS_FOUND}" --color GREEN
+             LogText "Result: Found running systemd-timesyncd in process list"

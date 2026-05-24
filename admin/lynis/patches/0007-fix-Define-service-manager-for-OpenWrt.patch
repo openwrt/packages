@@ -1,0 +1,32 @@
+From 2e0f28695e97908d4c7928f7348b812583ef9488 Mon Sep 17 00:00:00 2001
+From: macie <macie@users.noreply.github.com>
+Date: Sun, 23 Mar 2025 20:39:16 +0100
+Subject: [PATCH 7/9] fix: Define service manager for OpenWrt
+
+OpenWrt uses `procd` as a service manager (see: <https://openwrt.org/docs/techref/procd>).
+
+This fixes exception "Unknown service manager" returned by BOOT-5104 test.
+---
+ include/tests_boot_services | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+--- a/include/tests_boot_services
++++ b/include/tests_boot_services
+@@ -65,6 +65,7 @@
+     # runit           - Used by Artix, Devuan, Dragora and Void
+     # systemd         - Common option with more Linux distros implementing it
+     # upstart         - Used by Debian/Ubuntu
++    # procd           - Used by OpenWrt
+     Register --test-no BOOT-5104 --weight L --network NO --category security --description "Determine service manager"
+     if [ ${SKIPTEST} -eq 0 ]; then
+         BOOT_LOADER_SEARCHED=1
+@@ -114,6 +115,9 @@
+                                 openrc-init)
+                                     SERVICE_MANAGER="openrc"
+                                 ;;
++                                procd)
++                                    SERVICE_MANAGER="procd"
++                                ;;
+                                 *)
+                                     CONTAINS_SYSTEMD=$(echo ${SHORTNAME} | ${GREPBINARY} "systemd")
+                                     if [ -n "${CONTAINS_SYSTEMD}" ]; then
