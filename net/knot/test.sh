@@ -61,7 +61,7 @@ knot-keymgr)
 	# storage backend and DNSSEC bootstrap code paths.
 	tmp=$(mktemp -d)
 	trap 'rm -rf "$tmp"' EXIT
-	keymgr -d "$tmp" init
+	keymgr -D "$tmp" init
 	;;
 
 knot-libs|knot-libzscanner|knot-tests)

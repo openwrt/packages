@@ -1,0 +1,42 @@
+meson.build: use bare SONAME for libknot/libzscanner ffi.load()
+
+Upstream derives lib{knot,zscanner}_SONAME (baked into kresd via
+kresconfig.h and pushed to Lua at startup) by joining the pkg-config
+"libdir" variable with the SONAME. For cross-builds that produces a
+path inside the OpenWrt staging dir (e.g.
+/builder/staging_dir/target-x86_64_musl/usr/lib/libknot.so.16), which
+ends up in the installed kresd binary. At runtime ffi.load() then
+fails with "No such file or directory" because the path doesn't exist
+on the target.
+
+Drop the libdir prefix and pass only the bare SONAME so the dynamic
+linker resolves it through the standard search path (/usr/lib on
+OpenWrt), matching how libraries are looked up everywhere else.
+
+Signed-off-by: Alexandru Ardelean <alex@shruggie.ro>
+
+--- a/meson.build
++++ b/meson.build
+@@ -300,18 +300,11 @@ else
+   conf_data.set('DBG_ASSERTION_FORK', '(5 * 60 * 1000) /* five minutes */')
+ endif
+
+-# Getting *runtime* path to knot-dns libs is surprisingly difficult.
+-# Partially it's because meson isn't meant for general-purpose programming.
++# Use the bare SONAME (no libdir prefix) so ffi.load() resolves the
++# library through the dynamic linker's standard search path at runtime.
++# Embedding a build-time libdir breaks cross-compiled installs.
+ foreach libname, lib: { 'libknot': libknot, 'libzscanner': libzscanner }
+-  l = lib.get_variable(pkgconfig: 'libdir')
+-  p = lib.get_variable(pkgconfig: 'prefix')
+-  ep = lib.get_variable(pkgconfig: 'exec_prefix')
+-  if ep != p # replace `p` with `ep` at the start of `l`
+-    assert(l.startswith(p))
+-    p_len = run_command('sh', '-c', 'echo "' + p + '" | wc -c', check: true).stdout().to_int()
+-    l = ep / l.substring(p_len)
+-  endif
+-  conf_data.set_quoted(libname + '_SONAME', l / lib.get_variable(pkgconfig: 'soname'))
++  conf_data.set_quoted(libname + '_SONAME', lib.get_variable(pkgconfig: 'soname'))
+ endforeach
+
+ kresconfig = configure_file(
