@@ -14,6 +14,11 @@ config STRONGSWAN_ROUTING_TABLE_PRIO
 	prompt "Set the IPsec routing table priority"
 	default "220"
 
+config STRONGSWAN_INCLUDE_INSECURE
+	bool
+	prompt "Include cryptographically weak protocols"
+	default !PACKAGE_libopenssl
+
 comment "Packages"
 
 endif
