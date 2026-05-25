@@ -1,0 +1,8 @@
+#!/bin/sh
+# Runs once after package installation (on next boot or via uci-defaults trigger).
+# Enables and starts the uci-git-backup service.
+
+/etc/init.d/uci-git-backup enable
+/etc/init.d/uci-git-backup start
+
+exit 0

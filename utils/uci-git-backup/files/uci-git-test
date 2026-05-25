@@ -1,0 +1,178 @@
+#!/bin/sh
+
+SSH_KEY_FILE="/etc/uci-git-backup/id_rsa"
+TMP_PREFIX="/tmp/uci-git-test.$$"
+
+cleanup() {
+	rm -f "$TMP_PREFIX".out "$TMP_PREFIX".err "$TMP_PREFIX"-branch.out "$TMP_PREFIX"-branch.err
+}
+
+die() {
+	printf 'ERROR: %s\n' "$*" >&2
+	cleanup
+	exit 1
+}
+
+explain_git_error() {
+	case "$1" in
+		*'error in libcrypto: unsupported'*)
+			printf '%s\n%s\n' \
+				"$1" \
+				'Router SSH client could not load the private key. Use an unencrypted PEM RSA/ECDSA key, or convert an existing key with: ssh-keygen -p -m PEM -f <keyfile>'
+			;;
+		*)
+			printf '%s\n' "$1"
+			;;
+	esac
+}
+
+run_with_timeout() {
+	RUN_TIMEOUT_SECS="$1"
+	shift
+	RUN_TIMEOUT_MARKER="/tmp/uci-git-test-timeout.$$.$(date +%s)"
+	rm -f "$RUN_TIMEOUT_MARKER"
+
+	"$@" &
+	RUN_TIMEOUT_CMD_PID=$!
+	(
+		sleep "$RUN_TIMEOUT_SECS"
+		printf '1\n' > "$RUN_TIMEOUT_MARKER"
+		kill -TERM "$RUN_TIMEOUT_CMD_PID" 2>/dev/null || true
+		sleep 1
+		kill -KILL "$RUN_TIMEOUT_CMD_PID" 2>/dev/null || true
+	) &
+	RUN_TIMEOUT_WATCHDOG_PID=$!
+
+	wait "$RUN_TIMEOUT_CMD_PID"
+	RUN_TIMEOUT_STATUS=$?
+	kill "$RUN_TIMEOUT_WATCHDOG_PID" 2>/dev/null || true
+	wait "$RUN_TIMEOUT_WATCHDOG_PID" 2>/dev/null || true
+
+	if [ -f "$RUN_TIMEOUT_MARKER" ]; then
+		rm -f "$RUN_TIMEOUT_MARKER"
+		return 124
+	fi
+
+	rm -f "$RUN_TIMEOUT_MARKER"
+	return "$RUN_TIMEOUT_STATUS"
+}
+
+trap cleanup EXIT INT TERM
+
+CLI_REMOTE_URL_SET=0
+CLI_BRANCH_SET=0
+CLI_AUTH_TYPE_SET=0
+CLI_USERNAME_SET=0
+CLI_PASSWORD_SET=0
+
+while [ "$#" -gt 0 ]; do
+	case "$1" in
+		--remote-url)
+			CLI_REMOTE_URL_SET=1
+			CLI_REMOTE_URL="${2-}"
+			shift 2
+			;;
+		--branch)
+			CLI_BRANCH_SET=1
+			CLI_BRANCH="${2-}"
+			shift 2
+			;;
+		--auth-type)
+			CLI_AUTH_TYPE_SET=1
+			CLI_AUTH_TYPE="${2-}"
+			shift 2
+			;;
+		--username)
+			CLI_USERNAME_SET=1
+			CLI_USERNAME="${2-}"
+			shift 2
+			;;
+		--password)
+			CLI_PASSWORD_SET=1
+			CLI_PASSWORD="${2-}"
+			shift 2
+			;;
+		*)
+			die "Unknown argument: $1"
+			;;
+	esac
+done
+
+. /lib/functions.sh
+config_load uci_git_backup
+
+config_get REMOTE_URL config remote_url ''
+config_get BRANCH     config branch     'main'
+config_get AUTH_TYPE  config auth_type  'password'
+config_get USERNAME   config username   ''
+config_get PASSWORD   config password   ''
+
+[ "$CLI_REMOTE_URL_SET" -eq 0 ] || REMOTE_URL="$CLI_REMOTE_URL"
+[ "$CLI_BRANCH_SET" -eq 0 ] || BRANCH="$CLI_BRANCH"
+[ "$CLI_AUTH_TYPE_SET" -eq 0 ] || AUTH_TYPE="$CLI_AUTH_TYPE"
+[ "$CLI_USERNAME_SET" -eq 0 ] || USERNAME="$CLI_USERNAME"
+[ "$CLI_PASSWORD_SET" -eq 0 ] || PASSWORD="$CLI_PASSWORD"
+
+[ -n "$REMOTE_URL" ] || die "No remote repository URL configured"
+
+export GIT_TERMINAL_PROMPT=0
+
+case "$AUTH_TYPE" in
+	password)
+		[ -n "$USERNAME" ] || [ -z "$PASSWORD" ] || \
+			die "HTTPS password/token auth requires a username. For PAT login, use your Git username plus the token as the password."
+
+		if [ -n "$USERNAME" ]; then
+			PROTO="${REMOTE_URL%%://*}://"
+			REST="${REMOTE_URL#*://}"
+			REST="${REST#*@}"
+			if [ -n "$PASSWORD" ]; then
+				ENC_PASS=$(printf '%s' "$PASSWORD" | sed 's/@/%40/g; s/:/%3A/g')
+				AUTH_URL="${PROTO}${USERNAME}:${ENC_PASS}@${REST}"
+			else
+				AUTH_URL="${PROTO}${USERNAME}@${REST}"
+			fi
+		else
+			AUTH_URL="$REMOTE_URL"
+		fi
+		;;
+	ssh)
+		AUTH_URL="$REMOTE_URL"
+		if [ -f "$SSH_KEY_FILE" ]; then
+			export GIT_SSH_COMMAND="ssh -i $SSH_KEY_FILE \
+				-o StrictHostKeyChecking=no \
+				-o BatchMode=yes \
+				-o ConnectTimeout=15"
+		else
+			die "SSH key file not found at $SSH_KEY_FILE. Upload your key in LuCI."
+		fi
+		;;
+	*)
+		die "Unsupported authentication method: $AUTH_TYPE"
+		;;
+esac
+
+printf 'Testing remote reachability for %s\n' "$REMOTE_URL"
+printf 'Configured branch: %s\n' "$BRANCH"
+
+if run_with_timeout 20 git -c http.connectTimeout=15 ls-remote "$AUTH_URL" >"$TMP_PREFIX".out 2>"$TMP_PREFIX".err; then
+	printf 'Remote reachable and authentication succeeded.\n'
+	if run_with_timeout 20 git -c http.connectTimeout=15 ls-remote --heads "$AUTH_URL" "$BRANCH" >"$TMP_PREFIX"-branch.out 2>"$TMP_PREFIX"-branch.err; then
+		if [ -s "$TMP_PREFIX"-branch.out ]; then
+			printf 'Configured branch exists on remote: %s\n' "$BRANCH"
+		else
+			printf 'Configured branch does not exist on remote yet: %s\n' "$BRANCH"
+		fi
+	fi
+	exit 0
+fi
+
+TEST_STATUS=$?
+
+if [ "$TEST_STATUS" -eq 124 ]; then
+	die "Connection test failed: remote connection timed out after 20 seconds"
+fi
+
+ERR_MSG=$(cat "$TMP_PREFIX".err 2>/dev/null || true)
+ERR_MSG=$(explain_git_error "${ERR_MSG:-git ls-remote failed}")
+die "Connection test failed: $ERR_MSG"

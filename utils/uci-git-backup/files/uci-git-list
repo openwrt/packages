@@ -1,0 +1,16 @@
+#!/bin/sh
+
+. /lib/functions.sh
+config_load uci_git_backup
+
+config_get REPO_PATH config repo_path '/etc/uci-git-backup/repo'
+
+[ -d "$REPO_PATH/.git" ] || {
+	echo "No local backup repository found. Run a backup first." >&2
+	exit 1
+}
+
+git -C "$REPO_PATH" log --pretty=format:'%H	%ai	%s' -30 2>/dev/null || {
+	echo "Failed to read backup history from $REPO_PATH" >&2
+	exit 1
+}
