@@ -10,7 +10,7 @@ Subject: [PATCH 4/4] fixup! Check if adding new zone can replace an automatic
 
 --- a/bin/tests/system/addzone/tests.sh
 +++ b/bin/tests/system/addzone/tests.sh
-@@ -84,6 +84,23 @@ n=$((n + 1))
+@@ -104,6 +104,23 @@ n=$((n + 1))
  if [ $ret != 0 ]; then echo_i "failed"; fi
  status=$((status + ret))
  
