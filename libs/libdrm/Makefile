@@ -23,7 +23,8 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_libdrm-nouveau \
 	CONFIG_PACKAGE_libdrm-omap \
 	CONFIG_PACKAGE_libdrm-radeon \
-	CONFIG_PACKAGE_libdrm-tegra
+	CONFIG_PACKAGE_libdrm-tegra \
+	CONFIG_PACKAGE_libdrm-tests
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/meson.mk
@@ -135,6 +136,22 @@ $(call Package/libdrm/description/Default)
 This package provides the library with functions for nVidia Tegra SoCs.
 endef
 
+define Package/libdrm-tests
+$(call Package/libdrm/Default)
+  SECTION:=utils
+  CATEGORY:=Utilities
+  SUBMENU:=Video
+  TITLE+= test/utility programs (modetest, kmstest, ...)
+  DEPENDS:=+libdrm
+endef
+
+define Package/libdrm-tests/description
+$(call Package/libdrm/description/Default)
+
+Test and utility programs shipped with libdrm:
+  drmdevice, modetest, modeprint, proptest, vbltest.
+endef
+
 MESON_ARGS += \
 	-Dintel=$(if $(CONFIG_PACKAGE_libdrm-intel),en,dis)abled \
 	-Damdgpu=$(if $(CONFIG_PACKAGE_libdrm-amdgpu),en,dis)abled \
@@ -151,7 +168,7 @@ MESON_ARGS += \
 	-Dman-pages=disabled \
 	-Dvalgrind=disabled \
 	-Dfreedreno-kgsl=false \
-	-Dinstall-test-programs=false \
+	-Dinstall-test-programs=$(if $(CONFIG_PACKAGE_libdrm-tests),true,false) \
 	-Dudev=false
 
 define Build/InstallDev
@@ -205,6 +222,15 @@ define Package/libdrm-tegra/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdrm_tegra.so.* $(1)/usr/lib/
 endef
 
+define Package/libdrm-tests/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/drmdevice $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/modeprint $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/modetest $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/proptest $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/vbltest $(1)/usr/bin/
+endef
+
 $(eval $(call BuildPackage,libdrm))
 $(eval $(call BuildPackage,libdrm-amdgpu))
 $(eval $(call BuildPackage,libdrm-etnaviv))
@@ -213,3 +239,4 @@ $(eval $(call BuildPackage,libdrm-nouveau))
 $(eval $(call BuildPackage,libdrm-omap))
 $(eval $(call BuildPackage,libdrm-radeon))
 $(eval $(call BuildPackage,libdrm-tegra))
+$(eval $(call BuildPackage,libdrm-tests))
