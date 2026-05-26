@@ -135,10 +135,16 @@ f_load() {
 
 	# load dns backend and fetch utility
 	#
-	if [ "${adb_action}" != "report" ] && [ "${adb_action}" != "mail" ]; then
+	case "${adb_action}" in
+	"report" | "mail") ;;
+	"search")
+		f_dns
+		;;
+	*)
 		f_dns
 		f_fetch
-	fi
+		;;
+	esac
 
 	# check if reporting is enabled and tcpdump is available
 	#
@@ -497,7 +503,7 @@ f_dns() {
 
 	# determine final dns file directory based on dns shifting
 	#
-	if [ "${adb_dnsshift}" = "0" ]; then
+	if [ "${adb_dnsshift}" = "0" ] || [ -z "${adb_backupdir}" ]; then
 		adb_finaldir="${adb_dnsdir}"
 		[ -L "${adb_dnsdir}/${adb_dnsfile}" ] && "${adb_rmcmd}" -f "${adb_dnsdir}/${adb_dnsfile}"
 	else
@@ -510,11 +516,13 @@ f_dns() {
 		for dir in "${adb_dnsdir:-"/tmp"}" "${adb_backupdir:-"/tmp"}"; do
 			[ ! -d "${dir}" ] && mkdir -p "${dir}"
 		done
-		if [ "${adb_dnsflush}" = "1" ] || [ "${free_mem:-"0"}" -lt "64" ]; then
-			printf '%b' "${adb_dnsheader}" >"${adb_finaldir}/${adb_dnsfile}"
-			f_dnsup
-		elif [ ! -f "${adb_finaldir}/${adb_dnsfile}" ]; then
-			printf '%b' "${adb_dnsheader}" >"${adb_finaldir}/${adb_dnsfile}"
+		if [ "${adb_action}" != "search" ] && [ "${adb_action}" != "report" ]; then
+			if [ "${adb_dnsflush}" = "1" ] || [ "${free_mem:-"0"}" -lt "64" ]; then
+				printf '%b' "${adb_dnsheader}" >"${adb_finaldir}/${adb_dnsfile}"
+				f_dnsup
+			elif [ ! -f "${adb_finaldir}/${adb_dnsfile}" ]; then
+				printf '%b' "${adb_dnsheader}" >"${adb_finaldir}/${adb_dnsfile}"
+			fi
 		fi
 	fi
 
@@ -1456,12 +1464,13 @@ f_switch() {
 # search blocklist for certain (sub-)domains
 #
 f_search() {
-	local rc search res result tmp_result prefix suffix field search_start search_end search_timeout=30 domain="${1}" tld="${1#*.}"
+	local rc cnt res search result result_tmp result_flag result_tc backup_tmp prefix suffix field search_start search_end search_timeout="90" domain="${1}" tld="${1#*.}"
 
-	# prepare result file
+	# prepare result files
 	#
-	tmp_result="${adb_rundir}/adblock.search.tmp"
 	result="${adb_rundir}/adblock.search"
+	result_tmp="${adb_rundir}/adblock.search.tmp"
+	result_flag="${adb_rundir}/adblock.search.flag"
 
 	# input validation
 	#
@@ -1520,58 +1529,78 @@ f_search() {
 		;;
 	esac
 
-	# initialize tmp_result and start search
+	# initialize result_tmp and start search
 	#
-	: >"${tmp_result}"
+	: >"${result_tmp}"
 	read -r search_start _ <"/proc/uptime"
 	search_start="${search_start%.*}"
 
-	# search recursively for domain and its parent domains until tld is reached
+	# search recursively for max. 3 domain and its parent domains until tld is reached
 	#
 	while :; do
 		search="${domain//./\\.}"
-		res="$("${adb_awkcmd}" -F '/|\"|\t| ' "/^(${prefix}${search}${suffix})$/{i++;if(i<=9){printf \"  + %s\n\",\$${field}}else if(i==10){printf \"  + %s\n\",\"[...]\";exit}}" "${adb_finaldir}/${adb_dnsfile}")"
-		printf '%s\n%s\n%s\n' ":::" "::: domain '${domain}' in active blocklist" ":::" >>"${tmp_result}"
-		printf '%s\n\n' "${res:-"  - no match"}" >>"${tmp_result}"
+		res="$("${adb_awkcmd}" -F '/|\"|\t| ' "/^(${prefix}${search}${suffix})$/{i++;if(i<=3){printf \"  + %s\n\",\$${field}}else if(i==4){printf \"  + %s\n\",\"[...]\";exit}}" "${adb_finaldir}/${adb_dnsfile}")"
+		printf '%s\n%s\n%s\n' ":::" "::: domain '${domain}' in active blocklist" ":::" >>"${result_tmp}"
+		printf '%s\n\n' "${res:-"  - no match"}" >>"${result_tmp}"
 		[ "${domain}" = "${tld}" ] && break
 		domain="${tld}"
 		tld="${domain#*.}"
 	done
 
-	# search exactly for domain in backup files and local block-/allowlist
+	# search exactly for the given domain in backup files and local block-/allowlist
 	#
 	if [ -d "${adb_backupdir}" ]; then
 		search="${1//./\\.}"
-		printf '%s\n%s\n%s\n' ":::" "::: domain '${1}' in backups and in local block-/allowlist" ":::" >>"${tmp_result}"
+		printf '%s\n%s\n%s\n' ":::" "::: domain '${1}' in backups and in local block-/allowlist" ":::" >>"${result_tmp}"
+		"${adb_rmcmd}" -f "${result_flag}" "${adb_rundir}"/adblock.search.frag.*
+		result_tc=""
+		cnt="1"
 		for file in "${adb_backupdir}/adb_list".*.gz "${adb_blocklist}" "${adb_allowlist}"; do
-			suffix="${file##*.}"
-			if [ "${suffix}" = "gz" ]; then
-				if [ "${adb_tld}" = "1" ]; then
-					"${adb_zcatcmd}" "${file}" 2>>"${adb_errorlog}" |
-						"${adb_awkcmd}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' |
-						"${adb_awkcmd}" -v f="${file##*/}" "BEGIN{rc=1};/^($search|.*\\.${search})$/{i++;if(i<=3){printf \"  + %-30s%s\n\",f,\$1;rc=0}else if(i==4){printf \"  + %-30s%s\n\",f,\"[...]\"}};END{exit rc}" >>"${tmp_result}"
+			read -r search_end _ </proc/uptime
+			if [ "$((${search_end%.*} - search_start))" -gt "${search_timeout}" ]; then
+				result_tc="1"
+				break
+			fi
+
+			# parallel search in backup files and local block-/allowlist,
+			# exit as soon as a match is found or after 3 matches per file, if more matches are found print truncated result and stop searching further files
+			(
+				backup_tmp="${adb_rundir}/adblock.search.frag.$$.${cnt}"
+				suffix="${file##*.}"
+				if [ "${suffix}" = "gz" ]; then
+					if [ "${adb_tld}" = "1" ]; then
+						"${adb_zcatcmd}" "${file}" 2>>"${adb_errorlog}" |
+							"${adb_awkcmd}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' |
+							"${adb_awkcmd}" -v f="${file##*/}" "BEGIN{rc=1};/^($search|.*\\.${search})\$/{i++;if(i<=3){printf \"  + %-30s%s\n\",f,\$1;rc=0}else if(i==4){printf \"  + %-30s%s\n\",f,\"[...]\"}};END{exit rc}" >"${backup_tmp}"
+					else
+						"${adb_zcatcmd}" "${file}" 2>>"${adb_errorlog}" |
+							"${adb_awkcmd}" -v f="${file##*/}" "BEGIN{rc=1};/^($search|.*\\.${search})\$/{i++;if(i<=3){printf \"  + %-30s%s\n\",f,\$1;rc=0}else if(i==4){printf \"  + %-30s%s\n\",f,\"[...]\"}};END{exit rc}" >"${backup_tmp}"
+					fi
+					rc="${?}"
 				else
-					"${adb_zcatcmd}" "${file}" 2>>"${adb_errorlog}" |
-						"${adb_awkcmd}" -v f="${file##*/}" "BEGIN{rc=1};/^($search|.*\\.${search})$/{i++;if(i<=3){printf \"  + %-30s%s\n\",f,\$1;rc=0}else if(i==4){printf \"  + %-30s%s\n\",f,\"[...]\"}};END{exit rc}" >>"${tmp_result}"
+					"${adb_awkcmd}" -v f="${file##*/}" "BEGIN{rc=1};/^($search|.*\\.${search})\$/{i++;if(i<=3){printf \"  + %-30s%s\n\",f,\$1;rc=0}else if(i==4){printf \"  + %-30s%s\n\",f,\"[...]\"}};END{exit rc}" "${file}" >"${backup_tmp}"
+					rc="${?}"
 				fi
-				rc="${?}"
-			else
-				"${adb_awkcmd}" -v f="${file##*/}" "BEGIN{rc=1};/^($search|.*\\.${search})$/{i++;if(i<=3){printf \"  + %-30s%s\n\",f,\$1;rc=0}else if(i==4){printf \"  + %-30s%s\n\",f,\"[...]\"}};END{exit rc}" "${file}" >>"${tmp_result}"
-				rc="${?}"
-			fi
-			if [ "${rc}" = "0" ]; then
-				res="true"
-				read -r search_end _ <"/proc/uptime"
-				search_end="${search_end%.*}"
-				if [ "$((search_end - search_start))" -gt "${search_timeout}" ]; then
-					printf '%s\n\n' "  - [...]" >>"${tmp_result}"
-					break
+				if [ "${rc}" = "0" ]; then
+					: >"${result_flag}"
+					"${adb_catcmd}" "${backup_tmp}" >>"${result_tmp}"
 				fi
-			fi
+				"${adb_rmcmd}" -f "${backup_tmp}"
+			) &
+			[ "${cnt}" -ge "${adb_cores}" ] && wait -n
+			cnt="$((cnt + 1))"
 		done
-		[ "${res}" != "true" ] && printf '%s\n\n' "  - no match" >>"${tmp_result}"
+		wait
+
+		# if result_tc is set, it means that the search was stopped due to timeout and the result is truncated
+		#
+		if [ -n "${result_tc}" ]; then
+			printf '%s\n\n' "  - [...]" >>"${result_tmp}"
+		elif [ ! -f "${result_flag}" ]; then
+			printf '%s\n\n' "  - no match" >>"${result_tmp}"
+		fi
 	fi
-	"${adb_mvcmd}" -f "${tmp_result}" "${result}"
+	"${adb_mvcmd}" -f "${result_tmp}" "${result}"
 	"${adb_catcmd}" "${result}" 2>>"${adb_errorlog}"
 }
 
@@ -1789,7 +1818,7 @@ f_main() {
 			(
 				f_list safesearch "${entry}"
 			) &
-			[ "${cnt}" -gt "${adb_cores}" ] && wait -n
+			[ "${cnt}" -ge "${adb_cores}" ] && wait -n
 			cnt="$((cnt + 1))"
 		done
 		wait
@@ -2004,7 +2033,7 @@ f_main() {
 				f_list prepare
 			) &
 		fi
-		[ "${cnt}" -gt "${adb_cores}" ] && wait -n
+		[ "${cnt}" -ge "${adb_cores}" ] && wait -n
 		cnt="$((cnt + 1))"
 	done
 	wait
@@ -2122,7 +2151,7 @@ f_report() {
 					}
 				' >"${report_raw}.${cnt}"
 			) &
-			[ "${cnt}" -gt "${adb_cores}" ] && wait -n
+			[ "${cnt}" -ge "${adb_cores}" ] && wait -n
 			cnt="$((cnt + 1))"
 		done
 		wait
@@ -2296,7 +2325,7 @@ f_report() {
 					"${adb_fetchcmd}" ${adb_geoparm} "${adb_geourl}/${ip}" 2>>"${adb_errorlog}" |
 						"${adb_awkcmd}" -v feed="homeIP" '{printf ",{\"%s\": %s}\n",feed,$0}' >"${map_jsn}.${cnt}"
 				) &
-				[ "${cnt}" -gt "${adb_cores}" ] && wait -n
+				[ "${cnt}" -ge "${adb_cores}" ] && wait -n
 				cnt="$((cnt + 1))"
 			done
 			wait
@@ -2320,7 +2349,7 @@ f_report() {
 									"${adb_fetchcmd}" ${adb_geoparm} "${adb_geourl}/${domain}" 2>>"${adb_errorlog}" |
 										"${adb_awkcmd}" -v feed="${domain}" '{printf ",{\"%s\": %s}\n",feed,$0}' >"${map_jsn}.${cnt}"
 								) &
-								[ "${cnt}" -gt "${adb_cores}" ] && wait -n
+								[ "${cnt}" -ge "${adb_cores}" ] && wait -n
 								cnt="$((cnt + 1))"
 								[ "${cnt}" -ge "45" ] && break
 								;;
