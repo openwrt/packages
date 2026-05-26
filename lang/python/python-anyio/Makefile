@@ -14,8 +14,10 @@ PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
 HOST_BUILD_DEPENDS:= \
-	python3/host \
-	python-idna/host
+	python-idna/host \
+	python-setuptools-scm/host
+
+PKG_BUILD_DEPENDS:=python-setuptools-scm/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
