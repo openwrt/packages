@@ -14,9 +14,11 @@ PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.md
 
 HOST_BUILD_DEPENDS:= \
-	python3/host \
 	python-click/host \
-	python-h11/host
+	python-h11/host \
+	python-hatchling/host
+
+PKG_BUILD_DEPENDS:=python-hatchling/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
