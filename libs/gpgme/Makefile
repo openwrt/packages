@@ -80,7 +80,7 @@ define Build/InstallDev
 	$(SED) \
 		's,^\(prefix\|exec_prefix\)=.*,\1=$(STAGING_DIR)/usr,g' \
 		$(2)/bin/gpgme-config
-	$(LN) -sf $(STAGING_DIR)/host/bin/gpgme-config $(1)/usr/bin/gpgme-config
+	$(LN) $(STAGING_DIR)/host/bin/gpgme-config $(1)/usr/bin/gpgme-config
 endef
 
 define Package/libgpgme/install
