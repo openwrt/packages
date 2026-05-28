@@ -41,7 +41,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/Python-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/Python-$(PKG_VERSION)
 
 PKG_BUILD_DEPENDS:=bluez python3/host python-build/host python-installer/host python-wheel/host
-HOST_BUILD_DEPENDS:=bzip2/host libffi/host
+HOST_BUILD_DEPENDS:=bzip2/host libffi/host ncurses/host
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
@@ -293,10 +293,17 @@ endif
 # HOST_MAKE_VARS += \
 # 	PYTHONSTRICTEXTENSIONBUILD=1
 
-# Bypass configure test
+# Bypass configure test. Force every curses header check Python's
+# configure.ac runs to "no" so the host distro's headers stay out.
 HOST_CONFIGURE_VARS += \
 	py_cv_module__tkinter=n/a \
-	ac_cv_working_openssl_hashlib=yes
+	ac_cv_working_openssl_hashlib=yes \
+	ac_cv_header_curses_h=no \
+	ac_cv_header_ncurses_h=no \
+	ac_cv_header_panel_h=no \
+	ac_cv_header_ncursesw_curses_h=no \
+	ac_cv_header_ncursesw_ncurses_h=no \
+	ac_cv_header_ncursesw_panel_h=no
 
 ifeq ($(HOST_OS),Darwin)
 HOST_CONFIGURE_VARS += \
@@ -314,9 +321,8 @@ HOST_CONFIGURE_ARGS += \
 	--with-system-expat \
 	--without-cxx-main
 
-# ncurses and uuid have seemingly unsolvable issues with pkgconfig
+# uuid has seemingly unsolvable issues with pkgconfig
 HOST_CFLAGS += \
-	-I$(STAGING_DIR_HOSTPKG)/include/ncursesw \
 	-I$(STAGING_DIR_HOST)/include/uuid
 
 define Host/Configure
