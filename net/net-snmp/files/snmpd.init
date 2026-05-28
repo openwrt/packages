@@ -455,6 +455,7 @@ start_service() {
 	procd_append_param command -C -c "$CONFIGFILE"
 	config_foreach snmpd_configure_logging log
 	procd_set_param respawn
+	procd_set_param file /etc/config/snmpd
 
 	for iface in $(ls /sys/class/net 2>/dev/null); do
 		procd_append_param netdev "$iface"
