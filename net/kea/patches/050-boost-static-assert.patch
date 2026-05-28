@@ -8,3 +8,13 @@
  
  #include <log4cplus/logger.h>
  
+--- a/src/lib/dns/rdataclass.cc
++++ b/src/lib/dns/rdataclass.cc
+@@ -24,6 +24,7 @@
+ #include <dns/txt_like.h>
+ #include <util/buffer.h>
+ #include <util/encode/encode.h>
++#include <boost/static_assert.hpp>
+ 
+ #include <cerrno>
+ #include <cstring>
