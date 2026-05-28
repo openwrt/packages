@@ -1,12 +1,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ucode-utest
-PKG_VERSION:=0.9.0
+PKG_VERSION:=1.0.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=@GITHUB/m00qek/utest/v$(PKG_VERSION)
-PKG_HASH:=7c750dd3006c6b85886eb559842e5b5c5487f22b679ddced9d893f18eafc2bf9
+PKG_SOURCE_URL:=https://codeload.github.com/m00qek/utest/tar.gz/refs/tags/v$(PKG_VERSION)
+PKG_HASH:=b53fed829dd05cc513d18b8c1dae7e0ea3737aa5b68524ed192231bae97fa531
+PKG_SOURCE_SUBDIR:=utest-$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
 
 PKG_MAINTAINER:=António Mora <m00qek@gmail.com>
 PKG_LICENSE:=MIT

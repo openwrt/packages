@@ -7,7 +7,7 @@ case "$1" in
 import { describe, it, assert } from 'utest';
 describe("smoke", () => {
     it("framework is installed correctly", () => {
-        assert.equal(1 + 1, 2);
+        assert.match(2, 1 + 1);
     });
 });
 EOF
