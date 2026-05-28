@@ -1,6 +1,6 @@
 --- a/src/event/quic/ngx_event_quic_protection.c
 +++ b/src/event/quic/ngx_event_quic_protection.c
-@@ -510,7 +510,7 @@ ngx_quic_crypto_common(ngx_quic_secret_t
+@@ -520,7 +520,7 @@ ngx_quic_crypto_common(ngx_quic_secret_t
          }
      }
  
