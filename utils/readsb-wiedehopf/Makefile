@@ -24,6 +24,7 @@ PKG_MAINTAINER:=Dr Bill Mcilhargey <contributor@mcilhargey.com>
 PKG_BUILD_DEPENDS:=!USE_GLIBC:argp-standalone
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_FLAGS:=gc-sections lto
+PKG_FORTIFY_SOURCE:=0
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -79,16 +80,12 @@ define Package/viewadsb-wiedehopf/description
   list of received aircraft.
 endef
 
-# Drop -D_FORTIFY_SOURCE=* from TARGET_CFLAGS; upstream sets its own
-# and builds with -Werror, so OpenWrt's default would clash.
-READSB_OPTIMIZE_CFLAGS := $(filter-out -D_FORTIFY_SOURCE=%,$(TARGET_CFLAGS))
-
 MAKE_FLAGS += \
 	BLADERF=no \
 	HACKRF=no \
 	PLUTOSDR=no \
 	SOAPYSDR=no \
-	OPTIMIZE="$(READSB_OPTIMIZE_CFLAGS)" \
+	OPTIMIZE="$(TARGET_CFLAGS)" \
 	RTLSDR=yes \
 	UNAME="Linux"
 
