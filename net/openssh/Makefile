@@ -159,7 +159,7 @@ endef
 
 define Package/openssh-sk-helper
 	$(call Package/openssh/Default)
-	DEPENDS+= +libopenssl +zlib +libfido2
+	DEPENDS+= +libopenssl +zlib +PACKAGE_openssh-sk-helper:libfido2
 	TITLE+= helper for FIDO U2F and FIDO2 hardware token support
 endef
 
