@@ -102,6 +102,7 @@ ban_packages=""
 ban_trigger=""
 ban_resolver=""
 ban_enabled="0"
+ban_confload="0"
 ban_debug="0"
 
 # gather system information
@@ -288,6 +289,8 @@ f_log() {
 f_conf() {
 	local rir ccode region country
 
+	[ "${ban_confload}" = "1" ] && return 0
+
 	config_cb() {
 		option_cb() {
 			local option="${1}" value="${2//\"/\\\"}"
@@ -322,6 +325,7 @@ f_conf() {
 		}
 	}
 	config_load banip
+	ban_confload="1"
 
 	if [ -f "${ban_logreadfile}" ]; then
 		ban_logreadcmd="$(command -v tail)"
@@ -2055,8 +2059,11 @@ f_report() {
 					set_dport="${set_proto}: $(f_trim "${set_dport}")"
 				fi
 				if [ "${ban_nftcount}" = "1" ]; then
-					set_elements="$("${ban_jsoncmd}" -i "${set_jsn}" -l50 -qe '@.nftables[*].set.elem[*][@.counter.packets>0].val' |
-						"${ban_awkcmd}" -F '[ ,]' '{ORS=" ";if($2=="\"range\":"||$2=="\"concat\":")printf"%s, ",$4;else if($2=="\"prefix\":")printf"%s, ",$5;else printf"\"%s\", ",$1}')"
+					"${ban_jsoncmd}" -i "${set_jsn}" -qe '@.nftables[*].set.elem[*][@.counter.packets>0].counter.packets' >"${set_jsn}.cnt"
+					"${ban_jsoncmd}" -i "${set_jsn}" -qe '@.nftables[*].set.elem[*][@.counter.packets>0].val' >"${set_jsn}.val"
+					set_elements="$("${ban_awkcmd}" 'NR==FNR{p[FNR]=$0;next}{print p[FNR]"\t"$0}' "${set_jsn}.cnt" "${set_jsn}.val" |
+						"${ban_sortcmd}" -k1,1nr |
+						"${ban_awkcmd}" -F '\t' 'NR<=50{split($2,a,/[ ,]/);ORS=" ";if(a[2]=="\"range\":"||a[2]=="\"concat\":")printf"%s, ",a[4];else if(a[2]=="\"prefix\":")printf"%s, ",a[5];else printf"\"%s\", ",a[1]}')"
 				fi
 				if [ -n "${set_cntinbound}" ]; then
 					set_inbound="ON"
@@ -2078,7 +2085,7 @@ f_report() {
 					\"port\": \"${set_dport:-"-"}\", \
 					\"set_elements\": [ ${set_elements%%??} ] \
 				}" >"${report_jsn}.${item}"
-				"${ban_rmcmd}" -f "${set_jsn}"
+				"${ban_rmcmd}" -f "${set_jsn}"*
 			) &
 			[ "${cnt}" -gt "${ban_cores}" ] && wait -n
 			cnt="$((cnt + 1))"
