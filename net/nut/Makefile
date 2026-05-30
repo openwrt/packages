@@ -161,21 +161,23 @@ process. Every UPS that is defined in the upsmon.conf configuration file
 is assigned a power value and a type (secondary or primary).
 endef
 
-define Package/nut-upsmon/conffiles
-/etc/config/nut_monitor
-/etc/nut/upsmon.conf
-endef
-
 define Package/nut-upsmon/install
 	$(INSTALL_DIR) $(1)/etc/nut
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/nut-monitor.init $(1)/etc/init.d/nut-monitor
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/upsmon $(1)/usr/sbin/
 	$(INSTALL_BIN) ./files/nutshutdown $(1)/usr/sbin/nutshutdown
+	$(INSTALL_DATA) ./files/nut-monitor-migrate.default $(1)/etc/uci-defaults/80-nut-monitor-migrate
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/nut_monitor $(1)/etc/config/nut_monitor
 	ln -sf /var/etc/nut/upsmon.conf $(1)/etc/nut/upsmon.conf
+endef
+
+define Package/nut-upsmon/conffiles
+/etc/config/nut_monitor
+/etc/nut/upsmon.conf
 endef
 
 define Package/nut-upsmon-sendmail-notify
@@ -287,10 +289,6 @@ other uses that are possible.
 You can alternatively write your own script and save some space.
 endef
 
-define Package/nut-upssched/conffiles
-/etc/nut/upssched.conf
-endef
-
 define Package/nut-upssched/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_DIR) $(1)/usr/sbin
@@ -300,6 +298,10 @@ define Package/nut-upssched/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/upssched $(1)/usr/sbin/
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/nut/upssched.conf.sample $(1)/etc/nut/upssched.conf
 	$(INSTALL_DATA) ./files/nut-sched.default $(1)/etc/uci-defaults/nut-upssched
+endef
+
+define Package/nut-upssched/conffiles
+/etc/nut/upssched.conf
 endef
 
 define Package/nut-web-cgi
@@ -354,13 +356,13 @@ This package contains the service definition for announcing the
 attached UPS via mDNS/DNS-SD.
 endef
 
-define Package/nut-avahi-service/conffiles
-/etc/avahi/services/nut.service
-endef
-
 define Package/nut-avahi-service/install
 	$(INSTALL_DIR) $(1)/etc/avahi/services
 	$(INSTALL_CONF) ./files/nut.service $(1)/etc/avahi/services/
+endef
+
+define Package/nut-avahi-service/conffiles
+/etc/avahi/services/nut.service
 endef
 
 # Dealing with all of the drivers is very repetitive, but the previous
@@ -373,7 +375,7 @@ define DriverPackage
 		$(if $(filter $(1),snmp),DEPENDS+= @NUT_DRIVER_SNMP)
 		$(if $(filter $(1),usb),DEPENDS+= @NUT_DRIVER_USB)
 		$(if $(filter $(1),serial),DEPENDS+= @NUT_DRIVER_SERIAL)
-                $(if $(filter $(1),neon),DEPENDS+= @NUT_DRIVER_NEON)
+		$(if $(filter $(1),neon),DEPENDS+= @NUT_DRIVER_NEON)
         endef
 	# Deliberately empty description in order to trigger a build failure.
 	# It should be overridden by the list below, and when updating to a
