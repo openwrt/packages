@@ -5,7 +5,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=meshtasticd
 PKG_VERSION:=2.7.15
 PKG_SOURCE_VERSION:=v$(PKG_VERSION).567b8ea
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_PROTO:=git
@@ -20,6 +20,7 @@ FRONTEND_HASH:=a34f4360a0486543a698de20de533557492e763ab459fc27fcea95d0495144ed
 PKG_BUILD_DEPENDS:= \
 	python3/host \
 	python-platformio/host \
+	python-pyelftools/host \
 	!USE_GLIBC:argp-standalone
 
 PKG_MAINTAINER:=Austin Lane <vidplace7@gmail.com>, George Sapkin <george@sapk.in>
