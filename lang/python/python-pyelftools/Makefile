@@ -15,10 +15,13 @@ PKG_MAINTAINER:=Austin Lane <vidplace7@gmail.com>
 PKG_LICENSE:=Unlicense
 PKG_LICENSE_FILES:=LICENSE
 
+PKG_BUILD_DEPENDS:=python-setuptools/host
+
 HOST_BUILD_DEPENDS:= \
 	python3/host \
 	python-build/host \
 	python-installer/host \
+	python-setuptools/host \
 	python-wheel/host
 
 include ../pypi.mk
