@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fontconfig
-PKG_VERSION:=2.16.0
-PKG_RELEASE:=2
+PKG_VERSION:=2.17.1
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://www.freedesktop.org/software/fontconfig/release/
-PKG_HASH:=6a33dc555cc9ba8b10caf7695878ef134eeb36d0af366041f639b1da9b6ed220
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE_URL:=https://gitlab.freedesktop.org/fontconfig/fontconfig/-/archive/$(PKG_VERSION)
+PKG_HASH:=bc1a90697eb8ec6c3eed118105ef9cbdfdd676e563905bf1cb571a705598300e
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
-PKG_LICENSE:=
+PKG_LICENSE:=MIT-Modern-Variant
 PKG_LICENSE_FILES:=
 PKG_CPE_ID:=cpe:/a:fontconfig_project:fontconfig
 
