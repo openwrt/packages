@@ -23,6 +23,8 @@ setup_config() {
 	config_get ping_leases  $1 ping_leases "0"
 	config_get split_dns    $1 split_dns "0"
 	config_get default_domain  $1 default_domain ""
+	config_get server_cert  $1 server_cert "/etc/ocserv/server-cert.pem"
+	config_get server_key   $1 server_key "/etc/ocserv/server-key.pem"
 
 	# Enable proxy arp, and make sure that ping leases is set to true in that case,
 	# to prevent conflicts.
@@ -103,6 +105,8 @@ setup_config() {
 	    -e "s~|NETMASK|~$netmask~g" \
 	    -e "s~|IPV6ADDR|~$ip6addr~g" \
 	    -e "s~|ENABLE_IPV6|~$enable_ipv6~g" \
+	    -e "s~|SERVER_CERT|~$server_cert~g" \
+	    -e "s~|SERVER_KEY|~$server_key~g" \
 	    /etc/ocserv/ocserv.conf.template > /var/etc/ocserv.conf
 
 	test -f /etc/ocserv/ocserv.conf.local && cat /etc/ocserv/ocserv.conf.local >> /var/etc/ocserv.conf
@@ -170,9 +174,9 @@ start_service() {
 			--outfile /etc/ocserv/ca.pem >/dev/null 2>&1
 	}
 
-	#generate server certificate/key
+	#generate default server certificate/key
 	[ ! -f /etc/ocserv/server-key.pem ] && [ -x /usr/bin/certtool ] && {
-		logger -t ocserv "Generating server certificate..."
+		logger -t ocserv "Generating default server certificate..."
 		mkdir -p /etc/ocserv/pki/
 		certtool --bits 2048 --generate-privkey --outfile /etc/ocserv/server-key.pem >/dev/null 2>&1
 		echo "cn=$hostname" >/etc/ocserv/pki/server.tmpl
