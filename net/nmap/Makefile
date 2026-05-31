@@ -13,13 +13,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nmap
-PKG_VERSION:=7.95
+PKG_VERSION:=7.99
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Nuno Gonçalves <nunojpg@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://nmap.org/dist/
-PKG_HASH:=e14ab530e47b5afd88f1c8a2bac7f89cd8fe6b478e22d255c5b9bddb7a1c5778
+PKG_HASH:=df512492ffd108e53a27a06f26d8635bbe89e0e569455dc8ffef058c035d51b2
 
 PKG_LICENSE:=NPSL-0.94-or-NPSL-0.95
 PKG_LICENSE_FILES:=LICENSE
@@ -29,7 +29,6 @@ PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=python-setuptools/host
 PKG_INSTALL:=1
 PYTHON3_PKG_BUILD:=0
-PYTHON3_PKG_FORCE_DISTUTILS_SETUP:=1
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python3-package.mk
@@ -147,7 +146,7 @@ CONFIGURE_VARS += \
 	ac_cv_dnet_bsd_bpf=no
 
 PYTHON3_PKG_SETUP_DIR:=ndiff
-PYTHON3_PKG_SETUP_ARGS:=
+PYTHON3_PKG_WHEEL_NAME:=ndiff
 
 define Build/Compile
 	$(call Build/Compile/Default,)
