@@ -688,10 +688,12 @@ gen_dhcp_subnet() {
 	if [ $dynamicdhcp -eq 0 ]; then
 
 		if [ $authoritative -eq 1 ]; then
-			# see:
-			# https://gitlab.isc.org/isc-projects/kea/-/issues/4110
 			# echo " deny unknown-clients;"
-			:
+			json_add_array "client-classes"
+			json_add_object
+			json_add_fields "name:string=REJECT" "test:string=not(member('KNOWN'))"
+			json_close_object
+			json_close_array	# client-classes
 		else
 			# echo " ignore unknown-clients;"
 			json_add_array "client-classes"
