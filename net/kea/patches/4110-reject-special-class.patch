@@ -1,0 +1,1231 @@
+commit 0090d0b61315ebdbf8ebd0c3a594205334c2c501
+Author: Francis Dupont <fdupont@isc.org>
+Date:   Wed Mar 4 15:06:15 2026 +0100
+
+    [#4110] Checkpoint
+
+--- a/src/bin/dhcp4/dhcp4_messages.cc
++++ b/src/bin/dhcp4/dhcp4_messages.cc
+@@ -124,6 +124,7 @@ extern const isc::log::MessageID DHCP4_P
+ extern const isc::log::MessageID DHCP4_PACKET_NAK_0002 = "DHCP4_PACKET_NAK_0002";
+ extern const isc::log::MessageID DHCP4_PACKET_NAK_0003 = "DHCP4_PACKET_NAK_0003";
+ extern const isc::log::MessageID DHCP4_PACKET_NAK_0004 = "DHCP4_PACKET_NAK_0004";
++extern const isc::log::MessageID DHCP4_PACKET_NAK_0005 = "DHCP4_PACKET_NAK_0005";
+ extern const isc::log::MessageID DHCP4_PACKET_OPTIONS_SKIPPED = "DHCP4_PACKET_OPTIONS_SKIPPED";
+ extern const isc::log::MessageID DHCP4_PACKET_PACK = "DHCP4_PACKET_PACK";
+ extern const isc::log::MessageID DHCP4_PACKET_PACK_FAIL = "DHCP4_PACKET_PACK_FAIL";
+@@ -306,6 +307,7 @@ const char* values[] = {
+     "DHCP4_PACKET_NAK_0002", "%1: invalid address %2 requested by INIT-REBOOT",
+     "DHCP4_PACKET_NAK_0003", "%1: failed to advertise a lease, client sent ciaddr %2, requested-ip-address %3",
+     "DHCP4_PACKET_NAK_0004", "%1: failed to grant a lease, client sent ciaddr %2, requested-ip-address %3",
++    "DHCP4_PACKET_NAK_0005", "nacked as member of the special class 'REJECT': %1, %2",
+     "DHCP4_PACKET_OPTIONS_SKIPPED", "%1: An error unpacking an option, caused subsequent options to be skipped: %2",
+     "DHCP4_PACKET_PACK", "%1: preparing on-wire format of the packet to be sent",
+     "DHCP4_PACKET_PACK_FAIL", "%1: preparing on-wire-format of the packet to be sent failed %2",
+--- a/src/bin/dhcp4/dhcp4_messages.h
++++ b/src/bin/dhcp4/dhcp4_messages.h
+@@ -125,6 +125,7 @@ extern const isc::log::MessageID DHCP4_P
+ extern const isc::log::MessageID DHCP4_PACKET_NAK_0002;
+ extern const isc::log::MessageID DHCP4_PACKET_NAK_0003;
+ extern const isc::log::MessageID DHCP4_PACKET_NAK_0004;
++extern const isc::log::MessageID DHCP4_PACKET_NAK_0005;
+ extern const isc::log::MessageID DHCP4_PACKET_OPTIONS_SKIPPED;
+ extern const isc::log::MessageID DHCP4_PACKET_PACK;
+ extern const isc::log::MessageID DHCP4_PACKET_PACK_FAIL;
+--- a/src/bin/dhcp4/dhcp4_messages.mes
++++ b/src/bin/dhcp4/dhcp4_messages.mes
+@@ -799,6 +799,12 @@ identification information. The second a
+ in the ciaddr field. The third argument contains the IPv4 address in the
+ requested-ip-address option (if present).
+ 
++% DHCP4_PACKET_NAK_0005 nacked as member of the special class 'REJECT': %1, %2
++Logged at debug log level 15.
++This message indicates that the server returned a DHCPNAK because the
++incoming query was classified into the special class 'REJECT'. The packet
++details are displayed.
++
+ % DHCP4_PACKET_OPTIONS_SKIPPED %1: An error unpacking an option, caused subsequent options to be skipped: %2
+ Logged at debug log level 50.
+ A debug message issued when an option failed to unpack correctly, making it
+--- a/src/bin/dhcp4/dhcp4_srv.cc
++++ b/src/bin/dhcp4/dhcp4_srv.cc
+@@ -2964,6 +2964,17 @@ Dhcpv4Srv::assignZero(ConstSubnet4Ptr& s
+ }
+ 
+ void
++Dhcpv4Srv::reject(Dhcpv4Exchange& ex) {
++    Pkt4Ptr query = ex.getQuery();
++    Pkt4Ptr resp = ex.getResponse();
++    resp->setType(DHCPNAK);
++    resp->setYiaddr(IOAddress::IPV4_ZERO_ADDRESS());
++    LOG_DEBUG(packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_NAK_0005)
++        .arg(query->getLabel())
++        .arg(query->toText());
++}
++
++void
+ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
+     // Get the pointers to the query and the response messages.
+     Pkt4Ptr query = ex.getQuery();
+@@ -3858,10 +3869,11 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& disc
+         return (Pkt4Ptr());
+     }
+ 
+-    if (MultiThreadingMgr::instance().getMode()) {
++    if (discover->inClass("REJECT")) {
++        reject(ex);
++    } else if (MultiThreadingMgr::instance().getMode()) {
+         // The lease reclamation cannot run at the same time.
+         ReadLockGuard share(alloc_engine_->getReadWriteMutex());
+-
+         assignLease(ex);
+     } else {
+         assignLease(ex);
+@@ -3940,10 +3952,11 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& reque
+     // Note that we treat REQUEST message uniformly, regardless if this is a
+     // first request (requesting for new address), renewing existing address
+     // or even rebinding.
+-    if (MultiThreadingMgr::instance().getMode()) {
++    if (request->inClass("REJECT")) {
++        reject(ex);
++    } else if (MultiThreadingMgr::instance().getMode()) {
+         // The lease reclamation cannot run at the same time.
+         ReadLockGuard share(alloc_engine_->getReadWriteMutex());
+-
+         assignLease(ex);
+     } else {
+         assignLease(ex);
+--- a/src/bin/dhcp4/dhcp4_srv.h
++++ b/src/bin/dhcp4/dhcp4_srv.h
+@@ -252,7 +252,6 @@ private:
+ /// @brief Type representing the pointer to the @c Dhcpv4Exchange.
+ typedef boost::shared_ptr<Dhcpv4Exchange> Dhcpv4ExchangePtr;
+ 
+-
+ /// @brief DHCPv4 server service.
+ ///
+ /// This singleton class represents DHCPv4 server. It contains all
+@@ -701,6 +700,12 @@ protected:
+     /// @return DHCPACK to be sent to the client.
+     Pkt4Ptr processInform(Pkt4Ptr& inform, AllocEngine::ClientContext4Ptr& context);
+ 
++    /// @brief Return a NAK.
++    ///
++    /// Called when the query is in the REJECT class.
++    /// @param ex The exchange.
++    void reject(Dhcpv4Exchange& ex);
++
+     /// @brief Build the configured option list
+     ///
+     /// @note The configured option list is an *ordered* list of
+--- a/src/bin/dhcp6/dhcp6_srv.cc
++++ b/src/bin/dhcp6/dhcp6_srv.cc
+@@ -2786,7 +2786,7 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& qu
+     // (compare to the same status code, but different wording below)
+     if (!subnet) {
+ 
+-        // Insert status code NoAddrsAvail.
++        // Insert status code NoProfixAvail.
+         ia_rsp->addOption(createStatusCode(*query, *ia_rsp, STATUS_NoPrefixAvail,
+                                            "Sorry, no subnet available."));
+         return (ia_rsp);
+@@ -3785,6 +3785,56 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& d
+     return (ia_rsp);
+ }
+ 
++void
++Dhcpv6Srv::reject(const Pkt6Ptr& query, Pkt6Ptr& answer) {
++    LOG_DEBUG(packet6_logger, DBGLVL_PKT_HANDLING, DHCP6_PACKET_REJECT_CLASS)
++        .arg(query->makeLabel(query->getClientId(), 0))
++        .arg(query->toText());
++    // Handle IAs.
++    for (auto const& opt : query->options_) {
++        switch (opt.second->getType()) {
++        case D6O_IA_NA: {
++            OptionPtr answer_opt = rejectIA_NA(query,
++                                               boost::dynamic_pointer_cast<
++                                               Option6IA>(opt.second));
++            if (answer_opt) {
++                answer->addOption(answer_opt);
++            }
++            break;
++        }
++        case D6O_IA_PD: {
++            OptionPtr answer_opt = rejectIA_PD(query,
++                                               boost::dynamic_pointer_cast<
++                                               Option6IA>(opt.second));
++            if (answer_opt) {
++                answer->addOption(answer_opt);
++            }
++            break;
++        }
++        default:
++            break;
++        }
++    }
++}
++
++OptionPtr
++Dhcpv6Srv::rejectIA_NA(const Pkt6Ptr& query, Option6IAPtr ia) {
++    Option6IAPtr ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
++    // Insert status code NoAddrsAvail.
++    ia_rsp->addOption(createStatusCode(*query, *ia_rsp, STATUS_NoAddrsAvail,
++                                       "Server rejected this request"));
++    return (ia_rsp);
++}
++
++OptionPtr
++Dhcpv6Srv::rejectIA_PD(const Pkt6Ptr& query, Option6IAPtr ia) {
++    Option6IAPtr ia_rsp(new Option6IA(D6O_IA_PD, ia->getIAID()));
++    // Insert status code NoPrefixAvail.
++    ia_rsp->addOption(createStatusCode(*query, *ia_rsp, STATUS_NoPrefixAvail,
++                                       "Server rejected this request"));
++    return (ia_rsp);
++}
++
+ Pkt6Ptr
+ Dhcpv6Srv::processSolicit(AllocEngine::ClientContext6& ctx) {
+ 
+@@ -3821,10 +3871,11 @@ Dhcpv6Srv::processSolicit(AllocEngine::C
+ 
+     processClientFqdn(solicit, response, ctx);
+ 
+-    if (MultiThreadingMgr::instance().getMode()) {
++    if (solicit->inClass("REJECT")) {
++        reject(solicit, response);
++    } else if (MultiThreadingMgr::instance().getMode()) {
+         // The lease reclamation cannot run at the same time.
+         ReadLockGuard share(alloc_engine_->getReadWriteMutex());
+-
+         assignLeases(solicit, response, ctx);
+     } else {
+         assignLeases(solicit, response, ctx);
+@@ -3865,10 +3916,11 @@ Dhcpv6Srv::processRequest(AllocEngine::C
+ 
+     processClientFqdn(request, reply, ctx);
+ 
+-    if (MultiThreadingMgr::instance().getMode()) {
++    if (request->inClass("REJECT")) {
++        reject(request, reply);
++    } else if (MultiThreadingMgr::instance().getMode()) {
+         // The lease reclamation cannot run at the same time.
+         ReadLockGuard share(alloc_engine_->getReadWriteMutex());
+-
+         assignLeases(request, reply, ctx);
+     } else {
+         assignLeases(request, reply, ctx);
+@@ -3905,7 +3957,9 @@ Dhcpv6Srv::processRenew(AllocEngine::Cli
+ 
+     processClientFqdn(renew, reply, ctx);
+ 
+-    if (MultiThreadingMgr::instance().getMode()) {
++    if (renew->inClass("REJECT")) {
++        reject(renew, reply);
++    } else if (MultiThreadingMgr::instance().getMode()) {
+         // The lease reclamation cannot run at the same time.
+         ReadLockGuard share(alloc_engine_->getReadWriteMutex());
+ 
+@@ -3945,7 +3999,9 @@ Dhcpv6Srv::processRebind(AllocEngine::Cl
+ 
+     processClientFqdn(rebind, reply, ctx);
+ 
+-    if (MultiThreadingMgr::instance().getMode()) {
++    if (rebind->inClass("REJECT")) {
++        reject(rebind, reply);
++    } else if (MultiThreadingMgr::instance().getMode()) {
+         // The lease reclamation cannot run at the same time.
+         ReadLockGuard share(alloc_engine_->getReadWriteMutex());
+ 
+--- a/src/bin/dhcp6/dhcp6_srv.h
++++ b/src/bin/dhcp6/dhcp6_srv.h
+@@ -643,6 +643,27 @@ protected:
+                            boost::shared_ptr<Option6IA> ia,
+                            Lease6Ptr& old_lease);
+ 
++    /// @brief Reject query.
++    ///
++    /// Called when the query is in the REJECT class.
++    /// @param query client's message
++    /// @param answer server's message
++    void reject(const Pkt6Ptr& query, Pkt6Ptr& answer);
++
++    /// @brief Reject IA_NA.
++    ///
++    /// @param query client's message
++    /// @param ia pointer to client's IA_NA option
++    /// @return IA_NA option
++    OptionPtr rejectIA_NA(const isc::dhcp::Pkt6Ptr& query, Option6IAPtr ia);
++
++    /// @brief Reject IA_PD.
++    ///
++    /// @param query client's message
++    /// @param ia pointer to client's IA_PD option
++    /// @return IA_PD option
++    OptionPtr rejectIA_PD(const isc::dhcp::Pkt6Ptr& query, Option6IAPtr ia);
++
+     /// @brief Copies required options from client message to server answer.
+     ///
+     /// Copies options that must appear in any server response (ADVERTISE, REPLY)
+--- a/src/lib/dhcpsrv/client_class_def.cc
++++ b/src/lib/dhcpsrv/client_class_def.cc
+@@ -576,12 +576,10 @@ ClientClassDictionary::operator=(const C
+ /// @brief List of classes for which test expressions cannot be defined.
+ std::list<std::string>
+ builtinNames = {
+-    // DROP is not in this list because it is special but not built-in.
+-    // In fact DROP is set from an expression as callouts can drop
+-    // directly the incoming packet. The expression must not depend on
+-    // KNOWN/UNKNOWN which are set far after the drop point.
+-    // SKIP_DDNS, used by DDNS-tuning is also omitted from this list
+-    // so users may assign it a test expression.
++
++    // DROP and REJECT ares not in this list because they are special
++    // but not built-in.  SKIP_DDNS, used by DDNS-tuning is also
++    // omitted from this list so users may assign it a test expression.
+     "ALL", "KNOWN", "UNKNOWN", "BOOTP"
+ };
+ 
+--- a/src/lib/dhcpsrv/client_class_def.h
++++ b/src/lib/dhcpsrv/client_class_def.h
+@@ -517,7 +517,7 @@ private:
+ typedef boost::shared_ptr<ClientClassDictionary> ClientClassDictionaryPtr;
+ 
+ /// @brief List of built-in client class names.
+-/// i.e. ALL, KNOWN, UNKNOWN and BOOTP but not DROP.
++/// i.e. ALL, KNOWN, UNKNOWN and BOOTP but not DROP nor REJECT.
+ extern std::list<std::string> builtinNames;
+ 
+ /// @brief List of built-in client class prefixes
+--- a/src/lib/dhcpsrv/parsers/client_class_def_parser.cc
++++ b/src/lib/dhcpsrv/parsers/client_class_def_parser.cc
+@@ -283,8 +283,8 @@ ClientClassDefParser::parse(ClientClassD
+         }
+     }
+ 
+-    // Sanity checks on DROP
+-    if (name == "DROP") {
++    // Sanity checks on DROP and REJECT
++    if ((name == "DROP") || (name == "REJECT")) {
+         if (additional) {
+             isc_throw(DhcpConfigError, "special class '" << name
+                       << "' only-in-additional-list flag must be false");
+--- a/src/lib/dhcpsrv/tests/client_class_def_parser_unittest.cc
++++ b/src/lib/dhcpsrv/tests/client_class_def_parser_unittest.cc
+@@ -1980,6 +1980,40 @@ TEST_F(ClientClassDefListParserTest, dro
+     EXPECT_NO_THROW(parseClientClassDefList(cfg_text, AF_INET6));
+ }
+ 
++// Verifies that the special REJECT class can't be required.
++TEST_F(ClientClassDefListParserTest, rejectCheckError) {
++    std::string cfg_text =
++        "[ \n"
++        "   { \n"
++        "       \"name\": \"REJECT\", \n"
++        "       \"test\": \"option[123].text == 'abc'\" \n"
++        "   } \n"
++        "] \n";
++
++    EXPECT_NO_THROW(parseClientClassDefList(cfg_text, AF_INET6));
++
++    cfg_text =
++        "[ \n"
++        "   { \n"
++        "       \"name\": \"REJECT\", \n"
++        "       \"only-in-additional-list\": true \n"
++        "   } \n"
++        "] \n";
++
++    EXPECT_THROW(parseClientClassDefList(cfg_text, AF_INET), DhcpConfigError);
++
++    // This constraint was relaxed in #1815.
++    cfg_text =
++        "[ \n"
++        "   { \n"
++        "       \"name\": \"REJECT\", \n"
++        "       \"test\": \"member('KNOWN')\" \n"
++        "   } \n"
++        "] \n";
++
++    EXPECT_NO_THROW(parseClientClassDefList(cfg_text, AF_INET6));
++}
++
+ // Verify the ability to configure valid lifetime triplet.
+ TEST_F(ClientClassDefParserTest, validLifetimeTests) {
+ 
+--- /dev/null
++++ b/changelog_unreleased/4110-reject-special-class
+@@ -0,0 +1,8 @@
++[func]		fdupont
++	Added a new special client class "REJECT" which makes
++	incoming requests in this class to skip the resource
++	allocation part in processing e.g. return DHCPNAK on
++	DHCPREQUEST by the DHCPv4 server, or put status code
++	NoAddrsAvail in all ia-na options by the DHCPv6 server.
++	Proposed by Philip Prindeville.
++	(Gitlab #4110)
+--- a/doc/sphinx/arm/dhcp4-srv.rst
++++ b/doc/sphinx/arm/dhcp4-srv.rst
+@@ -3337,6 +3337,16 @@ member of the class.
+    Care should be taken with client classification, as it is easy for
+    clients that do not meet class criteria to be denied all service.
+ 
++
++.. note::
++
++   Kea 3.1.7 added another special class ``REJECT`` which works in a
++   similar way to the ``DROP`` class but instead to drop the incoming
++   query on the floor it skips the lease allocation part so no
++   DHCPOFFER response is sent to a DHCPDISCOVER query, and
++   the response to a DHCPREQUEST query should be a DHCPNAK.
++
++
+ Setting Fixed Fields in Classification
+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ 
+--- a/doc/sphinx/arm/dhcp6-srv.rst
++++ b/doc/sphinx/arm/dhcp6-srv.rst
+@@ -3109,6 +3109,15 @@ member of the class.
+    Care should be taken with client classification, as it is easy for
+    clients that do not meet class criteria to be denied all service.
+ 
++
++.. note::
++
++   Kea 3.1.7 added another special class ``REJECT`` which works in a
++   similar way to the ``DROP`` class but instead to drop the incoming
++   query on the floor it skips the lease allocation part so the IAs in
++   the response will get NoAddrsAvail or NoPrefixAvail status codes.
++
++
+ Defining and Using Custom Classes
+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ 
+--- a/src/bin/dhcp6/dhcp6_messages.mes
++++ b/src/bin/dhcp6/dhcp6_messages.mes
+@@ -761,6 +761,12 @@ The IPv6 DHCP server tried to receive a
+ occurred during this attempt. The reason for the error is included in
+ the message.
+ 
++% DHCP6_PACKET_REJECT_CLASS assignment rejected as member of the special class 'REJECT': %1 %2
++Logged at debug log level 15.
++This debug message is emitted when an incoming packet was classified
++into the special class 'REJECT' and no resource was assigned.
++The packet details are displayed.
++
+ % DHCP6_PACKET_SEND %1: trying to send packet %2 (type %3) from [%4]:%5 to [%6]:%7 on interface %8
+ An INFO message noting that the server is attempting to send the
+ specified type of packet. The arguments specify the client
+--- a/src/bin/dhcp4/tests/classify_unittest.cc
++++ b/src/bin/dhcp4/tests/classify_unittest.cc
+@@ -93,8 +93,6 @@ namespace {
+ ///   - the following class defined: not member('KNOWN'), DROP
+ ///     (the not member also verifies that the DROP class is set only
+ ///      after the host reservation lookup)
+-/// @note the reservation includes a hostname because raw reservations are
+-/// not yet allowed.
+ ///
+ /// - Configuration 7:
+ ///   - Used for the DROP class and reservation class.
+@@ -125,6 +123,42 @@ namespace {
+ ///   - 1 reservation for HW address 'aa:bb:cc:dd:ee:ff'
+ ///     setting the DROP class
+ ///
++/// - Configuration 10:
++///   - Used for the REJECT class
++///   - 1 subnet: 10.0.0.0/24
++///   - 1 pool: 10.0.0.10-10.0.0.100
++///   - the following class defined: option[93].hex == 0x0009, REJECT
++///
++/// - Configuration 11:
++///   - Used for the REJECT class and reservation existence.
++///   - 1 subnet: 10.0.0.0/24
++///   - 1 pool: 10.0.0.10-10.0.0.100
++///   - 1 reservation for HW address 'aa:bb:cc:dd:ee:ff'
++///   - the following class defined: not member('KNOWN'), REJECT
++///     (the not member also verifies that the REJECT class is set only
++///      after the host reservation lookup)
++///
++/// - Configuration 12:
++///   - Used for the REJECT class and reservation class.
++///   - 1 subnet: 10.0.0.0/24
++///   - 1 pool: 10.0.0.10-10.0.0.100
++///   - 1 reservation for HW address 'aa:bb:cc:dd:ee:ff'
++///     setting the allowed class
++///   - the following classes defined:
++///     - allowed
++///     - member('KNOWN') or member('UNKNOWN'), t
++///     - not member('allowed') and member('t'), REJECT
++///     The function of the always true 't' class is to move the REJECT
++///     evaluation to the classification point after the host reservation
++///     lookup, i.e. indirect KNOWN / UNKNOWN dependency.
++///
++/// - Configuration 13:
++///   - Used for the early global reservations lookup / drop.
++///   - 1 subnet: 10.0.0.0/24
++///   - 1 pool: 10.0.0.10-10.0.0.100
++///   - 1 reservation for HW address 'aa:bb:cc:dd:ee:ff'
++///     setting the REJECT class
++///
+ const char* CONFIGS[] = {
+     // Configuration 0
+     "{ \"interfaces-config\": {"
+@@ -357,8 +391,8 @@ const char* CONFIGS[] = {
+         "    \"id\": 1,"
+         "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
+         "    \"reservations\": [ {"
+-        "        \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
+-        "        \"hostname\": \"allowed\" } ]"
++        "        \"hw-address\": \"aa:bb:cc:dd:ee:ff\""
++        "    } ]"
+         " } ]"
+     "}",
+ 
+@@ -435,6 +469,86 @@ const char* CONFIGS[] = {
+         "    \"client-classes\": [ \"DROP\" ] } ]"
+     "}",
+ 
++    // Configuration 10
++    "{ \"interfaces-config\": {"
++        "   \"interfaces\": [ \"*\" ]"
++        "},"
++        "\"valid-lifetime\": 600,"
++        "\"client-classes\": ["
++        "{"
++        "   \"name\": \"REJECT\","
++        "   \"test\": \"option[93].hex == 0x0009\""
++        "}],"
++        "\"subnet4\": [ { "
++        "    \"subnet\": \"10.0.0.0/24\", "
++        "    \"id\": 1,"
++        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ]"
++        " } ]"
++    "}",
++
++    // Configuration 11
++    "{ \"interfaces-config\": {"
++        "   \"interfaces\": [ \"*\" ]"
++        "},"
++        "\"valid-lifetime\": 600,"
++        "\"client-classes\": ["
++        "{"
++        "   \"name\": \"REJECT\","
++        "   \"test\": \"not member('KNOWN')\""
++        "}],"
++        "\"subnet4\": [ { "
++        "    \"subnet\": \"10.0.0.0/24\", "
++        "    \"id\": 1,"
++        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
++        "    \"reservations\": [ {"
++        "        \"hw-address\": \"aa:bb:cc:dd:ee:ff\""
++        "    } ]"
++        " } ]"
++    "}",
++
++    // Configuration 12
++    "{ \"interfaces-config\": {"
++        "   \"interfaces\": [ \"*\" ]"
++        "},"
++        "\"valid-lifetime\": 600,"
++        "\"client-classes\": ["
++        "{"
++        "   \"name\": \"allowed\""
++        "},"
++        "{"
++        "   \"name\": \"t\","
++        "   \"test\": \"member('KNOWN') or member('UNKNOWN')\""
++        "},"
++        "{"
++        "   \"name\": \"REJECT\","
++        "   \"test\": \"not member('allowed') and member('t')\""
++        "}],"
++        "\"subnet4\": [ { "
++        "    \"subnet\": \"10.0.0.0/24\", "
++        "    \"id\": 1,"
++        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
++        "    \"reservations\": [ {"
++        "        \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
++        "        \"client-classes\": [ \"allowed\" ] } ]"
++        " } ]"
++    "}",
++
++    // Configuration 13
++    "{ \"interfaces-config\": {"
++        "   \"interfaces\": [ \"*\" ]"
++        "},"
++        "\"valid-lifetime\": 600,"
++        "\"early-global-reservations-lookup\": true,"
++        "\"subnet4\": [ { "
++        "    \"subnet\": \"10.0.0.0/24\", "
++        "    \"id\": 1,"
++        "    \"interface\": \"eth0\","
++        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ] } ],"
++        "\"reservations\": [ {"
++        "    \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
++        "    \"client-classes\": [ \"REJECT\" ] } ]"
++    "}",
++
+ };
+ 
+ /// @brief Test fixture class for testing classification.
+@@ -2476,4 +2590,161 @@ TEST_F(ClassifyTest, classTaggingList) {
+     }
+ }
+ 
++// This test checks the handling for the REJECT special class in a Solicit.
++TEST_F(ClassifyTest, rejectClassSolicit) {
++    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
++
++    // Configure DHCP server.
++    configure(CONFIGS[10], *client.getServer());
++
++    // Send the discover.
++    client.doDiscover();
++
++    // No option: OFFER.
++    ASSERT_TRUE(client.getContext().response_);
++    int type = client.getContext().response_->getType();
++    EXPECT_EQ(DHCPOFFER, type);
++    IOAddress addr = client.getContext().response_->getYiaddr();
++    EXPECT_EQ("10.0.0.10", addr.toText());
++
++    // Retry with an option matching the REJECT class.
++    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
++
++    // Add the pxe option.
++    OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0009));
++    client2.addExtraOption(pxe);
++
++    // Send the discover.
++    client2.doDiscover();
++
++    // Option: no offer.
++    EXPECT_FALSE(client2.getContext().response_);
++}
++
++// This test checks the handling for the REJECT special class in a Request.
++TEST_F(ClassifyTest, rejectClassRequest) {
++    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
++
++    // Configure DHCP server.
++    configure(CONFIGS[10], *client.getServer());
++
++    // Send the discover.
++    client.doDiscover();
++
++    // send the request.
++    client.doRequest();
++
++    // No option: ACK.
++    ASSERT_TRUE(client.getContext().response_);
++    int type = client.getContext().response_->getType();
++    EXPECT_EQ(DHCPACK, type);
++    IOAddress addr = client.getContext().response_->getYiaddr();
++    EXPECT_EQ("10.0.0.10", addr.toText());
++
++    // Retry with an option matching the REJECT class.
++    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
++
++    // Send the discover.
++    client2.doDiscover();
++
++    // Add the pxe option.
++    OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0009));
++    client2.addExtraOption(pxe);
++
++    // Send the request.
++    client2.doRequest();
++
++    // Option: no offer.
++    ASSERT_TRUE(client2.getContext().response_);
++    type = client2.getContext().response_->getType();
++    EXPECT_EQ(DHCPNAK, type);
++    addr = client2.getContext().response_->getYiaddr();
++    EXPECT_EQ("0.0.0.0", addr.toText());
++}
++
++// This test checks the handling for the REJECT special class at the host
++// reservation classification point with KNOWN / UNKNOWN.
++TEST_F(ClassifyTest, rejectClassUnknown) {
++    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
++
++    // Configure DHCP server.
++    configure(CONFIGS[11], *client.getServer());
++
++    // Set the HW address to the reservation.
++    client.setHWAddress("aa:bb:cc:dd:ee:ff");
++
++    // Send the discover.
++    client.doDiscover();
++
++    // Reservation match: no reject.
++    EXPECT_TRUE(client.getContext().response_);
++
++    // Retry with another HW address,
++    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
++    client2.setHWAddress("aa:bb:cc:dd:ee:fe");
++
++    // Send the discover.
++    client2.doDiscover();
++
++    // No reservation, rejected.
++    EXPECT_FALSE(client2.getContext().response_);
++}
++
++// This test checks the handling for the REJECT special class at the host
++// reservation classification point with a reserved class.
++TEST_F(ClassifyTest, rejectClassReservedClass) {
++    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
++
++    // Configure DHCP server.
++    configure(CONFIGS[12], *client.getServer());
++
++    // Set the HW address to the reservation.
++    client.setHWAddress("aa:bb:cc:dd:ee:ff");
++
++    // Send the discover.
++    client.doDiscover();
++
++    // Reservation match: no reject.
++    EXPECT_TRUE(client.getContext().response_);
++
++    // Retry with another HW address,
++    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
++    client2.setHWAddress("aa:bb:cc:dd:ee:fe");
++
++    // Send the discover.
++    client2.doDiscover();
++
++    // No reservation, rejected.
++    EXPECT_FALSE(client2.getContext().response_);
++}
++
++// This test checks the early global reservations lookup for rejecting.
++TEST_F(ClassifyTest, earlyReject) {
++    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
++
++    // Configure DHCP server.
++    configure(CONFIGS[13], *client.getServer());
++
++    // Set the HW address to the reservation.
++    client.setHWAddress("aa:bb:cc:dd:ee:ff");
++
++    // Send the discover.
++    client.doDiscover();
++
++    // Reservation match: reject.
++    EXPECT_FALSE(client.getContext().response_);
++
++    // Retry with another HW address,
++    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
++
++    // Set the HW address to another value.
++    client2.setHWAddress("aa:bb:cc:01:ee:ff");
++
++    // Send the discover.
++    client2.doDiscover();
++
++    // Not matching so not rejected.
++    EXPECT_TRUE(client2.getContext().response_);
++}
++
+ } // end of anonymous namespace
+--- a/src/bin/dhcp6/dhcp6_messages.cc
++++ b/src/bin/dhcp6/dhcp6_messages.cc
+@@ -119,6 +119,7 @@ extern const isc::log::MessageID DHCP6_P
+ extern const isc::log::MessageID DHCP6_PACKET_QUEUE_FULL = "DHCP6_PACKET_QUEUE_FULL";
+ extern const isc::log::MessageID DHCP6_PACKET_RECEIVED = "DHCP6_PACKET_RECEIVED";
+ extern const isc::log::MessageID DHCP6_PACKET_RECEIVE_FAIL = "DHCP6_PACKET_RECEIVE_FAIL";
++extern const isc::log::MessageID DHCP6_PACKET_REJECT_CLASS = "DHCP6_PACKET_REJECT_CLASS";
+ extern const isc::log::MessageID DHCP6_PACKET_SEND = "DHCP6_PACKET_SEND";
+ extern const isc::log::MessageID DHCP6_PACKET_SEND_FAIL = "DHCP6_PACKET_SEND_FAIL";
+ extern const isc::log::MessageID DHCP6_PACK_FAIL = "DHCP6_PACK_FAIL";
+@@ -296,6 +297,7 @@ const char* values[] = {
+     "DHCP6_PACKET_QUEUE_FULL", "multi-threading packet queue is full",
+     "DHCP6_PACKET_RECEIVED", "%1: %2 (type %3) received from %4 to %5 on interface %6",
+     "DHCP6_PACKET_RECEIVE_FAIL", "error on attempt to receive packet: %1",
++    "DHCP6_PACKET_REJECT_CLASS", "assignment rejected as member of the special class 'REJECT': %1 %2",
+     "DHCP6_PACKET_SEND", "%1: trying to send packet %2 (type %3) from [%4]:%5 to [%6]:%7 on interface %8",
+     "DHCP6_PACKET_SEND_FAIL", "%1: failed to send DHCPv6 packet: %2",
+     "DHCP6_PACK_FAIL", "%1: failed to assemble response correctly: %2",
+--- a/src/bin/dhcp6/dhcp6_messages.h
++++ b/src/bin/dhcp6/dhcp6_messages.h
+@@ -120,6 +120,7 @@ extern const isc::log::MessageID DHCP6_P
+ extern const isc::log::MessageID DHCP6_PACKET_QUEUE_FULL;
+ extern const isc::log::MessageID DHCP6_PACKET_RECEIVED;
+ extern const isc::log::MessageID DHCP6_PACKET_RECEIVE_FAIL;
++extern const isc::log::MessageID DHCP6_PACKET_REJECT_CLASS;
+ extern const isc::log::MessageID DHCP6_PACKET_SEND;
+ extern const isc::log::MessageID DHCP6_PACKET_SEND_FAIL;
+ extern const isc::log::MessageID DHCP6_PACK_FAIL;
+--- a/src/bin/dhcp6/tests/classify_unittest.cc
++++ b/src/bin/dhcp6/tests/classify_unittest.cc
+@@ -74,16 +74,14 @@ namespace {
+ /// - Configuration 3:
+ ///   - Used for the DROP class
+ ///   - 1 subnet: 2001:db8:1::/48
+-///   - 2 pool: 2001:db8:1:1::/64
++///   - 1 pool: 2001:db8:1:1::/64
+ ///   - the following class defined: option 1234 'foo', DROP
+ ///
+ /// - Configuration 4:
+ ///   - Used for the DROP class and reservation existence
+ ///   - 1 subnet: 2001:db8:1::/48
+-///   - 2 pool: 2001:db8:1:1::/64
++///   - 1 pool: 2001:db8:1:1::/64
+ ///   - the following class defined: not member('KNOWN'), DROP
+-/// @note the reservation includes a hostname because raw reservations are
+-/// not yet allowed
+ ///
+ /// - Configuration 5:
+ ///   - Used for the DROP class and reservation class
+@@ -111,6 +109,36 @@ namespace {
+ ///   - 1 pool: 2001:db8:1:1::/64
+ ///   - 1 global reservation setting the DROP class
+ ///
++/// - Configuration 8:
++///   - Used for the REJECT class
++///   - 1 subnet: 2001:db8:1::/48
++///   - 1 pool: 2001:db8:1:1::/64
++///   - the following class defined: option 1234 'foo', REJECT
++///
++/// - Configuration 9:
++///   - Used for the REJECT class and reservation existence
++///   - 1 subnet: 2001:db8:1::/48
++///   - 1 pool: 2001:db8:1:1::/64
++///   - the following class defined: not member('KNOWN'), REJECT
++///
++/// - Configuration 10:
++///   - Used for the REJECT class and reservation class
++///   - 1 subnet: 2001:db8:1::/48
++///   - 1 pool: 2001:db8:1:1::/64
++///   - the following class defined:
++///     - allowed
++///     - member('KNOWN') or member('UNKNOWN'), t
++///     - not member('allowed') and member('t'), REJECT
++///     The function of the always true 't' class is to move the REJECT
++///     evaluation to the classification point after the host reservation
++///     lookup, i.e. indirect KNOWN / UNKNOWN dependency
++///
++/// - Configuration 11:
++///   - Used for the early global reservations lookup / reject.
++///   - 1 subnet: 2001:db8:1::/48
++///   - 1 pool: 2001:db8:1:1::/64
++///   - 1 global reservation setting the REJECT class
++///
+ const char* CONFIGS[] = {
+     // Configuration 0
+     "{ \"interfaces-config\": {"
+@@ -350,8 +378,7 @@ const char* CONFIGS[] = {
+         "    \"interface\": \"eth1\","
+         "    \"reservations\": ["
+         "    {"
+-        "        \"duid\": \"01:02:03:04\","
+-        "        \"hostname\": \"allowed\""
++        "        \"duid\": \"01:02:03:04\""
+         "    } ]"
+         " } ],"
+         "\"valid-lifetime\": 4000 }",
+@@ -448,6 +475,120 @@ const char* CONFIGS[] = {
+     "    \"client-classes\": [ \"DROP\" ]"
+     "}"
+     "],"
++    "\"valid-lifetime\": 4000 }",
++
++    // Configuration 8
++    "{ \"interfaces-config\": {"
++        "  \"interfaces\": [ \"*\" ]"
++        "},"
++        "\"preferred-lifetime\": 3000,"
++        "\"rebind-timer\": 2000, "
++        "\"renew-timer\": 1000, "
++        "\"option-def\": [ "
++        "{"
++        "    \"name\": \"host-name\","
++        "    \"code\": 1234,"
++        "    \"type\": \"string\""
++        "},"
++        "{"
++        "    \"name\": \"ipv6-forwarding\","
++        "    \"code\": 2345,"
++        "    \"type\": \"boolean\""
++        "} ],"
++        "\"client-classes\": ["
++        "{"
++        "   \"name\": \"REJECT\","
++        "   \"test\": \"option[host-name].text == 'foo'\""
++        "}"
++        "],"
++        "\"subnet6\": [ "
++        "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
++        "    \"id\": 1, "
++        "    \"subnet\": \"2001:db8:1::/48\", "
++        "    \"interface\": \"eth1\""
++        " } ],"
++        "\"valid-lifetime\": 4000 }",
++
++    // Configuration 9
++    "{ \"interfaces-config\": {"
++        "  \"interfaces\": [ \"*\" ]"
++        "},"
++        "\"preferred-lifetime\": 3000,"
++        "\"rebind-timer\": 2000, "
++        "\"renew-timer\": 1000, "
++        "\"client-classes\": ["
++        "{"
++        "   \"name\": \"REJECT\","
++        "   \"test\": \"not member('KNOWN')\""
++        "}"
++        "],"
++        "\"subnet6\": [ "
++        "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
++        "    \"id\": 1, "
++        "    \"subnet\": \"2001:db8:1::/48\", "
++        "    \"interface\": \"eth1\","
++        "    \"reservations\": ["
++        "    {"
++        "        \"duid\": \"01:02:03:04\""
++        "    } ]"
++        " } ],"
++        "\"valid-lifetime\": 4000 }",
++
++    // Configuration 10
++    "{ \"interfaces-config\": {"
++        "  \"interfaces\": [ \"*\" ]"
++        "},"
++        "\"preferred-lifetime\": 3000,"
++        "\"rebind-timer\": 2000, "
++        "\"renew-timer\": 1000, "
++        "\"client-classes\": ["
++        "{"
++        "   \"name\": \"allowed\""
++        "},"
++        "{"
++        "   \"name\": \"t\","
++        "   \"test\": \"member('KNOWN') or member('UNKNOWN')\""
++        "},"
++        "{"
++        "   \"name\": \"REJECT\","
++        "   \"test\": \"not member('allowed') and member('t')\""
++        "}"
++        "],"
++        "\"subnet6\": [ "
++        "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
++        "    \"id\": 1, "
++        "    \"subnet\": \"2001:db8:1::/48\", "
++        "    \"interface\": \"eth1\","
++        "    \"reservations\": ["
++        "    {"
++        "        \"duid\": \"01:02:03:04\","
++        "        \"client-classes\": [ \"allowed\" ]"
++        "    } ]"
++        " } ],"
++        "\"valid-lifetime\": 4000 }",
++
++    // Configuration 11
++    "{ \"interfaces-config\": {"
++    "  \"interfaces\": [ \"*\" ]"
++    "},"
++    "\"early-global-reservations-lookup\": true, "
++    "\"preferred-lifetime\": 3000, "
++    "\"rebind-timer\": 2000, "
++    "\"renew-timer\": 1000, "
++    "\"subnet6\": [ "
++    "{"
++    "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
++    "    \"subnet\": \"2001:db8:1::/48\", "
++    "    \"interface\": \"eth1\","
++    "    \"id\": 1"
++    "}"
++    "],"
++    "\"reservations\": ["
++    "{"
++    "    \"duid\": \"01:02:03:04\","
++    "    \"client-classes\": [ \"REJECT\" ]"
++    "}"
++    "],"
+     "\"valid-lifetime\": 4000 }"
+ };
+ 
+@@ -3453,4 +3594,272 @@ TEST_F(ClassifyTest, classTaggingList) {
+     }
+ }
+ 
++// This test checks the handling for the REJECT special class in a Discover.
++TEST_F(ClassifyTest, rejectClassDiscover) {
++    Dhcp6Client client(srv_);
++    client.setDUID("01:02:03:04");
++    client.setInterface("eth1");
++    client.requestAddress();
++
++    // Configure DHCP server.
++    ASSERT_NO_THROW(configure(CONFIGS[8], *client.getServer()));
++
++    // Add the host-name option.
++    OptionStringPtr hostname(new OptionString(Option::V6, 1234, "foo"));
++    ASSERT_TRUE(hostname);
++    client.addExtraOption(hostname);
++
++    // Send a message to the server.
++    ASSERT_NO_THROW(client.doSolicit(true));
++
++    // Option:: rejected.
++    Pkt6Ptr resp = client.getContext().response_;
++    ASSERT_TRUE(resp);
++    OptionPtr ia_na = resp->getOption(D6O_IA_NA);
++    ASSERT_TRUE(ia_na);
++    EXPECT_FALSE(ia_na->getOption(D6O_IAADDR));
++    OptionPtr status_code = ia_na->getOption(D6O_STATUS_CODE);
++    ASSERT_TRUE(status_code);
++    Option6StatusCodePtr status =
++        boost::dynamic_pointer_cast<Option6StatusCode>(status_code);
++    ASSERT_TRUE(status);
++    EXPECT_EQ(STATUS_NoAddrsAvail, status->getStatusCode());
++    EXPECT_EQ("Server rejected this request", status->getStatusMessage());
++}
++
++// This test checks the handling for the REJECT special class with prefix.
++TEST_F(ClassifyTest, rejectClassPrefix) {
++    Dhcp6Client client(srv_);
++    client.setDUID("01:02:03:04");
++    client.setInterface("eth1");
++    client.requestPrefix();
++
++    // Configure DHCP server.
++    ASSERT_NO_THROW(configure(CONFIGS[8], *client.getServer()));
++
++    // Add the host-name option.
++    OptionStringPtr hostname(new OptionString(Option::V6, 1234, "foo"));
++    ASSERT_TRUE(hostname);
++    client.addExtraOption(hostname);
++
++    // Send a message to the server.
++    ASSERT_NO_THROW(client.doSolicit(true));
++
++    // Option:: rejected.
++    Pkt6Ptr resp = client.getContext().response_;
++    ASSERT_TRUE(resp);
++    OptionPtr ia_na = resp->getOption(D6O_IA_PD);
++    ASSERT_TRUE(ia_na);
++    EXPECT_FALSE(ia_na->getOption(D6O_IAPREFIX));
++    OptionPtr status_code = ia_na->getOption(D6O_STATUS_CODE);
++    ASSERT_TRUE(status_code);
++    Option6StatusCodePtr status =
++        boost::dynamic_pointer_cast<Option6StatusCode>(status_code);
++    ASSERT_TRUE(status);
++    EXPECT_EQ(STATUS_NoPrefixAvail, status->getStatusCode());
++    EXPECT_EQ("Server rejected this request", status->getStatusMessage());
++}
++
++// This test checks the handling for the REJECT special class in a Request.
++TEST_F(ClassifyTest, rejectClassRequest) {
++    Dhcp6Client client(srv_);
++    client.setDUID("01:02:03:04");
++    client.setInterface("eth1");
++    client.requestAddress();
++
++    // Configure DHCP server.
++    ASSERT_NO_THROW(configure(CONFIGS[8], *client.getServer()));
++
++    // Send a message to the server.
++    ASSERT_NO_THROW(client.doSolicit(true));
++
++    // Add the host-name option.
++    OptionStringPtr hostname(new OptionString(Option::V6, 1234, "foo"));
++    ASSERT_TRUE(hostname);
++    client.addExtraOption(hostname);
++
++    // Send the request.
++    ASSERT_NO_THROW(client.doRequest());
++
++    // Option:: rejected.
++    Pkt6Ptr resp = client.getContext().response_;
++    ASSERT_TRUE(resp);
++    OptionPtr ia_na = resp->getOption(D6O_IA_NA);
++    ASSERT_TRUE(ia_na);
++    EXPECT_FALSE(ia_na->getOption(D6O_IAADDR));
++    OptionPtr status_code = ia_na->getOption(D6O_STATUS_CODE);
++    ASSERT_TRUE(status_code);
++    Option6StatusCodePtr status =
++        boost::dynamic_pointer_cast<Option6StatusCode>(status_code);
++    ASSERT_TRUE(status);
++    EXPECT_EQ(STATUS_NoAddrsAvail, status->getStatusCode());
++    EXPECT_EQ("Server rejected this request", status->getStatusMessage());
++}
++
++// This test checks the handling for the REJECT special class in a Renew.
++TEST_F(ClassifyTest, rejectClassRenew) {
++    Dhcp6Client client(srv_);
++    client.setDUID("01:02:03:04");
++    client.setInterface("eth1");
++    client.requestAddress();
++
++    // Configure DHCP server.
++    ASSERT_NO_THROW(configure(CONFIGS[8], *client.getServer()));
++
++    // Send a message to the server.
++    ASSERT_NO_THROW(client.doSolicit(true));
++
++    // Send the request.
++    ASSERT_NO_THROW(client.doRequest());
++
++    // Add the host-name option.
++    OptionStringPtr hostname(new OptionString(Option::V6, 1234, "foo"));
++    ASSERT_TRUE(hostname);
++    client.addExtraOption(hostname);
++
++    // Send the renew.
++    ASSERT_NO_THROW(client.doRenew());
++
++    // Option:: rejected.
++    Pkt6Ptr resp = client.getContext().response_;
++    ASSERT_TRUE(resp);
++    OptionPtr ia_na = resp->getOption(D6O_IA_NA);
++    ASSERT_TRUE(ia_na);
++    EXPECT_FALSE(ia_na->getOption(D6O_IAADDR));
++    OptionPtr status_code = ia_na->getOption(D6O_STATUS_CODE);
++    ASSERT_TRUE(status_code);
++    Option6StatusCodePtr status =
++        boost::dynamic_pointer_cast<Option6StatusCode>(status_code);
++    ASSERT_TRUE(status);
++    EXPECT_EQ(STATUS_NoAddrsAvail, status->getStatusCode());
++    EXPECT_EQ("Server rejected this request", status->getStatusMessage());
++}
++
++// This test checks the handling for the REJECT special class in a Rebind.
++TEST_F(ClassifyTest, rejectClassRebind) {
++    Dhcp6Client client(srv_);
++    client.setDUID("01:02:03:04");
++    client.setInterface("eth1");
++    client.requestAddress();
++
++    // Configure DHCP server.
++    ASSERT_NO_THROW(configure(CONFIGS[8], *client.getServer()));
++
++    // Send a message to the server.
++    ASSERT_NO_THROW(client.doSolicit(true));
++
++    // Send the request.
++    ASSERT_NO_THROW(client.doRequest());
++
++    // Add the host-name option.
++    OptionStringPtr hostname(new OptionString(Option::V6, 1234, "foo"));
++    ASSERT_TRUE(hostname);
++    client.addExtraOption(hostname);
++
++    // Send the rebind.
++    ASSERT_NO_THROW(client.doRebind());
++
++    // Option:: rejected.
++    Pkt6Ptr resp = client.getContext().response_;
++    ASSERT_TRUE(resp);
++    OptionPtr ia_na = resp->getOption(D6O_IA_NA);
++    ASSERT_TRUE(ia_na);
++    EXPECT_FALSE(ia_na->getOption(D6O_IAADDR));
++    OptionPtr status_code = ia_na->getOption(D6O_STATUS_CODE);
++    ASSERT_TRUE(status_code);
++    Option6StatusCodePtr status =
++        boost::dynamic_pointer_cast<Option6StatusCode>(status_code);
++    ASSERT_TRUE(status);
++    EXPECT_EQ(STATUS_NoAddrsAvail, status->getStatusCode());
++    EXPECT_EQ("Server rejected this request", status->getStatusMessage());
++}
++
++// This test checks the handling for the REJECT special class at the host
++// reservation classification point with KNOWN / UNKNOWN.
++TEST_F(ClassifyTest, rejectClassUnknown) {
++    Dhcp6Client client(srv_);
++    // Only 01:02:03:04 is reserved.
++    client.setDUID("01:02:03:05");
++    client.setInterface("eth1");
++    client.requestAddress();
++
++    // Configure DHCP server.
++    ASSERT_NO_THROW(configure(CONFIGS[9], *client.getServer()));
++
++    // Send a message to the server.
++    ASSERT_NO_THROW(client.doSolicit(true));
++
++    // No reservation: rejected.
++    Pkt6Ptr resp = client.getContext().response_;
++    ASSERT_TRUE(resp);
++    OptionPtr ia_na = resp->getOption(D6O_IA_NA);
++    ASSERT_TRUE(ia_na);
++    EXPECT_FALSE(ia_na->getOption(D6O_IAADDR));
++    OptionPtr status_code = ia_na->getOption(D6O_STATUS_CODE);
++    ASSERT_TRUE(status_code);
++    Option6StatusCodePtr status =
++        boost::dynamic_pointer_cast<Option6StatusCode>(status_code);
++    ASSERT_TRUE(status);
++    EXPECT_EQ(STATUS_NoAddrsAvail, status->getStatusCode());
++    EXPECT_EQ("Server rejected this request", status->getStatusMessage());
++}
++
++// This test checks the handling for the REJECT special class at the host
++// reservation classification point with a reserved class.
++TEST_F(ClassifyTest, rejectClassReservedClass) {
++    Dhcp6Client client(srv_);
++    // Only 01:02:03:04 is reserved.
++    client.setDUID("01:02:03:05");
++    client.setInterface("eth1");
++    client.requestAddress();
++
++    // Configure DHCP server.
++    ASSERT_NO_THROW(configure(CONFIGS[10], *client.getServer()));
++
++    // Send a message to the server.
++    ASSERT_NO_THROW(client.doSolicit(true));
++
++    // No reservation: rejected.
++    Pkt6Ptr resp = client.getContext().response_;
++    ASSERT_TRUE(resp);
++    OptionPtr ia_na = resp->getOption(D6O_IA_NA);
++    ASSERT_TRUE(ia_na);
++    EXPECT_FALSE(ia_na->getOption(D6O_IAADDR));
++    OptionPtr status_code = ia_na->getOption(D6O_STATUS_CODE);
++    ASSERT_TRUE(status_code);
++    Option6StatusCodePtr status =
++        boost::dynamic_pointer_cast<Option6StatusCode>(status_code);
++    ASSERT_TRUE(status);
++    EXPECT_EQ(STATUS_NoAddrsAvail, status->getStatusCode());
++    EXPECT_EQ("Server rejected this request", status->getStatusMessage());
++}
++
++// This test checks the early global reservations lookup for rejecting.
++TEST_F(ClassifyTest, earlyReject) {
++    Dhcp6Client client(srv_);
++    client.setDUID("01:02:03:04");
++    client.setInterface("eth1");
++    client.requestAddress();
++
++    // Configure DHCP server.
++    ASSERT_NO_THROW(configure(CONFIGS[11], *client.getServer()));
++
++    // Send a message to the server.
++    ASSERT_NO_THROW(client.doSolicit(true));
++
++    // Match the reservation so rejected.
++    Pkt6Ptr resp = client.getContext().response_;
++    ASSERT_TRUE(resp);
++    OptionPtr ia_na = resp->getOption(D6O_IA_NA);
++    ASSERT_TRUE(ia_na);
++    EXPECT_FALSE(ia_na->getOption(D6O_IAADDR));
++    OptionPtr status_code = ia_na->getOption(D6O_STATUS_CODE);
++    ASSERT_TRUE(status_code);
++    Option6StatusCodePtr status =
++        boost::dynamic_pointer_cast<Option6StatusCode>(status_code);
++    ASSERT_TRUE(status);
++    EXPECT_EQ(STATUS_NoAddrsAvail, status->getStatusCode());
++    EXPECT_EQ("Server rejected this request", status->getStatusMessage());
++}
++
+ } // end of anonymous namespace
+--- a/AUTHORS
++++ b/AUTHORS
+@@ -311,6 +311,7 @@ We have received the following contribut
+ 
+  - Philip Prindeville
+    2024-09: Brought down the number of utilities keactrl depends on.
++   2026-05: Proposed the idea of the builtin REJECT client class.
+ 
+  - q66
+    2025-01: Added support for building with Boost 1.87.
