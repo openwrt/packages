@@ -54,7 +54,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
           without the SSL_OP_NO_SSLv2 option set. */
 --- a/nsock/src/nsock_pool.c
 +++ b/nsock/src/nsock_pool.c
-@@ -178,8 +178,10 @@ nsock_pool nsock_pool_new(void *userdata
+@@ -173,8 +173,10 @@ nsock_pool nsock_pool_new(void *userdata
  
  #if HAVE_OPENSSL
    nsp->sslctx = NULL;
