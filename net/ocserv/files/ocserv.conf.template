@@ -99,8 +99,8 @@ try-mtu-discovery = false
 #
 # There may be multiple certificate and key pairs and each key
 # should correspond to the preceding certificate.
-server-cert = /etc/ocserv/server-cert.pem
-server-key = /etc/ocserv/server-key.pem
+server-cert = |SERVER_CERT|
+server-key = |SERVER_KEY|
 
 # Diffie-Hellman parameters. Only needed if you require support
 # for the DHE ciphersuites (by default this server supports ECDHE).
