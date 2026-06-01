@@ -3,6 +3,22 @@
 [ -x /usr/bin/clawwrt-cli ] || exit 0
 [ -r /usr/share/libubox/jshn.sh ] || exit 0
 
+is_test_xfrm_iface() {
+  for iface_name in "$INTERFACE" "$DEVICE" "$IFACE" "$DEVICENAME"; do
+    case "$iface_name" in
+      xfrmi-test-*)
+        return 0
+        ;;
+    esac
+  done
+
+  return 1
+}
+
+if is_test_xfrm_iface; then
+  exit 0
+fi
+
 op=""
 case "$ACTION" in
   add|ifup|register)
