@@ -1,11 +1,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-docutils
-PKG_VERSION:=0.22.4
+PKG_VERSION:=0.23
 PKG_RELEASE:=1
 
 PYPI_NAME:=docutils
-PKG_HASH:=4db53b1fde9abecbb74d91230d32ab626d94f6badfc575d6db9194a49df29968
+PKG_HASH:=746f5060322511280a1e50eb76846ed6bf2342984b2ac04dc42caa1a8d78799e
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=Public-Domain BSD-2-License Python-2.0.1 GPL-3.0-or-later
