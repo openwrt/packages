@@ -145,7 +145,7 @@ Subject: [PATCH] 51738: support pcre's alternative DFA matching algorithm
  
 --- a/Test/V07pcre.ztst
 +++ b/Test/V07pcre.ztst
-@@ -208,3 +208,8 @@
+@@ -196,3 +196,8 @@
  >  [package]=name-12345
  >  [version]=12345
  >)
