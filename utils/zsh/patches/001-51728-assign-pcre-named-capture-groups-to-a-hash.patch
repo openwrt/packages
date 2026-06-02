@@ -160,7 +160,7 @@ Subject: [PATCH] 51728: assign pcre named capture groups to a hash
  
 --- a/Test/V07pcre.ztst
 +++ b/Test/V07pcre.ztst
-@@ -194,3 +194,17 @@
+@@ -182,3 +182,17 @@
    [[ abc =~ 'a(d*)bc' ]] && print "$#MATCH; $#match; ${#match[1]}"
  0:empty capture
  >3; 1; 0
