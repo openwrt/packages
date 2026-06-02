@@ -136,6 +136,7 @@ uci_changes() {
 	[ -n "$(/sbin/uci ${UCI_CONFIG_DIR:+-c ${UCI_CONFIG_DIR}} changes "$PACKAGE${CONFIG:+.${CONFIG}}${OPTION:+.${OPTION}}")" ]
 }
 notrack_nft() {
+	command -v nft >/dev/null 2>&1 || return 0
 	case "$1" in
 		update)
 			local port_set="$2"
@@ -154,8 +155,14 @@ notrack_nft() {
 			)"
 			existing_content="$(cat "$NOTRACK_NFT_FILE" 2>/dev/null)"
 			if [ "$new_content" != "$existing_content" ]; then
-				mkdir -p "${NOTRACK_NFT_FILE%/*}"
-				echo "$new_content" > "$NOTRACK_NFT_FILE"
+				if ! mkdir -p "${NOTRACK_NFT_FILE%/*}"; then
+					logger -t "$packageName" "Failed to create ${NOTRACK_NFT_FILE%/*}; skipping notrack rules"
+					return 1
+				fi
+				if ! echo "$new_content" > "$NOTRACK_NFT_FILE"; then
+					logger -t "$packageName" "Failed to write $NOTRACK_NFT_FILE; skipping notrack rules"
+					return 1
+				fi
 			fi
 			[ -s "$NOTRACK_NFT_FILE" ] && nft -c -f "$NOTRACK_NFT_FILE"
 		;;
