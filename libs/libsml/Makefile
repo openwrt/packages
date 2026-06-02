@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libsml
-PKG_VERSION:=1.1.4
+PKG_VERSION:=1.1.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/volkszaehler/libsml/tar.gz/v${PKG_VERSION}?
-PKG_HASH:=97d5647e5805b7f0e31d8875a1867a6afccbff1c1945b961b36041af3597f275
+PKG_HASH:=58dbc19edab0122e28676acc62e456f964c71894b10ed55058bcab3f4e3a8cc7
 
 PKG_MAINTAINER:=Andy Voigt <a.voigt@mailbox.org>
 PKG_LICENSE:=GPL-3.0-or-later
