@@ -49,7 +49,7 @@ start_service() {
    procd_set_param stderr 1
    procd_set_param pidfile $PID_FILE
 
-   procd_add_jail $BOINCEXE_NAME log requirejail
+   procd_add_jail $BOINCEXE_NAME log procfs requirejail
    procd_add_jail_mount /etc/TZ
    procd_add_jail_mount /proc/cpuinfo /proc/meminfo
    procd_add_jail_mount /etc/ssl/certs/ca-certificates.crt
