@@ -1,0 +1,13 @@
+#!/bin/sh
+
+if ! uci -q get sms_tool_js.@sms_tool_js[0] >/dev/null 2>&1; then
+	uci set sms_tool_js.config=sms_tool_js
+fi
+
+uci -q get sms_tool_js.@sms_tool_js[0].callport >/dev/null || uci set sms_tool_js.@sms_tool_js[0].callport=''
+uci -q get sms_tool_js.@sms_tool_js[0].calllog_enabled >/dev/null || uci set sms_tool_js.@sms_tool_js[0].calllog_enabled='0'
+uci commit sms_tool_js >/dev/null 2>&1
+
+rm -rf /tmp/luci-indexcache /tmp/luci-modulecache/ 2>/dev/null
+
+exit 0

@@ -1,0 +1,31 @@
+#!/bin/sh /etc/rc.common
+#
+# Copyright 2026 Rafał Wabik (IceG) - From eko.one.pl forum
+# Licensed to the GNU General Public License v3.0.
+#
+
+START=99
+USE_PROCD=1
+
+PROG=/usr/bin/sms_tool_calllogd
+
+start_service() {
+    local enabled=$(uci -q get sms_tool_js.@sms_tool_js[0].calllog_enabled || echo "0")
+    [ "$enabled" = "1" ] || return
+
+    procd_open_instance
+    procd_set_param command "$PROG"
+    procd_set_param respawn
+    procd_set_param stdout 1
+    procd_set_param stderr 1
+    procd_close_instance
+}
+
+reload_service() {
+    stop
+    start
+}
+
+service_triggers() {
+    procd_add_reload_trigger "sms_tool_js"
+}

@@ -1,0 +1,157 @@
+#!/bin/sh
+#
+# Copyright 2026 Rafał Wabik (IceG) - From eko.one.pl forum
+# Licensed to the GNU General Public License v3.0.
+#
+
+. /usr/share/libubox/jshn.sh
+
+PORT=$(uci -q get sms_tool_js.@sms_tool_js[0].callport)
+[ -n "$PORT" ] || PORT=$(uci -q get sms_tool_js.@sms_tool_js[0].readport)
+[ -z "$PORT" ] && exit 1
+
+LOG_FILE="/tmp/sms_tool_call_log.json"
+LINES_FILE="/tmp/sms_tool_call_log.lines"
+MAX_ENTRIES=50
+LAST_NUMBER=""
+LAST_TIME=0
+
+# Ensure files exist
+[ -f "$LINES_FILE" ] || touch "$LINES_FILE"
+[ -f "$LOG_FILE" ] || echo '{"calls":[]}' > "$LOG_FILE"
+
+add_to_log() {
+    local type="$1"
+    local number="$2"
+    local duration="$3"
+    local date=$(date "+%Y-%m-%d %H:%M:%S")
+    local now=$(date +%s)
+
+    [ -z "$number" ] && number="Unknown"
+    [ -z "$duration" ] && duration="0"
+
+    if [ "$number" = "$LAST_NUMBER" ] && [ $((now - LAST_TIME)) -lt 10 ]; then
+        return
+    fi
+
+    LAST_NUMBER="$number"
+    LAST_TIME="$now"
+
+    json_init
+    json_add_string "type" "$type"
+    json_add_string "number" "$number"
+    json_add_string "date" "$date"
+    json_add_string "duration" "$duration"
+    local new_entry=$(json_dump)
+
+    echo "$new_entry" >> "$LINES_FILE"
+
+    # Keep only last MAX_ENTRIES
+    local count=$(wc -l < "$LINES_FILE")
+    if [ "$count" -gt "$MAX_ENTRIES" ]; then
+        tail -n "$MAX_ENTRIES" "$LINES_FILE" > "${LINES_FILE}.tmp"
+        mv "${LINES_FILE}.tmp" "$LINES_FILE"
+    fi
+
+    # Generate JSON for LuCI
+    echo "{\"calls\":[" > "$LOG_FILE"
+    # Reverse lines to have newest first, add commas
+    if [ -s "$LINES_FILE" ]; then
+        sed '1!G;h;$!d' "$LINES_FILE" | sed '$ ! s/$/,/' >> "$LOG_FILE"
+    fi
+    echo "]}" >> "$LOG_FILE"
+}
+
+handle_event() {
+    local line="$1"
+
+    if echo "$line" | grep -q "\^DSCI:"; then
+        local data=$(echo "$line" | sed 's/\^DSCI: //')
+        local id=$(echo "$data" | cut -d, -f1)
+        local dir=$(echo "$data" | cut -d, -f2)
+        local state=$(echo "$data" | cut -d, -f3)
+        local number=$(echo "$data" | cut -d, -f5 | tr -d '"')
+
+        case "$state" in
+            0|1) # setup / alerting
+                eval "CALL_${id}_STATE=ringing"
+                [ -n "$number" ] && eval "CALL_${id}_NUMBER=\"$number\""
+                eval "CALL_${id}_START=$(date +%s)"
+                ;;
+            2) # active
+                eval "CALL_${id}_STATE=active"
+                eval "CALL_${id}_START=$(date +%s)"
+                ;;
+            3) # released
+                eval "local old_state=\$CALL_${id}_STATE"
+                eval "local old_number=\$CALL_${id}_NUMBER"
+                eval "local old_start=\$CALL_${id}_START"
+
+                [ -z "$old_state" ] && return
+
+                local type="Unknown"
+                if [ "$dir" = "1" ]; then
+                    if [ "$old_state" = "ringing" ]; then
+                        type="Missed"
+                    else
+                        type="Received"
+                    fi
+                else
+                    type="Dialed"
+                fi
+
+                local end=$(date +%s)
+                local duration_sec=$((end - old_start))
+                local duration=$(printf "%02d:%02d:%02d" $((duration_sec/3600)) $(( (duration_sec%3600)/60 )) $((duration_sec%60)) )
+
+                add_to_log "$type" "$old_number" "$duration"
+
+                # Cleanup
+                eval "unset CALL_${id}_STATE"
+                eval "unset CALL_${id}_NUMBER"
+                eval "unset CALL_${id}_START"
+                ;;
+        esac
+    elif echo "$line" | grep -q "+CLIP:"; then
+        local number=$(echo "$line" | cut -d'"' -f2)
+        [ -n "$number" ] && add_to_log "Missed" "$number" "0"
+    elif echo "$line" | grep -q "+CLCC:"; then
+        local number=$(echo "$line" | cut -d'"' -f2)
+        local state=$(echo "$line" | cut -d, -f3)
+
+        if [ "$state" = "4" ] && [ -n "$number" ]; then
+            add_to_log "Missed" "$number" "0"
+        fi
+    fi
+}
+
+# Main
+if command -v stty >/dev/null 2>&1; then
+    stty -F "$PORT" 115200 raw -echo 2>/dev/null
+fi
+
+exec 3<>"$PORT"
+
+printf "ATE0\r" >&3
+sleep 1
+printf "AT+CLIP=1\r" >&3
+sleep 1
+printf "AT+CRC=1\r" >&3
+sleep 1
+printf "AT^DSCI=1\r" >&3
+sleep 1
+
+last_poll=0
+
+while true; do
+    if read -t 1 line <&3; then
+        line=$(printf "%s" "$line" | tr -d '\r\n')
+        [ -n "$line" ] && handle_event "$line"
+    fi
+
+    now=$(date +%s)
+    if [ $((now - last_poll)) -gt 2 ]; then
+        printf "AT+CLCC\r" >&3
+        last_poll=$now
+    fi
+done
