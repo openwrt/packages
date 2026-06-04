@@ -113,7 +113,7 @@ status_service() {
 			json_get_type type "${key}" >/dev/null 2>&1
 			if [ "${type}" = "array" ]; then
 				json_get_values values "${key}" >/dev/null 2>&1
-				value="${values}"
+				value="${values// /, }"
 			else
 				json_get_var value "${key}" >/dev/null 2>&1
 			fi

@@ -230,7 +230,7 @@ f_conf() {
 			*[!a-zA-Z0-9_]*) ;;
 
 			*)
-				eval "${option}=\"\${value}\""
+				[ -n "${value}" ] && eval "${option}=\"\${value}\""
 				;;
 			esac
 		}
@@ -546,6 +546,9 @@ f_dns() {
 f_fetch() {
 	local fetch fetch_list insecure update="0"
 
+	# check if the configured fetch utility is available and has SSL support,
+	# if not try to find an alternative with SSL support or log an error if not found
+	#
 	adb_fetchcmd="$(command -v "${adb_fetchcmd}" 2>/dev/null)"
 	if [ -z "${adb_fetchcmd}" ]; then
 		fetch_list="curl wget-ssl libustream-openssl libustream-wolfssl libustream-mbedtls"
@@ -570,9 +573,18 @@ f_fetch() {
 			esac
 		done
 	fi
-
 	[ -z "${adb_fetchcmd}" ] && f_log "err" "download utility with SSL support not found, please set 'adb_fetchcmd' manually"
 
+	# check the fetch retry value
+	#
+	case "${adb_fetchretry}" in
+	0* | *[!0-9]*)
+		adb_fetchretry="5"
+		;;
+	esac
+
+	# set fetch parameters based on the fetch utility and check if insecure fetching is enabled
+	#
 	case "${adb_fetchcmd##*/}" in
 	"curl")
 		[ "${adb_fetchinsecure}" = "1" ] && insecure="--insecure"
@@ -829,7 +841,7 @@ f_dnsup() {
 # handle etag http header
 #
 f_etag() {
-	local http_head http_code etag_id etag_cnt etag_match out_rc="4" feed="${1}" feed_url="${2}" feed_suffix="${3}" feed_cnt="${4:-"1"}"
+	local http_head http_code etag_id etag_cnt etag_match out_rc="4" feed="${1}" feed_url="${2}" feed_suffix="${3}" feed_cnt="${4:-"1"}" feed_rm="${5:-"0"}"
 
 	if [ -n "${adb_etagparm}" ]; then
 
@@ -837,16 +849,19 @@ f_etag() {
 		#
 		[ ! -f "${adb_backupdir}/adblock.etag" ] && : >"${adb_backupdir}/adblock.etag"
 
-		# fetch http headers and extract http code and etag/last-modified header
-		#
-		http_head="$("${adb_fetchcmd}" ${adb_etagparm} "${feed_url}${feed_suffix}" 2>&1)"
-		http_code="$(printf '%s' "${http_head}" | "${adb_awkcmd}" 'tolower($0)~/^[[:space:]]*http\/[0-9.]+ /{printf "%s",$2}')"
-		etag_id="$(printf '%s' "${http_head}" | "${adb_awkcmd}" 'tolower($0)~/^[[:space:]]*etag: /{gsub("\"","");printf "%s",$2}')"
+		if [ "${feed_rm}" = "0" ]; then
 
-		# if etag header is not present, try to use last-modified header as fallback for change detection
-		#
-		if [ -z "${etag_id}" ]; then
-			etag_id="$(printf '%s' "${http_head}" | "${adb_awkcmd}" 'tolower($0)~/^[[:space:]]*last-modified: /{gsub(/[Ll]ast-[Mm]odified:|[[:space:]]|,|:/,"");printf "%s\n",$1}')"
+			# fetch http headers and extract http code and etag/last-modified header
+			#
+			http_head="$("${adb_fetchcmd}" ${adb_etagparm} "${feed_url}${feed_suffix}" 2>&1)"
+			http_code="$(printf '%s' "${http_head}" | "${adb_awkcmd}" 'tolower($0)~/^[[:space:]]*http\/[0-9.]+ /{printf "%s",$2}')"
+			etag_id="$(printf '%s' "${http_head}" | "${adb_awkcmd}" 'tolower($0)~/^[[:space:]]*etag: /{gsub(/[\r"]/,"");printf "%s",$2}')"
+
+			# if etag header is not present, try to use last-modified header as fallback for change detection
+			#
+			if [ -z "${etag_id}" ]; then
+				etag_id="$(printf '%s' "${http_head}" | "${adb_awkcmd}" 'tolower($0)~/^[[:space:]]*last-modified: /{gsub(/[Ll]ast-[Mm]odified:|[[:space:]]|,|:/,"");printf "%s\n",$1}')"
+			fi
 		fi
 
 		# acquire exclusive lock on etag file to serialize concurrent read-modify-write from parallel feeds
@@ -854,29 +869,32 @@ f_etag() {
 		exec 9>"${adb_etaglock}"
 		"${adb_flockcmd}" -x 9
 
-		# compare http code and etag id with stored values, update etag file and return code accordingly
-		#
-		etag_cnt="$("${adb_awkcmd}" -v f="${feed}" -v s="${feed_suffix}" -v e="${etag_id}" '
-		BEGIN { matched = 0; cnt = 0; p = f " " s }
-		$1 == f { cnt++ }
-		index($0, p) == 1 {
-			rest = substr($0, length(p) + 1)
-			sub(/^[[:space:]]+/, "", rest)
-			if (rest == e) { matched = 1 }
-		}
-		END { print cnt; exit !matched }' "${adb_backupdir}/adblock.etag")"
-		etag_match="${?}"
+		if [ "${feed_rm}" = "0" ]; then
+
+			# compare http code and etag id with stored values, update etag file and return code accordingly
+			#
+			etag_cnt="$("${adb_awkcmd}" -v f="${feed}" -v s="${feed_suffix}" -v e="${etag_id}" '
+			BEGIN { matched = 0; cnt = 0; p = f " " s }
+			$1 == f { cnt++ }
+			index($0, p) == 1 {
+				rest = substr($0, length(p) + 1)
+				sub(/^[[:space:]]+/, "", rest)
+				if (rest == e) { matched = 1 }
+			}
+			END { print cnt; exit !matched }' "${adb_backupdir}/adblock.etag")"
+			etag_match="${?}"
+		fi
 
 		# compare http code, etag count and etag id; update etag file and return code accordingly
 		#
-		if [ "${http_code}" = "200" ] && [ "${etag_cnt}" = "${feed_cnt}" ] && [ -n "${etag_id}" ] && [ "${etag_match}" = "0" ]; then
+		if [ "${feed_rm}" = "0" ] && [ "${http_code}" = "200" ] && [ "${etag_cnt}" = "${feed_cnt}" ] && [ -n "${etag_id}" ] && [ "${etag_match}" = "0" ]; then
 			out_rc="0"
-		elif [ -n "${etag_id}" ]; then
+		elif [ -n "${etag_id}" ] || [ "${feed_rm}" = "1" ]; then
 
 			# if feed count is less than etag count, it means the feed source has been removed or disabled, so remove all entries for this feed,
 			# otherwise only remove the entry with the matching feed suffix (feed url) to allow multiple sources for the same feed
 			#
-			if [ "${feed_cnt}" -lt "${etag_cnt}" ]; then
+			if [ "${feed_rm}" = "1" ] || [ "${feed_cnt}" -lt "${etag_cnt:-"0"}" ]; then
 				"${adb_awkcmd}" -v f="${feed}" '$1 != f' \
 					"${adb_backupdir}/adblock.etag" >"${adb_backupdir}/adblock.etag.new"
 			else
@@ -886,7 +904,7 @@ f_etag() {
 					"${adb_backupdir}/adblock.etag" >"${adb_backupdir}/adblock.etag.new"
 			fi
 			"${adb_mvcmd}" -f "${adb_backupdir}/adblock.etag.new" "${adb_backupdir}/adblock.etag"
-			printf '%s\t%s\n' "${feed} ${feed_suffix}" "${etag_id}" >>"${adb_backupdir}/adblock.etag"
+			[ "${feed_rm}" = "0" ] && printf '%s\t%s\n' "${feed} ${feed_suffix}" "${etag_id}" >>"${adb_backupdir}/adblock.etag"
 			out_rc="2"
 		fi
 
@@ -895,7 +913,7 @@ f_etag() {
 		exec 9>&-
 	fi
 
-	f_log "debug" "f_etag   ::: feed: ${feed}, suffix: ${feed_suffix:-"-"}, http_code: ${http_code:-"-"}, feed/etag: ${feed_cnt}/${etag_cnt:-"0"}, rc: ${out_rc}"
+	f_log "debug" "f_etag   ::: feed: ${feed}, suffix: ${feed_suffix:-"-"}, http_code: ${http_code:-"-"}, feed/etag: ${feed_cnt}/${etag_cnt:-"0"}, rm: ${feed_rm}, rc: ${out_rc}"
 	return "${out_rc}"
 }
 
@@ -1067,6 +1085,15 @@ f_nftremove() {
 	fi
 }
 
+# remove a single feed from the active feed list
+#
+f_feedrm() {
+	adb_feed=" ${adb_feed} "
+	adb_feed="${adb_feed// ${1} / }"
+	adb_feed="${adb_feed# }"
+	adb_feed="${adb_feed% }"
+}
+
 # backup/restore/remove blocklists
 #
 f_list() {
@@ -1211,6 +1238,7 @@ f_list() {
 				f_list backup
 			elif [ "${adb_action}" != "boot" ] && [ "${adb_action}" != "start" ]; then
 				f_log "info" "preparation of '${src_name}' failed, rc: ${src_rc}"
+				[ "${adb_action}" = "reload" ] && f_etag "${src_name}" "" "" "" "1"
 				f_list restore
 				out_rc="${?}"
 				: >"${src_tmpfile}"
@@ -1218,6 +1246,7 @@ f_list() {
 		else
 			f_log "info" "download of '${src_name}' failed, url: ${src_url}, rule: ${src_rset:-"-"}, categories: ${src_cat:-"-"}, rc: ${src_rc}"
 			if [ "${adb_action}" != "boot" ] && [ "${adb_action}" != "start" ]; then
+				[ "${adb_action}" = "reload" ] && f_etag "${src_name}" "" "" "" "1"
 				f_list restore
 				out_rc="${?}"
 			fi
@@ -1225,6 +1254,7 @@ f_list() {
 		;;
 	"backup")
 		file_name="${src_tmpfile}"
+		"${adb_rmcmd}" -f "${src_tmprmfile}"
 		"${adb_gzipcmd}" -cf "${src_tmpfile}" >"${adb_backupdir}/adb_list.${src_name}.gz"
 		out_rc="${?}"
 		;;
@@ -1248,13 +1278,9 @@ f_list() {
 		fi
 		case "${adb_action}" in
 		"boot" | "start" | "restart" | "resume") ;;
-
 		*)
 			if [ -n "${src_name}" ] && [ "${out_rc}" != "0" ]; then
-				adb_feed=" ${adb_feed} "
-				adb_feed="${adb_feed// ${src_name} / }"
-				adb_feed="${adb_feed# }"
-				adb_feed="${adb_feed% }"
+				printf '%s\n' "${src_name}" >"${src_tmprmfile}"
 			fi
 			;;
 		esac
@@ -1262,10 +1288,7 @@ f_list() {
 	"remove")
 		"${adb_rmcmd}" "${adb_backupdir}/adb_list.${src_name}.gz" 2>>"${adb_errorlog}"
 		out_rc="${?}"
-		adb_feed=" ${adb_feed} "
-		adb_feed="${adb_feed// ${src_name} / }"
-		adb_feed="${adb_feed# }"
-		adb_feed="${adb_feed% }"
+		f_feedrm "${src_name}"
 		;;
 	"merge")
 		src_name=""
@@ -1699,7 +1722,7 @@ f_jsnup() {
 				adb_cnt="0"
 				feeds="restrictive jail (allowlist-only)"
 			else
-				feeds="$(printf '%s\n' ${adb_feed// /, } | "${adb_sortcmd}" | "${adb_xargscmd}")"
+				feeds="$(printf '%s\n' ${adb_feed} | "${adb_sortcmd}" | "${adb_xargscmd}")"
 			fi
 		fi
 	fi
@@ -1755,9 +1778,9 @@ f_log() {
 
 	if [ -n "${log_msg}" ] && { [ "${class}" != "debug" ] || [ "${adb_debug}" = "1" ]; }; then
 		if [ -x "${adb_loggercmd}" ]; then
-			"${adb_loggercmd}" -p "${class}" -t "adblock-${adb_bver:-"-"}[${$}]" "${log_msg::512}"
+			"${adb_loggercmd}" -p "${class}" -t "adblock-${adb_bver:-"n/a"}[${$}]" "${log_msg::512}"
 		else
-			printf '%s %s %s\n' "${class}" "adblock-${adb_bver:-"-"}[${$}]" "${log_msg::512}" >&2
+			printf '%s %s %s\n' "${class}" "adblock-${adb_bver:-"n/a"}[${$}]" "${log_msg::512}" >&2
 		fi
 		if [ "${class}" = "err" ] || [ "${class}" = "emerg" ]; then
 			[ "${adb_action}" != "mail" ] && f_rmdns
@@ -1771,7 +1794,7 @@ f_log() {
 #
 f_main() {
 	local src_name src_domain src_rset src_url src_cat src_item src_list src_entries src_suffix src_rc entry cnt
-	local src_tmpcat src_tmparchive src_tmpload src_tmpfile seen_domains feed_restore map_domain
+	local src_tmpcat src_tmparchive src_tmpload src_tmprmfile src_tmpfile rm_file seen_domains feed_restore map_domain
 
 	# allow- and blocklist preparation
 	#
@@ -1858,10 +1881,7 @@ f_main() {
 		# check if feed is defined in configuration, if not remove it from feed list and continue with next one
 		#
 		if ! json_select "${src_name}" >/dev/null 2>&1; then
-			adb_feed=" ${adb_feed} "
-			adb_feed="${adb_feed// ${src_name} / }"
-			adb_feed="${adb_feed# }"
-			adb_feed="${adb_feed% }"
+			f_feedrm "${src_name}"
 			continue
 		fi
 
@@ -1873,6 +1893,7 @@ f_main() {
 		src_tmpcat="${adb_tmpload}.${src_name}.cat"
 		src_tmpload="${adb_tmpload}.${src_name}.load"
 		src_tmparchive="${adb_tmpload}.${src_name}.archive"
+		src_tmprmfile="${adb_tmpload}.${src_name}.remove"
 		src_tmpfile="${adb_tmpfile}.${src_name}"
 		src_rc=4
 
@@ -2037,6 +2058,15 @@ f_main() {
 		cnt="$((cnt + 1))"
 	done
 	wait
+
+	# prune feeds that failed restore inside the background subshells
+	#
+	for rm_file in "${adb_tmpload}".*.remove; do
+		[ -f "${rm_file}" ] || continue
+		while read -r entry; do
+			f_feedrm "${entry}"
+		done <"${rm_file}"
+	done
 
 	# tld compression and dns restart
 	#
@@ -2232,36 +2262,39 @@ f_report() {
 				top_clients)
 					"${adb_sortcmd}" ${adb_srtopts} -nr "${top_tmpclients}" |
 						"${adb_awkcmd}" -v top_count="${top_count}" '
+							function jclean(s){gsub(/[[:cntrl:]"\\]/,"",s);return s}
 							BEGIN { ORS=""; OFS="" }
 							NR==1 {
-								printf "\n\t\t{\n\t\t\t\"count\": \"%s\",\n\t\t\t\"address\": \"%s\"\n\t\t}", $1, $2
+								printf "\n\t\t{\n\t\t\t\"count\": \"%s\",\n\t\t\t\"address\": \"%s\"\n\t\t}", $1, jclean($2)
 							}
 							NR>1 && NR<=top_count {
-								printf ",\n\t\t{\n\t\t\t\"count\": \"%s\",\n\t\t\t\"address\": \"%s\"\n\t\t}", $1, $2
+								printf ",\n\t\t{\n\t\t\t\"count\": \"%s\",\n\t\t\t\"address\": \"%s\"\n\t\t}", $1, jclean($2)
 							}
 						' >>"${report_jsn}"
 					;;
 				top_domains)
 					"${adb_sortcmd}" ${adb_srtopts} -nr "${top_tmpdomains}" |
 						"${adb_awkcmd}" -v top_count="${top_count}" '
+							function jclean(s){gsub(/[[:cntrl:]"\\]/,"",s);return s}
 							BEGIN { ORS=""; OFS="" }
 							NR==1 {
-								printf "\n\t\t{\n\t\t\t\"count\": \"%s\",\n\t\t\t\"address\": \"%s\"\n\t\t}", $1, $2
+								printf "\n\t\t{\n\t\t\t\"count\": \"%s\",\n\t\t\t\"address\": \"%s\"\n\t\t}", $1, jclean($2)
 							}
 							NR>1 && NR<=top_count {
-								printf ",\n\t\t{\n\t\t\t\"count\": \"%s\",\n\t\t\t\"address\": \"%s\"\n\t\t}", $1, $2
+								printf ",\n\t\t{\n\t\t\t\"count\": \"%s\",\n\t\t\t\"address\": \"%s\"\n\t\t}", $1, jclean($2)
 							}
 						' >>"${report_jsn}"
 					;;
 				top_blocked)
 					"${adb_sortcmd}" ${adb_srtopts} -nr "${top_tmpblocked}" |
 						"${adb_awkcmd}" -v top_count="${top_count}" '
+							function jclean(s){gsub(/[[:cntrl:]"\\]/,"",s);return s}
 							BEGIN { ORS=""; OFS="" }
 							NR==1 {
-								printf "\n\t\t{\n\t\t\t\"count\": \"%s\",\n\t\t\t\"address\": \"%s\"\n\t\t}", $1, $2
+								printf "\n\t\t{\n\t\t\t\"count\": \"%s\",\n\t\t\t\"address\": \"%s\"\n\t\t}", $1, jclean($2)
 							}
 							NR>1 && NR<=top_count {
-								printf ",\n\t\t{\n\t\t\t\"count\": \"%s\",\n\t\t\t\"address\": \"%s\"\n\t\t}", $1, $2
+								printf ",\n\t\t{\n\t\t\t\"count\": \"%s\",\n\t\t\t\"address\": \"%s\"\n\t\t}", $1, jclean($2)
 							}
 						' >>"${report_jsn}"
 					;;
@@ -2283,6 +2316,7 @@ f_report() {
 					i = 0
 					printf "\t\"requests\": [\n"
 				}
+				function jclean(s){gsub(/[[:cntrl:]"\\]/,"",s);return s}
 
 				# only match if search is empty or non-empty and NF == 7
 				((search == "" || index($0, search)) && NF == 7) {
@@ -2297,10 +2331,10 @@ f_report() {
 					printf "\n\t\t{\n"
 					printf "\t\t\t\"date\": \"%s\",\n", $1
 					printf "\t\t\t\"time\": \"%s\",\n", $2
-					printf "\t\t\t\"client\": \"%s\",\n", $3
-					printf "\t\t\t\"iface\": \"%s\",\n", $4
+					printf "\t\t\t\"client\": \"%s\",\n", jclean($3)
+					printf "\t\t\t\"iface\": \"%s\",\n", jclean($4)
 					printf "\t\t\t\"type\": \"%s\",\n", $5
-					printf "\t\t\t\"domain\": \"%s\",\n", $6
+					printf "\t\t\t\"domain\": \"%s\",\n", jclean($6)
 					printf "\t\t\t\"rc\": \"%s\"\n", $7
 					printf "\t\t}"
 				}
