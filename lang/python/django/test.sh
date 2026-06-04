@@ -18,4 +18,3 @@ if (django.__version__) != "$GOT_VER":
 
 sys.exit(0)
 EOF
-
