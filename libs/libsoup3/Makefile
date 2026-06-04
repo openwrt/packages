@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libsoup3
 PKG_VERSION:=3.7.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=libsoup-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNOME/libsoup/$(basename $(PKG_VERSION))
@@ -30,13 +30,24 @@ define Package/libsoup3
   CATEGORY:=Libraries
   TITLE:=libsoup3
   URL:=https://wiki.gnome.org/Projects/libsoup
-  DEPENDS:=+glib2 +libxml2 +libgnutls +libsqlite3 +libpsl +libnghttp2
+  DEPENDS:=+glib2 +libsqlite3 +libpsl +libnghttp2 +LIBSOUP3_ZSTD:libzstd
+endef
+
+define Package/libsoup3/config
+  config LIBSOUP3_ZSTD
+	bool "zstd Content-Encoding support"
+	depends on PACKAGE_libsoup3
+	default n
+	help
+	  Enable transparent decoding of zstd-compressed HTTP responses.
+	  This pulls in libzstd. Leave disabled to keep the footprint small.
 endef
 
 MESON_ARGS += \
 	-Dgssapi=disabled \
 	-Dntlm=disabled \
 	-Dbrotli=disabled \
+	-Dzstd=$(if $(CONFIG_LIBSOUP3_ZSTD),enabled,disabled) \
 	-Dtls_check=false \
 	-Dintrospection=disabled \
 	-Dvapi=disabled \
