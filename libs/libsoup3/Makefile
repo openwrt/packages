@@ -30,7 +30,7 @@ define Package/libsoup3
   CATEGORY:=Libraries
   TITLE:=libsoup3
   URL:=https://wiki.gnome.org/Projects/libsoup
-  DEPENDS:=+glib2 +libxml2 +libgnutls +libsqlite3 +libpsl +libnghttp2
+  DEPENDS:=+glib2 +libxml2 +libgnutls +libsqlite3 +libpsl +libnghttp2 +libzstd
 endef
 
 MESON_ARGS += \
