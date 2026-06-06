@@ -47,7 +47,8 @@ PKG_CONFIG_DEPENDS:= \
   CONFIG_PRIVOXY_enable-external-filters \
   CONFIG_PRIVOXY_enable-accept-filter \
   CONFIG_PRIVOXY_enable-strptime-sanity-checks \
-  CONFIG_PRIVOXY_enable-compression
+  CONFIG_PRIVOXY_enable-compression \
+  CONFIG_PRIVOXY_enable-https-inspection
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -59,7 +60,7 @@ define Package/privoxy
   URL:=https://www.privoxy.org/
   USERID:=privoxy=8118:privoxy=8118
   MENU:=1
-  DEPENDS:=+!PRIVOXY_no_pcre:libpcre2 +!PRIVOXY_no_pthread:libpthread +!PRIVOXY_no_zlib:zlib
+  DEPENDS:=+!PRIVOXY_no_pcre:libpcre2 +!PRIVOXY_no_pthread:libpthread +!PRIVOXY_no_zlib:zlib +!PRIVOXY_no_openssl:libopenssl
 endef
 
 # shown in LuCI package description
@@ -106,7 +107,8 @@ CONFIGURE_ARGS += \
 	$(if $(CONFIG_PRIVOXY_enable-external-filters),--enable-external-filters) \
 	$(if $(CONFIG_PRIVOXY_enable-accept-filter),--enable-accept-filter) \
 	$(if $(CONFIG_PRIVOXY_enable-strptime-sanity-checks),--enable-strptime-sanity-checks) \
-	$(if $(CONFIG_PRIVOXY_enable-compression),--enable-compression)
+	$(if $(CONFIG_PRIVOXY_enable-compression),--enable-compression) \
+	$(if $(CONFIG_PRIVOXY_enable-https-inspection),--with-openssl)
 
 # needed otherwise errors during compile
 MAKE_FLAGS:=
