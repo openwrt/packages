@@ -4,9 +4,8 @@
 
 case "$PKG_NAME" in #luajit2 use build number at -v but releases are named by date
 luajit2)
-	exit 0
+	luajit2 -v 2>&1 | grep -F "LuaJIT 2.1."
 	;;
-
 *)
 	echo "Untested package: $PKG_NAME" >&2
 	exit 1
