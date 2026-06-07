@@ -30,7 +30,7 @@ Subject: [PATCH] add pcre2 support
  #include <pcre.h>
  #endif
  
-@@ -100,32 +103,52 @@ swrun_max_processes( void )
+@@ -99,32 +102,52 @@ swrun_max_processes( void )
  #endif /* NETSNMP_FEATURE_REMOVE_SWRUN_MAX_PROCESSES */
  
  #ifndef NETSNMP_FEATURE_REMOVE_SWRUN_COUNT_PROCESSES_BY_REGEX
@@ -100,7 +100,7 @@ Subject: [PATCH] add pcre2 support
  #include <pcre.h>
  #elif defined(HAVE_REGEX_H)
  #include <sys/types.h>
-@@ -824,7 +828,13 @@ int netsnmp_access_interface_max_reached
+@@ -821,7 +825,13 @@ int netsnmp_access_interface_max_reached
  int netsnmp_access_interface_include(const char *name)
  {
      netsnmp_include_if_list *if_ptr;
@@ -115,7 +115,7 @@ Subject: [PATCH] add pcre2 support
      int                      found_ndx[3];
  #endif
  
-@@ -840,7 +850,13 @@ int netsnmp_access_interface_include(con
+@@ -837,7 +847,13 @@ int netsnmp_access_interface_include(con
  
  
      for (if_ptr = include_list; if_ptr; if_ptr = if_ptr->next) {
@@ -130,7 +130,7 @@ Subject: [PATCH] add pcre2 support
          if (pcre_exec(if_ptr->regex_ptr, NULL, name, strlen(name), 0, 0,
                        found_ndx, 3) >= 0)
              return TRUE;
-@@ -853,6 +869,9 @@ int netsnmp_access_interface_include(con
+@@ -850,6 +866,9 @@ int netsnmp_access_interface_include(con
  #endif
      }
  
@@ -140,7 +140,7 @@ Subject: [PATCH] add pcre2 support
      return FALSE;
  }
  
-@@ -964,7 +983,13 @@ _parse_include_if_config(const char *tok
+@@ -961,7 +980,13 @@ _parse_include_if_config(const char *tok
  {
      netsnmp_include_if_list *if_ptr, *if_new;
      char                    *name, *st;
@@ -155,7 +155,7 @@ Subject: [PATCH] add pcre2 support
      const char              *pcre_error;
      int                     pcre_error_offset;
  #elif defined(HAVE_REGEX_H)
-@@ -996,7 +1021,15 @@ _parse_include_if_config(const char *tok
+@@ -993,7 +1018,15 @@ _parse_include_if_config(const char *tok
              config_perror("Out of memory");
              goto err;
          }
@@ -172,7 +172,7 @@ Subject: [PATCH] add pcre2 support
          if_new->regex_ptr = pcre_compile(if_new->name, 0,  &pcre_error,
                                           &pcre_error_offset, NULL);
          if (!if_new->regex_ptr) {
-@@ -1032,7 +1065,7 @@ _parse_include_if_config(const char *tok
+@@ -1029,7 +1062,7 @@ _parse_include_if_config(const char *tok
  
  err:
      if (if_new) {
@@ -181,7 +181,7 @@ Subject: [PATCH] add pcre2 support
          free(if_new->regex_ptr);
  #endif
          free(if_new->name);
-@@ -1047,7 +1080,7 @@ _free_include_if_config(void)
+@@ -1044,7 +1077,7 @@ _free_include_if_config(void)
  
      while (if_ptr) {
          if_next = if_ptr->next;
@@ -307,7 +307,7 @@ Subject: [PATCH] add pcre2 support
  
 --- a/configure.d/config_os_libs1
 +++ b/configure.d/config_os_libs1
-@@ -97,6 +97,32 @@ LIBS="$netsnmp_save_LIBS"
+@@ -95,6 +95,32 @@ LIBS="$netsnmp_save_LIBS"
  #
  #   regex in process table
  #
@@ -340,14 +340,14 @@ Subject: [PATCH] add pcre2 support
  if test "x$with_pcre" != "xno"; then
    AC_CHECK_HEADER([pcre.h], [
        AC_DEFINE([HAVE_PCRE_H], [1], [Define to 1 if you have <pcre.h>.])
-@@ -123,3 +149,4 @@ if test "x$with_pcre" != "xno"; then
-   AC_SUBST(LAGENTLIBS)
-   AC_SUBST(LMIBLIBS)
+@@ -194,3 +220,4 @@ if test "x$with_nl" != "xno"; then
+     ;;
+     esac
  fi
 +fi
 --- a/configure.d/config_project_with_enable
 +++ b/configure.d/config_project_with_enable
-@@ -160,6 +160,10 @@ NETSNMP_ARG_WITH(rpm,
+@@ -171,6 +171,10 @@ NETSNMP_ARG_WITH(rpm,
                                    management system when building the host MIB
                                    module.])
  
@@ -396,7 +396,7 @@ Subject: [PATCH] add pcre2 support
  
 --- a/include/net-snmp/types.h
 +++ b/include/net-snmp/types.h
-@@ -63,7 +63,7 @@ typedef long ssize_t;
+@@ -66,7 +66,7 @@ typedef long ssize_t;
  typedef unsigned long int nfds_t;
  #endif
  

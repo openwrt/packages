@@ -4,7 +4,7 @@
  #
  AC_MSG_CHECKING([for and configuring mib modules to use])
  
--AH_TOP([#define NETSNMP_REQUIRE_SEMICOLON extern void netsnmp_unused_function(void)])
+-AH_TOP([#define NETSNMP_REQUIRE_SEMICOLON struct netsnmp_unused_struct])
 -
  # set up the CPP command
  MODULECPP="$CPP $PARTIALTARGETFLAGS $CPPFLAGS -DNETSNMP_FEATURE_CHECKING -I${srcdir}/include -I${srcdir}/agent/mibgroup"
@@ -105,8 +105,8 @@
 -#define config_warning(x) NETSNMP_REQUIRE_SEMICOLON
 +#define config_warning(x)
  
--#define NETSNMP_REQUIRE_SEMICOLON extern void netsnmp_unused_function(void)
-+#define extern void netsnmp_unused_function(void)
+-#define NETSNMP_REQUIRE_SEMICOLON struct netsnmp_unused_struct
++/*define NETSNMP_REQUIRE_SEMICOLON struct netsnmp_unused_struct*/
  
 -#define config_belongs_in(x) NETSNMP_REQUIRE_SEMICOLON
 +#define config_belongs_in(x)
