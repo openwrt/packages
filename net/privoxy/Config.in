@@ -110,6 +110,14 @@ if PACKAGE_privoxy
 		depends on !PRIVOXY_no_zlib
 		default n
 
+	config PRIVOXY_enable-https-inspection
+		bool "Allow Privoxy to filter encrypted requests and responses. "
+		help
+			Allow Privoxy to filter encrypted requests and responses. Requires openssl support.
+		depends on !PRIVOXY_no_openssl
+		default n
+    
+
 
 endif
                 
