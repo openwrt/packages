@@ -6,6 +6,7 @@ STOP=10
 PIDFILE=/var/run/privoxy.pid
 CFGFILE=/var/etc/privoxy.conf
 CFGTEMP=/var/etc/privoxy.conf.tmp
+SSLCERTSTEMP=/var/ssl
 
 _uci2conf() {
 	# redefined callback for options when calling config_load
@@ -33,6 +34,12 @@ _uci2conf() {
 						echo $__OPT | grep -i "_LENGTH" >/dev/null 2>&1 && return
 						# detect list options (ITEM) and ignore
 						echo $__OPT | grep -i "_ITEM" >/dev/null 2>&1 && __OPT=$(echo $__OPT | sed -e "s#_ITEM.*##g")
+						# Ignore certificate generation options (used only in init script)
+						case $__OPT in
+							certdir|ca_common_name|ca_validity_days|cert_validity_days|cert_key_size|enable_ssl_bumping|boot_delay|_enabled)
+								return
+								;;
+						esac
 						# uci only accept "_" but we need "-"
 						local __OPT=$(echo $__OPT | sed -e "s#_#-#g")
 						# write to config
@@ -71,7 +78,8 @@ _uci2conf() {
 	chown privoxy:privoxy $_LOGDIR/$_LOGFILE
 	echo -e "logdir\t$_LOGDIR" >> $CFGTEMP
 	echo -e "logfile\t$_LOGFILE" >> $CFGTEMP
-
+	_RECEIVE_BUFFER_SIZE=$(uci -q get privoxy.privoxy.receive-buffer-size) || _RECEIVE_BUFFER_SIZE="30000"
+	echo -e "receive-buffer-size\t$_RECEIVE_BUFFER_SIZE" >> $CFGTEMP
 	# confdir
 	# privoxy needs read access (possibly write access)
 	_CONFDIR=$(uci -q get privoxy.privoxy.confdir) || _CONFDIR="/etc/privoxy"
@@ -103,6 +111,80 @@ _uci2conf() {
 		echo -e "temporary-directory\t$_TMP_DIR" >> $CFGTEMP
 	fi
 
+	# HTTPS Inspection (Section 7.7)
+	# ca-directory - directory for CA certificate and key files
+	# certificate-directory - directory for generated certificates
+	_CERT_DIR=$(uci -q get privoxy.privoxy.certdir)
+	if [ -n "$_CERT_DIR" ]; then
+		mkdir -m0700 -p $_CERT_DIR
+		chown privoxy:privoxy $_CERT_DIR
+		chmod 700 $_CERT_DIR
+
+		# Generate CA certificate if it doesn't exist or regeneration requested
+		_CA_CERT="$_CERT_DIR/ca-cert.pem"
+		_CA_KEY="$_CERT_DIR/ca-key.pem"
+		_REGEN_FILE="/etc/privoxy/regenerate_ca"
+		if [ -f "$_REGEN_FILE" ]; then
+			rm -f "$_CA_CERT" "$_CA_KEY"
+			rm -f "$_REGEN_FILE"
+		fi
+		if [ ! -f "$_CA_CERT" ] || [ ! -f "$_CA_KEY" ]; then
+			_CA_NAME=$(uci -q get privoxy.privoxy.ca_common_name) || _CA_NAME="Privoxy CA"
+			_CA_DAYS=$(uci -q get privoxy.privoxy.ca_validity_days) || _CA_DAYS="3650"
+			_CERT_DAYS=$(uci -q get privoxy.privoxy.cert_validity_days) || _CERT_DAYS="365"
+			_CERT_KEY_SIZE=$(uci -q get privoxy.privoxy.cert_key_size) || _CERT_KEY_SIZE="2048"
+			logger -p daemon.info -t "privoxy[]" "Generating CA certificate for HTTPS inspection"
+			openssl req -new -newkey rsa:$_CERT_KEY_SIZE -days $_CA_DAYS -nodes -x509 \
+				-subj "/CN=$_CA_NAME" -keyout "$_CA_KEY" -out "$_CA_CERT" 2>/dev/null
+		fi
+
+		# Set permissions: CA cert is public (readable by all), private key is secure
+		chmod 644 "$_CA_CERT"
+		chown root:root "$_CA_CERT"
+		chmod 600 "$_CA_KEY"
+		chown privoxy:privoxy "$_CA_KEY"
+
+		# Create symlink for trustedCAs.pem pointing to system CA certificates
+		_TRUSTED_CAS="$_CERT_DIR/trustedCAs.pem"
+		_SYSTEM_CA_CRT="/etc/ssl/certs/ca-certificates.crt"
+		if [ ! -f "$_TRUSTED_CAS" ]; then
+			if [ -f "$_SYSTEM_CA_CRT" ]; then
+				ln -sf "$_SYSTEM_CA_CRT" "$_TRUSTED_CAS"
+			else
+				# Fallback: use the CA bundle from ca-cert package
+				_CA_BUNDLE="/etc/ssl/certs/ca-bundle.crt"
+				if [ -f "$_CA_BUNDLE" ]; then
+					ln -sf "$_CA_BUNDLE" "$_TRUSTED_CAS"
+				fi
+			fi
+		fi
+
+		# Write ca-directory directive (directory containing ca-cert.pem and ca-key.pem)
+		echo -e "ca-directory\t$_CERT_DIR" >> $CFGTEMP
+
+		# Write ca-cert-file directive (full path to CA certificate)
+		echo -e "ca-cert-file\t$_CA_CERT" >> $CFGTEMP
+
+		# Write ca-key-file directive (full path to CA key)
+		echo -e "ca-key-file\t$_CA_KEY" >> $CFGTEMP
+
+		# Write certificate-directory directive (directory for generated certificates)
+		mkdir -m777 -p $SSLCERTSTEMP
+		echo -e "certificate-directory\t$SSLCERTSTEMP" >> $CFGTEMP
+	fi
+
+	# enable-ssl-bumping
+	_SSL_BUMP=$(uci -q get privoxy.privoxy.enable_ssl_bumping)
+	if [ "$_SSL_BUMP" = "1" ]; then
+		echo -e "enable-ssl-bumping\t1" >> $CFGTEMP
+	fi
+
+	# trustfile
+	_TRUSTFILE=$(uci -q get privoxy.privoxy.trustfile)
+	if [ -n "$_TRUSTFILE" ]; then
+		echo -e "trustfile\t$_TRUSTFILE" >> $CFGTEMP
+	fi
+
 	config_load "privoxy"	# calling above option_cb() and write the rest into $CFGTEMP
 
 	# move temp to final privoxy readable configuration
@@ -111,6 +193,9 @@ _uci2conf() {
 }
 
 boot() {
+	# check if privoxy is enabled
+	[ "$(uci -q get privoxy.privoxy._enabled)" != "1" ] && return 0
+
 	# wait a given time (default 10 seconds) before startup
 	# to wait for interfaces to come up / not using hotplug events during boot
 	_start() {
@@ -122,7 +207,7 @@ boot() {
 	}
 
 	local _DELAY
-	_DELAY=$(uci_get "privoxy" "system" "boot_delay" "10")
+	_DELAY=$(uci -q get privoxy.privoxy.boot_delay)
 	_start $_DELAY &
 	return 0
 }
