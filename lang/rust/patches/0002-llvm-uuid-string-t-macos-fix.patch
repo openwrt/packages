@@ -1,0 +1,36 @@
+From 6e9e4299b9a671ce54f3b5f4bc8073a9eb9a6071 Mon Sep 17 00:00:00 2001
+From: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Date: Mon, 8 Jun 2026 09:12:00 +0200
+Subject: [PATCH] llvm: fix build failure on macOS due to uuid_string_t conflict
+
+When building LLVM on macOS, if the `libuuid` package from Homebrew or
+MacPorts is installed, its `<uuid/uuid.h>` header shadows the macOS SDK's
+`<uuid/uuid.h>`. The `libuuid` version does not define the `uuid_string_t`
+typedef, leading to a compilation failure in `LockFileManager.cpp`:
+
+    error: unknown type name 'uuid_string_t'
+
+Since `uuid_string_t` is defined as `char[37]` in the macOS system header,
+using `char UUIDStr[37];` directly is fully compatible and avoids the build
+failure caused by header shadowing.
+
+Signed-off-by: Josef Schlehofer <pepe.schlehofer@gmail.com>
+---
+ src/llvm-project/llvm/lib/Support/LockFileManager.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/llvm-project/llvm/lib/Support/LockFileManager.cpp b/src/llvm-project/llvm/lib/Support/LockFileManager.cpp
+index d6527ba..84c0f2a 100644
+--- a/src/llvm-project/llvm/lib/Support/LockFileManager.cpp
++++ b/src/llvm-project/llvm/lib/Support/LockFileManager.cpp
+@@ -89,7 +89,7 @@ static std::error_code getHostID(SmallVectorImpl<char> &HostID) {
+   if (gethostuuid(uuid, &wait) != 0)
+     return errnoAsErrorCode();
+ 
+-  uuid_string_t UUIDStr;
++  char UUIDStr[37];
+   uuid_unparse(uuid, UUIDStr);
+   StringRef UUIDRef(UUIDStr);
+   HostID.append(UUIDRef.begin(), UUIDRef.end());
+-- 
+2.50.1 (Apple Git-155)
