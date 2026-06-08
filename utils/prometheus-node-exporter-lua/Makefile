@@ -4,7 +4,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=prometheus-node-exporter-lua
-PKG_VERSION:=2026.05.10
+PKG_VERSION:=2026.06.05
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
@@ -301,6 +301,22 @@ define Package/prometheus-node-exporter-lua-modemmanager/install
 	$(INSTALL_DATA) ./files/usr/lib/lua/prometheus-collectors/modemmanager.lua $(1)/usr/lib/lua/prometheus-collectors/
 endef
 
+define Package/prometheus-node-exporter-lua-unbound
+  $(call Package/prometheus-node-exporter-lua/Default)
+  TITLE+= (unbound stats collector)
+  DEPENDS:=prometheus-node-exporter-lua +unbound-daemon
+endef
+
+define Package/prometheus-node-exporter-lua-unbound/description
+  Adds a Unbound stats collector to the Prometheus node exporter.
+  Refer to https://github.com/marinierb/prometheus-node-exporter-lua-unbound for configuration details.
+endef
+
+define Package/prometheus-node-exporter-lua-unbound/install
+	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
+	$(INSTALL_DATA) ./files/usr/lib/lua/prometheus-collectors/unbound.lua $(1)/usr/lib/lua/prometheus-collectors/
+endef
+
 $(eval $(call BuildPackage,prometheus-node-exporter-lua))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-bmx7))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-dawn))
@@ -324,3 +340,4 @@ $(eval $(call BuildPackage,prometheus-node-exporter-lua-mwan3))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-ethtool))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-nft-counters))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-modemmanager))
+$(eval $(call BuildPackage,prometheus-node-exporter-lua-unbound))
