@@ -1,0 +1,131 @@
+Subject: [PATCH] do not use EIP-197
+
+ovpn-dco is currently incompatible with the SafeXcel EIP-197
+cryptographic engine [1]. Disable async until this is fixed.
+
+[1] https://github.com/openwrt/packages/pull/27421
+---
+ drivers/net/ovpn/crypto_aead.c | 10 +++++++---
+ drivers/net/ovpn/io.c          | 10 ++++++++++
+ drivers/net/ovpn/io.h          |  2 ++
+ 3 files changed, 19 insertions(+), 3 deletions(-)
+
+--- a/drivers/net/ovpn/crypto_aead.c
++++ b/drivers/net/ovpn/crypto_aead.c
+@@ -134,7 +134,7 @@ static struct scatterlist *ovpn_aead_cry
+ 			     __alignof__(struct scatterlist));
+ }
+ 
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 0)
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 0) && !IS_ENABLED(CONFIG_CRYPTO_DEV_SAFEXCEL)
+ static inline void ovpn_encrypt_post_compl(struct crypto_async_request *req, int ret)
+ {
+ 	ovpn_encrypt_post(req->data, ret);
+@@ -235,11 +235,13 @@ int ovpn_aead_encrypt(struct ovpn_peer *
+ 
+ 	/* setup async crypto operation */
+ 	aead_request_set_tfm(req, ks->encrypt);
++#if !IS_ENABLED(CONFIG_CRYPTO_DEV_SAFEXCEL)
+ #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 0)
+ 	aead_request_set_callback(req, 0, ovpn_encrypt_post_compl, skb);
+ #else
+ 	aead_request_set_callback(req, 0, ovpn_encrypt_post, skb);
+ #endif
++#endif
+ 	aead_request_set_crypt(req, sg, sg,
+ 			       skb->len - ovpn_aead_encap_overhead(ks), iv);
+ 	aead_request_set_ad(req, OVPN_AAD_SIZE);
+@@ -248,7 +250,7 @@ int ovpn_aead_encrypt(struct ovpn_peer *
+ 	return crypto_aead_encrypt(req);
+ }
+ 
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 0)
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 0) && !IS_ENABLED(CONFIG_CRYPTO_DEV_SAFEXCEL)
+ static inline void ovpn_decrypt_post_compl(struct crypto_async_request *req, int ret)
+ {
+ 	ovpn_decrypt_post(req->data, ret);
+@@ -333,11 +335,13 @@ int ovpn_aead_decrypt(struct ovpn_peer *
+ 
+ 	/* setup async crypto operation */
+ 	aead_request_set_tfm(req, ks->decrypt);
++#if !IS_ENABLED(CONFIG_CRYPTO_DEV_SAFEXCEL)
+ #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 0)
+ 	aead_request_set_callback(req, 0, ovpn_decrypt_post_compl, skb);
+ #else
+ 	aead_request_set_callback(req, 0, ovpn_decrypt_post, skb);
+ #endif
++#endif
+ 	aead_request_set_crypt(req, sg, sg, payload_len + tag_size, iv);
+ 
+ 	aead_request_set_ad(req, OVPN_AAD_SIZE);
+@@ -355,7 +359,7 @@ static struct crypto_aead *ovpn_aead_ini
+ 	struct crypto_aead *aead;
+ 	int ret;
+ 
+-	aead = crypto_alloc_aead(alg_name, 0, 0);
++	aead = crypto_alloc_aead(alg_name, 0, IS_ENABLED(CONFIG_CRYPTO_DEV_SAFEXCEL) ? CRYPTO_ALG_ASYNC : 0);
+ 	if (IS_ERR(aead)) {
+ 		ret = PTR_ERR(aead);
+ 		pr_err("%s crypto_alloc_aead failed, err=%d\n", title, ret);
+--- a/drivers/net/ovpn/io.c
++++ b/drivers/net/ovpn/io.c
+@@ -98,6 +98,9 @@ static void ovpn_netdev_write(struct ovp
+ 	}
+ }
+ 
++#if IS_ENABLED(CONFIG_CRYPTO_DEV_SAFEXCEL)
++static
++#endif
+ void ovpn_decrypt_post(void *data, int ret)
+ {
+ 	struct ovpn_crypto_key_slot *ks;
+@@ -108,11 +111,13 @@ void ovpn_decrypt_post(void *data, int r
+ 	__be16 proto;
+ 	__be32 *pid;
+ 
++#if !IS_ENABLED(CONFIG_CRYPTO_DEV_SAFEXCEL)
+ 	/* crypto is happening asynchronously. this function will be called
+ 	 * again later by the crypto callback with a proper return code
+ 	 */
+ 	if (unlikely(ret == -EINPROGRESS))
+ 		return;
++#endif
+ 
+ 	payload_offset = ovpn_skb_cb(skb)->payload_offset;
+ 	ks = ovpn_skb_cb(skb)->ks;
+@@ -228,6 +233,9 @@ void ovpn_recv(struct ovpn_peer *peer, s
+ 	ovpn_decrypt_post(skb, ovpn_aead_decrypt(peer, ks, skb));
+ }
+ 
++#if IS_ENABLED(CONFIG_CRYPTO_DEV_SAFEXCEL)
++static
++#endif
+ void ovpn_encrypt_post(void *data, int ret)
+ {
+ 	struct ovpn_crypto_key_slot *ks;
+@@ -236,11 +244,13 @@ void ovpn_encrypt_post(void *data, int r
+ 	struct ovpn_peer *peer;
+ 	unsigned int orig_len;
+ 
++#if !IS_ENABLED(CONFIG_CRYPTO_DEV_SAFEXCEL)
+ 	/* encryption is happening asynchronously. This function will be
+ 	 * called later by the crypto callback with a proper return value
+ 	 */
+ 	if (unlikely(ret == -EINPROGRESS))
+ 		return;
++#endif
+ 
+ 	ks = ovpn_skb_cb(skb)->ks;
+ 	peer = ovpn_skb_cb(skb)->peer;
+--- a/drivers/net/ovpn/io.h
++++ b/drivers/net/ovpn/io.h
+@@ -28,7 +28,9 @@ void ovpn_recv(struct ovpn_peer *peer, s
+ void ovpn_xmit_special(struct ovpn_peer *peer, const void *data,
+ 		       const unsigned int len);
+ 
++#if !IS_ENABLED(CONFIG_CRYPTO_DEV_SAFEXCEL)
+ void ovpn_encrypt_post(void *data, int ret);
+ void ovpn_decrypt_post(void *data, int ret);
++#endif
+ 
+ #endif /* _NET_OVPN_OVPN_H_ */
