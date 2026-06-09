@@ -1,18 +1,21 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025-2026 Chester A. Unal <chester.a.unal@arinc9.com>
 
-# Get the interface of lan network.
+# Exit if there is no wan firewall zone.
+fw_section=$(uci show firewall | grep "name='wan'" | cut -d. -f2)
+[ -z "$fw_section" ] && exit
+
+# Get the interface of lan network entry.
 lan_network_interface="$(uci -q get network.lan.device)"
 
-# If the interface exists, check if it is a bridge.
+# If the lan interface exists, check if it is a bridge.
 [ -n "$lan_network_interface" ] && for section in $(uci show network | grep "name='$lan_network_interface'" | cut -d. -f2); do
 	[ "$(uci -q get network.$section.type)" = bridge ] && lan_section="$section" && break
 done
-if [ -n "$lan_section" ]; then
-	# Save all interfaces.
-	lan_interfaces=$(uci get network.$lan_section.ports)
-
-	# Set biggest number interface as lan network.
+# If the lan interface is a bridge, check if there are any interfaces assigned
+# to that bridge.
+if [ -n "$lan_section" ] && lan_interfaces="$(uci -q get network.$lan_section.ports)"; then
+	# Set biggest number interface as lan interface.
 	lan_network_interface="$(echo $lan_interfaces | tr ' ' '\n' | grep '[0-9]\+$' | sort -V | tail -n1)"
 	# If there are no interfaces with numbers, use the first interface on
 	# the list.
@@ -23,50 +26,37 @@ if [ -n "$lan_section" ]; then
 	uci delete network.$lan_section
 fi
 
-# Get the interface of wan network.
+# Get the interface of wan network entry.
 wan_network_interface="$(uci -q get network.wan.device)"
 
-# If the interface exists, check if it is a bridge.
+# If the wan interface exists, check if it is a bridge.
 [ -n "$wan_network_interface" ] && for section in $(uci show network | grep "name='$wan_network_interface'" | cut -d. -f2); do
 	[ "$(uci -q get network.$section.type)" = bridge ] && wan_section="$section" && break
 done
-if [ -n "$wan_section" ]; then
-	# Save all interfaces.
-	wan_network_interface="$(uci get network.$wan_section.ports)"
-
+# If the wan interface is a bridge, check if there are any interfaces assigned
+# to that bridge.
+if [ -n "$wan_section" ] && wan_network_interface="$(uci -q get network.$wan_section.ports)"; then
 	# Remove bridge interface.
 	uci delete network.$wan_section
 fi
 
-# Add a wan network entry for wan network's interface(s) and lan network
-# interfaces other than the one used for lan, if there are any.
+# Decide the final wan interfaces. They are all wan and lan interfaces except
+# the decided lan interface.
 final_wan_interfaces="$wan_network_interface $(echo $lan_interfaces | tr ' ' '\n' | grep -v "^$lan_network_interface$")"
 
 # Exit if there are no suitable wan interfaces.
-[ -z "$(echo "$final_wan_interfaces" | tr ' ' '\n')" ] && exit
+[ -z "$(echo "$final_wan_interfaces" | tr ' ' '\n')" ] && uci revert network ; exit 0
 
 # Delete existing wan and wan6 networks.
 uci delete network.wan
 uci -q delete network.wan6
-fw_section=$(uci show firewall | grep "name='wan'" | cut -d. -f2)
+uci -q del_list firewall.$fw_section.network='wan'
+uci -q del_list firewall.$fw_section.network='wan6'
 
-if [ -n "$fw_section" ]; then
-	uci -q del_list firewall.$fw_section.network='wan'
-	uci -q del_list firewall.$fw_section.network='wan6'
-# If firewall section for wan doesn't exist, create one.
-else
-	fw_section=$(uci add firewall zone)
-	uci set firewall.@zone[-1].name='wan'
-	uci set firewall.@zone[-1].input='REJECT'
-	uci set firewall.@zone[-1].output='ACCEPT'
-	uci set firewall.@zone[-1].forward='DROP'
-	uci set firewall.@zone[-1].masq='1'
-	uci set firewall.@zone[-1].mtu_fix='1'
-fi
-
+# Add a wan network entry for every wan interface.
 index=1
 for dev in $final_wan_interfaces; do
-	# Only metrics 1 to 8 must be allocated for WAN so do not add any more.
+	# Only metrics 1 to 8 must be allocated for wan so do not add any more.
 	[ "$index" -gt 8 ] && break
 
 	uci -q delete network.wan$index
@@ -84,25 +74,36 @@ done
 # Configure xray.
 uci set xray.enabled.enabled='1'
 
-# Add rule to use routing table 100 for transparent proxy traffic.
+# Add rule to use routing table 1 for transparent proxy traffic.
 rule_section=$(uci show network | grep "mark='1'" | cut -d. -f2)
 [ -n "$rule_section" ] && uci delete network.$rule_section
-uci add network rule
+uci add network rule >/dev/null
 uci set network.@rule[-1].priority='0'
-uci set network.@rule[-1].lookup='100'
+uci set network.@rule[-1].lookup='1'
 uci set network.@rule[-1].mark='1'
 
 # Add route to route transparent proxy traffic to the loopback interface.
-route_section=$(uci show network | grep "table='100'" | cut -d. -f2)
+route_section=$(uci show network | grep "table='1'" | cut -d. -f2)
 [ -n "$route_section" ] && uci delete network.$route_section
-uci add network route
+uci add network route >/dev/null
 uci set network.@route[-1].interface='loopback'
 uci set network.@route[-1].type='local'
 uci set network.@route[-1].target='0.0.0.0/0'
-uci set network.@route[-1].table='100'
+uci set network.@route[-1].table='1'
 
 # Commit changes.
 uci commit
 
-# Enable bonding and ignore the non-zero exit code of bsbf-bonding.
-bsbf-bonding --enable || true
+# Enable bonding.
+bsbf-bonding --enable
+
+echo "Installation successful. Plug in to $(uci get network.lan.device) to access LAN."
+lan_ip=$(uci get network.lan.ipaddr)
+lan_ip=${lan_ip%% *}
+lan_ip=${lan_ip%%/*}
+echo "Head to http://$lan_ip/bsbf-client-web to access the BSBF Client Monitor."
+
+echo "Reloading network."
+service network reload
+
+exit 0
