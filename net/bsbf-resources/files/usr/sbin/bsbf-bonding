@@ -3,7 +3,7 @@
 # Copyright (C) 2026 Chester A. Unal <chester.a.unal@arinc9.com>
 
 usage() {
-	echo "Usage: $0 --status | --enable | --disable | --uninstall"
+	echo "Usage: $0 --status | --enable | --disable"
 	exit 1
 }
 
@@ -69,29 +69,6 @@ case "$1" in
 
 	# Flush the MPTCP endpoint table.
 	ip mp e f
-	;;
---uninstall)
-	# Delete nftables rules.
-	nft destroy table bsbf_bonding
-
-	# Stop bsbf-mptcp init.d service.
-	service bsbf-mptcp stop 2>/dev/null
-
-	# Delete bsbf-mptcp files.
-	rm -f /run/bsbf-mptcp-*
-
-	# Flush the MPTCP endpoint table.
-	ip mp e f
-
-	# Restore xray.
-	rm -f /etc/xray/config.json
-	uci set xray.enabled.enabled='0'
-	uci commit
-	service xray restart 2>/dev/null
-
-	# Uninstall bsbf-bonding, bsbf-client-web, bsbf-mptcp, and
-	# bsbf-rate-limiting.
-	apk del bsbf-bonding bsbf-client-web bsbf-mptcp bsbf-rate-limiting
 	;;
 *)
 	usage
