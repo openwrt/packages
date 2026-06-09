@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=debootstrap
-PKG_VERSION:=1.0.143
+PKG_VERSION:=1.0.144
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-udeb_$(PKG_VERSION)_all.udeb
 PKG_SOURCE_URL:=@DEBIAN/pool/main/d/debootstrap
-PKG_HASH:=40a9a7af1a4908112b617c9a85901fb8eba1df535965eb4225522c010564693f
+PKG_HASH:=b12dfc209cb9128b7456de96da93312ec27ab1b89ff81db1e4fc411b89167c9e
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=Unique
