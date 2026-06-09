@@ -1,0 +1,45 @@
+From eb9d01914bb2320faaa8bad68859da449884744c Mon Sep 17 00:00:00 2001
+From: Chet Ramey <chet.ramey@case.edu>
+Date: Wed, 3 Jun 2026 10:20:22 -0400
+Subject: Bash-5.3 patch 11: fix mapfile problem when callback unsets the
+ variable it is modifying
+
+--- a/builtins/mapfile.def
++++ b/builtins/mapfile.def
+@@ -153,9 +153,7 @@ mapfile (int fd, long line_count_goal, l
+   line_length = 0;
+   unbuffered_read = 0;
+ 
+-  /* The following check should be done before reading any lines.  Doing it
+-     here allows us to call bind_array_element instead of bind_array_variable
+-     and skip the variable lookup on every call. */
++  /* The following check should be done before reading any lines. */
+   entry = builtin_find_indexed_array (array_name, flags & MAPF_CLEARARRAY);
+   if (entry == 0)
+     return EXECUTION_FAILURE;
+@@ -201,8 +199,13 @@ mapfile (int fd, long line_count_goal, l
+ 	  run_callback (callback, array_index, line);
+ 	}
+ 
+-      /* XXX - bad things can happen if the callback modifies ENTRY, e.g.,
+-	 unsetting it or changing it to a non-indexed-array type. */
++      /* Bad things can happen if the callback modifies ENTRY, e.g.,
++	 unsetting it or changing it to a non-indexed-array type, so we
++	 look it up again every time we need to assign something */
++      entry = bind_array_variable (array_name, array_index, line, 0);
++      if (entry == 0 || ASSIGN_DISALLOWED (entry, 0))
++	return EXECUTION_FAILURE;
++
+       bind_array_element (entry, array_index, line, 0);
+ 
+       /* Have we exceeded # of lines to store? */
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 10
++#define PATCHLEVEL 11
+ 
+ #endif /* _PATCHLEVEL_H_ */
