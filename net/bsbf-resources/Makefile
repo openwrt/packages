@@ -11,9 +11,9 @@ PKG_MAINTAINER:=Chester A. Unal <chester.a.unal@arinc9.com>
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/bondingshouldbefree/bsbf-resources.git
-PKG_SOURCE_DATE:=2026-05-16
-PKG_SOURCE_VERSION:=733d3159e4c769a4fdd9e42ced53e346e2582beb
-PKG_MIRROR_HASH:=95c51a6b430f7b68e0b17d581fda7ac524d5e21e66375fdd4d4f830c61b2089a
+PKG_SOURCE_DATE:=2026-06-19
+PKG_SOURCE_VERSION:=254f0088d22bceaf9c57847536fade223b75ea97
+PKG_MIRROR_HASH:=a6138aa711c32fb2d368b5d2166605b8f838f55a6845570bf5174cb8fecd97d2
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -86,6 +86,20 @@ define Package/bsbf-bonding/install
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/resources-client/xray.json $(1)/usr/share/bsbf
 endef
 
+define Package/bsbf-bonding/prerm
+#!/bin/sh
+# Delete nftables rules.
+nft destroy table bsbf_bonding
+
+# Restore xray.
+rm -f /etc/xray/config.json
+uci set xray.enabled.enabled='0'
+uci commit
+service xray restart 2>/dev/null
+
+exit 0
+endef
+
 define Package/bsbf-client-web/install
 	$(INSTALL_DIR) $(1)/www/bsbf-client-web
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/resources-client/bsbf-client-web/index.html $(1)/www/bsbf-client-web
@@ -103,6 +117,20 @@ define Package/bsbf-mptcp/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/resources-client/bsbf-mptcp $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/resources-client/bsbf-mptcp-helper $(1)/usr/sbin
+endef
+
+define Package/bsbf-mptcp/prerm
+#!/bin/sh
+# Stop bsbf-mptcp init.d service.
+service bsbf-mptcp stop 2>/dev/null
+
+# Delete bsbf-mptcp files.
+rm -f /run/bsbf-mptcp-*
+
+# Flush the MPTCP endpoint table.
+ip mp e f
+
+exit 0
 endef
 
 define Package/bsbf-netspeed/install
