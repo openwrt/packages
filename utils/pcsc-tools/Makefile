@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pcsc-tools
-PKG_VERSION:=1.7.4
+PKG_VERSION:=1.7.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://pcsc-tools.apdu.fr
-PKG_HASH:=ef3669a221a46b361201c1e93ba32484fdf8db9190152db5cf131fb2244b80e1
+PKG_HASH:=bb87fe4a50222b6e34d11eb6e35bd6eceb830eb2f6dd4bf2a0d43381c3d1da2c
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-2.0-or-later
