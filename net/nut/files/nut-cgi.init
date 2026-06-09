@@ -1,76 +1,341 @@
 #!/bin/sh /etc/rc.common
-# Copyright © 2012 OpenWrt.org
-#
+# Copyright © 2012-2026 OpenWrt.org
+
+# In recent (relevant) versions of shellcheck busybox is a valid shell type
+# shellcheck shell=busybox
+
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
+
+# shellcheck disable=SC2034
 START=87
 STOP=23
 USE_PROCD=1
 
-DEFAULT=/etc/default/nut
-UPSCGI_C=/var/etc/nut/hosts.conf
-UPSCGI_S=/var/etc/nut/upsset.conf
+# Default is hardcoded in other program's configuration, as well as compile
+# time options for NUT CGI executable
+# /var is typically a tmpfs on OpenWrt and is not persisted across reboots
+UPSCGI_CONF_DIR=/var/etc/nut
 
-nut_upscgi_upsset() {
+# Ephemeral configuration for configuring NUT hosts using CGI and upsset
+# (persisted using UCI)
+UPSCGI_UPSSET_CONF="${UPSCGI_CONF_DIR}/upsset.conf"
+# Ephemeral configuration for NUT hosts to display using CGI (persisted
+# using UCI)
+UPSCGI_HOSTS_CONF="${UPSCGI_CONF_DIR}/hosts.conf"
+
+# IPKG_INSTROOT is intentionally only set when building an image and
+# is intentionally empty on a live OpenWrt device
+
+# Shellcheck source paths intentionally point to the location of files of
+# the scripts in the development environment (where shellcheck is used), not
+# on the live OpenWrt device
+
+# shellcheck source=net/nut/files/functions.sh.functions
+. "${IPKG_INSTROOT}"/lib/functions.sh || {
+	# Before our sourcing error logging definitions are sourced
+	logger -s -t nut-cgi "Unable to source 'functions.sh'"
+	exit 1
+}
+
+# 'shellcheck' complains about nut-common.sh due to a case pattern it does not understand, even
+# though it is correctly POSIX compliant
+# shellcheck disable=SC1094
+# shellcheck source=net/nut/files/nut-common.sh.functions
+. "${IPKG_INSTROOT}"/lib/functions/nut/nut-common.sh || {
+	# Before our sourcing error logging definitions are sourced
+	logger -s -t nut-cgi "Failed to load nut-common.sh"
+	exit 1
+}
+
+restore_umask_on_exit
+
+ensure_conf_dir_exists() {
+	# If the directory already exists we presume the creator of the directory
+	# has set the correct permissions.
+	if [ ! -d "$UPSCGI_CONF_DIR" ]; then
+		# Make directory for the UPS CGI configuration files, if not present
+		# Set permission on dir we create for UPS CGI configuration files
+		# All NUT configuration files are here, some which must be readable
+		# by other binaries with different group and ownership (therefore must
+		# be world readable)
+		# NOTE: Ensure sensitive files have more restrictive permissions
+		umask 022
+		if ! mkdir -p "$UPSCGI_CONF_DIR"; then
+			restore_umask
+			return 1
+		fi
+		restore_umask
+	fi
+	return 0
+}
+
+set_upsset_conf_content() {
+	local upsset_conf_content="$1"
+
+	umask 133
+	if ! printf "%s" "$upsset_conf_content" >"$UPSCGI_UPSSET_CONF"; then
+		restore_umask
+		log_error "failed to configure upsset; disabling NUT CGI" nut-cgi nut-cgi
+		return 1
+	fi
+	restore_umask
+	return 0
+}
+
+disable_upsset() {
+	ensure_conf_dir_exists || {
+		log_error "failed to disable upsset due to invalid directory; disabling NUT CGI" nut-cgi nut-cgi
+		return 1
+	}
+	# Use embedded content in preference to previous symlink method to avoid an
+	# attack vector via modified symlink target
+	# Prefer variable to heredoc due to complication with if, then around a
+	# heredoc when using shellcheck and shfmt together.
+	set_upsset_conf_content "# Network UPS Tools - upsset.conf sample file for OpenWrt
+#
+# This file is provided to ensure that you do not expose your upsd server
+# to the world upon installing the CGI programs.  Specifically, it keeps
+# the upsset.cgi program from running until you have assured it that you
+# have secured your web server's CGI directory.
+#
+# NOTE: Contents of this file should be pure ASCII (character codes
+# not in range would be ignored with a warning message).
+#
+###
+### I_HAVE_SECURED_MY_CGI_DIRECTORY
+###
+" || return 1
+	return 0
+}
+
+configure_nut_upscgi_upsset() {
 	local cfg="$1"
 	local enable
 
 	config_get_bool enable "$cfg" enable 0
 
-	if [ "$enable" -eq 1 ]; then
-		ln -sf /etc/nut/upsset.conf.enable "$UPSCGI_S"
+	# Use embedded content in preference to previous symlink method to avoid an
+	# attack vector via modified symlink target
+	# Prefer variable to heredoc due to complication with if..then around a
+	# heredoc when using shellcheck and shfmt together.
+	[ "$enable" = "1" ] || {
+		# Logs an error in the disable_upsset function call if it fails
+		disable_upsset || return 1
+		# not enabled (disabled) is a valid configuration choice
+		return 0
+	}
+	if ensure_conf_dir_exists; then
+		# Leading newline is intentional
+		set_upsset_conf_content "
+I_HAVE_SECURED_MY_CGI_DIRECTORY
+" || {
+			upscgi_upsset_failed="true"
+			return 1
+		}
+		return 0
 	else
-		ln -sf /etc/nut/upsset.conf.disable "$UPSCGI_S"
+		upscgi_upsset_failed="true"
+		# Logs an error in the disable_upsset function call if it fails
+		disable_upsset
+		return 1
 	fi
+	# No return 0 here as it would be dead code, and shellcheck would complain
+	# about the dead code.
 }
 
-nut_upscgi_add() {
-	local cfg="$1"
-	local upsname
-	local hostname
-	local port
-	local displayname
+log_validation_error() {
+	local var="$1"
+	local ups="$2"
+	log_error "Unsafe characters in '$var' for '$ups'; skipping" nut-cgi nut-cgi
+}
 
-	config_get upsname "$cfg" upsname
-	config_get hostname "$cfg" hostname localhost
-	config_get port "$cfg" port
-	config_get pass "$cfg" password
-	system="$upsname@$hostname"
+validate_host() {
+	local ups="$1"
+	local upsname="$2"
+	local hostname="$3"
+	local port="$4"
+	local displayname="$5"
+
+	# We do not unset upscgi_hosts_exists on error as we do not want to block
+	# monitoring hosts with the needed configuration as a result of those that
+	# do not
+	for var in upsname hostname port displayname; do
+		case "$var" in
+		upsname)
+			if ! check_safe_uci_name "$upsname"; then
+				log_validation_error "$var" "$ups"
+				return 1
+			fi
+			;;
+		hostname)
+			case "$hostname" in
+			"" | *[!a-zA-Z0-9.:-\[\]-]*)
+				log_validation_error "$var" "$ups"
+				return 1
+				;;
+			esac
+			;;
+		displayname)
+			# We accept a minimally useful set of characters for a display name
+			# We specifically omit characters like $ % " and '
+			# Some AI code reviewers get confused by \(\) and \space in the case
+			# pattern, but this is correct for busybox ash in modern OpenWrt
+			# and does not allow \ through the validation.
+			case "$displayname" in
+			*[!a-zA-Z0-9+!\(\)\ _=:.,-]*)
+				log_validation_error "$var" "$ups"
+				return 1
+				;;
+			esac
+			;;
+		port)
+			# We don't log missing port log, as port is optional (NUT defaults
+			# to using 3493 when it is not present)
+			if [ -n "$port" ]; then
+				case "$port" in
+				0*)
+					log_validation_error "$var" "$ups"
+					return 1
+					;;
+				*[!0-9]*)
+					log_validation_error "$var" "$ups"
+					return 1
+					;;
+				esac
+				# Catches illegal port numbers, including negative port numbers
+				if [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; then
+					log_error "Port set, but not between 1-65535 for '$ups'" nut-cgi nut-cgi
+					return 1
+				fi
+			fi
+			;;
+		esac
+	done
+	return 0
+}
+
+# Must be called from service_reload
+nut_upscgi_add_host() {
+	local ups="$1"
+	local upsname hostname port system displayname
+
+	config_get upsname "$ups" upsname "$ups"
+	config_get hostname "$ups" hostname localhost
+	config_get port "$ups" port
+	config_get displayname "$ups" displayname "$ups"
+
+	# We do not error exit as that would abort processing of other hosts
+	validate_host "$ups" "$upsname" "$hostname" "$port" "$displayname" || return
+
+	system="${upsname}@$hostname"
 	if [ -n "$port" ]; then
-	    system="$system:$port";
+		system="$system:$port"
 	fi
-	config_get displayname "$cfg" displayname
-	echo "MONITOR $system \"$displayname\"" >> "$UPSCGI_C"
+
+	if ! printf "%s\n" "MONITOR $system \"$displayname\"" >>"${UPSCGI_HOSTS_CONF}.new"; then
+		log_error "Failed to add MONITOR to CGI host.conf for '$ups'" nut-cgi nut-cgi
+		# Failed printf could result in inconsistent UPSCGI_HOSTS_CONF.new state, so recreate it as
+		# empty so later hosts can still potentially be properly configured
+		if rm -f "${UPSCGI_HOSTS_CONF}.new"; then
+			return
+		else
+			# Cascade failure. Bail.
+			log_error_exit "Cascade failure in nut_upscgi_add_host. Bailing." nut-cgi nut-cgi
+		fi
+	fi
+	upscgi_hosts_exists="true"
+	return 0
 }
 
 service_reload() {
-	mkdir -m 0755 -p "$(dirname "$UPSCGI_C")"
-	rm -f "$UPSCGI_C"
-	rm -f "$UPSCGI_S"
+	# Callers should not need to see the variables below outside this function
+	# Conversely, functions called by this function are able to see and set
+	# the variables below, which act as 'pseudo-globals' to called functions.
+	local upscgi_hosts_exists="false"
+	local upscgi_upsset_failed="false"
 
-	config_load nut_cgi
+	config_load nut_cgi || {
+		log_config_load_error "nut_cgi" "nut-cgi" "nut-cgi"
+		exit 1
+	}
 
-	config_foreach nut_upscgi_add host
-	config_foreach nut_upscgi_upsset upsset
+	# NUT configuration does not exist if NUT CGI cannot be configured, so
+	# stop service and bailout.
+	ensure_conf_dir_exists || {
+		service_stop
+		return 1
+	}
 
-	[ -s "$UPSCGI_C" ] && chmod 640 "$UPSCGI_C"
+	rm -f "${UPSCGI_HOSTS_CONF}.new"
+	umask 133
+	touch "${UPSCGI_HOSTS_CONF}.new" || {
+		restore_umask
+		service_stop
+		return 1
+	}
+	restore_umask
+
+	# We do not exit on error here as we do not want to block monitoring hosts
+	# with the needed configuration as a result of those that do not
+	config_foreach nut_upscgi_add_host host
+
+	# If new host configuration was successfully created
+	if [ "$upscgi_hosts_exists" = "true" ] && [ -s "${UPSCGI_HOSTS_CONF}.new" ]; then
+		# Move the new configuration file to active use,
+		# removing the old configuration in the process
+		mv -f "${UPSCGI_HOSTS_CONF}.new" "${UPSCGI_HOSTS_CONF}"
+	elif [ "$upscgi_hosts_exists" = "true" ]; then
+		rm -f "${UPSCGI_HOSTS_CONF}.new"
+	else
+		# If no hosts are configured, use an empty hosts.conf (no configuration)
+		rm -f "${UPSCGI_HOSTS_CONF}"
+		rm -f "${UPSCGI_HOSTS_CONF}.new"
+		if ! touch "${UPSCGI_HOSTS_CONF}"; then
+			log_error "Failed to create empty hosts.conf" nut-cgi nut-cgi
+			return 1
+		fi
+		# Empty hosts is not necessarily an error, but we log for information
+		logger -s -t nut-cgi "No configured hosts"
+	fi
+
+	# NUT CGI host file configuration is independent of upsset configuration
+	config_foreach configure_nut_upscgi_upsset upsset
+	if [ "$upscgi_upsset_failed" = "true" ]; then
+		disable_upsset
+		return 1
+	fi
+	return 0
 }
 
 start_service() {
-	service_reload
+	service_reload || return 1
+	return 0
 }
 
 reload_service() {
-	service_reload
+	service_reload || {
+		stop_service
+		return 1
+	}
+	return 0
 }
 
 stop_service() {
-	rm -f "$UPSCGI_C"
-	rm -f "$UPSCGI_S"
-	ln -sf /etc/nut/upsset.conf.disable "$UPSCGI_S"
+	# Remove the hosts configuration file
+	# Since this is only a configuration generation service, the only way to
+	# stop serving (without stopping the web server for all uses) is to remove
+	# the NUT CGI configuration
+	rm -f "$UPSCGI_HOSTS_CONF"
+	rm -f "$UPSCGI_HOSTS_CONF.new"
+
+	disable_upsset || return 1
+	return 0
 }
 
 service_triggers() {
-	procd_add_reload_trigger "nut_cgi"
+	# Add a reload trigger on changes to the nut_cgi UCI config
+	procd_add_reload_trigger "nut_cgi" || return 1
+	return 0
 }

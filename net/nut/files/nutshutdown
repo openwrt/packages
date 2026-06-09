@@ -2,50 +2,203 @@
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
-#
 
-stop_instance() {
-	/etc/init.d/nut-server stop "$1"
+# In recent (relevant) versions of shellcheck busybox is a valid shell type
+# shellcheck shell=busybox
+
+# Script called by NUT, as root, to safely shutdown the system in the event of
+# impending loss of power due to low battery discharge during a power outage,
+# or due to a FSD (Forced ShutDown) command.
+
+# Path to NUT server UCI configuration file
+NUT_SERVER_CONFIG=/etc/config/nut_server
+# Path to NUT drivers
+NUT_DRIVER_PATH=/usr/libexec/nut
+# Path to file created by NUT indicating a forced shutdown (FSD) is needed
+# On OpenWrt this will (intentionally) normally not exist after a reboot
+# as /var/run is typically a tmpfs
+NUT_KILLPOWER=/var/run/killpower
+# Disable NUT hotplug path
+NUT_DISABLE_HOTPLUG_PATH=/var/run/nut/disable-hotplug
+# Path to NUT server (de)initscript
+NUT_SERVER_INIT=/etc/init.d/nut-server
+# Delay for FSD to succeed before forcing shutdown
+# 2 minutes to allow UPS offdelay + safe shutdown grace period
+# Not a configuration option as reading config could fail
+NUT_FSD_FAIL_DELAY=120
+
+MISSING_CONFIG_BAIL_MESSAGE="No nut server config found while doing 'nutshutdown'. Bailing"
+MISSING_LIB_FUNCTIONS_SH_BAIL_MESSAGE="/lib/functions.sh is missing. Bailing"
+MISSING_UPS_INSTANCE_SKIP_MESSAGE="stop_nut_server_instance called with no ups (section) name. Skipping."
+NOT_A_LIVE_SYSTEM_BAIL_MESSAGE="Trying to use 'nutshutdown' when not on a live OpenWrt system. Bailing."
+UNSAFE_UPS_INSTANCE_NAME_SKIP_MESSAGE="No valid UPS UCI section name in shutdown_actual_ups. Skipping."
+
+# Only enact killpower (FSD: Forced Shut Down) if certain conditions are met
+DO_KILLPOWER="0"
+
+# shellcheck disable=SC2329,SC2317
+check_safe_name() {
+	case "$1" in
+	*[!a-zA-Z0-9_-]* | "")
+		return 1
+		;;
+	*)
+		return 0
+		;;
+	esac
 }
 
-shutdown_instance() {
-	local cfg="$1"
-	config_get driver "$cfg" driver "usbhid-ups"
+# shellcheck disable=SC2329,SC2317
+stop_nut_server_instance() {
+	# We're in an emergency shutdown; best effort shutdown and don't block
+	if [ -z "$1" ]; then
+		echo "$MISSING_UPS_INSTANCE_SKIP_MESSAGE" >&2
+		logger -s -t nut-shutdown "$MISSING_UPS_INSTANCE_SKIP_MESSAGE" || true
+		return 1
+	fi
+	"$NUT_SERVER_INIT" stop "$1" || true
+}
+
+stop_drivers() {
+	if [ "$DO_KILLPOWER" = "1" ]; then
+		# FSD may not work unless drivers are stopped; try to stop them but
+		# don't block on failure; partial success would be better than none
+		config_foreach stop_nut_server_instance driver || true
+	fi
+}
+
+# shellcheck disable=SC2329,SC2317
+shutdown_actual_ups() {
+	local ups="$1"
+	local driver nut_ups_driver_full_path
+
+	# Avoid potentially blocking errors if "$ups" is somehow not defined
+	# with a proper UCI name (should never happen, hence skipping if it does)
+	if ! check_safe_name "$ups"; then
+		echo "$UNSAFE_UPS_INSTANCE_NAME_SKIP_MESSAGE" >&2
+		logger -s -t nut-shutdown "$UNSAFE_UPS_INSTANCE_NAME_SKIP_MESSAGE" || true
+		return 1
+	fi
+
+	config_get driver "$ups" driver
+
+	# If we didn't get the current driver, skip to the next one (best effort)
+	[ -n "$driver" ] || return 0
+
+	# ensure driver name is 'safe'/valid. This not being true could be a
+	# simple mistake, so we do not bail on the shutdown, we just ignore this UPS.
+	check_safe_name "$driver" || return 0
+
+	nut_ups_driver_full_path="${NUT_DRIVER_PATH}/${driver}"
 
 	# Only FSD if killpower was indicated
-	if [ -f /var/run/killpower ]; then
-		/lib/nut/"${driver}" -a "$cfg" -k
+	if [ -f "$NUT_KILLPOWER" ]; then
+		# We're in an emergency shutdown; best effort shutdown and don't block
+		# Ideally this will also tell the UPS to poweroff after 'offdelay'
+		# We do this late in the sequence to minimize the chance the forced
+		# shutdown of the UPS (-k) will result in power loss before we
+		# finish
+		"$nut_ups_driver_full_path" -a "$ups" -k || true
 	fi
 }
 
-do_fsd() {
-	if [ -f /var/run/killpower ]; then
-		# Only make FS readonly if we are doing an FSD
-		mount -o remount,ro /overlay /overlay
-		mount -o remount,ro / /
+remount_filesystems_as_readonly() {
+	# Make FS readonly, if we are doing an FSD, but only on a best effort basis,
+	# do not stop shutdown if it does not succeed as power is going to be lost
+	# anyway. Also logging may already be stopped, so no point (and could hang
+	# shutdown) trying to log any errors
+	mount -o remount,ro /overlay /overlay || true
+	mount -o remount,ro / / || true
+}
 
-		. ${IPKG_INSTROOT}/lib/functions.sh
+# Do power off with delay and then forced reboot
+do_forced_shutdown() {
+	# In case poweroff forks and returns (but ignore error code, since if
+	# poweroff does return 'something' is wrong and we should not rely on it)
+	poweroff || true
+	# And just in case (even if poweroff claims it worked, it may not. If
+	# poweroff works properly this will never be reached).
+	sleep "$NUT_FSD_FAIL_DELAY"
+	# Uh-oh failed to poweroff system, force power off (not shutdown scripts
+	# will be run)
+	poweroff -f || true
+	sleep 1
+	# It still failed; hard force a non-syncing reboot
+	# Requires root and /proc to still be mounted
+	echo 1 >/proc/sys/kernel/sysrq || true
+	# Will immediately reboot the system
+	# without syncing or unmounting your disks.
+	# We do this as there is no bypass and halt option
+	# 'o' is essentially ACPI poweroff, which may not help us in an emergency.
+	echo b >/proc/sysrq-trigger || true
+}
 
-		if [ -f /etc/config/nut_server ]; then
-			config_load nut_server
+# IPKG_INSTROOT is intentionally only set when building an image and
+# is intentionally empty on a live OpenWrt device
+if [ -n "${IPKG_INSTROOT}" ]; then
+	echo "$NOT_A_LIVE_SYSTEM_BAIL_MESSAGE" >&2
+	# Improbable logging will work
+	logger -s -t nut-shutdown "$NOT_A_LIVE_SYSTEM_BAIL_MESSAGE" || true
+	exit 1
+fi
 
-			# Can't FSD unless drivers are stopped
-			config_foreach stop_instance driver
-			# Driver will  wait 'offdelay' before shutting down
-			config_foreach shutdown_instance driver
-			# So this can happen
-			rm -f /var/run/killpower
-			poweroff
-			# And just in case
-			sleep 120
-			# Uh-oh failed to poweroff UPS
-			reboot -f
-		else
-			poweroff
-		fi
-	else
-		poweroff
+# shellcheck source=/dev/null
+. "/lib/functions.sh" || {
+	# If /lib/functions.sh is missing on a live system (or we are not on a
+	# live system) bail with an error.
+	# Logging probably won't work if /lib/functions.sh is not available but try
+	echo "$MISSING_LIB_FUNCTIONS_SH_BAIL_MESSAGE" >&2
+	logger -s -t nut-shutdown "$MISSING_LIB_FUNCTIONS_SH_BAIL_MESSAGE" || true
+	exit 1
+}
+
+disable_hotplug() {
+	# If killpower is set disable hotplug until next boot
+	# (NUT_DISABLE_HOTPLUG_PATH) *should* be on non-persistent media that is
+	# available during forced shutdown
+	# If it is on persistent storage, manual intervention will be required
+	# for the NUT hotplug scripts to execute again
+	if [ ! -f "$NUT_DISABLE_HOTPLUG_PATH" ]; then
+		mkdir -p "$(dirname "$NUT_DISABLE_HOTPLUG_PATH")" 2>/dev/null || true
+		# Try to touch the file even if mkdir fails, but swallow an errors,
+		# because this is a best-effort emergency shutdown.
+		touch "$NUT_DISABLE_HOTPLUG_PATH" 2>/dev/null || true
 	fi
 }
 
-do_fsd
+# If a forced shutdown has been triggered ($NUT_KILLPOWER is present)
+# and we have a server config and the config loads correctly
+if [ -f "$NUT_KILLPOWER" ] && [ -f "$NUT_SERVER_CONFIG" ] && config_load nut_server; then
+	DO_KILLPOWER="1"
+
+	# UPS will wait 'offdelay' before shutting down
+	disable_hotplug || true
+
+	stop_drivers || true
+	remount_filesystems_as_readonly || true
+
+	# Drivers are already stopped so we don't require r/w access to filesystems
+	config_foreach shutdown_actual_ups driver || true
+elif [ -f "$NUT_KILLPOWER" ]; then
+	# If we can't load config, attempt to log that fact, but shutdown anyway
+	DO_KILLPOWER="1"
+	disable_hotplug || true
+	echo "$MISSING_CONFIG_BAIL_MESSAGE" >&2 || true
+	logger -s -t nut-shutdown "$MISSING_CONFIG_BAIL_MESSAGE" || true
+
+	remount_filesystems_as_readonly || true
+fi
+
+if [ "$DO_KILLPOWER" = "1" ]; then
+	# This is it, if the forced shutdown doesn't work we just wait for power
+	# to cutoff
+	do_forced_shutdown
+else
+	# Not a forced shutdown, just do a normal poweroff (calls normal
+	# power down sequence). Do not ignore errors in this case.
+	poweroff
+fi
+
+# To be explicit to readers that this script does nothing after this
+# It's an error exit, as it should never be reached
+exit 1
