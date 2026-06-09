@@ -1,0 +1,10 @@
+{
+	"name": "dnsimple.com-v2",
+	"ipv4": {
+		"url": "update_dnsimple_v2.sh"
+	},
+	"ipv6": {
+		"url": "update_dnsimple_v2.sh"
+	}
+}
+
