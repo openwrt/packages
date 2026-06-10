@@ -122,7 +122,7 @@ include $(GO_INCLUDE_DIR)/golang-values.mk
 # GoPackage/Build/Compile) belong to Debian's dh-golang completely.
 # https://salsa.debian.org/go-team/packages/dh-golang
 
-
+GO_PKG_BUILD_CGO_ENABLED ?= 1
 GO_PKG_BUILD_PKG?=$(strip $(GO_PKG))/...
 GO_PKG_INSTALL_BIN_PATH?=/usr/bin
 
@@ -208,7 +208,7 @@ GO_PKG_TARGET_VARS= \
 	GOMIPS="$(GO_MIPS)" \
 	GOMIPS64="$(GO_MIPS64)" \
 	GOPPC64="$(GO_PPC64)" \
-	CGO_ENABLED=1 \
+	CGO_ENABLED="$(GO_BUILD_CGO_ENABLED)" \
 	CC="$(TARGET_CC)" \
 	CXX="$(TARGET_CXX)" \
 	CGO_CFLAGS="$(filter-out $(GO_CFLAGS_TO_REMOVE),$(TARGET_CFLAGS))" \
@@ -236,7 +236,6 @@ GO_PKG_DEFAULT_ASMFLAGS= \
 
 GO_PKG_DEFAULT_LDFLAGS= \
 	-buildid '$(SOURCE_DATE_EPOCH)' \
-	-linkmode external \
 	-extldflags '$(patsubst -z%,-Wl$(comma)-z$(comma)%,$(TARGET_LDFLAGS))'
 
 GO_PKG_CUSTOM_LDFLAGS= \
