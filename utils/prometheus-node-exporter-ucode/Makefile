@@ -65,6 +65,7 @@ define Collector
 endef
 
 $(eval $(call Collector,dnsmasq,Dnsmasq collector,@dnsmasq))
+$(eval $(call Collector,nat_traffic,NAT traffic collector,))
 $(eval $(call Collector,ltq-dsl,Lantiq/Intel/MaxLinear DSL collector,@ltq-dsl-app))
 $(eval $(call Collector,netstat,netstat collector,))
 $(eval $(call Collector,openwrt,OpenWrt collector,))
