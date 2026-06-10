@@ -1,0 +1,35 @@
+From 8a310d1bbb03d158220483e5de607d42ad5b4e2e Mon Sep 17 00:00:00 2001
+From: Michael Heimpold <mhei@heimpold.de>
+Date: Sun, 18 Jan 2026 21:52:49 +0100
+Subject: [PATCH] Drop _FORTIFY_SOURCE and prevent calls to git
+
+The fortify level is set globally in OpenWrt so it would
+be redefined when passed via CFLAGS and it would trigger
+a build error. To prevent this, dont set it here. Later,
+the previously/globally defined one (the OpenWrt one) is
+passed, but then unset and re-set again via Makefile to
+the originally desired one.
+
+Comment also out calls to git for version detection.
+We pass the version from the package definition to Makefile
+and operate not on a git checkout thus the calls would fail.
+
+Signed-off-by: Michael Heimpold <mhei@heimpold.de>
+---
+ Makefile | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+--- a/Makefile
++++ b/Makefile
+@@ -1,8 +1,9 @@
+ CC ?= gcc
+ # GIT_VERSION is set to the latest tag, number of commits since that tag, and the date of the last commit
+ # e.g., v1.0-5-2023-10-01
+-GIT_VERSION := "$(shell git describe --abbrev=0 --tags)-$$(git rev-list --count $$(git describe --abbrev=0 --tags)..HEAD)-$$(git log -1 --format=%cd --date=short)"
+-AM_CFLAGS = -D_FILE_OFFSET_BITS=64 -D_FORTIFY_SOURCE=2 \
++#GIT_VERSION := "$(shell git describe --abbrev=0 --tags)-$$(git rev-list --count $$(git describe --abbrev=0 --tags)..HEAD)-$$(git log -1 --format=%cd --date=short)"
++GIT_VERSION := "unknown"
++AM_CFLAGS = -D_FILE_OFFSET_BITS=64 \
+ 	    -DVERSION=\"$(GIT_VERSION)\"
+ CFLAGS ?= -g -O2
+ objects = \

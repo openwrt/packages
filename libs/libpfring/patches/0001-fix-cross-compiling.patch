@@ -1,32 +1,43 @@
 --- a/userland/configure
 +++ b/userland/configure
-@@ -3873,12 +3873,6 @@ $as_echo "no" >&6; }
+@@ -3942,13 +3942,6 @@ printf "%s\n" "no" >&6; }
          if test "$IS_FREEBSD" != "1" && test "$cross_compiling" != "yes" ; then
-       { $as_echo "$as_me:${as_lineno-$LINENO}: checking if r/w locks are supported" >&5
- $as_echo_n "checking if r/w locks are supported... " >&6; }
--      if test "$cross_compiling" = yes; then :
--  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
--$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking if r/w locks are supported" >&5
+ printf %s "checking if r/w locks are supported... " >&6; }
+-      if test "$cross_compiling" = yes
+-then :
+-  { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+-printf "%s\n" "$as_me: error: in \`$ac_pwd':" >&2;}
 -as_fn_error $? "cannot run test program while cross compiling
 -See \`config.log' for more details" "$LINENO" 5; }
--else
+-else $as_nop
    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
  /* end confdefs.h.  */
  
-@@ -3891,7 +3885,7 @@ else
+@@ -3961,8 +3954,6 @@ else $as_nop
  
  
  _ACEOF
--if ac_fn_c_try_run "$LINENO"; then :
-+if ac_fn_c_try_compile "$LINENO"; then :
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
- $as_echo "yes" >&6; }
- cat >>confdefs.h <<_ACEOF
-@@ -3905,7 +3899,6 @@ $as_echo "no" >&6; }
- fi
- rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-   conftest.$ac_objext conftest.beam conftest.$ac_ext
--fi
+-if ac_fn_c_try_run "$LINENO"
+-then :
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+ printf "%s\n" "yes" >&6; }
+ printf "%s\n" "#define HAVE_RW_LOCK 1" >>confdefs.h
+@@ -3978,8 +3969,6 @@ fi
  
      fi
  
+-    fi
+-
+     MOD_FIBERBLAZE_LIB="libs/libpfring_fiberblaze_$MACHINE$LIBARCH.a"
+   if test -f "lib/$MOD_FIBERBLAZE_LIB"; then
+     FIBERBLAZE_LIB="-lm -ldl"
+@@ -4009,8 +3998,6 @@ printf "%s\n" "no" >&6; }
+     fi
+   fi
+ 
+-fi
+-
+ { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking Mellanox support (x64 and aarch64)" >&5
+ printf %s "checking Mellanox support (x64 and aarch64)... " >&6; }
+ MOD_MLX_LIB="libs/libpfring_mlx_${MACHINE}${LIBARCH}.a"

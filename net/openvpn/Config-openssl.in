@@ -2,23 +2,19 @@ if PACKAGE_openvpn-openssl
 
 config OPENVPN_openssl_ENABLE_LZO
 	bool "Enable LZO compression support"
-	default y
+	default n
 
 config OPENVPN_openssl_ENABLE_LZ4
 	bool "Enable LZ4 compression support"
-	default y
+	default n
 
 config OPENVPN_openssl_ENABLE_X509_ALT_USERNAME
 	bool "Enable the --x509-username-field feature"
 	default n
 
-#config OPENVPN_openssl_ENABLE_EUREPHIA
-#	bool "Enable support for the eurephia plug-in"
-#	default n
-
 config OPENVPN_openssl_ENABLE_MANAGEMENT
 	bool "Enable management server support"
-	default n
+	default y
 
 #config OPENVPN_openssl_ENABLE_PKCS11
 #	bool "Enable pkcs11 support"

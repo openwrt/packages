@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=acpid
 PKG_VERSION:=2.0.34
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/acpid2
@@ -18,7 +18,7 @@ PKG_HASH:=2d095c8cfcbc847caec746d62cdc8d0bff1ec1bc72ef7c674c721e04da6ab333
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
-PKG_CPE_ID:=cpe:/a:tedfelix:acpid
+PKG_CPE_ID:=cpe:/a:tedfelix:acpid2
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1

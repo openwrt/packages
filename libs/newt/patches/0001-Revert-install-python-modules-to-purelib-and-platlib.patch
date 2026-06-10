@@ -1,0 +1,30 @@
+From ce2b86fe32047f0c2d59273bf3ca5bbafd7f740a Mon Sep 17 00:00:00 2001
+From: Alexandru Ardelean <alex@shruggie.ro>
+Date: Mon, 23 Mar 2026 16:51:22 +0200
+Subject: [PATCH] Revert "install python modules to purelib and platlib"
+
+This reverts commit ecd43ab512e707f6e7873368871b517ed3206859.
+---
+ Makefile.in | 11 ++++-------
+ 1 file changed, 4 insertions(+), 7 deletions(-)
+
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -161,13 +161,10 @@ endif
+ 
+ install-py: _snack.$(SOEXT)
+ ifneq ($(PYTHONVERS),)
+-	@for ver in $(PYTHONVERS); do \
+-		PLATLIB=`$$ver -c "import sysconfig; print(sysconfig.get_path('platlib'))"`; \
+-		[ -d $(instroot)/$$PLATLIB ] || install -m 755 -d $(instroot)/$$PLATLIB ;\
+-		echo install -m 755 $$ver/_snack.$(SOEXT) $(instroot)/$$PLATLIB;\
+-		install -m 755 $$ver/_snack.$(SOEXT) $(instroot)/$$PLATLIB;\
+-		echo install -m 644 snack.py $(instroot)/$$PLATLIB;\
+-		install -m 644 snack.py $(instroot)/$$PLATLIB;\
++	for ver in $(PYTHONVERS); do \
++	   [ -d $(instroot)/$(libdir)/$$ver/site-packages ] || install -m 755 -d $(instroot)/$(libdir)/$$ver/site-packages ;\
++	   install -m 755 $$ver/_snack.$(SOEXT) $(instroot)/$(libdir)/$$ver/site-packages ;\
++	   install -m 644 snack.py $(instroot)/$(libdir)/$$ver/site-packages ;\
+ 	done
+ endif
+ 

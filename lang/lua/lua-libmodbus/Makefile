@@ -26,7 +26,7 @@ endef
 
 define Package/lua-libmodbus/description
 	lua-libmodbus is a binding to libmodbus,
-	see also http://www.libmodbus.org
+	see also https://libmodbus.org
 endef
 
 define Build/Configure

@@ -38,7 +38,7 @@ endef
 define Package/static-neighbor-reports/description
   Allows to configure static neighbor reports for hostapd interfaces.
 
-  These neighbor reports are avilable to clients using IEEE 802.11k.
+  These neighbor reports are available to clients using IEEE 802.11k.
 endef
 
 $(eval $(call BuildPackage,static-neighbor-reports))

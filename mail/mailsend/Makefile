@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mailsend
 PKG_VERSION:=1.19
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/muquit/mailsend/archive/$(PKG_VERSION)
@@ -65,6 +65,10 @@ TARGET_CFLAGS += \
 	-DHAVE_UNISTD_H \
 	-DSTDC_HEADERS \
 	-DTIME_WITH_SYS_TIME
+
+ifeq ($(BUILD_VARIANT),ssl)
+TARGET_CFLAGS += "-DHAVE_OPENSSL=1"
+endif
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) DEFS="$(TARGET_CFLAGS)"

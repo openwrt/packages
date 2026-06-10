@@ -5,13 +5,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-click
-PKG_VERSION:=8.1.7
-PKG_RELEASE:=2
+PKG_VERSION:=8.4.1
+PKG_RELEASE:=1
 
 PYPI_NAME:=click
-PKG_HASH:=ca9853ad459e787e2192211578cc907e7594e294c7ccc834310722b41b9ca6de
+PKG_HASH:=918b5633eddf6b41c32d4f454bf0de810065c74e3f7dbf8ee5452f8be88d3e96
 
-PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.rst
 

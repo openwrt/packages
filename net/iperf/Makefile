@@ -17,6 +17,7 @@ PKG_SOURCE_URL:=@SF/iperf2
 
 PKG_MAINTAINER:=Felix Fietkau <nbd@nbd.name>
 PKG_LICENSE:=BSD-3-Clause
+PKG_LICENSE_FILES:=COPYING LICENSE
 PKG_CPE_ID:=cpe:/a:iperf_project:iperf
 
 PKG_BUILD_PARALLEL:=1
@@ -31,7 +32,7 @@ define Package/iperf
   CATEGORY:=Network
   DEPENDS:= +libstdcpp +libpthread
   TITLE:=Internet Protocol bandwidth measuring tool
-  URL:=http://sourceforge.net/projects/iperf2/
+  URL:=https://sourceforge.net/projects/iperf2/
 endef
 
 define Package/iperf/description

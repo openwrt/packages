@@ -1,0 +1,31 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -78,8 +78,7 @@ SUBDIRS = \
+ 	avahi-autoipd \
+ 	avahi-ui \
+ 	avahi-ui-sharp \
+-	avahi-libevent \
+-	po
++	avahi-libevent
+ 
+ DX_INPUT = \
+ 	$(srcdir)/avahi-common/address.h \
+--- a/configure.ac
++++ b/configure.ac
+@@ -425,8 +425,6 @@ fi
+ GETTEXT_PACKAGE=avahi
+ AC_SUBST([GETTEXT_PACKAGE])
+ AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE],["$GETTEXT_PACKAGE"],[Gettext package])
+-AM_GNU_GETTEXT_VERSION([0.19.8])
+-AM_GNU_GETTEXT([external])
+ 
+ # Check for pkg-config manually first, as if its not installed the
+ # PKG_PROG_PKG_CONFIG macro won't be defined.
+@@ -1177,7 +1175,6 @@ avahi-compat-howl/samples/Makefile
+ avahi-autoipd/Makefile
+ avahi-ui/Makefile
+ avahi-libevent/Makefile
+-po/Makefile.in
+ ])
+ AC_OUTPUT
+ 

@@ -1,0 +1,37 @@
+From 37fe7397bc24c710437bef5f58cda87bd49f3d0b Mon Sep 17 00:00:00 2001
+From: Glenn Strauss <gstrauss@gluelogic.com>
+Date: Sat, 29 Nov 2025 00:41:28 -0500
+Subject: [PATCH] [mod_mbedtls] EC certs require drbg init
+
+EC certs require drbg init with mbedtls >= 3.0.0
+in addition to MBEDTLS_USE_PSA_CRYPTO requiring drbg init
+
+x-ref:
+  "mbedtls error with ec certificates"
+  https://redmine.lighttpd.net/boards/2/topics/12097
+  "mod_mbedtls: ECDSA OpenSSL certificates do not work with lighttpd + mbedTLS/PSA (MBEDTLS_USE_PSA_CRYPTO)"
+  https://redmine.lighttpd.net/issues/3288
+---
+ src/mod_mbedtls.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/src/mod_mbedtls.c
++++ b/src/mod_mbedtls.c
+@@ -1229,7 +1229,7 @@ __attribute_noinline__
+ static void *
+ network_mbedtls_load_pemfile (server *srv, const buffer *pemfile, const buffer *privkey)
+ {
+-  #if defined(MBEDTLS_USE_PSA_CRYPTO)
++  #if MBEDTLS_VERSION_NUMBER >= 0x03000000 /* mbedtls 3.0.0 */
+     if (!mod_mbedtls_init_once_mbedtls(srv))
+         return NULL;
+   #endif
+@@ -2120,7 +2120,7 @@ SETDEFAULTS_FUNC(mod_mbedtls_set_default
+                 __attribute_fallthrough__
+               case 2: /* ssl.ca-file */
+               case 3: /* ssl.ca-dn-file */
+-               #if defined(MBEDTLS_USE_PSA_CRYPTO)
++               #if MBEDTLS_VERSION_NUMBER >= 0x03000000 /* mbedtls 3.0.0 */
+                 if (!mod_mbedtls_init_once_mbedtls(srv)) return HANDLER_ERROR;
+                #endif /* else defer; not necessary for pemfile parsing */
+                 if (!buffer_is_blank(cpv->v.b)) {

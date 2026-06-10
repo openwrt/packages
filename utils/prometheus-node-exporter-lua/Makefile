@@ -4,7 +4,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=prometheus-node-exporter-lua
-PKG_VERSION:=2025.07.15
+PKG_VERSION:=2026.05.10
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
@@ -54,7 +54,7 @@ endef
 define Package/prometheus-node-exporter-lua/description
   Provides node metrics as Prometheus scraping endpoint.
 
-  This service is a lightweight rewrite in LUA of the offical Prometheus node_exporter.
+  This service is a lightweight rewrite in LUA of the official Prometheus node_exporter.
 endef
 
 # Additional optional exporters:
@@ -79,6 +79,17 @@ endef
 define Package/prometheus-node-exporter-lua-dawn/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
 	$(INSTALL_DATA) ./files/usr/lib/lua/prometheus-collectors/dawn.lua $(1)/usr/lib/lua/prometheus-collectors/
+endef
+
+define Package/prometheus-node-exporter-lua-filesystem
+  $(call Package/prometheus-node-exporter-lua/Default)
+  TITLE+= (filesystem collector)
+  DEPENDS:=prometheus-node-exporter-lua +luci-lib-nixio
+endef
+
+define Package/prometheus-node-exporter-lua-filesystem/install
+	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/filesystem.lua $(1)/usr/lib/lua/prometheus-collectors/
 endef
 
 define Package/prometheus-node-exporter-lua-hostapd_stations
@@ -279,9 +290,21 @@ define Package/prometheus-node-exporter-lua-nft-counters/install
 	$(INSTALL_DATA) ./files/usr/lib/lua/prometheus-collectors/nft_counters.lua $(1)/usr/lib/lua/prometheus-collectors/
 endef
 
+define Package/prometheus-node-exporter-lua-modemmanager
+  $(call Package/prometheus-node-exporter-lua/Default)
+  TITLE+= (modemmanager collector)
+  DEPENDS:=prometheus-node-exporter-lua +modemmanager +lua-cjson
+endef
+
+define Package/prometheus-node-exporter-lua-modemmanager/install
+	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
+	$(INSTALL_DATA) ./files/usr/lib/lua/prometheus-collectors/modemmanager.lua $(1)/usr/lib/lua/prometheus-collectors/
+endef
+
 $(eval $(call BuildPackage,prometheus-node-exporter-lua))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-bmx7))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-dawn))
+$(eval $(call BuildPackage,prometheus-node-exporter-lua-filesystem))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-hostapd_stations))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-hostapd_ubus_stations))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-hwmon))
@@ -300,3 +323,4 @@ $(eval $(call BuildPackage,prometheus-node-exporter-lua-realtek-poe))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-mwan3))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-ethtool))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-nft-counters))
+$(eval $(call BuildPackage,prometheus-node-exporter-lua-modemmanager))

@@ -30,7 +30,7 @@ define Package/gnupg/Default
   SUBMENU:=Encryption
   DEPENDS:=+zlib +libncurses +libreadline
   TITLE:=GNU privacy guard - a free PGP replacement
-  URL:=http://www.gnupg.org/
+  URL:=https://gnupg.org/
 endef
 
 define Package/gnupg
@@ -69,7 +69,7 @@ define Package/gpgv/description
 endef
 
 define Package/gnupg-utils/description
- Key management utilies for GnuPG.
+ Key management utilities for GnuPG.
  This package is needed to import keys from a keyserver.
 endef
 

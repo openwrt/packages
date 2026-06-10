@@ -8,9 +8,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pppossh
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
-PKG_LICENSE:=GPLv2
+PKG_LICENSE:=GPL-2.0-only
 
 include $(INCLUDE_DIR)/package.mk
 

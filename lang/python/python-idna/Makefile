@@ -8,18 +8,26 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-idna
-PKG_VERSION:=3.6
-PKG_RELEASE:=2
+PKG_VERSION:=3.17
+PKG_RELEASE:=1
 
 PYPI_NAME:=idna
-PKG_HASH:=9ecdbbd083b06798ae1e86adcbfe8ab1479cf864e4ee30fe4e46a003d12491ca
+PKG_HASH:=5eb0cb53bc467c12eadcf6de83163ad8527cec9416f44b9b61b19caedad2b87f
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.md
-PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
-PKG_BUILD_DEPENDS:=python-flit-core/host
-HOST_BUILD_DEPENDS:=python3/host python-build/host python-installer/host python-flit-core/host
+PKG_BUILD_DEPENDS:= \
+	python3/host \
+	python-setuptools/host \
+	python-flit-core/host
+HOST_BUILD_DEPENDS:= \
+	python3/host \
+	python-setuptools/host \
+	python-build/host \
+	python-installer/host \
+	python-flit-core/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

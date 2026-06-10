@@ -35,7 +35,7 @@ fi
 
 if [ -s "$TARGET_DL_FILE_4" ]; then
 	params=
-	while read -r p; do params="${params:+$params, }${p}"; done < "$TARGET_DL_FILE_4"
+	while read -r p; do params="${params:+${params}, }${p}"; done < "$TARGET_DL_FILE_4"
 	[ -n "$params" ] && nft "add element $TARGET_TABLE $TARGET_NFTSET_4 { $params }" || _ret=1
 fi
 
@@ -47,7 +47,7 @@ if [ -n "$TARGET_DL_FILE_6" ] && [ ! -s "$TARGET_DL_FILE_6" ]; then
 fi
 if [ -s "$TARGET_DL_FILE_6" ]; then
 	params=
-	while read -r p; do params="${params:+$params, }${p}"; done < "$TARGET_DL_FILE_6"
+	while read -r p; do params="${params:+${params}, }${p}"; done < "$TARGET_DL_FILE_6"
 	[ -n "$params" ] && nft "add element $TARGET_TABLE $TARGET_NFTSET_6 { $params }" || _ret=1
 fi
 

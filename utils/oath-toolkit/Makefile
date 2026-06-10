@@ -33,14 +33,14 @@ define Package/liboath
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=A shared and static C library for OATH handling
-  URL:=http://www.nongnu.org/oath-toolkit/index.html
+  URL:=https://oath-toolkit.codeberg.page/
 endef
 
 define Package/oath-pam
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=The oath PAM module
-  URL:=http://www.nongnu.org/oath-toolkit/index.html
+  URL:=https://oath-toolkit.codeberg.page/
   DEPENDS:= +libpam +liboath
 endef
 
@@ -48,7 +48,7 @@ define Package/oath-toolkit
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=A command line tool for generating and validating OTPs
-  URL:=http://www.nongnu.org/oath-toolkit/index.html
+  URL:=https://oath-toolkit.codeberg.page/
   DEPENDS:= +liboath
 endef
 

@@ -25,7 +25,7 @@ define Package/lua-penlight
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Penlight
-  URL:=http://lunarmodules.github.io/Penlight/manual/01-introduction.md.html
+  URL:=https://lunarmodules.github.io/Penlight/
   DEPENDS:=+luafilesystem
   MAINTAINER:=Karl Palsson <karlp@etactica.com>
 endef

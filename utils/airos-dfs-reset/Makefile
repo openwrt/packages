@@ -19,12 +19,12 @@ define Package/airos-dfs-reset
   CATEGORY:=Utilities
   TITLE:=Companion app for Ubiquity AirOS to help with DFS
   PKGARCH:=all
-  EXTRA_DEPENDS:=dropbear
+  DEPENDS:=dropbear
 endef
 
 define Package/airos-dfs-reset/description
 Companion app for Ubiquity AirOS Gear to enforce fallback to original frequency after DFS event is over.
-It works by soft-rebooting if running-frequency doesnt match the configured frequency.
+It works by soft-rebooting if running-frequency doesn't match the configured frequency.
 endef
 
 define Package/airos-dfs-reset/conffiles

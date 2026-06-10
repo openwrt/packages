@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-www
 PKG_VERSION:=6.78
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 METACPAN_NAME:=libwww-perl
 METACPAN_AUTHOR:=OALDERS
@@ -22,7 +22,7 @@ define Package/perl-www
   CATEGORY:=Languages
   TITLE:=The World-Wide Web library for Perl
   URL:=https://metacpan.org/pod/LWP
-  DEPENDS:=perl +perlbase-base +perlbase-digest +perlbase-encode +perlbase-essential +perlbase-io +perlbase-mime +perlbase-net +perl-encode-locale +perl-file-listing +perl-html-parser +perl-http-cookies +perl-http-daemon +perl-http-date +perl-http-message +perl-http-negotiate +perl-lwp-mediatypes +perl-net-http +perl-try-tiny +perl-uri +perl-www-robotrules
+  DEPENDS:=perl +perlbase-base +perlbase-digest +perlbase-encode +perlbase-essential +perlbase-io +perlbase-mime +perlbase-module +perlbase-net +perl-encode-locale +perl-file-listing +perl-html-parser +perl-http-cookies +perl-http-daemon +perl-http-date +perl-http-message +perl-http-negotiate +perl-lwp-mediatypes +perl-net-http +perl-try-tiny +perl-uri +perl-www-robotrules
 endef
 
 define Package/perl-www/description

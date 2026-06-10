@@ -55,7 +55,7 @@ define Package/dejavu-fonts-ttf/Default
   SECTION:=fonts
   CATEGORY:=Fonts
   SUBMENU:=DejaVu
-  URL:=http://dejavu.sourceforge.net/
+  URL:=https://dejavu-fonts.github.io/
 endef
 
 $(foreach file,$(FILES),$(eval $(call PartGen,$(file))))

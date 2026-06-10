@@ -17,7 +17,6 @@ PKG_MIRROR_HASH:=9386bd3711b05c28dc9a9d292713340f7e7f936e8e3493534d2437b0fd23443
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
-PKG_CPE_ID:=cpe:/a:libimobiledevice:ideviceinstaller
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

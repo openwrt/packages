@@ -61,6 +61,8 @@ load_options() {
 	procd_append_param env acme_server="$acme_server"
 	config_get days "$section" days
 	procd_append_param env days="$days"
+	config_get cert_profile "$section" cert_profile
+	procd_append_param env cert_profile="$cert_profile"
 	config_get dns_wait "$section" dns_wait
 	procd_append_param env dns_wait="$dns_wait"
 	config_get webroot "$section" webroot

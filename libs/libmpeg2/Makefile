@@ -25,10 +25,10 @@ define Package/libmpeg2
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=MPEG-1 & -2 decoding library
-  URL:=http://libmpeg2.sourceforge.net/
+  URL:=https://libmpeg2.sourceforge.io/
 endef
 
-define Package/libmpeg2/decription
+define Package/libmpeg2/description
   Libmpeg2 is a library for decoding MPEG-1 and MPEG-2 video streams
 endef
 

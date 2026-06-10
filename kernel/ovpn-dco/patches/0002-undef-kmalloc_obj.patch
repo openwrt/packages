@@ -1,0 +1,107 @@
+Subject: [PATCH] undef kmalloc_obj macros
+
+Kernel version 6.18.33 backports kmalloc_obj macros but GFP flags are
+required, which causes build failures as ovpn omits GFP flags. Undef
+those macros to fix the build.
+
+https://github.com/OpenVPN/ovpn-backports/issues/21
+
+--- a/compat-include/linux/slab.h
++++ b/compat-include/linux/slab.h
+@@ -4,15 +4,14 @@
+ #include <linux/version.h>
+ #include_next <linux/slab.h>
+ 
+-#ifndef __alloc_objs
++#undef __alloc_objs
+ #define __alloc_objs(KMALLOC, GFP, TYPE, COUNT)				\
+ ({									\
+ 	const size_t __obj_size = size_mul(sizeof(TYPE), COUNT);	\
+ 	(TYPE *)KMALLOC(__obj_size, GFP);				\
+ })
+-#endif /* __alloc_objs */
+ 
+-#ifndef __alloc_flex
++#undef __alloc_flex
+ #define __alloc_flex(KMALLOC, GFP, TYPE, FAM, COUNT)			\
+ ({									\
+ 	const size_t __count = (COUNT);					\
+@@ -22,66 +21,53 @@
+ 		__set_flex_counter(__obj_ptr->FAM, __count);		\
+ 	__obj_ptr;							\
+ })
+-#endif /* __alloc_flex */
+ 
+-#ifndef kmalloc_obj
++#undef kmalloc_obj
+ #define kmalloc_obj(VAR_OR_TYPE, ...) \
+ 	__alloc_objs(kmalloc, default_gfp(__VA_ARGS__), typeof(VAR_OR_TYPE), 1)
+-#endif /* kmalloc_obj */
+ 
+-#ifndef kmalloc_objs
++#undef kmalloc_objs
+ #define kmalloc_objs(VAR_OR_TYPE, COUNT, ...) \
+ 	__alloc_objs(kmalloc, default_gfp(__VA_ARGS__), typeof(VAR_OR_TYPE), COUNT)
+-#endif /* kmalloc_objs */
+ 
+-#ifndef kmalloc_flex
++#undef kmalloc_flex
+ #define kmalloc_flex(VAR_OR_TYPE, FAM, COUNT, ...) \
+ 	__alloc_flex(kmalloc, default_gfp(__VA_ARGS__), typeof(VAR_OR_TYPE), FAM, COUNT)
+-#endif /* kmalloc_flex */
+ 
+-#ifndef kzalloc_obj
++#undef kzalloc_obj
+ #define kzalloc_obj(P, ...) \
+ 	__alloc_objs(kzalloc, default_gfp(__VA_ARGS__), typeof(P), 1)
+-#endif /* kzalloc_obj */
+ 
+-#ifndef kzalloc_objs
++#undef kzalloc_objs
+ #define kzalloc_objs(P, COUNT, ...) \
+ 	__alloc_objs(kzalloc, default_gfp(__VA_ARGS__), typeof(P), COUNT)
+-#endif /* kzalloc_objs */
+ 
+-#ifndef kzalloc_flex
++#undef kzalloc_flex
+ #define kzalloc_flex(P, FAM, COUNT, ...)		\
+ 	__alloc_flex(kzalloc, default_gfp(__VA_ARGS__), typeof(P), FAM, COUNT)
+-#endif /* kzalloc_flex */
+ 
+-#ifndef kvmalloc_obj
++#undef kvmalloc_obj
+ #define kvmalloc_obj(P, ...) \
+ 	__alloc_objs(kvmalloc, default_gfp(__VA_ARGS__), typeof(P), 1)
+-#endif /* kvmalloc_obj */
+ 
+-#ifndef kvmalloc_objs
++#undef kvmalloc_objs
+ #define kvmalloc_objs(P, COUNT, ...) \
+ 	__alloc_objs(kvmalloc, default_gfp(__VA_ARGS__), typeof(P), COUNT)
+-#endif /* kvmalloc_objs */
+ 
+-#ifndef kvmalloc_flex
++#undef kvmalloc_flex
+ #define kvmalloc_flex(P, FAM, COUNT, ...) \
+ 	__alloc_flex(kvmalloc, default_gfp(__VA_ARGS__), typeof(P), FAM, COUNT)
+-#endif /* kvmalloc_flex */
+ 
+-#ifndef kvzalloc_obj
++#undef kvzalloc_obj
+ #define kvzalloc_obj(P, ...) \
+ 	__alloc_objs(kvzalloc, default_gfp(__VA_ARGS__), typeof(P), 1)
+-#endif /* kvzalloc_obj */
+ 
+-#ifndef kvzalloc_objs
++#undef kvzalloc_objs
+ #define kvzalloc_objs(P, COUNT, ...) \
+ 	__alloc_objs(kvzalloc, default_gfp(__VA_ARGS__), typeof(P), COUNT)
+-#endif /* kvzalloc_objs */
+ 
+-#ifndef kvzalloc_flex
++#undef kvzalloc_flex
+ #define kvzalloc_flex(P, FAM, COUNT, ...) \
+ 	__alloc_flex(kvzalloc, default_gfp(__VA_ARGS__), typeof(P), FAM, COUNT)
+-#endif /* kvzalloc_flex */
+ 
+ #endif /* _NET_OVPN_LINUX_SLAB_H_ */

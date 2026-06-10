@@ -12,6 +12,7 @@ start_service() {
 	procd_append_param command -f
 	procd_append_param command -S
 	procd_set_param pidfile "/var/run/acpid.pid"
+	procd_close_instance
 }
 
 reload_service() {

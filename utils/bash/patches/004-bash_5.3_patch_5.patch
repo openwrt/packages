@@ -1,0 +1,26 @@
+From f63f0134b19f303677a4371469158e4618967f63 Mon Sep 17 00:00:00 2001
+From: Chet Ramey <chet.ramey@case.edu>
+Date: Wed, 26 Nov 2025 12:47:49 -0500
+Subject: Bash-5.3 patch 5: fix crash when restoring default disposition for
+ SIGINT in asynchronous subshell
+
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 4
++#define PATCHLEVEL 5
+ 
+ #endif /* _PATCHLEVEL_H_ */
+--- a/trap.c
++++ b/trap.c
+@@ -964,6 +964,7 @@ restore_default_signal (int sig)
+       original_signals[sig] = SIG_DFL;	/* XXX */
+       set_signal_handler (sig, SIG_DFL);
+       change_signal (sig, (char *)DEFAULT_SIG);
++      sigmodes[sig] &= ~SIG_TRAPPED;	/* no longer trapped */
+       return;
+     }
+     

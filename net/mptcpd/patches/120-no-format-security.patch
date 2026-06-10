@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -321,7 +321,7 @@ AS_IF([test "x$enable_stack_protection"
+@@ -333,7 +333,7 @@ AS_IF([test "x$enable_stack_protection"
  # Format string vulnerabilities
  # -Wformat=2 implies:
  #    -Wformat -Wformat-nonliteral -Wformat-security -Wformat-y2k

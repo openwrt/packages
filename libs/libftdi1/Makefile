@@ -1,4 +1,3 @@
-#
 # Copyright (C) 2014-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
@@ -9,10 +8,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libftdi1
 PKG_VERSION:=1.5
-PKG_RELEASE:=2
+PKG_FTDI_EEPROM_VERSION:=0.17
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://www.intra2net.com/en/developer/libftdi/download/
+PKG_SOURCE_URL:=https://www.intra2net.com/en/developer/libftdi/download/
 PKG_HASH:=7c7091e9c86196148bd41177b4590dccb1510bfe6cea5bf7407ff194482eb049
 
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
@@ -30,12 +30,12 @@ define Package/libftdi1
   CATEGORY:=Libraries
   DEPENDS:=+libusb-1.0
   TITLE:=Library to talk to FTDI chips
-  URL:=http://www.intra2net.com/en/developer/libftdi/
+  URL:=https://www.intra2net.com/en/developer/libftdi/
 endef
 
 define Package/libftdi1/description
   libFTDI - FTDI USB driver with bitbang mode
-  libFTDI is an open source library to talk to FTDI chips: FT232BM, FT245BM, FT2232C, FT2232H, FT4232H, FT2232D and FT245R, including the popular bitbang mode. 
+  libFTDI is an open source library to talk to FTDI chips: FT232BM, FT245BM, FT2232C, FT2232H, FT4232H, FT2232D and FT245R, including the popular bitbang mode.
   The library is linked with your program in userspace, no kernel driver required.
 endef
 
@@ -44,7 +44,8 @@ define Package/ftdi_eeprom
   CATEGORY:=Utilities
   DEPENDS:=+confuse +libftdi1
   TITLE:=Tool for reading/erasing/flashing FTDI USB chip eeproms
-  URL:=http://www.intra2net.com/en/developer/libftdi/
+  URL:=https://www.intra2net.com/en/developer/libftdi/
+  VERSION:=$(PKG_FTDI_EEPROM_VERSION)-r$(PKG_RELEASE)
 endef
 
 define Package/ftdi_eeprom/description

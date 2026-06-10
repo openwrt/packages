@@ -12,6 +12,7 @@ PKG_MIRROR_HASH:=3583e409862982db88545fde721ed59cfc78df8c59ab1a715a621ad657e0524
 
 PKG_MAINTAINER:=Moritz Warning <moritzwarning@web.de>
 PKG_LICENSE:=MIT
+PKG_CPE_ID:=cpe:/a:kadnode_project:kadnode
 
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_FLAGS:=gc-sections

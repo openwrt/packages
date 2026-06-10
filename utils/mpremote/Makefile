@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpremote
-PKG_VERSION:=1.21.0
+PKG_VERSION:=1.28.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=mpremote
-PKG_HASH:=65bc94511f6ff499e901ab59462a5f0744ff7e2cf71d8c75700d14a89c54ed61
+PKG_HASH:=fdb5626be83dff4e53c0184f8950814cb519b524dba7f1f8b1668aa477257a31
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
 PKG_BUILD_DEPENDS:=python-hatchling/host python-hatch-requirements-txt/host python-hatch-vcs/host
 
@@ -29,7 +29,7 @@ define Package/mpremote
   CATEGORY:=Utilities
   TITLE:=Interacting remotely with MicroPython devices
   URL:=https://github.com/micropython/micropython
-  DEPENDS:=+python3-light +python3-urllib +python3-pyserial
+  DEPENDS:=+python3-light +python3-urllib +python3-pyserial +python3-platformdirs
 endef
 
 define Package/mpremote/description

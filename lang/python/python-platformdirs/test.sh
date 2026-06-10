@@ -18,7 +18,9 @@ assert user_pictures_dir() == '/root/Pictures'
 assert user_videos_dir() == '/root/Videos'
 assert user_music_dir() == '/root/Music'
 assert user_desktop_dir() == '/root/Desktop'
-assert user_runtime_dir(appname, appauthor) == '/run/user/0/SuperApp'
+# user_runtime_dir falls back to /tmp/runtime-{uid}/... if /run/user/{uid} is not writable
+runtime_dir = user_runtime_dir(appname, appauthor)
+assert 'SuperApp' in runtime_dir
 
 assert site_data_dir(appname, appauthor) == '/usr/local/share/SuperApp'
 assert site_data_dir(appname, appauthor, multipath=True) == '/usr/local/share/SuperApp:/usr/share/SuperApp'

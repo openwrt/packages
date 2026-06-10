@@ -7,18 +7,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-dbus-fast
-PKG_VERSION:=2.21.1
+PKG_VERSION:=4.0.4
 PKG_RELEASE:=1
 
 PYPI_NAME:=dbus-fast
 PYPI_SOURCE_NAME:=dbus_fast
-PKG_HASH:=87b852d2005f1d59399ca51c5f3538f28a4742d739d7abe82b7ae8d01d8a5d02
+PKG_HASH:=43137f0b73a7adbf7d5c0e9eb9d8d34df9e6e0aeafade2166e641c52dfe0a853
 
 PKG_MAINTAINER:=Quintin Hill <stuff@quintin.me.uk>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_DEPENDS:=python-poetry-core/host python-cython/host python-wheel/host
+PKG_BUILD_DEPENDS:=python-poetry-core/host python-cython/host python-wheel/host python-setuptools/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -30,8 +30,7 @@ define Package/python3-dbus-fast
   SUBMENU:=Python
   TITLE:=A faster version of dbus-next
   URL:=https://github.com/Bluetooth-Devices/dbus-fast
-  DEPENDS:=+python3-light +python3-async-timeout +python3-asyncio \
-	+python3-logging +python3-urllib +python3-xml
+  DEPENDS:=+python3-light +python3-xml +python3-asyncio +python3-logging
 endef
 
 define Package/python3-dbus-fast/description

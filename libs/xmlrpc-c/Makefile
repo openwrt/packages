@@ -28,7 +28,7 @@ define Package/xmlrpc-c/Default
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=XML-RPC library
-  URL:=http://xmlrpc-c.sourceforge.net/
+  URL:=https://xmlrpc-c.sourceforge.io/
 endef
 
 define Package/xmlrpc-c-common

@@ -1,6 +1,6 @@
 --- a/src/pip/_internal/build_env.py
 +++ b/src/pip/_internal/build_env.py
-@@ -54,7 +54,11 @@ def get_runnable_pip() -> str:
+@@ -74,7 +74,11 @@ def get_runnable_pip() -> str:
          # case, we can use that directly.
          return str(source)
  
@@ -12,4 +12,4 @@
 +    return os.fsdecode(source / filename)
  
  
- def _get_system_sitepackages() -> Set[str]:
+ def _get_system_sitepackages() -> set[str]:

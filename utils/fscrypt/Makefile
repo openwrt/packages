@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fscrypt
-PKG_VERSION:=0.3.5
+PKG_VERSION:=0.3.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/google/fscrypt/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=368119b5e67c64bdc5f7872ffc7beed425e1401778003f4c7ae7c1062a45ebaf
+PKG_HASH:=6d71e17ef3e48cd5df22190df6925f39ee4a5b24e672f0fa616f3b57f52b2a12
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE

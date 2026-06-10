@@ -39,7 +39,7 @@ include $(INCLUDE_DIR)/nls.mk
 
 define Package/usbip/Common
   TITLE:=USB-over-IP
-  URL:=http://usbip.sourceforge.net/
+  URL:=https://usbip.sourceforge.net/
   DEPENDS:=@USB_SUPPORT
 endef
 

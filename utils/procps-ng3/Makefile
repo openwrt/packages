@@ -16,7 +16,7 @@ PKG_SOURCE:=procps-ng-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/procps-ng
 PKG_HASH:=4518b3e7aafd34ec07d0063d250fd474999b20b200218c3ae56f5d2113f141b4
 
-PKG_MAINTAINER:=
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING COPYING.LIB
 PKG_CPE_ID:=cpe:/a:procps-ng_project:procps-ng

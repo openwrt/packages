@@ -17,6 +17,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/BackupPC-$(PKG_VERSION)
 PKG_MAINTAINER:=Carsten Wolff <carsten@wolffcarsten.de>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:backuppc:backuppc
 
 include $(INCLUDE_DIR)/package.mk
 

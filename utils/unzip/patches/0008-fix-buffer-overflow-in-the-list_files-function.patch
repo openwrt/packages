@@ -10,11 +10,9 @@ CVE: CVE-2014-9913
  list.c | 13 ++++++++++++-
  1 file changed, 12 insertions(+), 1 deletion(-)
 
-diff --git a/list.c b/list.c
-index 15e0011..3a3d1cd 100644
 --- a/list.c
 +++ b/list.c
-@@ -339,7 +339,18 @@ int list_files(__G)    /* return PK-type error code */
+@@ -339,7 +339,18 @@ int list_files(__G)    /* return PK-type
                  G.crec.compression_method == ENHDEFLATED) {
                  methbuf[5] = dtype[(G.crec.general_purpose_bit_flag>>1) & 3];
              } else if (methnum >= NUM_METHODS) {
@@ -34,5 +32,3 @@ index 15e0011..3a3d1cd 100644
              }
  
  #if 0       /* GRR/Euro:  add this? */
--- 
-

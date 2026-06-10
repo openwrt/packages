@@ -59,7 +59,7 @@ define Package/owfs/Default/description
   software designer to create monitoring or control applications. There are
   some performance enhancements in the implementation, including data caching,
   parallel access to bus masters, and aggregation of device communication.
-  Still the fundemental goal has been ease of use, flexibility and correctness
+  Still the fundamental goal has been ease of use, flexibility and correctness
   rather than speed.
 endef
 

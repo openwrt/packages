@@ -1,39 +1,43 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=containerd
-PKG_VERSION:=1.7.22
-PKG_RELEASE:=2
+PKG_VERSION:=2.2.3
+PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:linuxfoundation:containerd
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/containerd/containerd/tar.gz/v${PKG_VERSION}?
-PKG_HASH:=8c5edde741b7596af63c021429a1212bd616350ed65a7b741eeffc47e27ee9a9
+PKG_HASH:=b97780bde4b01ed3596b0b0c6f55bfb130794a3db4e6fe2e0fc9719244933945
 
 PKG_MAINTAINER:=Gerard Ryan <G.M0N3Y.2503@gmail.com>
 
 PKG_BUILD_DEPENDS:=golang/host dockerd
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
-PKG_BUILD_FLAGS:=no-mips16
 
 GO_PKG:=github.com/containerd/containerd
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
 
+EMPTY:=
+SPACE:= $(EMPTY) $(EMPTY)
+ARCH_DEPENDS:=@($(subst $(SPACE),||,$(strip $(filter-out mips mips64 mipsel mips64el,$(subst ||,$(SPACE),$(patsubst @(%),%,$(GO_ARCH_DEPENDS)))))))
+
 define Package/containerd
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=containerd container runtime
   URL:=https://containerd.io/
-  DEPENDS:=$(GO_ARCH_DEPENDS) +btrfs-progs +runc
+  DEPENDS:=$(ARCH_DEPENDS) +btrfs-progs +runc
   MENU:=1
 endef
 
 define Package/containerd/description
-An industry-standard container runtime with an emphasis on simplicity, robustness and portability
+  An industry-standard container runtime with an emphasis on simplicity,
+  robustness and portability.
 endef
 
 GO_PKG_INSTALL_EXTRA:=\
@@ -59,7 +63,7 @@ Build/Compile=$(call Build/Compile/Default)
 
 define Package/containerd/install
 	$(INSTALL_DIR) $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/{ctr,containerd,containerd-stress,containerd-shim,containerd-shim-runc-v1,containerd-shim-runc-v2} $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/{ctr,containerd,containerd-stress,containerd-shim-runc-v2} $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,containerd))

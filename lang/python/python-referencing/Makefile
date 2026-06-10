@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-referencing
-PKG_VERSION:=0.32.0
-PKG_RELEASE:=1
+PKG_VERSION:=0.37.0
+PKG_RELEASE:=2
 
 PYPI_NAME:=referencing
-PKG_HASH:=689e64fe121843dcfd57b71933318ef1f91188ffb45367332700a86ac8fd6161
+PKG_HASH:=44aefc3142c5b842538163acb373e24cce6632bd54bdb01b21ad5863489f50d8
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
-PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
 PKG_BUILD_DEPENDS:=python-hatchling/host python-hatch-vcs/host
 
@@ -32,7 +32,6 @@ define Package/python3-referencing
   URL:=https://github.com/python-jsonschema/referencing
   DEPENDS:= \
     +python3-light \
-    +python3-email \
     +python3-urllib \
     +python3-attrs \
     +python3-rpds-py

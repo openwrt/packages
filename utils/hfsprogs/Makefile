@@ -17,7 +17,7 @@ PKG_SOURCE_URL:=https://src.fedoraproject.org/repo/pkgs/hfsplus-tools/$(PKG_SOUR
 PKG_HASH:=b01b203a97f9a3bf36a027c13ddfc59292730552e62722d690d33bd5c24f5497
 PKG_BUILD_DIR:=$(BUILD_DIR)/diskdev_cmds-$(PKG_REAL_VERSION)
 
-PKG_MAINTAINER:=
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=APSL-2.0
 PKG_LICENSE_FILES:=COPYING
 

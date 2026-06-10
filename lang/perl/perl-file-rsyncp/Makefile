@@ -7,7 +7,7 @@ PKG_VERSION:=0.76
 PKG_RELEASE:=1
 
 PKG_SOURCE:=File-RsyncP-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://search.cpan.org/CPAN/authors/id/C/CB/CBARRATT/
+PKG_SOURCE_URL:=https://www.cpan.org/authors/id/C/CB/CBARRATT/
 PKG_HASH:=1b23d3d4c08b9dd3eadfc6a3f38dfd21b72669f0052e7ad18e53350ef47c9e16
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/File-RsyncP-$(PKG_VERSION)
 
@@ -23,7 +23,7 @@ define Package/perl-file-rsyncp
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Perl Rsync client
-  URL:=http://search.cpan.org/~cbarratt/File-RsyncP/
+  URL:=https://metacpan.org/dist/File-RsyncP/
   DEPENDS:=perl +perlbase-autoloader +perlbase-socket +perlbase-getopt +perlbase-data +perlbase-config +perlbase-encode +perlbase-fcntl +perlbase-file
 endef
 

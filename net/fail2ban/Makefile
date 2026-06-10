@@ -7,16 +7,20 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fail2ban
 PKG_VERSION:=1.1.0
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/fail2ban/fail2ban/tar.gz/$(PKG_VERSION)?
 PKG_HASH:=474fcc25afdaf929c74329d1e4d24420caabeea1ef2e041a267ce19269570bae
 
-PKG_MAINTAINER:=
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:fail2ban:fail2ban
+
+PKG_BUILD_DEPENDS:= \
+	python3/host \
+	python-setuptools/host
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python3-package.mk
@@ -30,12 +34,9 @@ define Package/fail2ban
   +nftables \
   +python3-light \
   +python3-ctypes \
-  +python3-distutils \
-  +python3-email \
   +python3-logging \
   +python3-sqlite3 \
-  +python3-urllib \
-  +python3-pkg-resources
+  +python3-urllib
 endef
 
 define Package/fail2ban/description

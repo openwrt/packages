@@ -47,9 +47,6 @@ IP6T="debug_exec ip6tables -w 5"
 #QDISC="cake autorate_ingress internet ethernet diffserv4 triple-isolate"
 QDISC="cake"
 
-REQ_MODULES="sch_htb sch_cake act_connmark act_mirred em_u32"
-REQ_CMDS="ip tc iptables"
-
 preinit(){
 	[ "$LOGLEVEL" -ge 1 ] && e() { msg ERROR "$@"; } || e() { true; }
 	[ "$LOGLEVEL" -ge 2 ] && v() { msg INFO "$@"; } || v() { true; }
@@ -59,15 +56,6 @@ preinit(){
 }
 
 requires() {
-	for module in $REQ_MODULES; do
-		[ -d /sys/module/$module ] || insert_modules "$module" ||
-			die 2 "cannot load $module. Please install kmod-$module"
-	done
-	for cmd in $REQ_CMDS; do
-		command -v $cmd &>/dev/null ||
-			die 2 "cannot find command $cmd. Please install $cmd"
-	done
-
 	if ! command -v ip6tables &>/dev/null; then
 		v "Disabling IPv6 as ip6tables was not found"
 		IP6T=true

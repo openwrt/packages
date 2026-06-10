@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=trafficshaper
 PKG_VERSION:=1.0.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>
 
 PKG_LICENSE:=GPL-2.0-or-later
@@ -19,16 +19,16 @@ define Package/trafficshaper
   SECTION:=net
   CATEGORY:=Network
   TITLE:=WAN traffic shaper based on LAN addresses
-  DEPENDS:=+tc +kmod-sched-core +kmod-sched-connmark +kmod-ifb +iptables +kmod-sched-cake +iptables-mod-conntrack-extra
+  DEPENDS:=+tc +kmod-sched-core +kmod-sched-connmark +kmod-ifb +iptables +IPV6:ip6tables +kmod-sched-cake +iptables-mod-conntrack-extra
   PKGARCH:=all
 endef
 
 define Package/trafficshaper/description
   Setup QoS rules to limit (or reserve) traffic used by classes of clients.
-  Uplink and downlink can be controled (or not controlled) independently.
+  Uplink and downlink can be controlled (or not controlled) independently.
   Client classes are defined by its network addresses (IPv4 or IPv6). Each
-  client class can define absolute or relative (to wan) bandwith, and also
-  the use (or not) of spare wan bandwidth when avaiable.
+  client class can define absolute or relative (to wan) bandwidth, and also
+  the use (or not) of spare wan bandwidth when available.
 endef
 
 define Package/trafficshaper/conffiles

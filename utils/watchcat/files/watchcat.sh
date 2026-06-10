@@ -6,6 +6,8 @@
 # This is free software, licensed under the GNU General Public License v2.
 #
 
+. /lib/network/config.sh
+
 get_ping_size() {
 	ps=$1
 	case "$ps" in
@@ -82,9 +84,10 @@ watchcat_restart_modemmanager_iface() {
 }
 
 watchcat_restart_network_iface() {
-	logger -p daemon.info -t "watchcat[$$]" "Restarting network interface: \"$1\"."
-	ip link set "$1" down
-	ip link set "$1" up
+	local network
+	network="$(find_config "$1")"
+	logger -p daemon.info -t "watchcat[$$]" "Restarting network interface: \"$1\" (network: \"$network\")."
+	ifup "$network"
 }
 
 watchcat_run_script() {
@@ -188,6 +191,7 @@ watchcat_ping() {
 	ping_frequency_interval="$4"
 	ping_size="$5"
 	address_family="$6"
+	iface="$7"
 
 	time_now="$(cat /proc/uptime)"
 	time_now="${time_now%%.*}"
@@ -252,8 +256,8 @@ periodic_reboot)
 	watchcat_periodic "$2" "$3"
 	;;
 ping_reboot)
-	# args from init script: period forcedelay pinghosts pingperiod pingsize addressfamily
-	watchcat_ping "$2" "$3" "$4" "$5" "$6" "$7"
+	# args from init script: period forcedelay pinghosts pingperiod pingsize addressfamily interface
+	watchcat_ping "$2" "$3" "$4" "$5" "$6" "$7" "$8"
 	;;
 restart_iface)
 	# args from init script: period pinghosts pingperiod pingsize interface mmifacename unlockbands addressfamily

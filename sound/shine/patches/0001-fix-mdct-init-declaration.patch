@@ -1,0 +1,21 @@
+From 905d4367cf57860b7f86e2d2f6fed5529c94ee98 Mon Sep 17 00:00:00 2001
+From: Vladimir Ermakov <vooon341@gmail.com>
+Date: Tue, 25 Nov 2025 16:40:09 +0100
+Subject: [PATCH] fix mdct init declaration
+
+Signed-off-by: Vladimir Ermakov <vooon341@gmail.com>
+---
+ src/lib/l3mdct.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/src/lib/l3mdct.h
++++ b/src/lib/l3mdct.h
+@@ -1,7 +1,7 @@
+ #ifndef shine_MDCT_H
+ #define shine_MDCT_H
+ 
+-void shine_mdct_initialise();
++void shine_mdct_initialise(shine_global_config *config);
+ void shine_mdct_sub(shine_global_config *config, int stride);
+ 
+ #endif

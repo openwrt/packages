@@ -12,7 +12,7 @@ PKG_VERSION:=0.15
 PKG_RELEASE:=1
 
 PKG_SOURCE:=dvtm-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.brain-dump.org/projects/dvtm/
+PKG_SOURCE_URL:=https://github.com/martanne/dvtm/releases/download/v$(PKG_VERSION)/
 PKG_HASH:=8f2015c05e2ad82f12ae4cf12b363d34f527a4bbc8c369667f239e4542e1e510
 PKG_MAINTAINER:=Yunfan Jiang <jyf1987@gmail.com>
 
@@ -27,7 +27,7 @@ define Package/dvtm
   SUBMENU:=Terminal
   DEPENDS:=+libncursesw
   TITLE:=dynamic virtual terminal manager
-  URL:=http://www.brain-dump.org/projects/dvtm/
+  URL:=https://www.brain-dump.org/projects/dvtm/
 endef
 
 define Package/dvtm/description

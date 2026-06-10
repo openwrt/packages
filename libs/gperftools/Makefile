@@ -12,6 +12,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_NAME)-$(PKG_VERSION)
 PKG_MAINTAINER:=John Audia <therealgraysky@proton.me>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:gperftools_project:gperftools
 
 PKG_BUILD_FLAGS:=no-mips16
 PKG_INSTALL:=1

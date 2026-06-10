@@ -10,8 +10,6 @@ CVE: CVE-2015-7696
  crypt.c | 12 +++++++++++-
  1 file changed, 11 insertions(+), 1 deletion(-)
 
-diff --git a/crypt.c b/crypt.c
-index 784e411..a8975f2 100644
 --- a/crypt.c
 +++ b/crypt.c
 @@ -465,7 +465,17 @@ int decrypt(__G__ passwrd)
@@ -33,5 +31,3 @@ index 784e411..a8975f2 100644
          h[n] = (uch)b;
          Trace((stdout, " (%02x)", h[n]));
      }
--- 
-

@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=net-mtools
 PKG_VERSION:=3.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=https://github.com/troglobit/mtools
@@ -19,7 +19,7 @@ define Package/net-mtools
 endef
 
 define Package/net-mtools/description
-  The tools msend and mreceive can be particulary useful
+  The tools msend and mreceive can be particularly useful
   when debugging multicast setups.
 
   msend continuously sends UDP packets to the multicast

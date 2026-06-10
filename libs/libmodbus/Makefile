@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmodbus
-PKG_VERSION:=3.1.8
+PKG_VERSION:=3.1.12
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/stephane/libmodbus/releases/download/v$(PKG_VERSION)/
-PKG_HASH:=b122f2bc29f749702a22c0a760a7ca2182d541f5fa26bf25e3431f907b606f3c
+PKG_HASH:=2f4d4191cd196c1fba131daec03b621db75129d8255c832fc66b259d9fc46e7b
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 
@@ -29,7 +29,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/libmodbus
   SECTION:=libs
   CATEGORY:=Libraries
-  URL:=http://www.libmodbus.org
+  URL:=https://libmodbus.org
   TITLE:=libmodbus
 endef
 

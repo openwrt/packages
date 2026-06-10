@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnupg
-PKG_VERSION:=2.4.8
+PKG_VERSION:=2.5.20
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://gnupg.org/ftp/gcrypt/gnupg
-PKG_HASH:=b58c80d79b04d3243ff49c1c3fc6b5f83138eb3784689563bcdd060595318616
+PKG_HASH:=6461266e99c308419a379abe6c356d54c214136c4589bd65951091138989ffc6
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -34,7 +34,7 @@ define Package/gnupg2/Default
   SUBMENU:=Encryption
   DEPENDS:=+libgpg-error +libnpth +libassuan +libksba +libgcrypt +zlib +libncurses +libreadline $(ICONV_DEPENDS) $(INTL_DEPENDS)
   TITLE:=GNU privacy guard (version 2) - a free PGP replacement
-  URL:=http://www.gnupg.org/
+  URL:=https://gnupg.org/
 endef
 
 define Package/gnupg2
@@ -86,7 +86,7 @@ access to OCSP providers.  Dirmngr is invoked internally by 'gpg',
 endef
 
 define Package/gnupg2-utils/description
- Key management utilies for GnuPG (version 2).
+ Key management utilities for GnuPG (version 2).
  This package is needed to import keys from a keyserver.
 endef
 

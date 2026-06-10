@@ -1,0 +1,41 @@
+From b5ab5d33461bcde40fc53820d7048def90ebc9b7 Mon Sep 17 00:00:00 2001
+From: John Audia <therealgraysky@proton.me>
+Date: Sat, 3 Jan 2026 05:11:32 -0500
+Subject: [PATCH] pf_ring: fix virt_to_page() type mismatch
+
+Cast base and end addresses to void * before calling virt_to_page().
+This avoids integer-to-pointer warnings on newer toolchains and makes
+the pointer semantics explicit.
+
+This fixes build failures on the following ARM targets on OpenWrt:
+arm_cortex{9_vfpv3-d16,a15_neon-vfpv4}, powerpc_{464fp,8548}.
+
+Signed-off-by: John Audia <therealgraysky@proton.me>
+---
+ kernel/pf_ring.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+--- a/kernel/pf_ring.c
++++ b/kernel/pf_ring.c
+@@ -4927,8 +4927,8 @@ void reserve_memory(unsigned long base,
+ {
+   struct page *page, *page_end;
+ 
+-  page_end = virt_to_page(base + mem_len - 1);
+-  for(page = virt_to_page(base); page <= page_end; page++)
++  page_end = virt_to_page((void *)(base + mem_len - 1));
++  for(page = virt_to_page((void *)base); page <= page_end; page++)
+     SetPageReserved(page);
+ }
+ 
+@@ -4936,8 +4936,8 @@ void unreserve_memory(unsigned long base
+ {
+   struct page *page, *page_end;
+ 
+-  page_end = virt_to_page(base + mem_len - 1);
+-  for(page = virt_to_page(base); page <= page_end; page++)
++  page_end = virt_to_page((void *)(base + mem_len - 1));
++  for(page = virt_to_page((void *)base); page <= page_end; page++)
+     ClearPageReserved(page);
+ }
+ 

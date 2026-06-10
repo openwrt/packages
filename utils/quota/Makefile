@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=quota
-PKG_VERSION:=4.10
-PKG_RELEASE:=3
+PKG_VERSION:=4.11
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/linuxquota
-PKG_HASH:=a04a0cafca29c15be8b6ac660e06188bccb802c19efe2e7c19ed7f3d667ecf5e
+PKG_HASH:=0a51b8f920254d8e83c34a4c3082b7d241f5d6fd65188afadf29859d5223ef78
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=GPL-2.0-or-later

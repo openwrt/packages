@@ -1,8 +1,8 @@
 --- a/OS/Makefile-Base
 +++ b/OS/Makefile-Base
-@@ -253,7 +253,7 @@ utils: $(EXIM_MONITOR) exicyclog exinext
-         transport-filter.pl convert4r3 convert4r4 \
-         exim_checkaccess \
+@@ -252,7 +252,7 @@ utils: $(EXIM_MONITOR) exicyclog exinext
+         exigrep eximstats exipick exiqgrep exiqsumm \
+         transport-filter.pl exim_checkaccess \
          exim_dbmbuild exim_dumpdb exim_fixdb exim_tidydb \
 -	exim_lock exim_msgdate exim_id_update
 +	exim_lock exim_msgdate

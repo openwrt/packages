@@ -42,7 +42,7 @@ endef
 define Build/Configure
 	$(call perlmod/Configure,,)
 	
-	# Prepare a library directory where we can link againt lusb-0.1(as
+	# Prepare a library directory where we can link against lusb-0.1(as
 	# opposed to -lusb) to avoid confusion at runtime
 	mkdir $(PKG_BUILD_DIR)/syslib
 	$(LN) $(STAGING_DIR)/usr/lib/libusb.so $(PKG_BUILD_DIR)/syslib/libusb-0.1.so

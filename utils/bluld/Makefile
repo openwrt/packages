@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bluld
-PKG_VERSION:=1.1.2
+PKG_VERSION:=1.1.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/ktgeek/$(PKG_NAME)/releases/download/v$(PKG_VERSION)
-PKG_HASH:=94e42999bf701ea01296d614fe298af3bd5b91d3bdab6adda7ecc24af69f8230
+PKG_HASH:=382def82bb1486633b2dbf2f399b7b11ab854c4f79957066b7a31b556abd0158
 
 PKG_MAINTAINER:=Keith T. Garner <kgarner@kgarner.com>
 PKG_LICENSE:=MIT

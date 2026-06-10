@@ -29,7 +29,7 @@ include $(INCLUDE_DIR)/cmake.mk
 define Package/libuv
   SECTION:=libs
   CATEGORY:=Libraries
-  TITLE:=Cross-platform asychronous I/O library
+  TITLE:=Cross-platform asynchronous I/O library
   URL:=https://libuv.org/
   DEPENDS:=+libpthread +librt
   ABI_VERSION:=1

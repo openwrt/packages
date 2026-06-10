@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lcd4linux
-PKG_RELEASE:=10
+PKG_RELEASE:=11
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/feckert/lcd4linux
@@ -129,7 +129,7 @@ define Package/lcd4linux/Default
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=LCD display utility
-  URL:=http://lcd4linux.bulix.org/
+  URL:=https://github.com/feckert/lcd4linux
 endef
 
 define Package/lcd4linux/Default/description

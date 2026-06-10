@@ -8,15 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pyfuse3
-PKG_VERSION:=3.3.0
+PKG_VERSION:=3.4.2
 PKG_RELEASE:=1
 
 PYPI_NAME:=pyfuse3
-PKG_HASH:=2b31fe412479f9620da2067dd739ed23f4cc37364224891938dedf7766e573bd
+PKG_HASH:=0a59031969c4ba51a5ec1b67f3c5c24f641a6a3f8119a86edad56debcb9084d9
 
 PKG_LICENSE:=LGPL-2.0-or-later
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Julien Malik <julien.malik@paraiso.me>
+
+PKG_BUILD_DEPENDS:=python-cython/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -31,6 +33,7 @@ define Package/python3-pyfuse3
   DEPENDS:= \
     +python3-light \
     +python3-asyncio \
+    +python3-urllib \
     +python3-logging \
     +python3-trio \
     +libfuse3

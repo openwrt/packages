@@ -17,7 +17,6 @@ python3-ctypes: ctypes
 python3-dbm: dbm dbm.dumb dbm.gnu dbm.ndbm
 python3-decimal: decimal
 python3-distutils: distutils
-python3-email: email
 python3-logging: logging
 python3-lzma: lzma
 python3-multiprocessing: multiprocessing
@@ -27,7 +26,7 @@ python3-pydoc: doctest pydoc
 python3-readline: readline
 python3-sqlite3: sqlite3
 python3-unittest: unittest
-python3-urllib: urllib
+python3-urllib: urllib email
 python3-uuid: uuid
 python3-xml: xml xmlrpc
 "

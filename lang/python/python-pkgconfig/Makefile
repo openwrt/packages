@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pkgconfig
-PKG_VERSION:=1.5.5
+PKG_VERSION:=1.6.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=pkgconfig
-PKG_HASH:=deb4163ef11f75b520d822d9505c1f462761b4309b1bb713d08689759ea8b899
+PKG_HASH:=4a5a6631ce937fafac457104a40d558785a658bbdca5c49b6295bc3fd651907f
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
 PKG_HOST_ONLY:=1
 HOST_BUILD_DEPENDS:=python3/host python-build/host python-installer/host python-poetry-core/host

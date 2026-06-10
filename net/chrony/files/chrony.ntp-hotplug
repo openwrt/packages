@@ -1,4 +1,25 @@
 #!/bin/sh
+
+# Find interface corresponding to lo device
+IFACE=$(ubus call network.interface dump | \
+            jsonfilter -e '@.interface[@.device="lo"].interface')
+
+# During boot network.interface dump can be empty; try UCI instead
+if [ -z "${IFACE}" ]; then
+    . /lib/functions.sh
+    handle_interface () {
+        local iface="$1"
+        local device
+        config_get device "${iface}" device
+        [ "${device}" = "lo" ] && IFACE=${iface}
+    }
+    config_load network
+    config_foreach handle_interface interface
+fi
+
+[ -z "${IFACE}" ] || \
+    ubus -t 30 wait_for network.interface.${IFACE}
+
 # Wait for sync for up to 5 minutes and notify other services
 
 /usr/bin/chronyc waitsync 300 1 0.0 1 || exit 0

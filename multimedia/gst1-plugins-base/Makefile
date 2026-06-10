@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-base
 PKG_VERSION:=1.26.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=gst-plugins-base-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gst-plugins-base
@@ -139,6 +139,8 @@ MESON_ARGS += \
 	$(call GST_COND_SELECT,encoding) \
 	$(call GST_COND_SELECT,gio) \
 	-Dgl=$(if $(CONFIG_PACKAGE_libgst1gl),en,dis)abled \
+	-Dgl_api=gles2 \
+	-Dgl_platform=egl \
 	$(call GST_COND_SELECT,overlaycomposition) \
 	$(call GST_COND_SELECT,pbtypes) \
 	$(call GST_COND_SELECT,playback) \

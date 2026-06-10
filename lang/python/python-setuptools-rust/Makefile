@@ -8,19 +8,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-setuptools-rust
-PKG_VERSION:=1.8.1
+PKG_VERSION:=1.12.1
 PKG_RELEASE:=1
 
 PYPI_NAME:=setuptools-rust
-PKG_HASH:=94b1dd5d5308b3138d5b933c3a2b55e6d6927d1a22632e509fcea9ddd0f7e486
+PYPI_SOURCE_NAME:=setuptools_rust
+PKG_HASH:=85ae70989d96c9cfeb5ef79cf3bac2d5200bc5564f720a06edceedbdf6664640
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
 PKG_HOST_ONLY:=1
 HOST_BUILD_DEPENDS:= \
 	python3/host \
+	python-setuptools/host \
 	python-build/host \
 	python-installer/host \
 	python-wheel/host \

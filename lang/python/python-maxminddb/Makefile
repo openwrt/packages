@@ -9,15 +9,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-maxminddb
-PKG_VERSION:=2.4.0
-PKG_RELEASE:=1
+PKG_VERSION:=3.1.1
+PKG_RELEASE:=2
 
 PYPI_NAME:=maxminddb
-PKG_HASH:=81e54e53408bd502650e5969ccba16780af659ec1db1c44b2c997e4330a5ed96
+PKG_HASH:=b19a938c481518f19a2c534ffdcb3bc59582f0fbbdcf9f81ac9adf912a0af686
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
+
+PKG_BUILD_DEPENDS:=python-setuptools-scm/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -29,7 +31,7 @@ define Package/python3-maxminddb
   SUBMENU:=Python
   TITLE:=Reader for the MaxMind DB format
   URL:=https://www.maxmind.com/
-  DEPENDS:=+python3-light +libmaxminddb
+  DEPENDS:=+python3-light +python3-urllib +libmaxminddb
 endef
 
 define Package/python3-maxminddb/description

@@ -2,13 +2,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=https-dns-proxy
-PKG_VERSION:=2025.10.07
-PKG_RELEASE:=1
+PKG_VERSION:=2026.03.18
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/aarond10/https_dns_proxy/
-PKG_MIRROR_HASH:=2d0e5f031c8de7f42fa7f2e79d5638f9e4899c056d710fc3638a03112b383be5
-PKG_SOURCE_VERSION:=7b27ecd5598d03bbe79651cc80efca886d433cd9
+PKG_MIRROR_HASH:=4c356c19b62fc7bdef3a67fd678e48f3659d709da10517c2eadef76e3409f5ce
+PKG_SOURCE_VERSION:=801881210ba8215dc9cd577222d8c10372423360
 
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.ca>
 PKG_LICENSE:=MIT
@@ -25,10 +25,16 @@ define Package/https-dns-proxy
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=DNS Over HTTPS Proxy
-	URL:=https://github.com/stangri/https-dns-proxy/
-	DEPENDS:=+libcares +libcurl +libev +ca-bundle +jsonfilter +resolveip
-	DEPENDS+=+!BUSYBOX_DEFAULT_GREP:grep
-	DEPENDS+=+!BUSYBOX_DEFAULT_SED:sed
+	URL:=https://github.com/mossdef-org/https-dns-proxy/
+	DEPENDS:= \
+		+libcares \
+		+libcurl \
+		+libev \
+		+ca-bundle \
+		+jsonfilter \
+		+resolveip \
+		+!BUSYBOX_DEFAULT_GREP:grep \
+		+!BUSYBOX_DEFAULT_SED:sed
 	CONFLICTS:=https_dns_proxy
 endef
 

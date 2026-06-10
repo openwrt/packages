@@ -15,7 +15,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/npat-efault/picocom/tar.gz/$(PKG_VERSION)?
 PKG_HASH:=e6761ca932ffc6d09bd6b11ff018bdaf70b287ce518b3282d29e0270e88420bb
 
-PKG_MAINTAINER:=
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=LICENSE.txt
 PKG_CPE_ID:=cpe:/a:picocom_project:picocom

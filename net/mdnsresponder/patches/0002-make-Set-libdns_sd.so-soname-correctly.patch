@@ -19,4 +19,4 @@ Signed-off-by: Alex Kiernan <alex.kiernan@gmail.com>
 +	$(LD) $(SOOPTS) $(LINKOPTS) -Wl,-soname,libdns_sd.$(LDSUFFIX).1 -o $@ $+
  	$(STRIP) $@
  
- Clients: setup libdns_sd ../Clients/build/dns-sd
+ Clients: setup ../Clients/build/dns-sd

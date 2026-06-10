@@ -26,14 +26,14 @@
 
 	config NUT_DRIVER_SERIAL
 		depends on PACKAGE_nut
-		bool "Build with suport for serial drivers"
+		bool "Build with support for serial drivers"
 		help
 			If you have a UPS connected via serial cable, select this.
 		default y
 
         config NUT_DRIVER_NEON
                 depends on PACKAGE_nut
-                bool "Build with suport for netxml drivers"
+                bool "Build with support for netxml drivers"
                 help
                         If you have a UPS connected via netxml, select this.
                 default y

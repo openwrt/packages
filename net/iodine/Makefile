@@ -12,7 +12,7 @@ PKG_VERSION:=0.8.0
 PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://code.kryo.se/iodine/
+PKG_SOURCE_URL:=https://code.kryo.se/iodine/
 PKG_HASH:=546e92cf8617f7970ea81c850b1063eb189c68c406d0c6a67e02c55e72e714c6
 
 PKG_MAINTAINER:=Uwe Kleine-König <uwe+openwrt@kleine-koenig.org>
@@ -28,7 +28,7 @@ define Package/iodine/Default
   SUBMENU:=Firewall Tunnel
   DEPENDS:= +kmod-tun +zlib
   TITLE:=IP over DNS tunneling
-  URL:=http://code.kryo.se/iodine/
+  URL:=https://code.kryo.se/iodine/
 endef
 
 define Package/iodine

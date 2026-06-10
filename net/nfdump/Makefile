@@ -6,13 +6,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nfdump
-PKG_VERSION:=1.7.6
+PKG_VERSION:=1.7.8
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 PKG_SOURCE_URL:=https://github.com/phaag/nfdump
-PKG_MIRROR_HASH:=a14613902a14935cb83832d877285e7f9adf0cd8a12ddb1e2717d860b2a9e890
+PKG_MIRROR_HASH:=ea94dcd3f64c778d641fae814d1cb3d3cce58b00a20c58d9405a4a5447e138f8
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=BSD-3-Clause
@@ -29,7 +29,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/nfdump
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:= +flex +libbz2 +USE_MUSL:musl-fts +libatomic +libzstd +liblz4
+  DEPENDS:= +flex +libbsd +libbz2 +USE_MUSL:musl-fts +libatomic +libzstd +liblz4
   TITLE:= nfdump
   URL:=https://github.com/phaag/nfdump/
 endef

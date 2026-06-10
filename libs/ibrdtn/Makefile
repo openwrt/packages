@@ -12,7 +12,7 @@ PKG_VERSION:=1.0.1
 PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.ibr.cs.tu-bs.de/projects/ibr-dtn/releases
+PKG_SOURCE_URL:=https://www.ibr.cs.tu-bs.de/projects/ibr-dtn/releases
 PKG_HASH:=288b14ccbaefb5e3234065c2778c247797ccb3c7afbb6746bb37dc12c620d360
 PKG_MAINTAINER:=Johannes Morgenroth <jm@m-network.de>
 PKG_LICENSE:=Apache-2.0

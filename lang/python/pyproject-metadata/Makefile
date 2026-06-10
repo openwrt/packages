@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pyproject-metadata
-PKG_VERSION:=0.9.1
+PKG_VERSION:=0.11.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=pyproject-metadata
 PYPI_SOURCE_NAME:=pyproject_metadata
-PKG_HASH:=b8b2253dd1b7062b78cf949a115f02ba7fa4114aabe63fa10528e9e1a954a816
+PKG_HASH:=c72fa49418bb7c5a10f25e050c418009898d1c051721d19f98a6fb6da59a66cf
 
 PKG_MAINTAINER:=Andy Syam <privasisource@gmail.com>
 PKG_LICENSE:=MIT
@@ -31,7 +31,7 @@ define Package/python3-pyproject-metadata
   CATEGORY:=Languages
   TITLE:=PEP 621 metadata parsing
   URL:=https://github.com/FFY00/python-pyproject-metadata
-  DEPENDS:=+python3
+  DEPENDS:=+python3 +python3-packaging
 endef
 
 define Package/python3-pyproject-metadata/description

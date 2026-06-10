@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=keepalived
 PKG_VERSION:=2.3.3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.keepalived.org/software
@@ -52,7 +52,7 @@ define Package/keepalived
   SECTION:=net
   CATEGORY:=Network
   TITLE:=VRRP with failover and monitoring daemon for LVS clusters
-  URL:=http://www.keepalived.org/
+  URL:=https://www.keepalived.org/
   DEPENDS:= \
     +libnl-genl \
     +libmagic \

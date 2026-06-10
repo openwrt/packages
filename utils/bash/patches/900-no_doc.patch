@@ -1,13 +1,13 @@
 --- a/Makefile.in
 +++ b/Makefile.in
-@@ -813,10 +813,8 @@ loadables:
- #	$(MAKE) -f $(srcdir)/Makefile $(MFLAGS) srcdir=$(srcdir)
+@@ -880,10 +880,8 @@ loadables: .made
+ #	$(MAKE) -f $(srcdir)/Makefile $(BASH_MAKEFLAGS) srcdir=$(srcdir)
  
  doc documentation:  force
--	@(cd $(DOCDIR) ; $(MAKE) $(MFLAGS) )
+-	@(cd $(DOCDIR) ; $(MAKE) $(BASH_MAKEFLAGS) )
  
- info dvi ps: force
--	@(cd $(DOCDIR) ; $(MAKE) $(MFLAGS) CFLAGS='$(CCFLAGS)' $@ )
+ info dvi ps pdf html: force
+-	@(cd $(DOCDIR) ; $(MAKE) $(BASH_MAKEFLAGS) CFLAGS='$(CCFLAGS)' $@ )
  
  force:
  

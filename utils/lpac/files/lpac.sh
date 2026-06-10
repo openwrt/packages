@@ -23,18 +23,18 @@ fi
 if [ "$APDU_BACKEND" = "at" ]; then
     AT_DEVICE="$(uci_get lpac at device /dev/ttyUSB2)"
     AT_DEBUG="$(uci_get lpac at debug 0)"
-    export AT_DEVICE="$AT_DEVICE"
-    export AT_DEBUG="$AT_DEBUG"
+    export LPAC_APDU_AT_DEVICE="$AT_DEVICE"
+    export LPAC_APDU_AT_DEBUG="$AT_DEBUG"
 elif [ "$APDU_BACKEND" = "uqmi" ]; then
     UQMI_DEV="$(uci_get lpac uqmi device /dev/cdc-wdm0)"
     UQMI_DEBUG="$(uci_get lpac uqmi debug 0)"
-    export LPAC_QMI_DEV="$UQMI_DEV"
-    export LPAC_QMI_DEBUG="$UQMI_DEBUG"
+    export LPAC_APDU_QMI_DEVICE="$UQMI_DEV"
+    export LPAC_APDU_UQMI_DEBUG="$UQMI_DEBUG"
 elif [ "$APDU_BACKEND" = "mbim" ]; then
     MBIM_DEVICE="$(uci_get lpac mbim device /dev/cdc-wdm0)"
     MBIM_PROXY="$(uci_get lpac mbim proxy 1)"
-    export MBIM_DEVICE="$MBIM_DEVICE"
-    export MBIM_USE_PROXY="$MBIM_PROXY"
+    export LPAC_APDU_MBIM_DEVICE="$MBIM_DEVICE"
+    export LPAC_APDU_MBIM_USE_PROXY="$MBIM_PROXY"
 fi
 
 export LPAC_CUSTOM_ISD_R_AID="$CUSTOM_ISD_R_AID"

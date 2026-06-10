@@ -21,5 +21,7 @@ start_service() {
 	procd_set_param command /usr/sbin/tangd -p "${port}" -l /usr/share/tang/db
 	procd_set_param respawn
 	procd_set_param user tang
+	procd_set_param stderr 1
+	procd_set_param stdout 1
 	procd_close_instance
 }

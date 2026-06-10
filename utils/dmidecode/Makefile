@@ -27,7 +27,7 @@ define Package/dmidecode
   SECTION:=utils
   CATEGORY:=Utilities
   DEPENDS:=@(TARGET_x86||TARGET_x86_64||TARGET_armsr_armv8)
-  TITLE:=Displays BIOS informations.
+  TITLE:=Displays BIOS information
   URL:=https://www.nongnu.org/dmidecode/
 endef
 

@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 VERSION:=3.1
-RELEASE_DATE:=20250104
+RELEASE_DATE:=20260512
 
 PKG_NAME:=libedit
 PKG_VERSION:=$(RELEASE_DATE).$(VERSION)
@@ -16,11 +16,13 @@ PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Daniel Salzman <daniel.salzman@nic.cz>
 PKG_LICENSE:=BSD-3-Clause
+PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:libedit_project:libedit
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(RELEASE_DATE)-$(VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(RELEASE_DATE)-$(VERSION).tar.gz
 PKG_SOURCE_URL:=https://thrysoee.dk/editline/
-PKG_HASH:=23792701694550a53720630cd1cd6167101b5773adddcb4104f7345b73a568ac
+PKG_HASH:=432d5e7ea8b0116dd39f2eca7bc11d0eed77faa6b77ea526ace89907c23ea4a0
 
 PKG_INSTALL:=1
 
@@ -30,7 +32,7 @@ define Package/libedit
 	SECTION:=libs
 	CATEGORY:=Libraries
 	TITLE:=BSD editline and history library
-	URL:=http://thrysoee.dk/editline/
+	URL:=https://thrysoee.dk/editline/
 	DEPENDS:=+libncurses
 endef
 
@@ -44,7 +46,7 @@ define Build/InstallDev
 
 	$(INSTALL_DIR)						$(1)/usr/include/editline
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/editline/*.h	$(1)/usr/include/editline/
-	
+
 	$(INSTALL_DIR)						$(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libedit.{a,so*}	$(1)/usr/lib/
 

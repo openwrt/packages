@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fish
-PKG_VERSION:=4.1.2
-PKG_RELEASE:=2
+PKG_VERSION:=4.7.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/fish-shell/fish-shell/releases/download/$(PKG_VERSION)
-PKG_HASH:=52873934fc1ee21a1496e9f4521409013e540f77cbf29142a1b17ab93ffaafac
+PKG_HASH:=6f4d5b438a6338e3f5dcda19a28261e2ece7a9b7ff97686685e6abdc31dbb7df
 
 PKG_MAINTAINER:=Curtis Jiang <jqqqqqqqqqq@gmail.com>
 PKG_LICENSE:=GPL-2.0-only
@@ -49,8 +49,8 @@ define Package/fish/description
 endef
 
 CMAKE_OPTIONS += \
-	-DBUILD_DOCS=OFF \
-	-DWITH_GETTEXT=OFF \
+	-DWITH_DOCS=OFF \
+	-DWITH_MESSAGE_LOCALIZATION=OFF \
 	-DRust_CARGO_TARGET=$(RUSTC_TARGET_ARCH) \
 	-DFISH_USE_SYSTEM_PCRE2=ON
 
@@ -69,8 +69,6 @@ define Package/fish/install
 
 	$(INSTALL_DIR) $(1)/usr/share/fish
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/fish/* $(1)/usr/share/fish/
-	rm -rf $(1)/usr/share/fish/groff
-	rm -rf $(1)/usr/share/fish/man
 	rm -rf $(1)/usr/share/fish/tools
 endef
 

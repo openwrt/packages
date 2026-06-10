@@ -15,7 +15,7 @@ Signed-off-by: Stéphane Graber <stgraber@stgraber.org>
 
 --- a/src/lxc/start.c
 +++ b/src/lxc/start.c
-@@ -1130,6 +1130,11 @@ static int do_start(void *data)
+@@ -1127,6 +1127,11 @@ static int do_start(void *data)
  		if (ret < 0)
  			goto out_warn_father;
  

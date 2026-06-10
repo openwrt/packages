@@ -1,7 +1,5 @@
 #!/bin/sh
 
-. /lib/functions.sh
-
 if [ "$ACTION" = add ] && [ "$DEVICENAME" = event0 ]; then
-        ( /etc/init.d/acpid/stop; sleep 3; /usr/sbin/acpid )&
+	/etc/init.d/acpid start
 fi

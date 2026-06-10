@@ -10,7 +10,7 @@ PKG_VERSION:=0.12
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://downloads.xiph.org/releases/opus/
+PKG_SOURCE_URL:=https://downloads.xiph.org/releases/opus/
 PKG_HASH:=118d8601c12dd6a44f52423e68ca9083cc9f2bfe72da7a8c1acb22a80ae3550b
 
 PKG_MAINTAINER:=Eduardo Abinader <eduardoabinader@gmail.com>
@@ -29,7 +29,7 @@ define Package/libopusfile
    CATEGORY:=Libraries
    DEPENDS:=+libogg +libopus +libopenssl
    TITLE:=OPUS file library
-   URL:=http://opus-codec.org/
+   URL:=https://opus-codec.org/
 endef
 
 define Package/libopusfile/description

@@ -12,7 +12,7 @@ PKG_VERSION:=7.6
 PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=ftp://ftp.porcupine.org/pub/security
+PKG_SOURCE_URL:=http://ftp.porcupine.org/pub/security
 PKG_HASH:=9543d7adedf78a6de0b221ccbbd1952e08b5138717f4ade814039bb489a4315d
 
 PKG_LICENSE:=TCP-wrappers
@@ -27,7 +27,7 @@ define Package/libwrap
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Security wrapper library for TCP services
-  URL:=ftp://ftp.porcupine.org/pub/security/index.html
+  URL:=http://ftp.porcupine.org/pub/security/index.html
   MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 endef
 

@@ -8,20 +8,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rsyslog
-PKG_VERSION:=8.2506.0
-PKG_RELEASE:=1
+PKG_VERSION:=8.2604.0
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
 	https://fossies.org/linux/misc \
 	https://www.rsyslog.com/files/download/rsyslog
-PKG_HASH:=6d6fd0257c95e756765d4d585a833d54dd3a0e5eeb8308b862a81b368a74bb7b
+PKG_HASH:=2a04b1cd6f0a5e2b60eec231acce3cf9927c4ed02bc5fbbe5dc4c35fcf887b64
 
-PKG_MAINTAINER:=
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:rsyslog:rsyslog
 
+PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
@@ -37,7 +38,7 @@ define Package/rsyslog
 	+RSYSLOG_libdbi:libdbi +libestr +libfastjson +RSYSLOG_gnutls:libgnutls \
 	+RSYSLOG_mmdblookup:libmaxminddb +RSYSLOG_mysql:libmysqlclient \
 	+RSYSLOG_omhttp:libcurl +RSYSLOG_openssl:libopenssl \
-	+RSYSLOG_pgsql:libpq +libuuid +zlib
+	+RSYSLOG_pgsql:libpq +RSYSLOG_libyaml:libyaml +libuuid +zlib
   MENU:=1
 endef
 
@@ -50,6 +51,8 @@ CONFIGURE_ARGS+= \
 	--disable-fmhttp \
 	--disable-default-tests \
 	--disable-libsystemd \
+	--disable-impstats-push \
+	$(if $(CONFIG_RSYSLOG_libyaml),--enable-libyaml,--disable-libyaml) \
 	$(if $(CONFIG_RSYSLOG_gssapi_krb5),--enable-gssapi-krb5) \
 	$(if $(CONFIG_RSYSLOG_mysql),--enable-mysql) \
 	$(if $(CONFIG_RSYSLOG_pgsql),--enable-pgsql) \

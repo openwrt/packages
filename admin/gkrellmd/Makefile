@@ -12,7 +12,7 @@ PKG_VERSION:=2.4.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=gkrellm-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://gkrellm.srcbox.net/releases
+PKG_SOURCE_URL:=https://gkrellm.srcbox.net/releases
 PKG_HASH:=6f83665760b936ad4b55f9182b1ec7601faf38a0f25ea1e4bddc9965088f032d
 PKG_BUILD_DIR:=$(BUILD_DIR)/gkrellm-$(PKG_VERSION)
 
@@ -28,7 +28,7 @@ define Package/gkrellmd
   CATEGORY:=Administration
   DEPENDS:=+glib2
   TITLE:=The GNU Krell Monitors Server
-  URL:=http://gkrellm.net/
+  URL:=https://gkrellm.srcbox.net/
 endef
 
 define Package/gkrellmd/description

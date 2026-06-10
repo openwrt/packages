@@ -34,11 +34,15 @@ if [ "$REMOVEDEFAULTNOTIFY" = "1" ]; then
 fi
 
 if [ "$SKIPADDEXEC" != "1" ]; then
-	uci add_list nut_monitor.@upsmon[-1].defaultnotify="EXEC"
-fi
-
-if [ "$SKIPADDSYSLOG" != "1" ]; then
-	uci add_list nut_monitor.@upsmon[-1].defaultnotify="SYSLOG"
+	if [ "$SKIPADDSYSLOG" != "1" ]; then
+		uci set nut_monitor.@upsmon[-1].defaultnotify="SYSLOG+EXEC"
+	else
+		uci set nut_monitor.@upsmon[-1].defaultnotify="EXEC"
+	fi
+else
+	if [ "$SKIPADDSYSLOG" != "1" ]; then
+		uci set nut_monitor.@upsmon[-1].defaultnotify="SYSLOG"
+	fi
 fi
 
 uci commit nut_monitor

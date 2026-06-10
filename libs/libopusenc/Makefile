@@ -30,7 +30,7 @@ define Package/libopusenc
   URL:=https://opus-codec.org
 endef
 
-define Package/libopusenc/descriptiion
+define Package/libopusenc/description
  Libopusenc provides a high-level API for creating .opus files and streams.
 endef
 

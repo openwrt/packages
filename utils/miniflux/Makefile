@@ -18,6 +18,7 @@ PKG_HASH:=f050b2bc9839dd485047b9d7820dbb669668fd13135aa8b49dc0ad304e509fd5
 PKG_MAINTAINER:=Michal Vasilek <michal.vasilek@nic.cz>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:miniflux_project:miniflux
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/v2-$(PKG_VERSION)
 PKG_BUILD_DEPENDS:=golang/host

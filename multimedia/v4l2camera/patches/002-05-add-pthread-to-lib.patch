@@ -1,0 +1,33 @@
+From 97d9f7ae4dd7a90fc03685b04e0cdc14ccff7015 Mon Sep 17 00:00:00 2001
+From: mpromonet <michel.promonet@free.fr>
+Date: Sat, 21 Sep 2024 23:10:37 +0200
+Subject: [PATCH] add pthread to lib
+
+---
+ v4l2rtspserver/CMakeLists.txt | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+--- a/v4l2rtspserver/CMakeLists.txt
++++ b/v4l2rtspserver/CMakeLists.txt
+@@ -45,10 +45,6 @@ message(STATUS "CMAKE_TOOLCHAIN_FILE=${C
+ message(STATUS "CMAKE_C_COMPILER=${CMAKE_C_COMPILER}")
+ message(STATUS "CMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}")
+ 
+-#pthread
+-find_package (Threads)
+-target_link_libraries (${PROJECT_NAME} Threads::Threads) 
+-
+ 
+ # openssl ?
+ if (WITH_SSL)
+@@ -94,6 +90,10 @@ if (OpenSSL_FOUND)
+     set(LIBRARIES ${LIBRARIES} OpenSSL::SSL)
+ endif ()
+ 
++#pthread
++find_package (Threads)
++target_link_libraries (libv4l2rtspserver PUBLIC Threads::Threads) 
++
+ # LOG4CPP
+ if (LOG4CPP) 
+     find_library(LOG4CPP_LIBRARY NAMES log4cpp)

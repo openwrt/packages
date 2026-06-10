@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=domoticz
 PKG_VERSION:=2025.2
-PKG_RELEASE:=1
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/domoticz/domoticz/tar.gz/$(PKG_VERSION)?
@@ -21,7 +21,7 @@ PKG_LICENSE_FILES:=License.txt
 PKG_CPE_ID:=cpe:/a:domoticz:domoticz
 
 PKG_BUILD_DEPENDS:=python3 minizip cereal boost jwt-cpp
-PKG_BUILD_FLAGS:=no-mips16 lto
+PKG_BUILD_FLAGS:=no-mips16
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -30,7 +30,7 @@ define Package/domoticz
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Open Source Home Automation System
-  URL:=http://domoticz.com/
+  URL:=https://domoticz.com/
   USERID:=domoticz=6144:domoticz=6144
   DEPENDS:= \
 	+boost \
@@ -47,7 +47,6 @@ define Package/domoticz
 	+libopenzwave \
 	+libsqlite3 \
 	+libstdcpp \
-	+telldus-core \
 	+zlib
 endef
 
@@ -72,7 +71,8 @@ CMAKE_OPTIONS += \
 	-DUSE_STATIC_OPENZWAVE=no \
 	-DUSE_OPENSSL_STATIC=no \
 	-DUSE_PYTHON=yes \
-	-DWITH_LIBUSB=no
+	-DWITH_LIBUSB=no \
+	-DWITH_TELLDUSCORE=no
 
 TARGET_CXXFLAGS += -DWITH_GPIO
 

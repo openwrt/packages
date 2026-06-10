@@ -27,7 +27,7 @@ define Package/mpc
   CATEGORY:=Sound
   DEPENDS:=+libmpdclient
   TITLE:=Music Player Daemon Console Client
-  URL:=http://www.musicpd.org/
+  URL:=https://www.musicpd.org/
 endef
 
 define Package/mpc/description

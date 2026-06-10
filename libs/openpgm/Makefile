@@ -24,21 +24,19 @@ PKG_AUTOMAKE_PATHS:=$(MAKE_PATH)
 PKG_MAINTAINER:=Ye Holmes <yeholmes@outlook.com>
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=$(MAKE_PATH)/LICENSE
-PKG_CPE_ID:=cpe:/a:openpgm:openpgm
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/openpgm
   TITLE:=OpenPGM, an implementation of the PGM protocol
-  URL:=http://openpgm.googlecode.com/
+  URL:=https://github.com/steve-o/openpgm
   SECTION:=libs
   CATEGORY:=Libraries
 endef
 
 define Package/openpgm/description
   OpenPGM is a library implementing the PGM reliable multicast
-  network protocol. For more information about OpenPGM, see:
-  http://openpgm.googlecode.com/
+  network protocol.
 endef
 
 CONFIGURE_VARS += ac_cv_file__proc_cpuinfo=yes \

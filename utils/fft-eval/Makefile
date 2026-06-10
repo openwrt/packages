@@ -22,7 +22,7 @@ define Package/$(PKG_NAME)
 endef
 
 define Package/$(PKG_NAME)/description
-	Evaluates FFT samples from diferent wifi boards drivers
+	Evaluates FFT samples from different wifi boards drivers
 endef
 
 TARGET_CFLAGS  += -Wall -W -std=gnu99 -fno-strict-aliasing -MD -MP

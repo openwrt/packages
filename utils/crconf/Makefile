@@ -26,12 +26,12 @@ include $(INCLUDE_DIR)/package.mk
 define Package/crconf
   SECTION:=utils
   CATEGORY:=Utilities
-  TITLE:=Linux crypto layer configuraton tool
+  TITLE:=Linux crypto layer configuration tool
   URL:=https://sourceforge.net/projects/crconf
 endef
 
 define Package/crconf/description
-  Linux crypto layer configuraton tool.
+  Linux crypto layer configuration tool.
   Use this to manipulate kernel Crypto API/framework stuff,
   like drivers, templates, etc.
   Example: https://wiki.strongswan.org/projects/strongswan/wiki/Pcrypt

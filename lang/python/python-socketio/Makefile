@@ -8,15 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-socketio
-PKG_VERSION:=5.8.0
+PKG_VERSION:=5.16.2
 PKG_RELEASE:=1
 
 PYPI_NAME:=python-socketio
-PKG_HASH:=e714f4dddfaaa0cb0e37a1e2deef2bb60590a5b9fea9c343dd8ca5e688416fd9
+PYPI_SOURCE_NAME:=python_socketio
+PKG_HASH:=ad88c228d921646efa436c0a0df217e364ef30ec072df4041484e54d49c15989
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
+
+PKG_BUILD_DEPENDS:=python-setuptools/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

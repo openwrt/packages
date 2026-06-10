@@ -1,0 +1,19 @@
+From ee9172d836091c3c94254bc500ec667f26900928 Mon Sep 17 00:00:00 2001
+From: Jan-Niklas Burfeind <git@aiyionpri.me>
+Date: Tue, 14 Oct 2025 02:17:22 +0200
+Subject: [PATCH] respondd: increase minimal cmake version to 3.10
+
+as cmake 4.x requires at least 3.5, which has recently been marked as deprecated;
+therefore many OpenWrt packages have been bumped to 3.10 instead.
+---
+ src/CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-cmake_minimum_required(VERSION 2.6)
++cmake_minimum_required(VERSION 3.10)
+ 
+ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
+ 

@@ -1,0 +1,289 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2009-2026 OpenWrt.org
+
+START=90
+STOP=10
+
+USE_PROCD=1
+PROG=/usr/bin/ustreamer
+
+start_instance() {
+	local enabled=0
+	local device="/dev/video0"
+
+	config_get_bool enabled "$1" 'enabled' "$enabled"
+	[ "$enabled" -eq 0 ] && return
+
+	config_get device "$1" 'device' "$device"
+	[ -n "$device" -a -c "$device" ] || return
+
+	# primary
+	local input=""
+	local format="YUYV"
+	local encoder="CPU"
+	local quality=80
+	local resolution="640x480"
+	local desired_fps=0
+	local slowdown=1
+	local device_timeout=5
+	local host="::"
+	local port=8080
+	local user=""
+	local pass=""
+
+	# capturing
+	local allow_truncated_frames=0
+	local format_swap_rgb=0
+	local persistent=0
+	local dv_timings=0
+	local tv_standard=""
+	local io_method=""
+	local buffers=""
+	local workers=""
+	local m2m_device=""
+	local min_frame_size=""
+	local device_error_delay=""
+
+	# HTTP server
+	local tcp_nodelay=0
+	local unix_rm=0
+	local static=""
+	local unix=""
+	local unix_mode=""
+	local drop_same_frames=""
+	local fake_resolution=""
+	local allow_origin=""
+	local instance_id=""
+	local server_timeout=""
+
+	# JPEG sink
+	local jpeg_sink=""
+	local jpeg_sink_mode=""
+	local jpeg_sink_client_ttl=""
+	local jpeg_sink_timeout=""
+	local jpeg_sink_rm=0
+
+	# RAW sink
+	local raw_sink=""
+	local raw_sink_mode=""
+	local raw_sink_client_ttl=""
+	local raw_sink_timeout=""
+	local raw_sink_rm=0
+
+	# H264 sink
+	local h264_sink=""
+	local h264_sink_mode=""
+	local h264_sink_client_ttl=""
+	local h264_sink_timeout=""
+	local h264_sink_rm=0
+	local h264_boost=0
+	local h264_bitrate=""
+	local h264_gop=""
+	local h264_m2m_device=""
+	local exit_on_no_clients=""
+
+	# logging
+	local log_level=""
+
+	# image control
+	local image_default=0
+	local brightness=""
+	local contrast=""
+	local saturation=""
+	local gamma=""
+	local gain=""
+	local hue=""
+	local sharpness=""
+	local color_effect=""
+	local white_balance=""
+	local backlight_compensation=""
+	local flip_horizontal=""
+	local flip_vertical=""
+	local rotate=""
+
+	# primary
+	config_get input "$1" 'input' "$input"
+	config_get format "$1" 'format' "$format"
+	config_get encoder "$1" 'encoder' "$encoder"
+	config_get quality "$1" 'quality' "$quality"
+	config_get resolution "$1" 'resolution' "$resolution"
+	config_get desired_fps "$1" 'desired_fps' "$desired_fps"
+	config_get_bool slowdown "$1" 'slowdown' "$slowdown"
+	config_get device_timeout "$1" 'device_timeout' "$device_timeout"
+	config_get host "$1" 'host' "$host"
+	config_get port "$1" 'port' "$port"
+	config_get user "$1" 'user' "$user"
+	config_get pass "$1" 'pass' "$pass"
+
+	# capturing
+	config_get_bool allow_truncated_frames "$1" 'allow_truncated_frames' "$allow_truncated_frames"
+	config_get_bool format_swap_rgb "$1" 'format_swap_rgb' "$format_swap_rgb"
+	config_get_bool persistent "$1" 'persistent' "$persistent"
+	config_get_bool dv_timings "$1" 'dv_timings' "$dv_timings"
+	config_get tv_standard "$1" 'tv_standard' "$tv_standard"
+	config_get io_method "$1" 'io_method' "$io_method"
+	config_get buffers "$1" 'buffers' "$buffers"
+	config_get workers "$1" 'workers' "$workers"
+	config_get m2m_device "$1" 'm2m_device' "$m2m_device"
+	config_get min_frame_size "$1" 'min_frame_size' "$min_frame_size"
+	config_get device_error_delay "$1" 'device_error_delay' "$device_error_delay"
+
+	# HTTP server
+	config_get_bool tcp_nodelay "$1" 'tcp_nodelay' "$tcp_nodelay"
+	config_get_bool unix_rm "$1" 'unix_rm' "$unix_rm"
+	config_get static "$1" 'static' "$static"
+	config_get unix "$1" 'unix' "$unix"
+	config_get unix_mode "$1" 'unix_mode' "$unix_mode"
+	config_get drop_same_frames "$1" 'drop_same_frames' "$drop_same_frames"
+	config_get fake_resolution "$1" 'fake_resolution' "$fake_resolution"
+	config_get allow_origin "$1" 'allow_origin' "$allow_origin"
+	config_get instance_id "$1" 'instance_id' "$instance_id"
+	config_get server_timeout "$1" 'server_timeout' "$server_timeout"
+
+	# JPEG sink
+	config_get jpeg_sink "$1" 'jpeg_sink' "$jpeg_sink"
+	config_get jpeg_sink_mode "$1" 'jpeg_sink_mode' "$jpeg_sink_mode"
+	config_get jpeg_sink_client_ttl "$1" 'jpeg_sink_client_ttl' "$jpeg_sink_client_ttl"
+	config_get jpeg_sink_timeout "$1" 'jpeg_sink_timeout' "$jpeg_sink_timeout"
+	config_get_bool jpeg_sink_rm "$1" 'jpeg_sink_rm' "$jpeg_sink_rm"
+
+	# RAW sink
+	config_get raw_sink "$1" 'raw_sink' "$raw_sink"
+	config_get raw_sink_mode "$1" 'raw_sink_mode' "$raw_sink_mode"
+	config_get raw_sink_client_ttl "$1" 'raw_sink_client_ttl' "$raw_sink_client_ttl"
+	config_get raw_sink_timeout "$1" 'raw_sink_timeout' "$raw_sink_timeout"
+	config_get_bool raw_sink_rm "$1" 'raw_sink_rm' "$raw_sink_rm"
+
+	# H264 sink
+	config_get h264_sink "$1" 'h264_sink' "$h264_sink"
+	config_get h264_sink_mode "$1" 'h264_sink_mode' "$h264_sink_mode"
+	config_get h264_sink_client_ttl "$1" 'h264_sink_client_ttl' "$h264_sink_client_ttl"
+	config_get h264_sink_timeout "$1" 'h264_sink_timeout' "$h264_sink_timeout"
+	config_get_bool h264_sink_rm "$1" 'h264_sink_rm' "$h264_sink_rm"
+	config_get_bool h264_boost "$1" 'h264_boost' "$h264_boost"
+	config_get h264_bitrate "$1" 'h264_bitrate' "$h264_bitrate"
+	config_get h264_gop "$1" 'h264_gop' "$h264_gop"
+	config_get h264_m2m_device "$1" 'h264_m2m_device' "$h264_m2m_device"
+	config_get exit_on_no_clients "$1" 'exit_on_no_clients' "$exit_on_no_clients"
+
+	# logging
+	config_get log_level "$1" 'log_level' "$log_level"
+
+	# image control
+	config_get_bool image_default "$1" 'image_default' "$image_default"
+	config_get brightness "$1" 'brightness' "$brightness"
+	config_get contrast "$1" 'contrast' "$contrast"
+	config_get saturation "$1" 'saturation' "$saturation"
+	config_get gamma "$1" 'gamma' "$gamma"
+	config_get gain "$1" 'gain' "$gain"
+	config_get hue "$1" 'hue' "$hue"
+	config_get sharpness "$1" 'sharpness' "$sharpness"
+	config_get color_effect "$1" 'color_effect' "$color_effect"
+	config_get white_balance "$1" 'white_balance' "$white_balance"
+	config_get backlight_compensation "$1" 'backlight_compensation' "$backlight_compensation"
+	config_get flip_horizontal "$1" 'flip_horizontal' "$flip_horizontal"
+	config_get flip_vertical "$1" 'flip_vertical' "$flip_vertical"
+	config_get rotate "$1" 'rotate' "$rotate"
+
+	# configure service
+	procd_open_instance
+	procd_set_param command "$PROG"
+
+	# primary
+	[ -n "$device" ] && procd_append_param command --device "$device"
+	[ -n "$input" ] && procd_append_param command --input "$input"
+	[ -n "$format" ] && procd_append_param command --format "$format"
+	[ -n "$encoder" ] && procd_append_param command --encoder "$encoder"
+	[ -n "$quality" ] && procd_append_param command --quality "$quality"
+	[ -n "$resolution" ] && procd_append_param command --resolution "$resolution"
+	[ -n "$desired_fps" ] && procd_append_param command --desired-fps "$desired_fps"
+	[ "$slowdown" -ne "0" ] && procd_append_param command --slowdown
+	[ -n "$device_timeout" ] && procd_append_param command --device-timeout "$device_timeout"
+	[ -n "$host" ] && procd_append_param command --host "$host"
+	[ -n "$port" ] && procd_append_param command --port "$port"
+	[ -n "$user" ] && procd_append_param command --user "$user"
+	[ -n "$pass" ] && procd_append_param command --passwd "$pass"
+
+	# capturing
+	[ "$allow_truncated_frames" -ne "0" ] && procd_append_param command --allow-truncated-frames
+	[ "$format_swap_rgb" -ne "0" ] && procd_append_param command --format-swap-rgb
+	[ "$persistent" -ne "0" ] && procd_append_param command --persistent
+	[ "$dv_timings" -ne "0" ] && procd_append_param command --dv-timings
+	[ -n "$tv_standard" ] && procd_append_param command --tv-standard "$tv_standard"
+	[ -n "$io_method" ] && procd_append_param command --io-method "$io_method"
+	[ -n "$buffers" ] && procd_append_param command --buffers "$buffers"
+	[ -n "$workers" ] && procd_append_param command --workers "$workers"
+	[ -n "$m2m_device" ] && procd_append_param command --m2m-device "$m2m_device"
+	[ -n "$min_frame_size" ] && procd_append_param command --min-frame-size "$min_frame_size"
+	[ -n "$device_error_delay" ] && procd_append_param command --device-error-delay "$device_error_delay"
+
+	# HTTP server
+	[ "$tcp_nodelay" -ne "0" ] && procd_append_param command --tcp-nodelay
+	[ "$unix_rm" -ne "0" ] && procd_append_param command --unix-rm
+	[ -n "$static" ] && procd_append_param command --static "$static"
+	[ -n "$unix" ] && procd_append_param command --unix "$unix"
+	[ -n "$unix_mode" ] && procd_append_param command --unix-mode "$unix_mode"
+	[ -n "$drop_same_frames" ] && procd_append_param command --drop-same-frames "$drop_same_frames"
+	[ -n "$fake_resolution" ] && procd_append_param command --fake-resolution "$fake_resolution"
+	[ -n "$allow_origin" ] && procd_append_param command --allow-origin "$allow_origin"
+	[ -n "$instance_id" ] && procd_append_param command --instance-id "$instance_id"
+	[ -n "$server_timeout" ] && procd_append_param command --server-timeout "$server_timeout"
+
+	# JPEG sink
+	[ -n "$jpeg_sink" ] && procd_append_param command --jpeg-sink "$jpeg_sink"
+	[ -n "$jpeg_sink_mode" ] && procd_append_param command --jpeg-sink-mode "$jpeg_sink_mode"
+	[ -n "$jpeg_sink_client_ttl" ] && procd_append_param command --jpeg-sink-client-ttl "$jpeg_sink_client_ttl"
+	[ -n "$jpeg_sink_timeout" ] && procd_append_param command --jpeg-sink-timeout "$jpeg_sink_timeout"
+	[ "$jpeg_sink_rm" -ne "0" ] && procd_append_param command --jpeg-sink-rm
+
+	# RAW sink
+	[ -n "$raw_sink" ] && procd_append_param command --raw-sink "$raw_sink"
+	[ -n "$raw_sink_mode" ] && procd_append_param command --raw-sink-mode "$raw_sink_mode"
+	[ -n "$raw_sink_client_ttl" ] && procd_append_param command --raw-sink-client-ttl "$raw_sink_client_ttl"
+	[ -n "$raw_sink_timeout" ] && procd_append_param command --raw-sink-timeout "$raw_sink_timeout"
+	[ "$raw_sink_rm" -ne "0" ] && procd_append_param command --raw-sink-rm
+
+	# H264 sink
+	[ -n "$h264_sink" ] && procd_append_param command --h264-sink "$h264_sink"
+	[ -n "$h264_sink_mode" ] && procd_append_param command --h264-sink-mode "$h264_sink_mode"
+	[ -n "$h264_sink_client_ttl" ] && procd_append_param command --h264-sink-client-ttl "$h264_sink_client_ttl"
+	[ -n "$h264_sink_timeout" ] && procd_append_param command --h264-sink-timeout "$h264_sink_timeout"
+	[ "$h264_sink_rm" -ne "0" ] && procd_append_param command --h264-sink-rm
+	[ "$h264_boost" -ne "0" ] && procd_append_param command --h264-boost
+	[ -n "$h264_bitrate" ] && procd_append_param command --h264-bitrate "$h264_bitrate"
+	[ -n "$h264_gop" ] && procd_append_param command --h264-gop "$h264_gop"
+	[ -n "$h264_m2m_device" ] && procd_append_param command --h264-m2m-device "$h264_m2m_device"
+	[ -n "$exit_on_no_clients" ] && procd_append_param command --exit-on-no-clients "$exit_on_no_clients"
+
+	# logging
+	[ -n "$log_level" ] && procd_append_param command --log-level "$log_level"
+
+	# image control
+	[ "$image_default" -ne "0" ] && procd_append_param command --image-default
+	[ -n "$brightness" ] && procd_append_param command --brightness "$brightness"
+	[ -n "$contrast" ] && procd_append_param command --contrast "$contrast"
+	[ -n "$saturation" ] && procd_append_param command --saturation "$saturation"
+	[ -n "$gamma" ] && procd_append_param command --gamma "$gamma"
+	[ -n "$gain" ] && procd_append_param command --gain "$gain"
+	[ -n "$hue" ] && procd_append_param command --hue "$hue"
+	[ -n "$sharpness" ] && procd_append_param command --sharpness "$sharpness"
+	[ -n "$color_effect" ] && procd_append_param command --color-effect "$color_effect"
+	[ -n "$white_balance" ] && procd_append_param command --white-balance "$white_balance"
+	[ -n "$backlight_compensation" ] && procd_append_param command --backlight-compensation "$backlight_compensation"
+	[ -n "$flip_horizontal" ] && procd_append_param command --flip-horizontal "$flip_horizontal"
+	[ -n "$flip_vertical" ] && procd_append_param command --flip-vertical "$flip_vertical"
+	[ -n "$rotate" ] && procd_append_param command --rotate "$rotate"
+
+	procd_add_mdns http tcp "$port" "daemon=ustreamer"
+	procd_set_param respawn 3600 5 5
+	procd_close_instance
+}
+
+start_service() {
+	config_load 'ustreamer'
+	config_foreach start_instance 'ustreamer'
+}
+
+service_triggers() {
+	procd_add_reload_trigger 'ustreamer'
+}

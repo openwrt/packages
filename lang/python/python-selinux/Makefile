@@ -6,13 +6,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-selinux
-PKG_VERSION:=3.8.1
+PKG_VERSION:=3.10
 PKG_RELEASE:=1
 
 SRC_NAME:=libselinux
 PKG_SOURCE:=$(SRC_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/SELinuxProject/selinux/releases/download/$(PKG_VERSION)
-PKG_HASH:=ec2d2789f931152d21c1db1eb4bc202ce4eccede34d9be9e360e3b45243cee2c
+PKG_HASH:=1ef216c5b56fb7e0a51cd2909787a175a17ee391e0467894807873539ebe766b
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)/$(SRC_NAME)-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Thomas Petazzoni <thomas.petazzoni@bootlin.com>
@@ -20,7 +20,9 @@ PKG_LICENSE:=libselinux-1.0
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:selinuxproject:libselinux
 
-PKG_BUILD_DEPENDS:=swig/host
+PKG_BUILD_DEPENDS:= \
+	swig/host \
+	python-setuptools/host
 PKG_BUILD_PARALLEL:=1
 PYTHON3_PKG_BUILD:=0
 
@@ -33,7 +35,7 @@ define Package/python3-selinux
   CATEGORY:=Languages
   TITLE:=SELinux runtime library bindings
   DEPENDS:=+python3-light +libselinux
-  URL:=http://selinuxproject.org/page/Main_Page
+  URL:=https://github.com/selinuxproject
 endef
 
 define Package/python3-selinux/description
@@ -51,7 +53,7 @@ endef
 MAKE_VARS += \
 	$(PYTHON3_VARS) \
 	$(HOST_PYTHON3_PIP_VARS) \
-	PYTHON_SETUP_ARGS=--no-compile
+	PYTHON_SETUP_ARGS="--no-compile --no-build-isolation"
 
 MAKE_FLAGS += \
 	SHLIBDIR=/usr/lib

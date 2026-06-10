@@ -6,11 +6,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=numpy
-PKG_VERSION:=2.3.4
+PKG_VERSION:=2.4.6
 PKG_RELEASE:=1
 
 PYPI_NAME:=$(PKG_NAME)
-PKG_HASH:=a7d018bfedb375a8d979ac758b120ba846a7fe764911a64465fd87b8729f4a6a
+PKG_HASH:=f3a3570c4a2a16746ac2c31a7c7c7b0c186b95ce902e33db6f28094ed7387dda
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
@@ -79,7 +79,7 @@ define Package/python3-numpy
 	   +NUMPY_OPENBLAS_SUPPORT:openblas
 endef
 
-# We need to duplicate the omitted arhitectures same as openblas
+# We need to duplicate the omitted architectures same as openblas
 define Package/python3-numpy/config
 menu "Configuration"
 depends on !powerpc

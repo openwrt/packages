@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=acme-acmesh
-PKG_VERSION:=3.1.1
-PKG_RELEASE:=4
+PKG_VERSION:=3.1.3
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/acmesh-official/acme.sh/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=c5d623ac0af400e83cd676aefaf045228f60e9fc597fea5db4c3a5bd7f6bfcf4
+PKG_HASH:=efd12b265252f8875269960b6b31830731ccce2b3e6ff8e7ecfbee21fde35ab4
 PKG_BUILD_DIR:=$(BUILD_DIR)/acme.sh-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Toke Høiland-Jørgensen <toke@toke.dk>
@@ -29,7 +29,8 @@ define Package/acme-acmesh
   TITLE:=ACME client acme.sh wrapper script
   URL:=https://acme.sh
   PKGARCH:=all
-  PROVIDES:=acme-client
+  PROVIDES:=@acme
+  DEFAULT_VARIANT:=1
 endef
 
 define Package/acme-acmesh/description
@@ -51,7 +52,7 @@ endef
 define Package/acme-acmesh-dnsapi
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+acme-acmesh
+  DEPENDS:=+acme
   TITLE:=DNS API integration for ACME (Letsencrypt) client
   PKGARCH:=all
 endef

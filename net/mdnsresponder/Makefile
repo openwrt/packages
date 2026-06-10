@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mDNSResponder
-PKG_VERSION:=2200.100.94.0.2
-PKG_RELEASE:=2
+PKG_VERSION:=2881.0.25
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=https://github.com/apple-oss-distributions/mDNSResponder
-PKG_MIRROR_HASH:=6d019ca318d189233b10e7d4a51ec6952547a87c3b81646c094021490d5990a7
+PKG_MIRROR_HASH:=876c5f449c6cca11febaab26abb53b1ffa2846f2af3e36b4e15efb116c9b83fa
 
-PKG_MAINTAINER:=
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_CPE_ID:=cpe:/a:apple:mdnsresponder
 
@@ -33,7 +33,7 @@ define Package/mDNSResponder/Default
   CATEGORY:=Network
   SUBMENU:=IP Addresses and Names
   TITLE:=mDNS
-  URL:=http://developer.apple.com/networking/bonjour/
+  URL:=https://developer.apple.com/bonjour/
 endef
 
 define Package/mDNSResponder/Default/description
@@ -86,7 +86,7 @@ endef
 # not found:
 MAKE_FLAGS += \
 	LD="$(TARGET_CC)"  \
-	CFLAGS_DEBUG="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS)" \
+	CFLAGS_DEBUG="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS) -DMDNS_VERSIONSTR_NODTS=1" \
 	LINKOPTS=-lc \
 	LDCONFIG= \
 	ETCBASE="$(PKG_INSTALL_DIR)/etc" \

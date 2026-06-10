@@ -11,14 +11,14 @@ include $(TOPDIR)/rules.mk
 include ../python3-version.mk
 
 PKG_NAME:=python3
-PKG_RELEASE:=2
+PKG_RELEASE:=1
 PKG_VERSION:=$(PYTHON3_VERSION).$(PYTHON3_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.python.org/ftp/python/$(PKG_VERSION)
-PKG_HASH:=ed5ef34cda36cfa2f3a340f07cac7e7814f91c7f3c411f6d3562323a866c5c66
+PKG_HASH:=7e32597b99e5d9a39abed35de4693fa169df3e5850d4c334337ffd6a19a36db6
 
-PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=Python-2.0.1 0BSD
 PKG_LICENSE_FILES:=LICENSE Doc/copyright.rst Doc/license.rst Modules/_ctypes/darwin/LICENSE Modules/_ctypes/libffi_osx/LICENSE Modules/expat/COPYING
 PKG_CPE_ID:=cpe:/a:python:python
@@ -35,13 +35,13 @@ PKG_BUILD_PARALLEL:=1
 HOST_BUILD_PARALLEL:=1
 # LTO is handled here individually, see --with-lto below
 # "no-lto" prevents CONFIG_USE_LTO to add additional and interfering flags
-PKG_BUILD_FLAGS:=no-lto
+PKG_BUILD_FLAGS:=no-mips16 no-lto
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/Python-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/Python-$(PKG_VERSION)
 
 PKG_BUILD_DEPENDS:=bluez python3/host python-build/host python-installer/host python-wheel/host
-HOST_BUILD_DEPENDS:=bzip2/host libffi/host
+HOST_BUILD_DEPENDS:=bzip2/host libffi/host ncurses/host
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
@@ -96,7 +96,7 @@ endef
 define Package/python3-light
 $(call Package/python3/Default)
   TITLE+= light installation
-  DEPENDS:=+python3-base +libbz2 +zlib +USE_GLIBC:libcrypt-compat
+  DEPENDS:=+python3-base +libbz2 +zlib +libzstd +USE_GLIBC:libcrypt-compat
 endef
 
 define Package/python3-light/config
@@ -293,10 +293,17 @@ endif
 # HOST_MAKE_VARS += \
 # 	PYTHONSTRICTEXTENSIONBUILD=1
 
-# Bypass configure test
+# Bypass configure test. Force every curses header check Python's
+# configure.ac runs to "no" so the host distro's headers stay out.
 HOST_CONFIGURE_VARS += \
 	py_cv_module__tkinter=n/a \
-	ac_cv_working_openssl_hashlib=yes
+	ac_cv_working_openssl_hashlib=yes \
+	ac_cv_header_curses_h=no \
+	ac_cv_header_ncurses_h=no \
+	ac_cv_header_panel_h=no \
+	ac_cv_header_ncursesw_curses_h=no \
+	ac_cv_header_ncursesw_ncurses_h=no \
+	ac_cv_header_ncursesw_panel_h=no
 
 ifeq ($(HOST_OS),Darwin)
 HOST_CONFIGURE_VARS += \
@@ -314,9 +321,8 @@ HOST_CONFIGURE_ARGS += \
 	--with-system-expat \
 	--without-cxx-main
 
-# ncurses and uuid have seemingly unsolvable issues with pkgconfig
+# uuid has seemingly unsolvable issues with pkgconfig
 HOST_CFLAGS += \
-	-I$(STAGING_DIR_HOSTPKG)/include/ncursesw \
 	-I$(STAGING_DIR_HOST)/include/uuid
 
 define Host/Configure

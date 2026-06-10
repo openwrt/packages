@@ -11,6 +11,7 @@ PKG_MIRROR_HASH:=cad2d94cf7a720a3910c781f80187e2c399aa8acbfa1046aa7445a4d1495faf
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:treasuredata:fluent_bit
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk

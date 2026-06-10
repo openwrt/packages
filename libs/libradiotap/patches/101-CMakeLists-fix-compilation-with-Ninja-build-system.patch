@@ -1,0 +1,42 @@
+From 377905d798aec00358872de9896ce5c175336169 Mon Sep 17 00:00:00 2001
+From: Christian Marangi <ansuelsmth@gmail.com>
+Date: Sun, 23 Nov 2025 13:44:05 +0100
+Subject: [PATCH] CMakeLists: fix compilation with Ninja build system
+
+On using Ninja build system, the package currently don't configure
+correctly with the error:
+
+ninja: error: 'check/*', needed by 'CMakeFiles/radiotap_check', missing and no known rule to make it
+
+This is caused by the usage of
+
+DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/check/*
+
+that both CMake and Ninja doesn't expand to the list of all files in the
+check directory.
+
+To better address this, use the CMake GLOB to first enumerate all the
+files in the check directory and then call DEPENDS on a variable
+containing the list of files.
+
+This restore correct functionality and better adapt to CMake syntax.
+
+Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
+---
+ CMakeLists.txt | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -16,9 +16,10 @@ set_target_properties(parse PROPERTIES
+ target_link_libraries(parse radiotap)
+ 
+ 
++file(GLOB CHECK_FILES "${CMAKE_CURRENT_SOURCE_DIR}/check/*")
+ add_custom_target(radiotap_check ALL
+ 		  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/check/check.sh ${CMAKE_CURRENT_BINARY_DIR}
+-		  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/check/*
++		  DEPENDS ${CHECK_FILES}
+ 		  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/check/
+ 		  COMMENT "Check examples")
+ add_dependencies(radiotap_check parse)

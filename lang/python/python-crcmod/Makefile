@@ -22,7 +22,7 @@ define Package/python3-crcmod
   CATEGORY:=Languages
   SUBMENU:=Python
   TITLE:=python3-crcmod
-  URL:=http://crcmod.sourceforge.net/
+  URL:=https://crcmod.sourceforge.net/
   DEPENDS:=+python3-light
 endef
 

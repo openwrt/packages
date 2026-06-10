@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=stunnel
 PKG_VERSION:=5.75
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_MAINTAINER:=Florian Eckert <fe@dev.tdt.de>
@@ -17,8 +17,7 @@ PKG_LICENSE_FILES:=COPYING.md COPYRIGHT.md
 PKG_CPE_ID:=cpe:/a:stunnel:stunnel
 
 PKG_SOURCE_URL:= \
-	http://ftp.nluug.nl/pub/networking/stunnel/ \
-	http://www.usenix.org.uk/mirrors/stunnel/ \
+	https://www.usenix.org.uk/mirrors/stunnel/ \
 	https://www.stunnel.org/downloads/ \
 	https://www.usenix.org.uk/mirrors/stunnel/archive/$(word 1, $(subst .,$(space),$(PKG_VERSION))).x/
 
@@ -37,7 +36,7 @@ define Package/stunnel
   CATEGORY:=Network
   DEPENDS:=+libopenssl +zlib +libpthread
   TITLE:=SSL TCP Wrapper
-  URL:=http://www.stunnel.org/
+  URL:=https://www.stunnel.org/
 endef
 
 define Package/stunnel/description

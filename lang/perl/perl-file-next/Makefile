@@ -25,7 +25,7 @@ define Package/perl-file-next
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=File finding module
-  URL:=http://search.cpan.org/dist/File-Next/
+  URL:=https://metacpan.org/dist/File-Next/
   DEPENDS:=perl +perlbase-file
 endef
 

@@ -9,11 +9,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=p910nd
 PKG_VERSION:=0.97
-PKG_RELEASE:=14
+PKG_RELEASE:=15
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/p910nd
-PKG_LICENSE:=GPLv2
+PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING
 PKG_HASH:=4ac980a3ae24babae6f70f0a692625ece03a4a92c357fbb10d2e368386c3c26f
 PKG_MAINTAINER:=Philipp Kerling <pkerling@casix.org>
@@ -27,7 +27,7 @@ define Package/p910nd
   CATEGORY:=Network
   SUBMENU:=Printing
   TITLE:=A small non-spooling printer server
-  URL:=http://p910nd.sourceforge.net
+  URL:=https://github.com/kenyapcomau/p910nd
   USERID:=p910nd=393:lp=7
 endef
 

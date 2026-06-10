@@ -8,16 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-setuptools-scm
-PKG_VERSION:=9.2.2
+PKG_VERSION:=10.0.5
 PKG_RELEASE:=1
 
 PYPI_NAME:=setuptools-scm
 PYPI_SOURCE_NAME:=setuptools_scm
-PKG_HASH:=1c674ab4665686a0887d7e24c03ab25f24201c213e82ea689d2f3e169ef7ef57
+PKG_HASH:=bbba8fe754516cdefd017f4456721775e6ef9662bd7887fb52ae26813d4838c3
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
 PKG_HOST_ONLY:=1
 HOST_BUILD_DEPENDS:= \
@@ -27,7 +27,8 @@ HOST_BUILD_DEPENDS:= \
 	python-installer/host \
 	python-wheel/host \
 	python-packaging/host \
-	python-typing-extensions/host
+	python-typing-extensions/host \
+	python-vcs-versioning/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

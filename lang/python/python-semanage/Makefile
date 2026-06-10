@@ -6,13 +6,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-semanage
-PKG_VERSION:=3.8.1
+PKG_VERSION:=3.10
 PKG_RELEASE:=1
 
 SRC_NAME:=libsemanage
 PKG_SOURCE:=$(SRC_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/SELinuxProject/selinux/releases/download/$(PKG_VERSION)
-PKG_HASH:=7b39127b219cc70bfd935a4af6b0f2ba83d4b35c916f253c7e942c23ab490f07
+PKG_HASH:=1978894c414769ad77438d26886eaae3fb7bb74578ef2a5ad3130c89cb5cb1fe
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)/$(SRC_NAME)-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Thomas Petazzoni <thomas.petazzoni@bootlin.com>
@@ -20,7 +20,9 @@ PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:selinuxproject:libsemanage
 
-PKG_BUILD_DEPENDS:=swig/host
+PKG_BUILD_DEPENDS:= \
+	swig/host \
+	python-setuptools/host
 PKG_BUILD_PARALLEL:=1
 PYTHON3_PKG_BUILD:=0
 
@@ -33,7 +35,7 @@ define Package/python3-semanage
   CATEGORY:=Languages
   TITLE:=SELinux policy management library bindings
   DEPENDS:=+python3-light +libsemanage
-  URL:=http://selinuxproject.org/page/Main_Page
+  URL:=https://github.com/selinuxproject
 endef
 
 define Package/python3-semanage/description
@@ -49,7 +51,10 @@ define Package/python3-semanage/description
 endef
 
 MAKE_VARS += \
-	$(PYTHON3_VARS)
+	$(PYTHON3_VARS) \
+	$(HOST_PYTHON3_PIP_VARS) \
+	PYCEXT=.cpython-$(PYTHON3_VERSION_MAJOR)$(PYTHON3_VERSION_MINOR)$(ABIFLAGS)-$(MULTIARCH).so \
+	PYTHON_SETUP_ARGS="--no-compile --no-build-isolation"
 
 define Build/Compile
 	$(call Build/Compile/Default,pywrap)

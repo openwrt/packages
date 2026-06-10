@@ -8,16 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-cython
-PKG_VERSION:=3.1.5
+PKG_VERSION:=3.2.5
 PKG_RELEASE:=1
 
 PYPI_NAME:=Cython
 PYPI_SOURCE_NAME:=cython
-PKG_HASH:=7e73c7e6da755a8dffb9e0e5c4398e364e37671778624188444f1ff0d9458112
+PKG_HASH:=3dd42e4cf36ad15f265bdfec2337cc00c688c8eb6d374ffd13bb19437c27bba1
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE.txt
-PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
 PKG_HOST_ONLY:=1
 HOST_BUILD_DEPENDS:= \

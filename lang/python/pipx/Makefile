@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pipx
-PKG_VERSION:=1.3.3
+PKG_VERSION:=1.13.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=pipx
-PKG_HASH:=6d5474e71e78c28d83570443e5418c56599aa8319a950ccf5984c5cb0a35f0a7
+PKG_HASH:=d754c19d070893aab5d1ddb3d622ef57ec082b79f53c2664183165dbd2868c0e
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
 PKG_BUILD_DEPENDS:=python-hatchling/host python-hatch-vcs/host
 

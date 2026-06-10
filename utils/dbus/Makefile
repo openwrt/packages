@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dbus
 PKG_VERSION:=1.16.2
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://dbus.freedesktop.org/releases/dbus
@@ -17,6 +17,7 @@ PKG_HASH:=0ba2a1a4b16afe7bceb2c07e9ce99a8c2c3508e5dec290dbb643384bd6beb7e2
 
 PKG_MAINTAINER:=Robert Marko <robimarko@gmail.com>
 PKG_LICENSE:=AFL-2.1
+PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:freedesktop:dbus
 
 PKG_BUILD_PARALLEL:=1
@@ -121,7 +122,7 @@ define Build/InstallDev
 		$(PKG_INSTALL_DIR)/usr/lib/dbus-1.0/include/dbus/*.h \
 		$(1)/usr/lib/dbus-1.0/include/dbus/
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libdbus-1.so* \
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdbus-1.so* \
 		$(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/dbus-1.0 $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig

@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=exim
-PKG_VERSION:=4.98.2
-PKG_RELEASE:=2
+PKG_VERSION:=4.99.3
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://ftp.exim.org/pub/exim/exim4/
-PKG_HASH:=88b8e8a67c1db6cc0b1d148161aa36e662f4ca2fef25d5b6f3694d490e42dcae
+PKG_SOURCE_URL:=https://downloads.exim.org/exim4/
+PKG_HASH:=663e76d2a0d9b8fc5b373d0008e44ae044f10feb22bc9dbae8c7f21345ebfb3b
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 
 PKG_LICENSE:=GPL-2.0-or-later
@@ -47,7 +47,7 @@ define Package/exim/Default
   CATEGORY:=Mail
   DEPENDS:= +USE_GLIBC:libcrypt-compat +libdb47 +libpcre2 $(ICONV_DEPENDS) +BUILD_NLS:libidn2 +BUILD_NLS:libidn
   TITLE:=Exim message transfer agent
-  URL:=http://www.exim.org/
+  URL:=https://exim.org/
   USERID:=exim=42:exim=42
 endef
 
@@ -126,7 +126,7 @@ define Package/exim-lookup-$(subst _,-,$(firstword $(subst %, ,$(1))))
   SECTION:=mail
   CATEGORY:=Mail
   TITLE:=Exim lookup module $(firstword $(subst %, ,$(1)))
-  URL:=http://www.exim.org/
+  URL:=https://exim.org/
   DEPENDS:=exim $(wordlist 2,$(words $(subst %, ,$(1))),$(subst %, ,$(1)))
 endef
 endef

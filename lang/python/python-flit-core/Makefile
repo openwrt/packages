@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-flit-core
 PKG_VERSION:=3.12.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=flit-core
 PYPI_SOURCE_NAME:=flit_core
@@ -17,7 +17,7 @@ PKG_HASH:=18f63100d6f94385c6ed57a72073443e1a71a4acb4339491615d0f16d6ff01b2
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
 PKG_HOST_ONLY:=1
 HOST_BUILD_DEPENDS:=python3/host
@@ -34,7 +34,7 @@ define Package/python3-flit-core
   SUBMENU:=Python
   TITLE:=Distribution-building parts of Flit
   URL:=https://github.com/pypa/flit
-  DEPENDS:=+python3-light +python3-email +python3-logging
+  DEPENDS:=+python3-light +python3-urllib +python3-logging
   BUILDONLY:=1
 endef
 

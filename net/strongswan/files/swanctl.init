@@ -550,7 +550,9 @@ config_remote() {
 	[ -n "$pools" ] && swanctl_xappend2 "pools = $pools"
 
 	local local_auth_method="$auth_method"
-	[ "$auth_method" = "eap-mschapv2" ] && local_auth_method="pubkey"
+	if [ "$auth_method" = "eap-mschapv2" ] || [ "$auth_method" = "eap-tls" ]; then
+		local_auth_method="pubkey"
+	fi
 
 	swanctl_xappend2 "local {"
 	swanctl_xappend3 "auth = $local_auth_method"
@@ -564,7 +566,9 @@ config_remote() {
 	swanctl_xappend3 "auth = $auth_method"
 	[ -n "$remote_identifier" ] && swanctl_xappend3 "id = \"$remote_identifier\""
 	[ -n "$remote_ca_certs" ] && swanctl_xappend3 "cacerts = \"$remote_ca_certs\""
-	[ "$auth_method" = eap-mschapv2 ] && swanctl_xappend3 "eap_id = $eap_id"
+	if [ "$auth_method" = "eap-mschapv2" ] || [ "$auth_method" = "eap-tls" ]; then
+		swanctl_xappend3 "eap_id = $eap_id"
+	fi
 	swanctl_xappend2 "}"
 
 	swanctl_xappend2 "children {"
@@ -637,6 +641,9 @@ config_remote() {
 		swanctl_xappend0 "}"
 	elif [ "$auth_method" = eap-mschapv2 ]; then
 		# EAP-MSCHAPv2 secrets are handled in config_mschapv2_secrets globally
+		:  # empty command
+	elif [ "$auth_method" = eap-tls ]; then
+		# EAP-TLS approved client certs are restricted by remote_ca_certs option
 		:  # empty command
 	else
 		fatal "AuthenticationMode $auth_mode not supported"

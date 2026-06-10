@@ -7,15 +7,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-aio-mqtt-mod
-PKG_VERSION:=0.3.4
+PKG_VERSION:=0.4.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=aio-mqtt-mod
-PKG_HASH:=340184b35771b7eb7982072fcca313213d856638dd7f98b99bda3ab16ba23552
+PYPI_SOURCE_NAME=aio_mqtt_mod
+PKG_HASH:=14784b0deedc9e91ef0980046c03cecff685b6e4364b6f3a66d41bca4b98b58f
 
 PKG_MAINTAINER:=Quintin Hill <stuff@quintin.me.uk>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
+
+PKG_BUILD_DEPENDS:=python-setuptools/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

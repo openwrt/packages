@@ -59,6 +59,8 @@ proto_openthread_setup() {
 	interface="$1"
 	device="$2"
 
+	mkdir -p /var/lib/thread
+
 	json_get_vars backbone_network dataset device radio_url verbose:0
 
 	[ -n "$backbone_network" ] || proto_openthread_setup_error "$interface" MISSING_BACKBONE_NETWORK
@@ -88,7 +90,6 @@ proto_openthread_setup() {
 	}
 
 	json_for_each_item proto_openthread_add_prefix prefix
-	mkdir -p /var/lib/thread
 	ubus call otbr threadstart || proto_openthread_setup_error "$interface" MISSING_UBUS_OBJ
 	$OTCTL netdata register
 

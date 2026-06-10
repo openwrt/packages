@@ -9,11 +9,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=qemu
-PKG_VERSION:=10.1.0
-PKG_RELEASE:=1
+PKG_VERSION:=10.1.3
+PKG_RELEASE:=2
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://download.qemu.org/
-PKG_HASH:=e0517349b50ca73ebec2fa85b06050d5c463ca65c738833bd8fc1f15f180be51
+PKG_HASH:=fbaa7a0d7a9a1deb5695b125916746ec28fe0de6275d4454f3e3bbaf8b339b53
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=LICENSE tcg/LICENSE
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
@@ -54,7 +54,7 @@ define Package/qemu-ga
   CATEGORY:=Utilities
   SUBMENU:=Virtualization
   TITLE:=QEMU Guest Agent
-  URL:=http://www.qemu.org
+  URL:=https://www.qemu.org
   DEPENDS:= +glib2 +virtio-console-helper +libstdcpp +libudev $(QEMU_DEPS_IN_GUEST)
 endef
 
@@ -75,7 +75,7 @@ define Package/qemu-bridge-helper
   CATEGORY:=Utilities
   SUBMENU:=Virtualization
   TITLE:=QEMU bridge helper
-  URL:=http://www.qemu.org
+  URL:=https://www.qemu.org
   DEPENDS:=+glib2 $(QEMU_DEPS_IN_HOST)
 endef
 
@@ -92,7 +92,7 @@ define Package/qemu-img
  CATEGORY:=Utilities
  SUBMENU:=Virtualization
  TITLE:=QEMU Image utility
- URL:=http://www.qemu.org
+ URL:=https://www.qemu.org
  DEPENDS:=+glib2 +QEMU_ZSTD:libzstd $(QEMU_DEPS_IN_HOST)
 endef
 
@@ -107,7 +107,7 @@ define Package/qemu-nbd
  CATEGORY:=Utilities
  SUBMENU:=Virtualization
  TITLE:=QEMU Network Block Device Utility
- URL:=http://www.qemu.org
+ URL:=https://www.qemu.org
  DEPENDS:=+glib2 +QEMU_ZSTD:libzstd $(QEMU_DEPS_IN_HOST) +kmod-nbd
 endef
 
@@ -125,7 +125,7 @@ define qemu-firmware
     CATEGORY:=Utilities
     SUBMENU:=Virtualization
     TITLE:=$(qemu-firmware-$(1)-title)
-    URL:=http://www.qemu.org
+    URL:=https://www.qemu.org
     DEPENDS:=$(QEMU_DEPS_IN_HOST)
   endef
 
@@ -191,7 +191,7 @@ define qemu-target
     CATEGORY:=Utilities
     SUBMENU:=Virtualization
     TITLE:=QEMU target $(1)
-    URL:=http://www.qemu.org
+    URL:=https://www.qemu.org
     DEPENDS:= +glib2 +libpthread +zlib +libbpf $(QEMU_DEPS_IN_HOST) $(qemu-target-$(1)-deps) \
 	+QEMU_UI_VNC:qemu-keymaps \
 	+QEMU_UI_VNC:libpng \

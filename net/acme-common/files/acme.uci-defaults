@@ -36,16 +36,40 @@ handle_cert() {
 	local standalone=$(uci_get acme "$section" standalone)
 	[ -n "$standalone" ] && uci_remove acme "$section" standalone
 	local dns=$(uci_get acme "$section" dns)
+	local tls=$(uci_get acme "$section" tls)
 	local validation_method=$(uci_get acme "$section" validation_method)
 	if [ -z "$validation_method" ]; then
 		if [ -n "$dns" ]; then
 			validation_method="dns"
 		elif [ "$standalone" = 1 ]; then
 			validation_method="standalone"
+		elif [ "$tls" = 1 ]; then
+			validation_method="alpn"
 		else
 			validation_method="webroot"
 		fi
 		uci_set acme "$section" validation_method "$validation_method"
+	fi
+
+	#uacme migration
+	local ACME_URL=$(uci_get acme "$section" acme_uri)
+	local ACME_SERVER=$(uci_get acme "$section" acme_server)
+
+	if [ -n "$ACME_URL" ]; then
+		if [ -n "$ACME_SERVER" ]; then
+			if [ "$ACME_URL" = "$ACME_SERVER" ]; then
+				uci_remove acme "$section" acme_uri
+			else
+				log warn "Both acme_uri and acme_server set in $section, need manual cleanup. client will use acme_server in current state"
+			fi
+		else
+			uci_set acme "$section" acme_server "$ACME_URL"
+			uci_remove acme "$section" acme_uri
+		fi
+	fi
+	local ACME_STAGING_URL=$(uci_get acme "$section" acme_staging_url)
+	if [ -n "$ACME_STAGING_URL" ]; then
+		uci_remove acme "$section" acme_staging_url
 	fi
 }
 

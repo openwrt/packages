@@ -24,7 +24,7 @@ define Package/lua-struct
   URL:=https://github.com/iryont/lua-struct
 endef
 
-define Package/lua-struct/desription
+define Package/lua-struct/description
 	lua-struct is a pure lua Implementation for packing and unpacking 
 	binary data. 
 endef
