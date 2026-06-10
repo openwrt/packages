@@ -1,0 +1,442 @@
+#!/bin/sh /etc/rc.common
+
+# This script is part of the static-device-names package.
+# See /usr/share/doc/static-device-names
+#
+# Copyright (C) 2024 qualIP Software.
+# Released under the GPL v3.0 or later.
+#
+# Location: /etc/init.d/static-device-names
+
+START=11
+NAME=static-device-names
+TRACE=${TRACE:-0}
+
+# don't run within buildroot
+[ -n "${IPKG_INSTROOT}" ] && return 0
+
+###################
+# LOCAL FUNCTIONS #
+###################
+
+NL=$'\n'  # New line
+
+LOG() {
+	local level=$1
+	shift
+
+	[ "$level" = "debug" ] && [ "$TRACE" = 0 ] && return
+	logger -s -t "$NAME" -p "syslog.$level" -- "$@"
+}
+
+TARGET_DEVICES=
+MAC_TO_DEVICE_MAPPING=
+PCI_ID_TO_DEVICE_MAPPING=
+PCI_SLOT_TO_DEVICE_MAPPING=
+USB_SLOT_TO_DEVICE_MAPPING=
+
+## Read configuration using UCI
+read_static_device_names_config() {
+	local rc=0
+	local dev
+	local mac
+	local pci_id
+	local pci_slot
+	local usb_slot
+	local i
+
+	if [ -z "$TARGET_DEVICES" ] ; then
+		TARGET_DEVICES=
+		MAC_TO_DEVICE_MAPPING=
+		PCI_ID_TO_DEVICE_MAPPING=
+		PCI_SLOT_TO_DEVICE_MAPPING=
+		USB_SLOT_TO_DEVICE_MAPPING=
+		i=0
+		while uci -q get "static-device-names.@device[$i]" > /dev/null ; do
+			dev=$(uci -q get "static-device-names.@device[$i].name")
+			if [ -n "$dev" ] ; then
+				TARGET_DEVICES="$TARGET_DEVICES$NL$dev"
+				for mac in \
+					$(uci -q get "static-device-names.@device[$i].mac") ; do
+					MAC_TO_DEVICE_MAPPING="${MAC_TO_DEVICE_MAPPING:+$MAC_TO_DEVICE_MAPPING$NL}$mac $dev"
+				done
+				for pci_id in \
+					$(uci -q get "static-device-names.@device[$i].pci_id")
+				do
+					PCI_ID_TO_DEVICE_MAPPING="${PCI_ID_TO_DEVICE_MAPPING:+$PCI_ID_TO_DEVICE_MAPPING$NL}$pci_id $dev"
+				done
+				for pci_slot in \
+					$(uci -q get "static-device-names.@device[$i].pci_slot")
+				do
+					PCI_SLOT_TO_DEVICE_MAPPING="${PCI_SLOT_TO_DEVICE_MAPPING:+$PCI_SLOT_TO_DEVICE_MAPPING$NL}$pci_slot $dev"
+				done
+				for usb_slot in \
+					$(uci -q get "static-device-names.@device[$i].usb_slot") ; do
+					USB_SLOT_TO_DEVICE_MAPPING="${USB_SLOT_TO_DEVICE_MAPPING:+$USB_SLOT_TO_DEVICE_MAPPING$NL}$usb_slot $dev"
+				done
+			else
+				LOG err "Configuration static-device-names.@device[$i] \
+					missing option 'name'"
+				rc=1
+			fi
+			i=$((i+1))
+		done
+		TARGET_DEVICES="$(echo "$TARGET_DEVICES" | sort -u)"
+		LOG debug config: TARGET_DEVICES: \
+			$TARGET_DEVICES
+		LOG debug config: MAC_TO_DEVICE_MAPPING: \
+			$MAC_TO_DEVICE_MAPPING
+		LOG debug config: PCI_ID_TO_DEVICE_MAPPING: \
+			$PCI_ID_TO_DEVICE_MAPPING
+		LOG debug config: PCI_SLOT_TO_DEVICE_MAPPING: \
+			$PCI_SLOT_TO_DEVICE_MAPPING
+		LOG debug config: USB_SLOT_TO_DEVICE_MAPPING: \
+			$USB_SLOT_TO_DEVICE_MAPPING
+	fi
+	return $rc
+}
+
+## Gets the subsystem of a device.
+# Usage: get_device_subsystem <dev>
+# Returns: "pci", "usb", ...
+get_device_subsystem() {
+	local dev=$1
+	shift
+
+	basename "$(readlink -f "/sys/class/net/$dev/device/subsystem")"
+}
+
+## Gets the MAC of a device.
+# Usage: get_device_mac <dev>
+get_device_mac() {
+	local dev=$1
+	shift
+
+	cat "/sys/class/net/$dev/address"
+}
+
+## Gets the PCI ID of a device in <vendor>:<device> form.
+# Usage: get_device_pci_id <dev>
+get_device_pci_id() {
+	local dev=$1
+	shift
+
+	if [ -f "/sys/class/net/$dev/device/subsystem_vendor" ] ; then
+		# e.g., PCI
+		echo $(cat "/sys/class/net/$dev/device/subsystem_vendor"):\
+			$(cat "/sys/class/net/$dev/device/subsystem_device") \
+			| sed -e 's/0x//g'
+	elif [ -f "/sys/class/net/$dev/device/../idProduct" ] ; then
+		# e.g., USB
+		echo $(cat "/sys/class/net/$dev/device/../idVendor"):\
+			$(cat "/sys/class/net/$dev/device/../idProduct") \
+			| sed -e 's/0x//g'
+	fi
+}
+
+## Gets the PCI slot of a device.
+# Usage: get_device_pci_slot <dev>
+get_device_pci_slot() {
+	local dev=$1
+	shift
+
+	local pci_slot
+
+	if [ $(get_device_subsystem "$dev") = "pci" ] ; then
+		# 0000:07:00.0
+		pci_slot=$(basename "$(readlink -f "/sys/class/net/$dev/device")")
+		# Remove default domain
+		pci_slot=${pci_slot#0000:}  # 07:00.0
+		echo "$pci_slot"
+	fi
+}
+
+## Gets the USB slot of a device in <bus>-<port>:<port>.<if> form.
+# Usage: get_device_usb_slot <dev>
+get_device_usb_slot() {
+	local dev=$1
+	shift
+
+	if [ $(get_device_subsystem "$dev") = "usb" ] ; then
+		if [ -d "/sys/class/net/$dev/device" ] ; then
+			basename $(readlink -f "/sys/class/net/$dev/device")
+		fi
+	fi
+}
+
+## Gets a string of information about a device.
+# Usage: get_device_info_str <dev>
+get_device_info_str() {
+	local dev=$1
+	shift
+
+	local info
+	local mac
+	local pci_id
+	local pci_slot
+	local usb_slot
+
+	mac=$(get_device_mac "$dev")
+	[ -n "$mac" ] && info="${info:+$info }mac=$mac"
+	pci_id=$(get_device_pci_id "$dev")
+	[ -n "$pci_id" ] && info="${info:+$info }pci_id=$pci_id"
+	pci_slot=$(get_device_pci_slot "$dev")
+	[ -n "$pci_slot" ] && info="${info:+$info }pci_slot=$pci_slot"
+	usb_slot=$(get_device_usb_slot "$dev")
+	[ -n "$usb_slot" ] && info="${info:+$info }usb_slot=$usb_slot"
+	echo "$dev ($info)"
+}
+
+## Gets the target device name.
+# Usage: get_target_device_name <dev>
+get_target_device_name() {
+	local in_dev=$1
+	shift
+
+	local mac
+	local pci_id
+	local pci_slot
+	local usb_slot
+
+	# Match device by MAC address
+	mac=$(get_device_mac "$in_dev")
+	if [ -n "$mac" ] ; then
+		dev=$(echo "$MAC_TO_DEVICE_MAPPING" \
+			| grep -i -- "^$mac " \
+			| awk '{print $2}' \
+			| head -n 1)
+		if [ -n "$dev" ] ; then
+			echo "$dev"
+			return
+		fi
+	fi
+
+	# Match device by PCI ID
+	pci_id=$(get_device_pci_id "$in_dev")
+	if [ -n "$pci_id" ] ; then
+		dev=$(echo "$PCI_ID_TO_DEVICE_MAPPING" \
+			| grep -i -- "^$pci_id " \
+			| awk '{print $2}' \
+			| head -n 1)
+		if [ -n "$dev" ] ; then
+			echo "$dev"
+			return
+		fi
+	fi
+
+	# Match device by PCI slot
+	pci_slot=$(get_device_pci_slot "$in_dev")
+	if [ -n "$pci_slot" ] ; then
+		dev=$(echo "$PCI_SLOT_TO_DEVICE_MAPPING" \
+			| grep -i -- "^$pci_slot " \
+			| awk '{print $2}' \
+			| head -n 1)
+		if [ -n "$dev" ] ; then
+			echo "$dev"
+			return
+		fi
+	fi
+
+	# Match device by USB slot
+	usb_slot=$(get_device_usb_slot "$in_dev")
+	if [ -n "$usb_slot" ] ; then
+		dev=$(echo "$USB_SLOT_TO_DEVICE_MAPPING" \
+			| grep -i -- "^$usb_slot " \
+			| awk '{print $2}' \
+			| head -n 1)
+		if [ -n "$dev" ] ; then
+			echo "$dev"
+			return
+		fi
+	fi
+
+	LOG debug "No target device name for $in_dev: \
+		mac=$mac, pci_id=$pci_id, pci_slot=$pci_slot, usb_slot=$usb_slot"
+}
+
+## Returns whether the device has a known target device name.
+# Usage: is_known_target_device <dev>
+is_known_target_device() {
+	local dev=$1
+	shift
+
+	echo "$TARGET_DEVICES" | grep -q "^$dev$"
+}
+
+## Lists all network devices on the system.
+# Usage: list_devices [pattern]
+list_devices() {
+	local pattern=${1:-*}
+
+	local path
+	local dev
+
+	for path in $(echo /sys/class/net/$pattern/device/uevent) ; do
+		[[ -e "$path" ]] || continue  # no nullglob
+		dev=$(echo "$path" | awk -F '/' '{print $5}')
+		echo "$dev"
+	done
+}
+
+## Returns whether the device exists
+# Usage: device_exists <dev>
+device_exists() {
+	local dev=$1
+	shift
+
+	[ -d "/sys/class/net/$dev" ]
+}
+
+## Gets the next device name available for a prefix
+# Usage: get_next_device_name <prefix>
+get_next_device_name() {
+	local prefix=$1
+	shift
+
+	local dev
+	local i
+
+	i=1
+	while true ; do
+		dev=$prefix$i
+		device_exists "$dev" || break
+		i=$((i+1))
+	done
+	echo "$dev"
+}
+
+## Renames the device.
+# Usage: rename_device <old-dev> <new-dev>
+rename_device() {
+	local dev=$1
+	local new_dev=$2
+	shift 2
+
+	if device_exists "$new_dev" ; then
+		LOG err "Cannot rename device $(get_device_info_str "$dev"): \
+			$new_dev already exists"
+		return 1
+	fi
+	ip link set "$dev" down
+	ip link set "$dev" name "$new_dev"
+}
+
+###########
+# ACTIONS #
+###########
+
+start() {
+	local rc=0
+	local devtype
+
+	read_static_device_names_config
+
+	# First pass on all devices.
+	# Either rename or move aside with "tmp" prefix.
+	for in_dev in $(list_devices) ; do
+		dev=$(get_target_device_name "$in_dev")
+
+		if [ "$in_dev" = "$dev" ] ; then
+			# Already the correct device name.
+			LOG info "Device $(get_device_info_str "$in_dev") has correct name"
+			continue
+		fi
+
+		if [ -n "$dev" ] && ! device_exists "$dev" ; then
+			# Target name is free: Rename
+			LOG notice "Renaming device $(get_device_info_str "$in_dev") \
+				to $dev"
+			rename_device "$in_dev" "$dev" || rc=1
+			continue
+		fi
+
+		case "$in_dev" in
+			tmp*)
+				: # Already a temporary name: Retry in next passes
+				continue
+				;;
+		esac
+
+		if [ -z "$dev" ] && ! is_known_target_device "$in_dev" ; then
+			# Unknown device that does not cause a collision: Leave alone
+			LOG info "Ignoring unknown device $(get_device_info_str "$in_dev")"
+			continue
+		fi
+
+		# Move aside with "tmp" prefix and retry in next passes
+		devtype=$(echo "$in_dev" | sed -e 's/[0-9].*//' -e 's/^tmp//')
+		dev="$(get_next_device_name "tmp$devtype")"
+		LOG notice "Temporarily renaming device \
+			$(get_device_info_str "$in_dev") to $dev"
+		rename_device "$in_dev" "$dev" || rc=1
+	done
+
+	# Second pass on "tmp" devices.
+	# Second chance to rename.
+	for in_dev in $(list_devices "tmp*") ; do
+		dev=$(get_target_device_name "$in_dev")
+		if [ -n "$dev" ] ; then
+			# Known device: Rename
+			LOG notice "Renaming device $(get_device_info_str "$in_dev") \
+				to $dev"
+			rename_device "$in_dev" "$dev" || rc=1
+		fi
+	done
+
+	# Third pass on "tmp" devices.
+	# Rename with original prefix but a free device number.
+	for in_dev in $(list_devices "tmp*") ; do
+		# Unknown device: Remove free name of correct prefix
+		devtype=$(echo "$in_dev" | sed -e 's/[0-9].*//' -e 's/^tmp//')
+		dev=$(get_next_device_name "$devtype")
+		LOG notice "Renaming unknown device $(get_device_info_str "$in_dev") \
+			to $dev"
+		rename_device "$in_dev" "$dev" || rc=1
+	done
+
+	return $rc
+}
+
+extra_command "status" "Service status"  # Not a default without USE_PROCD
+
+status() {
+	read_static_device_names_config
+	for in_dev in $(list_devices) ; do
+		dev=$(get_target_device_name "$in_dev")
+		if [ -z "$dev" ] ; then
+			LOG warning "$(get_device_info_str "$in_dev") unknown"
+		elif [ "$in_dev" == "$dev" ] ; then
+			LOG info "$(get_device_info_str "$in_dev")"
+		else
+			LOG error "$(get_device_info_str "$in_dev") != $dev"
+		fi
+	done
+}
+
+# hotplug command called by /etc/hotplug.d/net/static-device-names
+extra_command "hotplug" "Service hotplug"
+
+hotplug() {
+	local DEVICENAME=$1
+	shift
+
+	# For now, just reload
+	reload
+}
+
+extra_command "debug" "Service debug"
+
+debug() {
+	# Disable logging to syslog. Send all to stderr.
+	LOG() {
+		local level=$1
+		shift
+
+		echo "$level: $*" >&2
+	}
+	LOG debug "/etc/config/static-device-names:\
+		$NL~~~$NL\
+		$(cat /etc/config/static-device-names)\
+		$NL~~~"
+	status
+}

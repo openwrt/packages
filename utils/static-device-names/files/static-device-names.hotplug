@@ -1,0 +1,45 @@
+#!/bin/sh
+
+# This script is part of the static-device-names package.
+# See /usr/share/doc/static-device-names
+#
+# Copyright (C) 2024 qualIP Software.
+# Released under the GPL v3.0 or later.
+#
+# Location: /etc/hotplug.d/net/00-00-static-device-names
+# Note: This file is prefixed with "00-00-" to be sorted before "00-syslog"
+
+. /lib/functions.sh
+
+[ "$SUBSYSTEM" = "net" ] || exit 0
+
+# Example environment:
+#   ACTION=add
+#   SEQNUM=2251
+#   IFINDEX=122
+#   HOTPLUG_TYPE=net
+#   DEVPATH=/devices/pci0000:00/0000:00:02.0/0000:02:00.0/usb9/9-1/9-1:1.0/net/wlan0
+#   DEVICENAME=wlan0
+#   SUBSYSTEM=net
+#   INTERFACE=wlan0
+#   DEVTYPE=wlan
+
+add() {
+	config_load "static-device-names"
+	config_get_bool enabled globals hotplug true
+	if [ "$enabled" -eq 1 ] ; then
+		service static-device-names hotplug "$DEVICENAME"
+	fi
+}
+
+remove() {
+	# Run on remove too in case conflicts need to be resolved
+	config_load "static-device-names"
+	config_get_bool enabled globals hotplug true
+	if [ "$enabled" -eq 1 ] ; then
+		service static-device-names reload
+	fi
+}
+
+[ "$ACTION" = "add" ] && add
+[ "$ACTION" = "remove" ] && remove
