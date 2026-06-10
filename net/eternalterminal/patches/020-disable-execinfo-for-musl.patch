@@ -1,0 +1,31 @@
+--- a/src/base/Headers.hpp
++++ b/src/base/Headers.hpp
+@@ -124,9 +124,7 @@ namespace fs = boost::filesystem
+ #include "sago/platform_folders.h"
+ #include "sole.hpp"
+ 
+-#if !defined(__ANDROID__)
+-#include "ust.hpp"
+-#endif
++//#include "ust.hpp" // Disabled for OpenWrt/musl
+ 
+ #ifdef WITH_UTEMPTER
+ #include <utempter.h>
+@@ -172,15 +170,8 @@ const int MAX_CLIENT_KEEP_ALIVE_DURATION
+ // allow enough time.
+ const int SERVER_KEEP_ALIVE_DURATION = 11;
+ 
+-#if defined(__ANDROID__)
+-#define STFATAL LOG(FATAL) << "No Stack Trace on Android" << endl
+-
+-#define STERROR LOG(ERROR) << "No Stack Trace on Android" << endl
+-#else
+-#define STFATAL LOG(FATAL) << "Stack Trace: " << endl << ust::generate()
+-
+-#define STERROR LOG(ERROR) << "Stack Trace: " << endl << ust::generate()
+-#endif
++#define STFATAL LOG(FATAL) << "No Stack Trace on OpenWrt" << endl
++#define STERROR LOG(ERROR) << "No Stack Trace on OpenWrt" << endl
+ 
+ inline int GetErrno() {
+ #ifdef WIN32
