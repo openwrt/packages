@@ -1,0 +1,33 @@
+#!/bin/sh /etc/rc.common
+# Skrypt startowy Eternal Terminal (etserver) dla OpenWrt
+
+START=90
+STOP=10
+
+USE_PROCD=1
+PROG=/usr/bin/etserver
+
+start_service() {
+    # Wymuszamy, by etserver uważał /var/run za swój katalog XDG, 
+    # aby lokalny fifo nie uszkadzał pamięci flash.
+    export XDG_RUNTIME_DIR=/var/run
+    mkdir -p /var/run/etserver
+    chmod 0700 /var/run/etserver
+
+    procd_open_instance
+    procd_set_param command $PROG
+    
+    # Przekierowujemy standardowe wyjście (np. logi połączeń) do systemowego syslogd
+    procd_set_param stdout 1
+    procd_set_param stderr 1
+    
+    # Automatyczny restart demona, jeśli z jakiegoś powodu zginie
+    procd_set_param respawn "3600" "5" "5"
+    
+    procd_close_instance
+}
+
+reload_service() {
+    stop_service
+    start_service
+}
