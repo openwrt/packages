@@ -123,7 +123,6 @@ get)
 			case $status in
 			0)
 				link_certs "$domain_dir" "$main_domain"
-				$NOTIFY renewed
 				exit
 				;;
 			2)
