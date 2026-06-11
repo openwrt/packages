@@ -1,0 +1,52 @@
+Index: xtables-addons-3.27/extensions/pknock/xt_pknock.c
+===================================================================
+--- xtables-addons-3.27.orig/extensions/pknock/xt_pknock.c
++++ xtables-addons-3.27/extensions/pknock/xt_pknock.c
+@@ -30,6 +30,20 @@
+ #include "xt_pknock.h"
+ #include "compat_xtables.h"
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 15, 0)
++#define pknock_del_timer(t) timer_delete(t)
++#else
++#define pknock_del_timer(t) del_timer(t)
++#endif
++
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 16, 0)
++#define pknock_from_timer(var, timer, member) \
++	timer_container_of(var, timer, member)
++#else
++#define pknock_from_timer(var, timer, member) \
++	from_timer(var, timer, member)
++#endif
++
+ enum status {
+ 	ST_INIT = 1,
+ 	ST_MATCHING,
+@@ -296,7 +310,7 @@ static const struct proc_ops pknock_proc
+ static void update_rule_gc_timer(struct xt_pknock_rule *rule)
+ {
+ 	if (timer_pending(&rule->timer))
+-		del_timer(&rule->timer);
++		pknock_del_timer(&rule->timer);
+ 	rule->timer.expires = jiffies + msecs_to_jiffies(gc_expir_time);
+ 	add_timer(&rule->timer);
+ }
+@@ -355,7 +369,7 @@ has_logged_during_this_minute(const stru
+ static void peer_gc(struct timer_list *tl)
+ {
+ 	unsigned int i;
+-	struct xt_pknock_rule *rule = from_timer(rule, tl, timer);
++	struct xt_pknock_rule *rule = pknock_from_timer(rule, tl, timer);
+ 	struct peer *peer;
+ 	struct list_head *pos, *n;
+ 
+@@ -517,7 +531,7 @@ remove_rule(struct xt_pknock_mtinfo *inf
+ 		remove_proc_entry(info->rule_name, pde);
+ 	pr_debug("(D) rule deleted: %s.\n", rule->rule_name);
+ 	if (timer_pending(&rule->timer))
+-		del_timer(&rule->timer);
++		pknock_del_timer(&rule->timer);
+ 	list_del(&rule->head);
+ 	kfree(rule->peer_head);
+ 	kfree(rule);
