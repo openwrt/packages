@@ -1,0 +1,32 @@
+--- a/tools/rpcgen/rpc_tblout.c
++++ b/tools/rpcgen/rpc_tblout.c
+@@ -82,14 +82,19 @@ write_table (const definition * def)
+   proc_list *proc;
+   int current;
+   int expected;
+-  char progvers[100];
++  char *progvers;
+   int warning;
++  int a;
+ 
+   for (vp = def->def.pr.versions; vp != NULL; vp = vp->next)
+     {
+       warning = 0;
+-      s_print (progvers, "%s_%s",
++     a = asprintf (&progvers, "%s_%s", 
+ 	       locase (def->def_name), vp->vers_num);
++     if (a == -1)
++     {
++	     return;
++     }
+       /* print the table header */
+       f_print (fout, tbl_hdr, progvers);
+ 
+@@ -146,6 +151,7 @@ write_table (const definition * def)
+       /* print the table trailer */
+       f_print (fout, tbl_end);
+       f_print (fout, tbl_nproc, progvers, progvers, progvers);
++      free (progvers);
+     }
+ }
+ 

@@ -1,0 +1,22 @@
+From fb6601e3a5746013ff4c1fc023f5f49a27fbdf8a Mon Sep 17 00:00:00 2001
+From: John Audia <therealgraysky@proton.me>
+Date: Fri, 11 Apr 2025 10:11:20 -0400
+Subject: [PATCH] nfsdctl.c: add missing basename
+
+Fix an error when cross compiling due to an implicit declaration
+of the basename function in the nfsdctl.c file.
+
+---
+ utils/nfsdctl/nfsdctl.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+--- a/utils/nfsdctl/nfsdctl.c
++++ b/utils/nfsdctl/nfsdctl.c
+@@ -4,6 +4,7 @@
+ #include <config.h>
+ #endif
+ 
++#include <libgen.h>
+ #include <linux/module.h>
+ #include <linux/version.h>
+ #include <netlink/genl/genl.h>

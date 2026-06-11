@@ -1,0 +1,35 @@
+From 8d1e47c956ae10d1146114f7fcd4eb0d33187d08 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=C3=81lvaro=20Fern=C3=A1ndez=20Rojas?= <noltari@gmail.com>
+Date: Tue, 16 Jan 2024 16:25:40 +0100
+Subject: [PATCH] rpi-eeprom-config: replace nano with vi as default editor
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Álvaro Fernández Rojas <noltari@gmail.com>
+---
+ rpi-eeprom-config | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+--- a/rpi-eeprom-config
++++ b/rpi-eeprom-config
+@@ -184,8 +184,8 @@ def edit_config(eeprom=None):
+     """
+     Implements something like 'git commit' for editing EEPROM configs.
+     """
+-    # Default to nano if $EDITOR is not defined.
+-    editor = 'nano'
++    # Default to vi if $EDITOR is not defined.
++    editor = 'vi'
+     if 'EDITOR' in os.environ:
+         editor = os.environ['EDITOR']
+ 
+@@ -515,7 +515,7 @@ Operating modes:
+ 
+    To cancel the pending update run 'sudo rpi-eeprom-update -r'
+ 
+-   The default text editor is nano and may be overridden by setting the 'EDITOR'
++   The default text editor is vi and may be overridden by setting the 'EDITOR'
+    environment variable and passing '-E' to 'sudo' to preserve the environment.
+ 
+ 6. Signing the bootloader config file.

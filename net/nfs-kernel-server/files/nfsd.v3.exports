@@ -1,0 +1,4 @@
+# /etc/exports - exports(5) - directories exported to NFS clients
+#
+# Example for NFSv3:
+#  /srv/home        hostname1(rw,sync) hostname2(ro,sync)

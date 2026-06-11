@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# shellcheck source=/dev/null
+. /lib/functions/keepalived/hotplug.sh
+
+add_sync_file /etc/config/luci
+
+keepalived_hotplug

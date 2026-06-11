@@ -1,0 +1,40 @@
+--- a/bch.egg-info/requires.txt
++++ b/bch.egg-info/requires.txt
+@@ -3,4 +3,3 @@ click-log>=0.2.1
+ paho-mqtt>=1.0
+ pyserial>=3.0
+ PyYAML>=3.11
+-simplejson>=3.6.0
+--- a/bch/cli.py
++++ b/bch/cli.py
+@@ -6,7 +6,7 @@ import sys
+ import logging
+ import click
+ import click_log
+-import simplejson as json
++import json
+ from datetime import datetime
+ import paho.mqtt.client
+ from paho.mqtt.client import topic_matches_sub
+--- a/bch/mqtt_client.py
++++ b/bch/mqtt_client.py
+@@ -1,7 +1,7 @@
+ import paho.mqtt.client
+ from paho.mqtt.client import topic_matches_sub
+ import logging
+-import simplejson as json
++import json
+ import time
+ 
+ 
+--- a/setup.py
++++ b/setup.py
+@@ -3,7 +3,7 @@
+ 
+ from setuptools import setup, find_packages
+ 
+-requirements = ['Click>=6.0', 'click-log>=0.2.1', 'paho-mqtt>=1.0', 'pyserial>=3.0', 'PyYAML>=3.11', 'simplejson>=3.6.0']
++requirements = ['Click>=6.0', 'click-log>=0.2.1', 'paho-mqtt>=1.0', 'pyserial>=3.0', 'PyYAML>=3.11']
+ 
+ setup(
+     name='bch',

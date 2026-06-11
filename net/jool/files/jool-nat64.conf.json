@@ -1,0 +1,82 @@
+{
+	"comment": {
+		"description": "Sample full NAT64 configuration.",
+		"notes": [
+			"192.0.2/24 and 2001:db8::/32 are documentation blocks",
+			"(RFC 5737 and RFC 3849), and you WILL need to change or",
+			"remove them for your setup."
+		],
+		"last update": "2022-02-09"
+	},
+
+	"instance": "sample-nat64",
+	"framework": "netfilter",
+
+	"global": {
+		"manually-enabled": true,
+		"pool6": "64:ff9b::/96",
+		"lowest-ipv6-mtu": 1280,
+		"logging-debug": false,
+		"zeroize-traffic-class": false,
+		"override-tos": false,
+		"tos": 0,
+		"mtu-plateaus": [
+			65535, 32000, 17914, 8166,
+			4352, 2002, 1492, 1006,
+			508, 296, 68
+		],
+		"address-dependent-filtering": false,
+		"drop-externally-initiated-tcp": false,
+		"drop-icmpv6-info": false,
+		"source-icmpv6-errors-better": true,
+		"f-args": 11,
+		"handle-rst-during-fin-rcv": false,
+		"tcp-est-timeout": "2:00:00",
+		"tcp-trans-timeout": "0:04:00",
+		"udp-timeout": "0:05:00",
+		"icmp-timeout": "0:01:00",
+		"logging-bib": false,
+		"logging-session": false,
+		"maximum-simultaneous-opens": 10,
+		"ss-enabled": false,
+		"ss-flush-asap": true,
+		"ss-flush-deadline": 2000,
+		"ss-capacity": 512,
+		"ss-max-payload": 1452
+	},
+
+	"pool4": [
+		{
+			"comment": "mark, port range and max-iterations are optional.",
+			"protocol": "TCP",
+			"prefix": "192.0.2.1/32"
+		}, {
+			"mark": 0,
+			"protocol": "UDP",
+			"prefix": "192.0.2.1/32",
+			"port range": "61001-62000",
+			"max-iterations": 1500
+		}, {
+			"mark": 0,
+			"protocol": "ICMP",
+			"prefix": "192.0.2.1/32",
+			"port range": "1000-2000"
+		}
+	],
+
+	"bib": [
+		{
+			"protocol": "TCP",
+			"ipv6 address": "2001:db8::1#80",
+			"ipv4 address": "192.0.2.1#80"
+		}, {
+			"protocol": "UDP",
+			"ipv6 address": "2001:db8::2#10000",
+			"ipv4 address": "192.0.2.1#61500"
+		}, {
+			"protocol": "ICMP",
+			"ipv6 address": "2001:db8:AAAA::1#44",
+			"ipv4 address": "192.0.2.1#1044"
+		}
+	]
+}

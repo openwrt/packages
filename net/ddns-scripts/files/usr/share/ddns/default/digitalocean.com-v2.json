@@ -1,0 +1,9 @@
+{
+	"name": "digitalocean.com-v2",
+	"ipv4": {
+		"url": "update_digitalocean_com_v2.sh"
+	},
+	"ipv6": {
+		"url": "update_digitalocean_com_v2.sh"
+	}
+}

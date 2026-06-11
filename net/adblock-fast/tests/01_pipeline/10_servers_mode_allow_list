@@ -1,0 +1,117 @@
+Test that dnsmasq.servers mode prepends explicit allow entries (server=/domain/#)
+for domains from allowed list files, not just config-defined allowed_domain.
+
+-- File uci/adblock-fast.json --
+{
+	"config": [
+		{
+			".name": "config",
+			".type": "config",
+			"enabled": "1",
+			"dns": "dnsmasq.servers",
+			"verbosity": "0",
+			"force_dns": "0",
+			"compressed_cache": "0",
+			"config_update_enabled": "0",
+			"ipv6_enabled": "0",
+			"canary_domains_icloud": "0",
+			"canary_domains_mozilla": "0",
+			"dnsmasq_sanity_check": "0",
+			"dnsmasq_validity_check": "0",
+			"parallel_downloads": "0",
+			"allow_non_ascii": "0",
+			"update_config_sizes": "0",
+			"heartbeat_domain": "-",
+			"download_timeout": "10",
+			"pause_timeout": "20",
+			"curl_retry": "1",
+			"compressed_cache_dir": "TESTDIR/cache",
+			"allowed_domain": "config-allowed.example.com"
+		}
+	],
+	"file_url": [
+		{
+			".name": "blocked_domains",
+			".type": "file_url",
+			"enabled": "1",
+			"url": "file://TESTDIR/data/domains.txt",
+			"action": "block",
+			"name": "Test Domains"
+		},
+		{
+			".name": "blocked_hosts",
+			".type": "file_url",
+			"enabled": "1",
+			"url": "file://TESTDIR/data/hosts.txt",
+			"action": "block",
+			"name": "Test Hosts"
+		},
+		{
+			".name": "allowed_list",
+			".type": "file_url",
+			"enabled": "1",
+			"url": "file://TESTDIR/data/allowed.txt",
+			"action": "allow",
+			"name": "Test Allowed"
+		}
+	]
+}
+-- End --
+
+-- Testcase --
+import adb from 'adblock-fast';
+import { readfile } from 'fs';
+let ti = adb._test_internals;
+
+adb.env.load_config();
+ti.set_cfg('dns', 'dnsmasq.servers');
+ti.set_cfg('dnsmasq_sanity_check', false);
+ti.set_cfg('dnsmasq_validity_check', false);
+ti.set_cfg('heartbeat_domain', null);
+ti.set_cfg('config_update_enabled', false);
+ti.set_cfg('update_config_sizes', false);
+ti.env.dns_set_output_values('dnsmasq.servers');
+ti.append_urls();
+
+let ok = ti.download_lists();
+if (!ok) {
+	print('download_lists failed\n');
+} else {
+	let content = readfile(ti.dns_output.file) || '';
+	let lines = filter(split(content, '\n'), l => length(l) > 0);
+
+	let allow_entries = filter(lines, l => match(l, /\/#$/));
+
+	let results = [];
+
+	// Check config-defined allowed domain
+	let has_config = index(content, 'server=/config-allowed.example.com/#') >= 0;
+	push(results, sprintf('config-allowed.example.com allow: %s', has_config ? 'PRESENT' : 'MISSING'));
+
+	// Check list-file allowed domains (from allowed.txt which has hosts format)
+	let has_list1 = index(content, 'server=/adhost-zero-1.test.example.org/#') >= 0;
+	let has_list2 = index(content, 'server=/common-shared-1.test.example.com/#') >= 0;
+	push(results, sprintf('adhost-zero-1.test.example.org allow: %s', has_list1 ? 'PRESENT' : 'MISSING'));
+	push(results, sprintf('common-shared-1.test.example.com allow: %s', has_list2 ? 'PRESENT' : 'MISSING'));
+
+	// Allow entries should be at the top
+	if (length(allow_entries) > 0 && length(lines) > 0) {
+		let first_is_allow = match(lines[0], /\/#$/);
+		push(results, sprintf('allow_entries_at_top: %s', first_is_allow ? 'YES' : 'NO'));
+	}
+
+	// Allowed domains should NOT appear as block entries
+	let blocked_list1 = index(content, 'server=/adhost-zero-1.test.example.org/\n') >= 0;
+	push(results, sprintf('adhost-zero-1.test.example.org blocked: %s', blocked_list1 ? 'STILL PRESENT (BAD)' : 'REMOVED'));
+
+	print(join('\n', results) + '\n');
+}
+-- End --
+
+-- Expect stdout --
+config-allowed.example.com allow: PRESENT
+adhost-zero-1.test.example.org allow: PRESENT
+common-shared-1.test.example.com allow: PRESENT
+allow_entries_at_top: YES
+adhost-zero-1.test.example.org blocked: REMOVED
+-- End --

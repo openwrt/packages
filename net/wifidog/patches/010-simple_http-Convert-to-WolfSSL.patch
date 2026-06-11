@@ -1,0 +1,350 @@
+From 9588b78eb0a53c40ce96606f5329eec9df86217c Mon Sep 17 00:00:00 2001
+From: Christian Marangi <ansuelsmth@gmail.com>
+Date: Thu, 14 Dec 2023 15:00:52 +0100
+Subject: [PATCH] simple_http: Convert to WolfSSL
+
+Fully convert to WolfSSL as recent version of WolfSSL dropped the
+support shims for CyaSSL.
+
+Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
+---
+ configure.in      |  45 ++++++++---------
+ src/simple_http.c | 122 +++++++++++++++++++++++-----------------------
+ 2 files changed, 81 insertions(+), 86 deletions(-)
+
+--- a/configure.in
++++ b/configure.in
+@@ -85,48 +85,45 @@ AC_SUBST(enable_latex_docs)
+ # Acutally perform the doxygen check
+ BB_ENABLE_DOXYGEN
+ 
+-# Enable cyassl?
+-AC_DEFUN([BB_CYASSL],
++# Enable wolfssl?
++AC_DEFUN([BB_WOLFSSL],
+ [
+-AC_ARG_ENABLE(cyassl, [  --enable-cyassl        enable TLS support for auth server communication (no)], [], [enable_cyassl=no])
+-if test "x$enable_cyassl" = xyes; then
+-        # CyaSSL has been renamed wolfSSL. Old method names are still available
+-        # via cyassl/ssl.h, which maps old methods to new methods via macros.
+-        # To find the proper lib to link against (cyassl or wolfssl), we do have
+-        # the use the new naming scheme below as cyassl/ssl.h is not available for
+-        # AC_SEARCH_LIBS
+-        AC_CHECK_HEADERS(cyassl/ssl.h)
+-        AC_SEARCH_LIBS([CyaTLSv1_client_method], [cyassl], [], [
+-            AC_SEARCH_LIBS([wolfTLSv1_client_method], [wolfssl], [], [
+-                            AC_MSG_ERROR([unable to locate SSL lib: either wolfSSL or CyaSSL needed.])
+-            ])
++AC_ARG_ENABLE(wolfssl, [  --enable-wolfssl        enable TLS support for auth server communication (no)], [], [enable_wolfssl=no])
++if test "x$enable_wolfssl" = xyes; then
++        AC_CHECK_HEADERS(wolfssl/ssl.h, [], [],
++        [
++                #include <wolfssl/options.h>
++        ])
++        AC_SEARCH_LIBS([wolfTLSv1_client_method], [wolfssl], [], [
++                AC_MSG_ERROR([unable to locate SSL lib: wolfSSL needed.])
+         ])
+ 
+-        AC_MSG_CHECKING([for the CyaSSL SNI enabled])
++        AC_MSG_CHECKING([for the Wolfssl SNI enabled])
+         AC_LINK_IFELSE([AC_LANG_PROGRAM(
+         [[
+                 #define HAVE_SNI
+-                #include <cyassl/ssl.h>
++                #include <wolfssl/options.h>
++                #include <wolfssl/ssl.h>
+         ]], [[
+-                CYASSL_CTX *ctx;
+-                CyaSSL_Init();
+-                ctx = CyaSSL_CTX_new(CyaTLSv1_client_method());
+-                CyaSSL_CTX_UseSNI(ctx, CYASSL_SNI_HOST_NAME, "wifidog.org", 11);
++                WOLFSSL_CTX *ctx;
++                wolfSSL_Init();
++                ctx = wolfSSL_CTX_new(wolfTLSv1_client_method());
++                wolfSSL_CTX_UseSNI(ctx, WOLFSSL_SNI_HOST_NAME, "wifidog.org", 11);
+         ]])], [enabled_sni=yes], [enabled_sni=no])
+ 
+         if test "x$enabled_sni" = xyes; then
+                 AC_MSG_RESULT([yes])
+-                AC_DEFINE([HAVE_SNI],, "Compile with CyaSSL SNI support")
++                AC_DEFINE([HAVE_SNI],, "Compile with wolfssl SNI support")
+         else
+                 AC_MSG_RESULT([no])
+         fi
+ 
+-        AC_DEFINE(USE_CYASSL,, "Compile with CyaSSL support")
++        AC_DEFINE(USE_WOLFSSL,, "Compile with wolfssl support")
+ fi
+ ])
+ 
+-# Actually perform the cyassl check
+-BB_CYASSL
++# Actually perform the wolfssl check
++BB_WOLFSSL
+ 
+ 
+ 
+--- a/src/simple_http.c
++++ b/src/simple_http.c
+@@ -28,6 +28,7 @@
+ #include <arpa/inet.h>
+ #include <errno.h>
+ #include <unistd.h>
++#include <pthread.h>
+ #include <string.h>
+ #include <syslog.h>
+ 
+@@ -36,17 +37,14 @@
+ #include "debug.h"
+ #include "pstring.h"
+ 
+-#ifdef USE_CYASSL
+-#include <cyassl/ssl.h>
++#ifdef USE_WOLFSSL
++#include <wolfssl/options.h>
++#include <wolfssl/ssl.h>
+ #include "conf.h"
+-/* For CYASSL_MAX_ERROR_SZ */
+-#include <cyassl/ctaocrypt/types.h>
+-/* For COMPRESS_E */
+-#include <cyassl/ctaocrypt/error-crypt.h>
+ #endif
+ 
+-#ifdef USE_CYASSL
+-static CYASSL_CTX *get_cyassl_ctx(const char *hostname);
++#ifdef USE_WOLFSSL
++static WOLFSSL_CTX *get_wolfssl_ctx(const char *hostname);
+ #endif
+ 
+ /**
+@@ -133,48 +131,48 @@ http_get(const int sockfd, const char *r
+     return NULL;
+ }
+ 
+-#ifdef USE_CYASSL
++#ifdef USE_WOLFSSL
+ 
+-static CYASSL_CTX *cyassl_ctx = NULL;
+-static pthread_mutex_t cyassl_ctx_mutex = PTHREAD_MUTEX_INITIALIZER;
++static WOLFSSL_CTX *wolfssl_ctx = NULL;
++static pthread_mutex_t wolfssl_ctx_mutex = PTHREAD_MUTEX_INITIALIZER;
+ 
+-#define LOCK_CYASSL_CTX() do { \
+-	debug(LOG_DEBUG, "Locking CyaSSL Context"); \
+-	pthread_mutex_lock(&cyassl_ctx_mutex); \
+-	debug(LOG_DEBUG, "CyaSSL Context locked"); \
++#define LOCK_WOLFSSL_CTX() do { \
++	debug(LOG_DEBUG, "Locking WolfSSL Context"); \
++	pthread_mutex_lock(&wolfssl_ctx_mutex); \
++	debug(LOG_DEBUG, "WolfSSL Context locked"); \
+ } while (0)
+ 
+-#define UNLOCK_CYASSL_CTX() do { \
+-	debug(LOG_DEBUG, "Unlocking CyaSSL Context"); \
+-	pthread_mutex_unlock(&cyassl_ctx_mutex); \
+-	debug(LOG_DEBUG, "CyaSSL Context unlocked"); \
++#define UNLOCK_WOLFSSL_CTX() do { \
++	debug(LOG_DEBUG, "Unlocking WolfSSL Context"); \
++	pthread_mutex_unlock(&wolfssl_ctx_mutex); \
++	debug(LOG_DEBUG, "WolfSSL Context unlocked"); \
+ } while (0)
+ 
+-static CYASSL_CTX *
+-get_cyassl_ctx(const char *hostname)
++static WOLFSSL_CTX *
++get_wolfssl_ctx(const char *hostname)
+ {
+     int err;
+-    CYASSL_CTX *ret;
++    WOLFSSL_CTX *ret;
+     s_config *config = config_get_config();
+ 
+-    LOCK_CYASSL_CTX();
++    LOCK_WOLFSSL_CTX();
+ 
+-    if (NULL == cyassl_ctx) {
+-        CyaSSL_Init();
+-        /* Create the CYASSL_CTX */
++    if (NULL == wolfssl_ctx) {
++        wolfSSL_Init();
++        /* Create the WOLFSSL_CTX */
+         /* Allow TLSv1.0 up to TLSv1.2 */
+-        if ((cyassl_ctx = CyaSSL_CTX_new(CyaTLSv1_client_method())) == NULL) {
+-            debug(LOG_ERR, "Could not create CYASSL context.");
+-            UNLOCK_CYASSL_CTX();
++        if ((wolfssl_ctx = wolfSSL_CTX_new(wolfTLSv1_client_method())) == NULL) {
++            debug(LOG_ERR, "Could not create WOLFSSL context.");
++            UNLOCK_WOLFSSL_CTX();
+             return NULL;
+         }
+ 
+         if (config->ssl_cipher_list) {
+             debug(LOG_INFO, "Setting SSL cipher list to [%s]", config->ssl_cipher_list);
+-            err = CyaSSL_CTX_set_cipher_list(cyassl_ctx, config->ssl_cipher_list);
++            err = wolfSSL_CTX_set_cipher_list(wolfssl_ctx, config->ssl_cipher_list);
+             if (SSL_SUCCESS != err) {
+                 debug(LOG_ERR, "Could not load SSL cipher list (error %d)", err);
+-                UNLOCK_CYASSL_CTX();
++                UNLOCK_WOLFSSL_CTX();
+                 return NULL;
+             }
+         }
+@@ -183,12 +181,12 @@ get_cyassl_ctx(const char *hostname)
+         if (config->ssl_use_sni) {
+             debug(LOG_INFO, "Setting SSL using SNI for hostname %s",
+                 hostname);
+-            err = CyaSSL_CTX_UseSNI(cyassl_ctx, CYASSL_SNI_HOST_NAME, hostname,
++            err = wolfSSL_CTX_UseSNI(wolfssl_ctx, WOLFSSL_SNI_HOST_NAME, hostname,
+                       strlen(hostname));
+             if (SSL_SUCCESS != err) {
+                 debug(LOG_ERR, "Could not setup SSL using SNI for hostname %s",
+                     hostname);
+-                UNLOCK_CYASSL_CTX();
++                UNLOCK_WOLFSSL_CTX();
+                 return NULL;
+             }
+         }
+@@ -196,28 +194,28 @@ get_cyassl_ctx(const char *hostname)
+ 
+         if (config->ssl_verify) {
+             /* Use trusted certs */
+-            /* Note: CyaSSL requires that the certificates are named by their hash values */
++            /* Note: WolfSSL requires that the certificates are named by their hash values */
+             debug(LOG_INFO, "Loading SSL certificates from %s", config->ssl_certs);
+-            err = CyaSSL_CTX_load_verify_locations(cyassl_ctx, NULL, config->ssl_certs);
++            err = wolfSSL_CTX_load_verify_locations(wolfssl_ctx, NULL, config->ssl_certs);
+             if (err != SSL_SUCCESS) {
+                 debug(LOG_ERR, "Could not load SSL certificates (error %d)", err);
+                 if (err == ASN_UNKNOWN_OID_E) {
+-                    debug(LOG_ERR, "Error is ASN_UNKNOWN_OID_E - try compiling cyassl/wolfssl with --enable-ecc");
++                    debug(LOG_ERR, "Error is ASN_UNKNOWN_OID_E - try compiling wolfssl/wolfssl with --enable-ecc");
+                 } else {
+                     debug(LOG_ERR, "Make sure that SSLCertPath points to the correct path in the config file");
+                     debug(LOG_ERR, "Or disable certificate loading with 'SSLPeerVerification No'.");
+                 }
+-                UNLOCK_CYASSL_CTX();
++                UNLOCK_WOLFSSL_CTX();
+                 return NULL;
+             }
+         } else {
+-            CyaSSL_CTX_set_verify(cyassl_ctx, SSL_VERIFY_NONE, 0);
++            wolfSSL_CTX_set_verify(wolfssl_ctx, SSL_VERIFY_NONE, 0);
+             debug(LOG_INFO, "Disabling SSL certificate verification!");
+         }
+     }
+ 
+-    ret = cyassl_ctx;
+-    UNLOCK_CYASSL_CTX();
++    ret = wolfssl_ctx;
++    UNLOCK_WOLFSSL_CTX();
+     return ret;
+ }
+ 
+@@ -237,20 +235,20 @@ https_get(const int sockfd, const char *
+     fd_set readfds;
+     struct timeval timeout;
+     unsigned long sslerr;
+-    char sslerrmsg[CYASSL_MAX_ERROR_SZ];
++    char sslerrmsg[WOLFSSL_MAX_ERROR_SZ];
+     size_t reqlen = strlen(req);
+     char readbuf[MAX_BUF];
+     char *retval;
+     pstr_t *response = pstr_new();
+-    CYASSL *ssl = NULL;
+-    CYASSL_CTX *ctx = NULL;
++    WOLFSSL *ssl = NULL;
++    WOLFSSL_CTX *ctx = NULL;
+ 
+     s_config *config;
+     config = config_get_config();
+ 
+-    ctx = get_cyassl_ctx(hostname);
++    ctx = get_wolfssl_ctx(hostname);
+     if (NULL == ctx) {
+-        debug(LOG_ERR, "Could not get CyaSSL Context!");
++        debug(LOG_ERR, "Could not get WolfSSL Context!");
+         goto error;
+     }
+ 
+@@ -260,28 +258,28 @@ https_get(const int sockfd, const char *
+         goto error;
+     }
+ 
+-    /* Create CYASSL object */
+-    if ((ssl = CyaSSL_new(ctx)) == NULL) {
+-        debug(LOG_ERR, "Could not create CyaSSL context.");
++    /* Create WOLFSSL object */
++    if ((ssl = wolfSSL_new(ctx)) == NULL) {
++        debug(LOG_ERR, "Could not create WolfSSL context.");
+         goto error;
+     }
+     if (config->ssl_verify) {
+         // Turn on domain name check
+         // Loading of CA certificates and verification of remote host name
+         // go hand in hand - one is useless without the other.
+-        CyaSSL_check_domain_name(ssl, hostname);
++        wolfSSL_check_domain_name(ssl, hostname);
+     }
+-    CyaSSL_set_fd(ssl, sockfd);
++    wolfSSL_set_fd(ssl, sockfd);
+ 
+     debug(LOG_DEBUG, "Sending HTTPS request to auth server: [%s]\n", req);
+-    numbytes = CyaSSL_send(ssl, req, (int)reqlen, 0);
++    numbytes = wolfSSL_send(ssl, req, (int)reqlen, 0);
+     if (numbytes <= 0) {
+-        sslerr = (unsigned long)CyaSSL_get_error(ssl, numbytes);
+-        CyaSSL_ERR_error_string(sslerr, sslerrmsg);
+-        debug(LOG_ERR, "CyaSSL_send failed: %s", sslerrmsg);
++        sslerr = (unsigned long)wolfSSL_get_error(ssl, numbytes);
++        wolfSSL_ERR_error_string(sslerr, sslerrmsg);
++        debug(LOG_ERR, "WolfSSL_send failed: %s", sslerrmsg);
+         goto error;
+     } else if ((size_t) numbytes != reqlen) {
+-        debug(LOG_ERR, "CyaSSL_send failed: only %d bytes out of %d bytes sent!", numbytes, reqlen);
++        debug(LOG_ERR, "WolfSSL_send failed: only %d bytes out of %d bytes sent!", numbytes, reqlen);
+         goto error;
+     }
+ 
+@@ -300,14 +298,14 @@ https_get(const int sockfd, const char *
+                         /** We don't have to use FD_ISSET() because there
+ 			 *  was only one fd. */
+             memset(readbuf, 0, MAX_BUF);
+-            numbytes = CyaSSL_read(ssl, readbuf, MAX_BUF - 1);
++            numbytes = wolfSSL_read(ssl, readbuf, MAX_BUF - 1);
+             if (numbytes < 0) {
+-                sslerr = (unsigned long)CyaSSL_get_error(ssl, numbytes);
+-                CyaSSL_ERR_error_string(sslerr, sslerrmsg);
++                sslerr = (unsigned long)wolfSSL_get_error(ssl, numbytes);
++                wolfSSL_ERR_error_string(sslerr, sslerrmsg);
+                 debug(LOG_ERR, "An error occurred while reading from server: %s", sslerrmsg);
+                 goto error;
+             } else if (numbytes == 0) {
+-                /* CyaSSL_read returns 0 on a clean shutdown or if the peer closed the
++                /* WolfSSL_read returns 0 on a clean shutdown or if the peer closed the
+                    connection. We can't distinguish between these cases right now. */
+                 done = 1;
+             } else {
+@@ -326,7 +324,7 @@ https_get(const int sockfd, const char *
+ 
+     close(sockfd);
+ 
+-    CyaSSL_free(ssl);
++    wolfSSL_free(ssl);
+ 
+     retval = pstr_to_string(response);
+     debug(LOG_DEBUG, "HTTPS Response from Server: [%s]", retval);
+@@ -334,7 +332,7 @@ https_get(const int sockfd, const char *
+ 
+  error:
+     if (ssl) {
+-        CyaSSL_free(ssl);
++        wolfSSL_free(ssl);
+     }
+     if (sockfd >= 0) {
+         close(sockfd);
+@@ -344,4 +342,4 @@ https_get(const int sockfd, const char *
+     return NULL;
+ }
+ 
+-#endif                          /* USE_CYASSL */
++#endif                          /* USE_WOLFSSL */

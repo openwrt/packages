@@ -1,0 +1,65 @@
+#!/bin/sh
+# Copyright 2023-2026 MOSSDeF, Stan Grishin (stangri@melmac.ca)
+# shellcheck disable=SC2015,SC3043
+
+readonly pkg='adblock-fast'
+
+# ── Transition to list names ─────────────────────────────────────────
+# Adds 'name' to file_url sections that lack one, using the pristine default config
+
+# Find pristine default: apk uses .apk-new, opkg uses -opkg
+pristine=''
+for f in "/etc/config/${pkg}.apk-new" "/etc/config/${pkg}-opkg"; do
+	[ -s "$f" ] && pristine="$f" && break
+done
+
+_find_name() { grep -B1 "$1" "$pristine" 2>/dev/null | head -1 | cut -d "'" -f2; }
+
+if [ -n "$pristine" ]; then
+	# shellcheck disable=SC1091
+	. /lib/functions.sh
+	add_name() {
+		local cfg="$1" url name label
+		config_get url "$cfg" 'url'
+		config_get name "$cfg" 'name'
+		if [ -z "$name" ]; then
+			label="${url##*//}"; label="${label%%/*}"
+			name="$(_find_name "$url")"
+			if [ -n "$name" ]; then
+				uci set "${pkg}.${cfg}.name=${name}"
+				printf "  %s: %s\n" "$label" "$name" >&2
+			fi
+		fi
+	}
+	config_load "$pkg"
+	config_foreach add_name 'file_url'
+fi
+
+# ── Migrate to 1.2.0 ────────────────────────────────────────────────
+
+oldval="$(uci -q get "${pkg}.config.debug")"
+if [ -n "$oldval" ]; then
+	uci set "${pkg}.config.debug_init_script=${oldval}"
+	uci -q delete "${pkg}.config.debug"
+fi
+
+oldval="$(uci -q get "${pkg}.config.proc_debug")"
+if [ -n "$oldval" ]; then
+	uci set "${pkg}.config.debug_performance=${oldval}"
+	uci -q delete "${pkg}.config.proc_debug"
+fi
+
+# ── Migrate sanity_check → dnsmasq_sanity_check ─────────────────────
+
+if [ -z "$(uci -q get "${pkg}.config.dnsmasq_sanity_check")" ] \
+	&& [ -n "$(uci -q get "${pkg}.config.sanity_check")" ]; then
+	oldval="$(uci -q get "${pkg}.config.sanity_check")"
+	uci set "${pkg}.config.dnsmasq_sanity_check=${oldval}"
+	uci -q delete "${pkg}.config.sanity_check"
+fi
+
+# ── Commit if anything changed ───────────────────────────────────────
+
+[ -n "$(uci -q changes "$pkg" 2>/dev/null)" ] && uci commit "$pkg"
+
+exit 0

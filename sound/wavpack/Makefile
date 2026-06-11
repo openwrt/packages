@@ -1,0 +1,42 @@
+include $(TOPDIR)/rules.mk
+
+PKG_NAME:=wavpack
+PKG_VERSION:=5.9.0
+PKG_RELEASE:=2
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=https://www.wavpack.com/
+PKG_HASH:=b5291bc4e6d69ebbd3da3800c5bf4a70f19bb92679b23e09b3b612c1e648d1ff
+
+PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
+PKG_LICENSE:=BSD-2-Clause BSD-3-Clause
+PKG_LICENSE_FILES:=COPYING LICENSE
+PKG_CPE_ID:=cpe:/a:wavpack:wavpack
+
+CMAKE_INSTALL:=1
+
+include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/cmake.mk
+
+CMAKE_OPTIONS += -DBUILD_SHARED_LIBS=ON
+
+CMAKE_BINARY_SUBDIR:=openwrt-build
+
+define Package/libwavpack
+  SECTION:=sound
+  CATEGORY:=Sound
+  TITLE:=Hybrid Lossless Audio Compression
+  URL:=https://www.wavpack.com/
+endef
+
+define Package/libwavpack/description
+  WavPack is a completely open audio compression format providing lossless,
+  high-quality lossy, and a unique hybrid compression mode.
+endef
+
+define Package/libwavpack/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib*.so* $(1)/usr/lib/
+endef
+
+$(eval $(call BuildPackage,libwavpack))

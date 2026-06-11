@@ -1,0 +1,11 @@
+--- a/libraries/liblmdb/Makefile
++++ b/libraries/liblmdb/Makefile
+@@ -67,7 +67,7 @@ liblmdb.a:	mdb.o midl.o
+ 
+ liblmdb$(SOEXT):	mdb.lo midl.lo
+ #	$(CC) $(LDFLAGS) -pthread -shared -Wl,-Bsymbolic -o $@ mdb.o midl.o $(SOLIBS)
+-	$(CC) $(LDFLAGS) -pthread -shared -o $@ mdb.lo midl.lo $(SOLIBS)
++	$(CC) $(LDFLAGS) -pthread -shared -Wl,-soname,$@ -o $@ mdb.lo midl.lo $(SOLIBS)
+ 
+ mdb_stat: mdb_stat.o liblmdb.a
+ mdb_copy: mdb_copy.o liblmdb.a

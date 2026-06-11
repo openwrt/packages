@@ -1,0 +1,10 @@
+--- a/src/conf.c
++++ b/src/conf.c
+@@ -27,6 +27,7 @@
+ #endif
+ #include "conf.h"
+ #include "cfgparser1.h"
++#include "debug.h"
+ 
+ #ifdef HAVE_ASSERT_H
+ # include <assert.h>

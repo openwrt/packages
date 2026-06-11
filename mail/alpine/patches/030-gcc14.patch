@@ -1,0 +1,216 @@
+--- a/imap/src/c-client/http.c
++++ b/imap/src/c-client/http.c
+@@ -1016,7 +1016,7 @@ http_send (HTTPSTREAM *stream, HTTP_REQU
+     if(req->body){
+       char length[20];
+ 
+-      sprintf(length, "%lu", strlen(req->body));
++      sprintf(length, "%zu", strlen(req->body));
+       http_add_header(&req, "Content-Length", length);
+     }
+ 
+--- a/imap/src/osdep/unix/mh.c
++++ b/imap/src/osdep/unix/mh.c
+@@ -100,8 +100,8 @@ long mh_copy (MAILSTREAM *stream,char *s
+ 	      long options);
+ long mh_append (MAILSTREAM *stream,char *mailbox,append_t af,void *data);
+ 
+-int mh_select (struct direct *name);
+-int mh_numsort (const void *d1,const void *d2);
++int mh_select (const struct direct *name);
++int mh_numsort (const struct dirent **d1,const struct dirent **d2);
+ char *mh_file (char *dst,char *name);
+ long mh_canonicalize (char *pattern,char *ref,char *pat);
+ void mh_setdate (char *file,MESSAGECACHE *elt);
+@@ -1192,10 +1192,10 @@ long mh_append (MAILSTREAM *stream,char
+  * Returns: T to use file name, NIL to skip it
+  */
+ 
+-int mh_select (struct direct *name)
++int mh_select (const struct direct *name)
+ {
+   char c;
+-  char *s = name->d_name;
++  const char *s = name->d_name;
+   while ((c = *s++) != '\0') if (!isdigit (c)) return NIL;
+   return T;
+ }
+@@ -1207,10 +1207,10 @@ int mh_select (struct direct *name)
+  * Returns: negative if d1 < d2, 0 if d1 == d2, positive if d1 > d2
+  */
+ 
+-int mh_numsort (const void *d1,const void *d2)
++int mh_numsort (const struct dirent **d1,const struct dirent **d2)
+ {
+-  return atoi ((*(struct direct **) d1)->d_name) -
+-    atoi ((*(struct direct **) d2)->d_name);
++  return atoi ((*d1)->d_name) -
++    atoi ((*d2)->d_name);
+ }
+ 
+ 
+--- a/imap/src/osdep/unix/mix.c
++++ b/imap/src/osdep/unix/mix.c
+@@ -112,7 +112,7 @@ MIXBURP {
+ DRIVER *mix_valid (char *name);
+ long mix_isvalid (char *name,char *meta);
+ void *mix_parameters (long function,void *value);
+-long mix_dirfmttest (char *name);
++long mix_dirfmttest (const char *name);
+ void mix_scan (MAILSTREAM *stream,char *ref,char *pat,char *contents);
+ long mix_scan_contents (char *name,char *contents,unsigned long csiz,
+ 			unsigned long fsiz);
+@@ -123,7 +123,7 @@ long mix_unsubscribe (MAILSTREAM *stream
+ long mix_create (MAILSTREAM *stream,char *mailbox);
+ long mix_delete (MAILSTREAM *stream,char *mailbox);
+ long mix_rename (MAILSTREAM *stream,char *old,char *newname);
+-int mix_rselect (struct direct *name);
++int mix_rselect (const struct dirent *name);
+ MAILSTREAM *mix_open (MAILSTREAM *stream);
+ void mix_close (MAILSTREAM *stream,long options);
+ void mix_abort (MAILSTREAM *stream);
+@@ -138,8 +138,8 @@ THREADNODE *mix_thread (MAILSTREAM *stre
+ long mix_ping (MAILSTREAM *stream);
+ void mix_check (MAILSTREAM *stream);
+ long mix_expunge (MAILSTREAM *stream,char *sequence,long options);
+-int mix_select (struct direct *name);
+-int mix_msgfsort (const void *d1,const void *d2);
++int mix_select (const struct direct *name);
++int mix_msgfsort (const struct dirent **d1,const struct dirent **d2);
+ long mix_addset (SEARCHSET **set,unsigned long start,unsigned long size);
+ long mix_burp (MAILSTREAM *stream,MIXBURP *burp,unsigned long *reclaimed);
+ long mix_burp_check (SEARCHSET *set,size_t size,char *file);
+@@ -283,7 +283,7 @@ void *mix_parameters (long function,void
+  * Returns: T if internal name, NIL otherwise
+  */
+ 
+-long mix_dirfmttest (char *name)
++long mix_dirfmttest (const char *name)
+ {
+ 				/* belongs to MIX if starts with .mix */
+   return strncmp (name,MIXNAME,sizeof (MIXNAME) - 1) ? NIL : LONGT;
+@@ -586,7 +586,7 @@ long mix_rename (MAILSTREAM *stream,char
+  * Returns: T if mix file name, NIL otherwise
+  */
+ 
+-int mix_rselect (struct direct *name)
++int mix_rselect (const struct dirent *name)
+ {
+   return mix_dirfmttest (name->d_name);
+ }
+@@ -1151,9 +1151,10 @@ long mix_expunge (MAILSTREAM *stream,cha
+  * ".mix" with no suffix was used by experimental versions
+  */
+ 
+-int mix_select (struct direct *name)
++int mix_select (const struct direct *name)
+ {
+-  char c,*s;
++  char c;
++  const char *s;
+ 				/* make sure name has prefix */
+   if (mix_dirfmttest (name->d_name)) {
+     for (c = *(s = name->d_name + sizeof (MIXNAME) - 1); c && isxdigit (c);
+@@ -1170,10 +1171,10 @@ int mix_select (struct direct *name)
+  * Returns: -1 if d1 < d2, 0 if d1 == d2, 1 d1 > d2
+  */
+ 
+-int mix_msgfsort (const void *d1,const void *d2)
++int mix_msgfsort (const struct dirent **d1,const struct dirent **d2)
+ {
+-  char *n1 = (*(struct direct **) d1)->d_name + sizeof (MIXNAME) - 1;
+-  char *n2 = (*(struct direct **) d2)->d_name + sizeof (MIXNAME) - 1;
++  const char *n1 = (*d1)->d_name + sizeof (MIXNAME) - 1;
++  const char *n2 = (*d2)->d_name + sizeof (MIXNAME) - 1;
+   return compare_ulong (*n1 ? strtoul (n1,NIL,16) : 0,
+ 			*n2 ? strtoul (n2,NIL,16) : 0);
+ }
+@@ -1338,7 +1339,7 @@ long mix_burp_check (SEARCHSET *set,size
+ {
+   do if (set->last > size) {	/* sanity check */
+     char tmp[MAILTMPLEN];
+-    sprintf (tmp,"Unexpected short mix message file %.80s %lu < %lu",
++    sprintf (tmp,"Unexpected short mix message file %.80s %zu < %lu",
+ 	     file,size,set->last);
+     MM_LOG (tmp,ERROR);
+     return NIL;			/* don't burp this file at all */
+--- a/imap/src/osdep/unix/mx.c
++++ b/imap/src/osdep/unix/mx.c
+@@ -98,8 +98,8 @@ long mx_append (MAILSTREAM *stream,char
+ long mx_append_msg (MAILSTREAM *stream,char *flags,MESSAGECACHE *elt,
+ 		    STRING *st,SEARCHSET *set);
+ 
+-int mx_select (struct direct *name);
+-int mx_numsort (const void *d1,const void *d2);
++int mx_select (const struct direct *name);
++int mx_numsort (const struct dirent **d1,const struct dirent **d2);
+ char *mx_file (char *dst,char *name);
+ long mx_lockindex (MAILSTREAM *stream);
+ void mx_unlockindex (MAILSTREAM *stream);
+@@ -1111,10 +1111,10 @@ long mx_append_msg (MAILSTREAM *stream,c
+  * Returns: T to use file name, NIL to skip it
+  */
+ 
+-int mx_select (struct direct *name)
++int mx_select (const struct direct *name)
+ {
+   char c;
+-  char *s = name->d_name;
++  const char *s = name->d_name;
+   while ((c = *s++) != '\0') if (!isdigit (c)) return NIL;
+   return T;
+ }
+@@ -1126,10 +1126,10 @@ int mx_select (struct direct *name)
+  * Returns: negative if d1 < d2, 0 if d1 == d2, positive if d1 > d2
+  */
+ 
+-int mx_numsort (const void *d1,const void *d2)
++int mx_numsort (const struct dirent **d1,const struct dirent **d2)
+ {
+-  return atoi ((*(struct direct **) d1)->d_name) -
+-    atoi ((*(struct direct **) d2)->d_name);
++  return atoi ((*d1)->d_name) -
++    atoi ((*d2)->d_name);
+ }
+ 
+ 
+--- a/imap/src/osdep/unix/news.c
++++ b/imap/src/osdep/unix/news.c
+@@ -76,8 +76,8 @@ long news_create (MAILSTREAM *stream,cha
+ long news_delete (MAILSTREAM *stream,char *mailbox);
+ long news_rename (MAILSTREAM *stream,char *old,char *newname);
+ MAILSTREAM *news_open (MAILSTREAM *stream);
+-int news_select (struct direct *name);
+-int news_numsort (const void *d1,const void *d2);
++int news_select (const struct direct *name);
++int news_numsort (const struct dirent **d1,const struct dirent **d2);
+ void news_close (MAILSTREAM *stream,long options);
+ void news_fast (MAILSTREAM *stream,char *sequence,long flags);
+ void news_flags (MAILSTREAM *stream,char *sequence,long flags);
+@@ -403,10 +403,10 @@ MAILSTREAM *news_open (MAILSTREAM *strea
+  * Returns: T to use file name, NIL to skip it
+  */
+ 
+-int news_select (struct direct *name)
++int news_select (const struct direct *name)
+ {
+   char c;
+-  char *s = name->d_name;
++  const char *s = name->d_name;
+   while ((c = *s++) != '\0') if (!isdigit (c)) return NIL;
+   return T;
+ }
+@@ -418,10 +418,10 @@ int news_select (struct direct *name)
+  * Returns: negative if d1 < d2, 0 if d1 == d2, positive if d1 > d2
+  */
+ 
+-int news_numsort (const void *d1,const void *d2)
++int news_numsort (const struct dirent **d1,const struct dirent **d2)
+ {
+-  return atoi ((*(struct direct **) d1)->d_name) -
+-    atoi ((*(struct direct **) d2)->d_name);
++  return atoi ((*d1)->d_name) -
++    atoi ((*d2)->d_name);
+ }
+ 
+ 

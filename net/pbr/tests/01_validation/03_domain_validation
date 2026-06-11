@@ -1,0 +1,35 @@
+#!/bin/bash
+# Test: Domain, host, and hostname validation
+. "$(dirname "$0")/../lib/setup.sh"
+
+oneTimeTearDown() { rm -rf "${MOCK_ROOT:-}"; }
+
+testIsHost() {
+	assertTrue "Simple hostname" "is_host 'router'"
+	assertTrue "Hostname with hyphen" "is_host 'my-host'"
+	assertTrue "Hostname with numbers" "is_host 'host123'"
+	assertTrue "Single character" "is_host 'A'"
+	assertFalse "Empty string" "is_host ''"
+	assertFalse "Starts with hyphen" "is_host '-invalid'"
+}
+
+testIsHostname() {
+	assertTrue "Simple domain" "is_hostname 'example.com'"
+	assertTrue "Subdomain" "is_hostname 'sub.example.com'"
+	assertTrue "Deep subdomain" "is_hostname 'deep.sub.example.com'"
+	assertTrue "Hyphenated with ccTLD" "is_hostname 'my-site.co.uk'"
+	assertFalse "Single label" "is_hostname 'localhost'"
+	assertFalse "Empty string" "is_hostname ''"
+	assertFalse "IP address" "is_hostname '192.168.1.1'"
+}
+
+testIsDomain() {
+	assertTrue "Standard domain" "is_domain 'example.com'"
+	assertTrue "Single-label host" "is_domain 'router'"
+	assertTrue "Local domain" "is_domain 'my-server.local'"
+	assertFalse "IPv4 not a domain" "is_domain '192.168.1.1'"
+	assertFalse "Empty string" "is_domain ''"
+	assertFalse "Bad MAC notation" "is_domain 'AA-BB-CC-DD-EE-FF'"
+}
+
+. shunit2

@@ -1,0 +1,10 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -16,7 +16,6 @@
+ # along with this library; if not, see <http://www.gnu.org/licenses>.
+ #
+ 
+-@CODE_COVERAGE_RULES@
+ 
+ CODE_COVERAGE_OUTPUT_FILE = libseccomp.lcov.info
+ CODE_COVERAGE_OUTPUT_DIRECTORY = libseccomp.lcov.html.d

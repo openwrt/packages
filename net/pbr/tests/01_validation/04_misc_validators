@@ -1,0 +1,71 @@
+#!/bin/bash
+# Test: Miscellaneous validators (MAC, integer, URL, negation, version comparison)
+. "$(dirname "$0")/../lib/setup.sh"
+
+oneTimeTearDown() { rm -rf "${MOCK_ROOT:-}"; }
+
+testMacAddress() {
+	assertTrue "Uppercase MAC" "is_mac_address 'AA:BB:CC:DD:EE:FF'"
+	assertTrue "Lowercase MAC" "is_mac_address 'aa:bb:cc:dd:ee:ff'"
+	assertTrue "Numeric MAC" "is_mac_address '00:11:22:33:44:55'"
+	assertFalse "Too short" "is_mac_address 'AA:BB:CC:DD:EE'"
+	assertFalse "Too long" "is_mac_address 'AA:BB:CC:DD:EE:FF:00'"
+	assertFalse "Dash notation" "is_mac_address 'AA-BB-CC-DD-EE-FF'"
+	assertFalse "Not a MAC" "is_mac_address 'not_a_mac'"
+	assertFalse "Empty string" "is_mac_address ''"
+}
+
+testMacAddressBadNotation() {
+	assertTrue "Dash notation" "is_mac_address_bad_notation 'AA-BB-CC-DD-EE-FF'"
+	assertFalse "Colon notation" "is_mac_address_bad_notation 'AA:BB:CC:DD:EE:FF'"
+}
+
+testIsInteger() {
+	assertTrue "Zero" "is_integer '0'"
+	assertTrue "Positive" "is_integer '123'"
+	assertTrue "Large number" "is_integer '999999'"
+	assertFalse "Empty string" "is_integer ''"
+	assertFalse "Letters" "is_integer 'abc'"
+	assertFalse "Decimal" "is_integer '12.34'"
+	assertFalse "Negative" "is_integer '-1'"
+}
+
+testIsNegated() {
+	assertTrue "Negated IP" "is_negated '!192.168.1.1'"
+	assertTrue "Negated domain" "is_negated '!example.com'"
+	assertFalse "Not negated" "is_negated '192.168.1.1'"
+	assertFalse "Empty string" "is_negated ''"
+}
+
+testUrlValidators() {
+	assertTrue "HTTP URL" "is_url_http 'http://example.com'"
+	assertTrue "HTTPS URL" "is_url_https 'https://example.com'"
+	assertTrue "FTP URL" "is_url_ftp 'ftp://files.example.com'"
+	assertTrue "File URL" "is_url_file 'file:///tmp/list.txt'"
+	assertFalse "HTTPS is not HTTP" "is_url_http 'https://example.com'"
+	assertFalse "HTTP is not HTTPS" "is_url_https 'http://example.com'"
+	assertTrue "HTTP is URL" "is_url 'http://example.com'"
+	assertTrue "HTTPS is URL" "is_url 'https://example.com'"
+	assertTrue "FTP is URL" "is_url 'ftp://example.com'"
+	assertTrue "File is URL" "is_url 'file:///tmp/x'"
+	assertFalse "Plain domain not URL" "is_url 'example.com'"
+}
+
+testVersionComparison() {
+	assertTrue "2.0 > 1.0" "is_greater '2.0' '1.0'"
+	assertTrue "1.10 > 1.9" "is_greater '1.10' '1.9'"
+	assertFalse "1.0 not > 2.0" "is_greater '1.0' '2.0'"
+	assertFalse "Equal not greater" "is_greater '1.0' '1.0'"
+	assertTrue "Equal is >=" "is_greater_or_equal '1.0' '1.0'"
+	assertTrue "Greater is >=" "is_greater_or_equal '2.0' '1.0'"
+	assertFalse "Lesser not >=" "is_greater_or_equal '1.0' '2.0'"
+}
+
+testFamilyMismatch() {
+	assertTrue "IPv4 src IPv6 dst" "is_family_mismatch '192.168.1.1' '::1'"
+	assertTrue "IPv6 src IPv4 dst" "is_family_mismatch '::1' '10.0.0.1'"
+	assertFalse "Both IPv4" "is_family_mismatch '10.0.0.1' '10.0.0.2'"
+	assertFalse "Both IPv6" "is_family_mismatch '::1' '::2'"
+}
+
+. shunit2

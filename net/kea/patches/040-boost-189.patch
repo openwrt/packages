@@ -1,0 +1,40 @@
+--- a/src/lib/asiodns/io_fetch.cc
++++ b/src/lib/asiodns/io_fetch.cc
+@@ -67,7 +67,7 @@ struct IOFetchData : boost::noncopyable
+     OutputBufferPtr               msgbuf;            // Wire buffer for question
+     OutputBufferPtr               received;          // Received data put here
+     IOFetch::Callback*            callback;          // Called on I/O Completion
+-    boost::asio::deadline_timer   timer;             // Timer to measure timeouts
++    boost::asio::steady_timer     timer;             // Timer to measure timeouts
+     IOFetch::Protocol             protocol;          // Protocol being used
+     size_t                        cumulative;        // Cumulative received amount
+     size_t                        expected;          // Expected amount of data
+@@ -227,7 +227,7 @@ IOFetch::operator()(boost::system::error
+         // If we timeout, we stop, which cancels outstanding I/O operations and
+         // shuts down everything.
+         if (data_->timeout != -1) {
+-            data_->timer.expires_from_now(boost::posix_time::milliseconds(
++            data_->timer.expires_after(std::chrono::milliseconds(
+                 data_->timeout));
+             data_->timer.async_wait(std::bind(&IOFetch::stop, *this,
+                 TIME_OUT));
+--- a/src/lib/asiolink/interval_timer.cc
++++ b/src/lib/asiolink/interval_timer.cc
+@@ -88,7 +88,7 @@ private:
+     IOServicePtr io_service_;
+ 
+     /// @brief The asio timer.
+-    boost::asio::deadline_timer timer_;
++    boost::asio::steady_timer timer_;
+ 
+     /// @brief Controls how the timer behaves after expiration.
+     IntervalTimer::Mode mode_;
+@@ -141,7 +141,7 @@ void
+ IntervalTimerImpl::update() {
+     try {
+         // Update expire time to (current time + interval_).
+-        timer_.expires_from_now(boost::posix_time::millisec(long(interval_)));
++        timer_.expires_after(std::chrono::milliseconds(interval_));
+         // Reset timer.
+         // Pass a function bound with a shared_ptr to this.
+         timer_.async_wait(std::bind(&IntervalTimerImpl::callback,

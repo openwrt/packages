@@ -1,0 +1,34 @@
+#!/bin/sh
+
+. /lib/functions/tunneldigger.sh
+
+TUNNEL_ID="$1"
+INTERFACE="$3"
+OLD_MTU="$4"
+NEW_MTU="$5"
+
+# Get the bridge interface name for the old and new MTUs.
+tunneldigger_get_bridge old_bridge "${OLD_MTU}"
+tunneldigger_get_bridge new_bridge "${NEW_MTU}"
+
+if [ -z "$old_bridge" ]; then
+  echo "Unable to determine which bridge to use for MTU ${OLD_MTU}."
+  exit 1
+fi
+
+if [ -z "$new_bridge" ]; then
+  echo "Unable to determine which bridge to use for MTU ${NEW_MTU}."
+  exit 1
+fi
+
+# Get the isolation option for this bridge
+tunneldigger_get_bridge_isolate isolate "${NEW_MTU}"
+
+# Remove interface from old bridge.
+ip link set dev ${INTERFACE} nomaster
+ip link set dev ${old_bridge} mtu ${OLD_MTU}
+
+# Change interface bridge and MTU.
+ip link set dev ${INTERFACE} master ${new_bridge} mtu ${NEW_MTU}
+echo $isolate > /sys/class/net/${INTERFACE}/brport/isolated
+ip link set dev ${new_bridge} mtu ${NEW_MTU}

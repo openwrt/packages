@@ -1,0 +1,28 @@
+From fe6895e5eb2c17ddad6e95faaac7d56d4dd73256 Mon Sep 17 00:00:00 2001
+From: Glenn Strauss <gstrauss@gluelogic.com>
+Date: Fri, 20 Jan 2023 18:48:14 -0500
+Subject: [PATCH] [meson] mod_webdav_min w/o deps: xml2 sqlite3 uuid
+
+---
+ src/meson.build | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+--- a/src/meson.build
++++ b/src/meson.build
+@@ -926,6 +926,16 @@ if (host_machine.system() == 'darwin')
+ 	plugin_suffix = 'so'  # use "so" instead of "dylib"
+ endif
+ 
++modules += [
++  [ 'mod_webdav_min', [ 'mod_webdav.c' ],
++    [ libelftc,
++      declare_dependency(compile_args: [
++        '-DMOD_WEBDAV_BUILD_MINIMAL',
++        '-Dmod_webdav_plugin_init=mod_webdav_min_plugin_init' ] )
++    ]
++  ]
++]
++
+ foreach mod: modules
+ 	mod_name = mod.get(0)
+ 	mod_sources = mod.get(1)

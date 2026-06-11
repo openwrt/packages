@@ -1,0 +1,30 @@
+From a2f1745477e480f91bb68102308217eb95a063c7 Mon Sep 17 00:00:00 2001
+From: Lars Kruse <devel@sumpfralle.de>
+Date: Wed, 4 May 2022 14:52:44 +0200
+Subject: [PATCH 2/5] plugin ntpdate: tolerate multiple NTP servers (e.g. in a
+ pool)
+
+Previously multiple "server" lines were consumed, but the output of the
+awk filter lacked the line ending.  Thus the last numeric value of the
+previous "server" line was concatenated with the first numeric value of
+the following "server" line.  Thus multiple dots occurred in a single
+numeric value and parsing just failed.
+
+Thanks, glyndon!
+
+Closes: #16
+---
+ plugins/ntpdate | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/plugins/ntpdate
++++ b/plugins/ntpdate
+@@ -11,7 +11,7 @@ fetch_ntpdate() {
+   OFFSET=0
+   DELAY=0
+   if [ -n "$NTP_PEER" ] && [ -x "$NTPDATE" ]; then
+-    DATA=$("$NTPDATE" -q "$NTP_PEER" | awk '/^server.*offset/{gsub(/,/,""); printf "%s %s", ($6*1000), ($8*1000);}')
++    DATA=$("$NTPDATE" -q "$NTP_PEER" | awk '/^server.*offset/{gsub(/,/,""); printf "%s %s", ($6*1000), ($8*1000); exit;}')
+     OFFSET=$(echo "$DATA" | cut -d " " -f 1)
+     DELAY=$(echo "$DATA" | cut -d " " -f 2)
+   fi

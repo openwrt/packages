@@ -1,0 +1,72 @@
+autofoo stuff is really ancient, so lets make sure, that its never called.
+
+Fixes: openwrt/packages/issues/25543
+Signed-off-by: Petr Štetiar <ynezz@true.cz>
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -92,7 +92,7 @@ USE_NLS = @USE_NLS@
+ VERSION = @VERSION@
+ l = @l@
+ 
+-SUBDIRS = lib intl src po man testsuite
++SUBDIRS = lib intl src po
+ EXTRA_DIST = check.lrzsz COMPATABILITY README.cvs README.isdn4linux 	README.gettext rpmrc buildrpm systype.in fastcheck.sh README.tests 	beos-runpiped.c fastcheck.beos
+ 
+ noinst_SCRIPTS = systype
+@@ -117,19 +117,16 @@ GZIP_ENV = --best
+ all: all-redirect
+ .SUFFIXES:
+ $(srcdir)/Makefile.in: Makefile.am $(top_srcdir)/configure.in $(ACLOCAL_M4) 
+-	cd $(top_srcdir) && $(AUTOMAKE) --gnu Makefile
+ 
+ Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status $(BUILT_SOURCES)
+ 	cd $(top_builddir) \
+ 	  && CONFIG_FILES=$@ CONFIG_HEADERS= $(SHELL) ./config.status
+ 
+ $(ACLOCAL_M4):  configure.in  acinclude.m4
+-	cd $(srcdir) && $(ACLOCAL)
+ 
+ config.status: $(srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
+ 	$(SHELL) ./config.status --recheck
+ $(srcdir)/configure: $(srcdir)/configure.in $(ACLOCAL_M4) $(CONFIGURE_DEPENDENCIES)
+-	cd $(srcdir) && $(AUTOCONF)
+ 
+ config.h: stamp-h
+ 	@if test ! -f $@; then \
+@@ -147,7 +144,6 @@ $(srcdir)/config.h.in: $(srcdir)/stamp-h
+ 		$(MAKE) $(srcdir)/stamp-h.in; \
+ 	else :; fi
+ $(srcdir)/stamp-h.in: $(top_srcdir)/configure.in $(ACLOCAL_M4) acconfig.h
+-	cd $(top_srcdir) && $(AUTOHEADER)
+ 	@echo timestamp > $(srcdir)/stamp-h.in 2> /dev/null
+ 
+ mostlyclean-hdr:
+--- a/lib/Makefile.in
++++ b/lib/Makefile.in
+@@ -141,7 +141,6 @@ all: all-redirect
+ .SUFFIXES:
+ .SUFFIXES: .S .c .o .s
+ $(srcdir)/Makefile.in: Makefile.am $(top_srcdir)/configure.in $(ACLOCAL_M4) 
+-	cd $(top_srcdir) && $(AUTOMAKE) --gnu lib/Makefile
+ 
+ Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status $(BUILT_SOURCES)
+ 	cd $(top_builddir) \
+--- a/man/Makefile.in
++++ b/man/Makefile.in
+@@ -111,7 +111,6 @@ GZIP_ENV = --best
+ all: all-redirect
+ .SUFFIXES:
+ $(srcdir)/Makefile.in: Makefile.am $(top_srcdir)/configure.in $(ACLOCAL_M4) 
+-	cd $(top_srcdir) && $(AUTOMAKE) --gnu man/Makefile
+ 
+ Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status $(BUILT_SOURCES)
+ 	cd $(top_builddir) \
+@@ -168,8 +167,6 @@ distdir: $(DISTFILES)
+ 	here=`cd $(top_builddir) && pwd`; \
+ 	top_distdir=`cd $(top_distdir) && pwd`; \
+ 	distdir=`cd $(distdir) && pwd`; \
+-	cd $(top_srcdir) \
+-	  && $(AUTOMAKE) --include-deps --build-dir=$$here --srcdir-name=$(top_srcdir) --output-dir=$$top_distdir --gnu man/Makefile
+ 	@for file in $(DISTFILES); do \
+ 	  d=$(srcdir); \
+ 	  if test -d $$d/$$file; then \

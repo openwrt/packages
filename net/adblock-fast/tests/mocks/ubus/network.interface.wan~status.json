@@ -1,0 +1,23 @@
+{
+	"up": true,
+	"pending": false,
+	"available": true,
+	"autostart": true,
+	"device": "eth0",
+	"l3_device": "eth0",
+	"proto": "dhcp",
+	"ipv4-address": [
+		{
+			"address": "192.168.1.100",
+			"mask": 24
+		}
+	],
+	"route": [
+		{
+			"target": "0.0.0.0",
+			"mask": 0,
+			"nexthop": "192.168.1.1",
+			"source": "192.168.1.100/24"
+		}
+	]
+}

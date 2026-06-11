@@ -1,0 +1,10 @@
+--- a/modules/filters/mod_xml2enc.c
++++ b/modules/filters/mod_xml2enc.c
+@@ -35,6 +35,7 @@
+ #endif
+ 
+ /* libxml2 */
++#include <libxml/xmlstring.h>
+ #include <libxml/encoding.h>
+ 
+ #if defined(__clang__)

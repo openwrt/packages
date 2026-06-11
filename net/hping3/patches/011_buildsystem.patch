@@ -1,0 +1,96 @@
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -9,8 +9,8 @@
+ CC= gcc
+ AR=/usr/bin/ar
+ RANLIB=/usr/bin/ranlib
+-CCOPT= -O2 -Wall @PCAP_INCLUDE@ @TCL_INC@ @USE_TCL@
+-DEBUG= -g
++CCOPT= $(CFLAGS) @PCAP_INCLUDE@ @TCL_INC@ @USE_TCL@
++DEBUG=
+ #uncomment the following if you need libpcap based build under linux
+ #(not raccomanded)
+ COMPILE_TIME=
+@@ -50,17 +50,13 @@ libars.a: $(ARSOBJ)
+ 	$(RANLIB) $@
+ 
+ hping3: byteorder.h $(OBJ)
+-	$(CC) -o hping3 $(CCOPT) $(DEBUG) $(OBJ) -L/usr/local/lib $(PCAP) @SOLARISLIB@ @TCL_LIB@
++	$(CC) -o hping3 $(CCOPT) $(DEBUG) $(OBJ) $(PCAP) @SOLARISLIB@ @TCL_LIB@
+ 	@echo
+-	./hping3 -v
+ 	@echo "use \`make strip' to strip hping3 binary"
+ 	@echo "use \`make install' to install hping3"
+ 
+ hping3-static: byteorder.h $(OBJ)
+-	$(CC) -static -o hping3-static $(CCOPT) $(DEBUG) $(OBJ) -L/usr/local/lib $(PCAP) @SOLARISLIB@ @TCL_LIB@ -ldl
+-
+-byteorder.h:
+-	./configure
++	$(CC) -static -o hping3-static $(CCOPT) $(DEBUG) $(OBJ) $(PCAP) @SOLARISLIB@ @TCL_LIB@ -ldl
+ 
+ .c.o:
+ 	$(CC) -c $(CCOPT) $(DEBUG) $(COMPILE_TIME) $<
+@@ -72,6 +68,8 @@ distclean:
+ 	rm -rf hping3 *.o byteorder byteorder.h systype.h Makefile libars.a .depend
+ 
+ install: hping3
++
++dont-install:
+ 	cp -f hping3 /usr/sbin/
+ 	chmod 755 /usr/sbin/hping3
+ 	ln -s /usr/sbin/hping3 /usr/sbin/hping
+--- /dev/null
++++ b/byteorder.h
+@@ -0,0 +1,15 @@
++
++#ifndef __BYTEORDER_H
++#define __BYTEORDER_H
++
++#if defined(__BYTE_ORDER__)
++	#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
++		#define __BIG_ENDIAN_BITFIELD
++	#else
++		#define __LITTLE_ENDIAN_BITFIELD
++	#endif
++#else
++	#error Byte order not set
++#endif
++
++#endif /* __BYTEORDER_H */
+--- a/configure
++++ b/configure
+@@ -1,5 +1,24 @@
+ #!/bin/sh
+ 
++# This fake configure script applies hard-coded settings for OpenWRT
++
++echo creating Makefile...
++sed	-e "s^@PCAP@^PCAP=-lpcap^g" \
++	-e "s^@PCAP_INCLUDE@^^g" \
++	-e "s^@MANPATH@^/usr/share/man^g" \
++	-e "s^@SOLARISLIB@^^g" \
++	-e "s^@USE_TCL@^^g" \
++	-e "s^@TCL_INC@^^g" \
++	-e "s^@TCL_VER@^^g" \
++	-e "s^@TCL_LIB@^^g" \
++	<Makefile.in > Makefile
++
++echo now you can try \`make\'
++exit 0
++
++# Original file follows, to make the patch smaller
++#!/bin/sh
++
+ show_help()
+ {
+ 	echo configure help:
+--- /dev/null
++++ b/systype.h
+@@ -0,0 +1,6 @@
++#ifndef __SYSTYPE_H
++#define __SYSTYPE_H
++
++#define OSTYPE_LINUX
++
++#endif /* SYSTYPE_H */

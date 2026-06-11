@@ -1,0 +1,10 @@
+case "$ACTION" in
+	add)
+		# start process
+		ls /dev/video* > /dev/null && /etc/init.d/ustreamer start
+		;;
+	remove)
+		# stop process
+		ls /dev/video* > /dev/null || /etc/init.d/ustreamer stop
+		;;
+esac

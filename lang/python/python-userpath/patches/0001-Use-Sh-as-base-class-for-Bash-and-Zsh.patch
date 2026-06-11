@@ -1,0 +1,89 @@
+From dffcc1c5823bcce10b420467db41e42ec41f4702 Mon Sep 17 00:00:00 2001
+From: Jeffery To <jeffery.to@gmail.com>
+Date: Thu, 9 Nov 2023 17:48:50 +0800
+Subject: [PATCH 1/2] Use Sh as base class for Bash and Zsh
+
+---
+ userpath/shells.py | 41 ++++++++++++++++++++++++++---------------
+ 1 file changed, 26 insertions(+), 15 deletions(-)
+
+--- a/userpath/shells.py
++++ b/userpath/shells.py
+@@ -12,24 +12,36 @@ class Shell(object):
+ 
+ 
+ class Sh(Shell):
+-    def config(self, location, front=True):
++    name = 'sh'
++
++    def _config_contents(self, location, front=True):
+         head, tail = (location, '$PATH') if front else ('$PATH', location)
+         new_path = '{}{}{}'.format(head, pathsep, tail)
++        return 'export PATH="{}"'.format(new_path)
++
++    def config(self, location, front=True):
++        contents = self._config_contents(location, front=front)
++        return {path.join(self.home, '.profile'): contents}
+ 
+-        return {path.join(self.home, '.profile'): 'PATH="{}"'.format(new_path)}
++    @classmethod
++    def _interactive_show_path_command(cls):
++        return [cls.name, '-i', '-c', 'echo $PATH']
++
++    @classmethod
++    def _interactive_login_show_path_command(cls):
++        return [cls.name, '-i', '-l', '-c', 'echo $PATH']
+ 
+     @classmethod
+     def show_path_commands(cls):
+         # TODO: Find out what file influences non-login shells. The issue may simply be our Docker setup.
+-        return [['sh', '-i', '-l', '-c', 'echo $PATH']]
++        return [cls._interactive_login_show_path_command()]
+ 
+ 
+-class Bash(Shell):
+-    def config(self, location, front=True):
+-        head, tail = (location, '$PATH') if front else ('$PATH', location)
+-        new_path = '{}{}{}'.format(head, pathsep, tail)
+-        contents = 'export PATH="{}"'.format(new_path)
++class Bash(Sh):
++    name = 'bash'
+ 
++    def config(self, location, front=True):
++        contents = self._config_contents(location, front=front)
+         configs = {path.join(self.home, '.bashrc'): contents}
+ 
+         # https://github.com/ofek/userpath/issues/3#issuecomment-492491977
+@@ -50,7 +62,7 @@ class Bash(Shell):
+ 
+     @classmethod
+     def show_path_commands(cls):
+-        return [['bash', '-i', '-c', 'echo $PATH'], ['bash', '-i', '-l', '-c', 'echo $PATH']]
++        return [cls._interactive_show_path_command(), cls._interactive_login_show_path_command()]
+ 
+ 
+ class Fish(Shell):
+@@ -88,18 +100,17 @@ class Xonsh(Shell):
+         return [['xonsh', '-i', '-c', command], ['xonsh', '-i', '--login', '-c', command]]
+ 
+ 
+-class Zsh(Shell):
+-    def config(self, location, front=True):
+-        head, tail = (location, '$PATH') if front else ('$PATH', location)
+-        new_path = '{}{}{}'.format(head, pathsep, tail)
+-        contents = 'export PATH="{}"'.format(new_path)
++class Zsh(Sh):
++    name = 'zsh'
+ 
++    def config(self, location, front=True):
++        contents = self._config_contents(location, front=front)
+         zdotdir = environ.get('ZDOTDIR', self.home)
+         return {path.join(zdotdir, '.zshrc'): contents, path.join(zdotdir, '.zprofile'): contents}
+ 
+     @classmethod
+     def show_path_commands(cls):
+-        return [['zsh', '-i', '-c', 'echo $PATH'], ['zsh', '-i', '-l', '-c', 'echo $PATH']]
++        return [cls._interactive_show_path_command(), cls._interactive_login_show_path_command()]
+ 
+ 
+ SHELLS = {

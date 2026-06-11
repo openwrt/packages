@@ -1,0 +1,154 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2022 Dengfeng Liu <liudf0716@gmail.com>
+#
+# This is free software, licensed under the GNU General Public License v3.
+# See /LICENSE for more information.
+#
+
+START=99
+USE_PROCD=1
+
+NAME=xfrpc
+PROG=/usr/bin/$NAME
+
+
+handle_xfrpc() {
+    local section="$1"
+    local config="$2"
+
+    case "$section" in
+        common)
+            uci_validate_section xfrpc xfrpc common \
+                'server_addr:host' \
+                'server_port:uinteger' \
+                'token:string:'
+            ;;
+    esac
+
+    # Write the validated settings to the config file
+    echo "[${section}]" >> "$config"
+    [ -z "$server_addr" ] || echo "server_addr = $server_addr" >> "$config"
+    [ -z "$server_port" ] || echo "server_port = $server_port" >> "$config"
+    [ -z "$token" ] || echo "token = $token" >> "$config"
+}
+
+handle_tcp() {
+	local section="$1"
+	local config="$2"
+
+	uci_validate_section xfrpc tcp $section \
+		'enabled:bool:1' \
+		'local_ip:host' \
+		'local_port:uinteger' \
+		'remote_port:uinteger' 
+	
+	# if enabled is 0, then return
+	[ $enabled = 0 ] && return
+
+	# Write the validated settings to the config file
+	echo "[${section}]" >> "$config"
+	echo "type = tcp" >> "$config"
+	[ -z "$local_ip" ] || echo "local_ip = $local_ip" >> "$config"
+	[ -z "$local_port" ] || echo "local_port = $local_port" >> "$config"
+	[ -z "$remote_port" ] || echo "remote_port = $remote_port" >> "$config"
+}
+
+handle_http() {
+	local section="$1"
+	local config="$2"
+
+	uci_validate_section xfrpc http $section \
+		'enabled:bool:1' \
+		'local_ip:host' \
+		'local_port:uinteger' \
+		'custom_domains:string' \
+		'subdomain:string' \
+
+	# if enabled is 0, then return
+	[ $enabled = 0 ] && return
+
+	# Write the validated settings to the config file
+	echo "[${section}]" >> "$config"
+	echo "type = http" >> "$config"
+	[ -z "$local_ip" ] || echo "local_ip = $local_ip" >> "$config"
+	[ -z "$local_port" ] || echo "local_port = $local_port" >> "$config"
+	[ -z "$custom_domains" ] || echo "custom_domains = $custom_domains" >> "$config"
+	[ -z "$subdomain" ] || echo "subdomain = $subdomain" >> "$config"
+}
+
+handle_https() {
+	local section="$1"
+	local config="$2"
+
+	uci_validate_section xfrpc https $section \
+		'enabled:bool:1' \
+		'local_ip:host' \
+		'local_port:uinteger' \
+		'custom_domains:string' \
+		'subdomain:string' 
+	
+	# if enabled is 0, then return
+	[ $enabled = 0 ] && return
+
+	# Write the validated settings to the config file
+	echo "[${section}]" >> "$config"
+	echo "type = https" >> "$config"
+	[ -z "$local_ip" ] || echo "local_ip = $local_ip" >> "$config"
+	[ -z "$local_port" ] || echo "local_port = $local_port" >> "$config"
+	[ -z "$custom_domains" ] || echo "custom_domains = $custom_domains" >> "$config"
+	[ -z "$subdomain" ] || echo "subdomain = $subdomain" >> "$config"
+}
+
+handle_socks5() {
+	local section="$1"
+	local config="$2"
+
+	uci_validate_section xfrpc socks5 $section \
+		'enabled:bool:1' \
+		'remote_port:uinteger' 
+
+	# if enabled is 0, then return
+	[ $enabled = 0 ] && return
+
+	# Write the validated settings to the config file
+	echo "[${section}]" >> "$config"
+	echo "type = socks5" >> "$config"
+	[ -z "$remote_port" ] || echo "remote_port = $remote_port" >> "$config"
+}
+
+service_triggers() {
+	procd_add_reload_trigger "$NAME"
+}
+
+start_service() {
+	local conf_file="/var/etc/$NAME.ini"
+
+	> "$conf_file"
+	config_load "$NAME"
+
+	uci_validate_section xfrpc xfrpc common \
+			'enabled:bool:0' \
+			'loglevel:uinteger:0'
+
+	if [ $enabled = 0 ]; then
+		echo "xfrpc service disabled"
+		return
+	fi
+
+	config_foreach handle_xfrpc xfrpc "$conf_file"
+	config_foreach handle_tcp tcp "$conf_file"
+	config_foreach handle_http http "$conf_file"
+	config_foreach handle_https https "$conf_file"
+	config_foreach handle_socks5 socks5 "$conf_file"
+
+	procd_open_instance
+	procd_set_param command "$PROG" -c "$conf_file" -f -d $loglevel
+	procd_set_param file "$conf_file"
+	procd_set_param respawn
+	procd_close_instance
+}
+
+reload_service() {
+	stop
+	start
+}

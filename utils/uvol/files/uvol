@@ -1,0 +1,130 @@
+#!/usr/bin/ucode -R
+// SPDX-License-Identifier: GPL-2.0-or-later
+// uvol - storage volume manager for OpenWrt
+//  (c) 2022 Daniel Golle <daniel@makrotopia.org>
+
+let help_output = "uvol storage volume manager
+syntax: uvol command ...
+
+commands:
+  boot				get active volumes ready (called on boot)
+  free				show number of bytes available
+  total				show total number of bytes
+  align				show sector size in bytes
+  list [volname]		list volumes
+  create volname size type	create new volume
+    size: in bytes
+    type: 'ro' or 'rw'
+  remove volname		delete volume
+  device volname		show block device for mounting
+  size volname			show size of volume
+  up volname			get volume ready for mounting
+  down volname			take volume down after unmounting
+  status volname		return status of volume
+    return code: 0 - volume is ready for use
+                 1 - volume is not ready for use
+                 2 - volume doesn't exist
+  write volname size		write to volume from stdin, size in bytes
+";
+
+let fs = require("fs");
+let uci = require("uci");
+let cursor = uci ? uci.cursor() : null;
+
+let ctx = {};
+ctx.cursor = cursor;
+ctx.fs = fs;
+include("/usr/lib/uvol/uci.uc");
+ctx.uci_add = uvol_uci.uvol_uci_add;
+ctx.uci_remove = uvol_uci.uvol_uci_remove;
+ctx.uci_commit = uvol_uci.uvol_uci_commit;
+ctx.uci_init = uvol_uci.uvol_uci_init;
+
+let backend = null;
+let tried_backends = [];
+for (plugin in fs.glob("/usr/lib/uvol/backends/*.uc")) {
+	let current_backend = {};
+	include(plugin, { backend: current_backend });
+	push(tried_backends, current_backend.backend);
+	if (type(backend) == "object" &&
+	    type(backend.priority) == "int" &&
+	    type(current_backend.priority) == "int" &&
+	    backend.priority > current_backend.priority)
+		continue;
+	if (type(current_backend.init) == "function" &&
+	    current_backend.init(ctx)) {
+		backend = current_backend;
+		break;
+	}
+}
+
+if (!backend) {
+	printf("No backend available. (tried: %s)\n", join(" ", tried_backends));
+	printf("To setup devices with block storage install 'autopart'.\n");
+	exit(2);
+}
+
+// The below code is needed as older versions of ucode pass the complete cmdline via ARGV
+// Once we can rely in more recent ucode the while loop can be replaced by simply
+// let cmd = shift(ARGV);
+let skip = null;
+let cmd = null;
+let skip_argv = ["/usr/bin/ucode", "-R", "/usr/sbin/uvol"];
+while (skip = shift(ARGV)) {
+	if (skip != shift(skip_argv)) {
+		cmd = skip;
+		break;
+	}
+}
+
+if (!cmd || cmd == "-h" || cmd == "help") {
+	printf("%s", help_output);
+	return cmd?0:22;
+}
+
+if (!(cmd in keys(backend))) {
+	printf("command %s not found\n", cmd);
+	return 22;
+}
+
+let json_output = false;
+if (ARGV[0] == "-j") {
+	json_output = true;
+	shift(ARGV);
+}
+
+let legacy_output = function(var) {
+	let out = "";
+	if (type(var) == "array") {
+		for (let line in var) {
+			out += join(" ", values(line));
+			out += "\n";
+		}
+	} else if (type(var) == "object") {
+		out += join(" ", values(var));
+		out += "\n";
+	} else if (type(var) == "string") {
+		out += var;
+		out += "\n";
+	}
+	return out;
+};
+
+if (type(backend[cmd]) == "function") {
+	let ret = backend[cmd](...ARGV);
+	if (type(ret) == "int") {
+		exit(ret);
+	} else {
+		if (json_output)
+			printf("%.J\n", ret);
+		else
+			printf("%s", legacy_output(ret));
+	}
+} else {
+	if (json_output)
+		printf("%.J\n", backend[cmd]);
+	else
+		printf("%s\n", legacy_output(backend[cmd]));
+}
+
+exit(0);

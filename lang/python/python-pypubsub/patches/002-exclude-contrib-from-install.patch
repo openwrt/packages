@@ -1,0 +1,7 @@
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -62,3 +62,4 @@ pubsub = ["LICENSE_BSD_Simple.txt", "REL
+ 
+ [tool.setuptools.packages.find]
+ where = ["src"]
++exclude = ["contrib*"]

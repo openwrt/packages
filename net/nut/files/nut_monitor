@@ -1,0 +1,57 @@
+#config upsmon 'upsmon'
+#	option runas nutmon
+#	option deadtime 15
+#	option finaldelay 5 # final delay
+#	option hostsync 15
+#	option minsupplies 1
+#	option nocommwarntime 300 # no communications warn time
+#	option pollfaillogthrottlemax -1
+#	option notifycmd '/path/to/cmd'
+#	option pollfreq 5
+#	option pollfreqalert 5
+#	option offduration 30
+#	option overduration -1
+#	option oblbduration 0
+#	option shutdowncmd '/usr/sbin/nutshutdown'
+#	option rbwarntime 43200 # replace battery warn time
+#	option alarmcritical 1
+#	option shutdownexit 0
+#	option certpath /path/to/ca/dir
+#	option certverify 0
+#	option forcessl 0
+#	option debugmin 0
+# option defaultnotify SYSLOG
+
+#config monitor
+#	option type primary
+#	option upsname upsname
+#	option hostname localhost
+#	option port # optional port number
+#	option powervalue 1
+#	option username upsuser
+#	option password upspassword
+
+#config monitor
+#	option type secondary
+#	option upsname upsname
+#	option hostname localhost
+#	option port # optional port number
+#	option powervalue 1
+#	option username upsuser
+#	option password upspassword
+
+#config notifications 'COMMOK'
+#	option message "Communications with UPS %s established"
+#	option flag "SYSLOG"
+
+#config notifications 'COMMBAD'
+#	option message "Communications with UPS %s lost"
+#	option flag "SYSLOG+EXEC"
+
+#config notifications 'ONLINE'
+#	option message "UPS %s is on line power"
+#	option flag "SYSLOG"
+
+#config notifications 'ONBATT'
+#	option message "UPS %s is on battery power"
+#	option flag "SYSLOG+EXEC"

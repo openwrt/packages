@@ -1,0 +1,15 @@
+menu "Configuration options (for developers)"
+
+config RUST_SCCACHE
+	bool "Use sccache"
+	help
+	  Shared compilation cache; see https://github.com/mozilla/sccache
+
+config RUST_SCCACHE_DIR
+	string "Set sccache directory" if RUST_SCCACHE
+	default ""
+	help
+	  Store sccache in this directory.
+	  If not set, uses './.sccache'
+
+endmenu

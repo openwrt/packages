@@ -1,0 +1,137 @@
+#!/bin/sh /etc/rc.common
+# Copyright (c) 2015-2026 Dirk Brenken (dev@brenken.org)
+# This is free software, licensed under the GNU General Public License v3.
+
+# (s)hellcheck exceptions
+# shellcheck disable=all
+
+START=30
+USE_PROCD=1
+
+extra_command "suspend" "Suspend adblock processing"
+extra_command "resume" "Resume adblock processing"
+extra_command "search" "<domain> Search active blocklists and backups for a specific domain"
+extra_command "report" "[<cli>|<mail>|<gen>|<json>] Print DNS statistics"
+
+adb_init="/etc/init.d/adblock"
+adb_script="/usr/bin/adblock.sh"
+adb_rundir="/var/run/adblock"
+adb_pidfile="/var/run/adblock/adblock.pid"
+
+if [ -z "${IPKG_INSTROOT}" ]; then
+
+	# ensure runtime directory exists
+	#
+	[ ! -d "${adb_rundir}" ] && mkdir -p "${adb_rundir}"
+
+	# check for running instance and handle boot trigger
+	#
+	case "${action}" in
+	"boot")
+		"${adb_init}" running && exit 0
+		;;
+	esac
+
+	# reset pidfile if no/stale process is found,
+	# otherwise exit with error to prevent multiple instances
+	#
+	if [ -s "${adb_pidfile}" ]; then
+		pid="$(cat "${adb_pidfile}" 2>/dev/null)"
+		if [ -n "${pid}" ] && kill -0 "${pid}" 2>/dev/null; then
+			case "${action}" in
+			"start" | "stop" | "restart" | "reload" | "report" | "suspend" | "resume" | "search")
+				exit 1
+				;;
+			esac
+		else
+			: >"${adb_pidfile}"
+		fi
+	fi
+fi
+
+boot() {
+	rc_procd start_service boot
+}
+
+start_service() {
+	if "${adb_init}" enabled; then
+		if [ "${action}" = "boot" ]; then
+			[ -n "$(uci_get adblock global adb_trigger)" ] && return 0
+		fi
+		procd_open_instance "adblock"
+		procd_set_param command "${adb_script}" "${@:-"${action}"}"
+		procd_set_param pidfile "${adb_pidfile}"
+		procd_set_param nice "$(uci_get adblock global adb_nicelimit "0")"
+		procd_set_param stdout 0
+		procd_set_param stderr 1
+		procd_close_instance
+	fi
+}
+
+restart() {
+	stop_service "restart"
+	rc_procd start_service restart
+}
+
+reload_service() {
+	rc_procd start_service reload
+}
+
+stop_service() {
+	[ -z "${1}" ] && rc_procd "${adb_script}" stop
+}
+
+suspend() {
+	rc_procd start_service suspend
+}
+
+resume() {
+	rc_procd start_service resume
+}
+
+search() {
+	rc_procd "${adb_script}" search "${1}"
+}
+
+report() {
+	rc_procd "${adb_script}" report "${1:-"cli"}" "${2}" "${3}" "${4}"
+}
+
+status() {
+	status_service
+}
+
+status_service() {
+	local key keylist type value values
+
+	json_init
+	json_load_file "/var/run/adblock/adblock.runtime.json" >/dev/null 2>&1
+	json_get_keys keylist
+	if [ -n "${keylist}" ]; then
+		printf '%s\n' "::: adblock runtime information"
+		for key in ${keylist}; do
+			json_get_type type "${key}" >/dev/null 2>&1
+			if [ "${type}" = "array" ]; then
+				json_get_values values "${key}" >/dev/null 2>&1
+				value="${values// /, }"
+			else
+				json_get_var value "${key}" >/dev/null 2>&1
+			fi
+			printf '  + %-15s : %s\n' "${key}" "${value:-"-"}"
+		done
+	else
+		printf '%s\n' "::: no adblock runtime information available"
+	fi
+}
+
+service_triggers() {
+	local iface delay trigger
+
+	delay="$(uci_get adblock global adb_triggerdelay "5")"
+	trigger="$(uci_get adblock global adb_trigger)"
+
+	PROCD_RELOAD_DELAY="$((delay * 1000))"
+	for iface in ${trigger}; do
+		procd_add_interface_trigger "interface.*.up" "${iface}" "${adb_init}" start
+	done
+}

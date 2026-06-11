@@ -1,0 +1,37 @@
+if PACKAGE_mutt
+	config MUTT_POP
+		bool "POP support"
+		default y
+		help
+		  Enables POP support in mutt.
+	config MUTT_IMAP
+		bool "IMAP support"
+		default y
+		help
+		  Enables IMAP support in mutt.
+	config MUTT_SMTP
+		bool "SMTP support"
+		default n
+		help
+		  Enables SMTP support in mutt.
+	config MUTT_HCACHE
+		bool "Header caching support"
+		default n
+		help
+		  Enables header caching support in mutt (using libgdbm).
+	config MUTT_SASL
+		bool "SASL support"
+		default n
+		help
+		  Enables SASL support in mutt (libsasl2).
+	config MUTT_GNUTLS
+		bool "GnuTLS support"
+		default n
+		help
+		  Enables GnuTLS support in mutt (libgnutls).
+	config MUTT_OPENSSL
+		bool "OpenSSL support"
+		default y
+		help
+		  Enables OpenSSL support in mutt (libopenssl).
+endif

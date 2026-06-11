@@ -1,0 +1,11 @@
+--- a/Src/Modules/pcre.c
++++ b/Src/Modules/pcre.c
+@@ -152,7 +152,7 @@ zpcre_get_substrings(pcre2_code *pat, ch
+ 	int nelem = captured_count - 1;
+ 	/* Set to the offsets of the complete match */
+ 	if (want_offset_pair) {
+-	    sprintf(offset_all, "%ld %ld", ovec[0], ovec[1]);
++	    sprintf(offset_all, "%zd %zd", ovec[0], ovec[1]);
+ 	    setsparam("ZPCRE_OP", ztrdup(offset_all));
+ 	}
+ 	/*

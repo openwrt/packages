@@ -1,0 +1,52 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006-2011 OpenWrt.org
+
+START=50
+STOP=50
+
+USE_PROCD=1
+PROG=/usr/sbin/lighttpd
+
+validate_conf() {
+	$PROG -tt -f /etc/lighttpd/lighttpd.conf >/dev/null || {
+		echo 1>&2 "lighttpd.conf validation failed"
+		return 1
+	}
+}
+
+start_service() {
+	user_exists http || user_add http
+	for i in /var/log/lighttpd /var/lib/lighttpd /var/cache/lighttpd; do
+		[ -d "$i" ] || {
+			mkdir -m 0775 -p "$i"
+			chgrp www-data "$i"
+		}
+	done
+
+	validate_conf || exit 1
+
+	procd_open_instance
+	procd_set_param reload_signal USR1
+	procd_set_param command $PROG -D -f /etc/lighttpd/lighttpd.conf
+	procd_close_instance
+}
+
+service_triggers() {
+	procd_add_reload_interface_trigger loopback
+	procd_add_reload_interface_trigger lan
+	procd_add_raw_trigger acme.renew 5000 /etc/init.d/lighttpd reload
+}
+
+reload_service() {
+	validate_conf || exit 1
+	# lighttpd graceful restart (SIGUSR1)
+	procd_send_signal lighttpd '*' USR1
+}
+
+relog() {
+	# lighttpd reopen log files (SIGHUP)
+	procd_send_signal lighttpd '*' HUP
+}
+
+EXTRA_COMMANDS="relog"
+EXTRA_HELP="	relog   Reopen log files (without reloading)"

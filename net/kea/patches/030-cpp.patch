@@ -1,0 +1,320 @@
+--- a/meson.build
++++ b/meson.build
+@@ -300,7 +300,6 @@ endif
+ # Google Test
+ GTEST_DEP = dependency(
+     'gtest',
+-    fallback: ['gtest', 'gtest_dep'],
+     required: FUZZ_OPT.enabled() or TESTS_OPT.enabled(),
+ )
+ 
+@@ -363,167 +362,80 @@ conf_data.set('HAVE_PGSQL', POSTGRESQL_D
+ 
+ #### Compiler Checks
+ 
+-# The required keyword in cpp.run() is an 1.5.0 feature.
+-result = cpp.run(
+-    fs.read('compiler-checks/get-cpp-standard.cc'),
+-    name: 'Get cpp standard',
+-)
+-if result.returncode() == 0
+-    cpp_standard = result.stdout().strip()
+-else
+-    error('C++ standard is unknown')
+-endif
+-message(f'Detected C++ standard (__cplusplus value) is @cpp_standard@.')
+-cpp_std_opt = get_option('cpp_std')
+-no_cpp_std_opt_msg = 'Please set a C++ standard by passing the -D cpp_std argument to meson.'
+-cpp_std_opt_msg = f'-D cpp_std=@cpp_std_opt@ is not enough.'
+-if cpp_standard.version_compare('<201100')
+-    msgs = [
+-        'Kea requires at least C++11 to build.',
+-        'Recommended C++ standard is C++14 but some dependencies require at least C++20',
+-    ]
+-    if cpp_std_opt == 'none'
+-        msgs += no_cpp_std_opt_msg
+-    else
+-        msgs += cpp_std_opt_msg
+-    endif
+-    error('\n'.join(msgs))
+-endif
+-if cpp_standard.version_compare('<201400')
+-    result = cpp.run(
+-        fs.read('compiler-checks/boost-math-cpp14.cc'),
+-        name: 'BOOST_MATH_REQUIRES_CPP14',
+-        dependencies: [boost_dep, threads_dep],
+-    )
+-    if result.returncode() != 0
+-        msgs = ['Boost Math requires at least C++14.']
+-        if cpp_std_opt == 'none'
+-            msgs += no_cpp_std_opt_msg
+-        else
+-            msgs += cpp_std_opt_msg
+-        endif
+-        error('\n'.join(msgs))
+-    endif
+-endif
+-if NETCONF_DEP.found() and cpp_standard.version_compare('<202000')
+-    msgs = ['NETCONF dependency requires at least C++20.']
+-    if cpp_std_opt == 'none'
+-        msgs += no_cpp_std_opt_msg
+-    else
+-        msgs += cpp_std_opt_msg
+-    endif
+-    if netconf_opt.enabled()
+-        error('\n'.join(msgs))
+-    else
+-        msgs += 'Disabling NETCONF.'
+-        warning('\n'.join(msgs))
+-        NETCONF_DEP = disabler()
+-    endif
+-endif
+-if CRYPTO_DEP.name() == botan.name() and cpp_standard.version_compare('<202000')
+-    msgs = ['Botan dependency requires at least C++20.']
+-    if cpp_std_opt == 'none'
+-        msgs += no_cpp_std_opt_msg
+-    else
+-        msgs += cpp_std_opt_msg
+-    endif
+-    error('\n'.join(msgs))
+-endif
+-
+-result = cpp.run(
+-    fs.read('compiler-checks/boost-has-threads.cc'),
+-    dependencies: [boost_dep, threads_dep],
+-    name: 'BOOST_HAS_THREADS',
+-)
+-if result.returncode() != 0
+-    error('boost is not configured to use threads')
+-endif
+-
+-if cpp.has_header('boost/regex.h', dependencies: [boost_dep], required: false)
+-    result = cpp.run(
+-        fs.read('compiler-checks/boost-regex.cc'),
+-        dependencies: [boost_dep, threads_dep],
+-        name: 'GET_SYSTEM_VS_BOOST_REGEX_HEADER',
+-    )
+-    if result.returncode() != 0
+-        error('boost/regex.h is used in place of system regex.h')
+-    endif
+-endif
+-
+-result = cpp.run(
++result = cpp.compiles(
+     fs.read('compiler-checks/chrono-same-duration.cc'),
+     name: 'CHRONO_SAME_DURATION',
+ )
+-conf_data.set('CHRONO_SAME_DURATION', result.returncode() == 0)
++conf_data.set('CHRONO_SAME_DURATION', result)
+ 
+ if CRYPTO_DEP.name() == openssl.name()
+-    result1 = cpp.run(
++    result1 = cpp.compiles(
+         fs.read('compiler-checks/have-generic-tls-method.cc'),
+         name: 'HAVE_GENERIC_TLS_METHOD',
+         dependencies: [boost_dep, CRYPTO_DEP, threads_dep],
+     )
+-    result2 = cpp.run(
++    result2 = cpp.compiles(
+         fs.read('compiler-checks/stream-truncated-error.cc'),
+         name: 'HAVE_STREAM_TRUNCATED_ERROR',
+         dependencies: [boost_dep, CRYPTO_DEP, threads_dep],
+     )
+-    if result1.returncode() != 0 or result2.returncode() != 0
++    if not result1 or not result2
+         error('Boost TLS support broken.')
+     endif
+ endif
+ 
+ if CRYPTO_DEP.name() == botan.name()
+-    result = cpp.run(
++    result = cpp.compiles(
+         fs.read('compiler-checks/botan-hash.cc'),
+         name: 'CHECK_BOTAN_LIBRARY',
+         dependencies: [boost_dep, CRYPTO_DEP, threads_dep],
+     )
+-    if result.returncode() != 0
++    if not result
+         error('Botan library does not work.')
+     endif
+ endif
+ 
+-result = cpp.run(
++result = cpp.compiles(
+     fs.read('compiler-checks/have-optreset.cc'),
+     name: 'HAVE_OPTRESET',
+ )
+-conf_data.set('HAVE_OPTRESET', result.returncode() == 0)
++conf_data.set('HAVE_OPTRESET', result)
+ 
+-result = cpp.run(fs.read('compiler-checks/have-sa-len.cc'), name: 'HAVE_SA_LEN')
+-conf_data.set('HAVE_SA_LEN', result.returncode() == 0)
++result = cpp.compiles(fs.read('compiler-checks/have-sa-len.cc'), name: 'HAVE_SA_LEN')
++conf_data.set('HAVE_SA_LEN', result)
+ 
+-result = cpp.run(
++result = cpp.compiles(
+     fs.read('compiler-checks/log4cplus-initializer.cc'),
+     name: 'LOG4CPLUS_INITIALIZER_H',
+     dependencies: [LOG4CPLUS_DEP],
+ )
+-conf_data.set('LOG4CPLUS_INITIALIZER_H', result.returncode() == 0)
++conf_data.set('LOG4CPLUS_INITIALIZER_H', result)
+ 
+ if MYSQL_DEP.found()
+-    result = cpp.run(
++    result = cpp.compiles(
+         fs.read('compiler-checks/mysql-my-bool.cc'),
+         name: 'MYSQL_MY_BOOL',
+         dependencies: [MYSQL_DEP],
+     )
+-    conf_data.set('HAVE_MYSQL_MY_BOOL', result.returncode() == 0)
++    conf_data.set('HAVE_MYSQL_MY_BOOL', result)
+ 
+-    result = cpp.run(
++    result = cpp.compiles(
+         fs.read('compiler-checks/mysql-get-option.cc'),
+         name: 'HAVE_MYSQL_GET_OPTION',
+         dependencies: [MYSQL_DEP],
+     )
+-    conf_data.set('HAVE_MYSQL_GET_OPTION', result.returncode() == 0)
++    conf_data.set('HAVE_MYSQL_GET_OPTION', result)
+ endif
+ 
+-result = cpp.run(
++result = cpp.compiles(
+     fs.read('compiler-checks/fuzzing-with-clusterfuzzlite.cc'),
+     name: 'FUZZING_WITH_CLUSTERFUZZLITE',
+ )
+-FUZZING_WITH_CLUSTERFUZZLITE = result.returncode() == 0
++FUZZING_WITH_CLUSTERFUZZLITE = result
+ 
+ have_afl = false
+-result = cpp.run(fs.read('compiler-checks/have-afl.cc'), name: 'HAVE_AFL')
+-if result.returncode() == 0
++result = cpp.compiles(fs.read('compiler-checks/have-afl.cc'), name: 'HAVE_AFL')
++if result
+     have_afl = true
+ endif
+ conf_data.set('HAVE_AFL', have_afl)
+@@ -534,22 +446,22 @@ if GTEST_DEP.found()
+     if GTEST_DEP.type_name() == 'internal'
+         conf_data.set('HAVE_CREATE_UNIFIED_DIFF', true)
+     else
+-        result = cpp.run(
++        result = cpp.compiles(
+             fs.read('compiler-checks/have-create-unified-diff.cc'),
+             name: 'HAVE_CREATE_UNIFIED_DIFF',
+             dependencies: [GTEST_DEP],
+         )
+-        conf_data.set('HAVE_CREATE_UNIFIED_DIFF', result.returncode() == 0)
++        conf_data.set('HAVE_CREATE_UNIFIED_DIFF', result)
+     endif
+ endif
+ 
+ if KRB5_DEP.found()
+-    result = cpp.run(
++    result = cpp.compiles(
+         fs.read('compiler-checks/have-gss-str-to-oid.cc'),
+         name: 'HAVE_GSS_STR_TO_OID',
+         dependencies: [KRB5_DEP],
+     )
+-    conf_data.set('HAVE_GSS_STR_TO_OID', result.returncode() == 0)
++    conf_data.set('HAVE_GSS_STR_TO_OID', result)
+ endif
+ 
+ #### Other checks.
+@@ -753,7 +665,7 @@ if result.returncode() == 0
+ else
+     report_conf_data.set('CXX_VERSION', 'unknown')
+ endif
+-report_conf_data.set('CXX_STANDARD', cpp_standard)
++report_conf_data.set('CXX_STANDARD', '20')
+ compile_args += cpp_args_opt
+ report_conf_data.set('CXX_ARGS', ' '.join(compile_args))
+ report_conf_data.set('LD_ID', cpp.get_linker_id())
+@@ -762,29 +674,25 @@ report_conf_data.set('LD_ARGS', ' '.join
+ report_conf_data.set('PYTHON_PATH', PYTHON.full_path())
+ report_conf_data.set('PYTHON_VERSION', PYTHON.version())
+ report_conf_data.set('PKGPYTHONDIR', PKGPYTHONDIR)
+-result = cpp.run(
++result = cpp.compiles(
+     fs.read('compiler-checks/get-boost-version.cc'),
+     dependencies: [boost_dep, threads_dep],
+     name: 'Get Boost version',
+ )
+-if result.returncode() == 0
+-    report_conf_data.set('BOOST_VERSION', result.stdout().strip())
++if result
++    report_conf_data.set('BOOST_VERSION', boost_dep.version())
+ else
+     report_conf_data.set('BOOST_VERSION', 'unknown version')
+ endif
+ if CRYPTO_DEP.name() == botan.name()
+     report_conf_data.set('CRYPTO_NAME', 'Botan')
+     report_conf_data.set('SPACES', '                ')
+-    result = cpp.run(
++    result = cpp.compiles(
+         fs.read('compiler-checks/get-botan-version.cc'),
+         name: 'Get Botan version',
+         dependencies: [CRYPTO_DEP],
+     )
+-    if result.returncode() == 0
+-        version = result.stdout().strip()
+-    else
+-        version = botan.version()
+-    endif
++    version = botan.version()
+     if version == 'unknown'
+         version = 'unknown version'
+     endif
+@@ -792,31 +700,23 @@ if CRYPTO_DEP.name() == botan.name()
+ elif CRYPTO_DEP.name() == openssl.name()
+     report_conf_data.set('CRYPTO_NAME', 'OpenSSL')
+     report_conf_data.set('SPACES', '              ')
+-    result = cpp.run(
++    result = cpp.compiles(
+         fs.read('compiler-checks/get-openssl-version.cc'),
+         name: 'Get OpenSSL version',
+         dependencies: [CRYPTO_DEP],
+     )
+-    if result.returncode() == 0
+-        version = result.stdout().strip()
+-    else
+-        version = openssl.version()
+-    endif
++    version = openssl.version()
+     if version == 'unknown'
+         version = 'unknown version'
+     endif
+     report_conf_data.set('CRYPTO_VERSION', version)
+ endif
+-result = cpp.run(
++result = cpp.compiles(
+     fs.read('compiler-checks/get-log4cplus-version.cc'),
+     name: 'Get Log4cplus version',
+     dependencies: [LOG4CPLUS_DEP],
+ )
+-if result.returncode() == 0
+-    version = result.stdout().strip()
+-else
+-    version = log4cplus.version()
+-endif
++version = LOG4CPLUS_DEP.version()
+ if version == 'unknown'
+     version = 'unknown version'
+ endif
+@@ -1091,13 +991,6 @@ pkg.generate(
+ 
+ #### More Custom Targets
+ 
+-if TARGETS_GEN_MESSAGES.length() > 0
+-    alias_target('messages', TARGETS_GEN_MESSAGES)
+-else
+-    error(
+-        'No messages to generate. This is probably an error in the meson.build files.',
+-    )
+-endif
+ if TARGETS_GEN_PARSER.length() > 0
+     alias_target('parser', TARGETS_GEN_PARSER)
+ else

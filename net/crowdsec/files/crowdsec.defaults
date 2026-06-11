@@ -1,0 +1,26 @@
+#!/bin/sh
+
+CONFIG=/etc/crowdsec/config.yaml
+data_dir=`uci get "crowdsec.crowdsec.data_dir"`
+sed -i "s,^\(\s*data_dir\s*:\s*\).*\$,\1$data_dir," $CONFIG
+db_path=`uci get "crowdsec.crowdsec.db_path"`
+sed -i "s,^\(\s*db_path\s*:\s*\).*\$,\1$db_path," $CONFIG
+
+# Create data dir & permissions if needed
+if [ ! -d "${data_dir}" ]; then
+	mkdir -m 0755 -p "${data_dir}"
+fi;
+
+if grep -q "login:" /etc/crowdsec/local_api_credentials.yaml; then
+	echo local API already registered...
+else
+	cscli -c /etc/crowdsec/config.yaml machines add -a -f /etc/crowdsec/local_api_credentials.yaml
+fi
+if [ -s /etc/crowdsec/online_api_credentials.yaml ]; then
+	echo online API already registered...
+else
+	cscli -c /etc/crowdsec/config.yaml capi register -f /etc/crowdsec/online_api_credentials.yaml
+fi
+cscli hub update && cscli collections install crowdsecurity/linux && cscli parsers install crowdsecurity/whitelists && cscli hub upgrade
+
+exit 0

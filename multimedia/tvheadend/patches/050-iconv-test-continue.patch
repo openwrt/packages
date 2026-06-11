@@ -1,0 +1,13 @@
+--- a/src/intlconv.c
++++ b/src/intlconv.c
+@@ -37,9 +37,8 @@ intlconv_test( void )
+       (strcmp(s, "ZlutouckyKun") &&
+        strcmp(s, "Zlutouck'yKun") &&
+        strcmp(s, "?lu?ou?k?K??"))) {
+-    tvherror(LS_MAIN, "iconv() routine is not working properly (%s), aborting!", s);
++    tvherror(LS_MAIN, "iconv() routine is not working properly (%s)", s);
+     tvh_safe_usleep(2000000);
+-    abort();
+   }
+   free(s);
+ }

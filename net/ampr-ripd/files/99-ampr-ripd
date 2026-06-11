@@ -1,0 +1,112 @@
+##############################################################################
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 2 as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# Copyright (C) 2025 Dan Srebnick (K2IE)
+#
+##############################################################################
+
+# Check to see if network.amprlan.ipaddr and network.amprwan.ipaddr exist.
+# If so, no need to apply defaults.
+
+if [ -z "$(uci -q get network.amprlan.ipaddr)" ] && \
+   [ -z "$(uci -q get network.amprwan.ipaddr)" ]; then
+
+echo Installing default routing rules...
+r=$(uci add network rule)
+uci -q batch << EOI
+set network.$r.dest='44.0.0.0/9'
+set network.$r.lookup='44'
+set network.$r.priority='44'
+EOI
+r=$(uci add network rule)
+uci -q batch << EOI
+set network.$r.dest='44.128.0.0/10'
+set network.$r.lookup='44'
+set network.$r.priority='44'
+EOI
+r=$(uci add network rule)
+uci -q batch << EOI
+set network.$r.src='44.127.254.0/24'
+set network.$r.lookup='44'
+set network.$r.priority='45'
+EOI
+
+echo Installing default network interfaces...
+uci -q batch << EOI
+set network.amprlan=interface
+set network.amprlan.proto='static'
+set network.amprlan.device='br-lan'
+set network.amprlan.force_link='0'
+set network.amprlan.ipaddr='44.127.254.254'
+set network.amprlan.netmask='255.255.255.0'
+set network.amprlan.defaultroute='0'
+set network.amprlan.ip4table='44'
+set network.amprlan.delegate='0'
+set network.amprwan=interface
+set network.amprwan.device='tunl0'
+set network.amprwan.proto='static'
+set network.amprwan.ipaddr='44.127.254.254'
+set network.amprwan.netmask='255.255.255.0'
+commit network
+EOI
+
+echo Installing default firewall zones...
+z=$(uci add firewall zone)
+uci -q batch << EOI
+set firewall.$z.name='amprlan'
+set firewall.$z.network='amprlan'
+EOI
+z=$(uci add firewall zone)
+uci -q batch << EOI
+set firewall.$z.name='amprwan'
+set firewall.$z.network='amprwan'
+set firewall.$z.input='REJECT'
+EOI
+z=$(uci add firewall forwarding)
+uci -q batch << EOI
+set firewall.$z.src='amprlan'
+set firewall.$z.dest='amprwan'
+commit firewall
+EOI
+
+echo Installing default firewall rules...
+f=$(uci add firewall rule)
+uci -q batch << EOI
+set firewall.$f.name='ipip'
+set firewall.$f.proto='ipencap'
+set firewall.$f.src='wan'
+set firewall.$f.target='ACCEPT'
+set firewall.$f.family='ipv4'
+set firewall.$f.icmp_type='echo-request'
+EOI
+f=$(uci add firewall rule)
+uci -q batch << EOI
+set firewall.$f.name='Net 44 ICMP Echo Request'
+set firewall.$f.proto='icmp'
+set firewall.$f.src='amprwan'
+set firewall.$f.dest='amprlan'
+set firewall.$f.target='ACCEPT'
+set firewall.$f.family='ipv4'
+set firewall.$f.icmp_type='echo-request'
+EOI
+f=$(uci add firewall rule)
+uci -q batch << EOI
+set firewall.$f.name='Net 44 Router ICMP'
+set firewall.$f.proto='icmp'
+set firewall.$f.src='amprwan'
+set firewall.$f.target='ACCEPT'
+set firewall.$f.family='ipv4'
+set firewall.$f.icmp_type='echo-request'
+commit firewall
+EOI
+
+fi
+exit

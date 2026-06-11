@@ -1,0 +1,37 @@
+#!/bin/sh
+
+midisport_load() {
+	local MIDISPORT_FWDIR="/usr/share/usb/maudio"
+	local FXLOAD="/usr/sbin/fxload"
+	case "$DEVPATH" in "/"*".[1-9]") return 0 ;; esac
+	[ "$BUSNUM" ] || return 19
+	[ "$DEVNUM" ] || return 19
+	[ -x "$FXLOAD" ] || return 2
+	"$FXLOAD" -V | grep -q libusb || return 95
+	$FXLOAD -t an21 -p $BUSNUM,$DEVNUM \
+		-s "$MIDISPORT_FWDIR/MidiSportLoader.ihx" \
+		-I "$MIDISPORT_FWDIR/MidiSport${1}.ihx"
+}
+
+if [ "$ACTION" = "add" ]; then
+	case "$PRODUCT" in
+	"763/1001/"*)
+		midisport_load 2x2
+		;;
+	"763/1010/"*)
+		midisport_load 1x1
+		;;
+	"763/1014/"*)
+		midisport_load KS
+		;;
+	"763/1020/"*)
+		midisport_load 4x4
+		;;
+	"763/1031/110")
+		midisport_load 8x8-2.10
+		;;
+	"763/1031/121")
+		midisport_load 8x8-2.21
+		;;
+	esac
+fi

@@ -1,0 +1,40 @@
+From 92a1337e110464bbb3aaba2b3ede77dc13b3f175 Mon Sep 17 00:00:00 2001
+From: Alex T <alext.mkrs@gmail.com>
+Date: Sun, 2 Nov 2025 19:06:06 +0100
+Subject: [PATCH] cmake: bump minimum version to address a deprecation warning
+
+This fixes the following warning shown while configuring:
+
+  [cmake] CMake Deprecation Warning at CMakeLists.txt:1 (cmake_minimum_required):
+  [cmake] Compatibility with CMake < 3.10 will be removed from a future version of
+  [cmake] CMake.
+
+We don't have a clearly defined supported distro/versions list, so I
+took Ubuntu 22.04 as arguably the oldest one we'd want to support for
+the reference point. It has CMake 3.22, released in July 2022.
+
+Signed-off-by: Alex T <alext.mkrs@gmail.com>
+---
+ CMakeLists.txt | 10 ++--------
+ 1 file changed, 2 insertions(+), 8 deletions(-)
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,15 +1,9 @@
+-cmake_minimum_required (VERSION 2.8.11)
++cmake_minimum_required (VERSION 3.22)
+ project (mraa C)
+ 
+ FIND_PACKAGE (Threads REQUIRED)
+ 
+-if (CMAKE_VERSION VERSION_LESS "3.1")
+-  if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
+-    set (CMAKE_C_FLAGS "-std=gnu99 ${CMAKE_C_FLAGS}")
+-  endif ()
+-else ()
+-  set (CMAKE_C_STANDARD 99)
+-endif ()
++set (CMAKE_C_STANDARD 99)
+ 
+ option (BUILDCPP "Enable C++ (needed by FTDI4222 and tests)" ON)
+ 

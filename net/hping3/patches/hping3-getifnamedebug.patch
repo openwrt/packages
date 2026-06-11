@@ -1,0 +1,11 @@
+--- a/getifname.c
++++ b/getifname.c
+@@ -59,7 +59,7 @@ int get_if_name(void)
+ 			known_output_if = 1;
+ 			if (opt_debug)
+ 				printf("DEBUG: Output interface address: %s\n",
+-					inet_ntoa(sa.sin_addr));
++					inet_ntoa(output_if_addr.sin_addr));
+ 		} else {
+ 			fprintf(stderr, "Warning: Unable to guess the output "
+ 					"interface\n");

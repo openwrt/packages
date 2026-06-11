@@ -1,0 +1,9 @@
+{
+	"name": "dhis.org",
+	"ipv4": {
+		"url": "http://[USERNAME]:[PASSWORD]@is.dhis.org/"
+	},
+	"ipv6": {
+		"url": "http://[USERNAME]:[PASSWORD]@is.dhis.org/"
+	}
+}

@@ -1,0 +1,17 @@
+{
+	"bounding": [
+		"CAP_NET_ADMIN"
+	],
+	"effective": [
+		"CAP_NET_ADMIN"
+	],
+	"ambient": [
+		"CAP_NET_ADMIN"
+	],
+	"permitted": [
+		"CAP_NET_ADMIN"
+	],
+	"inheritable": [
+		"CAP_NET_ADMIN"
+	]
+}

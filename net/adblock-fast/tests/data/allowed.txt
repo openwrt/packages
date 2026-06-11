@@ -1,0 +1,6 @@
+# Allowed domains list (hosts format, used with action=allow)
+0.0.0.0 adhost-zero-1.test.example.org
+0.0.0.0 adhost-zero-2.test.example.org
+0.0.0.0 adhost-zero-3.test.example.org
+0.0.0.0 common-shared-1.test.example.com
+0.0.0.0 common-shared-2.test.example.com

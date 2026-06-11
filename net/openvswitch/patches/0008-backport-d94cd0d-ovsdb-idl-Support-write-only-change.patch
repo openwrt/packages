@@ -1,0 +1,318 @@
+From d94cd0d3eec33e4290d7ca81918f5ac61444886e Mon Sep 17 00:00:00 2001
+From: Dumitru Ceara <dceara@redhat.com>
+Date: Tue, 26 Apr 2022 12:37:08 +0200
+Subject: [PATCH] ovsdb-idl: Support write-only-changed IDL monitor mode.
+
+At a first glance, change tracking should never be allowed for
+write-only columns.  However, some clients (e.g., ovn-northd) that are
+mostly exclusive writers of a database, use change tracking to avoid
+duplicating the IDL row records into a local cache when implementing
+incremental processing.
+
+The default behavior of the IDL is to automatically turn a write-only
+column into a read-write column whenever the client enables change
+tracking for that column.
+
+For the afore mentioned clients, this becomes a performance issue.
+Commit 1cc618c32524 ("ovsdb-idl: Fix atomicity of writes that don't
+change a column's value.") explains why writes that don't change a
+column's value cannot be optimized out early if the column is
+read/write.
+
+Furthermore, if there is at least one record in any table that
+changed during a transaction, then *all* records that have been
+written are added to the transaction, even if their values didn't
+change.  If there are many such rows (e.g., like in ovn-northd's
+case) this incurs a significant overhead because:
+a. the client has to build this large transaction
+b. the transaction has to be sent over the network
+c. the server needs to parse this (mostly) no-op update
+
+We now introduce new IDL APIs allowing users to set a new monitoring
+mode flag, OVSDB_IDL_WRITE_CHANGED_ONLY, to indicate to the IDL that the
+atomicity constraints may be relaxed and written columns that don't
+change value can be skipped from the current transaction.
+
+We benchmarked ovn-northd performance when using this new mode
+against NB and SB databases taken from ovn-kubernetes scale tests.
+We noticed that when a minor change is performed to the Northbound
+database (e.g., NB_Global.nb_cfg is incremented) the time it takes to
+build the Southbound transaction becomes negligible (vs ~1.5 seconds
+before this change).
+
+End-to-end ovn-kubernetes scale tests on 120-node clusters also show
+significant reduction of latency to bring up pods; both average and P99
+latency decreased by ~30%.
+
+Acked-by: Han Zhou <hzhou@ovn.org>
+Signed-off-by: Dumitru Ceara <dceara@redhat.com>
+Signed-off-by: Ilya Maximets <i.maximets@ovn.org>
+---
+ lib/ovsdb-idl.c    | 60 +++++++++++++++++++++++++++++++++++++++++-----
+ lib/ovsdb-idl.h    | 16 +++++++++++--
+ tests/ovsdb-idl.at | 31 +++++++++++++++++++++++-
+ tests/test-ovsdb.c | 18 ++++++++++----
+ 5 files changed, 115 insertions(+), 14 deletions(-)
+
+--- a/lib/ovsdb-idl.c
++++ b/lib/ovsdb-idl.c
+@@ -1398,6 +1398,45 @@ ovsdb_idl_track_clear(struct ovsdb_idl *
+ {
+     ovsdb_idl_track_clear__(idl, false);
+ }
++
++/* Sets or clears (depending on 'enable') OVSDB_IDL_WRITE_CHANGED_ONLY
++ * for 'column' in 'idl', ensuring that the column will be included in a
++ * transaction only if its value has actually changed locally.  Normally
++ * read/write columns that are written to are always included in the
++ * transaction but, in specific cases, when the application doesn't
++ * require atomicity of writes across different columns, the ones that
++ * don't change value may be skipped.
++ *
++ * This function should be called between ovsdb_idl_create() and
++ * the first call to ovsdb_idl_run().
++ */
++void
++ovsdb_idl_set_write_changed_only(struct ovsdb_idl *idl,
++                                 const struct ovsdb_idl_column *column,
++                                 bool enable)
++{
++    if (enable) {
++        *ovsdb_idl_get_mode(idl, column) |= OVSDB_IDL_WRITE_CHANGED_ONLY;
++    } else {
++        *ovsdb_idl_get_mode(idl, column) &= ~OVSDB_IDL_WRITE_CHANGED_ONLY;
++    }
++}
++
++/* Helper function to wrap calling ovsdb_idl_set_write_changed_only() for
++ * all columns that are part of 'idl'.
++ */
++void
++ovsdb_idl_set_write_changed_only_all(struct ovsdb_idl *idl, bool enable)
++{
++    for (size_t i = 0; i < idl->class_->n_tables; i++) {
++        const struct ovsdb_idl_table_class *tc = &idl->class_->tables[i];
++
++        for (size_t j = 0; j < tc->n_columns; j++) {
++            const struct ovsdb_idl_column *column = &tc->columns[j];
++            ovsdb_idl_set_write_changed_only(idl, column, enable);
++        }
++    }
++}
+ 
+ static void
+ log_parse_update_error(struct ovsdb_error *error)
+@@ -3502,6 +3541,8 @@ ovsdb_idl_txn_write__(const struct ovsdb
+ {
+     struct ovsdb_idl_row *row = CONST_CAST(struct ovsdb_idl_row *, row_);
+     const struct ovsdb_idl_table_class *class;
++    unsigned char column_mode;
++    bool optimize_rewritten;
+     size_t column_idx;
+     bool write_only;
+ 
+@@ -3512,12 +3553,15 @@ ovsdb_idl_txn_write__(const struct ovsdb
+ 
+     class = row->table->class_;
+     column_idx = column - class->columns;
+-    write_only = row->table->modes[column_idx] == OVSDB_IDL_MONITOR;
++    column_mode = row->table->modes[column_idx];
++    write_only = column_mode == OVSDB_IDL_MONITOR;
++    optimize_rewritten =
++        write_only || (column_mode & OVSDB_IDL_WRITE_CHANGED_ONLY);
++
+ 
+     ovs_assert(row->new_datum != NULL);
+     ovs_assert(column_idx < class->n_columns);
+-    ovs_assert(row->old_datum == NULL ||
+-               row->table->modes[column_idx] & OVSDB_IDL_MONITOR);
++    ovs_assert(row->old_datum == NULL || column_mode & OVSDB_IDL_MONITOR);
+ 
+     if (row->table->idl->verify_write_only && !write_only) {
+         VLOG_ERR("Bug: Attempt to write to a read/write column (%s:%s) when"
+@@ -3535,9 +3579,13 @@ ovsdb_idl_txn_write__(const struct ovsdb
+      * different value in that column since we read it.  (But if a whole
+      * transaction only does writes of existing values, without making any real
+      * changes, we will drop the whole transaction later in
+-     * ovsdb_idl_txn_commit().) */
+-    if (write_only && ovsdb_datum_equals(ovsdb_idl_read(row, column),
+-                                         datum, &column->type)) {
++     * ovsdb_idl_txn_commit().)
++     *
++     * The application may choose to bypass this restriction and always
++     * optimize by setting OVSDB_IDL_WRITE_CHANGED_ONLY.
++     */
++    if (optimize_rewritten && ovsdb_datum_equals(ovsdb_idl_read(row, column),
++                                                 datum, &column->type)) {
+         goto discard_datum;
+     }
+ 
+--- a/lib/ovsdb-idl.h
++++ b/lib/ovsdb-idl.h
+@@ -158,7 +158,7 @@ bool ovsdb_idl_server_has_column(const s
+  * IDL will change the value returned by ovsdb_idl_get_seqno() when the
+  * column's value changes in any row.
+  *
+- * The possible mode combinations are:
++ * Typical mode combinations are:
+  *
+  *   - 0, for a column that a client doesn't care about.  This is the default
+  *     for every column in every table, if the client passes false for
+@@ -181,10 +181,17 @@ bool ovsdb_idl_server_has_column(const s
+  *   - (OVSDB_IDL_MONITOR | OVSDB_IDL_ALERT | OVSDB_IDL_TRACK), for a column
+  *     that a client wants to track using the change tracking
+  *     ovsdb_idl_track_get_*() functions.
++ *
++ *   - (OVSDB_IDL_MONITOR | OVSDB_IDL_ALERT | OVSDB_IDL_WRITE_CHANGED_ONLY)
++ *     is similar to (OVSDB_IDL_MONITOR | OVSDB_IDL_ALERT) except that it
++ *     only adds a written column to a transaction if the column's value
++ *     has actually changed.
+  */
+ #define OVSDB_IDL_MONITOR (1 << 0) /* Replicate this column? */
+ #define OVSDB_IDL_ALERT   (1 << 1) /* Alert client when column changes? */
+-#define OVSDB_IDL_TRACK   (1 << 2)
++#define OVSDB_IDL_TRACK   (1 << 2) /* Track column changes? */
++#define OVSDB_IDL_WRITE_CHANGED_ONLY \
++                          (1 << 3) /* Write back only changed columns? */
+ 
+ void ovsdb_idl_add_column(struct ovsdb_idl *, const struct ovsdb_idl_column *);
+ void ovsdb_idl_add_table(struct ovsdb_idl *,
+@@ -233,6 +240,11 @@ bool ovsdb_idl_track_is_updated(const st
+                                 const struct ovsdb_idl_column *column);
+ void ovsdb_idl_track_clear(struct ovsdb_idl *);
+ 
++void ovsdb_idl_set_write_changed_only(struct ovsdb_idl *idl,
++                                      const struct ovsdb_idl_column *column,
++                                      bool enable);
++void ovsdb_idl_set_write_changed_only_all(struct ovsdb_idl *idl, bool enable);
++
+ 
+ /* Reading the database replica. */
+ 
+--- a/tests/ovsdb-idl.at
++++ b/tests/ovsdb-idl.at
+@@ -94,6 +94,20 @@ m4_define([OVSDB_CHECK_IDL_C],
+    OVSDB_SERVER_SHUTDOWN
+    AT_CLEANUP])
+ 
++# same as OVSDB_CHECK_IDL but uses OVSDB_IDL_WRITE_CHANGED_ONLY.
++m4_define([OVSDB_CHECK_IDL_WRITE_CHANGED_ONLY_C],
++  [AT_SETUP([$1 - write-changed-only - C])
++   AT_KEYWORDS([ovsdb server idl positive $5])
++   AT_CHECK([ovsdb_start_idltest])
++   m4_if([$2], [], [],
++     [AT_CHECK([ovsdb-client transact unix:socket $2], [0], [ignore], [ignore])])
++   AT_CHECK([test-ovsdb '-vPATTERN:console:test-ovsdb|%c|%m' -vjsonrpc -t10 idl unix:socket $3],
++            [0], [stdout], [ignore])
++   AT_CHECK([sort stdout | uuidfilt]m4_if([$6],,, [[| $6]]),
++            [0], [$4])
++   OVSDB_SERVER_SHUTDOWN
++   AT_CLEANUP])
++
+ # same as OVSDB_CHECK_IDL but uses tcp.
+ m4_define([OVSDB_CHECK_IDL_TCP_C],
+   [AT_SETUP([$1 - C - tcp])
+@@ -264,6 +278,7 @@ m4_define([OVSDB_CHECK_IDL_SSL_PY],
+ 
+ m4_define([OVSDB_CHECK_IDL],
+   [OVSDB_CHECK_IDL_C($@)
++  OVSDB_CHECK_IDL_WRITE_CHANGED_ONLY_C($@)
+    OVSDB_CHECK_IDL_TCP_C($@)
+    OVSDB_CHECK_IDL_TCP6_C($@)
+    OVSDB_CHECK_IDL_PY($@)
+@@ -1202,8 +1217,22 @@ m4_define([OVSDB_CHECK_IDL_TRACK_C],
+    OVSDB_SERVER_SHUTDOWN
+    AT_CLEANUP])
+ 
++m4_define([OVSDB_CHECK_IDL_TRACK_WRITE_CHANGED_ONLY_C],
++  [AT_SETUP([$1 - write-changed-only - C])
++   AT_KEYWORDS([ovsdb server idl tracking positive $5])
++   AT_CHECK([ovsdb_start_idltest])
++   m4_if([$2], [], [],
++     [AT_CHECK([ovsdb-client transact unix:socket $2], [0], [ignore], [ignore])])
++   AT_CHECK([test-ovsdb '-vPATTERN:console:test-ovsdb|%c|%m' -vjsonrpc -t10 -c -w idl unix:socket $3],
++            [0], [stdout], [ignore])
++   AT_CHECK([sort stdout | uuidfilt]m4_if([$6],,, [[| $6]]),
++            [0], [$4])
++   OVSDB_SERVER_SHUTDOWN
++   AT_CLEANUP])
++
+ m4_define([OVSDB_CHECK_IDL_TRACK],
+-  [OVSDB_CHECK_IDL_TRACK_C($@)])
++  [OVSDB_CHECK_IDL_TRACK_C($@)
++   OVSDB_CHECK_IDL_TRACK_WRITE_CHANGED_ONLY_C($@)])
+ 
+ OVSDB_CHECK_IDL_TRACK([track, simple idl, initially populated],
+   [['["idltest",
+--- a/tests/test-ovsdb.c
++++ b/tests/test-ovsdb.c
+@@ -56,6 +56,7 @@
+ VLOG_DEFINE_THIS_MODULE(test_ovsdb);
+ 
+ struct test_ovsdb_pvt_context {
++    bool write_changed_only;
+     bool track;
+ };
+ 
+@@ -91,6 +92,7 @@ parse_options(int argc, char *argv[], st
+         {"timeout", required_argument, NULL, 't'},
+         {"verbose", optional_argument, NULL, 'v'},
+         {"change-track", optional_argument, NULL, 'c'},
++        {"write-changed-only", optional_argument, NULL, 'w'},
+         {"magic", required_argument, NULL, OPT_MAGIC},
+         {"no-rename-open-files", no_argument, NULL, OPT_NO_RENAME_OPEN_FILES},
+         {"help", no_argument, NULL, 'h'},
+@@ -125,6 +127,10 @@ parse_options(int argc, char *argv[], st
+             pvt->track = true;
+             break;
+ 
++        case 'w':
++            pvt->write_changed_only = true;
++            break;
++
+         case OPT_MAGIC:
+             magic = optarg;
+             break;
+@@ -2681,6 +2687,7 @@ update_conditions(struct ovsdb_idl *idl,
+ static void
+ do_idl(struct ovs_cmdl_context *ctx)
+ {
++    struct test_ovsdb_pvt_context *pvt = ctx->pvt;
+     struct jsonrpc *rpc;
+     struct ovsdb_idl *idl;
+     unsigned int next_cond_seqno = 0;
+@@ -2690,9 +2697,6 @@ do_idl(struct ovs_cmdl_context *ctx)
+     int step = 0;
+     int error;
+     int i;
+-    bool track;
+-
+-    track = ((struct test_ovsdb_pvt_context *)(ctx->pvt))->track;
+ 
+     idl = ovsdb_idl_create(ctx->argv[1], &idltest_idl_class, true, true);
+     ovsdb_idl_set_leader_only(idl, false);
+@@ -2709,10 +2713,14 @@ do_idl(struct ovs_cmdl_context *ctx)
+         rpc = NULL;
+     }
+ 
+-    if (track) {
++    if (pvt->track) {
+         ovsdb_idl_track_add_all(idl);
+     }
+ 
++    if (pvt->write_changed_only) {
++        ovsdb_idl_set_write_changed_only_all(idl, true);
++    }
++
+     setvbuf(stdout, NULL, _IONBF, 0);
+ 
+     symtab = ovsdb_symbol_table_create();
+@@ -2770,7 +2778,7 @@ do_idl(struct ovs_cmdl_context *ctx)
+             }
+ 
+             /* Print update. */
+-            if (track) {
++            if (pvt->track) {
+                 print_idl_track(idl, step++, terse);
+                 ovsdb_idl_track_clear(idl);
+             } else {

@@ -1,0 +1,238 @@
+From 4589f663862d8e7a062b356db3034992a56ed1c9 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 17 Jun 2022 17:36:31 +0100
+Subject: [PATCH] add support System Realtime and System Common
+
+https://github.com/cchaussat/ttymidi-sysex/pull/2
+
+Add input and output support for MIDI System Common and System Realtime operations.
+---
+ ttymidi-sysex.c | 194 ++++++++++++++++++++++++++++++++++++++++++++----
+ 1 file changed, 181 insertions(+), 13 deletions(-)
+
+--- a/ttymidi-sysex.c
++++ b/ttymidi-sysex.c
+@@ -338,18 +338,103 @@ void parse_midi_command(snd_seq_t* seq,
+ 			break;
+ 
+ 		case 0xF0:  // *new*
+-			if (buf[0] == 0xF0) {
+-				if (!arguments.silent && arguments.verbose) {
+-					printf("Serial  %02X Sysex len = %04X   ", operation, buflen);  // *new*
+-					int i;
+-					for (i=0; i < buflen; i++) {
+-						printf("%02X ", buf[i]);
++			switch (channel) {
++				case 0x0:
++					if (!arguments.silent && arguments.verbose) {
++						printf("Serial  %02X Sysex len = %04X   ", operation, buflen);  // *new*
++						int i;
++						for (i=0; i < buflen; i++) {
++							printf("%02X ", buf[i]);
++						}
++						printf("\n");
++						fflush(stdout);  // *new*
+ 					}
+-					printf("\n");
+-					fflush(stdout);  // *new*
+-				}
+-				// Send sysex message
+-				snd_seq_ev_set_sysex(&ev, buflen, buf);
++					// Send sysex message
++					snd_seq_ev_set_sysex(&ev, buflen, buf);
++					break;
++				case 0x1: // MTC Quarter Frame package
++					if (!arguments.silent && arguments.verbose) {
++						printf("Serial  MTC Quarter Frame       %02x\n", param1);
++						fflush(stdout);  // *new*
++					}
++					snd_seq_ev_set_fixed(&ev);
++					ev.data.control.value = param1;
++					ev.type = SND_SEQ_EVENT_QFRAME;
++					break;
++				case 0x2: // Song Position
++					int_param1 = (int) (param1 & 0x7F) + ((param2 & 0x7F) << 7);  // *new*
++					if (!arguments.silent && arguments.verbose) {
++						printf("Serial  Song Position           %04x\n", int_param1);
++						fflush(stdout);  // *new*
++					}
++					snd_seq_ev_set_fixed(&ev);
++					ev.data.control.value = int_param1;
++					ev.type = SND_SEQ_EVENT_SONGPOS;
++					break;
++				case 0x3: // Song Select
++					if (!arguments.silent && arguments.verbose) {
++						printf("Serial  Song Select             %02x\n", param1);
++						fflush(stdout);  // *new*
++					}
++					snd_seq_ev_set_fixed(&ev);
++					ev.data.control.value = param1;
++					ev.type = SND_SEQ_EVENT_SONGSEL;
++					break;
++				case 0x6: // Tune Request
++					if (!arguments.silent && arguments.verbose) {
++						printf("Serial  Tune Request\n");
++						fflush(stdout);  // *new*
++					}
++					snd_seq_ev_set_fixed(&ev);
++					ev.type = SND_SEQ_EVENT_TUNE_REQUEST;
++					break;
++				case 0x8: // Clock
++					if (!arguments.silent && arguments.verbose) {
++						printf("Serial  Clock\n");
++						fflush(stdout);  // *new*
++					}
++					snd_seq_ev_set_fixed(&ev);
++					ev.type = SND_SEQ_EVENT_CLOCK;
++					break;
++				case 0xA: // Start
++					if (!arguments.silent && arguments.verbose) {
++						printf("Serial  Start\n");
++						fflush(stdout);  // *new*
++					}
++					snd_seq_ev_set_fixed(&ev);
++					ev.type = SND_SEQ_EVENT_START;
++					break;
++				case 0xB: // Continue
++					if (!arguments.silent && arguments.verbose) {
++						printf("Serial  Continue\n");
++						fflush(stdout);  // *new*
++					}
++					snd_seq_ev_set_fixed(&ev);
++					ev.type = SND_SEQ_EVENT_CONTINUE;
++					break;
++				case 0xC: // Stop
++					if (!arguments.silent && arguments.verbose) {
++						printf("Serial  Stop\n");
++						fflush(stdout);  // *new*
++					}
++					snd_seq_ev_set_fixed(&ev);
++					ev.type = SND_SEQ_EVENT_STOP;
++					break;
++				case 0xE: // Active sense
++					if (!arguments.silent && arguments.verbose) {
++						printf("Serial  Active sense\n");
++						fflush(stdout);  // *new*
++					}
++					snd_seq_ev_set_fixed(&ev);
++					ev.type = SND_SEQ_EVENT_SENSING;
++					break;
++
++				default:
++					if (!arguments.silent) {  // *new*
++						printf("Serial  %02X Unknown MIDI System cmd\n", buf[0] & 0xFF);  // *new*
++						fflush(stdout);  // *new*
++					}
++					break;
+ 			}
+ 			break;
+ 
+@@ -464,6 +549,83 @@ void write_midi_action_to_serial_port(sn
+ 				}
+ 				break;
+ 
++			case SND_SEQ_EVENT_QFRAME:
++				bytes[0] = 0xF1;
++				bytes[1] = ev->data.control.value;
++				if (!arguments.silent && arguments.verbose) {
++					printf("Alsa    %02X MTC Quarter Frame      %02X\n", bytes[0], bytes[1]);
++					fflush(stdout);  // *new*
++				}
++				break;
++
++			case SND_SEQ_EVENT_SONGPOS:
++				bytes[0] = 0xF2;
++				ev->data.control.value += 8192;
++				bytes[1] = (unsigned char)(ev->data.control.value & 0x7F);
++				bytes[2] = (unsigned char)(ev->data.control.value >> 7);
++				if (!arguments.silent && arguments.verbose) {
++					printf("Alsa    %02X Song Position      %04X\n", bytes[0], ev->data.control.value);
++					fflush(stdout);  // *new*
++				}
++				break;
++
++			case SND_SEQ_EVENT_SONGSEL:
++				bytes[0] = 0xF3;
++				bytes[1] = ev->data.control.value;
++				if (!arguments.silent && arguments.verbose) {
++					printf("Alsa    %02X Song Select        %02X\n", bytes[0], bytes[1]);
++					fflush(stdout);  // *new*
++				}
++				break;
++
++			case SND_SEQ_EVENT_TUNE_REQUEST:
++				bytes[0] = 0xF6;
++				if (!arguments.silent && arguments.verbose) {
++					printf("Alsa    %02X Tune Request\n", bytes[0]);
++					fflush(stdout);  // *new*
++				}
++				break;
++
++			case SND_SEQ_EVENT_CLOCK:
++				bytes[0] = 0xF8;
++				if (!arguments.silent && arguments.verbose) {
++					printf("Alsa    %02X Clock\n", bytes[0]);
++					fflush(stdout);  // *new*
++				}
++				break;
++
++			case SND_SEQ_EVENT_START:
++				bytes[0] = 0xFA;
++				if (!arguments.silent && arguments.verbose) {
++					printf("Alsa    %02X Start\n", bytes[0]);
++					fflush(stdout);  // *new*
++				}
++				break;
++
++			case SND_SEQ_EVENT_CONTINUE:
++				bytes[0] = 0xFB;
++				if (!arguments.silent && arguments.verbose) {
++					printf("Alsa    %02X Continue\n", bytes[0]);
++					fflush(stdout);  // *new*
++				}
++				break;
++
++			case SND_SEQ_EVENT_STOP:
++				bytes[0] = 0xFC;
++				if (!arguments.silent && arguments.verbose) {
++					printf("Alsa    %02X Stop\n", bytes[0]);
++					fflush(stdout);  // *new*
++				}
++				break;
++
++			case SND_SEQ_EVENT_SENSING:
++				bytes[0] = 0xFE;
++				if (!arguments.silent && arguments.verbose) {
++					printf("Alsa    %02X Active Sense\n", bytes[0]);
++					fflush(stdout);  // *new*
++				}
++				break;
++
+ 			default:
+ 				if (!arguments.silent) {  // *new*
+ 					printf("Alsa    %02X Unknown MIDI cmd   %02X %02X %02X\n", bytes[0]&0xF0, bytes[0]&0x0F, bytes[1], bytes[2]);  // *new*
+@@ -484,8 +646,10 @@ void write_midi_action_to_serial_port(sn
+ 			if (bytes[0]!=0x00)
+ 			{
+ 				bytes[1] = (bytes[1] & 0x7F); // just to be sure that one bit is really zero
+-				if (bytes[2]==0xFF) {
++				if (bytes[2]==0xFF || bytes[0]==0xF1 || bytes[0]==0xF3 || bytes[0]==0xF5)
+ 					write(serial, bytes, 2);
++				else if (bytes[0]==0xF4 || bytes[0]==0xF6 || bytes[0]>=0xF8) {
++					write(serial, bytes, 1);
+ 				} else {
+ 					bytes[2] = (bytes[2] & 0x7F);
+ 					write(serial, bytes, 3);
+@@ -570,7 +734,11 @@ void* read_midi_from_serial_port(void* s
+ 					break;
+ 				}
+ 				buf[0] = buf[i];
+-				if(buf[0] != 0xF0)	//if not SysEx *new*
++				if (buf[0] == 0xF1 || buf[0] == 0xF3 || buf[0] == 0xF5)
++					bytesleft = 1;
++				else if (buf[0] >= 0xF4 || buf[0] >= 0xF6 || (buf[0] >= 0xF8 && buf[0] <= 0xFE))
++					bytesleft = 0;
++				else if (buf[0] != 0xF0)	//if not SysEx *new*
+ 					bytesleft = 3;
+ 				i = 1;
+ 			} else {

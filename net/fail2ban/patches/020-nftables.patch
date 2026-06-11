@@ -1,0 +1,41 @@
+From d56cda8f2a8dc3f69943545255d6934a73d0b1aa Mon Sep 17 00:00:00 2001
+From: sebres <info@sebres.de>
+Date: Fri, 26 Apr 2024 00:25:19 +0200
+Subject: [PATCH] cherry-pick from debian: debian default banactions are
+ nftables, systemd backend for sshd closes gh-3292
+
+Upstream-Status: Backport [https://github.com/fail2ban/fail2ban/commit/d0d07285234871bad3dc0c359d0ec03365b6dddc]
+
+Signed-off-by: Andrey Zotikov <andrey.zotikov@gmail.com>
+---
+ config/jail.conf         | 4 ++--
+ config/paths-debian.conf | 5 +++++
+ 2 files changed, 7 insertions(+), 2 deletions(-)
+
+--- a/config/jail.conf
++++ b/config/jail.conf
+@@ -205,8 +205,8 @@ fail2ban_agent = Fail2Ban/%(fail2ban_ver
+ # iptables-multiport, shorewall, etc) It is used to define
+ # action_* variables. Can be overridden globally or per
+ # section within jail.local file
+-banaction = iptables-multiport
+-banaction_allports = iptables-allports
++#banaction = iptables-multiport
++#banaction_allports = iptables-allports
+ 
+ # The simplest action to take: ban only
+ action_ = %(banaction)s[port="%(port)s", protocol="%(protocol)s", chain="%(chain)s"]
+--- a/config/paths-debian.conf
++++ b/config/paths-debian.conf
+@@ -9,6 +9,11 @@ after  = paths-overrides.local
+ 
+ [DEFAULT]
+ 
++banaction = nftables
++banaction_allports = nftables[type=allports]
++
++sshd_backend = systemd
++
+ syslog_mail = /var/log/mail.log
+ 
+ # control the `mail.warn` setting, see `/etc/rsyslog.d/50-default.conf` (if commented `mail.*` wins).

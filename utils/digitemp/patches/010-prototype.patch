@@ -1,0 +1,30 @@
+From fa56b0f78d12f97ac44e0a367d413a9e88611d1c Mon Sep 17 00:00:00 2001
+From: Robert Scheck <robert-scheck@users.noreply.github.com>
+Date: Thu, 16 Jan 2025 21:24:41 +0100
+Subject: [PATCH] Fix conflicting prototype
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+src/digitemp.c:171:6: error: conflicting types for ‘free_coupler’; have ‘void(int)’
+  171 | void free_coupler( int free_only )
+      |      ^~~~~~~~~~~~
+In file included from src/digitemp.c:78:
+src/digitemp.h:90:6: note: previous declaration of ‘free_coupler’ with type ‘void(void)’
+   90 | void free_coupler();
+      |      ^~~~~~~~~~~~
+---
+ src/digitemp.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/src/digitemp.h
++++ b/src/digitemp.h
+@@ -87,7 +87,7 @@ struct _coupler {
+ 
+ /* Prototypes */
+ void usage();
+-void free_coupler();
++void free_coupler( int free_only );
+ float c2f( float temp );
+ int build_tf( char *time_format, char *format, int sensor, 
+               float temp_c, int humidity, unsigned char *sn );

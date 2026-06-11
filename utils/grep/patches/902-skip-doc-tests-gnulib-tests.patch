@@ -1,0 +1,11 @@
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -2399,7 +2399,7 @@ top_srcdir = @top_srcdir@
+ # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ #
+ AUTOMAKE_OPTIONS = gnu 1.12
+-SUBDIRS = po lib doc src tests gnulib-tests
++SUBDIRS = po lib src
+ EXTRA_DIST = \
+   .mailmap		\
+   ChangeLog-2009	\

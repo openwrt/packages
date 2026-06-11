@@ -1,0 +1,25 @@
+From 7af6798a218737db7efc46dd4b9ae74b4c6a48f8 Mon Sep 17 00:00:00 2001
+From: John Audia <therealgraysky@proton.me>
+Date: Tue, 26 May 2026 09:22:30 -0400
+Subject: [PATCH] fix discarded-qualifiers warning with GCC 16
+
+strchr() returns char * even when passed a const char *, a known
+C standard wart. Explicitly cast the return value to char * to
+satisfy -Werror=discarded-qualifiers
+
+Signed-off-by: John Audia <therealgraysky@proton.me>
+---
+ subnets.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/subnets.c
++++ b/subnets.c
+@@ -36,7 +36,7 @@ parse_subnet(const char *addr, struct su
+ 	unsigned long int n;
+ 	uint8_t i, b;
+ 
+-	mask = strchr(addr, '/');
++	mask = (char *)strchr(addr, '/');
+ 
+ 	if (mask)
+ 		memcpy(tmp, addr, mask++ - addr);

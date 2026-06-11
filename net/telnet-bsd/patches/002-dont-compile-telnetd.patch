@@ -1,0 +1,42 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -3,7 +3,7 @@
+ #
+ AUTOMAKE_OPTIONS = 1.8 gnits dist-bzip2
+ #
+-SUBDIRS = m4 telnet telnetd
++SUBDIRS = m4 telnet
+ 
+ CLEANFILES = *~
+ 
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -164,7 +164,7 @@ target_vendor = @target_vendor@
+ #
+ AUTOMAKE_OPTIONS = 1.8 gnits dist-bzip2
+ #
+-SUBDIRS = m4 telnet telnetd
++SUBDIRS = m4 telnet
+ CLEANFILES = *~
+ ACLOCAL_AMFLAGS = -I m4
+ all: config.h
+--- a/configure
++++ b/configure
+@@ -3279,7 +3279,7 @@ _ACEOF
+ fi
+ 
+ 
+-                                        ac_config_files="$ac_config_files Makefile m4/Makefile telnet/Makefile telnetd/Makefile"
++                                        ac_config_files="$ac_config_files Makefile m4/Makefile telnet/Makefile"
+ 
+ cat >confcache <<\_ACEOF
+ # This file is a shell script that caches the results of configure
+--- a/configure.in
++++ b/configure.in
+@@ -54,5 +54,5 @@ AC_SUBST(PIE_LDFLAGS)
+ dnl Checks for typedefs, structures, and compiler characteristics.
+ AC_C_CONST
+ 
+-AC_CONFIG_FILES([Makefile m4/Makefile telnet/Makefile telnetd/Makefile])
++AC_CONFIG_FILES([Makefile m4/Makefile telnet/Makefile])
+ AC_OUTPUT

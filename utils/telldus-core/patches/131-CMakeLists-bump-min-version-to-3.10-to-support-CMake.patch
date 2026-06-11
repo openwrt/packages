@@ -1,0 +1,24 @@
+From 388c501bd55fc725e5213158179bcb8fcd4077b4 Mon Sep 17 00:00:00 2001
+From: Christian Marangi <ansuelsmth@gmail.com>
+Date: Tue, 18 Nov 2025 11:17:47 +0100
+Subject: [PATCH 2/2] CMakeLists: bump min version to 3.10 to support CMake >=
+ 4.0
+
+New CMake version require at least 3.5 as minimum version. Bump to 3.10
+to future proof the package when also 3.10 will be required by CMake.
+
+Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
+---
+ CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,6 +1,6 @@
+ PROJECT( telldus-core )
+ 
+-CMAKE_MINIMUM_REQUIRED( VERSION 2.6.0 )
++CMAKE_MINIMUM_REQUIRED( VERSION 3.10 )
+ 
+ CMAKE_POLICY(SET CMP0003 NEW)
+ 

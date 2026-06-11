@@ -1,0 +1,247 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006-2011 OpenWrt.org
+
+START=80
+USE_PROCD=1
+BIN=/usr/sbin/apinger
+APINGER_RRD=/apinger/rrd
+
+. /lib/functions/network.sh
+
+set_config_file() {
+	export CONFIG_FILE="/var/run/apinger-$instance.conf"
+}
+
+set_status_file() {
+	export STATUS_FILE="/var/run/apinger-$instance.status"
+}
+
+write_config_block() {
+	local cfg_var="CONFIG_BLOCK_$instance"
+	eval echo -e "\$$cfg_var" >> "$CONFIG_FILE"
+}
+
+start_config_block() {
+	eval "export CONFIG_BLOCK_$instance=''"
+	append CONFIG_BLOCK_$instance "$* {" "\n"
+}
+
+close_config_block() {
+	append CONFIG_BLOCK_$instance "}" "\n"
+}
+
+append_config_line() {
+	append CONFIG_BLOCK_$instance "\t$*" "\n"
+}
+
+append_target() {
+	local target=$1
+	local interface address probe_interval srcip
+	local avg_delay_samples avg_loss_samples avg_loss_delay_samples 
+	local alarm_down alarm_delay alarm_loss alarms rrd
+
+	config_get interface              "$target" interface wan
+	[ "$interface" != "$instance" ] && return 0
+
+	config_get address                "$target" address
+	config_get probe_interval         "$target" probe_interval
+	config_get avg_delay_samples      "$target" avg_delay_samples
+	config_get avg_loss_samples       "$target" avg_loss_samples
+	config_get avg_loss_delay_samples "$target" avg_loss_delay_samples
+	config_get alarm_down             "$target" alarm_down
+	config_get alarm_delay            "$target" alarm_delay
+	config_get alarm_loss             "$target" alarm_loss
+	config_get_bool rrd               "$target" rrd 0
+
+	[ -z "$address" ] && return 0
+	if [ -z $(echo "$address"|sed "/:/d") ]; then
+		srcip=$(uci_get network "$interface" ip6addr)
+		[ -z "$srcip"] && network_get_ipaddr6 srcip "$interface"
+		srcip="${srcip:-::}"
+	else
+		srcip=$(uci_get network "$interface" ipaddr)
+		[ -z "$srcip"] && network_get_ipaddr srcip "$interface"
+		srcip="${srcip:-0.0.0.0}"
+	fi
+
+	alarms=${alarm_down:+\"${alarm_down}\"}
+	alarms=${alarm_delay:+${alarms:+${alarms}, }}${alarm_delay:+\"${alarm_delay}\"}
+	alarms=${alarm_loss:+${alarms:+${alarms}, }}${alarm_loss:+\"${alarm_loss}\"}
+
+	start_config_block "target \"$address\""
+	append_config_line "srcip \"$srcip\""
+	append_config_line "description \"$target\""
+
+	[ -n "$probe_interval" ]          && append_config_line "interval ${probe_interval}s"
+	[ -n "$avg_delay_samples" ]       && append_config_line "avg_delay_samples ${avg_delay_samples}"
+	[ -n "$avg_loss_samples" ]        && append_config_line "avg_loss_samples ${avg_loss_samples}"
+	[ -n "$avg_loss_delay_samples" ]  && append_config_line "avg_loss_delay_samples ${avg_loss_delay_samples}"
+	[ -n "$alarms" ]                  && append_config_line "alarms override ${alarms}"
+	[ "$rrd" = "1" ]                  && append_config_line "rrd file \"$APINGER_RRD/apinger-target-$target.rrd\""
+
+	close_config_block
+	write_config_block
+}
+
+append_alarm_down() {
+	local alarm=$1
+	local time
+
+	config_get time "$alarm" time 5
+
+	[ -z "$time" ] && return
+
+	start_config_block "alarm down \"$alarm\""
+	append_config_line "time ${time}s"
+	close_config_block
+	write_config_block
+}
+
+append_alarm_delay() {
+	local alarm=$1
+	local delay_low delay_high
+
+	config_get delay_low  "$alarm" delay_low
+	config_get delay_high "$alarm" delay_high
+
+	if [ -z "$delay_low" ] || [ -z "$delay_high" ]; then
+		return
+	fi
+
+	start_config_block "alarm delay \"$alarm\""
+	append_config_line "delay_low ${delay_low}ms"
+	append_config_line "delay_high ${delay_high}ms"
+	close_config_block
+	write_config_block
+}
+
+append_alarm_loss() {
+	local alarm=$1
+	local percent_low percent_high
+
+	config_get percent_low  "$alarm" percent_low
+	config_get percent_high "$alarm" percent_high
+
+	if [ -z "$percent_low" ] || [ -z "$percent_high" ]; then
+		return
+	fi
+
+	start_config_block "alarm loss \"$alarm\""
+	append_config_line "percent_low ${percent_low}"
+	append_config_line "percent_high ${percent_high}"
+	close_config_block
+	write_config_block
+}
+
+init_apinger_config() {
+	local debug status_interval rrd_interval instance
+	instance=$1
+
+	config_get_bool debug             "$instance" debug 0
+	config_get      status_interval   "$instance" status_interval 1
+	config_get      rrd_interval      "$instance" rrd_interval 30
+
+	[ "$debug" = "1" ] && debug=on || debug=off
+
+	set_config_file
+	set_status_file
+
+	cat << EOF > "$CONFIG_FILE"
+user "root"
+group "root"
+debug ${debug}
+
+rrd interval ${rrd_interval}s
+
+status {
+	scriptformat on
+	file "$STATUS_FILE"
+	interval ${status_interval}s
+}
+alarm down "down" {
+	time 30s
+}
+alarm delay "delay" {
+	delay_low 5ms
+	delay_high 20ms
+}
+alarm loss "loss" {
+	percent_low 3
+	percent_high 5
+}
+alarm default {
+	command on "/usr/libexec/apinger-hotplug up $instance '%t' '%i' '%T' '%a' '%A' '%r' '%p' '%P' '%l' '%d' '%s'"
+	command off "/usr/libexec/apinger-hotplug down $instance '%t' '%i' '%T' '%a' '%A' '%r' '%p' '%P' '%l' '%d' '%s'"
+}
+target default {
+	interval 1s
+	avg_delay_samples 10
+	avg_loss_samples 50
+	avg_loss_delay_samples 20
+	alarms "down", "delay", "loss"
+}
+EOF
+}
+
+start_instance() {
+	export instance=$1
+
+	local enabled
+	config_get_bool enabled     "$instance" enabled 1
+	[ "$enabled" != "1" ] && return 0
+
+	init_apinger_config "$instance"
+	config_foreach append_alarm_down alarm_down
+	config_foreach append_alarm_delay alarm_delay
+	config_foreach append_alarm_loss alarm_loss
+	config_foreach append_target target
+
+	procd_open_instance "$instance"
+	procd_set_param command $BIN -f -c $CONFIG_FILE
+	procd_set_param stderr 1
+	procd_close_instance
+}
+
+start_service() {
+	local instance=$1
+
+	config_load apinger
+
+	[ ! -d "$APINGER_RRD" ] && mkdir -p "$APINGER_RRD"
+
+	if [ -n "$instance" ]; then
+		start_instance "$instance"
+	else
+		config_foreach start_instance interface
+	fi
+}
+
+service_triggers() {
+	procd_add_reload_trigger apinger
+}
+
+clean_instance() {
+	local instance=$1
+
+	set_config_file
+	set_status_file
+
+	[ -e $CONFIG_FILE ] && rm -f $CONFIG_FILE
+	[ -e $STATUS_FILE ] && rm -f $STATUS_FILE
+}
+
+service_stopped() {
+	local instance=$1
+
+	config_load apinger
+
+	if [ -n "$instance" ]; then
+		clean_instance "$instance"
+	else
+		config_foreach clean_instance interface
+	fi
+}
+
+reload_service() {
+	restart
+}

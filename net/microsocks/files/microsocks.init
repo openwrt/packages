@@ -1,0 +1,60 @@
+#!/bin/sh /etc/rc.common
+
+USE_PROCD=1
+START=95
+
+CONF="microsocks"
+
+start_service() {
+	config_load "$CONF"
+
+	local _enabled
+	config_get_bool _enabled "config" "enabled" "0"
+	[ "$_enabled" -eq "1" ] || return 1
+
+	local _port
+	local _listenip
+	local _bindaddr
+	local _user
+	local _format
+	local _auth_once
+	local _quiet
+
+	config_get _port "config" "port"
+	config_get _listenip "config" "listenip"
+	config_get _bindaddr "config" "bindaddr"
+	config_get _user "config" "user"
+	config_get _password "config" "password"
+	config_get_bool _auth_once "config" "auth_once" 0
+	config_get_bool _quiet "config" "quiet" 0
+
+	procd_open_instance "$CONF"
+	procd_set_param command /usr/bin/microsocks
+	[ -z "$_port" ] || procd_append_param command -p "${_port}"
+	[ -z "$_listenip" ] || procd_append_param command -i "${_listenip}"
+	[ -z "$_bindaddr" ] || procd_append_param command -b "${_bindaddr}"
+	[ -z "$_user" ] || procd_append_param command -u "${_user}"
+	[ -z "$_password" ] || procd_append_param command -P "${_password}"
+	[ "$_auth_once" -eq "0" ] || procd_append_param command -1
+	[ "$_quiet" -eq "0" ] || procd_append_param command -q
+
+	procd_set_param user microsocks
+	procd_set_param group microsocks
+
+	procd_set_param respawn
+	procd_set_param stderr 1
+	# TODO: Make it dependable on some verbose/debug config setting?
+	# procd_set_param stdout 1
+
+	procd_close_instance
+}
+
+
+reload_service() {
+	stop
+	start
+}
+
+service_triggers() { 
+	procd_add_reload_trigger "$CONF" 
+}

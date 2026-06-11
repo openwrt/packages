@@ -1,0 +1,51 @@
+From 28fa501b6c5f4df828f4f7ba6a98e3988ec742eb Mon Sep 17 00:00:00 2001
+From: Chun Jiao Zhao <chunjiao.zhao@siemens.com>
+Date: Tue, 2 Sep 2025 16:09:53 +0800
+Subject: [PATCH] python-binding: Fix Python 3.13+ compatibility
+
+PyEval_InitThreads and PyEval_CallObject were deprecated since
+Python 3.9 and removed in Python 3.12+ and 3.13+ respectively.
+
+These APIs are unavailable on Debian 13 which ships Python 3.13.
+
+Refer to: https://github.com/eclipse/mraa/issues/1135
+
+Signed-off-by: Chun Jiao Zhao <chunjiao.zhao@siemens.com>
+---
+ src/python/mraapy.c     | 6 +++++-
+ src/python/mraapython.i | 6 ++++++
+ 2 files changed, 11 insertions(+), 1 deletion(-)
+
+--- a/src/python/mraapy.c
++++ b/src/python/mraapy.c
+@@ -25,9 +25,13 @@ mraa_python_isr(void (*isr)(void*), void
+     if (arglist == NULL) {
+         syslog(LOG_ERR, "gpio: Py_BuildValue NULL");
+     } else {
++#if PY_VERSION_HEX >= 0x03090000
++        ret = PyObject_CallObject((PyObject*) isr, arglist);
++#else
+         ret = PyEval_CallObject((PyObject*) isr, arglist);
++#endif
+         if (ret == NULL) {
+-            syslog(LOG_ERR, "gpio: PyEval_CallObject failed");
++            syslog(LOG_ERR, "gpio: Python call failed");
+             PyObject *pvalue, *ptype, *ptraceback;
+             PyObject *pvalue_pystr, *ptype_pystr, *ptraceback_pystr;
+             PyObject *pvalue_ustr, *ptype_ustr, *ptraceback_ustr;
+--- a/src/python/mraapython.i
++++ b/src/python/mraapython.i
+@@ -151,7 +151,13 @@ class Spi;
+     // Initialise python threads, this allows use to grab the GIL when we are
+     // required to do so
+     Py_InitializeEx(0);
++#if PY_VERSION_HEX < 0x03090000
++    // PyEval_InitThreads() is deprecated since Python 3.9 and removed in Python 3.12
++    // In Python 3.7+, the GIL is initialized automatically by Py_Initialize()
++    // Only call PyEval_InitThreads() for Python < 3.9
++    // Reference: https://docs.python.org/3/c-api/init.html#c.PyEval_InitThreads
+     PyEval_InitThreads();
++#endif
+     // Add mraa_init() to the module initialisation process and set isr function
+     mraa_result_t res = mraa_init();
+     if (res == MRAA_SUCCESS) {

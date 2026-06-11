@@ -1,0 +1,33 @@
+From fe792646a8390d8e9a5047889a72a12813c8748a Mon Sep 17 00:00:00 2001
+From: Christian Marangi <ansuelsmth@gmail.com>
+Date: Tue, 18 Nov 2025 11:15:29 +0100
+Subject: [PATCH 1/2] service: switch to libftdi1
+
+Switch to libftdi1 as libftdi 0.x is too old and currently doesn't
+compile with new CMake version.
+
+The code happily compile with the new library version and API were
+compared to make sure no regression will be caused by the version bump.
+
+Also this reflect the compile documentation where it's said to use
+libftdi1 library.
+
+Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
+---
+ service/CMakeLists.txt | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/service/CMakeLists.txt
++++ b/service/CMakeLists.txt
+@@ -184,9 +184,9 @@ IF (FTDI_ENGINE STREQUAL "ftd2xx")
+ 	LIST(APPEND telldus-service_SRCS TellStick_ftd2xx.cpp )
+ 	LIST(APPEND telldus-service_LIBRARIES ${FTD2XX_LIBRARY})
+ ELSE (FTDI_ENGINE STREQUAL "ftd2xx")
+-	FIND_LIBRARY(FTDI_LIBRARY ftdi)
++	FIND_LIBRARY(FTDI_LIBRARY ftdi1)
+ 	INCLUDE(FindPkgConfig)
+-	PKG_SEARCH_MODULE(FTDI libftdi)
++	PKG_SEARCH_MODULE(FTDI libftdi1)
+ 	INCLUDE_DIRECTORIES( ${FTDI_INCLUDEDIR} )
+ 	ADD_DEFINITIONS( -DLIBFTDI )
+ 	LIST(APPEND telldus-service_SRCS TellStick_libftdi.cpp )

@@ -1,0 +1,9 @@
+{
+	"name": "mythic-beasts.com",
+	"ipv4": {
+		"url": "http://dnsapi4.mythic-beasts.com/?domain=[USERNAME]&password=[PASSWORD]&command=REPLACE%20[DOMAIN]%2060%20A%20DYNAMIC_IP&origin=."
+	},
+	"ipv6": {
+		"url": "http://dnsapi6.mythic-beasts.com/?domain=[USERNAME]&password=[PASSWORD]&command=REPLACE%20[DOMAIN]%2060%20AAAA%20DYNAMIC_IP&origin=."
+	}
+}

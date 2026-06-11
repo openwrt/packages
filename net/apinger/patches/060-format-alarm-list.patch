@@ -1,0 +1,12 @@
+--- a/src/apinger.c
++++ b/src/apinger.c
+@@ -860,6 +860,9 @@ char *buf1,*buf2;
+ 				a=al->alarm;
+ 				if(config->status_format){
+ 					fprintf(f,"%s",a->name);
++					if(al->next){
++						fprintf(f,",");
++					}
+ 				}
+ 				else{
+ 					fprintf(f," \"%s\"",a->name);

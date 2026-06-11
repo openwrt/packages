@@ -1,0 +1,175 @@
+From 11f224baeede709a181a9ccb01558ff39432a994 Mon Sep 17 00:00:00 2001
+From: Jeffery To <jeffery.to@gmail.com>
+Date: Mon, 5 Jul 2021 04:23:19 +0800
+Subject: [PATCH] Use C99 format macro constants for timestamp and vlan_tag
+
+Since timestamp and vlan_tag in the shm_log_entry struct are C99 fixed
+width integer types (uint64_t and uint16_t), the cross-platform way to
+print these values is to use the corresponding format macro
+constants[1], PRIu64 and PRIu16.
+
+This also adjusts the places where the time_t timestamp value is
+printed, casting it to uint64_t, for consistency.
+
+Fixes https://github.com/fln/addrwatch/issues/25
+Fixes https://github.com/fln/addrwatch/issues/26
+
+[1]: https://en.cppreference.com/w/c/types/integer#Format_macro_constants
+---
+ configure.ac           | 2 +-
+ src/addrwatch.c        | 2 +-
+ src/addrwatch_stdout.c | 2 +-
+ src/addrwatch_syslog.c | 2 +-
+ src/base64.h           | 2 +-
+ src/common.h           | 2 +-
+ src/mcache.h           | 2 +-
+ src/output_flatfile.c  | 4 ++--
+ src/parse.c            | 2 +-
+ src/shm.h              | 2 +-
+ src/shm_client.c       | 2 +-
+ src/storage.c          | 2 +-
+ src/util.h             | 2 +-
+ 13 files changed, 14 insertions(+), 14 deletions(-)
+
+--- a/configure.ac
++++ b/configure.ac
+@@ -53,7 +53,7 @@ AC_ARG_ENABLE([mysql],
+ )
+ 
+ # Checks for header files.
+-AC_CHECK_HEADERS([arpa/inet.h netinet/in.h stdint.h stdlib.h syslog.h unistd.h])
++AC_CHECK_HEADERS([arpa/inet.h netinet/in.h inttypes.h stdlib.h syslog.h unistd.h])
+ 
+ # Checks for typedefs, structures, and compiler characteristics.
+ AC_C_INLINE
+--- a/src/addrwatch.c
++++ b/src/addrwatch.c
+@@ -3,7 +3,7 @@
+ #include <limits.h>
+ #include <pwd.h>
+ #include <signal.h>
+-#include <stdint.h>
++#include <inttypes.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+--- a/src/addrwatch_stdout.c
++++ b/src/addrwatch_stdout.c
+@@ -16,7 +16,7 @@ void process_entry(struct shm_log_entry
+ 		ip4_ntoa(e->ip_address, ip_str);
+ 	}
+ 
+-	printf("%lu %s %u %s %s %s\n", e->timestamp, e->interface, e->vlan_tag,
++	printf("%" PRIu64 " %s %" PRIu16 " %s %s %s\n", e->timestamp, e->interface, e->vlan_tag,
+ 		mac_str, ip_str, pkt_origin_str[e->origin]);
+ }
+ 
+--- a/src/addrwatch_syslog.c
++++ b/src/addrwatch_syslog.c
+@@ -18,7 +18,7 @@ void process_entry(struct shm_log_entry
+ 		ip4_ntoa(e->ip_address, ip_str);
+ 	}
+ 
+-	syslog(LOG_INFO, "%lu %s %u %s %s %s", e->timestamp, e->interface,
++	syslog(LOG_INFO, "%" PRIu64 " %s %" PRIu16 " %s %s %s", e->timestamp, e->interface,
+ 		e->vlan_tag, mac_str, ip_str, pkt_origin_str[e->origin]);
+ }
+ 
+--- a/src/base64.h
++++ b/src/base64.h
+@@ -2,7 +2,7 @@
+ #define BASE64_H
+ 
+ #include "addrwatch.h"
+-#include <stdint.h>
++#include <inttypes.h>
+ 
+ void base64_encode(const uint8_t *src, char *dst, int ssize, int dsize);
+ char *base64_encode_packet(struct pkt *p);
+--- a/src/common.h
++++ b/src/common.h
+@@ -2,7 +2,7 @@
+ #define COMMON_H
+ 
+ #include <arpa/inet.h>
+-#include <stdint.h>
++#include <inttypes.h>
+ #include <stdio.h>
+ #include <sys/socket.h>
+ 
+--- a/src/mcache.h
++++ b/src/mcache.h
+@@ -6,7 +6,7 @@
+ 
+ #include <sys/types.h>
+ #include <netinet/if_ether.h>
+-#include <stdint.h>
++#include <inttypes.h>
+ 
+ struct mcache_node {
+ 	uint8_t l2_addr[ETHER_ADDR_LEN];
+--- a/src/output_flatfile.c
++++ b/src/output_flatfile.c
+@@ -22,8 +22,8 @@ void output_flatfile_reload()
+ void output_flatfile_save(struct pkt *p, char *mac_str, char *ip_str)
+ {
+ 	if (cfg.data_fd) {
+-		fprintf(cfg.data_fd, "%lu %s %u %s %s %s\n",
+-			p->pcap_header->ts.tv_sec, p->ifc->name, p->vlan_tag,
++		fprintf(cfg.data_fd, "%" PRIu64 " %s %" PRIu16 " %s %s %s\n",
++			(uint64_t)p->pcap_header->ts.tv_sec, p->ifc->name, p->vlan_tag,
+ 			mac_str, ip_str, pkt_origin_str[p->origin]);
+ 		fflush(cfg.data_fd);
+ 	}
+--- a/src/parse.c
++++ b/src/parse.c
+@@ -1,4 +1,4 @@
+-//#include <stdint.h>
++//#include <inttypes.h>
+ //#include <stdio.h>
+ //#include <stdlib.h>
+ 
+--- a/src/shm.h
++++ b/src/shm.h
+@@ -4,7 +4,7 @@
+ #include <net/if.h>
+ #include <netinet/in.h>
+ #include <netinet/if_ether.h>
+-#include <stdint.h>
++#include <inttypes.h>
+ #include <sys/socket.h>
+ 
+ #define DEFAULT_SHM_LOG_NAME "/addrwatch-shm-log"
+--- a/src/shm_client.c
++++ b/src/shm_client.c
+@@ -2,7 +2,7 @@
+ 
+ #include <fcntl.h>
+ #include <net/if.h>
+-#include <stdint.h>
++#include <inttypes.h>
+ #include <stdlib.h>
+ #include <sys/mman.h>
+ #include <sys/stat.h>
+--- a/src/storage.c
++++ b/src/storage.c
+@@ -129,7 +129,7 @@ void save_pairing(struct pkt *p)
+ 
+ 	output_shm_save(p, mac_str, ip_str);
+ 	if (!cfg.quiet) {
+-		printf("%lu %s %u %s %s %s\n", tstamp, p->ifc->name,
++		printf("%" PRIu64 " %s %" PRIu16 " %s %s %s\n", (uint64_t)tstamp, p->ifc->name,
+ 			p->vlan_tag, mac_str, ip_str, pkt_origin_str[p->origin]);
+ 		fflush(stdout);
+ 	}
+--- a/src/util.h
++++ b/src/util.h
+@@ -5,7 +5,7 @@
+ #include "config.h"
+ #endif
+ 
+-#include <stdint.h>
++#include <inttypes.h>
+ #include <stdio.h>
+ 
+ #include <syslog.h>

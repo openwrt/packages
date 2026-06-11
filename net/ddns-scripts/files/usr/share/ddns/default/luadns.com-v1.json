@@ -1,0 +1,9 @@
+{
+	"name": "luadns.com-v1",
+	"ipv4": {
+		"url": "update_luadns_v1.sh"
+	},
+	"ipv6": {
+		"url": "update_luadns_v1.sh"
+	}
+}

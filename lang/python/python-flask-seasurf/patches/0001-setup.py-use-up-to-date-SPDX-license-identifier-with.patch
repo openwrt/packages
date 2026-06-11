@@ -1,0 +1,34 @@
+From 8e6267a4c0e8cfedd18ab3efe616904d77ef99d6 Mon Sep 17 00:00:00 2001
+From: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Date: Mon, 3 Nov 2025 23:15:33 +0100
+Subject: [PATCH] setup.py: use up-to-date SPDX license identifier with LICENSE
+ file
+
+It fixes setuptoolsDeprecationWarning about deprecated license
+classifiers and adds LICENSE file.
+
+Signed-off-by: Josef Schlehofer <pepe.schlehofer@gmail.com>
+---
+ setup.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/setup.py
++++ b/setup.py
+@@ -15,7 +15,8 @@ setup(
+     name='Flask-SeaSurf',
+     version=__version__,
+     url='https://github.com/maxcountryman/flask-seasurf/',
+-    license='BSD',
++    license='BSD-3-Clause',
++    license_files=['LICENSE'],
+     author='Max Countryman',
+     author_email='maxc@me.com',
+     description='An updated CSRF extension for Flask.',
+@@ -30,7 +31,6 @@ setup(
+         'Development Status :: 4 - Beta',
+         'Environment :: Web Environment',
+         'Intended Audience :: Developers',
+-        'License :: OSI Approved :: BSD License',
+         'Operating System :: OS Independent',
+         'Programming Language :: Python',
+         'Programming Language :: Python :: 3',

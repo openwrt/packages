@@ -1,0 +1,20 @@
+--- a/config/config.yaml
++++ b/config/config.yaml
+@@ -8,7 +8,7 @@ common:
+   log_max_files: 10
+ config_paths:
+   config_dir: /etc/crowdsec/
+-  data_dir: /var/lib/crowdsec/data/
++  data_dir: /srv/crowdsec/data/
+   simulation_path: /etc/crowdsec/simulation.yaml
+   hub_dir: /etc/crowdsec/hub/
+   index_path: /etc/crowdsec/hub/.index.json
+@@ -25,7 +25,7 @@ cscli:
+ db_config:
+   log_level: info
+   type: sqlite
+-  db_path: /var/lib/crowdsec/data/crowdsec.db
++  db_path: /srv/crowdsec/data/crowdsec.db
+   #max_open_conns: 100
+   #user: 
+   #password:

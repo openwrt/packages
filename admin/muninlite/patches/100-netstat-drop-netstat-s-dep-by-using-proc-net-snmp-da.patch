@@ -1,0 +1,88 @@
+From cd0d4478916ff203db1d3e403b99a58d60d7c5ec Mon Sep 17 00:00:00 2001
+From: Rany Hany <rany_hany@riseup.net>
+Date: Thu, 2 Jan 2025 14:26:07 +0200
+Subject: [PATCH 5/5] netstat: drop `netstat -s` dep by using `/proc/net/snmp`
+ data directly
+
+This allows the plugin to work under OpenWRT as the busybox netstat
+does not support `netstat -s`.
+
+Fixes: https://github.com/munin-monitoring/muninlite/issues/14
+Signed-off-by: Rany Hany <rany_hany@riseup.net>
+---
+ muninlite.in    |  2 +-
+ plugins/netstat | 54 +++++++++++++++++++++++++++++++++++++++++++------
+ 2 files changed, 49 insertions(+), 7 deletions(-)
+
+--- a/muninlite.in
++++ b/muninlite.in
+@@ -87,7 +87,7 @@ for PLUG in $PLUGINS; do
+       done
+       ;;
+     netstat)
+-      if netstat -s >/dev/null 2>&1; then
++      if [ -f /proc/net/snmp ]; then
+         RES="$RES netstat"
+       fi
+       ;;
+--- a/plugins/netstat
++++ b/plugins/netstat
+@@ -31,10 +31,52 @@ config_netstat() {
+   echo "established.info The number of currently open connections."
+ }
+ fetch_netstat() {
+-  NINFO=$(netstat -s | sed 's/ \{1,\}/ /g')
+-  echo "active.value" "$(echo "$NINFO" | grep "active connection" | cut -d " " -f 2)"
+-  echo "passive.value" "$(echo "$NINFO" | grep "passive connection" | cut -d " " -f 2)"
+-  echo "failed.value" "$(echo "$NINFO" | grep "failed connection" | cut -d " " -f 2)"
+-  echo "resets.value" "$(echo "$NINFO" | grep "connection resets" | cut -d " " -f 2)"
+-  echo "established.value" "$(echo "$NINFO" | grep "connections established" | cut -d " " -f 2)"
++  awk '
++    BEGIN {
++      TcpNR = -1
++      ActiveOpens = -1
++      PassiveOpens = -1
++      AttemptFails = -1
++      EstabResets = -1
++      CurrEstab = -1
++    }
++
++    /^Tcp: / {
++      if (++TcpNR == 0) {
++        for (i = 1; i <= NF; i++) {
++          if ($i == "ActiveOpens") {
++            ActiveOpens = i
++          } else if ($i == "PassiveOpens") {
++            PassiveOpens = i
++          } else if ($i == "AttemptFails") {
++            AttemptFails = i
++          } else if ($i == "EstabResets") {
++            EstabResets = i
++          } else if ($i == "CurrEstab") {
++            CurrEstab = i
++          }
++        }
++      } else if (TcpNR == 1) {
++        if (ActiveOpens < 1 || PassiveOpens < 1 || AttemptFails < 1 || EstabResets < 1 || CurrEstab < 1) {
++          TcpNR = -1
++        } else {
++          print "active.value " $ActiveOpens
++          print "passive.value " $PassiveOpens
++          print "failed.value " $AttemptFails
++          print "resets.value " $EstabResets
++          print "established.value " $CurrEstab
++        }
++      }
++    }
++
++    END {
++      if (TcpNR < 1) {
++        print "active.value 0"
++        print "passive.value 0"
++        print "failed.value 0"
++        print "resets.value 0"
++        print "established.value 0"
++      }
++    }
++  ' /proc/net/snmp
+ }

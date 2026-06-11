@@ -1,0 +1,13 @@
+#!/bin/sh
+
+CONFIG=/usr/lib/lua/crowdsec/crowdsec.conf
+## Gen&ConfigApiKey
+if grep -q "{API_KEY}" "$CONFIG"; then
+	SUFFIX=`tr -dc A-Za-z0-9 </dev/urandom | head -c 8`
+	API_KEY=`/usr/bin/cscli bouncers add lua-cs-bouncer-${SUFFIX} -o raw`
+	sed -i "s,^\(\s*API_KEY\s*=\s*\).*\$,\1$API_KEY," $CONFIG
+else
+	echo API key already registered...
+fi
+
+exit 0

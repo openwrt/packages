@@ -1,0 +1,8 @@
+--- a/proxy/meson.build
++++ b/proxy/meson.build
+@@ -9,5 +9,3 @@ endif
+ if get_option('environment_proxy').enabled()
+   subdir('environment')
+ endif
+-
+-subdir('tests')

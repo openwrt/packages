@@ -1,0 +1,10 @@
+{
+	"user": "zabbix-agent",
+	"access": {
+		"network.wireless": {
+			"methods": [
+				"status"
+			]
+		}
+	}
+}

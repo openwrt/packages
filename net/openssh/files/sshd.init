@@ -1,0 +1,56 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006-2011 OpenWrt.org
+
+START=50
+STOP=50
+
+USE_PROCD=1
+PROG=/usr/sbin/sshd
+
+start_service() {
+	for type in rsa ed25519
+	do
+		# check for keys
+		key=/etc/ssh/ssh_host_${type}_key
+		[ -f $key ] && {
+			[ -x /usr/bin/ssh-keygen ] && {
+				if ! /usr/bin/ssh-keygen -y -f $key > /dev/null 2>&1; then
+					rm -f $key
+				fi
+			}
+		}
+		[ ! -f $key ] && {
+			# generate missing keys
+			[ -x /usr/bin/ssh-keygen ] && {
+				/usr/bin/ssh-keygen -N '' -t $type -f $key 2>&- >&-
+			}
+		}
+	done
+	mkdir -m 0700 -p /var/empty
+
+	local lport=$(awk '/^Port / { print $2; exit }' /etc/ssh/sshd_config)
+	[ -z "$lport" ] && lport=22
+
+	procd_open_instance
+	procd_add_mdns "ssh" "tcp" "$lport"
+	procd_set_param command $PROG -D
+	procd_set_param respawn
+	procd_close_instance
+}
+
+reload_service() {
+	procd_send_signal sshd
+}
+
+shutdown() {
+	local pid
+
+	stop
+
+	# kill active clients
+	for pid in $(pidof sshd-session)
+	do
+		[ "$pid" = "$$" ] && continue
+		[ -e "/proc/$pid/stat" ] && kill $pid
+	done
+}

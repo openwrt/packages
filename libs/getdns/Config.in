@@ -1,0 +1,22 @@
+menu "Configuration"
+	depends on PACKAGE_getdns
+
+config GETDNS_BUILD_LIBEVENT2
+	bool "Use libevent2-based event loop"
+	default n
+	help
+		"Use libevent2 for the event loop (requires libevent2 dependency)."
+
+config GETDNS_ENABLE_STUB_ONLY
+	bool "Stub resolution mode only"
+	default y
+	help
+		getdns can be configured for stub resolution mode only (removes libunbound dependency).
+	
+config GETDNS_ENABLE_IDN_LIBIDN2
+	bool "IDN support"
+	default n
+	help
+		getdns can be configured with some IDN Support (requires libidn2 dependency).
+
+endmenu

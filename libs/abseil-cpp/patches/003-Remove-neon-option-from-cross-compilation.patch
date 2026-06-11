@@ -1,0 +1,43 @@
+# From https://git.openembedded.org/meta-openembedded/tree/meta-oe/recipes-devtools/abseil-cpp
+From 632632508daf8bb3a5800dac937ffc33c6d85973 Mon Sep 17 00:00:00 2001
+From: Jonas Gorski <jonas.gorski@bisdn.de>
+Date: Thu, 16 Jun 2022 11:46:31 +0000
+Subject: [PATCH] Remove neon option from cross compilation
+
+Not every arm platform supports neon instructions, so do not enforce
+them.
+
+Upstream-Status: Pending
+
+Signed-off-by: Jonas Gorski <jonas.gorski@bisdn.de>
+---
+ absl/copts/GENERATED_AbseilCopts.cmake | 4 ----
+ absl/copts/GENERATED_copts.bzl         | 4 ----
+ 2 files changed, 8 deletions(-)
+
+--- a/absl/copts/GENERATED_AbseilCopts.cmake
++++ b/absl/copts/GENERATED_AbseilCopts.cmake
+@@ -218,10 +218,6 @@ list(APPEND ABSL_MSVC_TEST_FLAGS
+     "/DNOMINMAX"
+ )
+ 
+-list(APPEND ABSL_RANDOM_HWAES_ARM32_FLAGS
+-    "-mfpu=neon"
+-)
+-
+ list(APPEND ABSL_RANDOM_HWAES_ARM64_FLAGS
+     "-march=armv8-a+crypto"
+ )
+--- a/absl/copts/GENERATED_copts.bzl
++++ b/absl/copts/GENERATED_copts.bzl
+@@ -219,10 +219,6 @@ ABSL_MSVC_TEST_FLAGS = [
+     "/DNOMINMAX",
+ ]
+ 
+-ABSL_RANDOM_HWAES_ARM32_FLAGS = [
+-    "-mfpu=neon",
+-]
+-
+ ABSL_RANDOM_HWAES_ARM64_FLAGS = [
+     "-march=armv8-a+crypto",
+ ]

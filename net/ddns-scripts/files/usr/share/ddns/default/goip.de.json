@@ -1,0 +1,9 @@
+{
+	"name": "goip.de",
+	"ipv4": {
+		"url": "http://www.goip.de/setip?username=[USERNAME]&password=[PASSWORD]&subdomain=[DOMAIN]&ip=[IP]"
+	},
+	"ipv6": {
+		"url": "http://www.goip.de/setip?username=[USERNAME]&password=[PASSWORD]&subdomain=[DOMAIN]&ip6=[IP]"
+	}
+}

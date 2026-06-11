@@ -1,0 +1,56 @@
+From 59c389a91cfe91eebed9c36887fa2a3eca4cbd6f Mon Sep 17 00:00:00 2001
+From: Christian Marangi <ansuelsmth@gmail.com>
+Date: Mon, 24 Nov 2025 18:53:28 +0100
+Subject: [PATCH] [rest] Permit to externally provide cJSON library
+
+Permit to externally provide cJSON library if found with PKGConfig.
+
+Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
+---
+ src/rest/CMakeLists.txt    | 12 +++++++++++-
+ third_party/CMakeLists.txt |  5 ++++-
+ 2 files changed, 15 insertions(+), 2 deletions(-)
+
+--- a/src/rest/CMakeLists.txt
++++ b/src/rest/CMakeLists.txt
+@@ -36,11 +36,22 @@ add_library(otbr-rest
+     response.cpp
+ )
+ 
++if (CJSON_FOUND)
++    set(CJSON_LIB_TARGETS ${CJSON_LINK_LIBRARIES})
++else()
++    set(CJSON_LIB_TARGETS cjson)
++endif()
++
++target_include_directories(otbr-rest
++    PRIVATE
++        ${CJSON_INCLUDE_DIRS}
++)
++
+ target_link_libraries(otbr-rest
+     PUBLIC
+         http_parser
+     PRIVATE
+-        cjson
++        ${CJSON_LIB_TARGETS}
+         otbr-config
+         otbr-utils
+         openthread-ftd
+--- a/third_party/CMakeLists.txt
++++ b/third_party/CMakeLists.txt
+@@ -28,6 +28,13 @@
+ 
+ add_subdirectory(openthread)
+ if(OTBR_REST)
+-    add_subdirectory(cJSON)
++    pkg_check_modules(CJSON libcjson)
++    if (CJSON_FOUND)
++        set(CJSON_FOUND ${CJSON_FOUND} PARENT_SCOPE)
++        set(CJSON_INCLUDE_DIRS ${CJSON_INCLUDE_DIRS} PARENT_SCOPE)
++        set(CJSON_LINK_LIBRARIES ${CJSON_LINK_LIBRARIES} PARENT_SCOPE)
++    else()
++        add_subdirectory(cJSON)
++    endif()
+     add_subdirectory(http-parser)
+ endif()

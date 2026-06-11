@@ -1,0 +1,30 @@
+#!/bin/bash
+# Test: nft_check_element for verifying fw4 table/chain existence
+. "$(dirname "$0")/../lib/setup.sh"
+
+oneTimeTearDown() { rm -rf "${MOCK_ROOT:-}"; }
+
+setUp() {
+	nft_fw4_dump=""
+}
+
+testTableExists() {
+	assertTrue "fw4 table exists" "nft_check_element 'table' 'fw4'"
+}
+
+testChainsExist() {
+	assertTrue "input chain" "nft_check_element 'chain' 'input'"
+	assertTrue "forward chain" "nft_check_element 'chain' 'forward'"
+	assertTrue "output chain" "nft_check_element 'chain' 'output'"
+	assertTrue "dstnat chain" "nft_check_element 'chain' 'dstnat'"
+	assertTrue "mangle_prerouting" "nft_check_element 'chain' 'mangle_prerouting'"
+	assertTrue "mangle_output" "nft_check_element 'chain' 'mangle_output'"
+	assertTrue "mangle_forward" "nft_check_element 'chain' 'mangle_forward'"
+}
+
+testNonExistentElements() {
+	assertFalse "Non-existent chain" "nft_check_element 'chain' 'nonexistent_chain'"
+	assertFalse "srcnat not present" "nft_check_element 'chain' 'srcnat'"
+}
+
+. shunit2

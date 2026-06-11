@@ -1,0 +1,37 @@
+From 32e5943a3c4637d39e4d65b544dcb99e280210e3 Mon Sep 17 00:00:00 2001
+From: Khem Raj <raj.khem@gmail.com>
+Date: Sun, 23 Jul 2017 10:54:26 -0700
+Subject: [PATCH] configure: Add explicit tag options to libtool invocation
+
+This helps cross compile when tag inference via heuristics
+fail because CC variable is having -fPIE -pie and libtool
+smartly removes it when building libraries
+
+Upstream-Status: Inappropriate [as far as open source community is concerned, upstream is dead]
+
+Signed-off-by: Khem Raj <raj.khem@gmail.com>
+---
+ dist/configure.ac | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+--- a/dist/configure.ac
++++ b/dist/configure.ac
+@@ -366,12 +366,12 @@ LIBTOOL="./libtool"
+ 
+ INSTALLER="\$(LIBTOOL) --mode=install cp -p"
+ 
+-MAKEFILE_CC="\$(LIBTOOL) --mode=compile ${MAKEFILE_CC}"
+-MAKEFILE_SOLINK="\$(LIBTOOL) --mode=link ${MAKEFILE_CCLINK} -avoid-version"
+-MAKEFILE_CCLINK="\$(LIBTOOL) --mode=link ${MAKEFILE_CCLINK}"
+-MAKEFILE_CXX="\$(LIBTOOL) --mode=compile ${MAKEFILE_CXX}"
+-MAKEFILE_XSOLINK="\$(LIBTOOL) --mode=link ${MAKEFILE_CXXLINK} -avoid-version"
+-MAKEFILE_CXXLINK="\$(LIBTOOL) --mode=link ${MAKEFILE_CXXLINK}"
++MAKEFILE_CC="\$(LIBTOOL) --tag=CC --mode=compile ${MAKEFILE_CC}"
++MAKEFILE_SOLINK="\$(LIBTOOL) --tag=CC --mode=link ${MAKEFILE_CCLINK} -avoid-version"
++MAKEFILE_CCLINK="\$(LIBTOOL) --tag=CC --mode=link ${MAKEFILE_CCLINK}"
++MAKEFILE_CXX="\$(LIBTOOL) --tag=CXX --mode=compile ${MAKEFILE_CXX}"
++MAKEFILE_XSOLINK="\$(LIBTOOL) --tag=CXX --mode=link ${MAKEFILE_CXXLINK} -avoid-version"
++MAKEFILE_CXXLINK="\$(LIBTOOL) --tag=CXX --mode=link ${MAKEFILE_CXXLINK}"
+ 
+ 
+ case "$host_os" in

@@ -1,0 +1,203 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2010-2018 OpenWrt.org
+
+# shellcheck disable=SC2034
+START=95
+# shellcheck disable=SC2034
+STOP=10
+# shellcheck disable=SC2034
+USE_PROCD=1
+
+NAME=mysqld
+
+LOGGER="/usr/bin/logger -p user.err -s -t $NAME --"
+[ -x "$LOGGER" ] || LOGGER="echo"
+
+MYSQLD="/usr/bin/$NAME"
+
+pidfile=""
+
+# mysqladmin likes to read /root/.my.cnf which could cause issues.
+export HOME="/etc/mysql"
+
+# Safeguard (relative paths, core dumps...)
+cd /
+
+mysqld_get_param() {
+	"$MYSQLD" --help --verbose | sed -n 's|^'"$1"'[[:blank:]]\+||p'
+}
+
+# Send kill signal to MariaDB process
+#
+# Usage: boolean mysqld_kill signal
+mysql_kill() {
+	[ -n "$pidfile" ] || pidfile="$(mysqld_get_param pid-file)"
+	[ -f "$pidfile" ] || return 1
+	pid="$(cat "$pidfile")"
+	[ -n "$pid" ] || return 2
+	kill "$1" "$pid"
+}
+
+# Checks if a server is running and accessible.
+#
+# Supported modes are 'check_alive' and 'check_dead'.
+# Both check for pidfile and whether the specified process is running and is
+# indeed mysqld. We could use mysqladmin for the check, but to be able to do
+# so, mysqladmin requires access to the database, which sounds like overkill
+# and potential security issue.
+#
+# Usage: boolean mysqld_status [check_alive|check_dead]
+mysqld_status() {
+	ps_alive=0
+	pidfile="$(mysqld_get_param pid-file)"
+	if [ -f "$pidfile" ] && mysql_kill -0 2> /dev/null && \
+	   [ "$(readlink "/proc/$(cat "$pidfile")/exe")" = "$MYSQLD" ]; then
+		ps_alive=1
+	fi
+
+	if { [ "$1" = check_alive ] && [ $ps_alive = 1 ]; } || \
+		{ [ "$1" = check_dead ] && [ $ps_alive = 0 ]; }
+	then
+		return 0 # EXIT_SUCCESS
+	else
+		return 1 # EXIT_FAILURE
+	fi
+}
+
+start_service() {
+	conf=/etc/mysql/my.cnf
+	logdir=/var/log/mysql
+	version="$(mysqld --version | sed -n 's|.*Ver[[:blank:]]*\([0-9.]*\)-.*|\1|p')"
+
+	# Few basic checks
+	if [ ! -x "$MYSQLD" ]; then
+		$LOGGER "$MYSQLD is missing"
+		exit 1
+	fi
+
+	if [ -z "$version" ]; then
+		$LOGGER "Can't get MariaDB version, something is seriously wrong"
+		exit 1
+	fi
+
+	if [ ! -r "$conf" ]; then
+		$LOGGER "$conf cannot be read"
+		exit 1
+	fi
+
+	if mysqld_status check_alive; then
+		$LOGGER "server is already running"
+		exit 0
+	fi
+
+	# Get various config options
+	config_load "$NAME"
+	config_get my_user general user "mariadb"
+	config_get my_group general group "mariadb"
+	config_get_bool enabled general enabled 0
+	config_get_bool init_db general init 1
+	config_get_bool autoupgrade general upgrade 1
+	config_get options general options
+
+	# shellcheck disable=SC2154
+	if [ "$enabled" -eq 0 ]; then
+		$LOGGER "service not enabled in /etc/config/$NAME"
+		exit 1
+	fi
+
+	datadir="$(mysqld_get_param datadir)"
+	tmpdir="$(mysqld_get_param tmpdir)"
+	sockdir="$(dirname "$(mysqld_get_param socket)")"
+
+	# Make sure we have a working database in datadir
+	if [ ! -f "$datadir/mysql/tables_priv.MAD" ]; then
+		args="--force"
+		basedir="$(mysqld_get_param basedir)"
+		[ -n "$basedir" ] && args="$args --basedir=$basedir"
+
+		# shellcheck disable=SC2154
+		if [ "$init_db" -gt 0 ]; then
+			# shellcheck disable=SC2154
+			mysql_install_db $args --skip-name-resolve --skip-test-db --datadir="$datadir" || exit 1
+			echo "$version" > "$datadir"/.version
+			chown -Rh "$my_user:$my_group" "$datadir"
+		else
+			$LOGGER "Cannot detect privileges table. You might need to run"
+			$LOGGER "'mysql_install_db \"$args\"'"
+			$LOGGER "to initialize the system tables."
+			$LOGGER "Then hand it ower to MariaDB user"
+			# shellcheck disable=SC2154
+			$LOGGER "'chown -Rh \"$my_user:$my_group\" \"$datadir\"'"
+		exit 1
+		fi
+	fi
+
+	# Make sure all required directories exists and have correct rights
+	for i in "$logdir" "$sockdir"; do
+		opts="-m 0750"
+		if ! [ -e "$i" ]; then
+			# $sockdir needs to be accessible for clients
+			[ "$i" = "$sockdir" ] && opts="-m 0755"
+			# shellcheck disable=SC2086
+			mkdir -p $opts "$i"
+		fi
+		# shellcheck disable=SC2154
+		[ -d "$i" ] && chown -Rh "$my_user:$my_group" "$i"
+	done
+
+	# Migration from old versions
+	# shellcheck disable=SC2154
+	if [ "$(cat "$datadir"/.version 2> /dev/null)" \!= "$version" ] && [ "$autoupgrade" -gt 0 ]; then
+		# Check for correct owner
+		local owner="$(stat --format %U:%G "$datadir" 2> /dev/null)"
+		if [ -n "$owner" ] && [ "$owner" != "$my_user:$my_group" ]; then
+			chown -Rh "$my_user:$my_group" "$datadir"
+		fi
+
+		# Start upgrade instance without credentials
+		sudo -u "$my_user" mysqld --skip-networking --skip-grant-tables --socket=/tmp/mysql_upgrade.sock &
+		PID="$!"
+		i=0
+		# Wait for upgrade instance of db to start
+		while [ "$i" -lt 15 ] && test \! -S /tmp/mysql_upgrade.sock; do
+			sleep 1
+			i="$((i + 1))"
+		done
+		[ -S /tmp/mysql_upgrade.sock ] || {
+			$LOGGER "Failed to start upgrading instance of MariaDB."
+			exit 1
+		}
+		# Upgrade the database
+		mysql_upgrade --upgrade-system-tables --socket=/tmp/mysql_upgrade.sock
+		echo "$version" > "$datadir"/.version
+		# Stop the upgrade instance
+		kill "$PID"
+		i=0
+		while [ "$i" -lt 60 ] && grep -q mysql "/proc/$PID/cmdline"; do
+			sleep 1
+			[ "$i" -lt 30 ] || kill "$PID"
+			i="$((i + 1))"
+		done
+		# Use force
+		if grep -q mysql "/proc/$PID/cmdline"; then
+			kill -9 "$PID"
+		fi
+	fi
+
+	# Start daemon
+	procd_open_instance
+
+	# shellcheck disable=SC2154 disable=SC2086
+	procd_set_param command "$MYSQLD" $options
+	procd_set_param respawn "${respawn_threshold:-3600}" "${respawn_timeout:-5}" "${respawn_retry:-5}"
+	# run as user
+	procd_set_param user "$my_user"
+	# forward stderr to logd
+	procd_set_param stderr 1
+	# use HUP to reload
+	procd_set_param reload_signal HUP
+	# terminate using signals
+	procd_set_param term_timeout 60
+
+	procd_close_instance
+}

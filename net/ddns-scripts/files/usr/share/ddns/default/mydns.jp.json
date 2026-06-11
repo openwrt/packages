@@ -1,0 +1,9 @@
+{
+	"name": "mydns.jp",
+	"ipv4": {
+		"url": "http://www.mydns.jp/directip.html?MID=[USERNAME]&PWD=[PASSWORD]&IPV4ADDR=[IP]"
+	},
+	"ipv6": {
+		"url": "http://www.mydns.jp/directip.html?MID=[USERNAME]&PWD=[PASSWORD]&IPV6ADDR=[IP]"
+	}
+}

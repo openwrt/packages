@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.12)
+PROJECT(gl-puli-mcu C)
+ADD_DEFINITIONS(-Os -ggdb -Wall --std=gnu17 -Wmissing-declarations)
+SET(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
+ADD_EXECUTABLE(gl-puli-mcu gl-puli-mcu.c)
+TARGET_LINK_LIBRARIES(gl-puli-mcu ubox ubus ${CMAKE_DL_LIBS})
+INSTALL(TARGETS gl-puli-mcu RUNTIME DESTINATION sbin)

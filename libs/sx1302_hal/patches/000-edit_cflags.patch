@@ -1,0 +1,35 @@
+From 389e8138f543baf334442ca52edf5f7b4cfe13dc Mon Sep 17 00:00:00 2001
+From: Marcus Schref <mschref@web.de>
+Date: Mon, 22 Aug 2022 10:02:13 +0200
+Subject: [PATCH] sx1302_hal: edit cflags
+
+Enable use of TARGET_CFLAGS in addition to specified CFLAGS
+
+Signed-off-by: Marcus Schref <mschref@web.de>
+---
+ libloragw/Makefile | 2 +-
+ libtools/Makefile  | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+--- a/libloragw/Makefile
++++ b/libloragw/Makefile
+@@ -11,7 +11,7 @@ CROSS_COMPILE ?=
+ CC := $(CROSS_COMPILE)gcc
+ AR := $(CROSS_COMPILE)ar
+ 
+-CFLAGS := -O2 -Wall -Wextra -std=c99 -Iinc -I. -I../libtools/inc
++CFLAGS += -O2 -Wall -Wextra -std=c99 -Iinc -I. -I../libtools/inc
+ 
+ OBJDIR = obj
+ INCLUDES = $(wildcard inc/*.h) $(wildcard ../libtools/inc/*.h)
+--- a/libtools/Makefile
++++ b/libtools/Makefile
+@@ -7,7 +7,7 @@ CROSS_COMPILE ?=
+ CC := $(CROSS_COMPILE)gcc
+ AR := $(CROSS_COMPILE)ar
+ 
+-CFLAGS := -O2 -Wall -Wextra -std=c99 -Iinc -I.
++CFLAGS += -O2 -Wall -Wextra -std=c99 -Iinc -I.
+ 
+ OBJDIR = obj
+ INCLUDES = $(wildcard inc/*.h)

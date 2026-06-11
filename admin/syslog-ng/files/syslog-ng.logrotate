@@ -1,0 +1,12 @@
+/var/log/messages {
+	compress
+	copytruncate
+	delaycompress
+	notifempty
+	maxsize @MAXSIZE@
+	missingok
+	postrotate
+		/usr/sbin/syslog-ng-ctl reload > /dev/null
+	endscript
+	rotate @ROTATE@
+}

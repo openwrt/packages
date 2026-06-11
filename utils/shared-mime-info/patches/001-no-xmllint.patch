@@ -1,0 +1,11 @@
+--- a/meson.build
++++ b/meson.build
+@@ -21,7 +21,7 @@ config.set_quoted('VERSION', meson.proje
+ ###############################################################################
+ # Find tools
+ 
+-xmllint = find_program('xmllint')
++xmllint = find_program('xmllint', required: false)
+ xmlto   = find_program('xmlto', required: false)
+ 
+ ###############################################################################

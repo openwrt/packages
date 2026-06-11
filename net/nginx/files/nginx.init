@@ -1,0 +1,163 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2015 OpenWrt.org
+
+START=80
+
+USE_PROCD=1
+
+G_OPTS="daemon off;"
+
+NGINX_UTIL="/usr/bin/nginx-util"
+UCI_CONF_TEMPLATE="/etc/nginx/uci.conf.template"
+LATEST_UCI_CONF_VERSION="1.2"
+
+[ -f "${NGINX_UTIL}" ] && eval $("${NGINX_UTIL}" get_env)
+
+CONF=""
+
+nginx_check_luci_template() {
+	UCI_CONF_VERSION="$(sed -nr 's/# UCI_CONF_VERSION=(.*)/\1/p' $UCI_CONF_TEMPLATE)"
+
+	# No need to migrate already latest version
+	if [ "$UCI_CONF_VERSION" = "$LATEST_UCI_CONF_VERSION" ]; then
+		return
+	fi
+
+	# Fix wrong entry for the module.d include
+	if [ "$UCI_CONF_VERSION" = "1.1" ]; then
+		# Remove any entry
+		sed -i '/^include module\.d\/\*\.module;/d' $UCI_CONF_TEMPLATE
+		# Put the include before events {}
+		sed -i 's/events {/include module.d\/*.module;\n\nevents {/' $UCI_CONF_TEMPLATE
+	fi
+
+	if [ "$UCI_CONF_VERSION" != "$LATEST_UCI_CONF_VERSION" ]; then
+		sed -i "s/# UCI_CONF_VERSION=.*/# UCI_CONF_VERSION=$LATEST_UCI_CONF_VERSION/" $UCI_CONF_TEMPLATE
+	fi
+
+	if [ -z "$UCI_CONF_VERSION" ]; then
+		# Handle funny case with template with the include module but no version
+		if ! grep -q -e '^include module\.d/\*\.module;$' $UCI_CONF_TEMPLATE; then
+			sed -i 's/events {/include module.d\/*.module;\n\nevents {/' $UCI_CONF_TEMPLATE
+		fi
+		echo "" >> $UCI_CONF_TEMPLATE
+		echo "# UCI_CONF_VERSION=1.2"  >> $UCI_CONF_TEMPLATE
+	fi
+}
+
+nginx_init() {
+	[ -z "${CONF}" ] || return # already called.
+
+	[ -d /var/log/nginx ] || mkdir -p /var/log/nginx
+	[ -d /var/lib/nginx ] || mkdir -p /var/lib/nginx
+
+	rm -f "$(readlink "${UCI_CONF}")"
+	${NGINX_UTIL} init_lan
+
+	if [ -f $UCI_CONF_TEMPLATE ]; then
+		nginx_check_luci_template
+	fi
+
+	if [ -e "${UCI_CONF}" ]
+	then CONF="${UCI_CONF}"
+	else CONF="${NGINX_CONF}"
+	fi
+
+	local message
+	message="$(/usr/sbin/nginx -t -c "${CONF}" -g "${G_OPTS}" 2>&1)" ||
+	{
+		echo -e "${message}" | logger -t "nginx_init" -p "daemon.err"
+		logger -s -t "nginx_init" -p "daemon.err" "NOT using conf file!"
+		echo "show config to be used by: nginx -T -c '${CONF}'" >&2
+		exit 1
+	}
+
+	logger -t "nginx_init" -p "daemon.info" "using ${CONF} (the test is ok)"
+}
+
+add_mdns() {
+	local cfg="$1"
+	local port enabled service
+
+	config_get enabled "$cfg" enabled
+	config_get port "$cfg" listen
+
+	port=$(echo "$port" | head -n1 | awk '{print $1;}')
+
+
+	if [ "$enabled" != "0" ] && [ "$enabled" != "false" ] && [ -n "$port" ]; then
+		case "$port" in
+			"80")
+				service="http"
+				;;
+			"8080")
+				service="http-alt"
+				;;
+			"443")
+				service="https"
+				;;
+			"8443")
+				service="pcsync-https"
+				;;
+			*)
+				service="custom-http-$port"
+				;;
+		esac
+
+		procd_add_mdns_service "$service" "tcp" "$port" "daemon=nginx"
+	fi
+}
+
+configure_mdns() {
+	local mdns="$(uci -q get nginx.global.mdns)"
+
+	if [ "$mdns" = "1" ] || [ "$mdns" = "true" ]; then
+		procd_open_data
+		json_add_object "mdns"
+
+		config_load nginx
+		config_foreach add_mdns server
+
+		json_close_object
+		procd_close_data
+	fi
+}
+
+start_service() {
+	nginx_init
+
+	procd_open_instance
+	procd_set_param command /usr/sbin/nginx -c "${CONF}" -g "${G_OPTS}"
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_set_param file "${CONF}" "${CONF_DIR}*.crt" "${CONF_DIR}*.key" \
+		"${CONF_DIR}*.conf" "${CONF_DIR}*.locations"
+	procd_set_param respawn
+
+	configure_mdns
+
+	procd_close_instance
+}
+
+
+reload_service() {
+	nginx_init
+
+	if [ "$(cat "/proc/$(cat "/var/run/nginx.pid")/cmdline")" = \
+	     "nginx: master process /usr/sbin/nginx -c ${CONF} -g ${G_OPTS}" ]
+	then procd_send_signal nginx
+	else restart
+	fi
+}
+
+
+service_triggers() {
+	procd_add_raw_trigger acme.renew 5000 /etc/init.d/nginx reload
+}
+
+
+extra_command "relog" "Reopen log files (without reloading)"
+relog() {
+	[ -d /var/log/nginx ] || mkdir -p /var/log/nginx
+	procd_send_signal nginx '*' USR1
+}

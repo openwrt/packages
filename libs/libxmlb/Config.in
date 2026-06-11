@@ -1,0 +1,22 @@
+menu "Select libxmlb options"
+	depends on PACKAGE_libxmlb
+
+config LIBXMLB_CLI
+	bool "Command-line tool"
+	default n
+	help
+	  Compile and install the xb-tool cli
+
+config LIBXMLB_LZMA
+	bool "LZMA"
+	default n
+	help
+	  Compile libxmlb with LZMA support
+
+config LIBXMLB_ZSTD
+	bool "zstd"
+	default n
+	help
+	  Compile libxmlb with zstd support
+
+endmenu

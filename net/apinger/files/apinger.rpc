@@ -1,0 +1,117 @@
+#!/bin/sh
+
+. /lib/functions.sh
+. /usr/share/libubox/jshn.sh
+
+RPC_SCRIPTS=/usr/libexec/apinger/rpc
+
+[ -d $RPC_SCRIPTS ] && include $RPC_SCRIPTS
+
+__function__() {
+    type "$1" > /dev/null 2>&1
+}
+
+foreach_extra() {
+	local file obj
+
+	[ ! -d $RPC_SCRIPTS ] && return
+	
+	for file in $RPC_SCRIPTS/*; do
+		obj="${file##*/}"
+		$1 "${obj%%.*}"
+	done
+}
+
+apinger_status() {
+	interface_list() {
+		append iface_list $1
+	}
+	config_load apinger
+	config_foreach interface_list interface
+
+	json_init
+	json_add_array targets
+
+	for iface in $iface_list; do
+		local status_file="/var/run/apinger-$iface.status"
+
+		if [ -f "$status_file" ]; then
+			_IFS="$IFS"
+			IFS="|"
+			while read -r address srcip target sent received timestamp latency loss alarm; do
+				json_add_object targets
+				json_add_string interface "$iface"
+				json_add_string target "$target"
+				json_add_string address "$address"
+				json_add_string srcip "$srcip"
+				json_add_int sent "$sent"
+				json_add_int received "$received"
+				json_add_string latency "$latency"
+				json_add_string loss "$loss"
+				json_add_string alarm "$alarm"
+				json_add_int timestamp "$timestamp"
+				json_close_object
+			done < "$status_file"
+			IFS="$_IFS"
+		fi
+	done
+
+	json_close_array
+	json_dump
+}
+
+call_extra() {
+	if __function__ "$1"; then
+		$1
+	else
+		json_init
+		json_add_string error "invalid call $1"
+		json_dump
+	fi
+}
+
+call_method() {
+	case "$1" in
+		status)
+			apinger_status
+			;;
+		*)
+			call_extra $1
+			;;
+	esac
+}
+
+list_extra() {
+	if __function__ "${1}_help"; then
+		${1}_help
+	else
+		json_add_object "$1"
+		json_close_object
+	fi
+}
+
+list_methods() {
+	local file
+
+	json_init
+
+	json_add_object status
+	json_close_object
+
+	foreach_extra list_extra ${1}
+
+	json_dump
+} 
+
+main () {
+	case "$1" in
+		list)
+			list_methods
+			;;
+		call)
+			call_method $2
+			;;
+	esac
+}
+
+main "$@"

@@ -1,0 +1,18 @@
+config rest-server
+	option enabled '0'
+	option path '/mnt/backup'			# data directory (default "/tmp/restic")
+	#option append_only '1'				# enable append only mode
+	#option cpuprofile '/mnt/backup/cpuprofile'	# write CPU profile to file
+	#option debug '1'					# output debug messages
+	#option htpasswd_file '.htpasswd'	# location of .htpasswd file (default: "<data directory>/.htpasswd")
+	#option listen ':8000'				# listen address (default ":8000")
+	#option log '/mnt/backup/http.log'	# log HTTP requests in the combined log format
+	#option max_size '1000000'			# the maximum size of the repository in bytes
+	#option no_auth '1'					# disable .htpasswd authentication
+	#option no_verify_upload '1'		# do not verify the integrity of uploaded data. DO NOT enable unless the rest-server runs on a very low-power device
+	#option private_repos '1'			# users can only access their private repo
+	#option prometheus '1'				# enable Prometheus metrics
+	#option prometheus_no_auth '1'		# disable auth for Prometheus /metrics endpoint
+	#option tls '1'						# turn on TLS support
+	#option tls_cert '/mnt/backup/public_key'	# TLS certificate path
+	#option tls_key '/mnt/backup/private_key'	# TLS key path

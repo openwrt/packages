@@ -1,0 +1,7 @@
+{
+	"name": "selfhost.de",
+	"ipv4": {
+		"url": "http://carol.selfhost.de/update?username=[USERNAME]&password=[PASSWORD]&myip=[IP]&hostname=1",
+		"answer": "good|nochg|200|204"
+	}
+}

@@ -1,0 +1,101 @@
+#!/bin/sh /etc/rc.common
+
+# shellcheck shell=ash
+
+# Just looks for changes in the config-file and applies them with a
+# one-time-run.
+
+USE_PROCD=1
+# PROCD_DEBUG=1
+
+# taken from /etc/init.d/uhttpd
+append_arg() {
+	local cfg="$1"
+	local var="$2"
+	local opt="$3"
+	local def="$4"
+	local val
+
+	config_get val "$cfg" "$var"
+	[ -n "$val" -o -n "$def" ] && procd_append_param command "$opt" "${val:-$def}"
+}
+
+service_triggers() {
+	procd_add_reload_trigger "gatling"
+}
+
+start_instance() {
+
+	local cfg="$1"
+	local ftp_server
+	local enabled
+
+	config_get_bool enabled "$cfg" 'enabled' 1
+	[ $enabled -gt 0 ] || return
+
+	procd_open_instance
+
+	procd_set_param command /usr/bin/gatling
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_set_param term_timeout 20
+
+	# get listen-address and slice it from back, to cut at port-delimiter
+	config_get listen_http "$cfg" 'listen_http'
+	port="${listen_http##*:}"
+	ip="${listen_http%:*}"
+	case "$ip" in
+		'['*']')  ip="${ip:1:-1}" ;;
+	esac
+
+	procd_append_param command -i "$ip"
+	procd_append_param command -p "$port"
+
+	append_arg "$cfg" switch_to_uid "-u"
+	append_arg "$cfg" chroot_dir "-c"
+	append_arg "$cfg" timeout "-T"
+
+	config_get_bool virtual_hosting "$cfg" 'virtual_hosting' 0
+	if [ "$virtual_hosting" -gt 0 ]; then
+		# enable virtual hosting
+		procd_append_param command -v
+	else
+		# disable
+		procd_append_param command -V
+	fi
+
+	config_get_bool ftp_server "$cfg" 'ftp_server' 0
+	if [ "$ftp_server" -gt 0 ]; then
+		procd_append_param command -f
+		append_arg "$cfg" ftp_port "-p"
+	else
+		procd_append_param command -F
+	fi
+
+	config_get_bool logging "$cfg" 'logging' 1
+	if [ "$logging" = 0 ]; then
+		procd_append_param command -n
+	fi
+
+	config_get_bool tarpit_clients "$cfg" 'tarpit_clients' 0
+	if [ "$tarpit_clients" -gt 0 ]; then
+		append_arg "$cfg" tarpit_clients_at "-A"
+	fi
+
+	config_get_bool localhost_access_only "$cfg" 'localhost_access_only' 0
+	if [ "$localhost_access_only" = 1 ]; then
+		procd_append_param command -L
+	fi
+
+	config_get_bool permit_access_ftp_uploads_immediately "$cfg" 'permit_access_ftp_uploads_immediately' 0
+	if [ "$permit_access_ftp_uploads_immediately" = 1 ]; then
+		procd_append_param command -a
+	fi
+
+	procd_close_instance
+}
+
+start_service() {
+	config_load gatling
+	config_foreach start_instance gatling
+}

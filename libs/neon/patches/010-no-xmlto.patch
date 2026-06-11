@@ -1,0 +1,20 @@
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -45,7 +45,7 @@ INSTALL = @INSTALL@
+ transform = @program_transform_name@
+ 
+ LIBTOOL = @LIBTOOL@
+-XMLTO = xmlto
++XMLTO = /bin/true
+ GCOV = gcov
+ XGETTEXT_OPTS = --keyword=_ --keyword=N_ --msgid-bugs-address=neon@lists.manyfish.co.uk \
+ 		--default-domain=neon --flag ne_print_request_header:3:c-format \
+@@ -148,7 +148,7 @@ install-memleak:
+ 	@echo "ERROR: purposes only; this copy of neon must not be installed."
+ 	@false
+ 
+-install-yes: install-lib install-headers install-config install-docs install-nls
++install-yes: install-lib install-headers install-config install-nls
+ 
+ # libtool does all the necessary magic here
+ install-lib: subdirs

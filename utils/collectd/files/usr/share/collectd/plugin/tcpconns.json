@@ -1,0 +1,10 @@
+{
+	"bool": [
+		"ListeningPorts",
+		"AllPortsSummary"
+	],
+	"list": [
+		"LocalPort",
+		"RemotePort"
+	]
+}

@@ -1,0 +1,11 @@
+{
+	"name": "hosting.de",
+	"ipv4": {
+		"url": "https://[USERNAME]:[PASSWORD]@ddns.hosting.de/nic/update?hostname=[DOMAIN]&myip=[IP]",
+		"answer": "good|nochg"
+	},
+	"ipv6": {
+		"url": "https://[USERNAME]:[PASSWORD]@ddns.hosting.de/nic/update?hostname=[DOMAIN]&myip=[IP]",
+		"answer": "good|nochg"
+	}
+}

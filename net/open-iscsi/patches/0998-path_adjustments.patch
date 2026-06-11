@@ -1,0 +1,13 @@
+--- a/include/iscsi_if.h
++++ b/include/iscsi_if.h
+@@ -36,6 +36,10 @@
+  */
+ #endif
+ 
++#ifndef ISCSI_DB_ROOT
++#define ISCSI_DB_ROOT "/etc/iscsi"
++#endif
++
+ #define ISCSI_NL_GRP_ISCSID	1
+ #define ISCSI_NL_GRP_UIP	2
+ 

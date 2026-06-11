@@ -1,0 +1,4 @@
+config global 'global'
+	option disabled '0'
+	option mdns '0'
+	option conf_file '/etc/vsftpd.conf'

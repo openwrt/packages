@@ -1,0 +1,18 @@
+#!/bin/sh /etc/rc.common
+
+USE_PROCD=1
+START=95
+STOP=01
+
+start_service() {
+    procd_open_instance
+    procd_set_param command /usr/bin/airos-dfs-reset
+    procd_set_param stdout 0
+    procd_set_param stderr 0
+    procd_set_param user nobody
+    procd_close_instance
+}
+
+service_stopped() {
+    echo "airos-dfs-reset stopped!"
+}

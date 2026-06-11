@@ -1,0 +1,195 @@
+Date: Sun, 15 Sep 2024 18:41:20 +0800
+To: linuxptp-devel@lists.nwtime.org
+From: Shenghao Yang <me@shenghaoyang.info>
+Subject: [PATCH] sad: allow disabling MAC library autodetection
+
+Avoids ptp4l linking against MAC libraries in a build
+environment with insufficient isolation (OpenWRT).
+
+NO_AUTODETECT_SAD_MAC_LIB can be set to any value to disable
+autodetection, and then one of the SAD_MAC_* variables can be
+used to choose a preferred MAC implementation.
+
+Signed-off-by: Shenghao Yang <me@shenghaoyang.info>
+---
+ incdefs.sh | 154 ++++++++++++++++++++++++++++-------------------------
+ 1 file changed, 81 insertions(+), 73 deletions(-)
+
+--- a/incdefs.sh
++++ b/incdefs.sh
+@@ -52,94 +52,102 @@ user_flags()
+ 	done
+ 
+ 	# Look for nettle support.
+-	for d in $dirs; do
+-		sdirs=$(find $d -type d -name "nettle")
+-		for s in $sdirs; do
+-			have_hmac="0"
+-			files=$(find $s -type f -name hmac.h)
+-			for f in $files; do
+-				if grep -q hmac_sha256_set_key $f; then
+-					have_hmac="1"
+-					break 1;
+-				fi
+-			done
+-			have_memops="0"
+-			files=$(find $s -type f -name memops.h)
+-			for f in $files; do
+-				if grep -q memeql_sec $f; then
+-					have_memops="1"
+-					break 1;
+-				fi
+-			done
+-			have_nettle_meta="0"
+-			files=$(find $s -type f -name nettle-meta.h)
+-			for f in $files; do
+-				if grep -q nettle_get_macs $f; then
+-					have_nettle_meta="1"
+-					break 1;
++	if [ "x$NO_AUTODETECT_SAD_MAC_LIB" = "x" ] || [ "x$SAD_MAC_NETTLE" != "x" ]; then
++		for d in $dirs; do
++			sdirs=$(find $d -type d -name "nettle")
++			for s in $sdirs; do
++				have_hmac="0"
++				files=$(find $s -type f -name hmac.h)
++				for f in $files; do
++					if grep -q hmac_sha256_set_key $f; then
++						have_hmac="1"
++						break 1;
++					fi
++				done
++				have_memops="0"
++				files=$(find $s -type f -name memops.h)
++				for f in $files; do
++					if grep -q memeql_sec $f; then
++						have_memops="1"
++						break 1;
++					fi
++				done
++				have_nettle_meta="0"
++				files=$(find $s -type f -name nettle-meta.h)
++				for f in $files; do
++					if grep -q nettle_get_macs $f; then
++						have_nettle_meta="1"
++						break 1;
++					fi
++				done
++				if [ $have_hmac = "1" ] &&
++				[ $have_memops = "1" ] &&
++				[ $have_nettle_meta = "1" ]; then
++					printf " -DHAVE_NETTLE"
++					break 2
+ 				fi
+ 			done
+-			if [ $have_hmac = "1" ] &&
+-			   [ $have_memops = "1" ] &&
+-			   [ $have_nettle_meta = "1" ]; then
+-				printf " -DHAVE_NETTLE"
+-				break 2
+-			fi
+ 		done
+-	done
++	fi
+ 
+ 	# Look for gnutls support.
+-	for d in $dirs; do
+-		sdirs=$(find $d -type d -name "gnutls")
+-		for s in $sdirs; do
+-			files=$(find $s -type f -name crypto.h)
+-			for f in $files; do
+-				if grep -q gnutls_hmac_init $f; then
+-					printf " -DHAVE_GNUTLS"
+-					break 3
+-				fi
++	if [ "x$NO_AUTODETECT_SAD_MAC_LIB" = "x" ] || [ "x$SAD_MAC_GNUTLS" != "x" ]; then
++		for d in $dirs; do
++			sdirs=$(find $d -type d -name "gnutls")
++			for s in $sdirs; do
++				files=$(find $s -type f -name crypto.h)
++				for f in $files; do
++					if grep -q gnutls_hmac_init $f; then
++						printf " -DHAVE_GNUTLS"
++						break 3
++					fi
++				done
+ 			done
+ 		done
+-	done
++	fi
+ 
+ 	# Look for gnupg support.
+-	for d in $dirs; do
+-		files=$(find $d -type f -name gcrypt.h)
+-		for f in $files; do
+-			if grep -q gcry_mac_open $f; then
+-				printf " -DHAVE_GNUPG"
+-				break 2
+-			fi
++	if [ "x$NO_AUTODETECT_SAD_MAC_LIB" = "x" ] ||  [ "x$SAD_MAC_GNUPG" != "x" ]; then
++		for d in $dirs; do
++			files=$(find $d -type f -name gcrypt.h)
++			for f in $files; do
++				if grep -q gcry_mac_open $f; then
++					printf " -DHAVE_GNUPG"
++					break 2
++				fi
++			done
+ 		done
+-	done
++	fi
+ 
+ 	# Look for openssl support.
+-	for d in $dirs; do
+-		sdirs=$(find $d -type d -name "openssl")
+-		for s in $sdirs; do
+-			have_crypto="0"
+-			files=$(find $s -type f -name crypto.h)
+-			for f in $files; do
+-				if grep -q CRYPTO_memcmp $f; then
+-					have_crypto="1"
+-					break 1;
++	if [ "x$NO_AUTODETECT_SAD_MAC_LIB" = "x" ] || [ "x$SAD_MAC_OPENSSL" != "x" ]; then
++		for d in $dirs; do
++			sdirs=$(find $d -type d -name "openssl")
++			for s in $sdirs; do
++				have_crypto="0"
++				files=$(find $s -type f -name crypto.h)
++				for f in $files; do
++					if grep -q CRYPTO_memcmp $f; then
++						have_crypto="1"
++						break 1;
++					fi
++				done
++				have_evp="0"
++				files=$(find $s -type f -name evp.h)
++				for f in $files; do
++					if grep -q EVP_MAC_init $f; then
++						have_evp="1"
++						break 1;
++					fi
++				done
++				if [ $have_crypto = "1" ] &&
++				[ $have_evp = "1" ]; then
++					printf " -DHAVE_OPENSSL"
++					break 2
+ 				fi
+ 			done
+-			have_evp="0"
+-			files=$(find $s -type f -name evp.h)
+-			for f in $files; do
+-				if grep -q EVP_MAC_init $f; then
+-					have_evp="1"
+-					break 1;
+-				fi
+-			done
+-			if [ $have_crypto = "1" ] &&
+-			   [ $have_evp = "1" ]; then
+-				printf " -DHAVE_OPENSSL"
+-				break 2
+-			fi
+ 		done
+-	done
++	fi
+ }
+ 
+ #

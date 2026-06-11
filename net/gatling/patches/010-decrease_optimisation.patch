@@ -1,0 +1,25 @@
+gatling: decrease optimisation
+
+When compiling on MIPS-architectures, in -O2 there happen some
+errors on interlinking. Linker will will fail with:
+
+```
+Unsupported jump between ISA modes; consider recompiling with interlinking enabled
+```
+
+Reducing optimisation works around these errors and looks like
+a fairly common solution to this problem.
+https://forum.openwrt.org/t/unsupported-jump-between-isa-modes-consider-recompiling-with-interlinking-enabled/55786
+
+Signed-off-by: Martin Hübner <martin.hubner@web.de>
+--- a/GNUmakefile
++++ b/GNUmakefile
+@@ -47,7 +47,7 @@ ifneq ($(DEBUG),)
+ CFLAGS+=-g -Og
+ LDFLAGS+=-g
+ else
+-CFLAGS+=-O2 -fomit-frame-pointer -I/usr/local/include
++CFLAGS+=-O1 -fomit-frame-pointer -I/usr/local/include
+ LDFLAGS+=-s
+ ifneq ($(DIET),)
+ DIET+=-Os

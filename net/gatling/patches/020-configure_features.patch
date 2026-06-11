@@ -1,0 +1,30 @@
+gatling: configure features
+
+Disables SMB-support, as only deprecated SMBv1 is supported,
+which most users wouldn't use anyway. Avoids potential
+vulnerabilities.
+
+Activates threaded opening: Thus gatling will open files in
+threads to open kernel I/O scheduling opportunities.
+
+Signed-off-by: Martin Hübner <martin.hubner@web.de>
+--- a/gatling_features.h
++++ b/gatling_features.h
+@@ -7,7 +7,7 @@
+ 
+ #define SUPPORT_SERVERSTATUS
+ // #define SUPPORT_DAV
+-#define SUPPORT_SMB
++// #define SUPPORT_SMB
+ #define SUPPORT_FTP
+ #define SUPPORT_PROXY
+ /* #define DEBUG to enable more verbose debug messages for tracking fd
+@@ -36,7 +36,7 @@
+ #define SUPPORT_FALLBACK_REDIR
+ 
+ /* open files in threads to open kernel I/O scheduling opportunities */
+-#undef SUPPORT_THREADED_OPEN
++#define SUPPORT_THREADED_OPEN
+ 
+ /* try to divine MIME type by looking at content */
+ #define SUPPORT_MIMEMAGIC

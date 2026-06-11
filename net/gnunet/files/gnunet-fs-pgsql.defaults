@@ -1,0 +1,10 @@
+#!/bin/sh
+
+uci -q get gnunet.datastore || uci set gnunet.datastore=gnunet-config
+
+uci -q batch <<EOF
+	set gnunet.datastore.DATABASE=postgres
+	set gnunet.datastore_postgres=gnunet-config
+	set gnunet.datastore_postgres.CONFIG=postgres://gnunet@%2Ftmp%2Frun%2Fpostgresql/gnunet
+	commit gnunet
+EOF

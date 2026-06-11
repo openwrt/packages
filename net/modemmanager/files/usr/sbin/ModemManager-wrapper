@@ -1,0 +1,32 @@
+#!/bin/sh
+
+. /usr/share/ModemManager/modemmanager.common
+
+trap_with_arg() {
+	func="$1" ; shift
+	for sig ; do
+		# shellcheck disable=SC2064
+		trap "$func $sig" "$sig"
+	done
+}
+
+func_trap() {
+	logger "ModemManager-wrapper[$$]" "Sending signal ${1}..."
+	kill "-${1}" "$CHILD" 2>/dev/null
+}
+
+main() {
+	trap_with_arg func_trap INT TERM KILL
+
+	mkdir -p "${MODEMMANAGER_RUNDIR}"
+	chmod 0755 "${MODEMMANAGER_RUNDIR}"
+
+	/usr/sbin/ModemManager "$@" 1>/dev/null 2>/dev/null &
+	CHILD="$!"
+
+	mm_report_events_from_cache
+
+	wait "$CHILD"
+}
+
+main "$@"

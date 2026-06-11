@@ -1,0 +1,13 @@
+--- a/src/Mayaqua/Encrypt.h
++++ b/src/Mayaqua/Encrypt.h
+@@ -9,7 +9,9 @@
+ #define	ENCRYPT_H
+ 
+ #include "MayaType.h"
+-
++#ifdef linux
++	#include <pthread.h>
++#endif
+ #include <openssl/opensslv.h>
+ 
+ // Constant

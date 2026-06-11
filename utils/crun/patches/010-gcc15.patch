@@ -1,0 +1,11 @@
+--- a/tests/tests_libcrun_fuzzer.c
++++ b/tests/tests_libcrun_fuzzer.c
+@@ -463,7 +463,7 @@ LLVMFuzzerTestOneInput (uint8_t *buf, si
+ }
+ 
+ static void
+-sig_chld ()
++sig_chld (int i)
+ {
+   int status;
+   pid_t p;

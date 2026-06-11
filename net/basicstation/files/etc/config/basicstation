@@ -1,0 +1,146 @@
+config auth 'auth'
+	option cred ''
+	option mode ''
+	option addr ''
+	option port ''
+	option token ''
+	option key ''
+	option crt ''
+	option trust ''
+
+config sx130x 'sx130x'
+	option comif ''
+	option devpath ''
+	option pps ''
+	option public ''
+	option clksrc ''
+	option radio0 ''
+	option radio1 ''
+
+config rfconf 'rfconf0'
+	option type 'SX1250'
+	option txEnable '1'
+	option freq ''
+	option antennaGain '3'
+	option rssiOffset '-215.4'
+	option useRssiTcomp 'std'
+
+config rfconf 'rfconf1'
+	option type 'SX1250'
+	option txEnable '0'
+	option freq ''
+	option antennaGain '3'
+	option rssiOffset '-215.4'
+	option useRssiTcomp 'std'
+
+config rssitcomp 'std'
+	option coeff_a '0'
+	option coeff_b '0'
+	option coeff_c '20.41'
+	option coeff_d '2162.56'
+	option coeff_e '0'
+	
+config txlut
+	option rfPower '12'
+	option paGain '0'
+	option pwrIdx '15'
+	list usedBy 'rfconf0'
+
+config txlut
+	option rfPower '13'
+	option paGain '0'
+	option pwrIdx '16'
+	list usedBy 'rfconf0'
+
+config txlut
+	option rfPower '14'
+	option paGain '0'
+	option pwrIdx '17'
+	list usedBy 'rfconf0'
+
+config txlut
+	option rfPower '15'
+	option paGain '0'
+	option pwrIdx '19'
+	list usedBy 'rfconf0'
+
+config txlut
+	option rfPower '16'
+	option paGain '0'
+	option pwrIdx '20'
+	list usedBy 'rfconf0'
+
+config txlut
+	option rfPower '17'
+	option paGain '0'
+	option pwrIdx '22'
+	list usedBy 'rfconf0'
+
+config txlut
+	option rfPower '18'
+	option paGain '1'
+	option pwrIdx '1'
+	list usedBy 'rfconf0'
+
+config txlut
+	option rfPower '19'
+	option paGain '1'
+	option pwrIdx '2'
+	list usedBy 'rfconf0'
+
+config txlut
+	option rfPower '20'
+	option paGain '1'
+	option pwrIdx '3'
+	list usedBy 'rfconf0'
+
+config txlut
+	option rfPower '21'
+	option paGain '1'
+	option pwrIdx '4'
+	list usedBy 'rfconf0'
+
+config txlut
+	option rfPower '22'
+	option paGain '1'
+	option pwrIdx '5'
+	list usedBy 'rfconf0'
+
+config txlut
+	option rfPower '23'
+	option paGain '1'
+	option pwrIdx '6'
+	list usedBy 'rfconf0'
+
+config txlut
+	option rfPower '24'
+	option paGain '1'
+	option pwrIdx '7'
+	list usedBy 'rfconf0'
+
+config txlut
+	option rfPower '25'
+	option paGain '1'
+	option pwrIdx '9'
+	list usedBy 'rfconf0'
+
+config txlut
+	option rfPower '26'
+	option paGain '1'
+	option pwrIdx '11'
+	list usedBy 'rfconf0'
+
+config txlut
+	option rfPower '27'
+	option paGain '1'
+	option pwrIdx '14'
+	list usedBy 'rfconf0'
+
+config station 'station'
+	option idGenIf ''
+	option routerid ''
+	option stationid ''
+	option logFile ''
+	option logLevel ''
+	option logSize ''
+	option logRotate ''

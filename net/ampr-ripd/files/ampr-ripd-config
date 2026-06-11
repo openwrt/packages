@@ -1,0 +1,4 @@
+
+config ampr-ripd 'network'
+	option tunnet 44.127.254.0/255.255.255.0
+

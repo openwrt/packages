@@ -1,0 +1,48 @@
+--- a/fibmap.c
++++ b/fibmap.c
+@@ -17,6 +17,9 @@
+ #include <errno.h>
+ #include <sys/ioctl.h>
+ #include <sys/stat.h>
++#ifndef __SANE_USERSPACE_TYPES__
++#define __SANE_USERSPACE_TYPES__	/* For PPC64, to get LL64 types */
++#endif
+ #include <linux/types.h>
+ #include <linux/fs.h>
+ 
+--- a/fwdownload.c
++++ b/fwdownload.c
+@@ -14,6 +14,9 @@
+ #include <errno.h>
+ #include <sys/ioctl.h>
+ #include <sys/stat.h>
++#ifndef __SANE_USERSPACE_TYPES__
++#define __SANE_USERSPACE_TYPES__	/* For PPC64, to get LL64 types */
++#endif
+ #include <linux/types.h>
+ #include <linux/fs.h>
+ #include <sys/mman.h>
+--- a/hdparm.c
++++ b/hdparm.c
+@@ -24,6 +24,9 @@
+ #include <sys/mount.h>
+ #include <sys/mman.h>
+ #include <sys/user.h>
++#ifndef __SANE_USERSPACE_TYPES__
++#define __SANE_USERSPACE_TYPES__	/* For PPC64, to get LL64 types */
++#endif
+ #include <linux/types.h>
+ #ifndef FSCONFIG_SET_FLAG
+ #include <linux/fs.h>
+--- a/identify.c
++++ b/identify.c
+@@ -4,6 +4,9 @@
+ #include <stdlib.h>
+ #include <errno.h>
+ #include <string.h>
++#ifndef __SANE_USERSPACE_TYPES__
++#define __SANE_USERSPACE_TYPES__	/* For PPC64, to get LL64 types */
++#endif
+ #include <linux/types.h>
+ #include <endian.h>
+ 

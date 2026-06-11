@@ -1,0 +1,41 @@
+include $(TOPDIR)/rules.mk
+
+PKG_NAME:=python-boto3
+PKG_VERSION:=1.43.19
+PKG_RELEASE:=1
+
+PYPI_NAME:=boto3
+PKG_HASH:=8b84704719dd3960ac12a8f37d9ff5adb853715baa9742f84fdbe2de0305c4cb
+
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
+PKG_LICENSE:=Apache-2.0
+PKG_LICENSE_FILES:=LICENSE
+
+include ../pypi.mk
+include $(INCLUDE_DIR)/package.mk
+include ../python3-package.mk
+
+define Package/python3-boto3
+  SUBMENU:=Python
+  SECTION:=lang
+  CATEGORY:=Languages
+  TITLE:=AWS SDK
+  URL:=https://github.com/boto/boto3
+  DEPENDS:= \
+	+python3-light \
+	+python3-decimal \
+	+python3-logging \
+	+python3-botocore \
+	+python3-jmespath \
+	+python3-s3transfer
+endef
+
+define Package/python3-boto3/description
+Boto3 is the Amazon Web Services (AWS) Software Development Kit (SDK)
+for Python, which allows Python developers to write software that makes
+use of services like Amazon S3 and Amazon EC2.
+endef
+
+$(eval $(call Py3Package,python3-boto3))
+$(eval $(call BuildPackage,python3-boto3))
+$(eval $(call BuildPackage,python3-boto3-src))

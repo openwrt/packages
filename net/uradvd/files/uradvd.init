@@ -1,0 +1,93 @@
+#!/bin/sh /etc/rc.common
+
+START=50
+USE_PROCD=1
+ARGS=""
+
+append_prefix_off_link() {
+	ARGS="$ARGS -a $1"
+}
+
+append_prefix_on_link() {
+	ARGS="$ARGS -p $1"
+}
+
+append_dns() {
+	ARGS="$ARGS --rdnss $1"
+}
+
+start_instance() {
+	local cfg="$1" enabled device ifname default_lifetime valid_lifetime preferred_lifetime max_router_adv_interval min_router_adv_interval
+
+	ARGS=""
+
+	config_get_bool enabled $cfg 'enabled' 1
+	config_get device $cfg 'device'
+	config_get ifname $cfg 'ifname'
+	config_get default_lifetime $cfg 'default_lifetime'
+	config_get valid_lifetime $cfg 'valid_lifetime'
+	config_get preferred_lifetime $cfg 'preferred_lifetime'
+	config_get max_router_adv_interval $cfg 'max_router_adv_interval'
+	config_get min_router_adv_interval $cfg 'min_router_adv_interval'
+
+	if [ "$enabled" != "1" ]; then
+		echo "Disabled in /etc/config/uradvd" >&2
+		exit 0
+	fi
+
+	if [ -n "$device" ] && [ -n "$ifname" ]; then
+		echo "either set device or ifname" >&2
+		exit 1
+	fi
+
+	if [ -z "$device" ] && [ -z "$ifname" ]; then
+		echo "either set device or ifname" >&2
+		exit 1
+	fi
+
+	if [ -z "$ifname" ]; then
+		network_get_device 'ifname' "$ifname"
+	fi
+
+	if [ -z "$ifname" ]; then
+		echo "no valid device or ifname set" >&2
+		exit 1
+	fi
+
+	if [ -n "$default_lifetime" ]; then
+		ARGS="$ARGS --default-lifetime $default_lifetime"
+	fi
+
+	if [ -n "$valid_lifetime" ]; then
+		ARGS="$ARGS --valid-lifetime $valid_lifetime"
+	fi
+
+	if [ -n "$preferred_lifetime" ]; then
+		ARGS="$ARGS --preferred-lifetime $preferred_lifetime"
+	fi
+
+	if [ -n "$max_router_adv_interval" ]; then
+		ARGS="$ARGS --max-router-adv-interval $max_router_adv_interval"
+	fi
+
+	if [ -n "$min_router_adv_interval" ]; then
+		ARGS="$ARGS --min-router-adv-interval $min_router_adv_interval"
+	fi
+
+	ARGS="$ARGS -i $ifname"
+
+
+	config_list_foreach $cfg 'prefix_off_link' append_prefix_off_link
+	config_list_foreach $cfg 'prefix_on_link' append_prefix_on_link
+	config_list_foreach $cfg "dns" append_dns
+
+	procd_open_instance
+	procd_set_param command /usr/sbin/uradvd $ARGS
+	procd_set_param respawn
+	procd_close_instance
+}
+
+start_service() {
+	config_load uradvd
+	config_foreach start_instance interface
+}

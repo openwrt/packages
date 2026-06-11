@@ -1,0 +1,29 @@
+From de9b961c465d8d2a18334770857ae45115f02ab6 Mon Sep 17 00:00:00 2001
+From: Christian Marangi <ansuelsmth@gmail.com>
+Date: Mon, 24 Nov 2025 21:21:22 +0100
+Subject: [PATCH] CMakeLists: update min version to 3.10 for CMake >= 4.0
+ support
+
+Update minimum version of CMake to 3.10 for CMake >= 4.0 version
+support.
+
+New CMake require 3.5 as the minimum version with that increased to 3.10
+in the next CMake release.
+
+Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
+---
+ CMakeLists.txt | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -13,8 +13,7 @@
+ # You should have received a copy of the GNU General Public License
+ # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ 
+-cmake_minimum_required(VERSION 2.8.12)
+-cmake_policy(VERSION 2.8.12)
++cmake_minimum_required(VERSION 3.10)
+ 
+ project(schroot)
+ 

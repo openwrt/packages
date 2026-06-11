@@ -1,0 +1,31 @@
+--- a/ppstest.c
++++ b/ppstest.c
+@@ -110,13 +110,13 @@ retry:
+ 	}
+ 
+ 	printf("source %d - "
+-	       "assert %ld.%09ld, sequence: %ld - "
+-	       "clear  %ld.%09ld, sequence: %ld\n",
++	       "assert %lld.%09ld, sequence: %ld - "
++	       "clear  %lld.%09ld, sequence: %ld\n",
+ 	       i,
+-	       infobuf.assert_timestamp.tv_sec,
++	       (long long)infobuf.assert_timestamp.tv_sec,
+ 	       infobuf.assert_timestamp.tv_nsec,
+ 	       infobuf.assert_sequence,
+-	       infobuf.clear_timestamp.tv_sec,
++	       (long long)infobuf.clear_timestamp.tv_sec,
+ 	       infobuf.clear_timestamp.tv_nsec, infobuf.clear_sequence);
+ 	fflush(stdout);
+ 
+--- a/ppswatch.c
++++ b/ppswatch.c
+@@ -145,7 +145,7 @@ int fetch_source(pps_handle_t handle, in
+ 	if (max_divergence < div)
+ 		max_divergence = div;
+ 	if (div >= margin) {
+-		printf("timestamp: %ld, sequence: %ld, offset: % 6ld\n", ts.tv_sec, seq, ts.tv_nsec);
++		printf("timestamp: %lld, sequence: %ld, offset: % 6ld\n", (long long)ts.tv_sec, seq, ts.tv_nsec);
+ 		fflush(stdout);
+ 		overflows++;
+ 		curr_unsync++;

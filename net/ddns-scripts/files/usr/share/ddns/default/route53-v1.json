@@ -1,0 +1,9 @@
+{
+	"name": "route53-v1",
+	"ipv4": {
+		"url": "update_route53_v1.sh"
+	},
+	"ipv6": {
+		"url": "update_route53_v1.sh"
+	}
+}

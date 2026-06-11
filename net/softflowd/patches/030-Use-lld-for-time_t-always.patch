@@ -1,0 +1,114 @@
+From f96142c9f3267a09976cd8a6bb4cc601830bce9b Mon Sep 17 00:00:00 2001
+From: Sebastian Kemper <sebastian_ml@gmx.net>
+Date: Fri, 21 Oct 2022 23:37:42 +0200
+Subject: [PATCH] Use %lld for time_t always
+
+Compiling softflowd against musl 1.2.x for 32 bit targets shows some
+warnings:
+
+softflowd.c: In function 'format_flow':
+softflowd.c:307:13: warning: format '%ld' expects argument of type 'long int', but argument 15 has type 'suseconds_t' {aka 'long long int'} [-Wformat=]
+  307 |             "seq:%" PRIu64 " [%s]:%hu <> [%s]:%hu proto:%u "
+      |             ^~~~~~~
+......
+  315 |             (flow->flow_start.tv_usec + 500) / 1000, fin_time,
+      |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                                              |
+      |                                              suseconds_t {aka long long int}
+softflowd.c:309:27: note: format string is defined here
+  309 |             "start:%s.%03ld finish:%s.%03ld tcp>:%02x tcp<:%02x "
+      |                       ~~~~^
+      |                           |
+      |                           long int
+      |                       %03lld
+softflowd.c:307:13: warning: format '%ld' expects argument of type 'long int', but argument 17 has type 'suseconds_t' {aka 'long long int'} [-Wformat=]
+  307 |             "seq:%" PRIu64 " [%s]:%hu <> [%s]:%hu proto:%u "
+      |             ^~~~~~~
+......
+  316 |             (flow->flow_last.tv_usec + 500) / 1000, flow->tcp_flags[0],
+      |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                                             |
+      |                                             suseconds_t {aka long long int}
+softflowd.c:309:43: note: format string is defined here
+  309 |             "start:%s.%03ld finish:%s.%03ld tcp>:%02x tcp<:%02x "
+      |                                       ~~~~^
+      |                                           |
+      |                                           long int
+      |                                       %03lld
+softflowd.c: In function 'dump_flows':
+softflowd.c:1173:16: warning: format '%ld' expects argument of type 'long int', but argument 4 has type 'time_t' {aka 'long long int'} [-Wformat=]
+ 1173 |                "EXPIRY EVENT for flow %" PRIu64 " in %ld seconds\n",
+      |                ^~~~~~~~~~~~~~~~~~~~~~~~~
+ 1174 |                expiry->flow->flow_seq, (long int) expiry->expires_at - now);
+      |                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                                                                      |
+      |                                                                      time_t {aka long long int}
+softflowd.c:1173:56: note: format string is defined here
+ 1173 |                "EXPIRY EVENT for flow %" PRIu64 " in %ld seconds\n",
+      |                                                      ~~^
+      |                                                        |
+      |                                                        long int
+      |                                                      %lld
+
+Dumping flow data results in a segmentation fault:
+
+root@OpenWrt:~# softflowctl dump-flows
+softflowd[6688]: Dumping flow data:
+
+No further output. But in the system log a segmentation fault is
+visible:
+
+Fri Oct 21 07:13:47 2022 kern.info kernel: [745743.417947] do_page_fault(): sending SIGSEGV to softflowd for invalid read access from 00000326
+Fri Oct 21 07:13:47 2022 kern.info kernel: [745743.427175] epc = 77de0dc0 in libc.so[77d62000+a9000]
+Fri Oct 21 07:13:47 2022 kern.info kernel: [745743.432682] ra  = 77de2b04 in libc.so[77d62000+a9000]
+Fri Oct 21 07:13:47 2022 kern.info kernel: [745743.443552] device br-lan.1 left promiscuous mode
+Fri Oct 21 07:13:47 2022 kern.info kernel: [745743.448485] device br-lan left promiscuous mode
+Fri Oct 21 07:13:52 2022 kern.info kernel: [745748.464316] device br-lan.1 entered promiscuous mode
+Fri Oct 21 07:13:52 2022 kern.info kernel: [745748.469774] device br-lan entered promiscuous mode
+
+This was reported on the OpenWrt "packages" repository's issue tracker
+([1]).
+
+musl 1.2 has time64 support, meaning it always uses 64 bit time_t (also
+when compiling for 32 bit targets), to be Y2K38 safe. This commit
+changes the format specifier from "%ld" to "%lld" to fix the compiler
+warnings and make the segmentation fault go away.
+
+[1] https://github.com/openwrt/packages/issues/19655
+
+Signed-off-by: Sebastian Kemper <sebastian_ml@gmx.net>
+---
+ softflowd.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+--- a/softflowd.c
++++ b/softflowd.c
+@@ -316,14 +316,14 @@ format_flow (struct FLOW *flow) {
+   snprintf (buf, sizeof (buf),
+             "seq:%" PRIu64 " [%s]:%hu <> [%s]:%hu proto:%u "
+             "octets>:%u packets>:%u octets<:%u packets<:%u "
+-            "start:%s.%03ld finish:%s.%03ld tcp>:%02x tcp<:%02x "
++            "start:%s.%03lld finish:%s.%03lld tcp>:%02x tcp<:%02x "
+             "flowlabel>:%08x flowlabel<:%08x "
+             "vlan>:%u vlan<:%u ether:%s <> %s", flow->flow_seq, addr1,
+             ntohs (flow->port[0]), addr2, ntohs (flow->port[1]),
+             (int) flow->protocol, flow->octets[0], flow->packets[0],
+             flow->octets[1], flow->packets[1], start_time,
+-            (flow->flow_start.tv_usec + 500) / 1000, fin_time,
+-            (flow->flow_last.tv_usec + 500) / 1000, flow->tcp_flags[0],
++            (long long) ((flow->flow_start.tv_usec + 500) / 1000), fin_time,
++            (long long) ((flow->flow_last.tv_usec + 500) / 1000), flow->tcp_flags[0],
+             flow->tcp_flags[1], flow->ip6_flowlabel[0],
+             flow->ip6_flowlabel[1], flow->vlanid[0], flow->vlanid[1],
+             format_ethermac (flow->ethermac[0]),
+@@ -1194,8 +1194,8 @@ dump_flows (struct FLOWTRACK *ft, FILE *
+                expiry->expires_at == 0 ? " (FORCED)" : "");
+     } else {
+       fprintf (out,
+-               "EXPIRY EVENT for flow %" PRIu64 " in %ld seconds\n",
+-               expiry->flow->flow_seq, (long int) expiry->expires_at - now);
++               "EXPIRY EVENT for flow %" PRIu64 " in %lld seconds\n",
++               expiry->flow->flow_seq, (long long) expiry->expires_at - now);
+     }
+     fprintf (out, "\n");
+   }

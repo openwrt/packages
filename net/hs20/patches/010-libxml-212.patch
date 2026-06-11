@@ -1,0 +1,11 @@
+--- a/src/utils/xml_libxml2.c
++++ b/src/utils/xml_libxml2.c
+@@ -8,7 +8,7 @@
+ 
+ #include "includes.h"
+ #define LIBXML_VALID_ENABLED
+-#include <libxml/tree.h>
++#include <libxml/parser.h>
+ #include <libxml/xmlschemastypes.h>
+ 
+ #include "common.h"

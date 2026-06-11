@@ -1,0 +1,10 @@
+--- a/scripts/libpng-config-body.in
++++ b/scripts/libpng-config-body.in
+@@ -82,6 +82,7 @@ while test $# -gt 0; do
+ 
+     --static)
+         R_opts=""
++        libs=${all_libs}
+         ;;
+ 
+     *)

@@ -1,0 +1,11 @@
+--- a/samples/knot.sample.conf.in
++++ b/samples/knot.sample.conf.in
+@@ -13,6 +13,8 @@ log:
+ 
+ database:
+     storage: "@storage_dir@"
++    journal-db-max-size: 20M
++    timer-db-max-size: 5M
+ 
+ remote:
+ #  - id: secondary

@@ -1,0 +1,9 @@
+{
+	"name": "netcup.com",
+	"ipv4": {
+		"url": "update_netcup_com.sh"
+	},
+	"ipv6": {
+		"url": "update_netcup_com.sh"
+	}
+}

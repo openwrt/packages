@@ -1,0 +1,21 @@
+From 82bd3ead750016bbd874b11e5fedd6f376521882 Mon Sep 17 00:00:00 2001
+From: Nick Hainke <vincent@systemli.org>
+Date: Sun, 9 Nov 2025 16:48:57 +0100
+Subject: [PATCH] build: set cmake_minimum_required to 3.10
+
+New cmake versions require at least 3.5 as 'cmake_minimum_required'
+in CMakeLists.txt. In future 3.10 will be required.
+
+Signed-off-by: Nick Hainke <vincent@systemli.org>
+---
+ CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-cmake_minimum_required(VERSION 2.8.12)
++cmake_minimum_required(VERSION 3.10)
+ project(radiotap)
+ 
+ add_definitions("-D_BSD_SOURCE -D_DEFAULT_SOURCE -DRADIOTAP_SUPPORT_OVERRIDES")

@@ -1,0 +1,45 @@
+Test that canary domains are injected when enabled.
+
+-- Testcase --
+import adb from 'adblock-fast';
+import { readfile } from 'fs';
+let ti = adb._test_internals;
+
+adb.env.load_config();
+ti.set_cfg('dns', 'dnsmasq.servers');
+ti.set_cfg('dnsmasq_sanity_check', false);
+ti.set_cfg('dnsmasq_validity_check', false);
+ti.set_cfg('heartbeat_domain', null);
+ti.set_cfg('config_update_enabled', false);
+ti.set_cfg('update_config_sizes', false);
+ti.set_cfg('canary_domains_icloud', true);
+ti.set_cfg('canary_domains_mozilla', true);
+ti.env.dns_set_output_values('dnsmasq.servers');
+ti.append_urls();
+
+let ok = ti.download_lists();
+if (!ok) {
+	print('download_lists failed\n');
+} else {
+	let content = readfile(ti.dns_output.file) || '';
+
+	let canary_domains = [
+		'mask.icloud.com',
+		'mask-h2.icloud.com',
+		'use-application-dns.net',
+	];
+
+	let results = [];
+	for (let d in canary_domains) {
+		let found = index(content, 'server=/' + d + '/') >= 0;
+		push(results, sprintf('canary %s: %s', d, found ? 'PRESENT' : 'MISSING'));
+	}
+	print(join('\n', results) + '\n');
+}
+-- End --
+
+-- Expect stdout --
+canary mask.icloud.com: PRESENT
+canary mask-h2.icloud.com: PRESENT
+canary use-application-dns.net: PRESENT
+-- End --

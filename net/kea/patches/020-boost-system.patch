@@ -1,0 +1,11 @@
+--- a/meson.build
++++ b/meson.build
+@@ -189,7 +189,7 @@ message(f'Detected system "@SYSTEM@".')
+ 
+ #### Dependencies
+ 
+-boost_dep = dependency('boost', version: '>=1.66', modules: ['system'])
++boost_dep = dependency('boost', version: '>=1.66')
+ dl_dep = dependency('dl')
+ threads_dep = dependency('threads')
+ add_project_dependencies(boost_dep, dl_dep, threads_dep, language: ['cpp'])

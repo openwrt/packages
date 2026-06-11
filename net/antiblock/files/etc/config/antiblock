@@ -1,0 +1,26 @@
+
+#config main 'config'
+#Required parameters:
+	#option enabled       '0'
+#Optional parameters:
+	#option log			  '1'
+	#option stat		  '1'
+	#list blacklist 	  'x.x.x.x/xx'
+	#list blacklist 	  'x.x.x.x/xx'
+
+#It is necessary to enter from 1 to 32 values:
+#config route
+	#option gateway       'gateway1'
+	#option domains_path  'https://test1.com'
+
+#config route
+	#option gateway       'gateway2'
+	#option domains_path  '/test1.txt'
+
+#config route
+	#option gateway       'gateway2'
+	#option domains_path  '/test2.txt'
+
+#config route
+	#option gateway       'gateway1'
+	#option domains_path  'https://test2.com'

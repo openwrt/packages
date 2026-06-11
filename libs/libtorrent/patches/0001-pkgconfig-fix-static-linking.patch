@@ -1,0 +1,26 @@
+From 3f8bc12fe33bac4b063a6284af0f0ff7b53ac9b7 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Sun, 4 May 2025 17:08:34 -0700
+Subject: [PATCH] pkgconfig: fix static linking
+
+A link to libcrypto and pthread are missing, which shows up when trying
+to link a static libtorrent with rtorrent. The latter being an issue
+with older platforms that don't have pthread stuff in libc.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ libtorrent.pc.in | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+--- a/libtorrent.pc.in
++++ b/libtorrent.pc.in
+@@ -6,7 +6,6 @@ includedir=@includedir@
+ Name: libtorrent
+ Description: A BitTorrent library
+ Version: @VERSION@
+-Requires.private: zlib, libcrypto
+-Libs: -L${libdir} -ltorrent
+-Libs.private: @PTHREAD_LIBS@ @ATOMIC_LIBS@
++Requires: zlib, libcrypto
++Libs: -L${libdir} -ltorrent @PTHREAD_LIBS@ @ATOMIC_LIBS@
+ Cflags: -I${includedir}

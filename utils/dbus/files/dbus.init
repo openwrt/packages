@@ -1,0 +1,41 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2007-2011 OpenWrt.org
+
+START=60
+
+USE_PROCD=1
+PROG=/usr/bin/dbus-daemon
+
+# To enable this makes only sense if the dbus has been compiled with
+# the option CONFIG_DBUS_VERBOSE=y
+
+#DEBUG=1
+
+start_service() {
+	mkdir -m 0755 -p /var/lib/dbus
+	mkdir -m 0755 -p /var/run/dbus
+	chown dbus:dbus /var/lib/dbus /var/run/dbus
+	chown -R dbus:dbus /etc/dbus-1
+
+	[ -x /usr/bin/dbus-uuidgen ] && /usr/bin/dbus-uuidgen --ensure
+
+	procd_open_instance
+	procd_set_param command "${PROG}"
+	procd_append_param command --system
+	procd_append_param command --nofork
+	[ -n "$DEBUG" ] && procd_set_param env DBUS_VERBOSE=1
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	[ -x /sbin/ujail -a -e /etc/capabilities/dbus.json ] && {
+		procd_append_param command --nopidfile
+		procd_add_jail dbus
+		procd_set_param user dbus
+		procd_set_param group dbus
+		procd_set_param capabilities /etc/capabilities/dbus.json
+	}
+	procd_close_instance
+}
+
+stop_service() {
+	service_stop "${PROG}"
+}

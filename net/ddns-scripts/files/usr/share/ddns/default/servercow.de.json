@@ -1,0 +1,9 @@
+{
+		"name": "servercow.de",
+		"ipv4": {
+				"url": "update_servercow_de.sh"
+		},
+		"ipv6": {
+			"url": "update_servercow_de.sh"
+		}
+}

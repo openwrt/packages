@@ -1,0 +1,11 @@
+--- a/qpb/qpb_allocator.h
++++ b/qpb/qpb_allocator.h
+@@ -14,7 +14,7 @@
+ #ifndef _QPB_ALLOCATOR_H_
+ #define _QPB_ALLOCATOR_H_
+ 
+-#include <google/protobuf-c/protobuf-c.h>
++#include <protobuf-c/protobuf-c.h>
+ 
+ struct linear_allocator_t_;
+ 

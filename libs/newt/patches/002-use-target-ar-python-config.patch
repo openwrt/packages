@@ -1,0 +1,16 @@
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -85,12 +85,7 @@ showkey:	showkey.o $(LIBNEWT)
+ _snack.$(SOEXT):   snack.c $(LIBNEWTSH)
+ ifneq ($(PYTHONVERS),)
+ 	@for ver in $(PYTHONVERS); do \
+-		pyconfig=$$ver-config; \
+-		if ! $$pyconfig --cflags > /dev/null 2>&1 && \
+-				python-config --cflags > /dev/null 2>&1; then \
+-			echo $$pyconfig not found, using python-config; \
+-			pyconfig=python-config; \
+-		fi; \
++		pyconfig=$(PYTHON_CONFIG_PATH)/$$ver-config; \
+ 		mkdir -p $$ver; \
+ 		PCFLAGS=`$$pyconfig --cflags`; \
+ 		PLDFLAGS=`$$pyconfig --ldflags --embed || $$pyconfig --ldflags`; \

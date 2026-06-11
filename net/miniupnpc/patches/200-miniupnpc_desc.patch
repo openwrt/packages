@@ -1,0 +1,20 @@
+--- a/src/upnpcommands.c
++++ b/src/upnpcommands.c
+@@ -357,7 +357,7 @@ UPNP_AddPortMapping(const char * control
+ 		{"NewInternalPort", inPort},
+ 		{"NewInternalClient", inClient},
+ 		{"NewEnabled", "1"},
+-		{"NewPortMappingDescription", desc?desc:"libminiupnpc"},
++		{"NewPortMappingDescription", desc?desc:"miniupnpc"},
+ 		{"NewLeaseDuration", leaseDuration?leaseDuration:"0"},
+ 		{NULL, NULL}
+ 	};
+@@ -411,7 +411,7 @@ UPNP_AddAnyPortMapping(const char * cont
+ 		{"NewInternalPort", inPort},
+ 		{"NewInternalClient", inClient},
+ 		{"NewEnabled", "1"},
+-		{"NewPortMappingDescription", desc?desc:"libminiupnpc"},
++		{"NewPortMappingDescription", desc?desc:"miniupnpc"},
+ 		{"NewLeaseDuration", leaseDuration?leaseDuration:"0"},
+ 		{NULL, NULL}
+ 	};

@@ -1,0 +1,259 @@
+#!/bin/sh
+
+. /lib/functions.sh
+. /usr/share/libubox/jshn.sh
+. /lib/functions/network.sh
+. /lib/mwan3/mwan3.sh
+
+command_help() {
+	local cmd="$1"
+	local help="$2"
+
+	echo "$(printf "%-25s%s" "${cmd}" "${help}")"
+}
+
+help()
+{
+	cat <<EOF
+Syntax: mwan3 [command]
+
+Available commands:
+EOF
+	command_help "start" "Load iptables rules, ip rules and ip routes"
+	command_help "stop" "Unload iptables rules, ip rules and ip routes"
+	command_help "restart" "Reload iptables rules, ip rules and ip routes"
+	command_help "ifup <iface>" "Load rules and routes for specific interface"
+	command_help "ifdown <iface>" "Unload rules and routes for specific interface"
+	command_help "interfaces" "Show interfaces status"
+	command_help "policies" "Show currently active policy"
+	command_help "connected" "Show directly connected networks"
+	command_help "rules" "Show active rules"
+	command_help "status" "Show all status"
+	command_help "internal <ipv4|ipv6>" "Show internal configuration <default: ipv4>"
+	command_help "use <iface> <cmd>" "Run a command bound to <iface> and avoid mwan3 rules"
+}
+
+ifdown() {
+	if [ -z "$1" ]; then
+		echo "Error: Expecting interface. Usage: mwan3 ifdown <interface>"
+		exit 0
+	fi
+
+	if [ -n "$2" ]; then
+		echo "Error: Too many arguments. Usage: mwan3 ifdown <interface>"
+		exit 0
+	fi
+
+	mwan3_interface_hotplug_shutdown "$1" 1
+}
+
+ifup() {
+	. /etc/init.d/mwan3
+
+	if [ -z "$1" ]; then
+		echo "Expecting interface. Usage: mwan3 ifup <interface>"
+		exit 0
+	fi
+
+	if [ -n "$2" ]; then
+		echo "Too many arguments. Usage: mwan3 ifup <interface>"
+		exit 0
+	fi
+
+	mwan3_ifup "$1" "cmd"
+}
+
+interfaces()
+{
+	config_load mwan3
+
+	echo "Interface status:"
+	config_foreach mwan3_report_iface_status interface
+	echo
+}
+
+policies()
+{
+	echo "Current ipv4 policies:"
+	mwan3_report_policies_v4
+	echo
+	[ $NO_IPV6 -ne 0 ] && return
+	echo "Current ipv6 policies:"
+	mwan3_report_policies_v6
+	echo
+}
+
+connected()
+{
+	echo "Directly connected ipv4 networks:"
+	mwan3_report_connected_v4
+	echo
+	[ $NO_IPV6 -ne 0 ] && return
+	echo "Directly connected ipv6 networks:"
+	mwan3_report_connected_v6
+	echo
+}
+
+rules()
+{
+	echo "Active ipv4 user rules:"
+	mwan3_report_rules_v4
+	echo
+	[ $NO_IPV6 -ne 0 ] && return
+	echo "Active ipv6 user rules:"
+	mwan3_report_rules_v6
+	echo
+}
+
+status()
+{
+	interfaces
+	policies
+	connected
+	rules
+}
+
+internal()
+{
+	local family="$1"
+	local dash="-------------------------------------------------"
+
+	if [ -f "/etc/openwrt_release" ]; then
+		. /etc/openwrt_release
+	fi
+
+	local ipt ip output
+
+	if [ "$family" = "ipv6" ]; then
+		ipt="$IPT6"
+		ip="$IP6"
+	else
+		ipt="$IPT4"
+		ip="$IP4"
+	fi
+
+	echo "Software-Version"
+	echo "$dash"
+
+	if [ "$DISTRIB_RELEASE" != "" ]; then
+		echo "OpenWrt - $DISTRIB_RELEASE"
+	else
+		echo "OpenWrt - unknown"
+	fi
+
+	echo ""
+	echo "Output of \"$ip a show\""
+	echo "$dash"
+	output="$($ip a show)"
+	if [ "$output" != "" ]; then
+		echo "$output"
+	else
+		echo "No data found"
+	fi
+
+	echo ""
+	echo "Output of \"$ip route show\""
+	echo "$dash"
+	output="$($ip route show)"
+	if [ "$output" != "" ]; then
+		echo "$output"
+	else
+		echo "No data found"
+	fi
+
+	echo ""
+	echo "Output of \"$ip rule show\""
+	echo "$dash"
+	output="$($ip rule show)"
+	if [ "$output" != "" ]; then
+		echo "$output"
+	else
+		echo "No data found"
+	fi
+
+	echo ""
+	echo "Output of \"$ip route list table 1-250\""
+	echo "$dash"
+	local dump=0
+	for i in $(seq 1 250); do
+		output=$($ip route list table $i 2>/dev/null)
+		if [ "$output" != "" ];then
+			dump=1
+			echo "Routing table $i:"
+			echo "$output"
+			echo ""
+		fi
+	done
+	if [ "$dump" = "0" ]; then
+		echo "No data found"
+		echo ""
+	fi
+
+	echo "Output of \"$ipt -L -v -n\""
+	echo "$dash"
+	output="$($ipt -L -v -n)"
+	if [ "$output" != "" ]; then
+		echo "$output"
+	else
+		echo "No data found"
+	fi
+}
+
+start() {
+	/etc/init.d/mwan3 enable
+	/etc/init.d/mwan3 start
+}
+
+stop() {
+	/etc/init.d/mwan3 disable
+	/etc/init.d/mwan3 stop
+}
+
+restart() {
+	/etc/init.d/mwan3 enable
+	/etc/init.d/mwan3 stop
+	/etc/init.d/mwan3 start
+}
+
+use() {
+	# Run a command with the device, src_ip and fwmark set to avoid processing by mwan3
+	# firewall rules
+
+	local interface device src_ip family
+
+	interface=$1 ; shift
+	[ -z "$*" ] && echo "no command specified for mwan3 use" >&2 && return
+	network_get_device device $interface
+	[ -z "$device" ] && echo "could not find device for $interface" >&2 && return
+
+	mwan3_get_src_ip src_ip $interface
+	[ -z "$src_ip" ] && echo "could not find src_ip for $interface" >&2 && return
+
+	config_get family $interface family
+	[ -z "$family" ] && echo "could not find family for $interface. Using ipv4." >&2 && family='ipv4'
+
+	echo "Running '$*' with DEVICE=$device SRCIP=$src_ip FWMARK=$MMX_DEFAULT FAMILY=$family" >&2
+	# if a program (not a shell builtin) is run: use "exec" for allowing direct process control
+	if [ -x "$(command -v "$1")" ]; then
+		set -- exec "$@"
+	fi
+	FAMILY=$family DEVICE=$device SRCIP=$src_ip FWMARK=$MMX_DEFAULT LD_PRELOAD=/lib/mwan3/libwrap_mwan3_sockopt.so.1.0 "$@"
+}
+
+case "$1" in
+	ifup|ifdown|interfaces|policies|connected|rules|status|start|stop|restart|internal)
+		mwan3_init
+		"$@"
+	;;
+	use)
+		mwan3_init
+		"$@"
+		# Propagate mwan3 use command exit code
+		exit "$?"
+	;;
+	*)
+		help
+	;;
+esac
+
+exit 0

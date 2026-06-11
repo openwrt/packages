@@ -1,0 +1,24 @@
+Description: Fix type mismatches on 64-bit platforms
+Author: Russ Allbery <rra@debian.org>
+Reviewed-by: gregor herrmann <gregoa@debian.org>
+Last-Update: 2023-10-25
+
+Change the data types used in the XS code for the module to ensure data
+types match Perl's expectations on 64-bit platforms.
+
+Note:
+(libauthen-sasl-xs-perl is the successor of libauthen-sasl-cyrus-perl)
+Most of the original changes are applied upstream, one remains.
+[gregor 2023-10-25]
+
+--- a/XS.xs
++++ b/XS.xs
+@@ -946,7 +946,7 @@ void ExtractParentCallbacks(SV *parent,
+ {
+ 	char *key;
+ 	int count=0,i;
+-	long l;
++	I32 l;
+ #ifndef SASL2
+ 	// Missing SASL1 canonuser workaround
+ 	int canon=-1,auth=-1;

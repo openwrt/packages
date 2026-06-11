@@ -1,0 +1,114 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2014 OpenWrt.org
+
+# shellcheck disable=SC3043
+# shellcheck disable=SC2034
+# shellcheck disable=SC3037
+# shellcheck disable=SC2154
+# shellcheck disable=SC2129
+
+START=20
+
+USE_PROCD=1
+
+UCI_CONF="rsyslog"
+CONFIG_FILE="/var/etc/rsyslog.conf"
+BASE_CONFIG_FILE="/etc/rsyslog.conf"
+
+modules=""
+selectors=""
+forwarders=""
+
+handle_selector() {
+	local config="$1"
+	local src
+	local dst
+
+	config_get src "${config}" source
+	config_get dst "${config}" destination
+	if [ "${src}" != "" ] && [ "$dst" != "" ]; then
+		selectors="${selectors}\n${src}\t${dst}\n"
+	fi
+}
+
+handle_forwarder() {
+	local config="$1"
+	local src
+	local target
+	local protocol
+	local port
+	local rfc
+	local opts
+
+	config_get src "${config}" source
+	config_get target "${config}" target
+	config_get protocol "${config}" protocol "udp"
+	config_get port "${config}" port "514"
+	config_get rfc "${config}" rfc "3164"
+
+	if [ "$rfc" = "5424" ]; then
+		opts='Template="RSYSLOG_SyslogProtocol23Format" TCP_Framing="octet-counted"'
+	fi
+
+	if [ "${src}" != "" ] && [ "${target}" != "" ]; then
+		action="action(type=\"omfwd\" target=\"$target\" port=\"$port\" protocol=\"$protocol\" $opts action.resumeRetryCount=\"100\" queue.type=\"linkedList\" queue.size=\"10000\")"
+	   forwarders="${forwarders}\n${src}\t${action}\n"
+	fi
+}
+
+
+expand_config() {
+	local input_t=""
+	local input_u=""
+
+	config_load "${UCI_CONF}"
+	config_list_foreach syslog modules handle_module
+	config_get_bool tcp_input syslog tcp_input
+	if [ "${tcp_input}" -eq 1 ]; then
+		modules="${modules} imtcp"
+		config_get tcp_port syslog tcp_input_port
+		input_t="input(type=\"imtcp\" port=\"${tcp_port}\")"
+	fi
+
+	config_get_bool udp_input syslog udp_input
+	if [ "${udp_input}" -eq 1 ]; then
+		modules="${modules} imudp"
+		config_get udp_port syslog udp_input_port
+		input_u="input(type=\"imudp\" port=\"${udp_port}\")"
+
+	fi
+	config_get template syslog default_template
+	config_foreach handle_selector selector
+	config_foreach handle_forwarder forwarder
+
+	mkdir -p "$(dirname ${CONFIG_FILE})"
+	# shellcheck disable=SC2188
+	> ${CONFIG_FILE}
+	echo "include(file=\"${BASE_CONFIG_FILE}\" mode=\"optional\")" >> ${CONFIG_FILE}
+	for m in ${modules}; do
+		echo "module(load=\"${m}\")" >> ${CONFIG_FILE}
+	done
+	echo "${input_t}" >> ${CONFIG_FILE}
+	echo "${input_u}" >> ${CONFIG_FILE}
+	echo "\$ActionFileDefaultTemplate ${template}" >> ${CONFIG_FILE}
+	echo -e "${selectors}" >> ${CONFIG_FILE}
+	echo -e "${forwarders}" >> ${CONFIG_FILE}
+}
+
+handle_module() {
+	local module="$1"
+	modules="${modules} $module"
+}
+
+start_service() {
+	expand_config
+	procd_open_instance
+	procd_set_param command /usr/sbin/rsyslogd -f ${CONFIG_FILE} -n
+	procd_close_instance
+}
+
+
+service_triggers()
+{
+	procd_add_reload_trigger ${UCI_CONF}
+}

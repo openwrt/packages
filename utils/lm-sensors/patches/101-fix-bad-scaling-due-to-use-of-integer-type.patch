@@ -1,0 +1,27 @@
+From f49e346ab4f15f3c2c9d879e2b6662a17978131f Mon Sep 17 00:00:00 2001
+From: xaizek <xaizek@posteo.net>
+Date: Sat, 7 Jun 2025 13:33:11 +0300
+Subject: [PATCH] pwm: fix bad scaling due to use of integer type
+
+This fixes commit c1a1f4ff206c0e6959c3e4d6b19ba27963076d5e ("pwm: Move
+scaling factor from sensors prog to library") which didn't account for
+return type of `get_type_scaling()` being `int` rather than `double` or
+`float`, so the scaling was done by a factor of 2 instead of 2.55, thus
+making the result off by quite a lot.
+
+ms: adjust test
+---
+ lib/sysfs.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/lib/sysfs.c
++++ b/lib/sysfs.c
+@@ -139,7 +139,7 @@ static int sysfs_foreach_busdev(const ch
+ const char *sensors_sysfs_mount = "/sys";
+ 
+ static
+-int get_type_scaling(sensors_subfeature_type type)
++double get_type_scaling(sensors_subfeature_type type)
+ {
+ 	/* Multipliers for second class subfeatures
+ 	   that need their own multiplier */

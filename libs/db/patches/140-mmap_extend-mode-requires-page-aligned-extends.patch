@@ -1,0 +1,34 @@
+From: Andy Whitcroft <apw@canonical.com>
+Subject: [PATCH] MMAP_EXTEND mode requires we extend in full system page increments
+Date: Wed, 12 Mar 2014 11:58:31 +0100
+
+When extending a mmap file we must ensure we extend by full system pages,
+otherwise there is a risk (when the filesystem page size is smaller than
+the system page size) that we will not allocate disk extents to store
+the memory and it will be lost resulting in data loss.
+
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Cédric Le Goater <clg@fr.ibm.com>
+
+---
+ env_file.c |    9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+--- a/src/env/env_file.c
++++ b/src/env/env_file.c
+@@ -28,6 +28,15 @@ __db_file_extend(env, fhp, size)
+ 	int ret;
+ 	char buf;
+ 
++#ifdef HAVE_MMAP_EXTEND
++	/*
++	 * We have to ensure we extend a mmap'd segment a full memory page at
++	 * a time or risk the end of the page not having any filesystem blocks
++	 * associated resulting in the data loss.
++	 */
++	size = DB_ALIGN(size, getpagesize()) - 1;
++#endif
++
+ 	buf = '\0';
+ 	/*
+ 	 * Extend the file by writing the last page.  If the region is >4Gb,

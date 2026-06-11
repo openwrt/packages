@@ -1,0 +1,7 @@
+{
+	"name": "schokokeks.org",
+	"ipv4": {
+		"url": "http://[USERNAME]:[PASSWORD]@dyndns.schokokeks.org/nic/update?myip=[IP]",
+		"answer": "good|nochg"
+	}
+}
