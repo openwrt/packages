@@ -1,5 +1,5 @@
 
-# Copyright (C) 2006-2016 OpenWrt.org
+# Copyright (C) 2006-2026 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nut
-PKG_VERSION:=2.8.4
-PKG_RELEASE:=3
+PKG_VERSION:=2.8.5
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://networkupstools.org/source/2.8/
-PKG_HASH:=a2fe55bc2d90b4a848d6ff8bac361e6d1c97f899a545219cad707d17a27ff127
+PKG_SOURCE_URL:=https://www.networkupstools.org/source/2.8/
+PKG_HASH:=18bf32e59eb764b13da3c4fa70384926d7fa584cb31d2fe7f137a570633eeec1
 PKG_LICENSE:=GPL-2.0-or-later GPL-3.0-or-later GPL-1.0-or-later Artistic-1.0-Perl
 PKG_LICENSE_FILES:=LICENSE-GPL2 LICENSE-GPL3 COPYING
 PKG_FIXUP:=autoreconf
@@ -170,9 +170,11 @@ define Package/nut-upsmon/install
 	$(INSTALL_DIR) $(1)/etc/nut
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/nut-monitor.init $(1)/etc/init.d/nut-monitor
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/upsmon $(1)/usr/sbin/
 	$(INSTALL_BIN) ./files/nutshutdown $(1)/usr/sbin/nutshutdown
+	$(INSTALL_DATA) ./files/nut-monitor-migrate.default $(1)/etc/uci-defaults/80-nut-monitor-migrate
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/nut_monitor $(1)/etc/config/nut_monitor
 	ln -sf /var/etc/nut/upsmon.conf $(1)/etc/nut/upsmon.conf
@@ -383,9 +385,9 @@ define DriverPackage
 
         endef
         define Package/nut-driver-$(2)/install
-		$(INSTALL_DIR) $$(1)/lib/nut
-		$(CP) $$(PKG_INSTALL_DIR)/lib/nut/$(2) $$(1)/lib/nut/
-		$(if $(filter $(2),clone),$(CP) $$(PKG_INSTALL_DIR)/lib/nut/$(2)-outlet $$(1)/lib/nut/)
+		$(INSTALL_DIR) $$(1)/usr/libexec/nut
+		$(CP) $$(PKG_INSTALL_DIR)/usr/libexec/nut/$(2) $$(1)/usr/libexec/nut/
+		$(if $(filter $(2),clone),$(CP) $$(PKG_INSTALL_DIR)/usr/libexec/nut/$(2)-outlet $$(1)/usr/libexec/nut/)
         endef
 endef
 define DriverDescription
@@ -406,7 +408,7 @@ SERIAL_DRIVERLIST = al175 bcmxcp belkin belkinunv bestfcom	\
  gamatronic genericups isbmex liebert liebert-esp2 liebert-gxe masterguard metasys	\
  mge-utalk microdowell microsol-apc mge-shut nutdrv_hashx oneac optiups powercom powervar_cx_ser rhino	\
  safenet nutdrv_siemens-sitop solis tripplite tripplitesu upscode2 victronups powerpanel \
- blazer_ser ivtscd apcsmart apcsmart-old riello_ser sms_ser bicker_ser ve-direct \
+ blazer_ser ivtscd apcsmart apcsmart-old riello_ser sms_ser bicker_ser ve-direct meanwell_ntu \
  nutdrv_qx
 SERIAL_DRIVERLIST += nhs_ser
 SNMP_DRIVERLIST = snmp-ups
@@ -527,8 +529,10 @@ $(eval $(call DriverDescription,serial,bicker_ser,\
 	Driver for Bicker DC UPS via serial port connections))
 $(eval $(call DriverDescription,serial,ve-direct,\
 	Driver for Victron UPS unit running on VE.Direct serial protocol))
+$(eval $(call DriverDescription,serial,meanwell_ntu,\
+	Driver for Mean Well NTU series equipment with serial port))
 $(eval $(call DriverDescription,serial,nhs_ser,\
-	Driver for NHS Nobreaks, senoidal line, with serial port))
+	Driver for NHS Nobreaks - senoidal line - with serial port))
 $(eval $(call DriverDescription,snmp,snmp-ups,\
 	Multi-MIB Driver for SNMP UPS equipment))
 $(eval $(call DriverDescription,usb,usbhid-ups,\
@@ -556,7 +560,8 @@ CONFIGURE_VARS += \
 	ac_cv_path_AR=$(TARGET_AR)
 
 CONFIGURE_ARGS += \
-	--sysconfdir=/etc/nut \
+	--sysconfdir=/etc \
+	--with-confdir-suffix=/nut \
 	--datadir=/usr/share/nut \
 	--with-dev \
 	--$(if $(CONFIG_NUT_DRIVER_USB),with,without)-usb \
@@ -579,7 +584,7 @@ CONFIGURE_ARGS += \
 	--without-nut_monitor \
 	--with-statepath=/var/run/nut \
 	--with-pidpath=/var/run \
-	--with-drvpath=/lib/nut \
+	--with-drvpath=/usr/libexec/nut \
 	--with-user=nut \
 	--with-group=nut \
 	$(if $(CONFIG_PACKAGE_nut-web-cgi),--with-gd-includes="`pkg-config --cflags gdlib`") \
