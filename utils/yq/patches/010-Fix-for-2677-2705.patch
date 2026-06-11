@@ -1,0 +1,739 @@
+From 30e16a33c3cc2b9762e75a602899f11be79e8a29 Mon Sep 17 00:00:00 2001
+From: William Floyd <github@notmy.space>
+Date: Mon, 8 Jun 2026 23:08:47 -0500
+Subject: [PATCH] Fix for #2677 (#2705)
+
+* Update docs given https://github.com/yaml/go-yaml/pull/348
+
+* Fix for https://github.com/mikefarah/yq/issues/2677
+
+Depends on https://github.com/yaml/go-yaml/pull/348
+
+* Test for https://github.com/mikefarah/yq/issues/2677
+
+* Remove redundant check and add test case for explicit `!!merge` on `*+` traversal
+
+* Bump go.yaml.in/yaml/v4 from 4.0.0-rc.4 to 4.0.0-rc.5
+---
+ go.mod                                        |  2 +-
+ go.sum                                        |  4 +-
+ pkg/yqlib/candidate_node.go                   |  6 +-
+ .../operators/anchor-and-alias-operators.md   | 26 ++++-----
+ pkg/yqlib/doc/operators/divide.md             |  4 +-
+ pkg/yqlib/doc/operators/modulo.md             |  4 +-
+ pkg/yqlib/doc/operators/multiply-merge.md     |  6 +-
+ .../doc/operators/recursive-descent-glob.md   |  6 +-
+ pkg/yqlib/doc/operators/traverse-read.md      | 40 ++++++-------
+ pkg/yqlib/goccy_yaml_test.go                  |  3 +-
+ pkg/yqlib/lib_test.go                         |  2 +-
+ pkg/yqlib/operator_anchors_aliases_test.go    | 58 ++++++++++++++++++-
+ pkg/yqlib/operator_divide_test.go             |  2 +-
+ pkg/yqlib/operator_load_test.go               |  2 +-
+ pkg/yqlib/operator_modulo_test.go             |  6 +-
+ pkg/yqlib/operator_multiply.go                |  4 --
+ pkg/yqlib/operator_multiply_test.go           | 10 ++--
+ pkg/yqlib/operator_recursive_descent_test.go  |  8 +--
+ pkg/yqlib/operator_select_test.go             |  2 +-
+ pkg/yqlib/operator_sort_keys_test.go          |  2 +-
+ pkg/yqlib/operator_style_test.go              |  2 +-
+ pkg/yqlib/operator_traverse_path_test.go      |  4 +-
+ 22 files changed, 129 insertions(+), 74 deletions(-)
+
+--- a/go.mod
++++ b/go.mod
+@@ -19,7 +19,7 @@ require (
+ 	github.com/spf13/pflag v1.0.10
+ 	github.com/yuin/gopher-lua v1.1.2
+ 	github.com/zclconf/go-cty v1.18.1
+-	go.yaml.in/yaml/v4 v4.0.0-rc.4
++	go.yaml.in/yaml/v4 v4.0.0-rc.5
+ 	golang.org/x/mod v0.36.0
+ 	golang.org/x/net v0.55.0
+ 	golang.org/x/text v0.37.0
+--- a/go.sum
++++ b/go.sum
+@@ -68,8 +68,8 @@ github.com/zclconf/go-cty v1.18.1/go.mod
+ github.com/zclconf/go-cty-debug v0.0.0-20240509010212-0d6042c53940 h1:4r45xpDWB6ZMSMNJFMOjqrGHynW3DIBuR2H9j0ug+Mo=
+ github.com/zclconf/go-cty-debug v0.0.0-20240509010212-0d6042c53940/go.mod h1:CmBdvvj3nqzfzJ6nTCIwDTPZ56aVGvDrmztiO5g3qrM=
+ go.yaml.in/yaml/v3 v3.0.4/go.mod h1:DhzuOOF2ATzADvBadXxruRBLzYTpT36CKvDb3+aBEFg=
+-go.yaml.in/yaml/v4 v4.0.0-rc.4 h1:UP4+v6fFrBIb1l934bDl//mmnoIZEDK0idg1+AIvX5U=
+-go.yaml.in/yaml/v4 v4.0.0-rc.4/go.mod h1:aZqd9kCMsGL7AuUv/m/PvWLdg5sjJsZ4oHDEnfPPfY0=
++go.yaml.in/yaml/v4 v4.0.0-rc.5 h1:JVliQq9EGOYaTgMi+k8BhUJyqcGk4ZqeuiN1Cirba9c=
++go.yaml.in/yaml/v4 v4.0.0-rc.5/go.mod h1:aZqd9kCMsGL7AuUv/m/PvWLdg5sjJsZ4oHDEnfPPfY0=
+ golang.org/x/mod v0.36.0 h1:JJjpVx6myfUsUdAzZuOSTTmRE0PfZeNWzzvKrP7amb4=
+ golang.org/x/mod v0.36.0/go.mod h1:moc6ELqsWcOw5Ef3xVprK5ul/MvtVvkIXLziUOICjUQ=
+ golang.org/x/net v0.55.0 h1:bcvxaJn3e1U6InsFWt1JUq1aSjnRxLzT2rtD2KfkDF8=
+--- a/pkg/yqlib/candidate_node.go
++++ b/pkg/yqlib/candidate_node.go
+@@ -46,7 +46,11 @@ const (
+ func createStringScalarNode(stringValue string) *CandidateNode {
+ 	var node = &CandidateNode{Kind: ScalarNode}
+ 	node.Value = stringValue
+-	node.Tag = "!!str"
++	if stringValue == "<<" {
++		node.Tag = "!!merge"
++	} else {
++		node.Tag = "!!str"
++	}
+ 	return node
+ }
+ 
+--- a/pkg/yqlib/doc/operators/anchor-and-alias-operators.md
++++ b/pkg/yqlib/doc/operators/anchor-and-alias-operators.md
+@@ -32,7 +32,7 @@ Given a sample.yml file of:
+   r: 10
+ - &SMALL
+   r: 1
+-- !!merge <<: *CENTRE
++- <<: *CENTRE
+   r: 10
+ ```
+ then
+@@ -213,10 +213,10 @@ item_value: &item_value
+   value: true
+ thingOne:
+   name: item_1
+-  !!merge <<: *item_value
++  <<: *item_value
+ thingTwo:
+   name: item_2
+-  !!merge <<: *item_value
++  <<: *item_value
+ ```
+ then
+ ```bash
+@@ -231,7 +231,7 @@ thingOne:
+   value: false
+ thingTwo:
+   name: item_2
+-  !!merge <<: *item_value
++  <<: *item_value
+ ```
+ 
+ ## LEGACY: Explode with merge anchors
+@@ -249,13 +249,13 @@ bar: &bar
+   c: bar_c
+ foobarList:
+   b: foobarList_b
+-  !!merge <<:
++  <<:
+     - *foo
+     - *bar
+   c: foobarList_c
+ foobar:
+   c: foobar_c
+-  !!merge <<: *foo
++  <<: *foo
+   thing: foobar_thing
+ ```
+ then
+@@ -298,7 +298,7 @@ Given a sample.yml file of:
+   r: 10
+ - &SMALL
+   r: 1
+-- !!merge <<:
++- <<:
+     - *CENTRE
+     - *BIG
+ ```
+@@ -328,7 +328,7 @@ Given a sample.yml file of:
+   r: 10
+ - &SMALL
+   r: 1
+-- !!merge <<:
++- <<:
+     - *BIG
+     - *LEFT
+     - *SMALL
+@@ -361,13 +361,13 @@ bar: &bar
+   c: bar_c
+ foobarList:
+   b: foobarList_b
+-  !!merge <<:
++  <<:
+     - *foo
+     - *bar
+   c: foobarList_c
+ foobar:
+   c: foobar_c
+-  !!merge <<: *foo
++  <<: *foo
+   thing: foobar_thing
+ ```
+ then
+@@ -411,7 +411,7 @@ Given a sample.yml file of:
+   r: 10
+ - &SMALL
+   r: 1
+-- !!merge <<:
++- <<:
+     - *CENTRE
+     - *BIG
+ ```
+@@ -442,7 +442,7 @@ Given a sample.yml file of:
+   r: 10
+ - &SMALL
+   r: 1
+-- !!merge <<:
++- <<:
+     - *BIG
+     - *LEFT
+     - *SMALL
+@@ -467,7 +467,7 @@ Given a sample.yml file of:
+ ```yaml
+ a:
+   b: &b 42
+-!!merge <<:
++<<:
+   c: *b
+ ```
+ then
+--- a/pkg/yqlib/doc/operators/divide.md
++++ b/pkg/yqlib/doc/operators/divide.md
+@@ -55,7 +55,7 @@ yq '.a = .a / 0 | .b = .b / 0' sample.ym
+ ```
+ will output
+ ```yaml
+-a: !!float +Inf
+-b: !!float -Inf
++a: +Inf
++b: -Inf
+ ```
+ 
+--- a/pkg/yqlib/doc/operators/modulo.md
++++ b/pkg/yqlib/doc/operators/modulo.md
+@@ -34,7 +34,7 @@ yq '.a = .a % .b' sample.yml
+ ```
+ will output
+ ```yaml
+-a: !!float 2
++a: 2
+ b: 2.5
+ ```
+ 
+@@ -69,7 +69,7 @@ yq '.a = .a % .b' sample.yml
+ ```
+ will output
+ ```yaml
+-a: !!float NaN
++a: NaN
+ b: 0
+ ```
+ 
+--- a/pkg/yqlib/doc/operators/multiply-merge.md
++++ b/pkg/yqlib/doc/operators/multiply-merge.md
+@@ -471,13 +471,13 @@ bar: &bar
+   c: bar_c
+ foobarList:
+   b: foobarList_b
+-  !!merge <<:
++  <<:
+     - *foo
+     - *bar
+   c: foobarList_c
+ foobar:
+   c: foobar_c
+-  !!merge <<: *foo
++  <<: *foo
+   thing: foobar_thing
+ ```
+ then
+@@ -487,7 +487,7 @@ yq '.foobar * .foobarList' sample.yml
+ will output
+ ```yaml
+ c: foobarList_c
+-!!merge <<:
++<<:
+   - *foo
+   - *bar
+ thing: foobar_thing
+--- a/pkg/yqlib/doc/operators/recursive-descent-glob.md
++++ b/pkg/yqlib/doc/operators/recursive-descent-glob.md
+@@ -131,13 +131,13 @@ bar: &bar
+   c: bar_c
+ foobarList:
+   b: foobarList_b
+-  !!merge <<:
++  <<:
+     - *foo
+     - *bar
+   c: foobarList_c
+ foobar:
+   c: foobar_c
+-  !!merge <<: *foo
++  <<: *foo
+   thing: foobar_thing
+ ```
+ then
+@@ -147,7 +147,7 @@ yq '.foobar | [..]' sample.yml
+ will output
+ ```yaml
+ - c: foobar_c
+-  !!merge <<: *foo
++  <<: *foo
+   thing: foobar_thing
+ - foobar_c
+ - *foo
+--- a/pkg/yqlib/doc/operators/traverse-read.md
++++ b/pkg/yqlib/doc/operators/traverse-read.md
+@@ -294,13 +294,13 @@ bar: &bar
+   c: bar_c
+ foobarList:
+   b: foobarList_b
+-  !!merge <<:
++  <<:
+     - *foo
+     - *bar
+   c: foobarList_c
+ foobar:
+   c: foobar_c
+-  !!merge <<: *foo
++  <<: *foo
+   thing: foobar_thing
+ ```
+ then
+@@ -325,13 +325,13 @@ bar: &bar
+   c: bar_c
+ foobarList:
+   b: foobarList_b
+-  !!merge <<:
++  <<:
+     - *foo
+     - *bar
+   c: foobarList_c
+ foobar:
+   c: foobar_c
+-  !!merge <<: *foo
++  <<: *foo
+   thing: foobar_thing
+ ```
+ then
+@@ -376,13 +376,13 @@ bar: &bar
+   c: bar_c
+ foobarList:
+   b: foobarList_b
+-  !!merge <<:
++  <<:
+     - *foo
+     - *bar
+   c: foobarList_c
+ foobar:
+   c: foobar_c
+-  !!merge <<: *foo
++  <<: *foo
+   thing: foobar_thing
+ ```
+ then
+@@ -409,13 +409,13 @@ bar: &bar
+   c: bar_c
+ foobarList:
+   b: foobarList_b
+-  !!merge <<:
++  <<:
+     - *foo
+     - *bar
+   c: foobarList_c
+ foobar:
+   c: foobar_c
+-  !!merge <<: *foo
++  <<: *foo
+   thing: foobar_thing
+ ```
+ then
+@@ -442,13 +442,13 @@ bar: &bar
+   c: bar_c
+ foobarList:
+   b: foobarList_b
+-  !!merge <<:
++  <<:
+     - *foo
+     - *bar
+   c: foobarList_c
+ foobar:
+   c: foobar_c
+-  !!merge <<: *foo
++  <<: *foo
+   thing: foobar_thing
+ ```
+ then
+@@ -477,13 +477,13 @@ bar: &bar
+   c: bar_c
+ foobarList:
+   b: foobarList_b
+-  !!merge <<:
++  <<:
+     - *foo
+     - *bar
+   c: foobarList_c
+ foobar:
+   c: foobar_c
+-  !!merge <<: *foo
++  <<: *foo
+   thing: foobar_thing
+ ```
+ then
+@@ -513,13 +513,13 @@ bar: &bar
+   c: bar_c
+ foobarList:
+   b: foobarList_b
+-  !!merge <<:
++  <<:
+     - *foo
+     - *bar
+   c: foobarList_c
+ foobar:
+   c: foobar_c
+-  !!merge <<: *foo
++  <<: *foo
+   thing: foobar_thing
+ ```
+ then
+@@ -546,13 +546,13 @@ bar: &bar
+   c: bar_c
+ foobarList:
+   b: foobarList_b
+-  !!merge <<:
++  <<:
+     - *foo
+     - *bar
+   c: foobarList_c
+ foobar:
+   c: foobar_c
+-  !!merge <<: *foo
++  <<: *foo
+   thing: foobar_thing
+ ```
+ then
+@@ -579,13 +579,13 @@ bar: &bar
+   c: bar_c
+ foobarList:
+   b: foobarList_b
+-  !!merge <<:
++  <<:
+     - *foo
+     - *bar
+   c: foobarList_c
+ foobar:
+   c: foobar_c
+-  !!merge <<: *foo
++  <<: *foo
+   thing: foobar_thing
+ ```
+ then
+@@ -614,13 +614,13 @@ bar: &bar
+   c: bar_c
+ foobarList:
+   b: foobarList_b
+-  !!merge <<:
++  <<:
+     - *foo
+     - *bar
+   c: foobarList_c
+ foobar:
+   c: foobar_c
+-  !!merge <<: *foo
++  <<: *foo
+   thing: foobar_thing
+ ```
+ then
+--- a/pkg/yqlib/goccy_yaml_test.go
++++ b/pkg/yqlib/goccy_yaml_test.go
+@@ -230,8 +230,7 @@ var goccyYamlFormatScenarios = []formatS
+ 		description: "merge anchor",
+ 		skipDoc:     true,
+ 		input:       "a: &remember\n  c: mike\nb:\n  <<: *remember",
+-		// fine to have !!merge as that's what the current impl does
+-		expected: "a: &remember\n  c: mike\nb:\n  !!merge <<: *remember\n",
++		expected: "a: &remember\n  c: mike\nb:\n  <<: *remember\n",
+ 	},
+ 	{
+ 		description: "custom tag",
+--- a/pkg/yqlib/lib_test.go
++++ b/pkg/yqlib/lib_test.go
+@@ -24,7 +24,7 @@ type parseSnippetScenario struct {
+ var parseSnippetScenarios = []parseSnippetScenario{
+ 	{
+ 		snippet:       ":",
+-		expectedError: "yaml: while parsing a block mapping at <unknown position>: did not find expected key",
++		expectedError: "go-yaml load error in parser (while parsing a block mapping) at L1.C1: did not find expected key",
+ 	},
+ 	{
+ 		snippet: "",
+--- a/pkg/yqlib/operator_anchors_aliases_test.go
++++ b/pkg/yqlib/operator_anchors_aliases_test.go
+@@ -31,7 +31,7 @@ thingOne:
+     value: false
+ thingTwo:
+     name: item_2
+-    !!merge <<: *item_value
++    <<: *item_value
+ `
+ 
+ var explodeMergeAnchorsFixedExpected = `D0, P[], (!!map)::foo:
+@@ -288,8 +288,64 @@ var badAnchorOperatorScenarios = []expre
+ 	},
+ }
+ 
++var mixedMergeTagStyleDocument = `
++constants:
++    errorResponse: &errorResponse
++        status: 200
++endpoints:
++    - condition: true
++      !!merge <<: *errorResponse
++    - condition: false
++      <<: *errorResponse
++other:
++    !!merge <<: *errorResponse
++somethingElse:
++    <<: *errorResponse
++`
++
++var mixedMergeTagStyleExplodedDocument = `
++constants:
++    errorResponse:
++        status: 200
++endpoints:
++    - condition: true
++      status: 200
++    - condition: false
++      status: 200
++other:
++    status: 200
++somethingElse:
++    status: 200
++`
++
+ var anchorOperatorScenarios = []expressionScenario{
+ 	{
++		// mergeObjects previously skipped all !!merge-tagged nodes. Since !!merge only appears on
++		// << map keys, this meant applyAssignment was never called for the << key. It was later
++		// autocreated by createStringScalarNode("<<") with tag !!str, silently dropping !!merge.
++		// DontFollowAlias:true already prevents aliases being followed, so the skip was redundant.
++		// Old (buggy) output: "D0, P[], (!!map)::base: &base\n    x: 1\ndest:\n    <<: *base\n"
++		skipDoc:     true,
++		description: "direct *+ preserves explicit !!merge tag on << key (regression for issue 2677)",
++		document:    "base: &base\n    x: 1\ndest:\n    !!merge <<: *base\n",
++		expression:  `. as $d | {} *+ $d`,
++		expected:    []string{"D0, P[], (!!map)::base: &base\n    x: 1\ndest:\n    !!merge <<: *base\n"},
++	},
++	{
++		skipDoc:     true,
++		description: "explicit !!merge tag on << key is preserved through ireduce merge",
++		document:    mixedMergeTagStyleDocument,
++		expression:  `. as $item ireduce ({}; . *+ $item)`,
++		expected:    []string{"D0, P[], (!!map)::" + mixedMergeTagStyleDocument},
++	},
++	{
++		skipDoc:     true,
++		description: "explode expands << merge keys regardless of explicit tag style (!!merge or plain)",
++		document:    mixedMergeTagStyleDocument,
++		expression:  `explode(.)`,
++		expected:    []string{"D0, P[], (!!map)::" + mixedMergeTagStyleExplodedDocument},
++	},
++	{
+ 		skipDoc:     true,
+ 		description: "merge anchor to alias alias",
+ 		document:    "b: &b 10\na: &a { k:  *b }\nc:\n   <<: [*a]",
+--- a/pkg/yqlib/operator_divide_test.go
++++ b/pkg/yqlib/operator_divide_test.go
+@@ -45,7 +45,7 @@ var divideOperatorScenarios = []expressi
+ 		document:       `{a: 1, b: -1}`,
+ 		expression:     `.a = .a / 0 | .b = .b / 0`,
+ 		expected: []string{
+-			"D0, P[], (!!map)::{a: !!float +Inf, b: !!float -Inf}\n",
++			"D0, P[], (!!map)::{a: +Inf, b: -Inf}\n",
+ 		},
+ 	},
+ 	{
+--- a/pkg/yqlib/operator_load_test.go
++++ b/pkg/yqlib/operator_load_test.go
+@@ -77,7 +77,7 @@ var loadScenarios = []expressionScenario
+ 		document:       `{something: {file: "thing.yml"}, over: {here: [{file: "thing.yml"}]}}`,
+ 		expression:     `(.. | select(has("file"))) |= load("../../examples/" + .file)`,
+ 		expected: []string{
+-			"D0, P[], (!!map)::{something: {a: apple is included, b: cool.}, over: {here: [{a: apple is included, b: cool.}]}}\n",
++			"D0, P[], (!!map)::{something: {a: apple is included, b: cool.}, over: {here: [{a: apple is included,\n                b: cool.}]}}\n",
+ 		},
+ 	},
+ 	{
+--- a/pkg/yqlib/operator_modulo_test.go
++++ b/pkg/yqlib/operator_modulo_test.go
+@@ -37,7 +37,7 @@ var moduloOperatorScenarios = []expressi
+ 		document:       `{a: 12, b: 2.5}`,
+ 		expression:     `.a = .a % .b`,
+ 		expected: []string{
+-			"D0, P[], (!!map)::{a: !!float 2, b: 2.5}\n",
++			"D0, P[], (!!map)::{a: 2, b: 2.5}\n",
+ 		},
+ 	},
+ 	{
+@@ -53,7 +53,7 @@ var moduloOperatorScenarios = []expressi
+ 		document:       `{a: 1.1, b: 0}`,
+ 		expression:     `.a = .a % .b`,
+ 		expected: []string{
+-			"D0, P[], (!!map)::{a: !!float NaN, b: 0}\n",
++			"D0, P[], (!!map)::{a: NaN, b: 0}\n",
+ 		},
+ 	},
+ 	{
+@@ -70,7 +70,7 @@ var moduloOperatorScenarios = []expressi
+ 		document:   "a: 2\nb: !goat 2.3",
+ 		expression: `.a = .a % .b`,
+ 		expected: []string{
+-			"D0, P[], (!!map)::a: !!float 2\nb: !goat 2.3\n",
++			"D0, P[], (!!map)::a: 2\nb: !goat 2.3\n",
+ 		},
+ 	},
+ 	{
+--- a/pkg/yqlib/operator_multiply.go
++++ b/pkg/yqlib/operator_multiply.go
+@@ -189,10 +189,6 @@ func mergeObjects(d *dataTreeNavigator,
+ 
+ 		log.Debugf("going to applied assignment to LHS: %v with RHS: %v", NodeToString(lhs), NodeToString(candidate))
+ 
+-		if candidate.Tag == "!!merge" {
+-			continue
+-		}
+-
+ 		err := applyAssignment(d, context, pathIndexToStartFrom, lhs, candidate, preferences)
+ 		if err != nil {
+ 			return nil, err
+--- a/pkg/yqlib/operator_multiply_test.go
++++ b/pkg/yqlib/operator_multiply_test.go
+@@ -121,7 +121,7 @@ var multiplyOperatorScenarios = []expres
+ 		document:   mergeArrayWithAnchors,
+ 		expression: `. * .`,
+ 		expected: []string{
+-			"D0, P[], (!!map)::sample:\n    - &a\n    - !!merge <<: *a\n",
++			"D0, P[], (!!map)::sample:\n    - &a\n    - <<: *a\n",
+ 		},
+ 	},
+ 	{
+@@ -514,7 +514,7 @@ var multiplyOperatorScenarios = []expres
+ 		environmentVariables: map[string]string{"originalPath": ".myArray", "otherPath": ".newArray", "idPath": ".a"},
+ 		expression:           mergeExpression,
+ 		expected: []string{
+-			"D0, P[], (!!map)::{myArray: [{a: apple, b: appleB2}, {a: kiwi, b: kiwiB}, {a: banana, b: bananaB, c: bananaC}, {a: dingo, c: dingoC}], something: else}\n",
++			"D0, P[], (!!map)::{myArray: [{a: apple, b: appleB2}, {a: kiwi, b: kiwiB}, {a: banana, b: bananaB, c: bananaC},\n        {a: dingo, c: dingoC}], something: else}\n",
+ 		},
+ 	},
+ 	{
+@@ -546,7 +546,7 @@ var multiplyOperatorScenarios = []expres
+ 		document:    mergeDocSample,
+ 		expression:  `.foobar * .foobarList`,
+ 		expected: []string{
+-			"D0, P[foobar], (!!map)::c: foobarList_c\n!!merge <<: [*foo, *bar]\nthing: foobar_thing\nb: foobarList_b\n",
++			"D0, P[foobar], (!!map)::c: foobarList_c\n<<: [*foo, *bar]\nthing: foobar_thing\nb: foobarList_b\n",
+ 		},
+ 	},
+ 	{
+@@ -554,7 +554,7 @@ var multiplyOperatorScenarios = []expres
+ 		document:   document,
+ 		expression: `.b * .c`,
+ 		expected: []string{
+-			"D0, P[b], (!!map)::{name: dog, \"<<\": *cat}\n",
++			"D0, P[b], (!!map)::{name: dog, <<: *cat}\n",
+ 		},
+ 	},
+ 	{
+@@ -581,7 +581,7 @@ var multiplyOperatorScenarios = []expres
+ 		document:    "a: 2\nb: !goat 3.5",
+ 		expression:  ".a = .a * .b",
+ 		expected: []string{
+-			"D0, P[], (!!map)::a: !!float 7\nb: !goat 3.5\n",
++			"D0, P[], (!!map)::a: 7\nb: !goat 3.5\n",
+ 		},
+ 	},
+ 	{
+--- a/pkg/yqlib/operator_recursive_descent_test.go
++++ b/pkg/yqlib/operator_recursive_descent_test.go
+@@ -187,7 +187,7 @@ var recursiveDescentOperatorScenarios =
+ 		document:    mergeDocSample,
+ 		expression:  `.foobar | [..]`,
+ 		expected: []string{
+-			"D0, P[foobar], (!!seq)::- c: foobar_c\n  !!merge <<: *foo\n  thing: foobar_thing\n- foobar_c\n- *foo\n- foobar_thing\n",
++			"D0, P[foobar], (!!seq)::- c: foobar_c\n  <<: *foo\n  thing: foobar_thing\n- foobar_c\n- *foo\n- foobar_thing\n",
+ 		},
+ 	},
+ 	{
+@@ -195,7 +195,7 @@ var recursiveDescentOperatorScenarios =
+ 		document:   mergeDocSample,
+ 		expression: `.foobar | [...]`,
+ 		expected: []string{
+-			"D0, P[foobar], (!!seq)::- c: foobar_c\n  !!merge <<: *foo\n  thing: foobar_thing\n- c\n- foobar_c\n- !!merge <<\n- *foo\n- thing\n- foobar_thing\n",
++			"D0, P[foobar], (!!seq)::- c: foobar_c\n  <<: *foo\n  thing: foobar_thing\n- c\n- foobar_c\n- <<\n- *foo\n- thing\n- foobar_thing\n",
+ 		},
+ 	},
+ 	{
+@@ -203,7 +203,7 @@ var recursiveDescentOperatorScenarios =
+ 		document:   mergeDocSample,
+ 		expression: `.foobarList | ..`,
+ 		expected: []string{
+-			"D0, P[foobarList], (!!map)::b: foobarList_b\n!!merge <<: [*foo, *bar]\nc: foobarList_c\n",
++			"D0, P[foobarList], (!!map)::b: foobarList_b\n<<: [*foo, *bar]\nc: foobarList_c\n",
+ 			"D0, P[foobarList b], (!!str)::foobarList_b\n",
+ 			"D0, P[foobarList <<], (!!seq)::[*foo, *bar]\n",
+ 			"D0, P[foobarList << 0], (alias)::*foo\n",
+@@ -216,7 +216,7 @@ var recursiveDescentOperatorScenarios =
+ 		document:   mergeDocSample,
+ 		expression: `.foobarList | ...`,
+ 		expected: []string{
+-			"D0, P[foobarList], (!!map)::b: foobarList_b\n!!merge <<: [*foo, *bar]\nc: foobarList_c\n",
++			"D0, P[foobarList], (!!map)::b: foobarList_b\n<<: [*foo, *bar]\nc: foobarList_c\n",
+ 			"D0, P[foobarList b], (!!str)::b\n",
+ 			"D0, P[foobarList b], (!!str)::foobarList_b\n",
+ 			"D0, P[foobarList <<], (!!merge)::<<\n",
+--- a/pkg/yqlib/operator_select_test.go
++++ b/pkg/yqlib/operator_select_test.go
+@@ -98,7 +98,7 @@ var selectOperatorScenarios = []expressi
+ 		document:    `[{animal: cat, legs: {cool: true}}, {animal: fish}]`,
+ 		expression:  `(.[] | select(.legs.cool == true).canWalk) = true | (.[] | .alive.things) = "yes"`,
+ 		expected: []string{
+-			"D0, P[], (!!seq)::[{animal: cat, legs: {cool: true}, canWalk: true, alive: {things: yes}}, {animal: fish, alive: {things: yes}}]\n",
++			"D0, P[], (!!seq)::[{animal: cat, legs: {cool: true}, canWalk: true, alive: {things: yes}}, {animal: fish,\n        alive: {things: yes}}]\n",
+ 		},
+ 	},
+ 	{
+--- a/pkg/yqlib/operator_sort_keys_test.go
++++ b/pkg/yqlib/operator_sort_keys_test.go
+@@ -37,7 +37,7 @@ var sortKeysOperatorScenarios = []expres
+ 		document:       `{bParent: {c: dog, array: [3,1,2]}, aParent: {z: donkey, x: [{c: yum, b: delish}, {b: ew, a: apple}]}}`,
+ 		expression:     `sort_keys(..)`,
+ 		expected: []string{
+-			"D0, P[], (!!map)::{aParent: {x: [{b: delish, c: yum}, {a: apple, b: ew}], z: donkey}, bParent: {array: [3, 1, 2], c: dog}}\n",
++			"D0, P[], (!!map)::{aParent: {x: [{b: delish, c: yum}, {a: apple, b: ew}], z: donkey}, bParent: {array: [\n            3, 1, 2], c: dog}}\n",
+ 		},
+ 	},
+ }
+--- a/pkg/yqlib/operator_style_test.go
++++ b/pkg/yqlib/operator_style_test.go
+@@ -50,7 +50,7 @@ var styleOperatorScenarios = []expressio
+ 		document:   "bing: &foo {x: z}\na:\n  c: cat\n  <<: [*foo]",
+ 		expression: `(... | select(tag=="!!str")) style="single"`,
+ 		expected: []string{
+-			"D0, P[], (!!map)::'bing': &foo {'x': 'z'}\n'a':\n    'c': 'cat'\n    !!merge <<: [*foo]\n",
++			"D0, P[], (!!map)::'bing': &foo {'x': 'z'}\n'a':\n    'c': 'cat'\n    <<: [*foo]\n",
+ 		},
+ 	},
+ 	{
+--- a/pkg/yqlib/operator_traverse_path_test.go
++++ b/pkg/yqlib/operator_traverse_path_test.go
+@@ -494,7 +494,7 @@ var traversePathOperatorScenarios = []ex
+ 		document:   mergeDocSample,
+ 		expression: `.foobar`,
+ 		expected: []string{
+-			"D0, P[foobar], (!!map)::c: foobar_c\n!!merge <<: *foo\nthing: foobar_thing\n",
++			"D0, P[foobar], (!!map)::c: foobar_c\n<<: *foo\nthing: foobar_thing\n",
+ 		},
+ 	},
+ 	{
+@@ -518,7 +518,7 @@ var traversePathOperatorScenarios = []ex
+ 		document:   mergeDocSample,
+ 		expression: `.foobarList`,
+ 		expected: []string{
+-			"D0, P[foobarList], (!!map)::b: foobarList_b\n!!merge <<: [*foo, *bar]\nc: foobarList_c\n",
++			"D0, P[foobarList], (!!map)::b: foobarList_b\n<<: [*foo, *bar]\nc: foobarList_c\n",
+ 		},
+ 	},
+ 	{
