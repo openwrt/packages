@@ -28,7 +28,7 @@ stop                 Stop NETWORK or all
 Parameters:
  -n NETWORK          Start/Stop sections in background monitoring NETWORK, force VERBOSE=0
  -S SECTION          SECTION to start
-                     use either -N NETWORK or -S SECTION
+                     use either -n NETWORK or -S SECTION
 
  -h                  show this help and exit
  -V                  show version and exit
@@ -63,9 +63,19 @@ while getopts ":hv:dn:S:V" OPT; do
 done
 shift $((OPTIND - 1 ))	# OPTIND is 1 based
 
-[ -n "$NETWORK" -a -n "$SECTION_ID" ] && usage_err "use either option '-N' or '-S' not both"
+[ -n "$NETWORK" -a -n "$SECTION_ID" ] && usage_err "use either option '-n' or '-S' not both"
 [ $# -eq 0 ] && usage_err "missing command"
-[ $# -gt 1 ] && usage_err "to much commands"
+if [ $# -gt 1 ]; then
+	if [ -z "$NETWORK" -a -z "$SECTION_ID" ]; then
+		case "$1:$2" in
+			start:*|stop:*|reload:*) ;;
+			*:[0-9]*)
+				usage_err "legacy syntax detected ('$1 $2'); use '-S $1 -v $2 -- start'"
+				;;
+		esac
+	fi
+	usage_err "too many commands"
+fi
 
 case "$1" in
 	start)
