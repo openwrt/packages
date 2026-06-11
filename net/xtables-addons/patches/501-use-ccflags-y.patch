@@ -1,0 +1,32 @@
+Index: xtables-addons-3.27/extensions/ACCOUNT/Kbuild
+===================================================================
+--- xtables-addons-3.27.orig/extensions/ACCOUNT/Kbuild
++++ xtables-addons-3.27/extensions/ACCOUNT/Kbuild
+@@ -1,5 +1,6 @@
+ # -*- Makefile -*-
+ 
+ EXTRA_CFLAGS = -I${src}/..
++ccflags-y += $(EXTRA_CFLAGS)
+ 
+ obj-m += xt_ACCOUNT.o
+Index: xtables-addons-3.27/extensions/LUA/Kbuild
+===================================================================
+--- xtables-addons-3.27.orig/extensions/LUA/Kbuild
++++ xtables-addons-3.27/extensions/LUA/Kbuild
+@@ -49,3 +49,5 @@ xt_LUA-y += lua/lapi.o \
+ 			lua/lvm.o \
+ 			lua/lzio.o \
+ 			lua/lauxlib.o \
++
++ccflags-y += $(EXTRA_CFLAGS)
+Index: xtables-addons-3.27/extensions/pknock/Kbuild
+===================================================================
+--- xtables-addons-3.27.orig/extensions/pknock/Kbuild
++++ xtables-addons-3.27/extensions/pknock/Kbuild
+@@ -1,5 +1,6 @@
+ # -*- Makefile -*-
+ 
+ EXTRA_CFLAGS = -I${src}/..
++ccflags-y += $(EXTRA_CFLAGS)
+ 
+ obj-m += xt_pknock.o
