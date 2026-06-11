@@ -1,0 +1,34 @@
+--- a/gophish.go
++++ b/gophish.go
+@@ -27,7 +27,6 @@ THE SOFTWARE.
+ */
+ import (
+ 	"fmt"
+-	"io/ioutil"
+ 	"net/http"
+ 	"os"
+ 	"os/signal"
+@@ -60,11 +59,9 @@ var (
+ func main() {
+ 	// Load the version
+ 
+-	version, err := ioutil.ReadFile("./VERSION")
+-	if err != nil {
+-		log.Fatal(err)
+-	}
+-	kingpin.Version(string(version))
++	version := "0.12.1"
++
++	kingpin.Version(version)
+ 
+ 	// Parse the CLI flags and load the config
+ 	kingpin.CommandLine.HelpFlag.Short('h')
+@@ -80,7 +77,7 @@ func main() {
+ 		log.Warnf("No contact address has been configured.")
+ 		log.Warnf("Please consider adding a contact_address entry in your config.json")
+ 	}
+-	config.Version = string(version)
++	config.Version = version
+ 
+ 	// Configure our various upstream clients to make sure that we restrict
+ 	// outbound connections as needed.
