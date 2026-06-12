@@ -1,0 +1,25 @@
+--- a/Makefile
++++ b/Makefile
+@@ -22,17 +22,17 @@ endif
+ 
+ CFLAGS+=-Wall -O1
+ 
+-release: clean qmi-proxy mbim-proxy
++release: clean quectel-qmi-proxy quectel-mbim-proxy
+ 	$(CC) ${CFLAGS} -s ${QL_CM_SRC} ${QL_CM_DHCP} -o quectel-CM -lpthread -ldl -lrt
+ 
+ debug: clean
+ 	$(CC) ${CFLAGS} -g -DCM_DEBUG ${QL_CM_SRC} ${QL_CM_DHCP} -o quectel-CM -lpthread -ldl -lrt
+ 
+-qmi-proxy:
+-	$(CC) ${CFLAGS} -s quectel-qmi-proxy.c  -o quectel-qmi-proxy -lpthread -ldl -lrt
++quectel-qmi-proxy:
++	$(CC) ${CFLAGS} -s quectel-qmi-proxy.c -o quectel-qmi-proxy -lpthread -ldl -lrt
+ 
+-mbim-proxy:
+-	$(CC) ${CFLAGS} -s quectel-mbim-proxy.c  -o quectel-mbim-proxy -lpthread -ldl -lrt
++quectel-mbim-proxy:
++	$(CC) ${CFLAGS} -s quectel-mbim-proxy.c -o quectel-mbim-proxy -lpthread -ldl -lrt
+ 
+ clean:
+ 	rm -rf *.o libmnl/*.o quectel-CM quectel-qmi-proxy quectel-mbim-proxy

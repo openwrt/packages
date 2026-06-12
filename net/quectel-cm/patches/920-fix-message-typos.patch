@@ -1,0 +1,29 @@
+--- a/QMIThread.c
++++ b/QMIThread.c
+@@ -1301,7 +1301,7 @@ static int requestRegistrationState2(UCH
+     int err;
+     USHORT MobileCountryCode = 0;
+     USHORT MobileNetworkCode = 0;
+-    const char *pDataCapStr = "UNKNOW";
++    const char *pDataCapStr = "UNKNOWN";
+     LONG remainingLen;
+     PSERVICE_STATUS_INFO pServiceStatusInfo;
+     int is_lte = 0;
+@@ -1637,7 +1637,7 @@ static int requestRegistrationState(UCHA
+     PQMINAS_DATA_CAP pDataCap;
+     USHORT MobileCountryCode = 0;
+     USHORT MobileNetworkCode = 0;
+-    const char *pDataCapStr = "UNKNOW";
++    const char *pDataCapStr = "UNKNOWN";
+ 
+     if (s_9x07) {
+         return requestRegistrationState2(pPSAttachedState);
+@@ -1690,7 +1690,7 @@ static int requestRegistrationState(UCHA
+              case 0x0B: pDataCapStr = "LTE"; break;
+              case 0x0C: pDataCapStr = "HSDPA"; break;
+              case 0x0D: pDataCapStr = "HSDPA"; break;
+-             default: pDataCapStr = "UNKNOW"; break;
++             default: pDataCapStr = "UNKNOWN"; break;
+         }
+     }
+ 
