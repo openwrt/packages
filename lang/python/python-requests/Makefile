@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-requests
 PKG_VERSION:=2.34.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=Apache-2.0
@@ -20,7 +20,7 @@ PYPI_NAME:=requests
 PKG_HASH:=f288924cae4e29463698d6d60bc6a4da69c89185ad1e0bcc4104f584e960b9ed
 
 HOST_BUILD_DEPENDS:= \
-  python-chardet/host \
+  python-charset-normalizer/host \
   python-idna/host \
   python-urllib3/host \
   python-certifi/host
@@ -39,7 +39,7 @@ define Package/python3-requests
   URL:=https://requests.readthedocs.io
   DEPENDS:= \
 	  +python3-light  \
-	  +python3-chardet  \
+	  +python3-charset-normalizer  \
 	  +python3-idna  \
 	  +python3-urllib3  \
 	  +python3-certifi
