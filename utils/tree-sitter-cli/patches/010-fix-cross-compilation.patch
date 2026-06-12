@@ -1,0 +1,19 @@
+--- a/cli/loader/src/lib.rs
++++ b/cli/loader/src/lib.rs
+@@ -303,7 +303,6 @@ impl Config {
+ }
+ 
+ const BUILD_TARGET: &str = env!("BUILD_TARGET");
+-const BUILD_HOST: &str = env!("BUILD_HOST");
+ 
+ pub struct LanguageConfiguration<'a> {
+     pub scope: Option<String>,
+@@ -821,7 +820,7 @@ impl Loader {
+             .cargo_metadata(false)
+             .cargo_warnings(false)
+             .target(BUILD_TARGET)
+-            .host(BUILD_HOST)
++            .host(BUILD_TARGET)
+             .debug(self.debug_build)
+             .file(&config.parser_path)
+             .includes(&config.header_paths)
