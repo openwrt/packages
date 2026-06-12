@@ -1,0 +1,79 @@
+From: Sven Kirmess <sven.kirmess@kzone.ch>
+Date: Fri, 8 May 2026 08:59:29 +0200
+Subject: [PATCH] configure: add --disable-man option
+
+Allow man page generation to be disabled explicitly via
+--disable-man. When disabled, the libxml2 check and doxygen2man
+build are skipped entirely.
+
+This is useful in cross-compilation environments where doxygen2man
+cannot be built for the build host and libxml2 may not be available
+as a host library.
+
+Signed-off-by: Sven Kirmess <sven.kirmess@kzone.ch>
+---
+ Makefile.am  |  6 +++++-
+ configure.ac | 36 ++++++++++++++++++++++--------------
+ 2 files changed, 27 insertions(+), 15 deletions(-)
+
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -39,7 +39,11 @@ ACLOCAL_AMFLAGS		= -I m4
+ 
+ dist_doc_DATA		= COPYING INSTALL README.markdown
+ 
+-SUBDIRS			= include lib doxygen2man docs tools examples
++SUBDIRS			= include lib
++if BUILD_MAN
++SUBDIRS			+= doxygen2man
++endif
++SUBDIRS			+= docs tools examples
+ 
+ if ENABLE_TESTS
+ SUBDIRS			+= tests
+--- a/configure.ac
++++ b/configure.ac
+@@ -178,22 +178,30 @@ AC_DEFINE_UNQUOTED([HAVE_GLIB], [1], [We
+ fi
+ 
+ # For building doxygen2man and man pages
+-PKG_CHECK_MODULES([libxml], [libxml-2.0])
++AC_ARG_ENABLE([man],
++  [AS_HELP_STRING([--disable-man], [disable man page generation @<:@default=yes@:>@])],
++  [], [enable_man=yes])
+ 
+-# if we are not cross-compiling, we can use the locally built
+-# version of doxygen2man, otherwise we can look for
+-# a locally installed version. If neither are usable, then
+-# don´t build the man pages
+-if test "x$cross_compiling" = "xno"; then
+-  AM_CONDITIONAL([BUILD_MAN], [true])
+-  DOXYGEN2MAN="\$(abs_builddir)/../doxygen2man/doxygen2man"
+-else
+-  AC_CHECK_PROGS([DOXYGEN2MAN], [doxygen2man])
+-  if test "x$DOXYGEN2MAN" = "x"; then
+-    AM_CONDITIONAL([BUILD_MAN], [false])
+-  else
++if test "x$enable_man" = "xyes"; then
++  PKG_CHECK_MODULES([libxml], [libxml-2.0])
++
++  # if we are not cross-compiling, we can use the locally built
++  # version of doxygen2man, otherwise we can look for
++  # a locally installed version. If neither are usable, then
++  # don't build the man pages
++  if test "x$cross_compiling" = "xno"; then
+     AM_CONDITIONAL([BUILD_MAN], [true])
++    DOXYGEN2MAN="\$(abs_builddir)/../doxygen2man/doxygen2man"
++  else
++    AC_CHECK_PROGS([DOXYGEN2MAN], [doxygen2man])
++    if test "x$DOXYGEN2MAN" = "x"; then
++      AM_CONDITIONAL([BUILD_MAN], [false])
++    else
++      AM_CONDITIONAL([BUILD_MAN], [true])
++    fi
+   fi
++else
++  AM_CONDITIONAL([BUILD_MAN], [false])
+ fi
+ AC_SUBST(DOXYGEN2MAN)
+ 

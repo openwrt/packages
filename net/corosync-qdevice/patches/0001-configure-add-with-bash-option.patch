@@ -1,0 +1,32 @@
+From: Sven Kirmess <sven.kirmess@kzone.ch>
+Date: Fri, 8 May 2026 10:17:15 +0200
+Subject: [PATCH] configure: add --with-bash option for cross-compilation
+
+AC_PATH_PROG finds bash on the build host, which differs from the
+target system path in cross-compilation environments. Add
+--with-bash=PATH to allow explicitly specifying the bash path on
+the target system.
+
+When not specified, the existing auto-detection behaviour is
+unchanged.
+
+Signed-off-by: Sven Kirmess <sven.kirmess@kzone.ch>
+---
+ configure.ac | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+--- a/configure.ac
++++ b/configure.ac
+@@ -79,7 +79,11 @@ AC_PROG_LN_S
+ AC_PROG_INSTALL
+ AC_PROG_MAKE_SET
+ PKG_PROG_PKG_CONFIG
+-AC_PATH_PROG([BASHPATH], [bash])
++AC_ARG_WITH([bash],
++  [AS_HELP_STRING([--with-bash=PATH],
++    [path to bash on the target system @<:@default=auto-detect@:>@])],
++  [BASHPATH="$withval"],
++  [AC_PATH_PROG([BASHPATH], [bash])])
+ AC_CHECK_PROGS([GROFF], [groff])
+ 
+ # Checks for typedefs.
