@@ -20,7 +20,8 @@ PKG_BUILD_FLAGS:=no-mips16
 PKG_BUILD_DEPENDS:=!USE_GLIBC:argp-standalone
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_BUILD_NLS \
-	CONFIG_PACKAGE_v4l-utils
+	CONFIG_PACKAGE_v4l-utils \
+	CONFIG_PACKAGE_edid-decode
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/meson.mk
