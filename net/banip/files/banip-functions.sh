@@ -299,7 +299,7 @@ f_conf() {
 			*[!a-zA-Z0-9_]*) ;;
 
 			*)
-				eval "${option}=\"\${value}\""
+				[ -n "${value}" ] && eval "${option}=\"\${value}\""
 				;;
 			esac
 		}
@@ -516,6 +516,9 @@ f_actual() {
 f_getdl() {
 	local fetch fetch_list insecure update="0"
 
+	# check if the configured fetch utility is available and has SSL support,
+	# if not try to find an alternative with SSL support or log an error if not found
+	#
 	ban_fetchcmd="$(command -v "${ban_fetchcmd}" 2>/dev/null)"
 	if [ -z "${ban_fetchcmd}" ]; then
 		fetch_list="curl wget-ssl libustream-openssl libustream-wolfssl libustream-mbedtls"
@@ -542,6 +545,17 @@ f_getdl() {
 	fi
 
 	[ -z "${ban_fetchcmd}" ] && f_log "err" "download utility with SSL support not found, please set 'ban_fetchcmd' manually"
+
+	# check the fetch retry value
+	#
+	case "${ban_fetchretry}" in
+	0* | *[!0-9]*)
+		ban_fetchretry="5"
+		;;
+	esac
+
+	# set fetch parameters based on the fetch utility and check if insecure fetching is enabled
+	#
 	case "${ban_fetchcmd##*/}" in
 	"curl")
 		[ "${ban_fetchinsecure}" = "1" ] && insecure="--insecure"
@@ -754,13 +768,13 @@ f_etag() {
 		# fetch http headers and extract http code and etag/last-modified header
 		#
 		http_head="$("${ban_fetchcmd}" ${ban_etagparm} "${feed_url}" 2>&1)"
-		http_code="$(printf '%s' "${http_head}" | "${ban_awkcmd}" 'tolower($0)~/^[[:space:]]*http\/[0123\.]+ /{printf "%s",$2}')"
-		etag_id="$(printf '%s' "${http_head}" | "${ban_awkcmd}" 'tolower($0)~/^[[:space:]]*etag: /{gsub("\"","");printf "%s",$2}')"
+		http_code="$(printf '%s' "${http_head}" | "${ban_awkcmd}" 'tolower($0)~/^[[:space:]]*http\/[0123\.]+ /{code=$2} END{printf "%s",code}')"
+		etag_id="$(printf '%s' "${http_head}" | "${ban_awkcmd}" 'tolower($0)~/^[[:space:]]*etag: /{gsub(/[\r"]/,"");id=$2} END{printf "%s",id}')"
 
 		# if etag header is not present, try to use last-modified header as fallback for change detection
 		#
 		if [ -z "${etag_id}" ]; then
-			etag_id="$(printf '%s' "${http_head}" | "${ban_awkcmd}" 'tolower($0)~/^[[:space:]]*last-modified: /{gsub(/[Ll]ast-[Mm]odified:|[[:space:]]|,|:/,"");printf "%s\n",$1}')"
+			etag_id="$(printf '%s' "${http_head}" | "${ban_awkcmd}" 'tolower($0)~/^[[:space:]]*last-modified: /{gsub(/[Ll]ast-[Mm]odified:|[[:space:]]|,|:/,"");lm=$1} END{printf "%s",lm}')"
 		fi
 
 		# acquire exclusive lock on etag file to serialize concurrent read-modify-write from parallel feeds

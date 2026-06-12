@@ -2,9 +2,39 @@
 
 # banIP - ban incoming and outgoing IP addresses/subnets via Sets in nftables
 
+## Table of Contents
+* [Description](#description)
+* [Quick Start](#quick-start)
+* [Main Features](#main-features)
+* [Prerequisites](#prerequisites)
+* [Installation and Usage](#installation-and-usage)
+* [banIP CLI interface](#banip-cli-interface)
+* [banIP config options](#banip-config-options)
+* [Examples](#examples)
+* [Best practise and tweaks](#best-practise-and-tweaks)
+* [Troubleshooting & debug options](#troubleshooting-and-debug-options)
+* [Support](#support)
+* [Removal](#removal)
+* [Donations](#donations)
+
 <a id="description"></a>
 ## Description
 IP address blocking is commonly used to protect against brute force attacks, prevent disruptive or unauthorized address(es) from access or it can be used to restrict access to or from a particular geographic area — for example. Further more banIP scans the log file via logread and bans IPs that make too many password failures, e.g. via ssh.
+
+<a id="quick-start"></a>
+## Quick Start
+For a typical setup these few steps are enough to get banIP up and running — see the sections below for details:
+1. Install the LuCI companion package: `apk update && apk add luci-app-banip` (this pulls in the `banip` backend as a dependency).
+2. Open LuCI under `Services → banIP`, tick `Enabled` and (recommended) set a `Startup Trigger Interface` to your WAN interface (avoid IPv6/wan6).
+3. Activate a small, sensible feed selection to start with, e.g. `cinsscore`, `debl`, `turris` and `doh` in their default chains (≈20K IPs).
+4. Start and verify the service:
+
+```sh
+/etc/init.d/banip start
+/etc/init.d/banip status
+```
+
+**Please note:** don't blindly enable (too) many feeds at once — on low memory devices this will sooner or later lead to OOM conditions.
 
 <a id="main-features"></a>
 ## Main Features
@@ -77,11 +107,11 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 * Per feed it can be defined whether the inbound chain (wan-input, wan-forward) or the outbound chain (lan-forward) should be blocked
 * Automatic blocklist backup & restore, the backups will be used in case of download errors or during startup
 * Automatically selects one of the following download utilities with ssl support: curl, uclient-fetch or full wget
-* Provides HTTP ETag support to download only ressources that have been updated on the server side, to speed up banIP reloads and to save bandwith
+* Provides HTTP ETag support to download only resources that have been updated on the server side, to speed up banIP reloads and to save bandwidth
 * Supports an `allowlist only` mode, this option restricts the internet access only to specific, explicitly allowed IP segments
 * Supports external allowlist URLs to reference additional IPv4/IPv6 feeds
 * Optionally always allow certain protocols/destination ports in the inbound chain
-* Deduplicate IPs accross all Sets (single IPs only, no intervals)
+* Deduplicate IPs across all Sets (single IPs only, no intervals)
 * Implements BCP38 ingress filtering to prevent IP address spoofing
 * Provides comprehensive runtime information
 * Provides a detailed Set report, incl. a map that shows the geolocation of your own uplink addresses (in green) and the location of potential attackers (in red)
@@ -105,6 +135,8 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 **Please note:**  
 * Devices with less than 256MB of RAM are **_not_** supported
 * After system upgrades it's recommended to start with a fresh banIP default config
+* Only `reload` actually refreshes the feeds (ETag check plus download of changed feeds). `start`, `restart` — and `boot`/`resume` — restore the existing blocklist backups and only download feeds that have **no** backup yet; they do **not** re-fetch already cached feeds. To update your blocklists (e.g. from a cron job) always use `reload`.  
+
 
 <a id="installation-and-usage"></a>
 ## Installation and Usage
@@ -114,7 +146,7 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 * It's strongly recommended to use the LuCI frontend to easily configure all aspects of banIP, the application is located in LuCI under the `Services` menu
 * It's also recommended to configure a `Startup Trigger Interface` to depend on your WAN ifup events during boot or restart of your router. Avoid IPv6 (wan6) interfaces here, as IPv6/netifd is chatty and would trigger frequent unnecessary banIP restarts
 * To be able to use banIP in a meaningful way, you must activate the service and possibly also activate a few blocklist feeds
-* If you're using a complex network setup, e.g. special tunnel interfaces, than untick the `Auto Detection` option under the `General Settings` tab and set the required options manually
+* If you're using a complex network setup, e.g. special tunnel interfaces, then untick the `Auto Detection` option under the `General Settings` tab and set the required options manually
 * Start the service with `/etc/init.d/banip start` and check everything is working by running `/etc/init.d/banip status`, also check the `Processing Log` tab
 
 <a id="banip-cli-interface"></a>
@@ -142,6 +174,8 @@ Available commands:
 	info            Dump procd service info
 ```
 
+The `report` sub-command accepts an output mode: `text` (default, human-readable table), `json` (machine-readable output, incl. GeoIP map data when `ban_map=1`), `mail` (send the report via `msmtp`) and `gen` (regenerate the report data files in the background, used by the LuCI frontend).
+
 <a id="banip-config-options"></a>
 ## banIP config options
 
@@ -153,7 +187,7 @@ Available commands:
 | ban_loglimit            | option | 100                           | scan only the last n log entries permanently. A value of `0` disables the monitor                                 |
 | ban_logcount            | option | 1                             | how many times the IP must appear in the log per blocking cycle to trigger auto-blocking                          |
 | ban_logterm             | list   | regex                         | various regex for logfile parsing (default: dropbear, sshd, luci, asterisk and cgi-remote events)                 |
-| ban_logreadfile         | option | /var/log/messages             | alternative location for parsing a log file via tail, to deactivate the standard parsing via logread              |
+| ban_logreadfile         | option | - / logread                   | parse this log file via tail instead of the default logread; if left empty (default) banIP reads the system log via logread |
 | ban_autodetect          | option | 1                             | auto-detect wan interfaces, devices and subnets                                                                   |
 | ban_debug               | option | 0                             | enable banIP related debug logging                                                                                |
 | ban_icmplimit           | option | 25                            | threshold in number of packets to detect icmp DoS in prerouting chain. A value of `0` disables this safeguard     |
@@ -169,7 +203,7 @@ Available commands:
 | ban_autoblocksubnet     | option | 0                             | add entire subnets to the blocklist Sets based on a rate-limited, non-blocking RDAP lookup for the suspicious IP  |
 | ban_autoallowuplink     | option | subnet                        | limit the uplink autoallow function to: `subnet`, `ip` or `disable` it at all                                     |
 | ban_allowlistonly       | option | 0                             | restrict the internet access only to specific, explicitly allowed IP segments                                     |
-| ban_allowflag           | option | -                             | always allow certain protocols(tcp or udp) plus destination ports or port ranges, e.g.: `tcp 80 443-44`           |
+| ban_allowflag           | option | -                             | always allow certain protocols(tcp or udp) plus destination ports or port ranges, e.g.: `tcp 80 443-444`          |
 | ban_allowurl            | list   | -                             | external allowlist feed URLs, one or more references to simple remote IP lists                                    |
 | ban_basedir             | option | /tmp                          | base working directory while banIP processing                                                                     |
 | ban_reportdir           | option | /tmp/banIP-report             | directory where banIP stores report files                                                                         |
@@ -268,8 +302,8 @@ Available commands:
 ~# /etc/init.d/banip status
 ::: banIP runtime information
   + status            : active (nft: ✔, monitor: ✔)
-  + frontend_ver      : 1.8.0-r1
-  + backend_ver       : 1.8.0-r1
+  + frontend_ver      : 1.8.9-r1
+  + backend_ver       : 1.8.9-r1
   + element_count     : 138 148 (chains: 7, sets: 13, rules: 50)
   + active_feeds      : allowlist.v4MAC, allowlist.v6MAC, allowlist.v4, allowlist.v6, dns.v4, blocklist.v4MAC, blocklist.v6MAC, doh.v6, blocklist.v4, doh.v4, blocklist.v6, dns.v6, hagezi.v4
   + active_devices    : wan: pppoe-wan / wan-if: wan, wan_6 / vlan-allow: - / vlan-block: -
@@ -447,8 +481,8 @@ All log rules (prerouting flood protection, inbound and outbound feeds) share a 
 banIP includes a powerful reporting tool on the Set Reporting tab which shows the latest NFT banIP Set statistics. To get the latest statistics always press the "Refresh" button.
 In addition to a tabular overview banIP reporting includes a GeoIP map in a modal popup window/iframe that shows the geolocation of your own uplink addresses (in green) and the locations of potential attackers (in red). To enable the GeoIP Map set the following options (in "Feed/Set Settings" config tab):
 
-    * set `ban_nftcount` to `1` to enable the nft counter for every Set element
-    * set `ban_map` to `1` to include the external components listed below and activate the GeoIP map
+* set `ban_nftcount` to `1` to enable the nft counter for every Set element
+* set `ban_map` to `1` to include the external components listed below and activate the GeoIP map
 
 To make this work, banIP uses the following external components:
 * [Leaflet](https://leafletjs.com/) is a lightweight open-source JavaScript library for interactive maps
@@ -459,14 +493,14 @@ To make this work, banIP uses the following external components:
 **CGI interface to receive remote logging events**  
 banIP ships a basic cgi interface in `/www/cgi-bin/banip` to receive remote logging events (disabled by default). The cgi interface evaluates logging events via GET or POST request (see examples below). To enable the cgi interface set the following options:
 
-    * set `ban_remotelog` to `1` to enable the cgi interface
-    * set `ban_remotetoken` to a secret transfer token, allowed token characters consist of '[A-Za-z]', '[0-9]', '.' and ':'
-    * add the remote logging event to the logterm
+* set `ban_remotelog` to `1` to enable the cgi interface
+* set `ban_remotetoken` to a secret transfer token, allowed token characters consist of '[A-Za-z]', '[0-9]', '.' and ':'
+* add the remote logging event to the logterm
 
-  Examples to transfer remote logging events from an internal server to banIP via cgi interface:
+Examples to transfer remote logging events from an internal server to banIP via cgi interface:
 
-    * POST request: curl --insecure --data "<ban_remotetoken>=<suspicious IP>" https://192.168.1.1/cgi-bin/banip
-    * GET request: wget --no-check-certificate https://192.168.1.1/cgi-bin/banip?<ban_remotetoken>=<suspicious IP>
+* POST request: `curl --insecure --data "<ban_remotetoken>=<suspicious IP>" https://192.168.1.1/cgi-bin/banip`
+* GET request: `wget --no-check-certificate https://192.168.1.1/cgi-bin/banip?<ban_remotetoken>=<suspicious IP>`
 
 Please note: for security reasons use this cgi interface only internally and only encrypted via https transfer protocol.
 
@@ -474,12 +508,12 @@ Please note: for security reasons use this cgi interface only internally and onl
 By default banIP uses the following pre-configured download options:
 
 ```
-    * curl: --connect-timeout 20 --retry-delay 10 --retry 4 --retry-all-errors --fail --silent --show-error --location -o
-    * wget: --no-cache --no-cookies --timeout=20 --waitretry=10 --tries=5 --retry-connrefused --max-redirect=0 -O
+    * curl: --connect-timeout 20 --retry-delay 10 --retry 4 --retry-max-time 80 --retry-all-errors --fail --silent --show-error --location -o
+    * wget: --no-cache --no-cookies --timeout=20 --waitretry=10 --tries=5 --retry-connrefused -O
     * uclient-fetch: --timeout=20 -O
 ```
 
-To override the default set `ban_fetchretry`, `ban_fetchinsecure` or globally `ban_fetchparm` to your needs.
+The retry-related values shown above are derived from `ban_fetchretry` (default `5`): for curl `--retry` is `ban_fetchretry - 1` and `--retry-max-time` is `(ban_fetchretry - 1) * 20`, for wget `--tries` equals `ban_fetchretry`. To override the defaults set `ban_fetchretry`, `ban_fetchinsecure` or globally `ban_fetchparm` to your needs.
 
 **Configure E-Mail notifications via `msmtp`**  
 To use the email notification you must install and configure the package `msmtp`.
@@ -505,7 +539,7 @@ password        <password>
 Finally add a valid E-Mail receiver address in banIP.
 
 **Send status E-Mails and update the banIP lists via cron job**  
-For a regular, automatic status mailing and update of the used lists on a daily basis set up a cron job, e.g.
+For a regular, automatic update of the used feeds or other regular banIP tasks (e.g. status mailing) set up a cron job. Use `reload` here — `start`/`restart` would only restore the backups instead of fetching fresh feeds. In LuCI you find the cron settings under `System` => `Scheduled Tasks`. On the command line the cron file is located at `/etc/crontabs/root`:  
 
 ```
 55 03 * * * /etc/init.d/banip report mail
@@ -541,7 +575,8 @@ The rule consist of max. 4 individual, space separated parameters:
 
 Please note: the flag field is optional, it's a space separated list of options: supported are `gz` as an archive format and protocols `tcp` or `udp` with port numbers/port ranges for destination port limitations.
 
-**Debug options**  
+<a id="troubleshooting-and-debug-options"></a>
+## Troubleshooting & debug options
 banIP provides an optional debug mode that writes diagnostic information to the system log and captures internal error output in a dedicated error logfile - by default located in the banIP base directory as `/tmp/ban_error.log`. The log file is automatically cleared at the beginning of each run. Under normal conditions, all error messages are discarded to keep regular runs clean and silent.
 
 Whenever you encounter banIP related processing problems, please enable `Verbose Debug Logging`, restart banIP and check the `Processing Log` tab.
