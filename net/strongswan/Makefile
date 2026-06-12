@@ -450,6 +450,7 @@ CONFIGURE_ARGS+= \
 	--enable-mgf1 \
 	--enable-mediation \
 	--with-systemdsystemunitdir=no \
+	--with-plugins-packaged-seperately=yes \
 	PYTHON="python3" \
 	$(if $(CONFIG_PACKAGE_strongswan-charon-cmd),--enable-cmd,--disable-cmd) \
 	$(if $(CONFIG_PACKAGE_strongswan-mod-gmpdh),--enable-gmpdh,) \
