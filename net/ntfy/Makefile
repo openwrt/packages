@@ -41,8 +41,8 @@ define Package/ntfy/description
 endef
 
 define Package/ntfy/conffiles
-	/etc/ntfy/server.yml
-	/etc/ntfy/user.db
+/etc/ntfy/server.yml
+/etc/ntfy/user.db
 endef
 
 define Build/Compile
