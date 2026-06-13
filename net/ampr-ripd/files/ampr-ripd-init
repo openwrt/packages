@@ -17,14 +17,19 @@ start() {
 
 		exit 1
 	fi
-	if [ ! -d /var/lib/ampr-ripd ]; then
-		mkdir -p /var/lib/ampr-ripd
+	config_load ampr-ripd
+	config_get enabled network enabled 0
+	if [ "$enabled" != 1 ]; then
+		echo "ampr-ripd disabled via config"
+		exit 1
 	fi
+	mkdir -p /var/lib/ampr-ripd
 	ip tunnel change ttl 64 mode ipip tunl0
 	ip link set dev tunl0 up
 	ifconfig tunl0 mtu 1480
-	tunnet=$(uci -q get ampr-ripd.network.tunnet)
-	/usr/sbin/ampr-ripd -s -r -t 44 -i tunl0 -a "$tunnet"
+	config_get amprnet network amprnet
+	config_get amprmask network amprmask
+	/usr/sbin/ampr-ripd -s -r -t 44 -i tunl0 -a "$amprnet/$amprmask"
 }
 
 stop() {
@@ -58,16 +63,19 @@ configure() {
 	amprnet=$amprnet
 	EOF
 
-	tunnet=$amprnet/$amprmask
-	uci set ampr-ripd.network.tunnet="$tunnet"
+	uci set ampr-ripd.network.amprhost="$amprhost"
+	uci set ampr-ripd.network.amprmask="$amprmask"
+	uci set ampr-ripd.network.amprnet="$amprnet"
+	uci set ampr-ripd.network.enabled='1'
 	uci commit ampr-ripd
+
 	uci set network.amprlan.ipaddr="$amprhost"
 	uci set network.amprlan.netmask="$amprmask"
 	uci set network.amprwan.ipaddr="$amprhost"
 	uci set network.amprwan.netmask="$amprmask"
 	for i in $(uci show network | awk -F= "/@rule/ && /lookup='44'/ {split(\$1, conf, /[.=]/); print conf[2]}"); do
 		if [ "$(uci -q get "network.$i.priority")" = "45" ]; then
-			uci set "network.$i.src=$tunnet"
+			uci set "network.$i.src=$amprnet/$amprmask"
 		fi
 	done
 	uci commit network
