@@ -1,0 +1,102 @@
+#!/bin/sh /etc/rc.common
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Copyright (c) 2025-2026 Pierre Gaufillet <pierre.gaufillet@bergamote.eu>
+# lease-sync daemon init script for OpenWrt (procd)
+
+START=99
+STOP=10
+
+USE_PROCD=1
+
+PROG=/usr/sbin/lease-sync
+CONF=/etc/lease-sync/config
+
+start_service() {
+    # Ensure configuration directory exists
+    [ -d /etc/lease-sync ] || mkdir -p /etc/lease-sync
+    [ -d /var/lib/lease-sync ] || mkdir -p /var/lib/lease-sync
+
+    # Generate configuration from UCI
+    . /lib/functions.sh
+    config_load lease-sync
+
+    local enabled sync_port sync_interval peer_timeout log_level node_id
+    config_get_bool enabled config enabled 0
+
+    # If disabled in UCI, don't start
+    [ "$enabled" -eq 0 ] && {
+        logger -t lease-sync -p daemon.info "lease-sync disabled in UCI configuration"
+        return 0
+    }
+
+    config_get sync_port config sync_port "5378"
+    config_get sync_interval config sync_interval "30"
+    config_get peer_timeout config peer_timeout "120"
+    config_get log_level config log_level "2"
+    config_get node_id config node_id ""
+
+    # Generate flat configuration file
+    logger -t lease-sync -p daemon.info "Generating configuration from UCI"
+
+    cat > "$CONF" <<EOF
+# Auto-generated from /etc/config/lease-sync
+# Do not edit - changes will be overwritten
+# Edit /etc/config/lease-sync instead
+
+sync_port=$sync_port
+sync_interval=$sync_interval
+peer_timeout=$peer_timeout
+log_level=$log_level
+EOF
+
+    # Add node_id if configured
+    [ -n "$node_id" ] && echo "node_id=$node_id" >> "$CONF"
+
+    # Add peers from UCI (list option)
+    add_peer() {
+        echo "peer=$1" >> "$CONF"
+    }
+    config_list_foreach config peer add_peer
+
+    logger -t lease-sync -p daemon.info "Configuration generated with $(grep -c '^peer=' "$CONF" 2>/dev/null || echo 0) peers"
+
+    procd_open_instance lease-sync
+    procd_set_param command "$PROG" -c "$CONF"
+
+    # Respawn settings
+    procd_set_param respawn ${respawn_threshold:-3600} ${respawn_timeout:-5} ${respawn_retry:-5}
+
+    # File descriptor limits
+    procd_set_param limits nofile="1024 1024"
+
+    # Standard streams
+    procd_set_param stdout 1
+    procd_set_param stderr 1
+
+    # Use syslog for logging
+    procd_set_param syslog 1
+
+    procd_close_instance
+
+    logger -t lease-sync -p daemon.info "Starting lease-sync daemon"
+}
+
+stop_service() {
+    logger -t lease-sync -p daemon.info "Stopping lease-sync daemon"
+}
+
+service_triggers() {
+    # Reload on network changes
+    procd_add_reload_trigger "network"
+
+    # Watch configuration file for changes
+    procd_add_reload_trigger "lease-sync"
+}
+
+# lease-sync does not support SIGHUP config reload, so reload_service()
+# performs a full restart (stop + start). Brief sync gap during restart.
+reload_service() {
+    logger -t lease-sync -p daemon.info "Restarting lease-sync daemon (full restart, no SIGHUP support)"
+    stop
+    start
+}
