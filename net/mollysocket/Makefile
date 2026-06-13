@@ -26,12 +26,12 @@ define Package/mollysocket
 endef
 
 define Package/mollysocket/description
-  MollySocket allows getting Signal notifications via UnifiedPush.
+  MollySocket allows getting Signal notifications via UnifiedPush
 endef
 
 define Package/mollysocket/conffiles
-	/etc/mollysocket.conf
-	/etc/mollysocket/db.sqlite
+/etc/mollysocket.conf
+/etc/mollysocket/db.sqlite
 endef
 
 define Package/mollysocket/install
