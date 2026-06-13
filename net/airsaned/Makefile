@@ -23,7 +23,7 @@ TAR_OPTIONS:=--strip-components 1 $(TAR_OPTIONS)
 TAR_CMD=$(HOST_TAR) -C $(1) $(TAR_OPTIONS)
 
 define Package/airsaned
-  TITLE:=Publish SANE scanners to MacOS, Android, and Windows via Apple AirScan
+  TITLE:=Publish SANE scanners via Apple AirScan
   URL:=https://github.com/SimulPiscator/AirSane
   SECTION:=net
   CATEGORY:=Network
@@ -36,7 +36,7 @@ define Package/airsaned/description
 endef
 
 define Package/airsaned/conffiles
-	/etc/config/airsaned
+/etc/config/airsaned
 endef
 
 define Package/airsaned/install 
@@ -45,7 +45,7 @@ define Package/airsaned/install
 	$(INSTALL_DIR) $(1)/etc/init.d/
 	$(INSTALL_BIN) files/airsaned.init $(1)/etc/init.d/airsaned
 	$(INSTALL_DIR) $(1)/etc/config/
-	$(CP) files/airsaned.default $(1)/etc/config/airsaned
+	$(CP) files/airsaned.config $(1)/etc/config/airsaned
 endef
 
 $(eval $(call BuildPackage,airsaned))
