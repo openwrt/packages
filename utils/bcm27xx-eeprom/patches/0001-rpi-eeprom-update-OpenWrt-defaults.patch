@@ -8,8 +8,8 @@ Content-Transfer-Encoding: 8bit
 
 Signed-off-by: Álvaro Fernández Rojas <noltari@gmail.com>
 ---
- rpi-eeprom-update         | 4 ++--
- rpi-eeprom-update-default | 4 ++--
+ rpi-eeprom-update         | 2 +-
+ rpi-eeprom-update-default | 6 +++---
  2 files changed, 4 insertions(+), 4 deletions(-)
 
 --- a/rpi-eeprom-update
