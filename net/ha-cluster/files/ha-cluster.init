@@ -1,0 +1,136 @@
+#!/bin/sh /etc/rc.common
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Pierre Gaufillet <pierre.gaufillet@bergamote.eu>
+# /etc/init.d/ha-cluster
+# High Availability Cluster Management
+
+START=25  # After network (20), before standalone owsync (99) and lease-sync (90)
+STOP=91
+
+USE_PROCD=1
+
+. /usr/lib/ha-cluster/ha-cluster.sh
+
+start_service() {
+	local enabled
+
+	config_load ha-cluster
+	config_get_bool enabled config enabled 0
+
+	# Initialize log level from UCI
+	ha_log_init
+
+	[ "$enabled" -eq 0 ] && {
+		ha_log_debug "HA cluster disabled"
+		return 0
+	}
+
+	ha_log_info "Starting HA cluster"
+
+	# Ensure runtime directories exist (must be before ha_apply_config)
+	mkdir -p /etc/owsync
+	mkdir -p "$HA_CLUSTER_RUN_DIR"
+
+	# Generate configs and start all services
+	ha_apply_config || {
+		ha_log_error "Failed to apply configuration"
+		return 1
+	}
+
+	# Start keepalived daemon
+	ha_log_info "Starting keepalived daemon"
+	procd_open_instance keepalived
+	procd_set_param command /usr/sbin/keepalived
+	procd_append_param command -n  # don't daemonize
+	procd_append_param command -f "$KEEPALIVED_CONF"
+	procd_set_param respawn
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_close_instance
+
+	# Start owsync daemon (if config file was generated)
+	if [ -f "$OWSYNC_CONF" ]; then
+		ha_log_info "Starting owsync daemon"
+		procd_open_instance owsync
+		procd_set_param command /usr/bin/owsync daemon
+		procd_append_param command -c "$OWSYNC_CONF"
+		procd_set_param file "$OWSYNC_CONF"
+		procd_set_param respawn
+		procd_set_param stdout 1
+		procd_set_param stderr 1
+		procd_close_instance
+	fi
+
+	# Start lease-sync daemon (if config exists)
+	if [ -f "$LEASE_SYNC_CONF" ]; then
+		ha_log_info "Starting lease-sync daemon"
+		procd_open_instance lease-sync
+		procd_set_param command /usr/sbin/lease-sync
+		procd_append_param command -c "$LEASE_SYNC_CONF"
+		procd_set_param file "$LEASE_SYNC_CONF"
+		procd_set_param respawn
+		procd_set_param stdout 1
+		procd_set_param stderr 1
+		procd_close_instance
+	fi
+
+	return 0
+}
+
+stop_service() {
+	ha_log_info "Stopping HA cluster"
+
+	# Remove dnsmasq HA overlay and restart dnsmasq
+	ha_release_dnsmasq
+
+	# Release service management back to standalone init scripts
+	ha_manage_services "release"
+
+	# procd handles stopping all instances
+	return 0
+}
+
+reload_service() {
+	local enabled
+
+	config_load ha-cluster
+	config_get_bool enabled config enabled 0
+
+	# Initialize log level from UCI
+	ha_log_init
+
+	ha_log_info "Reloading HA cluster configuration"
+
+	# Not running → start or nothing
+	if ! procd_running ha-cluster; then
+		if [ "$enabled" -eq 1 ]; then
+			ha_log_info "Service not running, performing full start"
+			start
+		fi
+		return 0
+	fi
+
+	# Running + disabled → stop
+	if [ "$enabled" -eq 0 ]; then
+		ha_log_info "HA cluster disabled, stopping"
+		stop
+		return 0
+	fi
+
+	# Running + enabled → reconcile all instances via procd
+	# start_service() regenerates configs and re-defines procd instances.
+	# procd compares new vs running instances:
+	#   - keepalived: command line unchanged → procd does nothing
+	#   - owsync/lease-sync: config file tracked → procd restarts on change
+	#   - owsync/lease-sync: instance appeared/disappeared → procd starts/stops
+	start
+
+	# SIGHUP keepalived to reload its config file without dropping VIPs.
+	# procd doesn't restart keepalived (command line unchanged), so we
+	# signal it to re-read keepalived.conf in-place (no failover).
+	procd_send_signal ha-cluster keepalived SIGHUP
+}
+
+service_triggers() {
+	procd_add_reload_trigger "ha-cluster"
+}
