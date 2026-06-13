@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sing-box
-PKG_VERSION:=1.12.22
+PKG_VERSION:=1.13.13
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/SagerNet/sing-box/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=6c4333c3f53a07cc96b63a801fdf6c156820d51cd2eb05e44ea78df290a45377
+PKG_HASH:=38d6570738445c07497423dd05ac2a62276f00d9259f765bc843cac3365df324
 
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=LICENSE
@@ -63,6 +63,9 @@ define Package/sing-box/config
 		config SINGBOX_WITH_ACME
 			bool "Build with ACME TLS certificate issuer support"
 
+		config SINGBOX_WITH_CCM
+			bool "Build with Claude Code Multiplexer service support"
+
 		config SINGBOX_WITH_CLASH_API
 			bool "Build with Clash API support"
 			default y
@@ -79,6 +82,13 @@ define Package/sing-box/config
 		config SINGBOX_WITH_GVISOR
 			bool "Build with gVisor support"
 			default y
+
+		config SINGBOX_WITH_MUSL
+			bool "Build with musl libc"
+			default y
+
+		config SINGBOX_WITH_OCM
+			bool "Build with OpenAI Codex Multiplexer service support"
 
 		config SINGBOX_WITH_QUIC
 			bool "Build with QUIC support"
@@ -103,11 +113,14 @@ endef
 
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_SINGBOX_WITH_ACME \
+	CONFIG_SINGBOX_WITH_CCM \
 	CONFIG_SINGBOX_WITH_CLASH_API \
 	CONFIG_SINGBOX_WITH_DHCP \
 	CONFIG_SINGBOX_WITH_EMBEDDED_TOR \
 	CONFIG_SINGBOX_WITH_GRPC \
 	CONFIG_SINGBOX_WITH_GVISOR \
+	CONFIG_SINGBOX_WITH_MUSL \
+	CONFIG_SINGBOX_WITH_OCM \
 	CONFIG_SINGBOX_WITH_QUIC \
 	CONFIG_SINGBOX_WITH_TAILSCALE \
 	CONFIG_SINGBOX_WITH_UTLS \
@@ -115,18 +128,18 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_SINGBOX_WITH_WIREGUARD
 
 ifeq ($(BUILD_VARIANT),tiny)
-ifeq ($(CONFIG_SMALL_FLASH),)
-GO_PKG_TAGS:=with_gvisor
-endif
-GO_PKG_TAGS:=$(GO_PKG_TAGS),with_quic,with_utls,with_clash_api
+GO_PKG_TAGS:=with_gvisor,with_musl,with_quic,with_utls,with_clash_api
 else
 GO_PKG_TAGS:=$(subst $(space),$(comma),$(strip \
 	$(if $(CONFIG_SINGBOX_WITH_ACME),with_acme) \
+	$(if $(CONFIG_SINGBOX_WITH_CCM),with_ccm) \
 	$(if $(CONFIG_SINGBOX_WITH_CLASH_API),with_clash_api) \
 	$(if $(CONFIG_SINGBOX_WITH_DHCP),with_dhcp) \
 	$(if $(CONFIG_SINGBOX_WITH_EMBEDDED_TOR),with_embedded_tor) \
 	$(if $(CONFIG_SINGBOX_WITH_GRPC),with_grpc) \
 	$(if $(CONFIG_SINGBOX_WITH_GVISOR),with_gvisor) \
+	$(if $(CONFIG_SINGBOX_WITH_MUSL),with_musl) \
+	$(if $(CONFIG_SINGBOX_WITH_OCM),with_ocm) \
 	$(if $(CONFIG_SINGBOX_WITH_QUIC),with_quic) \
 	$(if $(CONFIG_SINGBOX_WITH_TAILSCALE),with_tailscale) \
 	$(if $(CONFIG_SINGBOX_WITH_UTLS),with_utls) \
