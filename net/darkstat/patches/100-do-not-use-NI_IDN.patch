@@ -1,6 +1,6 @@
 --- a/dns.c
 +++ b/dns.c
-@@ -347,9 +347,6 @@ dns_main(void)
+@@ -346,9 +346,6 @@ dns_main(void)
  
           reply.addr = ip;
           flags = NI_NAMEREQD;

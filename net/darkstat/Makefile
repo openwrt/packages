@@ -6,17 +6,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=darkstat
-PKG_VERSION:=3.0.719
-PKG_RELEASE:=6
+PKG_VERSION:=3.0.722
+PKG_RELEASE:=1
 
-PKG_MAINTAINER:=Jean-Michel Lacroix <lacroix@lepine-lacroix.info>
+PKG_MAINTAINER:=Paul Doran <RuralRoots@gmail.com>
 
 PKG_LICENSE:=GPL-2.0 BSD-ISC
+
 PKG_LICENSE_FILES:=COPYING.GPL LICENSE
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=https://unix4lyfe.org/darkstat
-PKG_HASH:=aeaf909585f7f43dc032a75328fdb62114e58405b06a92a13c0d3653236dedd7
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://github.com/emikulic/darkstat/archive/refs/tags/$(PKG_VERSION).tar.gz?
+PKG_HASH:=5c8e66d4c478b6d7e58f4c842823a09125509bf6851017ff70e32b32ce95b01b
 
 PKG_INSTALL:=1
 
@@ -31,8 +32,8 @@ define Package/darkstat
 endef
 
 define Package/darkstat/description
-darkstat is a packet sniffer that runs as a background process on a cable/DSL
-router, gathers all sorts of statistics about network usage, and serves them
+darkstat is a packet sniffer that runs as a background process on an OpenWrt 
+router. It captures multiple statistics about network usage, and serves them
 over HTTP.
 endef
 
@@ -49,9 +50,20 @@ CONFIGURE_VARS += \
 	ac_cv_search_strlcpy=no \
 	ac_cv_search_strlcat=no
 
+define Build/Configure
+	( cd $(PKG_BUILD_DIR) && autoreconf -fi )
+	$(call Build/Configure/Default)
+endef
+
 define Build/Compile
-	$(HOSTCC) $(PKG_BUILD_DIR)/static/c-ify.c \
-		-o $(PKG_BUILD_DIR)/c-ify
+	$(HOSTCC) $(HOST_CFLAGS) $(PKG_BUILD_DIR)/static/c-ify.c \
+	   -o $(PKG_BUILD_DIR)/c-ify $(HOST_LDFLAGS)
+	$(HOSTCC) $(HOST_CFLAGS) $(PKG_BUILD_DIR)/static/hex-ify.c \
+	   -o $(PKG_BUILD_DIR)/hex-ify $(HOST_LDFLAGS)
+	( cd $(PKG_BUILD_DIR) && \
+	    ./c-ify style_css <static/style.css >stylecss.h && \
+	    ./c-ify graph_js <static/graph.js >graphjs.h && \
+	    ./hex-ify favicon_png <static/favicon.png >favicon.h )
 	$(call Build/Compile/Default)
 endef
 
