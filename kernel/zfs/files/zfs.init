@@ -1,0 +1,14 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+
+extra_command "status" "Display the zpool status"
+
+boot() {
+	logger -t zfs "Importing ZFS pool(s)"
+	/usr/sbin/zpool import -a
+}
+
+status() {
+	/usr/sbin/zpool status
+}
