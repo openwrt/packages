@@ -1,0 +1,211 @@
+From b12c8b1dba1a304cd755307574f52f923959f1d6 Mon Sep 17 00:00:00 2001
+From: graysky <therealgraysky AT proton DOT me>
+Date: Sat, 13 Jun 2026 12:33:13 -0400
+Subject: [PATCH 3/3] iozone: gate O_DIRECT on defined(O_DIRECT)
+
+Auto-detect O_DIRECT instead of per-arch DONT_HAVE_O_DIRECT;
+falls back cleanly where the flag is absent.
+---
+ src/current/iozone.c | 44 ++++++++++++++++++++++----------------------
+ 1 file changed, 22 insertions(+), 22 deletions(-)
+
+--- a/src/current/iozone.c
++++ b/src/current/iozone.c
+@@ -2052,7 +2052,7 @@ int * main(int argc,char **argv)
+ 			sprintf(splash[splash_line++],"\tVxFS advanced feature SET_CACHE, VX_DIRECT enabled\n");
+ 			break;
+ #endif
+-#if !defined(DONT_HAVE_O_DIRECT)
++#if !defined(DONT_HAVE_O_DIRECT) && defined(O_DIRECT)
+   #if defined(linux) || defined(__AIX__) || defined(IRIX) || defined(IRIX64) || defined(Windows) || defined(__FreeBSD__) || defined(solaris) || defined(IOZ_macosx)
+ 			direct_flag++;
+ #if defined __APPLE__ && __MACH__
+@@ -7839,7 +7839,7 @@ long long *data2;
+ 		file_flags |=O_RSYNC|O_SYNC;
+ #endif
+ 
+-#if ! defined(DONT_HAVE_O_DIRECT)
++#if ! defined(DONT_HAVE_O_DIRECT) && defined(O_DIRECT)
+ #if defined(linux) || defined(__AIX__) || defined(IRIX) || defined(IRIX64) || defined(Windows) || defined (__FreeBSD__)
+ 	if(direct_flag)
+ 		file_flags |=O_DIRECT;
+@@ -8890,7 +8890,7 @@ long long *data1,*data2;
+ 	if(read_sync)
+ 		open_flags |=O_RSYNC|O_SYNC;
+ #endif
+-#if ! defined(DONT_HAVE_O_DIRECT)
++#if ! defined(DONT_HAVE_O_DIRECT) && defined(O_DIRECT)
+ #if defined(linux) || defined(__AIX__) || defined(IRIX) || defined(IRIX64) || defined(Windows) || defined (__FreeBSD__)
+ 	if(direct_flag)
+ 		open_flags |=O_DIRECT;
+@@ -9476,7 +9476,7 @@ long long *data1, *data2;
+ 		fprintf(stderr,"Random uniqueness fallback.\n");
+ 	}
+ 	flags = O_RDWR;
+-#if ! defined(DONT_HAVE_O_DIRECT)
++#if ! defined(DONT_HAVE_O_DIRECT) && defined(O_DIRECT)
+ #if defined(linux) || defined(__AIX__) || defined(IRIX) || defined(IRIX64) || defined(Windows) || defined (__FreeBSD__)
+ 	if(direct_flag)
+ 		flags |=O_DIRECT;
+@@ -9978,7 +9978,7 @@ long long *data1,*data2;
+ 
+ 	maddr=wmaddr=0;
+ 	open_flags=O_RDONLY;
+-#if ! defined(DONT_HAVE_O_DIRECT)
++#if ! defined(DONT_HAVE_O_DIRECT) && defined(O_DIRECT)
+ #if defined(linux) || defined(__AIX__) || defined(IRIX) || defined(IRIX64) || defined(Windows) || defined (__FreeBSD__)
+ 	if(direct_flag)
+ 		open_flags |=O_DIRECT;
+@@ -10291,7 +10291,7 @@ long long *data1,*data2;
+ 	filebytes64 = numrecs64*reclen;
+ /*	flags = O_RDWR|O_CREAT|O_TRUNC;*/
+ 	flags = O_RDWR|O_CREAT;
+-#if ! defined(DONT_HAVE_O_DIRECT)
++#if ! defined(DONT_HAVE_O_DIRECT) && defined(O_DIRECT)
+ #if defined(linux) || defined(__AIX__) || defined(IRIX) || defined(IRIX64) || defined(Windows) || defined (__FreeBSD__)
+ 	if(direct_flag)
+ 		flags |=O_DIRECT;
+@@ -10639,7 +10639,7 @@ long long *data1, *data2;
+ 	walltime=cputime=0;
+ 	nbuff=maddr=wmaddr=0;
+ 	open_flags=O_RDONLY;
+-#if ! defined(DONT_HAVE_O_DIRECT)
++#if ! defined(DONT_HAVE_O_DIRECT) && defined(O_DIRECT)
+ #if defined(linux) || defined(__AIX__) || defined(IRIX) || defined(IRIX64) || defined(Windows) || defined (__FreeBSD__)
+ 	if(direct_flag)
+ 		open_flags |=O_DIRECT;
+@@ -10998,7 +10998,7 @@ long long *data1,*data2;
+ 		flags_here |=O_RSYNC|O_SYNC;
+ #endif
+ 
+-#if ! defined(DONT_HAVE_O_DIRECT)
++#if ! defined(DONT_HAVE_O_DIRECT) && defined(O_DIRECT)
+ #if defined(linux) || defined(__AIX__) || defined(IRIX) || defined(IRIX64) || defined(Windows) || defined (__FreeBSD__)
+ 	if(direct_flag)
+ 		flags_here |=O_DIRECT;
+@@ -11264,7 +11264,7 @@ long long *data1, *data2;
+ 	traj_offset=0;
+ 	nbuff=mainbuffer;
+ 	open_flags=O_RDONLY;
+-#if ! defined(DONT_HAVE_O_DIRECT)
++#if ! defined(DONT_HAVE_O_DIRECT) && defined(O_DIRECT)
+ #if defined(linux) || defined(__AIX__) || defined(IRIX) || defined(IRIX64) || defined(Windows) || defined (__FreeBSD__)
+ 	if(direct_flag)
+ 		open_flags |=O_DIRECT;
+@@ -11539,7 +11539,7 @@ long long *data1,*data2;
+ 		flags_here |=O_RSYNC|O_SYNC;
+ #endif
+ 
+-#if ! defined(DONT_HAVE_O_DIRECT)
++#if ! defined(DONT_HAVE_O_DIRECT) && defined(O_DIRECT)
+ #if defined(linux) || defined(__AIX__) || defined(IRIX) || defined(IRIX64) || defined(Windows) || defined (__FreeBSD__)
+ 	if(direct_flag)
+ 		flags_here |=O_DIRECT;
+@@ -11865,7 +11865,7 @@ long long *data1,*data2;
+ #endif
+ 
+ 	open_flags=O_RDONLY;
+-#if ! defined(DONT_HAVE_O_DIRECT)
++#if ! defined(DONT_HAVE_O_DIRECT) && defined(O_DIRECT)
+ #if defined(linux) || defined(__AIX__) || defined(IRIX) || defined(IRIX64) || defined(Windows) || defined (__FreeBSD__)
+ 	if(direct_flag)
+ 		open_flags |=O_DIRECT;
+@@ -13211,7 +13211,7 @@ thread_write_test( x)
+ 		flags |=O_RSYNC|O_SYNC;
+ #endif
+ 
+-#if ! defined(DONT_HAVE_O_DIRECT)
++#if ! defined(DONT_HAVE_O_DIRECT) && defined(O_DIRECT)
+ #if defined(linux) || defined(__AIX__) || defined(IRIX) || defined(IRIX64) || defined(Windows) || defined (__FreeBSD__)
+ 	if(direct_flag)
+ 		flags |=O_DIRECT;
+@@ -13957,7 +13957,7 @@ thread_pwrite_test( x)
+ 		flags |=O_RSYNC|O_SYNC;
+ #endif
+ 
+-#if ! defined(DONT_HAVE_O_DIRECT)
++#if ! defined(DONT_HAVE_O_DIRECT) && defined(O_DIRECT)
+ #if defined(linux) || defined(__AIX__) || defined(IRIX) || defined(IRIX64) || defined(Windows) || defined (__FreeBSD__)
+ 	if(direct_flag)
+ 		flags |=O_DIRECT;
+@@ -14604,7 +14604,7 @@ thread_rwrite_test(x)
+ 		flags |=O_RSYNC|O_SYNC;
+ #endif
+ 
+-#if ! defined(DONT_HAVE_O_DIRECT)
++#if ! defined(DONT_HAVE_O_DIRECT) && defined(O_DIRECT)
+ #if defined(linux) || defined(__AIX__) || defined(IRIX) || defined(IRIX64) || defined(Windows) || defined (__FreeBSD__)
+ 	if(direct_flag)
+ 		flags |=O_DIRECT;
+@@ -15219,7 +15219,7 @@ thread_read_test(x)
+ 		flags |=O_RSYNC|O_SYNC;
+ #endif
+ 
+-#if ! defined(DONT_HAVE_O_DIRECT)
++#if ! defined(DONT_HAVE_O_DIRECT) && defined(O_DIRECT)
+ #if defined(linux) || defined(__AIX__) || defined(IRIX) || defined(IRIX64) || defined(Windows) || defined (__FreeBSD__)
+ 	if(direct_flag)
+ 		flags |=O_DIRECT;
+@@ -15841,7 +15841,7 @@ thread_pread_test(x)
+ 		flags |=O_RSYNC|O_SYNC;
+ #endif
+ 
+-#if ! defined(DONT_HAVE_O_DIRECT)
++#if ! defined(DONT_HAVE_O_DIRECT) && defined(O_DIRECT)
+ #if defined(linux) || defined(__AIX__) || defined(IRIX) || defined(IRIX64) || defined(Windows) || defined (__FreeBSD__)
+ 	if(direct_flag)
+ 		flags |=O_DIRECT;
+@@ -16418,7 +16418,7 @@ thread_rread_test(x)
+ 		flags |=O_RSYNC|O_SYNC;
+ #endif
+ 
+-#if ! defined(DONT_HAVE_O_DIRECT)
++#if ! defined(DONT_HAVE_O_DIRECT) && defined(O_DIRECT)
+ #if defined(linux) || defined(__AIX__) || defined(IRIX) || defined(IRIX64) || defined(Windows) || defined (__FreeBSD__)
+ 	if(direct_flag)
+ 		flags |=O_DIRECT;
+@@ -17023,7 +17023,7 @@ thread_reverse_read_test(x)
+ 		flags |=O_RSYNC|O_SYNC;
+ #endif
+ 
+-#if ! defined(DONT_HAVE_O_DIRECT)
++#if ! defined(DONT_HAVE_O_DIRECT) && defined(O_DIRECT)
+ #if defined(linux) || defined(__AIX__) || defined(IRIX) || defined(IRIX64) || defined(Windows) || defined (__FreeBSD__)
+ 	if(direct_flag)
+ 		flags |=O_DIRECT;
+@@ -17582,7 +17582,7 @@ thread_stride_read_test(x)
+ 	if(read_sync)
+ 		flags |=O_RSYNC|O_SYNC;
+ #endif
+-#if ! defined(DONT_HAVE_O_DIRECT)
++#if ! defined(DONT_HAVE_O_DIRECT) && defined(O_DIRECT)
+ #if defined(linux) || defined(__AIX__) || defined(IRIX) || defined(IRIX64) || defined(Windows) || defined (__FreeBSD__)
+ 	if(direct_flag)
+ 		flags |=O_DIRECT;
+@@ -18265,7 +18265,7 @@ void *x;
+ 		flags |=O_RSYNC|O_SYNC;
+ #endif
+ 
+-#if ! defined(DONT_HAVE_O_DIRECT)
++#if ! defined(DONT_HAVE_O_DIRECT) && defined(O_DIRECT)
+ #if defined(linux) || defined(__AIX__) || defined(IRIX) || defined(IRIX64) || defined(Windows) || defined (__FreeBSD__)
+ 	if(direct_flag)
+ 		flags |=O_DIRECT;
+@@ -18946,7 +18946,7 @@ thread_ranwrite_test( x)
+ 		flags |=O_RSYNC|O_SYNC;
+ #endif
+ 
+-#if ! defined(DONT_HAVE_O_DIRECT)
++#if ! defined(DONT_HAVE_O_DIRECT) && defined(O_DIRECT)
+ #if defined(linux) || defined(__AIX__) || defined(IRIX) || defined(IRIX64) || defined(Windows) || defined (__FreeBSD__)
+ 	if(direct_flag)
+ 		flags |=O_DIRECT;
+@@ -19952,7 +19952,7 @@ int flag, prot;
+ 		 */
+ 	 	file_flags=fcntl(fd,F_GETFL);
+ 
+-#if ! defined(DONT_HAVE_O_DIRECT)
++#if ! defined(DONT_HAVE_O_DIRECT) && defined(O_DIRECT)
+ #if defined(linux) || defined(__AIX__) || defined(IRIX) || defined(IRIX64) || defined(Windows) || defined (__FreeBSD__)
+ 		dflag = O_DIRECT;
+ #endif

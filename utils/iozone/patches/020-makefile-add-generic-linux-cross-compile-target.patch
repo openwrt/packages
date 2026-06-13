@@ -1,0 +1,61 @@
+From c43c0306ae1a49fdb225fc7b11473e5baef5d5d2 Mon Sep 17 00:00:00 2001
+From: graysky <therealgraysky AT proton DOT me>
+Date: Sat, 13 Jun 2026 12:32:56 -0400
+Subject: [PATCH 2/3] makefile: add generic linux cross-compile target
+
+Single arch-agnostic target honoring CC/CFLAGS/LDFLAGS; no -m64
+or per-arch defines (bitness via __LP64__).
+---
+ src/current/makefile | 27 +++++++++++++++++++++++++++
+ 1 file changed, 27 insertions(+)
+
+--- a/src/current/makefile
++++ b/src/current/makefile
+@@ -56,6 +56,7 @@ all:
+ 	@echo "        ->   linux                (32bit)   <-"
+ 	@echo "        ->   linux-arm            (32bit)   <-"
+ 	@echo "        ->   linux-aarch64        (64bit)   <-"
++	@echo "        ->   linux-generic        (auto)    <-"
+ 	@echo "        ->   linux-AMD64          (64bit)   <-"
+ 	@echo "        ->   linux-ia64           (64bit)   <-"
+ 	@echo "        ->   linux-powerpc        (32bit)   <-"
+@@ -179,6 +180,20 @@ linux:	iozone_linux.o libasync.o libbif.
+ 	$(CC)  -O3 $(CFLAGS) -Dlinux pit_server.o -o pit_server
+ 
+ #
++# Generic GNU/Clang Linux cross-compile build with threads, largefiles, async I/O.
++# Honors the toolchain's $(CC), $(CFLAGS) and $(LDFLAGS); the data model (32- vs
++# 64-bit) is taken from the compiler's target ABI via __LP64__ in iozone.c, so no
++# -m64 and no per-architecture defines are needed. A single recipe therefore
++# serves every Linux architecture (arm, aarch64, x86, x86_64, powerpc, powerpc64,
++# mips, ...). Intended for distribution/cross builds; see also the per-arch targets.
++#
++linux-generic:	iozone_linux-generic.o libasync.o libbif.o fileop_linux.o pit_server.o
++	$(CC) -O3 $(CFLAGS) $(LDFLAGS) iozone_linux-generic.o libasync.o libbif.o \
++		-lpthread -lrt -o iozone
++	$(CC) -O3 $(CFLAGS) $(LDFLAGS) -Dlinux fileop_linux.o -o fileop
++	$(CC) -O3 $(CFLAGS) $(LDFLAGS) -Dlinux pit_server.o -o pit_server
++
++#
+ # GNU 'C' compiler Linux build for powerpc chip with threads, largefiles, async I/O 
+ #
+ linux-powerpc: iozone_linux-powerpc.o  libbif.o libasync.o fileop_linux-ppc.o pit_server.o
+@@ -860,6 +875,18 @@ iozone_linux.o:	iozone.c libbif.c libasy
+ 	$(CC) -Wmissing-prototypes -c -O3 -Dunix -Dlinux -DHAVE_ANSIC_C -DASYNC_IO \
+ 		-D_LARGEFILE64_SOURCE $(CFLAGS) libasync.c  -o libasync.o 
+ 
++iozone_linux-generic.o:	iozone.c libbif.c libasync.c
++	@echo ""
++	@echo "Building iozone for Linux (generic cross-compile)"
++	@echo ""
++	$(CC) -c -O3 -Dunix -DHAVE_ANSIC_C -DASYNC_IO -DHAVE_PREAD \
++		-DSHARED_MEM -Dlinux -D_LARGEFILE64_SOURCE $(CFLAGS) iozone.c \
++		-DNAME='"linux-generic"' -o iozone_linux-generic.o
++	$(CC) -c -O3 -Dunix -DHAVE_ANSIC_C -DASYNC_IO -D_LARGEFILE64_SOURCE \
++		-DSHARED_MEM -Dlinux $(CFLAGS) libbif.c -o libbif.o
++	$(CC) -c -O3 -Dunix -Dlinux -DHAVE_ANSIC_C -DASYNC_IO \
++		-D_LARGEFILE64_SOURCE $(CFLAGS) libasync.c  -o libasync.o 
++
+ fileop_AIX.o:	fileop.c
+ 	@echo ""
+ 	@echo "Building fileop for AIX"
