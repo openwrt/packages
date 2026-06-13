@@ -230,7 +230,6 @@ PKG_GO_ASMFLAGS?= \
 	$(if $(GO_PKG_ENABLE_SPECTRE),-spectre all)
 
 PKG_GO_LDFLAGS?= \
-	-buildid '$(SOURCE_DATE_EPOCH)' \
 	-linkmode external \
 	-extldflags '$(patsubst -z%,-Wl$(comma)-z$(comma)%,$(TARGET_LDFLAGS))' \
 	$(if $(CONFIG_NO_STRIP)$(CONFIG_DEBUG),,-s -w)
