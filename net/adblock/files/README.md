@@ -2,11 +2,41 @@
 
 # DNS based ad/abuse domain blocking
 
+## Table of Contents
+* [Description](#description)
+* [Quick Start](#quick-start)
+* [Main Features](#main-features)
+* [Prerequisites](#prerequisites)
+* [Installation & Usage](#installation-and-usage)
+* [Adblock CLI interface](#adblock-cli-interface)
+* [Adblock Config Options](#adblock-config-options)
+* [Examples](#examples)
+* [Best practice and tweaks](#best-practice-and-tweaks)
+* [Troubleshooting & debug options](#troubleshooting-and-debug-options)
+* [Support](#support)
+* [Removal](#removal)
+* [Donations](#donations)
+
 <a id="description"></a>
 ## Description
 A lot of people already use adblocker plugins within their desktop browsers, but what if you are using your (smart) phone, tablet, watch or any other (wlan) gadget!? Getting rid of annoying ads, trackers and other abuse sites (like facebook) is simple: block them with your router.
 
 When the DNS server on your router receives DNS requests, you will sort out queries that ask for the resource records of ad servers and return a simple `NXDOMAIN`. This is nothing but **N**on-e**X**istent Internet or Intranet domain name, if a domain name cannot be resolved using the DNS server, a condition called the `NXDOMAIN` occurred.
+
+<a id="quick-start"></a>
+## Quick Start
+For a typical setup these few steps are enough to get adblock up and running — see the sections below for details:
+1. Install the LuCI companion package: `apk update && apk add luci-app-adblock` (this pulls in the `adblock` backend as a dependency).
+2. Enable the adblock system service under `System → Startup`, then open LuCI under `Services → Adblock`, tick `Enabled` and (recommended) set a `Startup Trigger Interface` to your WAN interface (avoid IPv6/wan6).
+3. Keep the small, pre-selected default feed selection to start with (e.g. `adguard`, `adguard_tracking` and `certpl`, ≈280K domains).
+4. Start and verify the service:
+
+```sh
+/etc/init.d/adblock start
+/etc/init.d/adblock status
+```
+
+**Please note:** don't blindly enable (too) many feeds at once — on low memory devices this will sooner or later lead to OOM conditions.
 
 <a id="main-features"></a>
 ## Main Features
@@ -138,6 +168,8 @@ Available commands:
 	trace           Start with syscall trace
 	info            Dump procd service info
 ```
+
+The `report` sub-command accepts an output mode: `cli` (default, human-readable table printed to the console), `json` (machine-readable output, incl. GeoIP map data when `adb_map=1`), `mail` (send the report via `msmtp`) and `gen` (regenerate the report data files in the background, used by the LuCI frontend).
 
 <a id="adblock-config-options"></a>
 ## Adblock Config Options
@@ -407,15 +439,21 @@ The rule consist of max. 4 individual, space separated parameters:
 3. column: the domain column within the feed file, e.g. `2` (required)
 4. separator: an optional field separator, default is the character class `[[:space:]]`
 
-**Enable debug mode**  
+<a id="troubleshooting-and-debug-options"></a>
+## Troubleshooting & debug options
 Adblock provides an optional debug mode that writes diagnostic information to the system log and captures internal error output in a dedicated error logfile - by default located in the adblock base directory as `/tmp/adb_error.log`. The log file is automatically cleared at the beginning of each run. Under normal conditions, all error messages are discarded to keep regular runs clean and silent. To enable debug mode, set the option `adb_debug` to `1`. When enabled, the script produces significantly more log output to assist with troubleshooting.
 
+Whenever you encounter adblock related processing problems, please enable debug logging, restart adblock and check the `Log View` tab in LuCI (or the syslog via `logread -e adblock-`).
+
+<a id="support"></a>
 ## Support
 Please join the adblock discussion in this [forum thread](https://forum.openwrt.org/t/adblock-support-thread/507) or contact me by mail <dev@brenken.org>
 
+<a id="removal"></a>
 ## Removal
 Stop all adblock related services with _/etc/init.d/adblock stop_ and remove the adblock package if necessary.
 
+<a id="donations"></a>
 ## Donations
 You like this project - is there a way to donate? Generally speaking "No" - I have a well-paying full-time job and my OpenWrt projects are just a hobby of mine in my spare time.
 
