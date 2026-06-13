@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shadow
 PKG_VERSION:=4.19.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/shadow-maint/shadow/releases/download/$(PKG_VERSION)
@@ -30,7 +30,7 @@ include $(INCLUDE_DIR)/nls.mk
 SHADOW_APPLETS := \
 	chage chfn chgpasswd chpasswd chsh expiry faillog gpasswd \
 	groupadd groupdel groupmems groupmod grpck grpconv grpunconv \
-	login logoutd newgrp newusers nologin \
+	login logoutd newgrp newgidmap newuidmap newusers nologin \
 	passwd pwck pwconv pwunconv su \
 	useradd userdel usermod vipw
 
@@ -45,7 +45,9 @@ CONFIGURE_ARGS += \
 	--without-sssd \
 	--without-libbsd \
 	--disable-logind \
-	--disable-subordinate-ids \
+	--enable-subordinate-ids \
+	--disable-shared \
+	--enable-static \
 	--with-bcrypt
 
 CONFIGURE_VARS += \
