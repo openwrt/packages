@@ -232,11 +232,21 @@ start_service() {
 
 	procd_open_instance
 	procd_set_param stderr 1
+
 	if [ -z "${DOCKERD_CONF}" ]; then
-		procd_set_param command /usr/bin/dockerd
+		procd_set_param command /bin/sh -c " \
+			echo '+memory' > /sys/fs/cgroup/cgroup.subtree_control 2>/dev/null; \
+			mkdir -p /sys/fs/cgroup/dockerd-init; \
+			echo \$\$ > /sys/fs/cgroup/dockerd-init/cgroup.procs; \
+			exec /usr/bin/dockerd"
 	else
-		procd_set_param command /usr/bin/dockerd --config-file="${DOCKERD_CONF}"
+		procd_set_param command /bin/sh -c " \
+			echo '+memory' > /sys/fs/cgroup/cgroup.subtree_control 2>/dev/null; \
+			mkdir -p /sys/fs/cgroup/dockerd-init; \
+			echo \$\$ > /sys/fs/cgroup/dockerd-init/cgroup.procs; \
+			exec /usr/bin/dockerd --config-file='${DOCKERD_CONF}'"
 	fi
+
 	procd_set_param limits nofile="${nofile} ${nofile}"
 	procd_close_instance
 }
