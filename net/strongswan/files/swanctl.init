@@ -314,7 +314,7 @@ config_child() {
 	hold)
 		dpdaction="trap" ;;
 	restart)
-		dpdaction="start" ;;
+		dpdaction="restart" ;;
 	trap|start)
 		# already using new syntax
 		;;
