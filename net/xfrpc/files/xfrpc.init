@@ -13,23 +13,60 @@ PROG=/usr/bin/$NAME
 
 
 handle_xfrpc() {
-    local section="$1"
-    local config="$2"
+	local section="$1"
+	local config="$2"
 
-    case "$section" in
-        common)
-            uci_validate_section xfrpc xfrpc common \
-                'server_addr:host' \
-                'server_port:uinteger' \
-                'token:string:'
-            ;;
-    esac
+	# Only process the "common" section
+	[ "$section" = "common" ] || return
 
-    # Write the validated settings to the config file
-    echo "[${section}]" >> "$config"
-    [ -z "$server_addr" ] || echo "server_addr = $server_addr" >> "$config"
-    [ -z "$server_port" ] || echo "server_port = $server_port" >> "$config"
-    [ -z "$token" ] || echo "token = $token" >> "$config"
+	uci_validate_section xfrpc xfrpc common \
+		'server_addr:host' \
+		'server_port:uinteger' \
+		'token:string:'
+
+	# Write the validated settings to the config file
+	echo "[${section}]" >> "$config"
+	[ -z "$server_addr" ] || echo "server_addr = $server_addr" >> "$config"
+	[ -z "$server_port" ] || echo "server_port = $server_port" >> "$config"
+	[ -z "$token" ] || echo "token = $token" >> "$config"
+}
+
+# Fallback handler for LuCI-generated proxy sections.
+# LuCI's GridSection creates sections with type "xfrpc" and an
+# option "type" (e.g. type="tcp"). This handler reads the option
+# and dispatches to the correct output format.
+handle_xfrpc_proxy() {
+	local section="$1"
+	local config="$2"
+
+	# Skip the "common" section
+	[ "$section" = "common" ] && return
+
+	uci_validate_section xfrpc xfrpc "$section" \
+		'enabled:bool:1' \
+		'local_ip:host' \
+		'local_port:uinteger' \
+		'remote_port:uinteger' \
+		'custom_domains:string' \
+		'subdomain:string'
+
+	[ "$enabled" = 0 ] && return
+
+	echo "[${section}]" >> "$config"
+	echo "type = $type" >> "$config"
+	[ -z "$local_ip" ] || echo "local_ip = $local_ip" >> "$config"
+	[ -z "$local_port" ] || echo "local_port = $local_port" >> "$config"
+
+	case "$type" in
+		tcp)
+			[ -z "$remote_port" ] || echo "remote_port = $remote_port" >> "$config"
+			;;
+		http|https)
+			[ -z "$remote_port" ] || echo "remote_port = $remote_port" >> "$config"
+			[ -z "$custom_domains" ] || echo "custom_domains = $custom_domains" >> "$config"
+			[ -z "$subdomain" ] || echo "subdomain = $subdomain" >> "$config"
+			;;
+	esac
 }
 
 handle_tcp() {
@@ -140,6 +177,8 @@ start_service() {
 	config_foreach handle_http http "$conf_file"
 	config_foreach handle_https https "$conf_file"
 	config_foreach handle_socks5 socks5 "$conf_file"
+	# Fallback: handle LuCI-generated sections (type=xfrpc with option type="tcp"/etc)
+	config_foreach handle_xfrpc_proxy xfrpc "$conf_file"
 
 	procd_open_instance
 	procd_set_param command "$PROG" -c "$conf_file" -f -d $loglevel
