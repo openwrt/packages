@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xfrpc
-PKG_VERSION:=5.04.874
+PKG_VERSION:=5.06.954
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/liudf0716/xfrpc/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=9350a647872c64cc3025b69ae7181de9736b6073acf4b46cad265ee3dad20974
+PKG_HASH:=skip
 PKG_BUILD_DIR:=$(BUILD_DIR)/xfrpc-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Dengfeng Liu <liudf0716@gmail.com>
@@ -23,24 +23,43 @@ PKG_LICENSE_FILES:=COPYING
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
+define Package/xfrpc/config
+  if PACKAGE_xfrpc
+    config XFRPC_QUIC
+      bool "Enable QUIC transport (ngtcp2 + nghttp3)"
+      default n
+      help
+        Enable QUIC-based P2P transport for XTCP.
+        Requires libngtcp2, libnghttp3, and a TLS crypto backend.
+  endif
+endef
+
 define Package/xfrpc
   SUBMENU:=Web Servers/Proxies
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+zlib +libjson-c +libevent2 +libevent2-openssl
-  TITLE:= C language fast reverse proxy client
+  TITLE:=C language fast reverse proxy client
   URL:=https://github.com/liudf0716/xfrpc
+  DEPENDS:=+zlib +libjson-c +libevent2 +libevent2-openssl \
+    +XFRPC_QUIC:libngtcp2 +XFRPC_QUIC:libnghttp3 +XFRPC_QUIC:libwolfssl
 endef
 
 define Package/xfrpc/description
-  xfrpc is C language fast reverse proxy client
-  compare with golang version frpc
-  xfrpc can run in almost all openwrt device
+  xfrpc is C language fast reverse proxy client.
+  Compare with golang version frpc, xfrpc can run in almost all OpenWrt devices.
+  Supports TCP, HTTP, HTTPS, STCP, XTCP, SUDP, TCPMUX proxy types.
+  Optional QUIC transport (ngtcp2) for both control and work connections.
+  Features: health check, SIGHUP hot-reload, Unix Domain Socket proxy,
+  TLS encryption, visitor support for STCP/XTCP P2P tunnels.
 endef
 
 define Package/xfrpc/conffiles
 /etc/config/xfrpc
 endef
+
+CMAKE_OPTIONS += \
+  -DENABLE_QUIC=$(if $(CONFIG_XFRPC_QUIC),ON,OFF) \
+  $(if $(CONFIG_XFRPC_QUIC),-DUSE_WOLFSSL=ON)
 
 define Package/xfrpc/install
 	$(INSTALL_DIR) $(1)/usr/bin
