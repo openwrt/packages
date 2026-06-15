@@ -16,20 +16,46 @@ handle_xfrpc() {
     local section="$1"
     local config="$2"
 
-    case "$section" in
-        common)
-            uci_validate_section xfrpc xfrpc common \
-                'server_addr:host' \
-                'server_port:uinteger' \
-                'token:string:'
-            ;;
-    esac
+    # Read settings directly from UCI (uci_validate_section has issues with
+    # some option names containing underscores like tls_key_file)
+    local server_addr=$(uci get xfrpc.${section}.server_addr 2>/dev/null)
+    local server_port=$(uci get xfrpc.${section}.server_port 2>/dev/null)
+    local token=$(uci get xfrpc.${section}.token 2>/dev/null)
+    local tcp_mux=$(uci get xfrpc.${section}.tcp_mux 2>/dev/null)
+    local protocol=$(uci get xfrpc.${section}.protocol 2>/dev/null)
+    local quic_bind_port=$(uci get xfrpc.${section}.quic_bind_port 2>/dev/null)
+    local heartbeat_interval=$(uci get xfrpc.${section}.heartbeat_interval 2>/dev/null)
+    local heartbeat_timeout=$(uci get xfrpc.${section}.heartbeat_timeout 2>/dev/null)
+    local tls_enable=$(uci get xfrpc.${section}.tls_enable 2>/dev/null)
+    local tls_cert_file=$(uci get xfrpc.${section}.tls_cert_file 2>/dev/null)
+    local tls_key_file=$(uci get xfrpc.${section}.tls_key_file 2>/dev/null)
+    local tls_trusted_ca_file=$(uci get xfrpc.${section}.tls_trusted_ca_file 2>/dev/null)
+    local tls_server_name=$(uci get xfrpc.${section}.tls_server_name 2>/dev/null)
+
+    # Warn if TLS enabled but client cert/key missing
+    if [ -n "$tls_enable" ] && [ "$tls_enable" != "0" ]; then
+        if [ -z "$tls_cert_file" ] || [ -z "$tls_key_file" ]; then
+            logger -t xfrpc "WARN: tls_enable=1 but tls_cert_file/tls_key_file not set"
+        elif [ ! -f "$tls_cert_file" ] || [ ! -f "$tls_key_file" ]; then
+            logger -t xfrpc "WARN: TLS cert/key file not found: $tls_cert_file / $tls_key_file"
+        fi
+    fi
 
     # Write the validated settings to the config file
     echo "[${section}]" >> "$config"
     [ -z "$server_addr" ] || echo "server_addr = $server_addr" >> "$config"
     [ -z "$server_port" ] || echo "server_port = $server_port" >> "$config"
     [ -z "$token" ] || echo "token = $token" >> "$config"
+    [ -n "$tcp_mux" ] && [ "$tcp_mux" != "0" ] && echo "tcp_mux = $tcp_mux" >> "$config"
+    [ -z "$protocol" ] || echo "protocol = $protocol" >> "$config"
+    [ -n "$quic_bind_port" ] && [ "$quic_bind_port" != "0" ] && echo "quic_bind_port = $quic_bind_port" >> "$config"
+    [ -n "$heartbeat_interval" ] && [ "$heartbeat_interval" != "30" ] && echo "heartbeat_interval = $heartbeat_interval" >> "$config"
+    [ -n "$heartbeat_timeout" ] && [ "$heartbeat_timeout" != "90" ] && echo "heartbeat_timeout = $heartbeat_timeout" >> "$config"
+    [ -n "$tls_enable" ] && [ "$tls_enable" != "0" ] && echo "tls_enable = $tls_enable" >> "$config"
+    [ -z "$tls_cert_file" ] || echo "tls_cert_file = $tls_cert_file" >> "$config"
+    [ -z "$tls_key_file" ] || echo "tls_key_file = $tls_key_file" >> "$config"
+    [ -z "$tls_trusted_ca_file" ] || echo "tls_trusted_ca_file = $tls_trusted_ca_file" >> "$config"
+    [ -z "$tls_server_name" ] || echo "tls_server_name = $tls_server_name" >> "$config"
 }
 
 handle_tcp() {
@@ -42,6 +68,11 @@ handle_tcp() {
 		'local_ip:host' \
 		'local_port:uinteger' \
 		'remote_port:uinteger' \
+		'health_check_type:string' \
+		'health_check_url:string' \
+		'health_check_interval:uinteger' \
+		'health_check_timeout:uinteger' \
+		'health_check_max_failed:uinteger' \
 		'start_time:string' \
 		'end_time:string'
 	
@@ -68,6 +99,11 @@ handle_tcp() {
 	[ -z "$local_ip" ] || echo "local_ip = $local_ip" >> "$config"
 	[ -z "$local_port" ] || echo "local_port = $local_port" >> "$config"
 	[ -z "$remote_port" ] || echo "remote_port = $remote_port" >> "$config"
+	[ -z "$health_check_type" ] || echo "health_check_type = $health_check_type" >> "$config"
+	[ -z "$health_check_url" ] || echo "health_check_url = $health_check_url" >> "$config"
+	[ -z "$health_check_interval" ] || echo "health_check_interval = $health_check_interval" >> "$config"
+	[ -z "$health_check_timeout" ] || echo "health_check_timeout = $health_check_timeout" >> "$config"
+	[ -z "$health_check_max_failed" ] || echo "health_check_max_failed = $health_check_max_failed" >> "$config"
 	[ -z "$start_time" ] || echo "start_time = $start_time" >> "$config"
 	[ -z "$end_time" ] || echo "end_time = $end_time" >> "$config"
 }
@@ -168,6 +204,203 @@ handle_iod() {
 	[ -z "$remote_port" ] || echo "remote_port = $remote_port" >> "$config"
 }
 
+handle_tcpmux() {
+	local section="$1"
+	local config="$2"
+
+	uci_validate_section xfrpc tcpmux $section \
+		'enabled:bool:1' \
+		'local_ip:host' \
+		'local_port:uinteger' \
+		'remote_port:uinteger' \
+		'custom_domains:string' \
+		'multiplexer:string' \
+		'service_type:string' \
+		'start_time:string' \
+		'end_time:string'
+
+	# if enabled is 0, then return
+	[ $enabled = 0 ] && return
+
+	# Validate service_type if provided
+	if [ -n "$service_type" ]; then
+		case "$service_type" in
+			ssh|mstsc|rdp|vnc|telnet|http|https)
+				# Valid service type
+				;;
+			*)
+				echo "Error: Invalid service_type '$service_type'. Must be one of: ssh, mstsc, rdp, vnc, telnet, http, https"
+				return 1
+				;;
+		esac
+	fi
+
+	# Validate multiplexer type if provided
+	if [ -n "$multiplexer" ]; then
+		case "$multiplexer" in
+			httpconnect|socks5|raw|quic)
+				# Valid multiplexer type
+				;;
+			*)
+				echo "Error: Invalid multiplexer '$multiplexer'. Must be one of: httpconnect, socks5, raw, quic"
+				return 1
+				;;
+		esac
+	fi
+
+	# Write the validated settings to the config file
+	echo "[${section}]" >> "$config"
+	echo "type = tcpmux" >> "$config"
+	[ -z "$service_type" ] || echo "service_type = $service_type" >> "$config"
+	[ -z "$local_ip" ] || echo "local_ip = $local_ip" >> "$config"
+	[ -z "$local_port" ] || echo "local_port = $local_port" >> "$config"
+	[ -z "$remote_port" ] || echo "remote_port = $remote_port" >> "$config"
+	[ -z "$custom_domains" ] || echo "custom_domains = $custom_domains" >> "$config"
+	[ -z "$multiplexer" ] || echo "multiplexer = $multiplexer" >> "$config"
+	[ -z "$start_time" ] || echo "start_time = $start_time" >> "$config"
+	[ -z "$end_time" ] || echo "end_time = $end_time" >> "$config"
+}
+
+handle_stcp() {
+	local section="$1"
+	local config="$2"
+
+	uci_validate_section xfrpc stcp $section \
+		'enabled:bool:1' \
+		'local_ip:host' \
+		'local_port:uinteger' \
+		'remote_port:uinteger' \
+		'secret_key:string' \
+		'start_time:string' \
+		'end_time:string'
+
+	[ $enabled = 0 ] && return
+
+	echo "[${section}]" >> "$config"
+	echo "type = stcp" >> "$config"
+	[ -z "$local_ip" ] || echo "local_ip = $local_ip" >> "$config"
+	[ -z "$local_port" ] || echo "local_port = $local_port" >> "$config"
+	[ -z "$remote_port" ] || echo "remote_port = $remote_port" >> "$config"
+	[ -z "$secret_key" ] || echo "sk = $secret_key" >> "$config"
+	[ -z "$start_time" ] || echo "start_time = $start_time" >> "$config"
+	[ -z "$end_time" ] || echo "end_time = $end_time" >> "$config"
+}
+
+handle_xtcp() {
+	local section="$1"
+	local config="$2"
+
+	uci_validate_section xfrpc xtcp $section \
+		'enabled:bool:1' \
+		'local_ip:host' \
+		'local_port:uinteger' \
+		'remote_port:uinteger' \
+		'secret_key:string' \
+		'start_time:string' \
+		'end_time:string'
+
+	[ $enabled = 0 ] && return
+
+	echo "[${section}]" >> "$config"
+	echo "type = xtcp" >> "$config"
+	[ -z "$local_ip" ] || echo "local_ip = $local_ip" >> "$config"
+	[ -z "$local_port" ] || echo "local_port = $local_port" >> "$config"
+	[ -z "$remote_port" ] || echo "remote_port = $remote_port" >> "$config"
+	[ -z "$secret_key" ] || echo "sk = $secret_key" >> "$config"
+	[ -z "$start_time" ] || echo "start_time = $start_time" >> "$config"
+	[ -z "$end_time" ] || echo "end_time = $end_time" >> "$config"
+}
+
+handle_sudp() {
+	local section="$1"
+	local config="$2"
+
+	uci_validate_section xfrpc sudp $section \
+		'enabled:bool:1' \
+		'local_ip:host' \
+		'local_port:uinteger' \
+		'remote_port:uinteger' \
+		'secret_key:string' \
+		'start_time:string' \
+		'end_time:string'
+
+	[ $enabled = 0 ] && return
+
+	echo "[${section}]" >> "$config"
+	echo "type = sudp" >> "$config"
+	[ -z "$local_ip" ] || echo "local_ip = $local_ip" >> "$config"
+	[ -z "$local_port" ] || echo "local_port = $local_port" >> "$config"
+	[ -z "$remote_port" ] || echo "remote_port = $remote_port" >> "$config"
+	[ -z "$secret_key" ] || echo "sk = $secret_key" >> "$config"
+	[ -z "$start_time" ] || echo "start_time = $start_time" >> "$config"
+	[ -z "$end_time" ] || echo "end_time = $end_time" >> "$config"
+}
+
+handle_stcp_visitor() {
+	local section="$1"
+	local config="$2"
+
+	uci_validate_section xfrpc stcp_visitor $section \
+		'enabled:bool:1' \
+		'server_name:string' \
+		'bind_addr:string' \
+		'bind_port:uinteger' \
+		'secret_key:string'
+
+	[ $enabled = 0 ] && return
+
+	echo "[${section}]" >> "$config"
+	echo "type = stcp_visitor" >> "$config"
+	[ -z "$server_name" ] || echo "server_name = $server_name" >> "$config"
+	[ -z "$bind_addr" ] || echo "bind_addr = $bind_addr" >> "$config"
+	[ -z "$bind_port" ] || echo "bind_port = $bind_port" >> "$config"
+	[ -z "$secret_key" ] || echo "sk = $secret_key" >> "$config"
+}
+
+handle_xtcp_visitor() {
+	local section="$1"
+	local config="$2"
+
+	uci_validate_section xfrpc xtcp_visitor $section \
+		'enabled:bool:1' \
+		'server_name:string' \
+		'bind_addr:string' \
+		'bind_port:uinteger' \
+		'secret_key:string'
+
+	[ $enabled = 0 ] && return
+
+	echo "[${section}]" >> "$config"
+	echo "type = xtcp_visitor" >> "$config"
+	[ -z "$server_name" ] || echo "server_name = $server_name" >> "$config"
+	[ -z "$bind_addr" ] || echo "bind_addr = $bind_addr" >> "$config"
+	[ -z "$bind_port" ] || echo "bind_port = $bind_port" >> "$config"
+	[ -z "$secret_key" ] || echo "sk = $secret_key" >> "$config"
+}
+
+handle_plugin() {
+	local section="$1"
+	local config="$2"
+
+	uci_validate_section xfrpc plugin $section \
+		'enabled:bool:1' \
+		'remote_port:uinteger' \
+		'plugin_name:string' \
+		'plugin_user:string' \
+		'plugin_pwd:string' \
+		'plugin_unix_path:string'
+
+	[ $enabled = 0 ] && return
+
+	echo "[${section}]" >> "$config"
+	echo "type = plugin" >> "$config"
+	[ -z "$remote_port" ] || echo "remote_port = $remote_port" >> "$config"
+	[ -z "$plugin_name" ] || echo "plugin_name = $plugin_name" >> "$config"
+	[ -z "$plugin_user" ] || echo "plugin_user = $plugin_user" >> "$config"
+	[ -z "$plugin_pwd" ] || echo "plugin_pwd = $plugin_pwd" >> "$config"
+	[ -z "$plugin_unix_path" ] || echo "plugin_unix_path = $plugin_unix_path" >> "$config"
+}
+
 service_triggers() {
 	procd_add_reload_trigger "$NAME"
 	procd_add_interface_trigger "interface.*.up" wan /etc/init.d/xfrpc restart
@@ -179,11 +412,10 @@ start_service() {
 	> "$conf_file"
 	config_load "$NAME"
 
-	uci_validate_section xfrpc xfrpc common \
-			'enabled:bool:0' \
-			'loglevel:uinteger:0'
+	local enabled=$(uci get xfrpc.common.enabled 2>/dev/null)
+	local loglevel=$(uci get xfrpc.common.loglevel 2>/dev/null)
 
-	if [ $enabled = 0 ]; then
+	if [ "$enabled" = "0" ] || [ "$enabled" = "false" ]; then
 		echo "xfrpc service disabled"
 		return
 	fi
@@ -194,6 +426,13 @@ start_service() {
 	config_foreach handle_https https "$conf_file"
 	config_foreach handle_socks5 socks5 "$conf_file"
 	config_foreach handle_iod iod "$conf_file"
+	config_foreach handle_tcpmux tcpmux "$conf_file"
+	config_foreach handle_stcp stcp "$conf_file"
+	config_foreach handle_xtcp xtcp "$conf_file"
+	config_foreach handle_sudp sudp "$conf_file"
+	config_foreach handle_stcp_visitor stcp_visitor "$conf_file"
+	config_foreach handle_xtcp_visitor xtcp_visitor "$conf_file"
+	config_foreach handle_plugin plugin "$conf_file"
 
 	procd_open_instance
 	procd_set_param command "$PROG" -c "$conf_file" -s -f -d $loglevel
