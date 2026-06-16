@@ -139,13 +139,13 @@ setup_vsftpd() {
 	[ -n "$invoking_security_mode" ] && INVOKING_SECURITY_MODE="$invoking_security_mode"
 
 	case "$LISTEN_MODE" in
-		both)
-			write_conf_bool "listen" "0"
-			write_conf_bool "listen_ipv6" "1"
-			;;
 		ipv4)
 			write_conf_bool "listen" "1"
 			write_conf_bool "listen_ipv6" "0"
+			;;
+		both|*)
+			write_conf_bool "listen" "0"
+			write_conf_bool "listen_ipv6" "1"
 			;;
 	esac
 
@@ -161,7 +161,7 @@ procd_vsftpd_instance() {
 	local name="vsftpd-$listen_port"
 
 	procd_open_instance "$name"
-	[ "$use_mdns" = "1" ] && procd_add_mdns "ftp" "tcp" "$port_val" "daemon=vsftpd"
+	[ "$use_mdns" = "1" ] && procd_add_mdns "ftp" "tcp" "$listen_port" "daemon=vsftpd"
 	procd_set_param command "$BIN" "$OUTPUT_CONF" \
 		"-olisten_port=$listen_port" \
 		"-oimplicit_ssl=$implicit_ssl"
@@ -203,15 +203,15 @@ start_service() {
 	config_foreach validate_vsftpd_section global setup_vsftpd
 
 	case "$INVOKING_SECURITY_MODE" in
-		explicit)
-			procd_vsftpd_instance "$PORT" "NO" "1"
+		implicit)
+			procd_vsftpd_instance "$PORT_IMPLICIT" "YES" "$mdns"
 			;;
 		both)
-			procd_vsftpd_instance "$PORT" "NO" "1"
+			procd_vsftpd_instance "$PORT" "NO" "$mdns"
 			procd_vsftpd_instance "$PORT_IMPLICIT" "YES" "0"
 			;;
-		implicit)
-			procd_vsftpd_instance "$PORT_IMPLICIT" "YES" "0"
+		explicit|*)
+			procd_vsftpd_instance "$PORT" "NO" "$mdns"
 			;;
 	esac
 }
