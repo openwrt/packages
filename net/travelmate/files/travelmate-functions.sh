@@ -1067,21 +1067,11 @@ f_genstatus() {
 	if [ "${status}" = "true" ]; then
 		status="connected, ${trm_connection:-"-"}"
 		dev_status="$("${trm_ubuscmd}" -S call network.wireless status 2>/dev/null)"
-		parse="$(printf "%s" "${dev_status}" | "${trm_jsoncmd}" \
-			-e '@.*.interfaces[@.config.mode="sta"].section' \
-			-e '@.*.interfaces[@.config.mode="sta"].config.ssid' \
-			-e '@.*.interfaces[@.config.mode="sta"].config.macaddr' \
-			-e '@.*.interfaces[@.config.mode="sta"].config.network[0]' \
-			-e '@.*.interfaces[@.config.mode="sta"].config.bssid')"
-		{
-			IFS= read -r section
-			IFS= read -r sta_essid
-			IFS= read -r sta_mac
-			IFS= read -r sta_iface
-			IFS= read -r sta_bssid
-		} <<-EOF
-			${parse}
-		EOF
+		section="$(printf "%s" "${dev_status}" | "${trm_jsoncmd}" -ql1 -e '@.*.interfaces[@.config.mode="sta"].section')"
+		sta_essid="$(printf "%s" "${dev_status}" | "${trm_jsoncmd}" -ql1 -e '@.*.interfaces[@.config.mode="sta"].config.ssid')"
+		sta_mac="$(printf "%s" "${dev_status}" | "${trm_jsoncmd}" -ql1 -e '@.*.interfaces[@.config.mode="sta"].config.macaddr')"
+		sta_iface="$(printf "%s" "${dev_status}" | "${trm_jsoncmd}" -ql1 -e '@.*.interfaces[@.config.mode="sta"].config.network[0]')"
+		sta_bssid="$(printf "%s" "${dev_status}" | "${trm_jsoncmd}" -ql1 -e '@.*.interfaces[@.config.mode="sta"].config.bssid')"
 		if [ -n "${section}" ]; then
 			sta_radio="$(uci_get "wireless" "${section}" "device")"
 			f_getcfg "${sta_radio}" "${sta_essid}" "${sta_bssid}"
