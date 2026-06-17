@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=net-snmp
 PKG_VERSION:=5.9.4
-PKG_RELEASE:=10
+PKG_RELEASE:=11
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/net-snmp
@@ -284,6 +284,7 @@ endif
 
 ifeq ($(BUILD_VARIANT),ssl)
 CONFIGURE_ARGS+= --with-openssl="$(STAGING_DIR)/usr"
+CONFIGURE_ARGS+= --enable-blumenthal-aes
 else
 CONFIGURE_ARGS+= --without-openssl
 endif
