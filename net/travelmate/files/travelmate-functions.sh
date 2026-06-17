@@ -962,16 +962,29 @@ f_check() {
 									uci_add_list "dhcp" "@dnsmasq[0]" "rebind_domain" "${cp_domain}"
 									[ -n "$(uci -q changes "dhcp")" ] && uci_commit "dhcp"
 									/etc/init.d/dnsmasq reload
-									f_log "info" "captive portal domain '${cp_domain}' added to to dhcp rebind whitelist"
+									f_log "info" "captive portal domain '${cp_domain}' added to dhcp rebind allowlist"
 									result="$(f_net)"
 								done
 								if [ -n "${cp_domain}" ]; then
 									trm_connection="${result:-"-"}/${ifquality}"
 									f_genstatus
 									login_script="$(f_getval "script")"
-									if [ -x "${login_script}" ]; then
+									if [ -n "${login_script}" ]; then
+										login_script="$(readlink -f "${login_script}" 2>/dev/null)"
+										case "${login_script}" in
+										/etc/travelmate/*.login) ;;
+										*)
+											f_log "info" "captive portal login script rejected"
+											login_script=""
+											;;
+										esac
+									fi
+									if [ -f "${login_script}" ] && [ -x "${login_script}" ]; then
 										login_script_args="$(f_getval "script_args")"
-										"${login_script}" ${login_script_args} >/dev/null 2>&1
+										(
+											set -f
+											exec "${login_script}" ${login_script_args} >/dev/null 2>&1
+										)
 										rc="${?}"
 										f_log "info" "captive portal login script for '${cp_domain}' has been finished  with rc '${rc}'"
 										if [ "${rc}" = "0" ]; then
