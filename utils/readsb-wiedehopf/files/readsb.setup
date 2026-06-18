@@ -1334,7 +1334,8 @@ while :; do
 						cur_preset=$(uci -q get "readsb.${target}.preset")
 						wiz_offer_install_companions "$cur_preset" "feeder '$target'" || exit 1
 					fi
-					;;				disable)
+					;;
+				disable)
 					if readsb-feeder --disable "$target" >/dev/tty 2>&1; then
 						changes_made=1
 					fi

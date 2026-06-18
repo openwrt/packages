@@ -361,7 +361,13 @@ read_geoip_wait_opts() {
 }
 # Probe used by readsb_wait_until.
 geoip_probe() {
+	local rc
 	/usr/sbin/readsb-geoip >/dev/null 2>&1
+	rc=$?
+	if [ "$rc" -eq 2 ]; then
+		_warn "readsb-geoip prerequisites missing (rc=2); skipping geoip wait"
+		return 0
+	fi
 	config_load readsb
 	needs_geoip=0
 	config_foreach check_geoip_needed readsb

@@ -42,7 +42,7 @@ if [ -z "$target" ]; then
 	exit 0
 fi
 
-config_get hotplug "$target" hotplug 1
+config_get_bool hotplug "$target" hotplug 1
 [ "$hotplug" = "1" ] || exit 0
 
 check_driver_collision() {
