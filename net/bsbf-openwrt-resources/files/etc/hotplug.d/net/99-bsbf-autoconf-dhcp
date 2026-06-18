@@ -36,5 +36,4 @@ fw_section=$(uci show firewall | grep "name='wan'" | cut -d. -f2)
 [ -n "$fw_section" ] && uci add_list firewall.$fw_section.network="wan_$sec_name"
 
 uci commit
-service firewall reload
 ifup wan_"$sec_name"
