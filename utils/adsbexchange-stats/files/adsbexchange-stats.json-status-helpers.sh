@@ -57,7 +57,13 @@ adsbx_curl_upload() {
 		"$REMOTE_URL"
 	[ "$ADSBX_LOG_LEVEL" -ge 3 ] && set -- -v "$@"
 
-	errfile=$(mktemp -t adsbx-curl.XXXXXX) || errfile=/dev/null
+	errfile=$(mktemp -t adsbx-curl.XXXXXX 2>/dev/null)
+	if [ -z "$errfile" ]; then
+		# Keep diagnostics available even when mktemp fails.
+		mkdir -p "$ADSBX_RUNTIME_DIR" 2>/dev/null
+		errfile="$ADSBX_RUNTIME_DIR/curl.stderr"
+		: >"$errfile" 2>/dev/null || errfile=/dev/null
+	fi
 	t0=$(date +%s)
 	http=$(curl "$@" < "$payload" 2>"$errfile") || rv=$?
 	t1=$(date +%s)

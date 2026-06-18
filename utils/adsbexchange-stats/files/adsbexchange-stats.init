@@ -78,7 +78,7 @@ write_env() (
 		# TEMP_DIR overrides the upstream default (/run/adsbexchange-stats/)
 		# which is missing on builds where /run is not symlinked to /var/run
 		# (e.g. some GL.iNet QSDK derivatives).
-		echo "TEMP_DIR=$ADSBX_RUNTIME_DIR/"
+		echo "TEMP_DIR=$ADSBX_RUNTIME_DIR"
 		echo "DNS_CACHE=$dns_cache"
 		echo "DNS_TTL=$dns_ttl"
 		echo "DNS_IGNORE_LOCAL=$dns_ignore_local"

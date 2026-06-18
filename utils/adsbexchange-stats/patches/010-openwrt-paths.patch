@@ -67,7 +67,7 @@ No behavior change when ADSBX_ENV_FILE is unset and TEMP_DIR is unset.
 +# GL.iNet QSDK derivatives), so the upstream default would 404 on touch with:
 +#   ERROR: Unable to write to /run/adsbexchange-stats//tmp.json, aborting!
 +# `:=` only assigns when unset/empty so a manual /etc/default override wins.
-+: "${TEMP_DIR:=/run/adsbexchange-stats/}"
++: "${TEMP_DIR:=/run/adsbexchange-stats}"
  TMPFILE="${TEMP_DIR}/tmp.json"
  NEWFILE="${TEMP_DIR}/new.json"
 
@@ -75,16 +75,17 @@ No behavior change when ADSBX_ENV_FILE is unset and TEMP_DIR is unset.
 +# survives a transient tmpfs remount or an out-of-band rm -rf.
 +mkdir -p "$TEMP_DIR" 2>/dev/null
 +
- # Sanity to make sure we can write to our scratch dir in /run
- T=$(touch $TMPFILE 2>&1)
+-# Sanity to make sure we can write to our scratch dir in /run
+-T=$(touch $TMPFILE 2>&1)
++# Sanity to make sure we can write to our scratch dir in /run
++T=$(touch "$TMPFILE" 2>&1)
  RV=$?
 @@ -215,7 +231,20 @@
 
 -VER_OK=$( echo "$CURL_VER" | perl -ne '@v=split(/\./); if ($v[0] == 7) { if ($v[1] >= 22) { printf("1");exit; } else { printf("0");exit; } } if ($v[0] > 7) { pr
 -intf("1");exit; } printf("0");exit;')
 -if [ $VER_OK -ne 1 ]; then
-+VER_OK=$( { echo "$CURL_VER" | perl -ne '@v=split(/\./); if ($v[0] == 7) { if ($v[1] >= 22) { printf("1");exit; } else { printf("0");exit; } } if ($v[0] > 7) { pr
-+intf("1");exit; } printf("0");exit;' ; } 2>/dev/null )
++VER_OK=$( { echo "$CURL_VER" | perl -ne '@v=split(/\./); if ($v[0] == 7) { if ($v[1] >= 22) { printf("1");exit; } else { printf("0");exit; } } if ($v[0] > 7) { printf("1");exit; } printf("0");exit;' ; } 2>/dev/null )
 +# OpenWrt: perl is not in DEPENDS. Three failure modes appear here:
 +#   1. `perl: command not found` from bash's failed exec.
 +#   2. `echo: write error: Broken pipe` -- when perl's exec fails the
@@ -99,11 +100,14 @@ No behavior change when ADSBX_ENV_FILE is unset and TEMP_DIR is unset.
 +# (treated as "too old"); DNS_CACHE was already disabled earlier by
 +# the `command -v perl` check, so behavior is unchanged.
 +if [ "${VER_OK:-0}" -ne 1 ]; then
- 	echo "WARNING: curl version is too old ($CURL_VER < 7.22.0), not using script's DNS cache."
- 	DNS_CACHE=0
+-echo "WARNING: curl version is too old ($CURL_VER < 7.22.0), not using script's DNS cache."
+-DNS_CACHE=0
++        echo "WARNING: curl version is too old ($CURL_VER < 7.22.0), not using script's DNS cache."
++        DNS_CACHE=0
  fi
 @@ -358,12 +387,27 @@
-     gzip -c <$NEWFILE >$TEMP_DIR/upload.gz
+-    gzip -c <$NEWFILE >$TEMP_DIR/upload.gz
++    gzip -c <"$NEWFILE" >"$TEMP_DIR/upload.gz"
      sleep 0.314
 
 -	# Push up the data.  'curl' will wait no more than $MAX_CURL_TIME seconds for upload to complete
@@ -120,17 +124,20 @@ No behavior change when ADSBX_ENV_FILE is unset and TEMP_DIR is unset.
 +		ADSBX_GZ_BYTES=$(stat --printf="%s" "$TEMP_DIR/upload.gz" 2>/dev/null || echo 0)
 +		adsbx_record_upload "$ADSBX_AIRCRAFT" "$ADSBX_GZ_BYTES"
 +	else
-+		curl -m $MAX_CURL_TIME $CURL_EXTRA -sS -X POST -H "adsbx-uuid: ${UUID}" -H "Content_Encoding: gzip" --data-binary @- $REMOTE_URL 2>&1 <$TEMP_DIR/upload.gz
++		curl -m $MAX_CURL_TIME $CURL_EXTRA -sS -X POST -H "adsbx-uuid: ${UUID}" -H "Content_Encoding: gzip" --data-binary @- $REMOTE_URL 2>&1 <"$TEMP_DIR/upload.gz"
 +		RV=$?
 +	fi
 
- 	if [ $RV -ne 0 ]; then
+-if [ $RV -ne 0 ]; then
++        if [ $RV -ne 0 ]; then
 -		echo "WARNING: curl process returned non-zero ($RV): [$CURL]; Sleeping a little extra."
 +		if command -v adsbx_warn >/dev/null 2>&1; then
 +			adsbx_warn "curl returned non-zero ($RV); backing off"
 +		else
 +			echo "WARNING: curl process returned non-zero ($RV): [$CURL]; Sleeping a little extra."
 +		fi
- 		sleep $(( 5 + RANDOM % 15 ))
- 	fi
+-        sleep $(( 5 + RANDOM % 15 ))
+-        fi
++                sleep $(( 5 + RANDOM % 15 ))
++        fi
  done
