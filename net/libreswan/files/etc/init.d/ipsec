@@ -78,6 +78,14 @@ expand_phase2alg() {
 	phase2alg_proposal="${encryption_algorithm:+${encryption_algorithm// /+}${hash_algorithm:+-${hash_algorithm// /+}${dh_group:+-${dh_group// /+}}}}"
 }
 
+append_subnet() {
+	local subnet="$1"
+	local var="$2"
+
+	[ "$subnet" = "0.0.0.0" ] && subnet="0.0.0.0/0"
+	append "$var" "$subnet" ","
+}
+
 generate_tunnel_config() {
 	local id=$1
 	local config_file="$IPSEC_CONF_DIR/$id.conf"
@@ -95,8 +103,6 @@ generate_tunnel_config() {
 	config_get rightid "$id" rightid "$right"
 	config_get leftsourceip "$id" leftsourceip
 	config_get rightsourceip "$id" rightsourceip
-	config_get leftsubnets "$id" leftsubnets
-	config_get rightsubnets "$id" rightsubnets
 	config_get_bool ikev2 "$id" ikev2
 	[ "$ikev2" = "1" ] && ikev2=yes || ikev2=no
 	config_get_bool rekey "$id" rekey
@@ -111,20 +117,22 @@ generate_tunnel_config() {
 	config_get nflog "$id" nflog 0
 	[ "$nflog" = "0" ] && unset nflog
 
+	leftsubnets=""
+	rightsubnets=""
 	config_list_foreach "$id" ike expand_ike
 	config_list_foreach "$id" phase2alg expand_phase2alg
+	config_list_foreach "$id" leftsubnets append_subnet leftsubnets
+	config_list_foreach "$id" rightsubnets append_subnet rightsubnets
 
 	config_get authby "$id" authby
 	config_get psk "$id" psk
 
 	if [ -n "$leftsubnets" ]; then
-		[[ "$leftsubnets" =~ 0.0.0.0* ]] && leftsubnets="0.0.0.0/0"
-		leftsubnets="{${leftsubnets// /,}}"
+		leftsubnets="{${leftsubnets}}"
 	fi
 
 	if [ -n "$rightsubnets" ]; then
-		[[ "$rightsubnets" =~ 0.0.0.0* ]] && rightsubnets="0.0.0.0/0"
-		rightsubnets="{${rightsubnets// /,}}"
+		rightsubnets="{${rightsubnets}}"
 	fi
 
 	config_get interface "$id" interface
