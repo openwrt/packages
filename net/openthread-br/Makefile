@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=openthread-br
 PKG_VERSION:=2026.06.0
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=https://github.com/openthread/ot-br-posix.git
@@ -41,9 +41,7 @@ define Package/openthread-br
 	+libreadline \
 	+libstdcpp \
 	+libubox \
-	+libubus \
-	+mdnsd \
-	+mdnsresponder
+	+libubus
 endef
 
 define Package/openthread-br/description
@@ -63,14 +61,12 @@ CMAKE_OPTIONS += \
 	-DOT_TARGET_OPENWRT=ON \
 	-DOTBR_BACKBONE_ROUTER=ON \
 	-DOTBR_BORDER_ROUTING=ON \
-	-DOTBR_DNSSD_DISCOVERY_PROXY=ON \
 	-DOTBR_DUA_ROUTING=ON \
-	-DOTBR_MDNS=mDNSResponder \
+	-DOTBR_MDNS=openthread \
 	-DOTBR_NAT64=OFF \
 	-DOTBR_OPENWRT=ON \
 	-DOTBR_PRODUCT_NAME="BorderRouter" \
 	-DOTBR_REST=ON \
-	-DOTBR_SRP_ADVERTISING_PROXY=ON \
 	-DOTBR_SRP_SERVER_AUTO_ENABLE=ON \
 	-DOTBR_TREL=ON \
 	-DOTBR_VENDOR_NAME="OpenThread" \
