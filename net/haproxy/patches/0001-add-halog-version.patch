@@ -1,0 +1,36 @@
+--- a/admin/halog/halog.c
++++ b/admin/halog/halog.c
+@@ -44,6 +44,15 @@
+ #define SEP(c) ((unsigned char)(c) <= ' ')
+ #define SKIP_CHAR(p,c) do { while (1) { int __c = (unsigned char)*p++; if (__c == c) break; if (__c <= ' ') { p--; break; } } } while (0)
+ 
++#define STR2(x) #x
++#define STR(x) STR2(x)
++
++#ifdef HALOG_VERSION
++#define HALOG_BUILD_INFO "halog - HAProxy log statistics reporter (" STR(HALOG_VERSION) ")\n"
++#else
++#define HALOG_BUILD_INFO "halog - HAProxy log statistics reporter\n"
++#endif
++
+ /* [0] = err/date, [1] = req, [2] = conn, [3] = resp, [4] = data */
+ static struct eb_root timers[5] = {
+ 	EB_ROOT_UNIQUE, EB_ROOT_UNIQUE, EB_ROOT_UNIQUE,
+@@ -165,6 +174,7 @@ void usage(FILE *output, const char *msg
+ {
+ 	fprintf(output,
+ 		"%s"
++		"%s"
+ 		"Usage:\n"
+ 		"  halog [-h|--help] for long help\n"
+ 		"  halog [input_filters]* [modifiers]* [output_format] < log\n"
+@@ -174,7 +184,8 @@ void usage(FILE *output, const char *msg
+ 		"    out = {-c|-u|-uc|-ue|-ua|-ut|-uao|-uto|-uba|-ubt|-hdr <block>:<field>|\n"
+ 		"           -cc|-gt|-pct|-st|-tc|-srv|-ic}\n"
+ 		"\n",
+-		msg ? msg : ""
++		msg ? msg : "",
++		HALOG_BUILD_INFO
+ 		);
+ }
+ 
