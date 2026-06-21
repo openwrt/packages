@@ -65,6 +65,7 @@ do_etherwake()
 	local value=''
 	local password=''
 	local args=''
+	local section_name=''
 
 	# password (legacy option)
 	config_get value "${section}" 'password'
@@ -80,17 +81,18 @@ do_etherwake()
 		append args "-p ${password}"
 	fi
 
+	# name
+	config_get section_name "${section}" 'name'
+	[ -z "${section_name}" ] && section_name="${section}"
+
 	# mac address
 	config_get value "${section}" 'mac'
-	[ -z "${value}" ] && { echo "${initscript}: Target ${section} has no MAC address"; return 1; }
+	[ -z "${value}" ] && {
+		echo "Target '${section_name}' has no 'mac' address"; return 1; }
 	append args "${value}"
 
-	# name
-	config_get value "${section}" 'name'
-	[ -z "${value}" ] && value="{section}"
-
 	# execute command
-	echo "${initscript}: Waking up ${value} via ${PROGRAM}${args:+ ${args}}"
+	echo "Waking up '${section_name}' via ${PROGRAM}${args:+ ${args}}"
 	${PROGRAM} ${args}
 	return $?
 }
