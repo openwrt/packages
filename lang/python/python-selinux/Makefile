@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-selinux
 PKG_VERSION:=3.10
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 SRC_NAME:=libselinux
 PKG_SOURCE:=$(SRC_NAME)-$(PKG_VERSION).tar.gz
@@ -34,7 +34,7 @@ define Package/python3-selinux
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=SELinux runtime library bindings
-  DEPENDS:=+python3-light +libselinux
+  DEPENDS:=+python3-light +libselinux +USE_MUSL:musl-fts
   URL:=https://github.com/selinuxproject
 endef
 

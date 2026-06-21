@@ -34,7 +34,7 @@ define Package/fluent-bit/conffiles
 /etc/fluent-bit/parsers.conf
 endef
 
-TARGET_LDFLAGS +=-lfts -latomic
+TARGET_LDFLAGS += $(if $(CONFIG_USE_MUSL),-lfts) -latomic
 
 CMAKE_OPTIONS+= \
 	-DFLB_RELEASE=Yes \
