@@ -45,10 +45,10 @@ fi
 final_wan_interfaces="$wan_network_interface $(echo $lan_interfaces | tr ' ' '\n' | grep -v "^$lan_network_interface$")"
 
 # Exit if there are no suitable wan interfaces.
-[ -z "$(echo "$final_wan_interfaces" | tr ' ' '\n')" ] && uci revert network ; exit 0
+[ -z "$(echo $final_wan_interfaces)" ] && { uci revert network ; exit 0; }
 
 # Delete existing wan and wan6 networks.
-uci delete network.wan
+uci -q delete network.wan
 uci -q delete network.wan6
 uci -q del_list firewall.$fw_section.network='wan'
 uci -q del_list firewall.$fw_section.network='wan6'
