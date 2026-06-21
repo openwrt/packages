@@ -66,12 +66,19 @@ do_etherwake()
 	local password=''
 	local args=''
 
-	# password
+	# password (legacy option)
 	config_get value "${section}" 'password'
 	[ -n "${value}" ] && {
 		password=$(etherwake_password "${value}")
-		append args "-p ${password}"
 	}
+
+	# secureOn password
+	config_get value "${section}" 'secureon'
+	if [ -n "${value}" ]; then
+		append args "-p ${value}"
+	elif [ -n "${password}" ]; then
+		append args "-p ${password}"
+	fi
 
 	# mac address
 	config_get value "${section}" 'mac'
@@ -89,7 +96,7 @@ do_etherwake()
 }
 
 
-# prepare hex password
+# prepare hex password (support legacy option)
 etherwake_password()
 {
 	local delimiter=':'
