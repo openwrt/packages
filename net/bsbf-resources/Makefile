@@ -4,7 +4,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bsbf-resources
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_LICENSE:=AGPL-3.0-or-later
 PKG_MAINTAINER:=Chester A. Unal <chester.a.unal@arinc9.com>
