@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fluent-bit
 PKG_VERSION:=4.2.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/fluent/fluent-bit.git
@@ -34,7 +34,7 @@ define Package/fluent-bit/conffiles
 /etc/fluent-bit/parsers.conf
 endef
 
-TARGET_LDFLAGS +=-lfts -latomic
+TARGET_LDFLAGS += $(if $(CONFIG_USE_MUSL),-lfts) -latomic
 
 CMAKE_OPTIONS+= \
 	-DFLB_RELEASE=Yes \
