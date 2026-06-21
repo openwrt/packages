@@ -12,8 +12,8 @@ start()
 	config_load "${NAME}"
 
 	# interface
-	config_get value 'setup' 'interface'
-	[ -n "${value}" ] && append PROGRAM "-i ${value}"
+	config_get value 'setup' 'interface' 'eth0'
+	append PROGRAM "-i ${value}"
 
 	# broadcast
 	config_get_bool value 'setup' 'broadcast' '0'
