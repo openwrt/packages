@@ -21,10 +21,6 @@ start()
 		exit 1
 	}
 
-	# sudo
-	config_get_bool value 'setup' 'sudo' '0'
-	[ "${value}" -ne 0 ] && PROGRAM="sudo ${PROGRAM}"
-
 	# interface
 	config_get value 'setup' 'interface'
 	[ -n "${value}" ] && append PROGRAM "-i ${value}"
