@@ -3,23 +3,13 @@
 
 NAME='etherwake'
 START=60
-PROGRAM=''
+PROGRAM='/usr/bin/etherwake'
 
 start()
 {
-	local searchlist=''
-	local section=''
 	local value=''
 
 	config_load "${NAME}"
-
-	# check for available program
-	config_get searchlist 'setup' 'pathes'
-	PROGRAM=$(search_program "${searchlist}")
-	[ -z "${PROGRAM}" ] && {
-		echo "${initscript}: No ${NAME} program installed. Check: opkg list | grep ${NAME}"
-		exit 1
-	}
 
 	# interface
 	config_get value 'setup' 'interface'
@@ -98,25 +88,6 @@ do_etherwake()
 	return $?
 }
 
-
-# find first available program from searchlist
-search_program()
-{
-	local searchlist="$1"
-	local test=''
-	local program=''
-
-	for test in ${searchlist} ; do
-		[ -x "${test}" ] && {
-			program="${test}"
-			break;
-		}
-	done
-
-	[ -n "${program}" ] && echo "${program}"
-
-	return
-}
 
 # prepare hex password
 etherwake_password()
