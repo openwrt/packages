@@ -180,7 +180,7 @@ The `report` sub-command accepts an output mode: `cli` (default, human-readable 
 | adb_enabled          | 1, enabled                         | set to 0 to disable the adblock service                                                            |
 | adb_feedfile         | /etc/adblock/adblock.feeds         | full path to the used adblock feed file                                                            |
 | adb_dns              | -, auto-detected                   | `dnsmasq`, `unbound`, `named`, `kresd`, `smartdns` or `raw`                                        |
-| adb_cores            | -, auto-detected                   | limit the cpu cores used by adblock to save RAM                                                    |
+| adb_cores            | -, auto-detected                   | limit the cpu cores used by adblock to save RAM; auto-detected and capped to the available memory  |
 | adb_fetchcmd         | -, auto-detected                   | `uclient-fetch`, `wget` or `curl`                                                                  |
 | adb_fetchparm        | -, auto-detected                   | manually override the config options for the selected download utility                             |
 | adb_fetchretry       | 5                                  | number of download attempts in case of an error (not supported by uclient-fetch)                   |
@@ -296,11 +296,45 @@ root@blackhole:~# /etc/init.d/adblock status
 ## Best practice and tweaks
 
 **Recommendation for low memory systems**  
-adblock keeps all working data in RAM to avoid unnecessary flash wear. On devices with only 128–256 MB RAM, you can reduce memory pressure with the following optimizations:
+adblock keeps all working data in RAM to avoid unnecessary flash wear. The number of parallel processing jobs and the sort buffer size are automatically scaled to the available memory, so on constrained devices adblock already throttles itself during feed processing. On devices with only 128–256 MB RAM, you can further reduce memory pressure with the following optimizations:
+* Limit CPU parallelism: the core count is auto-capped to the available memory; you can additionally set `adb_cores=1` to force single-threaded processing with minimal peak memory
 * Use external storage: Set adb_basedir, adb_backupdir and adb_reportdir to a USB drive or SSD to offload temporary and persistent data
-* Limit CPU parallelism: Set adb_cores=1 to reduce peak memory usage during feed processing
 * Enable blocklist shifting: Activate adb_dnsshift to store the generated blocklist on external storage and keep only a symlink in RAM
 * Use firewall‑based DNS redirection: Route DNS queries via nftables to external filtered DNS resolvers and keep only a minimal local blocklist active
+* Use compressed swap: install the `zram-swap` package so the kernel can page out cold memory into compressed RAM under pressure (see below)
+
+**Use compressed swap (zram-swap) on low memory devices**  
+The simplest way to survive the memory peak during feed processing is to give the kernel a compressed swap device and let it page out cold memory under pressure. The `zram-swap` package sets this up automatically at boot — no scripting, no changes to adblock, and adblock benefits transparently. Because the swap lives in compressed RAM rather than on flash, this incurs no flash wear.
+
+```sh
+apk add zram-swap
+```
+Size the swap device relative to your physical RAM — a sensible rule of thumb is half to one times the installed RAM. Note that the compressed pages occupy RAM themselves, so do not oversize it on very small devices:
+
+| Installed RAM | Suggested `zram_size_mb` |
+| :------------ | :----------------------- |
+| 128 MB        | 64–128                   |
+| 256 MB        | 128–256                  |
+| 512 MB        | 256–512                  |
+| 1 GB and more | 512                      |
+
+The device size is configured in `/etc/config/system` via LuCI (System -> ZRam Settings) or via CLI:
+
+```sh
+uci set system.@system[0].zram_size_mb='128'
+uci commit system
+/etc/init.d/zram restart
+```
+
+A running zram device cannot be resized in place, so the `restart` is required for a changed size to take effect.  
+To make the kernel reclaim into zram more eagerly during the short processing peak, raise the swappiness and persist it across reboots, e.g.:
+
+```sh
+echo 'vm.swappiness=100' >> /etc/sysctl.conf
+sysctl -p
+```
+
+Leave `adb_basedir` and `adb_backupdir` at their defaults. On very small devices (128 MB) compressed swap helps, but heavy swapping costs CPU — if RAM is truly marginal, the more honest fix is to activate fewer feeds.
 
 **Sensible choice of blocklists**  
 The following feeds are just my personal recommendation as an initial setup:
@@ -418,8 +452,11 @@ Example 3
 ```
 
 **Change/add adblock feeds**  
-The adblock blocklist feeds are stored in an external JSON file `/etc/adblock/adblock.feeds`. All custom changes should be stored in an external JSON file `/etc/adblock/adblock.custom.feeds` (empty by default). It's recommended to use the LuCI based Custom Feed Editor to make changes to this file.
-A valid JSON source object contains the following information, e.g.:
+The adblock default blocklist feeds are stored in an external JSON file `/etc/adblock/adblock.feeds`. This file is shipped with the package and is **overwritten on every package update**, so never edit it directly. All of your custom changes belong in the separate JSON file `/etc/adblock/adblock.custom.feeds` (empty by default), which is preserved across updates. It's recommended to use the LuCI based Custom Feed Editor (`Custom Feed Editor` tab), which validates the JSON for you.
+
+**Please note:** if `/etc/adblock/adblock.custom.feeds` exists and is non-empty, it is loaded **instead of** the shipped `adblock.feeds` — it replaces the feed set, it does not merge with it. A custom feed file must therefore contain *every* feed you want active, not just your additions. The Custom Feed Editor handles this for you by working on a full copy.
+
+A feed is a single JSON object, keyed by a unique feed name (no spaces, no special characters). Example:
 
 ```json
 	[...]
@@ -432,12 +469,31 @@ A valid JSON source object contains the following information, e.g.:
 	[...]
 ```
 
-Add a unique feed name (no spaces, no special chars) and make the required changes: adapt at least the URL, check/change the rule, the size and the description for a new feed.
-The rule consist of max. 4 individual, space separated parameters:
-1. type: always `feed` (required)
-2. prefix: an optional search term (a string literal, no regex) to identify valid domain list entries, e.g. `0.0.0.0`
-3. column: the domain column within the feed file, e.g. `2` (required)
-4. separator: an optional field separator, default is the character class `[[:space:]]`
+The object supports the following fields:
+
+| Field | Required | Description                                                                                               |
+| :---- | :------: | :-------------------------------------------------------------------------------------------------------- |
+| url   | yes      | download URL of the domain list (for category feeds: the base URL, see below)                             |
+| rule  | yes      | the parsing ruleset, max. 4 space separated parameters (see below)                                        |
+| size  | yes      | size hint shown in LuCI: `S`, `M`, `L`, `XL`, `XXL` or `VAR` (see the feed table legend in Main Features) |
+| descr | yes      | a short human-readable description shown in LuCI and the feed table                                       |
+
+**The `rule` field**  
+The rule consists of max. 4 individual, space separated parameters:
+1. **type**: always `feed` (required). adblock only supports the `feed` type for external sources; any source whose rule does not start with `feed` is skipped.
+2. **prefix**: an optional search term (a literal string, not a regex) that a line must contain to be treated as a valid entry. Use it to pick the relevant rows of a hosts-style file, e.g. `0.0.0.0`. Omit it for a plain list with one bare domain per line.
+3. **column**: the 1-based column that holds the domain within a matching line, e.g. `2` for a `0.0.0.0 example.com` hosts file or `1` for a bare list (required). When no prefix is used, give the column directly, e.g. `feed 1`.
+4. **separator**: an optional field separator; default is the whitespace character class `[[:space:]]+`. Pass a literal character such as `,` for comma-separated sources.
+
+Examples:
+* `feed 1` — plain list, one domain per line, domain in column 1
+* `feed 0.0.0.0 2` — hosts-style file, keep only `0.0.0.0` lines, domain in column 2
+* `feed 1 ,` — comma-separated source, domain in the first field
+
+**Category-based feeds (size `VAR`)**  
+The feeds marked `VAR` in the feed table (`1hosts`, `hagezi`, `ipfire_dbl`, `stevenblack`, `utcapitole`) are built-in feeds that require an additional category selection via the dedicated options `adb_hst_feed`, `adb_hag_feed`, `adb_ipf_feed`, `adb_stb_feed` and `adb_utc_feed` (or the LuCI feed configuration). For these, the `url` is a **base URL** to which the selected category is appended at download time. This category mechanism is wired to those specific feed names in the backend, so it cannot be reused for arbitrary new feeds — a custom feed you add yourself should point `url` at a single, complete list URL.
+
+After editing `/etc/adblock/adblock.custom.feeds`, reload adblock (`/etc/init.d/adblock reload`) and check the `Log View` tab (or `logread -e adblock-`). With `adb_debug` enabled, a malformed JSON object or a wrong column/separator typically shows up there as a feed that produces zero domains.
 
 <a id="troubleshooting-and-debug-options"></a>
 ## Troubleshooting & debug options
