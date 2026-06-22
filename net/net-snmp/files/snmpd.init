@@ -240,7 +240,7 @@ snmpd_engineid_add() {
 	config_get engineid "$cfg" engineid
 	[ -n "$engineid" ] && echo "engineID $engineid" >> $CONFIGFILE
 	config_get engineidtype "$cfg" engineidtype
-	[ "$engineidtype" -ge 1 -a "$engineidtype" -le 3 ] && \
+	[ -n "$engineidtype" ] && [ "$engineidtype" -ge 1 -a "$engineidtype" -le 3 ] && \
 		echo "engineIDType $engineidtype" >> $CONFIGFILE
 	config_get engineidnic "$cfg" engineidnic
 	[ -n "$engineidnic" ] && echo "engineIDNic $engineidnic" >> $CONFIGFILE
