@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xfrpc
-PKG_VERSION:=5.06.955
+PKG_VERSION:=5.09.976
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -41,7 +41,7 @@ define Package/xfrpc
   TITLE:=C language fast reverse proxy client
   URL:=https://github.com/liudf0716/xfrpc
   DEPENDS:=+zlib +libjson-c +libevent2 +libevent2-openssl \
-    +XFRPC_QUIC:libngtcp2 +XFRPC_QUIC:libnghttp3 +XFRPC_QUIC:libwolfssl
+    +XFRPC_QUIC:libngtcp2 +XFRPC_QUIC:libnghttp3
 endef
 
 define Package/xfrpc/description
@@ -49,7 +49,8 @@ define Package/xfrpc/description
   Compare with golang version frpc, xfrpc can run in almost all OpenWrt devices.
   Supports TCP, HTTP, HTTPS, STCP, XTCP, SUDP, TCPMUX proxy types.
   Optional QUIC transport (ngtcp2) for both control and work connections.
-  Features: health check, SIGHUP hot-reload, Unix Domain Socket proxy,
+  Features: TOML config (frp-compatible), AES-128-CFB use_encryption,
+  health check, SIGHUP hot-reload, Unix Domain Socket proxy,
   TLS encryption, visitor support for STCP/XTCP P2P tunnels.
 endef
 
@@ -59,7 +60,8 @@ endef
 
 CMAKE_OPTIONS += \
   -DENABLE_QUIC=$(if $(CONFIG_XFRPC_QUIC),ON,OFF) \
-  $(if $(CONFIG_XFRPC_QUIC),-DUSE_WOLFSSL=ON)
+  -DUSE_WOLFSSL=OFF \
+  -DDEBUG=ON
 
 define Package/xfrpc/install
 	$(INSTALL_DIR) $(1)/usr/bin

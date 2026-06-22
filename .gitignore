@@ -8,3 +8,4 @@
 /.env.*
 /*.patch
 .github/copilot-instructions.md
+net/xfrpc/skills/
