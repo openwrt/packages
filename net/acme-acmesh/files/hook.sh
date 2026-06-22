@@ -56,19 +56,19 @@ handle_signal() {
 	if [[ "$cgroup" == '/services/acme/*' ]]; then
 		# send SIGTERM to all processes in this process's cgroup. this
 		# relies on procd's having set up the cgroup for the instance.
-		read -r -d '' pids < /sys/fs/cgroup${cgroup}/cgroup.procs 
+		read -r -d '' pids < /sys/fs/cgroup${cgroup}/cgroup.procs
 		kill -TERM $pids 2> /dev/null
 	fi
 
-	# if we're here, either the cgroup wasn't as exected to be set up by
-	# procd or killing the cgroup PIDs failed. try to kill the process
-	# group, assuming this process is the group leader. this is actually
+	# If we're here, either the cgroup wasn't as expected to be set up by
+	# procd or killing the cgroup PIDs failed. Try to kill the process
+	# group, assuming this process is the group leader. This is actually
 	# unlikely since procd doesn't set service PGIDs (so they aren't group
 	# leaders).
 	kill -TERM -$$ 2> /dev/null
 
-	# if we're here, cgroup-based killing was avoided or didn't work and
-	# PGID-based killing didn't work. fall back to the raciest option.
+	# If we're here, cgroup-based killing was avoided or didn't work and
+	# PGID-based killing didn't work. Fall back to the raciest option.
 	trap "" TERM
 	term_descendants() {
 		local pids=$@
@@ -83,6 +83,7 @@ handle_signal() {
 	}
 	term_descendants $(jobs -p)
 
+	del_nft_rule
 	wait_notify
 }
 
@@ -115,10 +116,12 @@ get)
 			set -- "$@" --renew --home "$state_dir" -d "$main_domain"
 			log info "$ACME $*"
 			trap "handle_signal renew Renewal" INT TERM
+			add_nft_rule "$main_domain" "$listen_port"
 			$ACME "$@" &
 			wait $!
 			status=$?
 			trap - INT TERM
+			del_nft_rule
 
 			case $status in
 			0)
@@ -175,13 +178,16 @@ get)
 		fi
 		;;
 	"standalone")
+		add_nft_rule "$main_domain" "$listen_port"
 		set -- "$@" --standalone --listen-v6 --httpport "$listen_port"
 		;;
 	"alpn")
+		add_nft_rule "$main_domain" "$listen_port"
 		set -- "$@" --alpn --listen-v6 --tlsport "$listen_port"
 		;;
 	"webroot")
 		mkdir -p "$CHALLENGE_DIR"
+		add_nft_rule "$main_domain" "$listen_port"
 		set -- "$@" --webroot "$CHALLENGE_DIR"
 		;;
 	*)
@@ -199,6 +205,7 @@ get)
 	wait $!
 	status=$?
 	trap - INT TERM
+	del_nft_rule
 
 	case $status in
 	0)

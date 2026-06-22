@@ -89,7 +89,7 @@ get)
 	ec*)
 		keylength=${key_type#ec}
 		domain_dir="$state_dir/$main_domain"
-		set -- "$@" -t EC 
+		set -- "$@" -t EC
 		;;
 	rsa*)
 		keylength=${key_type#rsa}
@@ -137,6 +137,7 @@ get)
 	case "$validation_method" in
 	"alpn")
 		log info "using already running ualpn, it's user's duty to config ualpn server deamon"
+		add_nft_rule "$main_domain" "$listen_port"
 		set -- "$@" -h "$HOOKDIR/client/ualpn.sh"
 		;;
 	"dns")
@@ -161,10 +162,13 @@ get)
 		set -- "$@" --standalone --listen-v6
 		log err "standalone server is not implmented for uacme"
 		exit 1
+		# In case this is implemented in the future, we need to add nft rule before uacme starts to listen
+		#add_nft_rule "$main_domain" "$listen_port"
 		;;
 	"webroot")
 		mkdir -p "$CHALLENGE_DIR"
 		export CHALLENGE_DIR
+		add_nft_rule "$main_domain" "$listen_port"
 		set -- "$@" -h "$HOOKDIR/client/httpchalhook.sh"
 		;;
 	*)
@@ -178,10 +182,11 @@ get)
 	done
 
 	log info "$ACME $*"
-	trap '$NOTIFY issue-failed;exit 1' INT
+	trap 'del_nft_rule; $NOTIFY issue-failed; exit 1' INT TERM
 	"$ACME" "$@" -k 2>&1
 	status=$?
-	trap - INT
+	trap - INT TERM
+	del_nft_rule
 
 	case $status in
 	0)
