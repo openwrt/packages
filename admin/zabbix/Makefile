@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
-PKG_VERSION:=7.0.26
+PKG_VERSION:=7.0.27
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://cdn.zabbix.com/zabbix/sources/stable/$(basename $(PKG_VERSION))/ \
 	https://cdn.zabbix.com/zabbix/sources/oldstable/$(basename $(PKG_VERSION))/
-PKG_HASH:=3c27a97b52c75e2eccfa43dec5e3fd7d52876f5fdd94172495b025ec9f2a13a8
+PKG_HASH:=15e4c233e65c87922824d01abad624f34128bbb4af021a75e38e89b68e13e851
 
 PKG_MAINTAINER:=Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
 PKG_LICENSE:=AGPL-3.0-only
@@ -39,7 +39,7 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
 define Package/zabbix-agentd/config
-  source "$(SOURCE)/Config.in"
+	source "$(SOURCE)/Config.in"
 endef
 
 define Package/zabbix-proxy/config
@@ -256,7 +256,7 @@ define Package/zabbix-sender
     +ZABBIX_OPENSSL:libopenssl \
     +libpcre2 \
     +zlib
-  PROVIDES:=\
+  PROVIDES:= \
     zabbix-sender-ssl \
     zabbix-sender-openssl
   VARIANT:=full
@@ -281,7 +281,7 @@ define Package/zabbix-server
     +ZABBIX_OPENSSL:libopenssl \
     +ZABBIX_NETSNMP:libnetsnmp-ssl \
     +ZABBIX_POSTGRESQL:libpq
-  PROVIDES:=\
+  PROVIDES:= \
     zabbix-server-ssl \
     zabbix-server-openssl
   VARIANT:=full
@@ -378,34 +378,34 @@ endef
 
 ifneq ($(BUILD_VARIANT),no-configure)
 CONFIGURE_ARGS+= \
-	$(call autoconf_bool,CONFIG_IPV6,ipv6) \
-	--disable-java \
-	--with-libevent=$(STAGING_DIR)/usr/include \
-	--with-libpcre2=$(STAGING_DIR)/usr/include \
-	--with-zlib=$(STAGING_DIR)/usr/include
+  $(call autoconf_bool,CONFIG_IPV6,ipv6) \
+  --disable-java \
+  --with-libevent=$(STAGING_DIR)/usr/include \
+  --with-libpcre2=$(STAGING_DIR)/usr/include \
+  --with-zlib=$(STAGING_DIR)/usr/include
 endif
 
 ifeq ($(BUILD_VARIANT),basic)
 CONFIGURE_ARGS+= \
-	$(if $(CONFIG_PACKAGE_zabbix-agentd-basic),--enable-agent,--disable-agent) \
-	$(if $(CONFIG_PACKAGE_zabbix-proxy-basic-sqlite),--enable-proxy --with-sqlite3,--disable-proxy) \
-	--with-openssl="$(STAGING_DIR)/usr" \
-	--disable-server
+  $(if $(CONFIG_PACKAGE_zabbix-agentd-basic),--enable-agent,--disable-agent) \
+  $(if $(CONFIG_PACKAGE_zabbix-proxy-basic-sqlite),--enable-proxy --with-sqlite3,--disable-proxy) \
+  --with-openssl="$(STAGING_DIR)/usr" \
+  --disable-server
 endif
 
 ifeq ($(BUILD_VARIANT),full)
 
 CONFIGURE_ARGS+= \
-	$(if $(CONFIG_PACKAGE_zabbix-agentd),--enable-agent,--disable-agent) \
-	$(if $(CONFIG_PACKAGE_zabbix-proxy),--enable-proxy,--disable-proxy) \
-	$(if $(CONFIG_PACKAGE_zabbix-server),--enable-server,--disable-server) \
-	$(if $(CONFIG_ZABBIX_GNUTLS),--with-gnutls="$(STAGING_DIR)/usr",--with-gnutls="no") \
-	$(if $(CONFIG_ZABBIX_LDAP),--with-ldap="$(STAGING_DIR)/usr",--with-ldap="no") \
-	$(if $(CONFIG_ZABBIX_MYSQL),--with-mysql,--with-mysql="no") \
-	$(if $(CONFIG_ZABBIX_NETSNMP),--with-net-snmp="$(STAGING_DIR)/usr",--with-net-snmp="no") \
-	$(if $(CONFIG_ZABBIX_OPENSSL),--with-openssl="$(STAGING_DIR)/usr",--with-openssl="no") \
-	$(if $(CONFIG_ZABBIX_POSTGRESQL),--with-postgresql,--with-postgresql="no") \
-	$(if $(CONFIG_ZABBIX_SQLITE),--with-sqlite3,--with-sqlite3="no") \
+  $(if $(CONFIG_PACKAGE_zabbix-agentd),--enable-agent,--disable-agent) \
+  $(if $(CONFIG_PACKAGE_zabbix-proxy),--enable-proxy,--disable-proxy) \
+  $(if $(CONFIG_PACKAGE_zabbix-server),--enable-server,--disable-server) \
+  $(if $(CONFIG_ZABBIX_GNUTLS),--with-gnutls="$(STAGING_DIR)/usr",--with-gnutls="no") \
+  $(if $(CONFIG_ZABBIX_LDAP),--with-ldap="$(STAGING_DIR)/usr",--with-ldap="no") \
+  $(if $(CONFIG_ZABBIX_MYSQL),--with-mysql,--with-mysql="no") \
+  $(if $(CONFIG_ZABBIX_NETSNMP),--with-net-snmp="$(STAGING_DIR)/usr",--with-net-snmp="no") \
+  $(if $(CONFIG_ZABBIX_OPENSSL),--with-openssl="$(STAGING_DIR)/usr",--with-openssl="no") \
+  $(if $(CONFIG_ZABBIX_POSTGRESQL),--with-postgresql,--with-postgresql="no") \
+  $(if $(CONFIG_ZABBIX_SQLITE),--with-sqlite3,--with-sqlite3="no") \
   --enable-year2038
 
 ifeq ($(CONFIG_ZABBIX_CURL),y)
@@ -426,8 +426,7 @@ CONFIGURE_ARGS += --with-libcurl="yes"
 endif
 
 ifeq ($(CONFIG_ZABBIX_CURL)$(CONFIG_ZABBIX_CURL_GNUTLS),)
-CONFIGURE_ARGS += \
-  --with-libcurl="no"
+CONFIGURE_ARGS += --with-libcurl="no"
 endif
 
 endif
@@ -462,116 +461,112 @@ endef
 define Build/Compile
 	$(call Build/Compile/Default)
 	$(TARGET_CC) $(TARGET_CFLAGS) \
-    $(PKG_BUILD_DIR)/zabbix-extra-mac80211/zabbix_helper_mac80211.c \
-    -o $(PKG_BUILD_DIR)/zabbix-extra-mac80211/zabbix_helper_mac80211
+		$(PKG_BUILD_DIR)/zabbix-extra-mac80211/zabbix_helper_mac80211.c \
+		-o $(PKG_BUILD_DIR)/zabbix-extra-mac80211/zabbix_helper_mac80211
 endef
 endif
 
 MAKE_FLAGS += ARCH="linux"
 
 define Package/zabbix/install/sbin
-	$(INSTALL_DIR) \
-		$(1)/usr/sbin
-
-	$(INSTALL_BIN) \
-		$(PKG_INSTALL_DIR)/usr/sbin/zabbix_$(2) \
-		$(1)/usr/sbin/
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/zabbix_$(2) $(1)/usr/sbin/
 endef
 
 define Package/zabbix/install/bin
-	$(INSTALL_DIR) \
-		$(1)/usr/bin
-
-	$(INSTALL_BIN) \
-		$(PKG_INSTALL_DIR)/usr/bin/zabbix_$(2) \
-		$(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/zabbix_$(2) $(1)/usr/bin/
 endef
 
 define Package/zabbix/install/etc
-	$(INSTALL_DIR) \
-		$(1)/etc
-
-	$(INSTALL_CONF) \
-		$(PKG_INSTALL_DIR)/etc/zabbix_$(2).conf \
-		$(1)/etc/
+	$(INSTALL_DIR) $(1)/etc
+	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/zabbix_$(2).conf $(1)/etc/
 endef
 
 define Package/zabbix/install/init.d
-	$(INSTALL_DIR) \
-		$(1)/etc/init.d
-
-	$(INSTALL_BIN) \
-		./files/zabbix_$(2).init \
-		$(1)/etc/init.d/zabbix_$(2)
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/zabbix_$(2).init $(1)/etc/init.d/zabbix_$(2)
 endef
 
 define Package/zabbix/install/zabbix.conf.d
-	$(INSTALL_DIR) \
-		$(1)/etc/zabbix_agentd.conf.d
-
-	$(INSTALL_BIN) \
-		./files/$(2) \
-		$(1)/etc/zabbix_agentd.conf.d/$(2)
+	$(INSTALL_DIR) $(1)/etc/zabbix_agentd.conf.d
+	$(INSTALL_BIN) ./files/$(2) $(1)/etc/zabbix_agentd.conf.d/$(2)
 endef
 
-# Due to nested defines, eval, and call, the extra spaces for the nested define,
-# and tabs for the part that actually executes in a shell, is essential.
-define Package/zabbix-daemon/files
-        define Package/zabbix-$(1)$(2)/conffiles
-  /etc/zabbix_$(1).conf
-  $(3)
-        endef
-        define Package/zabbix-$(1)$(2)/install
-		$(INSTALL_DIR) $$(1)/etc/zabbix_$(1).conf.d
-		$(call Package/zabbix/install/sbin,$$(1),$(1))
-		$(4)
-        endef
+define Package/zabbix-agentd/conffiles
+/etc/zabbix_agentd.conf
 endef
 
-define Package/zabbix-server/conffiles-extra
+define Package/zabbix-agentd/install
+	$(INSTALL_DIR) $(1)/etc/zabbix_agentd.conf.d
+	$(call Package/zabbix/install/sbin,$(1),agentd)
+	$(call Package/zabbix/install/etc,$(1),agentd)
+	$(call Package/zabbix/install/init.d,$(1),agentd)
+endef
+
+define Package/zabbix-agentd-basic/conffiles
+/etc/zabbix_agentd.conf
+endef
+
+define Package/zabbix-agentd-basic/install
+	$(INSTALL_DIR) $(1)/etc/zabbix_agentd.conf.d
+	$(call Package/zabbix/install/sbin,$(1),agentd)
+	$(call Package/zabbix/install/etc,$(1),agentd)
+	$(call Package/zabbix/install/init.d,$(1),agentd)
+endef
+
+define Package/zabbix-proxy/conffiles
+/etc/zabbix_proxy.conf
+endef
+
+define Package/zabbix-proxy/install
+	$(INSTALL_DIR) $(1)/etc/zabbix_proxy.conf.d
+	$(call Package/zabbix/install/sbin,$(1),proxy)
+	$(call Package/zabbix/install/etc,$(1),proxy)
+endef
+
+define Package/zabbix-proxy-basic-sqlite/conffiles
+/etc/zabbix_proxy.conf
+endef
+
+define Package/zabbix-proxy-basic-sqlite/install
+	$(INSTALL_DIR) $(1)/etc/zabbix_proxy.conf.d
+	$(call Package/zabbix/install/sbin,$(1),proxy)
+	$(call Package/zabbix/install/etc,$(1),proxy)
+endef
+
+define Package/zabbix-server/conffiles
+/etc/zabbix_server.conf
 /etc/config/zabbix_server
 /etc/sysctl.d/90-zabbix-discovery-workers.conf
 endef
 
-define Package/zabbix-agentd/install-extra
-	$(call Package/zabbix/install/etc,$$(1),agentd)
-	$(call Package/zabbix/install/init.d,$$(1),agentd)
+define Package/zabbix-server/install
+	$(INSTALL_DIR) $(1)/etc/zabbix_server.conf.d
+	$(call Package/zabbix/install/sbin,$(1),server)
+	$(call Package/zabbix/install/etc,$(1),server)
+	$(call Package/zabbix/install/init.d,$(1),server)
+	$(INSTALL_DIR) $(1)/etc/sysctl.d
+	$(INSTALL_CONF) ./files/zabbix-discovery-workers.conf.sysctl $(1)/etc/sysctl.d/90-zabbix-discovery-workers.conf
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/zabbix_server.config $(1)/etc/config/zabbix_server
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/zabbix_server.defaults $(1)/etc/uci-defaults/90_zabbix_server
 endef
-
-define Package/zabbix-server/install-extra
-	$(call Package/zabbix/install/etc,$$(1),server)
-	$(call Package/zabbix/install/init.d,$$(1),server)
-	$(INSTALL_DIR) $$(1)/etc/sysctl.d
-	$(INSTALL_CONF) ./files/zabbix-discovery-workers.conf.sysctl \
-    $$(1)/etc/sysctl.d/90-zabbix-discovery-workers.conf
-	$(INSTALL_DIR) $$(1)/etc/config
-	$(INSTALL_CONF) ./files/zabbix_server.config $$(1)/etc/config/zabbix_server
-	$(INSTALL_DIR) $$(1)/etc/uci-defaults
-	$(INSTALL_BIN) ./files/zabbix_server.defaults $$(1)/etc/uci-defaults/90_zabbix_server
-endef
-
-$(eval $(call Package/zabbix-daemon/files,agentd,-basic,,$(call Package/zabbix-agentd/install-extra)))
-$(eval $(call Package/zabbix-daemon/files,agentd,,,$(call Package/zabbix-agentd/install-extra)))
-$(eval $(call Package/zabbix-daemon/files,proxy,-basic-sqlite))
-$(eval $(call Package/zabbix-daemon/files,proxy))
-$(eval $(call Package/zabbix-daemon/files,server,,$(call Package/zabbix-server/conffiles-extra),$(call Package/zabbix-server/install-extra)))
 
 define Package/zabbix-server/postinst
-  #!/bin/sh
-  [ -n "$${IPKG_INSTROOT}" ] || (. /etc/uci-defaults/90_zabbix_server) && rm -f /etc/uci-defaults/90_zabbix_server
-  exit 0
+#!/bin/sh
+[ -n "$${IPKG_INSTROOT}" ] || (. /etc/uci-defaults/90_zabbix_server) && rm -f /etc/uci-defaults/90_zabbix_server
+exit 0
 endef
 
-# Due to nested defines, eval, and call, the extra spaces for the nested define
-# is essential.
-define Package/zabbix-program/files
-        define Package/zabbix-$(1)/install
-		$(call Package/zabbix/install/bin,$$(1),$(1))
-        endef
+define Package/zabbix-get/install
+	$(call Package/zabbix/install/bin,$(1),get)
 endef
 
-$(eval $(call Package/zabbix-program/files,get))
-$(eval $(call Package/zabbix-program/files,sender))
+define Package/zabbix-sender/install
+	$(call Package/zabbix/install/bin,$(1),sender)
+endef
 
 define Package/zabbix-extra-mac80211/install
 	$(call Package/zabbix/install/zabbix.conf.d,$(1),mac80211)
@@ -589,7 +584,7 @@ endef
 define Package/zabbix-extra-network/postinst
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
-	killall -s HUP ubusd
+  killall -s HUP ubusd
 fi
 endef
 
@@ -602,7 +597,7 @@ endef
 define Package/zabbix-extra-wifi/postinst
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
-	killall -s HUP ubusd
+  killall -s HUP ubusd
 fi
 endef
 
