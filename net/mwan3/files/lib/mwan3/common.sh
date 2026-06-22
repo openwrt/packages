@@ -54,7 +54,7 @@ mwan3_get_true_iface()
 
 mwan3_get_src_ip()
 {
-	local family _src_ip interface true_iface device addr_cmd default_ip IP sed_str
+	local family _src_ip interface true_iface device addr_cmd default_ip IP sed_str route_target
 	interface=$2
 	mwan3_get_true_iface true_iface $interface
 
@@ -64,15 +64,19 @@ mwan3_get_src_ip()
 		addr_cmd='network_get_ipaddr'
 		default_ip="0.0.0.0"
 		sed_str='s/ *inet \([^ \/]*\).*/\1/;T;p;q'
+		route_target="0.0.0.0"
 		IP="$IP4"
 	elif [ "$family" = "ipv6" ]; then
 		addr_cmd='network_get_ipaddr6'
 		default_ip="::"
 		sed_str='s/ *inet6 \([^ \/]*\).* scope.*/\1/;T;p;q'
+		route_target="::"
 		IP="$IP6"
 	fi
 
-	$addr_cmd _src_ip "$true_iface"
+	__network_ifstatus _src_ip "$true_iface" ".route[@.target='$route_target'].source" "" 1
+	[ -n "$_src_ip" ] && _src_ip="${_src_ip%%/*}"
+	[ -z "$_src_ip" ] && $addr_cmd _src_ip "$true_iface"
 	if [ -z "$_src_ip" ]; then
 		if [ "$family" = "ipv6" ]; then
 			# on IPv6-PD interfaces (like PPPoE interfaces) we don't
