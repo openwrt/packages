@@ -35,6 +35,9 @@ elif [ "$APDU_BACKEND" = "mbim" ]; then
     MBIM_PROXY="$(uci_get lpac mbim proxy 1)"
     export LPAC_APDU_MBIM_DEVICE="$MBIM_DEVICE"
     export LPAC_APDU_MBIM_USE_PROXY="$MBIM_PROXY"
+elif [ "$APDU_BACKEND" = "qmi" ]; then
+    QMI_DEV="$(uci_get lpac qmi device /dev/cdc-wdm0)"
+    export LPAC_APDU_QMI_DEVICE="$QMI_DEV"
 fi
 
 export LPAC_CUSTOM_ISD_R_AID="$CUSTOM_ISD_R_AID"

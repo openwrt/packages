@@ -23,4 +23,10 @@ config LPAC_WITH_MBIM
 	default y
 	help
 	  Compile LPAC with APDU MBIM Backend support.
+
+config LPAC_WITH_QMI
+	bool "Include APDU QMI Backend support"
+	default y
+	help
+	  Compile LPAC with APDU QMI Backend support.
 endmenu
