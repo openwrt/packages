@@ -11,8 +11,8 @@ validate_section_fshs() {
 		'enable:bool:0' \
 		'addr:string' \
 		'port:port' \
-		'tokens:string'
-		'params:string' \
+		'tokens:string' \
+		'params:string'
 }
 
 fshs_instance() {
