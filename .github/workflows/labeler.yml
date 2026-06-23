@@ -16,26 +16,26 @@ jobs:
           repo-token: '${{ secrets.GITHUB_TOKEN }}'
           sync-labels: true
 
-      - name: Checkout PR code
+      - name: Checkout base code
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.pull_request.base.sha }}
           fetch-depth: 0
 
-      - name: Fetch base
-        run: git fetch origin ${{ github.event.pull_request.base.sha }}
+      - name: Fetch PR commits
+        run: git fetch origin pull/${{ github.event.pull_request.number }}/head
 
       - name: Check for PKG_VERSION changes
         id: check_version
         # Check for new packages (any Makefile with status 'A' - Added)
         # Check for dropped packages (any Makefile with status 'D' - Deleted)
         run: |
-          if git diff --name-only --diff-filter=A "${{ github.event.pull_request.base.sha }}"...HEAD -- '**/Makefile' | grep -q .; then
+          if git diff --name-only --diff-filter=A HEAD...FETCH_HEAD -- '**/Makefile' | grep -q .; then
             echo "New package detected."
             echo "new_package=true" >> $GITHUB_OUTPUT
           fi
 
-          if git diff --name-only --diff-filter=D "${{ github.event.pull_request.base.sha }}"...HEAD -- '**/Makefile' | grep -q .; then
+          if git diff --name-only --diff-filter=D HEAD...FETCH_HEAD -- '**/Makefile' | grep -q .; then
             echo "Dropped package detected."
             echo "dropped_package=true" >> $GITHUB_OUTPUT
           fi
