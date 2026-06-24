@@ -40,7 +40,7 @@ define Package/radicale3/description
   pre-configured to work out-of-the-box.
   The Radicale Project runs on most of the UNIX-like platforms
   (Linux, BSD, MacOS X) and Windows. It is known to work with Evolution,
-  Lightning, iPhone and Android clients. It is free and open-source software,
+  Thunderbird, iOS, and Android clients. It is free and open-source software,
   released under GPL version 3.
 
   This package contains the python files.
