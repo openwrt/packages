@@ -169,6 +169,8 @@ watchcat_monitor_network() {
 		done
 
 		[ "$((time_now - time_lastcheck_withinternet))" -ge "$failure_period" ] && {
+			recovery_started="$time_now"
+
 			if [ "$script" != "" ]; then
 				watchcat_run_script "$script" "$iface"
 			else
@@ -188,8 +190,10 @@ watchcat_monitor_network() {
 				time_now="$(cat /proc/uptime)"
 				time_now="${time_now%%.*}"
 				time_lastcheck="$time_now"
+				time_lastcheck_withinternet="$time_now"
+			else
+				time_lastcheck_withinternet="$recovery_started"
 			fi
-			time_lastcheck_withinternet="$time_now"
 		}
 
 	done
