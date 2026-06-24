@@ -4,16 +4,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bsbf-resources
-PKG_RELEASE:=2
+PKG_RELEASE:=1
 
 PKG_LICENSE:=AGPL-3.0-or-later
 PKG_MAINTAINER:=Chester A. Unal <chester.a.unal@arinc9.com>
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/bondingshouldbefree/bsbf-resources.git
-PKG_SOURCE_DATE:=2026-06-19
-PKG_SOURCE_VERSION:=254f0088d22bceaf9c57847536fade223b75ea97
-PKG_MIRROR_HASH:=a6138aa711c32fb2d368b5d2166605b8f838f55a6845570bf5174cb8fecd97d2
+PKG_SOURCE_DATE:=2026-06-24
+PKG_SOURCE_VERSION:=8d0b6ee9b4a0f99c50e63a005c41fc7ddaa46045
+PKG_MIRROR_HASH:=e91a54270cf7e4fd0ef3f4ba3dd2c31f15854b7fc05fcaaa1b68d1627ef20ae2
 
 include $(INCLUDE_DIR)/package.mk
 
