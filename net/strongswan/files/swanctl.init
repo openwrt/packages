@@ -739,10 +739,6 @@ prepare_env() {
 	do_postamble
 }
 
-service_running() {
-	swanctl --stats > /dev/null 2>&1
-}
-
 reload_service() {
 	running && {
 		prepare_env
