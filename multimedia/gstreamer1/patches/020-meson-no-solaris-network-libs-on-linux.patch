@@ -1,0 +1,43 @@
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Thu, 22 May 2026 00:00:00 +0100
+Subject: [PATCH] meson: only probe Solaris network libraries on Solaris
+
+The '-lsocket' / '-lnsl' networking libraries are a Solaris and
+Illumos peculiarity, as the comment right above the probe already
+states. Probing for them unconditionally with cc.find_library()
+is harmful when cross-compiling: if the build host happens to have
+a 'libnsl' package installed, meson locates the host's
+/usr/lib/libnsl.so and puts its absolute path on the link line,
+which then fails the cross link with an "incompatible file type"
+error.
+
+Gate the probe on host_machine.system() == 'sunos' so it is only
+performed where those split libraries actually exist.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+--- a/meson.build
++++ b/meson.build
+@@ -589,14 +589,16 @@ rt_lib = cc.find_library('rt', required
+ # into '-lsocket -lnsl'.  Anything that calls socketpair(), getifaddr(),
+ # etc. probably needs to include network_deps
+ #
+-socket_lib = cc.find_library('socket', required: false)
+-nsl_lib    = cc.find_library('nsl',    required: false)
+ network_deps = []
+-if socket_lib.found()
+-  network_deps += socket_lib
+-endif
+-if nsl_lib.found()
+-  network_deps += nsl_lib
++if host_machine.system() == 'sunos'
++  socket_lib = cc.find_library('socket', required: false)
++  nsl_lib    = cc.find_library('nsl',    required: false)
++  if socket_lib.found()
++    network_deps += socket_lib
++  endif
++  if nsl_lib.found()
++    network_deps += nsl_lib
++  endif
+ endif
+ 
+ # Check for libatomic for use of C11 atomics: some architectures need
