@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=smartdns
-PKG_VERSION:=46.1
+PKG_VERSION:=48.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-Release$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/pymumu/smartdns/tar.gz/refs/tags/Release$(PKG_VERSION)?
-PKG_HASH:=6307503fa409b9c6b87556d1b1f8eaf99c7be5b06a9d479ec3589c875391a6b3
+PKG_HASH:=fbc9e8de5e3bd6cd2d7e3823321d5caed22b7c704ae66ed7274f8012246cb285
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-Release$(PKG_VERSION)
 
 PKG_MAINTAINER:=Nick Peng <pymumu@gmail.com>
@@ -23,7 +23,7 @@ PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
-MAKE_VARS += VER=$(PKG_VERSION) 
+MAKE_VARS += VER=$(PKG_VERSION)
 MAKE_PATH:=src
 
 define Package/smartdns
@@ -31,14 +31,14 @@ define Package/smartdns
   CATEGORY:=Network
   TITLE:=smartdns server
   SUBMENU:=IP Addresses and Names
-  DEPENDS:=+libpthread +libopenssl
+  DEPENDS:=+i386:libatomic +libpthread +libopenssl
   URL:=https://www.github.com/pymumu/smartdns/
 endef
 
 define Package/smartdns/description
 SmartDNS is a local DNS server which accepts DNS query requests from local network clients,
 gets DNS query results from multiple upstream DNS servers concurrently, and returns the fastest IP to clients.
-Unlike dnsmasq's all-servers, smartdns returns the fastest IP, and encrypt DNS queries with DoT or DoH. 
+Unlike dnsmasq's all-servers, smartdns returns the fastest IP, and encrypt DNS queries with DoT or DoH.
 endef
 
 define Package/smartdns/conffiles
@@ -51,7 +51,7 @@ define Package/smartdns/conffiles
 endef
 
 define Package/smartdns/install
-	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/config $(1)/etc/init.d 
+	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/config $(1)/etc/init.d
 	$(INSTALL_DIR) $(1)/etc/smartdns $(1)/etc/smartdns/domain-set $(1)/etc/smartdns/conf.d/
 	$(INSTALL_DIR) $(1)/etc/smartdns/ip-set $(1)/etc/smartdns/download
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/smartdns $(1)/usr/sbin/smartdns
