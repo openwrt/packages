@@ -933,7 +933,7 @@ endef
 
 define Package/ddns-scripts-one/prerm
 #!/bin/sh
-if [-z "${IPKG_INSTROOT}" ]; then
+if [ -z "$${IPKG_INSTROOT}" ]; then
 	/etc/init.d/ddns stop
 fi
 exit 0
