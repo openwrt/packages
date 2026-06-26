@@ -4,7 +4,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bsbf-resources
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_LICENSE:=AGPL-3.0-or-later
 PKG_MAINTAINER:=Chester A. Unal <chester.a.unal@arinc9.com>
@@ -71,6 +71,10 @@ endef
 define Build/Compile
 endef
 
+define Package/bsbf-bonding/conffiles
+/etc/bsbf/bsbf-bonding.conf
+endef
+
 define Package/bsbf-bonding/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/etc/init.d/bsbf-bonding-nft $(1)/etc/init.d
@@ -108,6 +112,10 @@ define Package/bsbf-client-web/install
 
 	$(INSTALL_DIR) $(1)/www/cgi-bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/resources-client/bsbf-client-web/cgi-bin/bsbf-client-web $(1)/www/cgi-bin
+endef
+
+define Package/bsbf-mptcp/conffiles
+/etc/bsbf/bsbf-mptcp-subflow-backup
 endef
 
 define Package/bsbf-mptcp/install
