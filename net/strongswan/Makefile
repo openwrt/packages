@@ -133,16 +133,6 @@ define Package/strongswan
 $(call Package/strongswan/Default)
   MENU:=1
   DEPENDS:= +libpthread +ip \
-	+STRONGSWAN_INCLUDE_INSECURE:kmod-crypto-aead \
-	+kmod-crypto-authenc \
-	+kmod-crypto-cbc \
-	+kmod-lib-zlib-inflate \
-	+kmod-lib-zlib-deflate \
-	+kmod-crypto-des \
-	+kmod-crypto-echainiv \
-	+kmod-crypto-hmac \
-	+kmod-crypto-md5 \
-	+kmod-crypto-sha1 \
 	+kmod-ipsec +kmod-ipsec4 +IPV6:kmod-ipsec6
 endef
 
