@@ -57,6 +57,7 @@ ban_logratelimit="10"
 ban_logburstlimit="5"
 ban_logcount="1"
 ban_logterm=""
+ban_logterm_map=""
 ban_region=""
 ban_country=""
 ban_countrysplit="0"
@@ -98,6 +99,8 @@ ban_rdapparm=""
 ban_etagparm=""
 ban_geoparm=""
 ban_cores=""
+ban_srtmem="8"
+ban_srtopts=""
 ban_packages=""
 ban_trigger=""
 ban_resolver=""
@@ -105,10 +108,48 @@ ban_enabled="0"
 ban_confload="0"
 ban_debug="0"
 
+# command selector
+#
+f_cmd() {
+	local cmd pri_cmd="${1}" sec_cmd="${2}"
+
+	# check primary command,
+	# if not found check secondary command if provided, otherwise log error
+	#
+	cmd="$(command -v "${pri_cmd}" 2>/dev/null)"
+	if [ -z "${cmd}" ]; then
+		if [ -n "${sec_cmd}" ]; then
+			[ "${sec_cmd}" = "optional" ] && return
+			cmd="$(command -v "${sec_cmd}" 2>>"${ban_errorlog}")"
+		fi
+		if [ -n "${cmd}" ]; then
+			printf '%s' "${cmd}"
+		else
+			f_log "emerg" "command '${pri_cmd:-"-"}'/'${sec_cmd:-"-"}' not found"
+		fi
+	else
+		printf '%s' "${cmd}"
+	fi
+}
+
+# determine available system memory (MemAvailable) in MB
+# mode "float" returns MiB with two decimals, default is integer MiB
+#
+f_mem() {
+	local mem mode="${1}"
+
+	if [ "${mode}" = "float" ]; then
+		mem="$("${ban_awkcmd}" '/^MemAvailable/{printf "%.2f", $2/1024}' "/proc/meminfo" 2>>"${ban_errorlog}")"
+	else
+		mem="$("${ban_awkcmd}" '/^MemAvailable/{printf "%s", int($2/1024)}' "/proc/meminfo" 2>>"${ban_errorlog}")"
+	fi
+	printf '%s' "${mem:-"0"}"
+}
+
 # gather system information
 #
 f_system() {
-	local cpu
+	local free_mem mem_cores
 
 	ban_debug="$(uci_get banip global ban_debug "0")"
 	ban_cores="$(uci_get banip global ban_cores)"
@@ -134,34 +175,24 @@ f_system() {
 	ban_sysver="$("${ban_ubuscmd}" -S call system board 2>>"${ban_errorlog}" | "${ban_jsoncmd}" -ql1 -e '@.model' -e '@.release.target' -e '@.release.distribution' -e '@.release.version' -e '@.release.revision' |
 		"${ban_awkcmd}" 'BEGIN{RS="";FS="\n"}{printf "%s, %s, %s %s (%s)",$1,$2,$3,$4,$5}')"
 
-	if [ -z "${ban_cores}" ]; then
-		cpu="$("${ban_grepcmd}" -cm16 '^processor' /proc/cpuinfo 2>>"${ban_errorlog}")"
-		[ "${cpu}" = "0" ] && cpu="1"
-		ban_cores="${cpu}"
-	fi
-}
-
-# command selector
-#
-f_cmd() {
-	local cmd pri_cmd="${1}" sec_cmd="${2}"
-
-	# check primary command,
-	# if not found check secondary command if provided, otherwise log error
+	# detect cpu cores and cap them by available memory for memory-aware
+	# parallel processing (>= 48 MiB per job, floored to 1 core); a user-set
+	# ban_cores is only ever lowered by the cap, never raised
 	#
-	cmd="$(command -v "${pri_cmd}" 2>/dev/null)"
-	if [ -z "${cmd}" ]; then
-		if [ -n "${sec_cmd}" ]; then
-			[ "${sec_cmd}" = "optional" ] && return
-			cmd="$(command -v "${sec_cmd}" 2>>"${ban_errorlog}")"
-		fi
-		if [ -n "${cmd}" ]; then
-			printf '%s' "${cmd}"
-		else
-			f_log "emerg" "command '${pri_cmd:-"-"}'/'${sec_cmd:-"-"}' not found"
-		fi
-	else
-		printf '%s' "${cmd}"
+	[ -z "${ban_cores}" ] && ban_cores="$("${ban_grepcmd}" -cm16 '^processor' /proc/cpuinfo 2>>"${ban_errorlog}")"
+	case "${ban_cores}" in "" | 0 | *[!0-9]*) ban_cores="1" ;; esac
+	free_mem="$(f_mem)"
+	mem_cores="$((free_mem / 48))"
+	[ "${mem_cores}" -lt "1" ] && mem_cores="1"
+	[ "${ban_cores}" -gt "1" ] && [ "${mem_cores}" -lt "${ban_cores}" ] && ban_cores="${mem_cores}"
+
+	# derive the GNU sort buffer from available memory (>= 8 MiB per core);
+	# only applied when a coreutils sort is present (busybox sort has no --buffer-size)
+	#
+	ban_srtmem="$((free_mem / 2 / ban_cores))"
+	[ "${ban_srtmem}" -lt "8" ] && ban_srtmem="8"
+	if "${ban_sortcmd}" --version 2>/dev/null | "${ban_grepcmd}" -q "coreutils"; then
+		ban_srtopts="--buffer-size=${ban_srtmem}M"
 	fi
 }
 
@@ -304,18 +335,33 @@ f_conf() {
 			esac
 		}
 		list_cb() {
-			local append option="${1}" value="${2//\"/\\\"}"
+			local anchor pat append option="${1}" value="${2//\"/\\\"}"
 
 			case "${option}" in
 			*[!a-zA-Z0-9_]*) ;;
 
 			"ban_logterm")
+				case "${value}" in
+				first:*)
+					anchor="first"
+					pat="${value#first:}"
+					;;
+				last:*)
+					anchor="last"
+					pat="${value#last:}"
+					;;
+				*)
+					anchor="last"
+					pat="${value}"
+					;;
+				esac
 				eval "append=\"\${${option}}\""
 				if [ -n "${append}" ]; then
-					eval "${option}=\"\${append}\\|\${value}\""
+					eval "${option}=\"\${append}\\|${pat}\""
 				else
-					eval "${option}=\"\${value}\""
+					eval "${option}=\"${pat}\""
 				fi
+				ban_logterm_map="${ban_logterm_map}${anchor}$(printf '\037')${pat}$(printf '\036')"
 				;;
 			*)
 				eval "append=\"\${${option}}\""
@@ -1774,7 +1820,7 @@ f_genstatus() {
 
 	# memory and nftables version information
 	#
-	mem_free="$("${ban_awkcmd}" '/^MemAvailable/{printf "%.2f", $2/1024}' "/proc/meminfo" 2>>"${ban_errorlog}")"
+	mem_free="$(f_mem float)"
 	nft_ver="$(printf '%s' "${ban_packages}" | "${ban_jsoncmd}" -ql1 -e '@.packages["nftables-json"]')"
 
 	# read config information if not already available
@@ -2076,7 +2122,7 @@ f_report() {
 					"${ban_jsoncmd}" -i "${set_jsn}" -qe '@.nftables[*].set.elem[*][@.counter.packets>0].counter.packets' >"${set_jsn}.cnt"
 					"${ban_jsoncmd}" -i "${set_jsn}" -qe '@.nftables[*].set.elem[*][@.counter.packets>0].val' >"${set_jsn}.val"
 					set_elements="$("${ban_awkcmd}" 'NR==FNR{p[FNR]=$0;next}{print p[FNR]"\t"$0}' "${set_jsn}.cnt" "${set_jsn}.val" |
-						"${ban_sortcmd}" -k1,1nr |
+						"${ban_sortcmd}" -k1,1nr ${ban_srtopts} |
 						"${ban_awkcmd}" -F '\t' 'NR<=50{split($2,a,/[ ,]/);ORS=" ";if(a[2]=="\"range\":"||a[2]=="\"concat\":")printf"%s, ",a[4];else if(a[2]=="\"prefix\":")printf"%s, ",a[5];else printf"\"%s\", ",a[1]}')"
 				fi
 				if [ -n "${set_cntinbound}" ]; then
@@ -2649,25 +2695,49 @@ f_monitor() {
 				"${ban_logreadcmd}" -fe "${ban_logterm}" 2>/dev/null
 				;;
 			esac
-		} | "${ban_awkcmd}" -v threshold="${ban_logcount}" -v limit=5000 '
+		} | ban_logterm_map="${ban_logterm_map}" "${ban_awkcmd}" -v threshold="${ban_logcount}" -v limit=5000 '
+			function pick_ip(s, mode, m, res) {
+				res = ""
+				while (match(s, /([0-9]{1,3}\.){3}[0-9]{1,3}|([A-Fa-f0-9]{0,4}:){2,7}[A-Fa-f0-9]{0,4}/, m)) {
+					res = m[0]
+					if (mode == "first") break
+					s = substr(s, RSTART + RLENGTH)
+				}
+				return res
+			}
+			function anchor_for(line, k) { for (k = 1; k <= nterm; k++) if (line ~ pat[k]) return anc[k]; return "last" }
 			BEGIN {
 				unique = 0
+				map = ENVIRON["ban_logterm_map"]
+				n = split(map, recs, "\036")
+				nterm = 0
+				all_last = 1
+				for (i = 1; i <= n; i++) {
+					if (recs[i] == "") continue
+					split(recs[i], f, "\037")
+					nterm++
+					anc[nterm] = f[1]
+					pat[nterm] = f[2]
+					if (f[1] != "last") all_last = 0
+				}
 			}
 			{
+				pos = all_last ? "last" : anchor_for($0)
+				$0 = gensub(/(([0-9]{1,3}\.){3}[0-9]{1,3}):[0-9]+/, "\\1", "g", $0)
+				sub(/\]:[0-9]+/, "]", $0)
 				gsub(/[<>[\]]/, "", $0)
-				sub(/%.*/, "", $0)
-				sub(/:[0-9]+([ >]|$)/, "\\1", $0)
 				ip = ""
 				proto = ""
-				if (match($0, /([0-9]{1,3}\.){3}[0-9]{1,3}/, m4)) {
-					if (m4[0] !~ /^127\./ && m4[0] !~ /^0\./) {
-						ip = m4[0]
+				cand = pick_ip($0, pos)
+				if (cand ~ /\./) {
+					if (cand !~ /^127\./ && cand !~ /^0\./) {
+						ip = cand
 						proto = ".v4"
 					}
-				}
-				if (!ip && match($0, /([A-Fa-f0-9]{1,4}:){2,7}[A-Fa-f0-9]{1,4}/, m6)) {
-					if (m6[0] !~ /^[0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}$/ && m6[0] !~ /^([A-Fa-f0-9]{2}:){5}[A-Fa-f0-9]{2}$/) {
-						ip = m6[0]
+				} else if (cand ~ /:/) {
+					sub(/%.*/, "", cand)
+					if (cand !~ /^[0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}$/ && cand !~ /^([A-Fa-f0-9]{2}:){5}[A-Fa-f0-9]{2}$/) {
+						ip = cand
 						proto = ".v6"
 					}
 				}
