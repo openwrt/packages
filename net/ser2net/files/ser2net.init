@@ -15,6 +15,9 @@ list_cb_append() {
 	local value="$1"
 	local sep="${3:-,}"
 
+	# keep only printable ASCII characters (space through ~)
+	value="$(LC_ALL=C printf '%s' "$value" | tr -cd ' -~')"
+
 	eval "export ${NO_EXPORT:+-n} -- \"$var=\${$var:+\${$var}\${value:+\$sep}}\$value\""
 }
 
