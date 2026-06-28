@@ -39,7 +39,7 @@ config_watchcat() {
 	config_get forcedelay "$1" forcedelay "60"
 	config_get pingsize "$1" pingsize "standard"
 	config_get interface "$1" interface
-	config_get mmifacename "$1" mmifacename "null"
+	config_get mmifacename "$1" mmifacename
 	config_get_bool unlockbands "$1" unlockbands "0"
 	config_get_bool reset_failure_timer "$1" reset_failure_timer "0"
 	config_get addressfamily "$1" addressfamily "any"
@@ -74,7 +74,7 @@ config_watchcat() {
 				append_string "warn" "pingperiod cannot be a negative value." "; "
 			fi
 
-			if [ "$mmifacename" != "null" ] && [ "$period" -lt 30 ]; then
+			if [ -n "$mmifacename" ] && [ "$period" -lt 30 ]; then
 				append_string "error" "Check interval is less than 30s. For robust operation with ModemManager modem interfaces it is recommended to set the period to at least 30s."
 			fi
 		fi
