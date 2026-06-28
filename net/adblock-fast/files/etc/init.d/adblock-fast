@@ -95,6 +95,7 @@ load_validate_config() {
 	uci_load_validate "$packageName" "$packageName" "$1" "${2}${3:+ ${3}}" \
 		'enabled:bool:0' \
 		'force_dns:bool:1' \
+		'gateway_check:or("netifd", "kernel", "none"):netifd' \
 		'force_dns_interface:list(network):lan' \
 		'force_dns_port:list(integer):53,853' \
 		'parallel_downloads:bool:1' \

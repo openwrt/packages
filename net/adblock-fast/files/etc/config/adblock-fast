@@ -21,6 +21,7 @@ config adblock-fast 'config'
 #	option download_max_time ''
 	option download_allow_insecure '1'
 	option force_dns '1'
+	option gateway_check 'netifd'
 	list force_dns_port '53'
 	list force_dns_port '853'
 # ports listed below are used by some
