@@ -1,7 +1,7 @@
 name: Test and Build
 
 on:
-  check_run:
+  check_suite:
     types: [completed]
 
 permissions:
@@ -11,5 +11,5 @@ permissions:
 jobs:
   build:
     name: Feeds Package Test Build
-    if: ${{ github.event.check_run.name == 'Formalities Check' && github.event.check_run.conclusion == 'success' }}
+    if: ${{ github.event.check_suite.conclusion == 'success' }}
     uses: openwrt/actions-shared-workflows/.github/workflows/multi-arch-test-build.yml@main
