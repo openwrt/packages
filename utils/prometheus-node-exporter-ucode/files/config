@@ -5,3 +5,7 @@ config prometheus-node-exporter-ucode 'main'
 
 config collector 'wifi'
 	option stations '1'
+
+config collector 'go2rtc'
+	# Collector disabled if empty. Example: http://127.0.0.1:1984
+	option api_url ''
