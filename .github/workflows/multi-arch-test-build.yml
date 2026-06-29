@@ -1,15 +1,27 @@
 name: Test and Build
 
 on:
-  check_suite:
-    types: [completed]
+  pull_request:
 
 permissions:
   contents: read
   pull-requests: write
+  checks: read
 
 jobs:
+  wait-for-formalities:
+    name: Wait for FormalityCheck
+    runs-on: ubuntu-slim
+    steps:
+      - name: Wait for Check Run
+        uses: lewagon/wait-on-check-action@v1.8.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          check-name: 'FormalityCheck / Git & Commits'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 5
+
   build:
     name: Feeds Package Test Build
-    if: ${{ github.event.check_suite.conclusion == 'success' }}
+    needs: wait-for-formalities
     uses: openwrt/actions-shared-workflows/.github/workflows/multi-arch-test-build.yml@main
