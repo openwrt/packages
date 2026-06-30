@@ -1,6 +1,19 @@
+From: John Audia <therealgraysky@proton.me>
+Date:   Wed Jun 18 02:06:00 2025
+Subject: [PATCH] Fix build on aarch64 and risc
+    
+    For aarch64 and risc64, the discard_const macro is used to remove
+const qualifiers from string literals, but casting a string literal’s
+address to uintptr_t and then to void * is not a constant expression in
+some compilers or environments e.g. the musl libc and aarch64/risc64
+combination seems to enforce stricter rules for constant initializers
+or pointer/integer size handling compared to glibc-based systems.
+    
+    Signed-off-by: John Audia <therealgraysky@proton.me>
+
 --- a/lib/ldb/tests/test_ldb_comparison_fold.c
 +++ b/lib/ldb/tests/test_ldb_comparison_fold.c
-@@ -52,7 +52,7 @@ struct ranked_value {
+@@ -53,7 +53,7 @@ struct ranked_value {
  	int rank;
  };
  
