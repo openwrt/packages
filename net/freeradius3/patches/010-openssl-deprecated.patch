@@ -1,3 +1,8 @@
+From: Paul Donald <newtwen+github@gmail.com>
+Subject: [PATCH] fix compilation without deprecated OpenSSL APIs
+
+---
+
 --- a/src/main/threads.c
 +++ b/src/main/threads.c
 @@ -257,6 +257,7 @@ static void ssl_locking_function(int mod
