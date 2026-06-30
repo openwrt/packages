@@ -1,0 +1,23 @@
+From: Steffen May <sm00shed@posteo.de>
+Subject: [PATCH] fix board detection for RB5009UPr
+
+Fix mk_boards.h matching both PoE (UPr) and non-PoE (UG) RB5009
+variants under the same entry, which could cause incorrect PoE-port
+access on hardware without the PoE controller.
+
+Signed-off-by: Steffen May <sm00shed@posteo.de>
+---
+ mk_boards.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/mk_boards.h
++++ b/mk_boards.h
+@@ -31,7 +31,7 @@ const struct poe_board poe_boards[ ] = {
+ 		.ports_num = 4,
+ 		.port_state_map = {0xd, 0xc, 0xb, 0xa}
+ 	}, { /* RouterBOARD RB5009UPr+S+IN and its base */
+-		.name = "mikrotik,rb5009 mikrotik,rb5009upr",
++		.name = "mikrotik,rb5009upr",
+ 		.proto_ver = 4,
+ 		.spidev = "/dev/spidev2.0",
+ 		.ports_num = 8,

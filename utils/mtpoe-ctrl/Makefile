@@ -12,8 +12,9 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/adron-s/mtpoe_ctrl
-PKG_SOURCE_VERSION:=9c42b74274cca10810363dbbb6d161bfb9cedb7e
-PKG_MIRROR_HASH:=5528c4fd8b75eae2f9e82f5f472f44c11a386b82b854dddac92942d57495f34e
+PKG_SOURCE_VERSION:=af70c301fffc426cee456d8f03f3a172640d7ec1
+PKG_MIRROR_HASH:=41f91867c2ae1f3f8117adafb42d91094da17673f0dc5417d83fb21fe9523d16
+
 PKG_MAINTAINER:=Sergey Sergeev <adron@yapic.net>
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=LICENSE
@@ -23,9 +24,9 @@ include $(INCLUDE_DIR)/package.mk
 define Package/mtpoe-ctrl
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libuci +kmod-spi-dev
+  DEPENDS:=+libuci +kmod-spi-dev @TARGET_mvebu_cortexa72
   TITLE:=Management utility for MikroTik PoE V2/V3/V4
-  URL:=$(PKG_SOURCE_URL)
+  URL:=https://github.com/adron-s/mtpoe_ctrl
 endef
 
 define Package/mtpoe-ctrl/description
