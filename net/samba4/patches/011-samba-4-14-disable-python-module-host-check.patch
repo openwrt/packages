@@ -1,6 +1,14 @@
+From: Aditya Nugraha <vortexilation@gmail.com>
+Date:   Wed Jul 01 02:06:00 2026 +0700
+Subject: [PATCH] Disable python module host check
+    
+    Disable detection for host's third party python module check.	
+    
+    Signed-off-by: Aditya Nugraha <vortexilation@gmail.com>
+
 --- a/python/wscript
 +++ b/python/wscript
-@@ -90,9 +90,9 @@ def configure(conf):
+@@ -103,9 +103,9 @@ def configure(conf):
                                        "'python3-iso8601'. Please install "
                                        "one of the packages.")
  

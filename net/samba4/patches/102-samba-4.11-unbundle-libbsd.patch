@@ -1,8 +1,16 @@
+From: Aditya Nugraha <vortexilation@gmail.com>
+Date:   Wed Jul 01 02:06:00 2026 +0700
+Subject: [PATCH] Unbundle libbsd
+    
+    Remove libbsd dependency
+    
+    Signed-off-by: Aditya Nugraha <vortexilation@gmail.com>
+
 --- a/lib/replace/wscript
 +++ b/lib/replace/wscript
 @@ -441,33 +441,13 @@ def configure(conf):
  
-     conf.CHECK_FUNCS('prctl dirname basename')
+     conf.CHECK_FUNCS('dirname basename')
  
 -    strlcpy_in_bsd = False
 +    # Not checking for libbsd
