@@ -1,5 +1,10 @@
 #!/bin/sh
 
+if [ "$1" = "cleanup" ]; then
+	script_type=cleanup
+	INTERFACE="$2"
+fi
+
 [ -z "$script_type" ] && {
 	logger -t "openvpn(proto)" -p daemon.warn "hotplug: variable 'script_type' not found"
 	exit
@@ -10,8 +15,44 @@
 	exit
 }
 
-. /lib/functions.sh
-. /lib/netifd/netifd-proto.sh
+exec 2> >(logger -t "openvpn_$INTERFACE(hotplug)" -p daemon.err)
+
+run_hotplug() {
+	ACTION="$script_type"
+	INSTANCE="$INTERFACE"
+
+	export ACTION
+	export INSTANCE
+	exec /sbin/hotplug-call openvpn "$@"
+}
+
+case "$script_type" in
+	cleanup)
+		. /usr/share/libubox/jshn.sh
+
+		SERVER_ROUTE_IPV4_CLEANUP_CMD=
+		SERVER_ROUTE_IPV6_CLEANUP_CMD=
+		json_data="$(ubus call network.interface."$INTERFACE" status 2>/dev/null)"
+		if json_load "$json_data" 2>/dev/null; then
+			if json_select data 2>/dev/null; then
+				json_get_var SERVER_ROUTE_IPV4_CLEANUP_CMD server_route_ipv4_cleanup_cmd
+				json_get_var SERVER_ROUTE_IPV6_CLEANUP_CMD server_route_ipv6_cleanup_cmd
+				[ -n "$SERVER_ROUTE_IPV4_CLEANUP_CMD" ] && $SERVER_ROUTE_IPV4_CLEANUP_CMD
+				[ -n "$SERVER_ROUTE_IPV6_CLEANUP_CMD" ] && $SERVER_ROUTE_IPV6_CLEANUP_CMD
+			fi
+		fi
+
+		run_hotplug "$@"
+	;;
+	up) ;;
+	*) run_hotplug "$@" ;;
+esac
+
+SERVER_ROUTE_IPV4_CLEANUP_CMD=
+SERVER_ROUTE_IPV6_CLEANUP_CMD=
+MASK_PREFIX=
+CIDR6_ADDR=
+CIDR6_PLEN=
 
 mask2prefix() {
 	local mask="$1"
@@ -31,32 +72,100 @@ mask2prefix() {
 			*)   break     ;;
 		esac
 	done
-	echo "$n"
+	MASK_PREFIX="$n"
 }
 
 parse_cidr6() {
 	local val="$1"
 	local def_plen="$2"
-	local addr="${val%/*}"
-	local plen="${val#*/}"
-	[ "$addr" = "$plen" ] && plen="$def_plen"
-	echo "$addr $plen"
+
+	CIDR6_ADDR="${val%/*}"
+	CIDR6_PLEN="${val#*/}"
+	[ "$CIDR6_ADDR" = "$CIDR6_PLEN" ] && CIDR6_PLEN="$def_plen"
+}
+
+route_path_for_target() {
+	local family="$1"
+	local target="$2"
+	local output key
+
+	route_path_gateway=
+	route_path_dev=
+
+	[ -n "$target" ] || return 1
+
+	output="$(ip "-$family" route get "$target" 2>/dev/null)" || return 1
+
+	set -- $output
+	while [ "$#" -gt 0 ]; do
+		key="$1"
+		case "$key" in
+			via)
+				shift
+				route_path_gateway="$1"
+			;;
+			dev)
+				shift
+				route_path_dev="$1"
+			;;
+		esac
+		[ "$#" -gt 0 ] && shift
+	done
+
+	[ -n "$route_path_gateway$route_path_dev" ]
+}
+
+server_route_exists() {
+	local family="$1"
+	local prefix="$2"
+	local target="$3"
+	local output
+
+	[ -n "$target" ] || return 1
+
+	output="$(ip "-$family" route show "$target/$prefix" ${METRIC:+metric $METRIC} 2>/dev/null)"
+	[ -n "$output" ]
+}
+
+is_openvpn_default_route()
+{
+	case $1 in
+		0.0.0.0/0|\
+		0.0.0.0/1|\
+		128.0.0.0/1|\
+		::/0|\
+		::/1|\
+		8000::/1|\
+		::/3|\
+		2000::/3|\
+		3000::/4|\
+		2000::/4|\
+		fc00::/7)
+			return 0
+	esac
+	return 1
 }
 
 case "$script_type" in
 	up)
-		nohostroute="$(uci_get network "$INTERFACE" nohostroute)"
+		. /lib/functions.sh
+		. /lib/netifd/netifd-proto.sh
+		. /usr/share/libubox/jshn.sh
+
 		proto_init_update "$dev" 1
+
+		[ -n "$tun_mtu" ] && /sbin/ip link set dev $dev mtu $tun_mtu
 
 		[ -n "$ifconfig_local" ] && proto_add_ipv4_address "$ifconfig_local" "${ifconfig_netmask:-255.255.255.255}"
 
-		[ -n "$trusted_ip" ] && {
-			if [ -n "$route_net_gateway" -a "$route_net_gateway" != "0.0.0.0" -a "${nohostroute}" != "1" ]; then
-				proto_add_host_dependency "$INTERFACE" "$trusted_ip"
+		if [ -n "$trusted_ip" -a "$DEFAULTROUTE" = "1" ]; then
+			if route_path_for_target 4 "$trusted_ip" && ! server_route_exists 4 32 "$trusted_ip"; then
+				ip -4 route add $trusted_ip ${route_path_gateway:+via $route_path_gateway} ${route_path_dev:+dev $route_path_dev} ${METRIC:+metric $METRIC}
+				SERVER_ROUTE_IPV4_CLEANUP_CMD="ip -4 route del $trusted_ip ${route_path_gateway:+via $route_path_gateway} ${route_path_dev:+dev $route_path_dev} ${METRIC:+metric $METRIC}"
 			fi
-		}
+		fi
 
-		[ -n "$route_vpn_gateway" ] && proto_add_ipv4_route "0.0.0.0" 0 "$route_vpn_gateway"
+		[ "$DEFAULTROUTE" = "1" ] && [ -n "$route_vpn_gateway" ] && proto_add_ipv4_route "0.0.0.0" 0 "$route_vpn_gateway"
 
 		i=0
 		while :; do
@@ -65,27 +174,26 @@ case "$script_type" in
 			[ -z "$net" ] && break
 			[ -z "$mask" ] && continue
 
-			plen=$(mask2prefix "$mask")
-			proto_add_ipv4_route "$net" "$plen" "$gw"
+			mask2prefix "$mask"
+			is_openvpn_default_route "$net/$MASK_PREFIX" && continue
+
+			proto_add_ipv4_route "$net" "$MASK_PREFIX" "$gw"
 		done
 
 		if [ "$IPV6" = "1" ]; then
 			if [ -n "$ifconfig_ipv6_local" ]; then
-				read -r v6addr v6plen <<-EOF
-					$(parse_cidr6 "$ifconfig_ipv6_local" "${ifconfig_ipv6_netbits:-128}")
-				EOF
-				proto_add_ipv6_address "$v6addr" "$v6plen"
+				parse_cidr6 "$ifconfig_ipv6_local" "${ifconfig_ipv6_netbits:-128}"
+				proto_add_ipv6_address "$CIDR6_ADDR" "$CIDR6_PLEN"
 			fi
 
-			[ -n "$trusted_ip6" ] && {
-				# to detect net_gateway_ipv6, source routing on wan6 has to be disabled
-				# consider removing check for net_gateway_ipv6
-				if [ -n "$net_gateway_ipv6" -a "$net_gateway_ipv6" != "::" -a "${nohostroute}" != "1" ]; then
-					proto_add_host_dependency "$INTERFACE" "$trusted_ip6"
+			if [ -n "$trusted_ip6" -a "$DEFAULTROUTE" = "1" ]; then
+				if route_path_for_target 6 "$trusted_ip6" && ! server_route_exists 6 128 "$trusted_ip6"; then
+					ip -6 route add $trusted_ip6 ${route_path_gateway:+via $route_path_gateway} ${route_path_dev:+dev $route_path_dev} ${METRIC:+metric $METRIC}
+					SERVER_ROUTE_IPV6_CLEANUP_CMD="ip -6 route del $trusted_ip6 ${route_path_gateway:+via $route_path_gateway} ${route_path_dev:+dev $route_path_dev} ${METRIC:+metric $METRIC}"
 				fi
-			}
+			fi
 
-			[ -n "$ifconfig_ipv6_remote" ] && proto_add_ipv6_route "::" 0 "$ifconfig_ipv6_remote"
+			[ "$DEFAULTROUTE" = "1" ] && [ -n "$ifconfig_ipv6_remote" ] && proto_add_ipv6_route "::" 0 "$ifconfig_ipv6_remote"
 
 			i=0
 			while :; do
@@ -93,14 +201,12 @@ case "$script_type" in
 				eval "net=\$route_ipv6_network_$i gw=\$route_ipv6_gateway_$i"
 				[ -z "$net" ] && break
 
-				read -r v6net v6plen <<-EOF
-					$(parse_cidr6 "$net" 128)
-				EOF
-				proto_add_ipv6_route "$v6net" "$v6plen" "$gw"
+				parse_cidr6 "$net" 128
+				is_openvpn_default_route "$CIDR6_ADDR/$CIDR6_PLEN" && continue
+
+				proto_add_ipv6_route "$CIDR6_ADDR" "$CIDR6_PLEN" "$gw"
 			done
 		fi
-
-		[ -n "$tun_mtu" ] && json_add_int mtu "$tun_mtu"
 
 		i=0
 		while :; do
@@ -117,18 +223,15 @@ case "$script_type" in
 			esac
 		done
 
-		proto_send_update "$INTERFACE"
-	;;
+		proto_add_data
+		json_add_string "daemon_pid" "$daemon_pid"
+		json_add_string "ifname" "$dev"
+		[ -n "$SERVER_ROUTE_IPV4_CLEANUP_CMD" ] && json_add_string "server_route_ipv4_cleanup_cmd" "$SERVER_ROUTE_IPV4_CLEANUP_CMD"
+		[ -n "$SERVER_ROUTE_IPV6_CLEANUP_CMD" ] && json_add_string "server_route_ipv6_cleanup_cmd" "$SERVER_ROUTE_IPV6_CLEANUP_CMD"
+		proto_close_data
 
-	down)
-		proto_init_update "$dev" 0
 		proto_send_update "$INTERFACE"
 	;;
 esac
 
-ACTION="$script_type"
-INSTANCE="$INTERFACE"
-
-export ACTION="$ACTION"
-export INSTANCE="$INSTANCE"
-exec /sbin/hotplug-call openvpn "$@"
+run_hotplug "$@"
