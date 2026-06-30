@@ -8,18 +8,24 @@ PROG=/usr/sbin/nlbwmon
 NICEPRIO=19
 
 # ============================================
-# [NEW] Logging Functions
+# [REFACTORED] Single Unified Logging Function
 # ============================================
-log_info() {
-	echo "[nlbwmon] INFO: $*" | logger -t nlbwmon -p user.info
-}
-
-log_error() {
-	echo "[nlbwmon] ERROR: $*" | logger -t nlbwmon -p user.err >&2
-}
-
-log_warn() {
-	echo "[nlbwmon] WARN: $*" | logger -t nlbwmon -p user.warn
+log_msg() {
+	local level="${1:-INFO}"
+	shift
+	local msg="$*"
+	
+	case "$level" in
+		ERROR)
+			echo "[nlbwmon] ERROR: $msg" | logger -t nlbwmon -p user.err >&2
+			;;
+		WARN)
+			echo "[nlbwmon] WARN: $msg" | logger -t nlbwmon -p user.warn
+			;;
+		*)
+			echo "[nlbwmon] INFO: $msg" | logger -t nlbwmon -p user.info
+			;;
+	esac
 }
 
 # ============================================
@@ -39,14 +45,12 @@ health_check() {
 
 add_subnet() {
 	local network="$1"
-	local range ranges
 
 	case "$network" in
 		*.*|*:*)
 			procd_append_param command '-s' "$network"
 		;;
 		*)
-			# [CHANGED] Refactored to use helper function
 			_process_subnets "$network"
 		;;
 	esac
@@ -83,7 +87,6 @@ add_option() {
 	[ -n "$value" ] && procd_append_param command "$flag" "$value"
 }
 
-# [CHANGED] Fixed variable quoting and default value
 add_bool() {
 	local cfg="$1"
 	local flag="$2"
@@ -121,10 +124,9 @@ add_debug_mode() {
 	[ "$debug_mode" -eq 1 ] && procd_append_param command '--debug'
 }
 
-# [CHANGED] Added error handling and new features
 parse_config() {
 	if ! . /lib/functions/network.sh; then
-		log_error "Failed to source network functions"
+		log_msg "ERROR" "Failed to source network functions"
 		return 1
 	fi
 
@@ -134,7 +136,7 @@ parse_config() {
 	config_get dir "$cfg" database_directory /var/lib/nlbwmon
 
 	if ! mkdir -p "$dir" 2>/dev/null; then
-		log_error "Failed to create database directory: $dir"
+		log_msg "ERROR" "Failed to create database directory: $dir"
 		return 1
 	fi
 	
@@ -151,21 +153,18 @@ parse_config() {
 	add_bool "$cfg" -P database_prealloc 0
 	add_bool "$cfg" -Z database_compress 1
 
-	# [NEW] Additional features
 	add_performance_options "$cfg"
 	add_debug_mode "$cfg"
 
 	config_list_foreach "$cfg" local_network add_subnet
 }
 
-# [CHANGED] Added resource limits and logging
 start_service() {
 	procd_open_instance
 	procd_set_param stderr 1
 	procd_set_param command "$PROG"
 	procd_set_param nice "$NICEPRIO"
 	
-	# [NEW] Resource limits for stability
 	procd_set_param limits nofile=4096
 	procd_set_param limits nproc=512
 
@@ -174,8 +173,7 @@ start_service() {
 
 	procd_close_instance
 	
-	# [NEW] Log message
-	log_info "Service started successfully"
+	log_msg "INFO" "Service started successfully"
 }
 
 add_interface_trigger() {
@@ -184,7 +182,8 @@ add_interface_trigger() {
 	config_get interface "$1" interface
 	config_get_bool ignore "$1" ignore 0
 
-	# [CHANGED] Better formatting
-	[ -n "$interface" ] && [ "$ignore" -eq 0 ] && \
-		procd_add_interface_trigger "interface.*" "$interface](#)
-
+	# [FIXED] Proper conditional block formatting without broken hyperlink syntax
+	if [ -n "$interface" ] && [ "$ignore" -eq 0 ]; then
+		procd_add_interface_trigger "interface.*" "$interface"
+	fi
+}
