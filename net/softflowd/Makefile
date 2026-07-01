@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=softflowd
-PKG_VERSION:=1.1.0
-PKG_RELEASE:=2
+PKG_VERSION:=1.1.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/irino/softflowd/tar.gz/softflowd-v$(PKG_VERSION)?
-PKG_HASH:=68d36a21895d0b155b27c718c4b79cc304a4de92d591d73887ccfd74f90f4ffc
+PKG_HASH:=a6882e59931e5880901f8ee28d78b082cb3000ad8d28af35c13f2b528edbb2c9
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_NAME)-v$(PKG_VERSION)
 
 PKG_MAINTAINER:=Ross Vandegrift <ross@kallisti.us>
