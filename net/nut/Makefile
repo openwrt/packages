@@ -1,5 +1,5 @@
 
-# Copyright (C) 2006-2016 OpenWrt.org
+# Copyright (C) 2006-2026 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -13,7 +13,7 @@ PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://networkupstools.org/source/2.8/
-PKG_HASH:=a2fe55bc2d90b4a848d6ff8bac361e6d1c97f899a545219cad707d17a27ff127
+PKG_HASH:=0130ba82ea79f04ba4f34c5249a85943977efd984ed7df6aec1a518d5a3594f8
 PKG_LICENSE:=GPL-2.0-or-later GPL-3.0-or-later GPL-1.0-or-later Artistic-1.0-Perl
 PKG_LICENSE_FILES:=LICENSE-GPL2 LICENSE-GPL3 COPYING
 PKG_FIXUP:=autoreconf
