@@ -130,37 +130,58 @@ snmpd_trap_ip_add() {
 snmpd_access_default_add() {
 	local cfg="$1"
 	config_get mode "$cfg" Mode
+	[ -n "$mode" ] || return 0
 	config_get community "$cfg" CommunityName
-	config_get oidrestrict "$cfg" RestrictOID
+	[ -n "$community" ] || return 0
+
+	config_get_bool oidrestrict "$cfg" RestrictOID 0
 	config_get oid "$cfg" RestrictedOID
-	echo -n "$mode $community default" >> $CONFIGFILE
-	[ "$oidrestrict" == "yes" ] && echo " $oid" >> $CONFIGFILE
-	[ "$oidrestrict" == "no" ] && echo "" >> $CONFIGFILE
+	if [ "$oidrestrict" -eq 1 ]; then
+		[ -n "$oid" ] || return 0
+		echo "$mode $community default $oid" >> $CONFIGFILE
+	else
+		echo "$mode $community default" >> $CONFIGFILE
+	fi
 }
 
 snmpd_access_HostName_add() {
 	local cfg="$1"
 	config_get hostname "$cfg" HostName
+	[ -n "$hostname" ] || return 0
 	config_get mode "$cfg" Mode
+	[ -n "$mode" ] || return 0
 	config_get community "$cfg" CommunityName
-	config_get oidrestrict "$cfg" RestrictOID
+	[ -n "$community" ] || return 0
+
+	config_get_bool oidrestrict "$cfg" RestrictOID 0
 	config_get oid "$cfg" RestrictedOID
-	echo -n "$mode $community $hostname" >> $CONFIGFILE
-	[ "$oidrestrict" == "yes" ] && echo " $oid" >> $CONFIGFILE
-	[ "$oidrestrict" == "no" ] && echo "" >> $CONFIGFILE
+	if [ "$oidrestrict" -eq 1 ]; then
+		[ -n "$oid" ] || return 0
+		echo "$mode $community $hostname $oid" >> $CONFIGFILE
+	else
+		echo "$mode $community $hostname" >> $CONFIGFILE
+	fi
 }
 
 snmpd_access_HostIP_add() {
 	local cfg="$1"
 	config_get host_ip "$cfg" HostIP
+	[ -n "$host_ip" ] || return 0
 	config_get ip_mask "$cfg" IPMask
+	[ -n "$ip_mask" ] || return 0
 	config_get mode "$cfg" Mode
+	[ -n "$mode" ] || return 0
 	config_get community "$cfg" CommunityName
-	config_get oidrestrict "$cfg" RestrictOID
+	[ -n "$community" ] || return 0
+
+	config_get_bool oidrestrict "$cfg" RestrictOID 0
 	config_get oid "$cfg" RestrictedOID
-	echo -n "$mode $community $host_ip/$ip_mask" >> $CONFIGFILE
-	[ "$oidrestrict" == "yes" ] && echo " $oid" >> $CONFIGFILE
-	[ "$oidrestrict" == "no" ] && echo "" >> $CONFIGFILE
+	if [ "$oidrestrict" -eq 1 ]; then
+		[ -n "$oid" ] || return 0
+		echo "$mode $community $host_ip/$ip_mask $oid" >> $CONFIGFILE
+	else
+		echo "$mode $community $host_ip/$ip_mask" >> $CONFIGFILE
+	fi
 }
 
 snmpd_pass_add() {
@@ -219,7 +240,7 @@ snmpd_engineid_add() {
 	config_get engineid "$cfg" engineid
 	[ -n "$engineid" ] && echo "engineID $engineid" >> $CONFIGFILE
 	config_get engineidtype "$cfg" engineidtype
-	[ "$engineidtype" -ge 1 -a "$engineidtype" -le 3 ] && \
+	[ -n "$engineidtype" ] && [ "$engineidtype" -ge 1 -a "$engineidtype" -le 3 ] && \
 		echo "engineIDType $engineidtype" >> $CONFIGFILE
 	config_get engineidnic "$cfg" engineidnic
 	[ -n "$engineidnic" ] && echo "engineIDNic $engineidnic" >> $CONFIGFILE
@@ -233,7 +254,7 @@ snmpd_sink_add() {
 	local host
 
 	config_get host "$cfg" host
-	[ -n "section" -a -n "$host" ] || return 0
+	[ -n "$section" -a -n "$host" ] || return 0
 	# optional community
 	config_get community "$cfg" community
 	# optional port
