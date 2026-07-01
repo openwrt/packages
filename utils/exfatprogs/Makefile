@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=exfatprogs
 PKG_VERSION:=1.4.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/exfatprogs/exfatprogs/releases/download/$(PKG_VERSION)
@@ -39,6 +39,8 @@ endef
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--disable-static
+
+TARGET_LDFLAGS += $(if $(CONFIG_USE_MUSL),-lfts)
 
 define Package/exfat-mkfs/install
 	$(INSTALL_DIR) $(1)/usr/sbin

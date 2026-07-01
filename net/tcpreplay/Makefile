@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tcpreplay
 PKG_VERSION:=4.5.2
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/appneta/tcpreplay/releases/download/v$(PKG_VERSION)
@@ -80,7 +80,7 @@ $(call Package/tcpreplay/default)
 endef
 
 define Package/tcpbridge/description
-  tcpbridge is a tool for selectively briding network traffic across two
+  tcpbridge is a tool for selectively bridging network traffic across two
   interfaces and optionally modifying the packets in between
 endef
 
@@ -127,10 +127,6 @@ define Package/tcpreplay-all/description
   to support switches, routers, and IP Flow/NetFlow appliances. 
 endef
 
-ifneq ($(CONFIG_USE_MUSL),)
-	TARGET_LDFLAGS+= -lfts
-endif
-
 CONFIGURE_VARS += \
 	ac_cv_lib_nl_nl_cache_alloc=no \
 	ac_cv_lib_nl_genl_3_genl_connect=no \
@@ -144,6 +140,7 @@ CONFIGURE_ARGS += \
 	--with-libpcap="$(STAGING_DIR)/usr"
 
 TARGET_CFLAGS += -std=gnu11
+TARGET_LDFLAGS += $(if $(CONFIG_USE_MUSL),-lfts)
 
 define tcpreplayTemplate
   define Package/$(1)/install
