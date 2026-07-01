@@ -3,31 +3,17 @@
 
 NAME='etherwake'
 START=60
-PROGRAM=''
+PROGRAM='/usr/bin/etherwake'
 
 start()
 {
-	local searchlist=''
-	local section=''
 	local value=''
 
 	config_load "${NAME}"
 
-	# check for available program
-	config_get searchlist 'setup' 'pathes'
-	PROGRAM=$(search_program "${searchlist}")
-	[ -z "${PROGRAM}" ] && {
-		echo "${initscript}: No ${NAME} program installed. Check: opkg list | grep ${NAME}"
-		exit 1
-	}
-
-	# sudo
-	config_get_bool value 'setup' 'sudo' '0'
-	[ "${value}" -ne 0 ] && PROGRAM="sudo ${PROGRAM}"
-
 	# interface
-	config_get value 'setup' 'interface'
-	[ -n "${value}" ] && append PROGRAM "-i ${value}"
+	config_get value 'setup' 'interface' 'eth0'
+	append PROGRAM "-i ${value}"
 
 	# broadcast
 	config_get_bool value 'setup' 'broadcast' '0'
@@ -79,50 +65,40 @@ do_etherwake()
 	local value=''
 	local password=''
 	local args=''
+	local section_name=''
 
-	# password
+	# password (legacy option)
 	config_get value "${section}" 'password'
 	[ -n "${value}" ] && {
 		password=$(etherwake_password "${value}")
-		append args "-p ${password}"
 	}
+
+	# secureOn password
+	config_get value "${section}" 'secureon'
+	if [ -n "${value}" ]; then
+		append args "-p ${value}"
+	elif [ -n "${password}" ]; then
+		append args "-p ${password}"
+	fi
+
+	# name
+	config_get section_name "${section}" 'name'
+	[ -z "${section_name}" ] && section_name="${section}"
 
 	# mac address
 	config_get value "${section}" 'mac'
-	[ -z "${value}" ] && { echo "${initscript}: Target ${section} has no MAC address"; return 1; }
+	[ -z "${value}" ] && {
+		echo "Target '${section_name}' has no 'mac' address"; return 1; }
 	append args "${value}"
 
-	# name
-	config_get value "${section}" 'name'
-	[ -z "${value}" ] && value="{section}"
-
 	# execute command
-	echo "${initscript}: Waking up ${value} via ${PROGRAM}${args:+ ${args}}"
+	echo "Waking up '${section_name}' via ${PROGRAM}${args:+ ${args}}"
 	${PROGRAM} ${args}
 	return $?
 }
 
 
-# find first available program from searchlist
-search_program()
-{
-	local searchlist="$1"
-	local test=''
-	local program=''
-
-	for test in ${searchlist} ; do
-		[ -x "${test}" ] && {
-			program="${test}"
-			break;
-		}
-	done
-
-	[ -n "${program}" ] && echo "${program}"
-
-	return
-}
-
-# prepare hex password
+# prepare hex password (support legacy option)
 etherwake_password()
 {
 	local delimiter=':'
