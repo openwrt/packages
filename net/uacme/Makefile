@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=uacme
 PKG_VERSION:=1.8.1
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ndilieto/uacme/tar.gz/upstream/$(PKG_VERSION)?
@@ -48,6 +48,7 @@ define Package/uacme
   CATEGORY:=Network
   DEPENDS:=+libcurl +LIBCURL_WOLFSSL:libmbedtls +acme-common
   TITLE:=lightweight client for ACMEv2
+  CONFLICTS:=acme-acmesh
   Menu:=1
   PROVIDES:=@acme
 endef
