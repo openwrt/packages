@@ -1,0 +1,30 @@
+From: Sven Kirmess <sven.kirmess@kzone.ch>
+Date: Fri, 8 May 2026 00:00:00 +0200
+Subject: [PATCH] fix CA initialization for musl/busybox compatibility
+
+- chown --reference=: GNU coreutils only, not available in Busybox
+- ps -elf: GNU ps flags, not supported by Busybox
+- w: not available on OpenWrt
+- sha1sum: not compiled into Busybox by default; use sha256sum which is
+  available in Busybox by default instead
+
+--- a/qdevices/corosync-qnetd-certutil.sh
++++ b/qdevices/corosync-qnetd-certutil.sh
+@@ -62,6 +62,8 @@ usage() {
+ }
+ 
+ chown_ref_cfgdir() {
++    # All files owned by root on OpenWrt
++    return
+     if [ "$UID" == "0" ];then
+         chown --reference="$CONFIG_DIR" "$@" 2>/dev/null || chown "$(stat -f "%u:%g" "$CONFIG_DIR")" "$@" 2>/dev/null || return $?
+     fi
+@@ -83,7 +85,7 @@ create_new_noise_file() {
+     if [ ! -e "$noise_file" ];then
+         echo "Creating new noise file $noise_file"
+ 
+-        (ps -elf; date; w) | sha1sum | (read sha_sum rest; echo $sha_sum) > "$noise_file"
++        (ps w; date) | sha256sum | (read sha_sum rest; echo $sha_sum) > "$noise_file"
+ 
+         chown_ref_cfgdir "$noise_file"
+         chmod "$(get_perm)" "$noise_file"
