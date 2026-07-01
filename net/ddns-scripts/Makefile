@@ -7,8 +7,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ddns-scripts
-PKG_VERSION:=2.8.3
-PKG_RELEASE:=7
+PKG_VERSION:=2.8.4
+PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0
 
@@ -933,7 +933,7 @@ endef
 
 define Package/ddns-scripts-one/prerm
 #!/bin/sh
-if [-z "${IPKG_INSTROOT}" ]; then
+if [ -z "$${IPKG_INSTROOT}" ]; then
 	/etc/init.d/ddns stop
 fi
 exit 0
