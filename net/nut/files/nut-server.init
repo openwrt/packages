@@ -564,6 +564,6 @@ service_triggers() {
 
 	config_get interface_reload_delay upsd interface_reload_delay $DEFAULT_PROCD_INTERFACE_RELOAD_DELAY
 
-	interface_triggers "add_trigger" "upsd" "$interface_reload_delay"
+	interface_triggers "add_trigger" "upsd" "$interface_reload_delay" "nut-server" "upsd"
 	procd_add_reload_trigger "nut_server"
 }

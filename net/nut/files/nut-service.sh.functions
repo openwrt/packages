@@ -277,6 +277,8 @@ interface_triggers() {
 	local action="$1"
 	local section="$2"
 	local interface_reload_delay="${3:-$DEFAULT_PROCD_INTERFACE_RELOAD_DELAY}"
+	local initscript="$4"
+	local daemon="$5"
 	local interfaces interface
 	local have_up_interface
 	local trigger_failed
@@ -296,9 +298,8 @@ interface_triggers() {
 				# We use the variadic third and fourth parameters of procd_add_interface_trigger to
 				# restart instead of reload on interface up/down events. Additionally the variadic
 				# fourth and fifth parameters of procd_add_interface_trigger are passed through to
-				# the <script> (in this case /etc/init.d/nut-server), so the trigger action becomes
-				# /etc/init.d/nut-server restart "upsd").
-				procd_add_interface_trigger "interface.*.up" "$interface" /etc/init.d/nut-server restart "upsd" || trigger_failed="true"
+				# the <script>, so the trigger action becomes e.g. /etc/init.d/<script> restart "$daemon".
+				procd_add_interface_trigger "interface.*.up" "$interface" "/etc/init.d/$initscript" "restart" "$daemon" || trigger_failed="true"
 			done
 			set +f
 			if [ "$trigger_failed" = "true" ]; then
@@ -306,7 +307,7 @@ interface_triggers() {
 			fi
 		else
 			# Add a restart trigger on any interface's up status changing
-			procd_add_raw_trigger "interface.*.up" "$interface_reload_delay" /etc/init.d/nut-server restart || return 1
+			procd_add_raw_trigger "interface.*.up" "$interface_reload_delay" "/etc/init.d/$initscript" "restart" || return 1
 		fi
 		;;
 	check_interface_up)

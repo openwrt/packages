@@ -211,7 +211,7 @@ service_triggers() {
 
 	config_get interface_reload_delay upsmon interface_reload_delay $DEFAULT_PROCD_INTERFACE_RELOAD_DELAY
 
-	interface_triggers "add_trigger" "upsmon" || {
+	interface_triggers "add_trigger" "upsmon" "$interface_reload_delay" "nut-monitor" || {
 		log_error_exit "Failed to add interface triggers" nut-monitor nut-monitor
 	}
 	procd_add_reload_trigger "nut_monitor"
