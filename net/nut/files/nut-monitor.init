@@ -92,7 +92,7 @@ service_preconditions() {
 		fi
 
 		build_config || return 1
-		interface_triggers "check_interface_up" || return 1
+		interface_triggers "check_interface_up" "upsmon" || return 1
 		return 0
 		;;
 	*)
@@ -211,6 +211,8 @@ service_triggers() {
 
 	config_get interface_reload_delay upsmon interface_reload_delay $DEFAULT_PROCD_INTERFACE_RELOAD_DELAY
 
+	# We do not pass an instance name as the nut-monitor initscript does not need
+	# an additional instance argument
 	interface_triggers "add_trigger" "upsmon" "$interface_reload_delay" "nut-monitor" || {
 		log_error_exit "Failed to add interface triggers" nut-monitor nut-monitor
 	}
