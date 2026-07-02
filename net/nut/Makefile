@@ -27,6 +27,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_NUT_DRIVER_USB \
 	CONFIG_NUT_DRIVER_SERIAL \
 	CONFIG_NUT_DRIVER_NEON \
+	CONFIG_NUT_SSL_NSS \
 	CONFIG_NUT_SSL \
 	CONFIG_PACKAGE_nut-web-cgi
 
@@ -105,7 +106,8 @@ define Package/nut-common
 		+NUT_DRIVER_SNMP:libnetsnmp \
 		+NUT_DRIVER_USB:libusb-compat \
 		+NUT_DRIVER_NEON:libneon \
-		+NUT_SSL:libopenssl
+		+NUT_SSL:libopenssl \
+		+NUT_SSL_NSS:libnss
 endef
 
 define Package/nut-common/description
@@ -152,9 +154,9 @@ endef
 
 define Package/nut-upsmon
   $(call Package/nut/Default)
-	TITLE+= (monitor)
-	DEPENDS:=nut +nut-common
-	USERID:=nutmon=114:nutmon=114
+  TITLE+= (monitor)
+  DEPENDS:=nut +nut-common
+  USERID:=nutmon=114:nutmon=114
 endef
 
 define Package/nut-upsmon/description
@@ -571,11 +573,16 @@ $(eval $(call DriverDescription,usb,nutdrv_atcl_usb,\
 $(eval $(call DriverDescription,usb,nutdrv_qx,\
 	Driver for Q* protocol serial and USB based UPS equipment))
 $(eval $(call DriverDescription,neon,netxml-ups,\
-        Driver for NetXML based UPS equipment))
+	Driver for NetXML based UPS equipment))
 
 CONFIGURE_VARS += \
 	ac_cv_path_AR=$(TARGET_AR)
 
+# as flagged by Qwen 3.6 27B, --without-ssl also disables NSS so only use it
+# to disable all SSL backends. This can be verified in the applicable
+# upstream code which disables _all_ ssl when --with-ssl=no or the equivalent
+# --without-ssl is used. See:
+# https://github.com/networkupstools/nut/blob/26177060be94a738bf2d612441af264c90ac37a9/configure.ac#L2930
 CONFIGURE_ARGS += \
 	--sysconfdir=/etc \
 	--with-confdir-suffix=/nut \
@@ -586,7 +593,7 @@ CONFIGURE_ARGS += \
 	--$(if $(CONFIG_NUT_DRIVER_SNMP),with,without)-snmp \
 	--$(if $(CONFIG_NUT_DRIVER_SERIAL),with,without)-serial \
 	--without-doc \
-        --$(if $(CONFIG_NUT_DRIVER_NEON),with,without)-neon \
+	--$(if $(CONFIG_NUT_DRIVER_NEON),with,without)-neon \
 	--without-powerman \
 	--without-wrap \
 	--with-hotplug-dir=/etc/hotplug \
@@ -594,7 +601,9 @@ CONFIGURE_ARGS += \
 	--without-ipmi \
 	--without-freeipmi \
 	--without-linux-i2c \
-	--$(if $(CONFIG_NUT_SSL),with,without)-ssl $(if $(CONFIG_NUT_SSL),--with-openssl) \
+	$(if $(CONFIG_NUT_SSL),--with-ssl=openssl) \
+	$(if $(CONFIG_NUT_SSL_NSS),--with-ssl=nss,--without-nss) \
+	$(if $(CONFIG_NUT_SSL),,$(if $(CONFIG_NUT_SSL_NSS),,--without-ssl)) \
 	--without-libltdl \
 	--enable-docs-changelog=no \
 	--without-macosx_ups \
