@@ -1,5 +1,4 @@
 #config driver_global 'driver_global'
-#	option driverpath /usr/libexec/nut # compile-time default
 
 # ### NOTE ###
 # For USB UPSes it is necessary to properly configure

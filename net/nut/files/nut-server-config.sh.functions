@@ -299,7 +299,6 @@ build_global_driver_config() {
 
 	# Global driver config
 	get_write_ups_config "$cfg" chroot "" "" "$config_file"
-	get_write_ups_config "$cfg" driverpath "" "" "$config_file"
 	get_write_ups_config "$cfg" maxstartdelay "" "" "$config_file"
 	get_write_ups_config "$cfg" maxretry "" "" "$config_file"
 	get_write_ups_config "$cfg" retrydelay "" "" "$config_file"
