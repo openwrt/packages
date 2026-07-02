@@ -256,7 +256,7 @@ service_preconditions() {
 
 		case $ret in
 		0)
-			interface_triggers "check_interface_up" || should_start_srv=false
+			interface_triggers "check_interface_up" "upsd" || should_start_srv=false
 			;;
 		*)
 			should_start_srv=false
@@ -269,7 +269,7 @@ service_preconditions() {
 
 		case $ret in
 		0 | 2)
-			interface_triggers "check_interface_up" || should_stop_srv=true
+			interface_triggers "check_interface_up" "upsd" || should_stop_srv=true
 			;;
 		*)
 			should_stop_srv=true
