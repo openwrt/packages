@@ -77,7 +77,7 @@ srv_config() {
 	config_get maxconn "$srv" maxconn
 	[ -n "$maxconn" ] && printf "MAXCONN %s\n" "$maxconn" >>"$config_file"
 
-	#NOTE: certs only apply to SSL-enabled version
+	# NOTE: certs only apply to SSL-enabled version
 	config_get certfile "$srv" certfile
 	[ -n "$certfile" ] && printf "CERTFILE %s\n" "$certfile" >>"$config_file"
 }
