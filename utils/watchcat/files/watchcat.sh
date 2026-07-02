@@ -7,6 +7,77 @@
 #
 
 . /lib/network/config.sh
+. /lib/functions/network.sh
+
+# Accept the historical real-device input while also handling @logical
+# interface references used by other OpenWrt configs.
+watchcat_resolve_ping_iface() {
+	local iface="$1"
+	local logical device network
+
+	[ -n "$iface" ] || return 1
+
+	case "$iface" in
+	@*)
+		logical="${iface#@}"
+		[ -n "$logical" ] || return 1
+		if network_get_device device "$logical"; then
+			printf '%s\n' "$device"
+			return 0
+		fi
+		printf '%s\n' "$iface"
+		return 1
+		;;
+	esac
+
+	network="$(find_config "$iface")"
+	if [ -n "$network" ]; then
+		printf '%s\n' "$iface"
+		return 0
+	fi
+
+	if network_get_device device "$iface"; then
+		printf '%s\n' "$device"
+		return 0
+	fi
+
+	printf '%s\n' "$iface"
+	return 1
+}
+
+watchcat_resolve_restart_iface() {
+	local iface="$1"
+	local network device
+
+	[ -n "$iface" ] || return 1
+
+	case "$iface" in
+	@*)
+		network="${iface#@}"
+		[ -n "$network" ] || return 1
+		if ! network_get_device device "$network"; then
+			printf '%s\n' "$network"
+			return 1
+		fi
+		printf '%s\n' "$network"
+		return 0
+		;;
+	esac
+
+	network="$(find_config "$iface")"
+	if [ -n "$network" ]; then
+		printf '%s\n' "$network"
+		return 0
+	fi
+
+	if network_get_device device "$iface"; then
+		printf '%s\n' "$iface"
+		return 0
+	fi
+
+	printf '%s\n' "$iface"
+	return 1
+}
 
 get_ping_size() {
 	ps=$1
@@ -84,8 +155,11 @@ watchcat_restart_modemmanager_iface() {
 }
 
 watchcat_restart_network_iface() {
-	local network
-	network="$(find_config "$1")"
+	local iface="$1"
+	local network="$2"
+
+	[ -z "$network" ] && network="$(watchcat_resolve_restart_iface "$iface")"
+
 	logger -p daemon.info -t "watchcat[$$]" "Restarting network interface: \"$1\" (network: \"$network\")."
 	ifup "$network"
 }
@@ -110,10 +184,25 @@ watchcat_monitor_network() {
 	mm_iface_unlock_bands="$7"
 	address_family="$8"
 	script="$9"
+	ping_iface=""
+	restart_iface=""
 	reset_failure_timer=""
 	if [ "$#" -gt 9 ]; then
 		shift 9
 		reset_failure_timer="$1"
+	fi
+	[ "$mm_iface_name" = "null" ] && mm_iface_name=""
+	if [ "$iface" != "" ]; then
+		if ! ping_iface="$(watchcat_resolve_ping_iface "$iface")"; then
+			logger -p daemon.warn -t "watchcat[$$]" "Could not resolve interface \"$iface\" for pinging."
+			case "$iface" in
+			@*) ping_iface="" ;;
+			*) ping_iface="$iface" ;;
+			esac
+		fi
+		if ! restart_iface="$(watchcat_resolve_restart_iface "$iface")"; then
+			logger -p daemon.warn -t "watchcat[$$]" "Could not resolve interface \"$iface\" for restart."
+		fi
 	fi
 
 	time_now="$(cat /proc/uptime)"
@@ -143,9 +232,9 @@ watchcat_monitor_network() {
 		time_lastcheck="$time_now"
 
 		for host in $ping_hosts; do
-			if [ "$iface" != "" ]; then
+			if [ "$ping_iface" != "" ]; then
 				ping_result="$(
-					ping $ping_family -I "$iface" -s "$ping_size" -c 1 "$host" &> /dev/null
+					ping $ping_family -I "$ping_iface" -s "$ping_size" -c 1 "$host" &> /dev/null
 					echo $?
 				)"
 			else
@@ -178,7 +267,7 @@ watchcat_monitor_network() {
 					watchcat_restart_modemmanager_iface "$mm_iface_name" "$mm_iface_unlock_bands"
 				fi
 				if [ "$iface" != "" ]; then
-					watchcat_restart_network_iface "$iface"
+					watchcat_restart_network_iface "$iface" "$restart_iface"
 				else
 					watchcat_restart_all_network
 				fi
@@ -207,6 +296,16 @@ watchcat_ping() {
 	ping_size="$5"
 	address_family="$6"
 	iface="$7"
+	ping_iface=""
+	if [ "$iface" != "" ]; then
+		if ! ping_iface="$(watchcat_resolve_ping_iface "$iface")"; then
+			logger -p daemon.warn -t "watchcat[$$]" "Could not resolve interface \"$iface\" for pinging."
+			case "$iface" in
+			@*) ping_iface="" ;;
+			*) ping_iface="$iface" ;;
+			esac
+		fi
+	fi
 
 	time_now="$(cat /proc/uptime)"
 	time_now="${time_now%%.*}"
@@ -235,9 +334,9 @@ watchcat_ping() {
 		time_lastcheck="$time_now"
 
 		for host in $ping_hosts; do
-			if [ "$iface" != "" ]; then
+			if [ "$ping_iface" != "" ]; then
 				ping_result="$(
-					ping $ping_family -I "$iface" -s "$ping_size" -c 1 "$host" &> /dev/null
+					ping $ping_family -I "$ping_iface" -s "$ping_size" -c 1 "$host" &> /dev/null
 					echo $?
 				)"
 			else
