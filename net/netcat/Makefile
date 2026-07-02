@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netcat
 PKG_VERSION:=0.7.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)
@@ -32,6 +32,8 @@ define Package/netcat/description
 		Netcat is a featured networking utility which reads and writes data across network connections, using the TCP/IP protocol.
 	It is designed to be a reliable "back-end" tool that can be used directly or easily driven by other programs and scripts. At the same time, it is a feature-rich network debugging and exploration tool, since it can create almost any kind of connection you would need and has several interesting built-in capabilities.
 endef
+
+TARGET_CFLAGS += -std=gnu17
 
 define Build/Configure
 	$(call Build/Configure/Default, \
