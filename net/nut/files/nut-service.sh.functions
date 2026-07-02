@@ -210,10 +210,7 @@ find_statepath() {
 	local nut_value_via_foreach=""
 
 	find_foreach_value "$section_type" "$package" statepath "$NUT_BASE_STATEPATH" || return 1
-	# Modern OpenWrt (since at least OpenWrt-24.10 which is now old stable, we are developing for
-	# not yet released OpenWrt, so two versions later) supports readlink -f from busybox.
-	[ -n "$nut_value_via_foreach" ] || return 1
-	[ -d "$(readlink -f "$nut_value_via_foreach" 2>/dev/null)" ] || return 1
+	[ -n "$nut_value_via_foreach" ] || nut_value_via_foreach="$NUT_BASE_STATEPATH"
 
 	# shellcheck disable=2034
 	STATEPATH="$nut_value_via_foreach"
