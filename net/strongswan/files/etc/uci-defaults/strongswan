@@ -1,0 +1,15 @@
+#!/bin/sh
+
+main() {
+	# Skip migration if the 'globals' section already exists
+	uci show ipsec.globals 1>/dev/null 2>/dev/null
+	[ "$?" = "0" ] && return
+
+	# Rename last ipsec section to 'globals'
+	uci -q rename ipsec.@ipsec[-1]=globals
+	uci -q commit ipsec
+}
+
+main
+
+exit 0
