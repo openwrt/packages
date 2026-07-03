@@ -110,6 +110,7 @@ status_service() {
 	if [ -n "${keylist}" ]; then
 		printf '%s\n' "::: adblock runtime information"
 		for key in ${keylist}; do
+			[ "${key}" = "backup_cnt" ] && continue
 			json_get_type type "${key}" >/dev/null 2>&1
 			if [ "${type}" = "array" ]; then
 				json_get_values values "${key}" >/dev/null 2>&1
