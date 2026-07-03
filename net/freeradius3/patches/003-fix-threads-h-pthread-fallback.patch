@@ -1,0 +1,66 @@
+From: Josip Stjepanović <jstjep00@gmail.com>
+Subject: [PATCH] fix build failure in HAVE_PTHREAD_H fallback of threads.h
+
+Upstream 3.2.10 only implemented the `defined(__THREAD)` branch of the
+thread-local-storage macros (used when the compiler supports the
+`__thread` storage class, detected via TLS_STORAGE_CLASS). The
+remaining `defined(HAVE_PTHREAD_H)` fallback branch, taken when no
+compiler TLS support is detected but pthreads are available (as
+happens on some aarch64/musl toolchains), was left as `#error
+unsupported`, breaking the build.
+
+This mirrors the previously dropped
+003-freeradius-fix-error-for-expansion-of-macro.patch implementation
+for the `__THREAD` branch into the `HAVE_PTHREAD_H` branch, and adds
+the `if (_n) return _n;` early-return guard to both so
+`fr_thread_local_init()` does not re-run `pthread_once`/
+`pthread_setspecific` on every call.
+
+Reported-by: BKPepe <https://github.com/openwrt/packages/pull/29842#issuecomment-4859328263>
+Patch-by: vortexilation <https://github.com/openwrt/packages/pull/29842#issuecomment-4859798519>
+
+---
+
+--- a/src/include/threads.h
++++ b/src/include/threads.h
+@@ -82,7 +82,8 @@ static void __fr_thread_local_key_init_##_n(void)\
+ static _t __fr_thread_local_init_##_n(pthread_destructor_t func)\
+ {\
+ 	__fr_thread_local_destructor_##_n = func;\
+-	(void) pthread_once(&__fr_thread_local_once_##_n, __fr_thread_local_key_init_##_n); \
++	if (_n) return _n; \
++	(void) pthread_once(&__fr_thread_local_once_##_n, __fr_thread_local_key_init_##_n);\
+ 	(void) pthread_setspecific(__fr_thread_local_key_##_n, &(_n));\
+ 	return _n;\
+ }
+@@ -90,6 +91,29 @@ static _t __fr_thread_local_init_##_n(pthread_destructor_t func)\
+ #  define fr_thread_local_set(_n, _v) ((int)!((_n = _v) || 1))
+ #  define fr_thread_local_get(_n) _n
+ #elif defined(HAVE_PTHREAD_H)
+-#error unsupported
++#  include <pthread.h>
++#  define fr_thread_local_setup(_t, _n) static __thread _t _n;\
++static pthread_key_t __fr_thread_local_key_##_n;\
++static pthread_once_t __fr_thread_local_once_##_n = PTHREAD_ONCE_INIT;\
++static pthread_destructor_t __fr_thread_local_destructor_##_n = NULL;\
++static void __fr_thread_local_destroy_##_n(UNUSED void *unused)\
++{\
++	__fr_thread_local_destructor_##_n(_n);\
++}\
++static void __fr_thread_local_key_init_##_n(void)\
++{\
++	(void) pthread_key_create(&__fr_thread_local_key_##_n, __fr_thread_local_destroy_##_n);\
++}\
++static _t __fr_thread_local_init_##_n(pthread_destructor_t func)\
++{\
++	__fr_thread_local_destructor_##_n = func;\
++	if (_n) return _n; \
++	(void) pthread_once(&__fr_thread_local_once_##_n, __fr_thread_local_key_init_##_n);\
++	(void) pthread_setspecific(__fr_thread_local_key_##_n, &(_n));\
++	return _n;\
++}
++#  define fr_thread_local_init(_n, _f)	__fr_thread_local_init_##_n(_f)
++#  define fr_thread_local_set(_n, _v) ((int)!((_n = _v) || 1))
++#  define fr_thread_local_get(_n) _n
+ #endif
+ #endif
