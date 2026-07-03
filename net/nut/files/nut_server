@@ -39,4 +39,4 @@
 #	option interface_reload_delay 3000 # in milliseconds
 # NB: certificates only apply to SSL-enabled version
 #	option certfile /usr/local/etc/upsd.pem
-# option triggerlist all # not configured by default
+#	option triggerlist all # not configured by default

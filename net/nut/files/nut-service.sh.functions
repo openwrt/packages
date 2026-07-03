@@ -210,7 +210,6 @@ find_statepath() {
 	local nut_value_via_foreach=""
 
 	find_foreach_value "$section_type" "$package" statepath "$NUT_BASE_STATEPATH" || return 1
-	[ -n "$nut_value_via_foreach" ] || nut_value_via_foreach="$NUT_BASE_STATEPATH"
 
 	# shellcheck disable=2034
 	STATEPATH="$nut_value_via_foreach"
@@ -299,7 +298,7 @@ interface_triggers() {
 			for interface in $interfaces; do
 				# We use the variadic third and fourth parameters of procd_add_interface_trigger to
 				# restart instead of reload on interface up/down events. Additionally the variadic
-				# fifth and parameters of procd_add_interface_trigger are passed through to
+				# fifth and following parameters of procd_add_interface_trigger are passed through to
 				# the <script>, so the trigger action becomes e.g. /etc/init.d/<script> restart <variadic_vars>.
 				procd_add_interface_trigger "interface.*.up" "$interface" "/etc/init.d/$initscript" "restart" "$@" || trigger_failed="true"
 			done
