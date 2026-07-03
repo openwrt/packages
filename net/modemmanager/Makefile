@@ -84,7 +84,7 @@ MESON_ARGS += \
 	-Dintrospection=false \
 	-Dman=false \
 	-Dbash_completion=false \
-	-Dbuiltin_plugins=true \
+	-Dbuiltin_plugins=$(if $(CONFIG_MODEMMANAGER_WITH_BUILTIN_PLUGINS),true,false) \
 	-Db_lto=true \
 	-Dmbim=$(if $(CONFIG_MODEMMANAGER_WITH_MBIM),true,false) \
 	-Dqmi=$(if $(CONFIG_MODEMMANAGER_WITH_QMI),true,false) \
@@ -119,6 +119,10 @@ define Package/modemmanager/install
 
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libmm-glib.so.* $(1)/usr/lib
+
+	$(INSTALL_DIR) $(1)/usr/lib/ModemManager
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ModemManager/libmm-shared-*.so* $(1)/usr/lib/ModemManager
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ModemManager/libmm-plugin-*.so* $(1)/usr/lib/ModemManager
 
 	$(INSTALL_DIR) $(1)/usr/lib/ModemManager/connection.d
 	$(INSTALL_BIN) ./files/usr/lib/ModemManager/connection.d/10-report-down \
