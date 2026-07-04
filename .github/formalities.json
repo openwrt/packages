@@ -19,5 +19,8 @@
   "branch_labeling": true,
   "check_openwrt_meta": true,
   "check_conffiles": true,
-  "check_patch_headers": true
+  "check_patch_headers": true,
+  "check_pkg_release": "warning",
+  "require_linked_github_account": true,
+  "enable_stale_bot": true
 }
