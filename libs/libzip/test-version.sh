@@ -9,12 +9,12 @@ libzip-*)
 	;;
 
 zipcmp)
-	zipcmp -V 2>&1 | grep -qF "libzip $PKG_VERSION"
+	zipcmp -V 2>&1 | grep -F "libzip $PKG_VERSION"
 	exit 0
 	;;
 
 zipmerge)
-	zipmerge -V 2>&1 | grep -qF "libzip $PKG_VERSION"
+	zipmerge -V 2>&1 | grep -F "libzip $PKG_VERSION"
 	exit 0
 	;;
 

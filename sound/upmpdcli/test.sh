@@ -5,11 +5,11 @@ upmpdcli)
 	# Version check: upmpdcli prints version to stderr on bad args, or to
 	# stdout with --version; try both.
 	ver_out=$(upmpdcli --version 2>&1 || upmpdcli -v 2>&1 || true)
-	echo "$ver_out" | grep -qF "$2" || {
+	echo "$ver_out" | grep -F "$2" || {
 		# Some builds print only the short semver, not the full string;
 		# check for the major.minor part at minimum.
 		major_minor=$(echo "$2" | cut -d. -f1-2)
-		echo "$ver_out" | grep -qF "$major_minor" || {
+		echo "$ver_out" | grep -F "$major_minor" || {
 			echo "FAIL: version '$2' not found in: $ver_out"
 			exit 1
 		}

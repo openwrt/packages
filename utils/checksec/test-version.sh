@@ -6,7 +6,7 @@
 
 case "$PKG_NAME" in
 checksec)
-	checksec --version 2>&1 | grep -qF "2.7.1"
+	checksec --version 2>&1 | grep -F "2.7.1"
 	;;
 
 *)
