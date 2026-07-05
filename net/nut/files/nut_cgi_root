@@ -1,0 +1,2 @@
+config upsset
+	option enable 0

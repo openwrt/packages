@@ -70,29 +70,46 @@ service_preconditions() {
 
 	case "$action" in
 	start | reload)
+		unset RUNAS
+		export RUNAS
+
 		# NUT_KILLPOWER is an external sentinel that indicates a forced shutdown
 		if [ -f "$NUT_KILLPOWER" ]; then
 			return 1
 		fi
 
+		# Execute in a subshell to avoid config_load nut_monitor
+		# and config_load nut_monitor_root becoming mixed together
+		RUNAS="$(
+			config_load nut_monitor_root || {
+				log_config_load_error "nut_monitor_root" "nut-monitor" "nut-monitor"
+				exit 1
+			}
+
+			if have_section_named "upsmon" "upsmon_root"; then
+				# Find the RUNAS user for upsmon
+				if ! find_runas "upsmon_root" "nut_monitor_root" "nutmon" || [ -z "$RUNAS" ]; then
+					log_error_exit "Failed to determine RUNAS user" "nut-monitor" "nut-monitor"
+				fi
+			else
+				# If we do not have a 'upsmon_root' section in nut_monitor_root, use defaults
+				log_msg "No upsmon_root section so no RUNAS user, falling back to nutmon" "nut-monitor" "nut-monitor" "notice"
+				RUNAS=nutmon
+			fi
+			echo "$RUNAS"
+		)" || exit 1
+
+		# RUNAS should always be set, but be defensive
+		RUNAS="${RUNAS:-nutmon}"
+		export RUNAS
+
+		build_config || return 1
+
 		config_load nut_monitor || {
 			log_config_load_error "nut_monitor" "nut-monitor" "nut-monitor"
 			exit 1
 		}
-
-		if have_section_named "upsmon" "upsmon"; then
-			# Find the RUNAS user for upsmon
-			RUNAS="$(find_runas "upsmon" "nut_monitor" "nutmon")" || {
-				log_error_exit "Failed to determine RUNAS user" "nut-monitor" "nut-monitor"
-			}
-		else
-			# If we do not have a 'upsmon' section in nut_monitor, use defaults
-			log_msg "No upsmon section so no RUNAS user, falling back to nutmon" "nut-monitor" "nut-monitor" "notice"
-			RUNAS=nutmon
-		fi
-
-		build_config || return 1
-		check_interface_up "upsmon" || return 1
+		check_interface_up "upsmon" || exit 1
 		return 0
 		;;
 	*)
@@ -203,14 +220,14 @@ stop_service() {
 
 service_triggers() {
 	local val interface_reload_delay
-
 	# No config, or error loading config is fatal
 	config_load nut_monitor || {
 		log_config_load_error "nut_monitor" "nut-monitor" "nut-monitor"
 		exit 1
 	}
 
-	config_get interface_reload_delay upsmon interface_reload_delay $DEFAULT_PROCD_INTERFACE_RELOAD_DELAY
+	config_get_single upsmon interface_reload_delay "$DEFAULT_PROCD_INTERFACE_RELOAD_DELAY"
+	interface_reload_delay="$val"
 	if ! check_unsigned_int "$interface_reload_delay" || [ -z "$interface_reload_delay" ]; then
 		log_msg "interface_reload_delay must be an unsigned integer" nut-monitor nut-monitor warn
 		interface_reload_delay="$DEFAULT_PROCD_INTERFACE_RELOAD_DELAY"
@@ -222,4 +239,5 @@ service_triggers() {
 		log_error "Failed to add interface triggers" nut-monitor nut-monitor
 	}
 	procd_add_reload_trigger "nut_monitor"
+	procd_add_reload_trigger "nut_monitor_root"
 }
