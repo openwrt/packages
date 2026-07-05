@@ -1,0 +1,67 @@
+#!/bin/sh
+# In recent (relevant) versions of shellcheck busybox is a valid shell type
+# shellcheck shell=busybox
+
+# uci-defaults script to setup nut-common package
+#  * create (if no present) shared group for directories shared with nut-upsmon
+#  * install/create NSS certificate/key database
+
+# IPKG_INSTROOT is intentionally only set when building an image and
+# is intentionally empty on a live OpenWrt device
+
+# Shellcheck source paths intentionally point to the location of files of
+# the scripts in the development environment (where shellcheck is used), not
+# on the live OpenWrt device.
+
+# This script lives in nut-common package, which is independent of the
+# nut-upsmon package in which nut-upsmon.default lives
+
+# The separate packages limit the opportunities for code-sharing across the
+# scripts.
+
+# Only run this uci-defaults script on a live OpenWrt device
+[ -z "${IPKG_INSTROOT}" ] || exit 0
+
+# shellcheck source=net/nut/files/functions.sh.functions
+. /lib/functions.sh || {
+	# As the uci-defaults environment in which this runs does not have logging
+	# available, nor is stderr captured or displayed on the console, these messages
+	# exist only to assist when debugging manual runs of the script.
+	printf "'%s': '%s'" "nut-common.default" "FATAL: Unable to source 'functions.sh'" || true
+	exit 1
+}
+
+if ! group_exists "nutgrp"; then
+	group_add_next "nutgrp"
+fi
+
+if [ -n "$(command -v certutil)" ]; then
+	if [ ! -d /etc/nut/cert_db ]; then
+		old_umask="$(umask)"
+		umask 027
+		{
+			mkdir -p /etc/nut/cert_db
+			chgrp nutgrp /etc/nut/cert_db
+		} || {
+			printf "'%s': '%s'" "nut-common.default" "FATAL: Unable to create '/etc/nut/cert_db' with the needed group and permissions" || true
+			umask "$old_umask"
+			exit 1
+		}
+		umask "$old_umask"
+
+		# We only create the database if the directory did not exist before running this script, as we
+		# do not wish to overwrite an existing database
+		certutil -N -d /etc/nut/cert_db --empty-password || {
+			printf "'%s': '%s'" "nut-common.default" "FATAL: Unable to create empty certificate database"
+			umask "$old_umask"
+			exit 1
+		}
+		chgrp nutgrp /etc/nut/cert_db/*
+		# certutil does not honour umask so we must set permissions with chmod
+		chmod 0640 /etc/nut/cert_db/*
+	else
+		# If /etc/nut/cert_db already exists, we assume it is a pre-existing install
+		# and do not override potential system administrator initiated changes.
+		:
+	fi
+fi
