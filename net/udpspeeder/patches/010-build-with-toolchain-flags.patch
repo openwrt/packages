@@ -1,0 +1,35 @@
+From 7597b341540c10285a52f1917192bda580da051b Mon Sep 17 00:00:00 2001
+From: David Connolly <david@connol.ly>
+Date: Sun, 5 Jul 2026 21:40:39 +0100
+Subject: [PATCH] build the cross target with the toolchain CXX and flags
+
+Build the cross target with $(CXX) and append $(CXXFLAGS)/$(LDFLAGS), so
+the package builds with the OpenWrt toolchain and picks up its hardening
+flags instead of a compiler path hardcoded to the author's machine. Read
+gitversion from an overridable variable so the version can be injected via
+make flags instead of rewriting the makefile.
+
+Signed-off-by: David Connolly <david@connol.ly>
+---
+ makefile | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+--- a/makefile
++++ b/makefile
+@@ -51,7 +51,7 @@ cygwin:git_version
+ #targes for general cross compile
+ 
+ cross:git_version
+-	${cc_cross}   -o ${NAME}_cross    -I. ${SOURCES} ${FLAGS} -lrt -O2
++	${CXX}   -o ${NAME}_cross    -I. ${SOURCES} ${FLAGS} ${CXXFLAGS} ${LDFLAGS} -lrt -O2
+ 
+ cross2:git_version
+ 	${cc_cross}   -o ${NAME}_cross    -I. ${SOURCES} ${FLAGS} -lrt -static -lgcc_eh -O2
+@@ -115,5 +115,6 @@ clean:
+ 	rm -f ${NAME} ${NAME}_cross ${NAME}.exe ${NAME}_wepoll.exe ${NAME}_mac
+ 	rm -f git_version.h
+ 
++gitversion ?= $(shell git rev-parse HEAD 2>/dev/null)
+ git_version:
+-	    echo "const char *gitversion = \"$(shell git rev-parse HEAD)\";" > git_version.h
++	    echo "const char *gitversion = \"$(gitversion)\";" > git_version.h
