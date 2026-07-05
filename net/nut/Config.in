@@ -20,6 +20,14 @@
 			3493 from upsd will no longer net you interesting passwords.
 		default y
 
+	config NUT_SSL_CERTVERIFY
+		depends on PACKAGE_nut && (NUT_SSL || NUT_SSL_NSS)
+		bool "Build with support for certificate verification when using SSL"
+		help
+			When using SSL, enables configuration options for verification of peer's
+			certificate before connecting to the peer.
+		default  y
+
 	config NUT_DRIVER_USB
 		depends on PACKAGE_nut
 		bool "Build with support for USB drivers"

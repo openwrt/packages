@@ -23,13 +23,14 @@ PKG_MAINTAINER:=Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
 PKG_INSTALL:=1
 
 PKG_CONFIG_DEPENDS:= \
+	CONFIG_PACKAGE_nut-web-cgi \
+	CONFIG_NUT_DRIVER_NEON \
+	CONFIG_NUT_DRIVER_SERIAL \
 	CONFIG_NUT_DRIVER_SNMP \
 	CONFIG_NUT_DRIVER_USB \
-	CONFIG_NUT_DRIVER_SERIAL \
-	CONFIG_NUT_DRIVER_NEON \
-	CONFIG_NUT_SSL_NSS \
 	CONFIG_NUT_SSL \
-	CONFIG_PACKAGE_nut-web-cgi
+	CONFIG_NUT_SSL_CERTVERIFY \
+	CONFIG_NUT_SSL_NSS
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -600,6 +601,7 @@ CONFIGURE_ARGS += \
 	$(if $(CONFIG_NUT_SSL),--with-ssl=openssl) \
 	$(if $(CONFIG_NUT_SSL_NSS),--with-ssl=nss,--without-nss) \
 	$(if $(CONFIG_NUT_SSL),,$(if $(CONFIG_NUT_SSL_NSS),,--without-ssl)) \
+	$(if $(CONFIG_NUT_SSL)$(CONFIG_NUT_SSL_NSS),$(if $(CONFIG_NUT_SSL_CERTVERIFY),--with-ssl-client-validation,--without-ssl-client-validation)) \
 	--without-libltdl \
 	--enable-docs-changelog=no \
 	--without-macosx_ups \
