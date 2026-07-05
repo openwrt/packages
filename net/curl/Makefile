@@ -17,6 +17,9 @@ PKG_SOURCE_URL:=https://github.com/curl/curl/releases/download/curl-$(subst .,_,
 	https://curl.se/download/
 PKG_HASH:=aa1b66a70eace83dc624508745646c08ae561de512ab403adffb93ac87fc72e6
 
+PKG_SOURCE_SIG:=$(PKG_SOURCE).asc
+PKG_VALIDPGPKEYS:=27EDEAF22F3ABCEB50DB9A125CC908FDB71E12C2
+
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:haxx:libcurl
