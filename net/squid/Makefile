@@ -15,6 +15,9 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/squid-cache/squid/releases/download/SQUID_$(subst .,_,$(PKG_VERSION))
 PKG_HASH:=763b5a78561cedc4e47634fa42b8e6b8d46c87c949a151b4e7ac2396d2f97dea
 
+PKG_SOURCE_SIG:=$(PKG_SOURCE).asc
+PKG_VALIDPGPKEYS:=29B4B1F7CE03D1B1DED22F3028F85029FEF6E865
+
 PKG_MAINTAINER:=Marko Ratkaj <markoratkaj@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_CPE_ID:=cpe:/a:squid-cache:squid
