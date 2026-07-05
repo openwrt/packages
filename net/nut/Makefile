@@ -609,8 +609,7 @@ CONFIGURE_VARS += \
 
 # LLM claims --without-ssl will also disable NSS, so only use it for no SSL
 CONFIGURE_ARGS += \
-	--sysconfdir=/etc \
-	--with-confdir-suffix=/nut \
+	--with-confdir=/etc/nut \
 	--datadir=/usr/share/nut \
 	--with-dev \
 	--$(if $(CONFIG_NUT_DRIVER_USB),with,without)-usb \
