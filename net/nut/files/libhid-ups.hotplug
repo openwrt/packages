@@ -93,6 +93,7 @@ start_stop_driver() {
 			log_error "Failed to stop nut-driver instance (UPS) '$ups'." "libhid-ups" nut-usb-hotplug
 			return 0
 		}
+		return 0
 		;;
 	*)
 		# Ignore all other hotplug ACTION types
@@ -110,11 +111,12 @@ start_stop_driver() {
 nut_driver_config() {
 	local ups="$1"
 	local try_match="$2"
-	local cfg_vendorid cfg_productid
+	local cfg_vendorid cfg_productid val
 
 	# Configuration might not have a vendorid. This is allowed, and in that case
 	# we keep going as we will restart this UPS with no match.
-	config_get cfg_vendorid "$ups" vendorid
+	config_get_single "$ups" vendorid
+	cfg_vendorid="$val"
 	if [ -n "$cfg_vendorid" ] && ! check_valid_hex_number "${cfg_vendorid/0x/}"; then
 		log_error "Configured vendorid for '$ups' is not valid" "libhid-ups" nut-usb-hotplug
 		nd_driver_config_error=true
@@ -136,7 +138,9 @@ nut_driver_config() {
 
 	# Configuration might not have a productid. This is allowed, and in that case
 	# we keep going as we will restart this UPS with no match.
-	config_get cfg_productid "$ups" productid
+	config_get_single "$ups" productid
+	cfg_productid="$val"
+
 	if [ -n "$cfg_productid" ] && ! check_valid_hex_number "${cfg_productid/0x/}"; then
 		log_error "Configured productid for '$ups' is not valid" "libhid-ups" nut-usb-hotplug
 		nd_driver_config_error=true
@@ -225,19 +229,28 @@ perform_libhid_action() {
 	# Variable to indicate NUT driver instance (UPS) section found
 	local nd_found=false
 	local nd_driver_config_error=false
+	local pvendid pprodid ret
+
 	local pvendid pprodid
 
 	# Only find statepath and runas once per event
 	# defines STATEPATH
-	find_statepath "upsd" "nut_server" || {
+	STATEPATH="$(find_statepath "upsd_root" "nut_server_root")"
+	ret=$?
+
+	if [ "$ret" -ne 0 ] || [ -z "$STATEPATH" ]; then
+
 		log_error "Failed to set STATEPATH" "libhid-ups" nut-usb-hotplug
 		return 1
-	}
+	fi
 	# sets RUNAS
-	find_runas "upsd" "nut_server" || {
+	RUNAS="$(find_runas "upsd_root" "nut_server_root")"
+	ret=$?
+
+	if [ "$ret" -ne 0 ] || [ -z "$RUNAS" ]; then
 		log_error "Failed to set RUNAS" "libhid-ups" nut-usb-hotplug
 		return 1
-	}
+	fi
 
 	# PRODUCT comes from the calling hotplug event, and
 	# is of the form vendorid/productid/other
@@ -309,15 +322,15 @@ perform_libhid_action() {
 # This is an incomplete script which gets filled by libhid-ups.parsed-usermap.
 # This confuses shellcheck and reviewers, hence the disables below.
 # shellcheck disable=SC1073,SC1072
-case "$PRODUCT" in
-### insert libhid-ups.parsed-usermap content here ###
 # The result is cases of the form
-# "vendorid/productid/other" ) | \
+# "vendorid/productid/other" | \
 # to be matched against the PRODUCT from the calling hotplug event
-# and does NOT use ';;' (so falls through to code below).
 # The empty string matches when PRODUCT is empty, but does not match
 # when PRODUCT is neither empty nor one of the case targets, above
 
+# shellcheck disable=SC1073,SC1072
+case "$PRODUCT" in
+### insert libhid-ups.parsed-usermap content here ###
 "")
 	# Skip hotplug actions if NUT hotplug is disabled
 	# Uses NUT_DISABLE_HOTPLUG_PATH,  defined in nut-service.sh and sourced
