@@ -14,6 +14,9 @@ PKG_SOURCE_URL:=https://www.alsa-project.org/files/pub/lib/ \
 		https://distfiles.gentoo.org/distfiles/
 PKG_HASH:=9f79e813c08fc86cfa46dd75c4fcda1a4a51b482db2607e1fcfaafb92f588a31
 
+PKG_SOURCE_SIG:=$(PKG_SOURCE).sig
+PKG_VALIDPGPKEYS:=F04DF50737AC1A884C4B3D718380596DA6E59C91
+
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
