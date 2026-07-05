@@ -15,6 +15,9 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.clamav.net/downloads/production/
 PKG_HASH:=d874cabf3d4765b35b518ef535658a1e6ec74802006a1d613f9f124aa1343210
 
+PKG_SOURCE_SIG:=$(PKG_SOURCE).sig
+PKG_VALIDPGPKEYS:=5BADCA2665EF59DCF8A23D8B707F0DB480836771
+
 PKG_MAINTAINER:=Marko Ratkaj <markoratkaj@gmail.com> \
 		Lucian Cristian <lucian.cristian@gmail.com>
 PKG_LICENSE:=GPL-2.0-only
