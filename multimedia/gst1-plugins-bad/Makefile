@@ -14,6 +14,10 @@ PKG_RELEASE:=1
 PKG_SOURCE:=gst-plugins-bad-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gst-plugins-bad/
 PKG_HASH:=33dba95ed3933b742e4eac22063cdb81e14d54dc4cdd354a0000517273012661
+
+PKG_SOURCE_SIG:=$(PKG_SOURCE).asc
+PKG_VALIDPGPKEYS:=D637032E45B8C6585B9456565D2EEE6F6F349D7C
+
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-bad-$(PKG_VERSION)
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
