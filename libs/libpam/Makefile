@@ -14,6 +14,10 @@ PKG_RELEASE:=5
 PKG_SOURCE:=Linux-PAM-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/linux-pam/linux-pam/releases/download/v$(PKG_VERSION)
 PKG_HASH:=21dbcec6e01dd578f14789eac9024a18941e6f2702a05cf91b28c232eeb26ab0
+
+PKG_SOURCE_SIG:=$(PKG_SOURCE).asc
+PKG_VALIDPGPKEYS:=296D6F29A020808E8717A8842DB5BD89A340AEB7
+
 PKG_BUILD_DIR:=$(BUILD_DIR)/Linux-PAM-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Nikos Mavrogiannopoulos <n.mavrogiannopoulos@gmail.com>
