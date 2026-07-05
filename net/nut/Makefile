@@ -123,10 +123,15 @@ define Package/nut-common/install
 	$(INSTALL_DIR) $(1)/etc/nut
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(INSTALL_DIR) $(1)/lib/functions/nut
+	$(INSTALL_DIR) $(1)/usr/share/nut
 	$(INSTALL_DATA) ./files/nut-common.sh.functions $(1)/lib/functions/nut/nut-common.sh
 	$(INSTALL_DATA) ./files/nut-service.sh.functions $(1)/lib/functions/nut/nut-service.sh
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libupsclient.so* $(1)/usr/lib/
 	ln -sf /var/etc/nut/nut.conf $(1)/etc/nut/nut.conf
+	$(if $(CONFIG_NUT_SSL),printf "%s" "openssl" >$(PKG_BUILD_DIR)/ssl_backend)
+	$(if $(CONFIG_NUT_SSL_NSS),printf "%s" "nss" >$(PKG_BUILD_DIR)/ssl_backend)
+	$(if $(CONFIG_NUT_SSL)$(CONFIG_NUT_SSL_NSS),,printf "%s" "none" >$(PKG_BUILD_DIR)/ssl_backend)
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/ssl_backend $(1)/usr/share/nut/ssl_backend
 endef
 
 define Package/nut-server
