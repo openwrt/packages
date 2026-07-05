@@ -611,8 +611,7 @@ CONFIGURE_VARS += \
 # --without-ssl is used. See:
 # https://github.com/networkupstools/nut/blob/26177060be94a738bf2d612441af264c90ac37a9/configure.ac#L2930
 CONFIGURE_ARGS += \
-  --sysconfdir=/etc \
-  --with-confdir-suffix=/nut \
+  --with-confdir=/etc/nut \
   --datadir=/usr/share/nut \
   --with-dev \
   --$(if $(CONFIG_NUT_DRIVER_USB),with,without)-usb \
