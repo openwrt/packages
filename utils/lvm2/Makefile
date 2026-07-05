@@ -18,6 +18,10 @@ PKG_SOURCE_URL:=https://sourceware.org/pub/lvm2 \
                 https://www.mirrorservice.org/sites/sourceware.org/pub/lvm2
 
 PKG_HASH:=d58011b845df8ec13816ca13ea6c39d4cb3d038cd2d7d387acdf5681ad7d6637
+
+PKG_SOURCE_SIG:=$(PKG_SOURCE).asc
+PKG_VALIDPGPKEYS:=D501A478440AE2FD130A1BE8B9112431E509039F
+
 PKG_BUILD_DIR:=$(BUILD_DIR)/lvm2-$(BUILD_VARIANT)/$(PKG_NAME).$(PKG_VERSION)
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
