@@ -21,6 +21,9 @@ PKG_SOURCE_CODE:=tzcode$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://data.iana.org/time-zones/releases
 PKG_HASH:=114543d9f19a6bfeb5bca43686aea173d38755a3db1f2eec112647ae92c6f544
 
+PKG_SOURCE_SIG:=$(PKG_SOURCE).asc
+PKG_VALIDPGPKEYS:=7E3792A9D8ACF7D633BC1588ED97E90E62AA7E34
+
 include $(INCLUDE_DIR)/package.mk
 
 define Download/tzcode
