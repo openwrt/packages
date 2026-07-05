@@ -18,6 +18,9 @@ PKG_SOURCE_URL:= \
 	https://ftp.funet.fi/pub/mirrors/ftp.astron.com/pub/tcsh/old
 PKG_HASH:=eb16356243218c32f39e07258d72bf8b21e62ce94bb0e8a95e318b151397e231
 
+PKG_SOURCE_SIG:=$(PKG_SOURCE).asc
+PKG_VALIDPGPKEYS:=BE04995BA8F90ED0C0C176C471112AB16CB33B3A
+
 PKG_MAINTAINER:=Nuno Goncalves <nunojpg@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=Copyright
