@@ -8,6 +8,9 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://downloads.powerdns.com/releases/
 PKG_HASH:=b861d74abb0da59cff4e58760266198196eee7c10f2bfe86a3f5ccbd6768626b
 
+PKG_SOURCE_SIG:=$(PKG_SOURCE).sig
+PKG_VALIDPGPKEYS:=D6300CABCBF469BBE392E503A208ED4F8AF58446
+
 PKG_MAINTAINER:=Peter van Dijk <peter.van.dijk@powerdns.com>, Remi Gacogne <remi.gacogne@powerdns.com>
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING
