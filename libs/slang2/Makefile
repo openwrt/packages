@@ -18,6 +18,9 @@ PKG_SOURCE_URL:=https://www.jedsoft.org/releases/slang \
 	https://www.jedsoft.org/releases/slang/old
 PKG_HASH:=f9145054ae131973c61208ea82486d5dd10e3c5cdad23b7c4a0617743c8f5a18
 
+PKG_SOURCE_SIG:=$(PKG_SOURCE).asc
+PKG_VALIDPGPKEYS:=64083373E9E1DE997EBBE7784B82D0B82930237D
+
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
