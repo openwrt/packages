@@ -15,6 +15,10 @@ PKG_SOURCE_URL:=\
 	https://ftp.yz.yamagata-u.ac.jp/pub/dbms/mariadb/connector-c-$(PKG_VERSION) \
 	https://dlm.mariadb.com/3907132/Connectors/c/connector-c-$(PKG_VERSION)
 PKG_HASH:=156aed3b49f857d0ac74fb76f1982968bcbfd8382da3f5b6ae71f616729920d7
+
+PKG_SOURCE_SIG:=$(PKG_SOURCE).asc
+PKG_VALIDPGPKEYS:=177F4010FE56CA3336300305F1656F24C74CD1D8
+
 PKG_BUILD_DIR:=$(BUILD_DIR)/mariadb-connector-c-$(PKG_VERSION)-src
 
 PKG_MAINTAINER:=Michal Hrusecky <Michal@Hrusecky.net>
