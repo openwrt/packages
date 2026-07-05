@@ -67,7 +67,7 @@ listen_address() {
 srv_config() {
 	local srv="$1"
 	local config_file="$2"
-	local maxage maxconn certfile
+	local maxage maxconn val
 
 	config_get maxage "$srv" maxage
 	[ -n "$maxage" ] && printf "MAXAGE %s\n" "$maxage" >>"$config_file"
@@ -77,9 +77,21 @@ srv_config() {
 	config_get maxconn "$srv" maxconn
 	[ -n "$maxconn" ] && printf "MAXCONN %s\n" "$maxconn" >>"$config_file"
 
-	#NOTE: certs only apply to SSL-enabled version
-	config_get certfile "$srv" certfile
-	[ -n "$certfile" ] && printf "CERTFILE %s\n" "$certfile" >>"$config_file"
+	# If no certpath is specified, the do not use SSL
+	config_get val "$srv" certpath
+	[ -n "$val" ] && printf "CERTPATH %s\n" "$val" >>"$config_file"
+
+	config_get val "$srv" certident
+	[ -n "$val" ] && printf "CERTIDENT %s\n" "$val" >>"$config_file"
+
+	config_get val "$srv" certrequest
+	[ -n "$val" ] && printf "CERTREQUEST %s\n" "$val" >>"$config_file"
+
+	config_get_bool val "$srv" disable_weak_ssl 0
+	printf "DISABLE_WEAK_SSL %s\n" "$val" >>"$config_file"
+
+	config_get val "$srv" debug_min
+	[ -n "$val" ] && printf "DEBUG_MIN %s\n" "$val" >>"$config_file"
 }
 
 nut_user_instcmd() {
