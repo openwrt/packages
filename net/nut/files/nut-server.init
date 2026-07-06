@@ -556,6 +556,10 @@ service_triggers() {
 	}
 
 	config_get interface_reload_delay upsd interface_reload_delay $DEFAULT_PROCD_INTERFACE_RELOAD_DELAY
+	if ! check_unsigned_int "$interface_reload_delay" || [ -z "$interface_reload_delay" ]; then
+		log_msg "interface_reload_delay must be an unsigned integer" nut-server nut-server warn
+		interface_reload_delay="$DEFAULT_PROCD_INTERFACE_RELOAD_DELAY"
+	fi
 
 	interface_triggers "add_trigger" "upsd" "$interface_reload_delay" "nut-server" "upsd"
 	procd_add_reload_trigger "nut_server"
