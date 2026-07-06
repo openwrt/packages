@@ -140,8 +140,8 @@ build_server_config() {
 	# are named the same
 	config_foreach nut_user_add user "$USERS_C.new"
 	config_foreach listen_address listen_address "$UPSD_C.new"
-	if have_section_of_type "upsd"; then
-		config_foreach srv_config upsd "$UPSD_C.new"
+	if have_section_named "upsd" "upsd"; then
+		srv_config upsd "$UPSD_C.new"
 	else
 		# If config 'nut_server' does not have a 'upsd' section, use a default
 		# configuration

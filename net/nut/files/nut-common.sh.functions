@@ -175,19 +175,32 @@ log_error() {
 	log_msg "$reason" "$current_script" "$syslog_id" "error"
 }
 
-note_section_of_type() {
-	have_expected_section="true"
+note_section_match() {
+	local section="$1"
+	local wanted="$2"
+
+	if [ -n "$section" ] && [ "$section" = "$wanted" ]; then
+		have_expected_section="true"
+	fi
 }
 
-have_section_of_type() {
+have_section_named() {
 	local section_type="$1"
+	local section_name="$2"
+	local ret
 
 	# 'pseudo-global' to capture result from config_foreach
 	local have_expected_section="false"
-	config_foreach note_section_of_type "$section_type"
+	config_foreach note_section_match "$section_type" "$section_name"
+	ret=$?
 
 	if [ "$have_expected_section" = "true" ]; then
 		return 0
 	fi
-	return 1
+
+	if [ "$ret" = "0" ]; then
+		return 1
+	else
+		return $ret
+	fi
 }
