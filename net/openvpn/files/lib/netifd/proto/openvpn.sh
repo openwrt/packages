@@ -13,6 +13,9 @@
 	init_proto "$@"
 }
 
+CONF_DIR="/var/run"
+CONF_PREFIX="${CONF_DIR}/openvpn."
+
 # Helper to DRY up repeated option handling in init/setup
 option_builder() {
 	# option_builder <action:add|build> <LIST_VAR_NAME> <type>
@@ -92,6 +95,7 @@ option_builder() {
 # Not real config params used by openvpn - only by our proto handler
 PROTO_BOOLS='
 allow_deprecated
+defaultroute
 ipv6
 '
 
@@ -100,6 +104,10 @@ username
 password
 cert_password
 ovpnproto
+'
+
+PROTO_INTS='
+metric
 '
 
 proto_openvpn_init_config() {
@@ -116,6 +124,7 @@ proto_openvpn_init_config() {
 	# Add proto config options - netifd compares these for changes between interface events
 	option_builder add PROTO_BOOLS protobool
 	option_builder add PROTO_STRINGS string
+	option_builder add PROTO_INTS integer
 	option_builder add OPENVPN_BOOLS bool
 	option_builder add OPENVPN_UINTS uinteger
 	option_builder add OPENVPN_INTS integer
@@ -124,11 +133,88 @@ proto_openvpn_init_config() {
 	option_builder add OPENVPN_LIST list
 }
 
+# rewrite_config_line <dst> <old_path> <new_path>
+# Replace a `config <old_path>` line in <dst> with `config <new_path>`.
+# Handles absolute path, relative filename, no quotes / single quotes / double quotes,
+# and optional trailing whitespace.
+rewrite_config_line() {
+	local dst="$1"
+	local old="$2"
+	local new="$3"
+	local fname="${old##*/}"
+
+	# absolute path, three quote styles
+	# and relative filename, three quote styles
+	sed -i \
+		-e "s|^\([[:space:]]*config[[:space:]]\+\)${old}[[:space:]]*$|\1${new}|" \
+		-e "s|^\([[:space:]]*config[[:space:]]\+\)'${old}'[[:space:]]*$|\1${new}|" \
+		-e "s|^\([[:space:]]*config[[:space:]]\+\)\"${old}\"[[:space:]]*$|\1${new}|" \
+		-e "s|^\([[:space:]]*config[[:space:]]\+\)${fname}[[:space:]]*$|\1${new}|" \
+		-e "s|^\([[:space:]]*config[[:space:]]\+\)'${fname}'[[:space:]]*$|\1${new}|" \
+		-e "s|^\([[:space:]]*config[[:space:]]\+\)\"${fname}\"[[:space:]]*$|\1${new}|" \
+		"$dst"
+}
+
+# Recursively copy config files referenced by `config` directives.
+# Updates the `config` paths in the destination file to point to the copies.
+# Appends all copied files to the global CONFIG_FILES variable.
+#
+# Usage: copy_config_recursive <dst_file> <visited>
+#   dst_file: the already-copied config file to scan for `config` lines
+#   visited:  pipe-delimited list of source paths already processed (cycle guard)
+copy_config_recursive() {
+	local dst="$1"
+	local visited="$2"
+	local ref dst_ref fname
+
+	while IFS= read -r ref; do
+		# skip empty lines
+		[ -n "$ref" ] || continue
+		case "$ref" in
+			*"$CONF_PREFIX"*) continue ;;
+		esac
+
+		# expand relative path to absolute using cd_dir
+		case "$ref" in
+			/*) ;;
+			*) ref="$cd_dir/$ref" ;;
+		esac
+
+		# cycle guard
+		case "$visited" in
+			*"|$ref|"*) continue ;;
+		esac
+
+		[ -f "$ref" ] || continue
+
+		fname="${ref##*/}"
+		dst_ref="${CONF_PREFIX}${config}.user_${fname}"
+
+		cp "$ref" "$dst_ref" || {
+			logger -t "openvpn_$config(proto)" -p daemon.err "failed to copy config '$ref' to '$dst_ref'"
+			continue
+		}
+
+		# rewrite the `config` line in the parent file to point to the copy
+		rewrite_config_line "$dst" "$ref" "$dst_ref"
+
+		# accumulate file list
+		CONFIG_FILES="$CONFIG_FILES $dst_ref"
+
+		# recurse
+		copy_config_recursive "$dst_ref" "$visited|$ref|"
+
+	done <<EOF
+$(sed -n "/^[[:space:]]*config[[:space:]]/ { s/^[[:space:]]*config[[:space:]][[:space:]]*//; s/^['\"]//; s/[[:space:]]*['\"][[:space:]]*$//; s/[[:space:]]*$//; p; }" "$dst")
+EOF
+}
+
 proto_openvpn_setup() {
 	local config="$1"
-	local conf_file="/var/run/openvpn.$config.conf"
+	local conf_file="${CONF_PREFIX}$config.conf"
 	local exec_params cd_dir
 
+	mkdir -p "$CONF_DIR"
 	exec_params=
 
 	json_get_var dev_type dev_type
@@ -141,7 +227,7 @@ proto_openvpn_setup() {
 	cd_dir="${config_file%/*}"
 	[ "$cd_dir" = "$config_file" ] && cd_dir="/"
 	append exec_params "--cd $cd_dir"
-	append exec_params "--status /var/run/openvpn.$config.status"
+	append exec_params "--status ${CONF_PREFIX}$config.status"
 	append exec_params "--syslog openvpn_$config"
 	append exec_params "--tmp-dir /tmp"
 
@@ -160,73 +246,29 @@ proto_openvpn_setup() {
 
 	json_get_vars auth_user_pass askpass username password cert_password
 
-	mkdir -p /var/run
-	# combine into --askpass:
-	if [ -n "$cert_password" ]; then
-		cp_file="/var/run/openvpn.$config.pass"
-		umask 077
-		printf '%s\n' "${cert_password:-}" > "$cp_file"
-		umask 022
-		append exec_params "--askpass $cp_file"
-	elif [ -n "$askpass" ]; then
-		append exec_params "--askpass $askpass"
-	fi
-
-	# combine into --auth-user-pass:
-	if [ -n "$username" ] || [ -n "$password" ]; then
-		auth_file="/var/run/openvpn.$config.auth"
-		umask 077
-		printf '%s\n' "${username:-}" "${password:-}" > "$auth_file"
-		umask 022
-		append exec_params "--auth-user-pass $auth_file"
-	elif [ -n "$auth_user_pass" ]; then
-		append exec_params "--auth-user-pass $auth_user_pass"
-	fi
-
 	# Testing option
 	# ${tls_exit:+--tls-exit} \
 
 	# Check 'script_security' option
 	json_get_var script_security script_security
-	[ -z "$script_security" ] && script_security=3
+	[ -z "$script_security" ] && script_security=2
 
-	# Add default hotplug handling if 'script_security' option is equal '3'
-	if [ "$script_security" -eq '3' ]; then
-		local ipv6
+	# Add default hotplug handling if 'script_security' option is ge '2'
+	if [ "$script_security" -ge '2' ]; then
 		local up down route_up route_pre_down
 		local client tls_client tls_server
 		local tls_crypt_v2_verify mode learn_address client_connect
 		local client_crresponse client_disconnect auth_user_pass_verify
 
-		logger -t "openvpn(proto)" \
-			-p daemon.info "Enabled default hotplug processing, as the openvpn configuration 'script_security' is '3'"
-
-		append exec_params "--setenv INTERFACE $config"
-		append exec_params "--script-security 3"
-
 		json_get_vars up down route_up route_pre_down
 		json_get_vars tls_crypt_v2_verify mode learn_address client_connect
 		json_get_vars client_crresponse client_disconnect auth_user_pass_verify
 
-		json_get_vars ipv6
-		#default ipv6 is enabled
-		[ -n "$ipv6" ] || ipv6=1
-		append exec_params "--setenv IPV6 '$ipv6'"
-
 		json_get_vars ifconfig_noexec route_noexec
-		[ -z "$ifconfig_noexec" ] && append exec_params "--ifconfig-noexec"
-		[ -z "$route_noexec" ] && append exec_params "--route-noexec"
 
-		append exec_params "--up '/usr/libexec/openvpn-hotplug'"
 		[ -n "$up" ] && append exec_params "--setenv user_up '$up'"
-
-		append exec_params "--down '/usr/libexec/openvpn-hotplug'"
 		[ -n "$down" ] && append exec_params "--setenv user_down '$down'"
-
-		append exec_params "--route-up '/usr/libexec/openvpn-hotplug'"
 		[ -n "$route_up" ] && append exec_params "--setenv user_route_up '$route_up'"
-
-		append exec_params "--route-pre-down '/usr/libexec/openvpn-hotplug'"
 		[ -n "$route_pre_down" ] && append exec_params "--setenv user_route_pre_down '$route_pre_down'"
 
 		append exec_params "--tls-crypt-v2-verify '/usr/libexec/openvpn-hotplug'"
@@ -260,16 +302,106 @@ proto_openvpn_setup() {
 			json_get_var tls_verify tls_verify
 			[ -n "$tls_verify" ] && append exec_params "--setenv user_tls_verify '$tls_verify'"
 		fi
-	else
-		logger -t "openvpn(proto)" \
-			-p daemon.warn "Default hotplug processing disabled, as the openvpn configuration 'script_security' is less than '3'"
 	fi
 
+	# Write first-phase params to conf_file
 	eval "set -- $exec_params"
 	umask 077
 	printf "%b\n" "${exec_params//--/\\n}" > "$conf_file"
 	umask 022
-	proto_run_command "$config" openvpn --config "$conf_file"
+
+	local CONFIG_FILES="$conf_file"
+	# Copy user config and recursively copy all referenced config files,
+	# rewriting `config` directives to point to the copies in CONF_DIR.
+	local user_conf="${CONF_PREFIX}$config.user.conf"
+	if [ -n "$config_file" -a -e "$config_file" ]; then
+		cp "$config_file" "$user_conf" || {
+			logger -t "openvpn_$config(proto)" -p daemon.err "failed to copy config '$config_file'"
+			return 1
+		}
+		CONFIG_FILES="$CONFIG_FILES $user_conf"
+		copy_config_recursive "$user_conf" ""
+
+		# Update the `config` reference in conf_file to point to the copied user_conf.
+		rewrite_config_line "$conf_file" "$config_file" "$user_conf"
+	fi
+
+	local ipv6 defaultroute metric
+	exec_params=
+
+	# combine into --askpass:
+	if [ -n "$cert_password" ]; then
+		cp_file="${CONF_PREFIX}$config.pass"
+		umask 077
+		printf '%s\n' "${cert_password:-}" > "$cp_file"
+		umask 022
+		append exec_params "--askpass $cp_file"
+	elif [ -n "$askpass" ]; then
+		append exec_params "--askpass $askpass"
+	fi
+
+	# combine into --auth-user-pass:
+	if [ -n "$username" ] || [ -n "$password" ]; then
+		auth_file="${CONF_PREFIX}$config.auth"
+		umask 077
+		printf '%s\n' "${username:-}" "${password:-}" > "$auth_file"
+		umask 022
+		append exec_params "--auth-user-pass $auth_file"
+	elif [ -n "$auth_user_pass" ]; then
+		append exec_params "--auth-user-pass $auth_user_pass"
+	fi
+
+	#Always Override Options
+	append exec_params "--setenv INTERFACE $config"
+	append exec_params "--script-security 3"
+	append exec_params "--ifconfig-noexec"
+	append exec_params "--route-noexec"
+	append exec_params "--up '/usr/libexec/openvpn-hotplug'"
+	append exec_params "--down '/usr/libexec/openvpn-hotplug'"
+	append exec_params "--route-up '/usr/libexec/openvpn-hotplug'"
+	append exec_params "--route-pre-down '/usr/libexec/openvpn-hotplug'"
+	append exec_params "--persist-tun"
+	append exec_params "--persist-key"
+
+	local is_client=0
+	local client_detect_file="${CONF_PREFIX}$config.client_detected"
+	rm -f "$client_detect_file"
+
+	# filter out dup options - applied to all copied config files
+	sed -i \
+		-e "/^[[:space:]]*remote[[:space:]]/w $client_detect_file" \
+		-e '/^[[:space:]]*script-security[[:space:]]*/s/^/# /' \
+		-e '/^[[:space:]]*ifconfig-noexec[[:space:]]*/s/^/# /' \
+		-e '/^[[:space:]]*route-noexec[[:space:]]*/s/^/# /' \
+		-e '/^[[:space:]]*up[[:space:]]/s/^/# /' \
+		-e '/^[[:space:]]*down[[:space:]]/s/^/# /' \
+		-e '/^[[:space:]]*route-up[[:space:]]/s/^/# /' \
+		-e '/^[[:space:]]*route-pre-down[[:space:]]/s/^/# /' \
+		-e '/^[[:space:]]*persist-tun[[:space:]]*/s/^/# /' \
+		-e '/^[[:space:]]*persist-key[[:space:]]*/s/^/# /' \
+		$CONFIG_FILES
+	[ -s "$client_detect_file" ] && {
+		is_client=1
+	}
+	rm -f "$client_detect_file"
+
+	json_get_vars ipv6 defaultroute metric
+	#default ipv6 is enabled
+	[ -n "$ipv6" ] || ipv6=1
+	append exec_params "--setenv IPV6 $ipv6"
+
+	[ -n "$metric" ] && append exec_params "--setenv METRIC $metric"
+
+	if [ "$is_client" = 1 ]; then
+		append exec_params "--redirect-gateway def1 ipv6"
+		[ -n "$defaultroute" ] || defaultroute=1
+		sed -i '/^[[:space:]]*redirect-gateway[[:space:]]*/s/^/# /' $CONFIG_FILES
+	else
+		defaultroute=0
+	fi
+	append exec_params "--setenv DEFAULTROUTE $defaultroute"
+
+	proto_run_command "$config" openvpn $exec_params --config "$conf_file"
 
 	# last param wins; user provided status or syslog supersedes.
 }
@@ -284,12 +416,14 @@ proto_openvpn_renew() {
 
 proto_openvpn_teardown() {
 	local iface="$1"
-	rm -f \
-		"/var/run/openvpn.$iface.conf" \
-		"/var/run/openvpn.$iface.pass" \
-		"/var/run/openvpn.$iface.auth" \
-		"/var/run/openvpn.$iface.status" 
+
 	proto_kill_command "$iface"
+	[ -n "$iface" ] && rm -f "${CONF_PREFIX}${iface}."*
+
+	/usr/libexec/openvpn-hotplug cleanup "$iface"
+
+	proto_init_update "*" 0
+	proto_send_update "$iface"
 }
 
 [ -n "$INCLUDE_ONLY" ] || {
