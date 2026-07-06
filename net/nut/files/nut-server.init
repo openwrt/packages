@@ -101,15 +101,13 @@ start_ups_driver() {
 
 	procd_open_instance "$ups"
 	procd_set_param respawn
-	procd_set_param stderr 0 # stderr is just a dup of stdout + syslog
+	procd_set_param stderr 0 # stderr is just a dup of stdout + logger (with -s)
 	procd_set_param stdout 1
 	procd_set_param env NUT_QUIET_INIT_UPSNOTIFY=true
 	procd_set_param env NUT_STATEPATH="${STATEPATH}"
 	procd_set_param command "/usr/libexec/nut/${driver}"
 	procd_append_param command -FF -a "$ups"
-	if [ -n "$RUNAS" ]; then
-		procd_append_param command -u "$RUNAS"
-	fi
+	procd_append_param command -u "$RUNAS"
 	procd_close_instance
 
 	# If upsd is running, reload it to pick up new driver
@@ -142,16 +140,13 @@ common_preconditions() {
 		exit 1
 	}
 
-	if have_section_of_type "upsd"; then
-		# Only find statepath and runas once per service start or reload
-		# defines STATEPATH
-		find_statepath "upsd" "nut_server" || {
+	# Only find statepath and runas once per service start or reload
+	if have_section_named "upsd" "upsd"; then
+		STATEPATH="$(find_statepath "upsd" "nut_server")" || {
 			log_error_exit "Failed to determine STATEPATH" "nut-server" "nut-server"
 		}
-		# sets RUNAS
-		find_runas "upsd" "nut_server" || {
-			log_error "Failed to determine RUNAS" "nut-server" "nut-server"
-			return 1
+		RUNAS="$(find_runas "upsd" "nut_server")" || {
+			log_error_exit "Failed to determine RUNAS" "nut-server" "nut-server"
 		}
 	else
 		# If there is no 'upsd' section in the nut_server config file, use
@@ -317,15 +312,13 @@ start_server_instance() {
 
 	procd_open_instance upsd
 	procd_set_param respawn
-	procd_set_param stderr 0 # stderr is just a dup of stdout + syslog
+	procd_set_param stderr 0 # stderr is just a dup of stdout + logger (with -s)
 	procd_set_param stdout 1
 	procd_set_param env NUT_QUIET_INIT_UPSNOTIFY=true
 	procd_set_param env NUT_STATEPATH="$STATEPATH"
 	procd_set_param command /usr/sbin/upsd
 	procd_append_param command -FF
-	if [ -n "$RUNAS" ]; then
-		procd_append_param command -u "$RUNAS"
-	fi
+	procd_append_param command -u "$RUNAS"
 	procd_close_instance
 }
 

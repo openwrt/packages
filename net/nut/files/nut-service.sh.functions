@@ -27,7 +27,9 @@ NUT_BASE_STATEPATH="/var/run/nut"
 
 # STATEPATH and RUNAS values are not valid until after find_statepath
 # and/or find_runas
+# shellcheck disable=SC2034
 STATEPATH=""
+# shellcheck disable=SC2034
 RUNAS=""
 
 # Default delay between interface change and interface trigger reload action
@@ -147,96 +149,66 @@ signal_instance() {
 	return 0
 }
 
-config_foreach_get() {
-	local section="$1"
-	local option="$2"
-	local value
-
-	# nut_found_value is a 'pseudo-global' variable so that the value can be
-	# passed back to the calling function (that is the variable is defined in
-	# that function's context, and modification in functions called from that
-	# function will update the variable there).
-	config_get value "$section" "$option"
-	if [ -n "$value" ]; then
-		nut_found_value="$value"
-		nut_found_value_count=$((nut_found_value_count + 1))
-	fi
-	return 0
-}
-
-find_foreach_value() {
-	local section_type="$1"
-	local package="$2"
-	local option="$3"
-	local default="$4"
-	local nut_found_value=""
-	local nut_found_value_count=0
-
-	# 'pseudo-global' variable so that the value can be passed back to this function (that is the
-	# variable is defined in this function's context, and modification in functions called from
-	# this function will update variable here).
-	nut_value_via_foreach=""
-
-	config_foreach config_foreach_get "$section_type" "$option" || {
-		log_error "config_foreach for config_foreach_get for '$package'.'$section_type' failed." nut-service.sh nut-service
-		# nut_found_value and nut_found_value_count are indeterminate on config_foreach failure
-		nut_found_value=""
-		nut_found_value_count=0
-		return 1
-	}
-
-	if [ "$nut_found_value_count" -gt 1 ]; then
-		# Informational log messages, not error
-		logger -t nut-common "Found more than one '$option' setting in '$package' for '$section_type'."
-		logger -t nut-common "Using last found '$option': nut_found_value='$nut_found_value'"
-	fi
-
-	if [ -z "$nut_found_value" ]; then
-		nut_found_value="$default"
-	fi
-
-	nut_value_via_foreach="$nut_found_value"
-	return 0
-}
-
 # Store path for NUT working data in the global variable STATEPATH
 # shellcheck disable=SC2329
 find_statepath() {
-	local section_type="$1"
+	local section="$1"
 	local package="$2"
-	# Callers should not need to see the variable below outside this function
-	# Conversely, functions called by this function are able to see and set
-	# the variable below, which acts as a 'pseudo-global' to called functions.
-	local nut_value_via_foreach=""
+	local ret statepath
 
-	find_foreach_value "$section_type" "$package" statepath "$NUT_BASE_STATEPATH" || return 1
+	# Subshell so as not to interfere with main config_load
+	(
+		config_load "$package" || {
+			log_config_load_error "$package" "nut-service.sh" "nut-service"
+			exit 1
+		}
+		config_get statepath "$section" statepath "$NUT_BASE_STATEPATH"
+		ret=$?
 
-	# shellcheck disable=2034
-	STATEPATH="$nut_value_via_foreach"
-	return 0
+		if [ -n "$statepath" ]; then
+			printf "%s" "$statepath"
+		elif [ "$ret" != "0" ]; then
+			exit $ret
+		else
+			exit 1
+		fi
+	) || return $?
 }
 
 # Store user under which to run daemon processes
 # shellcheck disable=SC2329
 find_runas() {
-	local section_type="$1"
+	local section="$1"
 	local package="$2"
 	local fallback_runas="$3"
-	# Callers should not need to see the variable below outside this function
-	# Conversely, functions called by this function are able to see and set
-	# the variable below, which acts as a 'pseudo-global' to called functions.
-	local nut_value_via_foreach=""
+	local runas ret
 
-	find_foreach_value "$section_type" "$package" runas "${fallback_runas:-nut}" || return 1
-	[ -n "$nut_value_via_foreach" ] || return 1
-	[ -n "$(id -un "$nut_value_via_foreach")" ] || {
-		log_error "User '$nut_value_via_foreach' specified for RUNAS does not exist." nut-service.sh nut-service
-		return 1
-	}
+	# Subshell so as not to interfere with main config_load
+	(
+		config_load "$package" || {
+			log_config_load_error "$package" "nut-service.sh" "nut-service"
+			exit 1
+		}
+		config_get runas "$section" runas "${fallback_runas:-nut}"
+		ret=$?
 
-	# shellcheck disable=2034
-	RUNAS="$nut_value_via_foreach"
-	return 0
+		if [ -z "$runas" ]; then
+			if [ "$ret" != "0" ]; then
+				exit $ret
+			else
+				exit 1
+			fi
+		fi
+
+		if [ -n "$(id -un "$runas")" ]; then
+			printf "%s" "$runas"
+		else
+			# We omit the output on stderr to avoid potential mixing with the intended printf output on stdout,
+			# when called via command substitution, while maintaining log output to syslog
+			log_error "User '$runas' specified for 'runas' does not exist." nut-service.sh nut-service 2>/dev/null
+			exit 1
+		fi
+	) || return $?
 }
 
 # Detect if service is running under procd, with no instances
