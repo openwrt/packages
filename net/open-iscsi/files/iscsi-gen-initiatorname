@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# /sbin/iscsi-gen-initiatorname
+# /usr/sbin/iscsi-gen-initiatorname
 #
 # Generate a default iSCSI Initiatorname for SUSE installations.
 #
@@ -27,7 +27,7 @@ if [ -f /etc/iscsi/initiatorname.iscsi -a -z "$FORCE" ] ; then
 	eval $(cat /etc/iscsi/initiatorname.iscsi | sed -e '/^#/d')
 	if [ "$iSCSI_INITIATOR_NAME" != "$InitiatorName" ] ; then
 	    echo "iSCSI Initiatorname from iBFT is different from the current setting."
-	    echo "Please call '/sbin/iscsi-gen-initiatorname -f' to update the iSCSI Initiatorname."
+	    echo "Please call '/usr/sbin/iscsi-gen-initiatorname -f' to update the iSCSI Initiatorname."
 	    exit 1
 	fi
     fi
@@ -45,7 +45,7 @@ if [ "$iSCSI_INITIATOR_NAME" ] ; then
 ## Any change here will not be reflected to the iBFT BIOS tables.
 ## If a different initiatorname is required please change the 
 ## initiatorname in the BIOS setup and call
-## /sbin/iscsi-gen-initiatorname -f
+## /usr/sbin/iscsi-gen-initiatorname -f
 ## to recreate an updated version of this file.
 ##
 InitiatorName=$iSCSI_INITIATOR_NAME
