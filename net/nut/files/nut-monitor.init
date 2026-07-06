@@ -201,6 +201,8 @@ stop_service() {
 }
 
 service_triggers() {
+	local val interface_reload_delay
+
 	# No config, or error loading config is fatal
 	config_load nut_monitor || {
 		log_config_load_error "nut_monitor" "nut-monitor" "nut-monitor"
@@ -208,6 +210,10 @@ service_triggers() {
 	}
 
 	config_get interface_reload_delay upsmon interface_reload_delay $DEFAULT_PROCD_INTERFACE_RELOAD_DELAY
+	if ! check_unsigned_int "$interface_reload_delay" || [ -z "$interface_reload_delay" ]; then
+		log_msg "interface_reload_delay must be an unsigned integer" nut-monitor nut-monitor warn
+		interface_reload_delay="$DEFAULT_PROCD_INTERFACE_RELOAD_DELAY"
+	fi
 
 	# We do not pass a variadic instance name as the nut-monitor initscript does
 	# not need an additional instance name argument, only the initscript name

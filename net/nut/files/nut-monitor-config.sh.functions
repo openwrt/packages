@@ -137,22 +137,15 @@ nut_upsmon_conf() {
 		OVERDURATION | \
 		OBLBDURATION)
 			config_get val "$cfg" "$uci_option"
-			case "${val#[-]}" in
-			*[!0123456789]*)
+			if ! check_signed_int "$val"; then
 				log_error "upsmon section '$cfg' bad value for '$uci_option'" nut-monitor-config.sh nut-monitor-config
 				return 1
-				;;
-			'')
-				# Ignore options with no configuration
-				:
-				;;
-			*)
+			elif [ -n "$val" ]; then # Ignore options with no configuration
 				if ! printf "%s %s\n" "$nut_option" "$val" >>"$config_file"; then
 					log_error "upsmon section '$cfg' failed to write '$nut_option'" nut-monitor-config.sh nut-monitor-config
 					return 1
 				fi
-				;;
-			esac
+			fi
 			;;
 		# integer: negative values not allowed
 		DEADTIME | \
@@ -165,22 +158,15 @@ nut_upsmon_conf() {
 		POLLFREQALERT | \
 		RBWARNTIME)
 			config_get val "$cfg" "$uci_option"
-			case "$val" in
-			*[!0123456789]*)
+			if ! check_unsigned_int "$val"; then
 				log_error "upsmon section '$cfg' bad value for '$uci_option'" nut-monitor-config.sh nut-monitor-config
 				return 1
-				;;
-			'')
-				# Ignore options with no configuration
-				:
-				;;
-			*)
+			elif [ -n "$val" ]; then # Ignore options with no configuration
 				if ! printf "%s %s\n" "$nut_option" "$val" >>"$config_file"; then
 					log_error "upsmon section '$cfg' failed to write '$nut_option'" nut-monitor-config.sh nut-monitor-config
 					return 1
 				fi
-				;;
-			esac
+			fi
 			;;
 		SHUTDOWNCMD)
 			upsmon_conf_get_write "$cfg" "$config_file" "$uci_option" "$nut_option"
@@ -258,12 +244,48 @@ nut_upsmon_add() {
 	local type
 
 	config_get upsname "$cfg" upsname "$cfg"
+	if ! check_safe_uci_name "$upsname"; then
+		log_error "upsmon section '$cfg' has invalid upsname" nut-monitor-config.sh nut-monitor-config
+		upsmon_conf_fail="true"
+		# we do not error exit so as not abort processing of other sections on the config_foreach
+		return 0
+	fi
 	config_get hostname "$cfg" hostname localhost
+	if ! check_safe_hostname_or_ip "$hostname"; then
+		log_error "upsmon section '$cfg' has invalid hostname" nut-monitor-config.sh nut-monitor-config
+		upsmon_conf_fail="true"
+		# we do not error exit so as not abort processing of other sections on the config_foreach
+		return 0
+	fi
 	config_get port "$cfg" port
+	if ! check_port "$port"; then
+		log_error "upsmon section '$cfg' has invalid port" nut-monitor-config.sh nut-monitor-config
+		upsmon_conf_fail="true"
+		# we do not error exit so as not abort processing of other sections on the config_foreach
+		return 0
+	fi
 	config_get powervalue "$cfg" powervalue 1
+	if ! check_unsigned_int "$powervalue" || [ -z "$powervalue" ]; then
+		log_error "upsmon section '$cfg' has invalid powervalue" nut-monitor-config.sh nut-monitor-config
+		upsmon_conf_fail="true"
+		# we do not error exit so as not abort processing of other sections on the config_foreach
+		return 0
+	fi
 	config_get username "$cfg" username
 	config_get password "$cfg" password
 	config_get type "$cfg" type secondary
+	case "$type" in
+	primary | secondary)
+		# primary or secondary are the only allowed values
+		:
+		;;
+	*)
+		log_error "upsmon section '$cfg' has invalid user/ups type" nut-monitor-config.sh nut-monitor-config
+		upsmon_conf_fail="true"
+		# we do not error exit so as not abort processing of other sections on the config_foreach
+		return 0
+		;;
+	esac
 
 	system="$upsname@$hostname"
 	if [ -n "$port" ]; then

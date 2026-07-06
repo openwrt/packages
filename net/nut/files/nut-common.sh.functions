@@ -68,6 +68,18 @@ check_valid_user_group_name() {
 	return 0
 }
 
+# Just a check for safe/allowed characters, not a full validation
+check_safe_hostname_or_ip() {
+	local hostname="$1"
+
+	case "$hostname" in
+	"" | *[!a-zA-Z0-9.:-\[\]-]*)
+		return 1
+		;;
+	esac
+	return 0
+}
+
 # shellcheck disable=SC2329,SC2317
 check_valid_hex_number() {
 	local number="$1"
@@ -111,6 +123,58 @@ check_valid_hex_number() {
 	esac
 	# We do not return 0 here as it is unnecessary (all case branches, including
 	# catch-all have a return) and shellcheck will complain if we do.
+}
+
+# also passes on an empty value
+check_signed_int() {
+	local number="$1"
+
+	# a minus sign with no number is invalid
+	if [ "$number" = "-" ]; then
+		return 1
+	fi
+
+	case "${number#[-]}" in
+	*[!0123456789]*)
+		return 1
+		;;
+	*)
+		return 0
+		;;
+	esac
+}
+
+# also passes on an empty value
+check_unsigned_int() {
+	local number="$1"
+
+	case "$number" in
+	*[!0123456789]*)
+		return 1
+		;;
+	*)
+		return 0
+		;;
+	esac
+}
+
+# check for valid port, if present
+# also passes on an empty value
+check_port() {
+	local port="$1"
+
+	if [ -n "$port" ]; then
+		case "$port" in
+		*[!0-9]*)
+			return 1
+			;;
+		esac
+		# Catches port numbers outside valid range (1-65535)
+		if [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; then
+			return 1
+		fi
+	fi
+	return 0
 }
 
 # Wrap logging, in case we decide to update the logging, everywhere

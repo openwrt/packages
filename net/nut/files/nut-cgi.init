@@ -170,12 +170,10 @@ validate_host() {
 			fi
 			;;
 		hostname)
-			case "$hostname" in
-			"" | *[!a-zA-Z0-9.:-\[\]-]*)
+			if ! check_safe_hostname_or_ip "$hostname"; then
 				log_validation_error "$var" "$ups"
 				return 1
-				;;
-			esac
+			fi
 			;;
 		displayname)
 			# We accept a minimally useful set of characters for a display name
@@ -191,24 +189,9 @@ validate_host() {
 			esac
 			;;
 		port)
-			# We don't log missing port log, as port is optional (NUT defaults
-			# to using 3493 when it is not present)
-			if [ -n "$port" ]; then
-				case "$port" in
-				0*)
-					log_validation_error "$var" "$ups"
-					return 1
-					;;
-				*[!0-9]*)
-					log_validation_error "$var" "$ups"
-					return 1
-					;;
-				esac
-				# Catches illegal port numbers, including negative port numbers
-				if [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; then
-					log_error "Port set, but not between 1-65535 for '$ups'" nut-cgi nut-cgi
-					return 1
-				fi
+			if ! check_port "$port"; then
+				log_validation_error "$var" "$ups"
+				return 1
 			fi
 			;;
 		esac
