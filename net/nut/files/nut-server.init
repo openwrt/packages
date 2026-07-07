@@ -251,7 +251,7 @@ service_preconditions() {
 
 		case $ret in
 		0)
-			interface_triggers "check_interface_up" "upsd" || should_start_srv=false
+			check_interface_up "upsd" || should_start_srv=false
 			;;
 		*)
 			should_start_srv=false
@@ -264,7 +264,7 @@ service_preconditions() {
 
 		case $ret in
 		0 | 2)
-			interface_triggers "check_interface_up" "upsd" || should_stop_srv=true
+			check_interface_up "upsd" || should_stop_srv=true
 			;;
 		*)
 			should_stop_srv=true
@@ -561,6 +561,8 @@ service_triggers() {
 		interface_reload_delay="$DEFAULT_PROCD_INTERFACE_RELOAD_DELAY"
 	fi
 
-	interface_triggers "add_trigger" "upsd" "$interface_reload_delay" "nut-server" "upsd"
+	add_interface_triggers "upsd" "$interface_reload_delay" "nut-server" "upsd" || {
+		log_error "Failed to add interface triggers" nut-server nut-server
+	}
 	procd_add_reload_trigger "nut_server"
 }
