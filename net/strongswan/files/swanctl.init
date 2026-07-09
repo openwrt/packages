@@ -652,20 +652,28 @@ config_remote() {
 	swanctl_xappend0 ""
 }
 
+config_charon_install_routes() {
+	local conf="$1"
+
+	local rtinstall_enabled install_routes
+
+	config_get_bool rtinstall_enabled "$conf" rtinstall_enabled 1
+	[ $rtinstall_enabled -eq 1 ] && install_routes=yes || install_routes=no
+
+	swan_xappend1 "install_routes = $install_routes"
+}
+
 config_strongswan_generate() {
 	local conf="$1"
 
-	local debug install_routes routing_tables_ignored device_list
+	local debug routing_tables_ignored device_list
 
-	local rtinstall_enabled
 	local routing_table
 	local routing_table_id
 	local interface
 	local interface_list
 
 	config_get debug "$conf" debug 0
-	config_get_bool rtinstall_enabled "$conf" rtinstall_enabled 1
-	[ $rtinstall_enabled -eq 1 ] && install_routes=yes || install_routes=no
 
 	# prepare extra charon config option ignore_routing_tables
 	for routing_table in $(config_get "$conf" "ignore_routing_tables"); do
@@ -691,7 +699,7 @@ config_strongswan_generate() {
 	fi
 
 	swan_xappend0 "charon {"
-	swan_xappend1 "install_routes = $install_routes"
+	config_charon_install_routes "$conf"
 	[ -n "$routing_tables_ignored" ] && swan_xappend1 "ignore_routing_tables = $routing_tables_ignored"
 	[ -n "$device_list" ] && swan_xappend1 "interfaces_use = $device_list"
 	swan_xappend1 "start-scripts {"
