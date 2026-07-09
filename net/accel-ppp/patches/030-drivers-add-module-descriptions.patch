@@ -1,0 +1,31 @@
+From: Abdulkader Alrezej <alrazj.abdulkader@gmail.com>
+Date: Fri, 10 Jul 2026 12:30:00 +0300
+Subject: [PATCH] drivers: add module descriptions
+
+Linux 6.18 modpost warns when an external module does not provide a
+description. Add concise descriptions for both ACCEL-PPP drivers.
+
+Signed-off-by: Abdulkader Alrezej <alrazj.abdulkader@gmail.com>
+---
+ drivers/ipoe/ipoe.c         | 1 +
+ drivers/vlan_mon/vlan_mon.c | 1 +
+ 2 files changed, 2 insertions(+)
+
+--- a/drivers/ipoe/ipoe.c
++++ b/drivers/ipoe/ipoe.c
+@@ -2040,4 +2040,5 @@ static void __exit ipoe_fini(void)
+ 
+ module_init(ipoe_init);
+ module_exit(ipoe_fini);
++MODULE_DESCRIPTION("ACCEL-PPP IPoE virtual interface driver");
+ MODULE_LICENSE("GPL");
+--- a/drivers/vlan_mon/vlan_mon.c
++++ b/drivers/vlan_mon/vlan_mon.c
+@@ -824,6 +824,7 @@ static void __exit vlan_mon_fini(void)
+ 
+ module_init(vlan_mon_init);
+ module_exit(vlan_mon_fini);
++MODULE_DESCRIPTION("ACCEL-PPP VLAN monitor driver");
+ MODULE_LICENSE("GPL");
+ module_param(autoclean, int, 0);
+ //MODULE_PARAM_DESC(autoclean, "automaticaly remove created vlan interfaces on restart");

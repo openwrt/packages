@@ -1,0 +1,81 @@
+From: Abdulkader Alrezej <alrazj.abdulkader@gmail.com>
+Date: Fri, 10 Jul 2026 18:30:00 +0300
+Subject: [PATCH] accel-pppd: use __atomic builtins for 64-bit counters
+
+The legacy __sync builtins emit unresolved 64-bit helper symbols on
+some 32-bit targets such as MIPS and PowerPC. Use the newer
+__atomic builtins for the affected 64-bit counters so libatomic can
+provide the required helpers.
+
+Signed-off-by: Abdulkader Alrezej <alrazj.abdulkader@gmail.com>
+---
+
+--- a/accel-pppd/triton/mempool.c
++++ b/accel-pppd/triton/mempool.c
+@@ -104,7 +104,7 @@ void __export *mempool_alloc(mempool_t *
+ 		spin_unlock(&p->lock);
+ 
+ 		--p->objects;
+-		__sync_sub_and_fetch(&triton_stat.mempool_available, size);
++		__atomic_sub_fetch(&triton_stat.mempool_available, size, __ATOMIC_SEQ_CST);
+ 
+ 		return it->ptr;
+ 	}
+@@ -121,10 +121,10 @@ void __export *mempool_alloc(mempool_t *
+ 		it = (struct _item_t *)mmap_ptr;
+ 		mmap_ptr += size;
+ 		spin_unlock(&mmap_lock);
+-		__sync_sub_and_fetch(&triton_stat.mempool_available, size);
++		__atomic_sub_fetch(&triton_stat.mempool_available, size, __ATOMIC_SEQ_CST);
+ 	} else {
+ 		it = _malloc(size);
+-		__sync_add_and_fetch(&triton_stat.mempool_allocated, size);
++		__atomic_add_fetch(&triton_stat.mempool_allocated, size, __ATOMIC_SEQ_CST);
+ 	}
+ 
+ 	if (!it) {
+@@ -184,9 +184,9 @@ void __export mempool_free(void *ptr)
+ #else
+ 	if (need_free) {
+ 		_free(it);
+-		__sync_sub_and_fetch(&triton_stat.mempool_allocated, size);
++		__atomic_sub_fetch(&triton_stat.mempool_allocated, size, __ATOMIC_SEQ_CST);
+ 	} else
+-		__sync_add_and_fetch(&triton_stat.mempool_available, size);
++		__atomic_add_fetch(&triton_stat.mempool_available, size, __ATOMIC_SEQ_CST);
+ #endif
+ 
+ }
+@@ -238,8 +238,8 @@ static void mempool_clean(void)
+ #endif
+ 			list_del(&it->entry);
+ 			_free(it);
+-			__sync_sub_and_fetch(&triton_stat.mempool_allocated, size);
+-			__sync_sub_and_fetch(&triton_stat.mempool_available, size);
++			__atomic_sub_fetch(&triton_stat.mempool_allocated, size, __ATOMIC_SEQ_CST);
++			__atomic_sub_fetch(&triton_stat.mempool_available, size, __ATOMIC_SEQ_CST);
+ #ifdef VALGRIND
+ 			} else
+ 				break;
+@@ -275,8 +275,8 @@ static int mmap_grow(void)
+ 
+ 	mmap_endptr = ptr + size;
+ 
+-	__sync_add_and_fetch(&triton_stat.mempool_allocated, size);
+-	__sync_add_and_fetch(&triton_stat.mempool_available, size);
++	__atomic_add_fetch(&triton_stat.mempool_allocated, size, __ATOMIC_SEQ_CST);
++	__atomic_add_fetch(&triton_stat.mempool_available, size, __ATOMIC_SEQ_CST);
+ 
+ 	return 0;
+ oom:
+--- a/accel-pppd/session.c
++++ b/accel-pppd/session.c
+@@ -361,7 +361,7 @@ static void generate_sessionid(struct ap
+ 		sid = ++seq;
+ 		spin_unlock(&seq_lock);
+ #else
+-		sid = __sync_add_and_fetch(&seq, 1);
++		sid = __atomic_add_fetch(&seq, 1, __ATOMIC_SEQ_CST);
+ #endif
+ 
+ 		clock_gettime(CLOCK_MONOTONIC, &ts);
