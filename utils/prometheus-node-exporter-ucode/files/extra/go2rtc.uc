@@ -22,7 +22,7 @@ function fetch_json(api_url, endpoint) {
 	};
 
 	uloop.init();
-	uc = uclient.new(url, null, {
+	let uc = uclient.new(url, null, {
 		data_read: (cb) => {
 			let chunk;
 			while (length(chunk = uc.read()) > 0)
