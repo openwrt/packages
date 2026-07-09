@@ -70,7 +70,7 @@ Signed-off-by: Glenn Strauss <gstrauss@gluelogic.com>
  }
 --- a/src/mod_mbedtls.c
 +++ b/src/mod_mbedtls.c
-@@ -5071,8 +5071,6 @@ mod_mbedtls_ssl_conf_dhparameters(server
+@@ -5091,8 +5091,6 @@ mod_mbedtls_ssl_conf_dhparameters(server
  static void
  mod_mbedtls_ssl_conf_proto (server *srv, plugin_config_socket *s, const buffer *b, int max)
  {
@@ -79,7 +79,7 @@ Signed-off-by: Glenn Strauss <gstrauss@gluelogic.com>
      int v = MBEDTLS_SSL_MINOR_VERSION_3; /* default: TLS v1.2 */
      if (NULL == b) /* default: min TLSv1.2, max TLSv1.3 */
        #ifdef MBEDTLS_SSL_MINOR_VERSION_4
-@@ -5145,20 +5143,9 @@ mod_mbedtls_ssl_conf_proto (server *srv,
+@@ -5165,20 +5163,9 @@ mod_mbedtls_ssl_conf_proto (server *srv,
  static void
  mod_mbedtls_ssl_conf_proto (server *srv, plugin_config_socket *s, const buffer *b, int max)
  {
@@ -100,7 +100,7 @@ Signed-off-by: Glenn Strauss <gstrauss@gluelogic.com>
      else if (buffer_eq_icase_slen(b, CONST_STR_LEN("None"))) /*"disable" limit*/
          v = max ? MBEDTLS_SSL_VERSION_TLS1_3 : MBEDTLS_SSL_VERSION_TLS1_2;
      else if (buffer_eq_icase_slen(b, CONST_STR_LEN("TLSv1.2")))
-@@ -5180,9 +5167,6 @@ mod_mbedtls_ssl_conf_proto (server *srv,
+@@ -5200,9 +5187,6 @@ mod_mbedtls_ssl_conf_proto (server *srv,
              return;
          }
      }
