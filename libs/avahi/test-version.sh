@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# shellckeck shell=busybox
+# shellcheck shell=busybox
 
 _version_check() {
 	local bin="$1" pkg="$2" ver="$3"
