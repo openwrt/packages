@@ -15,6 +15,9 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://download.strongswan.org/ https://download2.strongswan.org/
 PKG_HASH:=e518e34e159514f4c6ba80d1f926cb151e0dd4e3a1d94213171234b8b9ae6f55
 
+PKG_SOURCE_SIG:=$(PKG_SOURCE).sig
+PKG_VALIDPGPKEYS:=948F158A4E76A27BF3D07532DF42C170B34DBA77
+
 PKG_MAINTAINER:=Philip Prindeville <philipp@redfish-solutions.com>, Noel Kuntze <noel.kuntze@thermi.consulting>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING LICENSE

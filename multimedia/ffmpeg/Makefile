@@ -15,6 +15,10 @@ PKG_RELEASE:=2
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ffmpeg.org/releases/
 PKG_HASH:=a231e3d5742c44b1cdaebfb98ad7b6200d12763e0b6db9e1e2c5891f2c083a18
+
+PKG_SOURCE_SIG:=$(PKG_SOURCE).asc
+PKG_VALIDPGPKEYS:=FCF986EA15E6E293A5644F10B4322F04D67658D8
+
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>, \
 		Ian Leonard <antonlacon@gmail.com>
 

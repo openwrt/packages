@@ -17,6 +17,9 @@ PKG_SOURCE_URL:=https://github.com/curl/curl/releases/download/curl-$(subst .,_,
 	https://curl.se/download/
 PKG_HASH:=63fe2dc148ba0ceae89922ef838f7e5c946272c2e78b7c59fab4b79d3ce2b896
 
+PKG_SOURCE_SIG:=$(PKG_SOURCE).asc
+PKG_VALIDPGPKEYS:=27EDEAF22F3ABCEB50DB9A125CC908FDB71E12C2
+
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING

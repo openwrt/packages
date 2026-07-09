@@ -16,6 +16,9 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ftp.isc.org/isc/kea/$(PKG_VERSION)
 PKG_HASH:=14bf695d37b65b9b1bf550fea5d0adaf9806c50e5419ef2a176a4b8e9aade3df
 
+PKG_SOURCE_SIG:=$(PKG_SOURCE).asc
+PKG_VALIDPGPKEYS:=DA6A3508E672A49DD382AFD95B8F4D91B88ED909
+
 PKG_MAINTAINER:=Philip Prindeville <philipp@redfish-solutions.com>, Noah Meyerhans <frodo@morgul.net>
 PKG_LICENSE:=MPL-2.0
 PKG_LICENSE_FILES:=COPYING

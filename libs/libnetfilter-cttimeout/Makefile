@@ -15,6 +15,9 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://netfilter.org/pub/libnetfilter_cttimeout/
 PKG_HASH:=aeab12754f557cba3ce2950a2029963d817490df7edb49880008b34d7ff8feba
 
+PKG_SOURCE_SIG:=$(PKG_SOURCE).sig
+PKG_VALIDPGPKEYS:=57FF5E9C9AA67A860B557AF7A4111F89BB5F58CC
+
 PKG_FIXUP:=autoreconf
 PKG_LICENSE:=GPL-2.0+
 PKG_CPE_ID:=cpe:/a:netfilter:libnetfilter_cttimeout

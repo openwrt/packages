@@ -15,6 +15,9 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://download.samba.org/pub/linux-cifs/cifs-utils/
 PKG_HASH:=7face85e3d2d5eb5e7adbd181adee6759097f135b10d6fb30be8e070af7e7054
 
+PKG_SOURCE_SIG:=$(PKG_SOURCE).asc
+PKG_VALIDPGPKEYS:=C699981A31F338706C817650DF5BA9D30642D5A0
+
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING

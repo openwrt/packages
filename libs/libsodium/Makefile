@@ -16,6 +16,9 @@ PKG_SOURCE_URL:=https://download.libsodium.org/libsodium/releases \
 		https://github.com/jedisct1/libsodium/releases/download/$(PKG_VERSION)
 PKG_HASH:=ebb65ef6ca439333c2bb41a0c1990587288da07f6c7fd07cb3a18cc18d30ce19
 
+PKG_SOURCE_SIG:=$(PKG_SOURCE).sig
+PKG_VALIDPGPKEYS:=54A2B8892CC3D6A597B92B6C210627AABA709FE1
+
 PKG_MAINTAINER:=Damiano Renfer <x9w2n7xnu@relay.firefox.com>
 PKG_LICENSE:=ISC
 PKG_LICENSE_FILES:=LICENSE

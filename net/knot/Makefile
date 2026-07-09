@@ -15,6 +15,9 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://secure.nic.cz/files/knot-dns/
 PKG_HASH:=38502c1472247c955aa3329bb5722e61ca765b833e3497d71f891ebf8e77fa04
 
+PKG_SOURCE_SIG:=$(PKG_SOURCE).asc
+PKG_VALIDPGPKEYS:=742FA4E95829B6C5EAC6B85710BB7AF6FEBBD6AB
+
 PKG_MAINTAINER:=Daniel Salzman <daniel.salzman@nic.cz>
 PKG_LICENSE:=GPL-2.0-or-later LGPL-2.0-or-later MIT ISC BSD-3-Clause
 PKG_CPE_ID:=cpe:/a:knot-dns:knot_dns

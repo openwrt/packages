@@ -15,6 +15,9 @@ PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://nginx.org/download/
 PKG_HASH:=e5823dc6f45610993def93ebf6cfce68264af4958c77e874b7d20f3709001b8f
 
+PKG_SOURCE_SIG:=$(PKG_SOURCE).asc
+PKG_VALIDPGPKEYS:=D6786CE303D9A9022998DC6CC8464D549AF75C0A
+
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de> \
 				Christian Marangi <ansuelsmth@gmail.com>
 PKG_LICENSE:=BSD-2-Clause

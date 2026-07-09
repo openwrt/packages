@@ -15,6 +15,9 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/utils/cryptsetup/v$(subst $(space),.,$(wordlist 1, 2, $(subst .,$(space),$(PKG_VERSION))))
 PKG_HASH:=8004265fd993885d08f7b633dbe056851de1a210307613a4ebddc743fccefe5a
 
+PKG_SOURCE_SIG:=$(basename $(PKG_SOURCE)).sign
+PKG_VALIDPGPKEYS:=2A2918243FDE46648D0686F9D9B0577BD93E98FC
+
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-2.0-or-later LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING COPYING.LGPL

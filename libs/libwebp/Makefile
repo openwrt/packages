@@ -8,6 +8,9 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://storage.googleapis.com/downloads.webmproject.org/releases/webp
 PKG_HASH:=e4ab7009bf0629fd11982d4c2aa83964cf244cffba7347ecd39019a9e38c4564
 
+PKG_SOURCE_SIG:=$(PKG_SOURCE).asc
+PKG_VALIDPGPKEYS:=6B0E6B70976DE303EDF2F601F9C3D6BDB8232B5D
+
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING

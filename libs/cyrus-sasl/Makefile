@@ -17,6 +17,9 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/cyrusimap/cyrus-sasl/releases/download/cyrus-sasl-2.1.28/
 PKG_HASH:=7ccfc6abd01ed67c1a0924b353e526f1b766b21f42d4562ee635a8ebfc5bb38c
 
+PKG_SOURCE_SIG:=$(PKG_SOURCE).sig
+PKG_VALIDPGPKEYS:=DEA1999F0CDB1AAEBA001E0DBEE3E3B4D2F06546
+
 PKG_LICENSE:=BSD-Attribution-HPND-disclaimer
 PKG_LICENSE_FILES:=COPYING cmulocal/COPYING saslauthd/COPYING
 PKG_CPE_ID:=cpe:/a:cmu:cyrus-sasl

@@ -16,6 +16,9 @@ PKG_SOURCE_URL:=https://www.alsa-project.org/files/pub/utils/ \
 		https://distfiles.gentoo.org/distfiles/
 PKG_HASH:=9ac6ca3a883f151e568dcf979b8d2e5cbecc51b819bb0e6bb8a2e9b34cc428a7
 
+PKG_SOURCE_SIG:=$(PKG_SOURCE).sig
+PKG_VALIDPGPKEYS:=F04DF50737AC1A884C4B3D718380596DA6E59C91
+
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING

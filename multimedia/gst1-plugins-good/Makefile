@@ -14,6 +14,10 @@ PKG_RELEASE:=1
 PKG_SOURCE:=gst-plugins-good-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gst-plugins-good/
 PKG_HASH:=49bdff25526bae33b683eab25fe28f761d33d51b08986653632b6ee31657a4f3
+
+PKG_SOURCE_SIG:=$(PKG_SOURCE).asc
+PKG_VALIDPGPKEYS:=D637032E45B8C6585B9456565D2EEE6F6F349D7C
+
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-good-$(PKG_VERSION)
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
