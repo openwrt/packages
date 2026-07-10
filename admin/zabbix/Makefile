@@ -27,7 +27,6 @@ PKG_BUILD_PARALLEL:=1
 PKG_CONFIG_DEPENDS:= \
   CONFIG_ZABBIX_CURL \
   CONFIG_ZABBIX_CURL_GNUTLS \
-  CONFIG_ZABBIX_ENABLE_ZABBIX \
   CONFIG_ZABBIX_GNUTLS \
   CONFIG_ZABBIX_LDAP \
   CONFIG_ZABBIX_MYSQL \
@@ -44,7 +43,6 @@ endef
 
 define Package/zabbix-proxy/config
 	choice
-		depends on ZABBIX_ENABLE_ZABBIX
 		prompt "Select Database Software for Zabbix"
 		default ZABBIX_POSTGRESQL
 
@@ -62,7 +60,7 @@ endef
 define Package/zabbix-get/config
 	config ZABBIX_BUILD_SUPPORT_BIN
 		bool
-		depends on PACKAGE_zabbix-agentd && ZABBIX_ENABLE_ZABBIX
+		depends on PACKAGE_zabbix-agentd
 		default y
 		help
 			This option exists to prevent trying to build get and/or sender when the
@@ -77,7 +75,6 @@ define Package/zabbix/Default
   SUBMENU:=Zabbix
   TITLE:=Zabbix
   URL:=https://www.zabbix.com/
-  DEPENDS:=@ZABBIX_ENABLE_ZABBIX
 endef
 
 define Package/zabbix/description/Default
