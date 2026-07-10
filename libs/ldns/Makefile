@@ -15,7 +15,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.nlnetlabs.nl/downloads/ldns
 PKG_HASH:=b524fa21994b6e834200ceb8c27f1b84bda5982fe35706f058196c079db94d5d
 
-PKG_MAINTAINER:=Eric Luehrsen <ericluehrsen@gmail.com>
+PKG_MAINTAINER:=
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:nlnetlabs:ldns
