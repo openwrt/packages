@@ -652,6 +652,14 @@ config_remote() {
 	swanctl_xappend0 ""
 }
 
+config_charon_scripts() {
+	local conf="$1"
+
+	swan_xappend1 "start-scripts {"
+	swan_xappend2 "load-all = /usr/sbin/swanctl --load-all --noprompt"
+	swan_xappend1 "}"
+}
+
 config_charon_interfaces_use() {
 	local conf="$1"
 
@@ -713,9 +721,7 @@ config_strongswan_generate() {
 	config_charon_install_routes "$conf"
 	config_charon_ignore_routing_tables "$conf"
 	config_charon_interfaces_use "$conf"
-	swan_xappend1 "start-scripts {"
-	swan_xappend2 "load-all = /usr/sbin/swanctl --load-all --noprompt"
-	swan_xappend1 "}"
+	config_charon_scripts "$conf"
 	swan_xappend1 "syslog {"
 	swan_xappend2 "identifier = ipsec"
 	swan_xappend2 "daemon {"
