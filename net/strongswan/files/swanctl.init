@@ -756,6 +756,20 @@ config_charon_plugin_syslog() {
 	swan_xappend1 "}"
 }
 
+config_charon_plugin_netlink () {
+
+	local install_routes_xfrmi
+
+	config_get_bool install_routes_xfrmi netlink install_routes_xfrmi 0
+	[ "$install_routes_xfrmi" = "1" ] || return
+
+	swan_xappend1 "plugins {"
+	swan_xappend2 "kernel-netlink {"
+	swan_xappend3 "install_routes_xfrmi = yes"
+	swan_xappend2 "}"
+	swan_xappend1 "}"
+}
+
 config_charon_scripts() {
 	local conf="$1"
 
@@ -823,6 +837,7 @@ config_strongswan_generate() {
 	config_charon_interfaces_use "$conf"
 	config_charon_scripts "$conf"
 	config_charon_plugin_syslog
+	config_charon_plugin_netlink
 	swan_xappend0 "}"
 }
 
