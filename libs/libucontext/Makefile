@@ -1,13 +1,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libucontext
-PKG_VERSION:=1.3.2
+PKG_VERSION:=1.5.1
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/kaniini/libucontext
+PKG_SOURCE_URL:=https://github.com/kaniini/libucontext.git
 PKG_SOURCE_VERSION:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_MIRROR_HASH:=eef55c05aca03c6d62672838638f49daa95ab8f9bf87126df32cedfe150e333c
+PKG_MIRROR_HASH:=6c5f756f32418d8db52b715e1837e46ea2d94926ba93e74d202e2cf891eda1f0
 
 PKG_MAINTAINER:=Volker Christian <me@vchrist.at>
 PKG_LICENSE:=ISC
@@ -23,7 +23,6 @@ define Package/libucontext
   CATEGORY:=Libraries
   TITLE:=libucontext is a library which provides the ucontext.h C API
   URL:=https://github.com/kaniini/libucontext
-  DEPENDS:=@USE_MUSL
 endef
 
 define Package/libucontext-tests
@@ -39,6 +38,18 @@ define Package/libucontext/description
   libraries/applications which need the SYS-V ucontext API.
 endef
 
+MESON_ARGS += \
+	-Ddocs=false
+
+ifneq ($(CONFIG_USE_MUSL),)
+MESON_ARGS += \
+	-Dfreestanding=false
+else ifneq ($(CONFIG_USE_GLIBC),)
+MESON_ARGS += \
+	-Dfreestanding=true \
+	-Dexport_unprefixed=false
+endif
+
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/libucontext $(1)/usr/include/
@@ -53,7 +64,9 @@ endef
 
 define Package/libucontext-tests/install
 	$(INSTALL_DIR) $(1)/usr/bin
+ifneq ($(CONFIG_USE_MUSL),)
 	$(INSTALL_BIN) $(MESON_BUILD_DIR)/test_libucontext_posix $(1)/usr/bin/
+endif
 	$(INSTALL_BIN) $(MESON_BUILD_DIR)/test_libucontext $(1)/usr/bin/
 endef
 
