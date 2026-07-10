@@ -40,7 +40,8 @@ the various operating system kernel interfaces.
 endef
 
 MAKE_FLAGS += \
-	KERNEL=Linux
+	KERNEL=Linux \
+	LIB_ATOMIC=-latomic
 
 define Package/stress-ng/install
 	$(INSTALL_DIR) $(1)/usr/bin
