@@ -652,6 +652,25 @@ config_remote() {
 	swanctl_xappend0 ""
 }
 
+config_charon_interfaces_use() {
+	local conf="$1"
+
+	local interface interface_list device_list
+
+	config_list_foreach "$conf" interface append_var interface_list
+	if [ -z "$interface_list" ]; then
+		WAIT_FOR_INTF=0
+	else
+		for interface in $interface_list; do
+			network_get_device device $interface
+			[ -n "$device" ] && append device_list "$device" ","
+		done
+		[ -n "$device_list" ] && WAIT_FOR_INTF=0 || WAIT_FOR_INTF=1
+	fi
+
+	[ -n "$device_list" ] && swan_xappend1 "interfaces_use = $device_list"
+}
+
 config_charon_ignore_routing_tables() {
 	local conf="$1"
 
@@ -686,29 +705,14 @@ config_charon_install_routes() {
 config_strongswan_generate() {
 	local conf="$1"
 
-	local debug device_list
-
-	local interface
-	local interface_list
+	local debug
 
 	config_get debug "$conf" debug 0
-
-	config_list_foreach "$conf" interface append_var interface_list
-
-	if [ -z "$interface_list" ]; then
-		WAIT_FOR_INTF=0
-	else
-		for interface in $interface_list; do
-			network_get_device device $interface
-			[ -n "$device" ] && append device_list "$device" ","
-		done
-		[ -n "$device_list" ] && WAIT_FOR_INTF=0 || WAIT_FOR_INTF=1
-	fi
 
 	swan_xappend0 "charon {"
 	config_charon_install_routes "$conf"
 	config_charon_ignore_routing_tables "$conf"
-	[ -n "$device_list" ] && swan_xappend1 "interfaces_use = $device_list"
+	config_charon_interfaces_use "$conf"
 	swan_xappend1 "start-scripts {"
 	swan_xappend2 "load-all = /usr/sbin/swanctl --load-all --noprompt"
 	swan_xappend1 "}"
