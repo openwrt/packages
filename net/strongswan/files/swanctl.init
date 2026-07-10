@@ -652,6 +652,21 @@ config_remote() {
 	swanctl_xappend0 ""
 }
 
+config_charon_syslog() {
+	local conf="$1"
+	local plugin="$2"
+
+	local debug
+
+	config_get debug "$conf" debug 0
+	swan_xappend1 "syslog {"
+	swan_xappend2 "identifier = ipsec"
+	swan_xappend2 "daemon {"
+	swan_xappend3 "default = $debug"
+	swan_xappend2 "}"
+	swan_xappend1 "}"
+}
+
 config_charon_scripts() {
 	local conf="$1"
 
@@ -713,21 +728,12 @@ config_charon_install_routes() {
 config_strongswan_generate() {
 	local conf="$1"
 
-	local debug
-
-	config_get debug "$conf" debug 0
-
 	swan_xappend0 "charon {"
 	config_charon_install_routes "$conf"
 	config_charon_ignore_routing_tables "$conf"
 	config_charon_interfaces_use "$conf"
 	config_charon_scripts "$conf"
-	swan_xappend1 "syslog {"
-	swan_xappend2 "identifier = ipsec"
-	swan_xappend2 "daemon {"
-	swan_xappend3 "default = $debug"
-	swan_xappend2 "}"
-	swan_xappend1 "}"
+	config_charon_syslog "$conf" "syslog"
 	swan_xappend0 "}"
 }
 
