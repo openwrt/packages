@@ -28,7 +28,7 @@ CMAKE_BINARY_SUBDIR:=openwrt-build
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
-ATOMIC_ARCHS:=arm armeb mips mipsel powerpc
+ATOMIC_ARCHS:=arm armeb mips mipsel powerpc x86_64
 
 define Package/accel-ppp
   SECTION:=net
@@ -41,8 +41,8 @@ define Package/accel-ppp
 	+libopenssl \
 	+libpthread \
 	+librt \
-	+(arm||armeb||mips||mipsel||powerpc):libatomic \
-	+USE_MUSL:libucontext \
+	+(arm||armeb||mips||mipsel||powerpc||x86_64):libatomic \
+	+libucontext \
 	+kmod-sched-core \
 	+kmod-pptp \
 	+kmod-pppoe \
