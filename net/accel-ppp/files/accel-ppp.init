@@ -1,0 +1,37 @@
+#!/bin/sh /etc/rc.common
+
+START=80
+STOP=85
+USE_PROCD=1
+
+PROG=/usr/sbin/accel-pppd
+CONFIG=/etc/accel-ppp/accel-ppp.conf
+
+. /lib/functions/network.sh
+
+boot() {
+	BOOT=1
+	start "$@"
+}
+
+start_service() {
+	mkdir -p /var/log/accel-ppp
+
+	# accel-pppd binds its local CLI and CoA sockets to 127.0.0.1.
+	# On boot, let netifd bring loopback up before starting the daemon.
+	if ! network_is_up loopback; then
+		[ -n "$BOOT" ] && return 0
+		return 1
+	fi
+
+	procd_open_instance
+	procd_set_param command "$PROG" -c "$CONFIG"
+	procd_set_param respawn
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_close_instance
+}
+
+service_triggers() {
+	procd_add_interface_trigger "interface.*.up" loopback /etc/init.d/accel-ppp restart
+}

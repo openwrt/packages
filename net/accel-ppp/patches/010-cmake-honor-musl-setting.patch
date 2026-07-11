@@ -1,0 +1,32 @@
+From: Abdulkader Alrezej <alrazj.abdulkader@gmail.com>
+Date: Fri, 10 Jul 2026 12:00:00 +0300
+Subject: [PATCH] cmake: honor an explicitly selected C library
+
+Running ldd while cross-compiling checks the build host instead of the
+target. Allow the toolchain to provide the MUSL value explicitly.
+
+Signed-off-by: Abdulkader Alrezej <alrazj.abdulkader@gmail.com>
+---
+ CMakeLists.txt | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -21,7 +21,7 @@ IF (NOT DEFINED LIB_SUFFIX)
+ ENDIF (NOT DEFINED LIB_SUFFIX)
+ 
+ # Set flag if we are building with MUSL
+-IF (CMAKE_SYSTEM_NAME STREQUAL Linux AND CMAKE_C_COMPILER_ID STREQUAL GNU)
++IF (NOT DEFINED MUSL AND CMAKE_SYSTEM_NAME STREQUAL Linux AND CMAKE_C_COMPILER_ID STREQUAL GNU)
+     execute_process(
+         COMMAND sh -c "ldd --version 2>&1 || true"
+         OUTPUT_VARIABLE LDD_VERSION
+@@ -33,7 +33,7 @@ IF (CMAKE_SYSTEM_NAME STREQUAL Linux AND
+ 		set(MUSL OFF)
+ 	endif ()
+ 	message(STATUS "Building with MUSL: ${MUSL}")
+-ENDIF (CMAKE_SYSTEM_NAME STREQUAL Linux AND CMAKE_C_COMPILER_ID STREQUAL GNU)
++ENDIF ()
+ 
+ #color console example  message(FATAL_ERROR "${Esc}[31m Red Text ${Esc}[m Restore Normal Text")
+ string(ASCII 27 Esc)

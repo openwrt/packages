@@ -1,0 +1,27 @@
+From: Abdulkader Alrezej <alrazj.abdulkader@gmail.com>
+Date: Sat, 11 Jul 2026 12:00:00 +0300
+Subject: [PATCH] pppoe: link connlimit unconditionally
+
+pppoe calls connlimit_check(), so libpppoe.so needs to link with
+connlimit on glibc as well. Otherwise the module can fail to load at
+runtime with an undefined connlimit_check symbol.
+
+Signed-off-by: Abdulkader Alrezej <alrazj.abdulkader@gmail.com>
+---
+
+--- a/accel-pppd/ctrl/pppoe/CMakeLists.txt
++++ b/accel-pppd/ctrl/pppoe/CMakeLists.txt
+@@ -13,12 +13,7 @@ SET(sources ${sources} tr101.c)
+ ENDIF(RADIUS)
+ 
+ ADD_LIBRARY(pppoe SHARED ${sources})
+-# if MUSL is set then we need to link with the connlimit library
+-IF (MUSL)
+-	TARGET_LINK_LIBRARIES(pppoe vlan-mon connlimit)
+-ELSE (MUSL)
+-	TARGET_LINK_LIBRARIES(pppoe vlan-mon)
+-ENDIF (MUSL)
++TARGET_LINK_LIBRARIES(pppoe vlan-mon connlimit)
+ set_property(TARGET pppoe PROPERTY CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+ set_property(TARGET pppoe PROPERTY INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}/accel-ppp)
+ 

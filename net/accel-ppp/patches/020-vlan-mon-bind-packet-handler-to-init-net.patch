@@ -1,0 +1,32 @@
+From ca68d8c427d6654a73e018ab85d6191d6bfb191e Mon Sep 17 00:00:00 2001
+From: Denys Fedoryshchenko <denys.f@collabora.com>
+Date: Sat, 2 May 2026 14:56:26 +0300
+Subject: [PATCH] vlan_mon: bind ETH_P_ALL packet handler to init_net on
+ kernels >= 6.6
+
+The vlan_mon driver registers a global packet_type with type=ETH_P_ALL
+to intercept PADI/IP/ARP frames before they reach the protocol stack.
+Since Linux 6.6 every ETH_P_ALL packet_type needs either dev or
+af_packet_net set. Bind the handler to init_net, which matches the
+driver's existing behaviour.
+
+Upstream: https://github.com/accel-ppp/accel-ppp/commit/ca68d8c427d6654a73e018ab85d6191d6bfb191e
+Signed-off-by: Denys Fedoryshchenko <denys.f@collabora.com>
+[backport to ACCEL-PPP 1.14.0]
+Signed-off-by: Abdulkader Alrezej <alrazj.abdulkader@gmail.com>
+---
+ drivers/vlan_mon/vlan_mon.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+--- a/drivers/vlan_mon/vlan_mon.c
++++ b/drivers/vlan_mon/vlan_mon.c
+@@ -753,6 +753,9 @@ static int __init vlan_mon_init(void)
+ 	}
+ #endif
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,6,0)
++	vlan_pt.af_packet_net = &init_net;
++#endif
+ 	dev_add_pack(&vlan_pt);
+ 
+ 	return 0;
