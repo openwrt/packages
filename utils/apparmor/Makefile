@@ -4,7 +4,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apparmor
 PKG_VERSION:=3.0.13
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
@@ -153,6 +153,13 @@ define Build/Install
 	+$(MAKE_VARS) PYTHON=$(HOST_PYTHON) VERSION=$(PYTHON3_VERSION) \
 		CFLAGS="$(TARGET_CFLAGS)" LDFLAGS="$(TARGET_LDFLAGS)" USE_SYSTEM=1 $(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR)/profiles \
 		$(MAKE_FLAGS) DESTDIR="$(PKG_INSTALL_DIR)-profiles" install
+endef
+
+define Build/InstallDev
+	$(INSTALL_DIR) $(1)/usr/include/sys $(1)/usr/lib $(1)/usr/lib/pkgconfig
+	$(CP) $(PKG_INSTALL_DIR)-libapparmor/usr/include/sys/*.h $(1)/usr/include/sys/
+	$(CP) $(PKG_INSTALL_DIR)-libapparmor/usr/lib/libapparmor.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)-libapparmor/usr/lib/pkgconfig/libapparmor.pc $(1)/usr/lib/pkgconfig/
 endef
 
 define Package/libapparmor/install
