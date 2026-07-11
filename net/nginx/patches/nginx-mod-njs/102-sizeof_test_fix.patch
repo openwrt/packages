@@ -1,6 +1,6 @@
 --- a/nginx-mod-njs/auto/types
 +++ b/nginx-mod-njs/auto/types
-@@ -11,113 +11,37 @@
+@@ -11,110 +11,34 @@
  #     printf("%d", (int) sizeof(TYPE));
  
  
@@ -60,11 +60,15 @@
 -                      return 0;
 -                  }"
 -. auto/feature
+-
+-
+-case "$njs_feature_value" in
+-    8) NJS_64BIT=1 ;;
+-    *) NJS_64BIT=0 ;;
 +njs_type="int"; . auto/types_util/sizeof
 +njs_param=NJS_INT_SIZE; njs_value=$njs_size; . auto/types_util/value
- 
- 
--case "$njs_feature_value" in
++
++
 +njs_type="u_int"; . auto/types_util/sizeof
 +njs_param=NJS_UINT_SIZE; njs_value=$njs_size; . auto/types_util/value
 +
@@ -77,8 +81,8 @@
 +njs_param=NJS_UINTPTR_T_SIZE; njs_value=$njs_size; . auto/types_util/value
 +
 +case "$njs_value" in
-     8) NJS_64BIT=1 ;;
-     *) NJS_64BIT=0 ;;
++     8) NJS_64BIT=1 ;;
++     *) NJS_64BIT=0 ;;
  esac
  
  
@@ -135,9 +139,6 @@
 +
 +njs_type="time_t"; . auto/types_util/sizeof
 +njs_param=NJS_TIME_T_SIZE; njs_value=$njs_size; . auto/types_util/value
- 
- 
- # Ensuring that double type is always evaluated at standard
 --- /dev/null
 +++ b/nginx-mod-njs/auto/types_util/sizeof
 @@ -0,0 +1,78 @@
