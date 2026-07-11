@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mdns-repeater
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=https://github.com/geekman/mdns-repeater.git
 PKG_SOURCE_PROTO=git
@@ -28,11 +28,10 @@ define Package/mdns-repeater
   URL:=https://github.com/geekman/mdns-repeater
 endef
 
-TARGET_CFLAGS += -I$(STAGING_DIR)/usr/include
-
-define Build/Compile
-	CFLAGS="$(TARGET_CFLAGS)" CPPFLAGS="$(TARGET_CPPFLAGS)" $(MAKE) -C $(PKG_BUILD_DIR) $(TARGET_CONFIGURE_OPTS)
-endef
+MAKE_FLAGS += \
+	HGVERSION='dummy' \
+	CFLAGS='$(TARGET_CFLAGS) $(TARGET_CPPFLAGS) -DHGVERSION="\"$(VERSION)\""' \
+	LDFLAGS='$(TARGET_LDFLAGS)'
 
 define Package/mdns-repeater/install
 	$(INSTALL_DIR) $(1)/usr/sbin
