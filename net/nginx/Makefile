@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
 PKG_VERSION:=1.30.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://nginx.org/download/
@@ -258,10 +258,10 @@ define Package/nginx-mod-lua-resty-core/install
 endef
 
 define Download/nginx-mod-headers-more
-  SOURCE_DATE:=2022-07-17
-  SOURCE_VERSION:=bea1be3bbf6af28f6aa8cf0c01c07ee1637e2bd0
+  SOURCE_DATE:=2026-05-29
+  SOURCE_VERSION:=0bf283ff92017acd616814b0e5153e0ccf93e2c9
   URL:=https://github.com/openresty/headers-more-nginx-module.git
-  MIRROR_HASH:=569abadc137b5b52bdcc33b00aa21f6d266cb84fb891795da2c4e101c4898abe
+  MIRROR_HASH:=caa6766224ef112162ddff91f4f956ad2d04a10301787d0c62f35dcb59f7517c
   PROTO:=git
 endef
 
@@ -290,34 +290,34 @@ define Download/nginx-mod-ts
 endef
 
 define Download/nginx-mod-naxsi
-  SOURCE_DATE:=2022-09-14
-  SOURCE_VERSION:=d714f1636ea49a9a9f4f06dba14aee003e970834
-  URL:=https://github.com/nbs-system/naxsi.git
-  MIRROR_HASH:=b0cef5fbf842f283eb5f0686ddd1afcd07d83abd7027c8cfb3e84a2223a34797
+  SOURCE_DATE:=2026-07-10
+  SOURCE_VERSION:=2e84227f32849dcd95dbf0b5e4b8207187897da8
+  URL:=https://github.com/wargio/naxsi.git
+  MIRROR_HASH:=cf092ad841a61a33d6d414e081e17069beee0a7f40407cb7666a0baf7749c2c4
   PROTO:=git
 endef
 
 define Download/nginx-mod-lua
-  SOURCE_DATE:=2023-08-19
-  SOURCE_VERSION:=c89469e920713d17d703a5f3736c9335edac22bf
+  SOURCE_DATE:=2026-05-29
+  SOURCE_VERSION:=4b21d8f5fd3cc94fd25c530b3a61405af9666d0b
   URL:=https://github.com/openresty/lua-nginx-module.git
-  MIRROR_HASH:=c3bdf1b23f0a63991b5dcbd1f8ee150e6f893b43278e8600e4e0bb42a6572db4
+  MIRROR_HASH:=5313ffd1b077aecb99c26251e789253ecdbf45a6a68be0d94b7d1609501c6d63
   PROTO:=git
 endef
 
 define Download/nginx-mod-lua-resty-core
-  SOURCE_DATE:=2023-09-09
-  SOURCE_VERSION:=2e2b2adaa61719972fe4275fa4c3585daa0dcd84
+  SOURCE_DATE:=2026-05-29
+  SOURCE_VERSION:=6fec23e2149c88b33b39fec8a5ebdd67a3e0dd88
   URL:=https://github.com/openresty/lua-resty-core.git
-  MIRROR_HASH:=c5f3df92fd72eac5b54497c039aca0f0d9ea1d87223f1e3a54365ba565991874
+  MIRROR_HASH:=5b989e9318bffb49e2c7a5ca81b2b98b6c3458958ef255cc3fb63181dc03c056
   PROTO:=git
 endef
 
 define Download/nginx-mod-lua-resty-lrucache
-  SOURCE_DATE:=2023-08-06
-  SOURCE_VERSION:=52f5d00403c8b7aa8a4d4f3779681976b10a18c1
+  SOURCE_DATE:=2026-05-14
+  SOURCE_VERSION:=1c7cf6be055233a2de2057ad7f02fadd7fc84e97
   URL:=https://github.com/openresty/lua-resty-lrucache.git
-  MIRROR_HASH:=0833e0114948af4edb216c5c34b3f1919f534b298f4fa29739544f7c9bb8a08d
+  MIRROR_HASH:=d8e7c2bf0a2835f477e3b8733ccb16acc60a1db5dbef7ef106452519556bc28b
   PROTO:=git
 endef
 
@@ -330,18 +330,18 @@ define Download/nginx-mod-dav-ext
 endef
 
 define Download/nginx-mod-ubus
-  SOURCE_DATE:=2020-09-06
-  SOURCE_VERSION:=b2d7260dcb428b2fb65540edb28d7538602b4a26
+  SOURCE_DATE:=2024-03-02
+  SOURCE_VERSION:=564fa3e9c2b04ea298ea659b793480415da26415
   URL:=https://github.com/Ansuel/nginx-ubus-module.git
-  MIRROR_HASH:=515bb9d355ad80916f594046a45c190a68fb6554d6795a54ca15cab8bdd12fda
+  MIRROR_HASH:=92c9ab94d88a2fe8d7d1e8a15d15cfc4d529fdc357ed96d22b65d5da3dd24d7f
   PROTO:=git
 endef
 
 define Download/nginx-mod-njs
-  SOURCE_DATE:=2024-10-03
-  SOURCE_VERSION:=c5a29a7af8894ee1ec44ebda71ef0ea1f2a31af6
+  SOURCE_DATE:=2026-06-23
+  SOURCE_VERSION:=ad60b62c3b4ca6339ca19c19ceed8c942dbe575d
   URL:=https://github.com/nginx/njs.git
-  MIRROR_HASH:=6c94ec6b1c119e0c7a85ec395a4987a8a61739e1f9256ce6d92a16804c5d4637
+  MIRROR_HASH:=ea265197ca4e360aa1538626e694e7da5db9d77bfb5669f16a49e472ba7f847c
   PROTO:=git
 endef
 
@@ -356,7 +356,12 @@ $(foreach m,$(PKG_MOD_EXTRA),$(eval $(call Module/Download,$(m))))
 
 define Module/nginx-mod-naxsi/install
 	$(INSTALL_DIR) $(1)/etc/nginx
-	$(INSTALL_CONF) $(PKG_BUILD_DIR)/nginx-mod-naxsi/naxsi_config/naxsi_core.rules $(1)/etc/nginx
+	$(INSTALL_CONF) $(PKG_BUILD_DIR)/nginx-mod-naxsi/naxsi_rules/naxsi_core.rules $(1)/etc/nginx
+endef
+
+define Module/nginx-mod-lua/install
+	$(INSTALL_DIR) $(1)/etc/nginx/conf.d
+	$(INSTALL_CONF) ./files/nginx-lua.conf $(1)/etc/nginx/conf.d/00-nginx-lua-path.conf
 endef
 
 define Quilt/Refresh/Package
