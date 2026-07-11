@@ -1,3 +1,16 @@
+From c92f32ecb030592dd948ee706dd90fbca74b47f6 Mon Sep 17 00:00:00 2001
+From: Christian Marangi <ansuelsmth@gmail.com>
+Date: Tue, 22 Oct 2024 03:32:33 +0000
+Subject: [PATCH 3/3] 104-endianness_fix
+
+this patch header is reatroactively created to satisfy CI,
+see https://github.com/openwrt/packages/pull/25082/
+
+---
+ nginx-mod-njs/auto/endianness   | 15 +++++++++------
+ nginx-mod-njs/nginx/config.make |  8 ++++----
+ 2 files changed, 13 insertions(+), 10 deletions(-)
+
 --- a/nginx-mod-njs/auto/endianness
 +++ b/nginx-mod-njs/auto/endianness
 @@ -2,6 +2,15 @@
@@ -34,18 +47,18 @@
  	cd $ngx_addon_dir/.. \\
  	&& if [ -f build/Makefile ]; then \$(MAKE) clean; fi \\
 -	&& CFLAGS="\$(CFLAGS)" CC="\$(CC)" ./configure --no-openssl \\
--		--no-libxml2 --no-zlib --no-pcre --no-quickjs \\
+-		--no-libxml2 --no-zlib --no-pcre --no-quickjs --ld-opt="$NGX_LD_OPT" \\
 +	&& CFLAGS="\$(CFLAGS)" CC="\$(CC)" CONFIG_BIG_ENDIAN=\$(CONFIG_BIG_ENDIAN) \\
-+		./configure --no-openssl --no-libxml2 --no-zlib --no-pcre --no-quickjs \\
++		./configure --no-openssl --no-libxml2 --no-zlib --no-pcre --no-quickjs --ld-opt="$NGX_LD_OPT" \\
  	&& \$(MAKE) libnjs
  
  $ngx_addon_dir/../build/libqjs.a: $NGX_MAKEFILE
  	cd $ngx_addon_dir/.. \\
  	&& if [ -f build/Makefile ]; then \$(MAKE) clean; fi \\
 -	&& CFLAGS="\$(CFLAGS)" CC="\$(CC)" ./configure --no-openssl \\
--		--no-libxml2 --no-zlib --no-pcre \\
+-		--no-libxml2 --no-zlib --no-pcre --ld-opt="$NGX_LD_OPT" \\
 +	&& CFLAGS="\$(CFLAGS)" CC="\$(CC)" CONFIG_BIG_ENDIAN=\$(CONFIG_BIG_ENDIAN) \\
-+		./configure --no-openssl --no-libxml2 --no-zlib --no-pcre \\
++		./configure --no-openssl --no-libxml2 --no-zlib --no-pcre  --ld-opt="$NGX_LD_OPT" \\
  	&& \$(MAKE) libnjs libqjs
  
  END
