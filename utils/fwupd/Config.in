@@ -36,6 +36,12 @@ config FWUPD_LIBDRM
 	help
 	  Compile fwupd with libdrm support
 
+config FWUPD_PLUGIN_DEVLINK
+	bool "devlink plugin"
+	default y
+	help
+	  Compile fwupd with devlink plugin
+
 config FWUPD_PLUGIN_MODEMMANAGER
 	bool "ModemManager plugin"
 	default y
