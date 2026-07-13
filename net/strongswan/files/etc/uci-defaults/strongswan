@@ -1,6 +1,6 @@
 #!/bin/sh
 
-main() {
+migrate_ipsec() {
 	# Skip migration if the 'globals' section already exists
 	uci show ipsec.globals 1>/dev/null 2>/dev/null
 	[ "$?" = "0" ] && return
@@ -8,6 +8,10 @@ main() {
 	# Rename last ipsec section to 'globals'
 	uci -q rename ipsec.@ipsec[-1]=globals
 	uci -q commit ipsec
+}
+
+main() {
+	migrate_ipsec
 }
 
 main
