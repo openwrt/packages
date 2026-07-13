@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fwupd
 PKG_VERSION:=2.1.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/fwupd/fwupd/releases/download/$(PKG_VERSION)
@@ -56,6 +56,7 @@ define Package/fwupd-libs
 	+FWUPD_GNUTLS:libgnutls \
 	+FWUPD_OPENSSL:libopenssl \
 	+FWUPD_LIBDRM:libdrm \
+	+FWUPD_PLUGIN_DEVLINK:libmnl \
 	+FWUPD_PLUGIN_MODEMMANAGER:modemmanager \
 	+FWUPD_PLUGIN_MODEMMANAGER:libqmi \
 	+FWUPD_PLUGIN_MODEMMANAGER:libmbim
@@ -104,7 +105,7 @@ MESON_ARGS += \
 	-Dhsi=$(if $(CONFIG_FWUPD_HSI),enabled,disabled) \
 	-Dintrospection=disabled \
 	-Dlibdrm=$(if $(CONFIG_FWUPD_LIBDRM),enabled,disabled) \
-	-Dlibmnl=disabled \
+	-Dlibmnl=$(if $(CONFIG_FWUPD_PLUGIN_DEVLINK),enabled,disabled) \
 	-Dlogind=disabled \
 	-Dlvfs=$(if $(CONFIG_FWUPD_LVFS),true,false) \
 	-Dman=false \
