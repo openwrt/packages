@@ -1,0 +1,200 @@
+From c2bacd41e1f5f95352caa6f63e4f6e29bb044e42 Mon Sep 17 00:00:00 2001
+From: Gleb Pesin <dormancygrace@gmail.com>
+Date: Tue, 14 Jul 2026 23:30:58 +0000
+Subject: [PATCH] zabbix_agentd: add active checks compression
+
+Classic agent active checks use uncompressed transport. Agent2 already
+compresses the same traffic by default.
+
+Add an EnableCompression configuration parameter, enabled by default,
+and pass protocol flags through the redirect-aware exchange helper. Keep
+zabbix_sender traffic uncompressed.
+
+Signed-off-by: Gleb Pesin <dormancygrace@gmail.com>
+---
+ conf/zabbix_agentd.conf                        | 11 +++++++++++
+ include/zbxcommshigh.h                         |  3 ++-
+ src/libs/zbxcommshigh/commshigh.c              |  9 +++++----
+ src/zabbix_agent/active_checks/active_checks.c | 11 ++++++++---
+ src/zabbix_agent/active_checks/active_checks.h |  1 +
+ src/zabbix_agent/zabbix_agentd.c               |  4 ++++
+ src/zabbix_sender/win32/zabbix_sender.c        |  2 +-
+ src/zabbix_sender/zabbix_sender.c              |  4 ++--
+ 8 files changed, 34 insertions(+), 11 deletions(-)
+
+--- a/conf/zabbix_agentd.conf
++++ b/conf/zabbix_agentd.conf
+@@ -164,6 +164,17 @@ StartAgents=1
+ # Default:
+ # ServerActive=
+ 
++### Option: EnableCompression
++#	Enables compression for communications related to active checks.
++#	Zabbix server or proxy version 4.0 or later is required.
++#	0 - disable
++#	1 - enable
++#
++# Mandatory: no
++# Range: 0-1
++# Default:
++# EnableCompression=1
++
+ ### Option: Hostname
+ #	List of comma delimited unique, case sensitive hostnames.
+ #	Required for active checks and must match hostnames as configured on the server.
+--- a/include/zbxcommshigh.h
++++ b/include/zbxcommshigh.h
+@@ -49,7 +49,8 @@ int	zbx_parse_redirect_response(struct z
+ 
+ int	zbx_comms_exchange_with_redirect(const char *source_ip, zbx_vector_addr_ptr_t *addrs, int timeout,
+ 		int connect_timeout, int retry_interval, int loglevel, const zbx_config_tls_t *config_tls,
+-		const char *data, char *(*connect_callback)(void *), void *cb_data, char **out, char **error);
++		unsigned char protocol, const char *data, char *(*connect_callback)(void *), void *cb_data, char **out,
++		char **error);
+ 
+ void	zbx_addrs_failover(zbx_vector_addr_ptr_t *addrs);
+ 
+--- a/src/libs/zbxcommshigh/commshigh.c
++++ b/src/libs/zbxcommshigh/commshigh.c
+@@ -553,11 +553,11 @@ static int	comms_check_redirect(const ch
+  *                                                                            *
+  ******************************************************************************/
+ static int	zbx_comms_exchange_data(zbx_socket_t *sock, const char *data, zbx_addr_t *addr,
+-		char **out, char **error)
++		unsigned char protocol, char **out, char **error)
+ {
+ 	zabbix_log(LOG_LEVEL_DEBUG, "sending to [%s]:%d: %s", addr->ip, addr->port, data);
+ 
+-	if (SUCCEED != zbx_tcp_send(sock, data))
++	if (SUCCEED != zbx_tcp_send_ext(sock, data, strlen(data), 0, protocol, 0))
+ 	{
+ 		zabbix_log(LOG_LEVEL_DEBUG, "unable to send to [%s]:%d: %s",
+ 					addr->ip, addr->port, zbx_socket_strerror());
+@@ -613,7 +613,8 @@ static int	zbx_comms_exchange_data(zbx_s
+  ******************************************************************************/
+ int	zbx_comms_exchange_with_redirect(const char *source_ip, zbx_vector_addr_ptr_t *addrs, int timeout,
+ 		int connect_timeout, int retry_interval, int loglevel, const zbx_config_tls_t *config_tls,
+-		const char *data, char *(*connect_callback)(void *), void *cb_data, char **out, char **error)
++		unsigned char protocol, const char *data, char *(*connect_callback)(void *), void *cb_data, char **out,
++		char **error)
+ {
+ 	zbx_socket_t		sock;
+ 	int			conn_ret, ret = FAIL, retries = 0;
+@@ -640,7 +641,7 @@ int	zbx_comms_exchange_with_redirect(con
+ 		if (NULL != connect_callback)
+ 			data = connect_callback(cb_data);
+ 
+-		if (SUCCEED == (ret = zbx_comms_exchange_data(&sock, data, addrs->values[0], out, error)))
++		if (SUCCEED == (ret = zbx_comms_exchange_data(&sock, data, addrs->values[0], protocol, out, error)))
+ 		{
+ 			if (ZBX_REDIRECT_FAIL != (conn_ret = comms_check_redirect(sock.buffer, addrs)))
+ 			{
+--- a/src/zabbix_agent/active_checks/active_checks.c
++++ b/src/zabbix_agent/active_checks/active_checks.c
+@@ -97,6 +97,7 @@ static ZBX_THREAD_LOCAL zbx_hashset_t
+ static ZBX_THREAD_LOCAL zbx_vector_expression_t		regexps;
+ static ZBX_THREAD_LOCAL char				*session_token;
+ static ZBX_THREAD_LOCAL zbx_uint64_t			last_valueid = 0;
++static ZBX_THREAD_LOCAL unsigned char			active_comms_protocol = ZBX_TCP_PROTOCOL;
+ static ZBX_THREAD_LOCAL zbx_vector_pre_persistent_t	pre_persistent_vec;	/* used for staging of data going */
+ 										/* into persistent files */
+ /* used for deleting inactive persistent files */
+@@ -938,7 +939,7 @@ static int	refresh_active_checks(zbx_vec
+ 	level = SUCCEED != last_ret ? LOG_LEVEL_DEBUG : LOG_LEVEL_WARNING;
+ 
+ 	ret = zbx_comms_exchange_with_redirect(config_source_ip, addrs, config_timeout, config_timeout, 0, level,
+-			config_tls, json.buffer, NULL, NULL, &data, NULL);
++			config_tls, active_comms_protocol, json.buffer, NULL, NULL, &data, NULL);
+ 
+ 	if (SUCCEED == ret && '\0' == *data)
+ 	{
+@@ -1264,7 +1265,8 @@ static int	send_buffer(zbx_vector_addr_p
+ 	level = 0 == buffer.first_error ? LOG_LEVEL_WARNING : LOG_LEVEL_DEBUG;
+ 
+ 	ret = zbx_comms_exchange_with_redirect(config_source_ip, addrs, MIN(buffer.count * config_timeout, 60),
+-			config_timeout, 0, level, config_tls, json.buffer, connect_callback, &json, &data, NULL);
++			config_timeout, 0, level, config_tls, active_comms_protocol, json.buffer, connect_callback, &json,
++			&data, NULL);
+ 
+ 	if (SUCCEED == ret)
+ 	{
+@@ -1894,7 +1896,7 @@ static void	send_heartbeat_msg(zbx_vecto
+ 	level = SUCCEED != last_ret ? LOG_LEVEL_DEBUG : LOG_LEVEL_WARNING;
+ 
+ 	ret = zbx_comms_exchange_with_redirect(config_source_ip, addrs, config_timeout, config_timeout, 0, level,
+-			config_tls, json.buffer, NULL, NULL, NULL, &error);
++			config_tls, active_comms_protocol, json.buffer, NULL, NULL, NULL, &error);
+ 
+ 	if (SUCCEED == ret)
+ 	{
+@@ -1929,6 +1931,9 @@ ZBX_THREAD_ENTRY(active_checks_thread, a
+ 					process_num = ((zbx_thread_args_t *)args)->info.process_num;
+ 
+ 	activechks_args_in = (zbx_thread_activechk_args *)((((zbx_thread_args_t *)args))->args);
++	active_comms_protocol = ZBX_TCP_PROTOCOL;
++	if (0 != activechks_args_in->config_enable_compression)
++		active_comms_protocol |= ZBX_TCP_COMPRESS;
+ 
+ 	zabbix_log(LOG_LEVEL_INFORMATION, "%s #%d started [%s #%d]", get_program_type_string(info->program_type),
+ 			server_num, get_process_type_string(process_type), process_num);
+--- a/src/zabbix_agent/active_checks/active_checks.h
++++ b/src/zabbix_agent/active_checks/active_checks.h
+@@ -35,6 +35,7 @@ typedef struct
+ 	const char		*config_hostname;
+ 	const char		*config_host_metadata;
+ 	const char		*config_host_metadata_item;
++	int			config_enable_compression;
+ 	int			config_heartbeat_frequency;
+ 	const char		*config_host_interface;
+ 	const char		*config_host_interface_item;
+--- a/src/zabbix_agent/zabbix_agentd.c
++++ b/src/zabbix_agent/zabbix_agentd.c
+@@ -44,6 +44,7 @@ ZBX_GET_CONFIG_VAR(int, zbx_config_unsaf
+ static int	zbx_config_listen_port = ZBX_DEFAULT_AGENT_PORT;
+ static char	*zbx_config_listen_ip = NULL;
+ static int	zbx_config_refresh_active_checks = 5;
++static int	zbx_config_enable_compression = 1;
+ ZBX_GET_CONFIG_VAR2(char*, const char *, zbx_config_source_ip, NULL)
+ static int	config_log_level = LOG_LEVEL_WARNING;
+ static int	zbx_config_buffer_size = 100;
+@@ -844,6 +845,7 @@ static int	add_serveractive_host_cb(cons
+ 				0 < hostnames->values_num ? hostnames->values[i] : "");
+ 		config_active_args[forks].config_host_metadata = zbx_config_host_metadata;
+ 		config_active_args[forks].config_host_metadata_item = zbx_config_host_metadata_item;
++		config_active_args[forks].config_enable_compression = zbx_config_enable_compression;
+ 		config_active_args[forks].config_heartbeat_frequency = zbx_config_heartbeat_frequency;
+ 		config_active_args[forks].config_host_interface = zbx_config_host_interface;
+ 		config_active_args[forks].config_host_interface_item = zbx_config_host_interface_item;
+@@ -943,6 +945,8 @@ static void	zbx_load_config(int requirem
+ 				ZBX_CONF_PARM_OPT,	0,			0},
+ 		{"ServerActive",		&active_hosts,				ZBX_CFG_TYPE_STRING_LIST,
+ 				ZBX_CONF_PARM_OPT,	0,			0},
++		{"EnableCompression",		&zbx_config_enable_compression,		ZBX_CFG_TYPE_INT,
++				ZBX_CONF_PARM_OPT,	0,			1},
+ 		{"Hostname",			&zbx_config_hostnames,			ZBX_CFG_TYPE_STRING_LIST,
+ 				ZBX_CONF_PARM_OPT,	0,			0},
+ 		{"HostnameItem",		&config_hostname_item,			ZBX_CFG_TYPE_STRING,
+--- a/src/zabbix_sender/win32/zabbix_sender.c
++++ b/src/zabbix_sender/win32/zabbix_sender.c
+@@ -102,7 +102,7 @@ int	zabbix_sender_send_values(const char
+ 	config_tls.connect_mode = ZBX_TCP_SEC_UNENCRYPTED;
+ 
+ 	ret = zbx_comms_exchange_with_redirect(source, &zbx_addrs, GET_SENDER_TIMEOUT, 30, 0, 0, &config_tls,
+-			json.buffer, NULL, NULL, result, NULL);
++			ZBX_TCP_PROTOCOL, json.buffer, NULL, NULL, result, NULL);
+ 
+ 	if (SUCCEED != ret && NULL != result)
+ 		*result = zbx_strdup(NULL, zbx_socket_strerror());
+--- a/src/zabbix_sender/zabbix_sender.c
++++ b/src/zabbix_sender/zabbix_sender.c
+@@ -647,8 +647,8 @@ static	ZBX_THREAD_ENTRY(send_value, args
+ #endif
+ 
+ 	ret = zbx_comms_exchange_with_redirect(config_source_ip, sendval_args->addrs, CONFIG_SENDER_TIMEOUT,
+-			config_timeout, 0, LOG_LEVEL_DEBUG, sendval_args->zbx_config_tls, sendval_args->json->buffer,
+-			connect_callback, sendval_args->json, &data, NULL);
++			config_timeout, 0, LOG_LEVEL_DEBUG, sendval_args->zbx_config_tls, ZBX_TCP_PROTOCOL,
++			sendval_args->json->buffer, connect_callback, sendval_args->json, &data, NULL);
+ 
+ 
+ 	if (SUCCEED == ret)
