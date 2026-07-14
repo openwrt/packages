@@ -61,14 +61,21 @@ service_triggers() {
 
 upnpd_generate_config() {
 	# Daemon
-	local enable_protocols allow_cgnat stun_host allow_third_party_mapping ipv6_disable system_uptime lease_file
+	local enable_protocols allow_cgnat stun_host allow_third_party_mapping system_uptime lease_file
 	config_get enable_protocols settings enable_protocols all
 	config_get allow_cgnat settings allow_cgnat 0
 	config_get stun_host settings stun_host stun.nextcloud.com
 	config_get allow_third_party_mapping settings allow_third_party_mapping 0
-	config_get ipv6_disable settings ipv6_disable 0
 	config_get system_uptime settings system_uptime 1
 	config_get lease_file settings lease_file /var/run/miniupnpd.leases
+
+	# Access control
+	local access_defaults accept_ports reject_ports check_acl ipv6_disable
+	config_get access_defaults settings access_defaults none
+	config_get accept_ports settings accept_ports
+	config_get reject_ports settings reject_ports "21 23 135 137-139 445 3389"
+	config_get check_acl settings check_acl 1
+	config_get ipv6_disable settings ipv6_disable 0
 
 	# UPnP IGD
 	local upnp_igd_compat download_kbps upload_kbps friendly_name model_number serial_number presentation_url uuid http_port notify_interval
@@ -83,12 +90,13 @@ upnpd_generate_config() {
 	config_get http_port settings http_port 5000
 	config_get notify_interval settings notify_interval
 
-	# External network interface
-	local external_iface external_iface6 external_zone external_ip
+	# Network interfaces
+	local external_iface external_iface6 external_zone external_ip internal_iface
 	config_get external_iface settings external_iface
 	config_get external_iface6 settings external_iface6
 	config_get external_zone settings external_zone
 	config_get external_ip settings external_ip
+	config_get internal_iface settings internal_iface lan
 
 	local ifname ifname6
 	. /lib/functions/network.sh
@@ -121,10 +129,6 @@ upnpd_generate_config() {
 			[ "$pass" = "4" ] && log "IPv6 GUA not yet available, UPnP IGD mapping not possible" && break
 		done
 	fi
-	if ! uci -q get upnpd.@internal_network[0].interface >/dev/null; then
-		log "No internal networks configured, not starting" daemon.err
-		return 1
-	fi
 	# Only perform an STUN CGNAT test if necessary, with a private/CGNAT-reserved external IPv4
 	local extipv4 extipv4private
 	extipv4="$(ip -4 addr show dev "$ifname" | grep inet | head -1 | sed -E "s/.*inet ([0-9.]+).*/\1/")"
@@ -151,7 +155,6 @@ upnpd_generate_config() {
 		[ "$allow_third_party_mapping" = "1" ] && echo "secure_mode=no" && echo "pcp_allow_thirdparty=yes"
 		[ "$allow_third_party_mapping" = "upnp-igd" ] && echo "secure_mode=no" && echo "pcp_allow_thirdparty=no"
 		[ "$allow_third_party_mapping" = "pcp" ] && echo "secure_mode=yes" && echo "pcp_allow_thirdparty=yes"
-		[ "$ipv6_disable" = "0" ] && echo "ipv6_disable=no" || echo "ipv6_disable=yes"
 		[ "$system_uptime" = "0" ] && echo "system_uptime=no" || echo "system_uptime=yes"
 		touch "$lease_file" && echo "lease_file=$lease_file"
 		[ "$ipv6_disable" = "0" ] && touch "${lease_file}-ipv6" && echo "lease_file6=${lease_file}-ipv6"
@@ -191,9 +194,37 @@ upnpd_generate_config() {
 		[ -n "$external_ip" ] && echo "ext_ip=$external_ip"
 
 		echo "# Enable internal networks / access control"
-		config_foreach upnpd_add_int_network_and_defaults internal_network pre-acl
-		config_foreach upnpd_add_acl_entry acl_entry
-		config_foreach upnpd_add_int_network_and_defaults internal_network post-acl
+		[ "$ipv6_disable" = "0" ] && echo "ipv6_disable=no" || echo "ipv6_disable=yes"
+		local rejectport
+		for rejectport in $reject_ports; do
+			is_port_or_range "$rejectport" allowport0 && echo "deny $rejectport 0.0.0.0/0 $rejectport # Reject port $rejectport" ||
+				log "Invalid port or port range ($rejectport) in reject_ports ignored" daemon.warn
+		done
+		[ "$check_acl" = "1" ] && echo "# Access control list" && config_foreach upnpd_add_acl_entry acl_entry
+		local iface
+		for iface in $internal_iface; do
+			local device subnet accessdefaultsports acceptport
+			network_get_device device "$iface"
+			network_get_subnet subnet "$iface"
+			[ "$subnet" = "" ] && log "Cannot get IPv4 subnet for network $iface, network ignored" daemon.warn && continue
+			echo "# Enable internal network $iface ($device) with access defaults $access_defaults and check ACL $check_acl"
+			echo "listening_ip=$device"
+			if [ "$access_defaults" = "accept-high-ports" ]; then
+				accessdefaultsports="1024-65535"
+			elif [ "$access_defaults" = "accept-web+high-ports" ]; then
+				accessdefaultsports="80 443 1024-65535"
+			elif [ "$access_defaults" = "accept-web-ports" ]; then
+				accessdefaultsports="80 443"
+			elif [ "$access_defaults" = "accept-all-ports" ]; then
+				accessdefaultsports="1-65535"
+			elif [ "$access_defaults" != "none" ]; then
+				log "Invalid access_defaults ($access_defaults) ignored" daemon.warn
+			fi
+			for acceptport in $accessdefaultsports $accept_ports; do
+				is_port_or_range "$acceptport" && echo "allow $acceptport $subnet $acceptport # Accept port $acceptport on $iface" ||
+					log "Invalid port or port range ($acceptport) in accept_ports ignored" daemon.warn
+			done
+		done
 		echo "deny 1-65535 0.0.0.0/0 1-65535 # Reject ACL by default"
 
 	} >"$1"
@@ -215,49 +246,6 @@ is_port_or_range() {
 	[ "${1%%-*}" -ge "$minport" ] 2>/dev/null && [ "${1%%-*}" -le "65535" ] 2>/dev/null &&
 		[ "${1##*-}" -ge "$minport" ] 2>/dev/null && [ "${1##*-}" -le "65535" ] 2>/dev/null &&
 		[ "${1##*-}" -ge "${1%%-*}" ] 2>/dev/null && return 0 || return 1
-}
-
-upnpd_add_int_network_and_defaults() {
-	local cfg="$1"
-	local interface access_defaults accept_ports reject_ports check_acl
-	config_get interface "$cfg" interface
-	config_get access_defaults "$cfg" access_defaults none
-	config_get accept_ports "$cfg" accept_ports
-	config_get reject_ports "$cfg" reject_ports "21 23 135 137-139 445 3389"
-	config_get check_acl "$cfg" check_acl 1
-	local device subnet rejectport accessdefaultsports acceptport
-	network_get_device device "$interface"
-	network_get_subnet subnet "$interface"
-	[ "$subnet" = "" ] && log "Cannot get IPv4 subnet for network $interface, network ignored" daemon.warn && return 0
-	if [ "$2" = "pre-acl" ]; then
-		echo "# Enable internal network $interface ($device) with access defaults $access_defaults and check ACL $check_acl"
-		echo "listening_ip=$device"
-		for rejectport in $reject_ports; do
-			is_port_or_range "$rejectport" allowport0 && echo "deny $rejectport $subnet $rejectport # Reject port $rejectport on $interface" ||
-				log "Invalid port or port range ($rejectport) in reject_ports ignored" daemon.warn
-		done
-	fi
-	if { [ "$2" = "post-acl" ] && [ "$check_acl" = "1" ]; } ||
-		{ [ "$2" = "pre-acl" ] && [ "$check_acl" = "0" ]; }; then
-		if [ "$access_defaults" = "accept-high-ports" ]; then
-			accessdefaultsports="1024-65535"
-		elif [ "$access_defaults" = "accept-web+high-ports" ]; then
-			accessdefaultsports="80 443 1024-65535"
-		elif [ "$access_defaults" = "accept-web-ports" ]; then
-			accessdefaultsports="80 443"
-		elif [ "$access_defaults" = "accept-all-ports" ]; then
-			accessdefaultsports="1-65535"
-		elif [ "$access_defaults" != "none" ]; then
-			log "Invalid access_defaults ($access_defaults) ignored" daemon.warn
-		fi
-		for acceptport in $accessdefaultsports $accept_ports; do
-			is_port_or_range "$acceptport" && echo "allow $acceptport $subnet $acceptport # Accept port $acceptport on $interface" ||
-				log "Invalid port or port range ($acceptport) in accept_ports ignored" daemon.warn
-		done
-	fi
-	if [ "$2" = "pre-acl" ] && [ "$check_acl" = "0" ]; then
-		echo "deny 1-65535 $subnet 1-65535 # Reject ACL by default on $interface"
-	fi
 }
 
 upnpd_add_acl_entry() {
