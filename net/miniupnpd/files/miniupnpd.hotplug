@@ -10,9 +10,9 @@
 [ "$ACTION" != "ifup" ] && /etc/init.d/miniupnpd running && exit 0
 
 tmpconf="/var/etc/miniupnpd.conf"
-external_iface=$(uci -q get upnpd.config.external_iface)
-external_iface6=$(uci -q get upnpd.config.external_iface6)
-external_zone=$(uci -q get upnpd.config.external_zone)
+external_iface=$(uci -q get upnpd.settings.external_iface)
+external_iface6=$(uci -q get upnpd.settings.external_iface6)
+external_zone=$(uci -q get upnpd.settings.external_zone)
 [ -x "$(command -v nft)" ] && FW="fw4" || FW="fw3"
 
 . /lib/functions/network.sh
