@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=net-snmp
 PKG_VERSION:=5.9.4
-PKG_RELEASE:=10
+PKG_RELEASE:=9
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/net-snmp
@@ -25,7 +25,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/net-snmp/Default
   SECTION:=net
   CATEGORY:=Network
-  URL:=http://www.net-snmp.org/
+  URL:=https://www.net-snmp.org/
 endef
 
 define Package/net-snmp/Default/description
