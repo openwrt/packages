@@ -14,8 +14,10 @@ PKG_RELEASE:=9
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/net-snmp
 PKG_HASH:=8b4de01391e74e3c7014beb43961a2d6d6fa03acc34280b9585f4930745b0544
+
 PKG_MAINTAINER:=Stijn Tintel <stijn@linux-ipv6.be>
 PKG_LICENSE:=MIT BSD-3-Clause-Clear
+PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:net-snmp:net-snmp
 
 PKG_FIXUP:=autoreconf
