@@ -1,21 +1,28 @@
-From ca45744e63b957d83cdbc2a28588077cbf8b5639 Mon Sep 17 00:00:00 2001
+From 6655a1f2e5bff8d0082f41cf2711339f0d75d788 Mon Sep 17 00:00:00 2001
 From: "Daniel F. Dickinson" <dfdpublic@wildtechgarden.ca>
 Date: Wed, 17 Dec 2025 06:39:16 -0500
-Subject: [PATCH] Make zabbix_server config suitable for OpenWrt
+Subject: zabbix_server: tweak config file for OpenWrt
 
-1. Log to (default ephemeral) syslog, not a file (and don't rotate)
+Created 2025-12-17. Updated 2026-07-16.
+
+1. Log to syslog, not a file.
 2. Update PidFile path so correct permissions can be set for access by
-   Zabbix server running without privileges
+   Zabbix server running without privileges.
 3. If started as root, drop privileges to zabbix-server user (instead of
-   zabbix)
-4. Set the fping location properly for OpenWrt (/usr/bin not /usr/sbin)
-5. Configure fping as the ipv6 fping as well
-6. For privacy, disable the public API call to check Zabbix version
+   zabbix user shared with agent and proxy, or root) per upstream
+   recommendation:
+   https://www.zabbix.com/documentation/7.0/en/manual/installation/install#security-recommendation.
+4. Set the fping location properly for OpenWrt (/usr/bin not /usr/sbin).
+5. Configure fping as the ipv6 fping as well.
+6. For privacy, disable the public API call to check Zabbix version.
+7. Include configurations under /etc/zabbix_server.conf.d/.
+8. Require configurations under /etc/zabbix_server.conf.d/ end in .conf
+   (other files are ignored for configuration purposes).
 
 Signed-off-by: Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
 ---
- conf/zabbix_server.conf | 15 +++++++++++----
- 1 file changed, 11 insertions(+), 4 deletions(-)
+ conf/zabbix_server.conf | 13 +++++++++++--
+ 1 file changed, 11 insertions(+), 2 deletions(-)
 
 --- a/conf/zabbix_server.conf
 +++ b/conf/zabbix_server.conf
@@ -36,15 +43,7 @@ Signed-off-by: Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
  
  ### Option: LogFileSize
  #	Maximum size of log file in MB.
-@@ -45,6 +46,7 @@ LogFile=/tmp/zabbix_server.log
- # Range: 0-1024
- # Default:
- # LogFileSize=1
-+LogFileSize=0
- 
- ### Option: DebugLevel
- #	Specifies debug level:
-@@ -67,6 +69,10 @@ LogFile=/tmp/zabbix_server.log
+@@ -67,6 +68,10 @@ LogFile=/tmp/zabbix_server.log
  # Default:
  # PidFile=/tmp/zabbix_server.pid
  
@@ -55,11 +54,10 @@ Signed-off-by: Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
  ### Option: SocketDir
  #	IPC socket directory.
  #		Directory to store IPC sockets used by internal Zabbix services.
-@@ -610,7 +616,7 @@ Timeout=4
- #
+@@ -611,6 +616,7 @@ Timeout=4
  # Mandatory: no
  # Default:
--# FpingLocation=/usr/sbin/fping
+ # FpingLocation=/usr/sbin/fping
 +FpingLocation=/usr/bin/fping
  
  ### Option: Fping6Location
@@ -72,16 +70,15 @@ Signed-off-by: Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
  
  ### Option: SSHKeyLocation
  #	Location of public and private keys for SSH checks and actions.
-@@ -698,7 +705,7 @@ LogSlowQueries=3000
- #
+@@ -699,6 +706,7 @@ LogSlowQueries=3000
  # Mandatory: no
  # Default:
--# User=zabbix
+ # User=zabbix
 +User=zabbix-server
  
  ### Option: SSLCertLocation
  #	Location of SSL client certificates.
-@@ -1050,7 +1057,7 @@ EnableGlobalScripts=0
+@@ -1050,7 +1058,7 @@ EnableGlobalScripts=0
  #
  # Mandatory: no
  # Default:
@@ -90,3 +87,8 @@ Signed-off-by: Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
  
  ### Option: SMSDevices
  #	List of comma delimited modem files allowed to use Zabbix server
+@@ -1125,3 +1133,4 @@ EnableGlobalScripts=0
+ # Include=/usr/local/etc/zabbix_server.general.conf
+ # Include=/usr/local/etc/zabbix_server.conf.d/
+ # Include=/usr/local/etc/zabbix_server.conf.d/*.conf
++Include=/etc/zabbix_server.conf.d/*.conf
