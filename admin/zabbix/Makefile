@@ -24,6 +24,10 @@ PKG_CPE_ID:=cpe:/a:zabbix:zabbix
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
+# Zabbix only probes zlib when server or proxy support is enabled. The classic
+# agent also needs the real compression implementation for active checks.
+TARGET_CPPFLAGS += -DHAVE_ZLIB
+
 PKG_CONFIG_DEPENDS:= \
   CONFIG_ZABBIX_CURL \
   CONFIG_ZABBIX_CURL_GNUTLS \
@@ -36,6 +40,11 @@ PKG_CONFIG_DEPENDS:= \
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
+
+CONFIGURE_VARS += \
+	ZLIB_CFLAGS="-I$(STAGING_DIR)/usr/include" \
+	ZLIB_LDFLAGS="-L$(STAGING_DIR)/usr/lib" \
+	ZLIB_LIBS="-lz"
 
 define Package/zabbix-agentd/config
 	source "$(SOURCE)/Config.in"
@@ -379,7 +388,7 @@ CONFIGURE_ARGS+= \
   --disable-java \
   --with-libevent=$(STAGING_DIR)/usr/include \
   --with-libpcre2=$(STAGING_DIR)/usr/include \
-  --with-zlib=$(STAGING_DIR)/usr/include
+  --with-zlib=$(STAGING_DIR)/usr
 endif
 
 ifeq ($(BUILD_VARIANT),basic)
