@@ -1,0 +1,98 @@
+From 502248599bfc0b36daf0f8dd83bee5bc6e1b24e4 Mon Sep 17 00:00:00 2001
+From: "Daniel F. Dickinson" <dfdpublic@wildtechgarden.ca>
+Date: Wed, 17 Dec 2025 18:28:37 -0500
+Subject: zabbix_agentd: tweak config file for OpenWrt
+
+Note: original patch had no header, header added 2025-12-16, while
+bumping package version. Modified 2025-12-25. Modified 2026-01-21.
+Tweaked further 2026-07-16.
+
+1. Use syslog not a file for logging.
+2. Place PidFile under /var/run/zabbix-agent.
+3. Only start 1 passive agent by default.
+4. Do not do active checks by default.
+5. Use the system hostname as hostname.
+6. If started as root, drop privileges to the zabbix-agent user, not
+   a shared (with server and proxy) zabbix user or root, per upstream
+   recommendation:
+   https://www.zabbix.com/documentation/7.0/en/manual/installation/install#security-recommendation
+7. Include configuration files under /etc/zabbix_agentd.conf.d/.
+8. Require configurations under /etc/zabbix_agentd.conf.d/ end in .conf.
+   (other files are ignored for configuration purposes).
+
+Signed-off-by: Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
+---
+ conf/zabbix_agentd.conf | 15 ++++++++++++---
+ 1 file changed, 12 insertions(+), 3 deletions(-)
+
+--- a/conf/zabbix_agentd.conf
++++ b/conf/zabbix_agentd.conf
+@@ -10,6 +10,9 @@
+ # Default:
+ # PidFile=/tmp/zabbix_agentd.pid
+ 
++# Zabbix always creates a PidFile. Make sure it is where we want it.
++PidFile=/var/run/zabbix-agent/zabbix_agentd.pid
++
+ ### Option: LogType
+ #	Specifies where log messages are written to:
+ #		system  - syslog
+@@ -20,6 +23,9 @@
+ # Default:
+ # LogType=file
+ 
++# Use syslog
++LogType=system
++
+ ### Option: LogFile
+ #	Log file name for LogType 'file' parameter.
+ #
+@@ -27,7 +33,7 @@
+ # Default:
+ # LogFile=
+ 
+-LogFile=/tmp/zabbix_agentd.log
++# LogFile=/tmp/zabbix_agentd.log
+ 
+ ### Option: LogFileSize
+ #	Maximum size of log file in MB.
+@@ -136,6 +142,7 @@ Server=127.0.0.1
+ # Range: 0-100
+ # Default:
+ # StartAgents=10
++StartAgents=1
+ 
+ ##### Active checks related
+ 
+@@ -166,7 +173,7 @@ Server=127.0.0.1
+ # Default:
+ # ServerActive=
+ 
+-ServerActive=127.0.0.1
++# ServerActive=127.0.0.1
+ 
+ ### Option: Hostname
+ #	List of comma delimited unique, case sensitive hostnames.
+@@ -177,7 +184,7 @@ ServerActive=127.0.0.1
+ # Default:
+ # Hostname=
+ 
+-Hostname=Zabbix server
++# Hostname=Zabbix server
+ 
+ ### Option: HostnameItem
+ #	Item used for generating Hostname if it is undefined. Ignored if Hostname is defined.
+@@ -318,6 +325,7 @@ Hostname=Zabbix server
+ # Mandatory: no
+ # Default:
+ # User=zabbix
++User=zabbix-agent
+ 
+ ####### USER-DEFINED MONITORED PARAMETERS #######
+ 
+@@ -549,3 +557,5 @@ Hostname=Zabbix server
+ # Include=/usr/local/etc/zabbix_agentd.userparams.conf
+ # Include=/usr/local/etc/zabbix_agentd.conf.d/
+ # Include=/usr/local/etc/zabbix_agentd.conf.d/*.conf
++Include=/usr/share/zabbix_agentd.openwrt-params.d/
++Include=/etc/zabbix_agentd.conf.d/*.conf
