@@ -192,7 +192,6 @@ define Package/zabbix-server-or-proxy/Default
     +libevent2-extra \
     +libpcre2 \
     +zlib
-  USERID:=zabbix-server=70:zabbix-server=70
 endef
 
 define Package/zabbix-proxy/Default
@@ -202,6 +201,7 @@ define Package/zabbix-proxy/Default
     @zabbix-proxy-any \
     zabbix-proxy-ssl \
     zabbix-proxy-openssl
+  USERID:=zabbix-proxy=71:zabbix-proxy=71
 endef
 
 define Package/zabbix-proxy
@@ -281,6 +281,7 @@ define Package/zabbix-server
   PROVIDES:= \
     zabbix-server-ssl \
     zabbix-server-openssl
+  USERID:=zabbix-server=70:zabbix-server=70
   VARIANT:=full
 endef
 
