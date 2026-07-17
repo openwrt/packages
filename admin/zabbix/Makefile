@@ -493,6 +493,13 @@ endef
 
 define Package/zabbix-agentd/conffiles
 /etc/zabbix_agentd.conf
+/etc/config/zabbix_agentd
+endef
+
+define Package/zabbix-agentd/postinst
+#!/bin/sh
+[ -n "$${IPKG_INSTROOT}" ] || (. /etc/uci-defaults/90_zabbix_agentd) && rm -f /etc/uci-defaults/90_zabbix_agentd
+exit 0
 endef
 
 define Package/zabbix-agentd/install
@@ -500,17 +507,17 @@ define Package/zabbix-agentd/install
 	$(call Package/zabbix/install/sbin,$(1),agentd)
 	$(call Package/zabbix/install/etc,$(1),agentd)
 	$(call Package/zabbix/install/init.d,$(1),agentd)
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/zabbix_agentd.config $(1)/etc/config/zabbix_agentd
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/zabbix_agentd.defaults $(1)/etc/uci-defaults/90_zabbix_agentd
 endef
 
-define Package/zabbix-agentd-basic/conffiles
-/etc/zabbix_agentd.conf
-endef
+Package/zabbix-agentd-basic/conffiles=$(call Package/zabbix_agentd/conffiles)
+Package/zabbix-agentd-basic/postinst=$(call Package/zabbix_agentd/postinst)
 
 define Package/zabbix-agentd-basic/install
-	$(INSTALL_DIR) $(1)/etc/zabbix_agentd.conf.d
-	$(call Package/zabbix/install/sbin,$(1),agentd)
-	$(call Package/zabbix/install/etc,$(1),agentd)
-	$(call Package/zabbix/install/init.d,$(1),agentd)
+	$(call Package/zabbix-agentd/install,$(1))
 endef
 
 define Package/zabbix-proxy/conffiles
