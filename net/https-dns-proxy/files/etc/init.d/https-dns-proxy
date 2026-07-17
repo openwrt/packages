@@ -25,6 +25,10 @@ readonly PROG=/usr/sbin/https-dns-proxy
 readonly BOOTSTRAP_CF='1.1.1.1,1.0.0.1,2606:4700:4700::1111,2606:4700:4700::1001'
 readonly BOOTSTRAP_GOOGLE='8.8.8.8,8.8.4.4,2001:4860:4860::8888,2001:4860:4860::8844'
 readonly DEFAULT_BOOTSTRAP="${BOOTSTRAP_CF},${BOOTSTRAP_GOOGLE}"
+# Cloudflare/Google servers by family, used as bootstrap fallback when a forced
+# IP family has no compatible server in the instance's configured bootstrap_dns.
+readonly DEFAULT_BOOTSTRAP4='1.1.1.1,1.0.0.1,8.8.8.8,8.8.4.4'
+readonly DEFAULT_BOOTSTRAP6='2606:4700:4700::1111,2606:4700:4700::1001,2001:4860:4860::8888,2001:4860:4860::8844'
 readonly canaryDomainsMozilla='use-application-dns.net'
 readonly canaryDomainsiCloud='mask.icloud.com mask-h2.icloud.com'
 readonly NOTRACK_NFT_FILE='/usr/share/nftables.d/ruleset-post/20-https-dns-proxy-notrack.nft'
@@ -57,7 +61,7 @@ global_polling_interval=
 global_proxy_server=
 global_force_http1=
 global_force_http3=
-global_force_ipv6=
+global_force_ip_family=
 global_max_idle_time=
 global_conn_loss_time=
 global_ca_certs_file=
@@ -223,14 +227,24 @@ append_boot() {
 	[ -z "$_loctmp" ] && return 0
 	IFS=" ,"
 	for i in $_loctmp; do
-		if { [ -z "$force_ipv6" ] && is_ipv4 "$i"; } || \
-			{ [ -n "$force_ipv6" ] && is_ipv6 "$i"; }; then
-			[ -z "$_newtmp" ] && _newtmp="$i" || _newtmp="${_newtmp},${i}"
-		fi
+		case "$force_ip_family" in
+			ipv4) is_ipv4 "$i" || continue;;
+			ipv6) is_ipv6 "$i" || continue;;
+		esac
+		[ -z "$_newtmp" ] && _newtmp="$i" || _newtmp="${_newtmp},${i}"
 	done
 	IFS="$_old_ifs"
+	# A forced family with no compatible bootstrap server configured would leave the
+	# proxy unable to resolve the resolver host; fall back to the Cloudflare/Google
+	# servers of the forced family so bootstrap still works.
+	if [ -z "$_newtmp" ]; then
+		case "$force_ip_family" in
+			ipv4) _newtmp="$DEFAULT_BOOTSTRAP4";;
+			ipv6) _newtmp="$DEFAULT_BOOTSTRAP6";;
+		esac
+	fi
 	[ -n "$_newtmp" ] && xappend "$switch $_newtmp"
-	[ -z "$force_ipv6" ] && xappend '-4'
+	[ "$force_ip_family" = 'ipv4' ] && xappend '-4'
 }
 
 boot() {
@@ -248,7 +262,7 @@ load_package_config() {
 	config_get_bool procd_trigger_wan6     'config' 'procd_trigger_wan6' '0'
 	config_get_bool global_force_http1     'config' 'force_http1' '0'
 	config_get_bool global_force_http3     'config' 'force_http3' '0'
-	config_get_bool global_force_ipv6      'config' 'force_ipv6_resolvers' '0'
+	config_get global_force_ip_family      'config' 'force_ip_family' 'auto'
 	config_get dnsmasq_config_update       'config' 'dnsmasq_config_update' '*'
 	config_get force_dns_port              'config' 'force_dns_port' '53 853'
 	config_get force_dns_src_interface     'config' 'force_dns_src_interface' 'lan'
@@ -276,13 +290,12 @@ load_package_config() {
 start_instance() {
 	local cfg="$1" param="$2"
 	local PROG_param
-	local listen_addr listen_port force_ipv6 p url iface
+	local listen_addr listen_port force_ip_family p url iface
 
 	config_get url             "$cfg" 'resolver_url'
 	config_get listen_addr     "$cfg" 'listen_addr' "$global_listen_addr"
 	config_get listen_port     "$cfg" 'listen_port' "$port"
-	config_get_bool force_ipv6 "$cfg" 'force_ipv6_resolvers' "$global_force_ipv6"
-	[ "$force_ipv6" = '1' ] || unset force_ipv6
+	config_get force_ip_family "$cfg" 'force_ip_family' "$global_force_ip_family"
 
 	append_parm "$cfg" 'resolver_url'       '-r'
 	append_parm "$cfg" 'listen_addr'        '-a' "$global_listen_addr"        '127.0.0.1'
@@ -460,8 +473,12 @@ service_triggers() {
 	fi
 }
 
-service_started() { { [ -n "$force_dns" ] || [ -n "$notrack_dns" ]; } && procd_set_config_changed firewall; }
-service_stopped() { { [ -n "$force_dns" ] || [ -n "$notrack_dns" ]; } && procd_set_config_changed firewall; }
+# These run for their side effect only (flag the firewall for reconfig). Force a
+# 0 return so a falsy test doesn't become the exit code of start/reload/restart —
+# force_dns/notrack_dns are empty in this scope, so without this restart exits 1
+# even on a successful start. See issue #11.
+service_started() { { [ -n "$force_dns" ] || [ -n "$notrack_dns" ]; } && procd_set_config_changed firewall; return 0; }
+service_stopped() { { [ -n "$force_dns" ] || [ -n "$notrack_dns" ]; } && procd_set_config_changed firewall; return 0; }
 restart() { reload "$@"; }
 
 dnsmasq_instance_append_force_dns_port() {
