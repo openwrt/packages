@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
 PKG_VERSION:=7.0.28
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://cdn.zabbix.com/zabbix/sources/stable/$(basename $(PKG_VERSION))/ \
@@ -360,6 +360,7 @@ define Package/zabbix-frontend-server
     +php8-mod-mbstring \
     +php8-mod-openssl \
     +php8-mod-session \
+    +php8-mod-simplexml \
     +php8-mod-sockets \
     +php8-mod-xmlreader \
     +php8-mod-xmlwriter
