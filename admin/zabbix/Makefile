@@ -487,8 +487,8 @@ define Package/zabbix/install/init.d
 endef
 
 define Package/zabbix/install/zabbix.conf.d
-	$(INSTALL_DIR) $(1)/etc/zabbix_agentd.conf.d
-	$(INSTALL_BIN) ./files/$(2) $(1)/etc/zabbix_agentd.conf.d/$(2)
+	$(INSTALL_DIR) $(1)/usr/share/zabbix_agentd.openwrt-params.d
+	$(INSTALL_BIN) ./files/zabbix_agentd.openwrt-params.d/$(2) $(1)/usr/share/zabbix_agentd.openwrt-params.d/$(2)
 endef
 
 define Package/zabbix-agentd/conffiles
