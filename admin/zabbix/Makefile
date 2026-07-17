@@ -361,6 +361,7 @@ define Package/zabbix-frontend-server
     +php8-mod-mbstring \
     +php8-mod-openssl \
     +php8-mod-session \
+    +php8-mod-simplexml \
     +php8-mod-sockets \
     +php8-mod-xmlreader \
     +php8-mod-xmlwriter
