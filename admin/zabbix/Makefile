@@ -555,7 +555,6 @@ define Package/zabbix-server/conffiles
 /etc/zabbix_server.conf
 /etc/zabbix_server.conf.d
 /etc/config/zabbix_server
-/etc/sysctl.d/90-zabbix-discovery-workers.conf
 endef
 
 define Package/zabbix-server/install
@@ -563,8 +562,6 @@ define Package/zabbix-server/install
 	$(call Package/zabbix/install/sbin,$(1),server)
 	$(call Package/zabbix/install/etc,$(1),server)
 	$(call Package/zabbix/install/init.d,$(1),server)
-	$(INSTALL_DIR) $(1)/etc/sysctl.d
-	$(INSTALL_CONF) ./files/zabbix-discovery-workers.conf.sysctl $(1)/etc/sysctl.d/90-zabbix-discovery-workers.conf
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/zabbix_server.config $(1)/etc/config/zabbix_server
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
