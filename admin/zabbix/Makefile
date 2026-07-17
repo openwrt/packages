@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
 PKG_VERSION:=7.0.28
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://cdn.zabbix.com/zabbix/sources/stable/$(basename $(PKG_VERSION))/ \
@@ -455,7 +455,7 @@ define Build/Configure
 	$(call Build/Configure/Default)
 endef
 
-# We use spaces for continued lines so that is if continuation does not parse
+# We use spaces for continued lines so that if continuation does not parse
 # properly we will get a hard error instead of subtle failure.
 define Build/Compile
 	$(call Build/Compile/Default)
@@ -526,23 +526,31 @@ endef
 define Package/zabbix-proxy/conffiles
 /etc/zabbix_proxy.conf
 /etc/zabbix_proxy.conf.d/
+/etc/config/zabbix_proxy
+endef
+
+define Package/zabbix-proxy/postinst
+#!/bin/sh
+[ -n "$${IPKG_INSTROOT}" ] || (. /etc/uci-defaults/90_zabbix_proxy) && rm -f /etc/uci-defaults/90_zabbix_proxy
+exit 0
 endef
 
 define Package/zabbix-proxy/install
 	$(INSTALL_DIR) $(1)/etc/zabbix_proxy.conf.d
 	$(call Package/zabbix/install/sbin,$(1),proxy)
 	$(call Package/zabbix/install/etc,$(1),proxy)
+	$(call Package/zabbix/install/init.d,$(1),proxy)
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/zabbix_proxy.config $(1)/etc/config/zabbix_proxy
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/zabbix_proxy.defaults $(1)/etc/uci-defaults/90_zabbix_proxy
 endef
 
-define Package/zabbix-proxy-basic-sqlite/conffiles
-/etc/zabbix_proxy.conf
-/etc/zabbix_proxy.conf.d/
-endef
+Package/zabbix-proxy-basic-sqlite/conffiles=$(call Package/zabbix-proxy/conffiles)
+Package/zabbix-proxy-basic-sqlite/postinst=$(call Package/zabbix-proxy/postinst)
 
 define Package/zabbix-proxy-basic-sqlite/install
-	$(INSTALL_DIR) $(1)/etc/zabbix_proxy.conf.d
-	$(call Package/zabbix/install/sbin,$(1),proxy)
-	$(call Package/zabbix/install/etc,$(1),proxy)
+	$(call Package/zabbix-proxy/install,$(1))
 endef
 
 define Package/zabbix-server/conffiles
