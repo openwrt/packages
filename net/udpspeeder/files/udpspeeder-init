@@ -88,6 +88,7 @@ start_instance() {
 	procd_append_param command --report "${report}"
 	procd_append_param command --interval "${interval}"
 	procd_append_param command --mtu "${mtu}"
+	procd_append_param command --timeout "${timeout}"
 	procd_append_param command --sock-buf "${sock_buf}"
 	procd_append_param command --decode-buf "${decode_buf}"
 	procd_append_param command --queue-len "${queue_len}"
