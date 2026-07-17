@@ -492,6 +492,7 @@ endef
 
 define Package/zabbix-agentd/conffiles
 /etc/zabbix_agentd.conf
+/etc/zabbix_agentd.conf.d/
 endef
 
 define Package/zabbix-agentd/install
@@ -503,6 +504,7 @@ endef
 
 define Package/zabbix-agentd-basic/conffiles
 /etc/zabbix_agentd.conf
+/etc/zabbix_agentd.conf.d/
 endef
 
 define Package/zabbix-agentd-basic/install
@@ -514,6 +516,7 @@ endef
 
 define Package/zabbix-proxy/conffiles
 /etc/zabbix_proxy.conf
+/etc/zabbix_proxy.conf.d/
 endef
 
 define Package/zabbix-proxy/install
@@ -524,6 +527,7 @@ endef
 
 define Package/zabbix-proxy-basic-sqlite/conffiles
 /etc/zabbix_proxy.conf
+/etc/zabbix_proxy.conf.d/
 endef
 
 define Package/zabbix-proxy-basic-sqlite/install
@@ -534,6 +538,7 @@ endef
 
 define Package/zabbix-server/conffiles
 /etc/zabbix_server.conf
+/etc/zabbix_server.conf.d/
 /etc/config/zabbix_server
 /etc/sysctl.d/90-zabbix-discovery-workers.conf
 endef
