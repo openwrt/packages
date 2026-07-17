@@ -37,7 +37,7 @@ fi
 
 readonly packageName='pbr'
 readonly PKG_VERSION='dev-test'
-readonly packageCompat='26'
+readonly packageCompat='27'
 readonly serviceName="$packageName $PKG_VERSION"
 readonly packageConfigFile="/etc/config/${packageName}"
 readonly packageDebugFile="/var/run/${packageName}.debug"
@@ -268,7 +268,8 @@ pbr_get_gateway4() {
 		# Fall back to ip route get using "table all" might already work
 		[ -z "$gw" ] && gw="$(ip -4 route get 1.1.1.1 oif "$dev" 2>/dev/null | awk '/via/ {print $3; exit}')"
 		# Raise warning if no gw and not point-to-point
-		{ [ -z "$gw" ] && ! ip address show dev "$dev" 2>/dev/null | grep -q "POINTOPOINT"; } && json add warning 'warningInterfaceRoutingUnknownGateway' "$dev"
+		{ [ -z "$gw" ] && ! ip address show dev "$dev" 2>/dev/null | grep -q "POINTOPOINT"; } && output_warning "Unknown IPv4 Gateway for interface:'$iface' device:'$dev'"
+		#{ [ -z "$gw" ] && ! ip address show dev "$dev" 2>/dev/null | grep -q "POINTOPOINT"; } && json add warning 'warningInterfaceRoutingUnknownGateway' "IPv4 interface:[$iface]; device:[$dev]"
 	fi
 	eval "$1"='$gw'
 }
@@ -294,7 +295,8 @@ pbr_get_gateway6() {
 		# Fall back to a link-local neighbor advertised as router.
 		[ -z "$gw" ] && gw="$(ip -6 neigh show dev "$dev" 2>/dev/null | awk '/^fe80:.*router/ {print $1; exit}')"
 		# Raise warning if no gw and not point-to-point link
-		{ [ -z "$gw" ] && ! ip address show dev "$dev" 2>/dev/null | grep -q "POINTOPOINT"; } && json add warning 'warningInterfaceRoutingUnknownGateway' "$dev"
+		{ [ -z "$gw" ] && ! ip address show dev "$dev" 2>/dev/null | grep -q "POINTOPOINT"; } && output_warning "Unknown IPv6 Gateway for interface:'$iface' device:'$dev'"
+		#{ [ -z "$gw" ] && ! ip address show dev "$dev" 2>/dev/null | grep -q "POINTOPOINT"; } && json add warning 'warningInterfaceRoutingUnknownGateway' "IPv6 interface:[$iface]; device:[$dev]"
 	fi
 	eval "$1"='$gw'
 }
@@ -432,6 +434,7 @@ get_mark_nft_chains() { "$nft" list table inet "$nftTable" 2>/dev/null | grep ch
 get_nft_sets() { "$nft" list table inet "$nftTable" 2>/dev/null | grep 'set' | grep "${nftPrefix}_" | awk '{ print $2 }'; }
 __ubus_get() { ubus call service list "{ 'name': '$packageName' }" | jsonfilter -e "$1"; }
 ubus_get_status() { __ubus_get "@.${packageName}.instances.main.data.status.${1}"; }
+ubus_get_data() { __ubus_get "@.${packageName}.instances.main.data.${1}[*]"; }  # use [*] otherwise it will return an array
 ubus_get_interface() { __ubus_get "@.${packageName}.instances.main.data.gateways[@.name='${1}']${2:+.${2}}"; }
 ubus_get_gateways() { __ubus_get "@.${packageName}.instances.main.data.gateways"; }
 config_get_list() { config_get "$@"; }
@@ -1314,14 +1317,14 @@ cleanup() {
 json() {
 	local status message stats i
 	local action="$1" param="$2" value="$3"; shift 3; local info="$*";
-	local _current_namespace="$_JSON_PREFIX"
-	json_set_namespace "${packageName//-/_}_"
+	local _current_namespace
+	json_set_namespace "${packageName//-/_}_" _current_namespace
 	[ "$param" = 'error' ] && param='errors'
 	[ "$param" = 'warning' ] && param='warnings'
 	{ json_load_file "$runningStatusFile" || json_init; } >/dev/null 2>&1
 	case "$action" in
 		'get')
-			json_select "$param" >/dev/null 2>&1 || return
+			json_select "$param" >/dev/null 2>&1 || { json_set_namespace "$_current_namespace"; return; }
 			if [ -n "$value" ]; then
 				{
 				if json_select "$value"; then
@@ -2587,12 +2590,11 @@ process_interface() {
 		return 1
 	fi
 
-	if is_ovpn "$iface"; then
-		uci_get_device dev4 "$iface"
-		[ -z "$dev4" ] && uci_get_dev dev4 "$iface"
-	else
-		network_get_device dev4 "$iface"
-		[ -z "$dev4" ] && network_get_physdev dev4 "$iface"
+	network_get_device dev4 "$iface"
+	[ -n "$dev4" ] || network_get_physdev dev4 "$iface"
+	[ -n "$dev4" ] || uci_get_device dev4 "$iface"
+	if [ -z "$dev4" ] && is_ovpn "$iface"; then
+		uci_get_dev dev4 "$iface"
 	fi
 	if is_uplink4 "$iface" && [ -n "$uplink_interface6" ]; then
 		network_get_device dev6 "$uplink_interface6"
@@ -2644,8 +2646,11 @@ process_interface() {
 			pbr_get_gateway6 gw6 "$iface" "$dev6"
 			pbr_get_ipaddr4 ipa4 "$iface" "$dev4"
 			pbr_get_ipaddr6 ipa6 "$iface" "$dev6"
-			dispGw4="${gw4:-${ipa4:--}}"
-			dispGw6="${gw6:-${ipa6:--}}"
+			dispGw4="${gw4:-${ipa4:-0.0.0.0}}"
+			case "${gw6:-$ipa6}" in
+				''|'::'|'::0'|'::/0'|'::0/0') dispGw6='::0' ;;
+				*) dispGw6="${gw6:-$ipa6}" ;;
+			esac
 			if is_split_uplink; then
 				if is_uplink4 "$iface"; then
 					gw6=""; dev6=""
@@ -2735,8 +2740,11 @@ process_interface() {
 			pbr_get_gateway6 gw6 "$iface" "$dev6"
 			pbr_get_ipaddr4 ipa4 "$iface" "$dev4"
 			pbr_get_ipaddr6 ipa6 "$iface" "$dev6"
-			dispGw4="${gw4:-${ipa4:--}}"
-			dispGw6="${gw6:-${ipa6:--}}"
+			dispGw4="${gw4:-${ipa4:-0.0.0.0}}"
+			case "${gw6:-$ipa6}" in
+				''|'::'|'::0'|'::/0'|'::0/0') dispGw6='::0' ;;
+				*) dispGw6="${gw6:-$ipa6}" ;;
+			esac
 			if is_split_uplink; then
 				if is_uplink4 "$iface"; then
 					gw6=""; dev6=""
@@ -2766,8 +2774,11 @@ process_interface() {
 			pbr_get_gateway6 gw6 "$iface" "$dev6"
 			pbr_get_ipaddr4 ipa4 "$iface" "$dev4"
 			pbr_get_ipaddr6 ipa6 "$iface" "$dev6"
-			dispGw4="${gw4:-${ipa4:--}}"
-			dispGw6="${gw6:-${ipa6:--}}"
+			dispGw4="${gw4:-${ipa4:-0.0.0.0}}"
+			case "${gw6:-$ipa6}" in
+				''|'::'|'::0'|'::/0'|'::0/0') dispGw6='::0' ;;
+				*) dispGw6="${gw6:-$ipa6}" ;;
+			esac
 			if is_split_uplink; then
 				if is_uplink4 "$iface"; then
 					gw6=""; dev6=""
@@ -2928,7 +2939,8 @@ start_service() {
 		return 0
 	fi
 
-	if [ -n "$(ubus_get_status error)" ] || [ -n "$(ubus_get_status warning)" ]; then
+	# Errors are blocking on_interface_reload, warnings are excluded!
+	if [ -n "$(ubus_get_data errors)" ]; then
 		serviceStartTrigger='on_start'
 		unset reloadedIface
 	elif ! is_service_running; then
@@ -3019,7 +3031,12 @@ start_service() {
 
 	json_add_int 'packageCompat' "$packageCompat"
 	json_add_object 'status'
-	if [ -n "$gatewaySummary" ]; then json_add_string 'gateways' "$gatewaySummary"; else json_add_error 'errorNoGateways'; fi
+	if [ -n "$gatewaySummary" ]; then
+		json_add_string 'gateways' "$gatewaySummary"
+	else
+		json add error 'errorNoGateways'
+		json_add_string 'error' 'errorNoGateways'
+	fi
 	json_close_object
 	json_add_array 'errors'
 		for k in $(json get errors); do
