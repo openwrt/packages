@@ -83,10 +83,11 @@ Signed-off-by: Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
  
  ####### USER-DEFINED MONITORED PARAMETERS #######
  
-@@ -547,5 +541,5 @@ Hostname=Zabbix server
+@@ -547,5 +541,6 @@ Hostname=Zabbix server
  # Include=
  
  # Include=/usr/local/etc/zabbix_agentd.userparams.conf
 -# Include=/usr/local/etc/zabbix_agentd.conf.d/
  # Include=/usr/local/etc/zabbix_agentd.conf.d/*.conf
++Include=/usr/share/zabbix_agentd.openwrt-params.d/
 +Include=/etc/zabbix_agentd.conf.d/
