@@ -493,6 +493,7 @@ endef
 
 define Package/zabbix-agentd/conffiles
 /etc/zabbix_agentd.conf
+/etc/zabbix_agentd.conf.d
 /etc/config/zabbix_agentd
 endef
 
@@ -513,8 +514,8 @@ define Package/zabbix-agentd/install
 	$(INSTALL_BIN) ./files/zabbix_agentd.defaults $(1)/etc/uci-defaults/90_zabbix_agentd
 endef
 
-Package/zabbix-agentd-basic/conffiles=$(call Package/zabbix_agentd/conffiles)
-Package/zabbix-agentd-basic/postinst=$(call Package/zabbix_agentd/postinst)
+Package/zabbix-agentd-basic/conffiles=$(call Package/zabbix-agentd/conffiles)
+Package/zabbix-agentd-basic/postinst=$(call Package/zabbix-agentd/postinst)
 
 define Package/zabbix-agentd-basic/install
 	$(call Package/zabbix-agentd/install,$(1))
@@ -522,6 +523,7 @@ endef
 
 define Package/zabbix-proxy/conffiles
 /etc/zabbix_proxy.conf
+/etc/zabbix_proxy.conf.d
 /etc/config/zabbix_proxy
 endef
 
@@ -551,6 +553,7 @@ endef
 
 define Package/zabbix-server/conffiles
 /etc/zabbix_server.conf
+/etc/zabbix_server.conf.d
 /etc/config/zabbix_server
 /etc/sysctl.d/90-zabbix-discovery-workers.conf
 endef
