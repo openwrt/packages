@@ -912,6 +912,7 @@ const config_schema = { // ucode-lsp disable
 	download_connect_timeout: ['string', '10'],
 	download_max_time:       ['string'],
 	download_timeout:        ['string', '20'],
+	gateway_check:           ['string', 'netifd'],
 	heartbeat_sleep_timeout: ['string', '10'],
 	led:                     ['string'],
 	pause_timeout:           ['string', '20'],
@@ -1224,7 +1225,7 @@ env.load = function(param, validation_result) {
 		}
 	};
 
-	let _check_wan_gateway = function() {
+	let _check_netifd_gateway = function() {
 		let ub = connect();
 		if (!ub) return false;
 		let dump = ub.call('network.interface', 'dump');
@@ -1232,9 +1233,26 @@ env.load = function(param, validation_result) {
 		if (!dump?.interface) return false;
 		for (let iface in dump.interface) {
 			for (let r in (iface.route || []))
-				if (r.target == '0.0.0.0') return true;
+				if (r.target == '0.0.0.0' || r.target == '::') return true;
 		}
 		return false;
+	};
+
+	let _check_kernel_gateway = function() {
+		return system("ip -4 route show default 2>/dev/null | grep -q '^default'") == 0 ||
+			system("ip -6 route show default 2>/dev/null | grep -q '^default'") == 0;
+	};
+
+	let _check_wan_gateway = function() {
+		switch (cfg.gateway_check) {
+		case 'none':
+			return true;
+		case 'kernel':
+			return _check_kernel_gateway();
+		case 'netifd':
+		default:
+			return _check_netifd_gateway();
+		}
 	};
 
 	// ── param-driven branches ───────────────────────────────────────
@@ -3081,4 +3099,3 @@ export default {
 	emit_procd_shell,
 	process_file_url,
 };
-
