@@ -2,8 +2,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=samba
-PKG_VERSION:=4.22.7
-PKG_RELEASE:=3
+PKG_VERSION:=4.24.4
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
@@ -11,7 +11,7 @@ PKG_SOURCE_URL:= \
 		https://ftp.riken.jp/net/samba/samba/stable/ \
 		https://www.nic.funet.fi/index/samba/pub/samba/stable/ \
 		https://download.samba.org/pub/samba/stable/
-PKG_HASH:=12195811d4542f661536e9055b44d58c53020412beafaae205e227bf72f6a497
+PKG_HASH:=df2c51ab4361ec626ab9988e5946efcca8465bc7afae834291d5558468265ff8
 
 PKG_BUILD_FLAGS:=gc-sections
 
@@ -148,8 +148,12 @@ endef
 TARGET_CFLAGS += $(FPIC) -std=gnu17
 TARGET_LDFLAGS += -Wl,--as-needed $(if $(filter arm armeb mips mipsel powerpc,$(ARCH)),-latomic)
 
-# dont mess with sambas private rpath!
-RSTRIP:=:
+STRIP:=$(firstword $(TOOLCHAIN_BIN_DIRS))/$(TARGET_CROSS)strip
+RSTRIP:= \
+	NM="$(firstword $(TOOLCHAIN_BIN_DIRS))/$(TARGET_CROSS)nm" \
+	STRIP="$(STRIP)" \
+	STRIP_KMOD="$(STRIP) --strip-debug" \
+	$(SCRIPT_DIR)/rstrip.sh
 
 CONFIGURE_VARS += \
 	CPP="$(TARGET_CROSS)cpp" \
@@ -336,9 +340,9 @@ ifdef CONFIG_KERNEL_IO_URING
 	SYSTEM_BUNDLED_LIBS:=,uring
 endif
 ifeq ($(CONFIG_SAMBA4_SERVER_AD_DC),y)
-	CONFIGURE_ARGS += --bundled-libraries=NONE,$(SYSTEM_PRIVATE_BUNDLED_LIBS)$(SYSTEM_BUNDLED_LIBS),$(PYTHON_BUNDLED_LIBS)
+	CONFIGURE_ARGS += --bundled-libraries=$(SYSTEM_PRIVATE_BUNDLED_LIBS)$(SYSTEM_BUNDLED_LIBS),$(PYTHON_BUNDLED_LIBS)
 else
-	CONFIGURE_ARGS += --bundled-libraries=NONE,$(SYSTEM_PRIVATE_BUNDLED_LIBS)$(SYSTEM_BUNDLED_LIBS)
+	CONFIGURE_ARGS += --bundled-libraries=$(SYSTEM_PRIVATE_BUNDLED_LIBS)$(SYSTEM_BUNDLED_LIBS)
 endif
 CONFIGURE_ARGS += --private-libraries=$(SYSTEM_PRIVATE_BUNDLED_LIBS)
 
@@ -363,9 +367,9 @@ define Host/Prepare
 	$(call Host/Prepare/Default)
 	$(SED) 's,mandatory=True,mandatory=False,g' $(HOST_BUILD_DIR)/wscript_configure_system_gnutls
 	$(SED) 's,gnutls_version =.*,gnutls_version = gnutls_min_required_version,g' $(HOST_BUILD_DIR)/wscript_configure_system_gnutls
-	$(SED) 's,gnutls_version_str.*,gnutls_version_str = "3.7.7",g' $(HOST_BUILD_DIR)/wscript_configure_system_gnutls
+	$(SED) 's,gnutls_version_str =.*,gnutls_version_str = "3.8.10",g' $(HOST_BUILD_DIR)/wscript_configure_system_gnutls
 	$(SED) 's,(gnutls_version > .*,(parse_version(gnutls_version) > parse_version("3.6.10")):,g' $(HOST_BUILD_DIR)/wscript_configure_system_gnutls
-	$(SED) 's,(gnutls_version < .*,(parse_version(gnutls_version) < parse_version("3.5.2")):,g' $(HOST_BUILD_DIR)/wscript_configure_system_gnutls
+	$(SED) 's,(gnutls_version >= .*,(parse_version(gnutls_version) >= parse_version("3.5.2")):,g' $(HOST_BUILD_DIR)/wscript_configure_system_gnutls
 endef
 define Host/Compile
 	(cd $(HOST_BUILD_DIR); \
@@ -408,6 +412,8 @@ endef
 
 # Build via "waf install", avoid the make wrapper. (Samba logic is 'waf install' = build + install)
 define Build/Compile
+	$(LN) $(STAGING_DIR_HOSTPKG)/bin/compile_et_samba $(PKG_BUILD_DIR)/bin/compile_et
+	$(LN) $(STAGING_DIR_HOSTPKG)/bin/asn1_compile_samba $(PKG_BUILD_DIR)/bin/asn1_compile
 	(cd $(PKG_BUILD_DIR); \
 		./buildtools/bin/waf install \
 		--jobs=$(shell nproc) \
