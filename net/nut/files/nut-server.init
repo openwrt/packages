@@ -29,7 +29,7 @@ USE_PROCD=1
 # shellcheck source=net/nut/files/functions.sh.functions
 . "${IPKG_INSTROOT}"/lib/functions.sh || {
 	# Before our sourcing error logging definitions are sourced
-	logger -t "nut-server" "FATAL: Unable to source 'functions.sh' in 'nut-server'"
+	logger -t "nut-server[$$]" "FATAL: Unable to source 'functions.sh' in 'nut-server'"
 	exit 1
 }
 
@@ -39,7 +39,7 @@ USE_PROCD=1
 # shellcheck source=net/nut/files/nut-common.sh.functions
 . "${IPKG_INSTROOT}"/lib/functions/nut/nut-common.sh || {
 	# Before our sourcing error logging definitions are sourced
-	logger -t "nut-server" "FATAL: Unable to source 'nut-common.sh' in 'nut-server'"
+	logger -t "nut-server[$$]" "FATAL: Unable to source 'nut-common.sh' in 'nut-server'"
 	exit 1
 }
 
@@ -397,7 +397,7 @@ reload_ups_driver() {
 
 stop_service_if_no_instances() {
 	if service_active_no_instances "nut-server"; then
-		logger -s -t "nut-server" "nut-server active with no instances"
+		logger -t "nut-server" "nut-server active with no instances"
 		# If "nut-server" is active with no instances
 		# We don't care about the exit code of procd_kill, and logging its
 		# stderr can aid debugging.

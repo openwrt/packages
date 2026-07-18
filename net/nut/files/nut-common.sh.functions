@@ -185,7 +185,7 @@ log_msg() {
 	local level="${4:-notice}"
 	local facility="${5:-daemon}"
 
-	logger -t "$syslog_id" -p "${facility}.${level}" "'$reason' in '$current_script'" || {
+	logger -t "${syslog_id}[$$]" -p "${facility}.${level}" "'$reason' in '$current_script'" || {
 		# We use 'tr' as changing case via variable parameter substitution is not available in ash on OpenWrt
 		# shellcheck disable=SC2018,SC2019
 		level="$(echo "$level" | tr 'a-z' 'A-Z')"

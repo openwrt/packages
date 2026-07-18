@@ -18,7 +18,7 @@ USE_PROCD=1
 # shellcheck source=net/nut/files/functions.sh.functions
 . "${IPKG_INSTROOT}"/lib/functions.sh || {
 	# Before our sourcing error logging definitions are sourced
-	logger -t nut-monitor "Unable to source 'functions.sh' in 'nut-monitor'. Bailing"
+	logger -t nut-monitor[$$] "Unable to source 'functions.sh' in 'nut-monitor'. Bailing"
 	exit 1
 }
 
@@ -28,7 +28,7 @@ USE_PROCD=1
 # shellcheck source=net/nut/files/nut-common.sh.functions
 . "${IPKG_INSTROOT}"/lib/functions/nut/nut-common.sh || {
 	# Before our sourcing error logging definitions are sourced
-	logger -t nut-monitor "Unable to source 'nut-common.sh' in 'nut-monitor'. Bailing"
+	logger -t nut-monitor[$$] "Unable to source 'nut-common.sh' in 'nut-monitor'. Bailing"
 	exit 1
 }
 
