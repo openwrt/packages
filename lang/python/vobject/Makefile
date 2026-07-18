@@ -5,7 +5,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vobject
 PKG_VERSION:=0.9.9
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=Apache-2.0
 
 PYPI_NAME:=$(PKG_NAME)
@@ -23,7 +23,7 @@ define Package/python3-vobject
   CATEGORY:=Languages
   TITLE:=VObject
   URL:=https://py-vobject.github.io/
-  DEPENDS:=+python3 +python3-dateutil
+  DEPENDS:=+python3 +python3-dateutil +python3-pytz +python3-six
 endef
 
 define Package/python3-vobject/description
