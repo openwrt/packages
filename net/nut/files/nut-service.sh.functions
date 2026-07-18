@@ -67,7 +67,7 @@ list_running_instances() {
 	if [ -n "$running_instances" ]; then
 		json_init
 		json_load "$running_instances" || {
-			logger -s -t nut-service "json_load failed in list_running_instances"
+			log_error "json_load failed in list_running_instances" nut-service.sh nut-service
 			return 1
 		}
 		json_get_keys instance_names
@@ -139,7 +139,7 @@ signal_instance() {
 	# We only want to issue secondary command if the primary command fails
 	if [ "$ret" = "1" ] && [ -n "$secondary_command" ] && procd_running "$service_name" "$instance_name"; then
 		# Informational log message, not error
-		logger -s -t "$service_name" "Performing '$secondary_command' $* for '$instance_name'"
+		log_msg "Performing '$secondary_command' $* for '$instance_name'" nut-service.sh "$service_name" info
 		set -f
 		"$secondary_command" "$@" 2>&1 | logger -t "$service_name"
 		set +f

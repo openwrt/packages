@@ -280,7 +280,7 @@ service_reload() {
 			return 1
 		fi
 		# Empty hosts is not necessarily an error, but we log for information
-		logger -s -t nut-cgi "No configured hosts"
+		log_msg "No configured hosts" nut-cgi nut-cgi info
 	fi
 
 	# NUT CGI host file configuration is independent of upsset configuration

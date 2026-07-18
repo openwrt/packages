@@ -397,7 +397,7 @@ reload_ups_driver() {
 
 stop_service_if_no_instances() {
 	if service_active_no_instances "nut-server"; then
-		logger -t "nut-server" "nut-server active with no instances"
+		log_msg "nut-server active with no instances" nut-server "nut-server" notice
 		# If "nut-server" is active with no instances
 		# We don't care about the exit code of procd_kill, and logging its
 		# stderr can aid debugging.
