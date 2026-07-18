@@ -16,7 +16,7 @@
 # shellcheck source=net/nut/files/functions.sh.functions
 . "${IPKG_INSTROOT}"/lib/functions.sh || {
 	# Before our sourcing error logging definitions are sourced
-	logger -s -t nut-usb-hotplug "Unable to source 'functions.sh' in 'libhid-ups' hotplug. Bailing"
+	logger -t nut-usb-hotplug "Unable to source 'functions.sh' in 'libhid-ups' hotplug. Bailing"
 	exit 1
 }
 
@@ -26,7 +26,7 @@
 # shellcheck source=net/nut/files/nut-common.sh.functions
 . "${IPKG_INSTROOT}"/lib/functions/nut/nut-common.sh || {
 	# Before our sourcing error logging definitions are sourced
-	logger -s -t nut-usb-hotplug "Unable to source 'nut-common.sh' in 'libhid-ups' hotplug. Bailing"
+	logger -t nut-usb-hotplug "Unable to source 'nut-common.sh' in 'libhid-ups' hotplug. Bailing"
 	exit 1
 }
 

@@ -35,7 +35,7 @@ UPSCGI_HOSTS_CONF="${UPSCGI_CONF_DIR}/hosts.conf"
 # shellcheck source=net/nut/files/functions.sh.functions
 . "${IPKG_INSTROOT}"/lib/functions.sh || {
 	# Before our sourcing error logging definitions are sourced
-	logger -s -t nut-cgi "Unable to source 'functions.sh'"
+	logger -t nut-cgi "Unable to source 'functions.sh'"
 	exit 1
 }
 
@@ -45,7 +45,7 @@ UPSCGI_HOSTS_CONF="${UPSCGI_CONF_DIR}/hosts.conf"
 # shellcheck source=net/nut/files/nut-common.sh.functions
 . "${IPKG_INSTROOT}"/lib/functions/nut/nut-common.sh || {
 	# Before our sourcing error logging definitions are sourced
-	logger -s -t nut-cgi "Failed to load nut-common.sh"
+	logger -t nut-cgi "Failed to load nut-common.sh"
 	exit 1
 }
 
