@@ -29,7 +29,7 @@ USE_PROCD=1
 # shellcheck source=net/nut/files/functions.sh.functions
 . "${IPKG_INSTROOT}"/lib/functions.sh || {
 	# Before our sourcing error logging definitions are sourced
-	logger -s -t "nut-server" "FATAL: Unable to source 'functions.sh' in 'nut-server'"
+	logger -t "nut-server" "FATAL: Unable to source 'functions.sh' in 'nut-server'"
 	exit 1
 }
 
@@ -39,7 +39,7 @@ USE_PROCD=1
 # shellcheck source=net/nut/files/nut-common.sh.functions
 . "${IPKG_INSTROOT}"/lib/functions/nut/nut-common.sh || {
 	# Before our sourcing error logging definitions are sourced
-	logger -s -t "nut-server" "FATAL: Unable to source 'nut-common.sh' in 'nut-server'"
+	logger -t "nut-server" "FATAL: Unable to source 'nut-common.sh' in 'nut-server'"
 	exit 1
 }
 
@@ -101,8 +101,9 @@ start_ups_driver() {
 
 	procd_open_instance "$ups"
 	procd_set_param respawn
-	procd_set_param stderr 0 # stderr is just a dup of stdout + logger (with -s)
+	procd_set_param stderr 1
 	procd_set_param stdout 1
+	procd_set_param env NUT_DEBUG_SYSLOG="stderr"
 	procd_set_param env NUT_QUIET_INIT_UPSNOTIFY=true
 	procd_set_param env NUT_STATEPATH="${STATEPATH}"
 	procd_set_param command "/usr/libexec/nut/${driver}"
@@ -183,7 +184,7 @@ stop_no_longer_configured_instances() {
 		config_get driver "$instance" driver
 		# Only stop not configured but running instances
 		if [ -z "$driver" ] && [ -n "$instance" ] && procd_running "nut-server" "$instance" >/dev/null 2>&1; then
-			procd_kill "nut-server" "$instance" 2>&1 | logger -s -t nut-server
+			procd_kill "nut-server" "$instance" 2>&1 | logger -t nut-server
 		fi
 	done
 	set +f
@@ -312,8 +313,9 @@ start_server_instance() {
 
 	procd_open_instance upsd
 	procd_set_param respawn
-	procd_set_param stderr 0 # stderr is just a dup of stdout + logger (with -s)
+	procd_set_param stderr 1
 	procd_set_param stdout 1
+	procd_set_param env NUT_DEBUG_SYSLOG="stderr"
 	procd_set_param env NUT_QUIET_INIT_UPSNOTIFY=true
 	procd_set_param env NUT_STATEPATH="$STATEPATH"
 	procd_set_param command /usr/sbin/upsd
@@ -399,7 +401,7 @@ stop_service_if_no_instances() {
 		# If "nut-server" is active with no instances
 		# We don't care about the exit code of procd_kill, and logging its
 		# stderr can aid debugging.
-		procd_kill "nut-server" 2>&1 | logger -s -t "nut-server"
+		procd_kill "nut-server" 2>&1 | logger -t "nut-server"
 	fi
 }
 

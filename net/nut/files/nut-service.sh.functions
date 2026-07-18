@@ -141,7 +141,7 @@ signal_instance() {
 		# Informational log message, not error
 		logger -s -t "$service_name" "Performing '$secondary_command' $* for '$instance_name'"
 		set -f
-		"$secondary_command" "$@" 2>&1 | logger -s -t "$service_name"
+		"$secondary_command" "$@" 2>&1 | logger -t "$service_name"
 		set +f
 	fi
 	# No signal sent is a valid possibility. Also, if sending a signal fails

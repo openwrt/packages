@@ -27,7 +27,7 @@
 
 # shellcheck source=net/nut/files/functions.sh.functions
 . /lib/functions.sh || {
-	logger -s -t nut-sched "FATAL: Unable to source 'functions.sh'" || true
+	logger -t nut-sched "FATAL: Unable to source 'functions.sh'" || true
 	exit 1
 }
 
@@ -36,7 +36,7 @@ SKIP_ADD_NOTIFYCMD="false"
 
 # Load and process nut_monitor (upsmon) configuration
 config_load nut_monitor || {
-	logger -s -t nut-sched "FATAL: loading 'nut_monitor' failed" || true
+	logger -t nut-sched "FATAL: loading 'nut_monitor' failed" || true
 	exit 1
 }
 
@@ -50,18 +50,18 @@ fi
 if [ "${SKIP_ADD_NOTIFYCMD}" = "false" ]; then
 	# Ensure upsmon type section with the name upsmon exists
 	uci set "nut_monitor.upsmon=upsmon" || {
-		logger -s -t nut-sched "Failed to ensure an upsmon section named upsmon exists" || true
+		logger -t nut-sched "Failed to ensure an upsmon section named upsmon exists" || true
 		exit 1
 	}
 
 	uci set "nut_monitor.upsmon.notifycmd=/usr/sbin/upssched" || {
-		logger -s -t nut-sched "Failed to set notifycmd to upssched" || true
+		logger -t nut-sched "Failed to set notifycmd to upssched" || true
 		uci revert nut_monitor || true
 		exit 1
 	}
 
 	uci commit nut_monitor || {
-		logger -s -t nut-sched "Failed to commit changes to nut_monitor" || true
+		logger -t nut-sched "Failed to commit changes to nut_monitor" || true
 		exit 1
 	}
 fi
