@@ -21,7 +21,12 @@ append_params() {
 		}
 		IFS="$LIST_SEP"
 		for value in $value; do
-			[ -n "$value" ] && echo "    $param '$value'" >> "$CONFFILE"
+			[ -n "$value" ] && {
+				case "$value" in
+					*"'"*) echo "    $param \"$value\"" >> "$CONFFILE" ;;
+					*) echo "    $param '$value'" >> "$CONFFILE" ;;
+				esac
+			}
 		done
 		unset IFS
 	done
@@ -50,9 +55,10 @@ radsecproxy_options() {
 	append_params "$cfg" \
 		Include PidFile LogLevel LogDestination FTicksReporting FTicksMAC FTicksKey \
 		FTicksSyslogFacility ListenUDP ListenTCP ListenTLS ListenDTLS SourceUDP \
-		SourceTCP SourceTLS SourceDTLS TTLAttribute AddTTL
+		SourceTCP SourceTLS SourceDTLS TTLAttribute AddTTL FTicksPrefix LogMAC \
+		LogKey
 	append_bools "$cfg" \
-		LoopPrevention IPv4Only IPv6Only
+		LoopPrevention IPv4Only IPv6Only SNI VerifyEAP LogThreadId LogFullUsername
 }
 
 tls_block() {
@@ -62,7 +68,8 @@ tls_block() {
 	echo "tls '$name' {" >> "$CONFFILE"
 	append_params "$cfg" \
 		Include CACertificateFile CACertificatePath certificateFile certificateKeyFile \
-		certificateKeyPassword cacheExpiry policyOID
+		certificateKeyPassword cacheExpiry policyOID CipherList CipherSuites \
+		TLSVersion DTLSVersion
 	append_bools "$cfg" \
 		CRLCheck
 	echo "}" >> "$CONFFILE"
@@ -75,7 +82,10 @@ rewrite_block() {
 	echo "rewrite '$name' {" >> "$CONFFILE"
 	append_params "$cfg" \
 		Include addAttribute addVendorAttribute removeAttribute removeVendorAttribute \
-		modifyAttribute
+		modifyAttribute modifyVendorAttribute supplementAttribute supplementVendorAttribute \
+		whitelistAttribute whitelistVendorAttribute
+	append_bools "$cfg" \
+		whitelistMode
 	echo "}" >> "$CONFFILE"
 }
 
@@ -87,9 +97,10 @@ client_block() {
 	append_params "$cfg" \
 		Include host type secret tls matchCertificateAttribute duplicateInterval \
 		AddTTL fticksVISCOUNTRY fticksVISINST rewrite rewriteIn rewriteOut \
-		rewriteAttribute
+		rewriteAttribute serverName PSKkey PSKidentity
 	append_bools "$cfg" \
-		IPv4Only IPv6Only certificateNameCheck
+		IPv4Only IPv6Only certificateNameCheck requireMessageAuthenticator \
+		requireMessageAuthenticatorProxy
 	echo "}" >> "$CONFFILE"
 }
 
@@ -101,9 +112,11 @@ server_block() {
 	append_params "$cfg" \
 		Include host port type secret tls matchCertificateAttribute \
 		AddTTL rewrite rewriteIn rewriteOut retryCount dynamicLookupCommand \
-		retryInterval
+		retryInterval serverName SNIservername PSKkey PSKidentity DTLSForceMTU \
+		source
 	append_bools "$cfg" \
-		IPv4Only IPv6Only certificateNameCheck statusServer LoopPrevention
+		IPv4Only IPv6Only certificateNameCheck statusServer LoopPrevention SNI \
+		requireMessageAuthenticator blockingStartup
 	echo "}" >> "$CONFFILE"
 }
 
