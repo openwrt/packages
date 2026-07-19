@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ripe-atlas
 PKG_VERSION:=5110
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=ripe-atlas-software-probe-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/RIPE-NCC/ripe-atlas-software-probe/tar.gz/refs/tags/$(PKG_VERSION)?
@@ -62,7 +62,6 @@ define Package/ripe-atlas-common
 	+jsonfilter \
 	+openssh-client \
 	+openssh-keygen \
-	+libopenssl \
 	+@OPENSSL_WITH_DEPRECATED \
 	+@BUSYBOX_CONFIG_KILL \
 	+@BUSYBOX_CONFIG_KILLALL \
