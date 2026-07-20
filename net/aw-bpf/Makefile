@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=aw-bpf
 PKG_VERSION:=1.04.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=aw-bpf-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/liudf0716/$(PKG_NAME)/tar.gz/$(PKG_VERSION)?
@@ -31,13 +31,14 @@ define Package/aw-bpf
   SECTION:=net
   CATEGORY:=Network
   TITLE:=ApFree eBPF programs and tools
-  DEPENDS:=+libbpf +libjson-c +libevent2 +libuci +libmnl +libnftnl +tc-full +kmod-xdpi $(BPF_DEPENDS)
+  DEPENDS:=+libbpf +libelf +libjson-c +libuci +libmnl +libnftnl +tc-full +kmod-xdpi $(BPF_DEPENDS)
   URL:=https://github.com/liudf0716/aw-bpf
 endef
 
 define Package/aw-bpf/description
 	ApFree eBPF provides eBPF programs for session tracking, xDPI, DNS monitoring
-	and related user-space tools (aw-bpfctl, event_daemon).
+	and user-space tools: aw-bpfctl (control CLI) and event_daemon (session / access
+	logging daemon that consumes session_events_map and writes JSON syslog).
 endef
 
 
@@ -49,7 +50,9 @@ define KernelPackage/xdpi
   AUTOLOAD:=$(call AutoProbe,xdpi)
 endef
 
+# Build cmake userspace first (aw-bpfctl, event_daemon), then BPF objects and kmod.
 define Build/Compile
+	$(call Build/Compile/Default)
 	$(call CompileBPF,$(PKG_BUILD_DIR)/aw-bpf.c,$(if $(filter arm aarch64 x86_64 i386,$(ARCH)),-DENABLE_XDPI_FEATURE))
 	$(call CompileBPF,$(PKG_BUILD_DIR)/dns-bpf.c,$(if $(filter arm aarch64 x86_64 i386,$(ARCH)),-DENABLE_XDPI_FEATURE))
 	$(KERNEL_MAKE) M=$(PKG_BUILD_DIR) modules
@@ -62,6 +65,7 @@ endef
 define Package/aw-bpf/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/aw-bpfctl $(1)/usr/bin/aw-bpfctl
+	# event_daemon: session event consumer for access logging (上网日志)
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/event_daemon $(1)/usr/bin/event_daemon
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/aw-bpf.init $(1)/etc/init.d/aw-bpf
