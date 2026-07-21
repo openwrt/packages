@@ -63,14 +63,15 @@ for feed in allowlist ${ban_feed} blocklist; do
 	# skip external feeds in allowlistonly mode
 	#
 	if [ "${ban_allowlistonly}" = "1" ]; then
-		case "${ban_feedin}" in
+		case " ${ban_feedin} " in
 		*" allowlist "*) ;;
 
 		*)
-			case "${ban_feedout}" in
+			case " ${ban_feedout} " in
 			*" allowlist "*) ;;
 
 			*)
+				f_log "info" "skip feed '${feed}' in allowlistonly mode"
 				continue
 				;;
 			esac
@@ -153,7 +154,6 @@ for feed in allowlist ${ban_feed} blocklist; do
 done
 wait
 f_rmset
-f_rmdir "${ban_tmpdir}"
 f_genstatus "active"
 
 # start domain lookup
@@ -176,6 +176,7 @@ f_log "info" "finish banIP processing"
 		f_mail
 	fi
 	json_cleanup
+	f_rmdir "${ban_tmpdir}"
 	rm -rf "${ban_lock}"
 ) &
 

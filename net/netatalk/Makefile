@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netatalk
-PKG_VERSION:=4.3.2
-PKG_RELEASE:=2
+PKG_VERSION:=4.4.3
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/netatalk
-PKG_HASH:=2977b4fd113182f0cc183337ba23d5701fb2be4e0dfcec7ee575b4d73a738d3a
+PKG_HASH:=863d640ecc99f4923ead6c58e8d3406ab3a1ca9dd3b0d47ccdf6fdebb6efe3ab
 
 PKG_MAINTAINER:=Antonio Pastor <antonio.pastor@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -31,7 +31,7 @@ define Package/netatalk/Default
   TITLE:=Apple Filing Protocol
   PROVIDES:=netatalk
   URL:=https://netatalk.io
-  DEPENDS:=+libevent2 +libdb47 +libgcrypt +iniparser
+  DEPENDS:=+libevent2 +libdb47 +libgcrypt +iniparser +libatomic
 endef
 
 define Package/netatalk-small

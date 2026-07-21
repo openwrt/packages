@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lm-sensors
 PKG_VERSION:=3.6.2
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_VERSION_SUBST=$(subst .,-,$(PKG_VERSION))
 PKG_SOURCE_URL:=https://codeload.github.com/hramrach/lm-sensors/tar.gz/V$(PKG_VERSION_SUBST)?
@@ -19,6 +19,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION_SUBST)
 
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 PKG_LICENSE:=GPL-2.0-or-later LGPL-2.1-or-later
+PKG_LICENSE_FILES:=COPYING COPYING.LGPL
 PKG_CPE_ID:=cpe:/a:lm_sensors:lm_sensors
 
 PKG_BUILD_PARALLEL:=1

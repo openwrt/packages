@@ -32,6 +32,8 @@ CARGO_RUSTFLAGS+=-Ctarget-feature=-crt-static $(RUSTC_LDFLAGS)
 ifeq ($(HOST_OS),Darwin)
   ifeq ($(HOST_ARCH),arm64)
     RUSTC_HOST_ARCH:=aarch64-apple-darwin
+  else ifeq ($(HOST_ARCH),x86_64)
+    RUSTC_HOST_ARCH:=x86_64-apple-darwin
   endif
 endif
 

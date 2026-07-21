@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fluent-bit
 PKG_VERSION:=4.2.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/fluent/fluent-bit.git
@@ -21,7 +21,7 @@ define Package/fluent-bit
   CATEGORY:=Administration
   TITLE:=Fast and Lightweight Logs and Metrics processor
   URL:=https://fluentbit.io/
-  DEPENDS:= +libyaml +libopenssl +libcurl +libstdcpp +libatomic +musl-fts +flex +bison \
+  DEPENDS:= +libyaml +libopenssl +libcurl +libstdcpp +libatomic +USE_MUSL:musl-fts +flex +bison \
 	    +libsasl2
 endef
 

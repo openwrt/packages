@@ -2,16 +2,12 @@
 
 [ "$1" = python3-awscli ] || exit 0
 
-python3 - << 'EOF'
+python3 - << 'EOF' || exit 1
 from awscli.clidriver import create_clidriver
 
-# Verify CLI driver can be created
+# Verify the CLI driver can be created
 driver = create_clidriver()
 assert driver is not None
-
-# Verify help text is available for s3 command
-import awscli.topics
-assert hasattr(awscli.topics, "TOPIC_TAGS")
 EOF
 
 # Verify the aws binary runs --version

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ifstat
 PKG_VERSION:=1.1
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://gael.roualland.free.fr/ifstat/
@@ -18,6 +18,8 @@ PKG_HASH:=8599063b7c398f9cfef7a9ec699659b25b1c14d2bc0f535aed05ce32b7d9f507
 PKG_MAINTAINER:=Nikil Mehta <nikil.mehta@gmail.com>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
+
+PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 

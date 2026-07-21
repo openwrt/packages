@@ -98,6 +98,12 @@ endif
 
 MESON_ARGS += \
 	-Ddefault_programmer_name=$(DEFAULT_PROGRAMMER_NAME) \
+	-Dich_descriptors_tool=enabled \
+	-Dbash_completion=disabled \
+	-Dtests=disabled \
 	-Dprogrammer=$(subst $(space),$(comma),$(strip $(PROGRAMMER_ARGS))) \
-	-Dwerror=false \
-	-Dtests=disabled
+	-Drpmc=disabled \
+	-Duse_git_version=disabled \
+	-Dman-pages=disabled \
+	-Ddocumentation=disabled \
+	-Dgenerate_authors_list=disabled

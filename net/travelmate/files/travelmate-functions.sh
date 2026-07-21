@@ -29,6 +29,7 @@ trm_maxautoadd="5"
 trm_timeout="60"
 trm_radio=""
 trm_revradio="0"
+trm_normbssid=""
 trm_connection=""
 trm_ssidfilter=""
 trm_ovpninfolist=""
@@ -203,6 +204,20 @@ f_trim() {
 	trim="${trim#"${trim%%[![:space:]]*}"}"
 	trim="${trim%"${trim##*[![:space:]]}"}"
 	printf "%s" "${trim}"
+}
+
+# normalize a bssid to upper case
+#
+f_normbssid() {
+	local bssid="${1}"
+
+	bssid="${bssid//a/A}"
+	bssid="${bssid//b/B}"
+	bssid="${bssid//c/C}"
+	bssid="${bssid//d/D}"
+	bssid="${bssid//e/E}"
+	bssid="${bssid//f/F}"
+	trm_normbssid="${bssid}"
 }
 
 # wifi helper function
@@ -509,11 +524,15 @@ f_getgw() {
 f_getcfg() {
 	local t_radio t_essid t_bssid radio="${1}" essid="${2}" bssid="${3}" cnt="0"
 
+	f_normbssid "${bssid}"
+	bssid="${trm_normbssid}"
 	trm_uplinkcfg=""
 	while uci_get "travelmate" "@uplink[${cnt}]" >/dev/null 2>&1; do
 		t_radio="$(uci_get "travelmate" "@uplink[${cnt}]" "device")"
 		t_essid="$(uci_get "travelmate" "@uplink[${cnt}]" "ssid")"
 		t_bssid="$(uci_get "travelmate" "@uplink[${cnt}]" "bssid")"
+		f_normbssid "${t_bssid}"
+		t_bssid="${trm_normbssid}"
 		if [ -n "${radio}" ] && [ -n "${essid}" ] &&
 			[ "${t_radio}" = "${radio}" ] && [ "${t_essid}" = "${essid}" ] && [ "${t_bssid}" = "${bssid}" ]; then
 			trm_uplinkcfg="@uplink[${cnt}]"
@@ -943,16 +962,29 @@ f_check() {
 									uci_add_list "dhcp" "@dnsmasq[0]" "rebind_domain" "${cp_domain}"
 									[ -n "$(uci -q changes "dhcp")" ] && uci_commit "dhcp"
 									/etc/init.d/dnsmasq reload
-									f_log "info" "captive portal domain '${cp_domain}' added to to dhcp rebind whitelist"
+									f_log "info" "captive portal domain '${cp_domain}' added to dhcp rebind allowlist"
 									result="$(f_net)"
 								done
 								if [ -n "${cp_domain}" ]; then
 									trm_connection="${result:-"-"}/${ifquality}"
 									f_genstatus
 									login_script="$(f_getval "script")"
-									if [ -x "${login_script}" ]; then
+									if [ -n "${login_script}" ]; then
+										login_script="$(readlink -f "${login_script}" 2>/dev/null)"
+										case "${login_script}" in
+										/etc/travelmate/*.login) ;;
+										*)
+											f_log "info" "captive portal login script rejected"
+											login_script=""
+											;;
+										esac
+									fi
+									if [ -f "${login_script}" ] && [ -x "${login_script}" ]; then
 										login_script_args="$(f_getval "script_args")"
-										"${login_script}" ${login_script_args} >/dev/null 2>&1
+										(
+											set -f
+											exec "${login_script}" ${login_script_args} >/dev/null 2>&1
+										)
 										rc="${?}"
 										f_log "info" "captive portal login script for '${cp_domain}' has been finished  with rc '${rc}'"
 										if [ "${rc}" = "0" ]; then
@@ -1059,7 +1091,7 @@ f_getstatus() {
 # generate status information
 #
 f_genstatus() {
-	local parse s_captive s_proactive s_netcheck s_autoadd s_randomize s_eviltwin s_ntp s_vpn s_mail vpn vpn_iface
+	local sta_json temp_ns s_captive s_proactive s_netcheck s_autoadd s_randomize s_eviltwin s_ntp s_vpn s_mail vpn vpn_iface
 	local section last_date sta_iface sta_radio sta_essid sta_bssid sta_mac dev_status status="${trm_ifstatus}" ntp_done="0" vpn_done="0" mail_done="0"
 
 	# get current connection information
@@ -1067,22 +1099,24 @@ f_genstatus() {
 	if [ "${status}" = "true" ]; then
 		status="connected, ${trm_connection:-"-"}"
 		dev_status="$("${trm_ubuscmd}" -S call network.wireless status 2>/dev/null)"
-		parse="$(printf "%s" "${dev_status}" | "${trm_jsoncmd}" \
-			-e '@.*.interfaces[@.config.mode="sta"].section' \
-			-e '@.*.interfaces[@.config.mode="sta"].config.ssid' \
-			-e '@.*.interfaces[@.config.mode="sta"].config.macaddr' \
-			-e '@.*.interfaces[@.config.mode="sta"].config.network[0]' \
-			-e '@.*.interfaces[@.config.mode="sta"].config.bssid')"
-		{
-			IFS= read -r section
-			IFS= read -r sta_essid
-			IFS= read -r sta_mac
-			IFS= read -r sta_iface
-			IFS= read -r sta_bssid
-		} <<-EOF
-			${parse}
-		EOF
+		sta_json="$(printf "%s" "${dev_status}" | "${trm_jsoncmd}" -ql1 -e '@.*.interfaces[@.config.mode="sta"]')"
+		if [ -n "${sta_json}" ]; then
+			json_set_namespace "trm_sta" temp_ns
+			json_load "${sta_json}"
+			json_get_var section "section"
+			if json_select "config" >/dev/null 2>&1; then
+				json_get_var sta_essid "ssid"
+				json_get_var sta_mac "macaddr"
+				json_get_var sta_bssid "bssid"
+				json_select "network" >/dev/null 2>&1 && json_get_var sta_iface "1"
+			fi
+			json_cleanup
+			json_set_namespace "${temp_ns}"
+		fi
+
 		if [ -n "${section}" ]; then
+			f_normbssid "${sta_bssid}"
+			sta_bssid="${trm_normbssid}"
 			sta_radio="$(uci_get "wireless" "${section}" "device")"
 			f_getcfg "${sta_radio}" "${sta_essid}" "${sta_bssid}"
 		fi
@@ -1334,7 +1368,8 @@ f_main() {
 			config_essid="${station_id%/*}"
 			config_essid="${config_essid#*/}"
 			config_bssid="${station_id##*/}"
-			config_bssid="${config_bssid//-/}"
+			f_normbssid "${config_bssid//-/}"
+			config_bssid="${trm_normbssid}"
 			f_check "dev" "true"
 			f_log "debug" "f_main-2    ::: config_radio: ${config_radio}, config_essid: \"${config_essid}\", config_bssid: ${config_bssid:-"-"}"
 		else
@@ -1364,6 +1399,8 @@ f_main() {
 					sta_radio="$(uci_get "wireless" "${section}" "device")"
 					sta_essid="$(uci_get "wireless" "${section}" "ssid")"
 					sta_bssid="$(uci_get "wireless" "${section}" "bssid")"
+					f_normbssid "${sta_bssid}"
+					sta_bssid="${trm_normbssid}"
 					sta_mac="$(f_mac "get" "${section}")"
 					if [ -z "${sta_radio}" ] || [ -z "${sta_essid}" ]; then
 						f_log "info" "invalid wireless section '${section}'"

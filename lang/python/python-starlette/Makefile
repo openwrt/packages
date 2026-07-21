@@ -3,11 +3,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-starlette
-PKG_VERSION:=1.0.0
+PKG_VERSION:=1.2.1
 PKG_RELEASE:=1
 
 PYPI_NAME:=starlette
-PKG_HASH:=6a4beaf1f81bb472fd19ea9b918b50dc3a77a6f2e190a12954b25e6ed5eea149
+PKG_HASH:=9b9b5ebb992e67d6093741e63c2f59e4f6fff986f81163c087867bd7b924b3f6
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=BSD-3-Clause

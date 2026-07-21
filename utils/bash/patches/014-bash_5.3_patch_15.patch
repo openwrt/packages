@@ -1,0 +1,48 @@
+From b460816602167718f78a6233164e8875f49b75b2 Mon Sep 17 00:00:00 2001
+From: Chet Ramey <chet.ramey@case.edu>
+Date: Wed, 10 Jun 2026 08:59:27 -0400
+Subject: Bash-5.3 patch 15: fix read builtin to avoid cases where -1 is used
+ as an index into the input buffer
+
+--- a/builtins/read.def
++++ b/builtins/read.def
+@@ -538,7 +538,8 @@ read_builtin (WORD_LIST *list)
+ 	     so we have to save input_string temporarily, run the unwind-
+ 	     protects, then restore input_string so we can use it later */
+ 	  orig_input_string = 0;
+-	  input_string[i] = '\0';	/* make sure it's terminated */
++	  if (i >= 0)
++	    input_string[i] = '\0';	/* make sure it's terminated */
+ 	  if (i == 0)
+ 	    {
+ 	      t = (char *)xmalloc (1);
+@@ -592,8 +593,7 @@ read_builtin (WORD_LIST *list)
+ 	  termsave.attrs = ttattrs;
+ 
+ 	  ttset = ttattrs;	  
+-	  i = silent ? ttfd_cbreak (fd, &ttset) : ttfd_onechar (fd, &ttset);
+-	  if (i < 0)
++	  if ((silent ? ttfd_cbreak (fd, &ttset) : ttfd_onechar (fd, &ttset)) < 0)
+ 	    sh_ttyerror (1);
+ 	  tty_modified = 1;
+ 	  add_unwind_protect (uw_ttyrestore, &termsave);
+@@ -609,8 +609,7 @@ read_builtin (WORD_LIST *list)
+       termsave.attrs = ttattrs;
+ 
+       ttset = ttattrs;
+-      i = ttfd_noecho (fd, &ttset);			/* ttnoecho (); */
+-      if (i < 0)
++      if (ttfd_noecho (fd, &ttset) < 0)
+ 	sh_ttyerror (1);
+ 
+       tty_modified = 1;
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 14
++#define PATCHLEVEL 15
+ 
+ #endif /* _PATCHLEVEL_H_ */

@@ -9,8 +9,7 @@ start_ddns_service() {
 
 	local interface
 
-	config_get interface $cfg interface
-	[ -z "$interface" ] && return
+	config_get interface $cfg interface wan
 
 	[ "$interface" != "$interface_event" ] && return
 

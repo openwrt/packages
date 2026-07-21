@@ -28,8 +28,8 @@ if [ "$APDU_BACKEND" = "at" ]; then
 elif [ "$APDU_BACKEND" = "uqmi" ]; then
     UQMI_DEV="$(uci_get lpac uqmi device /dev/cdc-wdm0)"
     UQMI_DEBUG="$(uci_get lpac uqmi debug 0)"
-    export LPAC_APDU_QMI_DEVICE="$UQMI_DEV"
-    export LPAC_APDU_UQMI_DEBUG="$UQMI_DEBUG"
+    export LPAC_QMI_DEV="$UQMI_DEV"
+    export LPAC_QMI_DEBUG="$UQMI_DEBUG"
 elif [ "$APDU_BACKEND" = "mbim" ]; then
     MBIM_DEVICE="$(uci_get lpac mbim device /dev/cdc-wdm0)"
     MBIM_PROXY="$(uci_get lpac mbim proxy 1)"
@@ -38,5 +38,12 @@ elif [ "$APDU_BACKEND" = "mbim" ]; then
 fi
 
 export LPAC_CUSTOM_ISD_R_AID="$CUSTOM_ISD_R_AID"
+
+case "$1" in
+    -\?|--help|-h|-V|--version)
+        shift
+        exec /usr/lib/lpac version "$@"
+        ;;
+esac
 
 /usr/lib/lpac "$@"

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# shellckeck shell=busybox
+# shellcheck shell=busybox
 
 case "$PKG_NAME" in
 krb5-libs|\

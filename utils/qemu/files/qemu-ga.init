@@ -7,6 +7,10 @@ USE_PROCD=1
 BIN=/usr/bin/qemu-ga
 
 start_service() {
+	if [ ! -d /dev/virtio-ports ];then
+		logger -t qemu-ga -p daemon.notice "/dev/virtio-ports not found. Skipping qemu-ga (this is normal on bare metal device)."
+		return 0
+	fi
 	procd_open_instance
 	procd_set_param command $BIN
 	procd_set_param respawn

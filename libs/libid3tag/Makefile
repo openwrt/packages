@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libid3tag
 PKG_VERSION:=0.16.3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://codeberg.org/tenacityteam/libid3tag.git
@@ -18,7 +18,7 @@ PKG_MIRROR_HASH:=b373a3015ace3e9d5db83d0987b1dad8cd02945fd223294365396ec54901b8a
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
-PKG_LICENSE:=GPL-2
+PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:media-libs:libid3tag
 

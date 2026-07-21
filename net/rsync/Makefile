@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rsync
-PKG_VERSION:=3.4.2
+PKG_VERSION:=3.4.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.samba.org/pub/$(PKG_NAME)/src
-PKG_HASH:=ff10aa2c151cd4b2dbbe6135126dbc854046113d2dfb49572a348233267eb315
+PKG_HASH:=bd88cf82fa653da32314fb229136407c5c90f80d1758d8f4b091767877d8fa96
 
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later

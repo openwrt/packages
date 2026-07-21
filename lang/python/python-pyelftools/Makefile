@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pyelftools
 PKG_VERSION:=0.32
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=pyelftools
 PKG_HASH:=6de90ee7b8263e740c8715a925382d4099b354f29ac48ea40d840cf7aa14ace5
@@ -15,10 +15,13 @@ PKG_MAINTAINER:=Austin Lane <vidplace7@gmail.com>
 PKG_LICENSE:=Unlicense
 PKG_LICENSE_FILES:=LICENSE
 
+PKG_BUILD_DEPENDS:=python-setuptools/host
+
 HOST_BUILD_DEPENDS:= \
 	python3/host \
 	python-build/host \
 	python-installer/host \
+	python-setuptools/host \
 	python-wheel/host
 
 include ../pypi.mk
@@ -33,11 +36,16 @@ define Package/python3-pyelftools
   SUBMENU:=Python
   TITLE:=Library for analyzing ELF files and DWARF debugging information
   URL:=https://pypi.org/project/pyelftools
-  DEPENDS:=+python3-light +python3-logging
+  DEPENDS:=+python3-light +python3-logging +python3-asyncio +python3-codecs
 endef
 
 define Package/python3-pyelftools/description
 Library for analyzing ELF files and DWARF debugging information
+endef
+
+define Py3Package/python3-pyelftools/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/readelf.py $(1)/usr/bin/pyreadelf
 endef
 
 $(eval $(call Py3Package,python3-pyelftools))

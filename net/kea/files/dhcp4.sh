@@ -866,7 +866,7 @@ general_config() {
 	# will populate later
 	json_close_array		# interfaces
 
-	json_add_boolean "re-detect" 0
+	json_add_boolean "re-detect" 1
 	json_add_string "dhcp-socket-type" "raw"
 	json_add_string "outbound-interface" "same-as-inbound"
 	json_close_object		# interfaces-config

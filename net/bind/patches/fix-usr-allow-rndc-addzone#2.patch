@@ -85,7 +85,7 @@ Subject: [PATCH 2/4] Check if adding new zone can replace an automatic empty
 +};
 --- a/bin/tests/system/addzone/tests.sh
 +++ b/bin/tests/system/addzone/tests.sh
-@@ -68,6 +68,35 @@ n=$((n + 1))
+@@ -88,6 +88,35 @@ n=$((n + 1))
  if [ $ret != 0 ]; then echo_i "failed"; fi
  status=$((status + ret))
  

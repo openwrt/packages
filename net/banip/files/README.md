@@ -2,18 +2,51 @@
 
 # banIP - ban incoming and outgoing IP addresses/subnets via Sets in nftables
 
+## Table of Contents
+* [Description](#description)
+* [Quick Start](#quick-start)
+* [Main Features](#main-features)
+* [Prerequisites](#prerequisites)
+* [Installation and Usage](#installation-and-usage)
+* [banIP CLI interface](#banip-cli-interface)
+* [banIP config options](#banip-config-options)
+* [Examples](#examples)
+* [Best practise and tweaks](#best-practise-and-tweaks)
+* [Troubleshooting & debug options](#troubleshooting-and-debug-options)
+* [Support](#support)
+* [Removal](#removal)
+* [Donations](#donations)
+
 <a id="description"></a>
 ## Description
 IP address blocking is commonly used to protect against brute force attacks, prevent disruptive or unauthorized address(es) from access or it can be used to restrict access to or from a particular geographic area — for example. Further more banIP scans the log file via logread and bans IPs that make too many password failures, e.g. via ssh.
 
+<a id="quick-start"></a>
+## Quick Start
+For a typical setup these few steps are enough to get banIP up and running — see the sections below for details:
+1. Install the LuCI companion package: `apk update && apk add luci-app-banip` (this pulls in the `banip` backend as a dependency).
+2. Open LuCI under `Services → banIP`, tick `Enabled` and (recommended) set a `Startup Trigger Interface` to your WAN interface (avoid IPv6/wan6).
+3. Activate a small, sensible feed selection to start with, e.g. `cinsscore`, `debl`, `turris` and `doh` in their default chains (≈20K IPs).
+4. Start and verify the service:
+
+```sh
+/etc/init.d/banip start
+/etc/init.d/banip status
+```
+
+**Please note:** don't blindly enable (too) many feeds at once — on low memory devices this will sooner or later lead to OOM conditions.
+
 <a id="main-features"></a>
 ## Main Features
 * banIP supports the following fully pre-configured IP blocklist feeds (free for private usage, for commercial use please check their individual licenses).
-**Please note:** By default, each feed blocks the packet flow in the chain shown in the table below. _Inbound_ combines the chains WAN-Input and WAN-Forward, _Outbound_ represents the LAN-FWD chain:
+**Please note:** By default, each feed blocks the packet flow in the chain(s) shown in the table below. _Inbound_ combines the chains WAN-Input and WAN-Forward, _Outbound_ represents the LAN-FWD chain:
   * WAN-INP chain applies to packets from internet to your router
   * WAN-FWD chain applies to packets from internet to other local devices (not your router)
   * LAN-FWD chain applies to local packets going out to the internet (not your router)
-  The listed standard assignments can be changed to your needs under the `Feed/Set Settings` config tab.
+
+  How to read the default direction: most reputation feeds list the **source** IPs of attackers, scanners and spammers — those are blocked _inbound_, because the unwanted connection is initiated **from the internet towards you**. A second group of feeds lists IPs that your **own clients should never talk to** (malware hosting, command-and-control servers, threat/DoH/DNS endpoints); those are blocked _outbound_ in the LAN-FWD chain, because the connection is initiated **from your LAN**. Feeds where both risks apply (e.g. spamhaus, emerging threats, tor, proxy, vpn) default to **both** directions. This distinction matters: a feed of malware-download or C2 IPs in the _inbound_ chain alone provides little protection, because your LAN client is the one initiating the connection — see the `country`/`asn` note in the [Best practise](#best-practise-and-tweaks) section for the common "block a country" case.
+
+  The listed standard assignments can be changed to your needs under the `Feed/Set Settings` config tab (options `ban_feedin`, `ban_feedout`, `ban_feedinout` and `ban_feedreset`).
 
 | Feed                | Focus                          | Inbound | Outbound | Proto/Port        | Information                                                  |
 | :------------------ | :----------------------------- | :-----: | :------: | :---------------: | :----------------------------------------------------------- |
@@ -28,10 +61,9 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 | debl                | fail2ban IP blacklist          |    x    |          |                   | [Link](https://www.blocklist.de)                             |
 | dns                 | public DNS-Server              |         |    x     | tcp, udp: 53, 853 | [Link](https://public-dns.info)                              |
 | doh                 | public DoH-Server              |         |    x     | tcp, udp: 80, 443 | [Link](https://github.com/dibdot/DoH-IP-blocklists)          |
-| drop                | spamhaus drop compilation      |    x    |          |                   | [Link](https://www.spamhaus.org)                             |
 | dshield             | dshield IP blocklist           |    x    |          |                   | [Link](https://www.dshield.org)                              |
 | etcompromised       | ET compromised hosts           |    x    |          |                   | [Link](https://iplists.firehol.org/?ipset=et_compromised)    |
-| feodo               | feodo tracker                  |    x    |          |                   | [Link](https://feodotracker.abuse.ch)                        |
+| feodo               | feodo tracker                  |    x    |    x     |                   | [Link](https://feodotracker.abuse.ch)                        |
 | firehol1            | firehol level 1 compilation    |    x    |          |                   | [Link](https://iplists.firehol.org/?ipset=firehol_level1)    |
 | firehol2            | firehol level 2 compilation    |    x    |          |                   | [Link](https://iplists.firehol.org/?ipset=firehol_level2)    |
 | firehol3            | firehol level 3 compilation    |    x    |          |                   | [Link](https://iplists.firehol.org/?ipset=firehol_level3)    |
@@ -43,21 +75,21 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 | ipsum               | malicious IPs                  |    x    |          |                   | [Link](https://github.com/stamparm/ipsum)                    |
 | ipthreat            | hacker and botnet IPs          |    x    |          |                   | [Link](https://ipthreat.net)                                 |
 | myip                | real-time IP blocklist         |    x    |          |                   | [Link](https://myip.ms)                                      |
-| proxy               | open proxies                   |    x    |          |                   | [Link](https://iplists.firehol.org/?ipset=proxylists)        |
-| spamhaus            | Spamhaus DROP                  |    x    |          |                   | [Link](https://www.spamhaus.org/blocklists/)                 |
-| threat              | emerging threats               |    x    |          |                   | [Link](https://rules.emergingthreats.net)                    |
-| threatview          | malicious IPs                  |    x    |          |                   | [Link](https://threatview.io)                                |
-| tor                 | tor exit nodes                 |    x    |          |                   | [Link](https://www.dan.me.uk)                                |
+| proxy               | open proxies                   |    x    |    x     |                   | [Link](https://iplists.firehol.org/?ipset=proxylists)        |
+| spamhaus            | Spamhaus DROP                  |    x    |    x     |                   | [Link](https://www.spamhaus.org/blocklists/)                 |
+| threat              | emerging threats               |    x    |    x     |                   | [Link](https://rules.emergingthreats.net)                    |
+| threatview          | malicious IPs                  |    x    |    x     |                   | [Link](https://threatview.io)                                |
+| tor                 | tor exit nodes                 |    x    |    x     |                   | [Link](https://www.dan.me.uk)                                |
 | turris              | turris sentinel blocklist      |    x    |          |                   | [Link](https://view.sentinel.turris.cz)                      |
 | uceprotect1         | spam protection level 1        |    x    |          |                   | [Link](https://www.uceprotect.net/en/index.php)              |
 | uceprotect2         | spam protection level 2        |    x    |          |                   | [Link](https://www.uceprotect.net/en/index.php)              |
 | uceprotect3         | spam protection level 3        |    x    |          |                   | [Link](https://www.uceprotect.net/en/index.php)              |
-| urlhaus             | urlhaus IDS IPs                |    x    |          |                   | [Link](https://urlhaus.abuse.ch)                             |
-| urlvir              | malware related IPs            |    x    |          |                   | [Link](https://iplists.firehol.org/?ipset=urlvir)            |
-| webclient           | malware related IPs            |    x    |          |                   | [Link](https://iplists.firehol.org/?ipset=firehol_webclient) |
+| urlhaus             | urlhaus IDS IPs                |         |    x     | tcp, udp: 80, 443 | [Link](https://urlhaus.abuse.ch)                             |
+| urlvir              | malware related IPs            |         |    x     | tcp, udp: 80, 443 | [Link](https://iplists.firehol.org/?ipset=urlvir)            |
+| webclient           | malware related IPs            |         |    x     | tcp, udp: 80, 443 | [Link](https://iplists.firehol.org/?ipset=firehol_webclient) |
 | voip                | VoIP fraud blocklist           |    x    |          |                   | [Link](https://voipbl.org)                                   |
-| vpn                 | vpn IPs                        |    x    |          |                   | [Link](https://github.com/X4BNet/lists_vpn)                  |
-| vpndc               | vpn datacenter IPs             |    x    |          |                   | [Link](https://github.com/X4BNet/lists_vpn)                  |
+| vpn                 | vpn IPs                        |    x    |    x     |                   | [Link](https://github.com/X4BNet/lists_vpn)                  |
+| vpndc               | vpn datacenter IPs             |    x    |    x     |                   | [Link](https://github.com/X4BNet/lists_vpn)                  |
 
 * Zero-conf like automatic installation & setup, usually no manual changes needed
 * All Sets are handled in a separate nft table/namespace `banIP`
@@ -77,11 +109,11 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 * Per feed it can be defined whether the inbound chain (wan-input, wan-forward) or the outbound chain (lan-forward) should be blocked
 * Automatic blocklist backup & restore, the backups will be used in case of download errors or during startup
 * Automatically selects one of the following download utilities with ssl support: curl, uclient-fetch or full wget
-* Provides HTTP ETag support to download only ressources that have been updated on the server side, to speed up banIP reloads and to save bandwith
+* Provides HTTP ETag support to download only resources that have been updated on the server side, to speed up banIP reloads and to save bandwidth
 * Supports an `allowlist only` mode, this option restricts the internet access only to specific, explicitly allowed IP segments
 * Supports external allowlist URLs to reference additional IPv4/IPv6 feeds
 * Optionally always allow certain protocols/destination ports in the inbound chain
-* Deduplicate IPs accross all Sets (single IPs only, no intervals)
+* Deduplicate IPs across all Sets (single IPs only, no intervals)
 * Implements BCP38 ingress filtering to prevent IP address spoofing
 * Provides comprehensive runtime information
 * Provides a detailed Set report, incl. a map that shows the geolocation of your own uplink addresses (in green) and the location of potential attackers (in red)
@@ -105,6 +137,8 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 **Please note:**  
 * Devices with less than 256MB of RAM are **_not_** supported
 * After system upgrades it's recommended to start with a fresh banIP default config
+* Only `reload` actually refreshes the feeds (ETag check plus download of changed feeds). `start`, `restart` — and `boot`/`resume` — restore the existing blocklist backups and only download feeds that have **no** backup yet; they do **not** re-fetch already cached feeds. To update your blocklists (e.g. from a cron job) always use `reload`.  
+
 
 <a id="installation-and-usage"></a>
 ## Installation and Usage
@@ -114,7 +148,7 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 * It's strongly recommended to use the LuCI frontend to easily configure all aspects of banIP, the application is located in LuCI under the `Services` menu
 * It's also recommended to configure a `Startup Trigger Interface` to depend on your WAN ifup events during boot or restart of your router. Avoid IPv6 (wan6) interfaces here, as IPv6/netifd is chatty and would trigger frequent unnecessary banIP restarts
 * To be able to use banIP in a meaningful way, you must activate the service and possibly also activate a few blocklist feeds
-* If you're using a complex network setup, e.g. special tunnel interfaces, than untick the `Auto Detection` option under the `General Settings` tab and set the required options manually
+* If you're using a complex network setup, e.g. special tunnel interfaces, then untick the `Auto Detection` option under the `General Settings` tab and set the required options manually
 * Start the service with `/etc/init.d/banip start` and check everything is working by running `/etc/init.d/banip status`, also check the `Processing Log` tab
 
 <a id="banip-cli-interface"></a>
@@ -142,6 +176,8 @@ Available commands:
 	info            Dump procd service info
 ```
 
+The `report` sub-command accepts an output mode: `text` (default, human-readable table), `json` (machine-readable output, incl. GeoIP map data when `ban_map=1`), `mail` (send the report via `msmtp`) and `gen` (regenerate the report data files in the background, used by the LuCI frontend).
+
 <a id="banip-config-options"></a>
 ## banIP config options
 
@@ -153,7 +189,7 @@ Available commands:
 | ban_loglimit            | option | 100                           | scan only the last n log entries permanently. A value of `0` disables the monitor                                 |
 | ban_logcount            | option | 1                             | how many times the IP must appear in the log per blocking cycle to trigger auto-blocking                          |
 | ban_logterm             | list   | regex                         | various regex for logfile parsing (default: dropbear, sshd, luci, asterisk and cgi-remote events)                 |
-| ban_logreadfile         | option | /var/log/messages             | alternative location for parsing a log file via tail, to deactivate the standard parsing via logread              |
+| ban_logreadfile         | option | - / logread                   | parse this log file via tail instead of the default logread; if left empty (default) banIP reads the system log via logread |
 | ban_autodetect          | option | 1                             | auto-detect wan interfaces, devices and subnets                                                                   |
 | ban_debug               | option | 0                             | enable banIP related debug logging                                                                                |
 | ban_icmplimit           | option | 25                            | threshold in number of packets to detect icmp DoS in prerouting chain. A value of `0` disables this safeguard     |
@@ -169,7 +205,7 @@ Available commands:
 | ban_autoblocksubnet     | option | 0                             | add entire subnets to the blocklist Sets based on a rate-limited, non-blocking RDAP lookup for the suspicious IP  |
 | ban_autoallowuplink     | option | subnet                        | limit the uplink autoallow function to: `subnet`, `ip` or `disable` it at all                                     |
 | ban_allowlistonly       | option | 0                             | restrict the internet access only to specific, explicitly allowed IP segments                                     |
-| ban_allowflag           | option | -                             | always allow certain protocols(tcp or udp) plus destination ports or port ranges, e.g.: `tcp 80 443-44`           |
+| ban_allowflag           | option | -                             | always allow certain protocols(tcp or udp) plus destination ports or port ranges, e.g.: `tcp 80 443-444`          |
 | ban_allowurl            | list   | -                             | external allowlist feed URLs, one or more references to simple remote IP lists                                    |
 | ban_basedir             | option | /tmp                          | base working directory while banIP processing                                                                     |
 | ban_reportdir           | option | /tmp/banIP-report             | directory where banIP stores report files                                                                         |
@@ -268,8 +304,8 @@ Available commands:
 ~# /etc/init.d/banip status
 ::: banIP runtime information
   + status            : active (nft: ✔, monitor: ✔)
-  + frontend_ver      : 1.8.0-r1
-  + backend_ver       : 1.8.0-r1
+  + frontend_ver      : 1.8.9-r1
+  + backend_ver       : 1.8.9-r1
   + element_count     : 138 148 (chains: 7, sets: 13, rules: 50)
   + active_feeds      : allowlist.v4MAC, allowlist.v6MAC, allowlist.v4, allowlist.v6, dns.v4, blocklist.v4MAC, blocklist.v6MAC, doh.v6, blocklist.v4, doh.v4, blocklist.v6, dns.v6, hagezi.v4
   + active_devices    : wan: pppoe-wan / wan-if: wan, wan_6 / vlan-allow: - / vlan-block: -
@@ -356,9 +392,35 @@ The following feeds are just my personal recommendation as an initial setup:
 In total, this feed selection blocks about 20K IP addresses. It may also be useful to include some countries to the country feed.
 Please note: don't just blindly activate (too) many feeds at once, sooner or later this will lead to OOM conditions.
 
+**Feed direction (inbound vs. outbound) — and the country/ASN case**  
+This is the single most common source of confusion, so it's worth understanding the model before you pick feeds.
+
+banIP filters on the **connection level** (source/destination IP), not on content. The default chain of a feed therefore has to match **who initiates the unwanted connection**:
+
+* **Inbound** (WAN-Input + WAN-Forward): blocks connections that come **from the internet towards you**. This is the right direction for the large majority of reputation feeds, which list the **source** IPs of attackers, scanners, brute-forcers and spam senders (`cinsscore`, `debl`, `dshield`, `firehol*`, `bruteforceblock`, `uceprotect*`, …). A fail2ban-style feed only makes sense inbound.
+* **Outbound** (LAN-Forward): blocks connections your **own LAN clients initiate towards** a listed IP. This is the right direction for feeds that list destinations your devices should never reach: malware-download hosts, command-and-control servers, DoH/DNS bypass endpoints and threat IPs (`doh`, `dns`, `hagezi`, `feodo`, `urlhaus`, `urlvir`, `webclient`).
+* **Both**: feeds where the risk genuinely exists in both directions default to `inout` (`spamhaus`, `threat`, `threatview`, `tor`, `proxy`, `vpn`, `vpndc`).
+
+The classic mistake: enabling a malware-URL / C2 feed like `urlhaus` in the **inbound** chain and expecting it to stop a LAN client from downloading malware. It won't — the client is the one opening the connection, so only the **outbound** chain can intercept it. These feeds ship with sensible defaults (outbound or both), but if you maintain your own custom feeds, keep this rule of thumb in mind.
+
+**The country/ASN case:** the `country` and `asn` feeds default to the **inbound** chain. This blocks traffic *from* the selected country/ASN towards you — the typical "keep attackers from region X out" use case. If your goal is instead to stop your **own clients from reaching** a country or ASN (the recurring "block all connections *to* country X" request), inbound alone does nothing for you. Switch the feed to the outbound or both chain:
+
+* via LuCI: `Feed/Set Settings` → move the feed into `Outbound` or `Inbound + Outbound`
+* via CLI in `/etc/config/banip`:
+
+```
+# block outbound connections to the selected countries as well as inbound
+list ban_feedinout 'country'
+
+# or restrict the country feed exclusively to the outbound (LAN-FWD) chain
+list ban_feedout 'country'
+```
+
+Be aware that bidirectional country blocking on large countries quickly inflates element counts and memory usage; consider `ban_countrysplit`/`ban_asnsplit` and the low-memory tweaks above.
+
 **Log Terms for logfile parsing**  
 Like fail2ban and crowdsec, banIP supports logfile scanning and automatic blocking of suspicious attacker IPs.
-In the default config only the log terms to detect failed login attempts via dropbear and LuCI are in place. The following search pattern has been tested as well:
+In the default config only the log terms to detect failed login attempts via dropbear and LuCI are in place. The following search patterns have been tested as well:
 
 ```
 dropbear : 'Exit before auth from'
@@ -370,6 +432,19 @@ openvpn  : 'TLS Error: could not determine wrapping from \[AF_INET\]'
 AdGuard  : 'AdGuardHome.*\[error\].*/control/login: from ip'
 Remote   : 'received a suspicious remote IP'
 ```
+
+**Source IP position**  
+For every matched line banIP picks the attacker's address out of the log entry. By default it uses the *last* IP in the line, which is correct for all login-style formats above: the service always appends the real remote address as the final field, after any user-supplied data (such as a login name). This stays robust even when an attacker puts an IP-like string into a username or similar field.
+
+Some formats instead lead with the source IP — most notably web-server access logs, where the client address is the first field. For those, prefix the term with `first:`:
+
+```
+nginx : 'first:"[A-Z]+ /wp-login\.php[^"]*" 40[13]'
+```
+
+The `first:`/`last:` prefix is parsed off before matching and applies only to that single term, so terms with different anchors can be mixed freely.
+
+Please note: `first:` only fits formats where the source IP is genuinely the first address in the line. Do **not** use it for Suricata fast.log (its leading `[1:2013:7]` signature id) or netfilter `LOG` lines (their leading `MAC=` field), as that leading field would be picked instead of the source — keep those on the default `last`.  
 
 You find the `Log Terms` option in LuCI under the `Log Settings` tab. Feel free to add more log terms to meet your needs and protect additional services.
 
@@ -447,8 +522,8 @@ All log rules (prerouting flood protection, inbound and outbound feeds) share a 
 banIP includes a powerful reporting tool on the Set Reporting tab which shows the latest NFT banIP Set statistics. To get the latest statistics always press the "Refresh" button.
 In addition to a tabular overview banIP reporting includes a GeoIP map in a modal popup window/iframe that shows the geolocation of your own uplink addresses (in green) and the locations of potential attackers (in red). To enable the GeoIP Map set the following options (in "Feed/Set Settings" config tab):
 
-    * set `ban_nftcount` to `1` to enable the nft counter for every Set element
-    * set `ban_map` to `1` to include the external components listed below and activate the GeoIP map
+* set `ban_nftcount` to `1` to enable the nft counter for every Set element
+* set `ban_map` to `1` to include the external components listed below and activate the GeoIP map
 
 To make this work, banIP uses the following external components:
 * [Leaflet](https://leafletjs.com/) is a lightweight open-source JavaScript library for interactive maps
@@ -459,14 +534,14 @@ To make this work, banIP uses the following external components:
 **CGI interface to receive remote logging events**  
 banIP ships a basic cgi interface in `/www/cgi-bin/banip` to receive remote logging events (disabled by default). The cgi interface evaluates logging events via GET or POST request (see examples below). To enable the cgi interface set the following options:
 
-    * set `ban_remotelog` to `1` to enable the cgi interface
-    * set `ban_remotetoken` to a secret transfer token, allowed token characters consist of '[A-Za-z]', '[0-9]', '.' and ':'
-    * add the remote logging event to the logterm
+* set `ban_remotelog` to `1` to enable the cgi interface
+* set `ban_remotetoken` to a secret transfer token, allowed token characters consist of '[A-Za-z]', '[0-9]', '.' and ':'
+* add the remote logging event to the logterm
 
-  Examples to transfer remote logging events from an internal server to banIP via cgi interface:
+Examples to transfer remote logging events from an internal server to banIP via cgi interface:
 
-    * POST request: curl --insecure --data "<ban_remotetoken>=<suspicious IP>" https://192.168.1.1/cgi-bin/banip
-    * GET request: wget --no-check-certificate https://192.168.1.1/cgi-bin/banip?<ban_remotetoken>=<suspicious IP>
+* POST request: `curl --insecure --data "<ban_remotetoken>=<suspicious IP>" https://192.168.1.1/cgi-bin/banip`
+* GET request: `wget --no-check-certificate https://192.168.1.1/cgi-bin/banip?<ban_remotetoken>=<suspicious IP>`
 
 Please note: for security reasons use this cgi interface only internally and only encrypted via https transfer protocol.
 
@@ -474,12 +549,12 @@ Please note: for security reasons use this cgi interface only internally and onl
 By default banIP uses the following pre-configured download options:
 
 ```
-    * curl: --connect-timeout 20 --retry-delay 10 --retry 4 --retry-all-errors --fail --silent --show-error --location -o
-    * wget: --no-cache --no-cookies --timeout=20 --waitretry=10 --tries=5 --retry-connrefused --max-redirect=0 -O
+    * curl: --connect-timeout 20 --retry-delay 10 --retry 4 --retry-max-time 80 --retry-all-errors --fail --silent --show-error --location -o
+    * wget: --no-cache --no-cookies --timeout=20 --waitretry=10 --tries=5 --retry-connrefused -O
     * uclient-fetch: --timeout=20 -O
 ```
 
-To override the default set `ban_fetchretry`, `ban_fetchinsecure` or globally `ban_fetchparm` to your needs.
+The retry-related values shown above are derived from `ban_fetchretry` (default `5`): for curl `--retry` is `ban_fetchretry - 1` and `--retry-max-time` is `(ban_fetchretry - 1) * 20`, for wget `--tries` equals `ban_fetchretry`. To override the defaults set `ban_fetchretry`, `ban_fetchinsecure` or globally `ban_fetchparm` to your needs.
 
 **Configure E-Mail notifications via `msmtp`**  
 To use the email notification you must install and configure the package `msmtp`.
@@ -505,7 +580,7 @@ password        <password>
 Finally add a valid E-Mail receiver address in banIP.
 
 **Send status E-Mails and update the banIP lists via cron job**  
-For a regular, automatic status mailing and update of the used lists on a daily basis set up a cron job, e.g.
+For a regular, automatic update of the used feeds or other regular banIP tasks (e.g. status mailing) set up a cron job. Use `reload` here — `start`/`restart` would only restore the backups instead of fetching fresh feeds. In LuCI you find the cron settings under `System` => `Scheduled Tasks`. On the command line the cron file is located at `/etc/crontabs/root`:  
 
 ```
 55 03 * * * /etc/init.d/banip report mail
@@ -516,8 +591,9 @@ For a regular, automatic status mailing and update of the used lists on a daily 
 By default banIP scans the logfile via logread, so to monitor attacks on asterisk, its security log must be available via logread. To do this, edit `/etc/asterisk/logger.conf` and add the line `syslog.local0 = security`, then run `asterisk -rx reload logger` to update the running asterisk configuration.
 
 **Change/add banIP feeds and set optional feed flags**  
-The banIP default blocklist feeds are stored in an external JSON file `/etc/banip/banip.feeds`. All custom changes should be stored in an external JSON file `/etc/banip/banip.custom.feeds` (empty by default). It's recommended to use the LuCI based Custom Feed Editor to make changes to this file.
-A valid JSON source object contains the following information, e.g.:
+The banIP default blocklist feeds are stored in an external JSON file `/etc/banip/banip.feeds`. This file is shipped with the package and is **overwritten on every package update**, so never edit it directly. All of your custom changes belong in the separate JSON file `/etc/banip/banip.custom.feeds` (empty by default), which is preserved across updates. It's recommended to use the LuCI based Custom Feed Editor (`Custom Feed Editor`tab), which validates the JSON for you.  
+
+A feed is a single JSON object, keyed by a unique feed name (no spaces, no special characters). Example:
 
 ```json
 	[...]
@@ -532,16 +608,55 @@ A valid JSON source object contains the following information, e.g.:
 	[...]
 ```
 
-Add an unique feed name (no spaces, no special chars) and make the required changes: adapt at least the URL, check/change the rule, the size and the description for a new feed.
-The rule consist of max. 4 individual, space separated parameters:
-1. type: `feed` or `suricata` (required)
-2. prefix: an optional search term (a string literal, no regex) to identify valid IP list entries
-3. column: the IP column within the feed file, e.g. `1` (required)
-4. separator: an optional field separator, default is the character class `[[:space:]]`
+The object supports the following fields:
 
-Please note: the flag field is optional, it's a space separated list of options: supported are `gz` as an archive format and protocols `tcp` or `udp` with port numbers/port ranges for destination port limitations.
+| Field   | Required | Description                                                                                                              |
+| :------ | :------: | :--------------------------------------------------------------------------------------------------------------------- |
+| url_4   | yes\*    | download URL of the IPv4 list. \*at least one of `url_4`/`url_6` must be present                                         |
+| url_6   | yes\*    | download URL of the IPv6 list. May point to the **same** URL as `url_4` if the source mixes IPv4 and IPv6 in one file   |
+| rule    | yes      | the parsing ruleset, max. 4 space separated parameters (see below)                                                      |
+| chain   | yes      | the default chain/direction: `in`, `out` or `inout` (see below)                                                         |
+| descr   | yes      | a short human-readable description shown in LuCI and the feed table                                                     |
+| flag    | no       | optional, space separated list of extra options: archive format and/or protocol/port limitations (see below)           |
 
-**Debug options**  
+**The `url_4` / `url_6` fields**  
+Each address family is fetched and processed independently. Three cases:
+* IPv4-only source: set `url_4` only, omit `url_6`
+* separate IPv4 and IPv6 files: set both to their respective URLs (e.g. `doh`, `spamhaus`)
+* a single dual-stack file that mixes v4 and v6 entries: point both `url_4` and `url_6` at that same URL. banIP fetches it only once and process it for each family and the per-family regex extracts the matching addresses; the non-matching lines are simply ignored. (e.g. `threatview`, which ships v4 and v6 in one file).
+
+**The `rule` field**  
+The rule consists of max. 4 individual, space separated parameters:
+1. **type**: `feed` or `suricata` (required)
+   * `feed`: a plain IP/CIDR list, one entry per line (the common case)
+   * `suricata`: a Suricata/Snort-style ruleset; banIP extracts the IPs out of the rule lines
+2. **prefix**: an optional search term (a literal string, not a regex) that a line must contain to be considered a valid entry. Use it to skip comment/header lines or to pick only the relevant rows. Omit it if every data line is a bare IP.
+3. **column**: the 1-based column that holds the IP within a matching line, e.g. `1` for a bare list or `13` for the dshield block file (required)
+4. **separator**: an optional field separator; default is the whitespace character class `[[:space:]]`. Pass a literal character such as `,` for comma-separated sources (e.g. turris).
+
+**The `chain` field**  
+Defines the default blocking direction. See the [Best practise feed-direction note](#best-practise-and-tweaks) for the reasoning behind each value:
+* `in`: inbound only (WAN-Input + WAN-Forward). Use for source-IP reputation feeds (attackers, scanners, spam senders).
+* `out`: outbound only (LAN-Forward). Use for destination feeds your own clients should never reach (malware hosts, C2, DoH/DNS endpoints).
+* `inout`: both directions. Use when the risk genuinely exists on both sides (e.g. spamhaus, tor, proxy, vpn).
+
+This is only the **default**; a user can always override it at runtime per feed via `ban_feedin` / `ban_feedout` / `ban_feedinout`, or strip a feed's port/protocol limitation via `ban_feedreset` — without touching the feed JSON.
+
+**The `flag` field (optional)**  
+A space separated list of extra options:
+* `gz`: the source is gzip-compressed and will be decompressed before parsing (e.g. `backscatterer`, `ipthreat`, `uceprotect*`)
+* protocol/port limitation — one or both of `tcp` / `udp` followed by one or more destination ports or port ranges. This restricts the feed's rules to those destination ports, which is mainly useful for outbound feeds to cut false positives.  
+Examples:  
+  * `tcp udp 80 443`: limit to HTTP/HTTPS (e.g. `doh`, `hagezi`, `feodo`, `urlhaus`, `urlvir`, `webclient`)
+  * `tcp udp 53 853`: limit to plain DNS and DNS-over-TLS (e.g. `dns`)
+  * `tcp 22`: limit to SSH
+  * `tcp 5060-5061 udp 5060`: mix of single ports and ranges
+  * `gz` and a port limitation can be combined, e.g. `gz tcp udp 80 443`
+
+After editing `/etc/banip/banip.custom.feeds`, reload banIP (`/etc/init.d/banip reload`) and check the `Processing Log` tab — a malformed JSON object or a wrong column/separator typically shows up there as a feed that loads zero elements.
+
+<a id="troubleshooting-and-debug-options"></a>
+## Troubleshooting & debug options
 banIP provides an optional debug mode that writes diagnostic information to the system log and captures internal error output in a dedicated error logfile - by default located in the banIP base directory as `/tmp/ban_error.log`. The log file is automatically cleared at the beginning of each run. Under normal conditions, all error messages are discarded to keep regular runs clean and silent.
 
 Whenever you encounter banIP related processing problems, please enable `Verbose Debug Logging`, restart banIP and check the `Processing Log` tab.

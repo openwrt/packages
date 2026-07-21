@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=exfatprogs
-PKG_VERSION:=1.3.2
+PKG_VERSION:=1.4.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/exfatprogs/exfatprogs/releases/download/$(PKG_VERSION)
-PKG_HASH:=67ddb50543636292df8fde58117eefd54210d6cd7bf1eea5e91d2c4dccbc425e
+PKG_HASH:=85c133e8802cbc1191bff2477a67b376192dfb9f94bb254c05dbae79fd958f2e
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-2.0-only
@@ -23,6 +23,7 @@ define Package/exfatprogs/Default
   CATEGORY:=Utilities
   SUBMENU:=Filesystem
   URL:=https://github.com/exfatprogs/exfatprogs
+  DEPENDS:=+libblkid +USE_MUSL:musl-fts
 endef
 
 define Package/exfat-mkfs

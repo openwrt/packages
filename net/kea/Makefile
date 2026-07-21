@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=kea
-PKG_VERSION:=3.0.2
-PKG_RELEASE:=7
+PKG_VERSION:=3.0.3
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ftp.isc.org/isc/kea/$(PKG_VERSION)
-PKG_HASH:=29f4e44fa48f62fe15158d17411e003496203250db7b3459c2c79c09f379a541
+PKG_HASH:=09702ddb078b637e85de9236cbedd3fb9d7af7c6e797026c538b45748ad4d631
 
 PKG_MAINTAINER:=Philip Prindeville <philipp@redfish-solutions.com>, Noah Meyerhans <frodo@morgul.net>
 PKG_LICENSE:=MPL-2.0
@@ -25,6 +25,9 @@ PKG_BUILD_FLAGS:=gc-sections
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/meson.mk
+
+PYTHON3_PKG_BUILD:=0
+include ../../lang/python/python3-package.mk
 
 define Package/kea/Default
   SECTION:=net
@@ -63,7 +66,7 @@ endef
 define Package/kea-libs
 	$(call Package/kea/Default)
 	TITLE+=Libraries
-	DEPENDS:=+libopenssl +libstdcpp +log4cplus-any +boost
+	DEPENDS:=+libopenssl +libstdcpp +log4cplus +boost
 endef
 define Package/kea-libs/description
 		Kea required Libraries.
@@ -181,7 +184,7 @@ endef
 define Package/kea-shell
 	$(call Package/kea/Default)
 	TITLE+=shell
-	DEPENDS:=+kea-libs
+	DEPENDS:=+kea-libs +python3-light +python3-urllib +python3-openssl
 endef
 define Package/kea-shell/description
      This simple text client uses the REST interface to connect to the Kea
@@ -236,8 +239,10 @@ define Package/kea-dhcp-ddns/install
 endef
 
 define Package/kea-admin/install
-	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/usr/sbin $(1)/usr/share/kea/scripts
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/kea-admin $(1)/usr/sbin/kea-admin
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/kea/scripts/admin-utils.sh \
+		$(1)/usr/share/kea/scripts/admin-utils.sh
 endef
 
 define Package/kea-hook-ha/install
@@ -269,8 +274,15 @@ define Package/kea-perfdhcp/install
 endef
 
 define Package/kea-shell/install
-	$(INSTALL_DIR) $(1)/usr/sbin
+	$(SED) '1s,^#!/.*python.*,#!/usr/bin/python3,' \
+		$(PKG_INSTALL_DIR)/usr/sbin/kea-shell
+	$(SED) "s,^sys.path.append.*,sys.path.append('$(PYTHON3_PKG_DIR)/kea')," \
+		$(PKG_INSTALL_DIR)/usr/sbin/kea-shell
+	$(INSTALL_DIR) $(1)/usr/sbin $(1)$(PYTHON3_PKG_DIR)/kea
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/kea-shell $(1)/usr/sbin/kea-shell
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/src/bin/shell/kea_conn.py \
+		$(PKG_BUILD_DIR)/src/bin/shell/kea_connector3.py \
+		$(1)$(PYTHON3_PKG_DIR)/kea/
 endef
 
 define Package/kea-uci/install

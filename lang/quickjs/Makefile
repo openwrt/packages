@@ -1,16 +1,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=quickjs
-PKG_VERSION:=2025.09.13
+PKG_VERSION:=2026.06.04
 # The source versioning structure is somewhat bizarre as the file name
 # might differ from the directory name and the version.
-PKG_SRC_VERSION:=2025-09-13
-PKG_SRC_VERSION_REV:=2
+PKG_SRC_VERSION:=2026-06-04
+PKG_SRC_VERSION_REV:=
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_SRC_VERSION)$(if $(PKG_SRC_VERSION_REV),-$(PKG_SRC_VERSION_REV)).tar.xz
 PKG_SOURCE_URL:=https://bellard.org/quickjs/
-PKG_HASH:=996c6b5018fc955ad4d06426d0e9cb713685a00c825aa5c0418bd53f7df8b0b4
+PKG_HASH:=b376e839b322978313d929fd20663b11ba58b75df5a46c126dd19ea2fa70ad2a
 
 PKG_MAINTAINER:=George Sapkin <george@sapk.in>
 PKG_LICENSE:=MIT

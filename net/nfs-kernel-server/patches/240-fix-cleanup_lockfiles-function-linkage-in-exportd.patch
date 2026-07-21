@@ -30,7 +30,7 @@ environment.
 
 --- a/utils/exportd/exportd.c
 +++ b/utils/exportd/exportd.c
-@@ -51,9 +51,10 @@ static char shortopts[] = "d:fghs:t:liT:
+@@ -53,9 +53,10 @@ static char shortopts[] = "d:fghs:t:liLT
  /*
   * Signal handlers.
   */

@@ -4,7 +4,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-anyio
 PKG_VERSION:=4.13.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=anyio
 PKG_HASH:=334b70e641fd2221c1505b3890c69882fe4a2df910cba14d97019b90b24439dc
@@ -14,8 +14,10 @@ PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
 HOST_BUILD_DEPENDS:= \
-	python3/host \
-	python-idna/host
+	python-idna/host \
+	python-setuptools-scm/host
+
+PKG_BUILD_DEPENDS:=python-setuptools-scm/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -34,7 +36,8 @@ define Package/python3-anyio
     +python3-idna \
     +python3-light \
     +python3-logging \
-    +python3-openssl
+    +python3-openssl \
+    +python3-urllib
 endef
 
 define Package/python3-anyio/description

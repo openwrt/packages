@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nnn
 PKG_VERSION:=5.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/jarun/nnn/tar.gz/v$(PKG_VERSION)?
@@ -21,7 +21,7 @@ define Package/nnn
   CATEGORY:=Utilities
   TITLE:=Full-featured terminal file manager
   URL:=https://github.com/jarun/nnn
-  DEPENDS:=+libncurses +libreadline +musl-fts
+  DEPENDS:=+libncurses +libreadline +USE_MUSL:musl-fts
 endef
 
 define Package/nnn/description

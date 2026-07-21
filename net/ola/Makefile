@@ -66,7 +66,7 @@ CONFIGURE_ARGS += \
 	--with-protoc=$(STAGING_DIR_HOSTPKG)/bin/protoc-compat
 
 HOST_CONFIGURE_VARS += \
-	PKG_CONFIG_PATH="$(STAGING_DIR_HOSTPKG)/usr/protobuf-compat/lib/pkgconfig:$(PKG_CONFIG_PATH)" \
+	PKG_CONFIG_PATH="$(STAGING_DIR_HOSTPKG)/usr/protobuf-compat/lib/pkgconfig:$$$$PKG_CONFIG_PATH" \
 	CPPFLAGS="-I$(STAGING_DIR_HOSTPKG)/usr/protobuf-compat/include $(HOST_CPPFLAGS)" \
 	CXXFLAGS="-I$(STAGING_DIR_HOSTPKG)/usr/protobuf-compat/include $(HOST_CXXFLAGS)" \
 	LDFLAGS="-L$(STAGING_DIR_HOSTPKG)/usr/protobuf-compat/lib $(HOST_LDFLAGS)"

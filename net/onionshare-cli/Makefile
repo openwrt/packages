@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=onionshare-cli
 PKG_VERSION:=2.3.1
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PYPI_NAME:=onionshare-cli
 PYPI_SOURCE_NAME:=onionshare_cli
@@ -40,11 +40,9 @@ define Package/onionshare-cli
     +python3-flask \
     +python3-flask-httpauth \
     +python3-flask-socketio \
-    +python3-pysocks \
     +python3-requests \
     +python3-stem \
     +python3-eventlet \
-    +python3-unidecode \
     +python3-cryptodome \
     +python3-urllib3 \
     +tor

@@ -19,9 +19,19 @@ PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
+HOST_BUILD_DEPENDS:= \
+	python3/host \
+	python-build/host \
+	python-installer/host \
+	python-wheel/host \
+	python-setuptools/host
+PKG_BUILD_DEPENDS:=python-setuptools/host
+
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 include ../python3-package.mk
+include ../python3-host-build.mk
 
 define Package/python3-charset-normalizer
   SECTION:=lang
@@ -42,3 +52,4 @@ endef
 $(eval $(call Py3Package,python3-charset-normalizer))
 $(eval $(call BuildPackage,python3-charset-normalizer))
 $(eval $(call BuildPackage,python3-charset-normalizer-src))
+$(eval $(call HostBuild))

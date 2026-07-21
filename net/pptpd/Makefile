@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pptpd
 PKG_VERSION:=1.5.0
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/poptop
@@ -18,6 +18,8 @@ PKG_HASH:=6a724284b1ce00ea23f7d7608d081843a10c8a8d87d951cb2ea86e70aa1b4e77
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
+PKG_LICENSE:=GPL-2.0-or-later
+PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:poptop:pptp_server
 
 include $(INCLUDE_DIR)/package.mk

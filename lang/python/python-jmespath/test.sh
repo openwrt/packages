@@ -37,3 +37,11 @@ assert expr.search({"a": {"b": 99}}) == 99
 
 sys.exit(0)
 EOF
+[ $? -eq 0 ] || exit 1
+
+# Verify the jp command-line tool
+result=$(echo '{"a": {"b": 42}}' | jp 'a.b')
+[ "$result" = "42" ] || {
+	echo "jp returned '$result', expected 42"
+	exit 1
+}

@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lxc
-PKG_VERSION:=6.0.6
+PKG_VERSION:=7.0.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://linuxcontainers.org/downloads/lxc/
-PKG_HASH:=b0ba4537258d2b848fd07dedb1044dab132de3fb3f1976d240da40a7dee1b8cf
+PKG_HASH:=ba0c860626efbac6683f351dd718edb062065e919716d787b89e3d547c5d9493
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=LGPL-2.1-or-later BSD-2-Clause GPL-2.0
@@ -36,6 +36,7 @@ MESON_ARGS += \
 	-Dseccomp=$(if $(CONFIG_LXC_SECCOMP),true,false) \
 	-Dexamples=false \
 	-Db_pie=true \
+	-Dmemfd-rexec=false \
 	-Druntime-path=/var/run
 
 LXC_APPLETS_BIN += \

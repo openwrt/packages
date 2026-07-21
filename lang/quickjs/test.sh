@@ -1,5 +1,9 @@
 #!/bin/sh
 
-if [ "$1" = 'quickjs' ]; then
-	qjs --help | grep -F "${PKG_VERSION//./-}"
-fi
+# shellcheck shell=busybox
+
+case "$PKG_NAME" in
+quickjs)
+	qjs --eval 'console.log(2 ** 8)' | grep 256
+	;;
+esac

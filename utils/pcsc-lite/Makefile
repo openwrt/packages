@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pcsc-lite
-PKG_VERSION:=2.4.1
+PKG_VERSION:=2.5.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://pcsclite.apdu.fr/files/
-PKG_HASH:=afd3ba68c8000d2be048dc292df99a9812df9ad2efaf0a366eea22ac1faa19a7
+PKG_HASH:=59b3c4b5be4ab228698edeb5b3ef46ad54ea217e7dd0891372770bb92b55db92
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING

@@ -36,5 +36,32 @@ from requests.exceptions import (
     TooManyRedirects, Timeout, ConnectTimeout, ReadTimeout
 )
 
-print("requests OK")
+# --- charset-normalizer backend (replaces chardet) ---
+# requests now pulls in charset-normalizer instead of chardet for content
+# charset detection. Verify both the standalone library and the path that
+# requests actually exercises (Response.apparent_encoding).
+import charset_normalizer
+from charset_normalizer import from_bytes
+
+sample = 'Bсеки човек има право на образование.'
+encoded = sample.encode('cp1251')
+
+# Standalone detection + decode round-trip.
+best = from_bytes(encoded).best()
+assert best is not None
+assert str(best) == sample
+
+# chardet-compatible detect() shim — this is the exact call requests makes.
+detected = charset_normalizer.detect(encoded)
+assert detected['encoding'] is not None
+
+# requests routes content charset detection through charset-normalizer.
+resp = requests.models.Response()
+resp._content = encoded
+enc = resp.apparent_encoding
+assert enc, "apparent_encoding should be resolved via charset-normalizer"
+resp.encoding = enc
+assert 'образование' in resp.text
+
+print("requests + charset-normalizer OK")
 EOF

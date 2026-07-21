@@ -45,11 +45,12 @@ define Package/openvpn/Default
 	   +OPENVPN_$(1)_ENABLE_DCO:kmod-ovpn-backports \
 	   $(3)
   VARIANT:=$(1)
+  DEFAULT_VARIANT:=$(4)
   PROVIDES:=openvpn openvpn-crypto
 endef
 
 Package/openvpn-openssl=$(call Package/openvpn/Default,openssl,OpenSSL,+PACKAGE_openvpn-openssl:libopenssl)
-Package/openvpn-mbedtls=$(call Package/openvpn/Default,mbedtls,mbedTLS,+PACKAGE_openvpn-mbedtls:libmbedtls)
+Package/openvpn-mbedtls=$(call Package/openvpn/Default,mbedtls,mbedTLS,+PACKAGE_openvpn-mbedtls:libmbedtls,1)
 Package/openvpn-wolfssl=$(call Package/openvpn/Default,wolfssl,WolfSSL,+PACKAGE_openvpn-wolfssl:libwolfssl @BROKEN)
 
 define Package/openvpn/config/Default
