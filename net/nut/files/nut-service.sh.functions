@@ -1,0 +1,315 @@
+#!/bin/sh
+# Shebang line included so editors and shellcheck/shfmt know this contains
+# shell code
+
+# Service helper functions for NUT server initscript
+
+# In recent (relevant) versions of shellcheck busybox is a valid shell type
+# shellcheck shell=busybox
+
+# Pre-requisite sourcing for functions this script uses
+# * /lib/functions.sh has been sourced
+# * /lib/functions/network.sh has been sourced
+# * /lib/functions/nut/nut-common.sh has been sourced
+# * /usr/share/libubox/jshn.sh has been sourced
+# * /lib/functions/procd.sh has been sourced (automatic for initscripts)
+
+# /var/run/killpower is a system-level sentinel created by another program
+# which indicates that the system should be powering off
+# /var/run is typically a tmpfs on OpenWrt and is not persisted across reboots
+NUT_KILLPOWER="/var/run/killpower"
+
+# Disable NUT hotplug path
+NUT_DISABLE_HOTPLUG_PATH="/var/run/nut/disable-hotplug"
+
+# Fallback STATEPATH setting
+NUT_BASE_STATEPATH="/var/run/nut"
+
+# STATEPATH and RUNAS values are not valid until after find_statepath
+# and/or find_runas
+# shellcheck disable=SC2034
+STATEPATH=""
+# shellcheck disable=SC2034
+RUNAS=""
+
+# Default delay between interface change and interface trigger reload action
+DEFAULT_PROCD_INTERFACE_RELOAD_DELAY=3000
+
+allow_hotplug_restart() {
+	# Allow hotplug to restart driver only if no NUT forced shutdown
+	# (as indicated by /var/run/killpower) is in progress
+	# and hotplug is not disabled
+
+	# NUT_KILLPOWER is a sentinel created by another program
+	# which indicates that the system should be powering off
+	[ ! -f "$NUT_KILLPOWER" ] || return 1
+
+	# Disable hotplug path; a sentinel created by config
+	# or nutshutdown
+	[ ! -f "$NUT_DISABLE_HOTPLUG_PATH" ] || return 1
+
+	return 0
+}
+
+# Emit list of running UPS service instances (empty if none)
+# returns 0 if there are active instances, 1 if no instances are active
+# 'service' (first positional parameter) must not come from user input, and is
+# expected to be static values provided by developers
+list_running_instances() {
+	local service="$1"
+	local running_instances service_filter
+
+	check_safe_uci_name "$service" || return 1
+
+	service_filter="@['""$service""'][@.*.running=true]"
+	running_instances="$(_procd_ubus_call list | jsonfilter -e "$service_filter")"
+
+	if [ -n "$running_instances" ]; then
+		json_init
+		json_load "$running_instances" || {
+			log_error "json_load failed in list_running_instances" nut-service.sh nut-service
+			return 1
+		}
+		json_get_keys instance_names
+		# shellcheck disable=SC2154
+		echo "$instance_names"
+		json_cleanup
+		return 0
+	fi
+	return 1
+}
+
+# Send a signal to a UPS service instance
+# **Not to be used with user input**, only use static information provided by
+# developers as signal_command and secondary_command execute commands in the
+# script's context
+signal_instance() {
+	if [ "$#" -lt 7 ]; then
+		log_error "signal_instance called with too few parameters."
+		return 1
+	fi
+	local instance_name="$1"
+	local signal_command="$2"
+	local signal_action="$3"
+	local signal="$4"
+	local pidfile="$5"
+	local signal_extra_arg="$6"
+	local service_name="$7"
+	# We use shift here and below to allow use of additional variadic parameters
+	shift 7
+	local secondary_command="$1"
+	shift || true
+	local process_name ret
+
+	process_name=$(basename "$signal_command")
+
+	# Prefer sending signal using '$signal_command', which requires that a
+	# PID file exists. Otherwise, send signal(s) to the process(es) by their
+	# instance name
+	if [ -s "$pidfile" ]; then
+		# Informational log message, not error
+		log_msg "Sending signal action '$signal_action' to '$signal_command' for '$instance_name'" "nut-service.sh" "$service_name" "info"
+		set -f
+		# **Not to be used with user input**
+		# shellcheck disable=SC2086
+		if [ -n "$signal_extra_arg" ]; then
+			"$signal_command" -c "$signal_action" -a "$signal_extra_arg"
+			ret=$?
+		else
+			"$signal_command" -c "$signal_action"
+			ret=$?
+		fi
+		set +f
+		# Modern OpenWrt (since OpenWrt-24.10, which is old stable, two releases
+		# prior to the release targetted by this script) has pgrep with the expected
+		# functionality--it, however, cannot send signals to processes.
+	elif pgrep "$process_name" >/dev/null 2>/dev/null; then
+		# If 'process_name' is in the process table, signal it with procd_send_signal
+		# Informational log message, not error
+		log_msg "Sending signal '$signal' to '$instance_name'" "nut-service.sh" "$service_name" "info"
+		procd_send_signal "$service_name" "$instance_name" "$signal"
+		ret=$?
+	else
+		# No matching instance/process, which is an allowed possible state.
+		:
+	fi
+
+	# **Not to be used with user input**
+	# For NUT exit code 0 is success, 1 is error, and other codes have other meanings
+	# We only want to issue secondary command if the primary command fails
+	if [ "$ret" = "1" ] && [ -n "$secondary_command" ] && procd_running "$service_name" "$instance_name"; then
+		# Informational log message, not error
+		log_msg "Performing '$secondary_command' $* for '$instance_name'" nut-service.sh "$service_name" info
+		set -f
+		"$secondary_command" "$@" 2>&1 | logger -t "$service_name"
+		set +f
+	fi
+	# No signal sent is a valid possibility. Also, if sending a signal fails
+	# we want to keep going, so don't error, but do log the condition.
+	return 0
+}
+
+# Store path for NUT working data in the global variable STATEPATH
+# shellcheck disable=SC2329
+find_statepath() {
+	local section="$1"
+	local package="$2"
+	local ret statepath
+
+	# Subshell so as not to interfere with main config_load
+	(
+		config_load "$package" || {
+			log_config_load_error "$package" "nut-service.sh" "nut-service"
+			exit 1
+		}
+		config_get statepath "$section" statepath "$NUT_BASE_STATEPATH"
+		ret=$?
+
+		if [ -n "$statepath" ]; then
+			printf "%s" "$statepath"
+		elif [ "$ret" != "0" ]; then
+			exit $ret
+		else
+			exit 1
+		fi
+	) || return $?
+}
+
+# Store user under which to run daemon processes
+# shellcheck disable=SC2329
+find_runas() {
+	local section="$1"
+	local package="$2"
+	local fallback_runas="$3"
+	local runas ret
+
+	# Subshell so as not to interfere with main config_load
+	(
+		config_load "$package" || {
+			log_config_load_error "$package" "nut-service.sh" "nut-service"
+			exit 1
+		}
+		config_get runas "$section" runas "${fallback_runas:-nut}"
+		ret=$?
+
+		if [ -z "$runas" ]; then
+			if [ "$ret" != "0" ]; then
+				exit $ret
+			else
+				exit 1
+			fi
+		fi
+
+		if [ -n "$(id -un "$runas")" ]; then
+			printf "%s" "$runas"
+		else
+			# We omit the output on stderr to avoid potential mixing with the intended printf output on stdout,
+			# when called via command substitution, while maintaining log output to syslog
+			log_error "User '$runas' specified for 'runas' does not exist." nut-service.sh nut-service 2>/dev/null
+			exit 1
+		fi
+	) || return $?
+}
+
+# Detect if service is running under procd, with no instances
+# (e.g. upsd with no UPS drivers running)
+service_active_no_instances() {
+	local service="$1"
+	local active_instances
+	local active_var service_filter
+
+	check_safe_uci_name "$service" || return 1
+
+	service_filter="@['""${service}""']"
+	active_instances="$(_procd_ubus_call list "{\"name\":\"$service\"}" | jsonfilter -l 1 -e active_var="$service_filter")"
+	# If we get no output at all, the service is not running
+	[ -z "$active_instances" ] && return 1
+
+	case "$active_instances" in
+	export\ active_var=*\;\ )
+		active_var="${active_instances#export active_var=}"
+		active_var="${active_var%%; }"
+		;;
+	*)
+		log_error "Unexpected value '$active_instances' for 'active_instances' from jsonfilter in service_active_no_instances" nut-service.sh nut-service
+		return 1
+		;;
+	esac
+
+	# active_var is only empty, but present, if there are no instances for the service
+	[ -z "$active_var" ] && return 0
+
+	return 1
+}
+
+# Setup triggers in procd for changes to specified network interfaces
+add_interface_triggers() {
+	local section="$1"
+	local interface_reload_delay="${2:-$DEFAULT_PROCD_INTERFACE_RELOAD_DELAY}"
+	local initscript="$3"
+	if [ $# -ge 3 ]; then
+		shift 3
+	fi
+
+	local interfaces interface trigger_failed
+
+	config_get interfaces "$section" triggerlist
+
+	if [ -n "$interfaces" ] && [ "$interfaces" != "all" ]; then
+		set -f
+		trigger_failed="false"
+		# interfaces is deliberately unquoted so we get word-splitting for
+		# the for loop
+		for interface in $interfaces; do
+			# We use the variadic third and fourth parameters of procd_add_interface_trigger to
+			# restart instead of reload on interface up/down events. Additionally the variadic
+			# fifth and following parameters of procd_add_interface_trigger are passed through to
+			# the <script>, so the trigger action becomes e.g. /etc/init.d/<script> restart <variadic_vars>.
+			procd_add_interface_trigger "interface.*.up" "$interface" "/etc/init.d/$initscript" "restart" "$@" || trigger_failed="true"
+		done
+		set +f
+		if [ "$trigger_failed" = "true" ]; then
+			return 1
+		fi
+	elif [ "$interfaces" = "all" ]; then
+		# Add a restart trigger on any interface's up status changing
+		procd_add_raw_trigger "interface.*.up" "$interface_reload_delay" "/etc/init.d/$initscript" "restart" "$@" || return 1
+	else
+		return 0 # don't react to interface status
+	fi
+	return 0
+}
+
+# availability of network_is_up depends on /lib/functions/network.sh having
+# been sourced
+check_interface_up() {
+	local section="$1"
+	local interfaces interface have_up_interface
+
+	config_get interfaces "$section" triggerlist
+
+	if [ -n "$interfaces" ] && [ "$interfaces" != "all" ]; then
+		set -f
+		have_up_interface="false"
+		for interface in $interfaces; do
+			network_is_up "$interface" && have_up_interface="true" && break
+		done
+		set +f
+		if [ "$have_up_interface" = "false" ]; then
+			log_msg "None of the trigger interfaces are up." "nut-service.sh" "nut-service" "notice"
+			return 1
+		fi
+	elif [ "$interfaces" = "all" ]; then
+		# Return true if any interface is up
+		# -q for jsonfilter only suppress error output, not messages on
+		# stdout, redirect to >/dev/null is needed to avoid all output
+		if ubus -S call network.device status | jsonfilter -q -l 1 -e '$[@.up=true].up' >/dev/null; then
+			return 0
+		fi
+		log_msg "No interfaces are up." "nut-service.sh" "nut-service" "notice"
+		return 1
+	else
+		return 0 # don't depend on interface status
+	fi
+	return 0
+}

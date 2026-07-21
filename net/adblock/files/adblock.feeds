@@ -84,7 +84,7 @@
 		"descr": "tracking"
 	},
 	"games_tracking": {
-		"url": "https://raw.githubusercontent.com/KodoPengin/GameIndustry-hosts-Template/master/Main-Template/hosts",
+		"url": "https://repository.gameindustry.eu/raw/gaminghosts",
 		"rule": "feed 0.0.0.0 2",
 		"size": "S",
 		"descr": "tracking"

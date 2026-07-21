@@ -6,13 +6,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=avahi
-PKG_VERSION:=0.9_rc4
+PKG_VERSION:=0.9_rc5
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-0.9-rc4.tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/avahi/avahi/tar.gz/v0.9-rc4?
-PKG_HASH:=08fcc57377ed05416ec4b3d8a179da716a7a9376821551a5ae16f8276a1ef0b5
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-0.9-rc4
+PKG_SOURCE:=$(PKG_NAME)-0.9-rc5.tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/avahi/avahi/tar.gz/v0.9-rc5?
+PKG_HASH:=5b0a9d88110b0fc8aaafc5cc0a26e83e7d2a4aca3a36bc27c9b626db7ead27b0
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-0.9-rc5
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -82,10 +82,12 @@ define Package/avahi-dbus-daemon
   $(call Package/avahi/Default)
   PROVIDES:=avahi-daemon
   VARIANT:=dbus
+  DEFAULT_VARIANT:=1
   SUBMENU:=IP Addresses and Names
   DEPENDS:=+libavahi-dbus-support +libexpat +librt +libdaemon
   TITLE+= (daemon)
   USERID:=avahi=105:avahi=105
+  CONFLICTS:=libavahi-nodbus-support
 endef
 
 define Package/avahi-nodbus-daemon
@@ -167,8 +169,10 @@ endef
 define Package/libavahi-dbus-support
   $(call Package/libavahi/Default)
   VARIANT:=dbus
-  DEPENDS:=+dbus
+  DEFAULT_VARIANT:=1
+  DEPENDS:=+PACKAGE_libavahi-dbus-support:dbus
   TITLE+= (D-Bus support)
+  CONFLICTS:=libavahi-nodbus-support
 endef
 
 define Package/libavahi-nodbus-support
@@ -207,6 +211,7 @@ define Package/libavahi-client
   VARIANT:=dbus
   DEPENDS:=+avahi-dbus-daemon
   TITLE+= (libavahi-client library)
+  CONFLICTS:=libavahi-nodbus-support
 endef
 
 define Package/libavahi-client/description
@@ -224,6 +229,7 @@ define Package/avahi-utils
   VARIANT:=dbus
   DEPENDS:=+libavahi-client +libgdbm
   TITLE+= (utilities)
+  CONFLICTS:=libavahi-nodbus-support
 endef
 
 define Package/avahi-utils/description

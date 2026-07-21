@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gpgme
 PKG_VERSION:=2.1.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://gnupg.org/ftp/gcrypt/$(PKG_NAME)
@@ -80,7 +80,7 @@ define Build/InstallDev
 	$(SED) \
 		's,^\(prefix\|exec_prefix\)=.*,\1=$(STAGING_DIR)/usr,g' \
 		$(2)/bin/gpgme-config
-	$(LN) -sf $(STAGING_DIR)/host/bin/gpgme-config $(1)/usr/bin/gpgme-config
+	$(LN) $(STAGING_DIR)/host/bin/gpgme-config $(1)/usr/bin/gpgme-config
 endef
 
 define Package/libgpgme/install

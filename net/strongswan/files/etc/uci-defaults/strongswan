@@ -1,0 +1,36 @@
+#!/bin/sh
+
+migrate_ipsec() {
+	# Skip migration if the 'globals' section already exists
+	uci show ipsec.globals 1>/dev/null 2>/dev/null
+	[ "$?" = "0" ] && return
+
+	# Rename last ipsec section to 'globals'
+	uci -q rename ipsec.@ipsec[-1]=globals
+	uci -q commit ipsec
+}
+
+migrate_ignore_routing_tables() {
+	local tables table count
+
+	# Check whether we still have the old config option ( not a 'list')
+	count="$(grep -c -E "^[[:space:]]*option ignore_routing_tables" /etc/config/ipsec)"
+	[ "$count" = "0" ] && return
+
+	tables="$(uci -q get "ipsec.globals.ignore_routing_tables")"
+	uci -q delete "ipsec.globals.ignore_routing_tables"
+	for table in $tables; do
+		uci add_list "ipsec.globals.ignore_routing_tables=${table}"
+	done
+
+	uci commit ipsec
+}
+
+main() {
+	migrate_ipsec
+	migrate_ignore_routing_tables
+}
+
+main
+
+exit 0

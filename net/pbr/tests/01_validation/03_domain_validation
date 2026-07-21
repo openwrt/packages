@@ -23,6 +23,26 @@ testIsHostname() {
 	assertFalse "IP address" "is_hostname '192.168.1.1'"
 }
 
+testIsPunycode() {
+	# Multi-label names where at least one label is xn--*
+	assertTrue "Punycode label, ASCII TLD" "is_punycode 'xn--bcher-kva.de'"
+	assertTrue "ASCII label, punycode TLD (.рф)" "is_punycode 'example.xn--p1ai'"
+	assertTrue "Punycode label, punycode TLD (пример.бел)" "is_punycode 'xn--e1adjldbbpv.xn--90ais'"
+	assertTrue "Punycode label, .рф TLD" "is_punycode 'xn--80aaa1cvac.xn--p1ai'"
+	# Plain ASCII names should NOT match is_punycode (they go through is_hostname)
+	assertFalse "Plain ASCII domain" "is_punycode 'example.com'"
+	assertFalse "ASCII subdomain" "is_punycode 'sub.example.com'"
+	# Single-label cases go through is_host, not is_punycode
+	assertFalse "Bare punycode TLD (single label)" "is_punycode 'xn--p1ai'"
+	assertFalse "Single label localhost" "is_punycode 'localhost'"
+	# Unicode forms rejected (deferred)
+	assertFalse "Unicode label rejected (deferred)" "is_punycode 'пример.бел'"
+	assertFalse "Unicode label rejected (deferred)" "is_punycode 'bücher.de'"
+	# Edge cases
+	assertFalse "Empty string" "is_punycode ''"
+	assertFalse "IP address" "is_punycode '192.168.1.1'"
+}
+
 testIsDomain() {
 	assertTrue "Standard domain" "is_domain 'example.com'"
 	assertTrue "Single-label host" "is_domain 'router'"
@@ -30,6 +50,17 @@ testIsDomain() {
 	assertFalse "IPv4 not a domain" "is_domain '192.168.1.1'"
 	assertFalse "Empty string" "is_domain ''"
 	assertFalse "Bad MAC notation" "is_domain 'AA-BB-CC-DD-EE-FF'"
+}
+
+testIsDomainPunycode() {
+	# is_domain composes is_host || is_hostname || is_punycode — all paths covered
+	assertTrue "Bare punycode TLD via is_host" "is_domain 'xn--p1ai'"
+	assertTrue "Bare punycode TLD via is_host" "is_domain 'xn--90ais'"
+	assertTrue "Punycode label, ASCII TLD" "is_domain 'xn--bcher-kva.de'"
+	assertTrue "ASCII label, punycode TLD" "is_domain 'example.xn--p1ai'"
+	assertTrue "Punycode label, punycode TLD" "is_domain 'xn--e1adjldbbpv.xn--90ais'"
+	assertFalse "Unicode form rejected (deferred)" "is_domain 'пример.бел'"
+	assertFalse "Unicode form rejected (deferred)" "is_domain 'bücher.de'"
 }
 
 . shunit2

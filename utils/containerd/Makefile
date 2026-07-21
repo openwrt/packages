@@ -1,15 +1,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=containerd
-PKG_VERSION:=2.2.3
-PKG_RELEASE:=2
+PKG_VERSION:=2.2.5
+PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:linuxfoundation:containerd
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/containerd/containerd/tar.gz/v${PKG_VERSION}?
-PKG_HASH:=b97780bde4b01ed3596b0b0c6f55bfb130794a3db4e6fe2e0fc9719244933945
+PKG_HASH:=ca9c2084ab92b3ce073fa4e43f29a0cad33c2ea71d4e09777acfc082b90049db
 
 PKG_MAINTAINER:=Gerard Ryan <G.M0N3Y.2503@gmail.com>
 
@@ -40,10 +40,6 @@ define Package/containerd/description
   robustness and portability.
 endef
 
-define Package/containerd/conffiles
-/etc/containerd/config.toml
-endef
-
 GO_PKG_INSTALL_EXTRA:=\
 	vendor/google.golang.org/protobuf/internal/editiondefaults/editions_defaults.binpb \
 	Makefile \
@@ -68,8 +64,6 @@ Build/Compile=$(call Build/Compile/Default)
 define Package/containerd/install
 	$(INSTALL_DIR) $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/{ctr,containerd,containerd-stress,containerd-shim-runc-v2} $(1)/usr/bin/
-	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/containerd.init $(1)/etc/init.d/containerd
 endef
 
 $(eval $(call BuildPackage,containerd))

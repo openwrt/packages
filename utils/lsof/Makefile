@@ -7,12 +7,12 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=lsof
-PKG_VERSION:=4.99.6
+PKG_VERSION:=4.99.7
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/lsof-org/lsof/releases/download/$(PKG_VERSION)
-PKG_HASH:=6081dedf841cd61f8a022ff7cbe04ed78918a47dea3c39528c8571474167aa0f
+PKG_HASH:=4a10391aab0b8ce1f539e82a1966693b2a6cf225972a6504ebb7ec4fa71675de
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
@@ -32,7 +32,12 @@ define Package/lsof
   URL:=https://lsof.readthedocs.io/en/latest/
 endef
 
-CONFIGURE_ARGS += --without-selinux --without-libtirpc
+CONFIGURE_ARGS += \
+    --without-selinux \
+    --without-libtirpc \
+    --disable-liblsof
+
+MAKE_FLAGS += man8_MANS=
 
 define Package/lsof/install
 	$(INSTALL_DIR) $(1)/usr/bin

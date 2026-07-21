@@ -26,6 +26,7 @@ die() {
 
 APPNAME="trafficshaper"
 IPT_CHAIN=$APPNAME
+NFT_TABLE=$APPNAME
 
 debug_exec(){
 	local err
@@ -43,6 +44,7 @@ IP="debug_exec ip"
 TC="debug_exec tc"
 IP4T="debug_exec iptables -w 5"
 IP6T="debug_exec ip6tables -w 5"
+NFT="debug_exec nft"
 
 #QDISC="cake autorate_ingress internet ethernet diffserv4 triple-isolate"
 QDISC="cake"
@@ -56,14 +58,37 @@ preinit(){
 }
 
 requires() {
-	if ! command -v ip6tables &>/dev/null; then
-		v "Disabling IPv6 as ip6tables was not found"
-		IP6T=true
-	fi
-
 	. /lib/functions/network.sh
 
 	config_load $APPNAME
+	config_get firewall_backend globals firewall_backend auto
+
+	case "$firewall_backend" in
+		auto)
+			if command -v nft >/dev/null; then
+				firewall_backend="nftables"
+			else
+				firewall_backend="iptables"
+			fi
+			;;
+		nft|nftables)
+			firewall_backend="nftables"
+			;;
+		iptables)
+			;;
+		*)
+			die 2 "unknown firewall_backend '$firewall_backend'"
+			;;
+	esac
+
+	if [ "$firewall_backend" = "nftables" ] && ! command -v nft &>/dev/null; then
+		die 1 "firewall_backend nftables selected but nft was not found"
+	fi
+
+	if [ "$firewall_backend" = "iptables" ] && ! command -v ip6tables &>/dev/null; then
+		v "Disabling IPv6 as ip6tables was not found"
+		IP6T=true
+	fi
 }
 
 do_stop() {
@@ -74,15 +99,7 @@ do_stop() {
 
 	v "Stopping $APPNAME${only_int:+ for interface $only_int}"
 	if [ -z "$only_int" ]; then
-		d "Cleaning iptables"
-		# Cleaning iptables
-		for IPT in "$IP4T" "$IP6T"; do
-			$IPT -t mangle -D FORWARD -j $IPT_CHAIN &>/dev/null || :
-			$IPT -t mangle -F $IPT_CHAIN &>/dev/null || :
-			$IPT -t mangle -X $IPT_CHAIN &>/dev/null || :
-			$IPT -t mangle -F $IPT_CHAIN-classify &>/dev/null || :
-			$IPT -t mangle -X $IPT_CHAIN-classify &>/dev/null || :
-		done
+		stop_firewall
 	fi
 
 	d "Cleaning tc"
@@ -156,6 +173,32 @@ mask_range() {
 	return 0
 }
 
+stop_firewall_iptables() {
+	command -v iptables &>/dev/null || return 0
+	command -v ip6tables &>/dev/null || IP6T=true
+
+	d "Cleaning iptables"
+	for IPT in "$IP4T" "$IP6T"; do
+		$IPT -t mangle -D FORWARD -j $IPT_CHAIN &>/dev/null || :
+		$IPT -t mangle -F $IPT_CHAIN &>/dev/null || :
+		$IPT -t mangle -X $IPT_CHAIN &>/dev/null || :
+		$IPT -t mangle -F $IPT_CHAIN-classify &>/dev/null || :
+		$IPT -t mangle -X $IPT_CHAIN-classify &>/dev/null || :
+	done
+}
+
+stop_firewall_nftables() {
+	command -v nft &>/dev/null || return 0
+
+	d "Cleaning nftables"
+	$NFT destroy table inet "$NFT_TABLE" &>/dev/null || :
+}
+
+stop_firewall() {
+	stop_firewall_iptables
+	stop_firewall_nftables
+}
+
 start_iptables(){
 	d "Creating iptables mangle rules"
 
@@ -226,6 +269,78 @@ start_iptables(){
 	$IP6T -t mangle -A $IPT_CHAIN-classify -j CONNMARK --save-mark --nfmask $mark_mask --ctmask $mark_mask
 }
 
+start_nftables() {
+	d "Creating nftables mangle rules"
+
+	config_get mark_mask globals mark_mask 0xFF
+	local mark_mask_dec mark_mask_inv fsb_lst class_id_max class_id_shift nft_rules
+	mark_mask_dec=$(($mark_mask))
+	mark_mask=$(printf '0x%X\n' "$mark_mask_dec")
+	mark_mask_inv=$(printf '0x%X\n' $((0xFFFFFFFF & ~mark_mask_dec)))
+
+	fsb_lst=$(mask_range $mark_mask)
+	class_id_max=$(((1<<(${fsb_lst#* } - ${fsb_lst% *} +1))+1))
+	class_id_shift=$((${fsb_lst% *}))
+
+	nft_rules="$(
+	{
+		printf '%s\n' "#!/usr/sbin/nft -f" ""
+		$NFT list table inet "$NFT_TABLE" &>/dev/null && \
+			printf '%s\n' "destroy table inet $NFT_TABLE"
+		printf '%s\n' \
+			"add table inet $NFT_TABLE" \
+			"add chain inet $NFT_TABLE forward { type filter hook forward priority mangle + 10; policy accept; }"
+
+		local class class_reserved_uplink class_reserved_downlink class_nets i=2 xi nft_family
+		for class in $(config_foreach echo class); do
+			config_get class_reserved_uplink   $class reserved_uplink
+			config_get class_reserved_downlink $class reserved_downlink
+			config_get class_nets     $class network
+			if [ "$class" = default ]; then
+				if [ -z "$class_reserved_uplink" -a -z "$class_reserved_downlink" ] ; then
+					die 2 "class default must defined either reserved uplink or downlink!"
+				fi
+				if [ "$class_nets" ]; then
+					die 2 "class default must not have any network defined!"
+				fi
+			else
+				if [ "$i" -ge "$class_id_max" ]; then
+					die 1 "Max client classes reached. Please, use less classes or increase option mark_mask '$mark_mask' in globals. Current mask allows only $((class_id_max-2)) classes if default is the last one."
+				fi
+			fi
+
+			xi=$(printf '0x%X\n' $(((i-1)<<class_id_shift)))
+
+			for class_net in $class_nets; do
+				case $class_net in
+					*:*) nft_family="ip6" ;;
+					*.*) nft_family="ip" ;;
+					*) die 2 "Unknown address family of network $class_net in class $class!"
+				esac
+				if [ "$class_reserved_uplink" ]; then
+					printf '%s\n' "add rule inet $NFT_TABLE forward ct mark & $mark_mask == 0x0 $nft_family saddr $class_net counter ct mark set (ct mark & $mark_mask_inv) | $xi comment \"$APPNAME-$class up\""
+				fi
+				if [ "$class_reserved_downlink" ]; then
+					printf '%s\n' "add rule inet $NFT_TABLE forward ct mark & $mark_mask == 0x0 $nft_family daddr $class_net counter ct mark set (ct mark & $mark_mask_inv) | $xi comment \"$APPNAME-$class down\""
+				fi
+			done
+			: $((i++))
+		done
+
+	}
+	)"
+
+	printf '%s\n' "$nft_rules" | $NFT -c -f -
+	printf '%s\n' "$nft_rules" | $NFT -f -
+}
+
+start_firewall() {
+	case "$firewall_backend" in
+		nftables) start_nftables ;;
+		iptables) start_iptables ;;
+	esac
+}
+
 
 
 start_tc_interface() {
@@ -274,6 +389,7 @@ start_tc_interface() {
 	if [ "$dev_up" ]; then
 		tc qdisc add dev $dev_up   root handle 1: htb default "$default_class_id"
 		tc class add dev $dev_up   parent 1: classid 1:1 htb rate $(calc_bw ${uplink})kbit   burst 500k quantum 1500
+		[ "$firewall_backend" = "nftables" ] && $TC filter add dev $dev_up parent 1: protocol all prio 1 u32 match u32 0 0 action connmark continue
 	fi
 
 	v "$int($dev):" \
@@ -390,7 +506,7 @@ do_start() {
 	fi
 	default_class_id=${default_class_id% *}
 
-	[ "$only_int" ] || start_iptables
+	[ "$only_int" ] || start_firewall
 	start_tc "$default_class_id" "$only_int"
 
 	trap - EXIT
@@ -409,11 +525,15 @@ restart_service() {
 }
 
 is_running() {
-	$IP4T -t mangle -L $IPT_CHAIN &>/dev/null
+	case "$firewall_backend" in
+		nftables) $NFT list table inet "$NFT_TABLE" &>/dev/null ;;
+		iptables) $IP4T -t mangle -L $IPT_CHAIN &>/dev/null ;;
+	esac
 }
 
 reload_service() {
 	preinit
+	requires
 	if ! is_running; then
 		d "Not running. Nothing to reload"
 		return 0
@@ -442,7 +562,8 @@ service_triggers() {
 
 validate_trafficshaper_global() {
         uci_validate_section $APPNAME global "${1}" \
-                'mark_mask:uinteger:0xFF'
+                'mark_mask:uinteger:0xFF' \
+                'firewall_backend:string:auto'
 }
 
 validate_trafficshaper_wan() {
