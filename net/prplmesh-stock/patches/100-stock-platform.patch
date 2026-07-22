@@ -140,17 +140,17 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
 +    auto transport_config_client = broker_client_factory->create_instance();
 +    if (!transport_config_client) {
 +        LOG(ERROR) << "Unable to create broker client for transport configuration!";
-+        return false;
++        return 1;
 +    }
 +
 +    if (!transport_config_client->configure_al_mac(tlvf::mac_from_string(bridge_info.mac))) {
 +        LOG(ERROR) << "Unable to configure transport AL MAC " << bridge_info.mac;
-+        return false;
++        return 1;
 +    }
 +
 +    if (!transport_config_client->configure_interfaces(bridge_iface, {}, true, true)) {
 +        LOG(ERROR) << "Unable to configure transport bridge " << bridge_iface;
-+        return false;
++        return 1;
 +    }
 +
      son::Controller controller(master_db, std::move(broker_client_factory), std::move(ucc_server),

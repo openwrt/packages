@@ -27,10 +27,12 @@ PKG_MAINTAINER:=Andrei Ovcharenko <a@krot.name>
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PKG_BUILD_DEPENDS:=python-yaml/host
 CMAKE_BINARY_SUBDIR:=build-openwrt-stock
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
+include ../../lang/python/python3-host.mk
 
 define Download/hostapd
   FILE:=$(HOSTAPD_SOURCE)
@@ -76,7 +78,7 @@ CMAKE_OPTIONS += \
 	-DPLATFORM_BUILD_DIR=$(BUILD_DIR) \
 	-DPLATFORM_STAGING_DIR=$(STAGING_DIR) \
 	-DPLATFORM_INCLUDE_DIR=$(STAGING_DIR)/usr/include \
-	-DPython3_EXECUTABLE=$(STAGING_DIR_HOST)/bin/python3 \
+	-DPython3_EXECUTABLE=$(HOST_PYTHON3_BIN) \
 	-DHOSTAPD_INCLUDE_DIR=$(HOSTAPD_BUILD_DIR) \
 	-DCMAKE_CXX_FLAGS="-Wno-error=deprecated-declarations"
 
