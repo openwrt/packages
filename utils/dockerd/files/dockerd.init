@@ -99,7 +99,7 @@ uciadd() {
 
 	# Add interface to firewall zone
 	if uci_quiet get firewall.${zone} \
-		&& ! uci_quiet get firewall.${zone}.network | tr ' ' '\n' | grep -Fxq "${iface}"; then
+		&& ! uci -q get firewall.${zone}.network | tr ' ' '\n' | grep -Fxq "${iface}"; then
 		uci_quiet add_list firewall.${zone}.network="${iface}"
 		uci_quiet commit firewall
 		changed=1
