@@ -141,10 +141,12 @@ define Package/snapserver/config
 				Adds a dependency on libopus.
 
 		config SNAPCAST_SOXR
-			bool "SOXR resampling support (server)"
+			bool "SOXR resampling support (server + client)"
 			default y
 			help
-				Adds a dependency on libsoxr.
+				High-quality SoX resampling, compiled into
+				both binaries (build-wide -DBUILD_WITH_SOXR).
+				Adds a dependency on libsoxr to each.
 
 		config SNAPCAST_SSL
 			bool "SSL / TLS support"
@@ -174,6 +176,7 @@ define Package/snapclient
   $(call Package/snapcast/Default)
   TITLE+= (client)
   DEPENDS+= \
+	+SNAPCAST_SOXR:libsoxr \
 	+SNAPCAST_VORBIS:libvorbisidec
 endef
 
