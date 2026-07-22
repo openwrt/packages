@@ -34,6 +34,8 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 include ../../lang/python/python3-host.mk
 
+EXTRA_CXXFLAGS += -Wno-error=deprecated-declarations
+
 define Download/hostapd
   FILE:=$(HOSTAPD_SOURCE)
   URL:=$(HOSTAPD_SOURCE_URL)
@@ -79,8 +81,7 @@ CMAKE_OPTIONS += \
 	-DPLATFORM_STAGING_DIR=$(STAGING_DIR) \
 	-DPLATFORM_INCLUDE_DIR=$(STAGING_DIR)/usr/include \
 	-DPython3_EXECUTABLE=$(HOST_PYTHON3_BIN) \
-	-DHOSTAPD_INCLUDE_DIR=$(HOSTAPD_BUILD_DIR) \
-	-DCMAKE_CXX_FLAGS="-Wno-error=deprecated-declarations"
+	-DHOSTAPD_INCLUDE_DIR=$(HOSTAPD_BUILD_DIR)
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
