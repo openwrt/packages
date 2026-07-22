@@ -2586,7 +2586,7 @@ Co-authored-by: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
 \ No newline at end of file
 --- a/src/lib_jit.c
 +++ b/src/lib_jit.c
-@@ -706,6 +706,104 @@ JIT_PARAMDEF(JIT_PARAMINIT)
+@@ -713,6 +713,104 @@ JIT_PARAMDEF(JIT_PARAMINIT)
  #include <sys/utsname.h>
  #endif
  
@@ -2691,7 +2691,7 @@ Co-authored-by: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
  /* Arch-dependent CPU feature detection. */
  static uint32_t jit_cpudetect(void)
  {
-@@ -778,6 +876,29 @@ static uint32_t jit_cpudetect(void)
+@@ -785,6 +883,29 @@ static uint32_t jit_cpudetect(void)
  #endif
  #elif LJ_TARGET_S390X
    /* No optional CPU features to detect (for now). */
@@ -4846,7 +4846,7 @@ Co-authored-by: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
 +}
 --- a/src/lj_ccall.c
 +++ b/src/lj_ccall.c
-@@ -687,6 +687,146 @@
+@@ -689,6 +689,146 @@
      if (ngpr < maxgpr) { dp = &cc->gpr[ngpr++]; goto done; } \
    }
  
@@ -4993,8 +4993,8 @@ Co-authored-by: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
  #else
  #error "Missing calling convention definitions for this architecture"
  #endif
-@@ -1055,6 +1195,164 @@ static void ccall_copy_struct(CCallState
- 
+@@ -1090,6 +1230,164 @@ static void ccall_copy_struct(CCallState
+ #define ccall_struct_align(cts, ct)	((ct)->info & CTF_ALIGN)
  #endif
  
 +/* -- RISC-V ABI struct classification ---------------------------- */
@@ -5158,7 +5158,7 @@ Co-authored-by: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
  /* -- Common C call handling ---------------------------------------------- */
  
  /* Infer the destination CTypeID for a vararg argument.
-@@ -1106,6 +1404,7 @@ static int ccall_set_args(lua_State *L,
+@@ -1141,6 +1439,7 @@ static int ccall_set_args(lua_State *L,
  #endif
  #endif
  
@@ -5166,7 +5166,7 @@ Co-authored-by: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
    /* Clear unused regs to get some determinism in case of misdeclaration. */
    memset(cc->gpr, 0, sizeof(cc->gpr));
  #if CCALL_NUM_FPR
-@@ -1168,6 +1467,11 @@ static int ccall_set_args(lua_State *L,
+@@ -1203,6 +1502,11 @@ static int ccall_set_args(lua_State *L,
      CType *d;
      CTSize sz;
      MSize n, isfp = 0, isva = 0;
@@ -5178,7 +5178,7 @@ Co-authored-by: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
      void *dp, *rp = NULL;
  #if LJ_TARGET_PPC && LJ_ARCH_BITS == 64
      int isf32 = 0;
-@@ -1216,6 +1520,10 @@ static int ccall_set_args(lua_State *L,
+@@ -1251,6 +1555,10 @@ static int ccall_set_args(lua_State *L,
  #if LJ_TARGET_S390X
      onstack = 1;
  #endif
@@ -5187,9 +5187,9 @@ Co-authored-by: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
 +    onsp = nsp;
 +#endif
      if (CCALL_ALIGN_STACKARG) {  /* Align argument on stack. */
-       MSize align = (1u << ctype_align(d->info)) - 1;
-       if (rp || (CCALL_PACK_STACKARG && isva && align < CTSIZE_PTR-1))
-@@ -1228,6 +1536,9 @@ static int ccall_set_args(lua_State *L,
+       MSize align = (1u << ctype_align(ccall_struct_align(cts, d))) - 1;
+ #if LJ_TARGET_ARM64 && LJ_TARGET_OSX
+@@ -1266,6 +1574,9 @@ static int ccall_set_args(lua_State *L,
  #else
      dp = ((uint8_t *)cc->stack) + nsp;
  #endif
@@ -5199,7 +5199,7 @@ Co-authored-by: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
      nsp += CCALL_PACK_STACKARG ? sz : n * CTSIZE_PTR;
      if ((int32_t)nsp > CCALL_SIZE_STACK) {  /* Too many arguments. */
      err_nyi:
-@@ -1295,7 +1606,11 @@ static int ccall_set_args(lua_State *L,
+@@ -1333,7 +1644,11 @@ static int ccall_set_args(lua_State *L,
          *(int64_t *)dp = (int64_t)*(int32_t *)dp;
      }
  #endif
@@ -5212,7 +5212,7 @@ Co-authored-by: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
      if ((ctype_isinteger_or_bool(d->info) || ctype_isenum(d->info)
  #if LJ_TARGET_MIPS64
  	 || (isfp && nsp == 0)
-@@ -1335,6 +1650,107 @@ static int ccall_set_args(lua_State *L,
+@@ -1373,6 +1688,107 @@ static int ccall_set_args(lua_State *L,
        CTSize i = (sz >> 2) - 1;
        do { ((uint64_t *)dp)[i] = ((uint32_t *)dp)[i]; } while (i--);
      }
