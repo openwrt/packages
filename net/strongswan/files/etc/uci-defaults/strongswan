@@ -75,11 +75,33 @@ migrate_gateway() {
 	config_foreach migrate_gateway_remote remote
 }
 
+migrate_remote_gateway_remote() {
+	local cfg="$1"
+
+	local remote_gateway value
+
+	config_get remote_gateway "$cfg" remote_gateway ""
+	[ -z "$remote_gateway" ] && return
+
+	for value in $remote_gateway; do
+		uci add_list "ipsec.${cfg}.remote_addrs=${value}"
+	done
+
+	uci -q delete "ipsec.${cfg}.remote_gateway"
+	uci commit ipsec
+}
+
+migrate_remote_gateway() {
+	config_load ipsec
+	config_foreach migrate_remote_gateway_remote remote
+}
+
 main() {
 	migrate_ipsec
 	migrate_ignore_routing_tables
 	migrate_local_nat
 	migrate_gateway
+	migrate_remote_gateway
 }
 
 main
