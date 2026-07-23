@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luasocket
 PKG_VERSION:=3.1.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
@@ -44,12 +44,23 @@ define Package/luasocket5.3
   VARIANT:=lua-53
 endef
 
+define Package/luasocket5.4
+  $(Package/luasocket/default)
+  TITLE:=LuaSocket 5.4
+  DEPENDS:=+liblua5.4
+  VARIANT:=lua-54
+endef
+
 ifeq ($(BUILD_VARIANT),lua-51)
   LUA_VERSION=5.1
 endif
 
 ifeq ($(BUILD_VARIANT),lua-53)
   LUA_VERSION=5.3
+endif
+
+ifeq ($(BUILD_VARIANT),lua-54)
+  LUA_VERSION=5.4
 endif
 
 
@@ -60,6 +71,7 @@ define Package/luasocket/default/description
 endef
 Package/luasocket/description     = $(Package/luasocket/default/description)
 Package/luasocket5.3/description = $(Package/luasocket/default/description)
+Package/luasocket5.4/description = $(Package/luasocket/default/description)
 
 define Build/Configure
 endef
@@ -95,6 +107,14 @@ define Package/luasocket5.3/install
 		install
 endef
 
+define Package/luasocket5.4/install
+	$(MAKE) -C $(PKG_BUILD_DIR)/src \
+		DESTDIR="$(1)" \
+		LUAV=$(LUA_VERSION) \
+		install
+endef
+
 
 $(eval $(call BuildPackage,luasocket))
 $(eval $(call BuildPackage,luasocket5.3))
+$(eval $(call BuildPackage,luasocket5.4))
