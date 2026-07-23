@@ -26,9 +26,36 @@ migrate_ignore_routing_tables() {
 	uci commit ipsec
 }
 
+migrate_local_nat_child() {
+	local cfg="$1"
+
+	local local_nat value
+
+	config_get local_nat "$cfg" local_nat ""
+	[ -z "$local_nat" ] && return
+
+	uci -q delete "ipsec.${cfg}.local_nat"
+
+	# Replace 'local_subnet' with 'local_nat' and do not append.
+	# That's how it was previously done in the swanctl start script.
+	uci -q delete "ipsec.${cfg}.local_subnet"
+
+	for value in $local_nat; do
+		uci add_list "ipsec.${cfg}.local_subnet=${value}"
+	done
+}
+
+migrate_local_nat() {
+	config_load ipsec
+	config_foreach migrate_local_nat_child tunnel
+	config_foreach migrate_local_nat_child transport
+	uci commit ipsec
+}
+
 main() {
 	migrate_ipsec
 	migrate_ignore_routing_tables
+	migrate_local_nat
 }
 
 main
