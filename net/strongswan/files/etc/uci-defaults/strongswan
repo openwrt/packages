@@ -1,5 +1,6 @@
 #!/bin/sh
 
+. /lib/functions.sh
 migrate_ipsec() {
 	# Skip migration if the 'globals' section already exists
 	uci show ipsec.globals 1>/dev/null 2>/dev/null
@@ -96,12 +97,34 @@ migrate_remote_gateway() {
 	config_foreach migrate_remote_gateway_remote remote
 }
 
+migrate_local_ip_local() {
+	local cfg="$1"
+
+	local local_ip value
+
+	config_get local_ip "$cfg" local_ip ""
+	[ -z "$local_ip" ] && return
+
+	for value in $local_ip; do
+		uci add_list "ipsec.${cfg}.local_addrs=${value}"
+	done
+
+	uci -q delete "ipsec.${cfg}.local_ip"
+	uci commit ipsec
+}
+
+migrate_local_ip() {
+	config_load ipsec
+	config_foreach migrate_local_ip_local remote
+}
+
 main() {
 	migrate_ipsec
 	migrate_ignore_routing_tables
 	migrate_local_nat
 	migrate_gateway
 	migrate_remote_gateway
+	migrate_local_ip
 }
 
 main
