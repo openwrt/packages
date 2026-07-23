@@ -226,7 +226,6 @@ config_child() {
 	local mode="$2"
 
 	local startaction
-	local local_nat
 	local updown
 	local firewall
 	local lifetime
@@ -247,7 +246,6 @@ config_child() {
 	local remote_subnet
 
 	config_get startaction "$conf" startaction "route"
-	config_get local_nat "$conf" local_nat ""
 	config_get updown "$conf" updown ""
 	config_get firewall "$conf" firewall ""
 	config_get lifetime "$conf" lifetime ""
@@ -332,8 +330,6 @@ config_child() {
 		hw_offload=""
 		;;
 	esac
-
-	[ -n "$local_nat" ] && local_subnet="$local_nat"
 
 	swanctl_xappend3 "$conf {"
 
