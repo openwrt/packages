@@ -110,11 +110,12 @@ start_stop_driver() {
 nut_driver_config() {
 	local ups="$1"
 	local try_match="$2"
-	local cfg_vendorid cfg_productid
+	local cfg_vendorid cfg_productid val
 
 	# Configuration might not have a vendorid. This is allowed, and in that case
 	# we keep going as we will restart this UPS with no match.
-	config_get cfg_vendorid "$ups" vendorid
+	config_get_single "$ups" vendorid
+	cfg_vendorid="$val"
 	if [ -n "$cfg_vendorid" ] && ! check_valid_hex_number "${cfg_vendorid/0x/}"; then
 		log_error "Configured vendorid for '$ups' is not valid" "libhid-ups" nut-usb-hotplug
 		nd_driver_config_error=true
@@ -136,7 +137,9 @@ nut_driver_config() {
 
 	# Configuration might not have a productid. This is allowed, and in that case
 	# we keep going as we will restart this UPS with no match.
-	config_get cfg_productid "$ups" productid
+	config_get_single "$ups" productid
+	cfg_productid="$val"
+
 	if [ -n "$cfg_productid" ] && ! check_valid_hex_number "${cfg_productid/0x/}"; then
 		log_error "Configured productid for '$ups' is not valid" "libhid-ups" nut-usb-hotplug
 		nd_driver_config_error=true
