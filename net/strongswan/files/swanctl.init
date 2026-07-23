@@ -374,7 +374,7 @@ config_child() {
 	[ -n "$dpdaction" ] && swanctl_xappend4 "dpd_action = $dpdaction"
 	[ -n "$replay_window" ] && swanctl_xappend4 "replay_window = $replay_window"
 
-        swanctl_xappend3 "}"
+	swanctl_xappend3 "}"
 }
 
 config_tunnel() {
@@ -513,9 +513,9 @@ config_remote() {
 
 	if [ -n "$local_key" ]; then
 		[ "$(dirname "$local_key")" != "." ] && \
-		   fatal "local_key $local_key can't be pathname"
+			fatal "local_key $local_key can't be pathname"
 		[ -f "/etc/swanctl/private/$local_key" ] || \
-		   fatal "local_key $local_key not found"
+			fatal "local_key $local_key not found"
 	fi
 
 	local ike_proposal
@@ -526,16 +526,16 @@ config_remote() {
 	if [ "$auth_method" = pubkey ]; then
 		if [ -n "$ca_cert" ]; then
 			[ "$(dirname "$ca_cert")" != "." ] && \
-			    fatal "ca_cert $ca_cert can't be pathname"
+				fatal "ca_cert $ca_cert can't be pathname"
 			[ -f "/etc/swanctl/x509ca/$ca_cert" ] || \
-			    fatal "ca_cert $ca_cert not found"
+				fatal "ca_cert $ca_cert not found"
 		fi
 
 		if [ -n "$local_cert" ]; then
 			[ "$(dirname "$local_cert")" != "." ] && \
-			    fatal "local_cert $local_cert can't be pathname"
+				fatal "local_cert $local_cert can't be pathname"
 			[ -f "/etc/swanctl/x509/$local_cert" ] || \
-			    fatal "local_cert $local_cert not found"
+				fatal "local_cert $local_cert not found"
 		fi
 	fi
 
@@ -559,7 +559,7 @@ config_remote() {
 
 	[ -n "$local_identifier" ] && swanctl_xappend3 "id = \"$local_identifier\""
 	[ "$local_auth_method" = pubkey ] && [ -n "$local_cert" ] && \
-	    swanctl_xappend3 "certs = $local_cert"
+		swanctl_xappend3 "certs = $local_cert"
 	swanctl_xappend2 "}"
 
 	swanctl_xappend2 "remote {"
