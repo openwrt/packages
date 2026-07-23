@@ -4,13 +4,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openthread-br
-PKG_SOURCE_DATE:=2025-06-12
-PKG_SOURCE_VERSION:=2f3c799c7463c8f674754e65c53f78bc0bbcbd58
+PKG_VERSION:=2026.06.0
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=https://github.com/openthread/ot-br-posix.git
-PKG_MIRROR_HASH:=fae1c7c88102f88bac32f8ee25e044b9a8781eef6b9acef39388e1e11a44a195
+PKG_MIRROR_HASH:=e1953edb06a3711dd8b4050338479af53c04a2ee53954699f52270721f783eb1
 
 PKG_MAINTAINER:=Stijn Tintel <stijn@linux-ipv6.be>
 PKG_LICENSE:=BSD-3-Clause
@@ -41,9 +41,7 @@ define Package/openthread-br
 	+libreadline \
 	+libstdcpp \
 	+libubox \
-	+libubus \
-	+mdnsd \
-	+mdnsresponder
+	+libubus
 endef
 
 define Package/openthread-br/description
@@ -63,15 +61,15 @@ CMAKE_OPTIONS += \
 	-DOT_TARGET_OPENWRT=ON \
 	-DOTBR_BACKBONE_ROUTER=ON \
 	-DOTBR_BORDER_ROUTING=ON \
-	-DOTBR_DNSSD_DISCOVERY_PROXY=ON \
 	-DOTBR_DUA_ROUTING=ON \
-	-DOTBR_MDNS=mDNSResponder \
+	-DOTBR_MDNS=openthread \
 	-DOTBR_NAT64=OFF \
 	-DOTBR_OPENWRT=ON \
+	-DOTBR_PRODUCT_NAME="BorderRouter" \
 	-DOTBR_REST=ON \
-	-DOTBR_SRP_ADVERTISING_PROXY=ON \
 	-DOTBR_SRP_SERVER_AUTO_ENABLE=ON \
-	-DOTBR_TREL=ON
+	-DOTBR_TREL=ON \
+	-DOTBR_VENDOR_NAME="OpenThread" \
 
 TARGET_CFLAGS += -DOPENTHREAD_POSIX_CONFIG_DAEMON_SOCKET_BASENAME=\\\"/var/run/openthread-%s\\\"
 
