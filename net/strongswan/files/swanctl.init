@@ -225,26 +225,26 @@ config_child() {
 	local conf="$1"
 	local mode="$2"
 
-	local hw_offload
-	local interface
-	local ipcomp
-	local priority
-	local local_subnet
+	local startaction
 	local local_nat
 	local updown
 	local firewall
-	local remote_subnet
 	local lifetime
 	local dpdaction
 	local closeaction
-	local startaction
 	local if_id
 	local rekeytime
+	local ipcomp
+	local interface
+	local hw_offload
+	local priority
 	local rekeybytes
 	local lifebytes
 	local rekeypackets
 	local lifepackets
 	local replay_window
+	local local_subnet
+	local remote_subnet
 
 	config_get startaction "$conf" startaction "route"
 	config_get local_nat "$conf" local_nat ""
