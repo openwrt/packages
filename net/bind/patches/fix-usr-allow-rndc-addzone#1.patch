@@ -13,7 +13,7 @@ restore the automatic zone to the view.
 
 --- a/bin/named/server.c
 +++ b/bin/named/server.c
-@@ -13919,6 +13919,7 @@ do_addzone(named_server_t *server, ns_cf
+@@ -13934,6 +13934,7 @@ do_addzone(named_server_t *server, ns_cf
  	   bool redirect, isc_buffer_t **text) {
  	isc_result_t result, tresult;
  	dns_zone_t *zone = NULL;
@@ -21,7 +21,7 @@ restore the automatic zone to the view.
  	bool locked = false;
  #ifndef HAVE_LMDB
  	FILE *fp = NULL;
-@@ -13937,7 +13938,13 @@ do_addzone(named_server_t *server, ns_cf
+@@ -13952,7 +13953,13 @@ do_addzone(named_server_t *server, ns_cf
  	} else {
  		result = dns_view_findzone(view, name, DNS_ZTFIND_EXACT, &zone);
  		if (result == ISC_R_SUCCESS) {
@@ -36,7 +36,7 @@ restore the automatic zone to the view.
  		}
  	}
  	if (result != ISC_R_NOTFOUND) {
-@@ -13946,6 +13953,10 @@ do_addzone(named_server_t *server, ns_cf
+@@ -13961,6 +13968,10 @@ do_addzone(named_server_t *server, ns_cf
  
  	isc_loopmgr_pause(named_g_loopmgr);
  
@@ -47,7 +47,7 @@ restore the automatic zone to the view.
  #ifndef HAVE_LMDB
  	/*
  	 * Make sure we can open the configuration save file
-@@ -14050,6 +14061,11 @@ do_addzone(named_server_t *server, ns_cf
+@@ -14065,6 +14076,11 @@ do_addzone(named_server_t *server, ns_cf
  		/* Remove the zone from the zone table */
  		dns_view_delzone(view, zone);
  		goto cleanup;
@@ -59,7 +59,7 @@ restore the automatic zone to the view.
  	}
  
  	/* Flag the zone as having been added at runtime */
-@@ -14066,6 +14082,22 @@ do_addzone(named_server_t *server, ns_cf
+@@ -14081,6 +14097,22 @@ do_addzone(named_server_t *server, ns_cf
  
  cleanup:
  
