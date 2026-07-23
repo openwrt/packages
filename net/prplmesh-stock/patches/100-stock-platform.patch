@@ -1,0 +1,521 @@
+From 77f2a8f29088e1c2af45b64a4158c57e45b1108a Mon Sep 17 00:00:00 2001
+From: Andrei Ovcharenko <a@krot.name>
+Date: Tue, 21 Jul 2026 22:33:14 +0300
+Subject: [PATCH 1/2] platform: support stock OpenWrt UCI and nl80211
+
+Add an opt-in platform mode that keeps stock OpenWrt in charge of UCI,
+ubus, the Linux bridge and hostapd. In this mode prplMesh uses the
+existing nl80211 and hostapd control interfaces instead of depending on
+prplOS WHM or Ambiorix.
+
+The UCI backend reads the runtime bridge and radio mappings, avoids NBAPI
+when it is disabled, and supplies the small portability fixes needed by
+the stock OpenWrt toolchain.
+
+Signed-off-by: Andrei Ovcharenko <a@krot.name>
+---
+ CMakeLists.txt                                |  1 +
+ agent/src/beerocks/slave/CMakeLists.txt       |  3 +-
+ .../beerocks/slave/beerocks_agent_main.cpp    | 14 +++
+ .../include/bcl/beerocks_ucc_server_factory.h |  1 +
+ common/beerocks/bwl/shared/nl80211_socket.h   |  2 +
+ controller/config/CMakeLists.txt              |  2 +-
+ .../beerocks/master/beerocks_master_main.cpp  | 31 ++++++
+ framework/platform/bpl/CMakeLists.txt         | 61 +++++++-----
+ .../bpl/cfg/linux/bpl_cfg_ifaces.cpp.in       |  1 +
+ framework/platform/bpl/cfg/uci/bpl.cpp        |  1 +
+ framework/platform/bpl/cfg/uci/bpl_cfg.cpp    | 96 ++++++++++++++++++-
+ .../platform/bpl/cfg/uci/bpl_cfg_helper.cpp   | 47 +++++++++
+ .../platform/bpl/cfg/uci/bpl_cfg_helper.h     | 10 ++
+ .../platform/bpl/cfg/uci/bpl_cfg_uci.cpp      | 18 ++++
+ 14 files changed, 261 insertions(+), 27 deletions(-)
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -66,6 +66,7 @@ option (ENABLE_NBAPI "Build the northbou
+ option (ENABLE_VBSS "Build with Virtual BSS support" ON)
+ 
+ option(USE_PRPLMESH_WHM "Use prplMesh Wireless Hardware Manager" ON)
++option(PRPLMESH_STOCK_OPENWRT_UCI "Build against stock OpenWrt UCI/ubus without Ambiorix or WHM" OFF)
+ 
+ ## Generic checks and defaults
+ 
+--- a/agent/src/beerocks/slave/CMakeLists.txt
++++ b/agent/src/beerocks/slave/CMakeLists.txt
+@@ -15,11 +15,12 @@ file(GLOB beerocks_agent_sources
+     ${MODULE_PATH}/tasks/*.c*
+     ${MODULE_PATH}/traffic_separation/*.c*
+     ${MODULE_PATH}/gate/*.c*
+-    ${MODULE_PATH}/nbapi/*.c*
+     ${MODULE_PATH}/*.c*
+ )
+ 
+ if (ENABLE_NBAPI)
++    file(GLOB beerocks_agent_nbapi_sources ${MODULE_PATH}/nbapi/*.c*)
++    list(APPEND beerocks_agent_sources ${beerocks_agent_nbapi_sources})
+     add_subdirectory("nbapi")
+ endif()
+ 
+--- a/agent/src/beerocks/slave/beerocks_agent_main.cpp
++++ b/agent/src/beerocks/slave/beerocks_agent_main.cpp
+@@ -632,6 +632,20 @@ int main(int argc, char *argv[])
+             return 1;
+         }
+     }
++
++    // Stock OpenWrt can move the wired EasyMesh backhaul between bridges at
++    // runtime (for example from the management LAN to a dedicated SSID
++    // network).  Keep every agent component on the UCI-selected bridge rather
++    // than the static value shipped in beerocks_agent.conf.
++    std::string configured_bridge_iface;
++    if (beerocks::bpl::bpl_cfg_get_backhaul_wire_iface(configured_bridge_iface) &&
++        !configured_bridge_iface.empty()) {
++        beerocks_slave_conf.bridge_iface = configured_bridge_iface;
++    } else {
++        LOG(WARNING) << "Unable to read backhaul_wire_iface; using bridge_iface='"
++                     << beerocks_slave_conf.bridge_iface << "' from agent configuration";
++    }
++
+     // beerocks system hang tester
+     if (beerocks_slave_conf.enable_system_hang_test == "1") {
+ 
+--- a/common/beerocks/bcl/include/bcl/beerocks_ucc_server_factory.h
++++ b/common/beerocks/bcl/include/bcl/beerocks_ucc_server_factory.h
+@@ -12,6 +12,7 @@
+ #include <bcl/beerocks_event_loop.h>
+ #include <bcl/beerocks_ucc_server.h>
+ 
++#include <cstdint>
+ #include <memory>
+ 
+ namespace beerocks {
+--- a/common/beerocks/bwl/shared/nl80211_socket.h
++++ b/common/beerocks/bwl/shared/nl80211_socket.h
+@@ -21,6 +21,8 @@ namespace bwl {
+ class nl80211_socket : public nl_genl_socket {
+ 
+ public:
++    using nl_genl_socket::send_receive_msg;
++
+     /**
+      * @brief Class destructor.
+      */
+--- a/controller/config/CMakeLists.txt
++++ b/controller/config/CMakeLists.txt
+@@ -1,5 +1,5 @@
+ set(BEEROCKS_CONTROLLER_DATAELEMENTS_VAP_CONFIGS 0)
+-if (NOT USE_PRPLMESH_WHM)
++if (NOT USE_PRPLMESH_WHM AND NOT PRPLMESH_STOCK_OPENWRT_UCI)
+         set(BEEROCKS_CONTROLLER_DATAELEMENTS_VAP_CONFIGS 1)
+ endif()
+ 
+--- a/controller/src/beerocks/master/beerocks_master_main.cpp
++++ b/controller/src/beerocks/master/beerocks_master_main.cpp
+@@ -672,6 +672,18 @@ int main(int argc, char *argv[])
+         }
+     }
+ 
++    // The wired EasyMesh tree can be moved between OpenWrt bridges at runtime.
++    // Keep the controller on the same UCI-selected bridge as the agent instead
++    // of retaining the static bridge_iface from beerocks_agent.conf.
++    std::string configured_bridge_iface;
++    if (beerocks::bpl::bpl_cfg_get_backhaul_wire_iface(configured_bridge_iface) &&
++        !configured_bridge_iface.empty()) {
++        beerocks_slave_conf.bridge_iface = configured_bridge_iface;
++    } else {
++        LOG(WARNING) << "Unable to read backhaul_wire_iface; using bridge_iface='"
++                     << beerocks_slave_conf.bridge_iface << "' from agent configuration";
++    }
++
+     std::string base_master_name = std::string(BEEROCKS_CONTROLLER);
+ 
+     //kill running master
+@@ -820,6 +832,25 @@ int main(int argc, char *argv[])
+         beerocks::btl::create_broker_client_factory(broker_uds_path, event_loop);
+     LOG_IF(!broker_client_factory, FATAL) << "Unable to create broker client factory!";
+ 
++    // The controller can run without a local agent. Configure the transport directly so that
++    // IEEE1905.1 frames received on the bridge are not dropped while no agent is present (or while
++    // the local agent is still starting). Keep this client alive for the lifetime of the controller.
++    auto transport_config_client = broker_client_factory->create_instance();
++    if (!transport_config_client) {
++        LOG(ERROR) << "Unable to create broker client for transport configuration!";
++        return 1;
++    }
++
++    if (!transport_config_client->configure_al_mac(tlvf::mac_from_string(bridge_info.mac))) {
++        LOG(ERROR) << "Unable to configure transport AL MAC " << bridge_info.mac;
++        return 1;
++    }
++
++    if (!transport_config_client->configure_interfaces(bridge_iface, {}, true, true)) {
++        LOG(ERROR) << "Unable to configure transport bridge " << bridge_iface;
++        return 1;
++    }
++
+     son::Controller controller(master_db, std::move(broker_client_factory), std::move(ucc_server),
+                                std::move(cmdu_server), timer_manager, event_loop);
+ 
+--- a/framework/platform/bpl/CMakeLists.txt
++++ b/framework/platform/bpl/CMakeLists.txt
+@@ -87,19 +87,32 @@ if (TARGET_PLATFORM STREQUAL "openwrt")
+         add_definitions(-DHAVE_C99)
+         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
+ 
+-    # Other OpenWRT based platforms (e.g. Turris-Omnia or GL.iNet-B1300)
++    # Stock OpenWrt with native UCI/ubus and no Ambiorix/WHM dependencies.
+     else()
+ 
+-        file(GLOB_RECURSE bpl_platform_sources
+-          ${MODULE_PATH}/arp/linux/*.c*
+-          ${MODULE_PATH}/dhcp/luci_rpc/*.c*
+-          ${MODULE_PATH}/db/uci/*.c*
+-          ${MODULE_PATH}/cfg/dm/*.c*
+-          ${MODULE_PATH}/cfg/vendor/*.c*
+-          ${MODULE_PATH}/common/uci/*.c*
+-          ${MODULE_PATH}/board/system_ubus/*.c*
+-          ${MODULE_PATH}/service_prioritization/tc/service_prio_utils_tc.cpp
+-        )
++        if (PRPLMESH_STOCK_OPENWRT_UCI)
++            file(GLOB_RECURSE bpl_platform_sources
++              ${MODULE_PATH}/arp/linux/*.c*
++              ${MODULE_PATH}/cfg/uci/*.c*
++              ${MODULE_PATH}/cfg/vendor/*.c*
++              ${MODULE_PATH}/common/uci/*.c*
++              ${MODULE_PATH}/db/uci/*.c*
++              ${MODULE_PATH}/dhcp/uci/*.c*
++              ${MODULE_PATH}/board/system_ubus/*.c*
++              ${MODULE_PATH}/service_prioritization/tc/service_prio_utils_tc.cpp
++            )
++        else()
++            file(GLOB_RECURSE bpl_platform_sources
++              ${MODULE_PATH}/arp/linux/*.c*
++              ${MODULE_PATH}/dhcp/luci_rpc/*.c*
++              ${MODULE_PATH}/db/uci/*.c*
++              ${MODULE_PATH}/cfg/dm/*.c*
++              ${MODULE_PATH}/cfg/vendor/*.c*
++              ${MODULE_PATH}/common/uci/*.c*
++              ${MODULE_PATH}/board/system_ubus/*.c*
++              ${MODULE_PATH}/service_prioritization/tc/service_prio_utils_tc.cpp
++            )
++        endif()
+ 
+         find_package(ubus REQUIRED)
+ 
+@@ -159,11 +172,13 @@ else()
+ 
+ endif()
+ 
+-find_package(amxb REQUIRED)
+-find_package(amxc REQUIRED)
+-find_package(amxd REQUIRED)
+-find_package(amxp REQUIRED)
+-list(APPEND BPL_LIBS amxb amxc amxd amxp)
++if (NOT PRPLMESH_STOCK_OPENWRT_UCI)
++    find_package(amxb REQUIRED)
++    find_package(amxc REQUIRED)
++    find_package(amxd REQUIRED)
++    find_package(amxp REQUIRED)
++    list(APPEND BPL_LIBS amxb amxc amxd amxp)
++endif()
+ 
+ # BPL pwhm DM via wbapi
+ if (USE_PRPLMESH_WHM)
+@@ -185,7 +200,7 @@ if (USE_PRPLMESH_WHM)
+     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WBAPI_SOCK}")
+ 
+     list(APPEND BPL_LIBS wbapi)
+-else ()
++elseif (NOT PRPLMESH_STOCK_OPENWRT_UCI)
+     file(GLOB_RECURSE bpl_platform_sources
+         ${MODULE_PATH}/*/linux/*.c*
+ 	    ${MODULE_PATH}/service_prioritization/dummy/service_prio_utils_dummy.c*
+@@ -194,11 +209,13 @@ else ()
+ endif()
+ 
+ # BPL configuration via nbapi
+-list(FIND bpl_platform_sources ${MODULE_PATH}/cfg/dm/bpl_amx.cpp _index)
+-message("bpl_platform_sources: ${bpl_platform_sources}")
+-if (_index EQUAL -1)
+-    message("APPEND bpl_platform_sources with ${MODULE_PATH}/cfg/dm/bpl_amx.cpp")
+-    list(APPEND bpl_platform_sources ${MODULE_PATH}/cfg/dm/bpl_amx.cpp)
++if (NOT PRPLMESH_STOCK_OPENWRT_UCI)
++    list(FIND bpl_platform_sources ${MODULE_PATH}/cfg/dm/bpl_amx.cpp _index)
++    message("bpl_platform_sources: ${bpl_platform_sources}")
++    if (_index EQUAL -1)
++        message("APPEND bpl_platform_sources with ${MODULE_PATH}/cfg/dm/bpl_amx.cpp")
++        list(APPEND bpl_platform_sources ${MODULE_PATH}/cfg/dm/bpl_amx.cpp)
++    endif()
+ endif()
+ list(APPEND BPL_LIBS nbapi)
+ 
+--- a/framework/platform/bpl/cfg/linux/bpl_cfg_ifaces.cpp.in
++++ b/framework/platform/bpl/cfg/linux/bpl_cfg_ifaces.cpp.in
+@@ -6,6 +6,7 @@
+  * See LICENSE file for more details.
+  */
+ 
++ #include <cstdint>
+  #include <string>
+ 
+ namespace beerocks {
+--- a/framework/platform/bpl/cfg/uci/bpl.cpp
++++ b/framework/platform/bpl/cfg/uci/bpl.cpp
+@@ -7,6 +7,7 @@
+  */
+ 
+ #include <bpl/bpl.h>
++#include <bpl/bpl_amx.h>
+ 
+ #include <mapf/common/logger.h>
+ 
+--- a/framework/platform/bpl/cfg/uci/bpl_cfg.cpp
++++ b/framework/platform/bpl/cfg/uci/bpl_cfg.cpp
+@@ -16,14 +16,41 @@
+ #include "bpl_cfg_uci.h"
+ 
+ #include <bcl/beerocks_string_utils.h>
++#include <bcl/beerocks_version.h>
+ #include <mapf/common/logger.h>
+ #include <mapf/common/utils.h>
+ 
++#include <fstream>
++
+ using namespace mapf;
+ 
+ namespace beerocks {
+ namespace bpl {
+ 
++static bool read_device_info_file(const char *path, std::string &value)
++{
++    std::ifstream input(path, std::ios::binary);
++    if (!input.good()) {
++        return false;
++    }
++
++    std::getline(input, value, '\0');
++    auto line_end = value.find_first_of("\r\n");
++    if (line_end != std::string::npos) {
++        value.erase(line_end);
++    }
++    while (!value.empty() && (value.back() == ' ' || value.back() == '\t')) {
++        value.pop_back();
++    }
++    auto first = value.find_first_not_of(" \t");
++    if (first == std::string::npos) {
++        value.clear();
++        return false;
++    }
++    value.erase(0, first);
++    return true;
++}
++
+ int cfg_get_hostap_iface_steer_vaps(int32_t radio_num,
+                                     char hostap_iface_steer_vaps[BPL_LOAD_STEER_ON_VAPS_LEN])
+ {
+@@ -152,8 +179,8 @@ int cfg_get_dcs_channel_pool(const BPL_W
+         return RETURN_ERR;
+     }
+ 
+-    if (radio_num < 0) {
+-        MAPF_ERR("invalid input: radio_num < 0");
++    if (iface.radio_num < 0) {
++        MAPF_ERR("invalid input: iface.radio_num < 0");
+         return RETURN_ERR;
+     }
+ 
+@@ -1102,8 +1129,12 @@ bool cfg_get_clients_unicast_measurement
+ 
+ bool cfg_get_private_bridge_iface(std::string &bridge_iface)
+ {
++    if (bpl_cfg_get_backhaul_wire_iface(bridge_iface) && !bridge_iface.empty()) {
++        return true;
++    }
++
+     bridge_iface = DEFAULT_PRIVATE_BRIDGE_IFACE;
+-    return true;
++    return false;
+ }
+ 
+ bool cfg_get_guest_bridge_iface(std::string &bridge_iface)
+@@ -1132,5 +1163,64 @@ bool cfg_get_traffic_separation_guest_vi
+ 
+ bool cfg_commit_changes() { return uci_commit_changes("prplmesh"); }
+ 
++bool get_serial_number(std::string &serial_number)
++{
++    if (!read_device_info_file("/sys/firmware/devicetree/base/serial-number", serial_number) &&
++        !read_device_info_file("/proc/device-tree/serial-number", serial_number) &&
++        !read_device_info_file("/tmp/sysinfo/board_name", serial_number)) {
++        serial_number = "openwrt-prplmesh";
++    }
++    return true;
++}
++
++bool get_software_version(std::string &software_version)
++{
++    software_version = beerocks::version::get_module_version();
++    return true;
++}
++
++bool get_manufacturer(std::string &manufacturer)
++{
++    if (!read_device_info_file("/tmp/sysinfo/board_name", manufacturer)) {
++        manufacturer = "OpenWrt";
++        return true;
++    }
++
++    auto separator = manufacturer.find(',');
++    if (separator != std::string::npos) {
++        manufacturer.erase(separator);
++    }
++    return true;
++}
++
++bool get_model_name(std::string &model_name)
++{
++    if (!read_device_info_file("/tmp/sysinfo/model", model_name)) {
++        model_name = "OpenWrt";
++    }
++    return true;
++}
++
++bool get_model_number(std::string &model_number)
++{
++    if (!read_device_info_file("/tmp/sysinfo/board_name", model_number)) {
++        return get_model_name(model_number);
++    }
++    return true;
++}
++
++bool get_ruid_chipset_vendor(const sMacAddr &ruid, std::string &chipset_vendor)
++{
++    (void)ruid;
++    chipset_vendor = "generic-nl80211";
++    return true;
++}
++
++bool get_max_prioritization_rules(uint32_t &max_prioritization_rules)
++{
++    max_prioritization_rules = 1;
++    return true;
++}
++
+ } // namespace bpl
+ } // namespace beerocks
+--- a/framework/platform/bpl/cfg/uci/bpl_cfg_helper.cpp
++++ b/framework/platform/bpl/cfg/uci/bpl_cfg_helper.cpp
+@@ -11,6 +11,7 @@
+ 
+ #include "bpl_cfg_helper.h"
+ #include "bpl_cfg_uci.h"
++#include "bpl_cfg_wifi_utils.h"
+ 
+ #include <mapf/common/logger.h>
+ #include <mapf/common/utils.h>
+@@ -38,6 +39,52 @@ int cfg_get_prplmesh_hostapd_ifaces(std:
+                                                    (char *)"hostap_iface", hostapd_ifaces);
+ }
+ 
++bool cfg_get_prplmesh_wireless_section(const std::string &iface, std::string &section_name)
++{
++    section_name.clear();
++
++    // Keep compatibility with systems that still explicitly configure ifname.
++    if (uci_find_section_by_option("wireless", "wifi-iface", "ifname", iface, section_name) &&
++        !section_name.empty()) {
++        return true;
++    }
++
++    std::string prplmesh_radio;
++    if (!uci_find_section_by_option("prplmesh", "wifi-device", "hostap_iface", iface,
++                                    prplmesh_radio) ||
++        prplmesh_radio.empty()) {
++        return false;
++    }
++
++    if (uci_get_option("prplmesh", "wifi-device", prplmesh_radio, "wireless_section",
++                       section_name) &&
++        uci_section_exists("wireless", "wifi-iface", section_name)) {
++        return true;
++    }
++
++    std::string wireless_device;
++    if (!uci_get_option("prplmesh", "wifi-device", prplmesh_radio, "wireless_device",
++                        wireless_device)) {
++        wireless_device = prplmesh_radio;
++    }
++
++    std::vector<std::string> sections;
++    if (!uci_get_all_sections("wireless", "wifi-iface", sections)) {
++        return false;
++    }
++    std::vector<std::string> matching_sections;
++    for (const auto &candidate : sections) {
++        std::string device;
++        std::string mode;
++        if (uci_get_option("wireless", "wifi-iface", candidate, "device", device) &&
++            device == wireless_device &&
++            uci_get_option("wireless", "wifi-iface", candidate, "mode", mode) && mode == "ap") {
++            matching_sections.push_back(candidate);
++        }
++    }
++    return wifi_cfg_utils::select_unique_wireless_section(matching_sections, section_name);
++}
++
+ int cfg_get_prplmesh_radio_param(int radio_id, const std::string &radio_param, char *buf,
+                                  size_t buf_len)
+ {
+--- a/framework/platform/bpl/cfg/uci/bpl_cfg_helper.h
++++ b/framework/platform/bpl/cfg/uci/bpl_cfg_helper.h
+@@ -26,6 +26,16 @@ namespace bpl {
+ int cfg_get_prplmesh_hostapd_ifaces(std::unordered_map<std::string, std::string> &hostapd_ifaces);
+ 
+ /**
++ * Resolve a runtime hostapd interface to its stock OpenWrt wifi-iface section.
++ *
++ * Modern OpenWrt normally omits the legacy wireless.*.ifname option. In that
++ * case the prplmesh wifi-device section may provide wireless_section (for
++ * example default_radio0). As a compatibility fallback, wireless_device or
++ * the prplmesh section name is matched against wireless.*.device.
++ */
++bool cfg_get_prplmesh_wireless_section(const std::string &iface, std::string &section_name);
++
++/**
+  * Returns the value of requested param from DB
+  *
+  * @param [in] param prplmesh param key string
+--- a/framework/platform/bpl/cfg/uci/bpl_cfg_uci.cpp
++++ b/framework/platform/bpl/cfg/uci/bpl_cfg_uci.cpp
+@@ -7,6 +7,7 @@
+  */
+ 
+ #include "bpl_cfg_uci.h"
++#include "bpl_cfg_helper.h"
+ #include "../../common/utils/utils.h"
+ #include <easylogging++.h>
+ #include <mapf/common/utils.h>
+@@ -130,6 +131,23 @@ int cfg_uci_get_wireless_from_ifname(enu
+         }
+     }
+ 
++    // Modern stock OpenWrt omits wireless.*.ifname. Resolve the runtime
++    // hostapd interface through the explicit prplmesh mapping first.
++    if (!is_section_found) {
++        std::string mapped_section;
++        if (cfg_get_prplmesh_wireless_section(interface_name, mapped_section)) {
++            uci_foreach_element(&p->sections, e)
++            {
++                s = uci_to_section(e);
++                if (!strncmp(s->type, "wifi-iface", MAX_UCI_BUF_LEN) &&
++                    mapped_section == s->e.name) {
++                    is_section_found = true;
++                    break;
++                }
++            }
++        }
++    }
++
+     // If interface not found in etc/config/wireless 'config wifi-iface'.
+     // Try to get ifname using option path from 'config wifi-device'.
+     // This doesn't work for RDK-B, since there is no etc/config/wireless file.

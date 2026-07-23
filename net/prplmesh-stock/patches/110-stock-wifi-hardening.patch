@@ -1,0 +1,576 @@
+From 48d470f40023017189eea43f256728d6053a26f2 Mon Sep 17 00:00:00 2001
+From: Andrei Ovcharenko <a@krot.name>
+Date: Tue, 21 Jul 2026 22:33:15 +0300
+Subject: [PATCH 2/2] platform: harden stock OpenWrt Wi-Fi profiles
+
+Let the stock UCI backend use explicit multi-band BSS profiles, merge
+identical profiles, and reject incomplete or invalid input. Keep the
+legacy wireless-section path available when explicit profiles are not
+requested.
+
+Also avoid building platform tests in non-test builds and make the
+association-frame bitfields portable across the OpenWrt toolchain.
+
+Signed-off-by: Andrei Ovcharenko <a@krot.name>
+---
+ .../platform/bpl/cfg/uci/bpl_cfg_wifi.cpp     | 197 +++++++++++-------
+ .../platform/bpl/cfg/uci/bpl_cfg_wifi_utils.h | 144 +++++++++++++
+ framework/platform/bpl/test/CMakeLists.txt    |   8 +
+ .../bpl/test/bpl_cfg_wifi_utils_test.cpp      |  69 ++++++
+ .../assoc_frame_bitfields.h                   |   1 +
+ 5 files changed, 338 insertions(+), 81 deletions(-)
+ create mode 100644 framework/platform/bpl/cfg/uci/bpl_cfg_wifi_utils.h
+ create mode 100644 framework/platform/bpl/test/bpl_cfg_wifi_utils_test.cpp
+
+--- a/framework/platform/bpl/cfg/uci/bpl_cfg_wifi.cpp
++++ b/framework/platform/bpl/cfg/uci/bpl_cfg_wifi.cpp
+@@ -14,16 +14,94 @@
+ 
+ #include "bpl_cfg_helper.h"
+ #include "bpl_cfg_uci.h"
++#include "bpl_cfg_wifi_utils.h"
+ 
+ #include <bcl/beerocks_string_utils.h>
+ #include <mapf/common/logger.h>
+ #include <mapf/common/utils.h>
+ 
++#include <sstream>
++#include <utility>
++
+ using namespace mapf;
+ 
+ namespace beerocks {
+ namespace bpl {
+ 
++static bool same_bss_profile(const son::wireless_utils::sBssInfoConf &lhs,
++                             const son::wireless_utils::sBssInfoConf &rhs)
++{
++    return lhs.ssid == rhs.ssid && lhs.authentication_type == rhs.authentication_type &&
++           lhs.encryption_type == rhs.encryption_type && lhs.network_key == rhs.network_key &&
++           lhs.fronthaul == rhs.fronthaul && lhs.backhaul == rhs.backhaul;
++}
++
++static void add_or_merge_bss_profile(
++    std::list<son::wireless_utils::sBssInfoConf> &wireless_settings,
++    son::wireless_utils::sBssInfoConf configuration)
++{
++    for (auto &existing : wireless_settings) {
++        if (!same_bss_profile(existing, configuration)) {
++            continue;
++        }
++        existing.operating_class.splice(existing.operating_class.end(),
++                                        configuration.operating_class);
++        existing.operating_class.sort();
++        existing.operating_class.unique();
++        return;
++    }
++    wireless_settings.push_back(std::move(configuration));
++}
++
++static bool bpl_cfg_get_explicit_bss_profiles(
++    std::list<son::wireless_utils::sBssInfoConf> &wireless_settings)
++{
++    std::vector<std::string> sections;
++    if (!uci_get_all_sections("prplmesh", "bss_profile", sections)) {
++        LOG(ERROR) << "No explicit prplmesh bss_profile sections found";
++        return false;
++    }
++
++    for (const auto &section_name : sections) {
++        OptionsUnorderedMap options;
++        if (!uci_get_section("prplmesh", "bss_profile", section_name, options)) {
++            LOG(ERROR) << "Failed to read explicit BSS profile " << section_name;
++            return false;
++        }
++
++        son::wireless_utils::sBssInfoConf configuration{};
++        configuration.ssid                = options["ssid"];
++        configuration.network_key         = options["key"];
++        configuration.authentication_type =
++            wifi_cfg_utils::authentication_from_uci(options["encryption"]);
++        configuration.encryption_type =
++            wifi_cfg_utils::encryption_from_uci(options["encryption"]);
++        configuration.fronthaul = wifi_cfg_utils::parse_bool(options["fronthaul"], true);
++        configuration.backhaul  = wifi_cfg_utils::parse_bool(options["backhaul"], false);
++
++        std::istringstream bands(options["bands"]);
++        std::string band;
++        while (bands >> band) {
++            if (!wifi_cfg_utils::append_operating_classes(band,
++                                                           configuration.operating_class)) {
++                LOG(ERROR) << "Invalid band '" << band << "' in BSS profile " << section_name;
++                return false;
++            }
++        }
++
++        if (configuration.ssid.empty() || configuration.operating_class.empty() ||
++            configuration.authentication_type == WSC::eWscAuth::WSC_AUTH_INVALID ||
++            configuration.encryption_type == WSC::eWscEncr::WSC_ENCR_INVALID) {
++            LOG(ERROR) << "Incomplete or invalid explicit BSS profile " << section_name;
++            return false;
++        }
++
++        add_or_merge_bss_profile(wireless_settings, std::move(configuration));
++    }
++
++    return !wireless_settings.empty();
++}
++
+ static bool bpl_cfg_get_bss_configuration(const std::string &section_name,
+                                           son::wireless_utils::sBssInfoConf &configuration)
+ {
+@@ -36,38 +114,9 @@ static bool bpl_cfg_get_bss_configuratio
+     // Fill in wireless credentials from option values read from UCI configuration.
+     configuration.ssid = options["ssid"];
+ 
+-    auto starts_with = [](const std::string &prefix, const std::string &value) {
+-        return (value.compare(0, prefix.size(), prefix) == 0);
+-    };
+-
+-    auto contains = [](const std::string &substring, const std::string &value) {
+-        return (value.find(substring) != std::string::npos);
+-    };
+-
+-    auto get_authentication_type = [&](const std::string &encryption) {
+-        if ("none" == encryption || encryption.empty()) {
+-            return WSC::eWscAuth::WSC_AUTH_OPEN;
+-        } else if (starts_with("psk2", encryption)) {
+-            return WSC::eWscAuth::WSC_AUTH_WPA2PSK;
+-        } else if ("sae" == encryption) {
+-            return WSC::eWscAuth::WSC_AUTH_SAE;
+-        }
+-        return WSC::eWscAuth::WSC_AUTH_INVALID;
+-    };
+-    configuration.authentication_type = get_authentication_type(options["encryption"]);
+-
+-    auto get_encryption_type = [&](const std::string &encryption) {
+-        if ("none" == encryption || encryption.empty()) {
+-            return WSC::eWscEncr::WSC_ENCR_NONE;
+-        } else if (contains("+tkip", encryption)) {
+-            return WSC::eWscEncr::WSC_ENCR_TKIP;
+-        } else if (("psk2" == encryption) || ("sae" == encryption) ||
+-                   contains("+aes", encryption) || contains("+ccmp", encryption)) {
+-            return WSC::eWscEncr::WSC_ENCR_AES;
+-        }
+-        return WSC::eWscEncr::WSC_ENCR_INVALID;
+-    };
+-    configuration.encryption_type = get_encryption_type(options["encryption"]);
++    configuration.authentication_type =
++        wifi_cfg_utils::authentication_from_uci(options["encryption"]);
++    configuration.encryption_type = wifi_cfg_utils::encryption_from_uci(options["encryption"]);
+ 
+     configuration.network_key = options["key"];
+ 
+@@ -128,8 +177,8 @@ int cfg_get_wifi_params(const std::strin
+     cfg_uci_get_wireless_bool(TYPE_RADIO, iface.c_str(), "disabled", &disabled);
+     wlan_params->enabled = !disabled;
+ 
+-    if (cfg_uci_get_wireless_bool(TYPE_RADIO, iface, "sub_band_dfs", &wlan_params->sub_band_dfs) ==
+-        RETURN_ERR) {
++    if (cfg_uci_get_wireless_bool(TYPE_RADIO, iface.c_str(), "sub_band_dfs",
++                                  &wlan_params->sub_band_dfs) == RETURN_ERR) {
+         // Failed to find "sub_band_dfs", set to to default value.
+         wlan_params->sub_band_dfs = false;
+     }
+@@ -143,7 +192,7 @@ int cfg_get_wifi_params(const std::strin
+ 
+     // country code
+     char alpha_2[MAX_UCI_BUF_LEN] = {0};
+-    cfg_uci_get_wireless_from_ifname(TYPE_RADIO, iface, "country", alpha_2);
++    cfg_uci_get_wireless_from_ifname(TYPE_RADIO, iface.c_str(), "country", alpha_2);
+ 
+     wlan_params->country_code[0] = alpha_2[0];
+     wlan_params->country_code[1] = alpha_2[1];
+@@ -153,6 +202,15 @@ int cfg_get_wifi_params(const std::strin
+ 
+ bool bpl_cfg_get_wireless_settings(std::list<son::wireless_utils::sBssInfoConf> &wireless_settings)
+ {
++    int use_explicit_profiles = 0;
++    if (cfg_get_prplmesh_param_int_default("use_explicit_bss_profiles", &use_explicit_profiles,
++                                           0) != RETURN_OK) {
++        return false;
++    }
++    if (use_explicit_profiles != 0) {
++        return bpl_cfg_get_explicit_bss_profiles(wireless_settings);
++    }
++
+     // Get all "wireless.wifi-iface" section names in UCI configuration
+     const std::string package_name = "wireless";
+     const std::string section_type = "wifi-iface";
+@@ -227,7 +285,7 @@ bool bpl_cfg_get_wireless_settings(std::
+             continue;
+         }
+ 
+-        son::wireless_utils::sBssInfoConf configuration;
++        son::wireless_utils::sBssInfoConf configuration{};
+         if (!bpl_cfg_get_bss_configuration(section_name, configuration)) {
+             LOG(DEBUG) << "Failed to get SSID and WiFi credentials from section " << section_name;
+             continue;
+@@ -251,13 +309,11 @@ bool bpl_cfg_get_wireless_settings(std::
+             continue;
+         }
+ 
+-        // Option "hwmode" in device section selects the wireless protocol to use, possible values
+-        // are 11b, 11g, and 11a.
++        // Modern OpenWrt uses option "band". Fall back to legacy "hwmode".
++        std::string band;
++        uci_get_option(package_name, "wifi-device", device, "band", band);
+         std::string hwmode;
+-        if (!uci_get_option(package_name, "wifi-device", device, "hwmode", hwmode)) {
+-            LOG(DEBUG) << "Failed to get 'hwmode' from section " << device;
+-            continue;
+-        }
++        uci_get_option(package_name, "wifi-device", device, "hwmode", hwmode);
+ 
+         // The mode used by upstream hostapd (11b, 11g, 11n, 11ac, 11ax) is governed by several parameters in
+         // the configuration file. However, as explained in the comment below from hostapd.conf, the
+@@ -274,17 +330,11 @@ bool bpl_cfg_get_wireless_settings(std::
+         //
+         // For MaxLinear's devices, by default '11bgnax' is used for 2.4Ghz bands, and '11anacax' is
+         // used for 5Ghz bands (see 'files/scripts/lib/netifd/wireless/mac80211.sh' in the swpal package).
+-        if (hwmode.empty() || (hwmode == "11b") || (hwmode == "11g") || hwmode == "11bgnax") {
+-            configuration.operating_class.splice(
+-                configuration.operating_class.end(),
+-                son::wireless_utils::string_to_wsc_oper_class("24g"));
+-        } else if (hwmode == "11a" || hwmode == "11anacax") {
+-            configuration.operating_class.splice(
+-                configuration.operating_class.end(),
+-                son::wireless_utils::string_to_wsc_oper_class("5g"));
+-        } else {
++        const auto band_or_hwmode = band.empty() ? hwmode : band;
++        if (!wifi_cfg_utils::append_operating_classes(band_or_hwmode,
++                                                       configuration.operating_class)) {
+             LOG(DEBUG) << "Failed to get frequency band for SSID " << configuration.ssid
+-                       << " from hwmode " << hwmode;
++                       << " from band/hwmode " << band_or_hwmode;
+             continue;
+         }
+ 
+@@ -326,10 +376,10 @@ bool bpl_cfg_get_wireless_settings(std::
+             }
+         }
+ 
+-        wireless_settings.push_back(configuration);
+-
+         LOG(DEBUG) << "Configuration added for SSID " << configuration.ssid
+-                   << " (hwmode = " << hwmode << ")";
++                   << " (band/hwmode = " << band_or_hwmode << ")";
++
++        add_or_merge_bss_profile(wireless_settings, std::move(configuration));
+     }
+ 
+     return true;
+@@ -340,7 +390,7 @@ bool bpl_cfg_get_wifi_credentials(const
+ {
+     // Find the "wireless.wifi-iface" section in UCI configuration for the given interface
+     std::string section_name;
+-    if (!uci_find_section_by_option("wireless", "wifi-iface", "ifname", iface, section_name)) {
++    if (!cfg_get_prplmesh_wireless_section(iface, section_name)) {
+         LOG(ERROR) << "Failed to find configuration section for interface " << iface;
+         return false;
+     }
+@@ -366,9 +416,8 @@ bool bpl_cfg_set_wifi_credentials(const
+     // Find the "wireless.wifi-iface" section in UCI configuration for the given interface
+     const std::string package_name = "wireless";
+     const std::string section_type = "wifi-iface";
+-    const std::string option_name  = "ifname";
+     std::string section_name;
+-    if (!uci_find_section_by_option(package_name, section_type, option_name, iface, section_name)) {
++    if (!cfg_get_prplmesh_wireless_section(iface, section_name)) {
+         LOG(ERROR) << "Failed to find configuration section for interface " << iface;
+         return false;
+     }
+@@ -382,22 +431,8 @@ bool bpl_cfg_set_wifi_credentials(const
+     OptionsUnorderedMap options;
+     options["ssid"] = configuration.ssid;
+ 
+-    auto get_encryption = [](WSC::eWscAuth authentication_type, WSC::eWscEncr encryption_type) {
+-        std::string encryption = "none";
+-        if (authentication_type == WSC::eWscAuth::WSC_AUTH_WPA2PSK) {
+-            encryption = "psk2";
+-            if (encryption_type == WSC::eWscEncr::WSC_ENCR_TKIP) {
+-                encryption += "+tkip";
+-            } else if (encryption_type == WSC::eWscEncr::WSC_ENCR_AES) {
+-                encryption += "+aes";
+-            }
+-        } else if (authentication_type == WSC::eWscAuth::WSC_AUTH_SAE) {
+-            encryption = "sae";
+-        }
+-        return encryption;
+-    };
+-    options["encryption"] =
+-        get_encryption(configuration.authentication_type, configuration.encryption_type);
++    options["encryption"] = wifi_cfg_utils::encryption_to_uci(
++        configuration.authentication_type, configuration.encryption_type);
+ 
+     options["key"] = configuration.network_key;
+ 
+@@ -476,18 +511,18 @@ void cfg_wifi_reset_wps_credentials() {
+ 
+ int cfg_get_hostap_iface(int32_t radio_num, std::string &hostap_iface)
+ {
+-    if (!hostap_iface) {
+-        MAPF_ERR("cfg_get_hostap_iface: invalid input: hostap_iface is NULL");
+-        return RETURN_ERR;
+-    }
+-
+     if (radio_num < 0) {
+         MAPF_ERR("cfg_get_hostap_iface: invalid input: radio_num < 0");
+         return RETURN_ERR;
+     }
+ 
+-    char iface_c_str[IFNAMSIZ];
+-    auto result  = cfg_get_prplmesh_radio_param(radio_num, "hostap_iface", c_iface, IFNAMSIZ);
++    char iface_c_str[IFNAMSIZ] = {0};
++    auto result =
++        cfg_get_prplmesh_radio_param(radio_num, "hostap_iface", iface_c_str, IFNAMSIZ);
++    if (result != RETURN_OK) {
++        hostap_iface.clear();
++        return result;
++    }
+     hostap_iface = std::string(iface_c_str);
+     return result;
+ }
+--- /dev/null
++++ b/framework/platform/bpl/cfg/uci/bpl_cfg_wifi_utils.h
+@@ -0,0 +1,144 @@
++/* SPDX-License-Identifier: BSD-2-Clause-Patent */
++
++#ifndef _BPL_CFG_WIFI_UTILS_H_
++#define _BPL_CFG_WIFI_UTILS_H_
++
++#include <algorithm>
++#include <cctype>
++#include <chrono>
++#include <list>
++#include <string>
++#include <unordered_set>
++#include <vector>
++
++#include <bcl/son/son_wireless_utils.h>
++
++namespace beerocks {
++namespace bpl {
++namespace wifi_cfg_utils {
++
++inline bool starts_with(const std::string &value, const std::string &prefix)
++{
++    return value.compare(0, prefix.size(), prefix) == 0;
++}
++
++inline bool contains(const std::string &value, const std::string &substring)
++{
++    return value.find(substring) != std::string::npos;
++}
++
++inline WSC::eWscAuth authentication_from_uci(const std::string &encryption)
++{
++    if (encryption.empty() || encryption == "none") {
++        return WSC::eWscAuth::WSC_AUTH_OPEN;
++    }
++    if (starts_with(encryption, "sae-mixed") || starts_with(encryption, "psk2+sae")) {
++        return WSC::eWscAuth(WSC::eWscAuth::WSC_AUTH_WPA2PSK |
++                             WSC::eWscAuth::WSC_AUTH_SAE);
++    }
++    if (starts_with(encryption, "psk2")) {
++        return WSC::eWscAuth::WSC_AUTH_WPA2PSK;
++    }
++    if (starts_with(encryption, "sae")) {
++        return WSC::eWscAuth::WSC_AUTH_SAE;
++    }
++    return WSC::eWscAuth::WSC_AUTH_INVALID;
++}
++
++inline WSC::eWscEncr encryption_from_uci(const std::string &encryption)
++{
++    if (encryption.empty() || encryption == "none") {
++        return WSC::eWscEncr::WSC_ENCR_NONE;
++    }
++    if (contains(encryption, "+tkip")) {
++        return WSC::eWscEncr::WSC_ENCR_TKIP;
++    }
++    if (starts_with(encryption, "psk2") || starts_with(encryption, "sae") ||
++        contains(encryption, "+aes") || contains(encryption, "+ccmp")) {
++        return WSC::eWscEncr::WSC_ENCR_AES;
++    }
++    return WSC::eWscEncr::WSC_ENCR_INVALID;
++}
++
++inline std::string encryption_to_uci(WSC::eWscAuth authentication,
++                                     WSC::eWscEncr encryption)
++{
++    const auto auth_bits = static_cast<uint16_t>(authentication);
++    if ((auth_bits & WSC::eWscAuth::WSC_AUTH_WPA2PSK) &&
++        (auth_bits & WSC::eWscAuth::WSC_AUTH_SAE)) {
++        return "sae-mixed";
++    }
++    if (authentication == WSC::eWscAuth::WSC_AUTH_SAE) {
++        return "sae";
++    }
++    if (authentication == WSC::eWscAuth::WSC_AUTH_WPA2PSK) {
++        if (encryption == WSC::eWscEncr::WSC_ENCR_TKIP) {
++            return "psk2+tkip";
++        }
++        return "psk2+aes";
++    }
++    return "none";
++}
++
++inline bool append_operating_classes(const std::string &band_or_hwmode,
++                                     std::list<uint8_t> &operating_classes)
++{
++    std::string value = band_or_hwmode;
++    std::transform(value.begin(), value.end(), value.begin(),
++                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
++
++    std::string band;
++    if (value == "2g" || value == "2.4g" || value == "24g" || value.empty() ||
++        value == "11b" || value == "11g" || value == "11bgnax") {
++        band = "24g";
++    } else if (value == "5g" || value == "5ghz" || value == "11a" ||
++               value == "11anacax") {
++        band = "5g";
++    } else if (value == "6g" || value == "6ghz") {
++        band = "6g";
++    } else {
++        return false;
++    }
++
++    auto classes = son::wireless_utils::string_to_wsc_oper_class(band);
++    operating_classes.splice(operating_classes.end(), classes);
++    operating_classes.sort();
++    operating_classes.unique();
++    return true;
++}
++
++inline bool parse_bool(const std::string &value, bool default_value)
++{
++    if (value.empty()) {
++        return default_value;
++    }
++    std::string normalized = value;
++    std::transform(normalized.begin(), normalized.end(), normalized.begin(),
++                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
++    if (normalized == "1" || normalized == "true" || normalized == "yes" ||
++        normalized == "on") {
++        return true;
++    }
++    if (normalized == "0" || normalized == "false" || normalized == "no" ||
++        normalized == "off") {
++        return false;
++    }
++    return default_value;
++}
++
++inline bool select_unique_wireless_section(const std::vector<std::string> &candidates,
++                                           std::string &section_name)
++{
++    section_name.clear();
++    if (candidates.size() != 1 || candidates.front().empty()) {
++        return false;
++    }
++    section_name = candidates.front();
++    return true;
++}
++
++} // namespace wifi_cfg_utils
++} // namespace bpl
++} // namespace beerocks
++
++#endif // _BPL_CFG_WIFI_UTILS_H_
+--- a/framework/platform/bpl/test/CMakeLists.txt
++++ b/framework/platform/bpl/test/CMakeLists.txt
+@@ -5,3 +5,11 @@ target_include_directories(bpl_test PUBL
+ 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../../common/include>
+ 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
+ 	)
++
++add_executable(bpl_cfg_wifi_utils_test bpl_cfg_wifi_utils_test.cpp)
++target_link_libraries(bpl_cfg_wifi_utils_test gtest_main bcl)
++target_include_directories(bpl_cfg_wifi_utils_test PRIVATE
++    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../../common/beerocks/bcl/include>
++    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../cfg/uci>
++)
++add_test(NAME bpl_cfg_wifi_utils_test COMMAND $<TARGET_FILE:bpl_cfg_wifi_utils_test>)
+--- /dev/null
++++ b/framework/platform/bpl/test/bpl_cfg_wifi_utils_test.cpp
+@@ -0,0 +1,69 @@
++/* SPDX-License-Identifier: BSD-2-Clause-Patent */
++
++#include "../cfg/uci/bpl_cfg_wifi_utils.h"
++
++#include <gtest/gtest.h>
++
++namespace {
++
++using namespace beerocks::bpl::wifi_cfg_utils;
++
++TEST(BplCfgWifiUtils, MapsStockOpenWrtSecurityModes)
++{
++    EXPECT_EQ(WSC::eWscAuth::WSC_AUTH_WPA2PSK, authentication_from_uci("psk2"));
++    EXPECT_EQ(WSC::eWscAuth::WSC_AUTH_SAE, authentication_from_uci("sae"));
++    const auto transition = authentication_from_uci("sae-mixed");
++    EXPECT_NE(0, static_cast<uint16_t>(transition) & WSC::eWscAuth::WSC_AUTH_WPA2PSK);
++    EXPECT_NE(0, static_cast<uint16_t>(transition) & WSC::eWscAuth::WSC_AUTH_SAE);
++    EXPECT_EQ(WSC::eWscEncr::WSC_ENCR_AES, encryption_from_uci("sae-mixed"));
++}
++
++TEST(BplCfgWifiUtils, MapsSecurityBackToUci)
++{
++    EXPECT_EQ("psk2+aes", encryption_to_uci(WSC::eWscAuth::WSC_AUTH_WPA2PSK,
++                                             WSC::eWscEncr::WSC_ENCR_AES));
++    EXPECT_EQ("sae", encryption_to_uci(WSC::eWscAuth::WSC_AUTH_SAE,
++                                        WSC::eWscEncr::WSC_ENCR_AES));
++    EXPECT_EQ("sae-mixed",
++              encryption_to_uci(WSC::eWscAuth(WSC::eWscAuth::WSC_AUTH_WPA2PSK |
++                                               WSC::eWscAuth::WSC_AUTH_SAE),
++                                WSC::eWscEncr::WSC_ENCR_AES));
++}
++
++TEST(BplCfgWifiUtils, MergesTwoFourFiveAndSixGhzOperatingClasses)
++{
++    std::list<uint8_t> classes;
++    EXPECT_TRUE(append_operating_classes("2g", classes));
++    EXPECT_TRUE(append_operating_classes("5g", classes));
++    EXPECT_TRUE(append_operating_classes("6g", classes));
++    EXPECT_NE(classes.end(), std::find(classes.begin(), classes.end(), 81));
++    EXPECT_NE(classes.end(), std::find(classes.begin(), classes.end(), 115));
++    EXPECT_NE(classes.end(), std::find(classes.begin(), classes.end(), 131));
++
++    const auto before = classes;
++    EXPECT_FALSE(append_operating_classes("invalid-band", classes));
++    EXPECT_EQ(before, classes);
++}
++
++TEST(BplCfgWifiUtils, ParsesExplicitBooleansWithSafeDefault)
++{
++    EXPECT_TRUE(parse_bool("yes", false));
++    EXPECT_FALSE(parse_bool("off", true));
++    EXPECT_TRUE(parse_bool("invalid", true));
++}
++
++TEST(BplCfgWifiUtils, SelectsOnlyAnUnambiguousWirelessSection)
++{
++    std::string selected;
++    EXPECT_FALSE(select_unique_wireless_section({}, selected));
++    EXPECT_TRUE(selected.empty());
++
++    EXPECT_TRUE(select_unique_wireless_section({"default_radio0"}, selected));
++    EXPECT_EQ("default_radio0", selected);
++
++    EXPECT_FALSE(
++        select_unique_wireless_section({"default_radio0", "guest_radio0"}, selected));
++    EXPECT_TRUE(selected.empty());
++}
++
++} // namespace
+--- a/framework/tlvf/src/include/tlvf/AssociationRequestFrame/assoc_frame_bitfields.h
++++ b/framework/tlvf/src/include/tlvf/AssociationRequestFrame/assoc_frame_bitfields.h
+@@ -4,6 +4,7 @@
+ 
+ #include <asm/byteorder.h>
+ #include <cstddef>
++#include <cstdint>
+ #include <memory>
+ 
+ namespace assoc_frame {
