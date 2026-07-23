@@ -1,0 +1,108 @@
+From 957955d0a93361519bb1ce1ef777dba7c1830ed1 Mon Sep 17 00:00:00 2001
+From: Coelacanthus <uwu@coelacanthus.name>
+Date: Sun, 24 Aug 2025 22:41:48 +0800
+Subject: [PATCH] refactor: new LPAC_VERSION handling (#310)
+
+* When git and .git directory is available, it append revision and
+  commit id of HEAD to version string.
+* Otherwise, it use version string defined in project() command.
+* Use target_compile_definitions() instead of configure header file,
+  avoid common header name conflict.
+
+Signed-off-by: Coelacanthus <uwu@coelacanthus.name>
+---
+ cmake/git-version.cmake | 43 ++++++++++++++++++-----------------------
+ src/CMakeLists.txt      | 15 ++++++--------
+ src/applet/version.h    |  2 --
+ src/version.h.in        |  4 ----
+ 4 files changed, 25 insertions(+), 39 deletions(-)
+ delete mode 100644 src/version.h.in
+
+--- a/cmake/git-version.cmake
++++ b/cmake/git-version.cmake
+@@ -1,25 +1,20 @@
+-# from https://github.com/nocnokneo/cmake-git-versioning-example
+-
+-if(GIT_EXECUTABLE)
+-  get_filename_component(SRC_DIR ${SRC} DIRECTORY)
+-  # Generate a git-describe version string from Git repository tags
+-  execute_process(
+-    COMMAND ${GIT_EXECUTABLE} describe --always --tags --dirty --match "v*"
+-    WORKING_DIRECTORY ${SRC_DIR}
+-    OUTPUT_VARIABLE GIT_DESCRIBE_VERSION
+-    RESULT_VARIABLE GIT_DESCRIBE_ERROR_CODE
+-    OUTPUT_STRIP_TRAILING_WHITESPACE
+-  )
+-  if(NOT GIT_DESCRIBE_ERROR_CODE)
+-    set(LPAC_VERSION ${GIT_DESCRIBE_VERSION})
+-  endif()
++find_package(Git)
++if(GIT_EXECUTABLE AND IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git)
++    execute_process(
++        COMMAND ${GIT_EXECUTABLE} rev-list --count HEAD
++        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
++        OUTPUT_VARIABLE GIT_REVISION
++        RESULT_VARIABLE GIT_REVISION_ERROR_CODE
++        OUTPUT_STRIP_TRAILING_WHITESPACE
++    )
++    execute_process(
++        COMMAND ${GIT_EXECUTABLE} rev-parse --short=12 HEAD
++        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
++        OUTPUT_VARIABLE GIT_COMMIT_ID
++        RESULT_VARIABLE GIT_COMMIT_ID_ERROR_CODE
++        OUTPUT_STRIP_TRAILING_WHITESPACE
++    )
++    if(NOT GIT_REVISION_ERROR_CODE AND NOT GIT_COMMIT_ID_ERROR_CODE)
++        set(LPAC_VERSION ${CMAKE_PROJECT_VERSION}.r${GIT_REVISION}.${GIT_COMMIT_ID})
++    endif()
+ endif()
+-
+-# Final fallback: Just use a bogus version string that is semantically older
+-# than anything else and spit out a warning to the developer.
+-if(NOT DEFINED LPAC_VERSION)
+-  set(LPAC_VERSION v0.0.0-unknown)
+-  message(WARNING "Failed to determine LPAC_VERSION from Git tags. Using default version \"${LPAC_VERSION}\".")
+-endif()
+-
+-configure_file(${SRC} ${DST} @ONLY)
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -15,15 +15,12 @@ add_executable(lpac ${DIR_LPAC_SRCS})
+ target_link_libraries(lpac euicc-drivers lpac-utils)
+ target_include_directories(lpac PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
+ 
+-find_package(Git)
+-add_custom_target(version
+-    ${CMAKE_COMMAND}
+-    -D SRC=${CMAKE_CURRENT_SOURCE_DIR}/version.h.in
+-    -D DST=${CMAKE_CURRENT_SOURCE_DIR}/version.h
+-    -D GIT_EXECUTABLE=${GIT_EXECUTABLE}
+-    -P ${LPAC_CMAKE_MODULE_PATH}/git-version.cmake
+-)
+-add_dependencies(lpac version)
++include(${CMAKE_SOURCE_DIR}/cmake/git-version.cmake)
++if(NOT DEFINED LPAC_VERSION)
++    set(LPAC_VERSION ${CMAKE_PROJECT_VERSION})
++endif()
++target_compile_definitions(lpac PRIVATE LPAC_VERSION="${LPAC_VERSION}")
++
+ set_target_properties(lpac PROPERTIES
+     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/output"
+     BUILD_RPATH "${RPATH_BINARY_PATH}"
+--- a/src/applet/version.h
++++ b/src/applet/version.h
+@@ -1,7 +1,5 @@
+ #pragma once
+ 
+-#include "version.h"
+-
+ #include <applet.h>
+ 
+ extern struct applet_entry applet_version;
+--- a/src/version.h.in
++++ /dev/null
+@@ -1,4 +0,0 @@
+-#ifndef LPAC_VERSION_H_
+-#define LPAC_VERSION_H_
+-#define LPAC_VERSION "@LPAC_VERSION@"
+-#endif /* LPAC_VERSION_H_ */
