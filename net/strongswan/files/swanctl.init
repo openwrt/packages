@@ -436,7 +436,7 @@ config_remote() {
 	local conf="$1"
 
 	local enabled
-	local gateway
+	local remote_gateway
 	local pre_shared_key
 	local auth_method
 	local local_identifier
@@ -464,7 +464,7 @@ config_remote() {
 	config_get_bool enabled "$conf" enabled 0
 	[ $enabled -eq 0 ] && return
 
-	config_get gateway "$conf" gateway
+	config_get remote_gateway "$conf" remote_gateway '%any'
 	config_get pre_shared_key "$conf" pre_shared_key
 	config_get auth_method "$conf" authentication_method
 	config_get local_identifier "$conf" local_identifier ""
@@ -504,8 +504,6 @@ config_remote() {
 		;;
 	esac
 
-	local remote_gateway
-	[ "$gateway" = "any" ] && remote_gateway="%any" || remote_gateway="$gateway"
 
 	if [ -n "$local_key" ]; then
 		[ "$(dirname "$local_key")" != "." ] && \

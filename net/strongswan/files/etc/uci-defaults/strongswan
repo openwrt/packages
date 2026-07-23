@@ -52,10 +52,34 @@ migrate_local_nat() {
 	uci commit ipsec
 }
 
+migrate_gateway_remote() {
+	local cfg="$1"
+
+	local gateway
+
+	config_get gateway "$cfg" gateway ""
+	[ -z "$gateway" ] && return
+
+	# The option 'any' is default for the 'remote_gateway' option if not set
+	# and does not need to be saved.
+	[ "$gateway" = "any" ] || {
+		uci -q set "ipsec.${cfg}.remote_gateway=${gateway}"
+	}
+
+	uci -q delete "ipsec.${cfg}.gateway"
+	uci commit ipsec
+}
+
+migrate_gateway() {
+	config_load ipsec
+	config_foreach migrate_gateway_remote remote
+}
+
 main() {
 	migrate_ipsec
 	migrate_ignore_routing_tables
 	migrate_local_nat
+	migrate_gateway
 }
 
 main
