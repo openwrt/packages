@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=openssh
 PKG_REALVERSION:=10.4p1
 PKG_VERSION:=10.4_p1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_REALVERSION).tar.gz
 PKG_SOURCE_URL:=https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/ \
@@ -159,7 +159,7 @@ endef
 
 define Package/openssh-sk-helper
 	$(call Package/openssh/Default)
-	DEPENDS+= +libopenssl +zlib +libfido2
+	DEPENDS+= +libopenssl +zlib +PACKAGE_openssh-sk-helper:libfido2
 	TITLE+= helper for FIDO U2F and FIDO2 hardware token support
 endef
 
