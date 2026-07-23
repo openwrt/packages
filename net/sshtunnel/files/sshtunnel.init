@@ -193,6 +193,7 @@ load_server() {
 	"
 
 	procd_open_instance "$server"
+        procd_set_param env HOME="/root"
 	procd_set_param command "$PROG" $ARGS
 	# ProxyCommand must be quoted
 	[ -n "$ProxyCommand" ] && procd_append_param command -o "ProxyCommand=$ProxyCommand"
