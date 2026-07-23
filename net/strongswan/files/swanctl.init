@@ -441,13 +441,11 @@ config_remote() {
 
 	local enabled
 	local gateway
-	local local_sourceip
-	local local_ip
-	local local_identifier
-	local remote_gateway
-	local remote_identifier
 	local pre_shared_key
 	local auth_method
+	local local_identifier
+	local remote_identifier
+	local local_ip
 	local keyingtries
 	local dpddelay
 	local encap
@@ -462,9 +460,10 @@ config_remote() {
 	local overtime
 	local send_cert
 	local send_certreq
+	local eap_id
+	local local_sourceip
 	local remote_ca_certs
 	local pools
-	local eap_id
 
 	config_get_bool enabled "$conf" enabled 0
 	[ $enabled -eq 0 ] && return
@@ -509,6 +508,7 @@ config_remote() {
 		;;
 	esac
 
+	local remote_gateway
 	[ "$gateway" = "any" ] && remote_gateway="%any" || remote_gateway="$gateway"
 
 	if [ -n "$local_key" ]; then
