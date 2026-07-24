@@ -1,0 +1,92 @@
+From 79fcec9d89a247f1a1995f7b4560ea819bfe654f Mon Sep 17 00:00:00 2001
+From: Coelacanthus <uwu@coelacanthus.name>
+Date: Fri, 17 Jul 2026 14:56:20 +0000
+Subject: [PATCH] mbim: improve UICC low-level access compatibility (#438)
+
+Improve compatibility with MBIM devices that expose eSIM access through the
+Microsoft UICC low-level access service.
+
+Some WWAN modules do not work with lpac's default MBIM APDU parameters. Add an
+opt-in environment variable to skip MBIM device slot mapping, use the extended
+class byte type for APDU transport, open the logical channel with select P2 set
+to 0x0c, and append Le=00 to case-4 ENVELOPE APDUs that omit it.
+
+The upstream documentation file changed by this commit is not present in the
+v2.3.0 release archive, so this backport contains the runtime change only.
+
+Runtime validation covered a Fibocom L850-GL with removable eUICC, a Foxconn
+T99W175, and a Dell DW5821e. The MBIM backend was also built against
+libmbim-glib 1.31.2.
+
+Signed-off-by: As Tsaqib <0xfiqks@gmail.com>
+Co-authored-by: As Tsaqib <0xfiqks@gmail.com>
+---
+ driver/apdu/mbim.c | 36 ++++++++++++++++++++++++++++++++----
+ 1 file changed, 32 insertions(+), 4 deletions(-)
+
+--- a/driver/apdu/mbim.c
++++ b/driver/apdu/mbim.c
+@@ -15,6 +15,16 @@
+ #define ENV_UIM_SLOT APDU_ENV_NAME(MBIM, UIM_SLOT)
+ #define ENV_USE_PROXY APDU_ENV_NAME(MBIM, USE_PROXY)
+ #define ENV_DEVICE APDU_ENV_NAME(MBIM, DEVICE)
++#define ENV_SKIP_SLOT_MAPPING APDU_ENV_NAME(MBIM, SKIP_SLOT_MAPPING)
++
++/*
++ * https://learn.microsoft.com/en-us/windows-hardware/drivers/network/mb-low-level-uicc-access
++ * SelectP2Arg maps to the P2 byte of the ISO/IEC 7816-4 SELECT command.
++ * ETSI TS 102 221 V18.0.0, section 11.1.1.2, table 11.2 defines 0x0c as
++ * "No data returned":
++ * https://www.etsi.org/deliver/etsi_ts/102200_102299/102221/18.00.00_60/ts_102221v180000p.pdf
++ */
++#define LPAC_MBIM_UICC_SELECT_P2_NO_RESPONSE 0x0c
+ 
+ struct mbim_data {
+     const char *device_path;
+@@ -134,6 +144,11 @@ static int apdu_interface_connect(struct
+         return -1;
+     }
+ 
++    if (getenv_bool_or_default(ENV_SKIP_SLOT_MAPPING, false)) {
++        fprintf(stderr, "info: skipping MBIM device slot mapping\n");
++        return 0;
++    }
++
+     return select_sim_slot(mbim_priv);
+ }
+ 
+@@ -161,9 +176,21 @@ static int mbim_apdu_interface_transmit(
+     struct mbim_data *mbim_priv = ctx->apdu.interface->userdata;
+     g_autoptr(GError) error = NULL;
+ 
+-    MbimMessage *request = mbim_message_ms_uicc_low_level_access_apdu_set_new(
+-        mbim_priv->last_channel_id, MBIM_UICC_SECURE_MESSAGING_NONE, MBIM_UICC_CLASS_BYTE_TYPE_INTER_INDUSTRY, tx_len,
+-        tx, &error);
++    const guint8 *apdu = tx;
++    guint32 apdu_len = tx_len;
++    g_autofree guint8 *apdu_with_le = NULL;
++
++    if (tx_len >= 5 && tx[1] == 0xe2 && tx_len == (guint32)tx[4] + 5) {
++        apdu_with_le = g_malloc(tx_len + 1);
++        memcpy(apdu_with_le, tx, tx_len);
++        apdu_with_le[tx_len] = 0x00;
++        apdu = apdu_with_le;
++        apdu_len = tx_len + 1;
++    }
++
++    MbimMessage *request =
++        mbim_message_ms_uicc_low_level_access_apdu_set_new(mbim_priv->last_channel_id, MBIM_UICC_SECURE_MESSAGING_NONE,
++                                                           MBIM_UICC_CLASS_BYTE_TYPE_EXTENDED, apdu_len, apdu, &error);
+     if (!request) {
+         fprintf(stderr, "error: creating apdu message failed: %s\n", error->message);
+         return -1;
+@@ -193,7 +220,8 @@ static int mbim_apdu_interface_logic_cha
+     g_autoptr(GError) error = NULL;
+     guint8 channel_id;
+ 
+-    MbimMessage *request = mbim_message_ms_uicc_low_level_access_open_channel_set_new(aid_len, aid, 0, 1, &error);
++    MbimMessage *request = mbim_message_ms_uicc_low_level_access_open_channel_set_new(
++        aid_len, aid, LPAC_MBIM_UICC_SELECT_P2_NO_RESPONSE, 1, &error);
+     if (!request) {
+         fprintf(stderr, "error: creating channel message failed: %s\n", error->message);
+         return -1;

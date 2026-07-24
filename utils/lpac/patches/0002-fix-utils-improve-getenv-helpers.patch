@@ -1,0 +1,96 @@
+From 977ea5db70433b680cf841b7cd7d32935637324e Mon Sep 17 00:00:00 2001
+From: septs <github@septs.pw>
+Date: Sun, 31 Aug 2025 20:58:20 +0800
+Subject: [PATCH] fix(utils): improve getenv helpers (#308)
+
+---
+ docs/ENVVARS.md    | 20 +++++++++++++++++---
+ utils/lpac/utils.c | 29 ++++++++++++-----------------
+ 2 files changed, 29 insertions(+), 20 deletions(-)
+
+--- a/docs/ENVVARS.md
++++ b/docs/ENVVARS.md
+@@ -25,12 +25,26 @@
+ * `LPAC_APDU_QMI_UIM_SLOT`: specify which UIM slot will be used by QMI APDU backend. (default: 1, slot number starts from 1)
+ * `LPAC_APDU_QMI_DEVICE`: specify which QMI device will be used by QMI APDU backend.
+ * `LPAC_APDU_MBIM_UIM_SLOT`: specify which UIM slot will be used by MBIM APDU backend. (default: 1, slot number starts from 1)
+-* `LPAC_APDU_MBIM_USE_PROXY`: tell the MBIM APDU backend to use the mbim-proxy. (boolean)
++* `LPAC_APDU_MBIM_USE_PROXY`: tell the MBIM APDU backend to use the mbim-proxy. ([boolean])
+ * `LPAC_APDU_MBIM_DEVICE`: specify which MBIM device will be used by MBIM APDU backend. (default: `/dev/cdc-wdm0`)
+ 
+ ## Debug
+ 
+ * `LIBEUICC_DEBUG_APDU`: enable debug output for APDU.
+ * `LIBEUICC_DEBUG_HTTP`: enable debug output for HTTP.
+-* `LPAC_APDU_AT_DEBUG`: enable debug output for AT APDU backend. (boolean)
+-* `LPAC_APDU_GBINDER_DEBUG`: enable debug output for GBinder APDU backend. (boolean)
++* `LPAC_APDU_AT_DEBUG`: enable debug output for AT APDU backend. ([boolean])
++* `LPAC_APDU_GBINDER_DEBUG`: enable debug output for GBinder APDU backend. ([boolean])
++
++## Data Types
++
++[boolean]: #boolean-type
++
++### Boolean Type
++
++A boolean type environment variable can be set to enable or disable a feature.
++
++The following values are recognized as **enabled** (case-insensitive): `1`, `y`, `on`, `yes`, `true`
++
++The following values are recognized as **disabled** (case-insensitive): `0`, `n`, `off`, `no`, `false`
++
++Any other value will result in the default being used.
+--- a/utils/lpac/utils.c
++++ b/utils/lpac/utils.c
+@@ -7,31 +7,26 @@
+ #include <stdlib.h>
+ #include <string.h>
+ 
+-static bool is_numeric(const char *value) {
+-    if (value == NULL)
+-        return false;
+-    for (size_t i = strlen(value); i > 0; --i) {
+-        if (isdigit(value[i]))
+-            continue;
+-        return false;
+-    }
+-    return true;
+-}
+-
+ const char *getenv_str_or_default(const char *name, const char *default_value) {
+     const char *value = getenv(name);
+-    if (value == NULL)
++    if (value == NULL || strlen(value) == 0)
+         return default_value;
+     return value;
+ }
+ 
+ bool getenv_bool_or_default(const char *name, const bool default_value) {
+     const char *value = getenv(name);
+-    if (value == NULL)
++    if (value == NULL || strlen(value) == 0)
+         return default_value;
+-    if (is_numeric(value))
+-        return strcmp(value, "0") != 0;
+-    return strcasecmp(value, "y") == 0 || strcasecmp(value, "yes") == 0 || strcasecmp(value, "true") == 0;
++    if (strcasecmp(value, "1") == 0 || strcasecmp(value, "y") == 0 || strcasecmp(value, "on") == 0
++        || strcasecmp(value, "yes") == 0 || strcasecmp(value, "true") == 0)
++        return true;
++    if (strcasecmp(value, "0") == 0 || strcasecmp(value, "n") == 0 || strcasecmp(value, "off") == 0
++        || strcasecmp(value, "no") == 0 || strcasecmp(value, "false") == 0)
++        return false;
++    fprintf(stderr, "WARNING: Invalid value '%s' for environment variable '%s', falling back to default (%s)\n", value,
++            name, default_value ? "true" : "false");
++    return default_value;
+ }
+ 
+ int getenv_int_or_default(const char *name, const int default_value) {
+@@ -40,7 +35,7 @@ int getenv_int_or_default(const char *na
+ 
+ long getenv_long_or_default(const char *name, const long default_value) {
+     const char *value = getenv(name);
+-    if (value == NULL)
++    if (value == NULL || strlen(value) == 0)
+         return default_value;
+     return strtol(value, NULL, 10);
+ }

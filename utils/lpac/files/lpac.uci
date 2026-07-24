@@ -16,3 +16,4 @@ config uqmi uqmi
 config mbim mbim
 	option		device		'/dev/cdc-wdm0'
 	option		proxy		'1'
+	option		skip_slot_mapping	'0'
