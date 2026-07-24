@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tar
 PKG_VERSION:=1.35
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/tar
@@ -68,6 +68,7 @@ define Package/tar/config
 
 	config PACKAGE_TAR_XZ
 		bool "tar: Enable seamless xz support"
+		depends on PACKAGE_xz-utils
 		default y
 
 	config PACKAGE_TAR_ZSTD
