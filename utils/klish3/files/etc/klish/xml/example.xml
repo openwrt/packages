@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<KLISH
+xmlns="https://klish.libcode.org/klish3"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="https://klish.libcode.org/klish3 /usr/share/klish/klish.xsd">
+
+<PLUGIN name="klish"/>
+
+<PLUGIN name="script"/>
+
+
+<PTYPE name="STRING">
+<ACTION sym="STRING@klish"/>
+</PTYPE>
+
+
+<VIEW name="main">
+
+<HOTKEY key="^Z" cmd="exit"/>
+
+<PROMPT name="prompt">
+<ACTION sym="prompt">%u@%h&gt; </ACTION>
+</PROMPT>
+
+<COMMAND name="exit" help="Exit view">
+<ACTION sym="nav">pop</ACTION>
+<ACTION sym="printl">Exiting klish session</ACTION>
+</COMMAND>
+
+<COMMAND name="cmd" help="Clear settings">
+<COMMAND name="first" help="Clear settings"/>
+<ACTION sym="printl">test</ACTION>
+</COMMAND>
+
+<COMMAND name="comm" value="command" help="Clear settings">
+<ACTION sym="printl">test2</ACTION>
+</COMMAND>
+
+<COMMAND name="ls" help="List path">
+<PARAM name="path" ptype="/STRING" help="Path"/>
+<ACTION sym="script">
+echo "${path}"
+ls "${path}"
+</ACTION>
+</COMMAND>
+
+<COMMAND name="pytest" help="Test for Python script">
+<ACTION sym="script">#!/usr/bin/python3
+import os
+print('ENV', os.getenv("KLISH_COMMAND"))
+</ACTION>
+</COMMAND>
+
+</VIEW>
+
+</KLISH>
