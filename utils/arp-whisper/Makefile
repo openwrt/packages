@@ -1,16 +1,16 @@
 # SPDX-License-Identifier: GPL-3.0-only
 #
-# Copyright (C) 2023 Facundo Acevedo
+# Copyright (C) 2026 Facundo Acevedo
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=arp-whisper
-PKG_VERSION:=0.1.2
-PKG_RELEASE:=2
+PKG_VERSION:=1.0.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/FacundoAcevedo/arp-whisper/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=13b393c64505d62b5abf7ace244eed0ce62f4b1562a688ddb5651bd42cc7c305
+PKG_HASH:=c7daae559b38bc8836de73f28ca645de4a7cd5ec8d3e8a9d82ae8e11e57bf32c
 
 PKG_MAINTAINER:=Facundo Acevedo <facevedo@disroot.org>
 PKG_LICENSE:=GPL-3.0-or-later
