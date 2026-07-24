@@ -252,6 +252,7 @@ main() {
 			exit 1
 		fi
 	}
+    config_get nslookup_name $INTERFACE nslookup_name www.google.com
 	config_get reliability $INTERFACE reliability 1
 	config_get count $INTERFACE count 1
 	config_get timeout $INTERFACE timeout 4
@@ -347,7 +348,7 @@ main() {
 						result=$(grep Lost $TRACK_OUTPUT | awk '{print $12}')
 					;;
 					nslookup)
-						WRAP nslookup www.google.com $track_ip > $TRACK_OUTPUT &
+						WRAP nslookup $nslookup_name $track_ip > $TRACK_OUTPUT &
 						wait $!
 						result=$?
 					;;
