@@ -36,7 +36,7 @@ define Package/vpnc
   CATEGORY:=Network
   DEPENDS:=\
 	  +libgpg-error \
-	  +libgcrypt \
+	  +libgcrypt-mini \
 	  +kmod-tun \
 	  +VPNC_OPENSSL:libopenssl \
 	  +VPNC_GNUTLS:libgnutls \
