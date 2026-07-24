@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nfs-kernel-server
 PKG_VERSION:=2.9.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_HASH:=302846343bf509f8f884c23bdbd0fe853b7f7cbb6572060a9082279d13b21a2c
 
 PKG_SOURCE:=nfs-utils-$(PKG_VERSION).tar.xz
@@ -33,7 +33,7 @@ define Package/nfs-kernel-server/Default
 	SECTION:=net
 	CATEGORY:=Network
 	SUBMENU:=Filesystem
-	DEPENDS:=+libblkid +libuuid +libtirpc +lsqlite3 +libxml2 +libnl
+	DEPENDS:=+libblkid +libuuid +libtirpc +libsqlite3 +libxml2 +libnl
 	URL:=https://nfs.sourceforge.net/
 endef
 
