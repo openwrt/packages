@@ -1,0 +1,23 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ricardo F. <r@rfmoz.eu>
+Date: Sun, 12 Jul 2026 18:32:42 +0200
+Subject: [PATCH] tuptime: change DB file path for OpenWrt
+
+/var/lib is tmpfs on OpenWrt, so the database would be lost across
+reboots. Change the default path to /opt/tuptime/tuptime.db for
+persistent storage.
+
+---
+ src/tuptime | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/src/tuptime
++++ b/src/tuptime
+@@ -22,7 +22,7 @@ from datetime import datetime
+ # On os_bsd(): import subprocess
+ 
+ 
+-DB_FILE = '/var/lib/tuptime/tuptime.db'
++DB_FILE = '/opt/tuptime/tuptime.db'
+ DATETIME_FMT = '%x %X'
+ __version__ = '5.2.6'
