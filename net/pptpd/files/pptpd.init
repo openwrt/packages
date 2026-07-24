@@ -21,7 +21,7 @@ validate_pptpd_section() {
 		'enabled:bool:1' \
 		'localip:string' \
 		'remoteip:string' \
-		'mppe:list(string):required no40 no56 stateless' \
+		'mppe:or(string,list(string)):required no40 stateless' \
 		'logwtmp:bool:0'
 }
 
@@ -38,7 +38,35 @@ setup_login() {
 	echo "$username pptp-server $password $remoteip" >> $CHAP_SECRETS
 }
 
+append_option() {
+	case "$1" in
+		# legacy options from ppp pre 2.5.0 in OpenWRT
+		required)	echo "require-mppe" >> $OPTIONS_PPTP ;;
+		no40)		echo "nomppe-40" >> $OPTIONS_PPTP ;;
+		no56)		echo "pptpd mppe option no56 is no longer supported" >&2 ;;
+		no128)		echo "nomppe-128" >> $OPTIONS_PPTP ;;
+		stateless)	echo "nomppe-stateful" >> $OPTIONS_PPTP ;;
+		# modern options from ppp 2.5.0+ in OpenWRT
+		require-mppe | +mppe | nomppe | -mppe)
+			echo "$1" >> $OPTIONS_PPTP
+			;;
+		require-mppe-40 | +mppe-40 | nomppe-40 | -mppe-40)
+			echo "$1" >> $OPTIONS_PPTP
+			;;
+		require-mppe-128 | +mppe-128 | nomppe-128 | -mppe-128)
+			echo "$1" >> $OPTIONS_PPTP
+			;;
+		mppe-stateful | nomppe-stateful)
+			echo "$1" >> $OPTIONS_PPTP
+			;;
+		*)		echo "Unknown mppe option $1" >&2 ;;
+	esac
+}
+
 setup_config() {
+	local mppe_is_list
+	local opt
+
 	[ "$2" = 0 ] || {
 		echo "validation failed"
 		return 1
@@ -54,7 +82,17 @@ setup_config() {
 	[ -n "$remoteip" ] && echo "remoteip  $remoteip" >> $CONFIG
 	[ "$logwtmp" -eq 1 ] && echo "logwtmp" >> $CONFIG
 
-	echo "mppe $(echo $mppe | sed -e 's/\s/,/g')" >> $OPTIONS_PPTP
+	# Parse mppe options; we support both a UCI list and a
+	# comma-separated string
+	config_get mppe_is_list "$1" mppe_LENGTH
+	if [ -z "$mppe_is_list" ]; then
+		mppe="$(echo $mppe | sed -e 's/,/ /g')"
+		for opt in $mppe; do
+			append_option "$opt"
+		done
+	else
+		config_list_foreach "$1" mppe append_option
+	fi
 
 	return 0
 }
