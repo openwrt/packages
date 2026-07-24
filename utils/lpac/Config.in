@@ -29,4 +29,31 @@ config LPAC_WITH_QMI
 	default y
 	help
 	  Compile LPAC with APDU QMI Backend support.
+
+config LPAC_INSTALL_GSMA_CI_CERTS
+	bool "Download GSMA RSP Root CI certificates and add them to the system CA bundle"
+	default y
+	select PACKAGE_ca-bundle
+	help
+	  Downloads the following three GSMA "Root Certificate Issuer for
+	  Remote SIM Provisioning" root certificates at build time and
+	  merges them into /etc/ssl/certs/ca-certificates.crt. This allows
+	  lpac (and any other tool relying on the system CA bundle, e.g.
+	  curl) to validate TLS connections to SM-DP+/SM-DS servers.
+
+	  Source of this certificate list:
+	  https://www.gsma.com/solutions-and-impact/technologies/internet-of-things/embedded-sim/gsma-root-certificate-issuer-remote-sim-provisioning/ :
+
+	    - Verizon/M2M31 Root CI (DER, M2M variant):
+	      https://www.gsma.com/solutions-and-impact/technologies/internet-of-things/wp-content/uploads/2017/03/Verizon_GSMA_M2M31-Root-CI21.crt_.txt
+
+	    - Symantec/RSPv2 Root CI (PEM, Consumer variant):
+	      https://www.gsma.com/solutions-and-impact/technologies/internet-of-things/wp-content/uploads/2017/03/Symantec_GSMA_RSPv2-Root-CI1.txt
+
+	    - CI SIG OISTE (PEM, eSIM IoT variant, shipped as a .zip):
+	      https://www.gsma.com/solutions-and-impact/technologies/esim/wp-content/uploads/2024/01/CERT_CI_SIG_OISTE.pem_.zip
+
+	  All three are fetched, normalized to PEM (converting the DER
+	  file and unpacking the zip as needed) and appended to the CA
+	  bundle.
 endmenu
