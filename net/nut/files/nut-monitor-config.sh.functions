@@ -197,6 +197,14 @@ nut_upsmon_conf() {
 				return 1
 			fi
 			;;
+		CERTPATH)
+			# If no certpath is specified, the do not use SSL
+			upsmon_conf_get_write "$cfg" "$config_file" "$uci_option" "$nut_option" "false"
+			conf_ret=$?
+			if [ "$conf_ret" -eq 1 ]; then
+				return 1
+			fi
+			;;
 		*)
 			if [ "${upsmon_bool_options/$nut_option/}" != "${upsmon_bool_options}" ]; then
 				nut_bool="true"

@@ -1,0 +1,38 @@
+#!/bin/sh
+# In recent (relevant) versions of shellcheck busybox is a valid shell type
+# shellcheck shell=busybox
+
+# uci-defaults script to setup nut-server package
+#  * create (if no present) shared group for directories shared with nut-upsmon
+#  * install/create NSS certificate/key database
+
+# IPKG_INSTROOT is intentionally only set when building an image and
+# is intentionally empty on a live OpenWrt device
+
+# Shellcheck source paths intentionally point to the location of files of
+# the scripts in the development environment (where shellcheck is used), not
+# on the live OpenWrt device.
+
+# This script lives in nut-server package, which is independent of the
+# nut-upsmon package in which nut-upsmon.default lives
+
+# The separate packages limit the opportunities for code-sharing across the
+# scripts.
+
+# Only run this uci-defaults script on a live OpenWrt device
+[ -z "${IPKG_INSTROOT}" ] || exit 0
+
+# shellcheck source=net/nut/files/functions.sh.functions
+. /lib/functions.sh || {
+	# As the uci-defaults environment in which this runs does not have logging
+	# available, nor is stderr captured or displayed on the console, these messages
+	# exist only to assist when debugging manual runs of the script.
+	printf "'%s': '%s'" "nut-server.default" "FATAL: Unable to source 'functions.sh'" || true
+	exit 1
+}
+
+if ! group_exists "nutgrp"; then
+	group_add_next "nutgrp"
+fi
+
+group_add_user "nutgrp" "nut"

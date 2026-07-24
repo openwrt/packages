@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nut
 PKG_VERSION:=2.8.5
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.networkupstools.org/source/2.8/
@@ -23,12 +23,14 @@ PKG_MAINTAINER:=Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
 PKG_INSTALL:=1
 
 PKG_CONFIG_DEPENDS:= \
+	CONFIG_PACKAGE_nut-web-cgi \
+	CONFIG_NUT_DRIVER_NEON \
+	CONFIG_NUT_DRIVER_SERIAL \
 	CONFIG_NUT_DRIVER_SNMP \
 	CONFIG_NUT_DRIVER_USB \
-	CONFIG_NUT_DRIVER_SERIAL \
-	CONFIG_NUT_DRIVER_NEON \
 	CONFIG_NUT_SSL \
-	CONFIG_PACKAGE_nut-web-cgi
+	CONFIG_NUT_SSL_CERTVERIFY \
+	CONFIG_NUT_SSL_NSS
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -96,6 +98,8 @@ define Package/nut-server/install
 		$(PKG_BUILD_DIR)/libhid-ups.parsed-usermap
 	$(SED) 's^### insert libhid-ups.parsed-usermap content here ###^\ncat "$(PKG_BUILD_DIR)/libhid-ups.parsed-usermap"^e' $(PKG_BUILD_DIR)/30-libhid-ups
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/30-libhid-ups $(1)/etc/hotplug.d/usb/30-libhid-ups
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_DATA) ./files/nut-server.default $(1)/etc/uci-defaults/90_nut-server
 endef
 
 define Package/nut-common
@@ -105,7 +109,9 @@ define Package/nut-common
 		+NUT_DRIVER_SNMP:libnetsnmp \
 		+NUT_DRIVER_USB:libusb-compat \
 		+NUT_DRIVER_NEON:libneon \
-		+NUT_SSL:libopenssl
+		+NUT_SSL:libopenssl \
+		+NUT_SSL_NSS:libnss \
+		+NUT_SSL_NSS:nss-utils
 endef
 
 define Package/nut-common/description
@@ -115,6 +121,7 @@ endef
 
 define Package/nut-common/conffiles
 /etc/nut/nut.conf
+/etc/nut/cert_db/
 endef
 
 define Package/nut-common/install
@@ -125,13 +132,22 @@ define Package/nut-common/install
 	$(INSTALL_DATA) ./files/nut-service.sh.functions $(1)/lib/functions/nut/nut-service.sh
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libupsclient.so* $(1)/usr/lib/
 	ln -sf /var/etc/nut/nut.conf $(1)/etc/nut/nut.conf
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_DATA) ./files/nut-common.default $(1)/etc/uci-defaults/89_nut-common
+endef
+
+define Package/nut-common/postinst
+#!/bin/sh
+[ -n "$${IPKG_INSTROOT}" ] || (. /etc/uci-defaults/89_nut-common) && rm -f /etc/uci-defaults/89_nut-common
+exit 0
 endef
 
 define Package/nut-server
-	$(call Package/nut/Default)
-	TITLE+= (server)
-	DEPENDS:=nut +nut-common
-	USERID:=nut=113:nut=113
+  $(call Package/nut/Default)
+  TITLE+= (server)
+  DEPENDS:=nut \
+    +nut-common
+  USERID:=nut=113:nut=113
 endef
 
 define Package/nut-server/description
@@ -150,11 +166,18 @@ define Package/nut-server/conffiles
 /etc/nut/ups.conf
 endef
 
+define Package/nut-server/postinst
+#!/bin/sh
+[ -n "$${IPKG_INSTROOT}" ] || (. /etc/uci-defaults/90_nut-server) && rm -f /etc/uci-defaults/90_nut-server
+exit 0
+endef
+
 define Package/nut-upsmon
   $(call Package/nut/Default)
-	TITLE+= (monitor)
-	DEPENDS:=nut +nut-common
-	USERID:=nutmon=114:nutmon=114
+  TITLE+= (monitor)
+  DEPENDS:=nut \
+    +nut-common
+  USERID:=nutmon=114:nutmon=114
 endef
 
 define Package/nut-upsmon/description
@@ -172,6 +195,12 @@ define Package/nut-upsmon/conffiles
 /etc/nut/upsmon.conf
 endef
 
+define Package/nut-upsmon/postinst
+#!/bin/sh
+[ -n "$${IPKG_INSTROOT}" ] || (. /etc/uci-defaults/90_nut-upsmon) && rm -f /etc/uci-defaults/90_nut-upsmon
+exit 0
+endef
+
 define Package/nut-upsmon/install
 	$(INSTALL_DIR) $(1)/etc/nut
 	$(INSTALL_DIR) $(1)/usr/sbin
@@ -186,6 +215,8 @@ define Package/nut-upsmon/install
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/nut_monitor $(1)/etc/config/nut_monitor
 	ln -sf /var/etc/nut/upsmon.conf $(1)/etc/nut/upsmon.conf
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_DATA) ./files/nut-upsmon.default $(1)/etc/uci-defaults/90_nut-upsmon
 endef
 
 define Package/nut-upsmon/conffiles
@@ -571,14 +602,14 @@ $(eval $(call DriverDescription,usb,nutdrv_atcl_usb,\
 $(eval $(call DriverDescription,usb,nutdrv_qx,\
 	Driver for Q* protocol serial and USB based UPS equipment))
 $(eval $(call DriverDescription,neon,netxml-ups,\
-        Driver for NetXML based UPS equipment))
+	Driver for NetXML based UPS equipment))
 
 CONFIGURE_VARS += \
 	ac_cv_path_AR=$(TARGET_AR)
 
+# LLM claims --without-ssl will also disable NSS, so only use it for no SSL
 CONFIGURE_ARGS += \
-	--sysconfdir=/etc \
-	--with-confdir-suffix=/nut \
+	--with-confdir=/etc/nut \
 	--datadir=/usr/share/nut \
 	--with-dev \
 	--$(if $(CONFIG_NUT_DRIVER_USB),with,without)-usb \
@@ -586,7 +617,7 @@ CONFIGURE_ARGS += \
 	--$(if $(CONFIG_NUT_DRIVER_SNMP),with,without)-snmp \
 	--$(if $(CONFIG_NUT_DRIVER_SERIAL),with,without)-serial \
 	--without-doc \
-        --$(if $(CONFIG_NUT_DRIVER_NEON),with,without)-neon \
+	--$(if $(CONFIG_NUT_DRIVER_NEON),with,without)-neon \
 	--without-powerman \
 	--without-wrap \
 	--with-hotplug-dir=/etc/hotplug \
@@ -594,7 +625,10 @@ CONFIGURE_ARGS += \
 	--without-ipmi \
 	--without-freeipmi \
 	--without-linux-i2c \
-	--$(if $(CONFIG_NUT_SSL),with,without)-ssl $(if $(CONFIG_NUT_SSL),--with-openssl) \
+	$(if $(CONFIG_NUT_SSL),--with-ssl=openssl) \
+	$(if $(CONFIG_NUT_SSL_NSS),--with-ssl=nss,--without-nss) \
+	$(if $(CONFIG_NUT_SSL),,$(if $(CONFIG_NUT_SSL_NSS),,--without-ssl)) \
+	$(if $(CONFIG_NUT_SSL)$(CONFIG_NUT_SSL_NSS),$(if $(CONFIG_NUT_SSL_CERTVERIFY),--with-ssl-client-validation,--without-ssl-client-validation)) \
 	--without-libltdl \
 	--enable-docs-changelog=no \
 	--without-macosx_ups \
