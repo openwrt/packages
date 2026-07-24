@@ -8,7 +8,10 @@ BIN="/usr/sbin/vsftpd"
 . /lib/functions.sh
 
 PORT=21
+PORT_IMPLICIT=990
 OUTPUT_CONF="/var/etc/vsftpd.conf"
+LISTEN_MODE="both"
+INVOKING_SECURITY_MODE="explicit"
 readonly DEFAULT_SECURE_CHROOT="/var/run/vsftpd"
 readonly TEMP_OUTPUT_CONF="/var/etc/vsftpd.conf.tmp"
 
@@ -34,18 +37,24 @@ write_conf_bool() {
 
 validate_vsftpd_section() {
 	uci_load_validate vsftpd global "$1" "$2" \
-		'listen:bool:1' \
-		'listen_ipv6:bool:0' \
+		'listen_mode:string:both' \
+		'invoking_security_mode:string:explicit' \
 		'listen_port:port' \
+		'listen_port_implicit:port' \
 		'anonymous_enable:bool:0' \
 		'anon_root:directory' \
 		'local_enable:bool:1' \
 		'local_root:directory' \
 		'write_enable:bool:1' \
 		'local_umask:uinteger:022' \
+		'pasv_enable:bool' \
+		'pasv_min_port:uinteger' \
+		'pasv_max_port:uinteger' \
 		'check_shell:bool:0' \
 		'dirmessage_enable:bool:1' \
 		'secure_chroot_dir:directory' \
+		'chroot_local_user:bool' \
+		'allow_writeable_chroot:bool' \
 		'ftpd_banner:string' \
 		'session_support:bool:0' \
 		'syslog_enable:bool' \
@@ -54,6 +63,7 @@ validate_vsftpd_section() {
 		'userlist_file:file' \
 		'xferlog_enable:bool' \
 		'xferlog_file:file' \
+		'vsftpd_log_file:string' \
 		'xferlog_std_format:bool' \
 		'ssl_enable:bool' \
 		'allow_anon_ssl:bool' \
@@ -82,8 +92,6 @@ setup_vsftpd() {
 	# always run in foreground
 	write_conf_bool "background" "0"
 
-	[ -n "$listen" ] && write_conf_bool "listen" "$listen"
-	[ -n "$listen_ipv6" ] && write_conf_bool "listen_ipv6" "$listen_ipv6"
 	[ -n "$anonymous_enable" ] && write_conf_bool "anonymous_enable" "$anonymous_enable"
 	[ -n "$local_enable" ] && write_conf_bool "local_enable" "$local_enable"
 	[ -n "$write_enable" ] && write_conf_bool "write_enable" "$write_enable"
@@ -102,16 +110,21 @@ setup_vsftpd() {
 	[ -n "$ssl_tlsv1" ] && write_conf_bool "ssl_tlsv1" "$ssl_tlsv1"
 	[ -n "$ssl_sslv2" ] && write_conf_bool "ssl_sslv2" "$ssl_sslv2"
 	[ -n "$ssl_sslv3" ] && write_conf_bool "ssl_sslv3" "$ssl_sslv3"
+	[ -n "$pasv_enable" ] && write_conf_bool "pasv_enable" "$pasv_enable"
+	[ -n "$chroot_local_user" ] && write_conf_bool "chroot_local_user" "$chroot_local_user"
+	[ -n "$allow_writeable_chroot" ] && write_conf_bool "allow_writeable_chroot" "$allow_writeable_chroot"
 
 	[ -n "$anon_root" ] && write_conf "anon_root" "$anon_root"
 	[ -n "$ftpd_banner" ] && write_conf "ftpd_banner" "$ftpd_banner"
-	[ -n "$listen_port" ] && { write_conf "listen_port" "$listen_port"; PORT="$listen_port"; }
 	[ -n "$local_umask" ] && write_conf "local_umask" "$local_umask"
 	[ -n "$local_root" ] && write_conf "local_root" "$local_root"
 	[ -n "$rsa_cert_file" ] && write_conf "rsa_cert_file" "$rsa_cert_file"
 	[ -n "$rsa_private_key_file" ] && write_conf "rsa_private_key_file" "$rsa_private_key_file"
 	[ -n "$userlist_file" ] && write_conf "userlist_file" "$userlist_file"
 	[ -n "$xferlog_file" ] && write_conf "xferlog_file" "$xferlog_file"
+	[ -n "$vsftpd_log_file" ] && write_conf "vsftpd_log_file" "$vsftpd_log_file"
+	[ -n "$pasv_min_port" ] && write_conf "pasv_min_port" "$pasv_min_port"
+	[ -n "$pasv_max_port" ] && write_conf "pasv_max_port" "$pasv_max_port"
 
 	if [ -n "$secure_chroot_dir" ] && [ "$secure_chroot_dir" != "$DEFAULT_SECURE_CHROOT" ]; then
 		# remove the DEFAULT_SECURE_CHROOT directory
@@ -120,8 +133,40 @@ setup_vsftpd() {
 		write_conf "secure_chroot_dir" "$secure_chroot_dir"
 	fi
 
+	[ -n "$listen_port" ] && PORT="$listen_port"
+	[ -n "$listen_port_implicit" ] && PORT_IMPLICIT="$listen_port_implicit"
+	[ -n "$listen_mode" ] && LISTEN_MODE="$listen_mode"
+	[ -n "$invoking_security_mode" ] && INVOKING_SECURITY_MODE="$invoking_security_mode"
+
+	case "$LISTEN_MODE" in
+		ipv4)
+			write_conf_bool "listen" "1"
+			write_conf_bool "listen_ipv6" "0"
+			;;
+		both|*)
+			write_conf_bool "listen" "0"
+			write_conf_bool "listen_ipv6" "1"
+			;;
+	esac
+
 	# move temporary file to the main configuration file
 	mv "$TEMP_OUTPUT_CONF" "$OUTPUT_CONF"
+}
+
+procd_vsftpd_instance() {
+	local listen_port="$1"
+	local implicit_ssl="$2"
+	local use_mdns="$3"
+
+	local name="vsftpd-$listen_port"
+
+	procd_open_instance "$name"
+	[ "$use_mdns" = "1" ] && procd_add_mdns "ftp" "tcp" "$listen_port" "daemon=vsftpd"
+	procd_set_param command "$BIN" "$OUTPUT_CONF" \
+		"-olisten_port=$listen_port" \
+		"-oimplicit_ssl=$implicit_ssl"
+	procd_set_param respawn
+	procd_close_instance
 }
 
 start_service() {
@@ -141,23 +186,34 @@ start_service() {
 	mkdir -m 0755 -p "$DEFAULT_SECURE_CHROOT"
 	chown root:root "$DEFAULT_SECURE_CHROOT"
 
+	config_get_bool mdns global mdns 0
 	config_get conf_file global conf_file ""
-	if [ -n "$conf_file" ]; then 
+
+	if [ -n "$conf_file" ]; then
 		# use user defined conf file instead of UCI
 		OUTPUT_CONF="$conf_file"
-	else
-		# Process the global configuration
-		config_foreach validate_vsftpd_section global setup_vsftpd
+		procd_open_instance "vsftpd"
+		[ "${mdns}" -eq 1 ] && procd_add_mdns "ftp" "tcp" "$PORT" "daemon=vsftpd"
+		procd_set_param command "$BIN" "$OUTPUT_CONF"
+		procd_set_param respawn
+		procd_close_instance
+		return
 	fi
 
-	procd_open_instance "vsftpd"
+	config_foreach validate_vsftpd_section global setup_vsftpd
 
-	config_get_bool mdns global mdns 0
-	[ "${mdns}" -eq 1 ] && procd_add_mdns "ftp" "tcp" "$PORT" "daemon=vsftpd"
-
-	procd_set_param command "$BIN" "$OUTPUT_CONF"
-	procd_set_param respawn
-	procd_close_instance
+	case "$INVOKING_SECURITY_MODE" in
+		implicit)
+			procd_vsftpd_instance "$PORT_IMPLICIT" "YES" "$mdns"
+			;;
+		both)
+			procd_vsftpd_instance "$PORT" "NO" "$mdns"
+			procd_vsftpd_instance "$PORT_IMPLICIT" "YES" "0"
+			;;
+		explicit|*)
+			procd_vsftpd_instance "$PORT" "NO" "$mdns"
+			;;
+	esac
 }
 
 service_triggers() {
