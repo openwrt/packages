@@ -172,7 +172,11 @@ ubus call otbr threadstop
 
 ### LuCI
 
-Creating a network in LuCI appears to be broken for the moment.
+This package no longer ships a LuCI application; the web UI lives in the
+`luci-app-openthread` package in the openwrt/luci repository
+(https://github.com/openwrt/luci/pull/8871). Install that alongside this package
+for a web interface, on a LuCI feed recent enough to carry it — older feeds will
+not have the package yet.
 
 ### CLI
 

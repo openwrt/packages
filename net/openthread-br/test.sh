@@ -22,10 +22,6 @@ openthread-br)
 	ot-ctl -h >/dev/null
 	;;
 
-luci-app-openthread)
-	# LuCI views and a Lua controller only; nothing executable to exercise.
-	;;
-
 *)
 	echo "test.sh: unknown package '$PKG_NAME' — refusing to silently pass" >&2
 	echo "test.sh: update net/openthread-br/test.sh to cover this package" >&2
