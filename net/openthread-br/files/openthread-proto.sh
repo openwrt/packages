@@ -39,7 +39,8 @@ proto_openthread_init_config() {
 	proto_config_add_string backbone_network
 	proto_config_add_string dataset
 	proto_config_add_string radio_url
-	proto_config_add_string foobar
+	proto_config_add_string rest_listen_address
+	proto_config_add_int rest_listen_port
 
 	available=1
 	no_device=1
@@ -61,7 +62,7 @@ proto_openthread_setup() {
 
 	mkdir -p /var/lib/thread
 
-	json_get_vars backbone_network dataset device radio_url verbose:0
+	json_get_vars backbone_network dataset device radio_url rest_listen_address rest_listen_port verbose:0
 
 	[ -n "$backbone_network" ] || proto_openthread_setup_error "$interface" MISSING_BACKBONE_NETWORK
 	proto_add_host_dependency "$interface" "" "$backbone_network"
@@ -78,6 +79,13 @@ proto_openthread_setup() {
 	[ "$verbose" -eq 0 ] || append opts -v
 	append opts "-I$device"
 	append opts "-B$backbone_ifname"
+	# The REST API listens on 127.0.0.1 by default. Bind it elsewhere (e.g. a
+	# LAN address) to let remote clients such as Home Assistant reach it;
+	# leaving it unset keeps the loopback-only default. The REST API is
+	# unauthenticated and can both read and replace the Thread dataset, so any
+	# non-loopback address must be firewalled to trusted hosts.
+	[ -n "$rest_listen_address" ] && append opts "--rest-listen-address=$rest_listen_address"
+	[ -n "$rest_listen_port" ] && append opts "--rest-listen-port=$rest_listen_port"
 	append opts "$radio_url"
 	append opts "trel://$backbone_ifname"
 	# run in subshell to prevent wiping json data needed for prefixes
