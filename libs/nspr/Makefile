@@ -7,7 +7,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nspr
-PKG_VERSION:=4.36
+PKG_VERSION:=4.39
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 PKG_LICENSE:=MPL-2.0
@@ -17,7 +17,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
     https://download.cdn.mozilla.net/pub/$(PKG_NAME)/releases/v$(PKG_VERSION)/src/ \
     https://archive.mozilla.org/pub/$(PKG_NAME)/releases/v$(PKG_VERSION)/src/
-PKG_HASH:=55dec317f1401cd2e5dba844d340b930ab7547f818179a4002bce62e6f1c6895
+PKG_HASH:=bbd02ee87a55676063a63e5bc819e0227de2666b47307b2a0134414cdf42368e
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1

@@ -6,29 +6,22 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  checks: read
 
 jobs:
-  formalities:
-    name: Test Formalities
+  wait-for-formalities:
+    name: Wait for FormalityCheck
     runs-on: ubuntu-slim
     steps:
-      - name: HyperStickler
-        uses: georgesapkin/hyperstickler@v1
+      - name: Wait for Check Run
+        uses: lewagon/wait-on-check-action@v1.8.0
         with:
-          check_branch: false
-          check_signoff: true
-          feedback_url: 'https://github.com/openwrt/actions-shared-workflows/issues'
-          guideline_url: 'https://openwrt.org/submitting-patches#submission_guidelines'
-          max_body_line_len: 100
-          max_subject_len_hard: 80
-          max_subject_len_soft: 60
-          # This still needs a fine-grained token related to:
-          # https://github.com/openwrt/packages/pull/28011
-          # job_step: 2
-          # post_comment: true
-          # warn_on_no_modify: true
+          ref: ${{ github.event.pull_request.head.sha }}
+          check-name: 'FormalityCheck / Git & Commits'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 5
 
   build:
     name: Feeds Package Test Build
-    needs: formalities
+    needs: wait-for-formalities
     uses: openwrt/actions-shared-workflows/.github/workflows/multi-arch-test-build.yml@main

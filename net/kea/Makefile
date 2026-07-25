@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=kea
-PKG_VERSION:=3.0.3
-PKG_RELEASE:=2
+PKG_VERSION:=3.2.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ftp.isc.org/isc/kea/$(PKG_VERSION)
-PKG_HASH:=09702ddb078b637e85de9236cbedd3fb9d7af7c6e797026c538b45748ad4d631
+PKG_HASH:=14bf695d37b65b9b1bf550fea5d0adaf9806c50e5419ef2a176a4b8e9aade3df
 
 PKG_MAINTAINER:=Philip Prindeville <philipp@redfish-solutions.com>, Noah Meyerhans <frodo@morgul.net>
 PKG_LICENSE:=MPL-2.0
@@ -258,9 +258,7 @@ endef
 define Package/kea-ctrl/install
 	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/kea
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/keactrl $(1)/usr/sbin/keactrl
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/kea-ctrl-agent $(1)/usr/sbin/kea-ctrl-agent
 	$(CP) $(PKG_INSTALL_DIR)/etc/kea/keactrl.conf $(1)/etc/kea/
-	$(CP) $(PKG_INSTALL_DIR)/etc/kea/kea-ctrl-agent.conf $(1)/etc/kea/
 endef
 
 define Package/kea-lfc/install

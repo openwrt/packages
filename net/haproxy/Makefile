@@ -10,12 +10,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=haproxy
-PKG_VERSION:=3.2.15
+PKG_VERSION:=3.4.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://www.haproxy.org/download/3.2/src
-PKG_HASH:=117e408aff544c9ad758c2fb3fd8cf791a72609d3ae319b2cf9f2a0b035393c2
+PKG_SOURCE_URL:=https://www.haproxy.org/download/3.4/src
+PKG_HASH:=2e62c4ce4fd77d3bc7cf17e586431663454456a078b7c8465b8f0125b5bc22f8
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>, \
 		Christian Lachner <gladiac@gmail.com>
@@ -91,7 +91,7 @@ define Build/Compile
 		VERSION="$(PKG_VERSION)" SUBVERS="-$(PKG_RELEASE)" \
 		VERDATE="$(shell date -d @$(SOURCE_DATE_EPOCH) '+%Y/%m/%d')" IGNOREGIT=1 \
 		$(ADDON) \
-		CFLAGS="$(TARGET_CFLAGS) -fno-strict-aliasing -Wdeclaration-after-statement -Wno-unused-label -Wno-sign-compare -Wno-unused-parameter -Wno-clobbered -Wno-missing-field-initializers -Wno-cast-function-type -Wno-address-of-packed-member -Wtype-limits -Wshift-negative-value -Wshift-overflow=2 -Wduplicated-cond -Wnull-dereference -fwrapv -fasynchronous-unwind-tables -Wno-null-dereference" \
+		CFLAGS="$(filter-out -ffile-prefix-map=% -fmacro-prefix-map=%,$(TARGET_CFLAGS)) -fno-strict-aliasing -Wdeclaration-after-statement -Wno-unused-label -Wno-sign-compare -Wno-unused-parameter -Wno-clobbered -Wno-missing-field-initializers -Wno-cast-function-type -Wno-address-of-packed-member -Wtype-limits -Wshift-negative-value -Wshift-overflow=2 -Wduplicated-cond -Wnull-dereference -fwrapv -fasynchronous-unwind-tables -Wno-null-dereference" \
 		LD="$(TARGET_CC)" \
 		LDFLAGS="$(TARGET_LDFLAGS)"
 
@@ -105,7 +105,7 @@ define Build/Compile
 	$(MAKE_VARS) $(MAKE) -C $(PKG_BUILD_DIR) \
 		DESTDIR="$(PKG_INSTALL_DIR)" \
 		CC="$(TARGET_CC)" \
-		CFLAGS="$(TARGET_CFLAGS) -Wno-address-of-packed-member" \
+		CFLAGS="$(TARGET_CFLAGS) -Wno-address-of-packed-member -DHALOG_VERSION='$(PKG_VERSION)-$(PKG_RELEASE)'" \
 		LDFLAGS="$(TARGET_LDFLAGS)" \
 		admin/halog/halog
 endef

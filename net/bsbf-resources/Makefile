@@ -4,16 +4,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bsbf-resources
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_LICENSE:=AGPL-3.0-or-later
 PKG_MAINTAINER:=Chester A. Unal <chester.a.unal@arinc9.com>
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/bondingshouldbefree/bsbf-resources.git
-PKG_SOURCE_DATE:=2026-05-16
-PKG_SOURCE_VERSION:=733d3159e4c769a4fdd9e42ced53e346e2582beb
-PKG_MIRROR_HASH:=95c51a6b430f7b68e0b17d581fda7ac524d5e21e66375fdd4d4f830c61b2089a
+PKG_SOURCE_DATE:=2026-06-24
+PKG_SOURCE_VERSION:=8d0b6ee9b4a0f99c50e63a005c41fc7ddaa46045
+PKG_MIRROR_HASH:=e91a54270cf7e4fd0ef3f4ba3dd2c31f15854b7fc05fcaaa1b68d1627ef20ae2
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -71,6 +71,10 @@ endef
 define Build/Compile
 endef
 
+define Package/bsbf-bonding/conffiles
+/etc/bsbf/bsbf-bonding.conf
+endef
+
 define Package/bsbf-bonding/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/etc/init.d/bsbf-bonding-nft $(1)/etc/init.d
@@ -86,6 +90,20 @@ define Package/bsbf-bonding/install
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/resources-client/xray.json $(1)/usr/share/bsbf
 endef
 
+define Package/bsbf-bonding/prerm
+#!/bin/sh
+# Delete nftables rules.
+nft destroy table bsbf_bonding
+
+# Restore xray.
+rm -f /etc/xray/config.json
+uci set xray.enabled.enabled='0'
+uci commit
+service xray restart 2>/dev/null
+
+exit 0
+endef
+
 define Package/bsbf-client-web/install
 	$(INSTALL_DIR) $(1)/www/bsbf-client-web
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/resources-client/bsbf-client-web/index.html $(1)/www/bsbf-client-web
@@ -96,6 +114,10 @@ define Package/bsbf-client-web/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/resources-client/bsbf-client-web/cgi-bin/bsbf-client-web $(1)/www/cgi-bin
 endef
 
+define Package/bsbf-mptcp/conffiles
+/etc/bsbf/bsbf-mptcp-subflow-backup
+endef
+
 define Package/bsbf-mptcp/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/etc/init.d/bsbf-mptcp $(1)/etc/init.d
@@ -103,6 +125,20 @@ define Package/bsbf-mptcp/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/resources-client/bsbf-mptcp $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/resources-client/bsbf-mptcp-helper $(1)/usr/sbin
+endef
+
+define Package/bsbf-mptcp/prerm
+#!/bin/sh
+# Stop bsbf-mptcp init.d service.
+service bsbf-mptcp stop 2>/dev/null
+
+# Delete bsbf-mptcp files.
+rm -f /run/bsbf-mptcp-*
+
+# Flush the MPTCP endpoint table.
+ip mp e f
+
+exit 0
 endef
 
 define Package/bsbf-netspeed/install

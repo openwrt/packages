@@ -7,7 +7,10 @@ It is recommended to setup a dynamic DNS address with openwrt prior
 to starting the server. That is because during the first startup
 a certificate file which will contain the dynamic DNS name will be
 created. You can always regenerate the certificate by deleting
-/etc/ocserv/server-key.pem.
+/etc/ocserv/server-key.pem. Alternatively, an externally-supplied
+certificate may be provided (obtained for example from Let's Encrypt
+using the acme package); this too will require the server's DNS name
+to match that of the certicate.
 
 There are two approaches to setup the VPN. The proxy-arp approach (1)
 which provides clients with addresses of the LAN, and the "forwarding"
@@ -178,6 +181,28 @@ config rule
 
 Note, that the last two rules, enable connections to port 443 from the
 Internet. That is the port used by OpenConnect VPN.
+
+Using an externally-supplied server certificate
+===============================================
+
+By default, a self-signed SSL certificate is used to identify the server.
+A certificate obtained by an external Certificate Authority (such as
+Let's Encrypt) may be used instead.
+
+First, obtain the certificate and private key (for example using acme):
+it will be installed somewhere like `/etc/acme/<your-dns-name>`. The two
+relevant files are <your-dns-name>.key for the private key, and
+fullchain.cer for the certificate containing the full chain of trust.
+
+Then add the following configuration to the ocserv configuration file:
+
+```
+----/etc/config/ocserv-------------------------------------------
+config ocserv 'config'
+	option server_key <path-to-server-key.key>
+	option server_cert <path-to-fullchain-cert.cer>
+```
+
 
 
 Starting the server

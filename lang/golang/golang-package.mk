@@ -235,7 +235,6 @@ GO_PKG_DEFAULT_ASMFLAGS= \
 	$(if $(GO_PKG_ENABLE_SPECTRE),-spectre all)
 
 GO_PKG_DEFAULT_LDFLAGS= \
-	-buildid '$(SOURCE_DATE_EPOCH)' \
 	-linkmode external \
 	-extldflags '$(patsubst -z%,-Wl$(comma)-z$(comma)%,$(TARGET_LDFLAGS))'
 

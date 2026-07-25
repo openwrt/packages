@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-jsonpath-ng
 PKG_VERSION:=1.8.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com> 
 
 PYPI_NAME:=jsonpath-ng
@@ -15,6 +15,8 @@ PKG_HASH:=54252968134b5e549ea5b872f1df1168bd7defe1a52fed5a358c194e1943ddc3
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
+
+PKG_BUILD_DEPENDS:=python-setuptools/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -28,10 +30,7 @@ define Package/python3-jsonpath-ng
   TITLE:=Standard compliant implementation of JSONPath
   DEPENDS:= \
     +python3-light \
-    +python3-logging \
-    +python3-ply \
-    +python3-six \
-    +python3-decorator
+    +python3-logging
 endef
 
 define Package/python3-jsonpath-ng/description

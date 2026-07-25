@@ -22,6 +22,7 @@ if type extra_command 1>/dev/null 2>&1; then
 fi
 
 readonly packageName='adblock-fast'
+readonly initCompat='17'
 readonly _ucode="ucode -S -L /lib/${packageName} /lib/${packageName}/cli.uc --"
 _procd_svc_data=
 _fw4_restart=
@@ -108,6 +109,9 @@ load_validate_config() {
 		'config_update_enabled:bool:0' \
 		'config_update_url:string:https://cdn.jsdelivr.net/gh/openwrt/packages/net/adblock-fast/files/adblock-fast.config.update' \
 		'download_timeout:range(1,60):20' \
+		'download_connect_timeout:range(1,60):10' \
+		'download_max_time:or("", uinteger)' \
+		'download_allow_insecure:bool:1' \
 		'pause_timeout:range(1,600):20' \
 		'rpcd_token:string' \
 		'curl_additional_param:or("", string)' \
@@ -120,7 +124,7 @@ load_validate_config() {
 		'dns:or("dnsmasq.addnhosts", "dnsmasq.conf", "dnsmasq.ipset", "dnsmasq.nftset", "dnsmasq.servers", "smartdns.domainset", "smartdns.ipset", "smartdns.nftset", "unbound.adb_list"):dnsmasq.servers' \
 		'dnsmasq_instance:list(or("*", "-", uinteger, uci("dhcp", "@dnsmasq"))):*' \
 		'smartdns_instance:list(or("*", "-", uinteger, uci("smartdns", "@smartdns"))):*' \
-		'heartbeat_domain:or("-", string):heartbeat.melmac.ca' \
+		'heartbeat_domain:or("-", string):heartbeat.mossdef.org' \
 		'heartbeat_sleep_timeout:range(1,60):10' \
 		'dnsmasq_sanity_check:bool:1' \
 		'dnsmasq_validity_check:bool:0' \

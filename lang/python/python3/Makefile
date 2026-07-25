@@ -287,6 +287,9 @@ Package/python3/install:=:
 ifeq ($(HOST_OS),Linux)
 HOST_LDFLAGS += \
 	-Wl,--no-as-needed -lrt
+
+HOST_MAKE_VARS += \
+	TMPDIR=/tmp
 endif
 
 # Would be nice to be able to do this, but hosts are very fiddly

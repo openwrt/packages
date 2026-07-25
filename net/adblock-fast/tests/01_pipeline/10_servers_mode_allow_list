@@ -23,6 +23,8 @@ for domains from allowed list files, not just config-defined allowed_domain.
 			"update_config_sizes": "0",
 			"heartbeat_domain": "-",
 			"download_timeout": "10",
+			"download_connect_timeout": "10",
+			"download_allow_insecure": "1",
 			"pause_timeout": "20",
 			"curl_retry": "1",
 			"compressed_cache_dir": "TESTDIR/cache",

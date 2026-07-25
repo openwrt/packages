@@ -8,7 +8,7 @@
 #   - Exports internal functions for test access
 #   - Uses real shell commands (sed/sort/grep/awk) with mock UCI/UBus
 #
-# Usage: cd source.openwrt.melmac.ca/adblock-fast && bash tests/run_tests.sh [test_file...]
+# Usage: cd source.mossdef.org/adblock-fast && bash tests/run_tests.sh [test_file...]
 
 set -o pipefail
 

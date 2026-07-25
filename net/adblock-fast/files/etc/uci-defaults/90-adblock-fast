@@ -4,6 +4,15 @@
 
 readonly pkg='adblock-fast'
 
+# Source the init script for $initCompat (compat-era stamp) and $_ucode.
+readonly initFile="/etc/init.d/${pkg}"
+# shellcheck disable=SC1091
+[ -s "$initFile" ] && . "$initFile"
+
+# Capture the previously-stamped config_compat before we (re)stamp it at
+# the end of this script — used to gate one-shot migrations.
+old_compat="$(uci -q get "${pkg}.config.config_compat")"
+
 # ── Transition to list names ─────────────────────────────────────────
 # Adds 'name' to file_url sections that lack one, using the pristine default config
 
@@ -58,7 +67,34 @@ if [ -z "$(uci -q get "${pkg}.config.dnsmasq_sanity_check")" ] \
 	uci -q delete "${pkg}.config.sanity_check"
 fi
 
-# ── Commit if anything changed ───────────────────────────────────────
+# ── Migrate parallel_downloads bool → numeric cap (one-shot) ─────────
+# Pre-1.2.4 (compat < 15) treated parallel_downloads as a bool — '1' meant
+# "parallel on". 1.2.4 made it a numeric cap. Convert the legacy '1' to 8.
+# Once a 1.2.4+ run stamps config_compat below, this never re-fires.
+
+if [ "${old_compat:-14}" -lt 15 ] 2>/dev/null; then
+	[ "$(uci -q get "${pkg}.config.parallel_downloads")" = "1" ] && \
+		uci set "${pkg}.config.parallel_downloads=8"
+fi
+
+# ── Split download_timeout → download_connect_timeout (compat < 16) ──
+# Pre-compat-16, download_timeout doubled as the connection-phase timeout
+# (curl --connect-timeout, wget --timeout). It now means a transfer-stall
+# timeout, and the connection phase has its own download_connect_timeout.
+# Seed the new option from the user's existing download_timeout so their
+# old connect tolerance is preserved. Skip if download_connect_timeout is
+# already set (fresh installs ship one); never re-fires once compat >= 16.
+
+if [ "${old_compat:-14}" -lt 16 ] 2>/dev/null; then
+	if [ -z "$(uci -q get "${pkg}.config.download_connect_timeout")" ] \
+		&& [ -n "$(uci -q get "${pkg}.config.download_timeout")" ]; then
+		uci set "${pkg}.config.download_connect_timeout=$(uci -q get "${pkg}.config.download_timeout")"
+	fi
+fi
+
+# ── Version tracking  ──────────────────────────
+[ -n "$initCompat" ] && uci set "${pkg}.config.config_compat=$initCompat"
+uci set "${pkg}.config.config_version=$($_ucode version 2>/dev/null)"
 
 [ -n "$(uci -q changes "$pkg" 2>/dev/null)" ] && uci commit "$pkg"
 

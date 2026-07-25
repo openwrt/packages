@@ -6,10 +6,8 @@ START=99
 STOP=60
 USE_PROCD=1
 
-CONFIG_FILE="/etc/config/nfsd"
 NFS_D=/var/lib/nfs
 RPC_PIPEFS_D=/var/lib/nfs/rpc_pipefs
-NFSDCLD_PID=/var/run/nfsdcld.pid
 
 start_service() {
 	logger -t "nfsd" -p notice "Starting the NFSV4 daemon"
@@ -20,22 +18,23 @@ start_service() {
 	grep -q "$RPC_PIPEFS_D" /proc/mounts || mount -t rpc_pipefs sunrpc "$RPC_PIPEFS_D"
 
 	procd_open_instance
-	procd_set_param command /usr/sbin/nfsv4.exportd -f
+	procd_set_param command /usr/sbin/nfsv4.exportd -f -L
+	procd_set_param respawn
 	procd_close_instance
 
 	procd_open_instance
 	procd_set_param command /usr/sbin/rpc.idmapd -f
+	procd_set_param respawn
 	procd_close_instance
 
 	procd_open_instance
 	procd_set_param command /usr/sbin/nfsdcld
-	procd_append_param -F
 	procd_close_instance
 
 	/usr/sbin/exportfs -r
 
 	procd_open_instance
-	procd_set_param command /usr/sbin/rpc.nfsd -N 3
+	procd_set_param command /usr/sbin/rpc.nfsd -N 3 -V 4.0
 	procd_close_instance
 }
 
@@ -51,7 +50,27 @@ stop_service() {
 		) &
 }
 
+status_service() {
+	local n_running=0
+	local n_total=3
+	pgrep -x nfsv4.exportd > /dev/null && n_running=$((n_running + 1))
+	pgrep -x rpc.idmapd   > /dev/null && n_running=$((n_running + 1))
+	pgrep -x nfsdcld      > /dev/null && n_running=$((n_running + 1))
+	if [ "$n_running" -eq "$n_total" ]; then
+		echo "running"
+		return 0
+	elif [ "$n_running" -gt 0 ]; then
+		echo "running ($n_running/$n_total)"
+		return 0
+	else
+		echo "not running"
+		return 1
+	fi
+}
+
 service_triggers() {
-	export_dirs="$(while read -r mp _r; do echo "$mp "; done < /etc/exports)"
-	procd_add_reload_mount_trigger "$export_dirs"
+	local export_dir
+	for export_dir in $(awk 'NF && !/^#/ {print $1}' /etc/exports); do
+		procd_add_reload_mount_trigger "$export_dir"
+	done
 }

@@ -1,3 +1,9 @@
+Description: Update Makefiles
+ Makefile patch to include libwrap and libsensors libraries and install
+ extra MIB files.
+Author: Net-SNMP Packaging Team <pkg-net-snmp-devel@lists.alioth.debian.org>
+Reviewed-by: Craig Small <csmall@debian.org>
+Last-Update: 2021-09-20
 --- a/local/Makefile.in
 +++ b/local/Makefile.in
 @@ -101,7 +101,7 @@ tkmib.made: $(srcdir)/tkmib

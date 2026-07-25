@@ -30,7 +30,6 @@ strongswan-libtls|\
 strongswan-minimal|\
 strongswan-mod-addrblock|\
 strongswan-mod-aes|\
-strongswan-mod-af-alg|\
 strongswan-mod-agent|\
 strongswan-mod-attr|\
 strongswan-mod-attr-sql|\

@@ -1,0 +1,45 @@
+From 67e873a4eab151ce4808e84eaba6dbc924e86de4 Mon Sep 17 00:00:00 2001
+From: Nicolas Roche <nicolasroche898@gmail.com>
+Date: Fri, 5 Jun 2026 00:55:11
+Subject: [PATCH] ping plugin: fix use-after-free when re-resolving a host
+Signed-off-by: Nicolas Roche <nicolasroche898@gmail.com>
+
+ping_dispatch_all() iterates the pingobj host list and, when a host has
+missed ping_max_missed packets, re-resolves it by calling
+ping_host_remove() + ping_host_add(). ping_host_remove() frees the
+pinghost that the iterator currently points at, but the for-loop's
+increment then called ping_iterator_next(iter), dereferencing the freed
+node (iter->next) -- a use-after-free.
+
+It only crashes intermittently: the freed block usually still holds a
+valid ->next (or is reused and zeroed by the trailing ping_host_add),
+so the loop limps on; it segfaults when ping_host_add's strdup/getaddrinfo
+clobbers the freed block's ->next before it is re-read. Reproducible by
+monitoring a permanently-unreachable host with MaxMissed enabled.
+
+Fix: read the next pointer at the top of the loop body, before the
+re-resolve can free the current node. Loop body and semantics unchanged.
+
+Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
+---
+ src/ping.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+--- a/src/ping.c
++++ b/src/ping.c
+@@ -146,12 +146,13 @@ static int ping_dispatch_all(pingobj_t *
+   hostlist_t *hl;
+   int status;
+ 
+-  for (pingobj_iter_t *iter = ping_iterator_get(pingobj); iter != NULL;
+-       iter = ping_iterator_next(iter)) { /* {{{ */
++  for (pingobj_iter_t *iter = ping_iterator_get(pingobj), *next; iter != NULL;
++       iter = next) { /* {{{ */
+     char userhost[NI_MAXHOST];
+     double latency;
+     size_t param_size;
+ 
++    next = ping_iterator_next(iter); /* fetch next now: iter may be freed at line 213 (ping_host_remove) */
+     param_size = sizeof(userhost);
+     status = ping_iterator_get_info(iter,
+ #ifdef PING_INFO_USERNAME

@@ -18,7 +18,12 @@ validate_rtty_section() {
 		'token:maxlength(32)' \
 		'username:string' \
 		'heartbeat:uinteger' \
-		'verbose:bool:0'
+		'verbose:bool:0' \
+		'http_timeout:uinteger:30' \
+		'reconnect:bool:0' \
+		'cacert:file' \
+		'cert:file' \
+		'key:file'
 }
 
 start_rtty() {
@@ -47,17 +52,31 @@ start_rtty() {
 		id=$(sed 's/://g' /sys/class/net/$ifname/address | tr 'a-z' 'A-Z')
 	}
 
+	mkdir -p /var/etc
+	local conf_file=/var/etc/rtty.ini
+
+	printf '[rtty]\n' > "$conf_file"
+	printf 'id = %s\n' "$id" >> "$conf_file"
+	[ -n "$group" ] && printf 'group = %s\n' "$group" >> "$conf_file"
+	[ -n "$description" ] && printf 'description = %s\n' "$description" >> "$conf_file"
+	printf 'host = %s\n' "$host" >> "$conf_file"
+	[ -n "$port" ] && printf 'port = %s\n' "$port" >> "$conf_file"
+	[ -n "$token" ] && printf 'token = %s\n' "$token" >> "$conf_file"
+	[ -n "$username" ] && printf 'username = %s\n' "$username" >> "$conf_file"
+	[ -n "$heartbeat" ] && printf 'heartbeat = %s\n' "$heartbeat" >> "$conf_file"
+	[ -n "$http_timeout" ] && printf 'http-timeout = %s\n' "$http_timeout" >> "$conf_file"
+	[ "$reconnect" = "1" ] && printf 'reconnect = true\n' >> "$conf_file"
+	[ "$verbose" = "1" ] && printf 'verbose = true\n' >> "$conf_file"
+
+	printf '\n[ssl]\n' >> "$conf_file"
+	[ "$ssl" = "1" ] && printf 'enabled = true\n' >> "$conf_file"
+	[ "$insecure" = "1" ] && printf 'insecure = true\n' >> "$conf_file"
+	[ -n "$cacert" ] && printf 'cacert = %s\n' "$cacert" >> "$conf_file"
+	[ -n "$cert" ] && printf 'cert = %s\n' "$cert" >> "$conf_file"
+	[ -n "$key" ] && printf 'key = %s\n' "$key" >> "$conf_file"
+
 	procd_open_instance
-	procd_set_param command $BIN -h $host -I "$id" -a
-	[ -n "$group" ] && procd_append_param command -g "$group"
-	[ -n "$port" ] && procd_append_param command -p "$port"
-	[ -n "$description" ] && procd_append_param command -d "$description"
-	[ "$ssl" = "1" ] && procd_append_param command -s
-	[ "$insecure" = "1" ] && procd_append_param command -x
-	[ -n "$token" ] && procd_append_param command -t "$token"
-	[ -n "$username" ] && procd_append_param command -f "$username"
-	[ -n "$heartbeat" ] && procd_append_param command -i "$heartbeat"
-	[ "$verbose" = "1" ] && procd_append_param command -v
+	procd_set_param command $BIN --conf "$conf_file"
 	procd_set_param respawn
 	procd_close_instance
 }
