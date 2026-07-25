@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=openthread-br
 PKG_SOURCE_DATE:=2025-06-12
 PKG_SOURCE_VERSION:=2f3c799c7463c8f674754e65c53f78bc0bbcbd58
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=https://github.com/openthread/ot-br-posix.git
@@ -18,14 +18,6 @@ PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
-
-define Package/luci-app-openthread
-  CATEGORY:=LuCI
-  SECTION:=luci
-  SUBMENU:=3. Applications
-  TITLE:=LuCI Support for OpenThread Border Router
-  DEPENDS:=+luci-base +luci-lua-runtime
-endef
 
 define Package/openthread-br
   CATEGORY:=Network
@@ -75,22 +67,6 @@ CMAKE_OPTIONS += \
 
 TARGET_CFLAGS += -DOPENTHREAD_POSIX_CONFIG_DAEMON_SOCKET_BASENAME=\\\"/var/run/openthread-%s\\\"
 
-define Package/luci-app-openthread/install
-	$(INSTALL_DIR) \
-		$(1)/usr/lib/lua/luci/controller/admin \
-		$(1)/usr/lib/lua/luci/view/admin_thread \
-		$(1)/www/luci-static/resources
-	$(INSTALL_DATA) \
-		$(PKG_BUILD_DIR)/src/openwrt/controller/thread.lua \
-		$(1)/usr/lib/lua/luci/controller/admin
-	$(INSTALL_DATA) \
-		$(PKG_BUILD_DIR)/src/openwrt/view/admin_thread/* \
-		$(1)/usr/lib/lua/luci/view/admin_thread
-	$(INSTALL_DATA) \
-		$(PKG_BUILD_DIR)/src/openwrt/handle_error.js \
-		$(1)/www/luci-static/resources
-endef
-
 define Package/openthread-br/install
 	$(INSTALL_DIR) \
 		$(1)/etc/init.d \
@@ -101,5 +77,4 @@ define Package/openthread-br/install
 endef
 
 
-$(eval $(call BuildPackage,luci-app-openthread))
 $(eval $(call BuildPackage,openthread-br))
