@@ -1,0 +1,207 @@
+#!/bin/sh
+# Shebang line included so editors and shellcheck/shfmt know this contains
+# shell code
+
+# Helper functions for NUT server service handling
+
+# In recent (relevant) versions of shellcheck busybox is a valid shell type
+# shellcheck shell=busybox
+
+# config_load is done by the sourcing script, before executing any functions in
+# this file
+
+# Pre-requisite sourcing for functions this script uses
+# * /lib/functions.sh has been sourced
+# * /lib/functions/nut/nut-common.sh has been sourced
+
+# find_runas to find the RUNAS user should already have been
+# run by nut-server initscript prior to calling
+# ensure_usb_ups_access.
+
+# Ensure the RUNAS user has access to the USB UPS device
+ensure_usb_ups_access() {
+	local ups="$1"
+	local known_devname="$2"
+	local cfg_vendorid
+	local cfg_productid
+	local device_owner
+	local device_group
+	local usb_bus
+	local usb_dev
+	local device_path
+	local cur_devname
+	local device_serial
+	local sysfs_vendorid
+	local sysfs_productid
+	local serial
+	# When no USB bus or USB device is found, the value returned in each case,
+	# after printf,	will be '000', which is not a valid USB bus or USB device
+	# number (i.e. it is a missing data indicator).
+	local missing_usb_num="000"
+
+	device_owner="$RUNAS"
+	[ -n "$RUNAS" ] || {
+		log_error "No RUNAS user specified. Skipping ups '$ups'" nut-server-service.sh nut-server-service
+		return 1
+	}
+
+	device_group="$(id -gn "$RUNAS")" || {
+		log_error "Unable to find group for RUNAS='$RUNAS'. Skipping ups '$ups'" nut-server-service.sh nut-server-service
+		return 1
+	}
+
+	config_get cfg_vendorid "$ups" vendorid
+	# replacement in variable parameter expansion is supported by ash in OpenWrt
+	# since at least OpenWrt-24.10 (the previous stable release, which two
+	# versions older than the targetted next release of OpenWrt (after
+	# OpenWrt-25.12). This has been verified by the author of this script).
+	if [ -n "$cfg_vendorid" ] && ! check_valid_hex_number "${cfg_vendorid/0x/}"; then
+		log_error "Configured vendorid for '$ups' is not valid" nut-server-service.sh nut-server-service
+		return 1
+	fi
+
+	# Configuration might not have a vendorid. This is allowed, but we have
+	# nothing to do here in that case.
+	[ -n "$cfg_vendorid" ] || return 0
+
+	case "$cfg_vendorid" in
+	0x*)
+		cfg_vendorid="$(printf "%04x" "$cfg_vendorid")"
+		;;
+	*)
+		cfg_vendorid="$(printf "%04x" "0x$cfg_vendorid")"
+		;;
+	esac
+
+	config_get cfg_productid "$ups" productid
+	if [ -n "$cfg_productid" ] && ! check_valid_hex_number "${cfg_productid/0x/}"; then
+		log_error "Configured productid for '$ups' is not valid" nut-server-service.sh nut-server-service
+		return 1
+	fi
+
+	# Configuration might not have a productid. This is allowed, but we have
+	# nothing to do here in that case.
+	[ -n "$cfg_productid" ] || return 0
+
+	case "$cfg_productid" in
+	0x*)
+		cfg_productid="$(printf "%04x" "$cfg_productid")"
+		;;
+	*)
+		cfg_productid="$(printf "%04x" "0x$cfg_productid")"
+		;;
+	esac
+
+	config_get serial "$ups" serial
+
+	# $'\x' syntax is supported by ash in OpenWrt since at least OpenWrt-24.10
+	# (the previous stable release, which two versions older than the targetted
+	# next release of OpenWrt (after OpenWrt-25.12). This has been verified by
+	# the author of this script).
+	# shellcheck disable=SC3003
+	local NL=$'\n'
+
+	# Loop on the idVendor of all USB devices attached to the system
+	# We do not need any return values from this loop, which exists solely for the side-effects of
+	# setting the appropriate device permissions and group, so subshell is okay.
+	# IFS is set to newline *only*. Default IFS also includes tab and space
+	# Disable globbing. `find` will still use patterns.
+	set -f
+	find /sys/devices -name idVendor -a -path '*/usb[0-9]*/*' | while IFS="$NL" read -r vendor_path; do
+		set +f
+		usb_bus=""
+		usb_dev=""
+		device_path=""
+		cur_devname=""
+		device_serial=""
+		# Filter by vendor ID first
+
+		sysfs_vendorid="$(cat "$vendor_path")"
+		if [ -z "$sysfs_vendorid" ]; then
+			log_error "Could not read vendor ID from $vendor_path" nut-server-service.sh nut-server-service
+			continue
+		fi
+
+		if [ "$sysfs_vendorid" != "$cfg_vendorid" ]; then
+			continue
+		fi
+
+		device_path="$(dirname "$vendor_path")"
+
+		# Then filter by product ID
+
+		sysfs_productid="$(cat "$device_path/idProduct")"
+
+		if [ -z "$sysfs_productid" ]; then
+			log_error "Could not read product ID from $device_path" nut-server-service.sh nut-server-service
+			continue
+		fi
+		if [ "$sysfs_productid" != "$cfg_productid" ]; then
+			continue
+		fi
+
+		# Next filter by serial (number), if provided
+
+		# guard against disappearing device_path (e.g. due to 'bouncing' device connection)
+		if [ ! -e "$device_path" ]; then
+			continue
+		fi
+
+		# Only check against device serial number if a serial number is
+		# in the configuration for this UPS
+		if [ -n "$serial" ]; then
+			device_serial="$(cat "$device_path/serial" 2>/dev/null)"
+
+			if [ "$serial" != "$device_serial" ]; then
+				continue
+			fi
+		fi
+
+		usb_bus="$(printf "%03d" "$(cat "$device_path/busnum")")"
+		usb_dev="$(printf "%03d" "$(cat "$device_path/devnum")")"
+
+		# usb_bus and usb_dev must each be at least 001
+		# a missing value will be present as 000 due to 'printf "%03d"'
+		if [ "$usb_bus" = "$missing_usb_num" ] || [ "$usb_dev" = "$missing_usb_num" ]; then
+			# If this sysfs device is not valid, keep looking (and ignore this
+			# sysfs device).
+			continue
+		else
+			# If we are called from hotplug, we know the device name, so skip any other devices
+			cur_devname="/dev/bus/usb/$usb_bus/$usb_dev"
+			if [ -n "$known_devname" ] && [ "$known_devname" != "$cur_devname" ]; then
+				continue
+			fi
+
+			# guard against disappearing cur_devname (e.g. due to 'bouncing' device connection)
+			if [ -e "$cur_devname" ]; then
+				chmod 0660 "$cur_devname" || {
+					log_error "'chmod' failed for $cur_devname (ups '$ups')" nut-server-service.sh nut-server-service
+					continue
+				}
+				# Re-check in case device disappeared after chmod
+				if [ -e "$cur_devname" ]; then
+					chown "${device_owner}:${device_group}" "$cur_devname" || {
+						log_error "'chown' failed for $cur_devname (ups '$ups')" nut-server-service.sh nut-server-service
+						continue
+					}
+				fi
+			else
+				continue
+			fi
+
+			# Serial numbers are defined as unique, so do not loop further (on /sys/devices - while),
+			# if serial was present and matched
+			if [ -n "$serial" ]; then
+				# Break out of while loop (so we do not process more 'find' results)
+				break
+			fi
+			# If a serial number is not provided we need all vendor:product matches
+			# to have permissions for NUT as we do not know the method used
+			# to match UPS device to a configuration, in this script
+			# (but if we have a known_devname, limit to that device)
+		fi
+		set -f
+	done
+	set +f
+}

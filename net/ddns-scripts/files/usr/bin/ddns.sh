@@ -33,6 +33,13 @@ usage() {
 	exit "$code"
 }
 
+version() {
+	local version="unknown"
+
+	[ -f "${DDNS_PACKAGE_DIR}/version" ] && version="$(cat "${DDNS_PACKAGE_DIR}/version")"
+	printf '%s\n' "ddns-scripts ${version}"
+}
+
 action_update() {
 	local cacert
 
@@ -160,6 +167,9 @@ main() {
 	[ "$#" -eq 0 ] && usage "1"
 
 	case "${cmd}" in
+		-V|--version)
+			version
+			;;
 		service)
 			sub_service "${action}" "${service}"
 			;;

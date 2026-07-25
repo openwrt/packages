@@ -1,5 +1,0 @@
-"")
-	[ -f /var/run/nut/disable-hotplug ] || \
-		/etc/init.d/nut-server enabled && perform_libhid_action
-	;;
-esac

@@ -4,7 +4,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=prometheus-node-exporter-ucode
 PKG_VERSION:=2024.02.07
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=Andre Heider <a.heider@gmail.com>
 PKG_LICENSE:=Apache-2.0
@@ -65,6 +65,7 @@ define Collector
 endef
 
 $(eval $(call Collector,dnsmasq,Dnsmasq collector,@dnsmasq))
+$(eval $(call Collector,nat_traffic,NAT traffic collector,))
 $(eval $(call Collector,ltq-dsl,Lantiq/Intel/MaxLinear DSL collector,@ltq-dsl-app))
 $(eval $(call Collector,netstat,netstat collector,))
 $(eval $(call Collector,openwrt,OpenWrt collector,))

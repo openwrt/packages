@@ -1,7 +1,7 @@
 #config host
 #	option upsname upsname
 #	option hostname localhost
-#	option port # optional port number
+#	option port <number> # optional port number
 #	option displayname "Display Name"
 
 config upsset

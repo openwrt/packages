@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fwupd
-PKG_VERSION:=2.1.1
+PKG_VERSION:=2.1.6
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/fwupd/fwupd/releases/download/$(PKG_VERSION)
-PKG_HASH:=0ae697f1f2011571310cef5d96429d8a5d541f73b0025bd2b622c9c7f4fe05b6
+PKG_HASH:=517a0d9d4b00f3dbd72c36f55085bd5dbdc20e7a2d6cfc341c4be60a903bcd8d
 
 PKG_MAINTAINER:=Lukas Voegl <lvoegl@tdt.de>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -21,10 +21,9 @@ PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:fwupd:fwupd
 
 PKG_BUILD_DEPENDS:= \
-	glib2/host \
 	python3/host \
-	python-packaging/host \
-	python-jinja2/host
+	python-jinja2/host \
+	gettext-full/host
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -50,15 +49,14 @@ define Package/fwupd-libs
 	+glib2 \
 	+dbus \
 	+libxmlb \
-	+libjcat \
-	+libprotobuf-c \
 	+libusb-1.0 \
 	+libsqlite3 \
 	+libcurl \
 	+liblzma \
-	+FWUPD_PLUGIN_FLASHROM:libflashrom \
+	+FWUPD_GNUTLS:libgnutls \
+	+FWUPD_OPENSSL:libopenssl \
 	+FWUPD_LIBDRM:libdrm \
-	+FWUPD_CBOR:libcbor \
+	+FWUPD_PLUGIN_DEVLINK:libmnl \
 	+FWUPD_PLUGIN_MODEMMANAGER:modemmanager \
 	+FWUPD_PLUGIN_MODEMMANAGER:libqmi \
 	+FWUPD_PLUGIN_MODEMMANAGER:libmbim
@@ -100,22 +98,22 @@ MESON_ARGS += \
 	-Dblkid=disabled \
 	-Dbluez=disabled \
 	-Dbuild=all \
-	-Dcbor=$(if $(CONFIG_FWUPD_CBOR),enabled,disabled) \
 	-Ddocs=disabled \
 	-Dfirmware-packager=$(if $(CONFIG_FWUPD_FIRMWARE_PACKAGER),true,false) \
 	-Dfish_completion=false \
-	-Dgnutls=disabled \
+	-Dgnutls=$(if $(CONFIG_FWUPD_GNUTLS),enabled,disabled) \
 	-Dhsi=$(if $(CONFIG_FWUPD_HSI),enabled,disabled) \
 	-Dintrospection=disabled \
 	-Dlibdrm=$(if $(CONFIG_FWUPD_LIBDRM),enabled,disabled) \
-	-Dlibmnl=disabled \
+	-Dlibmnl=$(if $(CONFIG_FWUPD_PLUGIN_DEVLINK),enabled,disabled) \
 	-Dlogind=disabled \
 	-Dlvfs=$(if $(CONFIG_FWUPD_LVFS),true,false) \
 	-Dman=false \
 	-Dmetainfo=false \
+	-Dp2p_policy=none \
+	-Dopenssl=$(if $(CONFIG_FWUPD_OPENSSL),enabled,disabled) \
 	-Dudev_hotplug=false \
 	-Dpassim=disabled \
-	-Dplugin_flashrom=$(if $(CONFIG_FWUPD_PLUGIN_FLASHROM),enabled,disabled) \
 	-Dplugin_modem_manager=$(if $(CONFIG_FWUPD_PLUGIN_MODEMMANAGER),enabled,disabled) \
 	-Dplugin_uefi_capsule_splash=false \
 	-Dpolkit=disabled \

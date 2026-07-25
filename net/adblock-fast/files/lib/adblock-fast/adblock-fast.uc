@@ -2224,8 +2224,8 @@ function _build_procd_data() {
 	result.outputFile = dns_output.file;
 	result.outputCache = dns_output.cache;
 
-	let gzip_path = cfg.compressed_cache_dir
-		? cfg.compressed_cache_dir + '/' + dns_output.gzip
+	let gzip_path = cfg.compressed_cache
+		? dns_output.gzip
 		: '';
 	result.outputGzip = gzip_path;
 
@@ -2935,8 +2935,8 @@ function get_init_status(name) {
 
 	// Gzip path (for live file-existence checks)
 	let gzip_path = svc_data?.outputGzip || '';
-	if (!gzip_path && cfg.compressed_cache_dir)
-		gzip_path = cfg.compressed_cache_dir + '/' + dns_output.gzip;
+	if (!gzip_path && cfg.compressed_cache)
+		gzip_path = dns_output.gzip;
 
 	let result = {};
 	result[name] = {

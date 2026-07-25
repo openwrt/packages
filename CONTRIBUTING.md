@@ -195,22 +195,56 @@ To simplify review and require less human resources, a CI tests all packages.
 Passing CI tests are not a hard requirement but a good indicator what the
 Buildbots will think about the proposed patch.
 
-The CI builds modified packages for multiple architectures using the latest
-snapshot SDK. For supported architectures (`aarch64_generic`,
-`arm_cortex-a15_neon-vfpv4`, `i386_pentium4` and `x86_64`) an additional
-runtime test is executed. A running OpenWrt is simulated which tries to install
-created packages and runs a script called `test.sh` located next to the package
-Makefile. The script is executed with the two arguments `PKG_NAME` and
-`PKG_VERSION`. The `PKG_NAME` can be used to distinguish package variants, e.g.
-`foobar` vs. `foobar-full`. The `PKG_VERSION` can be used for a trivial test
-checking if `foobar --version` prints the correct version.
+The CI builds modified packages for multiple
+architectures using the latest snapshot SDK. For supported architectures
+(`aarch64_generic`, `arm_cortex-a15_neon-vfpv4`, `i386_pentium-mmx`,
+`mips_24kc` and `x86_64`) an additional runtime test is executed inside a
+Docker container with QEMU user-mode emulation, simulating a running OpenWrt
+system.
+
+### Generic tests
+
+The CI automatically runs a set of **generic tests** on every installed
+package:
+
+- **Executable check** — verifies that files installed in standard executable
+  paths (`/usr/bin/`, `/usr/sbin/`, etc.) are actually executable.
+- **Version check** — attempts to detect the package version by running each
+  executable with common flags (`--version`, `-V`, `--help`, etc.) and checking
+  the output for `PKG_VERSION`.
+- **Hardcoded path check** — scans ELF binaries for leftover build directory
+  paths (`/build_dir/`).
+- **Strip check** — warns if ELF binaries are not stripped.
+- **Linked library check** — verifies that all shared library dependencies are
+  present on the system.
+- **SONAME check** — for libraries in standard library paths, verifies that the
+  SONAME is set correctly and the corresponding symlink exists.
+
+### Test scripts
+
+In addition to the generic tests, package maintainers can provide up to three
+optional shell scripts placed next to the package Makefile:
+
+#### `test.sh` — Functional test
+
+A package-specific functional test script that runs **in addition** to the
+generic tests. This is useful for verifying functionality that the generic
+checks cannot cover (e.g. importing a Python module, encrypting/decrypting
+data, or testing a specific command-line workflow). The following environment
+variables are available:
+
+| Variable      | Description                                            |
+| ------------- | ------------------------------------------------------ |
+| `PKG_NAME`    | Package name including variant (e.g. `foobar-full`)    |
+| `PKG_VERSION` | Upstream version without the OpenWrt release suffix    |
+| `CI_HELPERS`  | Path to `ci_helpers.sh` providing colored output utils |
 
 The following snippet shows a script that tests different binaries depending on
-what IPK package was installed. The `gpsd` Makefile produces both a `gpsd` and
-a `gpsd-clients` IPK packages.
+what package was installed. The `gpsd` Makefile produces both a `gpsd` and
+a `gpsd-clients` package.
 
 ```shell
- #!/bin/sh
+#!/bin/sh
 
 case "$1" in
     "gpsd")
@@ -220,4 +254,48 @@ case "$1" in
         cgps -V 2>&1 | grep "$2"
         ;;
 esac
+```
+
+#### `test-version.sh` — Version check override
+
+When the generic version check cannot detect the version automatically (e.g.
+the binary does not support `--version` or reports it in a non-standard way),
+a `test-version.sh` script can override the version check logic. When this
+script is present, the generic version detection is skipped entirely and the
+script is responsible for verifying the version.
+
+The script receives `PKG_NAME` and `PKG_VERSION` as environment variables and
+should use a `case` statement to handle individual sub-packages. Packages that
+have no executable or cannot report their version should `exit 0`. Unknown
+packages should `exit 1`.
+
+```shell
+#!/bin/sh
+
+# shellcheck shell=busybox
+
+case "$PKG_NAME" in
+tor)
+    tor --version | grep -F "$PKG_VERSION"
+    ;;
+tor-geoip)
+    # Data-only package, no version to check
+    exit 0
+    ;;
+*)
+    echo "Untested package: $PKG_NAME" >&2
+    exit 1
+    ;;
+esac
+```
+
+#### `pre-test.sh` — Pre-test setup
+
+A script that runs **before** the package is installed. This can be used to
+install additional dependencies required for testing that are not part of the
+package itself.
+
+```shell
+#!/bin/sh
+apk add openssl-util
 ```

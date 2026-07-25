@@ -1,8 +1,8 @@
 #!/bin/sh
 [ "$1" = python3-asgiref ] || exit 0
-python3 - << 'EOF'
+python3 - << EOF
 import asgiref
-assert asgiref.__version__, "asgiref version is empty"
+assert asgiref.__version__ == "$2", "Incorrect asgiref version"
 
 from asgiref.sync import async_to_sync, sync_to_async
 import asyncio

@@ -5,9 +5,9 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/raspberrypi/rpi-eeprom
-PKG_SOURCE_DATE:=2025-05-08
-PKG_SOURCE_VERSION:=1bb6edeff52c6d30c358f0a7e7a0db47427a7e21
-PKG_MIRROR_HASH:=3c1a9d91eb1d77df97084497c7e1ceac770dbefeac3d6544c3b4514d225e03f4
+PKG_SOURCE_DATE:=2026-05-27
+PKG_SOURCE_VERSION:=05d94be4554ce44a057bfce8d0dd37d951703dab
+PKG_MIRROR_HASH:=d9e9f6cf293cf0b7fb8d651b21fe48bd7553a56bba3796af27d8874423a0f47c
 
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 PKG_LICENSE:=BSD-3-Clause Custom
@@ -76,7 +76,7 @@ define Package/bcm2711-eeprom/install
 	$(INSTALL_DIR) $(1)/lib/firmware/raspberrypi/bootloader-2711/latest
 
 	$(CP) $(PKG_BUILD_DIR)/firmware-2711/release-notes.md $(1)/lib/firmware/raspberrypi/bootloader-2711
-	$(CP) $(PKG_BUILD_DIR)/firmware-2711/latest/pieeprom-2025-05-08.bin $(1)/lib/firmware/raspberrypi/bootloader-2711/latest
+	$(CP) $(PKG_BUILD_DIR)/firmware-2711/latest/pieeprom-2026-05-17.bin $(1)/lib/firmware/raspberrypi/bootloader-2711/latest
 	$(CP) $(PKG_BUILD_DIR)/firmware-2711/latest/recovery.bin $(1)/lib/firmware/raspberrypi/bootloader-2711/latest
 	$(CP) $(PKG_BUILD_DIR)/firmware-2711/latest/vl805-000138c0.bin $(1)/lib/firmware/raspberrypi/bootloader-2711/latest
 endef
@@ -86,7 +86,7 @@ define Package/bcm2712-eeprom/install
 	$(INSTALL_DIR) $(1)/lib/firmware/raspberrypi/bootloader-2712/latest
 
 	$(CP) $(PKG_BUILD_DIR)/firmware-2712/release-notes.md $(1)/lib/firmware/raspberrypi/bootloader-2712
-	$(CP) $(PKG_BUILD_DIR)/firmware-2712/latest/pieeprom-2025-05-08.bin $(1)/lib/firmware/raspberrypi/bootloader-2712/latest
+	$(CP) $(PKG_BUILD_DIR)/firmware-2712/latest/pieeprom-2026-05-26.bin $(1)/lib/firmware/raspberrypi/bootloader-2712/latest
 	$(CP) $(PKG_BUILD_DIR)/firmware-2712/latest/recovery.bin $(1)/lib/firmware/raspberrypi/bootloader-2712/latest
 endef
 

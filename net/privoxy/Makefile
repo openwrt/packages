@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=privoxy
 PKG_VERSION:=4.1.0
 PKG_REAL_VERSION:=$(PKG_VERSION)-stable
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-stable-src.tar.gz
 PKG_SOURCE_URL:=@SF/ijbswa

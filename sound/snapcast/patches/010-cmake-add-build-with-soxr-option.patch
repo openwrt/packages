@@ -1,0 +1,38 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mirko Vogt <foss@mirko.in>
+Date: Mon, 20 Jul 2026 12:00:00 +0000
+Subject: [PATCH] cmake: add an explicit BUILD_WITH_SOXR option
+
+Upstream looks SOXR up with an unconditional pkg_search_module(), so the
+optional resampling feature is enabled purely by whether libsoxr is
+discoverable in the build environment. In a shared package staging that
+is non-deterministic. Guard the lookup behind a real option (default ON,
+preserving previous behaviour) and mark it REQUIRED, so an
+enabled-but-missing libsoxr fails at configure time instead of silently
+dropping the feature.
+
+Signed-off-by: Mirko Vogt <foss@mirko.in>
+Assisted-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
+---
+ CMakeLists.txt | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index ef2252d..eb76646 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -264,7 +264,10 @@ if(NOT WIN32 AND NOT ANDROID)
+     endif()
+   endif()
+ 
+-  pkg_search_module(SOXR soxr)
++  option(BUILD_WITH_SOXR "Build with SOXR resampling support" ON)
++  if(BUILD_WITH_SOXR)
++    pkg_search_module(SOXR REQUIRED soxr)
++  endif()
+   if(SOXR_FOUND)
+     add_compile_definitions(HAS_SOXR)
+   else()
+-- 
+2.47.3
+
