@@ -59,13 +59,28 @@ Therefore, firewall support is disabled completely.
 This can be revised once the following feature request is implemented:
 https://github.com/openthread/ot-br-posix/issues/1675
 
-### mDNSResponder
+### mDNS
 
-The package depends on mDNSResponder. The alternative, Avahi, depends on D-Bus,
-which is not something I feel comfortable with running on any router. While
-there are Avahi packages without D-Bus support, using OpenThread Border Router
-with Avahi requires libavahi-client, and this requires Avahi to be built with
-D-Bus support.
+The package uses OpenThread's internal mDNS implementation
+(`-DOTBR_MDNS=openthread`), which is upstream's default. This drops the
+mDNSResponder dependency entirely: no separate daemon, and no Avahi, whose
+libavahi-client requirement would have pulled in D-Bus.
+
+The internal implementation advertises on a single infrastructure interface,
+the one selected by the `backbone_network` option. Anything that needs to be
+announced on more than one interface still needs a general-purpose responder.
+
+It coexists with umdns, which remains the provider for other packages'
+services. Both bind the wildcard address on port 5353 with SO_REUSEADDR, which
+is what admits the second bind and gets multicast delivered to both, and they
+never contend for a name: OpenThread's mDNS names its host after the Thread
+extended address, while umdns keeps `<hostname>.local`.
+
+Only multicast reaches both. A unicast datagram to port 5353 is delivered to
+one socket, so a unicast reply meant for one daemon can be received by the
+other. umdns does set SO_REUSEPORT, but only on a retry after its own bind
+fails, and that does not happen here because SO_REUSEADDR already admits the
+bind, so no SO_REUSEPORT group forms in either start order.
 
 ### REST Server
 

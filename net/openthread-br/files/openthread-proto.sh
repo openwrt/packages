@@ -21,18 +21,6 @@ proto_openthread_add_prefix() {
 	[ -n "$prefix" ] && $OTCTL prefix add $prefix
 }
 
-proto_openthread_check_service() {
-	service="$1"
-	ret=1
-	json_init
-	json_add_string name "$service"
-	ubus call service list "$(json_dump)" | jsonfilter -e '@[*].instances[*]["running"]' > /dev/null
-	ret=$?
-	json_cleanup
-
-	return "$ret"
-}
-
 proto_openthread_init_config() {
 	proto_config_add_array 'prefix:list(string)'
 	proto_config_add_boolean verbose
@@ -71,9 +59,6 @@ proto_openthread_setup() {
 	[ -n "$backbone_ifname" ] || proto_openthread_setup_error "$interface" MISSING_BACKBONE_IFNAME
 	[ -n "$device" ] || proto_openthread_setup_error "$interface" MISSING_DEVICE
 	[ -n "$radio_url" ] || proto_openthread_setup_error "$interface" MISSING_RADIO_URL
-
-	# run in subshell to prevent wiping json data needed for prefixes
-	( proto_openthread_check_service mdnsd ) || proto_openthread_setup_error "$interface" MISSING_SVC_MDNSD
 
 	opts="--auto-attach=0"
 	[ "$verbose" -eq 0 ] || append opts -v
