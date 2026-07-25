@@ -70,6 +70,10 @@ D-Bus support.
 ### REST Server
 
 The REST server is enabled to make this package compatible with Home Assistant.
+It listens on 127.0.0.1 by default. `rest_listen_address` and
+`rest_listen_port` can move it, but the API is unauthenticated and can read and
+replace the Thread dataset — including the network key — so any non-loopback
+address must be firewalled to trusted hosts.
 
 ### TREL support
 
@@ -112,9 +116,13 @@ config interface 'thread'
         option verbose '0'
 ```
 
-Prefix and verbose are optional. Everything else is required. The protocol
-handler will fail if a required setting is missing. If something isn't working,
-check ifstatus for the OpenThread interface:
+Only backbone_network, device and radio_url are required; the protocol handler
+fails the interface if one of them is missing, or if backbone_network names an
+interface that has no device. Everything else -- dataset, prefix, verbose,
+rest_listen_address and rest_listen_port -- is optional. See
+[REST Server](#rest-server) before moving the REST API off the loopback
+default. If something isn't working, check ifstatus for the
+OpenThread interface:
 
 ```
 # ifup thread
