@@ -41,9 +41,7 @@ define Package/openthread-br
 	+libreadline \
 	+libstdcpp \
 	+libubox \
-	+libubus \
-	+mdnsd \
-	+mdnsresponder
+	+libubus
 endef
 
 define Package/openthread-br/description
@@ -63,7 +61,7 @@ CMAKE_OPTIONS += \
 	-DOT_TARGET_OPENWRT=ON \
 	-DOTBR_BACKBONE_ROUTER=ON \
 	-DOTBR_BORDER_ROUTING=ON \
-	-DOTBR_MDNS=mDNSResponder \
+	-DOTBR_MDNS=openthread \
 	-DOTBR_NAT64=OFF \
 	-DOTBR_OPENWRT=ON \
 	-DOTBR_PRODUCT_NAME=BorderRouter \
