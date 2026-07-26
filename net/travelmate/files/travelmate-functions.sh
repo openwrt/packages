@@ -1496,7 +1496,7 @@ f_main() {
 										return 0
 									else
 										uci -q revert "wireless"
-										f_check "rev" "false"
+										f_check "rev" "false" "${sta_radio}" "${sta_essid}" "${sta_bssid}"
 										if [ "${retrycnt}" -eq "${trm_maxretry}" ]; then
 											if [ -n "${trm_uplinkcfg}" ]; then
 												uci_set "travelmate" "${trm_uplinkcfg}" "enabled" "0"
