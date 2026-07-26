@@ -2393,10 +2393,8 @@ f_report() {
 			cnt="1"
 			network_find_wan iface_v4 && network_get_ipaddr ip_v4 "${iface_v4}"
 			network_find_wan6 iface_v6 && network_get_ipaddr6 ip_v6 "${iface_v6}"
-			if [ -n "${ip_v4}" ] || [ -n "${ip_v6}" ]; then
-				f_fetch
-				printf '%s' ",[{}" >"${map_jsn}"
-			fi
+			f_fetch
+			printf '%s' ",[{}" >"${map_jsn}"
 			for ip in ${ip_v4} ${ip_v6}; do
 				(
 					"${adb_fetchcmd}" ${adb_geoparm} "${adb_geourl}/${ip}" 2>>"${adb_errorlog}" |
@@ -2406,7 +2404,7 @@ f_report() {
 				cnt="$((cnt + 1))"
 			done
 			wait
-			if [ -s "${map_jsn}" ] && [ "${cnt}" -lt "45" ]; then
+			if [ "${cnt}" -lt "45" ]; then
 				map_seen=""
 				json_init
 				if json_load_file "${report_jsn}" >/dev/null 2>&1; then
