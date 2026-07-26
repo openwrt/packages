@@ -1,14 +1,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=udp-broadcast-relay-redux
-PKG_RELEASE:=3
+PKG_RELEASE:=1
 PKG_LICENSE:=GPL-2.0
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/udp-redux/udp-broadcast-relay-redux
-PKG_SOURCE_DATE:=2021-04-05
-PKG_SOURCE_VERSION:=671372938b55a186625a80516f86e8b9948c977a
-PKG_MIRROR_HASH:=c506e32767233c7dcf079f45055ba14ecca70add5921141c4d9d8fe8499e7a65
+PKG_SOURCE_URL:=https://github.com/accwebs/udp-broadcast-relay-redux
+PKG_SOURCE_DATE:=2026-07-26
+PKG_SOURCE_VERSION:=aa9adef316824e88a28b0e19a4a7a29ababe92fc
+PKG_MIRROR_HASH:=5462b1d17b8e8e0bdc873ad778fc3d7760fcff39f0b49cbb535f6cf249966272
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -17,7 +17,7 @@ define Package/udp-broadcast-relay-redux
   CATEGORY:=Network
   SUBMENU:=Routing and Redirection
   TITLE:=listens for packets on a specified UDP broadcast port and replays them
-  URL:=https://github.com/udp-redux/udp-broadcast-relay-redux
+  URL:=https://github.com/accwebs/udp-broadcast-relay-redux
 endef
 
 define Package/udp-broadcast-relay-redux/description
