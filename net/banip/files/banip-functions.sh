@@ -2047,7 +2047,7 @@ f_lookup() {
 f_report() {
 	local report_jsn report_txt tmp_val table_json item sep table_sets set_cnt set_inbound set_outbound set_cntinbound set_cntoutbound set_proto set_dport set_details
 	local cnt ip expr detail jsnval timestamp autoadd_allow autoadd_block sum_sets sum_setinbound sum_setoutbound sum_cntelements sum_cntinbound sum_cntoutbound quantity
-	local chunk jsn table_jsn set_jsn map_jsn chain set_elements sum_setelements sum_synflood sum_udpflood sum_icmpflood sum_ctinvalid sum_tcpinvalid sum_setports sum_bcp38 output="${1}"
+	local chunk jsn table_jsn set_jsn map_jsn chain set_elements uplink_ip uplink_list sum_setelements sum_synflood sum_udpflood sum_icmpflood sum_ctinvalid sum_tcpinvalid sum_setports sum_bcp38 output="${1}"
 
 	f_conf
 	f_mkdir "${ban_reportdir}"
@@ -2255,19 +2255,25 @@ f_report() {
 		if [ "${ban_nftcount}" = "1" ] && [ "${ban_map}" = "1" ] && [ -s "${report_jsn}" ]; then
 			cnt="1"
 			f_getdl
+			printf '%s' ",[{}" >>"${map_jsn}"
 			json_init
 			if json_load_file "${ban_rtfile}" >/dev/null 2>&1; then
 				json_get_values jsnval "active_uplink" >/dev/null 2>&1
-				jsnval="${jsnval//\/[0-9][0-9]/}"
-				jsnval="${jsnval//\/[0-9]/}"
-				jsnval="\"${jsnval// /\", \"}\""
-				if [ "${jsnval}" != '""' ]; then
-					{
-						printf '%s' ",[{}"
-						"${ban_fetchcmd}" ${ban_geoparm} "[ ${jsnval} ]" "${ban_geourl}" 2>>"${ban_errorlog}" |
-							"${ban_jsoncmd}" -qe '@[*&&@.status="success"]' | "${ban_awkcmd}" -v feed="homeIP" '{printf ",{\"%s\": %s}\n",feed,$0}'
-					} >>"${map_jsn}"
+				for uplink_ip in ${jsnval}; do
+					uplink_ip="${uplink_ip%%/*}"
+					if [ -n "${uplink_ip}" ] && [ "${uplink_ip}" != "-" ]; then
+						uplink_list="${uplink_list}${uplink_list:+, }\"${uplink_ip}\""
+					fi
+				done
+			fi
+			if [ -n "${uplink_list}" ]; then
+				"${ban_fetchcmd}" ${ban_geoparm} "[ ${uplink_list} ]" "${ban_geourl}" 2>>"${ban_errorlog}" |
+					"${ban_jsoncmd}" -qe '@[*&&@.status="success"]' |
+					"${ban_awkcmd}" -v feed="homeIP" '{printf ",{\"%s\": %s}\n",feed,$0}' >"${map_jsn}.home"
+				if [ -s "${map_jsn}.home" ]; then
+					"${ban_catcmd}" "${map_jsn}.home" >>"${map_jsn}"
 				fi
+				"${ban_rmcmd}" -f "${map_jsn}.home"
 			fi
 			if [ -s "${map_jsn}" ]; then
 				json_init
