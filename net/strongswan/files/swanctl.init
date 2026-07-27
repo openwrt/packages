@@ -738,7 +738,7 @@ config_strongswan_generate() {
 }
 
 prepare_env() {
-	mkdir -p /var/ipsec /var/swanctl
+	mkdir -p /var/ipsec /var/swanctl/conf.d
 
 	config_load ipsec
 
