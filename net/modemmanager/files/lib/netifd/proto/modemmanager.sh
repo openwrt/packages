@@ -288,6 +288,7 @@ proto_modemmanager_init_config() {
 	proto_config_add_string init_password
 	proto_config_add_string init_user
 	proto_config_add_string init_apn
+	proto_config_add_string multiplex
 	proto_config_add_defaults
 }
 
@@ -575,7 +576,7 @@ proto_modemmanager_setup() {
 	local operatorname operatorid registration accesstech signalquality
 	local allowedmode preferredmode
 
-	local device apn allowedauth username password pincode
+	local device apn allowedauth username password pincode multiplex
 	local iptype plmn metric signalrate allow_roaming
 	local force_connection
 
@@ -585,7 +586,7 @@ proto_modemmanager_setup() {
 
 	local address prefix gateway mtu dns1 dns2
 
-	json_get_vars device apn allowedauth username password
+	json_get_vars device apn allowedauth username password multiplex
 	json_get_vars pincode iptype sourcefilter plmn metric signalrate allow_roaming
 	json_get_vars allowedmode preferredmode force_connection
 
@@ -720,6 +721,7 @@ proto_modemmanager_setup() {
 	done
 	# Append options to 'connectargs' variable
 	connectargs=""
+	[ -n "$multiplex" ] && append_param "multiplex=${multiplex}"
 	append_param "apn=${apn}"
 	append_param "allow-roaming=${allow_roaming}"
 	append_param "${iptype:+ip-type=${iptype}}"
