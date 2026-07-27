@@ -19,7 +19,7 @@
 
 	## This parameter controls whether a remote client is allowed or required to use SMB encryption.
 	## It has different effects depending on whether the connection uses SMB1 or SMB2 and newer:
-    ## If the connection uses SMB1, then this option controls the use of a Samba-specific extension to the SMB protocol introduced in Samba 3.2 that makes use of the Unix extensions.
+	## If the connection uses SMB1, then this option controls the use of a Samba-specific extension to the SMB protocol introduced in Samba 3.2 that makes use of the Unix extensions.
 	## If the connection uses SMB2 or newer, then this option controls the use of the SMB-level encryption that is supported in SMB version 3.0 and above and available in Windows 8 and newer. 
 	## (default/auto,desired,required,off)
 	#smb encrypt = default
@@ -29,9 +29,6 @@
 
 	## map unknow users to guest
 	map to guest = Bad User
-
-	## allow client access to accounts that have null passwords. 
-	null passwords = yes
 
 	## The old plaintext passdb backend. Some Samba features will not work if this passdb backend is used. (NOTE: enabled for size reasons)
 	## (tdbsam,smbpasswd,ldapsam)
