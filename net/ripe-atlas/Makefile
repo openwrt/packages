@@ -23,6 +23,9 @@ PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
+# Restore busybox's compiler-driver LD; OpenWrt overrides it with raw ld.bfd.
+MAKE_FLAGS += LD="$(TARGET_CC) -nostdlib"
+
 define Package/ripe-atlas/Default
   SECTION:=net
   CATEGORY:=Network
