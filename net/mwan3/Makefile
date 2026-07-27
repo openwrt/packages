@@ -77,6 +77,8 @@ define Package/mwan3/install
 		$(1)/etc/config/
 
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
+	$(INSTALL_DATA) ./files/etc/hotplug.d/iface/13-mwan3 \
+		$(1)/etc/hotplug.d/iface/
 	$(INSTALL_DATA) ./files/etc/hotplug.d/iface/15-mwan3 \
 		$(1)/etc/hotplug.d/iface/
 	$(INSTALL_DATA) ./files/etc/hotplug.d/iface/16-mwan3-user \
