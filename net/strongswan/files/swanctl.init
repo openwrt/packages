@@ -553,6 +553,8 @@ config_remote() {
 	[ -n "$local_identifier" ] && swanctl_xappend3 "id = \"$local_identifier\""
 	[ "$local_auth_method" = pubkey ] && [ -n "$local_cert" ] && \
 		swanctl_xappend3 "certs = $local_cert"
+	[ "$local_auth_method" = pubkey ] && [ -n "$local_key" ] && \
+		swanctl_xappend3 "privkeys = $local_key"
 	swanctl_xappend2 "}"
 
 	swanctl_xappend2 "remote {"
