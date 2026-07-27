@@ -118,6 +118,27 @@ migrate_local_ip() {
 	config_foreach migrate_local_ip_local remote
 }
 
+migrate_local_sourceip_vips() {
+	local cfg="$1"
+
+	local local_sourceip value
+
+	config_get local_sourceip "$cfg" local_sourceip ""
+	[ -z "$local_sourceip" ] && return
+
+	for value in $local_sourceip; do
+		uci add_list "ipsec.${cfg}.vips=${value}"
+	done
+
+	uci -q delete "ipsec.${cfg}.local_sourceip"
+	uci commit ipsec
+}
+
+migrate_local_sourceip() {
+	config_load ipsec
+	config_foreach migrate_local_sourceip_vips remote
+}
+
 main() {
 	migrate_ipsec
 	migrate_ignore_routing_tables
@@ -125,6 +146,7 @@ main() {
 	migrate_gateway
 	migrate_remote_gateway
 	migrate_local_ip
+	migrate_local_sourceip
 }
 
 main

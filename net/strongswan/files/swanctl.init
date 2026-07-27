@@ -457,7 +457,7 @@ config_remote() {
 	local eap_id
 	local local_addrs
 	local remote_addrs
-	local local_sourceip
+	local vips
 	local remote_ca_certs
 	local pools
 
@@ -486,7 +486,7 @@ config_remote() {
 
 	config_list_foreach "$conf" local_addrs append_var local_addrs ","
 	config_list_foreach "$conf" remote_addrs append_var remote_addrs ","
-	config_list_foreach "$conf" local_sourceip append_var local_sourceip ","
+	config_list_foreach "$conf" vips append_var vips ","
 	config_list_foreach "$conf" remote_ca_certs append_var remote_ca_certs ","
 	config_list_foreach "$conf" pools append_var pools ","
 
@@ -538,7 +538,7 @@ config_remote() {
 	swanctl_xappend1 "$conf {"
 	[ -n "$local_addrs" ] && swanctl_xappend2 "local_addrs = $local_addrs"
 	[ -n "$remote_addrs" ] && swanctl_xappend2 "remote_addrs = $remote_addrs"
-	[ -n "$local_sourceip" ] && swanctl_xappend2 "vips = $local_sourceip"
+	[ -n "$vips" ] && swanctl_xappend2 "vips = $vips"
 	[ -n "$fragmentation" ] && swanctl_xappend2 "fragmentation = $fragmentation"
 	[ -n "$pools" ] && swanctl_xappend2 "pools = $pools"
 
