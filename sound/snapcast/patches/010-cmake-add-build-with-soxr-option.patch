@@ -17,8 +17,6 @@ Assisted-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
  CMakeLists.txt | 5 ++++-
  1 file changed, 4 insertions(+), 1 deletion(-)
 
-diff --git a/CMakeLists.txt b/CMakeLists.txt
-index ef2252d..eb76646 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -264,7 +264,10 @@ if(NOT WIN32 AND NOT ANDROID)
@@ -33,6 +31,3 @@ index ef2252d..eb76646 100644
    if(SOXR_FOUND)
      add_compile_definitions(HAS_SOXR)
    else()
--- 
-2.47.3
-
