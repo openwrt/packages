@@ -1,3 +1,3 @@
 #!/bin/sh
 
-sscep | grep -q "$PKG_VERSION"
+sscep | grep -F "$PKG_VERSION"
