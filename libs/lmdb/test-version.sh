@@ -11,7 +11,7 @@ lmdb-test)
 	exit 0
 	;;
 lmdb-utils)
-	mdb_dump -V 2>&1 | grep -qF "LMDB $ver" || exit 1
+	mdb_dump -V 2>&1 | grep -F "LMDB $ver" || exit 1
 	exit 0
 	;;
 *)
