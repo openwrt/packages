@@ -40,7 +40,6 @@ endef
 define Package/lua-eco/config
 	config LUA_ECO_CRASH_BACKTRACE
 		bool "Enable fatal signal C backtrace diagnostics"
-		depends on PACKAGE_lua-eco
 		depends on !(USE_MUSL && powerpc)
 		default n
 		help
