@@ -9,7 +9,7 @@ BIN_PATH="/usr/sbin"
 CONF_PATH="/etc/kea"
 
 start_service() {
-	mkdir --mode=0750 -p /var/lib/kea /var/run/kea
+	mkdir --mode=0750 -p /var/lib/kea /var/run/kea /var/log/kea
 
 	config_load "kea"
 	config_foreach start_kea "service"
