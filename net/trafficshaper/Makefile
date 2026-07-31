@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=trafficshaper
 PKG_VERSION:=1.0.0
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>
 
 PKG_LICENSE:=GPL-2.0-or-later
@@ -19,7 +19,12 @@ define Package/trafficshaper
   SECTION:=net
   CATEGORY:=Network
   TITLE:=WAN traffic shaper based on LAN addresses
-  DEPENDS:=+tc +kmod-sched-core +kmod-sched-connmark +kmod-ifb +iptables +IPV6:ip6tables +kmod-sched-cake +iptables-mod-conntrack-extra
+  DEPENDS:=+tc +kmod-sched-core +kmod-sched-connmark +kmod-ifb \
+	+(PACKAGE_nftables-json||PACKAGE_nftables-nojson):nftables \
+	+!(PACKAGE_nftables-json||PACKAGE_nftables-nojson):iptables \
+	+(IPV6&&!(PACKAGE_nftables-json||PACKAGE_nftables-nojson)):ip6tables \
+	+kmod-sched-cake \
+	+!(PACKAGE_nftables-json||PACKAGE_nftables-nojson):iptables-mod-conntrack-extra
   PKGARCH:=all
 endef
 

@@ -3,10 +3,13 @@
 // uvol - storage volume manager for OpenWrt
 //  (c) 2022 Daniel Golle <daniel@makrotopia.org>
 
-let help_output = "uvol storage volume manager
+let uvol_version = "@PKG_VERSION@";
+
+let help_output = `uvol ${uvol_version} - storage volume manager
 syntax: uvol command ...
 
 commands:
+  version			show version and exit
   boot				get active volumes ready (called on boot)
   free				show number of bytes available
   total				show total number of bytes
@@ -25,7 +28,20 @@ commands:
                  1 - volume is not ready for use
                  2 - volume doesn't exist
   write volname size		write to volume from stdin, size in bytes
-";
+`;
+
+let cmd = shift(ARGV);
+
+// answer before probing for a backend, so both work on a system without storage
+if (cmd == "version" || cmd == "--version" || cmd == "-v" || cmd == "-V") {
+	printf("uvol %s\n", uvol_version);
+	return 0;
+}
+
+if (!cmd || cmd == "-h" || cmd == "--help" || cmd == "help") {
+	printf("%s", help_output);
+	return cmd?0:22;
+}
 
 let fs = require("fs");
 let uci = require("uci");
@@ -34,11 +50,9 @@ let cursor = uci ? uci.cursor() : null;
 let ctx = {};
 ctx.cursor = cursor;
 ctx.fs = fs;
-include("/usr/lib/uvol/uci.uc");
-ctx.uci_add = uvol_uci.uvol_uci_add;
-ctx.uci_remove = uvol_uci.uvol_uci_remove;
-ctx.uci_commit = uvol_uci.uvol_uci_commit;
-ctx.uci_init = uvol_uci.uvol_uci_init;
+include("/usr/lib/uvol/mount.uc");
+ctx.register = uvol_mount.register;
+ctx.unregister = uvol_mount.unregister;
 
 let backend = null;
 let tried_backends = [];
@@ -64,27 +78,53 @@ if (!backend) {
 	exit(2);
 }
 
-// The below code is needed as older versions of ucode pass the complete cmdline via ARGV
-// Once we can rely in more recent ucode the while loop can be replaced by simply
-// let cmd = shift(ARGV);
-let skip = null;
-let cmd = null;
-let skip_argv = ["/usr/bin/ucode", "-R", "/usr/sbin/uvol"];
-while (skip = shift(ARGV)) {
-	if (skip != shift(skip_argv)) {
-		cmd = skip;
-		break;
-	}
-}
-
-if (!cmd || cmd == "-h" || cmd == "help") {
-	printf("%s", help_output);
-	return cmd?0:22;
-}
-
 if (!(cmd in keys(backend))) {
 	printf("command %s not found\n", cmd);
 	return 22;
+}
+
+// serialise state-mutating commands device-wide; released on process exit.
+// create and write additionally serialise per volume, as create may reclaim
+// an incomplete volume of the same name and size while a writer is still
+// streaming to it. The device-wide lock is always taken before the
+// per-volume lock; write takes only the per-volume one so a slow stream
+// does not stall operations on other volumes.
+let uvol_mutating = [ "boot", "detect", "create", "up", "down", "remove", "reap", "resize" ];
+let uvol_vol_mutating = [ "create", "write" ];
+let uvol_lockfd;
+let uvol_vol_lockfd;
+if (index(uvol_mutating, cmd) >= 0 || index(uvol_vol_mutating, cmd) >= 0)
+	fs.mkdir("/tmp/run", 0755);
+if (index(uvol_mutating, cmd) >= 0) {
+	uvol_lockfd = fs.open("/tmp/run/uvol.lock", "a");
+	if (uvol_lockfd)
+		uvol_lockfd.lock("x");
+}
+if (index(uvol_vol_mutating, cmd) >= 0 && ARGV[0]) {
+	uvol_vol_lockfd = fs.open(sprintf("/tmp/run/uvol.lock.%s", ARGV[0]), "a");
+	if (uvol_vol_lockfd)
+		uvol_vol_lockfd.lock("x");
+}
+
+let meta_init = function() {
+	let sz = backend.size(".meta");
+	if (type(sz) != "string" || +sz <= 0) {
+		let metasz = +backend.total() / 10240;
+		if (metasz < 4194304)
+			metasz = 4194304;
+		if (metasz > +backend.free())
+			return;
+		if (backend.create(".meta", sprintf("%d", metasz), "rw") != 0)
+			return;
+	}
+	backend.up(".meta");
+	fs.mkdir("/tmp/run/uvol/.meta/apk", 0755);
+};
+
+if (cmd == "boot") {
+	backend.boot();
+	meta_init();
+	exit(0);
 }
 
 let json_output = false;
@@ -109,6 +149,69 @@ let legacy_output = function(var) {
 	}
 	return out;
 };
+
+// Content-addressed volumes are named "<algo>-<hexdigest>"; the name carries the
+// expected digest of its content. Validation lives here in the generic layer so
+// backends stay plain storage. Add an entry to ca_algos to support a new digest.
+let ca_algos = {
+	sha256: { cmd: "sha256sum", len: 64 },
+};
+
+let ca_parse = function(name) {
+	let m = match(name, /^([0-9a-z]+)-([0-9a-f]+)$/);
+	if (!m)
+		return null;
+	let a = ca_algos[m[1]];
+	if (!a || length(m[2]) != a.len)
+		return null;
+	return { cmd: a.cmd, hash: m[2] };
+};
+
+let ca_digest = function(cmd, size, path) {
+	let src = path ? sprintf("head -c %d %s", size, path) : sprintf("head -c %d", size);
+	let f = fs.popen(sprintf("%s | %s", src, cmd), "r");
+	if (!f)
+		return null;
+	let line = f.read("line");
+	f.close();
+	return split(trim(line ?? ""), " ")[0];
+};
+
+// complete means the volume exists and has left the write-only state:
+// ready (0) or merely down (1); incomplete volumes report 22 or 16
+let ca_complete = function(name) {
+	let st = backend.status(name);
+	return st == 0 || st == 1;
+};
+
+let ca_mismatch = function(name) {
+	printf("content hash mismatch for %s\n", name);
+	exit(74);
+};
+
+if (cmd == "create" && ca_parse(ARGV[0])) {
+	let ret = backend.create(...ARGV);
+	exit(ret == 17 ? 0 : ret);
+}
+
+if (cmd == "write") {
+	let ca = ca_parse(ARGV[0]);
+	if (ca) {
+		let size = +ARGV[1];
+		if (ca_complete(ARGV[0])) {
+			if (ca_digest(ca.cmd, size, null) != ca.hash)
+				ca_mismatch(ARGV[0]);
+			exit(0);
+		}
+		// the backend calls verify() on the raw volume before finalising it;
+		// 74 (EBADMSG) reports a rejected payload, the volume stays incomplete
+		let verify = (path) => ca_digest(ca.cmd, size, path) == ca.hash;
+		let ret = backend.write(ARGV[0], size, verify);
+		if (ret == 74)
+			ca_mismatch(ARGV[0]);
+		exit(ret);
+	}
+}
 
 if (type(backend[cmd]) == "function") {
 	let ret = backend[cmd](...ARGV);

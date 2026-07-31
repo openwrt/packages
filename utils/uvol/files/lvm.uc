@@ -41,8 +41,8 @@ function lvm(cmd, ...args) {
 }
 
 function pvs() {
-	let fstab = cursor.get_all('fstab');
-	for (let k, section in fstab) {
+	let fstab = cursor ? cursor.get_all('fstab') : null;
+	for (let k, section in (fstab ?? {})) {
 		if (section['.type'] != 'uvol' || !section.vg_name)
 			continue;
 
@@ -95,6 +95,45 @@ function lvs(vg_name, vol_name, extra_exp) {
 	return ret;
 }
 
+function lvs_deleting(vg_name) {
+	let ret = [];
+	let tmp = lvm("lvs", "-o", "lv_active,lv_name,lv_full_name,lv_dm_path", "-S",
+		      sprintf("\"lvname=~^dd_.* && vg_name=%s\"", vg_name));
+	if (tmp && tmp.report.lv) {
+		ret = tmp.report.lv;
+		for (let r in ret)
+			r.lv_active = (r.lv_active == "active");
+	}
+	return ret;
+}
+
+function lvs_incomplete(vg_name, vol_name) {
+	let ret = [];
+	let tmp = lvm("lvs", "-o", "lv_active,lv_name,lv_full_name,lv_size", "-S",
+		      sprintf("\"lvname=~^w[op]_%s\$ && vg_name=%s\"", vol_name ?? ".*", vg_name));
+	if (tmp && tmp.report.lv) {
+		ret = tmp.report.lv;
+		for (let r in ret) {
+			r.lv_active = (r.lv_active == "active");
+			r.lv_size = +(rtrim(r.lv_size, "B"));
+		}
+	}
+	return ret;
+}
+
+// purge incomplete (wo_/wp_) leftovers; with match_size, only those of exactly
+// that allocated size (null purges all)
+function lvm_purge_incomplete(vol_name, match_size) {
+	for (let lv in lvs_incomplete(vg_name, vol_name)) {
+		if (match_size != null && lv.lv_size != match_size)
+			continue;
+		if (lv.lv_active)
+			lvm("lvchange", "-a", "n", lv.lv_full_name);
+		lvm("lvremove", "-y", lv.lv_full_name);
+	}
+	return 0;
+}
+
 function getdev(lv) {
 	if (!lv)
 		return null;
@@ -123,10 +162,8 @@ function lvm_init(ctx) {
 		return false;
 
 	vg = vgs(vg_name);
-	uvol_uci_add = ctx.uci_add;
-	uvol_uci_commit = ctx.uci_commit;
-	uvol_uci_remove = ctx.uci_remove;
-	uvol_uci_init = ctx.uci_init;
+	register = ctx.register;
+	unregister = ctx.unregister;
 	return true;
 }
 
@@ -198,7 +235,11 @@ function lvm_status(vol_name) {
 		return 2;
 
 	let mode = substr(res[0].lv_name, 0, 2);
-	if ((mode != "ro" && mode != "rw") || !res[0].lv_active)
+	if (mode == "wo")
+		return 22;
+	if (mode == "wp")
+		return 16;
+	if (!res[0].lv_active)
 		return 1;
 
 	return 0;
@@ -235,27 +276,28 @@ function lvm_updown(vol_name, up) {
 		   wildcard(lv.lv_path, "/dev/*/wp_*")))
 		return 22;
 
-	if (up)
-		uvol_uci_commit(vol_name);
-
-	if (lv.lv_active == up)
-		return 0;
-
 	if (!up) {
 		let devname = getdev(lv);
-		if (devname)
-			system(sprintf("umount /dev/%s", devname));
+		if (devname) {
+			unregister(devname);
+			system(sprintf("umount /dev/%s 2>/dev/null", devname));
+		}
 	}
 
-	let lvchange_r = lvm("lvchange", up?"-k":"-a", "n", lv.lv_full_name);
-	if (up && lvchange_r.retval != 0)
-		return lvchange_r.retval;
+	if (lv.lv_active != up) {
+		let lvchange_r = lvm("lvchange", up?"-k":"-a", "n", lv.lv_full_name);
+		if (up && lvchange_r.retval != 0)
+			return lvchange_r.retval;
 
-	lvchange_r = lvm("lvchange", up?"-a":"-k", "y", lv.lv_full_name);
-	if (lvchange_r.retval != 0)
-		return lvchange_r.retval;
+		lvchange_r = lvm("lvchange", up?"-a":"-k", "y", lv.lv_full_name);
+		if (lvchange_r.retval != 0)
+			return lvchange_r.retval;
+	}
 
-	return 0
+	if (up)
+		return register(vol_name, getdev(lv), substr(lv.lv_name, 0, 2) == "ro");
+
+	return 0;
 }
 
 function lvm_up(vol_name) {
@@ -271,16 +313,20 @@ function lvm_create(vol_name, vol_size, vol_mode) {
 		return 22;
 
 	vol_size = +vol_size;
-	if (vol_size <= 0)
+	if (vol_size != vol_size || vol_size <= 0)
 		return 22;
+
+	let size_ext = vol_size / vg.vg_extent_size;
+	if (vol_size % vg.vg_extent_size)
+		++size_ext;
+
+	// reclaim only an exact name+size retry; a size mismatch surfaces as EEXIST
+	lvm_purge_incomplete(vol_name, size_ext * vg.vg_extent_size);
 
 	let res = lvs(vg_name, vol_name);
 	if (res[0])
 		return 17;
 
-	let size_ext = vol_size / vg.vg_extent_size;
-	if (vol_size % vg.vg_extent_size)
-		++size_ext;
 	let lvmode, mode;
 	if (vol_mode == "ro" || vol_mode == "wo") {
 		lvmode = "r";
@@ -315,7 +361,7 @@ function lvm_create(vol_name, vol_size, vol_mode) {
 			return mkfs_ret;
 		}
 	} else {
-		let mkfs_ret = system(sprintf("/usr/sbin/mke2fs -F -L \"%s\" \"%s\"", vol_name, lv.lv_path));
+		let mkfs_ret = system(sprintf("/usr/sbin/mke2fs -F -t ext4 -O has_journal -L \"%s\" \"%s\"", vol_name, lv.lv_path));
 		if (mkfs_ret != 0) {
 			lvchange_r = lvm("lvchange", "-a", "n", lv.lv_full_name);
 			if (lvchange_r.retval != 0)
@@ -323,7 +369,6 @@ function lvm_create(vol_name, vol_size, vol_mode) {
 			return mkfs_ret;
 		}
 	}
-	uvol_uci_add(vol_name, sprintf("/dev/%s", getdev(lv)), "rw");
 
 	ret = lvm("lvchange", "-a", "n", lv.lv_full_name);
 	if (ret.retval != 0)
@@ -336,6 +381,98 @@ function lvm_create(vol_name, vol_size, vol_mode) {
 	return 0;
 }
 
+// identify the on-disk filesystem by superblock magic (no external tool needed)
+function fs_type(devpath) {
+	let f = fs.open(devpath, "r");
+	if (!f)
+		return null;
+	f.seek(1024);
+	let sb = f.read(58);
+	f.close();
+	if (type(sb) != "string" || length(sb) < 58)
+		return null;
+	if (ord(sb, 0) == 0x10 && ord(sb, 1) == 0x20 && ord(sb, 2) == 0xf5 && ord(sb, 3) == 0xf2)
+		return "f2fs";
+	if (ord(sb, 56) == 0x53 && ord(sb, 57) == 0xef)
+		return "ext";
+	return null;
+}
+
+// Grow a rw volume in place; the fs (ext4 or f2fs, chosen at create by size) is
+// grown with its own tool. Shrink is refused. The fs-grow tool is an optional
+// dependency: if absent, report and refuse rather than grow the LV past the fs.
+function lvm_resize(vol_name, vol_size) {
+	if (!vol_name || !vg_name)
+		return 22;
+
+	vol_size = +vol_size;
+	if (vol_size != vol_size || vol_size <= 0)
+		return 22;
+
+	let res = lvs(vg_name, vol_name);
+	if (!res[0])
+		return 2;
+
+	if (substr(res[0].lv_name, 0, 2) != "rw")
+		return 1;
+
+	let size_ext = vol_size / vg.vg_extent_size;
+	if (vol_size % vg.vg_extent_size)
+		++size_ext;
+
+	let new_size = size_ext * vg.vg_extent_size;
+	if (new_size == +res[0].lv_size)
+		return 0;
+	if (new_size < +res[0].lv_size)
+		return 22;
+
+	let dev = getdev(res[0]);
+	if (!dev)
+		return 2;
+
+	let fstype = fs_type(sprintf("/dev/%s", dev));
+	let tool = (fstype == "f2fs") ? "resize.f2fs" : (fstype == "ext") ? "resize2fs" : null;
+	if (!tool) {
+		warn(sprintf("uvol: cannot identify filesystem on %s; not resizing\n", vol_name));
+		return 95;
+	}
+
+	// the fs-grow tool first, so the LV is never left larger than its filesystem
+	if (system(sprintf("command -v %s >/dev/null 2>&1", tool)) != 0) {
+		warn(sprintf("uvol: %s not found; install %s to grow this %s volume\n",
+			     tool, (fstype == "f2fs") ? "f2fs-tools" : "e2fsprogs", fstype));
+		return 95;
+	}
+
+	let ret = lvm("lvextend", "-l", size_ext, res[0].lv_full_name);
+	if (ret.retval != 0)
+		return ret.retval;
+
+	if (fstype == "f2fs")
+		return system(sprintf("resize.f2fs /dev/%s", dev));
+
+	return system(sprintf("resize2fs /dev/%s", dev));
+}
+
+// Reap volumes marked for deferred deletion (dd_ prefix). A volume can only be
+// reaped once its backing device has no holder; blockd signals that moment with
+// a mount.umount notification (autofs idle-expiry), which triggers 'uvol reap'.
+// Still-held volumes are left for the next signal (or the boot sweep).
+function lvm_reap() {
+	for (let dd in lvs_deleting(vg_name)) {
+		let dev = getdev(dd);
+		if (dd.lv_active) {
+			let r = lvm("lvchange", "-a", "n", dd.lv_full_name);
+			if (r.retval != 0)
+				continue;
+		}
+		if (dev)
+			unregister(dev);
+		lvm("lvremove", "-y", dd.lv_full_name);
+	}
+	return 0;
+}
+
 function lvm_remove(vol_name) {
 	if (!vol_name || !vg_name)
 		return 22;
@@ -344,16 +481,15 @@ function lvm_remove(vol_name) {
 	if (!res[0])
 		return 2;
 
-	if (res[0].lv_active)
-		return 16;
-
-	let ret = lvm("lvremove", "-y", res[0].lv_full_name);
+	// mark for deletion: rename to the dd_ state (works whether the volume is
+	// active or not, and hides it from list/status). reap removes it now if the
+	// device is already free, otherwise blockd's mount.umount triggers reap once
+	// the holder releases it.
+	let ret = lvm("lvrename", vg_name, res[0].lv_name, sprintf("dd_%s", vol_name));
 	if (ret.retval != 0)
 		return ret.retval;
 
-	uvol_uci_remove(vol_name);
-	uvol_uci_commit(vol_name);
-	return 0;
+	return lvm_reap();
 }
 
 function lvm_dd(in_fd, out_fd, vol_size) {
@@ -369,7 +505,7 @@ function lvm_dd(in_fd, out_fd, vol_size) {
 	return rem;
 }
 
-function lvm_write(vol_name, vol_size) {
+function lvm_write(vol_name, vol_size, verify) {
 	if (!vol_name || !vg_name)
 		return 22;
 
@@ -382,70 +518,74 @@ function lvm_write(vol_name, vol_size) {
 	if (vol_size > lv.lv_size)
 		return 27;
 
-	if (wildcard(lv.lv_path, "/dev/*/wo_*")) {
-		let ret = lvm("lvchange", "-p", "rw", lv.lv_full_name);
-		if (ret.retval != 0)
-			return ret.retval;
-
-		let ret = lvm("lvchange", "-a", "y", lv.lv_full_name);
-		if (ret.retval != 0)
-			return ret.retval;
-
-		let volfile = fs.open(lv.lv_path, "w");
-		let ret = lvm_dd(fs.stdin, volfile, vol_size);
-		volfile.close();
-		if (ret < 0) {
-			printf("more %d bytes data than given size!\n", -ret);
-		}
-
-		if (ret > 0) {
-			printf("reading finished %d bytes before given size!\n", ret);
-		}
-
-		uvol_uci_add(vol_name, sprintf("/dev/%s", getdev(lv)), "ro");
-
-		let ret = lvm("lvchange", "-a", "n", lv.lv_full_name);
-		if (ret.retval != 0)
-			return ret.retval;
-
-		let ret = lvm("lvchange", "-p", "r", lv.lv_full_name);
-		if (ret.retval != 0)
-			return ret.retval;
-
-		let ret = lvm("lvrename", vg_name, sprintf("wo_%s", vol_name), sprintf("ro_%s", vol_name));
-		if (ret.retval != 0)
-			return ret.retval;
-
-	} else {
+	if (!wildcard(lv.lv_path, "/dev/*/wo_*"))
 		return 22;
+
+	let ret = lvm("lvchange", "-p", "rw", lv.lv_full_name);
+	if (ret.retval != 0)
+		return ret.retval;
+
+	let ret = lvm("lvchange", "-a", "y", lv.lv_full_name);
+	if (ret.retval != 0)
+		return ret.retval;
+
+	let volfile = fs.open(lv.lv_path, "w");
+	let rem = lvm_dd(fs.stdin, volfile, vol_size);
+	volfile.close();
+	if (rem < 0) {
+		printf("more %d bytes data than given size!\n", -rem);
 	}
+
+	if (rem > 0) {
+		printf("reading finished %d bytes before given size!\n", rem);
+	}
+
+	if (verify && !verify(lv.lv_path)) {
+		lvm("lvchange", "-a", "n", lv.lv_full_name);
+		lvm("lvchange", "-p", "r", lv.lv_full_name);
+		return 74;
+	}
+
+	let ret = lvm("lvchange", "-a", "n", lv.lv_full_name);
+	if (ret.retval != 0)
+		return ret.retval;
+
+	let ret = lvm("lvchange", "-p", "r", lv.lv_full_name);
+	if (ret.retval != 0)
+		return ret.retval;
+
+	let ret = lvm("lvrename", vg_name, sprintf("wo_%s", vol_name), sprintf("ro_%s", vol_name));
+	if (ret.retval != 0)
+		return ret.retval;
+
 	return 0;
 }
 
 function lvm_detect() {
-	let temp_up = [];
-	let inactive_lv = lvs(vg_name, null, "lv_skip_activation!=0");
-	for (let lv in inactive_lv) {
-		lvm("lvchange", "-k", "n", lv.lv_full_name);
-		lvm("lvchange", "-a", "y", lv.lv_full_name);
-		push(temp_up, lv.lv_full_name);
-	}
-	sleep(1000);
-	uvol_uci_init();
 	for (let lv in lvs(vg_name)) {
-		let vol_name = substr(lv.lv_name, 3);
-		let vol_mode = substr(lv.lv_name, 0, 2);
-		uvol_uci_add(vol_name, sprintf("/dev/%s", getdev(lv)), vol_mode);
-	}
-	uvol_uci_commit();
-	for (let lv_full_name in temp_up) {
-		lvm("lvchange", "-a", "n", lv_full_name);
-		lvm("lvchange", "-k", "y", lv_full_name);
+		if (!lv.lv_active)
+			continue;
+
+		let mode = substr(lv.lv_name, 0, 2);
+		if (mode != "ro" && mode != "rw")
+			continue;
+
+		register(substr(lv.lv_name, 3), getdev(lv), mode == "ro");
 	}
 	return 0;
 }
 
 function lvm_boot() {
+	// clear crash/power-loss leftovers before activating
+	lvm_reap();
+	lvm_purge_incomplete();
+	for (let lv in lvs(vg_name, null, "lv_skip_activation=0")) {
+		let mode = substr(lv.lv_name, 0, 2);
+		if (mode != "ro" && mode != "rw")
+			continue;
+
+		lvm_up(substr(lv.lv_name, 3));
+	}
 	return 0;
 }
 
@@ -464,5 +604,7 @@ backend.device = lvm_device;
 backend.up = lvm_up;
 backend.down = lvm_down;
 backend.create = lvm_create;
+backend.resize = lvm_resize;
 backend.remove = lvm_remove;
+backend.reap = lvm_reap;
 backend.write = lvm_write;

@@ -48,8 +48,6 @@ ifdown() {
 }
 
 ifup() {
-	. /etc/init.d/mwan3
-
 	if [ -z "$1" ]; then
 		echo "Expecting interface. Usage: mwan3 ifup <interface>"
 		exit 0

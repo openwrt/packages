@@ -33,4 +33,9 @@ config MODEMMANAGER_WITH_AT_COMMAND_VIA_DBUS
 	help
 	  Compile ModemManager allowing AT commands without debug flag
 
+config MODEMMANAGER_WITH_BUILTIN_PLUGINS
+	bool "Build modemmanager with builtin plugins"
+	default y
+	help
+	  Build ModemManager with builtin plugins
 endmenu

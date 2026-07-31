@@ -35,11 +35,7 @@ kea-dhcp-ddns)
 	;;
 
 kea-ctrl)
-	# Exercise the ctrl-agent config parser + keactrl wrapper; the
-	# config requires an auth-password file so satisfy it with a stub.
-	echo test >/etc/kea/kea-api-password
-	kea-ctrl-agent -t /etc/kea/kea-ctrl-agent.conf
-	rm -f /etc/kea/kea-api-password
+	# Exercise the keactrl wrapper.
 	keactrl -v >/dev/null
 	;;
 

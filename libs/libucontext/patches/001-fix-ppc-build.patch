@@ -1,0 +1,19 @@
+From: Aditya Nugraha <vortexilation@gmail.com>
+Date:   Wed Jul 10 22:49:00 2026 +0700
+Subject: [PATCH] Fixed ppc compilation
+
+    Fixed ppc compilation for KERNEL_UAPI_UCONTEXT_SIZE is not found.
+
+    Signed-off-by: Aditya Nugraha <vortexilation@gmail.com>
+
+--- a/arch/ppc/defs.h
++++ b/arch/ppc/defs.h
+@@ -1,7 +1,7 @@
+ #ifndef __ARCH_PPC_DEFS_H
+ #define __ARCH_PPC_DEFS_H
+ 
+-#define KERNEL_UAPI_CONTEXT_SIZE (1184)
++#define KERNEL_UAPI_UCONTEXT_SIZE (1184)
+ 
+ #define REG_R0		(0)
+ #define REG_R1		(1)

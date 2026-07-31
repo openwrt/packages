@@ -5,6 +5,6 @@
     "files.trimFinalNewlines": true,
     "files.eol": "\n",
     "git.inputValidation": true,
-    "git.inputValidationSubjectLength": 60,
-    "git.inputValidationLineLength": 75
+    "git.inputValidationSubjectLength": 80,
+    "git.inputValidationLineLength": 100
 }

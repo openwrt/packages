@@ -420,7 +420,7 @@ Be aware that bidirectional country blocking on large countries quickly inflates
 
 **Log Terms for logfile parsing**  
 Like fail2ban and crowdsec, banIP supports logfile scanning and automatic blocking of suspicious attacker IPs.
-In the default config only the log terms to detect failed login attempts via dropbear and LuCI are in place. The following search pattern has been tested as well:
+In the default config only the log terms to detect failed login attempts via dropbear and LuCI are in place. The following search patterns have been tested as well:
 
 ```
 dropbear : 'Exit before auth from'
@@ -432,6 +432,19 @@ openvpn  : 'TLS Error: could not determine wrapping from \[AF_INET\]'
 AdGuard  : 'AdGuardHome.*\[error\].*/control/login: from ip'
 Remote   : 'received a suspicious remote IP'
 ```
+
+**Source IP position**  
+For every matched line banIP picks the attacker's address out of the log entry. By default it uses the *last* IP in the line, which is correct for all login-style formats above: the service always appends the real remote address as the final field, after any user-supplied data (such as a login name). This stays robust even when an attacker puts an IP-like string into a username or similar field.
+
+Some formats instead lead with the source IP — most notably web-server access logs, where the client address is the first field. For those, prefix the term with `first:`:
+
+```
+nginx : 'first:"[A-Z]+ /wp-login\.php[^"]*" 40[13]'
+```
+
+The `first:`/`last:` prefix is parsed off before matching and applies only to that single term, so terms with different anchors can be mixed freely.
+
+Please note: `first:` only fits formats where the source IP is genuinely the first address in the line. Do **not** use it for Suricata fast.log (its leading `[1:2013:7]` signature id) or netfilter `LOG` lines (their leading `MAC=` field), as that leading field would be picked instead of the source — keep those on the default `last`.  
 
 You find the `Log Terms` option in LuCI under the `Log Settings` tab. Feel free to add more log terms to meet your needs and protect additional services.
 

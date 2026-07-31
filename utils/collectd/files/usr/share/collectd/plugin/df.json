@@ -1,6 +1,10 @@
 {
 	"bool": [
-		"IgnoreSelected"
+		"IgnoreSelected",
+		"ReportByDevice",
+		"ReportInodes",
+		"ValuesAbsolute",
+		"ValuesPercentage"
 	],
 	"list": [
 		"Device",

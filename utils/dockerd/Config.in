@@ -61,7 +61,7 @@ menu "Network"
 		bool "Includes ftp/tftp client kernel modules"
 		default n
 		select PACKAGE_kmod-nf-nathelper
-		select PACKAGE_kmod-nf-nathelper-extra
+		select PACKAGE_kmod-nf-nathelper-tftp
 endmenu
 
 menu "Storage"

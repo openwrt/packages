@@ -1,6 +1,9 @@
+From: Florian Fainelli <florian@openwrt.org>
+Date: Tue, 29 Jul 2008 10:22:38 +0000
+Subject: [PATCH] Do not compile and generate curl tests and docs
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -72,7 +72,7 @@ DISTCLEANFILES = buildinfo.txt
+@@ -71,7 +71,7 @@ DISTCLEANFILES = buildinfo.txt
  bin_SCRIPTS = curl-config
  
  SUBDIRS = lib docs src scripts
@@ -9,7 +12,7 @@
  
  pkgconfigdir = $(libdir)/pkgconfig
  pkgconfig_DATA = libcurl.pc
-@@ -142,12 +142,9 @@ check-docs:
+@@ -141,12 +141,9 @@ check-docs:
  if BUILD_DOCS
  install-data-hook:
  	(cd include && $(MAKE) install)

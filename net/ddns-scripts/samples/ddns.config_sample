@@ -269,10 +269,13 @@ config service "myddns"
 	# In some very special configurations i.e. Multi WAN environment
 	# in a NAT cascade it might be necessary to define
 	# a network to use for communication.
+	# If bind_network is not set and ip_source is "network",
+	# ip_network is used as the default bind network.
 	# should use option ip_source "web" (see above)
 	# Needs GNU Wget (with SSL support) or cURL to be installed.
-	# GNU Wget will use IP address and cURL the physical device
-	# of the given network
+	# GNU Wget will use IP address and cURL the logical device
+	# of the given network. cURL retries once with the IP address
+	# when the device-bound transfer fails.
 	# default: none
 #	option bind_network "wan7"
 

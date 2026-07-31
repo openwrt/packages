@@ -18,7 +18,6 @@ sed -i "s/'PREROUTING'/'prerouting'/g" /etc/config/pbr
 sed -i "s/'POSTROUTING'/'postrouting'/g" /etc/config/pbr
 sed -i "s/option fw_mask '0x\(.*\)'/option fw_mask '\1'/g" /etc/config/pbr
 sed -i "s/option wan_mark '0x\(.*\)'/option wan_mark '\1'/g" /etc/config/pbr
-sed -i "s|option path '/etc/pbr/|option path '/usr/share/pbr/|g" /etc/config/pbr
 sed -i "/procd_lan_interface/d" /etc/config/pbr
 sed -i "s|procd_lan_device|lan_device|g" /etc/config/pbr
 sed -i "s|procd_wan_interface|uplink_interface|g" /etc/config/pbr

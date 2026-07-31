@@ -1,0 +1,281 @@
+#!/bin/sh
+# Script is sourced not executed, but shebang helps tools recognize this as
+# a shell script.
+
+# In recent (relevant) versions of shellcheck busybox is a valid shell type
+# shellcheck shell=busybox
+
+# uci-defaults script to migrate old uci config for notifications and monitor sections,
+# to the new. Applied during install or on first boot after install, if setting on install
+# fails
+
+# IPKG_INSTROOT is intentionally only set when building an image and
+# is intentionally empty on a live OpenWrt device
+
+# Only run this uci-defaults script on a live OpenWrt device
+[ -z "${IPKG_INSTROOT}" ] || exit 0
+
+# Loads needed OpenWrt functions
+# shellcheck source=net/nut/files/functions.sh.functions
+. /lib/functions.sh || {
+	# As the uci-defaults environment in which this runs does not have logging
+	# available, nor is stderr captured or displayed on the console, these messages
+	# exist only to assist when debugging manual runs of the script.
+	printf "'%s': ERROR: '%s'\n" nut-monitor-migrate "Unable to source 'functions.sh' in 'nut-monitor-migrate' uci-default script. Bailing"
+	exit 1
+}
+
+# Adds notification flag (value) to 'notify_flags' from caller
+# shellcheck disable=SC2329,SC2317
+get_notify_flags() {
+	local value="$1"
+
+	append notify_flags "$value" "+"
+}
+
+# shellcheck disable=SC2329,SC2317
+convert_flags() {
+	local notify_flags="$1"
+	local working_flags=""
+	local flag_val
+
+	# In input flags can be in any order. If any of the input flags are IGNORE,
+	# the output should only contain IGNORE. If the input contains only SYSLOG
+	# or only EXEC, use as is. If the input contains both SYSLOG and EXEC (in
+	# any order) the output must be SYSLOG+EXEC
+	for flag_val in IGNORE SYSLOG EXEC; do
+		# If the notify_flags contains $flag_val
+		case "$notify_flags" in
+		"$flag_val"+* | *+"$flag_val" | "$flag_val")
+			case "$flag_val" in
+			IGNORE)
+				working_flags="IGNORE"
+				printf "%s" "$working_flags"
+				return
+				;;
+			SYSLOG)
+				# If working flags exists, it already has a non SYSLOG value
+				# SYSLOG must come first in the final flags, so append
+				# old working_flags to SYSLOG with delimiter '+', and make
+				# that the new working_flags
+				if [ "$working_flags" = "EXEC" ]; then
+					working_flags="${flag_val}+${working_flags}"
+				else
+					working_flags="$flag_val"
+				fi
+				;;
+			EXEC)
+				# append to an empty variable just returns the value to be
+				# appended without a delimiter, so we do not need to check
+				# for already having a value in 'working_flags'
+				append working_flags "$flag_val" "+"
+				;;
+			esac
+			;;
+		esac
+	done
+	printf "%s" "$working_flags"
+}
+
+# As the uci-defaults environment in which this runs does not have logging
+# available, nor is stderr captured or displayed on the console, these messages
+# exist only to assist when debugging manual runs of the script.
+# shellcheck disable=SC2329,SC2317
+log_migration_error() {
+	local reason="$1"
+
+	printf "'%s': ERROR: '%s'\n" "nut-monitor-migrate" "$reason" >&2
+}
+
+# shellcheck disable=SC2329,SC2317
+get_notification_flags() {
+	local uci_option="$1"
+	local cfg="$2"
+	local notify_flags=""
+	# accumulates flags in notify_flags via get_notify_flags
+	config_list_foreach "$cfg" "$uci_option" get_notify_flags
+	convert_flags "$notify_flags"
+}
+
+# shellcheck disable=SC2329,SC2317
+process_upsmon_section() {
+	local cfg="$1"
+	local notify_type flag_name notify_msg notify_section val
+	local notification_name notify_flags_as_var upsmon_final_flags
+	# List of notification messages options in existing (to be converted)
+	# UCI config for nut_monitor
+	local nut_notify_message_types="onlinemsg onbattmsg lowbattmsg fsdmsg commokmsg"
+	append nut_notify_message_types "commbadmsg shutdownmsg replbattmsg"
+	append nut_notify_message_types "nocommmsmsg nocommmsg noparentmsg"
+	local nocomm_exists="false"
+
+	# Get hotsync (typo) value if present
+	config_get val "$cfg" hotsync
+	# Get hostsync value, only using hotsync as default if hostsync does not exist
+	config_get val "$cfg" hostsync "$val"
+
+	if [ -n "$val" ]; then
+		if ! uci -q set nut_monitor."$cfg".hostsync="$val"; then
+			log_migration_error "Failed to set hostsync value"
+		fi
+	fi
+
+	# Remove invalid hotsync option unconditionally
+	uci -q delete nut_monitor."$cfg".hotsync || true
+
+	if uci -q get nut_monitor.NOCOMM; then
+		nocomm_exists="true"
+	fi
+
+	# We need word-splitting to iterate over nut_notify_message_types
+	# This is a local variable defined by us, so it is safe to do this.
+	# We still disable globbing of the word-split
+	set -f
+	for notify_type in $nut_notify_message_types; do
+		# Transform <prefix>msg into <prefix>notify (flag_name) and <PREFIX> (notification_name)
+		flag_name="${notify_type/msg/notify}"
+		notification_name="${notify_type/msg/}"
+		# busybox ash does not support case transformation via variable  parameter substitution,
+		# so we use tr.
+		notification_name="$(printf '%s' "$notification_name" | tr '[:lower:]' '[:upper:]')"
+		# Transform wrong NOCOMMS to NOCOMM (typo in nocommsmsg which should
+		# have been nocommmsg in previous script), preferring NOCOMM (correct
+		# version) if both exist
+		if [ "$notification_name" = "NOCOMMMS" ]; then
+			notification_name="NOCOMM"
+		fi
+		if [ "$notification_name" = "NOCOMM" ]; then
+			if [ "$nocomm_exists" = "true" ]; then
+				# Do not delete or overwrite pre-existing NOCOMM section
+				continue
+			fi
+			if uci -q get nut_monitor."$notification_name"; then
+				uci -q delete nut_monitor."$notification_name" || {
+					log_migration_error "Failed to remove duplicate NOCOMM section"
+					# We don't want to prevent other sections from being processed
+					# if this one fails, so do not error exit, but keep going.
+					continue
+				}
+				printf "'%s': WARN: '%s'\n" "nut-monitor-migrate" "Removed duplicate NOCOMM section, likely from NOCOMMS typo" >&2
+			fi
+		fi
+		config_get notify_msg "$cfg" "$notify_type"
+		config_get notify_flags_as_var "$cfg" "$flag_name"
+		if [ -n "$notify_msg" ] || [ -n "$notify_flags_as_var" ]; then
+			notify_section="$(uci -q add nut_monitor notifications)"
+			if [ -z "$notify_section" ]; then
+				log_migration_error "Failed to add notifications section"
+				# We don't want to prevent other sections from being processed
+				# if this one fails, so do not error exit, but keep going.
+				continue
+			fi
+			if ! uci -q rename nut_monitor."$notify_section"="$notification_name"; then
+				log_migration_error "Failed to rename '$notify_section' to '$notification_name'"
+				# We don't want to prevent other sections from being processed
+				# if this one fails, so do not error exit, but keep going.
+				continue
+			fi
+		fi
+		if [ -n "$notify_msg" ]; then
+			if ! uci -q set nut_monitor."$notification_name".message="$notify_msg"; then
+				log_migration_error "Failed to add message for '$notification_name'"
+				continue
+			fi
+		fi
+		upsmon_final_flags="$(get_notification_flags "$flag_name" "$cfg")"
+		if [ -n "$upsmon_final_flags" ]; then
+			if ! uci -q set nut_monitor."$notification_name".flag="$upsmon_final_flags"; then
+				log_migration_error "Failed to add flag(s) to '$notification_name'"
+				continue
+			fi
+		fi
+
+		# Keep going even if deleting old flag fails. It won't be used
+		# anyway, and partial success is better than none.
+		if [ -n "$cfg" ] && [ -n "$notify_flags_as_var" ] && ! uci -q delete nut_monitor."$cfg"."$flag_name"; then
+			log_migration_error "Failed to delete old flag '$flag_name' from '$cfg'"
+		fi
+		# Keep going even if deleting old notification message fails. It
+		# won't be used anyway, and partial success is better than none.
+		if [ -n "$cfg" ] && [ -n "$notify_msg" ] && ! uci -q delete nut_monitor."$cfg"."$notify_type"; then
+			log_migration_error "Failed to delete old notification type '$notify_type' from '$cfg'"
+		fi
+	done
+	set +f
+	upsmon_final_flags="$(get_notification_flags "defaultnotify" "$cfg")"
+	if [ -n "$upsmon_final_flags" ]; then
+		if ! uci -q set nut_monitor."$cfg".defaultnotify="$upsmon_final_flags"; then
+			log_migration_error "Failed to update defaultnotify for '$cfg'"
+		fi
+	fi
+}
+
+# shellcheck disable=SC2329,SC2317
+process_primary_secondary() {
+	local cfg="$1"
+	local monitor_type="$2"
+	local upsname hostname port powervalue username password section
+
+	section="$(uci -q add nut_monitor monitor)" || {
+		log_migration_error "Failed to add monitor section to replace '$cfg'"
+		# Do not error exit as we do not want to stop other sections from being
+		# processed
+		return 0
+	}
+
+	if [ -n "$section" ]; then
+		{
+			uci -q set nut_monitor."$section".type="$monitor_type" || return 1
+
+			# Empty values are allowed and should remain as such in the new
+			# section.
+			config_get upsname "$cfg" upsname
+			config_get hostname "$cfg" hostname
+			config_get port "$cfg" port
+			config_get powervalue "$cfg" powervalue
+			config_get username "$cfg" username
+			config_get password "$cfg" password
+
+			uci -q set nut_monitor."$section".upsname="$upsname" || return 1
+			uci -q set nut_monitor."$section".hostname="$hostname" || return 1
+			uci -q set nut_monitor."$section".port="$port" || return 1
+			uci -q set nut_monitor."$section".powervalue="$powervalue" || return 1
+			uci -q set nut_monitor."$section".username="$username" || return 1
+			uci -q set nut_monitor."$section".password="$password" || return 1
+
+			# Delete the old section with name config (of type primary
+			# or secondary)
+			uci -q delete nut_monitor."$cfg" || return 1
+			# Rename the nut_monitor section '$section' we created, above, with
+			# the name of the old section. This requires that the old section
+			# with the same name has already been removed.
+			# In the event of delete failure, the new section is present, but
+			# with the name assigned when the new section was created.
+			uci -q rename nut_monitor."$section"="$cfg" || return 1
+			return 0
+		} || {
+			log_migration_error "Error converting primary/secondary section '$cfg'"
+			# Do not error exit as we do not want to stop other sections from
+			# being processed
+			return 0
+		}
+	else
+		log_migration_error "Name of monitor section to replace '$cfg' was empty"
+		# Do not error exit as we do not want to stop other sections from being
+		# processed
+		return 0
+
+	fi
+}
+
+config_load nut_monitor || {
+	echo "nut-monitor-migrate: FATAL: Failed to load nut_monitor"
+	exit 1
+}
+config_foreach process_upsmon_section upsmon
+config_foreach process_primary_secondary master primary
+config_foreach process_primary_secondary slave secondary
+
+uci commit nut_monitor
+
+exit 0

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=arp-scan
 PKG_VERSION:=1.10.0
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/royhills/arp-scan/tar.gz/$(PKG_VERSION)?
@@ -52,6 +52,7 @@ define Package/arp-scan/install
 endef
 
 define Package/arp-scan/postinst
+#!/bin/sh
 cat <<EOF
 
 Please install the arp-scan-database package in order to let arp-scan
@@ -80,8 +81,9 @@ define Package/arp-scan-database/install
 endef
 
 define Package/arp-scan-database/postrm
-	$(RM) -rf $(1)/usr/share/arp-scan
-	$(RM) -rf $(1)/etc/arp-scan
+#!/bin/sh
+rm -rf "$${IPKG_INSTROOT}/usr/share/arp-scan" \
+	"$${IPKG_INSTROOT}/etc/arp-scan"
 endef
 
 $(eval $(call BuildPackage,arp-scan-database))

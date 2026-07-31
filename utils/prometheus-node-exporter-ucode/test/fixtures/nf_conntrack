@@ -1,0 +1,4 @@
+ipv4     2 tcp      6 431999 ESTABLISHED src=192.168.1.2 dst=1.2.3.4 sport=49152 dport=443 packets=10 bytes=1234 src=1.2.3.4 dst=192.168.1.2 sport=443 dport=49152 packets=8 bytes=5678 [ASSURED] mark=0 use=2
+ipv4     2 tcp      6 120 TIME_WAIT src=192.168.1.2 dst=1.2.3.4 sport=49153 dport=80 packets=5 bytes=100 src=1.2.3.4 dst=192.168.1.2 sport=80 dport=49153 packets=3 bytes=200 mark=0 use=2
+ipv4     2 tcp      6 431999 ESTABLISHED src=192.168.1.3 dst=1.2.3.4 sport=49154 dport=443 packets=2 bytes=300 src=1.2.3.4 dst=192.168.1.3 sport=443 dport=49154 packets=1 bytes=400 [ASSURED] mark=0 use=2
+ipv4     2 udp      17 30 src=192.168.1.2 dst=8.8.8.8 sport=12345 dport=53 packets=1 bytes=60 src=8.8.8.8 dst=192.168.1.2 sport=53 dport=12345 packets=1 bytes=120 mark=0 use=2

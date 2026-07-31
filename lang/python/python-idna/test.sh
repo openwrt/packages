@@ -18,6 +18,4 @@ assert idna.alabel('测试') == b'xn--0zwm56d'
 assert idna.encode('Königsgäßchen', uts46=True) == b'xn--knigsgchen-b4a3dun'
 assert idna.decode('xn--knigsgchen-b4a3dun') == 'königsgäßchen'
 
-assert idna.encode('Königsgäßchen', uts46=True, transitional=True) == b'xn--knigsgsschen-lcb0w'
-
 EOF

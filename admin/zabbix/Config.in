@@ -1,14 +1,7 @@
-config ZABBIX_ENABLE_ZABBIX
-	bool "Enable Zabbix"
-	default y if ALL
-	default n
-
 menu "Modify features for non-core variants"
-	depends on ZABBIX_ENABLE_ZABBIX
 	config ZABBIX_CURL
 		bool "cURL support (default SSL)"
-		default y if ZABBIX_ENABLE_ZABBIX
-		default n
+		default y
 		depends on !ZABBIX_GNUTLS && !ZABBIX_NOSSL
 
 	config ZABBIX_CURL_GNUTLS
@@ -19,18 +12,15 @@ menu "Modify features for non-core variants"
 	config ZABBIX_LDAP
 		bool "LDAP support"
 		depends on ZABBIX_OPENSSL
-		default y if ZABBIX_ENABLE_ZABBIX
-		default n
+		default y
 
 	config ZABBIX_NETSNMP
 		bool "NetSNMP support (OpenSSL)"
 		depends on ZABBIX_OPENSSL
-		default y if ZABBIX_ENABLE_ZABBIX
-		default n
+		default y
 endmenu
 
 choice
-	depends on ZABBIX_ENABLE_ZABBIX
 	prompt "Select SSL Library"
 
 	default ZABBIX_OPENSSL

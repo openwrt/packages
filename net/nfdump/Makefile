@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nfdump
 PKG_VERSION:=1.7.8
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
@@ -42,7 +42,7 @@ define Package/nfdump/conffiles
 /etc/config/nfcapd
 endef
 
-TARGET_LDFLAGS += -Wl,--as-needed $(if $(CONFIG_USE_MUSL),-lfts)
+TARGET_LDFLAGS += $(if $(CONFIG_USE_MUSL),-lfts)
 
 define Package/nfdump/install
 	$(INSTALL_DIR) $(1)/usr/lib

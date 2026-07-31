@@ -121,7 +121,11 @@ ddns_loglines=$((ddns_loglines + 1))	# correct sed handling
 
 # format to show date information in log and luci-app-ddns default ISO 8601 format
 ddns_dateformat=$(uci -q get ddns.global.ddns_dateformat) || ddns_dateformat="%F %R"
-DATE_PROG="date +'$ddns_dateformat'"
+
+# Print the current date using the configured format.
+# Do not turn this into a command string that is run through "eval": the format
+# is read from UCI and a single quote inside it would start a new shell word.
+date_prog() { date +"$ddns_dateformat"; }
 
 # USE_CURL if GNU Wget and cURL installed normally Wget is used by do_transfer()
 # to change this use global option use_curl '1'
@@ -617,6 +621,7 @@ do_transfer() {
 	local __ERR=0
 	local __CNT=0	# error counter
 	local __PROG  __RUNPROG
+	local __FALLBACK_RUNPROG __FALLBACK_DESC
 
 	[ $# -ne 1 ] && write_log 12 "Error in 'do_transfer()' - wrong number of parameters"
 
@@ -674,11 +679,17 @@ do_transfer() {
 			write_log 13 "cURL: libcurl compiled without https support"
 		# force network/interface-device to use for communication
 		if [ -n "$bind_network" ]; then
-			local __DEVICE
+			local __DEVICE __BINDIP __BIND_OPT __FALLBACK_BIND_OPT
 			network_get_device __DEVICE $bind_network || \
 				write_log 13 "Can not detect local device using 'network_get_device $bind_network' - Error: '$?'"
+			# set correct program to detect IP
+			[ $use_ipv6 -eq 0 ] && __RUNPROG="network_get_ipaddr" || __RUNPROG="network_get_ipaddr6"
+			eval "$__RUNPROG __BINDIP $bind_network" || \
+				write_log 13 "Can not detect current IP using '$__RUNPROG $bind_network' - Error: '$?'"
 			write_log 7 "Force communication via device '$__DEVICE'"
-			__PROG="$__PROG --interface $__DEVICE"
+			__BIND_OPT=" --interface $__DEVICE"
+			__FALLBACK_BIND_OPT=" --interface $__BINDIP"
+			__FALLBACK_DESC="IP '$__BINDIP'"
 		fi
 		# force ip version to use
 		if [ $force_ipversion -eq 1 ]; then
@@ -705,7 +716,9 @@ do_transfer() {
 			write_log 13 "cURL: libcurl compiled without Proxy support"
 		fi
 
-		__RUNPROG="$__PROG '$__URL'"	# build final command
+		__RUNPROG="$__PROG$__BIND_OPT '$__URL'"	# build final command
+		[ -n "$__FALLBACK_BIND_OPT" ] && \
+			__FALLBACK_RUNPROG="$__PROG$__FALLBACK_BIND_OPT '$__URL'"
 		__PROG="cURL"			# reuse for error logging
 
 	# uclient-fetch possibly with ssl support if /lib/libustream-ssl.so installed
@@ -765,6 +778,14 @@ do_transfer() {
 		eval $__RUNPROG			# DO transfer
 		__ERR=$?			# save error code
 		[ $__ERR -eq 0 ] && return 0	# no error leave
+		if [ -n "$__FALLBACK_RUNPROG" ]; then
+			write_log 3 "$__PROG Error: '$__ERR'"
+			write_log 7 "$(cat $ERRFILE)"		# report error
+			write_log 4 "Transfer failed - retry using $__FALLBACK_DESC"
+			__RUNPROG="$__FALLBACK_RUNPROG"
+			__FALLBACK_RUNPROG=""
+			continue
+		fi
 		[ -n "$LUCI_HELPER" ] && return 1	# no retry if called by LuCI helper script
 
 		write_log 3 "$__PROG Error: '$__ERR'"
@@ -1104,17 +1125,17 @@ trap_handler() {
 
 	case $1 in
 		 0)	if [ $__ERR -eq 0 ]; then
-				write_log 5 "PID '$$' exit normal at $(eval $DATE_PROG)${N}"
+				write_log 5 "PID '$$' exit normal at $(date_prog)${N}"
 			else
-				write_log 4 "PID '$$' exit WITH ERROR '$__ERR' at $(eval $DATE_PROG)${N}"
+				write_log 4 "PID '$$' exit WITH ERROR '$__ERR' at $(date_prog)${N}"
 			fi ;;
-		 1)	write_log 6 "PID '$$' received 'SIGHUP' at $(eval $DATE_PROG)"
+		 1)	write_log 6 "PID '$$' received 'SIGHUP' at $(date_prog)"
 			# reload config via starting the script again
 			/usr/lib/ddns/dynamic_dns_updater.sh -v "0" -S "$__SECTIONID" -- start || true
 			exit 0 ;;	# and leave this one
-		 2)	write_log 5 "PID '$$' terminated by 'SIGINT' at $(eval $DATE_PROG)${N}";;
-		 3)	write_log 5 "PID '$$' terminated by 'SIGQUIT' at $(eval $DATE_PROG)${N}";;
-		15)	write_log 5 "PID '$$' terminated by 'SIGTERM' at $(eval $DATE_PROG)${N}";;
+		 2)	write_log 5 "PID '$$' terminated by 'SIGINT' at $(date_prog)${N}";;
+		 3)	write_log 5 "PID '$$' terminated by 'SIGQUIT' at $(date_prog)${N}";;
+		15)	write_log 5 "PID '$$' terminated by 'SIGTERM' at $(date_prog)${N}";;
 		 *)	write_log 13 "Unhandled signal '$1' in 'trap_handler()'";;
 	esac
 
