@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libxmlb
-PKG_VERSION:=0.3.23
+PKG_VERSION:=0.3.29
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/hughsie/libxmlb/releases/download/$(PKG_VERSION)
-PKG_HASH:=ab86eb2073592448a4e0263ab56e222de092c0a3964b66a8d696cac071c8ee3c
+PKG_HASH:=448294be33bfae62f00fa66e506f1cae80237ce71b7ab6530aefa75005eeb08a
 
 PKG_MAINTAINER:=Lukas Voegl <lvoegl@tdt.de>
 PKG_LICENSE:=LGPL-2.1-or-later
