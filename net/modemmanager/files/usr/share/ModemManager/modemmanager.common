@@ -158,6 +158,12 @@ mm_report_event() {
 			;;
 	esac
 
+	# Skip live report if MM isn't up; wrapper will replay from cache.
+	if [ ! -s "${MODEMMANAGER_PID_FILE}" ] || \
+		! kill -0 "$(cat "${MODEMMANAGER_PID_FILE}" 2>/dev/null)" 2>/dev/null; then
+		return
+	fi
+
 	# Report the event
 	mm_log "debug" "Report event: action=${action}, name=${name}, subsystem=${subsystem}"
 	result=$(mmcli --report-kernel-event="action=${action},name=${name},subsystem=${subsystem}" 2>&1)
