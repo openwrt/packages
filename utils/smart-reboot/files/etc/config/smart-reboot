@@ -1,0 +1,8 @@
+config settings 'settings'
+	option enabled '1'
+	option time '04:00'
+	option all_ifaces '0'
+	option last_auto_reboot ''
+	list ifaces 'wan'
+	option sample_seconds '120'
+	option byte_threshold '262144'
