@@ -37,7 +37,7 @@ endef
 define Package/shairport-sync-openssl
   $(Package/shairport-sync/default)
   TITLE+= (openssl)
-  DEPENDS+= +libopenssl +libavahi-client +libsoxr +libplist +libsodium +libgcrypt +libffmpeg-full +libuuid +nqptp
+  DEPENDS+= +libopenssl +libavahi-client +libsoxr +libplist +libsodium +libgcrypt-mini +libffmpeg-full +libuuid +nqptp
   VARIANT:=openssl
 endef
 
