@@ -29,11 +29,20 @@ __API="https://api.porkbun.com/api/json/v3"
 [ -z "$username" ] && write_log 14 "Service section not configured correctly! Missing 'username'"
 [ -z "$password" ] && write_log 14 "Service section not configured correctly! Missing 'password'"
 
-# Split FQDN into domain and subdomain(s)
-__DOMAIN_REGEX='^\(\(.*\)\.\)\?\([^.]\+\.[^.]\+\)$'
-echo $domain | grep "$__DOMAIN_REGEX" > /dev/null || write_log 14 "Invalid domain! Check 'domain' config"
-__DOMAIN=$(echo $domain | sed -e "s/$__DOMAIN_REGEX/\3/")
-__SUBDOMAIN=$(echo $domain | sed -e "s/$__DOMAIN_REGEX/\2/")
+if echo "$domain" | grep -Fq '@'; then
+	# split __HOST __DOMAIN from $domain
+	# given data:
+	# @example.com for "domain record"
+	# host.sub@example.com for a "host record"
+	__SUBDOMAIN=$(printf %s "$domain" | cut -d@ -f1)
+	__DOMAIN=$(printf %s "$domain" | cut -d@ -f2)
+else
+	# Split FQDN into domain and subdomain(s)
+	__DOMAIN_REGEX='^\(\(.*\)\.\)\?\([^.]\+\.[^.]\+\)$'
+	echo $domain | grep "$__DOMAIN_REGEX" > /dev/null || write_log 14 "Invalid domain! Check 'domain' config"
+	__DOMAIN=$(echo $domain | sed -e "s/$__DOMAIN_REGEX/\3/")
+	__SUBDOMAIN=$(echo $domain | sed -e "s/$__DOMAIN_REGEX/\2/")
+fi
 
 # Determine IPv4 or IPv6 address and record type
 if [ "$use_ipv6" -eq 1 ]; then
