@@ -284,6 +284,8 @@ GO_ARCH_DEPENDS:=@(aarch64||arm||i386||i686||loongarch64||mips||mips64||mips64el
 # ASLR/PIE
 
 # From https://go.dev/src/internal/platform/supported.go
+#
+# linux/ppc64le is omitted because -buildmode=pie makes the bootstrap compiler segfault.
 GO_PIE_SUPPORTED_OS_ARCH:= \
   aix/ppc64 \
   android/386 \
@@ -300,7 +302,6 @@ GO_PIE_SUPPORTED_OS_ARCH:= \
   linux/arm \
   linux/arm64 \
   linux/loong64 \
-  linux/ppc64le \
   linux/riscv64 \
   linux/s390x \
   openbsd/arm64 \
