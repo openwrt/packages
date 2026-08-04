@@ -44,7 +44,43 @@ imagemagick)
 		-gravity Center -composite /tmp/im-comp.png
 	identify /tmp/im-comp.png | grep "PNG"
 
+	# TIFF round-trip: encode, then decode back to PNG at the same geometry
+	convert /tmp/im-white.png /tmp/im-white.tiff
+	identify /tmp/im-white.tiff | grep "TIFF"
+	convert /tmp/im-white.tiff /tmp/im-back.png
+	identify /tmp/im-back.png | grep -E "PNG.*32x32"
+
+	# PPM and GIF encoders (built-in codecs)
+	convert /tmp/im-white.png /tmp/im-white.ppm
+	identify /tmp/im-white.ppm | grep -E "PNM|PPM"
+	convert /tmp/im-white.png /tmp/im-white.gif
+	identify /tmp/im-white.gif | grep "GIF"
+
+	# Crop a sub-region; +repage drops the virtual canvas offset
+	convert /tmp/im-white.png -crop 10x10+0+0 +repage /tmp/im-crop.png
+	identify /tmp/im-crop.png | grep -E "PNG.*10x10"
+
+	# Rotate 90 degrees swaps width and height
+	convert -size 40x20 xc:white -rotate 90 /tmp/im-rot.png
+	identify /tmp/im-rot.png | grep -E "PNG.*20x40"
+
+	# Horizontal append of two images
+	convert /tmp/im-white.png /tmp/im-small.png +append /tmp/im-app.png
+	identify /tmp/im-app.png | grep "PNG"
+
+	# The IM7 'magick' driver must work as well as the legacy tools
+	magick -size 24x24 xc:green /tmp/im-magick.png
+	identify /tmp/im-magick.png | grep -E "PNG.*24x24"
+
+	# mogrify rewrites the file in place
+	cp /tmp/im-white.png /tmp/im-mog.png
+	mogrify -resize 20x20! /tmp/im-mog.png
+	identify /tmp/im-mog.png | grep -E "PNG.*20x20"
+
 	rm -f /tmp/im-white.png /tmp/im-white.jpg /tmp/im-small.png \
-	      /tmp/im-red.png /tmp/im-white.bmp /tmp/im-gray.png /tmp/im-comp.png
+	      /tmp/im-red.png /tmp/im-white.bmp /tmp/im-gray.png /tmp/im-comp.png \
+	      /tmp/im-white.tiff /tmp/im-back.png /tmp/im-white.ppm \
+	      /tmp/im-white.gif /tmp/im-crop.png /tmp/im-rot.png /tmp/im-app.png \
+	      /tmp/im-magick.png /tmp/im-mog.png
 	;;
 esac
