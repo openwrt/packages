@@ -1,0 +1,23 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Qingfang Deng <dqfext@gmail.com>
+Date: Sun, 2 Aug 2026 19:17:55 +0800
+Subject: [PATCH] fix build on 6.18.40
+
+6.18.40 commit 073d95725269 changed the prototype of proto::recvmsg.
+Update the ifdef.
+---
+ drivers/net/ovpn/tcp.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+--- a/drivers/net/ovpn/tcp.c
++++ b/drivers/net/ovpn/tcp.c
+@@ -167,6 +167,9 @@ err_nopeer:
+ #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 19, 0)
+ static int ovpn_tcp_recvmsg(struct sock *sk, struct msghdr *msg, size_t len,
+ 			    int noblock, int flags, int *addr_len)
++#elif LINUX_VERSION_CODE >= KERNEL_VERSION(6, 18, 40) && LINUX_VERSION_CODE < KERNEL_VERSION(6, 19, 0)
++static int ovpn_tcp_recvmsg(struct sock *sk, struct msghdr *msg, size_t len,
++			    int flags)
+ #elif LINUX_VERSION_CODE < KERNEL_VERSION(7, 1, 0)
+ static int ovpn_tcp_recvmsg(struct sock *sk, struct msghdr *msg, size_t len,
+ 			    int flags, int *addr_len)
