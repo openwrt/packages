@@ -505,6 +505,10 @@ config_remote() {
 	esac
 
 
+	# swanctl.conf has no "privkeys" option in connections.<conn>.local<suffix>;
+	# strongSwan auto-selects the private key from /etc/swanctl/private by
+	# matching it against the certificate configured via "certs". We only
+	# need to make sure the referenced key file actually exists there.
 	if [ -n "$local_key" ]; then
 		[ "$(dirname "$local_key")" != "." ] && \
 			fatal "local_key $local_key can't be pathname"
@@ -553,8 +557,6 @@ config_remote() {
 	[ -n "$local_identifier" ] && swanctl_xappend3 "id = \"$local_identifier\""
 	[ "$local_auth_method" = pubkey ] && [ -n "$local_cert" ] && \
 		swanctl_xappend3 "certs = $local_cert"
-	[ "$local_auth_method" = pubkey ] && [ -n "$local_key" ] && \
-		swanctl_xappend3 "privkeys = $local_key"
 	swanctl_xappend2 "}"
 
 	swanctl_xappend2 "remote {"
