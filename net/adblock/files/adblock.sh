@@ -1737,7 +1737,7 @@ f_jsnup() {
 			end_time="${end_time%.*}"
 			duration="$(((end_time - adb_starttime) / 60))m $(((end_time - adb_starttime) % 60))s"
 		fi
-		runtime="mode: ${adb_action}, date / time: $(date "+%d/%m/%Y %H:%M:%S"), duration: ${duration:-"-"}, memory: ${free_mem:-0} MB available"
+		runtime="mode: ${adb_action}, date / time: $(date "+%Y-%m-%d %H:%M:%S"), duration: ${duration:-"-"}, memory: ${free_mem:-0} MB available"
 		;;
 	"resume")
 		status="enabled"
