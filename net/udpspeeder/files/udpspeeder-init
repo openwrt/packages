@@ -35,7 +35,7 @@ start_instance() {
 	local section="$1"
 
 	local server mode mtu timeout local remote key report disable_obscure fifo interval \
-		fec disable_fec sock_buf queue_len decode_buf sock_buf log_level enabled
+		fec disable_fec sock_buf queue_len decode_buf log_level fix_latency enabled
 
 	fifo="/tmp/udpspeeder-${section}.fifo"
 
