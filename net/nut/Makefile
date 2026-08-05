@@ -165,12 +165,6 @@ define Package/nut-server/conffiles
 /etc/nut/ups.conf
 endef
 
-define Package/nut-server/postinst
-#!/bin/sh
-[ -n "$${IPKG_INSTROOT}" ] || (. /etc/uci-defaults/90_nut-server) && rm -f /etc/uci-defaults/90_nut-server
-exit 0
-endef
-
 define Package/nut-upsmon
   $(call Package/nut/Default)
   TITLE+= (monitor)
@@ -192,12 +186,6 @@ endef
 define Package/nut-upsmon/conffiles
 /etc/config/nut_monitor
 /etc/nut/upsmon.conf
-endef
-
-define Package/nut-upsmon/postinst
-#!/bin/sh
-[ -n "$${IPKG_INSTROOT}" ] || (. /etc/uci-defaults/90_nut-upsmon) && rm -f /etc/uci-defaults/90_nut-upsmon
-exit 0
 endef
 
 define Package/nut-upsmon/install
