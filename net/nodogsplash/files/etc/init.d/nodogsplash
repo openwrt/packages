@@ -1,0 +1,215 @@
+#!/bin/sh /etc/rc.common
+
+#
+# Startup/shutdown script for nodogsplash captive portal
+#
+
+START=95
+STOP=95
+
+USE_PROCD=1
+
+IPT=/usr/sbin/iptables
+WD_DIR=/usr/bin
+
+# Run in PROCD (-f) and log to SYSLOG (-s)
+OPTIONS="-f -s"
+#
+
+CONFIG=""
+
+
+addline() {
+  append CONFIG "$1" "$N"
+}
+
+setup_mac_lists() {
+  local cfg="$1"
+  local macs=""
+  local val
+
+  append_mac() {
+    append macs "$1" ","
+  }
+
+  config_get val "$cfg" macmechanism
+  if [ -z "$val" ]; then
+    # Check if we have AllowedMACList or BlockedMACList defined they will be ignored
+    config_get val "$cfg" allowedmac
+    if [ -n "$val" ]; then
+      echo "Ignoring allowedmac - macmechanism not \"allow\"" >&2
+    fi
+
+    config_get val "$cfg" blockedmac
+    if [ -n "$val" ]; then
+      echo "Ignoring blockedmac - macmechanism not \"block\"" >&2
+    fi
+  elif [ "$val" = "allow" ]; then
+    config_list_foreach "$cfg" allowedmac append_mac
+    addline "MACmechanism allow"
+    addline "AllowedMACList $macs"
+  elif [ "$val" = "block" ]; then
+    config_list_foreach "$cfg" blockedmac append_mac
+    addline "MACmechanism block"
+    addline "BlockedMACList $macs"
+  else
+    echo "Invalid macmechanism '$val' - allow or block are valid." >&2
+    return 1
+  fi
+
+  macs=""
+  config_list_foreach "$cfg" trustedmac append_mac
+  if [ -n "$macs" ]; then
+    addline "TrustedMACList $macs"
+  fi
+
+  return 0
+}
+
+setup_firewall() {
+  local cfg="$1"
+  local uci_name
+  local val
+
+  append_firewall() {
+    addline "  FirewallRule $1"
+  }
+
+  for rule in authenticated-users preauthenticated-users users-to-router trusted-users trusted-users-to-router; do
+    # uci does not allow dashes
+    uci_name=${rule//-/_}
+    addline "FirewallRuleSet $rule {"
+    config_list_foreach "$cfg" "$uci_name" append_firewall
+    addline "}"
+    config_get val "$cfg" "policy_${uci_name}"
+    if [ -n "$val" ]; then
+      addline "EmptyRuleSetPolicy $rule $val"
+    fi
+  done
+}
+
+wait_for_interface() {
+  local ifname="$1"
+  local timeout=10
+
+  for i in $(seq $timeout); do
+    if [ $(ip -4 addr show dev $ifname 2> /dev/null | grep -c inet) -ne 0 ]; then
+      break
+    fi
+    sleep 1
+    if [ $i = $timeout ]; then
+      echo "Interface $ifname not detected." >&2
+      return 1
+    fi
+  done
+
+  return 0
+}
+
+generate_uci_config() {
+  local cfg="$1"
+  local val
+  local ifname
+  local download
+  local upload
+
+  # Init config file content
+  CONFIG="# auto-generated config file from /etc/config/nodogsplash"
+
+  config_get val "$cfg" config
+  if [ -n "$val" ]; then
+    if [ ! -f "$val" ]; then
+      echo "Configuration file '$file' doesn't exist." >&2
+      return 1
+    fi
+    addline "$(cat $val)"
+  fi
+
+  config_get ifname "$cfg" gatewayinterface
+
+  # Get device name if interface name is a section name in /etc/config/network
+  if network_get_device tmp "$ifname"; then
+    ifname="$tmp"
+  fi
+
+  if [ -z "$ifname" ]; then
+    echo "Option network or gatewayinterface missing." >&2
+    return 1
+  fi
+
+  wait_for_interface "$ifname" || return 1
+
+  addline "GatewayInterface $ifname"
+
+  for option in preauth binauth \
+    daemon debuglevel maxclients gatewayname gatewayinterface gatewayiprange \
+    gatewayaddress gatewayport webroot splashpage statuspage \
+    redirecturl sessiontimeout preauthidletimeout authidletimeout checkinterval \
+    setmss mssvalue trafficcontrol downloadlimit uploadlimit \
+    syslogfacility ndsctlsocket fw_mark_authenticated \
+    fw_mark_blocked fw_mark_trusted
+  do
+    config_get val "$cfg" "$option"
+
+    if [ -n "$val" ]; then
+      addline "$option $val"
+    fi
+  done
+  for option in fasport fasremoteip faspath fas_secure_enabled ; do
+    config_get val "$cfg" "$option"
+    if [ -n "$val" ]; then
+      echo "Warning: nodogsplash does not support $val"
+      return 1
+    fi
+  done
+  config_get download "$cfg" downloadlimit
+  config_get upload "$cfg" uploadlimit
+
+  if [ -n "$upload" -o -n "$download" ]; then
+    addline "TrafficControl yes"
+  fi
+
+  setup_mac_lists "$cfg" || return 1
+  setup_firewall "$cfg"
+
+  echo "$CONFIG" > "/tmp/etc/nodogsplash_$cfg.conf"
+  return 0
+}
+
+# setup configuration and start instance
+create_instance() {
+  local cfg="$1"
+  local val
+
+  config_get_bool val "$cfg" enabled 0
+  [ $val -gt 0 ] || return 0
+
+  if ! generate_uci_config "$cfg"; then
+    echo "Can not generate uci config. Will not start instance $cfg." >&2
+    return 1
+  fi
+
+  procd_open_instance $cfg
+  procd_set_param command /usr/bin/nodogsplash -c "/tmp/etc/nodogsplash_$cfg.conf" $OPTIONS
+  procd_set_param respawn
+  procd_set_param file "/tmp/etc/nodogsplash_$cfg.conf"
+  procd_close_instance
+}
+
+start_service() {
+  # For network_get_device()
+  include /lib/functions
+
+  # For nodogsplash.conf file
+  mkdir -p /tmp/etc/
+
+  config_load nodogsplash
+  config_foreach create_instance nodogsplash
+}
+
+stop_service() {
+  # When procd terminates nodogsplash, it does not exit fast enough.
+  # Otherwise procd will restart nodogsplash twice. First time starting
+  # nodogsplash fails, second time it succeeds.
+  sleep 1
+}
