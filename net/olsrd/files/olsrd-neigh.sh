@@ -50,6 +50,11 @@ read_hostnames()
 					ip="$1"
 					hostname="$2"
 
+					# both values are announced by other nodes in the
+					# mesh, so reject anything that is not a plain
+					# address/hostname before it reaches eval
+					case "$ip$hostname" in *[!A-Za-z0-9.:_-]*) continue ;; esac
+
 					# global vars, e.g.
 					# IP_1_2_3_4='foo' or IP_2001_ffff_ffff_ffff__1='bar'
 					eval IP_${ip//[.:]/_}="$hostname"
@@ -89,6 +94,12 @@ for HOST in '127.0.0.1' '::1';do
 			i=1;while json_is_a ${i} object;do
 				json_select ${i}
 				json_get_vars $(for v in ${VARS};do echo ${v%:*};done)
+
+				# remoteIP is announced by other nodes in the mesh and
+				# is interpolated into a variable name below, so reject
+				# anything that is not a plain address
+				case "$remoteIP" in *[!A-Za-z0-9.:_-]*) remoteIP= ;; esac
+
 				case ${j} in 0)
 					for v in ${VARS};do
 						eval "test \${_${v%:*}} -lt \${#${v%:*}} && _${v%:*}=\${#${v%:*}}"
