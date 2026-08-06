@@ -52,10 +52,6 @@ define KernelPackage/batman-adv/config
 	source "$(SOURCE)/Config.in"
 endef
 
-define Package/kmod-batman-adv/conffiles
-/etc/config/batman-adv
-endef
-
 PKG_MAKE_FLAGS:= \
 	CONFIG_BATMAN_ADV=m \
 	CONFIG_BATMAN_ADV_DEBUG=$(if $(CONFIG_BATMAN_ADV_DEBUG),y,n) \
