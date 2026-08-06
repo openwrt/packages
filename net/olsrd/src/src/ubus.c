@@ -83,6 +83,7 @@ static int olsrd_ubus_add_interface(struct ubus_context *ctx_local,
     double lqm_value = atof(lqm);
     mult->addr = addr;
     mult->value = (uint32_t)(lqm_value * LINK_LOSS_MULTIPLIER);
+    mult->next = tmp_ifs->cnf->lq_mult;
     tmp_ifs->cnf->lq_mult = mult;
     tmp_ifs->cnf->orig_lq_mult_cnt++;
   }
