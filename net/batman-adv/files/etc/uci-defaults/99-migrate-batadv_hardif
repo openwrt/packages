@@ -17,7 +17,7 @@ proto_batadv_to_batadv_hardif() {
     config_get routing_algo "${section}" routing_algo
 
     if [ -z "$mesh" -o "${proto}" != "batadv" ]; then
-        continue
+        return
     fi
 
     uci set network."${section}".proto="batadv_hardif"
