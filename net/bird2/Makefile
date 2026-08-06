@@ -101,8 +101,6 @@ CONFIGURE_ARGS += --disable-libssh
 
 define Package/bird2/conffiles
 /etc/bird.conf
-/etc/bird4.conf
-/etc/bird6.conf
 endef
 
 define Package/bird2/install
