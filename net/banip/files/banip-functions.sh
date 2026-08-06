@@ -1844,7 +1844,7 @@ f_genstatus() {
 			end_time="${end_time%%.*}"
 			duration="$(((end_time - ban_starttime) / 60))m $(((end_time - ban_starttime) % 60))s"
 		fi
-		runtime="mode: ${ban_action}, date / time: $(date "+%d/%m/%Y %H:%M:%S"), duration: ${duration:-"-"}, memory: ${mem_free} MB available"
+		runtime="mode: ${ban_action}, date / time: $(date "+%Y-%m-%d %H:%M:%S"), duration: ${duration:-"-"}, memory: ${mem_free} MB available"
 	fi
 	[ -s "${ban_customfeedfile}" ] && custom_feed="1"
 	[ "${ban_splitsize:-"0"}" -gt "0" ] && split="1"
