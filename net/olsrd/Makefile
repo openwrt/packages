@@ -159,7 +159,7 @@ endef
 
 define Package/olsrd-utils
   $(call Package/olsrd/template)
-  DEPENDS:=olsrd
+  DEPENDS:=olsrd +jshn
   TITLE:=Utils for OLSRD
 endef
 
