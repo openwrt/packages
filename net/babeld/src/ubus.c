@@ -83,7 +83,7 @@ static int babeld_ubus_add_filter(struct ubus_context *ctx_local,
   struct blob_buf b = {0};
   struct filter *filter = NULL;
   char *ifname;
-  int metric, type;
+  int metric = 0, type;
 
   blobmsg_parse(filter_policy, __FILTER_MAX, tb, blob_data(msg), blob_len(msg));
 
