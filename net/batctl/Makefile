@@ -29,7 +29,7 @@ define Package/batctl/Default
 endef
 
 define Package/batctl/description
-  batctl is a more intuitive managment utility for B.A.T.M.A.N.-Advanced.
+  batctl is a more intuitive management utility for B.A.T.M.A.N.-Advanced.
   It is an easier method for configuring batman-adv and provides some
   additional tools for debugging as well. This package builds
   version $(PKG_VERSION) of the user space utility.
@@ -72,11 +72,11 @@ define Package/batctl-full/description
 endef
 
 MAKE_VARS += \
-        LIBNL_NAME="libnl-tiny" \
-        LIBNL_GENL_NAME="libnl-tiny"
+	LIBNL_NAME="libnl-tiny" \
+	LIBNL_GENL_NAME="libnl-tiny"
 
 MAKE_FLAGS += \
-        REVISION="$(PKG_VERSION)-openwrt-$(PKG_RELEASE)"
+	REVISION="$(PKG_VERSION)-openwrt-$(PKG_RELEASE)"
 
 config-n := \
 	aggregation \
