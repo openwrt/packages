@@ -1,0 +1,139 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Nick Hainke <vincent@systemli.org>
+Date: Thu, 17 Dec 2020 12:41:32 +0100
+Subject: [PATCH] add ubus bindings
+
+---
+
+--- a/babeld.c
++++ b/babeld.c
+@@ -54,6 +54,8 @@ THE SOFTWARE.
+ #include "local.h"
+ #include "version.h"
+ 
++#include "ubus.h"
++
+ struct timeval now;
+ 
+ unsigned char myid[8];
+@@ -505,6 +507,9 @@ main(int argc, char **argv)
+         }
+     }
+ 
++    if(ubus_bindings)
++        babeld_add_ubus();
++
+     init_signals();
+     rc = resize_receive_buffer(1500);
+     if(rc < 0)
+@@ -597,6 +602,8 @@ main(int argc, char **argv)
+                 FD_SET(local_sockets[i].fd, &readfds);
+                 maxfd = MAX(maxfd, local_sockets[i].fd);
+             }
++            if(ubus_bindings)
++                maxfd = babeld_ubus_add_read_sock(&readfds, maxfd);
+             rc = select(maxfd + 1, &readfds, NULL, NULL, &tv);
+             if(rc < 0) {
+                 if(errno != EINTR) {
+@@ -665,6 +672,9 @@ main(int argc, char **argv)
+             i++;
+         }
+ 
++        if(ubus_bindings)
++            babeld_ubus_receive(&readfds);
++
+         if(reopening) {
+             kernel_dump_time = now.tv_sec;
+             check_neighbours_timeout = now;
+--- a/generate-version.sh
++++ b/generate-version.sh
+@@ -10,4 +10,4 @@ else
+     version="unknown"
+ fi
+ 
+-echo "#define BABELD_VERSION \"$version\""
++echo "#define BABELD_VERSION \"$version-ubus-mod\""
+--- a/configuration.c
++++ b/configuration.c
+@@ -42,6 +42,8 @@ THE SOFTWARE.
+ #include "hmac.h"
+ #include "configuration.h"
+ 
++#include "ubus.h"
++
+ static struct filter *input_filters = NULL;
+ static struct filter *output_filters = NULL;
+ static struct filter *redistribute_filters = NULL;
+@@ -1024,7 +1026,8 @@ parse_option(int c, gnc_t gnc, void *clo
+               strcmp(token, "daemonise") == 0 ||
+               strcmp(token, "skip-kernel-setup") == 0 ||
+               strcmp(token, "ipv6-subtrees") == 0 ||
+-              strcmp(token, "reflect-kernel-metric") == 0) {
++              strcmp(token, "reflect-kernel-metric") == 0 ||
++              strcmp(token, "ubus-bindings") == 0) {
+         int b;
+         c = getbool(c, &b, gnc, closure);
+         if(c < -1)
+@@ -1042,6 +1045,8 @@ parse_option(int c, gnc_t gnc, void *clo
+             has_ipv6_subtrees = b;
+         else if(strcmp(token, "reflect-kernel-metric") == 0)
+             reflect_kernel_metric = b;
++        else if(strcmp(token, "ubus-bindings") == 0)
++            ubus_bindings = b;
+         else
+             abort();
+     } else if(strcmp(token, "protocol-group") == 0) {
+--- a/local.c
++++ b/local.c
+@@ -42,6 +42,8 @@ THE SOFTWARE.
+ #include "local.h"
+ #include "version.h"
+ 
++#include "ubus.h"
++
+ int local_server_socket = -1;
+ struct local_socket local_sockets[MAX_LOCAL_SOCKETS];
+ int num_local_sockets = 0;
+@@ -191,6 +193,8 @@ local_notify_neighbour(struct neighbour
+         if(local_sockets[i].monitor)
+             local_notify_neighbour_1(&local_sockets[i], neigh, kind);
+     }
++    if(ubus_bindings)
++	    ubus_notify_neighbour(neigh, kind);
+ }
+ 
+ static void
+@@ -228,6 +232,8 @@ local_notify_xroute(struct xroute *xrout
+         if(local_sockets[i].monitor)
+             local_notify_xroute_1(&local_sockets[i], xroute, kind);
+     }
++    if(ubus_bindings)
++	    ubus_notify_xroute(xroute, kind);
+ }
+ 
+ static void
+@@ -273,6 +279,8 @@ local_notify_route(struct babel_route *r
+         if(local_sockets[i].monitor)
+             local_notify_route_1(&local_sockets[i], route, kind);
+     }
++    if(ubus_bindings)
++	    ubus_notify_route(route, kind);
+ }
+ 
+ static void
+--- a/Makefile
++++ b/Makefile
+@@ -11,11 +11,11 @@ LDLIBS = -lrt
+ 
+ SRCS = babeld.c net.c kernel.c util.c interface.c source.c neighbour.c \
+        route.c xroute.c message.c resend.c configuration.c local.c \
+-       hmac.c rfc6234/sha224-256.c BLAKE2/ref/blake2s-ref.c
++       hmac.c ubus.c rfc6234/sha224-256.c BLAKE2/ref/blake2s-ref.c
+ 
+ OBJS = babeld.o net.o kernel.o util.o interface.o source.o neighbour.o \
+        route.o xroute.o message.o resend.o configuration.o local.o \
+-       hmac.o rfc6234/sha224-256.o BLAKE2/ref/blake2s-ref.o
++       hmac.o ubus.o rfc6234/sha224-256.o BLAKE2/ref/blake2s-ref.o
+ 
+ babeld: $(OBJS)
+ 	$(CC) $(CFLAGS) $(LDFLAGS) -o babeld $(OBJS) $(LDLIBS)
