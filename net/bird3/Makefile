@@ -98,8 +98,6 @@ TARGET_LDFLAGS += -latomic
 
 define Package/bird3/conffiles
 /etc/bird.conf
-/etc/bird4.conf
-/etc/bird6.conf
 endef
 
 define Package/bird3/install
