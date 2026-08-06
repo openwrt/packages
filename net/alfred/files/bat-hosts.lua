@@ -4,6 +4,7 @@ local type_id = 64 -- bat-hosts
 
 function get_hostname()
   local hostfile = io.open("/proc/sys/kernel/hostname", "r")
+  if not hostfile then return nil end
   local ret_string = hostfile:read()
   hostfile:close()
   return ret_string
@@ -20,7 +21,10 @@ function get_interfaces_names()
 end
 
 function get_interface_address(name)
+  -- /sys/class/net also contains plain files, e.g. bonding_masters
+  -- once the bonding module is loaded, which have no address below them
   local addressfile = io.open("/sys/class/net/"..name.."/address", "r")
+  if not addressfile then return nil end
   local ret_string = addressfile:read()
   addressfile:close()
   return ret_string
@@ -37,7 +41,7 @@ local function generate_bat_hosts()
 
   for n, i in ipairs(get_interfaces_names()) do
     local address = get_interface_address(i)
-    if not ifaces[address] then ifaces[address] = i end
+    if address and not ifaces[address] then ifaces[address] = i end
   end
 
   for mac, iname in pairs(ifaces) do
