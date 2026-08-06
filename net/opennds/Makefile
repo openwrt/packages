@@ -30,7 +30,7 @@ define Package/opennds
   CATEGORY:=Network
   DEPENDS:=+libmicrohttpd-no-ssl
   TITLE:=open Network Demarcation Service
-  URL:=https://github.com/opennds/opennds
+  URL:=https://github.com/openNDS/openNDS
   CONFLICTS:=nodogsplash
 endef
 
