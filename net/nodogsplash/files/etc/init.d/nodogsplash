@@ -119,7 +119,7 @@ generate_uci_config() {
   config_get val "$cfg" config
   if [ -n "$val" ]; then
     if [ ! -f "$val" ]; then
-      echo "Configuration file '$file' doesn't exist." >&2
+      echo "Configuration file '$val' doesn't exist." >&2
       return 1
     fi
     addline "$(cat $val)"
@@ -142,7 +142,7 @@ generate_uci_config() {
   addline "GatewayInterface $ifname"
 
   for option in preauth binauth \
-    daemon debuglevel maxclients gatewayname gatewayinterface gatewayiprange \
+    daemon debuglevel maxclients gatewayname gatewayiprange \
     gatewayaddress gatewayport webroot splashpage statuspage \
     redirecturl sessiontimeout preauthidletimeout authidletimeout checkinterval \
     setmss mssvalue trafficcontrol downloadlimit uploadlimit \
@@ -158,7 +158,7 @@ generate_uci_config() {
   for option in fasport fasremoteip faspath fas_secure_enabled ; do
     config_get val "$cfg" "$option"
     if [ -n "$val" ]; then
-      echo "Warning: nodogsplash does not support $val"
+      echo "Warning: nodogsplash does not support $option"
       return 1
     fi
   done
