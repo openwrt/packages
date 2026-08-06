@@ -177,6 +177,7 @@ endef
 
 MAKE_FLAGS+= \
 	NO_DEBUG_MESSAGES=1 \
+	VERS="$(PKG_VERSION)" \
 	OS="linux" \
 	DESTDIR="$(PKG_INSTALL_DIR)" \
 	STRIP="true" \

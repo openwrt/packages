@@ -4,10 +4,7 @@
 
 case "$PKG_NAME" in
 olsrd)
-	# The version of olsrd is derived from the source date and git
-	# hash, which the binary does not report. Check that the binary
-	# starts and prints its version banner instead.
-	olsrd -v 2>&1 | grep -F "olsr.org"
+	olsrd -v 2>&1 | grep -F "$PKG_VERSION"
 	;;
 
 olsrd-mod-*)
