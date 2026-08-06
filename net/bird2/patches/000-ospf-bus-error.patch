@@ -1,0 +1,18 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Matt Reeve <matt@mreeve.com>
+Date: Tue, 10 Aug 2021 12:41:04 +0100
+Subject: [PATCH] Fix bus error on OSPF on IPQ806X
+
+---
+
+--- a/proto/ospf/topology.h
++++ b/proto/ospf/topology.h
+@@ -41,7 +41,7 @@ struct top_hash_entry
+   u8 mode;			/* LSA generated during RT calculation (LSA_RTCALC or LSA_STALE)*/
+   u8 nhs_reuse;			/* Whether nhs nodes can be reused during merging.
+ 				   See a note in rt.c:add_cand() */
+-};
++} PACKED;
+ 
+ 
+ /* Prevents ospf_hash_find() to ignore the entry, for p->lsrqh and p->lsrth */
