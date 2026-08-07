@@ -65,6 +65,7 @@ define Package/ripe-atlas-common
 	+jsonfilter \
 	+openssh-client \
 	+openssh-keygen \
+	+libopenssl \
 	+@OPENSSL_WITH_DEPRECATED \
 	+@BUSYBOX_CONFIG_KILL \
 	+@BUSYBOX_CONFIG_KILLALL \
