@@ -100,6 +100,10 @@ define Package/ripe-atlas-common/install
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/ripe-atlas.conf $(1)/etc/config/ripe-atlas
 
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/ripe-atlas.defaults \
+		       $(1)/etc/uci-defaults/80-ripe-atlas
+
 	$(INSTALL_DIR) $(1)/etc/ripe-atlas
 
 	$(INSTALL_DIR) $(1)/usr/lib/ripe-atlas/measurement
