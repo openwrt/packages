@@ -12,11 +12,27 @@ PKG_VERSION:=22.23.2
 PKG_RELEASE:=1
 NODE_MODULE_VERSION:=127
 
-PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://nodejs.org/dist/v$(PKG_VERSION)
-PKG_HASH:=cdaed46fcd8923a55974b7bbc7caaadeaaf7aed60cc137e59837b72f575ef641
+NODEJS_BIN_SUM_DARWIN_ARM64:=5eff7a9011895aae3f29d06f167b84a62b028a591370c7cafb59103559fd26e1
+NODEJS_BIN_SUM_DARWIN_X64:=96dff79f4e19a78715da559ec7cac2028f4985a175ea0c3454625a269c21deb7
+NODEJS_BIN_SUM_LINUX_ARM64:=fff4078c5def658577f92c88db7db3bc0072924bfb93fe52c1e744a54e94abb8
+NODEJS_BIN_SUM_LINUX_X64:=d60acfe00a2932254bb0ad20e01b0d74397a0875595de719654b214f4b03f307
+
+NODEJS_HOST_OS:=$(if $(findstring Darwin,$(HOST_OS)),darwin,linux)
+NODEJS_HOST_ARCH:=$(if $(filter aarch64 arm64,$(HOST_ARCH)),arm64,$(if $(filter x86_64 amd64,$(HOST_ARCH)),x64,))
+
+NODEJS_BIN_SUM:=$(NODEJS_BIN_SUM_$(call toupper,$(NODEJS_HOST_OS)_$(NODEJS_HOST_ARCH)))
+
+ifneq ($(NODEJS_BIN_SUM),)
+  PKG_SOURCE:=node-v$(PKG_VERSION)-$(NODEJS_HOST_OS)-$(NODEJS_HOST_ARCH).tar.xz
+  PKG_SOURCE_URL:=https://nodejs.org/download/release/v$(PKG_VERSION)/
+  PKG_HASH:=$(NODEJS_BIN_SUM)
+else
+  PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.xz
+  PKG_SOURCE_URL:=https://nodejs.org/dist/v$(PKG_VERSION)
+  PKG_HASH:=bbe768df8d5815d7fa76124052985332452e0a4742d39f32027550d1aab8f6fb
+endif
+
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-v$(PKG_VERSION)
-NODEJS_BIN_SUM:=b294a556e639d64338823920e5866c21c02741742d2e1529ee1a225c1ec9252a
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)-v$(PKG_VERSION)
 
 PKG_MAINTAINER:=Hirokazu MORIKAWA <morikw2@gmail.com>, Adrian Panella <ianchi74@outlook.com>
@@ -24,7 +40,7 @@ PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:nodejs:node.js
 
-HOST_BUILD_DEPENDS:=python3/host
+HOST_BUILD_DEPENDS:=$(if $(NODEJS_BIN_SUM),,python3/host)
 HOST_BUILD_PARALLEL:=1
 PKG_HOST_ONLY:=1
 
@@ -44,56 +60,52 @@ endef
 define Package/node/description
   Node.js® is a JavaScript runtime built on Chrome's V8 JavaScript engine. Node.js uses
   an event-driven, non-blocking I/O model that makes it lightweight and efficient. Node.js'
-   package ecosystem, npm, is the largest ecosystem of open source libraries in the world.
+  package ecosystem, npm, is the largest ecosystem of open source libraries in the world.
 endef
+
+define Host/Install/Clean
+	rm -rf \
+	$(1)/bin/npm \
+	$(1)/bin/npx \
+	$(1)/bin/corepack \
+	$(1)/lib/node_modules/npm \
+	$(1)/lib/node_modules/corepack
+endef
+
+ifneq ($(NODEJS_BIN_SUM),)
+
+HOST_UNPACK:=$(HOST_TAR) -C "$(HOST_BUILD_DIR)" --strip-components=1 -xf "$(DL_DIR)/$(PKG_SOURCE)"
+
+define Host/Patch
+	@:
+endef
+
+define Host/Configure
+	@:
+endef
+
+define Host/Compile
+	@:
+endef
+
+define Host/Install
+	$(call Host/Install/Clean,$(1))
+	$(CP) $(HOST_BUILD_DIR)/[!.]* $(1)/
+	mv $(1)/CHANGELOG.md $(1)/LICENSE $(1)/README.md $(1)/lib/node_modules/
+endef
+
+else
 
 HOST_MAKE_VARS+=NO_LOAD='cctest.target.mk embedtest.target.mk overlapped-checker.target.mk'
 
 HOST_CONFIGURE_VARS:=
 HOST_CONFIGURE_ARGS:= \
-	--dest-os=$(if $(findstring Darwin,$(HOST_OS)),mac,linux) \
+	--dest-os=linux \
 	--with-intl=small-icu \
 	--prefix=$(STAGING_DIR_HOSTPKG)
 
-ifeq ($(HOST_ARCH),x86_64)
-
-NODEJS_BIN:=node-v$(PKG_VERSION)-linux-x64.tar.gz
-
-define Download/nodebin
-	URL:=https://nodejs.org/download/release/v$(PKG_VERSION)/
-	FILE:=$(NODEJS_BIN)
-	HASH:=$(NODEJS_BIN_SUM)
-endef
-
-define Host/Prepare
-	$(eval $(call Download,nodebin))
-endef
-
-define Host/Configure
-	# nothing to do
-endef
-
-define Host/Compile
-	# nothing to do
-endef
-
 define Host/Install
-	rm -f $(1)/bin/npm
-	rm -f $(1)/bin/npx
-	rm -rf $(1)/lib/node_modules/npm
-	rm -f $(1)/bin/corepack
-	rm -rf $(1)/lib/node_modules/corepack
-	$(TAR) xvf $(DL_DIR)/$(NODEJS_BIN) -C $(1) --strip-components=1
-	mv $(1)/{CHANGELOG.md,LICENSE,README.md} $(1)/lib/node_modules/
-endef
-
-else
-define Host/Install
-	rm -f $(1)/bin/npm
-	rm -f $(1)/bin/npx
-	rm -rf $(1)/lib/node_modules/npm
-	rm -f $(1)/bin/corepack
-	rm -rf $(1)/lib/node_modules/corepack
+	$(call Host/Install/Clean,$(1))
 	$(call Host/Install/Default)
 endef
 endif
