@@ -71,6 +71,39 @@ guidelines:
 - Avoid reuse of <strong>PKG_NAME</strong> in call, define and eval lines to improve
   readability.
 
+### Patches
+
+Patches live in `<package>/patches/` and are applied with quilt. Always
+generate and update them with the buildroot's `refresh` target rather than by
+hand or with a plain `git diff`:
+
+```
+make package/foopkg/refresh
+```
+
+That target runs quilt as
+`QUILT_DIFF_OPTS="-p" quilt refresh -p ab --no-index --no-timestamps`, which is
+what produces the expected form:
+
+- `-p ab` gives the usual `a/` and `b/` path prefixes.
+- `--no-index` drops the `Index:` line, which carries no information here.
+- `--no-timestamps` drops the timestamps from the `---` and `+++` lines. They
+  are the working copy's mtimes, so leaving them in makes an otherwise
+  unchanged patch differ between contributors and produces noisy diffs on
+  every refresh.
+- `QUILT_DIFF_OPTS="-p"` passes `-p` to `diff`, so each `@@` hunk header names
+  the enclosing function or section. This is what makes a patch readable in
+  review and is the difference most often missed.
+
+A patch produced by `git diff` or `git format-patch` will carry index lines and
+timestamps and will lack the hunk context, so it will be sent back for a
+refresh even when it applies cleanly.
+
+Each patch should also carry a short description of what it changes and why,
+and a `Signed-off-by` line, above the diff. Anything that is not upstreamable —
+a workaround, a local-only build fix — should say so there, since the patch is
+the only place a later maintainer will look.
+
 ### Commits in your pull-requests should
 
 - Have a useful commit subject prefixed with the package name (E.g.: `foopkg:
