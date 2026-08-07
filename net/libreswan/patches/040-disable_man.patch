@@ -4,7 +4,7 @@
  #
  # For each define: TARGET clean-TARGET install-TARGET
  
--TARGETS = base manpages
+-TARGETS = base manpages html
 +TARGETS = base
  
  $(foreach target,$(TARGETS),$(eval $(call recursive-target,$(target))))
