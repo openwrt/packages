@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nlbwmon
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/jow-/nlbwmon.git
@@ -26,6 +26,7 @@ define Package/nlbwmon
   CATEGORY:=Network
   DEPENDS:=+libubox +libnl-tiny +zlib +kmod-nf-conntrack-netlink
   TITLE:=OpenWrt Traffic Usage Monitor
+  USERID:=nlbwmon:nlbwmon
 endef
 
 define Package/nlbwmon/install
