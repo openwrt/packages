@@ -9,14 +9,14 @@ PROG=/usr/bin/cs-firewall-bouncer
 VARCONFIGDIR=/var/etc/crowdsec/bouncers
 VARCONFIG=/var/etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
 
-CONFIGURATION=crowdsec
+CONFIGURATION=crowdsec-firewall-bouncer
 
 TABLE="crowdsec"
 TABLE6="crowdsec6"
 
 service_triggers() {
 	procd_add_reload_trigger crowdsec-firewall-bouncer
-	procd_add_config_trigger "config.change" "crowdsec" /etc/init.d/crowdsec-firewall-bouncer reload
+	procd_add_config_trigger "config.change" "crowdsec-firewall-bouncer" /etc/init.d/crowdsec-firewall-bouncer reload
 }
 
 init_yaml() {
