@@ -52,6 +52,30 @@ else ifeq ($(ARCH),riscv64)
   RUSTC_TARGET_ARCH:=$(subst riscv64,riscv64gc,$(RUSTC_TARGET_ARCH))
 endif
 
+# 32-bit PowerPC has both soft-float and hard-float subtargets: mpc85xx is an
+# e500v2 with no floating-point unit at all, while apm821xx (powerpc_464fp)
+# has one. They share the powerpc-unknown-linux-musl triple, which is the
+# hard-float one, so on the soft-float subtarget rustc emits lfd, stfd and
+# fdiv for a core with no floating-point registers, and passes doubles in
+# registers nothing else in the image uses.
+#
+# Ask the C compiler which it is rather than hardcoding a CPU list.
+ifeq ($(ARCH),powerpc)
+  RUSTC_CC_DEFINES:=$(shell $(TARGET_CC_NOCACHE) -dM -E - </dev/null 2>&1)
+  ifneq ($(filter _SOFT_FLOAT,$(RUSTC_CC_DEFINES)),)
+    RUSTC_TARGET_RUSTFLAGS+=-Ctarget-feature=-hard-float
+  endif
+endif
+
+CARGO_RUSTFLAGS+=$(RUSTC_TARGET_RUSTFLAGS)
+
+# The same flags have to reach the std that rust/host builds for the target,
+# or std and the packages linked against it disagree about how a double is
+# passed. Bootstrap has no target.<triple>.rustflags setting, so this goes
+# through the per-target variable cargo reads.
+RUSTC_TARGET_UPPER:=$(subst -,_,$(call toupper,$(RUSTC_TARGET_ARCH)))
+RUSTC_TARGET_CARGO_RUSTFLAGS:=CARGO_TARGET_$(RUSTC_TARGET_UPPER)_RUSTFLAGS
+
 # ARM Logic
 ifeq ($(ARCH),arm)
   ifeq ($(CONFIG_arm_v6)$(CONFIG_arm_v7),)
