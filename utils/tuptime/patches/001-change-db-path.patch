@@ -16,10 +16,10 @@ diff --git a/src/tuptime b/src/tuptime
 +++ b/src/tuptime
 @@ -22,7 +22,7 @@ from datetime import datetime
  # On os_bsd(): import subprocess
-
-
+ 
+ 
 -DB_FILE = '/var/lib/tuptime/tuptime.db'
 +DB_FILE = '/opt/tuptime/tuptime.db'
  DATETIME_FMT = '%x %X'
  __version__ = '5.2.6'
-
+ 
