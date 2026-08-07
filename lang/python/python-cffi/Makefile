@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-cffi
 PKG_VERSION:=1.16.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=cffi
 PKG_HASH:=bcb3ef43e58665bbda2fb198698fcae6776483e0c4a631aa5647806c25e02cc0
