@@ -1,0 +1,737 @@
+From a633c27d1da0f54d3af54e538a22e1f80e8960ea Mon Sep 17 00:00:00 2001
+From: Andrei Ovcharenko <a@krot.name>
+Date: Wed, 29 Jul 2026 13:20:19 +0300
+Subject: [PATCH] bwl: import and reconcile connected clients on nl80211
+
+The nl80211 flavor left pre/generate_connected_clients_events() as
+stubs that report success, so stations already associated when the
+agent starts never reach the controller: BML shows only clients that
+(re)associate afterwards, keeps stale parents and reports RSSI -127.
+
+Port the DWPAL station sweep to the nl80211 AP and monitor HALs: walk
+every VAP with STA-FIRST/STA-NEXT over the hostapd control socket,
+respect the iteration time budget, validate and deduplicate stations,
+skip authenticated-but-not-associated entries, survive a station
+vanishing mid-iteration (bounded VAP restart), and stop a failed VAP
+without wedging the FSM. Station capabilities are parsed from the
+hostapd station dump.
+
+The AP HAL keeps the sweep idempotent: it tracks currently connected
+stations from runtime events, emits an association only for new or
+moved stations, and reconciles stale clients only for VAPs whose
+enumeration reached a clean end-of-list (an empty reply; FAIL past the
+restart budget leaves the VAP partially walked). A pre-sweep snapshot,
+invalidated by runtime events, prevents a concurrent association from
+being undone. The new supports_connected_clients_reconciliation()
+capability lets the AP manager re-run the sweep every 60 seconds; HALs
+without that guarantee keep the previous run-once behavior.
+
+The whole series is publicly reviewable at
+https://gitlab.com/kreout/prpl-mesh-mercusys/-/merge_requests/1; the
+upstream GitLab only accepts merge requests from project members, so
+the upstream submission itself goes through the prpl Foundation Jira.
+
+Signed-off-by: Andrei Ovcharenko <a@krot.name>
+---
+ .../ap_manager/ap_manager.cpp                 |  14 +
+ .../fronthaul_manager/ap_manager/ap_manager.h |   2 +
+ common/beerocks/bwl/include/bwl/ap_wlan_hal.h |   8 +
+ .../bwl/nl80211/ap_wlan_hal_nl80211.cpp       | 338 +++++++++++++++++-
+ .../bwl/nl80211/ap_wlan_hal_nl80211.h         |  17 +
+ .../bwl/nl80211/base_wlan_hal_nl80211.cpp     |  19 +
+ .../bwl/nl80211/base_wlan_hal_nl80211.h       |   3 +
+ .../bwl/nl80211/mon_wlan_hal_nl80211.cpp      | 125 ++++++-
+ .../bwl/nl80211/mon_wlan_hal_nl80211.h        |  12 +
+ 9 files changed, 523 insertions(+), 15 deletions(-)
+
+--- a/agent/src/beerocks/fronthaul_manager/ap_manager/ap_manager.cpp
++++ b/agent/src/beerocks/fronthaul_manager/ap_manager/ap_manager.cpp
+@@ -747,6 +747,20 @@ bool ApManager::ap_manager_fsm(bool &con
+             m_generate_connected_clients_events = !is_finished_all_clients;
+         }
+ 
++        // Periodic reconciliation: HALs with an idempotent sweep re-run it to
++        // recover association events lost while the control socket was busy
++        // and to clean up stale clients.
++        if (!m_generate_connected_clients_events &&
++            ap_wlan_hal->supports_connected_clients_reconciliation() &&
++            now > m_next_client_reconciliation_time) {
++            m_next_client_reconciliation_time = now + std::chrono::seconds(60);
++            if (ap_wlan_hal->pre_generate_connected_clients_events()) {
++                m_generate_connected_clients_events = true;
++            } else {
++                LOG(WARNING) << "Failed to prepare connected clients reconciliation";
++            }
++        }
++
+         // Allow clients with expired blocking period timer
+         allow_expired_clients();
+         break;
+--- a/agent/src/beerocks/fronthaul_manager/ap_manager/ap_manager.h
++++ b/agent/src/beerocks/fronthaul_manager/ap_manager/ap_manager.h
+@@ -300,6 +300,8 @@ private:
+     bool m_generate_connected_clients_events                     = false;
+     std::chrono::steady_clock::time_point m_next_generate_connected_events_time =
+         std::chrono::steady_clock::time_point::min();
++    std::chrono::steady_clock::time_point m_next_client_reconciliation_time =
++        std::chrono::steady_clock::now() + std::chrono::seconds(60);
+ 
+     //Timer for triggering a CSA notification
+     void start_csa_notification_timer(
+--- a/common/beerocks/bwl/include/bwl/ap_wlan_hal.h
++++ b/common/beerocks/bwl/include/bwl/ap_wlan_hal.h
+@@ -442,6 +442,14 @@ public:
+     virtual bool pre_generate_connected_clients_events() = 0;
+ 
+     /**
++     * @brief Whether generate_connected_clients_events() is idempotent for
++     * this HAL (unchanged clients produce no duplicate events and stale
++     * clients are reported as disconnected), so the AP manager may re-run
++     * it periodically to reconcile missed association events.
++     */
++    virtual bool supports_connected_clients_reconciliation() const { return false; }
++
++    /**
+      * @brief Start WPS PBC procedure on a given VAP 
+      *
+      * @param iface_name VAP interface on which to start WPS PBC
+--- a/common/beerocks/bwl/nl80211/ap_wlan_hal_nl80211.cpp
++++ b/common/beerocks/bwl/nl80211/ap_wlan_hal_nl80211.cpp
+@@ -23,6 +23,7 @@
+ #include <netlink/msg.h>
+ #include <netlink/netlink.h>
+ #include <type_traits>
++#include <sstream>
+ 
+ //////////////////////////////////////////////////////////////////////////////
+ ////////////////////////// Local Module Definitions //////////////////////////
+@@ -1291,18 +1292,345 @@ bool ap_wlan_hal_nl80211::set_disabled_s
+     return true;
+ }
+ 
++// IEEE 802.11 HT capability bits needed to interpret hostapd station dumps;
++// the stock build has no hostapd headers to take them from.
++static constexpr uint16_t NL80211_HT_CAP_SUPP_CHANNEL_WIDTH_SET = 0x0002;
++static constexpr uint16_t NL80211_HT_CAP_SMPS_MASK              = 0x000C;
++static constexpr uint16_t NL80211_HT_CAP_SHORT_GI20MHZ          = 0x0020;
++static constexpr uint16_t NL80211_HT_CAP_SHORT_GI40MHZ          = 0x0040;
++
++static void sta_caps_from_ht(const int *HT_MCS, const std::string &ht_cap_str,
++                             beerocks::message::sRadioCapabilities &sta_caps)
++{
++    sta_caps.ht_bw = beerocks::BANDWIDTH_UNKNOWN;
++
++    if (ht_cap_str.empty()) {
++        sta_caps.ant_num = 1;
++        return;
++    }
++
++    uint16_t ht_cap = uint16_t(std::strtoul(ht_cap_str.c_str(), nullptr, 16));
++    sta_caps.ht_bw  = (ht_cap & NL80211_HT_CAP_SUPP_CHANNEL_WIDTH_SET) ? beerocks::BANDWIDTH_40
++                                                                       : beerocks::BANDWIDTH_20;
++    sta_caps.ht_sm_power_save    = ((ht_cap & NL80211_HT_CAP_SMPS_MASK) >> 2) & 0x03;
++    sta_caps.ht_low_bw_short_gi  = (ht_cap & NL80211_HT_CAP_SHORT_GI20MHZ) != 0;
++    sta_caps.ht_high_bw_short_gi = (ht_cap & NL80211_HT_CAP_SHORT_GI40MHZ) != 0;
++
++    uint32_t ht_mcs = 0;
++    for (uint8_t i = 0; i < 4; i++) {
++        ht_mcs |= uint32_t(HT_MCS[i]) << (8 * i);
++    }
++    uint32_t mask = 0x80000000;
++    for (uint8_t i = 4; i > 0; i--) {     // 4ss
++        for (int8_t j = 7; j >= 0; j--) { // 8 bits
++            if ((ht_mcs & mask) > 0) {
++                sta_caps.ht_ss   = i;
++                sta_caps.ant_num = i;
++                sta_caps.ht_mcs  = j;
++                return;
++            }
++            mask /= 2;
++        }
++    }
++}
++
++static void sta_caps_from_vht(const int16_t *VHT_MCS, const std::string &vht_cap_str,
++                              beerocks::message::sRadioCapabilities &sta_caps)
++{
++    sta_caps.vht_bw = beerocks::BANDWIDTH_UNKNOWN;
++
++    if (!vht_cap_str.empty()) {
++        uint32_t vht_cap          = std::strtoul(vht_cap_str.c_str(), nullptr, 16);
++        uint8_t supported_bw_bits = (vht_cap >> 2) & 0x03;
++
++        sta_caps.vht_bw =
++            (supported_bw_bits == 0) ? beerocks::BANDWIDTH_80 : beerocks::BANDWIDTH_160;
++        sta_caps.vht_low_bw_short_gi  = (vht_cap >> 5) & 0x01;
++        sta_caps.vht_high_bw_short_gi = (vht_cap >> 6) & 0x01;
++
++        uint16_t vht_mcs_rx = uint16_t(VHT_MCS[0]);
++        for (uint8_t i = 4; i > 0; i--) { // 4ss
++            uint16_t vht_mcs_temp = (vht_mcs_rx >> (2 * (i - 1))) & 0x03;
++            if (vht_mcs_temp != 0x3) { // 0x3 == not supported
++                sta_caps.vht_ss  = i;
++                sta_caps.ant_num = i;
++                sta_caps.vht_mcs = vht_mcs_temp + 7;
++                break;
++            }
++        }
++        sta_caps.vht_su_beamformer = (vht_cap >> 11) & 0x01;
++        sta_caps.vht_mu_beamformer = (vht_cap >> 19) & 0x01;
++    } else if (sta_caps.ant_num == 0) {
++        sta_caps.ant_num = 1;
++    }
++
++    if (sta_caps.vht_ss) {
++        sta_caps.wifi_standard = STANDARD_AC;
++    } else if (sta_caps.ht_ss) {
++        sta_caps.wifi_standard = STANDARD_N;
++    } else {
++        sta_caps.wifi_standard = STANDARD_A;
++    }
++}
++
++static void sta_caps_from_rates(const int *supported_rates,
++                                beerocks::message::sRadioCapabilities &sta_caps)
++{
++    uint16_t max_rate = 0;
++    for (int i = 0; i < 16; i++) {
++        uint16_t temp_rate = (supported_rates[i] & 0x7F) * 5; // rate/2 * 10
++        if (temp_rate > max_rate) {
++            max_rate = temp_rate;
++        }
++    }
++    son::wireless_utils::get_mcs_from_rate(max_rate, beerocks::ANT_MODE_1X1_SS1,
++                                           beerocks::BANDWIDTH_20, sta_caps.default_mcs,
++                                           sta_caps.default_short_gi);
++}
++
++// Parse one hostapd STA-FIRST/STA-NEXT reply block into an association
++// notification. Returns nullptr on malformed input. A station that has not
++// completed association carries no connected_time line; it is reported
++// through @a associated so the caller can skip it but keep iterating.
++static std::shared_ptr<char> parse_sta_block(const std::string &reply, int vap_id, bool radio_5G,
++                                             bool &associated, sMacAddr &mac_out)
++{
++    std::istringstream stream(reply);
++    std::string line;
++
++    if (!std::getline(stream, line)) {
++        return nullptr;
++    }
++    if (!line.empty() && line.back() == '\r') {
++        line.pop_back();
++    }
++    if (!looks_like_mac(line)) {
++        return nullptr;
++    }
++    mac_out = tlvf::mac_from_string(line);
++
++    std::unordered_map<std::string, std::string> options;
++    while (std::getline(stream, line)) {
++        if (!line.empty() && line.back() == '\r') {
++            line.pop_back();
++        }
++        auto separator = line.find('=');
++        if (separator == std::string::npos) {
++            continue;
++        }
++        options[line.substr(0, separator)] = line.substr(separator + 1);
++    }
++
++    associated = (options.find("connected_time") != options.end());
++
++    auto msg_buff = ALLOC_SMART_BUFFER(sizeof(sACTION_APMANAGER_CLIENT_ASSOCIATED_NOTIFICATION));
++    auto msg = reinterpret_cast<sACTION_APMANAGER_CLIENT_ASSOCIATED_NOTIFICATION *>(msg_buff.get());
++    if (!msg) {
++        LOG(FATAL) << "Memory allocation failed";
++        return nullptr;
++    }
++    memset(msg_buff.get(), 0, sizeof(sACTION_APMANAGER_CLIENT_ASSOCIATED_NOTIFICATION));
++
++    msg->params.vap_id       = vap_id;
++    msg->params.mac          = mac_out;
++    msg->params.capabilities = {};
++
++    int supported_rates[16] = {0};
++    std::istringstream rates(options["supported_rates"]);
++    std::string rate;
++    for (int i = 0; i < 16 && (rates >> rate); i++) {
++        supported_rates[i] = int(std::strtoul(rate.c_str(), nullptr, 16));
++    }
++
++    int HT_MCS[16]          = {0};
++    const auto &ht_mcs_line = options["ht_mcs_bitmask"];
++    for (size_t i = 0; i < 16 && 2 * i + 1 < ht_mcs_line.length(); i++) {
++        HT_MCS[i] = int(std::strtoul(ht_mcs_line.substr(2 * i, 2).c_str(), nullptr, 16));
++    }
++
++    int16_t VHT_MCS[1]       = {0};
++    const auto &vht_mcs_line = options["rx_vht_mcs_map"];
++    if (vht_mcs_line.length() >= 4) {
++        VHT_MCS[0] = int16_t(std::strtoul(vht_mcs_line.substr(0, 4).c_str(), nullptr, 16));
++    }
++
++    msg->params.capabilities.max_tx_power =
++        uint8_t(std::strtoul(options["max_txpower"].c_str(), nullptr, 10));
++
++    sta_caps_from_ht(HT_MCS, options["ht_caps_info"], msg->params.capabilities);
++    if (radio_5G) {
++        sta_caps_from_vht(VHT_MCS, options["vht_caps_info"], msg->params.capabilities);
++    }
++    sta_caps_from_rates(supported_rates, msg->params.capabilities);
++
++    return msg_buff;
++}
++
+ bool ap_wlan_hal_nl80211::generate_connected_clients_events(
+     bool &is_finished_all_clients, std::chrono::steady_clock::time_point max_iteration_timeout)
+ {
+-    LOG(TRACE) << __func__ << " - NOT IMPLEMENTED!";
++    auto next_unhandled_vap = [this]() {
++        for (const auto &vap : m_radio_info.available_vaps) {
++            if (m_completed_vaps.find(vap.first) == m_completed_vaps.end()) {
++                return vap.first;
++            }
++        }
++        return INVALID_VAP_ID;
++    };
++
++    is_finished_all_clients = false;
++
++    if (m_vap_id_in_progress == INVALID_VAP_ID) {
++        m_vap_id_in_progress = next_unhandled_vap();
++        m_vap_restart_count  = 0;
++    }
++
++    while (m_vap_id_in_progress != INVALID_VAP_ID) {
++        auto vap_it = m_radio_info.available_vaps.find(m_vap_id_in_progress);
++        if (vap_it == m_radio_info.available_vaps.end() || vap_it->second.bss.empty()) {
++            m_completed_vaps.insert(m_vap_id_in_progress);
++            m_vap_id_in_progress = next_unhandled_vap();
++            continue;
++        }
++        // On stock OpenWrt the BSS name is the real netdev the control
++        // socket is registered under; wlanX.Y spellings do not exist here.
++        auto vap_iface = vap_it->second.bss;
++
++        bool vap_done       = false;
++        bool vap_enumerated = false;
++        while (!vap_done) {
++            if (std::chrono::steady_clock::now() > max_iteration_timeout) {
++                // Out of time budget: resume from the same cursor next wakeup.
++                return true;
++            }
++
++            std::string cmd = m_queried_first
++                                  ? "STA-NEXT " + tlvf::mac_to_string(m_prev_client_mac)
++                                  : "STA-FIRST";
++            char placeholder = 0;
++            char *reply      = &placeholder;
++            if (!wpa_ctrl_send_msg(cmd, &reply, vap_iface) || !reply) {
++                LOG(WARNING) << __func__ << ": '" << cmd << "' failed on " << vap_iface;
++                if (m_queried_first && m_vap_restart_count++ < 2) {
++                    // The cursor station may just have disconnected; restart
++                    // this VAP - the handled set keeps events deduplicated.
++                    m_queried_first   = false;
++                    m_prev_client_mac = beerocks::net::network_utils::ZERO_MAC;
++                    return true;
++                }
++                // A dead control socket must not wedge the whole FSM.
++                vap_done = true;
++                break;
++            }
++
++            std::string text(reply);
++            if (text.empty() || text.rfind("FAIL", 0) == 0) {
++                if (!text.empty() && m_queried_first && m_vap_restart_count++ < 2) {
++                    // FAIL for a known cursor: the station disappeared
++                    // between STA-NEXT calls - restart this VAP once.
++                    m_queried_first   = false;
++                    m_prev_client_mac = beerocks::net::network_utils::ZERO_MAC;
++                    continue;
++                }
++                // Only an empty reply is a clean end-of-list; FAIL past the
++                // restart budget leaves the VAP only partially walked.
++                vap_enumerated = text.empty();
++                vap_done       = true;
++                break;
++            }
++            if (text.rfind("UNKNOWN", 0) == 0) {
++                LOG(WARNING) << "Station enumeration is unsupported on " << vap_iface;
++                vap_done = true;
++                break;
++            }
++
++            bool associated = false;
++            sMacAddr sta_mac;
++            auto msg_buff = parse_sta_block(text, m_vap_id_in_progress, get_radio_info().is_5ghz,
++                                            associated, sta_mac);
++            if (!msg_buff) {
++                LOG(WARNING) << "Malformed station block on " << vap_iface
++                             << ", skipping the rest of this VAP";
++                vap_done = true;
++                break;
++            }
++
++            m_queried_first   = true;
++            m_prev_client_mac = sta_mac;
++
++            if (!m_handled_clients.insert(sta_mac).second) {
++                continue; // seen earlier in this sweep
++            }
++            if (!associated) {
++                continue; // authenticated but not associated
++            }
++
++            auto known = m_connected_clients.find(sta_mac);
++            if (known != m_connected_clients.end() && known->second == m_vap_id_in_progress) {
++                continue; // unchanged client: no duplicate event
++            }
++            m_connected_clients[sta_mac] = m_vap_id_in_progress;
++            LOG(DEBUG) << "Importing connected client " << sta_mac << " on " << vap_iface;
++            event_queue_push(Event::STA_Connected, msg_buff);
++        }
++
++        m_completed_vaps.insert(m_vap_id_in_progress);
++        if (vap_enumerated) {
++            m_enumerated_vaps.insert(m_vap_id_in_progress);
++        }
++        m_queried_first      = false;
++        m_prev_client_mac    = beerocks::net::network_utils::ZERO_MAC;
++        m_vap_id_in_progress = next_unhandled_vap();
++        m_vap_restart_count  = 0;
++    }
++
++    // Reconcile only clients that existed before the sweep, on VAPs whose
++    // enumeration reached end-of-list. Runtime events remove their station
++    // from the snapshot, preventing a concurrent reconnect from being undone.
++    for (const auto &client : m_clients_before_sweep) {
++        if (m_enumerated_vaps.find(client.second) == m_enumerated_vaps.end() ||
++            m_handled_clients.find(client.first) != m_handled_clients.end()) {
++            continue;
++        }
++
++        auto current = m_connected_clients.find(client.first);
++        if (current == m_connected_clients.end() || current->second != client.second) {
++            continue;
++        }
++
++        auto msg_buff =
++            ALLOC_SMART_BUFFER(sizeof(sACTION_APMANAGER_CLIENT_DISCONNECTED_NOTIFICATION));
++        auto msg = reinterpret_cast<sACTION_APMANAGER_CLIENT_DISCONNECTED_NOTIFICATION *>(
++            msg_buff.get());
++        if (!msg) {
++            continue;
++        }
++        memset(msg_buff.get(), 0, sizeof(sACTION_APMANAGER_CLIENT_DISCONNECTED_NOTIFICATION));
++        msg->params.mac    = client.first;
++        msg->params.vap_id = client.second;
++        LOG(DEBUG) << "Client " << client.first
++                   << " no longer known to hostapd, reporting stale disconnect";
++        event_queue_push(Event::STA_Disconnected, msg_buff);
++        m_connected_clients.erase(current);
++    }
++
++    m_clients_before_sweep.clear();
++    m_enumerated_vaps.clear();
++    m_handled_clients.clear();
+     is_finished_all_clients = true;
+     return true;
+ }
+ 
+ bool ap_wlan_hal_nl80211::pre_generate_connected_clients_events()
+ {
+-
+-    LOG(TRACE) << __func__ << " - NOT IMPLEMENTED!";
++    m_vap_id_in_progress = INVALID_VAP_ID;
++    m_prev_client_mac    = beerocks::net::network_utils::ZERO_MAC;
++    m_queried_first      = false;
++    m_vap_restart_count  = 0;
++    m_completed_vaps.clear();
++    m_enumerated_vaps.clear();
++    m_handled_clients.clear();
++    m_clients_before_sweep = m_connected_clients;
+     return true;
+ }
+ 
+@@ -1427,6 +1755,8 @@ bool ap_wlan_hal_nl80211::process_nl8021
+         }
+ 
+         // Add the message to the queue
++        m_connected_clients[msg->params.mac] = vap_id;
++        m_clients_before_sweep.erase(msg->params.mac);
+         event_queue_push(Event::STA_Connected, msg_buff);
+ 
+     } break;
+@@ -1453,6 +1783,8 @@ bool ap_wlan_hal_nl80211::process_nl8021
+         msg->params.vap_id = vap_id;
+         msg->params.mac    = tlvf::mac_from_string(parsed_obj[bwl::EVENT_KEYLESS_PARAM_MAC]);
+ 
++        m_connected_clients.erase(msg->params.mac);
++        m_clients_before_sweep.erase(msg->params.mac);
+         // Add the message to the queue
+         event_queue_push(Event::STA_Disconnected, msg_buff);
+ 
+--- a/common/beerocks/bwl/nl80211/ap_wlan_hal_nl80211.h
++++ b/common/beerocks/bwl/nl80211/ap_wlan_hal_nl80211.h
+@@ -12,6 +12,10 @@
+ #include "base_wlan_hal_nl80211.h"
+ #include <bwl/ap_wlan_hal.h>
+ 
++#include <set>
++#include <unordered_map>
++#include <unordered_set>
++
+ namespace bwl {
+ namespace nl80211 {
+ 
+@@ -93,6 +97,7 @@ public:
+      * @see ap_wlan_hal::pre_generate_connected_clients_events
+      */
+     virtual bool pre_generate_connected_clients_events() override;
++    virtual bool supports_connected_clients_reconciliation() const override { return true; }
+ 
+     virtual bool start_wps_pbc() override;
+     virtual bool set_mbo_assoc_disallow(const std::string &bssid, bool enable) override;
+@@ -140,6 +145,18 @@ protected:
+     }
+ 
+ private:
++    // Connected-clients import and reconciliation (STA-FIRST/STA-NEXT sweep)
++    static constexpr int INVALID_VAP_ID = -1;
++    std::set<int> m_completed_vaps;
++    std::set<int> m_enumerated_vaps;
++    std::unordered_set<sMacAddr> m_handled_clients;
++    std::unordered_map<sMacAddr, int> m_connected_clients;
++    std::unordered_map<sMacAddr, int> m_clients_before_sweep;
++    sMacAddr m_prev_client_mac = {};
++    bool m_queried_first       = false;
++    int m_vap_id_in_progress   = INVALID_VAP_ID;
++    int m_vap_restart_count    = 0;
++
+     // Unassociated measurement state variables
+     std::chrono::steady_clock::time_point m_unassoc_measure_start;
+     int m_unassoc_measure_window_size = 0;
+--- a/common/beerocks/bwl/nl80211/base_wlan_hal_nl80211.cpp
++++ b/common/beerocks/bwl/nl80211/base_wlan_hal_nl80211.cpp
+@@ -27,9 +27,28 @@
+ #include <netlink/msg.h>
+ #include <netlink/netlink.h>
+ 
++#include <cctype>
++
+ namespace bwl {
+ namespace nl80211 {
+ 
++bool looks_like_mac(const std::string &text)
++{
++    if (text.length() != 17) {
++        return false;
++    }
++    for (size_t i = 0; i < text.length(); i++) {
++        if (i % 3 == 2) {
++            if (text[i] != ':') {
++                return false;
++            }
++        } else if (!std::isxdigit(static_cast<unsigned char>(text[i]))) {
++            return false;
++        }
++    }
++    return true;
++}
++
+ //////////////////////////////////////////////////////////////////////////////
+ ///////////////////////// Local Module Definitions ///////////////////////////
+ //////////////////////////////////////////////////////////////////////////////
+--- a/common/beerocks/bwl/nl80211/base_wlan_hal_nl80211.h
++++ b/common/beerocks/bwl/nl80211/base_wlan_hal_nl80211.h
+@@ -34,6 +34,9 @@ enum class nl80211_fsm_event { Attach, D
+ constexpr char global_iface[]   = "global";
+ constexpr char base_ctrl_path[] = "/var/run/";
+ 
++// Validate the canonical colon-separated MAC format returned by hostapd.
++bool looks_like_mac(const std::string &text);
++
+ /*!
+  * Base class for the wav abstraction layer.
+  * Read more about virtual inheritance: https://en.wikipedia.org/wiki/Virtual_inheritance
+--- a/common/beerocks/bwl/nl80211/mon_wlan_hal_nl80211.cpp
++++ b/common/beerocks/bwl/nl80211/mon_wlan_hal_nl80211.cpp
+@@ -26,6 +26,7 @@ extern "C" {
+ #include <netlink/genl/genl.h>
+ #include <netlink/msg.h>
+ #include <netlink/netlink.h>
++#include <sstream>
+ 
+ namespace bwl {
+ namespace nl80211 {
+@@ -457,24 +458,129 @@ bool mon_wlan_hal_nl80211::channel_scan_
+ bool mon_wlan_hal_nl80211::generate_connected_clients_events(
+     bool &is_finished_all_clients, std::chrono::steady_clock::time_point max_iteration_timeout)
+ {
+-    LOG(TRACE) << __func__ << " - NOT IMPLEMENTED";
+-    is_finished_all_clients = true;
++    auto next_unhandled_vap = [this]() {
++        for (const auto &vap : m_radio_info.available_vaps) {
++            if (m_completed_vaps.find(vap.first) == m_completed_vaps.end()) {
++                return vap.first;
++            }
++        }
++        return INVALID_VAP_ID;
++    };
++
++    is_finished_all_clients = false;
++
++    if (m_vap_id_in_progress == INVALID_VAP_ID) {
++        m_vap_id_in_progress = next_unhandled_vap();
++        m_vap_restart_count  = 0;
++    }
++
++    while (m_vap_id_in_progress != INVALID_VAP_ID) {
++        auto vap_it = m_radio_info.available_vaps.find(m_vap_id_in_progress);
++        if (vap_it == m_radio_info.available_vaps.end() || vap_it->second.bss.empty()) {
++            m_completed_vaps.insert(m_vap_id_in_progress);
++            m_vap_id_in_progress = next_unhandled_vap();
++            continue;
++        }
++        // On stock OpenWrt the BSS name is the real netdev the control
++        // socket is registered under; wlanX.Y spellings do not exist here.
++        auto vap_iface = vap_it->second.bss;
++
++        bool vap_done = false;
++        while (!vap_done) {
++            if (std::chrono::steady_clock::now() > max_iteration_timeout) {
++                // Out of time budget: resume from the same cursor next wakeup.
++                return true;
++            }
++
++            std::string cmd = m_queried_first
++                                  ? "STA-NEXT " + tlvf::mac_to_string(m_prev_client_mac)
++                                  : "STA-FIRST";
++            char placeholder = 0;
++            char *reply      = &placeholder;
++            if (!wpa_ctrl_send_msg(cmd, &reply, vap_iface) || !reply) {
++                LOG(WARNING) << __func__ << ": '" << cmd << "' failed on " << vap_iface;
++                if (m_queried_first && m_vap_restart_count++ < 2) {
++                    m_queried_first   = false;
++                    m_prev_client_mac = beerocks::net::network_utils::ZERO_MAC;
++                    return true;
++                }
++                vap_done = true;
++                break;
++            }
++
++            std::string text(reply);
++            if (text.empty() || text.rfind("FAIL", 0) == 0) {
++                if (!text.empty() && m_queried_first && m_vap_restart_count++ < 2) {
++                    m_queried_first   = false;
++                    m_prev_client_mac = beerocks::net::network_utils::ZERO_MAC;
++                    continue;
++                }
++                vap_done = true;
++                break;
++            }
++            if (text.rfind("UNKNOWN", 0) == 0) {
++                LOG(WARNING) << "Station enumeration is unsupported on " << vap_iface;
++                vap_done = true;
++                break;
++            }
+ 
+-    // TODO: implement the API (PPM-1152)
+-    // currently returning true even though not implemented in order not to break
+-    // the flow if this HAL is used by any flow, since the API return value is checked by
+-    // a common flow in the monitor.
++            std::istringstream stream(text);
++            std::string first_line;
++            std::getline(stream, first_line);
++            if (!first_line.empty() && first_line.back() == '\r') {
++                first_line.pop_back();
++            }
++            if (!looks_like_mac(first_line)) {
++                LOG(WARNING) << "Malformed station block on " << vap_iface
++                             << ", skipping the rest of this VAP";
++                vap_done = true;
++                break;
++            }
++
++            m_queried_first   = true;
++            m_prev_client_mac = tlvf::mac_from_string(first_line);
++
++            if (!m_handled_clients.insert(m_prev_client_mac).second) {
++                continue; // seen earlier in this sweep
++            }
++            if (text.find("connected_time=") == std::string::npos) {
++                continue; // authenticated but not associated
++            }
++
++            auto msg_buff =
++                ALLOC_SMART_BUFFER(sizeof(sACTION_MONITOR_CLIENT_ASSOCIATED_NOTIFICATION));
++            auto msg =
++                reinterpret_cast<sACTION_MONITOR_CLIENT_ASSOCIATED_NOTIFICATION *>(msg_buff.get());
++            if (!msg) {
++                LOG(FATAL) << "Memory allocation failed";
++                return false;
++            }
++            memset(msg_buff.get(), 0, sizeof(sACTION_MONITOR_CLIENT_ASSOCIATED_NOTIFICATION));
++            msg->vap_id = m_vap_id_in_progress;
++            msg->mac    = m_prev_client_mac;
++            event_queue_push(Event::STA_Connected, msg_buff);
++        }
++
++        m_completed_vaps.insert(m_vap_id_in_progress);
++        m_queried_first      = false;
++        m_prev_client_mac    = beerocks::net::network_utils::ZERO_MAC;
++        m_vap_id_in_progress = next_unhandled_vap();
++        m_vap_restart_count  = 0;
++    }
++
++    m_handled_clients.clear();
++    is_finished_all_clients = true;
+     return true;
+ }
+ 
+ bool mon_wlan_hal_nl80211::pre_generate_connected_clients_events()
+ {
+-    LOG(TRACE) << __func__ << " - NOT IMPLEMENTED";
+-
+-    // TODO: implement the API (PPM-1152)
+-    // currently returning true even though not implemented in order not to break
+-    // the flow if this HAL is used by any flow, since the API return value is checked by
+-    // a common flow in the monitor.
++    m_vap_id_in_progress = INVALID_VAP_ID;
++    m_prev_client_mac    = beerocks::net::network_utils::ZERO_MAC;
++    m_queried_first      = false;
++    m_vap_restart_count  = 0;
++    m_completed_vaps.clear();
++    m_handled_clients.clear();
+     return true;
+ }
+ 
+--- a/common/beerocks/bwl/nl80211/mon_wlan_hal_nl80211.h
++++ b/common/beerocks/bwl/nl80211/mon_wlan_hal_nl80211.h
+@@ -12,6 +12,9 @@
+ #include "base_wlan_hal_nl80211.h"
+ #include <bwl/mon_wlan_hal.h>
+ 
++#include <set>
++#include <unordered_set>
++
+ namespace bwl {
+ namespace nl80211 {
+ 
+@@ -88,6 +91,15 @@ protected:
+ 
+     // Private data-members:
+ private:
++    // Connected-clients import (STA-FIRST/STA-NEXT sweep)
++    static constexpr int INVALID_VAP_ID = -1;
++    std::set<int> m_completed_vaps;
++    std::unordered_set<sMacAddr> m_handled_clients;
++    sMacAddr m_prev_client_mac = {};
++    bool m_queried_first       = false;
++    int m_vap_id_in_progress   = INVALID_VAP_ID;
++    int m_vap_restart_count    = 0;
++
+     std::shared_ptr<char> m_temp_wav_value;
+ };
+ 

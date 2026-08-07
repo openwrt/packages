@@ -1,0 +1,466 @@
+From 430b2467d54f35316ddfbbcf4944cc446c8a50f7 Mon Sep 17 00:00:00 2001
+From: Andrei Ovcharenko <a@krot.name>
+Date: Sun, 26 Jul 2026 21:23:07 +0300
+Subject: [PATCH] bwl: add bundled minimal wpa_ctrl client
+
+The NL80211 flavor compiles wpa_ctrl.c and os_unix.c straight out of a
+hostapd source tree, so every integration has to carry a hostapd
+checkout at build time even when the target only talks to the control
+sockets of an already installed hostapd.
+
+Add a small self-contained implementation of the documented control
+interface protocol with the same API and semantics as hostap's
+wpa_ctrl.h (solicited replies with a 10 s timeout and -2 on expiry,
+event filtering while waiting, ATTACH/DETACH, pending/recv/get_fd), and
+a BWL_BUNDLED_WPA_CTRL option (default OFF) that builds it instead of
+the hostapd sources. The client socket is created group accessible for
+user/group network so a hostapd jailed the way OpenWrt does it can
+reply, which is what the OpenWrt tree patches into wpa_ctrl.c.
+
+The whole series is publicly reviewable at
+https://gitlab.com/kreout/prpl-mesh-mercusys/-/merge_requests/1; the
+upstream GitLab only accepts merge requests from project members, so
+the upstream submission itself goes through the prpl Foundation Jira.
+
+Signed-off-by: Andrei Ovcharenko <a@krot.name>
+---
+ common/beerocks/bwl/CMakeLists.txt            |  64 ++--
+ .../bwl/nl80211/wpa_ctrl_compat/wpa_ctrl.h    |  68 +++++
+ .../nl80211/wpa_ctrl_compat/wpa_ctrl_compat.c | 276 ++++++++++++++++++
+ 3 files changed, 387 insertions(+), 21 deletions(-)
+ create mode 100644 common/beerocks/bwl/nl80211/wpa_ctrl_compat/wpa_ctrl.h
+ create mode 100644 common/beerocks/bwl/nl80211/wpa_ctrl_compat/wpa_ctrl_compat.c
+
+--- a/common/beerocks/bwl/CMakeLists.txt
++++ b/common/beerocks/bwl/CMakeLists.txt
+@@ -115,34 +115,56 @@ elseif(BWL_TYPE STREQUAL "DWPAL")
+ 
+ elseif(BWL_TYPE STREQUAL "NL80211")
+ 
+-    file(GLOB HOSTAPD_SEARCH_PATHS "${PLATFORM_BUILD_DIR}/hostapd*/hostapd-*")
+-    find_path(HOSTAPD_INCLUDE_DIR NAMES "src/common/wpa_ctrl.h" PATHS ${HOSTAPD_SEARCH_PATHS} NO_CMAKE_FIND_ROOT_PATH)
+-    set(HOSTAPD_DIR "${HOSTAPD_INCLUDE_DIR}")
++    option(BWL_BUNDLED_WPA_CTRL
++        "Use the bundled minimal hostapd control interface client instead of a hostapd source tree"
++        OFF)
+ 
+     find_package(nl-genl-3 REQUIRED)
+     list(APPEND BWL_LIBS nl-genl-3)
+ 
+-    file(GLOB bwl_platform_sources
+-        ${MODULE_PATH}/shared/*.c*
+-        ${MODULE_PATH}/nl80211/*.c*
+-
+-        # WPA Control Interface
+-        ${HOSTAPD_DIR}/src/common/wpa_ctrl.c
+-        ${HOSTAPD_DIR}/src/utils/os_unix.c
+-    )
+-
+-    # Enable WPA control interface
+-    add_definitions(
+-        -DCONFIG_CTRL_IFACE
+-        -DCONFIG_CTRL_IFACE_UNIX
+-    )
+-
+-    # Hostapd/NL80211 include directories
+-    include_directories(
+-        ${HOSTAPD_DIR}/src/utils
+-        ${HOSTAPD_DIR}/src/common
+-        ${HOSTAPD_DIR}/src/drivers
+-    )
++    if(BWL_BUNDLED_WPA_CTRL)
++
++        file(GLOB bwl_platform_sources
++            ${MODULE_PATH}/shared/*.c*
++            ${MODULE_PATH}/nl80211/*.c*
++
++            # WPA Control Interface (bundled minimal client)
++            ${MODULE_PATH}/nl80211/wpa_ctrl_compat/wpa_ctrl_compat.c
++        )
++
++        include_directories(
++            ${MODULE_PATH}/nl80211/wpa_ctrl_compat
++        )
++
++    else()
++
++        file(GLOB HOSTAPD_SEARCH_PATHS "${PLATFORM_BUILD_DIR}/hostapd*/hostapd-*")
++        find_path(HOSTAPD_INCLUDE_DIR NAMES "src/common/wpa_ctrl.h" PATHS ${HOSTAPD_SEARCH_PATHS} NO_CMAKE_FIND_ROOT_PATH)
++        set(HOSTAPD_DIR "${HOSTAPD_INCLUDE_DIR}")
++
++        file(GLOB bwl_platform_sources
++            ${MODULE_PATH}/shared/*.c*
++            ${MODULE_PATH}/nl80211/*.c*
++
++            # WPA Control Interface
++            ${HOSTAPD_DIR}/src/common/wpa_ctrl.c
++            ${HOSTAPD_DIR}/src/utils/os_unix.c
++        )
++
++        # Enable WPA control interface
++        add_definitions(
++            -DCONFIG_CTRL_IFACE
++            -DCONFIG_CTRL_IFACE_UNIX
++        )
++
++        # Hostapd/NL80211 include directories
++        include_directories(
++            ${HOSTAPD_DIR}/src/utils
++            ${HOSTAPD_DIR}/src/common
++            ${HOSTAPD_DIR}/src/drivers
++        )
++
++    endif()
+ 
+     # Platform libraries
+     link_directories(
+--- /dev/null
++++ b/common/beerocks/bwl/nl80211/wpa_ctrl_compat/wpa_ctrl.h
+@@ -0,0 +1,68 @@
++/* SPDX-License-Identifier: BSD-2-Clause-Patent
++ *
++ * SPDX-FileCopyrightText: 2026 the prplMesh contributors (see AUTHORS.md)
++ *
++ * This code is subject to the terms of the BSD+Patent license.
++ * See LICENSE file for more details.
++ */
++
++/*
++ * Minimal client for the hostapd / wpa_supplicant control interface.
++ *
++ * Self-contained implementation of the documented control interface
++ * protocol (https://w1.fi/wpa_supplicant/devel/ctrl_iface_page.html) with
++ * the same API as hostap's wpa_ctrl.h, so BWL can talk to the control
++ * sockets of an already installed hostapd without needing a hostapd
++ * source tree at build time. Only UNIX datagram sockets are supported.
++ */
++
++#ifndef BWL_WPA_CTRL_COMPAT_H_
++#define BWL_WPA_CTRL_COMPAT_H_
++
++#include <stddef.h>
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++struct wpa_ctrl;
++
++/* Open a connection to the daemon control socket at @ctrl_path.
++ * Returns NULL on failure. */
++struct wpa_ctrl *wpa_ctrl_open(const char *ctrl_path);
++
++/* Same as wpa_ctrl_open(), but create the local client socket inside
++ * @cli_path instead of /tmp. */
++struct wpa_ctrl *wpa_ctrl_open2(const char *ctrl_path, const char *cli_path);
++
++/* Close the connection and remove the local client socket. */
++void wpa_ctrl_close(struct wpa_ctrl *ctrl);
++
++/* Send @cmd and wait for the solicited reply. Unsolicited event messages
++ * arriving while waiting are passed to @msg_cb when given and dropped
++ * otherwise. On entry *reply_len holds the size of @reply; on success it
++ * is set to the reply size (the reply is not NUL terminated). Returns 0
++ * on success, -1 on error and -2 on timeout. */
++int wpa_ctrl_request(struct wpa_ctrl *ctrl, const char *cmd, size_t cmd_len, char *reply,
++                     size_t *reply_len, void (*msg_cb)(char *msg, size_t len));
++
++/* Register (unregister) this connection as an event monitor.
++ * Returns 0 on success, -1 on failure and -2 on timeout. */
++int wpa_ctrl_attach(struct wpa_ctrl *ctrl);
++int wpa_ctrl_detach(struct wpa_ctrl *ctrl);
++
++/* Receive one pending message. Sizes behave as in wpa_ctrl_request().
++ * Returns 0 on success and -1 on error. */
++int wpa_ctrl_recv(struct wpa_ctrl *ctrl, char *reply, size_t *reply_len);
++
++/* Return 1 when a message is waiting, 0 when not, -1 on error. */
++int wpa_ctrl_pending(struct wpa_ctrl *ctrl);
++
++/* File descriptor of the underlying socket for select()/poll() loops. */
++int wpa_ctrl_get_fd(struct wpa_ctrl *ctrl);
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif /* BWL_WPA_CTRL_COMPAT_H_ */
+--- /dev/null
++++ b/common/beerocks/bwl/nl80211/wpa_ctrl_compat/wpa_ctrl_compat.c
+@@ -0,0 +1,276 @@
++/* SPDX-License-Identifier: BSD-2-Clause-Patent
++ *
++ * SPDX-FileCopyrightText: 2026 the prplMesh contributors (see AUTHORS.md)
++ *
++ * This code is subject to the terms of the BSD+Patent license.
++ * See LICENSE file for more details.
++ */
++
++#include "wpa_ctrl.h"
++
++#include <errno.h>
++#include <fcntl.h>
++#include <grp.h>
++#include <pwd.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <sys/select.h>
++#include <sys/socket.h>
++#include <sys/stat.h>
++#include <sys/time.h>
++#include <sys/types.h>
++#include <sys/un.h>
++#include <unistd.h>
++
++/* Directory for the local (client) end of the connection. The daemon only
++ * replies to a bound datagram socket, so every connection creates one. */
++#define WPA_CTRL_CLIENT_DIR "/tmp"
++
++/* How long wpa_ctrl_request() waits for a solicited reply. Same value as
++ * the reference client so BWL retry counting keeps its meaning. */
++#define WPA_CTRL_REPLY_TIMEOUT_SEC 10
++
++/* OpenWrt runs hostapd inside a procd jail as user/group "network" while
++ * BWL usually runs as root. The daemon must be able to send datagrams to
++ * our client socket, so the socket node is made group accessible and
++ * handed over to that account (statically allocated as 101 on OpenWrt,
++ * resolved by name when possible). */
++#define WPA_CTRL_DAEMON_FALLBACK_ID 101
++
++struct wpa_ctrl {
++    int s;
++    struct sockaddr_un local;
++    struct sockaddr_un dest;
++};
++
++static void wpa_ctrl_grant_daemon_access(const char *path)
++{
++    struct group *grp   = getgrnam("network");
++    struct passwd *pwd  = getpwnam("network");
++    gid_t gid = grp ? grp->gr_gid : (gid_t)WPA_CTRL_DAEMON_FALLBACK_ID;
++    uid_t uid = pwd ? pwd->pw_uid : (uid_t)WPA_CTRL_DAEMON_FALLBACK_ID;
++
++    /* Group first so restricted processes still hand over what they can,
++     * then full ownership; each step is best effort by design - even when
++     * both fail the socket keeps working for a root daemon. */
++    if (lchown(path, (uid_t)-1, gid) != 0) {
++        /* best effort by design */
++    }
++    if (lchown(path, uid, gid) != 0) {
++        /* best effort by design */
++    }
++}
++
++struct wpa_ctrl *wpa_ctrl_open2(const char *ctrl_path, const char *cli_path)
++{
++    struct wpa_ctrl *ctrl;
++    static unsigned int counter = 0;
++    unsigned int tries          = 0;
++    size_t dest_len;
++    int flags;
++    int written;
++
++    if (!ctrl_path) {
++        return NULL;
++    }
++    if (!cli_path) {
++        cli_path = WPA_CTRL_CLIENT_DIR;
++    }
++
++    ctrl = calloc(1, sizeof(*ctrl));
++    if (!ctrl) {
++        return NULL;
++    }
++
++    ctrl->s = socket(PF_UNIX, SOCK_DGRAM, 0);
++    if (ctrl->s < 0) {
++        free(ctrl);
++        return NULL;
++    }
++
++    /* Set client socket file permissions so that bind() creates the client
++     * socket with these permissions and there is no need to try to change
++     * them with chmod() after bind() which would have potential issues with
++     * race conditions. These permissions are needed to make sure the jailed
++     * hostapd on OpenWrt can send replies to this socket. */
++    if (fchmod(ctrl->s, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP) != 0) {
++        /* best effort by design */
++    }
++
++    ctrl->local.sun_family = AF_UNIX;
++
++try_again:
++    written = snprintf(ctrl->local.sun_path, sizeof(ctrl->local.sun_path), "%s/wpa_ctrl_%d-%u",
++                       cli_path, (int)getpid(), counter);
++    if (written < 0 || (size_t)written >= sizeof(ctrl->local.sun_path)) {
++        close(ctrl->s);
++        free(ctrl);
++        return NULL;
++    }
++    tries++;
++    if (bind(ctrl->s, (struct sockaddr *)&ctrl->local, sizeof(ctrl->local)) < 0) {
++        if (errno == EADDRINUSE && tries < 2) {
++            /* A previous process that had our PID left the node behind;
++             * reclaim the name. */
++            unlink(ctrl->local.sun_path);
++            goto try_again;
++        }
++        if (tries < 5) {
++            counter++;
++            goto try_again;
++        }
++        close(ctrl->s);
++        free(ctrl);
++        return NULL;
++    }
++    counter++;
++
++    wpa_ctrl_grant_daemon_access(ctrl->local.sun_path);
++
++    dest_len = strlen(ctrl_path);
++    if (dest_len >= sizeof(ctrl->dest.sun_path)) {
++        goto fail;
++    }
++    ctrl->dest.sun_family = AF_UNIX;
++    memcpy(ctrl->dest.sun_path, ctrl_path, dest_len + 1);
++    if (connect(ctrl->s, (struct sockaddr *)&ctrl->dest, sizeof(ctrl->dest)) < 0) {
++        goto fail;
++    }
++
++    /* The connection is never meant for processes BWL spawns. */
++    flags = fcntl(ctrl->s, F_GETFD);
++    if (flags >= 0) {
++        (void)fcntl(ctrl->s, F_SETFD, flags | FD_CLOEXEC);
++    }
++
++    return ctrl;
++
++fail:
++    unlink(ctrl->local.sun_path);
++    close(ctrl->s);
++    free(ctrl);
++    return NULL;
++}
++
++struct wpa_ctrl *wpa_ctrl_open(const char *ctrl_path)
++{
++    return wpa_ctrl_open2(ctrl_path, NULL);
++}
++
++void wpa_ctrl_close(struct wpa_ctrl *ctrl)
++{
++    if (!ctrl) {
++        return;
++    }
++    unlink(ctrl->local.sun_path);
++    close(ctrl->s);
++    free(ctrl);
++}
++
++int wpa_ctrl_request(struct wpa_ctrl *ctrl, const char *cmd, size_t cmd_len, char *reply,
++                     size_t *reply_len, void (*msg_cb)(char *msg, size_t len))
++{
++    struct timeval tv;
++    fd_set rfds;
++    ssize_t res;
++    int sres;
++
++    if (!ctrl || !cmd || !reply || !reply_len || !*reply_len) {
++        return -1;
++    }
++
++    if (send(ctrl->s, cmd, cmd_len, 0) < 0) {
++        return -1;
++    }
++
++    for (;;) {
++        tv.tv_sec  = WPA_CTRL_REPLY_TIMEOUT_SEC;
++        tv.tv_usec = 0;
++        FD_ZERO(&rfds);
++        FD_SET(ctrl->s, &rfds);
++        sres = select(ctrl->s + 1, &rfds, NULL, NULL, &tv);
++        if (sres < 0) {
++            if (errno == EINTR) {
++                continue;
++            }
++            return -1;
++        }
++        if (!FD_ISSET(ctrl->s, &rfds)) {
++            return -2;
++        }
++
++        res = recv(ctrl->s, reply, *reply_len, 0);
++        if (res < 0) {
++            if (errno == EINTR) {
++                continue;
++            }
++            return -1;
++        }
++        if (res > 0 &&
++            (reply[0] == '<' || ((size_t)res > 7 && strncmp(reply, "IFNAME=", 7) == 0))) {
++            /* Unsolicited event, not the reply we are waiting for. */
++            if (msg_cb) {
++                size_t event_len = (size_t)res;
++                if (event_len == *reply_len) {
++                    event_len--;
++                }
++                reply[event_len] = '\0';
++                msg_cb(reply, event_len);
++            }
++            continue;
++        }
++        *reply_len = (size_t)res;
++        return 0;
++    }
++}
++
++static int wpa_ctrl_attach_helper(struct wpa_ctrl *ctrl, int attach)
++{
++    char reply[10];
++    size_t reply_len = sizeof(reply);
++    int ret;
++
++    ret = wpa_ctrl_request(ctrl, attach ? "ATTACH" : "DETACH", 6, reply, &reply_len, NULL);
++    if (ret) {
++        return ret;
++    }
++    return (reply_len == 3 && memcmp(reply, "OK\n", 3) == 0) ? 0 : -1;
++}
++
++int wpa_ctrl_attach(struct wpa_ctrl *ctrl) { return wpa_ctrl_attach_helper(ctrl, 1); }
++
++int wpa_ctrl_detach(struct wpa_ctrl *ctrl) { return wpa_ctrl_attach_helper(ctrl, 0); }
++
++int wpa_ctrl_recv(struct wpa_ctrl *ctrl, char *reply, size_t *reply_len)
++{
++    ssize_t res;
++
++    if (!ctrl || !reply || !reply_len) {
++        return -1;
++    }
++    res = recv(ctrl->s, reply, *reply_len, 0);
++    if (res < 0) {
++        return -1;
++    }
++    *reply_len = (size_t)res;
++    return 0;
++}
++
++int wpa_ctrl_pending(struct wpa_ctrl *ctrl)
++{
++    struct timeval tv = {0, 0};
++    fd_set rfds;
++
++    if (!ctrl) {
++        return -1;
++    }
++    FD_ZERO(&rfds);
++    FD_SET(ctrl->s, &rfds);
++    if (select(ctrl->s + 1, &rfds, NULL, NULL, &tv) < 0) {
++        return -1;
++    }
++    return FD_ISSET(ctrl->s, &rfds) ? 1 : 0;
++}
++
++int wpa_ctrl_get_fd(struct wpa_ctrl *ctrl) { return ctrl ? ctrl->s : -1; }

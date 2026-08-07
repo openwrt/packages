@@ -1,0 +1,47 @@
+From a39ba4d95383b1acf2ec333b8d8215099df0c598 Mon Sep 17 00:00:00 2001
+From: Andrei Ovcharenko <a@krot.name>
+Date: Wed, 29 Jul 2026 22:35:00 +0300
+Subject: [PATCH] agent: ignore inactive wireless backhaul links
+
+The backhaul link list stores credentials for every wireless-capable
+radio, including radios that are not currently used for backhaul. Link
+metrics reporting treated every entry as an active wireless backhaul
+and warned whenever an AP-only radio had no backhaul interface.
+
+Skip those expected inactive entries without a warning. Keep the
+warning when the selected active wireless backhaul is missing its
+interface, and handle a stale radio entry without dereferencing it.
+
+The whole series is publicly reviewable at
+https://gitlab.com/kreout/prpl-mesh-mercusys/-/merge_requests/1; the
+upstream GitLab only accepts merge requests from project members, so
+the upstream submission itself goes through the prpl Foundation Jira.
+
+Signed-off-by: Andrei Ovcharenko <a@krot.name>
+---
+ .../slave/tasks/link_metrics_collection_task.cpp    | 13 ++++++++++++-
+ 1 file changed, 12 insertions(+), 1 deletion(-)
+
+--- a/agent/src/beerocks/slave/tasks/link_metrics_collection_task.cpp
++++ b/agent/src/beerocks/slave/tasks/link_metrics_collection_task.cpp
+@@ -1724,8 +1724,19 @@ bool LinkMetricsCollectionTask::get_neig
+ 
+     for (const auto &bh_wifi_info : db->backhaul.backhaul_links) {
+         auto radio = db->radio(bh_wifi_info.iface_name);
++        if (!radio) {
++            LOG(WARNING) << "Backhaul radio " << bh_wifi_info.iface_name << " not found";
++            continue;
++        }
++
+         if (radio->back.iface_name.empty()) {
+-            LOG(WARNING) << "Found empty backhaul link name!";
++            // backhaul_links also contains credentials for radios that are not currently
++            // used for wireless backhaul. An empty back interface is expected for them.
++            if (db->backhaul.connection_type ==
++                    AgentDB::sBackhaul::eConnectionType::Wireless &&
++                db->backhaul.selected_iface_name == bh_wifi_info.iface_name) {
++                LOG(WARNING) << "Found empty backhaul link name!";
++            }
+             continue;
+         }
+ 

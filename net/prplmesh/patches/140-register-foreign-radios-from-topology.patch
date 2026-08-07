@@ -1,0 +1,83 @@
+From b0771b5290c86cb2e68eb114e550992a3da4b754 Mon Sep 17 00:00:00 2001
+From: Andrei Ovcharenko <a@krot.name>
+Date: Wed, 29 Jul 2026 09:40:29 +0300
+Subject: [PATCH] controller: register foreign radios from Topology Response
+
+Some stock agents run WSC onboarding only for a subset of their radios:
+Mercusys Wi-Fi 7 units, for example, never send an AP-Autoconfiguration
+Search (and therefore no WSC M1) for their 6 GHz radio, while still
+reporting it in the AP Operational BSS TLV, Operating Channel Reports,
+AP Metrics Responses and Channel Selection Responses. The controller
+database only creates radio nodes in the WSC M1 flow, so every report
+about such a radio was dropped and the radio, its BSSes and its clients
+never appeared in the topology.
+
+Register unknown radios from the AP Operational BSS TLV of a Topology
+Response instead of discarding them, and let handle_current_op_class
+learn the radio band from the first reported operating class for radios
+created this way (they start as FREQ_UNKNOWN).
+
+The whole series is publicly reviewable at
+https://gitlab.com/kreout/prpl-mesh-mercusys/-/merge_requests/1; the
+upstream GitLab only accepts merge requests from project members, so
+the upstream submission itself goes through the prpl Foundation Jira.
+
+Signed-off-by: Andrei Ovcharenko <a@krot.name>
+---
+ controller/src/beerocks/master/db/db.cpp      | 12 +++++++++--
+ .../beerocks/master/tasks/topology_task.cpp   | 21 +++++++++++++++++--
+ 2 files changed, 29 insertions(+), 4 deletions(-)
+
+--- a/controller/src/beerocks/master/db/db.cpp
++++ b/controller/src/beerocks/master/db/db.cpp
+@@ -6998,9 +6998,17 @@ bool db::handle_current_op_class(const s
+         return false;
+     }
+ 
+-    if (radio->band != son::wireless_utils::which_freq_op_cls(op_class)) {
++    auto op_class_band = son::wireless_utils::which_freq_op_cls(op_class);
++    if (radio->band == beerocks::FREQ_UNKNOWN) {
++        // Radios registered from a Topology Response (agents that skip WSC
++        // onboarding for a band) start without a band; learn it from the
++        // first reported operating class.
++        LOG(INFO) << "Radio " << radio_mac << " band learned from op class " << int(op_class)
++                  << ": " << op_class_band;
++        radio->band = op_class_band;
++    } else if (radio->band != op_class_band) {
+         LOG(ERROR) << "This should not happen. Radio band changed from " << radio->band << " to "
+-                   << son::wireless_utils::which_freq_op_cls(op_class);
++                   << op_class_band;
+         return false;
+     }
+ 
+--- a/controller/src/beerocks/master/tasks/topology_task.cpp
++++ b/controller/src/beerocks/master/tasks/topology_task.cpp
+@@ -303,9 +303,26 @@ bool topology_task::handle_topology_resp
+             // Update BSSes in the Agent
+             auto radio = database.get_radio(src_mac, radio_entry.radio_uid());
+             if (!radio) {
++                // Some stock agents never run WSC onboarding for one of their
++                // radios (e.g. 6 GHz on Wi-Fi 7 units), so the radio is absent
++                // from the database and every report about it would be dropped
++                // here. Register it from the Topology Response instead; the
++                // band and channel are learned from the next Operating Channel
++                // Report.
+                 LOG(WARNING) << "OperationalBSS on unknown radio  " << radio_entry.radio_uid()
+-                             << " on " << src_mac;
+-                continue;
++                             << " on " << src_mac << ", registering it";
++                if (!database.add_radio(radio_entry.radio_uid(), src_mac)) {
++                    continue;
++                }
++                radio = database.get_radio(src_mac, radio_entry.radio_uid());
++                if (!radio) {
++                    continue;
++                }
++                // The radio carries operational BSSes, so mark it active for
++                // the connection map right away; the WSC onboarding flow will
++                // never do it for radios it does not see.
++                son_actions::set_radio_active(
++                    database, tasks, tlvf::mac_to_string(radio_entry.radio_uid()), true);
+             }
+ 
+             radio->bsses.keep_new_prepare();
