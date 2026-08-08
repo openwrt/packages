@@ -33,8 +33,10 @@ elif [ "$APDU_BACKEND" = "uqmi" ]; then
 elif [ "$APDU_BACKEND" = "mbim" ]; then
     MBIM_DEVICE="$(uci_get lpac mbim device /dev/cdc-wdm0)"
     MBIM_PROXY="$(uci_get lpac mbim proxy 1)"
+    MBIM_SKIP_SLOT_MAPPING="$(uci_get lpac mbim skip_slot_mapping 0)"
     export LPAC_APDU_MBIM_DEVICE="$MBIM_DEVICE"
     export LPAC_APDU_MBIM_USE_PROXY="$MBIM_PROXY"
+    export LPAC_APDU_MBIM_SKIP_SLOT_MAPPING="$MBIM_SKIP_SLOT_MAPPING"
 fi
 
 export LPAC_CUSTOM_ISD_R_AID="$CUSTOM_ISD_R_AID"
