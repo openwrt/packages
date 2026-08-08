@@ -1,7 +1,7 @@
 # Consider using UCI or creating files in /etc/nginx/conf.d/ for configuration.
 # Parsing UCI configuration is skipped if uci set nginx.global.uci_enable=false
 # For details see: https://openwrt.org/docs/guide-user/services/webserver/nginx
-# UCI_CONF_VERSION=1.2
+# UCI_CONF_VERSION=1.3
 
 worker_processes auto;
 
@@ -27,6 +27,7 @@ http {
 	gzip on;
 	gzip_vary on;
 	gzip_proxied any;
+	gzip_types *;
 
 	root /www;
 
