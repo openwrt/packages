@@ -4,7 +4,7 @@
 
 changed=0
 init_section=
-package=frpc
+package=frps
 
 find_init_section() {
 	[ -z "$init_section" ] && init_section="$1"
@@ -40,18 +40,26 @@ copy_if_empty() {
 upgrade_common() {
 	local section="$1"
 	local dashboard_tls_mode
+	local tls_only
+	local nat_hole_hours
 
 	[ "$section" = "common" ] || return 0
 
-	set_if_empty "$section" server_addr 127.0.0.1
-	set_if_empty "$section" server_port 7000
+	set_if_empty "$section" bind_addr 0.0.0.0
+	set_if_empty "$section" bind_port 7000
 	set_if_empty "$section" authentication_method token
-	set_if_empty "$section" login_fail_exit true
-	set_if_empty "$section" protocol tcp
-	set_if_empty "$section" wire_protocol v1
+	set_if_empty "$section" max_pool_count 5
 	set_if_empty "$section" tcp_mux true
-	set_if_empty "$section" tls_enable true
-	set_if_empty "$section" disable_custom_tls_first_byte true
+	set_if_empty "$section" detailed_errors_to_client true
+	set_if_empty "$section" pprof_enable false
+	set_if_empty "$section" enable_prometheus false
+
+	config_get tls_only "$section" tls_only
+	if [ -n "$tls_only" ]; then
+		set_if_empty "$section" tls_force "$tls_only"
+	else
+		set_if_empty "$section" tls_force false
+	fi
 
 	config_get dashboard_tls_mode "$section" dashboard_tls_mode
 	if [ -n "$dashboard_tls_mode" ]; then
@@ -67,7 +75,10 @@ upgrade_common() {
 	copy_if_empty "$section" dashboard_tls_cert_file admin_tls_cert_file
 	copy_if_empty "$section" dashboard_tls_key_file admin_tls_key_file
 
-	set_if_empty "$section" pprof_enable false
+	config_get nat_hole_hours "$section" nat_hole_analysis_data_reserve_hours
+	[ -n "$nat_hole_hours" ] && \
+		set_if_empty "$section" nathole_analysis_data_reserve_hours "$nat_hole_hours"
+
 	set_if_empty "$section" log_file console
 	set_if_empty "$section" log_level info
 	set_if_empty "$section" log_max_days 3
@@ -84,25 +95,10 @@ upgrade_init() {
 	set_if_empty "$init_section" respawn 1
 }
 
-upgrade_proxy_name() {
-	local section="$1"
-	local name
-
-	[ "$section" != "common" ] || return 0
-
-	config_get name "$section" name
-
-	if [ -z "$name" ]; then
-		uci_set "$package" "$section" name "$section"
-		changed=1
-	fi
-}
-
 config_load "$package"
 config_foreach find_init_section init
 upgrade_init
 config_foreach upgrade_common conf
-config_foreach upgrade_proxy_name conf
 
 [ "$changed" -eq 1 ] && uci_commit "$package"
 
