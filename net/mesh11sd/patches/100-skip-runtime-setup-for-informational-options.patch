@@ -1,0 +1,47 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Date: Thu, 6 Aug 2026 13:00:00 +0200
+Subject: [PATCH] mesh11sd: skip the environment setup for the informational
+ options
+
+get_current_setup() runs before any argument is parsed, so mesh11sd -v
+and mesh11sd -h collect the whole runtime environment first. That
+includes refresh_bridgemac(), which calls wait_for_interface() for
+br-lan; when that interface is not up, the poll loop runs for the full
+interface_timeout, ten seconds by default.
+
+On a running router br-lan is up, the loop exits on its first iteration
+and the delay is invisible. It shows up wherever the interface is
+absent or still coming up, such as the OpenWrt package CI: it probes
+every installed executable for its version with a ten second timeout,
+so each probe was killed before mesh11sd printed anything.
+
+The informational branches reference only $version and $tmpdir, and
+both already hold a value before the setup pass, so it can be skipped
+for them. The one visible consequence is that the help text now names
+the initial /tmp/mesh11sd rather than $log_mountpoint/mesh11sd, which
+get_current_setup() would have assigned on a node that configures
+log_mountpoint elsewhere.
+
+Upstream-Status: Submitted [https://github.com/openNDS/mesh11sd/pull/204]
+
+Signed-off-by: Josef Schlehofer <pepe.schlehofer@gmail.com>
+---
+ src/mesh11sd | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+--- a/src/mesh11sd
++++ b/src/mesh11sd
+@@ -5976,7 +5976,11 @@ else
+ 	mesh11sdpid=$(pgrep -f "/bin/sh /usr/sbin/mesh11sd")
+ fi
+ 
+-get_current_setup 2> /dev/null
++# Skip the expensive runtime setup for informational options.
++case "$1" in
++	""|-h|--help|help|-v|--version|version) ;;
++	*) get_current_setup 2> /dev/null ;;
++esac
+ 
+ if [ -z "$1" ] || [ "$1" = "-h" ] || [ $1 = "--help" ] || [ $1 = "help" ]; then
+ 	echo "
