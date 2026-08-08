@@ -876,6 +876,15 @@ f_net() {
 			fi
 		fi
 	fi
+
+	# without captive portal handling travelmate can neither allowlist the portal
+	# domain nor run a login script, so a detected portal is a dead end, not an
+	# expected intermediate state
+	#
+	case "${result}" in
+	"net cp"*) [ "${trm_captive}" = "0" ] && result="net nok" ;;
+	esac
+
 	printf "%s" "${result}"
 
 	f_log "debug" "f_net       ::: timeout: $((trm_maxwait / 6)), cp (url/html/js): ${json_cp:-"-"}/${html_cp:-"-"}/${js_cp:-"-"}, result: ${result}, error (rc/msg): ${json_ec}/${err_msg:-"-"}, probe_host: ${probe_host:-"-"}, eff_url: ${json_cp_url:-"-"}"
