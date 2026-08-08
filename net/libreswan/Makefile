@@ -7,12 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libreswan
-PKG_VERSION:=4.12
-PKG_RELEASE:=5
+PKG_VERSION:=5.3.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.libreswan.org/
-PKG_HASH:=ae85abe415f7becf4b6a2b9897e1712f27e5aac9c35dfbdddbcce0ad7dfd99f7
+PKG_HASH:=fb918afa0bb92bd0430c1da861ef8068864d25d72130df0c6307a1f9da761088
 
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -93,6 +93,8 @@ MAKE_FLAGS+= \
     USE_LINUX_AUDIT=false \
     USE_LABELED_IPSEC=false \
     USE_NM=false \
+    USE_IPTABLES=false \
+    USE_NFTABLES=true \
     USE_NSS_KDF=true \
     USE_LIBCURL=false \
     USE_GLIBC_KERN_FLIP_HEADERS=true \
@@ -100,13 +102,14 @@ MAKE_FLAGS+= \
     USE_LIBCAP_NG=true \
     USE_SYSTEMD_WATCHDOG=false \
     USE_SECCOMP=false\
+    USE_XFRM_HEADER_COPY=true\
     USE_XFRM_INTERFACE_IFLA_HEADER=false \
     PREFIX="/usr" \
-    FINALRUNDIR="/var/run/pluto" \
-    FINALNSSDIR="/etc/ipsec.d" \
+    RUNDIR="/var/run/pluto" \
+    NSSDIR="/etc/ipsec.d" \
     DEFAULT_DNSSEC_ROOTKEY_FILE=/etc/unbound/root.key \
-    MODPROBEARGS="-q" \
     OSDEP=linux \
+    INITSYSTEM="" \
     BUILDENV=linux \
     LINUX_VARIANT="openwrt" \
     ARCH="$(LINUX_KARCH)" \
@@ -115,6 +118,7 @@ define Build/Prepare
 	$(call Build/Prepare/Default)
 	$(SED) 's,include $$$$(top_srcdir)/mk/manpages.mk,,g' \
             $(PKG_BUILD_DIR)/mk/program.mk
+	$(SED) 's,manpages html,,g' $(PKG_BUILD_DIR)/mk/targets.mk
 endef
 
 define Build/Compile
@@ -170,35 +174,5 @@ define Package/libreswan-nftables/install
 	$(LN) /tmp/libreswan/firewall.d/libreswan.rules $(1)/usr/share/nftables.d/ruleset-post/10_libreswan.nft
 endef
 
-define Package/libreswan-iptables
-	$(Package/libreswan/default)
-	TITLE+= iptables plugin)
-	DEPENDS+=firewall +libreswan +iptables-mod-ipsec +kmod-ipt-ipsec \
-			 +iptables-zz-legacy +IPV6:ip6tables-zz-legacy \
-			 +kmod-ipt-nflog +iptables-mod-nflog
-endef
-
-define Package/libreswan-iptables/description
-	Provides Libreswan iptables plugin for adding firewall rules
-endef
-
-define Package/libreswan-iptables/install
-	$(INSTALL_DIR) $(1)/etc \
-		$(1)/etc/uci-defaults \
-		$(1)/etc/hotplug.d/libreswan
-
-	$(CP) ./files/etc/hotplug.d/libreswan/61-iptables $(1)/etc/hotplug.d/libreswan/61-iptables
-	$(CP) ./files/etc/uci-defaults/091-libreswan $(1)/etc/uci-defaults/091-libreswan
-	$(INSTALL_BIN) ./files/etc/libreswan_firewall.sh $(1)/etc/libreswan_firewall.sh
-endef
-
-define Package/libreswan-iptables/postinst
-#!/bin/sh
-[ -n "$$IPKG_INSTROOT" ] || {
-	/etc/init.d/firewall reload
-}
-endef
-
 $(eval $(call BuildPackage,libreswan))
 $(eval $(call BuildPackage,libreswan-nftables))
-$(eval $(call BuildPackage,libreswan-iptables))
