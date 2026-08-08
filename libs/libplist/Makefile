@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libplist
 PKG_VERSION:=2.7.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://github.com/libimobiledevice/libplist/releases/download/$(PKG_VERSION)
@@ -23,6 +23,7 @@ PKG_BUILD_PARALLEL:=1
 PKG_BUILD_FLAGS:=lto
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 
 define Package/libplist/Default
   TITLE:=Apple property list
@@ -67,6 +68,10 @@ CONFIGURE_ARGS += \
 	--disable-static \
 	--without-cython
 
+HOST_CONFIGURE_ARGS += \
+	--disable-shared \
+	--without-cython
+
 TARGET_LDFLAGS += -Wl,--gc-sections
 
 define Build/InstallDev
@@ -91,3 +96,4 @@ endef
 
 $(eval $(call BuildPackage,libplist))
 $(eval $(call BuildPackage,plistutil))
+$(eval $(call HostBuild))
