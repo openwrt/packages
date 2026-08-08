@@ -68,6 +68,8 @@ define Package/shairport-sync/default/description
   Shairport Sync does not support AirPlay video or photo streaming.
   Ensure Kernel Modules > Sound Support > kmod-sound-core is selected.
   Also select kmod-usb-audio if you want to use USB-connected sound cards.
+  Set alsa_output_device to real hardware, e.g. hw:0. ALSA's default device
+  reports no usable configurations and playback fails.
 endef
 Package/shairport-sync-openssl/description = $(Package/shairport-sync/default/description)
 Package/shairport-sync-mbedtls/description = $(Package/shairport-sync/default/description)
