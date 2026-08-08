@@ -226,7 +226,7 @@ password        zzz
 Finally enable e-mail support in travelmate and add a valid e-mail receiver address.
 
 **Captive portal auto-logins**  
-For automated captive portal logins you can reference an external shell script per uplink. All login scripts have to be executable and located in `/etc/travelmate` with the extension `.login`. The package ships multiple ready to run auto-login scripts:
+For automated captive portal logins you can reference an external shell script per uplink. All login scripts have to be executable and located in `/etc/travelmate` with the extension `.login`. A login script signals its result via the exit code: `0` means the login succeeded, any other value means it failed. Only `0` makes travelmate re-check the connectivity right away, every other value is just logged. The package ships multiple ready to run auto-login scripts:
 
 * 'wifibahn.login' for german DB railway hotspots
 * 'telekom.login' for telekom hotspots (DE)
@@ -242,6 +242,19 @@ user.info trm-2.4.7-1[26222]: captive portal login script for 'www.wifibahn.de' 
 user.info trm-2.4.7-1[26222]: connected to uplink 'radio1/WIFI@DB/-' with mac 'B2:9D:F5:96:86:A4' (1/3)
 [...]
 ```
+**Building your own login script**  
+The fastest way to a working script is to record the login once by hand and then replay it with curl. Any browser's developer tools can do the recording:
+
+1. Connect a client to the hotspot - either directly, or through travelmate's own AP while the uplink is up - and open the portal page.
+2. Open the developer tools (usually `F12`) and switch to the `Network` tab. Enable `Preserve log` (Chromium, Edge, Safari) resp. `Persist Logs` (Firefox, behind the gear icon) and `Disable cache`. A portal login almost always ends in a redirect, and without these options the recorded entries are dropped at that point.
+3. Perform the login manually and watch which requests are sent.
+4. Right-click the request that carries your credentials and choose `Copy` -> `Copy as cURL`. You now have the exact URL, method, headers, cookies and form fields as the browser sent them. `Save All As HAR` resp. `Export HAR` records the whole session if you want to study it later - note that recent Chromium versions strip cookies and authorization headers from the export unless you allow sensitive data in the devtools settings.
+5. Strip the copied command down: the browser adds a lot of `Accept*`, `Sec-*` and `Priority` headers that no portal cares about. Keep the request body, the `Content-Type` and whatever the portal actually validates, then replace curl's flags with travelmate's `${trm_fetchcmd} ${trm_fetchparm}` and `--user-agent "${trm_useragent}"`.
+6. Look for values that are only valid for one session - CSRF tokens, session ids, `sid` parameters. Those must not be copied into the script but fetched at runtime, see `wifibahn.login` (cookie jar plus awk) or `vodafone.login` (json response plus jsonfilter) for the two usual patterns.
+7. Never hardcode credentials. Pass them via the uplink's `script_args` option and read them as `${1}` and `${2}`, like `generic-user-pass.login` does.
+8. Test the script on the router while the portal is actually in the way: `sh -x /etc/travelmate/my.login user pass; echo "rc: ${?}"`. Make sure it only exits `0` when the login really succeeded - a script that reports success too eagerly is worse than one that fails, because travelmate will happily keep the uplink.
+
+The portal domain travelmate detected is in the system log: `logread -e "trm-"` shows it as `captive portal domain '<domain>' added to dhcp rebind allowlist`.
 
 Hopefully more scripts for different captive portals will be provided by the community!
 

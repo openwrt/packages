@@ -25,12 +25,12 @@ fi
 
 # get security token
 #
-"${trm_fetch}" ${trm_fetchparm} --user-agent "${trm_useragent}" --cookie-jar "/tmp/${trm_domain}.cookie" --output /dev/null "https://${trm_domain}/en/"
-sec_token="$("${trm_awkcmd}" '/csrf/{print $7}' "/tmp/${trm_domain}.cookie" 2>/dev/null)"
+"${trm_fetchcmd}" ${trm_fetchparm} --user-agent "${trm_useragent}" --cookie-jar "/tmp/${trm_domain}.cookie" --output /dev/null "https://${trm_domain}/en/"
+[ "${?}" = "0" ] && sec_token="$("${trm_awkcmd}" '/csrf/{print $7}' "/tmp/${trm_domain}.cookie" 2>/dev/null)"
 rm -f "/tmp/${trm_domain}.cookie"
 [ -z "${sec_token}" ] && exit 2
 
 # final post request
 #
-raw_html="$("${trm_fetch}" ${trm_fetchparm} --user-agent "${trm_useragent}" --header "Cookie: csrf=${sec_token}" --data "login=true&CSRFToken=${sec_token}" "https://${trm_domain}/en/")"
-[ -z "${raw_html}" ] && exit 0 || exit 255
+"${trm_fetchcmd}" ${trm_fetchparm} --user-agent "${trm_useragent}" --header "Cookie: csrf=${sec_token}" --data "login=true&CSRFToken=${sec_token}" --output /dev/null "https://${trm_domain}/en/"
+[ "${?}" = "0" ] && exit 0 || exit 255
