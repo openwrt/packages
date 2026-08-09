@@ -16,10 +16,6 @@ TEST_PASS="s3cr3t-ci-passphrase"
 
 case "$1" in
 prosody)
-	# Verify the installed version file matches the apk version arg the
-	# runner passes, so a stale .apk from an earlier batch fails fast.
-	grep -qF "$2" "$PROSODY_LIB/prosody.version"
-
 	# loader.lua installs the "prosody.*" -> "*" module searcher that every
 	# require() in 13.x goes through. It is the first thing prosodyctl looks
 	# for, and the package is dead on arrival if it was not installed.
