@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bc
 PKG_VERSION:=1.08.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/bc
@@ -19,6 +19,9 @@ PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:gnu:bc
+
+# Build only the library and calculators; skip the doc subdir (needs makeinfo).
+PKG_SUBDIRS:=lib bc dc
 
 include $(INCLUDE_DIR)/package.mk
 
