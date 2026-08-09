@@ -1,0 +1,28 @@
+menu "Modify features for non-core variants"
+	config ZABBIX80_CURL
+		bool "cURL support (default SSL)"
+		default y
+		depends on !ZABBIX80_NOSSL
+
+	config ZABBIX80_LDAP
+		bool "LDAP support"
+		depends on ZABBIX80_OPENSSL
+		default y
+
+	config ZABBIX80_NETSNMP
+		bool "NetSNMP support (OpenSSL)"
+		depends on ZABBIX80_OPENSSL
+		default y
+endmenu
+
+choice
+	prompt "Select SSL Library"
+
+	default ZABBIX80_OPENSSL
+
+	config ZABBIX80_NOSSL
+		bool "NoSSL"
+
+	config ZABBIX80_OPENSSL
+		bool "OpenSSL"
+endchoice
