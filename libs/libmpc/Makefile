@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpc
-PKG_VERSION:=1.3.1
+PKG_VERSION:=1.4.1
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=@GNU/mpc/
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=ab642492f5cf882b74aa0cb730cd410a81edcdbec895183ce930e706c1c759b8
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_HASH:=91204cd32f164bd3b7c992d4a6a8ce6519511aadab30f78b6982d0bf8d73e931
 
 PKG_LICENSE:=LGPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING.LESSER
@@ -22,6 +22,8 @@ PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+# Build/install only the library; skip the tests, doc and tools subdirs.
+PKG_SUBDIRS:=src
 
 include $(INCLUDE_DIR)/package.mk
 
