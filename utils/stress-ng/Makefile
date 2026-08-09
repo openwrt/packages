@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=stress-ng
-PKG_VERSION:=0.21.03
-PKG_RELEASE:=2
+PKG_VERSION:=0.21.04
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ColinIanKing/stress-ng/tar.gz/refs/tags/V$(PKG_VERSION)?
-PKG_HASH:=6db7089ad9cc2c13d0aa1cf8755112adac92858f4582a46c765bb6b7e1c3e1af
+PKG_HASH:=a328ba050bd3014f07a3265fb6c1aab071ae942dfad75c7459cce45a987869e1
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=GPL-2.0-only
@@ -70,6 +70,13 @@ MAKE_FLAGS += \
 	LIB_GLES2= \
 	LIB_IPSEC_MB= \
 	LIB_JUDY=
+
+# libnl is in the feed, but the netlink stressors do not warrant pulling it
+# in; disable the 0.21.04 probes so the build neither links libnl nor gains
+# an undeclared runtime dependency.
+MAKE_FLAGS += \
+	LIB_NL= \
+	LIB_GENL=
 
 MAKE_FLAGS += $(foreach l,$(STRESS_NG_LIBS),$(if $(CONFIG_STRESS_NG_LIB_$(l)),,LIB_$(l)=))
 
