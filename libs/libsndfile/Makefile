@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libsndfile
 PKG_VERSION:=1.2.2
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/libsndfile/libsndfile/releases/download/$(PKG_VERSION)
@@ -37,6 +37,7 @@ define Package/libsndfile/description
 endef
 
 CMAKE_OPTIONS += \
+	-DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
 	-DENABLE_MPEG=ON \
 	-DBUILD_SHARED_LIBS=ON \
 	-DENABLE_EXTERNAL_LIBS=OFF
