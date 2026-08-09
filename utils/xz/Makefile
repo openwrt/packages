@@ -103,6 +103,9 @@ define Build/InstallDev
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/liblzma.pc \
 		$(1)/usr/lib/pkgconfig/
+	$(SED) \
+		's,^libdir=.*,libdir=$$$${exec_prefix}/lib,;s,^includedir=.*,includedir=$$$${prefix}/include,' \
+		$(1)/usr/lib/pkgconfig/liblzma.pc
 endef
 
 define Package/xz-utils/install
