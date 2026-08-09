@@ -39,6 +39,12 @@ udp_broadcast_relay_redux_instance() {
 
 	procd_open_instance
 	procd_set_param command "$PROG" "--id" "${id}" "--port" "${port}"
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+
+	# Since udp-broadcast-relay-redux has no signal handler and jail forces PID 1
+	# (which will swallow signal), force SIGKILL after 1 second.
+	procd_set_param term_timeout 1
 
 	for net in $network; do
 		network_get_device ifname "$net"
@@ -63,7 +69,7 @@ udp_broadcast_relay_redux_instance() {
 		procd_append_param command "--multicast" "$multicast"
 	fi
 
-	procd_add_jail ubr-${PIDCOUNT} cgroupsns
+	procd_add_jail ubr-${PIDCOUNT} log
 	procd_close_instance
 }
 
