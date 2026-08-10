@@ -189,7 +189,7 @@ The `report` sub-command accepts an output mode: `text` (default, human-readable
 | ban_loglimit            | option | 100                           | scan only the last n log entries permanently. A value of `0` disables the monitor                                 |
 | ban_logcount            | option | 1                             | how many times the IP must appear in the log per blocking cycle to trigger auto-blocking                          |
 | ban_logterm             | list   | regex                         | various regex for logfile parsing (default: dropbear, sshd, luci, asterisk and cgi-remote events)                 |
-| ban_logreadfile         | option | - / logread                   | parse this log file via tail instead of the default logread; if left empty (default) banIP reads the system log via logread |
+| ban_logreadfile         | option | - / logread                   | parse this log file via tail instead of the default logread; by default banIP reads the system log via logread    |
 | ban_autodetect          | option | 1                             | auto-detect wan interfaces, devices and subnets                                                                   |
 | ban_debug               | option | 0                             | enable banIP related debug logging                                                                                |
 | ban_icmplimit           | option | 25                            | threshold in number of packets to detect icmp DoS in prerouting chain. A value of `0` disables this safeguard     |
@@ -222,7 +222,7 @@ The `report` sub-command accepts an output mode: `text` (default, human-readable
 | ban_triggerdelay        | option | 20                            | trigger timeout during interface reload and boot                                                                  |
 | ban_deduplicate         | option | 1                             | deduplicate IP addresses across all active Sets (see optional feed flag `dup` below)                              |
 | ban_splitsize           | option | 0                             | split the processing/loading of Sets in chunks of n lines/members (saves RAM)                                     |
-| ban_cores               | option | - / autodetect                | limit the cpu cores used by banIP (saves RAM)                                                                     |
+| ban_cores               | option | - / autodetect                | limit the cpu cores used by banIP; only auto-detection is memory-capped                                           |
 | ban_nftloglevel         | option | warn                          | nft loglevel, values: emerg, alert, crit, err, warn, notice, info, debug                                          |
 | ban_nftpriority         | option | -100                          | nft priority for the banIP table (the prerouting table is fixed to priority -150)                                 |
 | ban_nftpolicy           | option | memory                        | nft policy for banIP-related Sets, values: memory, performance                                                    |
@@ -381,7 +381,7 @@ List only elements with hits of a given Set with hit counters, e.g.:
 nftables supports the atomic loading of firewall rules (incl. elements), which is cool but unfortunately is also very memory intensive. To reduce the memory pressure on low memory systems (i.e. those with 256-512MB RAM), you should optimize your configuration with the following options:
 
 * point `ban_basedir`, `ban_reportdir`, `ban_backupdir` and `ban_errordir` to an external usb drive or ssd
-* set `ban_cores` to `1` (only useful on a multicore system) to force sequential feed processing
+* set `ban_cores` to `1` (only useful on a multicore system) to force sequential feed processing. The autodetected value is additionally capped to the available memory; a manually set value is always used as-is and is never lowered
 * set `ban_splitsize` e.g. to `1024` to split the load of an external Set after every 1024 lines/elements
 * set `ban_nftcount` to `0` to deactivate the CPU- and memory-intensive creation of counter elements at chain / Set level. With this setting, all packet counters are disabled, the Set Reporting will show zero values for these even when the protection rules are actively dropping traffic. Only the DoS protection counters (`syn-flood`, `udp-flood`, `icmp-flood`, etc.) are always enabled.
 
