@@ -180,7 +180,7 @@ The `report` sub-command accepts an output mode: `cli` (default, human-readable 
 | adb_enabled          | 1, enabled                         | set to 0 to disable the adblock service                                                            |
 | adb_feedfile         | /etc/adblock/adblock.feeds         | full path to the used adblock feed file                                                            |
 | adb_dns              | -, auto-detected                   | `dnsmasq`, `unbound`, `named`, `kresd`, `smartdns` or `raw`                                        |
-| adb_cores            | -, auto-detected                   | limit the cpu cores used by adblock to save RAM; auto-detected and capped to the available memory  |
+| adb_cores            | -, auto-detected                   | limit the cpu cores used by adblock; only auto-detection is memory-capped                          |
 | adb_fetchcmd         | -, auto-detected                   | `uclient-fetch`, `wget` or `curl`                                                                  |
 | adb_fetchparm        | -, auto-detected                   | manually override the config options for the selected download utility                             |
 | adb_fetchretry       | 5                                  | number of download attempts in case of an error (not supported by uclient-fetch)                   |
@@ -298,7 +298,7 @@ root@blackhole:~# /etc/init.d/adblock status
 
 **Recommendation for low memory systems**  
 adblock keeps all working data in RAM to avoid unnecessary flash wear. The number of parallel processing jobs and the sort buffer size are automatically scaled to the available memory, so on constrained devices adblock already throttles itself during feed processing. On devices with only 128–256 MB RAM, you can further reduce memory pressure with the following optimizations:
-* Limit CPU parallelism: the core count is auto-capped to the available memory; you can additionally set `adb_cores=1` to force single-threaded processing with minimal peak memory
+* Limit CPU parallelism: the auto-detected core count is capped to the available memory; set `adb_cores=1` to force single-threaded processing with minimal peak memory. A manually set value is always used as-is — it is never lowered, so raising it on a constrained device is at your own risk
 * Use external storage: Set adb_basedir, adb_backupdir and adb_reportdir to a USB drive or SSD to offload temporary and persistent data
 * Enable blocklist shifting: Activate adb_dnsshift to store the generated blocklist on external storage and keep only a symlink in RAM
 * Use firewall‑based DNS redirection: Route DNS queries via nftables to external filtered DNS resolvers and keep only a minimal local blocklist active
