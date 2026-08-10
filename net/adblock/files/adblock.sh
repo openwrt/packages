@@ -142,13 +142,16 @@ f_load() {
 		"${adb_awkcmd}" 'BEGIN{RS="";FS="\n"}{printf "%s, %s, %s %s (%s)",$1,$2,$3,$4,$5}')"
 
 	# detect cpu cores and available memory for memory-aware parallel processing
+	# 'mem_cores' is only calculated for auto-detected cores, a manually set 'adb_cores' is never capped
 	#
-	[ -z "${adb_cores}" ] && adb_cores="$("${adb_grepcmd}" -cm16 '^processor' /proc/cpuinfo 2>>"${adb_errorlog}")"
-	case "${adb_cores}" in "" | 0 | *[!0-9]*) adb_cores="1" ;; esac
 	free_mem="$(f_mem)"
-	mem_cores="$((${free_mem} / 48))"
-	[ "${mem_cores}" -lt "1" ] && mem_cores="1"
-	[ "${adb_cores}" -gt "1" ] && [ "${mem_cores}" -lt "${adb_cores}" ] && adb_cores="${mem_cores}"
+	if [ -z "${adb_cores}" ]; then
+		adb_cores="$("${adb_grepcmd}" -cm16 '^processor' /proc/cpuinfo 2>>"${adb_errorlog}")"
+		mem_cores="$((${free_mem} / 48))"
+		[ "${mem_cores}" -lt "1" ] && mem_cores="1"
+	fi
+	case "${adb_cores}" in "" | 0 | *[!0-9]*) adb_cores="1" ;; esac
+	[ -n "${mem_cores}" ] && [ "${mem_cores}" -lt "${adb_cores}" ] && adb_cores="${mem_cores}"
 
 	# allocate at least 8 MiB of memory per core for sorting
 	#
