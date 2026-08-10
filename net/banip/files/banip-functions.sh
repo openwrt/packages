@@ -175,16 +175,17 @@ f_system() {
 	ban_sysver="$("${ban_ubuscmd}" -S call system board 2>>"${ban_errorlog}" | "${ban_jsoncmd}" -ql1 -e '@.model' -e '@.release.target' -e '@.release.distribution' -e '@.release.version' -e '@.release.revision' |
 		"${ban_awkcmd}" 'BEGIN{RS="";FS="\n"}{printf "%s, %s, %s %s (%s)",$1,$2,$3,$4,$5}')"
 
-	# detect cpu cores and cap them by available memory for memory-aware
-	# parallel processing (>= 48 MiB per job, floored to 1 core); a user-set
-	# ban_cores is only ever lowered by the cap, never raised
+	# detect cpu cores and available memory for memory-aware parallel processing
+	# 'mem_cores' is only calculated for auto-detected cores, a manually set 'ban_cores' is never capped
 	#
-	[ -z "${ban_cores}" ] && ban_cores="$("${ban_grepcmd}" -cm16 '^processor' /proc/cpuinfo 2>>"${ban_errorlog}")"
-	case "${ban_cores}" in "" | 0 | *[!0-9]*) ban_cores="1" ;; esac
 	free_mem="$(f_mem)"
-	mem_cores="$((free_mem / 48))"
-	[ "${mem_cores}" -lt "1" ] && mem_cores="1"
-	[ "${ban_cores}" -gt "1" ] && [ "${mem_cores}" -lt "${ban_cores}" ] && ban_cores="${mem_cores}"
+	if [ -z "${ban_cores}" ]; then
+		ban_cores="$("${ban_grepcmd}" -cm16 '^processor' /proc/cpuinfo 2>>"${ban_errorlog}")"
+		mem_cores="$((free_mem / 48))"
+		[ "${mem_cores}" -lt "1" ] && mem_cores="1"
+	fi
+	case "${ban_cores}" in "" | 0 | *[!0-9]*) ban_cores="1" ;; esac
+	[ -n "${mem_cores}" ] && [ "${mem_cores}" -lt "${ban_cores}" ] && ban_cores="${mem_cores}"
 
 	# derive the GNU sort buffer from available memory (>= 8 MiB per core);
 	# only applied when a coreutils sort is present (busybox sort has no --buffer-size)
