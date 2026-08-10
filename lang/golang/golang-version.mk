@@ -295,5 +295,5 @@ endef
 # src/debug contains ELF executables as test data and they reference these
 # libraries we need to call this to pass CheckDependencies in package-pack.mk
 define Package/$(PKG_NAME)-tests/extra_provides
-	echo 'libc.so.6' libstdc++.so.6' libtiff.so.6' | tr ' ' '\n'
+	echo 'libc.so.6 libstdc++.so.6 libtiff.so.6' | tr ' ' '\n'
 endef
