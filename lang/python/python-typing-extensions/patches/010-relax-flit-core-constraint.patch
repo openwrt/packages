@@ -1,0 +1,26 @@
+From c4f17c8c6f8a2a7b242e5cc3871a5ea331b60157 Mon Sep 17 00:00:00 2001
+From: Alexandru Ardelean <alex@shruggie.ro>
+Date: Mon, 10 Aug 2026 10:00:00 +0300
+Subject: [PATCH] python-typing-extensions: allow flit_core 4.x as the build
+ backend
+
+Like python-wheel, typing-extensions caps its build backend at
+"flit_core >=3.11,<4", so python-typing-extensions/host fails with
+"Missing dependencies: flit_core<4,>=3.11" now that the feed ships
+flit-core 4.0.2. flit_core 4 builds it unchanged; relax the upper bound.
+
+Signed-off-by: Alexandru Ardelean <alex@shruggie.ro>
+---
+ pyproject.toml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -1,6 +1,6 @@
+ # Build system requirements.
+ [build-system]
+-requires = ["flit_core >=3.11,<4"]
++requires = ["flit_core >=3.11"]
+ build-backend = "flit_core.buildapi"
+ 
+ # Project metadata
