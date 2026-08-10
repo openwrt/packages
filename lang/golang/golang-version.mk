@@ -22,7 +22,7 @@ PKG_UNPACK:=$(HOST_TAR) -C "$(PKG_BUILD_DIR)" --strip-components=1 -xzf "$(DL_DI
 HOST_UNPACK:=$(HOST_TAR) -C "$(HOST_BUILD_DIR)" --strip-components=1 -xzf "$(DL_DIR)/$(PKG_SOURCE)"
 
 # Don't strip ELF executables in test data
-RSTRIP:=$(subst $(SCRIPT_DIR)/rstrip.sh,go-strip-helper $(SCRIPT_DIR)/rstrip.sh,$(RSTRIP))
+RSTRIP:=$(subst $(SCRIPT_DIR)/rstrip.sh,../go-strip-helper $(SCRIPT_DIR)/rstrip.sh,$(RSTRIP))
 
 ifeq ($(GO_TARGET_SPECTRE_SUPPORTED),1)
   PKG_CONFIG_DEPENDS+=CONFIG_GOLANG_SPECTRE
