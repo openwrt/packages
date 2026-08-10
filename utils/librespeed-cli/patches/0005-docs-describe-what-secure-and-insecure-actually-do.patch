@@ -1,0 +1,39 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Josef Schlehofer <pepe@bloodkings.eu>
+Date: Sat, 8 Aug 2026 00:57:36 +0200
+Subject: [PATCH] docs: describe what --secure and --insecure actually do
+
+Both said they applied "when communicating with LibreSpeed.org operated
+servers". They apply to every server in the list, and they do not affect
+fetching the list itself.
+
+Help text only.
+Signed-off-by: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Upstream-Status: Submitted
+---
+ main.go | 11 +++++++----
+ 1 file changed, 7 insertions(+), 4 deletions(-)
+
+--- a/main.go
++++ b/main.go
+@@ -150,13 +150,16 @@ func main() {
+ 			},
+ 			&cli.BoolFlag{
+ 				Name: defs.OptionSecure,
+-				Usage: "Use HTTPS instead of HTTP when communicating with\n" +
+-					"\tLibreSpeed.org operated servers",
++				Usage: "Force HTTPS for every test server, whichever scheme the\n" +
++					"\tserver list gives. Does not affect how the server list\n" +
++					"\titself is fetched",
+ 			},
+ 			&cli.BoolFlag{
+ 				Name: defs.OptionInsecure,
+-				Usage: "Use HTTP instead of HTTPS when communicating with\n" +
+-					"\tLibreSpeed.org operated servers",
++				Usage: "Force HTTP for every test server, whichever scheme the\n" +
++					"\tserver list gives. Does not affect how the server list\n" +
++					"\titself is fetched; use --" + defs.OptionServerJSON + " with an\n" +
++					"\thttp:// URL for that",
+ 			},
+ 			&cli.StringFlag{
+ 				Name: defs.OptionCACert,
