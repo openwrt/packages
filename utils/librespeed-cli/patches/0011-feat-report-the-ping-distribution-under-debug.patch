@@ -1,0 +1,45 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Date: Mon, 10 Aug 2026 02:11:41 +0200
+Subject: [PATCH] feat: report the ping distribution under --debug
+
+The test reports one average, which says nothing about how the samples were
+spread. A link averaging 5 ms because every probe took 5 ms and one averaging
+5 ms because probes ranged from 1 to 30 ms are not the same link, and only the
+second explains a connection that feels unsteady.
+
+pro-bing already works min, max and standard deviation out in Statistics(),
+so this prints what is on hand.
+
+Replies are shown as a raw count rather than a loss percentage. Ten probes are
+too few to express as a rate, and ICMP is frequently policed separately from
+the data path, so a percentage would describe the server's ICMP handling more
+than the network.
+Signed-off-by: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Upstream-Status: Submitted
+---
+ defs/server.go | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+--- a/defs/server.go
++++ b/defs/server.go
+@@ -148,6 +148,19 @@ func (s *Server) ICMPPingAndJitter(count
+ 			stats.IPAddr.String(), addressFamily(stats.IPAddr.String()))
+ 	}
+ 
++	// A single figure hides how the samples were spread. The pinger already
++	// works these out, and the spread is what says whether a link is steady or
++	// merely fast on average. Raw counts rather than a loss percentage: ten
++	// probes are too few for a rate, and ICMP is often policed independently of
++	// the data path, so a percentage would say more about the server's ICMP
++	// handling than about the network.
++	output.WriteDebug("Ping over ICMP: min %.2f ms, avg %.2f ms, max %.2f ms, stddev %.2f ms, %d/%d replies\n",
++		rttMillis(stats.MinRtt),
++		rttMillis(stats.AvgRtt),
++		rttMillis(stats.MaxRtt),
++		rttMillis(stats.StdDevRtt),
++		stats.PacketsRecv, stats.PacketsSent)
++
+ 	var lastPing, jitter float64
+ 	for idx, rtt := range stats.Rtts {
+ 		if idx != 0 {

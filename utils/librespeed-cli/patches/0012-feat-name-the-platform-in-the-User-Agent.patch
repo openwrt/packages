@@ -1,0 +1,45 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Date: Mon, 10 Aug 2026 08:36:47 +0200
+Subject: [PATCH] feat: name the platform in the User-Agent
+
+A server's telemetry stores the User-Agent header already, but the client only
+identifies itself by name and version, so an operator cannot tell which kinds
+of machine are measuring against them. Browsers have always reported this.
+
+Append the operating system and architecture, which runtime.GOOS and
+runtime.GOARCH give as compile-time constants at no cost:
+
+    librespeed-cli/1.0.12 (linux; arm64)
+
+It stays coarse on purpose. The kernel version or the hostname would identify
+the machine rather than describe it, and nothing here needs that.
+Signed-off-by: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Upstream-Status: Submitted
+---
+ defs/defs.go | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+--- a/defs/defs.go
++++ b/defs/defs.go
+@@ -1,11 +1,19 @@
+ package defs
+ 
++import "runtime"
++
+ var (
+ 	// values to be filled in by build script
+ 	BuildDate   string
+ 	ProgName    string
+ 	ProgVersion string
+-	UserAgent   = ProgName + "/" + ProgVersion
++	// UserAgent names the platform as well as the program, the way a browser
++	// does. A server's telemetry already stores this header, so reporting the
++	// operating system and architecture here is what lets an operator tell
++	// which kinds of machine are measuring against them without any change to
++	// what the client sends. It stays coarse deliberately: the kernel version
++	// or the hostname would identify the machine rather than describe it.
++	UserAgent = ProgName + "/" + ProgVersion + " (" + runtime.GOOS + "; " + runtime.GOARCH + ")"
+ )
+ 
+ // GetIPResults represents the returned JSON from backend server's getIP.php endpoint

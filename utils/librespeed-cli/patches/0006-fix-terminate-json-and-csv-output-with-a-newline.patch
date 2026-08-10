@@ -1,0 +1,33 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Josef Schlehofer <pepe@bloodkings.eu>
+Date: Sun, 9 Aug 2026 10:11:55 +0200
+Subject: [PATCH] fix: terminate --json and --csv output with a newline
+
+Neither ended with one: --json wrote the marshalled bytes as-is and --csv
+explicitly trimmed the trailing newline. The shell prompt lands on the same
+line as the result, and --csv-header already ends with a newline, so the two
+CSV modes could not be concatenated into a valid file.
+Signed-off-by: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Upstream-Status: Submitted
+---
+ speedtest/helper.go | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+--- a/speedtest/helper.go
++++ b/speedtest/helper.go
+@@ -224,13 +224,14 @@ func doSpeedTest(c *cli.Context, servers
+ 		if err := gocsv.MarshalWithoutHeaders(&reps_csv, &buf); err != nil {
+ 			output.WriteError("Error generating CSV report: %s\n", err)
+ 		} else {
+-			os.Stdout.WriteString(strings.TrimRight(buf.String(), "\n\r"))
++			os.Stdout.WriteString(strings.TrimRight(buf.String(), "\n\r") + "\n")
+ 		}
+ 	} else if c.Bool(defs.OptionJSON) {
+ 		if b, err := json.Marshal(&reps_json); err != nil {
+ 			output.WriteError("Error generating JSON report: %s\n", err)
+ 		} else {
+ 			os.Stdout.Write(b[:])
++			os.Stdout.WriteString("\n")
+ 		}
+ 	}
+ 
