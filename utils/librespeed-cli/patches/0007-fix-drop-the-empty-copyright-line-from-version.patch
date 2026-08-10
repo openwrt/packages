@@ -1,0 +1,23 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Josef Schlehofer <pepe@bloodkings.eu>
+Date: Sun, 9 Aug 2026 10:11:55 +0200
+Subject: [PATCH] fix: drop the empty copyright line from --version
+
+"librespeed.org	Copyright (C)" has named no holder and no year since the
+first commit. It says nothing that the two lines above it do not.
+Signed-off-by: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Upstream-Status: Submitted
+---
+ speedtest/speedtest.go | 1 -
+ 1 file changed, 1 deletion(-)
+
+--- a/speedtest/speedtest.go
++++ b/speedtest/speedtest.go
+@@ -73,7 +73,6 @@ func SpeedTest(c *cli.Context) error {
+ 		output.WriteOut("Licensed under GNU Lesser General Public License v3.0\n")
+ 		output.WriteOut("LibreSpeed\tCopyright (C) 2016-2020 Federico Dossena\n")
+ 		output.WriteOut("librespeed-cli\tCopyright (C) 2020 Maddie Zhan\n")
+-		output.WriteOut("librespeed.org\tCopyright (C)\n")
+ 		return nil
+ 	}
+ 

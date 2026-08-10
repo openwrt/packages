@@ -1,0 +1,81 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Josef Schlehofer <pepe@bloodkings.eu>
+Date: Mon, 10 Aug 2026 01:35:20 +0200
+Subject: [PATCH] fix: keep sub-millisecond precision in ping and jitter
+
+Duration.Milliseconds truncates to whole milliseconds, and every round-trip
+sample went through it -- in the ICMP path and in the TCP fallback that
+--no-icmp selects. On a link faster than a millisecond that leaves nothing.
+
+Against a server on loopback, reporting only ping and jitter:
+
+  before   ping 0     jitter 0
+  after    ping 0.11  jitter 0.01
+
+Over a wider link the reported ping still looks fractional, because it is an
+average of the samples, but its resolution is a whole millisecond and jitter
+is a difference of those samples. Three consecutive ICMP runs against the
+same server:
+
+  before   ping 5, 6, 5          jitter 0.59, 4.40, 0.02
+  after    ping 5.48, 5.68, 5.45 jitter 0.27, 0.32, 0.12
+
+Divide by time.Millisecond instead, which keeps the fraction.
+Signed-off-by: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Upstream-Status: Submitted
+---
+ defs/server.go | 15 +++++++++++----
+ 1 file changed, 11 insertions(+), 4 deletions(-)
+
+--- a/defs/server.go
++++ b/defs/server.go
+@@ -91,6 +91,13 @@ func (s *Server) IsUp() bool {
+ 	return resp.StatusCode == http.StatusOK
+ }
+ 
++// rttMillis converts a round-trip time to milliseconds without discarding the
++// fraction. Duration.Milliseconds truncates to whole milliseconds, which on a
++// link faster than that leaves nothing to report.
++func rttMillis(d time.Duration) float64 {
++	return float64(d) / float64(time.Millisecond)
++}
++
+ // ICMPPingAndJitter pings the server via ICMP echos and calculate the average ping and jitter
+ func (s *Server) ICMPPingAndJitter(count int, srcIp, network string) (float64, float64, error) {
+ 	t := time.Now()
+@@ -144,7 +151,7 @@ func (s *Server) ICMPPingAndJitter(count
+ 	var lastPing, jitter float64
+ 	for idx, rtt := range stats.Rtts {
+ 		if idx != 0 {
+-			instJitter := math.Abs(lastPing - float64(rtt.Milliseconds()))
++			instJitter := math.Abs(lastPing - rttMillis(rtt))
+ 			if idx > 1 {
+ 				if jitter > instJitter {
+ 					jitter = jitter*0.7 + instJitter*0.3
+@@ -153,7 +160,7 @@ func (s *Server) ICMPPingAndJitter(count
+ 				}
+ 			}
+ 		}
+-		lastPing = float64(rtt.Milliseconds())
++		lastPing = rttMillis(rtt)
+ 	}
+ 
+ 	if len(stats.Rtts) == 0 {
+@@ -162,7 +169,7 @@ func (s *Server) ICMPPingAndJitter(count
+ 		return s.PingAndJitter(count + 2)
+ 	}
+ 
+-	return float64(stats.AvgRtt.Milliseconds()), jitter, nil
++	return rttMillis(stats.AvgRtt), jitter, nil
+ }
+ 
+ // addressFamily names the IP version of an address, for reporting which path a
+@@ -234,7 +241,7 @@ func (s *Server) PingAndJitter(count int
+ 		resp.Body.Close()
+ 		end := time.Now()
+ 
+-		pings = append(pings, float64(end.Sub(start).Milliseconds()))
++		pings = append(pings, rttMillis(end.Sub(start)))
+ 	}
+ 
+ 	for _, addr := range remotes {

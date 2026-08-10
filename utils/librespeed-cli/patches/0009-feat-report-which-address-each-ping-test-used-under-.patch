@@ -1,0 +1,120 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Josef Schlehofer <pepe@bloodkings.eu>
+Date: Mon, 10 Aug 2026 01:03:30 +0200
+Subject: [PATCH] feat: report which address each ping test used under --debug
+
+IPv4 and IPv6 can take different paths through the network, so a result is
+not fully described by the hostname it was measured against. Nothing in the
+output says which was used: --json carries no client address, and the
+human-readable line only shows it by accident, in the ISP string.
+
+It is not academic. Against speedtest.cesnet.cz the ICMP ping goes over
+IPv4 while the transfers go over IPv6, so the reported latency and the
+reported throughput describe two different paths.
+
+The ICMP path reports the address the pinger resolved and probed; the TCP
+path reports every distinct peer the sockets connected to, taken from
+httptrace. The requests usually share one connection, but a reconnect can
+land on a different address, and reporting only the first would describe a
+connection the later samples did not use.
+
+Both paths are covered because --no-icmp is common enough that doing only
+the ICMP one would leave most users with nothing.
+Signed-off-by: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Upstream-Status: Submitted
+---
+ defs/server.go | 51 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 51 insertions(+)
+
+--- a/defs/server.go
++++ b/defs/server.go
+@@ -10,10 +10,13 @@ import (
+ 	"fmt"
+ 	"io"
+ 	"math"
++	"net"
+ 	"net/http"
++	"net/http/httptrace"
+ 	"net/url"
+ 	"os"
+ 	"path"
++	"slices"
+ 	"strconv"
+ 	"sync"
+ 	"time"
+@@ -129,6 +132,15 @@ func (s *Server) ICMPPingAndJitter(count
+ 
+ 	stats := p.Statistics()
+ 
++	// Say which address the test actually reached. IPv4 and IPv6 can take
++	// different paths through the network, so a result is not fully described
++	// by the hostname it was measured against, and --json carries no client
++	// address to infer it from.
++	if stats.IPAddr != nil {
++		output.WriteDebug("Pinging %s over ICMP (%s)\n",
++			stats.IPAddr.String(), addressFamily(stats.IPAddr.String()))
++	}
++
+ 	var lastPing, jitter float64
+ 	for idx, rtt := range stats.Rtts {
+ 		if idx != 0 {
+@@ -153,6 +165,24 @@ func (s *Server) ICMPPingAndJitter(count
+ 	return float64(stats.AvgRtt.Milliseconds()), jitter, nil
+ }
+ 
++// addressFamily names the IP version of an address, for reporting which path a
++// measurement took. Accepts either a bare address or one with a port.
++func addressFamily(addr string) string {
++	host := addr
++	if h, _, err := net.SplitHostPort(addr); err == nil {
++		host = h
++	}
++	ip := net.ParseIP(host)
++	switch {
++	case ip == nil:
++		return "unknown"
++	case ip.To4() != nil:
++		return "IPv4"
++	default:
++		return "IPv6"
++	}
++}
++
+ // PingAndJitter pings the server via accessing ping URL and calculate the average ping and jitter
+ func (s *Server) PingAndJitter(count int) (float64, float64, error) {
+ 	t := time.Now()
+@@ -176,6 +206,23 @@ func (s *Server) PingAndJitter(count int
+ 	}
+ 	req.Header.Set("User-Agent", UserAgent)
+ 
++	// Collect every distinct peer, not just the first. The requests usually
++	// share one connection, but a reconnect can land on a different address --
++	// a different family, even -- and reporting only the first would then
++	// describe a connection the later samples did not use.
++	var remotes []string
++	req = req.WithContext(httptrace.WithClientTrace(req.Context(), &httptrace.ClientTrace{
++		GotConn: func(info httptrace.GotConnInfo) {
++			if info.Conn == nil {
++				return
++			}
++			addr := info.Conn.RemoteAddr().String()
++			if !slices.Contains(remotes, addr) {
++				remotes = append(remotes, addr)
++			}
++		},
++	}))
++
+ 	for i := 0; i < count; i++ {
+ 		start := time.Now()
+ 		resp, err := http.DefaultClient.Do(req)
+@@ -190,6 +237,10 @@ func (s *Server) PingAndJitter(count int
+ 		pings = append(pings, float64(end.Sub(start).Milliseconds()))
+ 	}
+ 
++	for _, addr := range remotes {
++		output.WriteDebug("Pinging %s over TCP (%s)\n", addr, addressFamily(addr))
++	}
++
+ 	// discard first result due to handshake overhead
+ 	if len(pings) > 1 {
+ 		pings = pings[1:]
