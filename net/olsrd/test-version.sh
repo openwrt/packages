@@ -4,6 +4,10 @@
 
 case "$PKG_NAME" in
 olsrd)
+	# olsrd leaves through olsr_exit(), which ends the process with
+	# raise(SIGTERM) even for -v, so the shell reports "Terminated"
+	# after the banner. The pipeline status comes from grep, so the
+	# check is unaffected.
 	olsrd -v 2>&1 | grep -F "$PKG_VERSION"
 	;;
 
