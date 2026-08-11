@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=grep
 PKG_VERSION:=3.12
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/grep
@@ -22,6 +22,7 @@ PKG_CPE_ID:=cpe:/a:gnu:grep
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+PKG_SUBDIRS:=po lib src
 
 include $(INCLUDE_DIR)/package.mk
 
