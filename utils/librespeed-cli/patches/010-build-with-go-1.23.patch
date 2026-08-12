@@ -1,0 +1,85 @@
+From d169dbbe2a0e5d231b709b2299f52474b977fe1e Mon Sep 17 00:00:00 2001
+From: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Date: Wed, 12 Aug 2026 09:59:24 +0200
+Subject: [PATCH] Build with Go 1.23
+
+Upstream bumped the go directive to 1.24 in v1.0.13 together with
+dependencies that already require Go 1.24. OpenWrt 24.10 ships Go 1.23
+with GOTOOLCHAIN=local, so the build fails:
+
+  go: go.mod requires go >= 1.24.0 (running go 1.23.12; GOTOOLCHAIN=local)
+
+Lower the go directive back to 1.23 and downgrade
+golang.org/x/{net,sync,sys,term} and prometheus-community/pro-bing to
+the latest versions that still declare go 1.23.
+---
+ go.mod | 14 ++++++--------
+ go.sum | 20 ++++++++++----------
+ 2 files changed, 16 insertions(+), 18 deletions(-)
+
+--- a/go.mod
++++ b/go.mod
+@@ -1,15 +1,13 @@
+ module github.com/librespeed/speedtest-cli
+ 
+-go 1.24.0
+-
+-toolchain go1.24.2
++go 1.23.0
+ 
+ require (
+ 	github.com/briandowns/spinner v1.23.1
+ 	github.com/gocarina/gocsv v0.0.0-20240520201108-78e41c74b4b1
+-	github.com/prometheus-community/pro-bing v0.8.0
++	github.com/prometheus-community/pro-bing v0.7.0
+ 	github.com/urfave/cli/v2 v2.27.4
+-	golang.org/x/sys v0.40.0
++	golang.org/x/sys v0.33.0
+ )
+ 
+ require (
+@@ -20,7 +18,7 @@ require (
+ 	github.com/mattn/go-isatty v0.0.20 // indirect
+ 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
+ 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
+-	golang.org/x/net v0.49.0 // indirect
+-	golang.org/x/sync v0.19.0 // indirect
+-	golang.org/x/term v0.39.0 // indirect
++	golang.org/x/net v0.41.0 // indirect
++	golang.org/x/sync v0.15.0 // indirect
++	golang.org/x/term v0.32.0 // indirect
+ )
+--- a/go.sum
++++ b/go.sum
+@@ -13,21 +13,21 @@ github.com/mattn/go-colorable v0.1.13/go
+ github.com/mattn/go-isatty v0.0.16/go.mod h1:kYGgaQfpe5nmfYZH+SKPsOc2e4SrIfOl2e/yFXSvRLM=
+ github.com/mattn/go-isatty v0.0.20 h1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWEY=
+ github.com/mattn/go-isatty v0.0.20/go.mod h1:W+V8PltTTMOvKvAeJH7IuucS94S2C6jfK/D7dTCTo3Y=
+-github.com/prometheus-community/pro-bing v0.8.0 h1:CEY/g1/AgERRDjxw5P32ikcOgmrSuXs7xon7ovx6mNc=
+-github.com/prometheus-community/pro-bing v0.8.0/go.mod h1:Idyxz8raDO6TgkUN6ByiEGvWJNyQd40kN9ZUeho3lN0=
++github.com/prometheus-community/pro-bing v0.7.0 h1:KFYFbxC2f2Fp6c+TyxbCOEarf7rbnzr9Gw8eIb0RfZA=
++github.com/prometheus-community/pro-bing v0.7.0/go.mod h1:Moob9dvlY50Bfq6i88xIwfyw7xLFHH69LUgx9n5zqCE=
+ github.com/russross/blackfriday/v2 v2.1.0 h1:JIOH55/0cWyOuilr9/qlrm0BSXldqnqwMsf35Ld67mk=
+ github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
+ github.com/urfave/cli/v2 v2.27.4 h1:o1owoI+02Eb+K107p27wEX9Bb8eqIoZCfLXloLUSWJ8=
+ github.com/urfave/cli/v2 v2.27.4/go.mod h1:m4QzxcD2qpra4z7WhzEGn74WZLViBnMpb1ToCAKdGRQ=
+ github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 h1:gEOO8jv9F4OT7lGCjxCBTO/36wtF6j2nSip77qHd4x4=
+ github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1/go.mod h1:Ohn+xnUBiLI6FVj/9LpzZWtj1/D6lUovWYBkxHVV3aM=
+-golang.org/x/net v0.49.0 h1:eeHFmOGUTtaaPSGNmjBKpbng9MulQsJURQUAfUwY++o=
+-golang.org/x/net v0.49.0/go.mod h1:/ysNB2EvaqvesRkuLAyjI1ycPZlQHM3q01F02UY/MV8=
+-golang.org/x/sync v0.19.0 h1:vV+1eWNmZ5geRlYjzm2adRgW2/mcpevXNg50YZtPCE4=
+-golang.org/x/sync v0.19.0/go.mod h1:9KTHXmSnoGruLpwFjVSX0lNNA75CykiMECbovNTZqGI=
++golang.org/x/net v0.41.0 h1:vBTly1HeNPEn3wtREYfy4GZ/NECgw2Cnl+nK6Nz3uvw=
++golang.org/x/net v0.41.0/go.mod h1:B/K4NNqkfmg07DQYrbwvSluqCJOOXwUjeb/5lOisjbA=
++golang.org/x/sync v0.15.0 h1:KWH3jNZsfyT6xfAfKiz6MRNmd46ByHDYaZ7KSkCtdW8=
++golang.org/x/sync v0.15.0/go.mod h1:1dzgHSNfp02xaA81J2MS99Qcpr2w7fw1gpm99rleRqA=
+ golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+ golang.org/x/sys v0.6.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+-golang.org/x/sys v0.40.0 h1:DBZZqJ2Rkml6QMQsZywtnjnnGvHza6BTfYFWY9kjEWQ=
+-golang.org/x/sys v0.40.0/go.mod h1:OgkHotnGiDImocRcuBABYBEXf8A9a87e/uXjp9XT3ks=
+-golang.org/x/term v0.39.0 h1:RclSuaJf32jOqZz74CkPA9qFuVTX7vhLlpfj/IGWlqY=
+-golang.org/x/term v0.39.0/go.mod h1:yxzUCTP/U+FzoxfdKmLaA0RV1WgE0VY7hXBwKtY/4ww=
++golang.org/x/sys v0.33.0 h1:q3i8TbbEz+JRD9ywIRlyRAQbM0qF7hu24q3teo2hbuw=
++golang.org/x/sys v0.33.0/go.mod h1:BJP2sWEmIv4KK5OTEluFJCKSidICx8ciO85XgH3Ak8k=
++golang.org/x/term v0.32.0 h1:DR4lr0TjUs3epypdhTOkMmuF5CDFJ/8pOnbzMZPQ7bg=
++golang.org/x/term v0.32.0/go.mod h1:uZG1FhGx848Sqfsq4/DlJr3xGGsYMu/L5GW4abiaEPQ=
