@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=librespeed-cli-rust
-PKG_VERSION:=0.1.0
+PKG_VERSION:=0.1.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/BKPepe/speedtest-cli-rust/tar.gz/refs/tags/v$(PKG_VERSION)?
-PKG_HASH:=d6b88befe573a9d2f93656fadeb69c194c6aa0027749662e2f0dafd972cee8f5
+PKG_HASH:=fb658ea4e988c6d60cf4d01df6a3e4a7ed1b55192217a4a712d089584da5c9ec
 PKG_BUILD_DIR:=$(BUILD_DIR)/speedtest-cli-rust-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
