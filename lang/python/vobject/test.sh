@@ -5,6 +5,12 @@
 python3 - << 'EOF'
 import vobject
 
+# Upstream declares pytz and six as hard runtime requirements, so make sure
+# both resolve; a missing pytz is what broke the change_tz console script.
+import pytz
+import six
+from dateutil import tz
+
 # Parse a simple vCard
 vcard_text = """BEGIN:VCARD
 VERSION:3.0
@@ -31,6 +37,9 @@ cal = vobject.readOne(ical_text)
 events = list(cal.vevent_list)
 assert len(events) == 1
 assert events[0].summary.value == "Test Event"
+
+# Verify change_tz imports (requires pytz)
+from vobject.change_tz import change_tz
 
 print("python3-vobject OK")
 EOF

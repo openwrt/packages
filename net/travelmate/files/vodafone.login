@@ -24,13 +24,13 @@ fi
 
 # get sid
 #
-redirect_url="$("${trm_fetch}" ${trm_fetchparm} --user-agent "${trm_useragent}" --write-out "%{redirect_url}" --output /dev/null "${trm_captiveurl}")"
+redirect_url="$("${trm_fetchcmd}" ${trm_fetchparm} --user-agent "${trm_useragent}" --write-out "%{redirect_url}" --output /dev/null "${trm_captiveurl}")"
 sid="$(printf "%s" "${redirect_url}" 2>/dev/null | "${trm_awkcmd}" 'BEGIN{FS="[=&]"}{printf "%s",$2}')"
 [ -z "${sid}" ] && exit 1
 
 # get session
 #
-raw_html="$("${trm_fetch}" ${trm_fetchparm} --user-agent "${trm_useragent}" --referer "http://${trm_domain}/portal/?sid=${sid}" "https://${trm_domain}/api/v4/session?sid=${sid}")"
+raw_html="$("${trm_fetchcmd}" ${trm_fetchparm} --user-agent "${trm_useragent}" --referer "http://${trm_domain}/portal/?sid=${sid}" "https://${trm_domain}/api/v4/session?sid=${sid}")"
 session="$(printf "%s" "${raw_html}" 2>/dev/null | "${trm_jsoncmd}" -q -l1 -e '@.session')"
 [ -z "${session}" ] && exit 2
 
@@ -48,7 +48,7 @@ done
 # final login request
 #
 if [ "${login_id}" = "4" ] && [ -n "${username}" ] && [ -n "${password}" ]; then
-	raw_html="$("${trm_fetch}" ${trm_fetchparm} --user-agent "${trm_useragent}" --referer "http://${trm_domain}/portal/?sid=${sid}" --data "loginProfile=${login_id}&accessType=${access_type}&accountType=${account_type}&password=${password}&session=${session}&username=${username}" "https://${trm_domain}/api/v4/login?sid=${sid}")"
+	raw_html="$("${trm_fetchcmd}" ${trm_fetchparm} --user-agent "${trm_useragent}" --referer "http://${trm_domain}/portal/?sid=${sid}" --data "loginProfile=${login_id}&accessType=${access_type}&accountType=${account_type}&password=${password}&session=${session}&username=${username}" "https://${trm_domain}/api/v4/login?sid=${sid}")"
 fi
 success="$(printf "%s" "${raw_html}" 2>/dev/null | "${trm_jsoncmd}" -q -l1 -e '@.success')"
 [ "${success}" = "true" ] && exit 0 || exit 255

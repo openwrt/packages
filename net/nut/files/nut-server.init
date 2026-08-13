@@ -29,7 +29,7 @@ USE_PROCD=1
 # shellcheck source=net/nut/files/functions.sh.functions
 . "${IPKG_INSTROOT}"/lib/functions.sh || {
 	# Before our sourcing error logging definitions are sourced
-	logger -s -t "nut-server" "FATAL: Unable to source 'functions.sh' in 'nut-server'"
+	logger -t "nut-server[$$]" "FATAL: Unable to source 'functions.sh' in 'nut-server'"
 	exit 1
 }
 
@@ -39,7 +39,7 @@ USE_PROCD=1
 # shellcheck source=net/nut/files/nut-common.sh.functions
 . "${IPKG_INSTROOT}"/lib/functions/nut/nut-common.sh || {
 	# Before our sourcing error logging definitions are sourced
-	logger -s -t "nut-server" "FATAL: Unable to source 'nut-common.sh' in 'nut-server'"
+	logger -t "nut-server[$$]" "FATAL: Unable to source 'nut-common.sh' in 'nut-server'"
 	exit 1
 }
 
@@ -101,15 +101,14 @@ start_ups_driver() {
 
 	procd_open_instance "$ups"
 	procd_set_param respawn
-	procd_set_param stderr 0 # stderr is just a dup of stdout + syslog
+	procd_set_param stderr 1
 	procd_set_param stdout 1
+	procd_set_param env NUT_DEBUG_SYSLOG="stderr"
 	procd_set_param env NUT_QUIET_INIT_UPSNOTIFY=true
 	procd_set_param env NUT_STATEPATH="${STATEPATH}"
 	procd_set_param command "/usr/libexec/nut/${driver}"
 	procd_append_param command -FF -a "$ups"
-	if [ -n "$RUNAS" ]; then
-		procd_append_param command -u "$RUNAS"
-	fi
+	procd_append_param command -u "$RUNAS"
 	procd_close_instance
 
 	# If upsd is running, reload it to pick up new driver
@@ -142,16 +141,13 @@ common_preconditions() {
 		exit 1
 	}
 
-	if have_section_of_type "upsd"; then
-		# Only find statepath and runas once per service start or reload
-		# defines STATEPATH
-		find_statepath "upsd" "nut_server" || {
+	# Only find statepath and runas once per service start or reload
+	if have_section_named "upsd" "upsd"; then
+		STATEPATH="$(find_statepath "upsd" "nut_server")" || {
 			log_error_exit "Failed to determine STATEPATH" "nut-server" "nut-server"
 		}
-		# sets RUNAS
-		find_runas "upsd" "nut_server" || {
-			log_error "Failed to determine RUNAS" "nut-server" "nut-server"
-			return 1
+		RUNAS="$(find_runas "upsd" "nut_server")" || {
+			log_error_exit "Failed to determine RUNAS" "nut-server" "nut-server"
 		}
 	else
 		# If there is no 'upsd' section in the nut_server config file, use
@@ -188,7 +184,7 @@ stop_no_longer_configured_instances() {
 		config_get driver "$instance" driver
 		# Only stop not configured but running instances
 		if [ -z "$driver" ] && [ -n "$instance" ] && procd_running "nut-server" "$instance" >/dev/null 2>&1; then
-			procd_kill "nut-server" "$instance" 2>&1 | logger -s -t nut-server
+			procd_kill "nut-server" "$instance" 2>&1 | logger -t nut-server
 		fi
 	done
 	set +f
@@ -256,7 +252,7 @@ service_preconditions() {
 
 		case $ret in
 		0)
-			interface_triggers "check_interface_up" || should_start_srv=false
+			check_interface_up "upsd" || should_start_srv=false
 			;;
 		*)
 			should_start_srv=false
@@ -269,7 +265,7 @@ service_preconditions() {
 
 		case $ret in
 		0 | 2)
-			interface_triggers "check_interface_up" || should_stop_srv=true
+			check_interface_up "upsd" || should_stop_srv=true
 			;;
 		*)
 			should_stop_srv=true
@@ -317,15 +313,14 @@ start_server_instance() {
 
 	procd_open_instance upsd
 	procd_set_param respawn
-	procd_set_param stderr 0 # stderr is just a dup of stdout + syslog
+	procd_set_param stderr 1
 	procd_set_param stdout 1
+	procd_set_param env NUT_DEBUG_SYSLOG="stderr"
 	procd_set_param env NUT_QUIET_INIT_UPSNOTIFY=true
 	procd_set_param env NUT_STATEPATH="$STATEPATH"
 	procd_set_param command /usr/sbin/upsd
 	procd_append_param command -FF
-	if [ -n "$RUNAS" ]; then
-		procd_append_param command -u "$RUNAS"
-	fi
+	procd_append_param command -u "$RUNAS"
 	procd_close_instance
 }
 
@@ -402,11 +397,11 @@ reload_ups_driver() {
 
 stop_service_if_no_instances() {
 	if service_active_no_instances "nut-server"; then
-		logger -s -t "nut-server" "nut-server active with no instances"
+		log_msg "nut-server active with no instances" nut-server "nut-server" notice
 		# If "nut-server" is active with no instances
 		# We don't care about the exit code of procd_kill, and logging its
 		# stderr can aid debugging.
-		procd_kill "nut-server" 2>&1 | logger -s -t "nut-server"
+		procd_kill "nut-server" 2>&1 | logger -t "nut-server"
 	fi
 }
 
@@ -563,7 +558,13 @@ service_triggers() {
 	}
 
 	config_get interface_reload_delay upsd interface_reload_delay $DEFAULT_PROCD_INTERFACE_RELOAD_DELAY
+	if ! check_unsigned_int "$interface_reload_delay" || [ -z "$interface_reload_delay" ]; then
+		log_msg "interface_reload_delay must be an unsigned integer" nut-server nut-server warn
+		interface_reload_delay="$DEFAULT_PROCD_INTERFACE_RELOAD_DELAY"
+	fi
 
-	interface_triggers "add_trigger" "upsd" "$interface_reload_delay"
+	add_interface_triggers "upsd" "$interface_reload_delay" "nut-server" "upsd" || {
+		log_error "Failed to add interface triggers" nut-server nut-server
+	}
 	procd_add_reload_trigger "nut_server"
 }

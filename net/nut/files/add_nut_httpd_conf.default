@@ -22,7 +22,7 @@ grep -q '^/cgi-bin/nut' /etc/httpd.conf 2>/dev/null || {
 	# shellcheck disable=SC2016
 	echo '/cgi-bin/nut:root:$p$root' >>/etc/httpd.conf
 	if ! /etc/init.d/uhttpd restart; then
-		logger -s -t nut-cgi "Failed to restart uhttpd after http.conf update"
+		logger -t nut-cgi "Failed to restart uhttpd after http.conf update"
 		exit 1
 	fi
 }

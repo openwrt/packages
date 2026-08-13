@@ -1,0 +1,26 @@
+#!/bin/sh
+# Upgrade single-instance configuration to multi-instance format.
+
+if [ -f /etc/config/hev-socks5-tunnel ] && \
+	! uci -q get hev-socks5-tunnel.@instance[0] >/dev/null 2>&1 && \
+	uci -q get hev-socks5-tunnel.config >/dev/null 2>&1
+then
+	printf "Upgrading hev-socks5-tunnel configuration... "
+	conf_enabled="$(uci -q get hev-socks5-tunnel.config.enabled)"
+	conf_conffile="$(uci -q get hev-socks5-tunnel.config.conffile)"
+
+	if ! uci -q batch <<-EOF
+		delete hev-socks5-tunnel.config
+		add hev-socks5-tunnel instance
+		set hev-socks5-tunnel.@instance[-1].enabled='${conf_enabled:-0}'
+		set hev-socks5-tunnel.@instance[-1].conffile='${conf_conffile:-/etc/hev-socks5-tunnel/main.yml}'
+		commit hev-socks5-tunnel
+	EOF
+	then
+		printf "failed.\n"
+		exit 1
+	fi
+	printf "done.\n"
+fi
+
+exit 0

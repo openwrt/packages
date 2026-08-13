@@ -11,6 +11,6 @@ echo|false|kill|printf|pwd|test|true)
 	exit 0
 	;;
 *)
-	"$EXEC" --version 2>&1 | grep -qF "$PKG_VERSION"
+	"$EXEC" --version 2>&1 | grep -F "$PKG_VERSION"
 	;;
 esac

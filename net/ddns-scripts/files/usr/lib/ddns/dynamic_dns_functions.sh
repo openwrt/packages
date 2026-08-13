@@ -121,7 +121,11 @@ ddns_loglines=$((ddns_loglines + 1))	# correct sed handling
 
 # format to show date information in log and luci-app-ddns default ISO 8601 format
 ddns_dateformat=$(uci -q get ddns.global.ddns_dateformat) || ddns_dateformat="%F %R"
-DATE_PROG="date +'$ddns_dateformat'"
+
+# Print the current date using the configured format.
+# Do not turn this into a command string that is run through "eval": the format
+# is read from UCI and a single quote inside it would start a new shell word.
+date_prog() { date +"$ddns_dateformat"; }
 
 # USE_CURL if GNU Wget and cURL installed normally Wget is used by do_transfer()
 # to change this use global option use_curl '1'
@@ -1121,17 +1125,17 @@ trap_handler() {
 
 	case $1 in
 		 0)	if [ $__ERR -eq 0 ]; then
-				write_log 5 "PID '$$' exit normal at $(eval $DATE_PROG)${N}"
+				write_log 5 "PID '$$' exit normal at $(date_prog)${N}"
 			else
-				write_log 4 "PID '$$' exit WITH ERROR '$__ERR' at $(eval $DATE_PROG)${N}"
+				write_log 4 "PID '$$' exit WITH ERROR '$__ERR' at $(date_prog)${N}"
 			fi ;;
-		 1)	write_log 6 "PID '$$' received 'SIGHUP' at $(eval $DATE_PROG)"
+		 1)	write_log 6 "PID '$$' received 'SIGHUP' at $(date_prog)"
 			# reload config via starting the script again
 			/usr/lib/ddns/dynamic_dns_updater.sh -v "0" -S "$__SECTIONID" -- start || true
 			exit 0 ;;	# and leave this one
-		 2)	write_log 5 "PID '$$' terminated by 'SIGINT' at $(eval $DATE_PROG)${N}";;
-		 3)	write_log 5 "PID '$$' terminated by 'SIGQUIT' at $(eval $DATE_PROG)${N}";;
-		15)	write_log 5 "PID '$$' terminated by 'SIGTERM' at $(eval $DATE_PROG)${N}";;
+		 2)	write_log 5 "PID '$$' terminated by 'SIGINT' at $(date_prog)${N}";;
+		 3)	write_log 5 "PID '$$' terminated by 'SIGQUIT' at $(date_prog)${N}";;
+		15)	write_log 5 "PID '$$' terminated by 'SIGTERM' at $(date_prog)${N}";;
 		 *)	write_log 13 "Unhandled signal '$1' in 'trap_handler()'";;
 	esac
 

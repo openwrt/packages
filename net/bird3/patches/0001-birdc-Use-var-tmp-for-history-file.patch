@@ -1,0 +1,29 @@
+From e77b14853c1dcb3034e1af155f49e3b943203c4e Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Toke=20H=C3=B8iland-J=C3=B8rgensen?= <toke@toke.dk>
+Date: Mon, 24 Nov 2025 12:57:52 +0100
+Subject: [PATCH] birdc: Use /var/tmp for history file
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+We don't want birdc to write its history file to flash, so hard-code the
+history file to /var/tmp instead.
+
+Signed-off-by: Toke Høiland-Jørgensen <toke@toke.dk>
+---
+ client/birdc.c | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
+
+--- a/client/birdc.c
++++ b/client/birdc.c
+@@ -146,9 +146,7 @@ input_help(int arg, int key UNUSED)
+ void
+ history_init(void)
+ {
+-  const char *homedir = getenv("HOME");
+-  if (!homedir)
+-    homedir = ".";
++  const char *homedir = "/var/tmp";
+   history_file = malloc(strlen(homedir) + sizeof(HISTORY));
+   if (!history_file)
+     die("couldn't alloc enough memory for history file name");

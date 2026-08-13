@@ -175,16 +175,17 @@ f_system() {
 	ban_sysver="$("${ban_ubuscmd}" -S call system board 2>>"${ban_errorlog}" | "${ban_jsoncmd}" -ql1 -e '@.model' -e '@.release.target' -e '@.release.distribution' -e '@.release.version' -e '@.release.revision' |
 		"${ban_awkcmd}" 'BEGIN{RS="";FS="\n"}{printf "%s, %s, %s %s (%s)",$1,$2,$3,$4,$5}')"
 
-	# detect cpu cores and cap them by available memory for memory-aware
-	# parallel processing (>= 48 MiB per job, floored to 1 core); a user-set
-	# ban_cores is only ever lowered by the cap, never raised
+	# detect cpu cores and available memory for memory-aware parallel processing
+	# 'mem_cores' is only calculated for auto-detected cores, a manually set 'ban_cores' is never capped
 	#
-	[ -z "${ban_cores}" ] && ban_cores="$("${ban_grepcmd}" -cm16 '^processor' /proc/cpuinfo 2>>"${ban_errorlog}")"
-	case "${ban_cores}" in "" | 0 | *[!0-9]*) ban_cores="1" ;; esac
 	free_mem="$(f_mem)"
-	mem_cores="$((free_mem / 48))"
-	[ "${mem_cores}" -lt "1" ] && mem_cores="1"
-	[ "${ban_cores}" -gt "1" ] && [ "${mem_cores}" -lt "${ban_cores}" ] && ban_cores="${mem_cores}"
+	if [ -z "${ban_cores}" ]; then
+		ban_cores="$("${ban_grepcmd}" -cm16 '^processor' /proc/cpuinfo 2>>"${ban_errorlog}")"
+		mem_cores="$((free_mem / 48))"
+		[ "${mem_cores}" -lt "1" ] && mem_cores="1"
+	fi
+	case "${ban_cores}" in "" | 0 | *[!0-9]*) ban_cores="1" ;; esac
+	[ -n "${mem_cores}" ] && [ "${mem_cores}" -lt "${ban_cores}" ] && ban_cores="${mem_cores}"
 
 	# derive the GNU sort buffer from available memory (>= 8 MiB per core);
 	# only applied when a coreutils sort is present (busybox sort has no --buffer-size)
@@ -1844,7 +1845,7 @@ f_genstatus() {
 			end_time="${end_time%%.*}"
 			duration="$(((end_time - ban_starttime) / 60))m $(((end_time - ban_starttime) % 60))s"
 		fi
-		runtime="mode: ${ban_action}, date / time: $(date "+%d/%m/%Y %H:%M:%S"), duration: ${duration:-"-"}, memory: ${mem_free} MB available"
+		runtime="mode: ${ban_action}, date / time: $(date "+%Y-%m-%d %H:%M:%S"), duration: ${duration:-"-"}, memory: ${mem_free} MB available"
 	fi
 	[ -s "${ban_customfeedfile}" ] && custom_feed="1"
 	[ "${ban_splitsize:-"0"}" -gt "0" ] && split="1"
@@ -2047,7 +2048,7 @@ f_lookup() {
 f_report() {
 	local report_jsn report_txt tmp_val table_json item sep table_sets set_cnt set_inbound set_outbound set_cntinbound set_cntoutbound set_proto set_dport set_details
 	local cnt ip expr detail jsnval timestamp autoadd_allow autoadd_block sum_sets sum_setinbound sum_setoutbound sum_cntelements sum_cntinbound sum_cntoutbound quantity
-	local chunk jsn table_jsn set_jsn map_jsn chain set_elements sum_setelements sum_synflood sum_udpflood sum_icmpflood sum_ctinvalid sum_tcpinvalid sum_setports sum_bcp38 output="${1}"
+	local chunk jsn table_jsn set_jsn map_jsn chain set_elements uplink_ip uplink_list sum_setelements sum_synflood sum_udpflood sum_icmpflood sum_ctinvalid sum_tcpinvalid sum_setports sum_bcp38 output="${1}"
 
 	f_conf
 	f_mkdir "${ban_reportdir}"
@@ -2255,19 +2256,25 @@ f_report() {
 		if [ "${ban_nftcount}" = "1" ] && [ "${ban_map}" = "1" ] && [ -s "${report_jsn}" ]; then
 			cnt="1"
 			f_getdl
+			printf '%s' ",[{}" >>"${map_jsn}"
 			json_init
 			if json_load_file "${ban_rtfile}" >/dev/null 2>&1; then
 				json_get_values jsnval "active_uplink" >/dev/null 2>&1
-				jsnval="${jsnval//\/[0-9][0-9]/}"
-				jsnval="${jsnval//\/[0-9]/}"
-				jsnval="\"${jsnval// /\", \"}\""
-				if [ "${jsnval}" != '""' ]; then
-					{
-						printf '%s' ",[{}"
-						"${ban_fetchcmd}" ${ban_geoparm} "[ ${jsnval} ]" "${ban_geourl}" 2>>"${ban_errorlog}" |
-							"${ban_jsoncmd}" -qe '@[*&&@.status="success"]' | "${ban_awkcmd}" -v feed="homeIP" '{printf ",{\"%s\": %s}\n",feed,$0}'
-					} >>"${map_jsn}"
+				for uplink_ip in ${jsnval}; do
+					uplink_ip="${uplink_ip%%/*}"
+					if [ -n "${uplink_ip}" ] && [ "${uplink_ip}" != "-" ]; then
+						uplink_list="${uplink_list}${uplink_list:+, }\"${uplink_ip}\""
+					fi
+				done
+			fi
+			if [ -n "${uplink_list}" ]; then
+				"${ban_fetchcmd}" ${ban_geoparm} "[ ${uplink_list} ]" "${ban_geourl}" 2>>"${ban_errorlog}" |
+					"${ban_jsoncmd}" -qe '@[*&&@.status="success"]' |
+					"${ban_awkcmd}" -v feed="homeIP" '{printf ",{\"%s\": %s}\n",feed,$0}' >"${map_jsn}.home"
+				if [ -s "${map_jsn}.home" ]; then
+					"${ban_catcmd}" "${map_jsn}.home" >>"${map_jsn}"
 				fi
+				"${ban_rmcmd}" -f "${map_jsn}.home"
 			fi
 			if [ -s "${map_jsn}" ]; then
 				json_init

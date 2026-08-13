@@ -11,7 +11,7 @@
 # * /lib/functions.sh has been sourced
 # * /lib/functions/nut/nut-service.sh has been sourced
 
-# * /lib/functions/nut/nut-common.sh must be source and find_statepath executed
+# * /lib/functions/nut/nut-common.sh must be sourced and find_statepath executed
 #   before build_config is called
 
 # Ensure find_statepath from nut-service.sh is executed
@@ -140,8 +140,8 @@ build_server_config() {
 	# are named the same
 	config_foreach nut_user_add user "$USERS_C.new"
 	config_foreach listen_address listen_address "$UPSD_C.new"
-	if have_section_of_type "upsd"; then
-		config_foreach srv_config upsd "$UPSD_C.new"
+	if have_section_named "upsd" "upsd"; then
+		srv_config upsd "$UPSD_C.new"
 	else
 		# If config 'nut_server' does not have a 'upsd' section, use a default
 		# configuration
@@ -158,7 +158,7 @@ build_server_config() {
 			return 1
 		fi
 	else
-		# Otherwise if nut-server is already configured, make sure both
+		# Otherwise if nut-monitor is already configured, make sure both
 		# nut-server (this service) and nut-monitor are started
 		if grep -q '^MODE=netclient' "$NUT_CONF"; then
 			# In modern OpenWrt 'sed -i' modifies the specified files, without backup
@@ -299,7 +299,6 @@ build_global_driver_config() {
 
 	# Global driver config
 	get_write_ups_config "$cfg" chroot "" "" "$config_file"
-	get_write_ups_config "$cfg" driverpath "" "" "$config_file"
 	get_write_ups_config "$cfg" maxstartdelay "" "" "$config_file"
 	get_write_ups_config "$cfg" maxretry "" "" "$config_file"
 	get_write_ups_config "$cfg" retrydelay "" "" "$config_file"

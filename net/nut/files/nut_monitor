@@ -33,7 +33,8 @@
 #	option forcessl 0
 #	option debugmin 0
 #	option defaultnotify SYSLOG
-# option interface_reload_delay 3000 # in milliseconds
+#	option interface_reload_delay 3000 # in milliseconds
+#	option triggerlist all # not configured by default
 
 #config monitor
 #	option type primary

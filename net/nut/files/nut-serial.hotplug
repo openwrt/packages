@@ -16,7 +16,7 @@
 # shellcheck source=net/nut/files/functions.sh.functions
 . "${IPKG_INSTROOT}"/lib/functions.sh || {
 	# Before our sourcing error logging definitions are sourced
-	logger -s -t nut-serial-hotplug "Unable to source 'functions.sh' in 'nut-serial' hotplug. Bailing"
+	logger -t nut-serial-hotplug[$$] "Unable to source 'functions.sh' in 'nut-serial' hotplug. Bailing"
 	exit 1
 }
 
@@ -26,7 +26,7 @@
 # shellcheck source=net/nut/files/nut-common.sh.functions
 . "${IPKG_INSTROOT}"/lib/functions/nut/nut-common.sh || {
 	# Before our sourcing error logging definitions are sourced
-	logger -s -t nut-serial-hotplug "Unable to source 'nut-common.sh' in 'nut-serial' hotplug. Bailing"
+	logger -t nut-serial-hotplug[$$] "Unable to source 'nut-common.sh' in 'nut-serial' hotplug. Bailing"
 	exit 1
 }
 
@@ -139,7 +139,7 @@ nut_on_hotplug_add() {
 	# attempt to reload the driver and/or server
 	if [ "$did_set_perms" = "true" ]; then
 		# Informational and not an error
-		logger -t nut-serial-hotplug "Successfully set permissions for serial device(s)"
+		log_msg "Successfully set permissions for serial device(s)" nut-serial nut-serial-hotplug info
 		# We shouldn't get here if hotplug is disabled (race condition if we do), so log it as an error
 		if ! allow_hotplug_restart; then
 			log_error "Did not restart NUT after setting permissions as hotplug restart is disabled" nut-serial nut-serial-hotplug
@@ -163,7 +163,7 @@ nut_on_hotplug_add() {
 # for information
 if ! allow_hotplug_restart; then
 	# Informational and not an error
-	logger -t nut-serial-hotplug "Did not set permissions on serial port hotplug as NUT hotplug is disabled"
+	log_msg "Did not set permissions on serial port hotplug as NUT hotplug is disabled" nut-serial nut-serial-hotplug notice
 	exit 0
 fi
 

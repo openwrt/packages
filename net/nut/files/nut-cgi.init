@@ -35,7 +35,7 @@ UPSCGI_HOSTS_CONF="${UPSCGI_CONF_DIR}/hosts.conf"
 # shellcheck source=net/nut/files/functions.sh.functions
 . "${IPKG_INSTROOT}"/lib/functions.sh || {
 	# Before our sourcing error logging definitions are sourced
-	logger -s -t nut-cgi "Unable to source 'functions.sh'"
+	logger -t nut-cgi[$$] "Unable to source 'functions.sh'"
 	exit 1
 }
 
@@ -45,7 +45,7 @@ UPSCGI_HOSTS_CONF="${UPSCGI_CONF_DIR}/hosts.conf"
 # shellcheck source=net/nut/files/nut-common.sh.functions
 . "${IPKG_INSTROOT}"/lib/functions/nut/nut-common.sh || {
 	# Before our sourcing error logging definitions are sourced
-	logger -s -t nut-cgi "Failed to load nut-common.sh"
+	logger -t nut-cgi[$$] "Failed to load nut-common.sh"
 	exit 1
 }
 
@@ -170,12 +170,10 @@ validate_host() {
 			fi
 			;;
 		hostname)
-			case "$hostname" in
-			"" | *[!a-zA-Z0-9.:-\[\]-]*)
+			if ! check_safe_hostname_or_ip "$hostname"; then
 				log_validation_error "$var" "$ups"
 				return 1
-				;;
-			esac
+			fi
 			;;
 		displayname)
 			# We accept a minimally useful set of characters for a display name
@@ -191,24 +189,9 @@ validate_host() {
 			esac
 			;;
 		port)
-			# We don't log missing port log, as port is optional (NUT defaults
-			# to using 3493 when it is not present)
-			if [ -n "$port" ]; then
-				case "$port" in
-				0*)
-					log_validation_error "$var" "$ups"
-					return 1
-					;;
-				*[!0-9]*)
-					log_validation_error "$var" "$ups"
-					return 1
-					;;
-				esac
-				# Catches illegal port numbers, including negative port numbers
-				if [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; then
-					log_error "Port set, but not between 1-65535 for '$ups'" nut-cgi nut-cgi
-					return 1
-				fi
+			if ! check_port "$port"; then
+				log_validation_error "$var" "$ups"
+				return 1
 			fi
 			;;
 		esac
@@ -297,7 +280,7 @@ service_reload() {
 			return 1
 		fi
 		# Empty hosts is not necessarily an error, but we log for information
-		logger -s -t nut-cgi "No configured hosts"
+		log_msg "No configured hosts" nut-cgi nut-cgi info
 	fi
 
 	# NUT CGI host file configuration is independent of upsset configuration

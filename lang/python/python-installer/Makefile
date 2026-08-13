@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-installer
 PKG_VERSION:=1.0.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=installer
 PKG_HASH:=052c7fc3721d54c696e2dea019be67539d7b144e924f559f54beb3121831c364

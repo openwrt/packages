@@ -28,8 +28,8 @@ start_instance() {
 	# get options
 	config_get rtspport "$s" 'rtspport'
 	config_get httpport "$s" 'httpport'
-        config_get mode "$s" 'mode'
-        config_get format "$s" 'format'
+	config_get mode "$s" 'mode'
+	config_get format "$s" 'format'
 
 	# build args
 	local args="-p /usr/share/$SERVICE"

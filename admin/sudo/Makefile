@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=sudo
 PKG_REALVERSION:=1.9.17p2
 PKG_VERSION:=$(subst p,_p,$(PKG_REALVERSION))
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_REALVERSION).tar.gz
 PKG_SOURCE_URL:=https://www.sudo.ws/dist
@@ -29,11 +29,16 @@ PKG_BUILD_FLAGS:=no-mips16
 
 include $(INCLUDE_DIR)/package.mk
 
+# Skip the install-time chown, which fails during the unprivileged staged
+# install; sudo propagates INSTALL_OWNER into every sub-make.
+MAKE_INSTALL_FLAGS += INSTALL_OWNER=
+
 define Package/sudo
   SECTION:=admin
   CATEGORY:=Administration
   TITLE:=Delegate authority to run commands
   URL:=https://www.sudo.ws/
+  USERID:=:sudo
   DEPENDS:= +USE_GLIBC:libcrypt-compat
 endef
 

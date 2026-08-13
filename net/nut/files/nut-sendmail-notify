@@ -15,7 +15,7 @@
 
 # shellcheck source=net/nut/files/functions.sh.functions
 . "${IPKG_INSTROOT}"/lib/functions.sh || {
-	logger -s -t nut-sendmail-notify "Unable to source 'functions.sh' in 'nut-sendmail-notify'. Bailing"
+	logger -t nut-sendmail-notify[$$] "Unable to source 'functions.sh' in 'nut-sendmail-notify'. Bailing"
 	exit 1
 }
 
@@ -24,7 +24,7 @@
 # shellcheck disable=SC1094
 # shellcheck source=net/nut/files/nut-common.sh.functions
 . "${IPKG_INSTROOT}"/lib/functions/nut/nut-common.sh || {
-	logger -s -t nut-sendmail-notify "Unable to source 'nut-common.sh' in 'nut-sendmail-notify'. Bailing"
+	logger -t nut-sendmail-notify[$$] "Unable to source 'nut-common.sh' in 'nut-sendmail-notify'. Bailing"
 	exit 1
 }
 
@@ -33,7 +33,7 @@ log_send_failure_and_exit() {
 	local reason="$1"
 	local syslog_id="nut-sendmail-notify"
 	local message_prefix="Message was not sent"
-	logger -s -t "$syslog_id" "${message_prefix}: $reason" || {
+	logger -t "${syslog_id}[$$]" "${message_prefix}: $reason" || {
 		printf "%s: %s: %s, and logging failed\n" "$syslog_id" "$message_prefix" "$reason" >&2
 	}
 	exit 1

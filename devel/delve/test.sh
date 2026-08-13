@@ -2,7 +2,7 @@
 
 case "$1" in
 delve)
-	dlv version 2>&1 | grep -qF "$2" || {
+	dlv version 2>&1 | grep -F "$2" || {
 		echo "FAIL: dlv version did not print expected version '$2'"
 		exit 1
 	}

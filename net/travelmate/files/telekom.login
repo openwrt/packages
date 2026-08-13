@@ -8,25 +8,24 @@
 
 # url encoding function
 #
-urlencode()
-{
+urlencode() {
 	local chr str="${1}" len="${#1}" pos=0
 
 	while [ "${pos}" -lt "${len}" ]; do
 		chr="${str:pos:1}"
 		case "${chr}" in
-			[a-zA-Z0-9.~_-])
-				printf "%s" "${chr}"
-				;;
-			" ")
-				printf "%%20"
-				;;
-			*)
-				printf "%%%02X" "'${chr}"
-				;;
+		[a-zA-Z0-9.~_-])
+			printf "%s" "${chr}"
+			;;
+		" ")
+			printf "%%20"
+			;;
+		*)
+			printf "%%%02X" "'${chr}"
+			;;
 		esac
 		pos=$((pos + 1))
-		done
+	done
 }
 
 export LC_ALL=C
@@ -47,12 +46,12 @@ fi
 
 # get redirect url
 #
-raw_html="$("${trm_fetch}" ${trm_fetchparm} --user-agent "${trm_useragent}" "${trm_captiveurl}")"
+raw_html="$("${trm_fetchcmd}" ${trm_fetchparm} --user-agent "${trm_useragent}" "${trm_captiveurl}")"
 redirect_url="$(printf "%s" "${raw_html}" | "${trm_awkcmd}" 'match(tolower($0),/<loginurl>.*<\/loginurl>/){printf "%s",substr($0,RSTART+10,RLENGTH-21)}' 2>/dev/null | "${trm_awkcmd}" '{gsub("&amp;","\\&");printf "%s",$0}' 2>/dev/null)"
 [ -z "${redirect_url}" ] && exit 1
 
 # final login request
 #
-raw_html="$("${trm_fetch}" ${trm_fetchparm} --user-agent "${trm_useragent}" --referer "https://${trm_domain}/wlan/rest/freeLogin" --header "content-type: application/x-www-form-urlencoded" --data "UserName=${username}&Password=${password}&FNAME=0&button=Login&OriginatingServer=http%3A%2F%2F${trm_captiveurl}" "${redirect_url}")"
+raw_html="$("${trm_fetchcmd}" ${trm_fetchparm} --user-agent "${trm_useragent}" --referer "https://${trm_domain}/wlan/rest/freeLogin" --header "content-type: application/x-www-form-urlencoded" --data "UserName=${username}&Password=${password}&FNAME=0&button=Login&OriginatingServer=http%3A%2F%2F${trm_captiveurl}" "${redirect_url}")"
 login_url="$(printf "%s" "${raw_html}" | "${trm_awkcmd}" 'match(tolower($0),/<logoffurl>.*<\/logoffurl>/){printf "%s",substr($0,RSTART+11,RLENGTH-23)}' 2>/dev/null)"
 [ -n "${login_url}" ] && exit 0 || exit 255

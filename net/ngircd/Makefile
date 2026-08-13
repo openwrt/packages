@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ngircd
-PKG_VERSION:=27
+PKG_VERSION:=28
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ngircd.barton.de/pub/ngircd
-PKG_HASH:=6897880319dd5e2e73c1c9019613509f88eb5b8daa5821a36fbca3d785c247b8
+PKG_HASH:=b48ba320a931d445ae335c47f88a9406a20f5c71c623bee5f7755d0522d435ee
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=GPL-2.0

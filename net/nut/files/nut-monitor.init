@@ -18,7 +18,7 @@ USE_PROCD=1
 # shellcheck source=net/nut/files/functions.sh.functions
 . "${IPKG_INSTROOT}"/lib/functions.sh || {
 	# Before our sourcing error logging definitions are sourced
-	logger -s -t nut-monitor "Unable to source 'functions.sh' in 'nut-monitor'. Bailing"
+	logger -t nut-monitor[$$] "Unable to source 'functions.sh' in 'nut-monitor'. Bailing"
 	exit 1
 }
 
@@ -28,7 +28,7 @@ USE_PROCD=1
 # shellcheck source=net/nut/files/nut-common.sh.functions
 . "${IPKG_INSTROOT}"/lib/functions/nut/nut-common.sh || {
 	# Before our sourcing error logging definitions are sourced
-	logger -s -t nut-monitor "Unable to source 'nut-common.sh' in 'nut-monitor'. Bailing"
+	logger -t nut-monitor[$$] "Unable to source 'nut-common.sh' in 'nut-monitor'. Bailing"
 	exit 1
 }
 
@@ -80,11 +80,11 @@ service_preconditions() {
 			exit 1
 		}
 
-		if have_section_of_type "upsmon"; then
+		if have_section_named "upsmon" "upsmon"; then
 			# Find the RUNAS user for upsmon
-			if ! find_runas "upsmon" "nut_monitor" "nutmon" || [ -z "$RUNAS" ]; then
+			RUNAS="$(find_runas "upsmon" "nut_monitor" "nutmon")" || {
 				log_error_exit "Failed to determine RUNAS user" "nut-monitor" "nut-monitor"
-			fi
+			}
 		else
 			# If we do not have a 'upsmon' section in nut_monitor, use defaults
 			log_msg "No upsmon section so no RUNAS user, falling back to nutmon" "nut-monitor" "nut-monitor" "notice"
@@ -92,7 +92,7 @@ service_preconditions() {
 		fi
 
 		build_config || return 1
-		interface_triggers "check_interface_up" || return 1
+		check_interface_up "upsmon" || return 1
 		return 0
 		;;
 	*)
@@ -104,18 +104,17 @@ service_preconditions() {
 start_monitor_instance() {
 	procd_open_instance upsmon
 	procd_set_param respawn
-	procd_set_param stderr 0 # stderr is just a dup of stdout + syslog
+	procd_set_param stderr 1
 	procd_set_param stdout 1
 	procd_set_param env NUT_QUIET_INIT_UPSNOTIFY=true
+	procd_set_param env NUT_DEBUG_SYSLOG="stderr"
 	procd_set_param reload_signal HUP
 	procd_set_param command /usr/sbin/upsmon
 	procd_append_param command -FF
-	if [ -n "$RUNAS" ]; then
-		# upsmon needs root for some actions (like
-		# shutting down the system, but forks
-		# and drops root for most of its operation)
-		procd_append_param command -u "$RUNAS"
-	fi
+	# upsmon needs root for some actions (like
+	# shutting down the system), but forks
+	# and drops root for most of its operation
+	procd_append_param command -u "$RUNAS"
 	procd_close_instance
 }
 
@@ -203,6 +202,8 @@ stop_service() {
 }
 
 service_triggers() {
+	local val interface_reload_delay
+
 	# No config, or error loading config is fatal
 	config_load nut_monitor || {
 		log_config_load_error "nut_monitor" "nut-monitor" "nut-monitor"
@@ -210,9 +211,15 @@ service_triggers() {
 	}
 
 	config_get interface_reload_delay upsmon interface_reload_delay $DEFAULT_PROCD_INTERFACE_RELOAD_DELAY
+	if ! check_unsigned_int "$interface_reload_delay" || [ -z "$interface_reload_delay" ]; then
+		log_msg "interface_reload_delay must be an unsigned integer" nut-monitor nut-monitor warn
+		interface_reload_delay="$DEFAULT_PROCD_INTERFACE_RELOAD_DELAY"
+	fi
 
-	interface_triggers "add_trigger" "upsmon" || {
-		log_error_exit "Failed to add interface triggers" nut-monitor nut-monitor
+	# We do not pass a variadic instance name as the nut-monitor initscript does
+	# not need an additional instance name argument, only the initscript name
+	add_interface_triggers "upsmon" "$interface_reload_delay" "nut-monitor" || {
+		log_error "Failed to add interface triggers" nut-monitor nut-monitor
 	}
 	procd_add_reload_trigger "nut_monitor"
 }

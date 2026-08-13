@@ -36,7 +36,7 @@ _uci2conf() {
 						echo $__OPT | grep -i "_ITEM" >/dev/null 2>&1 && __OPT=$(echo $__OPT | sed -e "s#_ITEM.*##g")
 						# Ignore certificate generation options (used only in init script)
 						case $__OPT in
-							certdir|ca_common_name|ca_validity_days|cert_validity_days|cert_key_size|enable_ssl_bumping|boot_delay|_enabled)
+							certdir|ca_common_name|ca_validity_days|cert_validity_days|cert_key_size|enable_ssl_bumping|boot_delay|_enabled|receive_buffer_size)
 								return
 								;;
 						esac
@@ -78,7 +78,7 @@ _uci2conf() {
 	chown privoxy:privoxy $_LOGDIR/$_LOGFILE
 	echo -e "logdir\t$_LOGDIR" >> $CFGTEMP
 	echo -e "logfile\t$_LOGFILE" >> $CFGTEMP
-	_RECEIVE_BUFFER_SIZE=$(uci -q get privoxy.privoxy.receive-buffer-size) || _RECEIVE_BUFFER_SIZE="30000"
+	_RECEIVE_BUFFER_SIZE=$(uci -q get privoxy.privoxy.receive_buffer_size) || _RECEIVE_BUFFER_SIZE="30000"
 	echo -e "receive-buffer-size\t$_RECEIVE_BUFFER_SIZE" >> $CFGTEMP
 	# confdir
 	# privoxy needs read access (possibly write access)

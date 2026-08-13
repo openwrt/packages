@@ -5,7 +5,7 @@ erlang)
 	# Check erl binary is present and prints the right OTP version
 	otp_major="${2%%.*}"
 	timeout 60s erl -noshell -eval "V = erlang:system_info(otp_release), io:format(\"OTP ~s~n\", [V])" -s init stop 2>&1 | \
-		grep -qF "OTP ${otp_major}" || {
+		grep -F "OTP ${otp_major}" || {
 		echo "FAIL: erl did not report expected OTP version '$2' (major: $otp_major)"
 		exit 1
 	}

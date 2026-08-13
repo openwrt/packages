@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-charset-normalizer
-PKG_VERSION:=3.4.7
+PKG_VERSION:=3.4.9
 PKG_RELEASE:=1
 
 PYPI_NAME:=charset-normalizer
 PYPI_SOURCE_NAME:=charset_normalizer
-PKG_HASH:=ae89db9e5f98a11a4bf50407d4363e7b09b31e55bc117b4f7d80aab97ba009e5
+PKG_HASH:=673611bbd43f0810bec0b0f028ddeaaa501190339cac411f347ac76917c3ae7b
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
@@ -38,7 +38,7 @@ define Package/python3-charset-normalizer
   CATEGORY:=Languages
   SUBMENU:=Python
   TITLE:=Real First Universal Charset Detector
-  URL:=https://github.com/Ousret/charset_normalizer
+  URL:=https://github.com/jawah/charset_normalizer
   DEPENDS:=+python3-light +python3-codecs +python3-logging
 endef
 

@@ -9,7 +9,7 @@ PKG_SOURCE_URL:=https://gitlab.zapb.de/libjaylink/libjaylink/-/archive/$(PKG_VER
 PKG_HASH:=a2d98c1aa13dcf41c6c681767a43cdefc42b6f71af9362937555051007514cd9
 
 PKG_MAINTAINER:=Paul Fertser <fercerpav@gmail.com>
-PKG_LICENSE:=GPL-2.0+
+PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
 PKG_INSTALL:=1

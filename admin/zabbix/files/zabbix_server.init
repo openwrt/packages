@@ -1,6 +1,8 @@
 #!/bin/sh /etc/rc.common
 # Copyright (C) 2008-2025 OpenWrt.org
 
+# shellcheck shell=busybox
+
 # shellcheck disable=SC2034
 START=59
 
@@ -9,9 +11,13 @@ USE_PROCD=1
 
 NAME=zabbix_server
 PROG=/usr/sbin/${NAME}
-CONFIG=/etc/zabbix_server.conf
+CONFIG=/etc/${NAME}.conf
+UCI_CONFIG=/etc/config/${NAME}
+USER=zabbix-server
 
 start_service() {
+	local enabled never_root
+
 	if [ ! -f "${CONFIG}" ]; then
 		logger "Configuration file not found: '${CONFIG}'"
 		return 1
@@ -20,19 +26,22 @@ start_service() {
 	# Get enabled config option
 	config_load "$NAME"
 	config_get_bool enabled general enabled 0
+	config_get_bool never_root general never_root 1
 
 	# shellcheck disable=SC2154
 	if [ "$enabled" -eq 0 ]; then
-		logger "service not enabled in /etc/config/$NAME"
+		logger "service not enabled in $UCI_CONFIG"
 		return 1
 	fi
 
-	mkdir -p /var/run/zabbix-server
-	chown zabbix-server:zabbix-server /var/run/zabbix-server
+	mkdir -p "/var/run/$USER"
+	chown $USER:$USER "/var/run/$USER"
 
 	procd_open_instance
 	procd_set_param command ${PROG} -c ${CONFIG} -f
-	procd_set_param user zabbix-server
+	if [ "$never_root" -eq 1 ]; then
+		procd_set_param user ${USER}
+	fi
 	procd_set_param limits nofile="16384 100000"
 	procd_set_param file ${CONFIG}
 	procd_set_param respawn
