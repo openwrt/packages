@@ -126,17 +126,57 @@ config interface 'thread'
         option device 'wpan0'
         option proto 'openthread'
         option backbone_network 'lan'
-        option radio_url 'spinel+hdlc+uart:///dev/ttyACM0?uart-baudrate=460800'
+        option rcp '2-1'
+        option uart_baudrate '460800'
         list prefix 'fd6f:5772:5468:7200::/64 paros'
         option verbose '0'
 ```
 
-Only backbone_network, device and radio_url are required; the protocol handler
-fails the interface if one of them is missing, or if backbone_network names an
-interface that has no device. Everything else — dataset, prefix, verbose,
+Only backbone_network and device are required. A radio need not be named at
+all: with neither rcp nor radio_url set the handler behaves as if `rcp 'any'`
+were given and auto-discovers a dongle, failing the interface with
+RCP_NOT_FOUND only when none is found. It also fails if backbone_network names
+an interface that has no device. Everything else — dataset, prefix, verbose,
 rest_listen_address and rest_listen_port — is optional. See
 [REST Server](#rest-server) before moving the REST API off the loopback
-default. If something isn't working, check ifstatus for the OpenThread
+default.
+
+### Finding the RCP
+
+The radio is named with the `rcp` option rather than a full radio URL. It takes
+one of three forms:
+
+| value | meaning |
+| --- | --- |
+| `/dev/ttyACM0` | a fixed serial device; no discovery is done |
+| `2-1` | a USB bus position, resolved to whatever serial device it currently exposes |
+| `any` (the default) | pick a dongle automatically |
+
+`uart_baudrate` and `uart_flow_control` are appended to the resulting URL, and
+the port is always opened exclusively. `uart_baudrate` is unset by default,
+leaving the port at otbr-agent's own default; `uart_flow_control` defaults to
+1, so hardware flow control is on unless it is set to 0. Turn it off for a
+3-wire UART, or for a dongle that never asserts CTS. Setting `radio_url`
+directly still works and overrides all of this.
+
+Discovery resolves USB dongles, which requires the cdc_acm driver: only an
+interface bound to it is accepted, and the `/dev/ttyACM*` node does not exist
+without it. Install `kmod-usb-acm` if it is not already present. A
+UART-attached radio named through `/dev/tty*` or `radio_url` needs none of
+this.
+
+Prefer a bus position to `any` unless the dongle advertises itself. Unattended
+selection only accepts a device whose USB product string contains the word
+"OpenThread", which many dongles — the Home Assistant Connect ZBT-2 among them
+— do not. Naming the bus position is the operator saying "this one is the RCP",
+so no product string is needed. `ls /sys/bus/usb/devices/` shows the positions.
+
+`otbr-rcp` also has a plugin point for installing or updating dongle firmware,
+used when `rcp_firmware_update` is set. It is off by default, and no handlers
+ship with this package, so nothing is flashed unless you both add a handler and
+ask for it.
+
+If something isn't working, check ifstatus for the OpenThread
 interface:
 
 ```
@@ -234,7 +274,8 @@ config interface 'thread'
         option backbone_network 'lan'
         option dataset '0e080000000000010000000300000f35060004001fffe0020836b86cd9746ab3080708fd9850cbe719b1d205101f11a11320828c7a6ebc2f2e675c0dca030e686f6d652d617373697374616e740102716f041025804ed78614258ebedf4e2db37b3b6e0c0402a0f7f8'
         list prefix 'fd6f:5772:5468:7200::/64 paros'
-        option radio_url 'spinel+hdlc+uart:///dev/ttyACM0?uart-baudrate=460800'
+        option rcp '2-1'
+        option uart_baudrate '460800'
         option verbose '0'
 ```
 
