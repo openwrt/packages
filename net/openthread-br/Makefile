@@ -71,11 +71,14 @@ TARGET_CFLAGS += -DOPENTHREAD_POSIX_CONFIG_DAEMON_SOCKET_BASENAME=\\\"/var/run/o
 
 define Package/openthread-br/install
 	$(INSTALL_DIR) \
+		$(1)/etc/hotplug.d/usb \
 		$(1)/etc/init.d \
 		$(1)/lib/netifd/proto \
 		$(1)/usr/sbin \
 		$(1)/usr/share/otbr
 	$(INSTALL_BIN) ./files/openthread-proto.sh $(1)/lib/netifd/proto/openthread.sh
+	$(INSTALL_BIN) ./files/otbr-rcp $(1)/usr/sbin
+	$(INSTALL_DATA) ./files/otbr-rcp.hotplug $(1)/etc/hotplug.d/usb/50-otbr-rcp
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/* $(1)/usr/sbin
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/otbr/nftables-backend \
 		$(1)/usr/share/otbr
