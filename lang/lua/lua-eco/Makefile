@@ -1,18 +1,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua-eco
-PKG_VERSION:=4.0.0
+PKG_VERSION:=4.1.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL=https://github.com/zhaojh329/lua-eco/releases/download/v$(PKG_VERSION)
-PKG_HASH:=285427f29016afa59799f1caa12d35fdeb0a041908c0e8d6c6994783b1f39717
+PKG_HASH:=9f4348294c2d6461e6109ddb57a80bb67f24a1be77cb6cea492925948d6d9d0b
 
 PKG_MAINTAINER:=Jianhui Zhao <zhaojh329@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_CONFIG_DEPENDS:= \
+	CONFIG_LUA_ECO_CRASH_BACKTRACE \
 	CONFIG_LUA_ECO_OPENSSL \
 	CONFIG_LUA_ECO_WOLFSSL \
 	CONFIG_LUA_ECO_MBEDTLS
@@ -26,7 +27,7 @@ define Package/lua-eco
   CATEGORY:=Languages
   SUBMENU:=Lua
   URL:=https://github.com/zhaojh329/lua-eco
-  DEPENDS:=+liblua5.4
+  DEPENDS:=+liblua5.4 +LUA_ECO_CRASH_BACKTRACE:libunwind
 endef
 
 define Package/lua-eco/description
@@ -34,6 +35,17 @@ define Package/lua-eco/description
   At its internal is an **I/O-event-driven coroutine scheduler** (Linux `epoll` + timers): all I/O APIs
   use **non-blocking file descriptors** under the hood while exposing a **synchronous** programming style
   in Lua.
+endef
+
+define Package/lua-eco/config
+	config LUA_ECO_CRASH_BACKTRACE
+		bool "Enable fatal signal C backtrace diagnostics"
+		depends on !(USE_MUSL && powerpc)
+		default n
+		help
+		  Install fatal signal handlers that print a C backtrace using
+		  libunwind. Set ECO_CRASH_BACKTRACE_FILE at runtime to write
+		  diagnostics to a file instead of standard error.
 endef
 
 define Package/lua-eco/Module
@@ -45,6 +57,7 @@ define Package/lua-eco/Module
   DEPENDS:=+lua-eco $2
 endef
 
+Package/lua-eco-cli=$(call Package/lua-eco/Module,cli)
 Package/lua-eco-log=$(call Package/lua-eco/Module,log utils)
 Package/lua-eco-base64=$(call Package/lua-eco/Module,base64)
 Package/lua-eco-sha1=$(call Package/lua-eco/Module,sha1)
@@ -87,6 +100,7 @@ define Package/lua-eco-ssl/config
 endef
 
 CMAKE_OPTIONS += \
+  -DECO_CRASH_BACKTRACE=O$(if $(CONFIG_LUA_ECO_CRASH_BACKTRACE),N,FF) \
   -DECO_UBUS_SUPPORT=O$(if $(CONFIG_PACKAGE_lua-eco-ubus),N,FF) \
   -DECO_SSL_SUPPORT=O$(if $(CONFIG_PACKAGE_lua-eco-ssl),N,FF)
 
@@ -107,6 +121,11 @@ define Package/lua-eco/install
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/hex.lua $(1)/usr/local/lib/lua/5.4/eco/encoding
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/{time,sys,file,sync}.so $(1)/usr/local/lib/lua/5.4/eco/internal
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/{time,sys,file,sync,channel}.lua $(1)/usr/local/lib/lua/5.4/eco
+endef
+
+define Package/lua-eco-cli/install
+	$(INSTALL_DIR) $(1)/usr/local/lib/lua/5.4/eco
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/cli.lua $(1)/usr/local/lib/lua/5.4/eco
 endef
 
 define Package/lua-eco-log/install
@@ -228,6 +247,7 @@ define Package/lua-eco-net/install
 endef
 
 $(eval $(call BuildPackage,lua-eco))
+$(eval $(call BuildPackage,lua-eco-cli))
 $(eval $(call BuildPackage,lua-eco-log))
 $(eval $(call BuildPackage,lua-eco-base64))
 $(eval $(call BuildPackage,lua-eco-sha1))

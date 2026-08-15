@@ -3,12 +3,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=geoipupdate
-PKG_VERSION:=7.1.1
+PKG_VERSION:=8.0.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/maxmind/geoipupdate/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=f21b26d9be7281a0c90f9009ed150acb97e68e02be8a3e975315a7956de6965a
+PKG_HASH:=5c08b39d2ac49ad492138b3d618dddac130065852b6237ec450bac856ace7e0a
 
 PKG_LICENSE:=Apache-2.0 MIT
 PKG_LICENSE_FILES:=LICENSE-APACHE LICENSE-MIT
@@ -18,7 +18,7 @@ PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_FLAGS:=no-mips16
 
-GO_PKG:=github.com/maxmind/geoipupdate/v7
+GO_PKG:=github.com/maxmind/geoipupdate/v8
 GO_PKG_LDFLAGS_X:= \
 	main.defaultConfigFile=/etc/GeoIP.conf \
 	main.defaultDatabaseDirectory=/var/GeoIP \

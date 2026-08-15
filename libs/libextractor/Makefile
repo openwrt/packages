@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libextractor
 PKG_VERSION:=1.14
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 # ToDo:
 # - package missing optional dependencies: libexiv2, gsf, librpm, smf, tidy
@@ -62,6 +62,9 @@ CONFIGURE_ARGS += \
 	--disable-gsf \
 	--disable-rpath \
 	--with$(if $(CONFIG_PACKAGE_libextractor-plugin-gstreamer),,out)-gstreamer
+
+CONFIGURE_VARS += \
+	ac_cv_lib_apparmor_aa_change_profile=no
 
 TARGET_CFLAGS += -D__GNU_LIBRARY__
 

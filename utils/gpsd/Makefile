@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gpsd
 PKG_VERSION:=3.26.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SAVANNAH/$(PKG_NAME)
@@ -45,6 +45,7 @@ define Package/gpsd
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=An interface daemon for GPS receivers
+  USERID:=gpsd:gpsd:dialout=20
   DEPENDS+= +gpsd-utils
 endef
 
@@ -101,6 +102,8 @@ SCONS_VARS += \
 	LINKFLAGS="$(TARGET_LDFLAGS)"
 
 SCONS_OPTIONS += \
+	gpsd_user=gpsd \
+	gpsd_group=dialout \
 	target_platform=linux \
 	dbus_export=no \
 	tsip=no \

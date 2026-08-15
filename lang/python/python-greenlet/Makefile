@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-greenlet
-PKG_VERSION:=3.5.1
+PKG_VERSION:=3.5.4
 PKG_RELEASE:=1
 
 PYPI_NAME:=greenlet
-PKG_HASH:=5a56aeb7d5d9cc4b3a735efb5095bd4b4f6f0e4f93e5ca876d0e2315137b7829
+PKG_HASH:=0232ae1de90a8e07867bb127d7a6ba2301e859145489f25cda8a6096dabe1d20
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT

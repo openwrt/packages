@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=openssh
 PKG_REALVERSION:=10.4p1
 PKG_VERSION:=10.4_p1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_REALVERSION).tar.gz
 PKG_SOURCE_URL:=https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/ \
@@ -18,7 +18,7 @@ PKG_SOURCE_URL:=https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/ \
 PKG_HASH:=ef6026dd2aea8d56059638d5d3262902c892ceba9f88395835e0d06d3fb63238
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(if $(BUILD_VARIANT),$(PKG_NAME)-$(BUILD_VARIANT)/)$(PKG_NAME)-$(PKG_REALVERSION)
 
-PKG_LICENSE:=BSD ISC
+PKG_LICENSE:=BSD-2-Clause BSD-3-Clause ISC
 PKG_LICENSE_FILES:=LICENCE
 PKG_CPE_ID:=cpe:/a:openbsd:openssh
 
@@ -27,19 +27,19 @@ PKG_REMOVE_FILES:=
 include $(INCLUDE_DIR)/package.mk
 
 define Package/openssh/Default
-	SECTION:=net
-	CATEGORY:=Network
-	DEPENDS:=
-	TITLE:=OpenSSH
-	MAINTAINER:=Peter Wagner <tripolar@gmx.at>
-	URL:=https://www.openssh.com/
-	SUBMENU:=SSH
+  SECTION:=net
+  CATEGORY:=Network
+  DEPENDS:=
+  TITLE:=OpenSSH
+  MAINTAINER:=Peter Wagner <tripolar@gmx.at>
+  URL:=https://www.openssh.com/
+  SUBMENU:=SSH
 endef
 
 define Package/openssh-moduli
-	$(call Package/openssh/Default)
-	DEPENDS+= +openssh-keygen
-	TITLE+= moduli file
+  $(call Package/openssh/Default)
+  DEPENDS+= +openssh-keygen
+  TITLE+= moduli file
 endef
 
 define Package/openssh-moduli/description
@@ -47,12 +47,12 @@ OpenSSH server moduli file.
 endef
 
 define Package/openssh-client
-	$(call Package/openssh/Default)
-	DEPENDS+= +libopenssl +zlib
-	TITLE+= client
-	ALTERNATIVES:=\
-		200:/usr/bin/ssh:/usr/libexec/ssh-openssh \
-		200:/usr/bin/scp:/usr/libexec/scp-openssh
+  $(call Package/openssh/Default)
+  DEPENDS+= +libopenssl +zlib
+  TITLE+= client
+  ALTERNATIVES:=\
+  	200:/usr/bin/ssh:/usr/libexec/ssh-openssh \
+  	200:/usr/bin/scp:/usr/libexec/scp-openssh
 endef
 
 define Package/openssh-client/description
@@ -64,9 +64,9 @@ define Package/openssh-client/conffiles
 endef
 
 define Package/openssh-client-utils
-	$(call Package/openssh/Default)
-	DEPENDS+= +libopenssl +zlib +openssh-client +openssh-keygen
-	TITLE+= client utilities
+  $(call Package/openssh/Default)
+  DEPENDS+= +libopenssl +zlib +openssh-client +openssh-keygen
+  TITLE+= client utilities
 endef
 
 define Package/openssh-client-utils/description
@@ -74,10 +74,10 @@ OpenSSH client utilities.
 endef
 
 define Package/openssh-keygen
-	$(call Package/openssh/Default)
-	DEPENDS+= +libopenssl +zlib
-	TITLE+= keygen
-	ALTERNATIVES:=200:/usr/bin/ssh-keygen:/usr/libexec/ssh-keygen-openssh
+  $(call Package/openssh/Default)
+  DEPENDS+= +libopenssl +zlib
+  TITLE+= keygen
+  ALTERNATIVES:=200:/usr/bin/ssh-keygen:/usr/libexec/ssh-keygen-openssh
 endef
 
 define Package/openssh-keygen/description
@@ -85,11 +85,11 @@ OpenSSH keygen.
 endef
 
 define Package/openssh-server
-	$(call Package/openssh/Default)
-	DEPENDS+= +USE_GLIBC:libcrypt-compat +libopenssl +zlib +openssh-keygen
-	TITLE+= server
-	USERID:=sshd=22:sshd=22
-	VARIANT:=without-pam
+  $(call Package/openssh/Default)
+  DEPENDS+= +USE_GLIBC:libcrypt-compat +libopenssl +zlib +openssh-keygen
+  TITLE+= server
+  USERID:=sshd=22:sshd=22
+  VARIANT:=without-pam
 endef
 
 define Package/openssh-server/description
@@ -107,11 +107,11 @@ define Package/openssh-server/conffiles
 endef
 
 define Package/openssh-server-pam
-	$(call Package/openssh/Default)
-	DEPENDS+= +USE_GLIBC:libcrypt-compat +libopenssl +zlib +libpthread +openssh-keygen +libpam
-	TITLE+= server (with PAM support)
-	VARIANT:=with-pam
-	USERID:=sshd=22:sshd=22
+  $(call Package/openssh/Default)
+  DEPENDS+= +USE_GLIBC:libcrypt-compat +libopenssl +zlib +libpthread +openssh-keygen +libpam
+  TITLE+= server (with PAM support)
+  VARIANT:=with-pam
+  USERID:=sshd=22:sshd=22
 endef
 
 define Package/openssh-server-pam/description
@@ -125,8 +125,8 @@ $(Package/openssh-server/conffiles)
 endef
 
 define Package/openssh-sftp-client
-	$(call Package/openssh/Default)
-	TITLE+= SFTP client
+  $(call Package/openssh/Default)
+  TITLE+= SFTP client
 endef
 
 define Package/openssh-sftp-client/description
@@ -134,8 +134,8 @@ OpenSSH SFTP client.
 endef
 
 define Package/openssh-sftp-server
-	$(call Package/openssh/Default)
-	TITLE+= SFTP server
+  $(call Package/openssh/Default)
+  TITLE+= SFTP server
 endef
 
 define Package/openssh-sftp-server/description
@@ -143,9 +143,9 @@ OpenSSH SFTP server.
 endef
 
 define Package/openssh-sftp-avahi-service
-	$(call Package/openssh/Default)
-	TITLE+= (SFTP Avahi service)
-	DEPENDS:=+openssh-sftp-server +avahi-daemon
+  $(call Package/openssh/Default)
+  TITLE+= (SFTP Avahi service)
+  DEPENDS:=+openssh-sftp-server +avahi-daemon
 endef
 
 define Package/openssh-sftp-avahi-service/description
@@ -158,9 +158,9 @@ define Package/openssh-sftp-avahi-service/conffiles
 endef
 
 define Package/openssh-sk-helper
-	$(call Package/openssh/Default)
-	DEPENDS+= +libopenssl +zlib +libfido2
-	TITLE+= helper for FIDO U2F and FIDO2 hardware token support
+  $(call Package/openssh/Default)
+  DEPENDS+= +libopenssl +zlib +PACKAGE_openssh-sk-helper:libfido2
+  TITLE+= helper for FIDO U2F and FIDO2 hardware token support
 endef
 
 define Package/openssh-sk-helper/description

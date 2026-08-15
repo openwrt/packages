@@ -1,6 +1,28 @@
---- a/src/pip/_internal/build_env.py
-+++ b/src/pip/_internal/build_env.py
-@@ -74,7 +74,11 @@ def get_runnable_pip() -> str:
+From 85f271cdf5fa0853d221c704dbb4e7490ab117ec Mon Sep 17 00:00:00 2001
+From: Alexandru Ardelean <alex@shruggie.ro>
+Date: Tue, 11 Aug 2026 11:00:00 +0300
+Subject: [PATCH] build isolation: fall back to __pip-runner__.pyc
+
+get_runnable_pip() returns the path of __pip-runner__.py so pip can run
+itself in a subprocess to populate the PEP 517 build environment. We ship
+the pip package byte-compiled only (the .py sources live in the separate
+-src package), so the .py file is absent on target and build isolation
+fails. Fall back to the .pyc when the source is not present.
+
+Not an upstream bug: upstream always ships the .py, so it has no reason to
+handle this. In pip 26.2.x get_runnable_pip() moved from build_env.py to
+_internal/utils/misc.py (build_env.py became a package), which is why the
+old patch stopped applying; the function itself is unchanged and still
+hardcodes __pip-runner__.py, so this workaround is still required.
+
+Signed-off-by: Alexandru Ardelean <alex@shruggie.ro>
+---
+ src/pip/_internal/utils/misc.py | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+--- a/src/pip/_internal/utils/misc.py
++++ b/src/pip/_internal/utils/misc.py
+@@ -105,7 +105,11 @@ def get_runnable_pip() -> str:
          # case, we can use that directly.
          return str(source)
  
@@ -12,4 +34,4 @@
 +    return os.fsdecode(source / filename)
  
  
- def _get_system_sitepackages() -> set[str]:
+ def normalize_version_info(py_version_info: tuple[int, ...]) -> tuple[int, int, int]:

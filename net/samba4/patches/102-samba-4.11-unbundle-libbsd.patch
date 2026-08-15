@@ -1,8 +1,17 @@
+From 09f99fbea292108d7fa9a09efc127200bddb9ef4 Mon Sep 17 00:00:00 2001
+From: Andy Walsh <andy.walsh44+github@gmail.com>
+Date: Tue, 17 Dec 2019 02:06:00 +0000
+Subject: [PATCH] Unbundle libbsd
+
+Remove libbsd dependency.
+
+Signed-off-by: Andy Walsh <andy.walsh44+github@gmail.com>
+---
 --- a/lib/replace/wscript
 +++ b/lib/replace/wscript
 @@ -441,33 +441,13 @@ def configure(conf):
  
-     conf.CHECK_FUNCS('prctl dirname basename')
+     conf.CHECK_FUNCS('dirname basename')
  
 -    strlcpy_in_bsd = False
 +    # Not checking for libbsd

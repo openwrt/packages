@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cifs-utils
-PKG_VERSION:=7.5
-PKG_RELEASE:=2
+PKG_VERSION:=7.7
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://download.samba.org/pub/linux-cifs/cifs-utils/
-PKG_HASH:=7face85e3d2d5eb5e7adbd181adee6759097f135b10d6fb30be8e070af7e7054
+PKG_HASH:=2f8aae9aa5ddd73fbaf4d61e2e5e19ef54124cbf2810b626820050e7bd2f6606
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -39,7 +39,7 @@ endef
 define Package/smbinfo
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+kmod-fs-cifs +libtalloc
+  DEPENDS:=+kmod-fs-cifs +libtalloc +python3-light
   TITLE:=SMB info
   URL:=https://wiki.samba.org/index.php/LinuxCIFS_utils
 endef

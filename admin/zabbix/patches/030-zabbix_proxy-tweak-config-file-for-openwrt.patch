@@ -1,0 +1,98 @@
+From c03db1c64e218fb2ef469ddb9705eff9f9d493e1 Mon Sep 17 00:00:00 2001
+From: "Daniel F. Dickinson" <dfdpublic@wildtechgarden.ca>
+Date: Thu, 16 Jul 2026 18:58:26 -0400
+Subject: zabbix_proxy: tweak config file for OpenWrt
+
+Created 2026-07-16.
+
+1. Use passive proxy mode by default (in keeping with agentd defaults).
+2. Use system hostname as system hostname not 'Zabbix proxy'.
+3. Log to syslog, not a file.
+4. Update PidFile path so correct permissions can be set for access by
+   Zabbix proxy running without privileges.
+5. Set the fping location properly for OpenWrt (/usr/bin not /usr/sbin).
+6. Configure fping as the ipv6 fping as well.
+7. If started as root, drop privileges to zabbix-proxy user (instead of
+   zabbix user shared with agent and server, or root) per upstream
+   recommendation:
+   https://www.zabbix.com/documentation/7.0/en/manual/installation/install#security-recommendation.
+8. Include configurations under /etc/zabbix_proxy.conf.d/.
+9. Require configurations under /etc/zabbix_proxy.conf.d/ end in .conf
+   (other files are ignored for configuration purposes).
+---
+ conf/zabbix_proxy.conf | 11 +++++++++--
+ 1 file changed, 9 insertions(+), 2 deletions(-)
+
+--- a/conf/zabbix_proxy.conf
++++ b/conf/zabbix_proxy.conf
+@@ -11,6 +11,7 @@
+ # Mandatory: no
+ # Default:
+ # ProxyMode=0
++ProxyMode=1
+ 
+ ### Option: Server
+ #	If ProxyMode is set to active mode:
+@@ -39,7 +40,7 @@ Server=127.0.0.1
+ # Default:
+ # Hostname=
+ 
+-Hostname=Zabbix proxy
++# Hostname=Zabbix proxy
+ 
+ ### Option: HostnameItem
+ #	Item used for generating Hostname if it is undefined.
+@@ -73,6 +74,7 @@ Hostname=Zabbix proxy
+ # Mandatory: no
+ # Default:
+ # LogType=file
++LogType=system
+ 
+ ### Option: LogFile
+ #	Log file name for LogType 'file' parameter.
+@@ -81,7 +83,7 @@ Hostname=Zabbix proxy
+ # Default:
+ # LogFile=
+ 
+-LogFile=/tmp/zabbix_proxy.log
++# LogFile=/tmp/zabbix_proxy.log
+ 
+ ### Option: LogFileSize
+ #	Maximum size of log file in MB.
+@@ -130,6 +132,7 @@ LogFile=/tmp/zabbix_proxy.log
+ # Mandatory: no
+ # Default:
+ # PidFile=/tmp/zabbix_proxy.pid
++PidFile=/var/run/zabbix-proxy/zabbix_proxy.pid
+ 
+ ### Option: SocketDir
+ #	IPC socket directory.
+@@ -613,6 +616,7 @@ Timeout=4
+ # Mandatory: no
+ # Default:
+ # FpingLocation=/usr/sbin/fping
++FpingLocation=/usr/bin/fping
+ 
+ ### Option: Fping6Location
+ #	Location of fping6.
+@@ -622,6 +626,7 @@ Timeout=4
+ # Mandatory: no
+ # Default:
+ # Fping6Location=/usr/sbin/fping6
++Fping6Location=
+ 
+ ### Option: SSHKeyLocation
+ #	Location of public and private keys for SSH checks and actions.
+@@ -667,6 +672,7 @@ LogSlowQueries=3000
+ # Mandatory: no
+ # Default:
+ # User=zabbix
++User=zabbix-proxy
+ 
+ ### Option: SSLCertLocation
+ #	Location of SSL client certificates.
+@@ -1051,3 +1057,4 @@ StatsAllowedIP=127.0.0.1
+ # Include=/usr/local/etc/zabbix_proxy.general.conf
+ # Include=/usr/local/etc/zabbix_proxy.conf.d/
+ # Include=/usr/local/etc/zabbix_proxy.conf.d/*.conf
++Include=/etc/zabbix_proxy.conf.d/*.conf

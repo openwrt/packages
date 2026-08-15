@@ -225,29 +225,27 @@ config_child() {
 	local conf="$1"
 	local mode="$2"
 
-	local hw_offload
-	local interface
-	local ipcomp
-	local priority
-	local local_subnet
-	local local_nat
+	local startaction
 	local updown
 	local firewall
-	local remote_subnet
 	local lifetime
 	local dpdaction
 	local closeaction
-	local startaction
 	local if_id
 	local rekeytime
+	local ipcomp
+	local interface
+	local hw_offload
+	local priority
 	local rekeybytes
 	local lifebytes
 	local rekeypackets
 	local lifepackets
 	local replay_window
+	local local_subnet
+	local remote_subnet
 
 	config_get startaction "$conf" startaction "route"
-	config_get local_nat "$conf" local_nat ""
 	config_get updown "$conf" updown ""
 	config_get firewall "$conf" firewall ""
 	config_get lifetime "$conf" lifetime ""
@@ -333,8 +331,6 @@ config_child() {
 		;;
 	esac
 
-	[ -n "$local_nat" ] && local_subnet="$local_nat"
-
 	swanctl_xappend3 "$conf {"
 
 	[ -n "$local_subnet" ] && swanctl_xappend4 "local_ts = $local_subnet"
@@ -374,7 +370,7 @@ config_child() {
 	[ -n "$dpdaction" ] && swanctl_xappend4 "dpd_action = $dpdaction"
 	[ -n "$replay_window" ] && swanctl_xappend4 "replay_window = $replay_window"
 
-        swanctl_xappend3 "}"
+	swanctl_xappend3 "}"
 }
 
 config_tunnel() {
@@ -440,14 +436,10 @@ config_remote() {
 	local conf="$1"
 
 	local enabled
-	local gateway
-	local local_sourceip
-	local local_ip
-	local local_identifier
-	local remote_gateway
-	local remote_identifier
 	local pre_shared_key
 	local auth_method
+	local local_identifier
+	local remote_identifier
 	local keyingtries
 	local dpddelay
 	local encap
@@ -462,19 +454,20 @@ config_remote() {
 	local overtime
 	local send_cert
 	local send_certreq
+	local eap_id
+	local local_addrs
+	local remote_addrs
+	local vips
 	local remote_ca_certs
 	local pools
-	local eap_id
 
 	config_get_bool enabled "$conf" enabled 0
 	[ $enabled -eq 0 ] && return
 
-	config_get gateway "$conf" gateway
 	config_get pre_shared_key "$conf" pre_shared_key
 	config_get auth_method "$conf" authentication_method
 	config_get local_identifier "$conf" local_identifier ""
 	config_get remote_identifier "$conf" remote_identifier ""
-	config_get local_ip "$conf" local_ip "%any"
 	config_get keyingtries "$conf" keyingtries "3"
 	config_get dpddelay "$conf" dpddelay "30s"
 	config_get_bool encap "$conf" encap 0
@@ -491,7 +484,9 @@ config_remote() {
 	config_get_bool send_certreq "$conf" send_certreq 1
 	config_get eap_id "$conf" eap_id "%any"
 
-	config_list_foreach "$conf" local_sourceip append_var local_sourceip ","
+	config_list_foreach "$conf" local_addrs append_var local_addrs ","
+	config_list_foreach "$conf" remote_addrs append_var remote_addrs ","
+	config_list_foreach "$conf" vips append_var vips ","
 	config_list_foreach "$conf" remote_ca_certs append_var remote_ca_certs ","
 	config_list_foreach "$conf" pools append_var pools ","
 
@@ -509,13 +504,16 @@ config_remote() {
 		;;
 	esac
 
-	[ "$gateway" = "any" ] && remote_gateway="%any" || remote_gateway="$gateway"
 
+	# swanctl.conf has no "privkeys" option in connections.<conn>.local<suffix>;
+	# strongSwan auto-selects the private key from /etc/swanctl/private by
+	# matching it against the certificate configured via "certs". We only
+	# need to make sure the referenced key file actually exists there.
 	if [ -n "$local_key" ]; then
 		[ "$(dirname "$local_key")" != "." ] && \
-		   fatal "local_key $local_key can't be pathname"
+			fatal "local_key $local_key can't be pathname"
 		[ -f "/etc/swanctl/private/$local_key" ] || \
-		   fatal "local_key $local_key not found"
+			fatal "local_key $local_key not found"
 	fi
 
 	local ike_proposal
@@ -526,26 +524,25 @@ config_remote() {
 	if [ "$auth_method" = pubkey ]; then
 		if [ -n "$ca_cert" ]; then
 			[ "$(dirname "$ca_cert")" != "." ] && \
-			    fatal "ca_cert $ca_cert can't be pathname"
+				fatal "ca_cert $ca_cert can't be pathname"
 			[ -f "/etc/swanctl/x509ca/$ca_cert" ] || \
-			    fatal "ca_cert $ca_cert not found"
+				fatal "ca_cert $ca_cert not found"
 		fi
 
 		if [ -n "$local_cert" ]; then
 			[ "$(dirname "$local_cert")" != "." ] && \
-			    fatal "local_cert $local_cert can't be pathname"
+				fatal "local_cert $local_cert can't be pathname"
 			[ -f "/etc/swanctl/x509/$local_cert" ] || \
-			    fatal "local_cert $local_cert not found"
+				fatal "local_cert $local_cert not found"
 		fi
 	fi
 
 	swanctl_xappend0 "# config for $conf"
 	swanctl_xappend0 "connections {"
 	swanctl_xappend1 "$conf {"
-	swanctl_xappend2 "local_addrs = $local_ip"
-	swanctl_xappend2 "remote_addrs = $remote_gateway"
-
-	[ -n "$local_sourceip" ] && swanctl_xappend2 "vips = $local_sourceip"
+	[ -n "$local_addrs" ] && swanctl_xappend2 "local_addrs = $local_addrs"
+	[ -n "$remote_addrs" ] && swanctl_xappend2 "remote_addrs = $remote_addrs"
+	[ -n "$vips" ] && swanctl_xappend2 "vips = $vips"
 	[ -n "$fragmentation" ] && swanctl_xappend2 "fragmentation = $fragmentation"
 	[ -n "$pools" ] && swanctl_xappend2 "pools = $pools"
 
@@ -559,7 +556,7 @@ config_remote() {
 
 	[ -n "$local_identifier" ] && swanctl_xappend3 "id = \"$local_identifier\""
 	[ "$local_auth_method" = pubkey ] && [ -n "$local_cert" ] && \
-	    swanctl_xappend3 "certs = $local_cert"
+		swanctl_xappend3 "certs = $local_cert"
 	swanctl_xappend2 "}"
 
 	swanctl_xappend2 "remote {"

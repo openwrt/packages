@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=imagemagick
-PKG_VERSION:=7.1.2.21
+PKG_VERSION:=7.1.2.29
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
@@ -14,8 +14,8 @@ _PKGVER:=$(basename $(PKG_VERSION))
 _PKGREV:=$(_PKGVER)-$(subst .,,$(suffix $(PKG_VERSION)))
 
 PKG_SOURCE:=ImageMagick-$(_PKGREV).tar.xz
-PKG_SOURCE_URL:=https://imagemagick.org/archive
-PKG_HASH:=56450bf5d65b63abb09568abb2c40b493ab913418f92df135ed661471da0eb0d
+PKG_SOURCE_URL:=https://download.imagemagick.org/archive/releases
+PKG_HASH:=bab096dc4b3089be4c0ebfdb90a232b85b7d982a99f722b30512fb243ea1e4ce
 PKG_BUILD_DIR:=$(BUILD_DIR)/ImageMagick-$(_PKGREV)
 PKG_FIXUP:=autoreconf
 

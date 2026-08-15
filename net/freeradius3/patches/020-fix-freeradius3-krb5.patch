@@ -1,23 +1,43 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Alexandru Ardelean <alex@shruggie.ro>
+Date: Mon, 13 Jul 2026 22:18:27 +0300
+Subject: [PATCH] rlm_krb5: assume thread-safety when cross-compiling
+
+The autoconf probe for krb5_is_thread_safe() has no action-if-cross-compiling
+argument, so once libkrb5 provides the symbol configure aborts outright with
+"cannot run test program while cross compiling".
+
+Add the missing argument: warn that the probe was skipped, and assume
+thread-safety, which is correct for all modern krb5 builds.
+
+Signed-off-by: Alexandru Ardelean <alex@shruggie.ro>
+---
 --- a/src/modules/rlm_krb5/configure
 +++ b/src/modules/rlm_krb5/configure
-@@ -4003,12 +4003,6 @@ if test "x$smart_lib" != "x"; then
- fi
+@@ -4004,10 +4004,9 @@ fi
  
  	if test "x$ac_cv_lib_krb5_krb5_is_thread_safe" = xyes; then
--		if test "$cross_compiling" = yes; then :
+ 		if test "$cross_compiling" = yes; then :
 -  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 -$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
 -as_fn_error $? "cannot run test program while cross compiling
 -See \`config.log' for more details" "$LINENO" 5; }
--else
++  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: cross compiling: not checking" >&5
++$as_echo "$as_me: WARNING: cross compiling: not checking" >&2;}
++			 krb5threadsafe="-DKRB5_IS_THREAD_SAFE"
+ else
    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
  /* end confdefs.h.  */
- #include <krb5.h>
-@@ -4028,7 +4022,6 @@ $as_echo "$as_me: WARNING: libkrb5 is no
- fi
- rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-   conftest.$ac_objext conftest.beam conftest.$ac_ext
--fi
- 
+--- a/src/modules/rlm_krb5/configure.ac
++++ b/src/modules/rlm_krb5/configure.ac
+@@ -143,7 +143,9 @@ if test "$krb5threadsafe" != "no"; then
+ 	FR_SMART_CHECK_LIB(krb5, krb5_is_thread_safe)
+ 	if test "x$ac_cv_lib_krb5_krb5_is_thread_safe" = xyes; then
+ 		AC_RUN_IFELSE([AC_LANG_PROGRAM([[#include <krb5.h>]], [[return krb5_is_thread_safe() ? 0 : 1]])],
+-			[krb5threadsafe="-DKRB5_IS_THREAD_SAFE"], [AC_MSG_WARN([[libkrb5 is not threadsafe]])])
++			[krb5threadsafe="-DKRB5_IS_THREAD_SAFE"], [AC_MSG_WARN([[libkrb5 is not threadsafe]])],
++			[AC_MSG_WARN(cross compiling: not checking)
++			 krb5threadsafe="-DKRB5_IS_THREAD_SAFE"])
  	fi
  else
+ 	krb5threadsafe=""

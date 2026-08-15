@@ -86,8 +86,8 @@ setup_chains()
 	nft flush chain "$FAMILY" "$TABLE" "$CHAIN" 2>/dev/null
 
 	nft add rule "$FAMILY" "$TABLE" "$CHAIN" udp sport . udp dport { 68 . 67, 67 . 68 } counter return comment \"always accept DHCP traffic\"
-	nft add rule "$FAMILY" "$TABLE" "$CHAIN" oifname $interface ip daddr @"$MATCHSET" ip daddr != @"$NOMATCHSET" counter reject with icmp type host-unreachable
-	nft add rule "$FAMILY" "$TABLE" "$CHAIN" iifname $interface ip saddr @"$MATCHSET" ip saddr != @"$NOMATCHSET" counter drop
+	nft add rule "$FAMILY" "$TABLE" "$CHAIN" oifname "$interface" ip daddr @"$MATCHSET" ip daddr != @"$NOMATCHSET" counter reject with icmp type host-unreachable
+	nft add rule "$FAMILY" "$TABLE" "$CHAIN" iifname "$interface" ip saddr @"$MATCHSET" ip saddr != @"$NOMATCHSET" counter drop
 
 	nft add chain "$FAMILY" "$TABLE" input "{ type filter hook input priority $priority; policy accept; comment \"bcp38 filter\"; }"
 	nft add chain "$FAMILY" "$TABLE" forward "{ type filter hook forward priority $priority; policy accept; comment \"bcp38 filter\"; }"
@@ -101,8 +101,8 @@ setup_chains()
 destroy_table()
 {
 	if [ "$TABLE" != "fw4" ]; then
-		#as of kernel 3.18 we can delete a table without need to flush it
-		nft delete table "$FAMILY" "$TABLE" 2>/dev/null
+		# Delete the table if it exists.
+		nft destroy table "$FAMILY" "$TABLE" 2>/dev/null
 	fi
 }
 
