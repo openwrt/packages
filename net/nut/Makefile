@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nut
 PKG_VERSION:=2.8.5
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.networkupstools.org/source/2.8/
@@ -78,6 +78,7 @@ define Package/nut-server/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/nut/cmdvartab $(1)/usr/share/nut/
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/nut_server $(1)/etc/config/nut_server
+	$(INSTALL_CONF) ./files/nut_server_root $(1)/etc/config/nut_server_root
 	ln -sf ../../var/etc/nut/upsd.users  $(1)/etc/nut/upsd.users
 	ln -sf ../../var/etc/nut/upsd.conf $(1)/etc/nut/upsd.conf
 	# Driver common portion
@@ -145,6 +146,7 @@ endef
 
 define Package/nut-server/conffiles
 /etc/config/nut_server
+/etc/config/nut_server_root
 /etc/nut/upsd.conf
 /etc/nut/upsd.users
 /etc/nut/ups.conf
@@ -169,6 +171,7 @@ endef
 
 define Package/nut-upsmon/conffiles
 /etc/config/nut_monitor
+/etc/config/nut_monitor_root
 /etc/nut/upsmon.conf
 endef
 
@@ -185,6 +188,7 @@ define Package/nut-upsmon/install
 	$(INSTALL_DATA) ./files/nut-monitor-migrate.default $(1)/etc/uci-defaults/80-nut-monitor-migrate
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/nut_monitor $(1)/etc/config/nut_monitor
+	$(INSTALL_CONF) ./files/nut_monitor_root $(1)/etc/config/nut_monitor_root
 	ln -sf /var/etc/nut/upsmon.conf $(1)/etc/nut/upsmon.conf
 endef
 
@@ -342,6 +346,7 @@ define Package/nut-web-cgi/conffiles
 /etc/nut/upsstats.html
 /etc/nut/upsstats-single.html
 /etc/config/nut_cgi
+/etc/config/nut_cgi_root
 /etc/httpd.conf
 endef
 
@@ -356,6 +361,7 @@ define Package/nut-web-cgi/install
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/nut/upsstats-single.html.sample $(1)/etc/nut/upsstats-single.html
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/nut_cgi $(1)/etc/config/nut_cgi
+	$(INSTALL_CONF) ./files/nut_cgi_root $(1)/etc/config/nut_cgi_root
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/nut-cgi.init $(1)/etc/init.d/nut-cgi
 	ln -sf /var/etc/nut/hosts.conf $(1)/etc/nut/hosts.conf

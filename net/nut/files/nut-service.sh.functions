@@ -251,9 +251,10 @@ add_interface_triggers() {
 		shift 3
 	fi
 
-	local interfaces interface trigger_failed
+	local interfaces interface trigger_failed val
 
-	config_get interfaces "$section" triggerlist
+	config_get_single "$section" triggerlist
+	interfaces="$val"
 
 	if [ -n "$interfaces" ] && [ "$interfaces" != "all" ]; then
 		set -f

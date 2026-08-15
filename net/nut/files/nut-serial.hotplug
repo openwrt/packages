@@ -89,10 +89,11 @@ nut_set_serial_port_permissions() {
 # shellcheck disable=SC2317,SC2329
 nut_serial() {
 	local ups="$1" # UCI section name is also the UPS configuration name
-	local enable_usb_serial port normal_devname
+	local enable_usb_serial port normal_devname val
 
 	config_get_bool enable_usb_serial "$ups" enable_usb_serial 0
-	config_get port "$ups" port
+	config_get_single "$ups" port
+	port="$val"
 
 	[ "$enable_usb_serial" = "1" ] && {
 		# If port is specified only change tty's matching port

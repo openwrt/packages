@@ -1,0 +1,12 @@
+# defaults for the upsd section are compile time defaults
+# We only support one 'upsd' root section and it must be named 'upsd_root'
+#config upsd 'upsd_root'
+#	option statepath /var/run/nut
+#	option runas nut
+
+#config user
+#	option username upsuser
+#	option password upspassword
+#	option actions optional-action
+#	list instcmd optional-instant-command
+#	option upsmon secondary|primary

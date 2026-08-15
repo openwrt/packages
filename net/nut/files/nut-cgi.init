@@ -202,12 +202,16 @@ validate_host() {
 # Must be called from service_reload
 nut_upscgi_add_host() {
 	local ups="$1"
-	local upsname hostname port system displayname
+	local upsname hostname port system displayname val
 
-	config_get upsname "$ups" upsname "$ups"
-	config_get hostname "$ups" hostname localhost
-	config_get port "$ups" port
-	config_get displayname "$ups" displayname "$ups"
+	config_get_single "$ups" upsname "$ups"
+	upsname="$val"
+	config_get_single "$ups" hostname localhost
+	hostname="$val"
+	config_get_single "$ups" port
+	port="$val"
+	config_get_single "$ups" displayname "$ups"
+	displayname="$val"
 
 	# We do not error exit as that would abort processing of other hosts
 	validate_host "$ups" "$upsname" "$hostname" "$port" "$displayname" || return
@@ -239,11 +243,6 @@ service_reload() {
 	local upscgi_hosts_exists="false"
 	local upscgi_upsset_failed="false"
 
-	config_load nut_cgi || {
-		log_config_load_error "nut_cgi" "nut-cgi" "nut-cgi"
-		exit 1
-	}
-
 	# NUT configuration does not exist if NUT CGI cannot be configured, so
 	# stop service and bailout.
 	ensure_conf_dir_exists || {
@@ -260,35 +259,55 @@ service_reload() {
 	}
 	restore_umask
 
-	# We do not exit on error here as we do not want to block monitoring hosts
-	# with the needed configuration as a result of those that do not
-	config_foreach nut_upscgi_add_host host
+	# Execute in a subshell to avoid config_load nut_cgi
+	# and config_load nut_cgi_root becoming mixed together
+	(
+		config_load nut_cgi || {
+			log_config_load_error "nut_cgi" "nut-cgi" "nut-cgi"
+			exit 1
+		}
 
-	# If new host configuration was successfully created
-	if [ "$upscgi_hosts_exists" = "true" ] && [ -s "${UPSCGI_HOSTS_CONF}.new" ]; then
-		# Move the new configuration file to active use,
-		# removing the old configuration in the process
-		mv -f "${UPSCGI_HOSTS_CONF}.new" "${UPSCGI_HOSTS_CONF}"
-	elif [ "$upscgi_hosts_exists" = "true" ]; then
-		rm -f "${UPSCGI_HOSTS_CONF}.new"
-	else
-		# If no hosts are configured, use an empty hosts.conf (no configuration)
-		rm -f "${UPSCGI_HOSTS_CONF}"
-		rm -f "${UPSCGI_HOSTS_CONF}.new"
-		if ! touch "${UPSCGI_HOSTS_CONF}"; then
-			log_error "Failed to create empty hosts.conf" nut-cgi nut-cgi
-			return 1
+		# We do not exit on error here as we do not want to block monitoring hosts
+		# with the needed configuration as a result of those that do not
+		config_foreach nut_upscgi_add_host host
+
+		# If new host configuration was successfully created
+		if [ "$upscgi_hosts_exists" = "true" ] && [ -s "${UPSCGI_HOSTS_CONF}.new" ]; then
+			# Move the new configuration file to active use,
+			# removing the old configuration in the process
+			mv -f "${UPSCGI_HOSTS_CONF}.new" "${UPSCGI_HOSTS_CONF}"
+		elif [ "$upscgi_hosts_exists" = "true" ]; then
+			rm -f "${UPSCGI_HOSTS_CONF}.new"
+		else
+			# If no hosts are configured, use an empty hosts.conf (no configuration)
+			rm -f "${UPSCGI_HOSTS_CONF}"
+			rm -f "${UPSCGI_HOSTS_CONF}.new"
+			if ! touch "${UPSCGI_HOSTS_CONF}"; then
+				log_error "Failed to create empty hosts.conf" nut-cgi nut-cgi
+				exit 1
+			fi
+			# Empty hosts is not necessarily an error, but we log for information
+			logger -s -t nut-cgi "No configured hosts"
 		fi
-		# Empty hosts is not necessarily an error, but we log for information
-		log_msg "No configured hosts" nut-cgi nut-cgi info
-	fi
+	) || return 1
 
-	# NUT CGI host file configuration is independent of upsset configuration
-	config_foreach configure_nut_upscgi_upsset upsset
-	if [ "$upscgi_upsset_failed" = "true" ]; then
-		disable_upsset
-		return 1
-	fi
+	# Execute in a subshell to avoid config_load nut_cgi
+	# and config_load nut_cgi_root becoming mixed together
+	# not strictly necessary as config_load nut_cgi is already in a subshell
+	# but this is defensive
+	(
+		config_load nut_cgi_root || {
+			log_config_load_error "nut_cgi_root" "nut-cgi" "nut-cgi"
+			exit 1
+		}
+
+		# NUT CGI host file configuration is independent of upsset configuration
+		config_foreach configure_nut_upscgi_upsset upsset
+		if [ "$upscgi_upsset_failed" = "true" ]; then
+			disable_upsset
+			exit 1
+		fi
+	) || return 1
 	return 0
 }
 
@@ -320,5 +339,6 @@ stop_service() {
 service_triggers() {
 	# Add a reload trigger on changes to the nut_cgi UCI config
 	procd_add_reload_trigger "nut_cgi" || return 1
+	procd_add_reload_trigger "nut_cgi_root" || return 1
 	return 0
 }
