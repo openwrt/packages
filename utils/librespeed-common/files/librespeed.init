@@ -1,0 +1,148 @@
+#!/bin/sh /etc/rc.common
+# Keeps the scheduled-measurement cron entry in step with UCI. There is no
+# daemon here: measurements are one-shot runs of librespeed-run, and the rpcd
+# interface needs no service of its own.
+
+START=95
+USE_PROCD=1
+
+CRONTAB=/etc/crontabs/root
+RUN=/usr/libexec/librespeed-run
+AGG=/usr/libexec/librespeed-aggregate
+
+# Builds the cron time fields from UCI. For sub-daily intervals `hours`
+# restricts when measurements may run; for a daily one it is the window a
+# random time is drawn from, drawn here at sync time. That keeps the herd
+# apart -- every router lands on its own minute -- without any process
+# sleeping through the night, at the cost of re-drawing on every reload.
+# Every comma-separated part must be a number or an ascending range within
+# [0, max]; the caller already reduced the alphabet to digits, commas and
+# dashes.
+valid_field() {
+	local val="$1" max="$2" part a b oifs="$IFS"
+	IFS=','
+	for part in $val; do
+		IFS="$oifs"
+		a=${part%-*}; b=${part#*-}
+		# Each half on its own: concatenated, '5-' and '-5' hide their empty
+		# side and the arithmetic below would print a shell error where the
+		# caller promises a silent fallback.
+		case "$a" in ''|*[!0-9]*) return 1 ;; esac
+		case "$b" in ''|*[!0-9]*) return 1 ;; esac
+		[ "$a" -le "$max" ] && [ "$b" -le "$max" ] && [ "$a" -le "$b" ] || return 1
+	done
+	IFS="$oifs"
+	return 0
+}
+
+cron_expr() {
+	local interval="$1" days="$2" hours="$3"
+	local start end m h v
+
+	case "$interval" in
+	*m)
+		v=${interval%m}
+		case "$v" in ''|0|*[!0-9]*) return 1 ;; esac
+		[ "$v" -le 59 ] || return 1
+		echo "*/$v ${hours:-*} * * $days"
+		;;
+	*h)
+		v=${interval%h}
+		case "$v" in ''|0|*[!0-9]*) return 1 ;; esac
+		[ "$v" -le 23 ] || return 1
+		if [ -n "$hours" ]; then
+			echo "0 $hours/$v * * $days"
+		else
+			echo "0 */$v * * $days"
+		fi
+		;;
+	1d|24h)
+		start=${hours%-*}; end=${hours#*-}
+		[ -n "$hours" ] || { start=0; end=23; }
+		# A window wrapping midnight (22-4) is not supported; treat it as the
+		# single starting hour rather than guessing.
+		[ "$end" -ge "$start" ] 2>/dev/null || end=$start
+		# Time xor pid as the seed: seconds-granular srand() alone would give
+		# two syncs in the same second the same draw.
+		set -- $(awk -v a="$start" -v b="$end" -v s="$(( $(date +%s) ^ $$ ))" 'BEGIN {
+			srand(s)
+			printf "%d %d", int(rand() * 60), a + int(rand() * (b - a + 1))
+		}')
+		echo "$1 $2 * * $days"
+		;;
+	*)
+		return 1
+		;;
+	esac
+}
+
+restart_cron() {
+	# Unconditional: on a stock system the crontab dir starts empty, so crond
+	# is not running at all -- restart starts a stopped procd service, and a
+	# guard on "running" would mean the schedule never fires until reboot.
+	/etc/init.d/cron restart >/dev/null 2>&1
+	return 0
+}
+
+sync_cron() {
+	local enabled interval days hours expr hist_enabled archive_path
+
+	config_load librespeed
+	config_get_bool enabled schedule enabled 0
+	config_get interval schedule interval 1d
+	config_get days schedule days '*'
+	config_get hours schedule hours ''
+	config_get_bool hist_enabled history enabled 1
+	config_get archive_path history archive_path ''
+
+	# These end up verbatim in root's crontab, so anything unexpected becomes
+	# the harmless default rather than a cron field it was not meant to be.
+	# Values are checked as well as characters: '99' is made of digits, but
+	# as an hour it would turn a daily schedule into an hourly one.
+	case "$days" in *[!0-9,-]*|'') days='*' ;; esac
+	if [ "$days" != '*' ] && ! valid_field "$days" 6; then
+		days='*'
+	fi
+	case "$hours" in *[!0-9-]*) hours='' ;; esac
+	if [ -n "$hours" ] && ! valid_field "$hours" 23; then
+		hours=''
+	fi
+
+	mkdir -p "${CRONTAB%/*}"
+	touch "$CRONTAB"
+	sed -i "\\#$RUN#d;\\#$AGG#d" "$CRONTAB"
+
+	# The day completes at midnight; five past, it is reduced to one archive
+	# line. A missed run costs nothing to catch up: raw lives in RAM, so after
+	# a power cut there is nothing left to aggregate anyway.
+	if [ "$hist_enabled" = 1 ] && [ -n "$archive_path" ]; then
+		echo "5 0 * * * $AGG" >> "$CRONTAB"
+	fi
+
+	if [ "$enabled" = 1 ]; then
+		if expr=$(cron_expr "$interval" "$days" "$hours"); then
+			echo "$expr $RUN" >> "$CRONTAB"
+		else
+			logger -t librespeed "unsupported schedule interval '$interval'"
+		fi
+	fi
+
+	restart_cron
+}
+
+start_service() {
+	sync_cron
+}
+
+stop_service() {
+	sed -i "\\#$RUN#d;\\#$AGG#d" "$CRONTAB"
+	restart_cron
+}
+
+service_triggers() {
+	procd_add_reload_trigger "librespeed"
+}
+
+reload_service() {
+	sync_cron
+}
