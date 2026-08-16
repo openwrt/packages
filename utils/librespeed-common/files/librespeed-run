@@ -1,0 +1,417 @@
+#!/bin/sh
+#
+# Runs one LibreSpeed measurement and records the result.
+#
+# The only thing that starts a measurement: LuCI reaches it through rpcd, the
+# scheduler calls it directly. Holding the lock for the whole run means a second
+# invocation from either side fails instead of measuring against the first.
+
+# Packaging checks probe every executable for these; a runner that ignored
+# them would start a measurement instead of answering.
+case "$1" in
+--version)
+	echo "librespeed-common %%VERSION%%"
+	exit 0
+	;;
+--help|-h)
+	cat <<'EOF'
+Usage: librespeed-run
+Runs one LibreSpeed measurement according to /etc/config/librespeed and
+records the result for the ubus interface. Started by LuCI or cron; takes
+no arguments.
+EOF
+	exit 0
+	;;
+esac
+
+. /lib/functions.sh
+. /lib/functions/network.sh
+. /usr/share/libubox/jshn.sh
+
+CLI=/usr/bin/librespeed-cli
+STATE_DIR=/tmp/librespeed
+STATE="$STATE_DIR/state.json"
+RESULT="$STATE_DIR/result.json"
+LOCK=/var/lock/librespeed.lock
+
+mkdir -p "$STATE_DIR"
+
+# Writes $2 to $1 without ever leaving a half-written file for a reader.
+atomic_write() {
+	local target="$1" tmp="$1.$$"
+	printf '%s\n' "$2" > "$tmp" && mv "$tmp" "$target"
+}
+
+write_state() {
+	json_init
+	json_add_boolean running "$1"
+	[ -n "$2" ] && json_add_int pid "$2"
+	[ -n "$3" ] && json_add_int started "$3"
+	[ -n "$4" ] && json_add_int last_finished "$4"
+	json_add_string last_error "${5:-}"
+	json_add_string phase "${6:-}"
+	[ -n "$7" ] && json_add_double mbps "$7"
+	[ -n "$8" ] && json_add_int progress "$8"
+	atomic_write "$STATE" "$(json_dump)"
+}
+
+# Approximates progress from the interface byte counters, one sample a second.
+#
+# The fallback narrator for clients that cannot stream: it reads the whole
+# interface, not the test, so it is honest only while the test dominates the
+# link -- which is exactly the situation a progress line describes. Whichever
+# direction carries the traffic names the phase.
+sampler() {
+	local dev="$1" rx tx prx ptx phase mbps
+	[ -r "/sys/class/net/$dev/statistics/rx_bytes" ] || return 0
+	prx=$(cat "/sys/class/net/$dev/statistics/rx_bytes")
+	ptx=$(cat "/sys/class/net/$dev/statistics/tx_bytes")
+	while :; do
+		sleep 1
+		rx=$(cat "/sys/class/net/$dev/statistics/rx_bytes" 2>/dev/null) || return 0
+		tx=$(cat "/sys/class/net/$dev/statistics/tx_bytes" 2>/dev/null) || return 0
+		set -- $(awk -v rx="$rx" -v prx="$prx" -v tx="$tx" -v ptx="$ptx" 'BEGIN {
+			drx = (rx - prx) * 8 / 1000000
+			dtx = (tx - ptx) * 8 / 1000000
+			if (drx >= dtx && drx > 1)      printf "download %.1f", drx
+			else if (dtx > 1)               printf "upload %.1f", dtx
+			else                            printf "- -"
+		}')
+		prx=$rx; ptx=$tx
+		# The runner may die without reaching its kill (SIGKILL, a trap that
+		# never ran); without this check the sampler would rewrite state.json
+		# forever and mask every later run's result.
+		kill -0 $$ 2>/dev/null || return 0
+		# An idle second keeps the last phase: the frontend reads an empty
+		# phase as "not started yet" and would collapse mid-run.
+		if [ "$1" = "-" ]; then
+			write_state 1 $$ "$started" "" "" "$phase" ""
+		else
+			phase=$1
+			write_state 1 $$ "$started" "" "" "$1" "$2"
+		fi
+	done
+}
+
+fail() {
+	# A run that failed with the cached server drops the cache: the next run
+	# rediscovers instead of failing against the same dead choice forever.
+	[ "${used_cache:-0}" = 1 ] && rm -f "$LIST_CACHE" "$LIST_CACHE.src" "$CHOICE_CACHE"
+	write_state 0 "" "" "$(date +%s)" "$1"
+	logger -t librespeed "measurement failed: $1"
+	exit 1
+}
+
+# One measurement at a time. The descriptor stays open for the whole run, so the
+# kernel releases the lock even if this script is killed -- there is no stale
+# state to time out.
+exec 9>"$LOCK"
+flock -n 9 || {
+	echo "already running" >&2
+	exit 3
+}
+
+config_load librespeed
+config_get iface main interface wan
+config_get server main server auto
+config_get scheme main scheme auto
+config_get server_list main server_list ''
+config_get_bool hist_enabled history enabled 1
+config_get hist_path history path "$STATE_DIR/history.jsonl"
+config_get hist_retention history retention 30d
+
+# --interface takes a device, and UCI carries a logical interface name.
+dev=""
+network_get_device dev "$iface" 2>/dev/null
+
+[ -x "$CLI" ] || fail "librespeed-cli is not installed"
+
+# The Rust client reports progress as NDJSON under --json-stream; the Go one
+# does not have the flag yet. Asking --help is one extra exec per measurement
+# and keeps one script driving either client.
+stream=0
+if "$CLI" --help 2>&1 | grep -q -- '--json-stream'; then
+	stream=1
+	set -- "$CLI" --json-stream
+else
+	set -- "$CLI" --json
+fi
+# The router-side counterpart of the web UI remembering its chosen server:
+# after an automatic run the picked server's id and the downloaded list are
+# cached, and later runs go straight to the same server with --server and
+# --local-json instead of fetching the list and pinging everything on it.
+LIST_CACHE="$STATE_DIR/servers.json"
+CHOICE_CACHE="$STATE_DIR/server-choice"
+CACHE_TTL=86400
+# Where the list comes from: a self-hosted deployment -- Turris runs
+# https://librespeed.turris.cz/servers.json -- replaces the official one.
+LIST_URL="${server_list:-https://librespeed.org/backend-servers/servers.php}"
+
+cache_fresh=0
+c_id=""
+if [ -s "$LIST_CACHE" ] && [ -s "$CHOICE_CACHE" ]; then
+	read -r c_epoch c_id < "$CHOICE_CACHE"
+	# Both halves are checked before the arithmetic: a non-numeric value there
+	# is a fatal error in ash, and the run would die before writing any state.
+	case "$c_id" in ""|*[!0-9]*) c_id="" ;; esac
+	case "$c_epoch" in ""|*[!0-9]*) c_id="" ;; esac
+	[ -n "$c_id" ] && [ $(( $(date +%s) - c_epoch )) -lt "$CACHE_TTL" ] || c_id=""
+	# A cache fetched from another list is no cache at all.
+	[ "$(cat "$LIST_CACHE.src" 2>/dev/null)" = "$LIST_URL" ] || c_id=""
+fi
+[ -n "$c_id" ] && cache_fresh=1
+
+used_cache=0
+if [ "$server" != "auto" ]; then
+	set -- "$@" --server "$server"
+	# An explicit id still needs the list to resolve it; the cached copy
+	# saves that download too.
+	if [ "$cache_fresh" = 1 ]; then
+		set -- "$@" --local-json "$LIST_CACHE"
+		used_cache=1
+	elif [ -n "$server_list" ]; then
+		set -- "$@" --server-json "$LIST_URL"
+	fi
+elif [ "$cache_fresh" = 1 ]; then
+	set -- "$@" --server "$c_id" --local-json "$LIST_CACHE"
+	used_cache=1
+elif [ -n "$server_list" ]; then
+	set -- "$@" --server-json "$LIST_URL"
+fi
+[ -n "$dev" ] && set -- "$@" --interface "$dev"
+# TLS itself can bound the result on routers without AES acceleration, so the
+# scheme is a measurement setting, not just a transport detail.
+case "$scheme" in
+https) set -- "$@" --secure ;;
+http) set -- "$@" --insecure ;;
+esac
+# Never --bytes: it switches the report to MB/s and the history would end up
+# holding two units that cannot be told apart afterwards.
+
+started=$(date +%s)
+write_state 1 $$ "$started"
+
+# stop kills our whole process group, so librespeed-cli dies with us; ash runs
+# this trap once the foreground child has exited, and it records that the run
+# was stopped rather than pretending the measurement failed.
+trap '[ -n "$sampler_pid" ] && kill "$sampler_pid" 2>/dev/null
+	write_state 0 "" "" "$(date +%s)" "stopped"; exit 1' TERM
+sampler_pid=
+
+if [ "$stream" = 1 ]; then
+	# The while runs in a subshell, so the reports cannot come back in a
+	# variable; they land in a file instead. State updates are throttled to
+	# nothing -- one arrives a second and state.json lives in tmpfs.
+	rm -f "$STATE_DIR/reports.json"
+	"$@" 2>"$STATE_DIR/stderr.log" < /dev/null | while IFS= read -r line; do
+		case "$line" in
+		*'"event":"result"'*)
+			printf '%s' "$line" | jsonfilter -e '@.reports' \
+				> "$STATE_DIR/reports.json" 2>/dev/null
+			;;
+		*'"event":"progress"'*)
+			write_state 1 $$ "$started" "" "" \
+				"$(printf '%s' "$line" | jsonfilter -e '@.phase' 2>/dev/null)" \
+				"$(printf '%s' "$line" | jsonfilter -e '@.mbps' 2>/dev/null)" \
+				"$(printf '%s' "$line" | jsonfilter -e '@.progress' 2>/dev/null)"
+			;;
+		*'"event":"phase"'*)
+			write_state 1 $$ "$started" "" "" \
+				"$(printf '%s' "$line" | jsonfilter -e '@.phase' 2>/dev/null)" ""
+			;;
+		esac
+	done
+	# The pipeline's status is the reader's, so success is judged by what the
+	# stream delivered: a client that failed never emitted a result event.
+	out=$(cat "$STATE_DIR/reports.json" 2>/dev/null)
+	rm -f "$STATE_DIR/reports.json"
+	if [ -z "$out" ]; then
+		# tail succeeds on an empty file, so the substitution guards the
+		# value, not the command: an empty log still reports a failure.
+		err=$(tail -n 1 "$STATE_DIR/stderr.log" 2>/dev/null)
+		fail "${err:-measurement failed}"
+	fi
+else
+	if [ -n "$dev" ]; then
+		sampler "$dev" &
+		sampler_pid=$!
+	fi
+	out=$("$@" 2>"$STATE_DIR/stderr.log" < /dev/null); rc=$?
+	[ -n "$sampler_pid" ] && kill "$sampler_pid" 2>/dev/null
+	if [ "$rc" != 0 ]; then
+		err=$(tail -n 1 "$STATE_DIR/stderr.log" 2>/dev/null)
+		fail "${err:-measurement failed (exit $rc)}"
+	fi
+fi
+
+finished=$(date +%s)
+
+[ -n "$out" ] || fail "no output from librespeed-cli"
+# Both clients print an array of reports, one per server tested: the Go
+# client marshals []report.JSONReport, and the Rust port mirrors that shape.
+# jshn cannot load a bare array -- blobmsg wants an object at the top -- so the
+# report array is wrapped before parsing. Found the hard way on a router: this
+# is exactly the step no macOS test could reach.
+json_load "{ \"reports\": $out }" 2>/dev/null || fail "unparseable output from librespeed-cli"
+json_select reports 2>/dev/null || fail "unparseable output from librespeed-cli"
+
+# The report is an array with one entry per server tested.
+json_select 1 2>/dev/null || fail "empty report"
+
+json_get_var ts timestamp
+json_get_var ping ping
+json_get_var jitter jitter
+json_get_var download download
+json_get_var upload upload
+json_get_var bsent bytes_sent
+json_get_var brecv bytes_received
+json_get_var share share
+
+srv_id=""; srv_name=""; srv_url=""
+if json_select server 2>/dev/null; then
+	json_get_var srv_id id
+	json_get_var srv_name name
+	json_get_var srv_url url
+	json_select ..
+fi
+
+cli_ip=""; cli_org=""
+if json_select client 2>/dev/null; then
+	json_get_var cli_ip ip
+	json_get_var cli_org org
+	json_select ..
+fi
+
+# The family of the address the backend saw is the family the test ran over.
+# Derived here rather than asked of the CLI, so it works with any client; a
+# redacted or missing address simply leaves the field out.
+family=""
+case "$cli_ip" in
+*:*) family="ipv6" ;;
+*.*) family="ipv4" ;;
+esac
+
+# Whether the run was encrypted is visible from the URL the CLI settled on;
+# stored per measurement because the scheme option can change between runs.
+proto=""
+case "$srv_url" in
+https:*) proto="https" ;;
+http:*) proto="http" ;;
+esac
+
+# result.json -- the last completed measurement, not a database.
+json_init
+json_add_string timestamp "$ts"
+json_add_int started "$started"
+json_add_int finished "$finished"
+json_add_string interface "$iface"
+json_add_object server
+	# Absent until the CLI reports it; consumers treat null as unknown.
+	[ -n "$srv_id" ] && json_add_int id "$srv_id"
+	json_add_string name "$srv_name"
+	json_add_string url "$srv_url"
+json_close_object
+json_add_object client
+	json_add_string ip "$cli_ip"
+	json_add_string org "$cli_org"
+json_close_object
+[ -n "$family" ] && json_add_string family "$family"
+[ -n "$proto" ] && json_add_string proto "$proto"
+json_add_double download_mbps "$download"
+json_add_double upload_mbps "$upload"
+json_add_double ping_ms "$ping"
+json_add_double jitter_ms "$jitter"
+json_add_int bytes_sent "$bsent"
+json_add_int bytes_received "$brecv"
+json_add_string share "$share"
+result="$(json_dump)"
+atomic_write "$RESULT" "$result"
+
+if [ "$hist_enabled" = "1" ]; then
+	mkdir -p "$(dirname "$hist_path")"
+
+	json_init
+	json_add_string timestamp "$ts"
+	json_add_int epoch "$finished"
+	json_add_string interface "$iface"
+	json_add_object server
+		[ -n "$srv_id" ] && json_add_int id "$srv_id"
+		json_add_string name "$srv_name"
+		json_add_string url "$srv_url"
+	json_close_object
+	[ -n "$family" ] && json_add_string family "$family"
+	[ -n "$proto" ] && json_add_string proto "$proto"
+	json_add_double download_mbps "$download"
+	json_add_double upload_mbps "$upload"
+	json_add_double ping_ms "$ping"
+	json_add_double jitter_ms "$jitter"
+	printf '%s\n' "$(json_dump)" >> "$hist_path"
+
+	# Retention. The epoch above makes this an integer comparison, so no date(1)
+	# runs here -- a year of history is thousands of lines and forking once per
+	# line is not something a router should be asked to do.
+	days=${hist_retention%d}
+	case "$days" in
+	''|*[!0-9]*) days=0 ;;
+	esac
+	if [ "$days" -gt 0 ]; then
+		cutoff=$(( finished - days * 86400 ))
+
+		# Compacting rewrites the whole file, so it happens in batches rather
+		# than whenever a single line falls out. Past the retention window every
+		# run expires something, and rewriting on each of them would push about
+		# a gigabyte a year through the flash instead of a few megabytes. The
+		# file therefore holds somewhat more than the window, and is trimmed
+		# once enough has accumulated to be worth the write.
+		# jshn writes '"epoch": 175...' with a space, so the match is
+		# tolerant and the digits are extracted rather than offset-counted.
+		expired=$(awk -v c="$cutoff" '
+			match($0, /"epoch":[[:space:]]*[0-9]+/) {
+				v = substr($0, RSTART, RLENGTH); gsub(/[^0-9]/, "", v)
+				if (v + 0 < c) n++
+			}
+			END { print n + 0 }
+		' "$hist_path")
+		total=$(wc -l < "$hist_path")
+
+		if [ "$expired" -ge 50 ] || [ "$expired" -ge $(( total / 2 )) ] && [ "$expired" -gt 0 ]; then
+			tmp="$hist_path.$$"
+			awk -v c="$cutoff" '
+				match($0, /"epoch":[[:space:]]*[0-9]+/) {
+					v = substr($0, RSTART, RLENGTH); gsub(/[^0-9]/, "", v)
+					if (v + 0 < c) next
+				}
+				{ print }
+			' "$hist_path" > "$tmp" && mv "$tmp" "$hist_path"
+		fi
+	fi
+fi
+
+write_state 0 "" "" "$finished" ""
+
+# Refresh the server cache after the run, so the next one starts instantly:
+# at most one list download a day, and the choice is the server this run
+# actually used, looked up by the name the report carries.
+if [ "$cache_fresh" = 0 ]; then
+	if uclient-fetch -q -T 15 -O "$LIST_CACHE.tmp" "$LIST_URL" 2>/dev/null \
+		&& [ -s "$LIST_CACHE.tmp" ]; then
+		mv "$LIST_CACHE.tmp" "$LIST_CACHE"
+		printf '%s\n' "$LIST_URL" > "$LIST_CACHE.src"
+	else
+		rm -f "$LIST_CACHE.tmp"
+	fi
+	if [ -s "$LIST_CACHE" ] && [ -n "$srv_name" ]; then
+		new_id=$(LIST="$LIST_CACHE" NAME="$srv_name" ucode -e '
+			let fs = require("fs");
+			let list = json(fs.readfile(getenv("LIST")) || "[]");
+			for (s in list)
+				if (s.name == getenv("NAME")) { print(s.id); break; }
+		' 2>/dev/null)
+		case "$new_id" in
+		''|*[!0-9]*) ;;
+		*) atomic_write "$CHOICE_CACHE" "$(date +%s) $new_id" ;;
+		esac
+	fi
+fi
+logger -t librespeed "measurement done: ${download} Mbps down, ${upload} Mbps up"
+exit 0
