@@ -19,7 +19,8 @@ make_cmdline() {
 
 	echo $PROG
 
-	config_get dev $cfg "phc_device" "/dev/ptp0"
+	config_get dev $cfg "phc_device" ""
+	[ -z "$dev" ] && { log err "phc_device not configured. Set 'option phc_device' in /etc/config/linuxptp."; return 1; }
 	! [ -c "$dev" ] && { log crit "PHC device '$dev' not found!"; return 1; }
 
 	dir='phc_to_sys'
