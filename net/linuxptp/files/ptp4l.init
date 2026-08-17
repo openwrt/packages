@@ -33,13 +33,15 @@ is_clock_disciplined() {
 }
 
 wait_disciplined() {
-	local check_msg interval is_synced=0 rc role
+	local check_msg interval is_synced=0 max_tries rc role tries=0
 
 	config_get role $ID "role" ""
 	config_get interval $ID "clock_sync_check_interval" "15"
+	config_get max_tries $ID "clock_sync_max_tries" "8"
 
-	log info "Preparing to start with role:$role -> first checking if system clock is disciplined (has been synchronized)..."
+	log info "Preparing to start with role:$role -> checking if system clock is disciplined..."
 	while [ $is_synced -eq 0 ]; do
+		tries=$((tries + 1))
 		check_msg=$(is_clock_disciplined); rc=$?
 
 		if [ $rc -eq 0 ]; then
@@ -47,7 +49,12 @@ wait_disciplined() {
 			log info "sysclock-discipline-check: $check_msg. Continuing."
 			return 0
 		elif [ $rc -eq 1 ]; then
-			log info "sysclock-discipline-check: $check_msg. Waiting..."
+			if [ "$max_tries" -gt 0 ] && [ "$tries" -ge "$max_tries" ]; then
+				log err "Clock sync wait timed out after $tries attempts. ptp4l will NOT start."
+				log err "Increase 'clock_sync_max_tries' or set 'require_clock_sync 0' to skip."
+				return 1
+			fi
+			log info "sysclock-discipline-check: $check_msg. Waiting... ($tries/$max_tries)"
 		else
 			log crit "Clock sync check FAILED: $check_msg."
 			log err "ptp4l will NOT start. Resolve issue, or set 'require_clock_sync' to 0"
@@ -94,7 +101,7 @@ handle_global() {
 }
 
 make_configfile() {
-	local cfg=$1 rc
+	local cfg=$1 iface_count rc
 
 	. /lib/functions/network.sh
 
@@ -106,7 +113,14 @@ make_configfile() {
 	) > "$CONFIGFILE"
 	rc=$?
 
-	return $rc
+	[ $rc -ne 0 ] && return 1
+
+	# Require at least one [interface] section beyond [global]
+	iface_count=$(grep -c '^\[' "$CONFIGFILE" 2>/dev/null)
+	if [ "${iface_count:-0}" -lt 2 ]; then
+		log err "No PTP interfaces configured. Add a 'config ptp_interface' section to /etc/config/linuxptp."
+		return 1
+	fi
 }
 
 make_cmdline() {
@@ -141,7 +155,7 @@ start_service() {
 	fi
 
 	make_configfile $ID; rc=$?
-	if [ $rc -ne 0 ] || [ ! -s "$CONFIGFILE" ]; then
+	if [ $rc -ne 0 ]; then
 		log err "Failed to generate $CONFIGFILE. Aborting."
 		rm -f "$CONFIGFILE"
 		return 1
