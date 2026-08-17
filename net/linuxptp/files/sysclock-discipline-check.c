@@ -7,13 +7,13 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
+#include <string.h>
 #include <sys/timex.h>
 
-int main() {
+int main(void) {
     struct timex txc;
 
-    txc.modes = 0;
+    memset(&txc, 0, sizeof(txc));
 
     if (adjtimex(&txc) < 0) {
         perror("adjtimex failed");
@@ -21,10 +21,10 @@ int main() {
     }
 
     if (txc.status & STA_UNSYNC) {
-        fprintf(stdout, "Clock status: 0x%04X (STA_UNSYNC is SET - Unsynchronized)\n", txc.status);
+        fprintf(stdout, "Clock status: 0x%04X (STA_UNSYNC is SET - Unsynchronized)\n", (unsigned int)txc.status);
         return 1;
     } else {
-        fprintf(stdout, "Clock status: 0x%04X (STA_UNSYNC is CLEAR - Synchronized)\n", txc.status);
+        fprintf(stdout, "Clock status: 0x%04X (STA_UNSYNC is CLEAR - Synchronized)\n", (unsigned int)txc.status);
         return 0;
     }
 }

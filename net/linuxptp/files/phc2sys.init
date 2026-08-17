@@ -48,12 +48,16 @@ make_cmdline() {
 	config_list_foreach $cfg "extra_args" echo
 }
 
+service_triggers() {
+	procd_add_reload_trigger "linuxptp"
+}
+
 start_service() {
 	local cmdline
 
 	config_load linuxptp
 
-	cmdline=$(make_cmdline $ID)
+	cmdline=$(make_cmdline $ID) || return 1
 	log info "Starting phc2sys: $cmdline"
 
 	procd_open_instance phc2sys
@@ -64,5 +68,5 @@ start_service() {
 }
 
 stop_service() {
-	log info "phc2sys exitting (if running)."
+	log info "phc2sys exiting (if running)."
 }
