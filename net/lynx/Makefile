@@ -63,6 +63,11 @@ CONFIGURE_VARS += \
 	cf_cv_ncurses_header="ncursesw/curses.h" \
 	ac_cv_path_NCURSES_CONFIG=""
 
+define Package/lynx/conffiles
+/etc/lynx.cfg
+/etc/lynx.lss
+endef
+
 define Package/lynx/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_DIR) $(1)/etc
