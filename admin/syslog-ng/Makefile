@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=syslog-ng
 PKG_VERSION:=4.12.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=LGPL-2.1-or-later GPL-2.0-or-later
@@ -119,6 +119,7 @@ define Package/syslog-ng/install
 	rm -rf $(1)/usr/lib/pkgconfig \
 	$(1)/usr/lib/*.a \
 	$(1)/usr/include \
+	$(1)/usr/bin/syslog-ng-update-virtualenv \
 	$(1)/var
 
 	$(INSTALL_DIR) $(1)/etc/init.d
