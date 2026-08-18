@@ -123,6 +123,7 @@ define Package/syslog-ng/install
 		$(1)/usr/lib/syslog-ng/loggen/*.a \
 		$(1)/usr/include \
 		$(1)/usr/bin/syslog-ng-update-virtualenv \
+		$(1)/usr/etc \
 		$(1)/var
 
 	$(INSTALL_DIR) $(1)/etc/init.d
