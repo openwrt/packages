@@ -16,3 +16,6 @@ config uqmi uqmi
 config mbim mbim
 	option		device		'/dev/cdc-wdm0'
 	option		proxy		'1'
+
+config qmi qmi
+	option		device		'/dev/cdc-wdm0'
