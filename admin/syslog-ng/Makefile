@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=syslog-ng
 PKG_VERSION:=4.12.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=LGPL-2.1-or-later GPL-2.0-or-later
@@ -125,7 +125,7 @@ define Package/syslog-ng/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/syslog-ng.init $(1)/etc/init.d/syslog-ng
 	$(INSTALL_DIR) $(1)/etc/syslog-ng.d
-	$(INSTALL_DATA) ./files/syslog-ng.conf $(1)/etc
+	$(INSTALL_CONF) ./files/syslog-ng.conf $(1)/etc/syslog-ng.conf
 	touch $(1)/etc/syslog-ng.d/.keep
 
 	$(INSTALL_DIR) $(1)/usr/libexec
