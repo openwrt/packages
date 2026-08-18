@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=syslog-ng
 PKG_VERSION:=4.12.0
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=LGPL-2.1-or-later GPL-2.0-or-later
@@ -94,20 +94,21 @@ CMAKE_OPTIONS += \
 	-DENABLE_JAVA_MODULES=OFF \
 	-DENABLE_GRPC=OFF \
 	-DENABLE_AFAMQP=OFF \
-	-DENABLE_APPMODEL=OFF \
-	-DENABLE_AZURE_AUTH_HEADER=OFF \
-	-DENABLE_GETENT=OFF \
-	-DENABLE_HOOK_COMMANDS=OFF \
-	-DENABLE_MAP_VALUE_PAIRS=OFF \
+	-DENABLE_APPMODEL=ON \
+	-DENABLE_AZURE_AUTH_HEADER=ON \
+	-DENABLE_GETENT=ON \
+	-DENABLE_HOOK_COMMANDS=ON \
+	-DENABLE_MAP_VALUE_PAIRS=ON \
 	-DENABLE_NATIVE=OFF \
 	-DENABLE_PACCT=OFF \
-	-DENABLE_STARDATE=OFF \
-	-DENABLE_STOMP=OFF \
-	-DENABLE_XML=OFF \
+	-DENABLE_STARDATE=ON \
+	-DENABLE_STOMP=ON \
+	-DENABLE_XML=ON \
 	-DENABLE_MANPAGES=OFF \
 	-DENABLE_MANPAGES_INSTALL=OFF \
 	-DENABLE_KAFKA=OFF \
 	-DENABLE_MQTT=OFF \
+	-DENABLE_MONGODB=OFF \
 	-DENABLE_SQL=OFF \
 	-DJSONC_SOURCE=system \
 	-DWITH_SYSTEMD_JOURNAL=OFF \
@@ -132,6 +133,9 @@ define Package/syslog-ng/install
 	$(INSTALL_DIR) $(1)/etc/syslog-ng.d
 	$(INSTALL_CONF) ./files/syslog-ng.conf $(1)/etc/syslog-ng.conf
 	touch $(1)/etc/syslog-ng.d/.keep
+
+	# upstream creates it under $(CMAKE_INSTALL_PREFIX)/etc, which is pruned above
+	$(INSTALL_DIR) $(1)/etc/patterndb.d
 
 	$(INSTALL_DIR) $(1)/usr/libexec
 	$(INSTALL_BIN) ./files/logread.sh $(1)/usr/libexec/logread.sh
