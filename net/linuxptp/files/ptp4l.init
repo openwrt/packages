@@ -54,7 +54,11 @@ wait_disciplined() {
 				log err "Increase 'clock_sync_max_tries' or set 'require_clock_sync 0' to skip."
 				return 1
 			fi
-			log info "sysclock-discipline-check: $check_msg. Waiting... ($tries/$max_tries)"
+			if [ "$max_tries" -gt 0 ]; then
+				log info "sysclock-discipline-check: $check_msg. Waiting... ($tries/$max_tries)"
+			else
+				log info "sysclock-discipline-check: $check_msg. Waiting... (attempt $tries, unlimited)"
+			fi
 		else
 			log crit "Clock sync check FAILED: $check_msg."
 			log err "ptp4l will NOT start. Resolve issue, or set 'require_clock_sync' to 0"
@@ -118,7 +122,7 @@ make_configfile() {
 	# Require at least one [interface] section beyond [global]
 	iface_count=$(grep -c '^\[' "$CONFIGFILE" 2>/dev/null)
 	if [ "${iface_count:-0}" -lt 2 ]; then
-		log err "No PTP interfaces configured. Add a 'config ptp_interface' section to /etc/config/linuxptp."
+		log notice "No PTP interfaces configured. Add a 'config ptp_interface' section to /etc/config/linuxptp."
 		return 1
 	fi
 }
@@ -145,6 +149,13 @@ start_service() {
 	local clocksync_wanted cmdline rc role should_have_disciplined_clock=0
 
 	config_load linuxptp
+
+	# Fast pre-check: fail immediately if no ptp_interface sections exist in UCI,
+	# before potentially spending minutes in the clock-sync wait.
+	if ! uci -q get linuxptp.@ptp_interface[0] >/dev/null 2>&1; then
+		log notice "No ptp_interface sections configured in /etc/config/linuxptp. ptp4l will not start."
+		return 1
+	fi
 
 	config_get role $ID "role" "auto"
 	[ "$role" = "server" ] && should_have_disciplined_clock=1
