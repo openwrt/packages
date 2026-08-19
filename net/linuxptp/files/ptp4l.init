@@ -152,8 +152,8 @@ start_service() {
 
 	# Fast pre-check: fail immediately if no ptp_interface sections exist in UCI,
 	# before potentially spending minutes in the clock-sync wait.
-	if ! uci -q get linuxptp.@ptp_interface[0] >/dev/null 2>&1; then
-		log notice "No ptp_interface sections configured in /etc/config/linuxptp. ptp4l will not start."
+	if ! uci -q get linuxptp.@ptp_interface[0].interface >/dev/null 2>&1; then
+		log notice "No ptp_interface section with an 'interface' option configured in /etc/config/linuxptp. ptp4l will not start."
 		return 1
 	fi
 
