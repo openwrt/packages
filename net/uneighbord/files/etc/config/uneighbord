@@ -1,0 +1,3 @@
+config uneighbord 'main'
+	option enabled '1'
+	option network 'lan'
