@@ -1,0 +1,20 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Date: Mon, 18 Aug 2026 10:00:00 +0200
+Subject: [PATCH] cmake: define the libcap interface when caps are disabled
+
+Upstream-Status: Submitted [https://github.com/syslog-ng/syslog-ng/pull/5753]
+---
+--- a/cmake/enable_caps.cmake
++++ b/cmake/enable_caps.cmake
+@@ -29,6 +29,10 @@ message(STATUS "Checking Linux capabilities support")
+ 
+ if(ENABLE_LINUX_CAPS STREQUAL "OFF")
+   set(SYSLOG_NG_ENABLE_LINUX_CAPS OFF)
++  # lib/CMakeLists.txt links the libcap target unconditionally. FindLIBCAP
++  # defines it even when libcap is not present, but we return before that
++  # is reached here, so define the empty interface ourselves.
++  add_library(libcap INTERFACE)
+   message(STATUS "  Linux capabilities: disabled (forced OFF)")
+   return()
+ endif()
