@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=oci-runtime-tools
 PKG_VERSION:=1.3.0.20260316
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
@@ -82,6 +82,14 @@ endef
 
 define Build/Compile
 	$(call GoPackage/Build/Compile)
+	$(GO_GENERAL_BUILD_CONFIG_VARS) \
+	$(GO_PKG_BUILD_CONFIG_VARS) \
+	GO_BUILD_PKG="$(GO_PKG)cmd/runtimetest" \
+	$(GO_PKG_VARS) \
+	CGO_ENABLED=0 \
+	$(SHELL) $(GO_INCLUDE_DIR)golang-build.sh build \
+		-v -buildvcs=false -trimpath -tags "netgo osusergo" \
+		-ldflags "$(patsubst %,-X %,$(GO_PKG_LDFLAGS_X))"
 	$(call GoPackage/Package/Install/Bin,$(PKG_INSTALL_DIR))
 endef
 
