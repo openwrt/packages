@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=oci-runtime-tools
 PKG_VERSION:=1.3.0.20260316
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
@@ -65,7 +65,7 @@ define Package/oci-runtime-tests
   CATEGORY:=Utilities
   TITLE:=OCI runtimetest tool
   URL:=https://github.com/opencontainers/runtime-tools
-  DEPENDS:=@(aarch64||i386||i686||x86_64) oci-runtime-tool +tar
+  DEPENDS:=@(aarch64||i386||i686||x86_64) oci-runtime-tool +tar +unshare
 endef
 
 define Package/oci-runtime-tests/description
