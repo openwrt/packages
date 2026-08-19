@@ -24,6 +24,19 @@ GO_PKG_LDFLAGS_X:=main.gitCommit=$(PKG_SOURCE_VERSION) main.version=$(PKG_SOURCE
 
 BUSYBOX_STATIC_VERSION:=1.31.0
 
+ifdef CONFIG_i386
+  ROOTFS_ARCHIVE:=rootfs-386.tar.gz
+endif
+ifdef CONFIG_i686
+  ROOTFS_ARCHIVE:=rootfs-386.tar.gz
+endif
+ifdef CONFIG_x86_64
+  ROOTFS_ARCHIVE:=rootfs-amd64.tar.gz
+endif
+ifdef CONFIG_aarch64
+  ROOTFS_ARCHIVE:=rootfs-arm64.tar.gz
+endif
+
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
 
@@ -106,15 +119,7 @@ define Package/oci-runtime-tests/install
 		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/$$$${testbin} \
 			$(1)/usr/libexec/oci-runtime-test/$$$${testbin}.t ; \
 	done )
-ifdef CONFIG_x86
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/rootfs-386.tar.gz $(1)/usr/libexec/oci-runtime-test
-ifdef CONFIG_x86_64
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/rootfs-amd64.tar.gz $(1)/usr/libexec/oci-runtime-test
-endif
-endif
-ifdef CONFIG_aarch64
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/rootfs-arm64.tar.gz $(1)/usr/libexec/oci-runtime-test
-endif
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/$(ROOTFS_ARCHIVE) $(1)/usr/libexec/oci-runtime-test
 endef
 
 $(eval $(call GoBinPackage,oci-runtime-tools))
