@@ -1,0 +1,26 @@
+#!/bin/sh /etc/rc.common
+
+START=95
+STOP=10
+USE_PROCD=1
+
+PROG="/usr/sbin/smart-reboot"
+
+start_service() {
+	config_load smart-reboot
+	local enabled
+	config_get enabled settings enabled '0'
+	[ "$enabled" = "1" ] || return 0
+
+	procd_open_instance "smart-reboot"
+	procd_set_param command "$PROG"
+	procd_set_param respawn 3600 5 0
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_set_param pidfile /var/run/smart-reboot.pid
+	procd_close_instance
+}
+
+service_triggers() {
+	procd_add_reload_trigger "smart-reboot"
+}
