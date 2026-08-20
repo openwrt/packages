@@ -19,6 +19,8 @@ Created 2026-07-16.
 8. Include configurations under /etc/zabbix_proxy.conf.d/.
 9. Require configurations under /etc/zabbix_proxy.conf.d/ end in .conf
    (other files are ignored for configuration purposes).
+10. Default to using an SQLITE database (ephemeral) /var/lib/zabbix_proxy.db.
+    This allows the proxy to start when first installed (i.e. not configured).
 ---
  conf/zabbix_proxy.conf | 11 +++++++++--
  1 file changed, 9 insertions(+), 2 deletions(-)
@@ -67,7 +69,17 @@ Created 2026-07-16.
  
  ### Option: SocketDir
  #	IPC socket directory.
-@@ -613,6 +616,7 @@ Timeout=4
+@@ -164,7 +167,8 @@ LogFile=/tmp/zabbix_proxy.log
+ # Default:
+ # DBName=
+ 
+-DBName=zabbix_proxy
++# DBName=zabbix_proxy
++DBName=/var/lib/zabbix_proxy.db
+ 
+ ### Option: DBSchema
+ #	Schema name. Used for PostgreSQL.
+@@ -613,6 +617,7 @@ Timeout=4
  # Mandatory: no
  # Default:
  # FpingLocation=/usr/sbin/fping
@@ -75,7 +87,7 @@ Created 2026-07-16.
  
  ### Option: Fping6Location
  #	Location of fping6.
-@@ -622,6 +626,7 @@ Timeout=4
+@@ -622,6 +627,7 @@ Timeout=4
  # Mandatory: no
  # Default:
  # Fping6Location=/usr/sbin/fping6
@@ -83,7 +95,7 @@ Created 2026-07-16.
  
  ### Option: SSHKeyLocation
  #	Location of public and private keys for SSH checks and actions.
-@@ -667,6 +672,7 @@ LogSlowQueries=3000
+@@ -667,6 +673,7 @@ LogSlowQueries=3000
  # Mandatory: no
  # Default:
  # User=zabbix
@@ -91,7 +103,7 @@ Created 2026-07-16.
  
  ### Option: SSLCertLocation
  #	Location of SSL client certificates.
-@@ -1051,3 +1057,4 @@ StatsAllowedIP=127.0.0.1
+@@ -1051,3 +1058,4 @@ StatsAllowedIP=127.0.0.1
  # Include=/usr/local/etc/zabbix_proxy.general.conf
  # Include=/usr/local/etc/zabbix_proxy.conf.d/
  # Include=/usr/local/etc/zabbix_proxy.conf.d/*.conf

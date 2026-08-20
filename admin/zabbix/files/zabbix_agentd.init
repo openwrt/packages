@@ -27,14 +27,7 @@ start_service() {
 
 	# Get enabled config option
 	config_load "$NAME"
-	config_get_bool enabled general enabled 0
 	config_get_bool never_root general never_root 1
-
-	# shellcheck disable=SC2154
-	if [ "$enabled" -eq 0 ]; then
-		logger "service not enabled in $UCI_CONFIG"
-		return 1
-	fi
 
 	mkdir -p "/var/run/$USER"
 	chown $USER:$USER "/var/run/$USER"

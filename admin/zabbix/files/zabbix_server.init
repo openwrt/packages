@@ -15,6 +15,27 @@ CONFIG=/etc/${NAME}.conf
 UCI_CONFIG=/etc/config/${NAME}
 USER=zabbix-server
 
+is_database_configured() {
+	local no_db_password
+
+	# We consider the database configured if there is a configured DBName,
+	# DBUser, and DBPassword or 'no_db_password' is true in the UCI config
+	if grep -q '[^#].*DBPassword=' "${CONFIG}" && grep -q '[^#].*DBName' "${CONFIG}"; then
+		if ! grep -q '[^#].*DBUser=' "${CONFIG}"; then
+			config_get_bool no_db_password general no_db_password 0
+			if [ "$no_db_password" -eq 1 ]; then
+				return 0
+			else
+				return 1
+			fi
+		else
+			return 0
+		fi
+	else
+		return 1
+	fi
+}
+
 start_service() {
 	local enabled never_root
 
@@ -25,12 +46,10 @@ start_service() {
 
 	# Get enabled config option
 	config_load "$NAME"
-	config_get_bool enabled general enabled 0
 	config_get_bool never_root general never_root 1
 
-	# shellcheck disable=SC2154
-	if [ "$enabled" -eq 0 ]; then
-		logger "service not enabled in $UCI_CONFIG"
+	if ! is_database_configured; then
+		logger "No database configuration for ${NAME}. Not starting."
 		return 1
 	fi
 
