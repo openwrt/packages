@@ -1,6 +1,11 @@
+From 97a92f2e7a77c39d087892f5c9a7350c31f3d65b Mon Sep 17 00:00:00 2001
+From: Alexandru Ardelean <alex@shruggie.ro>
+Date: Sun, 24 Nov 2024 10:59:27 +0200
+Subject: [PATCH] Do not run profile task during cross build
+
 --- a/Makefile.pre.in
 +++ b/Makefile.pre.in
-@@ -852,6 +852,7 @@ profile-gen-stamp: profile-clean-stamp
+@@ -856,6 +856,7 @@ profile-gen-stamp: profile-clean-stamp
  
  # Run task with profile generation build to create profile information.
  profile-run-stamp:
@@ -8,7 +13,7 @@
  	@echo "Running code to generate profile data (this can take a while):"
  	# First, we need to create a clean build with profile generation
  	# enabled.
-@@ -865,6 +866,7 @@ profile-run-stamp:
+@@ -869,6 +870,7 @@ profile-run-stamp:
  	# This is an expensive target to build and it does not have proper
  	# makefile dependency information.  So, we create a "stamp" file
  	# to record its completion and avoid re-running it.
