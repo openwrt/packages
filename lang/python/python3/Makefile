@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 include ../python3-version.mk
 
 PKG_NAME:=python3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_VERSION:=$(PYTHON3_VERSION).$(PYTHON3_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
@@ -300,6 +300,8 @@ endif
 # configure.ac runs to "no" so the host distro's headers stay out.
 HOST_CONFIGURE_VARS += \
 	py_cv_module__tkinter=n/a \
+	py_cv_module__curses=n/a \
+	py_cv_module__curses_panel=n/a \
 	ac_cv_working_openssl_hashlib=yes \
 	ac_cv_header_curses_h=no \
 	ac_cv_header_ncurses_h=no \
