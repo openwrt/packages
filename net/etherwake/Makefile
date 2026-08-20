@@ -10,6 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=etherwake
 PKG_VERSION:=1.09
 PKG_RELEASE:=5
+PKG_LICENSE:=GPL-2.0-or-later
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).orig.tar.gz
 PKG_SOURCE_URL:=https://ftp.debian.org/debian/pool/main/e/etherwake
