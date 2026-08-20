@@ -11,7 +11,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/mndavew3/screen-haven/releases/download/v$(PKG_VERSION)
-PKG_HASH:=50ae05ff59739dcb58b9b48032f551bc975ae43cc0e4c38897a58b7346799829
+PKG_HASH:=70cc99e50b59e8266481ad028cf042df351c965c2d85e90b08cab65d134be423
 
 PKG_MAINTAINER:=LulHaven <mndavew@gmail.com>
 PKG_LICENSE:=MIT
@@ -29,7 +29,9 @@ endef
 define Package/screen-haven/description
   A table-driven status deck for the 480x320 "Turing" style 3.5-inch USB
   display: live bandwidth graphs, system health, network detail, connected
-  devices and a clock, navigated with the display's own wheel and buttons.
+  devices and a clock. Driven by an attached USB mouse (or wireless air-mouse):
+  the scroll wheel slides between screens, clicks step and the middle button
+  snapshots. A USB mouse is required.
   Reads only stock system state (/proc, /sys, the default route, dhcp leases,
   uci wireless). Starts automatically when the panel is plugged in.
 endef
