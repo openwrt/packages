@@ -1,0 +1,7 @@
+# hotplug.d/tty — bring the deck up when the USB panel (ttyACM*) appears.
+[ "$ACTION" = add ] || return 0
+case "$DEVNAME" in
+	ttyACM*)
+		/etc/init.d/screen-haven enabled && /etc/init.d/screen-haven restart
+	;;
+esac
