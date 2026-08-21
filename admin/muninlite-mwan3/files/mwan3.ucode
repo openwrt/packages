@@ -1,0 +1,72 @@
+#! /usr/bin/ucode -S
+const ubus = require('ubus');
+
+const data = ubus.call('mwan3', 'status');
+
+if (data == null) {
+  warn('could not reach the mwan3 service\n');
+
+  exit(1);
+}
+
+function outputConfig() {
+  for(let interfaceName in data.interfaces) {
+    print(`
+multigraph mwan3_if_${interfaceName}_uptime
+graph_title Uptime of ${interfaceName}
+graph_args --base 1000 -l 0
+graph_vlabel uptime in days
+graph_scale no
+graph_category network
+uptime.label uptime
+uptime.draw AREA
+multigraph mwan3_if_${interfaceName}_downtime
+graph_title Downtime of ${interfaceName}
+graph_args --base 1000 -l 0
+graph_vlabel downtime in days
+graph_scale no
+graph_category network
+downtime.label downtime
+downtime.draw AREA
+downtime.colour ff0000
+downtime.warning 0.01
+downtime.critical 0.1
+`);
+  }
+}
+
+function outputValues() {
+  const secondsPerDay = 60 * 60 * 24 * 1.0;
+
+  for(let interfaceName, interface in data.interfaces) {
+    let uptime, downtime;
+
+    if (interface.running) {
+      uptime = interface.online / secondsPerDay;
+      downtime = interface.offlone / secondsPerDay;
+    } else {
+      uptime = downtime = 'u';
+    }
+
+    print(`
+multigraph mwan3_if_${interfaceName}_uptime
+uptime.value ${uptime}
+multigraph mwan3_if_${interfaceName}_downtime
+downtime.value ${downtime}
+`);
+  }
+}
+
+function outputUsage() {
+  warn('This is a munin plugin\n');
+
+  exit(1);
+}
+
+if(length(ARGV) == 0) {
+  outputValues();
+} else if(length(ARGV) == 1 && ARGV[0] == 'config') {
+  outputConfig();
+} else {
+  outputUsage();
+}
