@@ -1,0 +1,39 @@
+From 221584d62687fab8ddca74c5ea39471325428b34 Mon Sep 17 00:00:00 2001
+From: Yaroslav Vereshchagin <yarik.vereshchagin1996@gmail.com>
+Date: Sat, 22 Aug 2026 14:01:00 +0300
+Subject: [PATCH 2/2] libretro: load the frontend's immutable ROM buffer
+
+The project frontend supplies both the original content path and an
+already validated in-memory snapshot. Preserve the path for filename-based
+region detection and auxiliary-resource naming while loading the exact bytes
+that the frontend hashed. This closes the path/inode modification window
+between hashing and FCEUmm parsing.
+
+This package links the patched core only into nesd. FCEUmm advertises
+need_fullpath=true when content-info overrides are unavailable, so generic
+frontends may leave retro_game_info.data and size invalid. nesd deliberately
+supplies path, data and size together after reading and hashing the ROM.
+Loading that explicit buffer preserves nesd's hash/load invariant and is
+therefore kept as a downstream integration.
+
+Upstream-Status: Inappropriate [nesd frontend specific]
+Signed-off-by: Yaroslav Vereshchagin <yarik.vereshchagin1996@gmail.com>
+---
+ src/drivers/libretro/libretro.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+--- a/src/drivers/libretro/libretro.c
++++ b/src/drivers/libretro/libretro.c
+@@ -3966,6 +3966,12 @@ bool retro_load_game(const struct retro_
+ 
+       strlcpy(content_path, info->path,
+             sizeof(content_path));
++
++      if (info->data && info->size)
++      {
++         content_data = (const uint8_t *)info->data;
++         content_size = info->size;
++      }
+    }
+ 
+ #ifdef HAVE_HDPACK

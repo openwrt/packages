@@ -1,0 +1,493 @@
+#!/bin/sh /etc/rc.common
+
+# Consumed by /etc/rc.common rather than this file directly.
+# shellcheck disable=SC2034
+START=99
+STOP=10
+USE_PROCD=1
+EXTRA_COMMANDS="preflight"
+EXTRA_HELP="	preflight	Validate configuration and managed files without starting nesd"
+PROG=/usr/bin/nesd
+NAME=nes-emulator
+CONFIG_FILE=/etc/config/nes-emulator
+TOKEN_FILE=/etc/nes-emulator/auth.token
+TOKEN_LOCK_FILE=/var/lock/nes-emulator-token.lock
+TOKEN_LOCK_HELD=0
+NESD_UID=
+NESD_GID=
+EXTRA_ROMS_INVALID=0
+PATH_METADATA_MODE=
+PATH_METADATA_NLINK=
+PATH_METADATA_UID=
+PATH_METADATA_GID=
+
+log_error() {
+	logger -t "$NAME" -p daemon.err -- "$*"
+}
+
+normalize_stream_fps() {
+	local value="$1"
+
+	case "$value" in
+		''|*[!0-9]*)
+			printf '%s\n' 2
+			return 0
+			;;
+	esac
+	if [ "$value" -ge 1 ] && [ "$value" -le 60 ]; then
+		printf '%s\n' "$value"
+	else
+		printf '%s\n' 2
+	fi
+}
+
+read_path_metadata() {
+	local path="$1" metadata
+
+	metadata="$(LC_ALL=C ls -ldn "$path" 2>/dev/null)" || return 1
+	case "$metadata" in
+		*'
+'*) return 1 ;;
+	esac
+	# Intentional field splitting of the fixed-format numeric ls output.
+	# shellcheck disable=SC2086
+	set -- $metadata
+	[ "$#" -ge 4 ] || return 1
+	case "$2:$3:$4" in
+		*[!0-9:]*) return 1 ;;
+	esac
+	PATH_METADATA_MODE="$1"
+	PATH_METADATA_NLINK="$2"
+	PATH_METADATA_UID="$3"
+	PATH_METADATA_GID="$4"
+	return 0
+}
+
+repair_regular_metadata() {
+	local path="$1" expected_mode="$2" expected_uid="$3" expected_gid="$4"
+	local owner_group="$5" numeric_mode="$6"
+
+	[ -f "$path" ] && [ ! -L "$path" ] || return 1
+	read_path_metadata "$path" || return 1
+	[ "$PATH_METADATA_NLINK" = 1 ] || return 1
+	if [ "$PATH_METADATA_MODE" = "$expected_mode" ] &&
+	   [ "$PATH_METADATA_UID" = "$expected_uid" ] &&
+	   [ "$PATH_METADATA_GID" = "$expected_gid" ]; then
+		return 0
+	fi
+	chown "$owner_group" "$path" 2>/dev/null &&
+		chmod "$numeric_mode" "$path" 2>/dev/null || return 1
+	read_path_metadata "$path" &&
+		[ "$PATH_METADATA_MODE" = "$expected_mode" ] &&
+		[ "$PATH_METADATA_NLINK" = 1 ] &&
+		[ "$PATH_METADATA_UID" = "$expected_uid" ] &&
+		[ "$PATH_METADATA_GID" = "$expected_gid" ]
+}
+
+repair_directory_metadata() {
+	local path="$1" expected_uid="$2" expected_gid="$3"
+	local owner_group="$4"
+
+	[ -d "$path" ] && [ ! -L "$path" ] || return 1
+	read_path_metadata "$path" || return 1
+	if [ "$PATH_METADATA_MODE" = drwxr-x--- ] &&
+	   [ "$PATH_METADATA_UID" = "$expected_uid" ] &&
+	   [ "$PATH_METADATA_GID" = "$expected_gid" ]; then
+		return 0
+	fi
+	chown "$owner_group" "$path" 2>/dev/null &&
+		chmod 0750 "$path" 2>/dev/null || return 1
+	read_path_metadata "$path" &&
+		[ "$PATH_METADATA_MODE" = drwxr-x--- ] &&
+		[ "$PATH_METADATA_UID" = "$expected_uid" ] &&
+		[ "$PATH_METADATA_GID" = "$expected_gid" ]
+}
+
+secure_config_file() {
+	repair_regular_metadata "$CONFIG_FILE" -rw------- 0 0 root:root 0600
+}
+
+append_extra() {
+	local d="$1"
+	[ -n "$d" ] || return 0
+	valid_data_dir "$d" || {
+		log_error "refusing unsafe extra ROM directory: $d"
+		EXTRA_ROMS_INVALID=1
+		return 0
+	}
+	if [ -z "$EXTRA_ROMS" ]; then
+		EXTRA_ROMS="$d"
+	else
+		EXTRA_ROMS="$EXTRA_ROMS:$d"
+	fi
+}
+
+load_extra_rom_dirs() {
+	local extra_rom_dirs_enabled
+
+	config_get_bool extra_rom_dirs_enabled main extra_rom_dirs_enabled 0
+	[ "$extra_rom_dirs_enabled" -eq 1 ] || return 0
+	config_list_foreach main extra_rom_dir append_extra
+}
+
+valid_data_dir() {
+	local d="$1"
+
+	[ -n "$d" ] && [ "${d#/}" != "$d" ] || return 1
+	while [ "$d" != "/" ] && [ "${d%/}" != "$d" ]; do
+		d="${d%/}"
+	done
+	[ "$(printf '%s' "$d" | wc -l)" -eq 0 ] || return 1
+	case "$d" in
+		/|/bin|/boot|/dev|/etc|/home|/lib|/lib64|/mnt|/opt|/overlay|/proc|/root|/run|/sbin|/sys|/tmp|/usr|/var)
+			return 1
+			;;
+		*/../*|*/..|*/./*|*/.|*//*|*:*|*';'*|*,*)
+			return 1
+			;;
+	esac
+	return 0
+}
+
+prepare_data_dir() {
+	local d="$1"
+	local existed=0
+	local parent resolved
+
+	while [ "$d" != "/" ] && [ "${d%/}" != "$d" ]; do
+		d="${d%/}"
+	done
+
+	valid_data_dir "$d" || {
+		log_error "refusing unsafe data directory: $d"
+		return 1
+	}
+	if [ -e "$d" ] || [ -L "$d" ]; then
+		[ -d "$d" ] && [ ! -L "$d" ] || {
+			log_error "refusing non-directory or symlink data path: $d"
+			return 1
+		}
+		existed=1
+	else
+		parent="${d%/*}"
+		[ -n "$parent" ] || parent=/
+		if [ "$parent" = "/" ]; then
+			resolved="$(readlink -f / 2>/dev/null)" || return 1
+			[ "$resolved" = "/" ] || return 1
+		elif [ -e "$parent" ] || [ -L "$parent" ]; then
+			[ -d "$parent" ] && [ ! -L "$parent" ] || {
+				log_error "refusing unsafe parent directory: $parent"
+				return 1
+			}
+			resolved="$(readlink -f "$parent" 2>/dev/null)" || return 1
+			[ "$resolved" = "$parent" ] || {
+				log_error "refusing parent path containing a symlink: $parent"
+				return 1
+			}
+		else
+			prepare_data_dir "$parent" || return 1
+		fi
+		mkdir "$d" || {
+			log_error "cannot create data directory: $d"
+			return 1
+		}
+	fi
+
+	resolved="$(readlink -f "$d" 2>/dev/null)" || {
+		log_error "cannot resolve data directory: $d"
+		return 1
+	}
+	[ "$resolved" = "$d" ] || {
+		log_error "refusing data path containing a symlink: $d"
+		return 1
+	}
+
+	# Never change ownership or mode of an arbitrary pre-existing mount.
+	# The package-owned default tree and directories created here are safe.
+	case "$d" in
+		/etc/nes-emulator)
+			repair_directory_metadata "$d" 0 "$NESD_GID" root:nesd ||
+				return 1
+			;;
+		/etc/nes-emulator/*)
+			repair_directory_metadata "$d" "$NESD_UID" "$NESD_GID" \
+				nesd:nesd || return 1
+			;;
+		*)
+			if [ "$existed" -eq 0 ]; then
+				repair_directory_metadata "$d" "$NESD_UID" "$NESD_GID" \
+					nesd:nesd || return 1
+			fi
+			;;
+	esac
+	return 0
+}
+
+token_is_valid() {
+	local token="$1"
+
+	[ "${#token}" -ge 32 ] 2>/dev/null &&
+		[ "${#token}" -le 127 ] 2>/dev/null || return 1
+	case "$token" in *[!A-Za-z0-9._~-]*) return 1 ;; esac
+	return 0
+}
+
+read_auth_token() {
+	local token bytes lines
+
+	repair_regular_metadata "$TOKEN_FILE" -rw-r----- 0 "$NESD_GID" \
+		root:nesd 0640 || return 1
+	token="$(cat "$TOKEN_FILE" 2>/dev/null)" || return 1
+	token_is_valid "$token" || return 1
+	bytes="$(wc -c <"$TOKEN_FILE" 2>/dev/null | tr -d ' ')"
+	lines="$(wc -l <"$TOKEN_FILE" 2>/dev/null | tr -d ' ')"
+	[ "$lines" = 1 ] &&
+		[ "$bytes" -eq $((${#token} + 1)) ] 2>/dev/null || return 1
+	AUTH_TOKEN="$token"
+	return 0
+}
+
+write_auth_token() {
+	local token="$1" temporary
+
+	token_is_valid "$token" || return 1
+	[ -d "${TOKEN_FILE%/*}" ] && [ ! -L "${TOKEN_FILE%/*}" ] ||
+		return 1
+	if [ -e "$TOKEN_FILE" ] || [ -L "$TOKEN_FILE" ]; then
+		repair_regular_metadata "$TOKEN_FILE" -rw-r----- 0 "$NESD_GID" \
+			root:nesd 0640 || return 1
+	fi
+	temporary="$(mktemp "${TOKEN_FILE}.tmp.XXXXXX" 2>/dev/null)" ||
+		return 1
+	if ! printf '%s\n' "$token" >"$temporary" ||
+	   ! chown root:nesd "$temporary" 2>/dev/null ||
+	   ! chmod 0640 "$temporary" 2>/dev/null ||
+	   ! mv -f "$temporary" "$TOKEN_FILE"; then
+		rm -f "$temporary"
+		return 1
+	fi
+	return 0
+}
+
+release_token_lock() {
+	[ "$TOKEN_LOCK_HELD" -eq 1 ] || return 0
+	trap - 0 1 2 15
+	exec 8>&-
+	TOKEN_LOCK_HELD=0
+}
+
+acquire_token_lock() {
+	local attempts=0
+
+	[ "$TOKEN_LOCK_HELD" -eq 0 ] || return 0
+	exec 8>"$TOKEN_LOCK_FILE" || return 1
+	while ! flock -n 8 2>/dev/null; do
+		attempts=$((attempts + 1))
+		if [ "$attempts" -ge 10 ]; then
+			exec 8>&-
+			return 1
+		fi
+		sleep 1
+	done
+	TOKEN_LOCK_HELD=1
+	trap 'release_token_lock' 0
+	trap 'release_token_lock; exit 1' 1 2 15
+	return 0
+}
+
+ensure_auth_token() {
+	local token legacy had_legacy=0 needs_write=0
+
+	acquire_token_lock || {
+		log_error "cannot acquire authentication token lock"
+		return 1
+	}
+	config_get legacy main auth_token ''
+	uci -q get nes-emulator.main.auth_token >/dev/null 2>&1 &&
+		had_legacy=1
+	if read_auth_token; then
+		token="$AUTH_TOKEN"
+	elif token_is_valid "$legacy"; then
+		token="$legacy"
+		needs_write=1
+	else
+		token="$(hexdump -v -n 32 -e '1/1 "%02x"' \
+			/dev/urandom 2>/dev/null)" || token=
+		[ "${#token}" -eq 64 ] || {
+			log_error "cannot generate API authentication token"
+			release_token_lock
+			return 1
+		}
+		needs_write=1
+	fi
+	if [ "$needs_write" -eq 1 ]; then
+		write_auth_token "$token" || {
+			log_error "cannot securely save API authentication token"
+			release_token_lock
+			return 1
+		}
+	fi
+	if [ "$had_legacy" -eq 1 ]; then
+		if ! uci -q delete nes-emulator.main.auth_token ||
+		   ! uci -q commit nes-emulator ||
+		   ! secure_config_file; then
+			log_error "cannot remove legacy token from UCI"
+			release_token_lock
+			return 1
+		fi
+	fi
+
+	AUTH_TOKEN="$token"
+	release_token_lock
+	return 0
+}
+
+start_service() {
+	local enabled rom_dir bind port system_dir save_dir rom
+	local jpeg_quality stream_fps show_fps show_touch_controls stream_format
+	local allowed_origin origin_authority
+	EXTRA_ROMS=""
+	EXTRA_ROMS_INVALID=0
+	AUTH_TOKEN=""
+	umask 027
+
+	NESD_UID="$(id -u nesd 2>/dev/null)" || NESD_UID=
+	NESD_GID="$(id -g nesd 2>/dev/null)" || NESD_GID=
+	case "$NESD_UID:$NESD_GID" in
+		:*|*:|*[!0-9:]*)
+			log_error "missing or invalid nesd service account"
+			return 10
+			;;
+	esac
+	secure_config_file || {
+		log_error "refusing missing, linked, or insecure $CONFIG_FILE"
+		return 11
+	}
+	config_load nes-emulator || {
+		log_error "cannot load $CONFIG_FILE"
+		return 11
+	}
+	config_get_bool enabled main enabled 0
+
+	config_get rom_dir main rom_dir '/etc/nes-emulator/roms'
+	config_get bind main bind '0.0.0.0'
+	config_get port main port '29876'
+	config_get system_dir main system_dir '/etc/nes-emulator/system'
+	config_get save_dir main save_dir '/etc/nes-emulator/saves'
+	config_get rom main rom ''
+	config_get jpeg_quality main jpeg_quality '92'
+	config_get stream_fps main stream_fps '2'
+	config_get_bool show_fps main show_fps 1
+	config_get_bool show_touch_controls main show_touch_controls 1
+	config_get stream_format main stream_format 'raw'
+	config_get allowed_origin main allowed_origin ''
+	load_extra_rom_dirs
+	[ "$EXTRA_ROMS_INVALID" -eq 0 ] || return 13
+
+	case "$port" in
+		''|*[!0-9]*) log_error "invalid port: $port"; return 12 ;;
+	esac
+	[ "$port" -ge 1 ] 2>/dev/null && [ "$port" -le 65535 ] 2>/dev/null || {
+		log_error "port is outside 1..65535: $port"
+		return 12
+	}
+	case "$jpeg_quality" in ''|*[!0-9]*) jpeg_quality=92 ;; esac
+	[ "$jpeg_quality" -ge 1 ] 2>/dev/null &&
+		[ "$jpeg_quality" -le 100 ] 2>/dev/null || jpeg_quality=92
+	stream_fps="$(normalize_stream_fps "$stream_fps")"
+	case "$stream_format" in raw|jpeg) ;; *) stream_format=raw ;; esac
+	case "$bind" in
+		''|*[!0-9A-Fa-f:.]*) log_error "invalid bind address: $bind"; return 12 ;;
+	esac
+	case "$allowed_origin" in
+		'') ;;
+		http://*) origin_authority="${allowed_origin#http://}" ;;
+		https://*) origin_authority="${allowed_origin#https://}" ;;
+		*) log_error "allowed_origin must be an exact http(s) Origin"; return 12 ;;
+	esac
+	if [ -n "$allowed_origin" ]; then
+		[ "$(printf '%s' "$origin_authority" | wc -l)" -eq 0 ] || {
+			log_error "allowed_origin contains a line break"
+			return 12
+		}
+		case "$origin_authority" in
+			''|*/*|*\\*|*\?*|*\#*|*' '*|*'	'*|*@*)
+				log_error "allowed_origin must contain only scheme and authority"
+				return 12
+				;;
+		esac
+	fi
+
+	prepare_data_dir /etc/nes-emulator || return 13
+	ensure_auth_token || return 14
+	prepare_data_dir "$rom_dir" &&
+		prepare_data_dir "$system_dir" &&
+		prepare_data_dir "$save_dir" || return 13
+
+	[ "${NESD_PREFLIGHT:-0}" = 1 ] && return 0
+	[ "$enabled" -eq 1 ] || [ "${NESD_ON_DEMAND:-0}" = 1 ] || return 0
+
+	procd_open_instance nesd
+	procd_set_param command "$PROG"
+	procd_append_param command -d "$rom_dir"
+	procd_append_param command -b "$bind"
+	procd_append_param command -p "$port"
+	procd_append_param command -s "$system_dir"
+	procd_append_param command -S "$save_dir"
+	procd_append_param command -q "$jpeg_quality"
+	procd_append_param command -f "$stream_fps"
+	if [ "$show_fps" -eq 1 ]; then
+		procd_append_param command --show-fps
+	else
+		procd_append_param command --hide-fps
+	fi
+	if [ "$show_touch_controls" -eq 1 ]; then
+		procd_append_param command --show-touch-controls
+	else
+		procd_append_param command --hide-touch-controls
+	fi
+	procd_append_param command --auth-token-file "$TOKEN_FILE"
+	[ -n "$allowed_origin" ] &&
+		procd_append_param command --allowed-origin "$allowed_origin"
+	if [ "$stream_format" = "jpeg" ]; then
+		procd_append_param command --jpeg-video
+	else
+		procd_append_param command --raw-video
+	fi
+	[ -n "$EXTRA_ROMS" ] && procd_append_param command -e "$EXTRA_ROMS"
+	if [ "${NESD_ON_DEMAND:-0}" = 1 ] && [ "$enabled" -ne 1 ]; then
+		procd_append_param command --idle-exit-seconds 120
+	fi
+	# An RPC load starts an empty control daemon and then explicitly loads the
+	# selected path through /api/load.  Reusing a stale autoload path here
+	# would make nesd exit before its API becomes reachable and would prevent
+	# the user from selecting a replacement ROM.
+	if [ "${NESD_SKIP_AUTOLOAD:-0}" != 1 ] &&
+	   [ -n "$rom" ] && [ -f "$rom" ]; then
+		procd_append_param command -r "$rom"
+	fi
+
+	# Critical for routers: low priority so network stack is never starved
+	procd_set_param nice 5
+	procd_set_param user nesd
+	procd_set_param group nesd
+	procd_set_param limits core="0 0" nofile="64 64"
+	procd_set_param term_timeout 10
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_close_instance
+}
+
+preflight() {
+	NESD_PREFLIGHT=1
+	start_service
+}
+
+service_triggers() {
+	procd_add_reload_trigger "nes-emulator"
+}
+
+reload_service() {
+	stop
+	start
+}
