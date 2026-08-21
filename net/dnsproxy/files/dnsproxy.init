@@ -141,7 +141,7 @@ start_service() {
 	procd_set_param capabilities "/etc/capabilities/dnsproxy.json"
 	procd_add_jail_mount "/etc/hosts"
 	procd_add_jail_mount "/etc/ssl/certs/ca-certificates.crt"
-	[ -z "$log_file" ] || procd_add_jail_mount_rw "$log_file"
+	[ -z "$log_file" ] || { touch "$log_file" && chown dnsproxy:dnsproxy "$log_file" && procd_add_jail_mount_rw "$log_file"; }
 	[ -z "$tls_crt" ] || procd_add_jail_mount "$tls_crt"
 	[ -z "$tls_key" ] || procd_add_jail_mount "$tls_key"
 	is_enabled "hosts" "enabled" && config_list_foreach "hosts" "hosts_files" "procd_add_jail_mount"
