@@ -1,0 +1,9 @@
+{
+        "name": "ionos.com",
+        "ipv4": {
+                "url": "https://ipv4.api.hosting.ionos.com/dns/v1/dyndns?q=[PASSWORD]&ipv4=[IP]"
+        },
+        "ipv6": {
+                "url": "https://ipv4.api.hosting.ionos.com/dns/v1/dyndns?q=[PASSWORD]&ipv6=[IP]"
+        }
+}
