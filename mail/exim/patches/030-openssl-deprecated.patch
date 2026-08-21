@@ -1,3 +1,10 @@
+From de9c527e9a2e5a3437b884c6f583e9dcbe15f3f8 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Sat, 20 Mar 2021 14:56:09 -0700
+Subject: [PATCH] exim: fix compilation without deprecated OpenSSL APIs
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
 --- a/src/dane-openssl.c
 +++ b/src/dane-openssl.c
 @@ -1122,8 +1122,8 @@ if (dane->selectors[DANESSL_USAGE_DANE_T
@@ -24,7 +31,7 @@
  #include <openssl/ec.h>
  #ifndef DISABLE_OCSP
  # include <openssl/ocsp.h>
-@@ -909,8 +912,9 @@ pkey = EVP_RSA_gen(2048);
+@@ -934,8 +937,9 @@ pkey = EVP_RSA_gen(2048);
  
  X509_set_version(x509, 2);				/* N+1 - version 3 */
  ASN1_INTEGER_set(X509_get_serialNumber(x509), 1);
@@ -36,7 +43,7 @@
  X509_set_pubkey(x509, pkey);
  
  name = X509_get_subject_name(x509);
-@@ -5031,8 +5035,8 @@ return string_fmt_append(g,
+@@ -5056,8 +5060,8 @@ return string_fmt_append(g,
      "                          Runtime: %s\n"
      "                                 : %s\n",
  	     OPENSSL_VERSION_TEXT,
@@ -47,7 +54,7 @@
    /* third line is 38 characters for the %s and the line is 73 chars long;
    the OpenSSL output includes a "built on: " prefix already. */
  }
-@@ -5074,8 +5078,6 @@ if (pidnow != pidlast)
+@@ -5099,8 +5103,6 @@ if (pidnow != pidlast)
    is unique for each thread", this doesn't apparently apply across processes,
    so our own warning from vaguely_random_number_fallback() applies here too.
    Fix per PostgreSQL. */
@@ -58,7 +65,7 @@
  
 --- a/src/tlscert-openssl.c
 +++ b/src/tlscert-openssl.c
-@@ -219,13 +219,13 @@ return mod ? tls_field_from_dn(cp, mod)
+@@ -221,13 +221,13 @@ return cp ? string_copy_taint(cp, GET_TA
  uschar *
  tls_cert_not_before(void * cert, const uschar * mod)
  {
