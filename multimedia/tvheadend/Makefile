@@ -20,6 +20,15 @@ PKG_BUILD_DEPENDS:=gettext-full/host
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
+# tvheadend needs iconv //TRANSLIT to build recording file names, which musl
+# does not implement, so always build against GNU libiconv.
+# With BUILD_NLS set, nls.mk already adds these for the same prefix.
+ifneq ($(CONFIG_BUILD_NLS),y)
+ICONV_FULL_PREFIX:=$(STAGING_DIR)/usr/lib/libiconv-full
+TARGET_CFLAGS += -I$(ICONV_FULL_PREFIX)/include
+TARGET_LDFLAGS += -L$(ICONV_FULL_PREFIX)/lib -Wl,-rpath-link=$(ICONV_FULL_PREFIX)/lib
+endif
+
 define Package/tvheadend
   SECTION:=multimedia
   CATEGORY:=Multimedia
@@ -32,7 +41,7 @@ define Package/tvheadend
 	+librt \
 	+libffi \
 	+libopenssl \
-	$(ICONV_DEPENDS) \
+	+libiconv-full \
 	+zlib \
 	+TVHEADEND_AVAHI_SUPPORT:libavahi-client \
 	+TVHEADEND_REGEX_PCRE2:libpcre2 \
