@@ -1,0 +1,45 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Sun, 30 Aug 2020 14:09:17 -0700
+Subject: [PATCH] fix compilation with uClibc-ng
+
+---
+
+--- a/src/schedule.c
++++ b/src/schedule.c
+@@ -376,7 +376,9 @@ loop4Event:
+ 					continue;
+ 				}
+ 
++#ifdef SIOCGSTAMP
+ 				ioctl(pb.i.iif->rx_mcast_sock, SIOCGSTAMP, &(pb.i.tv_stamp));
++#endif
+ 
+ 				rx_packet(&pb);
+ 
+@@ -402,7 +404,9 @@ loop4Event:
+ 					continue;
+ 				}
+ 
++#ifdef SIOCGSTAMP
+ 				ioctl(pb.i.iif->rx_fullbrc_sock, SIOCGSTAMP, &(pb.i.tv_stamp));
++#endif
+ 
+ 				rx_packet(&pb);
+ 
+@@ -452,10 +456,15 @@ loop4Event:
+ 					}
+ 				}
+ #endif
++#ifdef SIOCGSTAMP
+ 				if (tv_stamp == NULL)
+ 					ioctl(pb.i.iif->unicast_sock, SIOCGSTAMP, &(pb.i.tv_stamp));
+ 				else
+ 					timercpy(&(pb.i.tv_stamp), tv_stamp);
++#else
++				if (tv_stamp)
++					timercpy(&(pb.i.tv_stamp), tv_stamp);
++#endif
+ 
+ 				rx_packet(&pb);
+ 
