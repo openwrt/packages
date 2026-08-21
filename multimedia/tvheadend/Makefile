@@ -261,12 +261,6 @@ CONFIGURE_ARGS += \
 ##	--disable-libfdkaac_static \
 ##	--disable-pcloud_cache \
 
-define Build/Prepare
-	$(call Build/Prepare/Default)
-	echo 'Tvheadend $(shell echo $(PKG_SOURCE_VERSION) | sed "s/^v//")~openwrt$(PKG_RELEASE)' \
-		> $(PKG_BUILD_DIR)/debian/changelog
-endef
-
 define Package/tvheadend/conffiles
 /etc/config/tvheadend
 /etc/tvheadend
