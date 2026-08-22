@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ddns-scripts
 PKG_VERSION:=2.8.4
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_LICENSE:=GPL-2.0
 
@@ -65,6 +65,27 @@ endef
 
 define Package/ddns-scripts-utils/description
   Dynamic DNS Client utility scripts for config files
+endef
+
+
+define Package/ddns-scripts-getlease6
+  $(call Package/ddns-scripts/Default)
+  TITLE:=ip_script helper for IPv6 hosts behind the router
+  DEPENDS:=ddns-scripts +ucode +ucode-mod-ubus +ucode-mod-log
+  MAINTAINER:=Tieu Long <long025733@gmail.com>
+endef
+
+define Package/ddns-scripts-getlease6/description
+  Resolves the current global IPv6 address of a LAN host from its DHCPv6
+  lease, so that an AAAA record can follow a host behind the router when the
+  delegated prefix changes. Installed as /usr/sbin/getlease6 and used as an
+  IP source script:
+    option ip_source 'script'
+    option ip_script '/usr/sbin/getlease6 myhost'
+  The host is selected by hostname or by DUID, narrowed by IAID when it holds
+  a lease per NIC, and an upstream interface can be named when the router holds
+  more than one delegation. Run without a host to list the current leases.
+  Requires odhcpd.
 endef
 
 
@@ -507,6 +528,13 @@ define Package/ddns-scripts-utils/install
 		$(1)/usr/lib/ddns/slaac.sh
 	$(INSTALL_BIN) ./samples/getlocalip_sample.sh \
 		$(1)/usr/lib/ddns/getlocalip.sh
+endef
+
+
+define Package/ddns-scripts-getlease6/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) ./files/usr/sbin/getlease6.uc \
+		$(1)/usr/sbin/getlease6
 endef
 
 
@@ -1016,6 +1044,7 @@ endef
 $(eval $(call BuildPackage,ddns-scripts))
 $(eval $(call BuildPackage,ddns-scripts-services))
 $(eval $(call BuildPackage,ddns-scripts-utils))
+$(eval $(call BuildPackage,ddns-scripts-getlease6))
 $(eval $(call BuildPackage,ddns-scripts-luadns))
 $(eval $(call BuildPackage,ddns-scripts-cloudflare))
 $(eval $(call BuildPackage,ddns-scripts-gcp))
