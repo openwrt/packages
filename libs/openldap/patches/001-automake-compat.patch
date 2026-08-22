@@ -1,3 +1,10 @@
+From 3c78eaff96d7ba286bb0404b9bdc1a2c6aca7ec0 Mon Sep 17 00:00:00 2001
+From: W. Michael Petullo <mike@flyn.org>
+Date: Sun, 6 Aug 2014 11:28:00 +0200
+Subject: [PATCH] automake compat
+
+Signed-off-by: W. Michael Petullo <mike@flyn.org>
+---
 --- a/clients/tools/Makefile.in
 +++ b/clients/tools/Makefile.in
 @@ -13,6 +13,8 @@
@@ -249,7 +256,7 @@
 +
  SLAPTOOLS=slapadd slapcat slapdn slapindex slapmodify slappasswd slaptest slapauth slapacl slapschema
  PROGRAMS=slapd $(SLAPTOOLS)
- XPROGRAMS=sslapd libbackends.a .backend liboverlays.a
+ XPROGRAMS=sslapd libbackends.a liboverlays.a
 --- a/servers/slapd/overlays/Makefile.in
 +++ b/servers/slapd/overlays/Makefile.in
 @@ -13,6 +13,8 @@
