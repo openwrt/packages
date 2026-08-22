@@ -1,0 +1,28 @@
+#!/bin/sh
+
+. /lib/netifd/netifd-proto.sh
+
+ev_type=$1
+ev_json=$2
+
+[ "$ev_type" = "Notification" ] || exit 0
+
+json_load "$ev_json"
+
+json_get_vars label state op
+json_get_var ifname local-interface
+
+config=$label
+
+[ "$config" = "$BFD_CONFIG" ] || exit 0
+[ "$op" = "status" ] || exit 0
+
+up=0
+if [ "$state" = "up" ]; then
+  up=1
+fi
+
+echo "bfd-event: config=$config up=$up ifname=$ifname"
+
+proto_init_update "$ifname" "$up"
+proto_send_update "$config"
