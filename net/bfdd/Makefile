@@ -7,13 +7,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bfdd
-PKG_SOURCE_DATE:=2026-05-06
+PKG_SOURCE_DATE:=2026-08-19
 PKG_RELEASE:=1
 
-PKG_SOURCE_VERSION:=bcb532839290ab6cb71f7c3239ff273ac93af03c
+# TODO: update to a commit from master once https://github.com/rzalamena/bfdd/bfdd/pulls/6 is merged
+PKG_SOURCE_VERSION:=921bfa05b0e0020eb910cffc2a6edf37543b84cf
 PKG_SOURCE_URL:=https://codeload.github.com/rzalamena/bfdd/tar.gz/$(PKG_SOURCE_VERSION)?
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_DATE).tar.gz
-PKG_HASH:=c60975efb5eb6ed2fcc57ff1a4cb5dfc26f042ec93ea76ff380ccef85042cc67
+PKG_HASH:=c5b76d7c442d13bb78734542d3d82981ac63cd6ba560cddd6e09b383945ccbd0
 
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
