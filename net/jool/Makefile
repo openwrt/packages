@@ -112,6 +112,19 @@ define Package/jool-tools-netfilter/description
   This package provides the userspace control programs for Jool.
 endef
 
+define Package/jool-clat-proto
+  $(call Package/jool/Default)
+  TITLE:=Jool-based CLAT netifd proto helper
+  DEPENDS:=+ip-full +jool-tools-netfilter +kmod-veth
+endef
+
+define Package/jool-clat-proto/description
+  $(call Package/jool/Default/description)
+
+  This package provides a netifd proto helper for CLAT setups using Jool
+  SIIT in a dedicated network namespace.
+endef
+
 JOOL_AUTOLOAD:= \
 	jool \
 	jool_siit
@@ -145,5 +158,11 @@ define Package/jool-tools-netfilter/install
 	$(INSTALL_DATA) ./files/readme.md $(1)/etc/jool/readme.md
 endef
 
+define Package/jool-clat-proto/install
+	$(INSTALL_DIR) $(1)/lib/netifd/proto
+	$(INSTALL_BIN) ./files/jool_clat.sh $(1)/lib/netifd/proto/jool_clat.sh
+endef
+
 $(eval $(call KernelPackage,jool-netfilter))
 $(eval $(call BuildPackage,jool-tools-netfilter))
+$(eval $(call BuildPackage,jool-clat-proto))
