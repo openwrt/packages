@@ -20,7 +20,7 @@ PKG_BUILD_PARALLEL:=1
 PKG_BUILD_FLAGS:=no-mips16
 
 GO_PKG:=github.com/opencontainers/runtime-tools/
-GO_PKG_LDFLAGS_X:=main.gitCommit=$(PKG_SOURCE_VERSION) main.version=$(PKG_SOURCE_VERSION)
+GO_PKG_LDFLAGS_X:=main.gitCommit=$(PKG_SOURCE_VERSION) main.version=$(PKG_VERSION)
 
 BUSYBOX_STATIC_VERSION:=1.31.0
 
