@@ -1,0 +1,309 @@
+// shunt - rpcd backend for the LuCI frontend
+//
+// Stateless: renders the configuration through the same modules the daemon
+// uses and reads the rest from the kernel. The daemon is asked only for the
+// facts nothing outside its process can see.
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (c) 2026 Dirk Brenken <dev@brenken.org>
+
+import { popen, readfile } from 'fs';
+
+const ubus = require('ubus');
+const rtnl = require('rtnl');
+
+// The rtnl constants hang off a `const` sub-object, not off the module - the
+// example in lib/rtnl.c's own header says otherwise and yields null.
+const RT = rtnl.const;
+
+import { load as config_load, parse as config_parse } from 'shunt.config';
+import { resolve as netifd_resolve } from 'shunt.netifd';
+import { compile as match_compile } from 'shunt.match';
+import { compile as nft_compile } from 'shunt.nft';
+import { compile as route_compile } from 'shunt.route';
+import { names as poll_names } from 'shunt.poll';
+
+const TABLE_FAMILY = 'inet';
+const TABLE_NAME = 'shunt';
+
+function daemon_status() {
+	let conn = ubus.connect();
+
+	if (!conn)
+		return null;
+
+	let r = conn.call('shunt', 'status');
+
+	return r ?? null;
+}
+
+// The same sequence as the daemon's build_state(), minus the logging: two
+// readings of one config file are how a status view starts to lie.
+function render() {
+	let sections = config_load();
+
+	if (sections == null)
+		return null;
+
+	let cfg = config_parse(sections);
+
+	if (!cfg)
+		return null;
+
+	let dump = null;
+	let conn = ubus.connect();
+
+	if (conn)
+		dump = conn.call('network.interface', 'dump');
+
+	cfg.policies = netifd_resolve(cfg.policies, dump);
+
+	let m = match_compile(cfg.policies);
+	let n = nft_compile(cfg.policies);
+	let r = route_compile(cfg.policies, n.marks);
+
+	return { cfg, matcher: m, nft: n, route: r };
+}
+
+// Policy devices whose marked traffic the kernel would drop: max(all, <dev>),
+// blocked only when all is strict (1) and the device is not loose itself. Same
+// logic as the daemon. When rp_filter_manage is on the daemon has already set
+// these to 2, so this reads back empty on its own.
+function rp_filter_blocked(policies) {
+	let rp = (k) => trim(readfile(`/proc/sys/net/ipv4/conf/${k}/rp_filter`) ?? '');
+
+	if (rp('all') != '1')
+		return [];
+
+	let seen = {}, blocked = [];
+
+	for (let p in (policies ?? [])) {
+		let dev = p.interface;
+
+		if (!length(dev ?? '') || seen[dev])
+			continue;
+
+		seen[dev] = true;
+
+		let v = rp(dev);
+
+		// Absent device: no traffic, nothing dropped - not blocked. The
+		// daemon re-checks on ifup when it appears.
+		if (v == '')
+			continue;
+
+		if (v != '2')
+			push(blocked, dev);
+	}
+
+	return blocked;
+}
+
+// Same check the daemon logs, surfaced for the UI: which of all/default carry
+// strict reverse path filtering, which drops shunt's asymmetric traffic.
+function rp_filter_strict() {
+	let strict = [];
+
+	for (let key in [ 'all', 'default' ])
+		if (trim(readfile(`/proc/sys/net/ipv4/conf/${key}/rp_filter`) ?? '') == '1')
+			push(strict, key);
+
+	return strict;
+}
+
+function nft_table() {
+	let fh = popen(sprintf('nft -j list table %s %s 2>/dev/null',
+		TABLE_FAMILY, TABLE_NAME), 'r');
+
+	if (!fh)
+		return null;
+
+	let out = fh.read('all');
+
+	fh.close();
+
+	if (!length(out ?? ''))
+		return null;
+
+	let j = json(out);
+
+	return j?.nftables ? j : null;
+}
+
+function nft_sets(table) {
+	let out = {};
+
+	for (let item in (table?.nftables ?? [])) {
+		let s = item?.set;
+
+		if (!s?.name)
+			continue;
+
+		let elems = [];
+
+		for (let e in (s.elem ?? [])) {
+			let v = e?.elem ?? e;
+			let val = v?.val ?? v;
+
+			push(elems, {
+				addr: (type(val) == 'object') ? (val.prefix ? sprintf('%s/%d', val.prefix.addr, val.prefix.len) : null) : val,
+				expires: v?.expires,
+				packets: v?.counter?.packets,
+				bytes: v?.counter?.bytes
+			});
+		}
+
+		out[s.name] = elems;
+	}
+
+	return out;
+}
+
+function kernel_rules(marks) {
+	let want = {};
+
+	for (let m in (marks ?? []))
+		want[sprintf('%d', m.mark)] = m.name;
+
+	let res = rtnl.request(RT.RTM_GETRULE, RT.NLM_F_DUMP,
+		{ family: RT.AF_UNSPEC });
+
+	if (res == null)
+		return null;
+
+	let out = {};
+
+	for (let r in res) {
+		if (r?.fwmark == null)
+			continue;
+
+		let name = want[sprintf('%d', r.fwmark)];
+
+		if (!name)
+			continue;
+
+		if (!out[name])
+			out[name] = [];
+
+		push(out[name], {
+			family: r.family,
+			priority: r.priority,
+			table: r.table,
+			fwmark: r.fwmark,
+			fwmask: r.fwmask
+		});
+	}
+
+	return out;
+}
+
+function kernel_routes(marks) {
+	let out = {};
+
+	for (let m in (marks ?? [])) {
+		let n = 0;
+
+		for (let fam in [ RT.AF_INET, RT.AF_INET6 ]) {
+			let res = rtnl.request(RT.RTM_GETROUTE, RT.NLM_F_DUMP,
+				{ family: fam, table: m.rt_table });
+
+			if (res == null) {
+				n = null;
+				break;
+			}
+
+			for (let r in res)
+				if (r?.table == m.rt_table)
+					n++;
+		}
+
+		out[m.name] = n;
+	}
+
+	return out;
+}
+
+return {
+	'luci.shunt': {
+
+		status: {
+			args: {},
+			call: function(req) {
+				let st = render();
+
+				if (!st)
+					return { error: 'cannot read /etc/config/shunt' };
+
+				let svc = daemon_status();
+				let table = nft_table();
+				let rules = kernel_rules(st.nft.marks);
+				let routes = kernel_routes(st.nft.marks);
+				let policies = [];
+
+				for (let m in st.nft.marks) {
+					let p = null;
+
+					for (let c in st.cfg.policies)
+						if (c.name == m.name)
+							p = c;
+
+					push(policies, {
+						name: m.name,
+						mark: m.mark,
+						rt_table: m.rt_table,
+						rt_prio: m.rt_prio,
+						interface: p?.interface,
+						fallback: p?.fallback,
+						domains: length(p?.domains ?? []),
+						rules: rules ? length(rules[m.name] ?? []) : null,
+						routes: routes[m.name]
+					});
+				}
+
+				return {
+					running: (svc != null),
+					applied: (table != null),
+					service: svc,
+					global: st.cfg.global,
+					policies,
+					poll_names: length(poll_names(st.cfg.policies)),
+					rp_filter_blocked: rp_filter_blocked(st.cfg.policies),
+					rp_filter_strict: rp_filter_strict(),
+					issues: [
+						...st.cfg.issues,
+						...st.matcher.issues,
+						...st.nft.issues,
+						...st.route.issues
+					]
+				};
+			}
+		},
+
+		sets: {
+			args: { policy: '' },
+			call: function(req) {
+				let table = nft_table();
+
+				if (!table)
+					return { sets: {} };
+
+				let all = nft_sets(table);
+				let want = req.args?.policy;
+
+				if (!length(want ?? ''))
+					return { sets: all };
+
+				let out = {};
+
+				for (let name in all) {
+					let at = (substr(name, 0, 1) == 'm') ? 2 : 3;
+
+					if (substr(name, at) == want)
+						out[name] = all[name];
+				}
+
+				return { sets: out };
+			}
+		}
+	}
+};
