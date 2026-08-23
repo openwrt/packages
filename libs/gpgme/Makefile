@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gpgme
 PKG_VERSION:=2.1.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://gnupg.org/ftp/gcrypt/$(PKG_NAME)
@@ -18,6 +18,8 @@ PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
+
+CONFIGURE_VARS += ac_cv_path_GPGRT_CONFIG="$(STAGING_DIR)/usr/bin/gpgrt-config"
 
 define Package/libgpgme
   SECTION:=libs
