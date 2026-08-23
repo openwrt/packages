@@ -61,7 +61,7 @@ nut_get_notifications() {
 	if [ "${event_types#*" $event "}" != "${event_types}" ]; then
 		config_get_single "$event" message
 		if [ -n "$val" ]; then
-			if ! printf 'NOTIFYMSG %s %s\n' "$event" "$val" >>"$config_file"; then
+			if ! printf 'NOTIFYMSG %s "%s"\n' "$event" "$val" >>"$config_file"; then
 				log_error "upsmon section '$event' failed to write 'NOTIFYMSG' for '$event'" nut-monitor-config.sh nut-monitor-config
 				return 1
 			fi
