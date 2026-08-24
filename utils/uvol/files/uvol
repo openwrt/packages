@@ -47,12 +47,36 @@ let fs = require("fs");
 let uci = require("uci");
 let cursor = uci ? uci.cursor() : null;
 
+let shell_quote = function(word) {
+	return "'" + replace(`${word}`, /'/g, "'\\''") + "'";
+};
+
+// volumes are taken down whether or not anything mounted them, so umount is
+// expected to fail and stays quiet. That needs a shell, hence the quoting.
+let umount_dev = function(dev) {
+	return system(sprintf("umount %s 2>/dev/null", shell_quote(sprintf("/dev/%s", dev))));
+};
+
+// volume names reach tool arguments and lock file paths; anything outside
+// this set is refused before it gets there. A leading '.' is reserved for
+// internal volumes such as .meta, and a leading '-' would be taken for an
+// option by the backend tools.
+let name_valid = function(name, allow_internal) {
+	if (type(name) != "string")
+		return false;
+	if (allow_internal && name == ".meta")
+		return true;
+	return !!match(name, /^[A-Za-z0-9_][A-Za-z0-9._-]*$/);
+};
+
 let ctx = {};
 ctx.cursor = cursor;
 ctx.fs = fs;
 include("/usr/lib/uvol/mount.uc");
 ctx.register = uvol_mount.register;
 ctx.unregister = uvol_mount.unregister;
+ctx.shell_quote = shell_quote;
+ctx.umount_dev = umount_dev;
 
 let backend = null;
 let tried_backends = [];
@@ -81,6 +105,24 @@ if (!backend) {
 if (!(cmd in keys(backend))) {
 	printf("command %s not found\n", cmd);
 	return 22;
+}
+
+let json_output = false;
+if (ARGV[0] == "-j") {
+	json_output = true;
+	shift(ARGV);
+}
+
+// only the read-only verbs may name an internal volume such as .meta; the
+// check runs before the lock, which is keyed on the volume name too
+let ro_name_cmds = [ "status", "device", "size", "list" ];
+let rw_name_cmds = [ "create", "remove", "up", "down", "resize", "write" ];
+let ro_name = index(ro_name_cmds, cmd) >= 0;
+if (index(rw_name_cmds, cmd) >= 0 || (ro_name && ARGV[0] != null)) {
+	if (!name_valid(ARGV[0], ro_name)) {
+		printf("invalid volume name\n");
+		exit(22);
+	}
 }
 
 // serialise state-mutating commands device-wide; released on process exit.
@@ -127,12 +169,6 @@ if (cmd == "boot") {
 	exit(0);
 }
 
-let json_output = false;
-if (ARGV[0] == "-j") {
-	json_output = true;
-	shift(ARGV);
-}
-
 let legacy_output = function(var) {
 	let out = "";
 	if (type(var) == "array") {
@@ -168,7 +204,7 @@ let ca_parse = function(name) {
 };
 
 let ca_digest = function(cmd, size, path) {
-	let src = path ? sprintf("head -c %d %s", size, path) : sprintf("head -c %d", size);
+	let src = path ? sprintf("head -c %d %s", size, shell_quote(path)) : sprintf("head -c %d", size);
 	let f = fs.popen(sprintf("%s | %s", src, cmd), "r");
 	if (!f)
 		return null;
