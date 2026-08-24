@@ -175,6 +175,8 @@ nut_driver_config() {
 			# We check enabled again here, in case of a race condition since
 			# our last check.
 			if /etc/init.d/nut-server enabled; then
+				# Reduce bouncing with multiple hotplug events in quick succession
+				sleep 1
 				# If we don't have a specific match, attempt a reload rather
 				# than restart of '$ups'. The nut-server initscript will do a
 				# start if the reload fails.
@@ -208,7 +210,8 @@ nut_driver_config() {
 			return 0
 		fi
 		if [ "$(printf "%04x" 0x"$pvendid")" = "$cfg_vendorid" ] &&
-			[ "$(printf "%04x" 0x"$pprodid")" = "$cfg_productid" ]; then
+			[ "$(printf "%04x" 0x"$pprodid")" = "$cfg_productid" ] &&
+			[ -n "$DEVNAME" ] && [ -n "$ups" ]; then
 			# Round 1: If we have a match for hotplug event and the UCI config
 			# start this UPS and record that fact, otherwise skip this UCI UPS
 			# for this round
@@ -254,6 +257,9 @@ perform_libhid_action() {
 		log_error "Failed to set RUNAS" "libhid-ups" nut-usb-hotplug
 		return 1
 	fi
+
+	# Reduce bouncing with multiple hotplug events in quick succession
+	sleep 2
 
 	# PRODUCT comes from the calling hotplug event, and
 	# is of the form vendorid/productid/other

@@ -163,8 +163,12 @@ nut_on_hotplug_add() {
 # Do not do any hotplug actions if hotplug is disabled. Not an error but log
 # for information
 if ! allow_hotplug_restart; then
-	# Informational and not an error
-	log_msg "Did not set permissions on serial port hotplug as NUT hotplug is disabled" nut-serial nut-serial-hotplug notice
+	# Don't spam logs on initial boot
+	# (before NUT_HOTPLUG_BOOT_COMPLETE_PATH exists)
+	if [ -f "$NUT_HOTPLUG_BOOT_COMPLETE_PATH" ]; then
+		# Informational and not an error
+		log_msg "Did not set permissions on serial port hotplug as NUT hotplug is disabled" nut-serial nut-serial-hotplug notice
+	fi
 	exit 0
 fi
 
