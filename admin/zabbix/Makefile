@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
-PKG_VERSION:=7.0.27
+PKG_VERSION:=7.0.29
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://cdn.zabbix.com/zabbix/sources/stable/$(basename $(PKG_VERSION))/ \
 	https://cdn.zabbix.com/zabbix/sources/oldstable/$(basename $(PKG_VERSION))/
-PKG_HASH:=15e4c233e65c87922824d01abad624f34128bbb4af021a75e38e89b68e13e851
+PKG_HASH:=184d03454d7ff2d49fa1d292082ad335bce907ba22e30d54035d05329708ce32
 
 PKG_MAINTAINER:=Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
 PKG_LICENSE:=AGPL-3.0-only
@@ -192,7 +192,6 @@ define Package/zabbix-server-or-proxy/Default
     +libevent2-extra \
     +libpcre2 \
     +zlib
-  USERID:=zabbix-server=70:zabbix-server=70
 endef
 
 define Package/zabbix-proxy/Default
@@ -202,6 +201,7 @@ define Package/zabbix-proxy/Default
     @zabbix-proxy-any \
     zabbix-proxy-ssl \
     zabbix-proxy-openssl
+  USERID:=zabbix-proxy=71:zabbix-proxy=71
 endef
 
 define Package/zabbix-proxy
@@ -281,6 +281,7 @@ define Package/zabbix-server
   PROVIDES:= \
     zabbix-server-ssl \
     zabbix-server-openssl
+  USERID:=zabbix-server=70:zabbix-server=70
   VARIANT:=full
 endef
 
@@ -360,6 +361,7 @@ define Package/zabbix-frontend-server
     +php8-mod-mbstring \
     +php8-mod-openssl \
     +php8-mod-session \
+    +php8-mod-simplexml \
     +php8-mod-sockets \
     +php8-mod-xmlreader \
     +php8-mod-xmlwriter
@@ -446,14 +448,14 @@ ifdef CONFIG_PACKAGE_zabbix-extra-mac80211
 define Build/Prepare
 	$(call Build/Prepare/Default)
 	mkdir -p $(PKG_BUILD_DIR)/zabbix-extra-mac80211
-	$(CP) ./files/zabbix_helper_mac80211.c $(PKG_BUILD_DIR)/zabbix-extra-mac80211/
+	$(CP) ./src-extra/zabbix_helper_mac80211.c $(PKG_BUILD_DIR)/zabbix-extra-mac80211/
 endef
 
 define Build/Configure
 	$(call Build/Configure/Default)
 endef
 
-# We use spaces for continued lines so that is if continuation does not parse
+# We use spaces for continued lines so that if continuation does not parse
 # properly we will get a hard error instead of subtle failure.
 define Build/Compile
 	$(call Build/Compile/Default)
@@ -486,56 +488,75 @@ define Package/zabbix/install/init.d
 endef
 
 define Package/zabbix/install/zabbix.conf.d
-	$(INSTALL_DIR) $(1)/etc/zabbix_agentd.conf.d
-	$(INSTALL_BIN) ./files/$(2) $(1)/etc/zabbix_agentd.conf.d/$(2)
+	$(INSTALL_DIR) $(1)/usr/share/zabbix_agentd.openwrt-params.d
+	$(INSTALL_DATA) ./files/usr/share/zabbix_agentd.openwrt-params.d/$(2) $(1)/usr/share/zabbix_agentd.openwrt-params.d/$(2)
 endef
 
 define Package/zabbix-agentd/conffiles
 /etc/zabbix_agentd.conf
+/etc/zabbix_agentd.conf.d/
+/etc/config/zabbix_agentd
+endef
+
+define Package/zabbix-agentd/postinst
+#!/bin/sh
+[ -n "$${IPKG_INSTROOT}" ] || (. /etc/uci-defaults/90_zabbix_agentd) && rm -f /etc/uci-defaults/90_zabbix_agentd
+exit 0
 endef
 
 define Package/zabbix-agentd/install
 	$(INSTALL_DIR) $(1)/etc/zabbix_agentd.conf.d
+	$(INSTALL_DIR) $(1)/usr/share/zabbix_agentd.openwrt-params.d
 	$(call Package/zabbix/install/sbin,$(1),agentd)
 	$(call Package/zabbix/install/etc,$(1),agentd)
 	$(call Package/zabbix/install/init.d,$(1),agentd)
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/zabbix_agentd.config $(1)/etc/config/zabbix_agentd
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/zabbix_agentd.defaults $(1)/etc/uci-defaults/90_zabbix_agentd
 endef
 
-define Package/zabbix-agentd-basic/conffiles
-/etc/zabbix_agentd.conf
-endef
+Package/zabbix-agentd-basic/conffiles=$(call Package/zabbix-agentd/conffiles)
+Package/zabbix-agentd-basic/postinst=$(call Package/zabbix-agentd/postinst)
 
 define Package/zabbix-agentd-basic/install
-	$(INSTALL_DIR) $(1)/etc/zabbix_agentd.conf.d
-	$(call Package/zabbix/install/sbin,$(1),agentd)
-	$(call Package/zabbix/install/etc,$(1),agentd)
-	$(call Package/zabbix/install/init.d,$(1),agentd)
+	$(call Package/zabbix-agentd/install,$(1))
 endef
 
 define Package/zabbix-proxy/conffiles
 /etc/zabbix_proxy.conf
+/etc/zabbix_proxy.conf.d/
+/etc/config/zabbix_proxy
+endef
+
+define Package/zabbix-proxy/postinst
+#!/bin/sh
+[ -n "$${IPKG_INSTROOT}" ] || (. /etc/uci-defaults/90_zabbix_proxy) && rm -f /etc/uci-defaults/90_zabbix_proxy
+exit 0
 endef
 
 define Package/zabbix-proxy/install
 	$(INSTALL_DIR) $(1)/etc/zabbix_proxy.conf.d
 	$(call Package/zabbix/install/sbin,$(1),proxy)
 	$(call Package/zabbix/install/etc,$(1),proxy)
+	$(call Package/zabbix/install/init.d,$(1),proxy)
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/zabbix_proxy.config $(1)/etc/config/zabbix_proxy
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/zabbix_proxy.defaults $(1)/etc/uci-defaults/90_zabbix_proxy
 endef
 
-define Package/zabbix-proxy-basic-sqlite/conffiles
-/etc/zabbix_proxy.conf
-endef
+Package/zabbix-proxy-basic-sqlite/conffiles=$(call Package/zabbix-proxy/conffiles)
+Package/zabbix-proxy-basic-sqlite/postinst=$(call Package/zabbix-proxy/postinst)
 
 define Package/zabbix-proxy-basic-sqlite/install
-	$(INSTALL_DIR) $(1)/etc/zabbix_proxy.conf.d
-	$(call Package/zabbix/install/sbin,$(1),proxy)
-	$(call Package/zabbix/install/etc,$(1),proxy)
+	$(call Package/zabbix-proxy/install,$(1))
 endef
 
 define Package/zabbix-server/conffiles
 /etc/zabbix_server.conf
+/etc/zabbix_server.conf.d/
 /etc/config/zabbix_server
-/etc/sysctl.d/90-zabbix-discovery-workers.conf
 endef
 
 define Package/zabbix-server/install
@@ -543,8 +564,6 @@ define Package/zabbix-server/install
 	$(call Package/zabbix/install/sbin,$(1),server)
 	$(call Package/zabbix/install/etc,$(1),server)
 	$(call Package/zabbix/install/init.d,$(1),server)
-	$(INSTALL_DIR) $(1)/etc/sysctl.d
-	$(INSTALL_CONF) ./files/zabbix-discovery-workers.conf.sysctl $(1)/etc/sysctl.d/90-zabbix-discovery-workers.conf
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/zabbix_server.config $(1)/etc/config/zabbix_server
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
@@ -575,26 +594,26 @@ endef
 define Package/zabbix-extra-network/install
 	$(call Package/zabbix/install/zabbix.conf.d,$(1),network)
 	$(INSTALL_DIR) $(1)/usr/share/acl.d
-	$(INSTALL_DATA) ./files/zabbix-network-ubus-acl.json $(1)/usr/share/acl.d/zabbix-network.json
+	$(INSTALL_DATA) ./files/usr/share/acl.d/zabbix-network-ubus-acl.json $(1)/usr/share/acl.d/zabbix-network.json
 endef
 
 define Package/zabbix-extra-network/postinst
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
-  killall -s HUP ubusd
+  killall -s HUP ubusd || true
 fi
 endef
 
 define Package/zabbix-extra-wifi/install
 	$(call Package/zabbix/install/zabbix.conf.d,$(1),wifi)
 	$(INSTALL_DIR) $(1)/usr/share/acl.d
-	$(INSTALL_DATA) ./files/zabbix-wifi-ubus-acl.json $(1)/usr/share/acl.d/zabbix-wifi.json
+	$(INSTALL_DATA) ./files/usr/share/acl.d/zabbix-wifi-ubus-acl.json $(1)/usr/share/acl.d/zabbix-wifi.json
 endef
 
 define Package/zabbix-extra-wifi/postinst
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
-  killall -s HUP ubusd
+  killall -s HUP ubusd || true
 fi
 endef
 

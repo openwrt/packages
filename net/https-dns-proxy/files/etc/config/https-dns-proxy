@@ -1,9 +1,15 @@
 config main 'config'
+# Answer iCloud Private Relay canary domains so DNS-based filtering keeps working
 	option canary_domains_icloud '1'
+# Answer Mozilla canary domain so Firefox does not auto-enable its own DoH
 	option canary_domains_mozilla '1'
+# dnsmasq instances to point at the proxy ('*' = all, or space-separated indexes/names)
 	option dnsmasq_config_update '*'
+# Force LAN clients onto the proxy by redirecting/rejecting their outbound DNS
 	option force_dns '1'
+# Add nftables notrack rules for the proxy's loopback DNS traffic
 	option notrack_dns '1'
+# Destination ports intercepted by force_dns (53 = DNS, 853 = DoT)
 	list force_dns_port '53'
 	list force_dns_port '853'
 # ports listed below are used by some
@@ -14,21 +20,37 @@ config main 'config'
 #	list force_dns_port '4434'
 #	list force_dns_port '5443'
 #	list force_dns_port '8443'
+# Interface(s) whose outbound DNS is forced to the proxy
 	list force_dns_src_interface 'lan'
+# Also (re)start instances on wan6 interface events
 	option procd_trigger_wan6 '0'
+# Domain resolved to confirm the resolver works after start ('-' disables the check)
 	option heartbeat_domain 'heartbeat.mossdef.org'
+# Seconds to wait before running the heartbeat check
 	option heartbeat_sleep_timeout '10'
+# Seconds to wait for the heartbeat domain to resolve
 	option heartbeat_wait_timeout '10'
+# User the proxy drops privileges to
 	option user 'nobody'
+# Group the proxy drops privileges to
 	option group 'nogroup'
+# Default local address instances bind to
 	option listen_addr '127.0.0.1'
+# IP family for resolvers: 'auto' (dual-stack, default), 'ipv4' (IPv4 only + -4), 'ipv6' (IPv6 only)
+	option force_ip_family 'auto'
 
 config https-dns-proxy
-	option bootstrap_dns '1.1.1.1,1.0.0.1'
+# Plain DNS servers used to resolve the DoH resolver hostname at startup
+	option bootstrap_dns '1.1.1.1,1.0.0.1,2606:4700:4700::1111,2606:4700:4700::1001'
+# DoH resolver endpoint (RFC 8484)
 	option resolver_url 'https://cloudflare-dns.com/dns-query'
+# Local port this instance listens on
 	option listen_port '5053'
 
 config https-dns-proxy
-	option bootstrap_dns '8.8.8.8,8.8.4.4'
+# Plain DNS servers used to resolve the DoH resolver hostname at startup
+	option bootstrap_dns '8.8.8.8,8.8.4.4,2001:4860:4860::8888,2001:4860:4860::8844'
+# DoH resolver endpoint (RFC 8484)
 	option resolver_url 'https://dns.google/dns-query'
+# Local port this instance listens on
 	option listen_port '5054'

@@ -1,0 +1,71 @@
+From ccc11ce4b039ac2fd775922e26010d64e59e7c47 Mon Sep 17 00:00:00 2001
+From: Alexandru Ardelean <alex@shruggie.ro>
+Date: Tue, 26 May 2026 14:15:12 +0300
+Subject: [PATCH] prosody: build blake2 hashes only when OpenSSL has them
+
+util-src/hashes.c unconditionally registers blake2s256/blake2b512 and
+their HMAC variants, which fails to build against OpenSSL configured
+without BLAKE2. Guard them with OPENSSL_NO_BLAKE2 so the module builds
+either way.
+
+Signed-off-by: Alexandru Ardelean <alex@shruggie.ro>
+---
+ util-src/hashes.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+--- a/util-src/hashes.c
++++ b/util-src/hashes.c
+@@ -115,6 +115,7 @@ static int Lmd5(lua_State *L) {
+ 	return Levp_hash(L, EVP_md5());
+ }
+ 
++#ifndef OPENSSL_NO_BLAKE2
+ static int Lblake2s256(lua_State *L) {
+ 	return Levp_hash(L, EVP_blake2s256());
+ }
+@@ -122,6 +123,7 @@ static int Lblake2s256(lua_State *L) {
+ static int Lblake2b512(lua_State *L) {
+ 	return Levp_hash(L, EVP_blake2b512());
+ }
++#endif
+ 
+ static int Lsha3_256(lua_State *L) {
+ 	return Levp_hash(L, EVP_sha3_256());
+@@ -188,6 +190,7 @@ static int Lhmac_sha3_512(lua_State *L)
+ 	return Levp_hmac(L, EVP_sha3_512());
+ }
+ 
++#ifndef OPENSSL_NO_BLAKE2
+ static int Lhmac_blake2s256(lua_State *L) {
+ 	return Levp_hmac(L, EVP_blake2s256());
+ }
+@@ -195,6 +198,7 @@ static int Lhmac_blake2s256(lua_State *L
+ static int Lhmac_blake2b512(lua_State *L) {
+ 	return Levp_hmac(L, EVP_blake2b512());
+ }
++#endif
+ 
+ 
+ static int Levp_pbkdf2(lua_State *L, const EVP_MD *evp, size_t out_len) {
+@@ -292,8 +296,10 @@ static const luaL_Reg Reg[] = {
+ 	{ "md5",		Lmd5		},
+ 	{ "sha3_256",		Lsha3_256	},
+ 	{ "sha3_512",		Lsha3_512	},
++#ifndef OPENSSL_NO_BLAKE2
+ 	{ "blake2s256",		Lblake2s256	},
+ 	{ "blake2b512",		Lblake2b512	},
++#endif
+ 	{ "hmac_sha1",		Lhmac_sha1	},
+ 	{ "hmac_sha224",	Lhmac_sha224	},
+ 	{ "hmac_sha256",	Lhmac_sha256	},
+@@ -302,8 +308,10 @@ static const luaL_Reg Reg[] = {
+ 	{ "hmac_md5",		Lhmac_md5	},
+ 	{ "hmac_sha3_256",	Lhmac_sha3_256	},
+ 	{ "hmac_sha3_512",	Lhmac_sha3_512	},
++#ifndef OPENSSL_NO_BLAKE2
+ 	{ "hmac_blake2s256",	Lhmac_blake2s256	},
+ 	{ "hmac_blake2b512",	Lhmac_blake2b512	},
++#endif
+ 	{ "scram_Hi_sha1",	Lpbkdf2_sha1	}, /* COMPAT */
+ 	{ "pbkdf2_hmac_sha1",	Lpbkdf2_sha1	},
+ 	{ "pbkdf2_hmac_sha256",	Lpbkdf2_sha256	},

@@ -5,7 +5,7 @@ START=99
 
 USE_PROCD=1
 
-BIN=/usr/bin/prosodyctl
+BIN=/usr/bin/prosody
 
 start_service() {
 	[ -d /var/run/prosody ] || {
@@ -25,17 +25,13 @@ start_service() {
 	}
 
 	procd_open_instance
-	procd_set_param command "$BIN" start
+	procd_set_param command "$BIN" -F
 	procd_set_param file /etc/prosody/prosody.cfg.lua
 	procd_set_param user prosody
 	procd_set_param group prosody
 	procd_close_instance
 }
 
-stop_service() {
-	${BIN} stop
-}
-
 reload_service() {
-	${BIN} reload
+	procd_send_signal prosody
 }

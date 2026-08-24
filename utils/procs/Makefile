@@ -1,16 +1,16 @@
 # SPDX-License-Identifier: GPL-3.0-only
 #
-# Copyright (C) 2023 Facundo Acevedo
+# Copyright (C) 2026 Facundo Acevedo
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=procs
-PKG_VERSION:=0.14.3
+PKG_VERSION:=0.14.12
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/dalance/procs/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=a3012bba984faddcf8da2a72d21eb9a7e9be8d5d86a387d321987743b0080a8c
+PKG_HASH:=f2fab583fe98a9ae9505c5eecf4f3d9d4ad9bcb5d478a8222d52c87aa1ac602e
 
 PKG_MAINTAINER:=Facundo Acevedo <facevedo@disroot.org>
 PKG_LICENSE:=MIT
@@ -26,13 +26,13 @@ define Package/procs
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Procs is feature-rich alternative to the 'ps'
-  DEPENDS:=$(RUST_ARCH_DEPENDS) 
+  DEPENDS:=$(RUST_ARCH_DEPENDS)
   URL:=https://github.com/dalance/procs/
 endef
 
 define Package/procs/description
-  Procs is a 'ps' command replacement written in Rust, offering 
-  enhanced usability and information display. 
+  Procs is a 'ps' command replacement written in Rust, offering
+  enhanced usability and information display.
   Features include color-coded output, theme auto-detection, advanced
   search, and extended process details
   (TCP/UDP ports, Docker names, I/O throughput).

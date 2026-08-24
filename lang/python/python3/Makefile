@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 include ../python3-version.mk
 
 PKG_NAME:=python3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_VERSION:=$(PYTHON3_VERSION).$(PYTHON3_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
@@ -296,17 +296,23 @@ endif
 # HOST_MAKE_VARS += \
 # 	PYTHONSTRICTEXTENSIONBUILD=1
 
-# Bypass configure test. Force every curses header check Python's
-# configure.ac runs to "no" so the host distro's headers stay out.
+# Bypass configure test. Force the curses header checks that can only
+# ever resolve against the build host's own distro packages to "no" so
+# those stay out; leave ac_cv_header_ncursesw_{ncurses,panel}_h alone so
+# configure picks up the SDK's own wide-char ncurses consistently with
+# what its pkg-config-based ncursesw/panelw detection already reports.
+# ac_cv_header_ncursesw_curses_h stays forced: host ncurses is built
+# with --without-curses-h, so staging_dir/hostpkg/include/ncursesw/
+# deliberately has no curses.h of its own for this to genuinely resolve
+# against - a real, non-forced "yes" here could only come from the
+# build host's own /usr/include/ncursesw/curses.h.
 HOST_CONFIGURE_VARS += \
 	py_cv_module__tkinter=n/a \
 	ac_cv_working_openssl_hashlib=yes \
 	ac_cv_header_curses_h=no \
 	ac_cv_header_ncurses_h=no \
 	ac_cv_header_panel_h=no \
-	ac_cv_header_ncursesw_curses_h=no \
-	ac_cv_header_ncursesw_ncurses_h=no \
-	ac_cv_header_ncursesw_panel_h=no
+	ac_cv_header_ncursesw_curses_h=no
 
 ifeq ($(HOST_OS),Darwin)
 HOST_CONFIGURE_VARS += \

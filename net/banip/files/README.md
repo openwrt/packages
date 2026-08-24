@@ -111,6 +111,7 @@ For a typical setup these few steps are enough to get banIP up and running — s
 * Automatically selects one of the following download utilities with ssl support: curl, uclient-fetch or full wget
 * Provides HTTP ETag support to download only resources that have been updated on the server side, to speed up banIP reloads and to save bandwidth
 * Supports an `allowlist only` mode, this option restricts the internet access only to specific, explicitly allowed IP segments
+* Optionally screens the allowed IP segments in `allowlist only` mode as well, i.e. the log monitor may ban attackers from an explicitly allowed segment while the local allowlist entries stay exempt (see `ban_monitorallowed`)
 * Supports external allowlist URLs to reference additional IPv4/IPv6 feeds
 * Optionally always allow certain protocols/destination ports in the inbound chain
 * Deduplicate IPs across all Sets (single IPs only, no intervals)
@@ -189,7 +190,7 @@ The `report` sub-command accepts an output mode: `text` (default, human-readable
 | ban_loglimit            | option | 100                           | scan only the last n log entries permanently. A value of `0` disables the monitor                                 |
 | ban_logcount            | option | 1                             | how many times the IP must appear in the log per blocking cycle to trigger auto-blocking                          |
 | ban_logterm             | list   | regex                         | various regex for logfile parsing (default: dropbear, sshd, luci, asterisk and cgi-remote events)                 |
-| ban_logreadfile         | option | - / logread                   | parse this log file via tail instead of the default logread; if left empty (default) banIP reads the system log via logread |
+| ban_logreadfile         | option | - / logread                   | parse this log file via tail instead of the default logread; by default banIP reads the system log via logread    |
 | ban_autodetect          | option | 1                             | auto-detect wan interfaces, devices and subnets                                                                   |
 | ban_debug               | option | 0                             | enable banIP related debug logging                                                                                |
 | ban_icmplimit           | option | 25                            | threshold in number of packets to detect icmp DoS in prerouting chain. A value of `0` disables this safeguard     |
@@ -205,6 +206,7 @@ The `report` sub-command accepts an output mode: `text` (default, human-readable
 | ban_autoblocksubnet     | option | 0                             | add entire subnets to the blocklist Sets based on a rate-limited, non-blocking RDAP lookup for the suspicious IP  |
 | ban_autoallowuplink     | option | subnet                        | limit the uplink autoallow function to: `subnet`, `ip` or `disable` it at all                                     |
 | ban_allowlistonly       | option | 0                             | restrict the internet access only to specific, explicitly allowed IP segments                                     |
+| ban_monitorallowed      | option | 0                             | restrict the log monitor to the entries of the local allowlist (allowlist-only mode)                              |
 | ban_allowflag           | option | -                             | always allow certain protocols(tcp or udp) plus destination ports or port ranges, e.g.: `tcp 80 443-444`          |
 | ban_allowurl            | list   | -                             | external allowlist feed URLs, one or more references to simple remote IP lists                                    |
 | ban_basedir             | option | /tmp                          | base working directory while banIP processing                                                                     |
@@ -222,7 +224,7 @@ The `report` sub-command accepts an output mode: `text` (default, human-readable
 | ban_triggerdelay        | option | 20                            | trigger timeout during interface reload and boot                                                                  |
 | ban_deduplicate         | option | 1                             | deduplicate IP addresses across all active Sets (see optional feed flag `dup` below)                              |
 | ban_splitsize           | option | 0                             | split the processing/loading of Sets in chunks of n lines/members (saves RAM)                                     |
-| ban_cores               | option | - / autodetect                | limit the cpu cores used by banIP (saves RAM)                                                                     |
+| ban_cores               | option | - / autodetect                | limit the cpu cores used by banIP; only auto-detection is memory-capped                                           |
 | ban_nftloglevel         | option | warn                          | nft loglevel, values: emerg, alert, crit, err, warn, notice, info, debug                                          |
 | ban_nftpriority         | option | -100                          | nft priority for the banIP table (the prerouting table is fixed to priority -150)                                 |
 | ban_nftpolicy           | option | memory                        | nft policy for banIP-related Sets, values: memory, performance                                                    |
@@ -381,7 +383,7 @@ List only elements with hits of a given Set with hit counters, e.g.:
 nftables supports the atomic loading of firewall rules (incl. elements), which is cool but unfortunately is also very memory intensive. To reduce the memory pressure on low memory systems (i.e. those with 256-512MB RAM), you should optimize your configuration with the following options:
 
 * point `ban_basedir`, `ban_reportdir`, `ban_backupdir` and `ban_errordir` to an external usb drive or ssd
-* set `ban_cores` to `1` (only useful on a multicore system) to force sequential feed processing
+* set `ban_cores` to `1` (only useful on a multicore system) to force sequential feed processing. The autodetected value is additionally capped to the available memory; a manually set value is always used as-is and is never lowered
 * set `ban_splitsize` e.g. to `1024` to split the load of an external Set after every 1024 lines/elements
 * set `ban_nftcount` to `0` to deactivate the CPU- and memory-intensive creation of counter elements at chain / Set level. With this setting, all packet counters are disabled, the Set Reporting will show zero values for these even when the protection rules are actively dropping traffic. Only the DoS protection counters (`syn-flood`, `udp-flood`, `icmp-flood`, etc.) are always enabled.
 
@@ -458,6 +460,10 @@ Both local lists also accept domain names as input to allow IP filtering based o
 **Allowlist-only mode**  
 banIP supports an "allowlist only" mode. This option restricts Internet access only to certain, explicitly permitted IP segments - and blocks access to the rest of the Internet. All IPs that are _not_ listed in the allowlist or in the external allowlist URLs are blocked. In this mode it might be useful to limit the allowlist feed to the inbound chain, to still allow outbound communication to the rest of the world.
 
+In this mode the allowlist Sets define the permitted address scope, they do not act as an accept precedence - the blocklist Set is still evaluated and still applies. By default the log monitor nevertheless treats every allowlisted IP as exempt, therefore attackers coming from a permitted segment (e.g. a country-wide external allowlist feed) are never banned. Enable the `ban_monitorallowed` option to restrict the log monitor to the entries of the local allowlist. banIP then processes an additional local feed which provides the `allowlist.local.v4`/`allowlist.local.v6` Sets, built from /etc/banip/banip.allowlist only - including the automatically added uplink. These Sets are not referenced by any rule, they are solely used by the log monitor: local entries stay exempt, IPs which are merely covered by an external allowlist feed can be banned. This allows a "permit my own country, but still screen it" setup. The option has no effect unless `ban_allowlistonly` is enabled, and the additional Sets are removed automatically as soon as it is switched off.
+
+External feeds are skipped in this mode as far as they are redundant: the allowlist emits an inverted and therefore terminal drop rule in every chain it covers, so a feed rule in exactly these chains can never match. With the default allowlist direction all external feeds are skipped. If the allowlist is limited to a single chain - e.g. to the inbound chain - only the feeds of that chain are skipped, feeds which also cover the opposite chain are still processed.
+
 **MAC/IP-binding**  
 banIP supports concatenation of local MAC addresses/ranges with IPv4/IPv6 addresses, e.g. to enforce dhcp assignments or to free connected clients from outbound blocking.
 The following notations in the local allow- and block-list are supported:
@@ -530,6 +536,8 @@ To make this work, banIP uses the following external components:
 * [OpenStreetMap](https://www.openstreetmap.org/) provides the map data under an open-source license
 * [CARTO basemap styles](https://github.com/CartoDB/basemap-styles) based on [OpenMapTiles](https://openmaptiles.org/schema)
 * The free and quite fast [IP Geolocation API](https://ip-api.com/) to resolve the required IP/geolocation information
+
+Please note: the free ip-api.com batch endpoint is rate limited to 15 requests per minute per source IP. Requests beyond that limit are throttled with HTTP 429, and constantly exceeding the limit gets the IP banned for an hour — in both cases the map stays empty and banIP logs an info message. To stay below the limit banIP collects the top listed elements of all Sets, deduplicates them and resolves them in as few batch requests as possible (100 IPs each, the maximum the endpoint accepts). A setup with up to ~1500 mapped elements therefore needs no more than 15 requests per report run. If you run a large number of Sets and regenerate the report frequently, lower `ban_map` to `0` or reduce the number of active feeds.
 
 **CGI interface to receive remote logging events**  
 banIP ships a basic cgi interface in `/www/cgi-bin/banip` to receive remote logging events (disabled by default). The cgi interface evaluates logging events via GET or POST request (see examples below). To enable the cgi interface set the following options:

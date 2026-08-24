@@ -69,6 +69,7 @@ ban_logoutbound="0"
 ban_allowurl=""
 ban_allowflag=""
 ban_allowlistonly="0"
+ban_monitorallowed="0"
 ban_autoallowlist="1"
 ban_autoallowuplink="subnet"
 ban_autoblocklist="1"
@@ -175,16 +176,17 @@ f_system() {
 	ban_sysver="$("${ban_ubuscmd}" -S call system board 2>>"${ban_errorlog}" | "${ban_jsoncmd}" -ql1 -e '@.model' -e '@.release.target' -e '@.release.distribution' -e '@.release.version' -e '@.release.revision' |
 		"${ban_awkcmd}" 'BEGIN{RS="";FS="\n"}{printf "%s, %s, %s %s (%s)",$1,$2,$3,$4,$5}')"
 
-	# detect cpu cores and cap them by available memory for memory-aware
-	# parallel processing (>= 48 MiB per job, floored to 1 core); a user-set
-	# ban_cores is only ever lowered by the cap, never raised
+	# detect cpu cores and available memory for memory-aware parallel processing
+	# 'mem_cores' is only calculated for auto-detected cores, a manually set 'ban_cores' is never capped
 	#
-	[ -z "${ban_cores}" ] && ban_cores="$("${ban_grepcmd}" -cm16 '^processor' /proc/cpuinfo 2>>"${ban_errorlog}")"
-	case "${ban_cores}" in "" | 0 | *[!0-9]*) ban_cores="1" ;; esac
 	free_mem="$(f_mem)"
-	mem_cores="$((free_mem / 48))"
-	[ "${mem_cores}" -lt "1" ] && mem_cores="1"
-	[ "${ban_cores}" -gt "1" ] && [ "${mem_cores}" -lt "${ban_cores}" ] && ban_cores="${mem_cores}"
+	if [ -z "${ban_cores}" ]; then
+		ban_cores="$("${ban_grepcmd}" -cm16 '^processor' /proc/cpuinfo 2>>"${ban_errorlog}")"
+		mem_cores="$((free_mem / 48))"
+		[ "${mem_cores}" -lt "1" ] && mem_cores="1"
+	fi
+	case "${ban_cores}" in "" | 0 | *[!0-9]*) ban_cores="1" ;; esac
+	[ -n "${mem_cores}" ] && [ "${mem_cores}" -lt "${ban_cores}" ] && ban_cores="${mem_cores}"
 
 	# derive the GNU sort buffer from available memory (>= 8 MiB per core);
 	# only applied when a coreutils sort is present (busybox sort has no --buffer-size)
@@ -800,6 +802,69 @@ f_getelements() {
 	[ -s "${file}" ] && printf '%s' "elements={ $("${ban_catcmd}" "${file}" 2>>"${ban_errorlog}") };"
 }
 
+# resolve the chain direction of a feed,
+# an explicitly configured direction always wins over the feed default
+#
+f_direction() {
+	local feed_name="${1}" feed_chain="${2}"
+
+	if [ "${feed_chain}" = "none" ]; then
+		printf '%s' "none"
+		return 0
+	fi
+	case " ${ban_feedin} " in
+	*" ${feed_name} "*)
+		printf '%s' "inbound"
+		return 0
+		;;
+	esac
+	case " ${ban_feedout} " in
+	*" ${feed_name} "*)
+		printf '%s' "outbound"
+		return 0
+		;;
+	esac
+	case " ${ban_feedinout} " in
+	*" ${feed_name} "*)
+		printf '%s' "inbound outbound"
+		return 0
+		;;
+	esac
+	case "${feed_chain}" in
+	"in")
+		printf '%s' "inbound"
+		;;
+	"out")
+		printf '%s' "outbound"
+		;;
+	"inout")
+		printf '%s' "inbound outbound"
+		;;
+	*)
+		printf '%s' "inbound"
+		;;
+	esac
+}
+
+# check whether an external feed is redundant in allowlist-only mode
+#
+f_skipfeed() {
+	local direction allow_direction feed_direction="${1}"
+
+	[ "${ban_allowlistonly}" != "1" ] && return 1
+	allow_direction="$(f_direction "allowlist" "inout")"
+	for direction in ${feed_direction}; do
+		case " ${allow_direction} " in
+		*" ${direction} "*) ;;
+
+		*)
+			return 1
+			;;
+		esac
+	done
+	return 0
+}
+
 # handle etag http header
 #
 f_etag() {
@@ -1149,53 +1214,34 @@ f_down() {
 	# set feed direction
 	#
 	feed_name="${feed%%.*}"
-	if case " ${ban_feedin} " in
-		*" ${feed_name} "*)
-			true
-			;;
-		*)
-			false
-			;;
-		esac; then
+	feed_direction="$(f_direction "${feed_name}" "${feed_chain}")"
+	case "${feed_direction}" in
+	"inbound")
 		feed_policy="in"
-		feed_direction="inbound"
-	elif case " ${ban_feedout} " in
-		*" ${feed_name} "*)
-			true
-			;;
-		*)
-			false
-			;;
-		esac; then
+		;;
+	"outbound")
 		feed_policy="out"
-		feed_direction="outbound"
-	elif case " ${ban_feedinout} " in
-		*" ${feed_name} "*)
-			true
-			;;
-		*)
-			false
-			;;
-		esac; then
+		;;
+	"inbound outbound")
 		feed_policy="inout"
-		feed_direction="inbound outbound"
-	else
-		feed_policy="${feed_chain}"
-		case "${feed_chain}" in
-		"in")
-			feed_direction="inbound"
-			;;
-		"out")
-			feed_direction="outbound"
-			;;
-		"inout")
-			feed_direction="inbound outbound"
-			;;
-		*)
-			feed_direction="inbound"
-			;;
-		esac
-	fi
+		;;
+	*)
+		feed_policy="${feed_direction}"
+		;;
+	esac
+
+	# skip external feeds which are already covered by the allowlist in allowlist-only mode
+	#
+	case "${feed_name}" in
+	"allowlist" | "blocklist") ;;
+
+	*)
+		if f_skipfeed "${feed_direction}"; then
+			f_log "info" "skip feed '${feed}' in allowlistonly mode"
+			return 0
+		fi
+		;;
+	esac
 
 	# prepare feed flags
 	#
@@ -1263,7 +1309,7 @@ f_down() {
 
 	# restore local backups
 	#
-	if [ "${feed%%.*}" != "blocklist" ]; then
+	if [ "${feed%%.*}" != "blocklist" ] && [ "${feed%.*}" != "allowlist.local" ]; then
 		if [ -n "${ban_etagparm}" ] && [ "${ban_action}" = "reload" ] && [ "${feed_url}" != "local" ] && [ "${feed%%.*}" != "allowlist" ]; then
 			etag_rc="0"
 			case "${feed%%.*}" in
@@ -1306,20 +1352,31 @@ f_down() {
 			esac
 		fi
 		if [ "${etag_rc}" = "0" ] || [ "${ban_action}" != "reload" ] || [ "${feed_url}" = "local" ]; then
-			if [ "${feed%%.*}" = "allowlist" ] && [ ! -f "${tmp_allow}" ]; then
-				f_restore "allowlist" "-" "${tmp_allow}" "${etag_rc}"
-				restore_rc="${?}"
+			if [ "${feed%.*}" = "allowlist" ]; then
+
+				if [ ! -f "${tmp_allow}" ]; then
+					f_restore "allowlist" "-" "${tmp_allow}" "${etag_rc}"
+					restore_rc="${?}"
+					feed_rc="${restore_rc}"
+				fi
 			else
 				f_restore "${feed}" "${feed_url}" "${tmp_load}" "${etag_rc}"
 				restore_rc="${?}"
+				feed_rc="${restore_rc}"
 			fi
-			feed_rc="${restore_rc}"
 		fi
+	fi
+
+	# prepare the monitor-only allowlist, local entries only
+	#
+	if [ "${feed%.*}" = "allowlist.local" ] && [ ! -f "${tmp_allow}" ]; then
+		"${ban_catcmd}" "${ban_allowlist}" 2>>"${ban_errorlog}" >"${tmp_allow}"
+		feed_rc="${?}"
 	fi
 
 	# prepare local/remote allowlist
 	#
-	if [ "${feed%%.*}" = "allowlist" ] && [ ! -f "${tmp_allow}" ]; then
+	if [ "${feed%.*}" = "allowlist" ] && [ ! -f "${tmp_allow}" ]; then
 		"${ban_catcmd}" "${ban_allowlist}" 2>>"${ban_errorlog}" >"${tmp_allow}"
 		feed_rc="${?}"
 		for feed_url in ${ban_allowurl}; do
@@ -1329,7 +1386,7 @@ f_down() {
 					feed_rc="${?}"
 				fi
 			else
-				f_log "info" "download for feed '${feed%%.*}' failed"
+				f_log "info" "download for feed '${feed%.*}' failed"
 				feed_rc="4"
 				break
 			fi
@@ -1723,7 +1780,7 @@ f_restore() {
 # remove staled Sets
 #
 f_rmset() {
-	local feedlist tmp_del table_json feed country asn table_sets handles handle expr del_set feed_rc
+	local feedlist tmp_del table_json feed country asn table_sets handles handle expr del_set chain feed_chain feed_covered feed_rc
 
 	f_getfeed
 	json_get_keys feedlist
@@ -1733,10 +1790,30 @@ f_rmset() {
 	{
 		printf '%s\n\n' "#!${ban_nftcmd} -f"
 		for feed in ${table_sets}; do
+			if [ "${feed%.*}" = "allowlist.local" ]; then
+				if [ "${ban_allowlistonly}" = "1" ] && [ "${ban_monitorallowed}" = "1" ]; then
+					continue
+				fi
+			fi
+			feed_covered="0"
+			if [ "${ban_allowlistonly}" = "1" ]; then
+				case "${feed%%.*}" in
+				"allowlist" | "blocklist") ;;
+
+				*)
+					feed_chain=""
+					if json_select "${feed%%.*}" >/dev/null 2>&1; then
+						json_get_var feed_chain "chain" >/dev/null 2>&1
+						json_select ".." >/dev/null 2>&1
+					fi
+					f_skipfeed "$(f_direction "${feed%%.*}" "${feed_chain:-"in"}")" && feed_covered="1"
+					;;
+				esac
+			fi
 
 			# keep: active country split sets
 			#
-			if [ "${feed%%.*}" = "country" ] && [ "${ban_countrysplit}" = "1" ]; then
+			if [ "${feed_covered}" = "0" ] && [ "${feed%%.*}" = "country" ] && [ "${ban_countrysplit}" = "1" ]; then
 				country="${feed%.*}"
 				country="${country#*.}"
 				case " ${ban_feed} " in
@@ -1750,7 +1827,7 @@ f_rmset() {
 
 			# keep: active asn split sets
 			#
-			if [ "${feed%%.*}" = "asn" ] && [ "${ban_asnsplit}" = "1" ]; then
+			if [ "${feed_covered}" = "0" ] && [ "${feed%%.*}" = "asn" ] && [ "${ban_asnsplit}" = "1" ]; then
 				asn="${feed%.*}"
 				asn="${asn#*.}"
 				case " ${ban_feed} " in
@@ -1770,12 +1847,9 @@ f_rmset() {
 				*" ${feed%.*} "*)
 					if [ "${feed%.*}" != "country" ] || [ "${ban_countrysplit}" != "1" ]; then
 						if [ "${feed%.*}" != "asn" ] || [ "${ban_asnsplit}" != "1" ]; then
-							if [ "${feed%.*}" = "allowlist" ] || [ "${feed%.*}" = "blocklist" ] || [ "${ban_allowlistonly}" != "1" ]; then
+							if [ "${feed_covered}" = "0" ]; then
 								continue
 							fi
-							case " ${ban_feedin} ${ban_feedout} " in
-							*" allowlist "*) continue ;;
-							esac
 						fi
 					fi
 					;;
@@ -1844,7 +1918,7 @@ f_genstatus() {
 			end_time="${end_time%%.*}"
 			duration="$(((end_time - ban_starttime) / 60))m $(((end_time - ban_starttime) % 60))s"
 		fi
-		runtime="mode: ${ban_action}, date / time: $(date "+%d/%m/%Y %H:%M:%S"), duration: ${duration:-"-"}, memory: ${mem_free} MB available"
+		runtime="mode: ${ban_action}, date / time: $(date "+%Y-%m-%d %H:%M:%S"), duration: ${duration:-"-"}, memory: ${mem_free} MB available"
 	fi
 	[ -s "${ban_customfeedfile}" ] && custom_feed="1"
 	[ "${ban_splitsize:-"0"}" -gt "0" ] && split="1"
@@ -1953,7 +2027,7 @@ f_getstatus() {
 #
 f_lookup() {
 	local cnt list domain lookup ip dom ts proto elementsv4 elementsv6 start_time end_time duration cnt_domain="0" cnt_ip="0" feed="${1}"
-	local record_file tmp_dir target_file auto_flag
+	local record_file tmp_dir target_file auto_flag set_list set_name
 
 	# measure runtime of lookup function for performance insights
 	#
@@ -2022,16 +2096,22 @@ f_lookup() {
 
 	# add resolved IPs to nftables Sets
 	#
-	if [ -n "${elementsv4}" ]; then
-		if ! "${ban_nftcmd}" add element inet banIP "${feed}.v4" { ${elementsv4} } 2>>"${ban_errorlog}"; then
-			f_log "info" "can't add lookup file to nfset '${feed}.v4'"
-		fi
+	set_list="${feed}"
+	if [ "${feed}" = "allowlist" ] && [ "${ban_allowlistonly}" = "1" ] && [ "${ban_monitorallowed}" = "1" ]; then
+		set_list="${set_list} allowlist.local"
 	fi
-	if [ -n "${elementsv6}" ]; then
-		if ! "${ban_nftcmd}" add element inet banIP "${feed}.v6" { ${elementsv6} } 2>>"${ban_errorlog}"; then
-			f_log "info" "can't add lookup file to nfset '${feed}.v6'"
+	for set_name in ${set_list}; do
+		if [ -n "${elementsv4}" ]; then
+			if ! "${ban_nftcmd}" add element inet banIP "${set_name}.v4" { ${elementsv4} } 2>>"${ban_errorlog}"; then
+				f_log "info" "can't add lookup file to nfset '${set_name}.v4'"
+			fi
 		fi
-	fi
+		if [ -n "${elementsv6}" ]; then
+			if ! "${ban_nftcmd}" add element inet banIP "${set_name}.v6" { ${elementsv6} } 2>>"${ban_errorlog}"; then
+				f_log "info" "can't add lookup file to nfset '${set_name}.v6'"
+			fi
+		fi
+	done
 
 	# measure end time and log performance insights
 	#
@@ -2046,8 +2126,8 @@ f_lookup() {
 #
 f_report() {
 	local report_jsn report_txt tmp_val table_json item sep table_sets set_cnt set_inbound set_outbound set_cntinbound set_cntoutbound set_proto set_dport set_details
-	local cnt ip expr detail jsnval timestamp autoadd_allow autoadd_block sum_sets sum_setinbound sum_setoutbound sum_cntelements sum_cntinbound sum_cntoutbound quantity
-	local chunk jsn table_jsn set_jsn map_jsn chain set_elements sum_setelements sum_synflood sum_udpflood sum_icmpflood sum_ctinvalid sum_tcpinvalid sum_setports sum_bcp38 output="${1}"
+	local cnt ip expr detail jsnval timestamp autoadd_allow autoadd_block sum_sets sum_setinbound sum_setoutbound sum_cntelements sum_cntinbound sum_cntoutbound
+	local jsn table_jsn set_jsn map_jsn map_lookup chunk_no chain set_elements uplink_ip sum_setelements sum_synflood sum_udpflood sum_icmpflood sum_ctinvalid sum_tcpinvalid sum_setports sum_bcp38 output="${1}"
 
 	f_conf
 	f_mkdir "${ban_reportdir}"
@@ -2253,75 +2333,76 @@ f_report() {
 		# retrieve/prepare map data
 		#
 		if [ "${ban_nftcount}" = "1" ] && [ "${ban_map}" = "1" ] && [ -s "${report_jsn}" ]; then
-			cnt="1"
 			f_getdl
+			map_lookup="${ban_rundir}/report.map.lookup"
+			: >"${map_lookup}"
+
+			# collect the uplink IPs
+			#
 			json_init
 			if json_load_file "${ban_rtfile}" >/dev/null 2>&1; then
 				json_get_values jsnval "active_uplink" >/dev/null 2>&1
-				jsnval="${jsnval//\/[0-9][0-9]/}"
-				jsnval="${jsnval//\/[0-9]/}"
-				jsnval="\"${jsnval// /\", \"}\""
-				if [ "${jsnval}" != '""' ]; then
-					{
-						printf '%s' ",[{}"
-						"${ban_fetchcmd}" ${ban_geoparm} "[ ${jsnval} ]" "${ban_geourl}" 2>>"${ban_errorlog}" |
-							"${ban_jsoncmd}" -qe '@[*&&@.status="success"]' | "${ban_awkcmd}" -v feed="homeIP" '{printf ",{\"%s\": %s}\n",feed,$0}'
-					} >>"${map_jsn}"
-				fi
-			fi
-			if [ -s "${map_jsn}" ]; then
-				json_init
-				if json_load_file "${report_jsn}" >/dev/null 2>&1; then
-					json_select "sets" >/dev/null 2>&1
-					json_get_keys table_sets >/dev/null 2>&1
-					if [ -n "${table_sets}" ]; then
-						for item in ${table_sets}; do
-							[ "${item%%_*}" = "allowlist" ] && continue
-							json_select "${item}"
-							json_get_keys set_details
-							for detail in ${set_details}; do
-								if [ "${detail}" = "set_elements" ]; then
-									json_get_values jsnval "${detail}" >/dev/null 2>&1
-									jsnval="\"${jsnval// /\", \"}\""
-								fi
-							done
-							if [ "${jsnval}" != '""' ]; then
-								(
-									quantity="0"
-									chunk=""
-									for ip in ${jsnval}; do
-										chunk="${chunk} ${ip}"
-										quantity="$((quantity + 1))"
-										if [ "${quantity}" -eq "100" ]; then
-											"${ban_fetchcmd}" ${ban_geoparm} "[ ${chunk} ]" "${ban_geourl}" 2>>"${ban_errorlog}" |
-												"${ban_jsoncmd}" -qe '@[*&&@.status="success"]' | "${ban_awkcmd}" -v feed="${item//_v/.v}" '{printf ",{\"%s\": %s}\n",feed,$0}' >"${map_jsn}.${item}"
-											chunk=""
-											quantity="0"
-										fi
-									done
-									if [ "${quantity}" -gt "0" ]; then
-										"${ban_fetchcmd}" ${ban_geoparm} "[ ${chunk} ]" "${ban_geourl}" 2>>"${ban_errorlog}" |
-											"${ban_jsoncmd}" -qe '@[*&&@.status="success"]' | "${ban_awkcmd}" -v feed="${item//_v/.v}" '{printf ",{\"%s\": %s}\n",feed,$0}' >>"${map_jsn}.${item}"
-									fi
-								) &
-								[ "${cnt}" -gt "${ban_cores}" ] && wait -n
-								cnt="$((cnt + 1))"
-							fi
-							json_select ".."
-						done
-						wait
-
-						# assemble map data from per-set fragments
-						#
-						for item in ${table_sets}; do
-							if [ -s "${map_jsn}.${item}" ]; then
-								"${ban_catcmd}" "${map_jsn}.${item}" >>"${map_jsn}"
-							fi
-							"${ban_rmcmd}" -f "${map_jsn}.${item}"
-						done
+				for uplink_ip in ${jsnval}; do
+					uplink_ip="${uplink_ip%%/*}"
+					if [ -n "${uplink_ip}" ] && [ "${uplink_ip}" != "-" ]; then
+						printf '%s\t%s\n' "${uplink_ip}" "homeIP" >>"${map_lookup}"
 					fi
-				fi
+				done
 			fi
+
+			# collect the top listed IPs of all relevant Sets
+			#
+			json_init
+			if json_load_file "${report_jsn}" >/dev/null 2>&1; then
+				json_select "sets" >/dev/null 2>&1
+				json_get_keys table_sets >/dev/null 2>&1
+				for item in ${table_sets}; do
+					[ "${item%%_*}" = "allowlist" ] && continue
+					json_select "${item}"
+					jsnval=""
+					json_get_values jsnval "set_elements" >/dev/null 2>&1
+					for ip in ${jsnval}; do
+						printf '%s\t%s\n' "${ip}" "${item//_/.}" >>"${map_lookup}"
+					done
+					json_select ".."
+				done
+			fi
+
+			# split the deduplicated IPs into batch requests of 100 IPs each,
+			# the maximum the geo service accepts
+			#
+			if [ -s "${map_lookup}" ]; then
+				"${ban_awkcmd}" -F '\t' -v file="${map_jsn}" -v size="100" \
+					'!seen[$1]++{no=int(cnt++/size)+1;printf "%s\"%s\"",(chunk[no]++?", ":""),$1 >(file ".req." no)}END{for(i=1;i<=no;i++)close(file ".req." i);printf "%s\n",no+0 >(file ".num")}' "${map_lookup}"
+				chunk_no="$("${ban_catcmd}" "${map_jsn}.num" 2>>"${ban_errorlog}")"
+				cnt="1"
+				while [ "${cnt}" -le "${chunk_no:-0}" ]; do
+					(
+						"${ban_fetchcmd}" ${ban_geoparm} "[ $("${ban_catcmd}" "${map_jsn}.req.${cnt}") ]" "${ban_geourl}" 2>>"${ban_errorlog}" |
+							"${ban_jsoncmd}" -qe '@[*&&@.status="success"]' |
+							"${ban_awkcmd}" -F '\t' 'NR==FNR{if(!($1 in feed))feed[$1]=$2;next}
+								match($0,/"query"[ \t]*:[ \t]*"[^"]+"/){query=substr($0,RSTART,RLENGTH);sub(/^"query"[ \t]*:[ \t]*"/,"",query);sub(/"$/,"",query);if(query in feed)printf ",{\"%s\": %s}\n",feed[query],$0}' \
+								"${map_lookup}" - >"${map_jsn}.rsp.${cnt}"
+					) &
+					[ "${cnt}" -gt "${ban_cores}" ] && wait -n
+					cnt="$((cnt + 1))"
+				done
+				wait
+
+				# assemble map data from the batch fragments
+				#
+				cnt="1"
+				while [ "${cnt}" -le "${chunk_no:-0}" ]; do
+					if [ -s "${map_jsn}.rsp.${cnt}" ]; then
+						[ -s "${map_jsn}" ] || printf '%s' ",[{}" >>"${map_jsn}"
+						"${ban_catcmd}" "${map_jsn}.rsp.${cnt}" >>"${map_jsn}"
+					fi
+					cnt="$((cnt + 1))"
+				done
+				[ -s "${map_jsn}" ] || f_log "info" "no geo data received, the rate limit of '${ban_geourl}' has probably been exceeded"
+				f_log "debug" "f_report  ::: geo requests: ${chunk_no:-0}, map data: $([ -s "${map_jsn}" ] && printf '%s' "yes" || printf '%s' "no")"
+			fi
+			"${ban_rmcmd}" -f "${map_lookup}" "${map_jsn}".req.* "${map_jsn}".rsp.* "${map_jsn}.num"
 		fi
 
 		# text output preparation
@@ -2366,7 +2447,7 @@ f_report() {
 						printf '%-25s%-15s%-24s%-24s%-24s%-24s\n' "    Set" "| Count   " "| Inbound (packets)" "| Outbound (packets)" "| Port/Protocol      " "| Elements (max. 50) "
 						printf '%s\n' "    ---------------------+--------------+-----------------------+-----------------------+-----------------------+------------------------"
 						for item in ${table_sets}; do
-							printf '    %-21s' "${item//_v/.v}"
+							printf '    %-21s' "${item//_/.}"
 							json_select "${item}"
 							json_get_keys set_details
 							for detail in ${set_details}; do
@@ -2414,11 +2495,11 @@ f_report() {
 		[ -s "${report_txt}" ] && "${ban_catcmd}" "${report_txt}"
 		;;
 	"json")
-		if [ "${ban_nftcount}" = "1" ] && [ "${ban_map}" = "1" ]; then
-			jsn="$("${ban_catcmd}" ${report_jsn} ${map_jsn} 2>>"${ban_errorlog}")"
+		if [ "${ban_nftcount}" = "1" ] && [ "${ban_map}" = "1" ] && [ -s "${map_jsn}" ]; then
+			jsn="$("${ban_catcmd}" "${report_jsn}" "${map_jsn}" 2>>"${ban_errorlog}")"
 			[ -n "${jsn}" ] && printf '[%s]]\n' "${jsn}"
 		else
-			jsn="$("${ban_catcmd}" ${report_jsn} 2>>"${ban_errorlog}")"
+			jsn="$("${ban_catcmd}" "${report_jsn}" 2>>"${ban_errorlog}")"
 			[ -n "${jsn}" ] && printf '[%s]\n' "${jsn}"
 		fi
 		;;
@@ -2609,7 +2690,7 @@ f_mail() {
 f_monitor() {
 	local nft_expiry ip proto idx base cidr rdap_log rdap_rc rdap_idx rdap_info log_type allow_v4 allow_v6 block_v4 block_v6
 	local file cache_ts date_stamp time_now time_elapsed cache_interval rdap_interval rdap_tsfile rdap_lock rdap_jobs
-	local rdap_ts block_cache block_cache_limit block_cache_cnt
+	local rdap_ts block_cache block_cache_limit block_cache_cnt monitor_set
 
 	# intervals for periodic cache refresh and RDAP queries
 	#
@@ -2617,6 +2698,14 @@ f_monitor() {
 	rdap_interval=2
 	rdap_tsfile="${ban_rundir}/banIP_rdap_ts"
 	printf '%s' "0" >"${rdap_tsfile}"
+
+	# determine the allowlist Set used by the monitor
+	#
+	if [ "${ban_allowlistonly}" = "1" ] && [ "${ban_monitorallowed}" = "1" ]; then
+		monitor_set="allowlist.local"
+	else
+		monitor_set="allowlist"
+	fi
 
 	# determine log reader type
 	#
@@ -2663,8 +2752,8 @@ f_monitor() {
 
 		# retrieve/cache current allowlist/blocklist content
 		#
-		allow_v4="$(nft_cache allowlist.v4)"
-		allow_v6="$(nft_cache allowlist.v6)"
+		allow_v4="$(nft_cache "${monitor_set}.v4")"
+		allow_v6="$(nft_cache "${monitor_set}.v6")"
 		block_v4="$(nft_cache blocklist.v4)"
 		block_v6="$(nft_cache blocklist.v6)"
 
@@ -2806,7 +2895,7 @@ f_monitor() {
 
 				# CIDR-aware allowlist lookup (only at block-time, not every IP)
 				#
-				if "${ban_nftcmd}" get element inet banIP "allowlist${proto}" { ${ip} } >/dev/null 2>&1; then
+				if "${ban_nftcmd}" get element inet banIP "${monitor_set}${proto}" { ${ip} } >/dev/null 2>&1; then
 					block_cache_cnt="$((block_cache_cnt + 1))"
 					if [ "${block_cache_cnt}" -ge "${block_cache_limit}" ]; then
 						block_cache=""
@@ -2814,7 +2903,7 @@ f_monitor() {
 						f_log "debug" "f_monitor ::: refreshed local monitor cache at ${date_stamp}"
 					fi
 					block_cache="${block_cache} ${ip} "
-					f_log "debug" "f_monitor ::: skip IP '${ip}', found via allowlist CIDR lookup"
+					f_log "debug" "f_monitor ::: skip IP '${ip}', found via ${monitor_set}${proto} CIDR lookup"
 					continue
 				fi
 

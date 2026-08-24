@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cligen
 PKG_VERSION:=7.8.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/clicon/$(PKG_NAME)/tar.gz/$(PKG_VERSION)?
@@ -28,7 +28,7 @@ define Package/cligen
   CATEGORY:=Utilities
   URL:=https://www.cligen.se
   TITLE:=CLIgen is a Command-Line Interface generator
-  DEPENDS:=libxml2
+  DEPENDS:=+libxml2
 endef
 
 define Package/cligen/description

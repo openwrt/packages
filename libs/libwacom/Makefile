@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libwacom
-PKG_VERSION:=2.19.0
+PKG_VERSION:=2.19.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/linuxwacom/$(PKG_NAME)/releases/download/$(PKG_NAME)-$(PKG_VERSION)/
-PKG_HASH:=8dd84e75d322aa5f33b2fe781cb67efa5706fedcf483737b4657557f33055a93
+PKG_HASH:=a1e5b1e7ef60fa70ed05b55d888d980ec7e86bd15594857f3c48c529b661bf32
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=MIT

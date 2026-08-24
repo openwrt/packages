@@ -3,11 +3,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-starlette
-PKG_VERSION:=1.2.1
+PKG_VERSION:=1.6.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=starlette
-PKG_HASH:=9b9b5ebb992e67d6093741e63c2f59e4f6fff986f81163c087867bd7b924b3f6
+PKG_HASH:=d4e3ac5e546444960c710297a3c9fc3f7ebae1b7e963f3d36173b49da535be9b
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
@@ -15,8 +15,8 @@ PKG_LICENSE_FILES:=LICENSE.md
 
 HOST_BUILD_DEPENDS:= \
 	python-anyio/host \
-	python-setuptools/host
-PKG_BUILD_DEPENDS:=python-setuptools/host
+	python-hatchling/host
+PKG_BUILD_DEPENDS:=python-hatchling/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

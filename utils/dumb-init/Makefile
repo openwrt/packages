@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dumb-init
-PKG_VERSION:=1.2.2
+PKG_VERSION:=1.2.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/Yelp/dumb-init/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=d4e2e10e39ad49c225e1579a4d770b83637399a0be48e29986f720fae44dafdf
+PKG_HASH:=3eda470d8a4a89123f4516d26877a727c0945006c8830b7e3bad717a5f6efc4e
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Toni Uhlig <matzeton@googlemail.com>

@@ -1,0 +1,34 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Matt Reeve <matt@mreeve.com>
+Date: Tue, 10 Aug 2021 12:41:04 +0100
+Subject: [PATCH] Fix bus error on OSPF on IPQ806X
+
+On a Netgear R7800, if ospf v2 or v3 is configured in bird.conf, it fails
+to start with this error:
+
+    kernel: Alignment trap: not handling instruction f44c0a1f at [<00035848>]
+    kernel: Unhandled fault: alignment exception (0x801) at 0x007e0624
+
+The problem is due to a struct not being properly aligned on the ARMv7
+architecture.
+
+This patch fixes the problem by adding the "PACKED" macro to the affected
+struct. Note that upstream may later fix this in another way, in which
+case this patch will not be required.
+
+Upstream-Status: not submitted. As of 2.19.2 the structure still carries
+no alignment attribute.
+
+Signed-off-by: Matt Reeve <matt@mreeve.com>
+---
+--- a/proto/ospf/topology.h
++++ b/proto/ospf/topology.h
+@@ -41,7 +41,7 @@ struct top_hash_entry
+   u8 mode;			/* LSA generated during RT calculation (LSA_RTCALC or LSA_STALE)*/
+   u8 nhs_reuse;			/* Whether nhs nodes can be reused during merging.
+ 				   See a note in rt.c:add_cand() */
+-};
++} PACKED;
+ 
+ 
+ /* Prevents ospf_hash_find() to ignore the entry, for p->lsrqh and p->lsrth */

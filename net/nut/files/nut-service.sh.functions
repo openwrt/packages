@@ -27,7 +27,9 @@ NUT_BASE_STATEPATH="/var/run/nut"
 
 # STATEPATH and RUNAS values are not valid until after find_statepath
 # and/or find_runas
+# shellcheck disable=SC2034
 STATEPATH=""
+# shellcheck disable=SC2034
 RUNAS=""
 
 # Default delay between interface change and interface trigger reload action
@@ -65,7 +67,7 @@ list_running_instances() {
 	if [ -n "$running_instances" ]; then
 		json_init
 		json_load "$running_instances" || {
-			logger -s -t nut-service "json_load failed in list_running_instances"
+			log_error "json_load failed in list_running_instances" nut-service.sh nut-service
 			return 1
 		}
 		json_get_keys instance_names
@@ -137,9 +139,9 @@ signal_instance() {
 	# We only want to issue secondary command if the primary command fails
 	if [ "$ret" = "1" ] && [ -n "$secondary_command" ] && procd_running "$service_name" "$instance_name"; then
 		# Informational log message, not error
-		logger -s -t "$service_name" "Performing '$secondary_command' $* for '$instance_name'"
+		log_msg "Performing '$secondary_command' $* for '$instance_name'" nut-service.sh "$service_name" info
 		set -f
-		"$secondary_command" "$@" 2>&1 | logger -s -t "$service_name"
+		"$secondary_command" "$@" 2>&1 | logger -t "$service_name"
 		set +f
 	fi
 	# No signal sent is a valid possibility. Also, if sending a signal fails
@@ -147,100 +149,66 @@ signal_instance() {
 	return 0
 }
 
-config_foreach_get() {
-	local section="$1"
-	local option="$2"
-	local value
-
-	# nut_found_value is a 'pseudo-global' variable so that the value can be
-	# passed back to the calling function (that is the variable is defined in
-	# that function's context, and modification in functions called from that
-	# function will update the variable there).
-	config_get value "$section" "$option"
-	if [ -n "$value" ]; then
-		nut_found_value="$value"
-		nut_found_value_count=$((nut_found_value_count + 1))
-	fi
-	return 0
-}
-
-find_foreach_value() {
-	local section_type="$1"
-	local package="$2"
-	local option="$3"
-	local default="$4"
-	local nut_found_value=""
-	local nut_found_value_count=0
-
-	# 'pseudo-global' variable so that the value can be passed back to this function (that is the
-	# variable is defined in this function's context, and modification in functions called from
-	# this function will update variable here).
-	nut_value_via_foreach=""
-
-	config_foreach config_foreach_get "$section_type" "$option" || {
-		log_error "config_foreach for config_foreach_get for '$package'.'$section_type' failed." nut-service.sh nut-service
-		# nut_found_value and nut_found_value_count are indeterminate on config_foreach failure
-		nut_found_value=""
-		nut_found_value_count=0
-		return 1
-	}
-
-	if [ "$nut_found_value_count" -gt 1 ]; then
-		# Informational log messages, not error
-		logger -t nut-common "Found more than one '$option' setting in '$package' for '$section_type'."
-		logger -t nut-common "Using last found '$option': nut_found_value='$nut_found_value'"
-	fi
-
-	if [ -z "$nut_found_value" ]; then
-		nut_found_value="$default"
-	fi
-
-	nut_value_via_foreach="$nut_found_value"
-	return 0
-}
-
 # Store path for NUT working data in the global variable STATEPATH
 # shellcheck disable=SC2329
 find_statepath() {
-	local section_type="$1"
+	local section="$1"
 	local package="$2"
-	# Callers should not need to see the variable below outside this function
-	# Conversely, functions called by this function are able to see and set
-	# the variable below, which acts as a 'pseudo-global' to called functions.
-	local nut_value_via_foreach=""
+	local ret statepath
 
-	find_foreach_value "$section_type" "$package" statepath "$NUT_BASE_STATEPATH" || return 1
-	# Modern OpenWrt (since at least OpenWrt-24.10 which is now old stable, we are developing for
-	# not yet released OpenWrt, so two versions later) supports readlink -f from busybox.
-	[ -n "$nut_value_via_foreach" ] || return 1
-	[ -d "$(readlink -f "$nut_value_via_foreach" 2>/dev/null)" ] || return 1
+	# Subshell so as not to interfere with main config_load
+	(
+		config_load "$package" || {
+			log_config_load_error "$package" "nut-service.sh" "nut-service"
+			exit 1
+		}
+		config_get statepath "$section" statepath "$NUT_BASE_STATEPATH"
+		ret=$?
 
-	# shellcheck disable=2034
-	STATEPATH="$nut_value_via_foreach"
-	return 0
+		if [ -n "$statepath" ]; then
+			printf "%s" "$statepath"
+		elif [ "$ret" != "0" ]; then
+			exit $ret
+		else
+			exit 1
+		fi
+	) || return $?
 }
 
 # Store user under which to run daemon processes
 # shellcheck disable=SC2329
 find_runas() {
-	local section_type="$1"
+	local section="$1"
 	local package="$2"
 	local fallback_runas="$3"
-	# Callers should not need to see the variable below outside this function
-	# Conversely, functions called by this function are able to see and set
-	# the variable below, which acts as a 'pseudo-global' to called functions.
-	local nut_value_via_foreach=""
+	local runas ret
 
-	find_foreach_value "$section_type" "$package" runas "${fallback_runas:-nut}" || return 1
-	[ -n "$nut_value_via_foreach" ] || return 1
-	[ -n "$(id -un "$nut_value_via_foreach")" ] || {
-		log_error "User '$nut_value_via_foreach' specified for RUNAS does not exist." nut-service.sh nut-service
-		return 1
-	}
+	# Subshell so as not to interfere with main config_load
+	(
+		config_load "$package" || {
+			log_config_load_error "$package" "nut-service.sh" "nut-service"
+			exit 1
+		}
+		config_get runas "$section" runas "${fallback_runas:-nut}"
+		ret=$?
 
-	# shellcheck disable=2034
-	RUNAS="$nut_value_via_foreach"
-	return 0
+		if [ -z "$runas" ]; then
+			if [ "$ret" != "0" ]; then
+				exit $ret
+			else
+				exit 1
+			fi
+		fi
+
+		if [ -n "$(id -un "$runas")" ]; then
+			printf "%s" "$runas"
+		else
+			# We omit the output on stderr to avoid potential mixing with the intended printf output on stdout,
+			# when called via command substitution, while maintaining log output to syslog
+			log_error "User '$runas' specified for 'runas' does not exist." nut-service.sh nut-service 2>/dev/null
+			exit 1
+		fi
+	) || return $?
 }
 
 # Detect if service is running under procd, with no instances
@@ -275,66 +243,73 @@ service_active_no_instances() {
 }
 
 # Setup triggers in procd for changes to specified network interfaces
-# network_is_up depends on /lib/functions/network.sh having been sourced
-interface_triggers() {
-	local action="$1"
-	local section="$2"
-	local interface_reload_delay="${3:-$DEFAULT_PROCD_INTERFACE_RELOAD_DELAY}"
-	local interfaces interface
-	local have_up_interface
-	local trigger_failed
+add_interface_triggers() {
+	local section="$1"
+	local interface_reload_delay="${2:-$DEFAULT_PROCD_INTERFACE_RELOAD_DELAY}"
+	local initscript="$3"
+	if [ $# -ge 3 ]; then
+		shift 3
+	fi
+
+	local interfaces interface trigger_failed
 
 	config_get interfaces "$section" triggerlist
 
-	# We list the actions we care about. Other actions are irrelevant.
-	# We do not need to log or otherwise 'notice' other actions
-	case "$action" in
-	add_trigger)
-		if [ -n "$interfaces" ]; then
-			set -f
-			trigger_failed="false"
-			# interfaces is deliberately unquoted so we get word-splitting for
-			# the for loop
-			for interface in $interfaces; do
-				# We use the variadic third and fourth parameters of procd_add_interface_trigger to
-				# restart instead of reload on interface up/down events. Additionally the variadic
-				# fourth and fifth parameters of procd_add_interface_trigger are passed through to
-				# the <script> (in this case /etc/init.d/nut-server), so the trigger action becomes
-				# /etc/init.d/nut-server restart "upsd").
-				procd_add_interface_trigger "interface.*.up" "$interface" /etc/init.d/nut-server restart "upsd" || trigger_failed="true"
-			done
-			set +f
-			if [ "$trigger_failed" = "true" ]; then
-				return 1
-			fi
-		else
-			# Add a restart trigger on any interface's up status changing
-			procd_add_raw_trigger "interface.*.up" "$interface_reload_delay" /etc/init.d/nut-server restart || return 1
-		fi
-		;;
-	check_interface_up)
-		if [ -n "$interfaces" ]; then
-			set -f
-			have_up_interface="false"
-			for interface in $interfaces; do
-				network_is_up "$interface" && have_up_interface="true" && break
-			done
-			set +f
-			if [ "$have_up_interface" = "false" ]; then
-				log_msg "None of the trigger interfaces are up." "nut-service.sh" "nut-service" "notice"
-				return 1
-			fi
-		else
-			# Return true if any interface is up
-			# -q for jsonfilter only suppress error output, not messages on
-			# stdout, redirect to >/dev/null is needed to avoid all output
-			if ubus -S call network.device status | jsonfilter -q -l 1 -e '$[@.up=true].up' >/dev/null; then
-				return 0
-			fi
-			log_msg "No interfaces are up." "nut-service.sh" "nut-service" "notice"
+	if [ -n "$interfaces" ] && [ "$interfaces" != "all" ]; then
+		set -f
+		trigger_failed="false"
+		# interfaces is deliberately unquoted so we get word-splitting for
+		# the for loop
+		for interface in $interfaces; do
+			# We use the variadic third and fourth parameters of procd_add_interface_trigger to
+			# restart instead of reload on interface up/down events. Additionally the variadic
+			# fifth and following parameters of procd_add_interface_trigger are passed through to
+			# the <script>, so the trigger action becomes e.g. /etc/init.d/<script> restart <variadic_vars>.
+			procd_add_interface_trigger "interface.*.up" "$interface" "/etc/init.d/$initscript" "restart" "$@" || trigger_failed="true"
+		done
+		set +f
+		if [ "$trigger_failed" = "true" ]; then
 			return 1
 		fi
-		;;
-	esac
+	elif [ "$interfaces" = "all" ]; then
+		# Add a restart trigger on any interface's up status changing
+		procd_add_raw_trigger "interface.*.up" "$interface_reload_delay" "/etc/init.d/$initscript" "restart" "$@" || return 1
+	else
+		return 0 # don't react to interface status
+	fi
+	return 0
+}
+
+# availability of network_is_up depends on /lib/functions/network.sh having
+# been sourced
+check_interface_up() {
+	local section="$1"
+	local interfaces interface have_up_interface
+
+	config_get interfaces "$section" triggerlist
+
+	if [ -n "$interfaces" ] && [ "$interfaces" != "all" ]; then
+		set -f
+		have_up_interface="false"
+		for interface in $interfaces; do
+			network_is_up "$interface" && have_up_interface="true" && break
+		done
+		set +f
+		if [ "$have_up_interface" = "false" ]; then
+			log_msg "None of the trigger interfaces are up." "nut-service.sh" "nut-service" "notice"
+			return 1
+		fi
+	elif [ "$interfaces" = "all" ]; then
+		# Return true if any interface is up
+		# -q for jsonfilter only suppress error output, not messages on
+		# stdout, redirect to >/dev/null is needed to avoid all output
+		if ubus -S call network.device status | jsonfilter -q -l 1 -e '$[@.up=true].up' >/dev/null; then
+			return 0
+		fi
+		log_msg "No interfaces are up." "nut-service.sh" "nut-service" "notice"
+		return 1
+	else
+		return 0 # don't depend on interface status
+	fi
 	return 0
 }

@@ -27,7 +27,7 @@
 
 # shellcheck source=net/nut/files/functions.sh.functions
 . /lib/functions.sh || {
-	logger -s -t nut-sendmail-notify "FATAL: Unable to source 'functions.sh'" || true
+	logger -t nut-sendmail-notify "FATAL: Unable to source 'functions.sh'" || true
 	exit 1
 }
 
@@ -36,7 +36,7 @@ SKIP_ADD_NOTIFYCMD="false"
 
 # Load and process nut_monitor (upsmon) configuration
 config_load nut_monitor || {
-	logger -s -t nut-sendmail-notify "FATAL: Loading 'nut_monitor' failed." || true
+	logger -t nut-sendmail-notify "FATAL: Loading 'nut_monitor' failed." || true
 	exit 1
 }
 
@@ -50,7 +50,7 @@ fi
 if [ "${SKIP_ADD_NOTIFYCMD}" = "false" ]; then
 	# Ensure upsmon type section with the name upsmon exists
 	uci set "nut_monitor.upsmon=upsmon" || {
-		logger -s -t nut-sendmail-notify "Failed to ensure an upsmon section named upsmon exists" || true
+		logger -t nut-sendmail-notify "Failed to ensure an upsmon section named upsmon exists" || true
 		exit 1
 	}
 
@@ -61,14 +61,14 @@ if [ "${SKIP_ADD_NOTIFYCMD}" = "false" ]; then
 		# never be reached. This is intentional. upssched takes precedence over
 		# nut-sendmail-notify, unless the user writes a script that supports both.
 		uci set "nut_monitor.upsmon.notifycmd=/usr/bin/nut-sendmail-notify" || {
-			logger -s -t nut-sendmail-notify "Failed to set notifycmd to be nut-sendmail-notify" || true
+			logger -t nut-sendmail-notify "Failed to set notifycmd to be nut-sendmail-notify" || true
 			uci revert nut_monitor || true
 			exit 1
 		}
 	fi
 
 	uci commit nut_monitor || {
-		logger -s -t nut-sendmail-notify "Failed to commit changes to nut_monitor" || true
+		logger -t nut-sendmail-notify "Failed to commit changes to nut_monitor" || true
 		exit 1
 	}
 fi

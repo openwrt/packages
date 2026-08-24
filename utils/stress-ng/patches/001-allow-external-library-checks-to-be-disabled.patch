@@ -1,0 +1,141 @@
+From e0c4d324a0f0006fa090b8370989a03ecb28e334 Mon Sep 17 00:00:00 2001
+From: Alexandru Ardelean <alex@shruggie.ro>
+Date: Thu, 9 Jul 2026 17:41:34 +0300
+Subject: [PATCH] Makefile.config: allow external library checks to be
+ disabled
+
+Emptying a LIB_* variable now skips the check, so builds can opt out of
+stressors that pull in external library dependencies.
+---
+--- a/Makefile.config
++++ b/Makefile.config
+@@ -161,6 +161,36 @@ define check
+ endef
+ 
+ #
++#  check_lib
++#	as check, but for an external library. If the library's LIB_* variable
++#	has been emptied, e.g. "make LIB_ACL=", the check is skipped and the
++#	library is reported as unused. This allows builds to opt out of
++#	stressors that pull in external library dependencies.
++#
++# $1 = test program
++# $2 = HAVE config name
++# $3 = "using" message
++# $4 = libraries required, empty if the library has been disabled
++# $5 = cflags required for test
++#
++define check_lib
++	$(if $(strip $(4)),$(call check,$1,$2,$3,$4,$5),@echo "using $(3) ... no")
++endef
++
++#
++#  check_lib_apparmor
++#	as check_lib, but for the apparmor library check
++#
++# $1 = test program
++# $2 = HAVE config name
++# $3 = "using" message
++# $4 = libraries required, empty if the library has been disabled
++#
++define check_lib_apparmor
++	$(if $(strip $(4)),$(call check_apparmor,$1,$2,$3,$4),@echo "using $(3) ... no")
++endef
++
++#
+ # $1 = test program
+ # $2 = HAVE config name
+ # $3 = "using" message
+@@ -378,56 +408,52 @@ libraries: \
+ 	LIB_RT LIB_SCTP LIB_XXHASH LIB_Z LIB_LZMA
+ 
+ LIB_ACL:
+-	$(call check,test-libacl,HAVE_LIB_ACL,$(LIB_ACL),$(LIB_ACL))
++	$(call check_lib,test-libacl,HAVE_LIB_ACL,-lacl,$(LIB_ACL))
+ 
+ LIB_AIO:
+-	$(call check,test-libaio,HAVE_LIB_AIO,$(LIB_AIO),$(LIB_AIO))
++	$(call check_lib,test-libaio,HAVE_LIB_AIO,-laio,$(LIB_AIO))
+ 
+ LIB_APPARMOR:
+-	$(call check_apparmor,test-apparmor,HAVE_APPARMOR,$(LIB_APPARMOR),$(LIB_APPARMOR))
++	$(call check_lib_apparmor,test-apparmor,HAVE_APPARMOR,-lapparmor,$(LIB_APPARMOR))
+ 
+ LIB_BSD:
+-ifeq ($(LIB_BSD),)
+-	@echo using -lbsd ... no
+-else
+-	$(call check,test-libbsd,HAVE_LIB_BSD,$(LIB_BSD),$(LIB_BSD))
+-endif
++	$(call check_lib,test-libbsd,HAVE_LIB_BSD,-lbsd,$(LIB_BSD))
+ 
+ LIB_CRYPT:
+-	$(call check,test-libcrypt,HAVE_LIB_CRYPT,$(LIB_CRYPT),$(LIB_CRYPT))
++	$(call check_lib,test-libcrypt,HAVE_LIB_CRYPT,-lcrypt,$(LIB_CRYPT))
+ 
+ LIB_DL:
+ 	$(call check,test-libdl,HAVE_LIB_DL,$(LIB_DL),$(LIB_DL))
+ 
+ LIB_EGL:
+-	$(call check,test-libegl,HAVE_LIB_EGL,$(LIB_EGL),$(LIB_EGL))
++	$(call check_lib,test-libegl,HAVE_LIB_EGL,-lEGL,$(LIB_EGL))
+ 
+ LIB_GBM:
+-	$(call check,test-libgbm,HAVE_LIB_GBM,$(LIB_GBM),$(LIB_GBM))
++	$(call check_lib,test-libgbm,HAVE_LIB_GBM,-lgbm,$(LIB_GBM))
+ 
+ LIB_GLES2:
+-	$(call check,test-libgles,HAVE_LIB_GLES2,$(LIB_GLES2),$(LIB_GLES2))
++	$(call check_lib,test-libgles,HAVE_LIB_GLES2,-lGLESv2,$(LIB_GLES2))
+ 
+ LIB_GMP:
+-	$(call check,test-libgmp,HAVE_LIB_GMP,$(LIB_GMP),$(LIB_GMP))
++	$(call check_lib,test-libgmp,HAVE_LIB_GMP,-lgmp,$(LIB_GMP))
+ 
+ LIB_IPSEC_MB:
+-	$(call check,test-libipsec-mb,HAVE_LIB_IPSEC_MB,$(LIB_IPSEC_MB),$(LIB_IPSEC_MB))
++	$(call check_lib,test-libipsec-mb,HAVE_LIB_IPSEC_MB,-lIPSec_MB,$(LIB_IPSEC_MB))
+ 
+ LIB_JPEG:
+-	$(call check,test-libjpeg,HAVE_LIB_JPEG,$(LIB_JPEG),$(LIB_JPEG))
++	$(call check_lib,test-libjpeg,HAVE_LIB_JPEG,-ljpeg,$(LIB_JPEG))
+ 
+ LIB_JUDY:
+-	$(call check,test-judy,HAVE_LIB_JUDY,$(LIB_JUDY),$(LIB_JUDY))
++	$(call check_lib,test-judy,HAVE_LIB_JUDY,-lJudy,$(LIB_JUDY))
+ 
+ LIB_KMOD:
+-	$(call check,test-libkmod,HAVE_LIB_KMOD,$(LIB_KMOD),$(LIB_KMOD))
++	$(call check_lib,test-libkmod,HAVE_LIB_KMOD,-lkmod,$(LIB_KMOD))
+ 
+ LIB_MD:
+-	$(call check,test-libmd,HAVE_LIB_MD,$(LIB_MD),$(LIB_MD))
++	$(call check_lib,test-libmd,HAVE_LIB_MD,-lmd,$(LIB_MD))
+ 
+ LIB_MPFR:
+-	$(call check,test-libmpfr,HAVE_LIB_MPFR,$(LIB_MPFR),$(LIB_MPFR) $(LIB_GMP))
++	$(call check_lib,test-libmpfr,HAVE_LIB_MPFR,-lmpfr,$(if $(LIB_MPFR),$(LIB_MPFR) $(LIB_GMP)))
+ 
+ LIB_PTHREAD:
+ 	$(call check,test-libpthread,HAVE_LIB_PTHREAD,$(LIB_PTHREAD),$(LIB_PTHREAD))
+@@ -439,16 +465,16 @@ LIB_RT:
+ 	$(call check,test-librt,HAVE_LIB_RT,$(LIB_RT),$(LIB_RT))
+ 
+ LIB_SCTP:
+-	$(call check,test-libsctp,HAVE_LIB_SCTP,$(LIB_SCTP),$(LIB_SCTP))
++	$(call check_lib,test-libsctp,HAVE_LIB_SCTP,-lsctp,$(LIB_SCTP))
+ 
+ LIB_XXHASH:
+-	$(call check,test-libxxhash,HAVE_LIB_XXHASH,$(LIB_XXHASH),$(LIB_XXHASH))
++	$(call check_lib,test-libxxhash,HAVE_LIB_XXHASH,-lxxhash,$(LIB_XXHASH))
+ 
+ LIB_Z:
+-	$(call check,test-libz,HAVE_LIB_Z,$(LIB_Z),$(LIB_Z))
++	$(call check_lib,test-libz,HAVE_LIB_Z,-lz,$(LIB_Z))
+ 
+ LIB_LZMA:
+-	$(call check,test-liblzma,HAVE_LIB_LZMA,$(LIB_LZMA),$(LIB_LZMA))
++	$(call check_lib,test-liblzma,HAVE_LIB_LZMA,-llzma,$(LIB_LZMA))
+ 
+ .PHONY: headers
+ headers: \

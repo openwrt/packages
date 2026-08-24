@@ -68,6 +68,18 @@ check_valid_user_group_name() {
 	return 0
 }
 
+# Just a check for safe/allowed characters, not a full validation
+check_safe_hostname_or_ip() {
+	local hostname="$1"
+
+	case "$hostname" in
+	"" | *[!a-zA-Z0-9.:-\[\]-]*)
+		return 1
+		;;
+	esac
+	return 0
+}
+
 # shellcheck disable=SC2329,SC2317
 check_valid_hex_number() {
 	local number="$1"
@@ -113,6 +125,58 @@ check_valid_hex_number() {
 	# catch-all have a return) and shellcheck will complain if we do.
 }
 
+# also passes on an empty value
+check_signed_int() {
+	local number="$1"
+
+	# a minus sign with no number is invalid
+	if [ "$number" = "-" ]; then
+		return 1
+	fi
+
+	case "${number#[-]}" in
+	*[!0123456789]*)
+		return 1
+		;;
+	*)
+		return 0
+		;;
+	esac
+}
+
+# also passes on an empty value
+check_unsigned_int() {
+	local number="$1"
+
+	case "$number" in
+	*[!0123456789]*)
+		return 1
+		;;
+	*)
+		return 0
+		;;
+	esac
+}
+
+# check for valid port, if present
+# also passes on an empty value
+check_port() {
+	local port="$1"
+
+	if [ -n "$port" ]; then
+		case "$port" in
+		*[!0-9]*)
+			return 1
+			;;
+		esac
+		# Catches port numbers outside valid range (1-65535)
+		if [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; then
+			return 1
+		fi
+	fi
+	return 0
+}
+
 # Wrap logging, in case we decide to update the logging, everywhere
 log_msg() {
 	local reason="$1"
@@ -121,7 +185,7 @@ log_msg() {
 	local level="${4:-notice}"
 	local facility="${5:-daemon}"
 
-	logger -s -t "$syslog_id" -p "${facility}.${level}" "'$reason' in '$current_script'" || {
+	logger -t "${syslog_id}[$$]" -p "${facility}.${level}" "'$reason' in '$current_script'" || {
 		# We use 'tr' as changing case via variable parameter substitution is not available in ash on OpenWrt
 		# shellcheck disable=SC2018,SC2019
 		level="$(echo "$level" | tr 'a-z' 'A-Z')"
@@ -175,19 +239,32 @@ log_error() {
 	log_msg "$reason" "$current_script" "$syslog_id" "error"
 }
 
-note_section_of_type() {
-	have_expected_section="true"
+note_section_match() {
+	local section="$1"
+	local wanted="$2"
+
+	if [ -n "$section" ] && [ "$section" = "$wanted" ]; then
+		have_expected_section="true"
+	fi
 }
 
-have_section_of_type() {
+have_section_named() {
 	local section_type="$1"
+	local section_name="$2"
+	local ret
 
 	# 'pseudo-global' to capture result from config_foreach
 	local have_expected_section="false"
-	config_foreach note_section_of_type "$section_type"
+	config_foreach note_section_match "$section_type" "$section_name"
+	ret=$?
 
 	if [ "$have_expected_section" = "true" ]; then
 		return 0
 	fi
-	return 1
+
+	if [ "$ret" = "0" ]; then
+		return 1
+	else
+		return $ret
+	fi
 }

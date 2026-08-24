@@ -3,11 +3,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-anyio
-PKG_VERSION:=4.13.0
-PKG_RELEASE:=2
+PKG_VERSION:=4.14.2
+PKG_RELEASE:=1
 
 PYPI_NAME:=anyio
-PKG_HASH:=334b70e641fd2221c1505b3890c69882fe4a2df910cba14d97019b90b24439dc
+PKG_HASH:=cfa139f3ed1a23ee8f88a145ddb5ac7605b8bbfd8592baacd7ce3d8bb4313c7f
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT

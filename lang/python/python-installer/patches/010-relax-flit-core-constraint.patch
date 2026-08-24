@@ -1,0 +1,25 @@
+From 0896005b967075612dc66f98d33b46b9c1e689dd Mon Sep 17 00:00:00 2001
+From: Alexandru Ardelean <alex@shruggie.ro>
+Date: Mon, 10 Aug 2026 15:15:26 +0300
+Subject: [PATCH] python-installer: allow flit_core 4.x as the build backend
+
+installer caps its flit_core build requirement below 4, so python-installer/host fails
+with "Missing dependencies: flit_core<4" now that the feed ships flit-core
+4.0.2. flit_core 4 builds it unchanged; relax the upper bound.
+
+Signed-off-by: Alexandru Ardelean <alex@shruggie.ro>
+---
+ pyproject.toml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -1,7 +1,7 @@
+ [build-system]
+ build-backend = "flit_core.buildapi"
+ requires = [
+-    "flit_core<4,>=3.11",
++    "flit_core>=3.11",
+ ]
+ 
+ [project]

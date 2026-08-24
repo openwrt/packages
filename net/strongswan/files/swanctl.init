@@ -225,29 +225,27 @@ config_child() {
 	local conf="$1"
 	local mode="$2"
 
-	local hw_offload
-	local interface
-	local ipcomp
-	local priority
-	local local_subnet
-	local local_nat
+	local startaction
 	local updown
 	local firewall
-	local remote_subnet
 	local lifetime
 	local dpdaction
 	local closeaction
-	local startaction
 	local if_id
 	local rekeytime
+	local ipcomp
+	local interface
+	local hw_offload
+	local priority
 	local rekeybytes
 	local lifebytes
 	local rekeypackets
 	local lifepackets
 	local replay_window
+	local local_subnet
+	local remote_subnet
 
 	config_get startaction "$conf" startaction "route"
-	config_get local_nat "$conf" local_nat ""
 	config_get updown "$conf" updown ""
 	config_get firewall "$conf" firewall ""
 	config_get lifetime "$conf" lifetime ""
@@ -333,8 +331,6 @@ config_child() {
 		;;
 	esac
 
-	[ -n "$local_nat" ] && local_subnet="$local_nat"
-
 	swanctl_xappend3 "$conf {"
 
 	[ -n "$local_subnet" ] && swanctl_xappend4 "local_ts = $local_subnet"
@@ -374,7 +370,7 @@ config_child() {
 	[ -n "$dpdaction" ] && swanctl_xappend4 "dpd_action = $dpdaction"
 	[ -n "$replay_window" ] && swanctl_xappend4 "replay_window = $replay_window"
 
-        swanctl_xappend3 "}"
+	swanctl_xappend3 "}"
 }
 
 config_tunnel() {
@@ -440,14 +436,10 @@ config_remote() {
 	local conf="$1"
 
 	local enabled
-	local gateway
-	local local_sourceip
-	local local_ip
-	local local_identifier
-	local remote_gateway
-	local remote_identifier
 	local pre_shared_key
 	local auth_method
+	local local_identifier
+	local remote_identifier
 	local keyingtries
 	local dpddelay
 	local encap
@@ -462,19 +454,20 @@ config_remote() {
 	local overtime
 	local send_cert
 	local send_certreq
+	local eap_id
+	local local_addrs
+	local remote_addrs
+	local vips
 	local remote_ca_certs
 	local pools
-	local eap_id
 
 	config_get_bool enabled "$conf" enabled 0
 	[ $enabled -eq 0 ] && return
 
-	config_get gateway "$conf" gateway
 	config_get pre_shared_key "$conf" pre_shared_key
 	config_get auth_method "$conf" authentication_method
 	config_get local_identifier "$conf" local_identifier ""
 	config_get remote_identifier "$conf" remote_identifier ""
-	config_get local_ip "$conf" local_ip "%any"
 	config_get keyingtries "$conf" keyingtries "3"
 	config_get dpddelay "$conf" dpddelay "30s"
 	config_get_bool encap "$conf" encap 0
@@ -491,7 +484,9 @@ config_remote() {
 	config_get_bool send_certreq "$conf" send_certreq 1
 	config_get eap_id "$conf" eap_id "%any"
 
-	config_list_foreach "$conf" local_sourceip append_var local_sourceip ","
+	config_list_foreach "$conf" local_addrs append_var local_addrs ","
+	config_list_foreach "$conf" remote_addrs append_var remote_addrs ","
+	config_list_foreach "$conf" vips append_var vips ","
 	config_list_foreach "$conf" remote_ca_certs append_var remote_ca_certs ","
 	config_list_foreach "$conf" pools append_var pools ","
 
@@ -509,13 +504,16 @@ config_remote() {
 		;;
 	esac
 
-	[ "$gateway" = "any" ] && remote_gateway="%any" || remote_gateway="$gateway"
 
+	# swanctl.conf has no "privkeys" option in connections.<conn>.local<suffix>;
+	# strongSwan auto-selects the private key from /etc/swanctl/private by
+	# matching it against the certificate configured via "certs". We only
+	# need to make sure the referenced key file actually exists there.
 	if [ -n "$local_key" ]; then
 		[ "$(dirname "$local_key")" != "." ] && \
-		   fatal "local_key $local_key can't be pathname"
+			fatal "local_key $local_key can't be pathname"
 		[ -f "/etc/swanctl/private/$local_key" ] || \
-		   fatal "local_key $local_key not found"
+			fatal "local_key $local_key not found"
 	fi
 
 	local ike_proposal
@@ -526,26 +524,25 @@ config_remote() {
 	if [ "$auth_method" = pubkey ]; then
 		if [ -n "$ca_cert" ]; then
 			[ "$(dirname "$ca_cert")" != "." ] && \
-			    fatal "ca_cert $ca_cert can't be pathname"
+				fatal "ca_cert $ca_cert can't be pathname"
 			[ -f "/etc/swanctl/x509ca/$ca_cert" ] || \
-			    fatal "ca_cert $ca_cert not found"
+				fatal "ca_cert $ca_cert not found"
 		fi
 
 		if [ -n "$local_cert" ]; then
 			[ "$(dirname "$local_cert")" != "." ] && \
-			    fatal "local_cert $local_cert can't be pathname"
+				fatal "local_cert $local_cert can't be pathname"
 			[ -f "/etc/swanctl/x509/$local_cert" ] || \
-			    fatal "local_cert $local_cert not found"
+				fatal "local_cert $local_cert not found"
 		fi
 	fi
 
 	swanctl_xappend0 "# config for $conf"
 	swanctl_xappend0 "connections {"
 	swanctl_xappend1 "$conf {"
-	swanctl_xappend2 "local_addrs = $local_ip"
-	swanctl_xappend2 "remote_addrs = $remote_gateway"
-
-	[ -n "$local_sourceip" ] && swanctl_xappend2 "vips = $local_sourceip"
+	[ -n "$local_addrs" ] && swanctl_xappend2 "local_addrs = $local_addrs"
+	[ -n "$remote_addrs" ] && swanctl_xappend2 "remote_addrs = $remote_addrs"
+	[ -n "$vips" ] && swanctl_xappend2 "vips = $vips"
 	[ -n "$fragmentation" ] && swanctl_xappend2 "fragmentation = $fragmentation"
 	[ -n "$pools" ] && swanctl_xappend2 "pools = $pools"
 
@@ -559,7 +556,7 @@ config_remote() {
 
 	[ -n "$local_identifier" ] && swanctl_xappend3 "id = \"$local_identifier\""
 	[ "$local_auth_method" = pubkey ] && [ -n "$local_cert" ] && \
-	    swanctl_xappend3 "certs = $local_cert"
+		swanctl_xappend3 "certs = $local_cert"
 	swanctl_xappend2 "}"
 
 	swanctl_xappend2 "remote {"
@@ -652,36 +649,35 @@ config_remote() {
 	swanctl_xappend0 ""
 }
 
-do_preamble() {
-	swanctl_xappend0 "# generated by /etc/init.d/swanctl"
-}
-
-config_ipsec() {
+config_charon_syslog() {
 	local conf="$1"
+	local plugin="$2"
 
-	local rtinstall_enabled
-	local routing_table
-	local routing_table_id
-	local interface
-	local interface_list
+	local debug
 
 	config_get debug "$conf" debug 0
-	config_get_bool rtinstall_enabled "$conf" rtinstall_enabled 1
-	[ $rtinstall_enabled -eq 1 ] && install_routes=yes || install_routes=no
+	swan_xappend1 "syslog {"
+	swan_xappend2 "identifier = ipsec"
+	swan_xappend2 "daemon {"
+	swan_xappend3 "default = $debug"
+	swan_xappend2 "}"
+	swan_xappend1 "}"
+}
 
-	# prepare extra charon config option ignore_routing_tables
-	for routing_table in $(config_get "$conf" "ignore_routing_tables"); do
-		if [ "$routing_table" -ge 0 ] 2>/dev/null; then
-			routing_table_id=$routing_table
-		else
-			routing_table_id=$(sed -n '/[ \t]*[0-9]\+[ \t]\+'$routing_table'[ \t]*$/s/[ \t]*\([0-9]\+\).*/\1/p' /etc/iproute2/rt_tables)
-		fi
+config_charon_scripts() {
+	local conf="$1"
 
-		[ -n "$routing_table_id" ] && append routing_tables_ignored "$routing_table_id"
-	done
+	swan_xappend1 "start-scripts {"
+	swan_xappend2 "load-all = /usr/sbin/swanctl --load-all --noprompt"
+	swan_xappend1 "}"
+}
+
+config_charon_interfaces_use() {
+	local conf="$1"
+
+	local interface interface_list device_list
 
 	config_list_foreach "$conf" interface append_var interface_list
-
 	if [ -z "$interface_list" ]; then
 		WAIT_FOR_INTF=0
 	else
@@ -691,38 +687,66 @@ config_ipsec() {
 		done
 		[ -n "$device_list" ] && WAIT_FOR_INTF=0 || WAIT_FOR_INTF=1
 	fi
+
+	[ -n "$device_list" ] && swan_xappend1 "interfaces_use = $device_list"
 }
 
-do_postamble() {
-	swan_xappend0 "# generated by /etc/init.d/swanctl"
-	swan_xappend0 "charon {"
+config_charon_ignore_routing_tables() {
+	local conf="$1"
+
+	local routing_table_list routing_table ignore_routing_tables
+
+	config_list_foreach "$conf" ignore_routing_tables append_var routing_table_list
+	for routing_table in $routing_table_list; do
+		local routing_table_id
+		if [ "$routing_table" -ge 0 ] 2>/dev/null; then
+			routing_table_id=$routing_table
+		else
+			routing_table_id=$(sed -n '/[ \t]*[0-9]\+[ \t]\+'$routing_table'[ \t]*$/s/[ \t]*\([0-9]\+\).*/\1/p' /etc/iproute2/rt_tables)
+		fi
+
+		[ -n "$routing_table_id" ] && append ignore_routing_tables "$routing_table_id"
+	done
+
+	[ -n "$ignore_routing_tables" ] && swan_xappend1 "ignore_routing_tables = $ignore_routing_tables"
+}
+
+config_charon_install_routes() {
+	local conf="$1"
+
+	local rtinstall_enabled install_routes
+
+	config_get_bool rtinstall_enabled "$conf" rtinstall_enabled 1
+	[ $rtinstall_enabled -eq 1 ] && install_routes=yes || install_routes=no
+
 	swan_xappend1 "install_routes = $install_routes"
-	[ -n "$routing_tables_ignored" ] && swan_xappend1 "ignore_routing_tables = $routing_tables_ignored"
-	[ -n "$device_list" ] && swan_xappend1 "interfaces_use = $device_list"
-	swan_xappend1 "start-scripts {"
-	swan_xappend2 "load-all = /usr/sbin/swanctl --load-all --noprompt"
-	swan_xappend1 "}"
-	swan_xappend1 "syslog {"
-	swan_xappend2 "identifier = ipsec"
-	swan_xappend2 "daemon {"
-	swan_xappend3 "default = $debug"
-	swan_xappend2 "}"
-	swan_xappend1 "}"
+}
+
+config_strongswan_generate() {
+	local conf="$1"
+
+	swan_xappend0 "charon {"
+	config_charon_install_routes "$conf"
+	config_charon_ignore_routing_tables "$conf"
+	config_charon_interfaces_use "$conf"
+	config_charon_scripts "$conf"
+	config_charon_syslog "$conf" "syslog"
 	swan_xappend0 "}"
 }
 
 prepare_env() {
 	mkdir -p /var/ipsec /var/swanctl
 
-	swan_reset
-	swanctl_reset
-	do_preamble
-
-	# needed by do_postamble
-	local debug install_routes routing_tables_ignored device_list
-
 	config_load ipsec
-	config_foreach config_ipsec ipsec
+
+	# Generate /var/ipsec/strongswan.conf
+	swan_reset
+	swan_xappend0 "# generated by /etc/init.d/swanctl"
+	config_strongswan_generate globals
+
+	# Generate /var/swanctl/swanctl.conf
+	swanctl_reset
+	swanctl_xappend0 "# generated by /etc/init.d/swanctl"
 	config_foreach config_remote remote
 	
 	swanctl_xappend0 "# Global config"
@@ -736,7 +760,6 @@ prepare_env() {
 	config_foreach config_mschapv2_secret mschapv2_secrets
 	swanctl_xappend0 "}"
 
-	do_postamble
 }
 
 reload_service() {

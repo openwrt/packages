@@ -8,6 +8,13 @@
 # We require a interface name
 [ -n "${INTERFACE}" ] || exit
 
+# Virtual net devices (SQM IFB, GRE, bridges, veth, tun/tap, ...)
+# can never be modems; mm_report_event drops them internally, skip
+# the log-noisy hotplug script entirely.
+case "${DEVPATH}" in
+	/devices/virtual/*) exit ;;
+esac
+
 # Always make sure the rundir exists
 mkdir -m 0755 -p "${MODEMMANAGER_RUNDIR}"
 

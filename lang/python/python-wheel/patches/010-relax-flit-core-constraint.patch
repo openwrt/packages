@@ -1,0 +1,25 @@
+From b4e5d59d7a4445690e085005dcff1e49913a5cf6 Mon Sep 17 00:00:00 2001
+From: Alexandru Ardelean <alex@shruggie.ro>
+Date: Mon, 10 Aug 2026 09:00:00 +0300
+Subject: [PATCH] python-wheel: allow flit_core 4.x as the build backend
+
+wheel 0.47.0 caps its build requirement at "flit_core >=3.11,<4", but the
+feed now ships flit-core 4.0.2, so python-wheel/host (and the whole python
+host build-chain that depends on it) fails with "Missing dependencies:
+flit_core<4,>=3.11". flit_core 4 builds wheel unchanged, so relax the upper
+bound.
+
+Signed-off-by: Alexandru Ardelean <alex@shruggie.ro>
+---
+ pyproject.toml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -1,5 +1,5 @@
+ [build-system]
+-requires = ["flit_core >=3.11,<4"]
++requires = ["flit_core >=3.11"]
+ build-backend = "flit_core.buildapi"
+ 
+ [project]

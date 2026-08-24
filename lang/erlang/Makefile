@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=erlang
 PKG_VERSION:=28.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=otp_src_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/erlang/otp/releases/download/OTP-$(PKG_VERSION)
@@ -379,7 +379,7 @@ define Package/erlang/install
 		$(CP) $(PKG_INSTALL_DIR)/usr/lib/erlang/bin/$$$$f $(1)/usr/lib/erlang/bin/ ; \
 	done
 	$(INSTALL_DIR) $(1)/usr/lib/erlang/lib
-	for m in erts kernel sasl stdlib; do \
+	for m in erts kernel stdlib; do \
 		$(CP) $(PKG_INSTALL_DIR)/usr/lib/erlang/lib/$$$$m-* $(1)/usr/lib/erlang/lib/ ; \
 		rm -rf $(1)/usr/lib/erlang/lib/$$$$m-*/examples ; \
 		rm -rf $(1)/usr/lib/erlang/lib/$$$$m-*/src ; \

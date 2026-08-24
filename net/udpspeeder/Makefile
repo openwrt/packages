@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=UDPspeeder
 PKG_VERSION:=20230206.0
-PKG_RELEASE:=3
+PKG_RELEASE:=5
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
@@ -21,29 +21,23 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Nishant Sharma <nishant@hopbox.in>, Toni Uhlig <matzeton@googlemail.com>
 
 PKG_BUILD_PARALLEL:=1
+PKG_BUILD_FLAGS:=no-mips16
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/UDPspeeder
-	SECTION:=net
-	CATEGORY:=Network
-	TITLE:=UDP Network Speed-Up Tool
-	URL:=https://github.com/wangyu-/UDPspeeder
-	DEPENDS:= +libstdcpp +librt +libatomic
+  SECTION:=net
+  CATEGORY:=Network
+  TITLE:=UDP Network Speed-Up Tool
+  URL:=https://github.com/wangyu-/UDPspeeder
+  DEPENDS:=+libstdcpp +librt +libatomic
 endef
 
 define Package/UDPspeeder/description
-	 A Tunnel which Improves your Network Quality on a High-latency Lossy Link by using Forward Error Correction,for All Traffics(TCP/UDP/ICMP)
+  A Tunnel which Improves your Network Quality on a High-latency Lossy Link by using Forward Error Correction,for All Traffics(TCP/UDP/ICMP)
 endef
 
-MAKE_FLAGS += cross
-
-define Build/Prepare
-	$(Build/Prepare/Default)
-	sed -i 's/cc_cross=.*/cc_cross=$(TARGET_CXX)/g' $(PKG_BUILD_DIR)/makefile
-	sed -i '/\gitversion/d' $(PKG_BUILD_DIR)/makefile
-	echo 'const char * const gitversion = "$(PKG_VERSION)";' > $(PKG_BUILD_DIR)/git_version.h
-endef
+MAKE_FLAGS += cross gitversion="$(PKG_VERSION)"
 
 define Package/UDPspeeder/install
 	$(INSTALL_DIR) $(1)/usr/bin

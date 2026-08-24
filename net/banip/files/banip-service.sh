@@ -46,37 +46,29 @@ f_log "info" "start banIP download processes"
 f_getfeed
 [ "${ban_deduplicate}" = "1" ] && printf '\n' >"${ban_tmpfile}.deduplicate"
 
+# handle allowlistonly mode
+#
+if [ "${ban_allowlistonly}" = "1" ] && [ "${ban_monitorallowed}" = "1" ]; then
+	ban_monitorfeed="allowlist.local"
+fi
+
 # handle downloads
 #
 cnt="1"
-for feed in allowlist ${ban_feed} blocklist; do
+for feed in allowlist ${ban_monitorfeed} ${ban_feed} blocklist; do
 
 	# local feeds (sequential processing)
 	#
-	if [ "${feed}" = "allowlist" ] || [ "${feed}" = "blocklist" ]; then
+	if [ "${feed%%.*}" = "allowlist" ] || [ "${feed}" = "blocklist" ]; then
 		for proto in 4MAC 6MAC 4 6; do
-			f_down "${feed}" "${proto}" "-" "-" "inout"
+			chain="inout"
+			if [ "${feed}" = "allowlist.local" ]; then
+				case "${proto}" in *MAC) continue ;; esac
+				chain="none"
+			fi
+			f_down "${feed}" "${proto}" "-" "-" "${chain}"
 		done
 		continue
-	fi
-
-	# skip external feeds in allowlistonly mode
-	#
-	if [ "${ban_allowlistonly}" = "1" ]; then
-		case " ${ban_feedin} " in
-		*" allowlist "*) ;;
-
-		*)
-			case " ${ban_feedout} " in
-			*" allowlist "*) ;;
-
-			*)
-				f_log "info" "skip feed '${feed}' in allowlistonly mode"
-				continue
-				;;
-			esac
-			;;
-		esac
 	fi
 
 	# external feeds (parallel processing on multicore hardware)

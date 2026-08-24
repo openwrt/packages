@@ -5,7 +5,7 @@ case "$1" in
 		;;
 	python3-certifi)
 		BUNDLE=$(python3 -m certifi) || {
-			echo "Failed to run the certfi module script.  Exit status=$?." >&2
+			echo "Failed to run the certifi module script.  Exit status=$?." >&2
 			echo "Output='$BUNDLE'" >&2
 			exit 1
 		}
