@@ -17,7 +17,7 @@ function lvm(cmd, ...args) {
 		let json_param = "";
 		if (cmd in lvm_json_cmds)
 			json_param = "--reportformat json --units b ";
-		let stdout = fs.popen(sprintf("LVM_SUPPRESS_FD_WARNINGS=1 %s %s %s%s", lvm_exec, cmd, json_param, join(" ", args)));
+		let stdout = fs.popen(sprintf("LVM_SUPPRESS_FD_WARNINGS=1 %s %s %s%s", lvm_exec, cmd, json_param, join(" ", map(args, shell_quote))));
 		let tmp;
 		if (stdout) {
 			tmp = stdout.read("all");
@@ -37,7 +37,9 @@ function lvm(cmd, ...args) {
 	} catch(e) {
 		printf("Failed to parse lvm cli output: %s\n%s\n", e, e.stacktrace[0].context);
 	}
-	return null;
+	// callers read .retval without checking, so failure is reported as a
+	// return value rather than as an absent object
+	return { retval: -1 };
 }
 
 function pvs() {
@@ -53,17 +55,17 @@ function pvs() {
 	if (!rootdev)
 		return null;
 
-	let tmp = lvm("pvs", "-o", "vg_name", "-S", sprintf("\"pv_name=~^/dev/%s.*\$\"", rootdev));
-	if (tmp.report.pv[0])
+	let tmp = lvm("pvs", "-o", "vg_name", "-S", sprintf("pv_name=~^/dev/%s.*$", rootdev));
+	if (tmp?.report?.pv?.[0])
 		return tmp.report.pv[0].vg_name;
 	else
 		return null;
 }
 
 function vgs(vg_name) {
-	let tmp = lvm("vgs", "-o", "vg_extent_size,vg_extent_count,vg_free_count", "-S", sprintf("\"vg_name=%s\"", vg_name));
+	let tmp = lvm("vgs", "-o", "vg_extent_size,vg_extent_count,vg_free_count", "-S", sprintf("vg_name=%s", vg_name));
 	let ret = null;
-	if (tmp && tmp.report.vg) {
+	if (tmp?.report?.vg) {
 		ret = tmp.report.vg;
 		for (let r in ret) {
 			r.vg_extent_size = +(rtrim(r.vg_extent_size, "B"));
@@ -77,15 +79,21 @@ function vgs(vg_name) {
 		return null;
 }
 
+// lvm matches lvname with its own regex, so a name is escaped before it goes
+// in. name_valid() limits names to [A-Za-z0-9._-], of which only '.' means
+// anything to that parser; widen this if the permitted set ever widens.
+function lvname_quote(vol_name) {
+	return replace(`${vol_name}`, /\./g, "\\.");
+}
+
 function lvs(vg_name, vol_name, extra_exp) {
 	let ret = [];
-	if (!vol_name)
-		vol_name = ".*";
+	vol_name = vol_name ? lvname_quote(vol_name) : ".*";
 
-	let lvexpr = sprintf("\"lvname=~^[rw][owp]_%s\$ && vg_name=%s%s%s\"",
+	let lvexpr = sprintf("lvname=~^[rw][owp]_%s$ && vg_name=%s%s%s",
 			     vol_name, vg_name, extra_exp?" && ":"", extra_exp?extra_exp:"");
 	let tmp = lvm("lvs", "-o", "lv_active,lv_name,lv_full_name,lv_size,lv_path,lv_dm_path", "-S", lvexpr);
-	if (tmp && tmp.report.lv) {
+	if (tmp?.report?.lv) {
 		ret = tmp.report.lv;
 		for (let r in ret) {
 			r.lv_size = +(rtrim(r.lv_size, "B"));
@@ -98,8 +106,8 @@ function lvs(vg_name, vol_name, extra_exp) {
 function lvs_deleting(vg_name) {
 	let ret = [];
 	let tmp = lvm("lvs", "-o", "lv_active,lv_name,lv_full_name,lv_dm_path", "-S",
-		      sprintf("\"lvname=~^dd_.* && vg_name=%s\"", vg_name));
-	if (tmp && tmp.report.lv) {
+		      sprintf("lvname=~^dd_.* && vg_name=%s", vg_name));
+	if (tmp?.report?.lv) {
 		ret = tmp.report.lv;
 		for (let r in ret)
 			r.lv_active = (r.lv_active == "active");
@@ -110,8 +118,9 @@ function lvs_deleting(vg_name) {
 function lvs_incomplete(vg_name, vol_name) {
 	let ret = [];
 	let tmp = lvm("lvs", "-o", "lv_active,lv_name,lv_full_name,lv_size", "-S",
-		      sprintf("\"lvname=~^w[op]_%s\$ && vg_name=%s\"", vol_name ?? ".*", vg_name));
-	if (tmp && tmp.report.lv) {
+		      sprintf("lvname=~^w[op]_%s$ && vg_name=%s",
+			      vol_name ? lvname_quote(vol_name) : ".*", vg_name));
+	if (tmp?.report?.lv) {
 		ret = tmp.report.lv;
 		for (let r in ret) {
 			r.lv_active = (r.lv_active == "active");
@@ -154,6 +163,8 @@ function getdev(lv) {
 function lvm_init(ctx) {
 	cursor = ctx.cursor;
 	fs = ctx.fs;
+	shell_quote = ctx.shell_quote;
+	umount_dev = ctx.umount_dev;
 	if (type(fs.access) == "function" && !fs.access(lvm_exec, "x"))
 		return false;
 
@@ -280,7 +291,7 @@ function lvm_updown(vol_name, up) {
 		let devname = getdev(lv);
 		if (devname) {
 			unregister(devname);
-			system(sprintf("umount /dev/%s 2>/dev/null", devname));
+			umount_dev(devname);
 		}
 	}
 
@@ -353,7 +364,7 @@ function lvm_create(vol_name, vol_size, vol_mode) {
 
 	let use_f2fs = (lv.lv_size > (100 * 1024 * 1024));
 	if (use_f2fs) {
-		let mkfs_ret = system(sprintf("/usr/sbin/mkfs.f2fs -f -l \"%s\" \"%s\"", vol_name, lv.lv_path));
+		let mkfs_ret = system([ "/usr/sbin/mkfs.f2fs", "-f", "-l", vol_name, lv.lv_path ]);
 		if (mkfs_ret != 0 && mkfs_ret != 134) {
 			lvchange_r = lvm("lvchange", "-a", "n", lv.lv_full_name);
 			if (lvchange_r.retval != 0)
@@ -361,7 +372,7 @@ function lvm_create(vol_name, vol_size, vol_mode) {
 			return mkfs_ret;
 		}
 	} else {
-		let mkfs_ret = system(sprintf("/usr/sbin/mke2fs -F -t ext4 -O has_journal -L \"%s\" \"%s\"", vol_name, lv.lv_path));
+		let mkfs_ret = system([ "/usr/sbin/mke2fs", "-F", "-t", "ext4", "-O", "has_journal", "-L", vol_name, lv.lv_path ]);
 		if (mkfs_ret != 0) {
 			lvchange_r = lvm("lvchange", "-a", "n", lv.lv_full_name);
 			if (lvchange_r.retval != 0)
@@ -395,6 +406,19 @@ function fs_type(devpath) {
 		return "f2fs";
 	if (ord(sb, 56) == 0x53 && ord(sb, 57) == 0xef)
 		return "ext";
+	return null;
+}
+
+function tool_path(name) {
+	let dirs = split(getenv("PATH") ?? "", ":");
+	push(dirs, "/usr/sbin", "/usr/bin", "/sbin", "/bin");
+	for (let dir in dirs) {
+		if (!dir)
+			continue;
+		let path = sprintf("%s/%s", dir, name);
+		if (fs.access(path, "x"))
+			return path;
+	}
 	return null;
 }
 
@@ -438,7 +462,8 @@ function lvm_resize(vol_name, vol_size) {
 	}
 
 	// the fs-grow tool first, so the LV is never left larger than its filesystem
-	if (system(sprintf("command -v %s >/dev/null 2>&1", tool)) != 0) {
+	let tool_exec = tool_path(tool);
+	if (!tool_exec) {
 		warn(sprintf("uvol: %s not found; install %s to grow this %s volume\n",
 			     tool, (fstype == "f2fs") ? "f2fs-tools" : "e2fsprogs", fstype));
 		return 95;
@@ -448,10 +473,7 @@ function lvm_resize(vol_name, vol_size) {
 	if (ret.retval != 0)
 		return ret.retval;
 
-	if (fstype == "f2fs")
-		return system(sprintf("resize.f2fs /dev/%s", dev));
-
-	return system(sprintf("resize2fs /dev/%s", dev));
+	return system([ tool_exec, sprintf("/dev/%s", dev) ]);
 }
 
 // Reap volumes marked for deferred deletion (dd_ prefix). A volume can only be
