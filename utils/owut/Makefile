@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=owut
 PKG_SOURCE_DATE:=2026-07-08
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=db17536ec5cbcc6a76a51e65f3d192b6a2184abb
@@ -65,8 +65,14 @@ define Package/owut/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/owut $(1)/usr/bin
 
-	sed -i -e "s/%%VERSION%%/$(PKG_VERSION)-r$(PKG_RELEASE)/" $(1)/usr/bin/owut
-	sed -i -e "s/%%VERSION%%/$(PKG_VERSION)-r$(PKG_RELEASE)/" $(1)/usr/share/ucode/utils/argparse.uc
+	# Hardcode the package version/release
+	# Remove comments and empty lines preserving package's title, copyright and license
+	sed -i \
+		-e "s/%%VERSION%%/$(PKG_VERSION)-r$(PKG_RELEASE)/" \
+		-e '5,$$$${/^[ \t]*\/\//d}' \
+		-e '/^$$$$/d' \
+		$(1)/usr/bin/owut \
+		$(1)/usr/share/ucode/utils/argparse.uc
 endef
 
 $(eval $(call BuildPackage,owut))
