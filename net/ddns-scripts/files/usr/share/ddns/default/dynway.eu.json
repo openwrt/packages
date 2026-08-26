@@ -1,0 +1,11 @@
+{
+	"name": "dynway.eu",
+	"ipv4": {
+		"url": "http://[USERNAME]:[PASSWORD]@dynupdate.wayscloud.services/nic/update?hostname=[DOMAIN]&myip=[IP]",
+		"answer": "good|nochg"
+	},
+	"ipv6": {
+		"url": "http://[USERNAME]:[PASSWORD]@dynupdate.wayscloud.services/nic/update?hostname=[DOMAIN]&myip=[IP]",
+		"answer": "good|nochg"
+	}
+}
