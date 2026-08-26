@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shunt
 PKG_VERSION:=0.1.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>

@@ -353,14 +353,15 @@ function run() {
 	dbg = verbose || state.cfg.global.debug;
 
 	if (!state.cfg.global.enabled) {
-		log('notice', 'disabled in config');
-		return 0;
+		log('notice', 'disabled in config - running idle; enable and reload to start');
+		state.cfg.policies = [];
+		state.matcher = match_compile([]);
+		state.nft = nft_compile([]);
+		state.route = route_compile([], state.nft.marks);
 	}
 
-	if (!length(state.nft.marks)) {
-		log('err', 'no usable policy - not starting, run `shunt check` for the reasons');
-		return 2;
-	}
+	if (!length(state.nft.marks))
+		log('warn', 'no usable policy - running idle; configure a policy and reload, `shunt check` shows the reasons');
 
 	if (state.cfg.global.rp_filter_manage)
 		rp_filter_apply(state.cfg.policies);
@@ -526,7 +527,7 @@ function run() {
 
 	let socks = [];
 
-	if (state.cfg.global.snoop) {
+	if (state.cfg.global.snoop && length(state.nft.marks)) {
 		let socket = null;
 
 		for (let dev in state.cfg.global.snoop_devices) {
