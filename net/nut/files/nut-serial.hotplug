@@ -36,6 +36,9 @@
 	exit 1
 }
 
+# Group of RUNAS user; used to allow access to the USB serial device
+DEVICE_GROUP=""
+
 # 'shellcheck' does not understand config_foreach and therefore treats
 # functions and variables referenced only from config_foreach as not reachable,
 # or never invoked.
@@ -43,18 +46,11 @@
 nut_set_serial_port_permissions() {
 	local devname="$1" # Must be full path (e.g. /dev/...)
 	local ups="$2"
-	local device_group
-
-	# Get group of RUNAS user, to set the group of the hotplugged device node
-	# If RUNAS user does not exist, exit with an error.
-	device_group="$(id -gn "${RUNAS:-nut}")" || {
-		log_error "Unable to find group for '$RUNAS'. Skipping ups '$ups'" nut-serial nut-serial-hotplug
-		return 1
-	}
 
 	# Guard against disappearing device (e.g. due to 'bouncing' device)
 	if [ -e "$devname" ]; then
-		if ! chgrp "$device_group" "$devname"; then
+		# Allow RUNAS user (which is user of driver process) to access device
+		if ! chgrp "$DEVICE_GROUP" "$devname"; then
 			log_error "Unable to set group on '$devname'" nut-serial nut-serial-hotplug
 			return 1
 		fi
@@ -124,11 +120,22 @@ nut_on_hotplug_add() {
 		exit 1
 	}
 
-	# Only find statepath and runas once per event
-	# sets RUNAS
-	find_runas "upsd" "nut_server" || {
+	# Only find runas once per event
+	RUNAS="$(find_runas "upsd" "nut_server")" || {
 		log_error_exit "Failed to set RUNAS" nut-serial nut-serial-hotplug
 	}
+	[ -n "$RUNAS" ] || {
+		log_error_exit "Failed to set RUNAS" nut-serial nut-serial-hotplug
+	}
+	export RUNAS
+
+	# Get group of RUNAS user, to set the group of the hotplugged device node
+	# If RUNAS user does not exist, exit with an error.
+	DEVICE_GROUP="$(id -gn "${RUNAS}")" || {
+		log_error "Unable to find group for RUNAS user '$RUNAS'. Skipping serial usb hotplug." nut-serial nut-serial-hotplug
+		return 1
+	}
+	export DEVICE_GROUP
 
 	# Check if serial USB UPS for each NUT driver instance (UPS), and if so
 	# configure permissions to allow NUT to access the port
