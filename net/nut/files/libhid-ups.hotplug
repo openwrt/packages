@@ -202,7 +202,8 @@ nut_driver_config() {
 			return 0
 		fi
 		if [ "$(printf "%04x" 0x"$pvendid")" = "$cfg_vendorid" ] &&
-			[ "$(printf "%04x" 0x"$pprodid")" = "$cfg_productid" ]; then
+			[ "$(printf "%04x" 0x"$pprodid")" = "$cfg_productid" ] &&
+			[ -n "$DEVNAME" ] && [ -n "$ups" ]; then
 			# Round 1: If we have a match for hotplug event and the UCI config
 			# start this UPS and record that fact, otherwise skip this UCI UPS
 			# for this round
