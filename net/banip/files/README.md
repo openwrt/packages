@@ -117,7 +117,7 @@ For a typical setup these few steps are enough to get banIP up and running — s
 * Deduplicate IPs across all Sets (single IPs only, no intervals)
 * Implements BCP38 ingress filtering to prevent IP address spoofing
 * Provides comprehensive runtime information
-* Provides a detailed Set report, incl. a map that shows the geolocation of your own uplink addresses (in green) and the location of potential attackers (in red)
+* Provides a detailed Set report, incl. a map that shows the geolocation of your own uplink addresses (in green) and the location of potential attackers (in red), drawn from local country outlines without any tile service
 * Provides a Set search engine for certain IPs
 * Feed parsing by fast & flexible regex rulesets
 * Minimal status & error logging to syslog, enable debug logging to receive more output
@@ -533,9 +533,21 @@ In addition to a tabular overview banIP reporting includes a GeoIP map in a moda
 
 To make this work, banIP uses the following external components:
 * [Leaflet](https://leafletjs.com/) is a lightweight open-source JavaScript library for interactive maps
-* [OpenStreetMap](https://www.openstreetmap.org/) provides the map data under an open-source license
-* [CARTO basemap styles](https://github.com/CartoDB/basemap-styles) based on [OpenMapTiles](https://openmaptiles.org/schema)
 * The free and quite fast [IP Geolocation API](https://ip-api.com/) to resolve the required IP/geolocation information
+
+The basemap is no longer pulled from a tile service. CARTO started to require an API key for the raster basemaps at basemaps.cartocdn.com and watermarks every unauthenticated tile request, and a key is bound to a single customer, so it cannot be shipped with a package that lands on every installation. banIP therefore draws the basemap from country outlines that come with `luci-app-banip`: [Natural Earth](https://www.naturalearthdata.com) 1:110m, public domain, stripped of all attributes and simplified to 36 kB. The map page issues no request to a third party, works without a WAN connection and leaks no part of the admin session to a CDN. The outlines are enough to locate an IP, so the map does not zoom in beyond level 6 and labels the continents rather than the countries.
+
+**Optional: a higher detail basemap**
+
+The shipped 1:110m outlines are coarse around Scandinavia, the Greek islands and the smaller island states. If you want sharper coastlines, build the 1:50m variant with [mapshaper](https://github.com/mbloch/mapshaper) and drop it next to the shipped file. LuCI looks for it on every map run and falls back to the shipped outlines when it is missing, no config option is involved:
+
+```
+curl -sSLo ne50.geojson https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/geojson/ne_50m_admin_0_countries.geojson
+mapshaper ne50.geojson -filter-fields -simplify 5% keep-shapes -o force precision=0.01 format=geojson world-50m.json
+scp world-50m.json root@openwrt:/www/luci-static/resources/view/banip/
+```
+
+The result is roughly 105 kB, about three times the shipped file. Please note: this file is not part of any package, so it is removed on sysupgrade unless you add its path to `/etc/sysupgrade.conf`, and it stays behind when `luci-app-banip` is uninstalled.
 
 Please note: the free ip-api.com batch endpoint is rate limited to 15 requests per minute per source IP. Requests beyond that limit are throttled with HTTP 429, and constantly exceeding the limit gets the IP banned for an hour — in both cases the map stays empty and banIP logs an info message. To stay below the limit banIP collects the top listed elements of all Sets, deduplicates them and resolves them in as few batch requests as possible (100 IPs each, the maximum the endpoint accepts). A setup with up to ~1500 mapped elements therefore needs no more than 15 requests per report run. If you run a large number of Sets and regenerate the report frequently, lower `ban_map` to `0` or reduce the number of active feeds.
 
@@ -701,5 +713,5 @@ If you still insist to donate some bucks ...
 
 No matter what you decide - thank you very much for your support!
 
-Have fun!
+Have fun!  
 Dirk
