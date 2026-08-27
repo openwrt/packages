@@ -317,20 +317,20 @@ perform_libhid_action() {
 # is of the form vendorid/productid/other
 
 # This is an incomplete script which gets filled by libhid-ups.parsed-usermap.
+
+# The result is cases of the form
+# "vendorid/productid/other" ) | \
+# to be matched against the PRODUCT from the calling hotplug event
+# The empty string matches when PRODUCT is empty, but does not match
+# when PRODUCT is neither empty nor one of the case targets, above
+
 # This confuses shellcheck and reviewers, hence the disables below.
 # shellcheck disable=SC1073,SC1072
 case "$PRODUCT" in
 ### insert libhid-ups.parsed-usermap content here ###
-# The result is cases of the form
-# "vendorid/productid/other" ) | \
-# to be matched against the PRODUCT from the calling hotplug event
-# and does NOT use ';;' (so falls through to code below).
-# The empty string matches when PRODUCT is empty, but does not match
-# when PRODUCT is neither empty nor one of the case targets, above
-
 "")
 	# Skip hotplug actions if NUT hotplug is disabled
-	# Uses NUT_DISABLE_HOTPLUG_PATH,  defined in nut-service.sh and sourced
+	# Uses NUT_DISABLE_HOTPLUG_PATH, defined in nut-service.sh and sourced
 	# NUT_DISABLE_HOTPLUG_PATH is an external sentinel used to indicate NUT
 	# hotplug is disabled.
 	if ! allow_hotplug_restart; then
