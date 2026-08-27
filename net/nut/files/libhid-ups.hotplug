@@ -232,16 +232,25 @@ perform_libhid_action() {
 	[ -n "$ACTION" ] || return 0
 
 	# Only find statepath and runas once per event
-	# defines STATEPATH
-	find_statepath "upsd" "nut_server" || {
+	STATEPATH="$(find_statepath "upsd" "nut_server")" || {
 		log_error "Failed to set STATEPATH" "libhid-ups" nut-usb-hotplug
 		return 1
 	}
-	# sets RUNAS
-	find_runas "upsd" "nut_server" || {
+	[ -n "$STATEPATH" ] || {
+		log_error "Failed to set STATEPATH" "libhid-ups" nut-usb-hotplug
+		return 1
+	}
+	export STATEPATH
+
+	RUNAS="$(find_runas "upsd" "nut_server")" || {
 		log_error "Failed to set RUNAS" "libhid-ups" nut-usb-hotplug
 		return 1
 	}
+	[ -n "$RUNAS" ] || {
+		log_error "Failed to set RUNAS" "libhid-ups" nut-usb-hotplug
+		return 1
+	}
+	export RUNAS
 
 	# PRODUCT comes from the calling hotplug event, and
 	# is of the form vendorid/productid/other
