@@ -208,7 +208,7 @@ nut_driver_config() {
 			# for this round
 			# Initscript should have its own logging
 			if ! start_stop_driver "$ups" "/dev/$DEVNAME"; then
-				log_error "Error starting matched driver instance (UPS) in nut_driver_config" libhid-ups nut-usb-hotplug
+				log_error "Failed to start/stop matched driver instance (UPS) in nut_driver_config" libhid-ups nut-usb-hotplug
 				nd_driver_config_error=true
 				return 0
 			fi
@@ -226,6 +226,9 @@ perform_libhid_action() {
 	local nd_found=false
 	local nd_driver_config_error=false
 	local pvendid pprodid
+
+	[ -n "$DEVNAME" ] || return 0
+	[ -n "$ACTION" ] || return 0
 
 	# Only find statepath and runas once per event
 	# defines STATEPATH
@@ -268,6 +271,12 @@ perform_libhid_action() {
 	config_foreach nut_driver_config driver yes
 
 	[ "$nd_driver_config_error" = "false" ] || return 1
+
+	# Only do a second search that does not need to match a known device
+	# when ACTION is "add". We don't want to stop all UPSes on the removal
+	# of only one.
+	[ "$ACTION" = "add" ] || return 0
+
 	# Only if we cannot find a matching UPS (driver instance) configuration
 	# do we try again, this time restarting all UPS (driver) instances
 	# This is for the event the device matching configuration for NUT does
