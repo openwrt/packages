@@ -159,6 +159,10 @@ nut_on_hotplug_add() {
 	return 0
 }
 
+# Ignore incomplete (for our purposes) events
+[ -n "$DEVNAME" ] || exit 0
+[ -n "$ACTION" ] || exit 0
+
 # Do not do any hotplug actions if hotplug is disabled. Not an error but log
 # for information
 if ! allow_hotplug_restart; then
