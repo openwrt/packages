@@ -190,6 +190,8 @@ if [ "$ACTION" = "add" ] && [ -n "$DEVNAME" ]; then
 	# ttyUSB* or ttyAMA* or ttyACM* or ttyGS*
 	case "$DEVNAME" in
 	ttyUSB* | ttyAMA* | ttyACM* | ttyGS*)
+		# As we are at the top-level of the hotplug event, this only aborts this
+		# hotplug event, not hotplug events for other devices
 		nut_on_hotplug_add || exit 1
 		;;
 	esac

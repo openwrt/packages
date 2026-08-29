@@ -76,6 +76,9 @@ start_stop_driver() {
 		# We check enabled again here, in case of a race condition since
 		# our last check.
 		if /etc/init.d/nut-server enabled; then
+			# As the driver start goes through the initscript's start which has a
+			# procd_lock, the driver should not be started twice, even if hotplug
+			# fires as soon as hotplugging is allowed in initscript's boot()
 			if ! /etc/init.d/nut-server start "$ups"; then
 				log_error "Failed to start '$ups' processing '$ACTION' for '$DEVNAME'" "libhid-ups" nut-usb-hotplug
 				return 0
