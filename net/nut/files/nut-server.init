@@ -103,6 +103,10 @@ basescript=$(readlink "$initscript")
 has_running_driver() {
 	local instances instance
 
+	# have_driver_instance and have_upsd_instance are 'pseudo-globals' -
+	# they are local to the _caller_ and visible/modifiable in this
+	# function in order to get the value back to the caller.
+
 	instances="$(list_running_instances "nut-server")"
 	[ -n "$instances" ] || return 0
 	set -f
@@ -244,14 +248,24 @@ stop_no_longer_configured_instances() {
 	local instance instances
 
 	# Stop any driver instances which are no longer configured
+	# This can occur when the configuration is changed and the service
+	# is restarted or reloaded, as this script is not notified of what has
+	# changed if the configuration changes; the script will simply
+	# generate a new configuration in that event.
 	# We can only reliably do this for instances managed by procd
 	instances="$(list_running_instances "nut-server")"
 	[ -n "$instances" ] || return 0
 	set -f
+	# Check that all instances are associated with a configured driver or
+	# the upsd daemon
 	for instance in $instances; do
+		# upsd should be stopped last, if it is stopped at all
 		if [ "$instance" = "upsd" ]; then
 			continue
 		fi
+		# Set to true if any instance was running, whether stopped here, or left
+		# running. have_driver_instance (set in has_running_driver) lets us know
+		# if any driver is still running.
 		had_running_instance="true"
 		config_get driver "$instance" driver
 		# Only stop not configured but running instances
@@ -271,7 +285,8 @@ stop_no_longer_configured_instances() {
 
 	# If we have no UPS instances we must stop upsd or it will crash
 	# The "nut-server" service remains active and will 'see' configuration
-	# changes and execute reload_service when they are detected
+	# changes and execute reload_service when they are detected, but avoid
+	# signalling upsd if it is not running ('had_running_instance' != "true")
 	if [ "$have_upsd_instance" = "true" ] && [ "$have_driver_instance" = "false" ] && [ "$had_running_instance" = "true" ]; then
 		log_msg "Stopping upsd because no driver instances configured" "nut-server" "nut-server" "notice"
 		signal_instance "upsd" "upsd" "stop" "TERM" "${STATEPATH}/upsd.pid" "" "nut-server" "procd_kill" "nut-server" "upsd"
@@ -520,6 +535,9 @@ manage_service() {
 			fi
 			;;
 		esac
+		# Ensure drivers no longer present in config, but which are still running
+		# get stopped. This is required because we are not notified of what was
+		# removed when configuration is removed.
 		stop_no_longer_configured_instances
 		return $ret
 		;;
