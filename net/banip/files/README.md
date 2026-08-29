@@ -111,12 +111,13 @@ For a typical setup these few steps are enough to get banIP up and running — s
 * Automatically selects one of the following download utilities with ssl support: curl, uclient-fetch or full wget
 * Provides HTTP ETag support to download only resources that have been updated on the server side, to speed up banIP reloads and to save bandwidth
 * Supports an `allowlist only` mode, this option restricts the internet access only to specific, explicitly allowed IP segments
+* Optionally screens the allowed IP segments in `allowlist only` mode as well, i.e. the log monitor may ban attackers from an explicitly allowed segment while the local allowlist entries stay exempt (see `ban_monitorallowed`)
 * Supports external allowlist URLs to reference additional IPv4/IPv6 feeds
 * Optionally always allow certain protocols/destination ports in the inbound chain
 * Deduplicate IPs across all Sets (single IPs only, no intervals)
 * Implements BCP38 ingress filtering to prevent IP address spoofing
 * Provides comprehensive runtime information
-* Provides a detailed Set report, incl. a map that shows the geolocation of your own uplink addresses (in green) and the location of potential attackers (in red)
+* Provides a detailed Set report, incl. a map that shows the geolocation of your own uplink addresses (in green) and the location of potential attackers (in red), drawn from local country outlines without any tile service
 * Provides a Set search engine for certain IPs
 * Feed parsing by fast & flexible regex rulesets
 * Minimal status & error logging to syslog, enable debug logging to receive more output
@@ -205,6 +206,7 @@ The `report` sub-command accepts an output mode: `text` (default, human-readable
 | ban_autoblocksubnet     | option | 0                             | add entire subnets to the blocklist Sets based on a rate-limited, non-blocking RDAP lookup for the suspicious IP  |
 | ban_autoallowuplink     | option | subnet                        | limit the uplink autoallow function to: `subnet`, `ip` or `disable` it at all                                     |
 | ban_allowlistonly       | option | 0                             | restrict the internet access only to specific, explicitly allowed IP segments                                     |
+| ban_monitorallowed      | option | 0                             | restrict the log monitor to the entries of the local allowlist (allowlist-only mode)                              |
 | ban_allowflag           | option | -                             | always allow certain protocols(tcp or udp) plus destination ports or port ranges, e.g.: `tcp 80 443-444`          |
 | ban_allowurl            | list   | -                             | external allowlist feed URLs, one or more references to simple remote IP lists                                    |
 | ban_basedir             | option | /tmp                          | base working directory while banIP processing                                                                     |
@@ -458,6 +460,10 @@ Both local lists also accept domain names as input to allow IP filtering based o
 **Allowlist-only mode**  
 banIP supports an "allowlist only" mode. This option restricts Internet access only to certain, explicitly permitted IP segments - and blocks access to the rest of the Internet. All IPs that are _not_ listed in the allowlist or in the external allowlist URLs are blocked. In this mode it might be useful to limit the allowlist feed to the inbound chain, to still allow outbound communication to the rest of the world.
 
+In this mode the allowlist Sets define the permitted address scope, they do not act as an accept precedence - the blocklist Set is still evaluated and still applies. By default the log monitor nevertheless treats every allowlisted IP as exempt, therefore attackers coming from a permitted segment (e.g. a country-wide external allowlist feed) are never banned. Enable the `ban_monitorallowed` option to restrict the log monitor to the entries of the local allowlist. banIP then processes an additional local feed which provides the `allowlist.local.v4`/`allowlist.local.v6` Sets, built from /etc/banip/banip.allowlist only - including the automatically added uplink. These Sets are not referenced by any rule, they are solely used by the log monitor: local entries stay exempt, IPs which are merely covered by an external allowlist feed can be banned. This allows a "permit my own country, but still screen it" setup. The option has no effect unless `ban_allowlistonly` is enabled, and the additional Sets are removed automatically as soon as it is switched off.
+
+External feeds are skipped in this mode as far as they are redundant: the allowlist emits an inverted and therefore terminal drop rule in every chain it covers, so a feed rule in exactly these chains can never match. With the default allowlist direction all external feeds are skipped. If the allowlist is limited to a single chain - e.g. to the inbound chain - only the feeds of that chain are skipped, feeds which also cover the opposite chain are still processed.
+
 **MAC/IP-binding**  
 banIP supports concatenation of local MAC addresses/ranges with IPv4/IPv6 addresses, e.g. to enforce dhcp assignments or to free connected clients from outbound blocking.
 The following notations in the local allow- and block-list are supported:
@@ -527,9 +533,23 @@ In addition to a tabular overview banIP reporting includes a GeoIP map in a moda
 
 To make this work, banIP uses the following external components:
 * [Leaflet](https://leafletjs.com/) is a lightweight open-source JavaScript library for interactive maps
-* [OpenStreetMap](https://www.openstreetmap.org/) provides the map data under an open-source license
-* [CARTO basemap styles](https://github.com/CartoDB/basemap-styles) based on [OpenMapTiles](https://openmaptiles.org/schema)
 * The free and quite fast [IP Geolocation API](https://ip-api.com/) to resolve the required IP/geolocation information
+
+The basemap is no longer pulled from a tile service. CARTO started to require an API key for the raster basemaps at basemaps.cartocdn.com and watermarks every unauthenticated tile request, and a key is bound to a single customer, so it cannot be shipped with a package that lands on every installation. banIP therefore draws the basemap from country outlines that come with `luci-app-banip`: [Natural Earth](https://www.naturalearthdata.com) 1:110m, public domain, stripped of all attributes and simplified to 36 kB. The map page issues no request to a third party, works without a WAN connection and leaks no part of the admin session to a CDN. The outlines are enough to locate an IP, so the map does not zoom in beyond level 6 and labels the continents rather than the countries.
+
+**Optional: a higher detail basemap**
+
+The shipped 1:110m outlines are coarse around Scandinavia, the Greek islands and the smaller island states. If you want sharper coastlines, build the 1:50m variant with [mapshaper](https://github.com/mbloch/mapshaper) and drop it next to the shipped file. LuCI looks for it on every map run and falls back to the shipped outlines when it is missing, no config option is involved:
+
+```
+curl -sSLo ne50.geojson https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/geojson/ne_50m_admin_0_countries.geojson
+mapshaper ne50.geojson -filter-fields -simplify 5% keep-shapes -o force precision=0.01 format=geojson world-50m.json
+scp world-50m.json root@openwrt:/www/luci-static/resources/view/banip/
+```
+
+The result is roughly 105 kB, about three times the shipped file. Please note: this file is not part of any package, so it is removed on sysupgrade unless you add its path to `/etc/sysupgrade.conf`, and it stays behind when `luci-app-banip` is uninstalled.
+
+Please note: the free ip-api.com batch endpoint is rate limited to 15 requests per minute per source IP. Requests beyond that limit are throttled with HTTP 429, and constantly exceeding the limit gets the IP banned for an hour — in both cases the map stays empty and banIP logs an info message. To stay below the limit banIP collects the top listed elements of all Sets, deduplicates them and resolves them in as few batch requests as possible (100 IPs each, the maximum the endpoint accepts). A setup with up to ~1500 mapped elements therefore needs no more than 15 requests per report run. If you run a large number of Sets and regenerate the report frequently, lower `ban_map` to `0` or reduce the number of active feeds.
 
 **CGI interface to receive remote logging events**  
 banIP ships a basic cgi interface in `/www/cgi-bin/banip` to receive remote logging events (disabled by default). The cgi interface evaluates logging events via GET or POST request (see examples below). To enable the cgi interface set the following options:
@@ -693,5 +713,5 @@ If you still insist to donate some bucks ...
 
 No matter what you decide - thank you very much for your support!
 
-Have fun!
+Have fun!  
 Dirk

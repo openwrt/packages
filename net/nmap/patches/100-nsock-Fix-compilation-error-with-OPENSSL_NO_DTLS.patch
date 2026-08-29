@@ -21,7 +21,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
 
 --- a/nsock/src/nsock_connect.c
 +++ b/nsock/src/nsock_connect.c
-@@ -472,8 +472,12 @@ nsock_event_id nsock_connect_ssl(nsock_p
+@@ -479,8 +479,12 @@ nsock_event_id nsock_connect_ssl(nsock_p
  
    if (proto == IPPROTO_UDP)
    {

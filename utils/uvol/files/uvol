@@ -44,36 +44,14 @@ if (!cmd || cmd == "-h" || cmd == "--help" || cmd == "help") {
 }
 
 let fs = require("fs");
-let uci = require("uci");
-let cursor = uci ? uci.cursor() : null;
+include("/usr/lib/uvol/common.uc");
 
-let ctx = {};
-ctx.cursor = cursor;
-ctx.fs = fs;
-include("/usr/lib/uvol/mount.uc");
-ctx.register = uvol_mount.register;
-ctx.unregister = uvol_mount.unregister;
-
-let backend = null;
-let tried_backends = [];
-for (plugin in fs.glob("/usr/lib/uvol/backends/*.uc")) {
-	let current_backend = {};
-	include(plugin, { backend: current_backend });
-	push(tried_backends, current_backend.backend);
-	if (type(backend) == "object" &&
-	    type(backend.priority) == "int" &&
-	    type(current_backend.priority) == "int" &&
-	    backend.priority > current_backend.priority)
-		continue;
-	if (type(current_backend.init) == "function" &&
-	    current_backend.init(ctx)) {
-		backend = current_backend;
-		break;
-	}
-}
+let ctx = uvol_common.ctx_init();
+let selection = uvol_common.backend_select(ctx);
+let backend = selection.backend;
 
 if (!backend) {
-	printf("No backend available. (tried: %s)\n", join(" ", tried_backends));
+	printf("No backend available. (tried: %s)\n", join(" ", selection.tried));
 	printf("To setup devices with block storage install 'autopart'.\n");
 	exit(2);
 }
@@ -81,6 +59,24 @@ if (!backend) {
 if (!(cmd in keys(backend))) {
 	printf("command %s not found\n", cmd);
 	return 22;
+}
+
+let json_output = false;
+if (ARGV[0] == "-j") {
+	json_output = true;
+	shift(ARGV);
+}
+
+// only the read-only verbs may name an internal volume such as .meta; the
+// check runs before the lock, which is keyed on the volume name too
+let ro_name_cmds = [ "status", "device", "size", "list" ];
+let rw_name_cmds = [ "create", "remove", "up", "down", "resize", "write" ];
+let ro_name = index(ro_name_cmds, cmd) >= 0;
+if (index(rw_name_cmds, cmd) >= 0 || (ro_name && ARGV[0] != null)) {
+	if (!uvol_common.name_valid(ARGV[0], ro_name)) {
+		printf("invalid volume name\n");
+		exit(22);
+	}
 }
 
 // serialise state-mutating commands device-wide; released on process exit.
@@ -93,18 +89,10 @@ let uvol_mutating = [ "boot", "detect", "create", "up", "down", "remove", "reap"
 let uvol_vol_mutating = [ "create", "write" ];
 let uvol_lockfd;
 let uvol_vol_lockfd;
-if (index(uvol_mutating, cmd) >= 0 || index(uvol_vol_mutating, cmd) >= 0)
-	fs.mkdir("/tmp/run", 0755);
-if (index(uvol_mutating, cmd) >= 0) {
-	uvol_lockfd = fs.open("/tmp/run/uvol.lock", "a");
-	if (uvol_lockfd)
-		uvol_lockfd.lock("x");
-}
-if (index(uvol_vol_mutating, cmd) >= 0 && ARGV[0]) {
-	uvol_vol_lockfd = fs.open(sprintf("/tmp/run/uvol.lock.%s", ARGV[0]), "a");
-	if (uvol_vol_lockfd)
-		uvol_vol_lockfd.lock("x");
-}
+if (index(uvol_mutating, cmd) >= 0)
+	uvol_lockfd = uvol_common.lock_device();
+if (index(uvol_vol_mutating, cmd) >= 0 && ARGV[0])
+	uvol_vol_lockfd = uvol_common.lock_volume(ARGV[0]);
 
 let meta_init = function() {
 	let sz = backend.size(".meta");
@@ -124,13 +112,15 @@ let meta_init = function() {
 if (cmd == "boot") {
 	backend.boot();
 	meta_init();
+	// the event is best-effort; boot must not fail when ubusd is unavailable
+	try {
+		require("ubus").event("uvol.ready", {
+			backend: backend.backend,
+			meta: backend.status(".meta") == 0,
+		});
+	} catch(e) {
+	}
 	exit(0);
-}
-
-let json_output = false;
-if (ARGV[0] == "-j") {
-	json_output = true;
-	shift(ARGV);
 }
 
 let legacy_output = function(var) {
@@ -168,7 +158,7 @@ let ca_parse = function(name) {
 };
 
 let ca_digest = function(cmd, size, path) {
-	let src = path ? sprintf("head -c %d %s", size, path) : sprintf("head -c %d", size);
+	let src = path ? sprintf("head -c %d %s", size, uvol_common.shell_quote(path)) : sprintf("head -c %d", size);
 	let f = fs.popen(sprintf("%s | %s", src, cmd), "r");
 	if (!f)
 		return null;

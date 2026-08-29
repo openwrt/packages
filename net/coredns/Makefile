@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=coredns
-PKG_VERSION:=1.14.6
+PKG_VERSION:=1.14.7
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/coredns/coredns.git
-PKG_MIRROR_HASH:=1e7a9abb413a0fb5497f38f144e8a3f3647b5f77eb92b5944fb0e72febf4e147
+PKG_MIRROR_HASH:=c89b0abdd671f86f0b139bfa1530abbefc5c67f16a1ff7dc76aa0aaed5c2fabb
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 
 PKG_LICENSE:=Apache-2.0

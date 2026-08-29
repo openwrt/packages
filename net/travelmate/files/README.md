@@ -89,6 +89,18 @@ For a typical setup these few steps are enough to get travelmate up and running 
 * You may add additional uplinks for different locations by repeating the previous step
 * Happy traveling ...
 
+The buttons at the bottom of the LuCI overview page behave as follows:
+
+| Button               | Description                                                                                                        |
+| :------------------- | :----------------------------------------------------------------------------------------------------------------- |
+| **Stop**             | Stops the travelmate service. Greyed out while the service is not running                                            |
+| **Interface Wizard** | One-time setup of the uplink interface, firewall zone and metric                                                     |
+| **Interface Restart** | Restarts the travelmate uplink interface without touching the configuration                                         |
+| **AP QR-Codes**      | Displays a QR code per AP to transfer the wireless credentials to your mobile devices                                |
+| **Save & Restart**   | Applies pending configuration changes and restarts the service, this also brings a stopped service back up           |
+
+While a run cycle is in progress (status `processing`), all buttons except **Stop** are temporarily locked to avoid overlapping actions. **Stop** always stays available, so an unwanted or long running cycle can be interrupted at any time - e.g. right after the **Interface Wizard** on a fresh setup, when no uplink station has been configured yet.
+
 <a id="travelmate-cli-interface"></a>
 ## Travelmate CLI interface
 * All important travelmate functions are accessible via CLI, too. If you're going to configure travelmate via CLI, edit the config file `/etc/config/travelmate` and enable the service, see the options reference tables below.
@@ -131,6 +143,17 @@ The `status` sub-command prints the current runtime information:
   + last_run           : mode: start, date / time: 2026-08-06 09:08:24, memory: 412.35 MB available
   + system_info        : cores: 2, fetch: curl, Cudy TR3000 v1, mediatek/filogic, OpenWrt SNAPSHOT (r32287-1c7ec8ab19)
 ```
+
+The `travelmate_status` field reports one of the following states:
+
+| State           | Description                                                                                                     |
+| :-------------- | :-------------------------------------------------------------------------------------------------------------- |
+| `connected`     | An uplink is connected, followed by the connection details, e.g. `connected, net ok/100`                          |
+| `processing`    | A run cycle is currently in progress, e.g. scanning the radios or waiting for an uplink to come up                |
+| `not connected` | No uplink is connected and no run cycle is active, i.e. travelmate is idle and waiting for the next trigger       |
+| `program error` | A fatal error occurred, the daemon has stopped, please check the syslog                                           |
+
+A stopped service does not report a state at all, it truncates the runtime file instead - LuCI shows this as `stopped`.
 
 <a id="travelmate-config-options"></a>
 ## Travelmate config options

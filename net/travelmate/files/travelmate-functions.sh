@@ -53,6 +53,7 @@ trm_captiveurl="http://detectportal.firefox.com"
 trm_useragent="Mozilla/5.0 (X11; Linux x86_64; rv:144.0) Gecko/20100101 Firefox/144.0"
 trm_action="${1}"
 trm_runmode=""
+trm_active="0"
 
 # ensure runtime directory exists
 #
@@ -1188,7 +1189,11 @@ f_genstatus() {
 		status="program error"
 	else
 		trm_connection=""
-		status="processing"
+		if [ "${trm_active}" = "1" ]; then
+			status="processing"
+		else
+			status="not connected"
+		fi
 		runtime="-"
 	fi
 
@@ -1403,6 +1408,11 @@ f_main() {
 	local radio cnt retrycnt scan_list scan_essid scan_bssid scan_rsn scan_wpa scan_quality scan_open station_id retry_display
 	local section sta sta_essid sta_bssid sta_radio sta_mac open_sta open_essid config_radio config_essid config_bssid
 
+	# mark the run cycle as active, e.g. to distinguish 'processing' from an
+	# idle daemon in f_genstatus
+	#
+	trm_active="1"
+
 	# initial check
 	#
 	f_check "initial" "false"
@@ -1579,6 +1589,14 @@ f_main() {
 				EOV
 			done
 		done
+	fi
+
+	# the run cycle is over, settle the status file for the idle phase, e.g.
+	# to turn a leftover 'processing' into 'not connected'
+	#
+	trm_active="0"
+	if [ "${trm_ifstatus}" != "true" ] && [ "${trm_ifstatus}" != "error" ]; then
+		f_genstatus
 	fi
 }
 

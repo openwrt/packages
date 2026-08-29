@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
-PKG_VERSION:=7.0.29
+PKG_VERSION:=7.0.30
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://cdn.zabbix.com/zabbix/sources/stable/$(basename $(PKG_VERSION))/ \
 	https://cdn.zabbix.com/zabbix/sources/oldstable/$(basename $(PKG_VERSION))/
-PKG_HASH:=184d03454d7ff2d49fa1d292082ad335bce907ba22e30d54035d05329708ce32
+PKG_HASH:=c0ca4079119adeec4135e3351d1b849157ade076c352c006728e732f1707232c
 
 PKG_MAINTAINER:=Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
 PKG_LICENSE:=AGPL-3.0-only
