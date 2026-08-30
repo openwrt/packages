@@ -1,22 +1,20 @@
---- a/collectors/charts.d.plugin/charts.d.conf
-+++ b/collectors/charts.d.plugin/charts.d.conf
-@@ -30,7 +30,7 @@
- 
- # the default enable/disable for all charts.d collectors
- # the default is "yes"
--# enable_all_charts="yes"
-+enable_all_charts="no"
- 
- # BY DEFAULT ENABLED MODULES
- # ap=yes
---- a/collectors/python.d.plugin/python.d.conf
-+++ b/collectors/python.d.plugin/python.d.conf
+From 51571c36d02c9ccdb26156bd56a2298c69bc110f Mon Sep 17 00:00:00 2001
+From: Tiago Gaspar <tiagogaspar8@gmail.com>
+Date: Thu, 7 Nov 2024 22:00:16 +0000
+Subject: [PATCH] Update python.d.conf
+
+---
+ src/collectors/python.d.plugin/python.d.conf | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/src/collectors/python.d.plugin/python.d.conf
++++ b/src/collectors/python.d.plugin/python.d.conf
 @@ -7,7 +7,7 @@
- #
+ ##
  
- # Enable / disable the whole python.d.plugin (all its modules)
+ ## Enable / disable the whole python.d.plugin (all its modules)
 -enabled: yes
 +enabled: no
  
- # ----------------------------------------------------------------------
- # Enable / Disable python.d.plugin modules
+ ## ----------------------------------------------------------------------
+ ## Enable / Disable python.d.plugin modules
