@@ -42,7 +42,7 @@ define Package/aircrack-ng
   CATEGORY:=Network
   DEPENDS:=+AIRCRACK_NG_HWLOC:libhwloc +libpcap +libpcre2 +libpthread +libstdcpp
   DEPENDS += +AIRCRACK_NG_OPENSSL:libopenssl
-  DEPENDS += +AIRCRACK_NG_GCRYPT:libgcrypt
+  DEPENDS += +AIRCRACK_NG_GCRYPT:libgcrypt-mini
   DEPENDS += +AIRCRACK_NG_SQLITE3:libsqlite3
   DEPENDS += +libnl-core +libnl-genl +zlib
   TITLE:=WLAN tools (without airmon-ng) for breaking 802.11 WEP/WPA keys
