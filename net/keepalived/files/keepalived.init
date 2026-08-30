@@ -368,6 +368,17 @@ vrrp_sync_group() {
 		config_section_close "$INDENT_1"
 	fi
 
+	# Handle track_interface for sync group
+	local track_interface_val
+	config_get track_interface_val "$1" track_interface
+	if [ -n "$track_interface_val" ]; then
+		config_section_open "track_interface" "" "$INDENT_1"
+		for t in $track_interface_val; do
+			config_foreach print_track_elem_indent track_interface "$t" "$INDENT_2"
+		done
+		config_section_close "$INDENT_1"
+	fi
+
 	print_notify "GROUP" "$name" "$INDENT_1" notify_backup notify_master \
 		notify_fault notify
 
