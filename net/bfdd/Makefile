@@ -7,13 +7,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bfdd
-PKG_SOURCE_DATE:=2019-08-22
-PKG_RELEASE:=4
+PKG_SOURCE_DATE:=2026-08-19
+PKG_RELEASE:=2
 
-PKG_SOURCE_VERSION:=c54534beb524afc3972039f57b56ec65332b43f7
+# TODO: update to a commit from master once https://github.com/rzalamena/bfdd/bfdd/pulls/6 is merged
+PKG_SOURCE_VERSION:=921bfa05b0e0020eb910cffc2a6edf37543b84cf
 PKG_SOURCE_URL:=https://codeload.github.com/rzalamena/bfdd/tar.gz/$(PKG_SOURCE_VERSION)?
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_DATE).tar.gz
-PKG_HASH:=8b65f502163aacfe43bb897464f3bf44bc5af4cc85d23b7c644e329abf89cc5f
+PKG_HASH:=c5b76d7c442d13bb78734542d3d82981ac63cd6ba560cddd6e09b383945ccbd0
 
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -50,10 +51,13 @@ define Package/bfdd/install
 	$(INSTALL_DIR) \
 	 $(1)/usr/sbin \
 	 $(1)/etc/bfdd \
-	 $(1)/etc/init.d
+	 $(1)/etc/init.d \
+	 $(1)/lib/netifd/proto
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/{bfdd,bfdctl} $(1)/usr/sbin/
 	$(INSTALL_BIN) ./files/bfdd.init $(1)/etc/init.d/bfdd
 	$(INSTALL_CONF) ./files/bfdd.template.json $(1)/etc/bfdd/bfdd.json
+	$(INSTALL_BIN) ./files/bfd-event $(1)/lib/netifd/
+	$(INSTALL_BIN) ./files/bfd.sh $(1)/lib/netifd/proto/
 endef
 
 $(eval $(call BuildPackage,bfdd))
