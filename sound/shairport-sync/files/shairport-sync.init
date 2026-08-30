@@ -30,6 +30,22 @@ append_str() {
 	fi
 }
 
+append_val() {
+	local cfg="$1"
+	local var="$2"
+	local opt="$3"
+	local def="$4"
+	local val
+
+	config_get val "$cfg" "$var"
+	val="${val:-$def}"
+	[ -n "$val" ] || return 0
+	case "$val" in
+		\(*\)|[0-9]*) printf "\t%s = %s;\n" "$opt" "$val" ;;
+		*) printf "\t%s = \"%s\";\n" "$opt" "$val" ;;
+	esac
+}
+
 start_instance() {
 	local cfg=$1
 	local conf_custom conf_file aux
@@ -95,6 +111,9 @@ start_instance() {
 		printf "alsa =\n"
 		printf "{\n"
 		append_str "$cfg" alsa_output_device "output_device"
+		append_val "$cfg" alsa_output_rate "output_rate"
+		append_val "$cfg" alsa_output_format "output_format"
+		append_val "$cfg" alsa_output_channels "output_channels"
 		append_str "$cfg" alsa_mixer_control_name "mixer_control_name"
 		append_num "$cfg" alsa_mixer_control_index "mixer_control_index"
 		append_str "$cfg" alsa_mixer_device "mixer_device"
@@ -157,6 +176,7 @@ start_instance() {
 	procd_open_instance
 
 	procd_set_param command /usr/bin/shairport-sync
+	procd_set_param stderr 1
 	procd_append_param command -c "$conf_file"
 
 	config_get_bool aux "$cfg" 'respawn' '0'
