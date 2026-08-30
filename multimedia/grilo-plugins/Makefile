@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=grilo-plugins
-PKG_VERSION:=0.3.17
+PKG_VERSION:=0.3.18
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNOME/grilo-plugins/$(basename $(PKG_VERSION))
-PKG_HASH:=483c03f2ce06f96d42b85768fdc494c076d58474bf8e3c326f5a050fd4a2f03c
+PKG_HASH:=8e3ce74ee717c3c322d0cb0f8df26bb0914028a5d016e28055ffb49cc9a46c5e
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=LGPL-2.1-or-later
