@@ -67,6 +67,44 @@ static inline u32 batadv_skb_crc32c(struct sk_buff *skb, int offset,
 
 #endif /* < KERNEL_VERSION(7, 0, 0) */
 
+#if LINUX_VERSION_IS_LESS(7, 3, 0)
+
+#include <linux/skbuff.h>
+
+static inline bool __must_check
+batadv_skb_set_transport_header_careful(struct sk_buff *skb, const int offset)
+{
+	long thoff = skb->data - skb->head + offset;
+
+	if (unlikely(thoff != (typeof(skb->transport_header))thoff))
+		return false;
+
+	if (unlikely(thoff == (typeof(skb->transport_header))~0U))
+		return false;
+
+	skb->transport_header = thoff;
+	return true;
+}
+
+#define skb_set_transport_header_careful batadv_skb_set_transport_header_careful
+
+#endif /* LINUX_VERSION_IS_LESS(7, 3, 0) */
+
+/* <VERSION> */
+
+#include <linux/utsname.h>
+
+#define init_utsname() batadv_init_utsname()
+
+extern struct new_utsname batadv_version_name;
+
+static inline struct new_utsname *batadv_init_utsname(void)
+{
+	return &batadv_version_name;
+}
+
+/* </VERSION> */
+
 /* <DECLARE_EWMA> */
 
 #include <linux/version.h>
