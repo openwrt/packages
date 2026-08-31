@@ -3,12 +3,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=batctl
-PKG_VERSION:=2026.2
+PKG_VERSION:=2026.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://downloads.open-mesh.org/batman/releases/batman-adv-$(PKG_VERSION)
-PKG_HASH:=c1d580afb066d3165c239b67430b94c69932619c06a90b1295e828cb5081b122
+PKG_HASH:=2c8443fae7b3471a500837f8cfbbc2b7bbab602e43ce8c61b100560dec1d9ee0
 
 PKG_MAINTAINER:=Simon Wunderlich <sw@simonwunderlich.de>
 PKG_LICENSE:=GPL-2.0-only ISC MIT
