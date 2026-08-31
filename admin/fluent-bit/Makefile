@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fluent-bit
 PKG_VERSION:=5.0.8
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/fluent/fluent-bit.git
@@ -46,6 +46,7 @@ CMAKE_OPTIONS+= \
 	-DFLB_BACKTRACE=No \
 	-DFLB_WASM=No \
 	-DFLB_LUAJIT=No \
+	-DFLB_CORO_STACK_SIZE=65536 \
 	-DWITH_SASL=No \
 	-DWITH_ZLIB=No \
 	-DWITH_ZSTD=No \
