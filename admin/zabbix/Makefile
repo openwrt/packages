@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
 PKG_VERSION:=7.0.30
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://cdn.zabbix.com/zabbix/sources/stable/$(basename $(PKG_VERSION))/ \
@@ -27,6 +27,7 @@ PKG_BUILD_PARALLEL:=1
 PKG_CONFIG_DEPENDS:= \
   CONFIG_ZABBIX_CURL \
   CONFIG_ZABBIX_CURL_GNUTLS \
+  CONFIG_ZABBIX_ENABLE_AGENT_COMPRESSION \
   CONFIG_ZABBIX_GNUTLS \
   CONFIG_ZABBIX_LDAP \
   CONFIG_ZABBIX_MYSQL \
@@ -36,6 +37,32 @@ PKG_CONFIG_DEPENDS:= \
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
+
+ZABBIX_NEEDS_ZLIB:=$(strip \
+  $(CONFIG_ZABBIX_ENABLE_AGENT_COMPRESSION) \
+  $(CONFIG_PACKAGE_zabbix-get) \
+  $(CONFIG_PACKAGE_zabbix-proxy) \
+  $(CONFIG_PACKAGE_zabbix-proxy-basic-sqlite) \
+  $(CONFIG_PACKAGE_zabbix-sender) \
+  $(CONFIG_PACKAGE_zabbix-server))
+
+ifeq ($(CONFIG_ZABBIX_ENABLE_AGENT_COMPRESSION),y)
+# Compile the classic agent's active-check compression path. The real
+# zbx_compress() implementation it relies on is selected by HAVE_ZLIB below.
+TARGET_CPPFLAGS += -DZBX_AGENT_COMPRESSION
+endif
+
+ifneq ($(ZABBIX_NEEDS_ZLIB),)
+# Zabbix only probes zlib when server or proxy support is enabled. Define
+# HAVE_ZLIB for every configuration which supplies ZLIB_LIBS so the build uses
+# the real zbx_compress() rather than the failing fallback implementation.
+TARGET_CPPFLAGS += -DHAVE_ZLIB
+
+CONFIGURE_VARS += \
+  ZLIB_CFLAGS="-I$(STAGING_DIR)/usr/include" \
+  ZLIB_LDFLAGS="-L$(STAGING_DIR)/usr/lib" \
+  ZLIB_LIBS="-lz"
+endif
 
 define Package/zabbix-agentd/config
 	source "$(SOURCE)/Config.in"
@@ -115,7 +142,12 @@ define Package/zabbix-agentd/Default
     $(ICONV_DEPENDS) \
     +libevent2-pthreads \
     +libpcre2 \
-    +zlib
+    +ZABBIX_ENABLE_AGENT_COMPRESSION:zlib \
+    +PACKAGE_zabbix-get:zlib \
+    +PACKAGE_zabbix-proxy:zlib \
+    +PACKAGE_zabbix-proxy-basic-sqlite:zlib \
+    +PACKAGE_zabbix-sender:zlib \
+    +PACKAGE_zabbix-server:zlib
   PROVIDES:=\
     @zabbix-agentd-any \
     zabbix-agentd-ssl \
@@ -380,8 +412,11 @@ CONFIGURE_ARGS+= \
   $(call autoconf_bool,CONFIG_IPV6,ipv6) \
   --disable-java \
   --with-libevent=$(STAGING_DIR)/usr/include \
-  --with-libpcre2=$(STAGING_DIR)/usr/include \
-  --with-zlib=$(STAGING_DIR)/usr/include
+  --with-libpcre2=$(STAGING_DIR)/usr/include
+
+ifneq ($(ZABBIX_NEEDS_ZLIB),)
+CONFIGURE_ARGS += --with-zlib=$(STAGING_DIR)/usr
+endif
 endif
 
 ifeq ($(BUILD_VARIANT),basic)
