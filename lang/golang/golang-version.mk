@@ -33,6 +33,7 @@ define Package/$(PKG_NAME)/Default
   TITLE:=Go programming language
   URL:=https://go.dev/
   DEPENDS:=$(GO_ARCH_DEPENDS)
+  $(if $(PKG_HOST_ONLY),BUILDONLY:=1)
 endef
 
 define Package/$(PKG_NAME)/Default/description
