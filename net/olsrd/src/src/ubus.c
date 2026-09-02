@@ -180,6 +180,11 @@ static struct ubus_object olsrd_object = {
 static bool ubus_init_object() {
   int ret;
 
+  // one daemon per address family is a common setup, and two of them cannot
+  // both be "olsrd" on the bus
+  if (olsr_cnf->ip_version == AF_INET6)
+    olsrd_object.name = "olsrd6";
+
   ret = ubus_add_object(shared_ctx, &olsrd_object);
   if (ret) {
     olsr_syslog(OLSR_LOG_ERR, "Failed to add object: %s\n", ubus_strerror(ret));
