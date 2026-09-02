@@ -51,13 +51,28 @@ option would make the package fail it again.
 
 ### Firewall support
 
-OpenWrt uses firewall4 with nftables by default, but the OpenThread firewall
-implementation uses IPTables and IPset. While we still support firewall3 with
-IPTables, it's not a good idea to add new dependencies to old things.
-Therefore, firewall support is disabled completely.
+OpenWrt uses firewall4 with nftables. The OpenThread posix platform's own
+firewall (`OT_FIREWALL`) produces ipset/ip6tables rules, so it has always been
+disabled here and no Thread ingress filter existed at all.
 
-This can be revised once the following feature request is implemented:
-https://github.com/openthread/ot-br-posix/issues/1675
+Since v2026.09.0 upstream provides exactly what
+https://github.com/openthread/ot-br-posix/issues/1675 asked for: an in-process
+nftables backend (`OTBR_NFTABLES`). It is enabled, so otbr-agent now installs
+the Thread ingress filter itself, through nftables in a table of its own,
+`inet otbr_<thread-if>`, matching what the rest of the system uses. It puts
+the table back when something else deletes it, as `fw4 flush` does on every
+firewall stop. This needs nf_tables kernel support at runtime, hence the
+`kmod-nft-core` dependency. The backend's NAT44 masquerade is only installed
+with `OTBR_NAT64`, which this package builds without, so `kmod-nft-nat` is
+not needed. `OT_FIREWALL` deliberately stays off: the in-process backend
+replaces its ipset producer wholesale, and upstream's CI builds the same
+pairing.
+
+The build also writes a `/usr/share/otbr/nftables-backend` marker recording
+which backend owns the rules. Nothing on an OpenWrt target reads it today (its
+consumers are upstream's setup scripts, which this package does not install);
+it is shipped as a debugging aid and for anything that later needs to tell the
+backends apart.
 
 ### mDNS
 
