@@ -1,0 +1,98 @@
+#!/bin/sh
+# Script is sourced not executed, but shebang helps tools recognize this as
+# a shell script.
+
+# In recent (relevant) versions of shellcheck busybox is a valid shell type
+# shellcheck shell=busybox
+
+# uci-defaults script to migrate old uci config for notifications and monitor sections,
+# to the new. Applied during install or on first boot after install, if setting on install
+# fails
+
+# IPKG_INSTROOT is intentionally only set when building an image and
+# is intentionally empty on a live OpenWrt device
+
+# Only run this uci-defaults script on a live OpenWrt device
+[ -z "${IPKG_INSTROOT}" ] || exit 0
+
+# As the uci-defaults environment in which this runs does not have logging
+# available, nor is stderr captured or displayed on the console, these messages
+# exist only to assist when debugging manual runs of the script.
+# shellcheck disable=SC2329,SC2317
+log_migration_error() {
+	local reason="$1"
+
+	printf "'%s': ERROR: '%s'\n" "nut-monitor-migrate-root" "$reason" >&2
+}
+
+preserve_root_commented_file="false"
+preserve_regular_commented_file="false"
+
+nut_monitor_root_current_trimmed="$(mktemp)"
+
+grep -Ev "((^[#]|^$))*" /etc/config/nut_monitor_root 2>/dev/null >>"$nut_monitor_root_current_trimmed"
+
+if [ -n "$(cat "$nut_monitor_root_current_trimmed" | tr -d '\t \r\n')" ]; then
+	printf "'%s': NOTICE: '%s'\n" "nut-monitor-migrate-root" "nut_monitor_root already exists and has configuration. Skipping migration." >&2
+	rm -f "$nut_monitor_root_current_trimmed" || true
+	exit 0
+fi
+
+if grep -q "^[#]" /etc/config/nut_monitor_root 2>/dev/null; then
+	preserve_root_commented_file="true"
+fi
+
+nut_monitor_dir="$(mktemp -d /tmp/tmpXXXXXX)"
+nut_monitor_new="$(mktemp -p "$nut_monitor_dir" tmp_XXXXXX)"
+nut_monitor_new_trimmed="$(mktemp -p "$nut_monitor_dir" tmp_XXXXXX)"
+nut_monitor_root_add="$(mktemp -p "$nut_monitor_dir" tmp_XXXXXX)"
+nut_monitor_root_add_trimmed="$(mktemp -p "$nut_monitor_dir" tmp_XXXXXX)"
+
+grep -E "^#?(\t| )*(config(\t| )upsmon((\t| )+('|\")?upsmon('|\")?)?|option(\t| )+(deadtime|finaldelay|hostsync|minsupplies|nocommwarntime|pollfaillogthrottlemax|pollfreq|pollfreqalert|offduration|overduration|oblbduration|rbwarntime|alarmcritical|shutdownexit|interface_reload_delay|triggerlist))" /etc/config/nut_monitor >>"$nut_monitor_new"
+grep -Ev "^(\t )*(#|$)" "$nut_monitor_new" >>"$nut_monitor_new_trimmed"
+
+if [ -n "$(cat "$nut_monitor_new_trimmed" | tr -d '\t \r\n')" ]; then
+	if ! uci -c "$(dirname "$nut_monitor_new")" show "$(basename "$nut_monitor_new")" >/dev/null; then
+		log_migration_error "FATAL: failed to create valid non-_root only nut_monitor config"
+		exit 1
+	fi
+elif grep -q "^#" /etc/config/nut_monitor 2>/dev/null; then
+	preserve_regular_commented_file="true"
+fi
+
+grep -E "^#?(\t| )*(config(\t| )+(upsmon((\t| )+('|\")?upsmon('|\")?)?|monitor|notifications)|option(\t| )+(runas|notifycmd|shutdowncmd|defaultnotify|certfile|certpath|certident|certverify|forcessl|type|upsname|hostname|port|powervalue|username|password|message|flag))" /etc/config/nut_monitor >>"$nut_monitor_root_add"
+grep -Ev "^((\t )*(#|$)|#?(\t| )*config(\t| )+upsmon((\t| )+('|\")?upsmon('|\")?))" "$nut_monitor_root_add" >>"$nut_monitor_root_add_trimmed"
+
+if [ -n "$(cat "$nut_monitor_root_add_trimmed" | tr -d '\t \r\n')" ]; then
+	sed -i -e "s/config upsmon (|'|\")upsmon(|'|\")/config upsmon 'upsmon_root'/" "$nut_monitor_root_add" || {
+		log_migration_error "FATAL: failed to create new 'upsmon_root' to add to nut_monitor_root"
+		exit 1
+	}
+fi
+
+if [ -n "$(cat "$nut_monitor_root_add_trimmed" | tr -d '\t \r\n')" ] || [ "$preserve_root_commented_file" = "false" ]; then
+	if ! uci -c "$(dirname "$nut_monitor_root_add")" show "$(basename "$nut_monitor_root_add")" >/dev/null; then
+		log_migration_error "FATAL: failed to create valid nut_monitor_root config"
+		exit 1
+	fi
+	cat "$nut_monitor_root_add" | uci import nut_monitor_root || {
+		log_migration_error "Failed to import new nut_monitor_root configuration"
+		exit 1
+	}
+	# Ensure we remove non-root configs from regular nut_monitor config
+	preserve_regular_commented_file="false"
+fi
+
+if [ -n "$(cat "$nut_monitor_new_trimmed" | tr -d '\t \r\n')" ] || [ "$preserve_regular_commented_file" == "false" ]; then
+	cat "$nut_monitor_new" >/etc/config/nut_monitor || {
+		log_migration_error "Failed to replace nut_monitor_config with new non-_root only config"
+		exit 1
+	}
+fi
+
+rm -f "$nut_monitor_root_add_trimmed" || true
+rm -f "$nut_monitor_new_trimmed" || true
+rm -f "$nut_monitor_root_add" || true
+rm -f "$nut_monitor_new" || true
+
+exit 0

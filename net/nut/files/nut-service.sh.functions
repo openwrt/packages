@@ -21,6 +21,7 @@ NUT_KILLPOWER="/var/run/killpower"
 
 # Disable NUT hotplug path
 NUT_DISABLE_HOTPLUG_PATH="/var/run/nut/disable-hotplug"
+NUT_HOTPLUG_BOOT_COMPLETE_PATH="/var/run/nut-hotplug-boot-complete"
 
 # Fallback STATEPATH setting
 NUT_BASE_STATEPATH="/var/run/nut"
@@ -47,6 +48,10 @@ allow_hotplug_restart() {
 	# Disable hotplug path; a sentinel created by config
 	# or nutshutdown
 	[ ! -f "$NUT_DISABLE_HOTPLUG_PATH" ] || return 1
+
+	# Initial boot complete; NUT hotplug allowed sentinel
+	# Created by nut-server initscript
+	[ -f "$NUT_HOTPLUG_BOOT_COMPLETE_PATH" ] || return 1
 
 	return 0
 }
@@ -251,9 +256,10 @@ add_interface_triggers() {
 		shift 3
 	fi
 
-	local interfaces interface trigger_failed
+	local interfaces interface trigger_failed val
 
-	config_get interfaces "$section" triggerlist
+	config_get_single "$section" triggerlist
+	interfaces="$val"
 
 	if [ -n "$interfaces" ] && [ "$interfaces" != "all" ]; then
 		set -f

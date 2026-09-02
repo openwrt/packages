@@ -1,0 +1,7 @@
+# Although the settings in this file affect security, the values of
+# settings themselves are not sensitive, therefore this file only
+# needs to be read-only for group and other, not accessible only by root.
+# That is permissions of 0644 are sufficiently secure.
+
+config upsset
+	option enable 0
