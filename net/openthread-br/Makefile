@@ -24,12 +24,16 @@ define Package/openthread-br
   SECTION:=net
   TITLE:=OpenThread Border Router
   DEPENDS:= \
+	+kmod-nft-core \
+	+kmod-nft-nat \
 	+kmod-tun \
 	+libblobmsg-json \
 	+libjson-c \
 	+cJSON \
+	+libmnl \
 	+libncurses \
 	+libnetfilter-queue \
+	+libnftnl \
 	+libreadline \
 	+libstdcpp \
 	+libubox \
@@ -55,6 +59,7 @@ CMAKE_OPTIONS += \
 	-DOTBR_BORDER_ROUTING=ON \
 	-DOTBR_MDNS=openthread \
 	-DOTBR_NAT64=OFF \
+	-DOTBR_NFTABLES=ON \
 	-DOTBR_OPENWRT=ON \
 	-DOTBR_PRODUCT_NAME=BorderRouter \
 	-DOTBR_REST=ON \
@@ -69,9 +74,12 @@ define Package/openthread-br/install
 	$(INSTALL_DIR) \
 		$(1)/etc/init.d \
 		$(1)/lib/netifd/proto \
-		$(1)/usr/sbin
+		$(1)/usr/sbin \
+		$(1)/usr/share/otbr
 	$(INSTALL_BIN) ./files/openthread-proto.sh $(1)/lib/netifd/proto/openthread.sh
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/* $(1)/usr/sbin
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/otbr/nftables-backend \
+		$(1)/usr/share/otbr
 endef
 
 
