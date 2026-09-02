@@ -67,7 +67,8 @@ listen_address() {
 srv_config() {
 	local srv="$1"
 	local config_file="$2"
-	local maxage maxconn certfile
+	local ssl_backend
+	local maxage maxconn val certfile
 
 	config_get maxage "$srv" maxage
 	[ -n "$maxage" ] && printf "MAXAGE %s\n" "$maxage" >>"$config_file"
@@ -77,9 +78,39 @@ srv_config() {
 	config_get maxconn "$srv" maxconn
 	[ -n "$maxconn" ] && printf "MAXCONN %s\n" "$maxconn" >>"$config_file"
 
-	#NOTE: certs only apply to SSL-enabled version
+	ssl_backend="$(cat /usr/share/nut/ssl_backend)"
+
+	[ -n "$ssl_backend" ] || {
+		log_error_exit "Missing ssl_backend indicator. Bailing rather than running without SSL." "nut-server-config.sh" "nut-server-config"
+		return 1
+	}
+
+	# NOTE: certfile only applies to OpenSSL-enabled version
 	config_get certfile "$srv" certfile
-	[ -n "$certfile" ] && printf "CERTFILE %s\n" "$certfile" >>"$config_file"
+	[ -n "$certfile" ] && [ "$ssl_backend" = "openssl" ] && printf "CERTFILE %s\n" "$certfile" >>"$config_file"
+
+	# if not compiled with SSL (OpenSSL or NSS), then do not attempt to use
+	# SSL configuration
+	if [ "$ssl_backend" = "openssl" ] || [ "$ssl_backend" = "nss" ]; then
+		# If no certpath or certfile is specified, then SSL will not be used, even if
+		# other SSL config exists
+		config_get val "$srv" certpath
+		[ -n "$val" ] && printf "CERTPATH %s\n" "$val" >>"$config_file"
+
+		config_get val "$srv" certident
+		[ -n "$val" ] && printf "CERTIDENT %s\n" "$val" >>"$config_file"
+
+		config_get val "$srv" certrequest
+		[ -n "$val" ] && printf "CERTREQUEST %s\n" "$val" >>"$config_file"
+
+		config_get_bool val "$srv" disable_weak_ssl 0
+		printf "DISABLE_WEAK_SSL %s\n" "$val" >>"$config_file"
+	fi
+
+	config_get val "$srv" debug_min
+	[ -n "$val" ] && printf "DEBUG_MIN %s\n" "$val" >>"$config_file"
+
+	return 0
 }
 
 nut_user_instcmd() {
@@ -141,7 +172,7 @@ build_server_config() {
 	config_foreach nut_user_add user "$USERS_C.new"
 	config_foreach listen_address listen_address "$UPSD_C.new"
 	if have_section_named "upsd" "upsd"; then
-		srv_config upsd "$UPSD_C.new"
+		srv_config upsd "$UPSD_C.new" || return 1
 	else
 		# If config 'nut_server' does not have a 'upsd' section, use a default
 		# configuration

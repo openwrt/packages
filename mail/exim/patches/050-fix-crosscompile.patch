@@ -1,11 +1,43 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 21 Aug 2026 14:40:13 +0100
+Subject: [PATCH] fix-crosscompile: use $(LD) instead of raw ld for the
+ remaining partial-link rules
+
+src/miscmods/Makefile builds dkim.o, dmarc.o/dmarc_native.o and
+sieve_filter.o by compiling several .c files separately and then
+partial-linking (`ld -r`) the resulting .o files into one. Upstream
+4.100 switched the dkim.o rule from a raw `ld -r` to `$(LD) -r`, but
+left the dmarc and sieve_filter rules using the unqualified system
+`ld`, which cannot parse the target architecture's relocations when
+cross-compiling (fails with e.g. "Relocations in generic ELF (EM:
+183)" / "file in wrong format" on non-x86_64 targets - x86_64 happens
+to build "successfully" only because the build host's own `ld`
+coincidentally still understands x86_64 relocations).
+
+Apply the same $(LD) fix consistently to both remaining rules. These
+are the only two: grepping the full pristine 4.100 source tree for
+`ld -r` turns up nothing outside src/miscmods/Makefile.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
 --- a/src/miscmods/Makefile
 +++ b/src/miscmods/Makefile
-@@ -62,7 +62,7 @@ dkim.o:
- 	$(FE)$(CC) -c $(CFLAGS) $(INCLUDE) pdkim.c
- 	$(FE)$(CC) -c $(CFLAGS) $(INCLUDE) $(TLS_INCLUDE) signing.c
- 	$(FE)mv dkim.o dkim_tmp.o
--	$(FE)ld -r -o dkim.o $(LDFLAGS_PARTIAL) \
-+	$(FE)$(CC) -r -o dkim.o $(LDFLAGS_PARTIAL) \
- 		dkim_tmp.o dkim_transport.o pdkim.o signing.o
+@@ -96,7 +96,7 @@ dmarc.o dmarc_native.o:
+ 	$(FE)$(CC) -c $(CFLAGS) $(INCLUDE) $*.c
+ 	$(FE)$(CC) -c $(CFLAGS) $(INCLUDE) dmarc_common.c
+ 	$(FE)mv $@ dmarc_tmp.o
+-	$(FE)ld -r -o $@ $(LDFLAGS_PARTIAL) dmarc_tmp.o dmarc_common.o
++	$(FE)$(LD) -r -o $@ $(LDFLAGS_PARTIAL) dmarc_tmp.o dmarc_common.o
  
- # Similarly, we want a single .so for the dynamic-load module
+ # dmarc_native is special in the same way as spf_perl
+ dmarc.so dmarc_native.so:
+@@ -112,7 +112,7 @@ sieve_filter.o:
+ 	$(FE)$(CC) -c $(CFLAGS) $(INCLUDE) sieve_filter_body.c
+ 	$(FE)$(CC) -c $(CFLAGS) $(INCLUDE) sieve_filter_input.c
+ 	$(FE)mv sieve_filter.o sieve_filter_tmp.o
+-	$(FE)ld -r -o sieve_filter.o $(LDFLAGS_PARTIAL) \
++	$(FE)$(LD) -r -o sieve_filter.o $(LDFLAGS_PARTIAL) \
+ 		sieve_filter_tmp.o sieve_filter_body.o sieve_filter_input.o
+ 
+ sieve_filter.so:

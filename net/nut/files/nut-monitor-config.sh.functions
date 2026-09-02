@@ -112,9 +112,16 @@ upsmon_conf_get_write() {
 nut_upsmon_conf() {
 	local config_file="$1"
 	local cfg="upsmon"
-	local val defaultnotify nut_option uci_option conf_ret
+	local val defaultnotify nut_option uci_option conf_ret ssl_backend
 	local event_notify_flags_not_found upsmon_bool_options nut_bool
 	upsmon_bool_options=" $NUT_UPSMON_BOOL_OPTIONS "
+
+	ssl_backend="$(cat /usr/share/nut/ssl_backend)"
+
+	[ -n "$ssl_backend" ] || {
+		log_error_exit "Missing ssl_backend indicator. Bailing rather than running without SSL." "nut-monitor-config.sh" "nut-monitor-config"
+		return 1
+	}
 
 	# Note that we use '-u $RUNAS' on the daemon command line in preference to
 	# the RUN_AS_USER configuration in "$config_file"
@@ -192,6 +199,44 @@ nut_upsmon_conf() {
 			;;
 		POWERDOWNFLAG)
 			upsmon_conf_get_write "$cfg" "$config_file" "$uci_option" "$nut_option" "false" "$NUT_KILLPOWER"
+			conf_ret=$?
+			if [ "$conf_ret" -eq 1 ]; then
+				return 1
+			fi
+			;;
+		CERTPATH | CERTIDENT | CERTHOST)
+			# if not compiled with SSL (OpenSSL or NSS), then do not attempt to use
+			# SSL configuration
+			if [ "$ssl_backend" != "openssl" ] && [ "$ssl_backend" != "nss" ]; then
+				continue
+			fi
+			# If no certpath or certfile is specified, then SSL will not be used, even if
+			# other SSL config exists
+			upsmon_conf_get_write "$cfg" "$config_file" "$uci_option" "$nut_option" "false"
+			conf_ret=$?
+			if [ "$conf_ret" -eq 1 ]; then
+				return 1
+			fi
+			;;
+		CERTVERIFY | FORCESSL)
+			# if not compiled with SSL (OpenSSL or NSS), then do not attempt to use
+			# SSL configuration
+			if [ "$ssl_backend" != "openssl" ] && [ "$ssl_backend" != "nss" ]; then
+				continue
+			fi
+			upsmon_conf_get_write "$cfg" "$config_file" "$uci_option" "$nut_option" "true"
+			conf_ret=$?
+			if [ "$conf_ret" -eq 1 ]; then
+				return 1
+			fi
+			;;
+		CERTFILE)
+			# if not compiled with OpenSSL, then do not attempt to use CERTFILE (it is
+			# OpenSSL specific)
+			if [ "$ssl_backend" != "openssl" ]; then
+				continue
+			fi
+			upsmon_conf_get_write "$cfg" "$config_file" "$uci_option" "$nut_option" "false"
 			conf_ret=$?
 			if [ "$conf_ret" -eq 1 ]; then
 				return 1

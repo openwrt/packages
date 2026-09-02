@@ -11,20 +11,30 @@ guidelines:
   be updated regularly with supported versions.
 - Have no dependencies outside the OpenWrt core packages or this repository
   feed.
-- The compilation has been successfully tested with the appropriate includes and dependencies. 
+- The compilation has been successfully tested with the appropriate includes and dependencies.
   Additionally, if language support is relevant to your package, please enable the "Compile with full language support" option found under "Global Build Settings" in "menuconfig" and conduct further tests.
 - Most important -- the packaged software is tested to work as expected!
+
+### Pointers to the guidelines the LLM reviewers use
+
+If you have questions about what is expected of a pull request, and there is
+no specific documentation for your case, or the comments from a reviewer seem
+at odds with the documentation you have found, it can be useful to refer to the
+prompts given to the automated LLM reviewer.
+
+- [Project-wide LLM review guidelines](https://github.com/openwrt/actions-shared-workflows/tree/main/llm-review-prompts)
+- [Packages repository-specific LLM review addendum](https://github.com/openwrt/packages/blob/master/.github/llm-review-rules.md)
 
 ## Package Sources (archives and repositories)
 
 - <strong>PKG_SOURCE</strong> should reference the smallest available archive. In order of
-  preference: 
-  1. xz (most compressed), 
-  1. bzip2, gz and zip. 
+  preference:
+  1. xz (most compressed),
+  1. bzip2, gz and zip.
   1. As a last resort downloads from source repositories can be used.
 - <strong>PKG_SOURCE_URL</strong> should link to an official release archive. Use of `https://`
-  is preferred. 
-  
+  is preferred.
+
   If a source archive is not available, a locally generated
   archive fetched using git, svn, cvs or in rare circumstances, hg or bzr.
 - Convenience macros for popular mirrors are defined. Using these macros will

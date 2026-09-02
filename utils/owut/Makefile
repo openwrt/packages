@@ -6,13 +6,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=owut
-PKG_SOURCE_DATE:=2026-07-08
+PKG_SOURCE_DATE:=2026-08-30
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=db17536ec5cbcc6a76a51e65f3d192b6a2184abb
+PKG_SOURCE_VERSION:=9b51eeec3ec3fb583901b5b7b2af1a6784aea5b6
 PKG_SOURCE_URL:=https://github.com/efahl/owut.git
-PKG_MIRROR_HASH:=363bc98f4650ece76bf3b01f04f8aa78c5e79d4e44029d832e5d700c8223af05
+PKG_MIRROR_HASH:=9b74d305ac433c975a0eef5a3975ac1b2dd80f1b5b80e285bb70cecf0e216280
 
 PKG_MAINTAINER:=Eric Fahlgren <ericfahlgren@gmail.com>
 PKG_LICENSE:=GPL-2.0-only
@@ -65,8 +65,14 @@ define Package/owut/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/owut $(1)/usr/bin
 
-	sed -i -e "s/%%VERSION%%/$(PKG_VERSION)-r$(PKG_RELEASE)/" $(1)/usr/bin/owut
-	sed -i -e "s/%%VERSION%%/$(PKG_VERSION)-r$(PKG_RELEASE)/" $(1)/usr/share/ucode/utils/argparse.uc
+	# Hardcode the package version/release
+	# Remove comments and empty lines preserving package's title, copyright and license
+	sed -i \
+		-e "s/%%VERSION%%/$(PKG_VERSION)-r$(PKG_RELEASE)/" \
+		-e '5,$$$${/^[ \t]*\/\//d}' \
+		-e '/^$$$$/d' \
+		$(1)/usr/bin/owut \
+		$(1)/usr/share/ucode/utils/argparse.uc
 endef
 
 $(eval $(call BuildPackage,owut))

@@ -5,76 +5,999 @@ USE_PROCD=1
 
 NAME=frpc
 PROG=/usr/bin/$NAME
+CONF_FILE=/var/etc/$NAME.toml
 
 _err() {
 	echo "$*" >&2
 	logger -p daemon.err -t "$NAME" "$*"
 }
 
-config_cb() {
-	[ $# -eq 0 ] && return
-
-	local type="$1"
-	local name="$2"
-	if [ "$type" = "conf" ]; then
-		echo "[$name]" >> "$conf_file"
-		option_cb() {
-			local option="$1"
-			local value="$2"
-			[ "$option" = "name" ] && \
-			sed -i "s/$CONFIG_SECTION/$value/g" "$conf_file" || \
-			echo "$option = $value" >> "$conf_file";
-		}
-		list_cb() {
-			local name="$1"
-			local value="$2"
-			[ "$name" = "_" ] && echo "$value" >> "$conf_file"
-		}
-	else
-		[ "$type" = "init" ] && init_cfg="$name"
-		option_cb() { return 0; }
-		list_cb() { return 0; }
-	fi
+_trim() {
+	printf '%s' "$1" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//'
 }
 
-service_triggers()
-{
+_toml_escape() {
+	printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'
+}
+
+_toml_quote() {
+	printf '"%s"' "$(_toml_escape "$1")"
+}
+
+_toml_key_quote() {
+	_toml_quote "$1"
+}
+
+_toml_bool() {
+	local v
+	v="$(printf '%s' "$1" | tr 'A-Z' 'a-z')"
+
+	case "$v" in
+		1|true|yes|on|enabled)
+			printf 'true'
+		;;
+		0|false|no|off|disabled)
+			printf 'false'
+		;;
+		*)
+			printf 'false'
+		;;
+	esac
+}
+
+_TOML_ERR=0
+_ALLOW_UNSAFE_TOKEN_SOURCE_EXEC=0
+
+_is_uinteger() {
+	case "$1" in
+		''|*[!0-9]*)
+			return 1
+		;;
+	esac
+
+	return 0
+}
+
+_is_integer() {
+	local value="$1"
+
+	case "$value" in
+		+*|-*)
+			value="${value#?}"
+		;;
+	esac
+
+	_is_uinteger "$value"
+}
+
+_is_port_value() {
+	_is_uinteger "$1" || return 1
+	[ "$1" -ge 1 ] 2>/dev/null && [ "$1" -le 65535 ] 2>/dev/null
+}
+
+_is_port_or_zero_value() {
+	_is_uinteger "$1" || return 1
+	[ "$1" -ge 0 ] 2>/dev/null && [ "$1" -le 65535 ] 2>/dev/null
+}
+
+_is_negative_integer() {
+	local value
+
+	case "$1" in
+		-*)
+			value="${1#-}"
+			_is_uinteger "$value" && [ "$value" -gt 0 ] 2>/dev/null
+		;;
+		*)
+			return 1
+		;;
+	esac
+}
+
+_is_visitor_bind_port_value() {
+	_is_negative_integer "$1" && return 0
+	_is_port_value "$1"
+}
+
+_toml_line() {
+	local key="$1"
+	local value="$2"
+	local type="$3"
+
+	[ -z "$value" ] && return 0
+
+	case "$type" in
+		bool)
+			printf '%s = %s\n' "$key" "$(_toml_bool "$value")"
+		;;
+		int|integer|number)
+			if ! _is_integer "$value"; then
+				_err "invalid integer for $key: $value"
+				_TOML_ERR=1
+				return 1
+			fi
+
+			printf '%s = %s\n' "$key" "$value"
+		;;
+		port)
+			if ! _is_port_value "$value"; then
+				_err "invalid port for $key: $value"
+				_TOML_ERR=1
+				return 1
+			fi
+
+			printf '%s = %s\n' "$key" "$value"
+		;;
+		port0)
+			if ! _is_port_or_zero_value "$value"; then
+				_err "invalid port for $key: $value"
+				_TOML_ERR=1
+				return 1
+			fi
+
+			printf '%s = %s\n' "$key" "$value"
+		;;
+		visitor_bind_port)
+			if ! _is_visitor_bind_port_value "$value"; then
+				_err "invalid visitor bind port for $key: $value"
+				_TOML_ERR=1
+				return 1
+			fi
+
+			printf '%s = %s\n' "$key" "$value"
+		;;
+		*)
+			printf '%s = %s\n' "$key" "$(_toml_quote "$value")"
+		;;
+	esac
+}
+
+_emit_opt() {
+	local section="$1"
+	local option="$2"
+	local toml_key="$3"
+	local type="$4"
+	local value
+
+	config_get value "$section" "$option"
+	_toml_line "$toml_key" "$value" "$type"
+}
+
+_TOML_ARRAY=
+_TOML_HAS_LIST=0
+
+_toml_array_add() {
+	local item="$1"
+
+	item="$(_trim "$item")"
+	[ -z "$item" ] && return 0
+
+	if [ -n "$_TOML_ARRAY" ]; then
+		_TOML_ARRAY="${_TOML_ARRAY}, "
+	fi
+
+	_TOML_ARRAY="${_TOML_ARRAY}$(_toml_quote "$item")"
+}
+
+_collect_array_item() {
+	_TOML_HAS_LIST=1
+	_toml_array_add "$1"
+}
+
+_collect_array_option() {
+	local section="$1"
+	local option="$2"
+	local scalar item
+
+	_TOML_ARRAY=
+	_TOML_HAS_LIST=0
+
+	config_list_foreach "$section" "$option" _collect_array_item
+
+	if [ "$_TOML_HAS_LIST" = "0" ]; then
+		config_get scalar "$section" "$option"
+
+		while [ -n "$scalar" ]; do
+			case "$scalar" in
+				*,*)
+					item="${scalar%%,*}"
+					scalar="${scalar#*,}"
+				;;
+				*)
+					item="$scalar"
+					scalar=
+				;;
+			esac
+
+			_toml_array_add "$item"
+		done
+	fi
+
+	return 0
+}
+
+_emit_array_opt() {
+	local section="$1"
+	local option="$2"
+	local toml_key="$3"
+
+	_collect_array_option "$section" "$option"
+
+	[ -n "$_TOML_ARRAY" ] || return 0
+	printf '%s = [%s]\n' "$toml_key" "$_TOML_ARRAY"
+}
+
+_emit_kv_pair() {
+	local prefix="$1"
+	local line="$2"
+	local value_type="$3"
+	local key value toml_key
+
+	case "$line" in
+		*=*)
+			key="${line%%=*}"
+			value="${line#*=}"
+		;;
+		*)
+			return 0
+		;;
+	esac
+
+	key="$(_trim "$key")"
+	value="$(_trim "$value")"
+
+	[ -z "$key" ] && return 0
+
+	toml_key="${prefix}.$(_toml_key_quote "$key")"
+
+	case "$value_type" in
+		bool)
+			printf '%s = %s\n' "$toml_key" "$(_toml_bool "$value")"
+		;;
+		int|integer|number)
+			printf '%s = %s\n' "$toml_key" "$value"
+		;;
+		*)
+			printf '%s = %s\n' "$toml_key" "$(_toml_quote "$value")"
+		;;
+	esac
+}
+
+_KV_PREFIX=
+_KV_TYPE=
+_KV_HAS_LIST=0
+
+_emit_kv_list_item() {
+	_KV_HAS_LIST=1
+	_emit_kv_pair "$_KV_PREFIX" "$1" "$_KV_TYPE"
+}
+
+_emit_kv_opt() {
+	local section="$1"
+	local option="$2"
+	local prefix="$3"
+	local value_type="$4"
+	local scalar
+
+	_KV_PREFIX="$prefix"
+	_KV_TYPE="${value_type:-string}"
+	_KV_HAS_LIST=0
+
+	config_list_foreach "$section" "$option" _emit_kv_list_item
+
+	if [ "$_KV_HAS_LIST" = "0" ]; then
+		config_get scalar "$section" "$option"
+		[ -n "$scalar" ] && _emit_kv_pair "$prefix" "$scalar" "$value_type"
+	fi
+
+	return 0
+}
+
+_HEADERS_ARRAY=
+_HEADERS_HAS_LIST=0
+
+_headers_array_add() {
+	local line="$1"
+	local key value item
+
+	case "$line" in
+		*=*)
+			key="${line%%=*}"
+			value="${line#*=}"
+		;;
+		*)
+			return 0
+		;;
+	esac
+
+	key="$(_trim "$key")"
+	value="$(_trim "$value")"
+
+	[ -z "$key" ] && return 0
+
+	item="{ name = $(_toml_quote "$key"), value = $(_toml_quote "$value") }"
+
+	if [ -n "$_HEADERS_ARRAY" ]; then
+		_HEADERS_ARRAY="${_HEADERS_ARRAY}, "
+	fi
+
+	_HEADERS_ARRAY="${_HEADERS_ARRAY}${item}"
+}
+
+_collect_header_item() {
+	_HEADERS_HAS_LIST=1
+	_headers_array_add "$1"
+}
+
+_emit_headers_opt() {
+	local section="$1"
+	local option="$2"
+	local toml_key="$3"
+	local scalar
+
+	_HEADERS_ARRAY=
+	_HEADERS_HAS_LIST=0
+
+	config_list_foreach "$section" "$option" _collect_header_item
+
+	if [ "$_HEADERS_HAS_LIST" = "0" ]; then
+		config_get scalar "$section" "$option"
+		[ -n "$scalar" ] && _headers_array_add "$scalar"
+	fi
+
+	[ -n "$_HEADERS_ARRAY" ] || return 0
+	printf '%s = [%s]\n' "$toml_key" "$_HEADERS_ARRAY"
+}
+
+_emit_name_value_array_opt() {
+	_emit_headers_opt "$@"
+}
+
+_RAW_HAS_LIST=0
+
+_emit_raw_item() {
+	_RAW_HAS_LIST=1
+	[ -n "$1" ] || return 0
+	printf '%s\n' "$1"
+}
+
+_emit_raw_opt() {
+	local section="$1"
+	local option="$2"
+	local scalar
+
+	_RAW_HAS_LIST=0
+	config_list_foreach "$section" "$option" _emit_raw_item
+
+	if [ "$_RAW_HAS_LIST" = "0" ]; then
+		config_get scalar "$section" "$option"
+		[ -n "$scalar" ] || return 0
+		printf '%s\n' "$scalar"
+		return $?
+	fi
+
+	return 0
+}
+
+_emit_auth_scopes() {
+	local section="$1"
+	local hb nwc v
+
+	_collect_array_option "$section" auth_additional_scopes
+
+	if [ -z "$_TOML_ARRAY" ]; then
+		config_get hb "$section" authenticate_heartbeats
+		config_get nwc "$section" authenticate_new_work_conns
+
+		v="$(_toml_bool "$hb")"
+		[ "$v" = "true" ] && _toml_array_add "HeartBeats"
+
+		v="$(_toml_bool "$nwc")"
+		[ "$v" = "true" ] && _toml_array_add "NewWorkConns"
+	fi
+
+	[ -n "$_TOML_ARRAY" ] || return 0
+	printf 'auth.additionalScopes = [%s]\n' "$_TOML_ARRAY"
+}
+
+_emit_admin_web_tls() {
+	local section="$1"
+	local enabled cert key
+
+	config_get enabled "$section" admin_tls_enable
+
+	[ "$(_toml_bool "$enabled")" = "true" ] || return 0
+
+	config_get cert "$section" admin_tls_cert_file
+	config_get key "$section" admin_tls_key_file
+
+	if [ -z "$cert" ] || [ -z "$key" ]; then
+		_err "admin_tls_cert_file and admin_tls_key_file are required when admin_tls_enable is enabled"
+		return 1
+	fi
+
+	if [ ! -r "$cert" ]; then
+		_err "admin TLS certificate file is not readable: $cert"
+		return 1
+	fi
+
+	if [ ! -r "$key" ]; then
+		_err "admin TLS private key file is not readable: $key"
+		return 1
+	fi
+
+	_toml_line webServer.tls.certFile "$cert" string
+	_toml_line webServer.tls.keyFile "$key" string
+
+	return 0
+}
+
+_emit_admin_web() {
+	local section="$1"
+	local port addr
+
+	config_get port "$section" admin_port
+
+	# Empty or 0 means web server is disabled.
+	[ -n "$port" ] && [ "$port" != "0" ] || return 0
+
+	config_get addr "$section" admin_addr
+	_toml_line webServer.addr "${addr:-127.0.0.1}" string
+	_toml_line webServer.port "$port" port
+	_emit_opt "$section" admin_user webServer.user string
+	_emit_opt "$section" admin_pwd webServer.password string
+	_emit_admin_web_tls "$section" || return 1
+	_emit_opt "$section" assets_dir webServer.assetsDir string
+	_emit_opt "$section" pprof_enable webServer.pprofEnable bool
+
+	return 0
+}
+
+_emit_common() {
+	local section="common"
+	local method token token_source_type token_source_file_path
+
+	# Root options
+	_emit_opt "$section" client_id clientID string
+	_emit_opt "$section" user user string
+	_emit_opt "$section" server_addr serverAddr string
+	_emit_opt "$section" server_port serverPort port
+	_emit_opt "$section" nat_hole_stun_server natHoleStunServer string
+	_emit_opt "$section" login_fail_exit loginFailExit bool
+	_emit_opt "$section" dns_server dnsServer string
+	_emit_array_opt "$section" start start
+	_emit_opt "$section" udp_packet_size udpPacketSize int
+	_emit_array_opt "$section" includes includes
+
+	# Auth
+	config_get method "$section" authentication_method
+	config_get token "$section" token
+	config_get token_source_type "$section" token_source_type
+	config_get token_source_file_path "$section" token_source_file_path
+
+	[ -z "$method" ] && { [ -n "$token" ] || [ -n "$token_source_type" ]; } && method="token"
+
+	_toml_line auth.method "$method" string
+
+	if [ "$method" = "token" ] || [ -z "$method" ]; then
+		if [ -n "$token_source_type" ]; then
+			if [ -n "$token" ]; then
+				_err "token and token_source_type are mutually exclusive"
+				return 1
+			fi
+
+			case "$token_source_type" in
+				file)
+					if [ -z "$token_source_file_path" ]; then
+						_err "token_source_file_path is required when token_source_type=file"
+						return 1
+					fi
+
+					_toml_line auth.tokenSource.type "$token_source_type" string
+					_toml_line auth.tokenSource.file.path "$token_source_file_path" string
+				;;
+
+				exec)
+					local token_source_exec_command
+
+					config_get token_source_exec_command "$section" token_source_exec_command
+					if [ -z "$token_source_exec_command" ]; then
+						_err "token_source_exec_command is required when token_source_type=exec"
+						return 1
+					fi
+
+					_ALLOW_UNSAFE_TOKEN_SOURCE_EXEC=1
+					_toml_line auth.tokenSource.type "$token_source_type" string
+					_toml_line auth.tokenSource.exec.command "$token_source_exec_command" string
+					_emit_array_opt "$section" token_source_exec_args auth.tokenSource.exec.args
+					_emit_name_value_array_opt "$section" token_source_exec_env auth.tokenSource.exec.env
+				;;
+
+				*)
+					_err "unsupported token_source_type: $token_source_type"
+					return 1
+				;;
+			esac
+		else
+			_toml_line auth.token "$token" string
+		fi
+	fi
+
+	_emit_auth_scopes "$section"
+
+	if [ "$method" = "oidc" ]; then
+		_emit_opt "$section" oidc_client_id auth.oidc.clientID string
+		_emit_opt "$section" oidc_client_secret auth.oidc.clientSecret string
+		_emit_opt "$section" oidc_audience auth.oidc.audience string
+		_emit_opt "$section" oidc_scope auth.oidc.scope string
+		_emit_opt "$section" oidc_token_endpoint_url auth.oidc.tokenEndpointURL string
+		_emit_kv_opt "$section" oidc_additional_endpoint_params auth.oidc.additionalEndpointParams string
+		_emit_opt "$section" oidc_trusted_ca_file auth.oidc.trustedCaFile string
+		_emit_opt "$section" oidc_insecure_skip_verify auth.oidc.insecureSkipVerify bool
+		_emit_opt "$section" oidc_proxy_url auth.oidc.proxyURL string
+	fi
+
+	# Transport
+	_emit_opt "$section" dial_server_timeout transport.dialServerTimeout int
+	_emit_opt "$section" dial_server_keepalive transport.dialServerKeepalive int
+	_emit_opt "$section" http_proxy transport.proxyURL string
+	_emit_opt "$section" pool_count transport.poolCount int
+	_emit_opt "$section" tcp_mux transport.tcpMux bool
+	_emit_opt "$section" tcp_mux_keepalive_interval transport.tcpMuxKeepaliveInterval int
+	_emit_opt "$section" protocol transport.protocol string
+	_emit_opt "$section" wire_protocol transport.wireProtocol string
+	_emit_opt "$section" connect_server_local_ip transport.connectServerLocalIP string
+	_emit_opt "$section" heartbeat_interval transport.heartbeatInterval int
+	_emit_opt "$section" heartbeat_timeout transport.heartbeatTimeout int
+
+	# QUIC
+	_emit_opt "$section" quic_keepalive_period transport.quic.keepalivePeriod int
+	_emit_opt "$section" quic_max_idle_timeout transport.quic.maxIdleTimeout int
+	_emit_opt "$section" quic_max_incoming_streams transport.quic.maxIncomingStreams int
+
+	# TLS
+	_emit_opt "$section" tls_enable transport.tls.enable bool
+	_emit_opt "$section" tls_cert_file transport.tls.certFile string
+	_emit_opt "$section" tls_key_file transport.tls.keyFile string
+	_emit_opt "$section" tls_trusted_ca_file transport.tls.trustedCaFile string
+	_emit_opt "$section" tls_server_name transport.tls.serverName string
+	_emit_opt "$section" disable_custom_tls_first_byte transport.tls.disableCustomTLSFirstByte bool
+
+	# Web admin server
+	_emit_admin_web "$section" || return 1
+
+	# Feature gates / virtual net
+	_emit_kv_opt "$section" feature_gates featureGates bool
+	_emit_opt "$section" virtual_net_address virtualNet.address string
+	_emit_opt "$section" store_path store.path string
+
+	# Client metadata
+	_emit_kv_opt "$section" metadatas metadatas string
+
+	# Log
+	_emit_opt "$section" log_file log.to string
+	_emit_opt "$section" log_level log.level string
+	_emit_opt "$section" log_max_days log.maxDays int
+	_emit_opt "$section" disable_log_color log.disablePrintColor bool
+
+	# Raw extra TOML lines kept for manual UCI usage; LuCI intentionally hides this.
+	_emit_raw_opt "$section" _
+}
+
+_emit_plugin() {
+	local section="$1"
+	local plugin role
+
+	config_get plugin "$section" plugin
+	config_get role "$section" role
+
+	[ -z "$plugin" ] && return 0
+
+	_toml_line plugin.type "$plugin" string
+
+	case "$plugin" in
+		http_proxy)
+			_emit_opt "$section" plugin_http_user plugin.httpUser string
+			_emit_opt "$section" plugin_http_passwd plugin.httpPassword string
+		;;
+
+		socks5)
+			_emit_opt "$section" plugin_user plugin.username string
+			_emit_opt "$section" plugin_passwd plugin.password string
+		;;
+
+		unix_domain_socket)
+			_emit_opt "$section" plugin_unix_path plugin.unixPath string
+		;;
+
+		static_file)
+			_emit_opt "$section" plugin_local_path plugin.localPath string
+			_emit_opt "$section" plugin_strip_prefix plugin.stripPrefix string
+			_emit_opt "$section" plugin_http_user plugin.httpUser string
+			_emit_opt "$section" plugin_http_passwd plugin.httpPassword string
+		;;
+
+		https2http|https2https)
+			_emit_opt "$section" plugin_local_addr plugin.localAddr string
+			_emit_opt "$section" plugin_crt_path plugin.crtPath string
+			_emit_opt "$section" plugin_key_path plugin.keyPath string
+			_emit_opt "$section" plugin_host_header_rewrite plugin.hostHeaderRewrite string
+			_emit_opt "$section" plugin_enable_http2 plugin.enableHTTP2 bool
+			_emit_kv_opt "$section" plugin_request_headers plugin.requestHeaders.set string
+		;;
+
+		http2https|http2http)
+			_emit_opt "$section" plugin_local_addr plugin.localAddr string
+			_emit_opt "$section" plugin_host_header_rewrite plugin.hostHeaderRewrite string
+			_emit_kv_opt "$section" plugin_request_headers plugin.requestHeaders.set string
+		;;
+
+		tls2raw)
+			_emit_opt "$section" plugin_local_addr plugin.localAddr string
+			_emit_opt "$section" plugin_crt_path plugin.crtPath string
+			_emit_opt "$section" plugin_key_path plugin.keyPath string
+		;;
+
+		virtual_net)
+			[ "$role" = "visitor" ] && \
+				_emit_opt "$section" plugin_destination_ip plugin.destinationIP string
+		;;
+	esac
+
+	return 0
+}
+
+_emit_proxy() {
+	local section="$1"
+	local pname ptype plugin hct
+
+	[ "$section" = "common" ] && return 0
+
+	config_get pname "$section" name "$section"
+	config_get ptype "$section" type
+	config_get plugin "$section" plugin
+
+	[ -z "$ptype" ] && ptype="tcp"
+
+	printf '\n[[proxies]]\n'
+	_toml_line name "$pname" string
+	_toml_line type "$ptype" string
+
+	_emit_opt "$section" enabled enabled bool
+
+	# localIP/localPort are useful for normal local-service proxies.
+	# If plugin is enabled, plugin usually handles the local service itself.
+	if [ -z "$plugin" ]; then
+		case "$ptype" in
+			tcp|udp|http|https|stcp|xtcp|sudp|tcpmux)
+				_emit_opt "$section" local_ip localIP string
+				_emit_opt "$section" local_port localPort port
+			;;
+		esac
+	fi
+
+	# remotePort is mainly used by tcp/udp-style listeners.
+	# Plugin proxies with type=tcp also need remotePort.
+	case "$ptype" in
+		tcp|udp)
+			_emit_opt "$section" remote_port remotePort port0
+		;;
+	esac
+
+	# Common proxy transport options.
+	_emit_opt "$section" bandwidth_limit transport.bandwidthLimit string
+	_emit_opt "$section" bandwidth_limit_mode transport.bandwidthLimitMode string
+	_emit_opt "$section" use_encryption transport.useEncryption bool
+	_emit_opt "$section" use_compression transport.useCompression bool
+	_emit_opt "$section" proxy_protocol_version transport.proxyProtocolVersion string
+
+	# HTTP / HTTPS domain options.
+	case "$ptype" in
+		http|https)
+			_emit_array_opt "$section" custom_domains customDomains
+			_emit_opt "$section" subdomain subdomain string
+		;;
+	esac
+
+	# HTTP-only options. Skip these when plugin is enabled to avoid stale normal HTTP proxy fields.
+	case "$ptype" in
+		http)
+			_emit_opt "$section" route_by_http_user routeByHTTPUser string
+			if [ -z "$plugin" ]; then
+				_emit_array_opt "$section" locations locations
+				_emit_opt "$section" http_user httpUser string
+				_emit_opt "$section" http_pwd httpPassword string
+				_emit_opt "$section" host_header_rewrite hostHeaderRewrite string
+				_emit_kv_opt "$section" request_headers requestHeaders.set string
+				_emit_kv_opt "$section" response_headers responseHeaders.set string
+			fi
+		;;
+	esac
+
+	# TCPMUX options.
+	case "$ptype" in
+		tcpmux)
+			_emit_array_opt "$section" custom_domains customDomains
+			_emit_opt "$section" http_user httpUser string
+			_emit_opt "$section" http_pwd httpPassword string
+			_emit_opt "$section" multiplexer multiplexer string
+			_emit_opt "$section" route_by_http_user routeByHTTPUser string
+		;;
+	esac
+
+	# Load balancer options.
+	_emit_opt "$section" group loadBalancer.group string
+	_emit_opt "$section" group_key loadBalancer.groupKey string
+
+	# Health check options.
+	config_get hct "$section" health_check_type
+	if [ -n "$hct" ] && [ -z "$plugin" ]; then
+		case "$ptype" in
+			tcp|http|https|tcpmux)
+				_emit_opt "$section" health_check_type healthCheck.type string
+				_emit_opt "$section" health_check_timeout_s healthCheck.timeoutSeconds int
+				_emit_opt "$section" health_check_max_failed healthCheck.maxFailed int
+				_emit_opt "$section" health_check_interval_s healthCheck.intervalSeconds int
+
+				if [ "$hct" = "http" ]; then
+					_emit_opt "$section" health_check_url healthCheck.path string
+					_emit_headers_opt "$section" health_check_headers healthCheck.httpHeaders
+				fi
+			;;
+		esac
+	fi
+
+	# STCP / XTCP / SUDP server options.
+	case "$ptype" in
+		stcp|xtcp|sudp)
+			_emit_opt "$section" sk secretKey string
+			_emit_array_opt "$section" allow_users allowUsers
+		;;
+	esac
+
+	# NAT traversal options are mainly useful for XTCP.
+	case "$ptype" in
+		xtcp)
+			_emit_opt "$section" nat_disable_assisted_addrs natTraversal.disableAssistedAddrs bool
+		;;
+	esac
+
+	# Metadata / annotations.
+	_emit_kv_opt "$section" metadatas metadatas string
+	_emit_kv_opt "$section" annotations annotations string
+
+	# Plugin options are filtered by plugin type in _emit_plugin().
+	_emit_plugin "$section"
+
+	# Raw extra TOML lines.
+	_emit_raw_opt "$section" _
+}
+
+_emit_visitor() {
+	local section="$1"
+	local vname vtype
+
+	config_get vname "$section" name "$section"
+	config_get vtype "$section" type
+
+	[ -z "$vtype" ] && vtype="stcp"
+
+	printf '\n[[visitors]]\n'
+	_toml_line name "$vname" string
+	_toml_line type "$vtype" string
+
+	_emit_opt "$section" server_user serverUser string
+	_emit_opt "$section" server_name serverName string
+	_emit_opt "$section" sk secretKey string
+	_emit_opt "$section" bind_addr bindAddr string
+	_emit_opt "$section" bind_port bindPort visitor_bind_port
+	_emit_opt "$section" enabled enabled bool
+	_emit_opt "$section" use_encryption transport.useEncryption bool
+	_emit_opt "$section" use_compression transport.useCompression bool
+
+	# XTCP visitor-specific options.
+	case "$vtype" in
+		xtcp)
+			_emit_opt "$section" visitor_protocol protocol string
+			_emit_opt "$section" keep_tunnel_open keepTunnelOpen bool
+			_emit_opt "$section" max_retries_an_hour maxRetriesAnHour int
+			_emit_opt "$section" min_retry_interval minRetryInterval int
+			_emit_opt "$section" fallback_to fallbackTo string
+			_emit_opt "$section" fallback_timeout_ms fallbackTimeoutMs int
+			_emit_opt "$section" nat_disable_assisted_addrs natTraversal.disableAssistedAddrs bool
+		;;
+	esac
+
+	# Visitor plugin, for example virtual_net.
+	_emit_plugin "$section"
+
+	# Raw extra TOML lines.
+	_emit_raw_opt "$section" _
+}
+
+_emit_conf_section() {
+	local section="$1"
+	local role ptype
+
+	[ "$section" = "common" ] && return 0
+
+	config_get role "$section" role
+	config_get ptype "$section" type
+
+	if [ "$role" = "visitor" ]; then
+		case "$ptype" in
+			''|stcp|xtcp|sudp)
+				_emit_visitor "$section"
+				return $?
+			;;
+			*)
+				_err "visitor section $section has unsupported type: $ptype"
+				_TOML_ERR=1
+				return 1
+			;;
+		esac
+	fi
+
+	_emit_proxy "$section"
+}
+
+_find_init_section() {
+	[ -z "$init_cfg" ] && init_cfg="$1"
+	return 0
+}
+
+_append_conf_file() {
+	local file="$1"
+	local dir="/etc/frp/$NAME.d/"
+	local real_file
+
+	case "$file" in
+		"$dir"*.toml)
+			case "$file" in
+				*../*)
+					_err "additional config file outside $dir is not allowed: $file"
+					_TOML_ERR=1
+					return 1
+				;;
+			esac
+		;;
+		*)
+			_err "additional config file must be under $dir and end with .toml: $file"
+			_TOML_ERR=1
+			return 1
+		;;
+	esac
+
+	[ -r "$file" ] || {
+		_err "additional config file not readable: $file"
+		_TOML_ERR=1
+		return 1
+	}
+
+	real_file="$(readlink -f "$file")" || {
+		_err "additional config file path cannot be resolved: $file"
+		_TOML_ERR=1
+		return 1
+	}
+
+	case "$real_file" in
+		"$dir"*.toml)
+		;;
+		*)
+			_err "additional config file resolves outside $dir or is not .toml: $file"
+			_TOML_ERR=1
+			return 1
+		;;
+	esac
+
+	printf '\n' >> "$CONF_FILE"
+	cat "$real_file" >> "$CONF_FILE"
+	printf '\n' >> "$CONF_FILE"
+}
+
+_watch_conf_file() {
+	local file="$1"
+
+	[ -r "$file" ] && procd_set_param file "$file"
+	return 0
+}
+
+_append_env() {
+	procd_append_param env "$1"
+}
+
+service_triggers() {
 	procd_add_reload_trigger "$NAME"
 }
 
 start_service() {
-	local init_cfg=" "
-	local conf_file="/var/etc/$NAME.ini"
+	local init_cfg=
+	local stdout=1
+	local stderr=1
+	local respawn=1
+	local run_user=
+	local run_group=
+	local old_umask
 
-	> "$conf_file"
+	mkdir -p /var/etc
+	_TOML_ERR=0
+	_ALLOW_UNSAFE_TOKEN_SOURCE_EXEC=0
+
 	config_load "$NAME"
 
-	local stdout stderr user group respawn env conf_inc
-	uci_validate_section "$NAME" init "$init_cfg" \
-		'stdout:bool:1' \
-		'stderr:bool:1' \
-		'user:string' \
-		'group:string' \
-		'respawn:bool:1' \
-		'env:list(string)' \
-		'conf_inc:list(string)'
+	config_foreach _find_init_section init
 
-	local err=$?
-	[ $err -ne 0 ] && {
-		_err "uci_validate_section returned $err"
+	old_umask="$(umask)"
+	umask 077
+	: > "$CONF_FILE" || {
+		umask "$old_umask"
+		_err "failed to create $CONF_FILE"
+		return 1
+	}
+	umask "$old_umask"
+	chmod 600 "$CONF_FILE" || {
+		_err "failed to chmod $CONF_FILE"
 		return 1
 	}
 
-	[ -n "$conf_inc" ] && config_list_foreach "$init_cfg" conf_inc cat >> "$conf_file"
+	{
+		printf '# This file is automatically generated from /etc/config/%s.\n' "$NAME"
+		printf '# Do not edit this file directly.\n\n'
+
+		_emit_common
+	} >> "$CONF_FILE" || return 1
+	[ "$_TOML_ERR" = "0" ] || return 1
+
+	if [ -n "$init_cfg" ]; then
+		config_list_foreach "$init_cfg" conf_inc _append_conf_file
+
+		config_get_bool stdout "$init_cfg" stdout 1
+		config_get_bool stderr "$init_cfg" stderr 1
+		config_get_bool respawn "$init_cfg" respawn 1
+		config_get run_user "$init_cfg" user
+		config_get run_group "$init_cfg" group
+	fi
+
+	{
+		config_foreach _emit_conf_section conf
+	} >> "$CONF_FILE" || return 1
+	[ "$_TOML_ERR" = "0" ] || return 1
+
+	if [ -n "$run_user" ]; then
+		chown "$run_user${run_group:+:$run_group}" "$CONF_FILE" 2>/dev/null || {
+			_err "failed to chown $CONF_FILE to $run_user${run_group:+:$run_group}"
+			return 1
+		}
+	fi
+
+	chmod 600 "$CONF_FILE" || {
+		_err "failed to chmod $CONF_FILE"
+		return 1
+	}
 
 	procd_open_instance
-	procd_set_param command "$PROG" -c "$conf_file"
-	procd_set_param file $conf_file
-	procd_set_param stdout $stdout
-	procd_set_param stderr $stderr
-	[ -n "$user" ] && procd_set_param user "$user"
-	[ -n "$group" ] && procd_set_param group "$group"
-	[ $respawn -eq 1 ] && procd_set_param respawn
-	[ -n "$env" ] && config_list_foreach "$init_cfg" env "procd_append_param env"
+	if [ "$_ALLOW_UNSAFE_TOKEN_SOURCE_EXEC" = "1" ]; then
+		procd_set_param command "$PROG" -c "$CONF_FILE" --allow-unsafe=TokenSourceExec
+	else
+		procd_set_param command "$PROG" -c "$CONF_FILE"
+	fi
+	procd_set_param file "$CONF_FILE"
+	procd_set_param file "/etc/config/$NAME"
+
+	if [ -n "$init_cfg" ]; then
+		config_list_foreach "$init_cfg" conf_inc _watch_conf_file
+	fi
+
+	procd_set_param stdout "$stdout"
+	procd_set_param stderr "$stderr"
+
+	[ -n "$run_user" ] && procd_set_param user "$run_user"
+	[ -n "$run_group" ] && procd_set_param group "$run_group"
+	[ "$respawn" -eq 1 ] && procd_set_param respawn
+
+	if [ -n "$init_cfg" ]; then
+		config_list_foreach "$init_cfg" env _append_env
+	fi
+
 	procd_close_instance
 }
