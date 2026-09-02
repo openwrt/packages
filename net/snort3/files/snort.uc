@@ -41,7 +41,6 @@ snort  = {
 {% if (snort.mode == 'ips'): %}
   ['-Q'] = true,
 {% endif %}
-  ['--daq'] = '{{ snort.method }}',
 {% if (snort.method == 'nfq'): %}
   ['--max-packet-threads'] = {{ nfq.thread_count }},
 {% endif %}
