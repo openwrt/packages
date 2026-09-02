@@ -25,6 +25,30 @@ the package will likely result in more bug reports. As the package and its
 dependencies are unlikely to fit in any router with small flash (16MB or less),
 I don't see much point in making things configurable for reducing size either.
 
+### Vendor and product name
+
+`OTBR_VENDOR_NAME` and `OTBR_PRODUCT_NAME` have to be set: the 2026.08.0 release removed
+the built-in defaults, and otbr-agent exits with `Vendor name must be set.`
+without them.
+
+They are deliberately set to the values those defaults had, `OpenThread` and
+`BorderRouter`, rather than to something OpenWrt specific. The pair forms the
+MeshCoP service instance name as `<vendor> <product>`, which is the name shown
+when adding the border router in a Thread client and the one already-paired
+clients have recorded, so changing it would rename every existing user's border
+router on upgrade.
+
+### Version string
+
+`OTBR_VERSION` is set to `PKG_VERSION`. Without it the build falls back to the
+CMake project version, because the repacked source tree has no git directory
+for `git describe` to read, so `otbr-agent --version` and the `Running ...`
+line it logs on every start would report `0.3.0` rather than the release the
+package was built from.
+
+The version test in the package CI matches on that string, so dropping this
+option would make the package fail it again.
+
 ### Firewall support
 
 OpenWrt uses firewall4 with nftables by default, but the OpenThread firewall
@@ -125,7 +149,11 @@ ubus call otbr threadstop
 
 ### LuCI
 
-Creating a network in LuCI appears to be broken for the moment.
+This package no longer ships a LuCI application; the web UI lives in the
+`luci-app-openthread` package in the openwrt/luci repository
+(https://github.com/openwrt/luci/pull/8871). Install that alongside this package
+for a web interface, on a LuCI feed recent enough to carry it — older feeds will
+not have the package yet.
 
 ### CLI
 
