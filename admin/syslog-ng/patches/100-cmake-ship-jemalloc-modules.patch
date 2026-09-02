@@ -1,0 +1,174 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Date: Mon, 18 Aug 2026 09:00:00 +0200
+Subject: [PATCH] cmake: ship the jemalloc modules missing from the tarball
+
+CMakeLists.txt includes enable_jemalloc, but neither cmake/enable_jemalloc.cmake
+nor cmake/find_jemalloc.cmake is part of the 4.12.0 release tarball, so any CMake
+build of it stops at
+
+  CMake Error at CMakeLists.txt:105 (include):
+    include could not find requested file:
+      enable_jemalloc
+
+Both files are present in the syslog-ng-4.12.0 git tag; they are only missing
+from the generated dist. Add them verbatim from there.
+
+Upstream-Status: Submitted [https://github.com/syslog-ng/syslog-ng/pull/5752]
+---
+--- /dev/null
++++ b/cmake/enable_jemalloc.cmake
+@@ -0,0 +1,53 @@
++# ############################################################################
++# Copyright (c) 2025 Istvan Hoffmann <hofione@gmail.com>
++#
++# This library is free software; you can redistribute it and/or
++# modify it under the terms of the GNU Lesser General Public
++# License as published by the Free Software Foundation; either
++# version 2.1 of the License, or (at your option) any later version.
++#
++# This library is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++# Lesser General Public License for more details.
++#
++# You should have received a copy of the GNU Lesser General Public
++# License along with this library; if not, write to the Free Software
++# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++# As an additional exemption you are allowed to compile & link against the
++# OpenSSL libraries as published by the OpenSSL project. See the file
++# COPYING for details.
++#
++# ############################################################################
++
++set(ENABLE_JEMALLOC "OFF" CACHE STRING "Enable jemalloc memory allocator support: ON, OFF, AUTO")
++set_property(CACHE ENABLE_JEMALLOC PROPERTY STRINGS AUTO ON OFF)
++message(STATUS "Checking jemalloc support")
++
++if(ENABLE_JEMALLOC STREQUAL "OFF")
++  set(SYSLOG_NG_ENABLE_JEMALLOC OFF)
++  message(STATUS "  jemalloc support: disabled (forced OFF)")
++  return()
++endif()
++
++include(find_jemalloc)
++
++if("${ENABLE_JEMALLOC}" MATCHES "^(auto|AUTO)$")
++  if(JEMALLOC_FOUND)
++    set(SYSLOG_NG_ENABLE_JEMALLOC ON)
++    message(STATUS "  jemalloc support: enabled (AUTO, found libjemalloc)")
++  else()
++    set(SYSLOG_NG_ENABLE_JEMALLOC OFF)
++    message(STATUS "  jemalloc support: disabled (AUTO, libjemalloc not found)")
++  endif()
++elseif(ENABLE_JEMALLOC STREQUAL "ON")
++  if(NOT JEMALLOC_FOUND)
++    message(FATAL_ERROR "Could not find libjemalloc, and jemalloc support was explicitly enabled.")
++  endif()
++
++  set(SYSLOG_NG_ENABLE_JEMALLOC ON)
++  message(STATUS "  jemalloc support: enabled (forced ON)")
++else()
++  message(FATAL_ERROR "Invalid value (${ENABLE_JEMALLOC}) for ENABLE_JEMALLOC (must be ON, OFF, or AUTO)")
++endif()
+--- /dev/null
++++ b/cmake/find_jemalloc.cmake
+@@ -0,0 +1,97 @@
++# ############################################################################
++# Copyright (c) 2025 Istvan Hoffmann <hofione@gmail.com>
++#
++# This library is free software; you can redistribute it and/or
++# modify it under the terms of the GNU Lesser General Public
++# License as published by the Free Software Foundation; either
++# version 2.1 of the License, or (at your option) any later version.
++#
++# This library is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++# Lesser General Public License for more details.
++#
++# You should have received a copy of the GNU Lesser General Public
++# License along with this library; if not, write to the Free Software
++# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++# As an additional exemption you are allowed to compile & link against the
++# OpenSSL libraries as published by the OpenSSL project. See the file
++# COPYING for details.
++#
++# ############################################################################
++
++# Find jemalloc library
++#
++# On FreeBSD, jemalloc is built into libc, so no separate library is needed.
++# On Linux, jemalloc is a separate library.
++#
++# Sets the following variables:
++# JEMALLOC_FOUND        - True if jemalloc found
++# JEMALLOC_INCLUDE_DIRS - where to find jemalloc headers
++# JEMALLOC_LIBRARIES    - List of libraries when using jemalloc (empty on FreeBSD)
++
++include(FindPackageHandleStandardArgs)
++include(CheckIncludeFile)
++
++message(STATUS "  Searching for jemalloc...")
++message(STATUS "    CMAKE_SYSTEM_NAME = ${CMAKE_SYSTEM_NAME}")
++
++# Check if we're on FreeBSD where jemalloc is built into libc
++if(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
++  message(STATUS "    Detected FreeBSD - checking for built-in jemalloc")
++
++  # On FreeBSD, jemalloc functions are in stdlib.h and malloc_np.h
++  check_include_file(malloc_np.h HAVE_MALLOC_NP_H)
++
++  if(HAVE_MALLOC_NP_H)
++    set(JEMALLOC_FOUND TRUE)
++    set(JEMALLOC_INCLUDE_DIR "")
++    set(JEMALLOC_INCLUDE_DIRS "")
++    set(JEMALLOC_LIBRARY "")
++    set(JEMALLOC_LIBRARIES "")
++    message(STATUS "    FreeBSD built-in jemalloc found (part of libc)")
++  else()
++    set(JEMALLOC_FOUND FALSE)
++    message(STATUS "    FreeBSD built-in jemalloc not found")
++  endif()
++
++else() # On other systems, look for jemalloc as a separate library
++  # Look for the header file
++  find_path(JEMALLOC_INCLUDE_DIR
++    NAMES jemalloc/jemalloc.h
++    HINTS
++    ENV JEMALLOC_ROOT
++    ${JEMALLOC_ROOT}
++  )
++  mark_as_advanced(JEMALLOC_INCLUDE_DIR)
++
++  message(STATUS "    JEMALLOC_INCLUDE_DIR: ${JEMALLOC_INCLUDE_DIR}")
++
++  # Look for the library
++  find_library(JEMALLOC_LIBRARY
++    NAMES jemalloc
++    HINTS
++    ENV JEMALLOC_ROOT
++    ${JEMALLOC_ROOT}
++  )
++  mark_as_advanced(JEMALLOC_LIBRARY)
++
++  message(STATUS "    JEMALLOC_LIBRARY: ${JEMALLOC_LIBRARY}")
++
++  find_package_handle_standard_args(jemalloc REQUIRED_VARS JEMALLOC_LIBRARY JEMALLOC_INCLUDE_DIR)
++
++  # Copy the result to output variables
++  if(JEMALLOC_FOUND)
++    set(JEMALLOC_LIBRARIES ${JEMALLOC_LIBRARY})
++    set(JEMALLOC_INCLUDE_DIRS ${JEMALLOC_INCLUDE_DIR})
++  endif()
++endif()
++
++# Clear variables if not found
++if(NOT JEMALLOC_FOUND)
++  set(JEMALLOC_LIBRARY)
++  set(JEMALLOC_LIBRARIES)
++  set(JEMALLOC_INCLUDE_DIR)
++  set(JEMALLOC_INCLUDE_DIRS)
++endif()

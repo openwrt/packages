@@ -1,0 +1,27 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Date: Mon, 24 Aug 2026 10:00:00 +0200
+Subject: [PATCH] cmake: only link libcap when capabilities are enabled
+
+Upstream-Status: Submitted [https://github.com/syslog-ng/syslog-ng/pull/5753]
+---
+--- a/lib/CMakeLists.txt
++++ b/lib/CMakeLists.txt
+@@ -387,13 +387,16 @@ target_link_libraries(syslog-ng
+     ${Libsystemd_LIBRARIES}
+     ${LIBUNWIND_LIBRARIES}
+     resolv
+-    libcap
+     OpenSSL::SSL
+     OpenSSL::Crypto
+     Threads::Threads
+     secret-storage
+ )
+ 
++if(SYSLOG_NG_ENABLE_LINUX_CAPS)
++  target_link_libraries(syslog-ng PUBLIC libcap)
++endif()
++
+ set_target_properties(syslog-ng
+     PROPERTIES VERSION ${SYSLOG_NG_VERSION}
+     SOVERSION ${SYSLOG_NG_VERSION})
