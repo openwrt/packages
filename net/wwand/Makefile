@@ -178,6 +178,14 @@ define Package/wwand/install
 	# new_id bind / late kmodloader) re-kick a modem parked in no_at_port backoff
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/tty
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/files/wwand.hotplug.tty $(1)/etc/hotplug.d/tty/20-wwand
+	# usb hotplug: bind qmi_wwan to the Huawei E1820's ethernet function (USB
+	# 12d1:14ac, interface 1, class 02/06). The kernel defers the device to
+	# qmi_wwan — cdc_ether blacklists it, and qmi_wwan's own table entry wants a
+	# vendor-specific class this old stack does not carry — so the scoped
+	# dynamic new_id is what makes the control channel appear at all. It is
+	# volatile: every replug needs it re-created.
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/usb
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/files/wwand.hotplug.e1820 $(1)/etc/hotplug.d/usb/21-wwand-e1820
 	# NOTE: the kernel-wwan-subsystem hotplug (/etc/hotplug.d/wwan/20-wwand) is
 	# NOT installed here — it belongs to wwand-mhi, which also pulls the MHI
 	# drivers that create /sys/class/wwan in the first place (procd only arms a
@@ -342,10 +350,13 @@ define Package/wwand-mhi/description
   Adding wwand-mbim is worth weighing on a QMI-driven MHI modem: many of them
   expose no DUN channel and therefore no AT port at all, and wwand can then
   carry AT over the modem's MBIM channel instead (Quectel QDU). It costs
-  nothing on this path any more: the USB glue of every backend is now a
-  USB_SUPPORT-conditional dependency, so on a PCIe-only target the backends are
-  selectable and pull no USB stack, while a USB target gets exactly what it did
-  before. Without wwand-mbim the capability is simply absent — vendor AT
+  nothing on this path any more: the USB glue of both backends that can serve an
+  MHI modem — wwand-qmi and wwand-mbim — is a USB_SUPPORT-conditional
+  dependency, so on a PCIe-only target they are selectable and pull no USB
+  stack, while a USB target gets exactly what it did before. (wwand-ncm is
+  deliberately not in that sweep: it drives a cdc_ncm/cdc_ether or rndis_host
+  netdev and has no non-USB transport, so its kmods stay hard dependencies and
+  keep it unselectable where it could not work anyway.) Without wwand-mbim the capability is simply absent — vendor AT
   commands, the protocol switch and AT telemetry are unavailable, which is a
   limitation rather than a failure.
 endef
