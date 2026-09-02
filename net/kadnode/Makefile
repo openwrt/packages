@@ -5,10 +5,10 @@ PKG_NAME:=kadnode
 PKG_VERSION:=2.4.3
 PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/mwarning/KadNode
-PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_MIRROR_HASH:=495d9ef51448d2035776cbb8561b32a50bd3c0d1526fdbbb410aa1a81cf68f18
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/mwarning/KadNode/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=2ccffb19dd9030a946be3c02c994a6ff033b2fac6455ddec1bb39bd73856e223
+PKG_BUILD_DIR:=$(BUILD_DIR)/KadNode-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Moritz Warning <moritzwarning@web.de>
 PKG_LICENSE:=MIT
