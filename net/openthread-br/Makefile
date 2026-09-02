@@ -4,13 +4,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openthread-br
-PKG_SOURCE_DATE:=2025-06-12
-PKG_SOURCE_VERSION:=2f3c799c7463c8f674754e65c53f78bc0bbcbd58
-PKG_RELEASE:=2
+PKG_VERSION:=2026.09.0
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=https://github.com/openthread/ot-br-posix.git
-PKG_MIRROR_HASH:=fae1c7c88102f88bac32f8ee25e044b9a8781eef6b9acef39388e1e11a44a195
+PKG_MIRROR_HASH:=d0c82691b95e0aa2112ca08f6ff544c23794eae632c8c01b040616a0d60f5aab
 
 PKG_MAINTAINER:=Stijn Tintel <stijn@linux-ipv6.be>
 PKG_LICENSE:=BSD-3-Clause
@@ -18,14 +18,6 @@ PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
-
-define Package/luci-app-openthread
-  CATEGORY:=LuCI
-  SECTION:=luci
-  SUBMENU:=3. Applications
-  TITLE:=LuCI Support for OpenThread Border Router
-  DEPENDS:=+luci-base +luci-lua-runtime
-endef
 
 define Package/openthread-br
   CATEGORY:=Network
@@ -63,33 +55,17 @@ CMAKE_OPTIONS += \
 	-DOT_TARGET_OPENWRT=ON \
 	-DOTBR_BACKBONE_ROUTER=ON \
 	-DOTBR_BORDER_ROUTING=ON \
-	-DOTBR_DNSSD_DISCOVERY_PROXY=ON \
-	-DOTBR_DUA_ROUTING=ON \
 	-DOTBR_MDNS=mDNSResponder \
 	-DOTBR_NAT64=OFF \
 	-DOTBR_OPENWRT=ON \
+	-DOTBR_PRODUCT_NAME=BorderRouter \
 	-DOTBR_REST=ON \
-	-DOTBR_SRP_ADVERTISING_PROXY=ON \
 	-DOTBR_SRP_SERVER_AUTO_ENABLE=ON \
-	-DOTBR_TREL=ON
+	-DOTBR_TREL=ON \
+	-DOTBR_VENDOR_NAME=OpenThread \
+	-DOTBR_VERSION=$(PKG_VERSION)
 
 TARGET_CFLAGS += -DOPENTHREAD_POSIX_CONFIG_DAEMON_SOCKET_BASENAME=\\\"/var/run/openthread-%s\\\"
-
-define Package/luci-app-openthread/install
-	$(INSTALL_DIR) \
-		$(1)/usr/lib/lua/luci/controller/admin \
-		$(1)/usr/lib/lua/luci/view/admin_thread \
-		$(1)/www/luci-static/resources
-	$(INSTALL_DATA) \
-		$(PKG_BUILD_DIR)/src/openwrt/controller/thread.lua \
-		$(1)/usr/lib/lua/luci/controller/admin
-	$(INSTALL_DATA) \
-		$(PKG_BUILD_DIR)/src/openwrt/view/admin_thread/* \
-		$(1)/usr/lib/lua/luci/view/admin_thread
-	$(INSTALL_DATA) \
-		$(PKG_BUILD_DIR)/src/openwrt/handle_error.js \
-		$(1)/www/luci-static/resources
-endef
 
 define Package/openthread-br/install
 	$(INSTALL_DIR) \
@@ -101,5 +77,4 @@ define Package/openthread-br/install
 endef
 
 
-$(eval $(call BuildPackage,luci-app-openthread))
 $(eval $(call BuildPackage,openthread-br))
