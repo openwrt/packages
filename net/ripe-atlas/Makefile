@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ripe-atlas
-PKG_VERSION:=5110
+PKG_VERSION:=5120
 PKG_RELEASE:=1
 
 PKG_SOURCE:=ripe-atlas-software-probe-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/RIPE-NCC/ripe-atlas-software-probe/tar.gz/refs/tags/$(PKG_VERSION)?
-PKG_HASH:=9ff4931056b7da67e13478c29dfaea0f647ee4cb725f864ba5fa28a33a8ec5c7
+PKG_HASH:=d399f793d1576d7856023c2fde69453a0e5dbd537b03669b9767eb86957021f2
 PKG_BUILD_DIR:=$(BUILD_DIR)/ripe-atlas-software-probe-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Tiago Gaspar <tiagogaspar8@gmail.com>, Michel Stam <mstam@ripe.net>
@@ -22,6 +22,9 @@ PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
+
+# Restore busybox's compiler-driver LD; OpenWrt overrides it with raw ld.bfd.
+MAKE_FLAGS += LD="$(TARGET_CC) -nostdlib"
 
 define Package/ripe-atlas/Default
   SECTION:=net
@@ -96,6 +99,10 @@ define Package/ripe-atlas-common/install
 
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/ripe-atlas.conf $(1)/etc/config/ripe-atlas
+
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/ripe-atlas.defaults \
+		       $(1)/etc/uci-defaults/80-ripe-atlas
 
 	$(INSTALL_DIR) $(1)/etc/ripe-atlas
 

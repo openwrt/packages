@@ -1,0 +1,63 @@
+#!/bin/sh
+
+# Take over the state left behind by atlas-sw-probe, the package this one
+# provides. A probe is identified by its ssh key, so without this an upgraded
+# router registers itself as a brand new probe and loses its probe ID, its
+# measurement history and its credits.
+
+OLD_CONF=/etc/config/atlas
+OLD_ETC=/etc/atlas
+OLD_INIT=/etc/init.d/atlas
+NEW_ETC=/etc/ripe-atlas
+
+migrate_key()
+{
+	[ -f "${OLD_ETC}/probe_key" ] || return 0
+
+	# Never clobber a key this package already registered with.
+	[ -f "${NEW_ETC}/probe_key" ] && return 0
+
+	cp "${OLD_ETC}/probe_key" "${NEW_ETC}/probe_key" || return 0
+	[ -f "${OLD_ETC}/probe_key.pub" ] &&
+		cp "${OLD_ETC}/probe_key.pub" "${NEW_ETC}/probe_key.pub"
+
+	# atlas-sw-probe left the private key world readable; ssh-keygen would
+	# have created it as 0600, so settle on that.
+	chmod 0600 "${NEW_ETC}/probe_key"
+	[ -f "${NEW_ETC}/probe_key.pub" ] && chmod 0644 "${NEW_ETC}/probe_key.pub"
+
+	# What generic-ATLAS.sh does after generating the key by itself.
+	chown -R ripe-atlas:ripe-atlas "${NEW_ETC}"
+
+	# Both probes would now present the same key to the registration
+	# servers, so leave only the new one running.
+	if [ -x "${OLD_INIT}" ]; then
+		"${OLD_INIT}" stop
+		"${OLD_INIT}" disable
+	fi
+}
+
+migrate_config()
+{
+	local option
+	local value
+
+	[ -f "${OLD_CONF}" ] || return 0
+	uci -q get ripe-atlas.@ripe-atlas[0] >/dev/null || return 0
+
+	for option in log_stdout log_stderr; do
+		value="$(uci -q get "atlas.common.${option}")" &&
+			uci -q set "ripe-atlas.@ripe-atlas[0].${option}=${value}"
+	done
+
+	# atlas-sw-probe spelled this one without the underscore.
+	value="$(uci -q get atlas.common.rxtxrpt)" &&
+		uci -q set "ripe-atlas.@ripe-atlas[0].rxtx_report=${value}"
+
+	uci -q commit ripe-atlas
+}
+
+migrate_key
+migrate_config
+
+exit 0
