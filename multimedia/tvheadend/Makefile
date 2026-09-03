@@ -5,9 +5,9 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/tvheadend/tvheadend
-PKG_MIRROR_HASH:=68fda4d7563550fda07a81222fa371b8b42c6ee9517c2a7f5a374aa025301c52
-PKG_SOURCE_VERSION:=395afb8512d0d636ef223db4cccf722b70992e76
-PKG_SOURCE_DATE:=2026-04-03
+PKG_MIRROR_HASH:=fbb1341e2c032c6750e03434c3358c231307331975321ef9ee7af1c9a9528c29
+PKG_SOURCE_VERSION:=ddb984f4c17f4a26fd34f3e1b24e3323f9641b75
+PKG_SOURCE_DATE:=2026-08-17
 
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=LICENSE.md
@@ -19,6 +19,15 @@ PKG_BUILD_DEPENDS:=gettext-full/host
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
+
+# tvheadend needs iconv //TRANSLIT to build recording file names, which musl
+# does not implement, so always build against GNU libiconv.
+# With BUILD_NLS set, nls.mk already adds these for the same prefix.
+ifneq ($(CONFIG_BUILD_NLS),y)
+ICONV_FULL_PREFIX:=$(STAGING_DIR)/usr/lib/libiconv-full
+TARGET_CFLAGS += -I$(ICONV_FULL_PREFIX)/include
+TARGET_LDFLAGS += -L$(ICONV_FULL_PREFIX)/lib -Wl,-rpath-link=$(ICONV_FULL_PREFIX)/lib
+endif
 
 define Package/tvheadend
   SECTION:=multimedia
@@ -32,7 +41,7 @@ define Package/tvheadend
 	+librt \
 	+libffi \
 	+libopenssl \
-	$(ICONV_DEPENDS) \
+	+libiconv-full \
 	+zlib \
 	+TVHEADEND_AVAHI_SUPPORT:libavahi-client \
 	+TVHEADEND_REGEX_PCRE2:libpcre2 \
@@ -251,12 +260,6 @@ CONFIGURE_ARGS += \
 ##	--disable-libopus_static \
 ##	--disable-libfdkaac_static \
 ##	--disable-pcloud_cache \
-
-define Build/Prepare
-	$(call Build/Prepare/Default)
-	echo 'Tvheadend $(shell echo $(PKG_SOURCE_VERSION) | sed "s/^v//")~openwrt$(PKG_RELEASE)' \
-		> $(PKG_BUILD_DIR)/debian/changelog
-endef
 
 define Package/tvheadend/conffiles
 /etc/config/tvheadend
