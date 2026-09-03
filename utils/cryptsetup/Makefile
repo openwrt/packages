@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cryptsetup
 PKG_VERSION:=2.8.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/utils/cryptsetup/v$(subst $(space),.,$(wordlist 1, 2, $(subst .,$(space),$(PKG_VERSION))))
@@ -35,7 +35,8 @@ define Package/cryptsetup
   SUBMENU:=Encryption
   TITLE:=Cryptsetup
   DEPENDS:=$(ICONV_DEPENDS) $(INTL_DEPENDS) +libblkid +libuuid +libpopt +lvm2 \
-           +libdevmapper +libjson-c +@KERNEL_DIRECT_IO +kmod-crypto-user +libopenssl
+           +libdevmapper +libjson-c +@KERNEL_DIRECT_IO +kmod-crypto-user +libopenssl \
+           +@OPENSSL_WITH_BLAKE2
   URL:=https://gitlab.com/cryptsetup/cryptsetup/
 endef
 
