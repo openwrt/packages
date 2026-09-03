@@ -124,10 +124,6 @@ config LIBCURL_CRYPTO_AUTH
 	bool "Enable cryptographic authentication"
 	default n
 
-config LIBCURL_TLS_SRP
-	bool "Enable TLS-SRP authentication"
-	default n
-
 config LIBCURL_KERBEROS_AUTH
 	bool "Enable Kerberos authentication"
 	default n
