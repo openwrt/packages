@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-bad
-PKG_VERSION:=1.26.4
+PKG_VERSION:=1.28.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=gst-plugins-bad-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gst-plugins-bad/
-PKG_HASH:=33dba95ed3933b742e4eac22063cdb81e14d54dc4cdd354a0000517273012661
+PKG_HASH:=4213f43ddb875bb141e5040e97735579d74665bec3d17b51052aade395b83f00
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-bad-$(PKG_VERSION)
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
@@ -156,7 +156,6 @@ MESON_ARGS += \
 	-Dvideoparsers=$(if $(CONFIG_PACKAGE_gst1-mod-videoparsersbad),en,dis)abled \
 	$(call GST_COND_SELECT,videosignal) \
 	$(call GST_COND_SELECT,vmnc) \
-	-Dy4m=$(if $(CONFIG_PACKAGE_gst1-mod-y4mdec),en,dis)abled \
 	\
 	-Dopencv=disabled \
 	-Dwayland=$(if $(CONFIG_PACKAGE_libgst1gl),en,dis)abled \
@@ -434,7 +433,6 @@ $(eval $(call GstBuildPlugin,videoframe_audiolevel,videoframe_audiolevel support
 $(eval $(call GstBuildPlugin,videoparsersbad,videoparsersbad support,codecparsers,,))
 $(eval $(call GstBuildPlugin,videosignal,videosignal support,,,))
 $(eval $(call GstBuildPlugin,vmnc,vmnc support,,,))
-$(eval $(call GstBuildPlugin,y4mdec,y4mdec support,,,))
 
 $(eval $(call GstBuildPlugin,bluez,bluez support,,,+bluez-libs))
 #$(eval $(call GstBuildPlugin,bz2,bzip2 support,,,+libbz2))
