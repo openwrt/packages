@@ -1,0 +1,119 @@
+From 3664d240c434969e6e460faa323704a4c579261e Mon Sep 17 00:00:00 2001
+From: Alexandru Ardelean <alex@shruggie.ro>
+Date: Mon, 6 Jul 2026 12:15:25 +0300
+Subject: [PATCH] audio-resampler: drop the .w suffix from the NEON pointer adds
+
+Commit f635638777 (part of !11472) switched the coefficient pointer
+arithmetic to the wide mnemonic `add.w`. The `.w` suffix only exists in
+Thumb-2; in ARM (A32) state every instruction is already 32-bit and the
+suffix is invalid syntax. Clang's integrated assembler ignores it (so
+!11472 built fine), but GNU as rejects it:
+
+    Error: bad instruction `add.w r8,r8,%[bstride]'
+
+The asm never sets `.syntax unified` (which would not help anyway), so any
+unit compiled as A32 with a GCC/binutils toolchain fails to build, e.g.
+OpenWrt's cortex-a15; 1.28.x and main are affected.
+
+Drop the `.w`. The operands are plain registers computing r8 = r8 + stride,
+so the addressing !11472 fixed for #5075 is unchanged: in A32 `add` is the
+sole 32-bit encoding (e0888001); in Thumb-2 it picks the 16-bit encoding
+(4488) instead of add.w (eb08 0801), same result, flags untouched.
+
+Signed-off-by: Alexandru Ardelean <alex@shruggie.ro>
+---
+ gst-libs/gst/audio/audio-resampler-neon.h | 36 +++++++++++------------
+ 1 file changed, 18 insertions(+), 18 deletions(-)
+
+--- a/gst-libs/gst/audio/audio-resampler-neon.h
++++ b/gst-libs/gst/audio/audio-resampler-neon.h
+@@ -133,11 +133,11 @@ inner_product_gint16_cubic_1_neon (gint1
+                   "1:"
+                   "      mov r8, %[b]\n"
+                   "      vld1.16 {d16, d17}, [%[b]]!\n"
+-                  "      add.w r8, r8, %[bstride]\n"
++                  "      add    r8, r8, %[bstride]\n"
+                   "      vld1.16 {d18, d19}, [r8]\n"
+-                  "      add.w r8, r8, %[bstride]\n"
++                  "      add    r8, r8, %[bstride]\n"
+                   "      vld1.16 {d20, d21}, [r8]\n"
+-                  "      add.w r8, r8, %[bstride]\n"
++                  "      add    r8, r8, %[bstride]\n"
+                   "      vld1.16 {d22, d23}, [r8]\n"
+                   "      vld1.16 {d24, d25}, [%[a]]!\n"
+                   "      subs %[len], %[len], #8\n"
+@@ -214,11 +214,11 @@ interpolate_gint16_cubic_neon (gpointer
+                   "1:"
+                   "      mov r8, %[a]\n"
+                   "      vld1.16 {d16, d17}, [%[a]]!\n"
+-                  "      add.w r8, r8, %[astride]\n"
++                  "      add    r8, r8, %[astride]\n"
+                   "      vld1.16 {d18, d19}, [r8]\n"
+-                  "      add.w r8, r8, %[astride]\n"
++                  "      add    r8, r8, %[astride]\n"
+                   "      vld1.16 {d20, d21}, [r8]\n"
+-                  "      add.w r8, r8, %[astride]\n"
++                  "      add    r8, r8, %[astride]\n"
+                   "      vld1.16 {d22, d23}, [r8]\n"
+                   "      subs %[len], %[len], #8\n"
+                   "      vmull.s16 q0, d16, d24\n"
+@@ -340,11 +340,11 @@ inner_product_gint32_cubic_1_neon (gint3
+                   "1:"
+                   "      mov r8, %[b]\n"
+                   "      vld1.32 {d16, d17}, [%[b]]!\n"
+-                  "      add.w r8, r8, %[bstride]\n"
++                  "      add    r8, r8, %[bstride]\n"
+                   "      vld1.32 {d18, d19}, [r8]\n"
+-                  "      add.w r8, r8, %[bstride]\n"
++                  "      add    r8, r8, %[bstride]\n"
+                   "      vld1.32 {d20, d21}, [r8]\n"
+-                  "      add.w r8, r8, %[bstride]\n"
++                  "      add    r8, r8, %[bstride]\n"
+                   "      vld1.32 {d22, d23}, [r8]\n"
+                   "      vld1.32 {d24, d25}, [%[a]]!\n"
+                   "      subs %[len], %[len], #4\n"
+@@ -426,11 +426,11 @@ interpolate_gint32_cubic_neon (gpointer
+                   "1:"
+                   "      mov r8, %[a]\n"
+                   "      vld1.32 {d16, d17}, [%[a]]!\n"
+-                  "      add.w r8, r8, %[astride]\n"
++                  "      add    r8, r8, %[astride]\n"
+                   "      vld1.32 {d18, d19}, [r8]\n"
+-                  "      add.w r8, r8, %[astride]\n"
++                  "      add    r8, r8, %[astride]\n"
+                   "      vld1.32 {d20, d21}, [r8]\n"
+-                  "      add.w r8, r8, %[astride]\n"
++                  "      add    r8, r8, %[astride]\n"
+                   "      vld1.32 {d22, d23}, [r8]\n"
+                   "      subs %[len], %[len], #4\n"
+                   "      vmull.s32 q0, d16, d24\n"
+@@ -545,11 +545,11 @@ inner_product_gfloat_cubic_1_neon (gfloa
+                   "1:"
+                   "      mov r8, %[b]\n"
+                   "      vld1.32 {q8}, [%[b]]!\n"
+-                  "      add.w r8, r8, %[bstride]\n"
++                  "      add    r8, r8, %[bstride]\n"
+                   "      vld1.32 {q9}, [r8]\n"
+-                  "      add.w r8, r8, %[bstride]\n"
++                  "      add    r8, r8, %[bstride]\n"
+                   "      vld1.32 {q10}, [r8]\n"
+-                  "      add.w r8, r8, %[bstride]\n"
++                  "      add    r8, r8, %[bstride]\n"
+                   "      vld1.32 {q11}, [r8]\n"
+                   "      vld1.32 {q12}, [%[a]]!\n"
+                   "      subs %[len], %[len], #4\n"
+@@ -623,11 +623,11 @@ interpolate_gfloat_cubic_neon (gpointer
+                   "1:"
+                   "      mov r8, %[a]\n"
+                   "      vld1.32 {q8}, [%[a]]!\n"
+-                  "      add.w r8, r8, %[astride]\n"
++                  "      add    r8, r8, %[astride]\n"
+                   "      vld1.32 {q9}, [r8]\n"
+-                  "      add.w r8, r8, %[astride]\n"
++                  "      add    r8, r8, %[astride]\n"
+                   "      vld1.32 {q10}, [r8]\n"
+-                  "      add.w r8, r8, %[astride]\n"
++                  "      add    r8, r8, %[astride]\n"
+                   "      vld1.32 {q11}, [r8]\n"
+                   "      subs %[len], %[len], #4\n"
+                   "      vmul.f32 q0, q8, q12\n"
