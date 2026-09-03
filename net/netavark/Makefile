@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netavark
 PKG_VERSION:=1.17.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/containers/netavark/tar.gz/v$(PKG_VERSION)?
@@ -23,7 +23,7 @@ include ../../lang/rust/rust-package.mk
 define Package/netavark
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=$(RUST_ARCH_DEPENDS)
+  DEPENDS:=$(RUST_ARCH_DEPENDS) +nftables-json +kmod-nft-nat
   TITLE:=A container network stack
   URL:=https://github.com/containers/netavark
 endef
@@ -34,7 +34,8 @@ define Package/netavark/description
 endef
 
 CARGO_PKG_VARS += \
-	PROTOC=$(STAGING_DIR_HOSTPKG)/bin/protoc
+	PROTOC=$(STAGING_DIR_HOSTPKG)/bin/protoc \
+	NETAVARK_DEFAULT_FW=nftables
 
 define Package/netavark/install
 	$(INSTALL_DIR) $(1)/etc/config $(1)/usr/lib/podman
