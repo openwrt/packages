@@ -22,7 +22,7 @@ PKG_UNPACK:=$(HOST_TAR) -C "$(PKG_BUILD_DIR)" --strip-components=1 -xzf "$(DL_DI
 HOST_UNPACK:=$(HOST_TAR) -C "$(HOST_BUILD_DIR)" --strip-components=1 -xzf "$(DL_DIR)/$(PKG_SOURCE)"
 
 # Don't strip ELF executables in test data
-RSTRIP:=$(subst $(SCRIPT_DIR)/rstrip.sh,go-strip-helper $(SCRIPT_DIR)/rstrip.sh,$(RSTRIP))
+RSTRIP:=$(subst $(SCRIPT_DIR)/rstrip.sh,../go-strip-helper $(SCRIPT_DIR)/rstrip.sh,$(RSTRIP))
 
 ifeq ($(GO_TARGET_SPECTRE_SUPPORTED),1)
   PKG_CONFIG_DEPENDS+=CONFIG_GOLANG_SPECTRE
@@ -33,6 +33,7 @@ define Package/$(PKG_NAME)/Default
   TITLE:=Go programming language
   URL:=https://go.dev/
   DEPENDS:=$(GO_ARCH_DEPENDS)
+  $(if $(PKG_HOST_ONLY),BUILDONLY:=1)
 endef
 
 define Package/$(PKG_NAME)/Default/description
@@ -295,5 +296,5 @@ endef
 # src/debug contains ELF executables as test data and they reference these
 # libraries we need to call this to pass CheckDependencies in package-pack.mk
 define Package/$(PKG_NAME)-tests/extra_provides
-	echo 'libc.so.6' libstdc++.so.6' libtiff.so.6' | tr ' ' '\n'
+	echo 'libc.so.6 libstdc++.so.6 libtiff.so.6' | tr ' ' '\n'
 endef
