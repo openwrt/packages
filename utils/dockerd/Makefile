@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dockerd
 PKG_VERSION:=29.6.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:mobyproject:moby
@@ -133,6 +133,9 @@ define Package/dockerd/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/dockerd.init $(1)/etc/init.d/dockerd
 
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/dockerd.defaults $(1)/etc/uci-defaults/dockerd
+
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/etc/config/dockerd $(1)/etc/config/dockerd
 
@@ -146,7 +149,6 @@ define Package/dockerd/postinst
 #!/bin/sh
 [ -n "$$IPKG_INSTROOT" ] || {
 	/etc/init.d/dockerd enable
-	/etc/init.d/dockerd uciadd
 	/etc/init.d/dockerd start
 }
 endef
