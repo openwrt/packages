@@ -32,6 +32,9 @@ time_to_seconds() {
 
 config_watchcat() {
 	# Read config
+	config_get_bool enabled "$1" enabled 1
+	[ "$enabled" -eq 1 ] || return 0
+
 	config_get period "$1" period "120"
 	config_get mode "$1" mode "ping_reboot"
 	config_get pinghosts "$1" pinghosts "8.8.8.8"
