@@ -1,0 +1,19 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+STOP=60
+
+TUPTIME_DIR=/opt/tuptime
+USER=_tuptime
+
+start() {
+        mkdir -p $TUPTIME_DIR
+        chown $USER:$USER $TUPTIME_DIR 2>/dev/null || :
+        echo 'Tuptime start'
+        su -s /bin/sh $USER -c "/usr/bin/tuptime -q"
+}
+
+stop() {
+        echo 'Tuptime stop'
+        su -s /bin/sh $USER -c "/usr/bin/tuptime -qg"
+}
