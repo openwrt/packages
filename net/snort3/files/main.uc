@@ -28,6 +28,19 @@ function wrn(fmt, ...args) {
 	exit(1);
 }
 
+// Non-fatal sibling of wrn(): same QUIET/TTY handling, no exit().
+function inf(fmt, ...args) {
+	if (QUIET)
+		return;
+
+	let msg = sprintf(fmt, ...args);
+
+	if (getenv("TTY"))
+		warn(`\033[33m${msg}\033[m\n`);
+	else
+		warn(`[!] ${msg}\n`);
+}
+
 function rpad(str, fill, len)
 {
 	str = rtrim(str) + ' ';
@@ -119,11 +132,14 @@ const nfq_config = {
 	queue_count:     config_item("range", [ 1, 16 ], 4),           // Count of queues to allocate in nft chain when method=nfq, usually 2-8.
 	queue_start:     config_item("range", [ 1, 32768], 4),         // Start of queue numbers in nftables.
 	queue_maxlen:    config_item("range", [ 1024, 65536 ], 1024),  // --daq-var queue_maxlen=int
-	fanout_type:     config_item("enum",  [ "hash", "lb", "cpu", "rollover", "rnd", "qm"], "hash"), // See below.
 	thread_count:    config_item("range", [ 0, 32 ], 0),           // 0 = use cpu count
 	chain_type:      config_item("enum",  [ "prerouting", "input", "forward", "output", "postrouting" ], "input"),
 	chain_priority:  config_item("enum",  [ "raw", "filter", "300"], "filter"),
 	include:         config_item("path",  [ "" ]),                 // User-defined rules to include inside queue chain.
+};
+
+const afpacket_config = {
+	fanout_type:     config_item("enum",  [ "", "hash", "lb", "cpu", "rollover", "rnd", "qm"], ""), // See below.  Empty = kernel PACKET_FANOUT stays off.
 };
 
 
@@ -165,14 +181,18 @@ snort
 nfq - https://github.com/snort3/libdaq/blob/master/modules/nfq/README.nfq.md
     queue_maxlen    - nfq's '--daq-var queue_maxlen=int'
     queue_count     - Count of queues to use when method=nfq, usually 2-8
-    fanout_type     - Sets kernel load balancing algorithm*, one of hash, lb, cpu,
-                      rollover, rnd, qm.
     thread_count    - int snort.-z: <count> maximum number of packet threads
                       (same as --max-packet-threads); 0 gets the number of
                       CPU cores reported by the system; default is 1 { 0:max32 }
     chain_type      - Chain type when generating nft output
     chain_priority  - Chain priority when generating nft output
     include         - Full path to user-defined extra rules to include inside queue chain
+    fanout_type     - Deprecated, moved to the 'afpacket' section below.
+
+afpacket
+    fanout_type     - Sets kernel load balancing algorithm*, one of hash, lb, cpu,
+                      rollover, rnd, qm.  Only applies when method=afpacket.
+                      Empty (default) leaves kernel PACKET_FANOUT off.
 
     * - for details on fanout_type, see these pages:
         https://github.com/florincoras/daq/blob/master/README
@@ -221,11 +241,39 @@ function load(section, config) {
 	return self;
 }
 
-let snort = null;
-let nfq   = null;
+let snort    = null;
+let nfq      = null;
+let afpacket = null;
+
+// snort.nfq.fanout_type moved to snort.afpacket.fanout_type, since it is an
+// afpacket DAQ variable, not an nfq one (the nfq DAQ module ignores it).
+// 'hash' was the old option's stock default for years while it was inert for
+// every method, so treat it the same as unset instead of forcing every
+// upgraded install onto fanout_type=hash (which also flips on kernel
+// PACKET_FANOUT for afpacket users who never asked for it). A genuinely
+// customized old value is still read for backward compatibility.
+function coalesce_fanout_type() {
+	let legacy = uci.get("snort", "nfq", "fanout_type");
+	let modern = uci.get("snort", "afpacket", "fanout_type");
+
+	if (legacy == "hash")
+		legacy = null;
+
+	if (legacy && modern)
+		inf("snort.nfq.fanout_type is ignored because snort.afpacket.fanout_type is set.");
+	else if (legacy) {
+		if (! afpacket_config.fanout_type.contains(legacy))
+			wrn(`In option snort.nfq.fanout_type='${legacy}', must be ${afpacket_config.fanout_type.allowed()}`);
+		inf("snort.nfq.fanout_type is deprecated, use snort.afpacket.fanout_type instead.");
+		afpacket.fanout_type = legacy;
+	}
+}
+
 function load_all() {
-	snort = load("snort", snort_config);
-	nfq   = load("nfq", nfq_config);
+	snort    = load("snort", snort_config);
+	nfq      = load("nfq", nfq_config);
+	afpacket = load("afpacket", afpacket_config);
+	coalesce_fanout_type();
 }
 
 function dump_config(settings) {
@@ -239,7 +287,7 @@ function dump_config(settings) {
 }
 
 function render_snort() {
-	include("templates/snort.uc", { snort, nfq, rpad });
+	include("templates/snort.uc", { snort, nfq, afpacket, rpad });
 }
 
 function render_nftables() {
@@ -250,6 +298,7 @@ function render_config() {
 	snort_config_doc("#");
 	dump_config(snort);
 	dump_config(nfq);
+	dump_config(afpacket);
 }
 
 function render_help() {
