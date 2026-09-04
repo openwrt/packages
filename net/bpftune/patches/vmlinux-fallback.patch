@@ -1,0 +1,19 @@
+diff --git a/include/bpftune/bpftune.bpf.h b/include/bpftune/bpftune.bpf.h
+index 42466a6..23e3039 100644
+--- a/include/bpftune/bpftune.bpf.h
++++ b/include/bpftune/bpftune.bpf.h
+@@ -30,12 +30,13 @@
+ 	__builtin_preserve_access_index(&obj->field)
+ #endif
+ 
++// select atleast one vmlinux.h file
+ #ifdef VMLINUX_H
+ #include <vmlinux.h>
+ #else
+ #if defined(__TARGET_ARCH_x86)
+ #include <bpftune/vmlinux_x86_64.h>
+-#elif defined(__TARGET_ARCH_arm64)
++#else
+ #include <bpftune/vmlinux_aarch64.h>
+ #endif
+ #endif /* VMLIMUX_H */
