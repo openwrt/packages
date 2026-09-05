@@ -128,6 +128,10 @@ config LIBCURL_TLS_SRP
 	bool "Enable TLS-SRP authentication"
 	default n
 
+config LIBCURL_KERBEROS_AUTH
+	bool "Enable kerberos authentication"
+	default n
+
 config LIBCURL_LIBIDN2
 	bool "Enable IDN2 support"
 	default n
