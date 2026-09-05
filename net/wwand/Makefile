@@ -134,6 +134,13 @@ define Package/wwand/description
   or wwand-ncm) for the control protocols your modems use.
 endef
 
+# The E1820 usb binder (files/wwand.hotplug.e1820) ships in the tarball but is
+# deliberately NOT installed here: the only known E1820 owner reports it as an
+# unvalidated debugging script that does not survive a reboot, so it has no
+# business arming /etc/hotplug.d/usb on every install of the base package. The
+# feed package installs it for the people testing that hardware.
+# check-packaging: not-installed files/wwand.hotplug.e1820
+
 define Package/wwand/install
 	# native transport module (built by the cmake step from io/)
 	$(INSTALL_DIR) $(1)/usr/lib/ucode
@@ -178,14 +185,6 @@ define Package/wwand/install
 	# new_id bind / late kmodloader) re-kick a modem parked in no_at_port backoff
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/tty
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/files/wwand.hotplug.tty $(1)/etc/hotplug.d/tty/20-wwand
-	# usb hotplug: bind qmi_wwan to the Huawei E1820's ethernet function (USB
-	# 12d1:14ac, interface 1, class 02/06). The kernel defers the device to
-	# qmi_wwan — cdc_ether blacklists it, and qmi_wwan's own table entry wants a
-	# vendor-specific class this old stack does not carry — so the scoped
-	# dynamic new_id is what makes the control channel appear at all. It is
-	# volatile: every replug needs it re-created.
-	$(INSTALL_DIR) $(1)/etc/hotplug.d/usb
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/files/wwand.hotplug.e1820 $(1)/etc/hotplug.d/usb/21-wwand-e1820
 	# NOTE: the kernel-wwan-subsystem hotplug (/etc/hotplug.d/wwan/20-wwand) is
 	# NOT installed here — it belongs to wwand-mhi, which also pulls the MHI
 	# drivers that create /sys/class/wwan in the first place (procd only arms a
@@ -356,7 +355,8 @@ define Package/wwand-mhi/description
   stack, while a USB target gets exactly what it did before. (wwand-ncm is
   deliberately not in that sweep: it drives a cdc_ncm/cdc_ether or rndis_host
   netdev and has no non-USB transport, so its kmods stay hard dependencies and
-  keep it unselectable where it could not work anyway.) Without wwand-mbim the capability is simply absent — vendor AT
+  keep it unselectable where it could not work anyway.) Without wwand-mbim the
+  capability is simply absent — vendor AT
   commands, the protocol switch and AT telemetry are unavailable, which is a
   limitation rather than a failure.
 endef
