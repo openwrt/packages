@@ -9,16 +9,16 @@
  endif
  
  if ZSH_COMPLETIONS
-@@ -385,7 +385,7 @@ tools_meshctl_SOURCES = tools/meshctl.c
+@@ -388,7 +388,7 @@ tools_meshctl_SOURCES = tools/meshctl.c
  				tools/mesh-gatt/onoff-model.c
  tools_meshctl_LDADD = gdbus/libgdbus-internal.la src/libshared-glib.la \
  				lib/libbluetooth-internal.la \
 -				$(GLIB_LIBS) $(DBUS_LIBS) -ljson-c -lreadline
 +				$(GLIB_LIBS) $(DBUS_LIBS) -ljson-c -lreadline -lncurses
- 
- EXTRA_DIST += tools/mesh-gatt/local_node.json tools/mesh-gatt/prov_db.json
  endif
-@@ -404,7 +404,7 @@ tools_mesh_cfgclient_SOURCES = tools/mes
+ 
+ bin_PROGRAMS +=  tools/mesh-cfgclient
+@@ -405,7 +405,7 @@ tools_mesh_cfgclient_SOURCES = tools/mes
  				mesh/crypto.h mesh/crypto.c
  
  tools_mesh_cfgclient_LDADD = lib/libbluetooth-internal.la src/libshared-ell.la \
@@ -27,7 +27,7 @@
  
  bin_PROGRAMS +=  tools/mesh-cfgtest
  
-@@ -512,7 +512,7 @@ noinst_PROGRAMS += tools/btmgmt tools/ob
+@@ -487,7 +487,7 @@ noinst_PROGRAMS += tools/btmgmt tools/ob
  tools_obex_client_tool_SOURCES = $(gobex_sources) $(btio_sources) \
  						tools/obex-client-tool.c
  tools_obex_client_tool_LDADD = lib/libbluetooth-internal.la \
@@ -36,7 +36,7 @@
  
  tools_obex_server_tool_SOURCES = $(gobex_sources) $(btio_sources) \
  						tools/obex-server-tool.c
-@@ -523,16 +523,16 @@ tools_bluetooth_player_SOURCES = tools/b
+@@ -498,16 +498,16 @@ tools_bluetooth_player_SOURCES = tools/b
  				client/player.c
  tools_bluetooth_player_LDADD = gdbus/libgdbus-internal.la \
  				src/libshared-glib.la \
@@ -50,13 +50,13 @@
  
  tools_btmgmt_SOURCES = tools/btmgmt.c src/uuid-helper.c client/display.c \
  			client/mgmt.c
- tools_btmgmt_LDADD = lib/libbluetooth-internal.la src/libshared-mainloop.la \
--				-lreadline
-+				-lreadline -lncurses
+ tools_btmgmt_LDADD = lib/libbluetooth-internal.la src/libshared-glib.la \
+-				$(GLIB_LIBS) -lreadline
++				$(GLIB_LIBS) -lreadline -lncurses
  if DEPRECATED
  noinst_PROGRAMS += attrib/gatttool
  
-@@ -542,7 +542,7 @@ attrib_gatttool_SOURCES = attrib/gatttoo
+@@ -517,7 +517,7 @@ attrib_gatttool_SOURCES = attrib/gatttoo
  				attrib/utils.c src/log.c client/display.c \
  				client/display.h
  attrib_gatttool_LDADD = lib/libbluetooth-internal.la \
@@ -65,10 +65,10 @@
  
  endif
  endif
-@@ -592,5 +592,5 @@ tools/btpclient.$(OBJEXT): src/libshared
+@@ -573,5 +573,5 @@ client/btpclient/btpclient.$(OBJEXT): sr
  
- tools_btpclientctl_SOURCES = tools/btpclientctl.c client/display.c
- tools_btpclientctl_LDADD = src/libshared-mainloop.la src/libshared-glib.la \
+ client_btpclient_btpclientctl_SOURCES = client/btpclient/btpclientctl.c client/display.c
+ client_btpclient_btpclientctl_LDADD = src/libshared-mainloop.la src/libshared-glib.la \
 -				lib/libbluetooth-internal.la -lreadline
 +				lib/libbluetooth-internal.la -lreadline -lncurses
  endif
