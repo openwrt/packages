@@ -1,0 +1,36 @@
+#!/bin/sh /etc/rc.common
+# SPDX-License-Identifier: GPL-2.0-or-later
+
+USE_PROCD=1
+
+START=81
+STOP=81
+
+NAME=bpftune
+PROG=/usr/sbin/bpftune
+CONFIGFILE="/etc/config/bpftune"
+
+: "${command_args:=-R -c /sys/fs/cgroup}"
+EXTRA_COMMANDS="checkconf"
+
+checkconf() {
+	$PROG -S ${command_args} 2>&1
+}
+
+start_pre() {
+	checkconf > /dev/null 2>&1
+}
+
+start_service()
+{
+	if ! start_pre; then
+		return 1
+	fi
+
+	procd_open_instance
+	procd_set_param file $CONFIGFILE
+	config_load 'bpftune'
+	procd_set_param command $PROG ${command_args}
+	procd_set_param respawn
+	procd_close_instance
+}

@@ -1,0 +1,2 @@
+# Optional: Override arguments passed to bpftune.
+#command_args="-R -c /sys/fs/cgroup -d"

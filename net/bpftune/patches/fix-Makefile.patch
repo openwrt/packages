@@ -1,0 +1,105 @@
+From ea76f386284a706fd6a0fbbbfece91e41edf052c Mon Sep 17 00:00:00 2001
+From: Shon Sebastian <fluffball3@proton.me>
+Date: Sat, 5 Sep 2026 23:25:11 +0530
+Subject: [PATCH] fix Makefile
+
+---
+ src/Makefile | 44 ++++++++++++++++++++++----------------------
+ 1 file changed, 22 insertions(+), 22 deletions(-)
+
+diff --git a/src/Makefile b/src/Makefile
+index b42f945..7599c8a 100644
+--- a/src/Makefile
++++ b/src/Makefile
+@@ -15,26 +15,22 @@
+ # License along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ #
+ 
+-ARCH ?= $(shell uname -m)
+-SRCARCH ?= $(shell uname -m | sed -e s/i.86/x86/ -e s/x86_64/x86/ \
+-				  -e /arm64/!s/arm.*/arm/ -e s/sa110/arm/ \
+-				  -e s/aarch64.*/arm64/ )
+-
+ CLANG ?= clang
+ GCC_BPF ?=
+ LLC ?= llc
+ LLVM_STRIP ?= llvm-strip
+ BPFTOOL ?= bpftool
+-BPF_INCLUDE := /usr/include
+-BPF_LOCAL_INCLUDE := /usr/local/include
+-BPF_CFLAGS := -g -fno-stack-protector -Wall -Wno-incompatible-pointer-types-discards-qualifiers
+-NL_INCLUDE := /usr/include/libnl3
+-INCLUDES := -I../include -I$(BPF_INCLUDE) -I$(BPF_LOCAL_INCLUDE) -I$(NL_INCLUDE) -I../include/uapi
++BPF_CFLAGS += -g -fno-stack-protector -Wall -Wno-incompatible-pointer-types-discards-qualifiers
++
++INCLUDES := -I../include \
++	    -I$(STAGING_DIR)/usr/include \
++	    -I$(STAGING_DIR)/usr/include/libnl3
++
+ INSTALL ?= install
+ 
+ DESTDIR ?= /
+ prefix ?= /usr
+-libdir ?= lib64
++libdir ?= lib
+ installprefix = $(DESTDIR)/$(prefix)
+ 
+ INSTALLPATH = $(installprefix)
+@@ -57,7 +53,7 @@ endif
+ VERSION = 0.4.2
+ VERSION_SCRIPT  := libbpftune.map
+ 
+-CFLAGS = -fPIC -Wall -Wextra -g -I../include -std=c99
++CFLAGS = -fPIC -Wall -Wextra -g -std=c99
+ 
+ CFLAGS += -DBPFTUNE_VERSION='"$(BPFTUNE_VERSION)"' \
+ 	  -DBPFTUNER_PREFIX_DIR='"$(prefix)"' \
+@@ -74,12 +70,13 @@ VMLINUX_BTF_PATHS := /sys/kernel/btf/vmlinux /boot/vmlinux-$(KERNEL_REL)
+ VMLINUX_BTF_PATH := $(or $(VMLINUX_BTF),$(firstword			       \
+ 					  $(wildcard $(VMLINUX_BTF_PATHS))))
+ 
+-# Some systems ship with a vmlinux.h; use it.
+-VMLINUX_H_PATH ?= /usr/include/$(ARCH)-linux-gnu/linux/bpf/
+-VMLINUX_H_FILE := $(wildcard $(VMLINUX_H_PATH)/vmlinux.h)
++ifeq ($(VMLINUX_H),)
++VMLINUX_H_FILE := $(wildcard $(PKG_BUILD_DIR)/vmlinux.h)
++endif
+ 
++# Defaults to ../include/bpftune/vmlinux_aarch64.h as the best available fallback.
+ ifneq ($(VMLINUX_H_FILE),)
+-BPF_CFLAGS += -DVMLINUX_H -I$(VMLINUX_H_PATH)
++BPF_CFLAGS += -DVMLINUX_H -I$(PKG_BUILD_DIR)
+ endif
+ 
+ OPATH :=
+@@ -191,18 +188,21 @@ $(OPATH)bpftune.o: $(OPATH)libbpftune.so
+ # check if GCC_BPF flag is set, otherwise use CLANG
+ ifeq ($(GCC_BPF),)
+ $(BPF_OBJS): $(patsubst %.o,%.c,$(BPF_OBJS)) ../include/bpftune/bpftune.bpf.h
+-	$(CLANG) $(BPF_CFLAGS) -D__TARGET_ARCH_$(SRCARCH) -O2 -target bpf \
+-		$(INCLUDES) -c $(patsubst %.o,%.c,$(@)) -o $(@)
++	$(BPF_CLANG) $(BPF_CFLAGS) -D__TARGET_ARCH_$(SRCARCH) -O2 -target $(BPF_TARGET) \
++		-I../include -c $(patsubst %.o,%.c,$(@)) -o $(@)
++	$(LLVM_STRIP) --strip-debug $(@)
+ 
+ $(LEGACY_BPF_OBJS): $(patsubst %.legacy.o,%.c,$(LEGACY_BPF_OBJS)) ../include/bpftune/bpftune.bpf.h
+-	$(CLANG) $(BPF_CFLAGS) -D__TARGET_ARCH_$(SRCARCH) -DBPFTUNE_LEGACY -O2 -target bpf \
+-		$(INCLUDES) -c $(patsubst %.legacy.o,%.c,$(@)) \
++	$(BPF_CLANG) $(BPF_CFLAGS) -D__TARGET_ARCH_$(SRCARCH) -DBPFTUNE_LEGACY -O2 -target $(BPF_TARGET) \
++		-I../include -c $(patsubst %.legacy.o,%.c,$(@)) \
+ 		-o $(@)
++	$(LLVM_STRIP) --strip-debug $(@)
+ 
+ $(NOBTF_BPF_OBJS): $(patsubst %.nobtf.o,%.c,$(NOBTF_BPF_OBJS)) ../include/bpftune/bpftune.bpf.h
+-	$(CLANG) $(BPF_CFLAGS) -D__TARGET_ARCH_$(SRCARCH) -DBPFTUNE_NOBTF -O2 -target bpf \
+-		$(INCLUDES) -c $(patsubst %.nobtf.o,%.c,$(@)) \
++	$(BPF_CLANG) $(BPF_CFLAGS) -D__TARGET_ARCH_$(SRCARCH) -DBPFTUNE_NOBTF -O2 -target $(BPF_TARGET) \
++		-I../include -c $(patsubst %.nobtf.o,%.c,$(@)) \
+ 		-o $(@)
++	$(LLVM_STRIP) --strip-debug $(@)
+ else
+ GCC_BPF_FLAGS := -g -O2 \
+ 	$(BPF_CFLAGS) -D__TARGET_ARCH_$(SRCARCH) \
+-- 
+2.55.0
+
