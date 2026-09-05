@@ -41,7 +41,8 @@ endef
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR)/ \
 		$(TARGET_CONFIGURE_OPTS) \
-		CFLAGS="$(TARGET_CFLAGS)"
+		CFLAGS="$(TARGET_CFLAGS)" \
+		hcxdumptool
 endef
 
 define Package/hcxdumptool/install
