@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luasql
-PKG_VERSION:=2.4.0
-PKG_RELEASE:=2
+PKG_VERSION:=2.7.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/keplerproject/luasql/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=db2458a8c8c5f3bc717e4030fe2878f1ad8d71e437ec6149c381eebad5d525c5
+PKG_SOURCE_URL:=https://codeload.github.com/lunarmodules/luasql/tar.gz/$(PKG_VERSION)?
+PKG_HASH:=15de59f0ea1a2ab205a11e0115d760f8e0c3fee0d3fcc37f52e326a53236e0c7
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT
@@ -26,7 +26,7 @@ define Package/luasql/Default
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Lua SQL binding
-  URL:=https://keplerproject.github.io/luasql/
+  URL:=https://lunarmodules.github.io/luasql/
   DEPENDS:= +lua
 endef
 
