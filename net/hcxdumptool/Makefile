@@ -24,7 +24,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/hcxdumptool
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libpcap +libopenssl
+  DEPENDS:=+libpcap
   TITLE:=hcxdumptool
   URL:=https://github.com/ZerBea/hcxdumptool
   SUBMENU:=Wireless
