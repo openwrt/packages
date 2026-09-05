@@ -1,0 +1,44 @@
+From: Mirko Vogt <foss@mirko.in>
+Date: Sat, 5 Sep 2026 20:00:00 +0000
+Subject: [PATCH] libavdevice/v4l2: tell libv4l2.h about the POSIX ioctl signature
+
+libv4l2.h declares v4l2_ioctl() with a "long request" by default and only
+switches to the POSIX/musl "int request" signature when the *consumer*
+defines a feature macro before including it: HAVE_POSIX_IOCTL up to
+v4l-utils 1.30 (added 2024-10-17), LIBV4L_HAVE_POSIX_IOCTL from 1.32 on
+(renamed 2025-09-10 to avoid clashing with consumers' own config.h).
+
+FFmpeg detects the musl signature itself (HAVE_IOCTL_POSIX) and types its
+ioctl_f accordingly, but never forwards that knowledge to libv4l2.h. It used
+to work by accident while FFmpeg's config.h still spelled the symbol
+HAVE_POSIX_IOCTL; commit 5fea5e3e11d6 ("configure: rename posix_ioctl")
+renamed it and the header fell back to the "long" prototype. With GCC 14
+the resulting pointer-type mismatch is an error:
+
+  libavdevice/v4l2.c:145:17: error: assignment to 'int (*)(int,  int, ...)'
+  from incompatible pointer type 'int (*)(int,  long unsigned int, ...)'
+
+Define both spellings so either header generation gets the signature the
+library was actually built with (OpenWrt builds v4l-utils with
+HAVE_POSIX_IOCTL on musl). Same approach as Chimera/Alpine's
+posix-ioctl.patch by q66, extended for the pre-1.32 macro name.
+
+Signed-off-by: Mirko Vogt <foss@mirko.in>
+---
+--- a/libavdevice/v4l2.c
++++ b/libavdevice/v4l2.c
+@@ -49,6 +49,14 @@
+ #include <dirent.h>
+ 
+ #if CONFIG_LIBV4L2
++#if HAVE_IOCTL_POSIX
++/* libv4l2.h only declares v4l2_ioctl() with the POSIX "int request"
++ * signature when told so by the consumer: HAVE_POSIX_IOCTL up to
++ * v4l-utils 1.30, LIBV4L_HAVE_POSIX_IOCTL from 1.32 on. Without it the
++ * assignment to ioctl_f below has an incompatible pointer type on musl. */
++#define HAVE_POSIX_IOCTL 1
++#define LIBV4L_HAVE_POSIX_IOCTL 1
++#endif
+ #include <libv4l2.h>
+ #endif
+ 

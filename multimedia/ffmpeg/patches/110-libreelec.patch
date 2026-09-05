@@ -1,0 +1,59 @@
+From 342b6ab899e9c66286239c0717ea67183af505df Mon Sep 17 00:00:00 2001
+From: Lukas Rusak <lorusak@gmail.com>
+Date: Wed, 10 Apr 2019 13:39:21 -0700
+Subject: [PATCH 1/2] libavcodec/libdav1d: add libdav1d_get_format method to
+ call ff_get_format
+
+This will allow applications to properly init the decoder in
+cases where a hardware decoder is tried first and and software
+decoder is tried after by calling the get_format callback.
+
+Even though there is no hardware pixel formats available
+we still need to return the software pixel format.
+
+Tested with Kodi by checking if multithreaded software
+decoding is properly activated.
+---
+ libavcodec/libdav1d.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+--- a/libavcodec/libdav1d.c
++++ b/libavcodec/libdav1d.c
+@@ -67,6 +67,16 @@ static const enum AVPixelFormat pix_fmt_
+     AV_PIX_FMT_GBRP, AV_PIX_FMT_GBRP10, AV_PIX_FMT_GBRP12,
+ };
+ 
++static enum AVPixelFormat libdav1d_get_format(AVCodecContext *avctx, const Dav1dPicture *p)
++{
++   enum AVPixelFormat pix_fmts[2], *fmt = pix_fmts;
++
++   *fmt++ = pix_fmt[p->p.layout][p->seq_hdr->hbd];
++   *fmt = AV_PIX_FMT_NONE;
++
++   return ff_get_format(avctx, pix_fmts);
++}
++
+ static void libdav1d_log_callback(void *opaque, const char *fmt, va_list vl)
+ {
+     AVCodecContext *c = opaque;
+@@ -410,6 +420,7 @@ static int libdav1d_receive_frame(AVCode
+     if (res < 0)
+         goto fail;
+ 
++    frame->format = c->pix_fmt = libdav1d_get_format(c, p);
+     frame->width = p->p.w;
+     frame->height = p->p.h;
+     if (c->width != p->p.w || c->height != p->p.h) {
+--- a/libswscale/yuv2rgb.c
++++ b/libswscale/yuv2rgb.c
+@@ -575,10 +575,6 @@ SwsFunc ff_yuv2rgb_get_func_ptr(SwsInter
+     if (t)
+         return t;
+ 
+-    av_log(c, AV_LOG_WARNING,
+-           "No accelerated colorspace conversion found from %s to %s.\n",
+-           av_get_pix_fmt_name(c->opts.src_format), av_get_pix_fmt_name(c->opts.dst_format));
+-
+     if (c->opts.src_format == AV_PIX_FMT_YUV422P) {
+         switch (c->opts.dst_format) {
+         case AV_PIX_FMT_BGR48BE:

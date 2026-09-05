@@ -1,0 +1,38 @@
+From: Mirko Vogt <foss@mirko.in>
+Date: Sat, 1 Aug 2026 02:30:00 +0000
+Subject: [PATCH] v4l2-request: define sunxi AFBC pixelformats when the headers lack them
+
+The cedrus 8-bit/10-bit AFBC capture formats
+(V4L2_PIX_FMT_YUV420_{8,10}_AFBC_16X16_SPLIT) are downstream additions, not
+in mainline videodev2.h. OpenWrt packages build against the sanitized
+toolchain kernel-headers, which therefore lack these fourccs, so the table
+entries guarded by "#if defined(...)" are compiled out and 10-bit HEVC never
+gets a DRM_PRIME capture format (hwaccel init fails, ffmpeg silently falls
+back to software decoding).
+
+Define the fourccs in this translation unit when the headers do not; the
+values match the kernel UAPI (drivers/staging/media/sunxi/cedrus).
+
+Signed-off-by: Mirko Vogt <foss@mirko.in>
+---
+--- a/libavutil/hwcontext_v4l2request.c
++++ b/libavutil/hwcontext_v4l2request.c
+@@ -34,6 +34,18 @@
+ #include "hwcontext_v4l2request_internal.h"
+ #include "mem.h"
+ 
++/* The sunxi/cedrus AFBC pixelformats are downstream additions (not in
++ * mainline videodev2.h), so sanitized toolchain kernel-headers lack them and
++ * the capture format table below would be compiled without them. Define them
++ * when absent; the values must match the kernel UAPI. */
++#ifndef V4L2_PIX_FMT_YUV420_8_AFBC_16X16_SPLIT
++#define V4L2_PIX_FMT_YUV420_8_AFBC_16X16_SPLIT  v4l2_fourcc('A', 'S', '1', '2')
++#endif
++
++#ifndef V4L2_PIX_FMT_YUV420_10_AFBC_16X16_SPLIT
++#define V4L2_PIX_FMT_YUV420_10_AFBC_16X16_SPLIT v4l2_fourcc('A', 'S', '0', '1')
++#endif
++
+ typedef struct V4L2RequestVideoDecoder {
+     dev_t media_dev;
+     dev_t video_dev;
