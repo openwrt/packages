@@ -14,7 +14,19 @@
 START=70
 STOP=30
 
-USE_PROCD=1
+# We use the script functions and variables definitions from
+# /etc/rc.common that are added by USE_PROCD except with a modified
+# start and rc_procd. We cannot simply override USE_PROCD's
+# implementation of start and rc_procd as rc.common sources this
+# initscript before the definitions are applied by USE_PROCD
+#
+# The modified rc_procd uses "set" for procd_close_service, which
+# registers the service with procd, if the service for this
+# initscript (nut-server) is not registered with procd (active) at all,
+# otherwise it uses "add" which adds an instance to the registered
+# (active) service.
+#
+# USE_PROCD=1
 
 # IPKG_INSTROOT is intentionally only set when building an image and
 # is intentionally empty on a live OpenWrt device
@@ -73,32 +85,74 @@ USE_PROCD=1
 	exit 1
 }
 
+# shellcheck source=/dev/null
+. "${IPKG_INSTROOT}"/lib/functions/procd.sh || {
+	log_source_error "procd.sh" "nut-server" "nut-server"
+	exit 1
+}
+
 restore_umask_on_exit
 
-# Start a ups driver instance
-start_ups_driver() {
-	local ups="$1"
-	local requested="$2"
-	local driver=""
+extra_command "running" "Check if service is running"
+extra_command "status" "Service status"
+extra_command "trace" "Start with syscall trace"
+extra_command "info" "Dump procd service info"
 
-	# If wanting a specific instance, only start that instance
-	if [ -n "$requested" ] && [ "$requested" != "$ups" ]; then
-		return 0
+basescript=$(readlink "$initscript")
+
+has_running_driver() {
+	local instances instance
+
+	# have_driver_instance and have_upsd_instance are 'pseudo-globals' -
+	# they are local to the _caller_ and visible/modifiable in this
+	# function in order to get the value back to the caller.
+
+	instances="$(list_running_instances "nut-server")"
+	[ -n "$instances" ] || return 0
+	set -f
+	for instance in $instances; do
+		if [ "$instance" = "upsd" ]; then
+			have_upsd_instance="true"
+			continue
+		fi
+		have_driver_instance="true"
+		break
+	done
+	set +f
+}
+
+start_server_service() {
+	procd_open_instance upsd
+	procd_set_param respawn
+	procd_set_param stderr 1
+	procd_set_param stdout 1
+	procd_set_param env NUT_DEBUG_SYSLOG="stderr"
+	procd_set_param env NUT_QUIET_INIT_UPSNOTIFY=true
+	procd_set_param env NUT_STATEPATH="$STATEPATH"
+	procd_set_param command /usr/sbin/upsd
+	procd_append_param command -FF
+	procd_append_param command -u "$RUNAS"
+	procd_close_instance
+}
+
+# Start upsd instance
+start_server_instance() {
+	if [ -f "$NUT_KILLPOWER" ]; then
+		return 1
 	fi
 
-	# For non-USB devices this is effectively a no-op
-	# For USB devices, if the USB productid and USB vendorid of the configured
-	# driver instance (UPS) match a USB device in sysfs, set the permissions
-	# on the USB device node in /dev/bus/usb/... to allow NUT to access and
-	# control the device.
-	ensure_usb_ups_access "$ups" || return 1
-	config_get driver "$ups" driver
+	local have_driver_instance="false"
+	local have_upsd_instance="false"
+	has_running_driver
 
-	[ -n "$driver" ] || {
-		log_error "Missing driver when starting UPS '$ups'" "nut-server" "nut-server"
-		return 1
-	}
+	# upsd will crash if started with no available UPS, so only start if
+	# we have one, and we do not already have a upsd instance
+	if [ "$have_driver_instance" = "true" ] && [ "$have_upsd_instance" = "false" ]; then
+		rc_procd start_server_service || return 1
+	fi
+}
 
+start_ups_service() {
 	procd_open_instance "$ups"
 	procd_set_param respawn
 	procd_set_param stderr 1
@@ -110,22 +164,42 @@ start_ups_driver() {
 	procd_append_param command -FF -a "$ups"
 	procd_append_param command -u "$RUNAS"
 	procd_close_instance
-
-	# If upsd is running, reload it to pick up new driver
-	if procd_running "nut-server" "upsd" >/dev/null 2>&1; then
-		signal_instance "upsd" "upsd" "reload" "HUP" "${STATEPATH}/upsd.pid" "" "nut-server"
-	else
-		start_server_instance
-	fi
 }
 
-# On reload, we need to use rpc_procd to add an instance to an already running
-# service, as procd_open_service is not called by default when doing a
-# reload vs start
-add_ups_driver() {
+# Start a ups driver instance
+start_ups_driver() {
 	local ups="$1"
 	local requested="$2"
-	rc_procd start_ups_driver "$ups" "$requested"
+	local driver=""
+
+	# If wanting a specific instance, only start that instance; this is a normal
+	# operating event, so do not log and do not error
+	if [ -n "$requested" ] && [ "$requested" != "$ups" ]; then
+		return 0
+	fi
+
+	# For non-USB devices this is effectively a no-op
+	# For USB devices, if the USB productid and USB vendorid of the configured
+	# driver instance (UPS) match a USB device in sysfs, set the permissions
+	# on the USB device node in /dev/bus/usb/... to allow NUT to access and
+	# control the device.
+	ensure_usb_ups_access "$ups" || {
+		usb_ups_access_error="true"
+		log_error "Error enabling USB access for UPS '$ups'" "nut-server" "nut-server"
+		return 1
+	}
+
+	config_get driver "$ups" driver
+
+	[ -n "$driver" ] || {
+		log_error "Missing driver when starting UPS '$ups'" "nut-server" "nut-server"
+		return 1
+	}
+
+	rc_procd start_ups_service "$@" || {
+		return 1
+	}
+	return 0
 }
 
 have_upsd_section() {
@@ -170,58 +244,63 @@ common_preconditions() {
 stop_no_longer_configured_instances() {
 	local have_driver_instance=false
 	local have_upsd_instance=false
+	local had_running_instance="false"
 	local instance instances
 
 	# Stop any driver instances which are no longer configured
+	# This can occur when the configuration is changed and the service
+	# is restarted or reloaded, as this script is not notified of what has
+	# changed if the configuration changes; the script will simply
+	# generate a new configuration in that event.
 	# We can only reliably do this for instances managed by procd
-	set -f
 	instances="$(list_running_instances "nut-server")"
 	[ -n "$instances" ] || return 0
+	set -f
+	# Check that all instances are associated with a configured driver or
+	# the upsd daemon
 	for instance in $instances; do
+		# upsd should be stopped last, if it is stopped at all
 		if [ "$instance" = "upsd" ]; then
 			continue
 		fi
+		# Set to true if any instance was running, whether stopped here, or left
+		# running. have_driver_instance (set in has_running_driver) lets us know
+		# if any driver is still running.
+		had_running_instance="true"
 		config_get driver "$instance" driver
 		# Only stop not configured but running instances
 		if [ -z "$driver" ] && [ -n "$instance" ] && procd_running "nut-server" "$instance" >/dev/null 2>&1; then
-			procd_kill "nut-server" "$instance" 2>&1 | logger -t nut-server
+			log_msg "Stopping no longer configured ups '$instance'" "nut-server" "nut-server" notice
+			procd_kill "nut-server" "$instance"
 		fi
 	done
 	set +f
 
 	# Need to stop drivers before stopping upsd
-	# The second loop is required in case some instances failed to stop in the
-	# first loop (so we cannot just track instances in the above loop).
-	# In addition, it is possible for hotplug triggered drivers start to start
+	# The has_running_driver check is required in case some instances failed to
+	# stop in the first loop (so we cannot just track instances in the above loop).
+	# In addition, it is possible for hotplug triggered drivers starting to start
 	# instances between the stop above, and this loop.
-	set -f
-	instances="$(list_running_instances "nut-server")"
-	[ -n "$instances" ] || return 0
-	for instance in $instances; do
-		if [ "$instance" = "upsd" ]; then
-			have_upsd_instance="true"
-			continue
-		fi
-		have_driver_instance="true"
-		break
-	done
-	set +f
+	has_running_driver
 
 	# If we have no UPS instances we must stop upsd or it will crash
 	# The "nut-server" service remains active and will 'see' configuration
-	# changes and execute reload_service when they are detected
-	if [ "$have_upsd_instance" = "true" ] && [ "$have_driver_instance" = "false" ]; then
-		# stop_server_instance
+	# changes and execute reload_service when they are detected, but avoid
+	# signalling upsd if it is not running ('had_running_instance' != "true")
+	if [ "$have_upsd_instance" = "true" ] && [ "$have_driver_instance" = "false" ] && [ "$had_running_instance" = "true" ]; then
+		log_msg "Stopping upsd because no driver instances configured" "nut-server" "nut-server" "notice"
 		signal_instance "upsd" "upsd" "stop" "TERM" "${STATEPATH}/upsd.pid" "" "nut-server" "procd_kill" "nut-server" "upsd"
+	elif [ "$have_upsd_instance" = "false" ] && [ "$have_driver_instance" = "true" ]; then
+		start_server_instance
 	fi
 }
 
 stop_all_instances() {
 	local instance instances
 
-	set -f
 	instances="$(list_running_instances "nut-server")"
 	[ -n "$instances" ] || return 0
+	set -f
 	for instance in $instances; do
 		# stop upsd last
 		if [ "$instance" = "upsd" ]; then
@@ -305,25 +384,6 @@ service_preconditions() {
 	return 0
 }
 
-# Start upsd instance
-start_server_instance() {
-	if [ -f "$NUT_KILLPOWER" ]; then
-		return 1
-	fi
-
-	procd_open_instance upsd
-	procd_set_param respawn
-	procd_set_param stderr 1
-	procd_set_param stdout 1
-	procd_set_param env NUT_DEBUG_SYSLOG="stderr"
-	procd_set_param env NUT_QUIET_INIT_UPSNOTIFY=true
-	procd_set_param env NUT_STATEPATH="$STATEPATH"
-	procd_set_param command /usr/sbin/upsd
-	procd_append_param command -FF
-	procd_append_param command -u "$RUNAS"
-	procd_close_instance
-}
-
 remove_var_config() {
 	for rm_file in "$USERS_C" "$UPS_C" "$UPSD_C" \
 		"$USERS_C.new" "$UPS_C.new" "$UPSD_C.new"; do
@@ -390,8 +450,12 @@ reload_ups_driver() {
 	# If the driver instance (UPS) was terminated, or stopped 'naturally',
 	# start it up again
 	if ! procd_running "nut-server" "$ups" >/dev/null 2>&1; then
-		add_ups_driver "$ups" "$ups"
+		start_ups_driver "$ups" "$ups"
 	fi
+
+	# If the server instance (upsd) was terminated, or stopped 'naturally',
+	# start it up again
+	start_server_instance
 	return 0
 }
 
@@ -412,14 +476,13 @@ manage_instances() {
 	case "$action" in
 	start)
 		config_foreach start_ups_driver driver
+		start_server_instance
 		;;
 	reload)
 		if service_active_no_instances "nut-server"; then
 			log_msg "nut-server active with no instances. Reloading." "nut-server" "nut-server" "info"
 		fi
-		if procd_running "nut-server" upsd >/dev/null 2>&1; then
-			signal_instance "upsd" "upsd" "reload" "HUP" "${STATEPATH}/upsd.pid" "" "nut-server" "procd_kill" "nut-server" "upsd"
-		fi
+
 		config_foreach reload_ups_driver driver
 		stop_no_longer_configured_instances
 		;;
@@ -444,16 +507,14 @@ manage_service() {
 	# instances, we act only on one instance).
 	local instance="$1"
 	local ret=0
+	local service_active
 
 	case "$action" in
 	start)
+		service_preconditions "$action"
+		ret=$?
 		case "$instance" in
 		"")
-			service_preconditions "$action"
-			ret=$?
-
-			stop_no_longer_configured_instances
-
 			if [ "$ret" = "0" ]; then
 				manage_instances start
 			else
@@ -462,27 +523,23 @@ manage_service() {
 			;;
 		# We only start one service (upsd or one driver) from a given invocation
 		upsd)
-			service_preconditions "$action"
-			ret=$?
 			if [ "$ret" = "0" ]; then
 				start_server_instance
 			fi
-			stop_no_longer_configured_instances
-
-			return $ret
 			;;
 		# We only start one service (upsd or one driver) from a given invocation
 		*)
-			service_preconditions "$action"
-			ret=$?
 			if [ "$ret" = "0" ]; then
 				config_foreach start_ups_driver driver "$instance"
+				start_server_instance
 			fi
-			stop_no_longer_configured_instances
-
-			return $ret
 			;;
 		esac
+		# Ensure drivers no longer present in config, but which are still running
+		# get stopped. This is required because we are not notified of what was
+		# removed when configuration is removed.
+		stop_no_longer_configured_instances
+		return $ret
 		;;
 	reload)
 		service_preconditions "$action"
@@ -492,8 +549,6 @@ manage_service() {
 			manage_instances reload
 		fi
 
-		stop_no_longer_configured_instances
-
 		if [ "$ret" = "1" ]; then
 			return 1
 		fi
@@ -502,17 +557,27 @@ manage_service() {
 		case "$instance" in
 		"")
 			manage_instances stop
+			ret=$?
+
+			service_active_no_instances "$(basename "${basescript:-$initscript}")"
+			service_active=$?
+
+			if [ "$service_active" -eq 1 ]; then
+				# Prevent NUT hotplug events when service is not running
+				rm -f "$NUT_HOTPLUG_BOOT_COMPLETE_PATH"
+			elif [ "$service_active" -eq 3 ]; then
+				return 1
+			fi
+			return $ret
 			;;
 		upsd)
 			if procd_running "nut-server" upsd >/dev/null 2>&1; then
 				signal_instance "upsd" "upsd" "stop" "TERM" "${STATEPATH}/upsd.pid" "" "nut-server" "procd_kill" "nut-server" "upsd"
 			fi
-			stop_service_if_no_instances
 			;;
 		*)
 			# We only handle the first parameter, so do not pass in all parameters
 			config_foreach stop_ups_driver driver "$instance"
-			stop_service_if_no_instances
 			;;
 		esac
 		;;
@@ -537,17 +602,43 @@ manage_service() {
 
 # Start NUT drivers and upsd (NUT server)
 start_service() {
+	local ret
 	manage_service start "$@"
+	ret=$?
+
+	# Allow hotplug events after init (for first start on a new install)
+	# to (re)start drivers/upsd only if start was successful
+	if [ "$ret" -eq 0 ]; then
+		touch "$NUT_HOTPLUG_BOOT_COMPLETE_PATH"
+	fi
+
+	return $ret
 }
 
 # Reload NUT drivers and upsd (NUT server)
 reload_service() {
+	local ret
+
 	manage_service reload "$@"
+	ret=$?
+
+	# Ensure hotplug events are allowed to (re)start drivers/upsd
+	# if reloaded after a failed start
+	if [ "$ret" -eq 0 ]; then
+		touch "$NUT_HOTPLUG_BOOT_COMPLETE_PATH"
+	fi
+
+	return $ret
 }
 
 # Stop NUT drivers and upsd (NUT server)
 stop_service() {
+	local ret
+
 	manage_service stop "$@"
+	ret=$?
+
+	return $ret
 }
 
 service_triggers() {
@@ -567,4 +658,109 @@ service_triggers() {
 		log_error "Failed to add interface triggers" nut-server nut-server
 	}
 	procd_add_reload_trigger "nut_server"
+}
+
+rc_procd() {
+	local method service_active
+
+	service_active_no_instances "$(basename "${basescript:-$initscript}")"
+	service_active=$?
+
+	# Always use set if nut-server service is not active, even if this
+	# function is executed from reload or restart. In the default
+	# implementation from USE_PROCD=1, rc_procd is only called from
+	# start, so set is only used on a start action. In addition, the
+	# default rc_procd only uses add when called with a second parameter
+	if [ "$service_active" -eq 1 ]; then
+		log_msg "$(basename "${basescript:-$initscript}") was not active, so start it" "nut-server" "nut-server" "debug"
+		method="set"
+	elif [ "$service_active" -eq 3 ]; then
+		# log error message was already issued in service_active_no_instances
+		return 1
+	elif [ "$service_active" -eq 0 ] || [ "$service_active" -eq 2 ]; then
+		method="add"
+	else
+		log_error "Unexpected return value from 'service_active_no_instances'" "nut-server" "nut-server"
+		return 1
+	fi
+	procd_open_service "$(basename "${basescript:-$initscript}")" "$initscript"
+	"$@"
+	procd_close_service "$method"
+
+	return 0
+}
+
+boot() {
+	# Ensure start actions occur one at a time, as start_service enables
+	# hotplug before this function has finished starting instances
+	procd_lock
+
+	# Ensure service is started even if no instances are started
+	rc_procd : || return 1
+	# start_service will call manage_service start which will start the drivers
+	# and upsd instances, following which hotplug will be allowed
+	start_service || return 1
+
+	# Check status of starting drivers once hotplug has been allowed to
+	# (re)start drivers/upsd
+	local usb_ups_access_error="false"
+	config_foreach start_ups_driver driver
+	[ "$usb_ups_access_error" = "false" ] || return 1
+	start_server_instance || return 1
+	return 0
+}
+
+# Define start in a way that avoids nesting rc_procd
+start() {
+	# Ensure start actions occur one at a time
+	procd_lock
+
+	# Ensure service is started even if no instances are started
+	rc_procd : || return 1
+	start_service "$@"
+	if eval "type service_started" 2>/dev/null >/dev/null; then
+		service_started
+	fi
+}
+
+trace() {
+	TRACE_SYSCALLS=1
+	start "$@"
+}
+
+info() {
+	json_init
+	json_add_string name "$(basename "${basescript:-$initscript}")"
+	json_add_boolean verbose "1"
+	_procd_ubus_call list
+}
+
+stop() {
+	procd_lock
+	stop_service "$@"
+	procd_kill "$(basename "${basescript:-$initscript}")" "$1"
+	if eval "type service_stopped" 2>/dev/null >/dev/null; then
+		service_stopped
+	fi
+}
+
+reload() {
+	if eval "type reload_service" 2>/dev/null >/dev/null; then
+		procd_lock
+		reload_service "$@"
+	else
+		start
+	fi
+}
+
+running() {
+	service_running "$@"
+}
+
+status() {
+	if eval "type status_service" 2>/dev/null >/dev/null; then
+		status_service "$@"
+	else
+		_procd_status "$(basename "${basescript:-$initscript}")" "$1"
+	fi
 }
