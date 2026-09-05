@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: GPL-2.0-only
+# A managed netdev (re)appeared - re-apply just the rules bound to it.
+
+dev="${INTERFACE:-$DEVICE}"
+
+[ "$ACTION" = "add" ] || return 0
+[ -n "$dev" ] || return 0
+[ -x /etc/init.d/tcfilter ] || return 0
+
+/etc/init.d/tcfilter reapply_dev "$dev"

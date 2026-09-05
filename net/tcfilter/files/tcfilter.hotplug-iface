@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: GPL-2.0-only
+# clsact filters are lost when the network is reconfigured; re-apply on ifup.
+# 'start' is idempotent (rules already present are skipped), so repeated ifup
+# events at boot are cheap.
+
+[ "$ACTION" = "ifup" ] || return 0
+[ -x /etc/init.d/tcfilter ] || return 0
+[ -f /var/run/tcfilter.state ] || return 0
+
+/etc/init.d/tcfilter start
