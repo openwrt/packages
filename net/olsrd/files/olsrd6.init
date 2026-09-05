@@ -52,6 +52,8 @@ start_service() {
 
 	procd_set_param command "$BIN"
 	procd_append_param command -f ${CONF}
+	# force IpVersion 6, the config does not set it
+	procd_append_param command -ipv6
 	procd_append_param command -nofork
 	procd_append_param command -pidfile ${PID}
 
