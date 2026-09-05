@@ -20,7 +20,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
 
 --- a/src/shared/gatt-helpers.c
 +++ b/src/shared/gatt-helpers.c
-@@ -1158,6 +1158,26 @@ struct bt_gatt_request *bt_gatt_discover
+@@ -1170,6 +1170,26 @@ struct bt_gatt_request *bt_gatt_discover
  	return bt_gatt_request_ref(op);
  }
  
@@ -47,7 +47,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
  static void discover_chrcs_cb(uint8_t opcode, const void *pdu,
  					uint16_t length, void *user_data)
  {
-@@ -1166,6 +1186,7 @@ static void discover_chrcs_cb(uint8_t op
+@@ -1178,6 +1198,7 @@ static void discover_chrcs_cb(uint8_t op
  	uint8_t att_ecode = 0;
  	size_t data_length;
  	uint16_t last_handle;
@@ -55,7 +55,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
  
  	if (opcode == BT_ATT_OP_ERROR_RSP) {
  		success = false;
-@@ -1194,21 +1215,24 @@ static void discover_chrcs_cb(uint8_t op
+@@ -1206,21 +1227,24 @@ static void discover_chrcs_cb(uint8_t op
  		goto done;
  	}
  
