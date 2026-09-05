@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/nls.mk
 
 PKG_NAME:=curl
-PKG_VERSION:=8.21.0
+PKG_VERSION:=8.22.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/curl/curl/releases/download/curl-$(subst .,_,$(PKG_VERSION))/ \
 	https://curl.se/download/
-PKG_HASH:=aa1b66a70eace83dc624508745646c08ae561de512ab403adffb93ac87fc72e6
+PKG_HASH:=f7ef3ae8a22e521f289803fe93543eb64c329b58aa73a9e224dfd915a2a5f4f7
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
@@ -65,7 +65,6 @@ PKG_CONFIG_DEPENDS:= \
   CONFIG_LIBCURL_LIBCURL_OPTION \
   CONFIG_LIBCURL_PROXY \
   CONFIG_LIBCURL_THREADED_RESOLVER \
-  CONFIG_LIBCURL_TLS_SRP \
   CONFIG_LIBCURL_UNIX_SOCKETS \
   CONFIG_LIBCURL_VERBOSE \
   CONFIG_LIBCURL_NTLM \
@@ -162,7 +161,6 @@ CONFIGURE_ARGS += \
 	$(call autoconf_bool,CONFIG_LIBCURL_LIBCURL_OPTION,libcurl-option) \
 	$(call autoconf_bool,CONFIG_LIBCURL_PROXY,proxy) \
 	$(call autoconf_bool,CONFIG_LIBCURL_THREADED_RESOLVER,threaded-resolver) \
-	$(call autoconf_bool,CONFIG_LIBCURL_TLS_SRP,tls-srp) \
 	$(call autoconf_bool,CONFIG_LIBCURL_UNIX_SOCKETS,unix-sockets) \
 	$(call autoconf_bool,CONFIG_LIBCURL_VERBOSE,verbose) \
 
