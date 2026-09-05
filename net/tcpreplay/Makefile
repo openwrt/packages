@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tcpreplay
-PKG_VERSION:=4.6.0
+PKG_VERSION:=4.6.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/appneta/tcpreplay/releases/download/v$(PKG_VERSION)
-PKG_HASH:=1ec01a3fab92215be6d8a99984ab6c16047c1ec6d813f4c508b744dd94b48837
+PKG_HASH:=14b96e3565d6e66e813000d0d510afeaecb871f2b533182c391c6ccf948c3e21
 
 PKG_LICENSE:=GPL-3.0-only
 PKG_LICENSE_FILES:=docs/LICENSE
