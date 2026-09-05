@@ -1,0 +1,19 @@
+From 0872708eae9f223bb507d8a3fafd2264d25d71d3 Mon Sep 17 00:00:00 2001
+From: SunnyQeen <sunnyqeen@gmail.com>
+Date: Thu, 3 Sep 2026 23:21:53 +0200
+Subject: Disable tests
+
+
+diff --git a/meson.build b/meson.build
+index 808d2f90..466c0955 100644
+--- a/meson.build
++++ b/meson.build
+@@ -421,7 +421,7 @@ common_inc = include_directories('src/common')
+ 
+ subdir('src')
+ subdir('doc')
+-subdir('tests')
++# subdir('tests')
+ 
+ # --------------------------------------------------------------------------
+ # Dist: pre-generate files that autotools used to ship via EXTRA_DIST
