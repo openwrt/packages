@@ -1,6 +1,22 @@
+From c92f32ecb030592dd948ee706dd90fbca74b47f6 Mon Sep 17 00:00:00 2001
+From: Christian Marangi <ansuelsmth@gmail.com>
+Date: Tue, 22 Oct 2024 03:32:33 +0000
+Subject: [PATCH 2/3] 102-sizeof_test_fix
+
+this patch header is reatroactively created to satisfy CI,
+see https://github.com/openwrt/packages/pull/25082/
+
+---
+ nginx-mod-njs/auto/types             | 132 +++++++++--------------------------------
+ nginx-mod-njs/auto/types_util/sizeof |  78 ++++++++++++++++++++++++
+ nginx-mod-njs/auto/types_util/value  |  12 ++++
+ 3 files changed, 118 insertions(+), 104 deletions(-)
+ create mode 100644 auto/types_util/sizeof
+ create mode 100644 auto/types_util/value
+
 --- a/nginx-mod-njs/auto/types
 +++ b/nginx-mod-njs/auto/types
-@@ -11,113 +11,37 @@
+@@ -11,110 +11,34 @@
  #     printf("%d", (int) sizeof(TYPE));
  
  
@@ -60,11 +76,15 @@
 -                      return 0;
 -                  }"
 -. auto/feature
+-
+-
+-case "$njs_feature_value" in
+-    8) NJS_64BIT=1 ;;
+-    *) NJS_64BIT=0 ;;
 +njs_type="int"; . auto/types_util/sizeof
 +njs_param=NJS_INT_SIZE; njs_value=$njs_size; . auto/types_util/value
- 
- 
--case "$njs_feature_value" in
++
++
 +njs_type="u_int"; . auto/types_util/sizeof
 +njs_param=NJS_UINT_SIZE; njs_value=$njs_size; . auto/types_util/value
 +
@@ -77,8 +97,8 @@
 +njs_param=NJS_UINTPTR_T_SIZE; njs_value=$njs_size; . auto/types_util/value
 +
 +case "$njs_value" in
-     8) NJS_64BIT=1 ;;
-     *) NJS_64BIT=0 ;;
++     8) NJS_64BIT=1 ;;
++     *) NJS_64BIT=0 ;;
  esac
  
  
@@ -135,9 +155,6 @@
 +
 +njs_type="time_t"; . auto/types_util/sizeof
 +njs_param=NJS_TIME_T_SIZE; njs_value=$njs_size; . auto/types_util/value
- 
- 
- # Ensuring that double type is always evaluated at standard
 --- /dev/null
 +++ b/nginx-mod-njs/auto/types_util/sizeof
 @@ -0,0 +1,78 @@
