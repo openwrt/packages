@@ -38,7 +38,8 @@ endef
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR)/ \
 		$(TARGET_CONFIGURE_OPTS) \
-		CFLAGS="$(TARGET_CFLAGS)"
+		CFLAGS="$(TARGET_CFLAGS) -std=gnu99" \
+		LDFLAGS="$(TARGET_LDFLAGS)"
 endef
 
 define Package/hcxtools/install
