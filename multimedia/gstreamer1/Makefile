@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gstreamer1
 PKG_VERSION:=1.26.4
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=gstreamer-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gstreamer
@@ -125,6 +125,7 @@ MESON_ARGS += \
 	-Dpoisoning=false \
 	-Dmemory-alignment=malloc \
 	-Dcheck=enabled \
+	-Dtests=disabled \
 	-Dlibunwind=disabled \
 	-Dlibdw=disabled \
 	-Ddbghelp=disabled \
