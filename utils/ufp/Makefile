@@ -26,7 +26,13 @@ define Package/ufp
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Device fingerprinting daemon
-  DEPENDS:=+ucode +ucode-mod-fs +ucode-mod-struct +libubox +udhcpsnoop +unetmsg
+  DEPENDS:= \
+  	    +ucode \
+  	    +ucode-mod-fs \
+  	    +ucode-mod-struct \
+  	    +libubox \
+  	    +udhcpsnoop \
+  	    +unetmsg
 endef
 
 define Package/ufp-neigh
