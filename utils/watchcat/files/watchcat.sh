@@ -6,6 +6,10 @@
 # This is free software, licensed under the GNU General Public License v2.
 #
 
+# In recent (relevant) versions of shellcheck busybox is a valid shell type
+# shellcheck shell=busybox
+
+# shellcheck source=/dev/null
 . /lib/network/config.sh
 . /lib/functions/network.sh
 
@@ -105,6 +109,7 @@ get_ping_size() {
 		echo "Corresponding ping packet sizes (bytes): small=1, windows=32, standard=56, big=248, huge=1492, jumbo=9000" 1>&2
 		;;
 	esac
+	# shellcheck disable=SC2086
 	echo $ps
 }
 
@@ -124,6 +129,7 @@ get_ping_family_flag() {
 		echo "Error: invalid address_family \"$family\". address_family should be one of: any, ipv4, ipv6" 1>&2
 		;;
 	esac
+	# shellcheck disable=SC2086
 	echo $family
 }
 
@@ -132,8 +138,8 @@ reboot_now() {
 
 	[ "$1" -ge 1 ] && {
 		sleep "$1"
-		echo 1 > /proc/sys/kernel/sysrq
-		echo b > /proc/sysrq-trigger # Will immediately reboot the system without syncing or unmounting your disks.
+		echo 1 >/proc/sys/kernel/sysrq
+		echo b >/proc/sysrq-trigger # Will immediately reboot the system without syncing or unmounting your disks.
 	}
 }
 
@@ -234,12 +240,14 @@ watchcat_monitor_network() {
 		for host in $ping_hosts; do
 			if [ "$ping_iface" != "" ]; then
 				ping_result="$(
-					ping $ping_family -I "$ping_iface" -s "$ping_size" -c 1 "$host" &> /dev/null
+					# shellcheck disable=SC2086
+					ping $ping_family -I "$ping_iface" -s "$ping_size" -c 1 "$host" &>/dev/null
 					echo $?
 				)"
 			else
 				ping_result="$(
-					ping $ping_family -s "$ping_size" -c 1 "$host" &> /dev/null
+					# shellcheck disable=SC2086
+					ping $ping_family -s "$ping_size" -c 1 "$host" &>/dev/null
 					echo $?
 				)"
 			fi
@@ -336,12 +344,14 @@ watchcat_ping() {
 		for host in $ping_hosts; do
 			if [ "$ping_iface" != "" ]; then
 				ping_result="$(
-					ping $ping_family -I "$ping_iface" -s "$ping_size" -c 1 "$host" &> /dev/null
+					# shellcheck disable=SC2086
+					ping $ping_family -I "$ping_iface" -s "$ping_size" -c 1 "$host" &>/dev/null
 					echo $?
 				)"
 			else
 				ping_result="$(
-					ping $ping_family -s "$ping_size" -c 1 "$host" &> /dev/null
+					# shellcheck disable=SC2086
+					ping $ping_family -s "$ping_size" -c 1 "$host" &>/dev/null
 					echo $?
 				)"
 			fi
