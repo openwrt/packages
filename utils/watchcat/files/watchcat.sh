@@ -10,78 +10,7 @@
 # shellcheck shell=busybox
 
 # shellcheck source=/dev/null
-. /lib/network/config.sh
-. /lib/functions/network.sh
-
-# Accept the historical real-device input while also handling @logical
-# interface references used by other OpenWrt configs.
-watchcat_resolve_ping_iface() {
-	local iface="$1"
-	local logical device network
-
-	[ -n "$iface" ] || return 1
-
-	case "$iface" in
-	@*)
-		logical="${iface#@}"
-		[ -n "$logical" ] || return 1
-		if network_get_device device "$logical"; then
-			printf '%s\n' "$device"
-			return 0
-		fi
-		printf '%s\n' "$iface"
-		return 1
-		;;
-	esac
-
-	network="$(find_config "$iface")"
-	if [ -n "$network" ]; then
-		printf '%s\n' "$iface"
-		return 0
-	fi
-
-	if network_get_device device "$iface"; then
-		printf '%s\n' "$device"
-		return 0
-	fi
-
-	printf '%s\n' "$iface"
-	return 1
-}
-
-watchcat_resolve_restart_iface() {
-	local iface="$1"
-	local network device
-
-	[ -n "$iface" ] || return 1
-
-	case "$iface" in
-	@*)
-		network="${iface#@}"
-		[ -n "$network" ] || return 1
-		if ! network_get_device device "$network"; then
-			printf '%s\n' "$network"
-			return 1
-		fi
-		printf '%s\n' "$network"
-		return 0
-		;;
-	esac
-
-	network="$(find_config "$iface")"
-	if [ -n "$network" ]; then
-		printf '%s\n' "$network"
-		return 0
-	fi
-
-	if network_get_device device "$iface"; then
-		printf '%s\n' "$iface"
-		return 0
-	fi
-
-	printf '%s\n' "$iface"
-	return 1
-}
+. /lib/functions/watchcat.sh
 
 get_ping_size() {
 	ps=$1
