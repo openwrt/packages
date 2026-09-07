@@ -199,6 +199,7 @@ A stopped service does not report a state at all, it truncates the runtime file 
 | Option             | Default                            | Description/Valid Values                                                                              |
 | :----------------- | :--------------------------------- | :---------------------------------------------------------------------------------------------------- |
 | enabled            | 1, enabled                         | enable or disable the uplink, automatically set if the retry limit was reached                        |
+| revive             | 0, disabled                        | re-enable this uplink after n run cycles if the retry limit disabled it, minimum '10'                 |
 | device             | -, not set                         | match the 'device' in the wireless config section                                                     |
 | ssid               | -, not set                         | match the 'ssid' in the wireless config section                                                       |
 | bssid              | -, not set                         | match the 'bssid' in the wireless config section                                                      |
@@ -291,6 +292,8 @@ If your router has more than one radio, keep the AP and the uplink on separate r
 
 **Retry behaviour**  
 `trm_maxretry` (default 3) limits the connection attempts per uplink. When the limit is reached, the affected uplink is disabled in the travelmate config and has to be re-enabled manually - which is intentional for permanently broken credentials, but worth keeping in mind in combination with `trm_netcheck`. Set `trm_maxretry` to '0' for unlimited retries if you never want an uplink to be disabled automatically.
+
+Per uplink, `revive` softens that. With a value of n, an uplink disabled by the retry limit is set back to 'enabled' after n run cycles, so a network that was only temporarily unavailable comes back on its own. Values below 10 are raised to 10, since a run cycle is roughly `trm_timeout` seconds long and shorter intervals only produce needless reconnect attempts. The number of revivals is capped by the global `trm_maxretry`, which also means that `revive` has no effect with `trm_maxretry` set to '0'. The cycle and round counters are kept in the runtime file '/var/run/travelmate/travelmate.revive', they are never written to the config and are cleared when the service is stopped. The enable and disable itself is still recorded in the travelmate config, so the LuCI station list always shows the real state.
 
 **Open uplinks**  
 `trm_autoadd` adds open networks to your wireless config on the fly, which is handy in hotels and on trains. Keep `trm_maxautoadd` at a sane value so that a busy location doesn't flood your config, and use `trm_ssidfilter` to skip the usual noise, e.g. `Chromecast*` or printer and camera SSIDs.

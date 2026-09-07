@@ -30,6 +30,7 @@ while :; do
 		if [ -s "${trm_pidfile}" ]; then
 			f_log "info" "travelmate instance stopped ::: action: ${trm_action}, pid: $("${trm_catcmd}" "${trm_pidfile}")"
 			: >"${trm_rtfile}"
+			: >"${trm_revivefile}"
 			: >"${trm_pidfile}"
 		fi
 		break
