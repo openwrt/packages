@@ -1,0 +1,39 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Date: Sun, 7 Sep 2026 14:00:00 +0200
+Subject: [PATCH] cmake: let sysconfdir and localstatedir be set on the command line
+
+The autotools build takes --sysconfdir and --localstatedir, and
+distributions rely on them to keep the configuration in /etc and the
+runtime state in /var while the prefix stays /usr. The CMake build
+hardcodes both as ${prefix}/etc and ${prefix}/var, and because they are
+plain set() calls a -D on the command line is silently overridden.
+
+Only set the defaults when nothing was passed in, so that
+-DSYSLOG_NG_PATH_SYSCONFDIR=/etc -DSYSLOG_NG_PATH_LOCALSTATEDIR=/var
+behaves like the autotools options. Everything derived from the two,
+the default configuration file, the persist file, the pid file and the
+control socket, follows.
+
+Upstream-Status: Pending
+---
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -42,11 +42,15 @@ set(SYSLOG_NG_COMBINED_VERSION ${SYSLOG_
+ set(SYSLOG_NG_SOURCE_REVISION ${SYSLOG_NG_VERSION})
+ 
+ set(SYSLOG_NG_PATH_PREFIX ${CMAKE_INSTALL_PREFIX})
+-set(SYSLOG_NG_PATH_SYSCONFDIR "\${prefix}/etc")
++if(NOT DEFINED SYSLOG_NG_PATH_SYSCONFDIR)
++  set(SYSLOG_NG_PATH_SYSCONFDIR "\${prefix}/etc")
++endif()
+ set(SYSLOG_NG_PATH_DATADIR "\${datarootdir}")
+ set(SYSLOG_NG_PATH_PKGDATADIR "\${datarootdir}/syslog-ng")
+ set(SYSLOG_NG_PATH_PIDFILEDIR "\${localstatedir}")
+-set(SYSLOG_NG_PATH_LOCALSTATEDIR "\${prefix}/var")
++if(NOT DEFINED SYSLOG_NG_PATH_LOCALSTATEDIR)
++  set(SYSLOG_NG_PATH_LOCALSTATEDIR "\${prefix}/var")
++endif()
+ set(SYSLOG_NG_MODULE_PATH "\${exec_prefix}/lib/syslog-ng")
+ set(SYSLOG_NG_PATH_EXECPREFIX "\${prefix}")
+ set(SYSLOG_NG_PATH_CONFIG_INCLUDEDIR "\${datadir}/syslog-ng/include")

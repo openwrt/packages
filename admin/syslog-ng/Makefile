@@ -73,6 +73,8 @@ LOGROTATE_ROTATE:=$(call qstrip,$(CONFIG_SYSLOGNG_LOGROTATE_ROTATE_COUNT))
 
 CMAKE_OPTIONS += \
 	-DBUILD_TESTING=OFF \
+	-DSYSLOG_NG_PATH_SYSCONFDIR=/etc \
+	-DSYSLOG_NG_PATH_LOCALSTATEDIR=/var \
 	-DENABLE_IPV6=$(if $(CONFIG_IPV6),ON,OFF) \
 	-DENABLE_TCP_WRAPPER=OFF \
 	-DENABLE_SPOOF_SOURCE=OFF \
@@ -122,6 +124,7 @@ define Package/syslog-ng/install
 		$(1)/usr/lib/syslog-ng/loggen/*.a \
 		$(1)/usr/include \
 		$(1)/usr/bin/syslog-ng-update-virtualenv \
+		$(1)/usr/etc \
 		$(1)/usr/var \
 		$(1)/var
 
