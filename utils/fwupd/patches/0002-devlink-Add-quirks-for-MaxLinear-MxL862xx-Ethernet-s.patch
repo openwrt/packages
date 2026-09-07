@@ -1,0 +1,228 @@
+From e50c9e5ab39d31242e664efbbf441fd46d15a0cd Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Mon, 13 Jul 2026 22:57:10 +0100
+Subject: [PATCH 2/2] devlink: Add quirks for MaxLinear MxL862xx Ethernet
+ switches
+
+The mxl862xx DSA driver implements devlink info_get and flash_update
+for these switches attached via MDIO. The chip ID registers are only
+readable with a running firmware, so a switch stuck in MCUboot rescue
+mode reports no fixed versions at all and cannot be identified by its
+numeric "asic.id". Match the device and its firmware component on the
+devicetree compatible instead: it is available in both modes, so
+firmware targeting the compatible-based component GUID can also be
+flashed to recover a switch from rescue mode.
+
+The vendor ID derived from the devicetree vendor prefix by the MDIO
+parent device only reaches the devlink device itself, so it is
+repeated here for the component.
+
+The firmware image contains both application slots and is flashed as a
+whole, so component-specific updates are rejected by the driver and
+omit-component-name is required. All ports go down for the duration of
+the flash process and the new image boots immediately afterwards,
+hence neither usable-during-update nor dual-image apply.
+
+Also, add emulations recorded on a Bananapi BPI-R4 Pro 8X with a MaxLinear
+MxL86252 Ethernet switch attached via MDIO.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ plugins/devlink/README.md                   |  2 +-
+ plugins/devlink/devlink.quirk               | 18 +++++++++
+ plugins/devlink/fu-devlink-backend.c        | 41 +++++++++++++++------
+ plugins/devlink/fu-devlink-device.c         | 21 +++++++----
+ plugins/devlink/meson.build                 |  5 ++-
+ plugins/devlink/tests/devlink-mxl86252.json | 20 ++++++++++
+ 6 files changed, 86 insertions(+), 21 deletions(-)
+ create mode 100644 plugins/devlink/tests/devlink-mxl86252.json
+
+--- a/plugins/devlink/README.md
++++ b/plugins/devlink/README.md
+@@ -29,7 +29,7 @@ These devices use custom instance IDs co
+ * `MDIO_BUS\COMPONENT_fw`
+ * `MDIO_BUS\VEN_maxlinear&DEV_mxl86252&COMPONENT_fw`
+ 
+-Optionally, additional GUID might get generated as specified in the squirk file, see below.
++Optionally, additional GUIDs might be generated as specified in the quirk file, see below.
+ 
+ For devices attached via MDIO with an associated devicetree node, the vendor
+ prefix and device name from the first "compatible" string are used as the
+--- a/plugins/devlink/devlink.quirk
++++ b/plugins/devlink/devlink.quirk
+@@ -27,3 +27,21 @@ DevlinkFixedVersions = fw.psid
+ # NVIDIA ConnectX-8
+ [PCI\VEN_15B3&DEV_1023]
+ DevlinkFixedVersions = fw.psid
++
++# MaxLinear MxL86252 Ethernet switch
++[MDIO_BUS\VEN_maxlinear&DEV_mxl86252]
++Name = MxL86252 Ethernet Switch
++Vendor = MaxLinear
++[MDIO_BUS\VEN_maxlinear&DEV_mxl86252&COMPONENT_fw]
++Vendor = MaxLinear
++VendorId = DT:maxlinear
++Flags = omit-component-name,~usable-during-update,~dual-image
++
++# MaxLinear MxL86282 Ethernet switch
++[MDIO_BUS\VEN_maxlinear&DEV_mxl86282]
++Name = MxL86282 Ethernet Switch
++Vendor = MaxLinear
++[MDIO_BUS\VEN_maxlinear&DEV_mxl86282&COMPONENT_fw]
++Vendor = MaxLinear
++VendorId = DT:maxlinear
++Flags = omit-component-name,~usable-during-update,~dual-image
+--- a/plugins/devlink/fu-devlink-backend.c
++++ b/plugins/devlink/fu-devlink-backend.c
+@@ -40,7 +40,16 @@ fu_devlink_backend_create_pci_parent(FuD
+ 	}
+ 
+ 	/* construct PCI sysfs path from bus_name (e.g., "pci/0000:01:00.0") */
+-	pci_sysfs_path = g_strdup_printf("/sys/bus/pci/devices/%s", dev_name);
++	pci_sysfs_path = fu_context_build_filename(ctx,
++						   error,
++						   FU_PATH_KIND_SYSFSDIR,
++						   "bus",
++						   "pci",
++						   "devices",
++						   dev_name,
++						   NULL);
++	if (pci_sysfs_path == NULL)
++		return NULL;
+ 	pci_sysfs_real = fu_path_make_absolute(pci_sysfs_path, error);
+ 	if (pci_sysfs_real == NULL)
+ 		return NULL;
+@@ -90,7 +99,16 @@ fu_devlink_backend_create_mdio_parent(Fu
+ 		return NULL;
+ 	}
+ 
+-	mdio_sysfs_path = g_strdup_printf("/sys/bus/mdio_bus/devices/%s", dev_name);
++	mdio_sysfs_path = fu_context_build_filename(ctx,
++						    error,
++						    FU_PATH_KIND_SYSFSDIR,
++						    "bus",
++						    "mdio_bus",
++						    "devices",
++						    dev_name,
++						    NULL);
++	if (mdio_sysfs_path == NULL)
++		return NULL;
+ 	mdio_sysfs_real = fu_path_make_absolute(mdio_sysfs_path, error);
+ 	if (mdio_sysfs_real == NULL)
+ 		return NULL;
+@@ -118,13 +136,14 @@ fu_devlink_backend_create_mdio_parent(Fu
+ 							  FU_UDEV_DEVICE_ATTR_READ_TIMEOUT_DEFAULT,
+ 							  NULL);
+ 	if (compatible_blob != NULL && g_bytes_get_size(compatible_blob) > 0) {
+-		g_autofree gchar *compatible = g_strndup(g_bytes_get_data(compatible_blob, NULL),
+-							 g_bytes_get_size(compatible_blob));
+-		g_auto(GStrv) parts = g_strsplit(compatible, ",", 2);
+-		if (g_strv_length(parts) == 2) {
+-			fu_device_build_vendor_id(mdio_device, "DT", parts[0]);
+-			fu_device_add_instance_strsafe(mdio_device, "VEN", parts[0]);
+-			fu_device_add_instance_strsafe(mdio_device, "DEV", parts[1]);
++		g_autofree gchar *compatible = fu_strsafe_bytes(compatible_blob, G_MAXSIZE);
++		if (compatible != NULL) {
++			g_auto(GStrv) parts = g_strsplit(compatible, ",", 2);
++			if (g_strv_length(parts) == 2) {
++				fu_device_build_vendor_id(mdio_device, "DT", parts[0]);
++				fu_device_add_instance_strsafe(mdio_device, "VEN", parts[0]);
++				fu_device_add_instance_strsafe(mdio_device, "DEV", parts[1]);
++			}
+ 		}
+ 	}
+ 
+@@ -161,7 +180,7 @@ fu_devlink_backend_device_added(FuDevlin
+ {
+ 	FuContext *ctx = fu_backend_get_context(FU_BACKEND(self));
+ 	FuDevice *old_devlink_device;
+-	const gchar *instance_keys[] = {"VEN", "DEV", NULL};
++	const gchar *instance_keys[] = {"VEN", "DEV"};
+ 	g_autoptr(FuDevice) devlink_device = NULL;
+ 	g_autoptr(FuDevice) parent_device = NULL;
+ 
+@@ -229,7 +248,7 @@ fu_devlink_backend_device_added(FuDevlin
+ 				  FU_DEVICE_INCORPORATE_FLAG_VENDOR |
+ 				  FU_DEVICE_INCORPORATE_FLAG_VENDOR_IDS |
+ 				  FU_DEVICE_INCORPORATE_FLAG_VID | FU_DEVICE_INCORPORATE_FLAG_PID);
+-	for (guint i = 0; instance_keys[i] != NULL; i++) {
++	for (guint i = 0; i < G_N_ELEMENTS(instance_keys); i++) {
+ 		const gchar *value = fu_device_get_instance_str(parent_device, instance_keys[i]);
+ 		if (value != NULL)
+ 			fu_device_add_instance_str(devlink_device, instance_keys[i], value);
+--- a/plugins/devlink/fu-devlink-device.c
++++ b/plugins/devlink/fu-devlink-device.c
+@@ -868,16 +868,17 @@ fu_devlink_device_add_json(FuDevice *dev
+ 	if (self->dev_name != NULL)
+ 		fwupd_json_object_add_string(json_obj, "DevName", self->dev_name);
+ 
+-	/* instance strings inherited from the parent device, which does not exist under
+-	 * emulation */
+-	if (fu_device_get_instance_str(device, "VEN") != NULL)
++	/* instance strings inherited from the parent, which does not exist under emulation */
++	if (fu_device_get_instance_str(device, "VEN") != NULL) {
+ 		fwupd_json_object_add_string(json_obj,
+-					     "Ven",
++					     "Vid",
+ 					     fu_device_get_instance_str(device, "VEN"));
+-	if (fu_device_get_instance_str(device, "DEV") != NULL)
++	}
++	if (fu_device_get_instance_str(device, "DEV") != NULL) {
+ 		fwupd_json_object_add_string(json_obj,
+-					     "Dev",
++					     "Pid",
+ 					     fu_device_get_instance_str(device, "DEV"));
++	}
+ }
+ 
+ static gboolean
+@@ -893,10 +894,14 @@ fu_devlink_device_from_json(FuDevice *de
+ 	/* devlink-specific properties */
+ 	bus_name = fwupd_json_object_get_string(json_obj, "BusName", NULL);
+ 	dev_name = fwupd_json_object_get_string(json_obj, "DevName", NULL);
+-	ven = fwupd_json_object_get_string(json_obj, "Ven", NULL);
++	ven = fwupd_json_object_get_string(json_obj, "Vid", NULL);
++	if (ven == NULL)
++		ven = fwupd_json_object_get_string(json_obj, "Ven", NULL);
+ 	if (ven != NULL)
+ 		fu_device_add_instance_str(device, "VEN", ven);
+-	dev = fwupd_json_object_get_string(json_obj, "Dev", NULL);
++	dev = fwupd_json_object_get_string(json_obj, "Pid", NULL);
++	if (dev == NULL)
++		dev = fwupd_json_object_get_string(json_obj, "Dev", NULL);
+ 	if (dev != NULL)
+ 		fu_device_add_instance_str(device, "DEV", dev);
+ 
+--- a/plugins/devlink/meson.build
++++ b/plugins/devlink/meson.build
+@@ -29,6 +29,7 @@ plugin_builtin_devlink = static_library(
+ plugin_builtins += plugin_builtin_devlink
+ 
+ device_tests += files(
++  'tests/devlink-mxl86252.json',
+   'tests/devlink-netdevsim.json',
+ )
+ 
+--- /dev/null
++++ b/plugins/devlink/tests/devlink-mxl86252.json
+@@ -0,0 +1,20 @@
++{
++  "name": "MaxLinear MxL86252 Ethernet Switch Update",
++  "interactive": false,
++  "steps": [
++    {
++      "url": "972ec047263bc0e3e06a9fa929c65923f1cae6ead59e0904d4fe7440c5e6847a-mxl862xxc-1085-signed-upgrade-dsa.cab",
++      "emulation-url": "c2973f267c338b9904238c9964f612260f789248d711247bda6485bf4750d2b4-mxl86252-emulation.zip",
++      "components": [
++        {
++          "name": "fw",
++          "protocol": "org.kernel.devlink",
++          "version": "1.0.85",
++          "guids": [
++            "d2a6f602-d988-5425-b686-5c1081576cce"
++          ]
++        }
++      ]
++    }
++  ]
++}
