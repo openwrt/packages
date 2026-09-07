@@ -9,6 +9,9 @@ USE_PROCD=1
 START=97
 STOP=01
 
+# shellcheck source=/dev/null
+. /lib/functions/watchcat.sh
+
 append_string() {
 	varname="$1"
 	add="$2"
@@ -142,10 +145,55 @@ config_watchcat() {
 }
 
 start_service() {
+	# procd expects $1 to be a specific instance
+	if [ "$2" = "ifup-any" ]; then
+		logger -p daemon.notice -t "watchcat[$$]" "Restarting due to an interface up with any unresolved interface."
+	fi
+
 	config_load watchcat
 	config_foreach config_watchcat watchcat
 }
 
+# Setup trigger in procd for changes to specified network interface
+add_interface_trigger() {
+	local section="$1"
+	local ret=1
+	local interface mode logical
+
+	config_get mode "$section" mode "ping_reboot"
+	config_get interface "$section" interface
+
+	# Fix potential typo in mode and provide backward compatibility.
+	[ "$mode" = "allways" ] && mode="periodic_reboot"
+	[ "$mode" = "always" ] && mode="periodic_reboot"
+	[ "$mode" = "ping" ] && mode="ping_reboot"
+
+	# ping_reboot mode and restart_iface mode specific checks
+	if [ "$mode" = "ping_reboot" ] || [ "$mode" = "restart_iface" ] || [ "$mode" = "run_script" ]; then
+		[ -n "$interface" ] || return
+
+		logical="$(watchcat_resolve_restart_iface "$interface")"
+		ret=$?
+
+		if [ -n "$logical" ] && [ "$ret" -eq 0 ]; then
+			procd_add_interface_trigger "interface.*.up" "$logical" "/etc/init.d/watchcat" "restart"
+		else
+			has_failed_interface_resolve="true"
+		fi
+	fi
+}
+
 service_triggers() {
+	local has_failed_interface_resolve="false"
+
 	procd_add_reload_trigger "watchcat"
+
+	config_load watchcat
+	config_foreach add_interface_trigger watchcat
+
+	if [ "$has_failed_interface_resolve" = "true" ]; then
+		# PROCD_RELOAD_DELAY is defined in /lib/functions/procd.sh, sourced by /etc/rc.common on the live device
+		# procd expects parameter after script action (here, restart) to be a specific instance
+		procd_add_raw_trigger "interface.*.up" "$PROCD_RELOAD_DELAY" "/etc/init.d/watchcat" "restart" "" "ifup-any"
+	fi
 }
