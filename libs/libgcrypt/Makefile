@@ -23,7 +23,7 @@ PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/libgcrypt
+define Package/libgcrypt/default
   SECTION:=libs
   CATEGORY:=Libraries
   DEPENDS:=+libgpg-error
@@ -31,9 +31,10 @@ define Package/libgcrypt
   URL:=https://www.gnupg.org/related_software/libgcrypt/
   LICENSE:=LGPL-2.1-or-later
   LICENSE_FILES:=COPYING.LIB
+  PROVIDES:=libgcrypt
 endef
 
-define Package/libgcrypt/description
+define Package/libgcrypt/default/description
  This is a general purpose cryptographic library based on the code from
  GnuPG. It provides functions for all cryptographic building blocks:
  symmetric ciphers (AES, DES, Arcfour, CAST5), hash algorithms (MD5, SHA-1,
@@ -44,12 +45,70 @@ define Package/libgcrypt/description
  RC2, SEED, Camellia, CRC, MD4, TIGER-192, Whirlpool, ElGamal, ECC).
 endef
 
+define Package/libgcrypt
+  $(call Package/libgcrypt/default)
+  PROVIDES += libgcrypt-mini
+  DEFAULT_VARIANT:=1
+endef
+
+define Package/libgcrypt/description
+  $(call Package/libgcrypt/default/description)
+  .
+  This package contains the regular libgcrypt build.
+  Algorithms not used by other OpenWrt packages are excluded.
+endef
+
+define Package/libgcrypt-full
+  $(call Package/libgcrypt/default)
+  TITLE += (full)
+  PROVIDES += libgcrypt libgcrypt-mini
+  CONFLICTS:=libgcrypt libgcrypt-mini
+  VARIANT:=full
+endef
+
+define Package/libgcrypt-mini
+  $(call Package/libgcrypt/default)
+  TITLE+= (mini)
+  CONFLICTS:=libgcrypt libgcrypt-full
+  VARIANT:=mini
+endef
+
+define Package/libgcrypt-full/description
+  $(call Package/libgcrypt/default/description)
+  .
+  This package contains a fully-featured libgcrypt.
+  Some algorithms are not used by any existing OpenWrt
+  package.
+endef
+
+define Package/libgcrypt-mini/description
+  $(call Package/libgcrypt/default/description)
+  .
+  This package contains a minimal-featured libgcrypt.
+  It was tested to work with vpnc.
+endef
+
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
 	--disable-asm \
 	--disable-doc \
 	--with-gpg-error-prefix="$(STAGING_DIR)/usr"
+
+ifeq ($(BUILD_VARIANT),)
+CONFIGURE_ARGS += \
+	--enable-ciphers='arcfour,blowfish,des,aes,chacha20,cast5,twofish,serpent,seed,camellia,idea' \
+	--enable-pubkey-ciphers='ecc,rsa,dsa' \
+	--enable-digests='md5,sha1,sha256,sha512,sha3,blake2,md4,rmd160,sm3,tiger,whirlpool'
+endif
+
+ifeq ($(BUILD_VARIANT),mini)
+CONFIGURE_ARGS += \
+	--enable-ciphers='arcfour,blowfish,des,aes,chacha20' \
+	--enable-pubkey-ciphers='ecc' \
+	--enable-digests='md5,sha1,sha256,sha512,sha3,blake2' \
+	--enable-kdfs='pkdf2'
+endif
 
 TARGET_CFLAGS += $(FPIC)
 
@@ -69,4 +128,10 @@ define Package/libgcrypt/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgcrypt.so.* $(1)/usr/lib/
 endef
 
+Package/libgcrypt-full/install = $(Package/libgcrypt/install)
+
+Package/libgcrypt-mini/install = $(Package/libgcrypt/install)
+
 $(eval $(call BuildPackage,libgcrypt))
+$(eval $(call BuildPackage,libgcrypt-full))
+$(eval $(call BuildPackage,libgcrypt-mini))

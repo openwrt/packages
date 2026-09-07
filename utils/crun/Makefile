@@ -25,7 +25,7 @@ define Package/crun
   CATEGORY:=Utilities
   TITLE:=crun
   URL:=https://github.com/containers/crun
-  DEPENDS:=@!arc +libseccomp +libcap +libgcrypt +libjson-c
+  DEPENDS:=@!arc +libseccomp +libcap +libgcrypt-mini +libjson-c
 endef
 
 define Package/crun/description

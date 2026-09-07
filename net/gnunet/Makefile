@@ -42,7 +42,7 @@ endef
 define Package/gnunet
 $(call Package/gnunet/Default)
   TITLE+= - a peer-to-peer framework focusing on security
-  DEPENDS:=+libatomic +libgcrypt +libgmp +libgpg-error +libidn2 +libltdl \
+  DEPENDS:=+libatomic +libgcrypt-mini +libgmp +libgpg-error +libidn2 +libltdl \
            +libsodium +libunistring +librt +zlib $(ICONV_DEPENDS) $(INTL_DEPENDS)
   USERID:=gnunet=958:gnunet=958
   MENU:=1

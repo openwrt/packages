@@ -26,7 +26,7 @@ endef
 
 define Package/libfreeipmi
   $(call Package/libfreeipmi/Default)
-  DEPENDS:=+libgcrypt +libpthread
+  DEPENDS:=+libgcrypt-mini +libpthread
   TITLE+= (libfreeipmi)
 endef
 

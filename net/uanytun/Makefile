@@ -38,7 +38,7 @@ define Package/uanytun
   $(call Package/uanytun/template)
   TITLE+= (gcrypt)
   VARIANT:=gcrypt
-  DEPENDS+=+libgcrypt
+  DEPENDS+=+libgcrypt-mini
 endef
 
 define Package/uanytun/conffiles
