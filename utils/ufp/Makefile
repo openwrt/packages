@@ -30,6 +30,7 @@ define Package/ufp
   	    +ucode \
   	    +ucode-mod-fs \
   	    +ucode-mod-struct \
+  	    +ucode-mod-rtnl \
   	    +libubox \
   	    +udhcpsnoop \
   	    +unetmsg
