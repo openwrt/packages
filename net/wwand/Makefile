@@ -134,6 +134,24 @@ define Package/wwand/description
   or wwand-ncm) for the control protocols your modems use.
 endef
 
+# The E182E usb binder ships in the tarball but is deliberately NOT installed
+# here. (The file is `files/wwand.hotplug.e1820` in 1.6.2 — the stick is an
+# E182E and upstream renamed the file after this tag; the path below is the one
+# this release actually contains.) Installing it from the BASE package would
+# create /etc/hotplug.d/usb on every wwand install, and procd runs hotplug-call
+# for a subsystem whose directory exists -- so every USB uevent on the box would
+# fork a script, for one 2009 Huawei stick almost nobody has. The feed package
+# installs it for the people testing that hardware.
+#
+# (The earlier wording here rested on the hardware owner calling it an
+# unvalidated script that does not survive a reboot. That report was accurate
+# and its cause is now known: the idempotency guard tested a path
+# /sys/bus/usb/devices never contains, and `[ -e "$d" ] && return || exit 0`
+# exits when the path is ABSENT -- so the binder was unreachable on every
+# hotplug event. Fixed upstream after 1.6.1; the reason to keep it out of the
+# base package is the dispatch cost above, not the script.)
+# check-packaging: not-installed files/wwand.hotplug.e1820
+
 define Package/wwand/install
 	# native transport module (built by the cmake step from io/)
 	$(INSTALL_DIR) $(1)/usr/lib/ucode
