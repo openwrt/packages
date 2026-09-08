@@ -221,10 +221,9 @@ iter_ike_proposal() {
 }
 
 config_child() {
-	# Generic ipsec conn section shared by tunnel and transport
 	local conf="$1"
-	local mode="$2"
 
+	local mode
 	local startaction
 	local updown
 	local firewall
@@ -245,6 +244,7 @@ config_child() {
 	local local_subnet
 	local remote_subnet
 
+	config_get mode "$conf" mode
 	config_get startaction "$conf" startaction "route"
 	config_get updown "$conf" updown ""
 	config_get firewall "$conf" firewall ""
@@ -265,6 +265,14 @@ config_child() {
 
 	config_list_foreach "$conf" local_subnet append_var local_subnet ","
 	config_list_foreach "$conf" remote_subnet append_var remote_subnet ","
+
+	case "$mode" in
+		tunnel|transport)
+			;;
+		*)
+			fatal "mode value '$mode' invalid"
+		;;
+	esac
 
 	local esp_proposal
 	iter_esp_proposal "$conf" esp_proposal
@@ -371,14 +379,6 @@ config_child() {
 	[ -n "$replay_window" ] && swanctl_xappend4 "replay_window = $replay_window"
 
 	swanctl_xappend3 "}"
-}
-
-config_tunnel() {
-	config_child "$1" "tunnel"
-}
-
-config_transport() {
-	config_child "$1" "transport"
 }
 
 config_pool() {
@@ -570,9 +570,7 @@ config_remote() {
 
 	swanctl_xappend2 "children {"
 
-	config_list_foreach "$conf" tunnel config_tunnel
-
-	config_list_foreach "$conf" transport config_transport
+	config_list_foreach "$conf" child config_child
 
 	swanctl_xappend2 "}"
 
