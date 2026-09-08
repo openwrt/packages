@@ -1,30 +1,45 @@
 #
 # Copyright (C) 2017-2020 Ian Leonard <antonlacon@gmail.com>
 # Copyright (C) 2018 Ted Hess <thess@kitschensync.net>
+# Copyright (C) 2026 Mirko Vogt <mirko-openwrt@nanl.de>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
+#
+# Packaging principles:
+#
+#  * every build option is set explicitly - the build result only depends
+#    on this package's own config symbols, never on which other packages
+#    happen to be selected in the buildroot (--disable-autodetect plus an
+#    explicit --enable-*/--disable-* for everything configure would
+#    otherwise detect in the environment)
+#  * each optional external library is one config symbol driving both the
+#    conditional DEPENDS and the matching configure flag
+#
+# Two library variants: libffmpeg is the configurable one (menu below,
+# defaults give a full-featured build), libffmpeg-mini a fixed small set of
+# decoders for playback-only consumers. They conflict at install time.
 #
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
-PKG_VERSION:=6.1.4
-PKG_RELEASE:=2
+PKG_VERSION:=9.0.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ffmpeg.org/releases/
-PKG_HASH:=a231e3d5742c44b1cdaebfb98ad7b6200d12763e0b6db9e1e2c5891f2c083a18
+PKG_HASH:=cf38e0e28c7e5605942c4a77755349b0145804a397af37eb1fb4c77cb237f635
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>, \
 		Ian Leonard <antonlacon@gmail.com>
 
-PKG_LICENSE:=LGPL-2.1-or-later GPL-2.0-or-later LGPL-3.0-or-later
+PKG_LICENSE:=LGPL-2.1-or-later GPL-2.0-or-later LGPL-3.0-or-later GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING.GPLv2 COPYING.GPLv3 COPYING.LGPLv2.1 COPYING.LGPLv3
 PKG_CPE_ID:=cpe:/a:ffmpeg:ffmpeg
 
 PKG_BUILD_PARALLEL:=1
 
-FFMPEG_CUSTOM_ENCODERS:= \
+FFMPEG_ENCODERS:= \
 	ac3 \
 	jpegls \
 	mpeg1video \
@@ -36,8 +51,9 @@ FFMPEG_CUSTOM_ENCODERS:= \
 	vorbis \
 	zlib \
 
-FFMPEG_CUSTOM_DECODERS:= \
+FFMPEG_DECODERS:= \
 	aac \
+	aac_latm \
 	ac3 \
 	alac \
 	amrnb \
@@ -57,20 +73,22 @@ FFMPEG_CUSTOM_DECODERS:= \
 	mpegvideo \
 	mpc7 \
 	mpc8 \
+	opus \
 	pcm_s16be \
 	pcm_s16le \
 	png \
 	vc1 \
 	vorbis \
 	wavpack \
+	wmalossless \
+	wmapro \
 	wmav1 \
 	wmav2 \
 	zlib \
 
-FFMPEG_CUSTOM_MUXERS:= \
+FFMPEG_MUXERS:= \
 	ac3 \
 	avi \
-	ffm \
 	h264 \
 	hevc \
 	mp3 \
@@ -81,14 +99,14 @@ FFMPEG_CUSTOM_MUXERS:= \
 	ogg \
 	rtp \
 
-FFMPEG_CUSTOM_DEMUXERS:= \
+FFMPEG_DEMUXERS:= \
 	aac \
 	ac3 \
+	aiff \
 	amr \
 	ape \
 	avi \
 	flac \
-	ffm \
 	h264 \
 	hevc \
 	matroska \
@@ -104,23 +122,23 @@ FFMPEG_CUSTOM_DEMUXERS:= \
 	rtsp \
 	rtp \
 	sdp \
-	v4l2 \
 	vc1 \
 	wav \
 	wv \
 
-FFMPEG_CUSTOM_PARSERS:= \
+FFMPEG_PARSERS:= \
 	aac \
-	flac \
 	ac3 \
+	flac \
 	h264 \
 	hevc \
 	mpegaudio \
 	mpeg4video \
 	mpegvideo \
+	opus \
 	vc1 \
 
-FFMPEG_CUSTOM_PROTOCOLS:= \
+FFMPEG_PROTOCOLS:= \
 	file http icecast pipe rtp tcp udp
 
 FFMPEG_MINI_DECODERS:= \
@@ -156,59 +174,17 @@ FFMPEG_MINI_DEMUXERS:= \
 FFMPEG_MINI_PROTOCOLS:= \
 	file
 
-FFMPEG_AUDIO_DECODERS:= \
-	ac3 \
-	adpcm_* \
-	alac \
-	amrnb \
-	amrwb \
-	ape \
-	atrac3 \
-	flac \
-	mp2 \
-	mp3* \
-	mpc7 \
-	mpc8 \
-	opus \
-	pcm_* \
-	vorbis \
-	wavpack \
-	zlib \
-
-FFMPEG_AUDIO_DEMUXERS:= \
-	ac3 \
-	aiff \
-	amr \
-	ape \
-	avi \
-	flac \
-	ffm \
-	matroska \
-	mp3 \
-	mov \
-	mpc \
-	mpc8 \
-	mpegts \
-	ogg \
-	rm \
-	rtsp \
-	rtp \
-	sdp \
-	wav \
-	wv \
-
-FFMPEG_AUDIO_PROTOCOLS:= \
-	file http icecast rtp tcp udp
-
 FFMPEG_PATENTED_DECODERS:= \
 	h264 \
 	hevc \
 	vc1 \
+	vvc \
 
 FFMPEG_PATENTED_MUXERS:= \
 	h264 \
 	hevc \
 	vc1 \
+	vvc \
 
 FFMPEG_PATENTED_DEMUXERS:=$(FFMPEG_PATENTED_MUXERS)
 
@@ -216,167 +192,163 @@ FFMPEG_PATENTED_PARSERS:= \
 	h264 \
 	hevc \
 	vc1 \
+	vvc \
 
+# everything that changes the build must be listed here, else a changed
+# option does not trigger a rebuild
 PKG_CONFIG_DEPENDS:= \
-	$(patsubst %,CONFIG_FFMPEG_CUSTOM_ENCODER_%,$(FFMPEG_CUSTOM_ENCODERS)) \
-	$(patsubst %,CONFIG_FFMPEG_CUSTOM_DECODER_%,$(FFMPEG_CUSTOM_DECODERS)) \
-	$(patsubst %,CONFIG_FFMPEG_CUSTOM_MUXER_%,$(FFMPEG_CUSTOM_MUXERS)) \
-	$(patsubst %,CONFIG_FFMPEG_CUSTOM_DEMUXER_%,$(FFMPEG_CUSTOM_DEMUXERS)) \
-	$(patsubst %,CONFIG_FFMPEG_CUSTOM_PARSER_%,$(FFMPEG_CUSTOM_PARSERS)) \
-	$(patsubst %,CONFIG_FFMPEG_CUSTOM_PROTOCOL_%,$(FFMPEG_CUSTOM_PROTOCOLS))
+	CONFIG_BUILD_PATENTED \
+	CONFIG_FFMPEG_X86ASM \
+	CONFIG_FFMPEG_GPL \
+	CONFIG_FFMPEG_VERSION3 \
+	CONFIG_FFMPEG_NONFREE \
+	CONFIG_FFMPEG_OPTIMIZE_SIZE \
+	CONFIG_FFMPEG_PROGRAMS \
+	CONFIG_FFMPEG_LIBDRM \
+	CONFIG_FFMPEG_V4L2_M2M \
+	CONFIG_FFMPEG_VAAPI \
+	CONFIG_FFMPEG_LIBV4L2 \
+	CONFIG_FFMPEG_TLS_NONE \
+	CONFIG_FFMPEG_TLS_GNUTLS \
+	CONFIG_FFMPEG_TLS_OPENSSL \
+	CONFIG_FFMPEG_TLS_MBEDTLS \
+	CONFIG_FFMPEG_BZLIB \
+	CONFIG_FFMPEG_LZMA \
+	CONFIG_FFMPEG_ICONV \
+	CONFIG_FFMPEG_LIBDAV1D \
+	CONFIG_FFMPEG_LIBOPUS \
+	CONFIG_FFMPEG_LIBVORBIS \
+	CONFIG_FFMPEG_LIBVPX \
+	CONFIG_FFMPEG_LIBWEBP \
+	CONFIG_FFMPEG_LIBSPEEX \
+	CONFIG_FFMPEG_LIBXML2 \
+	CONFIG_FFMPEG_LAME \
+	CONFIG_FFMPEG_SHINE \
+	CONFIG_FFMPEG_LIBX264 \
+	CONFIG_FFMPEG_FDK_AAC \
+	CONFIG_FFMPEG_SELECT_COMPONENTS \
+	CONFIG_FFMPEG_DECODER_adpcm \
+	$(patsubst %,CONFIG_FFMPEG_ENCODER_%,$(FFMPEG_ENCODERS)) \
+	$(patsubst %,CONFIG_FFMPEG_DECODER_%,$(FFMPEG_DECODERS)) \
+	$(patsubst %,CONFIG_FFMPEG_MUXER_%,$(FFMPEG_MUXERS)) \
+	$(patsubst %,CONFIG_FFMPEG_DEMUXER_%,$(FFMPEG_DEMUXERS)) \
+	$(patsubst %,CONFIG_FFMPEG_PARSER_%,$(FFMPEG_PARSERS)) \
+	$(patsubst %,CONFIG_FFMPEG_PROTOCOL_%,$(FFMPEG_PROTOCOLS))
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/ffmpeg/Default
- TITLE:=FFmpeg
- URL:=https://ffmpeg.org/
- DEPENDS+= +libatomic
+  TITLE:=FFmpeg
+  URL:=https://ffmpeg.org/
+  DEPENDS+= +libatomic
 endef
 
 define Package/ffmpeg/Default/description
- FFmpeg is a a software package that can record, convert and stream digital
- audio and video in numerous formats.
+  FFmpeg is a a software package that can record, convert and stream digital
+  audio and video in numerous formats.
 
- FFmpeg licensing / patent issues are complex. It is the responsibility of the
- user to understand any requirements in this regard with its usage. See:
- https://ffmpeg.org/legal.html for further information.
+  FFmpeg licensing / patent issues are complex. It is the responsibility of the
+  user to understand any requirements in this regard with its usage. See:
+  https://ffmpeg.org/legal.html for further information.
 
- Patented codecs and technologies are available when CONFIG_BUILD_PATENTED=y.
+  Patented codecs and technologies are available when CONFIG_BUILD_PATENTED=y.
 endef
 
 
 define Package/ffmpeg
 $(call Package/ffmpeg/Default)
- SECTION:=multimedia
- CATEGORY:=Multimedia
- TITLE+= program
- DEPENDS+= +libffmpeg-full
- VARIANT:=full
-endef
-
-define Package/ffmpeg-custom
-$(call Package/ffmpeg/Default)
- SECTION:=multimedia
- CATEGORY:=Multimedia
- TITLE+= program (custom)
- DEPENDS+= @!ALL libffmpeg-custom
- VARIANT:=custom
+  SECTION:=multimedia
+  CATEGORY:=Multimedia
+  TITLE+= program
+  DEPENDS+= @FFMPEG_PROGRAMS +libffmpeg
+  VARIANT:=default
 endef
 
 define Package/ffmpeg/description
 $(call Package/ffmpeg/Default/description)
- .
- This package contains the FFmpeg command line tool.
+  .
+  This package contains the FFmpeg command line tool.
 endef
-
-Package/ffmpeg-custom/description = $(Package/ffmpeg/description)
 
 define Package/ffprobe
 $(call Package/ffmpeg/Default)
- SECTION:=multimedia
- CATEGORY:=Multimedia
- TITLE+= CLI media identifier
- DEPENDS+= +libffmpeg-full
- VARIANT:=full
-endef
-
-define Package/ffprobe-custom
-$(call Package/ffmpeg/Default)
- SECTION:=multimedia
- CATEGORY:=Multimedia
- TITLE+= CLI media identifier (custom)
- DEPENDS+= @!ALL libffmpeg-custom
- VARIANT:=custom
+  SECTION:=multimedia
+  CATEGORY:=Multimedia
+  TITLE+= CLI media identifier
+  DEPENDS+= @FFMPEG_PROGRAMS +libffmpeg
+  VARIANT:=default
 endef
 
 define Package/ffprobe/description
 $(call Package/ffmpeg/Default/description)
- .
- This package contains the FFprobe command line tool.
+  .
+  This package contains the FFprobe command line tool.
 endef
-
-Package/ffprobe-custom/description = $(Package/ffprobe/description)
 
 define Package/libffmpeg/Default
 $(call Package/ffmpeg/Default)
- SECTION:=libs
- CATEGORY:=Libraries
- TITLE+= libraries
- DEPENDS+= +libpthread +zlib +libbz2
- PROVIDES:= libffmpeg
+  SECTION:=libs
+  CATEGORY:=Libraries
+  TITLE+= libraries
+  DEPENDS+= +libpthread +zlib
 endef
 
-
-# Package build suppressed when CONFIG_ALL=y
-define Package/libffmpeg-custom
+define Package/libffmpeg
 $(call Package/libffmpeg/Default)
- TITLE+= (custom)
- DEPENDS+= @!ALL \
-           +FFMPEG_CUSTOM_SELECT_libopus:libopus \
-           +PACKAGE_libx264:libx264 +PACKAGE_lame-lib:lame-lib \
-           +FFMPEG_CUSTOM_SELECT_libshine:shine \
-           +PACKAGE_fdk-aac:fdk-aac
- VARIANT:=custom
- MENU:=1
+  DEPENDS+= \
+	+FFMPEG_BZLIB:libbz2 \
+	+FFMPEG_LZMA:liblzma \
+	+FFMPEG_LIBDRM:libdrm \
+	+FFMPEG_LIBV4L2:libv4l \
+	+FFMPEG_TLS_GNUTLS:libgnutls \
+	+FFMPEG_TLS_OPENSSL:libopenssl \
+	+FFMPEG_TLS_MBEDTLS:libmbedtls \
+	+FFMPEG_LIBOPUS:libopus \
+	+FFMPEG_LIBVORBIS:libvorbis \
+	+FFMPEG_LIBVPX:libvpx \
+	+FFMPEG_LIBWEBP:libwebp \
+	+FFMPEG_LIBSPEEX:libspeex \
+	+FFMPEG_LIBXML2:libxml2 \
+	+FFMPEG_LAME:lame-lib \
+	+FFMPEG_SHINE:shine \
+	+FFMPEG_LIBX264:libx264 \
+	+FFMPEG_FDK_AAC:fdk-aac
+  # prepared, disabled until the libva / dav1d packages exist in the feeds
+  # (the matching options in Config.in are commented out as well):
+  #	+FFMPEG_VAAPI:libva
+  #	+FFMPEG_LIBDAV1D:libdav1d
+  VARIANT:=default
+  # transitional aliases for packages still depending on the now gone ones
+  PROVIDES:=libffmpeg-full libffmpeg-audio-dec
 endef
 
-define Package/libffmpeg-custom/config
+# The menu is not guarded by PACKAGE_libffmpeg: its options pull their
+# libraries themselves, and such a guard closes a Kconfig recursion as soon
+# as a pulled library carries an @-dependency (e.g. libx264 on @BUILD_PATENTED).
+define Package/libffmpeg/config
 source "$(SOURCE)/Config.in"
 endef
 
-define Package/libffmpeg-custom/description
+define Package/libffmpeg/description
 $(call Package/ffmpeg/Default/description)
- .
- This package contains customized FFmpeg shared libraries.
+  .
+  This package contains the FFmpeg shared libraries, built according to
+  the "FFmpeg configuration" menu (full-featured by default).
 endef
-
-
-define Package/libffmpeg-audio-dec
-$(call Package/libffmpeg/Default)
- TITLE+= (audio)
- VARIANT:=audio-dec
- CONFLICTS:=libffmpeg-full
-endef
-
-define Package/libffmpeg-audio-dec/description
-$(call Package/ffmpeg/Default/description)
- .
- This package contains FFmpeg shared libraries for audio decoding.
-endef
-
-
-define Package/libffmpeg-full
-$(call Package/libffmpeg/Default)
- TITLE+= (full)
- DEPENDS+= +alsa-lib +libgnutls +PACKAGE_libopus:libopus \
-    +PACKAGE_libv4l:libv4l \
-    +SOFT_FLOAT:shine \
-    +!SOFT_FLOAT:lame-lib \
-    +PACKAGE_libx264:libx264 \
-    +!PACKAGE_libx264:fdk-aac
- VARIANT:=full
- PROVIDES+=libffmpeg-mini libffmpeg-audio-dec
-endef
-
-
-define Package/libffmpeg-full/description
-$(call Package/ffmpeg/Default/description)
- .
- This package contains full-featured FFmpeg shared libraries.
-endef
-
 
 define Package/libffmpeg-mini
 $(call Package/libffmpeg/Default)
- TITLE+= (mini)
- VARIANT:=mini
- CONFLICTS:=libffmpeg-full
+  TITLE+= (mini)
+  VARIANT:=mini
+  CONFLICTS:=libffmpeg
 endef
 
 define Package/libffmpeg-mini/description
 $(call Package/ffmpeg/Default/description)
- .
- This package contains minimal-featured FFmpeg shared libraries.
+  .
+  This package contains a fixed, minimal set of FFmpeg shared libraries
+  (a small set of decoders and demuxers, file protocol only). It is not
+  configurable; use libffmpeg for anything beyond basic playback.
 endef
 
 
@@ -385,6 +357,12 @@ REAL_CPU_TYPE:=$(call qstrip,$(firstword $(subst +, ,$(CONFIG_CPU_TYPE))))
 # Fixup cpu types recognized by ffmpeg configure
 REAL_CPU_TYPE:=$(subst octeonplus,octeon+,$(REAL_CPU_TYPE))
 
+# Base configuration, shared by all variants.
+#
+# --disable-autodetect makes the build deterministic: no library is used
+# merely because it is present in the shared staging dir. Everything wanted
+# is requested explicitly below; a requested but missing library is a
+# configure error rather than a silently missing feature.
 FFMPEG_CONFIGURE:= \
 	CFLAGS="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS) $(FPIC)" \
 	LDFLAGS="$(TARGET_LDFLAGS)" \
@@ -396,17 +374,40 @@ FFMPEG_CONFIGURE:= \
 	--target-os=linux \
 	--prefix="/usr" \
 	--pkg-config="pkg-config" \
+	--disable-autodetect \
 	--enable-shared \
 	--enable-static \
 	--enable-pthreads \
 	--enable-zlib \
 	--disable-doc \
 	--disable-debug \
-	\
-	--disable-lzma \
-	--disable-vaapi \
+	--disable-checkasm \
 	--disable-vdpau \
-	--disable-outdevs
+	--disable-outdevs \
+	\
+	\
+	--disable-alsa \
+	--disable-sndio \
+	--disable-sdl2 \
+	--disable-xlib \
+	--disable-libxcb \
+	--disable-libxcb-shm \
+	--disable-libxcb-shape \
+	--disable-libxcb-xfixes \
+	--disable-bzlib \
+	--disable-iconv \
+	--disable-lzma \
+	\
+	--disable-amf \
+	--disable-vulkan \
+	--disable-vaapi \
+	--disable-libdrm \
+	--disable-v4l2-m2m
+# Everything configure would autodetect on a Linux host is switched off
+# explicitly above. --disable-autodetect already implies this; the explicit
+# list documents the intent and is independent of changes to configure's
+# autodetect list. The libffmpeg variant re-enables bzlib/iconv/lzma and the
+# hwaccels through its FFMPEG_* options below; later flags take precedence.
 
 ifeq ($(CONFIG_SOFT_FLOAT),y)
 FFMPEG_CONFIGURE+= \
@@ -463,169 +464,119 @@ else
   FFMPEG_CONFIGURE += --disable-x86asm
 endif
 
-ifeq ($(BUILD_VARIANT),full)
-
-  FFMPEG_DISABLE= \
-	$(foreach c, $(2), \
-		--disable-$(1)="$(c)" \
-	)
-
-	FFMPEG_CONFIGURE+= \
-		--enable-gnutls \
-		$(if $(CONFIG_BUILD_PATENTED),, \
-			$(call FFMPEG_DISABLE,decoder,$(FFMPEG_PATENTED_DECODERS)) \
-			$(call FFMPEG_DISABLE,muxer,$(FFMPEG_PATENTED_MUXERS)) \
-			$(call FFMPEG_DISABLE,demuxer,$(FFMPEG_PATENTED_DEMUXERS)) \
-			$(call FFMPEG_DISABLE,parser,$(FFMPEG_PATENTED_PARSERS))) \
-		$(if $(CONFIG_PACKAGE_libopus),--enable-libopus) \
-		$(if $(CONFIG_PACKAGE_libv4l),--enable-libv4l2)
-  ifeq ($(CONFIG_SOFT_FLOAT),y)
-	FFMPEG_CONFIGURE+= \
-		--enable-small \
-		\
-		$(if $(CONFIG_PACKAGE_shine),--enable-libshine)
-  else
-	ifeq ($(ARCH),x86_64)
-		FFMPEG_CONFIGURE+= --enable-hardcoded-tables
-	else
-		FFMPEG_CONFIGURE+= --enable-small
-	endif
-	FFMPEG_CONFIGURE+= $(if $(CONFIG_PACKAGE_lame-lib),--enable-libmp3lame)
-  endif
-  # x264 support and fdk-aac support can't coexist and be distributed.
-  # Prioritize x264 over fdk-aac in default builds (maintain status-quo).
-  ifneq ($(CONFIG_PACKAGE_libx264),)
-	FFMPEG_CONFIGURE+= \
-		--enable-gpl \
-		--enable-libx264
-  else
-	FFMPEG_CONFIGURE+= $(if $(CONFIG_PACKAGE_fdk-aac),--enable-libfdk-aac)
-  endif
-endif
-
-ifeq ($(BUILD_VARIANT),custom)
-
-  FFMPEG_ENABLE= \
+# helper: --enable-$(1)=$(c) for every entry of $(2) whose $(3)_$(c) symbol is set
+FFMPEG_ENABLE_IF= \
 	$(foreach c, $(2), \
 		$(if $($(3)_$(c)),--enable-$(1)="$(c)") \
 	)
 
-  ifeq ($(CONFIG_FFMPEG_CUSTOM_LARGE),y)
-	FFMPEG_CONFIGURE+= \
-		--enable-hardcoded-tables
-  else
-	FFMPEG_CONFIGURE+= \
-		--enable-small
-  endif
-
-  ifeq ($(CONFIG_FFMPEG_CUSTOM_GPL),y)
-	FFMPEG_CONFIGURE+= --enable-gpl
-  endif
-
-  ifeq ($(CONFIG_FFMPEG_CUSTOM_GPLV3),y)
-	FFMPEG_CONFIGURE+= --enable-version3
-  endif
-
-  ifeq ($(CONFIG_FFMPEG_CUSTOM_NONFREE),y)
-	FFMPEG_CONFIGURE+= --enable-nonfree
-  endif
-
-  ifneq ($(CONFIG_FFMPEG_CUSTOM_PROGRAMS),y)
-      FFMPEG_CONFIGURE+= \
-	--disable-programs \
-	--disable-avfilter \
-	--disable-swresample
-  endif
-
-  ifneq ($(CONFIG_PACKAGE_ffmpeg-custom),n)
-      FFMPEG_CONFIGURE+= \
-	--enable-avfilter \
-	--enable-ffmpeg
-  endif
-
-  FFMPEG_CONFIGURE+= \
-	--disable-swscale \
-	--disable-everything \
-	$(call FFMPEG_ENABLE,encoder,$(FFMPEG_CUSTOM_ENCODERS),CONFIG_FFMPEG_CUSTOM_ENCODER) \
-	$(call FFMPEG_ENABLE,decoder,$(FFMPEG_CUSTOM_DECODERS),CONFIG_FFMPEG_CUSTOM_DECODER) \
-	$(call FFMPEG_ENABLE,muxer,$(FFMPEG_CUSTOM_MUXERS),CONFIG_FFMPEG_CUSTOM_MUXER) \
-	$(call FFMPEG_ENABLE,demuxer,$(FFMPEG_CUSTOM_DEMUXERS),CONFIG_FFMPEG_CUSTOM_DEMUXER) \
-	$(call FFMPEG_ENABLE,parser,$(FFMPEG_CUSTOM_PARSERS),CONFIG_FFMPEG_CUSTOM_PARSER) \
-	$(call FFMPEG_ENABLE,protocol,$(FFMPEG_CUSTOM_PROTOCOLS),CONFIG_FFMPEG_CUSTOM_PROTOCOL) \
-
-ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_adpcm),y)
-  FFMPEG_CONFIGURE+= \
-	--enable-decoder=adpcm_ima_wav \
-	--enable-decoder=adpcm_ima_qt \
-	--enable-decoder=adpcm_ms
-endif
-
-ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_libfdk-aac),y)
-  FFMPEG_CONFIGURE+= \
-	--enable-libfdk-aac --enable-encoder=libfdk_aac
-endif
-
-ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_libmp3lame),y)
-  FFMPEG_CONFIGURE+= \
-	--enable-libmp3lame --enable-encoder=libmp3lame
-endif
-
-ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_libopus),y)
-  FFMPEG_CONFIGURE+= \
-	--enable-libopus --enable-decoder=libopus --enable-encoder=libopus
-endif
-
-ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_libshine),y)
-  FFMPEG_CONFIGURE+= \
-	--enable-libshine --enable-encoder=libshine
-endif
-
-ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_libx264),y)
-  FFMPEG_CONFIGURE+= \
-	--enable-libx264 --enable-encoder=libx264
-else
-  FFMPEG_CONFIGURE+= --disable-postproc
-endif
-
-endif
-
-ifeq ($(BUILD_VARIANT),audio-dec)
-
-  FFMPEG_ENABLE= \
+# helper: --enable-$(1)=$(c) for every entry of $(2)
+FFMPEG_ENABLE= \
 	$(foreach c, $(2), \
 		--enable-$(1)="$(c)" \
 	)
 
+# helper: --disable-$(1)=$(c) for every entry of $(2)
+FFMPEG_DISABLE= \
+	$(foreach c, $(2), \
+		--disable-$(1)="$(c)" \
+	)
+
+# on/off helper for a config symbol
+FFMPEG_OPT=$(if $(CONFIG_$(1)),--enable-$(2),--disable-$(2))
+
+ifeq ($(BUILD_VARIANT),default)
+
+  # vaapi/libdav1d: literal --disable until the libva / dav1d packages exist
+  # in the feeds; then restore $(call FFMPEG_OPT,FFMPEG_VAAPI,vaapi),
+  # $(call FFMPEG_OPT,FFMPEG_LIBDAV1D,libdav1d) and, for manual component
+  # selection, --enable-hwaccel=*_vaapi / --enable-decoder=libdav1d.
   FFMPEG_CONFIGURE+= \
-	--enable-small \
-	--enable-gpl \
-	\
-	--disable-programs \
-	--disable-avfilter \
-	--disable-postproc \
-	--disable-swresample \
-	--disable-swscale \
-	--disable-everything \
-	$(call FFMPEG_ENABLE,decoder,$(FFMPEG_AUDIO_DECODERS)) \
-	$(call FFMPEG_ENABLE,demuxer,$(FFMPEG_AUDIO_DEMUXERS)) \
-	$(call FFMPEG_ENABLE,protocol,$(FFMPEG_AUDIO_PROTOCOLS)) \
-	--disable-decoder=pcm_bluray,pcm_dvd
+	$(call FFMPEG_OPT,FFMPEG_GPL,gpl) \
+	$(call FFMPEG_OPT,FFMPEG_VERSION3,version3) \
+	$(call FFMPEG_OPT,FFMPEG_NONFREE,nonfree) \
+	$(call FFMPEG_OPT,FFMPEG_OPTIMIZE_SIZE,small) \
+	$(if $(CONFIG_FFMPEG_OPTIMIZE_SIZE),--disable-hardcoded-tables,--enable-hardcoded-tables) \
+	$(call FFMPEG_OPT,FFMPEG_LIBDRM,libdrm) \
+	$(call FFMPEG_OPT,FFMPEG_V4L2_M2M,v4l2-m2m) \
+	--disable-vaapi \
+	$(call FFMPEG_OPT,FFMPEG_LIBV4L2,libv4l2) \
+	$(call FFMPEG_OPT,FFMPEG_TLS_GNUTLS,gnutls) \
+	$(call FFMPEG_OPT,FFMPEG_TLS_OPENSSL,openssl) \
+	$(call FFMPEG_OPT,FFMPEG_TLS_MBEDTLS,mbedtls) \
+	$(call FFMPEG_OPT,FFMPEG_BZLIB,bzlib) \
+	$(call FFMPEG_OPT,FFMPEG_LZMA,lzma) \
+	$(call FFMPEG_OPT,FFMPEG_ICONV,iconv) \
+	--disable-libdav1d \
+	$(call FFMPEG_OPT,FFMPEG_LIBOPUS,libopus) \
+	$(call FFMPEG_OPT,FFMPEG_LIBVORBIS,libvorbis) \
+	$(call FFMPEG_OPT,FFMPEG_LIBVPX,libvpx) \
+	$(call FFMPEG_OPT,FFMPEG_LIBWEBP,libwebp) \
+	$(call FFMPEG_OPT,FFMPEG_LIBSPEEX,libspeex) \
+	$(call FFMPEG_OPT,FFMPEG_LIBXML2,libxml2) \
+	$(call FFMPEG_OPT,FFMPEG_LAME,libmp3lame) \
+	$(call FFMPEG_OPT,FFMPEG_SHINE,libshine) \
+	$(call FFMPEG_OPT,FFMPEG_LIBX264,libx264) \
+	$(call FFMPEG_OPT,FFMPEG_FDK_AAC,libfdk-aac)
+
+  ifneq ($(CONFIG_FFMPEG_PROGRAMS),y)
+	FFMPEG_CONFIGURE+= --disable-programs
+  else
+	FFMPEG_CONFIGURE+= \
+		--enable-ffmpeg \
+		--enable-ffprobe \
+		--disable-ffplay
+  endif
+
+  # Component selection. By default every native component is built. With
+  # manual selection the build starts from --disable-everything, enables the
+  # selected components and adds those contributed by the selected external
+  # libraries, hwaccels and TLS backend (configure's --enable-<class>=NAME
+  # accepts shell globs; one flag per name, since commas would split make's
+  # $(if) arguments).
+  ifeq ($(CONFIG_FFMPEG_SELECT_COMPONENTS),y)
+	FFMPEG_CONFIGURE+= \
+		--disable-everything \
+		$(call FFMPEG_ENABLE_IF,encoder,$(FFMPEG_ENCODERS),CONFIG_FFMPEG_ENCODER) \
+		$(call FFMPEG_ENABLE_IF,decoder,$(FFMPEG_DECODERS),CONFIG_FFMPEG_DECODER) \
+		$(call FFMPEG_ENABLE_IF,muxer,$(FFMPEG_MUXERS),CONFIG_FFMPEG_MUXER) \
+		$(call FFMPEG_ENABLE_IF,demuxer,$(FFMPEG_DEMUXERS),CONFIG_FFMPEG_DEMUXER) \
+		$(call FFMPEG_ENABLE_IF,parser,$(FFMPEG_PARSERS),CONFIG_FFMPEG_PARSER) \
+		$(call FFMPEG_ENABLE_IF,protocol,$(FFMPEG_PROTOCOLS),CONFIG_FFMPEG_PROTOCOL) \
+		$(if $(CONFIG_FFMPEG_DECODER_adpcm),--enable-decoder=adpcm_*) \
+		$(if $(CONFIG_FFMPEG_TLS_NONE),,--enable-protocol=tls --enable-protocol=https) \
+		$(if $(CONFIG_FFMPEG_V4L2_M2M),--enable-decoder=*_v4l2m2m --enable-encoder=*_v4l2m2m) \
+		$(if $(CONFIG_FFMPEG_LIBOPUS),--enable-decoder=libopus --enable-encoder=libopus) \
+		$(if $(CONFIG_FFMPEG_LIBVORBIS),--enable-encoder=libvorbis) \
+		$(if $(CONFIG_FFMPEG_LIBVPX),--enable-decoder=libvpx_vp8 --enable-decoder=libvpx_vp9 --enable-encoder=libvpx_vp8 --enable-encoder=libvpx_vp9) \
+		$(if $(CONFIG_FFMPEG_LIBWEBP),--enable-encoder=libwebp --enable-encoder=libwebp_anim) \
+		$(if $(CONFIG_FFMPEG_LIBSPEEX),--enable-decoder=libspeex --enable-encoder=libspeex) \
+		$(if $(CONFIG_FFMPEG_LIBXML2),--enable-demuxer=dash --enable-demuxer=imf) \
+		$(if $(CONFIG_FFMPEG_LAME),--enable-encoder=libmp3lame) \
+		$(if $(CONFIG_FFMPEG_SHINE),--enable-encoder=libshine) \
+		$(if $(CONFIG_FFMPEG_LIBX264),--enable-encoder=libx264 --enable-encoder=libx264rgb) \
+		$(if $(CONFIG_FFMPEG_FDK_AAC),--enable-decoder=libfdk_aac --enable-encoder=libfdk_aac)
+  endif
+
+  # patented components are never built without BUILD_PATENTED, regardless
+  # of the component selection above (later flags take precedence)
+  FFMPEG_CONFIGURE+= \
+	$(if $(CONFIG_BUILD_PATENTED),, \
+		$(call FFMPEG_DISABLE,decoder,$(FFMPEG_PATENTED_DECODERS)) \
+		$(call FFMPEG_DISABLE,muxer,$(FFMPEG_PATENTED_MUXERS)) \
+		$(call FFMPEG_DISABLE,demuxer,$(FFMPEG_PATENTED_DEMUXERS)) \
+		$(call FFMPEG_DISABLE,parser,$(FFMPEG_PATENTED_PARSERS)))
 endif
 
 ifeq ($(BUILD_VARIANT),mini)
 
-  FFMPEG_ENABLE= \
-	$(foreach c, $(2), \
-		--enable-$(1)="$(c)" \
-	)
-
   FFMPEG_CONFIGURE+= \
 	--enable-small \
+	--disable-hardcoded-tables \
 	\
 	--disable-programs \
 	--disable-avdevice \
 	--disable-avfilter \
-	--disable-postproc \
 	--disable-swresample \
 	--disable-swscale \
 	--disable-everything \
@@ -650,129 +601,49 @@ define Build/Compile
 		all install
 endef
 
-define Build/InstallDev/custom
+# stage whatever the variant built - headers, static and shared libraries,
+# .pc files - so there is no per-variant library list to keep in sync
+define Build/InstallDev/Default
 	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/lib{avcodec,avdevice,avformat,avutil} $(1)/usr/include/
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/* $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{avcodec,avdevice,avformat,avutil}.{a,so*} $(1)/usr/lib/
-ifeq ($(CONFIG_FFMPEG_CUSTOM_PROGRAMS),y)
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{avfilter,swresample}.{a,so*} $(1)/usr/lib/
-endif
-ifeq ($(BUILD_VARIANT),custom)
-  ifneq ($(CONFIG_PACKAGE_ffmpeg-custom),n)
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libavfilter.{a,so*} $(1)/usr/lib/
-  endif
-endif
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib*.{a,so*} $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/lib{avcodec,avdevice,avformat,avutil}.pc $(1)/usr/lib/pkgconfig/
-ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_libx264),y)
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/libpostproc $(1)/usr/include/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpostproc.{a,so*} $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libpostproc.pc $(1)/usr/lib/pkgconfig/
-endif
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/*.pc $(1)/usr/lib/pkgconfig/
 endef
 
-# Only ffmpeg with libx264 is GPL (yes libpostproc); all other builds are lgpl (no libpostproc)
-define Build/InstallDev/full
-	$(INSTALL_DIR) $(1)/usr/include
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/lib{avcodec,avdevice,avfilter,avformat,avutil,swresample,swscale} $(1)/usr/include/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{avcodec,avdevice,avfilter,avformat,avutil,swresample,swscale}.{a,so*} $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/lib{avcodec,avdevice,avfilter,avformat,avutil,swresample,swscale}.pc $(1)/usr/lib/pkgconfig/
-ifneq ($(CONFIG_PACKAGE_libx264),)
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/libpostproc $(1)/usr/include/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpostproc.{a,so*} $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libpostproc.pc $(1)/usr/lib/pkgconfig/
-endif
-endef
-
-define Build/InstallDev/mini
-	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/lib{avcodec,avformat,avutil} $(1)/usr/include/
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{avcodec,avformat,avutil}.{a,so*} $(1)/usr/lib/
-	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/lib{avcodec,avformat,avutil}.pc $(1)/usr/lib/pkgconfig/
-endef
-
-Build/InstallDev/audio-dec = $(Build/InstallDev/custom)
-
-# XXX: attempt at installing "best" dev files available
-ifeq ($(BUILD_VARIANT),custom)
-  # XXX: only install "custom" dev files if -full & -mini are not selected
-  ifeq ($(CONFIG_PACKAGE_libffmpeg-full)$(CONFIG_PACKAGE_libffmpeg-mini),)
-    Build/InstallDev = $(Build/InstallDev/custom)
-  endif
-endif
-ifeq ($(BUILD_VARIANT),audio-dec)
-  # XXX: only install "audio-dec" dev files if -full & -mini are not selected
-  ifeq ($(CONFIG_PACKAGE_libffmpeg-full)$(CONFIG_PACKAGE_libffmpeg-mini),)
-    Build/InstallDev = $(Build/InstallDev/audio-dec)
-  endif
-endif
-ifeq ($(BUILD_VARIANT),full)
-  # XXX: always install "full" dev files if -full is selected
-  Build/InstallDev = $(Build/InstallDev/full)
+# Both variants stage into the same directory; libffmpeg takes precedence,
+# mini is staged only when libffmpeg is not selected (the two conflict at
+# install time).
+ifeq ($(BUILD_VARIANT),default)
+  Build/InstallDev = $(Build/InstallDev/Default)
 endif
 ifeq ($(BUILD_VARIANT),mini)
-  # XXX: only install "mini" dev files if -full is not selected
-  ifeq ($(CONFIG_PACKAGE_libffmpeg-full),)
-    Build/InstallDev = $(Build/InstallDev/mini)
+  ifeq ($(CONFIG_PACKAGE_libffmpeg),)
+    Build/InstallDev = $(Build/InstallDev/Default)
   endif
 endif
 
 define Package/ffmpeg/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/ffmpeg $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ffmpeg $(1)/usr/bin/ffmpeg
 endef
-
-Package/ffmpeg-custom/install = $(Package/ffmpeg/install)
 
 define Package/ffprobe/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/ffprobe $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ffprobe $(1)/usr/bin/ffprobe
 endef
 
-Package/ffprobe-custom/install = $(Package/ffprobe/install)
-
-define Package/libffmpeg-custom/install
+# ship whatever shared libraries the variant built
+define Package/libffmpeg/install/Default
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{avcodec,avdevice,avformat,avutil}.so.* $(1)/usr/lib/
-ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_libx264),y)
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpostproc.so.* $(1)/usr/lib/
-endif
-ifeq ($(CONFIG_FFMPEG_CUSTOM_PROGRAMS),y)
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{avfilter,swresample}.so.* $(1)/usr/lib/
-endif
-ifeq ($(BUILD_VARIANT),custom)
-  ifneq ($(CONFIG_PACKAGE_ffmpeg-custom),n)
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libavfilter.so.* $(1)/usr/lib/
-  endif
-endif
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib*.so.* $(1)/usr/lib/
 endef
 
-# Only ffmpeg with libx264 is GPL (yes libpostproc); all other builds are lgpl (no libpostproc)
-define Package/libffmpeg-full/install
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{avcodec,avdevice,avfilter,avformat,avutil,swresample,swscale}.so.* $(1)/usr/lib/
-ifneq ($(CONFIG_PACKAGE_libx264),)
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpostproc.so.* $(1)/usr/lib/
-endif
-endef
-
-define Package/libffmpeg-mini/install
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{avcodec,avformat,avutil}.so.* $(1)/usr/lib/
-endef
-
-Package/libffmpeg-audio-dec/install = $(Package/libffmpeg-custom/install)
+Package/libffmpeg/install = $(Package/libffmpeg/install/Default)
+Package/libffmpeg-mini/install = $(Package/libffmpeg/install/Default)
 
 $(eval $(call BuildPackage,ffmpeg))
 $(eval $(call BuildPackage,ffprobe))
-$(eval $(call BuildPackage,ffmpeg-custom))
-$(eval $(call BuildPackage,ffprobe-custom))
-$(eval $(call BuildPackage,libffmpeg-audio-dec))
-$(eval $(call BuildPackage,libffmpeg-full))
+$(eval $(call BuildPackage,libffmpeg))
 $(eval $(call BuildPackage,libffmpeg-mini))
-$(eval $(call BuildPackage,libffmpeg-custom))

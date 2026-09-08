@@ -1,486 +1,569 @@
+menu "FFmpeg configuration"
+
+comment "Licensing"
+
+config FFMPEG_GPL
+	bool "Include GPL components (GPL filters)"
+	default y
+	help
+	  Build libffmpeg with --enable-gpl. This adds the
+	  GPL-licensed filters, and the resulting libraries are
+	  distributed under the GPL-2.0-or-later.
+
+config FFMPEG_VERSION3
+	bool "Allow (L)GPL v3 components"
+	default n
+	help
+	  Sets --enable-version3. Upgrades the licence of the resulting
+	  libraries to (L)GPL-3.0-or-later. Selected automatically by the
+	  TLS backends that require it (see below).
+
+config FFMPEG_NONFREE
+	bool "Allow non-redistributable components"
+	default n
+	help
+	  Sets --enable-nonfree. In almost all cases this prohibits
+	  redistribution of the resulting binaries.
+
+comment "Build properties"
+
 config FFMPEG_X86ASM
-	bool "Compile x86 ASM"
+	bool "Compile x86 assembly optimizations"
 	depends on (x86_64 || (i386 && !(TARGET_x86_geode || TARGET_x86_legacy)))
+	default y
 	help
-		This compiles ffmpeg with x86 assembly optimizations. This option is needed as NASM is
-		totally broken with CPU_TYPE=pentium.
+	  Not available for CPU_TYPE=pentium targets, where NASM cannot
+	  assemble them. This option also applies to libffmpeg-mini, which
+	  has no other options.
+
+config FFMPEG_OPTIMIZE_SIZE
+	bool "Optimize for size instead of speed"
+	default n if x86_64
+	default y
+	help
+	  Sets --enable-small and uses generated instead of hardcoded
+	  tables. When disabled, decoding is faster and the libraries are
+	  larger.
+
+config FFMPEG_PROGRAMS
+	bool "Build the command line programs (ffmpeg, ffprobe)"
+	default y
+	help
+	  When disabled only the shared libraries are built and the
+	  ffmpeg/ffprobe packages cannot be selected.
+
+comment "Hardware acceleration"
+
+config FFMPEG_LIBDRM
+	bool "DRM support (libdrm, needed for DRM_PRIME zero-copy)"
 	default y
 
-if PACKAGE_libffmpeg-custom
-
-comment "Build Licensing"
-
-config FFMPEG_CUSTOM_GPL
-	bool "Allow use of GPL code"
-	help
-		By default, FFMpeg is licensed under the LGPL. This builds a GPL licensed version.
-		Some software requires this, such as libx264.
+config FFMPEG_V4L2_M2M
+	bool "V4L2 mem2mem (stateful) decoders/encoders"
 	default y
 
-config FFMPEG_CUSTOM_GPLV3
-	bool "Use (L)GPL v3"
-	help
-		Uses the LPGL v3 if GPL isn't selected, or GPL v3 if it is.
+# VA-API support is prepared but disabled until a libva package exists in
+# the feeds; uncomment (and the DEPENDS line in the Makefile) once it does.
+#config FFMPEG_VAAPI
+#	bool "VA-API hardware acceleration"
+#	default n
 
-config FFMPEG_CUSTOM_NONFREE
-	bool "Use code with complex licensing requirements; see help"
+comment "Transport layer security"
+
+choice
+	prompt "TLS backend"
+	default FFMPEG_TLS_MBEDTLS
 	help
-		This sets --enable-nonfree, which in almost all cases, will prohibit redistribution of the resulting package.
-		Use this with care.
+	  mbedTLS is the default because it is the TLS library OpenWrt
+	  itself ships by default (libustream-mbedtls, hostapd-*-mbedtls).
+	  Selecting the backend already present in the image avoids a
+	  second TLS library.
+
+	  Licence: FFmpeg's configure requires --enable-version3 for
+	  mbedTLS, and for OpenSSL 3.x whenever GPL components are
+	  enabled. Together with the GPL option this makes the resulting
+	  libraries GPL-3.0-or-later. GnuTLS carries no such requirement.
+
+	config FFMPEG_TLS_NONE
+		bool "none (no https/tls protocol)"
+
+	config FFMPEG_TLS_GNUTLS
+		bool "GnuTLS"
+
+	config FFMPEG_TLS_OPENSSL
+		bool "OpenSSL"
+		select FFMPEG_VERSION3 if FFMPEG_GPL
+
+	config FFMPEG_TLS_MBEDTLS
+		bool "mbedTLS"
+		select FFMPEG_VERSION3
+endchoice
+
+comment "External libraries"
+
+# libdav1d support is prepared but disabled until a dav1d package exists
+# in the feeds; uncomment (and the DEPENDS line in the Makefile) once it
+# does. Until then AV1 is only decodable by hardware, see the help text.
+#config FFMPEG_LIBDAV1D
+#	bool "AV1 decoding via libdav1d"
+#	default y
+#	help
+#	  FFmpeg has no native software AV1 decoder; its built-in av1
+#	  decoder only drives hardware acceleration (V4L2 Request API,
+#	  VA-API). Without libdav1d, AV1 can only be decoded by hardware
+#	  with an AV1 decoder.
+
+config FFMPEG_LIBOPUS
+	bool "Opus encoding via libopus"
+	default y
+	help
+	  Opus decoding is always available through FFmpeg's native
+	  decoder, which is preferred even when libopus is present.
+	  libopus adds a production-quality encoder; the native Opus
+	  encoder is marked experimental.
+
+config FFMPEG_LIBVORBIS
+	bool "Vorbis encoding via libvorbis"
 	default n
 
-config FFMPEG_CUSTOM_PATENTED
-	bool "Include patented codecs and technologies"
-	default BUILD_PATENTED
+config FFMPEG_LIBVPX
+	bool "VP8/VP9 encoding via libvpx"
+	default n
+	help
+	  VP8 and VP9 decoding is always available through FFmpeg's
+	  native decoders, which are preferred even when libvpx is
+	  present. libvpx therefore only adds the encoders.
 
-comment "Build Properties"
-
-config FFMPEG_CUSTOM_LARGE
-	bool "Build libffmpeg for performance instead of minimizing size on disk"
-	default y if ( x86_64 )
+config FFMPEG_LIBWEBP
+	bool "WebP encoding via libwebp"
 	default n
 
-comment "Profiles"
+config FFMPEG_LIBSPEEX
+	bool "Speex encoding via libspeex"
+	default n
+	help
+	  Speex decoding is always available through FFmpeg's native
+	  decoder, which is preferred even when libspeex is present.
+	  libspeex therefore only adds the encoder.
 
-config FFMPEG_CUSTOM_MINIDLNA_SUPPORT
-	bool "Include support for minidlna"
-	select FFMPEG_CUSTOM_DECODER_aac
-	select FFMPEG_CUSTOM_DECODER_ac3
-	select FFMPEG_CUSTOM_DECODER_flac
-	select FFMPEG_CUSTOM_DECODER_h264 if (BUILD_PATENTED)
-	select FFMPEG_CUSTOM_DECODER_hevc if (BUILD_PATENTED)
-	select FFMPEG_CUSTOM_DECODER_jpegls
-	select FFMPEG_CUSTOM_DECODER_mp2
-	select FFMPEG_CUSTOM_DECODER_mp3
-	select FFMPEG_CUSTOM_DECODER_mpeg1video
-	select FFMPEG_CUSTOM_DECODER_mpeg2video
-	select FFMPEG_CUSTOM_DECODER_mpeg4
-	select FFMPEG_CUSTOM_DECODER_mpegvideo
-	select FFMPEG_CUSTOM_DECODER_png
-	select FFMPEG_CUSTOM_DECODER_opus
-	select FFMPEG_CUSTOM_DECODER_vc1 if (BUILD_PATENTED)
-	select FFMPEG_CUSTOM_DECODER_vorbis
-	select FFMPEG_CUSTOM_DECODER_wmav1
-	select FFMPEG_CUSTOM_DECODER_wmav2
-	select FFMPEG_CUSTOM_DEMUXER_avi
-	select FFMPEG_CUSTOM_DEMUXER_flac
-	select FFMPEG_CUSTOM_DEMUXER_matroska
-	select FFMPEG_CUSTOM_DEMUXER_mov
-	select FFMPEG_CUSTOM_DEMUXER_mp3
-	select FFMPEG_CUSTOM_DEMUXER_mpegps
-	select FFMPEG_CUSTOM_DEMUXER_mpegts
-	select FFMPEG_CUSTOM_DEMUXER_mpegvideo
-	select FFMPEG_CUSTOM_DEMUXER_ogg
-	select FFMPEG_CUSTOM_PROTOCOL_file
+config FFMPEG_LIBXML2
+	bool "XML parsing via libxml2 (DASH/IMF demuxers)"
+	default n
+	help
+	  The DASH and IMF demuxers are the only users of libxml2 and
+	  are not built without it; there is no native fallback.
 
-config FFMPEG_CUSTOM_AUDIO_DEC_SUPPORT
-	bool "Include support for most audio decoding requirements"
-	select FFMPEG_CUSTOM_DECODER_aac
-	select FFMPEG_CUSTOM_DECODER_aac_latm
-	select FFMPEG_CUSTOM_DECODER_ac3
-	select FFMPEG_CUSTOM_SELECT_adpcm
-	select FFMPEG_CUSTOM_DECODER_alac
-	select FFMPEG_CUSTOM_DECODER_amrnb
-	select FFMPEG_CUSTOM_DECODER_amrwb
-	select FFMPEG_CUSTOM_DECODER_ape
-	select FFMPEG_CUSTOM_DECODER_atrac3
-	select FFMPEG_CUSTOM_DECODER_flac
-	select FFMPEG_CUSTOM_DECODER_mp2
-	select FFMPEG_CUSTOM_DECODER_mp3
-	select FFMPEG_CUSTOM_DECODER_mpc7
-	select FFMPEG_CUSTOM_DECODER_mpc8
-	select FFMPEG_CUSTOM_DECODER_opus
-	select FFMPEG_CUSTOM_DECODER_pcm_s16be
-	select FFMPEG_CUSTOM_DECODER_pcm_s16le
-	select FFMPEG_CUSTOM_DECODER_vorbis
-	select FFMPEG_CUSTOM_DECODER_wavpack
-	select FFMPEG_CUSTOM_DECODER_wmav1
-	select FFMPEG_CUSTOM_DECODER_wmav2
-	select FFMPEG_CUSTOM_DECODER_wmalossless
-	select FFMPEG_CUSTOM_DECODER_wmapro
-	select FFMPEG_CUSTOM_DECODER_zlib
-	select FFMPEG_CUSTOM_DEMUXER_aac
-	select FFMPEG_CUSTOM_DEMUXER_ac3
-	select FFMPEG_CUSTOM_DEMUXER_aiff
-	select FFMPEG_CUSTOM_DEMUXER_amr
-	select FFMPEG_CUSTOM_DEMUXER_ape
-	select FFMPEG_CUSTOM_DEMUXER_avi
-	select FFMPEG_CUSTOM_DEMUXER_flac
-	select FFMPEG_CUSTOM_DEMUXER_ffm
-	select FFMPEG_CUSTOM_DEMUXER_matroska
-	select FFMPEG_CUSTOM_DEMUXER_mp3
-	select FFMPEG_CUSTOM_DEMUXER_mov
-	select FFMPEG_CUSTOM_DEMUXER_mpc
-	select FFMPEG_CUSTOM_DEMUXER_mpc8
-	select FFMPEG_CUSTOM_DEMUXER_mpegts
-	select FFMPEG_CUSTOM_DEMUXER_ogg
-	select FFMPEG_CUSTOM_DEMUXER_rm
-	select FFMPEG_CUSTOM_DEMUXER_rtsp
-	select FFMPEG_CUSTOM_DEMUXER_rtp
-	select FFMPEG_CUSTOM_DEMUXER_sdp
-	select FFMPEG_CUSTOM_DEMUXER_wav
-	select FFMPEG_CUSTOM_DEMUXER_wv
-	select FFMPEG_CUSTOM_PROTOCOL_file
-	select FFMPEG_CUSTOM_PROTOCOL_http
-	select FFMPEG_CUSTOM_PROTOCOL_rtp
-	select FFMPEG_CUSTOM_PROTOCOL_tcp
-	select FFMPEG_CUSTOM_PROTOCOL_udp
+config FFMPEG_LAME
+	bool "MP3 encoding via LAME"
+	default y if !SOFT_FLOAT
+	default n
 
-config FFMPEG_CUSTOM_PROGRAMS
-	bool "Include ffmpeg command-line utilities"
-	select PACKAGE_ffmpeg-custom
-	select PACKAGE_ffprobe-custom
+config FFMPEG_SHINE
+	bool "Fixed-point MP3 encoding via libshine"
+	default y if SOFT_FLOAT
+	default n
 
-comment "External Libraries"
+config FFMPEG_LIBX264
+	bool "H.264 encoding via libx264"
+	depends on FFMPEG_GPL && BUILD_PATENTED
+	default y
 
-config FFMPEG_CUSTOM_SELECT_libfdk-aac
-	bool "Fraunhofer FDK AAC encoding library (libfdk-aac)"
-	depends on FFMPEG_CUSTOM_NONFREE
-	depends on PACKAGE_fdk-aac
+config FFMPEG_FDK_AAC
+	bool "AAC encoding via libfdk-aac"
+	depends on FFMPEG_NONFREE && !FFMPEG_GPL
+	default n
+	help
+	  The FDK licence is incompatible with the GPL, so this is only
+	  offered for a non-GPL, nonfree build. The native FFmpeg AAC
+	  encoder is always available.
 
-config FFMPEG_CUSTOM_SELECT_libmp3lame
-	bool "Libmp3lame"
-	depends on PACKAGE_lame-lib
-	select FFMPEG_CUSTOM_DECODER_mp3
-	select FFMPEG_CUSTOM_MUXER_mp3
-	select FFMPEG_CUSTOM_DEMUXER_mp3
+comment "System libraries"
 
-config FFMPEG_CUSTOM_SELECT_libopus
-	bool "Libopus"
+config FFMPEG_LIBV4L2
+	bool "V4L2 capture device via libv4l2 (pixel format conversion)"
+	default n
+	help
+	  The V4L2 capture/output devices of libavdevice work without
+	  this, using raw ioctls. libv4l2 adds the v4l-utils userspace
+	  layer, mainly libv4lconvert for capture devices producing pixel
+	  formats FFmpeg does not handle natively. Unrelated to hardware
+	  decoding.
 
-config FFMPEG_CUSTOM_SELECT_libshine
-	bool "Libshine"
+config FFMPEG_BZLIB
+	bool "bzip2 support"
+	default y
+	help
+	  Only used by the Matroska demuxer for bzip2-compressed tracks.
+	  Without it such tracks cannot be read; everything else in
+	  Matroska is unaffected.
 
-config FFMPEG_CUSTOM_SELECT_libx264
-	bool "Libx264"
-	depends on FFMPEG_CUSTOM_PATENTED
-	depends on FFMPEG_CUSTOM_GPL
-	depends on PACKAGE_libx264
-	select FFMPEG_CUSTOM_DECODER_h264
-	select FFMPEG_CUSTOM_MUXER_h264
-	select FFMPEG_CUSTOM_DEMUXER_h264
+config FFMPEG_LZMA
+	bool "lzma support"
+	default n
+	help
+	  Only used by the TIFF decoder for LZMA-compressed images.
+
+config FFMPEG_ICONV
+	bool "iconv support (subtitle charset conversion)"
+	default y
+	help
+	  Uses the iconv implementation of the C library; no additional
+	  package is needed on musl.
+
+comment "Components"
+
+config FFMPEG_SELECT_COMPONENTS
+	bool "Manual component selection"
+	default n
+	help
+	  Disabled: every native codec, container format, filter,
+	  protocol and device is built, subject to the licence options
+	  above and BUILD_PATENTED.
+
+	  Enabled: the build starts from --disable-everything and only
+	  the components selected in the options that appear below are
+	  built; every component not selected there is absent from the
+	  libraries. The components of the external libraries and
+	  hardware accelerations selected above are added automatically,
+	  as are the tls and https protocols of the selected TLS backend.
+
+if FFMPEG_SELECT_COMPONENTS
 
 comment "Encoders"
 
-config FFMPEG_CUSTOM_ENCODER_ac3
+config FFMPEG_ENCODER_ac3
 	bool "AC3"
 
-config FFMPEG_CUSTOM_ENCODER_jpegls
+config FFMPEG_ENCODER_jpegls
 	bool "JPEG-LS"
 
-config FFMPEG_CUSTOM_ENCODER_mpeg1video
+config FFMPEG_ENCODER_mpeg1video
 	bool "MPEG-1 Video"
 
-config FFMPEG_CUSTOM_ENCODER_mpeg2video
+config FFMPEG_ENCODER_mpeg2video
 	bool "MPEG-2 Video"
 
-config FFMPEG_CUSTOM_ENCODER_mpeg4
+config FFMPEG_ENCODER_mpeg4
 	bool "MPEG-4"
 
-config FFMPEG_CUSTOM_ENCODER_pcm_s16be
+config FFMPEG_ENCODER_pcm_s16be
 	bool "PCM signed 16-bit big-endian"
 
-config FFMPEG_CUSTOM_ENCODER_pcm_s16le
+config FFMPEG_ENCODER_pcm_s16le
 	bool "PCM signed 16-bit little-endian"
 
-config FFMPEG_CUSTOM_ENCODER_png
+config FFMPEG_ENCODER_png
 	bool "PNG"
-	select FFMPEG_CUSTOM_ENCODER_zlib
+	select FFMPEG_ENCODER_zlib
 
-config FFMPEG_CUSTOM_ENCODER_vorbis
+config FFMPEG_ENCODER_vorbis
 	bool "Vorbis"
 
-config FFMPEG_CUSTOM_ENCODER_zlib
+config FFMPEG_ENCODER_zlib
 	bool "Zlib"
 
 comment "Decoders"
 
-config FFMPEG_CUSTOM_DECODER_aac
+config FFMPEG_DECODER_aac
 	bool "AAC (Advanced Audio Coding)"
 
-config FFMPEG_CUSTOM_SELECT_adpcm
+config FFMPEG_DECODER_aac_latm
+	bool "AAC LATM"
+
+config FFMPEG_DECODER_adpcm
 	bool "ADPCM (multiple types)"
 
-config FFMPEG_CUSTOM_DECODER_ac3
+config FFMPEG_DECODER_ac3
 	bool "AC3"
 
-config FFMPEG_CUSTOM_DECODER_alac
+config FFMPEG_DECODER_alac
 	bool "ALAC"
 
-config FFMPEG_CUSTOM_DECODER_amrnb
+config FFMPEG_DECODER_amrnb
 	bool "AMR-NB"
-	select FFMPEG_CUSTOM_DEMUXER_amr
+	select FFMPEG_DEMUXER_amr
 
-config FFMPEG_CUSTOM_DECODER_amrwb
+config FFMPEG_DECODER_amrwb
 	bool "AMR-WB"
-	select FFMPEG_CUSTOM_DEMUXER_amr
+	select FFMPEG_DEMUXER_amr
 
-config FFMPEG_CUSTOM_DECODER_ape
+config FFMPEG_DECODER_ape
 	bool "APE"
 
-config FFMPEG_CUSTOM_DECODER_atrac3
+config FFMPEG_DECODER_atrac3
 	bool "ATRAC3"
 
-config FFMPEG_CUSTOM_DECODER_flac
+config FFMPEG_DECODER_flac
 	bool "FLAC"
 
-config FFMPEG_CUSTOM_DECODER_gif
+config FFMPEG_DECODER_gif
 	bool "GIF"
 
-config FFMPEG_CUSTOM_DECODER_h264
+config FFMPEG_DECODER_h264
 	bool "H.264"
-	depends on FFMPEG_CUSTOM_PATENTED
+	depends on BUILD_PATENTED
 
-config FFMPEG_CUSTOM_DECODER_hevc
+config FFMPEG_DECODER_hevc
 	bool "HEVC / H.265 Video"
-	depends on FFMPEG_CUSTOM_PATENTED
+	depends on BUILD_PATENTED
 
-config FFMPEG_CUSTOM_DECODER_jpegls
+config FFMPEG_DECODER_jpegls
 	bool "JPEG-LS"
 
-config FFMPEG_CUSTOM_DECODER_mp2
+config FFMPEG_DECODER_mp2
 	bool "MP2 (MPEG Audio Layer 2)"
 
-config FFMPEG_CUSTOM_DECODER_mp3
+config FFMPEG_DECODER_mp3
 	bool "MP3 (MPEG Audio Layer 3)"
 
-config FFMPEG_CUSTOM_DECODER_mpegvideo
+config FFMPEG_DECODER_mpegvideo
 	bool "MPEG Video"
 
-config FFMPEG_CUSTOM_DECODER_mpeg1video
+config FFMPEG_DECODER_mpeg1video
 	bool "MPEG-1 Video"
 
-config FFMPEG_CUSTOM_DECODER_mpeg2video
+config FFMPEG_DECODER_mpeg2video
 	bool "MPEG-2 Video"
 
-config FFMPEG_CUSTOM_DECODER_mpeg4
+config FFMPEG_DECODER_mpeg4
 	bool "MPEG-4"
 
-config FFMPEG_CUSTOM_DECODER_mpc7
+config FFMPEG_DECODER_mpc7
 	bool "Musepack 7"
-	select FFMPEG_CUSTOM_DEMUXER_mpc
+	select FFMPEG_DEMUXER_mpc
 
-config FFMPEG_CUSTOM_DECODER_mpc8
+config FFMPEG_DECODER_mpc8
 	bool "Musepack 8"
-	select FFMPEG_CUSTOM_DEMUXER_mpc8
+	select FFMPEG_DEMUXER_mpc8
 
-config FFMPEG_CUSTOM_DECODER_opus
+config FFMPEG_DECODER_opus
 	bool "Opus"
 
-config FFMPEG_CUSTOM_DECODER_pcm_s16be
+config FFMPEG_DECODER_pcm_s16be
 	bool "PCM signed 16-bit big-endian"
 
-config FFMPEG_CUSTOM_DECODER_pcm_s16le
+config FFMPEG_DECODER_pcm_s16le
 	bool "PCM signed 16-bit little-endian"
 
-config FFMPEG_CUSTOM_DECODER_png
+config FFMPEG_DECODER_png
 	bool "PNG"
-	select FFMPEG_CUSTOM_DECODER_zlib
+	select FFMPEG_DECODER_zlib
 
-config FFMPEG_CUSTOM_DECODER_vc1
+config FFMPEG_DECODER_vc1
 	bool "VC-1 / WMV9"
-	depends on FFMPEG_CUSTOM_PATENTED
+	depends on BUILD_PATENTED
 
-config FFMPEG_CUSTOM_DECODER_vorbis
+config FFMPEG_DECODER_vorbis
 	bool "Vorbis"
-	select FFMPEG_CUSTOM_DEMUXER_ogg
+	select FFMPEG_DEMUXER_ogg
 
-config FFMPEG_CUSTOM_DECODER_wavpack
+config FFMPEG_DECODER_wavpack
 	bool "Wavpack"
 
-config FFMPEG_CUSTOM_DECODER_wmav1
+config FFMPEG_DECODER_wmav1
 	bool "WMAv1"
 
-config FFMPEG_CUSTOM_DECODER_wmav2
+config FFMPEG_DECODER_wmav2
 	bool "WMAv2"
 
-config FFMPEG_CUSTOM_DECODER_zlib
+config FFMPEG_DECODER_wmalossless
+	bool "WMA Lossless"
+
+config FFMPEG_DECODER_wmapro
+	bool "WMA Pro"
+
+config FFMPEG_DECODER_zlib
 	bool "Zlib"
 
 comment "Muxers"
 
-config FFMPEG_CUSTOM_MUXER_ac3
+config FFMPEG_MUXER_ac3
 	bool "AC3"
 
-config FFMPEG_CUSTOM_MUXER_avi
+config FFMPEG_MUXER_avi
 	bool "AVI"
 
-config FFMPEG_CUSTOM_MUXER_h264
+config FFMPEG_MUXER_h264
 	bool "H.264 Raw Video"
-	depends on FFMPEG_CUSTOM_PATENTED
+	depends on BUILD_PATENTED
 
-config FFMPEG_CUSTOM_MUXER_hevc
+config FFMPEG_MUXER_hevc
 	bool "HEVC / H265 Raw Video"
-	depends on FFMPEG_CUSTOM_PATENTED
+	depends on BUILD_PATENTED
 
-config FFMPEG_CUSTOM_MUXER_mp3
+config FFMPEG_MUXER_mp3
 	bool "MP3 (MPEG Audio Layer 3)"
 
-config FFMPEG_CUSTOM_MUXER_mp4
+config FFMPEG_MUXER_mp4
 	bool "MP4"
 
-config FFMPEG_CUSTOM_MUXER_mpeg1video
+config FFMPEG_MUXER_mpeg1video
 	bool "MPEG-1 Video"
 
-config FFMPEG_CUSTOM_MUXER_mpeg2video
+config FFMPEG_MUXER_mpeg2video
 	bool "MPEG-2 Video"
 
-config FFMPEG_CUSTOM_MUXER_mpegts
+config FFMPEG_MUXER_mpegts
 	bool "MPEG-2 (TS)"
 
-config FFMPEG_CUSTOM_MUXER_ogg
+config FFMPEG_MUXER_ogg
 	bool "Ogg"
 
-config FFMPEG_CUSTOM_MUXER_rtp
+config FFMPEG_MUXER_rtp
 	bool "RTP"
 
 comment "Demuxers"
 
-config FFMPEG_CUSTOM_DEMUXER_aac
+config FFMPEG_DEMUXER_aac
 	bool "AAC"
 
-config FFMPEG_CUSTOM_DEMUXER_avi
+config FFMPEG_DEMUXER_avi
 	bool "AVI (Audio Video Interleave)"
 
-config FFMPEG_CUSTOM_DEMUXER_ac3
+config FFMPEG_DEMUXER_ac3
 	bool "AC3"
 
-config FFMPEG_CUSTOM_DEMUXER_amr
+config FFMPEG_DEMUXER_aiff
+	bool "AIFF"
+
+config FFMPEG_DEMUXER_amr
 	bool "AMR"
 
-config FFMPEG_CUSTOM_DEMUXER_ape
+config FFMPEG_DEMUXER_ape
 	bool "APE"
 
-config FFMPEG_CUSTOM_DEMUXER_flac
+config FFMPEG_DEMUXER_flac
 	bool "FLAC"
 
-config FFMPEG_CUSTOM_DEMUXER_h264
+config FFMPEG_DEMUXER_h264
 	bool "H.264 Raw Video"
-	depends on FFMPEG_CUSTOM_PATENTED
+	depends on BUILD_PATENTED
 
-config FFMPEG_CUSTOM_DEMUXER_hevc
+config FFMPEG_DEMUXER_hevc
 	bool "HEVC / H265 Raw Video"
-	depends on FFMPEG_CUSTOM_PATENTED
+	depends on BUILD_PATENTED
 
-config FFMPEG_CUSTOM_DEMUXER_matroska
+config FFMPEG_DEMUXER_matroska
 	bool "Matroska (MKA,MKV)"
-	select FFMPEG_CUSTOM_DECODER_zlib
+	select FFMPEG_DECODER_zlib
 
-config FFMPEG_CUSTOM_DEMUXER_mov
+config FFMPEG_DEMUXER_mov
 	bool "MOV/MP4/M4A/3GP/3G2/MJ2"
-	select FFMPEG_CUSTOM_DECODER_zlib
+	select FFMPEG_DECODER_zlib
 
-config FFMPEG_CUSTOM_DEMUXER_mp3
+config FFMPEG_DEMUXER_mp3
 	bool "MP3 (MPEG Audio Layer 3)"
 
-config FFMPEG_CUSTOM_DEMUXER_mpegvideo
+config FFMPEG_DEMUXER_mpegvideo
 	bool "MPEG Video (Raw)"
 
-config FFMPEG_CUSTOM_DEMUXER_mpegps
+config FFMPEG_DEMUXER_mpegps
 	bool "MPEG-2 (PS)"
 
-config FFMPEG_CUSTOM_DEMUXER_mpegts
+config FFMPEG_DEMUXER_mpegts
 	bool "MPEG-2 (TS)"
 
-config FFMPEG_CUSTOM_DEMUXER_mpc
+config FFMPEG_DEMUXER_mpc
 	bool "Musepack"
 
-config FFMPEG_CUSTOM_DEMUXER_mpc8
+config FFMPEG_DEMUXER_mpc8
 	bool "Musepack 8"
 
-config FFMPEG_CUSTOM_DEMUXER_ogg
+config FFMPEG_DEMUXER_ogg
 	bool "Ogg"
 
-config FFMPEG_CUSTOM_DEMUXER_rm
+config FFMPEG_DEMUXER_rm
 	bool "RM"
 	help
 	  RealMedia format demuxer
 
-config FFMPEG_CUSTOM_DEMUXER_rtsp
+config FFMPEG_DEMUXER_rtsp
 	bool "RTSP"
-	select FFMPEG_CUSTOM_DEMUXER_rm
-	select FFMPEG_CUSTOM_DEMUXER_sdp
-	select FFMPEG_CUSTOM_DEMUXER_rtp
+	select FFMPEG_DEMUXER_rm
+	select FFMPEG_DEMUXER_sdp
+	select FFMPEG_DEMUXER_rtp
 
-config FFMPEG_CUSTOM_DEMUXER_sdp
+config FFMPEG_DEMUXER_sdp
 	bool "SDP"
-	select FFMPEG_CUSTOM_DEMUXER_mpegts
+	select FFMPEG_DEMUXER_mpegts
 
-config FFMPEG_CUSTOM_DEMUXER_rtp
+config FFMPEG_DEMUXER_rtp
 	bool "RTP"
 
-config FFMPEG_CUSTOM_DEMUXER_vc1
+config FFMPEG_DEMUXER_vc1
 	bool "VC-1 / WMV9 Raw Video"
-	depends on FFMPEG_CUSTOM_PATENTED
+	depends on BUILD_PATENTED
 
-config FFMPEG_CUSTOM_DEMUXER_wav
+config FFMPEG_DEMUXER_wav
 	bool "WAV"
 
-config FFMPEG_CUSTOM_DEMUXER_wv
+config FFMPEG_DEMUXER_wv
 	bool "WV"
 
 comment "Parsers"
 
-config FFMPEG_CUSTOM_PARSER_aac
+config FFMPEG_PARSER_aac
 	bool "AAC (Advanced Audio Coding)"
 
-config FFMPEG_CUSTOM_PARSER_ac3
+config FFMPEG_PARSER_ac3
 	bool "AC3"
 
-config FFMPEG_CUSTOM_PARSER_flac
+config FFMPEG_PARSER_flac
 	bool "FLAC"
 
-config FFMPEG_CUSTOM_PARSER_h264
+config FFMPEG_PARSER_h264
 	bool "H.264"
-	depends on FFMPEG_CUSTOM_PATENTED
-	select FFMPEG_CUSTOM_DECODER_h264
+	depends on BUILD_PATENTED
+	select FFMPEG_DECODER_h264
 
-config FFMPEG_CUSTOM_PARSER_hevc
+config FFMPEG_PARSER_hevc
 	bool "HEVC / H265"
-	depends on FFMPEG_CUSTOM_PATENTED
-	select FFMPEG_CUSTOM_DECODER_hevc
+	depends on BUILD_PATENTED
+	select FFMPEG_DECODER_hevc
 
-config FFMPEG_CUSTOM_PARSER_mpegaudio
+config FFMPEG_PARSER_mpegaudio
 	bool "MPEG Audio"
 
-config FFMPEG_CUSTOM_PARSER_mpegvideo
+config FFMPEG_PARSER_mpegvideo
 	bool "MPEG Video"
 
-config FFMPEG_CUSTOM_PARSER_mpeg4video
+config FFMPEG_PARSER_mpeg4video
 	bool "MPEG-4 Video"
 
-config FFMPEG_CUSTOM_PARSER_opus
+config FFMPEG_PARSER_opus
 	bool "Opus"
 
-config FFMPEG_CUSTOM_PARSER_vc1
+config FFMPEG_PARSER_vc1
 	bool "VC-1 / WMV9"
-	depends on FFMPEG_CUSTOM_PATENTED
-	select FFMPEG_CUSTOM_DECODER_vc1
+	depends on BUILD_PATENTED
+	select FFMPEG_DECODER_vc1
 
 comment "Protocols"
 
-config FFMPEG_CUSTOM_PROTOCOL_file
+config FFMPEG_PROTOCOL_file
 	bool "file:"
 
-config FFMPEG_CUSTOM_PROTOCOL_http
+config FFMPEG_PROTOCOL_http
 	bool "http:"
 
-config FFMPEG_CUSTOM_PROTOCOL_icecast
+config FFMPEG_PROTOCOL_icecast
 	bool "icecast:"
-	select FFMPEG_CUSTOM_PROTOCOL_http
+	select FFMPEG_PROTOCOL_http
 
-config FFMPEG_CUSTOM_PROTOCOL_pipe
+config FFMPEG_PROTOCOL_pipe
 	bool "pipe:"
 
-config FFMPEG_CUSTOM_PROTOCOL_rtp
+config FFMPEG_PROTOCOL_rtp
 	bool "rtp:"
-	select FFMPEG_CUSTOM_PROTOCOL_udp
+	select FFMPEG_PROTOCOL_udp
 
-config FFMPEG_CUSTOM_PROTOCOL_tcp
+config FFMPEG_PROTOCOL_tcp
 	bool "tcp:"
 
-config FFMPEG_CUSTOM_PROTOCOL_udp
+config FFMPEG_PROTOCOL_udp
 	bool "udp:"
 
 
 endif
+
+endmenu
