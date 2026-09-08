@@ -647,17 +647,60 @@ config_remote() {
 	swanctl_xappend0 ""
 }
 
-config_charon_syslog() {
-	local conf="$1"
-	local plugin="$2"
+config_charon_plugin_syslog() {
+	# daemon syslog facility
+	local dmn mgr job cfg knl net asn lib tls tnc imc imv pts app wch
+	config_get dmn "syslog" dmn "1"
+	config_get mgr "syslog" mgr "1"
+	config_get job "syslog" job "1"
+	config_get cfg "syslog" cfg "1"
+	config_get knl "syslog" knl "1"
+	config_get net "syslog" net "1"
+	config_get asn "syslog" asn "1"
+	config_get lib "syslog" lib "1"
+	config_get tls "syslog" tls "1"
+	config_get tnc "syslog" tnc "1"
+	config_get imc "syslog" imc "1"
+	config_get imv "syslog" imv "1"
+	config_get pts "syslog" pts "1"
+	config_get app "syslog" app "1"
+	config_get wch "syslog" wch "1"
 
-	local debug
+	# auth syslog facility
+	local ike chd enc esp
+	config_get ike "syslog" ike "1"
+	config_get chd "syslog" chd "1"
+	config_get enc "syslog" enc "1"
+	config_get esp "syslog" esp "1"
 
-	config_get debug "$conf" debug 0
 	swan_xappend1 "syslog {"
 	swan_xappend2 "identifier = ipsec"
 	swan_xappend2 "daemon {"
-	swan_xappend3 "default = $debug"
+	swan_xappend3 "default = -1"
+	swan_xappend3 "ike_name = yes"
+	[ "$dmn" != "-1" ] && swan_xappend3 "dmn = $dmn"
+	[ "$mgr" != "-1" ] && swan_xappend3 "mgr = $mgr"
+	[ "$job" != "-1" ] && swan_xappend3 "job = $job"
+	[ "$cfg" != "-1" ] && swan_xappend3 "cfg = $cfg"
+	[ "$knl" != "-1" ] && swan_xappend3 "knl = $knl"
+	[ "$net" != "-1" ] && swan_xappend3 "net = $net"
+	[ "$asn" != "-1" ] && swan_xappend3 "asn = $asn"
+	[ "$lib" != "-1" ] && swan_xappend3 "lib = $lib"
+	[ "$tls" != "-1" ] && swan_xappend3 "tls = $tls"
+	[ "$tnc" != "-1" ] && swan_xappend3 "tnc = $tnc"
+	[ "$imc" != "-1" ] && swan_xappend3 "imc = $imc"
+	[ "$imv" != "-1" ] && swan_xappend3 "imv = $imv"
+	[ "$pts" != "-1" ] && swan_xappend3 "pts = $pts"
+	[ "$app" != "-1" ] && swan_xappend3 "app = $app"
+	[ "$wch" != "-1" ] && swan_xappend3 "wch = $wch"
+	swan_xappend2 "}"
+	swan_xappend2 "auth {"
+	swan_xappend3 "default = -1"
+	swan_xappend3 "ike_name = yes"
+	[ "$ike" != "-1" ] && swan_xappend3 "ike = $ike"
+	[ "$chd" != "-1" ] && swan_xappend3 "chd = $chd"
+	[ "$enc" != "-1" ] && swan_xappend3 "enc = $enc"
+	[ "$esp" != "-1" ] && swan_xappend3 "esp = $esp"
 	swan_xappend2 "}"
 	swan_xappend1 "}"
 }
@@ -728,7 +771,7 @@ config_strongswan_generate() {
 	config_charon_ignore_routing_tables "$conf"
 	config_charon_interfaces_use "$conf"
 	config_charon_scripts "$conf"
-	config_charon_syslog "$conf" "syslog"
+	config_charon_plugin_syslog
 	swan_xappend0 "}"
 }
 

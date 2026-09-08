@@ -196,6 +196,43 @@ migrate_to_child() {
 	uci commit ipsec
 }
 
+migrate_debug() {
+	local debug
+
+	config_load "ipsec"
+	config_get debug "globals" debug "1"
+
+	[ -z "$debug" ] && return
+
+	# create syslog section if not exist
+	if [ -z "$(uci -q get ipsec.syslog)" ]; then
+		uci -q set ipsec.syslog="plugin"
+	fi
+
+	uci -q set ipsec.syslog.dmn="$debug"
+	uci -q set ipsec.syslog.mgr="$debug"
+	uci -q set ipsec.syslog.job="$debug"
+	uci -q set ipsec.syslog.cfg="$debug"
+	uci -q set ipsec.syslog.knl="$debug"
+	uci -q set ipsec.syslog.net="$debug"
+	uci -q set ipsec.syslog.asn="$debug"
+	uci -q set ipsec.syslog.lib="$debug"
+	uci -q set ipsec.syslog.tls="$debug"
+	uci -q set ipsec.syslog.tnc="$debug"
+	uci -q set ipsec.syslog.imc="$debug"
+	uci -q set ipsec.syslog.imv="$debug"
+	uci -q set ipsec.syslog.pts="$debug"
+	uci -q set ipsec.syslog.app="$debug"
+	uci -q set ipsec.syslog.wch="$debug"
+	uci -q set ipsec.syslog.ike="$debug"
+	uci -q set ipsec.syslog.chd="$debug"
+	uci -q set ipsec.syslog.enc="$debug"
+	uci -q set ipsec.syslog.esp="$debug"
+
+	uci -q delete ipsec.globals.debug
+	uci commit ipsec
+}
+
 main() {
 	migrate_ipsec
 	migrate_ignore_routing_tables
@@ -205,6 +242,7 @@ main() {
 	migrate_local_ip
 	migrate_local_sourceip
 	migrate_to_child
+	migrate_debug
 }
 
 main
