@@ -139,6 +139,63 @@ migrate_local_sourceip() {
 	config_foreach migrate_local_sourceip_vips remote
 }
 
+migrate_to_child() {
+	local tunnel_sections=""
+	local transport_sections=""
+	local remote_sections=""
+
+	local section
+
+	collect_tunnel() {
+		tunnel_sections="${tunnel_sections} $1"
+	}
+	collect_transport() {
+		transport_sections="${transport_sections} $1"
+	}
+	collect_remote() {
+		remote_sections="${remote_sections} $1"
+	}
+
+	config_load "ipsec"
+	config_foreach collect_tunnel "tunnel"
+	config_foreach collect_transport "transport"
+	config_foreach collect_remote "remote"
+
+	migrate_simple() {
+		cfg="$1"
+		mode="$2"
+
+		uci set ipsec.${cfg}=child
+		uci -q set ipsec.${cfg}.mode="$mode"
+	}
+
+	for section in $tunnel_sections; do
+		migrate_simple "$section" "tunnel"
+	done
+
+	for section in $transport_sections; do
+		migrate_simple "$section" "transport"
+	done
+
+	for section in $remote_sections; do
+		local tunnel_refs=""
+		local transport_refs=""
+
+		config_get tunnel_refs "$section" tunnel ""
+		config_get transport_refs "$section" transport ""
+
+		if [ -n "$tunnel_refs" ] || [ -n "$transport_refs" ]; then
+			uci -q delete ipsec.${section}.tunnel
+			uci -q delete ipsec.${section}.transport
+			for ref in $tunnel_refs $transport_refs; do
+				uci add_list ipsec.${section}.child="$ref"
+			done
+		fi
+	done
+
+	uci commit ipsec
+}
+
 main() {
 	migrate_ipsec
 	migrate_ignore_routing_tables
@@ -147,6 +204,7 @@ main() {
 	migrate_remote_gateway
 	migrate_local_ip
 	migrate_local_sourceip
+	migrate_to_child
 }
 
 main
