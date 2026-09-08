@@ -5,8 +5,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=banip
-PKG_VERSION:=1.8.12
-PKG_RELEASE:=3
+PKG_VERSION:=1.8.13
+PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
 
@@ -23,7 +23,7 @@ endef
 define Package/banip/description
 banIP blocks IPs via named nftables Sets.
 banIP supports many IP blocklist feeds and provides a log service to block suspicious IPs in realtime.
-Please see https://github.com/openwrt/packages/blob/master/net/banip/files/README.md for further information.
+Please see https://github.com/openwrt/packages/blob/master/net/banip/README.md for further information.
 
 endef
 

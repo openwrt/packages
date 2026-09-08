@@ -92,6 +92,9 @@ ban_dev=""
 ban_vlanallow=""
 ban_vlanblock=""
 ban_uplink=""
+ban_uplink_add=""
+ban_uplink_del=""
+ban_devup=""
 ban_fetchcmd=""
 ban_fetchparm=""
 ban_fetchinsecure=""
@@ -721,59 +724,170 @@ f_getdev() {
 # get local uplink
 #
 f_getup() {
-	local uplink iface timestamp ip
+	local uplink dev iface timestamp ip old
+
+	ban_uplink=""
+	ban_uplink_add=""
+	ban_uplink_del=""
+	ban_devup=""
+
+	# single pass over the wan interfaces, collects the current
+	# devices and uplink addresses
+	#
+	network_flush_cache
+	for iface in ${ban_ifv4} ${ban_ifv6}; do
+		network_get_device dev "${iface}"
+		if [ -n "${dev}" ]; then
+			case " ${ban_devup} " in
+			*" ${dev} "*) ;;
+
+			*)
+				ban_devup="${ban_devup}${dev} "
+				;;
+			esac
+		fi
+		[ "${ban_autoallowlist}" = "1" ] && [ "${ban_autoallowuplink}" != "disable" ] || continue
+		if [ "${ban_autoallowuplink}" = "subnet" ]; then
+			network_get_subnet uplink "${iface}"
+		elif [ "${ban_autoallowuplink}" = "ip" ]; then
+			network_get_ipaddr uplink "${iface}"
+		fi
+		if [ -n "${uplink}" ]; then
+			case " ${ban_uplink} " in
+			*" ${uplink} "*) ;;
+
+			*)
+				ban_uplink="${ban_uplink}${uplink} "
+				;;
+			esac
+		fi
+		if [ "${ban_autoallowuplink}" = "subnet" ]; then
+			network_get_subnet6 uplink "${iface}"
+		elif [ "${ban_autoallowuplink}" = "ip" ]; then
+			network_get_ipaddr6 uplink "${iface}"
+		fi
+		if [ -n "${uplink%fe80::*}" ]; then
+			case " ${ban_uplink} " in
+			*" ${uplink} "*) ;;
+
+			*)
+				ban_uplink="${ban_uplink}${uplink} "
+				;;
+			esac
+		fi
+	done
+	ban_uplink="$(f_trim "${ban_uplink}")"
 
 	if [ "${ban_autoallowlist}" = "1" ] && [ "${ban_autoallowuplink}" != "disable" ]; then
-		for iface in ${ban_ifv4} ${ban_ifv6}; do
-			network_flush_cache
-			if [ "${ban_autoallowuplink}" = "subnet" ]; then
-				network_get_subnet uplink "${iface}"
-			elif [ "${ban_autoallowuplink}" = "ip" ]; then
-				network_get_ipaddr uplink "${iface}"
-			fi
-			if [ -n "${uplink}" ]; then
+		# compare the detected uplink with the local allowlist and
+		# track the differences for an in-place refresh (see f_refresh)
+		#
+		if [ -n "${ban_uplink}" ]; then
+			for ip in $("${ban_sedcmd}" -n "/# uplink added on /s/[[:space:]].*$//p" "${ban_allowlist}" 2>/dev/null); do
+				old="${old}${ip} "
+			done
+			for ip in ${old}; do
 				case " ${ban_uplink} " in
-				*" ${uplink} "*) ;;
+				*" ${ip} "*) ;;
 
 				*)
-					ban_uplink="${ban_uplink}${uplink} "
+					ban_uplink_del="${ban_uplink_del}${ip} "
 					;;
 				esac
-			fi
-			if [ "${ban_autoallowuplink}" = "subnet" ]; then
-				network_get_subnet6 uplink "${iface}"
-			elif [ "${ban_autoallowuplink}" = "ip" ]; then
-				network_get_ipaddr6 uplink "${iface}"
-			fi
-			if [ -n "${uplink%fe80::*}" ]; then
-				case " ${ban_uplink} " in
-				*" ${uplink} "*) ;;
+			done
+			for ip in ${ban_uplink}; do
+				case " ${old} " in
+				*" ${ip} "*) ;;
 
 				*)
-					ban_uplink="${ban_uplink}${uplink} "
+					ban_uplink_add="${ban_uplink_add}${ip} "
 					;;
 				esac
-			fi
-		done
-		ban_uplink="$(f_trim "${ban_uplink}")"
-		for ip in ${ban_uplink}; do
-			if ! "${ban_grepcmd}" -q "${ip} " "${ban_allowlist}"; then
+			done
+			if [ -n "${ban_uplink_add}" ] || [ -n "${ban_uplink_del}" ]; then
 				"${ban_sedcmd}" -i "/# uplink added on /d" "${ban_allowlist}"
-				break
+				timestamp="$(date "+%Y-%m-%d %H:%M:%S")"
+				for ip in ${ban_uplink}; do
+					printf '%-45s%s\n' "${ip}" "# uplink added on ${timestamp}" >>"${ban_allowlist}"
+				done
+				for ip in ${ban_uplink_add}; do
+					f_log "info" "add uplink '${ip}' to local allowlist"
+				done
+				for ip in ${ban_uplink_del}; do
+					f_log "info" "remove uplink '${ip}' from local allowlist"
+				done
 			fi
-		done
-		timestamp="$(date "+%Y-%m-%d %H:%M:%S")"
-		for ip in ${ban_uplink}; do
-			if ! "${ban_grepcmd}" -q "${ip} " "${ban_allowlist}"; then
-				printf '%-45s%s\n' "${ip}" "# uplink added on ${timestamp}" >>"${ban_allowlist}"
-				f_log "info" "add uplink '${ip}' to local allowlist"
-			fi
-		done
+		fi
 	elif [ "${ban_autoallowlist}" = "1" ] && [ "${ban_autoallowuplink}" = "disable" ]; then
-		"${ban_sedcmd}" -i "/# uplink added on /d" "${ban_allowlist}"
+		if "${ban_grepcmd}" -q "# uplink added on " "${ban_allowlist}"; then
+			"${ban_sedcmd}" -i "/# uplink added on /d" "${ban_allowlist}"
+		fi
 	fi
 
-	f_log "debug" "f_getup   ::: auto-allow/auto-uplink: ${ban_autoallowlist}/${ban_autoallowuplink}, uplink: ${ban_uplink:-"-"}"
+	f_log "debug" "f_getup   ::: auto-allow/auto-uplink: ${ban_autoallowlist}/${ban_autoallowuplink}, devices: ${ban_devup:-"-"}, uplink: ${ban_uplink:-"-"}, add/remove: ${ban_uplink_add:-"-"}/${ban_uplink_del:-"-"}"
+}
+
+# refresh the wan state in place, triggered by an interface event
+# return 0 if handled, 1 to escalate to a full service run
+#
+f_refresh() {
+	local dev ip addv4 addv6 delv4 delv6 set_list set_name
+
+	# require an initialized nft namespace
+	#
+	"${ban_nftcmd}" list chain inet banIP pre-routing >/dev/null 2>&1 || return 1
+
+	f_getup
+
+	# escalate on new or renamed wan devices, the rulesets match on
+	# ban_dev - a device that is merely gone means the interface is
+	# currently down, that is handled by the uplink diff below
+	#
+	for dev in ${ban_devup}; do
+		case " ${ban_dev} " in
+		*" ${dev} "*) ;;
+
+		*)
+			return 1
+			;;
+		esac
+	done
+	[ -z "${ban_uplink_add}" ] && [ -z "${ban_uplink_del}" ] && return 0
+
+	# update the allowlist Sets in a single atomic transaction,
+	# a rejected batch escalates to a full run
+	#
+	for ip in ${ban_uplink_del}; do
+		if [ "${ip##*:}" = "${ip}" ]; then
+			delv4="${delv4}${ip}, "
+		else
+			delv6="${delv6}${ip}, "
+		fi
+	done
+	for ip in ${ban_uplink_add}; do
+		if [ "${ip##*:}" = "${ip}" ]; then
+			addv4="${addv4}${ip}, "
+		else
+			addv6="${addv6}${ip}, "
+		fi
+	done
+	set_list="allowlist"
+	if [ "${ban_allowlistonly}" = "1" ] && [ "${ban_monitorallowed}" = "1" ]; then
+		set_list="${set_list} allowlist.local"
+	fi
+	if ! {
+		for set_name in ${set_list}; do
+			[ -n "${delv4}" ] && printf 'delete element inet banIP %s.v4 { %s }\n' "${set_name}" "${delv4%, }"
+			[ -n "${delv6}" ] && printf 'delete element inet banIP %s.v6 { %s }\n' "${set_name}" "${delv6%, }"
+			[ -n "${addv4}" ] && printf 'add element inet banIP %s.v4 { %s }\n' "${set_name}" "${addv4%, }"
+			[ -n "${addv6}" ] && printf 'add element inet banIP %s.v6 { %s }\n' "${set_name}" "${addv6%, }"
+		done
+	} | "${ban_nftcmd}" -f - >/dev/null 2>&1; then
+		return 1
+	fi
+
+	f_log "debug" "f_refresh ::: devices: ${ban_devup}, uplink: ${ban_uplink}"
+	return 0
 }
 
 # get feed information
