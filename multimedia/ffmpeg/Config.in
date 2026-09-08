@@ -63,6 +63,14 @@ config FFMPEG_V4L2_M2M
 	bool "V4L2 mem2mem (stateful) decoders/encoders"
 	default y
 
+config FFMPEG_V4L2_REQUEST
+	bool "V4L2 Request API (stateless) hwaccels"
+	select FFMPEG_LIBDRM
+	default y
+	help
+	  Stateless V4L2 hardware decoding (cedrus, hantro, rkvdec, ...)
+	  exporting DRM_PRIME frames. Requires libdrm and libudev.
+
 # VA-API support is prepared but disabled until a libva package exists in
 # the feeds; uncomment (and the DEPENDS line in the Makefile) once it does.
 #config FFMPEG_VAAPI
