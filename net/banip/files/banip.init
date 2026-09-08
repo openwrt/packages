@@ -58,9 +58,16 @@ boot() {
 
 start_service() {
 	if "${ban_init}" enabled; then
+		if [ "${1}" = "refresh" ]; then
+			f_conf
+			if f_refresh; then
+				rm -rf "${ban_lock}"
+				return 0
+			fi
+		fi
 		f_rmpid
 		procd_open_instance "banip-service"
-		procd_set_param command "${ban_service}" "${@:-"${action}"}"
+		procd_set_param command "${ban_service}" "${action}"
 		procd_set_param pidfile "${ban_pidfile}"
 		procd_set_param nice "$(uci_get banip global ban_nicelimit "0")"
 		procd_set_param limits nofile="$(uci_get banip global ban_filelimit "1024")"
@@ -122,6 +129,6 @@ service_triggers() {
 
 	PROCD_RELOAD_DELAY="$((delay * 1000))"
 	for iface in ${trigger}; do
-		procd_add_interface_trigger "interface.*.up" "${iface}" "${ban_init}" start
+		procd_add_interface_trigger "interface.*" "${iface}" "${ban_init}" start refresh
 	done
 }
