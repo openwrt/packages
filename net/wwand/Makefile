@@ -342,12 +342,15 @@ define Package/wwand-mhi/description
   Adding wwand-mbim is worth weighing on a QMI-driven MHI modem: many of them
   expose no DUN channel and therefore no AT port at all, and wwand can then
   carry AT over the modem's MBIM channel instead (Quectel QDU). It costs
-  nothing on this path any more: the USB glue of every backend is now a
-  USB_SUPPORT-conditional dependency, so on a PCIe-only target the backends are
-  selectable and pull no USB stack, while a USB target gets exactly what it did
-  before. Without wwand-mbim the capability is simply absent — vendor AT
-  commands, the protocol switch and AT telemetry are unavailable, which is a
-  limitation rather than a failure.
+  nothing on this path any more: the USB glue of both backends that can serve an
+  MHI modem — wwand-qmi and wwand-mbim — is a USB_SUPPORT-conditional
+  dependency, so on a PCIe-only target they are selectable and pull no USB
+  stack, while a USB target gets exactly what it did before. (wwand-ncm is
+  deliberately not in that sweep: it drives a cdc_ncm/cdc_ether or rndis_host
+  netdev and has no non-USB transport, so its kmods stay hard dependencies and
+  keep it unselectable where it could not work anyway.) Without wwand-mbim the
+  capability is simply absent — vendor AT commands, the protocol switch and AT
+  telemetry are unavailable, which is a limitation rather than a failure.
 endef
 
 define Package/wwand-mhi/install
