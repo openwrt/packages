@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-bad
 PKG_VERSION:=1.28.7
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=gst-plugins-bad-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gst-plugins-bad/
@@ -429,7 +429,7 @@ $(eval $(call GstBuildPlugin,speed,speed support,audio,,))
 $(eval $(call GstBuildPlugin,subenc,subenc support,controller,,))
 $(eval $(call GstBuildPlugin,switchbin,switchbin support,,,))
 $(eval $(call GstBuildPlugin,timecode,timecode support,,,))
-$(eval $(call GstBuildPlugin,v4l2codecs,V4L2 stateless codecs support,codecs,,))
+$(eval $(call GstBuildPlugin,v4l2codecs,V4L2 stateless codecs support,codecs,,+libgudev))
 $(eval $(call GstBuildPlugin,videofiltersbad,videofiltersbad support,,,))
 $(eval $(call GstBuildPlugin,videoframe_audiolevel,videoframe_audiolevel support,,,))
 $(eval $(call GstBuildPlugin,videoparsersbad,videoparsersbad support,codecparsers,,))
