@@ -3,12 +3,13 @@ menu "FFmpeg configuration"
 comment "Licensing"
 
 config FFMPEG_GPL
-	bool "Include GPL components (GPL filters)"
+	bool "Include GPL components (libpostproc, GPL filters)"
 	default y
 	help
-	  Build libffmpeg with --enable-gpl. This adds the
-	  GPL-licensed filters, and the resulting libraries are
-	  distributed under the GPL-2.0-or-later.
+	  Build libffmpeg with --enable-gpl. This adds libpostproc
+	  and the GPL-licensed filters, and the resulting libraries are
+	  distributed under the GPL-2.0-or-later. Kodi requires
+	  libpostproc.
 
 config FFMPEG_VERSION3
 	bool "Allow (L)GPL v3 components"
