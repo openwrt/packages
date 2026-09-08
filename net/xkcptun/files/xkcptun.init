@@ -1,0 +1,265 @@
+#!/bin/sh /etc/rc.common
+#
+# Copyright (C) 2026 Dengfeng Liu <liudf0716@gmail.com>
+#
+# This is free software, licensed under the GNU General Public License v3.
+# See /LICENSE for more information.
+#
+
+USE_PROCD=1
+START=99
+
+confdir=/var/etc/xkcptun
+bindir=/usr/bin
+
+append_toml_global() {
+	local cfg="$1"
+	local cfgtype="$2"
+	local outfile="$3"
+
+	eval "$(validate_global_options "$cfg" validate_mklocal)"
+	validate_global_options "$cfg" || return 0
+
+	[ -z "$remote_addr" ] || echo "remote_addr = \"$remote_addr\"" >> "$outfile"
+	[ -z "$remote_port" ] || echo "remote_port = $remote_port" >> "$outfile"
+	[ -z "$key" ] || echo "key = \"$key\"" >> "$outfile"
+	[ -z "$local_interface" ] || echo "local_interface = \"$local_interface\"" >> "$outfile"
+	[ -z "$local_port" ] || echo "local_port = $local_port" >> "$outfile"
+	[ -z "$mode" ] || echo "mode = \"$mode\"" >> "$outfile"
+	[ -z "$mtu" ] || echo "mtu = $mtu" >> "$outfile"
+	[ -z "$sndwnd" ] || echo "sndwnd = $sndwnd" >> "$outfile"
+	[ -z "$rcvwnd" ] || echo "rcvwnd = $rcvwnd" >> "$outfile"
+	[ -z "$datashard" ] || echo "data_shard = $datashard" >> "$outfile"
+	[ -z "$parityshard" ] || echo "parity_shard = $parityshard" >> "$outfile"
+	[ -z "$dscp" ] || echo "dscp = $dscp" >> "$outfile"
+	[ -z "$nodelay" ] || echo "nodelay = $nodelay" >> "$outfile"
+	[ -z "$interval" ] || echo "interval = $interval" >> "$outfile"
+	[ -z "$resend" ] || echo "resend = $resend" >> "$outfile"
+	[ -z "$nc" ] || echo "nc = $nc" >> "$outfile"
+	[ -z "$lossctrl" ] || echo "loss_ctrl = $lossctrl" >> "$outfile"
+	[ -z "$pacing" ] || echo "pacing = $pacing" >> "$outfile"
+	[ -z "$fec" ] || echo "fec = $fec" >> "$outfile"
+	[ -z "$sockbuf" ] || echo "sock_buf = $sockbuf" >> "$outfile"
+	[ -z "$keepalive" ] || echo "keepalive = $keepalive" >> "$outfile"
+	[ -z "$conntimeout" ] || echo "conn_timeout = $conntimeout" >> "$outfile"
+
+	return 0
+}
+
+append_toml_tunnel() {
+	local cfg="$1"
+	local cfgtype="$2"
+	local outfile="$3"
+
+	eval "$("validate_${cfgtype}_section" "$cfg" validate_mklocal)"
+	"validate_${cfgtype}_section" "$cfg" || return 1
+	[ "${enabled:-1}" -eq 1 ] || return 1
+	[ -n "$local_port" ] || return 1
+
+	cat << EOF >> "$outfile"
+
+[[tunnel]]
+name = "${name:-$cfg}"
+local_interface = "${local_interface:-br-lan}"
+local_port = $local_port
+EOF
+	[ -z "$proto" ] || echo "proto = \"$proto\"" >> "$outfile"
+	[ -z "$proxy_type" ] || echo "proxy_type = \"$proxy_type\"" >> "$outfile"
+	[ -z "$target_port" ] || echo "target_port = $target_port" >> "$outfile"
+	[ -z "$target_addr" ] || echo "target_addr = \"$target_addr\"" >> "$outfile"
+	[ -z "$remote_addr" ] || echo "remote_addr = \"$remote_addr\"" >> "$outfile"
+	[ -z "$remote_port" ] || echo "remote_port = $remote_port" >> "$outfile"
+	[ -z "$key" ] || echo "key = \"$key\"" >> "$outfile"
+	[ -z "$mode" ] || echo "mode = \"$mode\"" >> "$outfile"
+	[ -z "$mtu" ] || echo "mtu = $mtu" >> "$outfile"
+	[ -z "$sndwnd" ] || echo "sndwnd = $sndwnd" >> "$outfile"
+	[ -z "$rcvwnd" ] || echo "rcvwnd = $rcvwnd" >> "$outfile"
+	[ -z "$datashard" ] || echo "data_shard = $datashard" >> "$outfile"
+	[ -z "$parityshard" ] || echo "parity_shard = $parityshard" >> "$outfile"
+	[ -z "$dscp" ] || echo "dscp = $dscp" >> "$outfile"
+	[ -z "$nodelay" ] || echo "nodelay = $nodelay" >> "$outfile"
+	[ -z "$interval" ] || echo "interval = $interval" >> "$outfile"
+	[ -z "$resend" ] || echo "resend = $resend" >> "$outfile"
+	[ -z "$nc" ] || echo "nc = $nc" >> "$outfile"
+	[ -z "$lossctrl" ] || echo "loss_ctrl = $lossctrl" >> "$outfile"
+	[ -z "$pacing" ] || echo "pacing = $pacing" >> "$outfile"
+	[ -z "$fec" ] || echo "fec = $fec" >> "$outfile"
+	[ -z "$sockbuf" ] || echo "sock_buf = $sockbuf" >> "$outfile"
+	[ -z "$keepalive" ] || echo "keepalive = $keepalive" >> "$outfile"
+	[ -z "$conntimeout" ] || echo "conn_timeout = $conntimeout" >> "$outfile"
+
+	return 0
+}
+
+start_daemon() {
+	local cfgtype="$1"
+	local bin="$bindir/xkcp_$cfgtype"
+	[ -x "$bin" ] || bin="$bindir/xkcptun-$cfgtype"
+	[ -x "$bin" ] || return
+
+	local conftoml="$confdir/$cfgtype.toml"
+	rm -f "$conftoml"
+
+	local mon_port=9086
+	[ "$cfgtype" = "server" ] && mon_port=9087
+
+	cat << EOF > "$conftoml"
+[global]
+syslog = true
+mon_port = $mon_port
+EOF
+
+	# Append global parameters if configured
+	append_global_match() {
+		local cfg="$1"
+		local match="$2"
+		[ "$cfg" = "$match" ] && append_toml_global "$cfg" "$match" "$conftoml"
+	}
+	config_foreach append_global_match global "$cfgtype"
+
+	local count=0
+	append_section() {
+		local cfg="$1"
+		[ "$cfg" = "global" ] && return
+		if append_toml_tunnel "$cfg" "$cfgtype" "$conftoml"; then
+			count=$((count + 1))
+		fi
+	}
+
+	config_foreach append_section "$cfgtype"
+
+	if [ "$cfgtype" = "client" ]; then
+		local cli_enabled
+		config_get_bool cli_enabled client enabled 0
+		if [ "$cli_enabled" -ne 1 ] || [ "$count" -eq 0 ]; then
+			rm -f "$conftoml"
+			return
+		fi
+	fi
+
+	if [ "$cfgtype" = "server" ]; then
+		local srv_enabled
+		config_get_bool srv_enabled server enabled 0
+		if [ "$srv_enabled" -ne 1 ]; then
+			rm -f "$conftoml"
+			return
+		fi
+	fi
+
+	procd_open_instance "$cfgtype"
+	procd_set_param command "$bin" -f --syslog -c "$conftoml"
+	procd_set_param file "$conftoml"
+	procd_set_param respawn
+	procd_close_instance
+}
+
+start_service() {
+	mkdir -p "$confdir"
+	# generated TOML files contain the pre-shared key: keep them private
+	chmod 0700 "$confdir"
+	umask 077
+	config_load xkcptun
+	start_daemon server
+	start_daemon client
+}
+
+stop_service() {
+	rm -rf "$confdir"
+}
+
+service_triggers() {
+	procd_add_reload_interface_trigger wan
+	procd_add_reload_interface_trigger lan
+	procd_add_reload_trigger xkcptun
+	procd_open_validate
+	validate_global_section
+	validate_server_section
+	validate_client_section
+	procd_close_validate
+}
+
+validate_mklocal() {
+	local tuple opts
+
+	shift 2
+	for tuple in "$@"; do
+		opts="${tuple%%:*} $opts"
+	done
+	[ -z "$opts" ] || echo "local $opts"
+}
+
+validate() {
+	uci_validate_section xkcptun "$@"
+}
+
+validate_common_options() {
+	local cfgtype="$1"; shift
+	local cfg="$1"; shift
+	local func="$1"; shift
+	local enabled_def="${1:-1}"; shift
+	local mode_profiles='"fast3", "fast2", "fast", "normal", "manual"'
+
+	"${func:-validate}" "$cfgtype" "$cfg" "$@" \
+		"enabled:bool:$enabled_def" \
+		'name:string' \
+		"mode:or($mode_profiles)" \
+		'mtu:uinteger' \
+		'sndwnd:uinteger' \
+		'rcvwnd:uinteger' \
+		'datashard:uinteger' \
+		'parityshard:uinteger' \
+		'dscp:uinteger' \
+		'nodelay:uinteger' \
+		'interval:uinteger' \
+		'resend:uinteger' \
+		'nc:uinteger' \
+		'lossctrl:uinteger' \
+		'pacing:uinteger' \
+		'fec:uinteger' \
+		'sockbuf:uinteger' \
+		'keepalive:uinteger' \
+		'conntimeout:uinteger' \
+		'key:string' \
+		'syslog:bool:1' \
+		'user:string'
+}
+
+validate_global_options() {
+	validate_common_options global "$1" "$2" 0 \
+		'remote_addr:host' \
+		'remote_port:port' \
+		'local_interface:string' \
+		'local_port:port'
+}
+
+validate_server_options() {
+	validate_common_options server "$1" "$2" 1 \
+		'local_interface:string:eth0' \
+		'local_port:port:9089' \
+		'target_addr:host' \
+		'target_port:port'
+}
+
+validate_client_options() {
+	validate_common_options client "$1" "$2" 1 \
+		'local_interface:string:br-lan' \
+		'local_port:port:9088' \
+		'proto:or("tcp", "udp")' \
+		'proxy_type:or("forward", "redir", "socks5", "transparent")' \
+		'target_addr:host' \
+		'target_port:port' \
+		'remote_addr:host' \
+		'remote_port:port'
+}
+
+validate_global_section() {
+	validate_global_options "$1" "$2"
+}
+
+validate_server_section() {
+	validate_server_options "$1" "$2"
+}
+
+validate_client_section() {
+	validate_client_options "$1" "$2"
+}
