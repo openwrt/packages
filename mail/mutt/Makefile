@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mutt
-PKG_VERSION:=2.1.5
-PKG_RELEASE:=2
+PKG_VERSION:=2.4.2
+PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=http://ftp.mutt.org/pub/mutt/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=92a309e47e363a97d62425bcb71adceae5ab5c4c413dbcac37fa98ed70c12be0
+PKG_HASH:=2703ff1a51a99c3163d4fd998ac22e982bbd5493d512a7c5bde716a8adba0394
 
 PKG_MAINTAINER:=Phil Eichinger <phil@zankapfel.net>
 PKG_LICENSE:=GPL-2.0-or-later

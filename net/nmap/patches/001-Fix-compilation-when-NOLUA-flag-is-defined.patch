@@ -1,0 +1,30 @@
+From 9126a3bac1d508619ba1eb2d451d5f915710c3eb Mon Sep 17 00:00:00 2001
+From: Ivan Pavlov <AuthorReflex@gmail.com>
+Date: Wed, 12 Aug 2026 11:21:17 +0300
+Subject: [PATCH] Fix compilation when NOLUA flag is defined
+
+Commit a24082eee41f ("Close/unload NSE with --release-mem to resolve
+false-positive memory leaks") added a call to function close_nse(),
+which is declared in file nse_main.h; this file is included conditionally
+when NOLUA flag is not defined. If the condition is not met, a compilation
+error occurs. Fixing by adding conditional compilation for the function call.
+
+Fixes: a24082eee41f ("Close/unload NSE with --release-mem to resolve false-positive memory leaks")
+
+Signed-off-by: Ivan Pavlov <AuthorReflex@gmail.com>
+---
+ nmap.cc | 2 ++
+ 1 file changed, 2 insertions(+)
+
+--- a/nmap.cc
++++ b/nmap.cc
+@@ -1858,7 +1858,9 @@ void nmap_free_mem() {
+   AllProbes::service_scan_free();
+   traceroute_hop_cache_clear();
+   nsock_set_default_engine(NULL);
++#ifndef NOLUA
+   close_nse();
++#endif
+ }
+ 
+ int nmap_main(int argc, char *argv[]) {

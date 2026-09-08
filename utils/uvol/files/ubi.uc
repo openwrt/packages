@@ -27,6 +27,18 @@ function mkdtemp() {
 	return dirname;
 }
 
+function ubirename(from_name, to_name) {
+	return system([ "ubirename", sprintf("/dev/%s", ubidev), from_name, to_name ]);
+}
+
+function ubirmvol(volnum) {
+	return system([ "ubirmvol", sprintf("/dev/%s", ubidev), "-n", sprintf("%d", +volnum) ]);
+}
+
+function ubiblock(action, vol_dev) {
+	return system([ "ubiblock", action, sprintf("/dev/%s", vol_dev) ]);
+}
+
 function ubi_get_dev(vol_name) {
 	let wcstring = sprintf("uvol-[rw][owpd]-%s", vol_name);
 	for (vol_dir in fs.glob(sprintf("/sys/class/ubi/%s_*", ubidev))) {
@@ -44,8 +56,8 @@ function vol_get_mode(vol_dev, mode) {
 
 function mkubifs(vol_dev) {
 	let temp_mp = mkdtemp();
-	system(sprintf("mount -t ubifs /dev/%s %s", vol_dev, temp_mp));
-	system(sprintf("umount %s", temp_mp));
+	system([ "mount", "-t", "ubifs", sprintf("/dev/%s", vol_dev), temp_mp ]);
+	system([ "umount", temp_mp ]);
 	fs.rmdir(temp_mp);
 	return 0;
 }
@@ -74,6 +86,7 @@ function ubi_init(ctx) {
 
 	register = ctx.register;
 	unregister = ctx.unregister;
+	umount_dev = ctx.umount_dev;
 
 	return true;
 }
@@ -149,7 +162,8 @@ function ubi_create(vol_name, vol_size, vol_mode) {
 	if (vol_dev)
 		return 17;
 
-	let ret = system(sprintf("ubimkvol /dev/%s -N \"uvol-%s-%s\" -s %d", ubidev, mode, vol_name, vol_size));
+	let ret = system([ "ubimkvol", sprintf("/dev/%s", ubidev), "-N",
+			   sprintf("uvol-%s-%s", mode, vol_name), "-s", sprintf("%d", vol_size) ]);
 	if (ret != 0)
 		return ret;
 
@@ -157,7 +171,7 @@ function ubi_create(vol_name, vol_size, vol_mode) {
 	if (!vol_dev)
 		return 2;
 
-	let ret = system(sprintf("ubiupdatevol -t /dev/%s", vol_dev));
+	let ret = system([ "ubiupdatevol", "-t", sprintf("/dev/%s", vol_dev) ]);
 	if (ret != 0)
 		return ret;
 
@@ -168,7 +182,7 @@ function ubi_create(vol_name, vol_size, vol_mode) {
 	if (ret != 0)
 		return ret;
 
-	let ret = system(sprintf("ubirename /dev/%s \"uvol-wp-%s\" \"uvol-wd-%s\"", ubidev, vol_name, vol_name));
+	let ret = ubirename(sprintf("uvol-wp-%s", vol_name), sprintf("uvol-wd-%s", vol_name));
 	if (ret != 0)
 		return ret;
 
@@ -199,7 +213,8 @@ function ubi_resize(vol_name, vol_size) {
 	if (req_lebs < cur_lebs)
 		return 22;
 
-	return system(sprintf("ubirsvol /dev/%s -N \"uvol-rw-%s\" -s %d", ubidev, vol_name, vol_size));
+	return system([ "ubirsvol", sprintf("/dev/%s", ubidev), "-N",
+			sprintf("uvol-rw-%s", vol_name), "-s", sprintf("%d", vol_size) ]);
 }
 
 function ubi_get_deleting() {
@@ -243,8 +258,7 @@ function ubi_purge_incomplete(vol_name, match_size) {
 			if (v.lebs != want)
 				continue;
 		}
-		let volnum = split(v.dev, "_")[1];
-		system(sprintf("ubirmvol /dev/%s -n %d 2>/dev/null", ubidev, volnum));
+		ubirmvol(split(v.dev, "_")[1]);
 	}
 	return 0;
 }
@@ -255,13 +269,13 @@ function ubi_reap() {
 		let blkdev = sprintf("ubiblock%s", substr(vol_dev, 3));
 		let isblock = fs.access(sprintf("/dev/%s", blkdev), "r");
 
-		if (isblock && system(sprintf("ubiblock --remove /dev/%s 2>/dev/null", vol_dev)) != 0)
+		if (isblock && ubiblock("--remove", vol_dev) != 0)
 			continue;
 
 		if (!isblock)
-			system(sprintf("umount /dev/%s 2>/dev/null", vol_dev));
+			umount_dev(vol_dev);
 
-		if (system(sprintf("ubirmvol /dev/%s -n %d 2>/dev/null", ubidev, volnum)) != 0)
+		if (ubirmvol(volnum) != 0)
 			continue;
 
 		unregister(isblock ? blkdev : vol_dev);
@@ -275,7 +289,7 @@ function ubi_remove(vol_name) {
 		return 2;
 
 	let vol_ubiname = read_file(sprintf("/sys/class/ubi/%s/name", vol_dev));
-	let ret = system(sprintf("ubirename /dev/%s \"%s\" \"uvol-dd-%s\"", ubidev, vol_ubiname, vol_name));
+	let ret = ubirename(vol_ubiname, sprintf("uvol-dd-%s", vol_name));
 	if (ret != 0)
 		return ret;
 
@@ -296,17 +310,17 @@ function ubi_up(vol_name) {
 		return 16;
 
 	if (vol_mode == "rd") {
-		let ret = system(sprintf("ubirename /dev/%s \"uvol-rd-%s\" \"uvol-ro-%s\"", ubidev, vol_name, vol_name));
+		let ret = ubirename(sprintf("uvol-rd-%s", vol_name), sprintf("uvol-ro-%s", vol_name));
 		if (ret != 0)
 			return ret;
 
-		ret = system(sprintf("ubiblock --create /dev/%s", vol_dev));
+		ret = ubiblock("--create", vol_dev);
 		if (ret != 0)
 			return ret;
 
 		return register(vol_name, sprintf("ubiblock%s", substr(vol_dev, 3)), true);
 	} else if (vol_mode == "wd") {
-		let ret = system(sprintf("ubirename /dev/%s \"uvol-wd-%s\" \"uvol-rw-%s\"", ubidev, vol_name, vol_name));
+		let ret = ubirename(sprintf("uvol-wd-%s", vol_name), sprintf("uvol-rw-%s", vol_name));
 		if (ret != 0)
 			return ret;
 
@@ -329,14 +343,14 @@ function ubi_down(vol_name) {
 		return 16;
 	else if (vol_mode == "ro") {
 		unregister(sprintf("ubiblock%s", substr(vol_dev, 3)));
-		system(sprintf("umount /dev/ubiblock%s 2>&1 >/dev/null", substr(vol_dev, 3)));
-		system(sprintf("ubiblock --remove /dev/%s", vol_dev));
-		let ret = system(sprintf("ubirename /dev/%s \"uvol-ro-%s\" \"uvol-rd-%s\"", ubidev, vol_name, vol_name));
+		umount_dev(sprintf("ubiblock%s", substr(vol_dev, 3)));
+		ubiblock("--remove", vol_dev);
+		let ret = ubirename(sprintf("uvol-ro-%s", vol_name), sprintf("uvol-rd-%s", vol_name));
 		return ret;
 	} else if (vol_mode == "rw") {
 		unregister(vol_dev);
-		system(sprintf("umount /dev/%s 2>&1 >/dev/null", vol_dev));
-		let ret = system(sprintf("ubirename /dev/%s \"uvol-rw-%s\" \"uvol-wd-%s\"", ubidev, vol_name, vol_name));
+		umount_dev(vol_dev);
+		let ret = ubirename(sprintf("uvol-rw-%s", vol_name), sprintf("uvol-wd-%s", vol_name));
 		return ret;
 	}
 	return 0;
@@ -375,7 +389,7 @@ function ubi_register_active() {
 		let vol_mode = substr(vol_ubiname, 5, 2);
 
 		if (vol_mode == "ro") {
-			system(sprintf("ubiblock --create /dev/%s", vol_dev));
+			ubiblock("--create", vol_dev);
 			register(vol_name, sprintf("ubiblock%s", substr(vol_dev, 3)), true);
 		} else {
 			register(vol_name, vol_dev, false);
@@ -408,14 +422,15 @@ function ubi_write(vol_name, write_size, verify) {
 	if (vol_mode != "wo")
 		return 22;
 
-	let ret = system(sprintf("ubiupdatevol -s %d /dev/%s -", write_size, vol_dev));
+	let ret = system([ "ubiupdatevol", "-s", sprintf("%d", write_size),
+			   sprintf("/dev/%s", vol_dev), "-" ]);
 	if (ret)
 		return ret;
 
 	if (verify && !verify(sprintf("/dev/%s", vol_dev)))
 		return 74;
 
-	system(sprintf("ubirename /dev/%s \"uvol-wo-%s\" \"uvol-rd-%s\"", ubidev, vol_name, vol_name));
+	ubirename(sprintf("uvol-wo-%s", vol_name), sprintf("uvol-rd-%s", vol_name));
 
 	return 0;
 }

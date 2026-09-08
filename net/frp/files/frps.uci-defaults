@@ -1,0 +1,105 @@
+#!/bin/sh
+
+. /lib/functions.sh
+
+changed=0
+init_section=
+package=frps
+
+find_init_section() {
+	[ -z "$init_section" ] && init_section="$1"
+	return 0
+}
+
+set_if_empty() {
+	local section="$1"
+	local option="$2"
+	local value="$3"
+	local cur
+
+	config_get cur "$section" "$option"
+
+	if [ -z "$cur" ]; then
+		uci_set "$package" "$section" "$option" "$value"
+		changed=1
+	fi
+}
+
+copy_if_empty() {
+	local section="$1"
+	local old_option="$2"
+	local new_option="$3"
+	local value
+
+	config_get value "$section" "$old_option"
+	[ -n "$value" ] || return 0
+
+	set_if_empty "$section" "$new_option" "$value"
+}
+
+upgrade_common() {
+	local section="$1"
+	local dashboard_tls_mode
+	local tls_only
+	local nat_hole_hours
+
+	[ "$section" = "common" ] || return 0
+
+	set_if_empty "$section" bind_addr 0.0.0.0
+	set_if_empty "$section" bind_port 7000
+	set_if_empty "$section" authentication_method token
+	set_if_empty "$section" max_pool_count 5
+	set_if_empty "$section" tcp_mux true
+	set_if_empty "$section" detailed_errors_to_client true
+	set_if_empty "$section" pprof_enable false
+	set_if_empty "$section" enable_prometheus false
+
+	config_get tls_only "$section" tls_only
+	if [ -n "$tls_only" ]; then
+		set_if_empty "$section" tls_force "$tls_only"
+	else
+		set_if_empty "$section" tls_force false
+	fi
+
+	config_get dashboard_tls_mode "$section" dashboard_tls_mode
+	if [ -n "$dashboard_tls_mode" ]; then
+		set_if_empty "$section" admin_tls_enable "$dashboard_tls_mode"
+	else
+		set_if_empty "$section" admin_tls_enable false
+	fi
+
+	copy_if_empty "$section" dashboard_addr admin_addr
+	copy_if_empty "$section" dashboard_port admin_port
+	copy_if_empty "$section" dashboard_user admin_user
+	copy_if_empty "$section" dashboard_pwd admin_pwd
+	copy_if_empty "$section" dashboard_tls_cert_file admin_tls_cert_file
+	copy_if_empty "$section" dashboard_tls_key_file admin_tls_key_file
+
+	config_get nat_hole_hours "$section" nat_hole_analysis_data_reserve_hours
+	[ -n "$nat_hole_hours" ] && \
+		set_if_empty "$section" nathole_analysis_data_reserve_hours "$nat_hole_hours"
+
+	set_if_empty "$section" log_file console
+	set_if_empty "$section" log_level info
+	set_if_empty "$section" log_max_days 3
+}
+
+upgrade_init() {
+	if [ -z "$init_section" ]; then
+		init_section="$(uci add "$package" init)" || return 0
+		changed=1
+	fi
+
+	set_if_empty "$init_section" stdout 1
+	set_if_empty "$init_section" stderr 1
+	set_if_empty "$init_section" respawn 1
+}
+
+config_load "$package"
+config_foreach find_init_section init
+upgrade_init
+config_foreach upgrade_common conf
+
+[ "$changed" -eq 1 ] && uci_commit "$package"
+
+exit 0

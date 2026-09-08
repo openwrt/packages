@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-vcs-versioning
-PKG_VERSION:=1.1.1
+PKG_VERSION:=2.2.4
 PKG_RELEASE:=1
 
 PYPI_NAME:=vcs-versioning
 PYPI_SOURCE_NAME:=vcs_versioning
-PKG_HASH:=fabd75a3cab7dd8ac02fe24a3a9ba936bf258667b5a62ed468c9a1da0f5775bc
+PKG_HASH:=ed718fdee42170e128a8add6f23f53aa64dc7d9ab2de87d3083a691df881a809
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE

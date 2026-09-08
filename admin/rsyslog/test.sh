@@ -2,7 +2,7 @@
 
 case "$1" in
 rsyslog)
-	rsyslogd -v 2>&1 | grep -qF "$2" || {
+	rsyslogd -v 2>&1 | grep -F "$2" || {
 		echo "FAIL: rsyslogd -v did not print expected version '$2'"
 		exit 1
 	}

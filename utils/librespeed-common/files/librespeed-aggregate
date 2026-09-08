@@ -1,0 +1,200 @@
+#!/usr/bin/env ucode
+// Reduces completed days of raw measurement history to one line per day --
+// min/avg/max over that day's samples, not a measurement itself -- and
+// appends them to the archive on persistent storage. Runs from cron shortly
+// after midnight; librespeed.init keeps that entry in step with UCI.
+//
+// Only days strictly before today are archived: a day's aggregate is written
+// once and never revisited, which is what makes reruns idempotent without any
+// marker file -- a day already present in the archive is simply skipped.
+// Today's raw measurements stay in RAM only; if power is lost they are gone,
+// which the Settings page says out loud.
+
+'use strict';
+
+import { open, readfile, rename, mkdir, unlink, error } from 'fs';
+
+// Packaging checks probe every executable for these.
+if (length(ARGV) > 0) {
+	if (ARGV[0] == '--version') {
+		print("librespeed-common %%VERSION%%\n");
+		exit(0);
+	}
+	print("Usage: librespeed-aggregate\n" +
+		"Reduces completed days of measurement history to daily min/avg/max\n" +
+		"aggregates. Runs from cron; takes no arguments.\n");
+	exit(0);
+}
+import { cursor } from 'uci';
+
+const METRICS = [ 'download_mbps', 'upload_mbps', 'ping_ms', 'jitter_ms' ];
+
+const uci = cursor();
+
+function conf(section, option, fallback) {
+	const v = uci.get('librespeed', section, option);
+
+	return (v == null || v == '') ? fallback : v;
+}
+
+if (conf('history', 'enabled', '1') == '0')
+	exit(0);
+
+const raw_path = conf('history', 'path', '/tmp/librespeed/history.jsonl');
+const archive_path = conf('history', 'archive_path', '');
+const archive_days = int(conf('history', 'archive_retention', '365d')) || 365;
+
+if (archive_path == '')
+	exit(0);
+
+function read_lines(path) {
+	const out = [];
+	const f = open(path, 'r');
+
+	if (!f)
+		return out;
+
+	for (let line = f.read('line'); length(line); line = f.read('line')) {
+		try {
+			push(out, json(line));
+		}
+		catch (e) {
+			continue;
+		}
+	}
+
+	f.close();
+
+	return out;
+}
+
+function day_key(epoch) {
+	const lt = localtime(epoch);
+
+	return sprintf('%04d-%02d-%02d', lt.year, lt.mon, lt.mday);
+}
+
+function day_start(key) {
+	const p = split(key, '-');
+
+	return timelocal({
+		year: int(p[0]), mon: int(p[1]), mday: int(p[2]),
+		hour: 0, min: 0, sec: 0
+	});
+}
+
+function round2(v) {
+	return int(v * 100 + 0.5) / 100.0;
+}
+
+const today = day_key(time());
+
+// Which days the archive already holds. Entries carry the day in `timestamp`.
+const archive = read_lines(archive_path);
+const have = {};
+
+for (let e in archive)
+	have[e.timestamp] = true;
+
+// Group raw lines by local calendar day, completed days only.
+const days = {};
+
+for (let e in read_lines(raw_path)) {
+	const epoch = int(e?.epoch ?? 0);
+
+	if (!epoch)
+		continue;
+
+	const key = day_key(epoch);
+
+	if (key >= today || have[key])
+		continue;
+
+	days[key] = days[key] ?? [];
+	push(days[key], e);
+}
+
+let changed = false;
+
+for (let key in sort(keys(days))) {
+	const entry = {
+		timestamp: key,
+		epoch: day_start(key),
+		samples: length(days[key])
+	};
+
+	for (let m in METRICS) {
+		let lo = null, hi = null, sum = 0.0, n = 0;
+
+		for (let e in days[key]) {
+			const v = e[m];
+
+			if (type(v) != 'double' && type(v) != 'int')
+				continue;
+
+			lo = (lo == null || v < lo) ? v : lo;
+			hi = (hi == null || v > hi) ? v : hi;
+			sum += v;
+			n++;
+		}
+
+		if (n > 0) {
+			// The mean lives in the plain field so a consumer that only knows
+			// raw entries keeps working; min and max sit beside it.
+			entry[m] = round2(sum / n);
+			entry[`${m}_min`] = lo;
+			entry[`${m}_max`] = hi;
+		}
+	}
+
+	push(archive, entry);
+	changed = true;
+}
+
+// Archive retention: integer comparison on the day-start epoch.
+const cutoff = time() - archive_days * 86400;
+const kept = filter(archive, e => int(e?.epoch ?? 0) >= cutoff);
+
+if (length(kept) != length(archive))
+	changed = true;
+
+if (!changed)
+	exit(0);
+
+let tmp = `${archive_path}.tmp`;
+let out = '';
+
+for (let e in sort(kept, (a, b) => int(a.epoch) - int(b.epoch)))
+	out += sprintf('%J\n', e);
+
+// The last component only, never the whole tree: archive_path commonly
+// points at external storage, and with the mount down a recursive mkdir
+// would build the path on the overlay and write every night's aggregate to
+// internal flash, to be shadowed once the disk is back. Failing here leaves
+// the location as the user prepared it.
+const dir = replace(archive_path, /\/[^\/]+$/, '');
+if (dir != '' && dir != archive_path)
+	mkdir(dir, 0o755);
+
+// Atomic: a reader never sees a half-written archive. Written by hand
+// rather than writefile(), which drops fclose()'s status and would let a
+// full disk truncate the archive in silence -- flush() is where a short
+// write surfaces. A failed write goes to syslog: this runs from cron,
+// where stderr has nowhere to go. The reason comes along, since a missing
+// mount, a read-only filesystem and a full disk each want something
+// different from whoever reads that log.
+const af = open(tmp, 'w');
+let wrote = af != null && af.write(out) == length(out);
+
+if (af) {
+	wrote = af.flush() != null && wrote;
+	af.close();
+}
+
+if (wrote)
+	rename(tmp, archive_path);
+else {
+	system(['logger', '-t', 'librespeed',
+		`aggregate: cannot write ${tmp}: ${error()}`]);
+	unlink(tmp);
+}

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pyproject-hooks
 PKG_VERSION:=1.2.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=pyproject_hooks
 PKG_HASH:=1e859bd5c40fae9448642dd871adf459e5e2084186e8d2c2a79a824c970da1f8

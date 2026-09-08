@@ -22,7 +22,7 @@ Signed-off-by: Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
 
 --- a/setuptools/_distutils/command/build_ext.py
 +++ b/setuptools/_distutils/command/build_ext.py
-@@ -156,7 +156,10 @@ class build_ext(Command):
+@@ -169,7 +169,10 @@ class build_ext(Command):
              yield os.path.join(installed_dir, lib_dir)
          else:
              # building third party extensions
@@ -36,7 +36,7 @@ Signed-off-by: Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
          from distutils import sysconfig
 --- a/setuptools/_distutils/sysconfig.py
 +++ b/setuptools/_distutils/sysconfig.py
-@@ -37,10 +37,17 @@ else:
+@@ -36,10 +36,17 @@ else:
  IS_PYPY = '__pypy__' in sys.builtin_module_names
  
  # These are needed in a couple of spots, so just compute them once.

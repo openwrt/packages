@@ -37,6 +37,18 @@
 #	option maxconn 1024
 #	option runas nut
 #	option interface_reload_delay 3000 # in milliseconds
-# NB: certificates only apply to SSL-enabled version
-#	option certfile /usr/local/etc/upsd.pem
 #	option triggerlist all # not configured by default
+#	option debug_min 0
+# NB: certificates only apply to SSL-enabled version
+# See https://github.com/networkupstools/nut/blob/master/docs/security.txt
+# openssl server certificate chain and private key
+#	option certfile /usr/local/etc/upsd.pem
+# NSS or OpenSSL
+# For NSS path the directory with certificate and key databases
+# For OpenSSL path a file with one or more CA certificates
+#	option certpath /etc/nut/cert_db
+# Server certificate name and password to unlock the key for the certificate
+#	option certident '"certificate name" "database password"'
+# 0 - NO, 1 - REQUEST, 2 - REQUIRE (and verify)
+#	option certrequest 0
+#	option disable_weak_ssl 0

@@ -1,6 +1,15 @@
+From 2ea422f30999b4be543dc2cc5ce42b0e1c800e33 Mon Sep 17 00:00:00 2001
+From: Andy Walsh <andy.walsh44+github@gmail.com>
+Date: Sat, 29 Jan 2022 02:06:00 +0000
+Subject: [PATCH] Disable python module host check
+
+Disable detection for host's third party python module check.
+
+Signed-off-by: Andy Walsh <andy.walsh44+github@gmail.com>
+---
 --- a/python/wscript
 +++ b/python/wscript
-@@ -90,9 +90,9 @@ def configure(conf):
+@@ -103,9 +103,9 @@ def configure(conf):
                                        "'python3-iso8601'. Please install "
                                        "one of the packages.")
  

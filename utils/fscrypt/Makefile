@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fscrypt
-PKG_VERSION:=0.3.6
+PKG_VERSION:=0.3.7
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/google/fscrypt/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=6d71e17ef3e48cd5df22190df6925f39ee4a5b24e672f0fa616f3b57f52b2a12
+PKG_HASH:=9cd8913293572709e122a7c7fa1463fb0e0cf9b38f1d3bf633939564d8cc6245
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
@@ -18,6 +18,7 @@ PKG_BUILD_PARALLEL:=1
 PKG_BUILD_FLAGS:=no-mips16
 
 GO_PKG:=github.com/google/fscrypt
+GO_PKG_LDFLAGS_X:=main.version=v$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk

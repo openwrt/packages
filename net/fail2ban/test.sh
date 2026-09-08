@@ -3,7 +3,7 @@
 [ "$1" = fail2ban ] || exit 0
 
 # Verify fail2ban-client binary is present and functional
-fail2ban-client --version 2>&1 | grep -qi "fail2ban" || \
+fail2ban-client --version 2>&1 | grep -i "fail2ban" || \
     { echo "fail2ban-client --version did not produce expected output"; exit 1; }
 
 python3 - << 'EOF'

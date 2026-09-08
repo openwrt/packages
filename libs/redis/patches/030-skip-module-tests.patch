@@ -1,0 +1,27 @@
+From 5c04abd039eb23115389777ccbef7baa98188a86 Mon Sep 17 00:00:00 2001
+From: Alexandru Ardelean <alex@shruggie.ro>
+Date: Thu, 6 Aug 2026 10:00:00 +0300
+Subject: [PATCH] redis: skip building the module_tests target
+
+The default "all" target also builds module_tests, which compiles the
+example test modules under tests/modules/. Those are only needed to run
+the upstream test suite, not for the packaged binaries, and building them
+pulls in extra objects that are pointless for the OpenWrt package. Drop
+module_tests from the "all" prerequisites.
+
+Signed-off-by: Alexandru Ardelean <alex@shruggie.ro>
+---
+ src/Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/src/Makefile
++++ b/src/Makefile
+@@ -393,7 +393,7 @@ REDIS_CHECK_RDB_NAME=redis-check-rdb$(PR
+ REDIS_CHECK_AOF_NAME=redis-check-aof$(PROG_SUFFIX)
+ ALL_SOURCES=$(sort $(patsubst %.o,%.c,$(REDIS_SERVER_OBJ) $(REDIS_VEC_SETS_OBJ) $(REDIS_CLI_OBJ) $(REDIS_BENCHMARK_OBJ)))
+ 
+-all: $(REDIS_SERVER_NAME) $(REDIS_SENTINEL_NAME) $(REDIS_CLI_NAME) $(REDIS_BENCHMARK_NAME) $(REDIS_CHECK_RDB_NAME) $(REDIS_CHECK_AOF_NAME) $(TLS_MODULE) module_tests
++all: $(REDIS_SERVER_NAME) $(REDIS_SENTINEL_NAME) $(REDIS_CLI_NAME) $(REDIS_BENCHMARK_NAME) $(REDIS_CHECK_RDB_NAME) $(REDIS_CHECK_AOF_NAME) $(TLS_MODULE)
+ 	@echo ""
+ 	@echo "Hint: It's a good idea to run 'make test' ;)"
+ 	@echo ""

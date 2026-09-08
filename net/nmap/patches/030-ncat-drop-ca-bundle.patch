@@ -1,5 +1,8 @@
-Author: Konstantin Demin <rockdrilla@gmail.com>
-Title: ncat: avoid shipping/using internal ca-bundle.crt
+From c8793c02857d8d7ad2981cd862223e42862f9059 Mon Sep 17 00:00:00 2001
+From: Konstantin Demin <rockdrilla@gmail.com>
+Date: Wed, 31 Jan 2024 12:24:53 +0300
+Subject: [PATCH] nmap: ncat: avoid shipping/using internal ca-bundle.crt
+
 
 1. ca-bundle.crt may provide outdated trusted CAs.
 2. maintain trusted CAs in one place.
@@ -23,7 +26,7 @@ Also remove references to NCAT_CA_CERTS_FILE and NCAT_CA_CERTS_PATH in order to 
  ifneq ($(NOLUA),yes)
 --- a/ncat/ncat_posix.c
 +++ b/ncat/ncat_posix.c
-@@ -409,28 +409,17 @@ void set_lf_mode(void)
+@@ -433,28 +433,17 @@ void set_lf_mode(void)
  
  #ifdef HAVE_OPENSSL
  

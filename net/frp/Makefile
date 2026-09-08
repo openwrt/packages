@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=frp
-PKG_VERSION:=0.70.0
-PKG_RELEASE:=1
+PKG_VERSION:=0.70.1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/fatedier/frp/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=661554e336407880c444bf148b904f62f49c9442c4d71f3a2b0840dfbb12d678
+PKG_HASH:=67246606f504cb15df72193f1a83911259e92b6a87838cff8850031efd406dc8
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=Apache-2.0
@@ -36,6 +36,7 @@ endef
 define Package/frp/install
 	$(INSTALL_DIR) $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/etc/config/
+	$(INSTALL_DIR) $(1)/etc/frp/$(2).d/
 	$(INSTALL_DIR) $(1)/etc/init.d/
 
 	$(INSTALL_BIN) $(GO_PKG_BUILD_BIN_DIR)/$(2) $(1)/usr/bin/
@@ -65,6 +66,7 @@ define Package/frp/template
 
   define Package/$(1)/conffiles
 /etc/config/$(1)
+/etc/frp/$(1).d/
   endef
 
   define Package/$(1)/install

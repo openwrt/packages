@@ -3,11 +3,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-uvicorn
-PKG_VERSION:=0.48.0
+PKG_VERSION:=0.52.1
 PKG_RELEASE:=1
 
 PYPI_NAME:=uvicorn
-PKG_HASH:=a5504207195d08c2511bf9125ede5ac4a4b71725d519e758d01dcf0bc2d31c37
+PKG_HASH:=112ec661814189acbccd3f7b86460147cc065fc92c0821afa78918780e4354dd
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=BSD-3-Clause

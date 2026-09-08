@@ -28,7 +28,16 @@
 #	option rbwarntime 43200 # replace battery warn time
 #	option alarmcritical 1
 #	option shutdownexit 0
-#	option certpath /path/to/ca/dir
+# NB: certificates only apply to SSL-enabled version
+# See https://github.com/networkupstools/nut/blob/master/docs/security.txt
+# openssl client certificate chain and private key
+#	option certfile /usr/local/etc/upsmon.pem
+# NSS or OpenSSL
+# For NSS path the directory with certificate and key databases
+# For OpenSSL path a file with one or more CA certificates
+#	option certpath /etc/nut/cert_db
+# Client certificate name and password to unlock the key for the certificate
+#	option certident '"certificate name" "database password"'
 #	option certverify 0
 #	option forcessl 0
 #	option debugmin 0

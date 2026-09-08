@@ -1,0 +1,142 @@
+From 3bc16e0b58704b8c3bd596b23d907516c7cc2493 Mon Sep 17 00:00:00 2001
+From: Clint Bland <bland.cr@gmail.com>
+Date: Thu, 14 Mar 2019 02:19:16 +0000
+Subject: [PATCH] PPC: Call libm helpers via private GOT instead of the PLT
+
+A bl sym@plt call emitted by the VM assembler produces an
+R_PPC_PLTREL24 relocation with addend 0, which forces the linker to
+use BSS-PLT for the entire link. GCC 12 and newer emit inline-PLT
+relocations (R_PPC_PLTSEQ, R_PPC_PLTCALL, R_PPC_PLT16_*) that have no
+BSS-PLT equivalent, so linking libluajit.so fails outright:
+
+  ld: bss-plt forced due to lj_vm.o
+  ld: crtstuff.c:(.text+0x46): R_PPC_PLT16_HA relocation unsupported
+      for bss-plt
+
+Route these calls through a private GOT stored in GG_State, the way
+the MIPS port already does. No PLT relocation is emitted, the linker
+selects secure-PLT and the link succeeds.
+
+Originally submitted upstream as LuaJIT/LuaJIT#486, against 2.0 and
+addressing LuaJIT/LuaJIT#481, and closed without being merged. OpenWrt
+has carried it for the upstream luajit package as 060-ppc-musl.patch
+since 2019, extended with the soft-float helpers the 2.1 branch needs
+in the GOT. Adapted here for luajit2 and verified on OpenWrt.
+
+Tested on Turris 1.x (e500v2, 32-bit big-endian, musl, soft-float)
+with BUILDMODE=dynamic. No R_PPC_PLTREL24 relocations remain, and the
+resulting binary runs correctly, including all libm calls routed
+through the new GOT. The previously produced dynamic binary crashed
+during startup.
+
+Co-authored-by: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Signed-off-by: Josef Schlehofer <pepe.schlehofer@gmail.com>
+---
+ src/lj_dispatch.c | 11 ++++++++++-
+ src/lj_dispatch.h | 32 +++++++++++++++++++++++++++++++-
+ src/vm_ppc.dasc   | 12 +++++++++++-
+ 3 files changed, 52 insertions(+), 3 deletions(-)
+
+--- a/src/lj_dispatch.c
++++ b/src/lj_dispatch.c
+@@ -56,6 +56,15 @@ static const ASMFunction dispatch_got[]
+ #undef GOTFUNC
+ #endif
+ 
++#if LJ_TARGET_PPC && LJ_32
++#include <math.h>
++#define GOTFUNC(name)	(ASMFunction)name,
++static const ASMFunction dispatch_got[] = {
++  GOTDEF(GOTFUNC)
++};
++#undef GOTFUNC
++#endif
++
+ /* Initialize instruction dispatch table and hot counters. */
+ void lj_dispatch_init(GG_State *GG)
+ {
+@@ -76,7 +85,7 @@ void lj_dispatch_init(GG_State *GG)
+   GG->g.bc_cfunc_ext = GG->g.bc_cfunc_int = BCINS_AD(BC_FUNCC, LUA_MINSTACK, 0);
+   for (i = 0; i < GG_NUM_ASMFF; i++)
+     GG->bcff[i] = BCINS_AD(BC__MAX+i, 0, 0);
+-#if LJ_TARGET_MIPS
++#if LJ_TARGET_MIPS || (LJ_TARGET_PPC && LJ_32)
+   memcpy(GG->got, dispatch_got, LJ_GOT__MAX*sizeof(ASMFunction *));
+ #endif
+ }
+--- a/src/lj_dispatch.h
++++ b/src/lj_dispatch.h
+@@ -66,6 +66,36 @@ GOTDEF(GOTENUM)
+ };
+ #endif
+ 
++#if LJ_TARGET_PPC && LJ_32
++/* Call libm/libgcc helpers via our own GOT instead of the PLT. A PLT call
++** from the VM assembler forces the obsolete BSS-PLT for the whole link,
++** which fails against secure-PLT objects emitted by GCC 12 and newer.
++*/
++#if LJ_SOFTFP
++#ifndef _LJ_IRCALL_H
++extern double __ledf2(double a, double b);
++extern double __adddf3(double a, double b);
++extern double __subdf3(double a, double b);
++extern double __muldf3(double a, double b);
++extern double __divdf3(double a, double b);
++#endif
++#define SFGOTDEF(_)	_(__ledf2) _(__adddf3) _(__subdf3) _(__muldf3) _(__divdf3)
++#else
++#define SFGOTDEF(_)
++#endif
++#define GOTDEF(_) \
++  _(floor) _(ceil) _(trunc) _(log) _(log10) _(exp) _(sin) _(cos) _(tan) \
++  _(asin) _(acos) _(atan) _(sinh) _(cosh) _(tanh) _(frexp) _(modf) _(atan2) \
++  _(pow) _(fmod) _(ldexp) _(sqrt) SFGOTDEF(_)
++
++enum {
++#define GOTENUM(name) LJ_GOT_##name,
++GOTDEF(GOTENUM)
++#undef GOTENUM
++  LJ_GOT__MAX
++};
++#endif
++
+ /* Type of hot counter. Must match the code in the assembler VM. */
+ /* 16 bits are sufficient. Only 0.0015% overhead with maximum slot penalty. */
+ typedef uint16_t HotCount;
+@@ -93,7 +123,7 @@ typedef struct GG_State {
+   /* Make g reachable via K12 encoded DISPATCH-relative addressing. */
+   uint8_t align1[(16-sizeof(global_State))&15];
+ #endif
+-#if LJ_TARGET_MIPS
++#if LJ_TARGET_MIPS || (LJ_TARGET_PPC && LJ_32)
+   ASMFunction got[LJ_GOT__MAX];		/* Global offset table. */
+ #endif
+ #if LJ_HASJIT
+--- a/src/vm_ppc.dasc
++++ b/src/vm_ppc.dasc
+@@ -50,7 +50,13 @@
+ |.macro blex, target; bl extern target; nop; .endmacro
+ |.macro .toc, a, b; a, b; .endmacro
+ |.else
+-|.macro blex, target; bl extern target@plt; .endmacro
++|// Call via our own GOT to avoid PLT relocations, which force the obsolete
++|// BSS-PLT on PPC32 and break linking against secure-PLT objects.
++|.macro blex, target
++|  lwz TMP0, DISPATCH_GOT(target)(DISPATCH)
++|  mtctr TMP0
++|  bctrl
++|.endmacro
+ |.macro .toc, a, b; .endmacro
+ |.endif
+ |.if OPD
+@@ -577,6 +583,10 @@
+ |// Assumes DISPATCH is relative to GL.
+ #define DISPATCH_GL(field)	(GG_DISP2G + (int)offsetof(global_State, field))
+ #define DISPATCH_J(field)	(GG_DISP2J + (int)offsetof(jit_State, field))
++#if LJ_TARGET_PPC && LJ_32
++#define GG_DISP2GOT		(GG_OFS(got) - GG_OFS(dispatch))
++#define DISPATCH_GOT(name)	(GG_DISP2GOT + 4*LJ_GOT_##name)
++#endif
+ |
+ #define PC2PROTO(field)  ((int)offsetof(GCproto, field)-(int)sizeof(GCproto))
+ |

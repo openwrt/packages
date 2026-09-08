@@ -11,7 +11,7 @@ assert driver is not None
 EOF
 
 # Verify the aws binary runs --version
-aws --version 2>&1 | grep -q "aws-cli" || {
+aws --version 2>&1 | grep -F "aws-cli" || {
     echo "ERROR: 'aws --version' did not produce expected output"
     exit 1
 }

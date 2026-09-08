@@ -1,3 +1,4 @@
+From d810d559de43b36f1f8c470350f8ad88118269bb Mon Sep 17 00:00:00 2001
 From: Barry Warsaw <barry@python.org>
 Date: Fri, 18 Nov 2016 17:07:47 -0500
 Subject: Set --disable-pip-version-check=True by default.
@@ -9,7 +10,7 @@ Patch-Name: disable-pip-version-check.patch
 
 --- a/src/pip/_internal/cli/cmdoptions.py
 +++ b/src/pip/_internal/cli/cmdoptions.py
-@@ -1100,7 +1100,7 @@ disable_pip_version_check: Callable[...,
+@@ -1197,7 +1197,7 @@ disable_pip_version_check: Callable[...,
      "--disable-pip-version-check",
      dest="disable_pip_version_check",
      action="store_true",

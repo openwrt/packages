@@ -11,12 +11,12 @@ OpenWrt base build system decide flavor of fortify_source to use
 
 --- a/configure
 +++ b/configure
-@@ -791,6 +791,8 @@ for opt do
+@@ -744,6 +744,8 @@ for opt do
    ;;
    --disable-rust) rust=disabled
    ;;
 +  --disable-fortify-source) fortify_source="no"
 +  ;;
-   # everything else has the same name in configure and meson
-   --*) meson_option_parse "$opt" "$optarg"
+   --wasm64-32bit-address-limit)
    ;;
+   # everything else has the same name in configure and meson

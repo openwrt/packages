@@ -11,7 +11,7 @@ there is a dedicated libcurl-gnutls library and favor using it.
 
 --- a/meson.build
 +++ b/meson.build
-@@ -194,10 +194,17 @@ if not sqlite_dep.found()
+@@ -197,10 +197,17 @@ if not sqlite_dep.found()
          error('Sqlite version >= 3.35.0 requried')
      endif
  endif
@@ -33,7 +33,7 @@ there is a dedicated libcurl-gnutls library and favor using it.
    int main(int argc, char **argv) {
      #if LIBCURL_VERSION_NUM < 0x075500
        #error "cURL version >= 7.85.0 required"
-@@ -205,12 +212,34 @@ if not curl_dep.found()
+@@ -208,12 +215,34 @@ if not curl_dep.found()
      return 0;
      }
    '''
@@ -74,7 +74,7 @@ there is a dedicated libcurl-gnutls library and favor using it.
      endif
  endif
  zlib_dep = dependency('zlib', required: false)
-@@ -489,13 +518,22 @@ curl_ssl_check = '''#include <curl/curl.
+@@ -492,13 +521,22 @@ curl_ssl_check = '''#include <curl/curl.
      }
    '''
  

@@ -1,0 +1,9 @@
+{
+	"name": "gandi.net-v2",
+	"ipv4": {
+		"url": "update_gandi_net_v2.sh"
+	},
+	"ipv6": {
+		"url": "update_gandi_net_v2.sh"
+	}
+}

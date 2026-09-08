@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-wheel
 PKG_VERSION:=0.47.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=wheel
 PKG_HASH:=cc72bd1009ba0cf63922e28f94d9d83b920aa2bb28f798a31d0691b02fa3c9b3

@@ -1,0 +1,24 @@
+From 9d18091f27e5fdd9406c6ac03267199a059fc8f5 Mon Sep 17 00:00:00 2001
+From: Rob White <rob@blue-wave.net>
+Date: Thu, 6 Aug 2026 21:46:37 +0000
+Subject: [PATCH] Fix -licence discrepancy
+
+The script header claimed GPL version 3 or later, while the LICENSE file
+the project ships is GPL version 2. Make the header agree with it.
+
+Upstream-Status: Backport [https://github.com/openNDS/mesh11sd/commit/9d18091f27e5fdd9406c6ac03267199a059fc8f5]
+---
+--- a/src/mesh11sd
++++ b/src/mesh11sd
+@@ -1,9 +1,9 @@
+ #!/bin/sh
+ # Copyright (C) BlueWave Projects and Services 2015-2026
+ #
+-#	This software is released under the GNU General Public License version 3 or any later version.
++#	This software is released under the GNU General Public License version 2 or any later version.
+ #	This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation,
+-#	either version 3 of the License, or (at your option) any later version.
++#	either version 2 of the License, or (at your option) any later version.
+ #
+ #	This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ #	See the GNU General Public License for more details.

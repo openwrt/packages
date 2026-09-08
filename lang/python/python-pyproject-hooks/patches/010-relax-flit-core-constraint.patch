@@ -1,0 +1,24 @@
+From df6f6542c6a1caf2d8b91d9b27b27767df8b7bd3 Mon Sep 17 00:00:00 2001
+From: Alexandru Ardelean <alex@shruggie.ro>
+Date: Mon, 10 Aug 2026 15:15:26 +0300
+Subject: [PATCH] python-pyproject-hooks: allow flit_core 4.x as the build
+ backend
+
+pyproject-hooks caps its flit_core build requirement below 4, so python-pyproject-hooks/host fails
+with "Missing dependencies: flit_core<4" now that the feed ships flit-core
+4.0.2. flit_core 4 builds it unchanged; relax the upper bound.
+
+Signed-off-by: Alexandru Ardelean <alex@shruggie.ro>
+---
+ pyproject.toml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -1,5 +1,5 @@
+ [build-system]
+-requires = ["flit_core >=3.2,<4"]
++requires = ["flit_core >=3.2"]
+ build-backend = "flit_core.buildapi"
+ 
+ [project]

@@ -1,0 +1,21 @@
+From d0db5353ffc8574c30620fae1f54b13f7f873c6f Mon Sep 17 00:00:00 2001
+From: Rob White <rob@blue-wave.net>
+Date: Thu, 6 Aug 2026 22:05:02 +0000
+Subject: [PATCH] Fix - typo in get_current_setup() getting apmond_cgi_dir
+
+The length was taken from $apmon_cgi_dir, which is never set, so strlen
+was always 0 and the trailing slash check read the wrong character.
+
+Upstream-Status: Backport [https://github.com/openNDS/mesh11sd/commit/d0db5353ffc8574c30620fae1f54b13f7f873c6f]
+---
+--- a/src/mesh11sd
++++ b/src/mesh11sd
+@@ -989,7 +989,7 @@ get_current_setup() {
+ 		apmond_cgi_dir="/www/cgi-bin"
+ 	fi
+ 
+-	strlen=$((${#apmon_cgi_dir}));
++	strlen=$((${#apmond_cgi_dir}));
+ 	lastchar=${apmond_cgi_dir:$strlen -1 :1}
+ 
+ 	if [ "$lastchar" != "/" ]; then

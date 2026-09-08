@@ -1,3 +1,12 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 21 Aug 2026 14:40:13 +0100
+Subject: [PATCH] localscan: allow dlopen-based local_scan() libraries
+
+From:/Date: above record who carries this patch in the feed and when
+this header was last written, not original authorship. See Author:
+below for that.
+
 Description: Allow one to use and switch between different local_scan functions
  without recompiling exim.
  http://marc.merlins.org/linux/exim/files/sa-exim-current/ Original patch from
@@ -7,10 +16,10 @@ Author: David Woodhouse, Derrick 'dman' Hudson, Marc MERLIN
 Origin: other, http://marc.merlins.org/linux/exim/files/sa-exim-current/
 Forwarded: https://bugs.exim.org/show_bug.cgi?id=2671
 Last-Update: 2021-07-28
-
+---
 --- a/src/EDITME
 +++ b/src/EDITME
-@@ -998,6 +998,21 @@ HEADERS_CHARSET="ISO-8859-1"
+@@ -989,6 +989,21 @@ HEADERS_CHARSET="ISO-8859-1"
  
  
  #------------------------------------------------------------------------------
@@ -45,9 +54,9 @@ Last-Update: 2021-07-28
  #define CONFIGURE_FILE
 --- a/src/globals.c
 +++ b/src/globals.c
-@@ -120,6 +120,10 @@ int     dsn_ret                = 0;
+@@ -83,6 +83,10 @@ int     dsn_ret                = 0;
  const pcre2_code  *regex_DSN         = NULL;
- uschar *dsn_advertise_hosts    = NULL;
+ const uschar *dsn_advertise_hosts    = NULL;
  
 +#ifdef DLOPEN_LOCAL_SCAN
 +uschar *local_scan_path        = NULL;
@@ -58,9 +67,9 @@ Last-Update: 2021-07-28
  BOOL    gnutls_allow_auto_pkcs11 = FALSE;
 --- a/src/globals.h
 +++ b/src/globals.h
-@@ -164,6 +164,9 @@ extern int      dsn_ret;               /
+@@ -128,6 +128,9 @@ extern int      dsn_ret;               /
  extern const pcre2_code  *regex_DSN;         /* For recognizing DSN settings */
- extern uschar  *dsn_advertise_hosts;   /* host for which TLS is advertised */
+ extern const uschar  *dsn_advertise_hosts;   /* host for which TLS is advertised */
  
 +#ifdef DLOPEN_LOCAL_SCAN
 +extern uschar *local_scan_path;        /* Path to local_scan() library */
@@ -177,7 +186,7 @@ Last-Update: 2021-07-28
 +local_scan_lib = dlopen(local_scan_path, RTLD_NOW);
 +if (!local_scan_lib)
 +  {
-+  log_write(0, LOG_MAIN|LOG_REJECT, "local_scan() library open failed - "
++  log_write(LOG_MAIN|LOG_REJECT, "local_scan() library open failed - "
 +    "message temporarily rejected");
 +  return FALSE;
 +  }
@@ -186,7 +195,7 @@ Last-Update: 2021-07-28
 +if (!local_scan_version_fn)
 +  {
 +  dlclose(local_scan_lib);
-+  log_write(0, LOG_MAIN|LOG_REJECT, "local_scan() library doesn't contain "
++  log_write(LOG_MAIN|LOG_REJECT, "local_scan() library doesn't contain "
 +    "local_scan_version_major() function - message temporarily rejected");
 +  return FALSE;
 +  }
@@ -199,7 +208,7 @@ Last-Update: 2021-07-28
 +if (!local_scan_version_fn)
 +  {
 +  dlclose(local_scan_lib);
-+  log_write(0, LOG_MAIN|LOG_REJECT, "local_scan() library doesn't contain "
++  log_write(LOG_MAIN|LOG_REJECT, "local_scan() library doesn't contain "
 +    "local_scan_version_minor() function - message temporarily rejected");
 +  return FALSE;
 +  }
@@ -213,7 +222,7 @@ Last-Update: 2021-07-28
 +  {
 +  dlclose(local_scan_lib);
 +  local_scan_lib = NULL;
-+  log_write(0, LOG_MAIN|LOG_REJECT, "local_scan() has an incompatible major"
++  log_write(LOG_MAIN|LOG_REJECT, "local_scan() has an incompatible major"
 +    "version number, you need to recompile your module for this version"
 +    "of exim (The module was compiled for version %d.%d and this exim provides"
 +    "ABI version %d.%d)", vers_maj, vers_min, LOCAL_SCAN_ABI_VERSION_MAJOR,
@@ -224,7 +233,7 @@ Last-Update: 2021-07-28
 +  {
 +  dlclose(local_scan_lib);
 +  local_scan_lib = NULL;
-+  log_write(0, LOG_MAIN|LOG_REJECT, "local_scan() has an incompatible minor"
++  log_write(LOG_MAIN|LOG_REJECT, "local_scan() has an incompatible minor"
 +    "version number, you need to recompile your module for this version"
 +    "of exim (The module was compiled for version %d.%d and this exim provides"
 +    "ABI version %d.%d)", vers_maj, vers_min, LOCAL_SCAN_ABI_VERSION_MAJOR,
@@ -236,7 +245,7 @@ Last-Update: 2021-07-28
 +if (!local_scan_fn)
 +  {
 +  dlclose(local_scan_lib);
-+  log_write(0, LOG_MAIN|LOG_REJECT, "local_scan() library doesn't contain "
++  log_write(LOG_MAIN|LOG_REJECT, "local_scan() library doesn't contain "
 +    "local_scan() function - message temporarily rejected");
 +  return FALSE;
 +  }
@@ -248,15 +257,15 @@ Last-Update: 2021-07-28
  /* End of local_scan.c */
 --- a/src/local_scan.h
 +++ b/src/local_scan.h
-@@ -30,6 +30,7 @@ settings, and the store functions. */
- 
+@@ -31,6 +31,7 @@ settings, and the store functions. */
  #include <stdarg.h>
+ #include <stdint.h>
  #include <sys/types.h>
 +#pragma GCC visibility push(default)
  #include "config.h"
  #include "mytypes.h"
  #include "store.h"
-@@ -179,6 +180,9 @@ extern header_line *header_list;       /
+@@ -175,6 +176,9 @@ extern header_line *header_list;       /
  extern BOOL    host_checking;          /* Set when checking a host */
  extern uschar *interface_address;      /* Interface for incoming call */
  extern int     interface_port;         /* Port number for incoming call */
@@ -266,7 +275,7 @@ Last-Update: 2021-07-28
  extern uschar *message_id;             /* Internal id of message being handled */
  extern uschar *received_protocol;      /* Name of incoming protocol */
  extern int     recipients_count;       /* Number of recipients */
-@@ -249,5 +253,7 @@ extern pid_t    child_open_exim2_functio
+@@ -259,5 +263,7 @@ extern pid_t    child_open_exim2_functio
  extern pid_t    child_open_function(uschar **, uschar **, int, int *, int *, BOOL, const uschar *);
  #endif
  
@@ -276,7 +285,7 @@ Last-Update: 2021-07-28
  /* End of local_scan.h */
 --- a/src/readconf.c
 +++ b/src/readconf.c
-@@ -218,6 +218,9 @@ static optionlist optionlist_config[] =
+@@ -211,6 +211,9 @@ static optionlist optionlist_config[] =
    { "local_from_prefix",        opt_stringptr,   {&local_from_prefix} },
    { "local_from_suffix",        opt_stringptr,   {&local_from_suffix} },
    { "local_interfaces",         opt_stringptr,   {&local_interfaces} },
@@ -288,7 +297,7 @@ Last-Update: 2021-07-28
  #endif
 --- a/src/string.c
 +++ b/src/string.c
-@@ -459,6 +459,7 @@ return ss;
+@@ -472,6 +472,7 @@ return ss;
  
  #if (defined(HAVE_LOCAL_SCAN) || defined(EXPAND_DLFUNC)) \
  	&& !defined(MACRO_PREDEF) && !defined(COMPILE_UTILITY)
@@ -296,7 +305,7 @@ Last-Update: 2021-07-28
  /*************************************************
  *            Copy and save string                *
  *************************************************/
-@@ -504,6 +505,7 @@ string_copyn_function(const uschar * s,
+@@ -517,6 +518,7 @@ string_copyn_function(const uschar * s,
  {
  return string_copyn(s, n);
  }

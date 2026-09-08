@@ -1,16 +1,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=redis
-PKG_VERSION:=6.2.14
+PKG_VERSION:=8.8.0
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=https://download.redis.io/releases/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=34e74856cbd66fdb3a684fb349d93961d8c7aa668b06f81fd93ff267d09bc277
+PKG_HASH:=88422181efb0c9c0abba332e3e391d409e1e13714b838931669235e5796f704b
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
-PKG_LICENSE:=BSD-3-Clause
-PKG_LICENSE_FILES:=COPYING
+# Redis 8.x is tri-licensed: RSALv2 / SSPLv1 / AGPL-3.0. Pick AGPL-3.0
+# as the canonical SPDX identifier and document the choice for downstream
+# consumers in the package description. (Redis <= 7.2 was BSD-3-Clause.)
+PKG_LICENSE:=AGPL-3.0-only
+PKG_LICENSE_FILES:=LICENSE.txt
 PKG_CPE_ID:=cpe:/a:redis:redis
 
 PKG_INSTALL:=1
@@ -22,6 +25,18 @@ MAKE_FLAGS+= \
 	USE_JEMALLOC="no" \
 	PREFIX="$(PKG_INSTALL_DIR)/usr" \
 	ARCH=""
+
+# The bundled vector-sets module is 32-bit-incompatible: it fails to initialize
+# and aborts redis-server at startup. redis' own build passes SKIP_VEC_SETS=yes
+# for 32-bit targets, so do the same here.
+ifeq ($(CONFIG_ARCH_64BIT),)
+  MAKE_FLAGS += SKIP_VEC_SETS=yes
+endif
+
+# redis 8.x builds with -Werror -pedantic -Werror=deprecated-declarations,
+# which the musl fortify wrappers trip (void-returning bcopy, deprecated
+# sprintf/strcpy/strcat); demote both diagnostics from error to warning.
+TARGET_CFLAGS += -Wno-error=pedantic -Wno-error=deprecated-declarations
 
 TARGET_LDFLAGS += -latomic
 
@@ -58,9 +73,10 @@ $(call  Package/redis/Default)
 endef
 
 define Package/redis-full/description
-  Redis is an open source, BSD licensed, advanced key-value cache and store.
-  It is often referred to as a data structure server since keys can contain
-  strings, hashes, lists, sets, sorted sets, bitmaps and hyperloglogs.
+  Redis is an open source, advanced key-value cache and store. Redis 8.x is
+  tri-licensed under RSALv2 / SSPLv1 / AGPL-3.0; this package builds it under
+  AGPL-3.0. It is often referred to as a data structure server since keys can
+  contain strings, hashes, lists, sets, sorted sets, bitmaps and hyperloglogs.
 endef
 
 define Package/redis-server/conffiles

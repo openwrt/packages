@@ -1,0 +1,475 @@
+#!/usr/bin/ucode
+
+/* SPDX-License-Identifier: GPL-2.0-only */
+
+import { ulog_open, ulog, ulog_close, ULOG_SYSLOG, LOG_DAEMON, LOG_INFO, LOG_WARNING, LOG_ERR } from "log";
+
+const VERSION = 1;
+const GROUP = "ff12::6e65:6967:6862:6f72:64";
+const PORT = 32027;
+const MAX_PACKET = 8192;
+const MAX_SEND = 1232;
+const MAX_REPORTS = 64;
+const MAX_PEERS = 64;
+const MAX_NR_HEX = 1024;
+const RECONCILE_MS = 15000;
+const ANNOUNCE_MS = 30000;
+const PEER_TIMEOUT_S = 90;
+
+let libubus, uloop, socket, libuci;
+let bus, network;
+let udp, udp_handle, socket_device, socket_failure, send_failure;
+let local_bss = {};
+let remote_peers = {};
+let last_installed = {};
+let node_id, node_id_failure;
+let reconcile_timer, announce_timer, expire_timer, event_timer, object_listener, network_listener;
+
+function canonical(value) {
+	return sprintf("%J", value);
+}
+
+function report_cmp(a, b) {
+	if (a.ssid < b.ssid)
+		return -1;
+	if (a.ssid > b.ssid)
+		return 1;
+	if (a.bssid < b.bssid)
+		return -1;
+	if (a.bssid > b.bssid)
+		return 1;
+	let av = canonical(a.value);
+	let bv = canonical(b.value);
+	return av < bv ? -1 : (av > bv ? 1 : 0);
+}
+
+/* Keep the hostapd value array intact; normalized fields are only indexes. */
+function validate_report(value) {
+	if (type(value) != "array" || length(value) != 3)
+		return null;
+
+	if (type(value[0]) != "string" ||
+	    type(value[1]) != "string" ||
+	    type(value[2]) != "string")
+		return null;
+
+	let bssid = lc(value[0]);
+	let ssid = value[1];
+	let nr = value[2];
+
+	if (!match(bssid, /^[0-9a-f]{2}(:[0-9a-f]{2}){5}$/))
+		return null;
+
+	if (length(ssid) < 1 || length(ssid) > 32)
+		return null;
+
+	if (length(nr) < 26 || length(nr) > MAX_NR_HEX ||
+	    length(nr) % 2 || !match(nr, /^[0-9A-Fa-f]+$/))
+		return null;
+
+	/* The first six bytes in the Neighbor Report body are its BSSID. */
+	if (lc(substr(nr, 0, 12)) != replace(bssid, /:/g, ""))
+		return null;
+
+	return { bssid, ssid, value };
+}
+
+function normalize_reports(values) {
+	if (type(values) != "array" || length(values) > MAX_REPORTS)
+		return null;
+
+	let reports = [];
+
+	for (let value in values) {
+		let report = validate_report(value);
+		if (!report)
+			return null;
+
+		let duplicate = -1;
+		for (let i = 0; i < length(reports); i++) {
+			if (reports[i].ssid == report.ssid && reports[i].bssid == report.bssid) {
+				duplicate = i;
+				break;
+			}
+		}
+
+		if (duplicate < 0)
+			push(reports, report);
+		else if (canonical(report.value) < canonical(reports[duplicate].value))
+			reports[duplicate] = report;
+	}
+
+	return sort(reports, report_cmp);
+}
+
+function decode_packet(data) {
+	if (type(data) != "string" || length(data) > MAX_PACKET)
+		return null;
+
+	let message;
+	try {
+		message = json(data);
+	}
+	catch (e) {
+		return null;
+	}
+
+	if (type(message) != "object" || message.version != VERSION ||
+	    type(message.node) != "string" ||
+	    !match(lc(message.node), /^[0-9a-f]{2}(:[0-9a-f]{2}){5}$/))
+		return null;
+
+	let reports = normalize_reports(message.reports);
+	if (!reports)
+		return null;
+
+	return { node: lc(message.node), reports };
+}
+
+function local_reports(state) {
+	let reports = [];
+	for (let name in sort(keys(state)))
+		push(reports, state[name].report);
+
+	return sort(reports, report_cmp);
+}
+
+/* Local reports always survive MAX_REPORTS truncation; an untrusted peer
+   flooding low BSSIDs must not be able to evict them. */
+function neighbor_list(target, locals, peers) {
+	let seen = {};
+	let list = [];
+
+	for (let name in sort(keys(locals))) {
+		if (length(list) >= MAX_REPORTS)
+			return list;
+		let report = locals[name].report;
+		if (report.ssid == target.report.ssid && report.bssid != target.report.bssid &&
+		    !seen[report.bssid]) {
+			seen[report.bssid] = true;
+			push(list, report.value);
+		}
+	}
+
+	for (let peer_name in sort(keys(peers))) {
+		for (let report in peers[peer_name].reports) {
+			if (length(list) >= MAX_REPORTS)
+				return list;
+			if (report.ssid == target.report.ssid && report.bssid != target.report.bssid &&
+			    !seen[report.bssid]) {
+				seen[report.bssid] = true;
+				push(list, report.value);
+			}
+		}
+	}
+
+	return list;
+}
+
+function prune_peers(peers, now, timeout) {
+	let expired = [];
+	for (let name in keys(peers)) {
+		if (now - peers[name].seen >= timeout) {
+			push(expired, name);
+			delete peers[name];
+		}
+	}
+	return sort(expired);
+}
+
+libubus = require("ubus");
+uloop = require("uloop");
+socket = require("socket");
+libuci = require("uci");
+
+function monotime() {
+	return clock(true)[0];
+}
+
+function socket_close() {
+	if (udp_handle) {
+		udp_handle.delete();
+		udp_handle = null;
+	}
+	if (udp) {
+		udp.close();
+		udp = null;
+	}
+	socket_device = null;
+}
+
+function socket_fail(message) {
+	if (socket_failure != message) {
+		ulog(LOG_ERR, message);
+		socket_failure = message;
+	}
+	socket_close();
+}
+
+function update_hostapd() {
+	for (let object in sort(keys(local_bss))) {
+		let list = neighbor_list(local_bss[object], local_bss, remote_peers);
+		let signature = canonical(list);
+		if (last_installed[object] == signature)
+			continue;
+
+		bus.call(object, "rrm_nr_set", { list });
+		let error = libubus.error();
+		if (error) {
+			ulog(LOG_ERR, "failed to update " + object + ": " + error);
+			continue;
+		}
+
+		last_installed[object] = signature;
+		ulog(LOG_INFO, sprintf("updated neighbor list for %s: %d entries",
+		                       local_bss[object].interface, length(list)));
+	}
+}
+
+function receive_packet(data, address) {
+	let packet = decode_packet(data);
+	if (!packet)
+		return;
+
+	if (packet.node == node_id)
+		return;
+
+	let previous = remote_peers[packet.node];
+	if (!previous && length(keys(remote_peers)) >= MAX_PEERS)
+		return;
+
+	let changed = !previous || canonical(previous.reports) != canonical(packet.reports);
+	remote_peers[packet.node] = { seen: monotime(), reports: packet.reports };
+
+	if (changed) {
+		ulog(LOG_INFO, "learned peer " + packet.node);
+		update_hostapd();
+	}
+}
+
+function socket_readable(events) {
+	if (!(events & uloop.ULOOP_READ) || !udp)
+		return;
+
+	while (true) {
+		let address = {};
+		let data = udp.recv(MAX_PACKET + 1, socket.MSG_DONTWAIT, address);
+		if (data == null)
+			break;
+		if (length(data) > MAX_PACKET)
+			continue;
+		receive_packet(data, address);
+	}
+}
+
+/* The node identity is the network device's own MAC, not a BSSID: it must
+   stay the same AP even as individual BSSes come and go. */
+function device_node_id(device) {
+	let status = bus.call("network.device", "status", { name: device });
+	let mac = status?.macaddr;
+	if (type(mac) != "string" || !match(lc(mac), /^[0-9a-f]{2}(:[0-9a-f]{2}){5}$/))
+		return null;
+
+	return lc(mac);
+}
+
+function ensure_socket() {
+	let status = bus.call("network.interface." + network, "status", {});
+	if (type(status) != "object" || !status.up || type(status.l3_device) != "string") {
+		socket_fail("network " + network + " has no usable IPv6 interface; retrying");
+		return false;
+	}
+	let device = status.l3_device;
+
+	if (!node_id) {
+		let mac = device_node_id(device);
+		if (mac) {
+			node_id = mac;
+			node_id_failure = null;
+		}
+		else if (node_id_failure != device) {
+			ulog(LOG_WARNING, "unable to determine node id from " + device + "; not announcing");
+			node_id_failure = device;
+		}
+	}
+
+	if (udp && socket_device == device)
+		return true;
+
+	socket_close();
+	let sk = socket.create(socket.AF_INET6, socket.SOCK_DGRAM | socket.SOCK_NONBLOCK, 0);
+	if (!sk ||
+	    !sk.setopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, true) ||
+	    !sk.setopt(socket.SOL_SOCKET, socket.SO_BINDTODEVICE, device) ||
+	    !sk.setopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, true) ||
+	    /* sock.bind() takes a single address argument, not (host, port). */
+	    !sk.bind({ address: "::", port: PORT }) ||
+	    /* ucode resolves the device name to the membership interface index. */
+	    !sk.setopt(socket.IPPROTO_IPV6, socket.IPV6_ADD_MEMBERSHIP,
+	               { multiaddr: GROUP, interface: device }) ||
+	    !sk.setopt(socket.IPPROTO_IPV6, socket.IPV6_MULTICAST_IF, device) ||
+	    !sk.setopt(socket.IPPROTO_IPV6, socket.IPV6_MULTICAST_HOPS, 1) ||
+	    !sk.setopt(socket.IPPROTO_IPV6, socket.IPV6_MULTICAST_LOOP, false)) {
+		let error = socket.error() ?? "unknown socket error";
+		if (sk)
+			sk.close();
+		socket_fail("unable to open IPv6 multicast socket on " + device + ": " + error);
+		return false;
+	}
+
+	udp = sk;
+	udp_handle = uloop.handle(udp, socket_readable, uloop.ULOOP_READ);
+	if (!udp_handle) {
+		socket_fail("unable to register multicast socket with uloop");
+		return false;
+	}
+
+	socket_device = device;
+	socket_failure = null;
+	return true;
+}
+
+function discover_hostapd() {
+	let fresh = {};
+	let objects = bus.list() ?? [];
+
+	for (let object in sort(objects)) {
+		if (substr(object, 0, 8) != "hostapd.")
+			continue;
+
+		let status = bus.call(object, "get_status", {});
+		if (type(status) != "object" || status.status != "ENABLED" ||
+		    type(status.bssid) != "string" || type(status.ssid) != "string")
+			continue;
+
+		let own = bus.call(object, "rrm_nr_get_own", {});
+		let report = validate_report(own?.value);
+		if (!report || report.bssid != lc(status.bssid) || report.ssid != status.ssid)
+			continue;
+
+		fresh[object] = {
+			object,
+			interface: substr(object, 8),
+			report
+		};
+	}
+
+	let old_signature = canonical(map(local_reports(local_bss), (r) => r.value));
+	let new_signature = canonical(map(local_reports(fresh), (r) => r.value));
+
+	for (let object in keys(fresh)) {
+		if (!local_bss[object])
+			ulog(LOG_INFO, "discovered " + object);
+	}
+	for (let object in keys(local_bss)) {
+		if (!fresh[object])
+			delete last_installed[object];
+	}
+
+	local_bss = fresh;
+	return old_signature != new_signature;
+}
+
+/* An empty local_bss (e.g. mid wifi reload) is still announced under the
+   same node_id, so peers clear our reports immediately instead of waiting
+   for PEER_TIMEOUT_S. */
+function announce_local_reports() {
+	if (!node_id || !udp)
+		return;
+	if (length(keys(local_bss)) > MAX_REPORTS)
+		return;
+
+	let reports = map(local_reports(local_bss), (report) => report.value);
+	let data = canonical({ version: VERSION, node: node_id, reports });
+	if (length(data) > MAX_SEND) {
+		if (send_failure != length(data)) {
+			ulog(LOG_WARNING, "local announcement (" + length(data) + " bytes) exceeds " +
+			                  MAX_SEND + " byte send limit; not sending");
+			send_failure = length(data);
+		}
+		return;
+	}
+	send_failure = null;
+
+	if (udp.send(data, 0, {
+		family: socket.AF_INET6,
+		address: GROUP,
+		port: PORT,
+		interface: socket_device
+	}) == null)
+		socket_fail("IPv6 multicast send failed on " + socket_device + ": " +
+		            (socket.error() ?? "unknown socket error"));
+}
+
+function expire_remote_reports() {
+	let expired = prune_peers(remote_peers, monotime(), PEER_TIMEOUT_S);
+	if (!length(expired))
+		return;
+
+	for (let peer in expired)
+		ulog(LOG_INFO, "peer " + peer + " expired");
+	update_hostapd();
+}
+
+function reconcile() {
+	ensure_socket();
+	let changed = discover_hostapd();
+	update_hostapd();
+	if (changed)
+		announce_local_reports();
+}
+
+ulog_open(ULOG_SYSLOG, LOG_DAEMON, "uneighbord");
+
+let section = libuci.cursor().get_all("uneighbord", "main");
+network = section?.network ?? "lan";
+if (type(network) != "string" || !length(network)) {
+	ulog(LOG_ERR, "invalid UCI network");
+	exit(1);
+}
+
+uloop.init();
+bus = libubus.connect(null, 3);
+if (!bus) {
+	ulog(LOG_ERR, "unable to connect to ubus");
+	exit(1);
+}
+
+event_timer = uloop.timer(-1, reconcile);
+object_listener = bus.listener("ubus.object.add", (event, message) => {
+	if (type(message?.path) != "string" || substr(message.path, 0, 8) != "hostapd.")
+		return;
+
+	/* A recreated object has an empty hostapd NR DB even if its name is reused. */
+	delete last_installed[message.path];
+	event_timer.set(500);
+});
+
+/* A device recreated under the same name gets a new kernel interface index,
+   which the name match in ensure_socket() alone would never notice. */
+network_listener = bus.listener("network.interface", (event, message) => {
+	if (message?.interface != network)
+		return;
+
+	socket_close();
+	event_timer.set(500);
+});
+
+reconcile_timer = uloop.timer(RECONCILE_MS, () => {
+	reconcile();
+	reconcile_timer.set(RECONCILE_MS);
+});
+announce_timer = uloop.timer(ANNOUNCE_MS, () => {
+	announce_local_reports();
+	announce_timer.set(ANNOUNCE_MS);
+});
+expire_timer = uloop.timer(5000, () => {
+	expire_remote_reports();
+	expire_timer.set(5000);
+});
+
+reconcile();
+uloop.run();
+socket_close();
+uloop.done();
+ulog_close();

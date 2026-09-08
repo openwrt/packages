@@ -1,6 +1,11 @@
+From 49e3c330d4b5e17a740bc51b7ebbb9a42c67e505 Mon Sep 17 00:00:00 2001
+From: Sean Khan <datapronix@protonmail.com>
+Date: Thu, 27 Jun 2024 22:06:30 -0400
+Subject: [PATCH] Fix host build with LibreSSL
+
 --- a/Modules/_ssl.c
 +++ b/Modules/_ssl.c
-@@ -74,7 +74,10 @@
+@@ -75,7 +75,10 @@
  #  error "OPENSSL_THREADS is not defined, Python requires thread-safe OpenSSL"
  #endif
  
@@ -12,7 +17,7 @@
  
  struct py_ssl_error_code {
      const char *mnemonic;
-@@ -4898,7 +4901,11 @@ _ssl__SSLContext_cert_store_stats_impl(P
+@@ -4905,7 +4908,11 @@ _ssl__SSLContext_cert_store_stats_impl(P
      int x509 = 0, crl = 0, ca = 0, i;
  
      store = SSL_CTX_get_cert_store(self->ctx);
@@ -24,7 +29,7 @@
      if (objs == NULL) {
          PyErr_SetString(PyExc_MemoryError, "failed to query cert store");
          return NULL;
-@@ -4954,7 +4961,11 @@ _ssl__SSLContext_get_ca_certs_impl(PySSL
+@@ -4961,7 +4968,11 @@ _ssl__SSLContext_get_ca_certs_impl(PySSL
      }
  
      store = SSL_CTX_get_cert_store(self->ctx);

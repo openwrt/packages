@@ -24,6 +24,5 @@ fi
 
 # login with credentials
 #
-raw_html="$("${trm_fetch}" ${trm_fetchparm} --user-agent "${trm_useragent}" --header "Content-Type:application/x-www-form-urlencoded" --data "username=${user}&password=${password}" "http://${trm_domain}")"
-[ -z "${raw_html}" ] && exit 0 || exit 255
-
+"${trm_fetchcmd}" ${trm_fetchparm} --user-agent "${trm_useragent}" --header "Content-Type:application/x-www-form-urlencoded" --data "username=${user}&password=${password}" --output /dev/null "http://${trm_domain}"
+[ "${?}" = "0" ] && exit 0 || exit 255

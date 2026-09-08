@@ -1,3 +1,10 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ted Hess <thess@kitschensync.net>
+Date: Mon, 7 Mar 2016 17:17:53 -0500
+Subject: [PATCH] add interface selection for discovery broadcast
+
+---
+
 --- a/main.c
 +++ b/main.c
 @@ -99,6 +99,7 @@ static void usage(const char *argv0) {
@@ -132,7 +139,7 @@
  		} else {
 --- a/squeezelite.h
 +++ b/squeezelite.h
-@@ -474,7 +474,7 @@ char* strcasestr(const char *haystack, c
+@@ -477,7 +477,7 @@ char* strcasestr(const char *haystack, c
  
  char *next_param(char *src, char c);
  u32_t gettime_ms(void);
@@ -141,7 +148,7 @@
  void set_nonblock(sockfd s);
  void set_recvbufsize(sockfd s);
  int connect_timeout(sockfd sock, const struct sockaddr *addr, socklen_t addrlen, int timeout);
-@@ -533,7 +533,7 @@ void buf_init(struct buffer *buf, size_t
+@@ -536,7 +536,7 @@ void buf_init(struct buffer *buf, size_t
  void buf_destroy(struct buffer *buf);
  
  // slimproto.c

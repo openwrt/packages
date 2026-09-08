@@ -35,9 +35,8 @@ case "$1" in
 	      -D id="$uuid" \
 	      -e '
 	  let j = json(fs.readfile(infile));
-	  j.outbounds[0].settings.address = addr;
-	  j.outbounds[0].settings.port = port;
 	  j.outbounds[0].settings.id = id;
+	  j.outbounds[1].settings.redirect = `${addr}:${port}`;
 	  fs.writefile(outfile, sprintf("%.2J\n", j));'
 
 	# Flush the MPTCP endpoint table.

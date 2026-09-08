@@ -1,0 +1,79 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008-2013 OpenWrt.org
+
+. $IPKG_INSTROOT/lib/functions/olsrd.sh
+
+START=65
+USE_PROCD=1
+BIN=/usr/sbin/olsrd
+OLSRD=olsrd
+CONF=/var/etc/$OLSRD.conf
+PID=/var/run/olsrd.pid
+
+wait_for_network()
+{
+	ubus -t 15 wait_for network.interface.$1 2>/dev/null
+}
+
+wait_for_wireless()
+{
+	local count=0
+	ubus -t 15 wait_for network.wireless 2>/dev/null
+	while [ $count -lt 30 ]; do
+		if  [ "$(ubus call network.wireless status | jsonfilter -e '@[*]["pending"]' | grep true | wc -l)" == "0" ]; then
+			break
+		fi
+		count=$((count+1))
+		sleep 1
+	done
+}
+
+boot()
+{
+	config_load network
+	config_foreach wait_for_network interface
+	wait_for_wireless
+	rc_procd start_service
+}
+
+start_service() {
+	olsrd_generate_config $OLSRD
+
+	procd_open_instance
+
+	config_load olsrd
+	local _respawn_threshold
+	local _respawn_timeout
+	local _respawn_retry
+
+	config_get _respawn_threshold procd respawn_threshold 3600
+	config_get _respawn_timeout procd respawn_timeout 15
+	config_get _respawn_retry procd respawn_retry 0
+
+	procd_set_param command "$BIN"
+	procd_append_param command -f ${CONF}
+	procd_append_param command -nofork
+	procd_append_param command -pidfile ${PID}
+
+	# restart if olsrd dies
+	procd_set_param respawn $_respawn_threshold $_respawn_timeout $_respawn_retry
+
+	# automatically restart olsrd if generated cfg has changed
+	procd_set_param file $CONF
+
+	procd_set_param pidfile $PID
+
+	procd_close_instance
+
+	olsrd_setup_smartgw_rules
+}
+
+service_triggers() {
+	# reload if config changed via uci
+	procd_add_reload_trigger "olsrd"
+
+	# restart on ifup interface events
+	for n in $(olsrd_list_configured_interfaces $OLSRD); do
+		procd_add_reload_interface_trigger $n /etc/init.d/$OLSRD reload
+	done
+}

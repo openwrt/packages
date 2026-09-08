@@ -3,11 +3,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-marshmallow
-PKG_VERSION:=4.3.0
+PKG_VERSION:=4.3.1
 PKG_RELEASE:=1
 
 PYPI_NAME:=marshmallow
-PKG_HASH:=fb43c53b3fe240b8f6af37223d6ef1636f927ad9bea8ab323afad95dff090880
+PKG_HASH:=fb6b8048af08d4ab061610d5b7d3696a7e4c95337dbda880edb9f95812cabc20
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT

@@ -1,6 +1,11 @@
+From 18330902a0ca1b162e1ae938d8024cfb7e7c524d Mon Sep 17 00:00:00 2001
+From: Jeffery To <jeffery.to@gmail.com>
+Date: Tue, 16 Feb 2021 22:23:50 +0800
+Subject: [PATCH] Choose python-config version
+
 --- a/Makefile.pre.in
 +++ b/Makefile.pre.in
-@@ -2839,7 +2839,7 @@ python-config: $(srcdir)/Misc/python-con
+@@ -2845,7 +2845,7 @@ python-config: $(srcdir)/Misc/python-con
  	@ # On Darwin, always use the python version of the script, the shell
  	@ # version doesn't use the compiler customizations that are provided
  	@ # in python (_osx_support.py).
