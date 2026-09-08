@@ -8,13 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xfrpc
-PKG_VERSION:=5.06.909
+PKG_VERSION:=5.09.982
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/liudf0716/xfrpc/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=7742bedbe929f5bfb386af2025de744aa38bc6f531e1f86a1fbb7318e3ec8f72
-PKG_BUILD_DIR:=$(BUILD_DIR)/xfrpc-$(PKG_VERSION)
+PKG_HASH:=62fa59540bcfea04289b67fdb37916904f4dac62ac799ddf8cd634949a556edc
 
 PKG_MAINTAINER:=Dengfeng Liu <liudf0716@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
