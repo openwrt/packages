@@ -487,12 +487,17 @@ FFMPEG_OPT=$(if $(CONFIG_$(1)),--enable-$(2),--disable-$(2))
 
 ifeq ($(BUILD_VARIANT),default)
 
+  # postproc: libpostproc was removed upstream in FFmpeg 8.0 and is re-added
+  # by patches/100-postproc.patch (LibreELEC), which also re-introduces the
+  # --enable/--disable-postproc option; it is GPL-only, so it follows the GPL
+  # option. Kodi requires it.
   # vaapi/libdav1d: literal --disable until the libva / dav1d packages exist
   # in the feeds; then restore $(call FFMPEG_OPT,FFMPEG_VAAPI,vaapi),
   # $(call FFMPEG_OPT,FFMPEG_LIBDAV1D,libdav1d) and, for manual component
   # selection, --enable-hwaccel=*_vaapi / --enable-decoder=libdav1d.
   FFMPEG_CONFIGURE+= \
 	$(call FFMPEG_OPT,FFMPEG_GPL,gpl) \
+	$(call FFMPEG_OPT,FFMPEG_GPL,postproc) \
 	$(call FFMPEG_OPT,FFMPEG_VERSION3,version3) \
 	$(call FFMPEG_OPT,FFMPEG_NONFREE,nonfree) \
 	$(call FFMPEG_OPT,FFMPEG_OPTIMIZE_SIZE,small) \
@@ -577,6 +582,7 @@ ifeq ($(BUILD_VARIANT),mini)
 	--disable-programs \
 	--disable-avdevice \
 	--disable-avfilter \
+	--disable-postproc \
 	--disable-swresample \
 	--disable-swscale \
 	--disable-everything \
