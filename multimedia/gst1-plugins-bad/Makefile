@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-bad
 PKG_VERSION:=1.28.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=gst-plugins-bad-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gst-plugins-bad/
@@ -96,6 +96,7 @@ GST_COND_SELECT = -D$(1)=$(if $(CONFIG_PACKAGE_gst1-mod-$(1)),en,dis)abled
 GST_VERSION:=1.0
 
 MESON_ARGS += \
+	-Dauto_features=disabled \
 	$(call GST_COND_SELECT,accurip) \
 	$(call GST_COND_SELECT,adpcmdec) \
 	$(call GST_COND_SELECT,adpcmenc) \
@@ -257,6 +258,7 @@ MESON_ARGS += \
 	-Dexamples=disabled \
 	-Dtests=disabled \
 	-Dintrospection=disabled \
+	-Dnls=enabled \
 	-Dorc=disabled \
 	-Dgobject-cast-checks=disabled \
 	-Dglib-asserts=disabled \
