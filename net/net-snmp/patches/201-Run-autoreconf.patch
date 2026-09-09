@@ -10,7 +10,7 @@ Subject: [PATCH] Run autoreconf
 
 --- a/configure
 +++ b/configure
-@@ -928,6 +928,8 @@ with_dnssec
+@@ -925,6 +925,8 @@ with_dnssec
  enable_dnssec
  with_rpm
  enable_rpm
@@ -28,7 +28,7 @@ Subject: [PATCH] Run autoreconf
    --without-pcre                  Don't include pcre process searching
                                    support in the agent.
    --with-install-prefix=PATH      Just for installing, prefix all
-@@ -5259,6 +5263,21 @@ fi
+@@ -5357,6 +5361,21 @@ fi
  
  
  
@@ -50,7 +50,7 @@ Subject: [PATCH] Run autoreconf
  
  # Check whether --with-pcre was given.
  if test ${with_pcre+y}
-@@ -26477,6 +26496,112 @@ LIBS="$netsnmp_save_LIBS"
+@@ -27345,6 +27364,112 @@ LIBS="$netsnmp_save_LIBS"
  #
  #   regex in process table
  #
@@ -163,7 +163,7 @@ Subject: [PATCH] Run autoreconf
  if test "x$with_pcre" != "xno"; then
    ac_fn_c_check_header_compile "$LINENO" "pcre.h" "ac_cv_header_pcre_h" "$ac_includes_default"
  if test "x$ac_cv_header_pcre_h" = xyes
-@@ -31486,6 +31611,7 @@ printf "%s\n" "#define pid_t $ac_pid_typ
+@@ -36354,6 +36479,7 @@ printf "%s\n" "#define HAVE_STRUCT_UDPST
  
  
  fi
@@ -173,7 +173,7 @@ Subject: [PATCH] Run autoreconf
  
 --- a/include/net-snmp/net-snmp-config.h.in
 +++ b/include/net-snmp/net-snmp-config.h.in
-@@ -727,6 +727,9 @@
+@@ -788,6 +788,9 @@
  /* Define to 1 if you have the <pci/pci.h> header file. */
  #undef HAVE_PCI_PCI_H
  
