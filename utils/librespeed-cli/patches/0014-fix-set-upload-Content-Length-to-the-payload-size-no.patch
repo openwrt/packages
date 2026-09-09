@@ -1,0 +1,89 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: maddie <maddie@users.noreply.github.com>
+Date: Mon, 17 Aug 2026 13:19:10 +0800
+Subject: [PATCH] fix: set upload Content-Length to the payload size, not the
+ KiB option (#144)
+
+#143 set Content-Length to the raw --upload-size option value, but
+SetUploadSize scales it by 1024, so a default 1024 KiB payload went out as
+ContentLength=1024 with a 1 MiB body. The transport rejects the mismatch
+("ContentLength=1024 with Body length 1048576"), the request fails, and
+the upload stalls at one payload again (1 MiB / 5 s = 1.61 Mbps).
+
+Use the generated payload's actual length instead. The regression test now
+uses the CLI's real unit semantics (1024 KiB -> 1 MiB payload) and asserts
+the server sees Content-Length 1048576; the previous test passed by
+accident because it fed an already-scaled uploadSize in.
+Signed-off-by: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Upstream-Status: Backport [https://github.com/librespeed/speedtest-cli/commit/f56897bba3e5d98a504f36e7d759aeb62108fa6f]
+
+---
+ defs/server.go      |  6 ++++--
+ defs/server_test.go | 29 +++++++++++++++++------------
+ 2 files changed, 21 insertions(+), 14 deletions(-)
+
+--- a/defs/server.go
++++ b/defs/server.go
+@@ -460,8 +460,10 @@ func (s *Server) Upload(noPrealloc, sile
+ 			// waiting for an EOF that never comes while the client keeps the
+ 			// connection open, hanging the upload after a single payload (see
+ 			// librespeed/speedtest-cli#122). A fixed length is the standard,
+-			// universally supported form.
+-			uploadReq.ContentLength = int64(uploadSize)
++			// universally supported form. Use the payload's actual size:
++			// SetUploadSize scales the CLI's KiB option by 1024, so the request
++			// length must match the generated blob, not the option value.
++			uploadReq.ContentLength = int64(len(counter.Payload()))
+ 		}
+ 
+ 		resp, err := http.DefaultClient.Do(uploadReq)
+--- a/defs/server_test.go
++++ b/defs/server_test.go
+@@ -217,30 +217,35 @@ func librespeedRSLikeServer(t *testing.T
+ 
+ // TestUploadSendsContentLength is the regression test for
+ // librespeed/speedtest-cli#122: Upload must send an explicit Content-Length
+-// so servers that never chunk-decode (librespeed-rs) answer instead of
+-// blocking on a body that never ends. Without the fix the request goes out
+-// chunked and the upload stalls after a single payload.
++// matching the generated payload so servers that never chunk-decode
++// (librespeed-rs) answer instead of blocking on a body that never ends.
++// Without the fix the request goes out chunked and the upload stalls after a
++// single payload; with a wrong length the transport errors out the same way.
+ func TestUploadSendsContentLength(t *testing.T) {
+ 	s, contentLength, bodyBytes := librespeedRSLikeServer(t)
+ 
++	// Same units as the CLI: --upload-size N means N KiB. SetUploadSize
++	// scales by 1024, so the payload and the Content-Length must be 1 MiB,
++	// not 1024.
+ 	const (
+-		uploadSize = 1024 * 1024
+-		duration   = 500 * time.Millisecond
+-		requests   = 2
++		uploadSizeKiB = 1024
++		payloadBytes  = uploadSizeKiB * 1024
++		duration      = 500 * time.Millisecond
++		requests      = 2
+ 	)
+ 
+-	_, total, err := s.Upload(false, true, false, false, requests, uploadSize, duration)
++	_, total, err := s.Upload(false, true, false, false, requests, uploadSizeKiB, duration)
+ 	if err != nil {
+ 		t.Fatalf("Upload returned error: %v", err)
+ 	}
+ 
+-	if got := contentLength.Load(); got != uploadSize {
+-		t.Errorf("server saw Content-Length %d, want %d (chunked encoding would stall it)", got, int64(uploadSize))
++	if got := contentLength.Load(); got != payloadBytes {
++		t.Errorf("server saw Content-Length %d, want %d (chunked encoding or a wrong length stalls the upload)", got, int64(payloadBytes))
+ 	}
+-	if got := bodyBytes.Load(); got <= uploadSize {
+-		t.Errorf("server consumed %d bytes, want more than one %d-byte payload (upload stalled)", got, int64(uploadSize))
++	if got := bodyBytes.Load(); got <= payloadBytes {
++		t.Errorf("server consumed %d bytes, want more than one %d-byte payload (upload stalled)", got, int64(payloadBytes))
+ 	}
+-	if total <= uploadSize {
++	if total <= payloadBytes {
+ 		t.Errorf("counter reported %d bytes, want more than one payload", total)
+ 	}
+ }
