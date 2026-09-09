@@ -157,9 +157,21 @@ is_aead() {
 config_esp_proposal() {
 	local conf="$1"
 
+	local use_custom_proposal custom_proposal
 	local encryption_algorithm
 	local hash_algorithm
 	local dh_group
+
+	config_get_bool use_custom_proposal "$conf" use_custom_proposal 0
+	[ "$use_custom_proposal" = "1" ] && {
+		config_get custom_proposal "$conf" custom_proposal ""
+		if [ -z "$custom_proposal" ]; then
+			warning "Custom ESP proposal in '$conf' is not defined"
+		else
+			crypto="${crypto:+${crypto},}${custom_proposal}"
+		fi
+		return
+	}
 
 	config_get encryption_algorithm "$conf" encryption_algorithm
 	config_get hash_algorithm "$conf" hash_algorithm
@@ -189,10 +201,22 @@ iter_esp_proposal() {
 config_ike_proposal() {
 	local conf="$1"
 
+	local use_custom_proposal custom_proposal
 	local encryption_algorithm
 	local hash_algorithm
 	local dh_group
 	local prf_algorithm
+
+	config_get_bool use_custom_proposal "$conf" use_custom_proposal 0
+	[ "$use_custom_proposal" = "1" ] && {
+		config_get custom_proposal "$conf" custom_proposal ""
+		if [ -z "$custom_proposal" ]; then
+			warning "Custom IKE proposal in '$conf' is not defined"
+		else
+			crypto="${crypto:+${crypto},}${custom_proposal}"
+		fi
+		return
+	}
 
 	config_get encryption_algorithm "$conf" encryption_algorithm
 	config_get hash_algorithm "$conf" hash_algorithm
