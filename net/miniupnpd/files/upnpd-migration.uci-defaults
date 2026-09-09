@@ -212,6 +212,8 @@ else
 	fi
 	while uci -q delete upnpd.@perm_rule[-1]; do :; done
 fi
+[ "$access_defaults" != "" ] && uci set upnpd.config.access_defaults="$access_defaults"
+[ "$check_acl" = "0" ] && uci set upnpd.config.check_acl="0"
 if [ "$addtemplateentries" = "1" ]; then
 	uci batch >/dev/null <<-EOF
 		add upnpd acl_entry
@@ -229,20 +231,6 @@ if [ "$addtemplateentries" = "1" ]; then
 	EOF
 	uci -q get upnpd.@acl_entry[-3] >/dev/null &&
 		uci reorder upnpd.@acl_entry[-2]=0 && uci reorder upnpd.@acl_entry[-1]=1
-fi
-
-# Migrate internal_iface option to new internal_network section
-if ! uci -q get upnpd.@internal_network[0] >/dev/null; then
-	ifnr=0
-	for interface in $(uci -q get upnpd.config.internal_iface || echo lan); do
-		log "Create new internal_network section for $interface"
-		uci add upnpd internal_network >/dev/null
-		uci set upnpd.@internal_network[$ifnr].interface="$interface"
-		[ "$access_defaults" != "" ] && uci set upnpd.@internal_network[$ifnr].access_defaults="$access_defaults"
-		[ "$check_acl" = "0" ] && uci set upnpd.@internal_network[$ifnr].check_acl="0"
-		ifnr=$((ifnr + 1))
-	done
-	uci -q delete upnpd.config.internal_iface
 fi
 
 # Rename UCI section config -> settings (v2.0)
