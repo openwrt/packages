@@ -30,8 +30,9 @@ PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ffmpeg.org/releases/
 PKG_HASH:=cf38e0e28c7e5605942c4a77755349b0145804a397af37eb1fb4c77cb237f635
-PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>, \
-		Ian Leonard <antonlacon@gmail.com>
+PKG_MAINTAINER:=Ian Leonard <antonlacon@gmail.com>, \
+		Mirko Vogt <mirko-openwrt@nanl.de>, \
+		Daniel Golle <daniel@makrotopia.org>
 
 PKG_LICENSE:=LGPL-2.1-or-later GPL-2.0-or-later LGPL-3.0-or-later GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING.GPLv2 COPYING.GPLv3 COPYING.LGPLv2.1 COPYING.LGPLv3
