@@ -48,11 +48,11 @@ add_extzone_rules() {
 
 # By default, user configuration is king.
 
-for ext_iface in $(uci -q get upnpd.config.external_iface); do
+for ext_iface in $(uci -q get upnpd.settings.external_iface); do
     add_extzone_rules $(fw3 -q network "$ext_iface")
 done
 
-add_extzone_rules $(uci -q get upnpd.config.external_zone)
+add_extzone_rules $(uci -q get upnpd.settings.external_zone)
 
 [ "$ADDED" -ne 0 ] && exit 0
 
