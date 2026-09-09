@@ -219,8 +219,11 @@ start_instance() {
 	append_arg "-V" "$vendor_oid"
 	append_arg "-t" $mib_timeout
 
-	[ "$ipv6" = 1 ] && procd_append_param command "-6"
-	[ "$debug" = 1 ] && procd_append_param command "-v"
+	if "$PROG" -h 2>&1 | grep -q -- '--use-ipv4'; then
+		[ "$ipv6" = 0 ] && procd_append_param command "-4"
+		[ "$ipv6" = 1 ] && procd_append_param command "-6"
+	fi
+	[ "$debug" = 1 ] && procd_append_param command "-l" "debug"
 	# uci_validate_section() aka /sbin/validate_data can only cast default values not defined in /etc/config/* to string
 	# e.g. ="1" however it sets bools defined in /etc/config/* to =1 / =0
 	[ "$auth" = 1 -o "$auth" = "1" ] && procd_append_param command "-a"
