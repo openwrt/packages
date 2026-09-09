@@ -24,12 +24,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wwand
-PKG_VERSION:=1.6.1
+PKG_VERSION:=1.6.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ddimension/wwand/tar.gz/refs/tags/v$(PKG_VERSION)?
-PKG_HASH:=c7d85b1d6c7f8b524b7eab3f1381b34961e6e22810852b122dcd00b890289d0c
+PKG_HASH:=7cd61322a42113f2bca3d98645623d6781ce5a442ec9fe760b40072ceacb6c79
 
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=LICENSE
@@ -75,12 +75,13 @@ UCDIR:=/usr/share/ucode/wwand
 WWAND_BASE_UC:=apndb.uc atcmd.uc atcmd_parse.uc atport.uc backend.uc board.uc \
 	carrier_config.uc \
 	client.uc config.uc config_check.uc context_common.uc context_monitor_qmi.uc \
-	ctx_settings.uc daemon.uc discovery.uc hwops.uc log.uc modem_common.uc \
+	ctx_settings.uc daemon.uc deps.uc discovery.uc hwops.uc log.uc modem_common.uc \
 	modem_datapath_qmi.uc modem_init_qmi.uc modem_quirks.uc modeswitch.uc \
 	ncm_vendors.uc netlink.uc netsel_ops.uc protocol_switch.uc reconnect.uc \
 	recovery.uc regdetail.uc sim.uc sim_plmn.uc simops.uc sms.uc sms_pdu.uc \
 	telemetry_mbim.uc telemetry_ncm.uc telemetry_qmi.uc transport.uc ubus.uc \
-	version.uc
+	version.uc \
+	wwandctl_fmt.uc
 WWAND_BASE_CODEC:=arfcn_bands.uc hex.uc qmux.uc tlv.uc
 WWAND_BASE_SCHEMA:=cat.uc ctl.uc dms.uc dsd.uc loc.uc loc_lazy.uc merge.uc nas.uc \
 	pdc.uc rat.uc tmd.uc uim.uc wda.uc wds.uc wms.uc wms_lazy.uc
@@ -135,13 +136,11 @@ define Package/wwand/description
 endef
 
 # The E182E usb binder ships in the tarball but is deliberately NOT installed
-# here. (The file is `files/wwand.hotplug.e1820` in 1.6.2 — the stick is an
-# E182E and upstream renamed the file after this tag; the path below is the one
-# this release actually contains.) Installing it from the BASE package would
-# create /etc/hotplug.d/usb on every wwand install, and procd runs hotplug-call
-# for a subsystem whose directory exists -- so every USB uevent on the box would
-# fork a script, for one 2009 Huawei stick almost nobody has. The feed package
-# installs it for the people testing that hardware.
+# here. Installing it from the BASE package would create /etc/hotplug.d/usb on
+# every wwand install, and procd runs hotplug-call for a subsystem whose
+# directory exists -- so every USB uevent on the box would fork a script, for
+# one 2009 Huawei stick almost nobody has. The feed package installs it for the
+# people testing that hardware.
 #
 # (The earlier wording here rested on the hardware owner calling it an
 # unvalidated script that does not survive a reboot. That report was accurate
@@ -150,7 +149,7 @@ endef
 # exits when the path is ABSENT -- so the binder was unreachable on every
 # hotplug event. Fixed upstream after 1.6.1; the reason to keep it out of the
 # base package is the dispatch cost above, not the script.)
-# check-packaging: not-installed files/wwand.hotplug.e1820
+# check-packaging: not-installed files/wwand.hotplug.e182e
 
 define Package/wwand/install
 	# native transport module (built by the cmake step from io/)
