@@ -6,8 +6,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adblock
-PKG_VERSION:=4.5.7
-PKG_RELEASE:=4
+PKG_VERSION:=4.5.8
+PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
 
@@ -24,7 +24,7 @@ endef
 define Package/adblock/description
 adblock blocks ad/abuse domains via dnsmasq, unbound, named, smartdns or kresd.
 adblock consumes a minimum of memory, is very fast and supports many domain blocklist sites plus local block- and allowlist overrides.
-Please see https://github.com/openwrt/packages/blob/master/net/adblock/files/README.md for further information.
+Please see https://github.com/openwrt/packages/blob/master/net/adblock/README.md for further information.
 
 endef
 

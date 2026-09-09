@@ -17,6 +17,7 @@ adb_init="/etc/init.d/adblock"
 adb_script="/usr/bin/adblock.sh"
 adb_rundir="/var/run/adblock"
 adb_pidfile="/var/run/adblock/adblock.pid"
+adb_rtfile="/var/run/adblock/adblock.runtime.json"
 
 if [ -z "${IPKG_INSTROOT}" ]; then
 
@@ -54,12 +55,21 @@ boot() {
 }
 
 start_service() {
+	local status
+
 	if "${adb_init}" enabled; then
 		if [ "${action}" = "boot" ]; then
 			[ -n "$(uci_get adblock global adb_trigger)" ] && return 0
 		fi
+		if [ "${1}" = "refresh" ]; then
+			json_init
+			json_load_file "${adb_rtfile}" >/dev/null 2>&1
+			json_get_var status "adblock_status"
+			[ -n "${status}" ] && [ "${status}" != "error" ] && return 0
+		fi
+
 		procd_open_instance "adblock"
-		procd_set_param command "${adb_script}" "${@:-"${action}"}"
+		procd_set_param command "${adb_script}" "${action}"
 		procd_set_param pidfile "${adb_pidfile}"
 		procd_set_param nice "$(uci_get adblock global adb_nicelimit "0")"
 		procd_set_param stdout 0
@@ -105,7 +115,7 @@ status_service() {
 	local key keylist type value values
 
 	json_init
-	json_load_file "/var/run/adblock/adblock.runtime.json" >/dev/null 2>&1
+	json_load_file "${adb_rtfile}" >/dev/null 2>&1
 	json_get_keys keylist
 	if [ -n "${keylist}" ]; then
 		printf '%s\n' "::: adblock runtime information"
@@ -133,6 +143,6 @@ service_triggers() {
 
 	PROCD_RELOAD_DELAY="$((delay * 1000))"
 	for iface in ${trigger}; do
-		procd_add_interface_trigger "interface.*.up" "${iface}" "${adb_init}" start
+		procd_add_interface_trigger "interface.*" "${iface}" "${adb_init}" start refresh
 	done
 }
