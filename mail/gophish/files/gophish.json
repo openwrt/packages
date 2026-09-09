@@ -1,0 +1,19 @@
+{
+	"admin_server": {
+		"listen_url": "127.0.0.1:8080",
+		"use_tls": false,
+		"trusted_origins": []
+	},
+	"phish_server": {
+		"listen_url": "127.0.0.1:8081",
+		"use_tls": false
+	},
+	"db_name": "sqlite3",
+	"db_path": "/usr/libexec/gophish/gophish.db",
+	"migrations_prefix": "/usr/libexec/gophish/db_",
+	"contact_address": "",
+	"logging": {
+		"filename": "",
+		"level": ""
+	}
+}
