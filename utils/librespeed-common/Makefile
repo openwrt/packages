@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=librespeed-common
 PKG_VERSION:=1.0.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=GPL-2.0-only
@@ -21,8 +21,9 @@ define Package/librespeed-common
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=LibreSpeed measurement orchestration
-  DEPENDS:=+librespeed-cli +rpcd-mod-ucode +jsonfilter +ucode +ucode-mod-fs \
-	+ucode-mod-uci +jshn
+  DEPENDS:=+PACKAGE_librespeed-cli:librespeed-cli \
+	+!PACKAGE_librespeed-cli:librespeed-cli-rust \
+	+rpcd-mod-ucode +jsonfilter +ucode +ucode-mod-fs +ucode-mod-uci +jshn
   PKGARCH:=all
 endef
 
