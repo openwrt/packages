@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=travelmate
 PKG_VERSION:=2.4.9
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
 
@@ -23,7 +23,7 @@ endef
 
 define Package/travelmate/description
 A wlan connection manager for travel router.
-Please see https://github.com/openwrt/packages/blob/master/net/travelmate/files/README.md for further information.
+Please see https://github.com/openwrt/packages/blob/master/net/travelmate/README.md for further information.
 
 endef
 
