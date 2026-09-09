@@ -27,7 +27,7 @@ When the DNS server on your router receives DNS requests, you will sort out quer
 ## Quick Start
 For a typical setup these few steps are enough to get adblock up and running — see the sections below for details:
 1. Install the LuCI companion package: `apk update && apk add luci-app-adblock` (this pulls in the `adblock` backend as a dependency).
-2. Enable the adblock system service under `System → Startup`, then open LuCI under `Services → Adblock`, tick `Enabled` and (recommended) set a `Startup Trigger Interface` to your WAN interface (avoid IPv6/wan6).
+2. Enable the adblock system service under `System → Startup`, then open LuCI under `Services → Adblock`, tick `Enabled` and (recommended) set a `Startup Trigger Interface` to your WAN interface(s).
 3. Keep the small, pre-selected default feed selection to start with (e.g. `adguard`, `adguard_tracking` and `certpl`, ≈280K domains).
 4. Start and verify the service:
 
@@ -141,7 +141,7 @@ Support of the following fully pre-configured domain blocklist feeds (free for p
 * Install the LuCI companion package `luci-app-adblock` which also installs the main `adblock` package as a dependency
 * Enable the adblock system service (System -> Startup) and enable adblock itself (adblock -> General Settings)
 * It's strongly recommended to use the LuCI frontend to easily configure all aspects of adblock, the application is located in LuCI under the `Services` menu
-* It's also recommended to configure a `Startup Trigger Interface` to depend on your WAN ifup events during boot or restart of your router. Avoid IPv6 (wan6) interfaces here, as IPv6/netifd is chatty and would trigger frequent unnecessary adblock restarts
+* It's also recommended to configure a `Startup Trigger Interface` to depend on your WAN interface events during boot or restart of your router. Listing IPv6 interfaces (wan6) is fine as well: a trigger only starts a run if the last one did not succeed, so the chatty netifd update events no longer cause repeated downloads
 
 <a id="adblock-cli-interface"></a>
 ## Adblock CLI interface
@@ -185,7 +185,7 @@ The `report` sub-command accepts an output mode: `cli` (default, human-readable 
 | adb_fetchparm        | -, auto-detected                   | manually override the config options for the selected download utility                             |
 | adb_fetchretry       | 5                                  | number of download attempts in case of an error (not supported by uclient-fetch)                   |
 | adb_fetchinsecure    | 0, disabled                        | don't check SSL server certificates during download                                                |
-| adb_trigger          | -, not set                         | logical reload trigger interface(s), e.g. `wan` (avoid IPv6 interfaces)                            |
+| adb_trigger          | -, not set                         | logical reload trigger interface(s), e.g. `wan` and `wan6`                                         |
 | adb_triggerdelay     | 5                                  | additional trigger delay in seconds before adblock processing begins                               |
 | adb_debug            | 0, disabled                        | set to 1 to enable the debug output                                                                |
 | adb_nicelimit        | 0, standard prio.                  | valid nice level range 0-19 of the adblock processes                                               |
