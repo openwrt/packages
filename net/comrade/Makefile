@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=comrade
-PKG_VERSION:=0.1.17
+PKG_VERSION:=0.2.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/dangowrt/comrade/releases/download/v$(PKG_VERSION)
-PKG_HASH:=7824d2d475647456529256ad912ad7378a432da769777986d424b08e22de1329
+PKG_HASH:=02e01860bd262514ff53933f9acb1b3b2615483d110181cdd9afda737f8dd9ea
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=AGPL-3.0-or-later
@@ -49,7 +49,8 @@ define Package/comrade
   SUBMENU:=SSH
   TITLE:=Serverless peer-to-peer terminal sharing
   URL:=https://github.com/dangowrt/comrade
-  DEPENDS:=+libssh +libjuice +libdht +libkcp +libmonocypher +libpthread
+  DEPENDS:=$(ATOMIC64_DEPENDS) +libssh +libjuice +libdht \
+	   +libkcp +libmonocypher +libpthread
 endef
 
 define Package/comrade/description
@@ -72,7 +73,8 @@ define Package/comrade-tests
   SUBMENU:=SSH
   TITLE:=Serverless peer-to-peer terminal sharing (test suite)
   URL:=https://github.com/dangowrt/comrade
-  DEPENDS:=+libssh +libjuice +libdht +libkcp +libmonocypher +libpthread
+  DEPENDS:=$(ATOMIC64_DEPENDS) +libssh +libjuice +libdht \
+	   +libkcp +libmonocypher +libpthread
 endef
 
 define Package/comrade-tests/description
