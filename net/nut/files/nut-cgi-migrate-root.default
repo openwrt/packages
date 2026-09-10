@@ -1,0 +1,112 @@
+#!/bin/sh
+# Script is sourced not executed, but shebang helps tools recognize this as
+# a shell script.
+
+# In recent (relevant) versions of shellcheck busybox is a valid shell type
+# shellcheck shell=busybox
+
+# uci-defaults script to migrate old uci config into new separate regular and
+# admin configs. Applied during install or on first boot after install, if
+# setting on install fails
+
+# IPKG_INSTROOT is intentionally only set when building an image and
+# is intentionally empty on a live OpenWrt device
+
+# Only run this uci-defaults script on a live OpenWrt device
+[ -z "${IPKG_INSTROOT}" ] || exit 0
+
+# Loads needed OpenWrt functions
+# shellcheck source=net/nut/files/functions.sh.functions
+. /lib/functions.sh || {
+	# As the uci-defaults environment in which this runs does not have logging
+	# available, nor is stderr captured or displayed on the console, these messages
+	# exist only to assist when debugging manual runs of the script.
+	printf "'%s': ERROR: '%s'\n" nut-cgi-migrate "Unable to source 'functions.sh' in 'nut-cgi-migrate' uci-default script. Bailing"
+	exit 1
+}
+
+# As the uci-defaults environment in which this runs does not have logging
+# available, nor is stderr captured or displayed on the console, these messages
+# exist only to assist when debugging manual runs of the script.
+# shellcheck disable=SC2329,SC2317
+log_migration_error() {
+	local reason="$1"
+
+	printf "'%s': ERROR: '%s'\n" "nut-cgi-migrate" "$reason" >&2
+}
+
+# If there is more than one upsset section, the only the last is used, so only
+# migrate the last section found (and remove the rest).
+
+# We use a subshell so nut_cgi and nut_cgi_root do not become mixed together in
+# the environment
+upsset_enable="$(
+	upsset_enable_val=""
+
+	# shellcheck disable=SC2329
+	upsset_get_enable_val() {
+		local cfg="$1"
+		local enable
+
+		config_get_bool enable "$cfg" enable 0
+
+		if [ -n "$enable" ]; then
+			# config_foreach uses eval and for loops so upsset_enable_value will
+			# keep the last value set once config_foreach is done
+			upsset_enable_val="$enable"
+		fi
+
+		uci_remove nut_cgi "$cfg" || {
+			log_migration_error "Failed to remove upsset section '$cfg' from nut_cgi"
+		}
+		return 0
+	}
+
+	if ! config_load nut_cgi; then
+		log_migration_error "Missing nut_config_root"
+		exit 1
+	fi
+
+	config_foreach upsset_get_enable_val upsset
+
+	echo "$upsset_enable_val"
+)"
+ret=$?
+
+[ $ret -eq 0 ] || exit 1
+
+uci_load nut_cgi_root || {
+	log_migration_error "Failed to load 'nut_cgi_root'"
+	exit 1
+}
+
+last_upsset_section=""
+
+# shellcheck disable=SC2329
+upsset_get_last_section() {
+	local cfg="$1"
+	last_upsset_section="$cfg"
+}
+
+config_foreach upsset_get_last_section upsset
+
+if [ -z "$last_upsset_section" ]; then
+	uci_add nut_cgi_root upsset upsset
+	if [ -z "$CONFIG_SECTION" ]; then
+		log_migration_error "Failed to add upsset section to 'nut_cgi_root'"
+		exit 1
+	else
+		last_upsset_section="$CONFIG_SECTION"
+	fi
+fi
+
+uci_set nut_cgi_root "$last_upsset_section" enable "$upsset_enable" || {
+	log_migration_error "Failed to set nut_cgi_root.$last_upsset_section.enable"
+	exit 1
+}
+
+if ! uci_commit nut_cgi && uci_commit nut_cgi_root; then
+	log_migration_error "Failed to commit changes"
+fi
+
+exit 0

@@ -268,3 +268,47 @@ have_section_named() {
 		return $ret
 	fi
 }
+
+config_get_single() {
+	local section="$1"
+	local var="$2"
+	local def="$3"
+	local flag="$4"
+
+	# Used to pass value back to caller
+	unset val
+
+	if [ -z "$flag" ] || [ "$flag" = "0" ]; then
+		config_get val "$section" "$var" "$def"
+		# keep only printable ASCII characters (space through ~)
+		# borrowed from ser2net in this (packages) repo
+		val="$(LC_ALL=C printf '%s' "$val" | tr -cd ' -~')"
+	else
+		config_get_bool val "$section" "$var" "$def"
+	fi
+}
+
+config_get_single_unsafe() {
+	local section="$1"
+	local var="$2"
+	local def="$3"
+	local flag="$4"
+
+	# Used to pass value back to caller
+	unset val
+
+	if [ -z "$flag" ] || [ "$flag" = "0" ]; then
+		config_get val "$section" "$var" "$def"
+		case "$val" in
+		# Disallow newline. Prevents extra configuration injection.
+		*"
+"*)
+			log_error "section '$section' had an option '$var' with a disallowed newline" nut-common.sh nut-common
+			return 1
+			;;
+		esac
+	else
+		config_get_bool val "$section" "$var" "$def"
+	fi
+	return 0
+}

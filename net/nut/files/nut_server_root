@@ -1,0 +1,35 @@
+# **NOTE**: As these configuration contain sensitive values, restrictive file
+# permissions on this file in actual use in /etc/config/nut_server_root should be
+# used. For example:
+# chown root:root /etc/config/nut_server_root
+# chmod 0600 /etc/config/nut_server_root
+
+# defaults for the upsd section are compile time defaults
+# We only support one 'upsd' root section and it must be named 'upsd_root'
+#config upsd 'upsd_root'
+#	option statepath /var/run/nut
+#	option runas nut
+# NB: certificates only apply to SSL-enabled version
+#	option certfile /usr/local/etc/upsd.pem
+#	option triggerlist all # not configured by default
+#	option debug_min 0
+# NB: certificates only apply to SSL-enabled version
+# See https://github.com/networkupstools/nut/blob/master/docs/security.txt
+# openssl server certificate chain and private key
+#	option certfile /usr/local/etc/upsd.pem
+# NSS or OpenSSL
+# For NSS path the directory with certificate and key databases
+# For OpenSSL path a file with one or more CA certificates
+#	option certpath /etc/nut/cert_db
+# Server certificate name and password to unlock the key for the certificate
+#	option certident '"certificate name" "database password"'
+# 0 - NO, 1 - REQUEST, 2 - REQUIRE (and verify)
+#	option certrequest 0
+#	option disable_weak_ssl 0
+
+#config user
+#	option username upsuser
+#	option password upspassword
+#	option actions optional-action
+#	list instcmd optional-instant-command
+#	option upsmon secondary|primary

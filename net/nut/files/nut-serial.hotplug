@@ -89,10 +89,11 @@ nut_set_serial_port_permissions() {
 # shellcheck disable=SC2317,SC2329
 nut_serial() {
 	local ups="$1" # UCI section name is also the UPS configuration name
-	local enable_usb_serial port normal_devname
+	local enable_usb_serial port normal_devname val
 
 	config_get_bool enable_usb_serial "$ups" enable_usb_serial 0
-	config_get port "$ups" port
+	config_get_single "$ups" port
+	port="$val"
 
 	[ "$enable_usb_serial" = "1" ] && {
 		# If port is specified only change tty's matching port
@@ -162,8 +163,12 @@ nut_on_hotplug_add() {
 # Do not do any hotplug actions if hotplug is disabled. Not an error but log
 # for information
 if ! allow_hotplug_restart; then
-	# Informational and not an error
-	log_msg "Did not set permissions on serial port hotplug as NUT hotplug is disabled" nut-serial nut-serial-hotplug notice
+	# Don't spam logs on initial boot
+	# (before NUT_HOTPLUG_BOOT_COMPLETE_PATH exists)
+	if [ -f "$NUT_HOTPLUG_BOOT_COMPLETE_PATH" ]; then
+		# Informational and not an error
+		log_msg "Did not set permissions on serial port hotplug as NUT hotplug is disabled" nut-serial nut-serial-hotplug notice
+	fi
 	exit 0
 fi
 

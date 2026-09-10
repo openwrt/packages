@@ -18,6 +18,22 @@
 # run by nut-server initscript prior to calling
 # ensure_usb_ups_access.
 
+config_get_ups_value() {
+	local ups="$1"
+	local option="$2"
+
+	# Execute in a subshell to avoid nut_server and nut_server_root becoming
+	# mixed together
+	(
+		config_load nut_server || {
+			log_config_load_error "nut_server" "nut-server" "nut-server"
+			exit 1
+		}
+		config_get_single "$ups" "$option"
+		printf "%s" "$val"
+	) || return 1
+}
+
 # Ensure the RUNAS user has access to the USB UPS device
 ensure_usb_ups_access() {
 	local ups="$1"
@@ -34,6 +50,7 @@ ensure_usb_ups_access() {
 	local sysfs_vendorid
 	local sysfs_productid
 	local serial
+	local val
 	# When no USB bus or USB device is found, the value returned in each case,
 	# after printf,	will be '000', which is not a valid USB bus or USB device
 	# number (i.e. it is a missing data indicator).
@@ -50,7 +67,8 @@ ensure_usb_ups_access() {
 		return 1
 	}
 
-	config_get cfg_vendorid "$ups" vendorid
+	cfg_vendorid="$(config_get_ups_value "$ups" "vendorid")" || return 1
+
 	# replacement in variable parameter expansion is supported by ash in OpenWrt
 	# since at least OpenWrt-24.10 (the previous stable release, which two
 	# versions older than the targetted next release of OpenWrt (after
@@ -73,7 +91,8 @@ ensure_usb_ups_access() {
 		;;
 	esac
 
-	config_get cfg_productid "$ups" productid
+	cfg_productid="$(config_get_ups_value "$ups" "productid")" || return 1
+
 	if [ -n "$cfg_productid" ] && ! check_valid_hex_number "${cfg_productid/0x/}"; then
 		log_error "Configured productid for '$ups' is not valid" nut-server-service.sh nut-server-service
 		return 1
@@ -92,7 +111,7 @@ ensure_usb_ups_access() {
 		;;
 	esac
 
-	config_get serial "$ups" serial
+	serial="$(config_get_ups_value "$ups" "serial")" || return 1
 
 	# $'\x' syntax is supported by ash in OpenWrt since at least OpenWrt-24.10
 	# (the previous stable release, which two versions older than the targetted
