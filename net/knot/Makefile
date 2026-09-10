@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=knot
 PKG_VERSION:=3.5.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://secure.nic.cz/files/knot-dns/
@@ -38,7 +38,6 @@ define Package/knot/Default
 	CATEGORY:=Network
 	SUBMENU:=IP Addresses and Names
 	TITLE:=Knot DNS
-	DEPENDS=+libatomic
 	URL:=https://www.knot-dns.cz
 	VERSION:=${PKG_VERSION}-r${PKG_RELEASE}
 endef
