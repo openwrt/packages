@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nanomq
 PKG_VERSION:=0.24.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/nanomq/nanomq.git
@@ -21,6 +21,8 @@ PKG_CPE_ID:=cpe:/a:emqx:nanomq
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
+TARGET_LDFLAGS += -Wl,--as-needed
+
 CMAKE_OPTIONS+= \
 	-DBUILD_CLIENT=OFF
 
@@ -29,7 +31,7 @@ define Package/nanomq
   CATEGORY:=Network
   TITLE:=NanoMQ Broker
   URL:=https://github.com/nanomq/nanomq
-  DEPENDS:=+libatomic
+  DEPENDS:=$(ATOMIC64_DEPENDS)
 endef
 
 define Package/nanomq/description
