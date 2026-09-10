@@ -248,7 +248,7 @@ config_child() {
 	local conf="$1"
 
 	local mode
-	local startaction
+	local start_action
 	local updown
 	local firewall
 	local lifetime
@@ -269,7 +269,7 @@ config_child() {
 	local remote_subnet
 
 	config_get mode "$conf" mode
-	config_get startaction "$conf" startaction "route"
+	config_get start_action "$conf" start_action "route"
 	config_get updown "$conf" updown ""
 	config_get firewall "$conf" firewall ""
 	config_get lifetime "$conf" lifetime ""
@@ -301,18 +301,12 @@ config_child() {
 	local esp_proposal
 	iter_esp_proposal "$conf" esp_proposal
 
-	# translate from ipsec to swanctl
-	case "$startaction" in
-	add)
-		startaction="none" ;;
-	route)
-		startaction="trap" ;;
-	start|none|trap)
-		# already using new syntax
+	case "$start_action" in
+	none|trap|start)
 		;;
 	*)
-		fatal "Startaction $startaction unknown"
-		startaction=
+		fatal "start_action '$start_action' unknown"
+		start_action=
 		;;
 	esac
 
@@ -356,7 +350,7 @@ config_child() {
 	[ -n "$interface" ] && swanctl_xappend4 "interface = $interface"
 	[ -n "$priority" ] && swanctl_xappend4 "priority = $priority"
 	[ -n "$if_id" ] && swanctl_xappend4 "if_id_in = $if_id" "if_id_out = $if_id"
-	[ -n "$startaction" -a "$startaction" != "none" ] && swanctl_xappend4 "start_action = $startaction"
+	[ -n "$start_action" -a "$start_action" != "none" ] && swanctl_xappend4 "start_action = $start_action"
 	[ -n "$close_action" -a "$close_action" != "none" ] && swanctl_xappend4 "close_action = $close_action"
 	swanctl_xappend4 "esp_proposals = $esp_proposal"
 	swanctl_xappend4 "mode = $mode"

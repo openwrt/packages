@@ -286,13 +286,46 @@ migrate_close_action_value() {
 		uci -q set ipsec.${cfg}.close_action="start"
 	}
 
-	uci -q delete ipsec.${cfg}.closeaction
 	uci commit ipsec
 }
 
 migrate_close_action() {
 	config_load ipsec
 	config_foreach migrate_close_action_value child
+}
+
+migrate_start_action_value() {
+	local cfg="$1"
+
+	local startaction
+
+	# Check whether we need to migrate at all.
+	config_get startaction "$cfg" startaction ""
+	[ -z "$startaction" ] && return
+
+	uci -q delete ipsec.${cfg}.startaction
+	[ "$startaction" = "add" ] && {
+		uci -q set ipsec.${cfg}.start_action="none"
+	}
+
+	[ "$startaction" = "route" ] && {
+		uci -q set ipsec.${cfg}.start_action="trap"
+	}
+
+	[ "$startaction" = "start" ] && {
+		uci -q set ipsec.${cfg}.start_action="start"
+	}
+	# * 'none' is default value if 'start_action' is not specified
+	# * 'ignore' is the default value for the old startaction. This value
+	#   is no longer available in the new 'start_action'. There is not
+	#   equivalent for this option!
+
+	uci commit ipsec
+}
+
+migrate_start_action() {
+	config_load ipsec
+	config_foreach migrate_start_action_value child
 }
 
 main() {
@@ -307,6 +340,7 @@ main() {
 	migrate_debug
 	migrate_dpd_action
 	migrate_close_action
+	migrate_start_action
 }
 
 main
