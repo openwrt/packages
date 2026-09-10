@@ -125,6 +125,7 @@ endef
 
 define Py3Package/filespec/Default
 +|$(PYTHON3_PKG_DIR)
+-?|$(PYTHON3_PKG_DIR)/*.dist-info
 endef
 
 # $(1) => package name
