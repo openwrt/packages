@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
 PKG_VERSION:=8.4.23
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 PKG_LICENSE:=PHP-3.01
@@ -86,7 +86,7 @@ endef
 
 define Package/php8-cli
   $(call Package/php8/Default)
-  DEPENDS+= +PHP8_INTL:libstdcpp +riscv64:libatomic
+  DEPENDS+= +PHP8_INTL:libstdcpp
   TITLE+= (CLI)
 endef
 
@@ -97,7 +97,7 @@ endef
 
 define Package/php8-cgi
   $(call Package/php8/Default)
-  DEPENDS+= +PHP8_INTL:libstdcpp +riscv64:libatomic
+  DEPENDS+= +PHP8_INTL:libstdcpp
   TITLE+= (CGI & FastCGI)
 endef
 
@@ -119,7 +119,7 @@ endef
 
 define Package/php8-fpm
   $(call Package/php8/Default)
-  DEPENDS+= +PHP8_INTL:libstdcpp +riscv64:libatomic
+  DEPENDS+= +PHP8_INTL:libstdcpp
   TITLE+= (FPM)
 endef
 
@@ -149,7 +149,6 @@ define Package/apache-mod-php8
   CATEGORY:=Network
   DEPENDS+=PACKAGE_apache-mod-php8:apache \
     +PHP8_INTL:libstdcpp \
-    +riscv64:libatomic \
     +libpcre2 +zlib
   TITLE:=PHP8 module for Apache Web Server
 endef
@@ -189,9 +188,7 @@ endif
 ifeq ($(CONFIG_USE_MUSL),y)
 TARGET_CFLAGS += -D_LARGEFILE64_SOURCE
 endif
-ifneq ($(findstring riscv64,$(CONFIG_ARCH)),)
-TARGET_LDFLAGS += -latomic
-endif
+TARGET_LDFLAGS += -Wl,--as-needed
 
 
 ifeq ($(CONFIG_PHP8_GETTEXT),y)
@@ -604,8 +601,6 @@ define BuildModule
 
   define Package/php8-mod-$(1)
     $(call Package/php8/Default)
-
-    DEPENDS+=+riscv64:libatomic
 
     ifneq ($(3),)
       DEPENDS+=$(3)
