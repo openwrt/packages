@@ -13,7 +13,7 @@ NAME=mysqld
 LOGGER="/usr/bin/logger -p user.err -s -t $NAME --"
 [ -x "$LOGGER" ] || LOGGER="echo"
 
-MYSQLD="/usr/bin/$NAME"
+MYSQLD="/usr/bin/mariadbd"
 
 pidfile=""
 
@@ -42,7 +42,7 @@ mysql_kill() {
 #
 # Supported modes are 'check_alive' and 'check_dead'.
 # Both check for pidfile and whether the specified process is running and is
-# indeed mysqld. We could use mysqladmin for the check, but to be able to do
+# indeed mariadbd. We could use mysqladmin for the check, but to be able to do
 # so, mysqladmin requires access to the database, which sounds like overkill
 # and potential security issue.
 #
@@ -67,7 +67,7 @@ mysqld_status() {
 start_service() {
 	conf=/etc/mysql/my.cnf
 	logdir=/var/log/mysql
-	version="$(mysqld --version | sed -n 's|.*Ver[[:blank:]]*\([0-9.]*\)-.*|\1|p')"
+	version="$("$MYSQLD" --version | sed -n 's|.*Ver[[:blank:]]*\([0-9.]*\)-.*|\1|p')"
 
 	# Few basic checks
 	if [ ! -x "$MYSQLD" ]; then
@@ -118,12 +118,12 @@ start_service() {
 		# shellcheck disable=SC2154
 		if [ "$init_db" -gt 0 ]; then
 			# shellcheck disable=SC2154
-			mysql_install_db $args --skip-name-resolve --skip-test-db --datadir="$datadir" || exit 1
+			mariadb-install-db $args --skip-name-resolve --skip-test-db --datadir="$datadir" || exit 1
 			echo "$version" > "$datadir"/.version
 			chown -Rh "$my_user:$my_group" "$datadir"
 		else
 			$LOGGER "Cannot detect privileges table. You might need to run"
-			$LOGGER "'mysql_install_db \"$args\"'"
+			$LOGGER "'mariadb-install-db \"$args\"'"
 			$LOGGER "to initialize the system tables."
 			$LOGGER "Then hand it ower to MariaDB user"
 			# shellcheck disable=SC2154
@@ -155,7 +155,7 @@ start_service() {
 		fi
 
 		# Start upgrade instance without credentials
-		sudo -u "$my_user" mysqld --skip-networking --skip-grant-tables --socket=/tmp/mysql_upgrade.sock &
+		sudo -u "$my_user" "$MYSQLD" --skip-networking --skip-grant-tables --socket=/tmp/mysql_upgrade.sock &
 		PID="$!"
 		i=0
 		# Wait for upgrade instance of db to start
@@ -173,13 +173,13 @@ start_service() {
 		# Stop the upgrade instance
 		kill "$PID"
 		i=0
-		while [ "$i" -lt 60 ] && grep -q mysql "/proc/$PID/cmdline"; do
+		while [ "$i" -lt 60 ] && grep -q "$MYSQLD" "/proc/$PID/cmdline"; do
 			sleep 1
 			[ "$i" -lt 30 ] || kill "$PID"
 			i="$((i + 1))"
 		done
 		# Use force
-		if grep -q mysql "/proc/$PID/cmdline"; then
+		if grep -q "$MYSQLD" "/proc/$PID/cmdline"; then
 			kill -9 "$PID"
 		fi
 	fi
