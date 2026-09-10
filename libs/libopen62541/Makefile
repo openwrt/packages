@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libopen62541
 PKG_VERSION:=1.3.6
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/open62541/open62541.git
@@ -39,7 +39,7 @@ define Package/libopen62541
   CATEGORY:=Libraries
   TITLE:=An OPC UA library
   URL:=https://www.open62541.org/
-  DEPENDS:=+librt +zlib +libstdcpp +libpthread +libatomic \
+  DEPENDS:=+librt +zlib +libstdcpp +libpthread \
 		+LIBOPEN62541_MBDEDTLS:libmbedtls +LIBOPEN62541_OPENSSL:libopenssl
 endef
 
