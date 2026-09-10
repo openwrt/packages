@@ -2,13 +2,13 @@ include $(TOPDIR)/rules.mk
 
 
 PKG_NAME:=kadnode
-PKG_VERSION:=2.4.1
+PKG_VERSION:=2.4.3
 PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/mwarning/KadNode
-PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_MIRROR_HASH:=3583e409862982db88545fde721ed59cfc78df8c59ab1a715a621ad657e05248
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/mwarning/KadNode/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=2ccffb19dd9030a946be3c02c994a6ff033b2fac6455ddec1bb39bd73856e223
+PKG_BUILD_DIR:=$(BUILD_DIR)/KadNode-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Moritz Warning <moritzwarning@web.de>
 PKG_LICENSE:=MIT
