@@ -97,6 +97,16 @@ while IFS='|' read -r cmd path file_mode dir_mode; do
 		rm -fR -- "$dest"/$path
 		;;
 
+	-\?)
+		log "Optionally removing: \"$path\""
+
+		if ! path_exists "$dest" "$path"; then
+			log "\"$dest/$path\" not found"
+		else
+			rm -fR -- "$dest"/$path
+		fi
+		;;
+
 	=)
 		log "Setting recursive permissions \"${file_mode:-(none)}\"/\"${dir_mode:-(none)}\" on \"$path\""
 
