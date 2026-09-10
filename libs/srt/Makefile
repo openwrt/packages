@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=srt
 PKG_VERSION:=1.5.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/haivision/srt/tar.gz/v$(PKG_VERSION)?
@@ -37,7 +37,7 @@ include $(INCLUDE_DIR)/cmake.mk
 define Package/srt
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:= +libstdcpp +libatomic
+  DEPENDS:=+libstdcpp $(ATOMIC64_DEPENDS)
   DEPENDS += +SRT_OPENSSL:libopenssl +SRT_MBEDTLS:libmbedtls +SRT_GNUTLS:libgnutls
   TITLE:=secure reliable transport
   URL:=https://github.com/Haivision/srt
