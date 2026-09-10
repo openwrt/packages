@@ -264,6 +264,37 @@ migrate_dpd_action() {
 	config_foreach migrate_dpd_action_value child
 }
 
+migrate_close_action_value() {
+	local cfg="$1"
+
+	local closeaction
+
+	# Check whether we need to migrate at all.
+	config_get closeaction "$cfg" closeaction ""
+	[ -z "$closeaction" ] && return
+
+	uci -q delete ipsec.${cfg}.closeaction
+	[ "$closeaction" = "none" ] || [ "$closeaction" = "clear" ] && {
+		uci -q set ipsec.${cfg}.close_action="none"
+	}
+
+	[ "$closeaction" = "hold" ] && {
+		uci -q set ipsec.${cfg}.close_action="trap"
+	}
+
+	[ "$closeaction" = "restart" ] && {
+		uci -q set ipsec.${cfg}.close_action="start"
+	}
+
+	uci -q delete ipsec.${cfg}.closeaction
+	uci commit ipsec
+}
+
+migrate_close_action() {
+	config_load ipsec
+	config_foreach migrate_close_action_value child
+}
+
 main() {
 	migrate_ipsec
 	migrate_ignore_routing_tables
@@ -275,6 +306,7 @@ main() {
 	migrate_to_child
 	migrate_debug
 	migrate_dpd_action
+	migrate_close_action
 }
 
 main

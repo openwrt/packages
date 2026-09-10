@@ -253,7 +253,7 @@ config_child() {
 	local firewall
 	local lifetime
 	local dpd_action
-	local closeaction
+	local close_action
 	local if_id
 	local rekeytime
 	local ipcomp
@@ -274,7 +274,7 @@ config_child() {
 	config_get firewall "$conf" firewall ""
 	config_get lifetime "$conf" lifetime ""
 	config_get dpd_action "$conf" dpd_action "clear"
-	config_get closeaction "$conf" closeaction "none"
+	config_get close_action "$conf" close_action "none"
 	config_get if_id "$conf" if_id ""
 	config_get rekeytime "$conf" rekeytime ""
 	config_get_bool ipcomp "$conf" ipcomp 0
@@ -316,23 +316,17 @@ config_child() {
 		;;
 	esac
 
-	case "$closeaction" in
-	none|clear)
-		closeaction="none" ;;
-	hold)
-		closeaction="trap" ;;
-	restart)
-		closeaction="start" ;;
-	trap|start)
-		# already using new syntax
+	case "$close_action" in
+	none|trap|start)
 		;;
 	*)
-		fatal "Closeaction $closeaction unknown"
-		closeaction=
+		fatal "close_action '$close_action' unknown"
+		close_action=
 		;;
 	esac
-
-	[ -n "$closeaction" -a "$closeaction" != "none" ] && warning "Closeaction $closeaction can cause instability"
+	[ -n "$close_action" ] && [ "$close_action" != "none" ] && {
+		warning "close_action '$close_action' can cause instability"
+	}
 
 	case "$dpd_action" in
 	clear|trap|start)
@@ -363,7 +357,7 @@ config_child() {
 	[ -n "$priority" ] && swanctl_xappend4 "priority = $priority"
 	[ -n "$if_id" ] && swanctl_xappend4 "if_id_in = $if_id" "if_id_out = $if_id"
 	[ -n "$startaction" -a "$startaction" != "none" ] && swanctl_xappend4 "start_action = $startaction"
-	[ -n "$closeaction" -a "$closeaction" != "none" ] && swanctl_xappend4 "close_action = $closeaction"
+	[ -n "$close_action" -a "$close_action" != "none" ] && swanctl_xappend4 "close_action = $close_action"
 	swanctl_xappend4 "esp_proposals = $esp_proposal"
 	swanctl_xappend4 "mode = $mode"
 
