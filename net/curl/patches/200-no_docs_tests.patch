@@ -3,8 +3,8 @@ Date: Tue, 29 Jul 2008 10:22:38 +0000
 Subject: [PATCH] Do not compile and generate curl tests and docs
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -71,7 +71,7 @@ DISTCLEANFILES = buildinfo.txt
- bin_SCRIPTS = curl-config
+@@ -96,7 +96,7 @@ ETAGS_ARGS = $(CURL_ETAGS_FILES)
+ TAGS_DEPENDENCIES = $(CURL_ETAGS_FILES)
  
  SUBDIRS = lib docs src scripts
 -DIST_SUBDIRS = $(SUBDIRS) tests projects include docs
@@ -12,7 +12,7 @@ Subject: [PATCH] Do not compile and generate curl tests and docs
  
  pkgconfigdir = $(libdir)/pkgconfig
  pkgconfig_DATA = libcurl.pc
-@@ -141,12 +141,9 @@ check-docs:
+@@ -169,12 +169,9 @@ check-docs:
  if BUILD_DOCS
  install-data-hook:
  	(cd include && $(MAKE) install)
