@@ -141,7 +141,7 @@ Support of the following fully pre-configured domain blocklist feeds (free for p
 * Install the LuCI companion package `luci-app-adblock` which also installs the main `adblock` package as a dependency
 * Enable the adblock system service (System -> Startup) and enable adblock itself (adblock -> General Settings)
 * It's strongly recommended to use the LuCI frontend to easily configure all aspects of adblock, the application is located in LuCI under the `Services` menu
-* It's also recommended to configure a `Startup Trigger Interface` to depend on your WAN interface events during boot or restart of your router. Listing IPv6 interfaces (wan6) is fine as well: a trigger only starts a run if the last one did not succeed, so the chatty netifd update events no longer cause repeated downloads
+* It's also recommended to configure a `Startup Trigger Interface` to depend on your WAN interface events during boot or restart of your router. Listing IPv6 interfaces (wan6) is fine as well: a trigger only starts a run if the last one did not succeed or if its blocklist is gone, so the chatty netifd update events no longer cause repeated downloads
 
 <a id="adblock-cli-interface"></a>
 ## Adblock CLI interface

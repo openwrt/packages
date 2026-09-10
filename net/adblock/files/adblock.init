@@ -55,7 +55,7 @@ boot() {
 }
 
 start_service() {
-	local status
+	local status backend blocklist
 
 	if "${adb_init}" enabled; then
 		if [ "${action}" = "boot" ]; then
@@ -65,7 +65,13 @@ start_service() {
 			json_init
 			json_load_file "${adb_rtfile}" >/dev/null 2>&1
 			json_get_var status "adblock_status"
-			[ -n "${status}" ] && [ "${status}" != "error" ] && return 0
+			json_get_var backend "dns_backend"
+			if [ -n "${status}" ] && [ "${status}" != "error" ]; then
+				[ "${status}" != "enabled" ] && return 0
+				blocklist="${backend#*, }"
+				blocklist="${blocklist%%,*}/adb_list.overall"
+				[ -s "${blocklist}" ] && return 0
+			fi
 		fi
 
 		procd_open_instance "adblock"
