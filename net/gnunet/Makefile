@@ -3,7 +3,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=gnunet
 
 PKG_VERSION:=0.29.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/gnunet
 PKG_HASH:=c27055165d347388dd487a07d7d131506cae2eeca5ee2d49cfcccada1ac29acc
@@ -42,7 +42,7 @@ endef
 define Package/gnunet
 $(call Package/gnunet/Default)
   TITLE+= - a peer-to-peer framework focusing on security
-  DEPENDS:=+libatomic +libgcrypt +libgmp +libgpg-error +libidn2 +libltdl \
+  DEPENDS:=$(ATOMIC64_DEPENDS) +libgcrypt +libgmp +libgpg-error +libidn2 +libltdl \
            +libsodium +libunistring +librt +zlib $(ICONV_DEPENDS) $(INTL_DEPENDS)
   USERID:=gnunet=958:gnunet=958
   MENU:=1
