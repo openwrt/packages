@@ -252,7 +252,7 @@ config_child() {
 	local updown
 	local firewall
 	local lifetime
-	local dpdaction
+	local dpd_action
 	local closeaction
 	local if_id
 	local rekeytime
@@ -273,7 +273,7 @@ config_child() {
 	config_get updown "$conf" updown ""
 	config_get firewall "$conf" firewall ""
 	config_get lifetime "$conf" lifetime ""
-	config_get dpdaction "$conf" dpdaction "none"
+	config_get dpd_action "$conf" dpd_action "clear"
 	config_get closeaction "$conf" closeaction "none"
 	config_get if_id "$conf" if_id ""
 	config_get rekeytime "$conf" rekeytime ""
@@ -334,23 +334,12 @@ config_child() {
 
 	[ -n "$closeaction" -a "$closeaction" != "none" ] && warning "Closeaction $closeaction can cause instability"
 
-	case "$dpdaction" in
-	none)
-		dpddelay="0s"
-		dpdaction=
-		;;
-	clear)
-		;;
-	hold)
-		dpdaction="trap" ;;
-	restart)
-		dpdaction="restart" ;;
-	trap|start)
-		# already using new syntax
+	case "$dpd_action" in
+	clear|trap|start)
 		;;
 	*)
-		fatal "Dpdaction $dpdaction unknown"
-		dpdaction=
+		fatal "dpd_action '$dpd_action' unknown"
+		dpd_action=
 		;;
 	esac
 
@@ -399,7 +388,7 @@ config_child() {
 	[ -n "$inactivity" ] && swanctl_xappend4 "inactivity = $inactivity"
 
 	[ -n "$updown" ] && swanctl_xappend4 "updown = $updown"
-	[ -n "$dpdaction" ] && swanctl_xappend4 "dpd_action = $dpdaction"
+	[ -n "$dpd_action" ] && swanctl_xappend4 "dpd_action = $dpd_action"
 	[ -n "$replay_window" ] && swanctl_xappend4 "replay_window = $replay_window"
 
 	swanctl_xappend3 "}"

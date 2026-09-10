@@ -233,6 +233,37 @@ migrate_debug() {
 	uci commit ipsec
 }
 
+migrate_dpd_action_value() {
+	local cfg="$1"
+
+	local dpdaction
+
+	# Check whether we need to migrate at all.
+	config_get dpdaction "$cfg" dpdaction ""
+	[ -z "$dpdaction" ] && return
+
+	uci -q delete ipsec.${cfg}.dpdaction
+	[ "$dpdaction" = "hold" ] && {
+		uci -q set ipsec.${cfg}.dpd_action="trap"
+	}
+
+	[ "$dpdaction" = "restart" ] && {
+		uci -q set ipsec.${cfg}.dpd_action="start"
+	}
+	# * 'clear' is default value if 'dpd_action' is not specified
+	# * 'none' is the default value for the old dppdaction. This value
+	#   is no longer available in the new 'dpd_action'. It should be
+	#   converted to 'dpd_delay=0' to restore the old behavior.
+	#   However, this is not supported by the upgrade script.
+	uci -q delete ipsec.${cfg}.dpdaction
+	uci commit ipsec
+}
+
+migrate_dpd_action() {
+	config_load ipsec
+	config_foreach migrate_dpd_action_value child
+}
+
 main() {
 	migrate_ipsec
 	migrate_ignore_routing_tables
@@ -243,6 +274,7 @@ main() {
 	migrate_local_sourceip
 	migrate_to_child
 	migrate_debug
+	migrate_dpd_action
 }
 
 main
