@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ripe-atlas
-PKG_VERSION:=5110
+PKG_VERSION:=5130
 PKG_RELEASE:=1
 
 PKG_SOURCE:=ripe-atlas-software-probe-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/RIPE-NCC/ripe-atlas-software-probe/tar.gz/refs/tags/$(PKG_VERSION)?
-PKG_HASH:=9ff4931056b7da67e13478c29dfaea0f647ee4cb725f864ba5fa28a33a8ec5c7
+PKG_HASH:=d2b0b03c1c27b9e1cfc8329c4862141ca53d0f46f8cb36af92a3adc2e5d26ff6
 PKG_BUILD_DIR:=$(BUILD_DIR)/ripe-atlas-software-probe-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Tiago Gaspar <tiagogaspar8@gmail.com>, Michel Stam <mstam@ripe.net>
@@ -22,6 +22,9 @@ PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
+
+# Restore busybox's compiler-driver LD; OpenWrt overrides it with raw ld.bfd.
+MAKE_FLAGS += LD="$(TARGET_CC) -nostdlib"
 
 define Package/ripe-atlas/Default
   SECTION:=net
@@ -45,7 +48,6 @@ endef
 # The measurement applets need raw sockets; ujail hands them CAP_NET_RAW from
 # capabilities.json, so the probe does not have to run as root.
 CONFIGURE_ARGS+= \
-	--with-probe-type=generic \
 	--with-user=ripe-atlas \
 	--with-group=ripe-atlas \
 	--with-measurement-user=ripe-atlas \
