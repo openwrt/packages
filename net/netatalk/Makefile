@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netatalk
 PKG_VERSION:=4.4.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/netatalk
@@ -31,7 +31,7 @@ define Package/netatalk/Default
   TITLE:=Apple Filing Protocol
   PROVIDES:=netatalk
   URL:=https://netatalk.io
-  DEPENDS:=+libevent2 +libdb47 +libgcrypt +iniparser +libatomic
+  DEPENDS:=+libevent2 +libdb47 +libgcrypt +iniparser $(ATOMIC64_DEPENDS)
 endef
 
 define Package/netatalk-small
