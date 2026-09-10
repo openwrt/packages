@@ -2184,7 +2184,7 @@ f_lookup() {
 				fi
 			done >"${tmp_dir}/${cnt}"
 		) &
-		[ "${cnt}" -gt "${ban_cores}" ] && wait -n
+		[ "${cnt}" -ge "${ban_cores}" ] && wait -n
 		cnt_domain="${cnt}"
 		cnt="$((cnt + 1))"
 	done
@@ -2241,19 +2241,29 @@ f_lookup() {
 f_report() {
 	local report_jsn report_txt tmp_val table_json item sep table_sets set_cnt set_inbound set_outbound set_cntinbound set_cntoutbound set_proto set_dport set_details
 	local cnt ip expr detail jsnval timestamp autoadd_allow autoadd_block sum_sets sum_setinbound sum_setoutbound sum_cntelements sum_cntinbound sum_cntoutbound
-	local jsn table_jsn set_jsn map_jsn map_lookup chunk_no chain set_elements uplink_ip sum_setelements sum_synflood sum_udpflood sum_icmpflood sum_ctinvalid sum_tcpinvalid sum_setports sum_bcp38 output="${1}"
+	local jsn table_jsn set_jsn map_jsn map_ts map_lookup geo_ts geo_now geo_skip chunk_no chunk_skip rsp_no chain set_elements uplink_ip sum_setelements sum_synflood sum_udpflood sum_icmpflood sum_ctinvalid sum_tcpinvalid sum_setports sum_bcp38 output="${1}"
 
 	f_conf
 	f_mkdir "${ban_reportdir}"
 	report_jsn="${ban_reportdir}/ban_report.jsn"
 	report_txt="${ban_reportdir}/ban_report.txt"
 	map_jsn="${ban_reportdir}/ban_map.jsn"
+	map_ts="${ban_reportdir}/ban_map.ts"
 
 	if [ "${output}" != "json" ]; then
 
 		# json output preparation
 		#
-		: >"${report_txt}" >"${report_jsn}" >"${map_jsn}"
+		: >"${report_txt}" >"${report_jsn}"
+		read -r geo_now _ <"/proc/uptime"
+		geo_now="${geo_now%%.*}"
+		geo_ts=""
+		[ -s "${map_ts}" ] && read -r geo_ts <"${map_ts}"
+		case "${geo_ts}" in
+		"" | *[!0-9]*) ;;
+		*) [ "${geo_ts}" -le "${geo_now}" ] && [ "$((geo_now - geo_ts))" -lt "60" ] && geo_skip="1" ;;
+		esac
+		[ "${geo_skip}" = "1" ] || : >"${map_jsn}"
 		[ "${output}" = "gen" ] && printf '%s\n' "0" >"${ban_rundir}/banIP.report"
 		table_jsn="${ban_rundir}/report.table.jsn"
 		"${ban_nftcmd}" -tj list table inet banIP 2>>"${ban_errorlog}" >"${table_jsn}"
@@ -2341,7 +2351,7 @@ f_report() {
 				}" >"${report_jsn}.${item}"
 				"${ban_rmcmd}" -f "${set_jsn}"*
 			) &
-			[ "${cnt}" -gt "${ban_cores}" ] && wait -n
+			[ "${cnt}" -ge "${ban_cores}" ] && wait -n
 			cnt="$((cnt + 1))"
 		done
 		wait
@@ -2446,7 +2456,7 @@ f_report() {
 
 		# retrieve/prepare map data
 		#
-		if [ "${ban_nftcount}" = "1" ] && [ "${ban_map}" = "1" ] && [ -s "${report_jsn}" ]; then
+		if [ "${ban_nftcount}" = "1" ] && [ "${ban_map}" = "1" ] && [ -s "${report_jsn}" ] && [ "${geo_skip}" != "1" ]; then
 			f_getdl
 			map_lookup="${ban_rundir}/report.map.lookup"
 			: >"${map_lookup}"
@@ -2483,12 +2493,15 @@ f_report() {
 			fi
 
 			# split the deduplicated IPs into batch requests of 100 IPs each,
-			# the maximum the geo service accepts
+			# the maximum the geo service accepts, capped at 15 requests per run
 			#
 			if [ -s "${map_lookup}" ]; then
-				"${ban_awkcmd}" -F '\t' -v file="${map_jsn}" -v size="100" \
-					'!seen[$1]++{no=int(cnt++/size)+1;printf "%s\"%s\"",(chunk[no]++?", ":""),$1 >(file ".req." no)}END{for(i=1;i<=no;i++)close(file ".req." i);printf "%s\n",no+0 >(file ".num")}' "${map_lookup}"
+				"${ban_awkcmd}" -F '\t' -v file="${map_jsn}" -v size="100" -v max="15" \
+					'!seen[$1]++{if(cnt>=size*max){skip++;next};no=int(cnt++/size)+1;printf "%s\"%s\"",(chunk[no]++?", ":""),$1 >(file ".req." no)}END{for(i=1;i<=no;i++)close(file ".req." i);printf "%s %s\n",no+0,skip+0 >(file ".num")}' "${map_lookup}"
 				chunk_no="$("${ban_catcmd}" "${map_jsn}.num" 2>>"${ban_errorlog}")"
+				chunk_skip="${chunk_no#* }"
+				chunk_no="${chunk_no%% *}"
+				[ "${chunk_skip:-0}" -gt "0" ] && f_log "info" "geo lookup capped at 15 requests, ${chunk_skip} IPs left out of the map"
 				cnt="1"
 				while [ "${cnt}" -le "${chunk_no:-0}" ]; do
 					(
@@ -2498,25 +2511,31 @@ f_report() {
 								match($0,/"query"[ \t]*:[ \t]*"[^"]+"/){query=substr($0,RSTART,RLENGTH);sub(/^"query"[ \t]*:[ \t]*"/,"",query);sub(/"$/,"",query);if(query in feed)printf ",{\"%s\": %s}\n",feed[query],$0}' \
 								"${map_lookup}" - >"${map_jsn}.rsp.${cnt}"
 					) &
-					[ "${cnt}" -gt "${ban_cores}" ] && wait -n
+					[ "${cnt}" -ge "${ban_cores}" ] && wait -n
 					cnt="$((cnt + 1))"
 				done
 				wait
+				read -r geo_now _ <"/proc/uptime"
+				printf '%s\n' "${geo_now%%.*}" >"${map_ts}"
 
 				# assemble map data from the batch fragments
 				#
 				cnt="1"
+				rsp_no="0"
 				while [ "${cnt}" -le "${chunk_no:-0}" ]; do
 					if [ -s "${map_jsn}.rsp.${cnt}" ]; then
+						rsp_no="$((rsp_no + 1))"
 						[ -s "${map_jsn}" ] || printf '%s' ",[{}" >>"${map_jsn}"
 						"${ban_catcmd}" "${map_jsn}.rsp.${cnt}" >>"${map_jsn}"
 					fi
 					cnt="$((cnt + 1))"
 				done
-				[ -s "${map_jsn}" ] || f_log "info" "no geo data received, the rate limit of '${ban_geourl}' has probably been exceeded"
-				f_log "debug" "f_report  ::: geo requests: ${chunk_no:-0}, map data: $([ -s "${map_jsn}" ] && printf '%s' "yes" || printf '%s' "no")"
+				[ "${rsp_no}" -lt "${chunk_no:-0}" ] && f_log "info" "$((chunk_no - rsp_no)) of ${chunk_no} geo requests returned no data"
+				f_log "debug" "f_report  ::: geo requests: ${chunk_no:-0}, skipped IPs: ${chunk_skip:-0}, map data: $([ -s "${map_jsn}" ] && printf '%s' "yes" || printf '%s' "no")"
 			fi
 			"${ban_rmcmd}" -f "${map_lookup}" "${map_jsn}".req.* "${map_jsn}".rsp.* "${map_jsn}.num"
+		elif [ "${ban_map}" = "1" ] && [ "${geo_skip}" = "1" ]; then
+			f_log "debug" "f_report  ::: geo requests: 0, map data: reused"
 		fi
 
 		# text output preparation
@@ -2609,7 +2628,7 @@ f_report() {
 		[ -s "${report_txt}" ] && "${ban_catcmd}" "${report_txt}"
 		;;
 	"json")
-		if [ "${ban_nftcount}" = "1" ] && [ "${ban_map}" = "1" ] && [ -s "${map_jsn}" ]; then
+		if [ "${ban_nftcount}" = "1" ] && [ "${ban_map}" = "1" ] && [ -s "${report_jsn}" ] && [ -s "${map_jsn}" ]; then
 			jsn="$("${ban_catcmd}" "${report_jsn}" "${map_jsn}" 2>>"${ban_errorlog}")"
 			[ -n "${jsn}" ] && printf '[%s]]\n' "${jsn}"
 		else
@@ -2692,7 +2711,7 @@ f_search() {
 				printf '    %s\n' "IP found in Set '${item}'" >"${tmp_result}.${item}"
 			fi
 		) &
-		[ "${cnt}" -gt "${ban_cores}" ] && wait -n
+		[ "${cnt}" -ge "${ban_cores}" ] && wait -n
 		cnt="$((cnt + 1))"
 	done
 	wait

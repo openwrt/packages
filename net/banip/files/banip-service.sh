@@ -100,13 +100,13 @@ for feed in allowlist ${ban_monitorfeed} ${ban_feed} blocklist; do
 		if [ "${feed}" = "country" ] && [ "${ban_countrysplit}" = "1" ]; then
 			for country in ${ban_country}; do
 				(f_down "${feed}.${country}" "${feed_ipv}" "${feed_url_4}" "${feed_rule}" "${feed_chain:-"in"}" "${feed_flag}") &
-				[ "${cnt}" -gt "${ban_cores}" ] && wait -n
+				[ "${cnt}" -ge "${ban_cores}" ] && wait -n
 				cnt="$((cnt + 1))"
 			done
 		elif [ "${feed}" = "asn" ] && [ "${ban_asnsplit}" = "1" ]; then
 			for asn in ${ban_asn}; do
 				(f_down "${feed}.${asn}" "${feed_ipv}" "${feed_url_4}" "${feed_rule}" "${feed_chain:-"in"}" "${feed_flag}") &
-				[ "${cnt}" -gt "${ban_cores}" ] && wait -n
+				[ "${cnt}" -ge "${ban_cores}" ] && wait -n
 				cnt="$((cnt + 1))"
 			done
 		else
@@ -115,7 +115,7 @@ for feed in allowlist ${ban_monitorfeed} ${ban_feed} blocklist; do
 				f_down "${feed}" "${feed_ipv}" "${feed_url_4}" "${feed_rule}" "${feed_chain:-"in"}" "${feed_flag}"
 			else
 				(f_down "${feed}" "${feed_ipv}" "${feed_url_4}" "${feed_rule}" "${feed_chain:-"in"}" "${feed_flag}") &
-				[ "${cnt}" -gt "${ban_cores}" ] && wait -n
+				[ "${cnt}" -ge "${ban_cores}" ] && wait -n
 				cnt="$((cnt + 1))"
 			fi
 		fi
@@ -128,18 +128,18 @@ for feed in allowlist ${ban_monitorfeed} ${ban_feed} blocklist; do
 		if [ "${feed}" = "country" ] && [ "${ban_countrysplit}" = "1" ]; then
 			for country in ${ban_country}; do
 				(f_down "${feed}.${country}" "${feed_ipv}" "${feed_url_6}" "${feed_rule}" "${feed_chain:-"in"}" "${feed_flag}") &
-				[ "${cnt}" -gt "${ban_cores}" ] && wait -n
+				[ "${cnt}" -ge "${ban_cores}" ] && wait -n
 				cnt="$((cnt + 1))"
 			done
 		elif [ "${feed}" = "asn" ] && [ "${ban_asnsplit}" = "1" ]; then
 			for asn in ${ban_asn}; do
 				(f_down "${feed}.${asn}" "${feed_ipv}" "${feed_url_6}" "${feed_rule}" "${feed_chain:-"in"}" "${feed_flag}") &
-				[ "${cnt}" -gt "${ban_cores}" ] && wait -n
+				[ "${cnt}" -ge "${ban_cores}" ] && wait -n
 				cnt="$((cnt + 1))"
 			done
 		else
 			(f_down "${feed}" "${feed_ipv}" "${feed_url_6}" "${feed_rule}" "${feed_chain:-"in"}" "${feed_flag}") &
-			[ "${cnt}" -gt "${ban_cores}" ] && wait -n
+			[ "${cnt}" -ge "${ban_cores}" ] && wait -n
 			cnt="$((cnt + 1))"
 		fi
 	fi
@@ -154,7 +154,7 @@ f_log "info" "start banIP domain lookup"
 cnt="1"
 for list in allowlist blocklist; do
 	(f_lookup "${list}") &
-	[ "${cnt}" -gt "${ban_cores}" ] && wait -n
+	[ "${cnt}" -ge "${ban_cores}" ] && wait -n
 	cnt="$((cnt + 1))"
 done
 wait
