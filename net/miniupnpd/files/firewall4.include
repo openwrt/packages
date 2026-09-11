@@ -1,0 +1,27 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0
+#
+# Re-install the port mappings of miniupnpd after a firewall (re)load.
+#
+# The mappings live in the upnp_forward, upnp_prerouting and upnp_postrouting chains
+# declared by the nftables.d snippets this package ships, and those chains are part of
+# the main "inet fw4" table, which fw4 rebuilds from its templates on every start and
+# reload. So they end up present but empty while the daemon keeps running and has no way
+# of noticing, and existing mappings silently stop working. Restarting the daemon makes
+# it re-read its lease files, which is what puts the mappings back.
+#
+# fw4 runs this file as a forked shell while it still holds /var/run/fw4.lock, so the
+# restart must not be synchronous: the daemon's start_service() runs "fw4 reload" when
+# the upnp_forward chain is missing, and that inner invocation would then block on the
+# lock fw4 is still holding. Detaching the restart also keeps the daemon's start-up out
+# of fw4's critical section.
+
+[ -x /etc/init.d/miniupnpd ] || exit 0
+/etc/init.d/miniupnpd running || exit 0
+
+# Not using the fw4 table, nothing to do.
+nft -s -t -n list chain inet fw4 upnp_forward >/dev/null 2>&1 || exit 0
+
+( sleep 1; /etc/init.d/miniupnpd restart ) >/dev/null 2>&1 &
+
+exit 0
