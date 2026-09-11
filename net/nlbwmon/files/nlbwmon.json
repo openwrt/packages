@@ -1,0 +1,22 @@
+{
+	"bounding": [
+		"CAP_NET_ADMIN",
+		"CAP_DAC_OVERRIDE"
+	],
+	"effective": [
+		"CAP_NET_ADMIN",
+		"CAP_DAC_OVERRIDE"
+	],
+	"ambient": [
+		"CAP_NET_ADMIN",
+		"CAP_DAC_OVERRIDE"
+	],
+	"permitted": [
+		"CAP_NET_ADMIN",
+		"CAP_DAC_OVERRIDE"
+	],
+	"inheritable": [
+		"CAP_NET_ADMIN",
+		"CAP_DAC_OVERRIDE"
+	]
+}
