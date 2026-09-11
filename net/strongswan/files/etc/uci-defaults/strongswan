@@ -364,9 +364,21 @@ migrate_option_child_values() {
 	}
 }
 
+migrate_option_remote_values() {
+	local cfg="$1"
+
+	local value
+
+	config_get value "$cfg" rekeytime ""
+	[ -z "$value" ] || {
+		uci -q rename "ipsec.${cfg}.rekeytime=rekey_time"
+	}
+}
+
 migrate_options() {
 	config_load ipsec
 	config_foreach migrate_option_child_values child
+	config_foreach migrate_option_remote_values remote
 	uci commit ipsec
 }
 
