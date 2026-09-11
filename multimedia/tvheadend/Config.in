@@ -141,18 +141,12 @@ config TVHEADEND_DVB_DDCI
     Note: Kernel drivers are required for the adapter cards. These are not available as OpenWrt packages.
     Note: Not tested due to lack of hardware.
 
-comment "Software descrambling and some codecs are only available with BUILD_PATENTED."
-  depends on PACKAGE_tvheadend
-  depends on !BUILD_PATENTED
-
 comment "Software descrambling, SoftCAM (Software Conditional Access Module)"
   depends on PACKAGE_tvheadend
-  depends on BUILD_PATENTED
 
 config TVHEADEND_CSA
   bool "CSA decoding"
   depends on PACKAGE_tvheadend
-  depends on BUILD_PATENTED
   select PACKAGE_libdvbcsa
   default n
   help
