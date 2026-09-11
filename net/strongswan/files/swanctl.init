@@ -263,7 +263,7 @@ config_child() {
 	local rekey_bytes
 	local life_bytes
 	local rekey_packets
-	local lifepackets
+	local life_packets
 	local replay_window
 	local local_subnet
 	local remote_subnet
@@ -284,7 +284,7 @@ config_child() {
 	config_get rekey_bytes "$conf" rekey_bytes ""
 	config_get life_bytes "$conf" life_bytes ""
 	config_get rekey_packets "$conf" rekey_packets ""
-	config_get lifepackets "$conf" lifepackets ""
+	config_get life_packets "$conf" life_packets ""
 	config_get replay_window "$conf" replay_window ""
 
 	config_list_foreach "$conf" local_subnet append_var local_subnet ","
@@ -367,8 +367,8 @@ config_child() {
 		swanctl_xappend4 "life_bytes = $(((110 * rekey_bytes) / 100))"
 	fi
 	[ -n "$rekey_bytes" ] && swanctl_xappend4 "rekey_bytes = $rekey_bytes"
-	if [ -n "$lifepackets" ]; then
-		swanctl_xappend4 "life_packets = $lifepackets"
+	if [ -n "$life_packets" ]; then
+		swanctl_xappend4 "life_packets = $life_packets"
 	elif [ -n "$rekey_packets" ]; then
 		swanctl_xappend4 "life_packets = $(((110 * rekey_packets) / 100))"
 	fi
