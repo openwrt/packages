@@ -99,7 +99,7 @@ Subject: [PATCH] add ubus bindings
              local_notify_neighbour_1(&local_sockets[i], neigh, kind);
      }
 +    if(ubus_bindings)
-+	    ubus_notify_neighbour(neigh, kind);
++        ubus_notify_neighbour(neigh, kind);
  }
  
  static void
