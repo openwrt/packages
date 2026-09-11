@@ -328,6 +328,23 @@ migrate_start_action() {
 	config_foreach migrate_start_action_value child
 }
 
+migrate_option_child_values() {
+	local cfg="$1"
+
+	local value
+
+	config_get value "$cfg" rekeytime ""
+	[ -z "$value" ] || {
+		uci -q rename "ipsec.${cfg}.rekeytime=rekey_time"
+	}
+}
+
+migrate_options() {
+	config_load ipsec
+	config_foreach migrate_option_child_values child
+	uci commit ipsec
+}
+
 main() {
 	migrate_ipsec
 	migrate_ignore_routing_tables
@@ -341,6 +358,7 @@ main() {
 	migrate_dpd_action
 	migrate_close_action
 	migrate_start_action
+	migrate_options
 }
 
 main

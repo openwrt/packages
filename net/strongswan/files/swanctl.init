@@ -255,7 +255,7 @@ config_child() {
 	local dpd_action
 	local close_action
 	local if_id
-	local rekeytime
+	local rekey_time
 	local ipcomp
 	local interface
 	local hw_offload
@@ -276,7 +276,7 @@ config_child() {
 	config_get dpd_action "$conf" dpd_action "clear"
 	config_get close_action "$conf" close_action "none"
 	config_get if_id "$conf" if_id ""
-	config_get rekeytime "$conf" rekeytime ""
+	config_get rekey_time "$conf" rekey_time ""
 	config_get_bool ipcomp "$conf" ipcomp 0
 	config_get interface "$conf" interface ""
 	config_get hw_offload "$conf" hw_offload ""
@@ -357,10 +357,10 @@ config_child() {
 
 	if [ -n "$lifetime" ]; then
 		swanctl_xappend4 "life_time = $lifetime"
-	elif [ -n "$rekeytime" ]; then
-		swanctl_xappend4 "life_time = $(seconds2time $(((110 * $(time2seconds $rekeytime)) / 100)))"
+	elif [ -n "$rekey_time" ]; then
+		swanctl_xappend4 "life_time = $(seconds2time $(((110 * $(time2seconds $rekey_time)) / 100)))"
 	fi
-	[ -n "$rekeytime" ] && swanctl_xappend4 "rekey_time = $rekeytime"
+	[ -n "$rekey_time" ] && swanctl_xappend4 "rekey_time = $rekey_time"
 	if [ -n "$lifebytes" ]; then
 		swanctl_xappend4 "life_bytes = $lifebytes"
 	elif [ -n "$rekeybytes" ]; then
