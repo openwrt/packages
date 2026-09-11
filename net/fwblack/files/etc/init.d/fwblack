@@ -1,0 +1,74 @@
+#!/bin/sh /etc/rc.common
+# fwblack - procd init script for OpenWrt (UCI-driven).
+#
+# Config: /etc/config/fwblack (see files/etc/config/fwblack)
+#   uci set fwblack.global.interval=120; uci commit fwblack; service fwblack reload
+#
+# Blocklist stays a flat file (default /etc/fwblack/blocklist.cfg) so LuCI
+# and ssh can edit it without stuffing hundreds of domains into UCI.
+
+USE_PROCD=1
+START=99
+STOP=10
+
+CONFIG=fwblack
+
+start_service() {
+	config_load "$CONFIG" 2>/dev/null || true
+
+	local enabled interval jitter table set_v4 set_v6 chain
+	local blocklist cache_pos cache_neg cache_max cache_file
+
+	config_get enabled global enabled '1'
+	[ "$enabled" = '1' ] || {
+		echo "fwblack: disabled in /etc/config/fwblack" >&2
+		return 1
+	}
+
+	config_get interval global interval '300'
+	config_get jitter global interval_jitter '30'
+	config_get table global table 'fwblack'
+	config_get set_v4 global set_v4 'blacklist_v4'
+	config_get set_v6 global set_v6 'blacklist_v6'
+	config_get chain global chain 'forward_black'
+	config_get blocklist global blocklist '/etc/fwblack/blocklist.cfg'
+	config_get cache_pos global cache_ttl_pos '86400'
+	config_get cache_neg global cache_ttl_neg '3600'
+	config_get cache_max global cache_max '5000'
+	config_get cache_file global cache_file '/tmp/fwblack.dnscache'
+
+	case "$interval" in "" | *[!0-9]*) interval=300 ;; esac
+	case "$jitter" in "" | *[!0-9]*) jitter=30 ;; esac
+
+	procd_open_instance fwblack
+	procd_set_param command /usr/sbin/fw-black
+	procd_set_param env \
+		INTERVAL="$interval" \
+		INTERVAL_JITTER="$jitter" \
+		TABLE="$table" \
+		SET_V4="$set_v4" \
+		SET_V6="$set_v6" \
+		CHAIN="$chain" \
+		BLACKLIST="$blocklist" \
+		CACHE_TTL_POS="$cache_pos" \
+		CACHE_TTL_NEG="$cache_neg" \
+		CACHE_MAX="$cache_max" \
+		CACHE_FILE="$cache_file" \
+		BASE_DIR='/usr/libexec/fwblack' \
+		ETC_DIR='/etc/fwblack'
+	procd_set_param respawn 3600 5 0
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	# Trigger a procd state re-eval when these change (see service_triggers).
+	procd_set_param file /etc/config/fwblack "$blocklist"
+	procd_close_instance
+}
+
+service_triggers() {
+	procd_add_reload_trigger "$CONFIG" firewall
+}
+
+reload_service() {
+	stop
+	start
+}
