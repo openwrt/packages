@@ -378,6 +378,11 @@ migrate_option_remote_values() {
 	[ -z "$value" ] || {
 		uci -q rename "ipsec.${cfg}.overtime=over_time"
 	}
+
+	config_get value "$cfg" dpddelay ""
+	[ -z "$value" ] || {
+		uci -q rename "ipsec.${cfg}.dpddelay=dpd_delay"
+	}
 }
 
 migrate_options() {
