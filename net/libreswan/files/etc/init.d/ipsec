@@ -276,8 +276,6 @@ start_service() {
 	generate_config
 	checkconfig || return 1
 
-	${IPSEC_BIN} _stackmanager start
-
 	procd_open_instance
 	procd_set_param command $PROG --nofork
 	procd_set_param respawn
@@ -286,7 +284,6 @@ start_service() {
 
 stop_service() {
 	${IPSEC_BIN} whack --shutdown
-	${IPSEC_BIN} _stackmanager stop
 }
 
 stop_tunnel() {
