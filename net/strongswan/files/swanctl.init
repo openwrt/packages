@@ -261,7 +261,7 @@ config_child() {
 	local hw_offload
 	local priority
 	local rekey_bytes
-	local lifebytes
+	local life_bytes
 	local rekeypackets
 	local lifepackets
 	local replay_window
@@ -282,7 +282,7 @@ config_child() {
 	config_get hw_offload "$conf" hw_offload ""
 	config_get priority "$conf" priority ""
 	config_get rekey_bytes "$conf" rekey_bytes ""
-	config_get lifebytes "$conf" lifebytes ""
+	config_get life_bytes "$conf" life_bytes ""
 	config_get rekeypackets "$conf" rekeypackets ""
 	config_get lifepackets "$conf" lifepackets ""
 	config_get replay_window "$conf" replay_window ""
@@ -361,8 +361,8 @@ config_child() {
 		swanctl_xappend4 "life_time = $(seconds2time $(((110 * $(time2seconds $rekey_time)) / 100)))"
 	fi
 	[ -n "$rekey_time" ] && swanctl_xappend4 "rekey_time = $rekey_time"
-	if [ -n "$lifebytes" ]; then
-		swanctl_xappend4 "life_bytes = $lifebytes"
+	if [ -n "$life_bytes" ]; then
+		swanctl_xappend4 "life_bytes = $life_bytes"
 	elif [ -n "$rekey_bytes" ]; then
 		swanctl_xappend4 "life_bytes = $(((110 * rekey_bytes) / 100))"
 	fi
