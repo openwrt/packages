@@ -347,6 +347,11 @@ migrate_option_child_values() {
 	[ -z "$value" ] || {
 		uci -q rename "ipsec.${cfg}.rekeybytes=rekey_bytes"
 	}
+
+	config_get value "$cfg" lifebytes ""
+	[ -z "$value" ] || {
+		uci -q rename "ipsec.${cfg}.lifebytes=life_bytes"
+	}
 }
 
 migrate_options() {
