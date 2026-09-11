@@ -451,7 +451,7 @@ config_remote() {
 	local local_cert
 	local local_key
 	local ca_cert
-	local rekeytime
+	local rekey_time
 	local overtime
 	local send_cert
 	local send_certreq
@@ -479,7 +479,7 @@ config_remote() {
 	config_get local_cert "$conf" local_cert ""
 	config_get local_key "$conf" local_key ""
 	config_get ca_cert "$conf" ca_cert ""
-	config_get rekeytime "$conf" rekeytime
+	config_get rekey_time "$conf" rekey_time
 	config_get overtime "$conf" overtime
 	config_get send_cert "$conf" send_cert
 	config_get_bool send_certreq "$conf" send_certreq 1
@@ -593,11 +593,11 @@ config_remote() {
 
 	[ $mobike -eq 1 ] && swanctl_xappend2 "mobike = yes" || swanctl_xappend2 "mobike = no"
 
-	if [ -n "$rekeytime" ]; then
-		swanctl_xappend2 "rekey_time = $rekeytime"
+	if [ -n "$rekey_time" ]; then
+		swanctl_xappend2 "rekey_time = $rekey_time"
 
 		if [ -z "$overtime" ]; then
-			overtime=$(seconds2time $(($(time2seconds $rekeytime) / 10)))
+			overtime=$(seconds2time $(($(time2seconds $rekey_time) / 10)))
 		fi
 	fi
 	[ -n "$overtime" ] && swanctl_xappend2 "over_time = $overtime"
