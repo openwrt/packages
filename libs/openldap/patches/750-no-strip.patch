@@ -1,3 +1,10 @@
+From 3c78eaff96d7ba286bb0404b9bdc1a2c6aca7ec0 Mon Sep 17 00:00:00 2001
+From: W. Michael Petullo <mike@flyn.org>
+Date: Sun, 6 Aug 2014 11:28:00 +0200
+Subject: [PATCH] no strip
+
+Signed-off-by: W. Michael Petullo <mike@flyn.org>
+---
 --- a/clients/tools/Makefile.in
 +++ b/clients/tools/Makefile.in
 @@ -131,7 +131,7 @@ install-local:	FORCE
@@ -11,7 +18,7 @@
  	)
 --- a/servers/slapd/Makefile.in
 +++ b/servers/slapd/Makefile.in
-@@ -377,7 +377,7 @@ install-local-srv: install-slapd install
+@@ -366,7 +366,7 @@ install-local-srv: install-slapd install
  install-slapd: FORCE
  	-$(MKDIR) $(DESTDIR)$(libexecdir)
  	-$(MKDIR) $(DESTDIR)$(localstatedir)/run
