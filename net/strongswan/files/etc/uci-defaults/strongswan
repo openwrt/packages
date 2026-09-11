@@ -337,6 +337,11 @@ migrate_option_child_values() {
 	[ -z "$value" ] || {
 		uci -q rename "ipsec.${cfg}.rekeytime=rekey_time"
 	}
+
+	config_get value "$cfg" lifetime ""
+	[ -z "$value" ] || {
+		uci -q rename "ipsec.${cfg}.lifetime=life_time"
+	}
 }
 
 migrate_options() {

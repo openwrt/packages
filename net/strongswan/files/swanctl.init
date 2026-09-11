@@ -251,7 +251,7 @@ config_child() {
 	local start_action
 	local updown
 	local firewall
-	local lifetime
+	local life_time
 	local dpd_action
 	local close_action
 	local if_id
@@ -272,7 +272,7 @@ config_child() {
 	config_get start_action "$conf" start_action "route"
 	config_get updown "$conf" updown ""
 	config_get firewall "$conf" firewall ""
-	config_get lifetime "$conf" lifetime ""
+	config_get life_time "$conf" life_time ""
 	config_get dpd_action "$conf" dpd_action "clear"
 	config_get close_action "$conf" close_action "none"
 	config_get if_id "$conf" if_id ""
@@ -355,8 +355,8 @@ config_child() {
 	swanctl_xappend4 "esp_proposals = $esp_proposal"
 	swanctl_xappend4 "mode = $mode"
 
-	if [ -n "$lifetime" ]; then
-		swanctl_xappend4 "life_time = $lifetime"
+	if [ -n "$life_time" ]; then
+		swanctl_xappend4 "life_time = $life_time"
 	elif [ -n "$rekey_time" ]; then
 		swanctl_xappend4 "life_time = $(seconds2time $(((110 * $(time2seconds $rekey_time)) / 100)))"
 	fi
