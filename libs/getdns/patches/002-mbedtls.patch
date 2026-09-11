@@ -1,0 +1,2529 @@
+From aec9fea6d3f509d0f0ae2c8a916dcd339f685dac Mon Sep 17 00:00:00 2001
+From: Mario Rugiero <mrugiero@gmail.com>
+Date: Thu, 9 Jul 2026 17:23:16 -0300
+Subject: [PATCH] feat(tls): add mbedTLS backend for DoT and DNSSEC
+
+Adds src/mbedtls/ implementing the tls.h transport interface against
+mbedTLS 3.x/4.x's PSA API, and a new HAVE_MBEDTLS branch in
+src/tls/val_secalgo.c so DNSSEC verification no longer pulls in
+OpenSSL or Nettle when USE_MBEDTLS is selected.
+
+DNSSEC support covers RSA and ECDSA only: mbedTLS has no DSA or GOST
+implementation, and no EdDSA (Ed25519/Ed448) implementation despite
+declaring PSA_ALG_PURE_EDDSA and the twisted-Edwards curve family in
+its public headers.
+
+SPKI pinning is checked by hand post-handshake (mbedTLS has no
+DANE-alike API), and session-resumption status always reports fresh
+since mbedTLS 4.x has no public API to query it.
+
+On dynamic linking builds, user is responsible for matching versions
+correctly.
+---
+ CMakeLists.txt                        | 209 ++++--
+ cmake/include/cmakeconfig.h.in        |   1 +
+ src/mbedtls/keyraw-internal.c         |  15 +
+ src/mbedtls/keyraw-internal.h         |  31 +
+ src/mbedtls/pubkey-pinning-internal.c |  55 ++
+ src/mbedtls/tls-internal.h            | 104 +++
+ src/mbedtls/tls.c                     | 948 ++++++++++++++++++++++++++
+ src/tls/anchor-internal.c             | 266 ++++++++
+ src/tls/pubkey-pinning-internal.h     |   2 -
+ src/tls/val_secalgo.c                 | 568 ++++++++++++++-
+ 10 files changed, 2103 insertions(+), 96 deletions(-)
+ create mode 100644 src/mbedtls/keyraw-internal.c
+ create mode 100644 src/mbedtls/keyraw-internal.h
+ create mode 100644 src/mbedtls/pubkey-pinning-internal.c
+ create mode 100644 src/mbedtls/tls-internal.h
+ create mode 100644 src/mbedtls/tls.c
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -166,6 +166,7 @@ option(BUILD_LIBUV "Build libuv support
+ 
+ option(USE_LIBIDN2 "Use libidn2 if available." ON)
+ option(USE_GNUTLS "Use GnuTLS for TLS connections." OFF)
++option(USE_MBEDTLS "Use mbedTLS for TLS connections." OFF)
+ 
+ option(FORCE_COMPAT_STRPTIME "Force use of internal strptime when cross-compiling." OFF)
+ 
+@@ -326,66 +327,73 @@ check_type_size(sigset_t SIGSET_T)
+ check_type_size(_sigset_t _SIGSET_T)
+ 
+ # SSL library
+-find_package(OpenSSL "1.0.2" REQUIRED)
++#
++# USE_MBEDTLS builds get all their TLS and DNSSEC-signature-verification
++# crypto from mbedTLS (src/mbedtls/tls.c, src/tls/val_secalgo.c's
++# HAVE_MBEDTLS branch, src/tls/anchor-internal.c's HAVE_MBEDTLS branch), so
++# OpenSSL is not looked up or linked at all for them.
++if (NOT USE_MBEDTLS)
++  find_package(OpenSSL "1.0.2" REQUIRED)
++
++  set(HAVE_SSL 1)
++  set(tlsdir "openssl")
++
++  set(CMAKE_REQUIRED_INCLUDES ${OPENSSL_INCLUDE_DIR})
++  check_include_file(openssl/ssl.h HAVE_OPENSSL_SSL_H)
++  check_include_file(openssl/evp.h HAVE_OPENSSL_EVP_H)
++  check_include_file(openssl/err.h HAVE_OPENSSL_ERR_H)
++  check_include_file(openssl/rand.h HAVE_OPENSSL_RAND_H)
++  check_include_file(openssl/conf.h HAVE_OPENSSL_CONF_H)
++  check_include_file(openssl/engine.h HAVE_OPENSSL_ENGINE_H)
++  check_include_file(openssl/bn.h HAVE_OPENSSL_BN_H)
++  check_include_file(openssl/dsa.h HAVE_OPENSSL_DSA_H)
++  check_include_file(openssl/rsa.h HAVE_OPENSSL_RSA_H)
++  check_include_file(openssl/param_build.h HAVE_OPENSSL_PARAM_BUILD_H)
++
++  set(CMAKE_REQUIRED_LIBRARIES ${OPENSSL_LIBRARIES} ${getdns_system_libs})
++  check_function_exists(DSA_SIG_set0 HAVE_DSA_SIG_SET0)
++  check_function_exists(DSA_set0_pqg HAVE_DSA_SET0_PQG)
++  check_function_exists(DSA_set0_key HAVE_DSA_SET0_KEY)
++
++  check_function_exists(RSA_set0_key HAVE_RSA_SET0_KEY)
++
++  check_function_exists(EVP_md5 HAVE_EVP_MD5)
++  check_function_exists(EVP_sha1 HAVE_EVP_SHA1)
++  check_function_exists(EVP_sha224 HAVE_EVP_SHA224)
++  check_function_exists(EVP_sha256 HAVE_EVP_SHA256)
++  check_function_exists(EVP_sha384 HAVE_EVP_SHA384)
++  check_function_exists(EVP_sha512 HAVE_EVP_SHA512)
++
++  check_function_exists(EVP_dss1 HAVE_EVP_DSS1)
++  check_function_exists(EVP_DigestVerify HAVE_EVP_DIGESTVERIFY)
++
++  check_function_exists(EVP_MD_CTX_new HAVE_EVP_MD_CTX_NEW)
++
++  check_function_exists(HMAC_CTX_new HAVE_HMAC_CTX_NEW)
++
++  check_function_exists(OpenSSL_version_num HAVE_OPENSSL_VERSION_NUM)
++  check_function_exists(OpenSSL_version HAVE_OPENSSL_VERSION)
++
++  check_function_exists(SSL_CTX_dane_enable HAVE_SSL_CTX_DANE_ENABLE)
++
++  check_function_exists(SSL_CTX_set_ciphersuites HAVE_SSL_CTX_SET_CIPHERSUITES)
++  check_function_exists(SSL_set_ciphersuites HAVE_SSL_SET_CIPHERSUITES)
++
++  check_function_exists(OPENSSL_init_crypto HAVE_OPENSSL_INIT_CRYPTO)
++
++  check_function_exists(OSSL_PARAM_BLD_new HAVE_OSSL_PARAM_BLD_NEW)
++
++  check_symbol_exists(SSL_dane_enable "openssl/ssl.h" HAVE_SSL_DANE_ENABLE)
++  check_symbol_exists(SSL_CTX_set1_curves_list "openssl/ssl.h" HAVE_DECL_SSL_CTX_SET1_CURVES_LIST)
++  check_symbol_exists(SSL_set1_curves_list "openssl/ssl.h" HAVE_DECL_SSL_SET1_CURVES_LIST)
++  check_symbol_exists(SSL_set_min_proto_version "openssl/ssl.h" HAVE_DECL_SSL_SET_MIN_PROTO_VERSION)
++  check_symbol_exists(TLS_client_method "openssl/ssl.h" HAVE_TLS_CLIENT_METHOD)
++  check_symbol_exists(X509_get_notAfter "openssl/x509.h" HAVE_X509_GET_NOTAFTER)
++  check_symbol_exists(X509_get0_notAfter "openssl/x509.h" HAVE_X509_GET0_NOTAFTER)
+ 
+-set(HAVE_SSL 1)
+-set(tlsdir "openssl")
+-
+-set(CMAKE_REQUIRED_INCLUDES ${OPENSSL_INCLUDE_DIR})
+-check_include_file(openssl/ssl.h HAVE_OPENSSL_SSL_H)
+-check_include_file(openssl/evp.h HAVE_OPENSSL_EVP_H)
+-check_include_file(openssl/err.h HAVE_OPENSSL_ERR_H)
+-check_include_file(openssl/rand.h HAVE_OPENSSL_RAND_H)
+-check_include_file(openssl/conf.h HAVE_OPENSSL_CONF_H)
+-check_include_file(openssl/engine.h HAVE_OPENSSL_ENGINE_H)
+-check_include_file(openssl/bn.h HAVE_OPENSSL_BN_H)
+-check_include_file(openssl/dsa.h HAVE_OPENSSL_DSA_H)
+-check_include_file(openssl/rsa.h HAVE_OPENSSL_RSA_H)
+-check_include_file(openssl/param_build.h HAVE_OPENSSL_PARAM_BUILD_H)
+-
+-set(CMAKE_REQUIRED_LIBRARIES ${OPENSSL_LIBRARIES} ${getdns_system_libs})
+-check_function_exists(DSA_SIG_set0 HAVE_DSA_SIG_SET0)
+-check_function_exists(DSA_set0_pqg HAVE_DSA_SET0_PQG)
+-check_function_exists(DSA_set0_key HAVE_DSA_SET0_KEY)
+-
+-check_function_exists(RSA_set0_key HAVE_RSA_SET0_KEY)
+-
+-check_function_exists(EVP_md5 HAVE_EVP_MD5)
+-check_function_exists(EVP_sha1 HAVE_EVP_SHA1)
+-check_function_exists(EVP_sha224 HAVE_EVP_SHA224)
+-check_function_exists(EVP_sha256 HAVE_EVP_SHA256)
+-check_function_exists(EVP_sha384 HAVE_EVP_SHA384)
+-check_function_exists(EVP_sha512 HAVE_EVP_SHA512)
+-
+-check_function_exists(EVP_dss1 HAVE_EVP_DSS1)
+-check_function_exists(EVP_DigestVerify HAVE_EVP_DIGESTVERIFY)
+-
+-check_function_exists(EVP_MD_CTX_new HAVE_EVP_MD_CTX_NEW)
+-
+-check_function_exists(HMAC_CTX_new HAVE_HMAC_CTX_NEW)
+-
+-check_function_exists(OpenSSL_version_num HAVE_OPENSSL_VERSION_NUM)
+-check_function_exists(OpenSSL_version HAVE_OPENSSL_VERSION)
+-
+-check_function_exists(SSL_CTX_dane_enable HAVE_SSL_CTX_DANE_ENABLE)
+-
+-check_function_exists(SSL_CTX_set_ciphersuites HAVE_SSL_CTX_SET_CIPHERSUITES)
+-check_function_exists(SSL_set_ciphersuites HAVE_SSL_SET_CIPHERSUITES)
+-
+-check_function_exists(OPENSSL_init_crypto HAVE_OPENSSL_INIT_CRYPTO)
+-
+-check_function_exists(OSSL_PARAM_BLD_new HAVE_OSSL_PARAM_BLD_NEW)
+-
+-check_symbol_exists(SSL_dane_enable "openssl/ssl.h" HAVE_SSL_DANE_ENABLE)
+-check_symbol_exists(SSL_CTX_set1_curves_list "openssl/ssl.h" HAVE_DECL_SSL_CTX_SET1_CURVES_LIST)
+-check_symbol_exists(SSL_set1_curves_list "openssl/ssl.h" HAVE_DECL_SSL_SET1_CURVES_LIST)
+-check_symbol_exists(SSL_set_min_proto_version "openssl/ssl.h" HAVE_DECL_SSL_SET_MIN_PROTO_VERSION)
+-check_symbol_exists(TLS_client_method "openssl/ssl.h" HAVE_TLS_CLIENT_METHOD)
+-check_symbol_exists(X509_get_notAfter "openssl/x509.h" HAVE_X509_GET_NOTAFTER)
+-check_symbol_exists(X509_get0_notAfter "openssl/x509.h" HAVE_X509_GET0_NOTAFTER)
+-
+-check_symbol_exists(NID_ED25519 "openssl/obj_mac.h" HAVE_SSL_ED25519)
+-check_symbol_exists(NID_ED448 "openssl/obj_mac.h" HAVE_SSL_ED448)
++  check_symbol_exists(NID_ED25519 "openssl/obj_mac.h" HAVE_SSL_ED25519)
++  check_symbol_exists(NID_ED448 "openssl/obj_mac.h" HAVE_SSL_ED448)
++endif ()
+ 
+ # Threading library
+ set(THREADS_PREFER_PTHREAD_FLAG ON)
+@@ -412,6 +420,10 @@ endif()
+ # GnuTLS and Nettle. If using GnuTLS, we need the Nettle dev stuff to
+ # handle digital signature algorithms. GnuTLS uses Nettle internally.
+ if (USE_GNUTLS)
++  if (USE_MBEDTLS)
++    message(FATAL_ERROR "USE_GNUTLS and USE_MBEDTLS are mutually exclusive.")
++  endif()
++
+   find_package(GnuTLS "3.5.0" REQUIRED)
+   find_package(Nettle "3.2" REQUIRED)
+ 
+@@ -428,6 +440,40 @@ set(CMAKE_REQUIRED_LIBRARIES ${NETTLE_LI
+   check_symbol_exists(nettle_get_secp_384r1 "nettle/ecc-curve.h" HAVE_NETTLE_GET_SECP_384R1)
+ endif()
+ 
++# mbedTLS. src/tls/val_secalgo.c has its own mbedTLS-native branch
++# (HAVE_MBEDTLS) using the PSA crypto API, so DNSSEC doesn't need
++# OpenSSL or Nettle here.
++if (USE_MBEDTLS)
++  # Crypto lib target renamed mbedcrypto -> tfpsacrypto in 4.x.
++  find_package(MbedTLS REQUIRED)
++
++  # MbedTLSConfigVersion.cmake uses write_basic_package_version_file()'s
++  # default SameMajorVersion mode, which doesn't support find_package()
++  # version ranges (any range request is rejected outright) - so the
++  # bound is checked here instead. Sanity guard, not a considered
++  # compatibility promise: only verified against 3.6.6 and 4.2.0.
++  if (MbedTLS_VERSION VERSION_LESS "3.0.0" OR
++      NOT MbedTLS_VERSION VERSION_LESS "5.0.0")
++    message(FATAL_ERROR
++      "USE_MBEDTLS requires mbedTLS >= 3.0.0 and < 5.0.0, found ${MbedTLS_VERSION}")
++  endif ()
++
++  if (MbedTLS_VERSION VERSION_LESS "4.0.0")
++    set(MBEDTLS_CRYPTO_TARGET MbedTLS::mbedcrypto)
++  else()
++    set(MBEDTLS_CRYPTO_TARGET MbedTLS::tfpsacrypto)
++  endif()
++
++  set(tlsdir "mbedtls")
++  set(HAVE_MBEDTLS 1)
++
++  # mbedTLS has no DSA, GOST, or EdDSA (Ed25519/Ed448) support at all.
++  unset(USE_DSA)
++  unset(USE_GOST)
++  unset(USE_ED25519)
++  unset(USE_ED448)
++endif()
++
+ # Sort out what signature algorithms can be used.
+ if (USE_ED25519)
+   if (USE_GNUTLS)
+@@ -677,13 +723,18 @@ target_include_directories(getdns_object
+   src/yxml
+ 
+   ${CMAKE_CURRENT_BINARY_DIR}
+-
+-  # Note - CMake 3.5 doesn't like target_link_libraries on objects,
+-  # which would be preferred way to add an include dependency.
+-  ${OPENSSL_INCLUDE_DIR}
+   )
+ target_compile_definitions(getdns_objects PRIVATE JSMN_GETDNS YXML_GETDNS)
+-if (NOT HAVE_SSL_DANE_ENABLE)
++if (NOT USE_MBEDTLS)
++  # Note - CMake 3.5 doesn't like target_link_libraries on objects,
++  # which would be preferred way to add an include dependency.
++  target_include_directories(getdns_objects PRIVATE ${OPENSSL_INCLUDE_DIR})
++endif ()
++# src/ssl_dane/danessl.c is a hard-OpenSSL DANE verification helper with no
++# mbedTLS equivalent; it is only ever needed as a fallback when the linked
++# OpenSSL itself lacks native DANE support, so it is meaningless (and
++# unbuildable) for USE_MBEDTLS.
++if ((NOT USE_MBEDTLS) AND (NOT HAVE_SSL_DANE_ENABLE))
+   target_sources(getdns_objects PRIVATE src/ssl_dane/danessl.c)
+   target_include_directories(getdns_objects PRIVATE src/ssl_dane)
+   set(USE_DANESSL 1)
+@@ -697,6 +748,10 @@ endif ()
+ if (GnuTLS_FOUND)
+   target_include_directories(getdns_objects PRIVATE ${GNUTLS_INCLUDE_DIR})
+ endif ()
++if (MbedTLS_FOUND)
++  target_link_libraries(getdns_objects PUBLIC
++    MbedTLS::mbedtls MbedTLS::mbedx509 ${MBEDTLS_CRYPTO_TARGET})
++endif ()
+ 
+ # Don't compile separate objects for shared and static libraries.
+ # Yes, -fPIC is slightly suboptimal for static libraries, but it looks
+@@ -713,11 +768,12 @@ if (ENABLE_STATIC)
+     )
+   target_link_libraries(getdns
+     PUBLIC
+-    OpenSSL::SSL
+-    OpenSSL::Crypto
+     Threads::Threads
+     ${getdns_system_libs}
+     )
++  if (NOT USE_MBEDTLS)
++    target_link_libraries(getdns PUBLIC OpenSSL::SSL OpenSSL::Crypto)
++  endif ()
+   if (Libunbound_FOUND)
+     target_link_libraries(getdns PUBLIC Libunbound::Libunbound)
+   endif ()
+@@ -730,6 +786,10 @@ if (ENABLE_STATIC)
+   if (Nettle_FOUND)
+     target_link_libraries(getdns PUBLIC Nettle::Nettle Nettle::Hogweed)
+   endif ()
++  if (MbedTLS_FOUND)
++    target_link_libraries(getdns PUBLIC
++      MbedTLS::mbedtls MbedTLS::mbedx509 ${MBEDTLS_CRYPTO_TARGET})
++  endif ()
+   set_target_properties(getdns PROPERTIES OUTPUT_NAME getdns${static_lib_suffix})
+ endif ()
+ 
+@@ -742,11 +802,12 @@ if (ENABLE_SHARED)
+     )
+   target_link_libraries(getdns_shared
+     PUBLIC
+-    OpenSSL::SSL
+-    OpenSSL::Crypto
+     Threads::Threads
+     ${getdns_system_libs}
+     )
++  if (NOT USE_MBEDTLS)
++    target_link_libraries(getdns_shared PUBLIC OpenSSL::SSL OpenSSL::Crypto)
++  endif ()
+   if (Libunbound_FOUND)
+     target_link_libraries(getdns_shared PUBLIC Libunbound::Libunbound)
+   endif ()
+@@ -759,6 +820,10 @@ if (ENABLE_SHARED)
+   if (Nettle_FOUND)
+     target_link_libraries(getdns_shared PUBLIC Nettle::Nettle Nettle::Hogweed)
+   endif ()
++  if (MbedTLS_FOUND)
++    target_link_libraries(getdns_shared PUBLIC
++      MbedTLS::mbedtls MbedTLS::mbedx509 ${MBEDTLS_CRYPTO_TARGET})
++  endif ()
+   set_target_properties(getdns_shared PROPERTIES OUTPUT_NAME getdns)
+   target_shared_library_version(getdns_shared ${GETDNS_VERSION_CURRENT} ${GETDNS_VERSION_REVISION} ${GETDNS_VERSION_AGE})
+ 
+@@ -935,6 +1000,12 @@ if (BUILD_GETDNS_QUERY)
+   set_property(TARGET getdns_query PROPERTY C_STANDARD 11)
+ endif ()
+ 
++if (BUILD_GETDNS_SERVER_MON AND USE_MBEDTLS)
++  # src/tools/getdns_server_mon.c calls OpenSSL APIs directly (not through
++  # the tls.h backend abstraction), so it has no mbedTLS port.
++  message(WARNING "getdns_server_mon uses OpenSSL directly and has no mbedTLS port; disabled for USE_MBEDTLS.")
++  set(BUILD_GETDNS_SERVER_MON OFF CACHE BOOL "Compile and install the getdns_server_mon tool." FORCE)
++endif ()
+ if (BUILD_GETDNS_SERVER_MON)
+   add_executable(getdns_server_mon src/tools/getdns_server_mon.c)
+   target_link_libraries(getdns_server_mon
+--- a/cmake/include/cmakeconfig.h.in
++++ b/cmake/include/cmakeconfig.h.in
+@@ -187,6 +187,7 @@
+ #cmakedefine HAVE_NETTLE		1
+ #cmakedefine HAVE_NETTLE_DSA_COMPAT_H	1
+ #cmakedefine HAVE_NETTLE_EDDSA_H	1
++#cmakedefine HAVE_MBEDTLS		1
+ 
+ #cmakedefine HAVE_EVENT2_EVENT_H	1
+ #cmakedefine HAVE_EVENT_BASE_NEW	1
+--- /dev/null
++++ b/src/mbedtls/keyraw-internal.c
+@@ -0,0 +1,15 @@
++/*
++ * keyraw.c - raw key operations and conversions - OpenSSL version
++ *
++ * (c) NLnet Labs, 2004-2008
++ *
++ * See the file LICENSE for the license
++ */
++/**
++ * \file
++ * Implementation of raw DNSKEY functions (work on wire rdata).
++ */
++
++#include "config.h"
++#include "gldns/keyraw.h"
++#include "gldns/rrdef.h"
+--- /dev/null
++++ b/src/mbedtls/keyraw-internal.h
+@@ -0,0 +1,31 @@
++/*
++ * keyraw.h -- raw key and signature access and conversion - OpenSSL
++ *
++ * Copyright (c) 2005-2008, NLnet Labs. All rights reserved.
++ *
++ * See LICENSE for the license.
++ *
++ */
++
++/**
++ * \file
++ *
++ * raw key and signature access and conversion
++ *
++ * Since those functions heavily rely op cryptographic operations,
++ * this module is dependent on openssl.
++ * 
++ */
++ 
++#ifndef GLDNS_KEYRAW_INTERNAL_H
++#define GLDNS_KEYRAW_INTERNAL_H
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif /* GLDNS_KEYRAW_INTERNAL_H */
+--- /dev/null
++++ b/src/mbedtls/pubkey-pinning-internal.c
+@@ -0,0 +1,55 @@
++/**
++ *
++ * /brief functions for dealing with pubkey pinsets
++ *
++ */
++
++/*
++ * Copyright (c) 2015 ACLU
++ * All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions are met:
++ * * Redistributions of source code must retain the above copyright
++ *   notice, this list of conditions and the following disclaimer.
++ * * Redistributions in binary form must reproduce the above copyright
++ *   notice, this list of conditions and the following disclaimer in the
++ *   documentation and/or other materials provided with the distribution.
++ * * Neither the names of the copyright holders nor the
++ *   names of its contributors may be used to endorse or promote products
++ *   derived from this software without specific prior written permission.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
++ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
++ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
++ * DISCLAIMED. IN NO EVENT SHALL Verisign, Inc. BE LIABLE FOR ANY
++ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
++ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
++ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
++ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
++ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#include "context.h"
++#include <mbedtls/base64.h>
++
++#include "types-internal.h"
++
++#include "pubkey-pinning.h"
++
++/**
++ ** Interfaces from pubkey-pinning.h
++ **/
++
++getdns_return_t
++_getdns_decode_base64(const char *str, uint8_t *res, size_t res_size)
++{
++	size_t olen = 0;
++
++	if (mbedtls_base64_decode(res, res_size, &olen,
++		(const unsigned char *) str, strlen(str)) != 0)
++		return GETDNS_RETURN_GENERIC_ERROR;
++	return (olen == res_size)
++	    ? GETDNS_RETURN_GOOD : GETDNS_RETURN_GENERIC_ERROR;
++}
+--- /dev/null
++++ b/src/mbedtls/tls-internal.h
+@@ -0,0 +1,104 @@
++/**
++ *
++ * \file tls-internal.h
++ * @brief getdns TLS implementation-specific items
++ */
++
++/*
++ * Copyright (c) 2018-2019, NLnet Labs
++ * All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions are met:
++ * * Redistributions of source code must retain the above copyright
++ *   notice, this list of conditions and the following disclaimer.
++ * * Redistributions in binary form must reproduce the above copyright
++ *   notice, this list of conditions and the following disclaimer in the
++ *   documentation and/or other materials provided with the distribution.
++ * * Neither the names of the copyright holders nor the
++ *   names of its contributors may be used to endorse or promote products
++ *   derived from this software without specific prior written permission.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
++ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
++ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
++ * DISCLAIMED. IN NO EVENT SHALL Verisign, Inc. BE LIABLE FOR ANY
++ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
++ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
++ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
++ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
++ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#ifndef _GETDNS_TLS_INTERNAL_H
++#define _GETDNS_TLS_INTERNAL_H
++
++#include <stdbool.h>
++
++#include <mbedtls/ssl.h>
++#include <mbedtls/x509_crt.h>
++
++#include "getdns/getdns.h"
++
++#define SHA_DIGEST_LENGTH	20
++#define SHA224_DIGEST_LENGTH	28
++#define SHA256_DIGEST_LENGTH	32
++#define SHA384_DIGEST_LENGTH	48
++#define SHA512_DIGEST_LENGTH	64
++
++#define GETDNS_TLS_MAX_DIGEST_LENGTH	(SHA512_DIGEST_LENGTH)
++
++#define HAVE_TLS_CTX_CURVES_LIST	0
++#define HAVE_TLS_CONN_CURVES_LIST	0
++
++/* Forward declare type. */
++struct getdns_log_config;
++
++typedef struct _getdns_tls_context {
++	struct mem_funcs *mfs;
++	char *cipher_list;
++	char *cipher_suites;
++	char *curve_list;
++	getdns_tls_version_t min_tls;
++	getdns_tls_version_t max_tls;
++	char *ca_trust_file;
++	char *ca_trust_path;
++	mbedtls_x509_crt ca_chain;
++	int have_ca_chain;
++	const struct getdns_log_config *log;
++} _getdns_tls_context;
++
++typedef unsigned char _getdns_sha256_hash[SHA256_DIGEST_LENGTH];
++
++typedef struct _getdns_tls_connection {
++	mbedtls_ssl_context ssl;
++	mbedtls_ssl_config conf;
++	_getdns_tls_context *ctx;
++	struct mem_funcs *mfs;
++	int fd;
++	int shutdown;
++	char *cipher_list;
++	char *cipher_suites;
++	char *curve_list;
++	getdns_tls_version_t min_tls;
++	getdns_tls_version_t max_tls;
++	/* mbedtls_ssl_conf_ciphersuites() stores this pointer directly (no
++	 * copy), so it must stay alive for as long as `conf` references it. */
++	int *ciphersuite_ids;
++	_getdns_sha256_hash *pins;
++	size_t npins;
++	const struct getdns_log_config *log;
++} _getdns_tls_connection;
++
++typedef struct _getdns_tls_session {
++	unsigned char *data;
++	size_t len;
++} _getdns_tls_session;
++
++typedef struct _getdns_tls_x509 {
++	unsigned char *der;
++	size_t len;
++} _getdns_tls_x509;
++
++#endif /* _GETDNS_TLS_INTERNAL_H */
+--- /dev/null
++++ b/src/mbedtls/tls.c
+@@ -0,0 +1,948 @@
++/**
++ *
++ * \file tls.c
++ * @brief getdns TLS functions
++ */
++
++/*
++ * Copyright (c) 2018-2020, NLnet Labs
++ * All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions are met:
++ * * Redistributions of source code must retain the above copyright
++ *   notice, this list of conditions and the following disclaimer.
++ * * Redistributions in binary form must reproduce the above copyright
++ *   notice, this list of conditions and the following disclaimer in the
++ *   documentation and/or other materials provided with the distribution.
++ * * Neither the names of the copyright holders nor the
++ *   names of its contributors may be used to endorse or promote products
++ *   derived from this software without specific prior written permission.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
++ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
++ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
++ * DISCLAIMED. IN NO EVENT SHALL Verisign, Inc. BE LIABLE FOR ANY
++ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
++ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
++ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
++ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
++ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#include <errno.h>
++#include <stdio.h>
++#include <string.h>
++#include <sys/socket.h>
++
++#include <mbedtls/error.h>
++#include <mbedtls/pk.h>
++#include <mbedtls/psa_util.h>
++#include <mbedtls/version.h>
++#include <mbedtls/x509_crt.h>
++#include <psa/crypto.h>
++
++#include "config.h"
++
++#include "debug.h"
++#include "context.h"
++
++#include "tls.h"
++
++/* No ABI guarantee across mbedTLS major (or, outside LTS, minor)
++ * versions, and no runtime way to check it. mbedTLS structs are not
++ * opaque-constructed, so we need to embed them.
++ * Linking against a mismatched libmbedtls version can cause memory
++ * corruption or link failures. Handle with care. */
++
++/* Max ciphersuite IDs collected by apply_connection_ciphersuites(). */
++#define GETDNS_MBEDTLS_MAX_CIPHERSUITES 128
++
++/* RFC7525 AEAD suites, in mbedTLS's own ciphersuite names: cipher_list
++ * is the TLS1.2 ECDHE+AEAD set, cipher_suites the TLS1.3 set.
++ * Used as-is if set_cipher_list()/set_cipher_suites() is called with NULL. */
++static char const *const _getdns_tls_context_default_cipher_list =
++    "TLS-ECDHE-ECDSA-WITH-AES-256-GCM-SHA384:"
++    "TLS-ECDHE-RSA-WITH-AES-256-GCM-SHA384:"
++    "TLS-ECDHE-ECDSA-WITH-AES-128-GCM-SHA256:"
++    "TLS-ECDHE-RSA-WITH-AES-128-GCM-SHA256:"
++    "TLS-ECDHE-ECDSA-WITH-CHACHA20-POLY1305-SHA256:"
++    "TLS-ECDHE-RSA-WITH-CHACHA20-POLY1305-SHA256";
++
++static char const *const _getdns_tls_context_default_cipher_suites =
++    "TLS1-3-AES-256-GCM-SHA384:"
++    "TLS1-3-AES-128-GCM-SHA256:" "TLS1-3-CHACHA20-POLY1305-SHA256";
++
++/* mbedTLS has no "use the system trust store" call; fall back to probing
++ * well-known bundle locations when no explicit ca_trust_file/path is set. */
++static char const *const _getdns_tls_default_ca_bundle_paths[] = {
++	"/etc/ssl/certs/ca-certificates.crt",	/* Debian/Ubuntu/OpenWrt/Gentoo */
++	"/etc/pki/tls/certs/ca-bundle.crt",	/* Fedora/RHEL */
++	"/etc/ssl/cert.pem",	/* Alpine, OpenBSD, macOS Homebrew */
++	"/etc/ssl/ca-bundle.pem",	/* openSUSE */
++	NULL
++};
++
++static char *
++getdns_strdup(struct mem_funcs *mfs, const char *s)
++{
++	char *res;
++
++	if (!s)
++		return NULL;
++
++	res = GETDNS_XMALLOC(*mfs, char, strlen(s) + 1);
++	if (!res)
++		return NULL;
++	strcpy(res, s);
++	return res;
++}
++
++/* mbedTLS 4.x only implements TLS1.2/1.3; older versions clamp up. */
++static int
++_getdns_tls_version2mbedtls_version(getdns_tls_version_t v)
++{
++	switch (v) {
++	case GETDNS_TLS1_3:
++		return MBEDTLS_SSL_VERSION_TLS1_3;
++	default:
++		return MBEDTLS_SSL_VERSION_TLS1_2;
++	}
++}
++
++static void
++apply_connection_tls_version(_getdns_tls_connection *conn)
++{
++	getdns_tls_version_t min = conn->min_tls;
++	getdns_tls_version_t max = conn->max_tls;
++
++	if (!min)
++		min = conn->ctx->min_tls;
++	if (!max)
++		max = conn->ctx->max_tls;
++
++	mbedtls_ssl_conf_min_tls_version(&conn->conf,
++	    min ? _getdns_tls_version2mbedtls_version(min)
++	    : MBEDTLS_SSL_VERSION_TLS1_2);
++	mbedtls_ssl_conf_max_tls_version(&conn->conf,
++	    max ? _getdns_tls_version2mbedtls_version(max)
++	    : MBEDTLS_SSL_VERSION_TLS1_3);
++}
++
++/* Accepts mbedTLS's own ciphersuite names ("TLS-ECDHE-RSA-WITH-AES-256-GCM-SHA384"),
++ * colon/comma separated. Unrecognized names are skipped and logged; if none match,
++ * mbedTLS's own default ciphersuite set stays in effect.
++ * cipher_list and cipher_suites both feed the same mbedTLS ciphersuite ID list. */
++static void
++apply_connection_ciphersuites(_getdns_tls_connection *conn)
++{
++	const char *lists[2];
++	int ids[GETDNS_MBEDTLS_MAX_CIPHERSUITES];
++	size_t n = 0;
++	size_t i;
++
++	lists[0] =
++	    conn->cipher_list ? conn->cipher_list : conn->ctx->cipher_list;
++	lists[1] =
++	    conn->cipher_suites ? conn->cipher_suites : conn->ctx->
++	    cipher_suites;
++
++	for (i = 0; i < 2 && n + 1 < GETDNS_MBEDTLS_MAX_CIPHERSUITES; i++) {
++		char *copy, *saveptr, *tok;
++
++		if (!lists[i])
++			continue;
++		if (!(copy = getdns_strdup(conn->mfs, lists[i])))
++			continue;
++		for (tok = strtok_r(copy, ":,", &saveptr); tok;
++		    tok = strtok_r(NULL, ":,", &saveptr)) {
++			int id = mbedtls_ssl_get_ciphersuite_id(tok);
++
++			if (id == 0) {
++				_getdns_log(conn->log,
++				    GETDNS_LOG_UPSTREAM_STATS,
++				    GETDNS_LOG_WARNING,
++				    "%s: unrecognized mbedTLS ciphersuite "
++				    "name \"%s\", skipping\n",
++				    STUB_DEBUG_SETUP_TLS, tok);
++				continue;
++			}
++			if (n + 1 < GETDNS_MBEDTLS_MAX_CIPHERSUITES)
++				ids[n++] = id;
++		}
++		GETDNS_FREE(*conn->mfs, copy);
++	}
++
++	GETDNS_FREE(*conn->mfs, conn->ciphersuite_ids);
++	conn->ciphersuite_ids = NULL;
++	if (n == 0)
++		return;
++
++	ids[n] = 0;
++	if (!(conn->ciphersuite_ids = GETDNS_XMALLOC(*conn->mfs, int, n + 1)))
++		    return;
++	memcpy(conn->ciphersuite_ids, ids, (n + 1) * sizeof(int));
++	mbedtls_ssl_conf_ciphersuites(&conn->conf, conn->ciphersuite_ids);
++}
++
++static getdns_return_t
++error_may_want_read_write(int err)
++{
++	switch (err) {
++	case MBEDTLS_ERR_SSL_WANT_READ:
++		return GETDNS_RETURN_TLS_WANT_READ;
++	case MBEDTLS_ERR_SSL_WANT_WRITE:
++		return GETDNS_RETURN_TLS_WANT_WRITE;
++	default:
++		return GETDNS_RETURN_GENERIC_ERROR;
++	}
++}
++
++/* getdns owns and connects the fd itself, so plain send()/recv() wrappers
++ * are enough - no need for mbedTLS's net_sockets module. */
++static int
++bio_send(void *p_ctx, const unsigned char *buf, size_t len)
++{
++	int fd = *(int *) p_ctx;
++	ssize_t ret = send(fd, buf, len, 0);
++
++	if (ret >= 0)
++		return (int) ret;
++	if (errno == EAGAIN || errno == EWOULDBLOCK)
++		return MBEDTLS_ERR_SSL_WANT_WRITE;
++	if (errno == EINTR)
++		return MBEDTLS_ERR_SSL_WANT_WRITE;
++	return -1;
++}
++
++static int
++bio_recv(void *p_ctx, unsigned char *buf, size_t len)
++{
++	int fd = *(int *) p_ctx;
++	ssize_t ret = recv(fd, buf, len, 0);
++
++	if (ret >= 0)
++		return (int) ret;
++	if (errno == EAGAIN || errno == EWOULDBLOCK)
++		return MBEDTLS_ERR_SSL_WANT_READ;
++	if (errno == EINTR)
++		return MBEDTLS_ERR_SSL_WANT_READ;
++	return -1;
++}
++
++void
++_getdns_tls_init()
++{
++	(void) psa_crypto_init();
++}
++
++_getdns_tls_context *
++_getdns_tls_context_new(struct mem_funcs *mfs, const getdns_log_config *log)
++{
++	_getdns_tls_context *res;
++
++	if (!(res = GETDNS_MALLOC(*mfs, struct _getdns_tls_context)))
++		                    return NULL;
++
++	res->mfs = mfs;
++	res->cipher_list = res->cipher_suites = res->curve_list = NULL;
++	res->min_tls = res->max_tls = 0;
++	res->ca_trust_file = NULL;
++	res->ca_trust_path = NULL;
++	res->have_ca_chain = 0;
++	mbedtls_x509_crt_init(&res->ca_chain);
++	res->log = log;
++
++	return res;
++}
++
++getdns_return_t
++_getdns_tls_context_free(struct mem_funcs *mfs, _getdns_tls_context *ctx)
++{
++	if (!ctx)
++		return GETDNS_RETURN_INVALID_PARAMETER;
++
++	mbedtls_x509_crt_free(&ctx->ca_chain);
++	GETDNS_FREE(*mfs, ctx->ca_trust_path);
++	GETDNS_FREE(*mfs, ctx->ca_trust_file);
++	GETDNS_FREE(*mfs, ctx->curve_list);
++	GETDNS_FREE(*mfs, ctx->cipher_suites);
++	GETDNS_FREE(*mfs, ctx->cipher_list);
++	GETDNS_FREE(*mfs, ctx);
++	return GETDNS_RETURN_GOOD;
++}
++
++void
++_getdns_tls_context_pinset_init(_getdns_tls_context *ctx)
++{
++	(void) ctx;		/* unused parameter */
++}
++
++getdns_return_t
++_getdns_tls_context_set_min_max_tls_version(_getdns_tls_context *ctx,
++    getdns_tls_version_t min, getdns_tls_version_t max)
++{
++	if (!ctx)
++		return GETDNS_RETURN_INVALID_PARAMETER;
++	ctx->min_tls = min;
++	ctx->max_tls = max;
++	return GETDNS_RETURN_GOOD;
++}
++
++const char *
++_getdns_tls_context_get_default_cipher_list()
++{
++	return _getdns_tls_context_default_cipher_list;
++}
++
++getdns_return_t
++_getdns_tls_context_set_cipher_list(_getdns_tls_context *ctx, const char *list)
++{
++	if (!ctx)
++		return GETDNS_RETURN_INVALID_PARAMETER;
++
++	if (!list)
++		list = _getdns_tls_context_default_cipher_list;
++
++	GETDNS_FREE(*ctx->mfs, ctx->cipher_list);
++	ctx->cipher_list = getdns_strdup(ctx->mfs, list);
++	return GETDNS_RETURN_GOOD;
++}
++
++const char *
++_getdns_tls_context_get_default_cipher_suites()
++{
++	return _getdns_tls_context_default_cipher_suites;
++}
++
++getdns_return_t
++_getdns_tls_context_set_cipher_suites(_getdns_tls_context *ctx,
++    const char *list)
++{
++	if (!ctx)
++		return GETDNS_RETURN_INVALID_PARAMETER;
++
++	if (!list)
++		list = _getdns_tls_context_default_cipher_suites;
++
++	GETDNS_FREE(*ctx->mfs, ctx->cipher_suites);
++	ctx->cipher_suites = getdns_strdup(ctx->mfs, list);
++	return GETDNS_RETURN_GOOD;
++}
++
++getdns_return_t
++_getdns_tls_context_set_curves_list(_getdns_tls_context *ctx, const char *list)
++{
++	if (!ctx)
++		return GETDNS_RETURN_INVALID_PARAMETER;
++
++	GETDNS_FREE(*ctx->mfs, ctx->curve_list);
++	ctx->curve_list = getdns_strdup(ctx->mfs, list);
++	return GETDNS_RETURN_GOOD;
++}
++
++getdns_return_t
++_getdns_tls_context_set_ca(_getdns_tls_context *ctx, const char *file,
++    const char *path)
++{
++	int r;
++
++	if (!ctx)
++		return GETDNS_RETURN_INVALID_PARAMETER;
++
++	GETDNS_FREE(*ctx->mfs, ctx->ca_trust_file);
++	ctx->ca_trust_file = getdns_strdup(ctx->mfs, file);
++	GETDNS_FREE(*ctx->mfs, ctx->ca_trust_path);
++	ctx->ca_trust_path = getdns_strdup(ctx->mfs, path);
++
++	mbedtls_x509_crt_free(&ctx->ca_chain);
++	mbedtls_x509_crt_init(&ctx->ca_chain);
++	ctx->have_ca_chain = 0;
++
++	if (!file && !path) {
++		size_t i;
++		for (i = 0; _getdns_tls_default_ca_bundle_paths[i]; i++) {
++			if (mbedtls_x509_crt_parse_file(&ctx->ca_chain,
++				_getdns_tls_default_ca_bundle_paths[i]) >= 0) {
++				ctx->have_ca_chain = 1;
++				break;
++			}
++			mbedtls_x509_crt_free(&ctx->ca_chain);
++			mbedtls_x509_crt_init(&ctx->ca_chain);
++		}
++		if (!ctx->have_ca_chain)
++			_getdns_log(ctx->log, GETDNS_LOG_UPSTREAM_STATS,
++			    GETDNS_LOG_WARNING, "%s: %s\n",
++			    STUB_DEBUG_SETUP_TLS,
++			    "No CA trust file/path configured, and no system CA "
++			    "bundle found in well-known locations; strict TLS "
++			    "authentication will fail until one is configured.");
++		return GETDNS_RETURN_GOOD;
++	}
++
++	if (file) {
++		r = mbedtls_x509_crt_parse_file(&ctx->ca_chain, file);
++		if (r < 0)
++			return GETDNS_RETURN_GENERIC_ERROR;
++		ctx->have_ca_chain = 1;
++	}
++	if (path) {
++		r = mbedtls_x509_crt_parse_path(&ctx->ca_chain, path);
++		if (r < 0)
++			return GETDNS_RETURN_GENERIC_ERROR;
++		ctx->have_ca_chain = 1;
++	}
++	return GETDNS_RETURN_GOOD;
++}
++
++_getdns_tls_connection *
++_getdns_tls_connection_new(struct mem_funcs *mfs, _getdns_tls_context *ctx,
++    int fd, const getdns_log_config *log)
++{
++	_getdns_tls_connection *res;
++	static const char *alpn_protos[] = { "dot", NULL };
++
++	if (!ctx)
++		return NULL;
++
++	if (!(res = GETDNS_MALLOC(*mfs, struct _getdns_tls_connection)))
++		                       return NULL;
++
++	res->shutdown = 0;
++	res->ctx = ctx;
++	res->mfs = mfs;
++	res->fd = fd;
++	res->cipher_list = res->cipher_suites = res->curve_list = NULL;
++	res->min_tls = res->max_tls = 0;
++	res->ciphersuite_ids = NULL;
++	res->pins = NULL;
++	res->npins = 0;
++	res->log = log;
++
++	mbedtls_ssl_config_init(&res->conf);
++	mbedtls_ssl_init(&res->ssl);
++
++	if (mbedtls_ssl_config_defaults(&res->conf, MBEDTLS_SSL_IS_CLIENT,
++		MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_PRESET_DEFAULT) != 0)
++		goto failed;
++
++#if MBEDTLS_VERSION_MAJOR < 4
++	// PSA-internal in 4.x
++	mbedtls_ssl_conf_rng(&res->conf, mbedtls_psa_get_random,
++	    MBEDTLS_PSA_RANDOM_STATE);
++#endif
++
++	/* Default accept-all; hostname auth switches this to REQUIRED, pinset
++	 * auth is checked by hand in _getdns_tls_connection_certificate_verify(). */
++	mbedtls_ssl_conf_authmode(&res->conf, MBEDTLS_SSL_VERIFY_NONE);
++
++	if (ctx->have_ca_chain)
++		mbedtls_ssl_conf_ca_chain(&res->conf, &ctx->ca_chain, NULL);
++
++	apply_connection_tls_version(res);
++	apply_connection_ciphersuites(res);
++
++	if (mbedtls_ssl_conf_alpn_protocols(&res->conf, alpn_protos) != 0)
++		goto failed;
++
++	if (mbedtls_ssl_setup(&res->ssl, &res->conf) != 0)
++		goto failed;
++
++	mbedtls_ssl_set_bio(&res->ssl, &res->fd, bio_send, bio_recv, NULL);
++
++	return res;
++
++      failed:
++	_getdns_tls_connection_free(mfs, res);
++	return NULL;
++}
++
++getdns_return_t
++_getdns_tls_connection_free(struct mem_funcs *mfs,
++    _getdns_tls_connection *conn)
++{
++	if (!conn)
++		return GETDNS_RETURN_INVALID_PARAMETER;
++
++	mbedtls_ssl_free(&conn->ssl);
++	mbedtls_ssl_config_free(&conn->conf);
++	GETDNS_FREE(*mfs, conn->pins);
++	GETDNS_FREE(*mfs, conn->curve_list);
++	GETDNS_FREE(*mfs, conn->cipher_suites);
++	GETDNS_FREE(*mfs, conn->cipher_list);
++	GETDNS_FREE(*mfs, conn->ciphersuite_ids);
++	GETDNS_FREE(*mfs, conn);
++	return GETDNS_RETURN_GOOD;
++}
++
++getdns_return_t
++_getdns_tls_connection_shutdown(_getdns_tls_connection *conn)
++{
++	if (!conn)
++		return GETDNS_RETURN_INVALID_PARAMETER;
++
++	(void) mbedtls_ssl_close_notify(&conn->ssl);
++	conn->shutdown++;
++
++	return GETDNS_RETURN_GOOD;
++}
++
++getdns_return_t
++_getdns_tls_connection_set_min_max_tls_version(_getdns_tls_connection *conn,
++    getdns_tls_version_t min, getdns_tls_version_t max)
++{
++	if (!conn)
++		return GETDNS_RETURN_INVALID_PARAMETER;
++	conn->min_tls = min;
++	conn->max_tls = max;
++	apply_connection_tls_version(conn);
++	return GETDNS_RETURN_GOOD;
++}
++
++getdns_return_t
++_getdns_tls_connection_set_cipher_list(_getdns_tls_connection *conn,
++    const char *list)
++{
++	if (!conn)
++		return GETDNS_RETURN_INVALID_PARAMETER;
++
++	GETDNS_FREE(*conn->mfs, conn->cipher_list);
++	conn->cipher_list = list ? getdns_strdup(conn->mfs, list) : NULL;
++	apply_connection_ciphersuites(conn);
++	return GETDNS_RETURN_GOOD;
++}
++
++getdns_return_t
++_getdns_tls_connection_set_cipher_suites(_getdns_tls_connection *conn,
++    const char *list)
++{
++	if (!conn)
++		return GETDNS_RETURN_INVALID_PARAMETER;
++
++	GETDNS_FREE(*conn->mfs, conn->cipher_suites);
++	conn->cipher_suites = list ? getdns_strdup(conn->mfs, list) : NULL;
++	apply_connection_ciphersuites(conn);
++	return GETDNS_RETURN_GOOD;
++}
++
++getdns_return_t
++_getdns_tls_connection_set_curves_list(_getdns_tls_connection *conn,
++    const char *list)
++{
++	if (!conn)
++		return GETDNS_RETURN_INVALID_PARAMETER;
++
++	GETDNS_FREE(*conn->mfs, conn->curve_list);
++	conn->curve_list = list ? getdns_strdup(conn->mfs, list) : NULL;
++	return GETDNS_RETURN_GOOD;
++}
++
++getdns_return_t
++_getdns_tls_connection_set_session(_getdns_tls_connection *conn,
++    _getdns_tls_session *s)
++{
++	mbedtls_ssl_session session;
++	int r;
++
++	if (!conn || !s || !s->data)
++		return GETDNS_RETURN_INVALID_PARAMETER;
++
++	mbedtls_ssl_session_init(&session);
++	r = mbedtls_ssl_session_load(&session, s->data, s->len);
++	if (r == 0)
++		r = mbedtls_ssl_set_session(&conn->ssl, &session);
++	mbedtls_ssl_session_free(&session);
++
++	return r == 0 ? GETDNS_RETURN_GOOD : GETDNS_RETURN_GENERIC_ERROR;
++}
++
++_getdns_tls_session *
++_getdns_tls_connection_get_session(struct mem_funcs *mfs,
++    _getdns_tls_connection *conn)
++{
++	_getdns_tls_session *res;
++	mbedtls_ssl_session session;
++	size_t needed = 0;
++
++	if (!conn)
++		return NULL;
++
++	mbedtls_ssl_session_init(&session);
++	if (mbedtls_ssl_get_session(&conn->ssl, &session) != 0)
++		goto failed;
++	if (mbedtls_ssl_session_save(&session, NULL, 0,
++		&needed) != MBEDTLS_ERR_SSL_BUFFER_TOO_SMALL || needed == 0)
++		goto failed;
++
++	if (!(res = GETDNS_MALLOC(*mfs, struct _getdns_tls_session)))
++		                    goto failed;
++	res->data = GETDNS_XMALLOC(*mfs, unsigned char, needed);
++	if (!res->data) {
++		GETDNS_FREE(*mfs, res);
++		goto failed;
++	}
++	if (mbedtls_ssl_session_save(&session, res->data, needed,
++		&res->len) != 0) {
++		GETDNS_FREE(*mfs, res->data);
++		GETDNS_FREE(*mfs, res);
++		goto failed;
++	}
++	mbedtls_ssl_session_free(&session);
++	return res;
++
++      failed:
++	mbedtls_ssl_session_free(&session);
++	return NULL;
++}
++
++const char *
++_getdns_tls_connection_get_version(_getdns_tls_connection *conn)
++{
++	if (!conn)
++		return NULL;
++
++	return mbedtls_ssl_get_version(&conn->ssl);
++}
++
++getdns_return_t
++_getdns_tls_connection_do_handshake(_getdns_tls_connection *conn)
++{
++	int r;
++
++	if (!conn)
++		return GETDNS_RETURN_INVALID_PARAMETER;
++
++	r = mbedtls_ssl_handshake(&conn->ssl);
++	if (r == 0)
++		return GETDNS_RETURN_GOOD;
++
++	if (r != MBEDTLS_ERR_SSL_WANT_READ && r != MBEDTLS_ERR_SSL_WANT_WRITE) {
++		char errbuf[128];
++		mbedtls_strerror(r, errbuf, sizeof(errbuf));
++		_getdns_log(conn->log, GETDNS_LOG_UPSTREAM_STATS,
++		    GETDNS_LOG_ERR, "%s: %s %s\n", STUB_DEBUG_SETUP_TLS,
++		    "Error in TLS handshake", errbuf);
++	}
++	return error_may_want_read_write(r);
++}
++
++_getdns_tls_x509 *
++_getdns_tls_connection_get_peer_certificate(struct mem_funcs *mfs,
++    _getdns_tls_connection *conn)
++{
++	const mbedtls_x509_crt *crt;
++	_getdns_tls_x509 *res;
++
++	if (!conn)
++		return NULL;
++
++	crt = mbedtls_ssl_get_peer_cert(&conn->ssl);
++	if (!crt)
++		return NULL;
++
++	if (!(res = GETDNS_MALLOC(*mfs, struct _getdns_tls_x509)))
++		                 return NULL;
++	res->der = GETDNS_XMALLOC(*mfs, unsigned char, crt->raw.len);
++	if (!res->der) {
++		GETDNS_FREE(*mfs, res);
++		return NULL;
++	}
++	memcpy(res->der, crt->raw.p, crt->raw.len);
++	res->len = crt->raw.len;
++	return res;
++}
++
++getdns_return_t
++_getdns_tls_connection_is_session_reused(_getdns_tls_connection *conn)
++{
++	if (!conn)
++		return GETDNS_RETURN_INVALID_PARAMETER;
++
++	/* mbedTLS 4.x has no public API to query whether a handshake was
++	 * resumed. Always reporting FRESH means stub.c never skips
++	 * re-verifying a connection that wasn't actually checked. */
++	return GETDNS_RETURN_TLS_CONNECTION_FRESH;
++}
++
++getdns_return_t
++_getdns_tls_connection_setup_hostname_auth(_getdns_tls_connection *conn,
++    const char *auth_name)
++{
++	if (!conn || !auth_name)
++		return GETDNS_RETURN_INVALID_PARAMETER;
++
++	if (mbedtls_ssl_set_hostname(&conn->ssl, auth_name) != 0)
++		return GETDNS_RETURN_GENERIC_ERROR;
++
++	mbedtls_ssl_conf_authmode(&conn->conf, MBEDTLS_SSL_VERIFY_REQUIRED);
++	return GETDNS_RETURN_GOOD;
++}
++
++getdns_return_t
++_getdns_tls_connection_set_host_pinset(_getdns_tls_connection *conn,
++    const char *auth_name, const sha256_pin_t *pinset)
++{
++	size_t npins = 0;
++	const sha256_pin_t *pin;
++	size_t i;
++
++	(void) auth_name;
++
++	if (!conn)
++		return GETDNS_RETURN_INVALID_PARAMETER;
++
++	for (pin = pinset; pin; pin = pin->next)
++		npins++;
++
++	GETDNS_FREE(*conn->mfs, conn->pins);
++	conn->pins = NULL;
++	conn->npins = 0;
++	if (npins == 0)
++		return GETDNS_RETURN_GOOD;
++
++	conn->pins = GETDNS_XMALLOC(*conn->mfs, _getdns_sha256_hash, npins);
++	if (!conn->pins)
++		return GETDNS_RETURN_GENERIC_ERROR;
++
++	for (pin = pinset, i = 0; pin; pin = pin->next, i++)
++		memcpy(conn->pins[i], pin->pin, SHA256_DIGEST_LENGTH);
++	conn->npins = npins;
++
++	return GETDNS_RETURN_GOOD;
++}
++
++getdns_return_t
++_getdns_tls_connection_certificate_verify(_getdns_tls_connection *conn,
++    long *errnum, const char **errmsg)
++{
++	const mbedtls_x509_crt *crt;
++
++	if (!conn)
++		return GETDNS_RETURN_INVALID_PARAMETER;
++
++	if (!conn->pins || conn->npins == 0)
++		return GETDNS_RETURN_GOOD;
++
++	crt = mbedtls_ssl_get_peer_cert(&conn->ssl);
++	if (!crt) {
++		*errnum = 1;
++		*errmsg = "No peer certificate";
++		return GETDNS_RETURN_GENERIC_ERROR;
++	}
++
++	/* mbedTLS has no DANE-alike pinning API; hash each chain cert's SPKI
++	 * DER by hand and compare against the pinset. */
++	for (; crt; crt = crt->next) {
++		unsigned char der[2048];
++		int len;
++		unsigned char hash[SHA256_DIGEST_LENGTH];
++		size_t hash_len;
++		size_t i;
++
++		len = mbedtls_pk_write_pubkey_der(&crt->pk, der, sizeof(der));
++		if (len < 0)
++			continue;
++
++		/* writes at the end of the buffer */
++		if (psa_hash_compute(PSA_ALG_SHA_256, der + sizeof(der) - len,
++			(size_t) len, hash, sizeof(hash),
++			&hash_len) != PSA_SUCCESS)
++			continue;
++
++		for (i = 0; i < conn->npins; i++) {
++			if (memcmp(hash, conn->pins[i],
++				SHA256_DIGEST_LENGTH) == 0)
++				return GETDNS_RETURN_GOOD;
++		}
++	}
++
++	*errnum = 3;
++	*errmsg = "Pinset validation: Certificate differs";
++	return GETDNS_RETURN_GENERIC_ERROR;
++}
++
++getdns_return_t
++_getdns_tls_connection_read(_getdns_tls_connection *conn, uint8_t *buf,
++    size_t to_read, size_t *read)
++{
++	int r;
++
++	if (!conn || !read)
++		return GETDNS_RETURN_INVALID_PARAMETER;
++
++	/* TLS1.3 NewSessionTicket messages are consumed internally; retry. */
++	do {
++		r = mbedtls_ssl_read(&conn->ssl, buf, to_read);
++	} while (r == MBEDTLS_ERR_SSL_RECEIVED_NEW_SESSION_TICKET);
++	if (r < 0)
++		return error_may_want_read_write(r);
++
++	*read = (size_t) r;
++	return GETDNS_RETURN_GOOD;
++}
++
++getdns_return_t
++_getdns_tls_connection_write(_getdns_tls_connection *conn, uint8_t *buf,
++    size_t to_write, size_t *written)
++{
++	int r;
++
++	if (!conn || !written)
++		return GETDNS_RETURN_INVALID_PARAMETER;
++
++	r = mbedtls_ssl_write(&conn->ssl, buf, to_write);
++	if (r < 0)
++		return error_may_want_read_write(r);
++
++	*written = (size_t) r;
++	return GETDNS_RETURN_GOOD;
++}
++
++getdns_return_t
++_getdns_tls_session_free(struct mem_funcs *mfs, _getdns_tls_session *s)
++{
++	if (!s)
++		return GETDNS_RETURN_INVALID_PARAMETER;
++	GETDNS_FREE(*mfs, s->data);
++	GETDNS_FREE(*mfs, s);
++	return GETDNS_RETURN_GOOD;
++}
++
++getdns_return_t
++_getdns_tls_get_api_information(getdns_dict *dict)
++{
++	if (getdns_dict_set_int(dict, "mbedtls_build_version_number",
++		(int) MBEDTLS_VERSION_NUMBER))
++		return GETDNS_RETURN_GENERIC_ERROR;
++
++#ifdef MBEDTLS_VERSION_C
++	{
++		unsigned int version_number = mbedtls_version_get_number();
++
++		if (getdns_dict_set_int(dict, "mbedtls_runtime_version_number",
++			(int) version_number))
++			return GETDNS_RETURN_GENERIC_ERROR;
++
++		if (getdns_dict_set_int(dict, "mbedtls_feature_tls1_3",
++			mbedtls_version_check_feature
++			("MBEDTLS_SSL_PROTO_TLS1_3") == 0))
++			return GETDNS_RETURN_GENERIC_ERROR;
++	}
++#endif
++	return GETDNS_RETURN_GOOD;
++}
++
++void
++_getdns_tls_x509_free(struct mem_funcs *mfs, _getdns_tls_x509 *cert)
++{
++	if (cert) {
++		GETDNS_FREE(*mfs, cert->der);
++		GETDNS_FREE(*mfs, cert);
++	}
++}
++
++int
++_getdns_tls_x509_to_der(struct mem_funcs *mfs, _getdns_tls_x509 *cert,
++    getdns_bindata *bindata)
++{
++	if (!cert)
++		return 0;
++
++	if (!bindata)
++		return (int) cert->len;
++
++	bindata->data = GETDNS_XMALLOC(*mfs, uint8_t, cert->len);
++	if (!bindata->data)
++		return 0;
++
++	memcpy(bindata->data, cert->der, cert->len);
++	bindata->size = cert->len;
++	return (int) cert->len;
++}
++
++unsigned char *
++_getdns_tls_hmac_hash(struct mem_funcs *mfs, int algorithm, const void *key,
++    size_t key_size, const void *data, size_t data_size, size_t *output_size)
++{
++	psa_algorithm_t alg;
++	psa_key_attributes_t attrs = PSA_KEY_ATTRIBUTES_INIT;
++	psa_key_id_t key_id;
++	unsigned char *res;
++	size_t mac_len = 0;
++
++	switch (algorithm) {
++	case GETDNS_HMAC_MD5:
++		alg = PSA_ALG_HMAC(PSA_ALG_MD5);
++		break;
++	case GETDNS_HMAC_SHA1:
++		alg = PSA_ALG_HMAC(PSA_ALG_SHA_1);
++		break;
++	case GETDNS_HMAC_SHA224:
++		alg = PSA_ALG_HMAC(PSA_ALG_SHA_224);
++		break;
++	case GETDNS_HMAC_SHA256:
++		alg = PSA_ALG_HMAC(PSA_ALG_SHA_256);
++		break;
++	case GETDNS_HMAC_SHA384:
++		alg = PSA_ALG_HMAC(PSA_ALG_SHA_384);
++		break;
++	case GETDNS_HMAC_SHA512:
++		alg = PSA_ALG_HMAC(PSA_ALG_SHA_512);
++		break;
++	default:
++		return NULL;
++	}
++
++	psa_set_key_usage_flags(&attrs, PSA_KEY_USAGE_SIGN_MESSAGE);
++	psa_set_key_algorithm(&attrs, alg);
++	psa_set_key_type(&attrs, PSA_KEY_TYPE_HMAC);
++
++	if (psa_import_key(&attrs, key, key_size, &key_id) != PSA_SUCCESS)
++		return NULL;
++
++	res =
++	    (unsigned char *) GETDNS_XMALLOC(*mfs, unsigned char,
++	    PSA_MAC_LENGTH(PSA_KEY_TYPE_HMAC, 0, alg));
++	if (!res) {
++		psa_destroy_key(key_id);
++		return NULL;
++	}
++
++	if (psa_mac_compute(key_id, alg, data, data_size,
++		res, PSA_MAC_LENGTH(PSA_KEY_TYPE_HMAC, 0, alg),
++		&mac_len) != PSA_SUCCESS) {
++		psa_destroy_key(key_id);
++		GETDNS_FREE(*mfs, res);
++		return NULL;
++	}
++	psa_destroy_key(key_id);
++
++	if (output_size)
++		*output_size = mac_len;
++	return res;
++}
++
++void
++_getdns_tls_sha1(const void *data, size_t data_size, unsigned char *buf)
++{
++	size_t hash_len;
++	(void) psa_hash_compute(PSA_ALG_SHA_1, data, data_size, buf,
++	    SHA_DIGEST_LENGTH, &hash_len);
++}
++
++void
++_getdns_tls_cookie_sha256(uint32_t secret, void *addr, size_t addrlen,
++    unsigned char *buf, size_t *buflen)
++{
++	psa_hash_operation_t op = PSA_HASH_OPERATION_INIT;
++	size_t hash_len = 0;
++
++	psa_hash_setup(&op, PSA_ALG_SHA_256);
++	psa_hash_update(&op, (const uint8_t *) &secret, sizeof(secret));
++	psa_hash_update(&op, (const uint8_t *) addr, addrlen);
++	psa_hash_finish(&op, buf, SHA256_DIGEST_LENGTH, &hash_len);
++	*buflen = hash_len;
++}
++
++/* tls.c */
+--- a/src/tls/anchor-internal.c
++++ b/src/tls/anchor-internal.c
+@@ -33,10 +33,25 @@
+ #include "debug.h"
+ #include "anchor.h"
+ #include <fcntl.h>
++#ifdef HAVE_MBEDTLS
++/* mbedTLS's PKCS7 module (RFC 2315 SignedData only, DER only, at most one
++ * embedded certificate) has no OpenSSL-style "verify signers against a
++ * trust store" helper - only mbedtls_pkcs7_signed_data_verify() against a
++ * single caller-supplied certificate. So signer selection (matching
++ * subject emailAddress and key usage) and chain validation to the builtin
++ * trust anchor CA are done by hand below, mirroring what
++ * _getdns_get_valid_signers()/PKCS7_verify() do for OpenSSL. */
++#define MBEDTLS_ALLOW_PRIVATE_ACCESS
++#include <mbedtls/pkcs7.h>
++#include <mbedtls/x509_crt.h>
++#include <mbedtls/oid.h>
++#include <psa/crypto.h>
++#else
+ #include <openssl/x509.h>
+ #include <openssl/x509v3.h>
+ #include <openssl/pem.h>
+ #include <openssl/err.h>
++#endif
+ #include <time.h>
+ #include "types-internal.h"
+ #include "context.h"
+@@ -52,6 +67,88 @@
+ #include "util-internal.h"
+ #include "platform.h"
+ 
++#ifdef HAVE_MBEDTLS
++/* Verify the p7s PKCS7 signature over xml, using the embedded signer
++ * certificate after checking it against p7signer/key-usage and that it
++ * chains to ta_cert (the builtin trust anchor CA). */
++static int
++_getdns_mbedtls_verify_p7sig(const uint8_t *xml, size_t xml_len,
++    const uint8_t *p7s, size_t p7s_len,
++    mbedtls_x509_crt *ta_cert, const char *p7signer)
++{
++	mbedtls_pkcs7 pkcs7;
++	mbedtls_x509_crt *signer_crt;
++	int matched = 0;
++
++	(void) psa_crypto_init();
++	mbedtls_pkcs7_init(&pkcs7);
++
++	if (mbedtls_pkcs7_parse_der(&pkcs7, p7s, p7s_len)
++	    != MBEDTLS_PKCS7_SIGNED_DATA) {
++		DEBUG_ANCHOR("ERROR %s(): could not parse p7s signature file\n"
++		            , __FUNC__);
++		goto done;
++	}
++	if (pkcs7.signed_data.no_of_certs < 1) {
++		DEBUG_ANCHOR("ERROR %s(): p7s has no embedded signer "
++		             "certificate\n", __FUNC__);
++		goto done;
++	}
++	for ( signer_crt = &pkcs7.signed_data.certs
++	    ; signer_crt && !matched
++	    ; signer_crt = signer_crt->next) {
++		uint32_t flags = 0;
++
++		if (p7signer && *p7signer) {
++			const mbedtls_x509_name *n;
++			char email[256];
++			size_t email_len;
++			int found = 0;
++
++			for (n = &signer_crt->subject; n; n = n->next) {
++				if (MBEDTLS_OID_CMP(
++				    MBEDTLS_OID_PKCS9_EMAIL, &n->oid))
++					continue;
++				email_len = n->val.len < sizeof(email) - 1
++				          ? n->val.len : sizeof(email) - 1;
++				memcpy(email, n->val.p, email_len);
++				email[email_len] = 0;
++				found = strcmp(email, p7signer) == 0;
++				break;
++			}
++			if (!found) {
++				DEBUG_ANCHOR("%s(): removed cert with wrong "
++				             "name\n", __FUNC__);
++				continue;
++			}
++		} else
++			DEBUG_ANCHOR("%s(): did not check commonName of "
++			             "signer\n", __FUNC__);
++
++		if (mbedtls_x509_crt_check_key_usage(signer_crt,
++		    MBEDTLS_X509_KU_DIGITAL_SIGNATURE) != 0) {
++			DEBUG_ANCHOR("%s(): removed cert with no key usage "
++			             "Digital Signature allowed\n", __FUNC__);
++			continue;
++		}
++		if (mbedtls_x509_crt_verify(signer_crt, ta_cert, NULL,
++		    NULL, &flags, NULL, NULL) != 0) {
++			DEBUG_ANCHOR("%s(): signer cert does not chain to "
++			             "trust anchor CA\n", __FUNC__);
++			continue;
++		}
++		if (mbedtls_pkcs7_signed_data_verify(
++		    &pkcs7, signer_crt, xml, xml_len) == 0)
++			matched = 1;
++		else
++			DEBUG_ANCHOR("ERROR %s(): the PKCS7 signature did "
++			             "not verify\n", __FUNC__);
++	}
++done:
++	mbedtls_pkcs7_free(&pkcs7);
++	return matched;
++}
++#else
+ /* get key usage out of its extension, returns 0 if no key_usage extension */
+ static unsigned long
+ _getdns_get_usage_of_ex(X509* cert)
+@@ -186,7 +283,175 @@ _getdns_verify_p7sig(BIO* data, BIO* p7s
+ 	PKCS7_free(p7);
+ 	return secure;
+ }
++#endif /* HAVE_MBEDTLS */
++
++#ifdef HAVE_MBEDTLS
++uint8_t *_getdns_tas_validate(struct mem_funcs *mf,
++    const getdns_bindata *xml_bd, const getdns_bindata *p7s_bd,
++    const getdns_bindata *crt_bd, const char *p7signer,
++    uint64_t *now_ms, uint8_t *tas, size_t *tas_len)
++{
++	mbedtls_x509_crt ta_cert;
++	uint8_t *crt_pem = NULL;
++	uint8_t *success = NULL;
++
++	mbedtls_x509_crt_init(&ta_cert);
++
++	/* mbedtls_x509_crt_parse() requires PEM input to be NUL terminated;
++	 * crt_bd is a plain sized buffer, not guaranteed to be, so make a
++	 * NUL-terminated copy. */
++	if (!(crt_pem = GETDNS_XMALLOC(*mf, uint8_t, crt_bd->size + 1)))
++		DEBUG_ANCHOR("ERROR %s(): Failed allocating crt buffer\n"
++		            , __FUNC__);
++	else {
++		memcpy(crt_pem, crt_bd->data, crt_bd->size);
++		crt_pem[crt_bd->size] = 0;
++
++		if (mbedtls_x509_crt_parse(
++		    &ta_cert, crt_pem, crt_bd->size + 1) != 0)
++			DEBUG_ANCHOR("ERROR %s(): Parsing builtin certificate\n"
++			            , __FUNC__);
++
++		else if (_getdns_mbedtls_verify_p7sig(xml_bd->data,
++		    xml_bd->size, p7s_bd->data, p7s_bd->size,
++		    &ta_cert, p7signer)) {
++			gldns_buffer gbuf;
++
++			gldns_buffer_init_vfixed_frm_data(
++			    &gbuf, tas, *tas_len);
++
++			if (!_getdns_parse_xml_trust_anchors_buf(&gbuf, now_ms,
++			    (char *)xml_bd->data, xml_bd->size))
++				DEBUG_ANCHOR("Failed to parse trust anchor XML data");
++
++			else if (gldns_buffer_position(&gbuf) > *tas_len) {
++				*tas_len = gldns_buffer_position(&gbuf);
++				if ((success = GETDNS_XMALLOC(*mf, uint8_t, *tas_len))) {
++					gldns_buffer_init_frm_data(&gbuf, success, *tas_len);
++					if (!_getdns_parse_xml_trust_anchors_buf(&gbuf,
++					    now_ms, (char *)xml_bd->data, xml_bd->size)) {
++
++						DEBUG_ANCHOR("Failed to re-parse trust"
++						             " anchor XML data\n");
++						GETDNS_FREE(*mf, success);
++						success = NULL;
++					}
++				} else
++					DEBUG_ANCHOR("Could not allocate space for "
++					             "trust anchors\n");
++			} else {
++				success = tas;
++				*tas_len = gldns_buffer_position(&gbuf);
++			}
++		} else
++			DEBUG_ANCHOR("Verifying trust-anchors failed!\n");
++
++		GETDNS_FREE(*mf, crt_pem);
++	}
++	mbedtls_x509_crt_free(&ta_cert);
++	return success;
++}
++
++void _getdns_context_equip_with_anchor(
++    getdns_context *context, uint64_t *now_ms)
++{
++	uint8_t xml_spc[4096], *xml_data = NULL;
++	uint8_t p7s_spc[4096], *p7s_data = NULL;
++	size_t xml_len, p7s_len;
++	const char *verify_email = NULL;
++	const char *verify_CA = NULL;
++	getdns_return_t r;
++	mbedtls_x509_crt ta_cert;
++	int have_ta_cert = 0;
++
++	mbedtls_x509_crt_init(&ta_cert);
+ 
++	if ((r = getdns_context_get_trust_anchors_verify_CA(
++	    context, &verify_CA)))
++		DEBUG_ANCHOR("ERROR %s(): Getting trust anchor verify"
++			     " CA: \"%s\"\n", __FUNC__
++			    , getdns_get_errorstr_by_id(r));
++
++	else if (!verify_CA || !*verify_CA)
++		DEBUG_ANCHOR("NOTICE: Trust anchor verification explicitely "
++		             "disabled by empty verify CA\n");
++
++	else if ((r = getdns_context_get_trust_anchors_verify_email(
++	    context, &verify_email)))
++		DEBUG_ANCHOR("ERROR %s(): Getting trust anchor verify email "
++		             "address: \"%s\"\n", __FUNC__
++		            , getdns_get_errorstr_by_id(r));
++
++	else if (!verify_email || !*verify_email)
++		DEBUG_ANCHOR("NOTICE: Trust anchor verification explicitely "
++		             "disabled by empty verify email\n");
++
++	else if (!(xml_data = _getdns_context_get_priv_file(context,
++	    "root-anchors.xml", xml_spc, sizeof(xml_spc), &xml_len)))
++		DEBUG_ANCHOR("DEBUG %s(): root-anchors.xml not present\n"
++		            , __FUNC__);
++
++	else if (!(p7s_data = _getdns_context_get_priv_file(context,
++	    "root-anchors.p7s", p7s_spc, sizeof(p7s_spc), &p7s_len)))
++		DEBUG_ANCHOR("DEBUG %s(): root-anchors.p7s not present\n"
++		            , __FUNC__);
++
++	else if (mbedtls_x509_crt_parse(&ta_cert,
++	    (const unsigned char *)verify_CA, strlen(verify_CA) + 1) != 0)
++		DEBUG_ANCHOR("ERROR %s(): Parsing builtin certificate\n"
++		            , __FUNC__);
++
++	else if ((have_ta_cert = 1) &&
++	    _getdns_mbedtls_verify_p7sig(xml_data, xml_len,
++	    p7s_data, p7s_len, &ta_cert, verify_email)) {
++		uint8_t ta_spc[sizeof(context->trust_anchors_spc)];
++		size_t ta_len;
++		uint8_t *ta = NULL;
++		gldns_buffer gbuf;
++
++		gldns_buffer_init_vfixed_frm_data(
++		    &gbuf, ta_spc, sizeof(ta_spc));
++
++		if (!_getdns_parse_xml_trust_anchors_buf(&gbuf, now_ms,
++		    (char *)xml_data, xml_len))
++			DEBUG_ANCHOR("Failed to parse trust anchor XML data");
++		else if ((ta_len = gldns_buffer_position(&gbuf)) > sizeof(ta_spc)) {
++			if ((ta = GETDNS_XMALLOC(context->mf, uint8_t, ta_len))) {
++				gldns_buffer_init_frm_data(&gbuf, ta,
++				    gldns_buffer_position(&gbuf));
++				if (!_getdns_parse_xml_trust_anchors_buf(
++				    &gbuf, now_ms, (char *)xml_data, xml_len)) {
++					DEBUG_ANCHOR("Failed to re-parse trust"
++					             " anchor XML data");
++					GETDNS_FREE(context->mf, ta);
++				} else {
++					context->trust_anchors = ta;
++					context->trust_anchors_len = ta_len;
++					context->trust_anchors_source = GETDNS_TASRC_XML;
++					_getdns_ta_notify_dnsreqs(context);
++				}
++			} else
++				DEBUG_ANCHOR("Could not allocate space for XML file");
++		} else {
++			(void)memcpy(context->trust_anchors_spc, ta_spc, ta_len);
++			context->trust_anchors = context->trust_anchors_spc;
++			context->trust_anchors_len = ta_len;
++			context->trust_anchors_source = GETDNS_TASRC_XML;
++			_getdns_ta_notify_dnsreqs(context);
++		}
++		DEBUG_ANCHOR("ta: %p, ta_len: %d\n",
++		    (void *)context->trust_anchors, (int)context->trust_anchors_len);
++
++	} else if (have_ta_cert) {
++		DEBUG_ANCHOR("Verifying trust-anchors failed!\n");
++	}
++	mbedtls_x509_crt_free(&ta_cert);
++	if (xml_data && xml_data != xml_spc)
++		GETDNS_FREE(context->mf, xml_data);
++	if (p7s_data && p7s_data != p7s_spc)
++		GETDNS_FREE(context->mf, p7s_data);
++}
++#else
+ uint8_t *_getdns_tas_validate(struct mem_funcs *mf,
+     const getdns_bindata *xml_bd, const getdns_bindata *p7s_bd,
+     const getdns_bindata *crt_bd, const char *p7signer,
+@@ -380,3 +645,4 @@ void _getdns_context_equip_with_anchor(
+ 	if (p7s_data && p7s_data != p7s_spc)
+ 		GETDNS_FREE(context->mf, p7s_data);
+ }
++#endif /* HAVE_MBEDTLS */
+--- a/src/tls/pubkey-pinning-internal.h
++++ b/src/tls/pubkey-pinning-internal.h
+@@ -34,8 +34,6 @@
+ #ifndef PUBKEY_PINNING_INTERNAL_H_
+ #define PUBKEY_PINNING_INTERNAL_H_
+ 
+-#include <openssl/x509.h>
+-
+ getdns_return_t _getdns_decode_base64(const char* str, uint8_t* res, size_t res_size);
+ 
+ #endif
+--- a/src/tls/val_secalgo.c
++++ b/src/tls/val_secalgo.c
+@@ -4,22 +4,22 @@
+  * Copyright (c) 2012, NLnet Labs. All rights reserved.
+  *
+  * This software is open source.
+- * 
++ *
+  * Redistribution and use in source and binary forms, with or without
+  * modification, are permitted provided that the following conditions
+  * are met:
+- * 
++ *
+  * Redistributions of source code must retain the above copyright notice,
+  * this list of conditions and the following disclaimer.
+- * 
++ *
+  * Redistributions in binary form must reproduce the above copyright notice,
+  * this list of conditions and the following disclaimer in the documentation
+  * and/or other materials provided with the distribution.
+- * 
++ *
+  * Neither the name of the NLNET LABS nor the names of its contributors may
+  * be used to endorse or promote products derived from this software without
+  * specific prior written permission.
+- * 
++ *
+  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+@@ -50,12 +50,12 @@
+ #include "sldns/keyraw.h"
+ #include "sldns/sbuffer.h"
+ 
+-#if !defined(HAVE_SSL) && !defined(HAVE_NSS) && !defined(HAVE_NETTLE)
++#if !defined(HAVE_SSL) && !defined(HAVE_NSS) && !defined(HAVE_NETTLE) && !defined(HAVE_MBEDTLS)
+ #error "Need crypto library to do digital signature cryptography"
+ #endif
+ 
+ /* OpenSSL implementation */
+-#if defined(HAVE_SSL) && !defined(HAVE_NETTLE)
++#if defined(HAVE_SSL) && !defined(HAVE_NETTLE) && !defined(HAVE_MBEDTLS)
+ #ifdef HAVE_OPENSSL_ERR_H
+ #include <openssl/err.h>
+ #endif
+@@ -248,7 +248,7 @@ static int
+ do_gost94(unsigned char* data, size_t len, unsigned char* dest)
+ {
+ 	const EVP_MD* md = EVP_get_digestbyname("md_gost94");
+-	if(!md) 
++	if(!md)
+ 		return 0;
+ 	return sldns_digest_evp(data, (unsigned int)len, dest, md);
+ }
+@@ -298,8 +298,8 @@ secalgo_ds_digest(int algo, unsigned cha
+ #endif
+ 			return 1;
+ #endif
+-		default: 
+-			verbose(VERB_QUERY, "unknown DS digest algorithm %d", 
++		default:
++			verbose(VERB_QUERY, "unknown DS digest algorithm %d",
+ 				algo);
+ 			break;
+ 	}
+@@ -364,7 +364,7 @@ dnskey_algo_id_is_supported(int id)
+ 
+ #ifdef USE_DSA
+ /**
+- * Setup DSA key digest in DER encoding ... 
++ * Setup DSA key digest in DER encoding ...
+  * @param sig: input is signature output alloced ptr (unless failure).
+  * 	caller must free alloced ptr if this routine returns true.
+  * @param len: input is initial siglen, output is output len.
+@@ -511,7 +511,7 @@ void ecdsa_evp_workaround_init(void)
+  * @return false on failure.
+  */
+ static int
+-setup_key_digest(int algo, EVP_PKEY** evp_key, const EVP_MD** digest_type, 
++setup_key_digest(int algo, EVP_PKEY** evp_key, const EVP_MD** digest_type,
+ 	unsigned char* key, size_t keylen)
+ {
+ 	switch(algo) {
+@@ -646,7 +646,7 @@ setup_key_digest(int algo, EVP_PKEY** ev
+ 			break;
+ #endif /* USE_ED448 */
+ 		default:
+-			verbose(VERB_QUERY, "verify: unknown algorithm %d", 
++			verbose(VERB_QUERY, "verify: unknown algorithm %d",
+ 				algo);
+ 			return 0;
+ 	}
+@@ -667,7 +667,7 @@ setup_key_digest(int algo, EVP_PKEY** ev
+  *	unchecked on format errors and alloc failures.
+  */
+ enum sec_status
+-verify_canonrrset(sldns_buffer* buf, int algo, unsigned char* sigblock, 
++verify_canonrrset(sldns_buffer* buf, int algo, unsigned char* sigblock,
+ 	unsigned int sigblock_len, unsigned char* key, unsigned int keylen,
+ 	char** reason)
+ {
+@@ -684,7 +684,7 @@ verify_canonrrset(sldns_buffer* buf, int
+ 	if(fake_sha1 && (algo == LDNS_DSA || algo == LDNS_DSA_NSEC3 || algo == LDNS_RSASHA1 || algo == LDNS_RSASHA1_NSEC3))
+ 		return sec_status_secure;
+ #endif
+-	
++
+ 	if(!setup_key_digest(algo, &evp_key, &digest_type, key, keylen)) {
+ 		verbose(VERB_QUERY, "verify: failed to setup key");
+ 		*reason = "use of key for crypto failed";
+@@ -693,7 +693,7 @@ verify_canonrrset(sldns_buffer* buf, int
+ 	}
+ #ifdef USE_DSA
+ 	/* if it is a DSA signature in bind format, convert to DER format */
+-	if((algo == LDNS_DSA || algo == LDNS_DSA_NSEC3) && 
++	if((algo == LDNS_DSA || algo == LDNS_DSA_NSEC3) &&
+ 		sigblock_len == 1+2*SHA_DIGEST_LENGTH) {
+ 		if(!setup_dsa_sig(&sigblock, &sigblock_len)) {
+ 			verbose(VERB_QUERY, "verify: failed to setup DSA sig");
+@@ -705,7 +705,7 @@ verify_canonrrset(sldns_buffer* buf, int
+ 	}
+ #endif
+ #if defined(USE_ECDSA) && defined(USE_DSA)
+-	else 
++	else
+ #endif
+ #ifdef USE_ECDSA
+ 	if(algo == LDNS_ECDSAP256SHA256 || algo == LDNS_ECDSAP384SHA384) {
+@@ -748,7 +748,7 @@ verify_canonrrset(sldns_buffer* buf, int
+ 		else if(docrypto_free) OPENSSL_free(sigblock);
+ 		return sec_status_unchecked;
+ 	}
+-	if(EVP_DigestUpdate(ctx, (unsigned char*)sldns_buffer_begin(buf), 
++	if(EVP_DigestUpdate(ctx, (unsigned char*)sldns_buffer_begin(buf),
+ 		(unsigned int)sldns_buffer_limit(buf)) == 0) {
+ 		verbose(VERB_QUERY, "verify: EVP_DigestUpdate failed");
+ #ifdef HAVE_EVP_MD_CTX_NEW
+@@ -953,8 +953,8 @@ secalgo_ds_digest(int algo, unsigned cha
+ 				== SECSuccess;
+ #endif
+ 		case LDNS_HASH_GOST:
+-		default: 
+-			verbose(VERB_QUERY, "unknown DS digest algorithm %d", 
++		default:
++			verbose(VERB_QUERY, "unknown DS digest algorithm %d",
+ 				algo);
+ 			break;
+ 	}
+@@ -1162,7 +1162,7 @@ static SECKEYPublicKey* nss_buf2rsa(unsi
+ 	/* key length at least one */
+ 	if(len < (size_t)offset + exp + 1)
+ 		return NULL;
+-	
++
+ 	exponent.data = key+offset;
+ 	exponent.len = exp;
+ 	offset += exp;
+@@ -1214,7 +1214,7 @@ nss_setup_key_digest(int algo, SECKEYPub
+ 	static unsigned char p_sha512[] = {0x30, 0x51, 0x30, 0x0d, 0x06, 0x09, 0x60,
+ 	0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x03, 0x05, 0x00, 0x04, 0x40};
+ 	/* from RFC6234 */
+-	/* for future RSASHA384 .. 
++	/* for future RSASHA384 ..
+ 	static unsigned char p_sha384[] = {0x30, 0x51, 0x30, 0x0d, 0x06, 0x09, 0x60,
+ 	0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x02, 0x05, 0x00, 0x04, 0x30};
+ 	*/
+@@ -1315,7 +1315,7 @@ nss_setup_key_digest(int algo, SECKEYPub
+ #endif /* USE_ECDSA */
+ 		case LDNS_ECC_GOST:
+ 		default:
+-			verbose(VERB_QUERY, "verify: unknown algorithm %d", 
++			verbose(VERB_QUERY, "verify: unknown algorithm %d",
+ 				algo);
+ 			return 0;
+ 	}
+@@ -1336,7 +1336,7 @@ nss_setup_key_digest(int algo, SECKEYPub
+  *	unchecked on format errors and alloc failures.
+  */
+ enum sec_status
+-verify_canonrrset(sldns_buffer* buf, int algo, unsigned char* sigblock, 
++verify_canonrrset(sldns_buffer* buf, int algo, unsigned char* sigblock,
+ 	unsigned int sigblock_len, unsigned char* key, unsigned int keylen,
+ 	char** reason)
+ {
+@@ -2076,4 +2076,522 @@ verify_canonrrset(sldns_buffer* buf, int
+ 	}
+ }
+ 
+-#endif /* HAVE_SSL or HAVE_NSS or HAVE_NETTLE */
++#elif defined(HAVE_MBEDTLS)
++/* mbedTLS implementation, via PSA crypto. RSA and ECDSA only: mbedTLS has
++ * no DSA or GOST support, and no EdDSA implementation despite declaring
++ * PSA_ALG_PURE_EDDSA and the twisted-Edwards curve family in its headers. */
++
++#include <string.h>
++
++#include <mbedtls/asn1.h>
++#include <mbedtls/asn1write.h>
++#include <mbedtls/version.h>
++#include <psa/crypto.h>
++
++#define SHA1_DIGEST_SIZE	20
++#define SHA256_DIGEST_SIZE	32
++#define SHA384_DIGEST_SIZE	48
++#define SHA512_DIGEST_SIZE	64
++
++/** compute a digest, hash algorithm chosen by output size */
++static int
++_digest_mbedtls(size_t digest_size, const uint8_t *buf, size_t len,
++    unsigned char *res)
++{
++	psa_algorithm_t alg;
++	size_t hash_len = 0;
++
++	switch (digest_size) {
++	case SHA1_DIGEST_SIZE:
++		alg = PSA_ALG_SHA_1;
++		break;
++	case SHA256_DIGEST_SIZE:
++		alg = PSA_ALG_SHA_256;
++		break;
++	case SHA384_DIGEST_SIZE:
++		alg = PSA_ALG_SHA_384;
++		break;
++	case SHA512_DIGEST_SIZE:
++		alg = PSA_ALG_SHA_512;
++		break;
++	default:
++		return 0;
++	}
++	return psa_hash_compute(alg, buf, len, res, digest_size, &hash_len)
++	    == PSA_SUCCESS;
++}
++
++/* return size of digest if supported, or 0 otherwise */
++size_t
++nsec3_hash_algo_size_supported(int id)
++{
++	switch (id) {
++	case NSEC3_HASH_SHA1:
++		return SHA1_DIGEST_SIZE;
++	default:
++		return 0;
++	}
++}
++
++/* perform nsec3 hash. return false on failure */
++int
++secalgo_nsec3_hash(int algo, unsigned char *buf, size_t len,
++    unsigned char *res)
++{
++	switch (algo) {
++	case NSEC3_HASH_SHA1:
++		return _digest_mbedtls(SHA1_DIGEST_SIZE, (uint8_t *) buf, len,
++		    res);
++	default:
++		return 0;
++	}
++}
++
++void
++secalgo_hash_sha256(unsigned char *buf, size_t len, unsigned char *res)
++{
++	_digest_mbedtls(SHA256_DIGEST_SIZE, (uint8_t *) buf, len, res);
++}
++
++/** secalgo hash structure */
++struct secalgo_hash {
++	/** if it is 384 or 512 */
++	int active;
++	/** PSA multi-part hash operation */
++	psa_hash_operation_t op;
++};
++
++struct secalgo_hash *
++secalgo_hash_create_sha384(void)
++{
++	struct secalgo_hash *h = calloc(1, sizeof(*h));
++	if (!h)
++		return NULL;
++	h->active = 384;
++	h->op = psa_hash_operation_init();
++	if (psa_hash_setup(&h->op, PSA_ALG_SHA_384) != PSA_SUCCESS) {
++		free(h);
++		return NULL;
++	}
++	return h;
++}
++
++struct secalgo_hash *
++secalgo_hash_create_sha512(void)
++{
++	struct secalgo_hash *h = calloc(1, sizeof(*h));
++	if (!h)
++		return NULL;
++	h->active = 512;
++	h->op = psa_hash_operation_init();
++	if (psa_hash_setup(&h->op, PSA_ALG_SHA_512) != PSA_SUCCESS) {
++		free(h);
++		return NULL;
++	}
++	return h;
++}
++
++int
++secalgo_hash_update(struct secalgo_hash *hash, uint8_t *data, size_t len)
++{
++	if (hash->active != 384 && hash->active != 512)
++		return 0;
++	return psa_hash_update(&hash->op, data, len) == PSA_SUCCESS;
++}
++
++int
++secalgo_hash_final(struct secalgo_hash *hash, uint8_t *result,
++    size_t maxlen, size_t *resultlen)
++{
++	size_t needed = hash->active == 384 ? SHA384_DIGEST_SIZE
++	    : hash->active == 512 ? SHA512_DIGEST_SIZE : 0;
++
++	if (!needed) {
++		*resultlen = 0;
++		return 0;
++	}
++	if (needed > maxlen) {
++		*resultlen = 0;
++		log_err("secalgo_hash_final: hash buffer too small");
++		return 0;
++	}
++	if (psa_hash_finish(&hash->op, result, maxlen,
++		resultlen) != PSA_SUCCESS) {
++		*resultlen = 0;
++		return 0;
++	}
++	return 1;
++}
++
++void
++secalgo_hash_delete(struct secalgo_hash *hash)
++{
++	if (!hash)
++		return;
++	(void) psa_hash_abort(&hash->op);
++	free(hash);
++}
++
++/**
++ * Return size of DS digest according to its hash algorithm.
++ * @param algo: DS digest algo.
++ * @return size in bytes of digest, or 0 if not supported.
++ */
++size_t
++ds_digest_size_supported(int algo)
++{
++	switch (algo) {
++#ifdef USE_SHA1
++	case LDNS_SHA1:
++		return SHA1_DIGEST_SIZE;
++#endif
++#ifdef USE_SHA2
++	case LDNS_SHA256:
++		return SHA256_DIGEST_SIZE;
++#endif
++#ifdef USE_ECDSA
++	case LDNS_SHA384:
++		return SHA384_DIGEST_SIZE;
++#endif
++		/* GOST not supported */
++	case LDNS_HASH_GOST:
++	default:
++		break;
++	}
++	return 0;
++}
++
++int
++secalgo_ds_digest(int algo, unsigned char *buf, size_t len, unsigned char *res)
++{
++	switch (algo) {
++#ifdef USE_SHA1
++	case LDNS_SHA1:
++		return _digest_mbedtls(SHA1_DIGEST_SIZE, buf, len, res);
++#endif
++#if defined(USE_SHA2)
++	case LDNS_SHA256:
++		return _digest_mbedtls(SHA256_DIGEST_SIZE, buf, len, res);
++#endif
++#ifdef USE_ECDSA
++	case LDNS_SHA384:
++		return _digest_mbedtls(SHA384_DIGEST_SIZE, buf, len, res);
++#endif
++	case LDNS_HASH_GOST:
++	default:
++		verbose(VERB_QUERY, "unknown DS digest algorithm %d", algo);
++		break;
++	}
++	return 0;
++}
++
++int
++dnskey_algo_id_is_supported(int id)
++{
++	switch (id) {
++#ifdef USE_SHA1
++	case LDNS_RSASHA1:
++	case LDNS_RSASHA1_NSEC3:
++		return 1;
++#endif
++#ifdef USE_SHA2
++	case LDNS_RSASHA256:
++	case LDNS_RSASHA512:
++		return 1;
++#endif
++#ifdef USE_ECDSA
++	case LDNS_ECDSAP256SHA256:
++	case LDNS_ECDSAP384SHA384:
++		return 1;
++#endif
++	case LDNS_DSA:
++	case LDNS_DSA_NSEC3:
++		/* RFC 6725 deprecates RSAMD5 */
++	case LDNS_RSAMD5:
++	case LDNS_ECC_GOST:
++	case LDNS_ED25519:
++	case LDNS_ED448:
++	default:
++		return 0;
++	}
++}
++
++static int
++_asn1_write_len_and_tag(unsigned char **p, unsigned char *start,
++    size_t len, int tag)
++{
++	int len_bytes, tag_bytes;
++
++	if ((len_bytes = mbedtls_asn1_write_len(p, start, len)) < 0)
++		return len_bytes;
++	if ((tag_bytes = mbedtls_asn1_write_tag(p, start, tag)) < 0)
++		return tag_bytes;
++	return (int) len + len_bytes + tag_bytes;
++}
++
++// Equivalent to `mbedtls_asn1_write_integer` in 4.x, missing from 3.x
++static int
++_asn1_write_unsigned_integer(unsigned char **p, unsigned char *start,
++    const unsigned char *bytes, size_t len)
++{
++	static const unsigned char zero = 0;
++	size_t skip = 0;
++	int pad, content_len, ret;
++
++	while (skip + 1 < len && bytes[skip] == 0)
++		skip++;
++	pad = (bytes[skip] & 0x80) ? 1 : 0;
++
++	if ((ret = mbedtls_asn1_write_raw_buffer(p, start, bytes + skip,
++		len - skip)) < 0)
++		return ret;
++	content_len = ret;
++	if (pad) {
++		if ((ret = mbedtls_asn1_write_raw_buffer(p, start, &zero, 1)) < 0)
++			return ret;
++		content_len += ret;
++	}
++	if ((ret = _asn1_write_len_and_tag(p, start, (size_t) content_len,
++		MBEDTLS_ASN1_INTEGER)) < 0)
++		return ret;
++	return ret;
++}
++
++/** Build a DER RSAPublicKey ::= SEQUENCE { modulus INTEGER, publicExponent
++ * INTEGER } from the raw (exponent, modulus) pair in DNSKEY wire format
++ * (RFC 3110 sec. 2), for psa_import_key(). Length written at the tail of
++ * der_buf is returned; *der_start points at the start of the encoding.
++ */
++static size_t
++_rsa_key_to_der(unsigned char *der_buf, size_t der_buf_len,
++    const unsigned char *exponent, size_t exp_len,
++    const unsigned char *modulus, size_t mod_len, unsigned char **der_start)
++{
++	unsigned char *p = der_buf + der_buf_len;
++	int len = 0, ret;
++
++	/* asn1_write functions work backwards from the end of the buffer */
++	if ((ret =
++		_asn1_write_unsigned_integer(&p, der_buf, exponent,
++		    exp_len)) < 0)
++		return 0;
++	len += ret;
++	if ((ret =
++		_asn1_write_unsigned_integer(&p, der_buf, modulus, mod_len)) < 0)
++		return 0;
++	len += ret;
++	if ((ret = _asn1_write_len_and_tag(&p, der_buf, (size_t) len,
++		MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE)) < 0)
++		return 0;
++	len += ret;
++
++	*der_start = p;
++	return (size_t) len;
++}
++
++static char *
++_verify_mbedtls_rsa(sldns_buffer *buf, unsigned int digest_size,
++    unsigned char *sigblock, unsigned int sigblock_len, uint8_t *key,
++    unsigned int keylen)
++{
++	uint16_t exp_len = 0;
++	size_t exp_offset = 0, mod_offset = 0;
++	unsigned char der[2048];
++	unsigned char *der_start;
++	size_t der_len;
++	psa_key_attributes_t attrs = PSA_KEY_ATTRIBUTES_INIT;
++	mbedtls_svc_key_id_t key_id;
++	psa_algorithm_t alg;
++	unsigned char digest[SHA512_DIGEST_SIZE];
++	int ok;
++
++	/* RSA pubkey parsing as per RFC 3110 sec. 2 */
++	if (keylen <= 1) {
++		return "null RSA key";
++	}
++	if (key[0] != 0) {
++		/* 1-byte length */
++		exp_len = key[0];
++		exp_offset = 1;
++	} else {
++		/* 1-byte NUL + 2-bytes exponent length */
++		if (keylen < 3) {
++			return "incorrect RSA key length";
++		}
++		/* big-endian uint16, RFC 3110 sec. 2 */
++		exp_len = ((uint16_t) key[1] << 8) | (uint16_t) key[2];
++		if (exp_len == 0)
++			return "null RSA exponent length";
++		exp_offset = 3;
++	}
++	if (keylen < exp_offset + exp_len + 1) {
++		return "RSA key content shorter than expected";
++	}
++	mod_offset = exp_offset + exp_len;
++
++	der_len = _rsa_key_to_der(der, sizeof(der),
++	    key + exp_offset, exp_len,
++	    key + mod_offset, keylen - mod_offset, &der_start);
++	if (der_len == 0)
++		return "RSA key too large to DER-encode";
++
++	switch (digest_size) {
++	case SHA1_DIGEST_SIZE:
++		alg = PSA_ALG_RSA_PKCS1V15_SIGN(PSA_ALG_SHA_1);
++		break;
++	case SHA256_DIGEST_SIZE:
++		alg = PSA_ALG_RSA_PKCS1V15_SIGN(PSA_ALG_SHA_256);
++		break;
++	case SHA512_DIGEST_SIZE:
++		alg = PSA_ALG_RSA_PKCS1V15_SIGN(PSA_ALG_SHA_512);
++		break;
++	default:
++		return "unknown RSA digest algorithm";
++	}
++
++	if (!_digest_mbedtls(digest_size,
++		(const uint8_t *) sldns_buffer_begin(buf),
++		(size_t) sldns_buffer_limit(buf), digest))
++		return "RSA digest computation failed";
++
++	psa_set_key_usage_flags(&attrs, PSA_KEY_USAGE_VERIFY_HASH);
++	psa_set_key_algorithm(&attrs, alg);
++	psa_set_key_type(&attrs, PSA_KEY_TYPE_RSA_PUBLIC_KEY);
++
++	if (psa_import_key(&attrs, der_start, der_len, &key_id) != PSA_SUCCESS)
++		return "invalid RSA public key";
++
++	ok = psa_verify_hash(key_id, alg, digest, digest_size,
++	    sigblock, sigblock_len) == PSA_SUCCESS;
++	psa_destroy_key(key_id);
++
++	return ok ? NULL : "RSA signature verification failed";
++}
++
++#ifdef USE_ECDSA
++static char *
++_verify_mbedtls_ecdsa(sldns_buffer *buf, unsigned int digest_size,
++    unsigned char *sigblock, unsigned int sigblock_len, unsigned char *key,
++    unsigned int keylen)
++{
++	unsigned char rawkey[1 + 2 * SHA384_DIGEST_SIZE];
++	unsigned char digest[SHA512_DIGEST_SIZE];
++	psa_key_attributes_t attrs = PSA_KEY_ATTRIBUTES_INIT;
++	mbedtls_svc_key_id_t key_id;
++	psa_algorithm_t alg;
++	size_t bits;
++	int ok;
++
++	/* Always matched strength, as per RFC 6605 sec. 1 */
++	if (sigblock_len != 2 * digest_size || keylen != 2 * digest_size) {
++		return "wrong ECDSA signature length";
++	}
++
++	switch (digest_size) {
++	case SHA256_DIGEST_SIZE:
++		alg = PSA_ALG_ECDSA(PSA_ALG_SHA_256);
++		bits = 256;
++		break;
++	case SHA384_DIGEST_SIZE:
++		alg = PSA_ALG_ECDSA(PSA_ALG_SHA_384);
++		bits = 384;
++		break;
++	default:
++		return "unknown ECDSA algorithm";
++	}
++
++	if (!_digest_mbedtls(digest_size,
++		(const uint8_t *) sldns_buffer_begin(buf),
++		(size_t) sldns_buffer_limit(buf), digest))
++		return "ECDSA digest computation failed";
++
++	rawkey[0] = 0x04;
++	memcpy(rawkey + 1, key, keylen);
++
++	psa_set_key_usage_flags(&attrs, PSA_KEY_USAGE_VERIFY_HASH);
++	psa_set_key_algorithm(&attrs, alg);
++	psa_set_key_type(&attrs,
++	    PSA_KEY_TYPE_ECC_PUBLIC_KEY(PSA_ECC_FAMILY_SECP_R1));
++	psa_set_key_bits(&attrs, bits);
++
++	if (psa_import_key(&attrs, rawkey, 1 + keylen, &key_id) != PSA_SUCCESS)
++		return "invalid ECDSA public key";
++
++	ok = psa_verify_hash(key_id, alg, digest, digest_size,
++	    sigblock, sigblock_len) == PSA_SUCCESS;
++	psa_destroy_key(key_id);
++
++	return ok ? NULL : "ECDSA signature verification failed";
++}
++#endif /* USE_ECDSA */
++
++/**
++ * Check a canonical sig+rrset and signature against a dnskey
++ * @param buf: buffer with data to verify, the first rrsig part and the
++ *	canonicalized rrset.
++ * @param algo: DNSKEY algorithm.
++ * @param sigblock: signature rdata field from RRSIG
++ * @param sigblock_len: length of sigblock data.
++ * @param key: public key data from DNSKEY RR.
++ * @param keylen: length of keydata.
++ * @param reason: bogus reason in more detail.
++ * @return secure if verification succeeded, bogus on crypto failure,
++ *	unchecked on format errors and alloc failures.
++ */
++enum sec_status
++verify_canonrrset(sldns_buffer *buf, int algo, unsigned char *sigblock,
++    unsigned int sigblock_len, unsigned char *key, unsigned int keylen,
++    char **reason)
++{
++	if (sigblock_len == 0 || keylen == 0) {
++		*reason = "null signature";
++		return sec_status_bogus;
++	}
++
++	*reason = NULL;
++	switch (algo) {
++#ifdef USE_SHA1
++	case LDNS_RSASHA1:
++	case LDNS_RSASHA1_NSEC3:
++		*reason = _verify_mbedtls_rsa(buf, SHA1_DIGEST_SIZE, sigblock,
++		    sigblock_len, key, keylen);
++		break;
++#endif
++#ifdef USE_SHA2
++	case LDNS_RSASHA256:
++		*reason =
++		    _verify_mbedtls_rsa(buf, SHA256_DIGEST_SIZE, sigblock,
++		    sigblock_len, key, keylen);
++		break;
++	case LDNS_RSASHA512:
++		*reason =
++		    _verify_mbedtls_rsa(buf, SHA512_DIGEST_SIZE, sigblock,
++		    sigblock_len, key, keylen);
++		break;
++#endif
++#ifdef USE_ECDSA
++	case LDNS_ECDSAP256SHA256:
++		*reason =
++		    _verify_mbedtls_ecdsa(buf, SHA256_DIGEST_SIZE, sigblock,
++		    sigblock_len, key, keylen);
++		break;
++	case LDNS_ECDSAP384SHA384:
++		*reason =
++		    _verify_mbedtls_ecdsa(buf, SHA384_DIGEST_SIZE, sigblock,
++		    sigblock_len, key, keylen);
++		break;
++#endif
++	case LDNS_DSA:
++	case LDNS_DSA_NSEC3:
++	case LDNS_RSAMD5:
++	case LDNS_ECC_GOST:
++	case LDNS_ED25519:
++	case LDNS_ED448:
++	default:
++		*reason = "unable to verify signature, unknown algorithm";
++		return sec_status_bogus;
++	}
++
++	return *reason != NULL ? sec_status_bogus : sec_status_secure;
++}
++#endif /* HAVE_SSL or HAVE_NSS or HAVE_NETTLE or HAVE_MBEDTLS */
