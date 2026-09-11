@@ -262,7 +262,7 @@ config_child() {
 	local priority
 	local rekey_bytes
 	local life_bytes
-	local rekeypackets
+	local rekey_packets
 	local lifepackets
 	local replay_window
 	local local_subnet
@@ -283,7 +283,7 @@ config_child() {
 	config_get priority "$conf" priority ""
 	config_get rekey_bytes "$conf" rekey_bytes ""
 	config_get life_bytes "$conf" life_bytes ""
-	config_get rekeypackets "$conf" rekeypackets ""
+	config_get rekey_packets "$conf" rekey_packets ""
 	config_get lifepackets "$conf" lifepackets ""
 	config_get replay_window "$conf" replay_window ""
 
@@ -369,10 +369,10 @@ config_child() {
 	[ -n "$rekey_bytes" ] && swanctl_xappend4 "rekey_bytes = $rekey_bytes"
 	if [ -n "$lifepackets" ]; then
 		swanctl_xappend4 "life_packets = $lifepackets"
-	elif [ -n "$rekeypackets" ]; then
-		swanctl_xappend4 "life_packets = $(((110 * rekeypackets) / 100))"
+	elif [ -n "$rekey_packets" ]; then
+		swanctl_xappend4 "life_packets = $(((110 * rekey_packets) / 100))"
 	fi
-	[ -n "$rekeypackets" ] && swanctl_xappend4 "rekey_packets = $rekeypackets"
+	[ -n "$rekey_packets" ] && swanctl_xappend4 "rekey_packets = $rekey_packets"
 	[ -n "$inactivity" ] && swanctl_xappend4 "inactivity = $inactivity"
 
 	[ -n "$updown" ] && swanctl_xappend4 "updown = $updown"
