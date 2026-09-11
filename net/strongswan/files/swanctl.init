@@ -452,7 +452,7 @@ config_remote() {
 	local local_key
 	local ca_cert
 	local rekey_time
-	local overtime
+	local over_time
 	local send_cert
 	local send_certreq
 	local eap_id
@@ -480,7 +480,7 @@ config_remote() {
 	config_get local_key "$conf" local_key ""
 	config_get ca_cert "$conf" ca_cert ""
 	config_get rekey_time "$conf" rekey_time
-	config_get overtime "$conf" overtime
+	config_get over_time "$conf" over_time
 	config_get send_cert "$conf" send_cert
 	config_get_bool send_certreq "$conf" send_certreq 1
 	config_get eap_id "$conf" eap_id "%any"
@@ -596,11 +596,11 @@ config_remote() {
 	if [ -n "$rekey_time" ]; then
 		swanctl_xappend2 "rekey_time = $rekey_time"
 
-		if [ -z "$overtime" ]; then
-			overtime=$(seconds2time $(($(time2seconds $rekey_time) / 10)))
+		if [ -z "$over_time" ]; then
+			over_time=$(seconds2time $(($(time2seconds $rekey_time) / 10)))
 		fi
 	fi
-	[ -n "$overtime" ] && swanctl_xappend2 "over_time = $overtime"
+	[ -n "$over_time" ] && swanctl_xappend2 "over_time = $over_time"
 
 	swanctl_xappend2 "proposals = $ike_proposal"
 	[ -n "$dpddelay" ] && swanctl_xappend2 "dpd_delay = $dpddelay"
