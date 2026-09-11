@@ -1,0 +1,16 @@
+#!/bin/sh
+
+# shellcheck shell=busybox
+
+# cs-firewall-bouncer does not recognize -? for version test
+
+case "$PKG_NAME" in
+crowdsec-firewall-bouncer)
+	exit 0
+	;;
+
+*)
+	echo "Untested package: $PKG_NAME" >&2
+	exit 1
+	;;
+esac
