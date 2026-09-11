@@ -373,6 +373,11 @@ migrate_option_remote_values() {
 	[ -z "$value" ] || {
 		uci -q rename "ipsec.${cfg}.rekeytime=rekey_time"
 	}
+
+	config_get value "$cfg" overtime ""
+	[ -z "$value" ] || {
+		uci -q rename "ipsec.${cfg}.overtime=over_time"
+	}
 }
 
 migrate_options() {
