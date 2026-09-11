@@ -8,12 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pulseaudio
+# last release tag reachable from PKG_SOURCE_VERSION
 PKG_VERSION:=17.0
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://freedesktop.org/software/pulseaudio/releases
-PKG_HASH:=053794d6671a3e397d849e478a80b82a63cb9d8ca296bd35b73317bb5ceb87b5
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://gitlab.freedesktop.org/pulseaudio/pulseaudio.git
+PKG_SOURCE_DATE:=2026-09-01
+PKG_SOURCE_VERSION:=77d25a1e613095bdf87a1d13b65e7c330565077a
+PKG_MIRROR_HASH:=69b0c6c5b291eaa2a696f2fb9b31ca8cf16a3c591767d5b996ba8eca2fed89e6
 
 PKG_MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -97,7 +100,7 @@ MESON_ARGS += \
 	-Db_lto=true \
 	-Dgcov=false \
 	-Dman=false \
-	-Dtests=false \
+	-Dtests=disabled \
 	-Dsystem_user=pulse \
 	-Dsystem_group=pulse \
 	-Daccess_group=audio \
@@ -131,9 +134,9 @@ MESON_ARGS += \
 	-Dx11=disabled \
 	-Dadrian-aec=true \
 	-Dwebrtc-aec=disabled \
-        -Ddoxygen=false \
-        -Dtcpwrap=disabled \
-        -Dbluez5-gstreamer=disabled 
+	-Ddoxygen=disabled \
+	-Dtcpwrap=disabled \
+	-Dbluez5-gstreamer=disabled
 
 ifeq ($(BUILD_VARIANT),avahi)
 MESON_ARGS += \
@@ -151,6 +154,10 @@ TARGET_LDFLAGS += -Wl,--gc-sections $(if $(INTL_FULL),-lintl)
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
+	# the git snapshot carries neither .git nor .tarball-version, so
+	# git-version-gen cannot determine a version on its own
+	echo "$(PKG_VERSION)-git$(call version_abbrev,$(PKG_SOURCE_VERSION))" \
+		> $(PKG_BUILD_DIR)/.tarball-version
 ifneq ($(findstring arm,$(CONFIG_ARCH)),)
 ifeq ($(findstring neon,$(CONFIG_CPU_TYPE)),)
 	$(SED) '/remap_neon\.c/d' $(PKG_BUILD_DIR)/src/pulsecore/meson.build
