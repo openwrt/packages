@@ -1,0 +1,131 @@
+#!/bin/sh /etc/rc.common
+
+START=95
+STOP=10
+USE_PROCD=1
+
+PROG=/usr/sbin/tcpoptimizer-edge
+CONFIG=/var/run/tcpoptimizer-edge.toml
+
+toml_string() {
+	printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'
+}
+
+emit_string() {
+	key="$1"
+	value="$2"
+	[ -n "$value" ] || return 1
+	printf '%s = "' "$key"
+	toml_string "$value"
+	printf '"\n'
+}
+
+emit_number() {
+	case "$2" in ''|*[!0-9]*) return 1 ;; esac
+	printf '%s = %s\n' "$1" "$2"
+}
+
+get_required() {
+	value="$(uci -q get "tcpoptimizer.main.$1")" || {
+		logger -t tcpoptimizer-edge "missing UCI option $1"
+		return 1
+	}
+	[ -n "$value" ] || return 1
+	printf '%s' "$value"
+}
+
+append_allowed_cidr() {
+	[ "$CIDR_COUNT" -eq 0 ] || printf ', '
+	printf '"'
+	toml_string "$1"
+	printf '"'
+	CIDR_COUNT=$((CIDR_COUNT + 1))
+}
+
+write_config() {
+	role="$1"
+	emit_string mode "$role" || return 1
+	for key in token_file health_listen; do
+		emit_string "$key" "$(get_required "$key")" || return 1
+	done
+	for key in stream_window_mib connection_window_mib tcp_buffer_mib max_streams expected_rtt_ms idle_timeout_seconds keepalive_seconds initial_mtu connect_timeout_seconds; do
+		emit_number "$key" "$(get_required "$key")" || return 1
+	done
+	emit_string congestion "$(get_required congestion)" || return 1
+
+	if [ "$role" = ingress ]; then
+		emit_string tcp_listen "$(get_required tcp_listen)" || return 1
+		transparent="$(uci -q get tcpoptimizer.main.transparent || printf 1)"
+		case "$transparent" in 1|true|yes|on) printf 'transparent = true\n' ;; *) printf 'transparent = false\n' ;; esac
+		if [ "$transparent" != 1 ] && [ "$transparent" != true ] && uci -q get tcpoptimizer.main.fixed_target >/dev/null; then
+			emit_string fixed_target "$(get_required fixed_target)" || return 1
+		fi
+		for key in quic_peer server_name ca_cert; do
+			emit_string "$key" "$(get_required "$key")" || return 1
+		done
+	else
+		for key in quic_listen tls_cert tls_key; do
+			emit_string "$key" "$(get_required "$key")" || return 1
+		done
+		printf 'allowed_cidrs = ['
+		CIDR_COUNT=0
+		config_list_foreach main allowed_cidr append_allowed_cidr
+		printf ']\n'
+		allow_loopback="$(uci -q get tcpoptimizer.main.allow_loopback || printf 0)"
+		case "$allow_loopback" in 1|true|yes|on) printf 'allow_loopback = true\n' ;; *) printf 'allow_loopback = false\n' ;; esac
+	fi
+}
+
+render_config() {
+	. /lib/functions.sh
+	config_load tcpoptimizer
+	role="$(get_required role)" || return 1
+	case "$role" in
+		ingress|egress) ;;
+		*) return 1 ;;
+	esac
+
+	umask 077
+	tmp="$(mktemp /var/run/tcpoptimizer-edge.XXXXXX)" || return 1
+	write_config "$role" >"$tmp" || {
+		rm -f "$tmp"
+		return 1
+	}
+	chmod 0600 "$tmp" || {
+		rm -f "$tmp"
+		return 1
+	}
+	mv "$tmp" "$CONFIG" || {
+		rm -f "$tmp"
+		return 1
+	}
+}
+
+start_service() {
+	enabled="$(uci -q get tcpoptimizer.main.enabled || printf 0)"
+	case "$enabled" in 1|true|yes|on) ;; *) return 0 ;; esac
+
+	render_config || {
+		logger -t tcpoptimizer-edge "could not render /etc/config/tcpoptimizer"
+		return 1
+	}
+	"$PROG" --config "$CONFIG" check || return 1
+
+	procd_open_instance
+	procd_set_param command "$PROG" --config "$CONFIG" run
+	procd_set_param respawn 3600 5 5
+	procd_set_param file /etc/config/tcpoptimizer /etc/tcpoptimizer/token.hex
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_set_param limits nofile="4096 4096"
+	procd_close_instance
+}
+
+reload_service() {
+	stop
+	start
+}
+
+service_triggers() {
+	procd_add_reload_trigger tcpoptimizer
+}
