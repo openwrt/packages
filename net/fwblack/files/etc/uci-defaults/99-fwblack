@@ -1,0 +1,44 @@
+#!/bin/sh
+# 99-fwblack - UCI defaults: migrate legacy /etc/fw.black layout once.
+# Runs at first boot after opkg install (OpenWrt uci-defaults mechanism).
+
+[ -e /etc/config/fwblack ] || {
+	mkdir -p /etc/config
+	cat > /etc/config/fwblack <<'EOF'
+config main 'global'
+	option enabled '1'
+	option interval '300'
+	option interval_jitter '30'
+	option table 'fwblack'
+	option set_v4 'blacklist_v4'
+	option set_v6 'blacklist_v6'
+	option chain 'forward_black'
+	option blocklist '/etc/fwblack/blocklist.cfg'
+	option cache_ttl_pos '86400'
+	option cache_ttl_neg '3600'
+	option cache_max '5000'
+	option cache_file '/tmp/fwblack.dnscache'
+EOF
+}
+
+# Adopt a legacy manual install (/etc/fw.black): its blocklist wins over the
+# packaged default (saved as .ppkg-default). One-shot via marker file so a
+# later package upgrade never clobbers user edits with stale legacy content.
+# (Keep in sync with the postinst migration snippet in Makefile.)
+if [ -f /etc/fw.black/blocklist.cfg ] && [ ! -e /etc/fwblack/.migrated ]; then
+	mkdir -p /etc/fwblack
+	if [ ! -f /etc/fwblack/blocklist.cfg ]; then
+		cp /etc/fw.black/blocklist.cfg /etc/fwblack/blocklist.cfg
+	elif ! cmp -s /etc/fw.black/blocklist.cfg /etc/fwblack/blocklist.cfg 2>/dev/null; then
+		cp /etc/fwblack/blocklist.cfg /etc/fwblack/blocklist.cfg.ppkg-default
+		cp /etc/fw.black/blocklist.cfg /etc/fwblack/blocklist.cfg
+	fi
+	touch /etc/fwblack/.migrated
+fi
+
+# Prefer packaged nft include; drop legacy copy that would duplicate the table.
+if [ -f /etc/nftables.d/ruleset-post/fwblack.nft ]; then
+	rm -f /etc/nftables.d/ruleset-post/fwblack.nft
+fi
+
+exit 0
