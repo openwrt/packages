@@ -1,0 +1,47 @@
+From 32a2aa453e41e86dbc245c71f892e0a0140e49a3 Mon Sep 17 00:00:00 2001
+From: Mirko Vogt <foss@mirko.in>
+Date: Fri, 11 Sep 2026 15:14:22 +0000
+Subject: [PATCH] avcodec/mips/cabac: do not use the inline assembly in MIPS16
+ mode
+
+The MIPS CABAC inline assembly uses 32-bit-only registers and
+instructions (sll with $25, movz, movn) and is included by every CABAC
+decoder without an inline-asm guard. Compiled with -mips16, as OpenWrt
+builds MIPS packages, the assembler rejects it:
+
+  {standard input}:9366: Error: invalid operands `sll $25,$4,0x11'
+  {standard input}:9369: Error: opcode not supported on this processor:
+  mips32r2 (mips32r2) `movz $6,$16,$17'
+
+Fall back to the C implementation when __mips16 is defined.
+
+The guard was carried by the OpenWrt package as 030-h264-mips.patch
+(Rosen Penev, 2020, openwrt/packages commit 79afc370f) until the 6.1.2
+update dropped it in 2024 (commit dc43cca73), taking upstream's later
+!HAVE_MIPS32R6 guard for an equivalent; that one covers the R6 ISA, not
+MIPS16. The loss went unnoticed because the H.264 and HEVC decoders,
+the only users of the file in FFmpeg 6, are not built without
+BUILD_PATENTED. The VVC decoder, added in FFmpeg 7.0, includes the
+file as well. Upstream FFmpeg has no such guard.
+
+Signed-off-by: Mirko Vogt <foss@mirko.in>
+
+---
+--- a/libavcodec/mips/cabac.h
++++ b/libavcodec/mips/cabac.h
+@@ -30,7 +30,7 @@
+ #include "libavutil/mips/mmiutils.h"
+ #include "config.h"
+ 
+-#if !HAVE_MIPS32R6 && !HAVE_MIPS64R6
++#if !defined(__mips16) && !HAVE_MIPS32R6 && !HAVE_MIPS64R6
+ #define get_cabac_inline get_cabac_inline_mips
+ static av_always_inline int get_cabac_inline_mips(CABACContext *c,
+                                                   uint8_t * const state){
+@@ -226,5 +226,5 @@ static av_always_inline int get_cabac_by
+ 
+     return res;
+ }
+-#endif /* !HAVE_MIPS32R6 && !HAVE_MIPS64R6 */
++#endif /* !defined(__mips16) && !HAVE_MIPS32R6 && !HAVE_MIPS64R6 */
+ #endif /* AVCODEC_MIPS_CABAC_H */
