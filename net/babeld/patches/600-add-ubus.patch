@@ -108,7 +108,7 @@ Subject: [PATCH] add ubus bindings
              local_notify_xroute_1(&local_sockets[i], xroute, kind);
      }
 +    if(ubus_bindings)
-+	    ubus_notify_xroute(xroute, kind);
++        ubus_notify_xroute(xroute, kind);
  }
  
  static void
