@@ -139,6 +139,259 @@ migrate_local_sourceip() {
 	config_foreach migrate_local_sourceip_vips remote
 }
 
+migrate_to_child() {
+	local tunnel_sections=""
+	local transport_sections=""
+	local remote_sections=""
+
+	local section
+
+	collect_tunnel() {
+		tunnel_sections="${tunnel_sections} $1"
+	}
+	collect_transport() {
+		transport_sections="${transport_sections} $1"
+	}
+	collect_remote() {
+		remote_sections="${remote_sections} $1"
+	}
+
+	config_load "ipsec"
+	config_foreach collect_tunnel "tunnel"
+	config_foreach collect_transport "transport"
+	config_foreach collect_remote "remote"
+
+	migrate_simple() {
+		cfg="$1"
+		mode="$2"
+
+		uci set ipsec.${cfg}=child
+		uci -q set ipsec.${cfg}.mode="$mode"
+	}
+
+	for section in $tunnel_sections; do
+		migrate_simple "$section" "tunnel"
+	done
+
+	for section in $transport_sections; do
+		migrate_simple "$section" "transport"
+	done
+
+	for section in $remote_sections; do
+		local tunnel_refs=""
+		local transport_refs=""
+
+		config_get tunnel_refs "$section" tunnel ""
+		config_get transport_refs "$section" transport ""
+
+		if [ -n "$tunnel_refs" ] || [ -n "$transport_refs" ]; then
+			uci -q delete ipsec.${section}.tunnel
+			uci -q delete ipsec.${section}.transport
+			for ref in $tunnel_refs $transport_refs; do
+				uci add_list ipsec.${section}.child="$ref"
+			done
+		fi
+	done
+
+	uci commit ipsec
+}
+
+migrate_debug() {
+	local debug
+
+	config_load "ipsec"
+	config_get debug "globals" debug "1"
+
+	[ -z "$debug" ] && return
+
+	# create syslog section if not exist
+	if [ -z "$(uci -q get ipsec.syslog)" ]; then
+		uci -q set ipsec.syslog="plugin"
+	fi
+
+	uci -q set ipsec.syslog.dmn="$debug"
+	uci -q set ipsec.syslog.mgr="$debug"
+	uci -q set ipsec.syslog.job="$debug"
+	uci -q set ipsec.syslog.cfg="$debug"
+	uci -q set ipsec.syslog.knl="$debug"
+	uci -q set ipsec.syslog.net="$debug"
+	uci -q set ipsec.syslog.asn="$debug"
+	uci -q set ipsec.syslog.lib="$debug"
+	uci -q set ipsec.syslog.tls="$debug"
+	uci -q set ipsec.syslog.tnc="$debug"
+	uci -q set ipsec.syslog.imc="$debug"
+	uci -q set ipsec.syslog.imv="$debug"
+	uci -q set ipsec.syslog.pts="$debug"
+	uci -q set ipsec.syslog.app="$debug"
+	uci -q set ipsec.syslog.wch="$debug"
+	uci -q set ipsec.syslog.ike="$debug"
+	uci -q set ipsec.syslog.chd="$debug"
+	uci -q set ipsec.syslog.enc="$debug"
+	uci -q set ipsec.syslog.esp="$debug"
+
+	uci -q delete ipsec.globals.debug
+	uci commit ipsec
+}
+
+migrate_dpd_action_value() {
+	local cfg="$1"
+
+	local dpdaction
+
+	# Check whether we need to migrate at all.
+	config_get dpdaction "$cfg" dpdaction ""
+	[ -z "$dpdaction" ] && return
+
+	uci -q delete ipsec.${cfg}.dpdaction
+	[ "$dpdaction" = "hold" ] && {
+		uci -q set ipsec.${cfg}.dpd_action="trap"
+	}
+
+	[ "$dpdaction" = "restart" ] && {
+		uci -q set ipsec.${cfg}.dpd_action="start"
+	}
+	# * 'clear' is default value if 'dpd_action' is not specified
+	# * 'none' is the default value for the old dppdaction. This value
+	#   is no longer available in the new 'dpd_action'. It should be
+	#   converted to 'dpd_delay=0' to restore the old behavior.
+	#   However, this is not supported by the upgrade script.
+	uci -q delete ipsec.${cfg}.dpdaction
+	uci commit ipsec
+}
+
+migrate_dpd_action() {
+	config_load ipsec
+	config_foreach migrate_dpd_action_value child
+}
+
+migrate_close_action_value() {
+	local cfg="$1"
+
+	local closeaction
+
+	# Check whether we need to migrate at all.
+	config_get closeaction "$cfg" closeaction ""
+	[ -z "$closeaction" ] && return
+
+	uci -q delete ipsec.${cfg}.closeaction
+	[ "$closeaction" = "none" ] || [ "$closeaction" = "clear" ] && {
+		uci -q set ipsec.${cfg}.close_action="none"
+	}
+
+	[ "$closeaction" = "hold" ] && {
+		uci -q set ipsec.${cfg}.close_action="trap"
+	}
+
+	[ "$closeaction" = "restart" ] && {
+		uci -q set ipsec.${cfg}.close_action="start"
+	}
+
+	uci commit ipsec
+}
+
+migrate_close_action() {
+	config_load ipsec
+	config_foreach migrate_close_action_value child
+}
+
+migrate_start_action_value() {
+	local cfg="$1"
+
+	local startaction
+
+	# Check whether we need to migrate at all.
+	config_get startaction "$cfg" startaction ""
+	[ -z "$startaction" ] && return
+
+	uci -q delete ipsec.${cfg}.startaction
+	[ "$startaction" = "add" ] && {
+		uci -q set ipsec.${cfg}.start_action="none"
+	}
+
+	[ "$startaction" = "route" ] && {
+		uci -q set ipsec.${cfg}.start_action="trap"
+	}
+
+	[ "$startaction" = "start" ] && {
+		uci -q set ipsec.${cfg}.start_action="start"
+	}
+	# * 'none' is default value if 'start_action' is not specified
+	# * 'ignore' is the default value for the old startaction. This value
+	#   is no longer available in the new 'start_action'. There is not
+	#   equivalent for this option!
+
+	uci commit ipsec
+}
+
+migrate_start_action() {
+	config_load ipsec
+	config_foreach migrate_start_action_value child
+}
+
+migrate_option_child_values() {
+	local cfg="$1"
+
+	local value
+
+	config_get value "$cfg" rekeytime ""
+	[ -z "$value" ] || {
+		uci -q rename "ipsec.${cfg}.rekeytime=rekey_time"
+	}
+
+	config_get value "$cfg" lifetime ""
+	[ -z "$value" ] || {
+		uci -q rename "ipsec.${cfg}.lifetime=life_time"
+	}
+
+	config_get value "$cfg" rekeybytes ""
+	[ -z "$value" ] || {
+		uci -q rename "ipsec.${cfg}.rekeybytes=rekey_bytes"
+	}
+
+	config_get value "$cfg" lifebytes ""
+	[ -z "$value" ] || {
+		uci -q rename "ipsec.${cfg}.lifebytes=life_bytes"
+	}
+
+	config_get value "$cfg" rekeypackets ""
+	[ -z "$value" ] || {
+		uci -q rename "ipsec.${cfg}.rekeypackets=rekey_packets"
+	}
+
+	config_get value "$cfg" lifepackets ""
+	[ -z "$value" ] || {
+		uci -q rename "ipsec.${cfg}.lifepackets=life_packets"
+	}
+}
+
+migrate_option_remote_values() {
+	local cfg="$1"
+
+	local value
+
+	config_get value "$cfg" rekeytime ""
+	[ -z "$value" ] || {
+		uci -q rename "ipsec.${cfg}.rekeytime=rekey_time"
+	}
+
+	config_get value "$cfg" overtime ""
+	[ -z "$value" ] || {
+		uci -q rename "ipsec.${cfg}.overtime=over_time"
+	}
+
+	config_get value "$cfg" dpddelay ""
+	[ -z "$value" ] || {
+		uci -q rename "ipsec.${cfg}.dpddelay=dpd_delay"
+	}
+}
+
+migrate_options() {
+	config_load ipsec
+	config_foreach migrate_option_child_values child
+	config_foreach migrate_option_remote_values remote
+	uci commit ipsec
+}
+
 main() {
 	migrate_ipsec
 	migrate_ignore_routing_tables
@@ -147,6 +400,12 @@ main() {
 	migrate_remote_gateway
 	migrate_local_ip
 	migrate_local_sourceip
+	migrate_to_child
+	migrate_debug
+	migrate_dpd_action
+	migrate_close_action
+	migrate_start_action
+	migrate_options
 }
 
 main

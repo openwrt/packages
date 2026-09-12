@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=strongswan
 PKG_VERSION:=6.0.7
-PKG_RELEASE:=7
+PKG_RELEASE:=8
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://download.strongswan.org/ https://download2.strongswan.org/
@@ -450,6 +450,7 @@ CONFIGURE_ARGS+= \
 	--enable-mgf1 \
 	--enable-mediation \
 	--with-systemdsystemunitdir=no \
+	--with-plugins-packaged-seperately=yes \
 	PYTHON="python3" \
 	$(if $(CONFIG_PACKAGE_strongswan-charon-cmd),--enable-cmd,--disable-cmd) \
 	$(if $(CONFIG_PACKAGE_strongswan-mod-gmpdh),--enable-gmpdh,) \
