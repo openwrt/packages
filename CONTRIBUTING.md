@@ -81,6 +81,78 @@ prompts given to the automated LLM reviewer.
 - Avoid reuse of <strong>PKG_NAME</strong> in call, define and eval lines to improve
   readability.
 
+### Patches
+
+Patches live in `<package>/patches/`, are managed with quilt, and are expected
+in a specific shape. A patch that applies cleanly can still be sent back, so it
+is worth getting all three parts right before opening the pull request.
+
+#### Header
+
+A patch that a pull request adds or changes needs a `git am` compatible
+header, so that it can be applied to an upstream tree without editing. All four
+lines are required, and their absence is a hard failure in the formality check.
+Much of the tree predates that check and lacks them, so a neighbouring patch is
+not a safe model to copy:
+
+```
+From <hash> Mon Sep 17 00:00:00 2001
+From: Joe D. Hacker <jdh@jdhs-email-provider.org>
+Date: Tue, 9 Jun 2026 04:33:35 +0000
+Subject: [PATCH] setup.py: fix cross-compilation on macOS hosts
+```
+
+The `Mon Sep 17 00:00:00 2001` date is a fixed sentinel `git format-patch`
+emits verbatim — do not replace it with a real date. `Date:` is the one most
+often left out.
+
+#### Body
+
+Below the header, before the diff, explain what the patch changes and why, and
+end with a `Signed-off-by` line matching the author.
+
+Say where the change stands with respect to upstream. If it has been sent
+upstream, or is a backport, link the issue, pull request or commit; an
+`Upstream-Status:` line is also fine. If it will never go upstream — a
+cross-compile fix, a toolchain or path adjustment, a musl workaround — say so
+and why. The patch file is the only place a later maintainer will look when
+deciding whether a version bump has made it redundant.
+
+This is not a demand for prose on every patch. A one- or two-line change whose
+intent is obvious from the diff needs only a subject, and a patch with no
+upstream to go to needs no reference.
+
+#### Refreshing
+
+Always generate and update the diff with the buildroot's `refresh` target,
+never by hand and never with `git diff` or `git format-patch`:
+
+```
+make package/foopkg/{clean,prepare} QUILT=1
+make package/foopkg/refresh
+```
+
+`refresh` only works on a build directory that was unpacked under quilt; on one
+left over from an ordinary build it stops with "The source directory was not
+unpacked using quilt". The first command is what puts it in that state.
+
+It runs quilt as
+`QUILT_DIFF_OPTS="-p" quilt refresh -p ab --no-index --no-timestamps`, and each
+of those options matters:
+
+- `-p ab` gives the usual `a/` and `b/` path prefixes.
+- `--no-index` drops the `Index:` line, which carries no information here.
+- `--no-timestamps` drops the timestamps from the `---` and `+++` lines. They
+  are the working copy's mtimes, so leaving them in makes an otherwise
+  unchanged patch differ between contributors and produces a noisy diff on
+  every refresh.
+- `QUILT_DIFF_OPTS="-p"` passes `-p` to `diff`, so each `@@` hunk header names
+  the enclosing function or section. This is what makes a patch readable in
+  review, and it is the difference most often missed.
+
+The target preserves whatever header and description already sit above the
+diff, so refreshing an existing patch will not cost you its text.
+
 ### Commits in your pull-requests should
 
 - Have a useful commit subject prefixed with the package name (E.g.: `foopkg:
