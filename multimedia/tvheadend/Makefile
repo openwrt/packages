@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tvheadend
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/tvheadend/tvheadend
@@ -45,7 +45,7 @@ define Package/tvheadend
 	+zlib \
 	+TVHEADEND_AVAHI_SUPPORT:libavahi-client \
 	+TVHEADEND_REGEX_PCRE2:libpcre2 \
-	+BUILD_PATENTED&&TVHEADEND_CSA:libdvbcsa
+	+TVHEADEND_CSA:libdvbcsa
 
 ## Transcoding | Add these to DEPENDS.
 ##	+TVHEADEND_LIBFFMPEG:libffmpeg-full \
@@ -154,9 +154,6 @@ ifeq ($(CONFIG_TVHEADEND_DVB_DDCI),)
 endif
 endif
 
-ifeq ($(CONFIG_BUILD_PATENTED),)
-	CONFIGURE_ARGS += --disable-tvhcsa --disable-dvbcsa --disable-constcw --disable-cwc --disable-capmt --disable-cccam
-else
 ifeq ($(CONFIG_TVHEADEND_CSA),)
 	CONFIGURE_ARGS += --disable-tvhcsa --disable-dvbcsa --disable-constcw --disable-cwc --disable-capmt --disable-cccam
 else
@@ -172,7 +169,6 @@ ifeq ($(CONFIG_TVHEADEND_CAPMT),)
 endif
 ifeq ($(CONFIG_TVHEADEND_CCCAM),)
 	CONFIGURE_ARGS += --disable-cccam
-endif
 endif
 endif
 
