@@ -16,7 +16,7 @@ TABLE6="crowdsec6"
 
 service_triggers() {
 	procd_add_reload_trigger crowdsec-firewall-bouncer
-	procd_add_config_trigger "config.change" "crowdsec" /etc/init.d/crowdsec-firewall-bouncer reload
+	procd_add_config_trigger "config.change" "crowdsec" /etc/init.d/crowdsec-firewall-bouncer restart
 }
 
 init_yaml() {
