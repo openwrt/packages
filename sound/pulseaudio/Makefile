@@ -8,12 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pulseaudio
+# last release tag reachable from PKG_SOURCE_VERSION
 PKG_VERSION:=17.0
-PKG_RELEASE:=2
+PKG_RELEASE:=4
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://freedesktop.org/software/pulseaudio/releases
-PKG_HASH:=053794d6671a3e397d849e478a80b82a63cb9d8ca296bd35b73317bb5ceb87b5
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://gitlab.freedesktop.org/pulseaudio/pulseaudio.git
+PKG_SOURCE_DATE:=2026-09-01
+PKG_SOURCE_VERSION:=77d25a1e613095bdf87a1d13b65e7c330565077a
+PKG_MIRROR_HASH:=69b0c6c5b291eaa2a696f2fb9b31ca8cf16a3c591767d5b996ba8eca2fed89e6
 
 PKG_MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -29,8 +32,8 @@ include $(INCLUDE_DIR)/meson.mk
 define Package/pulseaudio-daemon/Default
   SECTION:=sound
   CATEGORY:=Sound
-  DEPENDS:=+libsndfile +libltdl +alsa-lib \
-	+libopenssl +libcap $(ICONV_DEPENDS) $(INTL_DEPENDS)
+  DEPENDS:=+alsa-lib \
+	+libopenssl +libcap +libdbus +libpulse $(ICONV_DEPENDS) $(INTL_DEPENDS)
   TITLE:=Network sound server
   URL:=https://www.freedesktop.org/wiki/Software/PulseAudio/
   PROVIDES:=pulseaudio
@@ -68,6 +71,14 @@ endef
 
 Package/pulseaudio-daemon-avahi/conffiles = $(Package/pulseaudio-daemon/conffiles)
 
+define Package/libpulse
+  SECTION:=lib
+  CATEGORY:=Libraries
+  DEPENDS:=+libsndfile +libltdl +libdbus $(ICONV_DEPENDS) $(INTL_DEPENDS)
+  TITLE:=Client library for PulseAudio
+  URL:=https://www.freedesktop.org/wiki/Software/PulseAudio/
+endef
+
 define Package/pulseaudio-tools
   SECTION:=sound
   CATEGORY:=Sound
@@ -89,7 +100,7 @@ MESON_ARGS += \
 	-Db_lto=true \
 	-Dgcov=false \
 	-Dman=false \
-	-Dtests=false \
+	-Dtests=disabled \
 	-Dsystem_user=pulse \
 	-Dsystem_group=pulse \
 	-Daccess_group=audio \
@@ -103,6 +114,7 @@ MESON_ARGS += \
 	-Dasyncns=disabled \
 	-Dbluez5-native-headset=false \
 	-Dbluez5-ofono-headset=false \
+	-Ddbus=enabled \
 	-Dfftw=disabled \
 	-Dglib=disabled \
 	-Dgsettings=disabled \
@@ -122,28 +134,30 @@ MESON_ARGS += \
 	-Dx11=disabled \
 	-Dadrian-aec=true \
 	-Dwebrtc-aec=disabled \
-        -Ddoxygen=false \
-        -Dtcpwrap=disabled \
-        -Dbluez5-gstreamer=disabled 
+	-Ddoxygen=disabled \
+	-Dtcpwrap=disabled \
+	-Dbluez5-gstreamer=disabled
 
 ifeq ($(BUILD_VARIANT),avahi)
 MESON_ARGS += \
 	-Davahi=enabled \
-	-Dbluez5=enabled \
-	-Ddbus=enabled
+	-Dbluez5=enabled
 endif
 
 ifeq ($(BUILD_VARIANT),noavahi)
 MESON_ARGS += \
 	-Davahi=disabled \
-	-Dbluez5=disabled \
-	-Ddbus=disabled
+	-Dbluez5=disabled
 endif
 
-TARGET_LDFLAGS += -Wl,--gc-sections $(if $(INTL_FULL),-lintl)
+TARGET_LDFLAGS += -Wl,--gc-sections
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
+	# the git snapshot carries neither .git nor .tarball-version, so
+	# git-version-gen cannot determine a version on its own
+	echo "$(PKG_VERSION)-git$(call version_abbrev,$(PKG_SOURCE_VERSION))" \
+		> $(PKG_BUILD_DIR)/.tarball-version
 ifneq ($(findstring arm,$(CONFIG_ARCH)),)
 ifeq ($(findstring neon,$(CONFIG_CPU_TYPE)),)
 	$(SED) '/remap_neon\.c/d' $(PKG_BUILD_DIR)/src/pulsecore/meson.build
@@ -169,6 +183,15 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pulseaudio/* $(1)/usr/lib/pulseaudio/
 endef
 
+define Package/libpulse/install
+	$(INSTALL_DIR) $(1)/usr/lib $(1)/usr/lib/pulseaudio
+	# client libraries only; the server-only libpulsecore/libpulsedsp stay with
+	# the daemon so a pure client (depending on libpulse) does not pull them in
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpulse.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpulse-simple.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pulseaudio/libpulsecommon-*.so $(1)/usr/lib/pulseaudio/
+endef
+
 define Package/pulseaudio-daemon/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/pulseaudio $(1)/usr/bin/pulseaudio
@@ -179,22 +202,21 @@ define Package/pulseaudio-daemon/install
 	$(INSTALL_DIR) $(1)/etc/pulse
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/pulse/* $(1)/etc/pulse
 
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so* $(1)/usr/lib/
-
-	$(INSTALL_DIR) $(1)/usr/lib/pulseaudio
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pulseaudio/* $(1)/usr/lib/pulseaudio/
-
-	$(INSTALL_DIR) $(1)/usr/lib/pulse-$(PKG_VERSION)/modules
+	$(INSTALL_DIR) $(1)/usr/lib $(1)/usr/lib/pulseaudio/modules
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pulseaudio/libpulsecore-*.so $(1)/usr/lib/pulseaudio/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pulseaudio/libpulsedsp.so $(1)/usr/lib/pulseaudio/
+	# module helper libraries (libprotocol-*, libalsa-util, libcli, librtp, ...):
+	# the dlopened modules DT_NEEDED these and carry no RUNPATH, so they must be
+	# installed into a default library search path
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pulseaudio/modules/lib*.so $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pulseaudio/modules/module*.so $(1)/usr/lib/pulseaudio/modules/
+
+	$(INSTALL_DIR) $(1)/usr/share/dbus-1/system.d
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/dbus-1/system.d/pulseaudio-system.conf $(1)/usr/share/dbus-1/system.d/pulseaudio-system.conf
 endef
 
 define Package/pulseaudio-daemon-avahi/install
 	$(call Package/pulseaudio-daemon/install,$1)
-
-	$(INSTALL_DIR) $(1)/usr/share/dbus-1/system.d
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/dbus-1/system.d/pulseaudio-system.conf $(1)/usr/share/dbus-1/system.d/pulseaudio-system.conf
 endef
 
 define Package/pulseaudio-tools/install
@@ -210,6 +232,7 @@ define Package/pulseaudio-profiles/install
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/pulseaudio/alsa-mixer/profile-sets/* $(1)/usr/share/pulseaudio/alsa-mixer/profile-sets
 endef
 
+$(eval $(call BuildPackage,libpulse))
 $(eval $(call BuildPackage,pulseaudio-daemon))
 $(eval $(call BuildPackage,pulseaudio-daemon-avahi))
 $(eval $(call BuildPackage,pulseaudio-tools))
