@@ -1,0 +1,54 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] uclo static and unused param
+
+Index: src/quickassist/utilities/downloader/Target_CoreLibs/uclo/uclo.c
+===================================================================
+--- src.orig/quickassist/utilities/downloader/Target_CoreLibs/uclo/uclo.c
++++ src/quickassist/utilities/downloader/Target_CoreLibs/uclo/uclo.c
+@@ -5584,7 +5584,7 @@ UcLo_computeFreeUstore(icp_firml_handle_
+  * 
+  * 
+  *****************************************************************************/
+-int 
++static int 
+ UcLo_AuthenticateFW(icp_firml_handle_t *handle, fw_auth_desc_t* desc)
+ {
+     unsigned int fcuSts = 0, retry = 0;
+@@ -5663,7 +5663,7 @@ UcLo_AuthenticateFW(icp_firml_handle_t *
+  * 
+  * 
+  *****************************************************************************/
+-int 
++static int 
+ UcLo_UnmapAuthFw (icp_firml_handle_t *handle, fw_auth_desc_t** desc)
+ {
+     icp_firml_dram_desc_t dramDesc;
+@@ -5709,7 +5709,7 @@ UcLo_UnmapAuthFw (icp_firml_handle_t *ha
+  * 
+  * 
+  *****************************************************************************/
+-int 
++static int 
+ UcLo_MapAuthFw (icp_firml_handle_t *handle, char* image, 
+                 unsigned int size, fw_auth_desc_t** desc)
+ {
+@@ -5979,7 +5979,7 @@ UcLo_MapAuthFw (icp_firml_handle_t *hand
+  * 
+  * 
+  *****************************************************************************/
+-int 
++static int 
+ Uclo_LoadFW (icp_firml_handle_t *handle, fw_auth_desc_t* desc)
+ {
+     int i = 0;
+@@ -7594,7 +7594,7 @@ int UcLo_GetMmpVer (icp_firml_handle_t *
+                     void * objBuf,
+                     unsigned int* mmpVer)
+ {
+-    mmpVer = 0;
++    (void)mmpVer;
+     
+     return (UCLO_SUCCESS);;
+ }

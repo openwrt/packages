@@ -1,0 +1,27 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] adf lib extern
+
+Index: src/quickassist/adf/src/adf_lib.c
+===================================================================
+--- src.orig/quickassist/adf/src/adf_lib.c
++++ src/quickassist/adf/src/adf_lib.c
+@@ -117,6 +117,8 @@ inline void adf_put_module(void)
+  * adf_init
+  * Adf lib init function
+  */
++extern int __init adf_init(void);
++
+ int __init adf_init(void)
+ {
+         Cpa32U status = SUCCESS;
+@@ -151,6 +153,8 @@ int __init adf_init(void)
+  * adfdrv_release
+  * Adf lib exit function
+  */
++extern void adf_exit(void);
++
+ void adf_exit(void)
+ {
+         if (SUCCESS != adf_dynUnregister()) {

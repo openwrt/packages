@@ -1,0 +1,18 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] fix page size redefine
+
+Index: src/quickassist/utilities/libusdm_drv/linux/user_space/qae_page_table.h
+===================================================================
+--- src.orig/quickassist/utilities/libusdm_drv/linux/user_space/qae_page_table.h
++++ src/quickassist/utilities/libusdm_drv/linux/user_space/qae_page_table.h
+@@ -81,7 +81,7 @@
+ #include <string.h>
+ #endif
+ 
+-#ifndef __FreeBSD__ /* FreeBSD, already defined in machine param.h */
++#ifndef PAGE_SIZE
+ #define PAGE_SIZE (0x1000)
+ #define PAGE_SHIFT (12)
+ #endif

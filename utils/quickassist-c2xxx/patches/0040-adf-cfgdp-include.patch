@@ -1,0 +1,17 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] adf cfgdp include
+
+Index: src/quickassist/adf/accel_mgr/src/adf_cfg_dp.c
+===================================================================
+--- src.orig/quickassist/adf/accel_mgr/src/adf_cfg_dp.c
++++ src/quickassist/adf/accel_mgr/src/adf_cfg_dp.c
+@@ -74,6 +74,7 @@
+ #include "icp_platform.h"
+ #include "adf_cfg.h"
+ #include "adf_cfg_types.h"
++#include "icp_adf_cfg_dp.h"
+ 
+ /*
+  * icp_adf_cfgGetSharedMemSize

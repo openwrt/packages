@@ -1,0 +1,30 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] adf pollctrl include
+
+Index: src/quickassist/adf/transport/src/adf_poll_ctrl.c
+===================================================================
+--- src.orig/quickassist/adf/transport/src/adf_poll_ctrl.c
++++ src/quickassist/adf/transport/src/adf_poll_ctrl.c
+@@ -125,6 +125,10 @@ CpaStatus adf_pollBank(icp_et_ring_bank_
+  * via the ISR method.
+  * N.B. The response_quota is per ring.
+  */
++extern CpaStatus icp_sal_pollBank(Cpa32U accelId,
++                           Cpa32U bank_number,
++                           Cpa32U response_quota);
++
+ CpaStatus icp_sal_pollBank(Cpa32U accelId,
+                            Cpa32U bank_number,
+                            Cpa32U response_quota)
+@@ -173,6 +177,9 @@ CpaStatus icp_sal_pollBank(Cpa32U accelI
+  * via the ISR method.
+  * N.B. The response_quota is per ring.
+  */
++extern CpaStatus icp_sal_pollAllBanks(Cpa32U accelId,
++                               Cpa32U response_quota);
++
+ CpaStatus icp_sal_pollAllBanks(Cpa32U accelId,
+                                Cpa32U response_quota)
+ {

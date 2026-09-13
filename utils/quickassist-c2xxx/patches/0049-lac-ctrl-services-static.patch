@@ -1,0 +1,18 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] lac ctrl services static
+
+Index: src/quickassist/lookaside/access_layer/src/common/ctrl/sal_ctrl_services.c
+===================================================================
+--- src.orig/quickassist/lookaside/access_layer/src/common/ctrl/sal_ctrl_services.c
++++ src/quickassist/lookaside/access_layer/src/common/ctrl/sal_ctrl_services.c
+@@ -290,7 +290,7 @@ CpaBoolean SalCtrl_IsServiceEnabled(Cpa3
+  * param[in] enabled_services    It is the bitmask for the enabled services
+  */
+ 
+-CpaStatus SalCtrl_GetSupportedServices(icp_accel_dev_t* device,
++static CpaStatus SalCtrl_GetSupportedServices(icp_accel_dev_t* device,
+     Cpa32U enabled_services)
+ {
+     CpaStatus status = CPA_STATUS_SUCCESS;

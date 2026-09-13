@@ -1,0 +1,18 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] accelcomp halaechip prototypes
+
+Index: src/quickassist/utilities/downloader/Target_CoreLibs/halAe/accelcomp/halAeChip.h
+===================================================================
+--- src.orig/quickassist/utilities/downloader/Target_CoreLibs/halAe/accelcomp/halAeChip.h
++++ src/quickassist/utilities/downloader/Target_CoreLibs/halAe/accelcomp/halAeChip.h
+@@ -204,4 +204,8 @@ typedef struct uof_encapuwblock_s{
+ 
+ typedef uint64 import_var_type; 
+ 
++int halAe_enableAutoInitSram(icp_firml_handle_t *handle, unsigned int aeMask);
++int halAe_checkAes(icp_firml_handle_t *handle, 
++               unsigned int aeMask);
++
+ #endif /* __HALAECHIP_H */

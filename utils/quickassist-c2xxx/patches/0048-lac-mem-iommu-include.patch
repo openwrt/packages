@@ -1,0 +1,17 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] lac mem iommu include
+
+Index: src/quickassist/lookaside/access_layer/src/common/utils/lac_mem.c
+===================================================================
+--- src.orig/quickassist/lookaside/access_layer/src/common/utils/lac_mem.c
++++ src/quickassist/lookaside/access_layer/src/common/utils/lac_mem.c
+@@ -93,6 +93,7 @@
+ #include "lac_sym_qat.h"
+ #include "icp_qat_fw_la.h"
+ #include "lac_sal_types_crypto.h"
++#include "icp_sal_iommu.h"
+ 
+ /*
+ ********************************************************************************

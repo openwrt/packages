@@ -1,0 +1,56 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] halmemscrub prototypes
+
+Index: src/quickassist/utilities/downloader/Target_CoreLibs/halAe/halMemScrub.c
+===================================================================
+--- src.orig/quickassist/utilities/downloader/Target_CoreLibs/halAe/halMemScrub.c
++++ src/quickassist/utilities/downloader/Target_CoreLibs/halAe/halMemScrub.c
+@@ -144,7 +144,7 @@ halMem_getCsrName(unsigned int CSR_offse
+ * 
+ * 
+ *****************************************************************************/
+-int halMem_CnvHalAeRetCode(int halRet)
++static int halMem_CnvHalAeRetCode(int halRet)
+ {
+     switch(halRet)
+     {
+@@ -932,7 +932,7 @@ halMem_MmpInitializeMemory(const char* F
+   *    
+   * 
+   *****************************************************************************/
+-int 
++static int 
+ halMem_ScrubMMPMemory(icp_firml_handle_t *handle)
+ {
+     int Status = HALMEM_SUCCESS;
+@@ -1872,7 +1872,7 @@ int halMem_SharedRamToDRam(
+   * 
+   * 
+   *****************************************************************************/
+-int 
++static int 
+ halMem_ScrubSharedRam(icp_firml_handle_t *handle)
+ {
+     int Status = HALMEM_SUCCESS, halAeStatus = HALAE_SUCCESS;
+Index: src/quickassist/utilities/downloader/Target_CoreLibs/halAe/halMemScrub.h
+===================================================================
+--- src.orig/quickassist/utilities/downloader/Target_CoreLibs/halAe/halMemScrub.h
++++ src/quickassist/utilities/downloader/Target_CoreLibs/halAe/halMemScrub.h
+@@ -210,6 +210,15 @@ int
+ halMem_InitMemory(icp_firml_handle_t *handle,
+                        QAT_MEM_TYPE QatMemType);
+ 
++int halMem_SharedRamToDRam(
++      icp_firml_handle_t *Handle, 
++      unsigned int QatNum, 
++      unsigned int ae,
++      unsigned int ShramAddr,
++      unsigned int Size,
++      unsigned int *DRamAddr,
++      unsigned int EndianSwap);
++
+ #endif  /* __HALMEMSCRUB_H */ 
+ 
+ 

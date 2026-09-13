@@ -1,0 +1,45 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] kernel 6.12 api fixes
+
+Index: src/quickassist/utilities/libusdm_drv/linux/include/qae_mem_utils.h
+===================================================================
+--- src.orig/quickassist/utilities/libusdm_drv/linux/include/qae_mem_utils.h
++++ src/quickassist/utilities/libusdm_drv/linux/include/qae_mem_utils.h
+@@ -93,7 +93,8 @@ MALLOC_DECLARE(M_QAE_MEM);
+ 
+ #define mm_info(...) pr_info(USDM_MOD __VA_ARGS__)
+ 
+-#define mm_warning(...) pr_warning(USDM_MOD __VA_ARGS__)
++#define mm_warning(...) pr_warn(USDM_MOD __VA_ARGS__)
++int handle_other_ioctls(uint32_t cmd);
+ 
+ /*define types which need to vary between 32 and 64 bit*/
+ #define QAE_PAGE_SHIFT 12
+Index: src/quickassist/utilities/libusdm_drv/linux/kernel_space/qae_mem_drv.c
+===================================================================
+--- src.orig/quickassist/utilities/libusdm_drv/linux/kernel_space/qae_mem_drv.c
++++ src/quickassist/utilities/libusdm_drv/linux/kernel_space/qae_mem_drv.c
+@@ -966,7 +966,7 @@ chr_drv_create_class(chr_drv_info_t* drv
+                      "chr_drv_create_class(): Invalid parameter value ",
+                      -EINVAL);
+ 
+-    drv_info->drv_class = class_create(THIS_MODULE, drv_info->name);
++    drv_info->drv_class = class_create(drv_info->name);
+     if (IS_ERR(drv_info->drv_class))
+     {
+         mm_err("%s:%d class_create failed\n",__func__,__LINE__);
+Index: src/quickassist/utilities/libusdm_drv/linux/kernel_space/qdm.c
+===================================================================
+--- src.orig/quickassist/utilities/libusdm_drv/linux/kernel_space/qdm.c
++++ src/quickassist/utilities/libusdm_drv/linux/kernel_space/qdm.c
+@@ -129,7 +129,7 @@ int qdm_iommu_map(dma_addr_t *iova, void
+ 			IOMMU_READ|IOMMU_WRITE|IOMMU_CACHE);
+ #else
+ 	return iommu_map(domain, *iova, paddr, size,
+-			IOMMU_READ|IOMMU_WRITE|IOMMU_CACHE);
++			IOMMU_READ|IOMMU_WRITE|IOMMU_CACHE, GFP_KERNEL);
+ #endif
+ }
+ EXPORT_SYMBOL_GPL(qdm_iommu_map);

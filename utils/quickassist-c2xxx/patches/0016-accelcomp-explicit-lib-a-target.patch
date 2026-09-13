@@ -1,0 +1,18 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] accelcomp explicit lib a target
+
+Index: src/quickassist/utilities/downloader/Target_CoreLibs/halAe/accelcomp/Makefile
+===================================================================
+--- src.orig/quickassist/utilities/downloader/Target_CoreLibs/halAe/accelcomp/Makefile
++++ src/quickassist/utilities/downloader/Target_CoreLibs/halAe/accelcomp/Makefile
+@@ -102,7 +102,7 @@ else
+       
+ all:
+ 	cp -f $(ICP_OSAL_RELEASE_LINUX)/libosal.a $(PWD)
+-	$(MAKE) -C $(KDIR) M=$(PWD)
++	$(MAKE) -C $(KDIR) M=$(PWD) lib.a
+ 	
+ clean:
+ 	$(RM) -r ../../uclo/*.o ../.*.cmd ../*.o .*.cmd libosal.a *.o *.mod.c *.ko .tmp_versions lib.a Module.symvers

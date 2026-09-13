@@ -1,0 +1,20 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] define semaphore 2arg
+
+Index: src/quickassist/utilities/osal/src/linux/kernel_space/OsalThread.c
+===================================================================
+--- src.orig/quickassist/utilities/osal/src/linux/kernel_space/OsalThread.c
++++ src/quickassist/utilities/osal/src/linux/kernel_space/OsalThread.c
+@@ -43,8 +43,8 @@
+ DECLARE_MUTEX (osalThreadMutex);
+ DECLARE_MUTEX (osalThreadStopMutex);
+ #else
+-DEFINE_SEMAPHORE (osalThreadMutex);
+-DEFINE_SEMAPHORE (osalThreadStopMutex);
++DEFINE_SEMAPHORE (osalThreadMutex, 1);
++DEFINE_SEMAPHORE (osalThreadStopMutex, 1);
+ #endif
+ 
+ OSAL_PUBLIC OSAL_STATUS

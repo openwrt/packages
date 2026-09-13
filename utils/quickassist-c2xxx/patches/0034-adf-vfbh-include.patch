@@ -1,0 +1,17 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] adf vfbh include
+
+Index: src/quickassist/adf/drivers/common/linux/src/adf_vf_bh.c
+===================================================================
+--- src.orig/quickassist/adf/drivers/common/linux/src/adf_vf_bh.c
++++ src/quickassist/adf/drivers/common/linux/src/adf_vf_bh.c
+@@ -77,6 +77,7 @@
+ #include "icp_adf_init.h"
+ #include "adf_platform.h"
+ #include "adf_drv_sriov.h"
++#include "adf_bh.h"
+ 
+ 
+ /*

@@ -1,0 +1,18 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] lac qat admin static
+
+Index: src/quickassist/lookaside/access_layer/src/common/qat_ctrl/qat_admin.c
+===================================================================
+--- src.orig/quickassist/lookaside/access_layer/src/common/qat_ctrl/qat_admin.c
++++ src/quickassist/lookaside/access_layer/src/common/qat_ctrl/qat_admin.c
+@@ -109,7 +109,7 @@
+  * QatCtrl_AdminSyncCb
+  * Admin Sync Callback function.
+  */
+-void
++static void
+ QatCtrl_AdminSyncCb(void *pCallbackTag, CpaStatus status)
+ {
+     LacSync_GenWakeupSyncCaller(pCallbackTag, status);

@@ -1,0 +1,25 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] samplecode qae makefile symvers path
+
+Index: src/quickassist/lookaside/access_layer/src/sample_code/performance/qae/linux/kernel_space/Makefile
+===================================================================
+--- src.orig/quickassist/lookaside/access_layer/src/sample_code/performance/qae/linux/kernel_space/Makefile
++++ src/quickassist/lookaside/access_layer/src/sample_code/performance/qae/linux/kernel_space/Makefile
+@@ -122,7 +122,7 @@ EXTRA_CFLAGS += -DKERNEL_SPACE
+ endif
+ EXTRA_CFLAGS+=-DSAL_IOMMU_CODE
+ 
+-KBUILD_EXTRA_SYMBOLS += $(PERF_SAMPLE_SRC_ROOT)/../../Module.symvers
++KBUILD_EXTRA_SYMBOLS += $(ICP_ROOT)/quickassist/lookaside/access_layer/build/icp_qa_al.symvers
+ export $(KBUILD_EXTRA_SYMBOLS)
+ 
+ #include your $(ICP_OS)_$(ICP_OS_LEVEL).mk file
+Index: src/quickassist/lookaside/access_layer/build/icp_qa_al.symvers
+===================================================================
+--- /dev/null
++++ src/quickassist/lookaside/access_layer/build/icp_qa_al.symvers
+@@ -0,0 +1,2 @@
++0x00000000	icp_sal_iommu_map	icp_qa_al	EXPORT_SYMBOL	
++0x00000000	icp_sal_iommu_unmap	icp_qa_al	EXPORT_SYMBOL	

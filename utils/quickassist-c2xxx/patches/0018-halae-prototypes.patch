@@ -1,0 +1,56 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] halae prototypes
+
+Index: src/quickassist/utilities/downloader/Target_CoreLibs/halAe/halAe.c
+===================================================================
+--- src.orig/quickassist/utilities/downloader/Target_CoreLibs/halAe/halAe.c
++++ src/quickassist/utilities/downloader/Target_CoreLibs/halAe/halAe.c
+@@ -3395,7 +3395,7 @@ halAe_Start(icp_firml_handle_t *handle,
+  * @retval HALAE_BADARG Bad function argument
+  * 
+  *****************************************************************************/
+-int 
++static int __attribute__((unused))
+ halAe_StartAuthenticatedME (icp_firml_handle_t *handle, 
+             unsigned char ae)
+ {
+Index: src/quickassist/utilities/downloader/Target_CoreLibs/halAe/include/linux/halAe_platform.h
+===================================================================
+--- src.orig/quickassist/utilities/downloader/Target_CoreLibs/halAe/include/linux/halAe_platform.h
++++ src/quickassist/utilities/downloader/Target_CoreLibs/halAe/include/linux/halAe_platform.h
+@@ -144,6 +144,7 @@ typedef unsigned char   uchar;
+ 
+ int halAe_getPciCsr(icp_firml_handle_t *handle, unsigned int offset, unsigned int numBytes, unsigned int *data);
+ int halAe_putPciCsr(icp_firml_handle_t *handle, unsigned int offset, unsigned int numBytes, unsigned int data);
++int halAe_DisableClkGating(icp_firml_handle_t *handle);
+ #define GET_PCI_CSR halAe_getPciCsr
+ #define PUT_PCI_CSR halAe_putPciCsr
+ 
+Index: src/quickassist/utilities/downloader/include/halAeApi.h
+===================================================================
+--- src.orig/quickassist/utilities/downloader/include/halAeApi.h
++++ src/quickassist/utilities/downloader/include/halAeApi.h
+@@ -160,6 +160,21 @@ typedef struct batch_init_s{
+ extern "C" {
+ #endif
+ 
++/* internal helpers shared between halAe.c and halAeHw.c, not part of
++ * the public HAL API documented below */
++int halAe_clearGPRs_Common(icp_firml_handle_t *handle, unsigned int aeMask);
++int halAe_BatchPutLM_Common(icp_firml_handle_t *handle, unsigned char ae,
++            batch_init_t *lm_init_header);
++int halAe_ContinuousDramAlloc(icp_firml_handle_t *Handle,
++                          icp_firml_dram_desc_t *pDram_desc,
++                          unsigned int size);
++void halAe_ContinuousDramFree(icp_firml_handle_t *Handle,
++                         icp_firml_dram_desc_t *pDram_desc);
++void halAe_WaitShramReady(icp_firml_handle_t *handle,
++                               unsigned int aeMask);
++int halAe_clearGPRs(icp_firml_handle_t *handle, 
++                unsigned int aeMask);
++
+ /**
+  *****************************************************************************
+  * @ingroup icp_hal

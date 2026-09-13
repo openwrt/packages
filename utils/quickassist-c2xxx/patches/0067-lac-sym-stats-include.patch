@@ -1,0 +1,17 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] lac sym stats include
+
+Index: src/quickassist/lookaside/access_layer/src/common/crypto/sym/lac_sym_stats.c
+===================================================================
+--- src.orig/quickassist/lookaside/access_layer/src/common/crypto/sym/lac_sym_stats.c
++++ src/quickassist/lookaside/access_layer/src/common/crypto/sym/lac_sym_stats.c
+@@ -91,6 +91,7 @@
+ #include "lac_sym_qat.h"
+ #include "lac_sal_types_crypto.h"
+ #include "sal_statistics.h"
++#include "lac_sym_stats.h"
+ 
+ /* Number of Symmetric Crypto statistics */
+ #define LAC_SYM_NUM_STATS (sizeof(CpaCySymStats64) / sizeof(Cpa64U))

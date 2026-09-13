@@ -1,0 +1,18 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] adf devring static
+
+Index: src/quickassist/adf/drivers/common/linux/src/adf_dev_ring.c
+===================================================================
+--- src.orig/quickassist/adf/drivers/common/linux/src/adf_dev_ring.c
++++ src/quickassist/adf/drivers/common/linux/src/adf_dev_ring.c
+@@ -214,7 +214,7 @@ void adf_ring_chrdev_unregister(void)
+ /*
+  * Dummy kernelspace callback for userspace rings
+  */
+-void adf_ring_dummy_callback(icp_comms_trans_handle comms_handle, void *pMsg)
++static void adf_ring_dummy_callback(icp_comms_trans_handle comms_handle, void *pMsg)
+ {
+         /* The real callback lives in user space */
+         return;

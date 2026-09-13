@@ -1,0 +1,20 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] lac sym api extern
+
+Index: src/quickassist/lookaside/access_layer/src/common/crypto/sym/lac_sym_api.c
+===================================================================
+--- src.orig/quickassist/lookaside/access_layer/src/common/crypto/sym/lac_sym_api.c
++++ src/quickassist/lookaside/access_layer/src/common/crypto/sym/lac_sym_api.c
+@@ -170,6 +170,10 @@ void LacDp_WriteRingMsgOpt(CpaCySymDpOpD
+  * @return void
+  *
+  *****************************************************************************/
++extern void LacSync_GenBufListVerifyCb(void *pCallbackTag,CpaStatus status,
++                CpaCySymOp operationType, void *pOpData,
++                CpaBufferList *pDstBuffer, CpaBoolean opResult);
++
+ void LacSync_GenBufListVerifyCb(void *pCallbackTag,CpaStatus status,
+                 CpaCySymOp operationType, void *pOpData,
+                 CpaBufferList *pDstBuffer, CpaBoolean opResult)

@@ -1,0 +1,18 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] usrkrlproxy class create
+
+Index: src/quickassist/utilities/osal/src/linux/kernel_space/OsalUsrKrlProxy.c
+===================================================================
+--- src.orig/quickassist/utilities/osal/src/linux/kernel_space/OsalUsrKrlProxy.c
++++ src/quickassist/utilities/osal/src/linux/kernel_space/OsalUsrKrlProxy.c
+@@ -525,7 +525,7 @@ chr_drv_create_class(chr_drv_info_t* drv
+     OSAL_LOCAL_ENSURE(drv_info,
+               "chr_drv_create_class(): Invalid parameter value ",
+               OSAL_FAIL);
+-    drv_info->drv_class = class_create(THIS_MODULE, drv_info->name);
++    drv_info->drv_class = class_create(drv_info->name);
+     if (IS_ERR(drv_info->drv_class)) {
+         osalLog (OSAL_LOG_LVL_ERROR, OSAL_LOG_DEV_STDOUT,
+         "class_create failed\n", 0, 0, 0, 0, 0, 0, 0, 0);

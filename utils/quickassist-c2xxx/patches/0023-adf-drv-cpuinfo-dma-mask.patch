@@ -1,0 +1,71 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] adf drv cpuinfo dma mask
+
+Index: src/quickassist/adf/drivers/ACCELDEV/linux/src/adf_acceldev_drv.c
+===================================================================
+--- src.orig/quickassist/adf/drivers/ACCELDEV/linux/src/adf_acceldev_drv.c
++++ src/quickassist/adf/drivers/ACCELDEV/linux/src/adf_acceldev_drv.c
+@@ -320,9 +320,9 @@ static int adf_get_dev_node_id(struct pc
+ 
+         /* if there is only one physical processor don't need
+          * to do any further calculations */
+-        if (c->phys_proc_id == 0)
++        if (c->topo.pkg_id == 0)
+                  return 0;
+-        bus_per_cpu = MAX_PCI_BUS / (c->phys_proc_id + 1);
++        bus_per_cpu = MAX_PCI_BUS / (c->topo.pkg_id + 1);
+         if (0 != bus_per_cpu) {
+                 return pdev->bus->number / bus_per_cpu;
+         }
+@@ -361,8 +361,8 @@ static int adf_vf_probe(struct pci_dev *
+                 return -ENOMEM;
+         }
+ 
+-        if (pci_set_dma_mask(pdev, DMA_BIT_MASK(64))) {
+-                if ((pci_set_dma_mask(pdev, DMA_BIT_MASK(32)))) {
++        if (dma_set_mask(&pdev->dev, DMA_BIT_MASK(64))) {
++                if ((dma_set_mask(&pdev->dev, DMA_BIT_MASK(32)))) {
+ 
+                         ADF_ERROR("No usable DMA configuration in VF,"
+                                       "aborting\n");
+@@ -370,11 +370,11 @@ static int adf_vf_probe(struct pci_dev *
+                         return -EIO;
+                 }
+                 else {
+-                        pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(32));
++                        dma_set_coherent_mask(&pdev->dev, DMA_BIT_MASK(32));
+                 }
+         }
+         else {
+-                pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(64));
++                dma_set_coherent_mask(&pdev->dev, DMA_BIT_MASK(64));
+         }
+ 
+         pci_set_master(pdev);
+@@ -685,8 +685,8 @@ static int adf_probe(struct pci_dev *pde
+ #if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,23)
+         #define DMA_BIT_MASK(n) (((n) == 64) ? ~0ULL : ((1ULL<<(n))-1))
+ #endif
+-        if (pci_set_dma_mask(pdev, DMA_BIT_MASK(64))) {
+-                if ((pci_set_dma_mask(pdev, DMA_BIT_MASK(32)))) {
++        if (dma_set_mask(&pdev->dev, DMA_BIT_MASK(64))) {
++                if ((dma_set_mask(&pdev->dev, DMA_BIT_MASK(32)))) {
+ 
+                         ADF_ERROR("No usable DMA configuration,"
+                                       "aborting\n");
+@@ -694,11 +694,11 @@ static int adf_probe(struct pci_dev *pde
+                         return -EIO;
+                 }
+                 else {
+-                        pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(32));
++                        dma_set_coherent_mask(&pdev->dev, DMA_BIT_MASK(32));
+                 }
+         }
+         else {
+-                pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(64));
++                dma_set_coherent_mask(&pdev->dev, DMA_BIT_MASK(64));
+         }
+ 
+         status = adf_alloc_coherent_buf(accel_dev);

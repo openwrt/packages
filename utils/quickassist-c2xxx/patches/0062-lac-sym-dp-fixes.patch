@@ -1,0 +1,41 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] lac sym dp fixes
+
+Index: src/quickassist/lookaside/access_layer/src/common/crypto/sym/lac_sym_dp.c
+===================================================================
+--- src.orig/quickassist/lookaside/access_layer/src/common/crypto/sym/lac_sym_dp.c
++++ src/quickassist/lookaside/access_layer/src/common/crypto/sym/lac_sym_dp.c
+@@ -99,6 +99,7 @@
+ #include "lac_sal_types_crypto.h"
+ #include "sal_service_state.h"
+ #include "lac_sym_auth_enc.h"
++#include "icp_sal_poll.h"
+ 
+ typedef void (*write_ringMsgFunc_t)(CpaCySymDpOpData *pRequest,
+           icp_qat_fw_la_bulk_req_t *pCurrentQatMsg,
+@@ -411,6 +412,11 @@ LacDp_EnqueueParamCheck(const CpaCySymDp
+  *
+  *****************************************************************************/
+ 
++extern void
++LacDp_WriteRingMsgOpt(CpaCySymDpOpData *pRequest,icp_qat_fw_la_bulk_req_t
++                      *pCurrentQatMsg,
++                      const CpaInstanceHandle instanceHandle);
++
+ void
+ LacDp_WriteRingMsgOpt(CpaCySymDpOpData *pRequest,icp_qat_fw_la_bulk_req_t
+                       *pCurrentQatMsg,
+@@ -521,6 +527,11 @@ LacDp_WriteRingMsgOpt(CpaCySymDpOpData *
+  *
+  *****************************************************************************/
+ 
++extern void
++LacDp_WriteRingMsgFull(CpaCySymDpOpData *pRequest,
++		               icp_qat_fw_la_bulk_req_t *pCurrentQatMsg,
++		               const CpaInstanceHandle instanceHandle);
++
+ void
+ LacDp_WriteRingMsgFull(CpaCySymDpOpData *pRequest,
+ 		               icp_qat_fw_la_bulk_req_t *pCurrentQatMsg,
