@@ -1,0 +1,33 @@
+# ntfy server configuration for OpenWrt
+#
+# This file only carries the settings that need to differ from the upstream
+# defaults. The full, documented list of options is available at
+# https://docs.ntfy.sh/config/
+#
+# This file is the single source of truth for the server settings. The init
+# script derives the directories it has to create from 'cache-file', 'auth-file'
+# and 'attachment-cache-dir' below, and /etc/config/ntfy only carries the
+# service wiring (enabled, conf_file, user, group).
+#
+# The 'ntfy user', 'ntfy access' and 'ntfy token' commands read this file too,
+# which is why it lives at ntfy's default config path.
+
+# Upstream listens on port 80, which collides with uhttpd/LuCI.
+listen-http: ":8180"
+
+cache-file: "/var/cache/ntfy/cache.db"
+auth-file: "/etc/ntfy/user.db"
+
+# Required for attachments, e-mail sending and iOS push on self-hosted servers.
+#base-url: "http://ntfy.example.org:8180"
+
+# Default is "read-write". Set to "deny-all" for a private instance, then hand
+# out access with 'ntfy user add' and 'ntfy access'.
+#auth-default-access: "deny-all"
+
+# The init script creates this directory and hands it to the service user.
+#attachment-cache-dir: "/var/cache/ntfy/attachments"
+
+# Enable when running behind a reverse proxy, otherwise every visitor is rate
+# limited as if they were one. Default is false.
+#behind-proxy: true
