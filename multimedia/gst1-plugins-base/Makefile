@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-base
-PKG_VERSION:=1.26.4
-PKG_RELEASE:=2
+PKG_VERSION:=1.28.6
+PKG_RELEASE:=1
 
 PKG_SOURCE:=gst-plugins-base-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gst-plugins-base
-PKG_HASH:=d6fcca7be4253e5d8541c6e3e07729120a16e1dc356f9a14a4a83a901120742f
+PKG_HASH:=0ba699c7c6c66f4ba640be78cb38a24715add9683f3e3a199f5369dc5a4f04ac
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-base-$(PKG_VERSION)
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
@@ -266,7 +266,7 @@ $(eval $(call GstBuildLibrary,rtp,RTP,,))
 $(eval $(call GstBuildLibrary,rtsp,RTSP,,))
 $(eval $(call GstBuildLibrary,sdp,SDP,pbutils rtp,))
 $(eval $(call GstBuildLibrary,tag,tag support,,))
-$(eval $(call GstBuildLibrary,video,video,,))
+$(eval $(call GstBuildLibrary,video,video,allocators,))
 
 # 1: short name
 # 2: description
@@ -315,7 +315,7 @@ $(eval $(call GstBuildPlugin,encoding,encoding plugin,pbutils video,,))
 $(eval $(call GstBuildPlugin,gio,GIO,,,))
 $(eval $(call GstBuildPlugin,opengl,GL,gl controller,,+libgraphene +libjpeg +libpng,HAVE_MESA))
 $(eval $(call GstBuildPlugin,overlaycomposition,overlay composition,video,,))
-$(eval $(call GstBuildPlugin,pbtypes,pbtypes,video,,))
+$(eval $(call GstBuildPlugin,pbtypes,pbtypes,audio video,,))
 $(eval $(call GstBuildPlugin,playback,playback,pbutils,,))
 $(eval $(call GstBuildPlugin,subparse,subparse,video,,))
 $(eval $(call GstBuildPlugin,rawparse,parse raw media,audio video,,))
