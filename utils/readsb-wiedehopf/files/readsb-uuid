@@ -1,0 +1,153 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-only
+# Copyright (C) 2026 OpenWrt.org
+
+# readsb-uuid -- inspect / generate / regenerate the station UUID.
+#
+# Manages the station UUID stored in readsb.@readsb[0].uuid (i.e.
+# /etc/config/readsb, the `main` section). Aggregators that
+# authenticate by UUID need a stable value over time -- DO NOT
+# regenerate after registering.
+#
+# Usage:
+#   readsb-uuid                 -- interactive wizard (falls back to
+#                                  --auto when stdin is not a tty)
+#
+# Read-only inspection (no UCI changes):
+#   readsb-uuid -p, --print     -- print the existing UUID; print
+#                                  nothing (rc 0) if unset
+#
+# Mutating (commits to UCI; does NOT restart the daemon):
+#   readsb-uuid -a, --auto      -- print the current UUID if valid,
+#                                  otherwise generate one (cron safe)
+#   readsb-uuid -f, --force     -- regenerate even if a UUID is set
+#                                  (DESTRUCTIVE -- aggregator
+#                                  registration tied to the old UUID
+#                                  is lost)
+#
+#   readsb-uuid -h, --help      -- this options banner
+#
+# After any mutating run: `service readsb reload`.
+#
+# Exit codes:
+#   0  success (UUID printed and/or written; wizard cancelled cleanly)
+#   1  no entropy source available
+#   2  UCI write failed / unknown argument
+#
+# Full reference:
+#   https://github.com/openwrt/packages/blob/master/utils/readsb-wiedehopf/README.md
+
+# -h reachable without sourcing functions.sh.
+print_help() {
+	sed -n '/^# readsb-uuid /,/^$/p' "$0" | sed 's/^# \{0,1\}//'
+}
+
+case ${1:-} in
+	-h|--help) print_help; exit 0 ;;
+esac
+
+# shellcheck source=files/readsb.functions.sh
+. /usr/lib/readsb/functions.sh
+
+READSB_LOG_TAG=readsb-uuid
+
+mode=wizard
+while [ "$#" -gt 0 ]; do
+	case $1 in
+		-p|--print) mode=print ;;
+		-a|--auto)  mode=auto ;;
+		-f|--force) mode=force ;;
+		-h|--help)  print_help; exit 0 ;;
+		*)
+			echo "readsb-uuid: unknown argument: $1 (try -h)" >&2
+			exit 2
+			;;
+	esac
+	shift
+done
+
+# Bare invocation falls back to --auto when there is no controlling
+# terminal, so cron / hotplug / postinst paths keep working unchanged.
+if [ "$mode" = wizard ] && ! wiz_available; then
+	mode=auto
+fi
+
+# Atomic UUID write: set + commit, with consistent error reporting.
+_write_uuid() {
+	local new=$1
+	if ! uci -q set "readsb.main.uuid=$new"; then
+		_err "uci set failed (is the readsb 'main' section present?)"
+		return 2
+	fi
+	uci -q commit readsb || { _err "uci commit failed"; return 2; }
+	_notice "wrote readsb.main.uuid=$new (run '/etc/init.d/readsb reload' to apply)"
+	return 0
+}
+
+# Generate + write a new UUID; print it on success.
+_gen_and_write() {
+	local new
+	new=$(readsb_gen_uuid) || {
+		_err "no UUID source: /proc/sys/kernel/random/uuid missing and uuidgen not installed"
+		return 1
+	}
+	_write_uuid "$new" || return $?
+	echo "$new"
+}
+
+current=$(uci -q get readsb.main.uuid)
+
+case $mode in
+	print)
+		[ -n "$current" ] && echo "$current"
+		exit 0
+		;;
+	force)
+		_gen_and_write
+		exit $?
+		;;
+	auto)
+		# Old default behavior: print existing if valid, else generate.
+		if [ -n "$current" ]; then
+			if readsb_is_uuid "$current"; then
+				echo "$current"
+				exit 0
+			fi
+			_warn "existing UUID '$current' is malformed; regenerating"
+		fi
+		_gen_and_write
+		exit $?
+		;;
+	wizard)
+		wiz_say ""
+		wiz_say "=== readsb-uuid ==="
+		wiz_say "Manage the station UUID stored in readsb.main.uuid."
+		wiz_say "Aggregators authenticate by UUID; regenerating after"
+		wiz_say "registering loses that registration."
+		wiz_say ""
+		wiz_say "Abort: 'q', 'quit', 'exit' (or Ctrl-D); UUID is left untouched."
+		wiz_say ""
+		if [ -n "$current" ] && readsb_is_uuid "$current"; then
+			wiz_say "  current: $current"
+			wiz_yesno regen "  regenerate? (DESTRUCTIVE)" N || exit 0
+			if [ "$regen" = 1 ]; then
+				_gen_and_write
+				exit $?
+			fi
+			# Keeping the existing UUID -- print it for convenience.
+			echo "$current"
+			exit 0
+		fi
+		if [ -n "$current" ]; then
+			wiz_say "  current: $current  (malformed -- not a valid UUID)"
+		else
+			wiz_say "  no station UUID set"
+		fi
+		wiz_yesno gen "  generate one now?" Y || exit 0
+		if [ "$gen" = 1 ]; then
+			_gen_and_write
+			exit $?
+		fi
+		exit 0
+		;;
+esac
