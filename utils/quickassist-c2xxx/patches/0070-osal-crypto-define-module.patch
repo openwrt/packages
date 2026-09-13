@@ -1,0 +1,25 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] osal crypto define module
+
+Index: src/quickassist/utilities/osal/src/linux/kernel_space/OsalCryptoInterface.c
+===================================================================
+--- src.orig/quickassist/utilities/osal/src/linux/kernel_space/OsalCryptoInterface.c
++++ src/quickassist/utilities/osal/src/linux/kernel_space/OsalCryptoInterface.c
+@@ -29,6 +29,15 @@
+  *  version: QAT1.5.L.1.13.0-19
+  */
+ 
++/* Ensure the MODULE_INFO-based macros below (MODULE_IMPORT_NS) embed
++ * the plain tag=value modinfo format expected by modpost when this
++ * translation unit is later statically linked into a real loadable
++ * .ko, rather than the KBUILD_MODNAME-prefixed vmlinux-builtin format -
++ * this object is compiled here as part of a lib.a via Kbuild lib-y,
++ * a build path Kbuild does not mark as -DMODULE on its own. */
++#ifndef MODULE
++#define MODULE
++#endif
+ #include "Osal.h"
+ #include <linux/crypto.h>
+ #include <linux/slab.h>

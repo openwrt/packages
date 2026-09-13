@@ -1,0 +1,17 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] lac nrbg include
+
+Index: src/quickassist/lookaside/access_layer/src/common/crypto/sym/nrbg/lac_sym_nrbg_api.c
+===================================================================
+--- src.orig/quickassist/lookaside/access_layer/src/common/crypto/sym/nrbg/lac_sym_nrbg_api.c
++++ src/quickassist/lookaside/access_layer/src/common/crypto/sym/nrbg/lac_sym_nrbg_api.c
+@@ -104,6 +104,7 @@
+ #include "lac_sal_types_crypto.h"
+ #include "lac_common.h"
+ #include "lac_mem.h"
++#include "lac_hooks.h"
+ 
+ /**
+  *******************************************************************************

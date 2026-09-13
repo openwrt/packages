@@ -1,0 +1,17 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] zlib fallthrough
+
+Index: src/quickassist/utilities/osal/src/linux/kernel_space/OsalZlib.c
+===================================================================
+--- src.orig/quickassist/utilities/osal/src/linux/kernel_space/OsalZlib.c
++++ src/quickassist/utilities/osal/src/linux/kernel_space/OsalZlib.c
+@@ -211,6 +211,7 @@ osalZlibInflate(void *srcBufferList,
+                            srcBuffList->pBuffers[srcBuffIdx].dataLenInBytes;
+                    break;
+                }
++               fallthrough;
+            } /* Z_BUF_ERROR falls through on unrecoverable error */
+            case Z_NEED_DICT:
+            case Z_DATA_ERROR:

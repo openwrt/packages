@@ -1,0 +1,19 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] osal user space zlib include path
+
+Index: src/quickassist/build_system/build_files/env_files/linux_2.6_user_space.mk
+===================================================================
+--- src.orig/quickassist/build_system/build_files/env_files/linux_2.6_user_space.mk
++++ src/quickassist/build_system/build_files/env_files/linux_2.6_user_space.mk
+@@ -77,7 +77,8 @@
+ INCLUDES+= \
+           -I$(API_DIR)   \
+           -I$(OSAL_DIR)/include \
+-          -I$(OSAL_DIR)/src/linux/user_space/include
++          -I$(OSAL_DIR)/src/linux/user_space/include \
++          -I$(OSAL_DIR)/src/linux/user_space/osalzlib/include
+ 
+ #----------------------------------------------------------
+ #

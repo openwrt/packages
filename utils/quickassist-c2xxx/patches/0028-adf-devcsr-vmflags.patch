@@ -1,0 +1,18 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] adf devcsr vmflags
+
+Index: src/quickassist/adf/drivers/common/linux/src/adf_dev_csr.c
+===================================================================
+--- src.orig/quickassist/adf/drivers/common/linux/src/adf_dev_csr.c
++++ src/quickassist/adf/drivers/common/linux/src/adf_dev_csr.c
+@@ -411,7 +411,7 @@ STATIC int adf_csr_mmap(struct file *fp,
+  * VM_RESERVED was removed from the 3.10 kernel and replaced with
+  * (VM_DONTEXPAND | VM_DONTDUMP) 
+  */
+-        vma->vm_flags |= VM_IO | (VM_DONTEXPAND | VM_DONTDUMP);
++        vm_flags_set(vma, VM_IO | (VM_DONTEXPAND | VM_DONTDUMP));
+ #endif
+ 	vma->vm_ops = &adf_mmap_operation;
+         vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);

@@ -1,0 +1,18 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] adf isr static
+
+Index: src/quickassist/adf/drivers/ACCELDEV/linux/src/adf_acceldev_isr.c
+===================================================================
+--- src.orig/quickassist/adf/drivers/ACCELDEV/linux/src/adf_acceldev_isr.c
++++ src/quickassist/adf/drivers/ACCELDEV/linux/src/adf_acceldev_isr.c
+@@ -599,7 +599,7 @@ STATIC int adf_request_msix_irq(icp_acce
+  * adf_isr_alloc_msix_entry_table
+  * Allocate buffer for MSIX entry value and name
+  */
+-int adf_isr_alloc_msix_entry_table(icp_accel_dev_t *accel_dev)
++static int adf_isr_alloc_msix_entry_table(icp_accel_dev_t *accel_dev)
+ {
+         adf_hw_device_data_t *hw_data = NULL;
+         Cpa32U msix_num_entries = 0;

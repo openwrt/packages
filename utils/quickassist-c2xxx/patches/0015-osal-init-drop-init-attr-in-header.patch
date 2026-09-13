@@ -1,0 +1,18 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] osal init drop init attr in header
+
+Index: src/quickassist/utilities/osal/include/Osal.h
+===================================================================
+--- src.orig/quickassist/utilities/osal/include/Osal.h
++++ src/quickassist/utilities/osal/include/Osal.h
+@@ -653,7 +653,7 @@ osalMemSet (void *ptr, UINT8 filler, UIN
+  *  Time
+  *****************************/
+ 
+-int __init osal_init(void);
++int osal_init(void);
+ void osal_exit(void);
+ 
+ /* Retrieve current system time */

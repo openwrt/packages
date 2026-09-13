@@ -1,0 +1,41 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] adf aer api fixes
+
+Index: src/quickassist/adf/drivers/ACCELDEV/linux/src/adf_acceldev_aer.c
+===================================================================
+--- src.orig/quickassist/adf/drivers/ACCELDEV/linux/src/adf_acceldev_aer.c
++++ src/quickassist/adf/drivers/ACCELDEV/linux/src/adf_acceldev_aer.c
+@@ -259,7 +259,7 @@ static pci_ers_result_t adf_slot_reset(s
+                 ADF_ERROR("Can't find acceleration device\n");
+                 return PCI_ERS_RESULT_DISCONNECT;
+         }
+-        pci_cleanup_aer_uncorrect_error_status(pdev);
++        pci_aer_clear_nonfatal_status(pdev);
+         /* Reset device and wait for result */
+         if (adf_aer_schedule_reset_dev(accel_dev, 1)) {
+ 
+@@ -308,9 +308,6 @@ int adf_enable_aer(icp_accel_dev_t *acce
+ 
+         drv = (struct pci_driver *)adf_driver;
+         drv->err_handler = &adf_err_handler;
+-        if (pci_enable_pcie_error_reporting(pdev)) {
+-                ADF_PRINT("Failed to enable PCI error reporting\n");
+-        }
+ #endif
+         return SUCCESS;
+ 
+@@ -322,12 +319,6 @@ int adf_enable_aer(icp_accel_dev_t *acce
+  */
+ void adf_disable_aer(icp_accel_dev_t *accel_dev)
+ {
+-        #ifdef CONFIG_PCIEAER
+-        struct pci_dev *pdev = accel_dev->pciAccelDev.pDev;
+-        if (pci_disable_pcie_error_reporting(pdev)) {
+-                ADF_ERROR("Can not disable AER for AccelDev\n");
+-        }
+-        #endif
+ }
+ 
+ /*

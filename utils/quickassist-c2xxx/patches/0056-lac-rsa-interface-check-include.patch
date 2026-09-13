@@ -1,0 +1,22 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] lac rsa interface check include
+
+Index: src/quickassist/lookaside/access_layer/src/common/crypto/asym/rsa/lac_rsa_interface_check.c
+===================================================================
+--- src.orig/quickassist/lookaside/access_layer/src/common/crypto/asym/rsa/lac_rsa_interface_check.c
++++ src/quickassist/lookaside/access_layer/src/common/crypto/asym/rsa/lac_rsa_interface_check.c
+@@ -80,10 +80,12 @@
+ 
+ 
+ #include "cpa.h"
++#include "cpa_cy_rsa.h"
+ 
+ #include "icp_qat_fw_pke.h"
+ #include "icp_qat_fw_mmp.h"
+ #include "lac_common.h"
++#include "lac_rsa_p.h"
+ 
+ #define COMPILE_TIME_ASSERT(pred) \
+         switch(0){case 0: case pred:;}

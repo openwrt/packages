@@ -1,0 +1,53 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] adf bank handler prototypes
+
+Index: src/quickassist/adf/platform/include/adf_platform_common.h
+===================================================================
+--- src.orig/quickassist/adf/platform/include/adf_platform_common.h
++++ src/quickassist/adf/platform/include/adf_platform_common.h
+@@ -307,6 +307,43 @@ void adf_c2xxx_set_hw_data(void *hw_data
+  */
+ void adf_c2xxx_set_hw_data_iov(adf_hw_device_data_t *hw_data);
+ 
++/*
++ * bank interrupt/polling handlers, defined in
++ * adf_acceldev_bank_bh_handlers.c
++ */
++void adf_bank0_handler(void* handle);
++void adf_bank1_handler(void* handle);
++void adf_bank2_handler(void* handle);
++void adf_bank3_handler(void* handle);
++void adf_bank4_handler(void* handle);
++void adf_bank5_handler(void* handle);
++void adf_bank6_handler(void* handle);
++void adf_bank7_handler(void* handle);
++void adf_bank8_handler(void* handle);
++void adf_bank9_handler(void* handle);
++void adf_bank10_handler(void* handle);
++void adf_bank11_handler(void* handle);
++void adf_bank12_handler(void* handle);
++void adf_bank13_handler(void* handle);
++void adf_bank14_handler(void* handle);
++void adf_bank15_handler(void* handle);
++void adf_bank0_polling_handler(void* handle);
++void adf_bank1_polling_handler(void* handle);
++void adf_bank2_polling_handler(void* handle);
++void adf_bank3_polling_handler(void* handle);
++void adf_bank4_polling_handler(void* handle);
++void adf_bank5_polling_handler(void* handle);
++void adf_bank6_polling_handler(void* handle);
++void adf_bank7_polling_handler(void* handle);
++void adf_bank8_polling_handler(void* handle);
++void adf_bank9_polling_handler(void* handle);
++void adf_bank10_polling_handler(void* handle);
++void adf_bank11_polling_handler(void* handle);
++void adf_bank12_polling_handler(void* handle);
++void adf_bank13_polling_handler(void* handle);
++void adf_bank14_polling_handler(void* handle);
++void adf_bank15_polling_handler(void* handle);
++
+ 
+ 
+ 

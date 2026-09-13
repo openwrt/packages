@@ -1,0 +1,25 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] osal kernel crypto headers
+
+Index: src/quickassist/utilities/osal/src/linux/kernel_space/OsalCryptoInterface.c
+===================================================================
+--- src.orig/quickassist/utilities/osal/src/linux/kernel_space/OsalCryptoInterface.c
++++ src/quickassist/utilities/osal/src/linux/kernel_space/OsalCryptoInterface.c
+@@ -31,13 +31,13 @@
+ 
+ #include "Osal.h"
+ #include <linux/crypto.h>
+-#include <linux/cryptohash.h>
+ #ifdef CENTOS65_INTEG
+ #define LINUX_VERSION_CODE KERNEL_VERSION(2,6,34)
+ #endif
+ #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,29))
+ #include <crypto/internal/hash.h>
+-#include <crypto/sha.h>
++#include <crypto/sha1.h>
++#include <crypto/sha2.h>
+ 
+ static struct crypto_shash *sha1_tfm = NULL;
+ static struct crypto_shash *sha224_tfm = NULL;

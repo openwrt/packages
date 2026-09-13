@@ -1,0 +1,18 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] adf init static
+
+Index: src/quickassist/adf/accel_mgr/src/adf_init.c
+===================================================================
+--- src.orig/quickassist/adf/accel_mgr/src/adf_init.c
++++ src/quickassist/adf/accel_mgr/src/adf_init.c
+@@ -435,7 +435,7 @@ icp_adf_subsystemUnregister(subservice_r
+  * adf_cfgAddInternalValues
+  * Add internal config values to general section of the given accel dev
+  */
+-CpaStatus
++static CpaStatus
+ adf_cfgAddInternalValues(icp_accel_dev_t *accel_dev)
+ {
+     CpaStatus status = CPA_STATUS_FAIL;

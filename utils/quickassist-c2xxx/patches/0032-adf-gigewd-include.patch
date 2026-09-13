@@ -1,0 +1,17 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] adf gigewd include
+
+Index: src/quickassist/adf/drivers/common/linux/src/adf_gige_wd_drv.c
+===================================================================
+--- src.orig/quickassist/adf/drivers/common/linux/src/adf_gige_wd_drv.c
++++ src/quickassist/adf/drivers/common/linux/src/adf_gige_wd_drv.c
+@@ -74,6 +74,7 @@
+ #include "icp_platform.h"
+ #include "adf_chr_drv.h"
+ #include "adf_platform.h"
++#include "adf_ctl_drv.h"
+ #include <linux/mutex.h>
+ #include <linux/completion.h>
+ #include <linux/sched/signal.h>

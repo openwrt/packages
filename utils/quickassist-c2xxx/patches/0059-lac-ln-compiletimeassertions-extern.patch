@@ -1,0 +1,30 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] lac ln compiletimeassertions extern
+
+Index: src/quickassist/lookaside/access_layer/src/common/crypto/asym/large_number/lac_ln.c
+===================================================================
+--- src.orig/quickassist/lookaside/access_layer/src/common/crypto/asym/large_number/lac_ln.c
++++ src/quickassist/lookaside/access_layer/src/common/crypto/asym/large_number/lac_ln.c
+@@ -1137,6 +1137,7 @@ LacLn_Init(CpaInstanceHandle instanceHan
+ 
+    /* Call compile time param check function to ensure it is included
+       in the build by the compiler */
++    extern void LacLn_CompileTimeAssertions(void);
+     LacLn_CompileTimeAssertions();
+ 
+     return status;
+Index: src/quickassist/lookaside/access_layer/src/common/crypto/asym/large_number/lac_ln_interface_check.c
+===================================================================
+--- src.orig/quickassist/lookaside/access_layer/src/common/crypto/asym/large_number/lac_ln_interface_check.c
++++ src/quickassist/lookaside/access_layer/src/common/crypto/asym/large_number/lac_ln_interface_check.c
+@@ -90,6 +90,8 @@
+         switch(0){case 0: case pred:;}
+ 
+ 
++extern void LacLn_CompileTimeAssertions(void);
++
+ void LacLn_CompileTimeAssertions(void)
+ {
+     /* *************************************************************

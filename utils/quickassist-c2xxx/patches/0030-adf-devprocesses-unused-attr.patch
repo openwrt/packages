@@ -1,0 +1,18 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] adf devprocesses unused attr
+
+Index: src/quickassist/adf/drivers/common/linux/src/adf_dev_processes.c
+===================================================================
+--- src.orig/quickassist/adf/drivers/common/linux/src/adf_dev_processes.c
++++ src/quickassist/adf/drivers/common/linux/src/adf_dev_processes.c
+@@ -161,7 +161,7 @@ static DECLARE_MUTEX(processes_list_sema
+  * adf_processes_chrdev_unregister
+  * Function unregisters character device interface
+  */
+-static void adf_processes_chrdev_unregister(void)
++static void __attribute__((unused)) adf_processes_chrdev_unregister(void)
+ {
+         adf_chr_drv_destroy(&adf_processes_drv_info);
+ }

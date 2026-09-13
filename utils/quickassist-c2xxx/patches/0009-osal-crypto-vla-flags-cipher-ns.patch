@@ -1,0 +1,491 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] osal crypto vla flags cipher ns
+
+Index: src/quickassist/utilities/osal/src/linux/kernel_space/OsalCryptoInterface.c
+===================================================================
+--- src.orig/quickassist/utilities/osal/src/linux/kernel_space/OsalCryptoInterface.c
++++ src/quickassist/utilities/osal/src/linux/kernel_space/OsalCryptoInterface.c
+@@ -31,11 +31,13 @@
+ 
+ #include "Osal.h"
+ #include <linux/crypto.h>
++#include <linux/slab.h>
++#include <linux/module.h>
+ #ifdef CENTOS65_INTEG
+ #define LINUX_VERSION_CODE KERNEL_VERSION(2,6,34)
+ #endif
+ #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,29))
+-#include <crypto/internal/hash.h>
++#include <crypto/hash.h>
+ #include <crypto/sha1.h>
+ #include <crypto/sha2.h>
+ 
+@@ -46,6 +48,8 @@ static struct crypto_shash *sha384_tfm =
+ static struct crypto_shash *sha512_tfm = NULL;
+ #endif
+ #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,19)
++#include <crypto/internal/cipher.h>
++MODULE_IMPORT_NS(CRYPTO_INTERNAL);
+ static struct crypto_cipher *cipher_tfm = NULL;
+ #endif
+ 
+@@ -61,22 +65,26 @@ OSAL_STATUS osalHashMD5(UINT8 *in, UINT8
+     if(!IS_ERR(md5_tfm))
+     {
+         struct md5_state *sctx = NULL;
+-        struct {
+-                struct shash_desc shash;
+-                char ctx[crypto_shash_descsize(md5_tfm)];
+-        } desc;
++        struct shash_desc *desc;
+ 
+-        desc.shash.tfm = md5_tfm;
+-        desc.shash.flags = 0x0;
+-        rc = crypto_shash_init(&desc.shash);
++        desc = kmalloc(sizeof(*desc) + crypto_shash_descsize(md5_tfm), GFP_KERNEL);
++        if (!desc)
++        {
++            printk("failed to allocate shash_desc\n");
++            return OSAL_FAIL;
++        }
++        desc->tfm = md5_tfm;
++        rc = crypto_shash_init(desc);
+         if(rc)
+         {
+             printk("crypto_shash_init failed\n");
++            kfree(desc);
+             return OSAL_FAIL;
+         }
+-        rc = crypto_shash_update(&desc.shash, in, MD5_HMAC_BLOCK_SIZE);
+-        sctx = (struct md5_state*) desc.ctx;
++        rc = crypto_shash_update(desc, in, MD5_HMAC_BLOCK_SIZE);
++        sctx = (struct md5_state*) shash_desc_ctx(desc);
+         memcpy(out, sctx->hash, MD5_DIGEST_SIZE);
++        kfree(desc);
+     }
+     else
+     {
+@@ -99,33 +107,37 @@ osalHashMD5Full(UINT8 *in, UINT8 *out, U
+     int rc = -1;
+     if(!IS_ERR(md5_tfm))
+     {
+-        struct {
+-                struct shash_desc shash;
+-                char ctx[crypto_shash_descsize(md5_tfm)];
+-        } desc;
++        struct shash_desc *desc;
+ 
+-        desc.shash.tfm = md5_tfm;
+-        desc.shash.flags = 0x0;
+-        rc = crypto_shash_init(&desc.shash);
++        desc = kmalloc(sizeof(*desc) + crypto_shash_descsize(md5_tfm), GFP_KERNEL);
++        if (!desc)
++        {
++            printk("failed to allocate shash_desc\n");
++            return OSAL_FAIL;
++        }
++        desc->tfm = md5_tfm;
++        rc = crypto_shash_init(desc);
+         if(rc)
+         {
+             printk("crypto_shash_init failed\n");
++            kfree(desc);
+             return OSAL_FAIL;
+         }
+-
+-        rc = crypto_shash_update(&desc.shash, in, len);
++        rc = crypto_shash_update(desc, in, len);
+         if(rc)
+         {
+             printk("crypto_shash_update failed\n");
++            kfree(desc);
+             return OSAL_FAIL;
+         }
+-
+-        crypto_shash_final(&desc.shash, out);
++        crypto_shash_final(desc, out);
+         if(rc)
+         {
+             printk("crypto_shash_final failed\n");
++            kfree(desc);
+             return OSAL_FAIL;
+         }
++        kfree(desc);
+     }
+     else
+     {
+@@ -151,22 +163,26 @@ osalHashSHA1(UINT8 *in,
+     if(!IS_ERR(sha1_tfm))
+     {
+         struct sha1_state *sctx = NULL;
+-        struct {
+-               struct shash_desc shash;
+-               char ctx[crypto_shash_descsize(sha1_tfm)];
+-        } desc;
++        struct shash_desc *desc;
+ 
+-        desc.shash.tfm = sha1_tfm;
+-        desc.shash.flags = 0x0;
+-        rc = crypto_shash_init(&desc.shash);
++        desc = kmalloc(sizeof(*desc) + crypto_shash_descsize(sha1_tfm), GFP_KERNEL);
++        if (!desc)
++        {
++            printk("failed to allocate shash_desc\n");
++            return OSAL_FAIL;
++        }
++        desc->tfm = sha1_tfm;
++        rc = crypto_shash_init(desc);
+         if(rc)
+         {
+             printk("crypto_shash_init failed\n");
++            kfree(desc);
+             return OSAL_FAIL;
+         }
+-        rc = crypto_shash_update(&desc.shash, in, SHA1_BLOCK_SIZE);
+-        sctx = (struct sha1_state*) desc.ctx;
++        rc = crypto_shash_update(desc, in, SHA1_BLOCK_SIZE);
++        sctx = (struct sha1_state*) shash_desc_ctx(desc);
+         memcpy(out, sctx->state, SHA1_DIGEST_SIZE);
++        kfree(desc);
+     }
+     else
+     {
+@@ -189,32 +205,37 @@ osalHashSHA1Full(UINT8 *in, UINT8 *out,
+     int rc = -1;
+     if(!IS_ERR(sha1_tfm))
+     {
+-        struct {
+-               struct shash_desc shash;
+-               char ctx[crypto_shash_descsize(sha1_tfm)];
+-        } desc;
++        struct shash_desc *desc;
+ 
+-        desc.shash.tfm = sha1_tfm;
+-        desc.shash.flags = 0x0;
+-        rc = crypto_shash_init(&desc.shash);
++        desc = kmalloc(sizeof(*desc) + crypto_shash_descsize(sha1_tfm), GFP_KERNEL);
++        if (!desc)
++        {
++            printk("failed to allocate shash_desc\n");
++            return OSAL_FAIL;
++        }
++        desc->tfm = sha1_tfm;
++        rc = crypto_shash_init(desc);
+         if(rc)
+         {
+             printk("crypto_shash_init failed\n");
++            kfree(desc);
+             return OSAL_FAIL;
+         }
+-        rc = crypto_shash_update(&desc.shash, in, len);
++        rc = crypto_shash_update(desc, in, len);
+         if(rc)
+         {
+             printk("crypto_shash_update failed\n");
++            kfree(desc);
+             return OSAL_FAIL;
+         }
+-
+-        crypto_shash_final(&desc.shash, out);
++        crypto_shash_final(desc, out);
+         if(rc)
+         {
+             printk("crypto_shash_final failed\n");
++            kfree(desc);
+             return OSAL_FAIL;
+         }
++        kfree(desc);
+     }
+     else
+     {
+@@ -240,22 +261,26 @@ osalHashSHA224(UINT8 *in,
+     if(!IS_ERR(sha224_tfm))
+     {
+         struct sha256_state *sctx = NULL;
+-        struct {
+-                struct shash_desc shash;
+-                char ctx[crypto_shash_descsize(sha224_tfm)];
+-        } desc;
++        struct shash_desc *desc;
+ 
+-        desc.shash.tfm = sha224_tfm;
+-        desc.shash.flags = 0x0;
+-        rc = crypto_shash_init(&desc.shash);
++        desc = kmalloc(sizeof(*desc) + crypto_shash_descsize(sha224_tfm), GFP_KERNEL);
++        if (!desc)
++        {
++            printk("failed to allocate shash_desc\n");
++            return OSAL_FAIL;
++        }
++        desc->tfm = sha224_tfm;
++        rc = crypto_shash_init(desc);
+         if(rc)
+         {
+             printk("crypto_shash_init failed\n");
++            kfree(desc);
+             return OSAL_FAIL;
+         }
+-        rc = crypto_shash_update(&desc.shash, in, SHA224_BLOCK_SIZE);
+-        sctx = (struct sha256_state*) desc.ctx;
++        rc = crypto_shash_update(desc, in, SHA224_BLOCK_SIZE);
++        sctx = (struct sha256_state*) shash_desc_ctx(desc);
+         memcpy(out, sctx->state, SHA256_DIGEST_SIZE);
++        kfree(desc);
+     }
+     else
+     {
+@@ -280,22 +305,26 @@ osalHashSHA256(UINT8 *in, UINT8 *out)
+     if(!IS_ERR(sha256_tfm))
+     {
+         struct sha256_state *sctx = NULL;
+-        struct {
+-                struct shash_desc shash;
+-                char ctx[crypto_shash_descsize(sha256_tfm)];
+-        } desc;
++        struct shash_desc *desc;
+ 
+-        desc.shash.tfm = sha256_tfm;
+-        desc.shash.flags = 0x0;
+-        rc = crypto_shash_init(&desc.shash);
++        desc = kmalloc(sizeof(*desc) + crypto_shash_descsize(sha256_tfm), GFP_KERNEL);
++        if (!desc)
++        {
++            printk("failed to allocate shash_desc\n");
++            return OSAL_FAIL;
++        }
++        desc->tfm = sha256_tfm;
++        rc = crypto_shash_init(desc);
+         if(rc)
+         {
+             printk("crypto_shash_init failed\n");
++            kfree(desc);
+             return OSAL_FAIL;
+         }
+-        rc = crypto_shash_update(&desc.shash, in, SHA256_BLOCK_SIZE);
+-        sctx = (struct sha256_state*) desc.ctx;
++        rc = crypto_shash_update(desc, in, SHA256_BLOCK_SIZE);
++        sctx = (struct sha256_state*) shash_desc_ctx(desc);
+         memcpy(out, sctx->state, SHA256_DIGEST_SIZE);
++        kfree(desc);
+     }
+     else
+     {
+@@ -318,33 +347,37 @@ osalHashSHA256Full(UINT8 *in, UINT8 *out
+     int rc = -1;
+     if(!IS_ERR(sha256_tfm))
+     {
+-        struct {
+-               struct shash_desc shash;
+-               char ctx[crypto_shash_descsize(sha256_tfm)];
+-        } desc;
+-
+-        desc.shash.tfm = sha256_tfm;
+-        desc.shash.flags = 0x0;
++        struct shash_desc *desc;
+ 
+-        rc = crypto_shash_init(&desc.shash);
++        desc = kmalloc(sizeof(*desc) + crypto_shash_descsize(sha256_tfm), GFP_KERNEL);
++        if (!desc)
++        {
++            printk("failed to allocate shash_desc\n");
++            return OSAL_FAIL;
++        }
++        desc->tfm = sha256_tfm;
++        rc = crypto_shash_init(desc);
+         if(rc)
+         {
+             printk("crypto_shash_init failed\n");
++            kfree(desc);
+             return OSAL_FAIL;
+         }
+-        rc = crypto_shash_update(&desc.shash, in, len);
++        rc = crypto_shash_update(desc, in, len);
+         if(rc)
+         {
+             printk("crypto_shash_update failed\n");
++            kfree(desc);
+             return OSAL_FAIL;
+         }
+-
+-        crypto_shash_final(&desc.shash, out);
++        crypto_shash_final(desc, out);
+         if(rc)
+         {
+             printk("crypto_shash_final failed\n");
++            kfree(desc);
+             return OSAL_FAIL;
+         }
++        kfree(desc);
+     }
+     else
+     {
+@@ -369,22 +402,26 @@ osalHashSHA384(UINT8 *in, UINT8 *out)
+     if(!IS_ERR(sha384_tfm))
+     {
+         struct sha512_state *sctx = NULL;
+-        struct {
+-                struct shash_desc shash;
+-                char ctx[crypto_shash_descsize(sha384_tfm)];
+-        } desc;
++        struct shash_desc *desc;
+ 
+-        desc.shash.tfm = sha384_tfm;
+-        desc.shash.flags = 0x0;
+-        rc = crypto_shash_init(&desc.shash);
++        desc = kmalloc(sizeof(*desc) + crypto_shash_descsize(sha384_tfm), GFP_KERNEL);
++        if (!desc)
++        {
++            printk("failed to allocate shash_desc\n");
++            return OSAL_FAIL;
++        }
++        desc->tfm = sha384_tfm;
++        rc = crypto_shash_init(desc);
+         if(rc)
+         {
+             printk("crypto_shash_init failed\n");
++            kfree(desc);
+             return OSAL_FAIL;
+         }
+-        rc = crypto_shash_update(&desc.shash, in, SHA384_BLOCK_SIZE);
+-        sctx = (struct sha512_state*) desc.ctx;
++        rc = crypto_shash_update(desc, in, SHA384_BLOCK_SIZE);
++        sctx = (struct sha512_state*) shash_desc_ctx(desc);
+         memcpy(out, sctx->state, SHA512_DIGEST_SIZE);
++        kfree(desc);
+     }
+     else
+     {
+@@ -407,32 +444,37 @@ osalHashSHA384Full(UINT8 *in, UINT8 *out
+     int rc = -1;
+     if(!IS_ERR(sha384_tfm))
+     {
+-        struct {
+-               struct shash_desc shash;
+-               char ctx[crypto_shash_descsize(sha384_tfm)];
+-        } desc;
++        struct shash_desc *desc;
+ 
+-        desc.shash.tfm = sha384_tfm;
+-        desc.shash.flags = 0x0;
+-        rc = crypto_shash_init(&desc.shash);
++        desc = kmalloc(sizeof(*desc) + crypto_shash_descsize(sha384_tfm), GFP_KERNEL);
++        if (!desc)
++        {
++            printk("failed to allocate shash_desc\n");
++            return OSAL_FAIL;
++        }
++        desc->tfm = sha384_tfm;
++        rc = crypto_shash_init(desc);
+         if(rc)
+         {
+             printk("crypto_shash_init failed\n");
++            kfree(desc);
+             return OSAL_FAIL;
+         }
+-        rc = crypto_shash_update(&desc.shash, in, len);
++        rc = crypto_shash_update(desc, in, len);
+         if(rc)
+         {
+             printk("crypto_shash_update failed\n");
++            kfree(desc);
+             return OSAL_FAIL;
+         }
+-
+-        crypto_shash_final(&desc.shash, out);
++        crypto_shash_final(desc, out);
+         if(rc)
+         {
+             printk("crypto_shash_final failed\n");
++            kfree(desc);
+             return OSAL_FAIL;
+         }
++        kfree(desc);
+     }
+     else
+     {
+@@ -456,22 +498,26 @@ osalHashSHA512(UINT8 *in, UINT8 *out)
+     if(!IS_ERR(sha512_tfm))
+     {
+         struct sha512_state *sctx = NULL;
+-        struct {
+-                struct shash_desc shash;
+-                char ctx[crypto_shash_descsize(sha512_tfm)];
+-        } desc;
++        struct shash_desc *desc;
+ 
+-        desc.shash.tfm = sha512_tfm;
+-        desc.shash.flags = 0x0;
+-        rc = crypto_shash_init(&desc.shash);
++        desc = kmalloc(sizeof(*desc) + crypto_shash_descsize(sha512_tfm), GFP_KERNEL);
++        if (!desc)
++        {
++            printk("failed to allocate shash_desc\n");
++            return OSAL_FAIL;
++        }
++        desc->tfm = sha512_tfm;
++        rc = crypto_shash_init(desc);
+         if(rc)
+         {
+             printk("crypto_shash_init failed\n");
++            kfree(desc);
+             return OSAL_FAIL;
+         }
+-        rc = crypto_shash_update(&desc.shash, in, SHA512_BLOCK_SIZE);
+-        sctx = (struct sha512_state*) desc.ctx;
++        rc = crypto_shash_update(desc, in, SHA512_BLOCK_SIZE);
++        sctx = (struct sha512_state*) shash_desc_ctx(desc);
+         memcpy(out, sctx->state, SHA512_DIGEST_SIZE);
++        kfree(desc);
+     }
+     else
+     {
+@@ -494,32 +540,37 @@ osalHashSHA512Full(UINT8 *in, UINT8 *out
+     int rc = -1;
+     if(!IS_ERR(sha512_tfm))
+     {
+-        struct {
+-               struct shash_desc shash;
+-               char ctx[crypto_shash_descsize(sha512_tfm)];
+-        } desc;
++        struct shash_desc *desc;
+ 
+-        desc.shash.tfm = sha512_tfm;
+-        desc.shash.flags = 0x0;
+-        rc = crypto_shash_init(&desc.shash);
++        desc = kmalloc(sizeof(*desc) + crypto_shash_descsize(sha512_tfm), GFP_KERNEL);
++        if (!desc)
++        {
++            printk("failed to allocate shash_desc\n");
++            return OSAL_FAIL;
++        }
++        desc->tfm = sha512_tfm;
++        rc = crypto_shash_init(desc);
+         if(rc)
+         {
+             printk("crypto_shash_init failed\n");
++            kfree(desc);
+             return OSAL_FAIL;
+         }
+-        rc = crypto_shash_update(&desc.shash, in, len);
++        rc = crypto_shash_update(desc, in, len);
+         if(rc)
+         {
+             printk("crypto_shash_update failed\n");
++            kfree(desc);
+             return OSAL_FAIL;
+         }
+-
+-        crypto_shash_final(&desc.shash, out);
++        crypto_shash_final(desc, out);
+         if(rc)
+         {
+             printk("crypto_shash_final failed\n");
++            kfree(desc);
+             return OSAL_FAIL;
+         }
++        kfree(desc);
+     }
+     else
+     {

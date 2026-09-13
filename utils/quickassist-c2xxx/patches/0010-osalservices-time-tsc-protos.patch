@@ -1,0 +1,60 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] osalservices time tsc protos
+
+Index: src/quickassist/utilities/osal/include/Osal.h
+===================================================================
+--- src.orig/quickassist/utilities/osal/include/Osal.h
++++ src/quickassist/utilities/osal/include/Osal.h
+@@ -653,6 +653,9 @@ osalMemSet (void *ptr, UINT8 filler, UIN
+  *  Time
+  *****************************/
+ 
++int __init osal_init(void);
++void osal_exit(void);
++
+ /* Retrieve current system time */
+ OSAL_PUBLIC OSAL_STATUS
+ osalTimeGet (OsalTimeval * pTime);
+Index: src/quickassist/utilities/osal/src/linux/kernel_space/OsalServices.c
+===================================================================
+--- src.orig/quickassist/utilities/osal/src/linux/kernel_space/OsalServices.c
++++ src/quickassist/utilities/osal/src/linux/kernel_space/OsalServices.c
+@@ -30,6 +30,7 @@
+  *  version: QAT1.5.L.1.13.0-19
+  */
+ #include "Osal.h"
++#include <linux/timekeeping.h>
+ #include "OsalOsTypes.h"
+ #include "OsalDevDrv.h"
+ 
+@@ -422,16 +423,11 @@ osalTimeGet (OsalTimeval * pTime)
+      * -- time_t   (type long, second)
+      * -- suseconds_t (type long, usecond)
+      */
+-    struct timeval _pTime;
++    struct timespec64 _pTime;
+ 
+-    do_gettimeofday (&_pTime);
+-    /*
+-     * Translate microsecond to nanosecond,
+-     * second field is identical so no translation
+-     * there.
+-     */
++    ktime_get_real_ts64(&_pTime);
+     pTime->secs = _pTime.tv_sec;
+-    pTime->nsecs = _pTime.tv_usec * OSAL_THOUSAND;
++    pTime->nsecs = _pTime.tv_nsec;
+     return OSAL_SUCCESS;
+ }
+ 
+@@ -473,7 +469,7 @@ osalTimestampGet (void)
+ {
+     UINT64 timestamp;
+     /* Read the 64-bit LSB of the time stamp counter */
+-    rdtscll(timestamp);
++    timestamp = rdtsc();
+     return (timestamp);
+ }
+ 

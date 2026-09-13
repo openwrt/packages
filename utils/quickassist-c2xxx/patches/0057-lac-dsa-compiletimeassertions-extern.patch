@@ -1,0 +1,31 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] lac dsa compiletimeassertions extern
+
+Index: src/quickassist/lookaside/access_layer/src/common/crypto/asym/dsa/lac_dsa.c
+===================================================================
+--- src.orig/quickassist/lookaside/access_layer/src/common/crypto/asym/dsa/lac_dsa.c
++++ src/quickassist/lookaside/access_layer/src/common/crypto/asym/dsa/lac_dsa.c
+@@ -3161,6 +3161,8 @@ LacDsa_Init(CpaInstanceHandle instanceHa
+         LAC_DSA_STATS_INIT(pCryptoService);
+     }
+ 
++    extern void LacDsa_CompileTimeAssertions(void);
++
+    /* Call compile time param check function to ensure it is included
+       in the build by the compiler */
+     LacDsa_CompileTimeAssertions();
+Index: src/quickassist/lookaside/access_layer/src/common/crypto/asym/dsa/lac_dsa_interface_check.c
+===================================================================
+--- src.orig/quickassist/lookaside/access_layer/src/common/crypto/asym/dsa/lac_dsa_interface_check.c
++++ src/quickassist/lookaside/access_layer/src/common/crypto/asym/dsa/lac_dsa_interface_check.c
+@@ -90,6 +90,8 @@
+         switch(0){case 0: case pred:;}
+ 
+ 
++extern void LacDsa_CompileTimeAssertions(void);
++
+ void LacDsa_CompileTimeAssertions(void)
+ {
+     /* *************************************************************

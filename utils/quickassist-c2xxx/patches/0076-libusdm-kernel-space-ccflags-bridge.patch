@@ -1,0 +1,22 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] libusdm kernel space ccflags bridge
+
+Index: src/quickassist/utilities/libusdm_drv/linux/Makefile
+===================================================================
+--- src.orig/quickassist/utilities/libusdm_drv/linux/Makefile
++++ src/quickassist/utilities/libusdm_drv/linux/Makefile
+@@ -163,6 +163,12 @@ ifeq ($(OS),linux)
+ # path and breaking kernel_space/qae_mem_utils.c on toolchains that do not
+ # happen to find it some other way.
+ EXTRA_CFLAGS+=$(INCLUDES) -Werror -ftree-ter
++# Modern Kbuild (~6.13+) no longer folds the legacy EXTRA_CFLAGS name
++# into ccflags-y automatically (see the same fix already applied in
++# quickassist/build_system/build_files/env_files/linux_2.6_kernel_space.mk,
++# which this Makefile does not include for the OS=linux kernel-space
++# case above) - bridge it explicitly here too.
++ccflags-y += $(EXTRA_CFLAGS)
+ obj-m+=$(OUTPUT_NAME).o
+ $(OUTPUT_NAME)-objs :=$(patsubst %.c,%.o, $(MODULE_SOURCES)) $(ADDITIONAL_KERNEL_LIBS)
+ lib-m := $(patsubst %.c,%.o, $(SOURCES)) $(patsubst %.S,%.o, $(ASM_SOURCES))

@@ -1,0 +1,17 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] adf c2xxx fallthrough
+
+Index: src/quickassist/adf/platform/ACCELDEV/src/adf_c2xxx_hw_data.c
+===================================================================
+--- src.orig/quickassist/adf/platform/ACCELDEV/src/adf_c2xxx_hw_data.c
++++ src/quickassist/adf/platform/ACCELDEV/src/adf_c2xxx_hw_data.c
+@@ -249,6 +249,7 @@ adf_c2xxx_getDevSKU(Cpa32U NumAccelerato
+             {
+                 return DEV_SKU_2;
+             }
++            fallthrough;
+         case ICP_C2XXX_MAX_ACCELENGINES:
+             return DEV_SKU_1;
+         default:

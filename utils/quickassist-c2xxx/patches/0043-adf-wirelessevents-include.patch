@@ -1,0 +1,17 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] adf wirelessevents include
+
+Index: src/quickassist/adf/wireless/src/adf_wireless_events.c
+===================================================================
+--- src.orig/quickassist/adf/wireless/src/adf_wireless_events.c
++++ src/quickassist/adf/wireless/src/adf_wireless_events.c
+@@ -76,6 +76,7 @@
+ #include "adf_cfg.h"
+ #include "adf_platform.h"
+ #include "adf_wireless.h"
++#include "adf_wireless_events.h"
+ #include "Osal.h"
+ 
+ /*

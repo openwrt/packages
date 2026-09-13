@@ -1,0 +1,23 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] libusdm fix mangled extra cflags includes
+
+Index: src/quickassist/utilities/libusdm_drv/linux/Makefile
+===================================================================
+--- src.orig/quickassist/utilities/libusdm_drv/linux/Makefile
++++ src/quickassist/utilities/libusdm_drv/linux/Makefile
+@@ -157,7 +157,12 @@ export OUTPUT_NAME
+ #kernel space rules here
+ #produce two artefacts: module and static library and copy them
+ ifeq ($(OS),linux)
+-EXTRA_CFLAGS+=-I$(INCLUDES) -Werror -ftree-ter
++# $(INCLUDES) already expands to a list of "-I..." flags (see above); the
++# extra "-I" prefix here mangled the first one into "-I-I<path>", silently
++# dropping the libusdm_drv root (where qae_mem.h lives) from the search
++# path and breaking kernel_space/qae_mem_utils.c on toolchains that do not
++# happen to find it some other way.
++EXTRA_CFLAGS+=$(INCLUDES) -Werror -ftree-ter
+ obj-m+=$(OUTPUT_NAME).o
+ $(OUTPUT_NAME)-objs :=$(patsubst %.c,%.o, $(MODULE_SOURCES)) $(ADDITIONAL_KERNEL_LIBS)
+ lib-m := $(patsubst %.c,%.o, $(SOURCES)) $(patsubst %.S,%.o, $(ASM_SOURCES))

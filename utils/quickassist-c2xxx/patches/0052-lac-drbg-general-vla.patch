@@ -1,0 +1,46 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] lac drbg general vla
+
+Index: src/quickassist/lookaside/access_layer/src/common/crypto/sym/drbg/lac_sym_drbg_general.c
+===================================================================
+--- src.orig/quickassist/lookaside/access_layer/src/common/crypto/sym/drbg/lac_sym_drbg_general.c
++++ src/quickassist/lookaside/access_layer/src/common/crypto/sym/drbg/lac_sym_drbg_general.c
+@@ -101,6 +101,7 @@
+ #include "lac_sal_types_crypto.h"
+ #include "sal_statistics.h"
+ #include "lac_sym_drbg.h"
++#include "lac_mem.h"
+ 
+ /* Authentication key used for AES CBC MAC operation in BCC function;
+  * depending on implementation it is used either in full or only first
+@@ -537,7 +538,10 @@ LacDrbg_InitSymSession(sal_crypto_servic
+ #if defined(__INTEL_COMPILER) && (__INTEL_COMPILER < 1300)
+ #pragma warning(enable)
+ #endif
+-    Cpa8U key[pInternalState->nImplKeyLen];
++    Cpa8U *key = NULL;
++
++    status = LAC_OS_MALLOC(&key, pInternalState->nImplKeyLen);
++    LAC_CHECK_STATUS(status);
+ 
+     /* Prepare session setup data */
+ 
+@@ -578,6 +582,7 @@ LacDrbg_InitSymSession(sal_crypto_servic
+     if (physAddress == 0)
+     {
+         LAC_LOG_ERROR("Unable to get the physical address of the session\n");
++        LAC_OS_FREE(key);
+         return CPA_STATUS_FAIL;
+     }
+ 
+@@ -617,6 +622,8 @@ LacDrbg_InitSymSession(sal_crypto_servic
+     status = LacAlgChain_SessionInit((CpaInstanceHandle)pService,
+                 &sessionSetupData, pSessionDesc);
+ 
++    LAC_OS_FREE(key);
++
+     return status;
+ }
+ 

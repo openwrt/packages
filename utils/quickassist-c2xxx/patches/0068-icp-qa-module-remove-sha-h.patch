@@ -1,0 +1,17 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] icp qa module remove sha h
+
+Index: src/quickassist/lookaside/access_layer/src/linux/icp_qa_module.c
+===================================================================
+--- src.orig/quickassist/lookaside/access_layer/src/linux/icp_qa_module.c
++++ src/quickassist/lookaside/access_layer/src/linux/icp_qa_module.c
+@@ -78,7 +78,6 @@
+ #include <linux/crypto.h>
+ #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,28))
+ #include <crypto/hash.h>
+-#include <crypto/sha.h>
+ #endif   /* End of check for KERNEL_VERSION(2,6,28) */
+ #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,34))
+ #include <crypto/md5.h>

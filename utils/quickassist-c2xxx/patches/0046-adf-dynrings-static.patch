@@ -1,0 +1,18 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] adf dynrings static
+
+Index: src/quickassist/adf/dyn/src/adf_dyn_rings.c
+===================================================================
+--- src.orig/quickassist/adf/dyn/src/adf_dyn_rings.c
++++ src/quickassist/adf/dyn/src/adf_dyn_rings.c
+@@ -94,7 +94,7 @@ STATIC dyn_dc_instance_t *dc_instance_ta
+ /*
+  * Dummy kernelspace callback for dyn rings
+  */
+-void adf_dyn_dummy_callback(icp_comms_trans_handle comms_handle, void *pMsg)
++static void adf_dyn_dummy_callback(icp_comms_trans_handle comms_handle, void *pMsg)
+ {
+         /* The real callback lives in dyn */
+         return;

@@ -1,0 +1,17 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] lac rsa stats include
+
+Index: src/quickassist/lookaside/access_layer/src/common/crypto/asym/rsa/lac_rsa_stats.c
+===================================================================
+--- src.orig/quickassist/lookaside/access_layer/src/common/crypto/asym/rsa/lac_rsa_stats.c
++++ src/quickassist/lookaside/access_layer/src/common/crypto/asym/rsa/lac_rsa_stats.c
+@@ -110,6 +110,7 @@
+ #include "lac_rsa_p.h"
+ #include "sal_statistics.h"
+ #include "lac_rsa_stats_p.h"
++#include "lac_hooks.h"
+ 
+ /* Number of RSA statistics */
+ #define LAC_RSA_NUM_STATS (sizeof(CpaCyRsaStats64) / sizeof(Cpa64U))

@@ -1,0 +1,36 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] adf sriov fixes
+
+Index: src/quickassist/adf/drivers/ACCELDEV/linux/src/adf_acceldev_sriov_drv.c
+===================================================================
+--- src.orig/quickassist/adf/drivers/ACCELDEV/linux/src/adf_acceldev_sriov_drv.c
++++ src/quickassist/adf/drivers/ACCELDEV/linux/src/adf_acceldev_sriov_drv.c
+@@ -81,6 +81,7 @@
+ #include "adf_platform.h"
+ #include "adf_ETring_ap.h"
+ #include "adf_drv_sriov.h"
++#include "adf_drv.h"
+ #include "adf_init.h"
+ 
+ #define RESTARTING_MAX_LOOPS  1000
+@@ -91,7 +92,7 @@ static struct workqueue_struct *ring_inf
+ #endif
+ 
+ #if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,35)
+-static DEFINE_SEMAPHORE(ring_info_sema);
++static DEFINE_SEMAPHORE(ring_info_sema, 1);
+ #else
+ static DECLARE_MUTEX(ring_info_sema);
+ #endif
+@@ -654,6 +655,9 @@ void adf_disable_sriov(icp_accel_dev_t *
+         }
+ }
+ 
++extern int adf_init_sriov(void);
++extern void adf_exit_sriov(void);
++
+ int adf_init_sriov(void)
+ {
+         spin_lock_init(&lock);

@@ -1,0 +1,18 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] adf chrdrv class create
+
+Index: src/quickassist/adf/drivers/common/linux/src/adf_chr_drv.c
+===================================================================
+--- src.orig/quickassist/adf/drivers/common/linux/src/adf_chr_drv.c
++++ src/quickassist/adf/drivers/common/linux/src/adf_chr_drv.c
+@@ -141,7 +141,7 @@ int adf_chr_drv_create(adf_chr_drv_info_
+                 return FAIL;
+         }
+ 
+-        drv_info->drv_class = class_create(drv_info->owner, drv_info->name);
++        drv_info->drv_class = class_create(drv_info->name);
+         if (IS_ERR(drv_info->drv_class)) {
+                 ADF_ERROR("class_create failed for device: %s\n",
+                               drv_info->name);

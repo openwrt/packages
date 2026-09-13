@@ -1,0 +1,22 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] inflate fallthrough pragma
+
+Index: src/quickassist/utilities/osal/src/linux/kernel_space/osalzlib/inflate.c
+===================================================================
+--- src.orig/quickassist/utilities/osal/src/linux/kernel_space/osalzlib/inflate.c
++++ src/quickassist/utilities/osal/src/linux/kernel_space/osalzlib/inflate.c
+@@ -79,6 +79,12 @@
+ #include "inflate.h"
+ #include "inffast.h"
+ 
++/* Vendored, unmodified zlib inflate() state machine intentionally falls
++ * through between case labels (this is the whole point of the design) -
++ * silence the warning for this one imported file rather than annotating
++ * ~18 individual sites in upstream Mark Adler zlib code. */
++#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
++
+ #ifdef MAKEFIXED
+ #  ifndef BUILDFIXED
+ #    define BUILDFIXED

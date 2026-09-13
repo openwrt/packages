@@ -1,0 +1,35 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] adf devprocesses fixes
+
+Index: src/quickassist/adf/drivers/common/linux/src/adf_dev_processes.c
+===================================================================
+--- src.orig/quickassist/adf/drivers/common/linux/src/adf_dev_processes.c
++++ src/quickassist/adf/drivers/common/linux/src/adf_dev_processes.c
+@@ -80,6 +80,7 @@
+ #include "icp_adf_cfg.h"
+ #include "icp_adf_init.h"
+ #include "adf_init.h"
++#include "adf_ctl_drv.h"
+ #include <linux/list.h>
+ 
+ #define ADF_DEV_PROCESSES_NAME             ("icp_dev_processes")
+@@ -151,7 +152,7 @@ STATIC LIST_HEAD(processes_list);
+  * Mutex guarding the list of processes connected to the driver
+  */
+ #if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,35)
+-static DEFINE_SEMAPHORE(processes_list_sema);
++static DEFINE_SEMAPHORE(processes_list_sema, 1);
+ #else
+ static DECLARE_MUTEX(processes_list_sema);
+ #endif
+@@ -160,7 +161,7 @@ static DECLARE_MUTEX(processes_list_sema
+  * adf_processes_chrdev_unregister
+  * Function unregisters character device interface
+  */
+-void adf_processes_chrdev_unregister(void)
++static void adf_processes_chrdev_unregister(void)
+ {
+         adf_chr_drv_destroy(&adf_processes_drv_info);
+ }

@@ -1,0 +1,18 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] cmn user drop clean prereq
+
+Index: src/quickassist/Makefile
+===================================================================
+--- src.orig/quickassist/Makefile
++++ src/quickassist/Makefile
+@@ -129,7 +129,7 @@ install_scripts:
+ #
+ 
+ #userspace common memory library
+-cmn_user: clean output_dir lac_lib_dir
++cmn_user: output_dir lac_lib_dir
+ 	@echo ; echo 'Building common mem driver for user space';
+ 	@cd $(CMN_MEM_PATH) && $(MAKE) ARCH=$(ICP_ARCH_USER) ICP_ENV_DIR=$(ICP_TOP_ENV) OS=linux ICP_OS?=linux_2.6 ICP_OS_LEVEL=user_space CPM_UPSTREAM=1 cm_user;\
+ 	echo ; echo 'Copying Common mem library';

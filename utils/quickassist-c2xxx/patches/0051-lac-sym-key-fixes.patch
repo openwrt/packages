@@ -1,0 +1,53 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] lac sym key fixes
+
+Index: src/quickassist/lookaside/access_layer/src/common/crypto/sym/key/lac_sym_key.c
+===================================================================
+--- src.orig/quickassist/lookaside/access_layer/src/common/crypto/sym/key/lac_sym_key.c
++++ src/quickassist/lookaside/access_layer/src/common/crypto/sym/key/lac_sym_key.c
+@@ -98,6 +98,7 @@
+ #include "lac_sym_qat_key.h"
+ #include "lac_sym_hash_defs.h"
+ #include "sal_statistics.h"
++#include "lac_hooks.h"
+ 
+ /* Number of statistics */
+ #define LAC_KEY_NUM_STATS (sizeof(CpaCyKeyGenStats64) / sizeof(Cpa64U))
+@@ -205,7 +206,7 @@ LacSymKey_SslTlsSync(CpaInstanceHandle i
+  * @param[in] instanceHandle_in        user supplied handle.
+  * @retval    CpaInstanceHandle        the instance handle
+  */
+-CpaInstanceHandle
++static CpaInstanceHandle
+ LacKey_GetHandle(CpaInstanceHandle instanceHandle_in)
+ {
+     CpaInstanceHandle instanceHandle = NULL;
+@@ -1512,7 +1513,7 @@ LacSymKey_KeyGenSslTls_GenCommon(CpaInst
+                 0, /* auth len*/
+                 CPA_FALSE,
+                 NULL,
+-                CPA_CY_SYM_OP_NONE /* hash Algorithm */);
++                CPA_CY_SYM_HASH_NONE /* hash Algorithm */);
+         /* Set up the labels and their length */
+         if (CPA_CY_KEY_TLS_OP_USER_DEFINED == pKeyGenTlsOpData->tlsOp)
+         {
+@@ -1959,7 +1960,7 @@ cpaCyKeyGenSsl(const CpaInstanceHandle i
+         pKeyGenCb,
+         pCallbackTag,
+         LAC_CONST_PTR_CAST(pKeyGenSslOpData),
+-        CPA_CY_SYM_OP_NONE, /* hashAlgorithm */
++        CPA_CY_SYM_HASH_NONE, /* hashAlgorithm */
+         pGeneratedKeyBuffer,
+         ICP_QAT_FW_LA_CMD_SSL3_KEY_DERIVE);
+ }
+@@ -2030,7 +2031,7 @@ cpaCyKeyGenTls(const CpaInstanceHandle i
+                     pKeyGenCb,
+                     pCallbackTag,
+                     LAC_CONST_PTR_CAST(pKeyGenTlsOpData),
+-                    CPA_CY_SYM_OP_NONE, /* hashAlgorithm */
++                    CPA_CY_SYM_HASH_NONE, /* hashAlgorithm */
+                     pGeneratedKeyBuffer,
+                     ICP_QAT_FW_LA_CMD_TLS_V1_1_KEY_DERIVE);
+ }

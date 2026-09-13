@@ -1,0 +1,47 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] lac drbg ht tests fixes
+
+Index: src/quickassist/lookaside/access_layer/src/common/crypto/sym/drbg/drbg_ht/lac_sym_drbg_ht_tests.c
+===================================================================
+--- src.orig/quickassist/lookaside/access_layer/src/common/crypto/sym/drbg/drbg_ht/lac_sym_drbg_ht_tests.c
++++ src/quickassist/lookaside/access_layer/src/common/crypto/sym/drbg/drbg_ht/lac_sym_drbg_ht_tests.c
+@@ -120,22 +120,26 @@ STATIC CpaStatus
+ LacDrbg_HTRemoveSession(const CpaInstanceHandle instanceHandle_in,
+         CpaCyDrbgSessionHandle sessionHandle);
+ 
++extern int lacSymDrbgLock_init(void);
++
+ int lacSymDrbgLock_init(void)
+ {
+     return osalMutexInit(&lock);
+ }
+ 
++extern void lacSymDrbgLock_exit(void);
++
+ void lacSymDrbgLock_exit(void)
+ {
+     osalMutexDestroy(&lock);
+ }
+ 
+-int lacSymDrbgLock_lock(void)
++static int lacSymDrbgLock_lock(void)
+ {
+     return osalMutexLock(&lock, OSAL_WAIT_FOREVER);
+ }
+ 
+-void lacSymDrbgLock_unlock(void)
++static void lacSymDrbgLock_unlock(void)
+ {
+     osalMutexUnlock(&lock);
+ }
+@@ -867,7 +871,7 @@ LacDrbg_TestGenGetEntropyInput(IcpSalDrb
+  * @return CPA_STATUS_SUCCESS         Operation successful
+  *
+  *****************************************************************************/
+-CpaStatus
++static CpaStatus
+ LacDrbg_TestGenGetNonce(
+         icp_sal_drbg_get_entropy_op_data_t *pOpData,
+         CpaFlatBuffer *pBuffer,
