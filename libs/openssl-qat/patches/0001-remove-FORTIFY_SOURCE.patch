@@ -1,0 +1,26 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] remove FORTIFY_SOURCE
+
+Index: src/configure.ac
+===================================================================
+--- src.orig/configure.ac
++++ src/configure.ac
+@@ -554,13 +554,13 @@ case "$host_os" in
+ *linux*)
+   if test "`cc --version | head -1 | awk '{print $3>=4.9}' 2>/dev/null`" = "1"
+   then
+-    AC_ARG_WITH(cflags, AS_HELP_STRING(), , cflags="-shared -fPIC -Wall -Wformat -Wformat-security -O2 -D_FORTIFY_SOURCE=2 -fno-delete-null-pointer-checks -fwrapv -fstack-protector-strong -fno-strict-overflow")
++    AC_ARG_WITH(cflags, AS_HELP_STRING(), , cflags="-shared -fPIC -Wall -Wformat -Wformat-security -O2 -fno-delete-null-pointer-checks -fwrapv -fno-strict-overflow")
+   else
+-    AC_ARG_WITH(cflags, AS_HELP_STRING(), , cflags="-shared -fPIC -Wall -Wformat -Wformat-security -O2 -D_FORTIFY_SOURCE=2 -fno-delete-null-pointer-checks -fwrapv -fstack-protector -fno-strict-overflow")
++    AC_ARG_WITH(cflags, AS_HELP_STRING(), , cflags="-shared -fPIC -Wall -Wformat -Wformat-security -O2 -fno-delete-null-pointer-checks -fwrapv -fno-strict-overflow")
+   fi
+ ;;
+ *freebsd*)
+-    AC_ARG_WITH(cflags, AS_HELP_STRING(), , cflags="-shared -fPIC -Wall -Wformat -Wformat-security -O2 -D_FORTIFY_SOURCE=2 -fno-delete-null-pointer-checks -fwrapv -fstack-protector-strong")
++    AC_ARG_WITH(cflags, AS_HELP_STRING(), , cflags="-shared -fPIC -Wall -Wformat -Wformat-security -O2 -fno-delete-null-pointer-checks -fwrapv -fstack-protector-strong")
+ ;;
+ *) ;;
+ esac

@@ -1,0 +1,54 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] rsa remove sslv23 padding
+
+Index: src/qat_rsa.c
+===================================================================
+--- src.orig/qat_rsa.c
++++ src/qat_rsa.c
+@@ -420,7 +420,6 @@ build_decrypt_op_buf(int flen, const uns
+     if ((padding != RSA_NO_PADDING) &&
+         (padding != RSA_PKCS1_PADDING) &&
+         (padding != RSA_PKCS1_OAEP_PADDING) &&
+-        (padding != RSA_SSLV23_PADDING) &&
+         (padding != RSA_X931_PADDING)) {
+         WARN("Unknown Padding %d\n", padding);
+         QATerr(QAT_F_BUILD_DECRYPT_OP_BUF, QAT_R_PADDING_UNKNOWN);
+@@ -769,8 +768,7 @@ build_encrypt_op_buf(int flen, const uns
+     if ((padding != RSA_NO_PADDING) &&
+         (padding != RSA_PKCS1_PADDING) &&
+         (padding != RSA_PKCS1_OAEP_PADDING) &&
+-        (padding != RSA_X931_PADDING) &&
+-        (padding != RSA_SSLV23_PADDING)) {
++        (padding != RSA_X931_PADDING)) {
+         WARN("Unknown Padding %d\n", padding);
+         QATerr(QAT_F_BUILD_ENCRYPT_OP_BUF, QAT_R_UNKNOWN_PADDING);
+         return 0;
+@@ -830,11 +828,6 @@ build_encrypt_op_buf(int flen, const uns
+                 RSA_padding_add_PKCS1_OAEP((*enc_op_data)->inputData.pData,
+                                            rsa_len, from, flen, NULL, 0);
+             break;
+-        case RSA_SSLV23_PADDING:
+-            padding_result =
+-                RSA_padding_add_SSLv23((*enc_op_data)->inputData.pData,
+-                                       rsa_len, from, flen);
+-            break;
+         case RSA_NO_PADDING:
+             padding_result =
+                 RSA_padding_add_none((*enc_op_data)->inputData.pData,
+@@ -1142,14 +1135,6 @@ int qat_rsa_priv_dec(int flen, const uns
+                                          NULL,
+                                          0);
+         break;
+-    case RSA_SSLV23_PADDING:
+-        output_len =
+-            RSA_padding_check_SSLv23(to,
+-                                     rsa_len,
+-                                     output_buffer->pData,
+-                                     output_buffer->dataLenInBytes,
+-                                     rsa_len);
+-        break;
+     case RSA_NO_PADDING:
+         output_len =
+             RSA_padding_check_none(to,
