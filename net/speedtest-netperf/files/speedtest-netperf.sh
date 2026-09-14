@@ -32,20 +32,22 @@
 # For more information, consult the online README.md:
 # https://github.com/openwrt/packages/blob/master/net/speedtest-netperf/files/README.md
 
-# Usage: speedtest-netperf.sh [-4 | -6] [ -H netperf-server ] [ -t duration ] [ -p host-to-ping ] [ -n simultaneous-streams ] [ -s | -c [duration] ] [ -i [duration] ]
+# Usage: speedtest-netperf.sh [-4 | -6] [ -H netperf-server ] [ -t duration ] [ -p host-to-ping ] [ -n simultaneous-streams ] [ -s | -c [duration] ] [ -i [duration] ] [ -Z passphrase ]
 
 # Options: If options are present:
 #
-# -H | --host:   netperf server name or IP (default netperf.bufferbloat.net)
-#                Alternate servers are netperf-east (east coast US),
-#                netperf-west (California), and netperf-eu (Denmark)
-# -4 | -6:       Enable ipv4 or ipv6 testing (ipv4 is the default)
-# -t | --time:   Duration of each direction's test - (default - 30 seconds)
-# -p | --ping:   Host to ping to measure latency (default - one.one.one.one)
-# -n | --number: Number of simultaneous streams (default - 5 streams)
-#                based on whether concurrent or sequential upload/downloads)
-# -s | -c:       Sequential or concurrent download/upload (default - disabled)
-# -i | --idle:   Measure idle latency before speed test (default - disabled)
+# -H | --host:       netperf server name or IP (default netperf.bufferbloat.net)
+#                    Alternate servers are netperf-east (east coast US),
+#                    netperf-west (California), and netperf-eu (Denmark)
+# -4 | -6:           Enable ipv4 or ipv6 testing (ipv4 is the default)
+# -t | --time:       Duration of each direction's test - (default - 30 seconds)
+# -p | --ping:       Host to ping to measure latency (default - one.one.one.one)
+# -n | --number:     Number of simultaneous streams (default - 5 streams)
+#                    based on whether concurrent or sequential upload/downloads)
+# -s | -c:           Sequential or concurrent download/upload (default - disabled)
+# -i | --idle:       Measure idle latency before speed test (default - disabled)
+# -Z | --passphrase: Passphrase to access host. (default - none)
+#                    See http://netperf.bufferbloat.net for passphrase.
 
 # Copyright (c) 2014 - Rich Brown <rich.brown@blueberryhillsoftware.com>
 # Copyright (c) 2018-2024 - Tony Ambardar <itugrok@yahoo.com>
@@ -188,7 +190,7 @@ print_dots() {
 
 start_netperf() {
 	for i in $( seq $MAXSTREAMS ); do
-		netperf $TESTPROTO -H $TESTHOST -t $1 -l $SPEEDDUR -v 0 -P 0 >> $2 &
+		netperf $TESTPROTO -H $TESTHOST -t $1 -l $SPEEDDUR -v 0 -P 0 ${PASSPHRASE:+-Z "$PASSPHRASE"} >> $2 &
 #		echo "Starting PID $! params: $TESTPROTO -H $TESTHOST -t $1 -l $SPEEDDUR -v 0 -P 0 >> $2"
 	done
 }
@@ -354,8 +356,14 @@ measure_direction() {
 	if ! wait_netperf; then
 		echo
 		echo "WARNING: Results may be inaccurate since 'netperf' returned errors."
+		if [ -z "$PASSPHRASE" ]; then
+			echo ""
+			echo "         The server may require a passphrase."
+			echo "         See http://$TESTHOST"
+			echo ""
+		fi
 		echo "         Run directly for more details:"
-		echo "         netperf $TESTPROTO -H $TESTHOST"
+		echo "         netperf $TESTPROTO -H $TESTHOST ${PASSPHRASE:+-Z "$PASSPHRASE"}"
 	fi
 
 	# When netperf completes, stop the CPU monitor, dots and pings
@@ -387,9 +395,10 @@ measure_direction() {
 
 print_usage() {
 	echo \
-"Usage: speedtest-netperf.sh [ -H netperf-server ] [ -p host-to-ping ] [-4 | -6]
-                            [ -i [duration] ] [ -s | -c [duration] ]
-                            [ -t duration ] [ -n simultaneous-streams ]"
+"Usage: speedtest-netperf.sh [ -H netperf-server ] [ -p host-to-ping ]
+                            [-4 | -6] [ -i [duration] ]
+                            [ -s | -c [duration] ] [ -t duration ]
+                            [ -n simultaneous-streams ] [ -Z passphrase ]"
 }
 
 is_number() {
@@ -410,6 +419,7 @@ TESTSPEED=0
 SPEEDDUR="30"
 TESTIDLE=0
 IDLEDUR="30"
+PASSPHRASE=""
 
 # Clear temp files
 DLFILE=
@@ -448,6 +458,11 @@ do
 		-n|--number)
 			is_number $2 || { echo "Missing number of streams" ; exit 1 ; }
 			MAXSTREAMS=$2 ; shift 2 ;;
+		-Z|--passphrase)	
+			case "$2" in 
+				"") echo "Missing passphrase" ; exit 1 ;;
+				*) PASSPHRASE="$2" ; shift 2 ;;
+			esac ;;
 		--) shift ; break ;;
 		*) print_usage ; exit 1 ;;
 	esac
