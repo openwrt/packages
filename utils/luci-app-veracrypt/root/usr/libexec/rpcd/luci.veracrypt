@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-only
 # rpcd backend for luci-app-veracrypt (veracrypt --text --non-interactive)
 
 . /usr/share/libubox/jshn.sh

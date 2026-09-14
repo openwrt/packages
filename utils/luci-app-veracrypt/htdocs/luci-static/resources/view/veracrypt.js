@@ -1,4 +1,5 @@
 'use strict';
+/* SPDX-License-Identifier: GPL-2.0-only */
 'require view';
 'require form';
 'require uci';
