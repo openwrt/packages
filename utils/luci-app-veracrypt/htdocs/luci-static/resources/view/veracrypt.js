@@ -17,6 +17,24 @@ var callListDev = rpc.declare({
 	method: 'listdev'
 });
 
+var callListDir = rpc.declare({
+	object: 'luci.veracrypt',
+	method: 'listdir',
+	params: [ 'path' ]
+});
+
+var callMkdir = rpc.declare({
+	object: 'luci.veracrypt',
+	method: 'mkdir',
+	params: [ 'path' ]
+});
+
+var callRm = rpc.declare({
+	object: 'luci.veracrypt',
+	method: 'rm',
+	params: [ 'path', 'recursive' ]
+});
+
 var RUN_PARAMS = [
 	'action', 'name', 'volume', 'mountpoint', 'password', 'new_password',
 	'pim', 'new_pim', 'hash', 'new_hash', 'encryption', 'filesystem',
@@ -63,6 +81,16 @@ function callJobWithTimeout() {
 var callTools = rpc.declare({
 	object: 'luci.veracrypt',
 	method: 'tools'
+});
+
+var callJobLog = rpc.declare({
+	object: 'luci.veracrypt',
+	method: 'job_log'
+});
+
+var callJobAbort = rpc.declare({
+	object: 'luci.veracrypt',
+	method: 'job_abort'
 });
 
 var callJobAnswer = rpc.declare({
@@ -137,15 +165,81 @@ function toolsReady(t, fs) {
 	return true;
 }
 
+function setLogText(logEl, text) {
+	if (!logEl)
+		return;
+	var nearBottom = (logEl.scrollHeight - logEl.scrollTop - logEl.clientHeight) < 48;
+	logEl.textContent = text || '';
+	if (nearBottom)
+		logEl.scrollTop = logEl.scrollHeight;
+}
+
+function copyText(text) {
+	text = text || '';
+	if (navigator.clipboard && navigator.clipboard.writeText)
+		return navigator.clipboard.writeText(text);
+	var ta = document.createElement('textarea');
+	ta.value = text;
+	ta.style.position = 'fixed';
+	ta.style.left = '-9999px';
+	document.body.appendChild(ta);
+	ta.select();
+	try { document.execCommand('copy'); } catch (e) {}
+	document.body.removeChild(ta);
+	return Promise.resolve();
+}
+
+function saveTextFile(name, text) {
+	var blob = new Blob([ text || '' ], { type: 'text/plain;charset=utf-8' });
+	var url = URL.createObjectURL(blob);
+	var a = document.createElement('a');
+	a.href = url;
+	a.download = name;
+	document.body.appendChild(a);
+	a.click();
+	document.body.removeChild(a);
+	window.setTimeout(function() { URL.revokeObjectURL(url); }, 1500);
+}
+
+function logStamp(action) {
+	var d = new Date();
+	function z(n) { return (n < 10 ? '0' : '') + n; }
+	return 'veracrypt-' + (action || 'job') + '-' +
+		d.getFullYear() + z(d.getMonth() + 1) + z(d.getDate()) + '-' +
+		z(d.getHours()) + z(d.getMinutes()) + z(d.getSeconds()) + '.log';
+}
+
+function abortButton(ctl) {
+	return E('button', {
+		'type': 'button',
+		'class': 'btn cbi-button-remove',
+		'title': _('Abort / cancel. Stop the job on the router (veracrypt, fsck, or apk) and close this dialog.'),
+		'click': function() {
+			ctl.stopped = true;
+			callJobAbort().then(function(res) {
+				ui.hideModal();
+				showResult({ ok: false, error: (res && res.output) || _('Aborted.') });
+			}).catch(function(err) {
+				ui.hideModal();
+				ui.addNotification(null, E('p', err.message || _('Aborted.')), 'warning');
+			});
+		}
+	}, _('Abort'));
+}
+
 function installPackages(list) {
 	var limit = timeoutSec();
 	var statusEl = E('p');
 	var elapsed = 0;
 	var left = limit;
+	var ctl = { stopped: false };
 	function paint() {
 		statusEl.textContent = _('apk add %s — elapsed %s, timeout in %s').format(list.join(' '), fmtClock(elapsed), fmtClock(left));
 	}
-	ui.showModal(_('Install packages'), [ statusEl ]);
+	ui.showModal(_('Install packages'), [
+		statusEl,
+		E('div', { 'class': 'right' }, [ abortButton(ctl) ])
+	]);
 	paint();
 	var iv = window.setInterval(function() {
 		elapsed++;
@@ -159,16 +253,22 @@ function installPackages(list) {
 		params: [ 'packages' ]
 	});
 	return inst(list.join(' ')).then(function(res) {
+		if (ctl.stopped)
+			return { ok: false, aborted: true };
 		if (res && res.pending)
-			return waitJob(left, statusEl);
+			return waitJob(left, statusEl, null, ctl);
 		return res;
 	}).then(function(res) {
 		window.clearInterval(iv);
+		if (ctl.stopped)
+			return false;
 		ui.hideModal();
 		showResult(res);
 		return res && res.ok !== false;
 	}).catch(function(err) {
 		window.clearInterval(iv);
+		if (ctl.stopped)
+			return false;
 		ui.hideModal();
 		ui.addNotification(null, E('p', err.message || String(err)), 'error');
 		return false;
@@ -190,12 +290,16 @@ function ensureFsPackages(o) {
 				E('p', _('Creating a volume with an inner %s filesystem needs: %s (dmsetup from lvm2, mkfs, and the kmod). Install with apk add, or create with filesystem=none and format after mount.').format(fs, pkgs.join(' '))),
 				E('div', { 'class': 'right' }, [
 					E('button', {
+						'type': 'button',
 						'class': 'btn',
+						'title': _('Close this dialog. The volume is not created.'),
 						'click': function() { ui.hideModal(); resolve(false); }
 					}, _('Cancel')),
 					' ',
 					E('button', {
+						'type': 'button',
 						'class': 'btn',
+						'title': _('Create the container with --filesystem=none. Format the inner filesystem later after mount.'),
 						'click': function() {
 							ui.hideModal();
 							o.filesystem = 'none';
@@ -204,7 +308,9 @@ function ensureFsPackages(o) {
 					}, _('Create with filesystem=none')),
 					' ',
 					E('button', {
+						'type': 'button',
 						'class': 'btn cbi-button-apply',
+						'title': _('apk add %s, then create the volume with the chosen inner filesystem.').format(pkgs.join(' ')),
 						'click': function() {
 							ui.hideModal();
 							installPackages(pkgs).then(function(ok) { resolve(ok); });
@@ -229,12 +335,16 @@ function ensureFsckPackages(o) {
 				E('p', _('Checking a volume cannot be done without the matching fsck tool. The app decrypts with --filesystem=none, runs fsck on the mapper or loop device, then dismounts. Install: %s (e2fsprogs for ext*, dosfstools for FAT, exfatprogs for exFAT, ntfs-3g for NTFS).').format(pkgs.join(' '))),
 				E('div', { 'class': 'right' }, [
 					E('button', {
+						'type': 'button',
 						'class': 'btn',
+						'title': _('Close this dialog. fsck is not run.'),
 						'click': function() { ui.hideModal(); resolve(false); }
 					}, _('Cancel')),
 					' ',
 					E('button', {
+						'type': 'button',
 						'class': 'btn cbi-button-apply',
+						'title': _('Install %s with apk add. fsck cannot run without these tools.').format(pkgs.join(' ')),
 						'click': function() {
 							ui.hideModal();
 							installPackages(pkgs).then(function(ok) { resolve(ok); });
@@ -256,10 +366,17 @@ function showResult(res) {
 			E('pre', err || _('Checking a volume cannot be done without the matching fsck tool.')),
 			E('p', _('apk add %s').format(pkgs.join(' '))),
 			E('div', { 'class': 'right' }, [
-				E('button', { 'class': 'btn', 'click': ui.hideModal }, _('Cancel')),
+				E('button', {
+					'type': 'button',
+					'class': 'btn',
+					'title': _('Close this dialog. fsck is not run.'),
+					'click': ui.hideModal
+				}, _('Cancel')),
 				' ',
 				E('button', {
+					'type': 'button',
 					'class': 'btn cbi-button-apply',
+					'title': _('Install %s with apk add. fsck cannot run without these tools.').format(pkgs.join(' ')),
 					'click': function() {
 						ui.hideModal();
 						installPackages(pkgs);
@@ -302,47 +419,198 @@ function pathRow(label, value, dirsOnly) {
 		'value': value || '',
 		'placeholder': dirsOnly ? '/mnt/Buffalo' : '/mnt/sda2/media.tc'
 	});
-	var holder = E('div');
-	var fu = new ui.FileUpload(value || '', {
-		root_directory: '/',
-		initial_directory: '/mnt',
-		show_hidden: true,
-		enable_upload: false,
-		enable_remove: false,
-		enable_download: false,
-		directory_create: true,
-		directory_select: !!dirsOnly
+	var listing = E('div', { 'style': 'max-height:180px;overflow:auto;margin-top:6px' });
+	var status = E('p', { 'class': 'cbi-map-descr' });
+	var newName = E('input', {
+		'type': 'text',
+		'placeholder': dirsOnly ? 'Buffalo' : 'newdir',
+		'style': 'width:60%'
 	});
-	Promise.resolve(fu.render()).then(function(el) {
-		holder.appendChild(el);
-		el.addEventListener('cbi-fileupload-select', function(ev) {
-			if (ev.detail && ev.detail.path)
-				inp.value = ev.detail.path;
+	var browse = value || '/mnt';
+	if (!dirsOnly && browse.lastIndexOf('/') > 0)
+		browse = browse.replace(/\/[^\/]+$/, '') || '/mnt';
+
+	function setStatus(t) {
+		status.textContent = t || '';
+	}
+
+	function load(path) {
+		if (!path)
+			path = '/mnt';
+		setStatus(_('Listing %s …').format(path));
+		return callListDir(path).then(function(res) {
+			while (listing.firstChild)
+				listing.removeChild(listing.firstChild);
+			if (!res || res.ok === false) {
+				setStatus(res && res.error ? res.error : _('Cannot list directory'));
+				var parent = String(path || '').replace(/\/+$/, '').replace(/\/[^\/]+$/, '') || '/mnt';
+				if (parent !== path)
+					return load(parent);
+				return;
+			}
+			browse = res.path || path;
+			setStatus(_('Browsing %s. Create or delete here without leaving this dialog.').format(browse));
+			(res.entries || []).forEach(function(ent) {
+				if (!ent || !ent.name)
+					return;
+				var isDir = ent.type === 'dir';
+				var isDot = ent.name === '..';
+				var row = E('div', { 'style': 'white-space:nowrap;margin:1px 0' });
+				if (!dirsOnly || isDir) {
+					row.appendChild(E('button', {
+						'type': 'button',
+						'class': 'btn',
+						'style': 'margin:1px',
+						'title': isDir
+							? _('Open directory %s').format(ent.path)
+							: _('Select file %s').format(ent.path),
+						'click': function(ev) {
+							if (ev)
+								ev.preventDefault();
+							if (isDir) {
+								if (dirsOnly && !isDot)
+									inp.value = ent.path;
+								load(ent.path);
+							}
+							else {
+								inp.value = ent.path;
+							}
+						}
+					}, isDir ? ent.name + '/' : ent.name));
+				}
+				else {
+					row.appendChild(E('span', { 'style': 'margin:1px' }, ent.name));
+				}
+				if (!isDot) {
+					row.appendChild(E('button', {
+						'type': 'button',
+						'class': 'btn cbi-button-remove',
+						'style': 'margin:1px',
+						'title': _('Delete %s after confirmation. The dialog stays open.').format(ent.path),
+						'click': function(ev) {
+							if (ev) {
+								ev.preventDefault();
+								ev.stopPropagation();
+							}
+							removePath(ent.path, isDir);
+						}
+					}, _('Delete')));
+				}
+				listing.appendChild(row);
+			});
+		}).catch(function(err) {
+			setStatus(err.message || String(err));
 		});
+	}
+
+	function makeDir(ev) {
+		if (ev) {
+			ev.preventDefault();
+			ev.stopPropagation();
+		}
+		var n = (newName.value || '').trim().replace(/\/+$/, '');
+		if (!n) {
+			setStatus(_('Type a directory name, then Create directory.'));
+			return;
+		}
+		var p = n.charAt(0) === '/' ? n : String(browse || '/mnt').replace(/\/+$/, '') + '/' + n.replace(/^\/+/, '');
+		setStatus(_('Creating %s …').format(p));
+		return callMkdir(p).then(function(res) {
+			if (!res || res.ok === false) {
+				setStatus(res && res.error ? res.error : _('mkdir failed'));
+				return;
+			}
+			inp.value = p;
+			newName.value = '';
+			return load(p);
+		}).catch(function(err) {
+			setStatus(err.message || String(err));
+		});
+	}
+
+	function removePath(p, isDir) {
+		p = String(p || '').trim();
+		if (!p) {
+			setStatus(_('Nothing to delete.'));
+			return;
+		}
+		var msg = isDir
+			? _('Delete directory %s? This cannot be undone.').format(p)
+			: _('Delete file %s? This cannot be undone.').format(p);
+		if (!window.confirm(msg))
+			return;
+		setStatus(_('Deleting %s …').format(p));
+		return callRm(p, '').then(function(res) {
+			if (res && res.need_recursive) {
+				if (!window.confirm(_('Directory %s is not empty. Delete it and all contents? This cannot be undone.').format(p))) {
+					setStatus(_('Delete cancelled.'));
+					return;
+				}
+				return callRm(p, '1');
+			}
+			return res;
+		}).then(function(res) {
+			if (!res)
+				return;
+			if (!res.ok && res.ok !== 1) {
+				setStatus(res.error || _('delete failed'));
+				return;
+			}
+			if (inp.value === p)
+				inp.value = browse || '';
+			setStatus(_('Deleted %s.').format(p));
+			return load(browse);
+		}).catch(function(err) {
+			setStatus(err.message || String(err));
+		});
+	}
+
+	newName.addEventListener('keydown', function(ev) {
+		if (ev.key === 'Enter' || ev.keyCode === 13) {
+			ev.preventDefault();
+			ev.stopPropagation();
+			makeDir(ev);
+		}
 	});
+
+	load(browse);
+
 	return {
 		node: E('div', { 'class': 'cbi-value' }, [
 			E('label', { 'class': 'cbi-value-title' }, label),
 			E('div', { 'class': 'cbi-value-field' }, [
 				E('p', { 'class': 'cbi-map-descr' },
 					dirsOnly
-						? _('Type the mount directory, or browse and click Select on the folder (opening a folder is not the same as selecting it).')
-						: _('Type the container path, or browse and click the file.')
+						? _('Type the directory, browse below, or create/delete. Create and delete stay in this dialog.')
+						: _('Type the container path, or browse and click the file. You can create or delete directories and files here.')
 				),
 				inp,
-				holder
+				status,
+				listing,
+				E('div', {}, [
+					newName,
+					' ',
+					E('button', {
+						'type': 'button',
+						'class': 'btn',
+						'title': _('Create the named directory under the current folder. The dialog stays open.'),
+						'click': makeDir
+					}, _('Create directory')),
+					' ',
+					E('button', {
+						'type': 'button',
+						'class': 'btn cbi-button-remove',
+						'title': _('Delete the path in the text field after confirmation. The dialog stays open.'),
+						'click': function(ev) {
+							var p = (inp.value || '').trim();
+							removePath(p, p.charAt(p.length - 1) === '/' || dirsOnly);
+						}
+					}, _('Delete selected'))
+				])
 			])
 		]),
 		getValue: function() {
-			var typed = (inp.value || '').trim();
-			if (typed)
-				return typed;
-			try {
-				return fu.getValue() || '';
-			}
-			catch (e) {
-				return value || '';
-			}
+			return (inp.value || '').trim() || value || '';
 		}
 	};
 }
@@ -355,10 +623,11 @@ function flag(el) {
 	return el && el.checked ? '1' : '';
 }
 
-function waitJob(limit, statusEl, logEl) {
+function waitJob(limit, statusEl, logEl, ctl) {
 	var left = limit;
 	var elapsed = 0;
 	var job = callJobWithTimeout();
+	ctl = ctl || {};
 
 	function paint() {
 		statusEl.textContent = _('Working… elapsed %s. Operation will time out in %s. Header derivation and random generation can take several minutes on a slow CPU with little RAM.').format(fmtClock(elapsed), fmtClock(left));
@@ -372,19 +641,28 @@ function waitJob(limit, statusEl, logEl) {
 	}, 1000);
 
 	function poll() {
+		if (ctl.stopped) {
+			window.clearInterval(iv);
+			return { ok: false, aborted: true, error: _('Aborted.') };
+		}
 		if (left <= 0) {
 			window.clearInterval(iv);
 			return {
 				ok: false,
-				error: _('Timed out after %s. veracrypt may still be running on the router.').format(fmtClock(limit))
+				error: _('Timed out after %s. veracrypt may still be running on the router. Use Abort next time, or raise Timeouts.')
+					.format(fmtClock(limit))
 			};
 		}
 		return job().then(function(res) {
+			if (ctl.stopped) {
+				window.clearInterval(iv);
+				return { ok: false, aborted: true, error: _('Aborted.') };
+			}
 			if (logEl && res && res.output)
-				logEl.textContent = res.output;
+				setLogText(logEl, res.output);
 			if (res && res.pending)
 				return new Promise(function(resolve) {
-					window.setTimeout(function() { resolve(poll()); }, 2000);
+					window.setTimeout(function() { resolve(poll()); }, 1000);
 				});
 			window.clearInterval(iv);
 			return res;
@@ -401,30 +679,82 @@ function runAction(opts) {
 	var statusEl = E('p');
 	var elapsed = 0;
 	var left = limit;
+	var ctl = { stopped: false };
 	function paint() {
 		statusEl.textContent = _('Working… elapsed %s. Operation will time out in %s. Header derivation and random generation can take several minutes on a slow CPU with little RAM.').format(fmtClock(elapsed), fmtClock(left));
 	}
-	var logEl = E('pre', { 'style': 'max-height:220px;overflow:auto;white-space:pre-wrap' });
+	var logEl = E('pre', {
+		'style': 'max-height:280px;overflow:auto;white-space:pre-wrap;user-select:text;background:var(--background-color-high, #111);padding:8px'
+	});
+	var showLive = E('input', { 'type': 'checkbox' });
+	showLive.checked = true;
+	showLive.addEventListener('change', function() {
+		logEl.style.display = showLive.checked ? '' : 'none';
+	});
 	var ynBox = E('p');
 	if (opts.action === 'fsck' && opts.fsck_auto !== '1') {
 		ynBox.appendChild(E('p', { 'class': 'cbi-map-descr' },
 			_('fsck is interactive. Press y or n for each prompt.')));
 		ynBox.appendChild(E('button', {
+			'type': 'button',
 			'class': 'btn cbi-button-apply',
+			'title': _('Answer yes to the current fsck prompt.'),
 			'click': function() { callJobAnswer('y'); }
 		}, _('y')));
 		ynBox.appendChild(E('span', {}, ' '));
 		ynBox.appendChild(E('button', {
+			'type': 'button',
 			'class': 'btn',
+			'title': _('Answer no to the current fsck prompt.'),
 			'click': function() { callJobAnswer('n'); }
 		}, _('n')));
 	}
+	var closeBtn = E('button', {
+		'type': 'button',
+		'class': 'btn',
+		'style': 'display:none',
+		'title': _('Close this dialog. The job has finished.'),
+		'click': function() { ui.hideModal(); }
+	}, _('Close'));
+	var copyBtn = E('button', {
+		'type': 'button',
+		'class': 'btn',
+		'title': _('Copy the log to the clipboard.'),
+		'click': function() {
+			var t = logEl.textContent || '';
+			copyText(t).then(function() {
+				statusEl.textContent = _('Log copied to clipboard.');
+			}).catch(function() {
+				statusEl.textContent = _('Copy failed. Select the log and copy it yourself.');
+			});
+		}
+	}, _('Copy log'));
+	var abortEl = abortButton(ctl);
+	var saveBtn = E('button', {
+		'type': 'button',
+		'class': 'btn',
+		'title': _('Save the log as a text file on this computer.'),
+		'click': function() {
+			callJobLog().then(function(res) {
+				var t = (res && res.output) || logEl.textContent || '';
+				saveTextFile(logStamp(opts.action), t);
+			}).catch(function() {
+				saveTextFile(logStamp(opts.action), logEl.textContent || '');
+			});
+		}
+	}, _('Save log'));
 	ui.showModal(_('VeraCrypt'), [
 		statusEl,
+		E('p', {}, [
+			E('label', {}, [ showLive, ' ', _('Show live output') ])
+		]),
 		ynBox,
 		logEl,
 		E('p', { 'class': 'cbi-map-descr' },
-			_('XHR timeout is %d seconds (minimum 300). Change it under Timeouts, then Save & Apply.').format(limit))
+			_('XHR timeout is %d seconds (minimum 300). Change it under Timeouts, then Save & Apply.').format(limit)),
+		E('div', { 'class': 'right' }, [
+			copyBtn, ' ', saveBtn, ' ', abortEl, ' ', closeBtn
+		])
 	]);
 	paint();
 	var iv = window.setInterval(function() {
@@ -446,18 +776,32 @@ function runAction(opts) {
 		opts.no_size_check || '', opts.legacy_password_maxlength || '',
 		opts.allow_insecure_mount || '', opts.fsck_auto || ''
 	).then(function(res) {
+		if (ctl.stopped)
+			return { ok: false, aborted: true };
 		if (res && res.pending)
-			return waitJob(left, statusEl, logEl);
+			return waitJob(left, statusEl, logEl, ctl);
 		return res;
 	}).then(function(res) {
 		window.clearInterval(iv);
-		ui.hideModal();
-		showResult(res);
+		if (ctl.stopped)
+			return res;
+		if (res && (res.output || res.error))
+			setLogText(logEl, res.output || res.error);
+		if (res && res.ok === false)
+			statusEl.textContent = res.error || _('Failed.');
+		else
+			statusEl.textContent = (res && res.summary) || _('Finished. Copy or save the log, then Close.');
+		closeBtn.style.display = '';
+		abortEl.style.display = 'none';
 		return res;
 	}).catch(function(err) {
 		window.clearInterval(iv);
-		ui.hideModal();
-		ui.addNotification(null, E('p', err.message || String(err)), 'error');
+		if (ctl.stopped)
+			return;
+		setLogText(logEl, err.message || String(err));
+		statusEl.textContent = err.message || String(err);
+		closeBtn.style.display = '';
+		abortEl.style.display = 'none';
 	});
 }
 
@@ -524,14 +868,18 @@ return view.extend({
 				E('td', { 'class': 'td' }, sl.line || ''),
 				E('td', { 'class': 'td' }, [
 					E('button', {
+						'type': 'button',
 						'class': 'btn',
+						'title': _('Show properties of the volume in slot %s (veracrypt --volume-properties).').format(String(sl.slot)),
 						'click': ui.createHandlerFn(this, function() {
 							return runAction({ action: 'volume-properties', slot: String(sl.slot) });
 						})
 					}, _('Properties')),
 					' ',
 					E('button', {
+						'type': 'button',
 						'class': 'btn cbi-button-remove',
+						'title': _('Unmount slot %s (veracrypt --unmount --slot=%s).').format(String(sl.slot), String(sl.slot)),
 						'click': ui.createHandlerFn(this, function() {
 							return runAction({ action: 'unmount', slot: String(sl.slot) }).then(function(res) {
 								if (res && res.ok !== false)
@@ -541,7 +889,9 @@ return view.extend({
 					}, _('Unmount')),
 					' ',
 					E('button', {
+						'type': 'button',
 						'class': 'btn',
+						'title': _('Check the inner filesystem of this volume: decrypt with --filesystem=none, fsck the mapper or loop device, then dismount. Unmount first if it is mounted.'),
 						'click': ui.createHandlerFn(this, function() {
 							var parts = String(sl.line || '').trim().split(/\s+/);
 							openFsck({ volume: parts[1] || '', slot: String(sl.slot) });
@@ -558,14 +908,18 @@ return view.extend({
 				E('td', { 'class': 'td' }, _('(empty)')),
 				E('td', { 'class': 'td' }, [
 					E('button', {
+						'type': 'button',
 						'class': 'btn cbi-button-apply',
+						'title': _('Browse for a container file and mount it in slot %s.').format(String(nextSlot)),
 						'click': ui.createHandlerFn(this, function() {
 							openFilePicker(nextSlot);
 						})
 					}, _('Open file')),
 					' ',
 					E('button', {
+						'type': 'button',
 						'class': 'btn',
+						'title': _('Pick a block device (/dev/sd*, nvme, mmc, mapper) and mount it in slot %s.').format(String(nextSlot)),
 						'click': ui.createHandlerFn(this, function() {
 							openDevicePicker(nextSlot);
 						})
@@ -579,14 +933,18 @@ return view.extend({
 
 		body.appendChild(E('p', {}, [
 			E('button', {
+				'type': 'button',
 				'class': 'btn',
+				'title': _('List mounted VeraCrypt volumes (veracrypt --list).'),
 				'click': ui.createHandlerFn(this, function() {
 					return runAction({ action: 'list' });
 				})
 			}, _('List volumes')),
 			' ',
 			E('button', {
+				'type': 'button',
 				'class': 'btn',
+				'title': _('Unmount every VeraCrypt volume (veracrypt --unmount).'),
 				'click': ui.createHandlerFn(this, function() {
 					return runAction({ action: 'unmount' }).then(function(res) {
 						if (res && res.ok !== false)
@@ -596,21 +954,27 @@ return view.extend({
 			}, _('Unmount all')),
 			' ',
 			E('button', {
+				'type': 'button',
 				'class': 'btn',
+				'title': _('Show the VeraCrypt version string (veracrypt --version).'),
 				'click': ui.createHandlerFn(this, function() {
 					return runAction({ action: 'version' });
 				})
 			}, _('Version')),
 			' ',
 			E('button', {
+				'type': 'button',
 				'class': 'btn',
+				'title': _('Run VeraCrypt algorithm self-tests (veracrypt --test).'),
 				'click': ui.createHandlerFn(this, function() {
 					return runAction({ action: 'test' });
 				})
 			}, _('Test algorithms')),
 			' ',
 			E('button', {
+				'type': 'button',
 				'class': 'btn',
+				'title': _('Show console help (veracrypt --help).'),
 				'click': ui.createHandlerFn(this, function() {
 					return runAction({ action: 'help' });
 				})
@@ -619,163 +983,135 @@ return view.extend({
 
 		function actionModal(title, extraNodes, collect, initial) {
 			initial = initial || {};
+			var showVolume = !initial.hideVolume;
+			var showFilename = !!initial.showFilename;
+			var showMount = !!initial.showMount;
+			var showKeyfiles = !!initial.showKeyfiles;
+			var showSlot = !!initial.showSlot;
+			var showQuick = !!initial.showQuick;
+			var showForce = !!initial.showForce;
 			var vol = pathRow(_('Volume / file'), initial.volume || '', !!initial.dirOnly);
 			var mp = pathRow(_('Mount point'), initial.mountpoint || '', true);
 			var fname = field('text', { 'placeholder': 'media.hc', 'value': initial.filename || '' });
 			var kf = pathRow(_('Keyfiles'), '', false);
 			var nkf = pathRow(_('New keyfiles'), '', false);
-			var rnd = pathRow(_('Random source'), '/dev/urandom', false);
+			var rnd = field('text', { 'value': '/dev/urandom', 'placeholder': '/dev/urandom' });
 			var pw = field('password');
 			var npw = field('password');
-			var ppw = field('password');
 			var pim = field('text', { 'placeholder': '0' });
 			var npim = field('text');
-			var ppim = field('text');
 			var slot = slotSelect(initial.slot || '');
 			var hash = select(HASHES, initial.hash || '');
 			var nhash = select(HASHES, '');
-			var phash = select(HASHES, '');
 			var enc = select(CIPHERS, initial.encryption || '');
 			var fs = select(FSTYPES, initial.filesystem || '');
 			var vtype = select(VTYPES, initial.volume_type || 'normal');
-			var phid = select([ [ 'no', _('No') ], [ 'yes', _('Yes') ] ], 'no');
 			var size = field('text', { 'placeholder': '100M' });
-			var fsopt = field('text');
-			var mopt = field('text', { 'placeholder': 'nokernelcrypto' });
-			var autom = field('text');
-			var tlib = pathRow(_('Token library'), '', false);
-			var tpin = field('password');
-			var pkf = pathRow(_('Protection keyfiles'), '', false);
+			var autom = select([
+				[ 'favorites', _('favorites') ],
+				[ 'devices', _('devices') ],
+				[ 'devices_favorites', _('devices and favorites') ]
+			], 'favorites');
 			var force = field('checkbox');
 			var quick = field('checkbox');
-			var verbose = field('checkbox');
-			var nosz = field('checkbox');
-			var legacy = field('checkbox');
-			var insecure = field('checkbox');
 			var fsckauto = field('checkbox');
-			quick.checked = true;
+			quick.checked = !!showQuick;
 			fsckauto.checked = true;
 			if (initial.size)
 				size.value = initial.size;
 
 			var nodes = [
-				E('p', _('Console flags are passed as veracrypt --text --non-interactive. Passwords are not saved.'))
+				E('p', _('Passwords are sent on stdin and are not saved.'))
 			];
-			if (!initial.hideVolume)
+			if (showVolume)
 				nodes.push(vol.node);
-			if (initial.showFilename)
+			if (showFilename)
 				nodes.push(E('div', { 'class': 'cbi-value' }, [
 					E('label', { 'class': 'cbi-value-title' }, _('Container file name')),
 					E('div', { 'class': 'cbi-value-field' }, fname)
 				]));
-			if (!initial.hideMount)
+			if (showMount)
 				nodes.push(mp.node);
-			if (!initial.hideKeyfiles)
+			if (showKeyfiles)
 				nodes.push(kf.node);
 			nodes = nodes.concat(extraNodes({
-				vol: vol, mp: mp, kf: kf, nkf: nkf, rnd: rnd, pw: pw, npw: npw, ppw: ppw,
-				pim: pim, npim: npim, ppim: ppim, slot: slot, hash: hash, nhash: nhash,
-				phash: phash, enc: enc, fs: fs, vtype: vtype, phid: phid, size: size,
-				fsopt: fsopt, mopt: mopt, autom: autom, tlib: tlib, tpin: tpin, pkf: pkf,
-				force: force, quick: quick, verbose: verbose, nosz: nosz, legacy: legacy,
-				insecure: insecure, fname: fname, fsckauto: fsckauto
+				vol: vol, mp: mp, kf: kf, nkf: nkf, rnd: rnd, pw: pw, npw: npw,
+				pim: pim, npim: npim, slot: slot, hash: hash, nhash: nhash,
+				enc: enc, fs: fs, vtype: vtype, size: size, autom: autom,
+				force: force, quick: quick, fname: fname, fsckauto: fsckauto
 			}));
-			if (!initial.hideSlot)
+			if (showSlot)
 				nodes.push(E('div', { 'class': 'cbi-value' }, [
 					E('label', { 'class': 'cbi-value-title' }, _('Slot (1–64)')),
 					E('div', { 'class': 'cbi-value-field' }, slot)
 				]));
-			if (!initial.hideFlags)
+			if (showQuick || showForce)
 				nodes.push(E('div', { 'class': 'cbi-value' }, [
-					E('label', { 'class': 'cbi-value-title' }, _('Force / verbose / quick / no-size-check / legacy password / allow insecure mount')),
+					E('label', { 'class': 'cbi-value-title' }, _('Options')),
 					E('div', { 'class': 'cbi-value-field' }, [
-						E('label', {}, [ force, ' ', _('force') ]), ' ',
-						E('label', {}, [ verbose, ' ', _('verbose') ]), ' ',
-						E('label', {}, [ quick, ' ', _('quick') ]), ' ',
-						E('label', {}, [ nosz, ' ', _('no-size-check') ]), ' ',
-						E('label', {}, [ legacy, ' ', _('legacy-password-maxlength') ]), ' ',
-						E('label', {}, [ insecure, ' ', _('allow-insecure-mount') ])
+						showQuick ? E('label', {}, [ quick, ' ', _('quick format') ]) : '',
+						showQuick && showForce ? ' ' : '',
+						showForce ? E('label', {}, [ force, ' ', _('overwrite if the file exists') ]) : ''
 					])
 				]));
 			nodes.push(E('div', { 'class': 'right' }, [
-					E('button', { 'class': 'btn', 'click': ui.hideModal }, _('Cancel')),
+					E('button', {
+						'type': 'button',
+						'class': 'btn',
+						'title': _('Close this dialog without running VeraCrypt.'),
+						'click': ui.hideModal
+					}, _('Cancel')),
 					' ',
 					E('button', {
+						'type': 'button',
 						'class': 'btn cbi-button-apply',
+						'title': _('Run the VeraCrypt command. The password is sent on stdin, not --password on the command line.'),
 						'click': ui.createHandlerFn(this, function() {
 							var o = collect({
-								vol: vol, mp: mp, kf: kf, nkf: nkf, rnd: rnd, pw: pw, npw: npw, ppw: ppw,
-								pim: pim, npim: npim, ppim: ppim, slot: slot, hash: hash, nhash: nhash,
-								phash: phash, enc: enc, fs: fs, vtype: vtype, phid: phid, size: size,
-								fsopt: fsopt, mopt: mopt, autom: autom, tlib: tlib, tpin: tpin, pkf: pkf,
-								force: force, quick: quick, verbose: verbose, nosz: nosz, legacy: legacy,
-								insecure: insecure, fsckauto: fsckauto
+								vol: vol, mp: mp, kf: kf, nkf: nkf, rnd: rnd, pw: pw, npw: npw,
+								pim: pim, npim: npim, slot: slot, hash: hash, nhash: nhash,
+								enc: enc, fs: fs, vtype: vtype, size: size, autom: autom,
+								force: force, quick: quick, fname: fname, fsckauto: fsckauto
 							});
-							o.volume = vol.getValue();
-							o.mountpoint = mp.getValue();
-							o.keyfiles = kf.getValue();
-							o.new_keyfiles = nkf.getValue();
-							o.random_source = rnd.getValue();
-							o.password = val(pw);
-							o.new_password = val(npw);
-							o.protection_password = val(ppw);
-							o.pim = val(pim);
-							o.new_pim = val(npim);
-							o.protection_pim = val(ppim);
-							o.slot = val(slot);
-							o.hash = val(hash);
-							o.new_hash = val(nhash);
-							o.protection_hash = val(phash);
-							o.encryption = val(enc);
-							o.filesystem = val(fs);
-							o.volume_type = val(vtype);
-							o.protect_hidden = val(phid);
-							o.size = val(size);
-							o.fs_options = val(fsopt);
-							o.mount_options = val(mopt);
-							o.auto_mount = val(autom);
-							o.token_lib = tlib.getValue();
-							o.token_pin = val(tpin);
-							o.protection_keyfiles = pkf.getValue();
-							o.force = flag(force);
-							o.quick = flag(quick);
-							o.verbose = flag(verbose);
-							o.no_size_check = flag(nosz);
-							o.legacy_password_maxlength = flag(legacy);
-							o.allow_insecure_mount = flag(insecure);
-							o.fsck_auto = flag(fsckauto) ? '1' : '0';
+							if (showVolume)
+								o.volume = vol.getValue();
+							if (showMount)
+								o.mountpoint = mp.getValue();
+							if (showKeyfiles)
+								o.keyfiles = kf.getValue();
+							if (showSlot)
+								o.slot = val(slot);
+							if (showQuick)
+								o.quick = flag(quick);
+							if (showForce)
+								o.force = flag(force);
 							if (o.action === 'create') {
 								var fn = val(fname) || initial.filename || 'media.hc';
-								o.volume = String(o.volume || '/mnt').replace(/\/+$/, '') + '/' + fn.replace(/^\/+/, '');
-								if (!o.size)
-									o.size = '100M';
+								o.volume = String((showVolume ? vol.getValue() : '') || '/mnt').replace(/\/+$/, '') + '/' + fn.replace(/^\/+/, '');
+								o.size = val(size) || '100M';
+								o.encryption = val(enc) || 'AES-Twofish-Serpent';
+								o.hash = val(hash) || 'sha-512';
+								o.volume_type = val(vtype) || 'normal';
+								o.filesystem = val(fs) || 'none';
+								o.pim = val(pim);
+								o.password = val(pw);
+								o.random_source = val(rnd) || '/dev/urandom';
 								o.slot = '';
-								o.mountpoint = '';
-								o.protect_hidden = '';
 								o.mount_options = '';
 							}
 							if (o.action === 'mount') {
-								o.encryption = '';
-								o.hash = '';
-								o.size = '';
-								o.volume_type = '';
-								o.quick = '';
-								if (!o.mount_options)
-									o.mount_options = 'nokernelcrypto';
+								o.password = val(pw);
+								o.pim = val(pim) || '0';
+								o.protect_hidden = 'no';
+								o.mount_options = 'nokernelcrypto';
 							}
 							if (o.action === 'fsck') {
-								o.mountpoint = '';
-								o.encryption = '';
-								o.hash = '';
-								o.size = '';
-								o.volume_type = '';
-								o.quick = '';
-								if (!o.mount_options)
-									o.mount_options = 'nokernelcrypto';
-								if (!o.protect_hidden)
-									o.protect_hidden = 'no';
-								if (!o.pim)
-									o.pim = '0';
+								o.password = val(pw);
+								o.pim = val(pim) || '0';
+								o.filesystem = val(fs);
+								o.fsck_auto = flag(fsckauto) ? '1' : '0';
+								o.protect_hidden = 'no';
+								o.mount_options = 'nokernelcrypto';
 							}
 							ui.hideModal();
 							return ensureFsPackages(o).then(function(go) {
@@ -793,15 +1129,22 @@ return view.extend({
 						})
 					}, _('Run'))
 			]));
-			ui.showModal(title, nodes);
+			ui.showModal(title, [
+				E('form', {
+					'submit': function(ev) {
+						if (ev && ev.preventDefault)
+							ev.preventDefault();
+						return false;
+					}
+				}, nodes)
+			]);
 		}
 
 		function mountExtras(f) {
 			return [
-				E('p', _('Opening reads cipher and hash from the volume header. Password is required; PIM and keyfiles only if the volume was created with them.')),
+				E('p', _('Cipher and hash come from the volume header. Password is required. PIM and keyfiles only if the volume was created with them. Always mounts with nokernelcrypto.')),
 				E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('Password')), E('div', { 'class': 'cbi-value-field' }, f.pw) ]),
-				E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('PIM (empty = default)')), E('div', { 'class': 'cbi-value-field' }, f.pim) ]),
-				E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('Mount options')), E('div', { 'class': 'cbi-value-field' }, f.mopt) ])
+				E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('PIM (empty = VeraCrypt default)')), E('div', { 'class': 'cbi-value-field' }, f.pim) ])
 			];
 		}
 
@@ -822,44 +1165,40 @@ return view.extend({
 			}, function() { return { action: 'fsck' }; }, {
 				volume: (initial && initial.volume) || '',
 				slot: (initial && initial.slot) || '',
-				hideMount: true,
-				hideFlags: true
+				showKeyfiles: true,
+				showSlot: !!(initial && initial.slot)
 			});
 		}
 
 		function openFilePicker(slotNo) {
-			var fu = new ui.FileUpload('', {
-				root_directory: '/',
-				initial_directory: '/mnt',
-				show_hidden: true,
-				enable_upload: false,
-				enable_remove: false,
-				enable_download: false,
-				directory_create: true,
-				directory_select: false
-			});
-			Promise.resolve(fu.render()).then(function(el) {
-				ui.showModal(_('Open file'), [
-					E('p', _('Go up with the parent folder, into a folder by name, then select the container.')),
-					el,
-					E('div', { 'class': 'right' }, [
-						E('button', { 'class': 'btn', 'click': ui.hideModal }, _('Cancel')),
-						' ',
-						E('button', {
-							'class': 'btn cbi-button-apply',
-							'click': function() {
-								var p = fu.getValue();
-								ui.hideModal();
-								if (!p)
-									return;
-								actionModal(_('Mount'), mountExtras, function() {
-									return { action: 'mount' };
-								}, { volume: p, slot: String(slotNo) });
-							}
-						}, _('Use file'))
-					])
-				]);
-			});
+			var row = pathRow(_('Container file'), '', false);
+			ui.showModal(_('Open file'), [
+				E('p', _('Browse, create or delete, then select the container. Create and delete stay in this dialog.')),
+				row.node,
+				E('div', { 'class': 'right' }, [
+					E('button', {
+						'type': 'button',
+						'class': 'btn',
+						'title': _('Close the file picker without mounting.'),
+						'click': ui.hideModal
+					}, _('Cancel')),
+					' ',
+					E('button', {
+						'type': 'button',
+						'class': 'btn cbi-button-apply',
+						'title': _('Use the selected container file and open the mount dialog for slot %s.').format(String(slotNo)),
+						'click': function() {
+							var p = row.getValue();
+							ui.hideModal();
+							if (!p)
+								return;
+							actionModal(_('Mount'), mountExtras, function() {
+								return { action: 'mount' };
+							}, { volume: p, slot: String(slotNo), showMount: true, showKeyfiles: true, showSlot: true });
+						}
+					}, _('Use file'))
+				])
+			]);
 		}
 
 		function openDevicePicker(slotNo) {
@@ -867,7 +1206,7 @@ return view.extend({
 				ui.hideModal();
 				actionModal(_('Mount'), mountExtras, function() {
 					return { action: 'mount' };
-				}, { volume: p, slot: String(slotNo) });
+				}, { volume: p, slot: String(slotNo), showMount: true, showKeyfiles: true, showSlot: true });
 			}
 			ui.showModal(_('Open device'), [ E('p', _('Loading block devices…')) ]);
 			return callListDev().then(function(res) {
@@ -878,8 +1217,10 @@ return view.extend({
 				devs.forEach(function(d) {
 					rows.push(E('div', {}, [
 						E('button', {
+							'type': 'button',
 							'class': 'btn',
 							'style': 'margin:2px',
+							'title': _('Mount %s as a VeraCrypt volume in slot %s.').format(d.path, String(slotNo)),
 							'click': function() { usePath(d.path); }
 						}, d.path)
 					]));
@@ -899,10 +1240,17 @@ return view.extend({
 				rows.push(holder);
 				Promise.resolve(fu.render()).then(function(el) { holder.appendChild(el); });
 				rows.push(E('div', { 'class': 'right' }, [
-					E('button', { 'class': 'btn', 'click': ui.hideModal }, _('Cancel')),
+					E('button', {
+						'type': 'button',
+						'class': 'btn',
+						'title': _('Close the device picker without mounting.'),
+						'click': ui.hideModal
+					}, _('Cancel')),
 					' ',
 					E('button', {
+						'type': 'button',
 						'class': 'btn cbi-button-apply',
+						'title': _('Use the selected /dev node and open the mount dialog for slot %s.').format(String(slotNo)),
 						'click': function() {
 							var p = fu.getValue();
 							if (p)
@@ -919,26 +1267,39 @@ return view.extend({
 
 		body.appendChild(E('h3', _('Operations')));
 		body.appendChild(E('p', {}, [
-			E('button', { 'class': 'btn cbi-button-apply', 'click': function() {
-				actionModal(_('Mount'), mountExtras, function() { return { action: 'mount' }; }, { slot: String(nextSlot || 1) });
+			E('button', {
+				'type': 'button',
+				'class': 'btn cbi-button-apply',
+				'title': _('Mount a container file or device to a directory. Cipher and hash come from the volume header. Password is sent on stdin.'),
+				'click': function() {
+				actionModal(_('Mount'), mountExtras, function() { return { action: 'mount' }; }, {
+					slot: String(nextSlot || 1), showMount: true, showKeyfiles: true, showSlot: true
+				});
 			} }, _('Mount…')),
 			' ',
-			E('button', { 'class': 'btn', 'click': function() {
+			E('button', {
+				'type': 'button',
+				'class': 'btn',
+				'title': _('Check the inner filesystem: decrypt with --filesystem=none, run fsck on the mapper or loop device, then dismount. Unmount first if the volume is mounted.'),
+				'click': function() {
 				openFsck({ slot: String(nextSlot || 1) });
 			} }, _('Check filesystem…')),
 			' ',
-			E('button', { 'class': 'btn', 'click': function() {
+			E('button', {
+				'type': 'button',
+				'class': 'btn',
+				'title': _('Create a new volume (folder + file name, size, password, mount directory). Creating a mount directory does not close this dialog. After create the volume is mounted there.'),
+				'click': function() {
 				actionModal(_('Create volume'), function(f) {
 					return [
-						E('p', _('Folder + file name become the container path. After create, the volume is mounted on /mnt/<name> in the next free slot. Defaults: AES-Twofish-Serpent, SHA-512, size 100M. For ext4/vfat the app can apk add lvm2 and e2fsprogs if you agree.')),
+						E('p', _('Folder + file name become the container path. Set or create the mount directory; creating a directory does not close this dialog. After create, the volume is mounted there. Defaults: AES-Twofish-Serpent, SHA-512, 100M, quick format.')),
 						E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('Password')), E('div', { 'class': 'cbi-value-field' }, f.pw) ]),
-						E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('PIM (0 = VeraCrypt default)')), E('div', { 'class': 'cbi-value-field' }, f.pim) ]),
+						E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('PIM (empty = VeraCrypt default)')), E('div', { 'class': 'cbi-value-field' }, f.pim) ]),
 						E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('Size (--size)')), E('div', { 'class': 'cbi-value-field' }, f.size) ]),
 						E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('Volume type')), E('div', { 'class': 'cbi-value-field' }, f.vtype) ]),
 						E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('Encryption')), E('div', { 'class': 'cbi-value-field' }, f.enc) ]),
 						E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('Hash')), E('div', { 'class': 'cbi-value-field' }, f.hash) ]),
-						E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('Filesystem')), E('div', { 'class': 'cbi-value-field' }, f.fs) ]),
-						f.rnd.node
+						E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('Inner filesystem')), E('div', { 'class': 'cbi-value-field' }, f.fs) ])
 					];
 				}, function() { return { action: 'create' }; }, {
 					encryption: 'AES-Twofish-Serpent',
@@ -946,54 +1307,130 @@ return view.extend({
 					volume_type: 'normal',
 					filesystem: 'none',
 					dirOnly: true,
-					hideMount: true,
-					hideKeyfiles: true,
-					hideSlot: true,
+					showMount: true,
 					showFilename: true,
+					showQuick: true,
+					showForce: true,
 					volume: '/mnt',
+					mountpoint: '/mnt/Buffalo',
 					filename: 'media.hc',
 					size: '100M'
 				});
 			} }, _('Create…')),
 			' ',
-			E('button', { 'class': 'btn', 'click': function() {
+			E('button', {
+				'type': 'button',
+				'class': 'btn',
+				'title': _('Change the volume password and/or keyfiles (veracrypt --change). Current password is sent on stdin.'),
+				'click': function() {
 				actionModal(_('Change password / keyfiles'), function(f) {
 					return [
+						E('p', _('veracrypt --change. Current password on stdin. New password is required by VeraCrypt as --new-password.')),
 						E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('Current password')), E('div', { 'class': 'cbi-value-field' }, f.pw) ]),
 						E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('New password')), E('div', { 'class': 'cbi-value-field' }, f.npw) ]),
 						E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('PIM / new PIM')), E('div', { 'class': 'cbi-value-field' }, [ f.pim, f.npim ]) ]),
 						E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('Hash / new hash')), E('div', { 'class': 'cbi-value-field' }, [ f.hash, f.nhash ]) ]),
 						f.nkf.node
 					];
-				}, function() { return { action: 'change' }; });
+				}, function(f) {
+					return {
+						action: 'change',
+						password: val(f.pw),
+						new_password: val(f.npw),
+						pim: val(f.pim),
+						new_pim: val(f.npim),
+						hash: val(f.hash),
+						new_hash: val(f.nhash),
+						new_keyfiles: f.nkf.getValue()
+					};
+				}, { showKeyfiles: true });
 			} }, _('Change…')),
 			' ',
-			E('button', { 'class': 'btn', 'click': function() {
-				actionModal(_('Backup headers'), function() { return []; }, function() { return { action: 'backup-headers' }; });
+			E('button', {
+				'type': 'button',
+				'class': 'btn',
+				'title': _('Write a backup of the volume headers (veracrypt --backup-headers).'),
+				'click': function() {
+				actionModal(_('Backup headers'), function(f) {
+					return [
+						E('p', _('veracrypt --backup-headers. Password, PIM and keyfiles must match the volume.')),
+						E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('Password')), E('div', { 'class': 'cbi-value-field' }, f.pw) ]),
+						E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('PIM (empty = default)')), E('div', { 'class': 'cbi-value-field' }, f.pim) ])
+					];
+				}, function(f) {
+					return { action: 'backup-headers', password: val(f.pw), pim: val(f.pim) };
+				}, { showKeyfiles: true });
 			} }, _('Backup headers…')),
 			' ',
-			E('button', { 'class': 'btn', 'click': function() {
-				actionModal(_('Restore headers'), function() { return []; }, function() { return { action: 'restore-headers' }; });
+			E('button', {
+				'type': 'button',
+				'class': 'btn',
+				'title': _('Restore volume headers from a backup (veracrypt --restore-headers).'),
+				'click': function() {
+				actionModal(_('Restore headers'), function(f) {
+					return [
+						E('p', _('veracrypt --restore-headers. Password, PIM and keyfiles must match the volume.')),
+						E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('Password')), E('div', { 'class': 'cbi-value-field' }, f.pw) ]),
+						E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('PIM (empty = default)')), E('div', { 'class': 'cbi-value-field' }, f.pim) ])
+					];
+				}, function(f) {
+					return { action: 'restore-headers', password: val(f.pw), pim: val(f.pim) };
+				}, { showKeyfiles: true });
 			} }, _('Restore headers…')),
 			' ',
-			E('button', { 'class': 'btn', 'click': function() {
+			E('button', {
+				'type': 'button',
+				'class': 'btn',
+				'title': _('Create a random keyfile. Path is the Volume / file field.'),
+				'click': function() {
 				actionModal(_('Create keyfile'), function(f) {
-					return [ E('p', _('Keyfile path is the Volume / file field.')), f.rnd.node ];
-				}, function() { return { action: 'create-keyfile' }; });
+					return [
+						E('p', _('Path is the Volume / file field. veracrypt --create-keyfile. No password.')),
+						E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('Random source')), E('div', { 'class': 'cbi-value-field' }, f.rnd) ])
+					];
+				}, function(f) {
+					return { action: 'create-keyfile', random_source: val(f.rnd) || '/dev/urandom' };
+				});
 			} }, _('Create keyfile…')),
 			' ',
-			E('button', { 'class': 'btn', 'click': function() {
-				actionModal(_('Volume properties'), function() { return []; }, function() { return { action: 'volume-properties' }; });
+			E('button', {
+				'type': 'button',
+				'class': 'btn',
+				'title': _('Show properties of a volume or slot (veracrypt --volume-properties).'),
+				'click': function() {
+				actionModal(_('Volume properties'), function() {
+					return [ E('p', _('veracrypt --volume-properties for a mounted volume path or slot. No password.')) ];
+				}, function() { return { action: 'volume-properties' }; }, { showSlot: true });
 			} }, _('Properties…')),
 			' ',
-			E('button', { 'class': 'btn', 'click': function() {
+			E('button', {
+				'type': 'button',
+				'class': 'btn',
+				'title': _('Mount favorite or device-hosted volumes (veracrypt --auto-mount).'),
+				'click': function() {
 				actionModal(_('Auto-mount'), function(f) {
-					return [ E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('--auto-mount')), E('div', { 'class': 'cbi-value-field' }, f.autom) ]),
-						E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('Password')), E('div', { 'class': 'cbi-value-field' }, f.pw) ]) ];
-				}, function() { return { action: 'auto-mount' }; });
+					return [
+						E('p', _('veracrypt --auto-mount=favorites|devices|devices_favorites. Always nokernelcrypto.')),
+						E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('What to mount')), E('div', { 'class': 'cbi-value-field' }, f.autom) ]),
+						E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('Password')), E('div', { 'class': 'cbi-value-field' }, f.pw) ]),
+						E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('PIM (empty = default)')), E('div', { 'class': 'cbi-value-field' }, f.pim) ])
+					];
+				}, function(f) {
+					return {
+						action: 'auto-mount',
+						auto_mount: val(f.autom) || 'favorites',
+						password: val(f.pw),
+						pim: val(f.pim),
+						mount_options: 'nokernelcrypto'
+					};
+				}, { hideVolume: true, showKeyfiles: true });
 			} }, _('Auto-mount…')),
 			' ',
-			E('button', { 'class': 'btn', 'click': function() {
+			E('button', {
+				'type': 'button',
+				'class': 'btn',
+				'title': _('List keyfiles on the PKCS #11 token. Set Timeouts → Security token library first.'),
+				'click': function() {
 				var lib = uci.get('veracrypt', 'main', 'token_lib') || '';
 				if (!lib) {
 					ui.addNotification(null, E('p',
@@ -1042,7 +1479,7 @@ return view.extend({
 		o.root_directory = '/';
 		o.show_hidden = true;
 		o.enable_upload = false;
-		o.enable_remove = false;
+		o.enable_remove = true;
 		o.enable_download = false;
 		o.directory_create = true;
 		o.rmempty = false;
@@ -1052,7 +1489,7 @@ return view.extend({
 		o.root_directory = '/';
 		o.show_hidden = true;
 		o.enable_upload = false;
-		o.enable_remove = false;
+		o.enable_remove = true;
 		o.directory_create = true;
 		o.directory_select = true;
 		o.rmempty = false;
@@ -1067,10 +1504,7 @@ return view.extend({
 		o = s.option(form.Flag, 'nokernelcrypto', _('No kernel crypto'));
 		o.default = '1';
 		o.modalonly = true;
-
-		o = s.option(form.Value, 'mount_options', _('Mount options (-m)'));
-		o.placeholder = 'nokernelcrypto';
-		o.modalonly = true;
+		o.description = _('Always recommended on this router (veracrypt -m=nokernelcrypto).');
 
 		o = s.option(form.Value, 'pim', _('PIM'));
 		o.datatype = 'uinteger';
@@ -1087,25 +1521,13 @@ return view.extend({
 		o.root_directory = '/';
 		o.show_hidden = true;
 		o.enable_upload = false;
-		o.enable_remove = false;
-		o.modalonly = true;
-
-		o = s.option(form.ListValue, 'hash', _('Hash'));
-		HASHES.forEach(function(h) { if (h) o.value(h, h); });
-		o.optional = true;
-		o.modalonly = true;
-
-		o = s.option(form.ListValue, 'encryption', _('Encryption'));
-		CIPHERS.forEach(function(c) { if (c) o.value(c, c); });
-		o.optional = true;
-		o.modalonly = true;
-
-		o = s.option(form.Value, 'filesystem', _('Filesystem'));
-		o.placeholder = 'ext4';
+		o.enable_remove = true;
+		o.directory_create = true;
 		o.modalonly = true;
 
 		o = s.option(form.Flag, 'truecrypt', _('TrueCrypt mode'));
 		o.modalonly = true;
+		o.description = _('Only if the container is a TrueCrypt volume. A .tc file name does not mean TrueCrypt.');
 
 		o = s.option(form.DummyValue, '_actions', _('Actions'));
 		o.modalonly = false;
@@ -1117,7 +1539,9 @@ return view.extend({
 			var wrap = E('span', { 'style': 'white-space:nowrap' });
 			if (mounted) {
 				wrap.appendChild(E('button', {
+					'type': 'button',
 					'class': 'btn cbi-button-remove',
+					'title': _('Unmount favorite %s from its mount point.').format(name),
 					'click': ui.createHandlerFn(this, function() {
 						return runAction({ action: 'unmount', name: name }).then(function(res) {
 							if (res && res.ok !== false)
@@ -1128,17 +1552,26 @@ return view.extend({
 			}
 			else {
 				wrap.appendChild(E('button', {
+					'type': 'button',
 					'class': 'btn cbi-button-apply',
+					'title': _('Mount favorite %s. Password is sent on stdin, not --password.').format(name),
 					'click': ui.createHandlerFn(this, function() {
 						var pw = field('password');
 						ui.showModal(_('Mount %s').format(name), [
 							E('p', uci.get('veracrypt', sid, 'volume') || ''),
 							pw,
 							E('div', { 'class': 'right' }, [
-								E('button', { 'class': 'btn', 'click': ui.hideModal }, _('Cancel')),
+								E('button', {
+									'type': 'button',
+									'class': 'btn',
+									'title': _('Close without mounting.'),
+									'click': ui.hideModal
+								}, _('Cancel')),
 								' ',
 								E('button', {
+									'type': 'button',
 									'class': 'btn cbi-button-apply',
+									'title': _('Mount this favorite. Password is sent on stdin.'),
 									'click': ui.createHandlerFn(this, function() {
 										ui.hideModal();
 										return runAction({ action: 'mount', name: name, password: val(pw) }).then(function(res) {
@@ -1153,7 +1586,9 @@ return view.extend({
 				}, _('Mount')));
 				wrap.appendChild(E('span', {}, ' '));
 				wrap.appendChild(E('button', {
+					'type': 'button',
 					'class': 'btn',
+					'title': _('Check the inner filesystem of this favorite: decrypt with --filesystem=none, fsck, then dismount.'),
 					'click': ui.createHandlerFn(this, function() {
 						openFsck({
 							volume: uci.get('veracrypt', sid, 'volume') || '',

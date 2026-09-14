@@ -204,6 +204,14 @@ vc_unmount_vol() {
 	fi
 }
 
+run_unbuf() {
+	if command -v stdbuf >/dev/null 2>&1; then
+		stdbuf -oL -eL "$@"
+	else
+		"$@"
+	fi
+}
+
 run_fsck_cmd() {
 	tool=$1
 	dev=$2
@@ -211,35 +219,35 @@ run_fsck_cmd() {
 	case $tool in
 		e2fsck|fsck.ext2|fsck.ext3|fsck.ext4)
 			if [ "$auto" = 1 ]; then
-				"$tool" -f -y "$dev"
+				run_unbuf "$tool" -f -y -C 0 "$dev"
 			elif command -v script >/dev/null 2>&1; then
 				script -c "$tool -f $dev" /dev/null
 			else
-				"$tool" -f "$dev"
+				run_unbuf "$tool" -f "$dev"
 			fi
 			;;
 		fsck.fat|fsck.vfat)
 			if [ "$auto" = 1 ]; then
-				"$tool" -a "$dev"
+				run_unbuf "$tool" -a "$dev"
 			else
-				"$tool" -r "$dev"
+				run_unbuf "$tool" -r "$dev"
 			fi
 			;;
 		fsck.exfat)
 			if [ "$auto" = 1 ]; then
-				"$tool" -y "$dev" 2>/dev/null || "$tool" -p "$dev"
+				run_unbuf "$tool" -y "$dev" 2>/dev/null || run_unbuf "$tool" -p "$dev"
 			else
-				"$tool" "$dev"
+				run_unbuf "$tool" "$dev"
 			fi
 			;;
 		ntfsfix)
-			ntfsfix "$dev"
+			run_unbuf ntfsfix "$dev"
 			;;
 		fsck)
 			if [ "$auto" = 1 ]; then
-				fsck -f -y "$dev"
+				run_unbuf fsck -f -y "$dev"
 			else
-				fsck -f "$dev"
+				run_unbuf fsck -f "$dev"
 			fi
 			;;
 		*)
@@ -279,7 +287,7 @@ cmd_pkg_install() {
 	rm -f "$JOB.rc" "$JOB.log" "$JOB.pid"
 	# shellcheck disable=SC2086
 	( "$ab" add $safe > "$JOB.log" 2>&1; echo $? > "$JOB.rc" ) &
-	echo $! > "$JOB.pid"
+	job_track
 	json_init
 	json_add_boolean ok 1
 	json_add_boolean pending 1
@@ -389,33 +397,60 @@ cmd_listdev() {
 	json_dump
 }
 
+job_track() {
+	echo $! > "$JOB.pid"
+	if [ -n "$1" ]; then
+		printf '%s\n' "$1" > "$JOB.vol"
+	else
+		rm -f "$JOB.vol"
+	fi
+}
+
 summarize_log() {
 	# Drop progress spam; keep warnings and the last error.
 	grep -v '^Done:' "$JOB.log" 2>/dev/null | grep -v '^[[:space:]]*$' | tail -n 20
+}
+
+job_log_text() {
+	n=${1:-250}
+	[ -f "$JOB.log" ] || return 0
+	tail -n "$n" "$JOB.log" 2>/dev/null
 }
 
 cmd_job() {
 	if [ -f "$JOB.rc" ]; then
 		rc=$(cat "$JOB.rc" 2>/dev/null)
 		out=$(summarize_log)
+		log=$(job_log_text 400)
 		if [ -f "$JOB.need" ]; then
 			pkgs=$(cat "$JOB.need" 2>/dev/null)
 			fst=$(cat "$JOB.fstype" 2>/dev/null)
-			json_fail_pkgs "$out" "$pkgs" "$fst"
+			json_init
+			json_add_boolean ok 0
+			json_add_string error "$out"
+			json_add_string output "$log"
+			json_add_string need_packages "$pkgs"
+			[ -n "$fst" ] && json_add_string fs_type "$fst"
+			json_dump
 			return 0
 		fi
 		if grep -q 'dmsetup not found' "$JOB.log" 2>/dev/null && grep -q '100.000%' "$JOB.log" 2>/dev/null; then
 			json_init
 			json_add_boolean ok 1
-			json_add_string output "Container file was created. Inner filesystem was not formatted because dmsetup is not installed (OpenWrt package lvm2). Create with filesystem=none, then mount and run mkfs, or apk add lvm2. $out"
+			json_add_string output "$log"
+			json_add_string summary "Container file was created. Inner filesystem was not formatted because dmsetup is not installed (OpenWrt package lvm2). Create with filesystem=none, then mount and run mkfs, or apk add lvm2. $out"
 			json_dump
 			return 0
 		fi
+		json_init
 		if [ "$rc" = 0 ]; then
-			json_ok "$out"
+			json_add_boolean ok 1
 		else
-			json_fail "$out"
+			json_add_boolean ok 0
+			json_add_string error "$out"
 		fi
+		json_add_string output "$log"
+		json_dump
 		return 0
 	fi
 	if [ -f "$JOB.pid" ]; then
@@ -424,17 +459,70 @@ cmd_job() {
 			json_init
 			json_add_boolean ok 1
 			json_add_boolean pending 1
-			if [ -f "$JOB.ask" ]; then
-				json_add_boolean interactive 1
-				json_add_string output "$(tail -n 40 "$JOB.log" 2>/dev/null)"
-			else
-				json_add_string output "running"
-			fi
+			[ -f "$JOB.ask" ] && json_add_boolean interactive 1
+			json_add_string output "$(job_log_text 250)"
 			json_dump
 			return 0
 		fi
 	fi
 	json_fail "no job"
+}
+
+cmd_job_log() {
+	json_init
+	json_add_boolean ok 1
+	if [ -f "$JOB.log" ]; then
+		json_add_string output "$(tail -c 200000 "$JOB.log" 2>/dev/null)"
+	else
+		json_add_string output ""
+	fi
+	json_dump
+}
+
+kill_tree() {
+	_p=$1
+	_sig=${2:-TERM}
+	[ -n "$_p" ] && [ -d "/proc/$_p" ] || return 0
+	kids=
+	if [ -r "/proc/$_p/task/$_p/children" ]; then
+		kids=$(cat "/proc/$_p/task/$_p/children" 2>/dev/null)
+	fi
+	if [ -z "$kids" ]; then
+		for d in /proc/[0-9]*; do
+			pp=$(sed -n 's/^PPid:[[:space:]]*//p' "$d/status" 2>/dev/null)
+			[ "$pp" = "$_p" ] && kids="$kids ${d#/proc/}"
+		done
+	fi
+	for c in $kids; do
+		kill_tree "$c" "$_sig"
+	done
+	kill -s "$_sig" "$_p" 2>/dev/null || true
+}
+
+cmd_job_abort() {
+	pid=$(cat "$JOB.pid" 2>/dev/null)
+	vol=$(cat "$JOB.vol" 2>/dev/null)
+	if [ -n "$pid" ] && [ -d "/proc/$pid" ]; then
+		printf '\nabort requested\n' >> "$JOB.log" 2>/dev/null || true
+		kill_tree "$pid" TERM
+		n=0
+		while [ -d "/proc/$pid" ] && [ "$n" -lt 15 ]; do
+			n=$((n + 1))
+			sleep 1
+		done
+		kill_tree "$pid" KILL
+		sleep 1
+	fi
+	if [ -n "$vol" ]; then
+		"$VC" --text --non-interactive --force --unmount "$vol" >/dev/null 2>&1 || true
+	fi
+	printf 'aborted\n' >> "$JOB.log" 2>/dev/null || true
+	echo 143 > "$JOB.rc"
+	rm -f "$JOB.pid" "$JOB.ask" "$JOB.in"
+	json_init
+	json_add_boolean ok 1
+	json_add_string output "Aborted. The router job was stopped."
+	json_dump
 }
 
 cmd_job_answer() {
@@ -511,6 +599,92 @@ cmd_listdir() {
 	rm -f "$tmp"
 	json_close_array
 	json_dump
+}
+
+cmd_mkdir() {
+	read_json
+	json_get_var path path
+	if [ -z "$path" ] || ! valid_path "$path"; then
+		json_fail "invalid path"
+		return 0
+	fi
+	case $path in
+		/|/mnt|/mnt/)
+			json_fail "refusing to create $path; use a subdirectory such as /mnt/Buffalo"
+			return 0
+			;;
+	esac
+	err=/tmp/vc-mkdir.err
+	if ! mkdir -p "$path" 2>"$err"; then
+		json_fail "$(cat "$err" 2>/dev/null)"
+		return 0
+	fi
+	if [ ! -d "$path" ]; then
+		json_fail "not a directory after mkdir"
+		return 0
+	fi
+	json_ok "$path"
+}
+
+protected_rm_path() {
+	p=$1
+	case $p in
+		/|/mnt|/mnt/|/overlay|/overlay/|/rom|/rom/|/proc|/sys|/dev|/tmp|/etc|/usr|/bin|/sbin|/lib|/www|/root|/boot)
+			return 0 ;;
+	esac
+	case $p in
+		/dev/*|/proc/*|/sys/*|/etc/*|/usr/*|/bin/*|/sbin/*|/lib/*|/rom/*|/overlay/*|/tmp/luci-veracrypt-job*)
+			return 0 ;;
+	esac
+	if [ -b "$p" ] || [ -c "$p" ]; then
+		return 0
+	fi
+	if awk -v mp="$p" '$2 == mp { found=1 } END { exit found ? 0 : 1 }' /proc/mounts; then
+		return 0
+	fi
+	return 1
+}
+
+cmd_rm() {
+	read_json
+	json_get_var path path
+	json_get_var recursive recursive
+	if [ -z "$path" ] || ! valid_path "$path"; then
+		json_fail "invalid path"
+		return 0
+	fi
+	if protected_rm_path "$path"; then
+		json_fail "refusing to delete $path"
+		return 0
+	fi
+	if [ ! -e "$path" ] && [ ! -L "$path" ]; then
+		json_fail "not found"
+		return 0
+	fi
+	err=/tmp/vc-rm.err
+	if [ -d "$path" ] && [ ! -L "$path" ]; then
+		if [ "$recursive" = 1 ]; then
+			if ! rm -r "$path" 2>"$err"; then
+				json_fail "$(cat "$err" 2>/dev/null)"
+				return 0
+			fi
+		else
+			if ! rmdir "$path" 2>"$err"; then
+				json_init
+				json_add_boolean ok 0
+				json_add_string error "directory is not empty"
+				json_add_boolean need_recursive 1
+				json_dump
+				return 0
+			fi
+		fi
+	else
+		if ! rm -f "$path" 2>"$err"; then
+			json_fail "$(cat "$err" 2>/dev/null)"
+			return 0
+		fi
+	fi
+	json_ok "$path"
 }
 
 cmd_run() {
@@ -590,27 +764,127 @@ cmd_run() {
 		return 0
 	fi
 
-	if [ "$action" = create ]; then
-		[ -n "$encryption" ] || encryption=AES-Twofish-Serpent
-		[ -n "$hash" ] || hash=sha-512
-		[ -n "$volume_type" ] || volume_type=normal
-		[ -n "$filesystem" ] || filesystem=none
-		[ -n "$random_source" ] || random_source=/dev/urandom
-	fi
-	if [ "$action" = mount ]; then
-		encryption=
-		hash=
-		[ -n "$mount_options" ] || mount_options=nokernelcrypto
-		[ -n "$pim" ] || pim=0
-		[ -n "$protect_hidden" ] || protect_hidden=no
-		# Filename (.tc) does not imply TrueCrypt; only the UCI/UI flag does.
-		case $mount_options in
-			truecrypt) mount_options=nokernelcrypto ;;
-			truecrypt,*) mount_options=${mount_options#truecrypt,} ;;
-			*,truecrypt) mount_options=${mount_options%,truecrypt} ;;
-			*,truecrypt,*) mount_options=$(echo "$mount_options" | sed 's/,truecrypt,/,/g;s/^truecrypt,//;s/,truecrypt$//') ;;
-		esac
-	fi
+	case $action in
+		create)
+			[ -n "$encryption" ] || encryption=AES-Twofish-Serpent
+			[ -n "$hash" ] || hash=sha-512
+			[ -n "$volume_type" ] || volume_type=normal
+			[ -n "$filesystem" ] || filesystem=none
+			[ -n "$random_source" ] || random_source=/dev/urandom
+			new_password=
+			new_pim=
+			new_hash=
+			new_keyfiles=
+			mount_options=
+			auto_mount=
+			fs_options=
+			protect_hidden=
+			protection_password=
+			protection_pim=
+			protection_hash=
+			protection_keyfiles=
+			slot=
+			allow_insecure_mount=
+			no_size_check=
+			legacy_password_maxlength=
+			verbose=
+			;;
+		mount|auto-mount)
+			encryption=
+			hash=
+			size=
+			volume_type=
+			filesystem=
+			quick=
+			new_password=
+			new_pim=
+			new_hash=
+			new_keyfiles=
+			random_source=
+			fs_options=
+			no_size_check=
+			[ -n "$mount_options" ] || mount_options=nokernelcrypto
+			[ -n "$pim" ] || pim=0
+			[ -n "$protect_hidden" ] || protect_hidden=no
+			case $mount_options in
+				truecrypt) mount_options=nokernelcrypto ;;
+				truecrypt,*) mount_options=${mount_options#truecrypt,} ;;
+				*,truecrypt) mount_options=${mount_options%,truecrypt} ;;
+				*,truecrypt,*) mount_options=$(echo "$mount_options" | sed 's/,truecrypt,/,/g;s/^truecrypt,//;s/,truecrypt$//') ;;
+			esac
+			if [ "$action" = auto-mount ]; then
+				[ -n "$auto_mount" ] || auto_mount=favorites
+			else
+				auto_mount=
+			fi
+			;;
+		change)
+			encryption=
+			filesystem=
+			size=
+			volume_type=
+			quick=
+			mount_options=
+			auto_mount=
+			slot=
+			mountpoint=
+			fs_options=
+			protect_hidden=
+			random_source=
+			allow_insecure_mount=
+			no_size_check=
+			;;
+		backup-headers|restore-headers)
+			encryption=
+			filesystem=
+			size=
+			volume_type=
+			quick=
+			mount_options=
+			auto_mount=
+			slot=
+			mountpoint=
+			new_password=
+			new_pim=
+			new_hash=
+			new_keyfiles=
+			fs_options=
+			protect_hidden=
+			allow_insecure_mount=
+			no_size_check=
+			verbose=
+			;;
+		create-keyfile)
+			password=
+			encryption=
+			hash=
+			filesystem=
+			size=
+			volume_type=
+			quick=
+			mount_options=
+			auto_mount=
+			slot=
+			mountpoint=
+			pim=
+			keyfiles=
+			new_password=
+			fs_options=
+			protect_hidden=
+			[ -n "$random_source" ] || random_source=/dev/urandom
+			;;
+		volume-properties)
+			password=
+			encryption=
+			hash=
+			filesystem=
+			size=
+			quick=
+			mount_options=
+			pim=
+			keyfiles=
+			;;
+	esac
 
 	set -- --text --non-interactive
 	[ "$use_tc" = 1 ] && set -- "$@" --truecrypt
@@ -667,7 +941,7 @@ cmd_run() {
 			mkdir -p "$mountpoint" 2>/dev/null || true
 			rm -f "$JOB.rc" "$JOB.log" "$JOB.pid"
 			( vc_invoke "$password" "$@" "$volume" "$mountpoint" > "$JOB.log" 2>&1; echo $? > "$JOB.rc" ) &
-			echo $! > "$JOB.pid"
+			job_track "$volume"
 			json_init
 			json_add_boolean ok 1
 			json_add_boolean pending 1
@@ -838,7 +1112,7 @@ cmd_run() {
 					esac
 				} > "$JOB.log" 2>&1
 			) &
-			echo $! > "$JOB.pid"
+			job_track "$vol_path"
 			json_init
 			json_add_boolean ok 1
 			json_add_boolean pending 1
@@ -879,7 +1153,8 @@ cmd_run() {
 			base=${volume##*/}
 			base=${base%.*}
 			[ -n "$base" ] || base=veracrypt
-			mp=/mnt/$base
+			mp=$mountpoint
+			[ -n "$mp" ] || mp=/mnt/$base
 			case $mp in /|/mnt|/mnt/) mp=/mnt/vc$nslot ;; esac
 			case $volume in
 				"$mp"/*) mp=/mnt/vc$nslot ;;
@@ -929,7 +1204,7 @@ cmd_run() {
 					echo "$crc" > "$JOB.rc"
 				fi
 			) &
-			echo $! > "$JOB.pid"
+			job_track "$vol_path"
 			json_init
 			json_add_boolean ok 1
 			json_add_boolean pending 1
@@ -944,7 +1219,7 @@ cmd_run() {
 			fi
 			rm -f "$JOB.rc" "$JOB.log" "$JOB.pid"
 			( vc_invoke "$password" "$@" --change "$volume" > "$JOB.log" 2>&1; echo $? > "$JOB.rc" ) &
-			echo $! > "$JOB.pid"
+			job_track "$volume"
 			json_init
 			json_add_boolean ok 1
 			json_add_boolean pending 1
@@ -969,12 +1244,34 @@ cmd_run() {
 			code=$?
 			;;
 		backup-headers)
-			out=$(vc_invoke "$password" "$@" --backup-headers "$volume" 2>&1)
-			code=$?
+			if [ -z "$volume" ]; then
+				json_fail "volume path required"
+				return 0
+			fi
+			rm -f "$JOB.rc" "$JOB.log" "$JOB.pid"
+			( vc_invoke "$password" "$@" --backup-headers "$volume" > "$JOB.log" 2>&1; echo $? > "$JOB.rc" ) &
+			job_track "$volume"
+			json_init
+			json_add_boolean ok 1
+			json_add_boolean pending 1
+			json_add_string output "backup-headers started"
+			json_dump
+			return 0
 			;;
 		restore-headers)
-			out=$(vc_invoke "$password" "$@" --restore-headers "$volume" 2>&1)
-			code=$?
+			if [ -z "$volume" ]; then
+				json_fail "volume path required"
+				return 0
+			fi
+			rm -f "$JOB.rc" "$JOB.log" "$JOB.pid"
+			( vc_invoke "$password" "$@" --restore-headers "$volume" > "$JOB.log" 2>&1; echo $? > "$JOB.rc" ) &
+			job_track "$volume"
+			json_init
+			json_add_boolean ok 1
+			json_add_boolean pending 1
+			json_add_string output "restore-headers started"
+			json_dump
+			return 0
 			;;
 		create-keyfile)
 			if [ -z "$volume" ]; then
@@ -984,7 +1281,7 @@ cmd_run() {
 			[ -n "$random_source" ] || set -- "$@" --random-source=/dev/urandom
 			rm -f "$JOB.rc" "$JOB.log" "$JOB.pid"
 			( vc_invoke "$password" "$@" --create-keyfile "$volume" > "$JOB.log" 2>&1; echo $? > "$JOB.rc" ) &
-			echo $! > "$JOB.pid"
+			job_track
 			json_init
 			json_add_boolean ok 1
 			json_add_boolean pending 1
@@ -1052,14 +1349,18 @@ cmd_run() {
 
 case "$1" in
 	list)
-		echo '{"status":{},"listdir":{"path":"str"},"listdev":{},"job":{},"job_answer":{"answer":"str"},"tools":{},"pkg_install":{"packages":"str"},"run":{"action":"str","name":"str","volume":"str","mountpoint":"str","password":"str","new_password":"str","pim":"str","new_pim":"str","hash":"str","new_hash":"str","encryption":"str","filesystem":"str","fs_options":"str","keyfiles":"str","new_keyfiles":"str","protect_hidden":"str","protection_password":"str","protection_pim":"str","protection_hash":"str","protection_keyfiles":"str","slot":"str","size":"str","volume_type":"str","random_source":"str","token_lib":"str","token_pin":"str","mount_options":"str","auto_mount":"str","force":"str","quick":"str","verbose":"str","no_size_check":"str","legacy_password_maxlength":"str","allow_insecure_mount":"str","fsck_auto":"str"}}'
+		echo '{"status":{},"listdir":{"path":"str"},"listdev":{},"mkdir":{"path":"str"},"rm":{"path":"str","recursive":"str"},"job":{},"job_log":{},"job_abort":{},"job_answer":{"answer":"str"},"tools":{},"pkg_install":{"packages":"str"},"run":{"action":"str","name":"str","volume":"str","mountpoint":"str","password":"str","new_password":"str","pim":"str","new_pim":"str","hash":"str","new_hash":"str","encryption":"str","filesystem":"str","fs_options":"str","keyfiles":"str","new_keyfiles":"str","protect_hidden":"str","protection_password":"str","protection_pim":"str","protection_hash":"str","protection_keyfiles":"str","slot":"str","size":"str","volume_type":"str","random_source":"str","token_lib":"str","token_pin":"str","mount_options":"str","auto_mount":"str","force":"str","quick":"str","verbose":"str","no_size_check":"str","legacy_password_maxlength":"str","allow_insecure_mount":"str","fsck_auto":"str"}}'
 		;;
 	call)
 		case "$2" in
 			status) cmd_status ;;
 			listdir) cmd_listdir ;;
 			listdev) cmd_listdev ;;
+			mkdir) cmd_mkdir ;;
+			rm) cmd_rm ;;
 			job) cmd_job ;;
+			job_log) cmd_job_log ;;
+			job_abort) cmd_job_abort ;;
 			job_answer) cmd_job_answer ;;
 			tools) cmd_tools ;;
 			pkg_install) cmd_pkg_install ;;
