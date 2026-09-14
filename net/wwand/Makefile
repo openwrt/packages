@@ -9,7 +9,7 @@
 #                                        passthrough reuses qmi_backend)
 #   wwand-ncm  - NCM/ECM backend        (DEPENDS wwand)
 #   wwand-mhi  - PCIe/MHI transport + drivers (DEPENDS wwand; add a backend)
-#   wwand-esim - eSIM management        (DEPENDS wwand-qmi + lpac)
+#   wwand-esim - eSIM management        (DEPENDS wwand + lpac; no backend)
 # A typical QMI router installs `wwand-qmi` (which pulls in `wwand`); add
 # `wwand-mbim` / `wwand-ncm` for those modems, `wwand-mhi` for a PCIe/MHI modem.
 # The ucode tree ships as SOURCE. It can be precompiled to bytecode (repo-root
@@ -24,12 +24,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wwand
-PKG_VERSION:=1.6.5
+PKG_VERSION:=1.6.7
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ddimension/wwand/tar.gz/refs/tags/v$(PKG_VERSION)?
-PKG_HASH:=7cd61322a42113f2bca3d98645623d6781ce5a442ec9fe760b40072ceacb6c79
+PKG_HASH:=093efcb4134afec4c52debd237edd9ca9accdf25c47bf92e4f361f3843e5f878
 
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=LICENSE
@@ -150,6 +150,12 @@ endef
 # hotplug event. Fixed upstream after 1.6.1; the reason to keep it out of the
 # base package is the dispatch cost above, not the script.)
 # check-packaging: not-installed files/wwand.hotplug.e182e
+#
+# src-ucode/apntest/ is the scheduled APN tester. It is a service-provider
+# tool — several boxes, one APN each, results to a monitoring system — and has
+# no place in a general package feed, so this packaging does not build it. The
+# release tarball carries it either way.
+# check-packaging: not-installed src-ucode/apntest/plan.uc
 
 define Package/wwand/install
 	# native transport module (built by the cmake step from io/)
@@ -187,6 +193,11 @@ define Package/wwand/install
 	# /etc/config/network now (existing files survive upgrade and are still read).
 	# files/wwand.config is kept in the source tree only as a documented example.
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/usbmisc
+	$(INSTALL_DIR) $(1)/usr/share/acl.d
+	# ubus ACL for an unprivileged reader: collectd's exec plugin refuses to run
+	# as root, so `wwandctl collectd` needs one. Deliberately not `status`, which
+	# carries iccid/imsi/imei — a ubus ACL cannot filter a result.
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/files/wwand-acl.json $(1)/usr/share/acl.d/wwand.json
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/files/wwand.hotplug $(1)/etc/hotplug.d/usbmisc/20-wwand
 	# net hotplug: NCM modems (no cdc-wdm) + re-enumeration after a mode switch
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/net
@@ -391,7 +402,7 @@ define Package/wwand-esim
   # SM-DP+ download/notification (ES9+ HTTPS on the router); the daemon bridges
   # its stdio APDU protocol inline. APDU access uses the modem UIM channel, so it
   # also needs the QMI backend.
-  DEPENDS:=+wwand-qmi +lpac
+  DEPENDS:=+wwand +lpac
 endef
 
 define Package/wwand-esim/description
