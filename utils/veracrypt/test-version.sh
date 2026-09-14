@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-only
 # Skip generic --version probing of mount.veracrypt (it is a mount helper).
 
 case "$PKG_NAME" in

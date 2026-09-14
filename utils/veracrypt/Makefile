@@ -9,8 +9,8 @@ PKG_SOURCE_URL:=https://github.com/veracrypt/VeraCrypt/releases/download/VeraCry
 PKG_HASH:=60826731e2982b4bd231e3930e85a44391169638671a1b200c518f8c8b46cb2a
 
 PKG_MAINTAINER:=Ville Takio <ville+git@takio.fi>
-PKG_LICENSE:=Apache-2.0 AND LicenseRef-TrueCrypt-3.0 AND LicenseRef-wxWindows-3.1
-PKG_LICENSE_FILES:=src/License.txt License.txt
+PKG_LICENSE:=Apache-2.0 AND LicenseRef-TrueCrypt-3.0 AND LicenseRef-wxWindows-3.1 AND GPL-2.0-only
+PKG_LICENSE_FILES:=src/License.txt License.txt files/COPYING
 PKG_CPE_ID:=cpe:/a:idrix:veracrypt
 
 PKG_BUILD_PARALLEL:=1
