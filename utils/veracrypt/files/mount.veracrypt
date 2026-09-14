@@ -28,8 +28,10 @@ done
 IFS=$OLDIFS
 
 if [ -n "$PASS" ]; then
-	printf '%s\n' "$PASS" | /usr/bin/veracrypt --text --non-interactive --stdin \
-		$VCOPTIONS --fs-options="${OPTIONS%,}" "$DEV" "$MNTPT"
+	/usr/bin/veracrypt --text --non-interactive --stdin \
+		$VCOPTIONS --fs-options="${OPTIONS%,}" "$DEV" "$MNTPT" <<EOF
+${PASS}
+EOF
 	exit $?
 fi
 exec /usr/bin/veracrypt --text --non-interactive \
