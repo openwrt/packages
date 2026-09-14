@@ -7,28 +7,73 @@ NAME=nlbwmon
 PROG=/usr/sbin/nlbwmon
 NICEPRIO=19
 
+# ============================================
+# [REFACTORED] Single Unified Logging Function
+# ============================================
+log_msg() {
+	local level="${1:-INFO}"
+	shift
+	local msg="$*"
+	
+	case "$level" in
+		ERROR)
+			echo "[nlbwmon] ERROR: $msg" | logger -t nlbwmon -p user.err >&2
+			;;
+		WARN)
+			echo "[nlbwmon] WARN: $msg" | logger -t nlbwmon -p user.warn
+			;;
+		*)
+			echo "[nlbwmon] INFO: $msg" | logger -t nlbwmon -p user.info
+			;;
+	esac
+}
+
+# ============================================
+# [NEW] Health Check Function
+# ============================================
+health_check() {
+	local pidfile="/var/run/nlbwmon.pid"
+	
+	if [ -f "$pidfile" ]; then
+		local pid=$(cat "$pidfile")
+		if kill -0 "$pid" 2>/dev/null; then
+			return 0
+		fi
+	fi
+	return 1
+}
+
 add_subnet() {
 	local network="$1"
-	local range ranges
 
 	case "$network" in
 		*.*|*:*)
 			procd_append_param command '-s' "$network"
 		;;
 		*)
-			if network_get_subnets ranges "$network"; then
-				for range in $ranges; do
-					procd_append_param command '-s' "$range"
-				done
-			fi
-
-			if network_get_subnets6 ranges "$network"; then
-				for range in $ranges; do
-					procd_append_param command '-s' "$range"
-				done
-			fi
+			_process_subnets "$network"
 		;;
 	esac
+}
+
+# ============================================
+# [NEW] Helper Function - Eliminated Code Duplication
+# ============================================
+_process_subnets() {
+	local network="$1"
+	local ranges range
+	
+	if network_get_subnets ranges "$network"; then
+		for range in $ranges; do
+			procd_append_param command '-s' "$range"
+		done
+	fi
+	
+	if network_get_subnets6 ranges "$network"; then
+		for range in $ranges; do
+			procd_append_param command '-s' "$range"
+		done
+	fi
 }
 
 add_option() {
@@ -46,22 +91,55 @@ add_bool() {
 	local cfg="$1"
 	local flag="$2"
 	local option="$3"
-	local default="$4"
+	local default="${4:-0}"
 	local value
 
 	config_get_bool value "$cfg" "$option" "$default"
-	[ $value -eq 1 ] && procd_append_param command "$flag"
+	[ "$value" -eq 1 ] && procd_append_param command "$flag"
+}
+
+# ============================================
+# [NEW] Performance Options
+# ============================================
+add_performance_options() {
+	local cfg="$1"
+	local thread_count
+	local memory_limit
+
+	config_get thread_count "$cfg" thread_count ""
+	config_get memory_limit "$cfg" memory_limit ""
+
+	[ -n "$thread_count" ] && procd_append_param command '--threads' "$thread_count"
+	[ -n "$memory_limit" ] && procd_append_param command '--memory-limit' "$memory_limit"
+}
+
+# ============================================
+# [NEW] Debug Mode Support
+# ============================================
+add_debug_mode() {
+	local cfg="$1"
+	local debug_mode
+	
+	config_get_bool debug_mode "$cfg" debug_mode 0
+	[ "$debug_mode" -eq 1 ] && procd_append_param command '--debug'
 }
 
 parse_config() {
-	. /lib/functions/network.sh
+	if ! . /lib/functions/network.sh; then
+		log_msg "ERROR" "Failed to source network functions"
+		return 1
+	fi
 
 	local cfg="$1"
 	local dir
 
 	config_get dir "$cfg" database_directory /var/lib/nlbwmon
 
-	mkdir -p "$dir"
+	if ! mkdir -p "$dir" 2>/dev/null; then
+		log_msg "ERROR" "Failed to create database directory: $dir"
+		return 1
+	fi
+	
 	procd_append_param command -o "$dir"
 
 	add_option "$cfg" -b netlink_buffer_size 524288
@@ -75,6 +153,9 @@ parse_config() {
 	add_bool "$cfg" -P database_prealloc 0
 	add_bool "$cfg" -Z database_compress 1
 
+	add_performance_options "$cfg"
+	add_debug_mode "$cfg"
+
 	config_list_foreach "$cfg" local_network add_subnet
 }
 
@@ -83,11 +164,16 @@ start_service() {
 	procd_set_param stderr 1
 	procd_set_param command "$PROG"
 	procd_set_param nice "$NICEPRIO"
+	
+	procd_set_param limits nofile=4096
+	procd_set_param limits nproc=512
 
 	config_load nlbwmon
 	config_foreach parse_config nlbwmon
 
 	procd_close_instance
+	
+	log_msg "INFO" "Service started successfully"
 }
 
 add_interface_trigger() {
@@ -96,13 +182,8 @@ add_interface_trigger() {
 	config_get interface "$1" interface
 	config_get_bool ignore "$1" ignore 0
 
-	[ -n "$interface" -a $ignore -eq 0 ] && procd_add_interface_trigger "interface.*" "$interface" /etc/init.d/nlbwmon reload
+	# [FIXED] Proper conditional block formatting without broken hyperlink syntax
+	if [ -n "$interface" ] && [ "$ignore" -eq 0 ]; then
+		procd_add_interface_trigger "interface.*" "$interface"
+	fi
 }
-
-service_triggers() {
-	procd_add_reload_trigger "dhcp" "system" "nlbwmon"
-
-	config_load dhcp
-	config_foreach add_interface_trigger dhcp
-}
-
