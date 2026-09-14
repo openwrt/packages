@@ -7,12 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shairport-sync
-PKG_VERSION:=4.3.6
-PKG_RELEASE:=3
+PKG_VERSION:=5.5.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/mikebrady/shairport-sync/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=f100ed80938ff63d305a260b0f0dd32d012ea9b64884b2802d46d862923439b8
+PKG_HASH:=5f56571f11206cb29e1a319df10c9b1b1df21dc9e6800a3b9aa701d17aa1046f
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>, \
 		Mike Brady <mikebrady@eircom.net>
@@ -22,6 +22,9 @@ PKG_LICENSE_FILES:=COPYING LICENSES shairport.c
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+
+# AirPlay 2 sources are generated at build time by plistutil
+PKG_BUILD_DEPENDS:=libplist/host
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -65,6 +68,8 @@ define Package/shairport-sync/default/description
   Shairport Sync does not support AirPlay video or photo streaming.
   Ensure Kernel Modules > Sound Support > kmod-sound-core is selected.
   Also select kmod-usb-audio if you want to use USB-connected sound cards.
+  Set alsa_output_device to real hardware, e.g. hw:0. ALSA's default device
+  reports no usable configurations and playback fails.
 endef
 Package/shairport-sync-openssl/description = $(Package/shairport-sync/default/description)
 Package/shairport-sync-mbedtls/description = $(Package/shairport-sync/default/description)
