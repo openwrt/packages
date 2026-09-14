@@ -1,0 +1,588 @@
+#!/bin/sh
+# rpcd backend for luci-app-veracrypt (veracrypt --text --non-interactive)
+
+. /usr/share/libubox/jshn.sh
+
+VC=/usr/bin/veracrypt
+JOB=/tmp/luci-veracrypt-job
+
+valid_name() {
+	echo "$1" | grep -q '^[A-Za-z0-9_]\+$'
+}
+
+valid_path() {
+	[ -z "$1" ] && return 0
+	case $1 in
+		/*) ;;
+		*) return 1 ;;
+	esac
+	case $1 in
+		*..*|*[\`\$\;\|\&\<\>\'\"]*) return 1 ;;
+	esac
+	return 0
+}
+
+valid_slot() {
+	[ -z "$1" ] && return 0
+	echo "$1" | grep -q '^[1-9][0-9]*$' || return 1
+	[ "$1" -ge 1 ] && [ "$1" -le 64 ]
+}
+
+json_fail() {
+	json_init
+	json_add_boolean ok 0
+	json_add_string error "$1"
+	json_dump
+}
+
+json_ok() {
+	json_init
+	json_add_boolean ok 1
+	[ -n "$1" ] && json_add_string output "$1"
+	json_dump
+}
+
+read_json() {
+	# ubus does not always send a trailing newline; read -r would hang.
+	input=$(cat)
+	[ -n "$input" ] || input='{}'
+	json_load "$input"
+}
+
+section_name() {
+	idx=$1
+	line=$(uci show "veracrypt.@volume[$idx]" 2>/dev/null | head -n1) || return 1
+	name=${line#veracrypt.}
+	name=${name%=volume}
+	[ -n "$name" ] || return 1
+	echo "$name"
+}
+
+is_mounted_mp() {
+	mp=$1
+	[ -n "$mp" ] || return 1
+	awk -v mp="$mp" '$2 == mp { found=1 } END { exit found ? 0 : 1 }' /proc/mounts
+}
+
+cmd_status() {
+	json_init
+	json_add_string version "$("$VC" --text --version 2>/dev/null | head -n1)"
+	json_add_array volumes
+	idx=0
+	while uci -q get "veracrypt.@volume[$idx]" >/dev/null 2>&1; do
+		name=$(section_name "$idx") || { idx=$((idx + 1)); continue; }
+		vol=$(uci -q get "veracrypt.${name}.volume")
+		mp=$(uci -q get "veracrypt.${name}.mountpoint")
+		json_add_object
+		json_add_string name "$name"
+		json_add_string volume "$vol"
+		json_add_string mountpoint "$mp"
+		slot=$(uci -q get "veracrypt.${name}.slot")
+		json_add_string slot "$slot"
+		if is_mounted_mp "$mp"; then
+			json_add_boolean mounted 1
+		else
+			json_add_boolean mounted 0
+		fi
+		json_close_object
+		idx=$((idx + 1))
+	done
+	json_close_array
+
+	listout=$("$VC" --text --non-interactive --list 2>/dev/null)
+	json_add_string list "$listout"
+
+	json_add_array slots
+	used_max=0
+	slot=1
+	while [ "$slot" -le 64 ]; do
+		line=$(printf '%s\n' "$listout" | awk -v s="$slot" '
+			$1 == s || $1 == s ":" { print; exit }
+			$1 ~ ("^" s ":") { print; exit }
+		')
+		if [ -n "$line" ]; then
+			json_add_object
+			json_add_int slot "$slot"
+			json_add_boolean used 1
+			json_add_string line "$line"
+			json_close_object
+			used_max=$slot
+		fi
+		slot=$((slot + 1))
+	done
+	json_close_array
+	next=$((used_max + 1))
+	[ "$next" -gt 64 ] && next=0
+	json_add_int next_slot "$next"
+	json_dump
+}
+
+cmd_listdev() {
+	json_init
+	json_add_boolean ok 1
+	json_add_array devices
+	# /sys/class/block is reliable on OpenWrt; /dev/sd* globs often miss USB names.
+	if [ -d /sys/class/block ]; then
+		for d in /sys/class/block/*; do
+			[ -e "$d" ] || continue
+			name=${d##*/}
+			case $name in
+				ram*|zram*) continue ;;
+			esac
+			path=/dev/$name
+			[ -e "$path" ] || continue
+			json_add_object
+			json_add_string path "$path"
+			json_add_string name "$name"
+			json_close_object
+		done
+	fi
+	if [ -d /dev/mapper ]; then
+		for p in /dev/mapper/*; do
+			case $p in *'*'*) continue ;; esac
+			[ -e "$p" ] || continue
+			json_add_object
+			json_add_string path "$p"
+			json_add_string name "mapper/${p##*/}"
+			json_close_object
+		done
+	fi
+	json_close_array
+	json_dump
+}
+
+cmd_job() {
+	if [ -f "$JOB.rc" ]; then
+		rc=$(cat "$JOB.rc" 2>/dev/null)
+		out=$(cat "$JOB.log" 2>/dev/null)
+		if [ "$rc" = 0 ]; then
+			json_ok "$out"
+		else
+			json_fail "$out"
+		fi
+		return 0
+	fi
+	if [ -f "$JOB.pid" ]; then
+		pid=$(cat "$JOB.pid" 2>/dev/null)
+		if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+			json_init
+			json_add_boolean ok 1
+			json_add_boolean pending 1
+			json_add_string output "running"
+			json_dump
+			return 0
+		fi
+	fi
+	json_fail "no job"
+}
+
+cmd_listdir() {
+	read_json
+	json_get_var path path
+	[ -n "$path" ] || path=/mnt
+	if ! valid_path "$path"; then
+		json_fail "invalid path"
+		return 0
+	fi
+	if [ ! -d "$path" ]; then
+		json_fail "not a directory"
+		return 0
+	fi
+	tmp=/tmp/vc-ls.$$
+	: > "$tmp"
+	# -p marks dirs with / so we do not stat every name (can hang on FUSE).
+	if command -v timeout >/dev/null 2>&1; then
+		timeout 5 ls -1Ap "$path" > "$tmp" 2>/dev/null || true
+	else
+		ls -1Ap "$path" > "$tmp" 2>/dev/null || true
+	fi
+	json_init
+	json_add_boolean ok 1
+	json_add_string path "$path"
+	json_add_array entries
+	parent=$(dirname "$path")
+	json_add_object
+	json_add_string name ..
+	json_add_string type dir
+	json_add_string path "$parent"
+	json_close_object
+	n=0
+	while IFS= read -r ent; do
+		[ -n "$ent" ] || continue
+		[ "$ent" = ./ ] && continue
+		[ "$ent" = ../ ] && continue
+		n=$((n + 1))
+		[ "$n" -gt 400 ] && break
+		t=file
+		case $ent in
+			*/) t=dir; ent=${ent%/} ;;
+		esac
+		fp="$path/$ent"
+		json_add_object
+		json_add_string name "$ent"
+		json_add_string type "$t"
+		json_add_string path "$fp"
+		json_close_object
+	done < "$tmp"
+	rm -f "$tmp"
+	json_close_array
+	json_dump
+}
+
+cmd_run() {
+	read_json
+	json_get_var action action
+	json_get_var name name
+	json_get_var volume volume
+	json_get_var mountpoint mountpoint
+	json_get_var password password
+	json_get_var new_password new_password
+	json_get_var pim pim
+	json_get_var new_pim new_pim
+	json_get_var hash hash
+	json_get_var new_hash new_hash
+	json_get_var encryption encryption
+	json_get_var filesystem filesystem
+	json_get_var fs_options fs_options
+	json_get_var keyfiles keyfiles
+	json_get_var new_keyfiles new_keyfiles
+	json_get_var protect_hidden protect_hidden
+	json_get_var protection_password protection_password
+	json_get_var protection_pim protection_pim
+	json_get_var protection_hash protection_hash
+	json_get_var protection_keyfiles protection_keyfiles
+	json_get_var slot slot
+	json_get_var size size
+	json_get_var volume_type volume_type
+	json_get_var random_source random_source
+	json_get_var token_lib token_lib
+	json_get_var token_pin token_pin
+	json_get_var mount_options mount_options
+	json_get_var auto_mount auto_mount
+	json_get_var force force
+	json_get_var quick quick
+	json_get_var verbose verbose
+	json_get_var no_size_check no_size_check
+	json_get_var legacy_password_maxlength legacy_password_maxlength
+	json_get_var allow_insecure_mount allow_insecure_mount
+	use_tc=
+
+	if [ -n "$name" ]; then
+		if ! valid_name "$name"; then
+			json_fail "invalid volume name"
+			return 0
+		fi
+		[ -n "$volume" ] || volume=$(uci -q get "veracrypt.${name}.volume")
+		[ -n "$mountpoint" ] || mountpoint=$(uci -q get "veracrypt.${name}.mountpoint")
+		[ -n "$pim" ] || pim=$(uci -q get "veracrypt.${name}.pim")
+		[ -n "$protect_hidden" ] || protect_hidden=$(uci -q get "veracrypt.${name}.protect_hidden")
+		[ -n "$keyfiles" ] || keyfiles=$(uci -q get "veracrypt.${name}.keyfiles")
+		[ -n "$filesystem" ] || filesystem=$(uci -q get "veracrypt.${name}.filesystem")
+		[ -n "$slot" ] || slot=$(uci -q get "veracrypt.${name}.slot")
+		[ -n "$hash" ] || hash=$(uci -q get "veracrypt.${name}.hash")
+		[ -n "$encryption" ] || encryption=$(uci -q get "veracrypt.${name}.encryption")
+		[ -n "$mount_options" ] || mount_options=$(uci -q get "veracrypt.${name}.mount_options")
+		nokc=$(uci -q get "veracrypt.${name}.nokernelcrypto")
+		tc=$(uci -q get "veracrypt.${name}.truecrypt")
+		if [ "$nokc" = 1 ]; then
+			case $mount_options in
+				*nokernelcrypto*) ;;
+				"") mount_options=nokernelcrypto ;;
+				*) mount_options="$mount_options,nokernelcrypto" ;;
+			esac
+		fi
+		[ "$tc" = 1 ] && use_tc=1
+	fi
+
+	if ! valid_path "$volume" || ! valid_path "$mountpoint" || ! valid_path "$keyfiles" \
+		|| ! valid_path "$new_keyfiles" || ! valid_path "$random_source" \
+		|| ! valid_path "$token_lib" || ! valid_path "$protection_keyfiles"; then
+		json_fail "paths must be absolute"
+		return 0
+	fi
+	if ! valid_slot "$slot"; then
+		json_fail "slot must be 1-64"
+		return 0
+	fi
+
+	if [ "$action" = create ]; then
+		[ -n "$encryption" ] || encryption=AES-Twofish-Serpent
+		[ -n "$hash" ] || hash=sha-512
+		[ -n "$volume_type" ] || volume_type=normal
+		[ -n "$filesystem" ] || filesystem=none
+		[ -n "$random_source" ] || random_source=/dev/urandom
+	fi
+	if [ "$action" = mount ]; then
+		encryption=
+		hash=
+		[ -n "$mount_options" ] || mount_options=nokernelcrypto
+		[ -n "$pim" ] || pim=0
+		[ -n "$protect_hidden" ] || protect_hidden=no
+		# Filename (.tc) does not imply TrueCrypt; only the UCI/UI flag does.
+		case $mount_options in
+			truecrypt) mount_options=nokernelcrypto ;;
+			truecrypt,*) mount_options=${mount_options#truecrypt,} ;;
+			*,truecrypt) mount_options=${mount_options%,truecrypt} ;;
+			*,truecrypt,*) mount_options=$(echo "$mount_options" | sed 's/,truecrypt,/,/g;s/^truecrypt,//;s/,truecrypt$//') ;;
+		esac
+	fi
+
+	set -- --text --non-interactive
+	[ "$use_tc" = 1 ] && set -- "$@" --truecrypt
+	[ "$verbose" = 1 ] && set -- "$@" --verbose
+	[ "$force" = 1 ] && set -- "$@" --force
+	[ "$quick" = 1 ] && set -- "$@" --quick
+	[ "$no_size_check" = 1 ] && set -- "$@" --no-size-check
+	[ "$legacy_password_maxlength" = 1 ] && set -- "$@" --legacy-password-maxlength
+	[ "$allow_insecure_mount" = 1 ] && set -- "$@" --allow-insecure-mount
+	[ -n "$password" ] && set -- "$@" --password="$password"
+	[ -n "$new_password" ] && set -- "$@" --new-password="$new_password"
+	[ -n "$pim" ] && set -- "$@" --pim="$pim"
+	[ -n "$new_pim" ] && set -- "$@" --new-pim="$new_pim"
+	[ -n "$hash" ] && set -- "$@" --hash="$hash"
+	[ -n "$new_hash" ] && set -- "$@" --new-hash="$new_hash"
+	[ -n "$encryption" ] && set -- "$@" --encryption="$encryption"
+	[ -n "$filesystem" ] && set -- "$@" --filesystem="$filesystem"
+	[ -n "$fs_options" ] && set -- "$@" --fs-options="$fs_options"
+	[ -n "$keyfiles" ] && set -- "$@" --keyfiles="$keyfiles"
+	[ -n "$new_keyfiles" ] && set -- "$@" --new-keyfiles="$new_keyfiles"
+	[ -n "$protect_hidden" ] && set -- "$@" --protect-hidden="$protect_hidden"
+	[ -n "$protection_password" ] && set -- "$@" --protection-password="$protection_password"
+	[ -n "$protection_pim" ] && set -- "$@" --protection-pim="$protection_pim"
+	[ -n "$protection_hash" ] && set -- "$@" --protection-hash="$protection_hash"
+	[ -n "$protection_keyfiles" ] && set -- "$@" --protection-keyfiles="$protection_keyfiles"
+	[ -n "$slot" ] && set -- "$@" --slot="$slot"
+	[ -n "$size" ] && set -- "$@" --size="$size"
+	[ -n "$volume_type" ] && set -- "$@" --volume-type="$volume_type"
+	[ -n "$random_source" ] && set -- "$@" --random-source="$random_source"
+	[ -n "$token_lib" ] && set -- "$@" --token-lib="$token_lib"
+	[ -n "$token_pin" ] && set -- "$@" --token-pin="$token_pin"
+	[ -n "$mount_options" ] && set -- "$@" --mount-options="$mount_options"
+	[ -n "$auto_mount" ] && set -- "$@" --auto-mount="$auto_mount"
+
+	out=
+	code=0
+	case $action in
+		mount)
+			if ! valid_path "$volume" || [ -z "$volume" ] || ! valid_path "$mountpoint" || [ -z "$mountpoint" ]; then
+				json_fail "volume and mountpoint required"
+				return 0
+			fi
+			case $mountpoint in
+				/|/mnt|/mnt/)
+					json_fail "refusing to mount on $mountpoint; use a subdirectory such as /mnt/Buffalo"
+					return 0
+					;;
+			esac
+			case $volume in
+				"$mountpoint"/*)
+					json_fail "container $volume is inside $mountpoint; mounting there would hide the file (busy unmount). Use e.g. /mnt/Buffalo"
+					return 0
+					;;
+			esac
+			mkdir -p "$mountpoint" 2>/dev/null || true
+			rm -f "$JOB.rc" "$JOB.log" "$JOB.pid"
+			( "$VC" "$@" "$volume" "$mountpoint" > "$JOB.log" 2>&1; echo $? > "$JOB.rc" ) &
+			echo $! > "$JOB.pid"
+			json_init
+			json_add_boolean ok 1
+			json_add_boolean pending 1
+			json_add_string output "mount started"
+			json_dump
+			return 0
+			;;
+		unmount|dismount)
+			target=$mountpoint
+			[ -n "$target" ] || target=$volume
+			out=
+			code=1
+			# Nested mounts (e.g. /mnt/sda2 under a volume on /mnt) make umount busy.
+			# Lazy-detach the VeraCrypt mount first, then tell veracrypt to drop the loop.
+			if [ -n "$target" ]; then
+				umount -l "$target" >/tmp/vc-umount.out 2>&1 || true
+				out=$(cat /tmp/vc-umount.out 2>/dev/null)
+			fi
+			if [ -n "$slot" ]; then
+				out=$out$("$VC" --text --non-interactive --force --unmount --slot="$slot" 2>&1)
+				code=$?
+			fi
+			if [ -n "$target" ]; then
+				out=$out$("$VC" --text --non-interactive --force --unmount "$target" 2>&1)
+				code=$?
+			fi
+			if [ "$code" -ne 0 ] || [ -z "$target" ]; then
+				out=$out$("$VC" --text --non-interactive --force --unmount 2>&1)
+				code=$?
+			fi
+			# If the slot is gone, treat as success even if umount said busy.
+			if "$VC" --text --non-interactive --list 2>/dev/null | grep -q .; then
+				:
+			else
+				code=0
+			fi
+			;;
+		create)
+			missing=
+			[ -n "$volume" ] || missing="$missing volume path (folder + file name);"
+			[ -n "$size" ] || missing="$missing --size (container size, e.g. 100M);"
+			[ -n "$password" ] || missing="$missing password;"
+			if [ -n "$missing" ]; then
+				json_fail "required argument missing:$missing"
+				return 0
+			fi
+			[ -n "$encryption" ] || encryption=AES-Twofish-Serpent
+			[ -n "$hash" ] || hash=sha-512
+			[ -n "$volume_type" ] || volume_type=normal
+			[ -n "$filesystem" ] || filesystem=none
+			[ -n "$random_source" ] || random_source=/dev/urandom
+			set -- --text --non-interactive --create \
+				--volume-type="$volume_type" \
+				--size="$size" \
+				--encryption="$encryption" \
+				--hash="$hash" \
+				--filesystem="$filesystem" \
+				--password="$password" \
+				--random-source="$random_source"
+			[ -n "$pim" ] && set -- "$@" --pim="$pim"
+			[ "$quick" = 1 ] && set -- "$@" --quick
+			[ "$force" = 1 ] && set -- "$@" --force
+			[ "$verbose" = 1 ] && set -- "$@" --verbose
+			[ "$no_size_check" = 1 ] && set -- "$@" --no-size-check
+			[ -n "$keyfiles" ] && set -- "$@" --keyfiles="$keyfiles"
+			rm -f "$JOB.rc" "$JOB.log" "$JOB.pid"
+			( "$VC" "$@" "$volume" > "$JOB.log" 2>&1; echo $? > "$JOB.rc" ) &
+			echo $! > "$JOB.pid"
+			json_init
+			json_add_boolean ok 1
+			json_add_boolean pending 1
+			json_add_string output "create started"
+			json_dump
+			return 0
+			;;
+		change)
+			if [ -z "$volume" ]; then
+				json_fail "volume path required"
+				return 0
+			fi
+			rm -f "$JOB.rc" "$JOB.log" "$JOB.pid"
+			( "$VC" "$@" --change "$volume" > "$JOB.log" 2>&1; echo $? > "$JOB.rc" ) &
+			echo $! > "$JOB.pid"
+			json_init
+			json_add_boolean ok 1
+			json_add_boolean pending 1
+			json_add_string output "change started"
+			json_dump
+			return 0
+			;;
+		list)
+			out=$("$VC" "$@" --list 2>&1)
+			code=$?
+			;;
+		test)
+			out=$("$VC" --text --non-interactive --test 2>&1)
+			code=$?
+			;;
+		version)
+			out=$("$VC" --text --version 2>&1)
+			code=$?
+			;;
+		help)
+			out=$("$VC" --text --help 2>&1)
+			code=$?
+			;;
+		backup-headers)
+			out=$("$VC" "$@" --backup-headers "$volume" 2>&1)
+			code=$?
+			;;
+		restore-headers)
+			out=$("$VC" "$@" --restore-headers "$volume" 2>&1)
+			code=$?
+			;;
+		create-keyfile)
+			if [ -z "$volume" ]; then
+				json_fail "keyfile path required (volume field)"
+				return 0
+			fi
+			[ -n "$random_source" ] || set -- "$@" --random-source=/dev/urandom
+			rm -f "$JOB.rc" "$JOB.log" "$JOB.pid"
+			( "$VC" "$@" --create-keyfile "$volume" > "$JOB.log" 2>&1; echo $? > "$JOB.rc" ) &
+			echo $! > "$JOB.pid"
+			json_init
+			json_add_boolean ok 1
+			json_add_boolean pending 1
+			json_add_string output "create-keyfile started"
+			json_dump
+			return 0
+			;;
+		volume-properties)
+			if [ -n "$slot" ]; then
+				out=$("$VC" --text --non-interactive --volume-properties --slot="$slot" 2>&1)
+			else
+				out=$("$VC" --text --non-interactive --volume-properties "$volume" 2>&1)
+			fi
+			code=$?
+			;;
+		auto-mount)
+			out=$("$VC" "$@" 2>&1)
+			code=$?
+			;;
+		list-token-keyfiles)
+			if [ -z "$token_lib" ]; then
+				json_fail "No PKCS #11 library path is set. Set Timeouts → Security token library (example: /usr/lib/libykcs11.so). This LuCI app has no Settings > Security Tokens."
+				return 0
+			fi
+			out=$("$VC" --text --non-interactive --token-lib="$token_lib" --list-token-keyfiles 2>&1)
+			code=$?
+			case $out in
+				*'Security Tokens'*)
+					out="No PKCS #11 library loaded from $token_lib. Set Timeouts → Security token library to a valid .so. This LuCI app has no Settings > Security Tokens."
+					;;
+			esac
+			;;
+		list-securitytoken-keyfiles)
+			out=$("$VC" --text --non-interactive --list-securitytoken-keyfiles 2>&1)
+			code=$?
+			;;
+		list-emvtoken-keyfiles)
+			out=$("$VC" --text --non-interactive --list-emvtoken-keyfiles 2>&1)
+			code=$?
+			;;
+		import-token-keyfiles)
+			out=$("$VC" "$@" --import-token-keyfiles 2>&1)
+			code=$?
+			;;
+		export-token-keyfile)
+			out=$("$VC" "$@" --export-token-keyfile 2>&1)
+			code=$?
+			;;
+		delete-token-keyfiles)
+			out=$("$VC" "$@" --delete-token-keyfiles 2>&1)
+			code=$?
+			;;
+		*)
+			json_fail "unknown action"
+			return 0
+			;;
+	esac
+
+	if [ "$code" -eq 0 ]; then
+		json_ok "$out"
+	else
+		json_fail "$out"
+	fi
+}
+
+case "$1" in
+	list)
+		echo '{"status":{},"listdir":{"path":"str"},"listdev":{},"job":{},"run":{"action":"str","name":"str","volume":"str","mountpoint":"str","password":"str","new_password":"str","pim":"str","new_pim":"str","hash":"str","new_hash":"str","encryption":"str","filesystem":"str","fs_options":"str","keyfiles":"str","new_keyfiles":"str","protect_hidden":"str","protection_password":"str","protection_pim":"str","protection_hash":"str","protection_keyfiles":"str","slot":"str","size":"str","volume_type":"str","random_source":"str","token_lib":"str","token_pin":"str","mount_options":"str","auto_mount":"str","force":"str","quick":"str","verbose":"str","no_size_check":"str","legacy_password_maxlength":"str","allow_insecure_mount":"str"}}'
+		;;
+	call)
+		case "$2" in
+			status) cmd_status ;;
+			listdir) cmd_listdir ;;
+			listdev) cmd_listdev ;;
+			job) cmd_job ;;
+			run) cmd_run ;;
+		esac
+		;;
+esac
