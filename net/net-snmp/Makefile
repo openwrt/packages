@@ -8,14 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=net-snmp
-PKG_VERSION:=5.9.4
-PKG_RELEASE:=6
+PKG_VERSION:=5.9.5.2
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/net-snmp
-PKG_HASH:=8b4de01391e74e3c7014beb43961a2d6d6fa03acc34280b9585f4930745b0544
+PKG_HASH:=16707719f833184a4b72835dac359ae188123b06b5e42817c00790d7dc1384bf
 PKG_MAINTAINER:=Stijn Tintel <stijn@linux-ipv6.be>
 PKG_LICENSE:=MIT BSD-3-Clause-Clear
+PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:net-snmp:net-snmp
 
 PKG_FIXUP:=autoreconf
@@ -25,7 +26,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/net-snmp/Default
   SECTION:=net
   CATEGORY:=Network
-  URL:=http://www.net-snmp.org/
+  URL:=https://www.net-snmp.org/
 endef
 
 define Package/net-snmp/Default/description
@@ -282,6 +283,7 @@ endif
 
 ifeq ($(BUILD_VARIANT),ssl)
 CONFIGURE_ARGS+= --with-openssl="$(STAGING_DIR)/usr"
+CONFIGURE_ARGS+= --enable-blumenthal-aes
 else
 CONFIGURE_ARGS+= --without-openssl
 endif
