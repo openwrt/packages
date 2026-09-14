@@ -4,7 +4,7 @@
 		"read": {
 			"ubus": {
 				"file": [ "list", "stat" ],
-				"luci.veracrypt": [ "status", "listdir", "listdev", "job", "run" ]
+				"luci.veracrypt": [ "status", "listdir", "listdev", "job", "job_answer", "tools", "pkg_install", "run" ]
 			},
 			"file": {
 				"*": [ "list", "stat" ],
@@ -17,7 +17,7 @@
 		"write": {
 			"ubus": {
 				"file": [ "exec" ],
-				"luci.veracrypt": [ "status", "listdir", "listdev", "job", "run" ]
+				"luci.veracrypt": [ "status", "listdir", "listdev", "job", "job_answer", "tools", "pkg_install", "run" ]
 			},
 			"file": {
 				"/bin/mkdir": [ "exec" ],

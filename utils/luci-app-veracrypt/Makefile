@@ -21,7 +21,7 @@ define Package/luci-app-veracrypt
 endef
 
 define Package/luci-app-veracrypt/description
-  LuCI pages to list, mount and dismount console VeraCrypt volumes.
+  LuCI pages to list, mount, check (fsck) and dismount console VeraCrypt volumes.
   Uses veracrypt --text only; no GUI toolkit.
 endef
 

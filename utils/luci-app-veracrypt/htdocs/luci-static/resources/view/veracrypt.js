@@ -24,7 +24,7 @@ var RUN_PARAMS = [
 	'protection_keyfiles', 'slot', 'size', 'volume_type', 'random_source',
 	'token_lib', 'token_pin', 'mount_options', 'auto_mount', 'force',
 	'quick', 'verbose', 'no_size_check', 'legacy_password_maxlength',
-	'allow_insecure_mount'
+	'allow_insecure_mount', 'fsck_auto'
 ];
 
 function timeoutSec() {
@@ -59,10 +59,215 @@ function callJobWithTimeout() {
 	});
 }
 
+var callTools = rpc.declare({
+	object: 'luci.veracrypt',
+	method: 'tools'
+});
+
+var callJobAnswer = rpc.declare({
+	object: 'luci.veracrypt',
+	method: 'job_answer',
+	params: [ 'answer' ]
+});
+
+function packagesForFs(fs) {
+	switch (fs) {
+		case 'ext4':
+		case 'ext3':
+		case 'ext2':
+			return [ 'lvm2', 'e2fsprogs', 'kmod-fs-ext4' ];
+		case 'vfat':
+			return [ 'lvm2', 'dosfstools', 'kmod-fs-vfat' ];
+		case 'ntfs':
+			return [ 'lvm2', 'ntfs-3g', 'kmod-fs-ntfs3' ];
+		case 'exfat':
+			return [ 'lvm2', 'exfatprogs', 'kmod-fs-exfat' ];
+		default:
+			return [];
+	}
+}
+
+function packagesForFsck(fs) {
+	switch (fs) {
+		case 'ext4':
+		case 'ext3':
+		case 'ext2':
+			return [ 'e2fsprogs' ];
+		case 'vfat':
+			return [ 'dosfstools' ];
+		case 'ntfs':
+			return [ 'ntfs-3g' ];
+		case 'exfat':
+			return [ 'exfatprogs' ];
+		default:
+			return [ 'e2fsprogs' ];
+	}
+}
+
+function fsckToolsReady(t, fs) {
+	if (!t)
+		return false;
+	if (!fs || fs === 'none')
+		return !!(t.has_e2fsck || t.has_fsck_ext4 || t.has_fsck_fat || t.has_fsck_exfat || t.has_ntfsfix || t.has_fsck);
+	if (fs === 'ext4' || fs === 'ext3' || fs === 'ext2')
+		return !!(t.has_e2fsck || t.has_fsck_ext4);
+	if (fs === 'vfat')
+		return !!t.has_fsck_fat;
+	if (fs === 'ntfs')
+		return !!t.has_ntfsfix;
+	if (fs === 'exfat')
+		return !!t.has_fsck_exfat;
+	return !!t.has_fsck;
+}
+
+function toolsReady(t, fs) {
+	if (!fs || fs === 'none')
+		return true;
+	if (!t || !t.has_dmsetup)
+		return false;
+	if ((fs === 'ext4' || fs === 'ext3' || fs === 'ext2') && !t.has_mkfs_ext4)
+		return false;
+	if (fs === 'vfat' && !t.has_mkfs_vfat)
+		return false;
+	if (fs === 'ntfs' && !t.has_mkfs_ntfs)
+		return false;
+	if (fs === 'exfat' && !t.has_mkfs_exfat)
+		return false;
+	return true;
+}
+
+function installPackages(list) {
+	var limit = timeoutSec();
+	var statusEl = E('p');
+	var elapsed = 0;
+	var left = limit;
+	function paint() {
+		statusEl.textContent = _('apk add %s — elapsed %s, timeout in %s').format(list.join(' '), fmtClock(elapsed), fmtClock(left));
+	}
+	ui.showModal(_('Install packages'), [ statusEl ]);
+	paint();
+	var iv = window.setInterval(function() {
+		elapsed++;
+		left--;
+		paint();
+	}, 1000);
+	var inst = rpc.declare({
+		object: 'luci.veracrypt',
+		method: 'pkg_install',
+		timeout: limit * 1000,
+		params: [ 'packages' ]
+	});
+	return inst(list.join(' ')).then(function(res) {
+		if (res && res.pending)
+			return waitJob(left, statusEl);
+		return res;
+	}).then(function(res) {
+		window.clearInterval(iv);
+		ui.hideModal();
+		showResult(res);
+		return res && res.ok !== false;
+	}).catch(function(err) {
+		window.clearInterval(iv);
+		ui.hideModal();
+		ui.addNotification(null, E('p', err.message || String(err)), 'error');
+		return false;
+	});
+}
+
+function ensureFsPackages(o) {
+	if (o.action !== 'create')
+		return Promise.resolve(true);
+	var fs = o.filesystem || 'none';
+	var pkgs = packagesForFs(fs);
+	if (!pkgs.length)
+		return Promise.resolve(true);
+	return callTools().then(function(t) {
+		if (toolsReady(t, fs))
+			return true;
+		return new Promise(function(resolve) {
+			ui.showModal(_('Missing tools for %s').format(fs), [
+				E('p', _('Creating a volume with an inner %s filesystem needs: %s (dmsetup from lvm2, mkfs, and the kmod). Install with apk add, or create with filesystem=none and format after mount.').format(fs, pkgs.join(' '))),
+				E('div', { 'class': 'right' }, [
+					E('button', {
+						'class': 'btn',
+						'click': function() { ui.hideModal(); resolve(false); }
+					}, _('Cancel')),
+					' ',
+					E('button', {
+						'class': 'btn',
+						'click': function() {
+							ui.hideModal();
+							o.filesystem = 'none';
+							resolve(true);
+						}
+					}, _('Create with filesystem=none')),
+					' ',
+					E('button', {
+						'class': 'btn cbi-button-apply',
+						'click': function() {
+							ui.hideModal();
+							installPackages(pkgs).then(function(ok) { resolve(ok); });
+						}
+					}, _('apk add and continue'))
+				])
+			]);
+		});
+	});
+}
+
+function ensureFsckPackages(o) {
+	if (o.action !== 'fsck')
+		return Promise.resolve(true);
+	var fs = o.filesystem || '';
+	var pkgs = packagesForFsck(fs);
+	return callTools().then(function(t) {
+		if (fsckToolsReady(t, fs))
+			return true;
+		return new Promise(function(resolve) {
+			ui.showModal(_('Missing fsck tools'), [
+				E('p', _('Checking a volume cannot be done without the matching fsck tool. The app decrypts with --filesystem=none, runs fsck on the mapper or loop device, then dismounts. Install: %s (e2fsprogs for ext*, dosfstools for FAT, exfatprogs for exFAT, ntfs-3g for NTFS).').format(pkgs.join(' '))),
+				E('div', { 'class': 'right' }, [
+					E('button', {
+						'class': 'btn',
+						'click': function() { ui.hideModal(); resolve(false); }
+					}, _('Cancel')),
+					' ',
+					E('button', {
+						'class': 'btn cbi-button-apply',
+						'click': function() {
+							ui.hideModal();
+							installPackages(pkgs).then(function(ok) { resolve(ok); });
+						}
+					}, _('apk add'))
+				])
+			]);
+		});
+	});
+}
+
 function showResult(res) {
 	var err = res && res.error ? String(res.error) : '';
 	if (err.indexOf('PKCS') !== -1 || err.indexOf('Security Tokens') !== -1)
 		err = _('No PKCS #11 library loaded. Set the library path under Timeouts → Security token library (for example /usr/lib/libykcs11.so). This app has no Settings > Security Tokens.');
+	if (res && res.need_packages) {
+		var pkgs = String(res.need_packages).split(/[\s,]+/).filter(Boolean);
+		ui.showModal(_('Missing fsck tools'), [
+			E('pre', err || _('Checking a volume cannot be done without the matching fsck tool.')),
+			E('p', _('apk add %s').format(pkgs.join(' '))),
+			E('div', { 'class': 'right' }, [
+				E('button', { 'class': 'btn', 'click': ui.hideModal }, _('Cancel')),
+				' ',
+				E('button', {
+					'class': 'btn cbi-button-apply',
+					'click': function() {
+						ui.hideModal();
+						installPackages(pkgs);
+					}
+				}, _('apk add'))
+			])
+		]);
+		return;
+	}
 	if (!res || res.ok === false)
 		ui.addNotification(null, E('pre', err || _('Command failed')), 'error');
 	else if (res.output)
@@ -149,7 +354,7 @@ function flag(el) {
 	return el && el.checked ? '1' : '';
 }
 
-function waitJob(limit, statusEl) {
+function waitJob(limit, statusEl, logEl) {
 	var left = limit;
 	var elapsed = 0;
 	var job = callJobWithTimeout();
@@ -174,6 +379,8 @@ function waitJob(limit, statusEl) {
 			};
 		}
 		return job().then(function(res) {
+			if (logEl && res && res.output)
+				logEl.textContent = res.output;
 			if (res && res.pending)
 				return new Promise(function(resolve) {
 					window.setTimeout(function() { resolve(poll()); }, 2000);
@@ -196,8 +403,25 @@ function runAction(opts) {
 	function paint() {
 		statusEl.textContent = _('Working… elapsed %s. Operation will time out in %s. Header derivation and random generation can take several minutes on a slow CPU with little RAM.').format(fmtClock(elapsed), fmtClock(left));
 	}
+	var logEl = E('pre', { 'style': 'max-height:220px;overflow:auto;white-space:pre-wrap' });
+	var ynBox = E('p');
+	if (opts.action === 'fsck' && opts.fsck_auto !== '1') {
+		ynBox.appendChild(E('p', { 'class': 'cbi-map-descr' },
+			_('fsck is interactive. Press y or n for each prompt.')));
+		ynBox.appendChild(E('button', {
+			'class': 'btn cbi-button-apply',
+			'click': function() { callJobAnswer('y'); }
+		}, _('y')));
+		ynBox.appendChild(E('span', {}, ' '));
+		ynBox.appendChild(E('button', {
+			'class': 'btn',
+			'click': function() { callJobAnswer('n'); }
+		}, _('n')));
+	}
 	ui.showModal(_('VeraCrypt'), [
 		statusEl,
+		ynBox,
+		logEl,
 		E('p', { 'class': 'cbi-map-descr' },
 			_('XHR timeout is %d seconds (minimum 300). Change it under Timeouts, then Save & Apply.').format(limit))
 	]);
@@ -219,10 +443,10 @@ function runAction(opts) {
 		opts.token_lib || '', opts.token_pin || '', opts.mount_options || '',
 		opts.auto_mount || '', opts.force || '', opts.quick || '', opts.verbose || '',
 		opts.no_size_check || '', opts.legacy_password_maxlength || '',
-		opts.allow_insecure_mount || ''
+		opts.allow_insecure_mount || '', opts.fsck_auto || ''
 	).then(function(res) {
 		if (res && res.pending)
-			return waitJob(left, statusEl);
+			return waitJob(left, statusEl, logEl);
 		return res;
 	}).then(function(res) {
 		window.clearInterval(iv);
@@ -313,7 +537,15 @@ return view.extend({
 									window.location.reload();
 							});
 						})
-					}, _('Unmount'))
+					}, _('Unmount')),
+					' ',
+					E('button', {
+						'class': 'btn',
+						'click': ui.createHandlerFn(this, function() {
+							var parts = String(sl.line || '').trim().split(/\s+/);
+							openFsck({ volume: parts[1] || '', slot: String(sl.slot) });
+						})
+					}, _('Check'))
 				])
 			]));
 		});
@@ -419,7 +651,9 @@ return view.extend({
 			var nosz = field('checkbox');
 			var legacy = field('checkbox');
 			var insecure = field('checkbox');
+			var fsckauto = field('checkbox');
 			quick.checked = true;
+			fsckauto.checked = true;
 			if (initial.size)
 				size.value = initial.size;
 
@@ -443,7 +677,7 @@ return view.extend({
 				phash: phash, enc: enc, fs: fs, vtype: vtype, phid: phid, size: size,
 				fsopt: fsopt, mopt: mopt, autom: autom, tlib: tlib, tpin: tpin, pkf: pkf,
 				force: force, quick: quick, verbose: verbose, nosz: nosz, legacy: legacy,
-				insecure: insecure, fname: fname
+				insecure: insecure, fname: fname, fsckauto: fsckauto
 			}));
 			if (!initial.hideSlot)
 				nodes.push(E('div', { 'class': 'cbi-value' }, [
@@ -474,7 +708,7 @@ return view.extend({
 								phash: phash, enc: enc, fs: fs, vtype: vtype, phid: phid, size: size,
 								fsopt: fsopt, mopt: mopt, autom: autom, tlib: tlib, tpin: tpin, pkf: pkf,
 								force: force, quick: quick, verbose: verbose, nosz: nosz, legacy: legacy,
-								insecure: insecure
+								insecure: insecure, fsckauto: fsckauto
 							});
 							o.volume = vol.getValue();
 							o.mountpoint = mp.getValue();
@@ -508,6 +742,7 @@ return view.extend({
 							o.no_size_check = flag(nosz);
 							o.legacy_password_maxlength = flag(legacy);
 							o.allow_insecure_mount = flag(insecure);
+							o.fsck_auto = flag(fsckauto) ? '1' : '0';
 							if (o.action === 'create') {
 								var fn = val(fname) || initial.filename || 'media.hc';
 								o.volume = String(o.volume || '/mnt').replace(/\/+$/, '') + '/' + fn.replace(/^\/+/, '');
@@ -527,10 +762,32 @@ return view.extend({
 								if (!o.mount_options)
 									o.mount_options = 'nokernelcrypto';
 							}
+							if (o.action === 'fsck') {
+								o.mountpoint = '';
+								o.encryption = '';
+								o.hash = '';
+								o.size = '';
+								o.volume_type = '';
+								o.quick = '';
+								if (!o.mount_options)
+									o.mount_options = 'nokernelcrypto';
+								if (!o.protect_hidden)
+									o.protect_hidden = 'no';
+								if (!o.pim)
+									o.pim = '0';
+							}
 							ui.hideModal();
-							return runAction(o).then(function(res) {
-								if (res && res.ok !== false && (o.action === 'mount' || o.action === 'unmount' || o.action === 'create'))
-									window.location.reload();
+							return ensureFsPackages(o).then(function(go) {
+								if (!go)
+									return;
+								return ensureFsckPackages(o).then(function(go2) {
+									if (!go2)
+										return;
+									return runAction(o).then(function(res) {
+										if (res && res.ok !== false && (o.action === 'mount' || o.action === 'unmount' || o.action === 'create' || o.action === 'fsck'))
+											window.location.reload();
+									});
+								});
 							});
 						})
 					}, _('Run'))
@@ -545,6 +802,28 @@ return view.extend({
 				E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('PIM (empty = default)')), E('div', { 'class': 'cbi-value-field' }, f.pim) ]),
 				E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('Mount options')), E('div', { 'class': 'cbi-value-field' }, f.mopt) ])
 			];
+		}
+
+		function openFsck(initial) {
+			actionModal(_('Check filesystem'), function(f) {
+				return [
+					E('p', _('Decrypts without mounting (veracrypt --filesystem=none), lists the mapper or loop device (veracrypt -l), runs fsck -f on that device, then dismounts. Unmount the volume first if it is mounted. Default is automatic yes to all prompts; uncheck for interactive y/n.')),
+					E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('Password')), E('div', { 'class': 'cbi-value-field' }, f.pw) ]),
+					E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('PIM (empty = default)')), E('div', { 'class': 'cbi-value-field' }, f.pim) ]),
+					E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('Inner filesystem (optional hint)')), E('div', { 'class': 'cbi-value-field' }, f.fs) ]),
+					E('div', { 'class': 'cbi-value' }, [
+						E('label', { 'class': 'cbi-value-title' }, _('Automatic yes')),
+						E('div', { 'class': 'cbi-value-field' }, [
+							E('label', {}, [ f.fsckauto, ' ', _('Yes to all fsck prompts (default). Uncheck to answer y or n.') ])
+						])
+					])
+				];
+			}, function() { return { action: 'fsck' }; }, {
+				volume: (initial && initial.volume) || '',
+				slot: (initial && initial.slot) || '',
+				hideMount: true,
+				hideFlags: true
+			});
 		}
 
 		function openFilePicker(slotNo) {
@@ -644,9 +923,13 @@ return view.extend({
 			} }, _('Mount…')),
 			' ',
 			E('button', { 'class': 'btn', 'click': function() {
+				openFsck({ slot: String(nextSlot || 1) });
+			} }, _('Check filesystem…')),
+			' ',
+			E('button', { 'class': 'btn', 'click': function() {
 				actionModal(_('Create volume'), function(f) {
 					return [
-						E('p', _('Folder + file name become the container path. Defaults: AES-Twofish-Serpent, SHA-512, size 100M.')),
+						E('p', _('Folder + file name become the container path. After create, the volume is mounted on /mnt/<name> in the next free slot. Defaults: AES-Twofish-Serpent, SHA-512, size 100M. For ext4/vfat the app can apk add lvm2 and e2fsprogs if you agree.')),
 						E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('Password')), E('div', { 'class': 'cbi-value-field' }, f.pw) ]),
 						E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('PIM (0 = VeraCrypt default)')), E('div', { 'class': 'cbi-value-field' }, f.pim) ]),
 						E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('Size (--size)')), E('div', { 'class': 'cbi-value-field' }, f.size) ]),
@@ -867,6 +1150,16 @@ return view.extend({
 						]);
 					})
 				}, _('Mount')));
+				wrap.appendChild(E('span', {}, ' '));
+				wrap.appendChild(E('button', {
+					'class': 'btn',
+					'click': ui.createHandlerFn(this, function() {
+						openFsck({
+							volume: uci.get('veracrypt', sid, 'volume') || '',
+							slot: uci.get('veracrypt', sid, 'slot') || ''
+						});
+					})
+				}, _('Check')));
 			}
 			return wrap;
 		};
