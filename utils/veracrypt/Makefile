@@ -9,7 +9,7 @@ PKG_SOURCE_URL:=https://github.com/veracrypt/VeraCrypt/releases/download/VeraCry
 PKG_HASH:=60826731e2982b4bd231e3930e85a44391169638671a1b200c518f8c8b46cb2a
 
 PKG_MAINTAINER:=Ville Takio <ville+git@takio.fi>
-PKG_LICENSE:=Apache-2.0 AND LicenseRef-TrueCrypt-3.0
+PKG_LICENSE:=Apache-2.0 AND LicenseRef-TrueCrypt-3.0 AND LicenseRef-wxWindows-3.1
 PKG_LICENSE_FILES:=src/License.txt License.txt
 PKG_CPE_ID:=cpe:/a:idrix:veracrypt
 
@@ -46,11 +46,12 @@ endef
 $(eval $(call Download,wxwidgets))
 
 # Official source tarball has no top-level directory.
-PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
+PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) -xjf $(DL_DIR)/$(PKG_SOURCE)
 
 define Build/Prepare
-	$(call Build/Prepare/Default)
-	$(TAR) -C $(PKG_BUILD_DIR) -xjf $(DL_DIR)/$(WX_FILE)
+	mkdir -p $(PKG_BUILD_DIR)
+	$(PKG_UNPACK)
+	$(HOST_TAR) -C $(PKG_BUILD_DIR) -xjf $(DL_DIR)/$(WX_FILE)
 endef
 
 # VeraCrypt's Makefile enables SIMD from the *host* GCC version.
@@ -89,9 +90,12 @@ define Build/Compile
 endef
 
 define Package/veracrypt/install
-	$(INSTALL_DIR) $(1)/usr/bin $(1)/sbin
+	$(INSTALL_DIR) $(1)/usr/bin $(1)/sbin $(1)/usr/share/doc/veracrypt
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/Main/veracrypt $(1)/usr/bin/veracrypt
 	$(INSTALL_BIN) ./files/mount.veracrypt $(1)/sbin/mount.veracrypt
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/src/License.txt $(1)/usr/share/doc/veracrypt/License.txt
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/wxWidgets-$(WX_VERSION)/docs/licence.txt \
+		$(1)/usr/share/doc/veracrypt/wxWindows.txt
 endef
 
 $(eval $(call BuildPackage,veracrypt))

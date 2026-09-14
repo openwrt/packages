@@ -1,11 +1,14 @@
 #!/bin/sh
-# mount.veracrypt <device> <mountpoint> [-o] <comma-opts>
+# mount.veracrypt <device> <mountpoint> [flags] [-o comma-opts]
 DEV=$1
 MNTPT=$2
 VCOPTIONS=
 OPTIONS=
+PASS=
 
-[ "$#" -ge 3 ] && shift 3
+shift 2
+while [ "$#" -gt 0 ] && [ "$1" != "-o" ]; do shift; done
+[ "$#" -gt 0 ] && shift
 
 OLDIFS=$IFS
 IFS=,
@@ -15,7 +18,7 @@ for arg in $@; do
 		system)           VCOPTIONS="$VCOPTIONS --mount-options=system" ;;
 		fs=*)             VCOPTIONS="$VCOPTIONS --filesystem=${arg#*=}" ;;
 		keyfiles=*)       VCOPTIONS="$VCOPTIONS --keyfiles=${arg#*=}" ;;
-		password=*)       VCOPTIONS="$VCOPTIONS --password=${arg#*=}" ;;
+		password=*)       PASS=${arg#*=} ;;
 		pim=*)            VCOPTIONS="$VCOPTIONS --pim=${arg#*=}" ;;
 		protect-hidden=*) VCOPTIONS="$VCOPTIONS --protect-hidden=${arg#*=}" ;;
 		slot=*)           VCOPTIONS="$VCOPTIONS --slot=${arg#*=}" ;;
@@ -24,4 +27,10 @@ for arg in $@; do
 done
 IFS=$OLDIFS
 
-exec /usr/bin/veracrypt --text --non-interactive $VCOPTIONS --fs-options="${OPTIONS%,}" "$DEV" "$MNTPT"
+if [ -n "$PASS" ]; then
+	printf '%s\n' "$PASS" | /usr/bin/veracrypt --text --non-interactive --stdin \
+		$VCOPTIONS --fs-options="${OPTIONS%,}" "$DEV" "$MNTPT"
+	exit $?
+fi
+exec /usr/bin/veracrypt --text --non-interactive \
+	$VCOPTIONS --fs-options="${OPTIONS%,}" "$DEV" "$MNTPT"
