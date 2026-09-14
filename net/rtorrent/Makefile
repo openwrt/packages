@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtorrent
 PKG_VERSION:=0.15.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/rakshasa/rtorrent
@@ -76,7 +76,7 @@ ifeq ($(BUILD_VARIANT),rpc)
 CONFIGURE_ARGS += --with-xmlrpc-c
 endif
 
-CONFIGURE_VARS = \
+CONFIGURE_VARS += \
 	ax_cv_cxx_compile_cxx17=yes
 
 define Package/rtorrent/install
