@@ -35,7 +35,8 @@ endef
 define Package/veracrypt/description
   Console-only VeraCrypt. Mounts encrypted volumes via FUSE3.
   Uses statically linked wxBase (no GUI). Crypto is portable C
-  (no x86 assembler).
+  (no x86 assembler). Optional LuCI UI is luci-app-veracrypt
+  in the luci feed; this package does not include it.
 endef
 
 define Download/wxwidgets
