@@ -1,0 +1,19 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] osal crypto module import ns string literal
+
+--- a/quickassist/utilities/osal/src/linux/kernel_space/OsalCryptoInterface.c
++++ b/quickassist/utilities/osal/src/linux/kernel_space/OsalCryptoInterface.c
+@@ -58,7 +58,11 @@ static struct crypto_shash *sha512_tfm =
+ #endif
+ #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,19)
+ #include <crypto/internal/cipher.h>
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 13, 0)
++MODULE_IMPORT_NS("CRYPTO_INTERNAL");
++#else
+ MODULE_IMPORT_NS(CRYPTO_INTERNAL);
++#endif
+ static struct crypto_cipher *cipher_tfm = NULL;
+ #endif
+ 
