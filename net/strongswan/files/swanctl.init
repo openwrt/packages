@@ -874,7 +874,18 @@ reload_service() {
 	running && {
 		prepare_env
 		[ $WAIT_FOR_INTF -eq 0 ] && {
+			# Load '/var/swanctl/swanctl.conf'
+			# NOTE: The command 'swanctl --load-all --noprompt'
+			# reloads '/var/swanctl/swanctl.conf' at runtime.
 			swanctl --load-all --noprompt
+
+			# Load '/var/ipsec/strongswan.conf'
+			# NOTE: The command 'swanctl --reload-settings' reloads
+			# '/var/ipsec/strongswan.conf' at runtime, but not *all*
+			# settings (esp. plugin load directives, kernel/socket
+			# options) are picked up by charon. A full daemon
+			# restart is required for such changes to apply.
+			swanctl --reload-settings
 			return
 		}
 	}
