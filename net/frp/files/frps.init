@@ -689,6 +689,7 @@ service_triggers() {
 
 start_service() {
 	local init_cfg=
+	local enabled=1
 	local stdout=1
 	local stderr=1
 	local respawn=1
@@ -696,13 +697,28 @@ start_service() {
 	local run_group=
 	local old_umask
 
+	config_load "$NAME"
+
+	config_foreach _find_init_section init
+
+	if [ -n "$init_cfg" ]; then
+		config_list_foreach "$init_cfg" conf_inc _append_conf_file
+
+		config_get_bool enabled "$init_cfg" enabled 1
+		config_get_bool stdout "$init_cfg" stdout 1
+		config_get_bool stderr "$init_cfg" stderr 1
+		config_get_bool respawn "$init_cfg" respawn 1
+		config_get run_user "$init_cfg" user
+		config_get run_group "$init_cfg" group
+	fi
+
+	[ "$enabled" -eq 0 ] && return 1
+
 	mkdir -p /var/etc
 	_TOML_ERR=0
 	_ALLOW_UNSAFE_TOKEN_SOURCE_EXEC=0
 
-	config_load "$NAME"
 
-	config_foreach _find_init_section init
 
 	old_umask="$(umask)"
 	umask 077
@@ -725,15 +741,7 @@ start_service() {
 	} >> "$CONF_FILE" || return 1
 	[ "$_TOML_ERR" = "0" ] || return 1
 
-	if [ -n "$init_cfg" ]; then
-		config_list_foreach "$init_cfg" conf_inc _append_conf_file
 
-		config_get_bool stdout "$init_cfg" stdout 1
-		config_get_bool stderr "$init_cfg" stderr 1
-		config_get_bool respawn "$init_cfg" respawn 1
-		config_get run_user "$init_cfg" user
-		config_get run_group "$init_cfg" group
-	fi
 
 	{
 		config_foreach _emit_http_plugin http_plugin
