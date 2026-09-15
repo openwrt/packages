@@ -1,0 +1,65 @@
+Testing start() in dynamic-routing mode generates correct nft rules.
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+let result = pbr.start_service(['on_start']);
+
+// result should be non-null (procd data)
+let checks = [
+	['result_not_null',    result != null],
+	['has_compat',         result.packageCompat == 37],
+	['has_gateways',       type(result.gateways) == 'array'],
+	['has_errors',         type(result.errors) == 'array'],
+	['has_warnings',       type(result.warnings) == 'array'],
+];
+
+// Check that gateways were discovered
+if (result && result.gateways) {
+	let gw_names = map(result.gateways, g => g.name);
+	push(checks, ['gw_has_wan',    index(gw_names, 'wan') >= 0]);
+	push(checks, ['gw_has_vpn',    index(gw_names, 'vpn') >= 0]);
+}
+
+// Check the nft file was written (captured by mock writefile)
+let nft_content = global.mocklib.read_captured('/var/run/pbr.nft');
+if (nft_content) {
+	push(checks, ['nft_has_shebang',     index(nft_content, '#!/usr/sbin/nft -f') >= 0]);
+	push(checks, ['nft_has_pbr_chains',  index(nft_content, 'add chain inet fw4 pbr_prerouting') >= 0]);
+	push(checks, ['nft_has_pbr_output',  index(nft_content, 'add chain inet fw4 pbr_output') >= 0]);
+	push(checks, ['nft_has_pbr_forward', index(nft_content, 'add chain inet fw4 pbr_forward') >= 0]);
+	push(checks, ['nft_has_jump_pre',    index(nft_content, 'add rule inet fw4 mangle_prerouting jump pbr_prerouting') >= 0]);
+	push(checks, ['nft_has_jump_out',    index(nft_content, 'add rule inet fw4 mangle_output jump pbr_output') >= 0]);
+	push(checks, ['nft_has_jump_fwd',    index(nft_content, 'add rule inet fw4 mangle_forward jump pbr_forward') >= 0]);
+	push(checks, ['nft_has_guard',       index(nft_content, 'meta mark & 0x00ff0000 != 0 return') >= 0]);
+	// Check that nft define statements are present
+	push(checks, ['nft_has_define_mark', index(nft_content, 'define pbr_fw_mark = ') >= 0]);
+	push(checks, ['nft_has_define_mask', index(nft_content, 'define pbr_fw_mask = ') >= 0]);
+	push(checks, ['nft_has_define_iface',index(nft_content, 'define pbr_wan_chain = pbr_mark_') >= 0]);
+	// Check that marking chains exist using literal chain names
+	push(checks, ['nft_has_mark_chain',  index(nft_content, 'add chain inet fw4 pbr_mark_0x') >= 0]);
+	push(checks, ['nft_has_mark_set',    index(nft_content, 'meta mark set') >= 0]);
+	// Check policy rules are present
+	push(checks, ['nft_has_route_vpn',   index(nft_content, '"Route via VPN"') >= 0]);
+	push(checks, ['nft_has_ignore_local',index(nft_content, '"Ignore Local"') >= 0]);
+	push(checks, ['nft_has_route_port',  index(nft_content, '"Route by Port"') >= 0]);
+} else {
+	push(checks, ['nft_file_written', false]);
+}
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("start_dynamic_routing: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+start_dynamic_routing: 23/23 passed
+-- End --

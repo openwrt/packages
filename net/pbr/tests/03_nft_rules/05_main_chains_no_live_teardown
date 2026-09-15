@@ -1,0 +1,69 @@
+Testing that a start tears down none of pbr's nft chains live, and never
+touches fw4's base chains.
+
+Regression guard for two bugs. bd042da (#143): nft.cleanup()'s 'main_chains'
+case flushed bare 'forward' / 'output' / 'prerouting' / 'dstnat' instead of
+'pbr_forward' and friends, so every start wiped fw4's own base chains --
+taking down LAN<->WAN forwarding and every NAT port forward on the router
+until fw4 was reloaded.
+
+And the reload window: 'main_chains' and 'sets' were dropped from the start
+path entirely, because everything rebuilt afterwards is only appended to
+nft_lines and does not reach the kernel until the 'fw4 -q reload' at the end
+of nft_file.apply('main'). Tearing them down first left pbr's chains empty
+and its sets missing for the length of the rebuild -- seconds on a
+multi-interface router -- which is what dnsmasq's nftset= directives were
+erroring against. fw4 rebuilds the whole table from 30-pbr.nft, so nothing
+needs removing first.
+
+A correct start therefore issues no 'nft flush chain' at all. The bare-chain
+check stays regardless: if live teardown is ever reinstated it must still
+never name one of fw4's own chains.
+
+The flushes went through nft_call() -> sh.run() -> system() and left no trace
+in /var/run/pbr.nft, so this asserts on the recorded system() calls instead.
+
+-- Testcase --
+import create_pbr from 'pbr';
+
+let mocklib = global.mocklib;
+
+mocklib.clear_commands();
+
+let pbr = create_pbr();
+pbr.start_service(['on_start']);
+
+let flushes = mocklib.commands(/^nft flush chain /);
+
+// fw4's own base chains -- 'inet fw4 forward', not 'inet fw4 pbr_forward'
+let bare_flushes = filter(flushes, cmd =>
+	match(cmd, /inet fw4 (forward|output|prerouting|dstnat)( |$)/));
+
+let checks = [
+	// nothing is torn down live; the ruleset swap does it
+	['no_chain_flush',       length(flushes) == 0],
+	// and if that ever changes, fw4's own chains stay off limits
+	['no_bare_chain_flush',  length(bare_flushes) == 0],
+	// flushing the table itself would take fw4 down just as thoroughly
+	['no_table_flush',       !mocklib.has_command(/^nft flush table /)],
+	// pbr's chains are fw4's to define, so they are never deleted either
+	['no_chain_delete',      !mocklib.has_command(/^nft delete chain inet fw4 pbr_(forward|output|prerouting|dstnat)( |$)/)],
+	// the reload is what actually installs the rebuilt ruleset
+	['fw4_reload_issued',    mocklib.has_command('fw4 -q reload')],
+];
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("main_chains_no_live_teardown: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+main_chains_no_live_teardown: 5/5 passed
+-- End --

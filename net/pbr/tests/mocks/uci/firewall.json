@@ -1,0 +1,31 @@
+{
+	"defaults": [
+		{
+			".name": "defaults",
+			"syn_flood": "1",
+			"input": "REJECT",
+			"output": "ACCEPT",
+			"forward": "REJECT"
+		}
+	],
+	"zone": [
+		{
+			".name": "zone_lan",
+			"name": "lan",
+			"network": ["lan"],
+			"input": "ACCEPT",
+			"output": "ACCEPT",
+			"forward": "ACCEPT"
+		},
+		{
+			".name": "zone_wan",
+			"name": "wan",
+			"network": ["wan", "wan6", "vpn"],
+			"input": "REJECT",
+			"output": "ACCEPT",
+			"forward": "REJECT",
+			"masq": "1",
+			"mtu_fix": "1"
+		}
+	]
+}
