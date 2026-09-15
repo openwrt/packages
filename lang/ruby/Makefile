@@ -12,7 +12,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruby
 PKG_VERSION:=4.0.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 # First two numbes
 PKG_ABI_VERSION:=$(subst $(space),.,$(wordlist 1, 2, $(subst .,$(space),$(PKG_VERSION))))
@@ -221,8 +221,7 @@ $(call Package/ruby/Default)
   CATEGORY:=Libraries
   TITLE+= (shared library)
   DEPENDS+= +libpthread +librt +libgmp +zlib
-  # Extracted from OpenSSL target selection (that does not have HW atomic ops)
-  DEPENDS+= +(arm||armeb||mips||mipsel||powerpc||arc):libatomic
+  DEPENDS+= $(ATOMIC64_DEPENDS)
   ABI_VERSION:=$(PKG_ABI_VERSION)
 endef
 define Package/libruby/install

@@ -33,7 +33,7 @@ define Package/rtorrent/Default
   CATEGORY:=Network
   TITLE:=BitTorrent client for ncurses
   URL:=https://github.com/rakshasa/rtorrent
-  DEPENDS:=+libcurl +libncurses +libatomic +libopenssl +libstdcpp +zlib
+  DEPENDS:=+libcurl +libncurses $(ATOMIC64_DEPENDS) +libopenssl +libstdcpp +zlib
 endef
 
 define Package/rtorrent/Default/description

@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nfdump
 PKG_VERSION:=1.7.8
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
@@ -29,7 +29,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/nfdump
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:= +flex +libbsd +libbz2 +USE_MUSL:musl-fts +libatomic +libzstd +liblz4
+  DEPENDS:=+flex +libbsd +libbz2 +USE_MUSL:musl-fts $(ATOMIC64_DEPENDS) +libzstd +liblz4
   TITLE:= nfdump
   URL:=https://github.com/phaag/nfdump/
 endef
