@@ -1,0 +1,88 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+STOP=10
+
+SPDTST_FILE_DIR="/tmp/oph5spdtst"
+SPDTST_FILE_PATH="$SPDTST_FILE_DIR/payload.bin"
+SPDTST_TMP_PATH="$SPDTST_FILE_PATH.tmp"
+FILE_SRC_LINK_PATH="/www/luci-static/resources/oph5spdtst/downloading"
+FILE_SRC_TMP_PATH="$FILE_SRC_LINK_PATH.tmp"
+FILE_SRC_DIR="/www/luci-static/resources/oph5spdtst"
+FILE_SIZE="5M"
+
+load_config() {
+	ENABLED=1
+	FLASH_STORE=0
+
+	config_load oph5spdtst
+	config_get_bool ENABLED settings enabled 1
+	config_get_bool FLASH_STORE settings use_flash_stored_payload 0
+}
+
+create_payload() {
+	target="$1"
+	tmp="$2"
+	dir="$3"
+
+	mkdir -p "$dir" || return 1
+	rm -f "$tmp"
+	dd if=/dev/urandom of="$tmp" bs="$FILE_SIZE" count=1 >/dev/null 2>&1 || {
+		rm -f "$tmp"
+		return 1
+	}
+	mv -f "$tmp" "$target"
+}
+
+payload_is_valid() {
+	[ -f "$1" ] && [ "$(wc -c < "$1")" -eq 5242880 ]
+}
+
+remove_payloads() {
+	rm -f "$SPDTST_FILE_PATH" "$SPDTST_TMP_PATH"
+	rm -f "$FILE_SRC_LINK_PATH" "$FILE_SRC_TMP_PATH"
+	rmdir "$SPDTST_FILE_DIR" 2>/dev/null || true
+}
+
+use_tmp_payload() {
+	# Replace a flash payload or stale link before creating the tmp-backed link.
+	mkdir -p "$FILE_SRC_DIR" || return 1
+	rm -f "$FILE_SRC_LINK_PATH" "$FILE_SRC_TMP_PATH"
+
+	if ! payload_is_valid "$SPDTST_FILE_PATH"; then
+		create_payload "$SPDTST_FILE_PATH" "$SPDTST_TMP_PATH" "$SPDTST_FILE_DIR" || return 1
+	fi
+
+	ln -s "$SPDTST_FILE_PATH" "$FILE_SRC_LINK_PATH"
+}
+
+use_flash_payload() {
+	# Remove the tmp payload and link; the public path becomes the flash file.
+	rm -f "$SPDTST_FILE_PATH" "$SPDTST_TMP_PATH" "$FILE_SRC_TMP_PATH"
+	if [ -L "$FILE_SRC_LINK_PATH" ]; then
+		rm -f "$FILE_SRC_LINK_PATH"
+	fi
+
+	if ! payload_is_valid "$FILE_SRC_LINK_PATH"; then
+		create_payload "$FILE_SRC_LINK_PATH" "$FILE_SRC_TMP_PATH" "$FILE_SRC_DIR"
+	fi
+}
+
+start() {
+	load_config
+
+	if [ "$ENABLED" -ne 1 ]; then
+		remove_payloads
+		return 0
+	fi
+
+	if [ "$FLASH_STORE" -eq 1 ]; then
+		use_flash_payload
+	else
+		use_tmp_payload
+	fi
+}
+
+stop() {
+	remove_payloads
+}
