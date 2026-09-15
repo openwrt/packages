@@ -25,27 +25,82 @@ the package will likely result in more bug reports. As the package and its
 dependencies are unlikely to fit in any router with small flash (16MB or less),
 I don't see much point in making things configurable for reducing size either.
 
+### Vendor and product name
+
+`OTBR_VENDOR_NAME` and `OTBR_PRODUCT_NAME` have to be set: the 2026.08.0 release removed
+the built-in defaults, and otbr-agent exits with `Vendor name must be set.`
+without them.
+
+They are deliberately set to the values those defaults had, `OpenThread` and
+`BorderRouter`, rather than to something OpenWrt specific. The pair forms the
+MeshCoP service instance name as `<vendor> <product>`, which is the name shown
+when adding the border router in a Thread client and the one already-paired
+clients have recorded, so changing it would rename every existing user's border
+router on upgrade.
+
+### Version string
+
+`OTBR_VERSION` is set to `PKG_VERSION`. Without it the build falls back to the
+CMake project version, because the repacked source tree has no git directory
+for `git describe` to read, so `otbr-agent --version` and the `Running ...`
+line it logs on every start would report `0.3.0` rather than the release the
+package was built from.
+
+The version test in the package CI matches on that string, so dropping this
+option would make the package fail it again.
+
 ### Firewall support
 
-OpenWrt uses firewall4 with nftables by default, but the OpenThread firewall
-implementation uses IPTables and IPset. While we still support firewall3 with
-IPTables, it's not a good idea to add new dependencies to old things.
-Therefore, firewall support is disabled completely.
+OpenWrt uses firewall4 with nftables. The OpenThread posix platform's own
+firewall (`OT_FIREWALL`) produces ipset/ip6tables rules, so it has always been
+disabled here and no Thread ingress filter existed at all.
 
-This can be revised once the following feature request is implemented:
-https://github.com/openthread/ot-br-posix/issues/1675
+Since v2026.09.0 upstream provides exactly what
+https://github.com/openthread/ot-br-posix/issues/1675 asked for: an in-process
+nftables backend (`OTBR_NFTABLES`). It is enabled, so otbr-agent now installs
+the Thread ingress filter and the NAT44 masquerade itself, through nftables in
+an isolated `otbr` table, matching what the rest of the system uses. This
+needs nf_tables kernel support at runtime, hence the `kmod-nft-core` and
+`kmod-nft-nat` dependencies. `OT_FIREWALL` deliberately stays off: the
+in-process backend replaces its ipset producer wholesale, and upstream's CI
+builds the same pairing.
 
-### mDNSResponder
+The build also writes a `/usr/share/otbr/nftables-backend` marker recording
+which backend owns the rules. Nothing on an OpenWrt target reads it today (its
+consumers are upstream's setup scripts, which this package does not install);
+it is shipped as a debugging aid and for anything that later needs to tell the
+backends apart.
 
-The package depends on mDNSResponder. The alternative, Avahi, depends on D-Bus,
-which is not something I feel comfortable with running on any router. While
-there are Avahi packages without D-Bus support, using OpenThread Border Router
-with Avahi requires libavahi-client, and this requires Avahi to be built with
-D-Bus support.
+### mDNS
+
+The package uses OpenThread's internal mDNS implementation
+(`-DOTBR_MDNS=openthread`), which is upstream's default. This drops the
+mDNSResponder dependency entirely: no separate daemon, and no Avahi, whose
+libavahi-client requirement would have pulled in D-Bus.
+
+The internal implementation advertises on a single infrastructure interface,
+the one selected by the `backbone_network` option. Anything that needs to be
+announced on more than one interface still needs a general-purpose responder.
+
+It coexists with umdns, which remains the provider for other packages'
+services. Both bind the wildcard address on port 5353 with SO_REUSEADDR, which
+is what admits the second bind and gets multicast delivered to both, and they
+never contend for a name: OpenThread's mDNS names its host after the Thread
+extended address, while umdns keeps `<hostname>.local`.
+
+Only multicast reaches both. A unicast datagram to port 5353 is delivered to
+one socket, so a unicast reply meant for one daemon can be received by the
+other. umdns does set SO_REUSEPORT, but only on a retry after its own bind
+fails, and that does not happen here because SO_REUSEADDR already admits the
+bind, so no SO_REUSEPORT group forms in either start order.
 
 ### REST Server
 
 The REST server is enabled to make this package compatible with Home Assistant.
+It listens on 127.0.0.1 by default. `rest_listen_address` and
+`rest_listen_port` can move it, but the API is unauthenticated and can read and
+replace the Thread dataset — including the network key — so any non-loopback
+address must be firewalled to trusted hosts.
 
 ### TREL support
 
@@ -88,9 +143,13 @@ config interface 'thread'
         option verbose '0'
 ```
 
-Prefix and verbose are optional. Everything else is required. The protocol
-handler will fail if a required setting is missing. If something isn't working,
-check ifstatus for the OpenThread interface:
+Only backbone_network, device and radio_url are required; the protocol handler
+fails the interface if one of them is missing, or if backbone_network names an
+interface that has no device. Everything else — dataset, prefix, verbose,
+rest_listen_address and rest_listen_port — is optional. See
+[REST Server](#rest-server) before moving the REST API off the loopback
+default. If something isn't working, check ifstatus for the OpenThread
+interface:
 
 ```
 # ifup thread
@@ -125,7 +184,11 @@ ubus call otbr threadstop
 
 ### LuCI
 
-Creating a network in LuCI appears to be broken for the moment.
+This package no longer ships a LuCI application; the web UI lives in the
+`luci-app-openthread` package in the openwrt/luci repository
+(https://github.com/openwrt/luci/pull/8871). Install that alongside this package
+for a web interface, on a LuCI feed recent enough to carry it — older feeds will
+not have the package yet.
 
 ### CLI
 
