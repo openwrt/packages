@@ -43,7 +43,6 @@ __NETCUP_ENDPOINT="https://ccp.netcup.net/run/webservice/servers/endpoint.php?JS
 [ -z "$param_enc" ]     && write_log 14 "netcup DDNS: 'param_enc' (API key) not set"
 [ -z "$domain" ]        && write_log 14 "netcup DDNS: 'domain' (subdomain to update) not set"
 [ -z "$__IP" ]          && write_log 14 "netcup DDNS: __IP (current IP) not set by the framework"
-[ -z "$REGISTERED_IP" ] && write_log 14 "netcup DDNS: REGISTERED_IP not set by the framework"
 
 # Require an HTTPS-capable client — the netcup endpoint is HTTPS only.
 [ -z "$CURL_SSL" ] && [ -z "$WGET_SSL" ] && \
@@ -215,12 +214,22 @@ for __key in $__RECORD_KEYS; do
 
 	write_log 7 "netcup DDNS: examining record id=$__rec_id '$__rec_name' [$__rec_type] = '$__rec_destination'"
 
-	if [ "$__rec_type" = "$__RRTYPE" ] \
-	&& [ "$__rec_name" = "$__REC_HOSTNAME" ] \
-	&& [ "$__rec_destination" = "$REGISTERED_IP" ]; then
-		__MATCH_ID="$__rec_id"
-		write_log 7 "netcup DDNS: matched record id=$__MATCH_ID"
-		break
+	if [ "$__rec_type" = "$__RRTYPE" ]; then
+		# compare hostname only if type already matches
+		if [ "$__rec_name" = "$__REC_HOSTNAME" ]; then
+			# compare ip's
+			__rec_cmp="$__rec_destination"
+			[ "$__RRTYPE" = "AAAA" ] && expand_ipv6 "$__rec_destination" __rec_cmp
+			if [ "$__rec_cmp" != "$__IP" ]; then
+				__MATCH_ID="$__rec_id"
+				write_log 7 "netcup DDNS: need update for record id='$__MATCH_ID'"
+				break
+			else
+				json_cleanup
+				write_log 6 "netcup DDNS: no update required for host '$__REC_HOSTNAME'"
+				return 0
+			fi
+		fi
 	fi
 done
 
