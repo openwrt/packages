@@ -1,0 +1,115 @@
+Testing that a Tor policy builds a valid ruleset when torrc is present but the
+Tor service is NOT running.
+
+The redirect ports come out of torrc, not out of the running daemon, but
+interface_process.tor('create') -- the only thing that fills env.tor_dns_port
+and env.tor_traffic_port -- used to be gated on net.is_tor_running(). The rule
+emitter gates only on the policy's interface NAME, so with the service down it
+interpolated an empty port and emitted 'redirect to :', which nft rejects for
+the WHOLE file: pbr fails to start and every other policy stops routing too.
+
+This is not an exotic state. pbr is START=20 and OpenWrt's tor is START=50, so
+at boot the service is never up yet.
+
+There is deliberately no ubus service~list fixture here, so is_tor_running() is
+false while torrc is readable.
+
+-- File uci/pbr.json --
+{
+	"pbr": [
+		{
+			".name": "config",
+			"enabled": "1",
+			"fw_mask": "00ff0000",
+			"ipv6_enabled": "0",
+			"resolver_set": "dnsmasq.nftset",
+			"uplink_interface": "wan",
+			"uplink_interface6": "wan6",
+			"uplink_ip_rules_priority": "30000",
+			"uplink_mark": "00010000",
+			"verbosity": "2",
+			"lan_device": ["br-lan"],
+			"resolver_instance": ["*"]
+		}
+	],
+	"policy": [
+		{
+			".name": "policy_tor",
+			"name": "Tor Clients",
+			"enabled": "1",
+			"interface": "tor",
+			"src_addr": "192.168.1.50",
+			"dest_addr": "",
+			"src_port": "",
+			"dest_port": "",
+			"proto": "",
+			"chain": ""
+		},
+		{
+			".name": "policy_wan",
+			"name": "Plain Wan",
+			"enabled": "1",
+			"interface": "wan",
+			"src_addr": "192.168.1.51",
+			"dest_addr": "",
+			"src_port": "",
+			"dest_port": "",
+			"proto": "",
+			"chain": ""
+		}
+	]
+}
+-- End --
+
+-- File fs/open~_etc_tor_torrc.txt --
+VirtualAddrNetwork 10.192.0.0/10
+AutomapHostsOnResolve 1
+TransPort 0.0.0.0:9140
+DNSPort 0.0.0.0:9153
+-- End --
+
+-- File fs/stat~_etc_tor_torrc.json --
+{ "type": "file", "size": 100 }
+-- End --
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+let result = pbr.start_service(['on_start']);
+let errors = map(result.errors || [], e => e.code);
+let nft = global.mocklib.read_captured('/var/run/pbr.nft') || '';
+
+// A missing port renders as 'redirect to :' (or ':null'); nft rejects the
+// whole file for it. Match the good shape and flag everything else.
+let portless = filter(split(nft, '\n'), l => index(l, 'redirect to :') >= 0 &&
+	!match(l, /redirect to :[0-9]+ /));
+
+let checks = [
+	// the ports must come from torrc even with the daemon down
+	['dns_port_emitted',      index(nft, 'udp dport 53 redirect to :9153') >= 0],
+	['http_port_emitted',     index(nft, 'tcp dport 80 redirect to :9140') >= 0],
+	['https_port_emitted',    index(nft, 'tcp dport 443 redirect to :9140') >= 0],
+	['no_portless_redirect',  length(portless) == 0],
+	// torrc is present, so the policy is legitimate and must not be rejected
+	['tor_policy_accepted',   index(errors, 'errorPolicyUnknownInterface') < 0],
+	// and the unrelated policy must be unaffected
+	['wan_policy_routed',     index(nft, 'policy_wan') >= 0 ||
+	                          index(nft, '192.168.1.51') >= 0],
+];
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("tor_ports_without_running_service: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+tor_ports_without_running_service: 6/6 passed
+-- End --

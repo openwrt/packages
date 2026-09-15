@@ -1,0 +1,43 @@
+Testing that IPv6 is properly disabled when ipv6_enabled=0.
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+let result = pbr.start_service(['on_start']);
+
+let nft_content = global.mocklib.read_captured('/var/run/pbr.nft');
+let checks = [];
+
+if (nft_content) {
+	let lines = split(nft_content, '\n');
+	// When IPv6 is disabled, there should be no ip6 rules from policies
+	let ip6_policy_rules = filter(lines, l =>
+		index(l, 'ip6 saddr') >= 0 || index(l, 'ip6 daddr') >= 0);
+
+	push(checks, ['no_ip6_policy_rules', length(ip6_policy_rules) == 0]);
+
+	// But ip6 might appear in guard rules — those are always present
+	// Verify no ip6 route/set rules
+	let ip6_set_rules = filter(lines, l =>
+		index(l, 'type ipv6_addr') >= 0);
+	push(checks, ['no_ip6_sets', length(ip6_set_rules) == 0]);
+} else {
+	push(checks, ['nft_file_written', false]);
+}
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("ipv6_disabled: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+ipv6_disabled: 2/2 passed
+-- End --

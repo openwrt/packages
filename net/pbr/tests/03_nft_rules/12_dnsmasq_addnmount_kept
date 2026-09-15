@@ -1,0 +1,110 @@
+Testing that dnsmasq cleanup removes only pbr's own addnmount entry.
+
+dnsmasq runs jailed, and every directory it must see inside that jail is listed
+as an `addnmount` on its uci section -- pbr's /var/run/pbr.dnsmasq, adblock's
+/tmp/adblock-backup, and whatever else a package added. The list is shared state.
+
+uci.delete() takes three arguments (config, section, option); a fourth is
+accepted by the call and silently ignored. Cleanup passed the value as a fourth
+argument, so instead of dropping pbr's entry it dropped the entire addnmount
+option, and dnsmasq's next start came up with adblock's directory unmounted --
+reported as an adblock regression, and "fixed" until the next pbr restart by
+reloading adblock, which re-adds its own entry.
+
+list_remove() is the call that removes one value. The section itself must not be
+reordered either: the old code called reorder() with the value's list index,
+which shuffles the dnsmasq section within /etc/config/dhcp for no reason.
+
+-- Testcase --
+import create_nft from 'nft';
+
+let PBR_FILE = '/var/run/pbr.dnsmasq';
+
+// A dnsmasq section carrying three packages' mounts, pbr's in the middle.
+let section = {
+	'.name': 'cfg01411c',
+	'.type': 'dnsmasq',
+	'.index': 0,
+	addnmount: [ '/tmp/adblock-backup', PBR_FILE, '/var/run/https-dns-proxy' ],
+};
+
+let reorders = [];
+
+// A cursor with the real ucode uci semantics, as measured on ucode 85922056:
+// delete() ignores anything past the option name and takes the whole option
+// with it, while list_remove() takes one value out of the list.
+let ctx = {
+	get: function(conf, sect, opt) {
+		if (sect != section['.name']) return null;
+		return opt ? section[opt] : section['.type'];
+	},
+	'delete': function(conf, sect, opt) {
+		if (opt) delete section[opt];
+	},
+	list_remove: function(conf, sect, opt, val) {
+		if (type(section[opt]) == 'array')
+			section[opt] = filter(section[opt], v => v != val);
+	},
+	reorder: function(conf, sect, idx) { push(reorders, [ sect, idx ]); },
+	foreach: function(conf, stype, cb) { cb({ ...section }); },
+	save: function() {},
+	commit: function() {},
+	changes: function() { return []; },
+};
+
+let fs_mod = {
+	readfile: function() { return null; },
+	writefile: function() { return 0; },
+	// /etc/config/dhcp exists; nothing else does.
+	stat: function(p) { return p == '/etc/config/dhcp' ? { type: 'file' } : null; },
+	unlink: function() {},
+	dirname: function() { return '.'; },
+	open: function() { return { write: function() { return 0; }, close: function() {} }; },
+};
+
+let config = {
+	cfg: { resolver_set: 'dnsmasq.nftset' },
+	uci_ctx: function() { return ctx; },
+	// No dnsmasq instance on ubus: _dnsmasq_get_confdir() gives up, which is
+	// not what this test is about.
+	ubus_call: function() { return null; },
+};
+let pkg      = { name: 'pbr', nft_table: 'fw4', nft_prefix: 'pbr', dnsmasq_file: PBR_FILE };
+let platform = { env: { resolver_set_supported: true } };
+let state    = { errors: [] };
+let sh       = { run: function() { return 0; }, exec: function() { return ''; }, quote: function(s) { return s; } };
+
+let nft = create_nft(fs_mod, config, sh, {}, pkg, platform, {}, {}, state);
+
+nft.resolver.cleanup();
+
+let mounts = section.addnmount;
+let checks = [];
+
+// The other packages' mounts survive -- this is the whole bug.
+push(checks, ['adblock_kept',   type(mounts) == 'array' && index(mounts, '/tmp/adblock-backup') >= 0]);
+push(checks, ['hdp_kept',       type(mounts) == 'array' && index(mounts, '/var/run/https-dns-proxy') >= 0]);
+// pbr's own entry is gone.
+push(checks, ['pbr_removed',    type(mounts) != 'array' || index(mounts, PBR_FILE) < 0]);
+// The option itself is still there, with the two remaining entries in order.
+push(checks, ['option_kept',    type(mounts) == 'array' && length(mounts) == 2]);
+push(checks, ['order_kept',     type(mounts) == 'array' && mounts[0] == '/tmp/adblock-backup']);
+// And the dnsmasq section was not shuffled around in /etc/config/dhcp.
+push(checks, ['no_reorder',     length(reorders) == 0]);
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("dnsmasq_addnmount_kept: %d/%d passed\n", pass, pass + fail);
+
+-- End --
+
+-- Expect stdout --
+dnsmasq_addnmount_kept: 6/6 passed
+-- End --

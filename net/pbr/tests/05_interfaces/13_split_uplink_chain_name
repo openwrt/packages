@@ -1,0 +1,112 @@
+Testing that both uplinks of a split uplink resolve to the same mark chain.
+
+With uplink_interface4 != uplink_interface6, the second uplink reached shares the
+first's firewall mark -- they share a routing table, so they must. Its chain name
+was derived from the mark it had *before* that reassignment and never recomputed,
+unlike the netifd and mwan4 branches beside it, so it named the chain of whichever
+interface really owns the mark it no longer uses.
+
+Two ways that goes wrong. If another interface owns that mark, a policy, a
+<iface>_dscp option or icmp_interface pointed at the second uplink silently routes
+out that interface instead. If nothing owns it, the chain is never created at all
+-- ensure_mark_chain() dedupes on mark, so the second uplink returns early -- and
+the ruleset carries a goto at a chain that does not exist, fails 'nft -c -f' and
+installs nothing.
+
+Which uplink is "second" is decided by section order in /etc/config/network, not
+by address family, so this can land on wan just as easily as on wan6.
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+pbr.start_service(['on_start']);
+
+let nft_content = global.mocklib.read_captured('/var/run/pbr.nft') || '';
+let lines = split(nft_content, '\n');
+let checks = [];
+
+// define pbr_<iface>_chain = pbr_mark_<mark>
+let chain_of = {};
+for (let l in lines) {
+	let m = match(l, /^define pbr_(\S+)_chain = (\S+)$/);
+	if (m) chain_of[m[1]] = m[2];
+}
+
+// Both uplinks share a routing table, so they must share a chain.
+push(checks, ['uplinks_share_a_chain', chain_of.wan && chain_of.wan == chain_of.wan6]);
+
+// And that chain must not be some other interface's.
+push(checks, ['uplink_chain_not_vpns', chain_of.wan != chain_of.vpn]);
+push(checks, ['vpn_has_its_own_chain', !!chain_of.vpn]);
+
+// No two interfaces may name the same chain unless they are the two uplinks.
+let seen = {}, collisions = 0;
+for (let iface in chain_of) {
+	let c = chain_of[iface];
+	if (seen[c] && !(iface == 'wan' || iface == 'wan6') ) collisions++;
+	if (seen[c] && (iface == 'wan' || iface == 'wan6') && !(seen[c] == 'wan' || seen[c] == 'wan6')) collisions++;
+	seen[c] = iface;
+}
+push(checks, ['no_unexpected_chain_collisions', collisions == 0]);
+
+// Every chain a rule jumps or gotos to has to be created somewhere in the file.
+// A dangling reference fails 'nft -c -f' and takes the whole ruleset with it.
+let created = {};
+for (let l in lines) {
+	let m = match(l, /^add chain inet fw4 (\S+)/);
+	if (m) created[m[1]] = true;
+}
+let dangling = [];
+for (let l in lines) {
+	let m = match(l, /goto (pbr_mark_\S+)/);
+	if (m && !created[m[1]]) push(dangling, m[1]);
+}
+push(checks, ['no_dangling_goto', length(dangling) == 0]);
+
+// The DSCP and ICMP rules are built from the same chain_name and are not
+// policy-driven, so they reach this with two config options and no policy.
+let dscp = filter(lines, l => index(l, 'dscp 10') >= 0);
+// IPv4 emits 'ip protocol icmp'; IPv6 has no 'protocol' field, so it emits
+// 'ip6 nexthdr icmpv6'. Match both or this silently checks only half.
+let icmp = filter(lines, l => index(l, 'protocol icmp') >= 0 || index(l, 'nexthdr icmpv6') >= 0);
+push(checks, ['dscp_rules_emitted', length(dscp) == 2]);
+push(checks, ['icmp_rules_emitted', length(icmp) == 2]);
+push(checks, ['dscp_targets_uplink_chain',
+	length(filter(dscp, l => index(l, 'goto ' + chain_of.wan) >= 0)) == 2]);
+push(checks, ['icmp_targets_uplink_chain',
+	length(filter(icmp, l => index(l, 'goto ' + chain_of.wan) >= 0)) == 2]);
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("split_uplink_chain_name: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- File uci/pbr.json --
+{
+	"pbr": [
+		{
+			".name": "config", "enabled": "1", "fw_mask": "00ff0000", "ipv6_enabled": "1",
+			"resolver_set": "none", "strict_enforcement": "1",
+			"uplink_interface": "wan", "uplink_interface6": "wan6",
+			"wan6_dscp": "10", "icmp_interface": "wan6",
+			"uplink_ip_rules_priority": "30000", "uplink_mark": "00010000", "verbosity": "2",
+			"lan_device": ["br-lan"], "resolver_instance": ["*"], "debug_performance": "0",
+			"nft_set_auto_merge": "1", "nft_set_flags_interval": "1", "nft_set_flags_timeout": "0",
+			"nft_set_policy": "performance", "ignored_interface": ["vpnserver"]
+		}
+	],
+	"policy": []
+}
+-- End --
+
+-- Expect stdout --
+split_uplink_chain_name: 9/9 passed
+-- End --

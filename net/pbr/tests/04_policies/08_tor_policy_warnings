@@ -1,0 +1,143 @@
+Testing that a Tor policy warns about the options pbr silently discards
+(src_port, dest_port, proto, chain). A dest_addr -- including '.onion' -- is a
+supported Tor policy and is deliberately NOT warned about: whether it works
+depends on DNS reaching Tor, which pbr cannot see, so a warning would fire on
+correct setups too. Such a policy must still build its set and stay silent.
+No policy is ever rejected.
+
+-- File uci/pbr.json --
+{
+	"pbr": [
+		{
+			".name": "config",
+			"enabled": "1",
+			"fw_mask": "00ff0000",
+			"ipv6_enabled": "0",
+			"resolver_set": "dnsmasq.nftset",
+			"uplink_interface": "wan",
+			"uplink_interface6": "wan6",
+			"uplink_ip_rules_priority": "30000",
+			"uplink_mark": "00010000",
+			"verbosity": "2",
+			"lan_device": ["br-lan"],
+			"resolver_instance": ["*"]
+		}
+	],
+	"policy": [
+		{
+			".name": "policy_tor_bad",
+			"name": "Tor Onion",
+			"enabled": "1",
+			"interface": "tor",
+			"src_addr": "192.168.1.50",
+			"dest_addr": "onion",
+			"src_port": "1024-65535",
+			"dest_port": "80 443",
+			"proto": "tcp",
+			"chain": "forward"
+		},
+		{
+			".name": "policy_tor_ok",
+			"name": "Tor Clean",
+			"enabled": "1",
+			"interface": "tor",
+			"src_addr": "192.168.1.51",
+			"dest_addr": "",
+			"src_port": "",
+			"dest_port": "",
+			"proto": "",
+			"chain": ""
+		},
+		{
+			".name": "policy_tor_normal",
+			"name": "Tor Normal Domain",
+			"enabled": "1",
+			"interface": "tor",
+			"src_addr": "192.168.1.52",
+			"dest_addr": "example.com",
+			"src_port": "",
+			"dest_port": "",
+			"proto": "",
+			"chain": ""
+		}
+	]
+}
+-- End --
+
+-- File fs/open~_etc_tor_torrc.txt --
+VirtualAddrNetwork 10.192.0.0/10
+AutomapHostsOnResolve 1
+TransPort 0.0.0.0:9040
+DNSPort 0.0.0.0:9053
+-- End --
+
+-- File fs/stat~_etc_tor_torrc.json --
+{ "type": "file", "size": 100 }
+-- End --
+
+-- File ubus/service~list~name-tor.json --
+{ "tor": { "instances": { "instance1": { "running": true } } } }
+-- End --
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+let result = pbr.start_service(['on_start']);
+let errors = map(result.errors || [], e => e.code);
+let nft = global.mocklib.read_captured('/var/run/pbr.nft') || '';
+
+// warnings carry the policy name in .info, so assert per policy
+function warned(code, who) {
+	for (let w in (result.warnings || []))
+		if (w.code == code && w.info == who) return true;
+	return false;
+}
+
+let checks = [
+	// 'Tor Onion' sets every discarded option -- each must be reported once
+	['warns_src_port',     warned('warningTorUnsetSrcPort', 'Tor Onion')],
+	['warns_dest_port',    warned('warningTorUnsetDestPort', 'Tor Onion')],
+	['warns_proto',        warned('warningTorUnsetProto', 'Tor Onion')],
+	['warns_chain',        warned('warningTorUnsetChainNft', 'Tor Onion')],
+	// 'Tor Clean' sets only src_addr -- it must not be warned about at all
+	['clean_no_src_port',  !warned('warningTorUnsetSrcPort', 'Tor Clean')],
+	['clean_no_dest_port', !warned('warningTorUnsetDestPort', 'Tor Clean')],
+	['clean_no_proto',     !warned('warningTorUnsetProto', 'Tor Clean')],
+	['clean_no_chain',     !warned('warningTorUnsetChainNft', 'Tor Clean')],
+	// A domain dest_addr is a supported Tor policy: it must still be processed
+	// into its own nftset, and must not be warned about at all. dest_addr is
+	// deliberately not warned on -- pbr cannot tell a working DNS setup from a
+	// broken one, so the warning would fire on both.
+	['normal_set_built',   index(nft, 'pbr_tor_4_dst_ip_policy_tor_normal') >= 0],
+	['normal_no_warnings', length(filter(result.warnings || [], w => w.info == 'Tor Normal Domain')) == 0],
+	// Tor has no device, gateway, routing table or mark, and must never be
+	// reported as missing one. It is registered by interface_process.tor()
+	// rather than the foreach('network','interface') loop, so it never reaches
+	// get_gateway4()/get_gateway6() -- which is structural, not asserted
+	// anywhere else. Guards against Tor being folded into the main interface
+	// loop, or a registry sweep being added, either of which would emit
+	// warnings for fields Tor cannot have.
+	['tor_no_gw_warning',  length(filter(result.warnings || [], w =>
+		(w.code == 'warningInterfaceRoutingUnknownGateway4' ||
+		 w.code == 'warningInterfaceRoutingUnknownGateway6') &&
+		index('' + w.info, 'tor') >= 0)) == 0],
+	// warnings only -- no policy is rejected
+	['not_rejected',       index(errors, 'errorPolicyUnknownInterface') < 0],
+];
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("tor_policy_warnings: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+tor_policy_warnings: 12/12 passed
+-- End --

@@ -1,0 +1,25 @@
+{
+	"up": true,
+	"pending": false,
+	"available": true,
+	"autostart": true,
+	"dynamic": false,
+	"uptime": 3600,
+	"l3_device": "eth1",
+	"device": "eth1",
+	"proto": "dhcpv6",
+	"ipv6-address": [
+		{
+			"address": "2001:db8::1",
+			"mask": 64
+		}
+	],
+	"route": [
+		{
+			"target": "::",
+			"mask": 0,
+			"nexthop": "2001:db8::ffff",
+			"source": "2001:db8::/64"
+		}
+	]
+}
