@@ -1,0 +1,112 @@
+From 549639c902ff3fa07e49fb54916600408c2fde69 Mon Sep 17 00:00:00 2001
+From: Chet Ramey <chet.ramey@case.edu>
+Date: Tue, 15 Sep 2026 11:18:03 -0400
+Subject: Bash-5.3 patch 19: work around systems including bytes between 128
+ and 255 in the isalpha(3) set, which causes bash to potentially include them
+ in identifier names
+
+--- a/general.h
++++ b/general.h
+@@ -110,8 +110,13 @@ extern char *strcpy (char *, const char
+ #define INT_BUFSIZE_BOUND(t) (INT_STRLEN_BOUND (t) + 1)
+ 
+ /* Define exactly what a legal shell identifier consists of. */
+-#define legal_variable_starter(c) (ISALPHA(c) || (c == '_'))
+-#define legal_variable_char(c)	(ISALNUM(c) || c == '_')
++#if 0
++#define legal_variable_starter(c) (c < 128 && (ISALPHA(c) || c == '_'))
++#define legal_variable_char(c)	(c < 128 && (ISALNUM(c) || c == '_'))
++#else
++#define legal_variable_starter(c) (sh_syntaxtab[c] & CNAMESTART)
++#define legal_variable_char(c)	(sh_syntaxtab[c] & CNAME)
++#endif
+ 
+ /* Definitions used in subst.c and by the `read' builtin for field
+    splitting. */
+--- a/mksyntax.c
++++ b/mksyntax.c
+@@ -60,6 +60,8 @@ struct wordflag {
+ 	{ CSPECVAR,	"CSPECVAR" },
+ 	{ CSUBSTOP,	"CSUBSTOP" },
+ 	{ CBLANK,	"CBLANK" },
++	{ CNAME,	"CNAME" },
++	{ CNAMESTART,	"CNAMESTART" }
+ };
+ 	
+ #define N_WFLAGS	(sizeof (wordflags) / sizeof (wordflags[0]))
+@@ -198,6 +200,45 @@ addblanks (void)
+     }
+ }
+ 
++static void
++setnamechars(void)
++{
++  lsyntax['_'] |= CNAME|CNAMESTART;
++
++  lsyntax['0'] |= CNAME; lsyntax['1'] |= CNAME; lsyntax['2'] |= CNAME;
++  lsyntax['3'] |= CNAME; lsyntax['4'] |= CNAME; lsyntax['5'] |= CNAME;
++  lsyntax['6'] |= CNAME; lsyntax['7'] |= CNAME; lsyntax['8'] |= CNAME;
++  lsyntax['9'] |= CNAME;
++
++  lsyntax['a'] |= CNAME|CNAMESTART; lsyntax['b'] |= CNAME|CNAMESTART;
++  lsyntax['c'] |= CNAME|CNAMESTART; lsyntax['d'] |= CNAME|CNAMESTART;
++  lsyntax['e'] |= CNAME|CNAMESTART; lsyntax['f'] |= CNAME|CNAMESTART;
++  lsyntax['g'] |= CNAME|CNAMESTART; lsyntax['h'] |= CNAME|CNAMESTART;
++  lsyntax['i'] |= CNAME|CNAMESTART; lsyntax['j'] |= CNAME|CNAMESTART;
++  lsyntax['k'] |= CNAME|CNAMESTART; lsyntax['l'] |= CNAME|CNAMESTART;
++  lsyntax['m'] |= CNAME|CNAMESTART; lsyntax['n'] |= CNAME|CNAMESTART;
++  lsyntax['o'] |= CNAME|CNAMESTART; lsyntax['p'] |= CNAME|CNAMESTART;
++  lsyntax['q'] |= CNAME|CNAMESTART; lsyntax['r'] |= CNAME|CNAMESTART;
++  lsyntax['s'] |= CNAME|CNAMESTART; lsyntax['t'] |= CNAME|CNAMESTART;
++  lsyntax['u'] |= CNAME|CNAMESTART; lsyntax['v'] |= CNAME|CNAMESTART;
++  lsyntax['w'] |= CNAME|CNAMESTART; lsyntax['x'] |= CNAME|CNAMESTART;
++  lsyntax['y'] |= CNAME|CNAMESTART; lsyntax['z'] |= CNAME|CNAMESTART;
++
++  lsyntax['A'] |= CNAME|CNAMESTART; lsyntax['B'] |= CNAME|CNAMESTART;
++  lsyntax['C'] |= CNAME|CNAMESTART; lsyntax['D'] |= CNAME|CNAMESTART;
++  lsyntax['E'] |= CNAME|CNAMESTART; lsyntax['F'] |= CNAME|CNAMESTART;
++  lsyntax['G'] |= CNAME|CNAMESTART; lsyntax['H'] |= CNAME|CNAMESTART;
++  lsyntax['I'] |= CNAME|CNAMESTART; lsyntax['J'] |= CNAME|CNAMESTART;
++  lsyntax['K'] |= CNAME|CNAMESTART; lsyntax['L'] |= CNAME|CNAMESTART;
++  lsyntax['M'] |= CNAME|CNAMESTART; lsyntax['N'] |= CNAME|CNAMESTART;
++  lsyntax['O'] |= CNAME|CNAMESTART; lsyntax['P'] |= CNAME|CNAMESTART;
++  lsyntax['Q'] |= CNAME|CNAMESTART; lsyntax['R'] |= CNAME|CNAMESTART;
++  lsyntax['S'] |= CNAME|CNAMESTART; lsyntax['T'] |= CNAME|CNAMESTART;
++  lsyntax['U'] |= CNAME|CNAMESTART; lsyntax['V'] |= CNAME|CNAMESTART;
++  lsyntax['W'] |= CNAME|CNAMESTART; lsyntax['X'] |= CNAME|CNAMESTART;
++  lsyntax['Y'] |= CNAME|CNAMESTART; lsyntax['Z'] |= CNAME|CNAMESTART;
++}
++
+ /* load up the correct flag values in lsyntax */
+ static void
+ load_lsyntax (void)
+@@ -234,6 +275,8 @@ load_lsyntax (void)
+   addcstr ("-=?+", CSUBSTOP);		/* OP in ${paramOPword} */
+ 
+   addblanks ();
++
++  setnamechars ();
+ }
+ 
+ static void
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 18
++#define PATCHLEVEL 19
+ 
+ #endif /* _PATCHLEVEL_H_ */
+--- a/syntax.h
++++ b/syntax.h
+@@ -63,6 +63,8 @@
+ #define CSPECVAR	0x0800	/* single-character shell variable name */
+ #define CSUBSTOP	0x1000	/* values of OP for ${word[:]OPstuff} */
+ #define CBLANK		0x2000	/* whitespace (blank) character */
++#define CNAME		0x4000	/* POSIX name character ([_0-9a-zA-Z]) */
++#define CNAMESTART	0x8000	/* POSIX name start character ([_a-zA-Z]) */
+ 
+ /* Defines for use by the rest of the shell. */
+ extern int sh_syntaxtab[];
