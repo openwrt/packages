@@ -1,0 +1,41 @@
+From ee9a3cee01983dca05d47591ea7b8b7b15084cb1 Mon Sep 17 00:00:00 2001
+From: Chet Ramey <chet.ramey@case.edu>
+Date: Tue, 15 Sep 2026 11:14:33 -0400
+Subject: Bash-5.3 patch 17: Modify the readline redisplay code to use a buffer
+ offset instead of the physical prompt length in a multibyte locale to
+ determine whether to reprint the prompt from column 0 because the cursor is
+ before the last invisible character in the prompt string.
+
+--- a/lib/readline/display.c
++++ b/lib/readline/display.c
+@@ -1497,7 +1497,6 @@ rl_redisplay (void)
+ 	     the characters from the current cursor position.  But we
+ 	     only need to reprint it if the cursor is before the last
+ 	     invisible character in the prompt string. */
+-	  /* XXX - why not use local_prompt_len? */
+ 	  nleft = prompt_visible_length + wrap_offset;
+ 	  if (cursor_linenum == prompt_last_screen_line)
+ 	    {
+@@ -1509,11 +1508,7 @@ rl_redisplay (void)
+ 	         on the current screen line begins in the buffer. It is a
+ 	         buffer position, an index into curline
+ 	         (local_prompt + pmt_offset) */
+-	      cursor_bufpos = pmt_offset;
+-	      if (mb_cur_max == 1 || rl_byte_oriented)
+-		cursor_bufpos += _rl_last_c_pos;
+-	      else
+-		cursor_bufpos += _rl_last_c_pos + curline_invchars;
++	      cursor_bufpos = pmt_offset + local_prompt_len;
+ 
+ 	      if (local_prompt && local_prompt_invis_chars[cursor_linenum] &&
+ 		    _rl_last_c_pos > 0 &&
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 16
++#define PATCHLEVEL 17
+ 
+ #endif /* _PATCHLEVEL_H_ */
