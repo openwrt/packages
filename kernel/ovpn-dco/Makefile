@@ -9,14 +9,14 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=ovpn-backports
-PKG_VERSION:=7.1.0.2026080300
+PKG_VERSION:=7.2.0.2026082800
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
 	https://build.openvpn.net/downloads/releases \
 	https://swupdate.openvpn.net/community/releases
-PKG_HASH:=b612261015b75fcb52a364d7bedc1e5fd70656e26ba388f1d88f58fc5fbb9560
+PKG_HASH:=81443f40d1d825e7d2bcb08b34f4f3269d288e4558f04543e4a56f7f697c7c4d
 PKG_BUILD_PARALLEL:=1
 
 PKG_MAINTAINER:=Jianhui Zhao <zhaojh329@gmail.com>
