@@ -3,11 +3,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-platformio
-PKG_VERSION:=6.1.19
-PKG_RELEASE:=2
+PKG_VERSION:=6.2.0
+PKG_RELEASE:=1
 
 PYPI_NAME:=platformio
-PKG_HASH:=7b53eaa36fcba554411b669eab845626da7c4b90fa6aaee9fe9f1875d82f5f54
+PKG_HASH:=880ea06734908b3d6c0a96598ca7be572c2b6755585784aa63a201bbdfb8c59d
 
 PKG_MAINTAINER:=Austin Lane <vidplace7@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=Apache-2.0
