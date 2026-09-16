@@ -103,9 +103,24 @@ make_cmdline() {
 	config_get dop options dsd_over_pcm 0
 	[ "$dop" -eq 1 ] && cmdline="$cmdline -D"
 
-	local unmute
-	config_get unmute options unmute ""
-	[ -n "$unmute" ] && cmdline="$cmdline -U $unmute"
+	local mixer_device
+	config_get mixer_device options mixer_device ""
+	[ -n "$mixer_device" ] && cmdline="$cmdline -O $mixer_device"
+
+	# -V and -U are mutually exclusive: a volume control implies unmuted
+	local mixer
+	config_get mixer options mixer ""
+	if [ -n "$mixer" ]; then
+		cmdline="$cmdline -V $mixer"
+
+		local linear_volume
+		config_get_bool linear_volume options linear_volume 0
+		[ "$linear_volume" -eq 1 ] && cmdline="$cmdline -X"
+	else
+		local unmute
+		config_get unmute options unmute ""
+		[ -n "$unmute" ] && cmdline="$cmdline -U $unmute"
+	fi
 }
 
 start_service() {
