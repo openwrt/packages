@@ -50,6 +50,7 @@ shunt check
 * Routes by client address, client MAC, destination CIDR and domain, in any combination
 * Resolver independent: works with any DNS backend, and with an encrypted upstream, because it reads the plaintext leg between client and resolver
 * Wildcard domains (`*.example.com`), learned passively as clients use them
+* Domain lists from a file - a community-maintained set of thousands of names, without a single UCI entry per name
 * Per-policy killswitch: hold the traffic when the interface drops, instead of leaking it out of the normal uplink
 * Per-policy action: `route` marks the traffic for the policy interface, `bypass` exempts it from every policy below
 * Your own networks stay reachable from a policy client, without listing them anywhere
@@ -62,7 +63,7 @@ shunt check
 <a id="prerequisites"></a>
 ## Prerequisites
 * OpenWrt with fw4/nftables
-* `ucode` plus `ucode-mod-fs`, `ucode-mod-socket`, `ucode-mod-uci`, `ucode-mod-uloop`, `ucode-mod-resolv`, `ucode-mod-ubus`, `ucode-mod-rtnl`, `ucode-mod-log` and `rpcd-mod-ucode` - all pulled in by the package
+* `ucode` plus `ucode-mod-fs`, `ucode-mod-socket`, `ucode-mod-uci`, `ucode-mod-uloop`, `ucode-mod-resolv`, `ucode-mod-ubus`, `ucode-mod-rtnl`, `ucode-mod-log` and `rpcd-mod-ucode` - all pulled in by the package; `ip` is not needed, routes and rules are written over rtnetlink
 
 `ucode-mod-resolv` and `ucode-mod-ubus` are soft at runtime: without resolv, poll is skipped and the observer carries the service alone; without ubus, gateway discovery and interface events are skipped and the config's own values are used. Both cost one warning in the log, not a failed start.
 
@@ -147,6 +148,7 @@ All functions are available from the command line, and the config file can be ed
 shunt check        # render everything, print marks and issues, change nothing
 shunt run          # foreground, the procd service entry point
 shunt flush        # tear down table, rules, routes and the mapping file
+shunt refresh      # make the running daemon re-read its domain files
 shunt -v <cmd>     # echo every message to the terminal as well
 ```
 
@@ -157,6 +159,8 @@ Exit codes: 0 ok, 1 runtime failure, 2 usage or unusable config.
 Logging goes to syslog under the tag `shunt`, so `logread -e shunt` shows everything - the daemon's own lines carry its pid, `shunt[1234]:`. Debug lines stay off unless `-v` is given or `option debug '1'` is set - under procd there is no command line, so a bug report needs the config switch. Expect volume: on a router running adblock roughly half of all observed answers are error replies, and debug gives each one a line.
 
 `shunt flush` is the escape hatch if the daemon ever dies without tearing down. It is idempotent and safe on a box that never ran shunt.
+
+`shunt refresh` asks the daemon over ubus to re-read every `domain_file` and reports what it found; it is the one change that does not need a restart. Without a running daemon it says so and exits 1 - nothing is lost, the next start reads the files anyway. Everything else in the config still takes `/etc/init.d/shunt restart`.
 
 <a id="shunt-config-options"></a>
 ## shunt config options
@@ -193,8 +197,9 @@ Each `config policy` section is one routing policy. **The section must be named,
 | dport | destination ports, single or a range like `8000-8080` |
 | dst | destination addresses or CIDRs |
 | domain | domain patterns, see below |
+| domain_file | files with domain patterns, one per line, see below |
 
-`src`, `src_mac`, `dst` and `domain` are lists and may repeat.
+`src`, `src_mac`, `dst`, `domain` and `domain_file` are lists and may repeat.
 
 Interfaces are resolved through netifd: a logical name resolves to its `l3_device`, a raw netdev is adopted if netifd knows it, and a device netifd knows nothing about passes through as given - which on OpenWrt means a tunnel started outside netifd, since wireguard and the other tunnel types have netifd protocols of their own. Gateways are discovered from the same dump, merged across sibling entries, because netifd splits families. `gw4`/`gw6` override discovery and always win; on a point to point interface no gateway is needed at all.
 
@@ -240,6 +245,36 @@ Precedence, in order:
 Rule 3 is what makes one domain usable by two client groups over two different uplinks: the address is written into each policy's set, and each policy's rule matches only its own clients, so they stay apart. Rules 1 and 2 still decide specificity - a shared `*.example.com` never overrides somebody's exact `www.example.com`.
 
 Matching is label aligned, never string suffix: `evilexample.com` does not match `*.example.com`. A bad pattern is collected as an issue, never fatal.
+
+<a id="domain-lists-from-a-file"></a>
+### Domain lists from a file
+
+A `list domain` entry is right for a handful of names. A community-maintained list has thousands, and the place for those is a file, not UCI:
+
+```
+config policy 'vpn'
+	option interface   'wg0'
+	list  src          '192.168.1.0/24'
+	list  domain       'my-own-exception.example'
+	list  domain_file  'community.txt'
+```
+
+A bare name lives under `/tmp/shunt/`, which shunt creates at start; an absolute path is taken as given, for a list kept on a mounted drive. The default is tmpfs on purpose: a list of that size rewritten every day belongs in RAM, not on the flash the overlay sits on. The price is that after a reboot the file is not there until whatever produces it has run again, and that is handled, not worked around - see below.
+
+The file holds one pattern per line in the same two shapes as `list domain` - `example.com` or `*.example.com` - with `#` starting a comment and blank lines ignored. It is read at start, validated by the same rules, and its patterns join the policy's own; `domain` and `domain_file` are additive, and a file may be named by more than one policy. A file that is not there, is unreadable or holds no usable pattern is reported as an issue against the policy and contributes nothing; the policy itself is still rendered, so with `domain_file` as its only domain selector its learned sets simply stay empty until the file arrives. Bad lines are counted and the first one is named, rather than logging every one of them.
+
+Two things distinguish a file entry from a `list domain` one, both deliberate:
+
+* **File entries are learned by snoop only.** poll resolves the names you typed, not the ones from a file - ten thousand names every `poll_interval` is a DNS storm, not a service. A name from a file reaches its set when a client on the observed LAN segment asks for it, which for a large list is exactly when it matters and never before. The [first-connection caveat](#known-limitations) applies to every one of them.
+* **shunt reads the file, it does not fetch it.** Where the list comes from and how often it changes is a job for cron, a script or a package of its own, and whatever writes the file runs `shunt refresh` afterwards: the daemon re-reads every domain file and swaps its matcher, and nothing else moves - no restart, the nftables table, the routes and the learned addresses all stay as they are. Write the new list to a temporary name and rename it over the old one, so a half-written file is never read:
+
+```sh
+uclient-fetch -q -O /tmp/shunt/community.tmp https://example.org/domains.txt && mv /tmp/shunt/community.tmp /tmp/shunt/community.txt && shunt refresh
+```
+
+Run from cron that covers the reboot case as well: the first run after boot creates the file and the refresh loads it. That keeps shunt independent of the network, of any download tool and of the format a list publisher happens to choose - converting `hosts` or dnsmasq syntax into one pattern per line is one `sed` away and stays outside the daemon.
+
+What a large list costs: 100k patterns take about two seconds to load and roughly 40 MB of memory on an x86 test box, so expect several seconds and a proportionally smaller footprint on a router, at start and on every refresh. A file above 4 MiB is refused outright as an issue. `shunt check` prints how many files were read and how many patterns they contributed, `shunt refresh` does the same for the running daemon, and `ubus call shunt status` shows the count under `files` together with the time of the last refresh.
 
 ### Actions: route or bypass
 
@@ -294,7 +329,7 @@ Note that domain precedence is resolved *before* this, at the matcher: the most 
 ## How addresses are learned
 Two sources feed the same nftables sets, union with an element timeout. They are complementary, not alternative modes.
 
-* **poll** resolves the configured names through whatever system resolver exists, on a fixed interval. It warms the sets before the first client packet, so first contact does not race. Wildcards are not names and cannot be polled.
+* **poll** resolves the configured names through whatever system resolver exists, on a fixed interval. It warms the sets before the first client packet, so first contact does not race. Wildcards are not names and cannot be polled, and names from a `domain_file` are not polled by design - see [Domain lists from a file](#domain-lists-from-a-file).
 * **snoop** passively observes DNS responses on the LAN side via AF_PACKET with a BPF filter matching **UDP source port 53** - answers, not questions - including one level of VLAN tagging. It covers CDN variance and wildcards, which poll cannot. It reads; it never writes anything back onto the wire and never sits between a client and its resolver. If it dies, DNS keeps working and only the policy stops applying.
 
 <a id="what-polling-costs"></a>
@@ -403,14 +438,15 @@ config policy 'office'
 
 Almost nothing. The daemon and the rpcd backend work through ucode's native bindings - `fs`, `socket` for the AF_PACKET observer, `uci`, `uloop`, `ubus`, `resolv`, `rtnl` and `log` - and rpcd carries the LuCI side, so there is no shell glue, no `awk`, no temporary state files. Logging goes to syslog through the binding, not through a `logger` process per line.
 
-Two external commands remain:
+One external command remains:
 
 | Command | Why |
 | :--- | :--- |
 | `nft` | the ruleset is applied and read as one atomic batch; ucode has no nftables binding |
-| `ip` | routes and rules are written this way, although `rtnl` already reads them - replaceable |
 
-Nothing is ever handed to a shell for parsing: `system()` takes an argument array, and where stderr has to be captured the wrapper is `sh -c 'exec "$0" "$@"'`, which passes arguments through untouched. `popen()` only ever runs fixed command lines - `nft -f -` in the daemon and `nft -j list table` in the rpcd backend - so no configuration value or captured data reaches a command line.
+Routes and rules go over rtnetlink through `ucode-mod-rtnl`, the same binding the rpcd backend reads them with, so there is no `ip` process per command and no `ip` dependency. A route on a device that does not exist yet is reported by the kernel's own reason rather than an exit code, and `rp_filter_manage` writes the `/proc/sys` value directly instead of calling `sysctl`.
+
+Nothing is ever handed to a shell for parsing: `system()` takes an argument array and only ever runs `nft`, and `popen()` only ever runs fixed command lines - `nft -f -` in the daemon and `nft -j list table` in the rpcd backend - so no configuration value or captured data reaches a command line.
 
 <a id="what-shunt-creates-on-the-system"></a>
 ## What shunt creates on the system
@@ -428,7 +464,7 @@ fwmark                               <index> << 24, mask 0xff000000
 ip rule pref                         31000 + <index> keep_local's main lookup
                                      31500 + <index> the policy table
 routing table                        8000 + <index>
-/etc/iproute2/rt_tables.d/shunt.conf the table name mapping
+/etc/iproute2/rt_tables.d/shunt.conf the table name mapping, for `ip route show` only
 ```
 
 A `bypass` policy is only a rule in the prerouting and output chains: no mark, no table, no ip rule, and it does not count against the 255. The mark mask is fixed at `0xff000000`, which allows 255 policies. The `output` chain is `type route` so the router's own marked traffic is re-routed after the mark is set.
@@ -492,7 +528,7 @@ ip route get <addr>
 
 The first answer must name the policy table, the second the normal uplink. With `keep_local` on - the default - pick a destination **outside** your own networks for this: an address in an attached subnet or behind a static route deliberately answers with `main` in both lines, and that is the feature working, not the policy failing.
 
-**The first line needs iproute2's `ip`**, because BusyBox's `route get` does not understand `mark` - one build rejects it outright, the OpenWrt one sends an incomplete netlink request that the kernel answers with `EINVAL`. shunt's `ip` dependency (`ip-tiny`) covers it: `route` and `rule` are complete there, the tiny build only strips exotic objects. The second line, without a mark, works with BusyBox too.
+**The first line needs iproute2's `ip`**, because BusyBox's `route get` does not understand `mark` - one build rejects it outright, the OpenWrt one sends an incomplete netlink request that the kernel answers with `EINVAL`. shunt itself no longer depends on `ip`, so install `ip-tiny` for this check: `route` and `rule` are complete there, the tiny build only strips exotic objects. The second line, without a mark, works with BusyBox too.
 
 Adding `from <client> iif br-lan` makes the lookup more precise, with one further catch worth a confused test session: **`iif` is not optional** there. Without it, `from` a non-local address makes the kernel validate a locally originated lookup and answer `ENETUNREACH` regardless of any table's content, which reads like broken routing and is not.
 

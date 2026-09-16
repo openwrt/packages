@@ -19,6 +19,7 @@ const RT = rtnl.const;
 import { load as config_load, parse as config_parse } from 'shunt.config';
 import { resolve as netifd_resolve } from 'shunt.netifd';
 import { compile as match_compile } from 'shunt.match';
+import { load as files_load } from 'shunt.domain_file';
 import { action_name, compile as nft_compile } from 'shunt.nft';
 import { compile as route_compile } from 'shunt.route';
 import { names as poll_names } from 'shunt.poll';
@@ -58,11 +59,15 @@ function render() {
 
 	cfg.policies = netifd_resolve(cfg.policies, dump);
 
+	let f = files_load(cfg.policies);
+
+	cfg.policies = f.policies;
+
 	let m = match_compile(cfg.policies);
 	let n = nft_compile(cfg.policies);
 	let r = route_compile(cfg.policies, n.marks);
 
-	return { cfg, matcher: m, nft: n, route: r };
+	return { cfg, files: f, matcher: m, nft: n, route: r };
 }
 
 // Policy devices whose marked traffic the kernel would drop: max(all, <dev>),
@@ -265,6 +270,7 @@ return {
 						interface: (m.action == 'route') ? p?.interface : null,
 						fallback: (m.action == 'route') ? p?.fallback : null,
 						domains: length(p?.domains ?? []),
+						file_domains: length(p?.file_domains ?? []),
 						rules: (m.action == 'route' && rules)
 							? length(rules[m.name] ?? []) : null,
 						routes: (m.action == 'route') ? routes[m.name] : null
@@ -282,6 +288,7 @@ return {
 					rp_filter_strict: rp_filter_strict(),
 					issues: [
 						...st.cfg.issues,
+						...st.files.issues,
 						...st.matcher.issues,
 						...st.nft.issues,
 						...st.route.issues

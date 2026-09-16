@@ -5,7 +5,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shunt
-PKG_VERSION:=0.1.6
+PKG_VERSION:=0.1.8
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=
@@ -19,7 +19,7 @@ define Package/shunt
   TITLE:=Policy based routing via passive DNS observation
   DEPENDS:=+ucode +ucode-mod-fs +ucode-mod-socket +ucode-mod-uci \
   +ucode-mod-uloop +ucode-mod-resolv +ucode-mod-ubus \
-  +ucode-mod-rtnl +ucode-mod-log +rpcd-mod-ucode +nftables-json +ip
+  +ucode-mod-rtnl +ucode-mod-log +rpcd-mod-ucode +nftables-json
   PKGARCH:=all
 endef
 
@@ -29,8 +29,8 @@ define Package/shunt/description
   configured names and a passive AF_PACKET observer picks every DNS answer off
   the wire, so shunt works unchanged with dnsmasq, unbound or any other backend.
   Marks are applied via an own nftables table with per-element
-  counters, routing via fwmark rules and per-policy tables, with gateway
-  discovery and interface events from netifd.
+  counters, routing via fwmark rules and per-policy tables written over
+  rtnetlink, with gateway discovery and interface events from netifd.
 endef
 
 define Package/shunt/conffiles

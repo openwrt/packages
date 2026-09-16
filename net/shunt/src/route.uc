@@ -1,7 +1,9 @@
-// shunt - ip rule and route renderer
+// shunt - rule and route renderer
 //
-// Renders the argv arrays for the policy routing tables and their rules.
-// Pure, like nft.uc - nothing here talks to the kernel.
+// Renders the netlink operations for the policy routing tables and their
+// rules, as rt.uc sends them. Pure, like nft.uc - nothing here talks to
+// the kernel, which is why the handful of kernel constants it needs are
+// spelled out below rather than read from the rtnl module.
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (c) 2026 Dirk Brenken <dev@brenken.org>
@@ -11,6 +13,19 @@ import { addr_family, DEFAULTS } from 'shunt.nft';
 const RE_IFACE = /^[A-Za-z0-9_][A-Za-z0-9_.-]{0,14}$/;
 
 const BLACKHOLE_METRIC = 9999;
+
+// Kernel ABI, from linux/rtnetlink.h and linux/fib_rules.h. Fixed for as
+// long as netlink exists, so a literal here costs nothing and keeps the
+// renderer importable without ucode-mod-rtnl.
+const AF = { '4': 2, '6': 10 };
+const ANY = { '4': '0.0.0.0/0', '6': '::/0' };
+const RTN_UNICAST = 1;
+const RTN_BLACKHOLE = 6;
+const RTPROT_BOOT = 3;
+const RT_SCOPE_UNIVERSE = 0;
+const RT_SCOPE_LINK = 253;
+const RT_TABLE_MAIN = 254;
+const FR_ACT_TO_TBL = 1;
 
 // Policy options arrive as UCI strings - config.uc only collects them - so the
 // one boolean among them is read here, with the rest of the routing checks.
@@ -85,27 +100,28 @@ export function compile(policies, marks, opts) {
 			keep = true;
 		}
 
-		let fwmark = sprintf('0x%x/0x%x', m.mark, mask);
-		let table = sprintf('%d', m.rt_table);
-		let pref = sprintf('%d', m.rt_prio);
-		let pref_local = sprintf('%d', m.rt_prio_local);
+		let table = m.rt_table;
 
 		push(tables, sprintf('%d\tshunt_%s', m.rt_table, m.name));
 
 		for (let fam in [ '4', '6' ]) {
-			let v = `-${fam}`;
+			let family = AF[fam];
 
-			let route = [ 'ip', v, 'route', 'replace', 'default' ];
+			// `ip route replace default [via gw] dev iface table n`: a
+			// gateway makes it a global-scope route, without one it is
+			// the point to point form with link scope, as ip renders it.
+			let route = { family, table, dst: ANY[fam], oif: iface,
+				type: RTN_UNICAST, protocol: RTPROT_BOOT,
+				scope: gw[fam] ? RT_SCOPE_UNIVERSE : RT_SCOPE_LINK };
 			if (gw[fam])
-				push(route, 'via', gw[fam]);
-			push(route, 'dev', iface, 'table', table);
-			push(add, route);
+				route.gateway = gw[fam];
+			push(add, { cmd: 'newroute', msg: route });
 
 			if (fb == 'block')
-				push(add, [ 'ip', v, 'route', 'replace', 'blackhole',
-					'default', 'metric',
-					sprintf('%d', BLACKHOLE_METRIC),
-					'table', table ]);
+				push(add, { cmd: 'newroute', msg: { family, table,
+					dst: ANY[fam], type: RTN_BLACKHOLE,
+					protocol: RTPROT_BOOT, scope: RT_SCOPE_UNIVERSE,
+					priority: BLACKHOLE_METRIC } });
 
 			// Ahead of the policy rule and on the same mark: main is
 			// consulted with its default route suppressed, so marked traffic
@@ -113,18 +129,20 @@ export function compile(policies, marks, opts) {
 			// subnet, every static route - keeps taking it, and only what
 			// would have used the default route reaches the policy table.
 			if (keep)
-				push(add, [ 'ip', v, 'rule', 'add', 'pref', pref_local,
-					'fwmark', fwmark, 'lookup', 'main',
-					'suppress_prefixlength', '0' ]);
+				push(add, { cmd: 'newrule', msg: { family,
+					action: FR_ACT_TO_TBL, priority: m.rt_prio_local,
+					fwmark: m.mark, fwmask: mask, table: RT_TABLE_MAIN,
+					suppress_prefixlen: 0 } });
 
-			push(add, [ 'ip', v, 'rule', 'add', 'pref', pref,
-				'fwmark', fwmark, 'lookup', table ]);
+			push(add, { cmd: 'newrule', msg: { family,
+				action: FR_ACT_TO_TBL, priority: m.rt_prio,
+				fwmark: m.mark, fwmask: mask, table } });
 
-			unshift(del, [ 'ip', v, 'route', 'flush', 'table', table ]);
-			unshift(del, [ 'ip', v, 'rule', 'del', 'pref', pref ]);
+			unshift(del, { cmd: 'flush', msg: { family, table } });
+			unshift(del, { cmd: 'delrule', msg: { family, priority: m.rt_prio } });
 			// Deleted whether or not it is rendered now: keep_local may have
 			// been on when the running ruleset was applied.
-			unshift(del, [ 'ip', v, 'rule', 'del', 'pref', pref_local ]);
+			unshift(del, { cmd: 'delrule', msg: { family, priority: m.rt_prio_local } });
 		}
 	}
 

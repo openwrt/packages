@@ -209,7 +209,11 @@ export function compile(policies, opts) {
 		if (length(ports) && !length(protos))
 			protos = [ 'tcp', 'udp' ];
 
-		let has_dom = length(p.domains ?? []) > 0;
+		// A named domain file counts as a domain selector whether or not it
+		// was readable at this moment: the policy's sets exist and stay
+		// empty until the file is, and `shunt flush` tears the policy down
+		// without having to read anything.
+		let has_dom = length(p.domains ?? []) + length(p.domain_files ?? []) > 0;
 		let has_dst_any = length(dst['4']) || length(dst['6']);
 
 		// Ports and protocols were asked for and none survived validation.

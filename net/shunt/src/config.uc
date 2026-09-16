@@ -171,7 +171,8 @@ export function parse(sections) {
 			dport: to_list(v.dport),
 			proto: to_list(v.proto),
 			dst: to_list(v.dst),
-			domains: to_list(v.domain)
+			domains: to_list(v.domain),
+			domain_files: to_list(v.domain_file)
 		});
 	}
 

@@ -8,13 +8,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (c) 2026 Dirk Brenken <dev@brenken.org>
 
-import { popen, writefile, readfile, unlink, mkdir, lstat, error as fs_error } from 'fs';
+import { popen, writefile, readfile, unlink, mkdir, error as fs_error } from 'fs';
 import { openlog, syslog, LOG_PID, LOG_DAEMON, LOG_ERR, LOG_WARNING,
 	LOG_NOTICE, LOG_INFO, LOG_DEBUG } from 'log';
 import { load as cfg_load, parse as cfg_parse } from 'shunt.config';
 import { compile as match_compile } from 'shunt.match';
+import { load as files_load, DIR as FILES_DIR } from 'shunt.domain_file';
 import { action_name, compile as nft_compile, refresh, teardown, TABLE } from 'shunt.nft';
 import { compile as route_compile } from 'shunt.route';
+import { open as rt_open, exec as rt_exec, describe as rt_describe } from 'shunt.rt';
 import { open as snoop_open, observe, RECV_LEN } from 'shunt.snoop';
 import { names as poll_names, plan as poll_plan,
 	addresses as poll_addresses,
@@ -89,39 +91,40 @@ function report(kind, issues) {
 		log('warn', sprintf('%s: %J', kind, i));
 }
 
-const RUN_DIR = '/tmp/.shunt';
-const RUN_ERR = RUN_DIR + '/cmd.err';
-
-function capture_ok() {
-	mkdir(RUN_DIR, 0o700);
-
-	let st = lstat(RUN_DIR);
-
-	return st != null && st.type == 'directory' && st.uid == 0 &&
-		!st.perm.group_write && !st.perm.other_write &&
-		!st.perm.group_read && !st.perm.other_read;
-}
-
-function loud(argv) {
-	if (!capture_ok())
-		return { rc: quiet(argv), err: '' };
-
-	let rc = system([ '/bin/sh', '-c',
-		sprintf('exec "$0" "$@" 2>%s', RUN_ERR), ...argv ]);
-	let err = '';
-
-	if (rc != 0)
-		err = replace(trim(readfile(RUN_ERR) ?? ''), /\s*\n\s*/g, '; ');
-
-	unlink(RUN_ERR);
-
-	return { rc, err };
-}
-
-// quiet() drops the child's stderr, loud() keeps it for the warning. Neither
-// may be called `run` - that name is the daemon's own entry point.
+// The one remaining child process besides `nft -f -`: nft's own existence
+// check for the table. Not called `run` - that name is the daemon's own
+// entry point.
 function quiet(argv) {
 	return system([ '/bin/sh', '-c', 'exec "$0" "$@" 2>/dev/null', ...argv ]);
+}
+
+let rtnl_mod = null;
+
+// Routes and rules go over rtnetlink through ucode-mod-rtnl. Without the
+// module nothing can be routed, so a missing one is an error, once.
+function rtnl() {
+	if (rtnl_mod != null)
+		return rtnl_mod;
+
+	rtnl_mod = rt_open() ?? false;
+
+	if (!rtnl_mod)
+		log('err', 'ucode-mod-rtnl missing - routes and rules cannot be applied');
+
+	return rtnl_mod;
+}
+
+// Fire and forget, the keeper's and the teardown's way: an EEXIST on a
+// rule that is already there or an ESRCH on one that is already gone is
+// the expected answer, not a fault.
+function rt_quiet(ops) {
+	let rt = rtnl();
+
+	if (!rt)
+		return;
+
+	for (let op in ops)
+		rt_exec(rt, op);
 }
 
 function nft_pipe(batch, what) {
@@ -181,26 +184,24 @@ function apply(state) {
 			log('warn', sprintf('cannot write %s: %s', RT_TABLES, fs_error()));
 	}
 
-	for (let argv in state.route.del)
-		quiet(argv);
+	rt_quiet(state.route.del);
 
+	let rt = rtnl();
 	let failed = 0;
 	let reasons = {};
 
-	for (let argv in state.route.add) {
-		let r = loud(argv);
+	for (let op in state.route.add) {
+		let why = rt ? rt_exec(rt, op) : 'ucode-mod-rtnl missing';
 
-		if (r.rc != 0) {
-			let why = length(r.err) ? r.err : sprintf('exit %d', r.rc);
-
+		if (why != null) {
 			failed++;
 			reasons[why] = (reasons[why] ?? 0) + 1;
-			debug(sprintf('not applied: %s - %s', join(' ', argv), why));
+			debug(sprintf('not applied: %s - %s', rt_describe(op), why));
 		}
 	}
 
 	for (let why in reasons)
-		log('warn', sprintf('%d of %d route/rule command(s) not applied - %s',
+		log('warn', sprintf('%d of %d route/rule operation(s) not applied - %s',
 			reasons[why], length(state.route.add), why));
 
 	if (failed)
@@ -211,8 +212,7 @@ function apply(state) {
 
 function flush(state) {
 	if (state)
-		for (let argv in state.route.del)
-			quiet(argv);
+		rt_quiet(state.route.del);
 
 	nft_pipe(teardown(), 'teardown');
 
@@ -274,8 +274,9 @@ function rp_filter_blocked(policies) {
 // device that exists. Off by default: changing a security setting is opt-in.
 function rp_filter_apply(policies) {
 	for (let dev in policy_devices(policies))
-		if (rp_read(dev) != '' && rp_read(dev) != '2')
-			loud([ 'sysctl', '-w', sprintf('net.ipv4.conf.%s.rp_filter=2', dev) ]);
+		if (rp_read(dev) != '' && rp_read(dev) != '2' &&
+			!writefile(`/proc/sys/net/ipv4/conf/${dev}/rp_filter`, '2\n'))
+			log('warn', sprintf('cannot set rp_filter on %s: %s', dev, fs_error()));
 }
 
 // Reads the live /proc value, so when rp_filter_apply has done its job the
@@ -298,9 +299,15 @@ function build_state(silent) {
 
 	cfg.policies = netifd_resolve(cfg.policies, netifd_dump());
 
-	let matcher = null;
+	let matcher = null, files = null;
 
+	// The files are read only when the matcher is built from them - a
+	// teardown renders the policy from its config alone, see nft.uc.
 	if (!silent) {
+		files = files_load(cfg.policies);
+		cfg.policies = files.policies;
+		report('file', files.issues);
+
 		matcher = match_compile(cfg.policies);
 		report('domain', matcher.issues);
 	}
@@ -313,7 +320,7 @@ function build_state(silent) {
 	if (!silent)
 		report('route', r.issues);
 
-	return { cfg, matcher, nft: n, route: r };
+	return { cfg, matcher, files, nft: n, route: r };
 }
 
 // nft -f reads the entire ruleset before resolving a single name, so on a box
@@ -408,11 +415,36 @@ function run() {
 		return 1;
 	}
 
+	mkdir(FILES_DIR, 0o755);
+
 	let cache = dedupe_create(state.cfg.global.entry_ttl);
 	let targets = poll_names(state.cfg.policies);
 
 	let stats = { started: time(), resolv: false, snoop: [],
-		matched: 0, drops: {}, reapplied: 0 };
+		matched: 0, drops: {}, reapplied: 0,
+		files: { count: state.files.files, entries: state.files.entries,
+			refreshed: null } };
+
+	// Re-reads the domain files and swaps the matcher - the one thing a
+	// changed list needs. Nothing else moves: the sets exist whether the
+	// file does, poll never had the file names, routes and rules are not
+	// touched, and the learned addresses stay put. Runs on the uloop
+	// thread between callbacks, so snoop never sees a half-built matcher.
+	function refresh_files() {
+		let f = files_load(state.cfg.policies);
+
+		report('file', f.issues);
+
+		state.cfg.policies = f.policies;
+		state.matcher = match_compile(state.cfg.policies);
+
+		stats.files = { count: f.files, entries: f.entries, refreshed: time() };
+
+		log('info', sprintf('refresh: %d file(s), %d pattern(s), %d issue(s)',
+			f.files, f.entries, length(f.issues)));
+
+		return { files: f.files, entries: f.entries, issues: f.issues };
+	}
 
 	try {
 		resolv = require('resolv');
@@ -469,8 +501,7 @@ function run() {
 	// and on a failed query, while snoop keeps feeding queue_writes() in
 	// all three cases.
 	function tick() {
-		for (let argv in state.route.add)
-			quiet(argv);
+		rt_quiet(state.route.add);
 
 		ensure_table(wq);
 
@@ -510,10 +541,8 @@ function run() {
 
 			check_rp_filter(resolved);
 
-			for (let argv in state.route.del)
-				quiet(argv);
-			for (let argv in r.add)
-				quiet(argv);
+			rt_quiet(state.route.del);
+			rt_quiet(r.add);
 
 			state.route = r;
 		}
@@ -553,11 +582,25 @@ function run() {
 					drops: stats.drops
 				},
 				reapplied: stats.reapplied,
-				dedupe: cache.size()
+				dedupe: cache.size(),
+				files: stats.files
 			};
 		}
 
-		let obj = c.publish('shunt', { status: { call: () => status_reply() } });
+		function refresh_reply() {
+			try {
+				return refresh_files();
+			}
+			catch (e) {
+				log('err', sprintf('refresh failed: %s', e));
+				return { error: `${e}` };
+			}
+		}
+
+		let obj = c.publish('shunt', {
+			status: { call: () => status_reply() },
+			refresh: { call: () => refresh_reply() }
+		});
 
 		if (!obj)
 			log('warn', sprintf('cannot publish ubus object: %s',
@@ -639,6 +682,43 @@ function run() {
 	return 0;
 }
 
+// Asks the running daemon to re-read its domain files. Without a daemon
+// there is nothing to refresh and nothing lost: the next start reads them.
+function refresh() {
+	let c = null;
+
+	try {
+		c = require('ubus').connect();
+	}
+	catch (e) {
+		c = null;
+	}
+
+	if (!c) {
+		warn('ubus unavailable - cannot reach the daemon\n');
+		return 1;
+	}
+
+	let r = c.call('shunt', 'refresh');
+
+	if (r == null) {
+		warn('shunt is not running - the files are read at start\n');
+		return 1;
+	}
+
+	if (r.error) {
+		warn(sprintf('refresh failed: %s\n', r.error));
+		return 1;
+	}
+
+	printf('files:    %d file(s), %d pattern(s)\n', r.files, r.entries);
+
+	for (let i in r.issues)
+		printf('issue:    %J\n', i);
+
+	return 0;
+}
+
 function check() {
 	verbose = true;
 
@@ -659,10 +739,12 @@ function check() {
 			printf('  %-16s mark 0x%08x  table %d  pref %d\n',
 				m.name, m.mark, m.rt_table, m.rt_prio);
 
-	let total = length(state.matcher.issues) + length(state.nft.issues) +
-		length(state.route.issues);
+	let total = length(state.files.issues) + length(state.matcher.issues) +
+		length(state.nft.issues) + length(state.route.issues);
 
 	printf('issues:   %d (see above)\n', total);
+	printf('files:    %d file(s), %d pattern(s)\n', state.files.files,
+		state.files.entries);
 	printf('poll:     %d name(s)\n', length(poll_names(state.cfg.policies)));
 
 	return length(state.nft.marks) ? 0 : 2;
@@ -685,7 +767,9 @@ case 'check':
 case 'flush':
 	flush(build_state(true));
 	exit(0);
+case 'refresh':
+	exit(refresh());
 default:
-	warn('usage: shunt [-v] run|check|flush\n');
+	warn('usage: shunt [-v] run|check|flush|refresh\n');
 	exit(2);
 }
