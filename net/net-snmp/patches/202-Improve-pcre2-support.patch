@@ -13,7 +13,7 @@ declarations occur before statements.
 
 --- a/agent/mibgroup/host/data_access/swrun.c
 +++ b/agent/mibgroup/host/data_access/swrun.c
-@@ -111,10 +111,7 @@ swrun_count_processes_by_regex( char *na
+@@ -110,10 +110,7 @@ swrun_count_processes_by_regex( char *na
      netsnmp_iterator  *it;
      int i = 0;
  #ifdef HAVE_PCRE2_H
@@ -25,7 +25,7 @@ declarations occur before statements.
  #elif defined(HAVE_PCRE_H)
      int found_ndx[30];
  #endif
-@@ -122,22 +119,20 @@ swrun_count_processes_by_regex( char *na
+@@ -121,22 +118,20 @@ swrun_count_processes_by_regex( char *na
      char fullCommand[64 + 128 + 128 + 3];
  
      netsnmp_cache_check_and_reload(swrun_cache);
@@ -55,7 +55,7 @@ declarations occur before statements.
  #endif
 --- a/agent/mibgroup/if-mib/data_access/interface.c
 +++ b/agent/mibgroup/if-mib/data_access/interface.c
-@@ -828,12 +828,8 @@ int netsnmp_access_interface_max_reached
+@@ -825,12 +825,8 @@ int netsnmp_access_interface_max_reached
  int netsnmp_access_interface_include(const char *name)
  {
      netsnmp_include_if_list *if_ptr;
@@ -70,7 +70,7 @@ declarations occur before statements.
  #elif defined(HAVE_PCRE_H)
      int                      found_ndx[3];
  #endif
-@@ -851,8 +847,8 @@ int netsnmp_access_interface_include(con
+@@ -848,8 +844,8 @@ int netsnmp_access_interface_include(con
  
      for (if_ptr = include_list; if_ptr; if_ptr = if_ptr->next) {
  #if defined(HAVE_PCRE2_H)
@@ -81,7 +81,7 @@ declarations occur before statements.
                  pcre2_match_data_free(ndx_match);
                  return TRUE;
          }
-@@ -984,11 +980,13 @@ _parse_include_if_config(const char *tok
+@@ -981,11 +977,13 @@ _parse_include_if_config(const char *tok
      netsnmp_include_if_list *if_ptr, *if_new;
      char                    *name, *st;
  #if defined(HAVE_PCRE2_H)
@@ -99,7 +99,7 @@ declarations occur before statements.
  #elif defined(HAVE_PCRE_H)
      const char              *pcre_error;
      int                     pcre_error_offset;
-@@ -1022,10 +1020,14 @@ _parse_include_if_config(const char *tok
+@@ -1019,10 +1017,14 @@ _parse_include_if_config(const char *tok
              goto err;
          }
  #if defined(HAVE_PCRE2_H)
