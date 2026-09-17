@@ -125,6 +125,7 @@ MESON_ARGS += \
 	-Dpoisoning=false \
 	-Dmemory-alignment=malloc \
 	-Dcheck=enabled \
+	-Dtests=disabled \
 	-Dlibunwind=disabled \
 	-Dlibdw=disabled \
 	-Ddbghelp=disabled \
