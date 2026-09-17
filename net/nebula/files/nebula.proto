@@ -40,12 +40,11 @@ proto_nebula_init_config() {
 }
 
 proto_nebula_setup() {
-	local interface="$1" config_file address addresses
+	local interface="$1" config_file address addresses ifaddr_timeout
 	local yaml_listen_host yaml_listen_port yaml_tun_dev
 
 	config_load network
 	config_get config_file "${interface}" "config_file"
-	proto_init_update "${interface}" 1
 
 	[ -s "$config_file" ] || { log "Config file not found or empty!"; return 1; }
 	eval "$(yaml_parse "$config_file" "yaml_")"
@@ -54,6 +53,26 @@ proto_nebula_setup() {
 
 	log "Setting up ${interface} from $(basename "$config_file")."
 	proto_run_command "$interface" "$PROG" -config "$config_file"
+
+	ifaddr_timeout=10
+	while [ "$ifaddr_timeout" -gt 0 ]; do
+		addresses="$(ip -o -4 addr show dev "$interface" scope global 2>/dev/null | awk '{print $4}')"
+		[ -n "$addresses" ] && break
+		ifaddr_timeout=$((ifaddr_timeout - 1))
+		sleep 1
+	done
+
+	[ -n "$addresses" ] || {
+		log "Timed out waiting for ${interface} to receive an IPv4 address."
+		proto_notify_error "$interface" IFADDR_TIMEOUT
+		proto_block_restart "$interface"
+		proto_setup_failed "$interface"
+		return 1
+	}
+
+	proto_init_update "$interface" 1
+	proto_set_keep 1
+
 	# TODO: if lighthouse, open local port 4242
 	# TODO: else get local subnet from local_range variable, if not,
 	# TODO: iterate over each lighthouse/hosts and append /24
@@ -71,7 +90,6 @@ proto_nebula_setup() {
 		json_close_object
 	json_close_array
 	proto_close_data
-	addresses="$(ip -4 a list dev "$interface" 2>/dev/null | grep inet | awk '{print $2}' | awk -F "/" '{print $1}')"
 	log "Running ${interface} from $(basename "$config_file")${addresses+:  with addresses: $addresses}."
 	for address in ${addresses}; do
 		case "${address}" in
