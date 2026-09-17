@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=getdns
 PKG_VERSION:=1.7.3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -27,27 +27,38 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
 define Package/getdns/Default
-	TITLE:=getdns
-	URL:=https://getdnsapi.net/
+  TITLE:=getdns (library) using $(2)
+  SECTION:=libs
+  CATEGORY:=Libraries
+  URL:=https://getdnsapi.net/
+  DEPENDS:=$(3) \
+	   +GETDNS_BUILD_LIBEVENT2:libevent2 \
+	   +!GETDNS_ENABLE_STUB_ONLY:libunbound \
+	   +GETDNS_ENABLE_IDN_LIBIDN2:libidn2
+  VARIANT:=$(1)
+  DEFAULT_VARIANT:=$(4)
+  PROVIDES:=getdns
+  CONFLICTS:=$(5)
+  MENU:=1
 endef
 
-define Package/getdns
-	$(call Package/getdns/Default)
-	SECTION:=libs
-	CATEGORY:=Libraries
-	TITLE+= (library)
-	DEPENDS+= +libopenssl +GETDNS_BUILD_LIBEVENT2:libevent2 +!GETDNS_ENABLE_STUB_ONLY:libunbound +GETDNS_ENABLE_IDN_LIBIDN2:libidn2
-	MENU:=1
-endef
+Package/getdns-openssl=$(call Package/getdns/Default,openssl,OpenSSL,+PACKAGE_getdns-openssl:libopenssl,1,getdns-mbedtls)
+Package/getdns-mbedtls=$(call Package/getdns/Default,mbedtls,mbedTLS,+PACKAGE_getdns-mbedtls:libmbedtls,,)
 
 define Package/getdns/description
 	This package contains the getdns library (libgetdns).
 	This package also contains the "getdns_query" command line wrapper for getdns exposing the features of this implementation (both in the official API and the additional API functions).
 endef
 
-define Package/getdns/config
+Package/getdns-openssl/description=$(Package/getdns/description)
+Package/getdns-mbedtls/description=$(Package/getdns/description)
+
+define Package/getdns/config/Default
 	source "$(SOURCE)/Config.in"
 endef
+
+Package/getdns-openssl/config=$(Package/getdns/config/Default)
+Package/getdns-mbedtls/config=$(Package/getdns/config/Default)
 
 # CMAKE options for GetDNS are described in this document:
 # https://getdnsapi.net/quick-start/cmake-quick-start/
@@ -69,11 +80,20 @@ CMAKE_OPTIONS += -DBSD_LIBRARY=OFF
 CMAKE_OPTIONS += -DENABLE_STATIC=OFF
 CMAKE_OPTIONS += -DENABLE_SHARED=ON  # This is the default
 
-define Package/getdns/install
+ifeq ($(BUILD_VARIANT),mbedtls)
+  CMAKE_OPTIONS += -DUSE_MBEDTLS=ON
+  CMAKE_OPTIONS += -DHAVE_MBEDTLS=ON
+endif
+
+define Package/getdns/install/Default
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgetdns.so.* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/getdns_query $(1)/usr/sbin/getdns_query
 endef
 
-$(eval $(call BuildPackage,getdns))
+Package/getdns-openssl/install=$(Package/getdns/install/Default)
+Package/getdns-mbedtls/install=$(Package/getdns/install/Default)
+
+$(eval $(call BuildPackage,getdns-openssl))
+$(eval $(call BuildPackage,getdns-mbedtls))
