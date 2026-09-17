@@ -1,0 +1,25 @@
+From c7414e33c84a62a514644695210876cc198d34a1 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Tue, 8 Sep 2026 21:04:02 +0100
+Subject: [PATCH] kernel: drop the no-FPU flags for the airmouse object
+
+The airmouse code uses floating point, so its object gets CC_FLAGS_FPU.
+Kbuild also requires removing CC_FLAGS_NO_FPU from such an object; on
+arm64 that flag is -mgeneral-regs-only and the compiler rejects
+floating-point types while it is set.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ kernel/Makefile | 1 +
+ 1 file changed, 1 insertion(+)
+
+--- a/kernel/Makefile
++++ b/kernel/Makefile
+@@ -7,6 +7,7 @@ KVER ?= $(shell uname -r)
+ PWD  := $(shell pwd)
+ 
+ CFLAGS_lg_magic_airmouse.o += $(CC_FLAGS_FPU)
++CFLAGS_REMOVE_lg_magic_airmouse.o += $(CC_FLAGS_NO_FPU)
+ 
+ all:
+ 	$(MAKE) -C $(KDIR) M=$(PWD) modules
