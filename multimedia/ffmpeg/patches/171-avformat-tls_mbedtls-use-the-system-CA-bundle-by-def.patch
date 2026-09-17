@@ -1,0 +1,79 @@
+From 8ca2626848d117d0e4c5c23074769c155753272d Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Thu, 17 Sep 2026 21:00:34 +0100
+Subject: [PATCH] avformat/tls_mbedtls: use the system CA bundle by default
+
+Unlike the other TLS backends, the mbedtls one has no trust store of its
+own: unless the caller passes ca_file, every certificate fails to verify
+with MBEDTLS_X509_BADCERT_NOT_TRUSTED. A caller that opens a URL rather
+than a socket frequently has nowhere to pass it, since an HLS playlist
+opens further connections of its own and those get no options, so https
+does not work at all on an mbedtls build.
+
+Look at SSL_CERT_FILE first, as OpenSSL does, then at the usual
+locations of the system bundle. Nothing is loaded when the peer
+certificate is not verified anyway, and a system carrying none of these
+files behaves as before.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ libavformat/tls_mbedtls.c | 34 ++++++++++++++++++++++++++++++++++
+ 1 file changed, 34 insertions(+)
+
+--- a/libavformat/tls_mbedtls.c
++++ b/libavformat/tls_mbedtls.c
+@@ -54,6 +54,16 @@ static unsigned int tls_mbedtls_version_
+ #endif
+ }
+ 
++#include "libavutil/getenv_utf8.h"
++
++static const char *const system_ca_files[] = {
++    "/etc/ssl/certs/ca-certificates.crt",     /* Debian, Alpine, OpenWrt */
++    "/etc/pki/tls/certs/ca-bundle.crt",       /* Fedora, RHEL */
++    "/etc/ssl/ca-bundle.pem",                 /* openSUSE */
++    "/etc/ssl/cert.pem",                      /* OpenBSD, macOS */
++    "/usr/local/share/certs/ca-root-nss.crt", /* FreeBSD */
++};
++
+ static int mbedtls_x509_fingerprint(char *cert_buf, size_t cert_sz, char **fingerprint)
+ {
+     unsigned char md[32];
+@@ -516,6 +526,27 @@ static int tls_handshake(URLContext *h)
+     return ret;
+ }
+ 
++static int load_system_ca(mbedtls_x509_crt *ca_cert)
++{
++    int ret = MBEDTLS_ERR_X509_FILE_IO_ERROR;
++    char *env = getenv_utf8("SSL_CERT_FILE");
++    int i;
++
++    if (env) {
++        ret = mbedtls_x509_crt_parse_file(ca_cert, env);
++        freeenv_utf8(env);
++        return ret;
++    }
++
++    for (i = 0; i < FF_ARRAY_ELEMS(system_ca_files); i++) {
++        ret = mbedtls_x509_crt_parse_file(ca_cert, system_ca_files[i]);
++        if (ret >= 0)
++            break;
++    }
++
++    return ret;
++}
++
+ static int tls_open(URLContext *h, const char *uri, int flags, AVDictionary **options)
+ {
+     TLSContext *tls_ctx = h->priv_data;
+@@ -565,6 +596,9 @@ static int tls_open(URLContext *h, const
+             av_log(h, AV_LOG_ERROR, "mbedtls_x509_crt_parse_file for CA cert returned %d\n", ret);
+             goto fail;
+         }
++    } else if (shr->verify && load_system_ca(&tls_ctx->ca_cert) < 0) {
++        av_log(h, AV_LOG_WARNING, "No system CA certificates found, "
++                                  "peer verification will fail\n");
+     }
+ 
+     // load own certificate
