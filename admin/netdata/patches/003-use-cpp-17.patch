@@ -1,0 +1,12 @@
+diff -Naur a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt	2024-11-08 03:09:18.000000000 +0700
++++ b/CMakeLists.txt	2024-11-10 05:54:38.197675500 +0700
+@@ -33,7 +33,7 @@
+ set(CMAKE_INSTALL_MESSAGE LAZY)
+ 
+ set(CMAKE_C_STANDARD 11)
+-set(CMAKE_CXX_STANDARD 14)
++set(CMAKE_CXX_STANDARD 17)
+ set(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME "netdata")
+ 
+ option(USE_CXX_11 "Use C++11 instead of C++14 (should only be used on legacy systems that cannot support C++14, may disable some features)" False)
