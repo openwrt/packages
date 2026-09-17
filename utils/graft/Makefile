@@ -27,9 +27,9 @@ define Package/graft
 endef
 
 define Package/graft/description
- Local-first composition workspace. Incremental compiler for video.
- Git owns recipe history; graft owns scions, layers, and compile.
- Runtime ffmpeg is not linked; graft shells out.
+  Local-first composition workspace. Incremental compiler for video.
+  Git owns recipe history; graft owns scions, layers, and compile.
+  Runtime ffmpeg is not linked; graft shells out.
 endef
 
 define Package/graft/install
