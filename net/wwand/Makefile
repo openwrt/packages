@@ -391,7 +391,8 @@ define Package/wwand-mhi/install
 endef
 
 # ---------------------------------------------------------------------------
-# wwand-esim: eSIM (eUICC) profile management. Needs a QMI UIM/APDU channel.
+# wwand-esim: eSIM (eUICC) profile management. Backend-neutral — the APDU
+# ladder (MBIM UICC -> QMI UIM -> AT) lives in the base package's sim.uc.
 # ---------------------------------------------------------------------------
 define Package/wwand-esim
   SECTION:=net
@@ -400,8 +401,9 @@ define Package/wwand-esim
   TITLE:=eSIM (eUICC) profile management for wwand
   # Needs an lpac binary at /usr/bin/lpac (the +lpac dependency). lpac drives the
   # SM-DP+ download/notification (ES9+ HTTPS on the router); the daemon bridges
-  # its stdio APDU protocol inline. APDU access uses the modem UIM channel, so it
-  # also needs the QMI backend.
+  # its stdio APDU protocol inline. APDU access goes through the base package's
+  # sim.uc, which probes MBIM UICC, then QMI UIM, then AT — so no backend is
+  # pinned here and eSIM works on an NCM- or MBIM-only box.
   DEPENDS:=+wwand +lpac
 endef
 
