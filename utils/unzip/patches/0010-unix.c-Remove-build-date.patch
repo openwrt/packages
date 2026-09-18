@@ -11,8 +11,6 @@ Bug-Debian: https://bugs.debian.org/782851
  unix/unix.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/unix/unix.c b/unix/unix.c
-index efa97fc..816e3da 100644
 --- a/unix/unix.c
 +++ b/unix/unix.c
 @@ -1705,7 +1705,7 @@ void version(__G)
@@ -24,5 +22,3 @@ index efa97fc..816e3da 100644
        " on ", __DATE__
  #else
        "", ""
--- 
-
