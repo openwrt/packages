@@ -262,7 +262,7 @@ $(eval $(call GstBuildPlugin,videofilter,videofilter support,video,,))
 $(eval $(call GstBuildPlugin,videomixer,videomixer support,video,,))
 $(eval $(call GstBuildPlugin,wavenc,Wav encoder,riff,,))
 $(eval $(call GstBuildPlugin,wavparse,Wav parser,audio riff tag,,))
-#$(eval $(call GstBuildPlugin,y4m,sty4menc support,video,,))
+$(eval $(call GstBuildPlugin,y4m,y4m encoder/decoder,video,,))
 
 #$(eval $(call GstBuildPlugin,1394,IEEE 1394 support,,,))
 #$(eval $(call GstBuildPlugin,aalib,aalib text console video sink,,,))
