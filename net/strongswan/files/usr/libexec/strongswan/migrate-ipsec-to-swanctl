@@ -399,6 +399,21 @@ migrate_options() {
 }
 
 main() {
+
+	[ -f /etc/config/ipsec ] || {
+		echo "File '/etc/config/ipsec' ipsec does not exists."
+		exit 1
+	}
+
+	[ -f /etc/config/swanctl ] && {
+		echo "File '/etc/config/swanctl' already exists."
+		echo "Copy to '/etc/config/swanctl.bak'"
+		cp /etc/config/swanctl /etc/config/swanctl.bak
+	}
+
+	# Make a backup copy of the old file.
+	cp /etc/config/ipsec /etc/config/ipsec.bak
+
 	migrate_ipsec
 	migrate_ignore_routing_tables
 	migrate_local_nat
@@ -412,8 +427,10 @@ main() {
 	migrate_close_action
 	migrate_start_action
 	migrate_options
+
+	# Move the migrated ipsec config to the new swanctl config
+	mv /etc/config/ipsec /etc/config/swanctl
+	exit 0
 }
 
-main
-
-exit 0
+main "$@"
