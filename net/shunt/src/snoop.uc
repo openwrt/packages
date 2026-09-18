@@ -50,8 +50,8 @@ export function open(dev) {
 	return { ok: true, sock: s };
 };
 
-// Returns { policies, qname, a, aaaa } or { drop: <verdict> }. The verdict
-// strings are contract; the fixtures compare them verbatim.
+// Returns { policies, qname, a, aaaa, ttl } or { drop: <verdict> }. The
+// verdict strings are contract; the fixtures compare them verbatim.
 export function observe(frame, matcher) {
 	let f = decap(frame);
 	if (!f.ok)
@@ -71,5 +71,5 @@ export function observe(frame, matcher) {
 	if (policies == null)
 		return { drop: 'nomatch' };
 
-	return { policies, qname: r.qname, a: r.a, aaaa: r.aaaa };
+	return { policies, qname: r.qname, a: r.a, aaaa: r.aaaa, ttl: r.ttl };
 };

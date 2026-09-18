@@ -11,7 +11,7 @@
 import { popen, writefile, readfile, unlink, mkdir, error as fs_error } from 'fs';
 import { openlog, syslog, LOG_PID, LOG_DAEMON, LOG_ERR, LOG_WARNING,
 	LOG_NOTICE, LOG_INFO, LOG_DEBUG } from 'log';
-import { load as cfg_load, parse as cfg_parse } from 'shunt.config';
+import { load as cfg_load, parse as cfg_parse, MIN as cfg_min } from 'shunt.config';
 import { compile as match_compile } from 'shunt.match';
 import { load as files_load, DIR as FILES_DIR } from 'shunt.domain_file';
 import { action_name, compile as nft_compile, refresh, teardown, TABLE } from 'shunt.nft';
@@ -332,10 +332,24 @@ const WRITE_MIN = 2;
 const WRITE_MAX = 60;
 const WRITE_FACTOR = 3;
 
+// A write from snoop carries the TTL of the answer it was learned from; one
+// from poll carries none. Either way the element lives no longer than
+// entry_ttl and no shorter than its floor, so a zero TTL still gets a few
+// seconds of coverage and a week-long one does not pin a stale address.
 function queue_writes(st, writes, now) {
-	for (let w in writes)
-		if (st.state.nft.learn[w.set] && st.cache.due(w.set, w.addr, now))
+	let max = st.state.cfg.global.entry_ttl;
+	let min = cfg_min.entry_ttl;
+
+	for (let w in writes) {
+		if (!st.state.nft.learn[w.set])
+			continue;
+
+		let ttl = w.ttl ?? max;
+		w.ttl = (ttl < min) ? min : (ttl > max) ? max : ttl;
+
+		if (st.cache.due(w.set, w.addr, now, w.ttl))
 			st.pending[`${w.set}/${w.addr}`] = w;
+	}
 }
 
 function drain_writes(st) {
@@ -646,9 +660,9 @@ function run() {
 					let writes = [];
 					for (let policy in v.policies) {
 						for (let a in v.a)
-							push(writes, { set: `d4_${policy}`, addr: a });
+							push(writes, { set: `d4_${policy}`, addr: a, ttl: v.ttl });
 						for (let a in v.aaaa)
-							push(writes, { set: `d6_${policy}`, addr: a });
+							push(writes, { set: `d6_${policy}`, addr: a, ttl: v.ttl });
 					}
 
 					debug(sprintf('snoop: %s -> %s (%d addr)',

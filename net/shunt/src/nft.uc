@@ -132,6 +132,7 @@ export function compile(policies, opts) {
 	// Rule records, not strings: a MAC rule belongs in prerouting only, and
 	// both chains must render from one ordered list or precedence breaks.
 	let issues = [], marks = [], sets = [], rules4 = [], rules6 = [];
+	let restore = [];
 	let idx = 0;
 	let learn = {};
 
@@ -269,10 +270,28 @@ export function compile(policies, opts) {
 
 		// bypass keeps whatever mark the packet carries: no shunt rule after
 		// this one is reached, and the bits outside the mask are not ours.
+		// route also records the mark on the conntrack entry, so the flow's
+		// later packets can be marked from it without another lookup - see
+		// the restore rules below.
 		let stmt = (action == 'bypass')
 			? sprintf('%scounter return', l4)
-			: sprintf('%smeta mark set (meta mark & 0x%08x) | 0x%08x counter return',
-				l4, ~mask & 0xffffffff, mark);
+			: sprintf('%smeta mark set (meta mark & 0x%08x) | 0x%08x ct mark set (ct mark & 0x%08x) | 0x%08x counter return',
+				l4, ~mask & 0xffffffff, mark, ~mask & 0xffffffff, mark);
+
+		// The decision for a flow is made on its first packet and kept:
+		// later packets in the original direction take the mark from the
+		// conntrack entry, and never reach the lookups. That is what makes
+		// a set change safe for connections already running - masquerade
+		// kills a conntrack entry whose output interface changed
+		// (nf_nat_inet_fn, oif_changed), so re-marking a live flow would
+		// reset it. One rule per route policy, with its mark as a constant:
+		// nft has no expression-to-expression OR. Family-agnostic, so one
+		// rule serves both. Replies stay unmarked, as they always did - a
+		// marked reply would look up the policy table and miss the LAN.
+		if (action == 'route')
+			push(restore, sprintf(
+				'\t\tct state != new ct direction original ct mark & 0x%08x == 0x%08x meta mark set (meta mark & 0x%08x) | 0x%08x counter return',
+				mask, mark, ~mask & 0xffffffff, mark));
 
 		// Two rule priorities per routing policy, in two bands 500 apart:
 		// keep_local's main lookup keeps the band a released version already
@@ -366,16 +385,24 @@ export function compile(policies, opts) {
 		}
 	}
 
+	// Every other flow past its first packet is settled too: a bypass
+	// decision, no policy, or older than the ruleset. It keeps whatever it
+	// has and is not re-evaluated against sets that changed since.
+	let settled = length(restore)
+		? [ '\t\tct state != new counter return' ] : [];
+
 	let setup = join('\n', [
 		`destroy table ${TABLE}`,
 		`table ${TABLE} {`,
 		...sets,
 		'\tchain prerouting {',
 		'\t\ttype filter hook prerouting priority mangle; policy accept;',
+		...restore, ...settled,
 		...map(rules4, (r) => r.text), ...map(rules6, (r) => r.text),
 		'\t}',
 		'\tchain output {',
 		'\t\ttype route hook output priority mangle; policy accept;',
+		...restore, ...settled,
 		...map(filter(rules4, (r) => r.out), (r) => r.text),
 		...map(filter(rules6, (r) => r.out), (r) => r.text),
 		'\t}',
@@ -386,8 +413,10 @@ export function compile(policies, opts) {
 	return { setup, marks, issues, learn };
 };
 
+// A write may carry its own timeout - the TTL of the answer it came from,
+// already clamped by the caller - or fall back to entry_ttl.
 export function refresh(writes, entry_ttl) {
-	let ttl = entry_ttl ?? DEFAULTS.entry_ttl;
+	let dflt = entry_ttl ?? DEFAULTS.entry_ttl;
 	let out = [], issues = [];
 
 	for (let w in (writes ?? [])) {
@@ -402,7 +431,7 @@ export function refresh(writes, entry_ttl) {
 
 		push(out, sprintf('destroy element %s %s { %s }', TABLE, w.set, w.addr));
 		push(out, sprintf('add element %s %s { %s timeout %ds }',
-			TABLE, w.set, w.addr, ttl));
+			TABLE, w.set, w.addr, w.ttl ?? dflt));
 	}
 
 	return { batch: length(out) ? join('\n', out) + '\n' : '', issues };

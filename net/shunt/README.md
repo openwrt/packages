@@ -173,11 +173,11 @@ Logging goes to syslog under the tag `shunt`, so `logread -e shunt` shows everyt
 | debug | `0` | log every observed answer and every set write |
 | rp_filter_manage | `0` | set rp_filter=2 on shunt's own policy devices, at start and on ifup |
 | poll_interval | `300` | seconds between poll cycles, at least 30 |
-| entry_ttl | `1200` | nftables timeout on learned elements, at least 60 |
+| entry_ttl | `1200` | ceiling for the nftables timeout on learned elements, at least 60 |
 | snoop | `1` | enable the passive DNS observer |
 | snoop_device | `br-lan` | LAN devices to observe, a list, one entry per segment |
 
-Values below the minimum are clamped, not rejected, and the clamp is logged. `entry_ttl` should stay well above `poll_interval` - an element is rewritten once its remaining timeout drops below half of `entry_ttl`, so the default pair refreshes comfortably within two poll cycles.
+Values below the minimum are clamped, not rejected, and the clamp is logged. `entry_ttl` should stay well above `poll_interval` - a polled element is rewritten once its remaining timeout drops below half of `entry_ttl`, so the default pair refreshes comfortably within two poll cycles. Elements learned by snoop expire with the TTL of the answer instead, see [How addresses are learned](#how-addresses-are-learned).
 
 ### Policy sections
 
@@ -332,10 +332,14 @@ Two sources feed the same nftables sets, union with an element timeout. They are
 * **poll** resolves the configured names through whatever system resolver exists, on a fixed interval. It warms the sets before the first client packet, so first contact does not race. Wildcards are not names and cannot be polled, and names from a `domain_file` are not polled by design - see [Domain lists from a file](#domain-lists-from-a-file).
 * **snoop** passively observes DNS responses on the LAN side via AF_PACKET with a BPF filter matching **UDP source port 53** - answers, not questions - including one level of VLAN tagging. It covers CDN variance and wildcards, which poll cannot. It reads; it never writes anything back onto the wire and never sits between a client and its resolver. If it dies, DNS keeps working and only the policy stops applying.
 
+The two sources differ in how long an element lives. A snooped element carries the TTL of the answer it came from - the shortest one, when a message mixes several - clamped to the range 60 to `entry_ttl` seconds. So an address a CDN hands out for 30 seconds is gone from the set within a minute of the last answer that named it, while a name with a day-long TTL is capped at `entry_ttl` and re-learned on its next answer. A polled element carries `entry_ttl`: the resolver interface hands back addresses without their TTL, so poll has nothing better than the ceiling. Where both sources see the same address the shorter bound wins - the next snooped answer cuts a polled element down to its TTL, and the write cache only rewrites an element when the new expiry moves by at least half of the lifetime the answer carries, so a burst of identical answers costs one write.
+
+This is also the honest answer to the question every IP-based policy router gets: what about a CDN address that the domain stops using while some other site starts to? Nothing on layer 3 can tell two names apart once they share an address, shunt included. What shunt can do is not keep the address longer than the resolver would have, which is exactly what the TTL says.
+
 <a id="what-polling-costs"></a>
 ### What polling costs
 
-"Polling" invites the assumption of waste, so here is the arithmetic. One cycle is a single call asking for A and AAAA of every listed name: two lookups per name per interval, against the **local** resolver. Ten names at the default 300 seconds is 240 lookups an hour - about what a dozen web page loads cost, on a network whose own DNS traffic runs to hundreds of answers in a few minutes. There is no polling of anything else: no interface scanning, no ruleset re-rendering, no periodic writes. An element is only rewritten when its remaining lifetime has dropped below half.
+"Polling" invites the assumption of waste, so here is the arithmetic. One cycle is a single call asking for A and AAAA of every listed name: two lookups per name per interval, against the **local** resolver. Ten names at the default 300 seconds is 240 lookups an hour - about what a dozen web page loads cost, on a network whose own DNS traffic runs to hundreds of answers in a few minutes. There is no polling of anything else: no interface scanning, no ruleset re-rendering, no periodic writes. A polled element is only rewritten when its remaining lifetime has dropped below half.
 
 Two costs worth knowing:
 
@@ -461,6 +465,7 @@ table inet shunt                     own table, see below
   set m_<policy>                     client MACs, no family digit, counter
 
 fwmark                               <index> << 24, mask 0xff000000
+ct mark                              same bits, set on a flow's first packet
 ip rule pref                         31000 + <index> keep_local's main lookup
                                      31500 + <index> the policy table
 routing table                        8000 + <index>
@@ -486,6 +491,8 @@ The interval follows what the last write actually cost, between 2 and 60 seconds
 
 **A reload wipes learned state.** Applying the configuration destroys and re-creates the table atomically, so the learned sets start empty. poll rewarms them within one interval and snoop refills from live traffic; expect a short window after a restart where domain policies do not apply yet.
 
+**A flow is routed once, on its first packet.** The mark a `route` policy sets is also written to the flow's conntrack entry, and every later packet of the flow in the original direction takes its mark from there and never reaches the set lookups; flows that got no mark, or a `bypass`, stay settled the same way. That is what makes a set change safe for connections already running: the kernel kills a masqueraded conntrack entry whose output interface changes, so re-marking a live flow would reset it - measured, not assumed. The same rule holds across a reload. Conntrack survives it, so a connection keeps the decision it started with, including the policy index encoded in its mark; if a reload reorders the policies, that index may now belong to a different policy. Existing connections are not re-evaluated against the new configuration, new connections follow it. Reboot, or restart the client's connections, if that matters after a reorder.
+
 <a id="coexistence-with-pbr-and-mwan3"></a>
 ## Coexistence with pbr and mwan3
 shunt is an independent implementation, not a fork of `pbr` and not a drop-in for it - there is no config migration and no attempt at feature parity. Within its scope it is a full alternative.
@@ -494,7 +501,7 @@ Running both at once during a migration is safe by construction:
 
 | | pbr | mwan3 | shunt |
 | :--- | :--- | :--- | :--- |
-| fwmark mask | `0x00ff0000` | `0x00003f00` | `0xff000000` |
+| fwmark and ct mark mask | `0x00ff0000` | `0x00003f00` | `0xff000000` |
 | ip rule pref | 30000 counting down | ~1001-3250 | 31000 and 31500 counting up |
 | routing tables | dynamic from ~256 | 1-250 | 8000+n |
 | nft | chains in fw4's table | | own `inet shunt` table |
@@ -584,7 +591,7 @@ These are consequences of the design, stated rather than worked around:
 * **Clients that speak DoH or DoT themselves are invisible to snoop.** poll still covers the names you list explicitly; wildcards do not work for those clients. A *resolver* forwarding upstream over DoT or DoH changes nothing.
 * **Wildcards require snoop.** poll can only resolve names it was given, and `*.example.com` is not a name.
 * **One CDN address serves many domains.** If a policy routes `example.com` and the address behind it also serves a thousand other sites, those sites follow the same policy. This is unsolvable at layer 3 by anything that routes on addresses.
-* **The first connection to a newly seen address takes the old path.** snoop learns from the response the client is reading at that moment, so the client's SYN is usually out before the element reaches the set. Measured on a live router: the entire first connection stayed on the normal uplink, and the next connection to the same host started on the policy interface. The switch happens at a connection boundary; shunt does not touch conntrack, so no established flow is ever yanked to a different exit mid-stream. Listing the entry point explicitly closes the gap, because poll warms it before any client asks.
+* **The first connection to a newly seen address takes the old path.** snoop learns from the response the client is reading at that moment, so the client's SYN is usually out before the element reaches the set. That connection stays where it started, by design: a flow's route is decided on its first packet and kept on the conntrack entry, so the switch happens at a connection boundary and never mid-stream - see [What shunt creates on the system](#what-shunt-creates-on-the-system). The next connection to the same host starts on the policy interface. Listing the entry point explicitly closes the gap, because poll warms it before any client asks.
 * **DNS over TCP is not observed.** Port 53 over TCP needs reassembly, which is out of scope; answers large enough to force TCP are rare in the traffic shunt cares about.
 * **Route and rule application is best effort.** At boot a tunnel interface may not exist yet. A rule over an empty table falls through to `main`, so the failure mode is "policy not applied yet", never "traffic broken". Each distinct reason is one warning line.
 * **No interface hotplug.** A device that appears later is picked up on the next `ifup` event or within one poll interval, not immediately.

@@ -1,7 +1,8 @@
 // shunt - DNS message parser
 //
-// Parses a response far enough to answer: which name was asked for, and
-// which A/AAAA addresses came back. Never trusts a length off the wire.
+// Parses a response far enough to answer: which name was asked for, which
+// A/AAAA addresses came back, and how long the answer is good for. Never
+// trusts a length off the wire.
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (c) 2026 Dirk Brenken <dev@brenken.org>
@@ -207,7 +208,7 @@ export function parse(buf) {
 	let qtype = u16at(buf, off);
 	off += 4;
 
-	let a = [], aaaa = [];
+	let a = [], aaaa = [], ttl = null;
 
 	for (let i = 0; i < ancount; i++) {
 		off = skip_name(buf, off);
@@ -218,6 +219,7 @@ export function parse(buf) {
 			return { ok: false, err: ERR.SHORT };
 
 		let rtype = u16at(buf, off);
+		let rttl = (u16at(buf, off + 4) << 16) | u16at(buf, off + 6);
 		let rdlen = u16at(buf, off + 8);
 		off += RR_FIXED;
 
@@ -235,6 +237,12 @@ export function parse(buf) {
 			push(aaaa, fmt6(buf, off));
 		}
 
+		// The records of one RRset share a TTL (RFC 2181 5.2); across the
+		// sets of a message the shortest one bounds the whole answer.
+		if ((rtype == TYPE.A || rtype == TYPE.AAAA) &&
+			(ttl == null || rttl < ttl))
+			ttl = rttl;
+
 		off += rdlen;
 	}
 
@@ -244,6 +252,7 @@ export function parse(buf) {
 		qname: q.name,
 		qtype,
 		a,
-		aaaa
+		aaaa,
+		ttl
 	};
 };

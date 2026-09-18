@@ -1,31 +1,39 @@
 // shunt - write suppression
 //
-// Remembers which (set, address) pairs were written recently so a repeated
-// DNS answer does not rewrite an element that is still fresh.
+// Remembers when each (set, address) element expires in the kernel so a
+// repeated DNS answer does not rewrite an element that is still fresh.
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (c) 2026 Dirk Brenken <dev@brenken.org>
 
 export function create(entry_ttl) {
-	let last = {};
+	let exp = {};
 
-	function due(set, addr, now) {
+	// A write is due when it moves the expiry by at least half of the
+	// lifetime it carries, in either direction: an answer with a long TTL
+	// extends an element that has aged past half, a short one cuts an
+	// element that poll or an earlier answer left long. Anything closer is
+	// a rewrite the kernel would not notice.
+	function due(set, addr, now, ttl) {
 		let k = `${set}/${addr}`;
-		let t = last[k];
+		let t = ttl ?? entry_ttl;
+		let e = now + t;
+		let cur = exp[k];
+		let d = (cur == null) ? t : (e > cur) ? e - cur : cur - e;
 
-		if (t != null && (now - t) * 2 < entry_ttl)
+		if (d * 2 < t)
 			return false;
 
-		last[k] = now;
+		exp[k] = e;
 		return true;
 	}
 
 	function prune(now) {
 		let n = 0;
 
-		for (let k in last) {
-			if (now - last[k] >= entry_ttl) {
-				delete last[k];
+		for (let k in exp) {
+			if (now >= exp[k]) {
+				delete exp[k];
 				n++;
 			}
 		}
@@ -36,11 +44,11 @@ export function create(entry_ttl) {
 	// Dropped wholesale when the table had to be re-created: the kernel has
 	// no elements any more, so every pair is due again regardless of age.
 	function reset() {
-		last = {};
+		exp = {};
 	}
 
 	function size() {
-		return length(keys(last));
+		return length(keys(exp));
 	}
 
 	return { due, prune, reset, size };
