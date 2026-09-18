@@ -10,7 +10,7 @@ FILE_SRC_LINK_PATH="/www/luci-static/resources/oph5spdtst/downloading"
 FILE_SRC_TMP_PATH="$FILE_SRC_LINK_PATH.tmp"
 FILE_SRC_DIR="/www/luci-static/resources/oph5spdtst"
 FILE_SIZE_MB=5
-FILE_SIZE_BYTES=5242880
+FILE_SIZE_BYTES=$((FILE_SIZE_MB * 1024 * 1024))
 
 load_config() {
 	ENABLED=1
@@ -75,7 +75,7 @@ use_flash_payload() {
 	fi
 
 	if ! payload_is_valid "$FILE_SRC_LINK_PATH"; then
-		create_payload "$FILE_SRC_LINK_PATH" "$FILE_SRC_TMP_PATH" "$FILE_SRC_DIR"
+		create_payload "$FILE_SRC_LINK_PATH" "$FILE_SRC_TMP_PATH" "$FILE_SRC_DIR" || return 1
 	fi
 }
 
