@@ -842,7 +842,7 @@ config_strongswan_generate() {
 prepare_env() {
 	mkdir -p /var/ipsec /var/swanctl
 
-	config_load ipsec
+	config_load swanctl
 
 	# Generate /var/ipsec/strongswan.conf
 	swan_reset
@@ -897,13 +897,13 @@ stop_service() {
 }
 
 service_triggers() {
-	procd_add_reload_trigger "ipsec"
-	config load "ipsec"
+	procd_add_reload_trigger "swanctl"
+	config load "swanctl"
 
-	config_foreach service_trigger_ipsec globals
+	config_foreach service_trigger_swanctl globals
 }
 
-service_trigger_ipsec() {
+service_trigger_swanctl() {
 	local interface interface_list
 	config_list_foreach "$1" interface append_var interface_list
 	for interface in $interface_list; do
