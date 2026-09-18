@@ -378,6 +378,22 @@ migrate_options() {
 	config_foreach migrate_option_remote_values remote
 }
 
+migrate_remote_to_connection() {
+	local sections=""
+	local section
+
+	collect_remote_type() {
+		sections="$sections $1"
+	}
+
+	config_load ipsec
+	config_foreach collect_remote_type remote
+
+	for section in $sections; do
+		uci -q set "ipsec.$section=connection"
+	done
+}
+
 main() {
 	local session="$1"
 
@@ -408,6 +424,7 @@ main() {
 	migrate_close_action
 	migrate_start_action
 	migrate_options
+	migrate_remote_to_connection
 
 	# Move staged migration changes to LuCI
 	[ -n "$session" ] && {
