@@ -1,0 +1,91 @@
+From 5be711b84f8aa1c2c1c3751d26adeb9e8fd6dcc6 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Wed, 9 Sep 2026 01:25:39 +0100
+Subject: [PATCH] shared/gatt-helpers: Ignore invalid characteristic entries
+
+The LG Magic Remote MR24 pads a Read By Type response for the
+characteristic declaration with junk entries once its attribute table
+is exhausted: handles outside the requested range and not ascending.
+Using the last of them as the continuation point makes the next request
+return the same junk, and the bogus handles break the database
+insertion, so the whole discovery fails and no profile is probed.
+
+Accept only the ascending, in-range prefix of the attribute data list
+and treat a truncated list as the end of the discovery.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ src/shared/gatt-helpers.c | 42 ++++++++++++++++++++++++++++++---------
+ 1 file changed, 33 insertions(+), 9 deletions(-)
+
+--- a/src/shared/gatt-helpers.c
++++ b/src/shared/gatt-helpers.c
+@@ -1158,6 +1158,26 @@ struct bt_gatt_request *bt_gatt_discover
+ 	return bt_gatt_request_ref(op);
+ }
+ 
++static uint16_t chrc_list_valid_len(const uint8_t *list, uint16_t len,
++					size_t data_length, uint16_t start,
++					uint16_t end)
++{
++	uint16_t handle;
++	uint16_t valid = 0;
++	uint16_t prev = 0;
++
++	while (valid + data_length <= len) {
++		handle = get_le16(list + valid);
++		if (handle < start || handle > end || handle <= prev)
++			break;
++
++		prev = handle;
++		valid += data_length;
++	}
++
++	return valid;
++}
++
+ static void discover_chrcs_cb(uint8_t opcode, const void *pdu,
+ 					uint16_t length, void *user_data)
+ {
+@@ -1166,6 +1186,7 @@ static void discover_chrcs_cb(uint8_t op
+ 	uint8_t att_ecode = 0;
+ 	size_t data_length;
+ 	uint16_t last_handle;
++	uint16_t list_len;
+ 
+ 	if (opcode == BT_ATT_OP_ERROR_RSP) {
+ 		success = false;
+@@ -1194,21 +1215,24 @@ static void discover_chrcs_cb(uint8_t op
+ 		goto done;
+ 	}
+ 
+-	if (!result_append(opcode, pdu + 1, length - 1,
+-							data_length, op)) {
+-		success = false;
++	list_len = chrc_list_valid_len(pdu + 1, length - 1, data_length,
++					op->start_handle, op->end_handle);
++	if (!list_len) {
++		success = true;
+ 		goto done;
+ 	}
+-	last_handle = get_le16(pdu + length - data_length);
+ 
+-	/*
+-	 * If last handle is lower from previous start handle then it is smth
+-	 * wrong. Let's stop search, otherwise we might enter infinite loop.
+-	 */
+-	if (last_handle < op->start_handle) {
++	if (!result_append(opcode, pdu + 1, list_len, data_length, op)) {
+ 		success = false;
+ 		goto done;
+ 	}
++	last_handle = get_le16(pdu + 1 + list_len - data_length);
++
++	/* Junk after the valid entries means the remote table has ended */
++	if (list_len < length - 1) {
++		success = true;
++		goto done;
++	}
+ 
+ 	op->start_handle = last_handle + 1;
+ 
