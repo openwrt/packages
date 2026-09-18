@@ -568,10 +568,9 @@ define Package/strongswan-swanctl/install
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/ipsec.config $(1)/etc/config/ipsec
 
-	# Install migration from 'ipsec@ipsec[-1]' to 'ipsec.globals'
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_DATA) ./files/etc/uci-defaults/strongswan \
-		$(1)/etc/uci-defaults/strongswan
+	$(INSTALL_DIR) $(1)/usr/libexec/strongswan/
+	$(INSTALL_BIN) ./files/usr/libexec/strongswan/migrate-ipsec-to-swanctl \
+		$(1)/usr/libexec/strongswan/
 endef
 
 define Package/strongswan-gencerts/install
