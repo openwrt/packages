@@ -19,6 +19,12 @@ WAIT_FOR_INTF=0
 
 CONFIG_FAIL=0
 
+extra_command "migrate" "Migrate old /etc/config/ipsec to /etc/config/swanctl"
+
+migrate() {
+	/usr/libexec/strongswan/migrate-ipsec-to-swanctl
+}
+
 time2seconds() {
 	local timestring="$1"
 	local multiplier number suffix

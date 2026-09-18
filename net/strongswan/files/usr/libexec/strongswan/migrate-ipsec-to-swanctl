@@ -395,6 +395,15 @@ migrate_options() {
 }
 
 main() {
+
+	[ -f /etc/config/ipsec ] || {
+		echo "File '/etc/config/ipsec' does not exists."
+		exit 1
+	}
+
+	# Make a backup copy of the old file.
+	cp /etc/config/ipsec /etc/config/ipsec_bak
+
 	migrate_ipsec
 	migrate_ignore_routing_tables
 	migrate_local_nat
@@ -408,8 +417,8 @@ main() {
 	migrate_close_action
 	migrate_start_action
 	migrate_options
+
+	exit 0
 }
 
-main
-
-exit 0
+main "$@"
