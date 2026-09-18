@@ -1,0 +1,173 @@
+Testing DNS policy dnat target port suffix (see PR #141).
+
+When dest_dns_port is unset the dnat target must be emitted without any port
+suffix -- a trailing ':' with no port is invalid nft syntax and aborts loading
+of /var/run/pbr.nft. When dest_dns_port is set it must be appended as ':<port>'.
+
+For IPv6 the address must additionally be bracketed whenever a port follows it,
+as in 'dnat ip6 to [2606:4700:4700::1111]:5353' (see nft(8), "ip6 nat prerouting
+tcp dport 2222 dnat to [1ce::d0]:22"); an unbracketed address is ambiguous and
+is rejected the same way. IPv4 targets are never bracketed, and neither family
+is bracketed when dest_dns_port is unset.
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+pbr.start_service(['on_start']);
+
+let nft_content = global.mocklib.read_captured('/var/run/pbr.nft');
+let checks = [];
+
+if (nft_content) {
+	let lines = split(nft_content, '\n');
+	let dns_rules = filter(lines, l => index(l, ' dnat ') >= 0);
+	let rules_for = (comment) => filter(dns_rules, l => index(l, '"' + comment + '"') >= 0);
+
+	let has = (rules, needle) => length(rules) > 0 &&
+		length(filter(rules, l => index(l, needle) >= 0)) == length(rules);
+
+	let v4_default = rules_for('Redirect DNS Default');
+	let v4_custom  = rules_for('Redirect DNS Custom');
+	let v6_default = rules_for('Redirect DNS V6');
+	let v6_custom  = rules_for('Redirect DNS V6 Port');
+	let v6_bracketed = rules_for('Redirect DNS V6 Bracketed');
+	let v6_scoped    = rules_for('Redirect DNS V6 Scoped');
+
+	// Both tcp and udp rules are emitted for every DNS policy.
+	push(checks, ['v4_default_rule_count', length(v4_default) == 2]);
+	push(checks, ['v4_custom_rule_count',  length(v4_custom) == 2]);
+	push(checks, ['v6_default_rule_count', length(v6_default) == 2]);
+	push(checks, ['v6_custom_rule_count',  length(v6_custom) == 2]);
+	push(checks, ['v6_bracketed_rule_count', length(v6_bracketed) == 2]);
+	push(checks, ['v6_scoped_rule_count',    length(v6_scoped) == 2]);
+
+	// Unset port: bare address, no ':' suffix and no brackets.
+	push(checks, ['v4_default_no_port', has(v4_default, 'dnat ip to 1.1.1.1 comment')]);
+	push(checks, ['v6_default_no_port', has(v6_default, 'dnat ip6 to 2606:4700:4700::1111 comment')]);
+
+	// Set port: appended to the address, bracketed for IPv6 only.
+	push(checks, ['v4_custom_has_port', has(v4_custom, 'dnat ip to 1.1.1.1:5353 comment')]);
+	push(checks, ['v6_custom_bracketed',
+		has(v6_custom, 'dnat ip6 to [2606:4700:4700::1111]:5353 comment')]);
+
+	// is_ipv6() accepts anything containing ':', so an address that already
+	// carries brackets must not end up double-bracketed.
+	push(checks, ['v6_bracketed_input_not_doubled',
+		has(v6_bracketed, 'dnat ip6 to [2606:4700:4700::1111]:5353 comment')]);
+
+	// A scoped link-local address is passed through unchanged apart from the
+	// bracketing. This pins current behaviour; it is not a claim that nft
+	// honours the '%iface' scope suffix.
+	push(checks, ['v6_scoped_not_mangled',
+		has(v6_scoped, 'dnat ip6 to [fe80::1%eth0]:5353 comment')]);
+
+	// Regression guard for the trailing-colon syntax error.
+	let dangling = filter(dns_rules, l => index(l, ': comment') >= 0);
+	push(checks, ['no_dangling_colon', length(dangling) == 0]);
+
+	// Brackets must not leak into IPv4 rules or into portless targets.
+	let stray = filter(dns_rules, l => index(l, 'dnat ip to [') >= 0 ||
+		index(l, '] comment') >= 0);
+	push(checks, ['no_stray_brackets', length(stray) == 0]);
+} else {
+	push(checks, ['nft_file_written', false]);
+}
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("dns_policy_dest_port: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- File uci/pbr.json --
+{
+	"pbr": [
+		{
+			".name": "config",
+			"enabled": "1",
+			"fw_mask": "00ff0000",
+			"ipv6_enabled": "1",
+			"strict_enforcement": "1",
+			"uplink_interface": "wan",
+			"uplink_interface6": "wan6",
+			"uplink_ip_rules_priority": "30000",
+			"uplink_mark": "00010000",
+			"verbosity": "2",
+			"lan_device": ["br-lan"],
+			"resolver_instance": ["*"],
+			"debug_performance": "0",
+			"nft_set_auto_merge": "1",
+			"nft_set_flags_interval": "1",
+			"nft_set_flags_timeout": "0",
+			"nft_set_policy": "performance",
+			"ignored_interface": ["vpnserver"]
+		}
+	],
+	"dns_policy": [
+		{
+			".name": "dns_default_port",
+			"name": "Redirect DNS Default",
+			"enabled": "1",
+			"src_addr": "192.168.1.0/24",
+			"dest_dns": "1.1.1.1"
+		},
+		{
+			".name": "dns_custom_port",
+			"name": "Redirect DNS Custom",
+			"enabled": "1",
+			"src_addr": "192.168.2.0/24",
+			"dest_dns": "1.1.1.1",
+			"dest_dns_port": "5353"
+		},
+		{
+			".name": "dns_v6_default_port",
+			"name": "Redirect DNS V6",
+			"enabled": "1",
+			"src_addr": "2001:db8:1::/64",
+			"dest_dns": "2606:4700:4700::1111"
+		},
+		{
+			".name": "dns_v6_custom_port",
+			"name": "Redirect DNS V6 Port",
+			"enabled": "1",
+			"src_addr": "2001:db8:2::/64",
+			"dest_dns": "2606:4700:4700::1111",
+			"dest_dns_port": "5353"
+		},
+		// Already-bracketed input: is_ipv6() accepts it verbatim, so the target
+		// builder has to strip the brackets rather than nest a second pair.
+		{
+			".name": "dns_v6_bracketed",
+			"name": "Redirect DNS V6 Bracketed",
+			"enabled": "1",
+			"src_addr": "2001:db8:3::/64",
+			"dest_dns": "[2606:4700:4700::1111]",
+			"dest_dns_port": "5353"
+		},
+		// Scoped link-local address. The '%eth0' suffix is kept because nothing
+		// in pbr strips it and is_ipv6() lets it through, so this vector pins
+		// what we currently emit. It is deliberately NOT a claim that nft
+		// honours the scope -- that is unverified, and if nft ignores or
+		// rejects it the answer is validation, not target formatting.
+		{
+			".name": "dns_v6_scoped",
+			"name": "Redirect DNS V6 Scoped",
+			"enabled": "1",
+			"src_addr": "2001:db8:4::/64",
+			"dest_dns": "fe80::1%eth0",
+			"dest_dns_port": "5353"
+		}
+	]
+}
+-- End --
+
+-- Expect stdout --
+dns_policy_dest_port: 14/14 passed
+-- End --

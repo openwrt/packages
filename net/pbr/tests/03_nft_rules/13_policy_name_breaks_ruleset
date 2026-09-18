@@ -1,0 +1,161 @@
+Testing that a policy name cannot take down the whole ruleset.
+
+The name is interpolated raw into every nft comment the policy produces -- the
+rules, the sets, and the trailing comment on dnsmasq's nftset lines. An nft
+comment is a double-quoted string with no escape for the quote and a hard
+128-byte limit, and nft_file.apply() validates the generated file with a single
+`nft -c -f`. So a name holding a `"`, or one that simply runs long, is not a
+cosmetic problem in that one policy: nft rejects the file, pbr installs nothing,
+and ALL policy routing stops -- the same "one policy kills everything" class as
+the negated-domain bug in 11_negation_on_same_rule.
+
+Both failure modes are reachable from the WebUI, and the length one is the
+likelier of the two: nobody types a quote into a policy name by accident, but a
+descriptive name reaches 128 bytes easily.
+
+Verified against nftables 1.0.9 -- `'`, `;`, `\`, `{}` and a literal newline
+all parse, so only the quote and the length need handling. A newline still has
+to go, because the same string is written as a `# comment` on a line of
+dnsmasq's nftset config, where it would inject a config line of its own.
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+pbr.start_service(['on_start']);
+
+let nft_content = global.mocklib.read_captured('/var/run/pbr.nft');
+let dnsmasq = global.mocklib.read_captured('/var/run/pbr.dnsmasq') || '';
+let checks = [];
+
+if (nft_content) {
+	let lines = split(nft_content, '\n');
+
+	// Pull out every comment payload, plus whatever the line has left over
+	// after the closing quote. On an unsanitised name the leftover is the tail
+	// of the name itself -- which is exactly what nft chokes on.
+	let comments = [], leftovers = [];
+	for (let l in lines) {
+		let i = index(l, ' comment "');
+		if (i < 0) continue;
+		let rest = substr(l, i + 10);
+		let e = index(rest, '"');
+		push(comments, e < 0 ? rest : substr(rest, 0, e));
+		push(leftovers, e < 0 ? '' : substr(rest, e + 1));
+	}
+	push(checks, ['comments_found', length(comments) > 0]);
+
+	// Nothing may follow the closing quote but the statement's own tail.
+	// Note the literal space and tab: `\s` is not a character class inside a
+	// bracket expression in ucode's regex, only outside one.
+	let stray = filter(leftovers, t => !!match(t, /[^;} \t]/));
+	push(checks, ['no_text_after_closing_quote', length(stray) == 0]);
+
+	// nft counts bytes, not characters, and refuses at 129.
+	let too_long = filter(comments, c => length(c) > 128);
+	push(checks, ['no_comment_over_128_bytes', length(too_long) == 0]);
+
+	// The quote is folded to an apostrophe, which nft accepts, so the name
+	// still reads the way its author wrote it.
+	push(checks, ['quote_folded_to_apostrophe',
+		length(filter(comments, c => c == "Say 'hi' now")) > 0]);
+	push(checks, ['no_raw_quote_left', length(filter(comments, c => index(c, '"') >= 0)) == 0]);
+
+	// The long name is cut to the limit, not dropped: it still identifies its
+	// policy in `nft list ruleset`.
+	let cut = filter(comments, c => index(c, 'Route everything from the guest network over the backup upli') == 0);
+	push(checks, ['long_name_kept_and_cut', length(cut) > 0 && length(cut[0]) == 128]);
+
+	// A newline would have split the comment across two lines of the file.
+	push(checks, ['newline_folded_to_space',
+		length(filter(comments, c => c == 'Two line name')) > 0]);
+} else {
+	push(checks, ['nft_file_written', false]);
+}
+
+// The same string is a trailing comment in dnsmasq's config; a newline there
+// injects a directive dnsmasq then fails to parse.
+let dlines = filter(split(dnsmasq, '\n'), l => l != '');
+push(checks, ['dnsmasq_lines_written', length(dlines) > 0]);
+push(checks, ['every_dnsmasq_line_is_an_nftset',
+	length(filter(dlines, l => index(l, 'nftset=') != 0)) == 0]);
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("policy_name_breaks_ruleset: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- File fs/stat~_sys_class_net_br-lan.json --
+{ "type": "link" }
+-- End --
+
+-- File uci/pbr.json --
+{
+	"pbr": [
+		{
+			".name": "config",
+			"enabled": "1",
+			"fw_mask": "00ff0000",
+			"ipv6_enabled": "1",
+			"resolver_set": "dnsmasq.nftset",
+			"strict_enforcement": "1",
+			"uplink_interface": "wan",
+			"uplink_interface6": "wan6",
+			"uplink_ip_rules_priority": "30000",
+			"uplink_mark": "00010000",
+			"verbosity": "2",
+			"lan_device": ["br-lan"],
+			"resolver_instance": ["*"],
+			"debug_performance": "0",
+			"nft_set_auto_merge": "1",
+			"nft_set_flags_interval": "1",
+			"nft_set_flags_timeout": "0",
+			"nft_set_policy": "performance"
+		}
+	],
+	"policy": [
+		// A quote ends the nft comment string early; the rest of the name is
+		// then read as syntax.
+		{
+			".name": "policy_quote",
+			"name": "Say \"hi\" now",
+			"enabled": "1",
+			"interface": "wan",
+			"src_addr": "192.168.9.0/24",
+			"chain": "prerouting"
+		},
+		// Over the 128-byte limit. The domain destination puts the same name on
+		// a set and on a dnsmasq nftset line, so all three carriers are covered.
+		{
+			".name": "policy_long",
+			"name": "Route everything from the guest network over the backup uplink Route everything from the guest network over the backup uplink Route everything from the guest network over the backup uplink Route everything from the guest network over the backup uplink",
+			"enabled": "1",
+			"interface": "wan",
+			"src_addr": "192.168.10.0/24",
+			"dest_addr": "example.com",
+			"chain": "prerouting"
+		},
+		// Parses in nft, but injects a line into dnsmasq's config.
+		{
+			".name": "policy_newline",
+			"name": "Two\nline name",
+			"enabled": "1",
+			"interface": "wan",
+			"src_addr": "192.168.11.0/24",
+			"dest_addr": "other.example.com",
+			"chain": "prerouting"
+		}
+	]
+}
+-- End --
+
+-- Expect stdout --
+policy_name_breaks_ruleset: 9/9 passed
+-- End --

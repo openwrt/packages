@@ -1,0 +1,81 @@
+Testing nftset.add_dnsmasq_element(): overlapping domains across different sets merge onto one nftset line (dnsmasq only honours the first line per domain), and re-runs are idempotent.
+
+-- Testcase --
+import create_nft from 'nft';
+
+let captured = {};
+let fs_mod = {
+	readfile:  function(p) { return exists(captured, p) ? captured[p] : null; },
+	writefile: function(p, d) { captured[p] = d; return length(d); },
+	stat:      function() { return null; },
+	unlink:    function(p) { delete captured[p]; },
+	dirname:   function() { return '.'; },
+	open: function(p, mode) {
+		if (mode && index(mode, 'a') >= 0)
+			return { write: function(d) { captured[p] = (exists(captured, p) ? captured[p] : '') + d; return length(d); }, close: function() {} };
+		return { write: function(d) { captured[p] = d; return length(d); }, close: function() {} };
+	},
+};
+let config   = { cfg: { ipv6_enabled: true } };
+let pkg      = { nft_prefix: 'pbr', nft_table: 'fw4', dnsmasq_file: '/var/run/pbr.dnsmasq', name: 'pbr' };
+let platform = { env: {} };
+let state    = { errors: [] };
+
+let nft = create_nft(fs_mod, config, {}, {}, pkg, platform, {}, {}, state);
+let ns  = nft.nftset;
+
+// Two policies route the SAME domain via different interfaces (different sets).
+ns.add_dnsmasq_element('wan', 'dst', 'ip', '', 'Policy A', 'example.com');
+ns.add_dnsmasq_element('vpn', 'dst', 'ip', '', 'Policy B', 'example.com');
+// A different domain stays on its own line.
+ns.add_dnsmasq_element('wan', 'dst', 'ip', '', 'Policy C', 'other.com');
+// Re-running an existing (domain, set) pair must not duplicate anything.
+ns.add_dnsmasq_element('wan', 'dst', 'ip', '', 'Policy A', 'example.com');
+
+let count_occ = function(hay, needle) {
+	let n = 0, pos = 0;
+	while (true) {
+		let i = index(substr(hay, pos), needle);
+		if (i < 0) break;
+		n++; pos += i + length(needle);
+	}
+	return n;
+};
+
+let content = captured['/var/run/pbr.dnsmasq'] || '';
+let lines = [];
+for (let l in split(content, '\n')) if (l != '') push(lines, l);
+
+let ex_line = '', other_line = '';
+for (let l in lines) {
+	if (index(l, 'nftset=/example.com/') == 0) ex_line = l;
+	if (index(l, 'nftset=/other.com/') == 0)   other_line = l;
+}
+
+let checks = [];
+// example.com lives on exactly one merged line carrying both interfaces' sets.
+push(checks, ['single_example_line', length(filter(lines, l => index(l, 'nftset=/example.com/') == 0)) == 1]);
+push(checks, ['has_wan4', index(ex_line, 'pbr_wan_4_dst_ip') >= 0]);
+push(checks, ['has_wan6', index(ex_line, 'pbr_wan_6_dst_ip') >= 0]);
+push(checks, ['has_vpn4', index(ex_line, 'pbr_vpn_4_dst_ip') >= 0]);
+push(checks, ['has_vpn6', index(ex_line, 'pbr_vpn_6_dst_ip') >= 0]);
+// Idempotent: the wan v4 set appears exactly once after the re-run.
+push(checks, ['wan4_once', count_occ(ex_line, 'pbr_wan_4_dst_ip') == 1]);
+// other.com is a separate line with its own set.
+push(checks, ['other_separate', other_line != '' && index(other_line, 'pbr_wan_4_dst_ip') >= 0]);
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("dnsmasq_nftset_overlap: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+dnsmasq_nftset_overlap: 7/7 passed
+-- End --

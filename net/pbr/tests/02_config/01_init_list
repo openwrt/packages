@@ -1,0 +1,27 @@
+Testing get_init_list() returns enabled status from config.
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+let result = pbr.get_init_list();
+let checks = [
+	['has_pbr_key',  result['pbr'] != null],
+	['is_enabled',   result['pbr'].enabled == true],
+];
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s (got %s)\n", c[0], result);
+	}
+}
+printf("init_list: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+init_list: 2/2 passed
+-- End --
