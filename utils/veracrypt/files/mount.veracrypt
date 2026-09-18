@@ -1,0 +1,39 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-only
+# mount.veracrypt <device> <mountpoint> [flags] [-o comma-opts]
+DEV=$1
+MNTPT=$2
+VCOPTIONS=
+OPTIONS=
+PASS=
+
+shift 2
+while [ "$#" -gt 0 ] && [ "$1" != "-o" ]; do shift; done
+[ "$#" -gt 0 ] && shift
+
+OLDIFS=$IFS
+IFS=,
+for arg in $@; do
+	case $arg in
+		truecrypt)        VCOPTIONS="$VCOPTIONS --truecrypt" ;;
+		system)           VCOPTIONS="$VCOPTIONS --mount-options=system" ;;
+		fs=*)             VCOPTIONS="$VCOPTIONS --filesystem=${arg#*=}" ;;
+		keyfiles=*)       VCOPTIONS="$VCOPTIONS --keyfiles=${arg#*=}" ;;
+		password=*)       PASS=${arg#*=} ;;
+		pim=*)            VCOPTIONS="$VCOPTIONS --pim=${arg#*=}" ;;
+		protect-hidden=*) VCOPTIONS="$VCOPTIONS --protect-hidden=${arg#*=}" ;;
+		slot=*)           VCOPTIONS="$VCOPTIONS --slot=${arg#*=}" ;;
+		*)                OPTIONS="${OPTIONS}${arg}," ;;
+	esac
+done
+IFS=$OLDIFS
+
+if [ -n "$PASS" ]; then
+	/usr/bin/veracrypt --text --non-interactive --stdin \
+		$VCOPTIONS --fs-options="${OPTIONS%,}" "$DEV" "$MNTPT" <<EOF
+${PASS}
+EOF
+	exit $?
+fi
+exec /usr/bin/veracrypt --text --non-interactive \
+	$VCOPTIONS --fs-options="${OPTIONS%,}" "$DEV" "$MNTPT"
