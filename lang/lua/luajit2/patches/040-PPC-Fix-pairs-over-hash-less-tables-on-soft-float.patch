@@ -30,7 +30,7 @@ Signed-off-by: Josef Schlehofer <pepe.schlehofer@gmail.com>
 
 --- a/src/vm_ppc.dasc
 +++ b/src/vm_ppc.dasc
-@@ -5807,7 +5807,11 @@ static void build_ins(BuildCtx *ctx, BCO
+@@ -5907,7 +5907,11 @@ static void build_ins(BuildCtx *ctx, BCO
      |  lwz CARG2, 4(CARG3)
      |   add NODE:TMP3, TMP2, TMP3
      |.endif
