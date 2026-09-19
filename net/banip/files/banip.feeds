@@ -1,7 +1,7 @@
 {
 	"asn":{
-		"url_4": "https://asn.ipinfo.app/api/text/list/",
-		"url_6": "https://asn.ipinfo.app/api/text/list/",
+		"url_4": "https://asn.ipinfo.app/api/text/list/AS{asn}",
+		"url_6": "https://asn.ipinfo.app/api/text/list/AS{asn}",
 		"rule": "feed 1",
 		"chain": "in",
 		"descr": "ASN IP segments"
@@ -45,8 +45,8 @@
 		"descr": "suspicious attacker IPs"
 	},
 	"country":{
-		"url_4": "https://www.ipdeny.com/ipblocks/data/aggregated/",
-		"url_6": "https://www.ipdeny.com/ipv6/ipaddresses/aggregated/",
+		"url_4": "https://www.ipdeny.com/ipblocks/data/aggregated/{country}-aggregated.zone",
+		"url_6": "https://www.ipdeny.com/ipv6/ipaddresses/aggregated/{country}-aggregated.zone",
 		"rule": "feed 1",
 		"chain": "in",
 		"descr": "country blocks"
