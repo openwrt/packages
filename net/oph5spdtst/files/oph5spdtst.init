@@ -1,0 +1,110 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+USE_PROCD=1
+
+SPDTST_FILE_DIR="/tmp/oph5spdtst"
+SPDTST_FILE_PATH="$SPDTST_FILE_DIR/payload.bin"
+SPDTST_TMP_PATH="$SPDTST_FILE_PATH.tmp"
+FILE_SRC_LINK_PATH="/www/luci-static/resources/oph5spdtst/downloading"
+FILE_SRC_TMP_PATH="$FILE_SRC_LINK_PATH.tmp"
+FILE_SRC_DIR="/www/luci-static/resources/oph5spdtst"
+FILE_SIZE_MB=5
+FILE_SIZE_BYTES=$((FILE_SIZE_MB * 1024 * 1024))
+
+load_config() {
+	ENABLED=1
+	FLASH_STORE=0
+
+	config_load oph5spdtst
+	config_get_bool ENABLED settings enabled 1
+	config_get_bool FLASH_STORE settings use_flash_stored_payload 0
+}
+
+payload_is_valid() {
+	[ -f "$1" ] && [ "$(wc -c < "$1")" -eq "$FILE_SIZE_BYTES" ]
+}
+
+create_payload() {
+	target="$1"
+	tmp="$2"
+	dir="$3"
+
+	mkdir -p "$dir" || return 1
+	rm -f "$tmp"
+	dd if=/dev/urandom of="$tmp" bs=1M count="$FILE_SIZE_MB" >/dev/null 2>&1 || {
+		rm -f "$tmp"
+		return 1
+	}
+
+	if ! payload_is_valid "$tmp"; then
+		rm -f "$tmp"
+		return 1
+	fi
+
+	mv -f "$tmp" "$target"
+}
+
+remove_tmp_payloads() {
+	rm -f "$SPDTST_FILE_PATH" "$SPDTST_TMP_PATH"
+	rmdir "$SPDTST_FILE_DIR" 2>/dev/null || true
+}
+
+remove_all_payloads() {
+	remove_tmp_payloads
+	rm -f "$FILE_SRC_LINK_PATH" "$FILE_SRC_TMP_PATH"
+}
+
+use_tmp_payload() {
+	# Replace a flash payload or stale link before creating the tmp-backed link.
+	mkdir -p "$FILE_SRC_DIR" || return 1
+	rm -f "$FILE_SRC_LINK_PATH" "$FILE_SRC_TMP_PATH"
+
+	if ! payload_is_valid "$SPDTST_FILE_PATH"; then
+		create_payload "$SPDTST_FILE_PATH" "$SPDTST_TMP_PATH" "$SPDTST_FILE_DIR" || return 1
+	fi
+
+	ln -s "$SPDTST_FILE_PATH" "$FILE_SRC_LINK_PATH"
+}
+
+use_flash_payload() {
+	# Remove the tmp payload and link; the public path becomes the flash file.
+	remove_tmp_payloads
+	if [ -L "$FILE_SRC_LINK_PATH" ]; then
+		rm -f "$FILE_SRC_LINK_PATH"
+	fi
+
+	if ! payload_is_valid "$FILE_SRC_LINK_PATH"; then
+		create_payload "$FILE_SRC_LINK_PATH" "$FILE_SRC_TMP_PATH" "$FILE_SRC_DIR" || return 1
+	fi
+}
+
+start_service() {
+	load_config
+
+	if [ "$ENABLED" -ne 1 ]; then
+		remove_all_payloads
+		return 0
+	fi
+
+	if [ "$FLASH_STORE" -eq 1 ]; then
+		use_flash_payload
+	else
+		use_tmp_payload
+	fi
+}
+
+stop_service() {
+	load_config
+	remove_tmp_payloads
+	rm -f "$FILE_SRC_TMP_PATH"
+
+	# Keep the persistent flash payload across service restarts.
+	if [ "$FLASH_STORE" -ne 1 ] || [ -L "$FILE_SRC_LINK_PATH" ]; then
+		rm -f "$FILE_SRC_LINK_PATH"
+	fi
+}
+
+service_triggers() {
+	procd_add_reload_trigger oph5spdtst
+}
