@@ -610,10 +610,10 @@ f_getdl() {
 	case "${ban_fetchcmd##*/}" in
 	"curl")
 		[ "${ban_fetchinsecure}" = "1" ] && insecure="--insecure"
-		ban_fetchparm="${ban_fetchparm:-"${insecure} --connect-timeout 20 --retry-delay 10 --retry $((ban_fetchretry - 1)) --retry-max-time $(((ban_fetchretry - 1) * 20)) --retry-all-errors --fail --silent --show-error --location -o"}"
-		ban_rdapparm="--connect-timeout 5 --silent --location -o"
-		ban_etagparm="--connect-timeout 5 --silent --location --head"
-		ban_geoparm="--connect-timeout 5 --silent --location --data"
+		ban_fetchparm="${ban_fetchparm:-"${insecure} --connect-timeout 20 --retry-delay 10 --retry $((ban_fetchretry - 1)) --retry-max-time $(((ban_fetchretry - 1) * 20)) --retry-all-errors --fail --silent --globoff --show-error --location -o"}"
+		ban_rdapparm="--connect-timeout 5 --silent --globoff --location -o"
+		ban_etagparm="--connect-timeout 5 --silent --globoff --location --head"
+		ban_geoparm="--connect-timeout 5 --silent --globoff --location --data"
 		;;
 	"wget")
 		[ "${ban_fetchinsecure}" = "1" ] && insecure="--no-check-certificate"
@@ -893,15 +893,20 @@ f_refresh() {
 # get feed information
 #
 f_getfeed() {
+	local feedlist quiet="${1}"
+
 	json_init
 	if [ -s "${ban_customfeedfile}" ]; then
 		if json_load_file "${ban_customfeedfile}" >/dev/null 2>&1; then
-			return
-		else
-			f_log "info" "can't load banIP custom feed file"
+			json_get_keys feedlist
+			if [ -n "${feedlist}" ]; then
+				[ -z "${quiet}" ] && f_log "info" "banIP custom feed file loaded successfully"
+				return
+			fi
 		fi
 	fi
 	if [ -s "${ban_feedfile}" ] && json_load_file "${ban_feedfile}" >/dev/null 2>&1; then
+		[ -z "${quiet}" ] && f_log "info" "banIP default feed file loaded successfully"
 		return
 	else
 		f_log "err" "can't load banIP feed file"
@@ -977,6 +982,24 @@ f_skipfeed() {
 		esac
 	done
 	return 0
+}
+
+# build a country/asn feed url from a template
+#
+f_feedurl() {
+	local url="${1}" key="${2}" value="${3}"
+
+	case "${url}" in
+	*"{${key}}"*)
+		printf '%s%s%s' "${url%%"{${key}}"*}" "${value}" "${url#*"{${key}}"}"
+		;;
+	*)
+		case "${key}" in
+		"country") printf '%s%s-aggregated.zone' "${url}" "${value}" ;;
+		"asn") printf '%sAS%s' "${url}" "${value}" ;;
+		esac
+		;;
+	esac
 }
 
 # handle etag http header
@@ -1431,13 +1454,13 @@ f_down() {
 				if [ "${ban_countrysplit}" = "1" ]; then
 					country="${feed%.*}"
 					country="${country#*.}"
-					f_etag "${feed}" "${feed_url}${country}-aggregated.zone" ".${country}"
+					f_etag "${feed}" "$(f_feedurl "${feed_url}" "country" "${country}")" ".${country}"
 					etag_rc="${?}"
 				else
 					etag_rc="0"
 					etag_cnt="$(printf '%s' "${ban_country}" | "${ban_wccmd}" -w)"
 					for country in ${ban_country}; do
-						if ! f_etag "${feed}" "${feed_url}${country}-aggregated.zone" ".${country}" "${etag_cnt}"; then
+						if ! f_etag "${feed}" "$(f_feedurl "${feed_url}" "country" "${country}")" ".${country}" "${etag_cnt}"; then
 							etag_rc="$((etag_rc + 1))"
 						fi
 					done
@@ -1447,13 +1470,13 @@ f_down() {
 				if [ "${ban_asnsplit}" = "1" ]; then
 					asn="${feed%.*}"
 					asn="${asn#*.}"
-					f_etag "${feed}" "${feed_url}AS${asn}" ".${asn}"
+					f_etag "${feed}" "$(f_feedurl "${feed_url}" "asn" "${asn}")" ".${asn}"
 					etag_rc="${?}"
 				else
 					etag_rc="0"
 					etag_cnt="$(printf '%s' "${ban_asn}" | "${ban_wccmd}" -w)"
 					for asn in ${ban_asn}; do
-						if ! f_etag "${feed}" "${feed_url}AS${asn}" ".${asn}" "${etag_cnt}"; then
+						if ! f_etag "${feed}" "$(f_feedurl "${feed_url}" "asn" "${asn}")" ".${asn}" "${etag_cnt}"; then
 							etag_rc="$((etag_rc + 1))"
 						fi
 					done
@@ -1654,7 +1677,7 @@ f_down() {
 		if [ "${feed%%.*}" = "country" ]; then
 			if [ "${ban_countrysplit}" = "0" ]; then
 				for country in ${ban_country}; do
-					if "${ban_fetchcmd}" ${ban_fetchparm} "${tmp_raw}" "${feed_url}${country}-aggregated.zone" 2>>"${ban_errorlog}"; then
+					if "${ban_fetchcmd}" ${ban_fetchparm} "${tmp_raw}" "$(f_feedurl "${feed_url}" "country" "${country}")" 2>>"${ban_errorlog}"; then
 						if [ -s "${tmp_raw}" ]; then
 							"${ban_catcmd}" "${tmp_raw}" 2>>"${ban_errorlog}" >>"${tmp_load}"
 							feed_rc="${?}"
@@ -1667,7 +1690,7 @@ f_down() {
 			else
 				country="${feed%.*}"
 				country="${country#*.}"
-				if "${ban_fetchcmd}" ${ban_fetchparm} "${tmp_load}" "${feed_url}${country}-aggregated.zone" 2>>"${ban_errorlog}"; then
+				if "${ban_fetchcmd}" ${ban_fetchparm} "${tmp_load}" "$(f_feedurl "${feed_url}" "country" "${country}")" 2>>"${ban_errorlog}"; then
 					feed_rc="${?}"
 				else
 					feed_rc="4"
@@ -1679,7 +1702,7 @@ f_down() {
 		elif [ "${feed%%.*}" = "asn" ]; then
 			if [ "${ban_asnsplit}" = "0" ]; then
 				for asn in ${ban_asn}; do
-					if "${ban_fetchcmd}" ${ban_fetchparm} "${tmp_raw}" "${feed_url}AS${asn}" 2>>"${ban_errorlog}"; then
+					if "${ban_fetchcmd}" ${ban_fetchparm} "${tmp_raw}" "$(f_feedurl "${feed_url}" "asn" "${asn}")" 2>>"${ban_errorlog}"; then
 						if [ -s "${tmp_raw}" ]; then
 							"${ban_catcmd}" "${tmp_raw}" 2>>"${ban_errorlog}" >>"${tmp_load}"
 							feed_rc="${?}"
@@ -1692,7 +1715,7 @@ f_down() {
 			else
 				asn="${feed%.*}"
 				asn="${asn#*.}"
-				if "${ban_fetchcmd}" ${ban_fetchparm} "${tmp_load}" "${feed_url}AS${asn}" 2>>"${ban_errorlog}"; then
+				if "${ban_fetchcmd}" ${ban_fetchparm} "${tmp_load}" "$(f_feedurl "${feed_url}" "asn" "${asn}")" 2>>"${ban_errorlog}"; then
 					feed_rc="${?}"
 				else
 					feed_rc="4"
@@ -1896,7 +1919,7 @@ f_restore() {
 f_rmset() {
 	local feedlist tmp_del table_json feed country asn table_sets handles handle expr del_set chain feed_chain feed_covered feed_rc
 
-	f_getfeed
+	f_getfeed "quiet"
 	json_get_keys feedlist
 	tmp_del="${ban_tmpfile}.final.delete"
 	table_json="$("${ban_nftcmd}" -tj list table inet banIP 2>>"${ban_errorlog}")"
@@ -2066,6 +2089,11 @@ f_genstatus() {
 		json_add_string "${object}" "${object}"
 	done
 	json_close_array
+	json_add_array "trigger_interfaces"
+	for object in ${ban_trigger:-"-"}; do
+		json_add_string "${object}" "${object}"
+	done
+	json_close_array
 	json_add_array "wan_devices"
 	for object in ${ban_dev:-"-"}; do
 		json_add_string "${object}" "${object}"
@@ -2113,8 +2141,10 @@ f_getstatus() {
 				json_get_values values "${key}" >/dev/null 2>&1
 				value="${values// /, }"
 			elif [ "${key}" = "wan_devices" ]; then
+				json_get_values values "trigger_interfaces" >/dev/null 2>&1
+				value="trigger: ${values// /, } / "
 				json_get_values values "${key}" >/dev/null 2>&1
-				value="wan: ${values// /, } / "
+				value="${value}wan: ${values// /, } / "
 				json_get_values values "wan_interfaces" >/dev/null 2>&1
 				value="${value}wan-if: ${values// /, } / "
 				json_get_values values "vlan_allow" >/dev/null 2>&1
@@ -2128,7 +2158,7 @@ f_getstatus() {
 					[ "${value}" = "active" ] && value="${value} ($(f_actual))"
 				fi
 			fi
-			if [ "${key}" != "wan_interfaces" ] && [ "${key}" != "vlan_allow" ] && [ "${key}" != "vlan_block" ]; then
+			if [ "${key}" != "trigger_interfaces" ] && [ "${key}" != "wan_interfaces" ] && [ "${key}" != "vlan_allow" ] && [ "${key}" != "vlan_block" ]; then
 				printf '  + %-17s : %s\n' "${key}" "${value:-"-"}"
 			fi
 		done
@@ -2855,18 +2885,17 @@ f_monitor() {
 
 		# determine nft timeout expression and cache interval
 		#
-		if printf '%s' "${ban_nftexpiry}" | grep -qE '^([1-9][0-9]*(ms|s|m|h|d|w))+$'; then
+		if printf '%s' "${ban_nftexpiry}" | grep -qE '^([1-9][0-9]*(ms|s|m|h|d))+$'; then
 			nft_expiry="timeout ${ban_nftexpiry}"
 			cache_interval="$(printf '%s' "${ban_nftexpiry}" | "${ban_awkcmd}" '{
 				s = 0
 				str = $0
-				while (match(str, /([0-9]+)(ms|s|m|h|d|w)/, a)) {
+				while (match(str, /([0-9]+)(ms|s|m|h|d)/, a)) {
 					if      (a[2] == "ms") s += a[1] / 1000
 					else if (a[2] == "s")  s += a[1]
 					else if (a[2] == "m")  s += a[1] * 60
 					else if (a[2] == "h")  s += a[1] * 3600
 					else if (a[2] == "d")  s += a[1] * 86400
-					else if (a[2] == "w")  s += a[1] * 604800
 					str = substr(str, RSTART + RLENGTH)
 				}
 				interval = int(s / 2)
