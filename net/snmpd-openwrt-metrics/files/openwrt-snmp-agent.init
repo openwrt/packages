@@ -1,0 +1,29 @@
+#!/bin/sh /etc/rc.common
+# SPDX-License-Identifier: GPL-2.0-or-later
+
+START=95
+USE_PROCD=1
+
+PROG=/usr/sbin/openwrt-snmp-agent
+
+start_service() {
+	# The AgentX master lives in snmpd (START=99, already the top of the
+	# two-digit range rc.common's glob-based enable/disable requires - see
+	# rc.common:40 - so nothing can be ordered strictly after it). If we
+	# start first, that is not fatal: net-snmp's AgentX subagent retries
+	# the master connection on its own alarm-driven schedule
+	# (agentx_reopen_session in agentx/subagent.c), and the reload trigger
+	# below reconnects us whenever snmpd itself restarts. The enabled
+	# check just avoids starting when snmpd is off entirely.
+	/etc/init.d/snmpd enabled || return 0
+
+	procd_open_instance
+	procd_set_param command "$PROG" -f -x /var/run/agentx.sock
+	procd_set_param respawn
+	procd_set_param stderr 1
+	procd_close_instance
+}
+
+service_triggers() {
+	procd_add_reload_trigger "snmpd"
+}
