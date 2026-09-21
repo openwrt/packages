@@ -509,7 +509,6 @@ config_connection() {
 	local conf="$1"
 
 	local enabled
-	local pre_shared_key
 	local auth_method
 	local local_identifier
 	local remote_identifier
@@ -522,7 +521,6 @@ config_connection() {
 	local mobike
 	local local_cert
 	local local_key
-	local ca_cert
 	local rekey_time
 	local over_time
 	local send_cert
@@ -537,7 +535,6 @@ config_connection() {
 	config_get_bool enabled "$conf" enabled 0
 	[ $enabled -eq 0 ] && return
 
-	config_get pre_shared_key "$conf" pre_shared_key
 	config_get auth_method "$conf" authentication_method
 	config_get local_identifier "$conf" local_identifier ""
 	config_get remote_identifier "$conf" remote_identifier ""
@@ -550,7 +547,6 @@ config_connection() {
 	config_get_bool mobike "$conf" mobike 1
 	config_get local_cert "$conf" local_cert ""
 	config_get local_key "$conf" local_key ""
-	config_get ca_cert "$conf" ca_cert ""
 	config_get rekey_time "$conf" rekey_time
 	config_get over_time "$conf" over_time
 	config_get send_cert "$conf" send_cert
@@ -595,13 +591,6 @@ config_connection() {
 	[ -n "$firewall" ] && fatal "Firewall not supported"
 
 	if [ "$auth_method" = pubkey ]; then
-		if [ -n "$ca_cert" ]; then
-			[ "$(dirname "$ca_cert")" != "." ] && \
-				fatal "ca_cert $ca_cert can't be pathname"
-			[ -f "/etc/swanctl/x509ca/$ca_cert" ] || \
-				fatal "ca_cert $ca_cert not found"
-		fi
-
 		if [ -n "$local_cert" ]; then
 			[ "$(dirname "$local_cert")" != "." ] && \
 				fatal "local_cert $local_cert can't be pathname"
@@ -681,41 +670,6 @@ config_connection() {
 
 	swanctl_xappend1 "}"
 	swanctl_xappend0 "}"
-
-	if [ "$auth_method" = pubkey ]; then
-		swanctl_xappend0 ""
-
-		if [ -n "$ca_cert" ]; then
-			swanctl_xappend0 "authorities {"
-			swanctl_xappend1 "$conf {"
-			swanctl_xappend2 "cacert = $ca_cert"
-			swanctl_xappend1 "}"
-			swanctl_xappend0 "}"
-		fi
-
-	elif [ "$auth_method" = psk ]; then
-		swanctl_xappend0 ""
-
-		swanctl_xappend0 "secrets {"
-		swanctl_xappend1 "ike-$conf {"
-		swanctl_xappend2 "secret = $pre_shared_key"
-		if [ -n "$local_identifier" ]; then
-			swanctl_xappend2 "id1 = $local_identifier"
-			if [ -n "$remote_identifier" ]; then
-				swanctl_xappend2 "id2 = $remote_identifier"
-			fi
-		fi
-		swanctl_xappend1 "}"
-		swanctl_xappend0 "}"
-	elif [ "$auth_method" = eap-mschapv2 ]; then
-		# EAP-MSCHAPv2 secrets are handled in config_mschapv2_secrets globally
-		:  # empty command
-	elif [ "$auth_method" = eap-tls ]; then
-		# EAP-TLS approved client certs are restricted by remote_ca_certs option
-		:  # empty command
-	else
-		fatal "AuthenticationMode $auth_mode not supported"
-	fi
 
 	swanctl_xappend0 ""
 }
