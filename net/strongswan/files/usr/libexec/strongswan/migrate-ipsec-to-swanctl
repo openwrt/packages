@@ -416,6 +416,66 @@ migrate_mschapv2_secrets() {
 	config_foreach migrate_mschapv2_secret_value mschapv2_secrets
 }
 
+migrate_psk_secret() {
+	local conn="$1"
+
+	local authentication_method
+	local pre_shared_key
+	local local_identifier
+	local remote_identifier
+
+	config_get authentication_method "$conn" authentication_method ""
+	[ "$authentication_method" = "psk" ] || return
+
+	config_get pre_shared_key "$conn" pre_shared_key ""
+	[ -z "$pre_shared_key" ] && return
+
+	uci -q set "ipsec.${conn}_secret=secret"
+	uci -q set "ipsec.${conn}_secret.type=ike"
+	uci -q set "ipsec.${conn}_secret.secret=$pre_shared_key"
+
+	# Replicate the old inline secret generation: 'id1' is the local
+	# identifier, 'id2' the remote identifier. Both are only emitted if
+	# the local identifier is set.
+	config_get local_identifier "$conn" local_identifier ""
+	if [ -n "$local_identifier" ]; then
+		uci -q add_list "ipsec.${conn}_secret.id=${local_identifier}"
+		config_get remote_identifier "$conn" remote_identifier ""
+		[ -n "$remote_identifier" ] &&
+			uci -q add_list "ipsec.${conn}_secret.id=${remote_identifier}"
+	fi
+
+	uci -q delete "ipsec.${conn}.pre_shared_key"
+}
+
+migrate_psk_secrets() {
+	config_load ipsec
+	config_foreach migrate_psk_secret connection
+}
+
+migrate_pubkey_authority() {
+	local conn="$1"
+
+	local authentication_method
+	local ca_cert
+
+	config_get authentication_method "$conn" authentication_method ""
+	[ "$authentication_method" = "pubkey" ] || return
+
+	config_get ca_cert "$conn" ca_cert ""
+	[ -z "$ca_cert" ] && return
+
+	uci -q set "ipsec.${conn}_authority=authority"
+	uci -q set "ipsec.${conn}_authority.cacert=$ca_cert"
+
+	uci -q delete "ipsec.${conn}.ca_cert"
+}
+
+migrate_pubkey_authorities() {
+	config_load ipsec
+	config_foreach migrate_pubkey_authority connection
+}
+
 main() {
 	local session="$1"
 
@@ -448,6 +508,8 @@ main() {
 	migrate_options
 	migrate_remote_to_connection
 	migrate_mschapv2_secrets
+	migrate_psk_secrets
+	migrate_pubkey_authorities
 
 	# Move staged migration changes to LuCI
 	[ -n "$session" ] && {
