@@ -418,19 +418,59 @@ config_pool() {
 	swanctl_xappend1 "}"
 }
 
-config_mschapv2_secret() {
+config_secret_id() {
+	local id="$1"
+
+	swanctl_xappend2 "id${SECRET_ID_INDEX} = $id"
+	SECRET_ID_INDEX=$((SECRET_ID_INDEX + 1))
+}
+
+config_secret() {
 	local conf="$1"
 
-	local id
-	local secret
+	local type
 
-	config_get id "$conf" id
-	config_get secret "$conf" secret
+	config_get type "$conf" type
 
-	swanctl_xappend1 "eap-${conf} {"
-	swanctl_xappend2 "id = $id"
-	swanctl_xappend2 "secret = $secret"
-	swanctl_xappend1 "}"
+	case "$type" in
+	eap|xauth|ntlm|ike|ppk)
+		local secret
+		config_get secret "$conf" secret
+
+		swanctl_xappend1 "${type}-${conf} {"
+		SECRET_ID_INDEX=1
+		config_list_foreach "$conf" id config_secret_id
+		[ -n "$secret" ] && swanctl_xappend2 "secret = $secret"
+		swanctl_xappend1 "}"
+		;;
+	private|rsa|ecdsa|pkcs8|pkcs12)
+		local file secret
+		config_get file "$conf" file
+		config_get secret "$conf" secret
+
+		swanctl_xappend1 "${type}-${conf} {"
+		[ -n "$file" ] && swanctl_xappend2 "file = $file"
+		[ -n "$secret" ] && swanctl_xappend2 "secret = $secret"
+		swanctl_xappend1 "}"
+		;;
+	token)
+		local handle slot module pin
+		config_get handle "$conf" handle
+		config_get slot "$conf" slot
+		config_get module "$conf" module
+		config_get pin "$conf" pin
+
+		swanctl_xappend1 "token-${conf} {"
+		[ -n "$handle" ] && swanctl_xappend2 "handle = $handle"
+		[ -n "$slot" ] && swanctl_xappend2 "slot = $slot"
+		[ -n "$module" ] && swanctl_xappend2 "module = $module"
+		[ -n "$pin" ] && swanctl_xappend2 "pin = $pin"
+		swanctl_xappend1 "}"
+		;;
+	*)
+		fatal "secret type '$type' unknown"
+		;;
+	esac
 }
 
 config_authority() {
@@ -897,7 +937,7 @@ prepare_env() {
 	swanctl_xappend0 "}"
 
 	swanctl_xappend0 "secrets {"
-	config_foreach config_mschapv2_secret mschapv2_secrets
+	config_foreach config_secret secret
 	swanctl_xappend0 "}"
 
 	swanctl_xappend0 "authorities {"
@@ -1417,6 +1457,21 @@ legacy_do_postamble() {
 	swan_xappend0 "}"
 }
 
+legacy_config_mschapv2_secret() {
+	local conf="$1"
+
+	local id
+	local secret
+
+	config_get id "$conf" id
+	config_get secret "$conf" secret
+
+	swanctl_xappend1 "eap-${conf} {"
+	swanctl_xappend2 "id = $id"
+	swanctl_xappend2 "secret = $secret"
+	swanctl_xappend1 "}"
+}
+
 legacy_prepare_env() {
 	mkdir -p /var/ipsec /var/swanctl
 
@@ -1440,7 +1495,7 @@ legacy_prepare_env() {
 	swanctl_xappend0 "}"
 
 	swanctl_xappend0 "secrets {"
-	config_foreach config_mschapv2_secret mschapv2_secrets
+	config_foreach legacy_config_mschapv2_secret mschapv2_secrets
 	swanctl_xappend0 "}"
 
 	legacy_do_postamble
