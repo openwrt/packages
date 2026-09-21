@@ -433,6 +433,38 @@ config_mschapv2_secret() {
 	swanctl_xappend1 "}"
 }
 
+config_authority() {
+	local conf="$1"
+
+	local cacert
+	local cert_uri_base
+	local crl_uri
+	local ocsp_uri
+
+	config_get cacert "$conf" cacert
+	config_get cert_uri_base "$conf" cert_uri_base
+	config_list_foreach "$conf" crl_uri append_var crl_uri ","
+	config_list_foreach "$conf" ocsp_uri append_var ocsp_uri ","
+
+	if [ -n "$cacert" ]; then
+		[ "$(dirname "$cacert")" != "." ] && {
+			fatal "cacert \'${cacert}\' can't be pathname"
+			return
+		}
+		[ -f "/etc/swanctl/x509ca/${cacert}" ] || {
+			fatal "cacert \'$cacert\' not found"
+			return
+		}
+	fi
+
+	swanctl_xappend1 "$conf {"
+	[ -n "$cacert" ] && swanctl_xappend2 "cacert = $cacert"
+	[ -n "$cert_uri_base" ] && swanctl_xappend2 "cert_uri_base = $cert_uri_base"
+	[ -n "$crl_uri" ] && swanctl_xappend2 "crl_uris = $crl_uri"
+	[ -n "$ocsp_uri" ] && swanctl_xappend2 "ocsp_uris = $ocsp_uri"
+	swanctl_xappend1 "}"
+}
+
 config_connection() {
 	local conf="$1"
 
@@ -868,6 +900,9 @@ prepare_env() {
 	config_foreach config_mschapv2_secret mschapv2_secrets
 	swanctl_xappend0 "}"
 
+	swanctl_xappend0 "authorities {"
+	config_foreach config_authority authority
+	swanctl_xappend0 "}"
 }
 
 reload_service() {
