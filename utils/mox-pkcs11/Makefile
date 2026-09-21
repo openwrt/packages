@@ -36,7 +36,7 @@ define Build/Compile
 	$(TARGET_CFLAGS) \
 	$(TARGET_LDFLAGS) \
 	$(FPIC) \
-	-o $(PKG_BUILD_DIR)/libmox-pkcs11.so $(PKG_BUILD_DIR)/mox-pkcs11.c
+	-o $(PKG_BUILD_DIR)/libmox-pkcs11.so $(PKG_BUILD_DIR)/mox-pkcs11.c \
 	-lcrypto \
 	-lkeyutils \
 	-Wall \
