@@ -505,13 +505,86 @@ config_authority() {
 	swanctl_xappend1 "}"
 }
 
+config_local() {
+	local conf="$1"
+
+	local auth
+	local id
+	local certs
+	local key
+	local suffix
+
+	config_get auth "$conf" auth "pubkey"
+	config_get id "$conf" id ""
+	config_get certs "$conf" certs ""
+	config_get key "$conf" key ""
+
+	# swanctl.conf has no "privkeys" option in connections.<conn>.local<suffix>;
+	# strongSwan auto-selects the private key from /etc/swanctl/private by
+	# matching it against the certificate configured via "certs". We only
+	# need to make sure the referenced key file actually exists there.
+	if [ -n "$key" ]; then
+		[ "$(dirname "$key")" != "." ] && {
+			fatal "local key \'$key\' can't be pathname"
+			return
+		}
+		[ -f "/etc/swanctl/private/${key}" ] || {
+			fatal "local key \'$key\' not found"
+			return
+		}
+	fi
+
+	if [ "$auth" = "pubkey" ] && [ -n "$certs" ]; then
+		[ "$(dirname "$certs")" != "." ] && \
+			fatal "local certs \'$certs\' can't be pathname"
+		[ -f "/etc/swanctl/x509/${certs}" ] || \
+			fatal "local certs \'$certs\' not found"
+	fi
+
+	LOCAL_ROUND=$((LOCAL_ROUND + 1))
+	[ "$LOCAL_ROUND" -eq 1 ] && suffix="" || suffix="$LOCAL_ROUND"
+
+	swanctl_xappend2 "local${suffix} {"
+	swanctl_xappend3 "auth = $auth"
+	[ -n "$id" ] && swanctl_xappend3 "id = \"$id\""
+	[ "$auth" = "pubkey" ] && [ -n "$certs" ] && \
+		swanctl_xappend3 "certs = $certs"
+	swanctl_xappend2 "}"
+}
+
+config_remote() {
+	local conf="$1"
+
+	local auth
+	local id
+	local cacerts
+	local eap_id
+	local suffix
+
+	config_get auth "$conf" auth "pubkey"
+	config_get id "$conf" id ""
+	config_list_foreach "$conf" cacerts append_var cacerts ","
+	config_get eap_id "$conf" eap_id "%any"
+
+	REMOTE_ROUND=$((REMOTE_ROUND + 1))
+	[ "$REMOTE_ROUND" -eq 1 ] && suffix="" || suffix="$REMOTE_ROUND"
+
+	swanctl_xappend2 "remote${suffix} {"
+	swanctl_xappend3 "auth = $auth"
+	[ -n "$id" ] && swanctl_xappend3 "id = \"$id\""
+	[ -n "$cacerts" ] && swanctl_xappend3 "cacerts = \"$cacerts\""
+	case "$auth" in
+	eap-mschapv2|eap-tls)
+		swanctl_xappend3 "eap_id = $eap_id"
+		;;
+	esac
+	swanctl_xappend2 "}"
+}
+
 config_connection() {
 	local conf="$1"
 
 	local enabled
-	local auth_method
-	local local_identifier
-	local remote_identifier
 	local keyingtries
 	local dpd_delay
 	local encap
@@ -519,25 +592,18 @@ config_connection() {
 	local keyexchange
 	local fragmentation
 	local mobike
-	local local_cert
-	local local_key
 	local rekey_time
 	local over_time
 	local send_cert
 	local send_certreq
-	local eap_id
 	local local_addrs
 	local remote_addrs
 	local vips
-	local remote_ca_certs
 	local pools
 
 	config_get_bool enabled "$conf" enabled 0
 	[ $enabled -eq 0 ] && return
 
-	config_get auth_method "$conf" authentication_method
-	config_get local_identifier "$conf" local_identifier ""
-	config_get remote_identifier "$conf" remote_identifier ""
 	config_get keyingtries "$conf" keyingtries "3"
 	config_get dpd_delay "$conf" dpd_delay "30s"
 	config_get_bool encap "$conf" encap 0
@@ -545,18 +611,14 @@ config_connection() {
 	config_get keyexchange "$conf" keyexchange "ikev2"
 	config_get fragmentation "$conf" fragmentation "yes"
 	config_get_bool mobike "$conf" mobike 1
-	config_get local_cert "$conf" local_cert ""
-	config_get local_key "$conf" local_key ""
 	config_get rekey_time "$conf" rekey_time
 	config_get over_time "$conf" over_time
 	config_get send_cert "$conf" send_cert
 	config_get_bool send_certreq "$conf" send_certreq 1
-	config_get eap_id "$conf" eap_id "%any"
 
 	config_list_foreach "$conf" local_addrs append_var local_addrs ","
 	config_list_foreach "$conf" remote_addrs append_var remote_addrs ","
 	config_list_foreach "$conf" vips append_var vips ","
-	config_list_foreach "$conf" remote_ca_certs append_var remote_ca_certs ","
 	config_list_foreach "$conf" pools append_var pools ","
 
 	case "$fragmentation" in
@@ -573,31 +635,10 @@ config_connection() {
 		;;
 	esac
 
-
-	# swanctl.conf has no "privkeys" option in connections.<conn>.local<suffix>;
-	# strongSwan auto-selects the private key from /etc/swanctl/private by
-	# matching it against the certificate configured via "certs". We only
-	# need to make sure the referenced key file actually exists there.
-	if [ -n "$local_key" ]; then
-		[ "$(dirname "$local_key")" != "." ] && \
-			fatal "local_key $local_key can't be pathname"
-		[ -f "/etc/swanctl/private/$local_key" ] || \
-			fatal "local_key $local_key not found"
-	fi
-
 	local ike_proposal
 	iter_ike_proposal "$conf" ike_proposal
 
 	[ -n "$firewall" ] && fatal "Firewall not supported"
-
-	if [ "$auth_method" = pubkey ]; then
-		if [ -n "$local_cert" ]; then
-			[ "$(dirname "$local_cert")" != "." ] && \
-				fatal "local_cert $local_cert can't be pathname"
-			[ -f "/etc/swanctl/x509/$local_cert" ] || \
-				fatal "local_cert $local_cert not found"
-		fi
-	fi
 
 	swanctl_xappend0 "# config for $conf"
 	swanctl_xappend0 "connections {"
@@ -608,27 +649,11 @@ config_connection() {
 	[ -n "$fragmentation" ] && swanctl_xappend2 "fragmentation = $fragmentation"
 	[ -n "$pools" ] && swanctl_xappend2 "pools = $pools"
 
-	local local_auth_method="$auth_method"
-	if [ "$auth_method" = "eap-mschapv2" ] || [ "$auth_method" = "eap-tls" ]; then
-		local_auth_method="pubkey"
-	fi
+	LOCAL_ROUND=0
+	config_list_foreach "$conf" local config_local
 
-	swanctl_xappend2 "local {"
-	swanctl_xappend3 "auth = $local_auth_method"
-
-	[ -n "$local_identifier" ] && swanctl_xappend3 "id = \"$local_identifier\""
-	[ "$local_auth_method" = pubkey ] && [ -n "$local_cert" ] && \
-		swanctl_xappend3 "certs = $local_cert"
-	swanctl_xappend2 "}"
-
-	swanctl_xappend2 "remote {"
-	swanctl_xappend3 "auth = $auth_method"
-	[ -n "$remote_identifier" ] && swanctl_xappend3 "id = \"$remote_identifier\""
-	[ -n "$remote_ca_certs" ] && swanctl_xappend3 "cacerts = \"$remote_ca_certs\""
-	if [ "$auth_method" = "eap-mschapv2" ] || [ "$auth_method" = "eap-tls" ]; then
-		swanctl_xappend3 "eap_id = $eap_id"
-	fi
-	swanctl_xappend2 "}"
+	REMOTE_ROUND=0
+	config_list_foreach "$conf" remote config_remote
 
 	swanctl_xappend2 "children {"
 
