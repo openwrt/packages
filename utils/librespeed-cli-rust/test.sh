@@ -10,7 +10,7 @@ librespeed-cli --csv-header | grep '^Timestamp,Server Name,Address,Ping,Jitter,D
 
 # The version banner carries more than the version the generic check looks
 # for; make sure the rest of it survives too.
-librespeed-cli --version | grep 'github.com/BKPepe/speedtest-cli-rust'
+librespeed-cli --version | grep 'github.com/librespeed/speedtest-cli-rust'
 librespeed-cli --version | grep 'GNU Lesser General Public License'
 
 cat > /tmp/librespeed-servers.json <<'EOF'
