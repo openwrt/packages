@@ -476,6 +476,76 @@ migrate_pubkey_authorities() {
 	config_foreach migrate_pubkey_authority connection
 }
 
+migrate_connection_local_remote() {
+	local conn="$1"
+
+	local authentication_method
+	local local_auth_method
+	local local_section="${conn}_local"
+	local remote_section="${conn}_remote"
+	local value
+	local cacert
+
+	config_get authentication_method "$conn" authentication_method ""
+
+	# The old connection had a single 'authentication_method' for both the
+	# local and the remote side. Move it into the new 'auth' option of the
+	# dedicated 'local' and 'remote' sections. The local side of an EAP
+	# connection authenticates with a certificate.
+	local_auth_method="$authentication_method"
+	case "$authentication_method" in
+	eap-mschapv2 | eap-tls)
+		local_auth_method="pubkey"
+		;;
+	esac
+
+	uci -q set "ipsec.${local_section}=local"
+	uci -q set "ipsec.${local_section}.auth=${local_auth_method:-pubkey}"
+
+	config_get value "$conn" local_identifier ""
+	[ -z "$value" ] || uci -q set "ipsec.${local_section}.id=${value}"
+
+	config_get value "$conn" local_cert ""
+	[ -z "$value" ] || uci -q set "ipsec.${local_section}.certs=${value}"
+
+	config_get value "$conn" local_key ""
+	[ -z "$value" ] || uci -q set "ipsec.${local_section}.key=${value}"
+
+	uci -q add_list "ipsec.${conn}.local=${local_section}"
+
+	uci -q set "ipsec.${remote_section}=remote"
+	uci -q set "ipsec.${remote_section}.auth=${authentication_method:-pubkey}"
+
+	config_get value "$conn" remote_identifier ""
+	[ -z "$value" ] || uci -q set "ipsec.${remote_section}.id=${value}"
+
+	for cacert in $(config_get "$conn" remote_ca_certs); do
+		uci -q add_list "ipsec.${remote_section}.cacerts=${cacert}"
+	done
+
+	case "$authentication_method" in
+	eap-mschapv2 | eap-tls)
+		config_get value "$conn" eap_id ""
+		[ -z "$value" ] || uci -q set "ipsec.${remote_section}.eap_id=${value}"
+		;;
+	esac
+
+	uci -q add_list "ipsec.${conn}.remote=${remote_section}"
+
+	uci -q delete "ipsec.${conn}.authentication_method"
+	uci -q delete "ipsec.${conn}.local_identifier"
+	uci -q delete "ipsec.${conn}.local_cert"
+	uci -q delete "ipsec.${conn}.local_key"
+	uci -q delete "ipsec.${conn}.remote_identifier"
+	uci -q delete "ipsec.${conn}.remote_ca_certs"
+	uci -q delete "ipsec.${conn}.eap_id"
+}
+
+migrate_connections_local_remote() {
+	config_load ipsec
+	config_foreach migrate_connection_local_remote connection
+}
+
 main() {
 	local session="$1"
 
@@ -510,6 +580,7 @@ main() {
 	migrate_mschapv2_secrets
 	migrate_psk_secrets
 	migrate_pubkey_authorities
+	migrate_connections_local_remote
 
 	# Move staged migration changes to LuCI
 	[ -n "$session" ] && {
