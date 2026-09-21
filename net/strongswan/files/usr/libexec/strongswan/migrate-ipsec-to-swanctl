@@ -394,6 +394,28 @@ migrate_remote_to_connection() {
 	done
 }
 
+migrate_mschapv2_secret_value() {
+	local cfg="$1"
+
+	local id
+
+	# The 'id' option of the new 'secret' section type is a list element.
+	config_get id "$cfg" id ""
+	[ -z "$id" ] && return
+
+	uci -q delete "ipsec.${cfg}.id"
+	uci -q add_list "ipsec.${cfg}.id=${id}"
+
+	# Rename the section type and set the secret kind
+	uci -q set "ipsec.${cfg}=secret"
+	uci -q set "ipsec.${cfg}.type=eap"
+}
+
+migrate_mschapv2_secrets() {
+	config_load ipsec
+	config_foreach migrate_mschapv2_secret_value mschapv2_secrets
+}
+
 main() {
 	local session="$1"
 
@@ -425,6 +447,7 @@ main() {
 	migrate_start_action
 	migrate_options
 	migrate_remote_to_connection
+	migrate_mschapv2_secrets
 
 	# Move staged migration changes to LuCI
 	[ -n "$session" ] && {
