@@ -675,6 +675,7 @@ reload_service() {
 
 	if [ "$enabled" = "1" ] && procd_running "keepalived"; then
 		process_config
+		# SIGHUP is used by keepalived to do init.d reload
 		procd_send_signal keepalived
 	else
 		start
