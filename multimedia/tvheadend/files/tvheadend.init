@@ -10,7 +10,7 @@ TEMP_CONFIG=/tmp/tvheadend
 PERSISTENT_CONFIG=/etc/tvheadend
 
 # If you change the user, update the owner of tvheadend configuration directory and files!
-# If you change the group, update USB hotplug script for DVB devices in /dev/hotplug.d/usb/
+# If you change the group, update the hotplug script for DVB devices in /etc/hotplug.d/dvb/
 # otherwise, tvheadend won't have permissions to open newly connected tuners!
 # Also update all other packages that use the dvb group.
 TVH_USER=tvheadend
