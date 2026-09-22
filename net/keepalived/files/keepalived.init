@@ -668,9 +668,17 @@ service_triggers() {
 }
 
 reload_service() {
-	process_config
-	#SIGHUP is used by keepalived to do init.d reload
-	procd_send_signal keepalived
+	local enabled
+
+	config_load 'keepalived'
+	config_get_bool enabled globals enabled 1
+
+	if [ "$enabled" = "1" ] && procd_running "keepalived"; then
+		process_config
+		procd_send_signal keepalived
+	else
+		start
+	fi
 }
 
 start_service() {
