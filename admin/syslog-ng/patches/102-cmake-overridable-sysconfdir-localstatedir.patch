@@ -1,0 +1,23 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Date: Tue, 3 Nov 2026 14:00:00 +0000
+Subject: [PATCH] cmake: let sysconfdir and localstatedir be overridden
+
+Upstream-Status: Backport [https://github.com/syslog-ng/syslog-ng/commit/b0f7bd63413ee7d2d8ee4d3261e722364214b3fb]
+---
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -42,11 +42,11 @@ set(SYSLOG_NG_COMBINED_VERSION ${SYSLOG_
+ set(SYSLOG_NG_SOURCE_REVISION ${SYSLOG_NG_VERSION})
+ 
+ set(SYSLOG_NG_PATH_PREFIX ${CMAKE_INSTALL_PREFIX})
+-set(SYSLOG_NG_PATH_SYSCONFDIR "\${prefix}/etc")
++set(SYSLOG_NG_PATH_SYSCONFDIR "\${prefix}/etc" CACHE STRING "Use path as the directory for the configuration files")
+ set(SYSLOG_NG_PATH_DATADIR "\${datarootdir}")
+ set(SYSLOG_NG_PATH_PKGDATADIR "\${datarootdir}/syslog-ng")
+ set(SYSLOG_NG_PATH_PIDFILEDIR "\${localstatedir}")
+-set(SYSLOG_NG_PATH_LOCALSTATEDIR "\${prefix}/var")
++set(SYSLOG_NG_PATH_LOCALSTATEDIR "\${prefix}/var" CACHE STRING "Use path as the directory for the persistent state files")
+ set(SYSLOG_NG_MODULE_PATH "\${exec_prefix}/lib/syslog-ng")
+ set(SYSLOG_NG_PATH_EXECPREFIX "\${prefix}")
+ set(SYSLOG_NG_PATH_CONFIG_INCLUDEDIR "\${datadir}/syslog-ng/include")
