@@ -1,6 +1,0 @@
-{
-	"name": "twodns.de",
-	"ipv4": {
-		"url": "http://[USERNAME]:[PASSWORD]@update.twodns.de/update?hostname=[DOMAIN]&ip=[IP]"
-	}
-}
