@@ -1,7 +1,0 @@
-{
-	"name": "dnsdynamic.org",
-	"ipv4": {
-		"url": "http://[USERNAME]:[PASSWORD]@www.dnsdynamic.org/api/?hostname=[DOMAIN]&myip=[IP]",
-		"answer": "good|nochg"
-	}
-}
