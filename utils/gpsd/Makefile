@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gpsd
 PKG_VERSION:=3.26.1
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SAVANNAH/$(PKG_NAME)
@@ -157,7 +157,7 @@ define Package/gpsd-clients/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) \
 		$(PKG_INSTALL_DIR)/usr/bin/cgps \
-		$(PKG_INSTALL_DIR)/usr/bin/gps{ctl,decode,mon,pipe} \
+		$(PKG_INSTALL_DIR)/usr/bin/gps{2udp,ctl,decode,mon,pipe} \
 		$(PKG_INSTALL_DIR)/usr/bin/gpxlogger \
 		$(PKG_INSTALL_DIR)/usr/bin/lcdgps \
 		$(1)/usr/bin/
