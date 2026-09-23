@@ -1,0 +1,24 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Alexandru Ardelean <alex@shruggie.ro>
+Date: Wed, 23 Sep 2026 12:00:00 +0300
+Subject: [PATCH] libav: read the channel count from ch_layout
+
+FFmpeg 7 removed AVCodecParameters.channels, replacing it with
+ch_layout.nb_channels. OpenWrt builds minidlna against FFmpeg 9.0.1, so
+the old field is never present.
+
+Upstream-Status: Inappropriate [unconditional, needs FFmpeg 7 or newer]
+
+Signed-off-by: Alexandru Ardelean <alex@shruggie.ro>
+---
+--- a/libav.h
++++ b/libav.h
+@@ -174,7 +174,7 @@ lav_get_interlaced(AVStream *s)
+ #define lav_codec_tag(s) s->codecpar->codec_tag
+ #define lav_sample_rate(s) s->codecpar->sample_rate
+ #define lav_bit_rate(s) s->codecpar->bit_rate
+-#define lav_channels(s) s->codecpar->channels
++#define lav_channels(s) s->codecpar->ch_layout.nb_channels
+ #define lav_width(s) s->codecpar->width
+ #define lav_height(s) s->codecpar->height
+ #define lav_profile(s) s->codecpar->profile
