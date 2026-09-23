@@ -59,7 +59,7 @@ function api_call() {
 	url="$__API/$1"
 	write_log 7 "API endpoint URL: $url"
 	write_log 7 "API request JSON payload: $2"
-	response="$("$CURL" -s -X POST "$url" -H "Content-Type: application/json" --data "$2" -o "$DATFILE" 2>"$ERRFILE")"
+	response="$("$CURL" -s --max-time 30 -X POST "$url" -H "Content-Type: application/json" --data "$2" -o "$DATFILE" 2>"$ERRFILE")"
 	write_log 7 "API response JSON payload: $(cat "$DATFILE")"
 	echo "$(cat "$DATFILE")"
 }
@@ -68,7 +68,11 @@ function api_call() {
 function json_check_status() {
 	local status
 	json_get_var status "status"
-	[ "$status" == "SUCCESS" ] || write_log 14 "API request failed!"
+	if [ "$status" != "SUCCESS" ]; then
+		write_log 3 "API request failed with status '$status'!"
+		return 1
+	fi
+	return 0
 }
 
 # Review DNS record and, if it is the record we're looking for, get its id
@@ -90,8 +94,9 @@ function find_existing_record_id() {
 	request=$(json_dump)
 	response=$(api_call "/dns/retrieve/$__DOMAIN" "$request")
 	json_load "$response"
-	json_check_status
+	json_check_status || return 1
 	json_for_each_item callback_review_record "records"
+	return 0
 }
 
 # Create a new A/AAAA record
@@ -105,7 +110,8 @@ function create_record() {
 	request=$(json_dump)
 	response=$(api_call "/dns/create/$__DOMAIN" "$request")
 	json_load "$response"
-	json_check_status
+	json_check_status || return 1
+	return 0
 }
 
 # Retrieve an existing record and get its content
@@ -117,11 +123,12 @@ function retrieve_record_content() {
 	request=$(json_dump)
 	response=$(api_call "/dns/retrieve/$__DOMAIN/$1" "$request")
 	json_load "$response"
-	json_check_status
+	json_check_status || return 1
 	json_select "records"
 	json_select 1
 	json_get_var content "content"
 	echo "$content"
+	return 0
 }
 
 # Edit an existing A/AAAA record
@@ -136,7 +143,8 @@ function edit_record() {
 	request=$(json_dump)
 	response=$(api_call "/dns/edit/$__DOMAIN/$1" "$request")
 	json_load "$response"
-	json_check_status
+	json_check_status || return 1
+	return 0
 }
 
 
@@ -144,6 +152,10 @@ function edit_record() {
 if [ -z $rec_id]; then
 	write_log 7 "Retrieving DNS $__TYPE record"
 	__ID=$(find_existing_record_id)
+	__STATUS=$?
+	if [ $__STATUS -ne 0 ]; then
+		return $__STATUS
+	fi
 else
 	write_log 7 "Using user-supplied DNS record id: $rec_id"
 	__ID=$rec_id
@@ -152,12 +164,19 @@ fi
 # Create or update DNS record with current IP address
 if [ -z "$__ID" ]; then
 	write_log 7 "Creating new DNS $__TYPE record"
-	create_record
+	create_record || return 1
 else
 	write_log 7 "Updating existing DNS $__TYPE record"
-	if [ "$(retrieve_record_content $__ID)" == "$__ADDR" ]; then
+	__EXISTING_CONTENT="$(retrieve_record_content $__ID)"
+	__STATUS = $?
+	if [ $__STATUS -ne 0 ]; then
+		return $__STATUS
+	fi
+	if [ "$__EXISTING_CONTENT" == "$__ADDR" ]; then
 		write_log 7 "Skipping Porkbun-unsupported forced noop update"
 	else
-		edit_record "$__ID"
+		edit_record "$__ID" || return 1
 	fi
 fi
+
+return 0
