@@ -4,10 +4,11 @@
 #
 # The only thing that starts a measurement: LuCI reaches it through rpcd, the
 # scheduler calls it directly. Holding the lock for the whole run means a second
-# invocation from either side fails instead of measuring against the first.
+# invocation from either side waits instead of measuring against the first.
 
 # Packaging checks probe every executable for these; a runner that ignored
 # them would start a measurement instead of answering.
+links=""
 case "$1" in
 --version)
 	echo "librespeed-common %%VERSION%%"
@@ -15,24 +16,47 @@ case "$1" in
 	;;
 --help|-h)
 	cat <<'EOF'
-Usage: librespeed-run
+Usage: librespeed-run [INTERFACE]
 Runs one LibreSpeed measurement according to /etc/config/librespeed and
-records the result for the ubus interface. Started by LuCI or cron; takes
-no arguments.
+records the result for the ubus interface. Started by LuCI or cron.
+INTERFACE is a logical interface (default: librespeed.main.interface).
+It is measured bound to the device of its link and recorded under the
+link (wan6 beside wan counts as wan). It is not measured, and that is
+recorded as its failure, when its link is down, netifd does not know it
+or netifd does not answer.
+--links  print each interface's link, the links to offer and the
+         interfaces whose link is down, as JSON
 EOF
 	exit 0
 	;;
+--links)
+	[ $# -eq 1 ] || { echo "Usage: librespeed-run --links" >&2; exit 2; }
+	links=1
+	shift
+	;;
 esac
 
+# The name reaches jsonfilter expressions and the crontab: UCI's alphabet only.
+usage() {
+	echo "Usage: librespeed-run [INTERFACE]" >&2
+	exit 2
+}
+[ $# -le 1 ] || usage
+case "$1" in *[!A-Za-z0-9_]*) usage ;; esac
+want=$1
+
 . /lib/functions.sh
-. /lib/functions/network.sh
 . /usr/share/libubox/jshn.sh
 
 CLI=/usr/bin/librespeed-cli
 STATE_DIR=/tmp/librespeed
 STATE="$STATE_DIR/state.json"
 RESULT="$STATE_DIR/result.json"
+FAILED="$STATE_DIR/failed"
 LOCK=/var/lock/librespeed.lock
+# A down interface still sits on the device it is configured on only as
+# DHCP, DHCPv6 or static: PPP and qmi bring up a device of their own.
+DEVP="@.proto='dhcp' || @.proto='dhcpv6' || @.proto='static'"
 
 mkdir -p "$STATE_DIR"
 
@@ -45,6 +69,12 @@ atomic_write() {
 write_state() {
 	json_init
 	json_add_boolean running "$1"
+	# A run names its link once bound; a failed one, its for_iface.
+	if [ "$1" = 1 ]; then
+		[ -n "$state_iface" ] && json_add_string interface "$state_iface"
+	elif [ -n "$5" ] && [ -n "$for_iface" ]; then
+		json_add_string interface "$for_iface"
+	fi
 	[ -n "$2" ] && json_add_int pid "$2"
 	[ -n "$3" ] && json_add_int started "$3"
 	[ -n "$4" ] && json_add_int last_finished "$4"
@@ -94,25 +124,178 @@ sampler() {
 }
 
 fail() {
+	local at
+
 	# A run that failed with the cached server drops the cache: the next run
 	# rediscovers instead of failing against the same dead choice forever.
 	[ "${used_cache:-0}" = 1 ] && rm -f "$LIST_CACHE" "$LIST_CACHE.src" "$CHOICE_CACHE"
-	write_state 0 "" "" "$(date +%s)" "$1"
-	logger -t librespeed "measurement failed: $1"
+	at=$(date +%s)
+	write_state 0 "" "" "$at" "$1"
+	# Kept until a result is recorded on this link; other links leave it.
+	if [ -n "$for_iface" ]; then
+		mkdir -p "$FAILED"
+		atomic_write "$FAILED/$for_iface" "$at $1"
+	fi
+	logger -t librespeed "measurement of ${for_iface:-$iface} failed: $1"
 	exit 1
 }
+
+# ifdump_get VAR PATH: PATH below @.interface of the netifd snapshot, taken
+# once so a run is judged by the state it began with. Matches space-joined.
+ifdump_get() {
+	local __v
+
+	[ -n "$ifdump" ] || return 1
+	__v=$(jsonfilter -s "$ifdump" -e "$1=@.interface$2" 2>/dev/null)
+	[ -n "$__v" ] || { unset "$1"; return 1; }
+	eval "$__v"
+}
+
+if_device() {
+	case "$2" in ''|*[!A-Za-z0-9_.-]*) unset "$1"; return 1 ;; esac
+	ifdump_get "$1" "[@.interface='$2'].l3_device"
+}
+
+# The UCI section device $1 is recorded under: wan for wan6, even while wan is
+# down. Several are narrowed in turn, a step only where it leaves some: to the
+# IPv4 default's holder, then not DHCPv6, then no IPv6 address. A down one
+# counts only as DHCP or static (PPP has a device of its own). More left: none.
+dev_iface() {
+	local p q f on="@.dynamic=false && (@.l3_device='$1' || (@.up=false && @.device='$1' && (@.proto='dhcp' || @.proto='static')))"
+
+	case "$1" in ''|*[!A-Za-z0-9_.-]*) return 1 ;; esac
+	ifdump_get p "[$on].interface" || return 1
+	for f in "!@.ip4table && @.route[@.target='0.0.0.0' && !@.table]" \
+		"@.proto!='dhcpv6'" "!@['ipv6-address'][0]"; do
+		case "$p" in *' '*) ;; *) break ;; esac
+		ifdump_get q "[$on && $f].interface" && on="$on && $f" p=$q
+	done
+	case "$p" in *' '*) return 1 ;; esac
+	echo "$p"
+}
+
+# bind_dev VAR NAME: the device a test of NAME is bound to: its l3_device, or
+# while it is down the device it sits on, if another interface of its link
+# is up there (wan6 beside a down wan). None: its link is down.
+bind_dev() {
+	local d u
+
+	case "$2" in ''|*[!A-Za-z0-9_]*) return 1 ;; esac
+	if_device "$1" "$2" && return 0
+	ifdump_get d "[@.interface='$2' && @.up=false && ($DEVP)].device" || return 1
+	dev_iface "$d" > /dev/null || return 1
+	ifdump_get u "[@.l3_device='$d'].interface" || return 1
+	eval "$1=\$d"
+}
+
+# --links: the link a bound run of each interface records (wan6 as wan), no
+# lock taken. A dynamic interface without a link is left out. A static link
+# without a gateway (lan) is not offered: no default route in the dump, which
+# shows routes only while up, and no gateway or ip6gw in UCI. down lists those
+# a run refuses as down: no l3_device, and bind_dev finds none.
+print_links() {
+	local names x d l g4 g6 cache="" map="" nogw="" nol3=""
+
+	ifdump_get names "[*].interface"
+	ifdump_get nol3 "[!@.l3_device].interface"
+	for x in $names; do
+		case "$x" in *[!A-Za-z0-9_]*) continue ;; esac
+		if_device d "$x" ||
+			ifdump_get d "[@.interface='$x' && @.up=false && ($DEVP)].device" ||
+			d=""
+		[ "$d" = lo ] && continue
+		l=""
+		if [ -n "$d" ]; then
+			case " $cache " in
+			*" $d="*) l=${cache##* "$d"=}; l=${l%% *} ;;
+			*) l=$(dev_iface "$d"); cache="$cache $d=$l" ;;
+			esac
+		fi
+		[ -n "$l" ] ||
+			ifdump_get l "[@.interface='$x' && @.dynamic=false].interface" ||
+			continue
+		map="$map $x=$l"
+	done
+	ifdump_get nogw "[@.proto='static' && !@.route[@.mask=0]].interface" &&
+		config_load network
+	json_init
+	json_add_array links
+	for l in $(for x in $map; do echo "${x#*=}"; done | sort -u); do
+		case " $nogw " in
+		*" $l "*)
+			config_get g4 "$l" gateway
+			config_get g6 "$l" ip6gw
+			[ -n "$g4$g6" ] || continue
+			;;
+		esac
+		json_add_string "" "$l"
+	done
+	json_close_array
+	json_add_object interfaces
+	for x in $map; do
+		json_add_string "${x%%=*}" "${x#*=}"
+	done
+	json_close_object
+	json_add_array down
+	for x in $map; do
+		x=${x%%=*}
+		case " $nol3 " in *" $x "*) bind_dev b "$x" || json_add_string "" "$x" ;; esac
+	done
+	json_close_array
+	json_dump
+	[ -n "$names" ]
+}
+
+if [ -n "$links" ]; then
+	ifdump=$(ubus -t 5 call network.interface dump 2>/dev/null)
+	print_links
+	exit
+fi
 
 # One measurement at a time. The descriptor stays open for the whole run, so the
 # kernel releases the lock even if this script is killed -- there is no stale
 # state to time out.
+# Schedules fire at the same minute: a run waits up to 3 minutes for the lock
+# (BusyBox flock has no -w) and writes nothing meanwhile, then gives up
+# (exit 3) and records that as its interface's failure.
 exec 9>"$LOCK"
-flock -n 9 || {
-	echo "already running" >&2
-	exit 3
-}
+tries=0
+until flock -n 9; do
+	if [ "$tries" = 0 ]; then
+		echo "waiting for the running measurement to finish" >&2
+		logger -t librespeed "measurement of ${want:-the default interface} waits for the running one"
+	elif [ "$tries" -ge 36 ]; then
+		echo "already running" >&2
+		logger -t librespeed "skipped measurement of ${want:-the default interface}: another one held the lock for 3 minutes"
+		# A lost slot is a gap in the data: kept as the interface's failure,
+		# not in state.json, which is the lock holder's.
+		skip=$want
+		[ -n "$skip" ] || { config_load librespeed; config_get skip main interface wan; }
+		case "$skip" in ''|*[!A-Za-z0-9_]*) ;; *)
+			mkdir -p "$FAILED"
+			atomic_write "$FAILED/$skip" "$(date +%s) skipped: another measurement held the lock for 3 minutes"
+		esac
+		exit 3
+	fi
+	tries=$((tries + 1))
+	sleep 5
+done
+
+# From here status reads state.json as this run's: clear the last interface.
+state_iface="" for_iface=""
+started=$(date +%s)
+write_state 1 $$ "$started"
+
+# stop kills our whole process group, so librespeed-cli dies with us; ash runs
+# this trap once the foreground child has exited, and it records that the run
+# was stopped rather than pretending the measurement failed.
+sampler_pid=
+trap '[ -n "$sampler_pid" ] && kill "$sampler_pid" 2>/dev/null
+	write_state 0 "" "" "$(date +%s)" "stopped"; exit 1' TERM
 
 config_load librespeed
 config_get iface main interface wan
+[ -n "$want" ] && iface=$want
 config_get server main server auto
 config_get scheme main scheme auto
 config_get server_list main server_list ''
@@ -120,9 +303,18 @@ config_get_bool hist_enabled history enabled 1
 config_get hist_path history path "$STATE_DIR/history.jsonl"
 config_get hist_retention history retention 30d
 
-# --interface takes a device, and UCI carries a logical interface name.
-dev=""
-network_get_device dev "$iface" 2>/dev/null
+# --interface takes a device, and UCI carries a logical interface name. A run
+# is bound to the device of its link or measures nothing, so its link is never
+# a guess. Failures go under the name asked for, once bound under its link.
+for_iface=$iface
+case "$for_iface" in *[!A-Za-z0-9_]*) for_iface="" ;; esac
+ifdump=$(ubus call network.interface dump 2>/dev/null)
+[ -n "$ifdump" ] || fail "netifd did not answer"
+ifdump_get known "[@.interface='$for_iface'].interface" ||
+	fail "interface disabled or not configured"
+bind_dev dev "$for_iface" || fail "interface is down"
+state_iface=$(dev_iface "$dev" 2>/dev/null) || state_iface=$for_iface
+for_iface=$state_iface
 
 [ -x "$CLI" ] || fail "librespeed-cli is not installed"
 
@@ -178,7 +370,7 @@ elif [ "$cache_fresh" = 1 ]; then
 elif [ -n "$server_list" ]; then
 	set -- "$@" --server-json "$LIST_URL"
 fi
-[ -n "$dev" ] && set -- "$@" --interface "$dev"
+set -- "$@" --interface "$dev"
 # TLS itself can bound the result on routers without AES acceleration, so the
 # scheme is a measurement setting, not just a transport detail.
 case "$scheme" in
@@ -188,15 +380,8 @@ esac
 # Never --bytes: it switches the report to MB/s and the history would end up
 # holding two units that cannot be told apart afterwards.
 
-started=$(date +%s)
+# Now with its link.
 write_state 1 $$ "$started"
-
-# stop kills our whole process group, so librespeed-cli dies with us; ash runs
-# this trap once the foreground child has exited, and it records that the run
-# was stopped rather than pretending the measurement failed.
-trap '[ -n "$sampler_pid" ] && kill "$sampler_pid" 2>/dev/null
-	write_state 0 "" "" "$(date +%s)" "stopped"; exit 1' TERM
-sampler_pid=
 
 if [ "$stream" = 1 ]; then
 	# The while runs in a subshell, so the reports cannot come back in a
@@ -232,11 +417,9 @@ if [ "$stream" = 1 ]; then
 		fail "${err:-measurement failed}"
 	fi
 else
-	if [ -n "$dev" ]; then
-		# Not with fd 9: its last sleep would hold the lock after the run.
-		sampler "$dev" 9>&- &
-		sampler_pid=$!
-	fi
+	# Not with fd 9: its last sleep would hold the lock after the run.
+	sampler "$dev" 9>&- &
+	sampler_pid=$!
 	out=$("$@" 2>"$STATE_DIR/stderr.log" < /dev/null); rc=$?
 	[ -n "$sampler_pid" ] && kill "$sampler_pid" 2>/dev/null
 	if [ "$rc" != 0 ]; then
@@ -305,7 +488,7 @@ json_init
 json_add_string timestamp "$ts"
 json_add_int started "$started"
 json_add_int finished "$finished"
-json_add_string interface "$iface"
+json_add_string interface "$state_iface"
 json_add_object server
 	# Absent until the CLI reports it; consumers treat null as unknown.
 	[ -n "$srv_id" ] && json_add_int id "$srv_id"
@@ -334,7 +517,7 @@ if [ "$hist_enabled" = "1" ]; then
 	json_init
 	json_add_string timestamp "$ts"
 	json_add_int epoch "$finished"
-	json_add_string interface "$iface"
+	json_add_string interface "$state_iface"
 	json_add_object server
 		[ -n "$srv_id" ] && json_add_int id "$srv_id"
 		json_add_string name "$srv_name"
@@ -389,6 +572,15 @@ if [ "$hist_enabled" = "1" ]; then
 fi
 
 write_state 0 "" "" "$finished" ""
+# A result clears the failures of all interfaces on its device (down ones
+# only as DHCP, DHCPv6 or static).
+on=""
+case "$dev" in *[!A-Za-z0-9_.-]*) ;; *)
+	ifdump_get on "[@.l3_device='$dev' || (@.up=false && @.device='$dev' && ($DEVP))].interface"
+esac
+for k in $state_iface $on; do
+	case "$k" in *[!A-Za-z0-9_]*) ;; *) rm -f "$FAILED/$k" ;; esac
+done
 
 # Refresh the server cache after the run, so the next one starts instantly:
 # at most one list download a day, and the choice is the server this run
@@ -414,5 +606,5 @@ if [ "$cache_fresh" = 0 ]; then
 		esac
 	fi
 fi
-logger -t librespeed "measurement done: ${download} Mbps down, ${upload} Mbps up"
+logger -t librespeed "measurement of $for_iface done: ${download} Mbps down, ${upload} Mbps up"
 exit 0
