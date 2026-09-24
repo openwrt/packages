@@ -35,8 +35,12 @@ valid_field() {
 	return 0
 }
 
+# $4 is the section's place in the sync: every call in one sync shares the
+# time and $$, so a section skips 2 draws per place down the one random
+# stream rather than repeating the draws of the section before it. The
+# legacy section passes none and draws as before.
 cron_expr() {
-	local interval="$1" days="$2" hours="$3"
+	local interval="$1" days="$2" hours="$3" salt="${4:-0}"
 	local start end m h v
 
 	case "$interval" in
@@ -64,8 +68,11 @@ cron_expr() {
 		[ "$end" -ge "$start" ] 2>/dev/null || end=$start
 		# Time xor pid as the seed: seconds-granular srand() alone would give
 		# two syncs in the same second the same draw.
-		set -- $(awk -v a="$start" -v b="$end" -v s="$(( $(date +%s) ^ $$ ))" 'BEGIN {
+		set -- $(awk -v a="$start" -v b="$end" -v s="$(( $(date +%s) ^ $$ ))" \
+			-v skip="$salt" 'BEGIN {
 			srand(s)
+			for (i = 0; i < skip * 2; i++)
+				rand()
 			printf "%d %d", int(rand() * 60), a + int(rand() * (b - a + 1))
 		}')
 		echo "$1 $2 * * $days"
@@ -84,16 +91,40 @@ restart_cron() {
 	return 0
 }
 
-sync_cron() {
-	local enabled interval days hours expr hist_enabled archive_path
+# Appends the cron line of one schedule section: the legacy named section
+# 'schedule', or a `config schedule` naming the interface it measures.
+# One line per interface, and the first enabled section wins -- the legacy
+# one, then the others in file order -- so a hand-made duplicate cannot
+# measure an interface twice. Uses sync_cron's main_iface, seen and salt.
+sync_schedule() {
+	local section="$1" enabled iface interval days hours expr
 
-	config_load librespeed
-	config_get_bool enabled schedule enabled 0
-	config_get interval schedule interval 1d
-	config_get days schedule days '*'
-	config_get hours schedule hours ''
-	config_get_bool hist_enabled history enabled 1
-	config_get archive_path history archive_path ''
+	config_get_bool enabled "$section" enabled 0
+	[ "$enabled" = 1 ] || return 0
+	config_get iface "$section" interface ''
+	config_get interval "$section" interval 1d
+	config_get days "$section" days '*'
+	config_get hours "$section" hours ''
+
+	# The legacy section without an interface keeps its line argument-free:
+	# the run resolves main.interface itself, exactly as before.
+	if [ -z "$iface" ] && [ "$section" != schedule ]; then
+		logger -t librespeed "skipped an automatic test that names no interface"
+		return 0
+	fi
+	# The name lands verbatim in root's crontab, so it is checked, and a bad
+	# one is skipped rather than replaced by an interface nobody chose.
+	case "$iface" in *[!A-Za-z0-9_]*)
+		logger -t librespeed "skipped an automatic test of invalid interface '$iface'"
+		return 0
+		;;
+	esac
+	case " $seen " in *" ${iface:-$main_iface} "*)
+		logger -t librespeed "skipped a second automatic test of ${iface:-$main_iface}"
+		return 0
+		;;
+	esac
+	seen="$seen ${iface:-$main_iface}"
 
 	# These end up verbatim in root's crontab, so anything unexpected becomes
 	# the harmless default rather than a cron field it was not meant to be.
@@ -108,6 +139,22 @@ sync_cron() {
 		hours=''
 	fi
 
+	if expr=$(cron_expr "$interval" "$days" "$hours" "$salt"); then
+		echo "$expr $RUN${iface:+ $iface}" >> "$CRONTAB"
+	else
+		logger -t librespeed "unsupported schedule interval '$interval' for ${iface:-$main_iface}"
+	fi
+	salt=$((salt + 1))
+}
+
+sync_cron() {
+	local hist_enabled archive_path main_iface seen="" salt=0
+
+	config_load librespeed
+	config_get main_iface main interface wan
+	config_get_bool hist_enabled history enabled 1
+	config_get archive_path history archive_path ''
+
 	mkdir -p "${CRONTAB%/*}"
 	touch "$CRONTAB"
 	sed -i "\\#$RUN#d;\\#$AGG#d" "$CRONTAB"
@@ -119,13 +166,8 @@ sync_cron() {
 		echo "5 0 * * * $AGG" >> "$CRONTAB"
 	fi
 
-	if [ "$enabled" = 1 ]; then
-		if expr=$(cron_expr "$interval" "$days" "$hours"); then
-			echo "$expr $RUN" >> "$CRONTAB"
-		else
-			logger -t librespeed "unsupported schedule interval '$interval'"
-		fi
-	fi
+	sync_schedule schedule
+	config_foreach sync_schedule schedule
 
 	restart_cron
 }
