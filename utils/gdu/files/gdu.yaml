@@ -1,0 +1,5 @@
+# GDU configuration for OpenWrt
+# Disables Unicode symbols in the size bar for compatibility
+# with OpenWrt terminal environments.
+no-unicode: true
+
