@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gummiboot
 PKG_VERSION:=48.1
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://dev.alpinelinux.org/archive/gummiboot/
@@ -21,6 +21,9 @@ PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
+
+TARGET_CFLAGS:=$(filter-out -Wl$(comma)-z$(comma)pack-relative-relocs -zpack-relative-relocs,$(TARGET_CFLAGS))
+TARGET_LDFLAGS:=$(filter-out -Wl$(comma)-z$(comma)pack-relative-relocs -zpack-relative-relocs,$(TARGET_LDFLAGS))
 
 define Package/gummiboot
   SECTION:=boot
@@ -42,6 +45,11 @@ CONFIGURE_ARGS += \
 	--with-efi-ldsdir=$(STAGING_DIR)/usr/lib \
 	--with-efi-includedir=$(STAGING_DIR)/usr/include \
 	--disable-manpages
+
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	$(SED) 's/--target=efi-app-/--output-target=efi-app-/g' $(PKG_BUILD_DIR)/Makefile.am
+endef
 
 define Build/Compile
 	+$(MAKE_VARS) EFI_CFLAGS="$(patsubst %,-I%,$(TOOLCHAIN_INC_DIRS)) $(TARGET_CFLAGS)" \
