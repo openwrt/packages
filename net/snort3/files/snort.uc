@@ -13,9 +13,13 @@ let inputs = null;
 let vars   = null;
 switch (snort.method) {
 case "pcap":
-case "afpacket":
 	inputs = `{ '${snort.interface}' }`;
 	vars   = "{}";
+	break;
+
+case "afpacket":
+	inputs = `{ '${snort.interface}' }`;
+	vars   = afpacket.fanout_type ? `{ 'fanout_type=${afpacket.fanout_type}', }` : "{}";
 	break;
 
 case "nfq":
@@ -25,7 +29,7 @@ case "nfq":
 	}
 	inputs += "}";
 
-	vars = `{ 'device=${snort.interface}', 'queue_maxlen=${nfq.queue_maxlen}', 'fanout_type=${nfq.fanout_type}', 'fail_open', }`;
+	vars = `{ 'device=${snort.interface}', 'queue_maxlen=${nfq.queue_maxlen}', 'fail_open', }`;
 	break;
 }
 -%}
@@ -41,7 +45,6 @@ snort  = {
 {% if (snort.mode == 'ips'): %}
   ['-Q'] = true,
 {% endif %}
-  ['--daq'] = '{{ snort.method }}',
 {% if (snort.method == 'nfq'): %}
   ['--max-packet-threads'] = {{ nfq.thread_count }},
 {% endif %}
@@ -173,7 +176,7 @@ if (snort.include) {
   // We use the ucode include here, so that the included file is also
   // part of the template and can use values passed in from the config.
   printf(rpad(`-- Include from '${snort.include}'`, ">", 80) + "\n");
-  include(snort.include, { snort, nfq });
+  include(snort.include, { snort, nfq, afpacket });
   printf(rpad("-- End of included file.", "<", 80) + "\n");
 }
 %}

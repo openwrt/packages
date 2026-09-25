@@ -1,0 +1,15 @@
+#!/bin/sh
+
+# The afpacket section of /etc/config/snort was added after the file first
+# shipped.  A modified config is kept as-is on upgrade, so it lacks the
+# section, and uci cannot create a section on the fly while setting an
+# option in it.  Append the empty section once, as plain text rather than
+# via uci commit, which would rewrite the whole file and strip its comments.
+# The value itself is read at render time (main.uc, coalesce_fanout_type()).
+# No trailing exit 0: a failed append must fail, so the script is kept and
+# retried on the next boot instead of being removed.
+
+[ -f /etc/config/snort ] || exit 0
+uci -q get snort.afpacket >/dev/null && exit 0
+
+printf "\nconfig afpacket 'afpacket'\n\toption fanout_type     ''               # one of [hash, lb, cpu, rollover, rnd, qm]\n" >> /etc/config/snort
