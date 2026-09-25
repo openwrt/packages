@@ -66,8 +66,10 @@ start_service() {
 			fi
 		fi
 		f_rmpid
+		read -r ban_nonce _ <"/proc/uptime"
 		procd_open_instance "banip-service"
 		procd_set_param command "${ban_service}" "${action}"
+		procd_set_param env ban_nonce="${ban_nonce}"
 		procd_set_param pidfile "${ban_pidfile}"
 		procd_set_param nice "$(uci_get banip global ban_nicelimit "0")"
 		procd_set_param limits nofile="$(uci_get banip global ban_filelimit "1024")"

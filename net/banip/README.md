@@ -453,6 +453,7 @@ You find the `Log Terms` option in LuCI under the `Log Settings` tab. Feel free 
 **Allow-/Blocklist handling**  
 banIP supports local allow- and block-lists, MAC/IPv4/IPv6 addresses (incl. ranges in CIDR notation) or domain names. These files are located in /etc/banip/banip.allowlist and /etc/banip/banip.blocklist.
 Unsuccessful login attempts or suspicious requests will be tracked and added to the local blocklist (see the `ban_autoblocklist` option). The blocklist behaviour can be further tweaked with the `ban_nftexpiry` option.
+Elements added by the log monitor, including the RDAP ranges of an offending address, expire after `ban_nftexpiry`, but every new hit within an existing range resets its timeout. As the Sets use `auto-merge`, overlapping or adjacent ranges are also combined into a single larger element. A network under continuous attack can therefore stay in the blocklist far beyond the configured expiry and grow over time - this is intended behaviour, not a stale entry.
 Depending on the options `ban_autoallowlist` and `ban_autoallowuplink` the uplink subnet or the uplink IP will be added automatically to local allowlist.
 Entries in CIDR notation always refer to the whole network - set host bits are masked by nftables, e.g. `192.168.1.5/24` ends up as `192.168.1.0/24` in the Set and `2001:db8::e65f:1:2:3/64` as `2001:db8::/64`. To allow or block a single host omit the prefix length or use /32 resp. /128.
 Furthermore, you can reference external Allowlist URLs with additional IPv4 and IPv6 feeds (see `ban_allowurl`).
