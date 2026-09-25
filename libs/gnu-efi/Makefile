@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnu-efi
 PKG_VERSION:=3.0.17
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/vathpela/gnu-efi.git
@@ -20,6 +20,10 @@ PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
 PKG_LICENSE_FILES:=README.efilib
 
 include $(INCLUDE_DIR)/package.mk
+
+TARGET_CFLAGS:=$(filter-out -Wl$(comma)-z$(comma)pack-relative-relocs -zpack-relative-relocs,$(TARGET_CFLAGS))
+TARGET_LDFLAGS:=$(filter-out -Wl$(comma)-z$(comma)pack-relative-relocs -zpack-relative-relocs,$(TARGET_LDFLAGS))
+MAKE_FLAGS+=FORMAT="--output-target efi-app-$(ARCH)"
 
 define Package/gnu-efi
   SECTION:=libs
