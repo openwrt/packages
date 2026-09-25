@@ -8,7 +8,7 @@ migrate_ipsec() {
 
 	# Rename last ipsec section to 'globals'
 	uci -q rename ipsec.@ipsec[-1]=globals
-	uci -q commit ipsec
+	uci -q set ipsec.globals=globals
 }
 
 migrate_ignore_routing_tables() {
@@ -21,10 +21,8 @@ migrate_ignore_routing_tables() {
 	tables="$(uci -q get "ipsec.globals.ignore_routing_tables")"
 	uci -q delete "ipsec.globals.ignore_routing_tables"
 	for table in $tables; do
-		uci add_list "ipsec.globals.ignore_routing_tables=${table}"
+		uci -q add_list "ipsec.globals.ignore_routing_tables=${table}"
 	done
-
-	uci commit ipsec
 }
 
 migrate_local_nat_child() {
@@ -42,7 +40,7 @@ migrate_local_nat_child() {
 	uci -q delete "ipsec.${cfg}.local_subnet"
 
 	for value in $local_nat; do
-		uci add_list "ipsec.${cfg}.local_subnet=${value}"
+		uci -q add_list "ipsec.${cfg}.local_subnet=${value}"
 	done
 }
 
@@ -50,7 +48,6 @@ migrate_local_nat() {
 	config_load ipsec
 	config_foreach migrate_local_nat_child tunnel
 	config_foreach migrate_local_nat_child transport
-	uci commit ipsec
 }
 
 migrate_gateway_remote() {
@@ -68,7 +65,6 @@ migrate_gateway_remote() {
 	}
 
 	uci -q delete "ipsec.${cfg}.gateway"
-	uci commit ipsec
 }
 
 migrate_gateway() {
@@ -85,11 +81,10 @@ migrate_remote_gateway_remote() {
 	[ -z "$remote_gateway" ] && return
 
 	for value in $remote_gateway; do
-		uci add_list "ipsec.${cfg}.remote_addrs=${value}"
+		uci -q add_list "ipsec.${cfg}.remote_addrs=${value}"
 	done
 
 	uci -q delete "ipsec.${cfg}.remote_gateway"
-	uci commit ipsec
 }
 
 migrate_remote_gateway() {
@@ -106,11 +101,10 @@ migrate_local_ip_local() {
 	[ -z "$local_ip" ] && return
 
 	for value in $local_ip; do
-		uci add_list "ipsec.${cfg}.local_addrs=${value}"
+		uci -q add_list "ipsec.${cfg}.local_addrs=${value}"
 	done
 
 	uci -q delete "ipsec.${cfg}.local_ip"
-	uci commit ipsec
 }
 
 migrate_local_ip() {
@@ -127,11 +121,10 @@ migrate_local_sourceip_vips() {
 	[ -z "$local_sourceip" ] && return
 
 	for value in $local_sourceip; do
-		uci add_list "ipsec.${cfg}.vips=${value}"
+		uci -q add_list "ipsec.${cfg}.vips=${value}"
 	done
 
 	uci -q delete "ipsec.${cfg}.local_sourceip"
-	uci commit ipsec
 }
 
 migrate_local_sourceip() {
@@ -165,7 +158,7 @@ migrate_to_child() {
 		local cfg="$1"
 		local mode="$2"
 
-		uci set ipsec.${cfg}=child
+		uci -q set ipsec.${cfg}=child
 		uci -q set ipsec.${cfg}.mode="$mode"
 	}
 
@@ -188,12 +181,10 @@ migrate_to_child() {
 			uci -q delete ipsec.${section}.tunnel
 			uci -q delete ipsec.${section}.transport
 			for ref in $tunnel_refs $transport_refs; do
-				uci add_list ipsec.${section}.child="$ref"
+				uci -q add_list ipsec.${section}.child="$ref"
 			done
 		fi
 	done
-
-	uci commit ipsec
 }
 
 migrate_debug() {
@@ -230,7 +221,6 @@ migrate_debug() {
 	uci -q set ipsec.syslog.esp="$debug"
 
 	uci -q delete ipsec.globals.debug
-	uci commit ipsec
 }
 
 migrate_dpd_action_value() {
@@ -258,7 +248,6 @@ migrate_dpd_action_value() {
 	#   for the *new* option.
 
 	uci -q delete ipsec.${cfg}.dpdaction
-	uci commit ipsec
 }
 
 migrate_dpd_action() {
@@ -287,8 +276,6 @@ migrate_close_action_value() {
 	[ "$closeaction" = "restart" ] && {
 		uci -q set ipsec.${cfg}.close_action="start"
 	}
-
-	uci commit ipsec
 }
 
 migrate_close_action() {
@@ -321,8 +308,6 @@ migrate_start_action_value() {
 	# * 'ignore' is the default value for the old startaction. This value
 	#   is no longer available in the new 'start_action'. There is not
 	#   equivalent for this option!
-
-	uci commit ipsec
 }
 
 migrate_start_action() {
@@ -391,10 +376,16 @@ migrate_options() {
 	config_load ipsec
 	config_foreach migrate_option_child_values child
 	config_foreach migrate_option_remote_values remote
-	uci commit ipsec
 }
 
 main() {
+	local session="$1"
+
+	#If LuCI provides a session ID, it can be marked 'staging,' allowing
+	# migration without an immediate restart.
+	[ -n "$session" ] && {
+		mkdir -p /tmp/run/rpcd/uci-${session}
+	}
 
 	[ -f /etc/config/ipsec ] || {
 		echo "File '/etc/config/ipsec' does not exists."
@@ -417,6 +408,11 @@ main() {
 	migrate_close_action
 	migrate_start_action
 	migrate_options
+
+	# Move staged migration changes to LuCI
+	[ -n "$session" ] && {
+		mv /tmp/.uci/ipsec /tmp/run/rpcd/uci-${session}
+	}
 
 	exit 0
 }
