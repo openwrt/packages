@@ -11,6 +11,7 @@ read -r ban_starttime _ <"/proc/uptime"
 ban_starttime="${ban_starttime%%.*}"
 ban_funlib="/usr/lib/banip-functions.sh"
 [ -z "${ban_bver}" ] && . "${ban_funlib}"
+trap 'f_exit' EXIT
 
 # load config and set banIP environment
 #
@@ -186,6 +187,13 @@ f_log "info" "finish banIP processing"
 	rm -rf "${ban_lock}"
 ) &
 
-# start detached log service (infinite loop)
+# start detached log service (infinite loop),
+# restart the monitor if the log reader terminates (e.g. logd restart),
+# stop if the pidfile has been cleared by f_rmpid
 #
-f_monitor
+while :; do
+	f_monitor
+	sleep 5
+	[ "$("${ban_catcmd}" "${ban_pidfile}" 2>/dev/null)" = "${$}" ] || break
+	f_log "info" "log reader terminated, restart detached banIP log service"
+done

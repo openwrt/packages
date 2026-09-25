@@ -261,9 +261,8 @@ f_trim() {
 f_rmpid() {
 	local ppid pid pids_next pids_all childs newchilds
 
-	# kill all descendant processes of the pid in pidfile
-	#
 	ppid="$("${ban_catcmd}" "${ban_pidfile}" 2>>"${ban_errorlog}")"
+	: >"${ban_pidfile}"
 	if [ -n "${ppid}" ]; then
 		pids_next="$("${ban_pgrepcmd}" -P "${ppid}" 2>>"${ban_errorlog}")"
 		pids_all=""
@@ -288,7 +287,6 @@ f_rmpid() {
 			kill -INT "${pid}" >/dev/null 2>&1
 		done
 	fi
-	: >"${ban_pidfile}"
 }
 
 # write log messages
@@ -2848,10 +2846,19 @@ f_mail() {
 	f_log "debug" "f_mail    ::: notification: ${ban_mailnotification}, template: ${ban_mailtemplate}, profile: ${ban_mailprofile}, receiver: ${ban_mailreceiver}, rc: ${?}"
 }
 
+# handle unexpected service exits
+#
+f_exit() {
+	trap - EXIT
+	if [ "$("${ban_catcmd}" "${ban_pidfile}" 2>/dev/null)" = "${$}" ]; then
+		f_log "err" "banIP service terminated unexpectedly"
+	fi
+}
+
 # log monitor
 #
 f_monitor() {
-	local nft_expiry ip proto idx base cidr rdap_log rdap_rc rdap_idx rdap_info log_type allow_v4 allow_v6 block_v4 block_v6
+	local nft_expiry ip proto rdap_log rdap_rc rdap_start rdap_end rdap_range rdap_regex rdap_info log_type allow_v4 allow_v6 block_v4 block_v6
 	local file cache_ts date_stamp time_now time_elapsed cache_interval rdap_interval rdap_tsfile rdap_lock rdap_jobs
 	local rdap_ts block_cache block_cache_limit block_cache_cnt monitor_set
 
@@ -3131,34 +3138,40 @@ f_monitor() {
 								# process RDAP response if valid JSON with expected content, otherwise log error
 								#
 								if [ "${rdap_rc}" = "0" ] && [ -s "${ban_rdapfile}.${ip}" ]; then
-									[ "${proto}" = ".v4" ] && rdap_idx="$("${ban_jsoncmd}" -i "${ban_rdapfile}.${ip}" -qe '@.cidr0_cidrs[@.v4prefix].*' | "${ban_awkcmd}" '{ORS=" "; print}')"
-									[ "${proto}" = ".v6" ] && rdap_idx="$("${ban_jsoncmd}" -i "${ban_rdapfile}.${ip}" -qe '@.cidr0_cidrs[@.v6prefix].*' | "${ban_awkcmd}" '{ORS=" "; print}')"
+									rdap_start="$("${ban_jsoncmd}" -i "${ban_rdapfile}.${ip}" -qe '@.startAddress')"
+									rdap_end="$("${ban_jsoncmd}" -i "${ban_rdapfile}.${ip}" -qe '@.endAddress')"
 									rdap_info="$("${ban_jsoncmd}" -l1 -i "${ban_rdapfile}.${ip}" -qe '@.country' -qe '@.notices[@.title="Source"].description[1]' | "${ban_awkcmd}" 'BEGIN{RS="";FS="\n"}{c=($1!=""?$1:"-"); s=($2!=""?$2:"-"); printf "%s, %s", c, s}')"
 									[ -z "${rdap_info}" ] || [ "${rdap_info}" = "-, -" ] && rdap_info="$("${ban_jsoncmd}" -l1 -i "${ban_rdapfile}.${ip}" -qe '@.notices[0].links[0].value' | "${ban_awkcmd}" 'BEGIN{FS="[/.]"}{printf"%s, %s","n/a",toupper($4)}')"
 
-									# if RDAP response contains (multiple) valid CIDR info,
-									# attempt to add entire range to blocklist set with same expiry as individual IP
+									# if RDAP response contains a valid address range (RFC 9083 startAddress/endAddress),
+									# add the entire range as a single interval element to blocklist set with same expiry as individual IP
 									#
-									base=""
-									for idx in ${rdap_idx}; do
-										if [ -z "${base}" ]; then
-											base="${idx}"
-											continue
-										else
-											case "${base}" in
-											"" | "::"* | "127."* | "0."* | "fe80:"*)
-												base=""
-												continue
-												;;
-											esac
-											[ -z "${base}" ] && continue
-											cidr="${base}/${idx}"
-											if "${ban_nftcmd}" add element inet banIP "blocklist${proto}" { ${cidr} ${nft_expiry} } >/dev/null 2>&1; then
-												f_log "info" "add IP range '${cidr}' (source: ${rdap_info:-"n/a"} ::: expiry: ${ban_nftexpiry:-"-"}) to blocklist${proto} set"
-											fi
-											base=""
+									rdap_range=""
+									rdap_regex=""
+									case "${rdap_start}-${rdap_end}" in
+									"-"* | "::"* | "127."* | "0."* | "fe80:"* | *[!0-9A-Fa-f.:-]*) ;;
+									*)
+										if [ "${proto}" = ".v4" ]; then
+											rdap_regex='^[0-9]{1,3}(\.[0-9]{1,3}){3}-[0-9]{1,3}(\.[0-9]{1,3}){3}$'
+										elif [ "${proto}" = ".v6" ]; then
+											rdap_regex='^[0-9A-Fa-f:]*:[0-9A-Fa-f:]*-[0-9A-Fa-f:]*:[0-9A-Fa-f:]*$'
 										fi
-									done
+										if [ -n "${rdap_regex}" ]; then
+											printf '%s' "${rdap_start}-${rdap_end}" | "${ban_grepcmd}" -qE "${rdap_regex}" && rdap_range="${rdap_start}-${rdap_end}"
+										fi
+										;;
+									esac
+									if [ -n "${rdap_range}" ]; then
+										if "${ban_nftcmd}" add element inet banIP "blocklist${proto}" { ${rdap_range} ${nft_expiry} } >/dev/null 2>&1; then
+											f_log "info" "add IP range '${rdap_range}' (source: ${rdap_info:-"n/a"} ::: expiry: ${ban_nftexpiry:-"-"}) to blocklist${proto} set"
+										else
+											f_log "info" "failed to add IP range '${rdap_range}' to blocklist${proto} set with rc '${?}'"
+										fi
+									else
+										rdap_start="${rdap_start%%[!0-9A-Fa-f.:]*}"
+										rdap_end="${rdap_end%%[!0-9A-Fa-f.:]*}"
+										f_log "info" "no valid rdap range (start: ${rdap_start:-"-"}/end: ${rdap_end:-"-"}) for IP '${ip}'"
+									fi
 								else
 									f_log "info" "rdap request failed (rc: ${rdap_rc:-"-"}/log: ${rdap_log:-"-"}) for IP '${ip}'"
 								fi
