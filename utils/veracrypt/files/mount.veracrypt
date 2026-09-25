@@ -1,0 +1,58 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-only
+# mount.veracrypt <device> <mountpoint> [flags] [-o comma-opts]
+DEV=$1
+MNTPT=$2
+VCOPTIONS=
+OPTIONS=
+PASS=
+PASSFILE=
+
+shift 2
+while [ "$#" -gt 0 ] && [ "$1" != "-o" ]; do shift; done
+[ "$#" -gt 0 ] && shift
+
+OLDIFS=$IFS
+IFS=,
+set -f
+for arg in $*; do
+	case $arg in
+		system)           VCOPTIONS="$VCOPTIONS --mount-options=system" ;;
+		fs=*)             VCOPTIONS="$VCOPTIONS --filesystem=${arg#*=}" ;;
+		keyfiles=*)       VCOPTIONS="$VCOPTIONS --keyfiles=${arg#*=}" ;;
+		password-file=*)  PASSFILE=${arg#*=} ;;
+		password=*)       PASS=${arg#*=} ;;
+		pim=*)            VCOPTIONS="$VCOPTIONS --pim=${arg#*=}" ;;
+		protect-hidden=*) VCOPTIONS="$VCOPTIONS --protect-hidden=${arg#*=}" ;;
+		slot=*)           VCOPTIONS="$VCOPTIONS --slot=${arg#*=}" ;;
+		*)                OPTIONS="${OPTIONS}${arg}," ;;
+	esac
+done
+IFS=$OLDIFS
+set +f
+
+if [ -n "$PASSFILE" ]; then
+	case $PASSFILE in
+		/*) ;;
+		*) echo "mount.veracrypt: password-file must be an absolute path" >&2; exit 1 ;;
+	esac
+	if [ ! -r "$PASSFILE" ]; then
+		echo "mount.veracrypt: cannot read $PASSFILE" >&2
+		exit 1
+	fi
+	IFS= read -r PASS < "$PASSFILE" || true
+	if [ -z "$PASS" ]; then
+		echo "mount.veracrypt: $PASSFILE is empty" >&2
+		exit 1
+	fi
+fi
+
+if [ -n "$PASS" ]; then
+	# ash printf is a builtin, so the passphrase is not in veracrypt's argv.
+	# Prefer password-file= over password= so the secret is not in this helper's argv.
+	printf '%s\n' "$PASS" | /usr/bin/veracrypt --text --non-interactive --stdin \
+		$VCOPTIONS --fs-options="${OPTIONS%,}" "$DEV" "$MNTPT"
+	exit $?
+fi
+exec /usr/bin/veracrypt --text --non-interactive \
+	$VCOPTIONS --fs-options="${OPTIONS%,}" "$DEV" "$MNTPT"
