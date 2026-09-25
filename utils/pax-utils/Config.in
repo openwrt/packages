@@ -1,0 +1,4 @@
+config PAX_UTILS_SECCOMP
+	depends on PACKAGE_pax-utils
+	bool "build with support for seccomp"
+	default n

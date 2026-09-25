@@ -1,0 +1,24 @@
+--- a/scripts/mysql_install_db.sh
++++ b/scripts/mysql_install_db.sh
+@@ -495,7 +495,9 @@ do
+   fi
+ done
+ 
+-if test -n "$user"
++# There should be no need for this on OpenWrt. If this turns out to be a wrong guess then
++# we can revisit.
++if test -n ""
+ then
+   if test -z "$srcdir" -a "$in_rpm" -eq 0 -a -d "$pamtooldir/auth_pam_tool_dir"
+   then
+@@ -516,6 +518,10 @@ then
+         echo
+     fi
+   fi
++fi
++
++if test -n "$user"
++then
+   args="$args --user=$user"
+ fi
+ 

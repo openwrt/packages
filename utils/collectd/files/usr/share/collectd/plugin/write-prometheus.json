@@ -1,0 +1,7 @@
+{
+	"string": [
+		"Host",
+		"Port",
+		"StalenessDelta"
+	]
+}

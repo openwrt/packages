@@ -1,0 +1,28 @@
+From 81df3ad69585629f952972228d7edb6da0596b94 Mon Sep 17 00:00:00 2001
+From: Khem Raj <raj.khem@gmail.com>
+Date: Wed, 14 Dec 2022 15:04:30 -0800
+Subject: [PATCH] Replace stat64 with stat
+
+It already checks for largefile support in configure.ac via
+AC_SYS_LARGEFILE macro, which will ensure that 64bit elements
+are correctly setup for stat APIs on platforms needing large
+file support.
+
+Signed-off-by: Khem Raj <raj.khem@gmail.com>
+---
+ sock.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/sock.c
++++ b/sock.c
+@@ -54,8 +54,8 @@ int non_root_clients;
+ static int
+ isfdtype(int fd, int fdtype)
+ {
+-	struct stat64 st;
+-	if (fstat64(fd, &st) != 0)
++	struct stat st;
++	if (fstat(fd, &st) != 0)
+ 		return -1;
+ 	return ((st.st_mode & S_IFMT) == (mode_t)fdtype);
+ }

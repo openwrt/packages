@@ -1,0 +1,21 @@
+From 5f5d303820066a9b7973a173c9fe0dedb1716d98 Mon Sep 17 00:00:00 2001
+From: Nick Hainke <vincent@systemli.org>
+Date: Sun, 9 Nov 2025 16:38:21 +0100
+Subject: [PATCH] client: set cmake_minimum_required to 3.10
+
+New cmake versions require at least 3.5 as 'cmake_minimum_required'
+in CMakeLists.txt. In future 3.10 will be required.
+
+Signed-off-by: Nick Hainke <vincent@systemli.org>
+---
+ client/CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/client/CMakeLists.txt
++++ b/client/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-cmake_minimum_required(VERSION 2.8)
++cmake_minimum_required(VERSION 3.10)
+ project (tunneldigger C)
+ 
+ set(USE_LIBNL FALSE CACHE BOOL "Explicitly use libnl over libnl-tiny")

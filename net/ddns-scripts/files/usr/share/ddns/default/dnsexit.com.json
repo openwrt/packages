@@ -1,0 +1,6 @@
+{
+	"name": "dnsexit.com",
+	"ipv4": {
+		"url": "http://update.dnsexit.com/RemoteUpdate.sv?login=[USERNAME]&password=[PASSWORD]&host=[DOMAIN]&myip=[IP]"
+	}
+}

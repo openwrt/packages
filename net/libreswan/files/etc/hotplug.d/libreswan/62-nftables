@@ -1,0 +1,87 @@
+#!/bin/sh
+
+. /lib/functions.sh
+
+FW4="$(command -v fw4)"
+[ -z "$FW4" ] && exit 0
+
+CONNECTION="${PLUTO_CONNECTION//\//_}"
+[ -z "$CONNECTION" ] && exit 0
+
+FW_DIR="/tmp/libreswan/firewall.d"
+LIBRESWAN_RULES_FILE="$FW_DIR/libreswan.rules"
+RULES_DIR="$FW_DIR/rules"
+
+IPV4_RULES_FILE="$RULES_DIR/${CONNECTION}-ipv4.rules"
+IPV6_RULES_FILE="$RULES_DIR/${CONNECTION}-ipv6.rules"
+NFLOG_ALL_RULES_FILE="$RULES_DIR/nflog_all.rules"
+
+reload_firewall() {
+	[ ! -d "$RULES_DIR" ] && return 0
+
+	cat $RULES_DIR/*.rules > "$LIBRESWAN_RULES_FILE" 2>/dev/null
+	/etc/init.d/firewall reload
+}
+
+up_rules() {
+	[ -z "$PLUTO_PEER_CLIENT" ] && return 0
+
+	[ ! -d "$RULES_DIR" ] && mkdir -p "$RULES_DIR"
+
+	eval $(ipsec addconn --configsetup)
+
+	if [ -n "$nflog_all" ]; then
+		unset NFLOG
+		if [ ! -f "$NFLOG_ALL_RULES_FILE" ]; then
+			cat << EOF > "$NFLOG_ALL_RULES_FILE"
+table inet fw4 {
+	chain libreswan_nflog_input {
+		meta ipsec exists log prefix "all-ipsec" group ${nflog_all}
+	}
+	chain libreswan_nflog_output {
+		rt ipsec exists log prefix "all-ipsec" group ${nflog_all}
+	}
+}
+EOF
+		fi
+	else
+		[ -f "$NFLOG_ALL_RULES_FILE" ] && rm -f "$NFLOG_ALL_RULES_FILE"
+	fi
+
+	cat << EOF > $IPV4_RULES_FILE
+table inet fw4 {
+	chain libreswan_input {
+		meta ipsec exists ipsec in ip saddr $PLUTO_PEER_CLIENT ip daddr $PLUTO_MY_CLIENT ${NFLOG:+log prefix \"${PLUTO_CONNECTION}\" group ${NFLOG}} accept comment "$PLUTO_CONNECTION"
+	}
+	chain libreswan_forward {
+		meta ipsec exists ipsec in ip saddr $PLUTO_PEER_CLIENT ip daddr $PLUTO_MY_CLIENT accept comment "$PLUTO_CONNECTION"
+	}
+	chain libreswan_output {
+		ipsec out ip saddr $PLUTO_MY_CLIENT ip daddr $PLUTO_PEER_CLIENT ${NFLOG:+log prefix \"${PLUTO_CONNECTION}\" group ${NFLOG}} accept comment "$PLUTO_CONNECTION"
+	}
+	chain libreswan_srcnat {
+		ip saddr $PLUTO_MY_CLIENT ip daddr $PLUTO_PEER_CLIENT accept comment "$PLUTO_CONNECTION"
+	}
+}
+EOF
+
+	reload_firewall
+
+	return 0
+}
+
+down_rules() {
+	if [ -f "$IPV4_RULES_FILE" ]; then
+		rm -rf "$IPV4_RULES_FILE"
+		reload_firewall
+	fi
+
+	return 0
+}
+
+case "${PLUTO_VERB}" in
+	up-host|up-client) up_rules ;;
+	down-host|down-client) down_rules ;;
+	up-host-v6|down-host-v6) ;;
+	up-client|down-client-v6) ;;
+esac

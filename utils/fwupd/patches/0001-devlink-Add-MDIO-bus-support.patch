@@ -1,0 +1,253 @@
+From 5298944fa6b14e9c6a36bc61af7e4a495033b7af Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Mon, 13 Jul 2026 22:55:10 +0100
+Subject: [PATCH 1/2] devlink: Add MDIO bus support
+
+The backend refused to create devices for anything but the "pci" and
+"netdevsim" buses. Ethernet switches attached via MDIO (bus name
+"mdio_bus"), such as the MaxLinear MxL862xx family, were rejected
+before their versions were ever queried:
+
+  failed to add devlink device mdio_bus/mdio-bus:10: unsupported bus
+  type: mdio_bus (only 'pci' and 'netdevsim' are supported)
+
+Create a parent device via the udev backend like it is already done
+for PCI devices. MDIO devices expose no vendor or device IDs in sysfs,
+so use the first "compatible" string of the associated OF node to
+identify the device where available: the vendor prefix becomes a
+devicetree vendor ID, e.g. DT:maxlinear, and the two halves of the
+compatible are used as the VEN and DEV instance strings, so the usual
+quirk instance ID, e.g. MDIO_BUS\VEN_maxlinear&DEV_mxl86252, and
+component GUIDs, e.g. MDIO_BUS\VEN_maxlinear&DEV_mxl86252&COMPONENT_fw,
+are built just like for PCI devices.
+
+Unlike the versions reported by the kernel, the devicetree compatible
+is constant and always available, even when the device cannot report
+any version information, for example while it is stuck in a bootloader
+rescue mode. Firmware targeting the compatible-based component GUID
+can therefore still be matched and flashed to recover such a device.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ plugins/devlink/README.md            | 18 ++++++-
+ plugins/devlink/fu-devlink-backend.c | 81 +++++++++++++++++++++++++++-
+ plugins/devlink/fu-devlink-device.c  | 22 ++++++++
+ 3 files changed, 117 insertions(+), 4 deletions(-)
+
+--- a/plugins/devlink/README.md
++++ b/plugins/devlink/README.md
+@@ -9,7 +9,8 @@ This is a generic plugin that can work w
+ 
+ ## Supported Devices
+ 
+-The plugin supports any device that implements the devlink interface, regardless the bus it resides on.
++The plugin supports devices implementing the devlink interface on the PCI and
++MDIO buses, as well as emulated netdevsim devices for testing.
+ 
+ ## Firmware Format
+ 
+@@ -25,9 +26,21 @@ This plugin supports the following proto
+ These devices use custom instance IDs consisting of the component name.
+ 
+ * `PCI\VEN_15B3&DEV_1021&COMPONENT_fw`
++* `MDIO_BUS\COMPONENT_fw`
++* `MDIO_BUS\VEN_maxlinear&DEV_mxl86252&COMPONENT_fw`
+ 
+ Optionally, additional GUID might get generated as specified in the squirk file, see below.
+ 
++For devices attached via MDIO with an associated devicetree node, the vendor
++prefix and device name from the first "compatible" string are used as the
++`VEN` and `DEV` instance ID components, resulting in a quirk-only
++`MDIO_BUS\VEN_maxlinear&DEV_mxl86252` instance ID on the devlink device and
++component GUIDs just like for PCI devices. Unlike the versions reported by
++the kernel, the devicetree compatible is available even when the device
++cannot report any version information, for example while it is stuck in a
++bootloader rescue mode, so firmware targeting the compatible-based GUID can
++still be matched and flashed to recover such a device.
++
+ ### Device Identification
+ 
+ Devices are identified using their in the format:
+@@ -131,7 +144,8 @@ The plugin handles various error conditi
+ 
+ ## Vendor ID Security
+ 
+-The vendor ID is set from the PCI vendor.
++The vendor ID is set from the PCI vendor, or for devices on the MDIO bus, from
++the devicetree vendor prefix, e.g. `DT:maxlinear`.
+ 
+ ## External Interface Access
+ 
+--- a/plugins/devlink/fu-devlink-backend.c
++++ b/plugins/devlink/fu-devlink-backend.c
+@@ -67,6 +67,71 @@ fu_devlink_backend_create_pci_parent(FuD
+ }
+ 
+ static FuDevice *
++fu_devlink_backend_create_mdio_parent(FuDevlinkBackend *self,
++				      const gchar *bus_name,
++				      const gchar *dev_name,
++				      GError **error)
++{
++	FuContext *ctx = fu_backend_get_context(FU_BACKEND(self));
++	FuBackend *udev_backend = NULL;
++	g_autofree gchar *mdio_sysfs_path = NULL;
++	g_autofree gchar *mdio_sysfs_real = NULL;
++	g_autoptr(FuDevice) mdio_device = NULL;
++	g_autoptr(GBytes) compatible_blob = NULL;
++	g_autoptr(GError) error_local = NULL;
++
++	udev_backend = fu_context_get_backend_by_name(ctx, "udev", &error_local);
++	if (udev_backend == NULL) {
++		g_set_error(error,
++			    FWUPD_ERROR,
++			    FWUPD_ERROR_NOT_SUPPORTED,
++			    "udev backend not available: %s",
++			    error_local->message);
++		return NULL;
++	}
++
++	mdio_sysfs_path = g_strdup_printf("/sys/bus/mdio_bus/devices/%s", dev_name);
++	mdio_sysfs_real = fu_path_make_absolute(mdio_sysfs_path, error);
++	if (mdio_sysfs_real == NULL)
++		return NULL;
++
++	mdio_device = fu_backend_create_device(udev_backend, mdio_sysfs_real, &error_local);
++	if (mdio_device == NULL) {
++		g_set_error(error,
++			    FWUPD_ERROR,
++			    FWUPD_ERROR_NOT_FOUND,
++			    "failed to create MDIO device for %s: %s",
++			    mdio_sysfs_path,
++			    error_local->message);
++		return NULL;
++	}
++
++	if (!fu_device_probe(mdio_device, error)) {
++		g_prefix_error_literal(error, "failed to probe MDIO device: ");
++		return NULL;
++	}
++
++	/* of_node/compatible is a NUL-separated string list, so read it as raw bytes */
++	compatible_blob = fu_udev_device_read_sysfs_bytes(FU_UDEV_DEVICE(mdio_device),
++							  "of_node/compatible",
++							  -1,
++							  FU_UDEV_DEVICE_ATTR_READ_TIMEOUT_DEFAULT,
++							  NULL);
++	if (compatible_blob != NULL && g_bytes_get_size(compatible_blob) > 0) {
++		g_autofree gchar *compatible = g_strndup(g_bytes_get_data(compatible_blob, NULL),
++							 g_bytes_get_size(compatible_blob));
++		g_auto(GStrv) parts = g_strsplit(compatible, ",", 2);
++		if (g_strv_length(parts) == 2) {
++			fu_device_build_vendor_id(mdio_device, "DT", parts[0]);
++			fu_device_add_instance_strsafe(mdio_device, "VEN", parts[0]);
++			fu_device_add_instance_strsafe(mdio_device, "DEV", parts[1]);
++		}
++	}
++
++	return g_steal_pointer(&mdio_device);
++}
++
++static FuDevice *
+ fu_devlink_backend_create_netdevsim_parent(FuDevlinkBackend *self,
+ 					   const gchar *bus_name,
+ 					   const gchar *dev_name,
+@@ -96,6 +161,7 @@ fu_devlink_backend_device_added(FuDevlin
+ {
+ 	FuContext *ctx = fu_backend_get_context(FU_BACKEND(self));
+ 	FuDevice *old_devlink_device;
++	const gchar *instance_keys[] = {"VEN", "DEV", NULL};
+ 	g_autoptr(FuDevice) devlink_device = NULL;
+ 	g_autoptr(FuDevice) parent_device = NULL;
+ 
+@@ -104,12 +170,17 @@ fu_devlink_backend_device_added(FuDevlin
+ 	g_return_val_if_fail(dev_name != NULL, NULL);
+ 	g_return_val_if_fail(error == NULL || *error == NULL, NULL);
+ 
+-	/* only support PCI and netdevsim buses */
++	/* create a bus-specific parent device */
+ 	if (g_strcmp0(bus_name, "pci") == 0) {
+ 		parent_device =
+ 		    fu_devlink_backend_create_pci_parent(self, bus_name, dev_name, error);
+ 		if (parent_device == NULL)
+ 			return NULL;
++	} else if (g_strcmp0(bus_name, "mdio_bus") == 0) {
++		parent_device =
++		    fu_devlink_backend_create_mdio_parent(self, bus_name, dev_name, error);
++		if (parent_device == NULL)
++			return NULL;
+ 	} else if (g_strcmp0(bus_name, "netdevsim") == 0) {
+ 		parent_device =
+ 		    fu_devlink_backend_create_netdevsim_parent(self, bus_name, dev_name, error);
+@@ -119,7 +190,8 @@ fu_devlink_backend_device_added(FuDevlin
+ 		g_set_error(error,
+ 			    FWUPD_ERROR,
+ 			    FWUPD_ERROR_NOT_SUPPORTED,
+-			    "unsupported bus type: %s (only 'pci' and 'netdevsim' are supported)",
++			    "unsupported bus type: %s (only 'pci', 'mdio_bus' and 'netdevsim' are "
++			    "supported)",
+ 			    bus_name);
+ 		return NULL;
+ 	}
+@@ -157,6 +229,11 @@ fu_devlink_backend_device_added(FuDevlin
+ 				  FU_DEVICE_INCORPORATE_FLAG_VENDOR |
+ 				  FU_DEVICE_INCORPORATE_FLAG_VENDOR_IDS |
+ 				  FU_DEVICE_INCORPORATE_FLAG_VID | FU_DEVICE_INCORPORATE_FLAG_PID);
++	for (guint i = 0; instance_keys[i] != NULL; i++) {
++		const gchar *value = fu_device_get_instance_str(parent_device, instance_keys[i]);
++		if (value != NULL)
++			fu_device_add_instance_str(devlink_device, instance_keys[i], value);
++	}
+ 
+ 	/* only add the devlink device to the backend - parent is managed by its own backend */
+ 	fu_backend_device_added(FU_BACKEND(self), devlink_device);
+--- a/plugins/devlink/fu-devlink-device.c
++++ b/plugins/devlink/fu-devlink-device.c
+@@ -699,6 +699,9 @@ fu_devlink_device_setup(FuDevice *device
+ 	if (fu_device_get_vid(device) != 0 && fu_device_get_pid(device) != 0) {
+ 		fu_device_add_instance_u16(device, "VEN", fu_device_get_vid(device));
+ 		fu_device_add_instance_u16(device, "DEV", fu_device_get_pid(device));
++	}
++	if (fu_device_get_instance_str(device, "VEN") != NULL &&
++	    fu_device_get_instance_str(device, "DEV") != NULL) {
+ 		if (!fu_device_build_instance_id_full(device,
+ 						      FU_DEVICE_INSTANCE_FLAG_QUIRKS,
+ 						      error,
+@@ -864,6 +867,17 @@ fu_devlink_device_add_json(FuDevice *dev
+ 		fwupd_json_object_add_string(json_obj, "BusName", self->bus_name);
+ 	if (self->dev_name != NULL)
+ 		fwupd_json_object_add_string(json_obj, "DevName", self->dev_name);
++
++	/* instance strings inherited from the parent device, which does not exist under
++	 * emulation */
++	if (fu_device_get_instance_str(device, "VEN") != NULL)
++		fwupd_json_object_add_string(json_obj,
++					     "Ven",
++					     fu_device_get_instance_str(device, "VEN"));
++	if (fu_device_get_instance_str(device, "DEV") != NULL)
++		fwupd_json_object_add_string(json_obj,
++					     "Dev",
++					     fu_device_get_instance_str(device, "DEV"));
+ }
+ 
+ static gboolean
+@@ -872,11 +886,19 @@ fu_devlink_device_from_json(FuDevice *de
+ 	FuDevlinkDevice *self = FU_DEVLINK_DEVICE(device);
+ 	const gchar *bus_name;
+ 	const gchar *dev_name;
++	const gchar *ven;
++	const gchar *dev;
+ 	g_autofree gchar *device_id = NULL;
+ 
+ 	/* devlink-specific properties */
+ 	bus_name = fwupd_json_object_get_string(json_obj, "BusName", NULL);
+ 	dev_name = fwupd_json_object_get_string(json_obj, "DevName", NULL);
++	ven = fwupd_json_object_get_string(json_obj, "Ven", NULL);
++	if (ven != NULL)
++		fu_device_add_instance_str(device, "VEN", ven);
++	dev = fwupd_json_object_get_string(json_obj, "Dev", NULL);
++	if (dev != NULL)
++		fu_device_add_instance_str(device, "DEV", dev);
+ 
+ 	if (bus_name == NULL || dev_name == NULL) {
+ 		g_set_error_literal(error,

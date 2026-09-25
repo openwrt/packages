@@ -1,0 +1,13 @@
+{
+    "git.alwaysSignOff": true,
+    "files.trimTrailingWhitespace": true,
+    "[diff]": {
+        "files.trimTrailingWhitespace": false
+    },
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": true,
+    "files.eol": "\n",
+    "git.inputValidation": true,
+    "git.inputValidationSubjectLength": 80,
+    "git.inputValidationLineLength": 100
+}

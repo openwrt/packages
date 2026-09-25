@@ -1,0 +1,7 @@
+{
+	"name": "dondominio.com",
+	"ipv4": {
+		"url": "http://dondns.dondominio.com/plain/?user=[USERNAME]&password=[PASSWORD]&host=[DOMAIN]&ip=[IP]",
+		"answer": "OK"
+	}
+}

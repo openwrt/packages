@@ -1,0 +1,578 @@
+menu "FFmpeg configuration"
+
+comment "Licensing"
+
+config FFMPEG_GPL
+	bool "Include GPL components (libpostproc, GPL filters)"
+	default y
+	help
+	  Build libffmpeg with --enable-gpl. This adds libpostproc
+	  and the GPL-licensed filters, and the resulting libraries are
+	  distributed under the GPL-2.0-or-later. Kodi requires
+	  libpostproc.
+
+config FFMPEG_VERSION3
+	bool "Allow (L)GPL v3 components"
+	default n
+	help
+	  Sets --enable-version3. Upgrades the licence of the resulting
+	  libraries to (L)GPL-3.0-or-later. Selected automatically by the
+	  TLS backends that require it (see below).
+
+config FFMPEG_NONFREE
+	bool "Allow non-redistributable components"
+	default n
+	help
+	  Sets --enable-nonfree. In almost all cases this prohibits
+	  redistribution of the resulting binaries.
+
+comment "Build properties"
+
+config FFMPEG_X86ASM
+	bool "Compile x86 assembly optimizations"
+	depends on (x86_64 || (i386 && !(TARGET_x86_geode || TARGET_x86_legacy)))
+	default y
+	help
+	  Not available for CPU_TYPE=pentium targets, where NASM cannot
+	  assemble them. This option also applies to libffmpeg-mini, which
+	  has no other options.
+
+config FFMPEG_OPTIMIZE_SIZE
+	bool "Optimize for size instead of speed"
+	default n if x86_64
+	default y
+	help
+	  Sets --enable-small and uses generated instead of hardcoded
+	  tables. When disabled, decoding is faster and the libraries are
+	  larger.
+
+config FFMPEG_PROGRAMS
+	bool "Build the command line programs (ffmpeg, ffprobe)"
+	default y
+	help
+	  When disabled only the shared libraries are built and the
+	  ffmpeg/ffprobe packages cannot be selected.
+
+comment "Hardware acceleration"
+
+config FFMPEG_LIBDRM
+	bool "DRM support (libdrm, needed for DRM_PRIME zero-copy)"
+	default y
+
+config FFMPEG_V4L2_M2M
+	bool "V4L2 mem2mem (stateful) decoders/encoders"
+	default y
+
+config FFMPEG_V4L2_REQUEST
+	bool "V4L2 Request API (stateless) hwaccels"
+	select FFMPEG_LIBDRM
+	default y
+	help
+	  Stateless V4L2 hardware decoding (cedrus, hantro, rkvdec, ...)
+	  exporting DRM_PRIME frames. Requires libdrm and libudev.
+
+# VA-API support is prepared but disabled until a libva package exists in
+# the feeds; uncomment (and the DEPENDS line in the Makefile) once it does.
+#config FFMPEG_VAAPI
+#	bool "VA-API hardware acceleration"
+#	default n
+
+comment "Transport layer security"
+
+choice
+	prompt "TLS backend"
+	default FFMPEG_TLS_MBEDTLS
+	help
+	  mbedTLS is the default because it is the TLS library OpenWrt
+	  itself ships by default (libustream-mbedtls, hostapd-*-mbedtls).
+	  Selecting the backend already present in the image avoids a
+	  second TLS library.
+
+	  Licence: FFmpeg's configure requires --enable-version3 for
+	  mbedTLS, and for OpenSSL 3.x whenever GPL components are
+	  enabled. Together with the GPL option this makes the resulting
+	  libraries GPL-3.0-or-later. GnuTLS carries no such requirement.
+
+	config FFMPEG_TLS_NONE
+		bool "none (no https/tls protocol)"
+
+	config FFMPEG_TLS_GNUTLS
+		bool "GnuTLS"
+
+	config FFMPEG_TLS_OPENSSL
+		bool "OpenSSL"
+		select FFMPEG_VERSION3 if FFMPEG_GPL
+
+	config FFMPEG_TLS_MBEDTLS
+		bool "mbedTLS"
+		select FFMPEG_VERSION3
+endchoice
+
+comment "External libraries"
+
+# libdav1d support is prepared but disabled until a dav1d package exists
+# in the feeds; uncomment (and the DEPENDS line in the Makefile) once it
+# does. Until then AV1 is only decodable by hardware, see the help text.
+#config FFMPEG_LIBDAV1D
+#	bool "AV1 decoding via libdav1d"
+#	default y
+#	help
+#	  FFmpeg has no native software AV1 decoder; its built-in av1
+#	  decoder only drives hardware acceleration (V4L2 Request API,
+#	  VA-API). Without libdav1d, AV1 can only be decoded by hardware
+#	  with an AV1 decoder.
+
+config FFMPEG_LIBOPUS
+	bool "Opus encoding via libopus"
+	default y
+	help
+	  Opus decoding is always available through FFmpeg's native
+	  decoder, which is preferred even when libopus is present.
+	  libopus adds a production-quality encoder; the native Opus
+	  encoder is marked experimental.
+
+config FFMPEG_LIBVORBIS
+	bool "Vorbis encoding via libvorbis"
+	default n
+
+config FFMPEG_LIBVPX
+	bool "VP8/VP9 encoding via libvpx"
+	default n
+	help
+	  VP8 and VP9 decoding is always available through FFmpeg's
+	  native decoders, which are preferred even when libvpx is
+	  present. libvpx therefore only adds the encoders.
+
+config FFMPEG_LIBWEBP
+	bool "WebP encoding via libwebp"
+	default n
+
+config FFMPEG_LIBSPEEX
+	bool "Speex encoding via libspeex"
+	default n
+	help
+	  Speex decoding is always available through FFmpeg's native
+	  decoder, which is preferred even when libspeex is present.
+	  libspeex therefore only adds the encoder.
+
+config FFMPEG_LIBXML2
+	bool "XML parsing via libxml2 (DASH/IMF demuxers)"
+	default n
+	help
+	  The DASH and IMF demuxers are the only users of libxml2 and
+	  are not built without it; there is no native fallback.
+
+config FFMPEG_LAME
+	bool "MP3 encoding via LAME"
+	default y if !SOFT_FLOAT
+	default n
+
+config FFMPEG_SHINE
+	bool "Fixed-point MP3 encoding via libshine"
+	default y if SOFT_FLOAT
+	default n
+
+config FFMPEG_LIBX264
+	bool "H.264 encoding via libx264"
+	depends on FFMPEG_GPL && BUILD_PATENTED
+	default y
+
+config FFMPEG_FDK_AAC
+	bool "AAC encoding via libfdk-aac"
+	depends on FFMPEG_NONFREE && !FFMPEG_GPL
+	default n
+	help
+	  The FDK licence is incompatible with the GPL, so this is only
+	  offered for a non-GPL, nonfree build. The native FFmpeg AAC
+	  encoder is always available.
+
+comment "System libraries"
+
+config FFMPEG_LIBV4L2
+	bool "V4L2 capture device via libv4l2 (pixel format conversion)"
+	default n
+	help
+	  The V4L2 capture/output devices of libavdevice work without
+	  this, using raw ioctls. libv4l2 adds the v4l-utils userspace
+	  layer, mainly libv4lconvert for capture devices producing pixel
+	  formats FFmpeg does not handle natively. Unrelated to hardware
+	  decoding.
+
+config FFMPEG_BZLIB
+	bool "bzip2 support"
+	default y
+	help
+	  Only used by the Matroska demuxer for bzip2-compressed tracks.
+	  Without it such tracks cannot be read; everything else in
+	  Matroska is unaffected.
+
+config FFMPEG_LZMA
+	bool "lzma support"
+	default n
+	help
+	  Only used by the TIFF decoder for LZMA-compressed images.
+
+config FFMPEG_ICONV
+	bool "iconv support (subtitle charset conversion)"
+	default y
+	help
+	  Uses the iconv implementation of the C library; no additional
+	  package is needed on musl.
+
+comment "Components"
+
+config FFMPEG_SELECT_COMPONENTS
+	bool "Manual component selection"
+	default n
+	help
+	  Disabled: every native codec, container format, filter,
+	  protocol and device is built, subject to the licence options
+	  above and BUILD_PATENTED.
+
+	  Enabled: the build starts from --disable-everything and only
+	  the components selected in the options that appear below are
+	  built; every component not selected there is absent from the
+	  libraries. The components of the external libraries and
+	  hardware accelerations selected above are added automatically,
+	  as are the tls and https protocols of the selected TLS backend.
+
+if FFMPEG_SELECT_COMPONENTS
+
+comment "Encoders"
+
+config FFMPEG_ENCODER_ac3
+	bool "AC3"
+
+config FFMPEG_ENCODER_jpegls
+	bool "JPEG-LS"
+
+config FFMPEG_ENCODER_mpeg1video
+	bool "MPEG-1 Video"
+
+config FFMPEG_ENCODER_mpeg2video
+	bool "MPEG-2 Video"
+
+config FFMPEG_ENCODER_mpeg4
+	bool "MPEG-4"
+
+config FFMPEG_ENCODER_pcm_s16be
+	bool "PCM signed 16-bit big-endian"
+
+config FFMPEG_ENCODER_pcm_s16le
+	bool "PCM signed 16-bit little-endian"
+
+config FFMPEG_ENCODER_png
+	bool "PNG"
+	select FFMPEG_ENCODER_zlib
+
+config FFMPEG_ENCODER_vorbis
+	bool "Vorbis"
+
+config FFMPEG_ENCODER_zlib
+	bool "Zlib"
+
+comment "Decoders"
+
+config FFMPEG_DECODER_aac
+	bool "AAC (Advanced Audio Coding)"
+
+config FFMPEG_DECODER_aac_latm
+	bool "AAC LATM"
+
+config FFMPEG_DECODER_adpcm
+	bool "ADPCM (multiple types)"
+
+config FFMPEG_DECODER_ac3
+	bool "AC3"
+
+config FFMPEG_DECODER_alac
+	bool "ALAC"
+
+config FFMPEG_DECODER_amrnb
+	bool "AMR-NB"
+	select FFMPEG_DEMUXER_amr
+
+config FFMPEG_DECODER_amrwb
+	bool "AMR-WB"
+	select FFMPEG_DEMUXER_amr
+
+config FFMPEG_DECODER_ape
+	bool "APE"
+
+config FFMPEG_DECODER_atrac3
+	bool "ATRAC3"
+
+config FFMPEG_DECODER_flac
+	bool "FLAC"
+
+config FFMPEG_DECODER_gif
+	bool "GIF"
+
+config FFMPEG_DECODER_h264
+	bool "H.264"
+	depends on BUILD_PATENTED
+
+config FFMPEG_DECODER_hevc
+	bool "HEVC / H.265 Video"
+	depends on BUILD_PATENTED
+
+config FFMPEG_DECODER_jpegls
+	bool "JPEG-LS"
+
+config FFMPEG_DECODER_mp2
+	bool "MP2 (MPEG Audio Layer 2)"
+
+config FFMPEG_DECODER_mp3
+	bool "MP3 (MPEG Audio Layer 3)"
+
+config FFMPEG_DECODER_mpegvideo
+	bool "MPEG Video"
+
+config FFMPEG_DECODER_mpeg1video
+	bool "MPEG-1 Video"
+
+config FFMPEG_DECODER_mpeg2video
+	bool "MPEG-2 Video"
+
+config FFMPEG_DECODER_mpeg4
+	bool "MPEG-4"
+
+config FFMPEG_DECODER_mpc7
+	bool "Musepack 7"
+	select FFMPEG_DEMUXER_mpc
+
+config FFMPEG_DECODER_mpc8
+	bool "Musepack 8"
+	select FFMPEG_DEMUXER_mpc8
+
+config FFMPEG_DECODER_opus
+	bool "Opus"
+
+config FFMPEG_DECODER_pcm_s16be
+	bool "PCM signed 16-bit big-endian"
+
+config FFMPEG_DECODER_pcm_s16le
+	bool "PCM signed 16-bit little-endian"
+
+config FFMPEG_DECODER_png
+	bool "PNG"
+	select FFMPEG_DECODER_zlib
+
+config FFMPEG_DECODER_vc1
+	bool "VC-1 / WMV9"
+	depends on BUILD_PATENTED
+
+config FFMPEG_DECODER_vorbis
+	bool "Vorbis"
+	select FFMPEG_DEMUXER_ogg
+
+config FFMPEG_DECODER_wavpack
+	bool "Wavpack"
+
+config FFMPEG_DECODER_wmav1
+	bool "WMAv1"
+
+config FFMPEG_DECODER_wmav2
+	bool "WMAv2"
+
+config FFMPEG_DECODER_wmalossless
+	bool "WMA Lossless"
+
+config FFMPEG_DECODER_wmapro
+	bool "WMA Pro"
+
+config FFMPEG_DECODER_zlib
+	bool "Zlib"
+
+comment "Muxers"
+
+config FFMPEG_MUXER_ac3
+	bool "AC3"
+
+config FFMPEG_MUXER_avi
+	bool "AVI"
+
+config FFMPEG_MUXER_h264
+	bool "H.264 Raw Video"
+	depends on BUILD_PATENTED
+
+config FFMPEG_MUXER_hevc
+	bool "HEVC / H265 Raw Video"
+	depends on BUILD_PATENTED
+
+config FFMPEG_MUXER_mp3
+	bool "MP3 (MPEG Audio Layer 3)"
+
+config FFMPEG_MUXER_mp4
+	bool "MP4"
+
+config FFMPEG_MUXER_mpeg1video
+	bool "MPEG-1 Video"
+
+config FFMPEG_MUXER_mpeg2video
+	bool "MPEG-2 Video"
+
+config FFMPEG_MUXER_mpegts
+	bool "MPEG-2 (TS)"
+
+config FFMPEG_MUXER_ogg
+	bool "Ogg"
+
+config FFMPEG_MUXER_rtp
+	bool "RTP"
+
+comment "Demuxers"
+
+config FFMPEG_DEMUXER_aac
+	bool "AAC"
+
+config FFMPEG_DEMUXER_avi
+	bool "AVI (Audio Video Interleave)"
+
+config FFMPEG_DEMUXER_ac3
+	bool "AC3"
+
+config FFMPEG_DEMUXER_aiff
+	bool "AIFF"
+
+config FFMPEG_DEMUXER_amr
+	bool "AMR"
+
+config FFMPEG_DEMUXER_ape
+	bool "APE"
+
+config FFMPEG_DEMUXER_flac
+	bool "FLAC"
+
+config FFMPEG_DEMUXER_h264
+	bool "H.264 Raw Video"
+	depends on BUILD_PATENTED
+
+config FFMPEG_DEMUXER_hevc
+	bool "HEVC / H265 Raw Video"
+	depends on BUILD_PATENTED
+
+config FFMPEG_DEMUXER_matroska
+	bool "Matroska (MKA,MKV)"
+	select FFMPEG_DECODER_zlib
+
+config FFMPEG_DEMUXER_mov
+	bool "MOV/MP4/M4A/3GP/3G2/MJ2"
+	select FFMPEG_DECODER_zlib
+
+config FFMPEG_DEMUXER_mp3
+	bool "MP3 (MPEG Audio Layer 3)"
+
+config FFMPEG_DEMUXER_mpegvideo
+	bool "MPEG Video (Raw)"
+
+config FFMPEG_DEMUXER_mpegps
+	bool "MPEG-2 (PS)"
+
+config FFMPEG_DEMUXER_mpegts
+	bool "MPEG-2 (TS)"
+
+config FFMPEG_DEMUXER_mpc
+	bool "Musepack"
+
+config FFMPEG_DEMUXER_mpc8
+	bool "Musepack 8"
+
+config FFMPEG_DEMUXER_ogg
+	bool "Ogg"
+
+config FFMPEG_DEMUXER_rm
+	bool "RM"
+	help
+	  RealMedia format demuxer
+
+config FFMPEG_DEMUXER_rtsp
+	bool "RTSP"
+	select FFMPEG_DEMUXER_rm
+	select FFMPEG_DEMUXER_sdp
+	select FFMPEG_DEMUXER_rtp
+
+config FFMPEG_DEMUXER_sdp
+	bool "SDP"
+	select FFMPEG_DEMUXER_mpegts
+
+config FFMPEG_DEMUXER_rtp
+	bool "RTP"
+
+config FFMPEG_DEMUXER_vc1
+	bool "VC-1 / WMV9 Raw Video"
+	depends on BUILD_PATENTED
+
+config FFMPEG_DEMUXER_wav
+	bool "WAV"
+
+config FFMPEG_DEMUXER_wv
+	bool "WV"
+
+comment "Parsers"
+
+config FFMPEG_PARSER_aac
+	bool "AAC (Advanced Audio Coding)"
+
+config FFMPEG_PARSER_ac3
+	bool "AC3"
+
+config FFMPEG_PARSER_flac
+	bool "FLAC"
+
+config FFMPEG_PARSER_h264
+	bool "H.264"
+	depends on BUILD_PATENTED
+	select FFMPEG_DECODER_h264
+
+config FFMPEG_PARSER_hevc
+	bool "HEVC / H265"
+	depends on BUILD_PATENTED
+	select FFMPEG_DECODER_hevc
+
+config FFMPEG_PARSER_mpegaudio
+	bool "MPEG Audio"
+
+config FFMPEG_PARSER_mpegvideo
+	bool "MPEG Video"
+
+config FFMPEG_PARSER_mpeg4video
+	bool "MPEG-4 Video"
+
+config FFMPEG_PARSER_opus
+	bool "Opus"
+
+config FFMPEG_PARSER_vc1
+	bool "VC-1 / WMV9"
+	depends on BUILD_PATENTED
+	select FFMPEG_DECODER_vc1
+
+comment "Protocols"
+
+config FFMPEG_PROTOCOL_file
+	bool "file:"
+
+config FFMPEG_PROTOCOL_http
+	bool "http:"
+
+config FFMPEG_PROTOCOL_icecast
+	bool "icecast:"
+	select FFMPEG_PROTOCOL_http
+
+config FFMPEG_PROTOCOL_pipe
+	bool "pipe:"
+
+config FFMPEG_PROTOCOL_rtp
+	bool "rtp:"
+	select FFMPEG_PROTOCOL_udp
+
+config FFMPEG_PROTOCOL_tcp
+	bool "tcp:"
+
+config FFMPEG_PROTOCOL_udp
+	bool "udp:"
+
+
+endif
+
+endmenu

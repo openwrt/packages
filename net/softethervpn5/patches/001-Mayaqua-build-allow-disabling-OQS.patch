@@ -1,0 +1,53 @@
+From 4bb366572d5ede4bcddd68ea5e20709e478327f5 Mon Sep 17 00:00:00 2001
+From: Dominique Martinet <dominique.martinet@atmark-techno.com>
+Date: Wed, 1 Oct 2025 17:41:57 +0900
+Subject: [PATCH] Mayaqua build: allow disabling OQS
+
+SoftEtherVPN version 5.02.5186 enable post-quantum algorithms, but these
+come at a large size increase (after strip, on x86_64, with default
+options as of master):
+- default options: 9.1M
+- new -DOQS_ENABLE=OFF: 762K
+
+Note it is also possible to disable all the algorithms individually by
+passing the (243!) options to cmake -DOQS_ENABLE_KEM_BIKE=OFF
+-DOQS_ENABLE_KEM_FRODOKEM=OFF -DOQS_ENABLE_KEM_NTRUPRIME=OFF ...,
+in which case the binary goes back to a reasonable size of 830K
+
+In the future, it might make sense to add a few settings picking
+"sensible" algorithms, e.g. allow everything for a server build or only
+allow the best algorithms for a lightweight client.
+
+See: #2148
+---
+ src/Mayaqua/CMakeLists.txt | 11 +++++++++--
+ 1 file changed, 9 insertions(+), 2 deletions(-)
+
+--- a/src/Mayaqua/CMakeLists.txt
++++ b/src/Mayaqua/CMakeLists.txt
+@@ -18,9 +18,14 @@ set_target_properties(mayaqua
+ 
+ find_package(OpenSSL REQUIRED)
+ 
+-if(OPENSSL_VERSION VERSION_LESS "3") # Disable oqsprovider when OpenSSL version < 3
+-  add_definitions(-DSKIP_OQS_PROVIDER)
++if(OPENSSL_VERSION VERSION_GREATER_EQUAL "3")
++  set(OQS_ENABLE ON CACHE BOOL "By setting this to OFF, Open Quantum Safe algorithms will not be built in")
+ else()
++  # Disable oqsprovider when OpenSSL version < 3
++  set(OQS_ENABLE OFF)
++endif()
++
++if(OQS_ENABLE)
+   set(OQS_BUILD_ONLY_LIB ON CACHE BOOL "Set liboqs to build only the library (no tests)")
+   set(BUILD_TESTING OFF CACHE BOOL "By setting this to OFF, no tests or examples will be compiled.")
+   set(OQS_PROVIDER_BUILD_STATIC ON CACHE BOOL "Build a static library instead of a shared library") # Build oqsprovider as a static library (defaults to shared)
+@@ -32,6 +37,8 @@ else()
+   target_include_directories(oqsprovider PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/3rdparty/liboqs/include)
+   set_property(TARGET oqsprovider PROPERTY POSITION_INDEPENDENT_CODE ON)
+   target_link_libraries(mayaqua PRIVATE oqsprovider)
++else()
++  add_definitions(-DSKIP_OQS_PROVIDER)
+ endif()
+ 
+ include(CheckSymbolExists)

@@ -1,0 +1,6 @@
+{
+	"name": "freedns.42.pl",
+	"ipv4": {
+		"url": "update_freedns_42_pl.sh"
+	}
+}

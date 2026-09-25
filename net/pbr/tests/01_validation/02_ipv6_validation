@@ -1,0 +1,47 @@
+#!/bin/bash
+# Test: IPv6 address validation and scope detection
+. "$(dirname "$0")/../lib/setup.sh"
+
+oneTimeTearDown() { rm -rf "${MOCK_ROOT:-}"; }
+
+testIpv6Valid() {
+	assertTrue "Loopback" "is_ipv6 '::1'"
+	assertTrue "Link-local" "is_ipv6 'fe80::1'"
+	assertTrue "Documentation prefix" "is_ipv6 '2001:db8::1'"
+	assertTrue "Unique local" "is_ipv6 'fd00::1'"
+	assertTrue "Full address" "is_ipv6 '2001:0db8:85a3::8a2e:0370:7334'"
+	assertTrue "Default route" "is_ipv6 '::/0'"
+}
+
+testIpv6Invalid() {
+	assertFalse "IPv4 address" "is_ipv6 '192.168.1.1'"
+	assertFalse "Plain string" "is_ipv6 'not_ipv6'"
+	assertFalse "Empty string" "is_ipv6 ''"
+	assertFalse "MAC address" "is_ipv6 'AA:BB:CC:DD:EE:FF'"
+}
+
+testIpv6GlobalScope() {
+	assertTrue "Global scope 2001" "is_ipv6_global_scope '2001:db8::1'"
+	assertFalse "Link-local not global" "is_ipv6_global_scope 'fe80::1'"
+	assertFalse "ULA not global" "is_ipv6_global_scope 'fd00::1'"
+}
+
+testIpv6LinkLocal() {
+	assertTrue "Link-local fe80" "is_ipv6_local_link 'fe80::1'"
+	assertFalse "Global not link-local" "is_ipv6_local_link '2001::1'"
+}
+
+testIpv6UniqueLocal() {
+	assertTrue "ULA fd" "is_ipv6_local_unique 'fd00::1'"
+	assertTrue "ULA fc" "is_ipv6_local_unique 'fc00::1'"
+	assertFalse "Link-local not ULA" "is_ipv6_local_unique 'fe80::1'"
+	assertFalse "Global not ULA" "is_ipv6_local_unique '2001::1'"
+}
+
+testIpv6LocalScope() {
+	assertTrue "Link-local is local scope" "is_ipv6_local_scope 'fe80::1'"
+	assertTrue "ULA is local scope" "is_ipv6_local_scope 'fd00::1'"
+	assertFalse "Global not local scope" "is_ipv6_local_scope '2001::1'"
+}
+
+. shunit2

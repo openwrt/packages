@@ -1,0 +1,25 @@
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -48,8 +48,7 @@ optional-dependencies.test = ["tox"]
+ 
+ [tool.setuptools]
+ include-package-data = false
+-script-files = ["apol",
+-                "sediff",
++script-files = ["sediff",
+                 "seinfo",
+                 "seinfoflow",
+                 "sesearch",
+@@ -57,10 +56,10 @@ script-files = ["apol",
+                 "sechecker"]
+ 
+ [tool.setuptools.packages.find]
+-include = ["setools*"]
++include = ["setools", "setools.*"]
+ 
+ [tool.setuptools.package-data]
+-"*" = ["*.css", "*.html", "perm_map", "py.typed"]
++"setools" = ["perm_map", "py.typed"]
+ 
+ [tool.setuptools.exclude-package-data]
+ "*" = ["*.c", "*.pyi", "*.pyx"]

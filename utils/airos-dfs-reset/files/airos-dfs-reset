@@ -1,0 +1,114 @@
+#!/bin/sh
+
+. /lib/functions.sh
+
+log() {
+    local msg="$1"
+    logger -t airos-dfs-reset -s "$msg"
+}
+
+rexec() {
+    local target="$1"
+    local username="$2"
+    local password="$3"
+    local cmd="$4"
+    raw=$(DROPBEAR_PASSWORD="$password" ssh -y $username@$target "$cmd")
+    ssh_result=$?
+}
+
+reset_dfs() {
+    local cmd="/usr/etc/rc.d/rc.softrestart force"
+    rexec $* "$cmd"
+}
+
+get_running_freq() {
+    local cmd="iwconfig ath0 | grep Frequency | awk -F ':' '{print \$3}' | awk '{print \$1}' | sed 's/\.//'"
+
+    rexec $* "$cmd"
+
+    # Append zeroes which are then cut to 4, we have to convert GHz into MHz
+    raw="$raw"000
+
+    running_freq=${raw:0:4}
+}
+
+get_target_freq() {
+    local cmd="grep 'radio.1.freq' /tmp/system.cfg | awk -F '=' '{ print \$2}'"
+    rexec $* "$cmd"
+    target_freq="$raw"
+} 
+
+check_dfs() {
+    local target="$1"
+    local username="$2"
+    local password="$3"
+
+    get_running_freq $target $username $password
+    if [ "$ssh_result" != 0 ]; then
+        return
+    fi
+    get_target_freq $target $username $password
+    if [ "$ssh_result" != 0 ]; then
+        return
+    fi
+    log "Running freq: $running_freq - Target freq: $target_freq"
+
+    [ "$running_freq" == "$target_freq" ]
+}
+
+
+reset_allowed() {
+    local daytime_limit="$1"
+    local start="$(echo $daytime_limit | awk -F '-' '{print $1'})"
+    local end="$(echo $daytime_limit | awk -F '-' '{print $2'})"
+    local cur="$(date +%H)"
+    [ "$cur" -ge "$start" ] && [ "$cur" -le "$end" ]
+}
+
+handle_device() {
+    local device="$1"
+    config_get target "$device" target
+    config_get username "$device" username
+    config_get password "$device" password
+    config_get daytime_limit "$device" daytime_limit "0-23"
+
+    ssh_result=0
+
+    log "Checking Device $device"
+
+    check_dfs $target $username $password
+    freqmatch=$?
+
+    if [ "$ssh_result" != 0 ]; then
+        log "ssh exited non-zero - connect timeout?"
+        return
+    elif [ "$freqmatch" == 0 ]; then
+        log "Frequency is matching. No radar event fired"
+    else
+        log "Frequency doesnt match. Looks like DFS activity :("
+        if reset_allowed $daytime_limit; then
+            log "Initiating reset"
+            reset_dfs $target $username $password
+            log "Waiting $cfg_reset_sleep seconds after reset"
+            sleep $cfg_reset_sleep
+        else
+            log "Resetting is forbidden at this daytime"
+        fi
+    fi
+}
+
+main() {
+    log "started!"
+
+    config_load airos-dfs-reset
+    config_get cfg_interval general interval 600
+    config_get cfg_reset_sleep general reset_sleep 120
+
+    while :;
+    do
+        config_foreach handle_device device
+        sleep $cfg_interval
+    done
+}
+
+main

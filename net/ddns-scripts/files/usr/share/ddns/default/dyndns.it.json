@@ -1,0 +1,7 @@
+{
+	"name": "dyndns.it",
+	"ipv4": {
+		"url": "http://[USERNAME]:[PASSWORD]@update.dyndns.it/nic/update?system=dyndns&hostname=[DOMAIN]&myip=[IP]",
+		"answer": "good|nochg"
+	}
+}

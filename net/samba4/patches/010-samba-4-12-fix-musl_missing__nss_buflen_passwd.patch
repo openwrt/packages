@@ -1,0 +1,13 @@
+--- a/lib/util/util_paths.c
++++ b/lib/util/util_paths.c
+@@ -28,6 +28,10 @@
+ #include "system/passwd.h"
+ #include "system/filesys.h"
+ 
++#if !defined(__GLIBC__) 
++	#define NSS_BUFLEN_PASSWD 1024
++#endif
++
+ /**
+  * @brief Returns an absolute path to a file in the Samba modules directory.
+  *

@@ -1,0 +1,10 @@
+--- a/activate.c
++++ b/activate.c
+@@ -103,7 +103,6 @@ error:
+ 	switch (errsave) {
+ 	case EAGAIN: /* Interrupted by signal. */
+ 	case EBUSY: /* Affinity change already in progress. */
+-	case EINVAL: /* IRQ would be bound to no CPU. */
+ 	case ERANGE: /* CPU in mask is offline. */
+ 	case ENOMEM: /* Kernel cannot allocate CPU mask. */
+ 		/* Do not blacklist the IRQ on transient errors. */

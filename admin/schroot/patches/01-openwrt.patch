@@ -1,0 +1,169 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -210,8 +210,8 @@ endif(BUILD_PAM)
+ set(BLOCKDEV_DEFAULT ON)
+ 
+ # LVM snapshot mount feature
+-find_program(LVCREATE_EXECUTABLE lvcreate PATHS /sbin /usr/sbin /usr/local/sbin)
+-find_program(LVREMOVE_EXECUTABLE lvremove PATHS /sbin /usr/sbin /usr/local/sbin)
++#find_program(LVCREATE_EXECUTABLE lvcreate PATHS /sbin /usr/sbin /usr/local/sbin)
++#find_program(LVREMOVE_EXECUTABLE lvremove PATHS /sbin /usr/sbin /usr/local/sbin)
+ set(LVMSNAP_DEFAULT OFF)
+ if (LVCREATE_EXECUTABLE AND LVREMOVE_EXECUTABLE)
+   set (LVMSNAP_DEFAULT ON)
+@@ -224,7 +224,7 @@ if (lvm-snapshot)
+ endif(lvm-snapshot)
+ 
+ # ZFS snapshot mount feature
+-find_program(ZFS_EXECUTABLE zfs PATHS /sbin /usr/sbin /usr/local/sbin)
++#find_program(ZFS_EXECUTABLE zfs PATHS /sbin /usr/sbin /usr/local/sbin)
+ set(ZFSSNAP_DEFAULT OFF)
+ if (ZFS_EXECUTABLE)
+   set (ZFSSNAP_DEFAULT ON)
+@@ -237,7 +237,7 @@ if (zfs-snapshot)
+ endif(zfs-snapshot)
+ 
+ # Btrfs snapshot mount feature
+-find_program(BTRFS_EXECUTABLE btrfs PATHS /sbin /usr/sbin /usr/local/sbin)
++#find_program(BTRFS_EXECUTABLE btrfs PATHS /sbin /usr/sbin /usr/local/sbin)
+ set(BTRFSSNAP_DEFAULT OFF)
+ if (BTRFS_EXECUTABLE)
+   set (BTRFSSNAP_DEFAULT ON)
+@@ -310,15 +310,9 @@ include_directories(${PROJECT_BINARY_DIR
+                     ${PROJECT_BINARY_DIR}
+                     ${PROJECT_SOURCE_DIR})
+ 
+-enable_testing()
+-
+ add_subdirectory(sbuild)
+ add_subdirectory(bin)
+-add_subdirectory(test)
+-add_subdirectory(doc)
+ add_subdirectory(etc)
+-add_subdirectory(po)
+-add_subdirectory(man)
+ 
+ add_custom_target(check-news
+   COMMAND if grep -q "Welcome to ${CMAKE_PROJECT_NAME} ${GIT_RELEASE_VERSION}" "${PROJECT_SOURCE_DIR}/NEWS" \; then echo "NEWS current version ${GIT_RELEASE_VERSION}" \; else echo "NEWS current version does not match release version ${GIT_RELEASE_VERSION}" \; exit 1 \; fi
+--- a/bin/schroot-base/schroot-base-run.h
++++ b/bin/schroot-base/schroot-base-run.h
+@@ -61,8 +61,8 @@ namespace schroot_base
+         std::cout.imbue(std::locale());
+         std::cerr.imbue(std::locale());
+ 
+-        bindtextdomain (SBUILD_MESSAGE_CATALOGUE, SCHROOT_LOCALE_DIR);
+-        textdomain (SBUILD_MESSAGE_CATALOGUE);
++        //bindtextdomain (SBUILD_MESSAGE_CATALOGUE, SCHROOT_LOCALE_DIR);
++        //textdomain (SBUILD_MESSAGE_CATALOGUE);
+ 
+         typename options_type::ptr opts(new options_type);
+         main_type kit(opts);
+--- a/sbuild/sbuild-feature.h
++++ b/sbuild/sbuild-feature.h
+@@ -24,6 +24,7 @@
+ #include <string>
+ 
+ #include <boost/format.hpp>
++#include <libintl.h>
+ 
+ namespace sbuild
+ {
+--- a/etc/setup.d/20copyfiles
++++ b/etc/setup.d/20copyfiles
+@@ -39,9 +39,9 @@ copy_file()
+         if [ -e "$2" ]; then
+ 
+             # Device and inode
+-            da=$(/usr/bin/stat --format="%d %i" "$1")
++            da=$(/bin/stat --format="%d %i" "$1")
+             # This one can fail since it might not exist yet
+-            db=$(/usr/bin/stat --format="%d %i" "$2" 2>/dev/null || :)
++            db=$(/bin/stat --format="%d %i" "$2" 2>/dev/null || :)
+ 
+             if [ "$da" = "$db" ]; then
+                 COPY="false"
+--- a/etc/setup.d/20nssdatabases
++++ b/etc/setup.d/20nssdatabases
+@@ -29,7 +29,7 @@ set -e
+ dup_nss()
+ {
+     info "Copying $1 database to $2"
+-    getent "$1" > "$2"
++    cat "/etc/$1" > "$2"
+ }
+ 
+ if [ $STAGE = "setup-start" ] || [ $STAGE = "setup-recover" ]; then
+@@ -42,9 +42,9 @@ if [ $STAGE = "setup-start" ] || [ $STAG
+                 fi
+ 
+                 # Device and inode
+-                dr=$(/usr/bin/stat --format="%d %i" "/etc/$db")
++                dr=$(/bin/stat --format="%d %i" "/etc/$db")
+                 # This one can fail since it might not exist yet
+-                dc=$(/usr/bin/stat --format="%d %i" "${CHROOT_PATH}/etc/$db" 2>/dev/null || :)
++                dc=$(/bin/stat --format="%d %i" "${CHROOT_PATH}/etc/$db" 2>/dev/null || :)
+ 
+                 # If the database inside and outside the chroot is the
+                 # same, it's very likely that dup_nss would blank the
+--- a/etc/profile-templates/all/all/nssdatabases
++++ b/etc/profile-templates/all/all/nssdatabases
+@@ -3,5 +3,5 @@
+ # <database name>
+ passwd
+ shadow
+-group
+-gshadow
++#group
++#gshadow
+--- a/etc/profile-templates/buildd/all/nssdatabases
++++ b/etc/profile-templates/buildd/all/nssdatabases
+@@ -3,5 +3,5 @@
+ # <database name>
+ passwd
+ shadow
+-group
+-gshadow
++#group
++#gshadow
+--- a/etc/profile-templates/default/all/nssdatabases
++++ b/etc/profile-templates/default/all/nssdatabases
+@@ -1,4 +1,4 @@
+ services
+ protocols
+-networks
++#networks
+ hosts
+--- a/etc/profile-templates/desktop/all/nssdatabases
++++ b/etc/profile-templates/desktop/all/nssdatabases
+@@ -1,4 +1,4 @@
+ services
+ protocols
+-networks
++#networks
+ hosts
+--- a/etc/profile-templates/default/linux/fstab
++++ b/etc/profile-templates/default/linux/fstab
+@@ -7,7 +7,7 @@
+ # to run additional services in the chroot.  However, note that this
+ # may potentially cause undesirable behaviour on upgrades, such as
+ # killing services on the host.
+-#/run           /run            none    rw,bind         0       0
++/run           /run            none    rw,bind         0       0
+ #/run/lock      /run/lock       none    rw,bind         0       0
+-#/dev/shm       /dev/shm        none    rw,bind         0       0
+-#/run/shm       /run/shm        none    rw,bind         0       0
++/tmp/shm       /dev/shm        none    rw,bind         0       0
++/tmp/shm       /run/shm        none    rw,bind         0       0
+--- a/etc/profile-templates/desktop/linux/fstab
++++ b/etc/profile-templates/desktop/linux/fstab
+@@ -12,7 +12,7 @@
+ # to run additional services in the chroot.  However, note that this
+ # may potentially cause undesirable behaviour on upgrades, such as
+ # killing services on the host.
+-#/run           /run            none    rw,bind         0       0
++/run           /run            none    rw,bind         0       0
+ #/run/lock      /run/lock       none    rw,bind         0       0
+-#/dev/shm       /dev/shm        none    rw,bind         0       0
+-#/run/shm       /run/shm        none    rw,bind         0       0
++/tmp/shm       /dev/shm        none    rw,bind         0       0
++/tmp/shm       /run/shm        none    rw,bind         0       0

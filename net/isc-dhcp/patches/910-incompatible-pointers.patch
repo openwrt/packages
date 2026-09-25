@@ -1,0 +1,45 @@
+--- a/server/dhcpv6.c
++++ b/server/dhcpv6.c
+@@ -5843,14 +5843,29 @@ exit:
+ 	option_state_dereference(&host_opt_state, MDL);
+ }
+ 
++typedef void ia_na_match_t(
++	const struct data_string *client_id,
++	const struct data_string *iaaddr,
++	struct iasubopt *lease
++	);
++
++typedef void ia_na_nomatch_t(
++	const struct data_string *client_id,
++	const struct data_string *iaaddr,
++	u_int32_t *data,
++	struct packet *packet,
++	char *reply_data,
++	int *reply_ofs,
++	int reply_data_sz);
++
+ static void
+ iterate_over_ia_na(struct data_string *reply_ret,
+ 		   struct packet *packet,
+ 		   const struct data_string *client_id,
+ 		   const struct data_string *server_id,
+ 		   const char *packet_type,
+-		   void (*ia_na_match)(),
+-		   void (*ia_na_nomatch)())
++		   ia_na_match_t ia_na_match,
++		   ia_na_nomatch_t ia_na_nomatch)
+ {
+ 	struct option_state *opt_state;
+ 	struct host_decl *packet_host;
+@@ -6351,8 +6366,8 @@ iterate_over_ia_pd(struct data_string *r
+ 		   const struct data_string *client_id,
+ 		   const struct data_string *server_id,
+ 		   const char *packet_type,
+-		   void (*ia_pd_match)(),
+-		   void (*ia_pd_nomatch)())
++		   ia_na_match_t ia_pd_match,
++		   ia_na_nomatch_t ia_pd_nomatch)
+ {
+ 	struct data_string reply_new;
+ 	int reply_len;

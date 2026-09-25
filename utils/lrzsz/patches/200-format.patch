@@ -1,0 +1,73 @@
+--- a/lib/long-options.c
++++ b/lib/long-options.c
+@@ -22,6 +22,7 @@
+ #endif
+ 
+ #include <stdio.h>
++#include <stdlib.h>
+ #include <getopt.h>
+ #include "long-options.h"
+ 
+--- a/src/lrz.c
++++ b/src/lrz.c
+@@ -2296,7 +2296,7 @@ exec2(const char *s)
+ 	if (*s == '!')
+ 		++s;
+ 	io_mode(0,0);
+-	execl("/bin/sh", "sh", "-c", s);
++	execl("/bin/sh", "sh", "-c", s, NULL);
+ 	zpfatal("execl");
+ 	exit(1);
+ }
+--- a/src/lsyslog.c
++++ b/src/lsyslog.c
+@@ -22,6 +22,7 @@
+ #ifdef ENABLE_SYSLOG
+ #include "zglobal.h"
+ #include <pwd.h>
++#include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+ #endif
+--- a/src/lsz.c
++++ b/src/lsz.c
+@@ -1988,7 +1988,7 @@ zsendfdata (struct zm_fileinfo *zi)
+ 		blklen = calc_blklen (total_sent);
+ 		total_sent += blklen + OVERHEAD;
+ 		if (Verbose > 2 && blklen != old)
+-			vstringf (_("blklen now %d\n"), blklen);
++			vstringf (_("blklen now %zu\n"), blklen);
+ #ifdef HAVE_MMAP
+ 		if (mm_addr) {
+ 			if (zi->bytes_sent + blklen < mm_size)
+--- a/src/zm.c
++++ b/src/zm.c
+@@ -453,7 +453,7 @@ zsda32(const char *buf, size_t length, i
+ 	int c;
+ 	unsigned long crc;
+ 	int i;
+-	VPRINTF(3,("zsdat32: %d %s", length, Zendnames[(frameend-ZCRCE)&3]));
++	VPRINTF(3,("zsdat32: %zu %s", length, Zendnames[(frameend-ZCRCE)&3]));
+ 
+ 	crc = 0xFFFFFFFFL;
+ 	zsendline_s(buf,length);
+--- a/src/zreadline.c
++++ b/src/zreadline.c
+@@ -68,7 +68,7 @@ readline_internal(unsigned int timeout)
+ 		else if (n==0)
+ 			n=1;
+ 		if (Verbose > 5)
+-			vstringf("Calling read: alarm=%d  Readnum=%d ",
++			vstringf("Calling read: alarm=%u  Readnum=%zu ",
+ 			  n, readline_readnum);
+ 		signal(SIGALRM, zreadline_alarm_handler); 
+ #ifdef HAVE_SIGINTERRUPT
+@@ -77,7 +77,7 @@ readline_internal(unsigned int timeout)
+ 		alarm(n);
+ 	}
+ 	else if (Verbose > 5)
+-		vstringf("Calling read: Readnum=%d ",
++		vstringf("Calling read: Readnum=%zu ",
+ 		  readline_readnum);
+ 
+ 	readline_ptr=readline_buffer;

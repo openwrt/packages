@@ -1,0 +1,46 @@
+#!/bin/sh
+
+SOCKET="/var/run/gpsd.sock"
+
+trap_with_arg() {
+	func="$1" ; shift
+	for sig; do
+		# shellcheck disable=SC2064
+		trap "$func $sig" "$sig"
+	done
+}
+
+func_trap() {
+	logger -t "gpsd-wrapper[$$]" "Sending signal ${1}..."
+	kill "-${1}" "$CHILD" 2>/dev/null
+}
+
+wait_for_socket_and_hotplug() {
+	local count=0
+	while [ $count -lt 15 ]; do
+		[ -S "$SOCKET" ] && break
+		sleep 1
+		count=$((count + 1))
+	done
+
+	if [ -S "$SOCKET" ]; then
+		logger -t "gpsd-wrapper[$$]" "Socket ready, sending hotplug call"
+		env -i ACTION="STARTED" /sbin/hotplug-call gpsd
+	else
+		logger -t "gpsd-wrapper[$$]" \
+			"Socket $SOCKET not ready after ${count}s, hotplug skipped"
+	fi
+}
+
+main() {
+	trap_with_arg func_trap INT TERM KILL
+
+	/usr/sbin/gpsd "$@" &
+	CHILD="$!"
+
+	wait_for_socket_and_hotplug
+
+	wait "$CHILD"
+}
+
+main "$@"

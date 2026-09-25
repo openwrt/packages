@@ -1,0 +1,51 @@
+From 443cdb4c9f0ca20466f6ae31a81047bfeb95825c Mon Sep 17 00:00:00 2001
+From: Rob White <rob@blue-wave.net>
+Date: Thu, 6 Aug 2026 21:57:14 +0000
+Subject: [PATCH] Fix - do not run get_current_setup until after version
+ argument
+
+get_current_setup() runs before any argument is parsed, so mesh11sd -v
+and mesh11sd -h collect the whole runtime environment first. That
+includes refresh_bridgemac(), which calls wait_for_interface() for
+br-lan; when that interface is not up, the poll loop runs for the full
+interface_timeout, ten seconds by default.
+
+On a running router br-lan is up, the loop exits on its first iteration
+and the delay is invisible. It shows up wherever the interface is absent
+or still coming up, such as the OpenWrt package CI, which probes every
+installed executable for its version with a ten second timeout.
+
+Handle the informational options first and exit, then run the setup for
+the options that need it.
+
+Upstream-Status: Backport [https://github.com/openNDS/mesh11sd/commit/443cdb4c9f0ca20466f6ae31a81047bfeb95825c]
+---
+--- a/src/mesh11sd
++++ b/src/mesh11sd
+@@ -5976,8 +5976,6 @@ else
+ 	mesh11sdpid=$(pgrep -f "/bin/sh /usr/sbin/mesh11sd")
+ fi
+ 
+-get_current_setup 2> /dev/null
+-
+ if [ -z "$1" ] || [ "$1" = "-h" ] || [ $1 = "--help" ] || [ $1 = "help" ]; then
+ 	echo "
+   Usage: mesh11sd [option] [argument...]]
+@@ -6153,11 +6151,16 @@ if [ -z "$1" ] || [ "$1" = "-h" ] || [ $
+   For further documentation, see: https://github.com/openNDS/mesh11sd#readme
+ 
+ "
++	exit 0
+ 
+ elif [ "$1" = "-v" ] || [ $1 = "--version" ] || [ $1 = "version" ]; then
+ 	echo "mesh11sd version $version"
++	exit 0
++fi
++
++get_current_setup 2> /dev/null
+ 
+-elif [ "$1" = "debuglevel" ]; then
++if [ "$1" = "debuglevel" ]; then
+ 
+ 	if [ -z "$2" ];then
+ 		echo "$debuglevel"

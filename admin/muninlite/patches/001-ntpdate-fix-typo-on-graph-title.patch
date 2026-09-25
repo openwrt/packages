@@ -1,0 +1,18 @@
+From 74927fc6e7d2b5475d4b8d4bc426b55d23c67be9 Mon Sep 17 00:00:00 2001
+From: "Kim B. Heino" <b@bbbs.net>
+Date: Sun, 22 Aug 2021 19:37:40 +0300
+Subject: [PATCH 1/5] ntpdate: fix typo on graph title
+
+---
+ plugins/ntpdate | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/plugins/ntpdate
++++ b/plugins/ntpdate
+@@ -1,5 +1,5 @@
+ config_ntpdate() {
+-  echo "graph_title NTP offset and dealy to peer $NTP_PEER"
++  echo "graph_title NTP offset and delay to peer $NTP_PEER"
+   echo "graph_args --base 1000 --vertical-label msec"
+   echo "graph_category time"
+   echo "offset.label Offset"

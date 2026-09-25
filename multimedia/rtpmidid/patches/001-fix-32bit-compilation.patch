@@ -1,0 +1,32 @@
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Tue, 11 Feb 2026 00:00:00 +0000
+Subject: [PATCH] formatterhelper: fix compilation on 32-bit platforms
+
+On 32-bit platforms, size_t and ssize_t are typically typedefs for
+unsigned int and int respectively, which already have built-in
+formatters in std::format and fmt::format.
+
+Defining duplicate formatters causes compile-time format string
+checking to fail with errors like:
+  error: call to non-'constexpr' function
+    'void std::__format::__unmatched_left_brace_in_format_string()'
+
+Fix this by only defining the custom size_t/ssize_t formatters on
+64-bit platforms where they are distinct types.
+
+Fixes: https://github.com/davidmoreno/rtpmidid/issues/138
+
+--- a/include/rtpmidid/formatterhelper.hpp
++++ b/include/rtpmidid/formatterhelper.hpp
+@@ -80,5 +80,11 @@
+     }                                                                          \
+   }
+ 
++// Only define size_t and ssize_t formatters on 64-bit platforms.
++// On 32-bit platforms, size_t is unsigned int and ssize_t is int,
++// which already have built-in formatters in std::format/fmt::format.
++// Defining duplicate formatters causes compile-time format checking errors.
++#if __SIZEOF_POINTER__ == 8
+ BASIC_FORMATTER(size_t, "{}", (uint32_t)v);
+ BASIC_FORMATTER(ssize_t, "{}", (int32_t)v);
++#endif

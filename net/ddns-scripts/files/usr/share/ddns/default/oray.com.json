@@ -1,0 +1,6 @@
+{
+	"name": "oray.com",
+	"ipv4": {
+		"url": "http://[USERNAME]:[PASSWORD]@ddns.oray.com/ph/update?hostname=[DOMAIN]&myip=[IP]"
+	}
+}

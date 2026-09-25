@@ -1,0 +1,22 @@
+--- a/m4/stdint.m4
++++ b/m4/stdint.m4
+@@ -15,7 +15,7 @@ AC_DEFUN_ONCE([gl_STDINT_H],
+   AC_REQUIRE([AC_CANONICAL_HOST]) dnl for cross-compiles
+ 
+   AC_REQUIRE([gl_LIMITS_H])
+-  AC_REQUIRE([gt_TYPE_WINT_T])
++  AC_REQUIRE([gt_TYPE_WINT_T_FO])
+ 
+   dnl Check for long long int and unsigned long long int.
+   AC_REQUIRE([AC_TYPE_LONG_LONG_INT])
+--- a/m4/wint_t.m4
++++ b/m4/wint_t.m4
+@@ -9,7 +9,7 @@ dnl Test whether <wchar.h> has the 'wint
+ dnl <wchar.h> or <wctype.h> would, if present, override 'wint_t'.
+ dnl Prerequisite: AC_PROG_CC
+ 
+-AC_DEFUN([gt_TYPE_WINT_T],
++AC_DEFUN([gt_TYPE_WINT_T_FO],
+ [
+   AC_CACHE_CHECK([for wint_t], [gt_cv_c_wint_t],
+     [AC_COMPILE_IFELSE(

@@ -1,0 +1,9 @@
+{
+	"name": "godaddy.com-v1",
+	"ipv4": {
+		"url": "update_godaddy_com_v1.sh"
+	},
+	"ipv6": {
+		"url": "update_godaddy_com_v1.sh"
+	}
+}

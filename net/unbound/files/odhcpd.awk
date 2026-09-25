@@ -1,0 +1,262 @@
+#!/usr/bin/awk
+##############################################################################
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 2 as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# Copyright (C) 2016 Eric Luehrsen
+#
+##############################################################################
+#
+# Turn DHCP records into meaningful A, AAAA, and PTR records. Also lift a
+# function from dnsmasq and use DHCPv4 MAC to find IPV6 SLAAC hosts.
+#
+# External Parameters
+#   "conffile" = Unbound configuration left for a restart
+#   "pipefile" = DNS entries for unbound-control standard input
+#   "domain" = text domain suffix
+#   "bslaac" = boolean, use DHCPv4 MAC to find GA and ULA IPV6 SLAAC
+#   "bisolt" = boolean, format <host>.<network>.<domain>. so you can isolate
+#   "bconf"  = boolean, write conf file with pipe records
+#   "exclude_ipv6_ga" = boolean, exclude IPv6 GA addresses from local-data
+#
+##############################################################################
+
+/^#/ {
+  # We need to pick out DHCP v4 or v6 records
+  net = $2 ; id = $3 ; cls = $4 ; hst = $5 ; adr = $9 ; adr2 = $10
+  cdr = adr ;
+  cdr2 = adr2 ;
+  sub( /\/.*/, "", adr ) ;
+  sub( /.*\//, "", cdr ) ;
+  sub( /\/.*/, "", adr2 ) ;
+  sub( /.*\//, "", cdr2 ) ;
+  gsub( /_/, "-", hst ) ;
+
+  if ( hst !~ /^[[:alnum:]]([-[:alnum:]]*[[:alnum:]])?$/ ) {
+    # that is not a valid host name (RFC1123)
+    # above replaced common error of "_" in host name with "-"
+    hst = "-" ;
+  }
+
+  if ( bisolt == 1 ) {
+    # TODO: this might be better with a substitution option,
+    # or per DHCP pool do-not-DNS option, but its getting busy here.
+    fqdn = net
+    gsub( /\./, "-", fqdn ) ;
+    fqdn = tolower( hst "." fqdn "." domain ) ;
+  }
+
+  else {
+    fqdn = tolower( hst "." domain ) ;
+  }
+
+  if ((cls == "ipv4") && (hst != "-") && (cdr == 32) && (NF == 9)) {
+    # IPV4 ; only for provided hostnames and full /32 assignments
+    # NF=9 ; odhcpd errata in field format without host name
+    ptr = adr ; qpr = "" ; split( ptr, ptrarr, "." ) ;
+    slaac = slaac_eui64( id ) ;
+
+    if ( bconf == 1 ) {
+      x = ( "local-data: \"" fqdn ". 300 IN A " adr "\"" ) ;
+      y = ( "local-data-ptr: \"" adr " 300 " fqdn "\"" ) ;
+      print ( x "\n" y "\n" ) > conffile ;
+    }
+
+    # always create the pipe file
+    for( i=1; i<=4; i++ ) { qpr = ( ptrarr[i] "." qpr) ; }
+    x = ( fqdn ". 300 IN A " adr ) ;
+    y = ( qpr "in-addr.arpa. 300 IN PTR " fqdn ) ;
+    print ( x "\n" y ) > pipefile ;
+
+    if (( bslaac == 1 ) && ( slaac != 0 )) {
+      # UCI option to discover IPV6 routed SLAAC addresses
+      # NOT TODO - ping probe take too long when added in awk-rule loop
+      cmd = ( "ip -6 --oneline route show dev " net ) ;
+
+      while ( ( cmd | getline adr ) > 0 ) {
+        if (( substr( adr, 1, 5 ) <= "fdff:" ) \
+        && ( index( adr, "::/" ) != 0 ) \
+        && ( index( adr, "anycast" ) == 0 ) \
+        && ( index( adr, "via" ) == 0 )) {
+          if ( exclude_ipv6_ga == 1 && ipv6_in_range(adr) ) {
+	    printf "Excluding GA IPv6 address: %s for %s\n", \
+		   adr, fqdn | "logger -t unbound-odhcpd"
+            continue
+          }
+          sub( /\/.*/, "", adr ) ;
+          adr = ( adr slaac ) ;
+
+          if ( split( adr, tmp0, ":" ) > 8 ) {
+            sub( "::", ":", adr ) ;
+          }
+
+          if ( bconf == 1 ) {
+            x = ( "local-data: \"" fqdn ". 300 IN AAAA " adr "\"" ) ;
+            y = ( "local-data-ptr: \"" adr " 300 " fqdn "\"" ) ;
+            print ( x "\n" y "\n" ) > conffile ;
+          }
+
+          # always create the pipe file
+          qpr = ipv6_ptr( adr ) ;
+          x = ( fqdn ". 300 IN AAAA " adr ) ;
+          y = ( qpr ". 300 IN PTR " fqdn ) ;
+          print ( x "\n" y ) > pipefile ;
+        }
+      }
+
+      close( cmd ) ;
+    }
+  }
+
+  else if ((cls != "ipv4") && (hst != "-") && (9 <= NF) && (NF <= 10)) {
+    if (cdr == 128) {
+      if ( exclude_ipv6_ga == 1 && ipv6_in_range(adr) ) {
+        printf "Excluding GA IPv6 address: %s for %s\n", \
+	       adr, fqdn | "logger -t unbound-odhcpd"
+      }
+      else {
+      if ( bconf == 1 ) {
+        x = ( "local-data: \"" fqdn ". 300 IN AAAA " adr "\"" ) ;
+        y = ( "local-data-ptr: \"" adr " 300 " fqdn "\"" ) ;
+        print ( x "\n" y "\n" ) > conffile ;
+      }
+
+      # only for provided hostnames and full /128 assignments
+      qpr = ipv6_ptr( adr ) ;
+      x = ( fqdn ". 300 IN AAAA " adr ) ;
+      y = ( qpr ". 300 IN PTR " fqdn ) ;
+      print ( x "\n" y ) > pipefile ;
+    }
+    }
+
+    if (cdr2 == 128) {
+      if ( exclude_ipv6_ga == 1 && ipv6_in_range(adr2) ) {
+        printf "Excluding GA IPv6 address: %s for %s\n", \
+	       adr2, fqdn | "logger -t unbound-odhcpd"
+      }
+      else {
+      if ( bconf == 1 ) {
+        x = ( "local-data: \"" fqdn ". 300 IN AAAA " adr2 "\"" ) ;
+        y = ( "local-data-ptr: \"" adr2 " 300 " fqdn "\"" ) ;
+        print ( x "\n" y "\n" ) > conffile ;
+      }
+
+      # odhcp puts GA and ULA on the same line (position 9 and 10)
+      qpr2 = ipv6_ptr( adr2 ) ;
+      x = ( fqdn ". 300 IN AAAA " adr2 ) ;
+      y = ( qpr2 ". 300 IN PTR " fqdn ) ;
+      print ( x "\n" y ) > pipefile ;
+    }
+    }
+  }
+
+  else {
+    # dump non-conforming lease records
+  }
+}
+
+##############################################################################
+
+function ipv6_ptr( ipv6, arpa, ary, end, m, n, new6, sz, start ) {
+  # IPV6 colon flexibility is a challenge when creating [ptr].ip6.arpa.
+  sz = split( ipv6, ary, ":" ) ; end = 9 - sz ;
+
+  for( m=1; m<=sz; m++ ) {
+    if( length(ary[m]) == 0 ) {
+      for( n=1; n<=end; n++ ) { ary[m] = ( ary[m] "0000" ) ; }
+    }
+
+    else {
+      ary[m] = substr( ( "0000" ary[m] ), length( ary[m] )+5-4 ) ;
+    }
+  }
+
+  new6 = ary[1] ;
+  for( m = 2; m <= sz; m++ ) { new6 = ( new6 ary[m] ) ; }
+  start = length( new6 ) ;
+  for( m=start; m>0; m-- ) { arpa = ( arpa substr( new6, m, 1 ) ) ; } ;
+  gsub( /./, "&.", arpa ) ; arpa = ( arpa "ip6.arpa" ) ;
+
+  return arpa ;
+}
+
+##############################################################################
+
+function slaac_eui64( mac,    ary, glbit, eui64 ) {
+  # Remove any colons from mac
+  gsub(":", "", mac) ;
+
+  if ( length(mac) >= 12 ) {
+    # RFC2373 and use DHCPv4 registered MAC to find SLAAC addresses
+    split( mac , ary , "" ) ;
+    glbit = ( "0x" ary[2] ) ;
+    glbit = sprintf( "%d", glbit ) ;
+    glbit = or( glbit, 2 ) ;
+    ary[2] = sprintf( "%x", glbit ) ;
+    eui64 = ( ary[1] ary[2] ary[3] ary[4] ":" ary[5] ary[6] "ff:fe" ) ;
+    eui64 = ( eui64 ary[7] ary[8] ":" ary[9] ary[10]  ary[11] ary[12] ) ;
+  }
+
+  else {
+    eui64 = 0 ;
+  }
+
+  return eui64 ;
+}
+
+##############################################################################
+
+function normalize_ipv6(ip, parts, normalized) {
+  # Remove any prefix length
+  sub(/\/.*/, "", ip);
+  
+  # Handle compressed notation (::)
+  if (index(ip, "::") > 0) {
+    split(ip, parts, "::");
+    # Count colons to determine how many zero groups to insert
+    gsub(/:/, ":", parts[1]);
+    if (parts[2] != "") gsub(/:/, ":", parts[2]);
+    missing = 8 - (split(parts[1], tmp1, ":") + split(parts[2], tmp2, ":"));
+    
+    # Build normalized address
+    normalized = parts[1];
+    for (i = 0; i < missing; i++) normalized = normalized ":0";
+    if (parts[2] != "") normalized = normalized ":" parts[2];
+  } else {
+    normalized = ip;
+  }
+  
+  # Fill each group with leading zeros
+  split(normalized, parts, ":");
+  normalized = "";
+  for (i = 1; i <= length(parts); i++) {
+    if (parts[i] == "") parts[i] = "0";
+    while (length(parts[i]) < 4) {
+      parts[i] = "0" parts[i];
+    }
+    if (i > 1) normalized = normalized ":";
+    normalized = normalized parts[i];
+  }
+  
+  return normalized;
+}
+
+function ipv6_in_range(ip) {
+  # Normalize the address first
+  ip = normalize_ipv6(ip);
+  
+  # Check if it's in 2000::/3 range
+  # This covers 2000:: to 3fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
+  first_group = substr(ip, 1, 4);
+  first_digit = substr(first_group, 1, 1);
+  
+  return (first_digit == "2" || first_digit == "3");
+}
+

@@ -1,0 +1,57 @@
+Test that dnsmasq.servers mode prepends explicit allow entries (server=/domain/#)
+when allowed_domain is set.
+
+-- Testcase --
+import adb from 'adblock-fast';
+import { readfile } from 'fs';
+let ti = adb._test_internals;
+
+adb.env.load_config();
+ti.set_cfg('dns', 'dnsmasq.servers');
+ti.set_cfg('dnsmasq_sanity_check', false);
+ti.set_cfg('dnsmasq_validity_check', false);
+ti.set_cfg('heartbeat_domain', null);
+ti.set_cfg('config_update_enabled', false);
+ti.set_cfg('update_config_sizes', false);
+ti.set_cfg('allowed_domain', 'safe.example.com also-safe.example.com');
+ti.env.dns_set_output_values('dnsmasq.servers');
+ti.append_urls();
+
+let ok = ti.download_lists();
+if (!ok) {
+	print('download_lists failed\n');
+} else {
+	let content = readfile(ti.dns_output.file) || '';
+	let lines = filter(split(content, '\n'), l => length(l) > 0);
+
+	// In servers mode with allowed_domain, server=/domain/# entries are prepended
+	let allow_entries = filter(lines, l => match(l, /\/#$/));
+	let block_entries = filter(lines, l => match(l, /\/$/));
+
+	let results = [];
+	push(results, sprintf('allow_entries: %d', length(allow_entries)));
+	push(results, sprintf('block_entries: %d', length(block_entries)));
+
+	// Check specific allow entries
+	let has_safe = index(content, 'server=/safe.example.com/#') >= 0;
+	let has_also = index(content, 'server=/also-safe.example.com/#') >= 0;
+	push(results, sprintf('safe.example.com allow: %s', has_safe ? 'PRESENT' : 'MISSING'));
+	push(results, sprintf('also-safe.example.com allow: %s', has_also ? 'PRESENT' : 'MISSING'));
+
+	// Allow entries should be at the top
+	if (length(allow_entries) > 0 && length(lines) > 0) {
+		let first_is_allow = match(lines[0], /\/#$/);
+		push(results, sprintf('allow_entries_at_top: %s', first_is_allow ? 'YES' : 'NO'));
+	}
+
+	print(join('\n', results) + '\n');
+}
+-- End --
+
+-- Expect stdout --
+allow_entries: 2
+block_entries: 162
+safe.example.com allow: PRESENT
+also-safe.example.com allow: PRESENT
+allow_entries_at_top: YES
+-- End --

@@ -1,0 +1,11 @@
+--- a/mssl.c
++++ b/mssl.c
+@@ -309,7 +309,7 @@ SSL_CTX * initialize_ctx(const char ask_
+ 		ca_path = "/etc/ssl/certs";
+ #endif
+ 
+-	SSL_CTX_load_verify_locations(ctx, NULL, ca_path);
++	SSL_CTX_load_verify_locations(ctx, "/etc/ssl/certs/ca-certificates.crt", ca_path);
+ 
+ #ifdef SSL_OP_NO_COMPRESSION
+ 	if (!ask_compression)

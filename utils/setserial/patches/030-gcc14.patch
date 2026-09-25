@@ -1,0 +1,22 @@
+--- a/configure
++++ b/configure
+@@ -689,7 +689,7 @@ cat > conftest.$ac_ext << EOF
+ #line 690 "configure"
+ #include "confdefs.h"
+ 
+-main(){return(0);}
++int main(){return(0);}
+ EOF
+ if { (eval echo configure:695: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+   ac_cv_prog_cc_works=yes
+--- a/setserial.c
++++ b/setserial.c
+@@ -717,7 +717,7 @@ fprintf(stderr, "\t* port\t\tset the I/O
+ 	exit(1);
+ }
+ 
+-main(int argc, char **argv)
++int main(int argc, char **argv)
+ {
+ 	int	get_flag = 0, wild_intr_flag = 0;
+ 	int	c;

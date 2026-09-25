@@ -1,0 +1,10 @@
+#!/bin/sh
+# Copyright (C) 2007 OpenWrt.org
+
+/etc/init.d/autossh enabled && {
+
+	[ "$ACTION" = "ifup" ] && {
+		/etc/init.d/autossh start
+	}
+
+}

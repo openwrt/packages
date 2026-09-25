@@ -1,0 +1,19 @@
+#!/bin/sh
+
+main() {
+	local device="$1"
+	local action="$2"
+
+	case "$action" in
+		"ACTIVATE")
+			env -i ACTION="$action" DEVICE="$device" \
+				/sbin/hotplug-call gpsd
+			;;
+		"DEACTIVATE")
+			env -i ACTION="$action" DEVICE="$device" \
+				/sbin/hotplug-call gpsd
+			;;
+	esac
+}
+
+main "$@"

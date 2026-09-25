@@ -1,0 +1,45 @@
+From 3dc6bd45838bb170ee4d95f014f0588c5d084d31 Mon Sep 17 00:00:00 2001
+From: Karl Palsson <karlp@etactica.com>
+Date: Mon, 19 Sep 2022 17:03:58 +0000
+Subject: [PATCH 2/2] pagekitec: status files: correctly support 64bit time
+
+This explicitly casts to long long, as in #78, which may or may not
+be desired globally. It's certainly required in OpenWrt with musl 1.2+
+
+See also: https://github.com/pagekite/libpagekite/pull/78
+
+Fixes: e8cfa5f (incomplete)
+Signed-off-by: Karl Palsson <karlp@etactica.com>
+---
+ contrib/backends/pagekitec.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+--- a/contrib/backends/pagekitec.c
++++ b/contrib/backends/pagekitec.c
+@@ -54,7 +54,7 @@ Note: For alternate license terms, see t
+         "  \"pagekitec_status_code\": %d,\n" \
+         "  \"pagekitec_pid\": %d,\n"         \
+         "  \"pagekitec_update_min_interval\": %d,\n" \
+-        "  \"pagekitec_update_ts\": %ld\n"   \
++        "  \"pagekitec_update_ts\": %lld\n"   \
+         "}\n")
+ 
+ /* Enable this format using -Y text:/path/to/file/ */
+@@ -64,7 +64,7 @@ Note: For alternate license terms, see t
+         "pagekitec_status_code: %d\n" \
+         "pagekitec_pid: %d\n"         \
+         "pagekitec_update_min_interval: %d\n" \
+-        "pagekitec_update_ts: %ld\n")
++        "pagekitec_update_ts: %lld\n")
+ 
+ 
+ pagekite_mgr m;
+@@ -153,7 +153,7 @@ int summarize_status(const char* fpath,
+     }
+ 
+     fprintf(fd, format,
+-      PK_VERSION, status_msg, status, getpid(), STATUS_MIN_INTERVAL, now);
++      PK_VERSION, status_msg, status, getpid(), STATUS_MIN_INTERVAL, (long long)now);
+ 
+     if (0 == ftruncate(fileno(fd), ftell(fd))) fflush(fd);
+     fclose(fd);

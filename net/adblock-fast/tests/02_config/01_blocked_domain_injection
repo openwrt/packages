@@ -1,0 +1,41 @@
+Test that cfg.blocked_domain entries are added to the output.
+
+-- Testcase --
+import adb from 'adblock-fast';
+import { readfile } from 'fs';
+let ti = adb._test_internals;
+
+adb.env.load_config();
+ti.set_cfg('dns', 'dnsmasq.servers');
+ti.set_cfg('dnsmasq_sanity_check', false);
+ti.set_cfg('dnsmasq_validity_check', false);
+ti.set_cfg('heartbeat_domain', null);
+ti.set_cfg('config_update_enabled', false);
+ti.set_cfg('update_config_sizes', false);
+ti.set_cfg('blocked_domain', 'custom-block-1.example.net custom-block-2.example.net');
+ti.env.dns_set_output_values('dnsmasq.servers');
+ti.append_urls();
+
+let ok = ti.download_lists();
+if (!ok) {
+	print('download_lists failed\n');
+} else {
+	let content = readfile(ti.dns_output.file) || '';
+
+	let customs = [
+		'custom-block-1.example.net',
+		'custom-block-2.example.net',
+	];
+	let results = [];
+	for (let d in customs) {
+		let found = index(content, 'server=/' + d + '/') >= 0;
+		push(results, sprintf('%s: %s', d, found ? 'PRESENT' : 'MISSING'));
+	}
+	print(join('\n', results) + '\n');
+}
+-- End --
+
+-- Expect stdout --
+custom-block-1.example.net: PRESENT
+custom-block-2.example.net: PRESENT
+-- End --

@@ -1,0 +1,63 @@
+#!/bin/sh /etc/rc.common
+# shellcheck disable=SC3043
+
+START=50
+USE_PROCD=1
+
+start_service() {
+	config_load 'earlyoom'
+
+	for opt in memory_term_percent memory_kill_percent \
+		swap_term_percent swap_kill_percent memory_term_kib \
+		memory_kill_kib swap_term_kib swap_kill_kib prefer_regex \
+		avoid_regex ignore_regex report_interval \
+		pre_script_path post_script_path
+	do
+		local "$opt"
+		config_get "$opt" 'main' "$opt"
+	done
+
+	for opt in debug_log high_priority kill_process_group \
+		sort_by_rss dry_run syslog
+	do
+		local "$opt"
+		config_get_bool "$opt" 'main' "$opt" 0
+	done
+
+	procd_open_instance
+	procd_set_param command '/usr/sbin/earlyoom'
+	procd_set_param stderr 1
+	procd_set_param respawn
+
+	[ "$memory_term_percent" -gt '0' ] || [ "$memory_kill_percent" -gt '0' ] &&
+		procd_append_param command -m "$memory_term_percent","$memory_kill_percent"
+	[ "$swap_term_percent" -gt '0' ] || [ "$swap_kill_percent" -gt '0' ] &&
+		procd_append_param command -s "$swap_term_percent","$swap_kill_percent"
+
+	[ "$memory_term_kib" -gt '0' ] || [ "$memory_kill_kib" -gt '0' ] &&
+		procd_append_param command -M "$memory_term_kib","$memory_kill_kib"
+	[ "$swap_term_kib" -gt '0' ] || [ "$swap_kill_kib" -gt '0' ] &&
+		procd_append_param command -S "$swap_term_kib","$swap_kill_kib"
+	
+	[ -n "$prefer_regex" ] && procd_append_param command --prefer "$prefer_regex"
+	[ -n "$avoid_regex" ] && procd_append_param command --avoid "$avoid_regex"
+	[ -n "$ignore_regex" ] && procd_append_param command --ignore "$ignore_regex"
+
+	[ -x "$pre_script_path" ] && procd_append_param command -P "$pre_script_path"
+	[ -x "$post_script_path" ] && procd_append_param command -N "$post_script_path"
+
+	[ -n "$report_interval" ] && procd_append_param command -r "$report_interval"
+
+	[ "$debug_log" -eq '1' ] && procd_append_param command -d
+	[ "$high_priority" -eq '1' ] && procd_append_param command -p
+	[ "$kill_process_group" -eq '1' ] && procd_append_param command -g
+	[ "$sort_by_rss" -eq '1' ] && procd_append_param command --sort-by-rss
+	[ "$dry_run" -eq '1' ] && procd_append_param command --dryrun
+	[ "$syslog" -eq '1' ] && procd_append_param command --syslog
+
+	procd_close_instance
+}
+
+service_triggers() {
+	procd_add_reload_trigger 'earlyoom'
+}

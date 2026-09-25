@@ -1,0 +1,6 @@
+{
+	"name": "dnsever.com",
+	"ipv4": {
+		"url": "http://[USERNAME]:[PASSWORD]@dyna.dnsever.com/update.php?host[[DOMAIN]]"
+	}
+}

@@ -1,0 +1,44 @@
+From a833685ecb9681b611b9c4c44b2e4c40932fcd6f Mon Sep 17 00:00:00 2001
+From: Chet Ramey <chet.ramey@case.edu>
+Date: Wed, 10 Jun 2026 08:58:29 -0400
+Subject: Bash-5.3 patch 14: update mapfile patch 11, removing stray line and
+ improving the efficiency of the original fix
+
+--- a/builtins/mapfile.def
++++ b/builtins/mapfile.def
+@@ -197,16 +197,16 @@ mapfile (int fd, long line_count_goal, l
+ 	    zsyncfd (fd);
+ 
+ 	  run_callback (callback, array_index, line);
+-	}
+-
+-      /* Bad things can happen if the callback modifies ENTRY, e.g.,
+-	 unsetting it or changing it to a non-indexed-array type, so we
+-	 look it up again every time we need to assign something */
+-      entry = bind_array_variable (array_name, array_index, line, 0);
+-      if (entry == 0 || ASSIGN_DISALLOWED (entry, 0))
+-	return EXECUTION_FAILURE;
+ 
+-      bind_array_element (entry, array_index, line, 0);
++	  /* Bad things can happen if the callback modifies ENTRY, e.g.,
++	     unsetting it or changing it to a non-indexed-array type, so we
++	     look it up again every time we need to assign something */
++	  entry = bind_array_variable (array_name, array_index, line, 0);
++	  if (entry == 0 || ASSIGN_DISALLOWED (entry, 0))
++	    return EXECUTION_FAILURE;
++	}
++      else
++	bind_array_element (entry, array_index, line, 0);
+ 
+       /* Have we exceeded # of lines to store? */
+       line_count++;
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 13
++#define PATCHLEVEL 14
+ 
+ #endif /* _PATCHLEVEL_H_ */

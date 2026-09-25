@@ -1,0 +1,56 @@
+From 6b578f03f4efd89a05a120de919386a5834e4900 Mon Sep 17 00:00:00 2001
+From: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Date: Mon, 3 Nov 2025 23:35:26 +0100
+Subject: [PATCH 2/3] Add pyproject.toml with modern Python packaging
+ configuration
+
+This follows PEP 621 and as well while keeping backward compatibility
+with existing setup.py.
+
+Signed-off-by: Josef Schlehofer <pepe.schlehofer@gmail.com>
+---
+ pyproject.toml | 38 ++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 38 insertions(+)
+ create mode 100644 pyproject.toml
+
+--- /dev/null
++++ b/pyproject.toml
+@@ -0,0 +1,38 @@
++[build-system]
++requires = ["setuptools>=61.0", "wheel"]
++build-backend = "setuptools.build_meta"
++
++[project]
++name = "Flask-SeaSurf"
++version = "2.0.0"
++description = "An updated CSRF extension for Flask."
++readme = {file = "README.markdown", content-type = "text/markdown"}
++license = "BSD-3-Clause"
++license-files = ["LICENSE"]
++authors = [{name = "Max Countryman", email = "maxc@me.com"}]
++requires-python = ">=3.8"
++dependencies = ["Flask"]
++classifiers = [
++    "Development Status :: 4 - Beta",
++    "Environment :: Web Environment",
++    "Intended Audience :: Developers",
++    "Operating System :: OS Independent",
++    "Programming Language :: Python",
++    "Programming Language :: Python :: 3",
++    "Programming Language :: Python :: 3.8",
++    "Programming Language :: Python :: 3.9",
++    "Programming Language :: Python :: 3.10",
++    "Programming Language :: Python :: 3.11",
++    "Programming Language :: Python :: 3.12",
++    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
++    "Topic :: Software Development :: Libraries :: Python Modules",
++]
++
++[project.urls]
++Homepage = "https://github.com/maxcountryman/flask-seasurf/"
++
++[tool.setuptools]
++py-modules = ["flask_seasurf"]
++
++[project.optional-dependencies]
++test = ["pytest"]

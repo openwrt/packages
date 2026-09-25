@@ -1,0 +1,51 @@
+--- a/nginx-mod-njs/auto/endianness
++++ b/nginx-mod-njs/auto/endianness
+@@ -2,6 +2,15 @@
+ # Copyright (C) Dmitry Volyntsev
+ # Copyright (C) NGINX, Inc.
+ 
++if [ "${CONFIG_BIG_ENDIAN}" != "y" ]; then
++    njs_define=NJS_HAVE_BIG_ENDIAN . auto/define
++
++else
++    njs_define=NJS_HAVE_LITTLE_ENDIAN . auto/define
++fi
++
++return
++
+ njs_found=no
+ 
+ njs_feature="system byte ordering"
+@@ -26,10 +35,4 @@ if [ $njs_found = no ]; then
+     exit 1;
+ fi
+ 
+-if [ $njs_feature_value = big ]; then
+-    njs_define=NJS_HAVE_BIG_ENDIAN . auto/define
+-
+-else
+-    njs_define=NJS_HAVE_LITTLE_ENDIAN . auto/define
+ 
+-fi
+--- a/nginx-mod-njs/nginx/config.make
++++ b/nginx-mod-njs/nginx/config.make
+@@ -3,15 +3,15 @@ cat << END
+ $ngx_addon_dir/../build/libnjs.a: $NGX_MAKEFILE
+ 	cd $ngx_addon_dir/.. \\
+ 	&& if [ -f build/Makefile ]; then \$(MAKE) clean; fi \\
+-	&& CFLAGS="\$(CFLAGS)" CC="\$(CC)" ./configure --no-openssl \\
+-		--no-libxml2 --no-zlib --no-pcre --no-quickjs \\
++	&& CFLAGS="\$(CFLAGS)" CC="\$(CC)" CONFIG_BIG_ENDIAN=\$(CONFIG_BIG_ENDIAN) \\
++		./configure --no-openssl --no-libxml2 --no-zlib --no-pcre --no-quickjs \\
+ 	&& \$(MAKE) libnjs
+ 
+ $ngx_addon_dir/../build/libqjs.a: $NGX_MAKEFILE
+ 	cd $ngx_addon_dir/.. \\
+ 	&& if [ -f build/Makefile ]; then \$(MAKE) clean; fi \\
+-	&& CFLAGS="\$(CFLAGS)" CC="\$(CC)" ./configure --no-openssl \\
+-		--no-libxml2 --no-zlib --no-pcre \\
++	&& CFLAGS="\$(CFLAGS)" CC="\$(CC)" CONFIG_BIG_ENDIAN=\$(CONFIG_BIG_ENDIAN) \\
++		./configure --no-openssl --no-libxml2 --no-zlib --no-pcre \\
+ 	&& \$(MAKE) libnjs libqjs
+ 
+ END

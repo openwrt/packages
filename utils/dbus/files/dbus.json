@@ -1,0 +1,27 @@
+{
+	"bounding": [
+		"CAP_SETPCAP",
+		"CAP_SETUID",
+		"CAP_SETGID"
+	],
+	"effective": [
+		"CAP_SETPCAP",
+		"CAP_SETUID",
+		"CAP_SETGID"
+	],
+	"ambient": [
+		"CAP_SETPCAP",
+		"CAP_SETUID",
+		"CAP_SETGID"
+	],
+	"permitted": [
+		"CAP_SETPCAP",
+		"CAP_SETUID",
+		"CAP_SETGID"
+	],
+	"inheritable": [
+		"CAP_SETPCAP",
+		"CAP_SETUID",
+		"CAP_SETGID"
+	]
+}

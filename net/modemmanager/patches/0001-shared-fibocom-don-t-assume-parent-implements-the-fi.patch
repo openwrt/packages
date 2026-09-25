@@ -1,0 +1,28 @@
+From 046b79a6766b6384db9cd56a9af5d148787bafe4 Mon Sep 17 00:00:00 2001
+From: Dan Williams <dan@ioncontrol.co>
+Date: Sat, 12 Apr 2025 23:56:13 -0500
+Subject: [PATCH] shared-fibocom: don't assume parent implements the firmware
+ interface
+
+MMBroadbandModemMbimMtkFibocom doesn't, so don't assert it.
+
+Fixes: https://gitlab.freedesktop.org/mobile-broadband/ModemManager/-/issues/975
+
+Signed-off-by: Dan Williams <dan@ioncontrol.co>
+---
+ src/plugins/fibocom/mm-shared-fibocom.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/src/plugins/fibocom/mm-shared-fibocom.c
++++ b/src/plugins/fibocom/mm-shared-fibocom.c
+@@ -75,8 +75,8 @@ get_private (MMSharedFibocom *self)
+         priv->class_parent = MM_SHARED_FIBOCOM_GET_IFACE (self)->peek_parent_class (self);
+ 
+         /* Setup firmware interface of parent class */
+-        g_assert (MM_SHARED_FIBOCOM_GET_IFACE (self)->peek_parent_firmware_interface);
+-        priv->iface_modem_firmware_parent = MM_SHARED_FIBOCOM_GET_IFACE (self)->peek_parent_firmware_interface (self);
++        if (MM_SHARED_FIBOCOM_GET_IFACE (self)->peek_parent_firmware_interface)
++            priv->iface_modem_firmware_parent = MM_SHARED_FIBOCOM_GET_IFACE (self)->peek_parent_firmware_interface (self);
+ 
+         g_object_set_qdata_full (G_OBJECT (self), private_quark, priv, (GDestroyNotify)private_free);
+     }

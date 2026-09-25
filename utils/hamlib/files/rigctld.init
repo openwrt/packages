@@ -1,0 +1,77 @@
+#!/bin/sh /etc/rc.common
+ 
+USE_PROCD=1
+
+START=50
+STOP=50
+
+NAME=rigctld
+TYPE=rig
+BIN=/usr/bin/rigctld
+
+# option model '1234' => --model=1234
+OPTIONS_STRING="model rig_file ptt_file dcd_file ptt_type dcd_type serial_speed civaddr listen_addr port set_conf twiddle_timeout uplink"
+# option vfo '1' => --vfo
+OPTIONS_BOOL="debug_time_stamps vfo"
+# option verbose '3' => --verbose --verbose --verbose
+OPTIONS_CUMULATIVE="verbose"
+
+start_service() {
+	local instance="$1"
+
+	config_load "${NAME}"
+
+	if [ -n "$instance" ]; then
+		start_instance "$instance"
+	else
+		config_foreach start_instance "$TYPE"
+	fi
+}                 
+
+start_instance() {
+	local instance="$1"
+
+	config_get_bool "enabled" "$instance" "enabled" 0
+	[ "$enabled" -gt 0 ] || return
+
+	procd_open_instance "$instance"
+
+	procd_set_param command "$BIN"
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+
+	local option
+	local value
+
+	for option in $OPTIONS_STRING; do
+		config_get value "$instance" "$option"
+		[ -n "$value" ] || continue
+
+		option="${option//_/-}"
+		procd_append_param command "--$option=$value"
+	done
+	
+	for option in $OPTIONS_BOOL; do
+		config_get_bool value "$instance" "$option" 0
+		[ "$value" -eq 1 ] || continue
+		
+		option="${option//_/-}"
+		procd_append_param command "--$option"
+	done
+
+	for option in $OPTIONS_CUMULATIVE; do
+		config_get value "$instance" "$option" 0
+		[ -n "$value" ] || continue
+
+		option="${option//_/-}"
+
+		local i=0
+		while [ $i -lt "$value" ]; do
+			procd_append_param command "--$option"
+			let i++
+		done
+	done
+
+	procd_close_instance
+}
+

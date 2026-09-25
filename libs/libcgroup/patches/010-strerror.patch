@@ -1,0 +1,51 @@
+From 942ef655237b90909edf53eafd121842cdc07ce1 Mon Sep 17 00:00:00 2001
+From: Khem Raj <raj.khem@gmail.com>
+Date: Fri, 13 Jan 2023 12:44:07 -0700
+Subject: [PATCH] api: Use GNU strerror_r when available
+
+GNU strerror_r is only available in glibc, musl impelents the XSI
+version which is slightly different, therefore check if GNU version is
+available before using it, otherwise use the XSI compliant version.
+
+Signed-off-by: Khem Raj <raj.khem@gmail.com>
+Signed-off-by: Kamalesh Babulal <kamalesh.babulal@oracle.com>
+Signed-off-by: Tom Hromatka <tom.hromatka@oracle.com>
+TJH: Minor formatting change so that the line doesn't exceed 100 chars
+---
+ configure.ac | 5 +++++
+ src/api.c    | 9 +++++++--
+ 2 files changed, 12 insertions(+), 2 deletions(-)
+
+--- a/configure.ac
++++ b/configure.ac
+@@ -186,6 +186,11 @@ AC_FUNC_REALLOC
+ AC_FUNC_STAT
+ AC_CHECK_FUNCS([getmntent hasmntopt memset mkdir rmdir strdup])
+ 
++orig_CFLAGS="$CFLAGS"
++CFLAGS="$CFLAGS -D_GNU_SOURCE"
++AC_FUNC_STRERROR_R
++CFLAGS="$orig_CFLAGS"
++
+ AC_SEARCH_LIBS(
+ 	[fts_open],
+ 	[fts],
+--- a/src/api.c
++++ b/src/api.c
+@@ -4598,9 +4598,14 @@ const char *cgroup_strerror(int code)
+ {
+ 	int idx = code % ECGROUPNOTCOMPILED;
+ 
+-	if (code == ECGOTHER)
++	if (code == ECGOTHER) {
++#ifdef STRERROR_R_CHAR_P
+ 		return strerror_r(cgroup_get_last_errno(), errtext, MAXLEN);
+-
++#else
++		return strerror_r(cgroup_get_last_errno(), errtext, sizeof (errtext)) ?
++			"unknown error" : errtext;
++#endif
++	}
+ 	if (idx >= sizeof(cgroup_strerror_codes)/sizeof(cgroup_strerror_codes[0]))
+ 		return "Invalid error code";
+ 

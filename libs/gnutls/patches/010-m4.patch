@@ -1,0 +1,73 @@
+--- a/m4/stdint.m4
++++ b/m4/stdint.m4
+@@ -17,7 +17,7 @@ AC_DEFUN_ONCE([gl_STDINT_H],
+   AC_REQUIRE([AC_CANONICAL_HOST]) dnl for cross-compiles
+ 
+   AC_REQUIRE([gl_LIMITS_H])
+-  AC_REQUIRE([gt_TYPE_WINT_T])
++  AC_REQUIRE([gt_TYPE_WINT_T_GNUTLS])
+ 
+   dnl For backward compatibility. Some packages may still be testing these
+   dnl macros.
+--- a/m4/vasnprintf.m4
++++ b/m4/vasnprintf.m4
+@@ -75,7 +75,7 @@ AC_DEFUN([gl_FUNC_VASNWPRINTF],
+ # Prerequisites of lib/printf-args.h, lib/printf-args.c.
+ AC_DEFUN([gl_PREREQ_PRINTF_ARGS],
+ [
+-  AC_REQUIRE([gt_TYPE_WINT_T])
++  AC_REQUIRE([gt_TYPE_WINT_T_GNUTLS])
+ ])
+ 
+ # Prerequisites of lib/printf-parse.h, lib/printf-parse.c.
+@@ -83,7 +83,7 @@ AC_DEFUN([gl_PREREQ_PRINTF_ARGS],
+ AC_DEFUN([gl_PREREQ_PRINTF_PARSE],
+ [
+   AC_REQUIRE([gl_FEATURES_H])
+-  AC_REQUIRE([gt_TYPE_WINT_T])
++  AC_REQUIRE([gt_TYPE_WINT_T_GNUTLS])
+   AC_REQUIRE([AC_TYPE_SIZE_T])
+   AC_CHECK_TYPE([ptrdiff_t], ,
+     [AC_DEFINE([ptrdiff_t], [long],
+@@ -216,7 +216,7 @@ int main()
+ AC_DEFUN_ONCE([gl_PREREQ_VASNXPRINTF],
+ [
+   AC_REQUIRE([AC_FUNC_ALLOCA])
+-  AC_REQUIRE([gt_TYPE_WINT_T])
++  AC_REQUIRE([gt_TYPE_WINT_T_GNUTLS])
+   AC_CHECK_FUNCS([wcslen])
+   dnl Knowing DBL_EXPBIT0_WORD and DBL_EXPBIT0_BIT enables an optimization
+   dnl in the code for NEED_PRINTF_LONG_DOUBLE || NEED_PRINTF_DOUBLE.
+--- a/m4/wchar_h.m4
++++ b/m4/wchar_h.m4
+@@ -28,7 +28,7 @@ AC_DEFUN_ONCE([gl_WCHAR_H],
+ 
+   AC_REQUIRE([gl_FEATURES_H])
+ 
+-  AC_REQUIRE([gt_TYPE_WINT_T])
++  AC_REQUIRE([gt_TYPE_WINT_T_GNUTLS])
+   if test $gt_cv_c_wint_t = yes; then
+     HAVE_WINT_T=1
+   else
+--- a/m4/wint_t.m4
++++ b/m4/wint_t.m4
+@@ -11,7 +11,7 @@ dnl Test whether <wchar.h> has the 'wint
+ dnl <wchar.h> or <wctype.h> would, if present, override 'wint_t'.
+ dnl Prerequisite: AC_PROG_CC
+ 
+-AC_DEFUN([gt_TYPE_WINT_T],
++AC_DEFUN([gt_TYPE_WINT_T_GNUTLS],
+ [
+   AC_CACHE_CHECK([for wint_t], [gt_cv_c_wint_t],
+     [AC_COMPILE_IFELSE(
+--- a/src/gl/m4/gnulib-comp.m4
++++ b/src/gl/m4/gnulib-comp.m4
+@@ -1432,7 +1432,7 @@ changequote([, ])dnl
+   AC_CHECK_DECLS_ONCE([alarm])
+   gl_SNAN
+   gl_NAN_MIPS
+-  AC_REQUIRE([gt_TYPE_WINT_T])
++  AC_REQUIRE([gt_TYPE_WINT_T_GNUTLS])
+   gl_DOUBLE_EXPONENT_LOCATION
+   gl_STRING_MODULE_INDICATOR([str_endswith])
+   gl_STRING_MODULE_INDICATOR([str_startswith])

@@ -1,0 +1,11 @@
+{
+	"dnsmasq": {
+		"instances": {
+			"cfg01411c": {
+				"running": true,
+				"pid": 1234,
+				"command": [ "/usr/sbin/dnsmasq", "-C", "/var/etc/dnsmasq.conf.cfg01411c", "-k", "-x", "/var/run/dnsmasq/dnsmasq.cfg01411c.pid" ]
+			}
+		}
+	}
+}

@@ -1,0 +1,10 @@
+--- a/src/sio/sprint.c
++++ b/src/sio/sprint.c
+@@ -6,6 +6,7 @@
+ 
+ 
+ #include "config.h"
++#define _GNU_SOURCE
+ #include <stdlib.h>
+ #include <string.h>
+ #include <ctype.h>

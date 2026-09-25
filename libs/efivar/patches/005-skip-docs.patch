@@ -1,0 +1,11 @@
+--- a/Makefile
++++ b/Makefile
+@@ -7,7 +7,7 @@ include $(TOPDIR)/src/include/defaults.m
+ include $(TOPDIR)/src/include/coverity.mk
+ include $(TOPDIR)/src/include/scan-build.mk
+ 
+-SUBDIRS := src docs
++SUBDIRS := src
+ 
+ all : | efivar.spec src/include/version.mk prep
+ all clean install prep :

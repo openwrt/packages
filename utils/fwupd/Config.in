@@ -1,0 +1,51 @@
+menu "Select fwupd options"
+
+config FWUPD_FIRMWARE_PACKAGER
+	bool "firmware packager"
+	default n
+	help
+	  Compile fwupd with firmware packager
+
+config FWUPD_HSI
+	bool "Host Security ID"
+	default n
+	help
+	  Compile fwupd with HSI support
+
+config FWUPD_LVFS
+	bool "LVFS remote"
+	default y
+	help
+	  Compile and install LVFS remote
+
+config FWUPD_GNUTLS
+	bool "gnutls"
+	default n
+	help
+	  Compile fwupd with GnuTLS support
+
+config FWUPD_OPENSSL
+	bool "openssl"
+	default y
+	help
+	  Compile fwupd with OpenSSL support
+
+config FWUPD_LIBDRM
+	bool "libdrm"
+	default n
+	help
+	  Compile fwupd with libdrm support
+
+config FWUPD_PLUGIN_DEVLINK
+	bool "devlink plugin"
+	default y
+	help
+	  Compile fwupd with devlink plugin
+
+config FWUPD_PLUGIN_MODEMMANAGER
+	bool "ModemManager plugin"
+	default y
+	help
+	  Compile fwupd with ModemManager plugin
+
+endmenu

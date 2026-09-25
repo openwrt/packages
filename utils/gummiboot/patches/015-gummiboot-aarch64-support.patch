@@ -1,0 +1,121 @@
+From koen.kooi at linaro.org  Sat Apr 11 01:23:22 2015
+From: koen.kooi at linaro.org (Koen Kooi)
+Date: Sat, 11 Apr 2015 10:23:22 +0200
+Subject: [systemd-devel] [gummiboot][PATCH 1/5] Makefile: support non-x86
+	builds
+Message-ID: <1428740606-30060-1-git-send-email-koen.kooi@linaro.org>
+
+Move the no-mmx/no-sse CFLAGS to X86-64 and IA32 defines in preparation
+for ARM32 and Aarch64 support.
+
+Signed-off-by: Koen Kooi <koen.kooi at linaro.org>
+---
+ Makefile.am | 12 +++++++++---
+ 1 file changed, 9 insertions(+), 3 deletions(-)
+
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -94,17 +94,23 @@ efi_cflags = \
+ 	-ffreestanding \
+ 	-fno-strict-aliasing \
+ 	-fno-stack-protector \
+-	-Wsign-compare \
+-	-mno-sse \
+-	-mno-mmx
++	-Wsign-compare
+ 
+ if ARCH_X86_64
+ efi_cflags += \
+ 	-mno-red-zone \
++	-mno-sse \
++	-mno-mmx
+ 	-DEFI_FUNCTION_WRAPPER \
+ 	-DGNU_EFI_USE_MS_ABI
+ endif
+ 
++if ARCH_IA32
++efi_cflags += \
++	-mno-sse \
++	-mno-mmx
++endif
++
+ efi_ldflags = \
+ 	$(EFI_LDFLAGS) \
+ 	-T $(EFI_LDS_DIR)/elf_$(ARCH)_efi.lds \
+@@ -115,6 +121,17 @@ efi_ldflags = \
+ 	-L $(EFI_LIB_DIR) \
+ 	$(EFI_LDS_DIR)/crt0-efi-$(ARCH).o
+ 
++# Aarch64 and ARM32 don't have an EFI capable objcopy
++if ARCH_AARCH64
++efi_ldflags += \
++	--defsym=EFI_SUBSYSTEM=0xa
++
++FORMAT = -O binary
++else
++FORMAT = --target=efi-app-$(ARCH)
++endif
++
++
+ # ------------------------------------------------------------------------------
+ gummiboot_headers = \
+ 	src/efi/util.h \
+@@ -150,7 +167,7 @@ $(gummiboot_solib): $(gummiboot_objects)
+ $(gummiboot): $(gummiboot_solib)
+ 	$(AM_V_GEN) objcopy -j .text -j .sdata -j .data -j .dynamic \
+ 	  -j .dynsym -j .rel -j .rela -j .reloc \
+-	  --target=efi-app-$(ARCH) $< $@
++	  $(FORMAT) $< $@
+ 
+ # ------------------------------------------------------------------------------
+ stub_headers = \
+@@ -185,7 +202,7 @@ $(stub_solib): $(stub_objects)
+ $(stub): $(stub_solib)
+ 	$(AM_V_GEN) objcopy -j .text -j .sdata -j .data -j .dynamic \
+ 	  -j .dynsym -j .rel -j .rela -j .reloc \
+-	  --target=efi-app-$(ARCH) $< $@
++	  $(FORMAT) $< $@
+ 
+ # ------------------------------------------------------------------------------
+ CLEANFILES += test-disk.img
+--- a/src/efi/util.c
++++ b/src/efi/util.c
+@@ -33,12 +33,17 @@ UINT64 ticks_read(VOID) {
+         __asm__ volatile ("rdtsc" : "=a" (a), "=d" (d));
+         return (d << 32) | a;
+ }
+-#else
++#elif __i386__
+ UINT64 ticks_read(VOID) {
+         UINT64 val;
+         __asm__ volatile ("rdtsc" : "=A" (val));
+         return val;
+ }
++#else
++UINT64 ticks_read(VOID) {
++        UINT64 val = 1;
++        return val;
++}
+ #endif
+ 
+ /* count TSC ticks during a millisecond delay */
+--- a/configure.ac
++++ b/configure.ac
+@@ -51,6 +51,7 @@ dnl Define ARCH_<NAME> conditionals
+ SET_ARCH(IA32, i*86*)
+ SET_ARCH(X86_64, x86_64*)
+ SET_ARCH(IA64, ia64*)
++SET_ARCH(AARCH64, aarch64*)
+ 
+ ARCH=`echo $host | sed "s/\(-\).*$//"`
+ 
+@@ -61,6 +62,9 @@ AM_COND_IF(ARCH_IA32, [
+ AM_COND_IF(ARCH_X86_64, [
+         MACHINE_TYPE_NAME=x64])
+ 
++AM_COND_IF(ARCH_AARCH64, [
++        MACHINE_TYPE_NAME=aa64])
++
+ AC_SUBST([ARCH])
+ AC_SUBST([MACHINE_TYPE_NAME])
+ 

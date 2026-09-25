@@ -1,0 +1,183 @@
+Subject: Add tcp-mss support.
+Origin: http://cvsweb.netbsd.org/bsdweb.cgi/pkgsrc/net/hping/patches/
+Bug-Debian: http://bugs.debian.org/409391
+Last-Update: 2009-09-19
+
+--- a/main.c
++++ b/main.c
+@@ -44,7 +44,8 @@ unsigned int
+ 	signlen,
+ 	lsr_length = 0,
+ 	ssr_length = 0,
+-	tcp_ack;
++	tcp_ack,
++	tcp_mss;
+ 
+ 
+ unsigned short int
+@@ -95,6 +96,7 @@ int
+ 	opt_tcpexitcode	= FALSE,
+ 	opt_badcksum	= FALSE,
+ 	opt_tr_keep_ttl = FALSE,
++	opt_tcp_mss	= FALSE,
+ 	opt_tcp_timestamp = FALSE,
+         opt_clock_skew  = FALSE,
+         cs_window       = DEFAULT_CS_WINDOW,
+--- a/globals.h
++++ b/globals.h
+@@ -32,7 +32,8 @@ extern unsigned int
+ 		tcp_seqnum,
+ 		set_ack,
+ 		ip_header_length,
+-		tcp_ack;
++		tcp_ack,
++		tcp_mss;
+ 
+ extern unsigned short int
+ 		data_size;
+@@ -77,6 +78,7 @@ extern int	opt_debug,
+ 		opt_tcpexitcode,
+ 		opt_badcksum,
+ 		opt_tr_keep_ttl,
++		opt_tcp_mss,
+ 		opt_tcp_timestamp,
+                 opt_clock_skew,
+                 cs_window,
+--- a/parseoptions.c
++++ b/parseoptions.c
+@@ -31,7 +31,7 @@ enum {	OPT_COUNT, OPT_INTERVAL, OPT_NUME
+ 	OPT_RROUTE, OPT_IPPROTO, OPT_ICMP_IPVER, OPT_ICMP_IPHLEN,
+ 	OPT_ICMP_IPLEN, OPT_ICMP_IPID, OPT_ICMP_IPPROTO, OPT_ICMP_CKSUM,
+ 	OPT_ICMP_TS, OPT_ICMP_ADDR, OPT_TCPEXITCODE, OPT_FAST, OPT_TR_KEEP_TTL,
+-	OPT_TCP_TIMESTAMP, OPT_TR_STOP, OPT_TR_NO_RTT, OPT_ICMP_HELP,
++	OPT_TCP_TIMESTAMP, OPT_TCP_MSS, OPT_TR_STOP, OPT_TR_NO_RTT, OPT_ICMP_HELP,
+ 	OPT_RAND_DEST, OPT_RAND_SOURCE, OPT_LSRR, OPT_SSRR, OPT_ROUTE_HELP,
+ 	OPT_ICMP_IPSRC, OPT_ICMP_IPDST, OPT_ICMP_SRCPORT, OPT_ICMP_DSTPORT,
+ 	OPT_ICMP_GW, OPT_FORCE_ICMP, OPT_APD_SEND, OPT_SCAN, OPT_FASTER,
+@@ -125,6 +125,7 @@ static struct ago_optlist hping_optlist[
+ 	{ '\0', "force-icmp",	OPT_FORCE_ICMP,		AGO_NOARG },
+ 	{ '\0', "beep",		OPT_BEEP,		AGO_NOARG },
+ 	{ '\0', "flood",	OPT_FLOOD,		AGO_NOARG },
++	{ '\0', "tcp-mss",	OPT_TCP_MSS,		AGO_NEEDARG|AGO_EXCEPT0 },
+ 	{ '\0', "clock-skew",	OPT_CLOCK_SKEW,		AGO_NOARG },
+ 	{ '\0', "clock-skew-win", OPT_CS_WINDOW,	AGO_NEEDARG},
+ 	{ '\0', "clock-skew-win-shift", OPT_CS_WINDOW_SHIFT,	AGO_NEEDARG},
+@@ -561,6 +562,10 @@ int parse_options(int argc, char **argv)
+ 		case OPT_FLOOD:
+ 			opt_flood = TRUE;
+ 			break;
++		case OPT_TCP_MSS:
++			opt_tcp_mss = TRUE;
++			tcp_mss = strtoul(ago_optarg, NULL, 0);
++			break;
+                 case OPT_CLOCK_SKEW:
+ 			opt_tcp_timestamp = TRUE;
+                         opt_clock_skew = TRUE;
+--- a/usage.c
++++ b/usage.c
+@@ -87,6 +87,7 @@ void	show_usage(void)
+ "  -X  --xmas       set X unused flag (0x40)\n"
+ "  -Y  --ymas       set Y unused flag (0x80)\n"
+ "  --tcpexitcode    use last tcp->th_flags as exit code\n"
++"  --tcp-mss        enable the TCP MSS option with the given value\n"
+ "  --tcp-timestamp  enable the TCP timestamp option to guess the HZ/uptime\n"
+ "Clock skew detection\n"
+ "  --clock-skew     enable clock skew detection. Try with -S against open port\n"
+--- a/sendtcp.c
++++ b/sendtcp.c
+@@ -28,10 +28,12 @@ void send_tcp(void)
+ 	char			*packet, *data;
+ 	struct mytcphdr		*tcp;
+ 	struct pseudohdr	*pseudoheader;
+-	unsigned char		*tstamp;
++	unsigned char		*opts;
+ 
++	if (opt_tcp_mss)
++		tcp_opt_size += 4;
+ 	if (opt_tcp_timestamp)
+-		tcp_opt_size = 12;
++		tcp_opt_size += 12;
+ 
+ 	packet_size = TCPHDR_SIZE + tcp_opt_size + data_size;
+ 	packet = malloc(PSEUDOHDR_SIZE + packet_size);
+@@ -41,7 +43,7 @@ void send_tcp(void)
+ 	}
+ 	pseudoheader = (struct pseudohdr*) packet;
+ 	tcp =  (struct mytcphdr*) (packet+PSEUDOHDR_SIZE);
+-	tstamp = (unsigned char*) (packet+PSEUDOHDR_SIZE+TCPHDR_SIZE);
++	opts = (unsigned char*) (packet+PSEUDOHDR_SIZE+TCPHDR_SIZE);
+ 	data = (char*) (packet+PSEUDOHDR_SIZE+TCPHDR_SIZE+tcp_opt_size);
+ 	
+ 	memset(packet, 0, PSEUDOHDR_SIZE+packet_size);
+@@ -64,14 +66,24 @@ void send_tcp(void)
+ 	tcp->th_win	= htons(src_winsize);
+ 	tcp->th_flags	= tcp_th_flags;
+ 
++	/* tcp MSS option */
++	if (opt_tcp_mss) {
++		opts[0] = 2;
++		opts[1] = 4;  /* 4 bytes, kind+len+MSS */
++		opts[2] = tcp_mss >> 8;
++		opts[3] = tcp_mss & 0xff;
++		opts += 4;
++	}
++
+ 	/* tcp timestamp option */
+ 	if (opt_tcp_timestamp) {
+ 		__u32 randts = rand() ^ (rand() << 16);
+-		tstamp[0] = tstamp[1] = 1; /* NOOP */
+-		tstamp[2] = 8;
+-		tstamp[3] = 10; /* 10 bytes, kind+len+T1+T2 */
+-		memcpy(tstamp+4, &randts, 4); /* random */
+-		memset(tstamp+8, 0, 4); /* zero */
++		opts[0] = opts[1] = 1; /* NOOP */
++		opts[2] = 8;
++		opts[3] = 10; /* 10 bytes, kind+len+T1+T2 */
++		memcpy(opts+4, &randts, 4); /* random */
++		memset(opts+8, 0, 4); /* zero */
++		opts += 12;
+ 	}
+ 
+ 	/* data */
+--- a/docs/hping3.8
++++ b/docs/hping3.8
+@@ -98,6 +98,8 @@ hping2 \- send (almost) arbitrary TCP/IP
+ ] [
+ .B \-\-tcpexitcode
+ ] [
++.B \-\-tcp-mss
++] [
+ .B \-\-tcp-timestamp
+ ] [
+ .B \-\-tr-stop
+@@ -510,6 +512,9 @@ numbers are predictable.
+ .I -b --badcksum
+ Send packets with a bad UDP/TCP checksum.
+ .TP
++.I --tcp-mss
++Enable the TCP MSS option and set it to the given value.
++.TP
+ .I --tcp-timestamp
+ Enable the TCP timestamp option, and try to guess the timestamp update
+ frequency and the remote system uptime.
+--- a/docs/french/hping2-fr.8
++++ b/docs/french/hping2-fr.8
+@@ -99,6 +99,8 @@ hping2 \- envoie des paquets TCP/IP (pre
+ ] [
+ .B \-\-tcpexitcode
+ ] [
++.B \-\-tcp-mss
++] [
+ .B \-\-tcp-timestamp
+ ] [
+ .B \-\-tr-stop
+@@ -538,6 +540,9 @@ pouvez le voir les numéros de séquence d
+ .I -b --badcksum
+ Envoie des paquets avec une mauvaise somme de contrôle UDP/TCP
+ .TP
++.I --tcp-mss
++Active l'option TCP MSS et la fixe avec la valeur donnée.
++.TP
+ .I --tcp-timestamp
+ Active l'option TCP timestamp, et essaye de deviner la fréquence de mise à
+ jour du timestamp et l'uptime du système distant.

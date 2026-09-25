@@ -1,0 +1,51 @@
+From dbf4c3773b2433b6324f4ec74feb746ca6e7bfb1 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Thu, 10 Sep 2026 15:16:59 +0100
+Subject: [PATCH] Use internal Argon2 when OpenSSL is built without Argon2
+
+OpenSSL can be configured with no-argon2, and no-blake2 implies it
+because Argon2 is built on BLAKE2b. Such a build still installs the
+OSSL_KDF_PARAM_ARGON2_* macros in core_names.h, so configure concludes
+that OpenSSL provides Argon2 and drops the bundled implementation.
+EVP_KDF_fetch() then fails at runtime and every LUKS2 keyslot using
+Argon2 fails to open. Check OPENSSL_NO_ARGON2 as well and fall back to
+the internal Argon2 implementation.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ configure.ac | 8 +++++++-
+ meson.build  | 3 +++
+ 2 files changed, 10 insertions(+), 1 deletion(-)
+
+--- a/configure.ac
++++ b/configure.ac
+@@ -345,7 +345,13 @@ AC_DEFUN([CONFIGURE_OPENSSL], [
+ 
+ 	saved_LIBS=$LIBS
+ 	AC_CHECK_DECLS([OSSL_get_max_threads], [], [], [#include <openssl/thread.h>])
+-	AC_CHECK_DECLS([OSSL_KDF_PARAM_ARGON2_VERSION], [use_internal_argon2=0], [], [#include <openssl/core_names.h>])
++	dnl OpenSSL built with no-argon2 (implied by no-blake2) still installs the parameter name macros.
++	AC_CHECK_DECLS([OSSL_KDF_PARAM_ARGON2_VERSION], [use_internal_argon2=0], [], [[
++#include <openssl/opensslconf.h>
++#ifdef OPENSSL_NO_ARGON2
++#error Argon2 is disabled in this OpenSSL build
++#endif
++#include <openssl/core_names.h>]])
+ 	LIBS=$saved_LIBS
+ ])
+ 
+--- a/meson.build
++++ b/meson.build
+@@ -518,9 +518,12 @@ elif get_option('crypto-backend') == 'op
+             dependencies: crypto_backend_library))
+     # LibreSSL defines OSSL_KDF_PARAM_ARGON2_VERSION in core_names.h but does
+     # not implement the EVP_KDF API. Check for both the symbol and the function.
++    # OpenSSL built with no-argon2 (implied by no-blake2) keeps the macros too.
+     _have_ossl_argon2 = (
+         cc.has_header_symbol('openssl/core_names.h', 'OSSL_KDF_PARAM_ARGON2_VERSION',
+             dependencies: crypto_backend_library) and
++        not cc.has_header_symbol('openssl/opensslconf.h', 'OPENSSL_NO_ARGON2',
++            dependencies: crypto_backend_library) and
+         cc.has_function('EVP_KDF_fetch',
+             dependencies: crypto_backend_library))
+     conf.set10('HAVE_DECL_OSSL_KDF_PARAM_ARGON2_VERSION', _have_ossl_argon2)

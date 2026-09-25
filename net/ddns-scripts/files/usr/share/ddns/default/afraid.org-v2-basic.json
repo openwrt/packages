@@ -1,0 +1,9 @@
+{
+	"name": "afraid.org-v2-basic",
+	"ipv4": {
+		"url": "https://[USERNAME]:[PASSWORD]@sync.afraid.org/u/?h=[DOMAIN]&ip=[IP]"
+	},
+	"ipv6": {
+		"url": "https://[USERNAME]:[PASSWORD]@v6.sync.afraid.org/u/?h=[DOMAIN]&ip=[IP]"
+	}
+}

@@ -1,0 +1,11 @@
+{
+	"name": "now-dns.com",
+	"ipv4": {
+		"url": "https://[USERNAME]:[PASSWORD]@now-dns.com/update?hostname=[DOMAIN]",
+		"answer": "good|nochg"
+	},
+	"ipv6": {
+		"url": "https://[USERNAME]:[PASSWORD]@now-dns.com/update?hostname=[DOMAIN]",
+		"answer": "good|nochg"
+	}
+}

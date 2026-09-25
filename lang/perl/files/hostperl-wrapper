@@ -1,0 +1,14 @@
+#!@HOST_PERL@
+
+foreach (@ARGV) {
+	# Stop parsing options if we encounter a non-option argument or --
+	last if $_ eq '--' || $_ !~ m/^-/;
+
+	# Modify first option of the form -Ilib, -I../lib, ... to refer to lib_build instead
+	if ($_ =~ m@-I(.*/)?lib@) {
+		$_ .= '_build';
+		last;
+	}
+}
+
+exec '@HOST_PERL@', @ARGV

@@ -1,0 +1,111 @@
+#!/bin/sh
+
+# shellcheck disable=SC2039
+
+# shellcheck source=/dev/null
+. /lib/functions.sh
+# shellcheck source=/dev/null
+. /usr/share/libubox/jshn.sh
+
+RPC_SCRIPTS=/usr/libexec/keepalived/rpc
+
+[ -d $RPC_SCRIPTS ] && include $RPC_SCRIPTS
+
+__function__() {
+	type "$1" > /dev/null 2>&1
+}
+
+foreach_extra() {
+	local file obj
+
+	[ ! -d $RPC_SCRIPTS ] && return
+
+	for file in "$RPC_SCRIPTS"/*; do
+		obj="${file##*/}"
+		$1 "${obj%%.*}"
+	done
+}
+
+keepalived_dump() {
+	local stats_file pids
+
+	stats_file="/tmp/keepalived.json"
+
+	[ -f "$stats_file" ] && rm -f "$stats_file"
+
+	pids=$(pidof /usr/sbin/keepalived)
+	if [ -n "$pids" ]; then
+		kill -37 "$pids" > /dev/null 2>&1
+		json_load "{ \"status\" :  $(cat $stats_file) }"
+	else
+		json_init
+	fi
+
+	json_dump
+}
+
+call_extra() {
+	if __function__ "$1"; then
+		$1
+	else
+		json_init
+		json_add_string error "invalid call $1"
+		json_dump
+	fi
+}
+
+call_method() {
+	local cmd=$1
+
+	case "$cmd" in
+		dump)
+			keepalived_dump
+			;;
+		*)
+			call_extra "$cmd"
+			;;
+	esac
+}
+
+list_extra() {
+	local arg func
+
+	arg=$1
+	func="${arg}_help"
+
+	if __function__ "$func"; then
+		$func
+	else
+		json_add_object "$arg"
+		json_close_object
+	fi
+}
+
+list_methods() {
+	local file
+
+	json_init
+
+	json_add_object dump
+	json_close_object
+
+	foreach_extra list_extra "${1}"
+
+	json_dump
+}
+
+main() {
+	local cmd=$1
+	shift
+
+	case "$cmd" in
+		list)
+			list_methods "$@"
+			;;
+		call)
+			call_method "$@"
+			;;
+	esac
+}
+
+main "$@"

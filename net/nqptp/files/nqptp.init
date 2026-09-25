@@ -1,0 +1,15 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2023 Ben Klang <bklang@wirehack.net>
+
+START=99
+USE_PROCD=1
+
+service_triggers() {
+	procd_add_reload_trigger "nqptp"
+}
+
+start_service() {
+	procd_open_instance
+	procd_set_param command /usr/bin/nqptp
+	procd_close_instance
+}

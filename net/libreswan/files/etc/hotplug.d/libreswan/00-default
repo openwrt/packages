@@ -1,0 +1,220 @@
+#!/bin/sh
+
+# Things that this script gets (from ipsec_pluto(8) man page)
+#
+#	PLUTO_VERB
+#		specifies the name of the operation to be performed
+#		(prepare-host, prepare-client, up-host, up-client,
+#		down-host, or down-client).  If the address family
+#		for security gateway to security gateway
+#		communications is IPv6, then a suffix of -v6 is added
+#		to the verb.
+#
+#	PLUTO_CONNECTION
+#		is the name of the  connection	for  which  we	are
+#		routing.
+#
+#	PLUTO_CONNECTION_TYPE
+#		is type of the connection, "tunnel" or "transport".
+#
+#	PLUTO_CONN_POLICY
+#		the policy of the connection, as in:
+#		RSASIG+ENCRYPT+TUNNEL+PFS+DONTREKEY+OPPORTUNISTIC
+#		+failureDROP+lKOD+rKOD
+#
+#	CAT=YES|
+#		if client address translation inside IPsec stack is enabled
+#
+#	PLUTO_NEXT_HOP
+#		is the next hop to which packets bound for the peer
+#		must be sent.
+#
+#	PLUTO_INTERFACE
+#		is the name of the real interface used by encrypted traffic and IKE traffic
+#
+#	PLUTO_ME
+#		is the IP address of our host.
+#
+#	PLUTO_MY_ID
+#		is our ID.
+#
+#	PLUTO_METRIC
+#		is the metric to set for the route
+#
+#	PLUTO_MTU
+#		is the mtu to set for the route
+#
+#	PLUTO_ADD_TIME
+#		Time the IPsec SA was added to the kernel
+#
+#	PLUTO_MOBIKE_EVENT
+#		wether the connection is underdoing MOBIKE migration
+#
+#	PLUTO_MY_CLIENT
+#		is the IP address / count of our client subnet.	 If
+#		the  client  is	 just  the  host,  this will be the
+#		host's own IP address / mask (where max	is  32	for
+#		IPv4 and 128 for IPv6).
+#
+#	PLUTO_MY_CLIENT_NET
+#		is the IP address of our client net.  If the client
+#		is just the host, this will be the  host's  own	 IP
+#		address.
+#
+#	PLUTO_MY_CLIENT_MASK
+#		is  the	 mask for our client net.  If the client is
+#		just the host, this will be 255.255.255.255.
+#
+#	PLUTO_MY_SOURCEIP
+#		if non-empty, then the source address for the route will be
+#		set to this IP address.
+#
+#	PLUTO_MY_PROTOCOL
+#		is the protocol	 for this  connection.	Useful	for
+#		firewalling.
+#
+#	PLUTO_MY_PORT
+#		is the port. Useful for firewalling.
+#
+#	PLUTO_PEER
+#		is the IP address of our peer.
+#
+#	PLUTO_PEER_ID
+#		is the ID of our peer.
+#
+#	PLUTO_PEER_CLIENT
+#		is the IP address / count of the peer's client subnet.
+#		If the client is just the peer, this will be
+#		the peer's own IP address / mask (where	max  is	 32
+#		for IPv4 and 128 for IPv6).
+#
+#	PLUTO_PEER_CLIENT_NET
+#		is the IP address of the peer's client net.  If the
+#		client is just the peer, this will  be	the  peer's
+#		own IP address.
+#
+#	PLUTO_PEER_CLIENT_MASK
+#		is  the	 mask  for  the	 peer's client net.  If the
+#		client	 is   just   the   peer,   this	  will	 be
+#		255.255.255.255.
+#
+#	PLUTO_PEER_PROTOCOL
+#		is  the	 protocol  set	for  remote  end  with port
+#		selector.
+#
+#	PLUTO_PEER_PORT
+#		is the peer's port. Useful for firewalling.
+#
+#	PLUTO_PEER_CA
+#		is the DN of the peer's CA that signed its certificate
+#
+#	PLUTO_CFG_CLIENT=0|1
+#		is MODECFG or IKEv2 Config client.
+#
+#	PLUTO_CFG_SERVER=0|1
+#		is MODECFG or IKEv2 Config server.
+#
+#	PLUTO_PEER_DNS_INFO
+#		The peer's supplied DNS information (IKEv1 and IKEv2)
+#
+#	PLUTO_PEER_DOMAIN_INFO
+#		The peer's supplied domain list for local resolving (IKEv2 only)
+#
+#	PLUTO_PEER_BANNER
+#		is the peer's provided banner
+#
+#	PLUTO_NM_CONFIGURED=0|1
+#		is NetworkManager used for resolv.conf update
+#
+#	PLUTO_CONN_ADDRFAMILY
+#		is the family type, "ipv4" or "ipv6"
+#
+#	PLUTO_CONN_KIND
+#		is the "kind" of connection (CK_PERMANENT, CK_INSTANCE, etc)
+#
+#	PLUTO_STACK
+#		is the local IPsec kernel stack used, eg XFRM, BSDKAME, NOSTACK
+#
+#	PLUTO_IS_PEER_CISCO=0|1
+#		remote server type is cisco. Add support for cisco extensions
+#		when used with xauth.
+#
+#	PLUTO_SA_REQID
+#		When using KAME or XFRM, the IPsec SA reqid base value.
+#		ESP/AH out is base, ESP/AH in = base + 1
+#		IPCOMP is base + 2 plus for inbound + 1
+#
+#	PLUTO_XFRMI_FWMARK
+#		use outgoing mark
+#
+#	PLUTO_SA_TYPE
+#		The type of IPsec SA (ESP or AH)
+#
+#	PLUTO_USERNAME
+#		The username (XAUTH or GSSAPI) that was authenticated (if any)
+#		for this SA
+#
+# 	PLUTO_VIRT_INTERFACE
+#		is the name of ipsec interface used by clear traffic in/out
+#
+# 	INTERFACE_IP
+# 		The IP to configure / expect on the interface? Currently is never set
+#
+#	PLUTO_XFRM_ROUTE
+#		if an XFRM (ipsec-device) has been specified, value will be "yes"
+#
+#	XAUTH_FAILED
+#		If xauthfail=soft this will be set to 1 if XAUTH authentication
+#		failed. If xauthfail=hard, the updown scripts never run.
+#
+#	CONNMARK
+#		If mark= is set on the connection, this variable will be
+#		set with the value. It can be used for iptables or VTI.
+#
+#	CONNMARK_IN
+#		the incoming mark to use
+#
+#	CONNMARK_OUT
+#		the outgoing mark to use
+#
+#	VTI_IFACE=iface
+#		Name of VTI interface to create
+#
+#	VTI_ROUTING=yes|no
+#		Whether or not to perform ip rule and ip route commands
+#		covering the IPsec SA address ranges to route those packets
+#		into the VTI_IFACE interface. This should be enabled unless
+#		the IPsec SA covers 0.0.0.0/0 <-> 0.0.0.0/0
+#
+#	VTI_SHARED=yes|no
+#		Whether or not more conns (or instances) share a VTI device.
+#               If not shared, the VTI device is deleted when tunnel goes down.
+#
+#	VTI_IP
+#		The IP to configure on the VTI device
+#
+#	SPI_IN / SPI_OUT
+#		The inbound and outbound SPI's of the connection.
+#
+#	PLUTO_INBYTES
+#		total bytes received
+#
+#	PLUTO_OUTBYTES
+#		total bytes sent
+#
+#	NFLOG
+#		is the nflog group to use
+#
+
+case "${PLUTO_VERB}" in
+	prepare-host|prepare-host-v6) ;;
+	prepare-client|prepare-client-v6) ;;
+	route-host|route-host-v6) ;;
+	unroute-host|unroute-host-v6) ;;
+	route-client|route-client-v6) ;;
+	unroute-client|unroute-client-v6) ;;
+	up-host|up-host-v6) ;;
+	down-host|down-host-v6) ;;
+	up-client|up-client-v6) ;;
+	down-client|down-client-v6) ;;
+esac

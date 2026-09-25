@@ -1,0 +1,81 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2010-2025 OpenWrt.org
+
+START=80
+STOP=10
+USE_PROCD=1
+PROG='/usr/sbin/atalkd'
+
+# Config file, contents and status
+default_config="/etc/atalkd.conf"
+atalkd_config=''
+atalkd_error=0
+
+# Log tag
+log_tag='atalkd-init'
+
+NL=$'\n'
+
+generate_config() {
+	# Setup section
+	config_file=''
+	config_overwrite=''
+
+	handle_zone() {
+		local value="$1"
+		atalkd_config="$atalkd_config -zone $value"
+	}
+
+	parse_interface() {
+		local section="$1"
+		local _buffer=''
+		local _value
+		local _interface=''
+		config_get _interface "$section" "interface"
+		append _buffer "$_interface"
+		[ -n "$_interface" ] || { 
+			atalkd_error=1 && logger -p err -t "$log_tag" "Missing interface name for interface $section"
+		}
+		config_get _value "$section" "mode"
+		[ -z "$_value" ] || append _buffer "-$_value"
+		config_get _value "$section" "phase"
+		[ -z "$_value" ] || append _buffer "-phase $_value"
+		config_get _value "$section" "net"
+		[ -z "$_value" ] || append _buffer "-net $_value"
+		config_get _value "$section" "addr"
+		[ -z "$_value" ] || append _buffer "-addr $_value"
+		atalkd_config="$atalkd_config$_buffer"
+		config_list_foreach "$section" zone handle_zone
+		atalkd_config="$atalkd_config$NL"
+	}
+
+	config_load atalkd
+
+	config_get disabled atalkd disabled '0'
+	if [ "$disabled" = "1" ] ; then 
+		logger -p info -t $log_tag "Disabled by config"
+		exit 
+	fi
+	config_get config_file atalkd config_file "$default_config"
+	config_get config_overwrite atalkd config_overwrite
+	if [ "$config_overwrite" == "1" ] ; then
+		config_foreach parse_interface interface
+		mkdir -p `dirname "$config_file"`
+		echo "$atalkd_config" > "$config_file"
+		logger -p info -t $log_tag "Configuration written to $config_file"
+	else
+		logger -p info -t $log_tag 'Configuration not modified - atalkd:config_overwrite=0 or missing'
+	fi
+}
+
+start_service() {
+	generate_config
+
+	[ "$atalkd_error" == "0" ] || exit
+
+	procd_open_instance
+	procd_set_param command $PROG -d -f "$config_file"
+	procd_set_param file "$config_file"
+	procd_set_param respawn
+	procd_close_instance
+}

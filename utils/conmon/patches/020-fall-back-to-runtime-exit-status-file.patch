@@ -1,0 +1,240 @@
+From f958fdd8b554766ed3d93ce1d826e11176a5d739 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Wed, 19 Aug 2026 07:50:54 +0100
+Subject: [PATCH] Take the exit status from the runtime when the container
+ cannot be reaped
+
+conmon learns a container's exit status by waiting for the pid it reads from
+the runtime's --container-pidfile. That only works while the container is
+conmon's own child. Runtimes which hand the container to a supervisor, as
+OpenWrt's ujail does when procd owns the container, leave conmon with nothing
+to wait for: check_child_processes() finds no children, probes the pid with
+kill(pid, 0), sees it gone and settles for a status of zero, which its comment
+already admits is a guess. Every container then looks like it exited
+successfully, whatever it really did, and an exec session that succeeded is
+reported as a failure.
+
+Let the runtime supply what conmon cannot observe. A runtime in that position
+writes the status to a file named exit_status beside the pid file, as a single
+decimal number in the convention a shell uses, and conmon adopts it in the one
+place it would otherwise guess. The value is stored the way a wait status is
+stored, so get_exit_status() decodes it back unchanged and the rest of the
+program is none the wiser. Only a plain decimal in the range 0 to 255 is
+believed, and only from a file at least as new as the pid file, so that
+anything an earlier container left in the same directory is ignored. A
+missing, unreadable or malformed file leaves the guess as it was, so a runtime
+whose container conmon does reap sees no change whatsoever.
+
+A status can only be written once the kernel has reaped the container, which
+is also the moment the pid stops answering the probe, so the two orders are
+possible. A probe which finds the pid gone and no status waits for one in ten
+millisecond steps, for a tenth of a second at most, rather than settling for
+the guess straight away.
+
+stdio_cb() also has to be able to end the main loop. It leaves the loop only
+once the container is known to have exited, which for a container conmon
+cannot reap never happens, so an attached exec session hung until its caller
+gave up. A status the runtime left behind counts as that knowledge too.
+
+Upstream-Status: Pending
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ docs/conmon.8.md |   8 ++++
+ src/ctr_exit.c   | 102 ++++++++++++++++++++++++++++++++++++++++++++++-
+ src/ctr_exit.h   |   1 +
+ src/ctr_stdio.c  |   5 ++-
+ 4 files changed, 112 insertions(+), 4 deletions(-)
+
+--- a/docs/conmon.8.md
++++ b/docs/conmon.8.md
+@@ -115,6 +115,14 @@ Persistent directory for a container tha
+ **-p**, **--container-pidfile**
+ PID file for the initial pid inside of the container.
+ 
++When the container process is not a child of conmon and therefore cannot be
++waited for, conmon looks for a file named *exit_status* beside this one and
++takes the container's exit status from it, if the runtime left one there. The
++file holds a single decimal number in the range 0 to 255, in the convention a
++shell uses: the exit code of the container process, or 128 plus the number of
++the signal that terminated it. It is only believed if it is at least as new as
++this file, so a runtime writing both must write this one first.
++
+ **-P**, **--conmon-pidfile**
+ PID file for the conmon process.
+ 
+--- a/src/ctr_exit.c
++++ b/src/ctr_exit.c
+@@ -1,7 +1,7 @@
+ #define _GNU_SOURCE
+ 
+ #include "ctr_exit.h"
+-#include "cli.h" // opt_exit_command, opt_exit_delay, opt_socket_path, opt_cuuid
++#include "cli.h" // opt_exit_command, opt_exit_delay, opt_socket_path, opt_cuuid, opt_container_pid_file
+ #include "utils.h"
+ #include "parent_pipe_fd.h"
+ #include "globals.h"
+@@ -14,6 +14,7 @@
+ #include <glib-unix.h>
+ #include <signal.h>
+ #include <stdlib.h>
++#include <sys/stat.h>
+ #include <unistd.h>
+ 
+ volatile sig_atomic_t container_pid = -1;
+@@ -37,6 +38,28 @@ void on_sig_exit(int signal)
+ 	raise(SIGUSR1);
+ }
+ 
++/* The runtime can only write the exit status once the kernel has reaped the
++   container, at which point the pid is already gone. Poll briefly for the
++   status file before giving up on it. */
++#define EXIT_STATUS_POLL_MS 10
++#define EXIT_STATUS_POLL_MAX 10
++
++static gboolean exit_status_poll_cb(G_GNUC_UNUSED gpointer user_data)
++{
++	static int tries;
++
++	if (!container_exit_known() && ++tries < EXIT_STATUS_POLL_MAX)
++		return G_SOURCE_CONTINUE;
++
++	if (container_status < 0)
++		container_status = 0; /* We can't get the real exit status */
++
++	container_pid = -1;
++	g_main_loop_quit(main_loop);
++
++	return G_SOURCE_REMOVE;
++}
++
+ static void check_child_processes(GHashTable *pid_to_handler, GHashTable *cache)
+ {
+ 	for (;;) {
+@@ -60,7 +83,15 @@ static void check_child_processes(GHashT
+ 					/* Container process has exited */
+ 					ninfof("Container process %d has exited (detected via kill probe)", container_pid);
+ 					/* Simulate container exit callback */
+-					container_status = 0; /* We can't get the real exit status */
++					if (!container_exit_known()) {
++						static gboolean polling;
++
++						if (!polling) {
++							polling = TRUE;
++							g_timeout_add(EXIT_STATUS_POLL_MS, exit_status_poll_cb, NULL);
++						}
++						return;
++					}
+ 					container_pid = -1;
+ 					/* Fall through to quit the main loop */
+ 				}
+@@ -125,6 +156,73 @@ int get_exit_status(int status)
+ 	return -1;
+ }
+ 
++static int read_exit_status_file(void)
++{
++	_cleanup_free_ char *dir = NULL;
++	_cleanup_free_ char *path = NULL;
++	_cleanup_free_ char *contents = NULL;
++	struct stat pid_st, status_st;
++	gsize len = 0;
++	char *end = NULL;
++	gint64 value;
++
++	if (opt_container_pid_file == NULL)
++		return -1;
++
++	dir = g_path_get_dirname(opt_container_pid_file);
++	path = g_build_filename(dir, "exit_status", NULL);
++
++	/* a status older than the pid file belongs to an earlier container */
++	if (stat(opt_container_pid_file, &pid_st) < 0 || stat(path, &status_st) < 0)
++		return -1;
++
++	if (status_st.st_mtim.tv_sec < pid_st.st_mtim.tv_sec ||
++	    (status_st.st_mtim.tv_sec == pid_st.st_mtim.tv_sec && status_st.st_mtim.tv_nsec < pid_st.st_mtim.tv_nsec))
++		return -1;
++
++	if (!g_file_get_contents(path, &contents, &len, NULL))
++		return -1;
++
++	if (len == 0 || len > 16)
++		return -1;
++
++	errno = 0;
++	value = g_ascii_strtoll(contents, &end, 10);
++	if (errno != 0 || end == contents)
++		return -1;
++
++	while (*end == ' ' || *end == '\t' || *end == '\n' || *end == '\r')
++		end++;
++
++	if (*end != '\0' || value < 0 || value > 255)
++		return -1;
++
++	ndebugf("read container exit status %d from %s", (int)value, path);
++
++	return (int)value;
++}
++
++/* Adopt a status the runtime left behind, for a container we cannot reap
++   ourselves. Encoded as a wait status so get_exit_status() decodes it back. */
++gboolean container_exit_known(void)
++{
++	int status;
++
++	if (container_status >= 0)
++		return TRUE;
++
++	status = read_exit_status_file();
++	if (status < 0)
++		return FALSE;
++
++	if (status > 128 && status < 128 + NSIG)
++		container_status = status - 128;
++	else
++		container_status = (status & 0xff) << 8;
++
++	return TRUE;
++}
++
+ void runtime_exit_cb(G_GNUC_UNUSED GPid pid, int status, G_GNUC_UNUSED gpointer user_data)
+ {
+ 	runtime_status = status;
+--- a/src/ctr_exit.h
++++ b/src/ctr_exit.h
+@@ -20,6 +20,7 @@ gboolean check_child_processes_cb(gpoint
+ gboolean on_signalfd_cb(gint fd, GIOCondition condition, gpointer user_data);
+ gboolean timeout_cb(G_GNUC_UNUSED gpointer user_data);
+ int get_exit_status(int status);
++gboolean container_exit_known(void);
+ void runtime_exit_cb(G_GNUC_UNUSED GPid pid, int status, G_GNUC_UNUSED gpointer user_data);
+ void container_exit_cb(G_GNUC_UNUSED GPid pid, int status, G_GNUC_UNUSED gpointer user_data);
+ void do_exit_command();
+--- a/src/ctr_stdio.c
++++ b/src/ctr_stdio.c
+@@ -4,6 +4,7 @@
+ #include "conn_sock.h"
+ #include "utils.h"
+ #include "ctr_logging.h"
++#include "ctr_exit.h"
+ #include "cli.h"
+ 
+ #include <stdbool.h>
+@@ -66,13 +67,13 @@ gboolean stdio_cb(int fd, GIOCondition c
+ 		 */
+ 		if (pipe == STDOUT_PIPE) {
+ 			mainfd_stdout = -1;
+-			if (container_status >= 0 && mainfd_stderr < 0) {
++			if (container_exit_known() && mainfd_stderr < 0) {
+ 				g_main_loop_quit(main_loop);
+ 			}
+ 		}
+ 		if (pipe == STDERR_PIPE) {
+ 			mainfd_stderr = -1;
+-			if (container_status >= 0 && mainfd_stdout < 0) {
++			if (container_exit_known() && mainfd_stdout < 0) {
+ 				g_main_loop_quit(main_loop);
+ 			}
+ 		}

@@ -1,0 +1,11 @@
+{
+	"name": "do.de",
+	"ipv4": {
+		"url": "http://ddns.do.de/?myip=[IP]&hostname=[DOMAIN]&username=[USERNAME]&password=[PASSWORD]",
+		"answer": "good|nochg"
+	},
+	"ipv6": {
+		"url": "http://ddns.do.de/?myip=[IP]&hostname=[DOMAIN]&username=[USERNAME]&password=[PASSWORD]",
+		"answer": "good|nochg"
+	}
+}

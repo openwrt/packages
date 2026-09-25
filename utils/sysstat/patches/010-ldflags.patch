@@ -1,0 +1,49 @@
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -109,9 +109,7 @@ ifdef TFLAGS
+ DFLAGS += $(TFLAGS)
+ endif
+ 
+-ifndef LFLAGS
+-LFLAGS = @STRIP@ @LDFLAGS@
+-endif
++LDFLAGS += @STRIP@
+ 
+ # Commands
+ ifndef MSGFMT
+@@ -152,7 +150,7 @@ endif
+ ifndef NLS
+ NLS = @NLS@
+ endif
+-LFLAGS += @LFINTL@
++LDFLAGS += @LFINTL@
+ ifeq ($(NLS),y)
+ REQUIRE_NLS = -DUSE_NLS -DPACKAGE=\"$(PACKAGE)\" -DLOCALEDIR=\"$(NLS_DIR)\"
+ endif
+@@ -248,7 +246,7 @@ NLSPOT= $(NLSPO:.po=.pot)
+ 	$(CC) -o $@ -c $(CFLAGS) $(DFLAGS) $<
+ 
+ % : %.o
+-	$(CC) -o $@ $(CFLAGS) $^ $(LFLAGS)
++	$(CC) -o $@ $(CFLAGS) $^ $(LDFLAGS)
+ 
+ all: sadc sar sadf iostat tapestat mpstat pidstat cifsiostat locales
+ 
+@@ -338,7 +336,7 @@ librdsensors.a: rd_sensors.o
+ 
+ sadc.o: sadc.c sa.h version.h common.h rd_stats.h rd_sensors.h
+ 
+-sadc: LFLAGS += $(LFSENSORS)
++sadc: LDFLAGS += $(LFSENSORS)
+ 
+ sadc: sadc.o act_sadc.o sa_wrap.o sa_common_light.o common_light.o systest.o librdstats.a librdsensors.a libsyscom.a
+ 
+@@ -348,7 +346,7 @@ sar: sar.o act_sar.o format_sar.o sa_com
+ 
+ sadf.o: sadf.c sadf.h version.h sa.h common.h rd_stats.h rd_sensors.h
+ 
+-sadf: LFLAGS += $(LFPCP)
++sadf: LDFLAGS += $(LFPCP)
+ 
+ sadf: sadf.o act_sadf.o format_sadf.o sadf_misc.o pcp_def_metrics.o sa_conv.o rndr_stats.o xml_stats.o json_stats.o svg_stats.o raw_stats.o pcp_stats.o sa_common.o librdstats_light.a libsyscom.a
+ 

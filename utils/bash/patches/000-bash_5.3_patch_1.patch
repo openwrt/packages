@@ -1,0 +1,27 @@
+From 21fee8ebcf03858a4c14b605095e89333ba159ba Mon Sep 17 00:00:00 2001
+From: Chet Ramey <chet.ramey@case.edu>
+Date: Wed, 23 Jul 2025 15:42:17 -0400
+Subject: Bash-5.3 patch 1: fix posix-mode issue with "wait -n", where it can
+ return process IDs outside the requested set
+
+--- a/jobs.c
++++ b/jobs.c
+@@ -3538,7 +3538,7 @@ return_procsub:
+   /* There aren't any dead jobs in the jobs table, but let's see if there's
+      one in bgpids. We can do this in posix mode because we'll remove any
+      one we find from the table, preserving existing semantics. */
+-  if (posixly_correct && (t = bgp_findone ()))
++  if (posixly_correct && (flags & JWAIT_WAITING) == 0 && (t = bgp_findone ()))
+     {
+       pid = t->pid;
+       r = t->status;
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 0
++#define PATCHLEVEL 1
+ 
+ #endif /* _PATCHLEVEL_H_ */

@@ -1,0 +1,57 @@
+From 519aae7b91454e45b0528809e94c5008cdf0c060 Mon Sep 17 00:00:00 2001
+From: Zahari Doychev <zdoychev@maxlinear.com>
+Date: Thu, 8 Dec 2022 17:40:17 +0100
+Subject: [PATCH] mausezahn: use getopt_long instead of getopt
+
+The musl getopt stops processing the options at the first non-option
+argument comapared to the glibc variant. Using getopt_long fixes this
+problem.
+
+Signed-off-by: Zahari Doychev <zahari.doychev@linux.com>
+---
+ staging/mausezahn.c | 13 ++++++-------
+ 1 file changed, 6 insertions(+), 7 deletions(-)
+
+--- a/staging/mausezahn.c
++++ b/staging/mausezahn.c
+@@ -23,7 +23,8 @@
+ #include <sys/ioctl.h>
+ #include <netinet/in.h>
+ #include <stdarg.h>
+- 
++#include <getopt.h>
++
+ #include "mz.h"
+ #include "cli.h"
+ #include "mops.h"
+@@ -447,9 +448,7 @@ int getopts (int argc, char *argv[])
+ 	char unit;
+ 
+ 	opterr = 1; // let getopt print error message if necessary
+-
+-
+-	while ((c = getopt(argc, argv, short_options)) != -1)
++	while ((c = getopt_long(argc, argv, short_options, NULL, NULL)) != -1) {
+ 		switch (c) {
+ 		 case '4':
+ 			tx.eth_type = 0x0800;
+@@ -646,7 +645,7 @@ int getopts (int argc, char *argv[])
+ 			fprintf (stderr," mz/getopts: Could not handle arguments properly!\n");
+ 			return 1;
+ 		}
+-   
++	}
+ 	// ********************************************
+ 	//       Handle additional arguments
+ 	// ********************************************
+@@ -660,8 +659,8 @@ int getopts (int argc, char *argv[])
+ 			"-- Verbose mode --\n"
+ 			"\n");
+ 	}
+-   
+-	if (argc<2) {
++
++	if (optind+2 < argc) {
+ 		help();
+ 	}
+    

@@ -1,0 +1,100 @@
+#!/bin/sh /etc/rc.common
+#
+# shellcheck disable=SC3043 # ash supports local
+
+START=90
+STOP=10
+
+PROG=/usr/bin/syncthing
+USE_PROCD=1
+
+service_triggers() {
+	procd_add_reload_trigger 'syncthing'
+}
+
+start_service() {
+	config_load 'syncthing'
+
+	local config_name='syncthing'
+	local enabled db_delete_retention_interval db_maintenance_interval \
+		gui_address gui_apikey home log_file logfile log_level \
+		log_max_old_files log_max_size nice user
+	local gc maxprocs macprocs memlimit
+
+	uci_validate_section 'syncthing' 'syncthing' "$config_name" \
+		'db_delete_retention_interval:string' \
+		'db_maintenance_interval:string' \
+		'enabled:bool:0' \
+		'gc:uinteger:0' \
+		'group:string:syncthing' \
+		'gui_address:string:http://0.0.0.0:8384' \
+		'gui_apikey:string' \
+		'home:string:/etc/syncthing' \
+		'log_file:string:/var/log/syncthing.log' \
+		'logfile:string' \
+		'log_level:or("DEBUG", "INFO", "WARN", "ERROR"):INFO' \
+		'log_max_old_files:uinteger:7' \
+		'log_max_size:uinteger:1048576' \
+		'macprocs:uinteger' \
+		'maxprocs:uinteger:0' \
+		'memlimit:uinteger:0' \
+		'nice:range(-20,19):0' \
+		'user:string:syncthing'
+
+	[ "$enabled" = 1 ] || return 0
+
+	# Compatibility with older configs
+	[ -n "$logfile" ] && log_file="$logfile"
+	[ -n "$macprocs" ] && maxprocs="$macprocs"
+
+	[ -z "$group" ] && group=$(id -gn "$user")
+
+	mkdir -p "$home"
+	# A separate step to handle an upgrade use case
+	[ -d "$home" ] && chown -R "$user:$group" "$home"
+
+	procd_open_instance syncthing
+
+	procd_set_param command "$PROG"
+
+	[ "$gc" -le 0 ] || procd_append_param env GOGC="$gc"
+	[ "$maxprocs" -le 0 ] || procd_append_param env GOMAXPROCS="$maxprocs"
+	[ "$memlimit" -le 0 ] || procd_append_param env GOMEMLIMIT="$memlimit"
+
+	procd_append_param command serve
+	[ -z "$db_delete_retention_interval" ] ||
+		procd_append_param command \
+			--db-delete-retention-interval="$db_delete_retention_interval"
+	[ -z "$db_maintenance_interval" ] ||
+		procd_append_param command \
+			--db-maintenance-interval="$db_maintenance_interval"
+	procd_append_param command --gui-address="$gui_address"
+	[ -z "$gui_apikey" ] ||
+		procd_append_param command --gui_apikey="$gui_apikey"
+	procd_append_param command --home="$home"
+	procd_append_param command --log-file="$log_file"
+	[ -z "$log_level" ] || procd_append_param command --log-level="$log_level"
+	[ -z "$log_max_old_files" ] ||
+		procd_append_param command --log-max-old-files="$log_max_old_files"
+	[ -z "$log_max_size" ] ||
+		procd_append_param command --log-max-size="$log_max_size"
+	procd_append_param command --no-browser
+	procd_append_param command --no-port-probing
+	procd_append_param command --no-restart
+	# The package is built with noupgrade tag so --no-upgrade is not necessary
+
+	procd_set_param nice "$nice"
+	procd_set_param term_timeout 15
+	procd_set_param user "$user"
+	procd_set_param group "$group"
+	procd_set_param respawn
+	procd_set_param stdout 0
+	procd_set_param stderr 1
+
+	procd_close_instance
+}
+
+reload_service() {
+	stop
+	start
+}

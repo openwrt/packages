@@ -1,0 +1,68 @@
+From 4b09d856fd3d82bfb6707d889fb40f981945a6a2 Mon Sep 17 00:00:00 2001
+From: Stijn Tintel <stijn@linux-ipv6.be>
+Date: Wed, 7 Jan 2026 00:20:04 +0200
+Subject: [PATCH] [openwrt] fix LuCI icons (#3178)
+
+The PNG icons in LuCI have been replaced with SVG icons.
+
+Signed-off-by: Stijn Tintel <stijn@linux-ipv6.be>
+---
+ src/openwrt/view/admin_thread/thread_overview.htm | 10 +++++-----
+ src/openwrt/view/admin_thread/thread_scan.htm     | 12 ++++++------
+ 2 files changed, 11 insertions(+), 11 deletions(-)
+
+--- a/src/openwrt/view/admin_thread/thread_overview.htm
++++ b/src/openwrt/view/admin_thread/thread_overview.htm
+@@ -32,7 +32,7 @@
+ 		<!-- physical device -->
+ 		<div class="tr cbi-rowstyle-2">
+ 			<div class="td col-1 center middle">
+-				<span class="ifacebadge"><img src="<%=resource .. "/icons/wifi.png"%>" id="wpan0" /> <%=threadget("interfacename").InterfaceName%></span>
++				<span class="ifacebadge"><img src="<%=resource .. "/icons/wifi.svg"%>" id="wpan0" /> <%=threadget("interfacename").InterfaceName%></span>
+ 			</div>
+ 			<div class="td col-7 left middle">
+ 				<big><strong><%:Generic MAC 802.15.4 Thread%></strong></big><br />
+@@ -164,13 +164,13 @@
+ 		var scale = percent_thread_signal(info);
+ 
+ 		if (scale == 0)
+-			icon = "<%=resource%>/icons/signal-0.png";
++			icon = "<%=resource%>/icons/signal-000.svg";
+ 		else if (scale == 30)
+-			icon = "<%=resource%>/icons/signal-25-50.png";
++			icon = "<%=resource%>/icons/signal-025-050.svg";
+ 		else if (scale == 50)
+-			icon = "<%=resource%>/icons/signal-50-75.png";
++			icon = "<%=resource%>/icons/signal-050-075.svg";
+ 		else
+-			icon = "<%=resource%>/icons/signal-75-100.png";
++			icon = "<%=resource%>/icons/signal-075-100.svg";
+ 
+ 		return icon;
+ 	}
+--- a/src/openwrt/view/admin_thread/thread_scan.htm
++++ b/src/openwrt/view/admin_thread/thread_scan.htm
+@@ -17,17 +17,17 @@
+ 		end
+ 
+ 		if info.NetworkName == nil then
+-			icon = resource .. "/icons/signal-none.png"
++			icon = resource .. "/icons/signal-none.svg"
+ 		elseif scale < 15 then
+-			icon = resource .. "/icons/signal-0.png"
++			icon = resource .. "/icons/signal-000.svg"
+ 		elseif scale < 35 then
+-			icon = resource .. "/icons/signal-0-25.png"
++			icon = resource .. "/icons/signal-000-025.svg"
+ 		elseif scale < 55 then
+-			icon = resource .. "/icons/signal-25-50.png"
++			icon = resource .. "/icons/signal-025-050.svg"
+ 		elseif scale < 75 then
+-			icon = resource .. "/icons/signal-50-75.png"
++			icon = resource .. "/icons/signal-050-075.svg"
+ 		else
+-			icon = resource .. "/icons/signal-75-100.png"
++			icon = resource .. "/icons/signal-075-100.svg"
+ 		end
+ 
+ 		return icon

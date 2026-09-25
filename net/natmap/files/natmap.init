@@ -1,0 +1,121 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+USE_PROCD=1
+
+NAME=natmap
+PROG=/usr/bin/$NAME
+
+STATUS_PATH=/var/run/natmap
+
+load_interfaces() {
+	config_get interface "$1" interface
+	config_get_bool enable "$1" enable 1
+
+	[ "${enable}" = "1" ] && interfaces=" ${interface} ${interfaces}"
+}
+
+validate_section_natmap() {
+	uci_load_validate "${NAME}" natmap "$1" "$2" \
+		'enable:bool:0' \
+		'family:string' \
+		'udp_mode:bool:0' \
+		'interface:string' \
+		'interval:and(uinteger, min(1))' \
+		'stun_cycle:uinteger' \
+		'stun_server:string' \
+		'http_server:string' \
+		'fwmark:string' \
+		'port:or(port,portrange)' \
+		'port_random:bool:0' \
+		'forward_target:host' \
+		'forward_port:port' \
+		'forward_timeout:and(uinteger, min(1))' \
+		'forward_congestion:string' \
+		'notify_script:file' \
+		'log_stdout:bool:1' \
+		'log_stderr:bool:1'
+}
+
+natmap_instance() {
+	[ "$2" = 0 ] || {
+		echo "validation failed"
+		return 1
+	}
+
+	[ "${enable}" = 0 ] && return 1
+
+	procd_open_instance "$1"
+	procd_set_param command "$PROG" \
+		${interval:+-k "$interval"} \
+		${stun_cycle:+-c "$stun_cycle"} \
+		${stun_server:+-s "$stun_server"} \
+		${http_server:+-h "$http_server"} \
+		${fwmark:+-f "$fwmark"} \
+		${port:+-b "$([ "$port_random" = 1 ] && echo ${port/-/\~} || echo $port)"} \
+
+	[ "${family}" = ipv4 ] && procd_append_param command -4
+	[ "${family}" = ipv6 ] && procd_append_param command -6
+	[ "${udp_mode}" = 1 ] && procd_append_param command -u
+
+	[ -n "${interface}" ] && {
+		local ifname
+
+		network_get_device ifname "$interface" || ifname="$interface"
+		procd_append_param command -i "$ifname"
+		procd_append_param netdev "$ifname"
+	}
+
+	[ -n "${forward_target}" ] && procd_append_param command -t "$forward_target" -p "$forward_port"
+	[ -n "${forward_timeout}" ] && procd_append_param command -T "$forward_timeout"
+	[ -n "${forward_congestion}" ] && procd_append_param command -C "$forward_congestion"
+
+	[ -n "${notify_script}" ] && procd_set_param env "NOTIFY_SCRIPT=${notify_script}"
+	procd_append_param command -e /usr/lib/natmap/update.sh
+
+	procd_set_param respawn
+	procd_set_param stdout "${log_stdout}"
+	procd_set_param stderr "${log_stderr}"
+
+	procd_close_instance
+}
+
+clear_status_files() {
+	find "${STATUS_PATH}" -type f -print0 | xargs -0 rm -f --
+}
+
+service_triggers() {
+	local interfaces
+
+	procd_add_reload_trigger "${NAME}"
+
+	config_load "${NAME}"
+	config_foreach load_interfaces natmap
+
+	[ -n "${interfaces}" ] && {
+		for n in $interfaces ; do
+			procd_add_reload_interface_trigger $n
+		done
+	}
+
+	procd_add_validation validate_section_natmap
+}
+
+start_service() {
+	. /lib/functions/network.sh
+
+	mkdir -p "${STATUS_PATH}"
+	clear_status_files
+
+	config_load "${NAME}"
+	config_foreach validate_section_natmap natmap natmap_instance
+}
+
+reload_service() {
+	stop
+	start
+}
+
+service_stopped() {
+	clear_status_files
+}

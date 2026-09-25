@@ -1,0 +1,24 @@
+From 2b8c7c5f4b71726806de0d718c4c56eeba2c7332 Mon Sep 17 00:00:00 2001
+From: Khem Raj <raj.khem@gmail.com>
+Date: Thu, 13 Feb 2025 22:14:47 -0800
+Subject: [PATCH] Include time.h for timespec struct definition
+
+Fixes
+git/isobusfs/../libj1939.h:33:18: error: field has incomplete type 'struct timespec'
+   33 |         struct timespec next_send_time;
+      |                         ^
+Signed-off-by: Khem Raj <raj.khem@gmail.com>
+---
+ libj1939.h | 1 +
+ 1 file changed, 1 insertion(+)
+
+--- a/libj1939.h
++++ b/libj1939.h
+@@ -17,6 +17,7 @@
+ #include <linux/can/j1939.h>
+ #include <stdbool.h>
+ #include <stdint.h>
++#include <time.h>
+ #include <sys/socket.h>
+ 
+ #ifndef J1939_LIB_H

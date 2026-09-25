@@ -1,0 +1,42 @@
+From 44a0f4ae30ac0b62a8cc5aa9f3e2d54d40c31a75 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Tue, 1 Sep 2026 00:25:27 +0100
+Subject: [PATCH] picohash: guard the SHA-1 output swap with the macro picohash
+ defines
+
+The final "swap byte order back" step in _picohash_sha1_final is guarded by
+SHA_BIG_ENDIAN, which nothing defines. picohash detects endianness into
+_PICOHASH_BIG_ENDIAN, and that is what the matching byte store in
+_picohash_sha1_add_uncounted tests. The name comes from liboauth's sha1.c,
+which this SHA-1 implementation is adopted from, and is present upstream in
+kazuho/picohash as well.
+
+On a big-endian target the swap runs when it must not, so every SHA-1 digest
+is emitted with each 32-bit word reversed, and HMAC-SHA1 with it. STUN
+MESSAGE-INTEGRITY therefore never verifies: every ICE connectivity check is
+rejected, no candidate pair is nominated, and no session can be established.
+picohash is the default backend, so this affects any big-endian build that
+does not set USE_NETTLE.
+
+Verified on mips_24kc, a big-endian MIPS 34Kc running OpenWrt with musl.
+Before the change, ICE loops with "STUN integrity check failed" and the agent
+never leaves the connecting state. After it, the agent reaches completed and
+the session comes up. RFC 2202 HMAC-SHA1 test case 1 and the SHA-1 vector for
+"abc" both fail before and pass after.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ src/picohash.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/src/picohash.h
++++ b/src/picohash.h
+@@ -452,7 +452,7 @@ inline void _picohash_sha1_final(_picoha
+     _picohash_sha1_add_uncounted(s, (uint8_t)(s->byteCount >> 5));
+     _picohash_sha1_add_uncounted(s, (uint8_t)(s->byteCount << 3));
+ 
+-#ifndef SHA_BIG_ENDIAN
++#ifndef _PICOHASH_BIG_ENDIAN
+     { // Swap byte order back
+         int i;
+         for (i = 0; i < 5; i++) {

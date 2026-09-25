@@ -1,0 +1,10 @@
+--- a/uwsgiconfig.py
++++ b/uwsgiconfig.py
+@@ -684,7 +684,6 @@ class uConf(object):
+             self.include_path += os.environ['UWSGI_INCLUDES'].split(',')
+ 
+         cflags = [
+-            '-O2',
+             '-I.',
+             '-Wall',
+             '-D_LARGEFILE_SOURCE',

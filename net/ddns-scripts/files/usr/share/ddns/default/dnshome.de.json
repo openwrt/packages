@@ -1,0 +1,9 @@
+{
+	"name": "dnshome.de",
+	"ipv4": {
+		"url": "http://[USERNAME]:[PASSWORD]@www.dnshome.de/dyndns.php?hostname=[DOMAIN]&ip=[IP]"
+	},
+	"ipv6": {
+		"url": "http://[USERNAME]:[PASSWORD]@www.dnshome.de/dyndns.php?hostname=[DOMAIN]&ip6=[IP]"
+	}
+}

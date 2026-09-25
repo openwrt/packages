@@ -1,0 +1,11 @@
+--- a/tcpserver/TCPServer.cpp
++++ b/tcpserver/TCPServer.cpp
+@@ -59,7 +59,7 @@ namespace tcp {
+ 			// Post a call to the stop function so that server::stop() is safe to call
+ 			// from any thread.
+ 			flghandle_stop_Completed=false;
+-			boost::asio::post([this] { handle_stop(); });
++			boost::asio::post(io_context_, [this] { handle_stop(); });
+ 		}
+ 
+ 		void CTCPServerInt::handle_stop()

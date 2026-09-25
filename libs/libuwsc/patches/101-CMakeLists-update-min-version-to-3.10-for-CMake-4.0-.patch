@@ -1,0 +1,25 @@
+From 48b993b462c106cd613d2684be83a00087c7c223 Mon Sep 17 00:00:00 2001
+From: Christian Marangi <ansuelsmth@gmail.com>
+Date: Sun, 23 Nov 2025 14:55:40 +0100
+Subject: [PATCH] CMakeLists: update min version to 3.10 for CMake >= 4.0
+ support
+
+Update minimum version of CMake to 3.10 for CMake >= 4.0 version
+support.
+
+New CMake require 3.5 as the minimum version with that increased to 3.10
+in the next CMake release.
+
+Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
+---
+ CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-cmake_minimum_required(VERSION 2.8)
++cmake_minimum_required(VERSION 3.10)
+ 
+ project(libuwsc C)
+ 

@@ -1,0 +1,67 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Nick Hainke <vincent@systemli.org>
+Date: Sat, 15 Jan 2022 08:37:37 +0100
+Subject: [PATCH] add ubus ipc integration
+
+---
+
+--- a/src/scheduler.c
++++ b/src/scheduler.c
+@@ -59,6 +59,8 @@
+ #include <assert.h>
+ #include <time.h>
+ 
++#include "ubus.h"
++
+ #ifdef __MACH__
+ #include "mach/clock_gettime.h"
+ #endif
+@@ -363,6 +365,8 @@ poll_sockets(void)
+   }
+   OLSR_FOR_ALL_SOCKETS_END(entry);
+ 
++  hfd = olsrd_ubus_add_read_sock(&ibits, hfd);
++
+   /* Running select on the FD set */
+   do {
+     n = olsr_select(hfd, fdsets & SP_PR_READ ? &ibits : NULL, fdsets & SP_PR_WRITE ? &obits : NULL, NULL, &tvp);
+@@ -395,6 +399,7 @@ poll_sockets(void)
+     }
+   }
+   OLSR_FOR_ALL_SOCKETS_END(entry);
++  olsrd_ubus_receive(&ibits);
+ }
+ 
+ static void
+--- a/src/main.c
++++ b/src/main.c
+@@ -74,6 +74,8 @@
+ #include "lock_file.h"
+ #include "cli.h"
+ 
++#include "ubus.h"
++
+ #if defined(__GLIBC__) && defined(__linux__) && !defined(__ANDROID__) && !defined(__UCLIBC__)
+   #define OLSR_HAVE_EXECINFO_H
+ #endif
+@@ -771,6 +773,9 @@ int main(int argc, char *argv[]) {
+   signal(SIGUSR2, SIG_IGN);
+ #endif /* _WIN32 */
+ 
++  /* Adding ubus */
++  olsrd_add_ubus();
++
+   /* Starting scheduler */
+   olsr_scheduler();
+ 
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -252,7 +252,7 @@ else
+ ifeq ($(OS),win32)
+   LDFLAGS +=	-Wl,-export-all-symbols
+ else 
+-  LDFLAGS +=	-Wl,-export-dynamic 
++  LDFLAGS +=	-Wl,-export-dynamic,-lubus,-lubox
+ endif
+ ifeq ($(NORPATH),0)
+ LDFLAGS +=	-Wl,-rpath,$(LIBDIR)

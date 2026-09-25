@@ -1,0 +1,32 @@
+--- a/configure.in
++++ b/configure.in
+@@ -94,7 +94,7 @@ if test "x$enable_wolfssl" = xyes; then
+         [
+                 #include <wolfssl/options.h>
+         ])
+-        AC_SEARCH_LIBS([wolfTLSv1_client_method], [wolfssl], [], [
++        AC_SEARCH_LIBS([wolfSSLv23_client_method], [wolfssl], [], [
+                 AC_MSG_ERROR([unable to locate SSL lib: wolfSSL needed.])
+         ])
+ 
+@@ -107,7 +107,7 @@ if test "x$enable_wolfssl" = xyes; then
+         ]], [[
+                 WOLFSSL_CTX *ctx;
+                 wolfSSL_Init();
+-                ctx = wolfSSL_CTX_new(wolfTLSv1_client_method());
++                ctx = wolfSSL_CTX_new(wolfSSLv23_client_method());
+                 wolfSSL_CTX_UseSNI(ctx, WOLFSSL_SNI_HOST_NAME, "wifidog.org", 11);
+         ]])], [enabled_sni=yes], [enabled_sni=no])
+ 
+--- a/src/simple_http.c
++++ b/src/simple_http.c
+@@ -160,8 +160,7 @@ get_wolfssl_ctx(const char *hostname)
+     if (NULL == wolfssl_ctx) {
+         wolfSSL_Init();
+         /* Create the WOLFSSL_CTX */
+-        /* Allow TLSv1.0 up to TLSv1.2 */
+-        if ((wolfssl_ctx = wolfSSL_CTX_new(wolfTLSv1_client_method())) == NULL) {
++        if ((wolfssl_ctx = wolfSSL_CTX_new(wolfSSLv23_client_method())) == NULL) {
+             debug(LOG_ERR, "Could not create WOLFSSL context.");
+             UNLOCK_WOLFSSL_CTX();
+             return NULL;

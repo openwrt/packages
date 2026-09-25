@@ -1,0 +1,11 @@
+#!/bin/bash
+# Mock dnsmasq for pbr tests
+case "$1" in
+	--version)
+		echo "Dnsmasq version 2.90"
+		echo "Compile time options: IPv6 GNU-getopt DBus no-UBus no-i18n IDN2 DHCP DHCPv6 no-Lua TFTP conntrack ipset nftset auth cryptohash DNSSEC loop-detect inotify dumpfile"
+		;;
+	*)
+		exit 0
+		;;
+esac

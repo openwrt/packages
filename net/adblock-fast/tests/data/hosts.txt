@@ -1,0 +1,108 @@
+# Test hosts blocklist for adblock-fast functional tests
+# Title: StevenBlack Unified hosts (adware + malware)
+#
+# This block between "# Title: StevenBlack" and "# Custom host records"
+# is specifically removed by adblock-fast (lines 1589-1590).
+# Entries here should NOT appear in the output.
+# stevenblack-should-not-appear.test.example.com
+0.0.0.0 stevenblack-entry-hidden.test.example.com
+# Custom host records are listed here
+
+# -- Standard localhost entries (should be filtered) --
+127.0.0.1 localhost
+127.0.0.1 localhost.localdomain
+127.0.0.1 local
+0.0.0.0 0.0.0.0
+::1 localhost
+
+# -- Valid host entries with 0.0.0.0 prefix (40 unique) --
+0.0.0.0 adhost-zero-1.test.example.org
+0.0.0.0 adhost-zero-2.test.example.org
+0.0.0.0 adhost-zero-3.test.example.org
+0.0.0.0 adhost-zero-4.test.example.org
+0.0.0.0 adhost-zero-5.test.example.org
+0.0.0.0 adhost-zero-6.test.example.org
+0.0.0.0 adhost-zero-7.test.example.org
+0.0.0.0 adhost-zero-8.test.example.org
+0.0.0.0 adhost-zero-9.test.example.org
+0.0.0.0 adhost-zero-10.test.example.org
+0.0.0.0 adhost-zero-11.test.example.org
+0.0.0.0 adhost-zero-12.test.example.org
+0.0.0.0 adhost-zero-13.test.example.org
+0.0.0.0 adhost-zero-14.test.example.org
+0.0.0.0 adhost-zero-15.test.example.org
+0.0.0.0 adhost-zero-16.test.example.org
+0.0.0.0 adhost-zero-17.test.example.org
+0.0.0.0 adhost-zero-18.test.example.org
+0.0.0.0 adhost-zero-19.test.example.org
+0.0.0.0 adhost-zero-20.test.example.org
+0.0.0.0 adhost-zero-21.test.example.org
+0.0.0.0 adhost-zero-22.test.example.org
+0.0.0.0 adhost-zero-23.test.example.org
+0.0.0.0 adhost-zero-24.test.example.org
+0.0.0.0 adhost-zero-25.test.example.org
+0.0.0.0 adhost-zero-26.test.example.org
+0.0.0.0 adhost-zero-27.test.example.org
+0.0.0.0 adhost-zero-28.test.example.org
+0.0.0.0 adhost-zero-29.test.example.org
+0.0.0.0 adhost-zero-30.test.example.org
+0.0.0.0 adhost-zero-31.test.example.org
+0.0.0.0 adhost-zero-32.test.example.org
+0.0.0.0 adhost-zero-33.test.example.org
+0.0.0.0 adhost-zero-34.test.example.org
+0.0.0.0 adhost-zero-35.test.example.org
+0.0.0.0 adhost-zero-36.test.example.org
+0.0.0.0 adhost-zero-37.test.example.org
+0.0.0.0 adhost-zero-38.test.example.org
+0.0.0.0 adhost-zero-39.test.example.org
+0.0.0.0 adhost-zero-40.test.example.org
+
+# -- Valid host entries with 127.0.0.1 prefix (25 unique) --
+127.0.0.1 adhost-loopback-1.test.example.org
+127.0.0.1 adhost-loopback-2.test.example.org
+127.0.0.1 adhost-loopback-3.test.example.org
+127.0.0.1 adhost-loopback-4.test.example.org
+127.0.0.1 adhost-loopback-5.test.example.org
+127.0.0.1 adhost-loopback-6.test.example.org
+127.0.0.1 adhost-loopback-7.test.example.org
+127.0.0.1 adhost-loopback-8.test.example.org
+127.0.0.1 adhost-loopback-9.test.example.org
+127.0.0.1 adhost-loopback-10.test.example.org
+127.0.0.1 adhost-loopback-11.test.example.org
+127.0.0.1 adhost-loopback-12.test.example.org
+127.0.0.1 adhost-loopback-13.test.example.org
+127.0.0.1 adhost-loopback-14.test.example.org
+127.0.0.1 adhost-loopback-15.test.example.org
+127.0.0.1 adhost-loopback-16.test.example.org
+127.0.0.1 adhost-loopback-17.test.example.org
+127.0.0.1 adhost-loopback-18.test.example.org
+127.0.0.1 adhost-loopback-19.test.example.org
+127.0.0.1 adhost-loopback-20.test.example.org
+127.0.0.1 adhost-loopback-21.test.example.org
+127.0.0.1 adhost-loopback-22.test.example.org
+127.0.0.1 adhost-loopback-23.test.example.org
+127.0.0.1 adhost-loopback-24.test.example.org
+127.0.0.1 adhost-loopback-25.test.example.org
+
+# -- Domains shared with domains.txt (10 overlapping) --
+0.0.0.0 common-shared-1.test.example.com
+0.0.0.0 common-shared-2.test.example.com
+0.0.0.0 common-shared-3.test.example.com
+0.0.0.0 common-shared-4.test.example.com
+0.0.0.0 common-shared-5.test.example.com
+127.0.0.1 common-shared-6.test.example.com
+127.0.0.1 common-shared-7.test.example.com
+127.0.0.1 common-shared-8.test.example.com
+127.0.0.1 common-shared-9.test.example.com
+127.0.0.1 common-shared-10.test.example.com
+
+# -- Subdomain dedup test (children that should be removed when parent exists) --
+0.0.0.0 child.parent-dedup-1.test.example.com
+0.0.0.0 sub.child.parent-dedup-2.test.example.com
+0.0.0.0 deep.sub.parent-dedup-3.test.example.com
+
+# -- Invalid entries --
+some random text without IP prefix
+0.0.0.0
+127.0.0.1
+

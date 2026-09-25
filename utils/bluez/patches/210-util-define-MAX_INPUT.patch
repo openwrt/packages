@@ -1,0 +1,12 @@
+--- a/src/shared/util.c
++++ b/src/shared/util.c
+@@ -24,6 +24,9 @@
+ #include <dirent.h>
+ #include <limits.h>
+ #include <string.h>
++#ifndef MAX_INPUT
++#define MAX_INPUT _POSIX_MAX_INPUT
++#endif
+ 
+ #ifdef HAVE_SYS_RANDOM_H
+ #include <sys/random.h>

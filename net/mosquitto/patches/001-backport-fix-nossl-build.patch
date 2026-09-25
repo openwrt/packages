@@ -1,0 +1,40 @@
+From af68d99c98039bb33b219c848d942d7be186f78e Mon Sep 17 00:00:00 2001
+From: Ben Marsh <ben.marsh555@googlemail.com>
+Date: Mon, 21 Jul 2025 17:46:16 +0100
+Subject: [PATCH] Fix CMake builds with WITH_TLS=OFF
+
+Recent CMake changes caused CMake builds with the WITH_TLS option set to OFF to fail. The OpenSSL package is only found (find_package()) if WITH_TLS is ON, but linking to OpenSSL for the broker and library is not guarded by WITH_TLS. The build therefore fails.
+
+Guard linking to OpenSSL, only linking if WITH_TLS is set.
+---
+ lib/CMakeLists.txt | 4 +++-
+ src/CMakeLists.txt | 5 ++++-
+ 2 files changed, 7 insertions(+), 2 deletions(-)
+
+--- a/lib/CMakeLists.txt
++++ b/lib/CMakeLists.txt
+@@ -60,7 +60,9 @@ set(C_SRC
+ 	util_mosq.c util_topic.c util_mosq.h
+ 	will_mosq.c will_mosq.h)
+ 
+-set (LIBRARIES OpenSSL::SSL)
++if (WITH_TLS)
++	set (LIBRARIES OpenSSL::SSL)
++endif()
+ 
+ if (UNIX AND NOT APPLE AND NOT ANDROID)
+ 	find_library(LIBRT rt)
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -163,7 +163,10 @@ if (WITH_DLT)
+     set (MOSQ_LIBS ${MOSQ_LIBS} ${DLT_LIBRARIES})
+ endif (WITH_DLT)
+ 
+-set (MOSQ_LIBS ${MOSQ_LIBS} OpenSSL::SSL)
++if (WITH_TLS)
++	set (MOSQ_LIBS ${MOSQ_LIBS} OpenSSL::SSL)
++endif()
++
+ # Check for getaddrinfo_a
+ include(CheckLibraryExists)
+ check_library_exists(anl getaddrinfo_a  "" HAVE_GETADDRINFO_A)

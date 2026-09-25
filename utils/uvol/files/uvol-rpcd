@@ -1,0 +1,153 @@
+#!/usr/bin/ucode -R
+// SPDX-License-Identifier: GPL-2.0-or-later
+// rpcd exec plugin exposing uvol volume operations over ubus
+//  (c) 2026 Daniel Golle <daniel@makrotopia.org>
+
+let fs = require("fs");
+
+let methods = {
+	ready:  { args: {} },
+	free:   { args: {} },
+	total:  { args: {} },
+	align:  { args: {} },
+	list:   { args: { name: "volname" }, ro: true },
+	status: { args: { name: "volname" }, need_name: true, ro: true },
+	up:     { args: { name: "volname" }, need_name: true, lock: true },
+	down:   { args: { name: "volname" }, need_name: true, lock: true },
+	remove: { args: { name: "volname" }, need_name: true, lock: true },
+	create: { args: { name: "volname", size: 64, mode: "rw" },
+		  need_name: true, need_size: true, lock: true, vol_lock: true },
+	resize: { args: { name: "volname", size: 64 },
+		  need_name: true, need_size: true, lock: true },
+};
+
+// rpcd runs '<plugin> list' once at startup; the method table must not
+// depend on backend availability or the object vanishes until reboot
+if (ARGV[0] == "list") {
+	let signature = {};
+	for (let name, m in methods)
+		signature[name] = m.args;
+	print(signature);
+	exit(0);
+}
+
+let method = (ARGV[0] == "call") ? methods[ARGV[1]] : null;
+if (!method)
+	exit(22);
+
+let cmd = ARGV[1];
+
+// stdout is the JSON reply channel; keep a copy and point fd 1 at stderr
+// so mkfs and lvm output from the backends cannot corrupt the reply
+fs.dup2(1, 3);
+fs.dup2(2, 1);
+let reply_out = fs.fdopen(3, "w");
+
+include("/usr/lib/uvol/common.uc");
+
+let error_text = {
+	"2": "no such volume",
+	"16": "write in progress",
+	"17": "volume already exists",
+	"22": "invalid argument",
+	"27": "payload larger than volume",
+	"74": "content verification failed",
+	"95": "operation not supported",
+};
+
+let status_states = {
+	"0": "ready",
+	"1": "down",
+	"2": "nonexistent",
+	"16": "write-pending",
+	"22": "write-only",
+};
+
+// rpcd ignores the exit code and requires a JSON object on stdout
+function reply(data) {
+	reply_out.write(sprintf("%J", data));
+	reply_out.flush();
+	exit(0);
+}
+
+function reply_code(code) {
+	if (code == 0)
+		reply({ code: 0 });
+	reply({ code: code, error: error_text[code] ?? "operation failed" });
+}
+
+let args = {};
+try {
+	args = json(fs.stdin.read("all"));
+} catch(e) {
+	args = {};
+}
+if (type(args) != "object")
+	args = {};
+
+let name = args.name;
+if (name != null && !uvol_common.name_valid(name, method.ro))
+	reply_code(22);
+if (method.need_name && !name)
+	reply_code(22);
+
+let size;
+if (method.need_size) {
+	if (type(args.size) != "int" && type(args.size) != "string")
+		reply_code(22);
+	size = +args.size;
+	if (size != size || size <= 0)
+		reply_code(22);
+}
+
+if (cmd == "create" && args.mode != "ro" && args.mode != "rw")
+	reply_code(22);
+
+let selection = uvol_common.backend_select(uvol_common.ctx_init());
+let backend = selection.backend;
+
+if (cmd == "ready") {
+	let res = { ready: backend != null, meta: false };
+	if (backend) {
+		res.backend = backend.backend;
+		res.meta = backend.status(".meta") == 0;
+	}
+	reply(res);
+}
+
+if (!backend)
+	reply({ code: 2, error: "no backend available", tried: selection.tried });
+
+let uvol_lockfd;
+let uvol_vol_lockfd;
+if (method.lock)
+	uvol_lockfd = uvol_common.lock_device();
+if (method.vol_lock)
+	uvol_vol_lockfd = uvol_common.lock_volume(name);
+
+if (cmd == "status") {
+	let code = backend.status(name);
+	reply({ code: code, state: status_states[code] ?? "unknown" });
+}
+
+if (cmd == "list") {
+	let volumes = backend.list(name);
+	for (let vol in volumes)
+		vol.size = +vol.size;
+	reply({ volumes: volumes });
+}
+
+if (cmd == "free" || cmd == "total" || cmd == "align") {
+	let res = backend[cmd]();
+	if (type(res) == "int")
+		reply({ code: res, error: "capacity unavailable" });
+	reply({ bytes: +res });
+}
+
+if (cmd == "create")
+	reply_code(backend.create(name, size, args.mode));
+
+if (cmd == "resize")
+	reply_code(backend.resize(name, size));
+
+reply_code(backend[cmd](name));

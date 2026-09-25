@@ -1,0 +1,17 @@
+--- a/lib/posix/init.lua
++++ b/lib/posix/init.lua
+@@ -437,14 +437,6 @@ do
+       end
+    end
+ 
+-   -- Inject deprecated APIs (overwriting submodules) for backwards compatibility.
+-   for k, v in next, (require 'posix.deprecated') do
+-      rawset(M, k, v)
+-   end
+-   for k, v in next, (require 'posix.compat') do
+-      rawset(M, k, v)
+-   end
+-
+    --- Metamethods
+    -- @section metamethods
+ 

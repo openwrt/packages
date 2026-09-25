@@ -1,0 +1,55 @@
+From a63bc75301a3c4a74eb2723e34606ac40e473d27 Mon Sep 17 00:00:00 2001
+From: Oliver Sedlbauer <os@dev.tdt.de>
+Date: Fri, 6 Mar 2026 10:59:44 +0100
+Subject: [PATCH] plugin_layout: prevent concurrent layout switches
+
+In plugin_layout, switching layouts while a switch is already in progress
+corrupts widget timer state and causes a segfault. Use a static lock to
+skip layout switches that arrive while one is already in progress.
+
+Signed-off-by: Oliver Sedlbauer <os@dev.tdt.de>
+---
+ plugin_layout.c | 20 +++++++++++++++-----
+ 1 file changed, 15 insertions(+), 5 deletions(-)
+
+--- a/plugin_layout.c
++++ b/plugin_layout.c
+@@ -251,15 +251,25 @@ static int my_hide_layout(const Layout *
+ 
+ static int my_switch_layout(const int groupIdx, const int layoutIdx)
+ {
++	static int switching = 0;
++	if (switching) {
++		my_info("Skipping layout switch, already in progress");
++		return 0;
++	}
++	switching = 1;
+ 
+-    if (groupIdx < 0 || groupIdx >= plugin->groupNb)
+-	return -1;
++	if (groupIdx < 0 || groupIdx >= plugin->groupNb) {
++		switching = 0;
++		return -1;
++	}
+ 
+     LayoutGroup *oldGroup = plugin->currentGroup;
+     LayoutGroup *newGroup = plugin->groups[groupIdx];
+ 
+-    if (layoutIdx < 0 || layoutIdx >= newGroup->layoutNb)
+-	return -1;
++	if (layoutIdx < 0 || layoutIdx >= newGroup->layoutNb) {
++		switching = 0;
++		return -1;
++	}
+ 
+     Layout *oldLayout = plugin->currentLayout;
+     Layout *newLayout = newGroup->layouts[layoutIdx];
+@@ -292,7 +302,7 @@ static int my_switch_layout(const int gr
+ 
+ 	action_trigger(newLayout->firstAction, "onenter");
+     }
+-
++	switching = 0;
+     return status;
+ }
+ 

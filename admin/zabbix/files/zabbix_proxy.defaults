@@ -1,0 +1,3 @@
+#!/bin/sh
+
+chown zabbix-proxy:zabbix-proxy /etc/zabbix_proxy.conf

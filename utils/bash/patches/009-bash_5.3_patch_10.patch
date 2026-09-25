@@ -1,0 +1,27 @@
+From d129c77127233051b8235cbec0cff1d6bea1f5f1 Mon Sep 17 00:00:00 2001
+From: Chet Ramey <chet.ramey@case.edu>
+Date: Wed, 3 Jun 2026 10:19:04 -0400
+Subject: Bash-5.3 patch 10: fix loop in subshells calling wait builtin with
+ inherited job list
+
+--- a/jobs.c
++++ b/jobs.c
+@@ -2839,7 +2839,7 @@ wait_for_background_pids (struct procsta
+ 	  ps->pid = pid;
+ 	  ps->status = (r < 0 || r > 256) ? 127 : r;
+ 	}
+-      if (r == -1 && errno == ECHILD)
++      if ((r < 0 || r > 256) && errno == ECHILD)
+ 	{
+ 	  /* If we're mistaken about job state, compensate. */
+ 	  check_async = 0;
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 9
++#define PATCHLEVEL 10
+ 
+ #endif /* _PATCHLEVEL_H_ */

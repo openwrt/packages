@@ -1,0 +1,9 @@
+{
+    "name": "blazingfast.io",
+    "ipv4": {
+        "url": "update_blazingfast_io.sh"
+    },
+    "ipv6": {
+        "url": "update_blazingfast_io.sh"
+    }
+}

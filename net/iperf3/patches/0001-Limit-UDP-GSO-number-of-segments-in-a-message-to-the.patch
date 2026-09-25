@@ -1,0 +1,45 @@
+From 212a2fe3ae2e600617a1fde7e6a1a0a1488a341f Mon Sep 17 00:00:00 2001
+From: DavidBar-On <david.cdb004@gmail.com>
+Date: Sat, 2 May 2026 12:12:39 +0300
+Subject: [PATCH] Limit UDP GSO number of segments in a message to the allowed
+ value
+
+---
+ src/iperf.h            | 1 +
+ src/iperf_client_api.c | 8 ++++++--
+ 2 files changed, 7 insertions(+), 2 deletions(-)
+
+--- a/src/iperf.h
++++ b/src/iperf.h
+@@ -494,6 +494,7 @@ extern int gerror; /* error value from g
+ /* In Reverse mode, maximum number of packets to wait for "accept" response - to handle out of order packets */
+ #define MAX_REVERSE_OUT_OF_ORDER_PACKETS 2
+ 
++#define GSO_MAX_DG_IN_BF (1 << 7UL) // 128 - the Linux Kernel limit hardcoded as `UDP_MAX_SEGMENTS (1 << 7UL)` in `udpgso.c`
+ #define GSO_BF_MAX_SIZE MAX_UDP_BLOCKSIZE
+ #define GRO_BF_MAX_SIZE MAX_UDP_BLOCKSIZE
+ 
+--- a/src/iperf_client_api.c
++++ b/src/iperf_client_api.c
+@@ -420,7 +420,7 @@ iperf_handle_message_client(struct iperf
+ int
+ iperf_connect(struct iperf_test *test)
+ {
+-    int opt;
++    int opt, n;
+     socklen_t len;
+ 
+     if (NULL == test)
+@@ -526,7 +526,11 @@ iperf_connect(struct iperf_test *test)
+ 	    test->settings->gso_dg_size = test->settings->blksize;
+ 	    /* use the multiple of datagram size for the best efficiency. */
+ 	    if (test->settings->gso_dg_size > 0) {
+-		test->settings->gso_bf_size = (test->settings->gso_bf_size / test->settings->gso_dg_size) * test->settings->gso_dg_size;
++                n = test->settings->gso_bf_size / test->settings->gso_dg_size;
++                if (n > GSO_MAX_DG_IN_BF) {
++                    n = GSO_MAX_DG_IN_BF;
++                }
++		test->settings->gso_bf_size = n * test->settings->gso_dg_size;
+ 	    } else {
+ 		/* If gso_dg_size is 0 (unlimited bandwidth), use default UDP datagram size */
+ 		test->settings->gso_dg_size = DEFAULT_UDP_BLKSIZE;

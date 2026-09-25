@@ -1,0 +1,11 @@
+{
+	"name": "myonlineportal.net",
+	"ipv4": {
+		"url": "http://myonlineportal.net/updateddns?hostname=[DOMAIN]&ip=[IP]&username=[USERNAME]&password=[PASSWORD]",
+		"answer": "good|nochg"
+	},
+	"ipv6": {
+		"url": "http://myonlineportal.net/updateddns?hostname=[DOMAIN]&ip6=[IP]&username=[USERNAME]&password=[PASSWORD]",
+		"answer": "good|nochg"
+	}
+}

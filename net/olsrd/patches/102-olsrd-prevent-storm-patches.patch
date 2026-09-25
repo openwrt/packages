@@ -1,0 +1,83 @@
+From 4dabd94d598dd893aaaffbd71c315923c8827a14 Mon Sep 17 00:00:00 2001
+From: Nick Hainke <vincent@systemli.org>
+Date: Wed, 22 Jun 2022 14:08:04 +0200
+Subject: [PATCH] olsrd: prevent storm patches
+
+As described in the PR:
+
+  Limit the positive sequence number difference which is considered valid,
+  and prevent network storms.
+  Source: https://github.com/aredn/aredn_packages/pull/5
+
+Signed-off-by: Nick Hainke <vincent@systemli.org>
+---
+ src/duplicate_set.c | 16 ++++++++--------
+ src/duplicate_set.h |  5 +++--
+ 2 files changed, 11 insertions(+), 10 deletions(-)
+
+--- a/src/duplicate_set.c
++++ b/src/duplicate_set.c
+@@ -70,7 +70,7 @@ void olsr_cleanup_duplicates(union olsr_
+ 
+   entry = (struct dup_entry *)olsrd_avl_find(&duplicate_set, orig);
+   if (entry != NULL) {
+-    entry->too_low_counter = DUP_MAX_TOO_LOW - 2;
++    entry->out_of_bounds_counter = DUP_MAX_OUT_OF_BOUNDS - 2;
+   }
+ }
+ 
+@@ -82,7 +82,7 @@ olsr_create_duplicate_entry(void *ip, ui
+   if (entry != NULL) {
+     memcpy(&entry->ip, ip, olsr_cnf->ip_version == AF_INET ? sizeof(entry->ip.v4) : sizeof(entry->ip.v6));
+     entry->seqnr = seqnr;
+-    entry->too_low_counter = 0;
++    entry->out_of_bounds_counter = 0;
+     entry->olsrd_avl.key = &entry->ip;
+     entry->array = 0;
+   }
+@@ -160,12 +160,12 @@ olsr_message_is_duplicate(union olsr_mes
+   }
+ 
+   diff = olsr_seqno_diff(seqnr, entry->seqnr);
+-  if (diff < -31) {
+-    entry->too_low_counter++;
++  if (diff < -31 || diff > DUP_SEQNR_DIFF_HIGH_LIMIT) {
++    entry->out_of_bounds_counter++;
+ 
+-    // client did restart with a lower number ?
+-    if (entry->too_low_counter > DUP_MAX_TOO_LOW) {
+-      entry->too_low_counter = 0;
++    // client did restart with a too low or too high number ?
++    if (entry->out_of_bounds_counter > DUP_MAX_OUT_OF_BOUNDS) {
++      entry->out_of_bounds_counter = 0;
+       entry->seqnr = seqnr;
+       entry->array = 1;
+       return false;             /* start with a new sequence number, so NO duplicate */
+@@ -174,7 +174,7 @@ olsr_message_is_duplicate(union olsr_mes
+     return true;                /* duplicate ! */
+   }
+ 
+-  entry->too_low_counter = 0;
++  entry->out_of_bounds_counter = 0;
+   if (diff <= 0) {
+     uint32_t bitmask = 1u << ((uint32_t) (-diff));
+ 
+--- a/src/duplicate_set.h
++++ b/src/duplicate_set.h
+@@ -54,13 +54,14 @@
+ #define DUPLICATE_CLEANUP_INTERVAL 15000
+ #define DUPLICATE_CLEANUP_JITTER 25
+ #define DUPLICATE_VTIME 120000
+-#define DUP_MAX_TOO_LOW 16
++#define DUP_MAX_OUT_OF_BOUNDS 16
++#define DUP_SEQNR_DIFF_HIGH_LIMIT 0x2000
+ 
+ struct dup_entry {
+   struct olsrd_avl_node olsrd_avl;
+   union olsr_ip_addr ip;
+   uint16_t seqnr;
+-  uint16_t too_low_counter;
++  uint16_t out_of_bounds_counter;
+   uint32_t array;
+   uint32_t valid_until;
+ };

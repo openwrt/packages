@@ -1,0 +1,33 @@
+menu "Configuration"
+	depends on PACKAGE_libqmi
+
+config LIBQMI_WITH_MBIM_QMUX
+	bool "Include MBIM QMUX service support"
+	default y
+	help
+	  Compile libqmi with QMI-over-MBIM support
+
+config LIBQMI_WITH_QRTR_GLIB
+	bool "Include QRTR support"
+	default y
+	help
+	  Compile libqmi with QRTR support
+
+choice
+	prompt "Select QMI message collection to build"
+	default LIBQMI_COLLECTION_BASIC
+
+	config LIBQMI_COLLECTION_MINIMAL
+		depends on !MODEMMANAGER_WITH_QMI
+		depends on !FWUPD_PLUGIN_MODEMMANAGER
+		bool "minimal"
+
+	config LIBQMI_COLLECTION_BASIC
+		depends on !FWUPD_PLUGIN_MODEMMANAGER
+		bool "basic (default)"
+
+	config LIBQMI_COLLECTION_FULL
+		bool "full"
+endchoice
+
+endmenu

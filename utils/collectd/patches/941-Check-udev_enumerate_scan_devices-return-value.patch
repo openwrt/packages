@@ -1,0 +1,61 @@
+From 289f58c9c96d5478cf200f7a3e62b82e86b12d32 Mon Sep 17 00:00:00 2001
+From: Florian Eckert <fe@dev.tdt.de>
+Date: Tue, 15 Mar 2022 14:56:19 +0100
+Subject: [PATCH] Check udev_enumerate_scan_devices return value
+
+This change checks the return value of the function and cancels the call
+if the returned integer is not greater than or equal to 0.
+
+Signed-off-by: Florian Eckert <fe@dev.tdt.de>
+---
+ src/smart.c | 18 ++++++++++++++++--
+ 1 file changed, 16 insertions(+), 2 deletions(-)
+
+--- a/src/smart.c
++++ b/src/smart.c
+@@ -104,6 +104,7 @@ static int create_ignorelist_by_serial(i
+   struct udev_enumerate *enumerate;
+   struct udev_list_entry *devices, *dev_list_entry;
+   struct udev_device *dev;
++  int r;
+ 
+   if (ignorelist_by_serial == NULL)
+     ignorelist_by_serial = ignorelist_create(invert_ignorelist);
+@@ -127,7 +128,13 @@ static int create_ignorelist_by_serial(i
+   }
+   udev_enumerate_add_match_subsystem(enumerate, "block");
+   udev_enumerate_add_match_property(enumerate, "DEVTYPE", "disk");
+-  udev_enumerate_scan_devices(enumerate);
++
++  r = udev_enumerate_scan_devices(enumerate);
++  if (r < 0) {
++    WARNING("smart plugin: udev scan devices failed");
++    return -1;
++  }
++
+   devices = udev_enumerate_get_list_entry(enumerate);
+   if (devices == NULL) {
+     ERROR("udev returned an empty list deviecs");
+@@ -597,6 +604,7 @@ static int smart_read(void) {
+   struct udev_enumerate *enumerate;
+   struct udev_list_entry *devices, *dev_list_entry;
+   struct udev_device *dev;
++  int r;
+ 
+   /* Use udev to get a list of disks */
+   handle_udev = udev_new();
+@@ -611,7 +619,13 @@ static int smart_read(void) {
+   }
+   udev_enumerate_add_match_subsystem(enumerate, "block");
+   udev_enumerate_add_match_property(enumerate, "DEVTYPE", "disk");
+-  udev_enumerate_scan_devices(enumerate);
++
++  r = udev_enumerate_scan_devices(enumerate);
++  if (r < 0) {
++    WARNING("smart plugin: udev scan devices failed");
++    return -1;
++  }
++
+   devices = udev_enumerate_get_list_entry(enumerate);
+   if (devices == NULL) {
+     ERROR("udev returned an empty list deviecs");

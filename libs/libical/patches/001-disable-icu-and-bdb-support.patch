@@ -1,0 +1,18 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -211,7 +211,6 @@ if(NOT DEFINED ENV{ICU_ROOT} AND APPLE)
+   #Use the homebrew version. MacOS provided ICU doesn't provide development files
+   set(ICU_ROOT "/usr/local/opt/icu4c")
+ endif()
+-find_package(ICU COMPONENTS uc i18n data)
+ set_package_properties(ICU PROPERTIES
+   TYPE RECOMMENDED
+   PURPOSE "For RSCALE (RFC7529) support"
+@@ -253,7 +252,6 @@ if(NOT "$ENV{BerkeleyDB_ROOT_DIR}")
+     set(BerkeleyDB_ROOT_DIR "/usr/local/opt/berkeley-db")
+   endif()
+ endif()
+-find_package(BerkeleyDB)
+ set_package_properties(BerkeleyDB PROPERTIES
+   TYPE OPTIONAL
+   PURPOSE "For Berkeley DB storage support"

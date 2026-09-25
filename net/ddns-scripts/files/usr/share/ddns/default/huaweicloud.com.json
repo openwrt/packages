@@ -1,0 +1,9 @@
+{
+	"name": "huaweicloud.com",
+	"ipv4": {
+		"url": "update_huaweicloud_com.sh"
+	},
+	"ipv6": {
+		"url": "update_huaweicloud_com.sh"
+	}
+}

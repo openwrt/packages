@@ -1,0 +1,20 @@
+--- a/GNUmakefile
++++ b/GNUmakefile
+@@ -61,6 +61,6 @@ OBJS = $(SRCS:.c=.o)
+ all: $(program)
+ 
+ %.o: %.c $(HEADERS) prefix
+-	$(CC) $(CFLAGS) $(DEFINES) -DPRIoff="\"$(OFFPRFX)d\"" -DVERSION="\"$(version)\"" -c $<
++	$(CC) $(CFLAGS) $(DEFINES) -DPRIoff="PRId64 \"d\"" -DVERSION="\"$(version)\"" -c $<
+ 
+ include rules.mk
+--- a/init.c
++++ b/init.c
+@@ -25,6 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fi
+ #include <sys/stat.h>     /* the stat structure */
+ #include <unistd.h>       /* getopt(), getcwd(), sysconf() */
+ #include <string.h>       /* strcmp(), strlen(), strncpy() */
++#include <inttypes.h>
+ #ifdef USE_LONG_OPTIONS
+ #include <getopt.h>       /* getopt_long() */
+ #endif

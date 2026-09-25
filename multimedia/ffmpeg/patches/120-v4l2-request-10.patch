@@ -1,0 +1,626 @@
+From 523f6c9fa1a3b5acbc70d841ba0e8444f5d2400b Mon Sep 17 00:00:00 2001
+From: Boris Brezillon <boris.brezillon@collabora.com>
+Date: Tue, 9 Dec 2025 20:30:05 +0100
+Subject: [PATCH 10/13] avcodec: Add V4L2 Request API vp9 hwaccel
+
+Add a V4L2 Request API hwaccel for VP9.
+
+Support for VP9 is enabled when Linux kernel headers declare the
+control id V4L2_CID_STATELESS_VP9_FRAME, added in v5.17.
+
+Signed-off-by: Boris Brezillon <boris.brezillon@collabora.com>
+Co-developed-by: Jernej Skrabec <jernej.skrabec@gmail.com>
+Signed-off-by: Jernej Skrabec <jernej.skrabec@gmail.com>
+Co-developed-by: Jonas Karlman <jonas@kwiboo.se>
+Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
+---
+ configure                     |   3 +
+ libavcodec/Makefile           |   1 +
+ libavcodec/hwaccels.h         |   1 +
+ libavcodec/v4l2_request_vp9.c | 530 ++++++++++++++++++++++++++++++++++
+ libavcodec/vp9.c              |   7 +
+ 5 files changed, 542 insertions(+)
+ create mode 100644 libavcodec/v4l2_request_vp9.c
+
+--- a/configure
++++ b/configure
+@@ -3554,6 +3554,8 @@ vp9_dxva2_hwaccel_deps="dxva2 DXVA_PicPa
+ vp9_dxva2_hwaccel_select="vp9_decoder"
+ vp9_nvdec_hwaccel_deps="nvdec"
+ vp9_nvdec_hwaccel_select="vp9_decoder"
++vp9_v4l2request_hwaccel_deps="v4l2_request vp9_v4l2_request"
++vp9_v4l2request_hwaccel_select="vp9_decoder"
+ vp9_vaapi_hwaccel_deps="vaapi VADecPictureParameterBufferVP9_bit_depth"
+ vp9_vaapi_hwaccel_select="vp9_decoder"
+ vp9_vdpau_hwaccel_deps="vdpau VdpPictureInfoVP9"
+@@ -7676,6 +7678,7 @@ if enabled v4l2_request; then
+     check_cc mpeg2_v4l2_request linux/videodev2.h "int i = V4L2_CID_STATELESS_MPEG2_SEQUENCE"
+     check_cc v4l2_m2m_hold_capture_buf linux/videodev2.h "int i = V4L2_BUF_FLAG_M2M_HOLD_CAPTURE_BUF"
+     check_cc vp8_v4l2_request linux/videodev2.h "int i = V4L2_CID_STATELESS_VP8_FRAME"
++    check_cc vp9_v4l2_request linux/videodev2.h "int i = V4L2_CID_STATELESS_VP9_FRAME"
+     check_func_headers "linux/media.h linux/videodev2.h" v4l2_timeval_to_ns
+     check_pkg_config libudev libudev libudev.h udev_new
+     check_struct linux/videodev2.h "struct v4l2_ctrl_hevc_decode_params" num_delta_pocs_of_ref_rps_idx
+--- a/libavcodec/Makefile
++++ b/libavcodec/Makefile
+@@ -1108,6 +1108,7 @@ OBJS-$(CONFIG_VP9_D3D11VA_HWACCEL)
+ OBJS-$(CONFIG_VP9_DXVA2_HWACCEL)          += dxva2_vp9.o
+ OBJS-$(CONFIG_VP9_D3D12VA_HWACCEL)        += dxva2_vp9.o d3d12va_vp9.o
+ OBJS-$(CONFIG_VP9_NVDEC_HWACCEL)          += nvdec_vp9.o
++OBJS-$(CONFIG_VP9_V4L2REQUEST_HWACCEL)    += v4l2_request_vp9.o
+ OBJS-$(CONFIG_VP9_VAAPI_HWACCEL)          += vaapi_vp9.o
+ OBJS-$(CONFIG_VP9_VDPAU_HWACCEL)          += vdpau_vp9.o
+ OBJS-$(CONFIG_VP9_VIDEOTOOLBOX_HWACCEL)   += videotoolbox_vp9.o
+--- a/libavcodec/hwaccels.h
++++ b/libavcodec/hwaccels.h
+@@ -90,6 +90,7 @@ extern const struct FFHWAccel ff_vp9_d3d
+ extern const struct FFHWAccel ff_vp9_d3d12va_hwaccel;
+ extern const struct FFHWAccel ff_vp9_dxva2_hwaccel;
+ extern const struct FFHWAccel ff_vp9_nvdec_hwaccel;
++extern const struct FFHWAccel ff_vp9_v4l2request_hwaccel;
+ extern const struct FFHWAccel ff_vp9_vaapi_hwaccel;
+ extern const struct FFHWAccel ff_vp9_vdpau_hwaccel;
+ extern const struct FFHWAccel ff_vp9_videotoolbox_hwaccel;
+--- /dev/null
++++ b/libavcodec/v4l2_request_vp9.c
+@@ -0,0 +1,530 @@
++/*
++ * This file is part of FFmpeg.
++ *
++ * FFmpeg is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * FFmpeg is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with FFmpeg; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++ */
++
++#include "config.h"
++
++#include "hwaccel_internal.h"
++#include "hwconfig.h"
++#include "internal.h"
++#include "v4l2_request.h"
++#include "vp89_rac.h"
++#include "vp9dec.h"
++
++#define V4L2_VP9_CONTROLS_MAX 2
++
++typedef struct V4L2RequestContextVP9 {
++    V4L2RequestContext base;
++    bool has_compressed_hdr;
++} V4L2RequestContextVP9;
++
++typedef struct V4L2RequestControlsVP9 {
++    V4L2RequestPictureContext pic;
++    struct v4l2_ctrl_vp9_frame frame;
++    struct v4l2_ctrl_vp9_compressed_hdr compressed_hdr;
++} V4L2RequestControlsVP9;
++
++// differential forward probability updates
++static int read_prob_delta(VPXRangeCoder *c)
++{
++    static const uint8_t inv_map_table[255] = {
++          7,  20,  33,  46,  59,  72,  85,  98, 111, 124, 137, 150, 163, 176,
++        189, 202, 215, 228, 241, 254,   1,   2,   3,   4,   5,   6,   8,   9,
++         10,  11,  12,  13,  14,  15,  16,  17,  18,  19,  21,  22,  23,  24,
++         25,  26,  27,  28,  29,  30,  31,  32,  34,  35,  36,  37,  38,  39,
++         40,  41,  42,  43,  44,  45,  47,  48,  49,  50,  51,  52,  53,  54,
++         55,  56,  57,  58,  60,  61,  62,  63,  64,  65,  66,  67,  68,  69,
++         70,  71,  73,  74,  75,  76,  77,  78,  79,  80,  81,  82,  83,  84,
++         86,  87,  88,  89,  90,  91,  92,  93,  94,  95,  96,  97,  99, 100,
++        101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 112, 113, 114, 115,
++        116, 117, 118, 119, 120, 121, 122, 123, 125, 126, 127, 128, 129, 130,
++        131, 132, 133, 134, 135, 136, 138, 139, 140, 141, 142, 143, 144, 145,
++        146, 147, 148, 149, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160,
++        161, 162, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175,
++        177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 190, 191,
++        192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 203, 204, 205, 206,
++        207, 208, 209, 210, 211, 212, 213, 214, 216, 217, 218, 219, 220, 221,
++        222, 223, 224, 225, 226, 227, 229, 230, 231, 232, 233, 234, 235, 236,
++        237, 238, 239, 240, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251,
++        252, 253, 253,
++    };
++    int d;
++
++    /* This code is trying to do a differential probability update. For a
++     * current probability A in the range [1, 255], the difference to a new
++     * probability of any value can be expressed differentially as 1-A, 255-A
++     * where some part of this (absolute range) exists both in positive as
++     * well as the negative part, whereas another part only exists in one
++     * half. We're trying to code this shared part differentially, i.e.
++     * times two where the value of the lowest bit specifies the sign, and
++     * the single part is then coded on top of this. This absolute difference
++     * then again has a value of [0, 254], but a bigger value in this range
++     * indicates that we're further away from the original value A, so we
++     * can code this as a VLC code, since higher values are increasingly
++     * unlikely. The first 20 values in inv_map_table[] allow 'cheap, rough'
++     * updates vs. the 'fine, exact' updates further down the range, which
++     * adds one extra dimension to this differential update model. */
++
++    if (!vp89_rac_get(c)) {
++        d = vp89_rac_get_uint(c, 4) + 0;
++    } else if (!vp89_rac_get(c)) {
++        d = vp89_rac_get_uint(c, 4) + 16;
++    } else if (!vp89_rac_get(c)) {
++        d = vp89_rac_get_uint(c, 5) + 32;
++    } else {
++        d = vp89_rac_get_uint(c, 7);
++        if (d >= 65)
++            d = (d << 1) - 65 + vp89_rac_get(c);
++        d += 64;
++        av_assert2(d < FF_ARRAY_ELEMS(inv_map_table));
++    }
++
++    return inv_map_table[d];
++}
++
++static void fill_compressed_hdr(struct v4l2_ctrl_vp9_compressed_hdr *ctrl,
++                                const uint8_t *buffer, uint32_t size,
++                                AVCodecContext *avctx)
++{
++    const VP9Context *s = avctx->priv_data;
++    enum CompPredMode comppredmode;
++    int ret, i, j, k, l, m, n;
++    VPXRangeCoder c;
++
++    ret = ff_vpx_init_range_decoder(&c, buffer + s->s.h.uncompressed_header_size,
++                                    s->s.h.compressed_header_size);
++    if (ret < 0)
++        return;
++
++    if (vpx_rac_get_prob_branchy(&c, 128)) // marker bit
++        return;
++
++    // txfm updates
++    if (s->s.h.lossless) {
++        ctrl->tx_mode = V4L2_VP9_TX_MODE_ONLY_4X4;
++    } else {
++        ctrl->tx_mode = vp89_rac_get_uint(&c, 2);
++        if (ctrl->tx_mode == V4L2_VP9_TX_MODE_ALLOW_32X32)
++            ctrl->tx_mode += vp89_rac_get(&c);
++
++        if (ctrl->tx_mode == V4L2_VP9_TX_MODE_SELECT) {
++            for (i = 0; i < 2; i++)
++                if (vpx_rac_get_prob_branchy(&c, 252))
++                    ctrl->tx8[i][0] = read_prob_delta(&c);
++            for (i = 0; i < 2; i++)
++                for (j = 0; j < 2; j++)
++                    if (vpx_rac_get_prob_branchy(&c, 252))
++                        ctrl->tx16[i][j] = read_prob_delta(&c);
++            for (i = 0; i < 2; i++)
++                for (j = 0; j < 3; j++)
++                    if (vpx_rac_get_prob_branchy(&c, 252))
++                        ctrl->tx32[i][j] = read_prob_delta(&c);
++        }
++    }
++
++    // coef updates
++    for (i = 0; i < 4; i++) {
++        if (vp89_rac_get(&c)) {
++            for (j = 0; j < 2; j++)
++                for (k = 0; k < 2; k++)
++                    for (l = 0; l < 6; l++)
++                        for (m = 0; m < 6; m++) {
++                            if (m >= 3 && l == 0) // dc only has 3 pt
++                                break;
++                            for (n = 0; n < 3; n++)
++                                if (vpx_rac_get_prob_branchy(&c, 252))
++                                    ctrl->coef[i][j][k][l][m][n] =
++                                                            read_prob_delta(&c);
++                        }
++        }
++        if (ctrl->tx_mode == i)
++            break;
++    }
++
++    // mode updates
++    for (i = 0; i < 3; i++)
++        if (vpx_rac_get_prob_branchy(&c, 252))
++            ctrl->skip[i] = read_prob_delta(&c);
++    if (!s->s.h.keyframe && !s->s.h.intraonly) {
++        for (i = 0; i < 7; i++)
++            for (j = 0; j < 3; j++)
++                if (vpx_rac_get_prob_branchy(&c, 252))
++                    ctrl->inter_mode[i][j] = read_prob_delta(&c);
++
++        if (s->s.h.filtermode == FILTER_SWITCHABLE)
++            for (i = 0; i < 4; i++)
++                for (j = 0; j < 2; j++)
++                    if (vpx_rac_get_prob_branchy(&c, 252))
++                        ctrl->interp_filter[i][j] = read_prob_delta(&c);
++
++        for (i = 0; i < 4; i++)
++            if (vpx_rac_get_prob_branchy(&c, 252))
++                ctrl->is_inter[i] = read_prob_delta(&c);
++
++        if (s->s.h.allowcompinter) {
++            comppredmode = vp89_rac_get(&c);
++            if (comppredmode)
++                comppredmode += vp89_rac_get(&c);
++            if (comppredmode == PRED_SWITCHABLE)
++                for (i = 0; i < 5; i++)
++                    if (vpx_rac_get_prob_branchy(&c, 252))
++                        ctrl->comp_mode[i] = read_prob_delta(&c);
++        } else {
++            comppredmode = PRED_SINGLEREF;
++        }
++
++        if (comppredmode != PRED_COMPREF) {
++            for (i = 0; i < 5; i++) {
++                if (vpx_rac_get_prob_branchy(&c, 252))
++                    ctrl->single_ref[i][0] = read_prob_delta(&c);
++                if (vpx_rac_get_prob_branchy(&c, 252))
++                    ctrl->single_ref[i][1] = read_prob_delta(&c);
++            }
++        }
++
++        if (comppredmode != PRED_SINGLEREF) {
++            for (i = 0; i < 5; i++)
++                if (vpx_rac_get_prob_branchy(&c, 252))
++                    ctrl->comp_ref[i] = read_prob_delta(&c);
++        }
++
++        for (i = 0; i < 4; i++)
++            for (j = 0; j < 9; j++)
++                if (vpx_rac_get_prob_branchy(&c, 252))
++                    ctrl->y_mode[i][j] = read_prob_delta(&c);
++
++        for (i = 0; i < 4; i++)
++            for (j = 0; j < 4; j++)
++                for (k = 0; k < 3; k++)
++                    if (vpx_rac_get_prob_branchy(&c, 252))
++                        ctrl->partition[(i * 4) + j][k] = read_prob_delta(&c);
++
++        // mv fields
++        for (i = 0; i < 3; i++)
++            if (vpx_rac_get_prob_branchy(&c, 252))
++                ctrl->mv.joint[i] = (vp89_rac_get_uint(&c, 7) << 1) | 1;
++
++        for (i = 0; i < 2; i++) {
++            if (vpx_rac_get_prob_branchy(&c, 252))
++                ctrl->mv.sign[i] = (vp89_rac_get_uint(&c, 7) << 1) | 1;
++
++            for (j = 0; j < 10; j++)
++                if (vpx_rac_get_prob_branchy(&c, 252))
++                    ctrl->mv.classes[i][j] = (vp89_rac_get_uint(&c, 7) << 1) | 1;
++
++            if (vpx_rac_get_prob_branchy(&c, 252))
++                ctrl->mv.class0_bit[i] = (vp89_rac_get_uint(&c, 7) << 1) | 1;
++
++            for (j = 0; j < 10; j++)
++                if (vpx_rac_get_prob_branchy(&c, 252))
++                    ctrl->mv.bits[i][j] = (vp89_rac_get_uint(&c, 7) << 1) | 1;
++        }
++
++        for (i = 0; i < 2; i++) {
++            for (j = 0; j < 2; j++)
++                for (k = 0; k < 3; k++)
++                    if (vpx_rac_get_prob_branchy(&c, 252))
++                        ctrl->mv.class0_fr[i][j][k] =
++                                            (vp89_rac_get_uint(&c, 7) << 1) | 1;
++
++            for (j = 0; j < 3; j++)
++                if (vpx_rac_get_prob_branchy(&c, 252))
++                    ctrl->mv.fr[i][j] = (vp89_rac_get_uint(&c, 7) << 1) | 1;
++        }
++
++        if (s->s.h.highprecisionmvs) {
++            for (i = 0; i < 2; i++) {
++                if (vpx_rac_get_prob_branchy(&c, 252))
++                    ctrl->mv.class0_hp[i] = (vp89_rac_get_uint(&c, 7) << 1) | 1;
++
++                if (vpx_rac_get_prob_branchy(&c, 252))
++                    ctrl->mv.hp[i] = (vp89_rac_get_uint(&c, 7) << 1) | 1;
++            }
++        }
++    }
++
++    memcpy(ctrl->uv_mode, s->prob.p.uv_mode, sizeof(ctrl->uv_mode));
++}
++
++static void fill_frame(struct v4l2_ctrl_vp9_frame *ctrl, AVCodecContext *avctx)
++{
++    const VP9Context *s = avctx->priv_data;
++    AVFrame *ref;
++    int i;
++
++    *ctrl = (struct v4l2_ctrl_vp9_frame) {
++        .lf = {
++            .level = s->s.h.filter.level,
++            .sharpness = s->s.h.filter.sharpness,
++        },
++
++        .quant = {
++            .base_q_idx = s->s.h.yac_qi,
++            .delta_q_y_dc = s->s.h.ydc_qdelta,
++            .delta_q_uv_dc = s->s.h.uvdc_qdelta,
++            .delta_q_uv_ac = s->s.h.uvac_qdelta,
++        },
++
++        .compressed_header_size = s->s.h.compressed_header_size,
++        .uncompressed_header_size = s->s.h.uncompressed_header_size,
++        .frame_width_minus_1 = avctx->width - 1,
++        .frame_height_minus_1 = avctx->height - 1,
++        .render_width_minus_1 = s->w - 1,
++        .render_height_minus_1 = s->h - 1,
++        .reset_frame_context = s->s.h.resetctx > 0 ? s->s.h.resetctx - 1 : 0,
++        .frame_context_idx = s->s.h.framectxid,
++        .profile = s->s.h.profile,
++        .bit_depth = s->s.h.bpp,
++        .interpolation_filter = s->s.h.filtermode ^ (s->s.h.filtermode <= 1),
++        .tile_cols_log2 = s->s.h.tiling.log2_tile_cols,
++        .tile_rows_log2 = s->s.h.tiling.log2_tile_rows,
++        .reference_mode = s->s.h.comppredmode,
++    };
++
++    for (i = 0; i < 4; i++)
++        ctrl->lf.ref_deltas[i] = s->s.h.lf_delta.ref[i];
++
++    for (i = 0; i < 2; i++)
++        ctrl->lf.mode_deltas[i] = s->s.h.lf_delta.mode[i];
++
++    if (s->s.h.lf_delta.enabled)
++        ctrl->lf.flags |= V4L2_VP9_LOOP_FILTER_FLAG_DELTA_ENABLED;
++
++    if (s->s.h.lf_delta.updated)
++        ctrl->lf.flags |= V4L2_VP9_LOOP_FILTER_FLAG_DELTA_UPDATE;
++
++    for (i = 0; i < 8; i++) {
++        if (s->s.h.segmentation.feat[i].q_enabled) {
++            ctrl->seg.feature_data[i][V4L2_VP9_SEG_LVL_ALT_Q] =
++                                            s->s.h.segmentation.feat[i].q_val;
++            ctrl->seg.feature_enabled[i] |= 1 << V4L2_VP9_SEG_LVL_ALT_Q;
++        }
++
++        if (s->s.h.segmentation.feat[i].lf_enabled) {
++            ctrl->seg.feature_data[i][V4L2_VP9_SEG_LVL_ALT_L] =
++                                            s->s.h.segmentation.feat[i].lf_val;
++            ctrl->seg.feature_enabled[i] |= 1 << V4L2_VP9_SEG_LVL_ALT_L;
++        }
++
++        if (s->s.h.segmentation.feat[i].ref_enabled) {
++            ctrl->seg.feature_data[i][V4L2_VP9_SEG_LVL_REF_FRAME] =
++                                            s->s.h.segmentation.feat[i].ref_val;
++            ctrl->seg.feature_enabled[i] |= 1 << V4L2_VP9_SEG_LVL_REF_FRAME;
++        }
++
++        if (s->s.h.segmentation.feat[i].skip_enabled)
++            ctrl->seg.feature_enabled[i] |= 1 << V4L2_VP9_SEG_LVL_SKIP;
++    }
++
++    for (i = 0; i < 7; i++)
++        ctrl->seg.tree_probs[i] = s->s.h.segmentation.prob[i];
++
++    if (s->s.h.segmentation.temporal) {
++        for (i = 0; i < 3; i++)
++            ctrl->seg.pred_probs[i] = s->s.h.segmentation.pred_prob[i];
++    } else {
++        memset(ctrl->seg.pred_probs, 255, sizeof(ctrl->seg.pred_probs));
++    }
++
++    if (s->s.h.segmentation.enabled)
++        ctrl->seg.flags |= V4L2_VP9_SEGMENTATION_FLAG_ENABLED;
++
++    if (s->s.h.segmentation.update_map)
++        ctrl->seg.flags |= V4L2_VP9_SEGMENTATION_FLAG_UPDATE_MAP;
++
++    if (s->s.h.segmentation.temporal)
++        ctrl->seg.flags |= V4L2_VP9_SEGMENTATION_FLAG_TEMPORAL_UPDATE;
++
++    if (s->frame_header->segmentation_update_data)
++        ctrl->seg.flags |= V4L2_VP9_SEGMENTATION_FLAG_UPDATE_DATA;
++
++    if (s->s.h.segmentation.absolute_vals)
++        ctrl->seg.flags |= V4L2_VP9_SEGMENTATION_FLAG_ABS_OR_DELTA_UPDATE;
++
++    if (s->s.h.keyframe)
++        ctrl->flags |= V4L2_VP9_FRAME_FLAG_KEY_FRAME;
++
++    if (!s->s.h.invisible)
++        ctrl->flags |= V4L2_VP9_FRAME_FLAG_SHOW_FRAME;
++
++    if (s->s.h.errorres)
++        ctrl->flags |= V4L2_VP9_FRAME_FLAG_ERROR_RESILIENT;
++
++    if (s->s.h.intraonly)
++        ctrl->flags |= V4L2_VP9_FRAME_FLAG_INTRA_ONLY;
++
++    if (!s->s.h.keyframe && s->s.h.highprecisionmvs)
++        ctrl->flags |= V4L2_VP9_FRAME_FLAG_ALLOW_HIGH_PREC_MV;
++
++    if (s->s.h.refreshctx)
++        ctrl->flags |= V4L2_VP9_FRAME_FLAG_REFRESH_FRAME_CTX;
++
++    if (s->s.h.parallelmode)
++        ctrl->flags |= V4L2_VP9_FRAME_FLAG_PARALLEL_DEC_MODE;
++
++    if (s->ss_h)
++        ctrl->flags |= V4L2_VP9_FRAME_FLAG_X_SUBSAMPLING;
++
++    if (s->ss_v)
++        ctrl->flags |= V4L2_VP9_FRAME_FLAG_Y_SUBSAMPLING;
++
++    if (avctx->color_range == AVCOL_RANGE_JPEG)
++        ctrl->flags |= V4L2_VP9_FRAME_FLAG_COLOR_RANGE_FULL_SWING;
++
++    ref = s->s.refs[s->s.h.refidx[0]].f;
++    if (ref && ref->private_ref)
++        ctrl->last_frame_ts = ff_v4l2_request_get_capture_timestamp(ref);
++
++    ref = s->s.refs[s->s.h.refidx[1]].f;
++    if (ref && ref->private_ref)
++        ctrl->golden_frame_ts = ff_v4l2_request_get_capture_timestamp(ref);
++
++    ref = s->s.refs[s->s.h.refidx[2]].f;
++    if (ref && ref->private_ref)
++        ctrl->alt_frame_ts = ff_v4l2_request_get_capture_timestamp(ref);
++
++    if (s->s.h.signbias[0])
++        ctrl->ref_frame_sign_bias |= V4L2_VP9_SIGN_BIAS_LAST;
++
++    if (s->s.h.signbias[1])
++        ctrl->ref_frame_sign_bias |= V4L2_VP9_SIGN_BIAS_GOLDEN;
++
++    if (s->s.h.signbias[2])
++        ctrl->ref_frame_sign_bias |= V4L2_VP9_SIGN_BIAS_ALT;
++}
++
++static int v4l2_request_vp9_start_frame(AVCodecContext *avctx,
++                                        av_unused const AVBufferRef *buf_ref,
++                                        const uint8_t *buffer,
++                                        uint32_t size)
++{
++    const VP9SharedContext *h = avctx->priv_data;
++    const VP9Frame *f = &h->frames[CUR_FRAME];
++    V4L2RequestContextVP9 *ctx = avctx->internal->hwaccel_priv_data;
++    V4L2RequestControlsVP9 *controls = f->hwaccel_picture_private;
++    int ret;
++
++    ret = ff_v4l2_request_start_frame(avctx, &controls->pic, f->tf.f);
++    if (ret)
++        return ret;
++
++    fill_frame(&controls->frame, avctx);
++
++    if (ctx->has_compressed_hdr)
++        fill_compressed_hdr(&controls->compressed_hdr, buffer, size, avctx);
++
++    return 0;
++}
++
++static int v4l2_request_vp9_decode_slice(AVCodecContext *avctx,
++                                         const uint8_t *buffer, uint32_t size)
++{
++    const VP9SharedContext *h = avctx->priv_data;
++    V4L2RequestControlsVP9 *controls = h->frames[CUR_FRAME].hwaccel_picture_private;
++
++    return ff_v4l2_request_append_output(avctx, &controls->pic, buffer, size);
++}
++
++static int v4l2_request_vp9_end_frame(AVCodecContext *avctx)
++{
++    const VP9SharedContext *h = avctx->priv_data;
++    V4L2RequestContextVP9 *ctx = avctx->internal->hwaccel_priv_data;
++    V4L2RequestControlsVP9 *controls = h->frames[CUR_FRAME].hwaccel_picture_private;
++    int count = 0;
++
++    struct v4l2_ext_control control[V4L2_VP9_CONTROLS_MAX] = {};
++
++    control[count++] = (struct v4l2_ext_control) {
++        .id = V4L2_CID_STATELESS_VP9_FRAME,
++        .ptr = &controls->frame,
++        .size = sizeof(controls->frame),
++    };
++
++    if (ctx->has_compressed_hdr) {
++        control[count++] = (struct v4l2_ext_control) {
++            .id = V4L2_CID_STATELESS_VP9_COMPRESSED_HDR,
++            .ptr = &controls->compressed_hdr,
++            .size = sizeof(controls->compressed_hdr),
++        };
++    }
++
++    return ff_v4l2_request_decode_frame(avctx, &controls->pic, control, count);
++}
++
++static int v4l2_request_vp9_post_frames_ctx(AVCodecContext *avctx)
++{
++    V4L2RequestContextVP9 *ctx = avctx->internal->hwaccel_priv_data;
++
++    struct v4l2_query_ext_ctrl compressed_hdr = {
++        .id = V4L2_CID_STATELESS_VP9_COMPRESSED_HDR,
++    };
++
++    // TODO: check V4L2_CID_MPEG_VIDEO_VP9_PROFILE
++    // TODO: check V4L2_CID_MPEG_VIDEO_VP9_LEVEL
++
++    if (!ff_v4l2_request_query_control(avctx, &compressed_hdr))
++        ctx->has_compressed_hdr = true;
++    else
++        ctx->has_compressed_hdr = false;
++
++    return 0;
++}
++
++static int v4l2_request_vp9_init(AVCodecContext *avctx)
++{
++    struct v4l2_ctrl_vp9_frame frame;
++
++    struct v4l2_ext_control control[] = {
++        {
++            .id = V4L2_CID_STATELESS_VP9_FRAME,
++            .ptr = &frame,
++            .size = sizeof(frame),
++        },
++    };
++
++    fill_frame(&frame, avctx);
++
++    return ff_v4l2_request_init(avctx, control, FF_ARRAY_ELEMS(control),
++                                v4l2_request_vp9_post_frames_ctx);
++}
++
++static int v4l2_request_vp9_frame_params(AVCodecContext *avctx,
++                                         AVBufferRef *hw_frames_ctx)
++{
++    const VP9Context *s = avctx->priv_data;
++    uint8_t bit_depth = s ? s->s.h.bpp : 0;
++
++    return ff_v4l2_request_frame_params(avctx, hw_frames_ctx,
++                                        V4L2_PIX_FMT_VP9_FRAME, bit_depth);
++}
++
++const FFHWAccel ff_vp9_v4l2request_hwaccel = {
++    .p.name             = "vp9_v4l2request",
++    .p.type             = AVMEDIA_TYPE_VIDEO,
++    .p.id               = AV_CODEC_ID_VP9,
++    .p.pix_fmt          = AV_PIX_FMT_DRM_PRIME,
++    .start_frame        = v4l2_request_vp9_start_frame,
++    .decode_slice       = v4l2_request_vp9_decode_slice,
++    .end_frame          = v4l2_request_vp9_end_frame,
++    .flush              = ff_v4l2_request_flush,
++    .frame_priv_data_size = sizeof(V4L2RequestControlsVP9),
++    .init               = v4l2_request_vp9_init,
++    .uninit             = ff_v4l2_request_uninit,
++    .priv_data_size     = sizeof(V4L2RequestContextVP9),
++    .frame_params       = v4l2_request_vp9_frame_params,
++    .caps_internal      = HWACCEL_CAP_ASYNC_SAFE,
++};
+--- a/libavcodec/vp9.c
++++ b/libavcodec/vp9.c
+@@ -168,6 +168,7 @@ static int update_size(AVCodecContext *a
+                      CONFIG_VP9_D3D11VA_HWACCEL * 2 + \
+                      CONFIG_VP9_D3D12VA_HWACCEL + \
+                      CONFIG_VP9_NVDEC_HWACCEL + \
++                     CONFIG_VP9_V4L2REQUEST_HWACCEL + \
+                      CONFIG_VP9_VAAPI_HWACCEL + \
+                      CONFIG_VP9_VDPAU_HWACCEL + \
+                      CONFIG_VP9_VIDEOTOOLBOX_HWACCEL + \
+@@ -214,6 +215,9 @@ static int update_size(AVCodecContext *a
+ #if CONFIG_VP9_VULKAN_HWACCEL
+             *fmtp++ = AV_PIX_FMT_VULKAN;
+ #endif
++#if CONFIG_VP9_V4L2REQUEST_HWACCEL
++            *fmtp++ = AV_PIX_FMT_DRM_PRIME;
++#endif
+             break;
+         case AV_PIX_FMT_YUV420P12:
+ #if CONFIG_VP9_NVDEC_HWACCEL
+@@ -1959,6 +1963,9 @@ const FFCodec ff_vp9_decoder = {
+ #if CONFIG_VP9_VULKAN_HWACCEL
+                                HWACCEL_VULKAN(vp9),
+ #endif
++#if CONFIG_VP9_V4L2REQUEST_HWACCEL
++                               HWACCEL_V4L2REQUEST(vp9),
++#endif
+                                NULL
+                            },
+ };

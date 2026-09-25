@@ -1,0 +1,35 @@
+From 11bf26faef5ee6d62a4641407a2f96a97b59db07 Mon Sep 17 00:00:00 2001
+From: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Date: Thu, 6 Aug 2026 09:56:10 +0200
+Subject: [PATCH] make: set plugin SONAME to the installed filename
+
+The plugins are linked with SONAME lib$(PLUGIN_NAME).so, but they are
+installed as $(PLUGIN_NAME).so.$(PLUGIN_VER) and loaded via dlopen()
+using that filename. A library whose SONAME does not match any
+installed filename confuses tooling which verifies that a symlink
+named after the SONAME exists, for example the OpenWrt CI runtime
+tests:
+
+    Library /usr/lib/olsrd_arprefresh.so.0.1 has SONAME
+    'libolsrd_arprefresh.so' but no corresponding symlink was found
+
+Use the full installed filename as SONAME instead. This has no
+functional effect on olsrd itself, since the plugins are dlopen()ed
+by path and never linked against.
+
+Signed-off-by: Josef Schlehofer <pepe.schlehofer@gmail.com>
+---
+ make/Makefile.linux | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/make/Makefile.linux
++++ b/make/Makefile.linux
+@@ -73,7 +73,7 @@ LIBS += -lrt
+ # CPPFLAGS += 	-Dlinux -DLINUX_NETLINK_ROUTING -DLINUX_NL80211
+ # LIBS +=		-lnl
+ 
+-PLUGIN_SONAME ?= lib$(PLUGIN_NAME).so
++PLUGIN_SONAME ?= $(PLUGIN_FULLNAME)
+ PLUGIN_FULLNAME ?= $(PLUGIN_NAME).so.$(PLUGIN_VER)
+ INSTALL_LIB =	install -D -m 755 $(PLUGIN_FULLNAME) $(LIBDIR)/$(PLUGIN_FULLNAME); \
+ 		$(LDCONFIG) -n $(LIBDIR)

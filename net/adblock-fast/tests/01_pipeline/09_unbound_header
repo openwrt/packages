@@ -1,0 +1,48 @@
+Test that unbound.adb_list mode prepends "server:" header line.
+
+-- Testcase --
+import adb from 'adblock-fast';
+import { readfile } from 'fs';
+let ti = adb._test_internals;
+
+adb.env.load_config();
+ti.set_cfg('dns', 'unbound.adb_list');
+ti.set_cfg('dnsmasq_sanity_check', false);
+ti.set_cfg('dnsmasq_validity_check', false);
+ti.set_cfg('heartbeat_domain', null);
+ti.set_cfg('config_update_enabled', false);
+ti.set_cfg('update_config_sizes', false);
+ti.env.dns_set_output_values('unbound.adb_list');
+ti.append_urls();
+
+let ok = ti.download_lists();
+if (!ok) {
+	print('download_lists failed\n');
+} else {
+	let content = readfile(ti.dns_output.file) || '';
+	let lines = filter(split(content, '\n'), l => length(l) > 0);
+
+	let results = [];
+
+	// First line should be "server:"
+	push(results, sprintf('first_line: %s', lines[0]));
+
+	// Rest should be local-zone entries
+	let lz_lines = filter(lines, l => match(l, /^local-zone: /));
+	push(results, sprintf('local_zone_entries: %d', length(lz_lines)));
+
+	// Spot-check format
+	let test_domain = 'ad.doubleclick.test.example.com';
+	let expected = 'local-zone: "' + test_domain + '." always_nxdomain';
+	let has_entry = index(content, expected) >= 0;
+	push(results, sprintf('correct_format: %s', has_entry ? 'YES' : 'NO'));
+
+	print(join('\n', results) + '\n');
+}
+-- End --
+
+-- Expect stdout --
+first_line: server:
+local_zone_entries: 162
+correct_format: YES
+-- End --

@@ -1,0 +1,30 @@
+From 6317063da827732dbc5cc0dd1650ed016bd2927c Mon Sep 17 00:00:00 2001
+From: Christian Marangi <ansuelsmth@gmail.com>
+Date: Sun, 29 Oct 2023 14:41:18 +0100
+Subject: [PATCH] build: support strlcat/strlcpy from musl or recent glibc
+
+Musl or recent glibc added support for these additional string function,
+strlcat and strlcpy hence the compat function are not needed and the
+builtin version can be used instead.
+
+Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
+---
+ build/m4/aircrack_ng_compat.m4 | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+--- a/build/m4/aircrack_ng_compat.m4
++++ b/build/m4/aircrack_ng_compat.m4
+@@ -41,11 +41,12 @@ AC_DEFUN([AIRCRACK_NG_COMPAT], [
+ AC_ARG_WITH(libbsd,
+ 	[AS_HELP_STRING([--with-libbsd[[=auto|yes|no]]], [use BSD library, [default=auto]])])
+ 
++AC_CHECK_FUNCS([strlcpy strlcat], [:])
++
+ case $with_libbsd in
+ 	yes | "" | auto)
+ 		AC_CHECK_HEADERS([bsd/string.h], [HAVE_BSD_STRING_H=yes])
+ 		AC_CHECK_LIB([bsd], [strlcpy], [:])
+-		AC_CHECK_FUNCS([strlcpy strlcat], [:])
+ 		;;
+ esac
+ 

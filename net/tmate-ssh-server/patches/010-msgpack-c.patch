@@ -1,0 +1,11 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -193,7 +193,7 @@ fi
+ 
+ PKG_CHECK_MODULES(
+   MSGPACK,
+-  msgpack >= 1.2.0,
++  msgpack-c >= 1.2.0,
+   [
+     CPPFLAGS="$MSGPACK_CFLAGS $CPPFLAGS"
+     LIBS="$MSGPACK_LIBS $LIBS"

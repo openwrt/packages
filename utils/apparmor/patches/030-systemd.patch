@@ -1,0 +1,26 @@
+--- a/parser/Makefile
++++ b/parser/Makefile
+@@ -361,7 +361,7 @@ install-redhat:
+ 	install -m 755 rc.apparmor.$(subst install-,,$@) $(DESTDIR)/etc/init.d/apparmor
+ 
+ .PHONY: install-suse
+-install-suse: install-systemd
++install-suse:
+ 	install -m 755 -d $(SBINDIR)
+ 	ln -sf service $(SBINDIR)/rcapparmor
+ 
+@@ -425,14 +425,6 @@ install-indep: indep
+ 	$(MAKE) -C po install NAME=${NAME} DESTDIR=${DESTDIR}
+ 	$(MAKE) install_manpages DESTDIR=${DESTDIR}
+ 
+-.PHONY: install-systemd
+-install-systemd:
+-	install -m 755 -d $(SYSTEMD_UNIT_DIR)
+-	install -m 644 apparmor.service $(SYSTEMD_UNIT_DIR)
+-	install -m 755 apparmor.systemd $(APPARMOR_BIN_PREFIX)
+-	install -m 755 -d $(USR_SBINDIR)
+-	install -m 755 aa-teardown $(USR_SBINDIR)
+-
+ ifndef VERBOSE
+ .SILENT: clean
+ endif

@@ -1,0 +1,3 @@
+#!/bin/sh
+export MICROPYPATH=".frozen:~/.micropython/lib:/usr/lib/micropython/unix:/usr/lib/micropython"
+exec micropython "$@"

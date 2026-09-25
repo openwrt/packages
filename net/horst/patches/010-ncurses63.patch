@@ -1,0 +1,22 @@
+--- a/display-main.c
++++ b/display-main.c
+@@ -53,7 +53,7 @@ static struct ewma bpsn_avg;
+ void print_dump_win(const char *str, int refresh)
+ {
+ 	wattron(dump_win, RED);
+-	wprintw(dump_win, str);
++	wprintw(dump_win, "%s", str);
+ 	wattroff(dump_win, RED);
+ 	if (refresh)
+ 		wrefresh(dump_win);
+--- a/display.c
++++ b/display.c
+@@ -86,7 +86,7 @@ print_centered(WINDOW* win, int line, in
+ 	vsnprintf(buf, cols, fmt, ap);
+ 	va_end(ap);
+ 
+-	mvwprintw(win, line, cols / 2 - strlen(buf) / 2, buf);
++	mvwprintw(win, line, cols / 2 - strlen(buf) / 2, "%s", buf);
+ 	free(buf);
+ }
+ 

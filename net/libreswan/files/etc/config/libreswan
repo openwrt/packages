@@ -1,0 +1,41 @@
+config libreswan 'globals'
+	option debug '0' # set debug mode none/all
+	list virtual_private '10.0.0.0/8'
+	list virtual_private '192.168.0.0/16'
+	list virtual_private '172.16.0.0/12'
+	list virtual_private '25.0.0.0/8'
+	list virtual_private '100.64.0.0/10'
+	list virtual_private '!100.64.0.0/24'  # the address ranges that may live behind a NAT router through which a client connects
+	# option listen '192.168.2.100' # listening address, if set listen_interface would not be used
+	# option listen_interface 'wan' # listening interface
+	# option uniqueids 'yes' # yes/no
+
+# config crypto_proposal 'p1'
+#	list encryption_algorithm '3des' # possible values: 3des, aes, aes_ctr, aes_cbc, aes128, aes192, aes256, camellia_cbc
+#	list hash_algorithm 'md5' # possible values: md5, sha1, sha256, sha384, sha512
+#	list dh_group 'modp1536' # possible values: modp1536, modp2048, modp3072, modp4096, modp6144, modp8192, dh19, dh20, dh21, dh22, dh31
+
+# config tunnel 'vti2_1_5'
+#	option left '192.168.1.1'
+# 	option left_interface 'wan'  # interface ipaddr to be used as left
+# 	option leftid '@left' # local id
+# 	option right '192.168.2.201' # remote endpoint public ip
+# 	option rightid '@62dd3e3f82339b002405245b' # rightid
+# 	option auto 'start' # what  operation, should be done automatically at IPsec startup
+# 	option authby 'secret' # how  the  two security gateways should authenticate each other
+# 	option psk 'AyG9RlTtQJIUxgxG' # preshare key
+# 	option ikev2 '1' # ike version
+# 	option ikelifetime '8h'
+# 	option rekey '1'
+# 	option rekeymargin '9m'
+# 	option dpdaction 'restart'
+# 	option dpddelay '30'
+# 	option dpdtimeout '150'
+# 	option interface 'vti2_1_5' # only for route based tunnels
+# 	list leftsubnets '0.0.0.0/0'
+# 	list rightsubnets '0.0.0.0/0'
+#	option phase2 'esp' # phase2 protocol
+#	list ike 'p1' # list of crypto_proposal (phase1 proposals)
+#	list phase2ag 'p1' # list of crypto_proposal (phase2 proposals')
+#	option nflog '0' # enable nflog
+#	option update_peeraddr '1' # auto update vti interface ppeeradd in /etc/config/network

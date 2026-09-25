@@ -1,0 +1,18 @@
+From 71cc9a81106dc2199e5686a54fcff7c0aff6ef5e Mon Sep 17 00:00:00 2001
+From: Daniel Alder <daald@users.noreply.github.com>
+Date: Wed, 13 Dec 2023 17:35:57 +0100
+Subject: [PATCH 201/204] Add examples for config with INTERFACE_NAMES_OVERRIDE
+
+---
+ muninlite.conf | 3 +++
+ 1 file changed, 3 insertions(+)
+
+--- a/muninlite.conf
++++ b/muninlite.conf
+@@ -1,3 +1,6 @@
+ # the following variables are added to the top of the assembled muninlite script
+ NTP_PEER="pool.ntp.org"
+ DF_IGNORE_FILESYSTEM_REGEX="(none|unknown|rootfs|iso9660|squashfs|udf|romfs|ramfs|debugfs|cgroup_root|devtmpfs)"
++
++#INTERFACE_NAMES_OVERRIDE="eth0"
++#INTERFACE_NAMES_OVERRIDE="$(sed 's/^ *//; s/:.*$//; / /d' /proc/net/dev | grep -P '^(eth|wlan|en)')"

@@ -1,0 +1,165 @@
+From d7eb251f945524b419e8c90dd54c640d9922e5d5 Mon Sep 17 00:00:00 2001
+From: Andras Gemes <andrasgemes@outlook.com>
+Date: Sat, 21 Jan 2023 19:31:31 +0100
+Subject: [PATCH 9/9] besside-ng: utilize compat-pcre
+
+---
+ src/besside-ng/besside-ng.c | 94 ++++++++-----------------------------
+ 1 file changed, 20 insertions(+), 74 deletions(-)
+
+--- a/src/besside-ng/besside-ng.c
++++ b/src/besside-ng/besside-ng.c
+@@ -57,13 +57,7 @@
+ #include <unistd.h>
+ #include <limits.h>
+ 
+-#ifdef HAVE_PCRE2
+-#define PCRE2_CODE_UNIT_WIDTH 8
+-#include <pcre2.h>
+-#elif defined HAVE_PCRE
+-#include <pcre.h>
+-#endif
+-
++#include "aircrack-ng/pcre/compat-pcre.h"
+ #include "aircrack-ng/defs.h"
+ #include "aircrack-ng/aircrack-ng.h"
+ #include "aircrack-ng/version.h"
+@@ -1122,7 +1116,7 @@ static void attack_ping(void * a)
+ 	timer_in(100 * 1000, attack_ping, n);
+ }
+ 
+-#ifdef HAVE_PCRE2
++#if defined HAVE_PCRE2 || defined HAVE_PCRE
+ static int is_filtered_essid(char * essid)
+ {
+ 	REQUIRE(essid != NULL);
+@@ -1131,39 +1125,20 @@ static int is_filtered_essid(char * essi
+ 
+ 	if (_conf.cf_essid_regex)
+ 	{
++#ifdef HAVE_PCRE2
+ 		_conf.cf_essid_match_data
+ 			= pcre2_match_data_create_from_pattern(_conf.cf_essid_regex, NULL);
+ 
+-		return pcre2_match(_conf.cf_essid_regex,
+-						   (PCRE2_SPTR) essid,
+-						   (int) strnlen((char *) essid, MAX_IE_ELEMENT_SIZE),
+-						   0,
+-						   0,
+-						   _conf.cf_essid_match_data,
+-						   0)
++		return COMPAT_PCRE_MATCH(_conf.cf_essid_regex,
++								 essid,
++								 MAX_IE_ELEMENT_SIZE,
++								 _conf.cf_essid_match_data)
+ 			   < 0;
+-	}
+-
+-	return (ret);
+-}
+ #elif defined HAVE_PCRE
+-static int is_filtered_essid(char * essid)
+-{
+-	REQUIRE(essid != NULL);
+-
+-	int ret = 0;
+-
+-	if (_conf.cf_essid_regex)
+-	{
+-		return pcre_exec(_conf.cf_essid_regex,
+-						 NULL,
+-						 (char *) essid,
+-						 strnlen((char *) essid, MAX_IE_ELEMENT_SIZE),
+-						 0,
+-						 0,
+-						 NULL,
+-						 0)
++		return COMPAT_PCRE_MATCH(
++				   _conf.cf_essid_regex, essid, MAX_IE_ELEMENT_SIZE, NULL)
+ 			   < 0;
++#endif
+ 	}
+ 
+ 	return (ret);
+@@ -1178,12 +1153,7 @@ static int should_attack(struct network
+ 	if (_conf.cf_bssid && memcmp(_conf.cf_bssid, n->n_bssid, 6) != 0)
+ 		return (0);
+ 
+-#ifdef HAVE_PCRE2
+-	if (is_filtered_essid(n->n_ssid))
+-	{
+-		return (0);
+-	}
+-#elif defined HAVE_PCRE
++#if defined HAVE_PCRE2 || defined HAVE_PCRE
+ 	if (is_filtered_essid(n->n_ssid))
+ 	{
+ 		return (0);
+@@ -3338,6 +3308,7 @@ int main(int argc, char * argv[])
+ 	int ch, temp;
+ #ifdef HAVE_PCRE2
+ 	int pcreerror;
++	PCRE2_UCHAR pcreerrorbuf[256];
+ 	PCRE2_SIZE pcreerroffset;
+ #elif defined HAVE_PCRE
+ 	const char * pcreerror;
+@@ -3393,7 +3364,7 @@ int main(int argc, char * argv[])
+ 				break;
+ 
+ 			case 'R':
+-#ifdef HAVE_PCRE2
++#if defined HAVE_PCRE2 || defined HAVE_PCRE
+ 				if (_conf.cf_essid_regex != NULL)
+ 				{
+ 					printf("Error: ESSID regular expression already given. "
+@@ -3401,43 +3372,18 @@ int main(int argc, char * argv[])
+ 					exit(EXIT_FAILURE);
+ 				}
+ 
+-				_conf.cf_essid_regex = pcre2_compile((PCRE2_SPTR) optarg,
+-													 PCRE2_ZERO_TERMINATED,
+-													 0,
+-													 &pcreerror,
+-													 &pcreerroffset,
+-													 NULL);
++				_conf.cf_essid_regex
++					= COMPAT_PCRE_COMPILE(optarg, &pcreerror, &pcreerroffset);
+ 
+ 				if (_conf.cf_essid_regex == NULL)
+ 				{
+-					PCRE2_UCHAR pcreerrbuffer[256];
++#ifdef HAVE_PCRE2
+ 					pcre2_get_error_message(
+-						pcreerror, pcreerrbuffer, sizeof(pcreerrbuffer));
+-
+-					printf("Error: regular expression compilation failed at "
+-						   "offset %lu: %s; aborting\n",
+-						   pcreerroffset,
+-						   pcreerrbuffer);
+-					exit(EXIT_FAILURE);
+-				}
+-				break;
++						pcreerror, pcreerrorbuf, sizeof(pcreerrorbuf));
++					COMPAT_PCRE_PRINT_ERROR(pcreerroffset, pcreerrorbuf);
+ #elif defined HAVE_PCRE
+-				if (_conf.cf_essid_regex != NULL)
+-				{
+-					printf("Error: ESSID regular expression already given. "
+-						   "Aborting\n");
+-					exit(EXIT_FAILURE);
+-				}
+-
+-				_conf.cf_essid_regex
+-					= pcre_compile(optarg, 0, &pcreerror, &pcreerroffset, NULL);
+-
+-				if (_conf.cf_essid_regex == NULL)
+-				{
+-					printf("Error: regular expression compilation failed at "
+-						   "offset %d: %s; aborting\n",
+-						   pcreerroffset,
+-						   pcreerror);
++					COMPAT_PCRE_PRINT_ERROR(pcreerroffset, pcreerror);
++#endif
+ 					exit(EXIT_FAILURE);
+ 				}
+ 				break;

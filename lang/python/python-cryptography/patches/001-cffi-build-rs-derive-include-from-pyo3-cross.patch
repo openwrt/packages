@@ -1,0 +1,93 @@
+From 5d072cb2a68506445844112e95b732c4287f39a0 Mon Sep 17 00:00:00 2001
+From: Alexandru Ardelean <ardeleanalex@gmail.com>
+Date: Wed, 27 May 2026 14:28:58 +0300
+Subject: [PATCH] cffi: derive Python include dir from PYO3_CROSS_LIB_DIR when
+ cross-compiling (#14904)
+
+When cross-compiling, ``cryptography-cffi/build.rs`` queries the host
+interpreter via ``setuptools.command.build_ext.build_ext.include_dirs``
+and feeds the result into ``cc-rs`` as ``-I /usr/include/python3.X``.
+On hosts that happen to ship Python development headers for the same
+3.X line as the target (e.g. an Arch Linux build host with Python 3.14
+installed), the host headers leak into the cross build and the target
+compiler aborts with::
+
+    /usr/include/python3.14/pyport.h:429:2: error: #error "LONG_BIT
+    definition appears wrong for platform (bad gcc/glibc config?)."
+
+``PYO3_CROSS_LIB_DIR`` is the documented PyO3 cross-compile signal and
+points at the target's libpython directory. When it is set, derive the
+matching Python include dir from it (``<prefix>/include/<py_ver>``) and
+skip the host setuptools probe entirely. Native builds keep the
+existing setuptools-based behaviour, so this is a no-op outside of
+PyO3-style cross builds.
+
+This is consistent with the existing ``PYO3_PYTHON`` handling in the
+same file: cryptography-cffi already respects PyO3's cross-compile
+environment for picking the interpreter, and this extends that to the
+matching header directory.
+
+Signed-off-by: Alexandru Ardelean <ardeleanalex@gmail.com>
+
+[OpenWrt: dropped the CHANGELOG.rst hunk — the 48.0.0 source tarball
+does not yet carry the post-48.0.0 "unreleased" section the upstream
+hunk targets. Drop this patch on next bump once the upstream change is
+in a tagged release.]
+Signed-off-by: Alexandru Ardelean <alex@shruggie.ro>
+---
+ src/rust/cryptography-cffi/build.rs | 44 ++++++++++++++++++++++-------
+ 1 file changed, 34 insertions(+), 10 deletions(-)
+
+--- a/src/rust/cryptography-cffi/build.rs
++++ b/src/rust/cryptography-cffi/build.rs
+@@ -56,16 +56,40 @@ fn main() {
+     )
+     .unwrap();
+     println!("cargo:rustc-cfg=python_implementation=\"{python_impl}\"");
+-    let python_includes = run_python_script(
+-        &python,
+-        "import os; \
+-         import setuptools.dist; \
+-         import setuptools.command.build_ext; \
+-         b = setuptools.command.build_ext.build_ext(setuptools.dist.Distribution()); \
+-         b.finalize_options(); \
+-         print(os.pathsep.join(b.include_dirs), end='')",
+-    )
+-    .unwrap();
++    println!("cargo:rerun-if-env-changed=PYO3_CROSS_LIB_DIR");
++    // When cross-compiling, PyO3 expects the build system to point
++    // PYO3_CROSS_LIB_DIR at the target's libpython directory. Derive the
++    // matching include dir from it instead of querying the host
++    // interpreter's setuptools, which returns host headers (e.g.
++    // /usr/include/python3.x) and breaks the cross build whenever the host
++    // happens to have same-version Python development headers installed.
++    let python_includes = if let Ok(lib_dir) = env::var("PYO3_CROSS_LIB_DIR") {
++        let lib = Path::new(&lib_dir);
++        let py_ver = lib
++            .file_name()
++            .and_then(|s| s.to_str())
++            .unwrap_or("python3");
++        let prefix = lib
++            .parent()
++            .and_then(|p| p.parent())
++            .expect("PYO3_CROSS_LIB_DIR has unexpected layout");
++        prefix
++            .join("include")
++            .join(py_ver)
++            .to_string_lossy()
++            .into_owned()
++    } else {
++        run_python_script(
++            &python,
++            "import os; \
++             import setuptools.dist; \
++             import setuptools.command.build_ext; \
++             b = setuptools.command.build_ext.build_ext(setuptools.dist.Distribution()); \
++             b.finalize_options(); \
++             print(os.pathsep.join(b.include_dirs), end='')",
++        )
++        .unwrap()
++    };
+     let openssl_c = Path::new(&out_dir).join("_openssl.c");
+ 
+     let mut build = cc::Build::new();

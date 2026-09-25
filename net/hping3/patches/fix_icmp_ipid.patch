@@ -1,0 +1,15 @@
+Description: Fixes replies when icmp-ipid is used
+Author: David Eisner <deisner@gmail.com>
+Last-Update: 2015-12-18
+--- a/waitpacket.c
++++ b/waitpacket.c
+@@ -244,7 +244,8 @@ int recv_icmp(void *packet, size_t size)
+ 	if ((icmp.type == ICMP_ECHOREPLY  ||
+ 	     icmp.type == ICMP_TIMESTAMPREPLY ||
+ 	     icmp.type == ICMP_ADDRESSREPLY) &&
+-		icmp.un.echo.id == (getpid() & 0xffff))
++		icmp.un.echo.id == ((icmp_ip_id == DEFAULT_ICMP_IP_ID) ?
++			getpid() & 0xffff : icmp_ip_id) )
+ 	{
+ 		int icmp_seq = icmp.un.echo.sequence;
+ 		int status;

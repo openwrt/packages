@@ -1,0 +1,154 @@
+#!/bin/sh
+
+. /lib/functions.sh
+migrate_ipsec() {
+	# Skip migration if the 'globals' section already exists
+	uci show ipsec.globals 1>/dev/null 2>/dev/null
+	[ "$?" = "0" ] && return
+
+	# Rename last ipsec section to 'globals'
+	uci -q rename ipsec.@ipsec[-1]=globals
+	uci -q commit ipsec
+}
+
+migrate_ignore_routing_tables() {
+	local tables table count
+
+	# Check whether we still have the old config option ( not a 'list')
+	count="$(grep -c -E "^[[:space:]]*option ignore_routing_tables" /etc/config/ipsec)"
+	[ "$count" = "0" ] && return
+
+	tables="$(uci -q get "ipsec.globals.ignore_routing_tables")"
+	uci -q delete "ipsec.globals.ignore_routing_tables"
+	for table in $tables; do
+		uci add_list "ipsec.globals.ignore_routing_tables=${table}"
+	done
+
+	uci commit ipsec
+}
+
+migrate_local_nat_child() {
+	local cfg="$1"
+
+	local local_nat value
+
+	config_get local_nat "$cfg" local_nat ""
+	[ -z "$local_nat" ] && return
+
+	uci -q delete "ipsec.${cfg}.local_nat"
+
+	# Replace 'local_subnet' with 'local_nat' and do not append.
+	# That's how it was previously done in the swanctl start script.
+	uci -q delete "ipsec.${cfg}.local_subnet"
+
+	for value in $local_nat; do
+		uci add_list "ipsec.${cfg}.local_subnet=${value}"
+	done
+}
+
+migrate_local_nat() {
+	config_load ipsec
+	config_foreach migrate_local_nat_child tunnel
+	config_foreach migrate_local_nat_child transport
+	uci commit ipsec
+}
+
+migrate_gateway_remote() {
+	local cfg="$1"
+
+	local gateway
+
+	config_get gateway "$cfg" gateway ""
+	[ -z "$gateway" ] && return
+
+	# The option 'any' is default for the 'remote_gateway' option if not set
+	# and does not need to be saved.
+	[ "$gateway" = "any" ] || {
+		uci -q set "ipsec.${cfg}.remote_gateway=${gateway}"
+	}
+
+	uci -q delete "ipsec.${cfg}.gateway"
+	uci commit ipsec
+}
+
+migrate_gateway() {
+	config_load ipsec
+	config_foreach migrate_gateway_remote remote
+}
+
+migrate_remote_gateway_remote() {
+	local cfg="$1"
+
+	local remote_gateway value
+
+	config_get remote_gateway "$cfg" remote_gateway ""
+	[ -z "$remote_gateway" ] && return
+
+	for value in $remote_gateway; do
+		uci add_list "ipsec.${cfg}.remote_addrs=${value}"
+	done
+
+	uci -q delete "ipsec.${cfg}.remote_gateway"
+	uci commit ipsec
+}
+
+migrate_remote_gateway() {
+	config_load ipsec
+	config_foreach migrate_remote_gateway_remote remote
+}
+
+migrate_local_ip_local() {
+	local cfg="$1"
+
+	local local_ip value
+
+	config_get local_ip "$cfg" local_ip ""
+	[ -z "$local_ip" ] && return
+
+	for value in $local_ip; do
+		uci add_list "ipsec.${cfg}.local_addrs=${value}"
+	done
+
+	uci -q delete "ipsec.${cfg}.local_ip"
+	uci commit ipsec
+}
+
+migrate_local_ip() {
+	config_load ipsec
+	config_foreach migrate_local_ip_local remote
+}
+
+migrate_local_sourceip_vips() {
+	local cfg="$1"
+
+	local local_sourceip value
+
+	config_get local_sourceip "$cfg" local_sourceip ""
+	[ -z "$local_sourceip" ] && return
+
+	for value in $local_sourceip; do
+		uci add_list "ipsec.${cfg}.vips=${value}"
+	done
+
+	uci -q delete "ipsec.${cfg}.local_sourceip"
+	uci commit ipsec
+}
+
+migrate_local_sourceip() {
+	config_load ipsec
+	config_foreach migrate_local_sourceip_vips remote
+}
+
+main() {
+	migrate_ipsec
+	migrate_ignore_routing_tables
+	migrate_local_nat
+	migrate_gateway
+	migrate_remote_gateway
+	migrate_local_ip
+	migrate_local_sourceip
+}
+
+main
+
+exit 0
