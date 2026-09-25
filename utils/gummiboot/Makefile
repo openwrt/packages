@@ -22,6 +22,10 @@ PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
+# 1. Strip RELR flags to prevent PE/COFF conversion failures in objcopy
+TARGET_CFLAGS := $(filter-out -Wl$(comma)-z$(comma)pack-relative-relocs -zpack-relative-relocs,$(TARGET_CFLAGS))
+TARGET_LDFLAGS := $(filter-out -Wl$(comma)-z$(comma)pack-relative-relocs -zpack-relative-relocs,$(TARGET_LDFLAGS))
+
 define Package/gummiboot
   SECTION:=boot
   CATEGORY:=Boot Loaders
@@ -42,6 +46,12 @@ CONFIGURE_ARGS += \
 	--with-efi-ldsdir=$(STAGING_DIR)/usr/lib \
 	--with-efi-includedir=$(STAGING_DIR)/usr/include \
 	--disable-manpages
+
+# 2. Fix binutils >= 2.42 objcopy syntax directly in automake template
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	$(SED) 's/--target=efi-app-/--output-target=efi-app-/g' $(PKG_BUILD_DIR)/Makefile.am
+endef
 
 define Build/Compile
 	+$(MAKE_VARS) EFI_CFLAGS="$(patsubst %,-I%,$(TOOLCHAIN_INC_DIRS)) $(TARGET_CFLAGS)" \
