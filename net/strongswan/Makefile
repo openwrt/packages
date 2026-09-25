@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=strongswan
 PKG_VERSION:=6.0.7
-PKG_RELEASE:=7
+PKG_RELEASE:=8
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://download.strongswan.org/ https://download2.strongswan.org/
@@ -450,6 +450,7 @@ CONFIGURE_ARGS+= \
 	--enable-mgf1 \
 	--enable-mediation \
 	--with-systemdsystemunitdir=no \
+	--with-plugins-packaged-separately=yes \
 	PYTHON="python3" \
 	$(if $(CONFIG_PACKAGE_strongswan-charon-cmd),--enable-cmd,--disable-cmd) \
 	$(if $(CONFIG_PACKAGE_strongswan-mod-gmpdh),--enable-gmpdh,) \
@@ -551,7 +552,7 @@ define Package/strongswan-pki/install
 endef
 
 define Package/strongswan-swanctl/conffiles
-/etc/config/ipsec
+/etc/config/swanctl
 /etc/swanctl/
 endef
 
@@ -565,12 +566,11 @@ define Package/strongswan-swanctl/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/swanctl $(1)/usr/sbin/
 	$(INSTALL_BIN) ./files/swanctl.init $(1)/etc/init.d/swanctl
 	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_CONF) ./files/ipsec.config $(1)/etc/config/ipsec
+	$(INSTALL_CONF) ./files/swanctl.config $(1)/etc/config/swanctl
 
-	# Install migration from 'ipsec@ipsec[-1]' to 'ipsec.globals'
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_DATA) ./files/etc/uci-defaults/strongswan \
-		$(1)/etc/uci-defaults/strongswan
+	$(INSTALL_DIR) $(1)/usr/libexec/strongswan/
+	$(INSTALL_BIN) ./files/usr/libexec/strongswan/migrate-ipsec-to-swanctl \
+		$(1)/usr/libexec/strongswan/
 endef
 
 define Package/strongswan-gencerts/install
