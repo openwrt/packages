@@ -21,6 +21,13 @@ PKG_LICENSE_FILES:=README.efilib
 
 include $(INCLUDE_DIR)/package.mk
 
+# 1. Strip RELR flags (prevents "file format not recognized" by avoiding ELF-specific relocations)
+TARGET_CFLAGS := $(filter-out -Wl$(comma)-z$(comma)pack-relative-relocs -zpack-relative-relocs,$(TARGET_CFLAGS))
+TARGET_LDFLAGS := $(filter-out -Wl$(comma)-z$(comma)pack-relative-relocs -zpack-relative-relocs,$(TARGET_LDFLAGS))
+
+# 2. Force correct objcopy syntax for newer binutils 2.42+
+MAKE_FLAGS += FORMAT="--output-target efi-app-$(ARCH)"
+
 define Package/gnu-efi
   SECTION:=libs
   CATEGORY:=Libraries
