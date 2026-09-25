@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=watchcat
 PKG_VERSION:=1
-PKG_RELEASE:=25
+PKG_RELEASE:=26
 
 PKG_MAINTAINER:=Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>, Dharmik Parmar <dharmikparmar2004@yahoo.com>
 PKG_LICENSE:=GPL-2.0
@@ -43,6 +43,8 @@ define Package/watchcat/install
 	$(INSTALL_DATA) ./files/watchcat.config $(1)/etc/config/watchcat
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/migrate-watchcat $(1)/etc/uci-defaults/migrate-watchcat
+	$(INSTALL_DIR) $(1)/lib/functions
+	$(INSTALL_DATA) ./files/watchcat.sh.functions $(1)/lib/functions/watchcat.sh
 endef
 
 $(eval $(call BuildPackage,watchcat))

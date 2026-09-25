@@ -6,78 +6,11 @@
 # This is free software, licensed under the GNU General Public License v2.
 #
 
-. /lib/network/config.sh
-. /lib/functions/network.sh
+# In recent (relevant) versions of shellcheck busybox is a valid shell type
+# shellcheck shell=busybox
 
-# Accept the historical real-device input while also handling @logical
-# interface references used by other OpenWrt configs.
-watchcat_resolve_ping_iface() {
-	local iface="$1"
-	local logical device network
-
-	[ -n "$iface" ] || return 1
-
-	case "$iface" in
-	@*)
-		logical="${iface#@}"
-		[ -n "$logical" ] || return 1
-		if network_get_device device "$logical"; then
-			printf '%s\n' "$device"
-			return 0
-		fi
-		printf '%s\n' "$iface"
-		return 1
-		;;
-	esac
-
-	network="$(find_config "$iface")"
-	if [ -n "$network" ]; then
-		printf '%s\n' "$iface"
-		return 0
-	fi
-
-	if network_get_device device "$iface"; then
-		printf '%s\n' "$device"
-		return 0
-	fi
-
-	printf '%s\n' "$iface"
-	return 1
-}
-
-watchcat_resolve_restart_iface() {
-	local iface="$1"
-	local network device
-
-	[ -n "$iface" ] || return 1
-
-	case "$iface" in
-	@*)
-		network="${iface#@}"
-		[ -n "$network" ] || return 1
-		if ! network_get_device device "$network"; then
-			printf '%s\n' "$network"
-			return 1
-		fi
-		printf '%s\n' "$network"
-		return 0
-		;;
-	esac
-
-	network="$(find_config "$iface")"
-	if [ -n "$network" ]; then
-		printf '%s\n' "$network"
-		return 0
-	fi
-
-	if network_get_device device "$iface"; then
-		printf '%s\n' "$iface"
-		return 0
-	fi
-
-	printf '%s\n' "$iface"
-	return 1
-}
+# shellcheck source=/dev/null
+. /lib/functions/watchcat.sh
 
 get_ping_size() {
 	ps=$1
@@ -105,6 +38,7 @@ get_ping_size() {
 		echo "Corresponding ping packet sizes (bytes): small=1, windows=32, standard=56, big=248, huge=1492, jumbo=9000" 1>&2
 		;;
 	esac
+	# shellcheck disable=SC2086
 	echo $ps
 }
 
@@ -124,6 +58,7 @@ get_ping_family_flag() {
 		echo "Error: invalid address_family \"$family\". address_family should be one of: any, ipv4, ipv6" 1>&2
 		;;
 	esac
+	# shellcheck disable=SC2086
 	echo $family
 }
 
@@ -132,8 +67,8 @@ reboot_now() {
 
 	[ "$1" -ge 1 ] && {
 		sleep "$1"
-		echo 1 > /proc/sys/kernel/sysrq
-		echo b > /proc/sysrq-trigger # Will immediately reboot the system without syncing or unmounting your disks.
+		echo 1 >/proc/sys/kernel/sysrq
+		echo b >/proc/sysrq-trigger # Will immediately reboot the system without syncing or unmounting your disks.
 	}
 }
 
@@ -234,12 +169,14 @@ watchcat_monitor_network() {
 		for host in $ping_hosts; do
 			if [ "$ping_iface" != "" ]; then
 				ping_result="$(
-					ping $ping_family -I "$ping_iface" -s "$ping_size" -c 1 "$host" &> /dev/null
+					# shellcheck disable=SC2086
+					ping $ping_family -I "$ping_iface" -s "$ping_size" -c 1 "$host" &>/dev/null
 					echo $?
 				)"
 			else
 				ping_result="$(
-					ping $ping_family -s "$ping_size" -c 1 "$host" &> /dev/null
+					# shellcheck disable=SC2086
+					ping $ping_family -s "$ping_size" -c 1 "$host" &>/dev/null
 					echo $?
 				)"
 			fi
@@ -336,12 +273,14 @@ watchcat_ping() {
 		for host in $ping_hosts; do
 			if [ "$ping_iface" != "" ]; then
 				ping_result="$(
-					ping $ping_family -I "$ping_iface" -s "$ping_size" -c 1 "$host" &> /dev/null
+					# shellcheck disable=SC2086
+					ping $ping_family -I "$ping_iface" -s "$ping_size" -c 1 "$host" &>/dev/null
 					echo $?
 				)"
 			else
 				ping_result="$(
-					ping $ping_family -s "$ping_size" -c 1 "$host" &> /dev/null
+					# shellcheck disable=SC2086
+					ping $ping_family -s "$ping_size" -c 1 "$host" &>/dev/null
 					echo $?
 				)"
 			fi
