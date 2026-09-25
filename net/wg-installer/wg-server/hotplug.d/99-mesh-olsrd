@@ -11,10 +11,15 @@ if [ "${slicedint}" != "wg_" ]; then
 	exit 0
 fi
 
-if [ "${ACTION}" = "add" ]; then
-	ubus call olsrd add_interface '{"ifname":'\""$INTERFACE"\"'}'
-fi
+case "${ACTION}" in
+	add) method=add_interface ;;
+	remove) method=del_interface ;;
+	*) exit 0 ;;
+esac
 
-if [ "${ACTION}" = "remove" ]; then
-	ubus call olsrd del_interface '{"ifname":'\""$INTERFACE"\"'}'
-fi
+# the IPv4 daemon registers as olsrd, the IPv6 one as olsrd6; a node may run
+# either or both, so talk to every one that is on the bus
+for obj in olsrd olsrd6; do
+	ubus -S list "$obj" | grep -qx "$obj" || continue
+	ubus call "$obj" "$method" '{"ifname":'\""$INTERFACE"\"'}'
+done
