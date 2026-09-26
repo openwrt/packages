@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tvheadend
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/tvheadend/tvheadend
@@ -34,10 +34,11 @@ define Package/tvheadend
   CATEGORY:=Multimedia
   TITLE:=TV streaming server
   MENU:=1
-  USERID:=tvheadend:dvb
+  USERID:=tvheadend:dvb=49
   URL:=https://tvheadend.org
   MAINTAINER:=Marius Dinu <m95d+git@psihoexpert.ro>
   DEPENDS:= \
+	dvb-support \
 	+librt \
 	+libffi \
 	+libopenssl \
