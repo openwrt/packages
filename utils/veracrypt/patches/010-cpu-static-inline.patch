@@ -1,0 +1,36 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ville Takio <ville+git@takio.fi>
+Date: Mon, 21 Sep 2026 20:50:00 +0000
+Subject: [PATCH] Crypto: make ARM CPU_Query helpers static inline
+
+C99 inline without static does not emit a function body, so aarch64
+builds fail to link DetectArmFeatures (undefined reference to
+CPU_QueryAES / CPU_QuerySHA2).
+
+Upstream-Status: Submitted [https://github.com/veracrypt/VeraCrypt/pull/1886]
+
+Signed-off-by: Ville Takio <ville+git@takio.fi>
+---
+ src/Crypto/cpu.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/src/Crypto/cpu.c
++++ b/src/Crypto/cpu.c
+@@ -489,7 +489,7 @@ void DisableCPUExtendedFeatures ()
+ volatile int g_hasAESARM = 0;
+ volatile int g_hasSHA256ARM = 0;
+ 
+-inline int CPU_QueryAES()
++static inline int CPU_QueryAES()
+ {
+ #if defined(CRYPTOPP_ARM_AES_AVAILABLE)
+ #if defined(__linux__) && defined(__aarch64__)
+@@ -513,7 +513,7 @@ inline int CPU_QueryAES()
+ #endif
+ }
+ 
+-inline int CPU_QuerySHA2()
++static inline int CPU_QuerySHA2()
+ {
+ #if defined(CRYPTOPP_ARM_SHA2_AVAILABLE)
+ #if defined(__linux__) && defined(__aarch64__)
