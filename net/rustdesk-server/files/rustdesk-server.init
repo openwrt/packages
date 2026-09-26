@@ -1,0 +1,141 @@
+#!/bin/sh /etc/rc.common
+
+START=98
+STOP=10
+USE_PROCD=1
+
+NAME=rustdesk-server
+
+get_config() {
+	config_get_bool enabled "$1" enabled 0
+	config_get_bool enabled_relay "$1" enabled_relay 0
+	config_get_bool open_firewall "$1" open_firewall 0
+
+	config_get server_port "$1" server_port
+	config_get server_key "$1" server_key
+	config_get server_relay_servers "$1" server_relay_servers
+	config_get server_rendezvous_servers "$1" server_rendezvous_servers
+	config_get server_mask "$1" server_mask
+	config_get server_rmem "$1" server_rmem
+	config_get server_serial "$1" server_serial
+	config_get server_software_url "$1" server_software_url
+	config_get_bool server_env_always_use_relay "$1" server_env_always_use_relay 0
+	config_get server_env_rust_log "$1" server_env_rust_log
+
+	config_get relay_port "$1" relay_port
+	config_get relay_key "$1" relay_key
+	config_get relay_env_rust_log "$1" relay_env_rust_log
+	config_get relay_env_limit_speed "$1" relay_env_limit_speed
+	config_get relay_env_single_bandwidth "$1" relay_env_single_bandwidth
+	config_get relay_env_total_bandwidth "$1" relay_env_total_bandwidth
+	config_get relay_env_downgrade_threshold "$1" relay_env_downgrade_threshold
+	config_get relay_env_downgrade_start_check "$1" relay_env_downgrade_start_check
+}
+
+add_fw_rule() {
+	json_add_object ""
+	json_add_string type rule
+	json_add_string src "*"
+	json_add_string proto "$1"
+	json_add_string dest_port "$2"
+	json_add_string target ACCEPT
+	json_close_object
+}
+
+start_hbbs() {
+	[ "$enabled" = "1" ] || return 0
+
+	local relay_servers_csv="${server_relay_servers// /,}"
+	local rendezvous_servers_csv="${server_rendezvous_servers// /,}"
+	local port="${server_port:-21116}"
+
+	procd_open_instance hbbs
+	procd_set_param command /usr/libexec/rustdesk-hbb hbbs
+	[ -n "$server_port" ] && procd_append_param command -p "$server_port"
+	[ -n "$relay_servers_csv" ] && procd_append_param command -r "$relay_servers_csv"
+	[ -n "$server_key" ] && procd_append_param command -k "$server_key"
+	[ -n "$rendezvous_servers_csv" ] && procd_append_param command -R "$rendezvous_servers_csv"
+	[ -n "$server_mask" ] && procd_append_param command --mask "$server_mask"
+	[ -n "$server_rmem" ] && procd_append_param command -M "$server_rmem"
+	[ -n "$server_serial" ] && procd_append_param command -s "$server_serial"
+	[ -n "$server_software_url" ] && procd_append_param command -u "$server_software_url"
+
+	procd_set_param respawn 3600 5 5
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+
+	# the peer table is a cache of client registrations that clients redo on
+	# their next heartbeat, and hbbs writes it often, so keep it off flash
+	procd_append_param env "DB_URL=/tmp/rustdesk_db_v2.sqlite3"
+	[ "$server_env_always_use_relay" = "1" ] && procd_append_param env "ALWAYS_USE_RELAY=Y"
+	[ -n "$server_env_rust_log" ] && procd_append_param env "RUST_LOG=$server_env_rust_log"
+
+	if [ "$open_firewall" = "1" ]; then
+		procd_open_data
+		json_add_array firewall
+		[ "$port" -gt 1 ] && add_fw_rule tcp "$((port - 1))"
+		add_fw_rule tcp "$port"
+		add_fw_rule tcp "$((port + 2))"
+		add_fw_rule udp "$port"
+		json_close_array
+		procd_close_data
+	fi
+
+	procd_close_instance
+}
+
+start_hbbr() {
+	[ "$enabled_relay" = "1" ] || return 0
+
+	local port="${relay_port:-21117}"
+
+	procd_open_instance hbbr
+	procd_set_param command /usr/libexec/rustdesk-hbb hbbr
+	[ -n "$relay_port" ] && procd_append_param command -p "$relay_port"
+	[ -n "$relay_key" ] && procd_append_param command -k "$relay_key"
+
+	procd_set_param respawn 3600 5 5
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+
+	[ -n "$relay_env_rust_log" ] && procd_append_param env "RUST_LOG=$relay_env_rust_log"
+	[ "${relay_env_limit_speed:-0}" != "0" ] && procd_append_param env "LIMIT_SPEED=$relay_env_limit_speed"
+	[ "${relay_env_single_bandwidth:-0}" != "0" ] && procd_append_param env "SINGLE_BANDWIDTH=$relay_env_single_bandwidth"
+	[ "${relay_env_total_bandwidth:-0}" != "0" ] && procd_append_param env "TOTAL_BANDWIDTH=$relay_env_total_bandwidth"
+	[ -n "$relay_env_downgrade_threshold" ] && procd_append_param env "DOWNGRADE_THRESHOLD=$relay_env_downgrade_threshold"
+	[ -n "$relay_env_downgrade_start_check" ] && procd_append_param env "DOWNGRADE_START_CHECK=$relay_env_downgrade_start_check"
+
+	if [ "$open_firewall" = "1" ]; then
+		procd_open_data
+		json_add_array firewall
+		add_fw_rule tcp "$port"
+		add_fw_rule tcp "$((port + 2))"
+		json_close_array
+		procd_close_data
+	fi
+
+	procd_close_instance
+}
+
+start_service() {
+	mkdir -p /etc/rustdesk
+	chmod 0700 /etc/rustdesk
+
+	config_load "$NAME"
+	config_foreach get_config "$NAME"
+
+	start_hbbs
+	start_hbbr
+}
+
+service_triggers() {
+	procd_add_reload_trigger "$NAME"
+}
+
+service_started() {
+	procd_set_config_changed firewall
+}
+
+service_stopped() {
+	procd_set_config_changed firewall
+}

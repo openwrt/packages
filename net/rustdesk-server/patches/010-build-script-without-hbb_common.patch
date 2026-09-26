@@ -1,0 +1,53 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Guilherme Cardoso <luminoso@gmail.com>
+Date: Mon, 21 Sep 2026 12:00:00 +0100
+Subject: [PATCH] build: generate src/version.rs without hbb_common
+
+build.rs called hbb_common::gen_version(), which made hbb_common a build
+dependency, so cargo compiled that whole crate for the build host. This
+pulls in libsodium-sys, which reads SODIUM_USE_PKG_CONFIG without a
+target suffix, so the OpenWrt pkg-config wrapper answers with the target
+staging directory and the host build script links the target libsodium.
+Cross builds then fail at link time. Write src/version.rs from
+CARGO_PKG_VERSION with the standard library instead; BUILD_DATE is left
+empty because nothing reads it and a constant value keeps the build
+reproducible.
+
+Upstream-Status: Submitted [https://github.com/rustdesk/rustdesk-server/pull/707]
+
+Signed-off-by: Guilherme Cardoso <luminoso@gmail.com>
+---
+ Cargo.toml |  3 ---
+ build.rs   | 13 ++++++++++++-
+ 2 files changed, 12 insertions(+), 4 deletions(-)
+
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -60,9 +60,6 @@ reqwest = { git = "https://github.com/ru
+ [target.'cfg(not(any(target_os = "macos", target_os = "windows")))'.dependencies]
+ reqwest = { git = "https://github.com/rustdesk-org/reqwest", features = ["blocking", "socks", "json", "rustls-tls", "rustls-tls-native-roots", "gzip"], default-features=false }
+ 
+-[build-dependencies]
+-hbb_common = { path = "libs/hbb_common" }
+-
+ [workspace]
+ members = ["libs/hbb_common"]
+ exclude = ["ui"]
+--- a/build.rs
++++ b/build.rs
+@@ -1,3 +1,14 @@
++use std::{env, fs};
++
+ fn main() {
+-    hbb_common::gen_version();
++    println!("cargo:rerun-if-changed=Cargo.toml");
++    let version = env::var("CARGO_PKG_VERSION").unwrap();
++    fs::write(
++        "./src/version.rs",
++        format!(
++            "pub const VERSION: &str = \"{version}\";\n\
++             #[allow(dead_code)]\npub const BUILD_DATE: &str = \"\";\n"
++        ),
++    )
++    .unwrap();
+ }
