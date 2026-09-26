@@ -1,0 +1,41 @@
+Testing port-based policy generates correct nft rules with protocol and dport.
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+let result = pbr.start_service(['on_start']);
+
+let nft_content = global.mocklib.read_captured('/var/run/pbr.nft');
+let checks = [];
+
+if (nft_content) {
+	let lines = split(nft_content, '\n');
+	let port_rules = filter(lines, l => index(l, '"Route by Port"') >= 0);
+
+	push(checks, ['has_port_rules', length(port_rules) > 0]);
+
+	for (let rule in port_rules) {
+		push(checks, ['rule_has_dport',  index(rule, 'dport') >= 0]);
+		push(checks, ['rule_has_tcp',    index(rule, 'tcp') >= 0]);
+		push(checks, ['rule_has_goto',   index(rule, 'goto pbr_mark_') >= 0]);
+	}
+} else {
+	push(checks, ['nft_file_written', false]);
+}
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("policy_port_based: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+policy_port_based: 4/4 passed
+-- End --

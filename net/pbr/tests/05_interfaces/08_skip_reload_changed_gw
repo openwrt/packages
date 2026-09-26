@@ -1,0 +1,61 @@
+Testing should_skip_reload(): a reload of the IPv6 uplink proceeds when the gateway has actually changed.
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+let checks = [];
+
+// wan6's current gateway (from ubus route: 2001:db8::ffff) differs from the
+// previously published gateway_ipv6 -> the reload must NOT be skipped.
+push(checks, ['no_skip_when_changed', pbr.should_skip_reload('wan6') == false]);
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("skip_reload_changed: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- File ubus/service~list~name-pbr.json --
+{
+	"pbr": {
+		"data": {
+			"gateways": [
+				{ "name": "wan6", "gateway_ipv6": "2001:db8::dead" }
+			]
+		}
+	}
+}
+-- End --
+
+-- File uci/pbr.json --
+{
+	"pbr": [
+		{
+			".name": "config",
+			"enabled": "1",
+			"fw_mask": "00ff0000",
+			"ipv6_enabled": "1",
+			"strict_enforcement": "1",
+			"uplink_interface": "wan",
+			"uplink_interface6": "wan6",
+			"uplink_ip_rules_priority": "30000",
+			"uplink_mark": "00010000",
+			"verbosity": "2",
+			"lan_device": ["br-lan"],
+			"resolver_instance": ["*"],
+			"debug_performance": "0"
+		}
+	]
+}
+-- End --
+
+-- Expect stdout --
+skip_reload_changed: 1/1 passed
+-- End --

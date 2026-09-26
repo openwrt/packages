@@ -1,0 +1,198 @@
+Testing that interface_enumerate() and create_global_rules() refuse to
+allocate an IP rule priority <= 0 once uplink_ip_rules_priority is
+exhausted by the interface count, instead of issuing 'ip rule ... priority 0'
+(which collides with the kernel's own 'from all lookup local' rule).
+
+-- File uci/network.json --
+{
+	"interface": [
+		{ ".name": "loopback", "device": "lo", "proto": "static", "ipaddr": "127.0.0.1", "netmask": "255.0.0.0" },
+		{ ".name": "lan", "device": "br-lan", "proto": "static", "ipaddr": "192.168.1.1/24" },
+		{ ".name": "wan", "device": "eth1", "proto": "dhcp" },
+		{ ".name": "wan2x", "device": "eth2", "proto": "dhcp" },
+		{ ".name": "wan3x", "device": "eth3", "proto": "dhcp" },
+		{ ".name": "wan4x", "device": "eth4", "proto": "dhcp" },
+		{ ".name": "wan5x", "device": "eth5", "proto": "dhcp" },
+		{ ".name": "wan6x", "device": "eth6", "proto": "dhcp" },
+		{ ".name": "wan7x", "device": "eth7", "proto": "dhcp" },
+		{ ".name": "wan8x", "device": "eth8", "proto": "dhcp" },
+		{ ".name": "wan9x", "device": "eth9", "proto": "dhcp" },
+		{ ".name": "wan10x", "device": "eth10", "proto": "dhcp" },
+		{ ".name": "wan11x", "device": "eth11", "proto": "dhcp" },
+		{ ".name": "wan12x", "device": "eth12", "proto": "dhcp" },
+		{ ".name": "wan13x", "device": "eth13", "proto": "dhcp" },
+		{ ".name": "wan14x", "device": "eth14", "proto": "dhcp" },
+		{ ".name": "wan15x", "device": "eth15", "proto": "dhcp" },
+		{ ".name": "wan16x", "device": "eth16", "proto": "dhcp" },
+		{ ".name": "wan17x", "device": "eth17", "proto": "dhcp" },
+		{ ".name": "wan18x", "device": "eth18", "proto": "dhcp" },
+		{ ".name": "wan19x", "device": "eth19", "proto": "dhcp" },
+		{ ".name": "wan20x", "device": "eth20", "proto": "dhcp" },
+		{ ".name": "wan21x", "device": "eth21", "proto": "dhcp" },
+		{ ".name": "wan22x", "device": "eth22", "proto": "dhcp" },
+		{ ".name": "wan23x", "device": "eth23", "proto": "dhcp" },
+		{ ".name": "wan24x", "device": "eth24", "proto": "dhcp" },
+		{ ".name": "wan25x", "device": "eth25", "proto": "dhcp" },
+		{ ".name": "wan26x", "device": "eth26", "proto": "dhcp" },
+		{ ".name": "wan27x", "device": "eth27", "proto": "dhcp" },
+		{ ".name": "wan28x", "device": "eth28", "proto": "dhcp" },
+		{ ".name": "wan29x", "device": "eth29", "proto": "dhcp" },
+		{ ".name": "wan30x", "device": "eth30", "proto": "dhcp" },
+		{ ".name": "wan31x", "device": "eth31", "proto": "dhcp" },
+		{ ".name": "wan32x", "device": "eth32", "proto": "dhcp" },
+		{ ".name": "wan33x", "device": "eth33", "proto": "dhcp" },
+		{ ".name": "wan34x", "device": "eth34", "proto": "dhcp" },
+		{ ".name": "wan35x", "device": "eth35", "proto": "dhcp" },
+		{ ".name": "wan36x", "device": "eth36", "proto": "dhcp" },
+		{ ".name": "wan37x", "device": "eth37", "proto": "dhcp" },
+		{ ".name": "wan38x", "device": "eth38", "proto": "dhcp" },
+		{ ".name": "wan39x", "device": "eth39", "proto": "dhcp" },
+		{ ".name": "wan40x", "device": "eth40", "proto": "dhcp" },
+		{ ".name": "wan41x", "device": "eth41", "proto": "dhcp" },
+		{ ".name": "wan42x", "device": "eth42", "proto": "dhcp" },
+		{ ".name": "wan43x", "device": "eth43", "proto": "dhcp" },
+		{ ".name": "wan44x", "device": "eth44", "proto": "dhcp" },
+		{ ".name": "wan45x", "device": "eth45", "proto": "dhcp" },
+		{ ".name": "wan46x", "device": "eth46", "proto": "dhcp" },
+		{ ".name": "wan47x", "device": "eth47", "proto": "dhcp" },
+		{ ".name": "wan48x", "device": "eth48", "proto": "dhcp" },
+		{ ".name": "wan49x", "device": "eth49", "proto": "dhcp" },
+		{ ".name": "wan50x", "device": "eth50", "proto": "dhcp" },
+		{ ".name": "wan51x", "device": "eth51", "proto": "dhcp" },
+		{ ".name": "wan52x", "device": "eth52", "proto": "dhcp" },
+		{ ".name": "wan53x", "device": "eth53", "proto": "dhcp" },
+		{ ".name": "wan54x", "device": "eth54", "proto": "dhcp" },
+		{ ".name": "wan55x", "device": "eth55", "proto": "dhcp" },
+		{ ".name": "wan56x", "device": "eth56", "proto": "dhcp" },
+		{ ".name": "wan57x", "device": "eth57", "proto": "dhcp" },
+		{ ".name": "wan58x", "device": "eth58", "proto": "dhcp" },
+		{ ".name": "wan59x", "device": "eth59", "proto": "dhcp" },
+		{ ".name": "wan60x", "device": "eth60", "proto": "dhcp" },
+		{ ".name": "wan61x", "device": "eth61", "proto": "dhcp" },
+		{ ".name": "wan62x", "device": "eth62", "proto": "dhcp" },
+		{ ".name": "wan63x", "device": "eth63", "proto": "dhcp" },
+		{ ".name": "wan64x", "device": "eth64", "proto": "dhcp" },
+		{ ".name": "wan65x", "device": "eth65", "proto": "dhcp" },
+		{ ".name": "wan66x", "device": "eth66", "proto": "dhcp" },
+		{ ".name": "wan67x", "device": "eth67", "proto": "dhcp" },
+		{ ".name": "wan68x", "device": "eth68", "proto": "dhcp" },
+		{ ".name": "wan69x", "device": "eth69", "proto": "dhcp" },
+		{ ".name": "wan70x", "device": "eth70", "proto": "dhcp" },
+		{ ".name": "wan71x", "device": "eth71", "proto": "dhcp" },
+		{ ".name": "wan72x", "device": "eth72", "proto": "dhcp" },
+		{ ".name": "wan73x", "device": "eth73", "proto": "dhcp" },
+		{ ".name": "wan74x", "device": "eth74", "proto": "dhcp" },
+		{ ".name": "wan75x", "device": "eth75", "proto": "dhcp" },
+		{ ".name": "wan76x", "device": "eth76", "proto": "dhcp" },
+		{ ".name": "wan77x", "device": "eth77", "proto": "dhcp" },
+		{ ".name": "wan78x", "device": "eth78", "proto": "dhcp" },
+		{ ".name": "wan79x", "device": "eth79", "proto": "dhcp" },
+		{ ".name": "wan80x", "device": "eth80", "proto": "dhcp" },
+		{ ".name": "wan81x", "device": "eth81", "proto": "dhcp" },
+		{ ".name": "wan82x", "device": "eth82", "proto": "dhcp" },
+		{ ".name": "wan83x", "device": "eth83", "proto": "dhcp" },
+		{ ".name": "wan84x", "device": "eth84", "proto": "dhcp" },
+		{ ".name": "wan85x", "device": "eth85", "proto": "dhcp" },
+		{ ".name": "wan86x", "device": "eth86", "proto": "dhcp" },
+		{ ".name": "wan87x", "device": "eth87", "proto": "dhcp" },
+		{ ".name": "wan88x", "device": "eth88", "proto": "dhcp" },
+		{ ".name": "wan89x", "device": "eth89", "proto": "dhcp" },
+		{ ".name": "wan90x", "device": "eth90", "proto": "dhcp" },
+		{ ".name": "wan91x", "device": "eth91", "proto": "dhcp" },
+		{ ".name": "wan92x", "device": "eth92", "proto": "dhcp" },
+		{ ".name": "wan93x", "device": "eth93", "proto": "dhcp" },
+		{ ".name": "wan94x", "device": "eth94", "proto": "dhcp" },
+		{ ".name": "wan95x", "device": "eth95", "proto": "dhcp" },
+		{ ".name": "wan96x", "device": "eth96", "proto": "dhcp" },
+		{ ".name": "wan97x", "device": "eth97", "proto": "dhcp" },
+		{ ".name": "wan98x", "device": "eth98", "proto": "dhcp" },
+		{ ".name": "wan99x", "device": "eth99", "proto": "dhcp" },
+		{ ".name": "wan100x", "device": "eth100", "proto": "dhcp" },
+		{ ".name": "wan101x", "device": "eth101", "proto": "dhcp" },
+		{ ".name": "wan102x", "device": "eth102", "proto": "dhcp" },
+		{ ".name": "wan103x", "device": "eth103", "proto": "dhcp" },
+		{ ".name": "wan104x", "device": "eth104", "proto": "dhcp" },
+		{ ".name": "wan105x", "device": "eth105", "proto": "dhcp" },
+		{ ".name": "wan106x", "device": "eth106", "proto": "dhcp" },
+		{ ".name": "wan107x", "device": "eth107", "proto": "dhcp" },
+		{ ".name": "wan108x", "device": "eth108", "proto": "dhcp" },
+		{ ".name": "wan109x", "device": "eth109", "proto": "dhcp" },
+		{ ".name": "wan110x", "device": "eth110", "proto": "dhcp" }
+	]
+}
+-- End --
+
+-- File uci/pbr.json --
+{
+	"pbr": [
+		{
+			".name": "config",
+			"enabled": "1",
+			"fw_mask": "00ff0000",
+			"ipv6_enabled": "0",
+			"strict_enforcement": "1",
+			"uplink_interface": "wan",
+			"uplink_ip_rules_priority": "99",
+			"uplink_mark": "00010000",
+			"verbosity": "2",
+			"lan_device": ["br-lan"],
+			"resolver_instance": ["*"],
+			"debug_performance": "0"
+		}
+	],
+	"policy": [],
+	"dns_policy": [],
+	"include": []
+}
+-- End --
+
+-- Testcase --
+import create_pbr from 'pbr';
+import _pkg_mod from 'pkg';
+let get_text = _pkg_mod.get_text;
+let pbr = create_pbr();
+
+let result = pbr.start_service(['on_start']);
+let errors = result?.errors || [];
+let gateways = result?.gateways || [];
+
+let exhaustion_errors = filter(errors, e => e.code == 'errorInterfacePriorityExhausted');
+
+let min_priority = null, max_priority = null, non_positive = 0;
+for (let gw in gateways) {
+	let p = +gw.priority;
+	if (p <= 0) non_positive++;
+	if (min_priority == null || p < min_priority) min_priority = p;
+	if (max_priority == null || p > max_priority) max_priority = p;
+}
+
+let msg = get_text('errorInterfacePriorityExhausted', {}, 'wan100x');
+
+let checks = [
+	// 110 supported interfaces against uplink_ip_rules_priority=99: the first
+	// 99 take priorities 99..1, so interfaces 100..110 are skipped (11 errors),
+	// and create_global_rules() then hits its own guard on the leftover
+	// iface_priority of 0 for the suppress_prefixlength rule (1 more) = 12.
+	['exhaustion_error_count',   length(exhaustion_errors) == 12],
+	['registered_interfaces',    length(gateways) == 99],
+	['no_non_positive_priority', non_positive == 0],
+	['min_priority_is_one',      min_priority == 1],
+	['max_priority_is_99',       max_priority == 99],
+	['message_includes_iface',   index(msg, 'wan100x') >= 0],
+];
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("priority_exhaustion_guard: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+priority_exhaustion_guard: 6/6 passed
+-- End --

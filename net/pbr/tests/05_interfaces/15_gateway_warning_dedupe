@@ -1,0 +1,165 @@
+Regression: an interface with no discoverable IPv6 gateway warned twice.
+
+get_gateway6() rewrites its interface argument to cfg.uplink_interface6 when
+handed the IPv4 uplink, and get_gateway4() does the mirror image. So on the
+usual wan + wan6 pair -- one device, one upstream -- processing 'wan' and then
+processing 'wan6' both produce the warning labelled 'wan6', with the same
+device, and state.warnings had no dedupe. The user saw the identical line
+twice with nothing to distinguish the two:
+
+  WARNING: Unknown IPv6 gateway for 'interface:wan6; device:eth1 '.
+  WARNING: Unknown IPv6 gateway for 'interface:wan6; device:eth1 '.
+
+Cosmetic only -- routing was never affected -- but the repeat reads like two
+separate faults. The warning must still be raised: one interface with no
+gateway is one warning.
+
+wan6 below is up and has an address but carries no default route, and no
+popen fixture backs the 'ip -6 route'/'ip -6 neigh' fallbacks, so they come
+back empty and the gateway is genuinely undiscoverable. vpn is stripped of its
+route too, on its own device, so the test also pins down that the dedupe
+collapses identical warnings only -- a second interface that really has no
+gateway must still warn on its own account.
+
+-- File uci/pbr.json --
+{
+	"pbr": [
+		{
+			".name": "config",
+			"enabled": "1",
+			"fw_mask": "00ff0000",
+			"ipv6_enabled": "1",
+			"strict_enforcement": "1",
+			"uplink_interface": "wan",
+			"uplink_interface6": "wan6",
+			"uplink_ip_rules_priority": "30000",
+			"uplink_mark": "00010000",
+			"verbosity": "2",
+			"lan_device": ["br-lan"],
+			"resolver_instance": ["*"],
+			"debug_performance": "0",
+			"nft_set_auto_merge": "1",
+			"nft_set_flags_interval": "1",
+			"nft_set_flags_timeout": "0",
+			"nft_set_policy": "performance",
+			"ignored_interface": ["vpnserver"]
+		}
+	],
+	"policy": [
+		{
+			".name": "policy_vpn",
+			"name": "Route via VPN",
+			"enabled": "1",
+			"interface": "vpn",
+			"src_addr": "192.168.1.0/24",
+			"dest_addr": "",
+			"src_port": "",
+			"dest_port": "",
+			"proto": "",
+			"chain": "prerouting"
+		}
+	]
+}
+-- End --
+
+-- File ubus/network.interface.wan6~status.json --
+{
+	"up": true,
+	"pending": false,
+	"available": true,
+	"autostart": true,
+	"dynamic": false,
+	"uptime": 3600,
+	"l3_device": "eth1",
+	"device": "eth1",
+	"proto": "dhcpv6",
+	"ipv6-address": [
+		{
+			"address": "2001:db8::1",
+			"mask": 64
+		}
+	],
+	"route": []
+}
+-- End --
+
+-- File ubus/network.interface.vpn~status.json --
+{
+	"up": true,
+	"pending": false,
+	"available": true,
+	"autostart": true,
+	"dynamic": false,
+	"uptime": 1800,
+	"l3_device": "tun0",
+	"device": "tun0",
+	"proto": "openvpn",
+	"ipv4-address": [
+		{
+			"address": "10.8.0.2",
+			"mask": 24
+		}
+	],
+	"route": [],
+	"dns-server": [
+		"10.8.0.1"
+	]
+}
+-- End --
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+let result = pbr.start_service(['on_start']);
+let warnings = result?.warnings || [];
+
+let checks = [];
+
+// The service must still start: wan carries a v4 gateway, so the missing
+// v6 one is a warning and nothing more.
+push(checks, ['service_started', type(result?.gateways) == 'array']);
+
+// The warning is still raised -- this must not pass by warnings vanishing.
+let v6_warnings = filter(warnings,
+	w => w.code == 'warningInterfaceRoutingUnknownGateway6');
+push(checks, ['v6_warning_raised', length(v6_warnings) >= 1]);
+
+// One interface with no gateway is exactly one warning.
+let wan6_warnings = filter(v6_warnings, w => index(w.info, 'interface:wan6') >= 0);
+push(checks, ['wan6_warned_once', length(wan6_warnings) == 1]);
+
+// ... and a genuinely different interface must still get its own warning.
+// This is the guard against the dedupe collapsing too much: vpn has no
+// route either, on a different device, so it is a distinct fault.
+let vpn_warnings = filter(warnings, w => index(w.info || '', 'interface:vpn') >= 0);
+push(checks, ['vpn_warned_separately', length(vpn_warnings) >= 1]);
+push(checks, ['vpn_v4_warned_once', length(filter(vpn_warnings,
+	w => w.code == 'warningInterfaceRoutingUnknownGateway4')) == 1]);
+
+// General invariant: no two recorded warnings render the same text.
+let seen = {}, dupes = [];
+for (let w in warnings) {
+	let key = w.code + '|' + (w.info || '');
+	if (seen[key]) push(dupes, key);
+	seen[key] = true;
+}
+push(checks, ['no_duplicate_warnings', length(dupes) == 0]);
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+for (let d in dupes)
+	printf("DUPE: %s\n", d);
+printf("gateway_warning_dedupe: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+gateway_warning_dedupe: 6/6 passed
+-- End --

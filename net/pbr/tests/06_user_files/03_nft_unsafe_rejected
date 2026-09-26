@@ -1,0 +1,86 @@
+Testing that unsafe nft commands (list, delete, flush) are rejected by api.nft/nft4/nft6.
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+// Override loadstring so user file code is actually evaluated
+global.loadstring = global._orig_loadstring;
+
+// User file that tries unsafe nft operations
+global.mocklib.capture('/usr/share/pbr/bad_user.uc',
+	"return function(api) {\n" +
+	"	api.nft('list ruleset');\n" +
+	"};\n"
+);
+
+let result = pbr.start_service(['on_start']);
+
+let nft_content = global.mocklib.read_captured('/var/run/pbr.nft') || '';
+let checks = [];
+
+// Unsafe command should not appear in nft output
+push(checks, ['no_list_ruleset', index(nft_content, 'list ruleset') < 0]);
+
+// The error should have been recorded
+if (result && result.errors) {
+	let unsafe_err = filter(result.errors, e => e.code == 'errorUserFileUnsafeNft');
+	push(checks, ['has_unsafe_error', length(unsafe_err) > 0]);
+} else {
+	push(checks, ['has_errors', false]);
+}
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("nft_unsafe_rejected: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- File uci/pbr.json --
+{
+	"pbr": [
+		{
+			".name": "config",
+			"enabled": "1",
+			"fw_mask": "00ff0000",
+			"ipv6_enabled": "0",
+			"strict_enforcement": "1",
+			"uplink_interface": "wan",
+			"uplink_interface6": "wan6",
+			"uplink_ip_rules_priority": "30000",
+			"uplink_mark": "00010000",
+			"verbosity": "2",
+			"lan_device": ["br-lan"],
+			"resolver_instance": ["*"],
+			"debug_performance": "0",
+			"nft_set_auto_merge": "1",
+			"nft_set_flags_interval": "1",
+			"nft_set_flags_timeout": "0",
+			"nft_set_policy": "performance",
+			"ignored_interface": ["vpnserver"]
+		}
+	],
+	"policy": [],
+	"include": [
+		{
+			".name": "user_bad",
+			"enabled": "1",
+			"path": "/usr/share/pbr/bad_user.uc"
+		}
+	]
+}
+-- End --
+
+-- File fs/stat~_usr_share_pbr_bad_user_uc.json --
+{ "type": "file", "size": 50 }
+-- End --
+
+-- Expect stdout --
+nft_unsafe_rejected: 2/2 passed
+-- End --

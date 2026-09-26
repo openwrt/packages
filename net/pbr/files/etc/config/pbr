@@ -17,26 +17,22 @@ config pbr 'config'
 	option uplink_interface6 'wan6'
 	option uplink_ip_rules_priority '30000'
 	option uplink_mark '00010000'
+	option debug_performance '0'
 	option verbosity '2'
 	list ignored_interface 'vpnserver'
 	list lan_device 'br-lan'
 	list resolver_instance '*'
-	list webui_supported_protocol 'all'
-	list webui_supported_protocol 'tcp'
-	list webui_supported_protocol 'udp'
-	list webui_supported_protocol 'tcp udp'
-	list webui_supported_protocol 'icmp'
 
 config include
 	option path '/usr/share/pbr/pbr.user.dnsprefetch'
 	option enabled '0'
 
 config include
-	option path '/usr/share/pbr/pbr.user.aws'
+	option path '/usr/share/pbr/pbr.user.aws.uc'
 	option enabled '0'
 
 config include
-	option path '/usr/share/pbr/pbr.user.netflix'
+	option path '/usr/share/pbr/pbr.user.netflix.uc'
 	option enabled '0'
 
 config dns_policy

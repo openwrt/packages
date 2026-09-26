@@ -1,0 +1,47 @@
+Testing forwarding.disable() drops forwarding when the service is enabled (strict_enforcement=1).
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+// Capture every system() command so we can assert the sysctl is issued.
+let sys_calls = [];
+let _orig_system = global.system;
+global.system = function(cmd, timeout) {
+	push(sys_calls, cmd);
+	return _orig_system(cmd, timeout);
+};
+
+pbr.forwarding.disable();
+
+let v4 = filter(sys_calls, c => index(c, 'sysctl -w net.ipv4.ip_forward=0') >= 0);
+let v6 = filter(sys_calls, c => index(c, 'sysctl -w net.ipv6.conf.all.forwarding=0') >= 0);
+printf("ipv4_forward_disabled: %s\n", length(v4) > 0 ? 'yes' : 'no');
+printf("ipv6_forward_disabled: %s\n", length(v6) > 0 ? 'yes' : 'no');
+-- End --
+
+-- File uci/pbr.json --
+{
+	"pbr": [
+		{
+			".name": "config",
+			"enabled": "1",
+			"fw_mask": "00ff0000",
+			"ipv6_enabled": "0",
+			"strict_enforcement": "1",
+			"uplink_interface": "wan",
+			"uplink_interface6": "wan6",
+			"uplink_ip_rules_priority": "30000",
+			"uplink_mark": "00010000",
+			"verbosity": "2",
+			"lan_device": ["br-lan"],
+			"resolver_instance": ["*"]
+		}
+	]
+}
+-- End --
+
+-- Expect stdout --
+ipv4_forward_disabled: yes
+ipv6_forward_disabled: yes
+-- End --
