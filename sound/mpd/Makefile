@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpd
 PKG_VERSION:=0.23.17
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.musicpd.org/download/mpd/0.23
@@ -18,7 +18,7 @@ PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
 PKG_CONFIG_DEPENDS:= \
-	CONFIG_AUDIO_SUPPORT \
+	CONFIG_PACKAGE_audio-support \
 	CONFIG_BUILD_PATENTED \
 	CONFIG_IPV6 \
 
@@ -34,7 +34,7 @@ define Package/mpd/Default
   TITLE:=Music Player Daemon
   URL:=https://www.musicpd.org/
   DEPENDS:= +zlib +libcurl +libpthread +libmpdclient +boost $(ICONV_DEPENDS) +libfmt \
-            +AUDIO_SUPPORT:alsa-lib +libexpat +libflac +libid3tag +libfaad2 +libopus
+            +PACKAGE_audio-support:alsa-lib +libexpat +libflac +libid3tag +libfaad2 +libopus
   USERID:=mpd:mpd
 endef
 
@@ -48,7 +48,7 @@ endef
 define Package/mpd-full
 $(call Package/mpd/Default)
   TITLE+= (full)
-  DEPENDS+= +AUDIO_SUPPORT:pulseaudio +libvorbis +libmms +libnpupnp +libshout +yajl \
+  DEPENDS+= +PACKAGE_audio-support:pulseaudio +libvorbis +libmms +libnpupnp +libshout +yajl \
             +libffmpeg +lame-lib +libsoxr +!BUILD_PATENTED:libmad
   PROVIDES:=mpd
   VARIANT:=full
@@ -156,7 +156,7 @@ MESON_ARGS += \
 	-Dshine=disabled \
 	-Dwave_encoder=true \
 	-Dlibsamplerate=disabled \
-	-Dalsa=$(if $(CONFIG_AUDIO_SUPPORT),en,dis)abled \
+	-Dalsa=$(if $(CONFIG_PACKAGE_audio-support),en,dis)abled \
 	-Dao=disabled \
 	-Dhttpd=true \
 	-Djack=disabled \
@@ -188,7 +188,7 @@ ifeq ($(BUILD_VARIANT),full)
 	-Dvorbis=enabled \
 	-Dfifo=true \
 	-Dpipe=true \
-	-Dpulse=$(if $(CONFIG_AUDIO_SUPPORT),en,dis)abled \
+	-Dpulse=$(if $(CONFIG_PACKAGE_audio-support),en,dis)abled \
 	-Drecorder=true \
 	-Dshout=enabled \
 	-Dyajl=enabled \
@@ -196,7 +196,7 @@ ifeq ($(BUILD_VARIANT),full)
 	-Dlame=enabled \
 	-Dsoxr=enabled
 
-ifeq ($(CONFIG_AUDIO_SUPPORT),y)
+ifeq ($(CONFIG_PACKAGE_audio-support),y)
 	TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib/pulseaudio
 endif
 endif
