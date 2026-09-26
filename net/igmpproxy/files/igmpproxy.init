@@ -23,11 +23,15 @@ igmp_header() {
 }
 
 igmp_add_phyint() {
-	local network direction altnets device up
+	local network direction ratelimit threshold altnets whitelists blacklists device up
 
 	config_get network $1 network
 	config_get direction $1 direction
+	config_get ratelimit $1 ratelimit 0
+	config_get threshold $1 threshold 1
 	config_get altnets $1 altnet
+	config_get whitelists $1 whitelist
+	config_get blacklists $1 blacklist
 
 	local status="$(ubus -S call "network.interface.$network" status)"
 	[ -n "$status" ] || return
@@ -45,12 +49,26 @@ igmp_add_phyint() {
 
 	[ "$direction" = "upstream" ] && has_upstream=1
 
-	echo -e "\nphyint $device $direction ratelimit 0 threshold 1" >> /var/etc/igmpproxy.conf
+	echo -e "\nphyint $device $direction ratelimit $ratelimit threshold $threshold" >> /var/etc/igmpproxy.conf
 
 	if [ -n "$altnets" ]; then
 		local altnet
 		for altnet in $altnets; do
 			echo -e "\taltnet $altnet" >> /var/etc/igmpproxy.conf
+		done
+	fi
+
+	if [ -n "$whitelists" ]; then
+		local whitelist
+		for whitelist in $whitelists; do
+			echo -e "\twhitelist $whitelist" >> /var/etc/igmpproxy.conf
+		done
+	fi
+
+	if [ -n "$blacklists" ]; then
+		local blacklist
+		for blacklist in $blacklists; do
+			echo -e "\tblacklist $blacklist" >> /var/etc/igmpproxy.conf
 		done
 	fi
 }
@@ -65,22 +83,24 @@ igmp_add_network() {
 igmp_add_firewall_routing() {
 	config_get direction $1 direction
 	config_get zone $1 zone
+	config_get_bool fw_drop_ssdp $1 fw_drop_ssdp 1
 
 	if [ "$direction" != "downstream" ] || [ -z "$zone" ]; then
 		return 0
 	fi
 
-# First drop SSDP packets then accept all other multicast
-
-	json_add_object ""
-	json_add_string type rule
-	json_add_string src "$upstream"
-	json_add_string dest "$zone"
-	json_add_string family ipv4
-	json_add_string proto udp
-	json_add_string dest_ip "239.255.255.250"
-	json_add_string target DROP
-	json_close_object
+	if [ "$fw_drop_ssdp" = "1" ]; then
+		json_add_object ""
+		json_add_string type rule
+		json_add_string src "$upstream"
+		json_add_string dest "$zone"
+		json_add_string family ipv4
+		json_add_string proto udp
+		# SSDP IPv4 site-local address (https://en.wikipedia.org/wiki/Simple_Service_Discovery_Protocol)
+		json_add_string dest_ip "239.255.255.250"
+		json_add_string target DROP
+		json_close_object
+	fi
 
 	json_add_object ""
 	json_add_string type rule
