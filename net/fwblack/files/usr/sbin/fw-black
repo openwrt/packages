@@ -1,0 +1,251 @@
+#!/bin/sh
+# fw.black - DNS-based blocklist daemon (nftables edition, OpenWrt package).
+#
+# Loops: collect active IPs (ips.sh) -> resolve+match against blocklist
+# (resips.sh) -> add matches to nft named sets. Single filter rule drops
+# TCP 80/443 towards set members in FORWARD.
+#
+# Config precedence: environment (set by procd from UCI, see
+# /etc/init.d/fwblack + /etc/config/fwblack) > defaults below.
+# UCI is read by the init script, not here, to keep the daemon dependency-
+# free and testable without lib/functions.sh.
+#
+# nft objects live in our own `inet fwblack` table so `fw4 reload` does not
+# wipe them. See /usr/share/nftables.d/ruleset-post/fwblack.nft.
+#
+# Inspect: nft list table inet fwblack
+#          nft list set inet fwblack blacklist_v4
+#          nft list set inet fwblack blacklist_v6
+
+set -eu
+
+# Keep in sync with PKG_VERSION (Makefile) and VERSION (repo root).
+VERSION='1.0.1'
+
+case "${1:-}" in
+	-V|--version)
+		echo "fw-black $VERSION"
+		exit 0
+		;;
+	-h|--help)
+		cat <<'USAGE'
+Usage: fw-black [OPTION]
+DNS-based nftables blocklist daemon. With no OPTION, collect active IPs,
+reverse-resolve them against the blocklist and drop TCP 80/443 toward
+matches in nftables sets (one scan per INTERVAL, then sleep).
+
+Options:
+  -V, --version   print version and exit
+  -h, --help      print this help and exit
+
+Environment (defaults): INTERVAL=300 INTERVAL_JITTER=30 TABLE=fwblack
+SET_V4=blacklist_v4 SET_V6=blacklist_v6 CHAIN=forward_black
+BLACKLIST=/etc/fwblack/blocklist.cfg. Normally launched by procd from
+UCI (/etc/config/fwblack) via /etc/init.d/fwblack.
+USAGE
+		exit 0
+		;;
+esac
+
+SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+
+# Resolve helper/base dirs. Package layout:
+#   daemon:  /usr/sbin/fw-black
+#   helpers: /usr/libexec/fwblack/{ips,resips}.sh
+#   config:  /etc/fwblack/blocklist.cfg (ETC_DIR), UCI /etc/config/fwblack
+# Legacy manual-install layout (/etc/fw.black/*.sh) still works as fallback.
+LIBEXEC_DEFAULT='/usr/libexec/fwblack'
+ETC_DEFAULT='/etc/fwblack'
+LEGACY_DIR='/etc/fw.black'
+
+BASE_DIR="${BASE_DIR:-$LIBEXEC_DEFAULT}"
+case "$BASE_DIR" in
+	/usr/sbin)
+		BASE_DIR="$LIBEXEC_DEFAULT"
+		;;
+esac
+if [ ! -d "$BASE_DIR" ]; then
+	if [ -d "$SCRIPT_DIR" ] && [ -f "$SCRIPT_DIR/ips.sh" ]; then
+		BASE_DIR="$SCRIPT_DIR"
+	elif [ -d "$ETC_DEFAULT" ]; then
+		BASE_DIR="$LIBEXEC_DEFAULT"
+	elif [ -d "$LEGACY_DIR" ]; then
+		BASE_DIR="$LEGACY_DIR"
+	else
+		BASE_DIR="$SCRIPT_DIR"
+	fi
+fi
+
+ETC_DIR="${ETC_DIR:-$ETC_DEFAULT}"
+[ -d "$ETC_DIR" ] || {
+	if [ -d "$LEGACY_DIR" ]; then
+		ETC_DIR="$LEGACY_DIR"
+	else
+		ETC_DIR="$ETC_DEFAULT"
+	fi
+}
+
+TABLE="${TABLE:-fwblack}"
+SET_V4="${SET_V4:-blacklist_v4}"
+SET_V6="${SET_V6:-blacklist_v6}"
+CHAIN="${CHAIN:-forward_black}"
+IFILE="${IFILE:-/tmp/blacklist.ips}"
+IPS_TMP="${IPS_TMP:-/tmp/ips}"
+INTERVAL="${INTERVAL:-300}"
+INTERVAL_JITTER="${INTERVAL_JITTER:-30}"
+case "$INTERVAL" in
+	"" | *[!0-9]*) INTERVAL=300 ;;
+esac
+case "$INTERVAL_JITTER" in
+	"" | *[!0-9]*) INTERVAL_JITTER=30 ;;
+esac
+
+IPS_SH="${IPS_SH:-$BASE_DIR/ips.sh}"
+RESIPS_SH="${RESIPS_SH:-$BASE_DIR/resips.sh}"
+# BLACKLIST default: prefer init-provided env, then new /etc/fwblack, then legacy.
+if [ -z "${BLACKLIST:-}" ]; then
+	if [ -f "$ETC_DIR/blocklist.cfg" ]; then
+		BLACKLIST="$ETC_DIR/blocklist.cfg"
+	elif [ -f "$ETC_DEFAULT/blocklist.cfg" ]; then
+		BLACKLIST="$ETC_DEFAULT/blocklist.cfg"
+	elif [ -f "$LEGACY_DIR/blocklist.cfg" ]; then
+		BLACKLIST="$LEGACY_DIR/blocklist.cfg"
+	else
+		BLACKLIST="$ETC_DEFAULT/blocklist.cfg"
+	fi
+fi
+export BLACKLIST
+
+is_ipv4() {
+	case "$1" in
+		"" | *[!0-9.]* | *..* | .* | *.) return 1 ;;
+	esac
+	# Split without touching global IFS (read-scoped IFS only).
+	_o1=""; _o2=""; _o3=""; _o4=""; _extra=""
+	IFS=. read -r _o1 _o2 _o3 _o4 _extra <<EOF
+$1
+EOF
+	[ -n "${_o1:-}" ] && [ -n "${_o2:-}" ] && [ -n "${_o3:-}" ] && [ -n "${_o4:-}" ] || return 1
+	[ -z "${_extra:-}" ] || return 1
+	for _octet in "$_o1" "$_o2" "$_o3" "$_o4"; do
+		case "$_octet" in
+			"" | *[!0-9]*) return 1 ;;
+		esac
+		[ "$_octet" -ge 0 ] 2>/dev/null || return 1
+		[ "$_octet" -le 255 ] 2>/dev/null || return 1
+		# Reject leading-zero octets like 01 (ambiguous octal), except "0" itself.
+		case "$_octet" in
+			0) ;;
+			0*) return 1 ;;
+		esac
+	done
+	return 0
+}
+
+is_ipv6() {
+	case "$1" in
+		*:*) ;;
+		*) return 1 ;;
+	esac
+	case "$1" in
+		*[!0-9A-Fa-f:.]* | *:::* ) return 1 ;;
+	esac
+	return 0
+}
+
+# Skip empty lines, comments, and local/link-local/multicast addresses so we
+# never block the LAN or loopback by accident.
+should_skip() {
+	case "$1" in
+		"" | \#*) return 0 ;;
+	esac
+	case "$1" in
+		127.* | 10.* | 192.168.* | 0.* | 169.254.* | 224.* | 255.*) return 0 ;;
+		172.1[6-9].* | 172.2[0-9].* | 172.3[0-1].*) return 0 ;;
+		"::1" | "::" | fe80:* | FE80:* | fc*:* | FC*:* | fd*:* | FD*:* | ff*:* | FF*:*) return 0 ;;
+	esac
+	return 1
+}
+
+nft_init() {
+	command -v nft >/dev/null 2>&1 || {
+		echo "fw-black: nft not found in PATH" >&2
+		return 1
+	}
+
+	if ! nft list table inet "$TABLE" >/dev/null 2>&1; then
+		nft add table inet "$TABLE"
+	fi
+	if ! nft list set inet "$TABLE" "$SET_V4" >/dev/null 2>&1; then
+		nft add set inet "$TABLE" "$SET_V4" '{ type ipv4_addr; flags interval; }'
+	fi
+	if ! nft list set inet "$TABLE" "$SET_V6" >/dev/null 2>&1; then
+		nft add set inet "$TABLE" "$SET_V6" '{ type ipv6_addr; flags interval; }'
+	fi
+	if ! nft list chain inet "$TABLE" "$CHAIN" >/dev/null 2>&1; then
+		nft add chain inet "$TABLE" "$CHAIN" '{ type filter hook forward priority filter; policy accept; }'
+		nft add rule inet "$TABLE" "$CHAIN" tcp dport '{ 80, 443 }' ip daddr "@$SET_V4" counter drop
+		nft add rule inet "$TABLE" "$CHAIN" tcp dport '{ 80, 443 }' ip6 daddr "@$SET_V6" counter drop
+	fi
+}
+
+# Sleep base seconds plus up to jitter extra (desyncs DNS bursts across routers).
+sleep_interval() {
+	base="$1"
+	jitter="$2"
+	case "$base$jitter" in
+		"" | *[!0-9]*) sleep "$INTERVAL"; return ;;
+	esac
+	if [ "$jitter" -gt 0 ] 2>/dev/null && [ -n "${RANDOM:-}" ] 2>/dev/null; then
+		sleep $((base + RANDOM % (jitter + 1)))
+	else
+		sleep "$base"
+	fi
+}
+
+: >> "$IFILE"
+
+nft_init
+
+echo "fw-black: started (interval=${INTERVAL}s+jitter${INTERVAL_JITTER}s table=inet $TABLE sets=$SET_V4/$SET_V6 blocklist=$BLACKLIST)" >&2
+
+while :; do
+	if [ -x "$IPS_SH" ]; then
+		"$IPS_SH" > "$IPS_TMP.tmp" && mv "$IPS_TMP.tmp" "$IPS_TMP" || {
+			echo "fw-black: ips.sh failed, keeping previous $IPS_TMP" >&2
+			rm -f "$IPS_TMP.tmp"
+		}
+	fi
+	if [ -x "$RESIPS_SH" ]; then
+		CONNTRACK_FILE="$IPS_TMP" "$RESIPS_SH" || echo "fw-black: resips.sh failed" >&2
+	fi
+	batch_v4=""
+	batch_v6=""
+	while IFS= read -r iline || [ -n "$iline" ]; do
+		# Strip trailing CR (in case of CRLF input) and whitespace.
+		iline="$(printf '%s' "$iline" | tr -d '\r \t')"
+		[ -n "$iline" ] || continue
+		case "$iline" in
+			\#*) continue ;;
+		esac
+		if should_skip "$iline"; then
+			continue
+		fi
+		if is_ipv4 "$iline"; then
+			batch_v4="${batch_v4:+$batch_v4, }$iline"
+		elif is_ipv6 "$iline"; then
+			batch_v6="${batch_v6:+$batch_v6, }$iline"
+		else
+			echo "fw-black: skipping invalid IP: $iline" >&2
+		fi
+	done < "$IFILE"
+	if [ -n "${batch_v4:-}" ]; then
+		# shellcheck disable=SC2086
+		nft add element inet "$TABLE" "$SET_V4" "{ $batch_v4 }" || echo "fw-black: failed to block batch v4" >&2
+	fi
+	if [ -n "${batch_v6:-}" ]; then
+		# shellcheck disable=SC2086
+		nft add element inet "$TABLE" "$SET_V6" "{ $batch_v6 }" || echo "fw-black: failed to block batch v6" >&2
+	fi
+	sleep_interval "$INTERVAL" "$INTERVAL_JITTER"
+done

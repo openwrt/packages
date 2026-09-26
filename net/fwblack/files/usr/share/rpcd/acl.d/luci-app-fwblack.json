@@ -1,0 +1,30 @@
+{
+	"luci-app-fwblack": {
+		"description": "Grant UCI, file, RPC and status access to fw.black LuCI app",
+		"read": {
+			"uci": [ "fwblack" ],
+			"ubus": {
+				"file": [ "read", "stat", "list" ],
+				"service": [ "list" ],
+				"system": [ "info" ],
+				"luci.fwblack": [ "status", "blocked", "lookup", "log" ]
+			},
+			"file": {
+				"/etc/fwblack/blocklist.cfg": [ "read" ],
+				"/etc/fwblack": [ "list" ],
+				"/tmp/blacklist.ips": [ "read" ],
+				"/tmp/ips": [ "read" ]
+			}
+		},
+		"write": {
+			"uci": [ "fwblack" ],
+			"ubus": {
+				"file": [ "write" ],
+				"luci.fwblack": [ "unblock", "svc", "cache_clear" ]
+			},
+			"file": {
+				"/etc/fwblack/blocklist.cfg": [ "write" ]
+			}
+		}
+	}
+}
