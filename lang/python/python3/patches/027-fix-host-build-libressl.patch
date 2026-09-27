@@ -1,6 +1,11 @@
+From 49e3c330d4b5e17a740bc51b7ebbb9a42c67e505 Mon Sep 17 00:00:00 2001
+From: Sean Khan <datapronix@protonmail.com>
+Date: Thu, 27 Jun 2024 22:06:30 -0400
+Subject: [PATCH] Fix host build with LibreSSL
+
 --- a/Modules/_ssl.c
 +++ b/Modules/_ssl.c
-@@ -4551,7 +4551,7 @@ set_sni_callback(PySSLContext *self, PyO
+@@ -4553,7 +4553,7 @@ set_sni_callback(PySSLContext *self, PyO
      return 0;
  }
  
@@ -9,7 +14,7 @@
  static X509_OBJECT *x509_object_dup(const X509_OBJECT *obj)
  {
      int ok;
-@@ -4624,7 +4624,11 @@ _ssl__SSLContext_cert_store_stats_impl(P
+@@ -4626,7 +4626,11 @@ _ssl__SSLContext_cert_store_stats_impl(P
      int x509 = 0, crl = 0, ca = 0, i;
  
      store = SSL_CTX_get_cert_store(self->ctx);
@@ -21,7 +26,7 @@
      if (objs == NULL) {
          PyErr_SetString(PyExc_MemoryError, "failed to query cert store");
          return NULL;
-@@ -4679,7 +4683,11 @@ _ssl__SSLContext_get_ca_certs_impl(PySSL
+@@ -4681,7 +4685,11 @@ _ssl__SSLContext_get_ca_certs_impl(PySSL
      }
  
      store = SSL_CTX_get_cert_store(self->ctx);
