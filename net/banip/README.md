@@ -571,12 +571,12 @@ Please note: for security reasons use this cgi interface only internally and onl
 By default banIP uses the following pre-configured download options:
 
 ```
-    * curl: --connect-timeout 20 --retry-delay 10 --retry 4 --retry-max-time 80 --retry-all-errors --fail --silent --globoff --show-error --location -o
+    * curl: --connect-timeout 20 --speed-time 20 --retry-delay 10 --retry 4 --retry-all-errors --fail --silent --globoff --show-error --location -o
     * wget: --no-cache --no-cookies --timeout=20 --waitretry=10 --tries=5 --retry-connrefused -O
     * uclient-fetch: --timeout=20 -O
 ```
 
-The retry-related values shown above are derived from `ban_fetchretry` (default `5`): for curl `--retry` is `ban_fetchretry - 1` and `--retry-max-time` is `(ban_fetchretry - 1) * 20`, for wget `--tries` equals `ban_fetchretry`. To override the defaults set `ban_fetchretry`, `ban_fetchinsecure` or globally `ban_fetchparm` to your needs.
+The retry-related values shown above are derived from `ban_fetchretry` (default `5`): for curl `--retry` is `ban_fetchretry - 1`, for wget `--tries` equals `ban_fetchretry`. To override the defaults set `ban_fetchretry`, `ban_fetchinsecure` or globally `ban_fetchparm` to your needs.
 
 **Configure E-Mail notifications via `msmtp`**  
 To use the email notification you must install and configure the package `msmtp`.
