@@ -1,13 +1,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tvheadend
-PKG_RELEASE:=2
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/tvheadend/tvheadend
-PKG_MIRROR_HASH:=fbb1341e2c032c6750e03434c3358c231307331975321ef9ee7af1c9a9528c29
-PKG_SOURCE_VERSION:=ddb984f4c17f4a26fd34f3e1b24e3323f9641b75
-PKG_SOURCE_DATE:=2026-08-17
+PKG_MIRROR_HASH:=da2a0c9f49c678e0c6f71c095e16555f3cbaf34d0a7b95b06ade7cfde0f98b9f
+PKG_SOURCE_VERSION:=547f8bfaec9307d3ba59370159df792295593f59
+PKG_SOURCE_DATE:=2026-09-24
 
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=LICENSE.md
@@ -15,7 +15,7 @@ PKG_LICENSE_FILES:=LICENSE.md
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
 PKG_BUILD_FLAGS:=no-mips16
-PKG_BUILD_DEPENDS:=gettext-full/host
+PKG_BUILD_DEPENDS:=gettext-full/host node/host
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -244,6 +244,7 @@ CONFIGURE_ARGS += \
 	--disable-libfdkaac \
 	--disable-libfdkaac_static \
 	--disable-pcloud_cache \
+	--enable-vue_build \
 	--enable-bundle \
 	--disable-uriparser \
 	--disable-execinfo \
