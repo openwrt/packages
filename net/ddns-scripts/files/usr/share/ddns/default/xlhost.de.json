@@ -1,7 +1,0 @@
-{
-	"name": "xlhost.de",
-	"ipv4": {
-		"url": "http://[USERNAME]:[PASSWORD]@nsupdate.xlhost.de/nic/update?hostname=[DOMAIN]&myip=[IP]",
-		"answer": "good|nochg"
-	}
-}
