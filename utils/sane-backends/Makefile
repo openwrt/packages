@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sane-backends
 PKG_VERSION:=1.4.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://gitlab.com/-/project/429008/uploads/843c156420e211859e974f78f64c3ea3/
@@ -127,9 +127,9 @@ define Package/sane-daemon
 $(call Package/sane-backends/Default)
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libsane
+  DEPENDS:=scanner-support +libsane
   TITLE+= (network daemon)
-  USERID:=saned:scanner
+  USERID:=saned:scanner=47
 endef
 
 define Package/sane-daemon/description
