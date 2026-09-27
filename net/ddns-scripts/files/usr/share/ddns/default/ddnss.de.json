@@ -1,7 +1,0 @@
-{
-	"name": "ddnss.de",
-	"ipv4": {
-		"url": "http://ip4.ddnss.de/upd.php?user=[USERNAME]&pwd=[PASSWORD]&host=[DOMAIN]&ip=[IP]",
-		"answer": "Updated|No change"
-	}
-}
