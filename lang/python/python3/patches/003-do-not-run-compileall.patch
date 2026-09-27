@@ -1,6 +1,11 @@
+From 8a4da017902d21ac6cada21a3bb23caa5b39af0b Mon Sep 17 00:00:00 2001
+From: Jeffery To <jeffery.to@gmail.com>
+Date: Fri, 12 May 2023 19:40:11 +0800
+Subject: [PATCH] Do not run compileall
+
 --- a/Makefile.pre.in
 +++ b/Makefile.pre.in
-@@ -2144,6 +2144,7 @@ libinstall:	all $(srcdir)/Modules/xxmodu
+@@ -2149,6 +2149,7 @@ libinstall:	all $(srcdir)/Modules/xxmodu
  		$(INSTALL_DATA) $(srcdir)/Modules/xxmodule.c \
  			$(DESTDIR)$(LIBDEST)/distutils/tests ; \
  	fi
@@ -8,7 +13,7 @@
  	-PYTHONPATH=$(DESTDIR)$(LIBDEST)  $(RUNSHARED) \
  		$(PYTHON_FOR_BUILD) -Wi $(DESTDIR)$(LIBDEST)/compileall.py \
  		-j0 -d $(LIBDEST) -f \
-@@ -2171,6 +2172,7 @@ libinstall:	all $(srcdir)/Modules/xxmodu
+@@ -2176,6 +2177,7 @@ libinstall:	all $(srcdir)/Modules/xxmodu
  		$(PYTHON_FOR_BUILD) -Wi -OO $(DESTDIR)$(LIBDEST)/compileall.py \
  		-j0 -d $(LIBDEST)/site-packages -f \
  		-x badsyntax $(DESTDIR)$(LIBDEST)/site-packages
