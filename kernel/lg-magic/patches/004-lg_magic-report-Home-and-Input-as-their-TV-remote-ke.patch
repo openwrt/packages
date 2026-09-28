@@ -1,0 +1,39 @@
+From 0c3d380e6cff70787681f4f2f213b95a381c850d Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 9 Oct 2026 14:10:55 +0100
+Subject: [PATCH] lg_magic: report Home and Input as their TV remote keys
+
+The house button was reported as KEY_HOME, the keyboard key that moves
+to the start of a line or list, so media centres jumped to the first
+item instead of going to their home screen. The Input button was
+reported as KEY_TV, Media Select TV, which selects the TV as the source
+rather than the next input.
+
+Report the house button as KEY_HOMEPAGE and the Input button as
+KEY_VIDEO_NEXT, the key for driving the next video source.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ kernel/lg_magic_main.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/kernel/lg_magic_main.c
++++ b/kernel/lg_magic_main.c
+@@ -126,7 +126,7 @@ static const struct {
+ 	{ 0x8003, KEY_VOLUMEDOWN },
+ 	{ 0x8009, KEY_MUTE },
+ 	{ 0x808B, KEY_VOICECOMMAND },
+-	{ 0x807C, KEY_HOME },
++	{ 0x807C, KEY_HOMEPAGE },
+ 	{ 0x8043, KEY_SETUP },
+ 	{ 0x8028, KEY_BACK },
+ 	{ 0x80AA, KEY_INFO },
+@@ -135,7 +135,7 @@ static const struct {
+ 	{ 0x8056, KEY_PROG1 },
+ 	{ 0x805C, KEY_PROG2 },
+ 	{ 0x805D, KEY_MEDIA }, // IVI
+-	{ 0x800B, KEY_TV },
++	{ 0x800B, KEY_VIDEO_NEXT },
+ 	{ 0x8098, KEY_CONTEXT_MENU }, // STB MENU
+ 	{ 0x80F0, KEY_RADIO },
+ 	{ 0x8001, KEY_CHANNELDOWN },

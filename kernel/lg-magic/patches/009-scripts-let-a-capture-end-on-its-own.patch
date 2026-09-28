@@ -1,0 +1,46 @@
+From 949cf4b4a8b7212bef5b3d0dde54f2ee9ea5b389 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 13 Nov 2026 13:59:25 +0000
+Subject: [PATCH] scripts: let a capture end on its own
+
+capture_imu.py records until it is interrupted, which a script driving
+a calibration over a serial console or ssh cannot do cleanly. Add
+--seconds to stop after a given time.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ scripts/capture_imu.py | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+--- a/scripts/capture_imu.py
++++ b/scripts/capture_imu.py
+@@ -2,6 +2,7 @@
+ import argparse
+ import csv
+ import sys
++import time
+ 
+ from imu_reader import find_imu_device, read_samples
+ 
+@@ -11,16 +12,21 @@ FIELDS = ["counter", "dt", "ax", "ay", "
+ def main():
+     parser = argparse.ArgumentParser(description="Capture raw IMU samples to CSV")
+     parser.add_argument("csv_file", help="output CSV file")
++    parser.add_argument("--seconds", type=float, help="stop after this many seconds")
+     args = parser.parse_args()
+ 
+     dev = find_imu_device()
+     print(f"Using device: {dev.name} ({dev.path})", file=sys.stderr)
+ 
++    deadline = time.monotonic() + args.seconds if args.seconds else None
++
+     with open(args.csv_file, "w", newline="") as f:
+         writer = csv.writer(f)
+         writer.writerow(FIELDS)
+         try:
+             for counter, dt, accel, gyro in read_samples(dev):
++                if deadline and time.monotonic() >= deadline:
++                    break
+                 writer.writerow((counter, dt, *accel, *gyro))
+         except KeyboardInterrupt:
+             pass

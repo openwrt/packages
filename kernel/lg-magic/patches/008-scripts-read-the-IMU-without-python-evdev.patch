@@ -1,0 +1,113 @@
+From 01878ea42ba228fdf457191c8c7605237268486c Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 13 Nov 2026 13:59:25 +0000
+Subject: [PATCH] scripts: read the IMU without python-evdev
+
+Capturing samples for a calibration needs three things from the event
+device: its name, the current value of six axes and the event stream.
+Requiring the python-evdev extension module for that keeps a headless
+box with a bare Python from calibrating a remote at all.
+
+Find the device in /proc/bus/input/devices, read the axes with the
+EVIOCGABS ioctl and unpack the events with the struct module, so that
+capture_imu.py runs on the standard library alone.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ scripts/imu_reader.py | 74 +++++++++++++++++++++++++++++++------------
+ 1 file changed, 54 insertions(+), 20 deletions(-)
+
+--- a/scripts/imu_reader.py
++++ b/scripts/imu_reader.py
+@@ -1,37 +1,71 @@
+-import evdev
+-from evdev import InputDevice, ecodes
++import fcntl
++import os
++import struct
+ 
+ MODULO = 2 ** 16
+ COUNTS_PER_0p02 = 256
+ T_UNIT = 0.02
+-ACCEL = (ecodes.ABS_X, ecodes.ABS_Y, ecodes.ABS_Z)
+-GYRO = (ecodes.ABS_RX, ecodes.ABS_RY, ecodes.ABS_RZ)
++
++EV_SYN, EV_ABS, EV_MSC = 0x00, 0x03, 0x04
++MSC_SERIAL = 0x00
++ACCEL = (0x00, 0x01, 0x02)
++GYRO = (0x03, 0x04, 0x05)
++
++EVENT = struct.Struct("llHHi")
++ABSINFO = struct.Struct("6i")
++
++# These architectures encode the ioctl direction one bit lower than the rest.
++IOC_DIRSHIFT = 29 if os.uname().machine.startswith(("mips", "ppc", "sparc", "alpha")) else 30
++IOC_READ = 2
++EVIOCGABS = (IOC_READ << IOC_DIRSHIFT) | (ABSINFO.size << 16) | (ord("E") << 8) | 0x40
++
++
++class ImuDevice:
++    def __init__(self, path, name):
++        self.path = path
++        self.name = name
++        self.handle = open(path, "rb", buffering=0)
++
++    def abs_value(self, code):
++        data = fcntl.ioctl(self.handle, EVIOCGABS + code, bytes(ABSINFO.size))
++        return ABSINFO.unpack(data)[0]
++
++    def events(self):
++        while True:
++            data = self.handle.read(EVENT.size)
++            if len(data) < EVENT.size:
++                return
++            yield EVENT.unpack(data)[2:]
+ 
+ 
+ def find_imu_device():
+-    for path in evdev.list_devices():
+-        dev = InputDevice(path)
+-        if "IMU" in dev.name:
+-            return dev
+-        dev.close()
++    name = None
++    with open("/proc/bus/input/devices") as devices:
++        for line in devices:
++            if line.startswith("N: Name="):
++                name = line.split("=", 1)[1].strip().strip('"')
++            elif line.startswith("H: Handlers=") and name and "IMU" in name:
++                for handler in line.split("=", 1)[1].split():
++                    if handler.startswith("event"):
++                        return ImuDevice("/dev/input/" + handler, name)
+     raise RuntimeError("No IMU evdev device found")
+ 
+ 
+ def read_samples(dev):
+-    accel = [dev.absinfo(code).value for code in ACCEL]
+-    gyro = [dev.absinfo(code).value for code in GYRO]
++    accel = [dev.abs_value(code) for code in ACCEL]
++    gyro = [dev.abs_value(code) for code in GYRO]
+     counter = 0
+     last_counter = None
+ 
+-    for event in dev.read_loop():
+-        if event.type == ecodes.EV_ABS:
+-            if event.code in ACCEL:
+-                accel[ACCEL.index(event.code)] = event.value
+-            elif event.code in GYRO:
+-                gyro[GYRO.index(event.code)] = event.value
+-        elif event.type == ecodes.EV_MSC and event.code == ecodes.MSC_SERIAL:
+-            counter = event.value
+-        elif event.type == ecodes.EV_SYN:
++    for etype, code, value in dev.events():
++        if etype == EV_ABS:
++            if code in ACCEL:
++                accel[ACCEL.index(code)] = value
++            elif code in GYRO:
++                gyro[GYRO.index(code)] = value
++        elif etype == EV_MSC and code == MSC_SERIAL:
++            counter = value
++        elif etype == EV_SYN:
+             dt = None
+             if last_counter is not None:
+                 delta = (counter - last_counter) % MODULO
