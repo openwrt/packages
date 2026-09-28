@@ -350,16 +350,20 @@ row() {
 	uci set "librespeed.$section.interval=$3"
 	[ -n "$4" ] && uci set "librespeed.$section.days=$4"
 	[ -n "$5" ] && uci set "librespeed.$section.hours=$5"
+	last_row=$section
 }
 
 # The legacy line stays bare, then one line per interface, from its first
 # enabled row whose interval is valid.
 test_cron() {
+	local last_row ifb_row wk_row wwan_row weekly
+
 	echo "== test_cron"
 	uci set librespeed.schedule.enabled=1
 	row lte 1 1d 0 3
 	row wan2 1 2h
 	row ifb 1 1d 1-5 4
+	ifb_row=$last_row
 	row badiv 1 90m
 	row off 0 1d
 	row lte 1 15m
@@ -367,6 +371,10 @@ test_cron() {
 	row a-b 1 1d
 	row lsd2 1 90m
 	row lsd2 1 2h
+	row wk 1 7d 1-5
+	wk_row=$last_row
+	row wwan 1 7d '' 3
+	wwan_row=$last_row
 	resync
 	grep -E '^[0-9]+ [2-5] \* \* \* /usr/libexec/librespeed-run$' $CRONTAB || fail "legacy line"
 	[ "$(grep -c 'librespeed-run$' $CRONTAB)" = 1 ] || fail "a second bare line"
@@ -377,6 +385,28 @@ test_cron() {
 	grep -E 'librespeed-run (badiv|off|a-b)$' $CRONTAB && fail "a skipped row has a line"
 	grep -E '^0 \*/2 \* \* \* /usr/libexec/librespeed-run lsd2$' $CRONTAB ||
 		fail "an invalid interval kept a later row of its interface out"
+	grep -E '^[0-9]+ [0-9]+ \* \* [1-5] /usr/libexec/librespeed-run wk$' $CRONTAB || fail "weekly line"
+	grep -E '^[0-9]+ 3 \* \* [0-6] /usr/libexec/librespeed-run wwan$' $CRONTAB || fail "drawn day"
+
+	# Weekly slots survive a sync in another process, so with another seed.
+	weekly=$(grep -E 'librespeed-run (wk|wwan)$' $CRONTAB)
+	sh -c '. /lib/functions.sh; . /etc/init.d/librespeed; sync_cron'
+	[ "$(grep -E 'librespeed-run (wk|wwan)$' $CRONTAB)" = "$weekly" ] || fail "weekly slot drawn anew"
+
+	# A slot the new hours, days or interval leave out is drawn anew in them;
+	# one they still hold stays.
+	uci set "librespeed.$wwan_row.hours=4"
+	uci set "librespeed.$wk_row.days=0"
+	uci set "librespeed.$ifb_row.interval=7d"
+	resync
+	grep -E '^[0-9]+ 4 \* \* [0-6] /usr/libexec/librespeed-run wwan$' $CRONTAB || fail "new hours"
+	grep -E '^[0-9]+ [0-9]+ \* \* 0 /usr/libexec/librespeed-run wk$' $CRONTAB || fail "new days"
+	grep -E '^[0-9]+ 4 \* \* [1-5] /usr/libexec/librespeed-run ifb$' $CRONTAB || fail "1d to 7d"
+	weekly=$(grep -E 'librespeed-run (wk|wwan|ifb)$' $CRONTAB)
+	uci set "librespeed.$wwan_row.hours=2-5"
+	uci set "librespeed.$wk_row.days=0,6"
+	sh -c '. /lib/functions.sh; . /etc/init.d/librespeed; sync_cron'
+	[ "$(grep -E 'librespeed-run (wk|wwan|ifb)$' $CRONTAB)" = "$weekly" ] || fail "a fitting slot drawn anew"
 
 	# A changed default moves the legacy line to wan2, so the wan2 row is
 	# skipped, unless the legacy interval is invalid.
