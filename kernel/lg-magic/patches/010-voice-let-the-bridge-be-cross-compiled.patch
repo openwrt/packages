@@ -1,0 +1,47 @@
+From 20f970b9531995445a3b39986eb5a34c877135e2 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 18 Sep 2026 10:47:26 +0100
+Subject: [PATCH 09/10] voice: let the bridge be cross-compiled
+
+A cross build passes CC, CFLAGS and LDFLAGS on the make command line,
+where they take precedence over everything the makefile appends, so the
+pkg-config include paths were dropped and the build failed to find the
+PipeWire headers. Mark those appends as overrides and let the toolchain
+name its own pkg-config, which is how the OpenWrt and Buildroot package
+recipes drive a plain makefile.
+
+The install-bin target installs the binary without the systemd unit, for
+the distributions that have their own service manager.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ voice/Makefile | 11 ++++++++---
+ 1 file changed, 8 insertions(+), 3 deletions(-)
+
+--- a/voice/Makefile
++++ b/voice/Makefile
+@@ -1,8 +1,10 @@
+ PKGS := libpipewire-0.3 sbc
+ 
++PKG_CONFIG ?= pkg-config
++
+ CFLAGS ?= -O2 -Wall -Wextra -Wno-unused-parameter
+-CFLAGS += $(shell pkg-config --cflags $(PKGS))
+-LDLIBS += $(shell pkg-config --libs $(PKGS))
++override CFLAGS += $(shell $(PKG_CONFIG) --cflags $(PKGS))
++override LDLIBS += $(shell $(PKG_CONFIG) --libs $(PKGS))
+ 
+ PREFIX ?= /usr/local
+ BINDIR ?= $(PREFIX)/bin
+@@ -18,7 +20,10 @@ install: lg-magic-voice
+ 	install -D -m 0644 lg-magic-voice.service \
+ 		$(DESTDIR)$(UNITDIR)/lg-magic-voice.service
+ 
++install-bin: lg-magic-voice
++	install -D -m 0755 lg-magic-voice $(DESTDIR)$(BINDIR)/lg-magic-voice
++
+ clean:
+ 	rm -f lg-magic-voice
+ 
+-.PHONY: all install clean
++.PHONY: all install install-bin clean

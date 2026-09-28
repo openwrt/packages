@@ -1,0 +1,13 @@
+[ "$SUBSYSTEM" = hidraw ] || exit 0
+[ -x /etc/init.d/lg-magic-voice ] || exit 0
+/etc/init.d/lg-magic-voice enabled || exit 0
+
+case "$ACTION" in
+add)
+	/etc/init.d/lg-magic-voice running || /etc/init.d/lg-magic-voice start
+	;;
+remove)
+	/etc/init.d/lg-magic-voice device >/dev/null || \
+		/etc/init.d/lg-magic-voice stop
+	;;
+esac
