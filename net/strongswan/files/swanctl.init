@@ -265,8 +265,8 @@ config_child() {
 	local rekey_packets
 	local life_packets
 	local replay_window
-	local local_subnet
-	local remote_subnet
+	local local_ts
+	local remote_ts
 
 	config_get mode "$conf" mode
 	config_get start_action "$conf" start_action "none"
@@ -287,8 +287,8 @@ config_child() {
 	config_get life_packets "$conf" life_packets ""
 	config_get replay_window "$conf" replay_window ""
 
-	config_list_foreach "$conf" local_subnet append_var local_subnet ","
-	config_list_foreach "$conf" remote_subnet append_var remote_subnet ","
+	config_list_foreach "$conf" local_ts append_var local_ts ","
+	config_list_foreach "$conf" remote_ts append_var remote_ts ","
 
 	case "$mode" in
 		tunnel|transport)
@@ -342,8 +342,8 @@ config_child() {
 
 	swanctl_xappend3 "$conf {"
 
-	[ -n "$local_subnet" ] && swanctl_xappend4 "local_ts = $local_subnet"
-	[ -n "$remote_subnet" ] && swanctl_xappend4 "remote_ts = $remote_subnet"
+	[ -n "$local_ts" ] && swanctl_xappend4 "local_ts = $local_ts"
+	[ -n "$remote_ts" ] && swanctl_xappend4 "remote_ts = $remote_ts"
 
 	[ -n "$hw_offload" ] && swanctl_xappend4 "hw_offload = $hw_offload"
 	[ $ipcomp -eq 1 ] && swanctl_xappend4 "ipcomp = 1"

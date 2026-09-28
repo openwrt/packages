@@ -546,6 +546,29 @@ migrate_connections_local_remote() {
 	config_foreach migrate_connection_local_remote connection
 }
 
+migrate_subnet_to_ts() {
+	local cfg="$1"
+	local old_option="$2"
+	local new_option="$3"
+
+	local ts value
+
+	config_get ts "$cfg" "$old_option" ""
+	[ -z "$ts" ] && return
+
+	uci -q delete "ipsec.${cfg}.${old_option}"
+
+	for value in $ts; do
+		uci -q add_list "ipsec.${cfg}.${new_option}=${value}"
+	done
+}
+
+migrate_child_subnet_to_ts() {
+	config_load ipsec
+	config_foreach migrate_subnet_to_ts child local_subnet local_ts
+	config_foreach migrate_subnet_to_ts child remote_subnet remote_ts
+}
+
 main() {
 	local session="$1"
 
@@ -581,6 +604,7 @@ main() {
 	migrate_psk_secrets
 	migrate_pubkey_authorities
 	migrate_connections_local_remote
+	migrate_child_subnet_to_ts
 
 	# Move staged migration changes to LuCI
 	[ -n "$session" ] && {
