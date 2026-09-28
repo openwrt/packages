@@ -51,19 +51,33 @@ cleanup() {
 trap cleanup EXIT
 
 # One cron line per automatic test: the legacy section keeps its bare line,
-# and a `config schedule` passes the interface it measures -- here on
-# Sundays at 3.
+# and a `config schedule` passes the interface it measures -- here weekly,
+# on Sundays at 3, and weekly on a day drawn at sync.
 uci set librespeed.schedule.enabled=1
 uci add librespeed schedule >/dev/null
 uci set librespeed.@schedule[-1].interface=lte
 uci set librespeed.@schedule[-1].enabled=1
+uci set librespeed.@schedule[-1].interval=7d
 uci set librespeed.@schedule[-1].days=0
+uci set librespeed.@schedule[-1].hours=3
+uci add librespeed schedule >/dev/null
+uci set librespeed.@schedule[-1].interface=wwan
+uci set librespeed.@schedule[-1].enabled=1
+uci set librespeed.@schedule[-1].interval=7d
 uci set librespeed.@schedule[-1].hours=3
 (. /lib/functions.sh; . /etc/init.d/librespeed; sync_cron)
 grep -E '^[0-9]+ [2-5] \* \* \* /usr/libexec/librespeed-run$' /etc/crontabs/root \
 	|| fail "legacy schedule line"
 grep -E '^[0-9]+ 3 \* \* 0 /usr/libexec/librespeed-run lte$' /etc/crontabs/root \
 	|| fail "per-interface schedule line"
+grep -E '^[0-9]+ 3 \* \* [0-6] /usr/libexec/librespeed-run wwan$' /etc/crontabs/root \
+	|| fail "weekly schedule line without a day"
+# A weekly test keeps its drawn slot when synced again: another process,
+# so another seed, as after a reboot.
+weekly=$(grep -F 'librespeed-run wwan' /etc/crontabs/root)
+sh -c '. /lib/functions.sh; . /etc/init.d/librespeed; sync_cron'
+[ "$(grep -F 'librespeed-run wwan' /etc/crontabs/root)" = "$weekly" ] \
+	|| fail "weekly slot drawn anew on sync"
 
 # A completed day is archived as one line per interface; runs of unknown
 # path form their own group, sorted first.
