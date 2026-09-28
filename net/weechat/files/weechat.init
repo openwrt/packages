@@ -1,0 +1,263 @@
+#!/bin/sh /etc/rc.common
+# shellcheck shell=busybox
+# shellcheck disable=SC2034,SC2329
+#
+# WeeChat headless daemon service for OpenWrt.
+#
+# Configuration Persistence:
+# UCI (/etc/config/weechat) is authoritative for irc.conf, relay.conf,
+# and logger.conf. These are regenerated from UCI on service start/restart.
+# Runtime changes made via WeeChat (/set, /server add) to these subsystems
+# will be overwritten on service restart.
+# Other WeeChat configuration files (weechat.conf, plugins.conf, sec.conf)
+# and user data in /etc/weechat/data are fully persistent.
+
+USE_PROCD=1
+START=90
+STOP=10
+
+PROG=/usr/bin/weechat-headless
+
+USER="weechat"
+GROUP="weechat"
+CONFIG_DIR="${WEECHAT_CONFIG_DIR:-/etc/weechat}"
+DATA_DIR="${WEECHAT_DATA_DIR:-/etc/weechat/data}"
+CACHE_DIR="${WEECHAT_CACHE_DIR:-/tmp/weechat/cache}"
+RUNTIME_DIR="${WEECHAT_RUNTIME_DIR:-/tmp/weechat/runtime}"
+
+weechat_escape() {
+	printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'
+}
+
+install_conf() {
+	local src="$1" dst="$2" tmp_dst
+	[ -f "$src" ] || return 1
+
+	cmp -s "$src" "$dst" && return 0
+
+	tmp_dst="$(mktemp "${dst}.XXXXXX")" || return 1
+
+	cat "$src" > "$tmp_dst" || { rm -f "$tmp_dst"; return 1; }
+	chmod 0600 "$tmp_dst" || { rm -f "$tmp_dst"; return 1; }
+	chown "$USER:$GROUP" "$tmp_dst" || { rm -f "$tmp_dst"; return 1; }
+	mv -f "$tmp_dst" "$dst" || { rm -f "$tmp_dst"; return 1; }
+}
+
+generate_weechat_configs() {
+	local relay_enabled relay_address relay_port relay_tls relay_cert_key relay_password
+	local log_enabled log_dir tmp_dir cfg
+
+	config_get_bool relay_enabled weechat relay_enabled 0
+	config_get relay_address weechat relay_address ''
+	config_get relay_port weechat relay_port '9000'
+	config_get_bool relay_tls weechat relay_tls 0
+	config_get relay_cert_key weechat relay_cert_key ''
+	config_get relay_password weechat relay_password ''
+
+	config_get_bool log_enabled weechat log_enabled 0
+	config_get log_dir weechat log_dir '/var/log/weechat'
+
+	tmp_dir="$(mktemp -d /tmp/weechat_cfg.XXXXXX)"
+	[ -n "$tmp_dir" ] && [ -d "$tmp_dir" ] || return 1
+	trap 'rm -rf "$tmp_dir"' EXIT INT TERM
+
+	# 1. logger.conf
+	cat <<EOF > "$tmp_dir/logger.conf"
+# logger.conf - generated from /etc/config/weechat
+[file]
+auto_log = $( [ "$log_enabled" -eq 1 ] && echo "on" || echo "off" )
+flush_delay = 120
+path = "$(weechat_escape "$log_dir")"
+EOF
+
+	# 2. relay.conf
+	cat <<EOF > "$tmp_dir/relay.conf"
+# relay.conf - generated from /etc/config/weechat
+config_version = 2
+[network]
+EOF
+	[ -n "$relay_address" ] && printf 'bind_address = "%s"\n' "$(weechat_escape "$relay_address")" >> "$tmp_dir/relay.conf"
+	[ -n "$relay_password" ] && printf 'password = "%s"\n' "$(weechat_escape "$relay_password")" >> "$tmp_dir/relay.conf"
+	if [ "$relay_tls" -eq 1 ]; then
+		local cert_file="${relay_cert_key:-$CONFIG_DIR/tls/relay.pem}"
+		printf 'tls_cert_key = "%s"\n' "$(weechat_escape "$cert_file")" >> "$tmp_dir/relay.conf"
+	fi
+
+	echo "[port]" >> "$tmp_dir/relay.conf"
+	if [ "$relay_enabled" -eq 1 ] && [ -n "$relay_port" ]; then
+		if [ "$relay_tls" -eq 1 ]; then
+			echo "tls.weechat = $relay_port" >> "$tmp_dir/relay.conf"
+		else
+			echo "weechat = $relay_port" >> "$tmp_dir/relay.conf"
+		fi
+	fi
+
+	# 3. irc.conf
+	cat <<EOF > "$tmp_dir/irc.conf"
+# irc.conf - generated from /etc/config/weechat
+config_version = 5
+[server_default]
+
+[server]
+EOF
+
+	handle_server_config() {
+		local s_name="$1"
+		local s_enabled address port ssl ipv6 autoconnect nicks username realname auth_method password autojoin
+
+		config_get_bool s_enabled "$s_name" enabled 1
+		[ "$s_enabled" -eq 1 ] || return 0
+
+		config_get address "$s_name" address ''
+		[ -n "$address" ] || return 0
+
+		config_get port "$s_name" port '6697'
+		config_get_bool ssl "$s_name" ssl 1
+		config_get ipv6 "$s_name" ipv6 'auto'
+		config_get_bool autoconnect "$s_name" autoconnect 1
+		config_get nicks "$s_name" nicks ''
+		config_get username "$s_name" username ''
+		config_get realname "$s_name" realname ''
+		config_get auth_method "$s_name" auth_method 'none'
+		config_get password "$s_name" password ''
+		config_get autojoin "$s_name" autojoin ''
+
+		{
+			printf '%s.addresses = "%s/%s"\n' "$s_name" "$(weechat_escape "$address")" "$port"
+			printf '%s.tls = %s\n' "$s_name" "$( [ "$ssl" -eq 1 ] && echo "on" || echo "off" )"
+			printf '%s.autoconnect = %s\n' "$s_name" "$( [ "$autoconnect" -eq 1 ] && echo "on" || echo "off" )"
+			[ -n "$ipv6" ] && printf '%s.ipv6 = %s\n' "$s_name" "$ipv6"
+			[ -n "$nicks" ] && printf '%s.nicks = "%s"\n' "$s_name" "$(weechat_escape "$nicks")"
+			[ -n "$username" ] && printf '%s.username = "%s"\n' "$s_name" "$(weechat_escape "$username")"
+			[ -n "$realname" ] && printf '%s.realname = "%s"\n' "$s_name" "$(weechat_escape "$realname")"
+			[ -n "$autojoin" ] && printf '%s.autojoin = "%s"\n' "$s_name" "$(weechat_escape "$autojoin")"
+
+			case "$auth_method" in
+				nickserv)
+					if [ -n "$password" ]; then
+						printf '%s.command = "/msg nickserv identify %s"\n' "$s_name" "$(weechat_escape "$password")"
+					fi
+					;;
+				sasl_plain|sasl_scram_sha_256|sasl_scram_sha_512)
+					if [ -n "$password" ]; then
+						local mech="plain"
+						[ "$auth_method" = "sasl_scram_sha_256" ] && mech="scram-sha-256"
+						[ "$auth_method" = "sasl_scram_sha_512" ] && mech="scram-sha-512"
+						local sasl_user="${username:-${nicks%%,*}}"
+						config_get sasl_user "$s_name" sasl_username "$sasl_user"
+						printf '%s.sasl_mechanism = %s\n' "$s_name" "$mech"
+						printf '%s.sasl_username = "%s"\n' "$s_name" "$(weechat_escape "$sasl_user")"
+						printf '%s.sasl_password = "%s"\n' "$s_name" "$(weechat_escape "$password")"
+					fi
+					;;
+			esac
+		} >> "$tmp_dir/irc.conf"
+	}
+	config_foreach handle_server_config server
+
+	# Install generated configs atomically; fail on any error
+	for cfg in logger.conf relay.conf irc.conf; do
+		install_conf "$tmp_dir/$cfg" "$CONFIG_DIR/$cfg" || {
+			rm -rf "$tmp_dir"
+			trap - EXIT INT TERM
+			return 1
+		}
+	done
+
+	rm -rf "$tmp_dir"
+	trap - EXIT INT TERM
+	return 0
+}
+
+start_service() {
+	local enabled relay_enabled relay_password relay_tls relay_cert_key log_enabled log_dir dir
+
+	config_load weechat
+
+	config_get_bool enabled weechat enabled 0
+	if [ "$enabled" -ne 1 ]; then
+		logger -t weechat -p daemon.info "service is disabled in /etc/config/weechat (option enabled '0')"
+		return 0
+	fi
+
+	config_get_bool relay_enabled weechat relay_enabled 0
+	config_get relay_password weechat relay_password ''
+	config_get_bool relay_tls weechat relay_tls 0
+	config_get relay_cert_key weechat relay_cert_key ''
+	config_get_bool log_enabled weechat log_enabled 0
+	config_get log_dir weechat log_dir '/var/log/weechat'
+
+	# Security: relay must not run without authentication
+	if [ "$relay_enabled" -eq 1 ]; then
+		if [ -z "$relay_password" ]; then
+			logger -t weechat -p daemon.err \
+				"relay enabled but no relay_password configured, refusing to start"
+			return 1
+		fi
+
+		if [ "$relay_tls" -eq 1 ]; then
+			[ -n "$relay_cert_key" ] || relay_cert_key="$CONFIG_DIR/tls/relay.pem"
+			if [ ! -f "$relay_cert_key" ]; then
+				logger -t weechat -p daemon.err \
+					"TLS relay enabled but '$relay_cert_key' does not exist, refusing to start"
+				return 1
+			fi
+		fi
+	fi
+
+	# Ensure persistent config and data directories
+	for dir in "$CONFIG_DIR" "$DATA_DIR"; do
+		[ -d "$dir" ] || mkdir -p "$dir" || return 1
+		chmod 0700 "$dir" || return 1
+		chown "$USER:$GROUP" "$dir" || return 1
+	done
+
+	# Ensure TLS certificate directory is owned by root with no write access for weechat
+	if [ -L "$CONFIG_DIR/tls" ] || { [ -e "$CONFIG_DIR/tls" ] && [ ! -d "$CONFIG_DIR/tls" ]; }; then
+		rm -rf "$CONFIG_DIR/tls" || return 1
+	fi
+	if [ ! -d "$CONFIG_DIR/tls" ]; then
+		mkdir -p "$CONFIG_DIR/tls" || return 1
+		chmod 0755 "$CONFIG_DIR/tls" || return 1
+		chown root:root "$CONFIG_DIR/tls" || return 1
+	fi
+
+	# Ensure volatile cache and runtime directories
+	if [ -L /tmp/weechat ] || [ -h /tmp/weechat ] || { [ -e /tmp/weechat ] && [ ! -d /tmp/weechat ]; }; then
+		rm -rf /tmp/weechat || return 1
+	fi
+	mkdir -p "$CACHE_DIR" "$RUNTIME_DIR" || return 1
+	chmod 0700 /tmp/weechat "$CACHE_DIR" "$RUNTIME_DIR" || return 1
+	chown -R "$USER:$GROUP" /tmp/weechat || return 1
+
+	# Ensure log directory if logging enabled
+	if [ "$log_enabled" -eq 1 ] && [ ! -d "$log_dir" ]; then
+		mkdir -p "$log_dir" || return 1
+		chmod 0750 "$log_dir" || return 1
+		chown "$USER:$GROUP" "$log_dir" || return 1
+	fi
+
+	# Generate native WeeChat configurations from UCI
+	generate_weechat_configs || {
+		logger -t weechat -p daemon.err "failed to generate weechat configurations"
+		return 1
+	}
+
+	procd_open_instance "weechat"
+	procd_set_param command "$PROG" --stdout \
+		--dir "$CONFIG_DIR:$DATA_DIR:$CACHE_DIR:$RUNTIME_DIR"
+	procd_set_param file /etc/config/weechat
+
+	procd_set_param user "$USER"
+	procd_set_param group "$GROUP"
+	procd_set_param respawn
+
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+
+	procd_close_instance
+}
+
+service_triggers() {
+	procd_add_reload_trigger "weechat"
+}
