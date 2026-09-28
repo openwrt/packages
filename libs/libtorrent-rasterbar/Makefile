@@ -12,12 +12,11 @@ PKG_MAINTAINER:=David Yang <mmyangfl@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
 
-PKG_BUILD_DEPENDS:=boost
+PKG_BUILD_DEPENDS:=boost PACKAGE_python3-libtorrent:python-setuptools/host
 PKG_CONFIG_DEPENDS:=CONFIG_PACKAGE_python3-libtorrent
 
 CMAKE_INSTALL:=1
 PYTHON3_PKG_BUILD:=0
-PYTHON3_PKG_WHEEL_NAME:=libtorrent
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -41,7 +40,7 @@ define Package/python3-libtorrent
   CATEGORY:=Languages
   SUBMENU:=Python
   TITLE+= (Python 3)
-  DEPENDS:=+libtorrent-rasterbar +boost +boost-python3
+  DEPENDS:=+libtorrent-rasterbar +boost +boost-python3 +python3-light
 endef
 
 define Package/libtorrent-rasterbar/description
@@ -56,28 +55,16 @@ endef
 
 ifneq ($(CONFIG_PACKAGE_python3-libtorrent),)
 CMAKE_OPTIONS += \
+	-DPython3_EXECUTABLE=$(HOST_PYTHON3_BIN) \
 	-Dpython-bindings=ON \
 	-Dpython-egg-info=ON
 endif
 
-define Build/Configure
-	$(call Build/Configure/Default)
-ifneq ($(CONFIG_PACKAGE_python3-libtorrent),)
-	$(call Py3Build/Configure)
-endif
-endef
-
-define Build/Compile
-	$(call Build/Compile/Default)
-ifneq ($(CONFIG_PACKAGE_python3-libtorrent),)
-	$(call Py3Build/Compile)
-endif
-endef
-
 define Build/Install
 	$(call Build/Install/Default)
 ifneq ($(CONFIG_PACKAGE_python3-libtorrent),)
-	$(call Py3Build/Install/Default)
+	mv $(PKG_INSTALL_DIR)$(PYTHON3_PKG_DIR)/libtorrent.cpython-*.so \
+		$(PKG_INSTALL_DIR)$(PYTHON3_PKG_DIR)/libtorrent.so
 endif
 endef
 
