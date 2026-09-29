@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 PKG_NAME:=frr
 PKG_VERSION:=10.6.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/FRRouting/frr/tar.gz/$(PKG_NAME)-$(PKG_VERSION)?
@@ -80,7 +80,8 @@ endef
 define Package/frr
   $(call Package/frr/Default)
   DEPENDS:=+librt +libatomic +libcap +libncurses +libjson-c +libreadline \
-    +libyang +libprotobuf-c +FRR_OPENSSL:libopenssl +FRR_SNMP:libnetsnmp +more
+    +libyang +libprotobuf-c +FRR_OPENSSL:libopenssl +FRR_SNMP:libnetsnmp +more \
+    +USE_GLIBC:libcrypt-compat
   TITLE:=The FRRouting (FRR) Software Routing Suite
   MENU:=1
 endef
