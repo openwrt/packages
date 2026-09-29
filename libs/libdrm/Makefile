@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libdrm
 PKG_VERSION:=2.4.133
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://dri.freedesktop.org/libdrm
@@ -35,6 +35,7 @@ define Package/libdrm/Default
   SUBMENU:=Video
   TITLE:=libdrm
   URL:=https://dri.freedesktop.org/
+  DEPENDS:=video-support
 endef
 
 define Package/libdrm/description/Default
