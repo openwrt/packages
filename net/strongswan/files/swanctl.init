@@ -154,6 +154,26 @@ is_aead() {
 	return 1
 }
 
+append_ke() {
+	local value="$1"
+
+	[ -n "$value" ] || return
+
+	ke_count="$((ke_count + 1))"
+	[ "$ke_count" -le 7 ] || {
+		warning "More than 7 key exchange methods configured, ignoring '$value'"
+		return
+	}
+
+	case "$value" in
+	ke[1-7]_*)
+		warning "Key exchange method '$value' already has a keN_ prefix, using it verbatim"
+		ke="$ke-$value" ;;
+	*)
+		ke="$ke-ke${ke_count}_${value}" ;;
+	esac
+}
+
 config_esp_proposal() {
 	local conf="$1"
 
@@ -161,6 +181,8 @@ config_esp_proposal() {
 	local encryption_algorithm
 	local hash_algorithm
 	local dh_group
+	local ke
+	local ke_count
 
 	config_get_bool use_custom_proposal "$conf" use_custom_proposal 0
 	[ "$use_custom_proposal" = "1" ] && {
@@ -177,14 +199,21 @@ config_esp_proposal() {
 	config_get hash_algorithm "$conf" hash_algorithm
 	config_get dh_group "$conf" dh_group
 
+	ke=""
+	ke_count=0
+	config_list_foreach "$conf" ke append_ke
+
 	# check for AEAD and clobber hash_algorithm if set
 	if is_aead "$encryption_algorithm" && [ -n "$hash_algorithm" ]; then
 		fatal "Can't have $hash_algorithm with $encryption_algorithm"
 		hash_algorithm=
 	fi
 
+	[ -n "$ke" ] && [ -z "$dh_group" ] && \
+		warning "Key exchange methods in '$conf' require a dh_group"
+
 	[ -n "$encryption_algorithm" ] && \
-		crypto="${crypto:+${crypto},}${encryption_algorithm}${hash_algorithm:+-${hash_algorithm}}${dh_group:+-${dh_group}}"
+		crypto="${crypto:+${crypto},}${encryption_algorithm}${hash_algorithm:+-${hash_algorithm}}${dh_group:+-${dh_group}}${ke}"
 }
 
 iter_esp_proposal() {
@@ -206,6 +235,8 @@ config_ike_proposal() {
 	local hash_algorithm
 	local dh_group
 	local prf_algorithm
+	local ke
+	local ke_count
 
 	config_get_bool use_custom_proposal "$conf" use_custom_proposal 0
 	[ "$use_custom_proposal" = "1" ] && {
@@ -223,14 +254,21 @@ config_ike_proposal() {
 	config_get dh_group "$conf" dh_group
 	config_get prf_algorithm "$conf" prf_algorithm
 
+	ke=""
+	ke_count=0
+	config_list_foreach "$conf" ke append_ke
+
 	# check for AEAD and clobber hash_algorithm if set
 	if is_aead "$encryption_algorithm" && [ -n "$hash_algorithm" ]; then
 		fatal "Can't have $hash_algorithm with $encryption_algorithm"
 		hash_algorithm=
 	fi
 
+	[ -n "$ke" ] && [ -z "$dh_group" ] && \
+		warning "Key exchange methods in '$conf' require a dh_group"
+
 	[ -n "$encryption_algorithm" ] && \
-		crypto="${crypto:+${crypto},}${encryption_algorithm}${hash_algorithm:+-${hash_algorithm}}${prf_algorithm:+-${prf_algorithm}}${dh_group:+-${dh_group}}"
+		crypto="${crypto:+${crypto},}${encryption_algorithm}${hash_algorithm:+-${hash_algorithm}}${prf_algorithm:+-${prf_algorithm}}${dh_group:+-${dh_group}}${ke}"
 }
 
 iter_ike_proposal() {
