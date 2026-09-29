@@ -69,7 +69,7 @@ define Package/containerd/install
 	$(INSTALL_DIR) $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/{ctr,containerd,containerd-stress,containerd-shim-runc-v2} $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/etc/init.d
-    $(INSTALL_BIN) ./files/containerd.init $(1)/etc/init.d/containerd
+	$(INSTALL_BIN) ./files/containerd.init $(1)/etc/init.d/containerd
 endef
 
 $(eval $(call BuildPackage,containerd))
