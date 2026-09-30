@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# bash feeds/packages/lang/ruby/ruby_missingfiles staging_dir/target-x86_64_musl/ bin/packages/x86_64/packages/*ruby*_3.1.2*
+# bash feeds/packages/lang/ruby/ruby_missingfiles staging_dir/target-x86_64_musl/ bin/packages/x86_64/packages/*ruby*-[0-9]*.apk
 #
 
 function list_staging_files {
@@ -31,6 +31,12 @@ function list_staging_files {
 		-not -name "*.md" \
 		-not -name "*.mk" \
 		-not -name "*.doc" \
+		-not -name "*.o" \
+		-not -name "*.c" \
+		-not -name "Makefile" \
+		-not -name "extconf.rb" \
+		-not -regex ".*/usr/lib/ruby/gems/[^/]*/gems/[^/]*/.*\.h" \
+		-not -name "mkmf.log" \
 		\( -name "LICENSE.txt" -or -not -name "*.txt" \) \
 		-not -name "*.travis.yml" \
 		-not -name "Rakefile" \
