@@ -28,7 +28,7 @@ $info.puts "Looking for installed ruby packages (and its files)..."
 packages = []
 package_files = {}
 package_depends = {}
-packages_json=`apk info --format json --contents --depends --match url 'http://www.ruby-lang.org/'`
+packages_json=`apk info --format json --contents --depends --match url 'https://www.ruby-lang.org/'`
 require "json"
 JSON.parse(packages_json).each do |pkg|
   next if not pkg["contents"]
@@ -74,6 +74,7 @@ require_ignore=%w{
 	rubygems/defaults/operating_system
 	rubygems/net/http
 	rubygems/timeout
+	rubygems/tsort
 	simplecov
 	sexp
 	sorted_set
@@ -363,9 +364,8 @@ end
 weak_dependency=Hash.new { |h,k| h[k]=[] }
 weak_dependency.merge!({
 	"ruby-irb"      =>%w{ruby-rdoc ruby-readline ruby-debug}, # irb/cmd/help.rb irb/cmd/debug.rb,3.2/irb/cmd/debug.rb
-	"ruby-gems"     =>%w{ruby-bundler ruby-rdoc},             # rubygems.rb rubygems/server.rb rdoc/rubygems_hook
-	"ruby-racc"     =>%w{ruby-gems},			  # /usr/bin/racc*
-	"ruby-rake"     =>%w{ruby-gems ruby-debug},               # /usr/bin/rake gems/3.3/gems/rake-13.1.0/lib/rake/application.rb
+	"ruby-gems"     =>%w{ruby-bundler ruby-rdoc ruby-rake},   # rubygems.rb rubygems/server.rb rdoc/rubygems_hook rubygems/ext/rake_builder.rb
+	"ruby-rake"     =>%w{ruby-debug},    		          # gems/3.3/gems/rake-13.1.0/lib/rake/application.rb
 	"ruby-rdoc"     =>%w{ruby-readline},			  # rdoc/ri/driver.rb
 	"ruby-testunit" =>%w{ruby-io-console},			  # gems/test-unit-3.1.5/lib/test/unit/ui/console/testrunner.rb
 	"ruby-net-http" =>%w{ruby-open-uri}			  # net/http/status.rb
@@ -442,7 +442,7 @@ begin
 			changed=true
 		end
 	end
-end if not changed
+end while changed
 
 $info.puts "Removing redundant dependencies..."
 package_dependencies.each do
