@@ -1,0 +1,89 @@
+From 5b3c5143e0e5fba440ec0aefe8ce5b52b4850e8c Mon Sep 17 00:00:00 2001
+From: Victor Irzak <victor@irzak.com>
+Date: Wed, 30 Sep 2026 17:46:31 -0400
+Subject: [PATCH] espflash: make the update check an optional feature
+
+The update check contacts crates.io on every run and pulls in an HTTP
+and TLS stack. Move the update-informer dependency from the cli feature
+into a new update-check feature, enabled by default, so distributions
+can build the CLI without it via --no-default-features --features cli.
+
+check_for_update() stays under cli and does nothing when update-check
+is disabled, so the library API is unchanged.
+
+Merged upstream as 5b3c5143e0e5, after 4.6.0; drop this patch when
+updating past it. The CI and changelog parts of that commit are left
+out.
+
+Link: https://github.com/esp-rs/espflash/pull/1080
+Signed-off-by: Victor Irzak <victor@irzak.com>
+---
+ espflash/Cargo.toml |  6 ++++--
+ espflash/src/lib.rs | 28 ++++++++++++++++++----------
+ 2 files changed, 22 insertions(+), 12 deletions(-)
+
+--- a/espflash/Cargo.toml
++++ b/espflash/Cargo.toml
+@@ -69,7 +69,7 @@ libc = "0.2.174"
+ nix = { version = "0.31", features = ["signal", "time"] }
+ 
+ [features]
+-default = ["cli"]
++default = ["cli", "update-check"]
+ cli = [
+     "dep:addr2line",
+     "dep:clap",
+@@ -82,10 +82,12 @@ cli = [
+     "dep:directories",
+     "dep:env_logger",
+     "dep:indicatif",
+-    "dep:update-informer",
+     "miette/fancy",
+     "serialport",
+ ]
+ 
++# Checks crates.io for a newer release on every run of the CLI
++update-check = ["cli", "dep:update-informer"]
++
+ # Enables connecting to a device via serial port
+ serialport = ["dep:reed-solomon", "dep:regex", "dep:serialport", "dep:slip-codec", "dep:toml"]
+--- a/espflash/src/lib.rs
++++ b/espflash/src/lib.rs
+@@ -62,19 +62,27 @@ pub mod logging {
+ /// Check for updates
+ #[cfg(feature = "cli")]
+ pub mod update {
+-    use std::time::Duration;
+-
+-    use log::info;
+-    use update_informer::{Check, registry::Crates};
+-
+     /// Check for updates to the espflash crate.
++    ///
++    /// Does nothing unless the `update-check` feature is enabled.
+     pub fn check_for_update(name: &str, version: &str) {
+-        // By setting the interval to 0 seconds we invalidate the cache with
+-        // each invocation and ensure we're getting up-to-date results
+-        let informer = update_informer::new(Crates, name, version).interval(Duration::from_secs(0));
++        #[cfg(feature = "update-check")]
++        {
++            use std::time::Duration;
++
++            use log::info;
++            use update_informer::{Check, registry::Crates};
++
++            // By setting the interval to 0 seconds we invalidate the cache with
++            // each invocation and ensure we're getting up-to-date results
++            let informer =
++                update_informer::new(Crates, name, version).interval(Duration::from_secs(0));
+ 
+-        if let Some(version) = informer.check_version().ok().flatten() {
+-            info!("🚀 A new version of {name} is available: {version}");
++            if let Some(version) = informer.check_version().ok().flatten() {
++                info!("🚀 A new version of {name} is available: {version}");
++            }
+         }
++        #[cfg(not(feature = "update-check"))]
++        let _ = (name, version);
+     }
+ }
