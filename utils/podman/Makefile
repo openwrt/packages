@@ -94,7 +94,8 @@ endif
 
 define Package/podman/install
 	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/lib/podman
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/{podman,podman-remote} $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/podman $(1)/usr/bin/
+	$(INSTALL_BIN) ./files/podman-remote.sh $(1)/usr/bin/podman-remote
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/podman/{rootlessport,quadlet} $(1)/usr/lib/podman/
 	$(LN) podman $(1)/usr/bin/podmansh
 	$(INSTALL_DIR) $(1)/etc/containers
