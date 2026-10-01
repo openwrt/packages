@@ -584,9 +584,11 @@ readsb_connector_live() {
 #
 # Returns:
 #   0  active socket found
-#   1  no matching socket
-#   2  cannot determine (no pid, /proc unavailable, bad port, or a shared
-#      port whose host has no resolvable IPv4 address)
+#   1  no owned ESTABLISHED socket on the remote port
+#   2  cannot determine (no pid, /proc unavailable, bad port, missing
+#      resolver, or shared-port attribution is uncertain: no resolvable
+#      IPv4 address, an IPv6 socket, or an address outside the current
+#      DNS result set)
 #
 #   readsb_connector_active <host> <port> [<pid>]
 readsb_connector_active() {

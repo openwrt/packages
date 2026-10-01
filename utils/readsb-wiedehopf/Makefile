@@ -63,9 +63,10 @@ define Package/readsb-wiedehopf/description
 
   Optional companion packages (not pulled in automatically):
     * adsbexchange-stats -- ranking-dashboard stats uploader for ADSBx.
-    * resolveip -- per-host socket attribution in readsb-feeder when
-      multiple feeders share a remote port; degrades to "indeterminate"
-      when absent.
+    * resolveip -- improves per-host socket attribution in readsb-feeder
+      when multiple feeders share a remote port. Without it, successful
+      TCP probes still confirm reachability; inconclusive checks report
+      SKIP / DEGRADED instead of claiming the feeder is unreachable.
 
   See https://github.com/openwrt/packages/blob/master/utils/readsb-wiedehopf/README.md
   for the full configuration reference, aggregator preset list, and

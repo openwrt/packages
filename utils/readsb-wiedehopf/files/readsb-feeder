@@ -34,8 +34,9 @@
 # After any mutation: `service readsb reload`.
 #
 # Exit codes:
-#   0  success (--probe / --health: ALL targets reachable; --health also
-#      requires LIVE in cmdline AND no recent errors)
+#   0  success (--probe: no confirmed failures; indeterminate SKIP results
+#      also exit 0 and do NOT confirm reachability; --health: all enabled
+#      targets LIVE in cmdline AND no recent errors)
 #   1  usage error / unknown option
 #   2  one or more targets unreachable / DEGRADED / mutation failed
 #   3  no feeder sections defined / named section not found
@@ -146,34 +147,23 @@ cmd_url() {
 }
 
 # --- command: --probe ------------------------------------------------------
-# TCP reachability probe. The `/dev/tcp/<host>/<port>` virtual device
-# is a bash/ksh feature that BusyBox ash does NOT implement, so on a
-# stock OpenWrt `/bin/sh` (busybox-ash) the redirection silently fails.
-# The /dev/tcp branch is kept because it costs nothing (it's just an
-# `exec` redirection) and lets ash environments that have been swapped
-# for bash -- or callers running this helper directly under bash --
-# short-circuit without forking nc.
-# `timeout`, when present, bounds that connect attempt to 3s; without it
-# the kernel's own (much longer) connect timeout applies. `nc -w` is
-# also optional in BusyBox; only use nc when its help advertises that
-# bounded-connect option. When neither a bounded /dev/tcp attempt nor a
-# bounded nc is available, the probe returns rc 2 ("can't tell") rather
-# than reporting a false unreachable result.
+# BusyBox ash does not implement /dev/tcp. When running under Bash,
+# use that same interpreter with timeout to bound the connect to 3s.
+# Otherwise use nc only if its help advertises the optional -w timeout.
+# Returns 0 on success, 1 on a failed connection, or 2 when neither
+# bounded probe is available; never attempt an unbounded /dev/tcp connect.
 #
 # Some upstream firewalls (notably feed1.adsbexchange.com:30004) drop
 # SYN+close drive-by probes while accepting persistent feeder streams;
 # the caller therefore checks the kernel's actual socket state via
 # `readsb_connector_active` first and only falls through here when no
-# live socket exists.
+# attributable live socket exists.
 _probe_tcp() {
 	local host=$1 port=$2
-	if command -v timeout >/dev/null 2>&1; then
-		if (timeout 3 sh -c 'exec 9<>"/dev/tcp/$1/$2"' _ "$host" "$port") 2>/dev/null; then
-			return 0
-		fi
-	elif (exec 9<>"/dev/tcp/$host/$port") 2>/dev/null; then
-		exec 9<&- 9>&-
-		return 0
+	if [ -n "${BASH:-}" ] && command -v timeout >/dev/null 2>&1; then
+		# shellcheck disable=SC2016
+		timeout 3 "$BASH" -c 'exec 9<>"/dev/tcp/$1/$2"' _ "$host" "$port" 2>/dev/null && return 0
+		return 1
 	fi
 	command -v nc >/dev/null 2>&1 || return 2
 	nc --help 2>&1 | grep -q -- '-w' || return 2
@@ -186,7 +176,7 @@ cmd_probe() {
 	rsb_pid=$(readsb_pid)
 
 	_one() {
-		local fcfg=$1 rc
+		local fcfg=$1 rc active=0
 		[ -z "$want" ] || [ "$want" = "$fcfg" ] || return 0
 		readsb_feeder_resolve "$fcfg" "$main_uuid" || return 0
 		if [ "$readsb_feeder_enabled" -ne 1 ]; then
@@ -211,11 +201,12 @@ cmd_probe() {
 						"$fcfg" "$readsb_feeder_host" "$readsb_feeder_port"
 					return 0
 					;;
+				2) active=2 ;;
 			esac
 		fi
 
-		# No attributable active socket -- use a bounded probe to distinguish
-		# "configured but not yet connected" from "unreachable".
+		# A successful probe confirms reachability, but a failed one cannot
+		# rule out a live socket whose attribution was indeterminate.
 		_probe_tcp "$readsb_feeder_host" "$readsb_feeder_port"
 		rc=$?
 		case $rc in
@@ -224,9 +215,18 @@ cmd_probe() {
 				   "$fcfg" "$readsb_feeder_host" "$readsb_feeder_port" >&2
 			   _warn "probe '$fcfg' skipped: no supported bounded TCP probe for $readsb_feeder_host:$readsb_feeder_port"
 			   skipped=$((skipped + 1)) ;;
-			*) printf '%-16s FAIL  %s:%s\n' "$fcfg" "$readsb_feeder_host" "$readsb_feeder_port" >&2
-			   _warn "probe '$fcfg' unreachable: $readsb_feeder_host:$readsb_feeder_port"
-			   bad=$((bad + 1)) ;;
+			*)
+				if [ "$active" = 2 ]; then
+					printf '%-16s SKIP  %s:%s (TCP probe failed; socket attribution indeterminate)\n' \
+						"$fcfg" "$readsb_feeder_host" "$readsb_feeder_port" >&2
+					_warn "probe '$fcfg' inconclusive: $readsb_feeder_host:$readsb_feeder_port; socket attribution indeterminate"
+					skipped=$((skipped + 1))
+				else
+					printf '%-16s FAIL  %s:%s\n' "$fcfg" "$readsb_feeder_host" "$readsb_feeder_port" >&2
+					_warn "probe '$fcfg' unreachable: $readsb_feeder_host:$readsb_feeder_port"
+					bad=$((bad + 1))
+				fi
+				;;
 		esac
 	}
 
@@ -237,11 +237,8 @@ cmd_probe() {
 		_no_match "$want" probe
 		return 3
 	fi
-	# An indeterminate result (SKIP) is not a failure -- it means no bounded
-	# probe tool was available, not that the feeder is unreachable. Keeping
-	# SKIP out of $bad lets --probe stay usable as a scripted health check
-	# that only exits nonzero on a confirmed FAIL, even on stock firmware
-	# where no bounded probe tool exists.
+	# SKIP means missing probe tooling or uncertain socket attribution,
+	# not confirmed unreachability; only FAIL contributes to $bad.
 	if [ "$bad" -gt 0 ]; then
 		if [ "$skipped" -gt 0 ]; then
 			_warn "probe summary: $bad of $probed feeder(s) failed, $skipped indeterminate"
@@ -251,7 +248,7 @@ cmd_probe() {
 		return 2
 	fi
 	if [ "$skipped" -gt 0 ]; then
-		_log "probe summary: $probed feeder(s) checked, $skipped indeterminate (no bounded probe tool)"
+		_log "probe summary: $probed feeder(s) checked, $skipped indeterminate"
 		return 0
 	fi
 	_log "probe summary: $probed feeder(s) checked"
@@ -269,8 +266,8 @@ cmd_probe() {
 #
 # States:
 #   LIVE         in cmdline AND (probe ok OR active socket), 0 errors
-#   DEGRADED     LIVE-shaped but with recent errors (or no probe tool +
-#                no active socket)
+#   DEGRADED     recent errors, or neither a successful probe nor an
+#                attributable active socket (including indeterminate attribution)
 #   UNREACHABLE  in cmdline AND probe FAIL AND no active socket
 #   NOT-LOADED   in UCI (enabled=1) but missing from cmdline
 #                -- run `service readsb reload`
@@ -390,6 +387,10 @@ cmd_health() {
 							state=LIVE
 							details='active socket in /proc/net/tcp (drive-by probe blocked at upstream)'
 						fi
+					elif [ "$active" = 2 ]; then
+						state=DEGRADED
+						details='TCP probe failed; socket attribution indeterminate'
+						bad=$((bad + 1))
 					else
 						state=UNREACHABLE
 						details='cmdline ok, TCP probe FAILED, no active socket'

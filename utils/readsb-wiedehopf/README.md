@@ -28,9 +28,11 @@ aggregators.
 * [Out-of-scope aggregators](#out-of-scope-aggregators)
 * [MLAT](#mlat)
 * [Logging and diagnostics](#logging-and-diagnostics)
+  * [Feeder probe results](#feeder-probe-results)
   * [Log levels](#log-levels)
 * [Companion packages](#companion-packages)
 * [Conflicts](#conflicts)
+* [Regression tests](#regression-tests)
 
 ## Quick start
 
@@ -106,12 +108,14 @@ to fix them, and are mirrored to syslog.
   `/proc/net/tcp`) + log clean.
 * `DEGRADED` -- in cmdline but recent error events are present, no probe
   tool or active socket is available, or exact socket attribution is
-  indeterminate because multiple connectors share a remote port.
+  indeterminate and a TCP probe cannot confirm reachability. Attribution
+  can be uncertain when multiple connectors share a remote port and
+  `resolveip` is missing, the socket uses IPv6, or DNS has rotated.
 * `UNREACHABLE` -- in cmdline + TCP probe FAIL **and** no active
-  socket. The active-socket cross-check is the authoritative
-  tie-breaker because some aggregator firewalls (notably
-  `feed1.adsbexchange.com:30004`) drop drive-by SYN+close probes but
-  accept readsb's persistent feeder stream.
+  socket (not merely indeterminate attribution). The active-socket
+  cross-check is the authoritative tie-breaker because some aggregator
+  firewalls (notably `feed1.adsbexchange.com:30004`) drop drive-by SYN+close
+  probes but accept readsb's persistent feeder stream.
 * `NOT-LOADED` -- in UCI but missing from the live cmdline; run
   `service readsb reload`.
 * `DISABLED` -- `enabled=0` in UCI; only shown when explicitly named.
@@ -604,6 +608,34 @@ readsb-geoip --self-test         # read-only PASS/FAIL diagnostic
 service readsb status            # procd status
 ```
 
+### Feeder probe results
+
+`readsb-feeder --probe [<name>]` checks the daemon's owned sockets first,
+then attempts a bounded TCP probe if no socket can be attributed to the
+feeder. When run under Bash with `timeout` available, it uses Bash's
+`/dev/tcp` support with a three-second timeout. Otherwise it uses `nc -w 3`
+only if that option is supported. Stock BusyBox `nc` may lack `-w`; no
+unbounded connection is attempted.
+
+| Result | Meaning |
+| ------ | ------- |
+| `LIVE` | readsb has an attributable established socket; no probe was sent |
+| `OK` | a TCP probe succeeded |
+| `SKIP` | no supported bounded probe is available, or a probe failed while socket attribution was indeterminate |
+| `FAIL` | a TCP probe failed and no potentially active readsb socket was found |
+| `DISABLED` | the explicitly named feeder is disabled; no probe was sent |
+
+`--probe` exits **0 when there are no confirmed failures, even if every
+result is `SKIP`**. Exit 0 alone does not confirm connectivity. It exits
+2 when any feeder reports `FAIL`, 3 when no enabled feeder matches (or
+the named section does not exist), and 1 for a usage error.
+
+`--health` is stricter: indeterminate checks are `DEGRADED`, not
+`UNREACHABLE`, and produce exit 2. A successful probe can still establish
+`LIVE` when socket attribution is indeterminate, provided the connector
+is loaded and there are no recent errors. Use `--health` rather than
+`--probe` when monitoring requires a confirmed healthy feed.
+
 ### Log levels
 
 All script-side logging follows RFC 5424 / OpenWrt severity convention.
@@ -630,14 +662,20 @@ Not pulled in automatically (opkg has no `Recommends` field):
 * **adsbexchange-stats** -- optional ranking-dashboard stats uploader
   for ADSBx. Hard-depends on this package; only install if you want
   ADSBx's per-station web ranking.
+* **resolveip** -- improves IPv4 socket attribution when multiple feeders
+  share a remote port. Install with `opkg install resolveip` to enable
+  per-host checks. Without it, successful TCP probes still work;
+  inconclusive checks report `SKIP` in `--probe` or `DEGRADED` in
+  `--health`. IPv6 sockets and DNS-rotated addresses may still be
+  indeterminate even with `resolveip` installed.
 
 `readsb-setup --status` and `readsb-feeder --companions` walk every
 *enabled* feeder section, look up the recommended companion package(s)
-for each preset, and report whether each one is **installed** and
-(when it ships an init script) **running**. Missing or stopped
-packages are printed with the exact command to install / start them
-and are mirrored to syslog so they also appear in
-`logread -e readsb` for headless setups.
+for each preset (currently `adsbexchange-stats`, not `resolveip`), and
+report whether each one is **installed** and (when it ships an init
+script) **running**. Missing or stopped packages are printed with the
+exact command to install / start them and are mirrored to syslog so
+they also appear in `logread -e readsb` for headless setups.
 
 ## Conflicts
 
@@ -645,3 +683,16 @@ This package `PROVIDES:=readsb` and `CONFLICTS:=readsb` (likewise for
 `viewadsb`). Either this package or the upstream `readsb` package can
 satisfy a `readsb` dependency, but the two cannot be installed
 side-by-side.
+
+## Regression tests
+
+From the packages feed root, run:
+
+```sh
+sh utils/readsb-wiedehopf/tests/feeder.sh
+```
+
+The tests exercise the production probe and health functions with mocked
+OpenWrt services and network tools; they do not change UCI or contact
+aggregators. The same script can be run with `bash` or `busybox ash` to
+check shell compatibility.
