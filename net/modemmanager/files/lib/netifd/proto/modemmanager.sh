@@ -530,10 +530,10 @@ modemmanager_init_epsbearer() {
 	local apn="$4"
 	local timeout="$5"
 
-	if [ "$eps" = "none" ]; then
-		echo "Deleting inital EPS bearer"
+	if [ "$eps" = "network" ]; then
+		echo "Setting network-assigned initial EPS bearer"
 	else
-		echo "Setting '$eps' inital EPS bearer apn to '$apn'"
+		echo "Setting '$eps' initial EPS bearer apn to '$apn'"
 	fi
 
 	mmcli --modem="${device}" \
@@ -629,44 +629,51 @@ proto_modemmanager_setup() {
 	}
 
 	# set initial eps bearer settings
-	if [ -z "${init_epsbearer}" ]; then
-		modemmanager_init_epsbearer "none" "$device" "" "$apn" "${timeout}"
-	else
-		case "$init_epsbearer" in
-			"default")
-				cliauth=""
-				for auth in $allowedauth; do
-					cliauth="${cliauth}${cliauth:+|}$auth"
-				done
-				connectargs=""
-				append_param "apn=${apn}"
-				append_param "${iptype:+ip-type=${iptype}}"
-				append_param "${cliauth:+allowed-auth=${cliauth}}"
-				append_param "${username:+user=${username}}"
-				append_param "${password:+password=${password}}"
-				modemmanager_init_epsbearer "default" \
-					"$device" "${connectargs}" "$apn" \
-					"${timeout}"
-				;;
-			"custom")
-				cliauth=""
-				for auth in $init_allowedauth; do
-					cliauth="${cliauth}${cliauth:+|}$auth"
-				done
-				connectargs=""
-				append_param "apn=${init_apn}"
-				append_param "${init_iptype:+ip-type=${init_iptype}}"
-				append_param "${cliauth:+allowed-auth=${cliauth}}"
-				append_param "${init_username:+user=${init_username}}"
-				append_param "${init_password:+password=${init_password}}"
-				modemmanager_init_epsbearer "custom" \
-					"$device" "${connectargs}" "$init_apn" \
-					"${timeout}"
-				;;
-		esac
-		# check error for init_epsbearer function call
-		[ "$?" -ne "0" ] && return 1
-	fi
+	case "${init_epsbearer:-modem}" in
+		"modem"|"none")
+			echo "Using initial EPS bearer stored on the modem"
+			;;
+		"network")
+			modemmanager_init_epsbearer "network" \
+				"$device" "" "" "${timeout}"
+			;;
+		"connection"|"default")
+			cliauth=""
+			for auth in $allowedauth; do
+				cliauth="${cliauth}${cliauth:+|}$auth"
+			done
+			connectargs=""
+			append_param "apn=${apn}"
+			append_param "${iptype:+ip-type=${iptype}}"
+			append_param "${cliauth:+allowed-auth=${cliauth}}"
+			append_param "${username:+user=${username}}"
+			append_param "${password:+password=${password}}"
+			modemmanager_init_epsbearer "connection" \
+				"$device" "${connectargs}" "$apn" \
+				"${timeout}"
+			;;
+		"custom")
+			cliauth=""
+			for auth in $init_allowedauth; do
+				cliauth="${cliauth}${cliauth:+|}$auth"
+			done
+			connectargs=""
+			append_param "apn=${init_apn}"
+			append_param "${init_iptype:+ip-type=${init_iptype}}"
+			append_param "${cliauth:+allowed-auth=${cliauth}}"
+			append_param "${init_username:+user=${init_username}}"
+			append_param "${init_password:+password=${init_password}}"
+			modemmanager_init_epsbearer "custom" \
+				"$device" "${connectargs}" "$init_apn" \
+				"${timeout}"
+			;;
+		*)
+			echo "Unknown init_epsbearer '${init_epsbearer}'," \
+				"using initial EPS bearer stored on the modem"
+			;;
+	esac
+	# check error for init_epsbearer function call
+	[ "$?" -ne "0" ] && return 1
 
 	if [ -z "${allowedmode}" ]; then
 		modemmanager_set_allowed_mode "$device" "$interface" "any"
