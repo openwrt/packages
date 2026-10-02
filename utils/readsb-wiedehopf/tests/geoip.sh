@@ -1,0 +1,284 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-only
+
+package_dir=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd) || exit 1
+test_dir="./.readsb-geoip-test.$$"
+(umask 077 && mkdir "$test_dir") || exit 1
+trap 'rm -f "$test_dir/functions.sh" "$test_dir/options.sh" "$test_dir/tooling.sh" "$test_dir/dispatch.sh" "$test_dir/calls" "$test_dir/output"; rmdir "$test_dir/bin" "$test_dir"' 0
+trap 'exit 1' HUP INT TERM
+mkdir "$test_dir/bin" || exit 1
+
+# Extract only the code under test; never source OpenWrt libraries or fetch URLs.
+sed -n '/^update_section() {/,/^}/p' "$package_dir/files/readsb-geoip" > "$test_dir/functions.sh" || exit 1
+sed -n '/^verbose=0$/p; /^force=0$/,/^_verbose_apply$/p' "$package_dir/files/readsb-geoip" > "$test_dir/options.sh" || exit 1
+sed -n '/^last_stage="tool-detect"$/,/^# Strict numeric check;/p' "$package_dir/files/readsb-geoip" > "$test_dir/tooling.sh" || exit 1
+sed -n '/^if \[ -n "\$section" \]; then$/,$p' "$package_dir/files/readsb-geoip" > "$test_dir/dispatch.sh" || exit 1
+# shellcheck source=/dev/null
+. "$test_dir/functions.sh"
+set -u
+
+assert_equal() {
+	[ "$1" = "$2" ] && return 0
+	printf 'expected <%s>, got <%s>\n' "$2" "$1" >&2
+	return 1
+}
+
+tests=0
+failures=0
+run_test() {
+	label=$1
+	shift
+	tests=$((tests + 1))
+	if "$@"; then
+		printf 'ok %s - %s\n' "$tests" "$label"
+	else
+		printf 'not ok %s - %s\n' "$tests" "$label"
+		failures=$((failures + 1))
+	fi
+}
+
+_debug() { :; }
+_log() { printf 'log: %s\n' "$*" >&2; }
+_notice() { printf '%s\n' "$*"; }
+_warn() { printf 'warn: %s\n' "$*" >&2; }
+_err() { printf 'error: %s\n' "$*" >&2; }
+
+lookup() {
+	printf 'lookup\n' >> "$test_dir/calls"
+	[ "$lookup_mode" != empty ] || return 1
+	printf '48.8566 2.3522 192.0.2.1\n'
+	[ "$lookup_mode" = success ]
+}
+
+uci() {
+	[ "$1" != -q ] || shift
+	case "$1 $2" in
+		'get readsb.main.lat')
+			[ "$stored_lat" != UNSET ] || return 1
+			printf '%s\n' "$stored_lat"
+			;;
+		'get readsb.main.lon')
+			[ "$stored_lon" != UNSET ] || return 1
+			printf '%s\n' "$stored_lon"
+			;;
+		'set readsb.main.lat='*)
+			printf '%s %s\n' "$1" "$2" >> "$test_dir/calls"
+			[ "$uci_failure" != lat ] || return 9
+			stored_lat=${2#*=}
+			;;
+		'set readsb.main.lon='*)
+			printf '%s %s\n' "$1" "$2" >> "$test_dir/calls"
+			[ "$uci_failure" != lon ] || return 9
+			stored_lon=${2#*=}
+			;;
+		'commit readsb')
+			printf '%s %s\n' "$1" "$2" >> "$test_dir/calls"
+			[ "$uci_failure" != commit ] || return 9
+			;;
+		*)
+			printf 'unexpected uci call: %s\n' "$*" >&2
+			return 99
+			;;
+	esac
+}
+
+test_update_section() (
+	stored_lat=$1 stored_lon=$2
+	# Used by the extracted production function.
+	# shellcheck disable=SC2034
+	force=$3 dry_run=$4
+	lookup_mode=$5 uci_failure=$6
+	expected_rc=$7 expected_calls=$8 expected_lat=$9 expected_lon=${10}
+	expected_preview=${11:-}
+
+	: > "$test_dir/calls"
+	saved_path=$PATH
+	PATH="$test_dir/bin"
+	rc=0
+	update_section main > "$test_dir/output" 2>&1 || rc=$?
+	PATH=$saved_path
+	assert_equal "$rc" "$expected_rc" || {
+		cat "$test_dir/output" >&2
+		return 1
+	}
+	assert_equal "$stored_lat" "$expected_lat" || return 1
+	assert_equal "$stored_lon" "$expected_lon" || return 1
+	assert_equal "$(cat "$test_dir/calls")" "$expected_calls" || return 1
+	assert_equal "$(awk '/^\[dry-run\] would set / {
+		for (i = 4; i <= NF; i++) print "set " $i
+	}' "$test_dir/output")" "$expected_preview" || return 1
+	if [ "$rc" -eq 0 ] && [ "$dry_run" -eq 0 ] && [ -n "$expected_calls" ]; then
+		grep -Fq "lat=$expected_lat lon=$expected_lon" "$test_dir/output" || return 1
+	fi
+	if [ "$rc" -eq 1 ]; then
+		if [ "$lookup_mode" = success ]; then
+			grep -q '^error:' "$test_dir/output" || return 1
+			grep -q 'rc=9' "$test_dir/output" || return 1
+		else
+			grep -q '^warn: geoip lookup failed' "$test_dir/output" || return 1
+		fi
+	fi
+)
+
+set_lat='set readsb.main.lat=48.8566'
+set_lon='set readsb.main.lon=2.3522'
+both="lookup
+$set_lat
+$set_lon
+commit readsb"
+lat_only="lookup
+$set_lat
+commit readsb"
+lon_only="lookup
+$set_lon
+commit readsb"
+
+run_test 'Missing longitude does not replace precise latitude' \
+	test_update_section 51.50123456 '' 0 0 success '' 0 "$lon_only" 51.50123456 2.3522
+run_test 'Missing latitude does not replace precise longitude' \
+	test_update_section '' -0.14123456 0 0 success '' 0 "$lat_only" 48.8566 -0.14123456
+run_test 'Both empty coordinates are filled' \
+	test_update_section '' '' 0 0 success '' 0 "$both" 48.8566 2.3522
+run_test 'Both absent UCI options are filled' \
+	test_update_section UNSET UNSET 0 0 success '' 0 "$both" 48.8566 2.3522
+run_test 'Absent longitude does not replace precise latitude' \
+	test_update_section 51.50123456 UNSET 0 0 success '' 0 "$lon_only" 51.50123456 2.3522
+run_test 'Absent latitude does not replace precise longitude' \
+	test_update_section UNSET -0.14123456 0 0 success '' 0 "$lat_only" 48.8566 -0.14123456
+run_test 'Latitude zero is already populated' \
+	test_update_section 0 '' 0 0 success '' 0 "$lon_only" 0 2.3522
+run_test 'Longitude zero is already populated' \
+	test_update_section '' 0 0 0 success '' 0 "$lat_only" 48.8566 0
+run_test 'Both populated coordinates skip lookup and UCI mutations' \
+	test_update_section 51.50123456 -0.14123456 0 0 success '' 0 '' 51.50123456 -0.14123456
+run_test 'Both zero coordinates skip lookup and UCI mutations' \
+	test_update_section 0 0 0 0 success '' 0 '' 0 0
+
+run_test 'Force fills both empty coordinates' \
+	test_update_section '' '' 1 0 success '' 0 "$both" 48.8566 2.3522
+run_test 'Force replaces populated latitude while filling longitude' \
+	test_update_section 51.50123456 '' 1 0 success '' 0 "$both" 48.8566 2.3522
+run_test 'Force replaces populated longitude while filling latitude' \
+	test_update_section '' -0.14123456 1 0 success '' 0 "$both" 48.8566 2.3522
+run_test 'Force replaces both populated coordinates' \
+	test_update_section 51.50123456 -0.14123456 1 0 success '' 0 "$both" 48.8566 2.3522
+
+run_test 'Dry-run previews both missing coordinates without changing UCI' \
+	test_update_section '' '' 0 1 success '' 0 lookup '' '' "$set_lat
+$set_lon"
+run_test 'Dry-run previews only missing longitude' \
+	test_update_section 51.50123456 '' 0 1 success '' 0 lookup 51.50123456 '' "$set_lon"
+run_test 'Dry-run previews only missing latitude' \
+	test_update_section '' -0.14123456 0 1 success '' 0 lookup '' -0.14123456 "$set_lat"
+run_test 'Dry-run skips both populated coordinates' \
+	test_update_section 51.50123456 -0.14123456 0 1 success '' 0 '' 51.50123456 -0.14123456
+run_test 'Forced dry-run previews both replacements without changing UCI' \
+	test_update_section 51.50123456 -0.14123456 1 1 success '' 0 lookup 51.50123456 -0.14123456 "$set_lat
+$set_lon"
+
+run_test 'No provider result leaves both coordinates empty and returns failure' \
+	test_update_section '' '' 0 0 empty '' 1 lookup '' ''
+run_test 'No provider result preserves populated latitude' \
+	test_update_section 51.50123456 '' 0 0 empty '' 1 lookup 51.50123456 ''
+run_test 'No provider result preserves populated longitude' \
+	test_update_section '' -0.14123456 0 0 empty '' 1 lookup '' -0.14123456
+run_test 'A failed lookup with output still makes no UCI changes' \
+	test_update_section 51.50123456 '' 0 0 failure '' 1 lookup 51.50123456 ''
+run_test 'Forced failed lookup preserves both populated coordinates' \
+	test_update_section 51.50123456 -0.14123456 1 0 empty '' 1 lookup 51.50123456 -0.14123456
+run_test 'Dry-run still reports lookup failure' \
+	test_update_section '' -0.14123456 0 1 empty '' 1 lookup '' -0.14123456
+run_test 'Populated coordinates do not need a working provider' \
+	test_update_section 51.50123456 -0.14123456 0 0 empty '' 0 '' 51.50123456 -0.14123456
+run_test 'Failed latitude write stops before longitude or commit' \
+	test_update_section '' '' 0 0 success lat 1 "lookup
+$set_lat" '' ''
+run_test 'Failed missing latitude write preserves populated longitude' \
+	test_update_section '' -0.14123456 0 0 success lat 1 "lookup
+$set_lat" '' -0.14123456
+run_test 'Failed missing longitude write preserves populated latitude' \
+	test_update_section 51.50123456 '' 0 0 success lon 1 "lookup
+$set_lon" 51.50123456 ''
+run_test 'Failed longitude write leaves only latitude staged and does not commit' \
+	test_update_section '' '' 0 0 success lon 1 "lookup
+$set_lat
+$set_lon" 48.8566 ''
+run_test 'Commit failure after filling latitude is reported without replacing longitude' \
+	test_update_section '' -0.14123456 0 0 success commit 1 "$lat_only" 48.8566 -0.14123456
+run_test 'Commit failure after filling both coordinates is reported' \
+	test_update_section '' '' 0 0 success commit 1 "$both" 48.8566 2.3522
+
+test_cli() (
+	stored_lat=$1 stored_lon=$2
+	tooling=$3 lookup_mode=$4 uci_failure=$5 expected_rc=$6 expected_calls=$7
+	shift 7
+
+	_verbose_apply() { :; }
+	print_help() { echo help; }
+	load_uci_safely() { :; }
+	config_foreach() { "$1" main; return 0; }
+	jsonfilter() { return 99; }
+	wget() { return 99; }
+	[ "$tooling" != no_jsonfilter ] || unset -f jsonfilter
+	[ "$tooling" != no_http ] || unset -f wget
+
+	: > "$test_dir/calls"
+	rc=0
+	(
+		# Only shell builtins and mocks are visible during CLI execution.
+		PATH="$test_dir/bin"
+		# shellcheck source=/dev/null
+		. "$test_dir/options.sh"
+		# shellcheck source=/dev/null
+		. "$test_dir/tooling.sh"
+		# shellcheck source=/dev/null
+		. "$test_dir/dispatch.sh"
+	) > "$test_dir/output" 2>&1 || rc=$?
+	assert_equal "$rc" "$expected_rc" || {
+		cat "$test_dir/output" >&2
+		return 1
+	}
+	assert_equal "$(cat "$test_dir/calls")" "$expected_calls" || return 1
+	case "$tooling" in
+		no_jsonfilter) grep -q '^error: jsonfilter not installed' "$test_dir/output" ;;
+		no_http) grep -q '^error: no HTTP client found' "$test_dir/output" ;;
+	esac
+)
+
+run_test 'Default all-section CLI fills only missing latitude' \
+	test_cli '' -0.14123456 full success '' 0 "$lat_only"
+run_test 'Named-section CLI fills only missing longitude' \
+	test_cli 51.50123456 '' full success '' 0 "$lon_only" main
+run_test 'Default CLI skips fully populated coordinates' \
+	test_cli 51.50123456 -0.14123456 full success '' 0 ''
+run_test 'Explicit force from a wizard or one-shot invocation replaces both coordinates' \
+	test_cli 51.50123456 -0.14123456 full success '' 0 "$both" --force
+run_test 'Named-section CLI honors force after the section name' \
+	test_cli 51.50123456 '' full success '' 0 "$both" main --force
+run_test 'Named-section dry-run performs no UCI mutations' \
+	test_cli '' -0.14123456 full success '' 0 lookup --dry-run main
+run_test 'Forced dry-run performs no UCI mutations' \
+	test_cli 51.50123456 -0.14123456 full success '' 0 lookup --force --dry-run main
+run_test 'Named-section CLI propagates lookup failure' \
+	test_cli 51.50123456 '' full empty '' 1 lookup main
+run_test 'Named-section CLI propagates write failure' \
+	test_cli 51.50123456 '' full success lon 1 "lookup
+$set_lon" main
+run_test 'Named-section CLI propagates commit failure' \
+	test_cli '' -0.14123456 full success commit 1 "$lat_only" main
+run_test 'Default all-section CLI propagates lookup failure' \
+	test_cli 51.50123456 '' full empty '' 1 lookup
+run_test 'Default all-section CLI propagates write failure' \
+	test_cli 51.50123456 '' full success lon 1 "lookup
+$set_lon"
+run_test 'Default all-section CLI propagates commit failure' \
+	test_cli '' -0.14123456 full success commit 1 "$lat_only"
+run_test 'Missing jsonfilter returns status 2 before lookup or UCI changes' \
+	test_cli '' '' no_jsonfilter success '' 2 '' main
+run_test 'Missing HTTP client returns status 2 before lookup or UCI changes' \
+	test_cli '' '' no_http success '' 2 '' --force
+run_test 'Unknown CLI option remains a fatal error before lookup' \
+	test_cli '' '' full success '' 1 '' --unknown
+
+printf '%s tests, %s failures\n' "$tests" "$failures"
+[ "$failures" -eq 0 ]

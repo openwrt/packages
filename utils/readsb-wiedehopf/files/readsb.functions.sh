@@ -101,20 +101,26 @@ readsb_device_index_valid() {
 	}'
 }
 
-# Normalize a UCI freq value to integer MHz. Accepts "1090",
-# "1090MHz", "1090m", "1090000000". Empty -> "1090". Bad -> "".
+# Bare values below 1 MHz are in MHz; larger bare values are in Hz.
+# Upstream stores frequency in a signed 32-bit int.
+readsb_freq_to_hz() {
+	awk -v f="$1" 'BEGIN {
+		if (f == "") { print "1090000000"; exit }
+		gsub(/[ \t]/, "", f)
+		mhz = sub(/[Mm]([Hh][Zz])?$/, "", f)
+		if (f !~ /^[0-9]+$/ || f+0 <= 0) exit 1
+		hz = f+0
+		if (mhz || hz < 1000000) hz *= 1000000
+		if (hz > 2147483647) exit 1
+		printf "%.0f\n", hz
+	}'
+}
+
+# Integer MHz for the serial-matches-frequency convention.
 readsb_freq_to_mhz() {
-	local f=$1
-	[ -n "$f" ] || { echo 1090; return 0; }
-	f=$(printf '%s' "$f" | tr -d ' \t' | sed 's/[Mm][Hh]\{0,1\}[Zz]\{0,1\}$//')
-	case "$f" in
-		''|*[!0-9]*) echo ""; return 1 ;;
-	esac
-	if [ "$f" -ge 1000000 ]; then
-		echo $((f / 1000000))
-	else
-		echo "$f"
-	fi
+	local hz
+	hz=$(readsb_freq_to_hz "$1") || return 1
+	awk -v hz="$hz" 'BEGIN { printf "%d\n", hz / 1000000 }'
 }
 
 # --- generic poll-with-timeout ---------------------------------------------
@@ -292,23 +298,22 @@ readsb_feeder_status_url() {
 }
 
 # --- optional companion packages (per preset) -----------------------------
-# Single source of truth for "this preset has a companion package". Used
-# by the wizard and by `readsb-setup --status`.
+# External companions are recognized only when already installed. Do not
+# recommend installing packages that are unavailable in the official feeds.
 #
 # Returns space-separated opkg package names, empty for presets with none.
 readsb_feeder_optional_pkgs() {
 	case "$1" in
-		adsbexchange) echo "adsbexchange-stats" ;;
-		*) echo "" ;;
+		adsbexchange)
+			readsb_pkg_installed adsbexchange-stats && echo adsbexchange-stats
+			;;
 	esac
+	return 0
 }
 
-# Every optional companion package this build knows about, one per line.
-# Keep in sync with readsb_feeder_optional_pkgs().
+# Installed external companions supported by the diagnostics.
 readsb_companion_pkgs_all() {
-	cat <<'EOF'
-adsbexchange-stats
-EOF
+	readsb_feeder_optional_pkgs adsbexchange
 }
 
 # Short purpose string for an optional companion package.
@@ -503,7 +508,7 @@ wiz_offer_install_companions() {
 					wiz_say "  '$pkg' is installed but NOT RUNNING (init: $init)."
 				fi
 				wiz_say "    purpose: $purpose"
-				wiz_yesno ans "  enable & start '$init' now?" Y || return 1
+				wiz_yesno ans "  enable & start '$init' now?" N || return 1
 				if [ "$ans" = 1 ]; then
 					if /etc/init.d/"$init" enable 2>/dev/null \
 					   && /etc/init.d/"$init" start 2>/dev/null; then
@@ -662,9 +667,7 @@ readsb_connector_active() {
 # Up to <n> recent readsb-tagged syslog lines (default 200). rc 1 when
 # logread is unavailable.
 readsb_log_recent() {
-	local n=${1:-200}
-	command -v logread >/dev/null 2>&1 || return 1
-	logread -e readsb 2>/dev/null | tail -n "$n"
+	readsb_pkg_log_recent readsb "${1:-200}"
 }
 
 # Count of recent error/warn-level events touching <host> <port>.
@@ -744,11 +747,8 @@ readsb_log_last_stats() {
 # syslog lines (timestamp + tag prefix preserved). rc 1 when no
 # complete block is buffered.
 #
-# Pulls a 400-line window because a single block can be 40+ lines and
-# may share the buffer with helper-script chatter that would otherwise
-# push the previous block off the end. Daemon-only filter
-# (`readsb\[<pid>\]:`) drops lines from readsb-setup/-feeder/-uuid/-geoip
-# that `logread -e readsb` substring-matched in.
+# Pulls 400 exact-tag lines because a single block can be 40+ lines.
+# The PID check below excludes init/hotplug messages tagged plain readsb.
 readsb_log_last_stats_block() {
 	local buf
 	buf=$(readsb_log_recent 400) || return 1
@@ -1008,16 +1008,13 @@ readsb_pkg_log_tag() {
 # Up to <n> recent syslog lines tagged <tag> (default 200). rc 1 when
 # logread is missing or tag is empty.
 #
-# `logread -e <tag>` is a SUBSTRING match against the whole line, so
-# our own helper output (which mentions companion package names in
-# status messages, e.g. "package 'adsbexchange-stats' installed but...")
-# would otherwise leak into the count. Post-filter on the syslog tag
-# field to drop lines emitted by readsb-setup/-feeder/-uuid/-geoip.
+# `logread -e` matches substrings anywhere, including message payloads.
+# Match the actual tag exactly before limiting the number of records.
 readsb_pkg_log_recent() {
 	local tag=$1 n=${2:-200}
 	[ -n "$tag" ] || return 1
 	command -v logread >/dev/null 2>&1 || return 1
-	logread -e "$tag" 2>/dev/null | awk '
+	logread -e "$tag" 2>/dev/null | awk -v wanted="$tag" '
 		{
 			# First field that looks like "name:" or "name[pid]:".
 			for (i = 1; i <= NF; i++) {
@@ -1025,16 +1022,10 @@ readsb_pkg_log_recent() {
 					tag = $i
 					sub(/\[[0-9]+\]:$/, "", tag)
 					sub(/:$/, "", tag)
-					# Drop chatter from our own helper CLIs.
-					if (tag == "readsb-setup" ||
-					    tag == "readsb-feeder" ||
-					    tag == "readsb-uuid" ||
-					    tag == "readsb-geoip")
-						next
-					break
+					if (tag == wanted) print
+					next
 				}
 			}
-			print
 		}
 	' | tail -n "$n"
 }
@@ -1248,8 +1239,9 @@ wiz_v_gain() {
 	wiz_v_decimal "$1" || return 1
 	awk -v v="$1" 'BEGIN{ exit !(v+0 >= 0 && v+0 <= 50) }'
 }
-# PPM correction: integer or decimal in -100..100; bare '0' accepted fast.
+# The RTL-SDR backend uses atoi, so fractional PPM cannot be applied.
 wiz_v_ppm() {
-	wiz_v_decimal "$1" || return 1
-	awk -v v="$1" 'BEGIN{ exit !(v+0 >= -100 && v+0 <= 100) }'
+	awk -v v="$1" 'BEGIN {
+		exit !(v ~ /^[+-]?[0-9]+$/ && v+0 >= -100 && v+0 <= 100)
+	}'
 }

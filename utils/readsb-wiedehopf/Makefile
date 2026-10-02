@@ -62,7 +62,6 @@ define Package/readsb-wiedehopf/description
   service reload). Per-area CLIs: readsb-uuid, readsb-geoip, readsb-feeder.
 
   Optional companion packages (not pulled in automatically):
-    * adsbexchange-stats -- ranking-dashboard stats uploader for ADSBx.
     * resolveip -- improves per-host socket attribution in readsb-feeder
       when multiple feeders share a remote port. Without it, successful
       TCP probes still confirm reachability; inconclusive checks report
@@ -89,6 +88,7 @@ endef
 MAKE_FLAGS += \
 	BLADERF=no \
 	HACKRF=no \
+	HAVE_BIASTEE=yes \
 	PLUTOSDR=no \
 	SOAPYSDR=no \
 	OPTIMIZE="$(TARGET_CFLAGS)" \

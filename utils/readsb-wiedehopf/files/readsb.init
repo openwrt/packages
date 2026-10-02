@@ -104,6 +104,7 @@ start_instance() {
 	local cfg=$1
 	local enabled gain_val sys_log_level extra_args
 	local device_type net_only bo_log mode_log sdr_mode
+	local freq_cfg freq_hz='' ppm_val=''
 
 	config_get_bool enabled "$cfg" enabled 0
 	if [ "$enabled" -ne 1 ]; then
@@ -121,6 +122,23 @@ start_instance() {
 		sdr_mode=0
 	fi
 
+	if [ "$sdr_mode" -eq 1 ]; then
+		config_get freq_cfg "$cfg" freq
+		if [ -n "$freq_cfg" ]; then
+			freq_hz=$(readsb_freq_to_hz "$freq_cfg") || {
+				_err "instance '$cfg': invalid freq '$freq_cfg' (expected integer Hz or MHz); not starting"
+				start_failed=1
+				return 1
+			}
+		fi
+		config_get ppm_val "$cfg" ppm
+		if [ -n "$ppm_val" ] && ! wiz_v_ppm "$ppm_val"; then
+			_err "instance '$cfg': invalid PPM '$ppm_val' (expected an integer -100..100); not starting"
+			start_failed=1
+			return 1
+		fi
+	fi
+
 	started=1
 	mkdir -p /var/run/readsb 2>/dev/null
 
@@ -134,9 +152,11 @@ start_instance() {
 	if [ "$sdr_mode" -eq 1 ]; then
 		procd_append_param command "--device-type=$device_type"
 
-		for param in beast_serial device freq ppm sdr_buffer_size; do
+		for param in beast_serial device sdr_buffer_size; do
 			append_param "$cfg" "$param"
 		done
+		[ -z "$freq_hz" ] || procd_append_param command "--freq=$freq_hz"
+		[ -z "$ppm_val" ] || procd_append_param command "--ppm=$ppm_val"
 
 		append_bool "$cfg" dcfilter 0
 		append_bool "$cfg" enable_agc 0
@@ -148,7 +168,7 @@ start_instance() {
 
 		# gain=auto + system log_level=debug -> auto-verbose (UCI untouched)
 		config_get gain_val "$cfg" gain
-		if [ -n "$gain_val" ]; then
+		if [ -n "$gain_val" ] && [ "$gain_val" != "max" ]; then
 			if [ "$gain_val" = "auto" ]; then
 				sys_log_level=$(uci -q get system.@system[0].log_level)
 				case "$sys_log_level" in
@@ -313,17 +333,26 @@ read_usb_wait_opts() {
 # previously-pinned SDR is no longer present.
 no_usb_reconciled=0
 reconcile_no_usb_section() {
-	local cfg=$1 hp dt dev no
+	local cfg=$1 hp dt dev no autopin
 	config_get_bool hp "$cfg" hotplug 1
 	[ "$hp" = "1" ] || return 0
 	config_get dt  "$cfg" device_type
 	config_get dev "$cfg" device
 	config_get no  "$cfg" net_only 0
+	config_get autopin "$cfg" device_auto
 
 	local changed=0
 	[ -n "$dt" ]    && { uci set "readsb.${cfg}.device_type="; changed=1; }
 	[ -n "$dev" ]   && { uci set "readsb.${cfg}.device=";      changed=1; }
 	[ "$no" = "1" ] || { uci set "readsb.${cfg}.net_only=1";   changed=1; }
+	if [ -n "$autopin" ]; then
+		uci set "readsb.${cfg}.device_auto=" || {
+			_err "no USB SDR: failed to clear automatic device pin for '$cfg'"
+			start_failed=1
+			return 1
+		}
+		changed=1
+	fi
 
 	if [ "$changed" = "1" ]; then
 		no_usb_reconciled=1
@@ -379,6 +408,7 @@ geoip_probe() {
 
 start_service() {
 	started=0
+	start_failed=0
 	config_load readsb
 
 	usb_wait_timeout=""
@@ -425,9 +455,10 @@ start_service() {
 	fi
 
 	config_foreach start_instance readsb
-	if [ "$started" -eq 0 ]; then
+	if [ "$started" -eq 0 ] && [ "$start_failed" -eq 0 ]; then
 		_warn "no enabled readsb instance; enable with 'uci set readsb.@readsb[0].enabled=1; uci commit readsb' or run 'readsb-setup'"
 	fi
+	[ "$start_failed" -eq 0 ]
 }
 
 service_triggers() {

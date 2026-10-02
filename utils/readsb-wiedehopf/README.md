@@ -93,12 +93,11 @@ The three are intentionally split:
   decoded messages, positions, tracks, CPU).
 
 `--status` also runs an optional companion-package check for every
-*enabled* feeder section: for any preset that has a recommended
-companion package (currently `adsbexchange` -> `adsbexchange-stats`),
-it reports whether that package is installed and (when applicable)
-whether the bundled service is running. Missing/stopped findings are
-printed with the exact `opkg install` / `service ... start` command
-to fix them, and are mirrored to syslog.
+*enabled* feeder section. An externally supplied `adsbexchange-stats`
+package is recognized only if it is already installed; its absence is
+not a warning and does not trigger an installation offer. For installed
+companions, stopped-service findings include the command to start the
+service and are mirrored to syslog.
 
 `--health` delegates the per-feeder runtime breakdown to
 `readsb-feeder --health` (also runnable standalone, with an optional
@@ -214,10 +213,11 @@ answers yes to the feeder connection prompt.
 
 `readsb-geoip --self-test` is also an explicit network operation: it
 tests DNS and HTTPS access to both GeoIP providers. The optional
-`adsbexchange-stats` companion is a separate package and is not
-installed or started by default; consult that package's documentation
-before enabling its external statistics upload. `readsb-feeder --url`
-only prints a dashboard URL and does not fetch it.
+external `adsbexchange-stats` companion is not provided by the official
+feeds or recommended for installation here. If installed separately,
+enabling its external statistics upload requires its own consent,
+defaulting to **no**; adding a feeder is not consent for that upload.
+`readsb-feeder --url` only prints a dashboard URL and does not fetch it.
 
 For non-interactive configuration:
 
@@ -250,6 +250,16 @@ readsb apply its built-in default". Boolean options take `'0'` or `'1'`.
 | `uuid`            | empty          | station UUID, shared as the default for every feeder section that doesn't override it. Generate with `readsb-uuid`. |
 | `uuid_file`       | empty          | path readsb reads at startup and applies to every uuid-capable output that doesn't carry an embedded `uuid=`. Independent of `option uuid`; setting only the file is fine if you don't use `config feeder` sections. |
 
+Without `--force`, `readsb-geoip` fills only missing coordinates. If
+latitude or longitude is already set, that value is preserved even
+when the other coordinate needs a lookup. Use `--force` only when both
+values should be replaced with the approximate GeoIP result.
+The setup wizard follows the same rule for partial locations. If both
+coordinates exist and you explicitly choose to change the location,
+it explains that auto-detection will replace both values before asking
+for consent. `--dry-run` previews the eligible writes without staging
+or committing any UCI changes; lookup or write failures return nonzero.
+
 ### Boot-time waits
 
 | Option                 | Default | Notes                                                  |
@@ -268,12 +278,19 @@ also works.
 
 | Option            | Default | Notes                                                 |
 | ----------------- | ------- | ----------------------------------------------------- |
-| `gain`            | `auto`  | `auto`, `max`, or a numeric dB value (`0`..`50`)      |
-| `device`          | empty   | RTL-SDR serial; auto-filled by the USB hotplug handler |
+| `gain`            | `auto`  | `auto`, `max`, or a numeric dB value (`0`..`50`); `max` omits `--gain` to select upstream's maximum-gain default |
+| `device`          | empty   | RTL-SDR serial or numeric index; auto-filled by the USB hotplug handler |
+| `device_auto`     | empty   | internal marker recording the last automatic pin; clear it when choosing a manual pin |
 | `device_type`     | empty   | `rtlsdr`, `bladerf`, etc. (only `rtlsdr` is supported in this build) |
-| `freq`            | empty   | center frequency; defaults to 1090 MHz                |
-| `ppm`             | `0`     | tuner PPM correction                                  |
-| `enable_agc`, `enable_biastee` | `0` | hardware-side toggles                          |
+| `freq`            | empty   | integer MHz (`978`, `1090`), suffixed MHz (`1090MHz`, `1090m`), or integer Hz (`1090000000`); converted to Hz before startup; empty uses 1090 MHz |
+| `ppm`             | `0`     | integer tuner correction in `-100`..`100`; fractional values are not supported by the RTL-SDR backend |
+| `enable_agc`, `enable_biastee` | `0` | hardware-side toggles; bias-T support is compiled in but remains off unless explicitly enabled on compatible hardware |
+
+Bare frequency values below `1000000` are interpreted as MHz; larger
+values are Hz. The normalized frequency must fit a positive signed
+32-bit integer. Invalid frequency or PPM settings are logged and
+prevent the SDR instance from starting instead of being silently
+truncated. Net-only instances do not apply SDR tuning options.
 
 ### Network
 
@@ -331,9 +348,10 @@ removed, it switches the section back to `net_only=1`.
 ### Single-SDR setup
 
 No hardware configuration is required. Plug the RTL-SDR in; the handler
-sets `device_type=rtlsdr`, `device=<serial>`, and `net_only=0`, then
-restarts the service if it is enabled. It preserves `enabled=0` as an
-administrative choice. Unplug -> reverts to net-only.
+sets `device_type=rtlsdr`, `device=<serial>`, `device_auto=<serial>`, and
+`net_only=0`, then restarts the service if it is enabled. A dongle with
+no serial uses index `0`. It preserves `enabled=0` as an administrative
+choice. Unplug -> reverts to net-only and clears the automatic pin.
 
 ### Multi-SDR setup
 
@@ -349,13 +367,33 @@ opkg install rtl-sdr                                # provides rtl_eeprom
 rtl_eeprom -s 1090
 # Unplug, plug ONLY the 978 dongle, then:
 rtl_eeprom -s 978
-# Now both can be plugged in; the handler will pin each section by freq.
+# Now both can be plugged in; the handler selects the serial matching freq.
 ```
 
 The section's `option freq` (in Hz, MHz, or `1090MHz`-style) selects
-which serial it claims. If no serial matches, the handler logs the
-available serials at warn level and leaves `option device` empty so
-you can set it manually.
+which serial it claims. Automatically selected pins are re-evaluated
+on subsequent add events and boot-time replay. Thus plugging the `978`
+dongle first does not prevent selecting `1090` when that dongle arrives.
+If no serial matches, the handler clears an automatic pin, logs the
+available serials at warn level, and leaves `option device` empty so
+you can choose manually.
+
+An attached manual pin is not replaced by the frequency convention.
+To make a manual choice, including freezing the current automatic
+choice:
+
+```sh
+uci set readsb.main.device='chosen-serial'
+uci -q delete readsb.main.device_auto
+uci commit readsb
+service readsb restart
+```
+
+Changing `device` to a value different from `device_auto` also makes it
+manual. Existing non-empty pins without a marker are treated as manual;
+clear `device` to opt them back into automatic selection. Removal of the
+selected dongle still clears its pin. Use `hotplug=0` to opt out of all
+automatic device changes.
 
 ## Boot-time behavior
 
@@ -369,7 +407,7 @@ spawning the daemon:
    units pay no boot cost.
 2. **No-USB reconciliation** -- if a section is hotplug-managed and
    no RTL-SDR is attached at boot, the section is normalized back to
-   net-only (clears `device_type` / `device`, sets `net_only=1`) before
+   net-only (clears `device_type` / `device` / `device_auto`, sets `net_only=1`) before
    the daemon starts. Avoids a stale `device=<serial>` from a
    no-longer-attached dongle blocking startup.
 3. **Geoip wait** -- if `geoip_auto` is enabled and any enabled section
@@ -495,29 +533,22 @@ UUID resolution order per section:
 ### adsbexchange supplemental stats
 
 Feeding to ADSBx works on its own from the `adsbexchange` preset. The
-optional supplemental stats uploader (rssi/throttled telemetry posted to
-`/api/receive`, used only for the per-station ranking on the web
-dashboard) is a **separate** companion package:
+optional external `adsbexchange-stats` uploader is **not available in
+the official feeds**. This package neither recommends an `opkg install`
+for it nor warns when it is absent. Pure feeding does not require it.
 
-```sh
-opkg install adsbexchange-stats
-```
-
-It hard-depends on this package, reads `option uuid` from the readsb
-`main` section, and reads `aircraft.json` from readsb's run dir.
-Install only if you want the dashboard ranking; pure feeding does not
-need it.
+If an operator separately installs that package, the diagnostics can
+recognize its opkg metadata and display its service status, configuration
+and logs. Starting a stopped uploader requires separate explicit consent
+(default **no**) because it sends supplemental statistics to ADSBx.
 
 The public per-UUID lookup URL is printed by
 `readsb-feeder --url adsbexchange` whether the uploader is installed or
 not. When the uploader **is** installed it also exposes the same URL
 via its own `/etc/init.d/adsbexchange-stats showurl` action and a
 project-info banner via `/etc/init.d/adsbexchange-stats info`. Both
-appear on the companion package's `controls` line in
-`readsb-setup --status` and `readsb-setup --help`. opkg has no
-`Recommends`/`Suggests` field, so the link between the two packages
-is one-way: `adsbexchange-stats` DEPENDS on `readsb-wiedehopf`, not
-the other way around.
+appear on the installed companion's `controls` line in
+`readsb-setup --status` and `readsb-setup --help`.
 
 ### adsblol map
 
@@ -566,6 +597,11 @@ All script-side and daemon-side logging goes to syslog under the tag
 ```sh
 logread -e readsb
 ```
+
+The health helpers filter by the exact syslog tag before taking the
+recent-log window. Warnings from `readsb-setup`, `readsb-feeder`,
+`readsb-uuid`, or `readsb-geoip` do not count as daemon errors merely
+because their tags contain `readsb`.
 
 To also persist logs to a file and/or forward them to a remote syslog
 server, configure system-wide logging (this is the OpenWrt convention --
@@ -659,9 +695,6 @@ the block with `option stats '0'` if it gets noisy.
 
 Not pulled in automatically (opkg has no `Recommends` field):
 
-* **adsbexchange-stats** -- optional ranking-dashboard stats uploader
-  for ADSBx. Hard-depends on this package; only install if you want
-  ADSBx's per-station web ranking.
 * **resolveip** -- improves IPv4 socket attribution when multiple feeders
   share a remote port. Install with `opkg install resolveip` to enable
   per-host checks. Without it, successful TCP probes still work;
@@ -670,12 +703,11 @@ Not pulled in automatically (opkg has no `Recommends` field):
   indeterminate even with `resolveip` installed.
 
 `readsb-setup --status` and `readsb-feeder --companions` walk every
-*enabled* feeder section, look up the recommended companion package(s)
-for each preset (currently `adsbexchange-stats`, not `resolveip`), and
-report whether each one is **installed** and (when it ships an init
-script) **running**. Missing or stopped packages are printed with the
-exact command to install / start them and are mirrored to syslog so
-they also appear in `logread -e readsb` for headless setups.
+*enabled* feeder section and report recognized, already-installed
+external companions (currently `adsbexchange-stats`, not `resolveip`).
+They do not recommend installing unavailable packages. Stopped services
+are reported with their start command and mirrored to syslog so they
+also appear in `logread -e readsb` for headless setups.
 
 ## Conflicts
 
@@ -690,9 +722,13 @@ From the packages feed root, run:
 
 ```sh
 sh utils/readsb-wiedehopf/tests/feeder.sh
+sh utils/readsb-wiedehopf/tests/runtime.sh
+sh utils/readsb-wiedehopf/tests/geoip.sh
 ```
 
-The tests exercise the production probe and health functions with mocked
-OpenWrt services and network tools; they do not change UCI or contact
-aggregators. The same script can be run with `bash` or `busybox ash` to
-check shell compatibility.
+The tests exercise production feeder diagnostics, SDR argument
+translation, automatic/manual pin handling, consent, exact-tag log
+filtering, and GeoIP coordinate preservation. OpenWrt services, hardware
+and network tools are mocked; the tests do not change the host's UCI or
+contact external services. The scripts can also be run with `bash` or
+`busybox ash` to check shell compatibility.

@@ -97,7 +97,7 @@ print_banner() {
    readsb-uuid --force       -- regenerate even if set (DESTRUCTIVE)
    readsb-geoip              -- auto-fill empty lat/lon from public IP
    readsb-geoip --force      -- overwrite existing lat/lon
-   readsb-geoip --dry-run    -- everything except 'uci commit'
+   readsb-geoip --dry-run    -- preview only; no UCI changes
    readsb-geoip --self-test  -- read-only PASS/FAIL diagnostic
 
  Daemon control:
@@ -1178,10 +1178,23 @@ if [ "$upd" = 1 ]; then
 			wiz_say "  This lookup sends an HTTPS request from this router to"
 			wiz_say "  ipapi.co; if that fails, it tries ipwho.is. The services"
 			wiz_say "  see the router's public IP and return city-level coordinates."
+			geoip_force=0
+			geoip_once=0
+			if [ -n "$cur_lat" ] && [ -n "$cur_lon" ]; then
+				geoip_force=1
+				wiz_say "  This will replace both existing coordinates with approximate values."
+			else
+				wiz_say "  Only missing coordinates will be filled; existing values are preserved."
+			fi
 			wiz_yesno geoip_once "  allow this one-time third-party lookup?" N || exit 1
 			if [ "$geoip_once" = 1 ]; then
-				wiz_say "  running readsb-geoip --force ..."
-				readsb-geoip --force
+				if [ "$geoip_force" = 1 ]; then
+					wiz_say "  running readsb-geoip --force ..."
+					readsb-geoip --force
+				else
+					wiz_say "  running readsb-geoip ..."
+					readsb-geoip
+				fi
 				rc=$?
 				if [ "$rc" = 0 ]; then
 					changes_made=1
@@ -1254,8 +1267,8 @@ else
 	if [ "$tune" = 1 ]; then
 		wiz_ask_validated new_gain "  gain ('auto', 'max', or 0..50 dB)" "${cur_gain:-auto}" wiz_v_gain \
 			"gain must be 'auto', 'max', or a number 0..50" || exit 1
-		wiz_ask_validated new_ppm "  PPM correction (-100..100, 0 for none)" "${cur_ppm:-0}" wiz_v_ppm \
-			"PPM must be a number between -100 and 100" || exit 1
+		wiz_ask_validated new_ppm "  PPM correction (integer -100..100, 0 for none)" "${cur_ppm:-0}" wiz_v_ppm \
+			"PPM must be an integer between -100 and 100" || exit 1
 
 		wiz_yesno new_agc "  enable AGC? (most setups: no)" \
 			"$([ "$cur_agc" = 1 ] && echo Y || echo N)" || exit 1

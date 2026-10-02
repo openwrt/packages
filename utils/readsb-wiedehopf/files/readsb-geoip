@@ -8,8 +8,8 @@
 #
 # City-level only; for accurate CPR / range decoding, set lat/lon
 # manually with `readsb-setup` or `uci set readsb.main.lat=...`.
-# Non-interactive: only writes when both values are empty (or with
-# --force) and then commits UCI.
+# Non-interactive: fills each empty coordinate, preserving any populated
+# value unless --force is used, and then commits UCI.
 #
 # Usage:
 #   readsb-geoip [<section>]            -- fill empty lat/lon (default:
@@ -20,7 +20,7 @@
 #   readsb-geoip --self-test            -- PASS/FAIL diagnostic of HTTP
 #                                          client, jsonfilter, network,
 #                                          provider response
-#   readsb-geoip --dry-run [<section>]  -- everything except `uci commit`
+#   readsb-geoip --dry-run [<section>]  -- preview only; no UCI changes
 #
 # Mutating (commits to UCI; does NOT restart the daemon):
 #   readsb-geoip [<section>]            -- the default action above
@@ -227,7 +227,7 @@ lookup() {
 
 update_section() {
 	local sec=$1
-	local cur_lat cur_lon coords lat lon
+	local cur_lat cur_lon coords lat lon set_lat=0 set_lon=0
 
 	cur_lat=$(uci -q get "readsb.${sec}.lat") || cur_lat=""
 	cur_lon=$(uci -q get "readsb.${sec}.lon") || cur_lon=""
@@ -240,14 +240,23 @@ update_section() {
 	_log "looking up coordinates for section '${sec}' (cur_lat='${cur_lat}' cur_lon='${cur_lon}' force=$force)"
 
 	coords=$(lookup) || {
-		_warn "geoip lookup failed for '${sec}'; lat/lon left unset (set manually: uci set readsb.${sec}.lat=...; uci set readsb.${sec}.lon=...; uci commit readsb)"
+		_warn "geoip lookup failed for '${sec}'; lat/lon left unchanged (set manually: uci set readsb.${sec}.lat=...; uci set readsb.${sec}.lon=...; uci commit readsb)"
 		return 1
 	}
 	set -- $coords
-	lat=$1; lon=$2
+	lat=$cur_lat; lon=$cur_lon
+	if [ "$force" -eq 1 ] || [ -z "$cur_lat" ]; then
+		lat=$1
+		set_lat=1
+	fi
+	if [ "$force" -eq 1 ] || [ -z "$cur_lon" ]; then
+		lon=$2
+		set_lon=1
+	fi
 
 	if [ "$dry_run" = "1" ]; then
-		_notice "[dry-run] would set readsb.${sec}.lat=${lat} readsb.${sec}.lon=${lon}"
+		[ "$set_lat" -eq 1 ] && _notice "[dry-run] would set readsb.${sec}.lat=${lat}"
+		[ "$set_lon" -eq 1 ] && _notice "[dry-run] would set readsb.${sec}.lon=${lon}"
 		return 0
 	fi
 
@@ -255,18 +264,22 @@ update_section() {
 	# emitting a success notice on a half-written / un-committed change.
 	# Returning non-zero lets callers (cron, init-script geoip wait,
 	# --self-test piping) treat this as the failure it actually is.
-	if ! uci set "readsb.${sec}.lat=${lat}"; then
-		_err "failed to set readsb.${sec}.lat (uci set rc=$?); aborting"
-		return 1
+	if [ "$set_lat" -eq 1 ]; then
+		uci set "readsb.${sec}.lat=${lat}" || {
+			_err "failed to set readsb.${sec}.lat (uci set rc=$?); aborting"
+			return 1
+		}
 	fi
-	if ! uci set "readsb.${sec}.lon=${lon}"; then
-		_err "failed to set readsb.${sec}.lon (uci set rc=$?); aborting"
-		return 1
+	if [ "$set_lon" -eq 1 ]; then
+		uci set "readsb.${sec}.lon=${lon}" || {
+			_err "failed to set readsb.${sec}.lon (uci set rc=$?); aborting"
+			return 1
+		}
 	fi
-	if ! uci commit readsb; then
+	uci commit readsb || {
 		_err "uci commit readsb failed (rc=$?); lat/lon for '${sec}' may not be persisted"
 		return 1
-	fi
+	}
 	_notice "auto-detected location for '${sec}': lat=${lat} lon=${lon} (city-level only; for accurate CPR set exact coords with 'readsb-setup' or 'uci set readsb.${sec}.lat=...; uci set readsb.${sec}.lon=...; uci commit readsb')"
 }
 
@@ -456,6 +469,11 @@ if [ "$sec_count" -eq 0 ]; then
 fi
 
 last_stage="update-all"
-config_foreach update_section readsb
+update_failed=0
+update_each_section() {
+	update_section "$1" || update_failed=1
+}
+config_foreach update_each_section readsb
 last_stage="done"
 _debug "all sections processed"
+exit "$update_failed"
