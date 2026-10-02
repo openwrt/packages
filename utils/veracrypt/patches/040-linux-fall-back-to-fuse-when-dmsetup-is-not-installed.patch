@@ -1,0 +1,35 @@
+From d24b82102a11a318fd00bffcac6681238da3992e Mon Sep 17 00:00:00 2001
+From: Ville Takio <93599126+flatstik@users.noreply.github.com>
+Date: Sat, 3 Oct 2026 02:00:48 +0000
+Subject: [PATCH] Linux: fall back to FUSE when dmsetup is not installed
+ (#1898)
+
+Without dmsetup, MountVolumeNative fails with "dmsetup not found in
+system directories" instead of using the FUSE path, so on systems that
+do not ship device-mapper tools (for example OpenWrt) every mount and
+the filesystem formatting step of --create need an explicit
+--mount-options=nokernelcrypto. Treat a missing dmsetup like the other
+cases where kernel crypto cannot be used.
+
+Upstream-Status: Backport [https://github.com/veracrypt/VeraCrypt/commit/d24b82102a11a318fd00bffcac6681238da3992e]
+
+Signed-off-by: Ville Takio <ville+git@takio.fi>
+---
+ src/Core/Unix/Linux/CoreLinux.cpp | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+--- a/src/Core/Unix/Linux/CoreLinux.cpp
++++ b/src/Core/Unix/Linux/CoreLinux.cpp
+@@ -502,6 +502,12 @@ namespace VeraCrypt
+ 		if (!SystemInfo::IsVersionAtLeast (2, 6, xts ? 24 : 20))
+ 			throw NotApplicable (SRC_POS);
+ 
++		// Without dmsetup, kernel crypto cannot be used: fall back to FUSE
++		// instead of failing, as when nokernelcrypto was given.
++		string dmsetupError;
++		if (Process::FindSystemBinary ("dmsetup", dmsetupError).empty())
++			throw NotApplicable (SRC_POS);
++
+ 		// Load device mapper kernel module
+ 		list <string> execArgs;
+ 		foreach (const string &dmModule, StringConverter::Split ("dm_mod dm-mod dm"))

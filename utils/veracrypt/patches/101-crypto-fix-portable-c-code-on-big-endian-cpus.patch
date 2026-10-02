@@ -1,0 +1,572 @@
+From 35a330a8d2b6b0ec4da3a75ba543c014679d2537 Mon Sep 17 00:00:00 2001
+From: Ville Takio <ville+git@takio.fi>
+Date: Wed, 30 Sep 2026 21:05:25 +0300
+Subject: [PATCH] Crypto: fix portable C code on big-endian CPUs
+
+On big-endian CPUs (e.g. MIPS and PowerPC) the portable C code of
+several algorithms assumes a little-endian host, so ciphertext, hashes
+and derived keys are wrong and "veracrypt --text --test" fails:
+
+- Twofish: the key-dependent S-box bytes are read back from 32-bit
+  words through a union, and blocks are loaded/stored as native words.
+- Camellia: blocks and keys are always byte-swapped to big-endian.
+- Kuznyechik: keys and blocks are loaded/stored as native 64-bit words
+  while the tables expect the little-endian interpretation.
+- SHA-256/SHA-512: message words, length and digest are always
+  byte-swapped.
+- BLAKE2s: the parameter block and message words are read as native
+  little-endian data. The parameter block is now built from its fields,
+  so it is right for any parameters, not only the ones VeraCrypt uses.
+- Streebog: the existing big-endian code path is never enabled, and
+  BSWAP64 used by it is not defined. Its add512() also differs from the
+  little-endian one, which drops a carry on purpose (existing volumes
+  depend on it); do the same limb arithmetic on big-endian.
+- misc.h: the rotate-based bswap_32 (non-Linux, non-Apple builds) lacks
+  outer parentheses, so "bswap_32(a) ^ b" is parsed wrongly, and the
+  fallback bswap_64 does not parenthesise its argument.
+- PBKDF2: the block number is always byte-swapped.
+
+Swap only where the host byte order differs from the data, and enable
+the Streebog big-endian path. On big-endian hosts the message words,
+keys and blocks of SHA-2, BLAKE2s, Twofish and Kuznyechik are read and
+written byte-wise (new VcLoad*/VcStore* inline helpers in misc.h), so
+these paths also work on misaligned buffers on strict-alignment CPUs.
+On little-endian CPUs the code is unchanged: the object files of all
+touched sources are byte-identical
+before and after this change (checked on x86_64, aarch64 and mipsel).
+With it, all self-tests pass on mips (big-endian) under qemu.
+
+Upstream-Status: Submitted [https://github.com/veracrypt/VeraCrypt/pull/1899]
+
+Signed-off-by: Ville Takio <ville+git@takio.fi>
+---
+ src/Common/Pkcs5.c      | 18 +++++++++++----
+ src/Crypto/Camellia.c   |  6 +++++
+ src/Crypto/Sha2.c       | 30 +++++++++++++++++++-----
+ src/Crypto/Streebog.c   | 37 +++++++++++++++++++-----------
+ src/Crypto/Twofish.c    | 51 +++++++++++++++++++++++++----------------
+ src/Crypto/blake2s.c    | 30 +++++++++++++++++++++++-
+ src/Crypto/kuznyechik.c | 34 +++++++++++++++++----------
+ src/Crypto/misc.h       | 50 +++++++++++++++++++++++++++++++++++++---
+ 8 files changed, 195 insertions(+), 61 deletions(-)
+
+--- a/src/Common/Pkcs5.c
++++ b/src/Common/Pkcs5.c
+@@ -22,6 +22,14 @@
+ #include "Whirlpool.h"
+ #include "cpu.h"
+ #include "misc.h"
++#include "Endian.h"
++
++/* PBKDF2 block numbers are big-endian: swap only on little-endian hosts. */
++#if BYTE_ORDER == BIG_ENDIAN
++#define PKCS5_BE32(x) (x)
++#else
++#define PKCS5_BE32(x) (bswap_32(x))
++#endif
+ #else
+ #pragma optimize ("t", on)
+ #include <string.h>
+@@ -180,7 +188,7 @@ static void derive_u_sha256 (const unsig
+ 	memset (&k[salt_len], 0, 3);
+ 	k[salt_len + 3] = (unsigned char) b;
+ #else
+-    b = bswap_32 (b);
++    b = PKCS5_BE32 (b);
+     memcpy (&k[salt_len], &b, 4);
+ #endif	
+ 
+@@ -433,7 +441,7 @@ static void derive_u_sha512 (const unsig
+ 	/* iteration 1 */
+ 	memcpy (k, salt, salt_len);	/* salt */
+ 	/* big-endian block number */
+-    b = bswap_32 (b);
++    b = PKCS5_BE32 (b);
+ 	memcpy (&k[salt_len], &b, 4);
+ 
+ 	hmac_sha512_internal (k, salt_len + 4, hmac);
+@@ -681,7 +689,7 @@ static void derive_u_blake2s (const unsi
+ 	memset (&k[salt_len], 0, 3);
+ 	k[salt_len + 3] = (unsigned char) b;
+ #else
+-    b = bswap_32 (b);
++    b = PKCS5_BE32 (b);
+     memcpy (&k[salt_len], &b, 4);
+ #endif	
+ 
+@@ -911,7 +919,7 @@ static void derive_u_whirlpool (const un
+ 	/* iteration 1 */
+ 	memcpy (k, salt, salt_len);	/* salt */
+ 	/* big-endian block number */
+-    b = bswap_32 (b);
++    b = PKCS5_BE32 (b);
+ 	memcpy (&k[salt_len], &b, 4);
+ 
+ 	hmac_whirlpool_internal (k, salt_len + 4, hmac);
+@@ -1114,7 +1122,7 @@ static void derive_u_streebog (const uns
+ 	/* iteration 1 */
+ 	memcpy (k, salt, salt_len);	/* salt */
+ 	/* big-endian block number */
+-    b = bswap_32 (b);
++    b = PKCS5_BE32 (b);
+ 	memcpy (&k[salt_len], &b, 4);
+ 
+ 	hmac_streebog_internal (k, salt_len + 4, hmac);
+--- a/src/Crypto/Camellia.c
++++ b/src/Crypto/Camellia.c
+@@ -1523,12 +1523,18 @@ static const uint64 S[8][256] = {
+ 
+ 	VC_INLINE uint64 camellia_load_be64(const unsigned __int8 *ptr)
+ 	{
++#if BYTE_ORDER == BIG_ENDIAN
++		return camellia_load64(ptr);
++#else
+ 		return bswap_64(camellia_load64(ptr));
++#endif
+ 	}
+ 
+ 	VC_INLINE void camellia_store_be64(unsigned __int8 *ptr, uint64 value)
+ 	{
++#if BYTE_ORDER != BIG_ENDIAN
+ 		value = bswap_64(value);
++#endif
+ 		camellia_store64(ptr, value);
+ 	}
+ 
+--- a/src/Crypto/Sha2.c
++++ b/src/Crypto/Sha2.c
+@@ -10,6 +10,24 @@ and released into public domain.
+ #include "Crypto/cpu.h"
+ #include "Crypto/misc.h"
+ 
++/* SHA-2 words are big-endian: swap only on little-endian hosts. */
++#if BYTE_ORDER == BIG_ENDIAN
++#define SHA2_BE32(x) (x)
++#define SHA2_BE64(x) (x)
++#else
++#define SHA2_BE32(x) (bswap_32(x))
++#define SHA2_BE64(x) (bswap_64(x))
++#endif
++
++/* Message word i of the block at p (big-endian; byte-wise on big-endian hosts). */
++#if BYTE_ORDER == BIG_ENDIAN
++#define SHA2_LOAD_BE32(p, i) VcLoadBE32((const uint8 *) (p) + 4 * (i))
++#define SHA2_LOAD_BE64(p, i) VcLoadBE64((const uint8 *) (p) + 8 * (i))
++#else
++#define SHA2_LOAD_BE32(p, i) bswap_32(((const uint_32t *) (p))[i])
++#define SHA2_LOAD_BE64(p, i) bswap_64(((const uint_64t *) (p))[i])
++#endif
++
+ #if defined(_UEFI) || defined(CRYPTOPP_DISABLE_ASM)
+ #define NO_OPTIMIZED_VERSIONS
+ #endif
+@@ -99,7 +117,7 @@ void StdTransform(sha512_ctx* ctx, void*
+ 
+ 		for (i = 0; i < 128 / 8; i++)
+ 		{
+-			W[i] = bswap_64((((const uint_64t*)(mp))[blk * 16 + i]));
++			W[i] = SHA2_LOAD_BE64(mp, blk * 16 + i);
+ 		}
+ 
+ 		a = ctx->hash[0];
+@@ -244,12 +262,12 @@ void sha512_end(unsigned char * result,
+ 		pos = 0;
+ 	}
+ 	memset(m + pos, 0, (size_t) (128 - pos));
+-	mlen = bswap_64(ctx->count[1]);
++	mlen = SHA2_BE64(ctx->count[1]);
+ 	memcpy(m + (128 - 8), &mlen, 64 / 8);
+ 	transfunc(ctx, m, 1);
+ 	for (i = 0; i < 8; i++)
+ 	{
+-		ctx->hash[i] = bswap_64(ctx->hash[i]);
++		ctx->hash[i] = SHA2_BE64(ctx->hash[i]);
+ 	}
+ 	memcpy(result, ctx->hash, 64);
+ }
+@@ -672,7 +690,7 @@ void StdSha256Transform(sha256_ctx* ctx,
+ 
+ 		for (i = 0; i < 64 / 4; i++)
+ 		{
+-			W[i] = bswap_32((((const uint_32t*)(mp))[blk * 16 + i]));
++			W[i] = SHA2_LOAD_BE32(mp, blk * 16 + i);
+ 		}
+ 
+ 		a = ctx->hash[0];
+@@ -846,12 +864,12 @@ void sha256_end(unsigned char * result,
+ 		pos = 0;
+ 	}
+ 	memset(m + pos, 0, (size_t) (56 - pos));
+-	mlen = bswap_64((uint_64t) ctx->count[1]);
++	mlen = SHA2_BE64((uint_64t) ctx->count[1]);
+ 	memcpy(m + (64 - 8), &mlen, 64 / 8);
+ 	sha256transfunc(ctx, m, 1);
+ 	for (i = 0; i < 8; i++)
+ 	{
+-		ctx->hash[i] = bswap_32(ctx->hash[i]);
++		ctx->hash[i] = SHA2_BE32(ctx->hash[i]);
+ 	}
+ 	memcpy(result, ctx->hash, 32);
+ }
+--- a/src/Crypto/Streebog.c
++++ b/src/Crypto/Streebog.c
+@@ -8,6 +8,14 @@
+ 
+ #include "Streebog.h"
+ #include "cpu.h"
++#include "misc.h"
++#include "Common/Endian.h"
++
++/* The big-endian code paths below come from the original implementation. */
++#if BYTE_ORDER == BIG_ENDIAN
++#define __GOST3411_BIG_ENDIAN__
++#define BSWAP64(x) bswap_64(x)
++#endif
+ 
+ #if defined (_MSC_VER) && (_MSC_VER < 1600)
+ #error "Streebog SSE code requires at least Visual C++ 2010 when building on Windows"
+@@ -24,8 +32,8 @@ STREEBOG_ALIGN(16) static const unsigned
+ STREEBOG_ALIGN(16) static const unsigned long long buffer512[8] = {0x0000000000000200ULL,
+     0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL };
+ #else
+-STREEBOG_ALIGN(16) static const unsigned long long buffer512[8] = {{ 0x0002000000000000ULL,
+-    0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL }};
++STREEBOG_ALIGN(16) static const unsigned long long buffer512[8] = { 0x0002000000000000ULL,
++    0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL };
+ #endif
+ 
+ #ifndef __GOST3411_BIG_ENDIAN__
+@@ -1783,20 +1791,21 @@ add512(const unsigned long long *x, cons
+         r[i] = tmp;
+ 	}
+ #else
+-    const unsigned char *xp, *yp;
+-    unsigned char *rp;
+-    unsigned int i;
+-    int buf;
++    /* Same limb-wise arithmetic as the little-endian path above (including
++     * its dropped carry, which existing volumes depend on), applied to the
++     * byte-swapped 64-bit limbs. */
++    unsigned int CF = 0, OF, i;
++    unsigned long long a, b, tmp;
+ 
+-    xp = (const unsigned char *) x;
+-    yp = (const unsigned char *) y;
+-    rp = (unsigned char *) r;
+-
+-    buf = 0;
+-    for (i = 0; i < 64; i++)
++    for (i = 0; i < 8; i++)
+     {
+-        buf = xp[i] + yp[i] + (buf >> 8);
+-        rp[i] = (unsigned char) buf & 0xFF;
++        a = BSWAP64(x[i]);
++        b = BSWAP64(y[i]);
++        tmp = a + b;
++        OF = tmp < a;
++        tmp += CF;
++        CF = OF;
++        r[i] = BSWAP64(tmp);
+     }
+ #endif
+ }
+--- a/src/Crypto/Twofish.c
++++ b/src/Crypto/Twofish.c
+@@ -44,6 +44,17 @@
+ 
+ #include "misc.h"
+ 
++/* The cipher works on little-endian words: swap only on big-endian hosts. */
++#if BYTE_ORDER == BIG_ENDIAN
++#define TWOFISH_LE32(x) (bswap_32(x))
++#define TWOFISH_LOAD(p, i) VcLoadLE32((p) + (i))
++#define TWOFISH_STORE(p, i, v) VcStoreLE32((p) + (i), (v))
++#else
++#define TWOFISH_LE32(x) (x)
++#define TWOFISH_LOAD(p, i) ((p)[i])
++#define TWOFISH_STORE(p, i, v) ((p)[i] = (v))
++#endif
++
+ /* C implementation based on code written by kerukuro for cppcrypto library 
+    (http://cppcrypto.sourceforge.net/) and released into public domain.
+    With ideas from Botan library	(C) 1999-2007 Jack Lloyd
+@@ -610,10 +621,10 @@ void twofish_set_key(TwofishInstance *in
+ 	unsigned int i;
+    const uint8* key = (const uint8*) in_key;
+ 
+-	us.S32[0] = RS[0][key[0]] ^ RS[1][key[1]] ^ RS[2][key[2]] ^ RS[3][key[3]] ^ RS[4][key[4]] ^ RS[5][key[5]] ^ RS[6][key[6]] ^ RS[7][key[7]];
+-	us.S32[1] = RS[0][key[8]] ^ RS[1][key[9]] ^ RS[2][key[10]] ^ RS[3][key[11]] ^ RS[4][key[12]] ^ RS[5][key[13]] ^ RS[6][key[14]] ^ RS[7][key[15]];
+-	us.S32[2] = RS[0][key[16]] ^ RS[1][key[17]] ^ RS[2][key[18]] ^ RS[3][key[19]] ^ RS[4][key[20]] ^ RS[5][key[21]] ^ RS[6][key[22]] ^ RS[7][key[23]];
+-	us.S32[3] = RS[0][key[24]] ^ RS[1][key[25]] ^ RS[2][key[26]] ^ RS[3][key[27]] ^ RS[4][key[28]] ^ RS[5][key[29]] ^ RS[6][key[30]] ^ RS[7][key[31]];
++	us.S32[0] = TWOFISH_LE32(RS[0][key[0]] ^ RS[1][key[1]] ^ RS[2][key[2]] ^ RS[3][key[3]] ^ RS[4][key[4]] ^ RS[5][key[5]] ^ RS[6][key[6]] ^ RS[7][key[7]]);
++	us.S32[1] = TWOFISH_LE32(RS[0][key[8]] ^ RS[1][key[9]] ^ RS[2][key[10]] ^ RS[3][key[11]] ^ RS[4][key[12]] ^ RS[5][key[13]] ^ RS[6][key[14]] ^ RS[7][key[15]]);
++	us.S32[2] = TWOFISH_LE32(RS[0][key[16]] ^ RS[1][key[17]] ^ RS[2][key[18]] ^ RS[3][key[19]] ^ RS[4][key[20]] ^ RS[5][key[21]] ^ RS[6][key[22]] ^ RS[7][key[23]]);
++	us.S32[3] = TWOFISH_LE32(RS[0][key[24]] ^ RS[1][key[25]] ^ RS[2][key[26]] ^ RS[3][key[27]] ^ RS[4][key[28]] ^ RS[5][key[29]] ^ RS[6][key[30]] ^ RS[7][key[31]]);
+ 
+ 	for (i = 0; i < 256; ++i)
+ 	{
+@@ -1003,10 +1014,10 @@ void twofish_encrypt(TwofishInstance *ks
+ {   
+ 	uint32* rk = ks->l_key;
+ 
+-	uint32 x0 = in_blk[0] ^ rk[0];
+-	uint32 x1 = in_blk[1] ^ rk[1];
+-	uint32 x2 = in_blk[2] ^ rk[2];
+-	uint32 x3 = in_blk[3] ^ rk[3];
++	uint32 x0 = TWOFISH_LOAD(in_blk, 0) ^ rk[0];
++	uint32 x1 = TWOFISH_LOAD(in_blk, 1) ^ rk[1];
++	uint32 x2 = TWOFISH_LOAD(in_blk, 2) ^ rk[2];
++	uint32 x3 = TWOFISH_LOAD(in_blk, 3) ^ rk[3];
+ 	uint32 f0, f1;
+ 
+ #ifdef UNROLL_TWOFISH
+@@ -1027,10 +1038,10 @@ void twofish_encrypt(TwofishInstance *ks
+ 	x1 ^= rk[7];
+ 
+ 
+-	out_blk[0] = x2;
+-	out_blk[1] = x3;
+-	out_blk[2] = x0;
+-	out_blk[3] = x1;
++	TWOFISH_STORE(out_blk, 0, x2);
++	TWOFISH_STORE(out_blk, 1, x3);
++	TWOFISH_STORE(out_blk, 2, x0);
++	TWOFISH_STORE(out_blk, 3, x1);
+ }
+ #endif
+ #else // TC_MINIMIZE_CODE_SIZE
+@@ -1075,10 +1086,10 @@ void twofish_encrypt(TwofishInstance *in
+ void twofish_decrypt(TwofishInstance *ks, const u4byte in_blk[4], u4byte out_blk[4])
+ {
+ 	uint32* rk = ks->l_key;
+-	uint32 x0 = in_blk[0] ^ rk[4];
+-	uint32 x1 = in_blk[1] ^ rk[5];
+-	uint32 x2 = in_blk[2] ^ rk[6];
+-	uint32 x3 = in_blk[3] ^ rk[7];
++	uint32 x0 = TWOFISH_LOAD(in_blk, 0) ^ rk[4];
++	uint32 x1 = TWOFISH_LOAD(in_blk, 1) ^ rk[5];
++	uint32 x2 = TWOFISH_LOAD(in_blk, 2) ^ rk[6];
++	uint32 x3 = TWOFISH_LOAD(in_blk, 3) ^ rk[7];
+ 	uint32 f0, f1;
+ 
+ #ifdef UNROLL_TWOFISH
+@@ -1097,10 +1108,10 @@ void twofish_decrypt(TwofishInstance *ks
+ 	x0 ^= rk[2];
+ 	x1 ^= rk[3];
+ 
+-	out_blk[0] = x2;
+-	out_blk[1] = x3;
+-	out_blk[2] = x0;
+-	out_blk[3] = x1;
++	TWOFISH_STORE(out_blk, 0, x2);
++	TWOFISH_STORE(out_blk, 1, x3);
++	TWOFISH_STORE(out_blk, 2, x0);
++	TWOFISH_STORE(out_blk, 3, x1);
+ };
+ #endif
+ #else // TC_MINIMIZE_CODE_SIZE
+--- a/src/Crypto/blake2s.c
++++ b/src/Crypto/blake2s.c
+@@ -28,6 +28,13 @@
+ // load32 is always called in SSE case which implies little endian 
+ #define load32(x)	*((uint32*) (x))
+ 
++/* Message words are little-endian: read them byte-wise on big-endian hosts. */
++#if BYTE_ORDER == BIG_ENDIAN
++#define BLAKE2S_LOAD32(p) VcLoadLE32(p)
++#else
++#define BLAKE2S_LOAD32(p) (*((uint32*) (p)))
++#endif
++
+ const uint32 blake2s_IV[8] =
+ {
+   0x6A09E667UL, 0xBB67AE85UL, 0x3C6EF372UL, 0xA54FF53AUL,
+@@ -70,6 +77,26 @@ void blake2s_init_param( blake2s_state *
+ {
+   size_t i;
+   /*blake2s_init0( S ); */
++#if BYTE_ORDER == BIG_ENDIAN
++  /* IV XOR ParamBlock: the parameter block is defined as little-endian
++   * words, so build them from the (native) fields. */
++  uint32 w[8];
++
++  memset( S, 0, sizeof( blake2s_state ) );
++  w[0] = ( uint32 ) P->digest_length | ( ( uint32 ) P->key_length << 8 )
++    | ( ( uint32 ) P->fanout << 16 ) | ( ( uint32 ) P->depth << 24 );
++  w[1] = P->leaf_length;
++  w[2] = P->node_offset;
++  w[3] = ( uint32 ) P->xof_length | ( ( uint32 ) P->node_depth << 16 )
++    | ( ( uint32 ) P->inner_length << 24 );
++  w[4] = VcLoadLE32( P->salt );
++  w[5] = VcLoadLE32( P->salt + 4 );
++  w[6] = VcLoadLE32( P->personal );
++  w[7] = VcLoadLE32( P->personal + 4 );
++
++  for( i = 0; i < 8; ++i )
++    S->h[i] = blake2s_IV[i] ^ w[i];
++#else
+   const uint8 * v = ( const uint8 * )( blake2s_IV );
+   const uint8 * p = ( const uint8 * )( P );
+   uint8 * h = ( uint8 * )( S->h );
+@@ -77,6 +104,7 @@ void blake2s_init_param( blake2s_state *
+   memset( S, 0, sizeof( blake2s_state ) );
+ 
+   for( i = 0; i < BLAKE2S_OUTBYTES; ++i ) h[i] = v[i] ^ p[i];
++#endif
+ 
+   S->outlen = P->digest_length;
+ }
+@@ -126,7 +154,7 @@ static void blake2s_compress_std( blake2
+   size_t i;
+ 
+   for( i = 0; i < 16; ++i ) {
+-	m[i] = *((uint32*) (in + i * sizeof( m[i] )));
++	m[i] = BLAKE2S_LOAD32( in + i * sizeof( m[i] ) );
+   }
+ 
+   for( i = 0; i < 8; ++i ) {
+--- a/src/Crypto/kuznyechik.c
++++ b/src/Crypto/kuznyechik.c
+@@ -6,6 +6,16 @@ and released into public domain.
+ #include "kuznyechik.h"
+ #include "cpu.h"
+ #include "misc.h"
++#include "Common/Endian.h"
++
++/* Keys and blocks are used as little-endian words: swap only on big-endian hosts. */
++#if BYTE_ORDER == BIG_ENDIAN
++#define KUZNYECHIK_LOAD64(p) VcLoadLE64(p)
++#define KUZNYECHIK_STORE64(p, v) VcStoreLE64((p), (v))
++#else
++#define KUZNYECHIK_LOAD64(p) (*(const uint64*)(p))
++#define KUZNYECHIK_STORE64(p, v) (*(uint64*)(p) = (v))
++#endif
+ 
+ #ifdef _MSC_VER
+ #define inline __forceinline
+@@ -2210,10 +2220,10 @@ void kuznyechik_decrypt_blocks_simd(uint
+ #endif
+ 		{
+ 			int i;
+-			uint64 k00 = *(const uint64*)key;
+-			uint64 k01 = *(((const uint64*)key) + 1);
+-			uint64 k10 = *(((const uint64*)key) + 2);
+-			uint64 k11 = *(((const uint64*)key) + 3);
++			uint64 k00 = KUZNYECHIK_LOAD64(key);
++			uint64 k01 = KUZNYECHIK_LOAD64(key + 8);
++			uint64 k10 = KUZNYECHIK_LOAD64(key + 16);
++			uint64 k11 = KUZNYECHIK_LOAD64(key + 24);
+ 			uint64 t00, t01, t10, t11;
+ 
+ 			kds->rke[0] = k00;
+@@ -2268,8 +2278,8 @@ void kuznyechik_decrypt_blocks_simd(uint
+ 		else
+ #endif
+ 		{
+-			uint64 x1 = *(const uint64*)in;
+-			uint64 x2 = *(((const uint64*)in)+1);
++			uint64 x1 = KUZNYECHIK_LOAD64(in);
++			uint64 x2 = KUZNYECHIK_LOAD64(in + 8);
+ 			uint64 t1, t2;
+ 			x1 ^= kds->rke[0];
+ 			x2 ^= kds->rke[1];
+@@ -2300,8 +2310,8 @@ void kuznyechik_decrypt_blocks_simd(uint
+ 			LS(x1, x2, t1, t2);
+ 			t1 ^= kds->rke[18];
+ 			t2 ^= kds->rke[19];
+-			*(uint64*)out = t1;
+-			*(((uint64*)out) + 1) = t2;
++			KUZNYECHIK_STORE64(out, t1);
++			KUZNYECHIK_STORE64(out + 8, t2);
+ 		}
+ 	}
+ 
+@@ -2335,8 +2345,8 @@ void kuznyechik_decrypt_blocks_simd(uint
+ 		else
+ #endif
+ 		{
+-			uint64 x1 = *(const uint64*)in;
+-			uint64 x2 = *(((const uint64*)in) + 1);
++			uint64 x1 = KUZNYECHIK_LOAD64(in);
++			uint64 x2 = KUZNYECHIK_LOAD64(in + 8);
+ 			uint64 t1, t2;
+ 
+ 			ILSS(x1, x2, t1, t2);
+@@ -2370,8 +2380,8 @@ void kuznyechik_decrypt_blocks_simd(uint
+ 			ISI((uint8*)&t2);
+ 			t1 ^= kds->rkd[0];
+ 			t2 ^= kds->rkd[1];
+-			*(uint64*)out = t1;
+-			*(((uint64*)out) + 1) = t2;
++			KUZNYECHIK_STORE64(out, t1);
++			KUZNYECHIK_STORE64(out + 8, t2);
+ 		}
+ 	}
+ 
+--- a/src/Crypto/misc.h
++++ b/src/Crypto/misc.h
+@@ -101,17 +101,61 @@ extern "C" {
+ #define bswap_64 OSSwapInt64
+ #else
+ #if CRYPTOPP_FAST_ROTATE(32)
+-#define bswap_32(x)	(rotr32((x), 8U) & 0xff00ff00) | (rotl32((x), 8U) & 0x00ff00ff)
++#define bswap_32(x)	((rotr32((x), 8U) & 0xff00ff00) | (rotl32((x), 8U) & 0x00ff00ff))
+ #else
+ #define CRYPTOPP_BYTESWAP_AVAILABLE
+ #define bswap_32(x)	(rotl32((((x) & 0xFF00FF00) >> 8) | (((x) & 0x00FF00FF) << 8), 16U))
+-#define bswap_64(x)	rotl64(((((((x & LL(0xFF00FF00FF00FF00)) >> 8) | ((x & LL(0x00FF00FF00FF00FF)) << 8)) & LL(0xFFFF0000FFFF0000)) >> 16) | (((((x & LL(0xFF00FF00FF00FF00)) >> 8) | ((x & LL(0x00FF00FF00FF00FF)) << 8)) & LL(0x0000FFFF0000FFFF)) << 16)), 32U)
++#define bswap_64(x)	rotl64(((((((((x) & LL(0xFF00FF00FF00FF00)) >> 8) | (((x) & LL(0x00FF00FF00FF00FF)) << 8)) & LL(0xFFFF0000FFFF0000)) >> 16) | ((((((x) & LL(0xFF00FF00FF00FF00)) >> 8) | (((x) & LL(0x00FF00FF00FF00FF)) << 8)) & LL(0x0000FFFF0000FFFF)) << 16)), 32U)
+ #endif
+ #ifndef TC_NO_COMPILER_INT64
+-#define bswap_64(x)	rotl64(((((((x & LL(0xFF00FF00FF00FF00)) >> 8) | ((x & LL(0x00FF00FF00FF00FF)) << 8)) & LL(0xFFFF0000FFFF0000)) >> 16) | (((((x & LL(0xFF00FF00FF00FF00)) >> 8) | ((x & LL(0x00FF00FF00FF00FF)) << 8)) & LL(0x0000FFFF0000FFFF)) << 16)), 32U)
++#define bswap_64(x)	rotl64(((((((((x) & LL(0xFF00FF00FF00FF00)) >> 8) | (((x) & LL(0x00FF00FF00FF00FF)) << 8)) & LL(0xFFFF0000FFFF0000)) >> 16) | ((((((x) & LL(0xFF00FF00FF00FF00)) >> 8) | (((x) & LL(0x00FF00FF00FF00FF)) << 8)) & LL(0x0000FFFF0000FFFF)) << 16)), 32U)
+ #endif
+ #endif
+ 
++/* Alignment-safe loads and stores of little- and big-endian words in byte
++ * buffers (used by the big-endian code paths). */
++VC_INLINE uint32 VcLoadLE32 (const void *ptr)
++{
++	const uint8 *p = (const uint8 *) ptr;
++	return (uint32) p[0] | ((uint32) p[1] << 8) | ((uint32) p[2] << 16) | ((uint32) p[3] << 24);
++}
++
++VC_INLINE uint32 VcLoadBE32 (const void *ptr)
++{
++	const uint8 *p = (const uint8 *) ptr;
++	return ((uint32) p[0] << 24) | ((uint32) p[1] << 16) | ((uint32) p[2] << 8) | (uint32) p[3];
++}
++
++VC_INLINE void VcStoreLE32 (void *ptr, uint32 value)
++{
++	uint8 *p = (uint8 *) ptr;
++	p[0] = (uint8) value;
++	p[1] = (uint8) (value >> 8);
++	p[2] = (uint8) (value >> 16);
++	p[3] = (uint8) (value >> 24);
++}
++
++#ifndef TC_NO_COMPILER_INT64
++VC_INLINE uint64 VcLoadLE64 (const void *ptr)
++{
++	const uint8 *p = (const uint8 *) ptr;
++	return (uint64) VcLoadLE32 (p) | ((uint64) VcLoadLE32 (p + 4) << 32);
++}
++
++VC_INLINE uint64 VcLoadBE64 (const void *ptr)
++{
++	const uint8 *p = (const uint8 *) ptr;
++	return ((uint64) VcLoadBE32 (p) << 32) | (uint64) VcLoadBE32 (p + 4);
++}
++
++VC_INLINE void VcStoreLE64 (void *ptr, uint64 value)
++{
++	uint8 *p = (uint8 *) ptr;
++	VcStoreLE32 (p, (uint32) value);
++	VcStoreLE32 (p + 4, (uint32) (value >> 32));
++}
++#endif
++
+ VC_INLINE uint32 ByteReverseWord32 (uint32 value)
+ {
+ #if defined(__GNUC__) && defined(CRYPTOPP_X86_ASM_AVAILABLE)

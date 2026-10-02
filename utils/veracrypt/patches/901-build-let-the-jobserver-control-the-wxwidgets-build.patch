@@ -1,0 +1,25 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ville Takio <ville+git@takio.fi>
+Date: Fri, 2 Oct 2026 12:00:00 +0300
+Subject: [PATCH] Build: let the jobserver control the wxWidgets build
+
+The wxbuild target always runs its sub-make with -j 4, which overrides
+the job count and jobserver of the OpenWrt build. Inherit them instead.
+OpenWrt-specific: a standalone upstream build would then build
+wxWidgets serially unless make is called with -j.
+
+Upstream-Status: Inappropriate [OpenWrt specific]
+
+Signed-off-by: Ville Takio <ville+git@takio.fi>
+---
+ src/Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/src/Makefile
++++ b/src/Makefile
+@@ -746,4 +746,4 @@ endif
+ 	"$(WX_ROOT)/configure" $(WX_CONFIGURE_FLAGS) $(WX_CONFIGURE_EXTRA_FLAGS) $$WX_CONFIGURE_LEGACY_FLAGS >/dev/null
+ 
+ 	@echo Building wxWidgets library...
+-	cd "$(WX_BUILD_DIR)" && $(MAKE) -j 4
++	cd "$(WX_BUILD_DIR)" && $(MAKE)
