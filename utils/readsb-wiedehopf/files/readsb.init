@@ -292,11 +292,9 @@ start_instance() {
 	fi
 	_notice "starting '$cfg' ($mode_log, beast_out=${bo_log:-off})"
 
-	# Defensive: surface the pin-mismatch case where SDR(s) are present
-	# on USB but UCI told us net-only. Operator can then 'restart' to
-	# re-pin via the next start_service.
+	# Network-only can be intentional while multiple SDRs need selection.
 	if [ "$sdr_mode" -eq 0 ] && readsb_is_sdr_present; then
-		_warn "instance '$cfg': $(readsb_count_sdrs) RTL-SDR(s) attached on USB but starting net-only (UCI device_type='${device_type}' net_only='${net_only}'); run '/etc/init.d/readsb restart' to re-pin"
+		_warn "instance '$cfg': $(readsb_count_sdrs) RTL-SDR(s) attached on USB but starting net-only (UCI device_type='${device_type}' net_only='${net_only}'); check the 'device' and 'freq' options, then restart to reselect"
 	fi
 }
 

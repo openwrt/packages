@@ -19,6 +19,7 @@ sed -n '/^_banner_print_companions() {/,/^}/p' "$package_dir/files/readsb-setup"
 . "$tmpdir/init.sh"
 sed -n '
 	/^pin_device() {/,/^}/p
+	/^set_net_only() {/,/^}/p
 	/^check_freq() {/,/^}/p
 	/^case "$ACTION" in/,$p
 ' "$package_dir/files/readsb.hotplug" > "$tmpdir/hotplug.sh" || exit 1
@@ -91,6 +92,31 @@ assert_config() {
 	config_get _actual main "$1"
 	assert_equal "$_actual" "$2"
 }
+
+test_wait_budget() (
+	reset_config
+	poll_timeout=$1 poll_interval=$2 ready_on=$3 expected_rc=$4 expected_delays=$5
+	attempts=0
+	probe() {
+		attempts=$((attempts + 1))
+		[ "$ready_on" -gt 0 ] && [ "$attempts" -ge "$ready_on" ]
+	}
+	sleep() { printf '%s\n' "$1" >> "$tmpdir/commands"; }
+	rc=0
+	readsb_wait_until receiver "$poll_timeout" "$poll_interval" probe || rc=$?
+	assert_equal "$rc" "$expected_rc" || return 1
+	assert_equal "$(cat "$tmpdir/commands")" "$expected_delays" || return 1
+	total=$(awk '{ n += $1 } END { print n+0 }' "$tmpdir/commands")
+	[ "$poll_timeout" -lt 0 ] || [ "$total" -le "$poll_timeout" ]
+)
+run_test 'poll timeout shorter than interval sleeps only the remainder' test_wait_budget 1 10 0 1 1
+run_test 'poll final sleep is capped to the remaining budget' test_wait_budget 5 3 0 1 "$(printf '3\n2')"
+run_test 'poll immediate success does not sleep' test_wait_budget 10 3 1 0 ''
+run_test 'poll success before the deadline stops further sleeps' test_wait_budget 10 3 2 0 3
+run_test 'poll performs a final probe at the deadline' test_wait_budget 5 3 3 0 "$(printf '3\n2')"
+run_test 'zero poll timeout probes once without sleeping' test_wait_budget 0 10 0 1 ''
+run_test 'negative poll timeout probes once without sleeping' test_wait_budget -1 10 0 1 ''
+run_test 'zero poll interval uses one-second intervals' test_wait_budget 2 0 0 1 "$(printf '1\n1')"
 
 test_frequency() (
 	rc=0
@@ -334,13 +360,59 @@ test_changed_frequency_pin() (
 test_unmatched_auto_pin() (
 	reset_config 'readsb.main.device=978' 'readsb.main.device_auto=978'
 	run_hotplug add spare "$(printf '%s\n' 978 spare)" || return 1
-	assert_config device '' && assert_config device_auto '' || return 1
+	assert_config device 978 && assert_config device_auto 978 && assert_config net_only 0 || return 1
+	grep -q 'no serial matches' "$tmpdir/messages"
+)
+test_unlabelled_auto_pin() (
+	reset_config
+	run_hotplug add first first || return 1
+	assert_config device first || return 1
+	run_hotplug add second "$(printf '%s\n' first second)" || return 1
+	assert_config device first && assert_config device_auto first && assert_config net_only 0 || return 1
+	writes_before=$(wc -l < "$tmpdir/writes")
+	run_hotplug add first "$(printf '%s\n' second first)" || return 1
+	assert_config device first && assert_equal "$(wc -l < "$tmpdir/writes")" "$writes_before"
+)
+test_ambiguous_devices() (
+	reset_config "readsb.main.device=$1" "readsb.main.device_auto=$2"
+	serials=$(printf '%s\n' first second)
+	run_hotplug add second "$serials" || return 1
+	assert_config device '' && assert_config device_auto '' && assert_config net_only 1 || return 1
+	writes_before=$(wc -l < "$tmpdir/writes")
+	run_hotplug add first "$serials" || return 1
+	assert_config net_only 1 && assert_equal "$(wc -l < "$tmpdir/writes")" "$writes_before" || return 1
+	grep -q 'net-only' "$tmpdir/messages" || return 1
+	run_hotplug add 1090 "$(printf '%s\n' "$serials" 1090)" || return 1
+	assert_config device 1090 && assert_config net_only 0
+)
+test_ambiguous_manual_recovery() (
+	reset_config 'readsb.main.net_only=1' 'readsb.main.device=chosen'
+	run_hotplug add second "$(printf '%s\n' chosen second)" || return 1
+	assert_config device chosen && assert_config device_auto '' && assert_config net_only 0
+)
+test_net_only_write_error() (
+	reset_config
+	fail_set=readsb.main.net_only
+	rc=0
+	run_hotplug add second "$(printf '%s\n' first second)" || rc=$?
+	assert_equal "$rc" 1 || return 1
+	grep -q '^error:' "$tmpdir/messages" && ! grep -q '^commit$' "$tmpdir/writes"
+)
+test_ambiguous_index() (
+	reset_config 'readsb.main.device=0' 'readsb.main.device_auto=0'
+	run_hotplug add '' "$(printf '%s\n' NOSERIAL NOSERIAL)" || return 1
+	assert_config device '' && assert_config device_auto '' && assert_config net_only 1 || return 1
 	grep -q 'no serial matches' "$tmpdir/messages"
 )
 test_remove_pin() (
 	reset_config 'readsb.main.device=1090' 'readsb.main.device_auto=1090'
 	run_hotplug remove "$1" "$2" || return 1
-	assert_config device "$3" && assert_config device_auto "$3"
+	assert_config device "$3" && assert_config device_auto "$3" || return 1
+	if [ -z "$3" ]; then
+		assert_config net_only 1
+	else
+		assert_config net_only 0
+	fi
 )
 test_reconcile_pin() (
 	reset_config 'readsb.main.device=1090' 'readsb.main.device_auto=1090'
@@ -362,7 +434,13 @@ run_test 'changing frequency re-evaluates an automatic pin' test_changed_frequen
 run_test 'manual serial pin is preserved' test_manual_pin 978 ''
 run_test 'manual numeric pin is preserved' test_manual_pin 0 ''
 run_test 'editing an auto pin makes it manual' test_manual_pin 'manual spare' 978
-run_test 'unmatched auto pin is cleared with a warning' test_unmatched_auto_pin
+run_test 'unmatched automatic serial is retained while still attached' test_unmatched_auto_pin
+run_test 'two unlabelled SDRs retain their stable automatic serial across replay' test_unlabelled_auto_pin
+run_test 'unselected multi-SDR setup remains net-only until a match arrives' test_ambiguous_devices '' ''
+run_test 'stale auto pin with no frequency match remains net-only' test_ambiguous_devices stale stale
+run_test 'manual selection can reactivate an ambiguous net-only setup' test_ambiguous_manual_recovery
+run_test 'net-only transition failure is reported and not committed' test_net_only_write_error
+run_test 'multiple serial-less SDRs cannot preserve an ambiguous automatic index' test_ambiguous_index
 run_test 'removing selected SDR clears its marker' test_remove_pin 1090 978 ''
 run_test 'removing unrelated SDR preserves the pin' test_remove_pin 978 1090 1090
 run_test 'removing the last SDR clears its marker' test_remove_pin 1090 '' ''

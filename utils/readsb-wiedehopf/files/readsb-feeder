@@ -278,6 +278,10 @@ cmd_probe() {
 # With <name>: same but for one section; rc 3 when <name> doesn't exist.
 cmd_health() {
 	local want=$1 main_uuid checked=0 bad=0
+	if [ -n "$want" ] && ! readsb_feeder_section_exists "$want"; then
+		echo "readsb-feeder: no feeder section named '$want'" >&2
+		return 3
+	fi
 	main_uuid=$(uci -q get readsb.main.uuid)
 
 	# Daemon-level preface: if not running, every feeder is by
@@ -592,6 +596,15 @@ _parse_kv() {
 	return 0
 }
 
+# Only discard the section created by this invocation; leave unrelated
+# staged edits and previously staged deletions intact.
+_discard_new_feeder() {
+	uci -q delete "readsb.$1" || {
+		echo "readsb-feeder: could not discard partial feeder '$1'; check pending UCI changes" >&2
+		return 2
+	}
+}
+
 # --- command: --add --------------------------------------------------------
 cmd_add() {
 	# busybox-ash exits the whole script on `shift N` past argv length,
@@ -637,16 +650,28 @@ cmd_add() {
 		fi
 	fi
 
-	uci -q add readsb feeder >/dev/null || { echo "readsb-feeder: uci add failed" >&2; return 2; }
-	uci -q rename "readsb.@feeder[-1]=${name}" || { echo "readsb-feeder: uci rename failed" >&2; return 2; }
-	uci -q set "readsb.${name}.preset=${preset}"
+	uci -q set "readsb.${name}=feeder" || {
+		echo "readsb-feeder: uci set failed creating feeder '$name'" >&2
+		return 2
+	}
 	# Default enabled=0 unless the caller overrides via key=value below.
-	uci -q set "readsb.${name}.enabled=0"
+	if ! uci -q set "readsb.${name}.preset=${preset}" \
+	   || ! uci -q set "readsb.${name}.enabled=0"; then
+		echo "readsb-feeder: uci set failed initializing feeder '$name'" >&2
+		_discard_new_feeder "$name"
+		return 2
+	fi
 	for kv in "$@"; do
-		_parse_kv "$kv" || return 1
-		uci -q set "readsb.${name}.${key}=${val}"
+		uci -q set "readsb.${name}.${kv}" || {
+			echo "readsb-feeder: uci set failed for '$name.${kv%%=*}'" >&2
+			_discard_new_feeder "$name"
+			return 2
+		}
 	done
-	_commit || return 2
+	_commit || {
+		_discard_new_feeder "$name"
+		return 2
+	}
 	_emit_mutation "feeder '$name' added (preset=$preset)"
 	readsb_warn_companions "$preset" "$name"
 }

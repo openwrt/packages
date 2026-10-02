@@ -129,7 +129,7 @@ readsb_freq_to_mhz() {
 readsb_wait_until() {
 	local label=$1 timeout=$2 interval=$3
 	shift 3
-	local elapsed=0 attempt=1
+	local elapsed=0 attempt=1 delay remaining
 	[ "$interval" -ge 1 ] 2>/dev/null || interval=1
 	_log "waiting for $label (timeout=${timeout}s interval=${interval}s)"
 	while : ; do
@@ -138,8 +138,11 @@ readsb_wait_until() {
 			return 0
 		fi
 		[ "$elapsed" -ge "$timeout" ] && break
-		sleep "$interval"
-		elapsed=$((elapsed + interval))
+		remaining=$((timeout - elapsed))
+		delay=$interval
+		[ "$delay" -le "$remaining" ] || delay=$remaining
+		sleep "$delay"
+		elapsed=$((elapsed + delay))
 		attempt=$((attempt + 1))
 	done
 	_warn "$label not ready within ${timeout}s; continuing"

@@ -84,6 +84,16 @@ pin_device() {
 	changed=1
 }
 
+set_net_only() {
+	[ "$net_only" = "$1" ] && return 0
+	uci set "readsb.${target}.net_only=$1" || {
+		_err "hotplug: failed to update net-only mode for '$target'"
+		return 1
+	}
+	net_only=$1
+	changed=1
+}
+
 case "$ACTION" in
 add)
 	check_driver_collision
@@ -122,9 +132,9 @@ add)
 	fi
 
 	if [ -z "$device" ] || [ "$device" = "$device_auto" ]; then
-		if [ "$sdr_count" -le 1 ]; then
+		if [ "$sdr_count" -eq 1 ]; then
 			pin_device "${event_serial:-0}" || exit 1
-		else
+		elif [ "$sdr_count" -gt 1 ]; then
 			# Multi-SDR auto-pin by serial-matches-freq convention.
 			# Recipe in README.md ("Multi-SDR setup").
 			config_get freq_cfg "$target" freq
@@ -137,16 +147,22 @@ add)
 			if [ -n "$match" ]; then
 				pin_device "$match" || exit 1
 				_notice "hotplug: $sdr_count RTL-SDRs attached; auto-pinned device='$match' by serial-matches-freq convention (freq=${freq_cfg:-1090})"
+			elif [ -n "$device" ] && readsb_sdr_serial_present "$device"; then
+				_warn "hotplug: no serial matches freq=${freq_cfg:-1090}; keeping attached automatic serial '$device'"
 			else
 				pin_device "" || exit 1
-				_warn "hotplug: $sdr_count RTL-SDRs attached ($(readsb_list_sdrs | tr '\n' ' ')); no serial matches freq=${freq_cfg:-1090}; set 'option device <serial>' to choose one (tip: 'rtl_eeprom -s 1090' to label by frequency)"
+				_warn "hotplug: $sdr_count RTL-SDRs attached ($(readsb_list_sdrs | tr '\n' ' ')); no serial matches freq=${freq_cfg:-1090}; staying net-only until a device is selected (tip: 'rtl_eeprom -s 1090' to label by frequency, or set 'option device <serial>')"
 			fi
 		fi
 	fi
 
-	[ "$net_only" = "1" ] && { uci set "readsb.${target}.net_only=0"; changed=1; }
-
-	msg="RTL-SDR ($vid:$pid serial=${event_serial:-none}) added [${sdr_count} total]: SDR mode"
+	if [ -n "$device" ]; then
+		set_net_only 0 || exit 1
+		msg="RTL-SDR ($vid:$pid serial=${event_serial:-none}) added [${sdr_count} total]: SDR mode"
+	else
+		set_net_only 1 || exit 1
+		msg="RTL-SDR ($vid:$pid serial=${event_serial:-none}) added [${sdr_count} total]: net-only mode (no SDR selected)"
+	fi
 	;;
 
 remove)
@@ -170,7 +186,8 @@ remove)
 			{ [ "$device_present" -eq 0 ] && ! readsb_device_index_valid "$device" "$sdr_count"; }; \
 		}; then
 			pin_device "" || exit 1
-			msg="RTL-SDR ($vid:$pid serial=$event_serial) removed; cleared device pin ($sdr_count remaining)"
+			set_net_only 1 || exit 1
+			msg="RTL-SDR ($vid:$pid serial=$event_serial) removed; cleared device pin, net-only until reselection ($sdr_count remaining)"
 		else
 			exit 0
 		fi
@@ -178,7 +195,7 @@ remove)
 		# Last SDR removed; revert to net-only.
 		[ "$device_type" = "rtlsdr" ] && { uci set "readsb.${target}.device_type="; changed=1; }
 		pin_device "" || exit 1
-		[ "$net_only"   = "1" ]       || { uci set "readsb.${target}.net_only=1";   changed=1; }
+		set_net_only 1 || exit 1
 		msg="RTL-SDR ($vid:$pid serial=${event_serial:-none}) removed; net-only mode"
 	fi
 	;;

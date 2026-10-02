@@ -3,17 +3,25 @@
 
 package_dir=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd) || exit 1
 tmpdir=$(mktemp -d) || exit 1
-trap 'rm -f "$tmpdir/functions.sh" "$tmpdir/calls" "$tmpdir/bin/grep"; rmdir "$tmpdir/bin" "$tmpdir"' 0
+trap 'rm -f "$tmpdir/functions.sh" "$tmpdir/calls" "$tmpdir/state" "$tmpdir/state.new" "$tmpdir/committed" "$tmpdir/bin/grep"; rmdir "$tmpdir/bin" "$tmpdir"' 0
 trap 'exit 1' HUP INT TERM
 mkdir "$tmpdir/bin" || exit 1
 ln -s "$(command -v grep)" "$tmpdir/bin/grep" || exit 1
 
 # Load the production functions without sourcing OpenWrt libraries or dispatching.
+# shellcheck source=/dev/null
+. "$package_dir/files/readsb.functions.sh"
 sed -n '
 	/^_no_match() {/,/^}/p
+	/^_emit_mutation() {/,/^}/p
+	/^_commit() {/,/^}/p
 	/^_probe_tcp() {/,/^}/p
 	/^cmd_probe() {/,/^}/p
 	/^cmd_health() {/,/^}/p
+	/^_feeder_opt_ok() {/,/^}/p
+	/^_parse_kv() {/,/^}/p
+	/^_discard_new_feeder() {/,/^}/p
+	/^cmd_add() {/,/^}/p
 ' "$package_dir/files/readsb-feeder" > "$tmpdir/functions.sh" || exit 1
 # shellcheck source=/dev/null
 . "$tmpdir/functions.sh"
@@ -115,6 +123,13 @@ test_feeder_command() (
 	enabled=${12:-1}
 
 	uci() { echo '00000000-0000-4000-8000-000000000000'; }
+	readsb_feeder_section_exists() {
+		case $1 in
+			test) return 0 ;;
+			second) [ "$mixed" = 1 ] ;;
+			*) return 1 ;;
+		esac
+	}
 	config_load() { :; }
 	config_foreach() {
 		"$1" test
@@ -200,6 +215,12 @@ run_test '--probe works without a running daemon' \
 	test_feeder_command cmd_probe 2 0 0 OK 1 0 1 down
 run_test '--health reports a stopped daemon' \
 	test_feeder_command cmd_health 1 0 2 NONE 0 0 1 down
+run_test '--health reports an unknown named feeder before daemon-down' \
+	test_feeder_command cmd_health 1 0 3 NONE 0 0 1 down 0 unknown
+run_test '--health rejects a non-feeder section even while the daemon is down' \
+	test_feeder_command cmd_health 1 0 3 NONE 0 0 1 down 0 main
+run_test '--health still reports daemon-down for an existing named feeder' \
+	test_feeder_command cmd_health 1 0 2 NONE 0 0 1 down 0 test
 
 for caller in cmd_probe cmd_health; do
 	run_test "$caller reports an unknown feeder" \
@@ -209,6 +230,104 @@ for caller in cmd_probe cmd_health; do
 	run_test "$caller reports explicitly selected disabled feeders" \
 		test_feeder_command "$caller" 1 0 0 DISABLED 0 0 1 123 0 test 0
 done
+
+test_add_feeder() (
+	fail=$1 expected_rc=$2
+	shift 2
+	printf '%s\n' 'readsb.main=readsb' 'readsb.main.lat=51.5' 'readsb.other=feeder' \
+		'readsb.other.enabled=0' 'readsb.main.pending=keep' > "$tmpdir/state"
+	cp "$tmpdir/state" "$tmpdir/committed"
+	: > "$tmpdir/calls"
+
+	uci() {
+		[ "$1" != -q ] || shift
+		printf '%s %s\n' "$1" "$2" >> "$tmpdir/calls"
+		case $1 in
+			get)
+				awk -v key="$2=" '
+					index($0, key) == 1 { value = substr($0, length(key) + 1); found = 1 }
+					END { if (!found) exit 1; print value }
+				' "$tmpdir/state"
+				;;
+			add)
+				[ "$fail" != create ] || return 9
+				echo 'readsb.cfgnew=feeder' >> "$tmpdir/state"
+				echo cfgnew
+				;;
+			rename)
+				sed 's/^readsb.cfgnew=/readsb.test=/' "$tmpdir/state" > "$tmpdir/state.new"
+				mv "$tmpdir/state.new" "$tmpdir/state"
+				;;
+			set)
+				case $2 in
+					readsb.test=*) [ "$fail" != create ] || return 9 ;;
+				esac
+				[ "$2" != "$fail" ] || return 9
+				[ "$fail" != cleanup ] || [ "$2" != readsb.test.enabled=0 ] || return 9
+				printf '%s\n' "$2" >> "$tmpdir/state"
+				;;
+			delete)
+				[ "$2" = readsb.test ] || return 99
+				[ "$fail" != cleanup ] || return 9
+				awk '$0 !~ /^readsb[.]test[.=]/' "$tmpdir/state" > "$tmpdir/state.new"
+				mv "$tmpdir/state.new" "$tmpdir/state"
+				;;
+			commit)
+				[ "$fail" != commit ] || return 9
+				cp "$tmpdir/state" "$tmpdir/committed"
+				;;
+			*) return 99 ;;
+		esac
+	}
+	_notice() { :; }
+	readsb_warn_companions() { echo companions >> "$tmpdir/calls"; }
+
+	rc=0
+	output=$(cmd_add test "$@" 2>&1) || rc=$?
+	assert_equal "$rc" "$expected_rc" || { printf '%s\n' "$output" >&2; return 1; }
+	grep -q '^readsb.main.pending=keep$' "$tmpdir/state" || return 1
+	grep -q '^readsb.other.enabled=0$' "$tmpdir/state" || return 1
+	if [ "$rc" -eq 0 ]; then
+		assert_equal "$(uci -q get readsb.test)" feeder || return 1
+		assert_equal "$(uci -q get readsb.test.preset)" "$1" || return 1
+		cmp -s "$tmpdir/state" "$tmpdir/committed" || return 1
+		printf '%s\n' "$output" | grep -q "feeder 'test' added" || return 1
+		if [ "$1" = custom ]; then
+			assert_equal "$(uci -q get readsb.test.host)" feed.example.com || return 1
+			assert_equal "$(uci -q get readsb.test.enabled)" 1
+		else
+			assert_equal "$(uci -q get readsb.test.enabled)" 0
+		fi
+	else
+		! printf '%s\n' "$output" | grep -q 'added' || return 1
+		! grep -q '^companions$' "$tmpdir/calls" || return 1
+		! grep -Eq '^readsb[.](test|cfgnew)[.=]' "$tmpdir/committed" || return 1
+		if [ "$fail" = cleanup ]; then
+			printf '%s\n' "$output" | grep -q 'could not discard' || return 1
+		else
+			! grep -Eq '^readsb[.](test|cfgnew)[.=]' "$tmpdir/state" || return 1
+			cmp -s "$tmpdir/state" "$tmpdir/committed" || return 1
+		fi
+		if [ "$fail" != commit ]; then
+			! grep -q '^commit ' "$tmpdir/calls" || return 1
+		fi
+		printf '%s\n' "$output" | grep -q 'readsb-feeder:'
+	fi
+)
+run_test '--add preset commits disabled defaults' test_add_feeder '' 0 adsblol
+run_test '--add custom commits every validated option' test_add_feeder '' 0 custom \
+	host=feed.example.com port=30004 protocol=beast_reduce_plus_out enabled=1 silent_fail=1 \
+	uuid=00000000-0000-4000-8000-000000000000
+for fail in create readsb.test.preset=custom readsb.test.enabled=0 \
+	readsb.test.host=feed.example.com readsb.test.port=30004 \
+	readsb.test.protocol=beast_reduce_plus_out readsb.test.enabled=1 \
+	readsb.test.silent_fail=1 readsb.test.uuid=00000000-0000-4000-8000-000000000000 commit cleanup; do
+	run_test "--add fails safely at $fail" test_add_feeder "$fail" 2 custom \
+		host=feed.example.com port=30004 protocol=beast_reduce_plus_out enabled=1 silent_fail=1 \
+		uuid=00000000-0000-4000-8000-000000000000
+done
+run_test '--add validates all options before any mutation' test_add_feeder '' 1 custom \
+	host=feed.example.com port=invalid
 
 printf '%s tests, %s failures\n' "$tests" "$failures"
 [ "$failures" -eq 0 ]

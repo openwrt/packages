@@ -119,6 +119,11 @@ service and are mirrored to syslog.
   `service readsb reload`.
 * `DISABLED` -- `enabled=0` in UCI; only shown when explicitly named.
 
+An explicitly requested feeder name is checked before the daemon's
+running state. `readsb-feeder --health <name>` exits 3 if that feeder
+does not exist (or names a non-feeder section), even while readsb is
+stopped; an existing feeder with a stopped daemon still exits 2.
+
 To dump the live UCI config in a human-readable form (without the noise
 of `uci show`):
 
@@ -270,6 +275,11 @@ or committing any UCI changes; lookup or write failures return nonzero.
 | `usb_wait_timeout`     | `0`     | seconds the init script blocks until a USB SDR appears in `/sys`. Default `0` (off) so net-only deployments pay no boot cost. Only honored when `option hotplug 1` is set. |
 | `usb_wait_interval`    | `2`     | poll interval for the USB wait loop.                   |
 
+Each polling sleep is capped to the remaining wait budget. For example,
+a one-second timeout with a ten-second interval sleeps only one second
+before the final probe. Individual probe execution time is additional
+to this sleep budget.
+
 ### SDR / RF
 
 The interactive way to set these on a unit with an attached RTL-SDR is
@@ -374,9 +384,17 @@ The section's `option freq` (in Hz, MHz, or `1090MHz`-style) selects
 which serial it claims. Automatically selected pins are re-evaluated
 on subsequent add events and boot-time replay. Thus plugging the `978`
 dongle first does not prevent selecting `1090` when that dongle arrives.
-If no serial matches, the handler clears an automatic pin, logs the
-available serials at warn level, and leaves `option device` empty so
-you can choose manually.
+If no serial matches, a still-attached automatic serial is kept to avoid
+switching a working unlabelled setup to an arbitrary dongle. An automatic
+numeric index without a matching serial is not stable enough to retain
+with multiple SDRs.
+
+With no matching serial, valid manual choice, or retained automatic
+serial, `device` stays empty and `net_only=1`; an omitted device must
+not silently select upstream's index 0. The handler logs the available
+serials and asks for a device selection. Selecting a device manually or
+attaching a frequency-matched dongle re-enables SDR mode on the next
+hotplug add or restart. Boot replay follows the same rule.
 
 An attached manual pin is not replaced by the frequency convention.
 To make a manual choice, including freezing the current automatic
@@ -392,8 +410,8 @@ service readsb restart
 Changing `device` to a value different from `device_auto` also makes it
 manual. Existing non-empty pins without a marker are treated as manual;
 clear `device` to opt them back into automatic selection. Removal of the
-selected dongle still clears its pin. Use `hotplug=0` to opt out of all
-automatic device changes.
+selected dongle still clears its pin and switches to network-only until
+reselection. Use `hotplug=0` to opt out of all automatic device changes.
 
 ## Boot-time behavior
 
@@ -484,6 +502,12 @@ readsb-feeder --add mycustom custom \
     enabled=1 silent_fail=1
 service readsb reload
 ```
+
+`--add` validates all options before staging a new named section and
+checks every write. A failed write or commit returns 2 without an
+"added" message and removes the partial new section; unrelated staged
+UCI edits are left alone. If cleanup also fails, the command reports
+that explicitly so the pending configuration can be inspected.
 
 Other useful commands -- run `readsb-feeder -h` for the full list. All
 commands are `--flag` style (matching `readsb-setup --status` /
