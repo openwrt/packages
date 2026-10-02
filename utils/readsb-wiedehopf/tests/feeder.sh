@@ -22,6 +22,7 @@ sed -n '
 	/^_parse_kv() {/,/^}/p
 	/^_discard_new_feeder() {/,/^}/p
 	/^cmd_add() {/,/^}/p
+	/^cmd_set() {/,/^}/p
 ' "$package_dir/files/readsb-feeder" > "$tmpdir/functions.sh" || exit 1
 # shellcheck source=/dev/null
 . "$tmpdir/functions.sh"
@@ -231,6 +232,51 @@ for caller in cmd_probe cmd_health; do
 		test_feeder_command "$caller" 1 0 0 DISABLED 0 0 1 123 0 test 0
 done
 
+mutation_uci() {
+	[ "$1" != -q ] || shift
+	printf '%s %s\n' "$1" "$2" >> "$tmpdir/calls"
+	case $1 in
+		get)
+			awk -v key="$2=" '
+				index($0, key) == 1 { value = substr($0, length(key) + 1); found = 1 }
+				END { if (!found) exit 1; print value }
+			' "$tmpdir/state"
+			;;
+		add)
+			[ "$fail" != create ] || return 9
+			echo 'readsb.cfgnew=feeder' >> "$tmpdir/state"
+			echo cfgnew
+			;;
+		rename)
+			sed 's/^readsb.cfgnew=/readsb.test=/' "$tmpdir/state" > "$tmpdir/state.new"
+			mv "$tmpdir/state.new" "$tmpdir/state"
+			;;
+		set)
+			case $2 in
+				readsb.test=*) [ "$fail" != create ] || return 9 ;;
+			esac
+			[ "$2" != "$fail" ] || return 9
+			[ "$fail" != cleanup ] || [ "$2" != readsb.test.enabled=0 ] || return 9
+			printf '%s\n' "$2" >> "$tmpdir/state"
+			;;
+		delete)
+			[ "$fail" != "delete:$2" ] && [ "$fail" != cleanup ] || return 9
+			if [ "$2" = readsb.test ]; then
+				awk '$0 !~ /^readsb[.]test[.=]/' "$tmpdir/state" > "$tmpdir/state.new"
+			else
+				grep -Fq "$2=" "$tmpdir/state" || return 1
+				awk -v key="$2=" 'index($0, key) != 1' "$tmpdir/state" > "$tmpdir/state.new"
+			fi
+			mv "$tmpdir/state.new" "$tmpdir/state"
+			;;
+		commit)
+			[ "$fail" != commit ] || return 9
+			cp "$tmpdir/state" "$tmpdir/committed"
+			;;
+		*) return 99 ;;
+	esac
+}
+
 test_add_feeder() (
 	fail=$1 expected_rc=$2
 	shift 2
@@ -239,46 +285,7 @@ test_add_feeder() (
 	cp "$tmpdir/state" "$tmpdir/committed"
 	: > "$tmpdir/calls"
 
-	uci() {
-		[ "$1" != -q ] || shift
-		printf '%s %s\n' "$1" "$2" >> "$tmpdir/calls"
-		case $1 in
-			get)
-				awk -v key="$2=" '
-					index($0, key) == 1 { value = substr($0, length(key) + 1); found = 1 }
-					END { if (!found) exit 1; print value }
-				' "$tmpdir/state"
-				;;
-			add)
-				[ "$fail" != create ] || return 9
-				echo 'readsb.cfgnew=feeder' >> "$tmpdir/state"
-				echo cfgnew
-				;;
-			rename)
-				sed 's/^readsb.cfgnew=/readsb.test=/' "$tmpdir/state" > "$tmpdir/state.new"
-				mv "$tmpdir/state.new" "$tmpdir/state"
-				;;
-			set)
-				case $2 in
-					readsb.test=*) [ "$fail" != create ] || return 9 ;;
-				esac
-				[ "$2" != "$fail" ] || return 9
-				[ "$fail" != cleanup ] || [ "$2" != readsb.test.enabled=0 ] || return 9
-				printf '%s\n' "$2" >> "$tmpdir/state"
-				;;
-			delete)
-				[ "$2" = readsb.test ] || return 99
-				[ "$fail" != cleanup ] || return 9
-				awk '$0 !~ /^readsb[.]test[.=]/' "$tmpdir/state" > "$tmpdir/state.new"
-				mv "$tmpdir/state.new" "$tmpdir/state"
-				;;
-			commit)
-				[ "$fail" != commit ] || return 9
-				cp "$tmpdir/state" "$tmpdir/committed"
-				;;
-			*) return 99 ;;
-		esac
-	}
+	uci() { mutation_uci "$@"; }
 	_notice() { :; }
 	readsb_warn_companions() { echo companions >> "$tmpdir/calls"; }
 
@@ -328,6 +335,71 @@ for fail in create readsb.test.preset=custom readsb.test.enabled=0 \
 done
 run_test '--add validates all options before any mutation' test_add_feeder '' 1 custom \
 	host=feed.example.com port=invalid
+
+test_set_feeder() (
+	scenario=$1 fail=$2 expected_rc=$3 expected_calls=$4
+	shift 4
+	printf '%s\n' 'readsb.main=readsb' 'readsb.main.pending=keep' \
+		'readsb.other=feeder' 'readsb.other.enabled=0' > "$tmpdir/state"
+	if [ "$scenario" != missing ]; then
+		printf '%s\n' 'readsb.test=feeder' 'readsb.test.preset=adsblol' \
+			'readsb.test.host=old.example' 'readsb.test.enabled=0' \
+			'readsb.test.uuid=00000000-0000-4000-8000-000000000000' >> "$tmpdir/state"
+		[ "$scenario" = missing-port ] || echo 'readsb.test.port=30004' >> "$tmpdir/state"
+	fi
+	original_state=$(cat "$tmpdir/state")
+	cp "$tmpdir/state" "$tmpdir/committed"
+	: > "$tmpdir/calls"
+	uci() { mutation_uci "$@"; }
+	_notice() { :; }
+
+	rc=0
+	output=$(cmd_set test "$@" 2>&1) || rc=$?
+	assert_equal "$rc" "$expected_rc" || { printf '%s\n' "$output" >&2; return 1; }
+	assert_equal "$(grep -E '^(set|delete|commit) ' "$tmpdir/calls")" "$expected_calls" || return 1
+	grep -q '^readsb.main.pending=keep$' "$tmpdir/state" || return 1
+	grep -q '^readsb.other.enabled=0$' "$tmpdir/state" || return 1
+	if [ "$rc" -eq 0 ]; then
+		cmp -s "$tmpdir/state" "$tmpdir/committed" || return 1
+		printf '%s\n' "$output" | grep -q "feeder 'test' updated"
+	else
+		assert_equal "$(cat "$tmpdir/committed")" "$original_state" || return 1
+		! printf '%s\n' "$output" | grep -q 'updated:' || return 1
+		[ "$rc" != 2 ] || printf '%s\n' "$output" | grep -q 'uci .* failed' || return 1
+		if [ "$rc" = 1 ]; then
+			assert_equal "$(cat "$tmpdir/state")" "$original_state" || return 1
+		fi
+		if [ "$scenario" != missing ]; then
+			assert_equal "$(uci -q get readsb.test)" feeder || return 1
+		fi
+		printf '%s\n' "$output" | grep -q 'readsb-feeder:'
+	fi
+)
+run_test '--set commits a successful option update' test_set_feeder existing '' 0 \
+	"$(printf 'set readsb.test.enabled=1\ncommit readsb')" enabled=1
+run_test '--set commits removal of a populated UUID override' test_set_feeder existing '' 0 \
+	"$(printf 'delete readsb.test.uuid\ncommit readsb')" uuid=
+run_test '--set commits mixed set/delete options in order' test_set_feeder existing '' 0 \
+	"$(printf 'set readsb.test.host=feed.example\ndelete readsb.test.uuid\nset readsb.test.enabled=1\ncommit readsb')" \
+	host=feed.example uuid= enabled=1
+run_test '--set preserves valid custom-preset conversion' test_set_feeder existing '' 0 \
+	"$(printf 'set readsb.test.preset=custom\nset readsb.test.port=30005\ncommit readsb')" preset=custom port=30005
+run_test '--set stops on the first failed write' test_set_feeder existing readsb.test.enabled=1 2 \
+	'set readsb.test.enabled=1' enabled=1 host=feed.example
+run_test '--set does not commit or continue after a later write fails' test_set_feeder existing readsb.test.host=feed.example 2 \
+	"$(printf 'set readsb.test.enabled=1\nset readsb.test.host=feed.example')" enabled=1 host=feed.example port=30005
+run_test '--set stops on a failed UUID deletion' test_set_feeder existing delete:readsb.test.uuid 2 \
+	'delete readsb.test.uuid' uuid= enabled=1
+run_test '--set does not commit earlier writes after a deletion fails' test_set_feeder existing delete:readsb.test.uuid 2 \
+	"$(printf 'set readsb.test.enabled=1\ndelete readsb.test.uuid')" enabled=1 uuid= port=30005
+run_test '--set reports commit failure without success output' test_set_feeder existing commit 2 \
+	"$(printf 'set readsb.test.enabled=1\ncommit readsb')" enabled=1
+run_test '--set rejects a missing feeder before mutation' test_set_feeder missing '' 3 '' enabled=1
+run_test '--set validates all arguments before mutation' test_set_feeder existing '' 1 '' enabled=1 port=bad
+run_test '--set rejects an unknown option before mutation' test_set_feeder existing '' 1 '' enabled=1 unknown=value
+run_test '--set rejects an incomplete custom endpoint before mutation' test_set_feeder missing-port '' 1 '' preset=custom
+run_test '--set retains later overriding values' test_set_feeder existing '' 0 \
+	"$(printf 'set readsb.test.enabled=1\nset readsb.test.enabled=0\ncommit readsb')" enabled=1 enabled=0
 
 printf '%s tests, %s failures\n' "$tests" "$failures"
 [ "$failures" -eq 0 ]

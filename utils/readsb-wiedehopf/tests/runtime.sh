@@ -3,7 +3,19 @@
 
 package_dir=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd) || exit 1
 tmpdir=$(mktemp -d) || exit 1
-trap 'rm -f "$tmpdir/init.sh" "$tmpdir/hotplug.sh" "$tmpdir/location.sh" "$tmpdir/config" "$tmpdir/commands" "$tmpdir/messages" "$tmpdir/writes" "$tmpdir/log" "$tmpdir/bin/readsb-geoip"; rmdir "$tmpdir/bin" "$tmpdir"' 0
+cleanup() {
+	cleanup_status=$?
+	trap - 0
+	rm -f "$tmpdir/init.sh" "$tmpdir/hotplug.sh" "$tmpdir/location.sh" \
+		"$tmpdir/config" "$tmpdir/commands" "$tmpdir/messages" "$tmpdir/writes" \
+		"$tmpdir/log" "$tmpdir/bin/readsb-geoip" "$tmpdir/cleanup.sh" \
+		"$tmpdir/cleanup-calls" "$tmpdir/cleanup-output" || \
+		printf 'cleanup: could not remove test files in %s\n' "$tmpdir" >&2
+	rmdir "$tmpdir/bin" "$tmpdir" || \
+		printf 'cleanup: could not remove temporary directories in %s\n' "$tmpdir" >&2
+	exit "$cleanup_status"
+}
+trap cleanup 0
 trap 'exit 1' HUP INT TERM
 mkdir "$tmpdir/bin" || exit 1
 # shellcheck disable=SC2016
@@ -25,6 +37,7 @@ sed -n '
 ' "$package_dir/files/readsb.hotplug" > "$tmpdir/hotplug.sh" || exit 1
 sed -n '/^# --- step 1: location /,/^# --- step 2: UUID /p' \
 	"$package_dir/files/readsb-setup" > "$tmpdir/location.sh" || exit 1
+sed -n '/^cleanup() {/,/^}/p; /^trap .* 0$/p' "$0" > "$tmpdir/cleanup.sh" || exit 1
 
 tests=0
 failures=0
@@ -92,6 +105,37 @@ assert_config() {
 	config_get _actual main "$1"
 	assert_equal "$_actual" "$2"
 }
+
+test_cleanup_status() (
+	wanted_status=$1 failure=$2
+	: > "$tmpdir/cleanup-calls"
+	actual_status=0
+	(
+		rm() {
+			echo rm >> "$tmpdir/cleanup-calls"
+			[ "$failure" != rm ]
+		}
+		rmdir() {
+			echo rmdir >> "$tmpdir/cleanup-calls"
+			[ "$failure" != rmdir ]
+		}
+		# shellcheck source=/dev/null
+		. "$tmpdir/cleanup.sh"
+		exit "$wanted_status"
+	) > "$tmpdir/cleanup-output" 2>&1 || actual_status=$?
+	assert_equal "$actual_status" "$wanted_status" || return 1
+	assert_equal "$(cat "$tmpdir/cleanup-calls")" "$(printf 'rm\nrmdir')" || return 1
+	if [ "$failure" = none ]; then
+		[ ! -s "$tmpdir/cleanup-output" ]
+	else
+		grep -q 'cleanup:.*could not remove' "$tmpdir/cleanup-output"
+	fi
+)
+for status in 0 1 7; do
+	for failure in none rm rmdir; do
+		run_test "cleanup preserves exit $status (failure=$failure)" test_cleanup_status "$status" "$failure"
+	done
+done
 
 test_wait_budget() (
 	reset_config

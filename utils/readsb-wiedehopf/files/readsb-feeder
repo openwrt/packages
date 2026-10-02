@@ -709,9 +709,15 @@ cmd_set() {
 	for kv in "$@"; do
 		_parse_kv "$kv" || return 1
 		if [ -z "$val" ]; then
-			uci -q delete "readsb.${name}.${key}"
+			uci -q delete "readsb.${name}.${key}" || {
+				echo "readsb-feeder: uci delete failed for '$name.$key'; not committed, check pending UCI changes" >&2
+				return 2
+			}
 		else
-			uci -q set "readsb.${name}.${key}=${val}"
+			uci -q set "readsb.${name}.${key}=${val}" || {
+				echo "readsb-feeder: uci set failed for '$name.$key'; not committed, check pending UCI changes" >&2
+				return 2
+			}
 		fi
 	done
 	_commit || return 2

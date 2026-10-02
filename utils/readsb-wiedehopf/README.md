@@ -509,6 +509,13 @@ checks every write. A failed write or commit returns 2 without an
 UCI edits are left alone. If cleanup also fails, the command reports
 that explicitly so the pending configuration can be inspected.
 
+`--set` also validates every option before applying changes. If any
+`uci set` or `uci delete` fails, it stops immediately with exit 2,
+reports the failed option, and does not commit or print a success
+message. Earlier successful writes can remain staged; inspect pending
+changes before committing or retrying. The existing feeder and unrelated
+pending edits are not deleted or reverted automatically.
+
 Other useful commands -- run `readsb-feeder -h` for the full list. All
 commands are `--flag` style (matching `readsb-setup --status` /
 `--config` / `--help`):
