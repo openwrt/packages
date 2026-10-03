@@ -9,7 +9,7 @@ G_OPTS="daemon off;"
 
 NGINX_UTIL="/usr/bin/nginx-util"
 UCI_CONF_TEMPLATE="/etc/nginx/uci.conf.template"
-LATEST_UCI_CONF_VERSION="1.2"
+LATEST_UCI_CONF_VERSION="1.3"
 
 [ -f "${NGINX_UTIL}" ] && eval $("${NGINX_UTIL}" get_env)
 
@@ -29,6 +29,12 @@ nginx_check_luci_template() {
 		sed -i '/^include module\.d\/\*\.module;/d' $UCI_CONF_TEMPLATE
 		# Put the include before events {}
 		sed -i 's/events {/include module.d\/*.module;\n\nevents {/' $UCI_CONF_TEMPLATE
+	fi
+
+	# Enable gzip for all content types
+	if [ "$UCI_CONF_VERSION" = "1.2" ]; then
+		grep -q 'gzip_types' $UCI_CONF_TEMPLATE ||
+			sed -i 's/gzip_proxied any;/gzip_proxied any;\n\tgzip_types *;/' $UCI_CONF_TEMPLATE
 	fi
 
 	if [ "$UCI_CONF_VERSION" != "$LATEST_UCI_CONF_VERSION" ]; then
