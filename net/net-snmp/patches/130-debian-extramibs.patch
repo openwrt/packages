@@ -1,3 +1,8 @@
+From: Net-SNMP Packaging Team <pkg-net-snmp-devel@lists.alioth.debian.org>
+Date: Thu, 18 Jun 2015 06:12:04 +0900
+Subject: _extramibs
+
+Extra MIB files shipped with Debian.
 --- /dev/null
 +++ b/mibs/BGP4-MIB.txt
 @@ -0,0 +1,929 @@
