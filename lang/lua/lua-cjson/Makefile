@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua-cjson
 PKG_VERSION:=2.1.0
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 PKG_MAINTAINER:=Dirk Chang <dirk@kooiot.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
@@ -88,8 +88,8 @@ define Package/lua-cjson-lua5.3/install
 endef
 
 define Package/lua-cjson-lua5.4/install
-	$(INSTALL_DIR) $(1)/usr/local/lib/lua/5.4
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cjson.so $(1)/usr/local/lib/lua/5.4
+	$(INSTALL_DIR) $(1)/usr/lib/lua/5.4
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cjson.so $(1)/usr/lib/lua/5.4
 endef
 
 $(eval $(call HostBuild))
