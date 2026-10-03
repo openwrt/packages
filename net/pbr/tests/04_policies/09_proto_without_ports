@@ -1,0 +1,170 @@
+Testing the two ways a policy's 'proto' option goes wrong.
+
+'proto' is a PORT QUALIFIER: it only ever reaches a rule as a prefix on
+sport/dport (files/lib/pbr/pbr.uc), and pbr's own defaulting says as much --
+with no proto set it becomes 'tcp udp' when a port is present and 'all' when it
+is not. Two consequences, both silent before this change:
+
+  1. proto set, no ports        -> the proto is dropped and the policy routes
+                                   EVERY protocol, not the one asked for.
+  2. a protocol with no ports   -> emits e.g. 'icmp dport { 53 }', which nft
+     (icmp, gre, esp, ...)         refuses. The whole file is rejected, so pbr
+     plus a port                   fails to start and NOTHING routes.
+
+Case 2 must therefore reject the policy rather than warn: by the time the
+ruleset is refused a warning helps nobody. Case 1 is a warning, and it is
+actionable -- for a protocol that does have ports, '0-65535' matches all of it.
+
+The LuCI dropdown is built from /etc/protocols (46 entries on stock 25.12) and
+only tcp/udp/sctp/dccp/udplite can carry a port, so 41 of its choices land in
+one of these two cases.
+
+-- File uci/pbr.json --
+{
+	"pbr": [
+		{
+			".name": "config",
+			"enabled": "1",
+			"fw_mask": "00ff0000",
+			"ipv6_enabled": "0",
+			"resolver_set": "",
+			"uplink_interface": "wan",
+			"uplink_interface6": "wan6",
+			"uplink_ip_rules_priority": "30000",
+			"uplink_mark": "00010000",
+			"verbosity": "2",
+			"lan_device": ["br-lan"]
+		}
+	],
+	"policy": [
+		{
+			".name": "policy_udp_noport",
+			"name": "Udp No Port",
+			"enabled": "1",
+			"interface": "wan",
+			"dest_addr": "192.0.2.10",
+			"proto": "udp"
+		},
+		{
+			".name": "policy_icmp_noport",
+			"name": "Icmp No Port",
+			"enabled": "1",
+			"interface": "wan",
+			"dest_addr": "192.0.2.11",
+			"proto": "icmp"
+		},
+		{
+			".name": "policy_icmp_port",
+			"name": "Icmp With Port",
+			"enabled": "1",
+			"interface": "wan",
+			"dest_addr": "192.0.2.12",
+			"dest_port": "53",
+			"proto": "icmp"
+		},
+		{
+			".name": "policy_udp_port",
+			"name": "Udp With Port",
+			"enabled": "1",
+			"interface": "wan",
+			"dest_addr": "192.0.2.13",
+			"dest_port": "0-65535",
+			"proto": "udp"
+		},
+		{
+			".name": "policy_mixed_case",
+			"name": "Mixed Case Proto",
+			"enabled": "1",
+			"interface": "wan",
+			"dest_addr": "192.0.2.14",
+			"proto": "UDP"
+		},
+		{
+			".name": "policy_mixed_case_portless",
+			"name": "Mixed Case Portless",
+			"enabled": "1",
+			"interface": "wan",
+			"dest_addr": "192.0.2.15",
+			"proto": "ICMP"
+		}
+	]
+}
+-- End --
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+let result = pbr.start_service(['on_start']);
+let nft = global.mocklib.read_captured('/var/run/pbr.nft') || '';
+
+// .info is a single string, "'name' (proto)" -- it must stay a string, because
+// the procd emission writes it with json_add_string and an array would reach the
+// WebUI as '[ "name", "proto" ]'.
+function coded(list, code, who) {
+	for (let m in (list || []))
+		if (m.code == code && index('' + m.info, "'" + who + "'") == 0) return true;
+	return false;
+}
+function rules_for(n) {
+	return filter(split(nft, '\n'), l => index(l, 'comment "' + n + '"') >= 0);
+}
+
+let checks = [
+	// 1. a port-capable protocol with no ports: warn, and keep routing
+	['udp_noport_warns',   coded(result.warnings, 'warningPolicyProtoNoPort', 'Udp No Port')],
+	['udp_noport_routed',  length(rules_for('Udp No Port')) > 0],
+	// the warning names the protocol, so the message can say what to do
+	// the protocol is named in .info so the message can point at the right one
+	['warning_names_proto', length(filter(result.warnings || [], w =>
+		w.code == 'warningPolicyProtoNoPort' &&
+		'' + w.info == "'Udp No Port' (udp)")) == 1],
+	['info_is_a_string', length(filter(result.warnings || [], w =>
+		w.code == 'warningPolicyProtoNoPort' && type(w.info) != 'string')) == 0],
+
+	// 2. a portless protocol with no ports: warn that it cannot work
+	['icmp_noport_warns',  coded(result.warnings, 'warningPolicyProtoPortless', 'Icmp No Port')],
+
+	// 3. a portless protocol WITH a port: reject the policy outright, because
+	//    the rule it would emit takes the whole ruleset down
+	['icmp_port_rejected', coded(result.errors, 'errorPolicyProtoPortNotSupported', 'Icmp With Port')],
+	['icmp_port_no_rule',  length(rules_for('Icmp With Port')) == 0],
+	['no_icmp_dport',      index(nft, 'icmp dport') < 0],
+
+	// 4. the working combination stays silent and emits the match
+	['udp_port_no_warning', !coded(result.warnings, 'warningPolicyProtoNoPort', 'Udp With Port')],
+	['udp_port_matches',   length(filter(rules_for('Udp With Port'),
+		l => index(l, 'udp dport') >= 0)) > 0],
+
+	// 5. protocol names are matched case-insensitively, so an upper-case value
+	//    written by hand into UCI is classified the same way. 'UDP' must be
+	//    recognised as port-capable (warn, keep routing) and 'ICMP' as portless
+	//    (warn that it cannot work) -- not fall through to the wrong branch.
+	['mixed_case_port_capable', coded(result.warnings, 'warningPolicyProtoNoPort', 'Mixed Case Proto')],
+	['mixed_case_portless',     coded(result.warnings, 'warningPolicyProtoPortless', 'Mixed Case Portless')],
+	['mixed_case_not_swapped',  !coded(result.warnings, 'warningPolicyProtoPortless', 'Mixed Case Proto') &&
+	                            !coded(result.warnings, 'warningPolicyProtoNoPort', 'Mixed Case Portless')],
+	// and the message reports the normalised name, not the raw 'UDP'
+	['mixed_case_normalised',   length(filter(result.warnings || [], w =>
+		'' + w.info == "'Mixed Case Proto' (udp)")) == 1],
+
+	// 6. rejecting one policy must not take the others with it
+	['others_survive',     length(rules_for('Udp No Port')) > 0 &&
+	                       length(rules_for('Udp With Port')) > 0],
+];
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("proto_without_ports: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+proto_without_ports: 15/15 passed
+-- End --

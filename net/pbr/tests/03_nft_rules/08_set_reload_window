@@ -1,0 +1,119 @@
+Testing that a start never deletes an nft set that the new ruleset still
+declares, and reaps the ones it does not only after the ruleset is live.
+
+Regression guard for the dnsmasq nftset window. start_service() used to call
+cleanup('main_table', 'rt_tables', 'main_chains', 'sets'), and the 'sets'
+case deleted every live pbr_* set. Everything rebuilt afterwards is only
+appended to nft_lines and does not reach the kernel until the 'fw4 -q reload'
+at the end of nft_file.apply('main'), so the sets named by dnsmasq's nftset=
+directives were missing for the whole rebuild -- ~0.85s on a four-interface
+router, ~2s on a ten-interface one. dnsmasq keeps answering across that gap
+and logged
+
+  dnsmasq: nftset inet fw4 pbr_wan_4_dst_ip_cfg09fff4 Error: No such file or directory
+
+for every reply that landed in it, and those addresses were never added to
+the set, leaving the host unrouted until a fresh lookup.
+
+fw4 flushes the table's rules but keeps set objects, so it does not reap sets
+whose policy is gone; cleanup('orphan_sets') does that instead, after
+apply('main') rather than before it. By then the new ruleset is live, so an
+orphan has no rule referencing it and deletes cleanly instead of failing
+EBUSY, while a set still in use is never touched at all.
+
+The deletes go through nft_call() -> sh.run() -> system() and leave no trace
+in /var/run/pbr.nft, so this asserts on the recorded system() calls, ordered
+against the reload. The live sets come from the mocked 'nft list table'
+output below: one the current config still declares, and one orphan left by a
+policy that no longer exists.
+
+-- File fs/popen~nft_list_table_inet_fw4_2_dev_null.txt --
+table inet fw4 {
+	chain forward {
+		type filter hook forward priority filter; policy drop;
+	}
+
+	chain pbr_forward {
+		ip saddr @pbr_vpn_4_src_ip_user goto pbr_mark_vpn
+	}
+
+	set pbr_vpn_4_src_ip_user {
+		type ipv4_addr
+		elements = { 192.168.1.0/24 }
+	}
+
+	set pbr_wan_4_dst_ip_policy_gone {
+		type ipv4_addr
+		elements = { 203.0.113.7 }
+	}
+}
+-- End --
+
+-- Testcase --
+import create_pbr from 'pbr';
+
+let mocklib = global.mocklib;
+
+mocklib.clear_commands();
+
+let pbr = create_pbr();
+pbr.start_service(['on_start']);
+
+let cmds = mocklib.commands();
+
+let index_of = function(needle) {
+	for (let i = 0; i < length(cmds); i++)
+		if (index(cmds[i], needle) >= 0) return i;
+	return -1;
+};
+
+let reload_at = index_of('fw4 -q reload');
+
+// Every set the ruleset just installed. Deleting any of these is the bug.
+let declared = {};
+for (let line in split(mocklib.read_captured('/var/run/pbr.nft') || '', '\n')) {
+	let m = match(line, /^add set inet fw4 (\S+)/);
+	if (m) declared[m[1]] = true;
+}
+
+// Set deletes, with the position each was issued at.
+let deletes = [], deleted = {}, early = [], declared_deleted = [];
+for (let i = 0; i < length(cmds); i++) {
+	let m = match(cmds[i], /^nft delete set inet fw4 (\S+)/);
+	if (!m) continue;
+	push(deletes, m[1]);
+	deleted[m[1]] = true;
+	if (reload_at < 0 || i < reload_at) push(early, m[1]);
+	if (declared[m[1]]) push(declared_deleted, m[1]);
+}
+
+let checks = [
+	['reload_issued',        reload_at >= 0],
+	// the window itself: nothing is deleted before the ruleset goes live
+	['no_delete_before_reload', length(early) == 0],
+	// a set the new ruleset declares is never deleted, at any point
+	['declared_set_kept',    length(declared_deleted) == 0],
+	// and the check above is not vacuous -- the mocked live set really is
+	// one the current config re-declares
+	['live_set_is_declared', !!declared['pbr_vpn_4_src_ip_user']],
+	// the orphan, which no policy declares any more, is reaped
+	['orphan_reaped',        !!deleted['pbr_wan_4_dst_ip_policy_gone']],
+	// nothing else is swept up along with it
+	['only_orphan_reaped',   length(deletes) == 1],
+];
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("set_reload_window: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+set_reload_window: 6/6 passed
+-- End --

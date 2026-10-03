@@ -1,0 +1,35 @@
+Testing get_supported_interfaces() discovers interfaces from network/firewall config.
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+let result = pbr.get_supported_interfaces();
+let ifaces = result['pbr'].interfaces;
+
+// Should include wan (from firewall zone) and vpn (tunnel)
+// Should NOT include lan (is_lan) or vpnserver (ignored_interface)
+let checks = [
+	['is_array',             type(ifaces) == 'array'],
+	['has_wan',              index(ifaces, 'wan') >= 0],
+	['has_vpn',              index(ifaces, 'vpn') >= 0],
+	['no_lan',               index(ifaces, 'lan') < 0],
+	['no_loopback',          index(ifaces, 'loopback') < 0],
+	['no_vpnserver',         index(ifaces, 'vpnserver') < 0],
+];
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s (ifaces=%J)\n", c[0], ifaces);
+	}
+}
+printf("supported_interfaces: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+supported_interfaces: 6/6 passed
+-- End --

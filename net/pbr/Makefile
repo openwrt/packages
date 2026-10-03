@@ -4,8 +4,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pbr
-PKG_VERSION:=1.2.2
-PKG_RELEASE:=20
+PKG_VERSION:=1.2.4
+PKG_RELEASE:=0
 PKG_LICENSE:=AGPL-3.0-or-later
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.ca>, Erik Conijn <egc112@msn.com>
 
@@ -23,6 +23,10 @@ define Package/pbr
 	+jshn \
 	+jsonfilter \
 	+resolveip \
+	+ucode \
+	+ucode-mod-fs \
+	+ucode-mod-uci \
+	+ucode-mod-ubus \
 	+!BUSYBOX_DEFAULT_AWK:gawk \
 	+!BUSYBOX_DEFAULT_GREP:grep \
 	+!BUSYBOX_DEFAULT_SED:sed \
@@ -49,18 +53,27 @@ endef
 define Package/pbr/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/etc/init.d/pbr $(1)/etc/init.d/pbr
-	$(SED) "s|^\(readonly PKG_VERSION\).*|\1='$(PKG_VERSION)-r$(PKG_RELEASE)'|" $(1)/etc/init.d/pbr
+	$(INSTALL_DIR) $(1)/lib/pbr
+	$(INSTALL_DATA) ./files/lib/pbr/pbr.uc $(1)/lib/pbr/pbr.uc
+	$(INSTALL_DATA) ./files/lib/pbr/pkg.uc $(1)/lib/pbr/pkg.uc
+	$(INSTALL_DATA) ./files/lib/pbr/cli.uc $(1)/lib/pbr/cli.uc
+	$(INSTALL_DATA) ./files/lib/pbr/sys.uc $(1)/lib/pbr/sys.uc
+	$(INSTALL_DATA) ./files/lib/pbr/validators.uc $(1)/lib/pbr/validators.uc
+	$(INSTALL_DATA) ./files/lib/pbr/output.uc $(1)/lib/pbr/output.uc
+	$(INSTALL_DATA) ./files/lib/pbr/config.uc $(1)/lib/pbr/config.uc
+	$(INSTALL_DATA) ./files/lib/pbr/platform.uc $(1)/lib/pbr/platform.uc
+	$(INSTALL_DATA) ./files/lib/pbr/network.uc $(1)/lib/pbr/network.uc
+	$(INSTALL_DATA) ./files/lib/pbr/nft.uc $(1)/lib/pbr/nft.uc
+	$(SED) "s|^\(\tversion:\).*|\1 '$(PKG_VERSION)-r$(PKG_RELEASE)',|" $(1)/lib/pbr/pkg.uc
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/etc/config/pbr $(1)/etc/config/pbr
 	$(INSTALL_DIR) $(1)/usr/share/pbr
 	$(INSTALL_DATA) ./files/usr/share/pbr/.keep $(1)/usr/share/pbr/.keep
 	$(INSTALL_DATA) ./files/usr/share/pbr/pbr.user.dnsprefetch $(1)/usr/share/pbr/pbr.user.dnsprefetch
-	$(INSTALL_DATA) ./files/usr/share/pbr/pbr.user.aws $(1)/usr/share/pbr/pbr.user.aws
-	$(INSTALL_DATA) ./files/usr/share/pbr/pbr.user.netflix $(1)/usr/share/pbr/pbr.user.netflix
+	$(INSTALL_DATA) ./files/usr/share/pbr/pbr.user.aws.uc $(1)/usr/share/pbr/pbr.user.aws.uc
+	$(INSTALL_DATA) ./files/usr/share/pbr/pbr.user.netflix.uc $(1)/usr/share/pbr/pbr.user.netflix.uc
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/etc/uci-defaults/90-pbr $(1)/etc/uci-defaults/90-pbr
-	$(INSTALL_BIN) ./files/etc/uci-defaults/91-pbr-nft $(1)/etc/uci-defaults/91-pbr-nft
-	$(INSTALL_BIN) ./files/etc/uci-defaults/99-pbr-version $(1)/etc/uci-defaults/99-pbr-version
 endef
 
 define Package/pbr/postinst
@@ -71,8 +84,6 @@ if [ -z "$${IPKG_INSTROOT}" ]; then
 		echo -n "Reinstalling pbr netifd integration... "
 		/etc/init.d/pbr netifd install >/dev/null 2>&1 && echo "OK" || echo "FAIL"
 	}
-	echo -n "Installing rc.d symlink for pbr... "
-	/etc/init.d/pbr enable && echo "OK" || echo "FAIL"
 fi
 exit 0
 endef
@@ -81,10 +92,6 @@ define Package/pbr/prerm
 #!/bin/sh
 # check if we are on real system
 if [ -z "$${IPKG_INSTROOT}" ]; then
-	echo -n "Stopping pbr service... "
-	/etc/init.d/pbr stop >/dev/null 2>&1 && echo "OK" || echo "FAIL"
-	echo -n "Removing rc.d symlink for pbr... "
-	/etc/init.d/pbr disable && echo "OK" || echo "FAIL"
 	/etc/init.d/pbr netifd check && {
 		echo -n "Uninstalling pbr netifd integration... "
 		/etc/init.d/pbr netifd uninstall >/dev/null 2>&1 && echo "OK" || echo "FAIL"

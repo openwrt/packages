@@ -1,0 +1,95 @@
+Testing that a resolver set is emptied when its policy's domain list changes.
+
+nft set names are keyed on the policy's uid, not on its contents, so editing a
+policy's dest_addr reuses the same set. Since #155 stopped deleting live sets on
+reload, that set survives with every address the *old* domain list resolved to
+still in it, and the policy goes on routing a domain that is no longer configured
+anywhere. cleanup('orphan_sets') does not catch it -- the set is still declared by
+the new ruleset, so it is kept -- and nothing else ever emptied a live set.
+
+Only sets whose domain list actually changed are flushed. Flushing every set on
+every reload would undo #155: a domain a client still has cached is never
+re-queried, so it would silently drop out of policy routing. A set with no
+previous generation to compare against is left alone for the same reason.
+
+-- Testcase --
+import create_pbr from 'pbr';
+
+// The generation that was live before this run. 'pol_changed' was fed by a
+// domain that the config below no longer mentions; 'pol_same' is unchanged.
+global.mocklib.capture('/var/run/pbr.dnsmasq',
+	'nftset=/old.example.com/4#inet#fw4#pbr_wan_4_dst_ip_pol_changed,6#inet#fw4#pbr_wan_6_dst_ip_pol_changed # Changed\n' +
+	'nftset=/stable.example.com/4#inet#fw4#pbr_wan_4_dst_ip_pol_same,6#inet#fw4#pbr_wan_6_dst_ip_pol_same # Same\n');
+
+let pbr = create_pbr();
+pbr.start_service(['on_start']);
+
+let flushed = (name) => global.mocklib.has_command('flush set inet fw4 ' + name + ' ');
+let checks = [];
+
+// Domain list changed: both families of that set must be emptied.
+push(checks, ['changed_v4_flushed', flushed('pbr_wan_4_dst_ip_pol_changed')]);
+push(checks, ['changed_v6_flushed', flushed('pbr_wan_6_dst_ip_pol_changed')]);
+
+// Domain list identical: the set keeps its addresses.
+push(checks, ['unchanged_v4_kept', !flushed('pbr_wan_4_dst_ip_pol_same')]);
+push(checks, ['unchanged_v6_kept', !flushed('pbr_wan_6_dst_ip_pol_same')]);
+
+// No previous generation for this set: nothing to go stale, nothing to flush.
+push(checks, ['new_set_not_flushed', !flushed('pbr_wan_4_dst_ip_pol_new')]);
+
+// The sets are emptied, never deleted -- deleting is what left dnsmasq's
+// nftset= target missing for the length of the rebuild.
+let deletes = global.mocklib.commands('delete set inet fw4 pbr_wan_4_dst_ip_pol_changed');
+push(checks, ['changed_set_not_deleted', length(deletes) == 0]);
+
+// The new generation is what the dnsmasq file ends up describing.
+let dnsmasq = global.mocklib.read_captured('/var/run/pbr.dnsmasq') || '';
+push(checks, ['old_domain_gone',  index(dnsmasq, 'old.example.com') < 0]);
+push(checks, ['new_domain_present', index(dnsmasq, 'new.example.com') >= 0]);
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("flush_changed_domain_sets: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- File uci/pbr.json --
+{
+	"pbr": [
+		{
+			".name": "config", "enabled": "1", "fw_mask": "00ff0000", "ipv6_enabled": "1",
+			"resolver_set": "dnsmasq.nftset", "strict_enforcement": "1",
+			"uplink_interface": "wan", "uplink_interface6": "wan6",
+			"uplink_ip_rules_priority": "30000", "uplink_mark": "00010000", "verbosity": "2",
+			"lan_device": ["br-lan"], "resolver_instance": ["*"], "debug_performance": "0",
+			"nft_set_auto_merge": "1", "nft_set_flags_interval": "1", "nft_set_flags_timeout": "0",
+			"nft_set_policy": "performance", "ignored_interface": ["vpnserver"]
+		}
+	],
+	"policy": [
+		{
+			".name": "pol_changed", "name": "Changed", "enabled": "1", "interface": "wan",
+			"dest_addr": "new.example.com", "chain": "prerouting"
+		},
+		{
+			".name": "pol_same", "name": "Same", "enabled": "1", "interface": "wan",
+			"dest_addr": "stable.example.com", "chain": "prerouting"
+		},
+		{
+			".name": "pol_new", "name": "New", "enabled": "1", "interface": "wan",
+			"dest_addr": "brand.example.com", "chain": "prerouting"
+		}
+	]
+}
+-- End --
+
+-- Expect stdout --
+flush_changed_domain_sets: 8/8 passed
+-- End --

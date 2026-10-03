@@ -1,0 +1,103 @@
+Testing that the Tor DNS and traffic ports are read out of torrc and reach the
+generated ruleset. interface_process._get_tor_dns_port() and
+_get_tor_traffic_port() each match a single capture group, so anything that
+shifts the group index leaves them returning null -- and because the match
+itself succeeds, the '9053'/'9040' fallbacks do NOT catch it: pbr emits
+'redirect to :' with no port and nft rejects the whole file.
+
+The fixture deliberately uses 9153/9140 rather than Tor's defaults, so a helper
+that silently fell back to 9053/9040 would fail here instead of passing by
+coincidence.
+
+-- File uci/pbr.json --
+{
+	"pbr": [
+		{
+			".name": "config",
+			"enabled": "1",
+			"fw_mask": "00ff0000",
+			"ipv6_enabled": "0",
+			"resolver_set": "dnsmasq.nftset",
+			"uplink_interface": "wan",
+			"uplink_interface6": "wan6",
+			"uplink_ip_rules_priority": "30000",
+			"uplink_mark": "00010000",
+			"verbosity": "2",
+			"lan_device": ["br-lan"],
+			"resolver_instance": ["*"]
+		}
+	],
+	"policy": [
+		{
+			".name": "policy_tor",
+			"name": "Tor Clients",
+			"enabled": "1",
+			"interface": "tor",
+			"src_addr": "192.168.1.50",
+			"dest_addr": "",
+			"src_port": "",
+			"dest_port": "",
+			"proto": "",
+			"chain": ""
+		}
+	]
+}
+-- End --
+
+-- File fs/open~_etc_tor_torrc.txt --
+VirtualAddrNetwork 10.192.0.0/10
+AutomapHostsOnResolve 1
+TransPort 0.0.0.0:9140
+DNSPort 0.0.0.0:9153
+-- End --
+
+-- File fs/stat~_etc_tor_torrc.json --
+{ "type": "file", "size": 100 }
+-- End --
+
+-- File ubus/service~list~name-tor.json --
+{ "tor": { "instances": { "instance1": { "running": true } } } }
+-- End --
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+let result = pbr.start_service(['on_start']);
+let nft = global.mocklib.read_captured('/var/run/pbr.nft') || '';
+
+// Every 'redirect to :' in the ruleset must be followed by a port number.
+// A null port stringifies to ':null' and an empty one to a bare ':'; nft
+// rejects both at the whole-file 'nft -c -f' check -- the FAILED TO START
+// mode -- so match the good shape and flag everything else.
+let portless = filter(split(nft, '\n'), l => index(l, 'redirect to :') >= 0 &&
+	!match(l, /redirect to :[0-9]+ /));
+
+let checks = [
+	['dns_port_from_torrc',      index(nft, 'udp dport 53 redirect to :9153') >= 0],
+	['http_tcp_port_from_torrc', index(nft, 'tcp dport 80 redirect to :9140') >= 0],
+	['http_udp_port_from_torrc', index(nft, 'udp dport 80 redirect to :9140') >= 0],
+	['https_tcp_port_from_torrc',index(nft, 'tcp dport 443 redirect to :9140') >= 0],
+	['https_udp_port_from_torrc',index(nft, 'udp dport 443 redirect to :9140') >= 0],
+	// the fallbacks must not appear: torrc named other ports
+	['no_fallback_dns_port',     index(nft, 'redirect to :9053') < 0],
+	['no_fallback_traffic_port', index(nft, 'redirect to :9040') < 0],
+	// and no rule may be left without a port at all
+	['no_portless_redirect',     length(portless) == 0],
+];
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("tor_ports_from_torrc: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+tor_ports_from_torrc: 8/8 passed
+-- End --

@@ -1,0 +1,42 @@
+Testing DNS policy routing generates dnat rules.
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+let result = pbr.start_service(['on_start']);
+
+let nft_content = global.mocklib.read_captured('/var/run/pbr.nft');
+let checks = [];
+
+if (nft_content) {
+	let lines = split(nft_content, '\n');
+	let dns_rules = filter(lines, l => index(l, '"Redirect DNS"') >= 0);
+
+	push(checks, ['has_dns_rules', length(dns_rules) > 0]);
+
+	let all_dns = join('\n', dns_rules);
+	// DNS policy should create dnat rules redirecting to 1.1.1.1:53
+	push(checks, ['has_dstnat_chain', index(all_dns, 'pbr_dstnat') >= 0]);
+	push(checks, ['has_dport_53',     index(all_dns, 'dport 53') >= 0]);
+	push(checks, ['has_dnat_to',      index(all_dns, 'dnat') >= 0]);
+	push(checks, ['has_target_ip',    index(all_dns, '1.1.1.1') >= 0]);
+} else {
+	push(checks, ['nft_file_written', false]);
+}
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("dns_policy: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+dns_policy: 5/5 passed
+-- End --

@@ -1,0 +1,84 @@
+Testing the mocklib system() recorder itself. mocklib.commands() must return
+every command system() was called with, in call order, optionally filtered by
+substring or regexp, and as a copy the caller cannot disturb; has_command()
+mirrors it as a boolean; clear_commands() resets the recording so a test can
+assert on one phase at a time.
+
+The second half runs a real start_service() to show the recorder sees the
+calls that leave no other trace: the 'fw4 -q reload' issued through sh.run()
+and the 'ip rule del' loops that call system() directly. Neither appears in
+/var/run/pbr.nft nor in the start_service() result, so before this recorder
+existed there was no way to assert on them at all. It also pins the absence
+of a call -- a start must flush no chains, since fw4 rebuilds the table from
+30-pbr.nft and live teardown would leave a window with pbr's chains empty.
+
+-- Testcase --
+import create_pbr from 'pbr';
+
+let mocklib = global.mocklib;
+
+// ── the recorder API on its own ─────────────────────────────────────
+mocklib.clear_commands();
+let empty = mocklib.commands();
+
+system('/usr/libexec/ip-full -4 rule del priority 0 2>/dev/null');
+system('nft flush chain inet fw4 pbr_forward >/dev/null 2>&1');
+system(['/usr/libexec/ip-full', '-6', 'rule', 'del', 'priority', '0']);
+
+let all = mocklib.commands();
+let substring_hits = mocklib.commands('rule del priority 0');
+let regexp_hits = mocklib.commands(/^nft /);
+
+// mutating what commands() handed back must not disturb the recording
+let copy = mocklib.commands();
+push(copy, 'never executed');
+
+let checks = [
+	['clear_empties',        length(empty) == 0],
+	['records_every_call',   length(all) == 3],
+	['records_in_order',     index(all[0], '-4 rule del') >= 0 &&
+	                         index(all[1], 'nft flush') >= 0],
+	['array_argv_joined',    all[2] == '/usr/libexec/ip-full -6 rule del priority 0'],
+	['substring_filter',     length(substring_hits) == 2],
+	['regexp_filter',        length(regexp_hits) == 1 &&
+	                         index(regexp_hits[0], 'pbr_forward') >= 0],
+	['returns_a_copy',       length(mocklib.commands()) == 3],
+	['has_command_true',     mocklib.has_command('nft flush chain')],
+	['has_command_false',    !mocklib.has_command('fw4 -q reload')],
+	['has_command_regexp',   mocklib.has_command(/rule del priority 0$/)],
+];
+
+// ── the same recorder over a real start ─────────────────────────────
+mocklib.clear_commands();
+
+let pbr = create_pbr();
+pbr.start_service(['on_start']);
+
+let flushes = mocklib.commands(/^nft flush chain /);
+
+push(checks,
+	// everything system() sees is recorded, including the tty probe
+	['tty_probe_recorded',   mocklib.has_command('[ -t ')],
+	// a command that leaves no other trace: the ruleset swap itself
+	['fw4_reload_recorded',  mocklib.has_command('fw4 -q reload')],
+	// and the absence of one -- nothing is torn down live before that swap
+	['no_chain_flush',       length(flushes) == 0],
+	// the ip rule deletes go to system() directly
+	['rule_delete_recorded', mocklib.has_command("rule del priority '30000'")],
+	['no_priority_zero_del', !mocklib.has_command(/rule del priority 0 /)]);
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("mocklib_system_recorder: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+mocklib_system_recorder: 15/15 passed
+-- End --

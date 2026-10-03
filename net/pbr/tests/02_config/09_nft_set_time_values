@@ -1,0 +1,115 @@
+nft's set declaration takes a time value as a bare run of <decimal><unit> --
+`1h`, `1h30m`, `100ms` -- with the unit one of ms, s, m, h, d. pbr got three
+things wrong about that, and each one on its own makes `nft -c -f` reject the
+generated file, which stops ALL policy routing rather than just ignoring the
+option:
+
+  * the values were emitted in double quotes. Those quotes belonged to the old
+    shell init script (`gc_interval "$nft_set_gc_interval";`), where the shell
+    consumed them; the ucode port copied them in as literal characters.
+  * `gc_interval` is not an nft keyword -- it is `gc-interval`. Wrong in the
+    shell version too, so that option had never worked.
+  * `timeout` was emitted twice: once folded into the flags string by the port,
+    once from set_parts.
+
+On top of that neither option was validated, so a typo like `1w` or `60` -- both
+rejected by nft -- reached the ruleset and killed it.
+
+Checked against nftables 1.0.9 and the 1.1.6 in OpenWrt 25.12: `1w` and bare
+numbers are refused by both, `100ms`, `0s`, `2d` and `1h30m` accepted by both.
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+pbr.start_service(['on_start']);
+
+let nft_content = global.mocklib.read_captured('/var/run/pbr.nft') || '';
+let sets = filter(split(nft_content, '\n'), l => index(l, 'add set ') == 0);
+let checks = [];
+
+push(checks, ['sets_emitted', length(sets) > 0]);
+
+// The declaration nft actually has to parse.
+let spec = length(sets) ? sets[0] : '';
+
+// Bare, not quoted. A quoted value is `unexpected quoted string`.
+push(checks, ['timeout_is_bare',    index(spec, 'timeout 1h30m;') >= 0]);
+push(checks, ['timeout_not_quoted', index(spec, 'timeout "') < 0]);
+
+// The keyword nft knows, spelled with a hyphen.
+push(checks, ['gc_interval_hyphenated', index(spec, 'gc-interval 5m;') >= 0]);
+push(checks, ['gc_interval_underscore_gone', index(spec, 'gc_interval') < 0]);
+
+// `timeout` may appear once as a FLAG and once as the set's default value,
+// and no more than that: the port used to emit the value twice.
+let flag_hits = 0, value_hits = 0;
+for (let part in split(spec, ';')) {
+	part = trim(part);
+	if (index(part, 'flags ') == 0) { if (index(part, 'timeout') >= 0) flag_hits++; }
+	else if (index(part, 'timeout ') == 0) value_hits++;
+}
+push(checks, ['timeout_flag_once',  flag_hits == 1]);
+push(checks, ['timeout_value_once', value_hits == 1]);
+
+// Every set pbr writes gets the same treatment, not just the first.
+push(checks, ['all_sets_consistent',
+	length(filter(sets, l => index(l, 'timeout "') >= 0 || index(l, 'gc_interval') >= 0)) == 0]);
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("nft_set_time_values: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- File fs/stat~_sys_class_net_br-lan.json --
+{ "type": "link" }
+-- End --
+
+-- File uci/pbr.json --
+{
+	"pbr": [
+		{
+			".name": "config",
+			"enabled": "1",
+			"fw_mask": "00ff0000",
+			"ipv6_enabled": "0",
+			"strict_enforcement": "1",
+			"uplink_interface": "wan",
+			"uplink_interface6": "",
+			"uplink_ip_rules_priority": "30000",
+			"uplink_mark": "00010000",
+			"verbosity": "2",
+			"lan_device": ["br-lan"],
+			"debug_performance": "0",
+			"nft_set_auto_merge": "1",
+			"nft_set_counter": "1",
+			"nft_set_flags_interval": "1",
+			"nft_set_flags_timeout": "1",
+			"nft_set_timeout": "1h30m",
+			"nft_set_gc_interval": "5m",
+			"nft_set_policy": "performance"
+		}
+	],
+	"policy": [
+		{
+			".name": "policy_a",
+			"name": "timeout probe",
+			"enabled": "1",
+			"interface": "wan",
+			"src_addr": "192.168.9.0/24",
+			"chain": "prerouting"
+		}
+	]
+}
+-- End --
+
+-- Expect stdout --
+nft_set_time_values: 8/8 passed
+-- End --

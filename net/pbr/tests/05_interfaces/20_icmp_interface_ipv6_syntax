@@ -1,0 +1,87 @@
+Testing that icmp_interface emits nft the kernel will accept for BOTH families.
+
+IPv6 headers have no 'protocol' field -- it is 'nexthdr' -- and the IPv6 ICMP
+protocol is 'icmpv6', not 'icmp'. pbr emitted 'ip6 protocol icmp', which nft
+rejects:
+
+  /var/run/pbr.nft:32:34-41: Error: syntax error, unexpected string
+  add rule inet fw4 pbr_output ip6 protocol icmp counter goto pbr_mark_0x020000
+
+and because the whole file is validated in one pass, setting 'Default ICMP
+Interface' in LuCI stopped the service from starting and took every policy with
+it. Reproduced on 1.2.3-r95 hardware; measured against nftables 1.1.6, where
+'ip protocol icmp' and 'ip6 nexthdr icmpv6' are accepted and 'ip6 protocol icmp'
+is not.
+
+The ipv6_enabled guard was never the problem and is left alone: the rule was
+already gated on it, it was simply malformed.
+
+-- File uci/pbr.json --
+{
+	"pbr": [
+		{
+			".name": "config",
+			"enabled": "1",
+			"fw_mask": "00ff0000",
+			"ipv6_enabled": "1",
+			"resolver_set": "",
+			"uplink_interface": "wan",
+			"uplink_interface6": "wan6",
+			"uplink_ip_rules_priority": "30000",
+			"uplink_mark": "00010000",
+			"icmp_interface": "wan",
+			"verbosity": "2",
+			"lan_device": ["br-lan"]
+		}
+	],
+	"policy": [
+		{
+			".name": "policy_plain",
+			"name": "Plain",
+			"enabled": "1",
+			"interface": "wan",
+			"dest_addr": "192.0.2.20"
+		}
+	]
+}
+-- End --
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+let result = pbr.start_service(['on_start']);
+let nft = global.mocklib.read_captured('/var/run/pbr.nft') || '';
+let icmp = filter(split(nft, '\n'), l => index(l, 'icmp') >= 0);
+
+let checks = [
+	// both families emit a rule
+	['two_icmp_rules',   length(icmp) == 2],
+	// IPv4 keeps 'ip protocol icmp'
+	['ipv4_form',        length(filter(icmp, l => index(l, 'ip protocol icmp') >= 0)) == 1],
+	// IPv6 must use nexthdr/icmpv6
+	['ipv6_form',        length(filter(icmp, l => index(l, 'ip6 nexthdr icmpv6') >= 0)) == 1],
+	// and must never use the form nft rejects
+	['no_ip6_protocol',  index(nft, 'ip6 protocol') < 0],
+	// they belong in the output chain, aimed at a mark chain
+	['in_output_chain',  length(filter(icmp, l => index(l, 'pbr_output') >= 0)) == 2],
+	['targets_mark',     length(filter(icmp, l => index(l, 'goto pbr_mark_') >= 0)) == 2],
+	// setting it must not break the service
+	['no_errors',        length(result.errors || []) == 0],
+];
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("icmp_interface_ipv6_syntax: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+icmp_interface_ipv6_syntax: 7/7 passed
+-- End --

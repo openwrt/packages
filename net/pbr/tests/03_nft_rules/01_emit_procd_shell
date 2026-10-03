@@ -1,0 +1,59 @@
+Testing emit_procd_shell() generates correct shell commands from procd data.
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+let data = {
+	packageCompat: 26,
+	gateways: [
+		{
+			name: 'wan',
+			device_ipv4: 'eth1',
+			gateway_ipv4: '203.0.113.1',
+			device_ipv6: '',
+			gateway_ipv6: '',
+			'default': true,
+			action: 'create',
+			table_id: '256',
+			mark: '0x010000',
+			priority: '30000',
+		}
+	],
+	status: {
+		gateways: 'wan/eth1/203.0.113.1'
+	},
+	errors: [],
+	warnings: [],
+};
+
+let shell_output = pbr.emit_procd_shell(data);
+
+// Verify key shell commands are present
+let checks = [
+	['has_compat',       index(shell_output, "json_add_int packageCompat '\\''26'\\''") >= 0],
+	['has_gateways_arr', index(shell_output, 'json_add_array gateways') >= 0],
+	['has_wan_name',     index(shell_output, "json_add_string name '\\''wan'\\''") >= 0],
+	['has_gateway_ip',   index(shell_output, "json_add_string gateway_ipv4 '\\''203.0.113.1'\\''") >= 0],
+	['has_default_bool', index(shell_output, 'json_add_boolean default') >= 0],
+	['has_status_obj',   index(shell_output, 'json_add_object status') >= 0],
+	['has_gw_string',    index(shell_output, "json_add_string gateways '\\''wan/eth1/203.0.113.1'\\''") >= 0],
+	['has_errors_arr',   index(shell_output, 'json_add_array errors') >= 0],
+	['has_warnings_arr', index(shell_output, 'json_add_array warnings') >= 0],
+];
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("emit_procd_shell: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+emit_procd_shell: 9/9 passed
+-- End --

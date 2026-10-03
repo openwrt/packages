@@ -1,5 +1,5 @@
 #!/bin/sh
-# shellcheck disable=SC3043
+# shellcheck disable=SC2015,SC3037,SC3043
 
 readonly pbrFunctionsFile='/etc/init.d/pbr'
 if [ -s "$pbrFunctionsFile" ]; then
@@ -9,7 +9,8 @@ else
 	printf "%b: pbr init.d file (%s) not found! \n" '\033[0;31mERROR\033[0m' "$pbrFunctionsFile"
 fi
 
-# Transition from older versions of pbr
+# ── Part 1: Migration from older versions ────────────────────────────
+
 sed -i "s/resolver_ipset/resolver_set/g" /etc/config/pbr
 sed -i "s/'FORWARD'/'forward'/g" /etc/config/pbr
 sed -i "s/'INPUT'/'input'/g" /etc/config/pbr
@@ -25,7 +26,7 @@ sed -i "s|procd_wan6_interface|uplink_interface6|g" /etc/config/pbr
 sed -i "s|wan_ip_rules_priority|uplink_ip_rules_priority|g" /etc/config/pbr
 sed -i "s|wan_mark|uplink_mark|g" /etc/config/pbr
 
-# Transition from pre-1.1.7 versions
+# Remove deprecated wg_server_and_client include
 # shellcheck disable=SC2317,SC2329
 _remove_wg_server_client() {
 	local path
@@ -37,5 +38,34 @@ _remove_wg_server_client() {
 config_load pbr
 config_foreach _remove_wg_server_client include
 [ -n "$(uci changes pbr)" ] && uci_commit pbr
+
+# Remove deprecated options
+uci -q delete pbr.config.webui_supported_protocol
+uci -q delete pbr.config.webui_show_ignore_target
+[ -n "$(uci changes pbr)" ] && uci_commit pbr
+
+# ── Part 2: NFT resolver setup ───────────────────────────────────────
+
+check_dnsmasq_nftset() {
+	[ -z "$dnsmasq_features" ] && dnsmasq_features="$(dnsmasq --version | grep -m1 'Compile time options:' | cut -d: -f2) "
+	[ "${dnsmasq_features#* nftset }" != "$dnsmasq_features" ]
+}
+
+if [ "$(uci_get 'pbr' 'config' 'resolver_set')" != 'dnsmasq.nftset' ]; then
+	if check_dnsmasq_nftset; then
+		echo -n "Setting resolver_set to 'dnsmasq.nftset'... "
+		uci_set 'pbr' 'config' 'resolver_set' 'dnsmasq.nftset' && echo "OK" || echo "FAIL"
+	else
+		echo -n "Setting resolver_set to 'none'... "
+		uci_set 'pbr' 'config' 'resolver_set' 'none' && echo "OK" || echo "FAIL"
+	fi
+	uci_commit 'pbr'
+fi
+
+# ── Part 3: Version tracking ─────────────────────────────────────────
+
+[ -n "$initCompat" ] && uci_set 'pbr' 'config' 'config_compat'  "$initCompat"
+uci_set 'pbr' 'config' 'config_version' "$($_ucode version)"
+uci_commit 'pbr'
 
 exit 0
