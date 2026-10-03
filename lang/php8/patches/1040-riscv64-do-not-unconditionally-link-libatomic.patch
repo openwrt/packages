@@ -1,0 +1,31 @@
+From 732049eef0adb9b66f1d802ac0b7c1ece36ba2e6 Mon Sep 17 00:00:00 2001
+From: Michael Heimpold <mhei@heimpold.de>
+Date: Sat, 10 Oct 2026 17:57:05 +0200
+Subject: [PATCH] php: do not unconditionally link libatomic on riscv64
+
+The generic libatomic probe puts -latomic into EXTRA_LIBS. This causes
+libphp.so to retain a DT_NEEDED entry even when its objects have no atomic
+library references. Let the target link determine the required libraries.
+
+Upstream-Status: PR not yet created
+
+Signed-off-by: Michael Heimpold <mhei@heimpold.de>
+---
+ configure.ac | 6 ------
+ 1 file changed, 6 deletions(-)
+
+--- a/configure.ac
++++ b/configure.ac
+@@ -339,12 +339,6 @@ AC_SEARCH_LIBS([dlopen], [dl],
+ 
+ AC_SEARCH_LIBS([sin], [m])
+ 
+-case $host_alias in
+-  riscv64*)
+-    PHP_CHECK_FUNC(__atomic_exchange_1, atomic)
+-    ;;
+-esac
+-
+ dnl Solaris/Illumos for process mapping.
+ AC_SEARCH_LIBS([Pgrab], [proc])
+ 
