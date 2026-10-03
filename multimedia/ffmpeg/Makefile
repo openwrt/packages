@@ -25,7 +25,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
 PKG_VERSION:=9.0.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ffmpeg.org/releases/
@@ -463,6 +463,14 @@ endif
 
 ifeq ($(ARCH),x86_64)
 	FFMPEG_CONFIGURE+= --enable-lto
+endif
+
+# e500 cores (8540, 8548) trap on dcbzl and on the 4xx maclhw/mullhw.
+# configure does not disable them for these --cpu names, so do it here.
+ifneq ($(filter 8540 8548,$(REAL_CPU_TYPE)),)
+	FFMPEG_CONFIGURE+= \
+		--disable-dcbzl \
+		--disable-ppc4xx
 endif
 
 ifeq ($(CONFIG_FFMPEG_X86ASM),y)
