@@ -16,6 +16,8 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_MAINTAINER:=Damien Mascord <tusker@tusker.org>
 
+PKG_BUILD_FLAGS:=no-mold
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/mdio-tools
