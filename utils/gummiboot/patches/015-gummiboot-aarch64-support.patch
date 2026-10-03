@@ -53,7 +53,7 @@ Signed-off-by: Koen Kooi <koen.kooi at linaro.org>
 +
 +FORMAT = -O binary
 +else
-+FORMAT = --target=efi-app-$(ARCH)
++FORMAT = --output-target=efi-app-$(ARCH)
 +endif
 +
 +
