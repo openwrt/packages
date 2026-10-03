@@ -1,0 +1,94 @@
+#!/bin/sh
+
+if [ "${INTERFACE}" = "loopback" ]; then
+    exit 0
+fi
+if [ "${ACTION}" != "ifup" ] && [ "${ACTION}" != "ifupdate" ]; then
+    exit 0
+fi
+if [ "${ACTION}" = "ifupdate" ] && [ -z "${IFUPDATE_ADDRESSES}" ] && [ -z "${IFUPDATE_DATA}" ]; then
+    exit 0
+fi
+
+log() {
+    logger -t "ip-timezone" "$@"
+}
+
+log_info() {
+    log -p user.info "$*"
+}
+
+log_error() {
+    log -p user.err "$*"
+}
+
+get_posix_timezone() {
+    iana_timezone=$1
+    tail -n1 /usr/share/zoneinfo/${iana_timezone}
+}
+
+get_country_code() {
+    iana_timezone=$1
+    awk -F '\t' -v tz="${iana_timezone}" '$3 == tz { print $1; exit }' /usr/share/zoneinfo/zone.tab
+}
+
+update_wifi_country() {
+    iana_timezone=$1
+    country_code="$(get_country_code "${iana_timezone}")"
+    if [ -z "${country_code}" ]; then
+        log_error "Invalid timezone"
+        return 1
+    fi
+
+    wifi_country_updated=0
+    for device in $(uci show wireless | grep "=wifi-device" | cut -d= -f1); do
+        # Only update when 1. config entry exists 2. country code is different
+        current_country="$(uci -q get "${device}.country")"
+        if [ $? -eq 0 ] && [ "${current_country}" != "${country_code}" ]; then
+            log_info "Updating wifi country code for ${device} to ${country_code}"
+            uci set "${device}.country=${country_code}"
+            wifi_country_updated=1
+        fi
+    done
+
+    if [ "${wifi_country_updated}" -eq 1 ]; then
+        uci commit wireless
+        wifi reload
+    fi
+}
+
+endpoint="$(uci -q get ip-timezone.config.endpoint)"
+if [ $? -ne 0 ]; then
+    log_error "Endpoint not set"
+    exit 1
+fi
+
+for i in {1..5}; do
+    timezone_iana="$(wget --timeout=5 -qO- "${endpoint}")" && break || sleep 1
+done
+
+if [ -z "${timezone_iana}" ]; then
+    log_error "Failed to get timezone"
+    exit 1
+fi
+
+timezone_posix="$(get_posix_timezone "${timezone_iana}")"
+if [ -z "${timezone_posix}" ]; then
+    log_error "Invalid timezone"
+    exit 1
+fi
+
+if [ "${timezone_iana}" != "$(uci -q get system.@system[0].zonename)" ] || [ "${timezone_posix}" != "$(uci -q get system.@system[0].timezone)" ]; then
+    log_info "Updating timezone, IANA: ${timezone_iana}, POSIX: ${timezone_posix}"
+    uci set system.@system[0].zonename="${timezone_iana}"
+    uci set system.@system[0].timezone="${timezone_posix}"
+    uci commit system
+    /etc/init.d/system reload
+    /etc/init.d/cron restart
+else
+    exit 0
+fi
+
+if [ "$(uci -q get ip-timezone.config.update_wifi_country)" != "0" ]; then
+    update_wifi_country "${timezone_iana}"
+fi
