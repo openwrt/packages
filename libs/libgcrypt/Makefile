@@ -47,7 +47,6 @@ endef
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
-	--disable-asm \
 	--disable-doc \
 	--with-gpg-error-prefix="$(STAGING_DIR)/usr"
 
