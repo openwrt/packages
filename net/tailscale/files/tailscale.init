@@ -12,6 +12,7 @@ export TS_NO_LOGS_NO_SUPPORT=true
 start_service() {
   local state_file
   local port
+  local gogc gomemlimit
   local std_err std_out
 
   config_load tailscale
@@ -20,6 +21,8 @@ start_service() {
   config_get port "settings" port 41641
   config_get state_file "settings" state_file /etc/tailscale/tailscaled.state
   config_get fw_mode "settings" fw_mode nftables
+  config_get gogc "settings" gogc
+  config_get gomemlimit "settings" gomemlimit
 
   /usr/sbin/tailscaled --cleanup
 
@@ -32,6 +35,10 @@ start_service() {
 
   # Disable logging to log.tailscale.com
   procd_append_param env TS_NO_LOGS_NO_SUPPORT=true
+
+  # Optional Go memory controls for RAM-constrained devices.
+  [ -z "$gogc" ] || procd_append_param env GOGC="$gogc"
+  [ -z "$gomemlimit" ] || procd_append_param env GOMEMLIMIT="$gomemlimit"
 
   # Set the port to listen on for incoming VPN packets.
   # Remote nodes will automatically be informed about the new port number,
