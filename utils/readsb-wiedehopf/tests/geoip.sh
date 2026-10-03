@@ -4,11 +4,16 @@
 package_dir=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd) || exit 1
 test_dir="./.readsb-geoip-test.$$"
 (umask 077 && mkdir "$test_dir") || exit 1
-trap 'rm -f "$test_dir/functions.sh" "$test_dir/options.sh" "$test_dir/tooling.sh" "$test_dir/dispatch.sh" "$test_dir/calls" "$test_dir/output"; rmdir "$test_dir/bin" "$test_dir"' 0
+trap 'rm -f "$test_dir/functions.sh" "$test_dir/options.sh" "$test_dir/tooling.sh" "$test_dir/dispatch.sh" "$test_dir/calls" "$test_dir/output" "$test_dir/lat" "$test_dir/lon" "$test_dir/stage-path" "$test_dir/bin/mktemp" "$test_dir/bin/rm" "$test_dir/bin/rmdir"; rmdir "$test_dir/bin" "$test_dir"' 0
 trap 'exit 1' HUP INT TERM
 mkdir "$test_dir/bin" || exit 1
+for tool in mktemp rm rmdir; do
+	ln -s "$(command -v "$tool")" "$test_dir/bin/$tool" || exit 1
+done
 
 # Extract only the code under test; never source OpenWrt libraries or fetch URLs.
+# shellcheck source=/dev/null
+. "$package_dir/files/readsb.functions.sh"
 sed -n '/^update_section() {/,/^}/p' "$package_dir/files/readsb-geoip" > "$test_dir/functions.sh" || exit 1
 sed -n '/^verbose=0$/p; /^force=0$/,/^_verbose_apply$/p' "$package_dir/files/readsb-geoip" > "$test_dir/options.sh" || exit 1
 sed -n '/^last_stage="tool-detect"$/,/^# Strict numeric check;/p' "$package_dir/files/readsb-geoip" > "$test_dir/tooling.sh" || exit 1
@@ -51,35 +56,67 @@ lookup() {
 }
 
 uci() {
+	local staging='' value
+	if [ "$1" = -t ]; then
+		staging=$2
+		printf '%s\n' "$staging" > "$test_dir/stage-path"
+		shift 2
+	fi
 	[ "$1" != -q ] || shift
 	case "$1 $2" in
 		'get readsb.main.lat')
-			[ "$stored_lat" != UNSET ] || return 1
-			printf '%s\n' "$stored_lat"
+			[ -f "$test_dir/lat" ] || return 1
+			IFS= read -r value < "$test_dir/lat"
+			printf '%s\n' "$value"
 			;;
 		'get readsb.main.lon')
-			[ "$stored_lon" != UNSET ] || return 1
-			printf '%s\n' "$stored_lon"
+			[ -f "$test_dir/lon" ] || return 1
+			IFS= read -r value < "$test_dir/lon"
+			printf '%s\n' "$value"
 			;;
 		'set readsb.main.lat='*)
 			printf '%s %s\n' "$1" "$2" >> "$test_dir/calls"
 			[ "$uci_failure" != lat ] || return 9
-			stored_lat=${2#*=}
+			if [ -n "$staging" ]; then
+				printf 'lat=%s\n' "${2#*=}" >> "$staging/readsb"
+			else
+				printf '%s\n' "${2#*=}" > "$test_dir/lat"
+			fi
 			;;
 		'set readsb.main.lon='*)
 			printf '%s %s\n' "$1" "$2" >> "$test_dir/calls"
 			[ "$uci_failure" != lon ] || return 9
-			stored_lon=${2#*=}
+			if [ -n "$staging" ]; then
+				printf 'lon=%s\n' "${2#*=}" >> "$staging/readsb"
+			else
+				printf '%s\n' "${2#*=}" > "$test_dir/lon"
+			fi
 			;;
 		'commit readsb')
 			printf '%s %s\n' "$1" "$2" >> "$test_dir/calls"
 			[ "$uci_failure" != commit ] || return 9
+			if [ -n "$staging" ]; then
+				while IFS= read -r value; do
+					case $value in
+						lat=*) printf '%s\n' "${value#*=}" > "$test_dir/lat" ;;
+						lon=*) printf '%s\n' "${value#*=}" > "$test_dir/lon" ;;
+						*) return 99 ;;
+					esac
+				done < "$staging/readsb"
+			fi
 			;;
+		'revert readsb.main.lat'|'revert readsb.main.lon') return 0 ;;
 		*)
 			printf 'unexpected uci call: %s\n' "$*" >&2
 			return 99
 			;;
 	esac
+}
+
+seed_coordinates() {
+	rm -f "$test_dir/lat" "$test_dir/lon" "$test_dir/stage-path"
+	[ "$stored_lat" = UNSET ] || printf '%s\n' "$stored_lat" > "$test_dir/lat"
+	[ "$stored_lon" = UNSET ] || printf '%s\n' "$stored_lon" > "$test_dir/lon"
 }
 
 test_update_section() (
@@ -91,12 +128,15 @@ test_update_section() (
 	expected_rc=$7 expected_calls=$8 expected_lat=$9 expected_lon=${10}
 	expected_preview=${11:-}
 
+	seed_coordinates
 	: > "$test_dir/calls"
 	saved_path=$PATH
 	PATH="$test_dir/bin"
 	rc=0
 	update_section main > "$test_dir/output" 2>&1 || rc=$?
 	PATH=$saved_path
+	stored_lat=$(uci -q get readsb.main.lat) || stored_lat=UNSET
+	stored_lon=$(uci -q get readsb.main.lon) || stored_lon=UNSET
 	assert_equal "$rc" "$expected_rc" || {
 		cat "$test_dir/output" >&2
 		return 1
@@ -104,6 +144,10 @@ test_update_section() (
 	assert_equal "$stored_lat" "$expected_lat" || return 1
 	assert_equal "$stored_lon" "$expected_lon" || return 1
 	assert_equal "$(cat "$test_dir/calls")" "$expected_calls" || return 1
+	if [ -f "$test_dir/stage-path" ]; then
+		IFS= read -r path < "$test_dir/stage-path"
+		[ ! -e "$path" ] || { printf 'private staging directory leaked: %s\n' "$path" >&2; return 1; }
+	fi
 	assert_equal "$(awk '/^\[dry-run\] would set / {
 		for (i = 4; i <= NF; i++) print "set " $i
 	}' "$test_dir/output")" "$expected_preview" || return 1
@@ -199,14 +243,20 @@ $set_lat" '' -0.14123456
 run_test 'Failed missing longitude write preserves populated latitude' \
 	test_update_section 51.50123456 '' 0 0 success lon 1 "lookup
 $set_lon" 51.50123456 ''
-run_test 'Failed longitude write leaves only latitude staged and does not commit' \
+run_test 'Failed longitude write leaves neither coordinate staged' \
 	test_update_section '' '' 0 0 success lon 1 "lookup
 $set_lat
-$set_lon" 48.8566 ''
+$set_lon" '' ''
 run_test 'Commit failure after filling latitude is reported without replacing longitude' \
-	test_update_section '' -0.14123456 0 0 success commit 1 "$lat_only" 48.8566 -0.14123456
+	test_update_section '' -0.14123456 0 0 success commit 1 "$lat_only" '' -0.14123456
 run_test 'Commit failure after filling both coordinates is reported' \
-	test_update_section '' '' 0 0 success commit 1 "$both" 48.8566 2.3522
+	test_update_section '' '' 0 0 success commit 1 "$both" '' ''
+run_test 'Forced update failure preserves the original precise coordinates' \
+	test_update_section 51.50123456 -0.14123456 1 0 success lon 1 "lookup
+$set_lat
+$set_lon" 51.50123456 -0.14123456
+run_test 'Forced commit failure preserves the original precise coordinates' \
+	test_update_section 51.50123456 -0.14123456 1 0 success commit 1 "$both" 51.50123456 -0.14123456
 
 test_cli() (
 	stored_lat=$1 stored_lon=$2
@@ -222,6 +272,7 @@ test_cli() (
 	[ "$tooling" != no_jsonfilter ] || unset -f jsonfilter
 	[ "$tooling" != no_http ] || unset -f wget
 
+	seed_coordinates
 	: > "$test_dir/calls"
 	rc=0
 	(

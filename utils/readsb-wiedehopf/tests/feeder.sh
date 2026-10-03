@@ -23,6 +23,7 @@ sed -n '
 	/^_discard_new_feeder() {/,/^}/p
 	/^cmd_add() {/,/^}/p
 	/^cmd_set() {/,/^}/p
+	/^cmd_enable_disable() {/,/^}/p
 ' "$package_dir/files/readsb-feeder" > "$tmpdir/functions.sh" || exit 1
 # shellcheck source=/dev/null
 . "$tmpdir/functions.sh"
@@ -400,6 +401,43 @@ run_test '--set rejects an unknown option before mutation' test_set_feeder exist
 run_test '--set rejects an incomplete custom endpoint before mutation' test_set_feeder missing-port '' 1 '' preset=custom
 run_test '--set retains later overriding values' test_set_feeder existing '' 0 \
 	"$(printf 'set readsb.test.enabled=1\nset readsb.test.enabled=0\ncommit readsb')" enabled=1 enabled=0
+
+test_enable_disable() (
+	want=$1 fail=$2 expected_rc=$3 expected_calls=$4 name=${5-test}
+	printf '%s\n' 'readsb.main=readsb' 'readsb.main.pending=keep' \
+		'readsb.test=feeder' 'readsb.test.preset=adsblol' "readsb.test.enabled=$((1-want))" > "$tmpdir/state"
+	cp "$tmpdir/state" "$tmpdir/committed"
+	original_state=$(cat "$tmpdir/state")
+	: > "$tmpdir/calls"
+	uci() { mutation_uci "$@"; }
+	_notice() { :; }
+	readsb_warn_companions() { echo companions >> "$tmpdir/calls"; }
+	rc=0
+	output=$(cmd_enable_disable "$name" "$want" 2>&1) || rc=$?
+	assert_equal "$rc" "$expected_rc" || { printf '%s\n' "$output" >&2; return 1; }
+	assert_equal "$(grep -E '^(set|commit|companions)' "$tmpdir/calls")" "$expected_calls" || return 1
+	if [ "$rc" = 0 ]; then
+		assert_equal "$(uci -q get readsb.test.enabled)" "$want" || return 1
+		cmp -s "$tmpdir/state" "$tmpdir/committed" || return 1
+		printf '%s\n' "$output" | grep -q "feeder 'test' enabled=$want"
+	else
+		assert_equal "$(cat "$tmpdir/committed")" "$original_state" || return 1
+		! printf '%s\n' "$output" | grep -q "feeder 'test' enabled=" || return 1
+		[ "$fail" = commit ] || assert_equal "$(cat "$tmpdir/state")" "$original_state"
+	fi
+)
+run_test '--enable commits only after a successful write' test_enable_disable 1 '' 0 \
+	"$(printf 'set readsb.test.enabled=1\ncommit readsb\ncompanions')"
+run_test '--disable commits only after a successful write' test_enable_disable 0 '' 0 \
+	"$(printf 'set readsb.test.enabled=0\ncommit readsb')"
+for want in 0 1; do
+	run_test "enabled=$want write failure does not commit unrelated changes" \
+		test_enable_disable "$want" "readsb.test.enabled=$want" 2 "set readsb.test.enabled=$want"
+	run_test "enabled=$want commit failure does not report success" \
+		test_enable_disable "$want" commit 2 "$(printf 'set readsb.test.enabled=%s\ncommit readsb' "$want")"
+done
+run_test '--enable rejects a missing section before mutation' test_enable_disable 1 '' 3 '' missing
+run_test '--disable rejects an empty name before mutation' test_enable_disable 0 '' 1 '' ''
 
 printf '%s tests, %s failures\n' "$tests" "$failures"
 [ "$failures" -eq 0 ]

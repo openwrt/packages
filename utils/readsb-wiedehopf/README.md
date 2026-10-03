@@ -154,6 +154,12 @@ readsb-setup --help
 | `/usr/sbin/readsb-uuid`       | station UUID wizard / generator (`--print`, `--auto`, `--force`)  |
 | `/usr/sbin/readsb-geoip`      | public-IP-based lat/lon auto-fill                                 |
 
+The daemon package depends on `uclient-fetch`, `ca-bundle`, and
+`libustream-mbedtls` (OpenWrt's default TLS provider) so GeoIP has HTTPS
+support on minimal images. Installing these dependencies does not opt in
+to any external lookup. The network-only viewer does not pull in the
+helpers' HTTP/TLS dependencies.
+
 ## Configuration model
 
 `/etc/config/readsb` is **declarative-only** by design. It contains:
@@ -264,6 +270,13 @@ coordinates exist and you explicitly choose to change the location,
 it explains that auto-detection will replace both values before asking
 for consent. `--dry-run` previews the eligible writes without staging
 or committing any UCI changes; lookup or write failures return nonzero.
+
+Coordinate updates are staged in a private UCI directory and committed
+only after every eligible write succeeds. A failed write or commit
+discards those private changes, preserving both the original coordinates
+and shared pending edits. A later unrelated commit cannot pick up part
+of a failed lookup. After a successful commit, pending edits to the keys
+explicitly updated are cleared so they cannot mask the new values.
 
 ### Boot-time waits
 
@@ -384,8 +397,12 @@ The section's `option freq` (in Hz, MHz, or `1090MHz`-style) selects
 which serial it claims. Automatically selected pins are re-evaluated
 on subsequent add events and boot-time replay. Thus plugging the `978`
 dongle first does not prevent selecting `1090` when that dongle arrives.
-If no serial matches, a still-attached automatic serial is kept to avoid
-switching a working unlabelled setup to an arbitrary dongle. An automatic
+If no serial matches, a still-attached automatic serial is kept only
+when it is unlabelled or its parsed frequency matches the configured
+band. For example, an automatic `978` pin is not retained by a `1090`
+instance when another SDR is attached. This check also recognizes MHz
+suffixes and Hz-form labels. Unlabelled serials remain stable, and a
+valid manual pin remains an explicit operator choice. An automatic
 numeric index without a matching serial is not stable enough to retain
 with multiple SDRs.
 
@@ -412,6 +429,12 @@ manual. Existing non-empty pins without a marker are treated as manual;
 clear `device` to opt them back into automatic selection. Removal of the
 selected dongle still clears its pin and switches to network-only until
 reselection. Use `hotplug=0` to opt out of all automatic device changes.
+
+Hotplug computes the device, automatic-pin marker, device type, and
+network-only mode together before staging them privately. A failed
+write or commit discards the whole hotplug update without leaving a
+partial pin for a later shared UCI commit. Service restart and success
+logging occur only after the update is committed.
 
 ## Boot-time behavior
 
@@ -515,6 +538,10 @@ reports the failed option, and does not commit or print a success
 message. Earlier successful writes can remain staged; inspect pending
 changes before committing or retrying. The existing feeder and unrelated
 pending edits are not deleted or reverted automatically.
+
+`--enable` and `--disable` also check their UCI write before committing.
+If it fails, they return 2 without committing unrelated pending changes,
+printing a success message, or starting companion checks.
 
 Other useful commands -- run `readsb-feeder -h` for the full list. All
 commands are `--flag` style (matching `readsb-setup --status` /

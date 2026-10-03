@@ -74,11 +74,6 @@ check_freq() {
 pin_device() {
 	local selected=$1
 	[ "$device" = "$selected" ] && [ "$device_auto" = "$selected" ] && return 0
-	if ! uci set "readsb.${target}.device=$selected" \
-	   || ! uci set "readsb.${target}.device_auto=$selected"; then
-		_err "hotplug: failed to update device pin for '$target'"
-		return 1
-	fi
 	device=$selected
 	device_auto=$selected
 	changed=1
@@ -86,10 +81,6 @@ pin_device() {
 
 set_net_only() {
 	[ "$net_only" = "$1" ] && return 0
-	uci set "readsb.${target}.net_only=$1" || {
-		_err "hotplug: failed to update net-only mode for '$target'"
-		return 1
-	}
 	net_only=$1
 	changed=1
 }
@@ -108,15 +99,11 @@ add)
 
 	changed=0
 	[ "$device_type" = "rtlsdr" ] || {
-		uci set "readsb.${target}.device_type=rtlsdr"; changed=1
+		device_type=rtlsdr; changed=1
 	}
 
 	# A changed explicit device value takes ownership away from hotplug.
 	if [ -n "$device_auto" ] && [ "$device" != "$device_auto" ]; then
-		uci set "readsb.${target}.device_auto=" || {
-			_err "hotplug: failed to clear automatic device pin for '$target'"
-			exit 1
-		}
 		device_auto=""
 		changed=1
 	fi
@@ -139,6 +126,8 @@ add)
 			# Recipe in README.md ("Multi-SDR setup").
 			config_get freq_cfg "$target" freq
 			want_serial=$(readsb_freq_to_mhz "$freq_cfg")
+			device_freq=""
+			[ -z "$device" ] || device_freq=$(readsb_freq_to_mhz "$device")
 			match=""
 			if [ -n "$want_serial" ] \
 			   && readsb_sdr_serial_present "$want_serial"; then
@@ -146,8 +135,9 @@ add)
 			fi
 			if [ -n "$match" ]; then
 				pin_device "$match" || exit 1
-				_notice "hotplug: $sdr_count RTL-SDRs attached; auto-pinned device='$match' by serial-matches-freq convention (freq=${freq_cfg:-1090})"
-			elif [ -n "$device" ] && readsb_sdr_serial_present "$device"; then
+				_debug "hotplug: $sdr_count RTL-SDRs attached; selected device='$match' by serial-matches-freq convention (freq=${freq_cfg:-1090})"
+			elif [ -n "$device" ] && readsb_sdr_serial_present "$device" \
+			     && { [ -z "$device_freq" ] || [ "$device_freq" = "$want_serial" ]; }; then
 				_warn "hotplug: no serial matches freq=${freq_cfg:-1090}; keeping attached automatic serial '$device'"
 			else
 				pin_device "" || exit 1
@@ -193,7 +183,7 @@ remove)
 		fi
 	else
 		# Last SDR removed; revert to net-only.
-		[ "$device_type" = "rtlsdr" ] && { uci set "readsb.${target}.device_type="; changed=1; }
+		[ "$device_type" = "rtlsdr" ] && { device_type=""; changed=1; }
 		pin_device "" || exit 1
 		set_net_only 1 || exit 1
 		msg="RTL-SDR ($vid:$pid serial=${event_serial:-none}) removed; net-only mode"
@@ -203,10 +193,11 @@ esac
 
 [ "$changed" = "1" ] || exit 0
 
-if ! uci commit readsb; then
-	_err "hotplug: 'uci commit readsb' failed; UCI may be inconsistent"
-	exit 1
-fi
+readsb_uci_apply \
+	"${target}.device_type=$device_type" \
+	"${target}.device=$device" \
+	"${target}.device_auto=$device_auto" \
+	"${target}.net_only=$net_only" || exit 1
 _notice "$msg"
 [ -n "$READSB_HOTPLUG_SEED" ] && exit 0
 if /etc/init.d/readsb enabled; then

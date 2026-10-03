@@ -14,6 +14,50 @@ _warn()   { logger -t "$READSB_LOG_TAG" -p daemon.warn   -- "$@"; }
 _err()    { logger -t "$READSB_LOG_TAG" -p daemon.err    -- "$@"; }
 _debug()  { logger -t "$READSB_LOG_TAG" -p daemon.debug  -- "$@"; }
 
+# Commit section.option=value assignments without exposing intermediate
+# writes in the shared UCI delta directory. Failed updates are discarded.
+readsb_uci_apply() (
+	[ "$#" -gt 0 ] || {
+		_err "no assignments supplied for UCI update"
+		return 1
+	}
+	umask 077
+	local assignment
+	# BusyBox unwinds function locals before running a subshell's EXIT trap.
+	readsb_uci_stagedir=$(mktemp -d) || {
+		_err "cannot create private UCI staging directory"
+		return 1
+	}
+	_readsb_uci_cleanup() {
+		local status=$?
+		trap - 0
+		rm -f "$readsb_uci_stagedir/readsb" || _err "could not remove private UCI changes in '$readsb_uci_stagedir'"
+		rmdir "$readsb_uci_stagedir" || _err "could not remove private UCI staging directory '$readsb_uci_stagedir'"
+		exit "$status"
+	}
+	trap _readsb_uci_cleanup 0
+	trap 'exit 1' HUP INT TERM
+
+	for assignment in "$@"; do
+		uci -t "$readsb_uci_stagedir" set "readsb.$assignment" || {
+			_err "failed to stage readsb.${assignment%%=*} (uci set rc=$?); update discarded"
+			return 1
+		}
+	done
+	uci -t "$readsb_uci_stagedir" commit readsb || {
+		_err "readsb UCI commit failed (rc=$?); private update discarded"
+		return 1
+	}
+	# The private commit does not clear shared deltas. Remove only edits
+	# superseded by this committed update, so they cannot hide its values.
+	for assignment in "$@"; do
+		uci -q revert "readsb.${assignment%%=*}" || {
+			_err "committed update, but could not clear pending readsb.${assignment%%=*} (rc=$?)"
+			return 1
+		}
+	done
+)
+
 # --- USB SDR identification ------------------------------------------------
 # RTL2832U USB IDs from librtlsdr's known_devices[]. To regenerate:
 #   awk '/static rtlsdr_dongle_t known_devices/,/^};/' src/librtlsdr.c \

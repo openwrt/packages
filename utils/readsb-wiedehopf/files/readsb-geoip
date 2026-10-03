@@ -260,26 +260,10 @@ update_section() {
 		return 0
 	fi
 
-	# Mutating UCI: surface any failure (set or commit) instead of
-	# emitting a success notice on a half-written / un-committed change.
-	# Returning non-zero lets callers (cron, init-script geoip wait,
-	# --self-test piping) treat this as the failure it actually is.
-	if [ "$set_lat" -eq 1 ]; then
-		uci set "readsb.${sec}.lat=${lat}" || {
-			_err "failed to set readsb.${sec}.lat (uci set rc=$?); aborting"
-			return 1
-		}
-	fi
-	if [ "$set_lon" -eq 1 ]; then
-		uci set "readsb.${sec}.lon=${lon}" || {
-			_err "failed to set readsb.${sec}.lon (uci set rc=$?); aborting"
-			return 1
-		}
-	fi
-	uci commit readsb || {
-		_err "uci commit readsb failed (rc=$?); lat/lon for '${sec}' may not be persisted"
-		return 1
-	}
+	set --
+	[ "$set_lat" -eq 0 ] || set -- "$@" "${sec}.lat=${lat}"
+	[ "$set_lon" -eq 0 ] || set -- "$@" "${sec}.lon=${lon}"
+	readsb_uci_apply "$@" || return 1
 	_notice "auto-detected location for '${sec}': lat=${lat} lon=${lon} (city-level only; for accurate CPR set exact coords with 'readsb-setup' or 'uci set readsb.${sec}.lat=...; uci set readsb.${sec}.lon=...; uci commit readsb')"
 }
 

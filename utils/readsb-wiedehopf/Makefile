@@ -16,7 +16,7 @@ PKG_HASH:=ac0488a2deadd20b373a56928b7d297b5e9262566dd84ec9c72cffaedff2cc78
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/readsb-$(PKG_VERSION)
 
-PKG_LICENSE:=GPL-3.0-or-later BSD-3-Clause
+PKG_LICENSE:=GPL-3.0-or-later BSD-3-Clause GPL-2.0-only
 PKG_LICENSE_FILES:=LICENSE COPYING
 
 PKG_MAINTAINER:=Dr Bill Mcilhargey <contributor@mcilhargey.com>
@@ -40,7 +40,7 @@ endef
 define Package/readsb-wiedehopf
   $(call Package/readsb-wiedehopf/default)
   TITLE+= (readsb)
-  DEPENDS+=+jsonfilter +ca-bundle
+  DEPENDS+=+jsonfilter +ca-bundle +uclient-fetch +libustream-mbedtls
   PROVIDES:=readsb
   CONFLICTS:=readsb
 endef

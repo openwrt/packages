@@ -9,7 +9,7 @@ cleanup() {
 	rm -f "$tmpdir/init.sh" "$tmpdir/hotplug.sh" "$tmpdir/location.sh" \
 		"$tmpdir/config" "$tmpdir/commands" "$tmpdir/messages" "$tmpdir/writes" \
 		"$tmpdir/log" "$tmpdir/bin/readsb-geoip" "$tmpdir/cleanup.sh" \
-		"$tmpdir/cleanup-calls" "$tmpdir/cleanup-output" || \
+		"$tmpdir/cleanup-calls" "$tmpdir/cleanup-output" "$tmpdir/stage-path" || \
 		printf 'cleanup: could not remove test files in %s\n' "$tmpdir" >&2
 	rmdir "$tmpdir/bin" "$tmpdir" || \
 		printf 'cleanup: could not remove temporary directories in %s\n' "$tmpdir" >&2
@@ -73,6 +73,12 @@ config_get() {
 }
 config_get_bool() { config_get "$@"; }
 uci() {
+	local staging=''
+	if [ "$1" = -t ]; then
+		staging=$2
+		printf '%s\n' "$staging" >> "$tmpdir/stage-path"
+		shift 2
+	fi
 	[ "$1" != -q ] || shift
 	case $1 in
 		get)
@@ -88,10 +94,22 @@ uci() {
 			;;
 		set)
 			[ "${2%%=*}" != "${fail_set:-}" ] || return 1
-			printf '%s\n' "$2" >> "$tmpdir/config"
+			if [ -n "$staging" ]; then
+				printf '%s\n' "$2" >> "$staging/readsb"
+			else
+				printf '%s\n' "$2" >> "$tmpdir/config"
+			fi
 			printf 'set %s\n' "$2" >> "$tmpdir/writes"
 			;;
-		commit) echo commit >> "$tmpdir/writes" ;;
+		commit)
+			echo commit >> "$tmpdir/writes"
+			[ "${fail_commit:-0}" != 1 ] || return 1
+			[ -z "$staging" ] || cat "$staging/readsb" >> "$tmpdir/config"
+			;;
+		revert)
+			printf 'revert %s\n' "$2" >> "$tmpdir/writes"
+			[ "${fail_revert:-}" != "$2" ]
+			;;
 		*) return 1 ;;
 	esac
 }
@@ -130,6 +148,48 @@ test_cleanup_status() (
 	else
 		grep -q 'cleanup:.*could not remove' "$tmpdir/cleanup-output"
 	fi
+)
+test_uci_staging_cleanup() (
+	reset_config
+	: > "$tmpdir/stage-path"
+	fail_set=$1
+	rc=0
+	readsb_uci_apply main.device=1090 main.device_auto=1090 || rc=$?
+	assert_equal "$rc" "$2" || return 1
+	while IFS= read -r path; do
+		[ ! -e "$path" ] || { printf 'private staging directory leaked: %s\n' "$path" >&2; return 1; }
+	done < "$tmpdir/stage-path"
+)
+test_uci_apply_order() (
+	reset_config
+	readsb_uci_apply main.device=1090 main.device_auto=1090 || return 1
+	assert_equal "$(cat "$tmpdir/writes")" "$(printf '%s\n' \
+		'set readsb.main.device=1090' 'set readsb.main.device_auto=1090' commit \
+		'revert readsb.main.device' 'revert readsb.main.device_auto')"
+)
+test_uci_setup_failure() (
+	reset_config
+	mktemp() { return 1; }
+	rc=0
+	readsb_uci_apply main.device=1090 || rc=$?
+	assert_equal "$rc" 1 && [ ! -s "$tmpdir/writes" ] \
+		&& grep -q 'cannot create private UCI' "$tmpdir/messages"
+)
+test_uci_empty_update() (
+	reset_config
+	rc=0
+	readsb_uci_apply || rc=$?
+	assert_equal "$rc" 1 && [ ! -s "$tmpdir/writes" ] \
+		&& grep -q 'no assignments' "$tmpdir/messages"
+)
+test_uci_revert_failure() (
+	reset_config
+	fail_revert=readsb.main.device
+	rc=0
+	readsb_uci_apply main.device=1090 || rc=$?
+	assert_equal "$rc" 1 || return 1
+	assert_config device 1090 || return 1
+	grep -q 'committed update, but could not clear pending readsb.main.device' "$tmpdir/messages"
 )
 for status in 0 1 7; do
 	for failure in none rm rmdir; do
@@ -402,9 +462,15 @@ test_changed_frequency_pin() (
 	assert_config device 978 && assert_config device_auto 978
 )
 test_unmatched_auto_pin() (
-	reset_config 'readsb.main.device=978' 'readsb.main.device_auto=978'
-	run_hotplug add spare "$(printf '%s\n' 978 spare)" || return 1
-	assert_config device 978 && assert_config device_auto 978 && assert_config net_only 0 || return 1
+	serial=$1 freq=$2 expected=$3
+	reset_config "readsb.main.device=$serial" "readsb.main.device_auto=$serial" "readsb.main.freq=$freq"
+	run_hotplug add spare "$(printf '%s\n' "$serial" spare)" || return 1
+	assert_config device "$expected" && assert_config device_auto "$expected" || return 1
+	if [ -z "$expected" ]; then
+		assert_config net_only 1 || return 1
+	else
+		assert_config net_only 0 || return 1
+	fi
 	grep -q 'no serial matches' "$tmpdir/messages"
 )
 test_unlabelled_auto_pin() (
@@ -465,11 +531,26 @@ test_reconcile_pin() (
 )
 test_pin_write_error() (
 	reset_config
+	original=$(cat "$tmpdir/config")
 	fail_set=readsb.main.device_auto
 	rc=0
 	run_hotplug add 1090 1090 || rc=$?
 	assert_equal "$rc" 1 || return 1
-	grep -q '^error:' "$tmpdir/messages" && ! grep -q '^commit$' "$tmpdir/writes"
+	grep -q '^error:' "$tmpdir/messages" && ! grep -q '^commit$' "$tmpdir/writes" || return 1
+	assert_equal "$(cat "$tmpdir/config")" "$original"
+)
+test_hotplug_isolation() (
+	reset_config 'readsb.main.device=old' 'readsb.main.device_auto=old' \
+		'readsb.main.lat=51.5' 'readsb.main.pending=keep' 'readsb.other.enabled=0'
+	original=$(cat "$tmpdir/config")
+	fail_set=$1
+	fail_commit=${2:-0}
+	rc=0
+	run_hotplug add 1090 1090 || rc=$?
+	assert_equal "$rc" 1 || return 1
+	assert_equal "$(cat "$tmpdir/config")" "$original" || return 1
+	grep -q '^error:' "$tmpdir/messages" || return 1
+	! grep -q '^notice:' "$tmpdir/messages"
 )
 run_test '978 then 1090 reselects the matching auto pin, including seed replays' test_auto_pin 978 1090
 run_test '1090 then 978 keeps the matching auto pin' test_auto_pin 1090 978
@@ -478,7 +559,12 @@ run_test 'changing frequency re-evaluates an automatic pin' test_changed_frequen
 run_test 'manual serial pin is preserved' test_manual_pin 978 ''
 run_test 'manual numeric pin is preserved' test_manual_pin 0 ''
 run_test 'editing an auto pin makes it manual' test_manual_pin 'manual spare' 978
-run_test 'unmatched automatic serial is retained while still attached' test_unmatched_auto_pin
+run_test 'wrong-band 978 automatic pin is not retained for default 1090' test_unmatched_auto_pin 978 '' ''
+run_test 'wrong-band 1090 automatic pin is not retained for 978' test_unmatched_auto_pin 1090 978 ''
+run_test 'suffixed wrong-band automatic pin is not retained' test_unmatched_auto_pin 978MHz 1090MHz ''
+run_test 'Hz-form wrong-band automatic pin is not retained' test_unmatched_auto_pin 978000000 1090000000 ''
+run_test 'equivalent frequency label can retain an existing pin' test_unmatched_auto_pin 1090MHz 1090000000 1090MHz
+run_test 'unlabelled automatic serial remains stable' test_unmatched_auto_pin receiver-a 1090 receiver-a
 run_test 'two unlabelled SDRs retain their stable automatic serial across replay' test_unlabelled_auto_pin
 run_test 'unselected multi-SDR setup remains net-only until a match arrives' test_ambiguous_devices '' ''
 run_test 'stale auto pin with no frequency match remains net-only' test_ambiguous_devices stale stale
@@ -490,6 +576,24 @@ run_test 'removing unrelated SDR preserves the pin' test_remove_pin 978 1090 109
 run_test 'removing the last SDR clears its marker' test_remove_pin 1090 '' ''
 run_test 'boot reconciliation clears stale auto-pin metadata' test_reconcile_pin
 run_test 'failed auto-pin metadata write reports an error and does not commit' test_pin_write_error
+for option in device_type device device_auto net_only; do
+	run_test "hotplug $option write failure leaves all shared settings unchanged" \
+		test_hotplug_isolation "readsb.main.$option"
+done
+run_test 'hotplug commit failure leaves original pins and unrelated pending edits intact' \
+	test_hotplug_isolation '' 1
+run_test 'successful isolated update removes its staging directory' test_uci_staging_cleanup '' 0
+run_test 'failed isolated update removes its staging directory' test_uci_staging_cleanup readsb.main.device_auto 1
+run_test 'shared deltas are cleared only for assigned keys after commit' test_uci_apply_order
+run_test 'failed staging-directory creation performs no UCI writes' test_uci_setup_failure
+run_test 'empty isolated update is rejected without a commit' test_uci_empty_update
+run_test 'post-commit housekeeping failure is reported explicitly' test_uci_revert_failure
+run_test 'package license includes the distributed GPL-2.0-only helpers' \
+	grep -q '^PKG_LICENSE:=.*GPL-2.0-only' "$package_dir/Makefile"
+run_test 'decoder package declares its HTTPS client dependency' \
+	grep -q 'DEPENDS+=.*+uclient-fetch' "$package_dir/Makefile"
+run_test 'decoder package provides a TLS backend for its HTTPS client' \
+	grep -q 'DEPENDS+=.*+libustream-mbedtls' "$package_dir/Makefile"
 
 printf '%s tests, %s failures\n' "$tests" "$failures"
 [ "$failures" -eq 0 ]

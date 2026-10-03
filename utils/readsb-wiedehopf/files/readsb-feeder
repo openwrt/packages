@@ -735,7 +735,10 @@ cmd_enable_disable() {
 		echo "readsb-feeder: no section named '$name'" >&2
 		return 3
 	fi
-	uci -q set "readsb.${name}.enabled=${want}"
+	uci -q set "readsb.${name}.enabled=${want}" || {
+		echo "readsb-feeder: uci set failed for '$name.enabled'; not committed" >&2
+		return 2
+	}
 	_commit || return 2
 	_emit_mutation "feeder '$name' enabled=${want}"
 	# Surface companion-package warnings on enable; nothing to warn about on disable.
