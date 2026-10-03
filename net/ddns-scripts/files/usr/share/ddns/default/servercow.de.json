@@ -1,11 +1,9 @@
 {
-	"name": "servercow.de",
-	"ipv4": {
-		"url": "http://www.servercow.de/dnsupdate/update.php?username=[USERNAME]&pass=[PASSWORD]&hostname=[DOMAIN]&ipaddr=[IP]",
-		"answer": "OKv4"
-	},
-	"ipv6": {
-		"url": "http://www.servercow.de/dnsupdate/update.php?username=[USERNAME]&pass=[PASSWORD]&hostname=[DOMAIN]&ip6addr=[IP]",
-		"answer": "OKv6"
-	}
+		"name": "servercow.de",
+		"ipv4": {
+				"url": "update_servercow_de.sh"
+		},
+		"ipv6": {
+			"url": "update_servercow_de.sh"
+		}
 }
