@@ -1,0 +1,100 @@
+From 6b735d09d9ecde95f0c4ac15170ed6377343aa1a Mon Sep 17 00:00:00 2001
+From: Ville Takio <ville+git@takio.fi>
+Date: Thu, 1 Oct 2026 17:52:50 +0300
+Subject: [PATCH] Volume: avoid unaligned 64-bit header and test vector
+ accesses
+
+The volume header (de)serialisation and TestXtsAES read and write 64-bit
+fields through casted pointers into byte buffers at offsets that are
+only 4-byte aligned (e.g. the header field at offset 12). CPUs that trap
+on misaligned access without kernel fix-up (SPARC, MIPS64 on some
+systems, qemu-user) then fail with SIGBUS in "veracrypt --test" and when
+creating or opening any volume. Use memcpy instead.
+
+The XTS code also accesses its local byte arrays (whitening values,
+data unit number) through uint64 pointers; declare them 8-byte aligned
+instead of relying on the compiler's stack layout.
+
+Upstream-Status: Submitted [https://github.com/veracrypt/VeraCrypt/pull/1899]
+
+Signed-off-by: Ville Takio <ville+git@takio.fi>
+---
+ src/Volume/EncryptionModeXTS.cpp | 12 ++++++------
+ src/Volume/EncryptionTest.cpp    |  3 ++-
+ src/Volume/VolumeHeader.cpp      | 11 ++++++++---
+ 3 files changed, 16 insertions(+), 10 deletions(-)
+
+--- a/src/Volume/EncryptionModeXTS.cpp
++++ b/src/Volume/EncryptionModeXTS.cpp
+@@ -70,9 +70,9 @@ namespace VeraCrypt
+ 	void EncryptionModeXTS::EncryptBufferXTS (const Cipher &cipher, const Cipher &secondaryCipher, uint8 *buffer, uint64 length, uint64 startDataUnitNo, unsigned int startCipherBlockNo) const
+ 	{
+                 uint8 finalCarry;
+-		uint8 whiteningValues [ENCRYPTION_DATA_UNIT_SIZE];
+-		uint8 whiteningValue [BYTES_PER_XTS_BLOCK];
+-		uint8 byteBufUnitNo [BYTES_PER_XTS_BLOCK];
++		CRYPTOPP_ALIGN_DATA(8) uint8 whiteningValues [ENCRYPTION_DATA_UNIT_SIZE];
++		CRYPTOPP_ALIGN_DATA(8) uint8 whiteningValue [BYTES_PER_XTS_BLOCK];
++		CRYPTOPP_ALIGN_DATA(8) uint8 byteBufUnitNo [BYTES_PER_XTS_BLOCK];
+ 		uint64 *whiteningValuesPtr64 = (uint64 *) whiteningValues;
+ 		uint64 *whiteningValuePtr64 = (uint64 *) whiteningValue;
+ 		uint64 *bufPtr = (uint64 *) buffer;
+@@ -249,9 +249,9 @@ namespace VeraCrypt
+ 	void EncryptionModeXTS::DecryptBufferXTS (const Cipher &cipher, const Cipher &secondaryCipher, uint8 *buffer, uint64 length, uint64 startDataUnitNo, unsigned int startCipherBlockNo) const
+ 	{
+ 		uint8 finalCarry;
+-		uint8 whiteningValues [ENCRYPTION_DATA_UNIT_SIZE];
+-		uint8 whiteningValue [BYTES_PER_XTS_BLOCK];
+-		uint8 byteBufUnitNo [BYTES_PER_XTS_BLOCK];
++		CRYPTOPP_ALIGN_DATA(8) uint8 whiteningValues [ENCRYPTION_DATA_UNIT_SIZE];
++		CRYPTOPP_ALIGN_DATA(8) uint8 whiteningValue [BYTES_PER_XTS_BLOCK];
++		CRYPTOPP_ALIGN_DATA(8) uint8 byteBufUnitNo [BYTES_PER_XTS_BLOCK];
+ 		uint64 *whiteningValuesPtr64 = (uint64 *) whiteningValues;
+ 		uint64 *whiteningValuePtr64 = (uint64 *) whiteningValue;
+ 		uint64 *bufPtr = (uint64 *) buffer;
+--- a/src/Volume/EncryptionTest.cpp
++++ b/src/Volume/EncryptionTest.cpp
+@@ -511,7 +511,8 @@ namespace VeraCrypt
+ 
+ 			memcpy (p, XtsTestVectors[i].plaintext, sizeof (p));
+ 
+-			dataUnitNo = Endian::Big (*((uint64 *) XtsTestVectors[i].dataUnitNo));
++			memcpy (&dataUnitNo, XtsTestVectors[i].dataUnitNo, sizeof (dataUnitNo));
++			dataUnitNo = Endian::Big (dataUnitNo);
+ 
+ 			aes.EncryptSectors (p, dataUnitNo, sizeof (p) / ENCRYPTION_DATA_UNIT_SIZE, ENCRYPTION_DATA_UNIT_SIZE);
+ 
+--- a/src/Volume/VolumeHeader.cpp
++++ b/src/Volume/VolumeHeader.cpp
+@@ -363,7 +363,9 @@ namespace VeraCrypt
+ 		if (offset > header.Size())
+ 			throw ParameterIncorrect (SRC_POS);
+ 
+-		return Endian::Big (*reinterpret_cast<const T *> (header.Get() + offset - sizeof (T)));
++		T value;
++		memcpy (&value, header.Get() + offset - sizeof (T), sizeof (T));
++		return Endian::Big (value);
+ 	}
+ 
+ 	template <typename T>
+@@ -372,7 +374,9 @@ namespace VeraCrypt
+ 		if (offset > header.Size())
+ 			throw ParameterIncorrect (SRC_POS);
+ 
+-		return Endian::Big (*reinterpret_cast<const T *> (header.Get() + offset));
++		T value;
++		memcpy (&value, header.Get() + offset, sizeof (T));
++		return Endian::Big (value);
+ 	}
+ 
+ 	void VolumeHeader::EncryptNew (const BufferPtr &newHeaderBuffer, const ConstBufferPtr &newSalt, const ConstBufferPtr &newHeaderKey, shared_ptr <Pkcs5Kdf> newPkcs5Kdf)
+@@ -486,7 +490,8 @@ namespace VeraCrypt
+ 		if (offset > header.Size())
+ 			throw ParameterIncorrect (SRC_POS);
+ 
+-		*reinterpret_cast<T *> (header.Get() + offset - sizeof (T)) = Endian::Big (entry);
++		T value = Endian::Big (entry);
++		memcpy (header.Get() + offset - sizeof (T), &value, sizeof (T));
+ 	}
+ 
+ 	void VolumeHeader::SetSize (uint32 headerSize)

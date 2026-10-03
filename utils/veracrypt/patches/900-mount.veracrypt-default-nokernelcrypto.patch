@@ -1,0 +1,26 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ville Takio <ville+git@takio.fi>
+Date: Tue, 29 Sep 2026 17:00:00 +0300
+Subject: [PATCH] mount.veracrypt: default to nokernelcrypto on OpenWrt
+
+OpenWrt does not ship dmsetup unless lvm2 is installed, so mount through
+FUSE3 by default. OpenWrt-specific, not intended for upstream.
+
+Upstream-Status: Inappropriate [OpenWrt specific]
+
+Signed-off-by: Ville Takio <ville+git@takio.fi>
+---
+ src/Setup/Linux/mount.veracrypt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/src/Setup/Linux/mount.veracrypt
++++ b/src/Setup/Linux/mount.veracrypt
+@@ -2,7 +2,7 @@
+ # mount.veracrypt <device> <mountpoint> [flags] [-o comma-options]
+ DEV=$1
+ MNTPT=$2
+-MOUNTOPTS=
++MOUNTOPTS=nokernelcrypto
+ OPTIONS=
+ 
+ shift 2
