@@ -1,0 +1,46 @@
+menu "Configuration"
+	depends on PACKAGE_weechat-full || PACKAGE_weechat-minimal
+
+config WEECHAT_ZSTD
+	bool "Enable Zstandard compression"
+	default y
+	help
+	  Enable Zstandard compression support for WeeChat (used in relay protocol and logs).
+
+config WEECHAT_CJSON
+	bool "Enable cJSON support"
+	default n
+	help
+	  Enable cJSON library support for WeeChat JSON processing.
+
+config WEECHAT_PYTHON
+	bool "Enable Python scripting plugin"
+	default n
+	help
+	  Enable Python 3 scripting plugin for WeeChat.
+
+config WEECHAT_LUA
+	bool "Enable Lua scripting plugin"
+	default n
+	help
+	  Enable Lua scripting plugin for WeeChat.
+
+config WEECHAT_RUBY
+	bool "Enable Ruby scripting plugin"
+	default n
+	help
+	  Enable Ruby scripting plugin for WeeChat.
+
+config WEECHAT_PERL
+	bool "Enable Perl scripting plugin"
+	default n
+	help
+	  Enable Perl scripting plugin for WeeChat.
+
+config WEECHAT_TCL
+	bool "Enable Tcl scripting plugin"
+	default n
+	help
+	  Enable Tcl scripting plugin for WeeChat.
+
+endmenu
