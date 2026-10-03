@@ -1,0 +1,42 @@
+# fw.black - nftables ruleset (fw4-safe, dual-stack)
+#
+# Own table `inet fwblack` so `fw4 reload` / reboot re-render of `inet fw4`
+# never wipes these blocks. The daemon (/usr/sbin/fw-black) creates the same
+# objects idempotently with `nft add ...` and then only adds set elements.
+#
+# Package install (firewall4 auto-include):
+#   /usr/share/nftables.d/ruleset-post/fwblack.nft  (owned by fwblack package)
+#   fw4 reload
+#
+# One-shot load (no fw4):
+#   nft -f /usr/share/nftables.d/ruleset-post/fwblack.nft
+#
+# Inspect:
+#   nft list table inet fwblack
+#   nft list set inet fwblack blacklist_v4
+#   nft list set inet fwblack blacklist_v6
+#
+# Idempotency: `table inet fwblack` creates the table if missing (no-op if
+# present), `flush` clears stale chains/rules from a previous load so repeated
+# `fw4 reload` never duplicates the drop rules. Note: flush also clears set
+# elements — the daemon re-adds them from /tmp/blacklist.ips each cycle.
+
+table inet fwblack
+flush table inet fwblack
+table inet fwblack {
+	set blacklist_v4 {
+		type ipv4_addr
+		flags interval
+	}
+
+	set blacklist_v6 {
+		type ipv6_addr
+		flags interval
+	}
+
+	chain forward_black {
+		type filter hook forward priority filter; policy accept;
+		tcp dport { 80, 443 } ip daddr @blacklist_v4 counter drop
+		tcp dport { 80, 443 } ip6 daddr @blacklist_v6 counter drop
+	}
+}
