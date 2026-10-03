@@ -1,0 +1,36 @@
+From c1b979371a3bc7b615e0925c07dc55eea0ca209e Mon Sep 17 00:00:00 2001
+From: Nate Robinson <nrobinson2000@me.com>
+Date: Tue, 5 Aug 2026 00:00:00 +0000
+Subject: [PATCH] restore builtin symlink file preview
+
+Upstream commit c1b9793 (r41, #2327) added an os.Lstat + IsRegular guard
+to the builtin previewer so special files are passed to the previewer
+script instead of being read directly. Lstat does not follow symlinks,
+so a symlink to a regular file never passes the check and its content is
+no longer displayed. Still broken in r42.
+
+Use os.Stat instead: it follows the link (matching the pre-r41 behavior,
+where file.Mode() came from os.Stat for working symlinks) while still
+rejecting FIFOs, sockets, and devices, whose followed mode remains
+non-regular. Broken symlinks fail the Stat call and return early, same
+as the old open() failure.
+
+--- a/nav.go
++++ b/nav.go
+@@ -920,13 +920,13 @@ func (nav *nav) preview(path string, win
+ 		defer out.Close()
+ 		reader = bufio.NewReader(out)
+ 	} else {
+-		lstat, err := os.Lstat(path)
++		stat, err := os.Stat(path)
+ 		if err != nil {
+-			log.Printf("lstat: %s", err)
++			log.Printf("stat: %s", err)
+ 			return
+ 		}
+ 
+-		if !lstat.Mode().IsRegular() {
++		if !stat.Mode().IsRegular() {
+ 			return
+ 		}
+ 
