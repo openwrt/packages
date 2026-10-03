@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xz
 PKG_VERSION:=5.8.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://github.com/tukaani-project/xz/releases/download/v$(PKG_VERSION) \
@@ -25,6 +25,7 @@ PKG_CPE_ID:=cpe:/a:tukaani:xz
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 PKG_BUILD_FLAGS:=lto
+PKG_CONFIG_DEPENDS:=CONFIG_SMALL_FLASH
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -76,7 +77,7 @@ endef
 TARGET_LDFLAGS += -Wl,--gc-sections
 
 CONFIGURE_ARGS += \
-	--enable-small \
+	$(if $(CONFIG_SMALL_FLASH),--enable-small) \
 	--enable-assume-ram=4 \
 	--disable-assembler \
 	--disable-debug \
