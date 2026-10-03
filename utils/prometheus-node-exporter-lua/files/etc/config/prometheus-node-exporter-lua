@@ -1,5 +1,6 @@
 config prometheus-node-exporter-lua 'main'
 	option listen_interface 'loopback'
 	option listen_port '9100'
+	#list listen_addresses '100.64.0.1'
 	#option cert '/etc/uhttpd.crt'
 	#option key '/etc/uhttpd.key'
