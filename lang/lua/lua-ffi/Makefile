@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua-ffi
 PKG_VERSION:=1.3.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL=https://github.com/zhaojh329/lua-ffi/releases/download/v$(PKG_VERSION)
@@ -75,8 +75,8 @@ define Package/lua-ffi-lua5.3/install
 endef
 
 define Package/lua-ffi-lua5.4/install
-	$(INSTALL_DIR) $(1)/usr/local/lib/lua/5.4
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ffi.so $(1)/usr/local/lib/lua/5.4
+	$(INSTALL_DIR) $(1)/usr/lib/lua/5.4
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ffi.so $(1)/usr/lib/lua/5.4
 endef
 
 $(eval $(call BuildPackage,lua-ffi))
