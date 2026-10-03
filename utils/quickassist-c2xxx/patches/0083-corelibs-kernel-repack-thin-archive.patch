@@ -1,0 +1,21 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] corelibs kernel repack thin archive
+
+--- a/quickassist/utilities/downloader/Target_CoreLibs/makDefs/coreLibs_kernel.mak
++++ b/quickassist/utilities/downloader/Target_CoreLibs/makDefs/coreLibs_kernel.mak
+@@ -75,7 +75,12 @@ libs :
+ 	-@ $(MKDIR) "$(LIB_DIR)"
+ 	-@ $(MKDIR) "$(LIB_DIR)/$(ICP_TOOLS_TARGET)"
+ 	@cd $(HALAETGT_DIR) $(CMD_CAT) $(MAKE) CCMODE=$(CCMODE) $(KVER_OPTION)
+-	mv $(HALAETGT_DIR)/lib.a $(LIB_DIR)/$(ICP_TOOLS_TARGET)/icp_ae_loader_kernel.a
++	@# Kbuild's lib.a is a thin archive (members referenced by path, not
++	@# embedded); a plain mv to another directory leaves those references
++	@# dangling. Re-pack as a regular archive here, while its members are
++	@# still alongside it, same as the other components' lib_kernel rules.
++	cd $(HALAETGT_DIR) && ar -t lib.a | xargs ar -rcsD icp_ae_loader_kernel.a
++	mv $(HALAETGT_DIR)/icp_ae_loader_kernel.a $(LIB_DIR)/$(ICP_TOOLS_TARGET)/icp_ae_loader_kernel.a
+ 
+ clean : clean_libs
+ 
