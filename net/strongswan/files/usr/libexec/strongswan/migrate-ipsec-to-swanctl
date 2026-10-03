@@ -1,6 +1,8 @@
 #!/bin/sh
 
 . /lib/functions.sh
+. /usr/share/libubox/jshn.sh
+
 migrate_ipsec() {
 	# Skip migration if the 'globals' section already exists
 	uci show ipsec.globals 1>/dev/null 2>/dev/null
@@ -569,14 +571,89 @@ migrate_child_subnet_to_ts() {
 	config_foreach migrate_subnet_to_ts child remote_subnet remote_ts
 }
 
-main() {
+session_uci() {
+	local session="$1"
+	local method="$2"
+
+	json_add_string config ipsec
+	json_add_string ubus_rpc_session "$session"
+	ubus call uci "$method" "$(json_dump)" 2>/dev/null
+}
+
+# Stage the migrated configuration as pending changes of the given LuCI
+# session. rpcd does not expose where it keeps the changes of a session,
+# so replace the configuration section by section through its uci ubus
+# API.
+stage_session() {
 	local session="$1"
 
-	#If LuCI provides a session ID, it can be marked 'staging,' allowing
-	# migration without an immediate restart.
-	[ -n "$session" ] && {
-		mkdir -p /tmp/run/rpcd/uci-${session}
-	}
+	local data section sections
+
+	# The migrated configuration including the changes staged above.
+	# Do not name anonymous sections, so that they stay anonymous.
+	data="$(uci -q -S -N export ipsec)" || return 1
+
+	json_init
+	session_uci "$session" revert >/dev/null || return 1
+
+	json_init
+	sections="$(session_uci "$session" get)" || return 1
+	json_load "$sections"
+	json_select values
+	json_get_keys sections
+
+	for section in $sections; do
+		json_init
+		json_add_string section "$section"
+		session_uci "$session" delete >/dev/null || return 1
+	done
+
+	# Add the sections of the migrated configuration. Run in a subshell,
+	# as the config, option and list handlers of /lib/functions.sh are
+	# replaced for evaluating the export.
+	(
+		sec_type=
+		cur_list=
+
+		add_section() {
+			[ -n "$sec_type" ] || return 0
+			[ -n "$cur_list" ] && json_close_array
+			json_close_object
+			session_uci "$session" add >/dev/null || exit 1
+		}
+
+		config() {
+			add_section
+			sec_type="$1"
+			cur_list=
+			json_init
+			json_add_string type "$1"
+			[ -n "$2" ] && json_add_string name "$2"
+			json_add_object values
+		}
+
+		option() {
+			[ -n "$cur_list" ] && json_close_array
+			cur_list=
+			json_add_string "$1" "$2"
+		}
+
+		list() {
+			[ "$cur_list" = "$1" ] || {
+				[ -n "$cur_list" ] && json_close_array
+				cur_list="$1"
+				json_add_array "$1"
+			}
+			json_add_string "" "$2"
+		}
+
+		eval "$data"
+		add_section
+	)
+}
+
+main() {
+	local session="$1"
 
 	[ -f /etc/config/ipsec ] || {
 		echo "File '/etc/config/ipsec' does not exists."
@@ -606,9 +683,19 @@ main() {
 	migrate_connections_local_remote
 	migrate_child_subnet_to_ts
 
-	# Move staged migration changes to LuCI
+	# If LuCI provides a session ID, hand the migration over to it as
+	# pending changes, allowing to review and apply it in LuCI without an
+	# immediate restart.
 	[ -n "$session" ] && {
-		mv /tmp/.uci/ipsec /tmp/run/rpcd/uci-${session}
+		if ! stage_session "$session"; then
+			json_init
+			session_uci "$session" revert >/dev/null
+			uci -q revert ipsec
+			echo "Failed to stage the migrated configuration in the LuCI session." >&2
+			exit 1
+		fi
+
+		uci -q revert ipsec
 	}
 
 	exit 0
