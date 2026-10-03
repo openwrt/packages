@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rsync
-PKG_VERSION:=3.4.3
+PKG_VERSION:=3.5.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.samba.org/pub/$(PKG_NAME)/src
-PKG_HASH:=c72e63ca3021cbc80ba86ec30102773f4c5631fbc492b52e773b3958f82a53d3
+PKG_HASH:=c55f9c9dc10fb8bec397b399a0fdded53cc9a2d8e30891bb0d63724d25c37bef
 
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
-PKG_CPE_ID:=cpe:/a:rsync:rsync
+PKG_CPE_ID:=cpe:/a:samba:rsync
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
@@ -31,7 +31,8 @@ define Package/rsync
   CATEGORY:=Network
   SUBMENU:=File Transfer
   TITLE:=an open source utility that provides fast incremental file transfer
-  DEPENDS:=+libpopt +zlib +RSYNC_xattr:libattr +RSYNC_acl:libacl +RSYNC_zstd:libzstd +RSYNC_xxhash:libxxhash +RSYNC_lz4:liblz4 $(ICONV_DEPENDS)
+  DEPENDS:=+libpopt +zlib +RSYNC_xattr:libattr +RSYNC_acl:libacl +RSYNC_idn:libidn2 \
+	+RSYNC_zstd:libzstd +RSYNC_xxhash:libxxhash +RSYNC_lz4:liblz4 $(ICONV_DEPENDS)
   URL:=https://rsync.samba.org/
   MENU:=1
 endef
@@ -59,6 +60,7 @@ CONFIGURE_ARGS += \
 	--$(if $(CONFIG_RSYNC_xattr),en,dis)able-xattr-support \
 	--$(if $(CONFIG_RSYNC_acl),en,dis)able-acl-support \
 	--$(if $(CONFIG_RSYNC_xxhash),en,dis)able-xxhash \
+	--$(if $(CONFIG_RSYNC_idn),en,dis)able-idn \
 	$(if $(CONFIG_IPV6),,--disable-ipv6)
 
 define Package/rsyncd
