@@ -1,0 +1,281 @@
+From 71d94231300d29b253619096916a0b8e45797170 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Thu, 17 Sep 2026 13:44:16 +0100
+Subject: [PATCH 2/3] scripts: read the IMU without evdev, numpy or a GUI
+
+display_imu.py imports evdev, numpy, the cube renderer and the uinput
+mouse before it parses its arguments, so capturing samples for a
+calibration pulls in Qt, OpenGL, trimesh and scipy, none of which a
+headless box has any use for. Read the event device with the struct
+module, keep the little vector arithmetic in plain Python, and import
+numpy, ahrs, draw_cube and uinput_mouse only in the branches that use
+them, so that --csv needs nothing beyond the standard library. Add
+--seconds so a capture can end on its own over a serial console or ssh.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ scripts/display_imu.py | 155 ++++++++++++++++++++++++-----------------
+ 1 file changed, 93 insertions(+), 62 deletions(-)
+
+--- a/scripts/display_imu.py
++++ b/scripts/display_imu.py
+@@ -1,69 +1,91 @@
+ #!/usr/bin/env python3
+-import evdev
+-from evdev import InputDevice, ecodes
+-import numpy as np
+ import json
+ import csv
+ import argparse
+ import math
++import struct
+ import threading
+-
+-
+-import draw_cube
+-import uinput_mouse
+-
+-from ahrs.filters import Madgwick
+-from ahrs.common.orientation import q2euler
++import time
++from collections import namedtuple
+ 
+ MODULO = 2**16
+ COUNTS_PER_0p02 = 256
+ T_UNIT = 0.02
+ 
++EV_SYN, EV_ABS, EV_MSC = 0x00, 0x03, 0x04
++ABS_X, ABS_Y, ABS_Z = 0x00, 0x01, 0x02
++ABS_RX, ABS_RY, ABS_RZ = 0x03, 0x04, 0x05
++MSC_SERIAL = 0x00
++
++Event = namedtuple("Event", ["type", "code", "value"])
++
++class InputDevice:
++    """The part of an evdev device this script needs, without the module."""
++    FORMAT = "llHHi"
++
++    def __init__(self, path, name):
++        self.path = path
++        self.name = name
++
++    def read_loop(self):
++        size = struct.calcsize(self.FORMAT)
++        with open(self.path, "rb", buffering=0) as handle:
++            while True:
++                data = handle.read(size)
++                if len(data) < size:
++                    return
++                _, _, etype, code, value = struct.unpack(self.FORMAT, data)
++                yield Event(etype, code, value)
++
+ class LPF:
+     def __init__(self, alpha=0.2):
+         self.alpha = alpha
+-        self.prev = np.zeros(3)  # [gx, gy, gz]
++        self.prev = [0.0, 0.0, 0.0]  # [gx, gy, gz]
+ 
+     def filter(self, gyro):
+         """
+         Apply low-pass filter to gyro vector.
+-        gyro: np.array([gx, gy, gz]) in rad/s
++        gyro: [gx, gy, gz] in rad/s
+         """
+-        self.prev = self.alpha * gyro + (1 - self.alpha) * self.prev
++        self.prev = [self.alpha * g + (1 - self.alpha) * p
++                     for g, p in zip(gyro, self.prev)]
+         return self.prev
+ 
+-R_align = np.array([
+-    [ 0,  -1,  0],   # new X = old Y
+-    [ -1,  0,  0],   # new Y = old X
+-    [ 0,  0, -1]    # new Z = - old Z
+-])
++def align(vec):
++    """new X = -old Y, new Y = -old X, new Z = -old Z"""
++    return [-vec[1], -vec[0], -vec[2]]
+ 
+ def find_imu_device():
+-    for path in evdev.list_devices():
+-        dev = InputDevice(path)
+-        if "IMU" in dev.name:
+-            print(f"Using device: {dev.name} ({path})")
+-            return dev
+-    raise RuntimeError("No IMU evdev device found")
++    name = None
++    with open("/proc/bus/input/devices") as handle:
++        for line in handle:
++            if line.startswith("N: Name="):
++                name = line.split("=", 1)[1].strip().strip('"')
++            elif line.startswith("H: Handlers=") and name and "IMU" in name:
++                for handler in line.split("=", 1)[1].split():
++                    if handler.startswith("event"):
++                        path = "/dev/input/" + handler
++                        print(f"Using device: {name} ({path})")
++                        return InputDevice(path, name)
++    raise RuntimeError("No IMU input device found")
+ 
+ def load_calibration(filename):
+     with open(filename, "r") as f:
+-        calib = json.load(f)
+-    calib["accel"]["matrix"] = np.array(calib["accel"]["matrix"])
+-    calib["accel"]["bias"] = np.array(calib["accel"]["bias"])
+-    calib["gyro"]["bias"] = np.array(calib["gyro"]["bias"])
+-    calib["gyro"]["scale"] = np.array(calib["gyro"]["scale"])
+-    return calib
++        return json.load(f)
+ 
+ def apply_calibration(accel, gyro, calib):
+-    a = np.array(accel, dtype=float)
+-    g = np.array(gyro, dtype=float)
+-    a_corr = calib["accel"]["matrix"].dot(a - calib["accel"]["bias"])
+-    g_corr = (g - calib["gyro"]["bias"]) * calib["gyro"]["scale"]
++    bias = calib["accel"]["bias"]
++    matrix = calib["accel"]["matrix"]
++    a = [accel[i] - bias[i] for i in range(3)]
++    a_corr = [sum(matrix[row][col] * a[col] for col in range(3))
++              for row in range(3)]
++    g_corr = [(gyro[i] - calib["gyro"]["bias"][i]) * calib["gyro"]["scale"][i]
++              for i in range(3)]
+     return a_corr, g_corr
+ 
+ def accel_to_quat(a):
+-    ax, ay, az = a / np.linalg.norm(a)
++    norm = math.sqrt(sum(v * v for v in a))
++    ax, ay, az = [v / norm for v in a]
+     # roll & pitch from accel
+     roll  = math.atan2(ay, az)
+     pitch = math.atan2(-ax, math.sqrt(ay*ay + az*az))
+@@ -72,70 +94,73 @@ def accel_to_quat(a):
+     cp, sp = math.cos(pitch/2), math.sin(pitch/2)
+     cr, sr = math.cos(roll/2),  math.sin(roll/2)
+     # quaternion [w,x,y,z]
+-    return np.array([
++    return [
+         cr*cp*cy + sr*sp*sy,
+         sr*cp*cy - cr*sp*sy,
+         cr*sp*cy + sr*cp*sy,
+         cr*cp*sy - sr*sp*cy
+-    ])
++    ]
+ 
+ 
+ def read_events(args):
+     dev = find_imu_device()
+ 
+-    accel = [
+-    dev.absinfo(ecodes.ABS_X).value,
+-    dev.absinfo(ecodes.ABS_Y).value,
+-    dev.absinfo(ecodes.ABS_Z).value,
+-    ]
+-    gyro = [
+-        dev.absinfo(ecodes.ABS_RX).value,
+-        dev.absinfo(ecodes.ABS_RY).value,
+-        dev.absinfo(ecodes.ABS_RZ).value,
+-    ]
+-    print("Initial state:", accel, gyro)
++    accel = [0, 0, 0]
++    gyro = [0, 0, 0]
+ 
+     calib = load_calibration(args.calib) if args.calib else None
+     writer = None
++    csvfile = None
+     if args.csv:
+         csvfile = open(args.csv, "w", newline="")
+         writer = csv.writer(csvfile)
+         writer.writerow(["counter", "dt", "ax", "ay", "az", "gx", "gy", "gz"])
+ 
++    deadline = time.monotonic() + args.seconds if args.seconds else None
++
+     counter = 0
+     last_counter = None
+ 
+-    madgwick = Madgwick(sampleperiod=T_UNIT, beta=0.1)
++    if args.ahrs:
++        import numpy as np
++        from ahrs.filters import Madgwick
++        from ahrs.common.orientation import q2euler
++        import draw_cube
++        madgwick = Madgwick(sampleperiod=T_UNIT, beta=0.1)
++    if args.mouse:
++        import uinput_mouse
+     gyro_filter = LPF()
+     q = None
+ 
+     print("Press Ctrl+C to stop...")
+     for event in dev.read_loop():
+-        if event.type == ecodes.EV_ABS:
+-            if event.code == ecodes.ABS_X: accel[0] = event.value
+-            elif event.code == ecodes.ABS_Y: accel[1] = event.value
+-            elif event.code == ecodes.ABS_Z: accel[2] = event.value
+-            elif event.code == ecodes.ABS_RX: gyro[0] = event.value
+-            elif event.code == ecodes.ABS_RY: gyro[1] = event.value
+-            elif event.code == ecodes.ABS_RZ: gyro[2] = event.value
+-        elif event.type == ecodes.EV_MSC and event.code == ecodes.MSC_SERIAL:
++        if event.type == EV_ABS:
++            if event.code == ABS_X: accel[0] = event.value
++            elif event.code == ABS_Y: accel[1] = event.value
++            elif event.code == ABS_Z: accel[2] = event.value
++            elif event.code == ABS_RX: gyro[0] = event.value
++            elif event.code == ABS_RY: gyro[1] = event.value
++            elif event.code == ABS_RZ: gyro[2] = event.value
++        elif event.type == EV_MSC and event.code == MSC_SERIAL:
+             counter = event.value
+-        elif event.type == ecodes.EV_SYN:
++        elif event.type == EV_SYN:
+             dt = None
+             if last_counter is not None:
+                 delta = (counter - last_counter) % MODULO
+                 dt = (delta / COUNTS_PER_0p02) * T_UNIT
+             last_counter = counter
+ 
++            if deadline and time.monotonic() >= deadline:
++                break
++
+             if writer:
+                 writer.writerow([counter, dt, *accel, *gyro])
+                 continue
+ 
+             if calib:
+                 a_corr, g_corr = apply_calibration(accel, gyro, calib)
+-                a_corr = R_align @ a_corr
+-                g_corr  = R_align @ g_corr
+-                g_corr *= (math.pi/180)
++                a_corr = align(a_corr)
++                g_corr = [g * (math.pi/180) for g in align(g_corr)]
+                 if args.mouse:
+                     gyro_filt = gyro_filter.filter(g_corr)
+                     print(f"dt={dt if dt else 0:.5f}s | gyro_filt ={gyro_filt}")
+@@ -147,7 +172,7 @@ def read_events(args):
+                     if q is None:
+                         q = accel_to_quat(a_corr)
+ 
+-                    q = madgwick.updateIMU(q, gyr=g_corr, acc=a_corr)
++                    q = madgwick.updateIMU(np.array(q), gyr=np.array(g_corr), acc=np.array(a_corr))
+                     draw_cube.update(q)
+                     rads = q2euler(q)
+                     euler = np.degrees(rads)
+@@ -158,10 +183,15 @@ def read_events(args):
+ 
+             print(f"dt={dt if dt else 0:.5f}s | Accel={accel} | Gyro={gyro}")
+ 
++    if csvfile:
++        csvfile.close()
++        print(f"Samples written to {args.csv}")
++
+ def main():
+     parser = argparse.ArgumentParser()
+     parser.add_argument("--calib", help="calibration JSON file")
+     parser.add_argument("--csv", help="output CSV file for raw samples")
++    parser.add_argument("--seconds", type=float, help="stop after this many seconds")
+ 
+     parser.add_argument("--ahrs", help="Display Euler angles", action='store_true')
+     parser.add_argument("--cube", help="Display spinning cube", action='store_true')
+@@ -170,6 +200,7 @@ def main():
+     args = parser.parse_args()
+ 
+     if args.cube:
++        import draw_cube
+         t = threading.Thread(target=read_events, kwargs={'args':args}, daemon=True)
+         t.start()
+ 
