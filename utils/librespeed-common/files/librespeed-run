@@ -4,7 +4,7 @@
 #
 # The only thing that starts a measurement: LuCI reaches it through rpcd, the
 # scheduler calls it directly. Holding the lock for the whole run means a second
-# invocation from either side fails instead of measuring against the first.
+# invocation from either side waits instead of measuring against the first.
 
 # Packaging checks probe every executable for these; a runner that ignored
 # them would start a measurement instead of answering.
@@ -15,23 +15,39 @@ case "$1" in
 	;;
 --help|-h)
 	cat <<'EOF'
-Usage: librespeed-run
+Usage: librespeed-run [INTERFACE]
 Runs one LibreSpeed measurement according to /etc/config/librespeed and
-records the result for the ubus interface. Started by LuCI or cron; takes
-no arguments.
+records the result for the ubus interface. Started by LuCI or cron.
+INTERFACE is a logical interface from /etc/config/network; without it the
+configured one (librespeed.main.interface) is measured. When the interface
+has no device, the test follows the default route and is recorded under the
+interface holding it, or under none when that is not one device or the
+kernel names another device for the test server. A link is its device: an
+IPv6 interface on the device of an IPv4 one (wan6 beside wan) is recorded
+as the IPv4 one.
 EOF
 	exit 0
 	;;
 esac
 
+# The name ends up in jsonfilter expressions and in root's crontab, so it is
+# held to UCI's section-name alphabet before anything is read or written.
+usage() {
+	echo "Usage: librespeed-run [INTERFACE]" >&2
+	exit 2
+}
+[ $# -le 1 ] || usage
+case "$1" in *[!A-Za-z0-9_]*) usage ;; esac
+want=$1
+
 . /lib/functions.sh
-. /lib/functions/network.sh
 . /usr/share/libubox/jshn.sh
 
 CLI=/usr/bin/librespeed-cli
 STATE_DIR=/tmp/librespeed
 STATE="$STATE_DIR/state.json"
 RESULT="$STATE_DIR/result.json"
+FAILED="$STATE_DIR/failed"
 LOCK=/var/lock/librespeed.lock
 
 mkdir -p "$STATE_DIR"
@@ -45,6 +61,14 @@ atomic_write() {
 write_state() {
 	json_init
 	json_add_boolean running "$1"
+	# Only a bound run knows its path while it runs; the Test page would
+	# otherwise label a scheduled run of another interface with the default.
+	# A run that failed or was stopped leaves the interface it was for.
+	if [ "$1" = 1 ]; then
+		[ -n "$state_iface" ] && json_add_string interface "$state_iface"
+	elif [ -n "$5" ] && [ -n "$for_iface" ]; then
+		json_add_string interface "$for_iface"
+	fi
 	[ -n "$2" ] && json_add_int pid "$2"
 	[ -n "$3" ] && json_add_int started "$3"
 	[ -n "$4" ] && json_add_int last_finished "$4"
@@ -94,25 +118,288 @@ sampler() {
 }
 
 fail() {
+	local at
+
 	# A run that failed with the cached server drops the cache: the next run
 	# rediscovers instead of failing against the same dead choice forever.
 	[ "${used_cache:-0}" = 1 ] && rm -f "$LIST_CACHE" "$LIST_CACHE.src" "$CHOICE_CACHE"
-	write_state 0 "" "" "$(date +%s)" "$1"
-	logger -t librespeed "measurement failed: $1"
+	at=$(date +%s)
+	write_state 0 "" "" "$at" "$1"
+	# Kept per interface until a result is recorded on its link (see the
+	# end of the run): a success of another link must not wipe a failing
+	# one from view.
+	if [ -n "$for_iface" ]; then
+		mkdir -p "$FAILED"
+		atomic_write "$FAILED/$for_iface" "$at $1"
+	fi
+	logger -t librespeed "measurement of ${for_iface:-$iface} failed: $1"
 	exit 1
+}
+
+# netifd's interfaces as the run found them: taken once, after the lock,
+# and never re-read, so an unbound run's path is judged against the
+# routing it started with. ifdump_get VAR PATH evaluates PATH below
+# @.interface of that snapshot; several matches come back space-joined.
+ifdump_get() {
+	local __v
+
+	[ -n "$ifdump" ] || return 1
+	__v=$(jsonfilter -s "$ifdump" -e "$1=@.interface$2" 2>/dev/null)
+	[ -n "$__v" ] || { unset "$1"; return 1; }
+	eval "$__v"
+}
+
+# The layer-3 device of logical interface $2, into variable $1.
+if_device() {
+	case "$2" in ''|*[!A-Za-z0-9_.-]*) unset "$1"; return 1 ;; esac
+	ifdump_get "$1" "[@.interface='$2'].l3_device"
+}
+
+# The name a link is recorded under, a link being a layer-3 device ($1):
+# the IPv4 and IPv6 sections of one uplink (wan and wan6) share it, and a
+# result of either is the uplink's. That is the device's UCI section; of
+# several, narrowed in turn to the ones holding the IPv4 default route (in
+# the main table), then to those not DHCPv6, then to those without an IPv6
+# address, each step taken only where it leaves one or more: the IPv4
+# section while it is down and the IPv6 one carries the test, which may
+# hold no address of its own, only a delegated prefix. A down section
+# counts on its device only as DHCP or static: PPP brings up a device of
+# its own. netifd's children (lte_4 from qmi, wan_6 from PPPoE) are no UCI
+# sections and never the name. More than one left names nothing. The name
+# goes into the expression, so one outside the usual alphabet of device
+# names names nothing either.
+dev_iface() {
+	local p q f on="@.dynamic=false && (@.l3_device='$1' || (@.up=false && @.device='$1' && (@.proto='dhcp' || @.proto='static')))"
+
+	case "$1" in ''|*[!A-Za-z0-9_.-]*) return 1 ;; esac
+	ifdump_get p "[$on].interface" || return 1
+	for f in "!@.ip4table && @.route[@.target='0.0.0.0' && !@.table]" \
+		"@.proto!='dhcpv6'" "!@['ipv6-address'][0]"; do
+		case "$p" in *' '*) ;; *) break ;; esac
+		ifdump_get q "[$on && $f].interface" && on="$on && $f" p=$q
+	done
+	case "$p" in *' '*) return 1 ;; esac
+	echo "$p"
+}
+
+# The link an unbound run went out of, as the routing stood when it started
+# (the snapshot): the holders of the main table's default route of the
+# run's families ($2...), compared by device. network_find_wan names only
+# the first holder in name order, which need not be the route the kernel
+# took once two uplinks are up; the client's address ($1), when it is the
+# router's own on one of those devices, says which one did. A family
+# netifd names no holder for is judged by the kernel's default route
+# instead (kernel_defaults). A device the kernel names for the test
+# server (server_route) has the last word: another one did not carry the
+# test. Anything but one device records nothing: a wrong name would file
+# the result under a link that never carried it.
+route_iface() {
+	local addr="$1" target h r d l devs="" key="" tab
+
+	shift
+	# Without a snapshot from the start netifd was unreachable then, and a
+	# lookup now would describe routing the run never saw.
+	[ -n "$ifdump" ] || return 1
+	for target in "$@"; do
+		# An interface with a routing table of its own puts its default
+		# there, not in the main table, though netifd reports no table.
+		case "$target" in 0.0.0.0) tab=ip4table ;; *) tab=ip6table ;; esac
+		if ifdump_get h "[!@.$tab && @.route[@.target='$target' && !@.table]].interface"; then
+			l=""
+			for r in $h; do
+				if_device d "$r" || return 1
+				l="$l $d"
+			done
+		else
+			case "$target" in 0.0.0.0) l=$kdef4 ;; *) l=$kdef6 ;; esac
+		fi
+		for d in $l; do
+			case " $devs " in *" $d "*) ;; *) devs="${devs:+$devs }$d" ;; esac
+		done
+	done
+	# The address comes from the test server, so only its alphabet reaches
+	# the expression. It is looked up among the interfaces' own addresses,
+	# not the prefixes lan hands out, and counts only on a device holding a
+	# default route: behind NAT it is none of the router's, and an address
+	# on lan may be the source of traffic that lan did not carry.
+	case "$addr" in
+	''|*[!0-9A-Fa-f:.]*) ;;
+	*:*) key=ipv6-address ;;
+	*) key=ipv4-address ;;
+	esac
+	if [ -n "$key" ] &&
+	   ifdump_get h "[@['$key'][@.address='$addr']].interface" &&
+	   if_device d "$h"; then
+		case " $devs " in *" $d "*) devs=$d ;; esac
+	fi
+	case "$devs" in ''|*' '*) return 1 ;; esac
+	# Where the kernel names devices for the server, they must be that one:
+	# a route of its own to the server (a VPN's def1 halves, an ip rule into
+	# another table, a better metric set outside netifd) took the test
+	# elsewhere. Naming none is no evidence of another path.
+	[ -z "$kroute" ] || [ "$kroute" = "$devs" ] || return 1
+	dev_iface "$devs"
+}
+
+# The addresses the test server's name ($1, a URL) stands for, the way the
+# client looked them up: an address in the URL is itself, a name is read
+# from /etc/hosts first and then asked of DNS. Anything odd gives none.
+server_addrs() {
+	local h="${1#*://}"
+
+	h=${h%%/*}
+	h=${h##*@}
+	case "$h" in
+	\[*\]*) h=${h#\[}; echo "${h%%\]*}"; return ;;
+	*:*:*) echo "$h"; return ;;
+	esac
+	h=${h%%:*}
+	case "$h" in ''|*[!A-Za-z0-9.-]*) return ;; esac
+	case "$h" in *[!0-9.]*) ;; *) echo "$h"; return ;; esac
+	awk -v h="$h" '$1 !~ /^#/ { for (i = 2; i <= NF && $i !~ /^#/; i++)
+		if (tolower($i) == tolower(h)) { print $1; break } }' /etc/hosts 2>/dev/null | grep . ||
+		nslookup "$h" 2>/dev/null | awk '/^Address: / { print $2 }'
+}
+
+# The device the kernel routes address $1 through now, from source address
+# $2 when one is given; nothing when it has no route (unreachable,
+# prohibited) or ip is missing.
+route_dev() {
+	# shellcheck disable=SC2046 # the reply is split into its words
+	set -- $(ip route get "$1" ${2:+from "$2"} 2>/dev/null)
+	while [ $# -gt 1 ]; do
+		[ "$1" = dev ] && { echo "$2"; return 0; }
+		shift
+	done
+	return 1
+}
+
+# Whether address $1 is one of the router's own, as the kernel holds them.
+own_addr() {
+	case "$1" in ''|*[!0-9A-Fa-f:.]*) return 1 ;; esac
+	case "$(ip -o addr show to "$1" 2>/dev/null)" in *" $1/"*) return 0 ;; esac
+	return 1
+}
+
+# After an unbound run, the devices the kernel names for the test server
+# (kroute), one lookup for each address of the run's family (both families
+# when it is unknown). An address it finds no route to is asked again from
+# the client's address when that is the router's own: odhcp6c, unless
+# sourcefilter is off, gives a DHCPv6 uplink's defaults a source -- its
+# delegated prefix and its address ('default from') -- so only a lookup
+# from one of them finds them, as the test's connection did. Still no
+# route, a client address that is not the router's (NAT66, a proxy) or no
+# ip names nothing: that is no evidence of another path, and route_iface
+# keeps the snapshot's answer.
+server_route() {
+	local a f d own=""
+
+	kroute=""
+	for a in $(server_addrs "$1"); do
+		case "$a" in ''|*[!0-9A-Fa-f:.]*) continue ;; *:*) f=ipv6 ;; *) f=ipv4 ;; esac
+		[ -z "$family" ] || [ "$family" = "$f" ] || continue
+		d=$(route_dev "$a") || {
+			[ -n "$own" ] || { own=0; own_addr "$cli_ip" && own=1; }
+			[ "$own" = 1 ] || continue
+			d=$(route_dev "$a" "$cli_ip") || continue
+		}
+		case " $kroute " in *" $d "*) ;; *) kroute="${kroute:+$kroute }$d" ;; esac
+	done
+}
+
+# The kernel's default routes: the only record of a gateway set outside
+# netifd, by hand or by another daemon, where netifd names no holder and
+# yet one device carries the test. kdef4 and kdef6 get each family's
+# devices at its lowest metric -- two when two tie, and the run then
+# records nothing, as the kernel's pick between them cannot be told.
+# Read without forks at the start of an unbound run, as netifd's snapshot
+# is taken; route_iface consults it only where netifd names no holder.
+#
+# An estimate of the kernel's choice, not a replay: /proc/net/route lists
+# the main table only, /proc/net/ipv6_route every table and source-specific
+# routes alike, a multipath route shows its first hop, and ip rules are
+# not seen at all. The kernel's own route to the server (server_route)
+# then vetoes a device it did not pick. Policy routing by mark (mwan3,
+# pbr) is invisible to both.
+kernel_defaults() {
+	local d dst fl met mask len kbest kdev
+
+	kbest="" kdev=""
+	# Iface Destination Gateway Flags RefCnt Use Metric Mask ...; the
+	# metric is printed signed, in decimal (a leading 0 would be octal).
+	[ -r /proc/net/route ] && while read -r d dst _ fl _ _ met mask _; do
+		[ "$dst$mask" = 0000000000000000 ] || continue
+		case "${met#-}" in ''|0?*|*[!0-9]*) continue ;; esac
+		kdef_offer "$d" $((met < 0 ? met + 4294967296 : met)) "$fl"
+	done < /proc/net/route
+	kdef4=$kdev
+	kbest="" kdev=""
+	# Destination, its length, source, its length, next hop, metric,
+	# refcount, use, flags (hex, as all but the device) and device.
+	[ -r /proc/net/ipv6_route ] && while read -r dst len _ _ _ met _ _ fl d; do
+		[ "$dst$len" = 0000000000000000000000000000000000 ] || continue
+		case "$met" in ''|*[!0-9a-f]*) continue ;; esac
+		kdef_offer "$d" $((0x$met)) "$fl"
+	done < /proc/net/ipv6_route
+	kdef6=$kdev
+}
+
+# One default route of kernel_defaults: device $1, metric $2, flags $3.
+# Only an up route that does not reject (unreachable, prohibit, the
+# kernel's null entry on lo) and has a device can carry a test.
+kdef_offer() {
+	case "$1" in ''|'*'|lo) return ;; esac
+	case "$3" in ''|*[!0-9A-Fa-f]*) return ;; esac
+	[ $((0x$3 & 0x201)) = 1 ] || return
+	if [ -z "$kbest" ] || [ "$2" -lt "$kbest" ]; then
+		kbest=$2 kdev=$1
+	elif [ "$2" = "$kbest" ]; then
+		case " $kdev " in *" $1 "*) ;; *) kdev="$kdev $1" ;; esac
+	fi
 }
 
 # One measurement at a time. The descriptor stays open for the whole run, so the
 # kernel releases the lock even if this script is killed -- there is no stale
 # state to time out.
+#
+# Schedules of several interfaces collide by construction -- every sub-daily
+# interval fires at minute 0 -- so a run that finds the lock taken waits its
+# turn instead of vanishing, for at most 3 minutes (a measurement takes
+# about one), and says so in syslog both when it starts waiting and when it
+# gives up. BusyBox flock has no -w, hence the loop; nothing is written
+# while waiting, so the frontend keeps seeing the running one.
 exec 9>"$LOCK"
-flock -n 9 || {
-	echo "already running" >&2
-	exit 3
-}
+tries=0
+until flock -n 9; do
+	if [ "$tries" = 0 ]; then
+		echo "waiting for the running measurement to finish" >&2
+		logger -t librespeed "measurement of ${want:-the default interface} waits for the running one"
+	elif [ "$tries" -ge 36 ]; then
+		echo "already running" >&2
+		logger -t librespeed "skipped measurement of ${want:-the default interface}: another one held the lock for 3 minutes"
+		exit 3
+	fi
+	tries=$((tries + 1))
+	sleep 5
+done
+
+# From here the lock tells ubus status that a run is in progress, and
+# status reads state.json with it: what the previous run left there (the
+# interface a failed run was for) must not pass for this run's.
+state_iface="" for_iface=""
+started=$(date +%s)
+write_state 1 $$ "$started"
+
+# stop kills our whole process group, so librespeed-cli dies with us; ash runs
+# this trap once the foreground child has exited, and it records that the run
+# was stopped rather than pretending the measurement failed.
+sampler_pid=
+trap '[ -n "$sampler_pid" ] && kill "$sampler_pid" 2>/dev/null
+	write_state 0 "" "" "$(date +%s)" "stopped"; exit 1' TERM
 
 config_load librespeed
 config_get iface main interface wan
+[ -n "$want" ] && iface=$want
 config_get server main server auto
 config_get scheme main scheme auto
 config_get server_list main server_list ''
@@ -121,8 +408,24 @@ config_get hist_path history path "$STATE_DIR/history.jsonl"
 config_get hist_retention history retention 30d
 
 # --interface takes a device, and UCI carries a logical interface name.
+# netifd is asked once: every later lookup of an interface reads this
+# snapshot, while the kernel's routes and addresses are read where used.
+ifdump=$(ubus call network.interface dump 2>/dev/null)
 dev=""
-network_get_device dev "$iface" 2>/dev/null
+if_device dev "$iface"
+# A bound run is recorded under its link's name (wan6 as wan); where the
+# device names none, the one asked for is still the one that carried it.
+# An unbound run notes the kernel's default routes beside that snapshot.
+if [ -n "$dev" ]; then
+	state_iface=$(dev_iface "$dev" 2>/dev/null) || state_iface=$iface
+else
+	kernel_defaults
+fi
+# The interface this run is for, under which a failure is kept and logged:
+# its link when bound, else the one asked for. It says what was asked, not
+# which way the traffic went, so a result never takes it from here.
+for_iface=${state_iface:-$iface}
+case "$for_iface" in *[!A-Za-z0-9_]*) for_iface="" ;; esac
 
 [ -x "$CLI" ] || fail "librespeed-cli is not installed"
 
@@ -188,15 +491,8 @@ esac
 # Never --bytes: it switches the report to MB/s and the history would end up
 # holding two units that cannot be told apart afterwards.
 
-started=$(date +%s)
+# Now with the interface of a bound run.
 write_state 1 $$ "$started"
-
-# stop kills our whole process group, so librespeed-cli dies with us; ash runs
-# this trap once the foreground child has exited, and it records that the run
-# was stopped rather than pretending the measurement failed.
-trap '[ -n "$sampler_pid" ] && kill "$sampler_pid" 2>/dev/null
-	write_state 0 "" "" "$(date +%s)" "stopped"; exit 1' TERM
-sampler_pid=
 
 if [ "$stream" = 1 ]; then
 	# The while runs in a subshell, so the reports cannot come back in a
@@ -299,12 +595,27 @@ https:*) proto="https" ;;
 http:*) proto="http" ;;
 esac
 
+# The interface the traffic really used, never merely the one asked for: a
+# bound run went out of its device; an unbound one (the interface is down or
+# unknown) took the default route. Without a known family, both families'
+# holders must be one device. No single answer leaves the field out.
+if [ -n "$dev" ]; then
+	used_iface=$state_iface
+else
+	server_route "$srv_url"
+	case "$family" in
+	ipv4) used_iface=$(route_iface "$cli_ip" 0.0.0.0 2>/dev/null) ;;
+	ipv6) used_iface=$(route_iface "$cli_ip" :: 2>/dev/null) ;;
+	*) used_iface=$(route_iface "" 0.0.0.0 :: 2>/dev/null) ;;
+	esac
+fi
+
 # result.json -- the last completed measurement, not a database.
 json_init
 json_add_string timestamp "$ts"
 json_add_int started "$started"
 json_add_int finished "$finished"
-json_add_string interface "$iface"
+[ -n "$used_iface" ] && json_add_string interface "$used_iface"
 json_add_object server
 	# Absent until the CLI reports it; consumers treat null as unknown.
 	[ -n "$srv_id" ] && json_add_int id "$srv_id"
@@ -333,7 +644,7 @@ if [ "$hist_enabled" = "1" ]; then
 	json_init
 	json_add_string timestamp "$ts"
 	json_add_int epoch "$finished"
-	json_add_string interface "$iface"
+	[ -n "$used_iface" ] && json_add_string interface "$used_iface"
 	json_add_object server
 		[ -n "$srv_id" ] && json_add_int id "$srv_id"
 		json_add_string name "$srv_name"
@@ -388,6 +699,31 @@ if [ "$hist_enabled" = "1" ]; then
 fi
 
 write_state 0 "" "" "$finished" ""
+# A result ends the failures kept for its link: the one it is recorded
+# under, and every other interface netifd has on the link's device (wan6
+# beside wan, up or down), which the pages show as that link. A down one
+# is on its device only as DHCP, DHCPv6 or static, as in dev_iface: PPP
+# brings up a device of its own. The device is the one a bound run used,
+# or the one dev_iface named the result by. An unbound run that went out
+# of another link measured nothing of the one asked for: that stays.
+case "$used_iface" in
+''|*[!A-Za-z0-9_]*) ;;
+*)
+	ldev=$dev on=""
+	[ -n "$ldev" ] || ifdump_get ldev "[@.interface='$used_iface'].l3_device" ||
+		ifdump_get ldev "[@.interface='$used_iface'].device"
+	case "$ldev" in
+	''|*[!A-Za-z0-9_.-]*) ;;
+	*)
+		p="@.proto='dhcp' || @.proto='dhcpv6' || @.proto='static'"
+		ifdump_get on "[@.l3_device='$ldev' || (@.up=false && @.device='$ldev' && ($p))].interface"
+		;;
+	esac
+	for k in $used_iface $on; do
+		case "$k" in *[!A-Za-z0-9_]*) ;; *) rm -f "$FAILED/$k" ;; esac
+	done
+	;;
+esac
 
 # Refresh the server cache after the run, so the next one starts instantly:
 # at most one list download a day, and the choice is the server this run
@@ -413,5 +749,10 @@ if [ "$cache_fresh" = 0 ]; then
 		esac
 	fi
 fi
-logger -t librespeed "measurement done: ${download} Mbps down, ${upload} Mbps up"
+case "$used_iface" in
+"$for_iface") via="" ;;
+'') via=", recorded without an interface" ;;
+*) via=", recorded as $used_iface" ;;
+esac
+logger -t librespeed "measurement of ${for_iface:-$iface} done: ${download} Mbps down, ${upload} Mbps up$via"
 exit 0

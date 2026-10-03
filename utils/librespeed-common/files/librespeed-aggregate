@@ -22,7 +22,7 @@ if (length(ARGV) > 0) {
 	}
 	print("Usage: librespeed-aggregate\n" +
 		"Reduces completed days of measurement history to daily min/avg/max\n" +
-		"aggregates. Runs from cron; takes no arguments.\n");
+		"aggregates per interface. Runs from cron; takes no arguments.\n");
 	exit(0);
 }
 import { cursor } from 'uci';
@@ -96,7 +96,10 @@ const have = {};
 for (let e in archive)
 	have[e.timestamp] = true;
 
-// Group raw lines by local calendar day, completed days only.
+// Group raw lines by local calendar day and by the interface that carried
+// them, completed days only: WAN and LTE are different links, and one mean
+// over both would describe neither. A run whose path was unknown carries no
+// interface and gets its own group under '', a name no interface can have.
 const days = {};
 
 for (let e in read_lines(raw_path)) {
@@ -110,23 +113,30 @@ for (let e in read_lines(raw_path)) {
 	if (key >= today || have[key])
 		continue;
 
-	days[key] = days[key] ?? [];
-	push(days[key], e);
+	const iface = (type(e.interface) == 'string') ? e.interface : '';
+
+	days[key] = days[key] ?? {};
+	days[key][iface] = days[key][iface] ?? [];
+	push(days[key][iface], e);
 }
 
-let changed = false;
-
-for (let key in sort(keys(days))) {
+// One day's aggregate of one group: the interface it describes, how many
+// runs, and min/mean/max of every metric those runs reported.
+function summarize(key, iface, group) {
 	const entry = {
 		timestamp: key,
-		epoch: day_start(key),
-		samples: length(days[key])
+		epoch: day_start(key)
 	};
+
+	if (iface != '')
+		entry.interface = iface;
+
+	entry.samples = length(group);
 
 	for (let m in METRICS) {
 		let lo = null, hi = null, sum = 0.0, n = 0;
 
-		for (let e in days[key]) {
+		for (let e in group) {
 			const v = e[m];
 
 			if (type(v) != 'double' && type(v) != 'int')
@@ -147,8 +157,16 @@ for (let key in sort(keys(days))) {
 		}
 	}
 
-	push(archive, entry);
-	changed = true;
+	return entry;
+}
+
+let changed = false;
+
+for (let key in sort(keys(days))) {
+	for (let iface in sort(keys(days[key]))) {
+		push(archive, summarize(key, iface, days[key][iface]));
+		changed = true;
+	}
 }
 
 // Archive retention: integer comparison on the day-start epoch.
@@ -164,7 +182,16 @@ if (!changed)
 let tmp = `${archive_path}.tmp`;
 let out = '';
 
-for (let e in sort(kept, (a, b) => int(a.epoch) - int(b.epoch)))
+// By day, then by interface with the unnamed group first: sort() is not
+// stable, and a fixed order keeps the file the same on every rewrite.
+function by_day(a, b) {
+	const d = int(a.epoch) - int(b.epoch);
+	const x = a.interface ?? '', y = b.interface ?? '';
+
+	return d ? d : (x < y ? -1 : (x > y ? 1 : 0));
+}
+
+for (let e in sort(kept, by_day))
 	out += sprintf('%J\n', e);
 
 // The last component only, never the whole tree: archive_path commonly
