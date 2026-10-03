@@ -1,0 +1,25 @@
+#!/bin/sh
+
+# umdns does not announce service instances when a network comes up or changes
+# address, and on a network with an mDNS reflector it takes its own reflected
+# probe for a name conflict and stops announcing. It does announce a service
+# that is added, so restart the player to withdraw and add it again.
+# Remove once openwrt/mdnsd#36 is in the umdns shipped by OpenWrt.
+
+case "$ACTION" in
+ifup) ;;
+ifupdate) [ -n "$IFUPDATE_ADDRESSES" ] || exit 0 ;;
+*) exit 0 ;;
+esac
+
+for network in $(uci -q get umdns.@umdns[-1].network); do
+	[ "$network" = "$INTERFACE" ] || continue
+	/etc/init.d/sendspin-cli running || exit 0
+	# Only a player announced over mDNS has anything to refresh; one
+	# connecting out to a server would just lose its stream.
+	ubus call service list '{"name":"sendspin-cli"}' 2> /dev/null |
+		jsonfilter -e '@["sendspin-cli"].instances[*].data.mdns' > /dev/null 2>&1 || exit 0
+	logger -t sendspin-cli "Restarting to announce on $INTERFACE after $ACTION"
+	/etc/init.d/sendspin-cli restart > /dev/null 2>&1 &
+	exit 0
+done
