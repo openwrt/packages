@@ -1,0 +1,64 @@
+#!/bin/sh /etc/rc.common
+# WireGuard Obfuscator init script for OpenWrt
+# Copyright (C) 2024-2025 Alexey Cluster <cluster@cluster.wtf>
+# Licensed under GPLv3
+
+START=99
+STOP=10
+
+USE_PROCD=1
+PROG="/usr/bin/wg-obfuscator"
+CONFIG_FILE="/var/etc/wg-obfuscator.conf"
+CONFIG_GENERATOR="/usr/libexec/wg-obfuscator-config.sh"
+
+check_enabled() {
+    local enabled
+    config_get enabled "$1" enabled "0"
+    [ "$enabled" = "1" ] && enabled_count=$((enabled_count + 1))
+}
+
+start_service() {
+    # Check if any instances are enabled (only wg_obfuscator sections)
+    local enabled_count=0
+    config_load wg-obfuscator
+    config_foreach check_enabled wg_obfuscator
+
+    if [ "$enabled_count" -eq 0 ]; then
+        echo "No wg-obfuscator instances are enabled"
+        return 0
+    fi
+
+    # Generate configuration from UCI
+    if [ -x "$CONFIG_GENERATOR" ]; then
+        echo "Generating configuration from UCI settings..."
+        "$CONFIG_GENERATOR"
+        if [ $? -ne 0 ]; then
+            echo "Failed to generate configuration"
+            return 1
+        fi
+    else
+        echo "Configuration generator not found: $CONFIG_GENERATOR"
+        return 1
+    fi
+
+    # Check if configuration file exists
+    if [ ! -f "$CONFIG_FILE" ]; then
+        echo "Configuration file not found: $CONFIG_FILE"
+        return 1
+    fi
+
+    # Start the service
+    procd_open_instance
+    procd_set_param command "$PROG" -c "$CONFIG_FILE"
+    # Tracking the generated file makes procd restart the instance whenever
+    # regenerating it produced different content, so 'reload' is enough.
+    procd_set_param file "$CONFIG_FILE"
+    procd_set_param respawn
+    procd_set_param stdout 1
+    procd_set_param stderr 1
+    procd_close_instance
+}
+
+service_triggers() {
+    procd_add_reload_trigger "wg-obfuscator"
+}
