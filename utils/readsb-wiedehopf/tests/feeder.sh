@@ -24,6 +24,7 @@ sed -n '
 	/^cmd_add() {/,/^}/p
 	/^cmd_set() {/,/^}/p
 	/^cmd_enable_disable() {/,/^}/p
+	/^cmd_wizard() {/,/^}/p
 ' "$package_dir/files/readsb-feeder" > "$tmpdir/functions.sh" || exit 1
 # shellcheck source=/dev/null
 . "$tmpdir/functions.sh"
@@ -438,6 +439,60 @@ for want in 0 1; do
 done
 run_test '--enable rejects a missing section before mutation' test_enable_disable 1 '' 3 '' missing
 run_test '--disable rejects an empty name before mutation' test_enable_disable 0 '' 1 '' ''
+
+test_wizard_exit() (
+	abort_at=$1 expected_rc=$2 add_rc=${3:-0}
+	: > "$tmpdir/calls"
+	wiz_available() { [ "$abort_at" != no-tty ]; }
+	wiz_say() { printf '%s\n' "$*"; }
+	readsb_feeder_optional_pkgs() { :; }
+	readsb_section_exists() { return 1; }
+	wiz_choose() {
+		[ "$abort_at" != "$1" ] || return 1
+		export "$1=custom"
+	}
+	wiz_ask_validated() {
+		[ "$abort_at" != "$1" ] || return 1
+		case $1 in
+			name) export "$1=test" ;;
+			host) export "$1=feed.example.com" ;;
+			port) export "$1=30004" ;;
+			uuid) export "$1=00000000-0000-4000-8000-000000000000" ;;
+			*) return 99 ;;
+		esac
+	}
+	wiz_ask() {
+		[ "$abort_at" != "$1" ] || return 1
+		export "$1=$3"
+	}
+	wiz_yesno() {
+		[ "$abort_at" != "$1" ] || return 1
+		if [ "$1" = __wcf_ans ] && [ "$abort_at" = confirm-no ]; then
+			export "$1=0"
+		else
+			export "$1=1"
+		fi
+	}
+	cmd_add() {
+		printf 'add %s\n' "$*" >> "$tmpdir/calls"
+		return "$add_rc"
+	}
+	rc=0
+	output=$(cmd_wizard 2>&1) || rc=$?
+	assert_equal "$rc" "$expected_rc" || { printf '%s\n' "$output" >&2; return 1; }
+	if [ "$abort_at" = none ]; then
+		grep -q '^add test custom ' "$tmpdir/calls"
+	else
+		[ ! -s "$tmpdir/calls" ]
+	fi
+)
+for abort_at in preset name host port proto enabled silent want_uuid uuid __wcf_ans confirm-no; do
+	run_test "wizard cancellation at $abort_at is a clean exit without adding a feeder" \
+		test_wizard_exit "$abort_at" 0
+done
+run_test 'wizard successful confirmation still adds a feeder' test_wizard_exit none 0
+run_test 'wizard mutation failure remains a failure' test_wizard_exit none 2 2
+run_test 'wizard still rejects invocation without a terminal' test_wizard_exit no-tty 1
 
 printf '%s tests, %s failures\n' "$tests" "$failures"
 [ "$failures" -eq 0 ]

@@ -38,7 +38,7 @@
 #
 # Exit codes:
 #   0  success (lat/lon written, already set, or --self-test all PASS)
-#   1  --self-test reported FAIL / fatal runtime error
+#   1  usage error / --self-test reported FAIL / fatal runtime error
 #   2  --self-test reported WARN(s) only / missing tooling at runtime
 #
 # Full reference:
@@ -82,7 +82,7 @@ on_exit() {
 		_log "exit rc=$rc stage='$last_stage'"
 	fi
 }
-trap on_exit EXIT
+trap on_exit 0
 
 force=0
 dry_run=0
@@ -96,7 +96,15 @@ for arg in "$@"; do
 		--verbose)   verbose=1 ;;
 		--self-test) self_test=1 ;;
 		-*)          _err "unknown option: $arg"; print_help >&2; exit 1 ;;
-		*)           [ -z "$section" ] && section="$arg" ;;
+		*)
+			if [ -n "$section" ] || [ -z "$arg" ]; then
+				_err "expected at most one non-empty section argument"
+				print_help >&2
+				last_stage="invalid-arguments/done"
+				exit 1
+			fi
+			section=$arg
+			;;
 	esac
 done
 _verbose_apply

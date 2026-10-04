@@ -24,6 +24,9 @@ PKG_MAINTAINER:=Dr Bill Mcilhargey <contributor@mcilhargey.com>
 PKG_BUILD_DEPENDS:=!USE_GLIBC:argp-standalone
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_FLAGS:=gc-sections lto
+# Upstream 3.16.11 supplies _FORTIFY_SOURCE=2 before OPTIMIZE.
+# Suppress OpenWrt's extra definition to avoid a -Werror redefinition;
+# upstream fortification remains enabled. Recheck on upstream updates.
 PKG_FORTIFY_SOURCE:=0
 
 include $(INCLUDE_DIR)/package.mk
@@ -40,7 +43,7 @@ endef
 define Package/readsb-wiedehopf
   $(call Package/readsb-wiedehopf/default)
   TITLE+= (readsb)
-  DEPENDS+=+jsonfilter +ca-bundle +uclient-fetch +libustream-mbedtls
+  DEPENDS+=+jsonfilter +ca-bundle +uclient-fetch
   PROVIDES:=readsb
   CONFLICTS:=readsb
 endef

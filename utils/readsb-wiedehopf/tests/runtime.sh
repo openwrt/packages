@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 package_dir=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd) || exit 1
+test_path=$PATH
 tmpdir=$(mktemp -d) || exit 1
 cleanup() {
 	cleanup_status=$?
@@ -9,7 +10,8 @@ cleanup() {
 	rm -f "$tmpdir/init.sh" "$tmpdir/hotplug.sh" "$tmpdir/location.sh" \
 		"$tmpdir/config" "$tmpdir/commands" "$tmpdir/messages" "$tmpdir/writes" \
 		"$tmpdir/log" "$tmpdir/bin/readsb-geoip" "$tmpdir/cleanup.sh" \
-		"$tmpdir/cleanup-calls" "$tmpdir/cleanup-output" "$tmpdir/stage-path" || \
+		"$tmpdir/cleanup-calls" "$tmpdir/cleanup-output" "$tmpdir/stage-path" \
+		"$tmpdir/feeder-add.sh" "$tmpdir/bin/readsb-feeder" || \
 		printf 'cleanup: could not remove test files in %s\n' "$tmpdir" >&2
 	rmdir "$tmpdir/bin" "$tmpdir" || \
 		printf 'cleanup: could not remove temporary directories in %s\n' "$tmpdir" >&2
@@ -21,6 +23,9 @@ mkdir "$tmpdir/bin" || exit 1
 # shellcheck disable=SC2016
 printf '%s\n' '#!/bin/sh' 'printf "geoip %s\n" "$*" >> "$READSB_TEST_COMMANDS"' > "$tmpdir/bin/readsb-geoip" || exit 1
 chmod 700 "$tmpdir/bin/readsb-geoip" || exit 1
+# shellcheck disable=SC2016
+printf '%s\n' '#!/bin/sh' 'exit "$READSB_TEST_ADD_RC"' > "$tmpdir/bin/readsb-feeder" || exit 1
+chmod 700 "$tmpdir/bin/readsb-feeder" || exit 1
 
 # Source definitions without touching host OpenWrt paths or dispatching hotplug.
 # shellcheck source=/dev/null
@@ -38,6 +43,12 @@ sed -n '
 sed -n '/^# --- step 1: location /,/^# --- step 2: UUID /p' \
 	"$package_dir/files/readsb-setup" > "$tmpdir/location.sh" || exit 1
 sed -n '/^cleanup() {/,/^}/p; /^trap .* 0$/p' "$0" > "$tmpdir/cleanup.sh" || exit 1
+{
+	printf 'case add in\n'
+	sed -n '/^[[:space:]]*add\*)$/,/^[[:space:]]*manage\*)$/p' \
+		"$package_dir/files/readsb-setup" | sed '$d'
+	printf 'esac\n'
+} > "$tmpdir/feeder-add.sh" || exit 1
 
 tests=0
 failures=0
@@ -81,6 +92,10 @@ uci() {
 	fi
 	[ "$1" != -q ] || shift
 	case $1 in
+		changes)
+			[ "${fail_changes:-0}" != 1 ] || return 9
+			printf '%s' "${pending_changes:-}"
+			;;
 		get)
 			case $2 in
 				system.@system\[0\].log_level) printf '%s\n' "${test_log_level:-info}" ;;
@@ -100,6 +115,7 @@ uci() {
 				printf '%s\n' "$2" >> "$tmpdir/config"
 			fi
 			printf 'set %s\n' "$2" >> "$tmpdir/writes"
+			[ -z "${pending_after_set:-}" ] || pending_changes=$pending_after_set
 			;;
 		commit)
 			echo commit >> "$tmpdir/writes"
@@ -164,8 +180,7 @@ test_uci_apply_order() (
 	reset_config
 	readsb_uci_apply main.device=1090 main.device_auto=1090 || return 1
 	assert_equal "$(cat "$tmpdir/writes")" "$(printf '%s\n' \
-		'set readsb.main.device=1090' 'set readsb.main.device_auto=1090' commit \
-		'revert readsb.main.device' 'revert readsb.main.device_auto')"
+		'set readsb.main.device=1090' 'set readsb.main.device_auto=1090' commit)"
 )
 test_uci_setup_failure() (
 	reset_config
@@ -182,14 +197,49 @@ test_uci_empty_update() (
 	assert_equal "$rc" 1 && [ ! -s "$tmpdir/writes" ] \
 		&& grep -q 'no assignments' "$tmpdir/messages"
 )
-test_uci_revert_failure() (
+test_uci_pending_changes() (
 	reset_config
-	fail_revert=readsb.main.device
+	pending_changes=$1
+	pending_after_set=${2:-}
+	original=$(cat "$tmpdir/config")
+	rc=0
+	readsb_uci_apply main.device=1090 main.device_auto=1090 || rc=$?
+	assert_equal "$rc" 1 || return 1
+	assert_equal "$(cat "$tmpdir/config")" "$original" || return 1
+	! grep -Eq '^(commit|revert)' "$tmpdir/writes" || return 1
+	if [ -n "$pending_changes" ]; then
+		[ ! -s "$tmpdir/writes" ] || return 1
+	fi
+	grep -q 'pending UCI changes' "$tmpdir/messages"
+)
+test_uci_changes_failure() (
+	reset_config
+	fail_changes=1
 	rc=0
 	readsb_uci_apply main.device=1090 || rc=$?
-	assert_equal "$rc" 1 || return 1
-	assert_config device 1090 || return 1
-	grep -q 'committed update, but could not clear pending readsb.main.device' "$tmpdir/messages"
+	assert_equal "$rc" 1 && [ ! -s "$tmpdir/writes" ] &&
+		grep -q 'cannot inspect pending UCI changes' "$tmpdir/messages"
+)
+test_setup_feeder_add() (
+	reset_config
+	READSB_TEST_ADD_RC=$1
+	PATH="$tmpdir/bin:$test_path"
+	export READSB_TEST_ADD_RC PATH
+	after_count=$2
+	changes_made=0
+	# shellcheck disable=SC2034
+	fc=1
+	readsb_count_feeders() { echo "$after_count"; }
+	wiz_say() { printf '%s\n' "$*" >> "$tmpdir/messages"; }
+	_step4_show_state() { :; }
+	# shellcheck source=/dev/null
+	. "$tmpdir/feeder-add.sh"
+	assert_equal "$changes_made" "$3" || return 1
+	if [ "$READSB_TEST_ADD_RC" = 0 ]; then
+		! grep -q 'failed' "$tmpdir/messages"
+	else
+		grep -q 'feeder add failed' "$tmpdir/messages"
+	fi
 )
 for status in 0 1 7; do
 	for failure in none rm rmdir; do
@@ -373,7 +423,7 @@ test_location_wizard() (
 		esac
 	}
 	READSB_TEST_COMMANDS="$tmpdir/commands"
-	PATH="$tmpdir/bin:$PATH"
+	PATH="$tmpdir/bin:$test_path"
 	export READSB_TEST_COMMANDS PATH
 	# shellcheck source=/dev/null
 	. "$tmpdir/location.sh"
@@ -584,16 +634,29 @@ run_test 'hotplug commit failure leaves original pins and unrelated pending edit
 	test_hotplug_isolation '' 1
 run_test 'successful isolated update removes its staging directory' test_uci_staging_cleanup '' 0
 run_test 'failed isolated update removes its staging directory' test_uci_staging_cleanup readsb.main.device_auto 1
-run_test 'shared deltas are cleared only for assigned keys after commit' test_uci_apply_order
+run_test 'automatic updates do not revert shared keys after committing' test_uci_apply_order
 run_test 'failed staging-directory creation performs no UCI writes' test_uci_setup_failure
 run_test 'empty isolated update is rejected without a commit' test_uci_empty_update
-run_test 'post-commit housekeeping failure is reported explicitly' test_uci_revert_failure
+run_test 'pending scalar changes block automatic commits' \
+	test_uci_pending_changes "readsb.main.lat='51.5'"
+run_test 'pending list additions block automatic commits' \
+	test_uci_pending_changes "readsb.main.extra+='operator-value'"
+run_test 'pending changes to an updated key remain under operator control' \
+	test_uci_pending_changes "readsb.main.device='manual'"
+run_test 'new shared changes during staging prevent the commit' \
+	test_uci_pending_changes '' "readsb.main.extra+='new-value'"
+run_test 'failed shared-change inspection does not mutate UCI' test_uci_changes_failure
+run_test 'setup does not mark a cancelled feeder wizard as a change' test_setup_feeder_add 0 1 0
+run_test 'setup still records a successfully added feeder' test_setup_feeder_add 0 2 1
+run_test 'setup distinguishes feeder mutation failure from cancellation' test_setup_feeder_add 2 1 0
 run_test 'package license includes the distributed GPL-2.0-only helpers' \
 	grep -q '^PKG_LICENSE:=.*GPL-2.0-only' "$package_dir/Makefile"
 run_test 'decoder package declares its HTTPS client dependency' \
 	grep -q 'DEPENDS+=.*+uclient-fetch' "$package_dir/Makefile"
-run_test 'decoder package provides a TLS backend for its HTTPS client' \
-	grep -q 'DEPENDS+=.*+libustream-mbedtls' "$package_dir/Makefile"
+test_image_tls_choice() {
+	! grep -Eq 'DEPENDS.*[+]libustream-(mbedtls|openssl|wolfssl)' "$package_dir/Makefile"
+}
+run_test 'decoder package leaves the TLS backend to the image' test_image_tls_choice
 
 printf '%s tests, %s failures\n' "$tests" "$failures"
 [ "$failures" -eq 0 ]

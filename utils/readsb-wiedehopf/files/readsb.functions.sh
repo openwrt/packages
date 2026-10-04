@@ -14,8 +14,8 @@ _warn()   { logger -t "$READSB_LOG_TAG" -p daemon.warn   -- "$@"; }
 _err()    { logger -t "$READSB_LOG_TAG" -p daemon.err    -- "$@"; }
 _debug()  { logger -t "$READSB_LOG_TAG" -p daemon.debug  -- "$@"; }
 
-# Commit section.option=value assignments without exposing intermediate
-# writes in the shared UCI delta directory. Failed updates are discarded.
+# Stage section.option=value assignments privately. The CLI still reads
+# shared deltas even with -t, so require a clean shared change set.
 readsb_uci_apply() (
 	[ "$#" -gt 0 ] || {
 		_err "no assignments supplied for UCI update"
@@ -23,6 +23,18 @@ readsb_uci_apply() (
 	}
 	umask 077
 	local assignment
+	_readsb_uci_require_clean() {
+		local pending
+		pending=$(uci -q changes readsb) || {
+			_err "cannot inspect pending UCI changes for readsb"
+			return 1
+		}
+		[ -z "$pending" ] || {
+			_err "readsb has pending UCI changes; commit or revert them before retrying"
+			return 1
+		}
+	}
+	_readsb_uci_require_clean || return 1
 	# BusyBox unwinds function locals before running a subshell's EXIT trap.
 	readsb_uci_stagedir=$(mktemp -d) || {
 		_err "cannot create private UCI staging directory"
@@ -44,18 +56,11 @@ readsb_uci_apply() (
 			return 1
 		}
 	done
+	_readsb_uci_require_clean || return 1
 	uci -t "$readsb_uci_stagedir" commit readsb || {
 		_err "readsb UCI commit failed (rc=$?); private update discarded"
 		return 1
 	}
-	# The private commit does not clear shared deltas. Remove only edits
-	# superseded by this committed update, so they cannot hide its values.
-	for assignment in "$@"; do
-		uci -q revert "readsb.${assignment%%=*}" || {
-			_err "committed update, but could not clear pending readsb.${assignment%%=*} (rc=$?)"
-			return 1
-		}
-	done
 )
 
 # --- USB SDR identification ------------------------------------------------

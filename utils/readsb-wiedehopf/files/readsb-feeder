@@ -34,7 +34,7 @@
 # After any mutation: `service readsb reload`.
 #
 # Exit codes:
-#   0  success (--probe: no confirmed failures; indeterminate SKIP results
+#   0  success or wizard cancelled (--probe: no confirmed failures; SKIP results
 #      also exit 0 and do NOT confirm reachability; --health: all enabled
 #      targets LIVE in cmdline AND no recent errors)
 #   1  usage error / unknown option
@@ -791,7 +791,7 @@ cmd_wizard() {
 
 	# 1. preset
 	wiz_say "Available presets (host:port baked in):"
-	wiz_choose preset "choose a preset" $preset_list custom || return 1
+	wiz_choose preset "choose a preset" $preset_list custom || return 0
 
 	# 1a. Early heads-up about optional companion package(s); offer to
 	#     install/enable any that are missing or stopped right now.
@@ -801,14 +801,14 @@ cmd_wizard() {
 		wiz_say "--- optional companion package(s) -----------"
 		readsb_recommend_optional_pkgs "$preset" >/dev/tty
 		wiz_say "---------------------------------------------"
-		wiz_offer_install_companions "$preset" || return 1
+		wiz_offer_install_companions "$preset" || return 0
 		wiz_say ""
 	fi
 
 	# 2. section name -- default to preset name; reject duplicates.
 	while :; do
 		wiz_ask_validated name "UCI section name" "$preset" wiz_v_uci_name \
-			"name must start with a letter; letters/digits/_ only" || return 1
+			"name must start with a letter; letters/digits/_ only" || return 0
 		if readsb_section_exists "$name"; then
 			wiz_say "  '$name' already exists -- pick another"
 			continue
@@ -820,10 +820,10 @@ cmd_wizard() {
 	host= port= proto=
 	if [ "$preset" = custom ]; then
 		wiz_ask_validated host  "feed host" "" wiz_v_host \
-			"host must be non-empty and contain no whitespace" || return 1
+			"host must be non-empty and contain no whitespace" || return 0
 		wiz_ask_validated port  "feed port" "30004" wiz_v_port \
-			"port must be a number 1..65535" || return 1
-		wiz_ask  proto "feed protocol" "beast_reduce_plus_out" || return 1
+			"port must be a number 1..65535" || return 0
+		wiz_ask  proto "feed protocol" "beast_reduce_plus_out" || return 0
 	fi
 
 	# 4. Third-party connection consent + retry behavior.
@@ -839,15 +839,15 @@ cmd_wizard() {
 	wiz_say "to $consent_endpoint and sends the received Mode-S/ADS-B stream"
 	wiz_say "plus the station UUID when one is configured. It is off unless"
 	wiz_say "you explicitly enable it now or later."
-	wiz_yesno enabled "enable this third-party connection now?" N || return 1
-	wiz_yesno silent  "silently retry on connection failures? (recommended)" Y || return 1
+	wiz_yesno enabled "enable this third-party connection now?" N || return 0
+	wiz_yesno silent  "silently retry on connection failures? (recommended)" Y || return 0
 
 	# 5. per-feeder UUID override (rare).
-	wiz_yesno want_uuid "override UUID for this feeder only?" N || return 1
+	wiz_yesno want_uuid "override UUID for this feeder only?" N || return 0
 	uuid=
 	if [ "$want_uuid" = 1 ]; then
 		wiz_ask_validated uuid "per-feeder UUID (RFC4122 8-4-4-4-12 hex)" "" \
-			wiz_v_uuid "not RFC4122; expected 8-4-4-4-12 hex" || return 1
+			wiz_v_uuid "not RFC4122; expected 8-4-4-4-12 hex" || return 0
 	fi
 
 	# 6. summary + confirm
@@ -864,7 +864,7 @@ cmd_wizard() {
 	}
 	[ -n "$uuid" ] && wiz_say "  uuid    : $uuid"
 	wiz_say "-------------------------------------------"
-	wiz_confirm "commit this feeder?" || { wiz_say "aborted; nothing changed"; return 1; }
+	wiz_confirm "commit this feeder?" || { wiz_say "aborted; no feeder added"; return 0; }
 
 	# 7. delegate to cmd_add for the actual UCI work.
 	local extras

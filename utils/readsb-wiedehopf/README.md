@@ -154,11 +154,12 @@ readsb-setup --help
 | `/usr/sbin/readsb-uuid`       | station UUID wizard / generator (`--print`, `--auto`, `--force`)  |
 | `/usr/sbin/readsb-geoip`      | public-IP-based lat/lon auto-fill                                 |
 
-The daemon package depends on `uclient-fetch`, `ca-bundle`, and
-`libustream-mbedtls` (OpenWrt's default TLS provider) so GeoIP has HTTPS
-support on minimal images. Installing these dependencies does not opt in
-to any external lookup. The network-only viewer does not pull in the
-helpers' HTTP/TLS dependencies.
+The daemon package depends on `uclient-fetch` and `ca-bundle`. The image
+chooses the `libustream` TLS backend: standard OpenWrt images include one;
+custom minimal images must include an appropriate backend for HTTPS.
+This package does not force mbedTLS over an existing OpenSSL or wolfSSL
+provider. Installing the client does not opt in to any external lookup.
+The network-only viewer does not pull in the helpers' HTTP dependencies.
 
 ## Configuration model
 
@@ -270,13 +271,24 @@ coordinates exist and you explicitly choose to change the location,
 it explains that auto-detection will replace both values before asking
 for consent. `--dry-run` previews the eligible writes without staging
 or committing any UCI changes; lookup or write failures return nonzero.
+The CLI accepts at most one non-empty section argument. Extra positional
+arguments are usage errors (exit 1), including with `--force` or
+`--dry-run`; no lookup or update is attempted.
 
 Coordinate updates are staged in a private UCI directory and committed
-only after every eligible write succeeds. A failed write or commit
-discards those private changes, preserving both the original coordinates
-and shared pending edits. A later unrelated commit cannot pick up part
-of a failed lookup. After a successful commit, pending edits to the keys
-explicitly updated are cleared so they cannot mask the new values.
+only after every eligible write succeeds. Since UCI's private save
+directory does not exclude shared deltas, automatic updates require a
+clean shared `readsb` change set. Pending changes are checked before
+staging and again before committing; if found, the operation fails with
+a diagnostic instead of committing them. Inspect `uci changes readsb`
+and explicitly commit or revert your edits before retrying. This also
+applies to hotplug updates. Do not edit the configuration concurrently
+with an automatic update.
+
+A failed write or commit discards the private changes rather than
+leaving part of a failed lookup for a later shared commit. Existing
+shared edits are never reverted by the helper, including edits to the
+same coordinate keys.
 
 ### Boot-time waits
 
@@ -512,6 +524,11 @@ Interactive (recommended -- prompts for everything, validates as you go):
 readsb-feeder
 service readsb reload
 ```
+
+Cancelling the feeder wizard with `q`, `quit`, `exit`, Ctrl-D, or No at
+the final confirmation exits 0 without adding a feeder. A missing
+terminal or invalid command usage still exits 1, and mutation failures
+remain errors.
 
 Non-interactive (scriptable):
 
@@ -790,3 +807,16 @@ filtering, and GeoIP coordinate preservation. OpenWrt services, hardware
 and network tools are mocked; the tests do not change the host's UCI or
 contact external services. The scripts can also be run with `bash` or
 `busybox ash` to check shell compatibility.
+
+For integration checks with a real UCI CLI, run:
+
+```sh
+sh utils/readsb-wiedehopf/tests/uci.sh /path/to/uci
+```
+
+This suite uses temporary config and delta directories. It checks that
+pending scalar, list, deletion, and same-key edits block automatic
+commits, including shared edits appearing during private staging. It
+also tests write/commit failures and verifies that later list additions
+are not applied twice. The commit-permission failure case runs only
+when the tests are not run as root.

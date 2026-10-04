@@ -4,7 +4,7 @@
 package_dir=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd) || exit 1
 test_dir="./.readsb-geoip-test.$$"
 (umask 077 && mkdir "$test_dir") || exit 1
-trap 'rm -f "$test_dir/functions.sh" "$test_dir/options.sh" "$test_dir/tooling.sh" "$test_dir/dispatch.sh" "$test_dir/calls" "$test_dir/output" "$test_dir/lat" "$test_dir/lon" "$test_dir/stage-path" "$test_dir/bin/mktemp" "$test_dir/bin/rm" "$test_dir/bin/rmdir"; rmdir "$test_dir/bin" "$test_dir"' 0
+trap 'rm -f "$test_dir/functions.sh" "$test_dir/options.sh" "$test_dir/tooling.sh" "$test_dir/dispatch.sh" "$test_dir/exit.sh" "$test_dir/calls" "$test_dir/output" "$test_dir/lat" "$test_dir/lon" "$test_dir/stage-path" "$test_dir/bin/mktemp" "$test_dir/bin/rm" "$test_dir/bin/rmdir"; rmdir "$test_dir/bin" "$test_dir"' 0
 trap 'exit 1' HUP INT TERM
 mkdir "$test_dir/bin" || exit 1
 for tool in mktemp rm rmdir; do
@@ -18,6 +18,7 @@ sed -n '/^update_section() {/,/^}/p' "$package_dir/files/readsb-geoip" > "$test_
 sed -n '/^verbose=0$/p; /^force=0$/,/^_verbose_apply$/p' "$package_dir/files/readsb-geoip" > "$test_dir/options.sh" || exit 1
 sed -n '/^last_stage="tool-detect"$/,/^# Strict numeric check;/p' "$package_dir/files/readsb-geoip" > "$test_dir/tooling.sh" || exit 1
 sed -n '/^if \[ -n "\$section" \]; then$/,$p' "$package_dir/files/readsb-geoip" > "$test_dir/dispatch.sh" || exit 1
+sed -n '/^on_exit() {/,/^}/p; /^trap on_exit /p' "$package_dir/files/readsb-geoip" > "$test_dir/exit.sh" || exit 1
 # shellcheck source=/dev/null
 . "$test_dir/functions.sh"
 set -u
@@ -64,6 +65,7 @@ uci() {
 	fi
 	[ "$1" != -q ] || shift
 	case "$1 $2" in
+		'changes readsb') return 0 ;;
 		'get readsb.main.lat')
 			[ -f "$test_dir/lat" ] || return 1
 			IFS= read -r value < "$test_dir/lat"
@@ -290,6 +292,9 @@ test_cli() (
 		return 1
 	}
 	assert_equal "$(cat "$test_dir/calls")" "$expected_calls" || return 1
+	if [ "$expected_rc" = 1 ] && [ -z "$expected_calls" ]; then
+		grep -q '^error:' "$test_dir/output" && grep -q '^help$' "$test_dir/output" || return 1
+	fi
 	case "$tooling" in
 		no_jsonfilter) grep -q '^error: jsonfilter not installed' "$test_dir/output" ;;
 		no_http) grep -q '^error: no HTTP client found' "$test_dir/output" ;;
@@ -330,6 +335,33 @@ run_test 'Missing HTTP client returns status 2 before lookup or UCI changes' \
 	test_cli '' '' no_http success '' 2 '' --force
 run_test 'Unknown CLI option remains a fatal error before lookup' \
 	test_cli '' '' full success '' 1 '' --unknown
+run_test 'Two positional sections are rejected before lookup or mutation' \
+	test_cli '' '' full success '' 1 '' main extra
+run_test 'Duplicate positional sections are also rejected' \
+	test_cli '' '' full success '' 1 '' main main
+run_test 'Flags between positional sections do not hide extra arguments' \
+	test_cli '' '' full success '' 1 '' main --force extra
+run_test 'Dry-run still rejects extra sections' \
+	test_cli '' '' full success '' 1 '' --dry-run main extra
+run_test 'An empty positional section is rejected' \
+	test_cli '' '' full success '' 1 '' ''
+
+test_exit_trap() (
+	rc=0
+	(
+		# shellcheck disable=SC2034
+		last_stage=test/done
+		# shellcheck source=/dev/null
+		. "$test_dir/exit.sh"
+		exit "$1"
+	) > "$test_dir/output" 2>&1 || rc=$?
+	assert_equal "$rc" "$1" || return 1
+	grep -q "exit rc=$1 stage='test/done'" "$test_dir/output"
+)
+run_test 'GeoIP uses the portable numeric exit trap' \
+	grep -qx 'trap on_exit 0' "$package_dir/files/readsb-geoip"
+run_test 'GeoIP exit logging preserves success' test_exit_trap 0
+run_test 'GeoIP exit logging preserves failure' test_exit_trap 7
 
 printf '%s tests, %s failures\n' "$tests" "$failures"
 [ "$failures" -eq 0 ]

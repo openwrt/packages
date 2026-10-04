@@ -1330,9 +1330,11 @@ while :; do
 	case $action in
 		add*)
 			if readsb-feeder; then
-				changes_made=1
+				if [ "$(readsb_count_feeders)" -gt "$fc" ]; then
+					changes_made=1
+				fi
 			else
-				wiz_say "  feeder add cancelled"
+				wiz_say "  feeder add failed"
 			fi
 			wiz_say ""
 			_step4_show_state
