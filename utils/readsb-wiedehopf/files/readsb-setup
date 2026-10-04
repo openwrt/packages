@@ -76,6 +76,7 @@ print_banner() {
    readsb-feeder --presets     -- list built-in preset names
    readsb-feeder --examples    -- print sample feeder UCI blocks
    readsb-feeder --companions  -- optional companion packages per preset
+   readsb-feeder --setup-companions <n> -- opt-in setup for an enabled feeder
    readsb-feeder --url   [<n>] -- public per-station stats URL(s)
    readsb-feeder --probe [<n>] -- TCP-probe each enabled feeder
    readsb-feeder --health [<n>] -- per-feeder runtime check (probe +
@@ -727,15 +728,18 @@ if [ "$mode" = status ]; then
 			[ -n "$purpose" ] || purpose="(no description available)"
 			case $state in
 				missing)
-					printf '    %s -- NOT INSTALLED\n' "$pkg"
+					printf '    %s -- AVAILABLE (optional, not installed)\n' "$pkg"
 					printf '      purpose : %s\n' "$purpose"
-					printf '      install : opkg update && opkg install %s\n' "$pkg"
+					printf '      setup   : readsb-feeder --setup-companions %s\n' "$fcfg"
+					;;
+				disabled)
+					printf '    %s -- installed, uploads disabled (optional)\n' "$pkg"
+					printf '      setup   : readsb-feeder --setup-companions %s\n' "$fcfg"
 					;;
 				stopped)
 					printf '    %s -- installed but NOT RUNNING (init: %s)\n' "$pkg" "$init"
 					printf '      purpose : %s\n' "$purpose"
-					printf '      enable  : /etc/init.d/%s enable\n' "$init"
-					printf '      start   : /etc/init.d/%s start\n' "$init"
+					printf '      setup   : readsb-feeder --setup-companions %s\n' "$fcfg"
 					printf '      logs    : logread -e %s\n' "$init"
 					;;
 				running)
@@ -750,6 +754,11 @@ if [ "$mode" = status ]; then
 					printf '    %s -- installed (no service component)\n' "$pkg"
 					;;
 			esac
+			if [ "$pkg" = adsbexchange-stats ] && readsb_pkg_installed "$pkg"; then
+				local selected_feeder
+				selected_feeder=$(uci -q get adsbexchange-stats.main.feeder)
+				printf '      feeder  : %s\n' "${selected_feeder:-(not selected)}"
+			fi
 		done
 		# Mirror missing/stopped fix-it hints to syslog.
 		readsb_warn_companions "$readsb_feeder_preset" "$fcfg"
@@ -1045,6 +1054,13 @@ if [ "$mode" = health ]; then
 		comp_pkgs=$(readsb_companion_pkgs_all 2>/dev/null)
 		for cpkg in $comp_pkgs; do
 			readsb_pkg_installed "$cpkg" || continue
+			cstate=$(readsb_pkg_status "$cpkg" 2>/dev/null)
+			case "$cstate" in
+				disabled*)
+					printf '\n[ optional companion: %s ]\n  uploads disabled; historical errors do not affect health\n' "$cpkg"
+					continue
+					;;
+			esac
 			ctag=$(readsb_pkg_log_tag "$cpkg")
 			[ -n "$ctag" ] || continue
 
@@ -1359,6 +1375,7 @@ while :; do
 				"enable" \
 				"disable" \
 				"remove" \
+				"optional features" \
 				"back" \
 				|| continue
 
@@ -1368,8 +1385,8 @@ while :; do
 						changes_made=1
 						# Enabling triggers syslog companion warnings;
 						# also offer interactive install while we have a tty.
-						cur_preset=$(uci -q get "readsb.${target}.preset")
-						wiz_offer_install_companions "$cur_preset" "feeder '$target'" || exit 1
+						readsb-feeder --setup-companions "$target" || \
+							wiz_say "  optional setup failed; the feeder remains enabled"
 					fi
 					;;
 				disable)
@@ -1384,6 +1401,10 @@ while :; do
 							changes_made=1
 						fi
 					fi
+					;;
+				optional*)
+					readsb-feeder --setup-companions "$target" || \
+						wiz_say "  optional setup failed"
 					;;
 				back) ;;
 			esac

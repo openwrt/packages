@@ -93,11 +93,11 @@ The three are intentionally split:
   decoded messages, positions, tracks, CPU).
 
 `--status` also runs an optional companion-package check for every
-*enabled* feeder section. An externally supplied `adsbexchange-stats`
-package is recognized only if it is already installed; its absence is
-not a warning and does not trigger an installation offer. For installed
-companions, stopped-service findings include the command to start the
-service and are mirrored to syslog.
+*enabled* feeder section. An optional package is discoverable only when
+already installed or listed in cached metadata from the configured feeds.
+Missing or deliberately disabled optional uploads are informational, not
+configuration failures. An opted-in uploader that is stopped includes a
+setup command and a syslog hint. The selected feeder is shown explicitly.
 
 `--health` delegates the per-feeder runtime breakdown to
 `readsb-feeder --health` (also runnable standalone, with an optional
@@ -225,10 +225,12 @@ answers yes to the feeder connection prompt.
 
 `readsb-geoip --self-test` is also an explicit network operation: it
 tests DNS and HTTPS access to both GeoIP providers. The optional
-external `adsbexchange-stats` companion is not provided by the official
-feeds or recommended for installation here. If installed separately,
-enabling its external statistics upload requires its own consent,
+`adsbexchange-stats` companion is a separate installable package.
+Enabling its external statistics upload requires its own consent,
 defaulting to **no**; adding a feeder is not consent for that upload.
+Discovery only reads cached package metadata. An accepted offer may
+download the companion and its dependencies from configured feeds;
+declining does not install or start anything.
 `readsb-feeder --url` only prints a dashboard URL and does not fetch it.
 
 For non-interactive configuration:
@@ -571,6 +573,7 @@ readsb-feeder --probe          # TCP-probe each enabled feeder host:port
 readsb-feeder --url            # public stats URL (where one is published)
 readsb-feeder --companions     # optional companion package(s) per enabled feeder
 readsb-feeder --companions <p> # ... or for one specific preset
+readsb-feeder --setup-companions <n> # optional setup for an enabled feeder
 readsb-feeder --examples       # ready-to-paste UCI blocks for scripted setups
 readsb-feeder --set <n> <k>=<v>...
 readsb-feeder --enable  <name>
@@ -578,11 +581,18 @@ readsb-feeder --disable <name>
 readsb-feeder --remove  <name>
 ```
 
-When a preset has an optional companion package (currently
-`adsbexchange` only), the wizard prints the install command before
-asking for confirmation, and `readsb-feeder --add` / `--enable` log the
-same recommendation to syslog -- so headless setups see it too via
-`logread -e readsb`.
+After an enabled feeder is saved, the wizard offers applicable optional
+features (currently ADSBx statistics). The same flow is available from
+the setup wizard's **optional features** action or
+`readsb-feeder --setup-companions <name>`. It explains the upload and
+asks a separate default-No question before installing or activating
+anything. A disabled feeder never triggers an upload offer.
+
+If the package is neither installed nor available in cached feed
+metadata, it is not offered. Update package lists explicitly when
+needed; discovery does not perform an automatic `opkg update`.
+Ordinary feeding remains usable without the package, and a failed
+optional installation or activation does not undo the saved feeder.
 
 ### `silent_fail` semantics
 
@@ -608,20 +618,28 @@ UUID resolution order per section:
 ### adsbexchange supplemental stats
 
 Feeding to ADSBx works on its own from the `adsbexchange` preset. The
-optional external `adsbexchange-stats` uploader is **not available in
-the official feeds**. This package neither recommends an `opkg install`
-for it nor warns when it is absent. Pure feeding does not require it.
+optional `adsbexchange-stats` uploader remains a **separate package**,
+with its own dependencies and service. It is offered only when installed
+or available from configured feeds. Installing it alone leaves uploads
+disabled; activation requires explicit consent (default **no**).
 
-If an operator separately installs that package, the diagnostics can
-recognize its opkg metadata and display its service status, configuration
-and logs. Starting a stopped uploader requires separate explicit consent
-(default **no**) because it sends supplemental statistics to ADSBx.
+The uploader binds to one enabled `adsbexchange` feeder section.
+That section's UUID override takes precedence over `readsb.main.uuid`.
+If another feeder is already selected, the wizard explains that opting
+in will replace that selection. It never silently picks between multiple
+feeders. Disabling/removing the selected feeder prevents further uploads;
+a UUID or selection change requires an uploader reload.
+
+Use `service adsbexchange-stats about` for companion-specific controls.
+To revoke upload permission persistently, set
+`adsbexchange-stats.main.enabled=0`, commit that package, and stop/disable
+its service. This does not disable the normal ADSBx feed.
 
 The public per-UUID lookup URL is printed by
 `readsb-feeder --url adsbexchange` whether the uploader is installed or
 not. When the uploader **is** installed it also exposes the same URL
 via its own `/etc/init.d/adsbexchange-stats showurl` action and a
-project-info banner via `/etc/init.d/adsbexchange-stats info`. Both
+project-info banner via `/etc/init.d/adsbexchange-stats about`. Both
 appear on the installed companion's `controls` line in
 `readsb-setup --status` and `readsb-setup --help`.
 
@@ -778,11 +796,19 @@ Not pulled in automatically (opkg has no `Recommends` field):
   indeterminate even with `resolveip` installed.
 
 `readsb-setup --status` and `readsb-feeder --companions` walk every
-*enabled* feeder section and report recognized, already-installed
-external companions (currently `adsbexchange-stats`, not `resolveip`).
-They do not recommend installing unavailable packages. Stopped services
-are reported with their start command and mirrored to syslog so they
-also appear in `logread -e readsb` for headless setups.
+*enabled* feeder section and report installed/available optional
+companions (currently `adsbexchange-stats`, not `resolveip`). Missing
+packages and deliberately disabled uploads are not warnings. Setup is
+explicit through `readsb-feeder --setup-companions <name>`. Only
+already-installed, opted-in uploaders participate in health/log checks;
+old warnings from a disabled uploader do not degrade daemon health.
+
+Additional provider companions can use the same pattern: map the preset
+to an optional package, default its uploads off, and expose a
+feeder-aware `activate <name>` service action. Keep provider-specific
+dependencies and upload logic in that package rather than adding them
+to the decoder. Extend the existing discovery/diagnostic mappings and
+tests when adding a companion; no general plugin framework is required.
 
 ## Conflicts
 
@@ -799,11 +825,13 @@ From the packages feed root, run:
 sh utils/readsb-wiedehopf/tests/feeder.sh
 sh utils/readsb-wiedehopf/tests/runtime.sh
 sh utils/readsb-wiedehopf/tests/geoip.sh
+sh utils/readsb-wiedehopf/tests/companions.sh
 ```
 
 The tests exercise production feeder diagnostics, SDR argument
 translation, automatic/manual pin handling, consent, exact-tag log
-filtering, and GeoIP coordinate preservation. OpenWrt services, hardware
+filtering, GeoIP coordinate preservation, and optional companion consent,
+availability, installation and feeder selection. OpenWrt services, hardware
 and network tools are mocked; the tests do not change the host's UCI or
 contact external services. The scripts can also be run with `bash` or
 `busybox ash` to check shell compatibility.

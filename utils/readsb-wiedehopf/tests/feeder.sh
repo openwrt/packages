@@ -442,14 +442,17 @@ run_test '--disable rejects an empty name before mutation' test_enable_disable 0
 
 test_wizard_exit() (
 	abort_at=$1 expected_rc=$2 add_rc=${3:-0}
+	wizard_preset=${4:-custom} feeder_enabled=${5:-1}
 	: > "$tmpdir/calls"
 	wiz_available() { [ "$abort_at" != no-tty ]; }
 	wiz_say() { printf '%s\n' "$*"; }
-	readsb_feeder_optional_pkgs() { :; }
+	readsb_feeder_optional_pkgs() {
+		[ "$wizard_preset" != adsbexchange ] || echo adsbexchange-stats
+	}
 	readsb_section_exists() { return 1; }
 	wiz_choose() {
 		[ "$abort_at" != "$1" ] || return 1
-		export "$1=custom"
+		export "$1=$wizard_preset"
 	}
 	wiz_ask_validated() {
 		[ "$abort_at" != "$1" ] || return 1
@@ -469,6 +472,8 @@ test_wizard_exit() (
 		[ "$abort_at" != "$1" ] || return 1
 		if [ "$1" = __wcf_ans ] && [ "$abort_at" = confirm-no ]; then
 			export "$1=0"
+		elif [ "$1" = enabled ]; then
+			export "$1=$feeder_enabled"
 		else
 			export "$1=1"
 		fi
@@ -477,11 +482,17 @@ test_wizard_exit() (
 		printf 'add %s\n' "$*" >> "$tmpdir/calls"
 		return "$add_rc"
 	}
+	cmd_setup_companions() { printf 'setup %s\n' "$1" >> "$tmpdir/calls"; }
 	rc=0
 	output=$(cmd_wizard 2>&1) || rc=$?
 	assert_equal "$rc" "$expected_rc" || { printf '%s\n' "$output" >&2; return 1; }
 	if [ "$abort_at" = none ]; then
-		grep -q '^add test custom ' "$tmpdir/calls"
+		grep -q "^add test $wizard_preset " "$tmpdir/calls" || return 1
+		if [ "$wizard_preset" = adsbexchange ] && [ "$feeder_enabled" = 1 ] && [ "$add_rc" = 0 ]; then
+			assert_equal "$(tail -n 1 "$tmpdir/calls")" 'setup test'
+		else
+			! grep -q '^setup ' "$tmpdir/calls"
+		fi
 	else
 		[ ! -s "$tmpdir/calls" ]
 	fi
@@ -493,6 +504,14 @@ done
 run_test 'wizard successful confirmation still adds a feeder' test_wizard_exit none 0
 run_test 'wizard mutation failure remains a failure' test_wizard_exit none 2 2
 run_test 'wizard still rejects invocation without a terminal' test_wizard_exit no-tty 1
+run_test 'ADSBx wizard offers optional stats only after a successful enabled feeder add' \
+	test_wizard_exit none 0 0 adsbexchange 1
+run_test 'disabled ADSBx feeder does not offer uploader activation' \
+	test_wizard_exit none 0 0 adsbexchange 0
+run_test 'failed ADSBx feeder creation does not offer optional setup' \
+	test_wizard_exit none 2 2 adsbexchange 1
+run_test 'cancelled ADSBx feeder confirmation does not install or activate companions' \
+	test_wizard_exit confirm-no 0 0 adsbexchange 1
 
 printf '%s tests, %s failures\n' "$tests" "$failures"
 [ "$failures" -eq 0 ]

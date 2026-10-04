@@ -22,6 +22,9 @@
 #   readsb-feeder --examples                -- sample feeder UCI blocks
 #   readsb-feeder --companions [<preset>]   -- optional companion package(s)
 #
+# Optional setup (may install/start an uploader after separate consent):
+#   readsb-feeder --setup-companions <name>
+#
 # Mutating (commits to UCI; does NOT restart the daemon):
 #   readsb-feeder --add <name> <preset> [k=v]...
 #   readsb-feeder --set <name> <k>=<v>...
@@ -494,6 +497,33 @@ cmd_companions() {
 	return 0
 }
 
+cmd_setup_companions() {
+	local name=$1 main_uuid rc
+	if [ -z "$name" ] || ! readsb_feeder_section_exists "$name"; then
+		echo "readsb-feeder: select an existing feeder for optional setup" >&2
+		return 3
+	fi
+	wiz_available || { echo "readsb-feeder: optional setup needs an interactive terminal" >&2; return 1; }
+	config_load readsb
+	main_uuid=$(uci -q get readsb.main.uuid)
+	readsb_feeder_resolve "$name" "$main_uuid" || {
+		echo "readsb-feeder: feeder '$name' ${readsb_feeder_error:-is malformed}" >&2
+		return 2
+	}
+	if [ "$readsb_feeder_enabled" -ne 1 ]; then
+		echo "readsb-feeder: enable feeder '$name' before configuring optional uploads" >&2
+		return 2
+	fi
+	if [ -z "$(readsb_feeder_optional_pkgs "$readsb_feeder_preset")" ]; then
+		echo "no optional packages installed or available in configured feeds for '$name'"
+		return 0
+	fi
+	rc=0
+	wiz_offer_install_companions "$readsb_feeder_preset" "$name" || rc=$?
+	[ "$rc" -ne 1 ] || return 0
+	return "$rc"
+}
+
 # --- command: --examples ---------------------------------------------------
 # Print sample feeder UCI blocks for paste/redirection / scripted setups.
 cmd_examples() {
@@ -793,18 +823,6 @@ cmd_wizard() {
 	wiz_say "Available presets (host:port baked in):"
 	wiz_choose preset "choose a preset" $preset_list custom || return 0
 
-	# 1a. Early heads-up about optional companion package(s); offer to
-	#     install/enable any that are missing or stopped right now.
-	if [ "$preset" != custom ] \
-	   && [ -n "$(readsb_feeder_optional_pkgs "$preset")" ]; then
-		wiz_say ""
-		wiz_say "--- optional companion package(s) -----------"
-		readsb_recommend_optional_pkgs "$preset" >/dev/tty
-		wiz_say "---------------------------------------------"
-		wiz_offer_install_companions "$preset" || return 0
-		wiz_say ""
-	fi
-
 	# 2. section name -- default to preset name; reject duplicates.
 	while :; do
 		wiz_ask_validated name "UCI section name" "$preset" wiz_v_uci_name \
@@ -876,18 +894,12 @@ cmd_wizard() {
 	# shellcheck disable=SC2086
 	cmd_add "$name" "$preset" $extras || return $?
 
-	# 8. post-commit reminder for optional companion package(s); offer
-	#    install/enable for anything still missing or stopped.
-	if [ "$preset" != custom ] \
+	# Optional uploads require their own consent after the feeder is saved.
+	if [ "$enabled" = 1 ] && [ "$preset" != custom ] \
 	   && [ -n "$(readsb_feeder_optional_pkgs "$preset")" ]; then
 		wiz_say ""
 		wiz_say "--- companion package follow-up -------------"
-		readsb_recommend_optional_pkgs "$preset" "feeder '$name'" >/dev/tty
-		wiz_say "---------------------------------------------"
-		wiz_offer_install_companions "$preset" "feeder '$name'" || {
-			wiz_say "companion setup cancelled; feeder '$name' remains saved"
-			return 0
-		}
+		cmd_setup_companions "$name" || return $?
 	fi
 }
 
@@ -906,6 +918,7 @@ case $sub in
 	--health)     cmd_health "${1:-}" ;;
 	--presets)    cmd_presets ;;
 	--companions) cmd_companions "${1:-}" ;;
+	--setup-companions) cmd_setup_companions "${1:-}" ;;
 	--examples)   cmd_examples ;;
 	--add)        cmd_add "$@" ;;
 	--set)        cmd_set "$@" ;;

@@ -12,7 +12,9 @@ cleanup() {
 	trap - 0
 	chmod 700 "$tmpdir/config" || exit 1
 	rm -f "$tmpdir/config/readsb" "$tmpdir/shared/readsb" "$tmpdir/original" \
-		"$tmpdir/calls" "$tmpdir/stages" "$tmpdir/output"
+		"$tmpdir/calls" "$tmpdir/stages" "$tmpdir/output" \
+		"$tmpdir/config/adsbexchange-stats" "$tmpdir/shared/adsbexchange-stats" \
+		"$tmpdir/companion-original"
 	rmdir "$tmpdir/config" "$tmpdir/shared" "$tmpdir/override" "$tmpdir"
 	exit "$status"
 }
@@ -146,6 +148,36 @@ test_success() (
 	[ "$(real_uci get readsb.other.tags)" = 'base operator' ] || return 1
 	assert_clean_staging
 )
+test_companion_package() (
+	seed_config
+	rm -f "$tmpdir/shared/adsbexchange-stats"
+	printf '%s\n' "config adsbexchange-stats 'main'" "  option enabled '0'" \
+		"  option feeder 'old'" > "$tmpdir/config/adsbexchange-stats"
+	cp "$tmpdir/config/adsbexchange-stats" "$tmpdir/companion-original"
+	real_uci add_list readsb.other.tags=operator || return 1
+	readsb_pending=$(real_uci changes readsb)
+	scenario=$1
+	case $scenario in
+		fail) failure=adsbexchange-stats.main.enabled=1 ;;
+		pending) real_uci set adsbexchange-stats.main.feeder=manual || return 1 ;;
+	esac
+	stats_pending=$(real_uci changes adsbexchange-stats)
+	rc=0
+	readsb_uci_apply_package adsbexchange-stats main.feeder=adsbx main.enabled=1 || rc=$?
+	if [ "$scenario" = success ]; then
+		[ "$rc" = 0 ] || return 1
+		[ "$(real_uci get adsbexchange-stats.main.feeder)" = adsbx ] || return 1
+		[ "$(real_uci get adsbexchange-stats.main.enabled)" = 1 ] || return 1
+		[ -z "$(real_uci changes adsbexchange-stats)" ] || return 1
+	else
+		[ "$rc" = 1 ] || return 1
+		cmp -s "$tmpdir/config/adsbexchange-stats" "$tmpdir/companion-original" || return 1
+		[ "$(real_uci changes adsbexchange-stats)" = "$stats_pending" ] || return 1
+	fi
+	cmp -s "$tmpdir/config/readsb" "$tmpdir/original" || return 1
+	[ "$(real_uci changes readsb)" = "$readsb_pending" ] || return 1
+	assert_clean_staging
+)
 
 tests=0
 failures=0
@@ -172,5 +204,8 @@ if [ "$(id -u)" != 0 ]; then
 	run_test 'real commit I/O failure does not leak private changes' test_failure commit-io
 fi
 run_test 'clean updates persist without duplicating later list additions' test_success
+run_test 'companion UCI commit leaves pending readsb edits alone' test_companion_package success
+run_test 'companion UCI write failure does not leak partial settings' test_companion_package fail
+run_test 'companion UCI update preserves its own pending edits' test_companion_package pending
 printf '%s tests, %s failures\n' "$tests" "$failures"
 [ "$failures" -eq 0 ]

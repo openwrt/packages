@@ -380,7 +380,7 @@ test_companions() (
 	readsb_warn_companions adsbexchange test
 	[ ! -s "$tmpdir/messages" ] || return 1
 	wiz_yesno() { echo 'unexpected prompt' >&2; return 1; }
-	wiz_offer_install_companions adsbexchange || return 1
+	wiz_offer_install_companions adsbexchange test || return 1
 	installed=1
 	assert_equal "$(readsb_feeder_optional_pkgs adsbexchange)" adsbexchange-stats || return 1
 	assert_equal "$(readsb_companion_pkgs_all)" adsbexchange-stats
@@ -396,7 +396,7 @@ test_telemetry_consent() (
 		# shellcheck disable=SC2034
 		ans=0
 	}
-	wiz_offer_install_companions adsbexchange || return 1
+	wiz_offer_install_companions adsbexchange test || return 1
 	[ ! -s "$tmpdir/messages" ]
 )
 run_test 'unavailable companions are not recommended; installed ones remain discoverable' test_companions

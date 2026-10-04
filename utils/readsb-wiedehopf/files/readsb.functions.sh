@@ -16,7 +16,17 @@ _debug()  { logger -t "$READSB_LOG_TAG" -p daemon.debug  -- "$@"; }
 
 # Stage section.option=value assignments privately. The CLI still reads
 # shared deltas even with -t, so require a clean shared change set.
-readsb_uci_apply() (
+readsb_uci_apply() {
+	readsb_uci_apply_package readsb "$@"
+}
+
+# Shared with optional companions that have their own UCI package.
+readsb_uci_apply_package() (
+	readsb_uci_package=${1:-}
+	case "$readsb_uci_package" in
+		''|*[!A-Za-z0-9_-]*) _err "invalid UCI package name"; return 1 ;;
+	esac
+	shift
 	[ "$#" -gt 0 ] || {
 		_err "no assignments supplied for UCI update"
 		return 1
@@ -25,12 +35,12 @@ readsb_uci_apply() (
 	local assignment
 	_readsb_uci_require_clean() {
 		local pending
-		pending=$(uci -q changes readsb) || {
-			_err "cannot inspect pending UCI changes for readsb"
+		pending=$(uci -q changes "$readsb_uci_package") || {
+			_err "cannot inspect pending UCI changes for $readsb_uci_package"
 			return 1
 		}
 		[ -z "$pending" ] || {
-			_err "readsb has pending UCI changes; commit or revert them before retrying"
+			_err "$readsb_uci_package has pending UCI changes; commit or revert them before retrying"
 			return 1
 		}
 	}
@@ -43,7 +53,7 @@ readsb_uci_apply() (
 	_readsb_uci_cleanup() {
 		local status=$?
 		trap - 0
-		rm -f "$readsb_uci_stagedir/readsb" || _err "could not remove private UCI changes in '$readsb_uci_stagedir'"
+		rm -f "$readsb_uci_stagedir/$readsb_uci_package" || _err "could not remove private UCI changes in '$readsb_uci_stagedir'"
 		rmdir "$readsb_uci_stagedir" || _err "could not remove private UCI staging directory '$readsb_uci_stagedir'"
 		exit "$status"
 	}
@@ -51,14 +61,14 @@ readsb_uci_apply() (
 	trap 'exit 1' HUP INT TERM
 
 	for assignment in "$@"; do
-		uci -t "$readsb_uci_stagedir" set "readsb.$assignment" || {
-			_err "failed to stage readsb.${assignment%%=*} (uci set rc=$?); update discarded"
+		uci -t "$readsb_uci_stagedir" set "$readsb_uci_package.$assignment" || {
+			_err "failed to stage $readsb_uci_package.${assignment%%=*} (uci set rc=$?); update discarded"
 			return 1
 		}
 	done
 	_readsb_uci_require_clean || return 1
-	uci -t "$readsb_uci_stagedir" commit readsb || {
-		_err "readsb UCI commit failed (rc=$?); private update discarded"
+	uci -t "$readsb_uci_stagedir" commit "$readsb_uci_package" || {
+		_err "$readsb_uci_package UCI commit failed (rc=$?); private update discarded"
 		return 1
 	}
 )
@@ -350,14 +360,15 @@ readsb_feeder_status_url() {
 }
 
 # --- optional companion packages (per preset) -----------------------------
-# External companions are recognized only when already installed. Do not
-# recommend installing packages that are unavailable in the official feeds.
+# Offer only installed companions or packages listed in the configured feeds.
 #
 # Returns space-separated opkg package names, empty for presets with none.
 readsb_feeder_optional_pkgs() {
 	case "$1" in
 		adsbexchange)
-			readsb_pkg_installed adsbexchange-stats && echo adsbexchange-stats
+			if readsb_pkg_installed adsbexchange-stats || readsb_pkg_available adsbexchange-stats; then
+				echo adsbexchange-stats
+			fi
 			;;
 	esac
 	return 0
@@ -365,14 +376,15 @@ readsb_feeder_optional_pkgs() {
 
 # Installed external companions supported by the diagnostics.
 readsb_companion_pkgs_all() {
-	readsb_feeder_optional_pkgs adsbexchange
+	readsb_pkg_installed adsbexchange-stats && echo adsbexchange-stats
+	return 0
 }
 
 # Short purpose string for an optional companion package.
 readsb_pkg_purpose() {
 	case "$1" in
 		adsbexchange-stats)
-			echo "reads readsb's aircraft.json, aggregates per-aircraft RSSI/counts, and POSTs to adsbexchange.com (identified by readsb.main.uuid); required only for the per-station web ranking"
+			echo "reads aircraft.json and uploads RSSI/counts to adsbexchange.com using the selected feeder's effective UUID; optional, not required for feeding"
 			;;
 		*) echo "" ;;
 	esac
@@ -383,7 +395,7 @@ readsb_pkg_purpose() {
 # in sync with each companion's `EXTRA_COMMANDS=` declaration.
 readsb_pkg_extra_actions() {
 	case "$1" in
-		adsbexchange-stats) echo "showurl info" ;;
+		adsbexchange-stats) echo "showurl about" ;;
 		*) echo "" ;;
 	esac
 }
@@ -402,6 +414,20 @@ readsb_pkg_installed() {
 	[ -n "$1" ] && [ -f "/usr/lib/opkg/info/$1.control" ]
 }
 
+# Read cached feed metadata only; discovery never performs an opkg update.
+readsb_pkg_available() {
+	local packages
+	command -v opkg >/dev/null 2>&1 || return 1
+	packages=$(opkg list "$1") || {
+		_warn "could not inspect configured feeds for optional package '$1'"
+		return 1
+	}
+	printf '%s\n' "$packages" | awk -v package="$1" '
+		$1 == package && $2 == "-" { found=1 }
+		END { exit !found }
+	'
+}
+
 # One init-script base name per line owned by <pkg>. rc 1 when none.
 readsb_pkg_init_scripts() {
 	local pkg=$1
@@ -411,9 +437,9 @@ readsb_pkg_init_scripts() {
 }
 
 # Status token for an opkg package, optionally followed by an init script.
-#   running <init> (rc 0) | no-service (rc 0) | stopped <init> (rc 2) | missing (rc 1)
+#   running/disabled <init> (rc 0) | no-service (rc 0) | stopped <init> (rc 2) | missing (rc 1)
 readsb_pkg_status() {
-	local pkg=$1 init
+	local pkg=$1 init enabled
 	if ! readsb_pkg_installed "$pkg"; then
 		echo "missing"
 		return 1
@@ -422,6 +448,13 @@ readsb_pkg_status() {
 	if [ -z "$init" ]; then
 		echo "no-service"
 		return 0
+	fi
+	if [ "$pkg" = adsbexchange-stats ]; then
+		enabled=$(uci -q get adsbexchange-stats.main.enabled)
+		case "$enabled" in
+			1|on|true|yes) ;;
+			*) printf 'disabled %s\n' "$init"; return 0 ;;
+		esac
 	fi
 	if [ -x "/etc/init.d/$init" ] && /etc/init.d/"$init" running 2>/dev/null; then
 		printf 'running %s\n' "$init"
@@ -462,15 +495,18 @@ readsb_recommend_optional_pkgs() {
 
 		case $status in
 			missing)
-				printf '  %s -- NOT INSTALLED\n' "$pkg"
+				printf '  %s -- AVAILABLE (optional, not installed)\n' "$pkg"
 				printf '    purpose : %s\n' "$purpose"
-				printf '    install : opkg update && opkg install %s\n' "$pkg"
+				printf '    setup   : readsb-feeder --setup-companions <feeder-name>\n'
+				;;
+			disabled)
+				printf '  %s -- installed, uploads disabled (optional)\n' "$pkg"
+				printf '    setup   : readsb-feeder --setup-companions <feeder-name>\n'
 				;;
 			stopped)
 				printf '  %s -- installed but NOT RUNNING (init: %s)\n' "$pkg" "$init"
 				printf '    purpose : %s\n' "$purpose"
-				printf '    enable  : /etc/init.d/%s enable\n' "$init"
-				printf '    start   : /etc/init.d/%s start\n' "$init"
+				printf '    setup   : readsb-feeder --setup-companions <feeder-name>\n'
 				;;
 			running)
 				printf '  %s -- installed and running (init: %s)\n' "$pkg" "$init"
@@ -480,39 +516,50 @@ readsb_recommend_optional_pkgs() {
 				;;
 		esac
 	done
+	if [ "$preset" = adsbexchange ] && readsb_pkg_installed adsbexchange-stats; then
+		local selected
+		selected=$(uci -q get adsbexchange-stats.main.feeder)
+		printf '    selected feeder: %s\n' "${selected:-(not selected)}"
+	fi
 	return 0
 }
 
 # Mirror missing/stopped companion warnings to syslog. Quiet for
 # 'custom' presets and for presets with no companion packages.
 readsb_warn_companions() {
-	local preset=$1 section=$2 pkg state init
+	local preset=$1 section=$2 pkg state init selected
 	[ -n "$preset" ] && [ "$preset" != custom ] || return 0
 	for pkg in $(readsb_feeder_optional_pkgs "$preset"); do
+		readsb_pkg_installed "$pkg" || continue
+		if [ "$pkg" = adsbexchange-stats ]; then
+			selected=$(uci -q get adsbexchange-stats.main.feeder)
+			[ "$selected" = "$section" ] || continue
+		fi
 		# shellcheck disable=SC2046
 		set -- $(readsb_pkg_status "$pkg" 2>/dev/null)
 		state=${1:-missing}
 		init=${2:-}
 		case $state in
-			missing)
-				_warn "feeder '$section' (preset $preset): optional companion package '$pkg' not installed -- run: opkg update && opkg install $pkg"
-				;;
 			stopped)
-				_warn "feeder '$section' (preset $preset): companion package '$pkg' installed but not running -- run: /etc/init.d/$init enable && /etc/init.d/$init start"
+				_warn "feeder '$section' (preset $preset): opted-in companion '$pkg' is not running -- run: readsb-feeder --setup-companions $section; check logread -e $init"
 				;;
 		esac
 	done
 }
 
-# Interactive: prompt the user via wiz_* helpers to install / start any
-# missing companion packages for <preset>. Caller must already have a
-# tty (wiz_available). Re-invocation is safe; one `opkg update` per
-# shell, gated by _readsb_opkg_updated.
-#   wiz_offer_install_companions <preset> [<context-label>]
-# Returns 0 normally, 1 if the user aborts a prompt with EOF.
+readsb_companion_service() {
+	local pkg=$1
+	shift
+	"/etc/init.d/$pkg" "$@"
+}
+
+# Consent covers optional installation and a provider-specific uploader.
+# Returns 1 on cancellation and 2 if an approved operation fails.
+#   wiz_offer_install_companions <preset> <enabled-feeder-section>
 wiz_offer_install_companions() {
-	local preset=$1 ctx=${2:-} pkgs pkg state init purpose ans
+	local preset=$1 feeder=${2:-} pkgs pkg state init purpose ans selected
 	[ -n "$preset" ] && [ "$preset" != custom ] || return 0
+	[ -n "$feeder" ] || return 0
 	pkgs=$(readsb_feeder_optional_pkgs "$preset")
 	[ -n "$pkgs" ] || return 0
 
@@ -523,57 +570,38 @@ wiz_offer_install_companions() {
 		init=${2:-}
 		purpose=$(readsb_pkg_purpose "$pkg")
 		[ -n "$purpose" ] || purpose="(no description available)"
-
-		case $state in
-			missing)
-				wiz_say ""
-				if [ -n "$ctx" ]; then
-					wiz_say "  '$pkg' is NOT INSTALLED ($ctx)."
-				else
-					wiz_say "  '$pkg' is NOT INSTALLED."
-				fi
-				wiz_say "    purpose: $purpose"
-				wiz_yesno ans "  install '$pkg' now via opkg?" N || return 1
-				if [ "$ans" = 1 ]; then
-					if [ -z "${_readsb_opkg_updated:-}" ]; then
-						wiz_say "  running 'opkg update' ..."
-						opkg update >/dev/null 2>&1 \
-							|| wiz_say "  (opkg update failed; trying install anyway)"
-						_readsb_opkg_updated=1
-					fi
-					wiz_say "  running 'opkg install $pkg' ..."
-					if opkg install "$pkg" >/dev/tty 2>&1; then
-						_notice "installed companion package '$pkg' for preset $preset"
-						wiz_say "  '$pkg' installed"
-					else
-						_warn "opkg install '$pkg' failed (preset $preset)"
-						wiz_say "  install failed; check 'logread' or run manually:"
-						wiz_say "    opkg update && opkg install $pkg"
-					fi
-				fi
-				;;
-			stopped)
-				wiz_say ""
-				if [ -n "$ctx" ]; then
-					wiz_say "  '$pkg' is installed but NOT RUNNING (init: $init, $ctx)."
-				else
-					wiz_say "  '$pkg' is installed but NOT RUNNING (init: $init)."
-				fi
-				wiz_say "    purpose: $purpose"
-				wiz_yesno ans "  enable & start '$init' now?" N || return 1
-				if [ "$ans" = 1 ]; then
-					if /etc/init.d/"$init" enable 2>/dev/null \
-					   && /etc/init.d/"$init" start 2>/dev/null; then
-						_notice "enabled and started companion init '$init' for preset $preset"
-						wiz_say "  '$init' enabled and started"
-					else
-						_warn "/etc/init.d/$init enable/start failed (preset $preset)"
-						wiz_say "  enable/start failed; check 'logread'"
-					fi
-				fi
-				;;
-			running|no-service) ;;
-		esac
+		selected=$(uci -q get "$pkg.main.feeder")
+		if [ "$state" = running ] && [ "$selected" = "$feeder" ]; then
+			wiz_say "  '$pkg' uploads are already enabled for '$feeder'."
+			continue
+		fi
+		wiz_say ""
+		wiz_say "  Optional '$pkg' for feeder '$feeder': $purpose"
+		wiz_say "  This is a separate external telemetry upload; normal feeding does not need it."
+		[ "$state" != missing ] || wiz_say "  If accepted, '$pkg' will be installed from the configured feeds."
+		if [ -n "$selected" ] && [ "$selected" != "$feeder" ]; then
+			wiz_say "  This replaces the uploader's existing feeder selection '$selected'."
+		fi
+		wiz_yesno ans "  enable these optional statistics uploads for '$feeder'?" N || return 1
+		[ "$ans" = 1 ] || continue
+		if ! readsb_pkg_installed "$pkg"; then
+			if ! opkg install "$pkg"; then
+				_warn "optional package '$pkg' installation failed; feeder '$feeder' remains configured"
+				wiz_say "  installation failed; no uploader activation was attempted"
+				return 2
+			fi
+			if ! readsb_pkg_installed "$pkg"; then
+				_warn "optional package '$pkg' has no installed metadata after installation"
+				return 2
+			fi
+		fi
+		if ! readsb_companion_service "$pkg" activate "$feeder"; then
+			_warn "optional uploader '$pkg' could not activate for '$feeder'; check logread -e $pkg"
+			wiz_say "  uploader activation failed; the feeder remains configured"
+			return 2
+		fi
+		_notice "optional statistics '$pkg' explicitly enabled for feeder '$feeder'"
+		wiz_say "  statistics uploads enabled for '$feeder'"
 	done
 	return 0
 }
