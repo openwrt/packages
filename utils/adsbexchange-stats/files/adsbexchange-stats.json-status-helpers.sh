@@ -33,6 +33,13 @@ ADSBX_AC_TOTAL=0 ADSBX_BYTES_TOTAL=0
 ADSBX_LAST_SUMMARY=0
 ADSBX_HTTP_LAST=000 ADSBX_ELAPSED_LAST=0
 
+_adsbx_normalize_log_level() {
+	case ${ADSBX_LOG_LEVEL:-} in
+		0|1|2|3) ;;
+		*) ADSBX_LOG_LEVEL=0 ;;
+	esac
+}
+
 # One UCI process per upload; keyed show output tolerates missing options
 # without relying on batch get's version-dependent blank-line behavior.
 adsbx_upload_uuid() {
@@ -97,6 +104,7 @@ EOF
 # or, on transport failure, drained at warn priority. Returns curl's rv.
 adsbx_curl_upload() {
 	local payload="$1" rv=0 t0 t1 errfile http current_uuid
+	_adsbx_normalize_log_level
 	ADSBX_HTTP_LAST=000 ADSBX_ELAPSED_LAST=0
 	current_uuid=$(adsbx_upload_uuid) || return 1
 	if [ "$current_uuid" != "$UUID" ]; then
@@ -149,6 +157,7 @@ adsbx_curl_upload() {
 # summary (level >= 1). 200 OK counts as success; anything else as fail.
 adsbx_record_upload() {
 	local aircraft bytes now avg_ac=0 avg_bytes=0
+	_adsbx_normalize_log_level
 	aircraft=$(adsbx_uint "${1:-}" 0 "aircraft count")
 	bytes=$(adsbx_uint "${2:-}" 0 "payload byte count")
 

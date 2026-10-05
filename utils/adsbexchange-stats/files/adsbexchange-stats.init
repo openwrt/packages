@@ -73,6 +73,8 @@ write_env() (
 	log_summary_interval=$(adsbx_uint "$log_summary_interval" 300 log_summary_interval)
 
 	umask 077
+	: >> "$ADSBX_UUID_FILE" || return 1
+	chmod 600 "$ADSBX_UUID_FILE" || return 1
 	echo "$uuid" > "$ADSBX_UUID_FILE" || return 1
 
 	umask 022

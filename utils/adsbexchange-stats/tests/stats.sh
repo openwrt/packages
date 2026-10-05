@@ -202,6 +202,25 @@ test_environment_failure() (
 	assert_equal "$rc" 1 && ! grep -q '^open$' "$tmpdir/calls" &&
 		grep -q 'cannot prepare the uploader environment' "$tmpdir/log"
 )
+test_uuid_permissions() (
+	seed 'adsbexchange-stats.main.enabled=1'
+	printf '%s\n' old-identity > "$tmpdir/uuid"
+	chmod 644 "$tmpdir/uuid" || return 1
+	if [ "$1" = failure ]; then
+		chmod() { return 9; }
+		rc=0
+		start_instance main || rc=$?
+		assert_equal "$rc" 1 || return 1
+		assert_equal "$(cat "$tmpdir/uuid")" old-identity || return 1
+		! grep -q '^open$' "$tmpdir/calls"
+	else
+		start_instance main || return 1
+		assert_equal "$(stat -c %a "$tmpdir/uuid")" 600 || return 1
+		assert_equal "$(cat "$tmpdir/uuid")" "$main_uuid"
+	fi
+)
+run_test 'pre-existing world-readable UUID file is restricted before writing' test_uuid_permissions success
+run_test 'failed UUID permission change prevents writing or starting the uploader' test_uuid_permissions failure
 test_start_logging() (
 	level=$1 interval=$2 expected_level=$3 expected_interval=$4
 	seed 'adsbexchange-stats.main.enabled=1' \
@@ -299,6 +318,28 @@ test_upload_guard() (
 	fi
 )
 run_test 'approved matching feeder can upload' test_upload_guard matching 0
+test_upload_log_level() (
+	seed 'adsbexchange-stats.main.enabled=1' 'adsbexchange-stats.main.feeder=second'
+	ADSBX_FEEDER=second UUID=$override_uuid ADSBX_LOG_LEVEL=$1
+	curl() { printf '%s\n' "$@" > "$tmpdir/calls"; printf 200; }
+	adsbx_curl_upload "$tmpdir/config" > "$tmpdir/stdout" 2> "$tmpdir/stderr" || return 1
+	assert_equal "$ADSBX_LOG_LEVEL" "$2" || return 1
+	[ ! -s "$tmpdir/stderr" ] || return 1
+	if [ "$2" = 3 ]; then
+		grep -qx -- '-v' "$tmpdir/calls" || return 1
+	else
+		! grep -qx -- '-v' "$tmpdir/calls" || return 1
+	fi
+	ADSBX_LOG_LEVEL=$1
+	adsbx_record_upload 1 10 > "$tmpdir/stdout" 2> "$tmpdir/stderr" || return 1
+	assert_equal "$ADSBX_LOG_LEVEL" "$2" && [ ! -s "$tmpdir/stderr" ]
+)
+for level in 0 1 2 3; do
+	run_test "upload helpers preserve valid log level $level" test_upload_log_level "$level" "$level"
+done
+for level in '' invalid -1 99 0003 '3 extra'; do
+	run_test "upload helpers safely normalize invalid log level [$level]" test_upload_log_level "$level" 0
+done
 for reason in disabled feeder-disabled switched uuid-changed unselected; do
 	run_test "upload is blocked when $reason" test_upload_guard "$reason" 1
 done
@@ -531,6 +572,7 @@ test_upload_snapshot() (
 	# shellcheck disable=SC2034
 	ADSBX_FEEDER=second UUID=$override_uuid
 	fail_batch=$1 expected_rc=$2
+	# shellcheck disable=SC2329
 	curl() { echo curl >> "$tmpdir/calls"; printf 200; }
 	rc=0
 	adsbx_curl_upload "$tmpdir/config" || rc=$?
@@ -551,6 +593,7 @@ test_cleanup_status() (
 	(
 		# shellcheck disable=SC2329
 		rm() { [ "$failed_command" != rm ]; }
+		# shellcheck disable=SC2329
 		rmdir() { [ "$failed_command" != rmdir ]; }
 		trap cleanup 0
 		exit "$wanted"
