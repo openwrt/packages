@@ -56,23 +56,20 @@ write_env() (
 	local feeder="$3"
 	local json_paths
 	local dns_cache dns_ttl dns_ignore_local
-	local log_level log_summary_interval
+	local env_log_level log_summary_interval
 
 	json_paths=$(adsbx_resolve_json_paths)
 
 	config_get dns_cache            "$cfg" dns_cache 0
 	config_get dns_ttl              "$cfg" dns_ttl 600
 	config_get dns_ignore_local     "$cfg" dns_ignore_local 0
-	config_get log_level            "$cfg" log_level 1
+	config_get env_log_level        "$cfg" log_level 1
 	config_get log_summary_interval "$cfg" log_summary_interval 300
 
 	dns_cache=$(_clamp "$dns_cache" '0|1' 0)
 	dns_ignore_local=$(_clamp "$dns_ignore_local" '0|1' 0)
 	dns_ttl=$(adsbx_uint "$dns_ttl" 600 dns_ttl)
-	# clamped log_level is consumed locally; subshell scope means it
-	# does not escape (caller re-reads UCI for its own log line).
-	# shellcheck disable=SC2030
-	log_level=$(_clamp "$log_level" '0|1|2|3' 1)
+	env_log_level=$(_clamp "$env_log_level" '0|1|2|3' 1)
 	log_summary_interval=$(adsbx_uint "$log_summary_interval" 300 log_summary_interval)
 
 	umask 077
@@ -91,7 +88,7 @@ write_env() (
 		_env_assignment DNS_TTL "$dns_ttl"
 		_env_assignment DNS_IGNORE_LOCAL "$dns_ignore_local"
 		_env_assignment ADSBX_LOG_TAG "$ADSBX_LOG_TAG"
-		_env_assignment ADSBX_LOG_LEVEL "$log_level"
+		_env_assignment ADSBX_LOG_LEVEL "$env_log_level"
 		_env_assignment ADSBX_SUMMARY_INTERVAL "$log_summary_interval"
 		echo ". /usr/lib/adsbexchange-stats/json-status-helpers.sh"
 		# Render JSON_PATHS as a real bash array so the uploader keeps
@@ -129,9 +126,9 @@ start_instance() {
 
 	config_get log_level        "$cfg" log_level 1
 	config_get summary_interval "$cfg" log_summary_interval 300
+	log_level=$(_clamp "$log_level" '0|1|2|3' 1)
+	summary_interval=$(adsbx_uint "$summary_interval" 300 log_summary_interval)
 	json_paths=$(adsbx_resolve_json_paths)
-	# log_level is the freshly-read UCI value; the same name was clamped
-	# inside write_env's subshell but did not escape.
 	# shellcheck disable=SC2031
 	adsbx_notice "starting '$cfg' feeder=$feeder uuid=$uuid log_level=$log_level summary=${summary_interval}s paths='$json_paths'"
 

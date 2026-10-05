@@ -13,7 +13,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adsbexchange-stats
 PKG_VERSION:=2023-02-22
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/ADSBexchange/adsbexchange-stats.git
@@ -59,11 +59,14 @@ define Package/adsbexchange-stats/description
     logread -e adsbexchange-stats        -- uploader logs
 
   Extra (non-procd) actions:
-    /etc/init.d/adsbexchange-stats showurl
+    service adsbexchange-stats showurl
                                          -- print the public per-station
                                             ADSBexchange stats URL
                                             (derived from the selected feeder)
-    /etc/init.d/adsbexchange-stats about -- package and configuration help
+    service adsbexchange-stats about   -- package and configuration help
+    service adsbexchange-stats activate <feeder>
+                      -- consent to statistics uploads for an
+                       enabled ADSBexchange feeder
 endef
 
 # Pure shell payload; nothing to compile or stage-install.

@@ -185,6 +185,20 @@ test_environment_failure() (
 	assert_equal "$rc" 1 && ! grep -q '^open$' "$tmpdir/calls" &&
 		grep -q 'cannot prepare the uploader environment' "$tmpdir/log"
 )
+test_start_logging() (
+	level=$1 interval=$2 expected_level=$3 expected_interval=$4
+	seed 'adsbexchange-stats.main.enabled=1' \
+		"adsbexchange-stats.main.log_level=$level" \
+		"adsbexchange-stats.main.log_summary_interval=$interval"
+	start_instance main || return 1
+	grep -qx "ADSBX_LOG_LEVEL='$expected_level'" "$tmpdir/env" || return 1
+	grep -qx "ADSBX_SUMMARY_INTERVAL='$expected_interval'" "$tmpdir/env" || return 1
+	grep -q "log_level=$expected_level summary=${expected_interval}s" "$tmpdir/log"
+)
+run_test 'startup notice uses effective defaults for invalid logging settings' \
+	test_start_logging invalid invalid 1 300
+run_test 'startup notice preserves valid logging settings' test_start_logging 3 60 3 60
+run_test 'startup notice normalizes a leading-zero interval' test_start_logging 2 00060 2 60
 test_activation() (
 	failure=${1:-}
 	seed
