@@ -443,6 +443,7 @@ run_test '--disable rejects an empty name before mutation' test_enable_disable 0
 test_wizard_exit() (
 	abort_at=$1 expected_rc=$2 add_rc=${3:-0}
 	wizard_preset=${4:-custom} feeder_enabled=${5:-1}
+	companion_rc=${6:-0}
 	: > "$tmpdir/calls"
 	wiz_available() { [ "$abort_at" != no-tty ]; }
 	wiz_say() { printf '%s\n' "$*"; }
@@ -460,6 +461,7 @@ test_wizard_exit() (
 			name) export "$1=test" ;;
 			host) export "$1=feed.example.com" ;;
 			port) export "$1=30004" ;;
+			proto) export "$1=beast_reduce_plus_out" ;;
 			uuid) export "$1=00000000-0000-4000-8000-000000000000" ;;
 			*) return 99 ;;
 		esac
@@ -479,10 +481,14 @@ test_wizard_exit() (
 		fi
 	}
 	cmd_add() {
+		if [ "$wizard_preset" = custom ]; then
+			assert_equal "$#" 8 || return 99
+			assert_equal "$8" 'protocol=beast_reduce_plus_out' || return 99
+		fi
 		printf 'add %s\n' "$*" >> "$tmpdir/calls"
 		return "$add_rc"
 	}
-	cmd_setup_companions() { printf 'setup %s\n' "$1" >> "$tmpdir/calls"; }
+	cmd_setup_companions() { printf 'setup %s\n' "$1" >> "$tmpdir/calls"; return "$companion_rc"; }
 	rc=0
 	output=$(cmd_wizard 2>&1) || rc=$?
 	assert_equal "$rc" "$expected_rc" || { printf '%s\n' "$output" >&2; return 1; }
@@ -502,10 +508,19 @@ for abort_at in preset name host port proto enabled silent want_uuid uuid __wcf_
 		test_wizard_exit "$abort_at" 0
 done
 run_test 'wizard successful confirmation still adds a feeder' test_wizard_exit none 0
+run_test 'protocol validator accepts supported token syntax' wiz_v_protocol beast_reduce_plus_out
+test_invalid_protocols() (
+	for protocol in '' 'beast out' 'beast*' 'beast?' 'beast,out'; do
+		! wiz_v_protocol "$protocol" || return 1
+	done
+)
+run_test 'protocol validator rejects whitespace, glob characters and delimiters' test_invalid_protocols
 run_test 'wizard mutation failure remains a failure' test_wizard_exit none 2 2
 run_test 'wizard still rejects invocation without a terminal' test_wizard_exit no-tty 1
 run_test 'ADSBx wizard offers optional stats only after a successful enabled feeder add' \
 	test_wizard_exit none 0 0 adsbexchange 1
+run_test 'optional companion failure does not turn a saved feeder into a failed add' \
+	test_wizard_exit none 0 0 adsbexchange 1 2
 run_test 'disabled ADSBx feeder does not offer uploader activation' \
 	test_wizard_exit none 0 0 adsbexchange 0
 run_test 'failed ADSBx feeder creation does not offer optional setup' \

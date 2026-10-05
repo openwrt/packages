@@ -189,6 +189,7 @@ readsb_wait_until() {
 	local label=$1 timeout=$2 interval=$3
 	shift 3
 	local elapsed=0 attempt=1 delay remaining
+	[ "$timeout" -ge 0 ] 2>/dev/null || timeout=0
 	[ "$interval" -ge 1 ] 2>/dev/null || interval=1
 	_log "waiting for $label (timeout=${timeout}s interval=${interval}s)"
 	while : ; do
@@ -409,14 +410,27 @@ readsb_pkg_uci_config() {
 	esac
 }
 
-# 0 if the named opkg package is installed (reads metadata directly).
+# 0 if the named package is installed.
 readsb_pkg_installed() {
+	[ -n "$1" ] || return 1
+	if command -v apk >/dev/null 2>&1; then
+		apk info -e "$1" >/dev/null 2>&1
+		return $?
+	fi
 	[ -n "$1" ] && [ -f "/usr/lib/opkg/info/$1.control" ]
 }
 
-# Read cached feed metadata only; discovery never performs an opkg update.
+# Read cached feed metadata only; discovery never updates the package index.
 readsb_pkg_available() {
 	local packages
+	if command -v apk >/dev/null 2>&1; then
+		packages=$(apk search -x -q "$1") || {
+			_warn "could not inspect configured feeds for optional package '$1'"
+			return 1
+		}
+		printf '%s\n' "$packages" | grep -Fqx -- "$1"
+		return $?
+	fi
 	command -v opkg >/dev/null 2>&1 || return 1
 	packages=$(opkg list "$1") || {
 		_warn "could not inspect configured feeds for optional package '$1'"
@@ -431,12 +445,31 @@ readsb_pkg_available() {
 # One init-script base name per line owned by <pkg>. rc 1 when none.
 readsb_pkg_init_scripts() {
 	local pkg=$1
+	[ -n "$pkg" ] || return 1
+	if command -v apk >/dev/null 2>&1; then
+		local files
+		files=$(apk info -L "$pkg") || return 1
+		printf '%s\n' "$files" | awk '
+			{ sub(/^\//, "") }
+			/^etc\/init\.d\/[^/]+$/ { sub(/^etc\/init\.d\//, ""); print; n++ }
+			END { exit !(n>0) }
+		'
+		return $?
+	fi
 	[ -n "$pkg" ] && [ -r "/usr/lib/opkg/info/$pkg.list" ] || return 1
 	awk -F/ '$2=="etc" && $3=="init.d" && $4!="" { print $4; n++ }
 		END { exit !(n>0) }' "/usr/lib/opkg/info/$pkg.list"
 }
 
-# Status token for an opkg package, optionally followed by an init script.
+readsb_pkg_install() {
+	if command -v apk >/dev/null 2>&1; then
+		apk add "$1"
+	else
+		opkg install "$1"
+	fi
+}
+
+# Status token for a package, optionally followed by an init script.
 #   running/disabled <init> (rc 0) | no-service (rc 0) | stopped <init> (rc 2) | missing (rc 1)
 readsb_pkg_status() {
 	local pkg=$1 init enabled
@@ -585,7 +618,7 @@ wiz_offer_install_companions() {
 		wiz_yesno ans "  enable these optional statistics uploads for '$feeder'?" N || return 1
 		[ "$ans" = 1 ] || continue
 		if ! readsb_pkg_installed "$pkg"; then
-			if ! opkg install "$pkg"; then
+			if ! readsb_pkg_install "$pkg"; then
 				_warn "optional package '$pkg' installation failed; feeder '$feeder' remains configured"
 				wiz_say "  installation failed; no uploader activation was attempted"
 				return 2
@@ -1303,6 +1336,9 @@ wiz_v_uci_name() {
 	esac
 }
 wiz_v_uuid() { readsb_is_uuid "$1"; }
+wiz_v_protocol() {
+	case $1 in ''|*[!A-Za-z0-9_+-]*) return 1 ;; esac
+}
 wiz_v_host() {
 	# Reject empty/whitespace; UCI doesn't validate DNS so anything else passes.
 	case $1 in

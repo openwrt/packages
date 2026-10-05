@@ -598,11 +598,10 @@ _parse_kv() {
 				return 1
 			fi ;;
 		protocol)
-			case $val in
-				''|*[!A-Za-z0-9_+-]*)
-					echo "readsb-feeder: invalid protocol '$val'" >&2
-					return 1 ;;
-			esac ;;
+			if ! wiz_v_protocol "$val"; then
+				echo "readsb-feeder: invalid protocol '$val'" >&2
+				return 1
+			fi ;;
 		enabled|silent_fail)
 			case $val in 0|1) ;; *)
 				echo "readsb-feeder: '$key' must be 0 or 1 (got '$val')" >&2
@@ -841,7 +840,8 @@ cmd_wizard() {
 			"host must be non-empty and contain no whitespace" || return 0
 		wiz_ask_validated port  "feed port" "30004" wiz_v_port \
 			"port must be a number 1..65535" || return 0
-		wiz_ask  proto "feed protocol" "beast_reduce_plus_out" || return 0
+		wiz_ask_validated proto "feed protocol" "beast_reduce_plus_out" wiz_v_protocol \
+			"protocol must use letters, digits, underscores, plus or minus" || return 0
 	fi
 
 	# 4. Third-party connection consent + retry behavior.
@@ -885,22 +885,21 @@ cmd_wizard() {
 	wiz_confirm "commit this feeder?" || { wiz_say "aborted; no feeder added"; return 0; }
 
 	# 7. delegate to cmd_add for the actual UCI work.
-	local extras
-	extras="enabled=$enabled silent_fail=$silent"
-	[ -n "$uuid" ] && extras="$extras uuid=$uuid"
+	set -- "enabled=$enabled" "silent_fail=$silent"
+	[ -z "$uuid" ] || set -- "$@" "uuid=$uuid"
 	if [ "$preset" = custom ]; then
-		extras="$extras host=$host port=$port protocol=$proto"
+		set -- "$@" "host=$host" "port=$port" "protocol=$proto"
 	fi
-	# shellcheck disable=SC2086
-	cmd_add "$name" "$preset" $extras || return $?
+	cmd_add "$name" "$preset" "$@" || return $?
 
 	# Optional uploads require their own consent after the feeder is saved.
 	if [ "$enabled" = 1 ] && [ "$preset" != custom ] \
 	   && [ -n "$(readsb_feeder_optional_pkgs "$preset")" ]; then
 		wiz_say ""
 		wiz_say "--- companion package follow-up -------------"
-		cmd_setup_companions "$name" || return $?
+		cmd_setup_companions "$name" || wiz_say "optional setup failed; feeder '$name' remains saved"
 	fi
+	return 0
 }
 
 # --- dispatch --------------------------------------------------------------

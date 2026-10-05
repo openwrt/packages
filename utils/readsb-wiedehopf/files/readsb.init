@@ -332,6 +332,7 @@ read_usb_wait_opts() {
 no_usb_reconciled=0
 reconcile_no_usb_section() {
 	local cfg=$1 hp dt dev no autopin
+	[ "${start_failed:-0}" = 0 ] || return 1
 	config_get_bool hp "$cfg" hotplug 1
 	[ "$hp" = "1" ] || return 0
 	config_get dt  "$cfg" device_type
@@ -339,20 +340,17 @@ reconcile_no_usb_section() {
 	config_get no  "$cfg" net_only 0
 	config_get autopin "$cfg" device_auto
 
-	local changed=0
-	[ -n "$dt" ]    && { uci set "readsb.${cfg}.device_type="; changed=1; }
-	[ -n "$dev" ]   && { uci set "readsb.${cfg}.device=";      changed=1; }
-	[ "$no" = "1" ] || { uci set "readsb.${cfg}.net_only=1";   changed=1; }
-	if [ -n "$autopin" ]; then
-		uci set "readsb.${cfg}.device_auto=" || {
-			_err "no USB SDR: failed to clear automatic device pin for '$cfg'"
+	set --
+	[ -z "$dt" ] || set -- "$@" "${cfg}.device_type="
+	[ -z "$dev" ] || set -- "$@" "${cfg}.device="
+	[ "$no" = "1" ] || set -- "$@" "${cfg}.net_only=1"
+	[ -z "$autopin" ] || set -- "$@" "${cfg}.device_auto="
+	if [ "$#" -gt 0 ]; then
+		readsb_uci_apply "$@" || {
+			_err "no USB SDR: failed to reconcile '$cfg'; configuration unchanged"
 			start_failed=1
 			return 1
 		}
-		changed=1
-	fi
-
-	if [ "$changed" = "1" ]; then
 		no_usb_reconciled=1
 		_notice "no USB SDR; reconciled '$cfg' to net-only (was device_type='${dt}' device='${dev}' net_only='${no}')"
 	fi
@@ -361,9 +359,8 @@ reconcile_no_usb_section() {
 reconcile_for_no_usb() {
 	no_usb_reconciled=0
 	config_foreach reconcile_no_usb_section readsb
+	[ "${start_failed:-0}" = 0 ] || return 1
 	if [ "$no_usb_reconciled" = "1" ]; then
-		# Reconcile is idempotent; the next start_service finds nothing to change.
-		uci commit readsb
 		config_load readsb
 	fi
 }
@@ -425,7 +422,7 @@ start_service() {
 	seed_hotplug_state
 	config_load readsb
 	if [ "$hotplug_enabled_any" = "1" ] && ! readsb_is_sdr_present; then
-		reconcile_for_no_usb
+		reconcile_for_no_usb || return 1
 	fi
 
 	if [ -x /usr/sbin/readsb-geoip ]; then

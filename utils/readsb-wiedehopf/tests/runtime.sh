@@ -260,6 +260,10 @@ test_wait_budget() (
 	readsb_wait_until receiver "$poll_timeout" "$poll_interval" probe || rc=$?
 	assert_equal "$rc" "$expected_rc" || return 1
 	assert_equal "$(cat "$tmpdir/commands")" "$expected_delays" || return 1
+	if [ "$poll_timeout" -lt 0 ]; then
+		grep -q 'timeout=0s' "$tmpdir/messages" || return 1
+		! grep -q 'within -' "$tmpdir/messages" || return 1
+	fi
 	total=$(awk '{ n += $1 } END { print n+0 }' "$tmpdir/commands")
 	[ "$poll_timeout" -lt 0 ] || [ "$total" -le "$poll_timeout" ]
 )
@@ -576,8 +580,20 @@ test_remove_pin() (
 )
 test_reconcile_pin() (
 	reset_config 'readsb.main.device=1090' 'readsb.main.device_auto=1090'
+	start_failed=0
 	reconcile_no_usb_section main
 	assert_config device '' && assert_config device_auto ''
+)
+test_reconcile_failure() (
+	reset_config 'readsb.main.device=1090' 'readsb.main.device_auto=1090'
+	original=$(cat "$tmpdir/config")
+	start_failed=0
+	fail_set=$1 fail_commit=${2:-0} pending_changes=${3:-}
+	rc=0
+	reconcile_no_usb_section main || rc=$?
+	assert_equal "$rc" 1 && assert_equal "$start_failed" 1 || return 1
+	assert_equal "$(cat "$tmpdir/config")" "$original" || return 1
+	! grep -q '^notice:' "$tmpdir/messages"
 )
 test_pin_write_error() (
 	reset_config
@@ -625,6 +641,12 @@ run_test 'removing selected SDR clears its marker' test_remove_pin 1090 978 ''
 run_test 'removing unrelated SDR preserves the pin' test_remove_pin 978 1090 1090
 run_test 'removing the last SDR clears its marker' test_remove_pin 1090 '' ''
 run_test 'boot reconciliation clears stale auto-pin metadata' test_reconcile_pin
+for option in device_type device device_auto net_only; do
+	run_test "reconciliation $option write failure leaves shared settings unchanged" \
+		test_reconcile_failure "readsb.main.$option"
+done
+run_test 'reconciliation commit failure preserves original configuration' test_reconcile_failure '' 1
+run_test 'reconciliation refuses pending operator changes' test_reconcile_failure '' 0 'readsb.main.lat=51.5'
 run_test 'failed auto-pin metadata write reports an error and does not commit' test_pin_write_error
 for option in device_type device device_auto net_only; do
 	run_test "hotplug $option write failure leaves all shared settings unchanged" \

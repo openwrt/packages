@@ -590,9 +590,12 @@ anything. A disabled feeder never triggers an upload offer.
 
 If the package is neither installed nor available in cached feed
 metadata, it is not offered. Update package lists explicitly when
-needed; discovery does not perform an automatic `opkg update`.
+needed; discovery does not perform an automatic package-index update.
+Companion discovery and installation support both APK-based images
+(`apk add`) and opkg-based images (`opkg install`).
 Ordinary feeding remains usable without the package, and a failed
-optional installation or activation does not undo the saved feeder.
+optional installation or activation does not undo the saved feeder or
+cause its successful creation to be reported as a failed add.
 
 ### `silent_fail` semantics
 

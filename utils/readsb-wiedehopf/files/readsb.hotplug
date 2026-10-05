@@ -177,7 +177,7 @@ remove)
 		}; then
 			pin_device "" || exit 1
 			set_net_only 1 || exit 1
-			msg="RTL-SDR ($vid:$pid serial=$event_serial) removed; cleared device pin, net-only until reselection ($sdr_count remaining)"
+			msg="RTL-SDR ($vid:$pid serial=${event_serial:-none}) removed; cleared device pin, net-only until reselection ($sdr_count remaining)"
 		else
 			exit 0
 		fi

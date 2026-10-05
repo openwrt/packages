@@ -42,6 +42,31 @@ run_test 'unavailable uninstalled companion is not recommended' test_discovery 0
 run_test 'companion in configured feeds is discoverable without installation' test_discovery 0 1 adsbexchange-stats
 run_test 'installed companion remains discoverable without feed metadata' test_discovery 1 0 adsbexchange-stats
 
+test_apk_metadata() (
+	: > "$tmpdir/calls"
+	apk() {
+		printf '%s\n' "$*" >> "$tmpdir/calls"
+		case $* in
+			'info -e adsbexchange-stats') return 0 ;;
+			'info -e missing') return 1 ;;
+			'search -x -q adsbexchange-stats') echo adsbexchange-stats ;;
+			'search -x -q missing') echo missing-other ;;
+			'info -L adsbexchange-stats') printf '%s\n' 'adsbexchange-stats owns:' 'etc/init.d/adsbexchange-stats' '/etc/config/adsbexchange-stats' ;;
+			'add adsbexchange-stats') return 0 ;;
+			*) return 99 ;;
+		esac
+	}
+	readsb_pkg_installed adsbexchange-stats || return 1
+	! readsb_pkg_installed missing || return 1
+	readsb_pkg_available adsbexchange-stats || return 1
+	! readsb_pkg_available missing || return 1
+	assert_equal "$(readsb_pkg_init_scripts adsbexchange-stats)" adsbexchange-stats || return 1
+	! grep -q '^add ' "$tmpdir/calls" || return 1
+	readsb_pkg_install adsbexchange-stats || return 1
+	assert_equal "$(tail -n 1 "$tmpdir/calls")" 'add adsbexchange-stats'
+)
+run_test 'APK metadata discovery is exact and read-only; installation uses apk add' test_apk_metadata
+
 test_opt_in() (
 	installed=$1 available=$2 consent=$3 install_rc=$4 activate_rc=$5 expected_rc=$6 expected_actions=$7
 	current_feeder=${8:-}
@@ -150,6 +175,7 @@ test_setup_command() (
 	readsb_feeder_optional_pkgs() {
 		[ "$available" = 0 ] || echo adsbexchange-stats
 	}
+	# shellcheck disable=SC2329
 	wiz_offer_install_companions() {
 		printf 'offer %s\n' "$*" >> "$tmpdir/calls"
 		return "$offer_rc"
