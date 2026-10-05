@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua
 PKG_VERSION:=5.4.7
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.lua.org/ftp/ \
@@ -147,6 +147,11 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/liblua5.4.{a,so*} $(1)/usr/lib/
 	$(LN) liblua5.4.so.0.0.0 $(1)/usr/lib/liblualib5.4.so
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	$(CP) ./files/lua5.4.pc.in $(1)/usr/lib/pkgconfig/lua5.4.pc
+	$(SED) 's,@VERSION@,$(PKG_VERSION),' $(1)/usr/lib/pkgconfig/lua5.4.pc
+	$(LN) lua5.4.pc $(1)/usr/lib/pkgconfig/lua-5.4.pc
+	$(LN) lua5.4.pc $(1)/usr/lib/pkgconfig/lua54.pc
 endef
 
 define Package/liblua5.4/install
