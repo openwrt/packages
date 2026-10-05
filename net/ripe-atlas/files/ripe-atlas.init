@@ -154,7 +154,6 @@ start_instance()
 	fi
 	# OpenSSH refuses a private key that others can read.
 	chmod 0600 "${key}"
-	chown ${MAINU}:${GROUP} "${key}" "${key}.pub"
 	rm -f /etc/ripe-atlas/reg_servers.sh "${cfg}" "${mod}"
 	cp /usr/lib/ripe-atlas/scripts/reg_servers.sh.${mode} \
 		/etc/ripe-atlas/reg_servers.sh || return 1
@@ -167,14 +166,21 @@ start_instance()
 
 	procd_open_instance
 	procd_set_param command /usr/sbin/ripe-atlas
-	procd_set_param user ${MAINU}
 	procd_set_param group ${GROUP}
 	procd_set_param stdout ${log_stdout}
 	procd_set_param stderr ${log_stderr}
 	procd_set_param respawn
-	if [ -x /sbin/ujail ]; then
+	if [ -x /sbin/ujail ] && user_exists ${MAINU}; then
+		chown ${MAINU}:${GROUP} "${key}" "${key}.pub"
+		procd_set_param user ${MAINU}
 		procd_add_jail ripe-atlas
 		procd_append_param capabilities /usr/share/ripe-atlas/capabilities.json
+	else
+		# procd grants capabilities only through ujail, and without
+		# CAP_NET_RAW ping and traceroute fail. Run as root, like
+		# atlas-sw-probe did; the group still tags the probe processes.
+		logger -t ripe-atlas -p daemon.warn \
+			"ujail or user ${MAINU} missing, running the probe as root"
 	fi
 	procd_close_instance
 

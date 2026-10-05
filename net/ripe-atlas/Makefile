@@ -54,8 +54,10 @@ define Package/ripe-atlas/Default/postinst
 exit 0
 endef
 
-# The measurement applets need raw sockets; ujail hands them CAP_NET_RAW from
-# capabilities.json, so the probe does not have to run as root.
+# The measurement applets need raw sockets. With procd-ujail installed the
+# probe runs as ripe-atlas and ujail hands it CAP_NET_RAW from
+# capabilities.json; without ujail the init falls back to root, as
+# atlas-sw-probe always ran, because procd grants capabilities only via ujail.
 CONFIGURE_ARGS+= \
 	--with-user=ripe-atlas \
 	--with-group=ripe-atlas \
