@@ -38,6 +38,14 @@ function daemon_status() {
 	return r ?? null;
 }
 
+// Same test as the daemon's, so LuCI reports the policy the daemon skips.
+function tproxy_available() {
+	let rel = trim(readfile('/proc/sys/kernel/osrelease') ?? '');
+
+	return !!(access('/sys/module/nft_tproxy') ||
+		(length(rel) && access(`/lib/modules/${rel}/nft_tproxy.ko`)));
+}
+
 // The same sequence as the daemon's build_state(), minus the logging: two
 // readings of one config file are how a status view starts to lie.
 function render() {
@@ -68,14 +76,6 @@ function render() {
 	let r = route_compile(cfg.policies, n.marks);
 
 	return { cfg, files: f, matcher: m, nft: n, route: r };
-}
-
-// Same test as the daemon's, so LuCI reports the policy the daemon skips.
-function tproxy_available() {
-	let rel = trim(readfile('/proc/sys/kernel/osrelease') ?? '');
-
-	return !!(access('/sys/module/nft_tproxy') ||
-		(length(rel) && access(`/lib/modules/${rel}/nft_tproxy.ko`)));
 }
 
 // Policy devices whose marked traffic the kernel would drop: max(all, <dev>),
