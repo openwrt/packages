@@ -19,32 +19,21 @@ the upstream submission itself goes through the prpl Foundation Jira.
 
 Signed-off-by: Andrei Ovcharenko <a@krot.name>
 ---
- CMakeLists.txt                                |  1 +
- agent/src/beerocks/slave/CMakeLists.txt       |  3 +-
- .../beerocks/slave/beerocks_agent_main.cpp    | 14 +++
- .../include/bcl/beerocks_ucc_server_factory.h |  1 +
- common/beerocks/bwl/shared/nl80211_socket.h   |  2 +
- controller/config/CMakeLists.txt              |  2 +-
- .../beerocks/master/beerocks_master_main.cpp  | 31 ++++++
- framework/platform/bpl/CMakeLists.txt         | 61 +++++++-----
- .../bpl/cfg/linux/bpl_cfg_ifaces.cpp.in       |  1 +
- framework/platform/bpl/cfg/uci/bpl.cpp        |  1 +
- framework/platform/bpl/cfg/uci/bpl_cfg.cpp    | 96 ++++++++++++++++++-
- .../platform/bpl/cfg/uci/bpl_cfg_helper.cpp   | 47 +++++++++
- .../platform/bpl/cfg/uci/bpl_cfg_helper.h     | 10 ++
- .../platform/bpl/cfg/uci/bpl_cfg_uci.cpp      | 18 ++++
- 14 files changed, 261 insertions(+), 27 deletions(-)
 
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 9eb902a..68aa24f 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -66,6 +66,7 @@ option (ENABLE_NBAPI "Build the northbou
+@@ -74,6 +74,7 @@ option (ENABLE_NBAPI "Build the northbound (high-level) API" ON)
  option (ENABLE_VBSS "Build with Virtual BSS support" ON)
  
  option(USE_PRPLMESH_WHM "Use prplMesh Wireless Hardware Manager" ON)
 +option(PRPLMESH_STOCK_OPENWRT_UCI "Build against stock OpenWrt UCI/ubus without Ambiorix or WHM" OFF)
  
- ## Generic checks and defaults
- 
+ option (ENABLE_BEEROCKS_CLI "Build beerocks CLI" ON)
+ option (ENABLE_PRPLMESH_CLI "Build prplMesh CLI" ON)
+diff --git a/agent/src/beerocks/slave/CMakeLists.txt b/agent/src/beerocks/slave/CMakeLists.txt
+index 05c27d4..0efae1a 100755
 --- a/agent/src/beerocks/slave/CMakeLists.txt
 +++ b/agent/src/beerocks/slave/CMakeLists.txt
 @@ -15,11 +15,12 @@ file(GLOB beerocks_agent_sources
@@ -61,9 +50,11 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
      add_subdirectory("nbapi")
  endif()
  
+diff --git a/agent/src/beerocks/slave/beerocks_agent_main.cpp b/agent/src/beerocks/slave/beerocks_agent_main.cpp
+index 18ad393..6306f23 100644
 --- a/agent/src/beerocks/slave/beerocks_agent_main.cpp
 +++ b/agent/src/beerocks/slave/beerocks_agent_main.cpp
-@@ -632,6 +632,20 @@ int main(int argc, char *argv[])
+@@ -729,6 +729,20 @@ int main(int argc, char *argv[])
              return 1;
          }
      }
@@ -84,6 +75,8 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
      // beerocks system hang tester
      if (beerocks_slave_conf.enable_system_hang_test == "1") {
  
+diff --git a/common/beerocks/bcl/include/bcl/beerocks_ucc_server_factory.h b/common/beerocks/bcl/include/bcl/beerocks_ucc_server_factory.h
+index ffdc14d..b03c894 100644
 --- a/common/beerocks/bcl/include/bcl/beerocks_ucc_server_factory.h
 +++ b/common/beerocks/bcl/include/bcl/beerocks_ucc_server_factory.h
 @@ -12,6 +12,7 @@
@@ -94,6 +87,8 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
  #include <memory>
  
  namespace beerocks {
+diff --git a/common/beerocks/bwl/shared/nl80211_socket.h b/common/beerocks/bwl/shared/nl80211_socket.h
+index 916b942..29aba9f 100644
 --- a/common/beerocks/bwl/shared/nl80211_socket.h
 +++ b/common/beerocks/bwl/shared/nl80211_socket.h
 @@ -21,6 +21,8 @@ namespace bwl {
@@ -105,6 +100,8 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
      /**
       * @brief Class destructor.
       */
+diff --git a/controller/config/CMakeLists.txt b/controller/config/CMakeLists.txt
+index 1b13361..6463988 100644
 --- a/controller/config/CMakeLists.txt
 +++ b/controller/config/CMakeLists.txt
 @@ -1,5 +1,5 @@
@@ -114,9 +111,11 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
          set(BEEROCKS_CONTROLLER_DATAELEMENTS_VAP_CONFIGS 1)
  endif()
  
+diff --git a/controller/src/beerocks/master/beerocks_master_main.cpp b/controller/src/beerocks/master/beerocks_master_main.cpp
+index defd36b..72e504c 100644
 --- a/controller/src/beerocks/master/beerocks_master_main.cpp
 +++ b/controller/src/beerocks/master/beerocks_master_main.cpp
-@@ -672,6 +672,18 @@ int main(int argc, char *argv[])
+@@ -675,6 +675,18 @@ int main(int argc, char *argv[])
          }
      }
  
@@ -135,7 +134,7 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
      std::string base_master_name = std::string(BEEROCKS_CONTROLLER);
  
      //kill running master
-@@ -820,6 +832,25 @@ int main(int argc, char *argv[])
+@@ -853,6 +865,25 @@ int main(int argc, char *argv[])
          beerocks::btl::create_broker_client_factory(broker_uds_path, event_loop);
      LOG_IF(!broker_client_factory, FATAL) << "Unable to create broker client factory!";
  
@@ -161,9 +160,11 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
      son::Controller controller(master_db, std::move(broker_client_factory), std::move(ucc_server),
                                 std::move(cmdu_server), timer_manager, event_loop);
  
+diff --git a/framework/platform/bpl/CMakeLists.txt b/framework/platform/bpl/CMakeLists.txt
+index 813d4a8..d60d280 100644
 --- a/framework/platform/bpl/CMakeLists.txt
 +++ b/framework/platform/bpl/CMakeLists.txt
-@@ -87,19 +87,32 @@ if (TARGET_PLATFORM STREQUAL "openwrt")
+@@ -88,19 +88,32 @@ if (TARGET_PLATFORM STREQUAL "openwrt")
          add_definitions(-DHAVE_C99)
          set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
  
@@ -207,7 +208,7 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
  
          find_package(ubus REQUIRED)
  
-@@ -159,11 +172,13 @@ else()
+@@ -160,11 +173,13 @@ else()
  
  endif()
  
@@ -226,7 +227,7 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
  
  # BPL pwhm DM via wbapi
  if (USE_PRPLMESH_WHM)
-@@ -185,7 +200,7 @@ if (USE_PRPLMESH_WHM)
+@@ -209,7 +224,7 @@ if (USE_PRPLMESH_WHM)
      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WBAPI_SOCK}")
  
      list(APPEND BPL_LIBS wbapi)
@@ -235,25 +236,8 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
      file(GLOB_RECURSE bpl_platform_sources
          ${MODULE_PATH}/*/linux/*.c*
  	    ${MODULE_PATH}/service_prioritization/dummy/service_prio_utils_dummy.c*
-@@ -194,11 +209,13 @@ else ()
- endif()
- 
- # BPL configuration via nbapi
--list(FIND bpl_platform_sources ${MODULE_PATH}/cfg/dm/bpl_amx.cpp _index)
--message("bpl_platform_sources: ${bpl_platform_sources}")
--if (_index EQUAL -1)
--    message("APPEND bpl_platform_sources with ${MODULE_PATH}/cfg/dm/bpl_amx.cpp")
--    list(APPEND bpl_platform_sources ${MODULE_PATH}/cfg/dm/bpl_amx.cpp)
-+if (NOT PRPLMESH_STOCK_OPENWRT_UCI)
-+    list(FIND bpl_platform_sources ${MODULE_PATH}/cfg/dm/bpl_amx.cpp _index)
-+    message("bpl_platform_sources: ${bpl_platform_sources}")
-+    if (_index EQUAL -1)
-+        message("APPEND bpl_platform_sources with ${MODULE_PATH}/cfg/dm/bpl_amx.cpp")
-+        list(APPEND bpl_platform_sources ${MODULE_PATH}/cfg/dm/bpl_amx.cpp)
-+    endif()
- endif()
- list(APPEND BPL_LIBS nbapi)
- 
+diff --git a/framework/platform/bpl/cfg/linux/bpl_cfg_ifaces.cpp.in b/framework/platform/bpl/cfg/linux/bpl_cfg_ifaces.cpp.in
+index 8e41f58..4f0b0b2 100644
 --- a/framework/platform/bpl/cfg/linux/bpl_cfg_ifaces.cpp.in
 +++ b/framework/platform/bpl/cfg/linux/bpl_cfg_ifaces.cpp.in
 @@ -6,6 +6,7 @@
@@ -264,16 +248,8 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
   #include <string>
  
  namespace beerocks {
---- a/framework/platform/bpl/cfg/uci/bpl.cpp
-+++ b/framework/platform/bpl/cfg/uci/bpl.cpp
-@@ -7,6 +7,7 @@
-  */
- 
- #include <bpl/bpl.h>
-+#include <bpl/bpl_amx.h>
- 
- #include <mapf/common/logger.h>
- 
+diff --git a/framework/platform/bpl/cfg/uci/bpl_cfg.cpp b/framework/platform/bpl/cfg/uci/bpl_cfg.cpp
+index ca17397..c7951e6 100644
 --- a/framework/platform/bpl/cfg/uci/bpl_cfg.cpp
 +++ b/framework/platform/bpl/cfg/uci/bpl_cfg.cpp
 @@ -16,14 +16,41 @@
@@ -315,10 +291,10 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
 +    return true;
 +}
 +
- int cfg_get_hostap_iface_steer_vaps(int32_t radio_num,
-                                     char hostap_iface_steer_vaps[BPL_LOAD_STEER_ON_VAPS_LEN])
+ bool bpl_cfg_get_agent_mac(std::string &agent_mac)
  {
-@@ -152,8 +179,8 @@ int cfg_get_dcs_channel_pool(const BPL_W
+     agent_mac = DEFAULT_AGENT_MAC;
+@@ -174,8 +201,8 @@ int cfg_get_dcs_channel_pool(const BPL_WLAN_IFACE &iface,
          return RETURN_ERR;
      }
  
@@ -329,7 +305,7 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
          return RETURN_ERR;
      }
  
-@@ -1102,8 +1129,12 @@ bool cfg_get_clients_unicast_measurement
+@@ -1108,8 +1135,12 @@ bool get_controller_heartbeat_state_timeout_seconds(std::chrono::seconds &timeou
  
  bool cfg_get_private_bridge_iface(std::string &bridge_iface)
  {
@@ -343,7 +319,7 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
  }
  
  bool cfg_get_guest_bridge_iface(std::string &bridge_iface)
-@@ -1132,5 +1163,64 @@ bool cfg_get_traffic_separation_guest_vi
+@@ -1138,5 +1169,64 @@ bool cfg_get_traffic_separation_guest_vid(int &guest_vid)
  
  bool cfg_commit_changes() { return uci_commit_changes("prplmesh"); }
  
@@ -408,6 +384,8 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
 +
  } // namespace bpl
  } // namespace beerocks
+diff --git a/framework/platform/bpl/cfg/uci/bpl_cfg_helper.cpp b/framework/platform/bpl/cfg/uci/bpl_cfg_helper.cpp
+index 493a4ed..fc136e4 100644
 --- a/framework/platform/bpl/cfg/uci/bpl_cfg_helper.cpp
 +++ b/framework/platform/bpl/cfg/uci/bpl_cfg_helper.cpp
 @@ -11,6 +11,7 @@
@@ -418,7 +396,7 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
  
  #include <mapf/common/logger.h>
  #include <mapf/common/utils.h>
-@@ -38,6 +39,52 @@ int cfg_get_prplmesh_hostapd_ifaces(std:
+@@ -38,6 +39,52 @@ int cfg_get_prplmesh_hostapd_ifaces(std::unordered_map<std::string, std::string>
                                                     (char *)"hostap_iface", hostapd_ifaces);
  }
  
@@ -471,12 +449,15 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
  int cfg_get_prplmesh_radio_param(int radio_id, const std::string &radio_param, char *buf,
                                   size_t buf_len)
  {
+diff --git a/framework/platform/bpl/cfg/uci/bpl_cfg_helper.h b/framework/platform/bpl/cfg/uci/bpl_cfg_helper.h
+index 8d30352..dd4338b 100644
 --- a/framework/platform/bpl/cfg/uci/bpl_cfg_helper.h
 +++ b/framework/platform/bpl/cfg/uci/bpl_cfg_helper.h
-@@ -26,6 +26,16 @@ namespace bpl {
+@@ -25,6 +25,16 @@ namespace bpl {
+  **/
  int cfg_get_prplmesh_hostapd_ifaces(std::unordered_map<std::string, std::string> &hostapd_ifaces);
  
- /**
++/**
 + * Resolve a runtime hostapd interface to its stock OpenWrt wifi-iface section.
 + *
 + * Modern OpenWrt normally omits the legacy wireless.*.ifname option. In that
@@ -486,10 +467,11 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
 + */
 +bool cfg_get_prplmesh_wireless_section(const std::string &iface, std::string &section_name);
 +
-+/**
+ /**
   * Returns the value of requested param from DB
   *
-  * @param [in] param prplmesh param key string
+diff --git a/framework/platform/bpl/cfg/uci/bpl_cfg_uci.cpp b/framework/platform/bpl/cfg/uci/bpl_cfg_uci.cpp
+index 27f2ac6..59dca31 100644
 --- a/framework/platform/bpl/cfg/uci/bpl_cfg_uci.cpp
 +++ b/framework/platform/bpl/cfg/uci/bpl_cfg_uci.cpp
 @@ -8,6 +8,7 @@
@@ -500,7 +482,7 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
  #include <easylogging++.h>
  #include <mapf/common/utils.h>
  
-@@ -130,6 +131,23 @@ int cfg_uci_get_wireless_from_ifname(enu
+@@ -130,6 +131,23 @@ int cfg_uci_get_wireless_from_ifname(enum paramType type, const char *interface_
          }
      }
  

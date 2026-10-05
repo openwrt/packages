@@ -30,7 +30,7 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
 
 --- a/controller/src/beerocks/master/db/db.cpp
 +++ b/controller/src/beerocks/master/db/db.cpp
-@@ -6998,9 +6998,17 @@ bool db::handle_current_op_class(const s
+@@ -7129,9 +7129,17 @@ bool db::handle_current_op_class(const s
          return false;
      }
  

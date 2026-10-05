@@ -24,7 +24,7 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
 
 --- a/controller/src/beerocks/master/db/db.cpp
 +++ b/controller/src/beerocks/master/db/db.cpp
-@@ -7087,6 +7087,10 @@ bool db::dm_clear_empty_current_op_class
+@@ -7218,6 +7218,10 @@ bool db::dm_clear_empty_current_op_class
          return false;
      }
  
