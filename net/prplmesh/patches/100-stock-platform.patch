@@ -20,11 +20,9 @@ the upstream submission itself goes through the prpl Foundation Jira.
 Signed-off-by: Andrei Ovcharenko <a@krot.name>
 ---
 
-diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 9eb902a..68aa24f 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -74,6 +74,7 @@ option (ENABLE_NBAPI "Build the northbound (high-level) API" ON)
+@@ -74,6 +74,7 @@ option (ENABLE_NBAPI "Build the northbou
  option (ENABLE_VBSS "Build with Virtual BSS support" ON)
  
  option(USE_PRPLMESH_WHM "Use prplMesh Wireless Hardware Manager" ON)
@@ -32,8 +30,6 @@ index 9eb902a..68aa24f 100644
  
  option (ENABLE_BEEROCKS_CLI "Build beerocks CLI" ON)
  option (ENABLE_PRPLMESH_CLI "Build prplMesh CLI" ON)
-diff --git a/agent/src/beerocks/slave/CMakeLists.txt b/agent/src/beerocks/slave/CMakeLists.txt
-index 05c27d4..0efae1a 100755
 --- a/agent/src/beerocks/slave/CMakeLists.txt
 +++ b/agent/src/beerocks/slave/CMakeLists.txt
 @@ -15,11 +15,12 @@ file(GLOB beerocks_agent_sources
@@ -50,8 +46,6 @@ index 05c27d4..0efae1a 100755
      add_subdirectory("nbapi")
  endif()
  
-diff --git a/agent/src/beerocks/slave/beerocks_agent_main.cpp b/agent/src/beerocks/slave/beerocks_agent_main.cpp
-index 18ad393..6306f23 100644
 --- a/agent/src/beerocks/slave/beerocks_agent_main.cpp
 +++ b/agent/src/beerocks/slave/beerocks_agent_main.cpp
 @@ -729,6 +729,20 @@ int main(int argc, char *argv[])
@@ -75,8 +69,6 @@ index 18ad393..6306f23 100644
      // beerocks system hang tester
      if (beerocks_slave_conf.enable_system_hang_test == "1") {
  
-diff --git a/common/beerocks/bcl/include/bcl/beerocks_ucc_server_factory.h b/common/beerocks/bcl/include/bcl/beerocks_ucc_server_factory.h
-index ffdc14d..b03c894 100644
 --- a/common/beerocks/bcl/include/bcl/beerocks_ucc_server_factory.h
 +++ b/common/beerocks/bcl/include/bcl/beerocks_ucc_server_factory.h
 @@ -12,6 +12,7 @@
@@ -87,8 +79,6 @@ index ffdc14d..b03c894 100644
  #include <memory>
  
  namespace beerocks {
-diff --git a/common/beerocks/bwl/shared/nl80211_socket.h b/common/beerocks/bwl/shared/nl80211_socket.h
-index 916b942..29aba9f 100644
 --- a/common/beerocks/bwl/shared/nl80211_socket.h
 +++ b/common/beerocks/bwl/shared/nl80211_socket.h
 @@ -21,6 +21,8 @@ namespace bwl {
@@ -100,8 +90,6 @@ index 916b942..29aba9f 100644
      /**
       * @brief Class destructor.
       */
-diff --git a/controller/config/CMakeLists.txt b/controller/config/CMakeLists.txt
-index 1b13361..6463988 100644
 --- a/controller/config/CMakeLists.txt
 +++ b/controller/config/CMakeLists.txt
 @@ -1,5 +1,5 @@
@@ -111,8 +99,6 @@ index 1b13361..6463988 100644
          set(BEEROCKS_CONTROLLER_DATAELEMENTS_VAP_CONFIGS 1)
  endif()
  
-diff --git a/controller/src/beerocks/master/beerocks_master_main.cpp b/controller/src/beerocks/master/beerocks_master_main.cpp
-index defd36b..72e504c 100644
 --- a/controller/src/beerocks/master/beerocks_master_main.cpp
 +++ b/controller/src/beerocks/master/beerocks_master_main.cpp
 @@ -675,6 +675,18 @@ int main(int argc, char *argv[])
@@ -160,8 +146,6 @@ index defd36b..72e504c 100644
      son::Controller controller(master_db, std::move(broker_client_factory), std::move(ucc_server),
                                 std::move(cmdu_server), timer_manager, event_loop);
  
-diff --git a/framework/platform/bpl/CMakeLists.txt b/framework/platform/bpl/CMakeLists.txt
-index 813d4a8..d60d280 100644
 --- a/framework/platform/bpl/CMakeLists.txt
 +++ b/framework/platform/bpl/CMakeLists.txt
 @@ -88,19 +88,32 @@ if (TARGET_PLATFORM STREQUAL "openwrt")
@@ -236,8 +220,6 @@ index 813d4a8..d60d280 100644
      file(GLOB_RECURSE bpl_platform_sources
          ${MODULE_PATH}/*/linux/*.c*
  	    ${MODULE_PATH}/service_prioritization/dummy/service_prio_utils_dummy.c*
-diff --git a/framework/platform/bpl/cfg/linux/bpl_cfg_ifaces.cpp.in b/framework/platform/bpl/cfg/linux/bpl_cfg_ifaces.cpp.in
-index 8e41f58..4f0b0b2 100644
 --- a/framework/platform/bpl/cfg/linux/bpl_cfg_ifaces.cpp.in
 +++ b/framework/platform/bpl/cfg/linux/bpl_cfg_ifaces.cpp.in
 @@ -6,6 +6,7 @@
@@ -248,8 +230,6 @@ index 8e41f58..4f0b0b2 100644
   #include <string>
  
  namespace beerocks {
-diff --git a/framework/platform/bpl/cfg/uci/bpl_cfg.cpp b/framework/platform/bpl/cfg/uci/bpl_cfg.cpp
-index ca17397..c7951e6 100644
 --- a/framework/platform/bpl/cfg/uci/bpl_cfg.cpp
 +++ b/framework/platform/bpl/cfg/uci/bpl_cfg.cpp
 @@ -16,14 +16,41 @@
@@ -294,7 +274,7 @@ index ca17397..c7951e6 100644
  bool bpl_cfg_get_agent_mac(std::string &agent_mac)
  {
      agent_mac = DEFAULT_AGENT_MAC;
-@@ -174,8 +201,8 @@ int cfg_get_dcs_channel_pool(const BPL_WLAN_IFACE &iface,
+@@ -174,8 +201,8 @@ int cfg_get_dcs_channel_pool(const BPL_W
          return RETURN_ERR;
      }
  
@@ -305,7 +285,7 @@ index ca17397..c7951e6 100644
          return RETURN_ERR;
      }
  
-@@ -1108,8 +1135,12 @@ bool get_controller_heartbeat_state_timeout_seconds(std::chrono::seconds &timeou
+@@ -1108,8 +1135,12 @@ bool get_controller_heartbeat_state_time
  
  bool cfg_get_private_bridge_iface(std::string &bridge_iface)
  {
@@ -319,7 +299,7 @@ index ca17397..c7951e6 100644
  }
  
  bool cfg_get_guest_bridge_iface(std::string &bridge_iface)
-@@ -1138,5 +1169,64 @@ bool cfg_get_traffic_separation_guest_vid(int &guest_vid)
+@@ -1138,5 +1169,64 @@ bool cfg_get_traffic_separation_guest_vi
  
  bool cfg_commit_changes() { return uci_commit_changes("prplmesh"); }
  
@@ -384,8 +364,6 @@ index ca17397..c7951e6 100644
 +
  } // namespace bpl
  } // namespace beerocks
-diff --git a/framework/platform/bpl/cfg/uci/bpl_cfg_helper.cpp b/framework/platform/bpl/cfg/uci/bpl_cfg_helper.cpp
-index 493a4ed..fc136e4 100644
 --- a/framework/platform/bpl/cfg/uci/bpl_cfg_helper.cpp
 +++ b/framework/platform/bpl/cfg/uci/bpl_cfg_helper.cpp
 @@ -11,6 +11,7 @@
@@ -396,7 +374,7 @@ index 493a4ed..fc136e4 100644
  
  #include <mapf/common/logger.h>
  #include <mapf/common/utils.h>
-@@ -38,6 +39,52 @@ int cfg_get_prplmesh_hostapd_ifaces(std::unordered_map<std::string, std::string>
+@@ -38,6 +39,52 @@ int cfg_get_prplmesh_hostapd_ifaces(std:
                                                     (char *)"hostap_iface", hostapd_ifaces);
  }
  
@@ -449,15 +427,12 @@ index 493a4ed..fc136e4 100644
  int cfg_get_prplmesh_radio_param(int radio_id, const std::string &radio_param, char *buf,
                                   size_t buf_len)
  {
-diff --git a/framework/platform/bpl/cfg/uci/bpl_cfg_helper.h b/framework/platform/bpl/cfg/uci/bpl_cfg_helper.h
-index 8d30352..dd4338b 100644
 --- a/framework/platform/bpl/cfg/uci/bpl_cfg_helper.h
 +++ b/framework/platform/bpl/cfg/uci/bpl_cfg_helper.h
-@@ -25,6 +25,16 @@ namespace bpl {
-  **/
+@@ -26,6 +26,16 @@ namespace bpl {
  int cfg_get_prplmesh_hostapd_ifaces(std::unordered_map<std::string, std::string> &hostapd_ifaces);
  
-+/**
+ /**
 + * Resolve a runtime hostapd interface to its stock OpenWrt wifi-iface section.
 + *
 + * Modern OpenWrt normally omits the legacy wireless.*.ifname option. In that
@@ -467,11 +442,10 @@ index 8d30352..dd4338b 100644
 + */
 +bool cfg_get_prplmesh_wireless_section(const std::string &iface, std::string &section_name);
 +
- /**
++/**
   * Returns the value of requested param from DB
   *
-diff --git a/framework/platform/bpl/cfg/uci/bpl_cfg_uci.cpp b/framework/platform/bpl/cfg/uci/bpl_cfg_uci.cpp
-index 27f2ac6..59dca31 100644
+  * @param [in] param prplmesh param key string
 --- a/framework/platform/bpl/cfg/uci/bpl_cfg_uci.cpp
 +++ b/framework/platform/bpl/cfg/uci/bpl_cfg_uci.cpp
 @@ -8,6 +8,7 @@
@@ -482,7 +456,7 @@ index 27f2ac6..59dca31 100644
  #include <easylogging++.h>
  #include <mapf/common/utils.h>
  
-@@ -130,6 +131,23 @@ int cfg_uci_get_wireless_from_ifname(enum paramType type, const char *interface_
+@@ -130,6 +131,23 @@ int cfg_uci_get_wireless_from_ifname(enu
          }
      }
  
