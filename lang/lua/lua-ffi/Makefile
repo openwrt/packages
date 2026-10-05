@@ -54,30 +54,25 @@ Package/lua-ffi-lua5.4/description = $(Package/lua-ffi/default/description)
 
 ifeq ($(BUILD_VARIANT),lua51)
   CMAKE_OPTIONS += -DLUA_INCLUDE_DIR="$(STAGING_DIR)/usr/include"
+  LUA_INSTALL_DIR:=/usr/lib/lua
 endif
 
 ifeq ($(BUILD_VARIANT),lua53)
   CMAKE_OPTIONS += -DLUA_INCLUDE_DIR="$(STAGING_DIR)/usr/include/lua5.3"
+  LUA_INSTALL_DIR:=/usr/local/lib/lua/5.3
 endif
 
 ifeq ($(BUILD_VARIANT),lua54)
   CMAKE_OPTIONS += -DLUA_INCLUDE_DIR="$(STAGING_DIR)/usr/include/lua5.4"
+  LUA_INSTALL_DIR:=/usr/lib/lua/5.4
 endif
 
 define Package/lua-ffi/install
-	$(INSTALL_DIR) $(1)/usr/lib/lua
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ffi.so $(1)/usr/lib/lua
+	$(INSTALL_DIR) $(1)$(LUA_INSTALL_DIR)
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ffi.so $(1)$(LUA_INSTALL_DIR)
 endef
-
-define Package/lua-ffi-lua5.3/install
-	$(INSTALL_DIR) $(1)/usr/local/lib/lua/5.3
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ffi.so $(1)/usr/local/lib/lua/5.3
-endef
-
-define Package/lua-ffi-lua5.4/install
-	$(INSTALL_DIR) $(1)/usr/lib/lua/5.4
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ffi.so $(1)/usr/lib/lua/5.4
-endef
+Package/lua-ffi-lua5.3/install = $(Package/lua-ffi/install)
+Package/lua-ffi-lua5.4/install = $(Package/lua-ffi/install)
 
 $(eval $(call BuildPackage,lua-ffi))
 $(eval $(call BuildPackage,lua-ffi-lua5.3))
