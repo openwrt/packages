@@ -7,11 +7,21 @@ USE_PROCD=1
 
 start_service() {
 	[ -f /etc/syslog-ng.conf ] || return 1
+
+	local timezone
+	timezone="$(date +%z)" && timezone="${timezone%??}:${timezone#???}"
+
 	procd_open_instance
 	procd_set_param command /usr/sbin/syslog-ng --foreground
+	procd_set_param env "DEVICE_TZ=$timezone"
 	procd_close_instance
 }
 
+service_triggers() {
+	procd_add_reload_trigger "system"
+}
+
 reload_service() {
+	start
 	/usr/sbin/syslog-ng-ctl reload
 }
