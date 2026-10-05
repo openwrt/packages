@@ -9,11 +9,11 @@ GROUP=ripe-atlas
 validate_config()
 {
 	uci_load_validate 'ripe-atlas' 'ripe-atlas' "${1}" "${2}" \
-		'enabled:uinteger:1' \
-		'log_stderr:uinteger:0' \
-		'log_stdout:uinteger:0' \
+		'enabled:bool:1' \
+		'log_stderr:bool:0' \
+		'log_stdout:bool:0' \
 		'mode:string:prod' \
-		'rxtx_report:uinteger:0'
+		'rxtx_report:bool:0'
 }
 
 create_dir()
@@ -22,6 +22,7 @@ create_dir()
 	local group
 	local mode
 	local dir
+	local ret=0
 
 	user="${1}"
 	shift
@@ -32,18 +33,42 @@ create_dir()
 
 	while [ -n "${1}" ]; do
 		dir="${1}"
-		mkdir -p "${dir}"
-		chown ${user}:${group} "${dir}"
-		chmod ${mode} "${dir}"
+		# The probe user may have put a link in its place.
+		[ -L "${dir}" ] && rm -f "${dir}"
+		mkdir -p "${dir}" || ret=1
+		chown ${user}:${group} "${dir}" || ret=1
+		chmod ${mode} "${dir}" || ret=1
 		shift
 	done
+
+	return ${ret}
 }
 
 setup_environment()
 {
+	local stamp=/var/run/ripe-atlas/spool.done
+
+	create_dir root root 0755 /var/run/ripe-atlas
 	create_dir ${MEASU} ${GROUP} 0775 \
 		/var/run/ripe-atlas/pids \
 		/var/run/ripe-atlas/status
+
+	# Below a spool someone else made, links could be swapped in at any
+	# time.
+	mkdir -p /var/spool
+	if [ -n "$(find /var/spool /var/spool/ripe-atlas -maxdepth 0 \
+			! -user 0 2> /dev/null)" ]; then
+		logger -t ripe-atlas -p daemon.err \
+			'/var/spool/ripe-atlas was not made by root'
+		return 1
+	fi
+
+	# The probe user owns the spool directories and could swap in a link
+	# for root's chown and chmod to follow. Set them up only until that
+	# worked once since boot (/var is a tmpfs), so only while no probe
+	# runs.
+	[ -e "${stamp}" ] && [ -d /var/spool/ripe-atlas ] && return 0
+
 	create_dir ${MEASU} ${GROUP} 2775 \
 		/var/spool/ripe-atlas/crons \
 		/var/spool/ripe-atlas/crons/main \
@@ -71,24 +96,32 @@ setup_environment()
 		/var/spool/ripe-atlas/data/oneoff \
 		/var/spool/ripe-atlas/data/out \
 		/var/spool/ripe-atlas/data/out/ooq \
-		/var/spool/ripe-atlas/data/out/ooq10
+		/var/spool/ripe-atlas/data/out/ooq10 &&
+		rm -f "${stamp}" && : > "${stamp}"
+
+	return 0
 }
 
 start_instance()
 {
 	local cfg=/etc/ripe-atlas/config.txt
 	local mod=/etc/ripe-atlas/mode
+	local key=/etc/ripe-atlas/probe_key
 
 	if [ ${2} -ne 0 ]; then
 		echo 'validation failed'
 		return 1
 	fi
 
+	enabled="$(get_bool "${enabled}" 1)"
+	log_stderr="$(get_bool "${log_stderr}" 0)"
+	log_stdout="$(get_bool "${log_stdout}" 0)"
+	rxtx_report="$(get_bool "${rxtx_report}" 0)"
+
 	if [ ${enabled} -eq 0 ]; then
 		return 1
 	fi
 
-	rm -f /etc/ripe-atlas/reg_servers.sh
 	case "${mode}" in
 		test|dev|prod)
 			;;
@@ -97,8 +130,34 @@ start_instance()
 			;;
 	esac
 
+	# ripe-atlas-probe or -anchor brings the rest. apk installs it only after
+	# this package started the service, also over an older variant without
+	# this file.
+	[ -f /usr/share/ripe-atlas/variant ] || return 1
+
 	echo 'Starting RIPE Atlas'
-	setup_environment
+	umask 022
+	setup_environment || return 1
+
+	# /etc/ripe-atlas stays root's, so prepare what generic-ATLAS.sh would
+	# otherwise write there: the key, and the registration servers of the
+	# mode, which it copies only when they are missing.
+	if [ ! -s "${key}" ]; then
+		# ssh-keygen would ask before replacing an empty file.
+		rm -f "${key}" "${key}.pub"
+		if ! ssh-keygen -q -t rsa -P '' -C "$(uname -n)" -f "${key}" \
+				< /dev/null; then
+			logger -t ripe-atlas -p daemon.err "cannot create ${key}"
+			return 1
+		fi
+		logger -t ripe-atlas -p daemon.notice 'created a new probe key'
+	fi
+	# OpenSSH refuses a private key that others can read.
+	chmod 0600 "${key}"
+	chown ${MAINU}:${GROUP} "${key}" "${key}.pub"
+	rm -f /etc/ripe-atlas/reg_servers.sh "${cfg}" "${mod}"
+	cp /usr/lib/ripe-atlas/scripts/reg_servers.sh.${mode} \
+		/etc/ripe-atlas/reg_servers.sh || return 1
 	: > "${cfg}"
 
 	if [ ${rxtx_report} -ne 0 ]; then

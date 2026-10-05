@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ripe-atlas
 PKG_VERSION:=5130
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=ripe-atlas-software-probe-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/RIPE-NCC/ripe-atlas-software-probe/tar.gz/refs/tags/$(PKG_VERSION)?
@@ -43,6 +43,15 @@ define Package/ripe-atlas/Default/description
   RIPE Atlas users can also perform customised
   measurements to gain valuable data about their
   own networks.
+endef
+
+# The init in ripe-atlas-common waits for the variant, and apk installs the
+# variant only after it started the service.
+define Package/ripe-atlas/Default/postinst
+#!/bin/sh
+[ -n "$${IPKG_INSTROOT}" ] || ! /etc/init.d/ripe-atlas enabled ||
+	/etc/init.d/ripe-atlas restart
+exit 0
 endef
 
 # The measurement applets need raw sockets; ujail hands them CAP_NET_RAW from
@@ -151,7 +160,7 @@ define Package/ripe-atlas-common/install
 	$(INSTALL_DATA) ./files/capabilities.json $(1)/usr/share/ripe-atlas/capabilities.json
 	$(INSTALL_DATA) -t $(1)/usr/share/ripe-atlas \
 		$(PKG_INSTALL_DIR)/usr/share/ripe-atlas/FIRMWARE_APPS_VERSION
-	$(INSTALL_CONF) -t $(1)/usr/share/ripe-atlas \
+	$(INSTALL_DATA) -t $(1)/usr/share/ripe-atlas \
 		$(PKG_INSTALL_DIR)/usr/share/ripe-atlas/measurement.conf
 
 	$(INSTALL_DIR) $(1)/usr/sbin
@@ -181,7 +190,10 @@ define Package/ripe-atlas-probe/install
 	$(INSTALL_DIR) $(1)/usr/share/ripe-atlas
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/config/probe/known_hosts.reg \
 		$(1)/usr/share/ripe-atlas
+	echo probe > $(1)/usr/share/ripe-atlas/variant
 endef
+
+Package/ripe-atlas-probe/postinst = $(Package/ripe-atlas/Default/postinst)
 
 define Package/ripe-atlas-anchor
   $(call Package/ripe-atlas/Default)
@@ -204,7 +216,10 @@ define Package/ripe-atlas-anchor/install
 	$(INSTALL_DIR) $(1)/usr/share/ripe-atlas
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/config/anchor/known_hosts.reg \
 		$(1)/usr/share/ripe-atlas
+	echo anchor > $(1)/usr/share/ripe-atlas/variant
 endef
+
+Package/ripe-atlas-anchor/postinst = $(Package/ripe-atlas/Default/postinst)
 
 $(eval $(call BuildPackage,ripe-atlas-common))
 $(eval $(call BuildPackage,ripe-atlas-anchor))
