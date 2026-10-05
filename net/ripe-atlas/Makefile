@@ -168,6 +168,10 @@ define Package/ripe-atlas-probe/description
 endef
 
 define Package/ripe-atlas-probe/install
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/ripe-atlas.defaults \
+		       $(1)/etc/uci-defaults/80-ripe-atlas
+
 	$(INSTALL_DIR) $(1)/usr/lib/ripe-atlas/scripts
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/config/probe/reg_servers.sh.prod \
 		$(1)/usr/lib/ripe-atlas/scripts
