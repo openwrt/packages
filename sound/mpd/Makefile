@@ -196,7 +196,7 @@ ifeq ($(BUILD_VARIANT),full)
 	-Dlame=enabled \
 	-Dsoxr=enabled
 
-ifeq ($(CONFIG_PACKAGE_audio-support),y)
+ifneq ($(CONFIG_PACKAGE_audio-support),)
 	TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib/pulseaudio
 endif
 endif
