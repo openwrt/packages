@@ -130,6 +130,20 @@ start_instance()
 			;;
 	esac
 
+	# Only one probe may present the key: wait until the atlas-sw-probe
+	# one is taken over and atlas is disabled. While the key is not taken
+	# over, log the wait, as at boot the takeover runs before the log
+	# daemon and its errors are lost.
+	if [ -e /etc/uci-defaults/80-ripe-atlas ]; then
+		if [ ! -s "${key}" ] &&
+				{ [ -s /usr/libexec/atlas-probe-scripts/etc/probe_key ] ||
+				[ -s /etc/atlas/probe_key ]; }; then
+			logger -t ripe-atlas -p daemon.warn \
+				'waiting for /etc/uci-defaults/80-ripe-atlas'
+		fi
+		return 1
+	fi
+
 	# ripe-atlas-probe or -anchor brings the rest. apk installs it only after
 	# this package started the service, also over an older variant without
 	# this file.
