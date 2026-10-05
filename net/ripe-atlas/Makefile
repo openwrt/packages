@@ -15,8 +15,9 @@ PKG_HASH:=d2b0b03c1c27b9e1cfc8329c4862141ca53d0f46f8cb36af92a3adc2e5d26ff6
 PKG_BUILD_DIR:=$(BUILD_DIR)/ripe-atlas-software-probe-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Tiago Gaspar <tiagogaspar8@gmail.com>, Michel Stam <mstam@ripe.net>
-PKG_LICENSE:=GPL-3.0-only
-PKG_LICENSE_FILES:=LICENSE
+PKG_LICENSE:=GPL-3.0-only GPL-2.0-only LGPL-2.1-or-later BSD-3-Clause ISC
+PKG_LICENSE_FILES:=LICENSE probe-busybox/LICENSE \
+	probe-busybox/libevent-2.1.11-stable/LICENSE
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -72,22 +73,23 @@ define Package/ripe-atlas-common
   USERID:=ripe-atlas=445:ripe-atlas=445
   PROVIDES:=atlas-probe
   DEPENDS:= \
-	+jsonfilter \
 	+openssh-client \
 	+openssh-keygen \
 	+libopenssl \
 	+@OPENSSL_WITH_DEPRECATED \
 	+@BUSYBOX_CONFIG_KILL \
-	+@BUSYBOX_CONFIG_KILLALL \
-	+@BUSYBOX_CONFIG_PS \
 	+@BUSYBOX_CONFIG_SED \
-	+@BUSYBOX_CONFIG_TAR \
-	+@BUSYBOX_CONFIG_NTPD \
-	+@BUSYBOX_CONFIG_BUNZIP2
+	+@BUSYBOX_CONFIG_TEE \
+	+@BUSYBOX_CONFIG_CMP \
+	+@BUSYBOX_CONFIG_FIND \
+	+@BUSYBOX_CONFIG_FEATURE_FIND_MAXDEPTH \
+	+@BUSYBOX_CONFIG_FEATURE_FIND_TYPE \
+	+@BUSYBOX_CONFIG_FEATURE_FIND_USER \
+	+@BUSYBOX_CONFIG_FEATURE_FIND_GROUP \
+	+@BUSYBOX_CONFIG_FEATURE_FIND_NOT
 endef
 
 define Package/ripe-atlas-common/conffiles
-/etc/ripe-atlas/mode
 /etc/ripe-atlas/probe_key
 /etc/ripe-atlas/probe_key.pub
 /etc/config/ripe-atlas
@@ -99,9 +101,10 @@ define Package/ripe-atlas-common/description
   $(call Package/ripe-atlas/Default/description)
 endef
 
-define LinkApplet
-	$(LN) busybox $(1)/usr/lib/ripe-atlas/measurement/$(2)
-endef
+RIPE_ATLAS_APPLETS:= \
+	atlasinit buddyinfo condmv date dfrm eooqd eperd evhttpget evntp \
+	evping evsslgetcert evtdig evtraceroute httppost onlyuptime perd \
+	rchoose rptaddrs rptra6 rptuptime rxtxrpt telnetd
 
 define Package/ripe-atlas-common/install
 	$(INSTALL_DIR) $(1)/etc/init.d
@@ -115,28 +118,8 @@ define Package/ripe-atlas-common/install
 	$(INSTALL_DIR) $(1)/usr/lib/ripe-atlas/measurement
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/ripe-atlas/measurement/busybox \
 		       $(1)/usr/lib/ripe-atlas/measurement/busybox
-	$(call LinkApplet,$(1),atlasinit)
-	$(call LinkApplet,$(1),buddyinfo)
-	$(call LinkApplet,$(1),condmv)
-	$(call LinkApplet,$(1),date)
-	$(call LinkApplet,$(1),dfrm)
-	$(call LinkApplet,$(1),eooqd)
-	$(call LinkApplet,$(1),eperd)
-	$(call LinkApplet,$(1),evhttpget)
-	$(call LinkApplet,$(1),evntp)
-	$(call LinkApplet,$(1),evping)
-	$(call LinkApplet,$(1),evsslgetcert)
-	$(call LinkApplet,$(1),evtdig)
-	$(call LinkApplet,$(1),evtraceroute)
-	$(call LinkApplet,$(1),httppost)
-	$(call LinkApplet,$(1),onlyuptime)
-	$(call LinkApplet,$(1),perd)
-	$(call LinkApplet,$(1),rchoose)
-	$(call LinkApplet,$(1),rptaddrs)
-	$(call LinkApplet,$(1),rptra6)
-	$(call LinkApplet,$(1),rptuptime)
-	$(call LinkApplet,$(1),rxtxrpt)
-	$(call LinkApplet,$(1),telnetd)
+	$(foreach applet,$(RIPE_ATLAS_APPLETS), \
+		$(LN) busybox $(1)/usr/lib/ripe-atlas/measurement/$(applet);)
 
 	$(INSTALL_DIR) $(1)/usr/lib/ripe-atlas/scripts
 	$(INSTALL_BIN) -t $(1)/usr/lib/ripe-atlas/scripts \
@@ -173,9 +156,9 @@ define Package/ripe-atlas-probe
   $(call Package/ripe-atlas/Default)
   TITLE+=(Software Probe)
   DEPENDS+=+ripe-atlas-common
-  PROVIDES:=atlas-sw-probe
-  VARIANT:=probe
-  CONFLICTS+=ripe-atlas-anchor
+  PROVIDES:=ripe-atlas atlas-sw-probe
+  DEFAULT_VARIANT:=1
+  CONFLICTS:=ripe-atlas-anchor
 endef
 
 define Package/ripe-atlas-probe/description
@@ -201,7 +184,7 @@ define Package/ripe-atlas-anchor
   $(call Package/ripe-atlas/Default)
   TITLE+=(Anchor)
   DEPENDS+=+ripe-atlas-common
-  VARIANT:=anchor
+  PROVIDES:=ripe-atlas
 endef
 
 define Package/ripe-atlas-anchor/description
