@@ -859,7 +859,7 @@ config_charon_plugin_netlink () {
 	swan_xappend1 "}"
 }
 
-config_charon_scripts() {
+config_charon_common_scripts() {
 	local conf="$1"
 
 	swan_xappend1 "start-scripts {"
@@ -867,7 +867,7 @@ config_charon_scripts() {
 	swan_xappend1 "}"
 }
 
-config_charon_interfaces_use() {
+config_charon_common_interfaces_use() {
 	local conf="$1"
 
 	local interface interface_list device_list
@@ -886,7 +886,7 @@ config_charon_interfaces_use() {
 	[ -n "$device_list" ] && swan_xappend1 "interfaces_use = $device_list"
 }
 
-config_charon_ignore_routing_tables() {
+config_charon_common_ignore_routing_tables() {
 	local conf="$1"
 
 	local routing_table_list routing_table ignore_routing_tables
@@ -906,7 +906,7 @@ config_charon_ignore_routing_tables() {
 	[ -n "$ignore_routing_tables" ] && swan_xappend1 "ignore_routing_tables = $ignore_routing_tables"
 }
 
-config_charon_install_routes() {
+config_charon_common_install_routes() {
 	local conf="$1"
 
 	local rtinstall_enabled install_routes
@@ -917,14 +917,20 @@ config_charon_install_routes() {
 	swan_xappend1 "install_routes = $install_routes"
 }
 
+config_charon_common() {
+	local conf="$1"
+
+	config_charon_common_scripts "$conf"
+	config_charon_common_interfaces_use "$conf"
+	config_charon_common_ignore_routing_tables "$conf"
+	config_charon_common_install_routes "$conf"
+}
+
 config_strongswan_generate() {
 	local conf="$1"
 
 	swan_xappend0 "charon {"
-	config_charon_install_routes "$conf"
-	config_charon_ignore_routing_tables "$conf"
-	config_charon_interfaces_use "$conf"
-	config_charon_scripts "$conf"
+	config_charon_common "$conf"
 	config_charon_plugin_syslog
 	config_charon_plugin_netlink
 	swan_xappend0 "}"
