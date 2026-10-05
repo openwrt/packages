@@ -211,17 +211,41 @@ stop_service()
 {
 	local pids
 	local pid
+	local procs
 
-	for pid in $(find /proc -type d -maxdepth 1 -group ${GROUP} -print); do
-		pids="${pid##*/} ${pids}"
+	# Up to OpenWrt 25.12, procd signals only the main script; the daemons,
+	# the ssh tunnel and telnetd it started would keep running. Take them
+	# from the instance's cgroup, or, when that holds none, from the group
+	# only the probe uses.
+	for procs in /sys/fs/cgroup/services/ripe-atlas/*/cgroup.procs; do
+		[ -f "${procs}" ] || continue
+		while read -r pid; do
+			pids="${pid} ${pids}"
+		done < "${procs}"
 	done
+	if [ -z "${pids}" ]; then
+		for pid in $(find /proc -maxdepth 1 -type d -group ${GROUP} \
+				2> /dev/null); do
+			pids="${pid##*/} ${pids}"
+		done
+	fi
 
 	if [ -n "${pids}" ]; then
 		kill ${pids} 1>/dev/null 2>&1
 	fi
 }
 
+# procd would not restart the probe when its options change, and up to
+# OpenWrt 25.12, when it stops the instance, it signals only the main
+# script.
+reload_service()
+{
+	stop
+	start
+}
+
 service_triggers()
 {
+	procd_add_reload_trigger 'ripe-atlas'
 	procd_add_validation validate_config
 }
