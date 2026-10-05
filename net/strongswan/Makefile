@@ -150,7 +150,6 @@ $(call Package/strongswan/Default)
   DEPENDS:= strongswan \
 	+strongswan-charon \
 	+strongswan-charon-cmd \
-	+strongswan-ipsec \
 	+strongswan-mod-addrblock \
 	+strongswan-mod-aes \
 	+strongswan-mod-agent \
@@ -216,7 +215,6 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-sql \
 	+strongswan-mod-sqlite \
 	+strongswan-mod-sshkey \
-	+strongswan-mod-stroke \
 	+strongswan-mod-test-vectors \
 	+strongswan-mod-unity \
 	+strongswan-mod-updown \
@@ -234,10 +232,9 @@ endef
 
 define Package/strongswan-full/description
 $(call Package/strongswan/description/Default)
- This meta-package contains dependencies for all of the strongswan plugins
- except kernel-libipsec,
- socket-dynamic and which are omitted in favor of the kernel-netlink and
- socket-default plugins.
+  This meta-package contains dependencies for most strongSwan plugins. It uses
+  kernel-netlink, socket-default and the swanctl frontend instead of
+  kernel-libipsec, socket-dynamic and the legacy stroke frontend.
 endef
 
 
