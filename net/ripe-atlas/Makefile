@@ -14,7 +14,7 @@ PKG_SOURCE_URL:=https://codeload.github.com/RIPE-NCC/ripe-atlas-software-probe/t
 PKG_HASH:=d2b0b03c1c27b9e1cfc8329c4862141ca53d0f46f8cb36af92a3adc2e5d26ff6
 PKG_BUILD_DIR:=$(BUILD_DIR)/ripe-atlas-software-probe-$(PKG_VERSION)
 
-PKG_MAINTAINER:=Tiago Gaspar <tiagogaspar8@gmail.com>, Michel Stam <mstam@ripe.net>
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=GPL-3.0-only GPL-2.0-only LGPL-2.1-or-later BSD-3-Clause ISC
 PKG_LICENSE_FILES:=LICENSE probe-busybox/LICENSE \
 	probe-busybox/libevent-2.1.11-stable/LICENSE
