@@ -19,33 +19,43 @@ the upstream submission itself goes through the prpl Foundation Jira.
 
 Signed-off-by: Andrei Ovcharenko <a@krot.name>
 ---
- agent/config/beerocks_agent.conf.in           | 4 ++--
- controller/config/beerocks_controller.conf.in | 4 ++--
- 2 files changed, 4 insertions(+), 4 deletions(-)
 
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 68aa24f..2dd772a 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -238,7 +238,7 @@ set(BEEROCKS_LOG_FILES_AUTO_ROLL "true" CACHE STRING "Auto rollback prplMesh log
+ set(BEEROCKS_LOG_STDOUT_ENABLED  "false" CACHE STRING "Print logs to stdout")
+ set(BEEROCKS_LOG_SYSLOG_ENABLED  "true" CACHE STRING "Send logs to syslog")
+ #full ascending list: trace, debug, info, warning, error, fatal
+-set(BEEROCKS_SYSLOG_LEVEL_LIST   "error,fatal" CACHE STRING "Syslog level list")
++set(BEEROCKS_SYSLOG_LEVEL_LIST   "error,info,warning,fatal" CACHE STRING "Syslog level list")
+ if (TARGET_PLATFORM STREQUAL "linux")
+     set(BEEROCKS_CONTROLLER_LOG_SIZE "30000000" CACHE STRING "Max controller log size")
+     set(BEEROCKS_AGENT_LOG_SIZE "2000000" CACHE STRING "Max agent log size")
+diff --git a/agent/config/beerocks_agent.conf.in b/agent/config/beerocks_agent.conf.in
+index 7ea4e09..72ae48f 100644
 --- a/agent/config/beerocks_agent.conf.in
 +++ b/agent/config/beerocks_agent.conf.in
-@@ -92,8 +92,8 @@ enable_repeater_mode=0
- em_handle_third_party=0
+@@ -93,7 +93,7 @@ em_handle_third_party=0
  
  [log]
+ #full ascending list: trace, debug, info, warning, error, fatal
 -log_global_levels=error,info,warning,fatal,trace,debug
--log_global_syslog_levels=error,info,warning,fatal,trace,debug
 +log_global_levels=error,info,warning,fatal
-+log_global_syslog_levels=error,info,warning,fatal
+ log_global_syslog_levels=@BEEROCKS_SYSLOG_LEVEL_LIST@
  log_global_size=@BEEROCKS_AGENT_LOG_SIZE@
  log_files_enabled=@BEEROCKS_LOG_FILES_ENABLED@
- log_files_path=@BEEROCKS_LOG_FILES_PATH@
+diff --git a/controller/config/beerocks_controller.conf.in b/controller/config/beerocks_controller.conf.in
+index be33029..5646005 100644
 --- a/controller/config/beerocks_controller.conf.in
 +++ b/controller/config/beerocks_controller.conf.in
-@@ -56,8 +56,8 @@ fail_safe_5G_vht_frequency=5210
- use_dataelements_vap_configs=@BEEROCKS_CONTROLLER_DATAELEMENTS_VAP_CONFIGS@
+@@ -57,7 +57,7 @@ use_dataelements_vap_configs=@BEEROCKS_CONTROLLER_DATAELEMENTS_VAP_CONFIGS@
  
  [log]
+ #full ascending list: trace, debug, info, warning, error, fatal
 -log_global_levels=error,info,warning,fatal,trace,debug
--log_global_syslog_levels=error,info,warning,fatal,trace,debug
 +log_global_levels=error,info,warning,fatal
-+log_global_syslog_levels=error,info,warning,fatal
+ log_global_syslog_levels=@BEEROCKS_SYSLOG_LEVEL_LIST@
  log_global_size=@BEEROCKS_CONTROLLER_LOG_SIZE@
  log_files_enabled=@BEEROCKS_LOG_FILES_ENABLED@
- log_files_path=@BEEROCKS_LOG_FILES_PATH@

@@ -21,15 +21,9 @@ the upstream submission itself goes through the prpl Foundation Jira.
 
 Signed-off-by: Andrei Ovcharenko <a@krot.name>
 ---
- .../platform/bpl/cfg/uci/bpl_cfg_wifi.cpp     | 215 +++++++++++-------
- .../platform/bpl/cfg/uci/bpl_cfg_wifi_utils.h | 139 +++++++++++
- framework/platform/bpl/test/CMakeLists.txt    |   8 +
- .../bpl/test/bpl_cfg_wifi_utils_test.cpp      |  66 ++++++
- .../assoc_frame_bitfields.h                   |   1 +
- 5 files changed, 348 insertions(+), 81 deletions(-)
- create mode 100644 framework/platform/bpl/cfg/uci/bpl_cfg_wifi_utils.h
- create mode 100644 framework/platform/bpl/test/bpl_cfg_wifi_utils_test.cpp
 
+diff --git a/framework/platform/bpl/cfg/uci/bpl_cfg_wifi.cpp b/framework/platform/bpl/cfg/uci/bpl_cfg_wifi.cpp
+index 108073c..669b949 100644
 --- a/framework/platform/bpl/cfg/uci/bpl_cfg_wifi.cpp
 +++ b/framework/platform/bpl/cfg/uci/bpl_cfg_wifi.cpp
 @@ -14,16 +14,113 @@
@@ -146,7 +140,7 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
  static bool bpl_cfg_get_bss_configuration(const std::string &section_name,
                                            son::wireless_utils::sBssInfoConf &configuration)
  {
-@@ -36,38 +133,9 @@ static bool bpl_cfg_get_bss_configuratio
+@@ -36,38 +133,9 @@ static bool bpl_cfg_get_bss_configuration(const std::string &section_name,
      // Fill in wireless credentials from option values read from UCI configuration.
      configuration.ssid = options["ssid"];
  
@@ -188,7 +182,7 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
  
      configuration.network_key = options["key"];
  
-@@ -128,8 +196,8 @@ int cfg_get_wifi_params(const std::strin
+@@ -128,8 +196,8 @@ int cfg_get_wifi_params(const std::string &iface, struct BPL_WLAN_PARAMS *wlan_p
      cfg_uci_get_wireless_bool(TYPE_RADIO, iface.c_str(), "disabled", &disabled);
      wlan_params->enabled = !disabled;
  
@@ -199,7 +193,7 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
          // Failed to find "sub_band_dfs", set to to default value.
          wlan_params->sub_band_dfs = false;
      }
-@@ -143,7 +211,7 @@ int cfg_get_wifi_params(const std::strin
+@@ -143,7 +211,7 @@ int cfg_get_wifi_params(const std::string &iface, struct BPL_WLAN_PARAMS *wlan_p
  
      // country code
      char alpha_2[MAX_UCI_BUF_LEN] = {0};
@@ -208,7 +202,7 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
  
      wlan_params->country_code[0] = alpha_2[0];
      wlan_params->country_code[1] = alpha_2[1];
-@@ -153,6 +221,15 @@ int cfg_get_wifi_params(const std::strin
+@@ -159,6 +227,15 @@ int cfg_get_wifi_universal_index(const std::string &iface, int &index)
  
  bool bpl_cfg_get_wireless_settings(std::list<son::wireless_utils::sBssInfoConf> &wireless_settings)
  {
@@ -224,7 +218,7 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
      // Get all "wireless.wifi-iface" section names in UCI configuration
      const std::string package_name = "wireless";
      const std::string section_type = "wifi-iface";
-@@ -227,7 +304,7 @@ bool bpl_cfg_get_wireless_settings(std::
+@@ -233,7 +310,7 @@ bool bpl_cfg_get_wireless_settings(std::list<son::wireless_utils::sBssInfoConf>
              continue;
          }
  
@@ -233,7 +227,7 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
          if (!bpl_cfg_get_bss_configuration(section_name, configuration)) {
              LOG(DEBUG) << "Failed to get SSID and WiFi credentials from section " << section_name;
              continue;
-@@ -251,13 +328,11 @@ bool bpl_cfg_get_wireless_settings(std::
+@@ -257,13 +334,11 @@ bool bpl_cfg_get_wireless_settings(std::list<son::wireless_utils::sBssInfoConf>
              continue;
          }
  
@@ -251,7 +245,7 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
  
          // The mode used by upstream hostapd (11b, 11g, 11n, 11ac, 11ax) is governed by several parameters in
          // the configuration file. However, as explained in the comment below from hostapd.conf, the
-@@ -274,17 +349,11 @@ bool bpl_cfg_get_wireless_settings(std::
+@@ -280,17 +355,11 @@ bool bpl_cfg_get_wireless_settings(std::list<son::wireless_utils::sBssInfoConf>
          //
          // For MaxLinear's devices, by default '11bgnax' is used for 2.4Ghz bands, and '11anacax' is
          // used for 5Ghz bands (see 'files/scripts/lib/netifd/wireless/mac80211.sh' in the swpal package).
@@ -273,7 +267,7 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
              continue;
          }
  
-@@ -326,10 +395,10 @@ bool bpl_cfg_get_wireless_settings(std::
+@@ -332,10 +401,10 @@ bool bpl_cfg_get_wireless_settings(std::list<son::wireless_utils::sBssInfoConf>
              }
          }
  
@@ -287,7 +281,7 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
      }
  
      return true;
-@@ -340,7 +409,7 @@ bool bpl_cfg_get_wifi_credentials(const
+@@ -346,7 +415,7 @@ bool bpl_cfg_get_wifi_credentials(const std::string &iface,
  {
      // Find the "wireless.wifi-iface" section in UCI configuration for the given interface
      std::string section_name;
@@ -296,43 +290,7 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
          LOG(ERROR) << "Failed to find configuration section for interface " << iface;
          return false;
      }
-@@ -366,9 +435,8 @@ bool bpl_cfg_set_wifi_credentials(const
-     // Find the "wireless.wifi-iface" section in UCI configuration for the given interface
-     const std::string package_name = "wireless";
-     const std::string section_type = "wifi-iface";
--    const std::string option_name  = "ifname";
-     std::string section_name;
--    if (!uci_find_section_by_option(package_name, section_type, option_name, iface, section_name)) {
-+    if (!cfg_get_prplmesh_wireless_section(iface, section_name)) {
-         LOG(ERROR) << "Failed to find configuration section for interface " << iface;
-         return false;
-     }
-@@ -382,22 +450,8 @@ bool bpl_cfg_set_wifi_credentials(const
-     OptionsUnorderedMap options;
-     options["ssid"] = configuration.ssid;
- 
--    auto get_encryption = [](WSC::eWscAuth authentication_type, WSC::eWscEncr encryption_type) {
--        std::string encryption = "none";
--        if (authentication_type == WSC::eWscAuth::WSC_AUTH_WPA2PSK) {
--            encryption = "psk2";
--            if (encryption_type == WSC::eWscEncr::WSC_ENCR_TKIP) {
--                encryption += "+tkip";
--            } else if (encryption_type == WSC::eWscEncr::WSC_ENCR_AES) {
--                encryption += "+aes";
--            }
--        } else if (authentication_type == WSC::eWscAuth::WSC_AUTH_SAE) {
--            encryption = "sae";
--        }
--        return encryption;
--    };
--    options["encryption"] =
--        get_encryption(configuration.authentication_type, configuration.encryption_type);
-+    options["encryption"] = wifi_cfg_utils::encryption_to_uci(configuration.authentication_type,
-+                                                              configuration.encryption_type);
- 
-     options["key"] = configuration.network_key;
- 
-@@ -476,18 +530,17 @@ void cfg_wifi_reset_wps_credentials() {
+@@ -436,18 +505,17 @@ int cfg_get_sta_iface(const std::string &iface, std::string &sta_iface)
  
  int cfg_get_hostap_iface(int32_t radio_num, std::string &hostap_iface)
  {
@@ -357,6 +315,9 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
      hostap_iface = std::string(iface_c_str);
      return result;
  }
+diff --git a/framework/platform/bpl/cfg/uci/bpl_cfg_wifi_utils.h b/framework/platform/bpl/cfg/uci/bpl_cfg_wifi_utils.h
+new file mode 100644
+index 0000000..6624ab6
 --- /dev/null
 +++ b/framework/platform/bpl/cfg/uci/bpl_cfg_wifi_utils.h
 @@ -0,0 +1,139 @@
@@ -499,9 +460,11 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
 +} // namespace beerocks
 +
 +#endif // BPL_CFG_WIFI_UTILS_H_
+diff --git a/framework/platform/bpl/test/CMakeLists.txt b/framework/platform/bpl/test/CMakeLists.txt
+index d2485fd..7318d94 100644
 --- a/framework/platform/bpl/test/CMakeLists.txt
 +++ b/framework/platform/bpl/test/CMakeLists.txt
-@@ -5,3 +5,11 @@ target_include_directories(bpl_test PUBL
+@@ -5,3 +5,11 @@ target_include_directories(bpl_test PUBLIC
  	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../../common/include>
  	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
  	)
@@ -513,6 +476,9 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
 +    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../cfg/uci>
 +)
 +add_test(NAME bpl_cfg_wifi_utils_test COMMAND $<TARGET_FILE:bpl_cfg_wifi_utils_test>)
+diff --git a/framework/platform/bpl/test/bpl_cfg_wifi_utils_test.cpp b/framework/platform/bpl/test/bpl_cfg_wifi_utils_test.cpp
+new file mode 100644
+index 0000000..bce1ffe
 --- /dev/null
 +++ b/framework/platform/bpl/test/bpl_cfg_wifi_utils_test.cpp
 @@ -0,0 +1,66 @@
@@ -582,6 +548,8 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
 +    EXPECT_FALSE(select_unique_wireless_section(two, selected));
 +    EXPECT_TRUE(selected.empty());
 +}
+diff --git a/framework/tlvf/src/include/tlvf/AssociationRequestFrame/assoc_frame_bitfields.h b/framework/tlvf/src/include/tlvf/AssociationRequestFrame/assoc_frame_bitfields.h
+index b05bd5f..0ca4610 100644
 --- a/framework/tlvf/src/include/tlvf/AssociationRequestFrame/assoc_frame_bitfields.h
 +++ b/framework/tlvf/src/include/tlvf/AssociationRequestFrame/assoc_frame_bitfields.h
 @@ -4,6 +4,7 @@

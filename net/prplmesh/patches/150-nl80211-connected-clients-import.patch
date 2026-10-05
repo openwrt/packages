@@ -46,7 +46,7 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
 
 --- a/agent/src/beerocks/fronthaul_manager/ap_manager/ap_manager.cpp
 +++ b/agent/src/beerocks/fronthaul_manager/ap_manager/ap_manager.cpp
-@@ -747,6 +747,20 @@ bool ApManager::ap_manager_fsm(bool &con
+@@ -733,6 +733,20 @@ bool ApManager::ap_manager_fsm(bool &con
              m_generate_connected_clients_events = !is_finished_all_clients;
          }
  
@@ -69,7 +69,7 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
          break;
 --- a/agent/src/beerocks/fronthaul_manager/ap_manager/ap_manager.h
 +++ b/agent/src/beerocks/fronthaul_manager/ap_manager/ap_manager.h
-@@ -300,6 +300,8 @@ private:
+@@ -322,6 +322,8 @@ private:
      bool m_generate_connected_clients_events                     = false;
      std::chrono::steady_clock::time_point m_next_generate_connected_events_time =
          std::chrono::steady_clock::time_point::min();
@@ -80,7 +80,7 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
      void start_csa_notification_timer(
 --- a/common/beerocks/bwl/include/bwl/ap_wlan_hal.h
 +++ b/common/beerocks/bwl/include/bwl/ap_wlan_hal.h
-@@ -442,6 +442,14 @@ public:
+@@ -470,6 +470,14 @@ public:
      virtual bool pre_generate_connected_clients_events() = 0;
  
      /**
