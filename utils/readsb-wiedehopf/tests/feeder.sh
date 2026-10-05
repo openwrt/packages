@@ -110,6 +110,10 @@ run_test 'Non-Bash shell uses bounded nc, not /dev/tcp' \
 	test_tcp_probe '' 1 0 bounded 0 0 nc
 run_test 'Bounded nc reports a failed connection' \
 	test_tcp_probe '' 1 0 bounded 1 1 nc
+for status in 125 126 127; do
+	run_test "netcat execution error $status is indeterminate rather than unreachable" \
+		test_tcp_probe '' 1 0 bounded "$status" 2 nc
+done
 run_test 'Stock nc without -w is indeterminate' \
 	test_tcp_probe '' 1 0 stock 0 2 ''
 run_test 'Missing probe tools are indeterminate' \

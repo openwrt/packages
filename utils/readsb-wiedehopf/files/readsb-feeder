@@ -166,15 +166,16 @@ _probe_tcp() {
 	if [ -n "${BASH:-}" ] && command -v timeout >/dev/null 2>&1; then
 		# shellcheck disable=SC2016
 		timeout 3 "$BASH" -c 'exec 9<>"/dev/tcp/$1/$2"' _ "$host" "$port" 2>/dev/null || rc=$?
-		case $rc in
-			0) return 0 ;;
-			125|126|127) return 2 ;;
-			*) return 1 ;;
-		esac
+	else
+		command -v nc >/dev/null 2>&1 || return 2
+		nc --help 2>&1 | grep -q -- '-w' || return 2
+		nc -w 3 "$host" "$port" </dev/null >/dev/null 2>&1 || rc=$?
 	fi
-	command -v nc >/dev/null 2>&1 || return 2
-	nc --help 2>&1 | grep -q -- '-w' || return 2
-	nc -w 3 "$host" "$port" </dev/null >/dev/null 2>&1
+	case $rc in
+		0) return 0 ;;
+		125|126|127) return 2 ;;
+		*) return 1 ;;
+	esac
 }
 
 cmd_probe() {

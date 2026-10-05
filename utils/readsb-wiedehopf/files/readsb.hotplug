@@ -170,7 +170,9 @@ remove)
 		# Other SDRs remain. Un-pin when the removed device was selected,
 		# or when its old pin no longer names any attached SDR.
 		device_present=0
-		readsb_sdr_serial_present "$device" && device_present=1
+		if [ -n "$device" ] && readsb_sdr_serial_present "$device"; then
+			device_present=1
+		fi
 		if [ -n "$device" ] && { \
 			{ [ -n "$event_serial" ] && [ "$device" = "$event_serial" ]; } || \
 			{ [ "$device_present" -eq 0 ] && ! readsb_device_index_valid "$device" "$sdr_count"; }; \

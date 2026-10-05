@@ -644,6 +644,14 @@ test_remove_pin() (
 		assert_config net_only 0
 	fi
 )
+test_remove_unselected() (
+	reset_config 'readsb.main.device=' 'readsb.main.device_auto=' 'readsb.main.net_only=1'
+	# shellcheck disable=SC2329
+	readsb_sdr_serial_present() { echo serial-probe >> "$tmpdir/commands"; return 1; }
+	run_hotplug remove unrelated remaining || return 1
+	assert_config device '' && assert_config device_auto '' && assert_config net_only 1 || return 1
+	[ ! -s "$tmpdir/commands" ] && [ ! -s "$tmpdir/writes" ]
+)
 test_reconcile_pin() (
 	reset_config 'readsb.main.device=1090' 'readsb.main.device_auto=1090'
 	start_failed=0
@@ -706,6 +714,7 @@ run_test 'multiple serial-less SDRs cannot preserve an ambiguous automatic index
 run_test 'removing selected SDR clears its marker' test_remove_pin 1090 978 ''
 run_test 'removing unrelated SDR preserves the pin' test_remove_pin 978 1090 1090
 run_test 'removing the last SDR clears its marker' test_remove_pin 1090 '' ''
+run_test 'removing an unrelated SDR does not probe an empty device or change configuration' test_remove_unselected
 run_test 'boot reconciliation clears stale auto-pin metadata' test_reconcile_pin
 for option in device_type device device_auto net_only; do
 	run_test "reconciliation $option write failure leaves shared settings unchanged" \
