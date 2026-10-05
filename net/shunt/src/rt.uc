@@ -90,7 +90,7 @@ export function describe(op) {
 	switch (op?.cmd) {
 	case 'newroute':
 		return sprintf('ip %s route replace %sdefault%s%s%s table %d', v,
-			m.type == 6 ? 'blackhole ' : '',
+			m.type == 6 ? 'blackhole ' : m.type == 2 ? 'local ' : '',
 			m.gateway ? ` via ${m.gateway}` : '',
 			m.oif ? ` dev ${m.oif}` : '',
 			m.priority != null ? ` metric ${m.priority}` : '', m.table);

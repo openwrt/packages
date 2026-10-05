@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (c) 2026 Dirk Brenken <dev@brenken.org>
 
-import { popen, readfile } from 'fs';
+import { popen, readfile, access } from 'fs';
 
 const ubus = require('ubus');
 const rtnl = require('rtnl');
@@ -64,10 +64,18 @@ function render() {
 	cfg.policies = f.policies;
 
 	let m = match_compile(cfg.policies);
-	let n = nft_compile(cfg.policies);
+	let n = nft_compile(cfg.policies, { tproxy: tproxy_available() });
 	let r = route_compile(cfg.policies, n.marks);
 
 	return { cfg, files: f, matcher: m, nft: n, route: r };
+}
+
+// Same test as the daemon's, so LuCI reports the policy the daemon skips.
+function tproxy_available() {
+	let rel = trim(readfile('/proc/sys/kernel/osrelease') ?? '');
+
+	return !!(access('/sys/module/nft_tproxy') ||
+		(length(rel) && access(`/lib/modules/${rel}/nft_tproxy.ko`)));
 }
 
 // Policy devices whose marked traffic the kernel would drop: max(all, <dev>),
@@ -268,12 +276,13 @@ return {
 						rt_table: m.rt_table,
 						rt_prio: m.rt_prio,
 						interface: (m.action == 'route') ? p?.interface : null,
-						fallback: (m.action == 'route') ? p?.fallback : null,
+						fallback: (m.action != 'bypass') ? p?.fallback : null,
+						tproxy_port: m.port,
 						domains: length(p?.domains ?? []),
 						file_domains: length(p?.file_domains ?? []),
-						rules: (m.action == 'route' && rules)
+						rules: (m.action != 'bypass' && rules)
 							? length(rules[m.name] ?? []) : null,
-						routes: (m.action == 'route') ? routes[m.name] : null
+						routes: (m.action != 'bypass') ? routes[m.name] : null
 					});
 				}
 

@@ -52,7 +52,7 @@ shunt check
 * Wildcard domains (`*.example.com`), learned passively as clients use them
 * Domain lists from a file - a community-maintained set of thousands of names, without a single UCI entry per name
 * Per-policy killswitch: hold the traffic when the interface drops, instead of leaking it out of the normal uplink
-* Per-policy action: `route` marks the traffic for the policy interface, `bypass` exempts it from every policy below
+* Per-policy action: `route` marks the traffic for the policy interface, `bypass` exempts it from every policy below, `tproxy` hands it to a transparent proxy on the router
 * Your own networks stay reachable from a policy client, without listing them anywhere
 * Puts its own table back when something deletes it, `fw4 flush` included
 * Own nftables table and routing tables, disjoint mark range - runs beside `pbr` and `mwan3`
@@ -64,6 +64,8 @@ shunt check
 ## Prerequisites
 * OpenWrt with fw4/nftables
 * `ucode` plus `ucode-mod-fs`, `ucode-mod-socket`, `ucode-mod-uci`, `ucode-mod-uloop`, `ucode-mod-resolv`, `ucode-mod-ubus`, `ucode-mod-rtnl`, `ucode-mod-log` and `rpcd-mod-ucode` - all pulled in by the package; `ip` is not needed, routes and rules are written over rtnetlink
+
+`kmod-nft-tproxy` only for a `tproxy` policy. It is not pulled in: without it a tproxy policy is skipped as an issue and everything else is applied.
 
 `ucode-mod-resolv` and `ucode-mod-ubus` are soft at runtime: without resolv, poll is skipped and the observer carries the service alone; without ubus, gateway discovery and interface events are skipped and the config's own values are used. Both cost one warning in the log, not a failed start.
 
@@ -186,9 +188,10 @@ Each `config policy` section is one routing policy. **The section must be named,
 | Option | Description |
 | :--- | :--- |
 | enabled | `0` skips the section entirely |
-| action | `route` (default) or `bypass`, see below |
+| action | `route` (default), `bypass` or `tproxy`, see below |
 | interface | netifd logical name (`wan`, `trm_wwan`) or raw netdev (`wg0`, `phy0-sta0`); `route` only |
-| fallback | `main` (default) or `block`, see below; `route` only |
+| tproxy_port | port the transparent proxy listens on; `tproxy` only, required there |
+| fallback | `main` (default) or `block`, see below; `route` and `tproxy` |
 | keep_local | `1` (default) keeps traffic on `main` where `main` has a route for it, see below; `route` only |
 | gw4 / gw6 | gateway override; normally unnecessary |
 | src | client addresses or CIDRs whose traffic this policy owns |
@@ -276,7 +279,7 @@ Run from cron that covers the reboot case as well: the first run after boot crea
 
 What a large list costs: 100k patterns take about two seconds to load and roughly 40 MB of memory on an x86 test box, so expect several seconds and a proportionally smaller footprint on a router, at start and on every refresh. A file above 4 MiB is refused outright as an issue. `shunt check` prints how many files were read and how many patterns they contributed, `shunt refresh` does the same for the running daemon, and `ubus call shunt status` shows the count under `files` together with the time of the last refresh.
 
-### Actions: route or bypass
+### Actions: route, bypass or tproxy
 
 `action 'route'` (default) is the policy shape everything above describes: matching traffic is marked and looked up in the policy's own table.
 
@@ -296,6 +299,40 @@ config policy 'vpn'
 ```
 
 Order matters and only order: a bypass section placed after the policy it is meant to except from never sees the packet.
+
+<a id="transparent-proxy-tproxy"></a>
+### Transparent proxy: tproxy
+
+`action 'tproxy'` hands the selected traffic to a transparent proxy running on the router - `hev-socks5-tproxy`, `sing-box` or `xray` in tproxy mode, or anything else that accepts `IP_TRANSPARENT` connections. shunt only steers: it does not start, configure or watch the proxy. It needs `kmod-nft-tproxy`.
+
+```
+config policy 'proxy'
+	option action      'tproxy'
+	option tproxy_port '1088'
+	option fallback    'block'
+	list   src         '192.168.1.0/24'
+	list   domain      '*.example.com'
+```
+
+The selectors are the usual ones. tproxy carries tcp and udp only, so a tproxy policy without `proto` covers both, and the proxy must listen for every protocol the policy selects. A policy consumes a mark and gets a routing table holding a single `local default dev lo` route - that is how the selected packets reach a socket on the router without their destination being rewritten.
+
+shunt delivers to `127.0.0.1` and `::1`. A proxy listening on loopback or on the wildcard address is found; one bound to the router's LAN address is not. The address is not left to the kernel on purpose: without one it picks the address of the incoming interface, and a proxy bound to loopback would never be found - the statement fails silently and the traffic is not proxied.
+
+`fallback` decides what a **new** flow does when no listener is found - proxy stopped, crashed, wrong port: `main` (default) lets it take the normal uplink, `block` drops it. A flow that was already proxied is dropped either way once its listener is gone. Its state is in the proxy, and its conntrack entry was never NATed, so forwarding the rest of it would put the client's own address on the uplink - measured, which is why this does not follow `fallback`.
+
+`interface`, `keep_local` and the gateway overrides are not read, and `keep_local '1'` set explicitly is reported. It would break the policy: main would forward packets the kernel has already handed to the proxy's socket, and the kernel drops those.
+
+Only traffic passing through the router is proxied. tproxy exists in the prerouting hook alone, so the router's own traffic is not touched by a tproxy policy - which also keeps the proxy's upstream connections from looping back into it.
+
+The proxied traffic is delivered to the router itself, so fw4 applies its **input** rules, not its forward rules. On `lan`, with input `ACCEPT`, nothing needs doing. A zone with input `REJECT` or `DROP` - a guest network, typically - drops it, and shunt cannot override that from its own table, because a drop in any base chain is final. The packet still carries its original destination port, so a rule on the proxy port does not match; match the policy's mark instead (`shunt check` prints it):
+
+```
+config rule
+	option name   'Allow-guest-tproxy'
+	option src    'guest'
+	option mark   '0x01000000/0xff000000'
+	option target 'ACCEPT'
+```
 
 <a id="local-traffic-keep_local"></a>
 ### Local traffic: keep_local
@@ -468,11 +505,11 @@ fwmark                               <index> << 24, mask 0xff000000
 ct mark                              same bits, set on a flow's first packet
 ip rule pref                         31000 + <index> keep_local's main lookup
                                      31500 + <index> the policy table
-routing table                        8000 + <index>
+routing table                        8000 + <index>, for tproxy: local default dev lo
 /etc/iproute2/rt_tables.d/shunt.conf the table name mapping, for `ip route show` only
 ```
 
-A `bypass` policy is only a rule in the prerouting and output chains: no mark, no table, no ip rule, and it does not count against the 255. The mark mask is fixed at `0xff000000`, which allows 255 policies. The `output` chain is `type route` so the router's own marked traffic is re-routed after the mark is set.
+A `bypass` policy is only a rule in the prerouting and output chains: no mark, no table, no ip rule, and it does not count against the 255. A `tproxy` policy has rules in prerouting only, and no keep_local rule. The mark mask is fixed at `0xff000000`, which allows 255 policies. The `output` chain is `type route` so the router's own marked traffic is re-routed after the mark is set.
 
 Every set carries per-element counters, so "is this element ever hit" is one look at `nft list set inet shunt <set>` rather than a tcpdump session. The two kinds count different things: nftables tests a rule left to right, so a **client** set counts every packet that matched the selector, whether or not the destination matched afterwards; a **learned** set is the last lookup in the rule, so a hit there means the packet really was marked. A busy client beside learned addresses at zero is a client that has not visited any of the routed domains, not a fault.
 
@@ -595,6 +632,7 @@ These are consequences of the design, stated rather than worked around:
 * **DNS over TCP is not observed.** Port 53 over TCP needs reassembly, which is out of scope; answers large enough to force TCP are rare in the traffic shunt cares about.
 * **Route and rule application is best effort.** At boot a tunnel interface may not exist yet. A rule over an empty table falls through to `main`, so the failure mode is "policy not applied yet", never "traffic broken". Each distinct reason is one warning line.
 * **No interface hotplug.** A device that appears later is picked up on the next `ifup` event or within one poll interval, not immediately.
+* **tproxy is detected by its module file.** shunt applies a tproxy policy when `nft_tproxy` is loaded or installed under `/lib/modules`. A custom kernel with tproxy built in has neither, and its tproxy policies are skipped as an issue.
 * **An outside flush of nftables is repaired, not prevented.** Any tool may delete shunt's table - `fw4 flush` does. shunt re-applies it within one poll interval, or sooner, and until then nothing is marked.
 
 **Out of scope permanently:** resolver-integrated set population (dnsmasq `nftset`, AdGuard Home etc.). Being independent of the DNS backend is the entire point of the project, so adopting a backend-specific mechanism would give up the one property that distinguishes it. Also out: DSCP tagging and user include files.

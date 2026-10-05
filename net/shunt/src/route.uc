@@ -20,10 +20,12 @@ const BLACKHOLE_METRIC = 9999;
 const AF = { '4': 2, '6': 10 };
 const ANY = { '4': '0.0.0.0/0', '6': '::/0' };
 const RTN_UNICAST = 1;
+const RTN_LOCAL = 2;
 const RTN_BLACKHOLE = 6;
 const RTPROT_BOOT = 3;
 const RT_SCOPE_UNIVERSE = 0;
 const RT_SCOPE_LINK = 253;
+const RT_SCOPE_HOST = 254;
 const RT_TABLE_MAIN = 254;
 const FR_ACT_TO_TBL = 1;
 
@@ -62,6 +64,37 @@ export function compile(policies, marks, opts) {
 		// nft chain returning is the whole of it. `interface` is not read.
 		if (m.action == 'bypass')
 			continue;
+
+		// tproxy delivers to a socket on the router, so its table holds a
+		// single local default route and nothing of the interface options
+		// applies. keep_local in particular must not: main would forward
+		// a packet the tproxy statement has already given a socket, and
+		// the kernel drops those on forward - measured. The fallback is
+		// nft's, see there.
+		if (m.action == 'tproxy') {
+			if (to_bool(p.keep_local, false) === true)
+				reject(p.name, p.keep_local, 'keep_local does not apply to tproxy, ignored');
+
+			push(tables, sprintf('%d\tshunt_%s', m.rt_table, m.name));
+
+			for (let fam in [ '4', '6' ]) {
+				let family = AF[fam];
+
+				push(add, { cmd: 'newroute', msg: { family,
+					table: m.rt_table, dst: ANY[fam], oif: 'lo',
+					type: RTN_LOCAL, protocol: RTPROT_BOOT,
+					scope: RT_SCOPE_HOST } });
+
+				push(add, { cmd: 'newrule', msg: { family,
+					action: FR_ACT_TO_TBL, priority: m.rt_prio,
+					fwmark: m.mark, fwmask: mask, table: m.rt_table } });
+
+				unshift(del, { cmd: 'flush', msg: { family, table: m.rt_table } });
+				unshift(del, { cmd: 'delrule', msg: { family, priority: m.rt_prio } });
+				unshift(del, { cmd: 'delrule', msg: { family, priority: m.rt_prio_local } });
+			}
+			continue;
+		}
 
 		let iface = p.interface;
 		if (type(iface) != 'string' || match(iface, RE_IFACE) == null) {
