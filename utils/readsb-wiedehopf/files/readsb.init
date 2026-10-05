@@ -278,9 +278,12 @@ start_instance() {
 
 	# Passthrough for flags not exposed as a UCI option.
 	config_get extra_args "$cfg" extra_args
+	local restore_globbing=0
+	case $- in *f*) ;; *) set -f; restore_globbing=1 ;; esac
 	for arg in $extra_args; do
 		procd_append_param command "$arg"
 	done
+	[ "$restore_globbing" = 0 ] || set +f
 
 	procd_close_instance
 

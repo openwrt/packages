@@ -11,7 +11,7 @@ cleanup() {
 		"$tmpdir/config" "$tmpdir/commands" "$tmpdir/messages" "$tmpdir/writes" \
 		"$tmpdir/log" "$tmpdir/bin/readsb-geoip" "$tmpdir/cleanup.sh" \
 		"$tmpdir/cleanup-calls" "$tmpdir/cleanup-output" "$tmpdir/stage-path" \
-		"$tmpdir/feeder-add.sh" "$tmpdir/bin/readsb-feeder" || \
+		"$tmpdir/feeder-add.sh" "$tmpdir/bin/readsb-feeder" "$tmpdir/--filter=expanded" || \
 		printf 'cleanup: could not remove test files in %s\n' "$tmpdir" >&2
 	rmdir "$tmpdir/bin" "$tmpdir" || \
 		printf 'cleanup: could not remove temporary directories in %s\n' "$tmpdir" >&2
@@ -267,6 +267,16 @@ test_wait_budget() (
 	total=$(awk '{ n += $1 } END { print n+0 }' "$tmpdir/commands")
 	[ "$poll_timeout" -lt 0 ] || [ "$total" -le "$poll_timeout" ]
 )
+test_first_set() (
+	reset_config 'readsb.main.usb_wait_timeout=12' 'readsb.other.usb_wait_timeout=34'
+	usb_wait_timeout=$1
+	read_first_set usb_wait_timeout main usb_wait_timeout
+	read_first_set usb_wait_timeout other usb_wait_timeout
+	assert_equal "$usb_wait_timeout" "$2"
+)
+run_test 'first wait option wins over later sections' test_first_set '' 12
+run_test 'existing wait option is not overwritten' test_first_set 7 7
+run_test 'zero wait option is treated as already set' test_first_set 0 0
 run_test 'poll timeout shorter than interval sleeps only the remainder' test_wait_budget 1 10 0 1 1
 run_test 'poll final sleep is capped to the remaining budget' test_wait_budget 5 3 0 1 "$(printf '3\n2')"
 run_test 'poll immediate success does not sleep' test_wait_budget 10 3 1 0 ''
@@ -323,7 +333,8 @@ done
 
 test_sdr_args() (
 	reset_config "readsb.main.freq=$1" "readsb.main.gain=$2" "readsb.main.ppm=$3" \
-		"readsb.main.net_only=${7:-0}" "readsb.main.enable_biastee=${8:-0}"
+		"readsb.main.net_only=${7:-0}" "readsb.main.enable_biastee=${8:-0}" \
+		"readsb.main.extra_args=${10:-}"
 	test_log_level=${6:-info}
 	mkdir() { :; }
 	procd_open_instance() { echo open >> "$tmpdir/commands"; }
@@ -338,12 +349,16 @@ test_sdr_args() (
 	config_foreach() { [ "$1" != start_instance ] || start_instance main; }
 	seed_hotplug_state() { :; }
 	readsb_is_sdr_present() { return 1; }
+	local globbing_before=0 globbing_after=0
+	case $- in *f*) globbing_before=1 ;; esac
 	rc=0
 	if [ "${9:-0}" = 1 ]; then
 		start_service || rc=$?
 	else
 		start_instance main || rc=$?
 	fi
+	case $- in *f*) globbing_after=1 ;; esac
+	assert_equal "$globbing_after" "$globbing_before" || return 1
 	if [ "$4" = invalid ]; then
 		assert_equal "$rc" 1 || return 1
 		[ ! -s "$tmpdir/commands" ] && grep -q '^error:' "$tmpdir/messages"
@@ -373,6 +388,17 @@ run_test 'service startup propagates invalid tuning failure' test_sdr_args bad a
 run_test 'net-only ignores SDR tuning' test_sdr_args invalid max 0.9 '' '' info 1
 run_test 'bias-T is passed only when enabled' test_sdr_args 1090 auto 0 1090000000 auto info 0 1
 run_test 'package enables upstream bias-T support' grep -q 'HAVE_BIASTEE=yes' "$package_dir/Makefile"
+
+test_literal_extra_args() (
+	cd "$tmpdir" || return 1
+	: > './--filter=expanded'
+	if [ "$1" = 1 ]; then set -f; else set +f; fi
+	test_sdr_args '' '' '' '' '' info 1 0 0 '--filter=* --other=? --brackets=[ab]' || return 1
+	assert_equal "$(grep -E '^--(filter|other|brackets)=' "$tmpdir/commands")" \
+		"$(printf '%s\n' '--filter=*' '--other=?' '--brackets=[ab]')"
+)
+run_test 'extra_args does not expand matching filenames' test_literal_extra_args 0
+run_test 'extra_args stays literal when caller already disabled globbing' test_literal_extra_args 1
 
 test_companions() (
 	reset_config
