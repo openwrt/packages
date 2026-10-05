@@ -299,10 +299,18 @@ Signed-off-by: Andrei Ovcharenko <a@krot.name>
  }
  
  bool cfg_get_guest_bridge_iface(std::string &bridge_iface)
-@@ -1138,5 +1169,64 @@ bool cfg_get_traffic_separation_guest_vi
+@@ -1138,5 +1169,72 @@ bool cfg_get_traffic_separation_guest_vi
  
  bool cfg_commit_changes() { return uci_commit_changes("prplmesh"); }
  
++bool get_friendly_name(std::string &friendly_name)
++{
++    if (!read_device_info_file("/proc/sys/kernel/hostname", friendly_name)) {
++        return get_model_name(friendly_name);
++    }
++    return true;
++}
++
 +bool get_serial_number(std::string &serial_number)
 +{
 +    if (!read_device_info_file("/sys/firmware/devicetree/base/serial-number", serial_number) &&
