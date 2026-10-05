@@ -84,7 +84,12 @@ define Build/Prepare
 	mv $(PKG_BUILD_DIR)/doc/luac.1 $(PKG_BUILD_DIR)/doc/luac5.4.1
 endef
 
-TARGET_CFLAGS += -DLUA_USE_LINUX $(FPIC) -std=gnu99
+LUA_LMOD_DIR:=/usr/share/lua/5.4
+LUA_CMOD_DIR:=/usr/lib/lua/5.4
+
+TARGET_CFLAGS += -DLUA_USE_LINUX $(FPIC) -std=gnu99 \
+	-DLUA_PATH_DEFAULT='\"$(LUA_LMOD_DIR)/?.lua;$(LUA_LMOD_DIR)/?/init.lua;$(LUA_CMOD_DIR)/?.lua;$(LUA_CMOD_DIR)/?/init.lua;./?.lua;./?/init.lua\"' \
+	-DLUA_CPATH_DEFAULT='\"$(LUA_CMOD_DIR)/?.so;$(LUA_CMOD_DIR)/loadall.so;./?.so\"'
 
 define Build/Compile
 	$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR) \
