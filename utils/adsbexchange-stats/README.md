@@ -97,6 +97,10 @@ Scalar values in that generated file are shell-quoted, including log
 tags and runtime paths; quotes, whitespace, and shell punctuation are
 preserved as data rather than interpreted as commands.
 
+The shared helpers preserve preconfigured `ADSBX_RUNTIME_DIR`,
+`ADSBX_ENV_FILE`, `ADSBX_UUID_FILE`, and `ADSBX_UPLOADER` values.
+When file paths are unset, they are derived from the runtime directory.
+
 Reload triggers are registered on **both** `adsbexchange-stats` and
 `readsb`, so the recommended workflow is:
 
@@ -118,7 +122,7 @@ or incorrectly typed main section is reported as a configuration error.
 | `enabled`              | `0`     | separate opt-in for external statistics uploads; installation alone does not change it |
 | `feeder`               | empty   | one enabled `adsbexchange` feeder section in `/etc/config/readsb`; chosen by the setup wizard or `activate` |
 | `json_paths_override`  | empty   | space-separated list of directories searched for `aircraft.json`, in preferred order. Empty = derive from `readsb.main.write_json` plus built-in fallbacks. Tokens are restricted to `[A-Za-z0-9/_.+-]`. |
-| `log_level`            | `1`     | uploader verbosity: `0` errors only, `1` + periodic summary, `2` + per-cycle line, `3` + full curl `-v` headers                                                |
+| `log_level`            | `1`     | uploader verbosity: `0` errors only, `1` + periodic summary, `2` + per-cycle line, `3` + redacted curl `-v` diagnostics |
 | `log_summary_interval` | `300`   | seconds between summary lines at `log_level >= 1`                                                                                                              |
 | `dns_cache`            | `0`     | enable the uploader's in-process DNS self-cache. Auto-disabled if a `127.0.0.0/8` resolver is in use or if `host`/`perl` are missing.                          |
 | `dns_ttl`              | `600`   | DNS cache TTL in seconds when `dns_cache=1`                                                                                                                    |
@@ -229,7 +233,17 @@ RFC 5424 / OpenWrt severity convention; filter with `logread -p <level>`.
 | `0`         | errors only (curl transport failures, decoder stalls)                                             |
 | `1`         | + periodic upload summary every `log_summary_interval` seconds                                    |
 | `2`         | + one line per upload cycle (aircraft, http code, gzipped bytes, elapsed time)                    |
-| `3`         | + full curl `-v` request/response headers (TLS handshake; verbose, mostly useful for debugging)   |
+| `3`         | + redacted curl `-v` diagnostics (TLS handshake; verbose, mostly useful for debugging) |
+
+Curl diagnostics redact the station UUID, authorization headers, and
+cookies before logging, including on transport failures. Hostnames,
+addresses, URLs, and other connection details remain visible; use level
+3 only when needed for troubleshooting. Startup notices omit the UUID.
+
+Errors go to syslog and, by default, stderr for interactive or scripted
+commands. Procd sets `ADSBX_LOG_STDERR=0` for the uploader to prevent
+duplicate errors through captured stderr; manual callers can use the
+same flag to suppress stderr explicitly.
 
 Init-script lifecycle events (start, stop, refused-UUID, unsafe path
 token) log at `notice` / `warn` / `err` regardless of `log_level`.

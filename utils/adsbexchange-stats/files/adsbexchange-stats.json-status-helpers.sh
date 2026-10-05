@@ -96,12 +96,25 @@ EOF
 	printf '%s\n' "$uuid"
 }
 
+adsbx_log_curl_diagnostics() {
+	awk -v uuid="${UUID:-}" '
+		{
+			if (match(tolower($0), /(adsbx-uuid|authorization|proxy-authorization|cookie|set-cookie):[[:space:]]*/)) {
+				$0 = substr($0, 1, RSTART + RLENGTH - 1) "[redacted]"
+			}
+			while (uuid != "" && (position = index(tolower($0), tolower(uuid))) > 0) {
+				$0 = substr($0, 1, position - 1) "[redacted]" substr($0, position + length(uuid))
+			}
+			print
+		}
+	' "$2" | logger -t "$ADSBX_LOG_TAG" -p "daemon.$1"
+}
+
 # adsbx_curl_upload <gz_payload>
 #
-# POST the payload, capture HTTP code into ADSBX_HTTP_LAST and elapsed
-# seconds into ADSBX_ELAPSED_LAST. curl stderr (incl. -v at debug) is
-# captured to a tempfile and either logged at debug priority (level 3)
-# or, on transport failure, drained at warn priority. Returns curl's rv.
+# POST the payload and capture HTTP code and elapsed seconds. Redacted
+# curl stderr is logged at debug level, or warn on transport failure.
+# Returns curl's exit status.
 adsbx_curl_upload() {
 	local payload="$1" rv=0 t0 t1 errfile http current_uuid
 	_adsbx_normalize_log_level
@@ -142,9 +155,9 @@ adsbx_curl_upload() {
 
 	if [ "$errfile" != /dev/null ] && [ -s "$errfile" ]; then
 		if [ "$rv" -ne 0 ]; then
-			logger -t "$ADSBX_LOG_TAG" -p daemon.warn < "$errfile"
+			adsbx_log_curl_diagnostics warn "$errfile"
 		elif [ "$ADSBX_LOG_LEVEL" -ge 3 ]; then
-			logger -t "$ADSBX_LOG_TAG" -p daemon.debug < "$errfile"
+			adsbx_log_curl_diagnostics debug "$errfile"
 		fi
 	fi
 	[ "$errfile" != /dev/null ] && rm -f "$errfile"

@@ -63,10 +63,10 @@ define Package/adsbexchange-stats/description
                                          -- print the public per-station
                                             ADSBexchange stats URL
                                             (derived from the selected feeder)
-    service adsbexchange-stats about   -- package and configuration help
+    service adsbexchange-stats about     -- package and configuration help
     service adsbexchange-stats activate <feeder>
-                      -- consent to statistics uploads for an
-                       enabled ADSBexchange feeder
+                       -- consent to statistics uploads
+                        for an enabled ADSBexchange feeder
 endef
 
 # Pure shell payload; nothing to compile or stage-install.

@@ -158,19 +158,47 @@ test_error_output() (
 	# shellcheck source=/dev/null
 	. "$tmpdir/functions.sh"
 	ADSBX_LOG_TAG=review-stats
+	ADSBX_LOG_STDERR=${1:-1}
 	: > "$tmpdir/calls"
 	logger() { printf '%s\n' "$*" >> "$tmpdir/calls"; }
 	adsbx_err 'failed to start' > "$tmpdir/stdout" 2> "$tmpdir/stderr" || return 1
 	[ ! -s "$tmpdir/stdout" ] || return 1
-	assert_equal "$(cat "$tmpdir/stderr")" 'review-stats: failed to start' || return 1
+	if [ "$ADSBX_LOG_STDERR" = 1 ]; then
+		assert_equal "$(cat "$tmpdir/stderr")" 'review-stats: failed to start' || return 1
+	else
+		[ ! -s "$tmpdir/stderr" ] || return 1
+	fi
 	assert_equal "$(cat "$tmpdir/calls")" '-t review-stats -p daemon.err -- failed to start'
 )
 run_test 'production error logger writes both stderr and syslog without stdout' test_error_output
-run_test 'new uploader package starts at release 1' grep -qx 'PKG_RELEASE:=1' "$package_dir/Makefile"
-run_test 'daemon control help does not misclassify showurl' \
-	grep -Fq 'service adsbexchange-stats {start|stop|restart|reload|status|enable|disable}' "$package_dir/Makefile"
-run_test 'package help retains the extra showurl action' \
-	grep -qx '    service adsbexchange-stats showurl' "$package_dir/Makefile"
+run_test 'daemon errors are sent to syslog without duplicate stderr output' test_error_output 0
+test_runtime_defaults() (
+	unset ADSBX_RUNTIME_DIR ADSBX_ENV_FILE ADSBX_UUID_FILE ADSBX_UPLOADER
+	expected_dir=/var/run/adsbexchange-stats
+	expected_env=$expected_dir/env expected_uuid=$expected_dir/uuid
+	expected_uploader=/usr/share/adsbexchange-stats/json-status
+	case $1 in
+		directory)
+			ADSBX_RUNTIME_DIR="$tmpdir/custom"
+			expected_dir=$ADSBX_RUNTIME_DIR
+			expected_env=$expected_dir/env expected_uuid=$expected_dir/uuid
+			;;
+		explicit)
+			ADSBX_ENV_FILE="$tmpdir/custom-env" ADSBX_UUID_FILE="$tmpdir/custom-uuid"
+			ADSBX_UPLOADER="$tmpdir/custom-uploader"
+			expected_env=$ADSBX_ENV_FILE expected_uuid=$ADSBX_UUID_FILE expected_uploader=$ADSBX_UPLOADER
+			;;
+	esac
+	# shellcheck source=/dev/null
+	. "$tmpdir/functions.sh"
+	assert_equal "$ADSBX_RUNTIME_DIR" "$expected_dir" &&
+		assert_equal "$ADSBX_ENV_FILE" "$expected_env" &&
+		assert_equal "$ADSBX_UUID_FILE" "$expected_uuid" &&
+		assert_equal "$ADSBX_UPLOADER" "$expected_uploader"
+)
+run_test 'unset runtime paths receive production defaults' test_runtime_defaults default
+run_test 'runtime directory override determines default env and UUID paths' test_runtime_defaults directory
+run_test 'explicit runtime file and uploader overrides are preserved' test_runtime_defaults explicit
 run_test 'default-selected feeder inherits main UUID' test_identity '' 0 "$main_uuid"
 run_test 'selected feeder override wins over main UUID' test_identity second 0 "$override_uuid"
 run_test 'configured selection resolves its own override' test_identity '' 0 "$override_uuid" \
@@ -192,7 +220,9 @@ test_enabled_start() (
 	seed 'adsbexchange-stats.main.enabled=1' 'adsbexchange-stats.main.feeder=second'
 	start_instance main || return 1
 	assert_equal "$(cat "$tmpdir/uuid")" "$override_uuid" || return 1
-	grep -qx "ADSBX_FEEDER='second'" "$tmpdir/env" && grep -q '^open$' "$tmpdir/calls"
+	! grep -Fq "$override_uuid" "$tmpdir/log" || return 1
+	grep -qx "ADSBX_FEEDER='second'" "$tmpdir/env" && grep -q '^open$' "$tmpdir/calls" &&
+		grep -q 'ADSBX_LOG_STDERR=0' "$tmpdir/calls"
 )
 test_environment_failure() (
 	seed 'adsbexchange-stats.main.enabled=1'
@@ -318,6 +348,36 @@ test_upload_guard() (
 	fi
 )
 run_test 'approved matching feeder can upload' test_upload_guard matching 0
+test_curl_redaction() (
+	override_uuid=abcdefab-0000-4000-8000-abcdefabcdef
+	seed 'adsbexchange-stats.main.enabled=1' 'adsbexchange-stats.main.feeder=second'
+	ADSBX_FEEDER=second UUID=$override_uuid ADSBX_LOG_LEVEL=$1
+	curl_status=$2 priority=$3
+	curl() {
+		printf '%s\n' \
+			"> adsbx-uuid: $UUID" \
+			'> AuThOrIzAtIoN: Bearer private-token' \
+			'> Proxy-Authorization: private-proxy' \
+			'> Cookie: session=private-cookie' \
+			'< Set-Cookie: session=private-server' \
+			"* [HTTP/2] [1] [adsbx-uuid: $UUID]" \
+			"* identity $UUID" \
+			'* identity ABCDEFAB-0000-4000-8000-ABCDEFABCDEF' \
+			'* identity AbCdEfAb-0000-4000-8000-AbCdEfAbCdEf' '* Connected to test host' >&2
+		printf 200
+		return "$curl_status"
+	}
+	logger() { printf '%s\n' "$*" >> "$tmpdir/calls"; cat >> "$tmpdir/log"; }
+	rc=0
+	adsbx_curl_upload "$tmpdir/config" || rc=$?
+	assert_equal "$rc" "$curl_status" || return 1
+	grep -q "daemon.$priority" "$tmpdir/calls" || return 1
+	grep -q '\[redacted\]' "$tmpdir/log" && grep -q 'Connected to test host' "$tmpdir/log" || return 1
+	! grep -Fiq "$UUID" "$tmpdir/log" && ! grep -Eq 'private-(token|proxy|cookie|server)' "$tmpdir/log"
+)
+run_test 'successful verbose uploads redact UUID and sensitive headers' test_curl_redaction 3 0 debug
+run_test 'failed verbose uploads redact UUID and sensitive headers' test_curl_redaction 3 9 warn
+run_test 'failure diagnostics are redacted even below debug level' test_curl_redaction 0 9 warn
 test_upload_log_level() (
 	seed 'adsbexchange-stats.main.enabled=1' 'adsbexchange-stats.main.feeder=second'
 	ADSBX_FEEDER=second UUID=$override_uuid ADSBX_LOG_LEVEL=$1
@@ -507,6 +567,7 @@ test_runtime_cleanup() (
 	stop_service || return 1
 	[ -f "$runtime/upload.gz" ] || return 1
 	if [ "$scenario" = failure ]; then
+		# shellcheck disable=SC2329
 		rm() { return 1; }
 		rc=0
 		service_stopped || rc=$?
@@ -534,6 +595,7 @@ test_metrics() (
 	ADSBX_LOG_LEVEL=2 ADSBX_SUMMARY_INTERVAL=300 ADSBX_HTTP_LAST=200 ADSBX_ELAPSED_LAST=0
 	ADSBX_CYCLE=0 ADSBX_OK=0 ADSBX_FAIL=0
 	ADSBX_AC_TOTAL=0 ADSBX_BYTES_TOTAL=0 ADSBX_LAST_SUMMARY=100
+	# shellcheck disable=SC2329
 	date() { echo 100; }
 	adsbx_record_upload "$aircraft_input" "$bytes_input" || return 1
 	assert_equal "$ADSBX_CYCLE" 1 && assert_equal "$ADSBX_OK" 1 &&

@@ -18,18 +18,19 @@
 : "${ADSBX_LOG_TAG:=adsbexchange-stats}"
 READSB_LOG_TAG=$ADSBX_LOG_TAG
 
-ADSBX_RUNTIME_DIR=/var/run/adsbexchange-stats
-ADSBX_ENV_FILE=$ADSBX_RUNTIME_DIR/env
-ADSBX_UUID_FILE=$ADSBX_RUNTIME_DIR/uuid
-ADSBX_UPLOADER=/usr/share/adsbexchange-stats/json-status
+: "${ADSBX_RUNTIME_DIR:=/var/run/adsbexchange-stats}"
+: "${ADSBX_ENV_FILE:=$ADSBX_RUNTIME_DIR/env}"
+: "${ADSBX_UUID_FILE:=$ADSBX_RUNTIME_DIR/uuid}"
+: "${ADSBX_UPLOADER:=/usr/share/adsbexchange-stats/json-status}"
+: "${ADSBX_LOG_STDERR:=1}"
 
 # Fallback aircraft.json search list when neither the UCI override nor
 # readsb.main.write_json is set.
-ADSBX_FALLBACK_PATHS='/var/run/readsb /run/adsbexchange-feed /run/dump1090 /run/dump1090-fa'
+: "${ADSBX_FALLBACK_PATHS:=/var/run/readsb /run/adsbexchange-feed /run/dump1090 /run/dump1090-fa}"
 
 # Public per-station stats URL template (mirrors readsb-wiedehopf's
 # adsbexchange preset entry).
-ADSBX_FEED_URL_BASE='https://www.adsbexchange.com/api/feeders/?feed='
+: "${ADSBX_FEED_URL_BASE:=https://www.adsbexchange.com/api/feeders/?feed=}"
 
 # --- logging ----------------------------------------------------------
 # Daemon-facility logger; tag overridable via ADSBX_LOG_TAG.
@@ -39,7 +40,9 @@ adsbx_info()    { _adsbx_log info   "$@"; }
 adsbx_notice()  { _adsbx_log notice "$@"; }
 adsbx_warn()    { _adsbx_log warn   "$@"; }
 adsbx_err() {
-	printf '%s: %s\n' "$ADSBX_LOG_TAG" "$*" >&2
+	if [ "$ADSBX_LOG_STDERR" = 1 ]; then
+		printf '%s: %s\n' "$ADSBX_LOG_TAG" "$*" >&2
+	fi
 	_adsbx_log err "$@"
 }
 
