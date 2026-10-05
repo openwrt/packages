@@ -38,7 +38,10 @@ _adsbx_log()    { local p="$1"; shift; logger -t "$ADSBX_LOG_TAG" -p "daemon.$p"
 adsbx_info()    { _adsbx_log info   "$@"; }
 adsbx_notice()  { _adsbx_log notice "$@"; }
 adsbx_warn()    { _adsbx_log warn   "$@"; }
-adsbx_err()     { _adsbx_log err    "$@" >&2; }
+adsbx_err() {
+	printf '%s: %s\n' "$ADSBX_LOG_TAG" "$*" >&2
+	_adsbx_log err "$@"
+}
 
 # Normalize decimal input before shell arithmetic, including leading zeros.
 adsbx_uint() {

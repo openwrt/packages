@@ -16,7 +16,7 @@ cleanup() {
 	rm -f "$tmpdir/functions.sh" "$tmpdir/init.sh" "$tmpdir/upload.sh" \
 		"$tmpdir/postinst.sh" "$tmpdir/prerm.sh" "$tmpdir/config" \
 		"$tmpdir/calls" "$tmpdir/log" "$tmpdir/uuid" "$tmpdir/env" "$tmpdir/env-check.sh" \
-		"$tmpdir/uci-calls" "$tmpdir/cleanup-output" || \
+		"$tmpdir/uci-calls" "$tmpdir/cleanup-output" "$tmpdir/stderr" "$tmpdir/stdout" || \
 		printf 'cleanup: could not remove test files in %s\n' "$tmpdir" >&2
 	rmdir "$tmpdir" 2>/dev/null || \
 		printf 'cleanup: temporary directory retained at %s (leftover files or removal failure)\n' "$tmpdir" >&2
@@ -154,6 +154,23 @@ test_identity() (
 	value=$(adsbx_require_uuid "$selector") || rc=$?
 	assert_equal "$rc" "$expected_rc" && assert_equal "$value" "$expected_uuid"
 )
+test_error_output() (
+	# shellcheck source=/dev/null
+	. "$tmpdir/functions.sh"
+	ADSBX_LOG_TAG=review-stats
+	: > "$tmpdir/calls"
+	logger() { printf '%s\n' "$*" >> "$tmpdir/calls"; }
+	adsbx_err 'failed to start' > "$tmpdir/stdout" 2> "$tmpdir/stderr" || return 1
+	[ ! -s "$tmpdir/stdout" ] || return 1
+	assert_equal "$(cat "$tmpdir/stderr")" 'review-stats: failed to start' || return 1
+	assert_equal "$(cat "$tmpdir/calls")" '-t review-stats -p daemon.err -- failed to start'
+)
+run_test 'production error logger writes both stderr and syslog without stdout' test_error_output
+run_test 'new uploader package starts at release 1' grep -qx 'PKG_RELEASE:=1' "$package_dir/Makefile"
+run_test 'daemon control help does not misclassify showurl' \
+	grep -Fq 'service adsbexchange-stats {start|stop|restart|reload|status|enable|disable}' "$package_dir/Makefile"
+run_test 'package help retains the extra showurl action' \
+	grep -qx '    service adsbexchange-stats showurl' "$package_dir/Makefile"
 run_test 'default-selected feeder inherits main UUID' test_identity '' 0 "$main_uuid"
 run_test 'selected feeder override wins over main UUID' test_identity second 0 "$override_uuid"
 run_test 'configured selection resolves its own override' test_identity '' 0 "$override_uuid" \
@@ -532,6 +549,7 @@ test_cleanup_status() (
 	wanted=$1 failed_command=$2
 	rc=0
 	(
+		# shellcheck disable=SC2329
 		rm() { [ "$failed_command" != rm ]; }
 		rmdir() { [ "$failed_command" != rmdir ]; }
 		trap cleanup 0

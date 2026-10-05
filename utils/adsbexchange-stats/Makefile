@@ -13,7 +13,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adsbexchange-stats
 PKG_VERSION:=2023-02-22
-PKG_RELEASE:=2
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/ADSBexchange/adsbexchange-stats.git
@@ -55,7 +55,7 @@ define Package/adsbexchange-stats/description
   Manage the station UUID with `readsb-uuid`.
 
   Daemon control:
-    service adsbexchange-stats {start|stop|restart|reload|status|enable|disable|showurl}
+    service adsbexchange-stats {start|stop|restart|reload|status|enable|disable}
     logread -e adsbexchange-stats        -- uploader logs
 
   Extra (non-procd) actions:
