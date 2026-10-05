@@ -6,6 +6,9 @@ MAINU=ripe-atlas
 MEASU=ripe-atlas
 GROUP=ripe-atlas
 
+extra_command "get_key" "Print the public key to register the probe with"
+extra_command "probeid" "Print the probe ID"
+
 validate_config()
 {
 	uci_load_validate 'ripe-atlas' 'ripe-atlas' "${1}" "${2}" \
@@ -242,6 +245,42 @@ reload_service()
 {
 	stop
 	start
+}
+
+registered_id()
+{
+	awk '$1 == "PROBE_ID" { print $2 }' \
+		/var/run/ripe-atlas/status/reg_init_reply.txt 2> /dev/null
+}
+
+get_key()
+{
+	local pub=/etc/ripe-atlas/probe_key.pub
+	local id
+
+	if [ ! -s "${pub}" ]; then
+		echo "${pub} is missing, start the probe to create it" >&2
+		return 1
+	fi
+	id="$(registered_id)"
+	if [ -n "${id}" ]; then
+		echo "Registered as probe ${id} with:"
+	else
+		echo 'Register the probe at https://atlas.ripe.net/apply/swprobe/ with:'
+	fi
+	cat "${pub}"
+}
+
+probeid()
+{
+	local id
+
+	id="$(registered_id)"
+	if [ -z "${id}" ]; then
+		echo 'The probe has not registered since boot' >&2
+		return 1
+	fi
+	echo "Probe ID is ${id}"
 }
 
 service_triggers()
