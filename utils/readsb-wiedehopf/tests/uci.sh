@@ -10,12 +10,17 @@ tmpdir=$(mktemp -d) || exit 1
 cleanup() {
 	status=$?
 	trap - 0
-	chmod 700 "$tmpdir/config" || exit 1
+	if [ -d "$tmpdir/config" ]; then
+		chmod 700 "$tmpdir/config" || \
+			printf 'cleanup: could not restore permissions on %s\n' "$tmpdir/config" >&2
+	fi
 	rm -f "$tmpdir/config/readsb" "$tmpdir/shared/readsb" "$tmpdir/original" \
 		"$tmpdir/calls" "$tmpdir/stages" "$tmpdir/output" \
 		"$tmpdir/config/adsbexchange-stats" "$tmpdir/shared/adsbexchange-stats" \
-		"$tmpdir/companion-original"
-	rmdir "$tmpdir/config" "$tmpdir/shared" "$tmpdir/override" "$tmpdir"
+		"$tmpdir/companion-original" || \
+		printf 'cleanup: could not remove test files in %s\n' "$tmpdir" >&2
+	rmdir "$tmpdir/config" "$tmpdir/shared" "$tmpdir/override" "$tmpdir" || \
+		printf 'cleanup: could not remove test directories in %s\n' "$tmpdir" >&2
 	exit "$status"
 }
 trap cleanup 0

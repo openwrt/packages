@@ -153,8 +153,8 @@ cmd_url() {
 # BusyBox ash does not implement /dev/tcp. When running under Bash,
 # use that same interpreter with timeout to bound the connect to 3s.
 # Otherwise use nc only if its help advertises the optional -w timeout.
-# Returns 0 on success, 1 on a failed connection, or 2 when neither
-# bounded probe is available; never attempt an unbounded /dev/tcp connect.
+# Returns 0 on success, 1 on a failed connection, or 2 when bounded
+# probing is unavailable or cannot execute; never use an unbounded connect.
 #
 # Some upstream firewalls (notably feed1.adsbexchange.com:30004) drop
 # SYN+close drive-by probes while accepting persistent feeder streams;
@@ -162,11 +162,15 @@ cmd_url() {
 # `readsb_connector_active` first and only falls through here when no
 # attributable live socket exists.
 _probe_tcp() {
-	local host=$1 port=$2
+	local host=$1 port=$2 rc=0
 	if [ -n "${BASH:-}" ] && command -v timeout >/dev/null 2>&1; then
 		# shellcheck disable=SC2016
-		timeout 3 "$BASH" -c 'exec 9<>"/dev/tcp/$1/$2"' _ "$host" "$port" 2>/dev/null && return 0
-		return 1
+		timeout 3 "$BASH" -c 'exec 9<>"/dev/tcp/$1/$2"' _ "$host" "$port" 2>/dev/null || rc=$?
+		case $rc in
+			0) return 0 ;;
+			125|126|127) return 2 ;;
+			*) return 1 ;;
+		esac
 	fi
 	command -v nc >/dev/null 2>&1 || return 2
 	nc --help 2>&1 | grep -q -- '-w' || return 2

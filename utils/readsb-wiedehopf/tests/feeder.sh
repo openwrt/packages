@@ -98,6 +98,10 @@ run_test 'Bash refused connection is a failed probe, not an unavailable tool' \
 	test_tcp_probe /test/bash 1 1 absent 0 1 timeout
 run_test 'Bash timed-out connection is a failed probe' \
 	test_tcp_probe /test/bash 1 124 absent 0 1 timeout
+for status in 125 126 127; do
+	run_test "timeout execution error $status is indeterminate rather than unreachable" \
+		test_tcp_probe /test/bash 1 "$status" absent 0 2 timeout
+done
 run_test 'Bash without timeout does not attempt an unbounded connection' \
 	test_tcp_probe /test/bash 0 0 absent 0 2 ''
 run_test 'Bash without timeout falls back to bounded nc' \

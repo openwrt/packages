@@ -1,5 +1,7 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-2.0-only
+# Cleanup fixtures intentionally override tmpdir inside a subshell.
+# shellcheck disable=SC2030,SC2031
 
 package_dir=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd) || exit 1
 test_path=$PATH
@@ -11,7 +13,8 @@ cleanup() {
 		"$tmpdir/config" "$tmpdir/commands" "$tmpdir/messages" "$tmpdir/writes" \
 		"$tmpdir/log" "$tmpdir/bin/readsb-geoip" "$tmpdir/cleanup.sh" \
 		"$tmpdir/cleanup-calls" "$tmpdir/cleanup-output" "$tmpdir/stage-path" \
-		"$tmpdir/feeder-add.sh" "$tmpdir/bin/readsb-feeder" "$tmpdir/--filter=expanded" || \
+		"$tmpdir/feeder-add.sh" "$tmpdir/bin/readsb-feeder" "$tmpdir/--filter=expanded" \
+		"$tmpdir/uci-cleanup.sh" || \
 		printf 'cleanup: could not remove test files in %s\n' "$tmpdir" >&2
 	rmdir "$tmpdir/bin" "$tmpdir" || \
 		printf 'cleanup: could not remove temporary directories in %s\n' "$tmpdir" >&2
@@ -43,6 +46,7 @@ sed -n '
 sed -n '/^# --- step 1: location /,/^# --- step 2: UUID /p' \
 	"$package_dir/files/readsb-setup" > "$tmpdir/location.sh" || exit 1
 sed -n '/^cleanup() {/,/^}/p; /^trap .* 0$/p' "$0" > "$tmpdir/cleanup.sh" || exit 1
+sed -n '/^cleanup() {/,/^}/p' "$package_dir/tests/uci.sh" > "$tmpdir/uci-cleanup.sh" || exit 1
 {
 	printf 'case add in\n'
 	sed -n '/^[[:space:]]*add\*)$/,/^[[:space:]]*manage\*)$/p' \
@@ -267,6 +271,41 @@ test_wait_budget() (
 	total=$(awk '{ n += $1 } END { print n+0 }' "$tmpdir/commands")
 	[ "$poll_timeout" -lt 0 ] || [ "$total" -le "$poll_timeout" ]
 )
+test_uci_cleanup_status() (
+	wanted_status=$1 failure=$2
+	fixture="$tmpdir/uci-cleanup-case"
+	mkdir "$fixture" || return 1
+	[ "$failure" = absent ] || mkdir "$fixture/config" || return 1
+	: > "$tmpdir/cleanup-calls"
+	actual_status=0
+	(
+		call_log="$tmpdir/cleanup-calls"
+		tmpdir=$fixture
+		chmod() { echo chmod >> "$call_log"; [ "$failure" != chmod ]; }
+		rm() { echo rm >> "$call_log"; [ "$failure" != rm ]; }
+		rmdir() { echo rmdir >> "$call_log"; [ "$failure" != rmdir ]; }
+		# shellcheck source=/dev/null
+		. "$fixture/../uci-cleanup.sh"
+		trap cleanup 0
+		exit "$wanted_status"
+	) > "$tmpdir/cleanup-output" 2>&1 || actual_status=$?
+	[ "$failure" = absent ] || rmdir "$fixture/config" || return 1
+	rmdir "$fixture" || return 1
+	assert_equal "$actual_status" "$wanted_status" || return 1
+	if [ "$failure" = absent ]; then
+		! grep -q '^chmod$' "$tmpdir/cleanup-calls"
+	elif [ "$failure" != none ]; then
+		grep -q '^cleanup:' "$tmpdir/cleanup-output"
+	else
+		[ ! -s "$tmpdir/cleanup-output" ]
+	fi
+)
+for status in 0 1 7; do
+	for failure in none absent chmod rm rmdir; do
+		run_test "UCI cleanup preserves exit $status (failure=$failure)" \
+			test_uci_cleanup_status "$status" "$failure"
+	done
+done
 test_first_set() (
 	reset_config 'readsb.main.usb_wait_timeout=12' 'readsb.other.usb_wait_timeout=34'
 	usb_wait_timeout=$1
@@ -506,6 +545,7 @@ test_stats_log_filter() (
 run_test 'log filtering matches exact tags before taking the tail' test_log_filter
 run_test 'helper warnings do not interrupt daemon stats or degrade health' test_stats_log_filter
 
+# shellcheck disable=SC2329
 run_hotplug() (
 	# shellcheck disable=SC2034
 	target=main ACTION=$1 event_serial=$2 event_visible=0 vid=0bda pid=2838 READSB_HOTPLUG_SEED=1
