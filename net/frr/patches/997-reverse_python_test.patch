@@ -1,6 +1,16 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Lucian Cristian <lucian.cristian@gmail.com>
+Date: Mon, 7 Mar 2022 19:26:52 +0200
+Subject: [PATCH] do not look for python when cross-compiling
+
+AM_PATH_PYTHON is only needed for clippy, which is built for the host,
+and it fails the target configure run on OpenWrt.
+
+Upstream-Status: Inappropriate [OpenWrt cross-compile setup]
+---
 --- a/configure.ac
 +++ b/configure.ac
-@@ -979,7 +979,6 @@ AC_DEFINE_UNQUOTED([DFLT_NAME], ["$DFLT_
+@@ -980,7 +980,6 @@ AC_DEFINE_UNQUOTED([DFLT_NAME], ["$DFLT_
  #
  
  AS_IF([test "$host" = "$build"], [
