@@ -26,7 +26,7 @@ define Package/bird3
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=Routing and Redirection
-  DEPENDS:=+libpthread +libatomic
+  DEPENDS:=+libpthread $(ATOMIC64_DEPENDS)
   CONFLICTS:=bird2
 endef
 
@@ -94,7 +94,7 @@ define Package/bird3cl/description
 endef
 
 CONFIGURE_ARGS += --disable-libssh
-TARGET_LDFLAGS += -latomic
+TARGET_LDFLAGS += -Wl,--as-needed
 
 define Package/bird3/conffiles
 /etc/bird.conf
