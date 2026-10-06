@@ -74,13 +74,14 @@ define Package/frr/Default
   CATEGORY:=Network
   SUBMENU:=Routing and Redirection
   URL:=https://www.frrouting.org/
-  DEPENDS:=frr
+  # Spelled out: apk's soname resolution would pick libyang 5.x.
+  DEPENDS:=frr +libyang-legacy
 endef
 
 define Package/frr
   $(call Package/frr/Default)
   DEPENDS:=+librt +libatomic +libcap +libncurses +libjson-c +libreadline \
-    +libyang +libprotobuf-c +FRR_OPENSSL:libopenssl +FRR_SNMP:libnetsnmp +more
+    +libyang-legacy +libprotobuf-c +FRR_OPENSSL:libopenssl +FRR_SNMP:libnetsnmp +more
   TITLE:=The FRRouting (FRR) Software Routing Suite
   MENU:=1
 endef
@@ -153,7 +154,16 @@ define Package/frr/conffiles
 /etc/frr/vtysh.conf
 endef
 
-TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed -latomic
+# frr needs the v3 ABI; its configure looks libyang up three ways
+# (PKG_CHECK_MODULES, pkg-config --modversion, AC_CHECK_LIB), so all of
+# LDFLAGS, LIBYANG_* and PKG_CONFIG_PATH point at the legacy prefix.
+TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed -latomic \
+	-L$(STAGING_DIR)/usr/lib/libyang-legacy/lib
+
+CONFIGURE_VARS += \
+	LIBYANG_CFLAGS="-I$(STAGING_DIR)/usr/lib/libyang-legacy/include" \
+	LIBYANG_LIBS="-L$(STAGING_DIR)/usr/lib/libyang-legacy/lib -lyang" \
+	PKG_CONFIG_PATH="$(STAGING_DIR)/usr/lib/libyang-legacy/lib/pkgconfig:$$$$PKG_CONFIG_PATH"
 
 define Host/Configure
 	$(Host/Configure/Default)
