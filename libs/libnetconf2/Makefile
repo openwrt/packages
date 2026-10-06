@@ -25,14 +25,15 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
 CMAKE_OPTIONS += \
-	-DENABLE_PAM=OFF
+	-DENABLE_PAM=OFF \
+	-DCMAKE_PREFIX_PATH=$(STAGING_DIR)/usr/lib/libyang-legacy
 
 define Package/libnetconf2
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=NETCONF library
   URL:=https://github.com/CESNET/libnetconf2
-  DEPENDS:= +libyang +libcurl +libssh +libopenssl +libpthread
+  DEPENDS:=+libyang-legacy +libcurl +libssh +libopenssl +libpthread
 endef
 
 define Package/libnetconf2/description

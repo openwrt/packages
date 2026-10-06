@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sysrepo
 PKG_VERSION:=3.7.11
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/sysrepo/sysrepo/tar.gz/v$(PKG_VERSION)?
@@ -29,7 +29,7 @@ define Package/libsysrepo
   CATEGORY:=Libraries
   TITLE:=YANG-based data store library
   URL:=https://www.sysrepo.org/
-  DEPENDS:=+libyang $(ATOMIC64_DEPENDS) +libprotobuf-c +libev +librt +libpthread
+  DEPENDS:=+libyang-legacy $(ATOMIC64_DEPENDS) +libprotobuf-c +libev +librt +libpthread
 endef
 
 define Package/sysrepo
@@ -71,7 +71,8 @@ CMAKE_OPTIONS += \
 	-DCMAKE_BUILD_TYPE="Package" \
 	-DREPOSITORY_LOC:PATH=/etc/sysrepo \
 	-DCALL_TARGET_BINS_DIRECTLY=OFF \
-	-DGEN_LANGUAGE_BINDINGS:BOOL=TRUE
+	-DGEN_LANGUAGE_BINDINGS:BOOL=TRUE \
+	-DCMAKE_PREFIX_PATH=$(STAGING_DIR)/usr/lib/libyang-legacy
 
 define Package/libsysrepo/install
 	$(INSTALL_DIR) $(1)/usr/lib

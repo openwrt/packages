@@ -29,7 +29,7 @@ define Package/netopeer2-server
   CATEGORY:=Utilities
   TITLE:=NETCONF server
   URL:=https://github.com/CESNET/Netopeer2
-  DEPENDS:=+libcurl +libpthread +libyang +libnetconf2 +libsysrepo +sysrepocfg +sysrepoctl +sysrepo
+  DEPENDS:=+libcurl +libpthread +libyang-legacy +libnetconf2 +libsysrepo +sysrepocfg +sysrepoctl +sysrepo
   MENU:=1
 endef
 
@@ -38,7 +38,7 @@ define Package/netopeer2-cli
   CATEGORY:=Utilities
   TITLE:=Netopeer2 cli tool
   URL:=https://github.com/CESNET/Netopeer2
-  DEPENDS:=+libpthread +libyang +libnetconf2 +libopenssl
+  DEPENDS:=+libpthread +libyang-legacy +libnetconf2 +libopenssl
 endef
 
 define Package/netopeer2/description
@@ -51,7 +51,8 @@ endef
 CMAKE_OPTIONS += \
 	-DCMAKE_INSTALL_PREFIX:PATH=/usr \
 	-DCMAKE_BUILD_TYPE:STRING=Release \
-	-DSYSREPO_SETUP:BOOL=OFF
+	-DSYSREPO_SETUP:BOOL=OFF \
+	-DCMAKE_PREFIX_PATH=$(STAGING_DIR)/usr/lib/libyang-legacy
 
 define Package/netopeer2-server/install
 	$(INSTALL_DIR) $(1)/usr/bin
