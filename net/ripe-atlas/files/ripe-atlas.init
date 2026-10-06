@@ -256,8 +256,14 @@ registered_id()
 get_key()
 {
 	local pub=/etc/ripe-atlas/probe_key.pub
+	local variant
 	local id
 
+	variant="$(cat /usr/share/ripe-atlas/variant 2> /dev/null)"
+	if [ -z "${variant}" ]; then
+		echo 'Install ripe-atlas-probe or ripe-atlas-anchor first' >&2
+		return 1
+	fi
 	if [ ! -s "${pub}" ]; then
 		echo "${pub} is missing, start the probe to create it" >&2
 		return 1
@@ -265,6 +271,8 @@ get_key()
 	id="$(registered_id)"
 	if [ -n "${id}" ]; then
 		echo "Registered as probe ${id} with:"
+	elif [ "${variant}" = anchor ]; then
+		echo 'Register the anchor at https://atlas.ripe.net/anchors/apply/ with:'
 	else
 		echo 'Register the probe at https://atlas.ripe.net/apply/swprobe/ with:'
 	fi
