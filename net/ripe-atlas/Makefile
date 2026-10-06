@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ripe-atlas
 PKG_VERSION:=5130
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=ripe-atlas-software-probe-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/RIPE-NCC/ripe-atlas-software-probe/tar.gz/refs/tags/$(PKG_VERSION)?
@@ -71,7 +71,6 @@ define Package/ripe-atlas-common
   $(call Package/ripe-atlas/Default)
   TITLE+=(common files)
   USERID:=ripe-atlas=445:ripe-atlas=445
-  PROVIDES:=atlas-probe
   DEPENDS:= \
 	+openssh-client \
 	+openssh-keygen \
@@ -156,7 +155,7 @@ define Package/ripe-atlas-probe
   $(call Package/ripe-atlas/Default)
   TITLE+=(Software Probe)
   DEPENDS+=+ripe-atlas-common
-  PROVIDES:=ripe-atlas atlas-sw-probe
+  PROVIDES:=ripe-atlas atlas-sw-probe atlas-probe
   DEFAULT_VARIANT:=1
   CONFLICTS:=ripe-atlas-anchor
 endef
