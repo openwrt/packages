@@ -7,7 +7,7 @@
 # not print PKG_VERSION, so the generic runtime version check cannot match it.
 # Opt out for every package defined in this Makefile.
 case "$PKG_NAME" in
-wwand|wwand-qmi|wwand-mbim|wwand-ncm|wwand-mhi|wwand-esim)
+wwand|wwand-qmi|wwand-mbim|wwand-ncm|wwand-mhi|wwand-esim|wwand-gps)
 	exit 0
 	;;
 

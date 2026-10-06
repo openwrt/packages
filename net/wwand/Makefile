@@ -10,6 +10,7 @@
 #   wwand-ncm  - NCM/ECM backend        (DEPENDS wwand)
 #   wwand-mhi  - PCIe/MHI transport + drivers (DEPENDS wwand; add a backend)
 #   wwand-esim - eSIM management        (DEPENDS wwand + lpac; no backend)
+#   wwand-gps  - GNSS/NMEA reader       (DEPENDS wwand)
 # A typical QMI router installs `wwand-qmi` (which pulls in `wwand`); add
 # `wwand-mbim` / `wwand-ncm` for those modems, `wwand-mhi` for a PCIe/MHI modem.
 # The ucode tree ships as SOURCE. It can be precompiled to bytecode (repo-root
@@ -24,12 +25,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wwand
-PKG_VERSION:=1.6.7
+PKG_VERSION:=1.6.9
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ddimension/wwand/tar.gz/refs/tags/v$(PKG_VERSION)?
-PKG_HASH:=093efcb4134afec4c52debd237edd9ca9accdf25c47bf92e4f361f3843e5f878
+PKG_HASH:=8b509e2f26103dc4a3c2099c1cf82f72d02c639eba194e0835d774572ae88d50
 
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=LICENSE
@@ -76,9 +77,9 @@ WWAND_BASE_UC:=apndb.uc atcmd.uc atcmd_parse.uc atport.uc backend.uc board.uc \
 	carrier_config.uc \
 	client.uc config.uc config_check.uc context_common.uc context_monitor_qmi.uc \
 	ctx_settings.uc daemon.uc deps.uc discovery.uc hwops.uc log.uc modem_common.uc \
-	modem_datapath_qmi.uc modem_init_qmi.uc modem_quirks.uc modeswitch.uc \
+	modem_datapath_qmi.uc modem_init_qmi.uc modem_quirks.uc modeswitch.uc plugins.uc \
 	ncm_vendors.uc netlink.uc netsel_ops.uc protocol_switch.uc reconnect.uc \
-	recovery.uc regdetail.uc sim.uc sim_plmn.uc simops.uc sms.uc sms_pdu.uc \
+	recovery.uc regdetail.uc sim.uc sim_plmn.uc simops.uc siminventory.uc sms.uc sms_pdu.uc \
 	telemetry_mbim.uc telemetry_ncm.uc telemetry_qmi.uc transport.uc ubus.uc \
 	version.uc \
 	wwandctl_fmt.uc
@@ -423,9 +424,52 @@ define Package/wwand-esim/install
 	$(INSTALL_DATA) $(WWAND_UCODE)/esim_bridge.uc $(1)$(UCDIR)/
 endef
 
+define Package/wwand-gps
+  SECTION:=net
+  CATEGORY:=Network
+  SUBMENU:=WWAN
+  TITLE:=GNSS/NMEA reader for wwand
+  # Reads NMEA off the modem's own port and reports it through wwand's ubus.
+  # It used to drive ugps (OpenWrt base) instead, and no longer depends on it:
+  # ugps takes ONE static tty out of /etc/config/gps and publishes ONE `gps`
+  # object, so a two-modem box could only ever have one position; it exits on
+  # tty EOF, which on a modem reset means respawning against a device that is
+  # not back; and it parses neither GSV (satellites in view) nor GSA (fix type,
+  # PDOP/VDOP) and drops every talker but $GP/$GN. wwand already finds the
+  # port, starts the receiver and owns the lifecycle, so the reading is the
+  # small part. Installing ugps alongside is harmless — wwand does not touch
+  # /etc/config/gps and does not claim the `gps` ubus name.
+  DEPENDS:=+wwand
+endef
+
+define Package/wwand-gps/description
+  wwand finds the modem's NMEA port during enumeration (reported as `gps_port`)
+  and `option gnss` starts the receiver with the vendor AT command — QMI's LOC
+  service is broken on Quectel and AT is what works, and only wwand has the
+  port. This package reads that port: NMEA 0183 framing, checksums, RMC/GGA/GSA/
+  GSV/GLL/VTG/ZDA from ANY talker, reported through `modem_gps` as numbers, with
+  the satellites in view and their SNR, the fix type and the DOP values.
+
+  ONE READER PER MODEM, so a two-modem router has two positions. `option
+  gnss_set_time` hands the receiver's clock to wwand's own set_clock, which only
+  ever steps a clock that is plainly unset and so never fights sysntpd.
+
+  Good citizen: it writes no config at all and does not claim the `gps` ubus
+  name, so ugps and an operator's own receiver are unaffected by installing it.
+  One port is only ever read once — a second modem naming a tty that is already
+  being read is refused rather than given half a stream.
+endef
+
+define Package/wwand-gps/install
+	$(INSTALL_DIR) $(1)$(UCDIR)
+	$(INSTALL_DATA) $(WWAND_UCODE)/gps.uc $(1)$(UCDIR)/
+	$(INSTALL_DATA) $(WWAND_UCODE)/nmea.uc $(1)$(UCDIR)/
+endef
+
 $(eval $(call BuildPackage,wwand))
 $(eval $(call BuildPackage,wwand-qmi))
 $(eval $(call BuildPackage,wwand-mbim))
 $(eval $(call BuildPackage,wwand-ncm))
 $(eval $(call BuildPackage,wwand-mhi))
 $(eval $(call BuildPackage,wwand-esim))
+$(eval $(call BuildPackage,wwand-gps))
