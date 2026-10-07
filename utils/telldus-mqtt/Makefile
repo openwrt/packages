@@ -6,13 +6,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=telldus-mqtt
-PKG_VERSION:=0.3
+PKG_VERSION:=0.4.1
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/PeterFromSweden/telldus-mqtt.git
-PKG_SOURCE_VERSION:=ffcbadc3aa3e36a238e35319bab66819e93db347
-PKG_MIRROR_HASH:=20aa0e2d59ac8f37cc805f3b1a02559c278a99a577567d978ece264bac6bae61
+PKG_SOURCE_VERSION:=ce6445ca4dc467d8870bba1e1b45ad6957d758e6
+PKG_MIRROR_HASH:=e63b129a63c5e0b184def0e3cd709da84117ab5649b71c12da65f7d5b4451757
 
 PKG_MAINTAINER:=Peter Liedholm <PeterFromSwe884@gmail.com>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -20,6 +20,8 @@ PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
+
+CMAKE_OPTIONS += -DBUILD_TESTING=OFF
 
 define Package/telldus-mqtt
 	SECTION:=utils
