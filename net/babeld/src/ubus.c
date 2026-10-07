@@ -36,6 +36,13 @@ int ubus_bindings = 0;
 // Shared state maintained throughout calls to handle ubus messages.
 static struct ubus_context *shared_ctx;
 
+// Whether the connection to ubusd was lost, and when and how often to try to
+// reconnect.
+static bool ubus_connection_lost;
+static time_t ubus_reconnect_time;
+static time_t ubus_reconnect_interval = 1;
+#define UBUS_RECONNECT_INTERVAL_MAX 32
+
 // List of exported routes (to be used with ubox's list helpers).
 struct xroute_list_entry {
   struct list_head list;
@@ -94,6 +101,8 @@ static int babeld_ubus_add_filter(struct ubus_context *ctx_local,
     return UBUS_STATUS_INVALID_ARGUMENT;
 
   type = blobmsg_get_u32(tb[FILTER_TYPE]);
+  if (type < FILTER_TYPE_INPUT || type > FILTER_TYPE_INSTALL)
+    return UBUS_STATUS_INVALID_ARGUMENT;
 
   if (tb[FILTER_METRIC])
     metric = blobmsg_get_u32(tb[FILTER_METRIC]);
@@ -110,9 +119,17 @@ static int babeld_ubus_add_filter(struct ubus_context *ctx_local,
 
   ifname = blobmsg_get_string(tb[FILTER_IFNAME]);
   filter->ifname = strdup(ifname);
+  if (filter->ifname == NULL) {
+    free(filter);
+    return UBUS_STATUS_UNKNOWN_ERROR;
+  }
   filter->ifindex = if_nametoindex(filter->ifname);
 
-  add_filter(filter, type);
+  if (add_filter(filter, type) < 0) {
+    free(filter->ifname);
+    free(filter);
+    return UBUS_STATUS_UNKNOWN_ERROR;
+  }
 
   return UBUS_STATUS_OK;
 }
@@ -168,17 +185,33 @@ static int babeld_ubus_babeld_info(struct ubus_context *ctx_local,
   return ret;
 }
 
-// Appends an exported route message entry to the buffer.
-static void babeld_add_xroute_buf(struct xroute *xroute, struct blob_buf *b) {
-  void *prefix;
-
-  prefix = blobmsg_open_table(b, NULL);
+// Appends the fields of an exported route to the buffer.
+static void babeld_add_xroute_fields(struct xroute *xroute,
+                                     struct blob_buf *b) {
   blobmsg_add_string(b, "address",
                       format_prefix(xroute->prefix, xroute->plen));
   blobmsg_add_string(b, "src_prefix",
                      format_prefix(xroute->src_prefix, xroute->src_plen));
   blobmsg_add_u32(b, "metric", xroute->metric);
+}
+
+// Appends an exported route message entry to the buffer.
+static void babeld_add_xroute_buf(struct xroute *xroute, struct blob_buf *b) {
+  void *prefix;
+
+  prefix = blobmsg_open_table(b, NULL);
+  babeld_add_xroute_fields(xroute, b);
   blobmsg_close_table(b, prefix);
+}
+
+// Frees the entries of an exported route list.
+static void babeld_free_xroute_list(struct list_head *head) {
+  struct xroute_list_entry *cur, *tmp;
+
+  list_for_each_entry_safe(cur, tmp, head, list) {
+    list_del(&cur->list);
+    free(cur);
+  }
 }
 
 // Sends an exported routes message on ubus socket, splitting apart IPv4 and
@@ -206,6 +239,13 @@ static int babeld_ubus_get_xroutes(struct ubus_context *ctx_local,
 
       struct xroute_list_entry *xr =
           calloc(1, sizeof(struct xroute_list_entry));
+      if (xr == NULL) {
+        xroute_stream_done(xroutes);
+        babeld_free_xroute_list(&xroute_ipv4_list);
+        babeld_free_xroute_list(&xroute_ipv6_list);
+        blob_buf_free(&b);
+        return UBUS_STATUS_UNKNOWN_ERROR;
+      }
       xr->xroute = xroute;
 
       if (v4mapped(xroute->prefix)) {
@@ -242,13 +282,9 @@ static int babeld_ubus_get_xroutes(struct ubus_context *ctx_local,
   return ret;
 }
 
-// Appends an route message entry to the buffer.
-static void babeld_add_route_buf(struct babel_route *route,
-                                 struct blob_buf *b) {
-  void *prefix;
-
-  prefix = blobmsg_open_table(
-      b, NULL);
+// Appends the fields of a route to the buffer.
+static void babeld_add_route_fields(struct babel_route *route,
+                                    struct blob_buf *b) {
   blobmsg_add_string(
       b, "address",
       format_prefix(route->src->prefix, route->src->plen));
@@ -267,8 +303,26 @@ static void babeld_add_route_buf(struct babel_route *route,
 
   blobmsg_add_u8(b, "installed", route->installed);
   blobmsg_add_u8(b, "feasible", route_feasible(route));
+}
 
+// Appends an route message entry to the buffer.
+static void babeld_add_route_buf(struct babel_route *route,
+                                 struct blob_buf *b) {
+  void *prefix;
+
+  prefix = blobmsg_open_table(b, NULL);
+  babeld_add_route_fields(route, b);
   blobmsg_close_table(b, prefix);
+}
+
+// Frees the entries of a route list.
+static void babeld_free_route_list(struct list_head *head) {
+  struct route_list_entry *cur, *tmp;
+
+  list_for_each_entry_safe(cur, tmp, head, list) {
+    list_del(&cur->list);
+    free(cur);
+  }
 }
 
 // Sends received routes message on ubus socket, splitting apart IPv4 and IPv6
@@ -294,6 +348,13 @@ static int babeld_ubus_get_routes(struct ubus_context *ctx_local,
       if (route == NULL)
         break;
       struct route_list_entry *r = calloc(1, sizeof(struct route_list_entry));
+      if (r == NULL) {
+        route_stream_done(routes);
+        babeld_free_route_list(&route_ipv4_list);
+        babeld_free_route_list(&route_ipv6_list);
+        blob_buf_free(&b);
+        return UBUS_STATUS_UNKNOWN_ERROR;
+      }
       r->route = route;
 
       if (v4mapped(route->src->prefix)) {
@@ -330,12 +391,9 @@ static int babeld_ubus_get_routes(struct ubus_context *ctx_local,
   return ret;
 }
 
-// Appends an neighbour entry to the buffer.
-static void babeld_add_neighbour_buf(struct neighbour *neigh,
-                                     struct blob_buf *b) {
-  void *neighbour;
-
-  neighbour = blobmsg_open_table(b, NULL);
+// Appends the fields of a neighbour to the buffer.
+static void babeld_add_neighbour_fields(struct neighbour *neigh,
+                                        struct blob_buf *b) {
   blobmsg_add_string(b, "address", format_address(neigh->address));
   blobmsg_add_string(b, "dev", neigh->ifp->name);
   blobmsg_add_u32(b, "hello_reach", neigh->hello.reach);
@@ -344,7 +402,26 @@ static void babeld_add_neighbour_buf(struct neighbour *neigh,
   blobmsg_add_u32(b, "txcost", neigh->txcost);
   blobmsg_add_string(b, "rtt", format_thousands(neigh->rtt));
   blobmsg_add_u8(b, "if_up", if_up(neigh->ifp));
+}
+
+// Appends an neighbour entry to the buffer.
+static void babeld_add_neighbour_buf(struct neighbour *neigh,
+                                     struct blob_buf *b) {
+  void *neighbour;
+
+  neighbour = blobmsg_open_table(b, NULL);
+  babeld_add_neighbour_fields(neigh, b);
   blobmsg_close_table(b, neighbour);
+}
+
+// Frees the entries of a neighbour list.
+static void babeld_free_neighbour_list(struct list_head *head) {
+  struct neighbour_list_entry *cur, *tmp;
+
+  list_for_each_entry_safe(cur, tmp, head, list) {
+    list_del(&cur->list);
+    free(cur);
+  }
 }
 
 // Sends neighbours message on ubus socket, splitting apart IPv4 and IPv6
@@ -367,6 +444,12 @@ static int babeld_ubus_get_neighbours(struct ubus_context *ctx_local,
   FOR_ALL_NEIGHBOURS(neigh) {
     struct neighbour_list_entry *n =
         calloc(1, sizeof(struct neighbour_list_entry));
+    if (n == NULL) {
+      babeld_free_neighbour_list(&neighbour_ipv4_list);
+      babeld_free_neighbour_list(&neighbour_ipv6_list);
+      blob_buf_free(&b);
+      return UBUS_STATUS_UNKNOWN_ERROR;
+    }
     n->neighbour = neigh;
     if (v4mapped(neigh->address)) {
       list_add(&n->list, &neighbour_ipv4_list);
@@ -435,6 +518,36 @@ static bool ubus_init_object() {
   return true;
 }
 
+// Called by libubus when ubusd closes the connection, e.g. when it restarts.
+// babeld doesn't use uloop, so reconnect from its main loop.
+static void babeld_ubus_connection_lost(struct ubus_context *ctx) {
+  ubus_connection_lost = true;
+  ubus_reconnect_time = now.tv_sec;
+}
+
+// Tries to reconnect to ubusd, waiting longer after each failed attempt.
+// libubus adds the babeld object again after reconnecting.
+static void babeld_ubus_reconnect(void) {
+  if (now.tv_sec < ubus_reconnect_time)
+    return;
+
+  if (ubus_reconnect(shared_ctx, NULL) == UBUS_STATUS_OK) {
+    fprintf(stderr, "Reconnected to ubus.\n");
+    ubus_connection_lost = false;
+    ubus_reconnect_interval = 1;
+    return;
+  }
+
+  ubus_reconnect_time = now.tv_sec + ubus_reconnect_interval;
+  if (ubus_reconnect_interval < UBUS_RECONNECT_INTERVAL_MAX)
+    ubus_reconnect_interval *= 2;
+}
+
+// Whether there is a usable connection to ubusd.
+static bool babeld_ubus_connected(void) {
+  return shared_ctx && !ubus_connection_lost;
+}
+
 // Initializes the global ubus context, connecting to the bus to be able to
 // receive and send messages.
 static bool babeld_ubus_init(void) {
@@ -444,6 +557,8 @@ static bool babeld_ubus_init(void) {
   shared_ctx = ubus_connect(NULL);
   if (!shared_ctx)
     return false;
+
+  shared_ctx->connection_lost = babeld_ubus_connection_lost;
 
   return true;
 }
@@ -458,11 +573,11 @@ void ubus_notify_route(struct babel_route *route, int kind) {
   if (!route)
     return;
 
-  if (!shared_ctx)
+  if (!babeld_ubus_connected())
     return;
 
   blob_buf_init(&b, 0);
-  babeld_add_route_buf(route, &b);
+  babeld_add_route_fields(route, &b);
   snprintf(method, sizeof(method), "route.%s", local_kind(kind));
   ubus_notify(shared_ctx, &babeld_object, method, b.head, -1);
   blob_buf_free(&b);
@@ -479,11 +594,11 @@ void ubus_notify_xroute(struct xroute *xroute, int kind) {
   if (!xroute)
     return;
 
-  if (!shared_ctx)
+  if (!babeld_ubus_connected())
     return;
 
   blob_buf_init(&b, 0);
-  babeld_add_xroute_buf(xroute, &b);
+  babeld_add_xroute_fields(xroute, &b);
   snprintf(method, sizeof(method), "xroute.%s", local_kind(kind));
   ubus_notify(shared_ctx, &babeld_object, method, b.head, -1);
   blob_buf_free(&b);
@@ -491,7 +606,8 @@ void ubus_notify_xroute(struct xroute *xroute, int kind) {
 
 void ubus_notify_neighbour(struct neighbour *neigh, int kind) {
   struct blob_buf b = {0};
-  char method[50]; // possible methods are neigh.change, neigh.add, neigh.flush
+  char method[50]; // possible methods are neighbour.change, neighbour.add,
+                   // neighbour.flush
 
   if (!babeld_object.has_subscribers)
     return;
@@ -499,18 +615,18 @@ void ubus_notify_neighbour(struct neighbour *neigh, int kind) {
   if (!neigh)
     return;
 
-  if (!shared_ctx)
+  if (!babeld_ubus_connected())
     return;
 
   blob_buf_init(&b, 0);
-  babeld_add_neighbour_buf(neigh, &b);
-  snprintf(method, sizeof(method), "neigh.%s", local_kind(kind));
+  babeld_add_neighbour_fields(neigh, &b);
+  snprintf(method, sizeof(method), "neighbour.%s", local_kind(kind));
   ubus_notify(shared_ctx, &babeld_object, method, b.head, -1);
   blob_buf_free(&b);
 }
 
 void babeld_ubus_receive(fd_set *readfds) {
-  if (!shared_ctx)
+  if (!babeld_ubus_connected())
     return;
   if (FD_ISSET(shared_ctx->sock.fd, readfds))
     ubus_handle_event(shared_ctx);
@@ -518,6 +634,12 @@ void babeld_ubus_receive(fd_set *readfds) {
 
 int babeld_ubus_add_read_sock(fd_set *readfds, int maxfd) {
   if (!shared_ctx)
+    return maxfd;
+
+  if (ubus_connection_lost)
+    babeld_ubus_reconnect();
+
+  if (!babeld_ubus_connected())
     return maxfd;
 
   FD_SET(shared_ctx->sock.fd, readfds);

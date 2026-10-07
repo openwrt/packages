@@ -122,9 +122,10 @@ babel_config_cb() {
 			local option="$1"
 			local value="$2"
 			local _interface
-			# "option ifname" is a special option, don't actually
-			# generate configuration for it.
+			# "option ifname" and "option ignore" are special
+			# options, don't actually generate configuration for them.
 			[ "$option" = "ifname" ] && return
+			[ "$option" = "ignore" ] && return
 			[ -n "$interface" ] && _interface="interface $interface" || _interface="default"
 			cfg_append "$_interface ${option//_/-} $value"
 		}
