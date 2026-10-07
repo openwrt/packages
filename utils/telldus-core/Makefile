@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=telldus-core
 PKG_VERSION:=2.1.2
-PKG_RELEASE:=9
+PKG_RELEASE:=10
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download.telldus.com/TellStick/Software/telldus-core/
@@ -64,7 +64,7 @@ define Package/telldus-core/install
 	$(INSTALL_BIN)  $(PKG_INSTALL_DIR)/usr/sbin/telldusd $(1)/usr/sbin
 	$(INSTALL_BIN)  $(PKG_INSTALL_DIR)/usr/sbin/tdadmin $(1)/usr/sbin
 	$(INSTALL_DIR)  $(1)/usr/lib
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libtelldus* $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libtelldus-core.so.* $(1)/usr/lib
 	$(INSTALL_DIR)  $(1)/etc/config
 	$(INSTALL_CONF) ./files/tellstick.conf $(1)/etc
 	$(INSTALL_DIR)  $(1)/etc/init.d
