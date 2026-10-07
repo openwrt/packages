@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua
 PKG_VERSION:=5.4.7
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.lua.org/ftp/ \
@@ -84,7 +84,12 @@ define Build/Prepare
 	mv $(PKG_BUILD_DIR)/doc/luac.1 $(PKG_BUILD_DIR)/doc/luac5.4.1
 endef
 
-TARGET_CFLAGS += -DLUA_USE_LINUX $(FPIC) -std=gnu99
+LUA_LMOD_DIR:=/usr/share/lua/5.4
+LUA_CMOD_DIR:=/usr/lib/lua/5.4
+
+TARGET_CFLAGS += -DLUA_USE_LINUX $(FPIC) -std=gnu99 \
+	-DLUA_PATH_DEFAULT='\"$(LUA_LMOD_DIR)/?.lua;$(LUA_LMOD_DIR)/?/init.lua;$(LUA_CMOD_DIR)/?.lua;$(LUA_CMOD_DIR)/?/init.lua;./?.lua;./?/init.lua\"' \
+	-DLUA_CPATH_DEFAULT='\"$(LUA_CMOD_DIR)/?.so;$(LUA_CMOD_DIR)/loadall.so;./?.so\"'
 
 define Build/Compile
 	$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR) \
@@ -142,6 +147,11 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/liblua5.4.{a,so*} $(1)/usr/lib/
 	$(LN) liblua5.4.so.0.0.0 $(1)/usr/lib/liblualib5.4.so
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	$(CP) ./files/lua5.4.pc.in $(1)/usr/lib/pkgconfig/lua5.4.pc
+	$(SED) 's,@VERSION@,$(PKG_VERSION),' $(1)/usr/lib/pkgconfig/lua5.4.pc
+	$(LN) lua5.4.pc $(1)/usr/lib/pkgconfig/lua-5.4.pc
+	$(LN) lua5.4.pc $(1)/usr/lib/pkgconfig/lua54.pc
 endef
 
 define Package/liblua5.4/install

@@ -157,7 +157,7 @@ mwan3_get_mwan3track_status()
 
 mwan3_init()
 {
-	local bitcnt mmdefault source_routing
+	local bitcnt mmdefault route_modifiers source_routing
 
 	config_load mwan3
 
@@ -180,10 +180,14 @@ mwan3_init()
 		LOG debug "Max interface count is ${MWAN3_INTERFACE_MAX}"
 	fi
 
-	# remove "linkdown", expiry and source based routing modifiers from route lines
+	# remove unsupported flags, expiry and source based routing modifiers
 	config_get_bool source_routing globals source_routing 0
 	[ $source_routing -eq 1 ] && unset source_routing
-	MWAN3_ROUTE_LINE_EXP="s/offload//; s/linkdown //; s/expires [0-9]\+sec//; s/error [0-9]\+//; ${source_routing:+s/default\(.*\) from [^ ]*/default\1/;} p"
+	route_modifiers="s/offload//; s/ dead / /; s/ dead$/ /;"
+	route_modifiers="$route_modifiers s/ linkdown / /; s/ linkdown$/ /;"
+	route_modifiers="$route_modifiers s/expires [0-9]\+sec//;"
+	route_modifiers="$route_modifiers s/error [0-9]\+//;"
+	MWAN3_ROUTE_LINE_EXP="$route_modifiers ${source_routing:+s/default\(.*\) from [^ ]*/default\1/;} p"
 
 	# mark mask constants
 	bitcnt=$(mwan3_count_one_bits MMX_MASK)

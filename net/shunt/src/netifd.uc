@@ -9,9 +9,10 @@
 function nexthop(entry, fam) {
 	let dflt = (fam == 4) ? '0.0.0.0' : '::';
 
-	for (let r in (entry?.route ?? []))
-		if (r?.target == dflt && r?.mask == 0 && length(r?.nexthop ?? ''))
+	for (let r in (entry?.route ?? [])) {
+		if (r?.target == dflt && r?.mask == 0 && length(r?.nexthop ?? '') && r.nexthop != dflt)
 			return r.nexthop;
+	}
 
 	return null;
 }

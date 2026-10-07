@@ -8,7 +8,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (c) 2026 Dirk Brenken <dev@brenken.org>
 
-import { popen, writefile, readfile, unlink, mkdir, error as fs_error } from 'fs';
+import { popen, writefile, readfile, unlink, mkdir, access, error as fs_error } from 'fs';
 import { openlog, syslog, LOG_PID, LOG_DAEMON, LOG_ERR, LOG_WARNING,
 	LOG_NOTICE, LOG_INFO, LOG_DEBUG } from 'log';
 import { load as cfg_load, parse as cfg_parse, MIN as cfg_min } from 'shunt.config';
@@ -287,6 +287,17 @@ function check_rp_filter(policies) {
 			dev, dev));
 }
 
+// kmod-nft-tproxy is not a dependency, so a tproxy policy may name a module
+// that is not there - and nft loads the ruleset as one batch, so one rule
+// the kernel cannot resolve would take every policy down. Loaded, or
+// installed and left to the kernel's autoload on first use.
+function tproxy_available() {
+	let rel = trim(readfile('/proc/sys/kernel/osrelease') ?? '');
+
+	return !!(access('/sys/module/nft_tproxy') ||
+		(length(rel) && access(`/lib/modules/${rel}/nft_tproxy.ko`)));
+}
+
 // silent: build only what a teardown consumes and say nothing about the
 // configuration - flush() needs route.del and nothing else.
 function build_state(silent) {
@@ -312,7 +323,10 @@ function build_state(silent) {
 		report('domain', matcher.issues);
 	}
 
-	let n = nft_compile(cfg.policies);
+	// A teardown renders without the check: a policy whose module has
+	// gone since it was applied still owns a table and rules to remove.
+	let n = nft_compile(cfg.policies,
+		{ tproxy: silent ? true : tproxy_available() });
 	if (!silent)
 		report('nft', n.issues);
 
@@ -749,6 +763,9 @@ function check() {
 	for (let m in state.nft.marks)
 		if (m.action == 'bypass')
 			printf('  %-16s bypass\n', m.name);
+		else if (m.action == 'tproxy')
+			printf('  %-16s mark 0x%08x  table %d  pref %d  tproxy :%d\n',
+				m.name, m.mark, m.rt_table, m.rt_prio, m.port);
 		else
 			printf('  %-16s mark 0x%08x  table %d  pref %d\n',
 				m.name, m.mark, m.rt_table, m.rt_prio);

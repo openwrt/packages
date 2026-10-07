@@ -546,7 +546,8 @@ f_dns() {
 		for dir in "${adb_dnsdir:-"/tmp"}" "${adb_backupdir:-"/tmp"}"; do
 			[ ! -d "${dir}" ] && mkdir -p "${dir}"
 		done
-		if [ "${adb_action}" != "search" ] && [ "${adb_action}" != "report" ]; then
+		if [ "${adb_action}" != "search" ] && [ "${adb_action}" != "report" ] &&
+			[ "${adb_action}" != "suspend" ] && [ "${adb_action}" != "resume" ]; then
 			if [ "${adb_dnsflush}" = "1" ] || [ "${free_mem:-"0"}" -lt "64" ]; then
 				printf '%b' "${adb_dnsheader}" >"${adb_finaldir}/${adb_dnsfile}"
 				f_dnsup
@@ -618,20 +619,20 @@ f_fetch() {
 	case "${adb_fetchcmd##*/}" in
 	"curl")
 		[ "${adb_fetchinsecure}" = "1" ] && insecure="--insecure"
-		adb_fetchparm="${adb_fetchparm:-"${insecure} --connect-timeout 20 --retry-delay 10 --retry $((adb_fetchretry - 1)) --retry-max-time $(((adb_fetchretry - 1) * 20)) --retry-all-errors --fail --silent --show-error --location -o"}"
-		adb_etagparm="--connect-timeout 5 --silent --location --head"
-		adb_geoparm="--connect-timeout 5 --silent --location"
+		adb_fetchparm="${adb_fetchparm:-"${insecure} --connect-timeout 20 --speed-time 20 --retry-delay 10 --retry $((adb_fetchretry - 1)) --retry-all-errors --fail --silent --globoff --show-error --location -o"}"
+		adb_etagparm="${insecure} --connect-timeout 5 --max-time 10 --fail --silent --globoff --location --head"
+		adb_geoparm="${insecure} --connect-timeout 5 --max-time 10 --fail --silent --globoff --show-error --location"
 		;;
 	"wget")
 		[ "${adb_fetchinsecure}" = "1" ] && insecure="--no-check-certificate"
 		adb_fetchparm="${adb_fetchparm:-"${insecure} --no-cache --no-cookies --timeout=20 --waitretry=10 --tries=${adb_fetchretry} --retry-connrefused -O"}"
-		adb_etagparm="--timeout=5 --spider --server-response"
-		adb_geoparm="--timeout=5 --quiet -O-"
+		adb_etagparm="${insecure} --tries=1 --timeout=5 --spider --server-response"
+		adb_geoparm="${insecure} --tries=1 --timeout=5 --quiet -O-"
 		;;
 	"uclient-fetch")
 		[ "${adb_fetchinsecure}" = "1" ] && insecure="--no-check-certificate"
 		adb_fetchparm="${adb_fetchparm:-"${insecure} --timeout=20 -O"}"
-		adb_geoparm="--timeout=5 --quiet -O-"
+		adb_geoparm="${insecure} --timeout=5 --quiet -O-"
 		;;
 	esac
 
@@ -795,7 +796,7 @@ f_dnsup() {
 				if [ "${nft_rc}" = "0" ]; then
 					f_log "debug" "external DNS bridge loaded: ${adb_bridgednsv4:-"-"} / ${adb_bridgednsv6:-"-"}"
 				else
-					f_log "err" "failed to load external DNS bridge: ${adb_bridgednsv4:-"-"} / ${adb_bridgednsv6:-"-"}"
+					f_log "info" "failed to load external DNS bridge: ${adb_bridgednsv4:-"-"} / ${adb_bridgednsv6:-"-"}"
 				fi
 			fi
 		fi
@@ -860,7 +861,7 @@ f_dnsup() {
 		if [ "${nft_rc}" = "0" ]; then
 			f_log "debug" "external DNS bridge removed"
 		else
-			f_log "err" "failed to remove external DNS bridge"
+			f_log "info" "failed to remove external DNS bridge"
 		fi
 	fi
 
@@ -910,11 +911,10 @@ f_etag() {
 			# compare http code and etag id with stored values, update etag file and return code accordingly
 			#
 			etag_cnt="$("${adb_awkcmd}" -v f="${feed}" -v s="${feed_suffix}" -v e="${etag_id}" '
-			BEGIN { matched = 0; cnt = 0; p = f " " s }
+			BEGIN { matched = 0; cnt = 0; p = f " " s "\t" }
 			$1 == f { cnt++ }
 			index($0, p) == 1 {
 				rest = substr($0, length(p) + 1)
-				sub(/^[[:space:]]+/, "", rest)
 				if (rest == e) { matched = 1 }
 			}
 			END { print cnt; exit !matched }' "${adb_backupdir}/adblock.etag")"
@@ -943,7 +943,7 @@ f_etag() {
 					"${adb_backupdir}/adblock.etag" >"${adb_backupdir}/adblock.etag.new"
 			else
 				"${adb_awkcmd}" -v f="${feed}" -v s="${feed_suffix}" '
-				BEGIN { p = f " " s }
+				BEGIN { p = f " " s "\t" }
 				index($0, p) != 1' \
 					"${adb_backupdir}/adblock.etag" >"${adb_backupdir}/adblock.etag.new"
 			fi &&
@@ -1138,6 +1138,17 @@ f_feedrm() {
 	adb_feed="${adb_feed% }"
 }
 
+# extract and validate the host part of an url
+#
+f_urlhost() {
+	local host="${1#*://}"
+
+	host="${host%%[/?#]*}"
+	host="${host##*@}"
+	host="${host%:*}"
+	printf '%s\n' "${host}" | f_chkdom local 1
+}
+
 # backup/restore/remove blocklists
 #
 f_list() {
@@ -1270,7 +1281,7 @@ f_list() {
 		;;
 	"prepare")
 		file_name="${src_tmpfile}"
-		if [ -s "${src_tmpload}" ]; then
+		if [ "${src_rc}" = "0" ] && [ -s "${src_tmpload}" ]; then
 			if [ "${adb_tld}" = "1" ]; then
 				f_chkdom ${src_rset} <"${src_tmpload}" |
 					"${adb_awkcmd}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' |
@@ -1898,8 +1909,7 @@ f_main() {
 	# add map service domain to allowlist if map is enabled
 	#
 	if [ "${adb_map}" = "1" ] && [ "${adb_dnsallow}" = "1" ] && [ -n "${adb_geourl}" ]; then
-		map_domain="${adb_geourl#*://}"
-		map_domain="${map_domain%%/*}"
+		map_domain="$(f_urlhost "${adb_geourl}")"
 		if [ -n "${map_domain}" ]; then
 			printf '%s\n' "${map_domain}" | f_dnsallow >>"${adb_tmpdir}/tmp.add.allowlist"
 			printf '%s\n' "${map_domain}" >>"${adb_tmpdir}/tmp.rem.allowlist"
@@ -1955,8 +1965,7 @@ f_main() {
 
 		# add domains of active feed URLs to the allowlist
 		#
-		src_domain="${src_url#*://}"
-		src_domain="${src_domain%%/*}"
+		src_domain="$(f_urlhost "${src_url}")"
 		if [ -n "${src_domain}" ] && [ "${adb_dnsallow}" = "1" ]; then
 			case " ${seen_domains} " in
 			*" ${src_domain} "*) ;;
@@ -2044,7 +2053,8 @@ f_main() {
 				for suffix in ${src_cat}; do
 					"${adb_fetchcmd}" ${adb_fetchparm} "${src_tmpcat}" "${src_url}${suffix}" 2>>"${adb_errorlog}"
 					src_rc="${?}"
-					if [ "${src_rc}" = "0" ] && [ -s "${src_tmpcat}" ]; then
+					[ "${src_rc}" = "0" ] || break
+					if [ -s "${src_tmpcat}" ]; then
 						"${adb_catcmd}" "${src_tmpcat}" >>"${src_tmpload}"
 						: >"${src_tmpcat}"
 					fi

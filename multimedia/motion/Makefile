@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=motion
-PKG_VERSION:=4.5.0
+PKG_VERSION:=4.7.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-release-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/Motion-Project/motion/tar.gz/release-$(PKG_VERSION)?
-PKG_HASH:=42320a1c7b54a3f0b5a49cecf34a5d752760b28383bc573b3ca1240581786fe5
+PKG_HASH:=c11f68c7cea949227e57797b932f01432d8942ef5323c75063d19b951d0d4194
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-release-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>
@@ -21,7 +21,7 @@ PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:motion_project:motion
 
-PKG_FIXUP:=autoreconf
+PKG_FIXUP:=gettext-version
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=gettext-full/host
@@ -79,7 +79,6 @@ Package/motion-ffmpeg/conffiles = $(Package/motion/conffiles)
 CONFIGURE_ARGS += \
 	--without-bktr \
 	--without-webp \
-	--without-mmal \
 	--without-mariadb \
 	--without-mysql \
 	--without-pgsql \

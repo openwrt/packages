@@ -166,6 +166,7 @@ export function parse(sections) {
 			keep_local: v.keep_local,
 			gw4: v.gw4,
 			gw6: v.gw6,
+			tproxy_port: v.tproxy_port,
 			src: to_list(v.src),
 			src_mac: to_list(v.src_mac),
 			dport: to_list(v.dport),
