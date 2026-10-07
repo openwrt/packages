@@ -917,6 +917,16 @@ config_charon_common_install_routes() {
 	swan_xappend1 "install_routes = $install_routes"
 }
 
+config_charon_common_aggressive() {
+	local conf="$1"
+
+	local aggressive
+
+	config_get_bool aggressive "$conf" aggressiv 0
+	[ $aggressive -eq 1 ] && \
+		swan_xappend1 "i_dont_care_about_security_and_use_aggressive_mode_psk = yes"
+}
+
 config_charon_common() {
 	local conf="$1"
 
@@ -924,6 +934,7 @@ config_charon_common() {
 	config_charon_common_interfaces_use "$conf"
 	config_charon_common_ignore_routing_tables "$conf"
 	config_charon_common_install_routes "$conf"
+	config_charon_common_aggressive "$conf"
 }
 
 config_strongswan_generate() {
