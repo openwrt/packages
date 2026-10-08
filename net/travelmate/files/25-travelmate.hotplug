@@ -16,9 +16,14 @@ trm_ntplock="/var/run/travelmate/travelmate.ntp.lock"
 
 # check for ntp hotplug event and travelmate service autostart condition
 #
-if mkdir "${trm_ntplock}" 2>/dev/null; then
-	if [ "${ACTION}" = "stratum" ] && "${trm_init}" enabled; then
+case "${stratum}" in
+"") ;;
+*[!0-9]*) exit 0 ;;
+*) [ "${stratum}" -lt "16" ] || exit 0 ;;
+esac
+if [ "${ACTION}" = "stratum" ] && "${trm_init}" enabled; then
+	if mkdir "${trm_ntplock}" 2>/dev/null; then
 		. "${trm_funlib}"
-		f_log "info" "get ntp time sync"
+		f_log "info" "get ntp time sync (stratum: ${stratum:-"-"})"
 	fi
 fi
