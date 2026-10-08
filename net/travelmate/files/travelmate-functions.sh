@@ -75,12 +75,6 @@ f_system() {
 	#
 	[ -z "${trm_cores}" ] && trm_cores="$("${trm_grepcmd}" -cm16 '^processor' /proc/cpuinfo 2>/dev/null)"
 	case "${trm_cores}" in "" | 0 | *[!0-9]*) trm_cores="1" ;; esac
-
-	# trigger ntp sync if no lock file exists (to avoid multiple concurrent calls)
-	#
-	if [ ! -d "${trm_ntplock}" ]; then
-		"${trm_ubuscmd}" -S call hotplug.ntp call '{ "env": [ "ACTION=stratum" ] }' >/dev/null 2>&1
-	fi
 }
 
 # command selector
