@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-markupsafe
-PKG_VERSION:=3.0.3
-PKG_RELEASE:=2
+PKG_VERSION:=3.0.4
+PKG_RELEASE:=1
 
 PYPI_NAME:=MarkupSafe
 PYPI_SOURCE_NAME:=markupsafe
-PKG_HASH:=722695808f4b6457b320fdc131280796bdceb04ab50fe1795cd540799ebe1698
+PKG_HASH:=2e9ad7dd851bf45fab9f75cbff4cb493fee9979e8d8c7c9c3ee119022518edd6
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
