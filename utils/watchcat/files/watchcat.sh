@@ -165,7 +165,11 @@ watchcat_restart_network_iface() {
 }
 
 watchcat_run_script() {
-	logger -p daemon.info -t "watchcat[$$]" "Running script \"$1\" for network interface: \"$2\"."
+	if [ "$2" != "" ]; then
+		logger -p daemon.info -t "watchcat[$$]" "Running script \"$1\" for network interface: \"$2\"."
+	else
+		logger -p daemon.info -t "watchcat[$$]" "Running script \"$1\"."
+	fi
 	"$1" "$2"
 }
 
@@ -263,7 +267,7 @@ watchcat_monitor_network() {
 				logger -p daemon.info -t "watchcat[$$]" "Could not reach $host"
 			fi
 		done
-		if [ "$end_result" -ne 0 ]; then
+		if [ "$end_result" -ne 0 ] && [ "$restart_pending" -ne 0 ]; then
 			if [ "$script" != "" ]; then
 				logger -p daemon.info -t "watchcat[$$]" "Could not reach any configured host for \"$((time_now - time_lastcheck_withinternet))\" seconds. Will run the script after \"$failure_period\" seconds of failed reachability"
 			elif [ "$iface" != "" ]; then
