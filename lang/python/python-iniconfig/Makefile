@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-iniconfig
-PKG_VERSION:=2.3.0
+PKG_VERSION:=2.3.1
 PKG_RELEASE:=1
 
 PYPI_NAME:=iniconfig
-PKG_HASH:=c76315c77db068650d49c5b56314774a7804df16fee4402c1f19d6d15d8c4730
+PKG_HASH:=67f4b9c50da0dedf52af349e7749a80a9057a5031199791b906c3bb3ae878960
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT
