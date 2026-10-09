@@ -1,0 +1,21 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Alexandru Ardelean <alex@shruggie.ro>
+Date: Sun, 11 Oct 2026 20:00:00 +0300
+Subject: [PATCH] relax the setuptools upper bound
+
+0.5.7 caps its build backend at "setuptools >= 68,<75", which the
+feed's setuptools 84.0.0 does not satisfy. The cap is precautionary;
+the package builds unchanged without it.
+---
+ pyproject.toml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -1,5 +1,5 @@
+ [build-system]
+ requires = [
+-    "setuptools >= 68,<75",
++    "setuptools >= 68",
+ ]
+ build-backend = 'setuptools.build_meta'
