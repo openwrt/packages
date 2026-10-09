@@ -1,0 +1,115 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Dr Bill Mcilhargey <contributor@mcilhargey.com>
+Date: Sun, 4 Oct 2026 18:24:24 +0000
+Subject: [PATCH] integrate json-status with OpenWrt feeder configuration
+
+Use OpenWrt runtime paths and source the procd-generated environment
+after legacy overrides. Route uploads through the optional helper for
+consent and feeder-identity checks, diagnostics, and upload metrics.
+Make the optional Perl-based curl-version probe tolerate missing Perl.
+
+The upstream payload remains MIT licensed. OpenWrt integration changes
+are distributed under GPL-2.0-only.
+
+Signed-off-by: Dr Bill Mcilhargey <contributor@mcilhargey.com>
+---
+diff --git a/json-status b/json-status
+index c4b260c..13e5313 100755
+--- a/json-status
++++ b/json-status
+@@ -16,8 +16,8 @@ DNS_TTL=600
+ DNS_IGNORE_LOCAL=0
+ 
+ # List all paths, IN PREFERRED ORDER, separated by a SPACE
+-# By default, only use the json from the feed client
+-JSON_PATHS=("/run/adsbexchange-feed")
++# OpenWrt defaults; procd supplies the configured paths below.
++JSON_PATHS=("/var/run/readsb" "/run/adsbexchange-feed" "/run/dump1090" "/run/dump1090-fa")
+ 
+ ######################################################################################################################
+ # If you know what you're doing, and you want to override the search path, you can do it easily in
+@@ -28,10 +28,7 @@ JSON_PATHS=("/run/adsbexchange-feed")
+ ######################################################################################################################
+ 
+ # UUID file
+-UUID_FILE="/boot/adsbx-uuid"
+-if [[ ! -f "$UUID_FILE" ]]; then
+-    UUID_FILE="/usr/local/share/adsbexchange/adsbx-uuid"
+-fi
++UUID_FILE="/var/run/adsbexchange-stats/uuid"
+ 
+ # source local overrides (commonly the JSON_PATH, or DNS cache settings)
+ if [ -r /etc/default/adsbexchange-stats ]; then
+@@ -44,6 +41,11 @@ if [ -r /etc/default/adsbexchange-stats ]; then
+ 	fi
+ fi
+ 
++# UCI-rendered settings take precedence over legacy local overrides.
++if [ -n "${ADSBX_ENV_FILE:-}" ] && [ -r "$ADSBX_ENV_FILE" ]; then
++	. "$ADSBX_ENV_FILE"
++fi
++
+ # Small bit of sanity...
+ if [ "${#JSON_PATHS[@]}" -le 0 ]; then
+ 	echo "FATAL - You broke something.  JSON_PATHS variable has no locations listed.  Please fix."
+@@ -52,12 +54,13 @@ fi
+ 
+ JSON_DIR=""
+ 
+-TEMP_DIR="/run/adsbexchange-stats/"
++: "${TEMP_DIR:=/var/run/adsbexchange-stats}"
+ TMPFILE="${TEMP_DIR}/tmp.json"
+ NEWFILE="${TEMP_DIR}/new.json"
+ 
+ # Sanity to make sure we can write to our scratch dir in /run
+-T=$(touch $TMPFILE 2>&1)
++mkdir -p "$TEMP_DIR" || exit 99
++T=$(touch "$TMPFILE" 2>&1)
+ RV=$?
+ if [ $RV -ne 0 ]; then
+     echo "ERROR: Unable to write to $TMPFILE, aborting!  ($T)"
+@@ -213,9 +216,8 @@ if ! command -v host &>/dev/null || ! command -v perl &>/dev/null; then
+     DNS_CACHE=0
+ fi
+ 
+-VER_OK=$( echo "$CURL_VER" | perl -ne '@v=split(/\./); if ($v[0] == 7) { if ($v[1] >= 22) { printf("1");exit; } else { printf("0");exit; } } if ($v[0] > 7) { pr
+-intf("1");exit; } printf("0");exit;')
+-if [ $VER_OK -ne 1 ]; then
++VER_OK=$( { echo "$CURL_VER" | perl -ne '@v=split(/\./); print (($v[0] > 7 || ($v[0] == 7 && $v[1] >= 22)) ? 1 : 0)' ; } 2>/dev/null)
++if [ "${VER_OK:-0}" -ne 1 ]; then
+ 	echo "WARNING: curl version is too old ($CURL_VER < 7.22.0), not using script's DNS cache."
+ 	DNS_CACHE=0
+ fi
+@@ -355,16 +357,27 @@ while true; do
+ 	fi
+ 
+     sleep 0.314
+-    gzip -c <$NEWFILE >$TEMP_DIR/upload.gz
++    gzip -c <"$NEWFILE" >"$TEMP_DIR/upload.gz"
+     sleep 0.314
+ 
+ 	# Push up the data.  'curl' will wait no more than $MAX_CURL_TIME seconds for upload to complete
+-	curl -m $MAX_CURL_TIME $CURL_EXTRA -sS -X POST -H "adsbx-uuid: ${UUID}" -H "Content_Encoding: gzip" --data-binary @- $REMOTE_URL 2>&1 <$TEMP_DIR/upload.gz
+-	RV=$?
++	if command -v adsbx_curl_upload >/dev/null 2>&1; then
++		adsbx_curl_upload "$TEMP_DIR/upload.gz"
++		RV=$?
++		ADSBX_AIRCRAFT=$(jq -r '.aircraft | length' < "$NEWFILE")
++		ADSBX_GZ_BYTES=$(stat --printf="%s" "$TEMP_DIR/upload.gz")
++		adsbx_record_upload "$ADSBX_AIRCRAFT" "$ADSBX_GZ_BYTES"
++	else
++		curl -m $MAX_CURL_TIME $CURL_EXTRA -sS -X POST -H "adsbx-uuid: ${UUID}" -H "Content_Encoding: gzip" --data-binary @- $REMOTE_URL 2>&1 <"$TEMP_DIR/upload.gz"
++		RV=$?
++	fi
+ 
+ 	if [ $RV -ne 0 ]; then
+-		echo "WARNING: curl process returned non-zero ($RV): [$CURL]; Sleeping a little extra."
++		if command -v adsbx_warn >/dev/null 2>&1; then
++			adsbx_warn "upload returned non-zero ($RV); backing off"
++		else
++			echo "WARNING: curl process returned non-zero ($RV): [$CURL]; Sleeping a little extra."
++		fi
+ 		sleep $(( 5 + RANDOM % 15 ))
+ 	fi
+ done
+-
