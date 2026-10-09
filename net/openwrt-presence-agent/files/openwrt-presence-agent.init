@@ -1,0 +1,74 @@
+#!/bin/sh /etc/rc.common
+# shellcheck disable=SC2034,SC3043
+
+USE_PROCD=1
+START=95
+STOP=10
+
+service_triggers() {
+	procd_add_reload_trigger openwrt-presence-agent
+}
+
+append_option() {
+	local section="$1"
+	local option="$2"
+	local flag="$3"
+	local value
+	config_get value "$section" "$option"
+	[ -n "$value" ] && procd_append_param command "$flag" "$value"
+}
+
+start_instance() {
+	local section="$1"
+	local enabled
+	local token_file
+	config_get_bool enabled "$section" enabled 1
+	[ "$enabled" -eq 1 ] || return 0
+	config_get token_file "$section" token_file /etc/openwrt-presence-agent/token
+	mkdir -p "$(dirname "$token_file")" || return 1
+	if [ ! -s "$token_file" ]; then
+		tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 48 > "$token_file"
+	fi
+	chmod 600 "$token_file" || return 1
+
+	procd_open_instance
+	procd_set_param command /usr/bin/openwrt-presence-agent
+	append_option "$section" listen_address --listen-address
+	append_option "$section" port --port
+	procd_append_param command --token-file "$token_file"
+	append_option "$section" agent_id_file --agent-id-file
+	append_option "$section" ubus_path --ubus-path
+	append_option "$section" hostapd_socket --hostapd-socket
+	append_option "$section" arping_path --arping-path
+	append_option "$section" dhcp_leases_file --dhcp-leases-file
+	append_option "$section" lan_interface --lan-interface
+	append_option "$section" provider --provider
+	append_option "$section" reconcile_interval --reconcile-interval
+	append_option "$section" wired_reconcile_interval --wired-reconcile-interval
+	append_option "$section" discovery_interval --discovery-interval
+	append_option "$section" command_timeout --command-timeout
+	append_option "$section" max_command_output --max-command-output
+	append_option "$section" max_event_bytes --max-event-bytes
+	append_option "$section" max_clients --max-clients
+	append_option "$section" max_http_connections --max-http-connections
+	append_option "$section" provider_queue_size --provider-queue-size
+	append_option "$section" max_stream_clients --max-stream-clients
+	append_option "$section" stream_queue_size --stream-queue-size
+	append_option "$section" log_level --log-level
+	procd_set_param respawn 3600 5 5
+	procd_set_param term_timeout 5
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_close_instance
+}
+
+start_service() {
+	umask 077
+	config_load openwrt-presence-agent
+	config_foreach start_instance observer
+}
+
+reload_service() {
+	stop
+	start
+}
