@@ -59,6 +59,7 @@ stop_service() {
 
 	mwan3_init
 	config_foreach mwan3_interface_shutdown interface
+	config_foreach mwan3_online_metric_clean interface
 
 	for family in ipv4 ipv6; do
 		if [ "$family" = "ipv4" ]; then
