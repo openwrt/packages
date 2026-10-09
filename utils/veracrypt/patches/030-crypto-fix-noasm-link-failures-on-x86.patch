@@ -1,0 +1,62 @@
+From a15c996f4fe7b7b820cb3a017153a1c8f5b6bb67 Mon Sep 17 00:00:00 2001
+From: Ville Takio <ville+git@takio.fi>
+Date: Wed, 30 Sep 2026 06:49:18 +0000
+Subject: [PATCH] Crypto: fix NOASM link failures on x86 (#1896)
+
+With NOASM=1 on x86/x64 the assembler module Aes_hw_cpu is not built,
+but cpu.h still defines TC_AES_HW_CPU, so Cipher.cpp references
+aes_hw_cpu_encrypt/decrypt. cpu.c also still declares and calls
+TrySHA256, which Sha2Intel.c omits when CRYPTOPP_DISABLE_ASM is set
+(NOASM passes CRYPTOPP_DISABLE_X86ASM, which implies it), and this
+happens whenever __SHA__ is defined (-msha, -march=native) or
+CRYPTOPP_SHANI_AVAILABLE is set.
+
+- cpu.h: define TC_AES_HW_CPU on x86 only without CRYPTOPP_DISABLE_ASM
+- cpu.c: declare and call TrySHA256 only under the same condition
+  Sha2Intel.c uses to build it (not _UEFI, not CRYPTOPP_DISABLE_ASM)
+
+Both follow the compiler target, so cross builds need no ARCH override.
+
+Upstream-Status: Backport [https://github.com/veracrypt/VeraCrypt/commit/a15c996f4fe7b7b820cb3a017153a1c8f5b6bb67]
+
+Signed-off-by: Ville Takio <ville+git@takio.fi>
+---
+ src/Crypto/cpu.c | 7 +++++--
+ src/Crypto/cpu.h | 3 ++-
+ 2 files changed, 7 insertions(+), 3 deletions(-)
+
+--- a/src/Crypto/cpu.c
++++ b/src/Crypto/cpu.c
+@@ -290,7 +290,10 @@ static int Detect_MS_HyperV_AES ()
+ 
+ #endif
+ 
+-#if defined(__SHA__) || defined(__INTEL_COMPILER) || CRYPTOPP_SHANI_AVAILABLE
++/* TrySHA256 lives in Sha2Intel.c, which omits it for _UEFI and CRYPTOPP_DISABLE_ASM */
++#if !defined(_UEFI) && !defined(CRYPTOPP_DISABLE_ASM) && \
++	(defined(__SHA__) || defined(__INTEL_COMPILER) || CRYPTOPP_SHANI_AVAILABLE)
++#define TC_SHA256_PROBE_AVAILABLE
+ extern int TrySHA256();
+ #endif
+ 
+@@ -366,7 +369,7 @@ void DetectX86Features()
+ 	}
+ #endif
+ 
+-#if defined(__SHA__) || defined(__INTEL_COMPILER) || CRYPTOPP_SHANI_AVAILABLE
++#ifdef TC_SHA256_PROBE_AVAILABLE
+ 	if (!g_hasSHA256)
+ 	{
+ 		g_hasSHA256 = TrySHA256();
+--- a/src/Crypto/cpu.h
++++ b/src/Crypto/cpu.h
+@@ -236,7 +236,8 @@ extern "C" {
+ #endif
+ 
+ #define CRYPTOPP_CPUID_AVAILABLE
+-#if !defined(CRYPTOPP_DISABLE_AESNI) && !defined(WOLFCRYPT_BACKEND)
++/* aes_hw_cpu_* come from the assembler module, which NOASM builds leave out */
++#if !defined(CRYPTOPP_DISABLE_AESNI) && !defined(WOLFCRYPT_BACKEND) && !defined(CRYPTOPP_DISABLE_ASM)
+ #define TC_AES_HW_CPU
+ #endif
+ 
