@@ -40,6 +40,15 @@
 . /usr/share/libubox/jshn.sh
 
 
+# Helpers
+# ---------------------------------------------------------------------------
+
+# Returns true if $1 is a JSON error response.
+is_error() {
+	jsonfilter -s "$1" -e "@.error" > /dev/null
+}
+
+
 # Authentication
 # ---------------------------------------------------------------------------
 # The authentication flow works like this:
@@ -139,22 +148,21 @@ get_jwt() {
 }
 
 # Request an access token for the Google Cloud service account.
-get_access_token_raw() {
+get_access_token() {
 	local grant_type="urn:ietf:params:oauth:grant-type:jwt-bearer"
 	local assertion=$(get_jwt)
 
-	${CURL} -v https://oauth2.googleapis.com/token \
-		--data-urlencode 'grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer' \
-		--data-urlencode "assertion=${assertion}" \
-		| jsonfilter -e @.access_token
-}
+	local response=$(
+		${CURL} -v https://oauth2.googleapis.com/token \
+			--data-urlencode "grant_type=${grant_type}" \
+			--data-urlencode "assertion=${assertion}"
+	)
 
-# Get the access token, stripping the trailing dots.
-get_access_token() {
-	# Since tokens may contain internal dots, we only trim the suffix if it
-	# starts with at least 8 dots. (The access token has *many* trailing dots.)
-	local access_token="$(get_access_token_raw)"
-	echo "${access_token%%........*}"
+	if is_error "${response}"; then
+		write_log 12 "${response}"
+	else
+		jsonfilter -s "${response}" -e @.access_token
+	fi
 }
 
 
@@ -209,11 +217,17 @@ patch_record_set() {
 	local url="https://dns.googleapis.com/dns/v1/projects/${project}/managedZones/${zone}/rrsets/${domain}./${record_type}"
 	local record_set=$(format_record_set ${domain} ${record_type} ${ttl} $@)
 
-	${CURL} -v ${url} \
-		-X PATCH \
-		-H "Content-Type: application/json" \
-		-H "Authorization: Bearer ${access_token}" \
-		-d "${record_set}"
+	local response=$(
+		${CURL} -v ${url} \
+			-X PATCH \
+			-H "Content-Type: application/json" \
+			-H "Authorization: Bearer ${access_token}" \
+			-d "${record_set}"
+	)
+
+	if is_error "${response}"; then
+		write_log 12 "${response}"
+	fi
 }
 
 
