@@ -1,3 +1,4 @@
+From 51b65ec78487e6da9c1ad0f3c4c802eba929f91b Mon Sep 17 00:00:00 2001
 From: Mieczyslaw Nalewaj <namiltd@yahoo.com>
 Date: Thu, 15 May 2025 14:59:18 +0200
 Subject: xtables-addons: deactivate 'no TEXTSEARCH_BM' error

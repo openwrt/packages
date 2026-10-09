@@ -1,3 +1,11 @@
+From d5d7deba5a49d1d9387d95e3173044d8e1f9663f Mon Sep 17 00:00:00 2001
+From: Jo-Philipp Wich <jow@openwrt.org>
+Date: Wed, 4 Jan 2012 00:30:53 +0000
+Subject: [PATCH] xtables-addons: add rtsp-module-2.6.36 to xtables-addons and
+ make it available as kmod-ipt-nathelper-rtsp
+
+SVN-Revision: 29644
+
 --- /dev/null
 +++ b/extensions/rtsp/Kbuild
 @@ -0,0 +1,4 @@
@@ -381,10 +389,10 @@
 +	uint	entitylen = 0;
 +	uint	lineoff;
 +	uint	linelen;
-+	
++
 +	if (!nf_nextline(ptcp, tcplen, ptcpoff, &lineoff, &linelen))
 +		return 0;
-+	
++
 +	*phdrsoff = *ptcpoff;
 +	while (nf_mime_nextline(ptcp, tcplen, ptcpoff, &lineoff, &linelen)) {
 +		if (linelen == 0) {
@@ -400,13 +408,13 @@
 +		if (nf_strncasecmp(ptcp+lineoff, "CSeq:", 5) == 0) {
 +			*pcseqoff = lineoff;
 +			*pcseqlen = linelen;
-+		} 
++		}
 +
 +		if (nf_strncasecmp(ptcp+lineoff, "Transport:", 10) == 0) {
 +			*transoff = lineoff;
 +			*translen = linelen;
 +		}
-+		
++
 +		if (nf_strncasecmp(ptcp+lineoff, "Content-Length:", 15) == 0) {
 +			uint off = lineoff+15;
 +			SKIP_WSPACE(ptcp+lineoff, linelen, off);
@@ -414,7 +422,7 @@
 +		}
 +	}
 +	*phdrslen = (*ptcpoff) - (*phdrsoff);
-+	
++
 +	return 1;
 +}
 +
@@ -439,33 +447,33 @@
 +{
 +	int  rc = 0;
 +	uint off = 0;
-+	
++
 +	if (tranlen < 10 || !iseol(ptran[tranlen-1]) ||
 +	    nf_strncasecmp(ptran, "Transport:", 10) != 0) {
 +		pr_info("sanity check failed\n");
 +		return 0;
 +	}
-+	
++
 +	pr_debug("tran='%.*s'\n", (int)tranlen, ptran);
 +	off += 10;
 +	SKIP_WSPACE(ptran, tranlen, off);
-+	
++
 +	/* Transport: tran;field;field=val,tran;field;field=val,... */
 +	while (off < tranlen) {
 +		const char* pparamend;
 +		uint        nextparamoff;
-+		
++
 +		pparamend = memchr(ptran+off, ',', tranlen-off);
 +		pparamend = (pparamend == NULL) ? ptran+tranlen : pparamend+1;
 +		nextparamoff = pparamend-ptran;
-+		
++
 +		while (off < nextparamoff) {
 +			const char* pfieldend;
 +			uint        nextfieldoff;
-+			
++
 +			pfieldend = memchr(ptran+off, ';', nextparamoff-off);
 +			nextfieldoff = (pfieldend == NULL) ? nextparamoff : pfieldend-ptran+1;
-+		   
++
 +			if (strncmp(ptran+off, "client_port=", 12) == 0) {
 +				u_int16_t   port;
 +				uint        numlen;
@@ -484,7 +492,7 @@
 +						off += numlen;
 +						prtspexp->pbtype = pb_range;
 +						prtspexp->hiport = port;
-+						
++
 +						// If we have a range, assume rtp:
 +						// loport must be even, hiport must be loport+1
 +						if ((prtspexp->loport & 0x0001) != 0 ||
@@ -538,20 +546,20 @@
 +					}
 +				}
 +			}
-+			
++
 +			/*
 +			 * Note we don't look for the destination parameter here.
 +			 * If we are using NAT, the NAT module will handle it.  If not,
 +			 * and the client is sending packets elsewhere, the expectation
 +			 * will quietly time out.
 +			 */
-+			
++
 +			off = nextfieldoff;
 +		}
-+		
++
 +		off = nextparamoff;
 +	}
-+	
++
 +	return rc;
 +}
 +
@@ -570,7 +578,7 @@
 +#endif
 +{
 +	struct ip_ct_rtsp_expect expinfo;
-+	
++
 +	int dir = CTINFO2DIR(ctinfo);   /* = IP_CT_DIR_ORIGINAL */
 +	//struct  tcphdr* tcph = (void*)iph + iph->ihl * 4;
 +	//uint    tcplen = pktlen - iph->ihl * 4;
@@ -578,17 +586,17 @@
 +	//uint    datalen = tcplen - tcph->doff * 4;
 +	uint    dataoff = 0;
 +	int ret = NF_ACCEPT;
-+	
++
 +	struct nf_conntrack_expect *rtp_exp;
 +	struct nf_conntrack_expect *rtcp_exp = NULL;
-+	
++
 +	__be16 be_loport;
 +	__be16 be_hiport;
-+	
++
 +	typeof(nf_nat_rtsp_hook) nf_nat_rtsp;
 +
 +	memset(&expinfo, 0, sizeof(expinfo));
-+	
++
 +	while (dataoff < datalen) {
 +		uint cmdoff = dataoff;
 +		uint hdrsoff = 0;
@@ -599,7 +607,7 @@
 +		uint translen = 0;
 +		uint off;
 +		union nf_inet_addr srvaddr;
-+		
++
 +		if (!rtsp_parse_message(pdata, datalen, &dataoff,
 +					&hdrsoff, &hdrslen,
 +					&cseqoff, &cseqlen,
@@ -855,7 +863,7 @@
 + }
 +
 +static int help(struct sk_buff *skb, unsigned int protoff,
-+		struct nf_conn *ct, enum ip_conntrack_info ctinfo) 
++		struct nf_conn *ct, enum ip_conntrack_info ctinfo)
 +{
 +	struct tcphdr _tcph, *th;
 +	unsigned int dataoff, datalen;
@@ -863,18 +871,18 @@
 +	int ret = NF_DROP;
 +
 +	/* Until there's been traffic both ways, don't look in packets. */
-+	if (ctinfo != IP_CT_ESTABLISHED && 
++	if (ctinfo != IP_CT_ESTABLISHED &&
 +	    ctinfo != IP_CT_ESTABLISHED + IP_CT_IS_REPLY) {
 +		pr_debug("conntrackinfo = %u\n", ctinfo);
 +		return NF_ACCEPT;
-+	} 
++	}
 +
 +	/* Not whole TCP header? */
 +	th = skb_header_pointer(skb, protoff, sizeof(_tcph), &_tcph);
 +
 +	if (!th)
 +		return NF_ACCEPT;
-+   
++
 +	/* No data ? */
 +	dataoff = protoff + th->doff*4;
 +	datalen = skb->len - dataoff;
@@ -955,9 +963,9 @@
 +
 +	rtsp_exp_policy.max_expected = max_outstanding;
 +	rtsp_exp_policy.timeout = setup_timeout;
-+	
++
 +	rtsp_buffer = kmalloc(65536, GFP_KERNEL);
-+	if (!rtsp_buffer) 
++	if (!rtsp_buffer)
 +		return -ENOMEM;
 +
 +	/* If no port given, default to standard rtsp port */

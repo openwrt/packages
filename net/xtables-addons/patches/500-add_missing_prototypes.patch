@@ -1,3 +1,17 @@
+From 269af99ab1f5272134a6a7e2e911d01726fa1d75 Mon Sep 17 00:00:00 2001
+From: Russell Senior <russell@personaltelco.net>
+Date: Thu, 22 May 2025 03:49:37 -0700
+Subject: [PATCH] xtables-addons: fix build for kernel 6.12
+
+    missing prototypes for three functions generated build errors.
+	error: no previous prototype for 'foo' [-Werror=missing-prototypes]
+
+	extensions/LUA/prot_buf_helpers.c: get_header_size
+	extensions/LUA/prot_buf_tftp.c: tftp_get_field_changes
+	extensions/LUA/prot_buf_dynamic.c: free_dynamic_prot_buf
+
+Signed-off-by: Russell Senior <russell@personaltelco.net>
+
 --- a/extensions/LUA/prot_buf_helpers.c
 +++ b/extensions/LUA/prot_buf_helpers.c
 @@ -23,6 +23,8 @@
@@ -30,7 +44,7 @@
 --- a/extensions/LUA/prot_buf_dynamic.c
 +++ b/extensions/LUA/prot_buf_dynamic.c
 @@ -242,6 +242,9 @@ static int32_t get_free_protocol_index(l
-  * cleanup routine. Be aware, before running this function you must be 
+  * cleanup routine. Be aware, before running this function you must be
   * sure that no references to the dynamic protocol buffers were available.
   * It's recomended to close the Lua state before calling the function. */
 +
