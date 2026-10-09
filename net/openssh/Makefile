@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openssh
-PKG_REALVERSION:=10.5p1
-PKG_VERSION:=10.5_p1
+PKG_REALVERSION:=10.6p1
+PKG_VERSION:=10.6_p1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_REALVERSION).tar.gz
 PKG_SOURCE_URL:=https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/ \
 		https://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/
-PKG_HASH:=d44d28a839ea9daf969cc69150fde59910b2b39361dad81a3bd6cbd19218db11
+PKG_HASH:=a9dc9565dffe8640f64d863cd29a32bc4a3dbdec0566a7fc44c5d6ee767d5f39
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(if $(BUILD_VARIANT),$(PKG_NAME)-$(BUILD_VARIANT)/)$(PKG_NAME)-$(PKG_REALVERSION)
 
 PKG_LICENSE:=BSD-2-Clause BSD-3-Clause ISC
@@ -31,7 +31,7 @@ define Package/openssh/Default
   CATEGORY:=Network
   DEPENDS:=
   TITLE:=OpenSSH
-  MAINTAINER:=Peter Wagner <tripolar@gmx.at>
+  MAINTAINER:=John Audia <therealgraysky@proton.me>
   URL:=https://www.openssh.com/
   SUBMENU:=SSH
 endef
