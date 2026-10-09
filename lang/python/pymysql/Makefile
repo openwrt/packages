@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pymysql
-PKG_VERSION:=1.2.0
+PKG_VERSION:=1.2.3
 PKG_RELEASE:=1
 
 PYPI_NAME:=pymysql
-PKG_HASH:=6c7b17ca686988104d7426c27895b455cdeea3e9d3ceb1270f0c3704fead8c33
+PKG_HASH:=d5b288529782e536ae171866df3ca9dc4f6cbfb3cc2f18e6f837fbb90dbc262b
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT

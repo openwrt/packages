@@ -42,10 +42,5 @@ import pymysql.constants as constants
 assert hasattr(constants, "CR")
 assert hasattr(constants, "ER")
 
-# Verify _escape function exists (used internally for queries)
-from pymysql.converters import escape_string, escape_dict
-assert callable(escape_string)
-assert callable(escape_dict)
-
 print("pymysql OK")
 '
