@@ -233,7 +233,7 @@ endef
 define Package/nginx-mod-lua-resty-lrucache
   $(call Package/nginx/default)
   TITLE:=Nginx Lua OpenResty lrucache module
-  DEPENDS:=@HAS_LUAJIT_ARCH +luajit2
+  DEPENDS:=@HAS_LUAJIT_ARCH +PACKAGE_nginx-mod-lua-resty-lrucache:luajit2
 endef
 
 define Package/nginx-mod-lua-resty-core
