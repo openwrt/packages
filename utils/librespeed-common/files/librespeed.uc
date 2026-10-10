@@ -8,12 +8,13 @@
 
 'use strict';
 
-import { open, readfile, stat } from 'fs';
+import { lsdir, open, readfile, stat } from 'fs';
 import { cursor } from 'uci';
 
 const STATE_DIR = '/tmp/librespeed';
 const STATE = `${STATE_DIR}/state.json`;
 const RESULT = `${STATE_DIR}/result.json`;
+const FAILED = `${STATE_DIR}/failed`;
 const LOCK = '/var/lock/librespeed.lock';
 const RUN = '/usr/libexec/librespeed-run';
 
@@ -48,6 +49,25 @@ function pgid_of(pid) {
 	const f = split(trim(substr(st, rindex(st, ')') + 1)), ' ');
 
 	return int(f[2] ?? 0);
+}
+
+// The last failure of each interface a run was for, newest first. The
+// runner keeps one file per interface until a result is recorded on its
+// link, so a success of another link does not hide it.
+function failures() {
+	const out = [];
+
+	for (let name in (lsdir(FAILED) ?? [])) {
+		if (!match(name, /^[A-Za-z0-9_]+$/))
+			continue;
+
+		const m = match(readfile(`${FAILED}/${name}`) ?? '', /^([0-9]+) ([^\n]*)/);
+
+		if (m)
+			push(out, { interface: name, error: m[2], finished: int(m[1]) });
+	}
+
+	return sort(out, (a, b) => b.finished - a.finished);
 }
 
 // The lock says whether a measurement runs, not a field in a file: a process
@@ -165,15 +185,30 @@ function cron_next(line, count) {
 
 const methods = {
 	start: {
-		call: function() {
+		args: { interface: '' },
+		call: function(request) {
+			const iface = request.args?.interface ?? '';
+
 			if (is_running())
 				return { error: 'already running' };
 
 			if (!stat(RUN))
 				return { error: 'not installed' };
 
+			// Only what LuCI offers: a logical interface of UCI network. The
+			// runner takes any name, but this is reachable by every session
+			// the ACL admits, and the name goes into a shell command below.
+			// Down or deviceless is fine: the run records the path it took.
+			if (iface != '' && (type(iface) != 'string' ||
+			    !match(iface, /^[A-Za-z0-9_]+$/) ||
+			    cursor().get('network', iface) != 'interface'))
+				return { error: 'unknown interface' };
+
 			// Detached: the frontend polls status instead of waiting here.
-			system(`start-stop-daemon -S -b -x ${RUN} >/dev/null 2>&1 || ( setsid ${RUN} >/dev/null 2>&1 & )`);
+			// Without a name the command line is the one it always was.
+			const arg = (iface != '') ? ` ${iface}` : '';
+
+			system(`start-stop-daemon -S -b -x ${RUN}${arg ? ' --' + arg : ''} >/dev/null 2>&1 || ( setsid ${RUN}${arg} >/dev/null 2>&1 & )`);
 
 			return { started: true };
 		}
@@ -207,6 +242,10 @@ const methods = {
 			if (is_running()) {
 				const out = { running: true, phase: st.phase ?? '' };
 
+				// Only a bound run writes it: an unbound one learns its
+				// path at the end, and a guess here would mislabel it.
+				if (type(st.interface) == 'string' && st.interface != '')
+					out.interface = st.interface;
 				if (st.pid)
 					out.pid = int(st.pid);
 				if (st.started) {
@@ -219,14 +258,19 @@ const methods = {
 					out.mbps = st.mbps + 0.0;
 				if (st.progress != null)
 					out.progress = int(st.progress);
+				out.failures = failures();
 
 				return out;
 			}
 
 			const out = { running: false, last_error: st.last_error ?? '' };
 
+			// The interface a failed or stopped run was for.
+			if (out.last_error != '' && type(st.interface) == 'string' && st.interface != '')
+				out.interface = st.interface;
 			if (st.last_finished)
 				out.last_finished = int(st.last_finished);
+			out.failures = failures();
 
 			return out;
 		}
@@ -308,37 +352,76 @@ const methods = {
 	config: {
 		call: function() {
 			const uci = cursor();
+			const main_iface = config_get(uci, 'main', 'interface', 'wan');
 
-			// The drawn schedule lives in the crontab, not in UCI: for a daily
-			// interval the time is picked at sync. Handing the line out lets
-			// the frontend show when measurements will actually run.
-			let cron = '';
+			// A line naming an interface belongs to the section that wrote
+			// it, found the way librespeed.init picks one: the first enabled
+			// section naming it, the legacy one before every `config
+			// schedule`. A bare line is the legacy section's.
+			const legacy = uci.get_all('librespeed', 'schedule');
+			const owners = legacy ? [ legacy ] : [];
+
+			uci.foreach('librespeed', 'schedule', (s) => { push(owners, s); });
+
+			const owner = (arg) => (arg == '') ? legacy : filter(owners, (s) =>
+				s.interface == arg &&
+				(s.enabled in [ '1', 'on', 'true', 'yes', 'enabled' ]))[0];
+			const opt = (sec, o, fallback) =>
+				(sec?.[o] == null || sec[o] == '') ? fallback : sec[o];
+
+			// The drawn schedules live in the crontab, not in UCI: for a
+			// daily interval the time is picked at sync. Handing the lines
+			// out lets the frontend show when measurements will actually run.
+			const schedules = [];
+			let own = null;
 			const cf = open('/etc/crontabs/root', 'r');
 
 			if (cf) {
-				for (let line = cf.read('line'); length(line); line = cf.read('line'))
-					if (index(line, '/usr/libexec/librespeed-run') >= 0)
-						cron = trim(line);
+				for (let line = cf.read('line'); length(line); line = cf.read('line')) {
+					if (index(line, RUN) < 0)
+						continue;
+
+					const f = split(trim(line), /\s+/);
+					const at = index(f, RUN);
+					const arg = (at >= 0) ? (f[at + 1] ?? '') : '';
+					const sec = owner(arg);
+					const entry = {
+						interface: (arg != '') ? arg : main_iface,
+						interval: opt(sec, 'interval', '1d'),
+						days: opt(sec, 'days', '*'),
+						hours: opt(sec, 'hours', ''),
+						cron: trim(line),
+						next_runs: cron_next(line, 3)
+					};
+
+					push(schedules, entry);
+
+					if (arg == '' || sec?.['.name'] == 'schedule')
+						own = entry;
+				}
 				cf.close();
 			}
 
 			const out = {
-				interface: config_get(uci, 'main', 'interface', 'wan'),
+				interface: main_iface,
 				server: config_get(uci, 'main', 'server', 'auto'),
 				scheme: config_get(uci, 'main', 'scheme', 'auto'),
 				server_list: config_get(uci, 'main', 'server_list', ''),
+				// The legacy section and its own line only: a line of another
+				// schedule must not pass for it.
 				schedule: {
 					// What the crontab holds, not what UCI intends: a
 					// hand-set 'true' satisfies the init script's bool but
 					// not a string compare, and the page would say No while
 					// cron fires. The line is the one source of truth.
-					enabled: cron != '',
+					enabled: own != null,
 					interval: config_get(uci, 'schedule', 'interval', '1d'),
 					days: config_get(uci, 'schedule', 'days', '*'),
 					hours: config_get(uci, 'schedule', 'hours', ''),
-					cron: cron,
-					next_runs: cron != '' ? cron_next(cron, 3) : []
+					cron: own?.cron ?? '',
+					next_runs: own?.next_runs ?? []
 				},
+				schedules: schedules,
 				history: {
 					enabled: config_get(uci, 'history', 'enabled', '1') != '0',
 					path: config_get(uci, 'history', 'path',
