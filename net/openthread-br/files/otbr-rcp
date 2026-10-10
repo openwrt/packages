@@ -1,0 +1,342 @@
+#!/bin/sh
+
+# Copyright (c) 2026 Project CHIP Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# otbr-rcp: Wrapper script for otbr-agent to manage an RCP dongle
+
+# RCP interfaces are recognized using the following USB properties:
+# - interface has INTERFACE == 2/2/0 and DRIVER == cdc_acm
+# - device product string contains the word "OpenThread"
+# Additional an RCP selector string can be specified. This can be
+# - "any" (the default) matches any eligible device
+# - <B>-<P>, e.g. "1-1.2.3" matches a specific bus/port path
+# If the --wait option is given, the script will wait for a
+# suitable device to be hot-plugged if necessary.
+#
+# If the --update option is given and suitable firmware handler
+# plugins are available, the RCP firmware will be auto-updated
+# or auto-installed. The latter is only performed if the USB device
+# has been manually placed into boot loader mode.
+
+usage() {
+	echo "Usage: $0 [OPTIONS...] [RCP] [-- AGENT-ARGS...]" >&2
+	exit 2
+}
+
+RC_NOT_FOUND=3
+RC_NOT_SUPPORTED=4
+RC_INTERNAL=7
+RC_BREAK=63
+
+AGENT_PROG=/usr/sbin/otbr-agent
+
+main() {
+	# Parse options / arguments
+	local wait= update=
+	while [ $# -gt 0 ]; do
+		case "$1" in
+		--) break;;
+		--wait) wait=1; shift;;
+		--update) update=1; shift;;
+		-*) echo "Unrecognized option: ${1#-}" >&2; usage;;
+		*) break;;
+		esac
+	done
+
+	local rcp=any
+	if [ $# -gt 0 -a "$1" != "--" ]; then
+		rcp="$1"
+		validate_rcp_selector "$rcp" || usage
+		shift
+	fi
+
+	local launch=
+	if [ $# -gt 0 ]; then
+		[ "$1" = "--" -a $# -gt 1 ] || usage
+		launch=1
+		shift
+	fi
+
+	# Find and/or wait for the RCP device
+	[ -z "$update" ] || load_firmware_handlers
+	if [ -n "$wait" ]; then
+		log debug "Looking for RCP devices matching selector '$rcp'"
+		hotplug_wait find_rcp "$rcp" "$update"
+	elif ! find_rcp "$rcp" "$update"; then
+		log error "No RCP device found for selector '$rcp'"
+		return "$RC_NOT_FOUND"
+	fi
+	local rcpdev="${REPLY% *}" installhid="${REPLY#* }"
+
+	# Install firmware if necessary
+	if [ -n "$update" -a "$installhid" != "-" ]; then
+		install_rcp "$rcpdev" "$installhid" || return $?
+		rcpdev="${REPLY% *}" update=
+	fi
+
+	# Find the corresponding TTY
+	if ! usb_wait_devnode "$rcpdev" tty ttyACM; then
+		log error "Unable to resolve TTY for USB device $rcpdev"
+		return "$RC_INTERNAL"
+	fi
+	local rcptty="$REPLY"
+	local rcpurl="spinel+hdlc+uart://$rcptty"
+
+	# Update firmware if requested, supported, and necessary
+	if [ -n "$update" ]; then
+		update_rcp "${rcpdev%:*}" "$rcptty" "$rcpurl" || return $?
+	fi
+
+	# Exec otbr-agent if requested
+	if [ -n "$launch" ]; then
+		local arg
+		for arg in "$@"; do
+			shift
+			set -- "$@" "${arg//%rcpurl%/$rcpurl}"
+		done
+		log debug "Executing $AGENT_PROG $*"
+		exec "$AGENT_PROG" "$@"
+	else
+		echo "RCPDEV=$rcpdev"
+		echo "RCPTTY=$rcptty"
+		return 0
+	fi
+}
+
+validate_rcp_selector() {  # selector
+	case "$1" in
+	any) return 0;;
+	*-*) return 0;;  # USB DEVICENAME / <bus>-<port path>, e.g. "1-1", "3-2.1.1"
+	esac
+	return 1
+}
+
+find_rcp() {  # selector [include-installable] => $REPLY
+	local rcpdev= installdev= installhid=
+	usb_device_foreach _find_rcp_cb "$@"
+	if [ $? -eq "$RC_BREAK" ] && [ -n "$rcpdev" ]; then
+		log debug "Found RCP interface $rcpdev for selector '$1'"
+		REPLY="$rcpdev -"
+		return 0
+	fi
+	if [ -n "$2" -a -n "$installdev" -a -n "$installhid" ]; then
+		log debug "Found installable $installhid device $installdev for selector '$1'"
+		REPLY="$installdev $installhid"
+		return 0
+	fi
+	return "$RC_NOT_FOUND"
+}
+_find_rcp_cb() {  # selector [include-installable]
+	# Must match the selector (if any)
+	case "$1" in
+	*-*) [ "$1" = "$DEVICENAME" ] || return 0
+	esac
+
+	# Check for a usable cdc_acm interface
+	usb_interface_foreach "" _find_rcp_if_cb
+	if [ $? -eq "$RC_BREAK" ] && [ -n "$rcpdev" ]; then
+		# An explicit bus position is the operator saying this device is
+		# the RCP; only unattended selection needs the product string to
+		# say so, since many dongles (Home Assistant's ZBT-2 for one) do
+		# not carry the word OpenThread in theirs.
+		case "$1" in
+		*-*) return "$RC_BREAK";;
+		esac
+		usb_read_property '' product && REPLY=" $REPLY " && [ "${REPLY/ OpenThread /}" != "$REPLY" ] \
+			&& return "$RC_BREAK"
+		rcpdev=
+	fi
+
+	# If requested, check if we could install RCP firmware on this device
+	if [ -n "$2" -a -n "$RCPFWHANDLERS" -a -z "$installdev" ]; then
+		local hid
+		for hid in $RCPFWHANDLERS; do
+			call_firmware_handler "$hid" installable "$DEVICENAME" && installdev="$DEVICENAME" installhid="$hid" && break
+		done
+	fi
+}
+_find_rcp_if_cb() {
+	usb_read_property '' INTERFACE && [ "$REPLY" = 2/2/0 ] || return 0
+	usb_read_property '' DRIVER && [ "$REPLY" = cdc_acm ] || return 0
+	rcpdev="$DEVICENAME"
+	return "$RC_BREAK"
+}
+
+update_rcp() {  # rcpdev rcptty rcpurl
+	local rcpdev="$1" rcptty="$2" rcpurl="$3"
+	[ -n "$RCPFWHANDLERS" ] || return 0
+
+	# Use uart-exclusive to ensure we don't interfere with a running otbr-agent
+	log debug "Determining current firmware for USB device $rcpdev ($rcptty)"
+	local currentfw="$("$AGENT_PROG" -s -d3 --radio-version "${rcpurl}?uart-exclusive" 2>/dev/null)"
+	if [ -z "$currentfw" ]; then
+		log notice "Not updating USB device $rcpdev, unable to determine current firmware version"
+		return 0
+	fi
+	log debug " -> $currentfw"
+
+	local hid rc
+	for hid in $RCPFWHANDLERS; do
+		call_firmware_handler "$hid" update "$@" "$currentfw"; rc=$?
+		if [ "$rc" -eq "$RC_NOT_SUPPORTED" ]; then
+			continue
+		elif [ "$rc" -ne 0 ]; then
+			log error "Failed to update $hid device $rcpdev"
+			return "$rc"
+		fi
+		return 0
+	done
+	log notice "Not updating USB device $1, not supported by any firmware handler"
+}
+
+install_rcp() {  # rcpdev hid => $REPLY
+	local rcpdev="$1" hid="$2" retry
+	log notice "Attempting to install RCP firmware on $hid device $rcpdev"
+	if ! call_firmware_handler "$hid" install "$rcpdev"; then
+		log error "Failed to install firmware on USB device $rcpdev"
+		return "$RC_INTERNAL"
+	fi
+	for retry in 2 1 0; do
+		find_rcp "$rcpdev" && return 0
+		[ "$retry" -gt 0 ] && sleep 1
+	done
+	log error "Failed to find RCP device after firmware install"
+	return "$RC_INTERNAL"
+}
+
+usb_device_foreach() {  # callback ... (with $DEVICENAME)
+	local _dev DEVICENAME
+	for _dev in /sys/bus/usb/devices/*; do
+		DEVICENAME="${_dev##*/}"  # e.g. "1-1"
+		[ "${DEVICENAME%:*}" = "$DEVICENAME" -a -f "$_dev/bDeviceClass" ] || continue
+		"$@"; [ $? -ne "$RC_BREAK" ] || return "$RC_BREAK"
+	done
+}
+
+usb_interface_foreach() {  # devicename callback ... (with $DEVICENAME)
+	local _dn="${1:-$DEVICENAME}" _if DEVICENAME; shift
+	for _if in "/sys/bus/usb/devices/$_dn/$_dn:"*; do
+		[ -d "$_if" -a -f "$_if/bInterfaceClass" ] || continue
+		DEVICENAME="${_if##*/}"  # e.g. "1-1:1.0"
+		"$@"; [ $? -ne "$RC_BREAK" ] || return "$RC_BREAK"
+	done
+}
+
+usb_read_property() {  # devicename property => $REPLY
+	local dev="/sys/bus/usb/devices/${1:-$DEVICENAME}" u v w
+	REPLY=
+	case "$2" in
+		# Provide some processed / composite values that align with hotplug environment variables
+		DEVPATH) v="$(readlink -f "$dev" 2>/dev/null)" && REPLY="${v#/sys}";;  # e.g. "/devices/platform/1e1c0000.xhci/usb1/1-1"
+		DRIVER) v="$(readlink "$dev/driver" 2>/dev/null)" && REPLY="${v##*/}";;  # e.g. "cdc_acm"
+		INTERFACE) usb_read_property "$1" bInterfaceClass && u="0x0$REPLY" \
+			&& usb_read_property "$1" bInterfaceSubClass && v="0x0$REPLY" \
+			&& usb_read_property "$1" bInterfaceProtocol && w="0x0$REPLY" \
+			&& REPLY="$(printf '%d/%d/%d' "$u" "$v" "$w")";;  # e.g. "2/2/0"
+		TYPE) usb_read_property "$1" bDeviceClass && u="0x0$REPLY" \
+			&& usb_read_property "$1" bDeviceSubClass && v="0x0$REPLY" \
+			&& usb_read_property "$1" bDeviceProtocol && w="0x0$REPLY" \
+			&& REPLY="$(printf '%d/%d/%d' "$u" "$v" "$w")";;  # e.g. "239/2/1"
+		PRODUCT) usb_read_property "$1" idVendor && u="0x0$REPLY" \
+			&& usb_read_property "$1" idProduct && v="0x0$REPLY" \
+			&& usb_read_property "$1" bcdDevice && w="0x0$REPLY" \
+			&& REPLY="$(printf '%x/%x/%x' "$u" "$v" "$w")";;  # e.g. "e8d/7612/100"
+		*) [ -r "$dev/$2" ] && read -r <"$dev/$2" 2>/dev/null;;
+	esac
+}
+
+usb_find_devnode() {  # devicename class [prefix] => $REPLY
+	local devpath node path
+	usb_read_property "$1" DEVPATH && devpath="$REPLY" || return $?
+	for node in "/sys/class/$2/$3"*; do
+		path="$(readlink "$node" 2>/dev/null)" && [ "${path/$devpath/}" != "$path" ] || continue
+		REPLY="/dev/${node##*/}" && [ -e "$REPLY" ] && return 0
+	done
+	REPLY=
+	return "$RC_NOT_FOUND"
+}
+
+usb_wait_devnode() {  # devicename class [prefix] => $REPLY
+	local retry
+	for retry in 2 1 0; do
+		usb_find_devnode "$@" && return 0
+		[ "$retry" -gt 0 ] && sleep 1
+	done
+	return "$RC_NOT_FOUND"
+}
+
+hotplug_wait() {  # callback ...
+	# Note: This function MUST NOT be called from a sub-shell!
+	# Create a fifo that acts as a flag file for the otbr-rcp hotplug handler.
+	# A fifo is used so we can block interruptibly by reading from it. The fifo
+	# is not actually written to by the hotplug handler, since this would require
+	# logic to avoid hanging / blocking if this listener goes away. Instead, the
+	# hotplug handler directly sends an ALRM signal to wake up listeners.
+	local sig ignored fifo="/var/run/otbr-rcp.hotplug.$$"
+	trap "rm -f '$fifo' 2>/dev/null" 0
+	trap 'sig=1' ALRM
+	mkfifo -m 0400 "$fifo" || return $?
+	exec 9<>"$fifo"
+	while true; do
+		# reset before polling
+		sig=; "$@" && break
+		log debug "Waiting for ALRM signal from otbr-rcp hotplug handler"
+		read -r ignored <&9 2>/dev/null
+	done
+	exec 9>&-
+	rm "$fifo"
+	trap '' ALRM  # ignore further / later signals
+	trap - 0
+}
+
+load_firmware_handlers() {  # => $RCPFWHANDLERS
+	local _script _hname _hid _type
+	RCPFWHANDLERS=
+	for _script in /usr/share/openthread-rcp/*.sh; do
+		[ -f "$_script" -a -r "$_script" ] || continue
+		_hname="${_script##*/}"
+		_hid="${_hname%.sh}"; _hid="${_hid//-/_}"
+		if [ -n "${_hid//[a-z0-9_]}" ]; then
+			log warning "Not loading firmware handler '$_hname', invalid file name"
+			continue
+		fi
+		log debug "Loading firmware handler '$_hname'"
+		. "$_script"
+		_type="$(type "rcp_fw_$_hid")"
+		if [ "${_type/function}" = "$_type" ]; then
+			log warning "Ignoring firmware handler '$_hname', missing entry point"
+			continue
+		fi
+		RCPFWHANDLERS="${RCPFWHANDLERS}${RCPFWHANDLERS:+ }${_hid}"
+	done
+	[ -n "$RCPFWHANDLERS" ] || log debug "No firmware handlers available"
+}
+
+call_firmware_handler() {  # hid args...
+	local hid="$1"; shift
+	"rcp_fw_$hid" "$@"
+}
+
+log() {  # {debug|info|notice|warning|error|...} message
+	logger -t otbr-rcp -p "$1" "$2"
+	! [ -t 2 ] || echo "$2" >&2
+}
+
+# Force signal handlers to respect an EXIT (0) trap
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+main "$@"
