@@ -1,0 +1,16 @@
+#!/bin/sh
+# Copyright 2026 51DDNS
+# SPDX-License-Identifier: Apache-2.0
+set -eu
+
+delay="${START_DELAY_SECONDS:-0}"
+
+case "$delay" in
+	''|*[!0-9]*) delay=0 ;;
+esac
+if [ "$delay" -gt 0 ]; then
+	logger -t 51ddns-agent "delaying startup by ${delay} seconds"
+	sleep "$delay"
+fi
+
+exec "$@"
