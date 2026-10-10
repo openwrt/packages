@@ -1,0 +1,189 @@
+#!/bin/sh
+# Guided air-mouse calibration for the LG Magic Remote.
+
+HERE=$(dirname "$0")
+
+# next to this script when run from a checkout, installed otherwise
+helper() {
+	local candidate
+
+	for candidate in "$HERE/lg-magic-$1" "$HERE/$1" "/usr/sbin/lg-magic-$1"; do
+		[ -x "$candidate" ] && { printf '%s' "$candidate"; return 0; }
+	done
+}
+
+CAPTURE=$(helper display_imu.py)
+BIAS=$(helper calibrate.py)
+PACK=$(helper convert_calib.py)
+
+STATE_DIR=/etc/lg-magic
+STATE_JSON="$STATE_DIR/calib.json"
+FIRMWARE_DIR=/lib/firmware
+PARAM=/sys/module/lg_magic/parameters/imu_evdev
+
+CAPTURE_SECS=10
+SPEED=0.25
+SCALE=0.07
+ALPHA=0.2
+SPAN_LIMIT=60
+RECAPTURE=
+
+usage() {
+	cat <<EOF
+Usage: ${0##*/} [options]
+
+Measures the gyroscope bias of the LG Magic Remote and installs the
+calibration the driver loads as firmware.
+
+  --speed VALUE    pointer speed, above 0 and at most 1 (default $SPEED)
+  --seconds N      seconds of samples to capture (default $CAPTURE_SECS)
+  --scale VALUE    gyroscope scale (default $SCALE)
+  --alpha VALUE    pointer smoothing, 0 to 1 (default $ALPHA)
+  --recapture      measure again instead of reusing $STATE_JSON
+  -h, --help       this text
+
+With a calibration already stored, the speed can be changed on its own:
+
+  ${0##*/} --speed 0.15
+EOF
+}
+
+die() {
+	printf 'Error: %s\n' "$1" >&2
+	exit 1
+}
+
+ask() {
+	[ -t 0 ] || return 0
+	printf '%s' "$1"
+	read -r _reply
+}
+
+remote_address() {
+	local info
+
+	for info in /var/lib/bluetooth/*/*/info; do
+		[ -f "$info" ] || continue
+		grep -qi '^Name=LG' "$info" || continue
+		info=${info%/info}
+		printf '%s' "${info##*/}"
+		return 0
+	done
+}
+
+imu_handler() {
+	awk '/^N: Name=.*IMU/{found=1} found && /^H: Handlers=/{
+		for (i = 2; i <= NF; i++)
+			if ($i ~ /^event/) {print $i; exit}
+	}' /proc/bus/input/devices
+}
+
+wait_for_imu() {
+	local waited=0
+
+	[ -n "$(imu_handler)" ] && return 0
+
+	printf 'Waiting for the remote. Press one of its buttons.\n'
+	while [ "$waited" -lt 120 ]; do
+		[ -n "$(imu_handler)" ] && return 0
+		sleep 2
+		waited=$((waited + 2))
+	done
+
+	return 1
+}
+
+enable_imu_device() {
+	[ -e "$PARAM" ] || die "the lg_magic module is not loaded"
+	[ "$(cat "$PARAM")" = "1" ] && return 0
+
+	echo 1 > "$PARAM" || die "cannot write $PARAM"
+	printf 'Raw IMU reporting enabled. The remote has to reconnect for it\n'
+	printf 'to take effect: leave it alone until it drops the link.\n'
+}
+
+check_capture() {
+	awk -F, 'NR > 1 && $1 ~ /^[0-9]+$/ {
+		n++
+		for (i = 6; i <= 8; i++) {
+			if (n == 1 || $i < min[i]) min[i] = $i
+			if (n == 1 || $i > max[i]) max[i] = $i
+		}
+	}
+	END {
+		if (n < 50) {
+			printf "too few samples (%d)\n", n
+			exit 1
+		}
+		for (i = 6; i <= 8; i++)
+			if (max[i] - min[i] > limit) {
+				printf "the remote moved (axis %d spans %d counts)\n", i - 5, max[i] - min[i]
+				exit 1
+			}
+		printf "%d samples, still\n", n
+	}' -v limit="$SPAN_LIMIT" "$1"
+}
+
+while [ $# -gt 0 ]; do
+	case "$1" in
+	--speed) SPEED="$2"; shift 2 ;;
+	--seconds) CAPTURE_SECS="$2"; shift 2 ;;
+	--scale) SCALE="$2"; shift 2 ;;
+	--alpha) ALPHA="$2"; shift 2 ;;
+	--recapture) RECAPTURE=1; shift ;;
+	-h|--help) usage; exit 0 ;;
+	*) usage >&2; exit 1 ;;
+	esac
+done
+
+[ -n "$CAPTURE" ] && [ -n "$BIAS" ] && [ -n "$PACK" ] ||
+	die "the lg-magic scripts are not installed"
+
+mkdir -p "$STATE_DIR"
+
+if [ -n "$RECAPTURE" ] || [ ! -f "$STATE_JSON" ]; then
+	enable_imu_device
+	wait_for_imu || die "no IMU device appeared; is the remote paired?"
+
+	while :; do
+		printf '\nPut the remote flat on a table and let go of it.\n'
+		ask 'Press Enter when it is lying still: '
+
+		csv=$(mktemp /tmp/lg-magic.XXXXXX)
+		"$CAPTURE" --csv "$csv" --seconds "$CAPTURE_SECS" >/dev/null ||
+			die "capture failed"
+
+		verdict=$(check_capture "$csv") && break
+
+		printf 'Discarding this capture: %s\n' "$verdict"
+		rm -f "$csv"
+		[ -t 0 ] || die "capture unusable"
+	done
+
+	printf 'Captured %s\n' "$verdict"
+	"$BIAS" --gyro "$csv" "$STATE_JSON" --gyro-scale "$SCALE" >/dev/null ||
+		die "could not work out the bias"
+	rm -f "$csv"
+else
+	printf 'Reusing the measurement in %s (--recapture to measure again).\n' "$STATE_JSON"
+fi
+
+"$PACK" "$STATE_JSON" "$FIRMWARE_DIR/lg_magic_calib.bin" \
+	--alpha "$ALPHA" --mouse_k "$SPEED" >/dev/null ||
+	die "could not build the calibration blob"
+
+address=$(remote_address)
+if [ -n "$address" ]; then
+	named=$(printf '%s' "$address" | tr 'A-F:' 'a-f_')
+	cp "$FIRMWARE_DIR/lg_magic_calib.bin" \
+		"$FIRMWARE_DIR/lg_magic_calib_$named.bin"
+	printf 'Installed for %s and as the fallback for any remote.\n' "$address"
+else
+	printf 'Installed as the fallback for any remote.\n'
+fi
+
+printf 'Pointer speed %s, smoothing %s, gyroscope scale %s.\n' "$SPEED" "$ALPHA" "$SCALE"
+printf '\nThe driver reads the calibration when the remote connects, so let it\n'
+printf 'drop the link and press a button to reconnect. Check it took with:\n'
+printf '  dmesg | grep -i lgmagic | tail -n 2\n'
+printf '\nToo fast or too slow? Run "%s --speed VALUE"; no new capture needed.\n' "${0##*/}"
