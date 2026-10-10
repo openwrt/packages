@@ -79,6 +79,7 @@ upgrade_init() {
 		changed=1
 	fi
 
+	set_if_empty "$init_section" enabled 1
 	set_if_empty "$init_section" stdout 1
 	set_if_empty "$init_section" stderr 1
 	set_if_empty "$init_section" respawn 1
