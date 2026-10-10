@@ -1,0 +1,31 @@
+Testing emit_procd_shell() handles null/empty data gracefully.
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+// Null input
+let r1 = pbr.emit_procd_shell(null);
+let r2 = pbr.emit_procd_shell({});
+
+let checks = [
+	['null_returns_empty',  r1 == ''],
+	['empty_has_compat',    index(r2, 'json_add_int packageCompat') >= 0],
+	['empty_has_gateways',  index(r2, 'json_add_array gateways') >= 0],
+];
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("emit_procd_null: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+emit_procd_null: 3/3 passed
+-- End --

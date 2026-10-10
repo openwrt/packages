@@ -1,0 +1,135 @@
+Regression: the same dedupe on a split uplink whose two halves differ.
+
+Companion to 15_gateway_warning_dedupe, which covers the default wan + wan6
+pair sharing one device. Here uplink_interface is 'wanb' (device lan1) and
+uplink_interface6 is 'wan6' (device eth1) -- the configuration a reporter
+arrived at to keep pbr starting while their primary WAN was down. The two
+uplinks are now different interfaces on different devices, so the rewrite
+inside get_gateway6() lands differently and the dedupe has to still hold.
+
+What happens without the dedupe: wanb is the IPv4 uplink, so get_gateway6()
+rewrites it to uplink_interface6 and looks up that interface's device, and
+the warning it raises is indistinguishable from the one wan6 raises for
+itself. eth1 has no IPv6 gateway here, so the identical line appears twice
+among three warnings.
+
+The 'wan' warning must survive alongside them. wan is a separate UCI section
+that is no longer either uplink, so nothing rewrites it, and its missing IPv6
+gateway is its own fact to report even though it shares eth1 with wan6. That
+is the over-collapse guard: dedupe by rendered text, never by device or by
+underlying cause.
+
+-- File uci/pbr.json --
+{
+	"pbr": [
+		{
+			".name": "config",
+			"enabled": "1",
+			"fw_mask": "00ff0000",
+			"ipv6_enabled": "1",
+			"strict_enforcement": "1",
+			"uplink_interface": "wanb",
+			"uplink_interface6": "wan6",
+			"uplink_ip_rules_priority": "30000",
+			"uplink_mark": "00010000",
+			"verbosity": "2",
+			"lan_device": ["br-lan"],
+			"resolver_instance": ["*"],
+			"debug_performance": "0",
+			"nft_set_auto_merge": "1",
+			"nft_set_flags_interval": "1",
+			"nft_set_flags_timeout": "0",
+			"nft_set_policy": "performance",
+			"ignored_interface": ["vpnserver"]
+		}
+	],
+	"policy": []
+}
+-- End --
+
+-- File uci/network.json --
+{
+	"interface": [
+		{ ".name": "loopback", "device": "lo", "proto": "static", "ipaddr": "127.0.0.1", "netmask": "255.0.0.0" },
+		{ ".name": "lan", "device": "br-lan", "proto": "static", "ipaddr": "192.168.1.1/24" },
+		{ ".name": "wan", "device": "eth1", "proto": "dhcp" },
+		{ ".name": "wan6", "device": "eth1", "proto": "dhcpv6" },
+		{ ".name": "wanb", "device": "lan1", "proto": "dhcp" }
+	]
+}
+-- End --
+
+-- File ubus/network.interface.wanb~status.json --
+{
+	"up": true, "pending": false, "available": true, "autostart": true,
+	"dynamic": false, "uptime": 3600, "l3_device": "lan1", "device": "lan1",
+	"proto": "dhcp",
+	"ipv4-address": [ { "address": "10.209.0.2", "mask": 24 } ],
+	"route": [ { "target": "0.0.0.0", "mask": 0, "nexthop": "10.209.0.1", "source": "10.209.0.2/24" } ]
+}
+-- End --
+
+-- File ubus/network.interface.wan6~status.json --
+{
+	"up": true, "pending": false, "available": true, "autostart": true,
+	"dynamic": false, "uptime": 3600, "l3_device": "eth1", "device": "eth1",
+	"proto": "dhcpv6",
+	"ipv6-address": [ { "address": "2001:db8::1", "mask": 64 } ],
+	"route": []
+}
+-- End --
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+let result = pbr.start_service(['on_start']);
+let warnings = result?.warnings || [];
+
+let checks = [];
+
+// wanb carries a v4 gateway, so the service starts and the missing v6 one
+// is a warning and nothing more.
+push(checks, ['service_started', type(result?.gateways) == 'array']);
+
+let v6 = filter(warnings, w => w.code == 'warningInterfaceRoutingUnknownGateway6');
+push(checks, ['v6_warning_raised', length(v6) >= 1]);
+
+// The dedupe: wanb rewrites to wan6, and wan6 warns for itself. One line.
+push(checks, ['wan6_warned_once',
+	length(filter(v6, w => w.info == 'interface:wan6; device:eth1 ')) == 1]);
+
+// The over-collapse guard: wan is neither uplink here, shares eth1 with
+// wan6, and must still be reported in its own right.
+push(checks, ['wan_warned_separately',
+	length(filter(v6, w => w.info == 'interface:wan; device:eth1 ')) == 1]);
+
+// Which makes exactly two distinct IPv6 warnings, not one and not three.
+push(checks, ['two_distinct_v6_warnings', length(v6) == 2]);
+
+// General invariant: no two recorded warnings render the same text.
+let seen = {}, dupes = [];
+for (let w in warnings) {
+	let key = w.code + '|' + (w.info || '');
+	if (seen[key]) push(dupes, key);
+	seen[key] = true;
+}
+push(checks, ['no_duplicate_warnings', length(dupes) == 0]);
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+for (let d in dupes)
+	printf("DUPE: %s\n", d);
+printf("gateway_warning_dedupe_split_uplink: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+gateway_warning_dedupe_split_uplink: 6/6 passed
+-- End --

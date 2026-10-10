@@ -1,0 +1,9 @@
+{
+	"system": [
+		{
+			".name": "cfg01e48a",
+			"hostname": "OpenWrt",
+			"timezone": "UTC"
+		}
+	]
+}

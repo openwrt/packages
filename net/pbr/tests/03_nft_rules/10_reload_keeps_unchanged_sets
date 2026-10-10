@@ -1,0 +1,127 @@
+Testing that a plain reload and an interface reload never empty a resolver set.
+
+Flushing on a reload that changed nothing would undo #155 twice over: a domain a
+client still has cached is never re-queried, so it would silently drop out of
+policy routing, and pbr would be churning kernel state on every config.change
+trigger. Only a set whose domain list actually differs may be flushed.
+
+'service pbr reload' arrives as 'on_reload', which resolves to the same default
+branch as 'on_start' -- full teardown and rebuild -- so it does run the flush
+logic and has to be proven inert when nothing moved. 'on_interface_reload' takes
+its own branch, which reloads routing only: it never truncates the dnsmasq file,
+never calls nft_file.apply('main'), and so never reaches the flush at all.
+
+Neither path may delete a set either. That is what left dnsmasq's nftset= target
+missing mid-rebuild and produced 'Error: No such file or directory' for every
+reply landing in the gap.
+
+-- Testcase --
+import create_pbr from 'pbr';
+
+// The live generation, byte-identical to what this config regenerates.
+let live = 'nftset=/stable.example.com/4#inet#fw4#pbr_wan_4_dst_ip_pol_stable,6#inet#fw4#pbr_wan_6_dst_ip_pol_stable # Stable\n';
+global.mocklib.capture('/var/run/pbr.dnsmasq', live);
+
+let checks = [];
+let flushes = () => global.mocklib.commands('flush set inet fw4 pbr_');
+let deletes = () => global.mocklib.commands('delete set inet fw4 pbr_');
+
+// ── 'service pbr reload' ────────────────────────────────────────────────
+let pbr = create_pbr();
+pbr.start_service(['on_reload']);
+
+push(checks, ['reload_flushes_nothing', length(flushes()) == 0]);
+push(checks, ['reload_deletes_nothing', length(deletes()) == 0]);
+
+// The set stays declared by the new ruleset, so it is never missing.
+let nft_content = global.mocklib.read_captured('/var/run/pbr.nft') || '';
+push(checks, ['reload_set_still_declared',
+	index(nft_content, 'add set inet fw4 pbr_wan_4_dst_ip_pol_stable ') >= 0]);
+push(checks, ['reload_dnsmasq_unchanged',
+	global.mocklib.read_captured('/var/run/pbr.dnsmasq') == live]);
+
+// ── 'service pbr on_interface_reload wan' ───────────────────────────────
+global.mocklib.clear_commands();
+// Drop the installed ruleset: this branch reloads routing only, so if it were
+// silently downgraded to 'on_start' -- which happens when the service looks
+// stopped or has no published gateways -- nft_file.apply('main') would write
+// the file again and the assertions below would be testing the wrong path.
+global.mocklib.delete_captured('/var/run/pbr.nft');
+
+let pbr2 = create_pbr();
+pbr2.start_service(['on_interface_reload', 'wan']);
+
+push(checks, ['iface_reload_took_its_own_branch',
+	!global.mocklib.has_captured('/var/run/pbr.nft')]);
+push(checks, ['iface_reload_flushes_nothing', length(flushes()) == 0]);
+push(checks, ['iface_reload_deletes_nothing', length(deletes()) == 0]);
+push(checks, ['iface_reload_dnsmasq_untouched',
+	global.mocklib.read_captured('/var/run/pbr.dnsmasq') == live]);
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("reload_keeps_unchanged_sets: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- File fs/popen~nft_list_table_inet_fw4_2_dev_null.txt --
+table inet fw4 {
+	chain pbr_mark_0x010000 {
+		meta mark set (meta mark & 0xff00ffff) | 0x010000
+		return
+	}
+
+	set pbr_wan_4_dst_ip_pol_stable {
+		type ipv4_addr
+	}
+
+	set pbr_wan_6_dst_ip_pol_stable {
+		type ipv6_addr
+	}
+}
+-- End --
+
+-- File ubus/service~list~name-pbr.json --
+{
+	"pbr": {
+		"data": {
+			"gateways": [
+				{ "name": "wan", "gateway_ipv4": "192.168.1.1" },
+				{ "name": "wan6", "gateway_ipv6": "2001:db8::ffff" }
+			]
+		}
+	}
+}
+-- End --
+
+-- File uci/pbr.json --
+{
+	"pbr": [
+		{
+			".name": "config", "enabled": "1", "fw_mask": "00ff0000", "ipv6_enabled": "1",
+			"resolver_set": "dnsmasq.nftset", "strict_enforcement": "1",
+			"uplink_interface": "wan", "uplink_interface6": "wan6",
+			"uplink_ip_rules_priority": "30000", "uplink_mark": "00010000", "verbosity": "2",
+			"lan_device": ["br-lan"], "resolver_instance": ["*"], "debug_performance": "0",
+			"nft_set_auto_merge": "1", "nft_set_flags_interval": "1", "nft_set_flags_timeout": "0",
+			"nft_set_policy": "performance", "ignored_interface": ["vpnserver"]
+		}
+	],
+	"policy": [
+		{
+			".name": "pol_stable", "name": "Stable", "enabled": "1", "interface": "wan",
+			"dest_addr": "stable.example.com", "chain": "prerouting"
+		}
+	]
+}
+-- End --
+
+-- Expect stdout --
+reload_keeps_unchanged_sets: 8/8 passed
+-- End --
