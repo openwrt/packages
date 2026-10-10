@@ -154,6 +154,26 @@ is_aead() {
 	return 1
 }
 
+append_ke() {
+	local value="$1"
+
+	[ -n "$value" ] || return
+
+	ke_count="$((ke_count + 1))"
+	[ "$ke_count" -le 7 ] || {
+		warning "More than 7 key exchange methods configured, ignoring '$value'"
+		return
+	}
+
+	case "$value" in
+	ke[1-7]_*)
+		warning "Key exchange method '$value' already has a keN_ prefix, using it verbatim"
+		ke="$ke-$value" ;;
+	*)
+		ke="$ke-ke${ke_count}_${value}" ;;
+	esac
+}
+
 config_esp_proposal() {
 	local conf="$1"
 
@@ -161,6 +181,8 @@ config_esp_proposal() {
 	local encryption_algorithm
 	local hash_algorithm
 	local dh_group
+	local ke
+	local ke_count
 
 	config_get_bool use_custom_proposal "$conf" use_custom_proposal 0
 	[ "$use_custom_proposal" = "1" ] && {
@@ -177,14 +199,21 @@ config_esp_proposal() {
 	config_get hash_algorithm "$conf" hash_algorithm
 	config_get dh_group "$conf" dh_group
 
+	ke=""
+	ke_count=0
+	config_list_foreach "$conf" ke append_ke
+
 	# check for AEAD and clobber hash_algorithm if set
 	if is_aead "$encryption_algorithm" && [ -n "$hash_algorithm" ]; then
 		fatal "Can't have $hash_algorithm with $encryption_algorithm"
 		hash_algorithm=
 	fi
 
+	[ -n "$ke" ] && [ -z "$dh_group" ] && \
+		warning "Key exchange methods in '$conf' require a dh_group"
+
 	[ -n "$encryption_algorithm" ] && \
-		crypto="${crypto:+${crypto},}${encryption_algorithm}${hash_algorithm:+-${hash_algorithm}}${dh_group:+-${dh_group}}"
+		crypto="${crypto:+${crypto},}${encryption_algorithm}${hash_algorithm:+-${hash_algorithm}}${dh_group:+-${dh_group}}${ke}"
 }
 
 iter_esp_proposal() {
@@ -206,6 +235,8 @@ config_ike_proposal() {
 	local hash_algorithm
 	local dh_group
 	local prf_algorithm
+	local ke
+	local ke_count
 
 	config_get_bool use_custom_proposal "$conf" use_custom_proposal 0
 	[ "$use_custom_proposal" = "1" ] && {
@@ -223,14 +254,21 @@ config_ike_proposal() {
 	config_get dh_group "$conf" dh_group
 	config_get prf_algorithm "$conf" prf_algorithm
 
+	ke=""
+	ke_count=0
+	config_list_foreach "$conf" ke append_ke
+
 	# check for AEAD and clobber hash_algorithm if set
 	if is_aead "$encryption_algorithm" && [ -n "$hash_algorithm" ]; then
 		fatal "Can't have $hash_algorithm with $encryption_algorithm"
 		hash_algorithm=
 	fi
 
+	[ -n "$ke" ] && [ -z "$dh_group" ] && \
+		warning "Key exchange methods in '$conf' require a dh_group"
+
 	[ -n "$encryption_algorithm" ] && \
-		crypto="${crypto:+${crypto},}${encryption_algorithm}${hash_algorithm:+-${hash_algorithm}}${prf_algorithm:+-${prf_algorithm}}${dh_group:+-${dh_group}}"
+		crypto="${crypto:+${crypto},}${encryption_algorithm}${hash_algorithm:+-${hash_algorithm}}${prf_algorithm:+-${prf_algorithm}}${dh_group:+-${dh_group}}${ke}"
 }
 
 iter_ike_proposal() {
@@ -352,7 +390,7 @@ config_child() {
 	[ -n "$if_id" ] && swanctl_xappend4 "if_id_in = $if_id" "if_id_out = $if_id"
 	[ -n "$start_action" -a "$start_action" != "none" ] && swanctl_xappend4 "start_action = $start_action"
 	[ -n "$close_action" -a "$close_action" != "none" ] && swanctl_xappend4 "close_action = $close_action"
-	swanctl_xappend4 "esp_proposals = $esp_proposal"
+	[ -n "$esp_proposal" ] && swanctl_xappend4 "esp_proposals = $esp_proposal"
 	swanctl_xappend4 "mode = $mode"
 
 	if [ -n "$life_time" ]; then
@@ -688,7 +726,7 @@ config_connection() {
 	fi
 	[ -n "$over_time" ] && swanctl_xappend2 "over_time = $over_time"
 
-	swanctl_xappend2 "proposals = $ike_proposal"
+	[ -n "$ike_proposal" ] && swanctl_xappend2 "proposals = $ike_proposal"
 	[ -n "$dpd_delay" ] && swanctl_xappend2 "dpd_delay = $dpd_delay"
 	[ $encap -eq 1 ] && swanctl_xappend2 "encap = yes" || swanctl_xappend2 "encap = no"
 	[ "$keyingtries" = "%forever" ] && swanctl_xappend2 "keyingtries = 0" || swanctl_xappend2 "keyingtries = $keyingtries"
@@ -778,7 +816,7 @@ config_charon_plugin_syslog() {
 	swan_xappend1 "syslog {"
 	swan_xappend2 "identifier = ipsec"
 	swan_xappend2 "daemon {"
-	swan_xappend3 "default = 0"
+	swan_xappend3 "default = -1"
 	swan_xappend3 "ike_name = yes"
 	[ "$dmn" = "" ] || swan_xappend3 "dmn = $dmn"
 	[ "$mgr" = "" ] || swan_xappend3 "mgr = $mgr"
@@ -797,7 +835,7 @@ config_charon_plugin_syslog() {
 	[ "$wch" = "" ] || swan_xappend3 "wch = $wch"
 	swan_xappend2 "}"
 	swan_xappend2 "auth {"
-	swan_xappend3 "default = 0"
+	swan_xappend3 "default = -1"
 	swan_xappend3 "ike_name = yes"
 	[ "$ike" = "" ] || swan_xappend3 "ike = $ike"
 	[ "$chd" = "" ] || swan_xappend3 "chd = $chd"
@@ -821,7 +859,7 @@ config_charon_plugin_netlink () {
 	swan_xappend1 "}"
 }
 
-config_charon_scripts() {
+config_charon_common_scripts() {
 	local conf="$1"
 
 	swan_xappend1 "start-scripts {"
@@ -829,7 +867,7 @@ config_charon_scripts() {
 	swan_xappend1 "}"
 }
 
-config_charon_interfaces_use() {
+config_charon_common_interfaces_use() {
 	local conf="$1"
 
 	local interface interface_list device_list
@@ -848,7 +886,7 @@ config_charon_interfaces_use() {
 	[ -n "$device_list" ] && swan_xappend1 "interfaces_use = $device_list"
 }
 
-config_charon_ignore_routing_tables() {
+config_charon_common_ignore_routing_tables() {
 	local conf="$1"
 
 	local routing_table_list routing_table ignore_routing_tables
@@ -868,7 +906,7 @@ config_charon_ignore_routing_tables() {
 	[ -n "$ignore_routing_tables" ] && swan_xappend1 "ignore_routing_tables = $ignore_routing_tables"
 }
 
-config_charon_install_routes() {
+config_charon_common_install_routes() {
 	local conf="$1"
 
 	local rtinstall_enabled install_routes
@@ -879,14 +917,31 @@ config_charon_install_routes() {
 	swan_xappend1 "install_routes = $install_routes"
 }
 
+config_charon_common_aggressive() {
+	local conf="$1"
+
+	local aggressive
+
+	config_get_bool aggressive "$conf" aggressiv 0
+	[ $aggressive -eq 1 ] && \
+		swan_xappend1 "i_dont_care_about_security_and_use_aggressive_mode_psk = yes"
+}
+
+config_charon_common() {
+	local conf="$1"
+
+	config_charon_common_scripts "$conf"
+	config_charon_common_interfaces_use "$conf"
+	config_charon_common_ignore_routing_tables "$conf"
+	config_charon_common_install_routes "$conf"
+	config_charon_common_aggressive "$conf"
+}
+
 config_strongswan_generate() {
 	local conf="$1"
 
 	swan_xappend0 "charon {"
-	config_charon_install_routes "$conf"
-	config_charon_ignore_routing_tables "$conf"
-	config_charon_interfaces_use "$conf"
-	config_charon_scripts "$conf"
+	config_charon_common "$conf"
 	config_charon_plugin_syslog
 	config_charon_plugin_netlink
 	swan_xappend0 "}"
