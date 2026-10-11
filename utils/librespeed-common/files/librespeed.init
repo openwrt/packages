@@ -20,6 +20,8 @@ AGG=/usr/libexec/librespeed-aggregate
 # dashes.
 valid_field() {
 	local val="$1" max="$2" part a b oifs="$IFS"
+	# Splitting drops a trailing empty part, which cron then fails to parse.
+	case "$val" in *,) return 1 ;; esac
 	IFS=','
 	for part in $val; do
 		IFS="$oifs"
@@ -44,13 +46,15 @@ cron_expr() {
 	case "$interval" in
 	*m)
 		v=${interval%m}
-		case "$v" in ''|0|*[!0-9]*) return 1 ;; esac
+		# A leading zero is refused: '00' would pass as non-zero, and cron
+		# reads a zero step as the first value only.
+		case "$v" in ''|0*|*[!0-9]*) return 1 ;; esac
 		[ "$v" -le 59 ] || return 1
 		echo "*/$v ${hours:-*} * * $days"
 		;;
 	*h)
 		v=${interval%h}
-		case "$v" in ''|0|*[!0-9]*) return 1 ;; esac
+		case "$v" in ''|0*|*[!0-9]*) return 1 ;; esac
 		[ "$v" -le 23 ] || return 1
 		if [ -n "$hours" ]; then
 			echo "0 $hours/$v * * $days"
