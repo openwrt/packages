@@ -356,7 +356,7 @@ row() {
 # The legacy line stays bare, then one line per interface, from its first
 # enabled row whose interval is valid.
 test_cron() {
-	local last_row ifb_row wk_row wwan_row weekly
+	local last_row ifb_row wk_row wwan_row weekly newline interval
 
 	echo "== test_cron"
 	uci set librespeed.schedule.enabled=1
@@ -375,6 +375,20 @@ test_cron() {
 	wk_row=$last_row
 	row wwan 1 7d '' 3
 	wwan_row=$last_row
+	# Hand-set values for root's crontab: a bad interval or name gives no line,
+	# bad days or hours the default field, and no value a line of its own.
+	newline='
+'
+	for interval in 0m 00m 05m 60m 0h 00h 24h 8d; do
+		row "i$interval" 1 "$interval"
+	done
+	row inl 1 "1d$newline* * * * * echo lsinject"
+	row dbad 1 1d 1-7,9 3
+	row dcomma 1 1d 1,2, 3
+	row dnl 1 1d "1$newline* * * * * echo lsinject" 3
+	row hbad 1 23h '' 5-25
+	row hnl 1 1d '' "2-5$newline* * * * * echo lsinject"
+	row "x$newline* * * * * echo lsinject" 1 1d
 	resync
 	grep -E '^[0-9]+ [2-5] \* \* \* /usr/libexec/librespeed-run$' $CRONTAB || fail "legacy line"
 	[ "$(grep -c 'librespeed-run$' $CRONTAB)" = 1 ] || fail "a second bare line"
@@ -382,11 +396,16 @@ test_cron() {
 	[ "$(grep -c 'librespeed-run lte$' $CRONTAB)" = 1 ] || fail "lte twice"
 	grep -E '^0 \*/2 \* \* \* /usr/libexec/librespeed-run wan2$' $CRONTAB || fail "2h line"
 	grep -E '^[0-9]+ 4 \* \* 1-5 /usr/libexec/librespeed-run ifb$' $CRONTAB || fail "day range"
-	grep -E 'librespeed-run (badiv|off|a-b)$' $CRONTAB && fail "a skipped row has a line"
+	grep -E 'librespeed-run (badiv|off|a-b|i[0-9]+[mhd]|inl)$' $CRONTAB && fail "a skipped row has a line"
 	grep -E '^0 \*/2 \* \* \* /usr/libexec/librespeed-run lsd2$' $CRONTAB ||
 		fail "an invalid interval kept a later row of its interface out"
 	grep -E '^[0-9]+ [0-9]+ \* \* [1-5] /usr/libexec/librespeed-run wk$' $CRONTAB || fail "weekly line"
 	grep -E '^[0-9]+ 3 \* \* [0-6] /usr/libexec/librespeed-run wwan$' $CRONTAB || fail "drawn day"
+	grep lsinject $CRONTAB && fail "a value became a cron line"
+	[ "$(grep -cE '^[0-9]+ 3 \* \* \* /usr/libexec/librespeed-run (dbad|dcomma|dnl)$' $CRONTAB)" = 3 ] ||
+		fail "bad days not replaced by every day"
+	grep -E '^0 \*/23 \* \* \* /usr/libexec/librespeed-run hbad$' $CRONTAB || fail "bad hours kept"
+	grep -E '^[0-9]+ [0-9]+ \* \* \* /usr/libexec/librespeed-run hnl$' $CRONTAB || fail "hours with a newline"
 
 	# Weekly slots survive a sync in another process, so with another seed.
 	weekly=$(grep -E 'librespeed-run (wk|wwan)$' $CRONTAB)
