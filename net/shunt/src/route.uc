@@ -12,7 +12,7 @@ import { addr_family, DEFAULTS } from 'shunt.nft';
 
 const RE_IFACE = /^[A-Za-z0-9_][A-Za-z0-9_.-]{0,14}$/;
 
-const BLACKHOLE_METRIC = 9999;
+const BLOCK_METRIC = 9999;
 
 // Kernel ABI, from linux/rtnetlink.h and linux/fib_rules.h. Fixed for as
 // long as netlink exists, so a literal here costs nothing and keeps the
@@ -21,7 +21,7 @@ const AF = { '4': 2, '6': 10 };
 const ANY = { '4': '0.0.0.0/0', '6': '::/0' };
 const RTN_UNICAST = 1;
 const RTN_LOCAL = 2;
-const RTN_BLACKHOLE = 6;
+const RTN_PROHIBIT = 8;
 const RTPROT_BOOT = 3;
 const RT_SCOPE_UNIVERSE = 0;
 const RT_SCOPE_LINK = 253;
@@ -152,9 +152,9 @@ export function compile(policies, marks, opts) {
 
 			if (fb == 'block')
 				push(add, { cmd: 'newroute', msg: { family, table,
-					dst: ANY[fam], type: RTN_BLACKHOLE,
+					dst: ANY[fam], type: RTN_PROHIBIT,
 					protocol: RTPROT_BOOT, scope: RT_SCOPE_UNIVERSE,
-					priority: BLACKHOLE_METRIC } });
+					priority: BLOCK_METRIC } });
 
 			// Ahead of the policy rule and on the same mark: main is
 			// consulted with its default route suppressed, so marked traffic

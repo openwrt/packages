@@ -51,7 +51,7 @@ shunt check
 * Resolver independent: works with any DNS backend, and with an encrypted upstream, because it reads the plaintext leg between client and resolver
 * Wildcard domains (`*.example.com`), learned passively as clients use them
 * Domain lists from a file - a community-maintained set of thousands of names, without a single UCI entry per name
-* Per-policy killswitch: hold the traffic when the interface drops, instead of leaking it out of the normal uplink
+* Per-policy killswitch: reject the traffic when the interface or proxy is gone, instead of leaking it out of the normal uplink - clients fail at once rather than on a timeout
 * Per-policy action: `route` marks the traffic for the policy interface, `bypass` exempts it from every policy below, `tproxy` hands it to a transparent proxy on the router
 * Your own networks stay reachable from a policy client, without listing them anywhere
 * Puts its own table back when something deletes it, `fw4 flush` included
@@ -78,7 +78,7 @@ Any of them, and there is no supported-protocols list to check against, because 
 * **Ethernet style interfaces** - OpenVPN `tap*`, a second wired uplink, a mobile connection - use the gateway discovered from netifd, or `gw4`/`gw6` if you set them.
 * **Interfaces netifd does not manage** work by name too. On OpenWrt this is the exception rather than the rule - wireguard, OpenVPN, L2TP and the rest all have netifd protocols and are managed like any other interface. It applies to a tunnel brought up outside netifd, by `wg-quick` or a script of your own. If such an interface does need a gateway, discovery cannot find one and you have to set `gw4`/`gw6` yourself.
 
-**WireGuard: `route_allowed_ips` belongs off.** shunt renders `default dev <device>` into the policy's own table, so it needs no route from the tunnel itself. With the option on and `allowed_ips 0.0.0.0/0` netifd installs that prefix as a route in `main` instead, and the whole box follows the tunnel - the situation policy routing exists to avoid. Turning it off is all that is required; nothing else about the peer changes.
+**WireGuard: `route_allowed_ips` belongs off, unless the tunnel is the default uplink.** shunt renders `default dev <device>` into the policy's own table, so it needs no route from the tunnel itself. With the option on and `allowed_ips 0.0.0.0/0` netifd installs that prefix as a route in `main` instead, and the whole box follows the tunnel - the situation policy routing exists to avoid. Turning it off is all that is required; nothing else about the peer changes. Where the tunnel is meant to carry everything and the policies carve out the exceptions, leave it on - see [Default uplink and exceptions](#default-uplink-and-exceptions).
 
 **`AllowedIPs` is not a route, and it still applies.** `route_allowed_ips` decides only whether netifd installs routes for those prefixes - they are written to the wireguard configuration either way, and the kernel uses them as its cryptokey filter. A packet whose destination matches no peer's `AllowedIPs` is dropped inside wireguard, however correctly it was routed there. A policy meant to carry general traffic therefore needs `0.0.0.0/0` on the peer, and `::/0` if it carries IPv6; what actually enters the tunnel is decided by the policy's selectors, not by the peer. Narrowing `AllowedIPs` to a few subnets is right only when those subnets really are everything the tunnel should ever carry.
 
@@ -318,9 +318,22 @@ The selectors are the usual ones. tproxy carries tcp and udp only, so a tproxy p
 
 shunt delivers to `127.0.0.1` and `::1`. A proxy listening on loopback or on the wildcard address is found; one bound to the router's LAN address is not. The address is not left to the kernel on purpose: without one it picks the address of the incoming interface, and a proxy bound to loopback would never be found - the statement fails silently and the traffic is not proxied.
 
-`fallback` decides what a **new** flow does when no listener is found - proxy stopped, crashed, wrong port: `main` (default) lets it take the normal uplink, `block` drops it. A flow that was already proxied is dropped either way once its listener is gone. Its state is in the proxy, and its conntrack entry was never NATed, so forwarding the rest of it would put the client's own address on the uplink - measured, which is why this does not follow `fallback`.
+Each family needs a listener that accepts it. A proxy on `0.0.0.0` or `127.0.0.1` serves IPv4 only, so the IPv6 traffic of the policy finds no listener and follows `fallback`. Listen on `::` - which takes both families unless the proxy sets `IPV6_V6ONLY` - or on both loopback addresses.
 
-`interface`, `keep_local` and the gateway overrides are not read, and `keep_local '1'` set explicitly is reported. It would break the policy: main would forward packets the kernel has already handed to the proxy's socket, and the kernel drops those.
+Destinations on the router itself are never proxied, nor broadcast and multicast: DNS, DHCP, LuCI and SSH of a selected client reach the router as they would without shunt, and stay reachable with `fallback 'block'` while the proxy is down. This is tproxy's counterpart to `keep_local`, built in and not switchable. It covers the router's own addresses only - traffic to your other networks is forwarded unicast and is proxied like any other. A proxy on the router cannot reach those networks on the client's behalf in a useful way, so exempt them with a `bypass` section above the tproxy policy:
+
+```
+config policy 'no_proxy'
+	option action 'bypass'
+	list  dst     '192.168.0.0/16'
+	list  dst     'fd00::/8'
+```
+
+`fallback` decides what a **new** flow does when no listener is found - proxy stopped, crashed, wrong port: `main` (default) lets it take the normal uplink, `block` rejects it - tcp with a reset, anything else with ICMP admin-prohibited, so the client gives up at once instead of on a timeout. A flow that was already proxied is rejected the same way once its listener is gone, whatever the fallback. Its state is in the proxy, and its conntrack entry was never NATed, so forwarding the rest of it would put the client's own address on the uplink - measured, which is why this does not follow `fallback`.
+
+Without `proto` or `dport` the policy owns every protocol its clients send, not only what a proxy can take. `fallback 'block'` therefore also rejects ICMP, ESP, GRE and the rest - while the proxy runs too, so `ping` from those clients never gets out. Router addresses, broadcast and multicast stay exempt as above, which keeps neighbour discovery and the router's own services working. With `proto` or `dport` the policy owns only what it names and `block` rejects only that; everything else the client sends - QUIC for a policy narrowed to `proto 'tcp'` - takes the normal uplink.
+
+`interface`, `keep_local` and the gateway overrides are not read, and `keep_local '1'` set explicitly is reported - the exemption of the router's own addresses above takes its place. It would break the policy: main would forward packets the kernel has already handed to the proxy's socket, and the kernel drops those.
 
 Only traffic passing through the router is proxied. tproxy exists in the prerouting hook alone, so the router's own traffic is not touched by a tproxy policy - which also keeps the proxy's upstream connections from looping back into it.
 
@@ -334,10 +347,29 @@ config rule
 	option target 'ACCEPT'
 ```
 
+**Example backend: hev-socks5-tproxy.** It turns tproxy traffic into connections to a SOCKS5 server and is packaged for OpenWrt. Its sample `/etc/hev-socks5-tproxy/main.yml` already fits the policy above - tcp and udp on `::` port 1088, the SOCKS5 server expected on `127.0.0.1:1080`:
+
+```
+socks5:
+  port: 1080
+  address: 127.0.0.1
+  udp: 'udp'
+
+tcp:
+  port: 1088
+  address: '::'
+
+udp:
+  port: 1088
+  address: '::'
+```
+
+Point `socks5` at your server, then enable the service with `uci set hev-socks5-tproxy.config.enabled='1'`, `uci commit hev-socks5-tproxy` and `/etc/init.d/hev-socks5-tproxy start`. Its own connections to the SOCKS5 server start on the router, so the tproxy policy never sees them; a `route` policy can still send them through a tunnel.
+
 <a id="local-traffic-keep_local"></a>
 ### Local traffic: keep_local
 
-A policy that names only clients marks everything those clients send, and the mark decides the routing table before the destination is looked at. Without `keep_local` that includes traffic to your own networks: a marked packet to another VLAN would find only the policy table's default route and leave through the tunnel, and with `fallback 'block'` it would be dropped.
+A policy that names only clients marks everything those clients send, and the mark decides the routing table before the destination is looked at. Without `keep_local` that includes traffic to your own networks: a marked packet to another VLAN would find only the policy table's default route and leave through the tunnel, and with `fallback 'block'` it would be rejected.
 
 `keep_local '1'` (default) renders a second ip rule per family, on the same mark and one priority ahead of the policy rule, that consults `main` with the default route suppressed:
 
@@ -360,7 +392,32 @@ Note that domain precedence is resolved *before* this, at the matcher: the most 
 
 `fallback 'main'` (default) renders no default route into the policy table, so when the policy interface is down the table is empty and marked traffic falls through to `main` - the normal uplink. Traffic keeps flowing, unpolicied.
 
-`fallback 'block'` adds a blackhole default at metric 9999 to the policy table. While the interface is up its own default has the lower metric and wins; when the interface drops, the kernel withdraws that route and the blackhole catches everything. That is the killswitch: traffic belonging to the policy stops rather than leaking out of the wrong interface. It stops at the destinations the policy actually owns - see [keep_local](#local-traffic-keep_local) for what a marked packet to one of your own networks does, and how to make the killswitch hermetic.
+`fallback 'block'` adds a `prohibit` default at metric 9999 to the policy table. While the interface is up its own default has the lower metric and wins; when the interface drops, the kernel withdraws that route and the prohibit route catches everything, answering it with ICMP admin-prohibited - a connection attempt fails at once instead of on a timeout, measured. That is the killswitch: traffic belonging to the policy stops rather than leaking out of the wrong interface. It stops at the destinations the policy actually owns - see [keep_local](#local-traffic-keep_local) for what a marked packet to one of your own networks does, and how to make the killswitch hermetic.
+
+<a id="default-uplink-and-exceptions"></a>
+### Default uplink and exceptions
+
+shunt routes only what its policies select. Everything else follows `main`, and which uplink `main` uses is decided by the interface metrics, not by shunt. A box with a normal uplink and a tunnel can therefore be set up either way round:
+
+**ISP as default, selected clients through the tunnel.** The uplink keeps its default route in `main`, the tunnel installs none (`route_allowed_ips '0'`). The policy names the tunnel as its `interface`:
+
+```
+config policy 'vpn'
+	option interface 'wg0'
+	list  src_mac    'aa:bb:cc:dd:ee:ff'
+```
+
+**Tunnel as default, selected clients through the ISP.** The tunnel carries the default route in `main` (`route_allowed_ips '1'` and a lower `metric` than the uplink), and the policy names the uplink as its `interface`:
+
+```
+config policy 'isp'
+	option interface 'wan'
+	list  src_mac    'aa:bb:cc:dd:ee:ff'
+```
+
+In both forms the policy's own table decides for its clients in both address families, so the metrics matter only for traffic no policy selects. Set them explicitly on both sides anyway, including `wan6` where IPv6 comes from an interface of its own: netifd's default `metric 0` stays 0 for IPv4, but the kernel stores an IPv6 route with metric 0 as 1024. An interface left at the default therefore wins the IPv4 default route and loses the IPv6 one against any interface with an explicit metric - unselected clients then leave through different uplinks per family.
+
+`fallback 'block'` covers the policy's clients only. In the tunnel-as-default form, unselected clients move to the uplink when the tunnel goes down, because netifd withdraws the tunnel's route from `main` and the uplink's is left. Preventing that is a matter of the firewall, not of shunt.
 
 <a id="how-addresses-are-learned"></a>
 ## How addresses are learned
@@ -506,6 +563,7 @@ ct mark                              same bits, set on a flow's first packet
 ip rule pref                         31000 + <index> keep_local's main lookup
                                      31500 + <index> the policy table
 routing table                        8000 + <index>, for tproxy: local default dev lo
+                                     with fallback 'block': prohibit default metric 9999
 /etc/iproute2/rt_tables.d/shunt.conf the table name mapping, for `ip route show` only
 ```
 

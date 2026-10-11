@@ -242,6 +242,11 @@ export function compile(policies, opts) {
 				reject(pname, v, 'invalid proto - only tcp and udp carry ports');
 		}
 
+		// Whether the policy itself names protocols or ports. A blocking
+		// tproxy policy that does not rejects everything it cannot proxy;
+		// one that does keeps to what it names.
+		let narrowed = length(protos) > 0 || length(ports) > 0;
+
 		// A port with no protocol means both, as banIP does it: "port 443 of
 		// this client" almost always includes QUIC, and requiring the
 		// protocol would let it slip through unnoticed.
@@ -299,17 +304,31 @@ export function compile(policies, opts) {
 		// One transport term for all three rule shapes. `th dport` reads the
 		// port at the transport header offset, which works for tcp and udp
 		// alike, so a port without a protocol needs no rule per protocol.
-		let l4 = '';
+		let l4 = '', pt = '';
+
+		if (length(ports))
+			pt = length(ports) == 1
+				? sprintf('th dport %s ', ports[0])
+				: sprintf('th dport { %s } ', join(', ', ports));
 
 		if (length(protos))
 			l4 = length(protos) == 1
 				? sprintf('meta l4proto %s ', protos[0])
 				: sprintf('meta l4proto { %s } ', join(', ', protos));
 
-		if (length(ports))
-			l4 += length(ports) == 1
-				? sprintf('th dport %s ', ports[0])
-				: sprintf('th dport { %s } ', join(', ', ports));
+		l4 += pt;
+
+		// tproxy has no keep_local, so without this a client selector alone
+		// would hand the proxy everything the client sends - DNS and LuCI on
+		// the router itself, broadcast and multicast included - and with
+		// fallback 'block' reject it while the proxy is down. Not proxied
+		// means untouched: it is delivered or forwarded as it would be
+		// without shunt. A forwarded unicast address still matches, an
+		// unreachable one too, so a router without a route for a family
+		// can still have it proxied. The block rules below carry the same
+		// term, which also keeps neighbour discovery out of their reach.
+		let fib = (action == 'tproxy')
+			? 'fib daddr type != { local, broadcast, multicast } ' : '';
 
 		// bypass keeps whatever mark the packet carries: no shunt rule after
 		// this one is reached, and the bits outside the mask are not ours.
@@ -324,27 +343,44 @@ export function compile(policies, opts) {
 		// tproxy names the family of its address, so its statement exists
 		// once per family. When the socket lookup finds no listener the
 		// statement ends the rule unmatched and the packet goes on to the
-		// next one - with fallback 'block' that is the drop rendered right
-		// after it, otherwise the normal uplink.
+		// next one - with fallback 'block' those are the rejects rendered
+		// right after it, otherwise the normal uplink.
 		function stmt(fam) {
 			if (action == 'bypass')
 				return sprintf('%scounter return', l4);
 			if (action == 'tproxy')
-				return sprintf('%stproxy %s to %s:%s %scounter return', l4,
+				return sprintf('%s%stproxy %s to %s:%s %scounter return', l4, fib,
 					fam == '4' ? 'ip' : 'ip6', TPROXY_ADDR[fam], tp_port, setmark);
 			return sprintf('%s%scounter return', l4, setmark);
 		}
 
-		// A rule, and for a blocking tproxy policy the drop that catches it
-		// failing. tproxy exists in prerouting only, so none of it goes to
-		// output: the router's own traffic is not proxied, and the proxy's
-		// own upstream connections cannot loop back into it.
+		// A rule, and for a blocking tproxy policy the rejects that catch
+		// it failing. Rejected, not dropped, so a client gives up at once
+		// rather than on a timeout: tcp is reset, anything else answered
+		// with admin-prohibited. Without its own protocols or ports the
+		// policy owns every protocol the client sends, and what the proxy
+		// cannot take - icmp, esp, gre - is rejected whether it runs or
+		// not; with them, it owns only those. tproxy exists in prerouting
+		// only, so none of it goes to output: the router's own traffic is
+		// not proxied, and the proxy's own upstream connections cannot
+		// loop back into it.
 		function emit(rules, out, pre, fam) {
 			push(rules, { out: out && action != 'tproxy',
 				text: sprintf('\t\t%s%s', pre, stmt(fam)) });
-			if (tp_block)
+			if (!tp_block)
+				return;
+			if (!narrowed || index(protos, 'tcp') >= 0)
 				push(rules, { out: false,
-					text: sprintf('\t\t%s%scounter drop', pre, l4) });
+					text: sprintf('\t\t%smeta l4proto tcp %s%scounter reject with tcp reset',
+						pre, pt, fib) });
+			if (!narrowed)
+				push(rules, { out: false,
+					text: sprintf('\t\t%s%scounter reject with icmpx admin-prohibited',
+						pre, fib) });
+			else if (index(protos, 'udp') >= 0)
+				push(rules, { out: false,
+					text: sprintf('\t\t%smeta l4proto udp %s%scounter reject with icmpx admin-prohibited',
+						pre, pt, fib) });
 		}
 
 		// The decision for a flow is made on its first packet and kept:
@@ -375,8 +411,9 @@ export function compile(policies, opts) {
 		// its connected socket either way. Without a listener the flow
 		// cannot go on anywhere: its state is in the proxy, and the conntrack
 		// entry was never NATed, so forwarding it would put the client's
-		// own address on the uplink - measured too. It is dropped whatever
-		// the fallback; fallback decides about new flows only.
+		// own address on the uplink - measured too. It is rejected whatever
+		// the fallback, tcp with a reset so the client sees the end at once;
+		// fallback decides about new flows only.
 		if (action == 'tproxy') {
 			let pl = length(protos) == 1 ? protos[0] : sprintf('{ %s }', join(', ', protos));
 			for (let fam in [ '4', '6' ])
@@ -384,7 +421,8 @@ export function compile(policies, opts) {
 					'\t\t%smeta nfproto ipv%s meta l4proto %s tproxy %s to %s:%s %scounter return',
 					ctm, fam, pl, fam == '4' ? 'ip' : 'ip6', TPROXY_ADDR[fam],
 					tp_port, rmark));
-			push(restore, sprintf('\t\t%scounter drop', ctm));
+			push(restore, sprintf('\t\t%smeta l4proto tcp counter reject with tcp reset', ctm));
+			push(restore, sprintf('\t\t%scounter reject with icmpx admin-prohibited', ctm));
 		}
 
 		// Two rule priorities per routing policy, in two bands 500 apart:
