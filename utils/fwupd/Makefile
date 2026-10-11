@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fwupd
-PKG_VERSION:=2.1.7
-PKG_RELEASE:=2
+PKG_VERSION:=2.1.8
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/fwupd/fwupd/releases/download/$(PKG_VERSION)
-PKG_HASH:=472e9426f7a1b18fa9d199666c15482d4ee51ea35e916ca53bb3ca25919edb10
+PKG_HASH:=8724305a52621ab6586de3290f6a78edb8393a4aa4bcb6c63f9228ae5e00acf8
 
 PKG_MAINTAINER:=Lukas Voegl <lvoegl@tdt.de>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -21,6 +21,7 @@ PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:fwupd:fwupd
 
 PKG_BUILD_DEPENDS:= \
+	glib2/host \
 	python3/host \
 	python-jinja2/host \
 	gettext-full/host
