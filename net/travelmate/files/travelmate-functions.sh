@@ -1638,7 +1638,7 @@ f_main() {
 												f_reviveload "${sta_radio}" "${sta_essid}" "${sta_bssid}"
 											fi
 											f_log "info" "uplink has been disabled '${sta_radio}/${sta_essid}/${sta_bssid:-"-"}' (${retrycnt}/${retry_display})"
-											continue 2
+											continue 3
 										else
 											f_genstatus
 											f_log "info" "can't connect to uplink '${sta_radio}/${sta_essid}/${sta_bssid:-"-"}' (${retrycnt}/${retry_display})"
