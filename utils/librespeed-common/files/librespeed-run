@@ -233,7 +233,8 @@ if [ "$stream" = 1 ]; then
 	fi
 else
 	if [ -n "$dev" ]; then
-		sampler "$dev" &
+		# Not with fd 9: its last sleep would hold the lock after the run.
+		sampler "$dev" 9>&- &
 		sampler_pid=$!
 	fi
 	out=$("$@" 2>"$STATE_DIR/stderr.log" < /dev/null); rc=$?
