@@ -1,0 +1,112 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Copyright (c) 2025-2026 Pierre Gaufillet <pierre.gaufillet@bergamote.eu>
+#
+# DHCP Lease Event Handler for lease-sync
+# This hotplug script publishes DHCP events to ubus for the lease-sync daemon
+# Installed to: /etc/hotplug.d/dhcp/50-lease-sync
+
+# Only process DHCP lease events
+[ -n "$ACTION" ] || exit 0
+
+# Configuration
+UBUS_EVENT="dhcp.lease"
+LOG_TAG="lease-sync-hotplug"
+NODE_ID_FILE="/etc/lease-sync/node-id"
+
+# Logging function
+log() {
+    logger -t "$LOG_TAG" -p "daemon.$1" "$2"
+}
+
+# Get or generate node ID
+get_node_id() {
+    if [ -f "$NODE_ID_FILE" ]; then
+        cat "$NODE_ID_FILE"
+    else
+        cat /sys/class/net/br-lan/address 2>/dev/null || hostname
+    fi
+}
+
+# Sanitize a string for safe JSON embedding.
+# Escapes backslash and double-quote characters to prevent injection.
+sanitize_json() {
+    printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'
+}
+
+# Build JSON payload for ubus event
+build_lease_json() {
+    local json='{'
+
+    # Map hotplug ACTION to lease-sync action
+    case "$ACTION" in
+        add) json="${json}\"action\":\"add\"" ;;
+        remove) json="${json}\"action\":\"del\"" ;;
+        update) json="${json}\"action\":\"old\"" ;;
+        *) return 1 ;;
+    esac
+
+    # Required fields from hotplug environment
+    # (HOSTNAME is untrusted DHCP client input — must sanitize)
+    [ -n "$IPADDR" ] && json="${json},\"ip\":\"$IPADDR\""
+    [ -n "$MACADDR" ] && json="${json},\"mac\":\"$MACADDR\""
+    [ -n "$HOSTNAME" ] && json="${json},\"hostname\":\"$(sanitize_json "$HOSTNAME")\""
+
+    # Node identification
+    json="${json},\"node_id\":\"$(sanitize_json "$(get_node_id)")\""
+    json="${json},\"timestamp\":$(date +%s)"
+
+    # Lease timing (from dnsmasq environment, validated as numeric)
+    case "$DNSMASQ_LEASE_EXPIRES" in
+        ''|*[!0-9]*) ;;
+        *) json="${json},\"expires\":$DNSMASQ_LEASE_EXPIRES" ;;
+    esac
+    case "$DNSMASQ_TIME_REMAINING" in
+        ''|*[!0-9]*) ;;
+        *) json="${json},\"time_remaining\":$DNSMASQ_TIME_REMAINING" ;;
+    esac
+    case "$DNSMASQ_LEASE_LENGTH" in
+        ''|*[!0-9]*) ;;
+        *) json="${json},\"lease_length\":$DNSMASQ_LEASE_LENGTH" ;;
+    esac
+
+    # Client identification
+    [ -n "$DNSMASQ_CLIENT_ID" ] && json="${json},\"client_id\":\"$DNSMASQ_CLIENT_ID\""
+    [ -n "$DNSMASQ_INTERFACE" ] && json="${json},\"interface\":\"$DNSMASQ_INTERFACE\""
+
+    # IPv6 specific fields (IAID may have "T" prefix for temporary addresses)
+    if [ -n "$DNSMASQ_IAID" ]; then
+        local iaid_num
+        iaid_num=$(echo "$DNSMASQ_IAID" | sed 's/^T//')
+        case "$iaid_num" in
+            ''|*[!0-9]*) log err "Invalid DNSMASQ_IAID='$DNSMASQ_IAID', skipping" ;;
+            *)
+                json="${json},\"iaid\":$iaid_num"
+                if echo "$DNSMASQ_IAID" | grep -q "^T"; then
+                    json="${json},\"is_temporary\":1"
+                else
+                    json="${json},\"is_temporary\":0"
+                fi
+                ;;
+        esac
+    fi
+
+    json="${json}}"
+    echo "$json"
+}
+
+# Publish event to ubus
+case "$ACTION" in
+    add|remove|update)
+        [ -z "$IPADDR" ] && exit 0
+
+        payload=$(build_lease_json)
+        if ubus send "$UBUS_EVENT" "$payload" 2>/dev/null; then
+            log info "$ACTION event for $IPADDR published"
+        else
+            log err "Failed to publish $ACTION event for $IPADDR"
+        fi
+        ;;
+esac
+
+exit 0
