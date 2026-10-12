@@ -223,7 +223,7 @@ watchcat_monitor_network() {
 
 	ping_family="$(get_ping_family_flag "$address_family")"
 
-	restart_pending=1
+	restart_pending=0
 	while true; do
 		# account for the time ping took to return. With a ping time of 5s, ping might take more than that, so it is important to avoid even more delay.
 		time_now="$(cat /proc/uptime)"
@@ -236,7 +236,7 @@ watchcat_monitor_network() {
 		time_now="${time_now%%.*}"
 		time_lastcheck="$time_now"
 
-		end_result=1
+		any_host_reachable=0
 		for host in $ping_hosts; do
 			if [ "$ping_iface" != "" ]; then
 				ping_result="$(
@@ -252,8 +252,8 @@ watchcat_monitor_network() {
 
 			if [ "$ping_result" -eq 0 ]; then
 				time_lastcheck_withinternet="$time_now"
-				end_result=0
-				if [ "$restart_pending" -eq 0 ]; then
+				any_host_reachable=1
+				if [ "$restart_pending" -eq 1 ]; then
 					if [ "$script" != "" ]; then
 						logger -p daemon.info -t "watchcat[$$]" "$host replies to ping, running script cancelled"
 					elif [ "$iface" != "" ]; then
@@ -261,13 +261,13 @@ watchcat_monitor_network() {
 					else
 						logger -p daemon.info -t "watchcat[$$]" "$host replies to ping, restarting networking cancelled"
 					fi
-					restart_pending=1
+					restart_pending=0
 				fi
 			else
 				logger -p daemon.info -t "watchcat[$$]" "Could not reach $host"
 			fi
 		done
-		if [ "$end_result" -ne 0 ] && [ "$restart_pending" -ne 0 ]; then
+		if [ "$any_host_reachable" -eq 0 ] && [ "$restart_pending" -eq 0 ]; then
 			if [ "$script" != "" ]; then
 				logger -p daemon.info -t "watchcat[$$]" "Could not reach any configured host for \"$((time_now - time_lastcheck_withinternet))\" seconds. Will run the script after \"$failure_period\" seconds of failed reachability"
 			elif [ "$iface" != "" ]; then
@@ -275,7 +275,7 @@ watchcat_monitor_network() {
 			else
 				logger -p daemon.info -t "watchcat[$$]" "Could not reach any configured host for \"$((time_now - time_lastcheck_withinternet))\" seconds. Will restart networking after \"$failure_period\" seconds of failed reachability"
 			fi
-			restart_pending=0
+			restart_pending=1
 		fi
 
 		[ "$((time_now - time_lastcheck_withinternet))" -ge "$failure_period" ] && {
@@ -294,7 +294,7 @@ watchcat_monitor_network() {
 				fi
 			fi
 			/etc/init.d/watchcat start
-			restart_pending=1
+			restart_pending=0
 			# Optionally start a fresh failure window after the recovery action
 			# finishes instead of continuing to count the original outage.
 			if [ "$reset_failure_timer" = "1" ]; then
