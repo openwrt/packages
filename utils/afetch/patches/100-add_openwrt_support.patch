@@ -1,0 +1,22 @@
+Index: afetch-2.2.0/src/fetch.c
+===================================================================
+--- afetch-2.2.0.orig/src/fetch.c
++++ afetch-2.2.0/src/fetch.c
+@@ -338,6 +338,17 @@ void *os()
+ 			info.col7 = BGREEN "__________/";
+ 			info.col8 = BGREEN "";
+ 			info.getPkgCount = "rpm -qa | wc -l";
++		} else if (strncmp(osname, "OpenWrt", 7) == 0) {
++			info.col1 = BWHITE "  ______  \n" BBLUE;
++			info.col2 = BWHITE " / ____ \\ " BBLUE;
++			info.col3 = BWHITE "  / __ \\  " BBLUE;
++			info.col4 = BBLUE " / "BWHITE"/	 \\ "BBLUE"\\ " BBLUE;
++			info.col5 = BBLUE " \\	"BWHITE"()"BBLUE"  / " BBLUE;
++			info.col6 = BBLUE "  \\____/  " BBLUE;
++			info.col7 = BBLUE " OpenWrt  " BBLUE;
++			info.col8 = BBLUE "";
++			info.getPkgCount =
++				"grep 'P:' /lib/apk/db/installed | wc -l";
+ 		} else if (strncmp(osname, "Parabola", 8) == 0) {
+ 			info.col1 = BMAGENTA "";
+ 			info.col2 = BMAGENTA "  __ __ __  _  ";
