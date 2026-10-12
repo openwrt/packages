@@ -68,11 +68,16 @@ for (let radio in x) {
 		let bitrate = 0;
 		const stations = length(wsta) || 0;
 		if (stations) {
+			let rated = 0;
 			for (let sta in wsta) {
 				signal += sta["sta_info"].signal;
-				bitrate += sta["sta_info"]["tx_bitrate"].bitrate32;
+				const br = sta["sta_info"]["tx_bitrate"]?.bitrate32;
+				if (br) {
+					bitrate += br;
+					rated++;
+				}
 			}
-			bitrate /= stations * 0.01;
+			bitrate = rated ? bitrate / (rated * 0.01) : 0;
 			signal /= stations;
 		}
 
