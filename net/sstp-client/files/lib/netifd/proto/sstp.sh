@@ -76,7 +76,6 @@ proto_sstp_setup() {
 	proto_send_update "$config"
 
 	proto_run_command "$config" sstpc \
-		--cert-warn \
 		--password $password \
 		--user $username \
 		--log-level $log_level \
