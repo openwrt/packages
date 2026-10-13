@@ -1,18 +1,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua-struct
-PKG_VERSION:=0.9.2
+PKG_VERSION:=1.0.0
 PKG_RELEASE:=1
 
-PKG_VERSION_TAG:=$(PKG_VERSION)-1
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION_TAG).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/iryont/$(PKG_NAME)/tar.gz/$(PKG_VERSION_TAG)?
-PKG_HASH:=30d4e3584e27caa504745fdf5e191f2469ae284dc51271292654856905a4603d
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/iryont/$(PKG_NAME)/tar.gz/$(PKG_VERSION)?
+PKG_HASH:=7f14d5d9e4a9f5392dc095377a1c98976a36a2cd0e4939feb8fb5302ce67777b
 
-PKG_MAINTAINER:=jasle <jasle@riseup.net>
+PKG_MAINTAINER:=Jakob Schade <jasle@riseup.net>
 PKG_LICENSE:=MIT/X11
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION_TAG)
 
 include $(INCLUDE_DIR)/package.mk
 
