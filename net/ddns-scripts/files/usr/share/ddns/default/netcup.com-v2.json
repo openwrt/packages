@@ -1,0 +1,9 @@
+{
+	"name": "netcup.com-v2",
+	"ipv4": {
+		"url": "https://customercontrolpanel.de/wsDynDns.php?action=update&token=[PASSWORD]&fqdn=[DOMAIN]&ipv4Address=[IP]"
+	},
+	"ipv6": {
+		"url": "https://customercontrolpanel.de/wsDynDns.php?action=update&token=[PASSWORD]&fqdn=[DOMAIN]&ipv6Address=[IP]"
+	}
+}
