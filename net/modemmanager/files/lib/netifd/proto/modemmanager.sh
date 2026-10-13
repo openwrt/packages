@@ -438,9 +438,19 @@ modemmanager_check_state_locked() {
 
 	sim_path="$(modemmanager_get_field "${modemstatus}" "modem.generic.sim")"
 	mmcli --modem="${device}" -i "${sim_path}" --pin=${pincode} || {
-		proto_notify_error "${interface}" MM_PINCODE_WRONG
-		proto_block_restart "${interface}"
-		return 1
+		# A concurrent setup (e.g. after an interface restart) may have
+		# unlocked the SIM meanwhile. ModemManager then rejects the PIN
+		# because unlock-required is no longer sim-pin. Only a SIM still
+		# requiring PIN or PUK means the PIN was rejected.
+		modemstatus=$(mmcli --modem="${device}" --output-keyvalue)
+		case "$(modemmanager_get_field "${modemstatus}" "modem.generic.unlock-required")" in
+			sim-pin|sim-puk)
+				proto_notify_error "${interface}" MM_PINCODE_WRONG
+				proto_block_restart "${interface}"
+				return 1
+				;;
+		esac
+		echo "SIM already unlocked"
 	}
 
 	# Give the modem time to change to the initializing state after
