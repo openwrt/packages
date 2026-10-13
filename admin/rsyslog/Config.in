@@ -67,4 +67,9 @@ if PACKAGE_rsyslog
 		default n
 		help
 		  Enable input file module in rsyslog
+	config RSYSLOG_impstats
+		bool "Enable periodic statistics module support"
+		default n
+		help
+		  Enable periodic statistics module in rsyslog
 endif

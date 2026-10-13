@@ -64,7 +64,8 @@ CONFIGURE_ARGS+= \
 	$(if $(CONFIG_RSYSLOG_mail),--enable-mail) \
 	$(if $(CONFIG_RSYSLOG_mmjsonparse),--enable-mmjsonparse) \
 	$(if $(CONFIG_RSYSLOG_mmdblookup),--enable-mmdblookup) \
-	$(if $(CONFIG_RSYSLOG_imfile),--enable-imfile)
+	$(if $(CONFIG_RSYSLOG_imfile),--enable-imfile) \
+	$(if $(CONFIG_RSYSLOG_impstats),--enable-impstats)
 
 define Package/rsyslog/install
 	$(INSTALL_DIR) $(1)/usr/sbin
