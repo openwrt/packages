@@ -352,13 +352,24 @@ endef
 
 define Package/ddns-scripts-netcup-com
   $(call Package/ddns-scripts/Default)
-  TITLE:=Extension for netcup.com API
+  TITLE:=Extension for netcup.com Legacy API
   DEPENDS:=ddns-scripts +curl
   PROVIDES:=ddns-scripts_netcup-com
 endef
 
 define Package/ddns-scripts-netcup-com/description
-  Dynamic DNS Client scripts extension for 'netcup.com API'.
+  Dynamic DNS Client scripts extension for 'netcup.com Legacy API'.
+endef
+
+define Package/ddns-scripts-netcup-com-v2
+  $(call Package/ddns-scripts/Default)
+  TITLE:=Extension for netcup.com CloudDNS API
+  DEPENDS:=ddns-scripts +curl
+  PROVIDES:=ddns-scripts_netcup-com
+endef
+
+define Package/ddns-scripts-netcup-com-v2/description
+  Dynamic DNS Client scripts extension for 'netcup.com CloudDNS API'.
 endef
 
 define Package/ddns-scripts-transip
@@ -493,6 +504,7 @@ define Package/ddns-scripts-services/install
 	rm $(1)/usr/share/ddns/default/hetzner.cloud.json
 	rm $(1)/usr/share/ddns/default/namesilo.com-v1.json
 	rm $(1)/usr/share/ddns/default/netcup.com.json
+	rm $(1)/usr/share/ddns/default/netcup.com-v2.json
 	rm $(1)/usr/share/ddns/default/digitalocean.com-v2.json
 	rm $(1)/usr/share/ddns/default/dnspod.cn.json
 	rm $(1)/usr/share/ddns/default/dnspod.cn-v3.json
@@ -666,6 +678,24 @@ define Package/ddns-scripts-netcup-com/install
 endef
 
 define Package/ddns-scripts-netcup-com/prerm
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
+endef
+
+define Package/ddns-scripts-netcup-com-v2/install
+	$(INSTALL_DIR) $(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/update_netcup_com_v2.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/netcup.com-v2.json \
+		$(1)/usr/share/ddns/default
+endef
+
+define Package/ddns-scripts-netcup-com-v2/prerm
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
 	/etc/init.d/ddns stop
@@ -1057,6 +1087,7 @@ $(eval $(call BuildPackage,ddns-scripts-godaddy))
 $(eval $(call BuildPackage,ddns-scripts-hetzner-cloud))
 $(eval $(call BuildPackage,ddns-scripts-namesilo))
 $(eval $(call BuildPackage,ddns-scripts-netcup-com))
+$(eval $(call BuildPackage,ddns-scripts-netcup-com-v2))
 $(eval $(call BuildPackage,ddns-scripts-digitalocean))
 $(eval $(call BuildPackage,ddns-scripts-dnspod))
 $(eval $(call BuildPackage,ddns-scripts-dnspod-v3))
