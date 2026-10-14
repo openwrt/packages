@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lighttpd
 PKG_VERSION:=1.4.85
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 # release candidate ~rcX testing; remove for release
 #PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
@@ -92,7 +92,7 @@ endef
 define Package/lighttpd
   $(call Package/lighttpd/Default)
   MENU:=1
-  DEPENDS:=+libpthread +LIGHTTPD_LOGROTATE:logrotate \
+  DEPENDS:=+USE_GLIBC:libcrypt-compat +libpthread +LIGHTTPD_LOGROTATE:logrotate \
            +LIGHTTPD_PCRE2:libpcre2 \
            $(cryptolibdep)
   TITLE:=A flexible and lightweight web server
