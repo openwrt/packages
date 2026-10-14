@@ -1,0 +1,15 @@
+# hotplug.d/tty - follow the USB panel (ttyACM*) as it comes and goes.
+case "$DEVNAME" in
+	ttyACM*) ;;
+	*) return 0 ;;
+esac
+
+/etc/init.d/screen-haven enabled || return 0
+
+case "$ACTION" in
+	# 'remove' matters: procd respawns the deck, and the device guard lives in
+	# start_service only, so an unplug would loop until procd gave up instead
+	# of stopping cleanly.
+	add) /etc/init.d/screen-haven restart ;;
+	remove) /etc/init.d/screen-haven stop ;;
+esac
