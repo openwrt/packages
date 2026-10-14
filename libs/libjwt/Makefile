@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libjwt
-PKG_VERSION:=3.3.3
+PKG_VERSION:=3.6.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/benmcollins/libjwt/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=a562e5548a8e10ac6fcba64a5e6d326c15712211cb54d25242c15e8b3250b4f2
+PKG_HASH:=b483a5f77e548964553f54a0ec5f0c810cc6c0629c5ac5a03610bcced150e7be
 
 PKG_LICENSE:=MPL-2.0
 PKG_LICENSE_FILES:=LICENSE
@@ -28,7 +28,7 @@ define Package/libjwt
   TITLE:=libjwt
   URL:=https://github.com/benmcollins/libjwt
   DEPENDS:=+libopenssl +jansson
-  ABI_VERSION:=0
+  ABI_VERSION:=14
 endef
 
 define Package/libjwt/description
@@ -40,7 +40,6 @@ endef
 define Package/libjwt/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libjwt.so* $(1)/usr/lib/
-	$(LN) libjwt.so.0 $(1)/usr/lib/libjwt.so
 endef
 
 $(eval $(call BuildPackage,libjwt))
