@@ -1,0 +1,58 @@
+From 0ee70130275a089e3c18d1bf0d492c928e54c48c Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Thu, 17 Sep 2026 13:58:15 +0100
+Subject: [PATCH 4/4] scripts: let the gyroscope scale be given on the command
+ line
+
+The scale ends up in the blob the driver loads, and the air mouse wants
+about 0.07 rather than the 1.0 written here, so every calibration had to
+be finished by editing the JSON by hand. Take it as an option instead,
+keeping 1.0 as the default.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ scripts/calibrate.py | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
+
+--- a/scripts/calibrate.py
++++ b/scripts/calibrate.py
+@@ -22,7 +22,7 @@ def load_imu_csv(filename):
+                 continue  # skip invalid lines
+     return a, g
+ 
+-def save_calibration_json(filename, bias=(), matrix=(), gyro_bias=(0,0,0)):
++def save_calibration_json(filename, bias=(), matrix=(), gyro_bias=(0,0,0), gyro_scale=1.0):
+     bias_list = [float(f"{v:.6f}") for v in bias]
+     matrix_list = [[float(f"{v:.6f}") for v in row] for row in matrix]
+     calib_dict = {
+@@ -30,10 +30,9 @@ def save_calibration_json(filename, bias
+         "bias": bias_list,
+         "matrix": matrix_list
+         },
+-        # Default values
+         "gyro" : {
+             "bias" : gyro_bias,
+-            "scale" : [1,1,1]
++            "scale" : [gyro_scale] * 3
+         }
+     }
+     with open(filename, "w") as f:
+@@ -88,6 +87,8 @@ def main():
+ 
+     parser.add_argument("--accel", help="Calculate accelerometer ellipsoidal bias/scale", action='store_true')
+     parser.add_argument("--gyro", help="Calculate gyroscope bias from static samples", action='store_true')
++    parser.add_argument("--gyro-scale", type=float, default=1.0,
++                        help="Gyroscope scale to record, about 0.07 for the air mouse")
+ 
+     args = parser.parse_args()
+ 
+@@ -98,7 +99,8 @@ def main():
+             save_calibration_json(args.output_file, b_calib, M_calib)
+         elif args.gyro:
+             g_bias = calibrate_gyro_bias(gyro_samples)
+-            save_calibration_json(args.output_file, gyro_bias=g_bias)
++            save_calibration_json(args.output_file, gyro_bias=g_bias,
++                                  gyro_scale=args.gyro_scale)
+         else:
+             print("You need to select --accel or --gyro")
+     except Exception as e:

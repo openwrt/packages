@@ -1,0 +1,37 @@
+From a59bd5e9730de71edf71a314c794b15c34505679 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 18 Sep 2026 10:47:26 +0100
+Subject: [PATCH 10/10] voice: check the hidraw path for truncation
+
+The device path was built with an unchecked snprintf() behind a strlen()
+guard the compiler cannot see through, which warns at -Os. Check the
+return value instead and skip a node whose path would not fit.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ voice/lg_magic_voice.c | 7 +++----
+ 1 file changed, 3 insertions(+), 4 deletions(-)
+
+--- a/voice/lg_magic_voice.c
++++ b/voice/lg_magic_voice.c
+@@ -147,9 +147,6 @@ static int lgmagic_hidraw_find(char *pat
+ 		if (strncmp(ent->d_name, "hidraw", 6))
+ 			continue;
+ 
+-		if (strlen(ent->d_name) + sizeof("/dev/") > size)
+-			continue;
+-
+ 		snprintf(line, sizeof(line),
+ 			 "/sys/class/hidraw/%s/device/uevent", ent->d_name);
+ 
+@@ -168,7 +165,9 @@ static int lgmagic_hidraw_find(char *pat
+ 		if (!hit)
+ 			continue;
+ 
+-		snprintf(path, size, "/dev/%s", ent->d_name);
++		if (snprintf(path, size, "/dev/%s", ent->d_name) >= (int)size)
++			continue;
++
+ 		closedir(dir);
+ 
+ 		return 0;

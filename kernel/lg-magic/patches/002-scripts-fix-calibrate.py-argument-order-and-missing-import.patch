@@ -1,0 +1,48 @@
+From 17575f991e2633f50d83ddee68d27b25574fa2ff Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Thu, 17 Sep 2026 13:44:16 +0100
+Subject: [PATCH 1/3] scripts: fix calibrate.py argument order and missing
+ import
+
+save_calibration_json() declares the required filename parameter after
+the defaulted ones, which is a SyntaxError, so the script never ran at
+all. Move filename first, adapt both callers, and import sys, which the
+error path uses.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ scripts/calibrate.py | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+--- a/scripts/calibrate.py
++++ b/scripts/calibrate.py
+@@ -3,6 +3,7 @@ import numpy as np
+ import csv
+ import json
+ import argparse
++import sys
+ 
+ # -----------------------------
+ # Load samples CSV
+@@ -22,7 +23,7 @@ def load_imu_csv(filename):
+                 continue  # skip invalid lines
+     return np.array(a), np.array(g)
+ 
+-def save_calibration_json(bias=[], matrix=[], gyro_bias=[0,0,0], filename):
++def save_calibration_json(filename, bias=(), matrix=(), gyro_bias=(0,0,0)):
+     bias_list = [float(f"{v:.6f}") for v in bias]
+     matrix_list = [[float(f"{v:.6f}") for v in row] for row in matrix]
+     calib_dict = {
+@@ -92,10 +93,10 @@ def main():
+         accel_samples, gyro_samples = load_imu_csv(args.csv_file)
+         if args.accel:
+             b_calib, M_calib = calibrate_accel(accel_samples)
+-            save_calibration_json(b_calib, M_calib, filename=args.output_file)
++            save_calibration_json(args.output_file, b_calib, M_calib)
+         elif args.gyro:
+             g_bias = calibrate_gyro_bias(gyro_samples)
+-            save_calibration_json(gyro_bias=g_bias, filename=args.output_file)
++            save_calibration_json(args.output_file, gyro_bias=g_bias)
+         else:
+             print("You need to select --accel or --gyro")
+     except Exception as e:
