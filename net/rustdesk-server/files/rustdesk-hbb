@@ -1,0 +1,4 @@
+#!/bin/sh
+cd /etc/rustdesk || exit 1
+prog="$1"; shift
+exec "/usr/bin/$prog" "$@"
