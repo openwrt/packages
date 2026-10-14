@@ -1,0 +1,28 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+STOP=99
+
+USE_PROCD=1
+PROG=/usr/bin/k3screenctrl
+
+start_service() {
+	local m d
+	m=$(uci -q get k3screenctrl.@general[0].screen_time)
+	d=$(uci -q get k3screenctrl.@general[0].refresh_time)
+	case "$m" in ''|*[!0-9]*) m=10 ;; esac
+	case "$d" in ''|*[!0-9]*) d=2 ;; esac
+	[ "$m" -lt 10 ] && m=10
+	[ "$d" -lt 1 ] && d=1
+
+	procd_open_instance
+	procd_set_param command "$PROG" -m "$m" -d "$d"
+	procd_set_param respawn
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_close_instance
+}
+
+service_triggers() {
+	procd_add_config_trigger "config.change" "k3screenctrl" /etc/init.d/k3screenctrl reload
+}
