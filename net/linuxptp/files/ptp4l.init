@@ -1,0 +1,189 @@
+#!/bin/sh /etc/rc.common
+# Init script for ptp4l daemon, from linuxptp package
+
+START=45
+USE_PROCD=1
+
+PROG=/usr/sbin/ptp4l
+HELPER=/usr/sbin/sysclock-discipline-check
+CONFIGFILE=/var/etc/ptp4l.conf
+
+ID=ptp4l
+
+log() {
+	local loglevel=$1; shift; local msg="$*"
+	logger -t ptp4l-init -p daemon.$loglevel "$msg"
+}
+
+is_clock_disciplined() {
+	local output rc
+
+	if ! [ -x "$HELPER" ]; then
+		echo "Helper $HELPER not found or not executable." >&2
+		echo "Error: Clock sync helper tool missing."
+		return 2
+	fi
+
+	output=$($HELPER)
+	rc=$?
+	echo $output
+
+	[ $rc -eq 2 ] && log err "ERROR: $HELPER call unsuccessful (rc=$rc): $output"
+	return $rc
+}
+
+wait_disciplined() {
+	local check_msg interval is_synced=0 max_tries rc role tries=0
+
+	config_get role $ID "role" ""
+	config_get interval $ID "clock_sync_check_interval" "15"
+	config_get max_tries $ID "clock_sync_max_tries" "8"
+
+	log info "Preparing to start with role:$role -> checking if system clock is disciplined..."
+	while [ $is_synced -eq 0 ]; do
+		tries=$((tries + 1))
+		check_msg=$(is_clock_disciplined); rc=$?
+
+		if [ $rc -eq 0 ]; then
+			is_synced=1
+			log info "sysclock-discipline-check: $check_msg. Continuing."
+			return 0
+		elif [ $rc -eq 1 ]; then
+			if [ "$max_tries" -gt 0 ] && [ "$tries" -ge "$max_tries" ]; then
+				log err "Clock sync wait timed out after $tries attempts. ptp4l will NOT start."
+				log err "Increase 'clock_sync_max_tries' or set 'require_clock_sync 0' to skip."
+				return 1
+			fi
+			if [ "$max_tries" -gt 0 ]; then
+				log info "sysclock-discipline-check: $check_msg. Waiting... ($tries/$max_tries)"
+			else
+				log info "sysclock-discipline-check: $check_msg. Waiting... (attempt $tries, unlimited)"
+			fi
+		else
+			log crit "Clock sync check FAILED: $check_msg."
+			log err "ptp4l will NOT start. Resolve issue, or set 'require_clock_sync' to 0"
+			return 1
+		fi
+		sleep $interval
+	done
+}
+
+handle_interface() {
+	local cfg=$1 delay_mechanism interface ifname transport
+
+	config_get interface $cfg "interface" ""
+	[ -z "$interface" ] && { log err "Required 'interface' option missing in 'ptp_interface' section"; exit 1; }
+
+	network_get_device ifname "$interface"
+	[ -z "$ifname" ] && { log err "Cannot resolve UCI interface '$interface' to kernel-compatible ifname."; exit 1; }
+
+	config_get transport $cfg "transport" "UDPv4"
+	config_get delay_mechanism $cfg "delay_mechanism" "E2E"
+
+	echo ""
+	echo "[$ifname]"
+	[ "$transport" != "UDPv4" ] && echo "network_transport $transport"
+	[ "$delay_mechanism" != "E2E" ] && echo "delay_mechanism $delay_mechanism"
+	config_list_foreach $cfg "interface_opts" echo
+}
+
+handle_global() {
+	local cfg=$1 role
+
+	config_get role $cfg "role" "auto"
+
+	echo "[global]"
+
+	case "$role" in
+		server) printf "serverOnly 1\n";;
+		client) printf "clientOnly 1\n";;
+		auto) printf "";;
+		*) log err "Invalid role: $role! valid values: 'auto', 'client', 'server'"; return 1;;
+	esac
+
+	config_list_foreach $cfg "global_opts" echo
+}
+
+make_configfile() {
+	local cfg=$1 iface_count rc
+
+	. /lib/functions/network.sh
+
+	mkdir -p "${CONFIGFILE%/*}"
+
+	(
+		handle_global $cfg || exit 1
+		config_foreach handle_interface ptp_interface
+	) > "$CONFIGFILE"
+	rc=$?
+
+	[ $rc -ne 0 ] && return 1
+
+	# Require at least one [interface] section beyond [global]
+	iface_count=$(grep -c '^\[' "$CONFIGFILE" 2>/dev/null)
+	if [ "${iface_count:-0}" -lt 2 ]; then
+		log notice "No PTP interfaces configured. Add a 'config ptp_interface' section to /etc/config/linuxptp."
+		return 1
+	fi
+}
+
+make_cmdline() {
+	local cfg=$1 loglevel
+
+	config_get loglevel $cfg "loglevel" "6"
+
+	echo $PROG
+	echo "-l $loglevel"
+	echo "-f $CONFIGFILE"
+	echo "-m"
+	echo "-q"
+
+	config_list_foreach $cfg "extra_args" echo
+}
+
+service_triggers() {
+	procd_add_reload_trigger "linuxptp"
+}
+
+start_service() {
+	local clocksync_wanted cmdline rc role should_have_disciplined_clock=0
+
+	config_load linuxptp
+
+	# Fast pre-check: fail immediately if no ptp_interface section carries a
+	# non-empty 'interface' option, before spending minutes in the clock-sync wait below.
+	if [ -z "$(uci -q get linuxptp.@ptp_interface[0].interface)" ]; then
+		log notice "No ptp_interface section with an 'interface' option configured in /etc/config/linuxptp. ptp4l will not start."
+		return 1
+	fi
+
+	config_get role $ID "role" "auto"
+	[ "$role" = "server" ] && should_have_disciplined_clock=1
+	config_get_bool clocksync_wanted $ID "require_clock_sync" "$should_have_disciplined_clock"
+
+	if [ "$clocksync_wanted" = 1 ]; then
+		wait_disciplined || return 1
+	fi
+
+	make_configfile $ID; rc=$?
+	if [ $rc -ne 0 ]; then
+		log err "Failed to generate $CONFIGFILE. Aborting."
+		rm -f "$CONFIGFILE"
+		return 1
+	fi
+
+	cmdline=$(make_cmdline $ID)
+	log info "Starting ptp4l: $cmdline"
+
+	procd_open_instance "ptp4l"
+	procd_set_param command $cmdline
+	procd_set_param file $CONFIGFILE
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_close_instance
+}
+
+stop_service() {
+	rm -f "$CONFIGFILE"
+	log info "ptp4l exiting (if running)"
+}
