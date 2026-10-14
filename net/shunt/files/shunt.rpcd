@@ -19,7 +19,7 @@ const RT = rtnl.const;
 import { load as config_load, parse as config_parse } from 'shunt.config';
 import { resolve as netifd_resolve } from 'shunt.netifd';
 import { compile as match_compile } from 'shunt.match';
-import { load as files_load } from 'shunt.domain_file';
+import { load as files_load } from 'shunt.list_file';
 import { action_name, compile as nft_compile } from 'shunt.nft';
 import { compile as route_compile } from 'shunt.route';
 import { names as poll_names } from 'shunt.poll';
@@ -280,6 +280,7 @@ return {
 						tproxy_port: m.port,
 						domains: length(p?.domains ?? []),
 						file_domains: length(p?.file_domains ?? []),
+						file_dst: length(p?.file_dst ?? []),
 						rules: (m.action != 'bypass' && rules)
 							? length(rules[m.name] ?? []) : null,
 						routes: (m.action != 'bypass') ? routes[m.name] : null
@@ -322,8 +323,9 @@ return {
 
 				let out = {};
 
+				// m_ and i_ carry no family digit, every other kind does.
 				for (let name in all) {
-					let at = (substr(name, 0, 1) == 'm') ? 2 : 3;
+					let at = (index('mi', substr(name, 0, 1)) >= 0) ? 2 : 3;
 
 					if (substr(name, at) == want)
 						out[name] = all[name];

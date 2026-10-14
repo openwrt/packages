@@ -169,9 +169,11 @@ export function parse(sections) {
 			tproxy_port: v.tproxy_port,
 			src: to_list(v.src),
 			src_mac: to_list(v.src_mac),
+			src_dev: to_list(v.src_dev),
 			dport: to_list(v.dport),
 			proto: to_list(v.proto),
 			dst: to_list(v.dst),
+			dst_files: to_list(v.dst_file),
 			domains: to_list(v.domain),
 			domain_files: to_list(v.domain_file)
 		});

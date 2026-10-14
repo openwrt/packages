@@ -49,6 +49,19 @@ export function mac_addr(s) {
 	return match(m, /^[0-9a-f]{2}(:[0-9a-f]{2}){5}$/) ? m : null;
 };
 
+// An ingress device as the kernel names it - at most IFNAMSIZ - 1 bytes,
+// the same shape route.uc accepts for a policy interface. Matched by name,
+// so a device that does not exist yet is not an error: its rule simply
+// matches nothing until it appears.
+export function dev_name(s) {
+	if (type(s) != 'string')
+		return null;
+
+	let d = trim(s);
+
+	return match(d, /^[A-Za-z0-9_][A-Za-z0-9_.-]{0,14}$/) ? d : null;
+};
+
 // A destination port or an inclusive range, normalised to nft syntax. Ports
 // are 1-65535; 0 is reserved and never a destination.
 export function port_spec(s) {
@@ -140,7 +153,7 @@ export function compile(policies, opts) {
 	// Rule records, not strings: a MAC rule belongs in prerouting only, and
 	// both chains must render from one ordered list or precedence breaks.
 	let issues = [], marks = [], sets = [], rules4 = [], rules6 = [];
-	let restore = [], restore_out = [];
+	let restore = [], restore_out = [], fill = [];
 	let idx = 0;
 	let learn = {};
 
@@ -214,7 +227,12 @@ export function compile(policies, opts) {
 				reject(pname, a, 'invalid dst address');
 		}
 
-		let macs = [];
+		// Entries from a dst_file arrive validated from list_file.uc, so the
+		// family is all that is left to tell - and a colon tells it.
+		for (let a in (p.file_dst ?? []))
+			push(dst[index(a, ':') >= 0 ? '6' : '4'], a);
+
+		let macs = [], devs = [], seen_dev = {};
 
 		for (let a in (p.src_mac ?? [])) {
 			let m = mac_addr(a);
@@ -222,6 +240,16 @@ export function compile(policies, opts) {
 				push(macs, m);
 			else
 				reject(pname, a, 'invalid src_mac address');
+		}
+
+		for (let a in (p.src_dev ?? [])) {
+			let d = dev_name(a);
+			if (d == null)
+				reject(pname, a, 'invalid src_dev - expected a device name');
+			else if (!seen_dev[d]) {
+				seen_dev[d] = true;
+				push(devs, d);
+			}
 		}
 
 		let ports = [], protos = [];
@@ -263,7 +291,11 @@ export function compile(policies, opts) {
 		// empty until the file is, and `shunt flush` tears the policy down
 		// without having to read anything.
 		let has_dom = length(p.domains ?? []) + length(p.domain_files ?? []) > 0;
-		let has_dst_any = length(dst['4']) || length(dst['6']);
+
+		// The same holds for an address file: its sets exist, empty until
+		// the file is readable, and are refilled by `shunt refresh`.
+		let has_dfile = length(p.dst_files ?? []) > 0;
+		let has_dst_any = length(dst['4']) || length(dst['6']) || has_dfile;
 
 		// Ports and protocols were asked for and none survived validation.
 		// Rendering the policy anyway would drop the narrowing and mark
@@ -277,17 +309,31 @@ export function compile(policies, opts) {
 		}
 		let has_ipsrc = length(src['4']) || length(src['6']);
 		let has_mac = length(macs) > 0;
-		let has_src = has_ipsrc || has_mac;
-		let has_any = has_src || length(dst['4']) || length(dst['6']) || has_dom;
+		let has_dev = length(devs) > 0;
+		let has_src = has_ipsrc || has_mac || has_dev;
+
+		// A port or a protocol is a selector of its own: `dport 25` alone
+		// routes everybody's smtp. Only what the policy names counts here -
+		// the protocols tproxy pins on its own select nothing.
+		let has_any = has_src || has_dst_any || has_dom || narrowed;
 
 		if (!has_any) {
 			reject(pname, null, 'policy selects nothing');
 			continue;
 		}
 
-		if (length(p.src ?? []) + length(p.src_mac ?? []) > 0 && !has_src) {
+		if (length(p.src ?? []) + length(p.src_mac ?? []) + length(p.src_dev ?? []) > 0 && !has_src) {
 			reject(pname, null,
 				'no usable client selector - policy skipped rather than widened to every client');
+			continue;
+		}
+
+		// The same widening on the other side: destinations were asked for
+		// and none survived, so the policy would cover every destination of
+		// its clients. Domains still narrow it, their sets exist either way.
+		if (length(p.dst ?? []) > 0 && !has_dst_any && !has_dom) {
+			reject(pname, null,
+				'no usable destination - policy skipped rather than widened to every destination');
 			continue;
 		}
 
@@ -447,6 +493,12 @@ export function compile(policies, opts) {
 				'\tset %s { type ether_addr; counter; elements = { %s }; }',
 				set_name('m', '', pname), join(', ', macs)));
 
+		if (has_dev)
+			push(sets, sprintf(
+				'\tset %s { type ifname; counter; elements = { %s }; }',
+				set_name('i', '', pname),
+				join(', ', map(devs, (d) => `"${d}"`))));
+
 		for (let fam in [ '4', '6' ]) {
 			let ip = (fam == '4') ? 'ip' : 'ip6';
 			let rules = (fam == '4') ? rules4 : rules6;
@@ -471,6 +523,14 @@ export function compile(policies, opts) {
 					out: false, per_family: false
 				} ];
 
+			// Like a MAC, an ingress device exists in prerouting only: the
+			// router's own traffic has no input interface.
+			if (has_dev)
+				prefixes = [ ...prefixes, {
+					pre: sprintf('iifname @%s ', set_name('i', '', pname)),
+					out: false, per_family: false
+				} ];
+
 			if (!has_src)
 				prefixes = [ { pre: '', out: true, per_family: false } ];
 
@@ -482,20 +542,38 @@ export function compile(policies, opts) {
 				continue;
 			}
 
+			// auto-merge: overlapping prefixes - 10.0.0.0/8 next to
+			// 10.1.0.0/16, as any list of real networks has - are folded
+			// instead of failing the batch with "conflicting intervals",
+			// which would take every policy down with this one.
 			if (length(src[fam]))
 				push(sets, sprintf(
-					'\tset %s { type %s; flags interval; counter; elements = { %s }; }',
+					'\tset %s { type %s; flags interval; auto-merge; counter; elements = { %s }; }',
 					set_name('c', fam, pname), atype,
 					join(', ', src[fam])));
 
-			if (length(dst[fam]))
-				push(sets, sprintf(
-					'\tset %s { type %s; flags interval; counter; elements = { %s }; }',
-					set_name('s', fam, pname), atype,
-					join(', ', dst[fam])));
+			// A policy with an address file gets both families' sets even
+			// while they are empty: the next refresh may bring either.
+			let has_sset = length(dst[fam]) > 0 || has_dfile;
+
+			if (has_sset)
+				push(sets, length(dst[fam])
+					? sprintf('\tset %s { type %s; flags interval; auto-merge; counter; elements = { %s }; }',
+						set_name('s', fam, pname), atype, join(', ', dst[fam]))
+					: sprintf('\tset %s { type %s; flags interval; auto-merge; counter; }',
+						set_name('s', fam, pname), atype));
+
+			// Refilled as a whole on `shunt refresh`: flush and add in one
+			// batch, so the set is never seen half-filled.
+			if (has_dfile) {
+				push(fill, sprintf('flush set %s %s', TABLE, set_name('s', fam, pname)));
+				if (length(dst[fam]))
+					push(fill, sprintf('add element %s %s { %s }', TABLE,
+						set_name('s', fam, pname), join(', ', dst[fam])));
+			}
 
 			for (let px in prefixes)
-				if (length(dst[fam]))
+				if (has_sset)
 					emit(rules, px.out, sprintf('%s%s daddr @%s ',
 						px.pre, ip, set_name('s', fam, pname)), fam);
 
@@ -505,7 +583,7 @@ export function compile(policies, opts) {
 			// Destinations exist, but all in the other family: nothing for
 			// this one to route. A port or protocol alone does not have a
 			// family, so it does not trigger this.
-			if (!length(dst[fam]) && !has_dom && has_dst_any)
+			if (!has_sset && !has_dom && has_dst_any)
 				continue;
 
 			for (let px in prefixes) {
@@ -555,7 +633,8 @@ export function compile(policies, opts) {
 		''
 	]);
 
-	return { setup, marks, issues, learn };
+	return { setup, marks, issues, learn,
+		fill: length(fill) ? join('\n', fill) + '\n' : '' };
 };
 
 // A write may carry its own timeout - the TTL of the answer it came from,

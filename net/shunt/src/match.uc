@@ -116,7 +116,7 @@ export function compile(policies) {
 			insert(pname, r.pat, r.wild);
 		}
 
-		// file_domains arrive canonical from domain_file.uc - validated,
+		// file_domains arrive canonical from list_file.uc - validated,
 		// lower case, deduplicated - so they are not checked a second
 		// time: with a list of a hundred thousand names that is the
 		// difference between a start and a stall.

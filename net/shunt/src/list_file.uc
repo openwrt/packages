@@ -1,10 +1,12 @@
-// shunt - domain patterns from files
+// shunt - domain and address lists from files
 //
-// Reads the files a policy names in `domain_file` and attaches their
-// patterns as `file_domains`, kept apart from the hand-entered `domains`:
-// the matcher takes both, poll takes only the latter. A file is the shape
-// a community list comes in, and resolving ten thousand names every poll
-// interval is not a service, it is a DNS storm - so file entries are
+// Reads the files a policy names in `domain_file` and `dst_file` and
+// attaches their entries as `file_domains` and `file_dst`, kept apart from
+// the hand-entered `domains` and `dst`: the matcher takes both domain
+// lists, poll takes only the typed one, and nft renders both address lists
+// into the policy's static destination sets. A file is the shape a
+// community list comes in, and resolving ten thousand names every poll
+// interval is not a service, it is a DNS storm - so file domains are
 // learned passively, by snoop, when a client asks for them.
 //
 // Where the file comes from is not shunt's business. cron, a script, a
@@ -21,6 +23,7 @@
 
 import { readfile, stat, error as fs_error } from 'fs';
 import { pattern } from 'shunt.match';
+import { addr_family } from 'shunt.nft';
 
 // Hard limit on one file: a list of that size is the wrong tool on a
 // router, and reading it into a ucode array would show why.
@@ -29,6 +32,25 @@ export const LIM = {
 };
 
 export const DIR = '/tmp/shunt';
+
+// One line, checked by the rules of the list it belongs to: `{ key }` for
+// a usable entry in its canonical form, `{ error }` otherwise.
+const KINDS = {
+	domain: function(line) {
+		let r = pattern(line);
+
+		return r.error ? r : { key: (r.wild ? '*.' : '') + r.pat };
+	},
+
+	// The family check nft.uc applies to a typed `list dst`, so a file
+	// entry is never one the kernel refuses - one bad element would take
+	// the whole batch, every other policy included, down with it.
+	dst: function(line) {
+		let fam = addr_family(line);
+
+		return fam ? { key: lc(line), fam } : { error: 'not an address or prefix' };
+	}
+};
 
 // A bare name resolves under DIR; an absolute path is taken as given, for
 // a list that lives on a mounted drive or in an overlay of the user's
@@ -65,11 +87,12 @@ export function read(path) {
 	return { text };
 };
 
-// One pattern per line, `#` starts a comment, blanks are skipped. Only the
+// One entry per line, `#` starts a comment, blanks are skipped. Only the
 // count and the first offender are reported, not every bad line - a list
 // with a thousand broken entries must not turn into a thousand log lines.
-export function parse(text) {
-	let patterns = [], seen = {};
+export function parse(text, kind) {
+	let check = KINDS[kind ?? 'domain'];
+	let entries = [], seen = {};
 	let lines = 0, rejected = 0, first = null;
 
 	for (let line in split(text ?? '', '\n')) {
@@ -83,7 +106,7 @@ export function parse(text) {
 		if (!length(line))
 			continue;
 
-		let r = pattern(line);
+		let r = check(line);
 
 		if (r.error) {
 			rejected++;
@@ -92,33 +115,37 @@ export function parse(text) {
 			continue;
 		}
 
-		let key = (r.wild ? '*.' : '') + r.pat;
-
-		if (seen[key])
+		if (seen[r.key])
 			continue;
 
-		seen[key] = true;
-		push(patterns, key);
+		seen[r.key] = true;
+		push(entries, r.key);
 	}
 
-	return { patterns, rejected, first };
+	return { entries, rejected, first };
 };
 
 export function load(policies, reader) {
 	let rd = reader ?? read;
 	let cache = {}, issues = [], out = [];
-	let files = 0, entries = 0;
+	let files = 0, entries = 0, addresses = 0;
 
 	function reject(policy, entry, reason) {
 		push(issues, { policy, entry, reason });
 	}
 
-	function fetch(path) {
-		if (cache[path] != null)
-			return cache[path];
+	// Keyed by kind as well: the same file named as a domain list by one
+	// policy and as an address list by another is two different readings.
+	function fetch(path, kind) {
+		let ck = `${kind}:${path}`;
+
+		if (cache[ck] != null)
+			return cache[ck];
 
 		let file = resolve(path);
-		let res = { file: file ?? path, patterns: [], error: null };
+		let res = { file: file ?? path, entries: [], error: null };
+		let what = (kind == 'dst') ? 'address' : 'pattern';
+		let whats = (kind == 'dst') ? 'address(es)' : 'pattern(s)';
 
 		if (file == null) {
 			res.error = 'not a file name - a bare name or an absolute path';
@@ -130,46 +157,58 @@ export function load(policies, reader) {
 				res.error = f.missing ? f.error : `cannot read: ${f.error}`;
 			}
 			else {
-				let p = parse(f.text);
+				let p = parse(f.text, kind);
 
-				res.patterns = p.patterns;
+				res.entries = p.entries;
 
-				if (!length(p.patterns))
+				if (!length(p.entries))
 					res.error = p.rejected
-						? sprintf('no usable pattern, %d line(s) rejected (%s)',
-							p.rejected, p.first)
-						: 'no usable pattern';
+						? sprintf('no usable %s, %d line(s) rejected (%s)',
+							what, p.rejected, p.first)
+						: `no usable ${what}`;
 				else if (p.rejected)
-					res.warn = sprintf('%d line(s) rejected (%s), %d pattern(s) kept',
-						p.rejected, p.first, length(p.patterns));
+					res.warn = sprintf('%d line(s) rejected (%s), %d %s kept',
+						p.rejected, p.first, length(p.entries), whats);
 
 				files++;
-				entries += length(p.patterns);
+
+				if (kind == 'dst')
+					addresses += length(p.entries);
+				else
+					entries += length(p.entries);
 			}
 		}
 
-		cache[path] = res;
+		cache[ck] = res;
 
 		return res;
 	}
 
-	for (let p in (policies ?? [])) {
-		let file_domains = [];
+	function collect(p, paths, kind) {
+		let got = [];
 
-		for (let path in (p?.domain_files ?? [])) {
-			let res = fetch(path);
+		for (let path in (paths ?? [])) {
+			let res = fetch(path, kind);
 
 			if (res.error)
 				reject(p?.name, res.file, res.error);
 			else if (res.warn)
 				reject(p?.name, res.file, res.warn);
 
-			for (let pat in res.patterns)
-				push(file_domains, pat);
+			for (let e in res.entries)
+				push(got, e);
 		}
 
-		push(out, { ...p, file_domains });
+		return got;
 	}
 
-	return { policies: out, issues, files, entries };
+	for (let p in (policies ?? [])) {
+		push(out, {
+			...p,
+			file_domains: collect(p, p?.domain_files, 'domain'),
+			file_dst: collect(p, p?.dst_files, 'dst')
+		});
+	}
+
+	return { policies: out, issues, files, entries, addresses };
 };

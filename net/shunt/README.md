@@ -47,10 +47,10 @@ shunt check
 
 <a id="main-features"></a>
 ## Main Features
-* Routes by client address, client MAC, destination CIDR and domain, in any combination
+* Routes by client address, client MAC, ingress device, destination CIDR, port and domain, in any combination
 * Resolver independent: works with any DNS backend, and with an encrypted upstream, because it reads the plaintext leg between client and resolver
 * Wildcard domains (`*.example.com`), learned passively as clients use them
-* Domain lists from a file - a community-maintained set of thousands of names, without a single UCI entry per name
+* Domain and address lists from a file - a community-maintained set of thousands of names or networks, without a single UCI entry per line
 * Per-policy killswitch: reject the traffic when the interface or proxy is gone, instead of leaking it out of the normal uplink - clients fail at once rather than on a timeout
 * Per-policy action: `route` marks the traffic for the policy interface, `bypass` exempts it from every policy below, `tproxy` hands it to a transparent proxy on the router
 * Your own networks stay reachable from a policy client, without listing them anywhere
@@ -82,7 +82,7 @@ Any of them, and there is no supported-protocols list to check against, because 
 
 **`AllowedIPs` is not a route, and it still applies.** `route_allowed_ips` decides only whether netifd installs routes for those prefixes - they are written to the wireguard configuration either way, and the kernel uses them as its cryptokey filter. A packet whose destination matches no peer's `AllowedIPs` is dropped inside wireguard, however correctly it was routed there. A policy meant to carry general traffic therefore needs `0.0.0.0/0` on the peer, and `::/0` if it carries IPv6; what actually enters the tunnel is decided by the policy's selectors, not by the peer. Narrowing `AllowedIPs` to a few subnets is right only when those subnets really are everything the tunnel should ever carry.
 
-The one thing that does not work is anything that is not a routable interface. Tor is the usual example: it normally offers a SOCKS port, and sending traffic there is a redirect, not a route. shunt marks a packet and looks up a routing table; without a device to put a default route on, there is nothing for it to do. Transparent proxying is out of scope by design, not for want of a special case.
+The one thing that does not work is anything that is not a routable interface. Tor is the usual example: it normally offers a SOCKS port, and sending traffic there is a redirect, not a route. shunt marks a packet and looks up a routing table; without a device to put a default route on, there is nothing for it to do.
 
 Two kernel-side prerequisites. shunt never changes either one behind your back - the first can be handed to shunt explicitly (`rp_filter_manage`, below), the second stays with fw4:
 
@@ -150,7 +150,7 @@ All functions are available from the command line, and the config file can be ed
 shunt check        # render everything, print marks and issues, change nothing
 shunt run          # foreground, the procd service entry point
 shunt flush        # tear down table, rules, routes and the mapping file
-shunt refresh      # make the running daemon re-read its domain files
+shunt refresh      # make the running daemon re-read its list files
 shunt -v <cmd>     # echo every message to the terminal as well
 ```
 
@@ -162,7 +162,7 @@ Logging goes to syslog under the tag `shunt`, so `logread -e shunt` shows everyt
 
 `shunt flush` is the escape hatch if the daemon ever dies without tearing down. It is idempotent and safe on a box that never ran shunt.
 
-`shunt refresh` asks the daemon over ubus to re-read every `domain_file` and reports what it found; it is the one change that does not need a restart. Without a running daemon it says so and exits 1 - nothing is lost, the next start reads the files anyway. Everything else in the config still takes `/etc/init.d/shunt restart`.
+`shunt refresh` asks the daemon over ubus to re-read every `domain_file` and `dst_file` and reports what it found; it is the one change that does not need a restart. Without a running daemon it says so and exits 1 - nothing is lost, the next start reads the files anyway. Everything else in the config still takes `/etc/init.d/shunt restart`.
 
 <a id="shunt-config-options"></a>
 ## shunt config options
@@ -196,13 +196,15 @@ Each `config policy` section is one routing policy. **The section must be named,
 | gw4 / gw6 | gateway override; normally unnecessary |
 | src | client addresses or CIDRs whose traffic this policy owns |
 | src_mac | client MAC addresses, ORed with `src` |
+| src_dev | ingress devices (`br-guest`, `lan2`), ORed with `src` and `src_mac`, see below |
 | proto | `tcp`, `udp`, or both; a port without one covers both |
 | dport | destination ports, single or a range like `8000-8080` |
 | dst | destination addresses or CIDRs |
+| dst_file | files with destination addresses or CIDRs, one per line, see below |
 | domain | domain patterns, see below |
 | domain_file | files with domain patterns, one per line, see below |
 
-`src`, `src_mac`, `dst`, `domain` and `domain_file` are lists and may repeat.
+`src`, `src_mac`, `src_dev`, `dst`, `dst_file`, `domain` and `domain_file` are lists and may repeat.
 
 Interfaces are resolved through netifd: a logical name resolves to its `l3_device`, a raw netdev is adopted if netifd knows it, and a device netifd knows nothing about passes through as given - which on OpenWrt means a tunnel started outside netifd, since wireguard and the other tunnel types have netifd protocols of their own. Gateways are discovered from the same dump, merged across sibling entries, because netifd splits families. `gw4`/`gw6` override discovery and always win; on a point to point interface no gateway is needed at all.
 
@@ -210,15 +212,15 @@ There is deliberately no list of supported tunnel protocols. shunt asks netifd f
 
 ### Selectors are ANDed, client selectors OR each other
 
-* `src` or `src_mac` alone marks everything from those clients
-* `dst`, `domain`, `dport` or `proto` alone marks that traffic from everyone
+* `src`, `src_mac` or `src_dev` alone marks everything from those clients
+* `dst`, `dst_file`, `domain`, `dport` or `proto` alone marks that traffic from everyone - `dport '25'` by itself routes everybody's smtp
 * clients plus destinations marks only those clients' traffic to those destinations
 
 `dport` and `proto` AND with everything else, so a policy with a client, a domain and `dport 443` covers that client's HTTPS traffic to that domain and nothing more. A port without a protocol matches **both** tcp and udp - "port 443" almost always means QUIC too, and requiring the protocol would let it slip through unnoticed. If ports or protocols were configured and none of them is usable, the policy is skipped rather than rendered without the narrowing.
 
 This is the single most common source of "it did not work" reports: with a client and a domain both set, a generic `curl ifconfig.me` from that client correctly takes the normal uplink, because `ifconfig.me` is not in the domain list. That is the policy working, not failing.
 
-A client MAC and a client address OR each other, so a host may be named either way. If client selectors were configured and **none** of them is usable - a typo in the only address, say - the policy is skipped with an issue rather than falling back to "every client", which is what an absent client selector otherwise means.
+A client MAC, a client address and an ingress device OR each other, so a host may be named either way. If client selectors were configured and **none** of them is usable - a typo in the only address, say - the policy is skipped with an issue rather than falling back to "every client", which is what an absent client selector otherwise means. The same holds for `dst`: if every destination address is unusable and no domain is left to narrow the policy, it is skipped rather than widened to every destination.
 
 ### Selecting clients by MAC
 
@@ -229,6 +231,22 @@ Three limits, none of them guessable:
 * **Same layer 2 segment only.** Anything behind another router arrives with that router's MAC.
 * **Never the router itself.** The `output` chain sees traffic the router generated, which has no ethernet sender, so MAC rules are not installed there. An address based policy does cover the router; a MAC-only one does not.
 * **Phones randomise their MAC**, though usually stable per network. Use the address the client shows in your DHCP leases, not the one on the label.
+
+<a id="selecting-clients-by-ingress-device"></a>
+### Selecting clients by ingress device
+
+`src_dev` selects everything that arrives on a device - a whole guest network, an IoT VLAN, a second LAN port - in both address families at once. That is what an address selector cannot do for IPv6 on a line with a dynamic prefix: the delegated prefix changes, and the prefix you configured stops matching the day it does. The device does not change.
+
+```
+config policy 'guest'
+	option interface 'wg0'
+	option fallback  'block'
+	list   src_dev   'br-guest'
+```
+
+The entry is a kernel device name - `br-guest`, `lan2`, `eth0.20` - as `ip link` shows it, not a netifd interface name. It is matched by name, so a device that does not exist yet is no error: the rule matches nothing until it appears. Like `src_mac`, it exists in prerouting only, so the router's own traffic is never covered by it.
+
+With `keep_local` at its default the devices' traffic to your other networks stays local, and traffic to the router itself - DNS, DHCP, LuCI - is delivered locally whatever the mark says. For domain policies the device has to be observed as well: add it to `snoop_device`, or names its clients ask for are learned by poll alone.
 
 ### Domain patterns
 
@@ -278,6 +296,24 @@ uclient-fetch -q -O /tmp/shunt/community.tmp https://example.org/domains.txt && 
 Run from cron that covers the reboot case as well: the first run after boot creates the file and the refresh loads it. That keeps shunt independent of the network, of any download tool and of the format a list publisher happens to choose - converting `hosts` or dnsmasq syntax into one pattern per line is one `sed` away and stays outside the daemon.
 
 What a large list costs: 100k patterns take about two seconds to load and roughly 40 MB of memory on an x86 test box, so expect several seconds and a proportionally smaller footprint on a router, at start and on every refresh. A file above 4 MiB is refused outright as an issue. `shunt check` prints how many files were read and how many patterns they contributed, `shunt refresh` does the same for the running daemon, and `ubus call shunt status` shows the count under `files` together with the time of the last refresh.
+
+<a id="address-lists-from-a-file"></a>
+### Address lists from a file
+
+`dst_file` is the same mechanism for destinations: a provider's published ranges, a country list, a set of CDN networks - thousands of prefixes that have no business in UCI.
+
+```
+config policy 'streaming'
+	option interface 'wg0'
+	list   src       '192.168.1.0/24'
+	list   dst_file  'provider.txt'
+```
+
+The file holds one IPv4 or IPv6 address or prefix per line, both families mixed as they come, with `#` starting a comment and blank lines ignored. Name, location, size limit, issues and `shunt refresh` work exactly as for a [domain file](#domain-lists-from-a-file), and `dst` and `dst_file` are additive. Every entry is checked by the rules a `list dst` entry is checked by, so a bad line costs that line and never the ruleset.
+
+Overlapping prefixes are fine: the sets are created with `auto-merge`, so `10.0.0.0/8` next to `10.1.0.0/16` is folded into one instead of failing the whole batch. The policy gets its static sets for both families even while the file is missing, so a later file may bring either family. `shunt refresh` flushes and refills those sets in one nftables transaction - the set is never seen half-filled - and leaves everything else in place.
+
+A list of 100k prefixes takes about two seconds to read and roughly 40 MB of memory on an x86 test box, and nftables about two seconds to load it, at start and on every refresh; expect several times that on a router.
 
 ### Actions: route, bypass or tproxy
 
@@ -522,6 +558,27 @@ config policy 'subnet'
 	list  src        '192.168.1.0/24'
 ```
 
+**A whole guest network into the tunnel**
+
+`br-guest` is the device, not the netifd interface. It covers the guest network's IPv4 and IPv6 alike, whatever prefix the provider hands out:
+
+```
+config policy 'guest'
+	option interface 'wg0'
+	option fallback  'block'
+	list   src_dev   'br-guest'
+```
+
+**One port for everybody**
+
+No client, no destination - every smtp connection leaves through the second uplink:
+
+```
+config policy 'smtp'
+	option interface 'wan2'
+	list   dport     '25'
+```
+
 **A destination range without any domain**
 
 ```
@@ -554,9 +611,10 @@ table inet shunt                     own table, see below
   chain prerouting                   filter hook prerouting, priority mangle
   chain output                       route hook output, priority mangle
   set d4_<policy> / d6_<policy>      learned, flags timeout, per-element counter
-  set s4_<policy> / s6_<policy>      static dst, flags interval, counter
-  set c4_<policy> / c6_<policy>      client src selectors, interval, counter
+  set s4_<policy> / s6_<policy>      static dst and dst_file, flags interval, auto-merge, counter
+  set c4_<policy> / c6_<policy>      client src selectors, interval, auto-merge, counter
   set m_<policy>                     client MACs, no family digit, counter
+  set i_<policy>                     client ingress devices, no family digit, counter
 
 fwmark                               <index> << 24, mask 0xff000000
 ct mark                              same bits, set on a flow's first packet

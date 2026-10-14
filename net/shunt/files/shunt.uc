@@ -13,7 +13,7 @@ import { openlog, syslog, LOG_PID, LOG_DAEMON, LOG_ERR, LOG_WARNING,
 	LOG_NOTICE, LOG_INFO, LOG_DEBUG } from 'log';
 import { load as cfg_load, parse as cfg_parse, MIN as cfg_min } from 'shunt.config';
 import { compile as match_compile } from 'shunt.match';
-import { load as files_load, DIR as FILES_DIR } from 'shunt.domain_file';
+import { load as files_load, DIR as FILES_DIR } from 'shunt.list_file';
 import { action_name, compile as nft_compile, refresh, teardown, TABLE } from 'shunt.nft';
 import { compile as route_compile } from 'shunt.route';
 import { open as rt_open, exec as rt_exec, describe as rt_describe } from 'shunt.rt';
@@ -325,8 +325,9 @@ function build_state(silent) {
 
 	// A teardown renders without the check: a policy whose module has
 	// gone since it was applied still owns a table and rules to remove.
-	let n = nft_compile(cfg.policies,
-		{ tproxy: silent ? true : tproxy_available() });
+	// Kept, so a refresh renders against the same set of policies.
+	let opts = { tproxy: silent ? true : tproxy_available() };
+	let n = nft_compile(cfg.policies, opts);
 	if (!silent)
 		report('nft', n.issues);
 
@@ -334,7 +335,7 @@ function build_state(silent) {
 	if (!silent)
 		report('route', r.issues);
 
-	return { cfg, matcher, files, nft: n, route: r };
+	return { cfg, matcher, files, opts, nft: n, route: r };
 }
 
 // nft -f reads the entire ruleset before resolving a single name, so on a box
@@ -451,28 +452,7 @@ function run() {
 	let stats = { started: time(), resolv: false, snoop: [],
 		matched: 0, drops: {}, reapplied: 0,
 		files: { count: state.files.files, entries: state.files.entries,
-			refreshed: null } };
-
-	// Re-reads the domain files and swaps the matcher - the one thing a
-	// changed list needs. Nothing else moves: the sets exist whether the
-	// file does, poll never had the file names, routes and rules are not
-	// touched, and the learned addresses stay put. Runs on the uloop
-	// thread between callbacks, so snoop never sees a half-built matcher.
-	function refresh_files() {
-		let f = files_load(state.cfg.policies);
-
-		report('file', f.issues);
-
-		state.cfg.policies = f.policies;
-		state.matcher = match_compile(state.cfg.policies);
-
-		stats.files = { count: f.files, entries: f.entries, refreshed: time() };
-
-		log('info', sprintf('refresh: %d file(s), %d pattern(s), %d issue(s)',
-			f.files, f.entries, length(f.issues)));
-
-		return { files: f.files, entries: f.entries, issues: f.issues };
-	}
+			addresses: state.files.addresses, refreshed: null } };
 
 	try {
 		resolv = require('resolv');
@@ -489,6 +469,41 @@ function run() {
 
 	let wq = { state, cache, stats, pending: {}, lost: false,
 		interval: WRITE_MIN, timer: null };
+
+	// Re-reads the list files, swaps the matcher and refills the address
+	// file sets - the two things a changed list needs. Nothing else moves:
+	// the sets exist whether the file does, poll never had the file names,
+	// routes and rules are not touched, and the learned addresses stay put.
+	// The ruleset is rendered again from the same config with the new file
+	// contents, so a re-apply after an outside flush carries them too; its
+	// issues were reported at start and are not repeated. Runs on the uloop
+	// thread between callbacks, so snoop never sees a half-built matcher.
+	function refresh_files() {
+		let f = files_load(state.cfg.policies);
+
+		report('file', f.issues);
+
+		state.cfg.policies = f.policies;
+		state.matcher = match_compile(state.cfg.policies);
+
+		if (state.cfg.global.enabled) {
+			let n = nft_compile(state.cfg.policies, state.opts);
+
+			if (length(n.fill) && !nft_pipe(n.fill, 'refresh'))
+				ensure_table(wq);
+
+			state.nft = n;
+		}
+
+		stats.files = { count: f.files, entries: f.entries,
+			addresses: f.addresses, refreshed: time() };
+
+		log('info', sprintf('refresh: %d file(s), %d pattern(s), %d address(es), %d issue(s)',
+			f.files, f.entries, f.addresses, length(f.issues)));
+
+		return { files: f.files, entries: f.entries, addresses: f.addresses,
+			issues: f.issues };
+	}
 
 	function poll_cycle() {
 		if (!resolv || !length(targets))
@@ -710,7 +725,7 @@ function run() {
 	return 0;
 }
 
-// Asks the running daemon to re-read its domain files. Without a daemon
+// Asks the running daemon to re-read its list files. Without a daemon
 // there is nothing to refresh and nothing lost: the next start reads them.
 function refresh() {
 	let c = null;
@@ -739,7 +754,8 @@ function refresh() {
 		return 1;
 	}
 
-	printf('files:    %d file(s), %d pattern(s)\n', r.files, r.entries);
+	printf('files:    %d file(s), %d pattern(s), %d address(es)\n',
+		r.files, r.entries, r.addresses ?? 0);
 
 	for (let i in r.issues)
 		printf('issue:    %J\n', i);
@@ -774,8 +790,8 @@ function check() {
 		length(state.nft.issues) + length(state.route.issues);
 
 	printf('issues:   %d (see above)\n', total);
-	printf('files:    %d file(s), %d pattern(s)\n', state.files.files,
-		state.files.entries);
+	printf('files:    %d file(s), %d pattern(s), %d address(es)\n',
+		state.files.files, state.files.entries, state.files.addresses);
 	printf('poll:     %d name(s)\n', length(poll_names(state.cfg.policies)));
 
 	return length(state.nft.marks) ? 0 : 2;
