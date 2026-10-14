@@ -25,6 +25,33 @@ prompts given to the automated LLM reviewer.
 - [Project-wide LLM review guidelines](https://github.com/openwrt/actions-shared-workflows/tree/main/llm-review-prompts)
 - [Packages repository-specific LLM review addendum](https://github.com/openwrt/packages/blob/master/.github/llm-review-rules.md)
 
+## AI policy
+
+> [!WARNING]
+> You **must** disclose any LLM usage in your pull request, description or
+> commit messages.
+
+We support the use of LLMs for coding, but we hold a high bar for all
+contributions, and we expect a human in the loop who genuinely understands the
+work an LLM produces on their behalf.
+
+> [!IMPORTANT]
+> Don't rely on LLMs to write the whole thing for you when communicating with
+> the maintainers, and don't post wall-of-text comments.
+
+We expect comments on our projects to be written by humans. The readers are
+humans, and we'd like to hear from you, not from a model. We may hide or remove
+any comments that we believe are LLM-generated.
+
+If you're using an LLM to edit or – as a non-native English speaker – to
+translate your comments, keep them short, review before posting, and make sure
+they say what you mean.
+
+> [!CAUTION]
+> Do not use autonomous agents for contributing to our projects.
+
+We will close any pull requests that we believe were created autonomously.
+
 ## Package Sources (archives and repositories)
 
 - <strong>PKG_SOURCE</strong> should reference the smallest available archive. In order of
