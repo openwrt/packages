@@ -638,9 +638,14 @@ export function compile(policies, opts) {
 };
 
 // A write may carry its own timeout - the TTL of the answer it came from,
-// already clamped by the caller - or fall back to entry_ttl.
-export function refresh(writes, entry_ttl) {
+// already clamped by the caller - or fall back to entry_ttl. slack goes on
+// top of either: a client asks again when the TTL runs out, and the write
+// for that answer reaches the kernel up to one write interval later. An
+// element timed out to the second would be gone for exactly that gap, and
+// a connection opened in it starts on the normal uplink and stays there.
+export function refresh(writes, entry_ttl, slack) {
 	let dflt = entry_ttl ?? DEFAULTS.entry_ttl;
+	let pad = (type(slack) == 'int' && slack > 0) ? slack : 0;
 	let out = [], issues = [];
 
 	for (let w in (writes ?? [])) {
@@ -655,7 +660,7 @@ export function refresh(writes, entry_ttl) {
 
 		push(out, sprintf('destroy element %s %s { %s }', TABLE, w.set, w.addr));
 		push(out, sprintf('add element %s %s { %s timeout %ds }',
-			TABLE, w.set, w.addr, w.ttl ?? dflt));
+			TABLE, w.set, w.addr, (w.ttl ?? dflt) + pad));
 	}
 
 	return { batch: length(out) ? join('\n', out) + '\n' : '', issues };

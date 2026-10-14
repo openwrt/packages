@@ -346,6 +346,10 @@ function build_state(silent) {
 const WRITE_MIN = 2;
 const WRITE_MAX = 60;
 const WRITE_FACTOR = 3;
+// Kernel timeouts run this much past the lifetime on top of the current
+// write interval: the replacement for an expiring element waits up to one
+// interval in the queue, and time() rounds to the second on both ends.
+const WRITE_SLACK = 2;
 
 // A write from snoop carries the TTL of the answer it was learned from; one
 // from poll carries none. Either way the element lives no longer than
@@ -375,7 +379,8 @@ function drain_writes(st) {
 	if (!length(due))
 		return;
 
-	let r = refresh(due, st.state.cfg.global.entry_ttl);
+	let r = refresh(due, st.state.cfg.global.entry_ttl,
+		st.interval + WRITE_SLACK);
 	report('refresh', r.issues);
 
 	if (!length(r.batch))
