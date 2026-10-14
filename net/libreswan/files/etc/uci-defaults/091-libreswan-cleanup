@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# Remove legacy 4.x iptables firewall include if present
+if uci -q get firewall.libreswan >/dev/null; then
+	uci -q delete firewall.libreswan
+	uci -q commit firewall
+fi
+
+exit 0
