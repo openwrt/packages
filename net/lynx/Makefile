@@ -1,13 +1,11 @@
 #
 # This is free software, licensed under the GNU General Public License v2.
 #
-# Based on https://github.com/kyak/openwrt-packages/tree/master/lynx
-#
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lynx
-PKG_VERSION:=2.9.2
+PKG_VERSION:=2.9.3
 PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0
@@ -15,8 +13,12 @@ PKG_MAINTAINER:=Leonid Esman <leonid.esman@gmail.com>
 PKG_CPE_ID:=cpe:/a:lynx:lynx
 PKG_SOURCE:=$(PKG_NAME)$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://invisible-mirror.net/archives/lynx/tarballs/ \
-                https://fossies.org/linux/www/
-PKG_HASH:=7374b89936d991669e101f4e97f2c9592036e1e8cdaa7bafc259a77ab6fb07ce
+                https://ftp2.osuosl.org/pub/blfs/conglomeration/lynx/
+# Below are additional source URLs that may not work reliably sometimes or
+# for users in some countries
+# PKG_SOURCE_URL:=https://invisible-island.net/archives/lynx/tarballs/
+# PKG_SOURCE_URL:=https://ftp.icm.edu.pl/packages/lynx/tarballs/
+PKG_HASH:=174b7f2866a60f3247ba75f5c7dbb10b124aede4a1359312de15f3bfebd2050f
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
@@ -60,6 +62,11 @@ CONFIGURE_VARS += \
 	ac_cv_lib_bsd_arc4random=no \
 	cf_cv_ncurses_header="ncursesw/curses.h" \
 	ac_cv_path_NCURSES_CONFIG=""
+
+define Package/lynx/conffiles
+/etc/lynx.cfg
+/etc/lynx.lss
+endef
 
 define Package/lynx/install
 	$(INSTALL_DIR) $(1)/usr/bin
