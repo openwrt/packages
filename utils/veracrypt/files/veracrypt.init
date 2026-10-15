@@ -1,0 +1,26 @@
+#!/bin/sh /etc/rc.common
+# Unmounts all VeraCrypt volumes gracefully on stop, reboot and shutdown
+# (after the services that may use them have stopped). Start and restart
+# do nothing, so nothing is mounted at boot.
+
+# START only enables the script for rc.d; start does nothing.
+START=99
+STOP=85
+
+restart() {
+	:
+}
+
+mounted() {
+	/usr/bin/veracrypt --text --non-interactive --list >/dev/null 2>&1
+}
+
+stop() {
+	[ -x /usr/bin/veracrypt ] && mounted || return 0
+	sync
+	/usr/bin/veracrypt --text --non-interactive --unmount 2>&1 | logger -t veracrypt
+	mounted || return 0
+	# Never force: a volume still in use is left mounted and reported.
+	/usr/bin/veracrypt --text --non-interactive --list 2>&1 |
+		logger -t veracrypt -p daemon.warn
+}
