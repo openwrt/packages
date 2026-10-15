@@ -447,15 +447,31 @@ f_chkip() {
 			if (M[1] == "") next
 			$col1 = M[1]
 		}
-		ip = $col1
-		gsub(/\r|^[[:space:]]+|[[:space:]]+$/, "", ip)
 		# prefix filter
 		if (pre != "" && index($0, pre) != 1) next
+		ip = $col1
+		gsub(/\r|^[[:space:]]+|[[:space:]]+$/, "", ip)
 		# skip empty lines or comments
 		if (ip == "" || ip ~ /^#/) next
 		# reject invalid lengths
 		len = length(ip)
 		if (len < 3 || len > 43) next
+		# IPv4 fast path: octets 0-255 without leading zeros, optional numeric mask up to 32
+		if (ipv == "4") {
+			if (col2 != "") ip = ip "/" $col2
+			if (ip !~ /^(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])(\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])){3}(\/[0-9]+)?$/) next
+			slash = index(ip, "/")
+			if (slash) {
+				if (substr(ip, slash + 1) + 0 > 32) next
+				base = substr(ip, 1, slash - 1)
+			} else {
+				base = ip
+			}
+			# reject loopback and unspecified addresses
+			if (base ~ /^127\./ || base == "0.0.0.0") next
+			print ip ", "
+			next
+		}
 		# reject MAC addresses when ipv=6
 		if (ipv == "6" && ip ~ /^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$/) next
 		# reject IPv4 when ipv=6
@@ -540,7 +556,9 @@ f_chkip() {
 f_actual() {
 	local nft monitor ppid pids pid
 
-	if "${ban_nftcmd}" -t list table inet banIP >/dev/null 2>&1; then
+	# a chain lookup avoids the element fetch of a full table listing
+	#
+	if "${ban_nftcmd}" -t list chain inet banIP _reject >/dev/null 2>&1; then
 		nft="✔"
 	else
 		nft="✘"
@@ -1296,7 +1314,7 @@ f_nftinit() {
 # handle downloads
 #
 f_down() {
-	local log_inbound log_outbound start_ts end_ts tmp_raw tmp_load tmp_file split_file table_json handles handle etag_rc etag_cnt nft_cnt nft_setcnt tmp_allow feed_name
+	local log_inbound log_outbound start_ts end_ts tmp_raw tmp_load tmp_file split_file chain_json handles handle etag_rc etag_cnt nft_cnt nft_setcnt tmp_allow feed_name
 	local expr cnt_set cnt_dl restore_rc feed_direction feed_policy feed_rc feed_comp feed_complete feed_target feed_dport chain flag tmp_flush tmp_nft
 	local tmp_split tmp_proto tmp_port asn country feed="${1}" feed_ipv="${2}" feed_url="${3}" feed_rule="${4}" feed_chain="${5}" feed_flag="${6}"
 
@@ -1426,12 +1444,15 @@ f_down() {
 
 	# chain/rule maintenance
 	#
-	if [ "${ban_action}" = "reload" ] && "${ban_nftcmd}" -t list set inet banIP "${feed}" >/dev/null 2>&1; then
-		table_json="$("${ban_nftcmd}" -tja list table inet banIP 2>>"${ban_errorlog}")"
+	# set and chain listings instead of set/table listings, the latter fetch all Set elements
+	#
+	if [ "${ban_action}" = "reload" ] && [ -n "$("${ban_nftcmd}" -tj list sets inet 2>/dev/null |
+		"${ban_jsoncmd}" -q -e "@.nftables[@.set.table=\"banIP\" && @.set.name=\"${feed}\"].set.name")" ]; then
 		{
 			for chain in _inbound _outbound; do
+				chain_json="$("${ban_nftcmd}" -tja list chain inet banIP "${chain}" 2>>"${ban_errorlog}")"
 				for expr in 0 1 2; do
-					handles="$(printf '%s\n' "${table_json}" | "${ban_jsoncmd}" -q -e "@.nftables[@.rule.chain=\"${chain}\"][@.expr[${expr}].match.right=\"@${feed}\"].handle" | "${ban_xargscmd}")"
+					handles="$(printf '%s\n' "${chain_json}" | "${ban_jsoncmd}" -q -e "@.nftables[@.rule.chain=\"${chain}\"][@.expr[${expr}].match.right=\"@${feed}\"].handle" | "${ban_xargscmd}")"
 					for handle in ${handles}; do
 						printf '%s\n' "delete rule inet banIP ${chain} handle ${handle}"
 					done
@@ -1870,7 +1891,12 @@ f_down() {
 						: >"${split_file}"
 					fi
 				done
-				cnt_set="$("${ban_nftcmd}" -j list set inet banIP "${feed}" 2>/dev/null | "${ban_jsoncmd}" -qe '@.nftables[*].set.elem[*]' | "${ban_wccmd}" -l 2>/dev/null)"
+
+				# element count for the debug log only, a full Set listing is expensive with large Sets
+				#
+				if [ "${ban_debug}" = "1" ]; then
+					cnt_set="$("${ban_nftcmd}" -j list set inet banIP "${feed}" 2>/dev/null | "${ban_jsoncmd}" -qe '@.nftables[*].set.elem[*]' | "${ban_wccmd}" -l 2>/dev/null)"
+				fi
 			fi
 		else
 			f_log "info" "skip empty feed '${feed}'"
@@ -2709,8 +2735,8 @@ f_search() {
 	# get relevant Sets
 	#
 	if [ -n "${proto}" ]; then
-		table_sets="$("${ban_nftcmd}" -tj list table inet banIP 2>>"${ban_errorlog}" |
-			"${ban_jsoncmd}" -qe "@.nftables[@.set.type=\"ip${proto}_addr\"].set.name")"
+		table_sets="$("${ban_nftcmd}" -tj list sets inet 2>>"${ban_errorlog}" |
+			"${ban_jsoncmd}" -qe "@.nftables[@.set.table=\"banIP\" && @.set.type=\"ip${proto}_addr\"].set.name")"
 	else
 		printf '%s\n%s\n%s\n' ":::" "::: no valid search input" ":::"
 		printf '%s\n%s\n%s\n' ":::" "::: no valid search input" ":::" >"${result}"
