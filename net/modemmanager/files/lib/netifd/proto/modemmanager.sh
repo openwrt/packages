@@ -599,7 +599,7 @@ proto_modemmanager_setup() {
 	[ -n "${device}" ] || {
 		echo "No device specified"
 		proto_notify_error "${interface}" NO_DEVICE
-		proto_set_available "${interface}" 0
+		proto_block_restart "${interface}"
 		return 1
 	}
 
