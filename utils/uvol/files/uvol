@@ -107,6 +107,9 @@ let meta_init = function() {
 	}
 	backend.up(".meta");
 	fs.mkdir("/tmp/run/uvol/.meta/apk", 0755);
+	if (!fs.stat("/tmp/run/uvol/.meta/apk/world"))
+		fs.writefile("/tmp/run/uvol/.meta/apk/world", "");
+	fs.mkdir("/tmp/run/uvol/.meta/uxc", 0755);
 };
 
 if (cmd == "boot") {

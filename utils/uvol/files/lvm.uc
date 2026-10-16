@@ -174,6 +174,7 @@ function lvm_init(ctx) {
 
 	vg = vgs(vg_name);
 	register = ctx.register;
+	registered = ctx.registered;
 	unregister = ctx.unregister;
 	return true;
 }
@@ -286,6 +287,9 @@ function lvm_updown(vol_name, up) {
 	if (up && (wildcard(lv.lv_path, "/dev/*/wo_*") ||
 		   wildcard(lv.lv_path, "/dev/*/wp_*")))
 		return 22;
+
+	if (up && lv.lv_active && registered(vol_name, getdev(lv)))
+		return 0;
 
 	if (!up) {
 		let devname = getdev(lv);

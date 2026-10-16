@@ -45,6 +45,7 @@ uvol_common = {
 		ctx.cursor = common_uci ? common_uci.cursor() : null;
 		ctx.fs = common_fs;
 		ctx.register = uvol_mount.register;
+		ctx.registered = uvol_mount.registered;
 		ctx.unregister = uvol_mount.unregister;
 		ctx.shell_quote = shell_quote;
 		ctx.umount_dev = umount_dev;
