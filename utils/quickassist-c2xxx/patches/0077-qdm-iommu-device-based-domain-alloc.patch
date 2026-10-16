@@ -1,0 +1,84 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] qdm iommu device based domain alloc
+
+--- a/quickassist/utilities/libusdm_drv/linux/kernel_space/qdm.c
++++ b/quickassist/utilities/libusdm_drv/linux/kernel_space/qdm.c
+@@ -51,12 +51,15 @@
+ #define KERNEL_VERSION(a, b, c) (((a) << 16) + ((b) << 8) + (c))
+ #endif
+ 
++#include <linux/err.h>
++#include <linux/mutex.h>
+ #include <linux/iommu.h>
+ #include <linux/module.h>
+ #include <linux/pci.h>
+ #include "qdm.h"
+ 
+ static struct iommu_domain *domain;
++static DEFINE_MUTEX(domain_lock);
+ 
+ /**
+  * qdm_attach_device() - Attach a device to the QAT IOMMU domain
+@@ -68,14 +71,34 @@ static struct iommu_domain *domain;
+  */
+ int qdm_attach_device(struct device *dev)
+ {
+-	if (!domain)
+-		return 0;
+-
+ 	if (!dev) {
+ 		pr_err("QDM: Invalid device\n");
+ 		return -ENODEV;
+ 	}
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 11, 0)
++	/*
++	 * iommu_domain_alloc(bus) was removed in 6.13; the device-based
++	 * replacement needs a real device, which qdm_init() doesn't have
++	 * yet, so allocate lazily here on first attach instead. Guard
++	 * against concurrent first attaches (e.g. async PCI probe of more
++	 * than one accel device) racing to each allocate their own domain.
++	 */
++	if (!domain) {
++		mutex_lock(&domain_lock);
++		if (!domain) {
++			struct iommu_domain *new_domain = iommu_paging_domain_alloc(dev);
++
++			if (!IS_ERR(new_domain))
++				domain = new_domain;
++		}
++		mutex_unlock(&domain_lock);
++	}
++#endif
++
++	if (!domain)
++		return 0;
++
+ 	return iommu_attach_device(domain, dev);
+ }
+ 
+@@ -164,6 +187,14 @@ EXPORT_SYMBOL_GPL(qdm_iommu_unmap);
+ 
+ int __init qdm_init(void)
+ {
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 11, 0)
++	/* Domain is allocated lazily in qdm_attach_device() instead: the
++	 * device-based iommu_paging_domain_alloc() that replaced the
++	 * bus-based API needs a real struct device, which isn't available
++	 * yet at module init time.
++	 */
++	return 0;
++#else
+ 	if (!iommu_present(&pci_bus_type))
+ 		return 0;
+ 
+@@ -177,6 +208,7 @@ int __init qdm_init(void)
+ 		return -1;
+ 	}
+ 	return 0;
++#endif
+ }
+ 
+ void __exit qdm_exit(void)
