@@ -84,7 +84,6 @@ PKG_MOD_AVAILABLE:= \
 	sql \
 	sqlite \
 	sshkey \
-	stroke \
 	test-vectors \
 	unity \
 	updown \
@@ -145,7 +144,6 @@ $(call Package/strongswan/Default)
   DEPENDS:= strongswan \
 	+strongswan-charon \
 	+strongswan-charon-cmd \
-	+strongswan-ipsec \
 	+strongswan-mod-addrblock \
 	+strongswan-mod-aes \
 	+strongswan-mod-agent \
@@ -206,7 +204,6 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-sql \
 	+strongswan-mod-sqlite \
 	+strongswan-mod-sshkey \
-	+strongswan-mod-stroke \
 	+strongswan-mod-test-vectors \
 	+strongswan-mod-unity \
 	+strongswan-mod-updown \
@@ -279,7 +276,6 @@ $(call Package/strongswan/Default)
   TITLE+= (isakmp)
   DEPENDS:= strongswan \
 	+strongswan-charon \
-	+strongswan-ipsec \
 	+strongswan-mod-aes \
 	+strongswan-mod-des \
 	+strongswan-mod-gmpdh \
@@ -292,15 +288,14 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-random \
 	+strongswan-mod-sha1 \
 	+strongswan-mod-socket-default \
-	+strongswan-mod-stroke \
-	+strongswan-mod-updown
+	+strongswan-mod-updown \
+	+strongswan-swanctl
 endef
 
 define Package/strongswan-isakmp/description
 $(call Package/strongswan/description/Default)
- This meta-package contains only dependencies to establish  ISAKMP /
- IKE PSK connections, dropping other capabilities in favor of small size
- Can fit most routers even with 4Mb flash (after removing IPv6 support).
+  This meta-package contains dependencies for ISAKMP / IKEv1 PSK connections
+  configured with swanctl.
 endef
 
 
@@ -319,10 +314,10 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-random \
 	+strongswan-mod-sha1 \
 	+strongswan-mod-socket-default \
-	+strongswan-mod-stroke \
 	+strongswan-mod-updown \
 	+strongswan-mod-x509 \
-	+strongswan-mod-xcbc
+	+strongswan-mod-xcbc \
+	+strongswan-swanctl
 endef
 
 define Package/strongswan-minimal/description
@@ -350,17 +345,6 @@ endef
 define Package/strongswan-charon-cmd/description
 $(call Package/strongswan/description/Default)
  This package contains the charon-cmd utility.
-endef
-
-define Package/strongswan-ipsec
-$(call Package/strongswan/Default)
-  TITLE+= utilities
-  DEPENDS:= strongswan
-endef
-
-define Package/strongswan-ipsec/description
-$(call Package/strongswan/description/Default)
- This package contains the ipsec utility.
 endef
 
 define Package/strongswan-pki
@@ -427,6 +411,7 @@ define BuildPlugin
 
   define Package/strongswan-mod-$(1)/conffiles
 /etc/strongswan.d/charon/$(1).conf
+$(call Plugin/$(1)/conffiles)
 endef
 
   $$(eval $$(call BuildPackage,strongswan-mod-$(1)))
@@ -505,35 +490,6 @@ define Package/strongswan-charon-cmd/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/charon-cmd $(1)/usr/sbin/
 endef
 
-define Package/strongswan-ipsec/conffiles
-/etc/ipsec.d/
-/etc/ipsec.conf
-/etc/ipsec.secrets
-/etc/ipsec.user
-endef
-
-define Package/strongswan-ipsec/install
-	$(INSTALL_DIR) $(1)/etc/ $(1)/usr/sbin
-	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/ipsec.conf $(1)/etc/
-	echo -e "\ninclude /var/ipsec/ipsec.conf" >> $(1)/etc/ipsec.conf
-	$(INSTALL_CONF) ./files/ipsec.secrets $(1)/etc/
-	echo -e "\ninclude /var/ipsec/ipsec.secrets" >> $(1)/etc/ipsec.secrets
-	$(INSTALL_CONF) ./files/ipsec.user $(1)/etc/
-	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/ipsec.init $(1)/etc/init.d/ipsec
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/ipsec $(1)/usr/sbin/
-endef
-
-define Package/strongswan-ipsec/postinst
-#!/bin/sh
-
-[ -z "$${IPKG_INSTROOT}" ] || exit 0
-
-opkg list-changed-conffiles | grep -qx /etc/ipsec.conf || {
-	rm -f /etc/ipsec.conf-opkg
-}
-endef
-
 define Package/strongswan-pki/install
 	$(INSTALL_DIR) $(1)/etc/strongswan.d
 	$(CP) $(PKG_INSTALL_DIR)/etc/strongswan.d/pki.conf $(1)/etc/strongswan.d/
@@ -584,15 +540,13 @@ define Plugin/attr-sql/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/pool $(1)/usr/lib/ipsec/
 endef
 
-define Plugin/stroke/install
-	$(INSTALL_DIR) $(1)/etc/ipsec.d/{aacerts,acerts,cacerts,certs,crls,ocspcerts,private,reqs}
-
-	$(INSTALL_DIR) $(1)/usr/lib/ipsec/plugins
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/ipsec/{starter,stroke} $(1)/usr/lib/ipsec/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/plugins/libstrongswan-stroke.so $(1)/usr/lib/ipsec/plugins/
+define Plugin/updown/conffiles
+/etc/ipsec.user
 endef
 
 define Plugin/updown/install
+	$(INSTALL_DIR) $(1)/etc
+	$(INSTALL_CONF) ./files/ipsec.user $(1)/etc/
 	$(INSTALL_DIR) $(1)/usr/lib/ipsec/plugins
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/_updown $(1)/usr/lib/ipsec/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/plugins/libstrongswan-updown.so $(1)/usr/lib/ipsec/plugins/
@@ -625,7 +579,6 @@ $(eval $(call BuildPackage,strongswan-minimal))
 $(eval $(call BuildPackage,strongswan-isakmp))
 $(eval $(call BuildPackage,strongswan-charon))
 $(eval $(call BuildPackage,strongswan-charon-cmd))
-$(eval $(call BuildPackage,strongswan-ipsec))
 $(eval $(call BuildPackage,strongswan-pki))
 $(eval $(call BuildPackage,strongswan-swanctl))
 $(eval $(call BuildPackage,strongswan-gencerts))
@@ -693,7 +646,6 @@ $(eval $(call BuildPlugin,socket-dynamic,dynamic socket implementation for charo
 $(eval $(call BuildPlugin,sql,SQL database interface,))
 $(eval $(call BuildPlugin,sqlite,SQLite database interface,+strongswan-mod-sql +PACKAGE_strongswan-mod-sqlite:libsqlite3))
 $(eval $(call BuildPlugin,sshkey,SSH key decoding,))
-$(eval $(call BuildPlugin,stroke,Stroke,+strongswan-charon +strongswan-ipsec))
 $(eval $(call BuildPlugin,test-vectors,crypto test vectors,))
 $(eval $(call BuildPlugin,unity,Cisco Unity extension,))
 $(eval $(call BuildPlugin,updown,updown firewall,+iptables +IPV6:ip6tables +iptables-mod-ipsec +kmod-ipt-ipsec))
