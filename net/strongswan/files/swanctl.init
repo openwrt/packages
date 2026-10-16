@@ -141,6 +141,62 @@ append_var() {
 	append "$var" "$value" "$delim"
 }
 
+swanctl_is_decimal_number() {
+	local number="$1"
+
+	case "$number" in
+	""|*[!0-9]*)
+		return 1
+		;;
+	esac
+	return 0
+}
+
+swanctl_is_hex_number() {
+	local number="$1"
+	local hex_digits="${number#0[xX]}"
+
+	case "$number" in
+	0[xX]?*)
+		;;
+	*)
+		return 1
+		;;
+	esac
+	case "$hex_digits" in
+	*[!0-9a-fA-F]*)
+		return 1
+		;;
+	esac
+	return 0
+}
+
+swanctl_is_valid_mark_number() {
+	local number="$1"
+
+	swanctl_is_decimal_number "$number" && return 0
+	swanctl_is_hex_number "$number" && return 0
+	return 1
+}
+
+# valid: %unique, %unique-dir or <value>[/<mask>]
+swanctl_is_valid_mark() {
+	local mark="$1"
+	local mark_value="${mark%%/*}"
+	local mark_mask="${mark#*/}"
+
+	case "$mark" in
+	%unique|%unique-dir)
+		return 0
+		;;
+	esac
+	swanctl_is_valid_mark_number "$mark_value" || return 1
+	if [ "$mark_value" != "$mark" ]; then
+		swanctl_is_valid_mark_number "$mark_mask" || return 1
+	fi
+	return 0
+}
+
 is_aead() {
 	local cipher="$1"
 
@@ -293,6 +349,8 @@ config_child() {
 	local dpd_action
 	local close_action
 	local if_id
+	local mark_in
+	local mark_out
 	local rekey_time
 	local ipcomp
 	local interface
@@ -314,6 +372,8 @@ config_child() {
 	config_get dpd_action "$conf" dpd_action "clear"
 	config_get close_action "$conf" close_action "none"
 	config_get if_id "$conf" if_id ""
+	config_get mark_in "$conf" mark_in ""
+	config_get mark_out "$conf" mark_out ""
 	config_get rekey_time "$conf" rekey_time ""
 	config_get_bool ipcomp "$conf" ipcomp 0
 	config_get interface "$conf" interface ""
@@ -369,6 +429,15 @@ config_child() {
 		;;
 	esac
 
+	if [ -n "$mark_in" ] && ! swanctl_is_valid_mark "$mark_in"; then
+		fatal "mark_in '$mark_in' invalid"
+		mark_in=
+	fi
+	if [ -n "$mark_out" ] && ! swanctl_is_valid_mark "$mark_out"; then
+		fatal "mark_out '$mark_out' invalid"
+		mark_out=
+	fi
+
 	case "$hw_offload" in
 	yes|no|auto|"")
 		;;
@@ -388,6 +457,8 @@ config_child() {
 	[ -n "$interface" ] && swanctl_xappend4 "interface = $interface"
 	[ -n "$priority" ] && swanctl_xappend4 "priority = $priority"
 	[ -n "$if_id" ] && swanctl_xappend4 "if_id_in = $if_id" "if_id_out = $if_id"
+	[ -n "$mark_in" ] && swanctl_xappend4 "mark_in = $mark_in"
+	[ -n "$mark_out" ] && swanctl_xappend4 "mark_out = $mark_out"
 	[ -n "$start_action" -a "$start_action" != "none" ] && swanctl_xappend4 "start_action = $start_action"
 	[ -n "$close_action" -a "$close_action" != "none" ] && swanctl_xappend4 "close_action = $close_action"
 	[ -n "$esp_proposal" ] && swanctl_xappend4 "esp_proposals = $esp_proposal"
