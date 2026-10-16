@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=strongswan
-PKG_VERSION:=6.0.7
-PKG_RELEASE:=11
+PKG_VERSION:=6.1.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://download.strongswan.org/ https://download2.strongswan.org/
-PKG_HASH:=e518e34e159514f4c6ba80d1f926cb151e0dd4e3a1d94213171234b8b9ae6f55
+PKG_HASH:=fe6c97481298767213cfc2e9a1da29fdd8018d481ff4cb9cf0283099654f20d4
 
 PKG_MAINTAINER:=Philip Prindeville <philipp@redfish-solutions.com>, Noel Kuntze <noel.kuntze@thermi.consulting>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -338,7 +338,7 @@ endef
 
 define Package/strongswan-charon/description
 $(call Package/strongswan/description/Default)
- This package contains charon, an IKEv2 keying daemon.
+  This package contains charon, an IKEv1/IKEv2 keying daemon.
 endef
 
 define Package/strongswan-charon-cmd
@@ -435,7 +435,7 @@ endef
 CONFIGURE_ARGS+= \
 	--disable-scripts \
 	--disable-static \
-	--disable-fast \
+	--enable-ikev1 \
 	--enable-nonce \
 	--enable-mgf1 \
 	--enable-mediation \
