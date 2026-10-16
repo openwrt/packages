@@ -355,6 +355,7 @@ config_child() {
 	local ipcomp
 	local interface
 	local hw_offload
+	local policies
 	local priority
 	local rekey_bytes
 	local life_bytes
@@ -378,6 +379,7 @@ config_child() {
 	config_get_bool ipcomp "$conf" ipcomp 0
 	config_get interface "$conf" interface ""
 	config_get hw_offload "$conf" hw_offload ""
+	config_get policies "$conf" policies ""
 	config_get priority "$conf" priority ""
 	config_get rekey_bytes "$conf" rekey_bytes ""
 	config_get life_bytes "$conf" life_bytes ""
@@ -447,12 +449,22 @@ config_child() {
 		;;
 	esac
 
+	case "$policies" in
+	yes|no|"")
+		;;
+	*)
+		fatal "policies value $policies invalid"
+		policies=""
+		;;
+	esac
+
 	swanctl_xappend3 "$conf {"
 
 	[ -n "$local_ts" ] && swanctl_xappend4 "local_ts = $local_ts"
 	[ -n "$remote_ts" ] && swanctl_xappend4 "remote_ts = $remote_ts"
 
 	[ -n "$hw_offload" ] && swanctl_xappend4 "hw_offload = $hw_offload"
+	[ -n "$policies" ] && swanctl_xappend4 "policies = $policies"
 	[ $ipcomp -eq 1 ] && swanctl_xappend4 "ipcomp = 1"
 	[ -n "$interface" ] && swanctl_xappend4 "interface = $interface"
 	[ -n "$priority" ] && swanctl_xappend4 "priority = $priority"
