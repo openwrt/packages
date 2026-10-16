@@ -96,6 +96,7 @@ Support of the following fully pre-configured domain blocklist feeds (free for p
 * Supports a wide range of router modes, even AP modes are supported
 * Full IPv4 and IPv6 support
 * Provides top level domain compression (`tld compression`), this feature removes thousands of needless host entries from the blocklist and lowers the memory footprint for the DNS backend
+* Packs multiple domains per dnsmasq 'local=' line (max. 1000 characters), this reduces the size of the final blocklist by ~30% and speeds up the dnsmasq start
 * Provides a `DNS Blocklist Shift`, where the generated final DNS blocklist is moved to the backup directory and only a soft link to this file is set in memory. As long as your backup directory is located on an external drive, you should activate this option to save valuable RAM.
 * Feed parsing by a very fast & secure domain validator, all domain rules and feed information are placed in an external JSON file (`/etc/adblock/adblock.feeds`)
 * Overall duplicate removal in generated blocklist file `adb_list.overall`

@@ -237,12 +237,15 @@ f_env() {
 	json_init
 	if [ -s "${adb_customfeedfile}" ]; then
 		if json_load_file "${adb_customfeedfile}" >/dev/null 2>&1; then
-			return
-		else
-			f_log "info" "can't load adblock custom feed file"
+			json_get_keys feedlist
+			if [ -n "${feedlist}" ]; then
+				f_log "info" "adblock custom feed file loaded successfully"
+				return
+			fi
 		fi
 	fi
 	if [ -s "${adb_feedfile}" ] && json_load_file "${adb_feedfile}" >/dev/null 2>&1; then
+		f_log "info" "adblock default feed file loaded successfully"
 		return
 	else
 		f_log "err" "can't load adblock feed file"
@@ -406,7 +409,22 @@ f_dns() {
 		adb_dnssafesearch="1"
 		adb_dnsstop="address=/#/\nlocal=/#/"
 		f_dnsdeny() {
-			"${adb_awkcmd}" '{print "local=/"$0"/"}' "${@}"
+			"${adb_awkcmd}" '
+				{
+					if (len > 0 && len + length($0) + 1 > 1000) {
+						print line
+						len = 0
+					}
+					if (len == 0) {
+						line = "local=/" $0 "/"
+						len = length(line)
+					} else {
+						line = line $0 "/"
+						len += length($0) + 1
+					}
+				}
+				END { if (len > 0) print line }
+			' "${@}"
 		}
 		f_dnsallow() {
 			"${adb_awkcmd}" '{print "local=/"$0"/#"}' "${@}"
@@ -701,8 +719,8 @@ f_count() {
 			for file in "${adb_tmpdir}/tmp.safesearch".*; do
 				[ -s "${file}" ] && files="${files} ${file}"
 			done
-			adb_cnt="$("${adb_awkcmd}" -v hdr="${adb_dnsheader}" '
-				NR == FNR { main++; next }
+			adb_cnt="$("${adb_awkcmd}" -v hdr="${adb_dnsheader}" -v dns="${adb_dns}" '
+				NR == FNR { main += (dns == "dnsmasq" ? split($0, seg, "/") - 2 : 1); next }
 				{ sub_cnt++ }
 				END {
 					cnt = main - sub_cnt
@@ -1301,6 +1319,7 @@ f_list() {
 				out_rc="${?}"
 			fi
 		fi
+		"${adb_rmcmd}" -f "${src_tmpload}"
 		;;
 	"backup")
 		file_name="${src_tmpfile}"
@@ -1551,11 +1570,6 @@ f_search() {
 	# search blocklist
 	#
 	case "${adb_dns}" in
-	"dnsmasq")
-		prefix='local=.*[\/\.]'
-		suffix='\/'
-		field="2"
-		;;
 	"unbound")
 		prefix='local-zone: .*["\.]'
 		suffix='" always_nxdomain'
@@ -1593,7 +1607,25 @@ f_search() {
 	#
 	while :; do
 		search="${domain//./\\.}"
-		res="$("${adb_awkcmd}" -F '/|\"|\t| ' "/^(${prefix}${search}${suffix})$/{i++;if(i<=3){printf \"  + %s\n\",\$${field}}else if(i==4){printf \"  + %s\n\",\"[...]\";exit}}" "${adb_finaldir}/${adb_dnsfile}")"
+		if [ "${adb_dns}" = "dnsmasq" ]; then
+			res="$("${adb_awkcmd}" -F '/' -v s="${domain}" '
+				$1 == "local=" && $NF == "" && index($0, s "/") {
+					for (f = 2; f < NF; f++) {
+						if ($f == s || (length($f) > length(s) && substr($f, length($f) - length(s)) == "." s)) {
+							i++
+							if (i <= 3) {
+								printf "  + %s\n", $f
+							} else {
+								printf "  + %s\n", "[...]"
+								exit
+							}
+						}
+					}
+				}
+			' "${adb_finaldir}/${adb_dnsfile}")"
+		else
+			res="$("${adb_awkcmd}" -F '/|\"|\t| ' "/^(${prefix}${search}${suffix})$/{i++;if(i<=3){printf \"  + %s\n\",\$${field}}else if(i==4){printf \"  + %s\n\",\"[...]\";exit}}" "${adb_finaldir}/${adb_dnsfile}")"
+		fi
 		printf '%s\n%s\n%s\n' ":::" "::: domain '${domain}' in active blocklist" ":::" >>"${result_tmp}"
 		printf '%s\n\n' "${res:-"  - no match"}" >>"${result_tmp}"
 		[ "${domain}" = "${tld}" ] && break
