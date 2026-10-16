@@ -26,7 +26,6 @@ PKG_MOD_AVAILABLE:= \
 	agent \
 	attr \
 	attr-sql \
-	blowfish \
 	$(if $(CONFIG_STRONGSWAN_INCLUDE_INSECURE),ccm,) \
 	chapoly \
 	cmac \
@@ -40,7 +39,6 @@ PKG_MOD_AVAILABLE:= \
 	dhcp \
 	dnskey \
 	drbg \
-	duplicheck \
 	eap-dynamic \
 	eap-identity \
 	eap-md5 \
@@ -51,7 +49,6 @@ PKG_MOD_AVAILABLE:= \
 	fips-prf \
 	forecast \
 	gcm \
-	gcrypt \
 	gmp \
 	gmpdh \
 	ha \
@@ -60,7 +57,6 @@ PKG_MOD_AVAILABLE:= \
 	kernel-libipsec \
 	kernel-netlink \
 	ldap \
-	led \
 	load-tester \
 	lookip \
 	$(if $(CONFIG_STRONGSWAN_INCLUDE_INSECURE),md4,) \
@@ -83,7 +79,6 @@ PKG_MOD_AVAILABLE:= \
 	sha1 \
 	sha2 \
 	sha3 \
-	smp \
 	socket-default \
 	socket-dynamic \
 	sql \
@@ -156,7 +151,6 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-agent \
 	+strongswan-mod-attr \
 	+strongswan-mod-attr-sql \
-	+strongswan-mod-blowfish \
 	+STRONGSWAN_INCLUDE_INSECURE:strongswan-mod-ccm \
 	+strongswan-mod-chapoly \
 	+strongswan-mod-cmac \
@@ -170,7 +164,6 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-dhcp \
 	+strongswan-mod-dnskey \
 	+strongswan-mod-drbg \
-	+strongswan-mod-duplicheck \
 	+strongswan-mod-eap-dynamic \
 	+strongswan-mod-eap-identity \
 	+strongswan-mod-eap-md5 \
@@ -181,14 +174,12 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-fips-prf \
 	+strongswan-mod-forecast \
 	+strongswan-mod-gcm \
-	+strongswan-mod-gcrypt \
 	+strongswan-mod-gmp \
 	+strongswan-mod-ha \
 	+strongswan-mod-hmac \
 	+strongswan-mod-kdf \
 	+strongswan-mod-kernel-netlink \
 	+strongswan-mod-ldap \
-	+strongswan-mod-led \
 	+strongswan-mod-load-tester \
 	+strongswan-mod-lookip \
 	+STRONGSWAN_INCLUDE_INSECURE:strongswan-mod-md4 \
@@ -211,7 +202,6 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-sha1 \
 	+strongswan-mod-sha2 \
 	+strongswan-mod-sha3 \
-	+strongswan-mod-smp \
 	+strongswan-mod-socket-default \
 	+strongswan-mod-sql \
 	+strongswan-mod-sqlite \
@@ -583,12 +573,6 @@ define Package/strongswan-libtls/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/libtls.so.* $(1)/usr/lib/ipsec/
 endef
 
-define Plugin/duplicheck/install
-	$(INSTALL_DIR) $(1)/usr/lib/ipsec/plugins
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/duplicheck $(1)/usr/lib/ipsec/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/plugins/libstrongswan-duplicheck.so $(1)/usr/lib/ipsec/plugins/
-endef
-
 define Plugin/eap-radius/install
 	$(INSTALL_DIR) $(1)/usr/lib/ipsec/plugins
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/libradius.so.* $(1)/usr/lib/ipsec/
@@ -651,7 +635,6 @@ $(eval $(call BuildPlugin,aes,AES crypto,))
 $(eval $(call BuildPlugin,agent,SSH agent signing,))
 $(eval $(call BuildPlugin,attr,file based config,))
 $(eval $(call BuildPlugin,attr-sql,SQL based config,+strongswan-charon))
-$(eval $(call BuildPlugin,blowfish,Blowfish crypto,))
 $(eval $(call BuildPlugin,ccm,CCM AEAD wrapper crypto,))
 $(eval $(call BuildPlugin,chapoly,ChaCha20-Poly1305 AEAD crypto,+kmod-crypto-chacha20poly1305))
 $(eval $(call BuildPlugin,cmac,CMAC crypto,))
@@ -665,7 +648,6 @@ $(eval $(call BuildPlugin,des,DES crypto,))
 $(eval $(call BuildPlugin,dhcp,DHCP based attribute provider,))
 $(eval $(call BuildPlugin,dnskey,DNS RR key decoding,))
 $(eval $(call BuildPlugin,drbg,Deterministic random bit generator,,))
-$(eval $(call BuildPlugin,duplicheck,advanced duplicate checking,))
 $(eval $(call BuildPlugin,eap-dynamic,EAP dynamic selector,))
 $(eval $(call BuildPlugin,eap-identity,EAP identity helper,))
 $(eval $(call BuildPlugin,eap-md5,EAP MD5 (CHAP) EAP auth,))
@@ -676,7 +658,6 @@ $(eval $(call BuildPlugin,farp,fake arp respsonses,))
 $(eval $(call BuildPlugin,fips-prf,FIPS PRF crypto,+strongswan-mod-sha1))
 $(eval $(call BuildPlugin,forecast,forward multi/broadcast traffic,+libip4tc +kmod-ipt-conntrack-extra))
 $(eval $(call BuildPlugin,gcm,GCM AEAD wrapper crypto,))
-$(eval $(call BuildPlugin,gcrypt,libgcrypt,+PACKAGE_strongswan-mod-gcrypt:libgcrypt))
 $(eval $(call BuildPlugin,gmp,libgmp,+PACKAGE_strongswan-mod-gmp:libgmp))
 $(eval $(call BuildPlugin,gmpdh,DH-Groups; no libgmp dep,))
 $(eval $(call BuildPlugin,ha,high availability cluster,))
@@ -685,7 +666,6 @@ $(eval $(call BuildPlugin,kdf,KDF/PRF+,))
 $(eval $(call BuildPlugin,kernel-libipsec,libipsec kernel interface,))
 $(eval $(call BuildPlugin,kernel-netlink,netlink kernel interface,))
 $(eval $(call BuildPlugin,ldap,LDAP,+PACKAGE_strongswan-mod-ldap:libopenldap))
-$(eval $(call BuildPlugin,led,LED blink on IKE activity,))
 $(eval $(call BuildPlugin,load-tester,load testing,))
 $(eval $(call BuildPlugin,lookip,enable fast virtual IP lookup and notification,))
 $(eval $(call BuildPlugin,md4,MD4 crypto,))
@@ -708,7 +688,6 @@ $(eval $(call BuildPlugin,revocation,X509 CRL/OCSP revocation,))
 $(eval $(call BuildPlugin,sha1,SHA1 crypto,))
 $(eval $(call BuildPlugin,sha2,SHA2 crypto,))
 $(eval $(call BuildPlugin,sha3,SHA3 and SHAKE crypto,))
-$(eval $(call BuildPlugin,smp,SMP configuration and control interface,+PACKAGE_strongswan-mod-smp:libxml2))
 $(eval $(call BuildPlugin,socket-default,default socket implementation for charon,))
 $(eval $(call BuildPlugin,socket-dynamic,dynamic socket implementation for charon,))
 $(eval $(call BuildPlugin,sql,SQL database interface,))
