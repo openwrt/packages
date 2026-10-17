@@ -1,0 +1,75 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Sat, 17 Oct 2026 03:20:00 +0100
+Subject: [PATCH] rtsp: allocate the message arrays of the watch on the heap
+
+gst_rtsp_watch_send_messages() and gst_rtsp_watch_write_serialized_messages()
+allocate arrays on the stack that grow with the number of messages and
+of memories in them. An RTSP server sending a video frame over TCP
+passes every RTP packet of the frame in one call, which are several
+hundred for a 4K frame, and the arrays took 150 KiB of the stack of the
+sending thread. A thread stack of 128 KiB, the default of musl, was
+overrun and the server crashed with a segmentation fault. Use the heap
+for these arrays.
+
+Link: https://gitlab.freedesktop.org/gstreamer/gstreamer/-/work_items/5358
+Assisted-by: LLM
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+--- a/gst-libs/gst/rtsp/gstrtspconnection.c
++++ b/gst-libs/gst/rtsp/gstrtspconnection.c
+@@ -4778,8 +4778,8 @@ gst_rtsp_watch_write_serialized_messages
+       }
+     }
+ 
+-    vectors = g_newa (GOutputVector, n_vectors);
+-    map_infos = n_memories ? g_newa (GstMapInfo, n_memories) : NULL;
++    vectors = g_new (GOutputVector, n_vectors);
++    map_infos = n_memories ? g_new (GstMapInfo, n_memories) : NULL;
+ 
+     for (i = 0, j = 0, k = 0, bytes_to_write = 0; i < n_messages; i++) {
+       vectors[j].buffer = messages[i].data_is_data_header ?
+@@ -4827,6 +4827,8 @@ gst_rtsp_watch_write_serialized_messages
+     for (k = 0; k < n_memories; k++) {
+       gst_memory_unmap (map_infos[k].memory, &map_infos[k]);
+     }
++    g_free (map_infos);
++    g_free (vectors);
+ 
+     if (res != GST_RTSP_EINTR) {
+       /* actual error or done completely */
+@@ -5073,27 +5075,30 @@ gst_rtsp_watch_send_messages (GstRTSPWat
+     guint n_messages, guint * id)
+ {
+   GstRTSPSerializedMessage *serialized_messages;
++  GstRTSPResult res;
+   gint i;
+ 
+   g_return_val_if_fail (watch != NULL, GST_RTSP_EINVAL);
+   g_return_val_if_fail (messages != NULL || n_messages == 0, GST_RTSP_EINVAL);
+ 
+-  serialized_messages = g_newa (GstRTSPSerializedMessage, n_messages);
+-  memset (serialized_messages, 0,
+-      sizeof (GstRTSPSerializedMessage) * n_messages);
++  serialized_messages = g_new0 (GstRTSPSerializedMessage, n_messages);
+ 
+   for (i = 0; i < n_messages; i++) {
+     if (!serialize_message (watch->conn, &messages[i], &serialized_messages[i]))
+       goto error;
+   }
+ 
+-  return gst_rtsp_watch_write_serialized_messages (watch, serialized_messages,
++  res = gst_rtsp_watch_write_serialized_messages (watch, serialized_messages,
+       n_messages, id);
++  g_free (serialized_messages);
++
++  return res;
+ 
+ error:
+   for (i = 0; i < n_messages; i++) {
+     gst_rtsp_serialized_message_clear (&serialized_messages[i]);
+   }
++  g_free (serialized_messages);
+ 
+   return GST_RTSP_EINVAL;
+ }
