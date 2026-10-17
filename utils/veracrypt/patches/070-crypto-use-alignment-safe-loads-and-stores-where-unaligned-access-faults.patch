@@ -1,0 +1,318 @@
+From 7c06e03ec3700d8c038c516f76dffd63de60a4f7 Mon Sep 17 00:00:00 2001
+From: Ville Takio <ville+git@takio.fi>
+Date: Fri, 9 Oct 2026 11:39:21 +0000
+Subject: [PATCH] Crypto: use alignment-safe loads and stores where unaligned
+ access faults (#1909)
+
+* Crypto: use alignment-safe loads and stores on all hosts
+
+SHA-2, BLAKE2s, Twofish and Kuznyechik read and write words in caller
+buffers directly on little-endian hosts, Streebog's stage2() reads 64-bit
+words from the input, and the Unix XTS code XORs whitening values through
+uint64 pointers. On strict-alignment CPUs (ARMv5-v7 for LDRD/LDM, MIPS,
+mips64) this raises SIGBUS when a caller passes an unaligned buffer; real
+volume operations use aligned buffers, but test vectors and future
+callers need not.
+
+- SHA-2, BLAKE2s, Twofish and Kuznyechik use the VcLoad*/VcStore* helpers
+  on all hosts, not only on big-endian ones.
+- On GCC/Clang little-endian targets the helpers copy with memcpy, which
+  compiles to single loads and stores where unaligned access is allowed,
+  so the C paths keep their speed. MSVC targets keep native accesses, as
+  before.
+- Streebog takes the direct path only for 8-byte-aligned input; other
+  input goes through the existing copy into CTX->buffer.
+- XTS (Unix, without the x64 SSE path) XORs the whitening values through
+  memcpy.
+
+Output is unchanged: known-answer comparisons for every offset from 0 to
+15 match on x86_64, armv7, mips, mipsel and mips64, and an
+alignment-checking (UBSan) build is clean.
+
+Signed-off-by: Ville Takio <ville+git@takio.fi>
+
+* Crypto: keep direct word accesses where unaligned access is safe
+
+Address review: limit the alignment fix to the targets that need it.
+
+VC_UNALIGNED_ACCESS_OK (config.h) is 1 on x86, x64, ARMv8 (including
+MSVC ARM64) and PowerPC, where unaligned 32- and 64-bit accesses are
+safe; there SHA-2, BLAKE2s, Twofish, Kuznyechik, Streebog and XTS
+compile exactly as before. On other targets (32-bit ARM, whose
+unaligned support does not cover LDRD/LDM, MIPS, ...), they load and
+store through the VcLoad*/VcStore* helpers; SHA-2 keeps its byte swaps
+and only the input load changes.
+
+The object code of the changed files is identical to master with GCC
+and Clang on x86_64 and with GCC on AArch64. On armv7, mips, mipsel and
+mips64 (qemu-user), the known-answer outputs at buffer offsets 0..15
+match x86_64.
+
+Signed-off-by: Ville Takio <ville+git@takio.fi>
+
+---------
+
+Upstream-Status: Backport [https://github.com/veracrypt/VeraCrypt/commit/7c06e03ec3700d8c038c516f76dffd63de60a4f7]
+
+Signed-off-by: Ville Takio <ville+git@takio.fi>
+---
+ src/Crypto/Sha2.c                |  6 +++++-
+ src/Crypto/Streebog.c            |  5 ++++-
+ src/Crypto/Twofish.c             |  6 ++++++
+ src/Crypto/blake2s.c             |  7 ++++---
+ src/Crypto/config.h              | 11 +++++++++++
+ src/Crypto/kuznyechik.c          |  5 +++--
+ src/Crypto/misc.h                | 28 +++++++++++++++++++++++++++-
+ src/Volume/EncryptionModeXTS.cpp | 30 ++++++++++++++++++++++++++++++
+ 8 files changed, 90 insertions(+), 8 deletions(-)
+
+--- a/src/Crypto/Sha2.c
++++ b/src/Crypto/Sha2.c
+@@ -23,9 +23,13 @@ and released into public domain.
+ #if BYTE_ORDER == BIG_ENDIAN
+ #define SHA2_LOAD_BE32(p, i) VcLoadBE32((const uint8 *) (p) + 4 * (i))
+ #define SHA2_LOAD_BE64(p, i) VcLoadBE64((const uint8 *) (p) + 8 * (i))
+-#else
++#elif VC_UNALIGNED_ACCESS_OK
+ #define SHA2_LOAD_BE32(p, i) bswap_32(((const uint_32t *) (p))[i])
+ #define SHA2_LOAD_BE64(p, i) bswap_64(((const uint_64t *) (p))[i])
++#else
++/* The caller's buffer may be unaligned: load it alignment-safe, then swap. */
++#define SHA2_LOAD_BE32(p, i) bswap_32(VcLoadLE32((const uint8 *) (p) + 4 * (i)))
++#define SHA2_LOAD_BE64(p, i) bswap_64(VcLoadLE64((const uint8 *) (p) + 8 * (i)))
+ #endif
+ 
+ #if defined(_UEFI) || defined(CRYPTOPP_DISABLE_ASM)
+--- a/src/Crypto/Streebog.c
++++ b/src/Crypto/Streebog.c
+@@ -2266,7 +2266,10 @@ void STREEBOG_add(STREEBOG_CTX *CTX, con
+ {
+     size_t chunksize;
+ 
+-    while (len > 63 && CTX->bufsize == 0)
++    /* stage2() reads the block as 64-bit words: where unaligned access is not
++     * safe, unaligned input is copied to the buffer first */
++    while (len > 63 && CTX->bufsize == 0
++        && (VC_UNALIGNED_ACCESS_OK || ((size_t) data % sizeof (unsigned long long)) == 0))
+     {
+         stage2(CTX, data);
+ 
+--- a/src/Crypto/Twofish.c
++++ b/src/Crypto/Twofish.c
+@@ -51,8 +51,14 @@
+ #define TWOFISH_STORE(p, i, v) VcStoreLE32((p) + (i), (v))
+ #else
+ #define TWOFISH_LE32(x) (x)
++#if VC_UNALIGNED_ACCESS_OK
+ #define TWOFISH_LOAD(p, i) ((p)[i])
+ #define TWOFISH_STORE(p, i, v) ((p)[i] = (v))
++#else
++/* Blocks may be unaligned in the caller's buffer. */
++#define TWOFISH_LOAD(p, i) VcLoadLE32((p) + (i))
++#define TWOFISH_STORE(p, i, v) VcStoreLE32((p) + (i), (v))
++#endif
+ #endif
+ 
+ /* C implementation based on code written by kerukuro for cppcrypto library 
+--- a/src/Crypto/blake2s.c
++++ b/src/Crypto/blake2s.c
+@@ -28,8 +28,9 @@
+ // load32 is always called in SSE case which implies little endian 
+ #define load32(x)	*((uint32*) (x))
+ 
+-/* Message words are little-endian: read them byte-wise on big-endian hosts. */
+-#if BYTE_ORDER == BIG_ENDIAN
++/* Message words are little-endian: read them byte-wise on big-endian hosts and
++ * alignment-safe where unaligned access is not safe. */
++#if BYTE_ORDER == BIG_ENDIAN || !VC_UNALIGNED_ACCESS_OK
+ #define BLAKE2S_LOAD32(p) VcLoadLE32(p)
+ #else
+ #define BLAKE2S_LOAD32(p) (*((uint32*) (p)))
+@@ -273,7 +274,7 @@ int blake2s_final( blake2s_state *S, uns
+ 
+   for( i = 0; i < 8; ++i ) /* Output full hash to temp buffer */
+   {
+-#if BYTE_ORDER == LITTLE_ENDIAN
++#if BYTE_ORDER == LITTLE_ENDIAN && VC_UNALIGNED_ACCESS_OK
+ 	*((uint32*) out) = S->h[i];
+ #else
+ 	uint32 w = S->h[i] ;
+--- a/src/Crypto/config.h
++++ b/src/Crypto/config.h
+@@ -216,6 +216,17 @@
+ 	#define CRYPTOPP_BOOL_ARM64 0
+ #endif
+ 
++// VC_UNALIGNED_ACCESS_OK is 1 on targets where unaligned 32- and 64-bit loads
++// and stores are safe (x86, x64, ARMv8, PowerPC), which keep their direct word
++// accesses. Elsewhere (e.g. 32-bit ARM, whose unaligned support does not cover
++// the 64-bit LDRD/LDM, and MIPS), code that may get unaligned buffers uses the
++// alignment-safe VcLoad*/VcStore* helpers from misc.h.
++#if CRYPTOPP_BOOL_X64 || CRYPTOPP_BOOL_X86 || CRYPTOPP_BOOL_X32 || CRYPTOPP_BOOL_ARMV8 || defined(__powerpc__)
++	#define VC_UNALIGNED_ACCESS_OK 1
++#else
++	#define VC_UNALIGNED_ACCESS_OK 0
++#endif
++
+ // ARMv8 and ASIMD. -march=armv8-a or above must be present
+ // Requires GCC 4.8, Clang 3.3 or Visual Studio 2017
+ // Do not use APPLE_CLANG_VERSION; use __ARM_FEATURE_XXX instead.
+--- a/src/Crypto/kuznyechik.c
++++ b/src/Crypto/kuznyechik.c
+@@ -8,8 +8,9 @@ and released into public domain.
+ #include "misc.h"
+ #include "Common/Endian.h"
+ 
+-/* Keys and blocks are used as little-endian words: swap only on big-endian hosts. */
+-#if BYTE_ORDER == BIG_ENDIAN
++/* Keys and blocks are used as little-endian words: swap on big-endian hosts,
++ * and access them alignment-safe where unaligned access is not safe. */
++#if BYTE_ORDER == BIG_ENDIAN || !VC_UNALIGNED_ACCESS_OK
+ #define KUZNYECHIK_LOAD64(p) VcLoadLE64(p)
+ #define KUZNYECHIK_STORE64(p, v) VcStoreLE64((p), (v))
+ #else
+--- a/src/Crypto/misc.h
++++ b/src/Crypto/misc.h
+@@ -113,11 +113,23 @@ extern "C" {
+ #endif
+ 
+ /* Alignment-safe loads and stores of little- and big-endian words in byte
+- * buffers (used by the big-endian code paths). */
++ * buffers (used by the big-endian code paths and where unaligned access is
++ * not safe). On little-endian GCC/Clang targets, memcpy compiles to the
++ * fastest access the target allows. */
++#if defined(__GNUC__) && defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
++#	define VC_LE_ACCESS_MEMCPY
++#endif
++
+ VC_INLINE uint32 VcLoadLE32 (const void *ptr)
+ {
++#ifdef VC_LE_ACCESS_MEMCPY
++	uint32 value;
++	__builtin_memcpy (&value, ptr, sizeof (value));
++	return value;
++#else
+ 	const uint8 *p = (const uint8 *) ptr;
+ 	return (uint32) p[0] | ((uint32) p[1] << 8) | ((uint32) p[2] << 16) | ((uint32) p[3] << 24);
++#endif
+ }
+ 
+ VC_INLINE uint32 VcLoadBE32 (const void *ptr)
+@@ -128,18 +140,28 @@ VC_INLINE uint32 VcLoadBE32 (const void
+ 
+ VC_INLINE void VcStoreLE32 (void *ptr, uint32 value)
+ {
++#ifdef VC_LE_ACCESS_MEMCPY
++	__builtin_memcpy (ptr, &value, sizeof (value));
++#else
+ 	uint8 *p = (uint8 *) ptr;
+ 	p[0] = (uint8) value;
+ 	p[1] = (uint8) (value >> 8);
+ 	p[2] = (uint8) (value >> 16);
+ 	p[3] = (uint8) (value >> 24);
++#endif
+ }
+ 
+ #ifndef TC_NO_COMPILER_INT64
+ VC_INLINE uint64 VcLoadLE64 (const void *ptr)
+ {
++#ifdef VC_LE_ACCESS_MEMCPY
++	uint64 value;
++	__builtin_memcpy (&value, ptr, sizeof (value));
++	return value;
++#else
+ 	const uint8 *p = (const uint8 *) ptr;
+ 	return (uint64) VcLoadLE32 (p) | ((uint64) VcLoadLE32 (p + 4) << 32);
++#endif
+ }
+ 
+ VC_INLINE uint64 VcLoadBE64 (const void *ptr)
+@@ -150,9 +172,13 @@ VC_INLINE uint64 VcLoadBE64 (const void
+ 
+ VC_INLINE void VcStoreLE64 (void *ptr, uint64 value)
+ {
++#ifdef VC_LE_ACCESS_MEMCPY
++	__builtin_memcpy (ptr, &value, sizeof (value));
++#else
+ 	uint8 *p = (uint8 *) ptr;
+ 	VcStoreLE32 (p, (uint32) value);
+ 	VcStoreLE32 (p + 4, (uint32) (value >> 32));
++#endif
+ }
+ #endif
+ 
+--- a/src/Volume/EncryptionModeXTS.cpp
++++ b/src/Volume/EncryptionModeXTS.cpp
+@@ -47,6 +47,20 @@
+ 
+ namespace VeraCrypt
+ {
++#if !VC_UNALIGNED_ACCESS_OK
++	// The data buffer is supplied by the caller and need not be 64-bit aligned.
++	static inline void XorWhiteningValue (uint64 *&data, uint64 *&whiteningValue)
++	{
++		uint64 block[2];
++		memcpy (block, data, sizeof (block));
++		block[0] ^= whiteningValue[0];
++		block[1] ^= whiteningValue[1];
++		memcpy (data, block, sizeof (block));
++		data += 2;
++		whiteningValue += 2;
++	}
++#endif
++
+ 	void EncryptionModeXTS::Encrypt (uint8 *data, uint64 length) const
+ 	{
+ 		EncryptBuffer (data, length, 0);
+@@ -177,8 +191,12 @@ namespace VeraCrypt
+ 			for (block = 0; block < countBlock; block++)
+ 			{
+ 				// Pre-whitening
++#if VC_UNALIGNED_ACCESS_OK
+ 				*bufPtr++ ^= *whiteningValuesPtr64++;
+ 				*bufPtr++ ^= *whiteningValuesPtr64++;
++#else
++				XorWhiteningValue (bufPtr, whiteningValuesPtr64);
++#endif
+ 			}
+ #endif
+ 			// Actual encryption
+@@ -193,8 +211,12 @@ namespace VeraCrypt
+ 			for (block = 0; block < countBlock; block++)
+ 			{
+ 				// Post-whitening
++#if VC_UNALIGNED_ACCESS_OK
+ 				*bufPtr++ ^= *whiteningValuesPtr64++;
+ 				*bufPtr++ ^= *whiteningValuesPtr64++;
++#else
++				XorWhiteningValue (bufPtr, whiteningValuesPtr64);
++#endif
+ 			}
+ #endif
+ 			remainingBlocks -= countBlock;
+@@ -348,8 +370,12 @@ namespace VeraCrypt
+ #else
+ 			for (block = 0; block < countBlock; block++)
+ 			{
++#if VC_UNALIGNED_ACCESS_OK
+ 				*bufPtr++ ^= *whiteningValuesPtr64++;
+ 				*bufPtr++ ^= *whiteningValuesPtr64++;
++#else
++				XorWhiteningValue (bufPtr, whiteningValuesPtr64);
++#endif
+ 			}
+ #endif
+ 			cipher.DecryptBlocks ((uint8 *) dataUnitBufPtr, countBlock);
+@@ -361,8 +387,12 @@ namespace VeraCrypt
+ #else
+ 			for (block = 0; block < countBlock; block++)
+ 			{
++#if VC_UNALIGNED_ACCESS_OK
+ 				*bufPtr++ ^= *whiteningValuesPtr64++;
+ 				*bufPtr++ ^= *whiteningValuesPtr64++;
++#else
++				XorWhiteningValue (bufPtr, whiteningValuesPtr64);
++#endif
+ 			}
+ #endif
+ 			remainingBlocks -= countBlock;
