@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/nls.mk
 
 PKG_NAME:=curl
-PKG_VERSION:=8.22.0
+PKG_VERSION:=8.23.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/curl/curl/releases/download/curl-$(subst .,_,$(PKG_VERSION))/ \
 	https://curl.se/download/
-PKG_HASH:=f7ef3ae8a22e521f289803fe93543eb64c329b58aa73a9e224dfd915a2a5f4f7
+PKG_HASH:=8dadd7d2536a314f982ad05a651b713f426bf7d02cc2c76cffb9796f2218e6c5
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
@@ -51,8 +51,6 @@ PKG_CONFIG_DEPENDS:= \
   CONFIG_LIBCURL_POP3 \
   CONFIG_LIBCURL_RTSP \
   CONFIG_LIBCURL_NO_RTSP \
-  CONFIG_LIBCURL_SMB \
-  CONFIG_LIBCURL_NO_SMB \
   CONFIG_LIBCURL_SMTP \
   CONFIG_LIBCURL_TELNET \
   CONFIG_LIBCURL_TFTP \
@@ -152,7 +150,6 @@ CONFIGURE_ARGS += \
 	$(call autoconf_bool,CONFIG_LIBCURL_LDAPS,ldaps) \
 	$(call autoconf_bool,CONFIG_LIBCURL_POP3,pop3) \
 	$(call autoconf_bool,CONFIG_LIBCURL_RTSP,rtsp) \
-	$(call autoconf_bool,CONFIG_LIBCURL_SMB,smb) \
 	$(call autoconf_bool,CONFIG_LIBCURL_SMTP,smtp) \
 	$(call autoconf_bool,CONFIG_LIBCURL_TELNET,telnet) \
 	$(call autoconf_bool,CONFIG_LIBCURL_TFTP,tftp) \
