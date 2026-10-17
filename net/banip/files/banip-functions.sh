@@ -9,6 +9,7 @@
 #
 export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
+export GAWK_GNU_MATCHERS=1
 
 # initial defaults
 #
