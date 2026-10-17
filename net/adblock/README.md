@@ -305,6 +305,9 @@ adblock keeps all working data in RAM to avoid unnecessary flash wear. The numbe
 * Use firewall‑based DNS redirection: Route DNS queries via nftables to external filtered DNS resolvers and keep only a minimal local blocklist active
 * Use compressed swap: install the `zram-swap` package so the kernel can page out cold memory into compressed RAM under pressure (see below)
 
+**Recommendation for slow CPUs**  
+The top level domain compression (`adb_tld`) is enabled by default and keeps the blocklist compact, but it needs an additional label reversal per feed and an extra pass over the merged blocklist. On slow CPUs this roughly doubles the processing time, while today's curated feeds are largely compressed already and the number of removed entries is small. If the processing time matters more than a slightly smaller blocklist, set `adb_tld=0`. Example: on a 2-core router with the hagezi pro and oisd big feeds the processing time drops from 14.5 to 7.5 seconds, the blocklist grows by 1.3% (~4,700 entries).
+
 **Use compressed swap (zram-swap) on low memory devices**  
 The simplest way to survive the memory peak during feed processing is to give the kernel a compressed swap device and let it page out cold memory under pressure. The `zram-swap` package sets this up automatically at boot — no scripting, no changes to adblock, and adblock benefits transparently. Because the swap lives in compressed RAM rather than on flash, this incurs no flash wear.
 
