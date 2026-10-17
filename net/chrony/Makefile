@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=chrony
 PKG_VERSION:=4.9
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://chrony-project.org/releases/
@@ -97,11 +97,13 @@ define Package/chrony/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DIR) $(1)/etc/chrony
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
 	$(INSTALL_BIN) ./files/chrony.hotplug $(1)/etc/hotplug.d/iface/20-chrony
 	$(INSTALL_BIN) ./files/chronyd.init $(1)/etc/init.d/chronyd
 	$(INSTALL_CONF) ./files/chrony.config $(1)/etc/config/chrony
 	$(INSTALL_CONF) ./files/chrony.conf $(1)/etc/chrony/chrony.conf
+	$(INSTALL_BIN) ./files/chrony.defaults $(1)/etc/uci-defaults/chrony
 endef
 
 Package/chrony-nts/install= $(Package/chrony/install)
