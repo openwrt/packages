@@ -8,6 +8,7 @@ HOTPLUG=/usr/sbin/chrony-hotplug
 CONFIGFILE=/etc/chrony/chrony.conf
 INCLUDEFILE=/var/etc/chrony.d/10-uci.conf
 RTCDEVICE=/dev/rtc0
+DRIFTFILE=/var/run/chrony/drift
 
 handle_source() {
 	local cfg=$1 sourcetype=$2 disabled hostname minpoll maxpoll iburst nts
@@ -117,11 +118,36 @@ handle_logging() {
 	[ -n "$logchange" ] && echo logchange "$logchange"
 }
 
+handle_driftfile() {
+	local cfg=$1 file interval
+
+	config_get file "$cfg" file $DRIFTFILE
+	config_get interval "$cfg" interval
+
+	local dir=$(dirname "$file")
+	if [ ! -d $dir ]; then
+		mkdir -p "$dir"
+		chown chrony:chrony "$dir"
+	fi
+
+	if [ -n "$interval" ]; then
+		echo driftfile $file interval $interval
+	else
+		echo driftfile $file
+	fi
+}
+
 start_service() {
 	. /lib/functions/network.sh
 
+	config_load chrony
+	# Restoring time requires the -s command-line option; no configuration directive exists.
+	local restore_time
+	config_get_bool restore_time driftfile restore_time 0
+
 	procd_open_instance
 	procd_set_param command $PROG -n
+	[ "$restore_time" = "1" ] && procd_append_param command -s
 	procd_set_param file $CONFIGFILE
 	procd_set_param file $INCLUDEFILE
 	procd_close_instance
@@ -130,7 +156,6 @@ start_service() {
 	procd_set_param command $HOTPLUG
 	procd_close_instance
 
-	config_load chrony
 	mkdir -p $(dirname $INCLUDEFILE)
 
 	(
@@ -143,5 +168,6 @@ start_service() {
 		config_foreach handle_systemclock systemclock
 		config_foreach handle_nts nts
 		config_foreach handle_logging logging
+		config_foreach handle_driftfile driftfile
 	) > $INCLUDEFILE
 }
