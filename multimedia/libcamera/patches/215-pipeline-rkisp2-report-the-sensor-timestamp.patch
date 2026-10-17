@@ -1,0 +1,30 @@
+From 64a3728b81969e3719cd145019b02b9af9383b85 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Sat, 17 Oct 2026 02:25:57 +0100
+Subject: [PATCH] pipeline: rkisp2: Report the sensor timestamp
+
+The pipeline handler leaves the SensorTimestamp of the requests unset.
+The GStreamer element subtracts its base time from the value, so every
+buffer got a timestamp that wrapped to the same large number and players
+rejected the stream with invalid video timestamps. Set the control from
+the V4L2 timestamp of the main path buffer, as the rkisp1 pipeline
+handler does.
+
+Assisted-by: LLM
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ src/libcamera/pipeline/rkisp2/rkisp2.cpp | 3 +++
+ 1 file changed, 3 insertions(+)
+
+--- a/src/libcamera/pipeline/rkisp2/rkisp2.cpp
++++ b/src/libcamera/pipeline/rkisp2/rkisp2.cpp
+@@ -461,6 +461,9 @@ void RkISP2CameraData::ispBufferReady(Fr
+ 			<< info.sequence << " got " << buffer->metadata().sequence;
+ 	}
+ 
++	request->_d()->metadata().set(controls::SensorTimestamp,
++				      buffer->metadata().timestamp);
++
+ 	pipe()->completeBuffer(request, buffer);
+ 	tryCompleteRequest(request, buffer);
+ }

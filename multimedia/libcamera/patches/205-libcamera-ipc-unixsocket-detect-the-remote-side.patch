@@ -1,0 +1,172 @@
+From 1553677540d5820a7fccb25eadb79d39cc301dd8 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 16 Oct 2026 14:39:21 +0100
+Subject: [PATCH] libcamera: ipc_unixsocket: Detect the remote side closing the
+ channel
+
+The IPC channel is a datagram socket pair, and the kernel does not notify
+the peer of a datagram socket when the other end is released. The IPA
+proxy worker therefore never learns that the application has terminated
+without sending the Exit command, for instance when it was killed by a
+signal, and stays alive forever with the buffers it has mapped.
+
+Create the socket pair as SOCK_SEQPACKET, which keeps the message
+boundaries and reports the disconnection as an end of file, and emit a
+new disconnected signal when it is received. Sending to a disconnected
+channel fails with EPIPE; pass MSG_NOSIGNAL so that the kernel does not
+raise SIGPIPE. Extend the unit test with the disconnection case.
+
+Assisted-by: LLM
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ include/libcamera/internal/ipc_unixsocket.h |  1 +
+ src/libcamera/ipc_unixsocket.cpp            | 27 +++++++++++++++++---
+ test/ipc/unixsocket.cpp                     | 28 +++++++++++++++++++++
+ 3 files changed, 52 insertions(+), 4 deletions(-)
+
+--- a/include/libcamera/internal/ipc_unixsocket.h
++++ b/include/libcamera/internal/ipc_unixsocket.h
+@@ -39,6 +39,7 @@ public:
+ 	int receive(Payload *payload);
+ 
+ 	Signal<> readyRead;
++	Signal<> disconnected;
+ 
+ private:
+ 	struct Header {
+--- a/src/libcamera/ipc_unixsocket.cpp
++++ b/src/libcamera/ipc_unixsocket.cpp
+@@ -49,7 +49,7 @@ LOG_DEFINE_CATEGORY(IPCUnixSocket)
+  * \brief IPC mechanism based on Unix sockets
+  *
+  * The Unix socket IPC allows bidirectional communication between two processes
+- * through unnamed Unix sockets. It implements datagram-based communication,
++ * through unnamed Unix sockets. It implements message-based communication,
+  * transporting entire payloads with guaranteed ordering.
+  *
+  * The IPC design is asynchronous, a message is queued to a receiver which gets
+@@ -58,6 +58,10 @@ LOG_DEFINE_CATEGORY(IPCUnixSocket)
+  * delivered nor processed. If such interactions are needed a protocol specific
+  * to the users use-case should be implemented on top of the IPC objects.
+  *
++ * The channel is connection-oriented. When the remote side closes its socket,
++ * or its process terminates, the \ref disconnected signal is emitted and no
++ * further message can be sent.
++ *
+  * Establishment of an IPC channel is asymmetrical. The side that initiates
+  * communication first instantiates a local side socket and creates the channel
+  * with create(). The function returns a file descriptor for the remote side of
+@@ -95,7 +99,7 @@ UniqueFD IPCUnixSocket::create()
+ 	int sockets[2];
+ 	int ret;
+ 
+-	ret = socketpair(AF_UNIX, SOCK_DGRAM | SOCK_NONBLOCK, 0, sockets);
++	ret = socketpair(AF_UNIX, SOCK_SEQPACKET | SOCK_NONBLOCK, 0, sockets);
+ 	if (ret) {
+ 		ret = -errno;
+ 		LOG(IPCUnixSocket, Error)
+@@ -185,7 +189,7 @@ int IPCUnixSocket::send(const Payload &p
+ 	if (!hdr.data && !hdr.fds)
+ 		return -EINVAL;
+ 
+-	ret = ::send(fd_.get(), &hdr, sizeof(hdr), 0);
++	ret = ::send(fd_.get(), &hdr, sizeof(hdr), MSG_NOSIGNAL);
+ 	if (ret < 0) {
+ 		ret = -errno;
+ 		LOG(IPCUnixSocket, Error)
+@@ -240,6 +244,15 @@ int IPCUnixSocket::receive(Payload *payl
+  * \brief A Signal emitted when a message is ready to be read
+  */
+ 
++/**
++ * \var IPCUnixSocket::disconnected
++ * \brief A Signal emitted when the remote side has closed the channel
++ *
++ * The signal is emitted once, when the remote socket is closed or the remote
++ * process terminates. Messages received before the disconnection remain
++ * readable. Sending a message afterwards fails with -EPIPE.
++ */
++
+ int IPCUnixSocket::sendData(const void *buffer, size_t length,
+ 			    const int32_t *fds, unsigned int num)
+ {
+@@ -265,7 +278,7 @@ int IPCUnixSocket::sendData(const void *
+ 	if (fds)
+ 		memcpy(CMSG_DATA(cmsg), fds, num * sizeof(uint32_t));
+ 
+-	if (sendmsg(fd_.get(), &msg, 0) < 0) {
++	if (sendmsg(fd_.get(), &msg, MSG_NOSIGNAL) < 0) {
+ 		int ret = -errno;
+ 		LOG(IPCUnixSocket, Error)
+ 			<< "Failed to sendmsg: " << strerror(-ret);
+@@ -326,6 +339,12 @@ void IPCUnixSocket::dataNotifier()
+ 			return;
+ 		}
+ 
++		if (ret == 0) {
++			notifier_->setEnabled(false);
++			disconnected.emit();
++			return;
++		}
++
+ 		headerReceived_ = true;
+ 	}
+ 
+--- a/test/ipc/unixsocket.cpp
++++ b/test/ipc/unixsocket.cpp
+@@ -56,6 +56,7 @@ public:
+ 	{
+ 		dispatcher_ = Thread::current()->eventDispatcher();
+ 		ipc_.readyRead.connect(this, &UnixSocketTestSlave::readyRead);
++		ipc_.disconnected.connect(this, &UnixSocketTestSlave::disconnected);
+ 	}
+ 
+ 	int run(UniqueFD fd)
+@@ -187,6 +188,11 @@ private:
+ 		}
+ 	}
+ 
++	void disconnected()
++	{
++		stop(0);
++	}
++
+ 	void stop(int code)
+ 	{
+ 		exitCode_ = code;
+@@ -210,6 +216,12 @@ protected:
+ 			return TestFail;
+ 
+ 		if (!pid_) {
++			/* Don't leak the master side of the channel to the slave. */
++			for (int i = 3; i < sysconf(_SC_OPEN_MAX); i++) {
++				if (i != fd)
++					close(i);
++			}
++
+ 			std::string arg = std::to_string(fd);
+ 			execl(self().c_str(), self().c_str(), arg.c_str(), nullptr);
+ 
+@@ -413,6 +425,22 @@ protected:
+ 			return TestFail;
+ 		}
+ 
++		/* Test that closing the channel terminates the slave. */
++		slavefd = ipc_.create();
++		if (!slavefd.isValid())
++			return TestFail;
++
++		if (slaveStart(slavefd.release())) {
++			cerr << "Failed to start slave" << endl;
++			return TestFail;
++		}
++
++		ipc_.close();
++		if (slaveStop()) {
++			cerr << "Slave did not exit on disconnection" << endl;
++			return TestFail;
++		}
++
+ 		return TestPass;
+ 	}
+ 

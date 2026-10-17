@@ -1,0 +1,3619 @@
+From 447ce026ab8ed0f5b7d8ac3266492f6a7085645b Mon Sep 17 00:00:00 2001
+From: Hans de Goede <johannes.goede@oss.qualcomm.com>
+Date: Tue, 18 Aug 2026 16:05:45 +0200
+Subject: [PATCH] libcamera: Create IPA by IPA proxy type name
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Currently createIPA() / IPAManager::module() assume that there is a 1:1
+relationship between pipeline handlers and IPAs and IPA matching is done
+based on matching the pipe's name to ipaModuleInfo.name[].
+
+This coupling between pipeline name and which IPA to create is undesirable
+and makes it impossible to for example use the softISP as a fallback in
+other pipeline handlers than the simple pipeline handler.
+
+The actual API contract between the IPA and the pipeline handler is given
+by the IPA proxy type. Add a static IPAProxyXXX::name() to the generated
+IPAProxyXXX classes and use this in PipelineHandler::createIPA() instead
+of using PipelineHandler::name().
+
+This requires changing the name, as well as the subdirectory of the softISP
+IPA from "simple" to "softisp", which is the more sensible name anyway.
+
+Note: this means that softISP IPA config files will now be looked for under
+/usr/share/libcamera/ipa/softisp instead of /usr/share/libcamera/ipa/simple!
+
+Reviewed-by: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Reviewed-by: Barnabás Pőcze <barnabas.pocze@ideasonboard.com>
+Signed-off-by: Hans de Goede <johannes.goede@oss.qualcomm.com>
+Signed-off-by: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+---
+ Documentation/Doxyfile-internal.in                        | 2 +-
+ include/libcamera/internal/pipeline_handler.h             | 2 +-
+ include/libcamera/internal/software_isp/software_isp.h    | 4 ++--
+ include/libcamera/ipa/meson.build                         | 2 +-
+ include/libcamera/ipa/{soft.mojom => softisp.mojom}       | 0
+ meson_options.txt                                         | 4 ++--
+ src/ipa/meson.build                                       | 2 +-
+ src/ipa/{simple => softisp}/algorithms/adjust.cpp         | 0
+ src/ipa/{simple => softisp}/algorithms/adjust.h           | 0
+ src/ipa/{simple => softisp}/algorithms/agc.cpp            | 0
+ src/ipa/{simple => softisp}/algorithms/agc.h              | 0
+ src/ipa/{simple => softisp}/algorithms/algorithm.h        | 0
+ src/ipa/{simple => softisp}/algorithms/awb.cpp            | 0
+ src/ipa/{simple => softisp}/algorithms/awb.h              | 2 +-
+ src/ipa/{simple => softisp}/algorithms/blc.cpp            | 0
+ src/ipa/{simple => softisp}/algorithms/blc.h              | 0
+ src/ipa/{simple => softisp}/algorithms/ccm.cpp            | 0
+ src/ipa/{simple => softisp}/algorithms/ccm.h              | 0
+ src/ipa/{simple => softisp}/algorithms/meson.build        | 0
+ src/ipa/{simple => softisp}/data/meson.build              | 2 +-
+ src/ipa/{simple => softisp}/data/uncalibrated.yaml        | 0
+ src/ipa/{simple => softisp}/ipa_context.cpp               | 0
+ src/ipa/{simple => softisp}/ipa_context.h                 | 0
+ src/ipa/{simple => softisp}/meson.build                   | 0
+ src/ipa/{simple => softisp}/module.h                      | 2 +-
+ src/ipa/{simple => softisp}/soft_simple.cpp               | 4 ++--
+ src/libcamera/pipeline_handler.cpp                        | 8 +++++---
+ .../libcamera_templates/module_ipa_proxy.h.tmpl           | 2 ++
+ 28 files changed, 20 insertions(+), 16 deletions(-)
+ rename include/libcamera/ipa/{soft.mojom => softisp.mojom} (100%)
+ rename src/ipa/{simple => softisp}/algorithms/adjust.cpp (100%)
+ rename src/ipa/{simple => softisp}/algorithms/adjust.h (100%)
+ rename src/ipa/{simple => softisp}/algorithms/agc.cpp (100%)
+ rename src/ipa/{simple => softisp}/algorithms/agc.h (100%)
+ rename src/ipa/{simple => softisp}/algorithms/algorithm.h (100%)
+ rename src/ipa/{simple => softisp}/algorithms/awb.cpp (100%)
+ rename src/ipa/{simple => softisp}/algorithms/awb.h (97%)
+ rename src/ipa/{simple => softisp}/algorithms/blc.cpp (100%)
+ rename src/ipa/{simple => softisp}/algorithms/blc.h (100%)
+ rename src/ipa/{simple => softisp}/algorithms/ccm.cpp (100%)
+ rename src/ipa/{simple => softisp}/algorithms/ccm.h (100%)
+ rename src/ipa/{simple => softisp}/algorithms/meson.build (100%)
+ rename src/ipa/{simple => softisp}/data/meson.build (79%)
+ rename src/ipa/{simple => softisp}/data/uncalibrated.yaml (100%)
+ rename src/ipa/{simple => softisp}/ipa_context.cpp (100%)
+ rename src/ipa/{simple => softisp}/ipa_context.h (100%)
+ rename src/ipa/{simple => softisp}/meson.build (100%)
+ rename src/ipa/{simple => softisp}/module.h (91%)
+ rename src/ipa/{simple => softisp}/soft_simple.cpp (99%)
+
+--- a/Documentation/Doxyfile-internal.in
++++ b/Documentation/Doxyfile-internal.in
+@@ -28,7 +28,7 @@ EXCLUDE                = @TOP_SRCDIR@/in
+                          @TOP_SRCDIR@/src/libcamera/sensor/camera_sensor_raw.cpp \
+                          @TOP_SRCDIR@/src/libcamera/tracepoints.cpp \
+                          @TOP_BUILDDIR@/include/libcamera/internal/tracepoints.h \
+-                         @TOP_BUILDDIR@/include/libcamera/ipa/soft_ipa_interface.h \
++                         @TOP_BUILDDIR@/include/libcamera/ipa/softisp_ipa_interface.h \
+                          @TOP_BUILDDIR@/src/libcamera/proxy/
+ 
+ HTML_OUTPUT            = internal-api
+--- a/include/libcamera/internal/pipeline_handler.h
++++ b/include/libcamera/internal/pipeline_handler.h
+@@ -76,7 +76,7 @@ public:
+ 	std::unique_ptr<T> createIPA(uint32_t minVersion, uint32_t maxVersion)
+ 	{
+ 		IPAManager *ipaManager = manager_->_d()->ipaManager();
+-		return ipaManager->createIPA<T>(name_, minVersion, maxVersion);
++		return ipaManager->createIPA<T>(T::name(), minVersion, maxVersion);
+ 	}
+ 
+ 	template<typename T>
+--- a/include/libcamera/internal/software_isp/software_isp.h
++++ b/include/libcamera/internal/software_isp/software_isp.h
+@@ -25,8 +25,8 @@
+ #include <libcamera/geometry.h>
+ #include <libcamera/pixel_format.h>
+ 
+-#include <libcamera/ipa/soft_ipa_interface.h>
+-#include <libcamera/ipa/soft_ipa_proxy.h>
++#include <libcamera/ipa/softisp_ipa_interface.h>
++#include <libcamera/ipa/softisp_ipa_proxy.h>
+ 
+ #include "libcamera/internal/camera_sensor.h"
+ #include "libcamera/internal/dma_buf_allocator.h"
+--- a/include/libcamera/ipa/meson.build
++++ b/include/libcamera/ipa/meson.build
+@@ -68,7 +68,7 @@ pipeline_ipa_mojom_mapping = {
+     'rkisp1': 'rkisp1.mojom',
+     'rpi/pisp': 'raspberrypi.mojom',
+     'rpi/vc4': 'raspberrypi.mojom',
+-    'simple': 'soft.mojom',
++    'simple': 'softisp.mojom',
+     'vimc': 'vimc.mojom',
+ }
+ 
+--- a/meson_options.txt
++++ b/meson_options.txt
+@@ -48,8 +48,8 @@ option('gstreamer',
+ 
+ option('ipas',
+         type : 'array',
+-        choices : ['ipu3', 'mali-c55', 'rkisp1', 'rpi/pisp', 'rpi/vc4', 'simple',
+-                   'vimc'],
++        choices : ['ipu3', 'mali-c55', 'rkisp1', 'rpi/pisp', 'rpi/vc4',
++                   'softisp', 'vimc'],
+         description : 'Select which IPA modules to build')
+ 
+ option('lc-compliance',
+--- a/src/ipa/meson.build
++++ b/src/ipa/meson.build
+@@ -30,7 +30,7 @@ supported_ipas = {
+     'rkisp1':     'rkisp1',
+     'rpi/pisp':   'rpi/pisp',
+     'rpi/vc4':    'rpi/vc4',
+-    'simple':     'simple',
++    'simple':     'softisp',
+     'vimc':       'vimc'
+ }
+ 
+--- a/src/ipa/simple/algorithms/awb.h
++++ /dev/null
+@@ -1,64 +0,0 @@
+-/* SPDX-License-Identifier: LGPL-2.1-or-later */
+-/*
+- * Copyright (C) 2024-2025 Red Hat Inc.
+- *
+- * Auto white balance
+- */
+-
+-#pragma once
+-
+-#include <libcamera/controls.h>
+-
+-#include "libcamera/internal/software_isp/debayer_params.h"
+-#include "libcamera/internal/value_node.h"
+-
+-#include "libipa/awb.h"
+-#include "libipa/fixedpoint.h"
+-#include "simple/ipa_context.h"
+-
+-#include "algorithm.h"
+-
+-namespace libcamera {
+-
+-namespace ipa::soft::algorithms {
+-
+-class SimpleAwbStats;
+-
+-class Awb : public Algorithm
+-{
+-public:
+-	Awb() = default;
+-	~Awb() = default;
+-
+-	int init(IPAContext &context,
+-		 const ValueNode &tuningData) override;
+-	int configure(IPAContext &context, const IPAConfigInfo &configInfo) override;
+-
+-	void queueRequest(IPAContext &context, const uint32_t frame,
+-			  IPAFrameContext &frameContext,
+-			  const ControlList &controls) override;
+-	void prepare(IPAContext &context,
+-		     const uint32_t frame,
+-		     IPAFrameContext &frameContext,
+-		     DebayerParams *params) override;
+-	void process(IPAContext &context,
+-		     const uint32_t frame,
+-		     IPAFrameContext &frameContext,
+-		     const SwIspStats *stats,
+-		     ControlList &metadata) override;
+-
+-private:
+-	SimpleAwbStats calculateRgbMeans(IPAContext &context,
+-					 const SwIspStats *stats) const;
+-
+-	/*
+-	 * There actually is no Q register format for SoftISP, but allow the
+-	 * colour gains to range in the [0.0f, 3.999f] interval, which seems
+-	 * reasonable.
+-	 */
+-	AwbAlgorithm<UQ<2, 8>> awbAlgo_;
+-};
+-
+-} /* namespace ipa::soft::algorithms */
+-
+-} /* namespace libcamera */
+--- /dev/null
++++ b/src/ipa/softisp/algorithms/awb.h
+@@ -0,0 +1,64 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2024-2025 Red Hat Inc.
++ *
++ * Auto white balance
++ */
++
++#pragma once
++
++#include <libcamera/controls.h>
++
++#include "libcamera/internal/software_isp/debayer_params.h"
++#include "libcamera/internal/value_node.h"
++
++#include "libipa/awb.h"
++#include "libipa/fixedpoint.h"
++#include "softisp/ipa_context.h"
++
++#include "algorithm.h"
++
++namespace libcamera {
++
++namespace ipa::soft::algorithms {
++
++class SimpleAwbStats;
++
++class Awb : public Algorithm
++{
++public:
++	Awb() = default;
++	~Awb() = default;
++
++	int init(IPAContext &context,
++		 const ValueNode &tuningData) override;
++	int configure(IPAContext &context, const IPAConfigInfo &configInfo) override;
++
++	void queueRequest(IPAContext &context, const uint32_t frame,
++			  IPAFrameContext &frameContext,
++			  const ControlList &controls) override;
++	void prepare(IPAContext &context,
++		     const uint32_t frame,
++		     IPAFrameContext &frameContext,
++		     DebayerParams *params) override;
++	void process(IPAContext &context,
++		     const uint32_t frame,
++		     IPAFrameContext &frameContext,
++		     const SwIspStats *stats,
++		     ControlList &metadata) override;
++
++private:
++	SimpleAwbStats calculateRgbMeans(IPAContext &context,
++					 const SwIspStats *stats) const;
++
++	/*
++	 * There actually is no Q register format for SoftISP, but allow the
++	 * colour gains to range in the [0.0f, 3.999f] interval, which seems
++	 * reasonable.
++	 */
++	AwbAlgorithm<UQ<2, 8>> awbAlgo_;
++};
++
++} /* namespace ipa::soft::algorithms */
++
++} /* namespace libcamera */
+--- a/src/ipa/simple/data/meson.build
++++ /dev/null
+@@ -1,10 +0,0 @@
+-# SPDX-License-Identifier: CC0-1.0
+-
+-conf_files = files([
+-    'uncalibrated.yaml',
+-])
+-
+-# The install_dir must match the name from the IPAModuleInfo
+-install_data(conf_files,
+-             install_dir : ipa_data_dir / 'simple',
+-             install_tag : 'runtime')
+--- /dev/null
++++ b/src/ipa/softisp/data/meson.build
+@@ -0,0 +1,10 @@
++# SPDX-License-Identifier: CC0-1.0
++
++conf_files = files([
++    'uncalibrated.yaml',
++])
++
++# The install_dir must match the name from the IPAModuleInfo
++install_data(conf_files,
++             install_dir : ipa_data_dir / 'softisp',
++             install_tag : 'runtime')
+--- a/src/ipa/simple/module.h
++++ /dev/null
+@@ -1,30 +0,0 @@
+-/* SPDX-License-Identifier: LGPL-2.1-or-later */
+-/*
+- * Copyright (C) 2024 Red Hat, Inc.
+- *
+- * Software ISP IPA Module
+- */
+-
+-#pragma once
+-
+-#include <libcamera/controls.h>
+-
+-#include <libcamera/ipa/soft_ipa_interface.h>
+-
+-#include "libcamera/internal/software_isp/debayer_params.h"
+-#include "libcamera/internal/software_isp/swisp_stats.h"
+-
+-#include <libipa/module.h>
+-
+-#include "ipa_context.h"
+-
+-namespace libcamera {
+-
+-namespace ipa::soft {
+-
+-using Module = ipa::Module<IPAContext, IPAFrameContext, IPAConfigInfo,
+-			   DebayerParams, SwIspStats>;
+-
+-} /* namespace ipa::soft */
+-
+-} /* namespace libcamera */
+--- /dev/null
++++ b/src/ipa/softisp/module.h
+@@ -0,0 +1,30 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2024 Red Hat, Inc.
++ *
++ * Software ISP IPA Module
++ */
++
++#pragma once
++
++#include <libcamera/controls.h>
++
++#include <libcamera/ipa/softisp_ipa_interface.h>
++
++#include "libcamera/internal/software_isp/debayer_params.h"
++#include "libcamera/internal/software_isp/swisp_stats.h"
++
++#include <libipa/module.h>
++
++#include "ipa_context.h"
++
++namespace libcamera {
++
++namespace ipa::soft {
++
++using Module = ipa::Module<IPAContext, IPAFrameContext, IPAConfigInfo,
++			   DebayerParams, SwIspStats>;
++
++} /* namespace ipa::soft */
++
++} /* namespace libcamera */
+--- a/src/ipa/simple/soft_simple.cpp
++++ /dev/null
+@@ -1,355 +0,0 @@
+-/* SPDX-License-Identifier: LGPL-2.1-or-later */
+-/*
+- * Copyright (C) 2023, Linaro Ltd
+- *
+- * Simple Software Image Processing Algorithm module
+- */
+-
+-#include <chrono>
+-#include <stdint.h>
+-#include <sys/mman.h>
+-
+-#include <linux/v4l2-controls.h>
+-
+-#include <libcamera/base/file.h>
+-#include <libcamera/base/log.h>
+-#include <libcamera/base/shared_fd.h>
+-
+-#include <libcamera/control_ids.h>
+-#include <libcamera/controls.h>
+-
+-#include <libcamera/ipa/ipa_interface.h>
+-#include <libcamera/ipa/ipa_module_info.h>
+-#include <libcamera/ipa/soft_ipa_interface.h>
+-
+-#include "libcamera/internal/software_isp/debayer_params.h"
+-#include "libcamera/internal/software_isp/swisp_stats.h"
+-#include "libcamera/internal/yaml_parser.h"
+-
+-#include "algorithms/adjust.h"
+-#include "libipa/camera_sensor_helper.h"
+-
+-#include "module.h"
+-
+-namespace libcamera {
+-LOG_DEFINE_CATEGORY(IPASoft)
+-
+-using namespace std::literals::chrono_literals;
+-
+-namespace ipa::soft {
+-
+-/* Maximum number of frame contexts to be held */
+-static constexpr uint32_t kMaxFrameContexts = 16;
+-
+-class IPASoftSimple : public ipa::soft::IPASoftInterface, public Module
+-{
+-public:
+-	IPASoftSimple()
+-		: context_(kMaxFrameContexts)
+-	{
+-	}
+-
+-	~IPASoftSimple();
+-
+-	int init(const IPASettings &settings,
+-		 const SharedFD &fdStats,
+-		 const SharedFD &fdParams,
+-		 const IPACameraSensorInfo &sensorInfo,
+-		 const ControlInfoMap &sensorControls,
+-		 ControlInfoMap *ipaControls,
+-		 bool *ccmEnabled) override;
+-	int configure(const IPAConfigInfo &configInfo) override;
+-
+-	int start() override;
+-	void stop() override;
+-
+-	void queueRequest(const uint32_t frame, const ControlList &controls) override;
+-	void computeParams(const uint32_t frame) override;
+-	void processStats(const uint32_t frame, const uint32_t bufferId,
+-			  const ControlList &sensorControls) override;
+-
+-protected:
+-	std::string logPrefix() const override;
+-
+-private:
+-	void updateExposure(double exposureMSV);
+-
+-	DebayerParams *params_;
+-	SwIspStats *stats_;
+-	std::unique_ptr<CameraSensorHelper> camHelper_;
+-	ControlInfoMap sensorInfoMap_;
+-
+-	/* Local parameter storage */
+-	struct IPAContext context_;
+-};
+-
+-IPASoftSimple::~IPASoftSimple()
+-{
+-	if (stats_)
+-		munmap(stats_, sizeof(SwIspStats));
+-	if (params_)
+-		munmap(params_, sizeof(DebayerParams));
+-}
+-
+-int IPASoftSimple::init(const IPASettings &settings,
+-			const SharedFD &fdStats,
+-			const SharedFD &fdParams,
+-			const IPACameraSensorInfo &sensorInfo,
+-			const ControlInfoMap &sensorControls,
+-			ControlInfoMap *ipaControls,
+-			bool *ccmEnabled)
+-{
+-	camHelper_ = CameraSensorHelperFactoryBase::create(settings.sensorModel);
+-	if (!camHelper_) {
+-		LOG(IPASoft, Warning)
+-			<< "Failed to create camera sensor helper for "
+-			<< settings.sensorModel;
+-	}
+-
+-	context_.sensorInfo = sensorInfo;
+-
+-	/* Load the tuning data file */
+-	File file(settings.configurationFile);
+-	if (!file.open(File::OpenModeFlag::ReadOnly)) {
+-		int ret = file.error();
+-		LOG(IPASoft, Error)
+-			<< "Failed to open configuration file "
+-			<< settings.configurationFile << ": " << strerror(-ret);
+-		return ret;
+-	}
+-
+-	std::unique_ptr<ValueNode> data = YamlParser::parse(file);
+-	if (!data)
+-		return -EINVAL;
+-
+-	/* \todo Use the IPA configuration file for real. */
+-	unsigned int version = (*data)["version"].get<uint32_t>(0);
+-	LOG(IPASoft, Debug) << "Tuning file version " << version;
+-
+-	if (!data->contains("algorithms")) {
+-		LOG(IPASoft, Error) << "Tuning file doesn't contain algorithms";
+-		return -EINVAL;
+-	}
+-
+-	int ret = createAlgorithms(context_, (*data)["algorithms"]);
+-	if (ret)
+-		return ret;
+-
+-	*ccmEnabled = context_.ccmEnabled;
+-
+-	params_ = nullptr;
+-	stats_ = nullptr;
+-
+-	if (!fdStats.isValid()) {
+-		LOG(IPASoft, Error) << "Invalid Statistics handle";
+-		return -ENODEV;
+-	}
+-
+-	if (!fdParams.isValid()) {
+-		LOG(IPASoft, Error) << "Invalid Parameters handle";
+-		return -ENODEV;
+-	}
+-
+-	{
+-		void *mem = mmap(nullptr, sizeof(DebayerParams), PROT_WRITE,
+-				 MAP_SHARED, fdParams.get(), 0);
+-		if (mem == MAP_FAILED) {
+-			LOG(IPASoft, Error) << "Unable to map Parameters";
+-			return -errno;
+-		}
+-
+-		params_ = static_cast<DebayerParams *>(mem);
+-		params_->blackLevel = { { 0.0, 0.0, 0.0 } };
+-		params_->gamma = 1.0 / algorithms::kDefaultGamma;
+-		params_->contrastExp = 1.0;
+-		params_->gains = { { 1.0, 1.0, 1.0 } };
+-		/* combinedMatrix is reset for each frame. */
+-	}
+-
+-	{
+-		void *mem = mmap(nullptr, sizeof(SwIspStats), PROT_READ,
+-				 MAP_SHARED, fdStats.get(), 0);
+-		if (mem == MAP_FAILED) {
+-			LOG(IPASoft, Error) << "Unable to map Statistics";
+-			return -errno;
+-		}
+-
+-		stats_ = static_cast<SwIspStats *>(mem);
+-	}
+-
+-	ControlInfoMap::Map ctrlMap = context_.ctrlMap;
+-	*ipaControls = ControlInfoMap(std::move(ctrlMap), controls::controls);
+-
+-	/*
+-	 * Check if the sensor driver supports the controls required by the
+-	 * Soft IPA.
+-	 * Don't save the min and max control values yet, as e.g. the limits
+-	 * for V4L2_CID_EXPOSURE depend on the configured sensor resolution.
+-	 */
+-	if (sensorControls.find(V4L2_CID_EXPOSURE) == sensorControls.end()) {
+-		LOG(IPASoft, Error) << "Don't have exposure control";
+-		return -EINVAL;
+-	}
+-
+-	if (sensorControls.find(V4L2_CID_ANALOGUE_GAIN) == sensorControls.end()) {
+-		LOG(IPASoft, Error) << "Don't have gain control";
+-		return -EINVAL;
+-	}
+-
+-	return 0;
+-}
+-
+-int IPASoftSimple::configure(const IPAConfigInfo &configInfo)
+-{
+-	sensorInfoMap_ = configInfo.sensorControls;
+-
+-	const ControlInfo &exposureInfo = sensorInfoMap_.find(V4L2_CID_EXPOSURE)->second;
+-	const ControlInfo &gainInfo = sensorInfoMap_.find(V4L2_CID_ANALOGUE_GAIN)->second;
+-
+-	/* Clear the IPA context before the streaming session. */
+-	context_.configuration = {};
+-	context_.activeState = {};
+-	context_.frameContexts.clear();
+-
+-	context_.configuration.agc.lineDuration =
+-		context_.sensorInfo.minLineLength * 1.0s / context_.sensorInfo.pixelRate;
+-	context_.configuration.agc.exposureMin = exposureInfo.min().get<int32_t>();
+-	context_.configuration.agc.exposureMax = exposureInfo.max().get<int32_t>();
+-	if (!context_.configuration.agc.exposureMin) {
+-		LOG(IPASoft, Warning) << "Minimum exposure is zero, that can't be linear";
+-		context_.configuration.agc.exposureMin = 1;
+-	}
+-
+-	int32_t againMin = gainInfo.min().get<int32_t>();
+-	int32_t againMax = gainInfo.max().get<int32_t>();
+-	int32_t againDef = gainInfo.def().get<int32_t>();
+-
+-	if (camHelper_) {
+-		context_.configuration.agc.againMin = camHelper_->gain(againMin);
+-		context_.configuration.agc.againMax = camHelper_->gain(againMax);
+-		context_.configuration.agc.again10 = std::max(context_.configuration.agc.againMin, 1.0);
+-		context_.configuration.agc.againMinStep =
+-			(context_.configuration.agc.againMax -
+-			 context_.configuration.agc.againMin) /
+-			100.0;
+-		if (camHelper_->blackLevel().has_value()) {
+-			/*
+-			 * The black level from camHelper_ is a 16 bit value, software ISP
+-			 * works with 8 bit pixel values, both regardless of the actual
+-			 * sensor pixel width. Hence we obtain the pixel-based black value
+-			 * by dividing the value from the helper by 256.
+-			 */
+-			context_.configuration.black.level =
+-				camHelper_->blackLevel().value() / 256;
+-		}
+-	} else {
+-		context_.configuration.agc.againMax = againMax;
+-		context_.configuration.agc.again10 = againDef;
+-		context_.configuration.agc.againMin = againMin;
+-		context_.configuration.agc.againMinStep = 1.0;
+-	}
+-
+-	for (const auto &algo : algorithms()) {
+-		int ret = algo->configure(context_, configInfo);
+-		if (ret)
+-			return ret;
+-	}
+-
+-	LOG(IPASoft, Info)
+-		<< "Exposure " << context_.configuration.agc.exposureMin << "-"
+-		<< context_.configuration.agc.exposureMax
+-		<< ", gain " << context_.configuration.agc.againMin << "-"
+-		<< context_.configuration.agc.againMax
+-		<< " (" << context_.configuration.agc.againMinStep << ")";
+-
+-	return 0;
+-}
+-
+-int IPASoftSimple::start()
+-{
+-	return 0;
+-}
+-
+-void IPASoftSimple::stop()
+-{
+-	context_.frameContexts.clear();
+-}
+-
+-void IPASoftSimple::queueRequest(const uint32_t frame, const ControlList &controls)
+-{
+-	IPAFrameContext &frameContext = context_.frameContexts.alloc(frame);
+-
+-	for (const auto &algo : algorithms())
+-		algo->queueRequest(context_, frame, frameContext, controls);
+-}
+-
+-void IPASoftSimple::computeParams(const uint32_t frame)
+-{
+-	context_.activeState.combinedMatrix = Matrix<float, 3, 3>::identity();
+-
+-	IPAFrameContext &frameContext = context_.frameContexts.get(frame);
+-	for (const auto &algo : algorithms())
+-		algo->prepare(context_, frame, frameContext, params_);
+-	params_->combinedMatrix = context_.activeState.combinedMatrix;
+-
+-	setIspParams.emit();
+-}
+-
+-void IPASoftSimple::processStats(const uint32_t frame,
+-				 [[maybe_unused]] const uint32_t bufferId,
+-				 const ControlList &sensorControls)
+-{
+-	IPAFrameContext &frameContext = context_.frameContexts.get(frame);
+-
+-	frameContext.sensor.exposure =
+-		sensorControls.get(V4L2_CID_EXPOSURE).get<int32_t>();
+-	int32_t again = sensorControls.get(V4L2_CID_ANALOGUE_GAIN).get<int32_t>();
+-	frameContext.sensor.gain = camHelper_ ? camHelper_->gain(again) : again;
+-
+-	ControlList metadata(controls::controls);
+-	for (const auto &algo : algorithms())
+-		algo->process(context_, frame, frameContext, stats_, metadata);
+-	metadataReady.emit(frame, metadata);
+-
+-	/* Sanity check */
+-	if (!sensorControls.contains(V4L2_CID_EXPOSURE) ||
+-	    !sensorControls.contains(V4L2_CID_ANALOGUE_GAIN)) {
+-		LOG(IPASoft, Error) << "Control(s) missing";
+-		return;
+-	}
+-
+-	ControlList ctrls(sensorInfoMap_);
+-
+-	auto &againNew = frameContext.sensor.gain;
+-	ctrls.set(V4L2_CID_EXPOSURE, frameContext.sensor.exposure);
+-	ctrls.set(V4L2_CID_ANALOGUE_GAIN,
+-		  static_cast<int32_t>(camHelper_ ? camHelper_->gainCode(againNew) : againNew));
+-
+-	setSensorControls.emit(ctrls);
+-}
+-
+-std::string IPASoftSimple::logPrefix() const
+-{
+-	return "IPASoft";
+-}
+-
+-} /* namespace ipa::soft */
+-
+-/*
+- * External IPA module interface
+- */
+-extern "C" {
+-const struct IPAModuleInfo ipaModuleInfo = {
+-	IPA_MODULE_API_VERSION,
+-	0,
+-	"simple",
+-};
+-
+-IPAInterface *ipaCreate()
+-{
+-	return new ipa::soft::IPASoftSimple();
+-}
+-
+-} /* extern "C" */
+-
+-} /* namespace libcamera */
+--- /dev/null
++++ b/src/ipa/softisp/soft_simple.cpp
+@@ -0,0 +1,355 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2023, Linaro Ltd
++ *
++ * Simple Software Image Processing Algorithm module
++ */
++
++#include <chrono>
++#include <stdint.h>
++#include <sys/mman.h>
++
++#include <linux/v4l2-controls.h>
++
++#include <libcamera/base/file.h>
++#include <libcamera/base/log.h>
++#include <libcamera/base/shared_fd.h>
++
++#include <libcamera/control_ids.h>
++#include <libcamera/controls.h>
++
++#include <libcamera/ipa/ipa_interface.h>
++#include <libcamera/ipa/ipa_module_info.h>
++#include <libcamera/ipa/softisp_ipa_interface.h>
++
++#include "libcamera/internal/software_isp/debayer_params.h"
++#include "libcamera/internal/software_isp/swisp_stats.h"
++#include "libcamera/internal/yaml_parser.h"
++
++#include "algorithms/adjust.h"
++#include "libipa/camera_sensor_helper.h"
++
++#include "module.h"
++
++namespace libcamera {
++LOG_DEFINE_CATEGORY(IPASoft)
++
++using namespace std::literals::chrono_literals;
++
++namespace ipa::soft {
++
++/* Maximum number of frame contexts to be held */
++static constexpr uint32_t kMaxFrameContexts = 16;
++
++class IPASoftSimple : public ipa::soft::IPASoftInterface, public Module
++{
++public:
++	IPASoftSimple()
++		: context_(kMaxFrameContexts)
++	{
++	}
++
++	~IPASoftSimple();
++
++	int init(const IPASettings &settings,
++		 const SharedFD &fdStats,
++		 const SharedFD &fdParams,
++		 const IPACameraSensorInfo &sensorInfo,
++		 const ControlInfoMap &sensorControls,
++		 ControlInfoMap *ipaControls,
++		 bool *ccmEnabled) override;
++	int configure(const IPAConfigInfo &configInfo) override;
++
++	int start() override;
++	void stop() override;
++
++	void queueRequest(const uint32_t frame, const ControlList &controls) override;
++	void computeParams(const uint32_t frame) override;
++	void processStats(const uint32_t frame, const uint32_t bufferId,
++			  const ControlList &sensorControls) override;
++
++protected:
++	std::string logPrefix() const override;
++
++private:
++	void updateExposure(double exposureMSV);
++
++	DebayerParams *params_;
++	SwIspStats *stats_;
++	std::unique_ptr<CameraSensorHelper> camHelper_;
++	ControlInfoMap sensorInfoMap_;
++
++	/* Local parameter storage */
++	struct IPAContext context_;
++};
++
++IPASoftSimple::~IPASoftSimple()
++{
++	if (stats_)
++		munmap(stats_, sizeof(SwIspStats));
++	if (params_)
++		munmap(params_, sizeof(DebayerParams));
++}
++
++int IPASoftSimple::init(const IPASettings &settings,
++			const SharedFD &fdStats,
++			const SharedFD &fdParams,
++			const IPACameraSensorInfo &sensorInfo,
++			const ControlInfoMap &sensorControls,
++			ControlInfoMap *ipaControls,
++			bool *ccmEnabled)
++{
++	camHelper_ = CameraSensorHelperFactoryBase::create(settings.sensorModel);
++	if (!camHelper_) {
++		LOG(IPASoft, Warning)
++			<< "Failed to create camera sensor helper for "
++			<< settings.sensorModel;
++	}
++
++	context_.sensorInfo = sensorInfo;
++
++	/* Load the tuning data file */
++	File file(settings.configurationFile);
++	if (!file.open(File::OpenModeFlag::ReadOnly)) {
++		int ret = file.error();
++		LOG(IPASoft, Error)
++			<< "Failed to open configuration file "
++			<< settings.configurationFile << ": " << strerror(-ret);
++		return ret;
++	}
++
++	std::unique_ptr<ValueNode> data = YamlParser::parse(file);
++	if (!data)
++		return -EINVAL;
++
++	/* \todo Use the IPA configuration file for real. */
++	unsigned int version = (*data)["version"].get<uint32_t>(0);
++	LOG(IPASoft, Debug) << "Tuning file version " << version;
++
++	if (!data->contains("algorithms")) {
++		LOG(IPASoft, Error) << "Tuning file doesn't contain algorithms";
++		return -EINVAL;
++	}
++
++	int ret = createAlgorithms(context_, (*data)["algorithms"]);
++	if (ret)
++		return ret;
++
++	*ccmEnabled = context_.ccmEnabled;
++
++	params_ = nullptr;
++	stats_ = nullptr;
++
++	if (!fdStats.isValid()) {
++		LOG(IPASoft, Error) << "Invalid Statistics handle";
++		return -ENODEV;
++	}
++
++	if (!fdParams.isValid()) {
++		LOG(IPASoft, Error) << "Invalid Parameters handle";
++		return -ENODEV;
++	}
++
++	{
++		void *mem = mmap(nullptr, sizeof(DebayerParams), PROT_WRITE,
++				 MAP_SHARED, fdParams.get(), 0);
++		if (mem == MAP_FAILED) {
++			LOG(IPASoft, Error) << "Unable to map Parameters";
++			return -errno;
++		}
++
++		params_ = static_cast<DebayerParams *>(mem);
++		params_->blackLevel = { { 0.0, 0.0, 0.0 } };
++		params_->gamma = 1.0 / algorithms::kDefaultGamma;
++		params_->contrastExp = 1.0;
++		params_->gains = { { 1.0, 1.0, 1.0 } };
++		/* combinedMatrix is reset for each frame. */
++	}
++
++	{
++		void *mem = mmap(nullptr, sizeof(SwIspStats), PROT_READ,
++				 MAP_SHARED, fdStats.get(), 0);
++		if (mem == MAP_FAILED) {
++			LOG(IPASoft, Error) << "Unable to map Statistics";
++			return -errno;
++		}
++
++		stats_ = static_cast<SwIspStats *>(mem);
++	}
++
++	ControlInfoMap::Map ctrlMap = context_.ctrlMap;
++	*ipaControls = ControlInfoMap(std::move(ctrlMap), controls::controls);
++
++	/*
++	 * Check if the sensor driver supports the controls required by the
++	 * Soft IPA.
++	 * Don't save the min and max control values yet, as e.g. the limits
++	 * for V4L2_CID_EXPOSURE depend on the configured sensor resolution.
++	 */
++	if (sensorControls.find(V4L2_CID_EXPOSURE) == sensorControls.end()) {
++		LOG(IPASoft, Error) << "Don't have exposure control";
++		return -EINVAL;
++	}
++
++	if (sensorControls.find(V4L2_CID_ANALOGUE_GAIN) == sensorControls.end()) {
++		LOG(IPASoft, Error) << "Don't have gain control";
++		return -EINVAL;
++	}
++
++	return 0;
++}
++
++int IPASoftSimple::configure(const IPAConfigInfo &configInfo)
++{
++	sensorInfoMap_ = configInfo.sensorControls;
++
++	const ControlInfo &exposureInfo = sensorInfoMap_.find(V4L2_CID_EXPOSURE)->second;
++	const ControlInfo &gainInfo = sensorInfoMap_.find(V4L2_CID_ANALOGUE_GAIN)->second;
++
++	/* Clear the IPA context before the streaming session. */
++	context_.configuration = {};
++	context_.activeState = {};
++	context_.frameContexts.clear();
++
++	context_.configuration.agc.lineDuration =
++		context_.sensorInfo.minLineLength * 1.0s / context_.sensorInfo.pixelRate;
++	context_.configuration.agc.exposureMin = exposureInfo.min().get<int32_t>();
++	context_.configuration.agc.exposureMax = exposureInfo.max().get<int32_t>();
++	if (!context_.configuration.agc.exposureMin) {
++		LOG(IPASoft, Warning) << "Minimum exposure is zero, that can't be linear";
++		context_.configuration.agc.exposureMin = 1;
++	}
++
++	int32_t againMin = gainInfo.min().get<int32_t>();
++	int32_t againMax = gainInfo.max().get<int32_t>();
++	int32_t againDef = gainInfo.def().get<int32_t>();
++
++	if (camHelper_) {
++		context_.configuration.agc.againMin = camHelper_->gain(againMin);
++		context_.configuration.agc.againMax = camHelper_->gain(againMax);
++		context_.configuration.agc.again10 = std::max(context_.configuration.agc.againMin, 1.0);
++		context_.configuration.agc.againMinStep =
++			(context_.configuration.agc.againMax -
++			 context_.configuration.agc.againMin) /
++			100.0;
++		if (camHelper_->blackLevel().has_value()) {
++			/*
++			 * The black level from camHelper_ is a 16 bit value, software ISP
++			 * works with 8 bit pixel values, both regardless of the actual
++			 * sensor pixel width. Hence we obtain the pixel-based black value
++			 * by dividing the value from the helper by 256.
++			 */
++			context_.configuration.black.level =
++				camHelper_->blackLevel().value() / 256;
++		}
++	} else {
++		context_.configuration.agc.againMax = againMax;
++		context_.configuration.agc.again10 = againDef;
++		context_.configuration.agc.againMin = againMin;
++		context_.configuration.agc.againMinStep = 1.0;
++	}
++
++	for (const auto &algo : algorithms()) {
++		int ret = algo->configure(context_, configInfo);
++		if (ret)
++			return ret;
++	}
++
++	LOG(IPASoft, Info)
++		<< "Exposure " << context_.configuration.agc.exposureMin << "-"
++		<< context_.configuration.agc.exposureMax
++		<< ", gain " << context_.configuration.agc.againMin << "-"
++		<< context_.configuration.agc.againMax
++		<< " (" << context_.configuration.agc.againMinStep << ")";
++
++	return 0;
++}
++
++int IPASoftSimple::start()
++{
++	return 0;
++}
++
++void IPASoftSimple::stop()
++{
++	context_.frameContexts.clear();
++}
++
++void IPASoftSimple::queueRequest(const uint32_t frame, const ControlList &controls)
++{
++	IPAFrameContext &frameContext = context_.frameContexts.alloc(frame);
++
++	for (const auto &algo : algorithms())
++		algo->queueRequest(context_, frame, frameContext, controls);
++}
++
++void IPASoftSimple::computeParams(const uint32_t frame)
++{
++	context_.activeState.combinedMatrix = Matrix<float, 3, 3>::identity();
++
++	IPAFrameContext &frameContext = context_.frameContexts.get(frame);
++	for (const auto &algo : algorithms())
++		algo->prepare(context_, frame, frameContext, params_);
++	params_->combinedMatrix = context_.activeState.combinedMatrix;
++
++	setIspParams.emit();
++}
++
++void IPASoftSimple::processStats(const uint32_t frame,
++				 [[maybe_unused]] const uint32_t bufferId,
++				 const ControlList &sensorControls)
++{
++	IPAFrameContext &frameContext = context_.frameContexts.get(frame);
++
++	frameContext.sensor.exposure =
++		sensorControls.get(V4L2_CID_EXPOSURE).get<int32_t>();
++	int32_t again = sensorControls.get(V4L2_CID_ANALOGUE_GAIN).get<int32_t>();
++	frameContext.sensor.gain = camHelper_ ? camHelper_->gain(again) : again;
++
++	ControlList metadata(controls::controls);
++	for (const auto &algo : algorithms())
++		algo->process(context_, frame, frameContext, stats_, metadata);
++	metadataReady.emit(frame, metadata);
++
++	/* Sanity check */
++	if (!sensorControls.contains(V4L2_CID_EXPOSURE) ||
++	    !sensorControls.contains(V4L2_CID_ANALOGUE_GAIN)) {
++		LOG(IPASoft, Error) << "Control(s) missing";
++		return;
++	}
++
++	ControlList ctrls(sensorInfoMap_);
++
++	auto &againNew = frameContext.sensor.gain;
++	ctrls.set(V4L2_CID_EXPOSURE, frameContext.sensor.exposure);
++	ctrls.set(V4L2_CID_ANALOGUE_GAIN,
++		  static_cast<int32_t>(camHelper_ ? camHelper_->gainCode(againNew) : againNew));
++
++	setSensorControls.emit(ctrls);
++}
++
++std::string IPASoftSimple::logPrefix() const
++{
++	return "IPASoft";
++}
++
++} /* namespace ipa::soft */
++
++/*
++ * External IPA module interface
++ */
++extern "C" {
++const struct IPAModuleInfo ipaModuleInfo = {
++	IPA_MODULE_API_VERSION,
++	0,
++	"softisp",
++};
++
++IPAInterface *ipaCreate()
++{
++	return new ipa::soft::IPASoftSimple();
++}
++
++} /* extern "C" */
++
++} /* namespace libcamera */
+--- a/src/libcamera/pipeline_handler.cpp
++++ b/src/libcamera/pipeline_handler.cpp
+@@ -844,8 +844,10 @@ void PipelineHandler::disconnect()
+  *
+  * Create an IPA module using \a ipaName as the matching identifier. This
+  * overload allows pipeline handlers to create an IPA module by specifying its
+- * name instead of relying on the fact that the IPA module matches the pipeline
+- * handler's one.
++ * name instead of relying on the fact that the IPA module matches the IPA
++ * proxy's type name.
++ *
++ * \deprecated This method is deprecated and *MUST* not be used in new code.
+  *
+  * \return A newly created IPA proxy, or nullptr if no matching IPA module is
+  * found or if the IPA proxy fails to initialize
+@@ -858,7 +860,7 @@ void PipelineHandler::disconnect()
+  * \param[in] minVersion Minimum acceptable version of IPA module
+  * \param[in] maxVersion Maximum acceptable version of IPA module
+  *
+- * Create an IPA module using the pipeline handler name as the matching
++ * Create an IPA module using the IPA proxy's type name as the matching
+  * identifier. This overload allows pipeline handler to create an IPA module
+  * whose name matches the pipeline handler one.
+  *
+--- a/utils/codegen/ipc/generators/libcamera_templates/module_ipa_proxy.h.tmpl
++++ b/utils/codegen/ipc/generators/libcamera_templates/module_ipa_proxy.h.tmpl
+@@ -40,6 +40,8 @@ class {{proxy_name}}Isolated;
+ class {{proxy_name}} : public IPAProxy, public {{interface_name}}, public Object
+ {
+ public:
++	static constexpr const char *name() { return "{{module_name}}"; }
++
+ 	using Threaded = {{proxy_name}}Threaded;
+ 	using Isolated = {{proxy_name}}Isolated;
+ 
+--- a/include/libcamera/ipa/soft.mojom
++++ /dev/null
+@@ -1,38 +0,0 @@
+-/* SPDX-License-Identifier: LGPL-2.1-or-later */
+-
+-/*
+- * \todo Document the interface and remove the related EXCLUDE_PATTERNS entry.
+- */
+-
+-module ipa.soft;
+-
+-import "include/libcamera/ipa/core.mojom";
+-
+-struct IPAConfigInfo {
+-	libcamera.ControlInfoMap sensorControls;
+-};
+-
+-interface IPASoftInterface {
+-	init(libcamera.IPASettings settings,
+-	     libcamera.SharedFD fdStats,
+-	     libcamera.SharedFD fdParams,
+-	     libcamera.IPACameraSensorInfo sensorInfo,
+-	     libcamera.ControlInfoMap sensorControls)
+-		=> (int32 ret, libcamera.ControlInfoMap ipaControls, bool ccmEnabled);
+-	start() => (int32 ret);
+-	stop();
+-	configure(IPAConfigInfo configInfo)
+-		=> (int32 ret);
+-
+-	[async] queueRequest(uint32 frame, libcamera.ControlList sensorControls);
+-	[async] computeParams(uint32 frame);
+-	[async] processStats(uint32 frame,
+-			     uint32 bufferId,
+-			     libcamera.ControlList sensorControls);
+-};
+-
+-interface IPASoftEventInterface {
+-	setSensorControls(libcamera.ControlList sensorControls);
+-	setIspParams();
+-	metadataReady(uint32 frame, libcamera.ControlList metadata);
+-};
+--- /dev/null
++++ b/include/libcamera/ipa/softisp.mojom
+@@ -0,0 +1,38 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++
++/*
++ * \todo Document the interface and remove the related EXCLUDE_PATTERNS entry.
++ */
++
++module ipa.soft;
++
++import "include/libcamera/ipa/core.mojom";
++
++struct IPAConfigInfo {
++	libcamera.ControlInfoMap sensorControls;
++};
++
++interface IPASoftInterface {
++	init(libcamera.IPASettings settings,
++	     libcamera.SharedFD fdStats,
++	     libcamera.SharedFD fdParams,
++	     libcamera.IPACameraSensorInfo sensorInfo,
++	     libcamera.ControlInfoMap sensorControls)
++		=> (int32 ret, libcamera.ControlInfoMap ipaControls, bool ccmEnabled);
++	start() => (int32 ret);
++	stop();
++	configure(IPAConfigInfo configInfo)
++		=> (int32 ret);
++
++	[async] queueRequest(uint32 frame, libcamera.ControlList sensorControls);
++	[async] computeParams(uint32 frame);
++	[async] processStats(uint32 frame,
++			     uint32 bufferId,
++			     libcamera.ControlList sensorControls);
++};
++
++interface IPASoftEventInterface {
++	setSensorControls(libcamera.ControlList sensorControls);
++	setIspParams();
++	metadataReady(uint32 frame, libcamera.ControlList metadata);
++};
+--- a/src/ipa/simple/algorithms/adjust.cpp
++++ /dev/null
+@@ -1,134 +0,0 @@
+-/* SPDX-License-Identifier: LGPL-2.1-or-later */
+-/*
+- * Copyright (C) 2024, Ideas On Board
+- * Copyright (C) 2024-2026, Red Hat Inc.
+- *
+- * Common image adjustments
+- */
+-
+-#include "adjust.h"
+-
+-#include <libcamera/base/log.h>
+-#include <libcamera/base/utils.h>
+-
+-#include <libcamera/control_ids.h>
+-
+-#include "libcamera/internal/matrix.h"
+-
+-namespace libcamera {
+-
+-namespace ipa::soft::algorithms {
+-
+-constexpr float kDefaultContrast = 1.0f;
+-constexpr float kDefaultSaturation = 1.0f;
+-
+-LOG_DEFINE_CATEGORY(IPASoftAdjust)
+-
+-int Adjust::init(IPAContext &context, [[maybe_unused]] const ValueNode &tuningData)
+-{
+-	context.ctrlMap[&controls::Gamma] =
+-		ControlInfo(0.1f, 10.0f, kDefaultGamma);
+-	context.ctrlMap[&controls::Contrast] =
+-		ControlInfo(0.0f, 2.0f, kDefaultContrast);
+-	if (context.ccmEnabled)
+-		context.ctrlMap[&controls::Saturation] =
+-			ControlInfo(0.0f, 2.0f, kDefaultSaturation);
+-	return 0;
+-}
+-
+-int Adjust::configure(IPAContext &context,
+-		      [[maybe_unused]] const IPAConfigInfo &configInfo)
+-{
+-	context.activeState.knobs.gamma = kDefaultGamma;
+-	context.activeState.knobs.contrast = std::optional<float>();
+-	context.activeState.knobs.saturation = std::optional<float>();
+-
+-	return 0;
+-}
+-
+-void Adjust::queueRequest(typename Module::Context &context,
+-			  [[maybe_unused]] const uint32_t frame,
+-			  [[maybe_unused]] typename Module::FrameContext &frameContext,
+-			  const ControlList &controls)
+-{
+-	const auto &gamma = controls.get(controls::Gamma);
+-	if (gamma.has_value()) {
+-		context.activeState.knobs.gamma = gamma.value();
+-		LOG(IPASoftAdjust, Debug) << "Setting gamma to " << gamma.value();
+-	}
+-
+-	const auto &contrast = controls.get(controls::Contrast);
+-	if (contrast.has_value()) {
+-		context.activeState.knobs.contrast = contrast;
+-		LOG(IPASoftAdjust, Debug) << "Setting contrast to " << contrast.value();
+-	}
+-
+-	const auto &saturation = controls.get(controls::Saturation);
+-	if (saturation.has_value()) {
+-		context.activeState.knobs.saturation = saturation;
+-		LOG(IPASoftAdjust, Debug) << "Setting saturation to " << saturation.value();
+-	}
+-}
+-
+-void Adjust::applySaturation(Matrix<float, 3, 3> &matrix, float saturation)
+-{
+-	/* https://en.wikipedia.org/wiki/YCbCr#ITU-R_BT.601_conversion */
+-	const Matrix<float, 3, 3> rgb2ycbcr{
+-		{ 0.256788235294, 0.504129411765, 0.0979058823529,
+-		  -0.148223529412, -0.290992156863, 0.439215686275,
+-		  0.439215686275, -0.367788235294, -0.0714274509804 }
+-	};
+-	const Matrix<float, 3, 3> ycbcr2rgb{
+-		{ 1.16438356164, 0, 1.59602678571,
+-		  1.16438356164, -0.391762290094, -0.812967647235,
+-		  1.16438356164, 2.01723214285, 0 }
+-	};
+-	const Matrix<float, 3, 3> saturationMatrix{
+-		{ 1, 0, 0,
+-		  0, saturation, 0,
+-		  0, 0, saturation }
+-	};
+-	matrix =
+-		ycbcr2rgb * saturationMatrix * rgb2ycbcr * matrix;
+-}
+-
+-void Adjust::prepare(IPAContext &context,
+-		     [[maybe_unused]] const uint32_t frame,
+-		     IPAFrameContext &frameContext,
+-		     DebayerParams *params)
+-{
+-	frameContext.gamma = context.activeState.knobs.gamma;
+-	frameContext.contrast = context.activeState.knobs.contrast;
+-
+-	auto &saturation = context.activeState.knobs.saturation;
+-	if (context.ccmEnabled && saturation) {
+-		applySaturation(context.activeState.combinedMatrix, saturation.value());
+-		frameContext.saturation = saturation;
+-	}
+-
+-	params->gamma = 1.0 / context.activeState.knobs.gamma;
+-	const float contrast = context.activeState.knobs.contrast.value_or(kDefaultContrast);
+-	params->contrastExp = tan(std::clamp(contrast * M_PI_4, 0.0, M_PI_2 - 0.00001));
+-}
+-
+-void Adjust::process([[maybe_unused]] IPAContext &context,
+-		     [[maybe_unused]] const uint32_t frame,
+-		     IPAFrameContext &frameContext,
+-		     [[maybe_unused]] const SwIspStats *stats,
+-		     ControlList &metadata)
+-{
+-	const auto &gamma = frameContext.gamma;
+-	metadata.set(controls::Gamma, gamma);
+-
+-	const auto &contrast = frameContext.contrast;
+-	metadata.set(controls::Contrast, contrast.value_or(kDefaultContrast));
+-
+-	const auto &saturation = frameContext.saturation;
+-	metadata.set(controls::Saturation, saturation.value_or(kDefaultSaturation));
+-}
+-
+-REGISTER_IPA_ALGORITHM(Adjust, "Adjust")
+-
+-} /* namespace ipa::soft::algorithms */
+-
+-} /* namespace libcamera */
+--- a/src/ipa/simple/algorithms/adjust.h
++++ /dev/null
+@@ -1,50 +0,0 @@
+-/* SPDX-License-Identifier: LGPL-2.1-or-later */
+-/*
+- * Copyright (C) 2024-2026, Red Hat Inc.
+- *
+- * Color correction matrix
+- */
+-
+-#pragma once
+-
+-#include "libcamera/internal/matrix.h"
+-
+-#include <libipa/interpolator.h>
+-
+-#include "algorithm.h"
+-
+-namespace libcamera {
+-
+-namespace ipa::soft::algorithms {
+-
+-constexpr float kDefaultGamma = 2.2f;
+-
+-class Adjust : public Algorithm
+-{
+-public:
+-	Adjust() = default;
+-	~Adjust() = default;
+-
+-	int init(IPAContext &context, const ValueNode &tuningData) override;
+-	int configure(IPAContext &context,
+-		      const IPAConfigInfo &configInfo) override;
+-	void queueRequest(typename Module::Context &context,
+-			  const uint32_t frame,
+-			  typename Module::FrameContext &frameContext,
+-			  const ControlList &controls) override;
+-	void prepare(IPAContext &context,
+-		     const uint32_t frame,
+-		     IPAFrameContext &frameContext,
+-		     DebayerParams *params) override;
+-	void process(IPAContext &context, const uint32_t frame,
+-		     IPAFrameContext &frameContext,
+-		     const SwIspStats *stats,
+-		     ControlList &metadata) override;
+-
+-private:
+-	void applySaturation(Matrix<float, 3, 3> &ccm, float saturation);
+-};
+-
+-} /* namespace ipa::soft::algorithms */
+-
+-} /* namespace libcamera */
+--- a/src/ipa/simple/algorithms/agc.cpp
++++ /dev/null
+@@ -1,199 +0,0 @@
+-/* SPDX-License-Identifier: LGPL-2.1-or-later */
+-/*
+- * Copyright (C) 2024, Red Hat Inc.
+- *
+- * Exposure and gain
+- */
+-
+-#include "agc.h"
+-
+-#include <algorithm>
+-#include <cmath>
+-#include <stdint.h>
+-
+-#include <libcamera/base/log.h>
+-
+-#include "control_ids.h"
+-
+-namespace libcamera {
+-
+-LOG_DEFINE_CATEGORY(IPASoftExposure)
+-
+-namespace ipa::soft::algorithms {
+-
+-/*
+- * The number of bins to use for the optimal exposure calculations.
+- */
+-static constexpr unsigned int kExposureBinsCount = 5;
+-
+-/*
+- * The exposure is optimal when the mean sample value of the histogram is
+- * in the middle of the range.
+- */
+-static constexpr float kExposureOptimal = kExposureBinsCount / 2.0;
+-
+-/*
+- * This implements the hysteresis for the exposure adjustment.
+- * It is small enough to have the exposure close to the optimal, and is big
+- * enough to prevent the exposure from wobbling around the optimal value.
+- */
+-static constexpr float kExposureSatisfactory = 0.2;
+-
+-/*
+- * Proportional gain for exposure/gain adjustment. Maps the MSV error to a
+- * multiplicative correction factor:
+- *
+- *   factor = 1.0 + kExpProportionalGain * error
+- *
+- * With kExpProportionalGain = 0.04:
+- *   - max error ~2.5 -> factor 1.10 (~10% step, same as before)
+- *   - error 1.0      -> factor 1.04 (~4% step)
+- *   - error 0.3      -> factor 1.012 (~1.2% step)
+- *
+- * This replaces the fixed 10% bang-bang step with a proportional correction
+- * that converges smoothly and avoids overshooting near the target.
+- */
+-static constexpr float kExpProportionalGain = 0.04;
+-
+-/*
+- * Maximum multiplicative step per frame, to bound the correction when the
+- * scene changes dramatically.
+- */
+-static constexpr float kExpMaxStep = 0.15;
+-
+-Agc::Agc()
+-{
+-}
+-
+-void Agc::updateExposure(IPAContext &context, IPAFrameContext &frameContext, double exposureMSV)
+-{
+-	int32_t &exposure = frameContext.sensor.exposure;
+-	double &again = frameContext.sensor.gain;
+-
+-	double error = kExposureOptimal - exposureMSV;
+-
+-	if (std::abs(error) <= kExposureSatisfactory)
+-		return;
+-
+-	/*
+-	 * Compute a proportional correction factor. The sign of the error
+-	 * determines the direction: positive error means too dark (increase),
+-	 * negative means too bright (decrease).
+-	 */
+-	float step = std::clamp(static_cast<float>(error) * kExpProportionalGain,
+-				-kExpMaxStep, kExpMaxStep);
+-	float factor = 1.0f + step;
+-
+-	if (factor > 1.0f) {
+-		/* Scene too dark: increase exposure first, then gain. */
+-		if (exposure < context.configuration.agc.exposureMax) {
+-			int32_t next = static_cast<int32_t>(exposure * factor);
+-			exposure = std::max(next, exposure + 1);
+-		} else {
+-			double next = again * factor;
+-			if (next - again < context.configuration.agc.againMinStep)
+-				again += context.configuration.agc.againMinStep;
+-			else
+-				again = next;
+-		}
+-	} else {
+-		/* Scene too bright: decrease gain first, then exposure. */
+-		if (again > context.configuration.agc.again10) {
+-			double next = again * factor;
+-			if (again - next < context.configuration.agc.againMinStep)
+-				again -= context.configuration.agc.againMinStep;
+-			else
+-				again = next;
+-		} else {
+-			int32_t next = static_cast<int32_t>(exposure * factor);
+-			exposure = std::min(next, exposure - 1);
+-		}
+-	}
+-
+-	exposure = std::clamp(exposure, context.configuration.agc.exposureMin,
+-			      context.configuration.agc.exposureMax);
+-	again = std::clamp(again, context.configuration.agc.againMin,
+-			   context.configuration.agc.againMax);
+-
+-	context.activeState.agc.exposure = exposure;
+-	context.activeState.agc.again = again;
+-
+-	LOG(IPASoftExposure, Debug)
+-		<< "exposureMSV " << exposureMSV
+-		<< " error " << error << " factor " << factor
+-		<< " exp " << exposure << " again " << again;
+-}
+-
+-void Agc::process(IPAContext &context,
+-		  [[maybe_unused]] const uint32_t frame,
+-		  IPAFrameContext &frameContext,
+-		  const SwIspStats *stats,
+-		  ControlList &metadata)
+-{
+-	utils::Duration exposureTime =
+-		context.configuration.agc.lineDuration * frameContext.sensor.exposure;
+-	metadata.set(controls::ExposureTime, exposureTime.get<std::micro>());
+-	metadata.set(controls::AnalogueGain, frameContext.sensor.gain);
+-
+-	if (!context.activeState.agc.valid) {
+-		/*
+-		 * Init active-state from sensor values in case updateExposure()
+-		 * does not run for the first frame.
+-		 */
+-		context.activeState.agc.exposure = frameContext.sensor.exposure;
+-		context.activeState.agc.again = frameContext.sensor.gain;
+-		context.activeState.agc.valid = true;
+-	}
+-
+-	if (!stats->valid) {
+-		/*
+-		 * Use the new exposure and gain values calculated the last time
+-		 * there were valid stats.
+-		 */
+-		frameContext.sensor.exposure = context.activeState.agc.exposure;
+-		frameContext.sensor.gain = context.activeState.agc.again;
+-		return;
+-	}
+-
+-	/*
+-	 * Calculate Mean Sample Value (MSV) according to formula from:
+-	 * https://www.araa.asn.au/acra/acra2007/papers/paper84final.pdf
+-	 */
+-	const auto &histogram = stats->yHistogram;
+-	const unsigned int blackLevelHistIdx =
+-		context.activeState.blc.level / (256 / SwIspStats::kYHistogramSize);
+-	const unsigned int histogramSize =
+-		SwIspStats::kYHistogramSize - blackLevelHistIdx;
+-	const unsigned int yHistValsPerBin = histogramSize / kExposureBinsCount;
+-	const unsigned int yHistValsPerBinMod =
+-		histogramSize / (histogramSize % kExposureBinsCount + 1);
+-	int exposureBins[kExposureBinsCount] = {};
+-	unsigned int denom = 0;
+-	unsigned int num = 0;
+-
+-	if (yHistValsPerBin == 0) {
+-		LOG(IPASoftExposure, Debug)
+-			<< "Not adjusting exposure due to insufficient histogram data";
+-		return;
+-	}
+-
+-	for (unsigned int i = 0; i < histogramSize; i++) {
+-		unsigned int idx = (i - (i / yHistValsPerBinMod)) / yHistValsPerBin;
+-		exposureBins[idx] += histogram[blackLevelHistIdx + i];
+-	}
+-
+-	for (unsigned int i = 0; i < kExposureBinsCount; i++) {
+-		LOG(IPASoftExposure, Debug) << i << ": " << exposureBins[i];
+-		denom += exposureBins[i];
+-		num += exposureBins[i] * (i + 1);
+-	}
+-
+-	float exposureMSV = (denom == 0 ? 0 : static_cast<float>(num) / denom);
+-	updateExposure(context, frameContext, exposureMSV);
+-}
+-
+-REGISTER_IPA_ALGORITHM(Agc, "Agc")
+-
+-} /* namespace ipa::soft::algorithms */
+-
+-} /* namespace libcamera */
+--- a/src/ipa/simple/algorithms/agc.h
++++ /dev/null
+@@ -1,33 +0,0 @@
+-/* SPDX-License-Identifier: LGPL-2.1-or-later */
+-/*
+- * Copyright (C) 2024, Red Hat Inc.
+- *
+- * Exposure and gain
+- */
+-
+-#pragma once
+-
+-#include "algorithm.h"
+-
+-namespace libcamera {
+-
+-namespace ipa::soft::algorithms {
+-
+-class Agc : public Algorithm
+-{
+-public:
+-	Agc();
+-	~Agc() = default;
+-
+-	void process(IPAContext &context, const uint32_t frame,
+-		     IPAFrameContext &frameContext,
+-		     const SwIspStats *stats,
+-		     ControlList &metadata) override;
+-
+-private:
+-	void updateExposure(IPAContext &context, IPAFrameContext &frameContext, double exposureMSV);
+-};
+-
+-} /* namespace ipa::soft::algorithms */
+-
+-} /* namespace libcamera */
+--- a/src/ipa/simple/algorithms/algorithm.h
++++ /dev/null
+@@ -1,22 +0,0 @@
+-/* SPDX-License-Identifier: LGPL-2.1-or-later */
+-/*
+- * Copyright (C) 2024 Red Hat, Inc.
+- *
+- * Software ISP control algorithm interface
+- */
+-
+-#pragma once
+-
+-#include <libipa/algorithm.h>
+-
+-#include "module.h"
+-
+-namespace libcamera {
+-
+-namespace ipa::soft {
+-
+-using Algorithm = libcamera::ipa::Algorithm<Module>;
+-
+-} /* namespace ipa::soft */
+-
+-} /* namespace libcamera */
+--- a/src/ipa/simple/algorithms/awb.cpp
++++ /dev/null
+@@ -1,164 +0,0 @@
+-/* SPDX-License-Identifier: LGPL-2.1-or-later */
+-/*
+- * Copyright (C) 2024-2026 Red Hat Inc.
+- *
+- * Auto white balance
+- */
+-
+-#include "awb.h"
+-
+-#include <numeric>
+-#include <stdint.h>
+-
+-#include <libcamera/base/log.h>
+-
+-#include <libcamera/control_ids.h>
+-
+-namespace libcamera {
+-
+-LOG_DEFINE_CATEGORY(IPASoftAwb)
+-
+-namespace ipa::soft::algorithms {
+-
+-/*
+- * \todo Replace it with a proper Lux algorithm
+- */
+-static constexpr unsigned int kDefaultLux = 500;
+-
+-class SimpleAwbStats final : public AwbStats
+-{
+-public:
+-	SimpleAwbStats() = default;
+-
+-	SimpleAwbStats(const RGB<double> &rgbMeans)
+-	{
+-		rgbMeans_ = rgbMeans;
+-
+-		rg_ = rgbMeans_.r() / rgbMeans_.g();
+-		bg_ = rgbMeans_.b() / rgbMeans_.g();
+-	}
+-
+-	double computeColourError(const RGB<double> &gains) const override
+-	{
+-		/*
+-		 * Compute the sum of the squared colour error (non-greyness) as
+-		 * it appears in the log likelihood equation.
+-		 */
+-		double deltaR = gains.r() * rg_ - 1.0;
+-		double deltaB = gains.b() * bg_ - 1.0;
+-		double delta2 = deltaR * deltaR + deltaB * deltaB;
+-
+-		return delta2;
+-	}
+-
+-	RGB<double> rgbMeans() const override
+-	{
+-		return rgbMeans_;
+-	}
+-
+-	bool valid() const override
+-	{
+-		/* Minimum mean value below which AWB can't operate. */
+-		constexpr double minValue = 0.2;
+-
+-		return rgbMeans_.r() > minValue || rgbMeans_.g() > minValue ||
+-		       rgbMeans_.b() > minValue;
+-	}
+-
+-private:
+-	RGB<double> rgbMeans_;
+-	double rg_;
+-	double bg_;
+-};
+-
+-/**
+- * \copydoc libcamera::ipa::Algorithm::init
+- */
+-int Awb::init(IPAContext &context, const ValueNode &tuningData)
+-{
+-	return awbAlgo_.init(tuningData, context.ctrlMap);
+-}
+-
+-/**
+- * \copydoc libcamera::ipa::Algorithm::configure
+- */
+-int Awb::configure(IPAContext &context,
+-		   [[maybe_unused]] const IPAConfigInfo &configInfo)
+-{
+-	return awbAlgo_.configure(context.activeState.awb);
+-}
+-
+-/**
+- * \copydoc libcamera::ipa::Algorithm::queueRequest
+- */
+-void Awb::queueRequest(IPAContext &context, const uint32_t frame,
+-		       IPAFrameContext &frameContext,
+-		       const ControlList &controls)
+-{
+-	awbAlgo_.queueRequest(context.activeState.awb, frame, frameContext.awb,
+-			      controls);
+-}
+-
+-/**
+- * \copydoc libcamera::ipa::Algorithm::prepare
+- */
+-void Awb::prepare(IPAContext &context,
+-		  [[maybe_unused]] const uint32_t frame,
+-		  IPAFrameContext &frameContext,
+-		  DebayerParams *params)
+-{
+-	awbAlgo_.prepare(context.activeState.awb, frameContext.awb);
+-
+-	params->gains = frameContext.awb.gains;
+-}
+-
+-SimpleAwbStats Awb::calculateRgbMeans(IPAContext &context,
+-				      const SwIspStats *stats) const
+-{
+-	if (!stats->valid)
+-		return {};
+-
+-	const SwIspStats::Histogram &histogram = stats->yHistogram;
+-	const uint8_t blackLevel = context.activeState.blc.level;
+-
+-	/*
+-	 * Black level must be subtracted to get the correct AWB ratios, they
+-	 * would be off if they were computed from the whole brightness range
+-	 * rather than from the sensor range.
+-	 */
+-	const uint64_t nPixels = std::accumulate(
+-		histogram.begin(), histogram.end(), uint64_t(0));
+-	const uint64_t offset = blackLevel * nPixels;
+-	const uint64_t minValid = 1;
+-
+-	/*
+-	 * Make sure the sums are at least minValid, while preventing unsigned
+-	 * integer underflow.
+-	 */
+-	const RGB<uint64_t> sum = stats->sum_.max(offset + minValid) - offset;
+-
+-	RGB<double> rgbMeans = { { static_cast<double>(sum.r()) / nPixels,
+-				   static_cast<double>(sum.g()) / nPixels,
+-				   static_cast<double>(sum.b()) / nPixels } };
+-
+-	return SimpleAwbStats(rgbMeans);
+-}
+-
+-/**
+- * \copydoc libcamera::ipa::Algorithm::process
+- */
+-void Awb::process(IPAContext &context, [[maybe_unused]] const uint32_t frame,
+-		  IPAFrameContext &frameContext, const SwIspStats *stats,
+-		  ControlList &metadata)
+-{
+-	SimpleAwbStats awbStats = calculateRgbMeans(context, stats);
+-
+-	awbAlgo_.process(context.activeState.awb, frameContext.awb, awbStats,
+-			 kDefaultLux, metadata);
+-}
+-
+-REGISTER_IPA_ALGORITHM(Awb, "Awb")
+-
+-} /* namespace ipa::soft::algorithms */
+-
+-} /* namespace libcamera */
+--- a/src/ipa/simple/algorithms/blc.cpp
++++ /dev/null
+@@ -1,124 +0,0 @@
+-/* SPDX-License-Identifier: LGPL-2.1-or-later */
+-/*
+- * Copyright (C) 2024-2025, Red Hat Inc.
+- *
+- * Black level handling
+- */
+-
+-#include "blc.h"
+-
+-#include <numeric>
+-
+-#include <libcamera/base/log.h>
+-
+-#include "control_ids.h"
+-
+-namespace libcamera {
+-
+-namespace ipa::soft::algorithms {
+-
+-LOG_DEFINE_CATEGORY(IPASoftBL)
+-
+-BlackLevel::BlackLevel()
+-{
+-}
+-
+-int BlackLevel::init([[maybe_unused]] IPAContext &context,
+-		     const ValueNode &tuningData)
+-{
+-	auto blackLevel = tuningData["blackLevel"].get<int16_t>();
+-	if (blackLevel.has_value()) {
+-		/*
+-		 * Convert 16 bit values from the tuning file to 8 bit black
+-		 * level for the SoftISP.
+-		 */
+-		definedLevel_ = blackLevel.value() >> 8;
+-	}
+-	return 0;
+-}
+-
+-int BlackLevel::configure(IPAContext &context,
+-			  [[maybe_unused]] const IPAConfigInfo &configInfo)
+-{
+-	if (definedLevel_.has_value())
+-		context.configuration.black.level = definedLevel_;
+-	context.activeState.blc.level =
+-		context.configuration.black.level.value_or(16);
+-	return 0;
+-}
+-
+-void BlackLevel::prepare(IPAContext &context,
+-			 [[maybe_unused]] const uint32_t frame,
+-			 [[maybe_unused]] IPAFrameContext &frameContext,
+-			 DebayerParams *params)
+-{
+-	/* Latch the blacklevel gain so GPUISP can apply. */
+-	params->blackLevel = RGB<double>(context.activeState.blc.level / 255.0f);
+-}
+-
+-void BlackLevel::process(IPAContext &context,
+-			 [[maybe_unused]] const uint32_t frame,
+-			 IPAFrameContext &frameContext,
+-			 const SwIspStats *stats,
+-			 ControlList &metadata)
+-{
+-	/* Assign each of the R G G B channels as the same black level. */
+-	const int32_t blackLevel = context.activeState.blc.level * 256;
+-	const int32_t blackLevels[] = {
+-		blackLevel, blackLevel, blackLevel, blackLevel
+-	};
+-	metadata.set(controls::SensorBlackLevels, blackLevels);
+-
+-	if (!stats->valid)
+-		return;
+-
+-	if (context.configuration.black.level.has_value())
+-		return;
+-
+-	if (frameContext.sensor.exposure == context.activeState.blc.lastExposure &&
+-	    frameContext.sensor.gain == context.activeState.blc.lastGain) {
+-		return;
+-	}
+-
+-	const SwIspStats::Histogram &histogram = stats->yHistogram;
+-
+-	/*
+-	 * The constant is selected to be "good enough", not overly
+-	 * conservative or aggressive. There is no magic about the given value.
+-	 */
+-	constexpr float ignoredPercentage = 0.02;
+-	const unsigned int total =
+-		std::accumulate(begin(histogram), end(histogram), 0);
+-	if (total == 0) {
+-		LOG(IPASoftBL, Debug) << "Not guessing black level, histogram is empty";
+-		return;
+-	}
+-
+-	const unsigned int pixelThreshold = ignoredPercentage * total;
+-	const unsigned int histogramRatio = 256 / SwIspStats::kYHistogramSize;
+-	const unsigned int currentBlackIdx =
+-		context.activeState.blc.level / histogramRatio;
+-
+-	for (unsigned int i = 0, seen = 0;
+-	     i < currentBlackIdx && i < SwIspStats::kYHistogramSize;
+-	     i++) {
+-		seen += histogram[i];
+-		if (seen >= pixelThreshold) {
+-			context.activeState.blc.level = i * histogramRatio;
+-			context.activeState.blc.lastExposure = frameContext.sensor.exposure;
+-			context.activeState.blc.lastGain = frameContext.sensor.gain;
+-			LOG(IPASoftBL, Debug)
+-				<< "Auto-set black level: "
+-				<< i << "/" << SwIspStats::kYHistogramSize
+-				<< " (" << 100 * (seen - histogram[i]) / total << "% below, "
+-				<< 100 * seen / total << "% at or below)";
+-			break;
+-		}
+-	};
+-}
+-
+-REGISTER_IPA_ALGORITHM(BlackLevel, "BlackLevel")
+-
+-} /* namespace ipa::soft::algorithms */
+-
+-} /* namespace libcamera */
+--- a/src/ipa/simple/algorithms/blc.h
++++ /dev/null
+@@ -1,42 +0,0 @@
+-/* SPDX-License-Identifier: LGPL-2.1-or-later */
+-/*
+- * Copyright (C) 2024, Red Hat Inc.
+- *
+- * Black level handling
+- */
+-
+-#pragma once
+-
+-#include <optional>
+-#include <stdint.h>
+-
+-#include "algorithm.h"
+-
+-namespace libcamera {
+-
+-namespace ipa::soft::algorithms {
+-
+-class BlackLevel : public Algorithm
+-{
+-public:
+-	BlackLevel();
+-	~BlackLevel() = default;
+-
+-	int init(IPAContext &context, const ValueNode &tuningData) override;
+-	int configure(IPAContext &context, const IPAConfigInfo &configInfo) override;
+-	void prepare(IPAContext &context,
+-		     const uint32_t frame,
+-		     IPAFrameContext &frameContext,
+-		     DebayerParams *params) override;
+-	void process(IPAContext &context, const uint32_t frame,
+-		     IPAFrameContext &frameContext,
+-		     const SwIspStats *stats,
+-		     ControlList &metadata) override;
+-
+-private:
+-	std::optional<uint8_t> definedLevel_;
+-};
+-
+-} /* namespace ipa::soft::algorithms */
+-
+-} /* namespace libcamera */
+--- a/src/ipa/simple/algorithms/ccm.cpp
++++ /dev/null
+@@ -1,84 +0,0 @@
+-/* SPDX-License-Identifier: LGPL-2.1-or-later */
+-/*
+- * Copyright (C) 2024, Ideas On Board
+- * Copyright (C) 2024-2026, Red Hat Inc.
+- *
+- * Color correction matrix
+- */
+-
+-#include "ccm.h"
+-
+-#include "libcamera/internal/matrix.h"
+-
+-namespace libcamera {
+-
+-namespace ipa::soft::algorithms {
+-
+-LOG_DEFINE_CATEGORY(IPASoftCcm)
+-
+-/**
+- * \copydoc libcamera::ipa::Algorithm::init
+- */
+-int Ccm::init(IPAContext &context, const ValueNode &tuningData)
+-{
+-	/* Informs the 'adjust' component that CCM is available to apply Saturation */
+-	context.ccmEnabled = true;
+-
+-	return ccmAlgo_.init(tuningData, context.ctrlMap);
+-}
+-
+-/**
+- * \copydoc libcamera::ipa::Algorithm::configure
+- */
+-int Ccm::configure(IPAContext &context,
+-		   [[maybe_unused]] const IPAConfigInfo &configInfo)
+-{
+-	return ccmAlgo_.configure(context.activeState.ccm,
+-				  context.activeState.awb.automatic.colourTemperature);
+-}
+-
+-/**
+- * \copydoc libcamera::ipa::Algorithm::queueRequest
+- */
+-void Ccm::queueRequest(IPAContext &context,
+-		       [[maybe_unused]] const uint32_t frame,
+-		       IPAFrameContext &frameContext,
+-		       const ControlList &controls)
+-{
+-	/* Nothing to do here, the ccm will be calculated in prepare() */
+-	if (frameContext.awb.autoEnabled)
+-		return;
+-
+-	ccmAlgo_.queueRequest(context.activeState.ccm, frameContext.ccm, controls);
+-}
+-
+-void Ccm::prepare(IPAContext &context, const uint32_t frame,
+-		  IPAFrameContext &frameContext, [[maybe_unused]] DebayerParams *params)
+-{
+-	if (frameContext.awb.autoEnabled)
+-		ccmAlgo_.prepare(context.activeState.ccm, frameContext.ccm,
+-				 frame, frameContext.awb.colourTemperature);
+-
+-	/*
+-	 * \todo: Split out combined matrix into individual parameters in
+-	 * DebayerParams and perform any pre-multiplication combination in the
+-	 * SoftISP component directly.
+-	 */
+-	context.activeState.combinedMatrix =
+-		frameContext.ccm.ccm * context.activeState.combinedMatrix;
+-}
+-
+-void Ccm::process([[maybe_unused]] IPAContext &context,
+-		  [[maybe_unused]] const uint32_t frame,
+-		  IPAFrameContext &frameContext,
+-		  [[maybe_unused]] const SwIspStats *stats,
+-		  ControlList &metadata)
+-{
+-	ccmAlgo_.process(frameContext.ccm, metadata);
+-}
+-
+-REGISTER_IPA_ALGORITHM(Ccm, "Ccm")
+-
+-} /* namespace ipa::soft::algorithms */
+-
+-} /* namespace libcamera */
+--- a/src/ipa/simple/algorithms/ccm.h
++++ /dev/null
+@@ -1,50 +0,0 @@
+-/* SPDX-License-Identifier: LGPL-2.1-or-later */
+-/*
+- * Copyright (C) 2024-2026, Red Hat Inc.
+- *
+- * Color correction matrix
+- */
+-
+-#pragma once
+-
+-#include <libcamera/controls.h>
+-
+-#include "libcamera/internal/value_node.h"
+-
+-#include "libipa/ccm.h"
+-#include "libipa/fixedpoint.h"
+-
+-#include "algorithm.h"
+-#include "ipa_context.h"
+-
+-namespace libcamera {
+-
+-namespace ipa::soft::algorithms {
+-
+-class Ccm : public Algorithm
+-{
+-public:
+-	int init(IPAContext &context, const ValueNode &tuningData) override;
+-
+-	int configure(IPAContext &context, const IPAConfigInfo &configInfo) override;
+-
+-	void queueRequest(IPAContext &context, const uint32_t frame,
+-			  IPAFrameContext &frameContext,
+-			  const ControlList &controls) override;
+-
+-	void prepare(IPAContext &context,
+-		     const uint32_t frame,
+-		     IPAFrameContext &frameContext,
+-		     DebayerParams *params) override;
+-	void process(IPAContext &context, const uint32_t frame,
+-		     IPAFrameContext &frameContext,
+-		     const SwIspStats *stats,
+-		     ControlList &metadata) override;
+-
+-private:
+-	CcmAlgorithm<Q<4, 16>> ccmAlgo_;
+-};
+-
+-} /* namespace ipa::soft::algorithms */
+-
+-} /* namespace libcamera */
+--- a/src/ipa/simple/algorithms/meson.build
++++ /dev/null
+@@ -1,9 +0,0 @@
+-# SPDX-License-Identifier: CC0-1.0
+-
+-soft_simple_ipa_algorithms = files([
+-    'adjust.cpp',
+-    'awb.cpp',
+-    'agc.cpp',
+-    'blc.cpp',
+-    'ccm.cpp',
+-])
+--- a/src/ipa/simple/data/uncalibrated.yaml
++++ /dev/null
+@@ -1,19 +0,0 @@
+-# SPDX-License-Identifier: CC0-1.0
+-%YAML 1.1
+----
+-version: 1
+-algorithms:
+-  - BlackLevel:
+-  - Awb:
+-  # Color correction matrices can be defined here. The CCM algorithm
+-  # has a significant performance impact, and should only be enabled
+-  # if tuned.
+-  # - Ccm:
+-  #     ccms:
+-  #       - ct: 6500
+-  #         ccm: [ 1, 0, 0,
+-  #                0, 1, 0,
+-  #                0, 0, 1]
+-  - Adjust:
+-  - Agc:
+-...
+--- a/src/ipa/simple/ipa_context.cpp
++++ /dev/null
+@@ -1,102 +0,0 @@
+-/* SPDX-License-Identifier: LGPL-2.1-or-later */
+-/*
+- * Copyright (C) 2021, Google Inc.
+- * Copyright (C) 2024 Red Hat Inc.
+- *
+- * Software ISP IPA Context
+- */
+-
+-#include "ipa_context.h"
+-
+-/**
+- * \file ipa_context.h
+- * \brief Context and state information shared between the algorithms
+- */
+-
+-namespace libcamera::ipa::soft {
+-
+-/**
+- * \struct IPASessionConfiguration
+- * \brief Session configuration for the IPA module
+- *
+- * The session configuration contains all IPA configuration parameters that
+- * remain constant during the capture session, from IPA module start to stop.
+- * It is typically set during the configure() operation of the IPA module, but
+- * may also be updated in the start() operation.
+- */
+-
+-/**
+- * \struct IPAActiveState
+- * \brief The active state of the IPA algorithms
+- *
+- * The IPA is fed with the statistics generated from the latest frame processed.
+- * The statistics are then processed by the IPA algorithms to compute parameters
+- * required for the next frame capture and processing. The current state of the
+- * algorithms is reflected through the IPAActiveState to store the values most
+- * recently computed by the IPA algorithms.
+- */
+-
+-/**
+- * \struct IPAContext
+- * \brief Global IPA context data shared between all algorithms
+- *
+- * \var IPAContext::configuration
+- * \brief The IPA session configuration, immutable during the session
+- *
+- * \var IPAContext::frameContexts
+- * \brief Ring buffer of the IPAFrameContext(s)
+- *
+- * \var IPAContext::activeState
+- * \brief The current state of IPA algorithms
+- */
+-
+-/**
+- * \var IPASessionConfiguration::gamma
+- * \brief Gamma value to be used in the raw image processing
+- */
+-
+-/**
+- * \var IPAActiveState::black
+- * \brief Context for the Black Level algorithm
+- *
+- * \var IPAActiveState::black.level
+- * \brief Current determined black level
+- */
+-
+-/**
+- * \var IPAActiveState::gains
+- * \brief Context for gains in the Colors algorithm
+- *
+- * \var IPAActiveState::gains.red
+- * \brief Gain of red color
+- *
+- * \var IPAActiveState::gains.green
+- * \brief Gain of green color
+- *
+- * \var IPAActiveState::gains.blue
+- * \brief Gain of blue color
+- */
+-
+-/**
+- * \var IPAActiveState::agc
+- * \brief Context for the AGC algorithm
+- *
+- * \var IPAActiveState::agc.exposure
+- * \brief Current exposure value
+- *
+- * \var IPAActiveState::agc.again
+- * \brief Current analog gain value
+- */
+-
+-/**
+- * \var IPAActiveState::gamma
+- * \brief Context for gamma in the Colors algorithm
+- *
+- * \var IPAActiveState::gamma.gammaTable
+- * \brief Computed gamma table
+- *
+- * \var IPAActiveState::gamma.blackLevel
+- * \brief Black level used for the gamma table computation
+- */
+-
+-} /* namespace libcamera::ipa::soft */
+--- a/src/ipa/simple/ipa_context.h
++++ /dev/null
+@@ -1,96 +0,0 @@
+-/* SPDX-License-Identifier: LGPL-2.1-or-later */
+-/*
+- * Copyright (C) 2024-2026 Red Hat, Inc.
+- *
+- * Simple pipeline IPA Context
+- */
+-
+-#pragma once
+-
+-#include <array>
+-#include <optional>
+-#include <stdint.h>
+-
+-#include <libcamera/controls.h>
+-
+-#include "libcamera/internal/matrix.h"
+-#include "libcamera/internal/vector.h"
+-
+-#include <libipa/awb.h>
+-#include <libipa/ccm.h>
+-#include <libipa/fc_queue.h>
+-
+-#include "core_ipa_interface.h"
+-
+-namespace libcamera {
+-
+-namespace ipa::soft {
+-
+-struct IPASessionConfiguration {
+-	struct {
+-		int32_t exposureMin, exposureMax;
+-		double againMin, againMax, again10, againMinStep;
+-		utils::Duration lineDuration;
+-	} agc;
+-	struct {
+-		std::optional<uint8_t> level;
+-	} black;
+-};
+-
+-struct IPAActiveState {
+-	ipa::awb::ActiveState awb;
+-	ipa::ccm::ActiveState ccm;
+-
+-	struct {
+-		int32_t exposure;
+-		double again;
+-		bool valid;
+-	} agc;
+-
+-	struct {
+-		uint8_t level;
+-		int32_t lastExposure;
+-		double lastGain;
+-	} blc;
+-
+-	Matrix<float, 3, 3> combinedMatrix;
+-
+-	struct {
+-		float gamma;
+-		/* 0..2 range, 1.0 = normal */
+-		std::optional<float> contrast;
+-		std::optional<float> saturation;
+-	} knobs;
+-};
+-
+-struct IPAFrameContext : public FrameContext {
+-	ipa::awb::FrameContext awb;
+-	ipa::ccm::FrameContext ccm;
+-
+-	struct {
+-		int32_t exposure;
+-		double gain;
+-	} sensor;
+-
+-	float gamma;
+-	std::optional<float> contrast;
+-	std::optional<float> saturation;
+-};
+-
+-struct IPAContext {
+-	IPAContext(unsigned int frameContextSize)
+-		: frameContexts(frameContextSize)
+-	{
+-	}
+-
+-	IPACameraSensorInfo sensorInfo;
+-	IPASessionConfiguration configuration;
+-	IPAActiveState activeState;
+-	FCQueue<IPAFrameContext> frameContexts;
+-	ControlInfoMap::Map ctrlMap;
+-	bool ccmEnabled = false;
+-};
+-
+-} /* namespace ipa::soft */
+-
+-} /* namespace libcamera */
+--- a/src/ipa/simple/meson.build
++++ /dev/null
+@@ -1,31 +0,0 @@
+-# SPDX-License-Identifier: CC0-1.0
+-
+-subdir('algorithms')
+-subdir('data')
+-
+-ipa_name = 'ipa_soft_simple'
+-
+-soft_simple_sources = files([
+-    'ipa_context.cpp',
+-    'soft_simple.cpp',
+-])
+-
+-soft_simple_sources += soft_simple_ipa_algorithms
+-
+-mod = shared_module(ipa_name, soft_simple_sources,
+-                    name_prefix : '',
+-                    include_directories : [ipa_includes],
+-                    dependencies : [libcamera_private, libipa_dep],
+-                    install : true,
+-                    install_dir : ipa_install_dir)
+-
+-if ipa_sign_module
+-    custom_target(ipa_name + '.so.sign',
+-                  input : mod,
+-                  output : ipa_name + '.so.sign',
+-                  command : [ipa_sign, ipa_priv_key, '@INPUT@', '@OUTPUT@'],
+-                  install : false,
+-                  build_by_default : true)
+-endif
+-
+-ipa_names += ipa_name
+--- /dev/null
++++ b/src/ipa/softisp/algorithms/adjust.cpp
+@@ -0,0 +1,134 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2024, Ideas On Board
++ * Copyright (C) 2024-2026, Red Hat Inc.
++ *
++ * Common image adjustments
++ */
++
++#include "adjust.h"
++
++#include <libcamera/base/log.h>
++#include <libcamera/base/utils.h>
++
++#include <libcamera/control_ids.h>
++
++#include "libcamera/internal/matrix.h"
++
++namespace libcamera {
++
++namespace ipa::soft::algorithms {
++
++constexpr float kDefaultContrast = 1.0f;
++constexpr float kDefaultSaturation = 1.0f;
++
++LOG_DEFINE_CATEGORY(IPASoftAdjust)
++
++int Adjust::init(IPAContext &context, [[maybe_unused]] const ValueNode &tuningData)
++{
++	context.ctrlMap[&controls::Gamma] =
++		ControlInfo(0.1f, 10.0f, kDefaultGamma);
++	context.ctrlMap[&controls::Contrast] =
++		ControlInfo(0.0f, 2.0f, kDefaultContrast);
++	if (context.ccmEnabled)
++		context.ctrlMap[&controls::Saturation] =
++			ControlInfo(0.0f, 2.0f, kDefaultSaturation);
++	return 0;
++}
++
++int Adjust::configure(IPAContext &context,
++		      [[maybe_unused]] const IPAConfigInfo &configInfo)
++{
++	context.activeState.knobs.gamma = kDefaultGamma;
++	context.activeState.knobs.contrast = std::optional<float>();
++	context.activeState.knobs.saturation = std::optional<float>();
++
++	return 0;
++}
++
++void Adjust::queueRequest(typename Module::Context &context,
++			  [[maybe_unused]] const uint32_t frame,
++			  [[maybe_unused]] typename Module::FrameContext &frameContext,
++			  const ControlList &controls)
++{
++	const auto &gamma = controls.get(controls::Gamma);
++	if (gamma.has_value()) {
++		context.activeState.knobs.gamma = gamma.value();
++		LOG(IPASoftAdjust, Debug) << "Setting gamma to " << gamma.value();
++	}
++
++	const auto &contrast = controls.get(controls::Contrast);
++	if (contrast.has_value()) {
++		context.activeState.knobs.contrast = contrast;
++		LOG(IPASoftAdjust, Debug) << "Setting contrast to " << contrast.value();
++	}
++
++	const auto &saturation = controls.get(controls::Saturation);
++	if (saturation.has_value()) {
++		context.activeState.knobs.saturation = saturation;
++		LOG(IPASoftAdjust, Debug) << "Setting saturation to " << saturation.value();
++	}
++}
++
++void Adjust::applySaturation(Matrix<float, 3, 3> &matrix, float saturation)
++{
++	/* https://en.wikipedia.org/wiki/YCbCr#ITU-R_BT.601_conversion */
++	const Matrix<float, 3, 3> rgb2ycbcr{
++		{ 0.256788235294, 0.504129411765, 0.0979058823529,
++		  -0.148223529412, -0.290992156863, 0.439215686275,
++		  0.439215686275, -0.367788235294, -0.0714274509804 }
++	};
++	const Matrix<float, 3, 3> ycbcr2rgb{
++		{ 1.16438356164, 0, 1.59602678571,
++		  1.16438356164, -0.391762290094, -0.812967647235,
++		  1.16438356164, 2.01723214285, 0 }
++	};
++	const Matrix<float, 3, 3> saturationMatrix{
++		{ 1, 0, 0,
++		  0, saturation, 0,
++		  0, 0, saturation }
++	};
++	matrix =
++		ycbcr2rgb * saturationMatrix * rgb2ycbcr * matrix;
++}
++
++void Adjust::prepare(IPAContext &context,
++		     [[maybe_unused]] const uint32_t frame,
++		     IPAFrameContext &frameContext,
++		     DebayerParams *params)
++{
++	frameContext.gamma = context.activeState.knobs.gamma;
++	frameContext.contrast = context.activeState.knobs.contrast;
++
++	auto &saturation = context.activeState.knobs.saturation;
++	if (context.ccmEnabled && saturation) {
++		applySaturation(context.activeState.combinedMatrix, saturation.value());
++		frameContext.saturation = saturation;
++	}
++
++	params->gamma = 1.0 / context.activeState.knobs.gamma;
++	const float contrast = context.activeState.knobs.contrast.value_or(kDefaultContrast);
++	params->contrastExp = tan(std::clamp(contrast * M_PI_4, 0.0, M_PI_2 - 0.00001));
++}
++
++void Adjust::process([[maybe_unused]] IPAContext &context,
++		     [[maybe_unused]] const uint32_t frame,
++		     IPAFrameContext &frameContext,
++		     [[maybe_unused]] const SwIspStats *stats,
++		     ControlList &metadata)
++{
++	const auto &gamma = frameContext.gamma;
++	metadata.set(controls::Gamma, gamma);
++
++	const auto &contrast = frameContext.contrast;
++	metadata.set(controls::Contrast, contrast.value_or(kDefaultContrast));
++
++	const auto &saturation = frameContext.saturation;
++	metadata.set(controls::Saturation, saturation.value_or(kDefaultSaturation));
++}
++
++REGISTER_IPA_ALGORITHM(Adjust, "Adjust")
++
++} /* namespace ipa::soft::algorithms */
++
++} /* namespace libcamera */
+--- /dev/null
++++ b/src/ipa/softisp/algorithms/adjust.h
+@@ -0,0 +1,50 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2024-2026, Red Hat Inc.
++ *
++ * Color correction matrix
++ */
++
++#pragma once
++
++#include "libcamera/internal/matrix.h"
++
++#include <libipa/interpolator.h>
++
++#include "algorithm.h"
++
++namespace libcamera {
++
++namespace ipa::soft::algorithms {
++
++constexpr float kDefaultGamma = 2.2f;
++
++class Adjust : public Algorithm
++{
++public:
++	Adjust() = default;
++	~Adjust() = default;
++
++	int init(IPAContext &context, const ValueNode &tuningData) override;
++	int configure(IPAContext &context,
++		      const IPAConfigInfo &configInfo) override;
++	void queueRequest(typename Module::Context &context,
++			  const uint32_t frame,
++			  typename Module::FrameContext &frameContext,
++			  const ControlList &controls) override;
++	void prepare(IPAContext &context,
++		     const uint32_t frame,
++		     IPAFrameContext &frameContext,
++		     DebayerParams *params) override;
++	void process(IPAContext &context, const uint32_t frame,
++		     IPAFrameContext &frameContext,
++		     const SwIspStats *stats,
++		     ControlList &metadata) override;
++
++private:
++	void applySaturation(Matrix<float, 3, 3> &ccm, float saturation);
++};
++
++} /* namespace ipa::soft::algorithms */
++
++} /* namespace libcamera */
+--- /dev/null
++++ b/src/ipa/softisp/algorithms/agc.cpp
+@@ -0,0 +1,199 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2024, Red Hat Inc.
++ *
++ * Exposure and gain
++ */
++
++#include "agc.h"
++
++#include <algorithm>
++#include <cmath>
++#include <stdint.h>
++
++#include <libcamera/base/log.h>
++
++#include "control_ids.h"
++
++namespace libcamera {
++
++LOG_DEFINE_CATEGORY(IPASoftExposure)
++
++namespace ipa::soft::algorithms {
++
++/*
++ * The number of bins to use for the optimal exposure calculations.
++ */
++static constexpr unsigned int kExposureBinsCount = 5;
++
++/*
++ * The exposure is optimal when the mean sample value of the histogram is
++ * in the middle of the range.
++ */
++static constexpr float kExposureOptimal = kExposureBinsCount / 2.0;
++
++/*
++ * This implements the hysteresis for the exposure adjustment.
++ * It is small enough to have the exposure close to the optimal, and is big
++ * enough to prevent the exposure from wobbling around the optimal value.
++ */
++static constexpr float kExposureSatisfactory = 0.2;
++
++/*
++ * Proportional gain for exposure/gain adjustment. Maps the MSV error to a
++ * multiplicative correction factor:
++ *
++ *   factor = 1.0 + kExpProportionalGain * error
++ *
++ * With kExpProportionalGain = 0.04:
++ *   - max error ~2.5 -> factor 1.10 (~10% step, same as before)
++ *   - error 1.0      -> factor 1.04 (~4% step)
++ *   - error 0.3      -> factor 1.012 (~1.2% step)
++ *
++ * This replaces the fixed 10% bang-bang step with a proportional correction
++ * that converges smoothly and avoids overshooting near the target.
++ */
++static constexpr float kExpProportionalGain = 0.04;
++
++/*
++ * Maximum multiplicative step per frame, to bound the correction when the
++ * scene changes dramatically.
++ */
++static constexpr float kExpMaxStep = 0.15;
++
++Agc::Agc()
++{
++}
++
++void Agc::updateExposure(IPAContext &context, IPAFrameContext &frameContext, double exposureMSV)
++{
++	int32_t &exposure = frameContext.sensor.exposure;
++	double &again = frameContext.sensor.gain;
++
++	double error = kExposureOptimal - exposureMSV;
++
++	if (std::abs(error) <= kExposureSatisfactory)
++		return;
++
++	/*
++	 * Compute a proportional correction factor. The sign of the error
++	 * determines the direction: positive error means too dark (increase),
++	 * negative means too bright (decrease).
++	 */
++	float step = std::clamp(static_cast<float>(error) * kExpProportionalGain,
++				-kExpMaxStep, kExpMaxStep);
++	float factor = 1.0f + step;
++
++	if (factor > 1.0f) {
++		/* Scene too dark: increase exposure first, then gain. */
++		if (exposure < context.configuration.agc.exposureMax) {
++			int32_t next = static_cast<int32_t>(exposure * factor);
++			exposure = std::max(next, exposure + 1);
++		} else {
++			double next = again * factor;
++			if (next - again < context.configuration.agc.againMinStep)
++				again += context.configuration.agc.againMinStep;
++			else
++				again = next;
++		}
++	} else {
++		/* Scene too bright: decrease gain first, then exposure. */
++		if (again > context.configuration.agc.again10) {
++			double next = again * factor;
++			if (again - next < context.configuration.agc.againMinStep)
++				again -= context.configuration.agc.againMinStep;
++			else
++				again = next;
++		} else {
++			int32_t next = static_cast<int32_t>(exposure * factor);
++			exposure = std::min(next, exposure - 1);
++		}
++	}
++
++	exposure = std::clamp(exposure, context.configuration.agc.exposureMin,
++			      context.configuration.agc.exposureMax);
++	again = std::clamp(again, context.configuration.agc.againMin,
++			   context.configuration.agc.againMax);
++
++	context.activeState.agc.exposure = exposure;
++	context.activeState.agc.again = again;
++
++	LOG(IPASoftExposure, Debug)
++		<< "exposureMSV " << exposureMSV
++		<< " error " << error << " factor " << factor
++		<< " exp " << exposure << " again " << again;
++}
++
++void Agc::process(IPAContext &context,
++		  [[maybe_unused]] const uint32_t frame,
++		  IPAFrameContext &frameContext,
++		  const SwIspStats *stats,
++		  ControlList &metadata)
++{
++	utils::Duration exposureTime =
++		context.configuration.agc.lineDuration * frameContext.sensor.exposure;
++	metadata.set(controls::ExposureTime, exposureTime.get<std::micro>());
++	metadata.set(controls::AnalogueGain, frameContext.sensor.gain);
++
++	if (!context.activeState.agc.valid) {
++		/*
++		 * Init active-state from sensor values in case updateExposure()
++		 * does not run for the first frame.
++		 */
++		context.activeState.agc.exposure = frameContext.sensor.exposure;
++		context.activeState.agc.again = frameContext.sensor.gain;
++		context.activeState.agc.valid = true;
++	}
++
++	if (!stats->valid) {
++		/*
++		 * Use the new exposure and gain values calculated the last time
++		 * there were valid stats.
++		 */
++		frameContext.sensor.exposure = context.activeState.agc.exposure;
++		frameContext.sensor.gain = context.activeState.agc.again;
++		return;
++	}
++
++	/*
++	 * Calculate Mean Sample Value (MSV) according to formula from:
++	 * https://www.araa.asn.au/acra/acra2007/papers/paper84final.pdf
++	 */
++	const auto &histogram = stats->yHistogram;
++	const unsigned int blackLevelHistIdx =
++		context.activeState.blc.level / (256 / SwIspStats::kYHistogramSize);
++	const unsigned int histogramSize =
++		SwIspStats::kYHistogramSize - blackLevelHistIdx;
++	const unsigned int yHistValsPerBin = histogramSize / kExposureBinsCount;
++	const unsigned int yHistValsPerBinMod =
++		histogramSize / (histogramSize % kExposureBinsCount + 1);
++	int exposureBins[kExposureBinsCount] = {};
++	unsigned int denom = 0;
++	unsigned int num = 0;
++
++	if (yHistValsPerBin == 0) {
++		LOG(IPASoftExposure, Debug)
++			<< "Not adjusting exposure due to insufficient histogram data";
++		return;
++	}
++
++	for (unsigned int i = 0; i < histogramSize; i++) {
++		unsigned int idx = (i - (i / yHistValsPerBinMod)) / yHistValsPerBin;
++		exposureBins[idx] += histogram[blackLevelHistIdx + i];
++	}
++
++	for (unsigned int i = 0; i < kExposureBinsCount; i++) {
++		LOG(IPASoftExposure, Debug) << i << ": " << exposureBins[i];
++		denom += exposureBins[i];
++		num += exposureBins[i] * (i + 1);
++	}
++
++	float exposureMSV = (denom == 0 ? 0 : static_cast<float>(num) / denom);
++	updateExposure(context, frameContext, exposureMSV);
++}
++
++REGISTER_IPA_ALGORITHM(Agc, "Agc")
++
++} /* namespace ipa::soft::algorithms */
++
++} /* namespace libcamera */
+--- /dev/null
++++ b/src/ipa/softisp/algorithms/agc.h
+@@ -0,0 +1,33 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2024, Red Hat Inc.
++ *
++ * Exposure and gain
++ */
++
++#pragma once
++
++#include "algorithm.h"
++
++namespace libcamera {
++
++namespace ipa::soft::algorithms {
++
++class Agc : public Algorithm
++{
++public:
++	Agc();
++	~Agc() = default;
++
++	void process(IPAContext &context, const uint32_t frame,
++		     IPAFrameContext &frameContext,
++		     const SwIspStats *stats,
++		     ControlList &metadata) override;
++
++private:
++	void updateExposure(IPAContext &context, IPAFrameContext &frameContext, double exposureMSV);
++};
++
++} /* namespace ipa::soft::algorithms */
++
++} /* namespace libcamera */
+--- /dev/null
++++ b/src/ipa/softisp/algorithms/algorithm.h
+@@ -0,0 +1,22 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2024 Red Hat, Inc.
++ *
++ * Software ISP control algorithm interface
++ */
++
++#pragma once
++
++#include <libipa/algorithm.h>
++
++#include "module.h"
++
++namespace libcamera {
++
++namespace ipa::soft {
++
++using Algorithm = libcamera::ipa::Algorithm<Module>;
++
++} /* namespace ipa::soft */
++
++} /* namespace libcamera */
+--- /dev/null
++++ b/src/ipa/softisp/algorithms/awb.cpp
+@@ -0,0 +1,164 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2024-2026 Red Hat Inc.
++ *
++ * Auto white balance
++ */
++
++#include "awb.h"
++
++#include <numeric>
++#include <stdint.h>
++
++#include <libcamera/base/log.h>
++
++#include <libcamera/control_ids.h>
++
++namespace libcamera {
++
++LOG_DEFINE_CATEGORY(IPASoftAwb)
++
++namespace ipa::soft::algorithms {
++
++/*
++ * \todo Replace it with a proper Lux algorithm
++ */
++static constexpr unsigned int kDefaultLux = 500;
++
++class SimpleAwbStats final : public AwbStats
++{
++public:
++	SimpleAwbStats() = default;
++
++	SimpleAwbStats(const RGB<double> &rgbMeans)
++	{
++		rgbMeans_ = rgbMeans;
++
++		rg_ = rgbMeans_.r() / rgbMeans_.g();
++		bg_ = rgbMeans_.b() / rgbMeans_.g();
++	}
++
++	double computeColourError(const RGB<double> &gains) const override
++	{
++		/*
++		 * Compute the sum of the squared colour error (non-greyness) as
++		 * it appears in the log likelihood equation.
++		 */
++		double deltaR = gains.r() * rg_ - 1.0;
++		double deltaB = gains.b() * bg_ - 1.0;
++		double delta2 = deltaR * deltaR + deltaB * deltaB;
++
++		return delta2;
++	}
++
++	RGB<double> rgbMeans() const override
++	{
++		return rgbMeans_;
++	}
++
++	bool valid() const override
++	{
++		/* Minimum mean value below which AWB can't operate. */
++		constexpr double minValue = 0.2;
++
++		return rgbMeans_.r() > minValue || rgbMeans_.g() > minValue ||
++		       rgbMeans_.b() > minValue;
++	}
++
++private:
++	RGB<double> rgbMeans_;
++	double rg_;
++	double bg_;
++};
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::init
++ */
++int Awb::init(IPAContext &context, const ValueNode &tuningData)
++{
++	return awbAlgo_.init(tuningData, context.ctrlMap);
++}
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::configure
++ */
++int Awb::configure(IPAContext &context,
++		   [[maybe_unused]] const IPAConfigInfo &configInfo)
++{
++	return awbAlgo_.configure(context.activeState.awb);
++}
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::queueRequest
++ */
++void Awb::queueRequest(IPAContext &context, const uint32_t frame,
++		       IPAFrameContext &frameContext,
++		       const ControlList &controls)
++{
++	awbAlgo_.queueRequest(context.activeState.awb, frame, frameContext.awb,
++			      controls);
++}
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::prepare
++ */
++void Awb::prepare(IPAContext &context,
++		  [[maybe_unused]] const uint32_t frame,
++		  IPAFrameContext &frameContext,
++		  DebayerParams *params)
++{
++	awbAlgo_.prepare(context.activeState.awb, frameContext.awb);
++
++	params->gains = frameContext.awb.gains;
++}
++
++SimpleAwbStats Awb::calculateRgbMeans(IPAContext &context,
++				      const SwIspStats *stats) const
++{
++	if (!stats->valid)
++		return {};
++
++	const SwIspStats::Histogram &histogram = stats->yHistogram;
++	const uint8_t blackLevel = context.activeState.blc.level;
++
++	/*
++	 * Black level must be subtracted to get the correct AWB ratios, they
++	 * would be off if they were computed from the whole brightness range
++	 * rather than from the sensor range.
++	 */
++	const uint64_t nPixels = std::accumulate(
++		histogram.begin(), histogram.end(), uint64_t(0));
++	const uint64_t offset = blackLevel * nPixels;
++	const uint64_t minValid = 1;
++
++	/*
++	 * Make sure the sums are at least minValid, while preventing unsigned
++	 * integer underflow.
++	 */
++	const RGB<uint64_t> sum = stats->sum_.max(offset + minValid) - offset;
++
++	RGB<double> rgbMeans = { { static_cast<double>(sum.r()) / nPixels,
++				   static_cast<double>(sum.g()) / nPixels,
++				   static_cast<double>(sum.b()) / nPixels } };
++
++	return SimpleAwbStats(rgbMeans);
++}
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::process
++ */
++void Awb::process(IPAContext &context, [[maybe_unused]] const uint32_t frame,
++		  IPAFrameContext &frameContext, const SwIspStats *stats,
++		  ControlList &metadata)
++{
++	SimpleAwbStats awbStats = calculateRgbMeans(context, stats);
++
++	awbAlgo_.process(context.activeState.awb, frameContext.awb, awbStats,
++			 kDefaultLux, metadata);
++}
++
++REGISTER_IPA_ALGORITHM(Awb, "Awb")
++
++} /* namespace ipa::soft::algorithms */
++
++} /* namespace libcamera */
+--- /dev/null
++++ b/src/ipa/softisp/algorithms/blc.cpp
+@@ -0,0 +1,124 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2024-2025, Red Hat Inc.
++ *
++ * Black level handling
++ */
++
++#include "blc.h"
++
++#include <numeric>
++
++#include <libcamera/base/log.h>
++
++#include "control_ids.h"
++
++namespace libcamera {
++
++namespace ipa::soft::algorithms {
++
++LOG_DEFINE_CATEGORY(IPASoftBL)
++
++BlackLevel::BlackLevel()
++{
++}
++
++int BlackLevel::init([[maybe_unused]] IPAContext &context,
++		     const ValueNode &tuningData)
++{
++	auto blackLevel = tuningData["blackLevel"].get<int16_t>();
++	if (blackLevel.has_value()) {
++		/*
++		 * Convert 16 bit values from the tuning file to 8 bit black
++		 * level for the SoftISP.
++		 */
++		definedLevel_ = blackLevel.value() >> 8;
++	}
++	return 0;
++}
++
++int BlackLevel::configure(IPAContext &context,
++			  [[maybe_unused]] const IPAConfigInfo &configInfo)
++{
++	if (definedLevel_.has_value())
++		context.configuration.black.level = definedLevel_;
++	context.activeState.blc.level =
++		context.configuration.black.level.value_or(16);
++	return 0;
++}
++
++void BlackLevel::prepare(IPAContext &context,
++			 [[maybe_unused]] const uint32_t frame,
++			 [[maybe_unused]] IPAFrameContext &frameContext,
++			 DebayerParams *params)
++{
++	/* Latch the blacklevel gain so GPUISP can apply. */
++	params->blackLevel = RGB<double>(context.activeState.blc.level / 255.0f);
++}
++
++void BlackLevel::process(IPAContext &context,
++			 [[maybe_unused]] const uint32_t frame,
++			 IPAFrameContext &frameContext,
++			 const SwIspStats *stats,
++			 ControlList &metadata)
++{
++	/* Assign each of the R G G B channels as the same black level. */
++	const int32_t blackLevel = context.activeState.blc.level * 256;
++	const int32_t blackLevels[] = {
++		blackLevel, blackLevel, blackLevel, blackLevel
++	};
++	metadata.set(controls::SensorBlackLevels, blackLevels);
++
++	if (!stats->valid)
++		return;
++
++	if (context.configuration.black.level.has_value())
++		return;
++
++	if (frameContext.sensor.exposure == context.activeState.blc.lastExposure &&
++	    frameContext.sensor.gain == context.activeState.blc.lastGain) {
++		return;
++	}
++
++	const SwIspStats::Histogram &histogram = stats->yHistogram;
++
++	/*
++	 * The constant is selected to be "good enough", not overly
++	 * conservative or aggressive. There is no magic about the given value.
++	 */
++	constexpr float ignoredPercentage = 0.02;
++	const unsigned int total =
++		std::accumulate(begin(histogram), end(histogram), 0);
++	if (total == 0) {
++		LOG(IPASoftBL, Debug) << "Not guessing black level, histogram is empty";
++		return;
++	}
++
++	const unsigned int pixelThreshold = ignoredPercentage * total;
++	const unsigned int histogramRatio = 256 / SwIspStats::kYHistogramSize;
++	const unsigned int currentBlackIdx =
++		context.activeState.blc.level / histogramRatio;
++
++	for (unsigned int i = 0, seen = 0;
++	     i < currentBlackIdx && i < SwIspStats::kYHistogramSize;
++	     i++) {
++		seen += histogram[i];
++		if (seen >= pixelThreshold) {
++			context.activeState.blc.level = i * histogramRatio;
++			context.activeState.blc.lastExposure = frameContext.sensor.exposure;
++			context.activeState.blc.lastGain = frameContext.sensor.gain;
++			LOG(IPASoftBL, Debug)
++				<< "Auto-set black level: "
++				<< i << "/" << SwIspStats::kYHistogramSize
++				<< " (" << 100 * (seen - histogram[i]) / total << "% below, "
++				<< 100 * seen / total << "% at or below)";
++			break;
++		}
++	};
++}
++
++REGISTER_IPA_ALGORITHM(BlackLevel, "BlackLevel")
++
++} /* namespace ipa::soft::algorithms */
++
++} /* namespace libcamera */
+--- /dev/null
++++ b/src/ipa/softisp/algorithms/blc.h
+@@ -0,0 +1,42 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2024, Red Hat Inc.
++ *
++ * Black level handling
++ */
++
++#pragma once
++
++#include <optional>
++#include <stdint.h>
++
++#include "algorithm.h"
++
++namespace libcamera {
++
++namespace ipa::soft::algorithms {
++
++class BlackLevel : public Algorithm
++{
++public:
++	BlackLevel();
++	~BlackLevel() = default;
++
++	int init(IPAContext &context, const ValueNode &tuningData) override;
++	int configure(IPAContext &context, const IPAConfigInfo &configInfo) override;
++	void prepare(IPAContext &context,
++		     const uint32_t frame,
++		     IPAFrameContext &frameContext,
++		     DebayerParams *params) override;
++	void process(IPAContext &context, const uint32_t frame,
++		     IPAFrameContext &frameContext,
++		     const SwIspStats *stats,
++		     ControlList &metadata) override;
++
++private:
++	std::optional<uint8_t> definedLevel_;
++};
++
++} /* namespace ipa::soft::algorithms */
++
++} /* namespace libcamera */
+--- /dev/null
++++ b/src/ipa/softisp/algorithms/ccm.cpp
+@@ -0,0 +1,84 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2024, Ideas On Board
++ * Copyright (C) 2024-2026, Red Hat Inc.
++ *
++ * Color correction matrix
++ */
++
++#include "ccm.h"
++
++#include "libcamera/internal/matrix.h"
++
++namespace libcamera {
++
++namespace ipa::soft::algorithms {
++
++LOG_DEFINE_CATEGORY(IPASoftCcm)
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::init
++ */
++int Ccm::init(IPAContext &context, const ValueNode &tuningData)
++{
++	/* Informs the 'adjust' component that CCM is available to apply Saturation */
++	context.ccmEnabled = true;
++
++	return ccmAlgo_.init(tuningData, context.ctrlMap);
++}
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::configure
++ */
++int Ccm::configure(IPAContext &context,
++		   [[maybe_unused]] const IPAConfigInfo &configInfo)
++{
++	return ccmAlgo_.configure(context.activeState.ccm,
++				  context.activeState.awb.automatic.colourTemperature);
++}
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::queueRequest
++ */
++void Ccm::queueRequest(IPAContext &context,
++		       [[maybe_unused]] const uint32_t frame,
++		       IPAFrameContext &frameContext,
++		       const ControlList &controls)
++{
++	/* Nothing to do here, the ccm will be calculated in prepare() */
++	if (frameContext.awb.autoEnabled)
++		return;
++
++	ccmAlgo_.queueRequest(context.activeState.ccm, frameContext.ccm, controls);
++}
++
++void Ccm::prepare(IPAContext &context, const uint32_t frame,
++		  IPAFrameContext &frameContext, [[maybe_unused]] DebayerParams *params)
++{
++	if (frameContext.awb.autoEnabled)
++		ccmAlgo_.prepare(context.activeState.ccm, frameContext.ccm,
++				 frame, frameContext.awb.colourTemperature);
++
++	/*
++	 * \todo: Split out combined matrix into individual parameters in
++	 * DebayerParams and perform any pre-multiplication combination in the
++	 * SoftISP component directly.
++	 */
++	context.activeState.combinedMatrix =
++		frameContext.ccm.ccm * context.activeState.combinedMatrix;
++}
++
++void Ccm::process([[maybe_unused]] IPAContext &context,
++		  [[maybe_unused]] const uint32_t frame,
++		  IPAFrameContext &frameContext,
++		  [[maybe_unused]] const SwIspStats *stats,
++		  ControlList &metadata)
++{
++	ccmAlgo_.process(frameContext.ccm, metadata);
++}
++
++REGISTER_IPA_ALGORITHM(Ccm, "Ccm")
++
++} /* namespace ipa::soft::algorithms */
++
++} /* namespace libcamera */
+--- /dev/null
++++ b/src/ipa/softisp/algorithms/ccm.h
+@@ -0,0 +1,50 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2024-2026, Red Hat Inc.
++ *
++ * Color correction matrix
++ */
++
++#pragma once
++
++#include <libcamera/controls.h>
++
++#include "libcamera/internal/value_node.h"
++
++#include "libipa/ccm.h"
++#include "libipa/fixedpoint.h"
++
++#include "algorithm.h"
++#include "ipa_context.h"
++
++namespace libcamera {
++
++namespace ipa::soft::algorithms {
++
++class Ccm : public Algorithm
++{
++public:
++	int init(IPAContext &context, const ValueNode &tuningData) override;
++
++	int configure(IPAContext &context, const IPAConfigInfo &configInfo) override;
++
++	void queueRequest(IPAContext &context, const uint32_t frame,
++			  IPAFrameContext &frameContext,
++			  const ControlList &controls) override;
++
++	void prepare(IPAContext &context,
++		     const uint32_t frame,
++		     IPAFrameContext &frameContext,
++		     DebayerParams *params) override;
++	void process(IPAContext &context, const uint32_t frame,
++		     IPAFrameContext &frameContext,
++		     const SwIspStats *stats,
++		     ControlList &metadata) override;
++
++private:
++	CcmAlgorithm<Q<4, 16>> ccmAlgo_;
++};
++
++} /* namespace ipa::soft::algorithms */
++
++} /* namespace libcamera */
+--- /dev/null
++++ b/src/ipa/softisp/algorithms/meson.build
+@@ -0,0 +1,9 @@
++# SPDX-License-Identifier: CC0-1.0
++
++soft_simple_ipa_algorithms = files([
++    'adjust.cpp',
++    'awb.cpp',
++    'agc.cpp',
++    'blc.cpp',
++    'ccm.cpp',
++])
+--- /dev/null
++++ b/src/ipa/softisp/data/uncalibrated.yaml
+@@ -0,0 +1,19 @@
++# SPDX-License-Identifier: CC0-1.0
++%YAML 1.1
++---
++version: 1
++algorithms:
++  - BlackLevel:
++  - Awb:
++  # Color correction matrices can be defined here. The CCM algorithm
++  # has a significant performance impact, and should only be enabled
++  # if tuned.
++  # - Ccm:
++  #     ccms:
++  #       - ct: 6500
++  #         ccm: [ 1, 0, 0,
++  #                0, 1, 0,
++  #                0, 0, 1]
++  - Adjust:
++  - Agc:
++...
+--- /dev/null
++++ b/src/ipa/softisp/ipa_context.cpp
+@@ -0,0 +1,102 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2021, Google Inc.
++ * Copyright (C) 2024 Red Hat Inc.
++ *
++ * Software ISP IPA Context
++ */
++
++#include "ipa_context.h"
++
++/**
++ * \file ipa_context.h
++ * \brief Context and state information shared between the algorithms
++ */
++
++namespace libcamera::ipa::soft {
++
++/**
++ * \struct IPASessionConfiguration
++ * \brief Session configuration for the IPA module
++ *
++ * The session configuration contains all IPA configuration parameters that
++ * remain constant during the capture session, from IPA module start to stop.
++ * It is typically set during the configure() operation of the IPA module, but
++ * may also be updated in the start() operation.
++ */
++
++/**
++ * \struct IPAActiveState
++ * \brief The active state of the IPA algorithms
++ *
++ * The IPA is fed with the statistics generated from the latest frame processed.
++ * The statistics are then processed by the IPA algorithms to compute parameters
++ * required for the next frame capture and processing. The current state of the
++ * algorithms is reflected through the IPAActiveState to store the values most
++ * recently computed by the IPA algorithms.
++ */
++
++/**
++ * \struct IPAContext
++ * \brief Global IPA context data shared between all algorithms
++ *
++ * \var IPAContext::configuration
++ * \brief The IPA session configuration, immutable during the session
++ *
++ * \var IPAContext::frameContexts
++ * \brief Ring buffer of the IPAFrameContext(s)
++ *
++ * \var IPAContext::activeState
++ * \brief The current state of IPA algorithms
++ */
++
++/**
++ * \var IPASessionConfiguration::gamma
++ * \brief Gamma value to be used in the raw image processing
++ */
++
++/**
++ * \var IPAActiveState::black
++ * \brief Context for the Black Level algorithm
++ *
++ * \var IPAActiveState::black.level
++ * \brief Current determined black level
++ */
++
++/**
++ * \var IPAActiveState::gains
++ * \brief Context for gains in the Colors algorithm
++ *
++ * \var IPAActiveState::gains.red
++ * \brief Gain of red color
++ *
++ * \var IPAActiveState::gains.green
++ * \brief Gain of green color
++ *
++ * \var IPAActiveState::gains.blue
++ * \brief Gain of blue color
++ */
++
++/**
++ * \var IPAActiveState::agc
++ * \brief Context for the AGC algorithm
++ *
++ * \var IPAActiveState::agc.exposure
++ * \brief Current exposure value
++ *
++ * \var IPAActiveState::agc.again
++ * \brief Current analog gain value
++ */
++
++/**
++ * \var IPAActiveState::gamma
++ * \brief Context for gamma in the Colors algorithm
++ *
++ * \var IPAActiveState::gamma.gammaTable
++ * \brief Computed gamma table
++ *
++ * \var IPAActiveState::gamma.blackLevel
++ * \brief Black level used for the gamma table computation
++ */
++
++} /* namespace libcamera::ipa::soft */
+--- /dev/null
++++ b/src/ipa/softisp/ipa_context.h
+@@ -0,0 +1,96 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2024-2026 Red Hat, Inc.
++ *
++ * Simple pipeline IPA Context
++ */
++
++#pragma once
++
++#include <array>
++#include <optional>
++#include <stdint.h>
++
++#include <libcamera/controls.h>
++
++#include "libcamera/internal/matrix.h"
++#include "libcamera/internal/vector.h"
++
++#include <libipa/awb.h>
++#include <libipa/ccm.h>
++#include <libipa/fc_queue.h>
++
++#include "core_ipa_interface.h"
++
++namespace libcamera {
++
++namespace ipa::soft {
++
++struct IPASessionConfiguration {
++	struct {
++		int32_t exposureMin, exposureMax;
++		double againMin, againMax, again10, againMinStep;
++		utils::Duration lineDuration;
++	} agc;
++	struct {
++		std::optional<uint8_t> level;
++	} black;
++};
++
++struct IPAActiveState {
++	ipa::awb::ActiveState awb;
++	ipa::ccm::ActiveState ccm;
++
++	struct {
++		int32_t exposure;
++		double again;
++		bool valid;
++	} agc;
++
++	struct {
++		uint8_t level;
++		int32_t lastExposure;
++		double lastGain;
++	} blc;
++
++	Matrix<float, 3, 3> combinedMatrix;
++
++	struct {
++		float gamma;
++		/* 0..2 range, 1.0 = normal */
++		std::optional<float> contrast;
++		std::optional<float> saturation;
++	} knobs;
++};
++
++struct IPAFrameContext : public FrameContext {
++	ipa::awb::FrameContext awb;
++	ipa::ccm::FrameContext ccm;
++
++	struct {
++		int32_t exposure;
++		double gain;
++	} sensor;
++
++	float gamma;
++	std::optional<float> contrast;
++	std::optional<float> saturation;
++};
++
++struct IPAContext {
++	IPAContext(unsigned int frameContextSize)
++		: frameContexts(frameContextSize)
++	{
++	}
++
++	IPACameraSensorInfo sensorInfo;
++	IPASessionConfiguration configuration;
++	IPAActiveState activeState;
++	FCQueue<IPAFrameContext> frameContexts;
++	ControlInfoMap::Map ctrlMap;
++	bool ccmEnabled = false;
++};
++
++} /* namespace ipa::soft */
++
++} /* namespace libcamera */
+--- /dev/null
++++ b/src/ipa/softisp/meson.build
+@@ -0,0 +1,31 @@
++# SPDX-License-Identifier: CC0-1.0
++
++subdir('algorithms')
++subdir('data')
++
++ipa_name = 'ipa_soft_simple'
++
++soft_simple_sources = files([
++    'ipa_context.cpp',
++    'soft_simple.cpp',
++])
++
++soft_simple_sources += soft_simple_ipa_algorithms
++
++mod = shared_module(ipa_name, soft_simple_sources,
++                    name_prefix : '',
++                    include_directories : [ipa_includes],
++                    dependencies : [libcamera_private, libipa_dep],
++                    install : true,
++                    install_dir : ipa_install_dir)
++
++if ipa_sign_module
++    custom_target(ipa_name + '.so.sign',
++                  input : mod,
++                  output : ipa_name + '.so.sign',
++                  command : [ipa_sign, ipa_priv_key, '@INPUT@', '@OUTPUT@'],
++                  install : false,
++                  build_by_default : true)
++endif
++
++ipa_names += ipa_name

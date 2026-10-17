@@ -1,0 +1,638 @@
+From e60d700315686913a0e6c0fd3ccb2d11056bff58 Mon Sep 17 00:00:00 2001
+From: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Date: Mon, 20 Jul 2026 13:03:13 +0200
+Subject: [PATCH] ipa: libipa: lsc: Quantize gains in LscAlgorithm
+
+Template the LscAlgorithm class with the LSC engine register format and
+make lsc::Components<> parameteric on the type used to store the
+quantized LSC gains.
+
+This allows to quantize gains in the LscAlgorithm class and not in the
+IPA modules.
+
+Move the Components<> and ComponentsMap<> type to lsc.h in order for IPA
+modules to be able to access the quantized gains, and make the existing
+float-based Components internal to LscImplementation to be used as the
+exchange format between LscImplementation and LscAlgorithm.
+
+Split the LscAlgorithm class in two, one LscAlgorithmBase one for
+non-templated function implementations and one for the templated
+configure() implementation and for templated data members and accessor.
+
+Note that currently table-based LSC data do not require quantization as
+they're already expressed in register format in tuning files. This will
+change soon to make it easier to re-use LSC data between different
+platforms by expressing gains in floating point format in tuning files
+as well.
+
+Signed-off-by: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Reviewed-by: Kieran Bingham <kieran.bingham@ideasonboard.com>
+Reviewed-by: Stefan Klug <stefan.klug@ideasonboard.com>
+---
+ src/ipa/libipa/lsc.cpp            | 134 +++++++++++++++++++++++-------
+ src/ipa/libipa/lsc.h              |  83 +++++++++++++++---
+ src/ipa/libipa/lsc_base.cpp       |  75 +++++++----------
+ src/ipa/libipa/lsc_base.h         |  31 +------
+ src/ipa/libipa/lsc_polynomial.cpp |   6 +-
+ src/ipa/libipa/lsc_polynomial.h   |   2 +-
+ src/ipa/libipa/lsc_table.cpp      |   2 +-
+ src/ipa/libipa/lsc_table.h        |   4 +-
+ src/ipa/rkisp1/algorithms/lsc.cpp |  28 +++----
+ src/ipa/rkisp1/algorithms/lsc.h   |   6 +-
+ 10 files changed, 231 insertions(+), 140 deletions(-)
+
+--- a/src/ipa/libipa/lsc.cpp
++++ b/src/ipa/libipa/lsc.cpp
+@@ -46,11 +46,91 @@ namespace lsc {
+  * \brief Boolean flag for the LscAlgorithm updated status
+  */
+ 
++/**
++ * \typedef Components
++ * \brief Associate colour components with a list of gains in register format
++ * \tparam T The type used to store the gain values
++ *
++ * LSC tables are defined as a list of gain values associated to a colour
++ * component.
++ *
++ * As different ISPs support different colour components (usually 'r', 'gr',
++ * 'gb', 'b' or just 'r', 'g', 'b') this class associates a string
++ * identifier for the colour component to a list of gains.
++ *
++ * Each key name shall match an entry in the tuning file.
++ *
++ * The list of keys is provided to the LscAlgorithm class using \a
++ * LscDescriptor::keys.
++ *
++ * The gain values are expressed in fixed-point register format stored in
++ * variabled of type \a T, as each platform potentially has a different register
++ * width.
++ */
++
++/**
++ * \typedef ComponentsMap
++ * \brief Associate a colour temperature to a LSC table
++ * \tparam T The type of the gain values
++ *
++ * An LSC table is generated during the tuning phase for a specific colour
++ * temperature, and a tuning file usually contains LSC tables generated for
++ * several different colour temperatures.
++ */
++
+ } /* namespace lsc */
+ 
++#ifndef __DOXYGEN__
++template<typename T>
++void interpolateVector(const std::vector<T> &a,
++		       const std::vector<T> &b,
++		       std::vector<T> &dest, double lambda)
++{
++	ASSERT(a.size() == b.size());
++	dest.resize(a.size());
++	for (size_t i = 0; i < a.size(); i++)
++		dest[i] = a[i] * (1.0 - lambda) + b[i] * lambda;
++}
++
++template<>
++void Interpolator<lsc::Components<uint16_t>>::
++	interpolate(const lsc::Components<uint16_t> &a,
++		    const lsc::Components<uint16_t> &b,
++		    lsc::Components<uint16_t> &dest,
++		    double lambda)
++{
++	for (auto const &[k, v] : a)
++		interpolateVector(v, b.at(k), dest[k], lambda);
++}
++#endif
++
++/**
++ * \class LscAlgorithmBase
++ * \brief Base class for LscAlgorithm
++ *
++ * Base class for LscAlgorithm for non-templated functions implementation
++ */
++
++/**
++ * \var LscAlgorithmBase::impl_
++ * \brief The LSC algorithm implementation
++ *
++ * There are two classes derived from LscImplementation, the LscTable and
++ * LscPolynomial ones. Which one to instantiate is decided by parsing the tuning
++ * file.
++ */
++
++/**
++ * \var LscAlgorithmBase::polynomial_
++ * \brief Boolean flag for polynomial LSC
++ *
++ * Set to true if polynomial LSC is in use.
++ */
++
+ /**
+  * \class LscAlgorithm
+  * \brief libIPA LSC algorithm implementation
++ * \tparam U The platform fixed-point register format representation
+  *
+  * Due to the optical characteristics of the lens, the light intensity received
+  * by the sensor is not uniform. The Lens Shading Correction algorithm applies
+@@ -192,6 +272,14 @@ namespace lsc {
+  *
+  * \todo Implement grid based re-sampling
+  *
++ * After re-sampling, the LSC tables gain values are converted from their
++ * floating point representation (LscImplementation::Components) to the
++ * platform's register representation (lsc::Components<>). Grid-based LSC tables
++ * currently already contain gains represented in register format, so no
++ * quantization is necessary but only a simple cast is required.
++ *
++ * \todo Express gains in floating point format for grid-based LSC tables
++ *
+  * When the IPA algorithms wants to get access to the (re-sampled) tables to
+  * program its LSC engine, it uses LscAlgorithm::interpolateComponents() to get
+  * an LSC table interpolated by the LscAlgorithm class for the specified colour
+@@ -209,8 +297,8 @@ namespace lsc {
+  *
+  * \return 0 on success, a negative error code otherwise
+  */
+-int LscAlgorithm::init(const ValueNode &tuningData, ControlInfoMap::Map &controls,
+-		       const LscDescriptor &descriptor)
++int LscAlgorithmBase::init(const ValueNode &tuningData, ControlInfoMap::Map &controls,
++			   const LscDescriptor &descriptor)
+ {
+ 	polynomial_ = false;
+ 
+@@ -245,12 +333,15 @@ int LscAlgorithm::init(const ValueNode &
+ }
+ 
+ /**
++ * \fn LscAlgorithm::configure()
++ * \brief Re-sample and quantize LSC data
+  * \param[in] state The LSC active state
+  * \param[in] analogCrop The current sensor analog crop rectangle
+  * \param[in] xPos List of horizontal positions of the LSC grid nodes
+  * \param[in] yPos List of vertical positions of the LSC grid nodes
+  *
+- * Re-sample the LSC data for an \a analogCrop.
++ * Re-sample the LSC data for an \a analogCrop and convert gains to their
++ * register representation using the class template paramter \a U.
+  *
+  * LSC tables are generated at tuning time using a known sensor configuration.
+  * When a new streaming session is started, it might use a different sensor
+@@ -263,30 +354,12 @@ int LscAlgorithm::init(const ValueNode &
+  *
+  * \sa LscImplementation::sampleForCrop
+  *
++ * Once tables have been re-sampled, they get quantized to the platform's
++ * fixed-point register representation using the LscAlgorithm template parameter
++ * \a U.
++ *
+  * \return 0 on success, a negative error code otherwise
+  */
+-int LscAlgorithm::configure(lsc::ActiveState &state, const Rectangle &analogCrop,
+-			    const std::vector<double> &xPos,
+-			    const std::vector<double> &yPos)
+-{
+-	LOG(Lsc, Debug) << "Sample Lsc data for " << analogCrop;
+-	lsc::ComponentsMap lscData =
+-		impl_->sampleForCrop(analogCrop, xPos, yPos);
+-
+-	/*
+-	 * Retain a copy of the components table.
+-	 *
+-	 * We could avoid a copy here if getComponents() could
+-	 * return sets_.data() but I wasn't able to work around the
+-	 * compiler refusing it.
+-	 */
+-	lscData_ = lscData;
+-
+-	sets_.setData(std::move(lscData));
+-	state.enabled = true;
+-
+-	return 0;
+-}
+ 
+ /**
+  * \brief Queue a request to the lsc algorithm
+@@ -297,9 +370,9 @@ int LscAlgorithm::configure(lsc::ActiveS
+  * Queue a new list of \a controls to the lsc algorithm.
+  * The only supported control is controls::LensShadingCorrectionEnable.
+  */
+-void LscAlgorithm::queueRequest(lsc::ActiveState &state,
+-				lsc::FrameContext &context,
+-				const ControlList &controls)
++void LscAlgorithmBase::queueRequest(lsc::ActiveState &state,
++				    lsc::FrameContext &context,
++				    const ControlList &controls)
+ {
+ 	const auto &lscEnable = controls.get(controls::LensShadingCorrectionEnable);
+ 	if (lscEnable && *lscEnable != state.enabled) {
+@@ -322,7 +395,7 @@ void LscAlgorithm::queueRequest(lsc::Act
+  * Populates the list of \a metadata with controls handled by the LscAlgorithm
+  * class. The only supported metadata is controls::LensShadingCorrectionEnable.
+  */
+-void LscAlgorithm::process(lsc::FrameContext &context, ControlList &metadata)
++void LscAlgorithmBase::process(lsc::FrameContext &context, ControlList &metadata)
+ {
+ 	metadata.set(controls::LensShadingCorrectionEnable, context.enabled);
+ }
+@@ -350,8 +423,7 @@ void LscAlgorithm::process(lsc::FrameCon
+ 
+ /**
+  * \fn LscAlgorithm::getComponents
+- *
+- * Return the map of LSC data per-colour-temperature.
++ * \brief Return the map of LSC data per-colour-temperature
+  *
+  * Calling this function is only valid after LscAlgorithm::configure() has been
+  * called. An empty components list is returned otherwise.
+--- a/src/ipa/libipa/lsc.h
++++ b/src/ipa/libipa/lsc.h
+@@ -33,37 +33,96 @@ struct FrameContext {
+ 	bool update;
+ };
+ 
++template<typename T>
++using Components = std::map<std::string, std::vector<T>, std::less<>>;
++
++template<typename T>
++using ComponentsMap = std::map<unsigned int, Components<T>>;
++
+ } /* namespace lsc */
+ 
+-class LscAlgorithm
++#ifndef __DOXYGEN__
++template<>
++void Interpolator<lsc::Components<uint16_t>>::
++	interpolate(const lsc::Components<uint16_t> &a,
++		    const lsc::Components<uint16_t> &b,
++		    lsc::Components<uint16_t> &dest,
++		    double lambda);
++#endif /* __DOXYGEN__ */
++
++class LscAlgorithmBase
+ {
+ public:
+ 	int init(const ValueNode &tuningData, ControlInfoMap::Map &controls,
+ 		 const LscDescriptor &descriptor);
+ 
+-	int configure(lsc::ActiveState &state, const Rectangle &analogCrop,
+-		      const std::vector<double> &xPos,
+-		      const std::vector<double> &yPos);
+-
+ 	void queueRequest(lsc::ActiveState &state, lsc::FrameContext &context,
+ 			  const ControlList &controls);
+ 	void process(lsc::FrameContext &context, ControlList &metadata);
+ 
+-	const lsc::Components interpolateComponents(unsigned int ct)
++protected:
++	LscAlgorithmBase() = default;
++
++	std::unique_ptr<LscImplementation> impl_;
++	bool polynomial_;
++};
++
++template<typename U>
++class LscAlgorithm : public LscAlgorithmBase
++{
++private:
++	using Components = lsc::Components<typename U::QuantizedType>;
++	using ComponentsMap = lsc::ComponentsMap<typename U::QuantizedType>;
++
++public:
++	LscAlgorithm() = default;
++
++	int configure(lsc::ActiveState &state, const Rectangle &analogCrop,
++		      const std::vector<double> &xPos,
++		      const std::vector<double> &yPos)
++	{
++		LscImplementation::ComponentsMap data =
++			impl_->sampleForCrop(analogCrop, xPos, yPos);
++
++		ComponentsMap lscData;
++		for (const auto &[t, c] : data) {
++			Components &comp = lscData[t];
++
++			for (const auto &[k, gains] : c) {
++				auto &quantizedGains = comp[k];
++				quantizedGains.reserve(gains.size());
++
++				for (const float &gain : gains) {
++					/*
++					 * Tabular LSC tables already store
++					 * quantized values.
++					 */
++					if (polynomial_)
++						quantizedGains.push_back(U(gain).quantized());
++					else
++						quantizedGains.push_back(gain);
++				}
++			}
++		}
++
++		sets_.setData(std::move(lscData));
++		state.enabled = true;
++
++		return 0;
++	}
++
++	const Components interpolateComponents(unsigned int ct)
+ 	{
+ 		return sets_.getInterpolated(ct);
+ 	}
+ 
+-	const lsc::ComponentsMap getComponents()
++	const ComponentsMap &getComponents() const
+ 	{
+-		return lscData_;
++		return sets_.data();
+ 	}
+ 
+ private:
+-	std::unique_ptr<LscImplementation> impl_;
+-	Interpolator<lsc::Components> sets_;
+-	lsc::ComponentsMap lscData_;
+-	bool polynomial_;
++	Interpolator<Components> sets_;
+ };
+ 
+ } /* namespace ipa */
+--- a/src/ipa/libipa/lsc_base.cpp
++++ b/src/ipa/libipa/lsc_base.cpp
+@@ -16,49 +16,6 @@ namespace libcamera {
+ 
+ namespace ipa {
+ 
+-namespace lsc {
+-
+-/**
+- * \typedef Components
+- * \brief Associate colour components with a list of gains
+- *
+- * LSC tables are defined as a list of gain values associated to a colour
+- * component.
+- *
+- * As different ISPs support different colour components (usually 'r', 'gr',
+- * 'gb', 'b' or just 'r', 'g', 'b') this class associates a string
+- * identifier for the colour component to a list of gains.
+- *
+- * Each key name shall match an entry in the tuning file.
+- *
+- * The list of keys is provided to the LscAlgorithm class using \a
+- * LscDescriptor::keys.
+- */
+-
+-/**
+- * \typedef ComponentsMap
+- * \brief Associate a colour temperature to a LSC table
+- *
+- * An LSC table is generated during the tuning phase for a specific colour
+- * temperature, and a tuning file usually contains LSC tables generated for
+- * several different colour temperatures.
+- */
+-
+-} /* namespace lsc */
+-
+-#ifndef __DOXYGEN__
+-template<>
+-void Interpolator<lsc::Components>::
+-	interpolate(const lsc::Components &a,
+-		    const lsc::Components &b,
+-		    lsc::Components &dest,
+-		    double lambda)
+-{
+-	for (auto const &[k, v] : a)
+-		interpolateVector(v, b.at(k), dest[k], lambda);
+-}
+-#endif
+-
+ /**
+  * \struct LscDescriptor
+  * \brief Describe the ISP LSC engine
+@@ -91,6 +48,38 @@ void Interpolator<lsc::Components>::
+  */
+ 
+ /**
++ * \typedef LscImplementation::Components
++ * \brief Associate colour components with a list of gains in float format
++ *
++ * LSC tables are defined as a list of gain values associated to a colour
++ * component.
++ *
++ * As different ISP support different colour components (usually 'r', 'gr',
++ * 'gb', 'b' or just 'r', 'g', 'b') this class associates a string
++ * identifier for the colour component to a list of gains.
++ *
++ * The gain values are represented as floats and are either loaded from tuning
++ * file or are the result of a polynomial expansion, depending on the
++ * LscImplementation derived class in use (LscTable or LscPolynomial).
++ *
++ * The gain values are converted to the platform's register format before being
++ * returned to the IPA module by LscAlgorithm::configure().
++ *
++ * \todo Tabular LSC data are already expressed in register format. Make the
++ * tuning files express gains in float format as well and actually perform
++ * quantization in LscAlgorithm::configure().
++ */
++
++/**
++ * \typedef LscImplementation::ComponentsMap
++ * \brief Associate a colour temperature to a LSC table
++ *
++ * An LSC table is generated during the tuning phase for a specific colour
++ * temperature, and a tuning file usually contains LSC tables generated for
++ * several different colour temperatures.
++ */
++
++/**
+  * \fn LscImplementation::~LscImplementation
+  * \brief Virtual class destructor
+  */
+--- a/src/ipa/libipa/lsc_base.h
++++ b/src/ipa/libipa/lsc_base.h
+@@ -24,32 +24,6 @@ namespace libcamera {
+ 
+ namespace ipa {
+ 
+-namespace lsc {
+-
+-using Components = std::map<std::string, std::vector<float>, std::less<>>;
+-using ComponentsMap = std::map<unsigned int, Components>;
+-
+-} /* namespace lsc */
+-
+-#ifndef __DOXYGEN__
+-template<typename T>
+-void interpolateVector(const std::vector<T> &a, const std::vector<T> &b,
+-		       std::vector<T> &dest, double lambda)
+-{
+-	ASSERT(a.size() == b.size());
+-	dest.resize(a.size());
+-	for (size_t i = 0; i < a.size(); i++)
+-		dest[i] = a[i] * (1.0 - lambda) + b[i] * lambda;
+-}
+-
+-template<>
+-void Interpolator<lsc::Components>::
+-	interpolate(const lsc::Components &a,
+-		    const lsc::Components &b,
+-		    lsc::Components &dest,
+-		    double lambda);
+-#endif /* __DOXYGEN__ */
+-
+ struct LscDescriptor {
+ 	std::vector<std::string> keys;
+ 	unsigned int numHSamples;
+@@ -60,12 +34,15 @@ struct LscDescriptor {
+ class LscImplementation
+ {
+ public:
++	using Components = std::map<std::string, std::vector<float>, std::less<>>;
++	using ComponentsMap = std::map<unsigned int, Components>;
++
+ 	virtual ~LscImplementation() {}
+ 
+ 	virtual int parseLscData(const ValueNode &tuningData,
+ 				 const LscDescriptor &descriptor) = 0;
+ 
+-	virtual lsc::ComponentsMap
++	virtual ComponentsMap
+ 	sampleForCrop(const Rectangle &cropRectangle,
+ 		      std::vector<double> xPos, std::vector<double> yPos) = 0;
+ };
+--- a/src/ipa/libipa/lsc_polynomial.cpp
++++ b/src/ipa/libipa/lsc_polynomial.cpp
+@@ -194,15 +194,15 @@ int LscPolynomial::parseLscData(const Va
+  * [0, 0.0625, 0.125, 0.1875, ... , 1]. It is expected that the first position
+  * is 0 and the last position is 1.
+  */
+-lsc::ComponentsMap
++LscImplementation::ComponentsMap
+ LscPolynomial::sampleForCrop(const Rectangle &cropRectangle,
+ 			     std::vector<double> xPos, std::vector<double> yPos)
+ {
+ 
+-	lsc::ComponentsMap components;
++	LscImplementation::ComponentsMap components;
+ 
+ 	for (const auto &[t, c] : lscData_) {
+-		lsc::Components &comp = components[t];
++		LscImplementation::Components &comp = components[t];
+ 
+ 		for (const auto &[k, p] : c)
+ 			comp.try_emplace(k, samplePolynomial(p, xPos, yPos,
+--- a/src/ipa/libipa/lsc_polynomial.h
++++ b/src/ipa/libipa/lsc_polynomial.h
+@@ -60,7 +60,7 @@ public:
+ 	int parseLscData(const ValueNode &sets,
+ 			 const LscDescriptor &descriptor) override;
+ 
+-	lsc::ComponentsMap
++	LscImplementation::ComponentsMap
+ 	sampleForCrop(const Rectangle &cropRectangle,
+ 		      std::vector<double> xPos, std::vector<double> yPos) override;
+ 
+--- a/src/ipa/libipa/lsc_table.cpp
++++ b/src/ipa/libipa/lsc_table.cpp
+@@ -59,7 +59,7 @@ int LscTable::parseLscData(const ValueNo
+ int LscTable::parseLscComponent(const ValueNode &yamlSet,
+ 				unsigned int ct, const LscDescriptor &descriptor)
+ {
+-	lsc::Components component;
++	LscImplementation::Components component;
+ 	for (auto &k : descriptor.keys) {
+ 		auto [it, inserted] =
+ 			component.try_emplace(k, parseTable(yamlSet,
+--- a/src/ipa/libipa/lsc_table.h
++++ b/src/ipa/libipa/lsc_table.h
+@@ -29,7 +29,7 @@ public:
+ 	int parseLscData(const ValueNode &sets,
+ 			 const LscDescriptor &descriptor) override;
+ 
+-	lsc::ComponentsMap
++	LscImplementation::ComponentsMap
+ 	sampleForCrop([[maybe_unused]] const Rectangle &cropRectangle,
+ 		      [[maybe_unused]] std::vector<double> xPos,
+ 		      [[maybe_unused]] std::vector<double> yPos) override
+@@ -47,7 +47,7 @@ private:
+ 					 unsigned int numHSamples,
+ 					 unsigned int numVSamples);
+ 
+-	lsc::ComponentsMap lscData_;
++	LscImplementation::ComponentsMap lscData_;
+ };
+ 
+ } /* namespace ipa */
+--- a/src/ipa/rkisp1/algorithms/lsc.cpp
++++ b/src/ipa/rkisp1/algorithms/lsc.cpp
+@@ -175,23 +175,16 @@ void LensShadingCorrection::setParameter
+ }
+ 
+ void LensShadingCorrection::copyTable(rkisp1_cif_isp_lsc_config &config,
+-				      const lsc::Components &set)
++				      const lsc::Components<uint16_t> &set)
+ {
+-	/*
+-	 * The hardware uses 2.10 fixed point format and limits the legal values
+-	 * to [1..3.999]. Scale and clamp the sampled values accordingly.
+-	 */
+-	const auto quantizeSet = [&](const std::string &key, uint16_t *dst) {
+-		const auto &s = set.at(key);
+-		std::transform(s.begin(), s.end(), dst, [](float f) {
+-				return std::clamp<uint16_t>(f * 1024, 1024, 4095);
+-				});
+-	};
+-
+-	quantizeSet("r", &config.r_data_tbl[0][0]);
+-	quantizeSet("gr", &config.gr_data_tbl[0][0]);
+-	quantizeSet("gb", &config.gb_data_tbl[0][0]);
+-	quantizeSet("b", &config.b_data_tbl[0][0]);
++	const auto &r = set.at("r");
++	std::copy(r.begin(), r.end(), &config.r_data_tbl[0][0]);
++	const auto &gr = set.at("gr");
++	std::copy(gr.begin(), gr.end(), &config.gr_data_tbl[0][0]);
++	const auto &gb = set.at("gb");
++	std::copy(gb.begin(), gb.end(), &config.gb_data_tbl[0][0]);
++	const auto &b = set.at("b");
++	std::copy(b.begin(), b.end(), &config.b_data_tbl[0][0]);
+ }
+ 
+ /**
+@@ -241,8 +234,7 @@ void LensShadingCorrection::prepare([[ma
+ 
+ 	setParameters(*config);
+ 
+-	const lsc::Components &set = lscAlgo_.interpolateComponents(quantizedCt);
+-	copyTable(*config, set);
++	copyTable(*config, lscAlgo_.interpolateComponents(quantizedCt));
+ 
+ 	lastAppliedCt_ = ct;
+ 	lastAppliedQuantizedCt_ = quantizedCt;
+--- a/src/ipa/rkisp1/algorithms/lsc.h
++++ b/src/ipa/rkisp1/algorithms/lsc.h
+@@ -12,6 +12,7 @@
+ #include <linux/rkisp1-config.h>
+ 
+ #include "libcamera/internal/value_node.h"
++#include "libipa/fixedpoint.h"
+ 
+ #include "libipa/lsc.h"
+ 
+@@ -41,7 +42,8 @@ public:
+ 		     ControlList &metadata) override;
+ private:
+ 	void setParameters(rkisp1_cif_isp_lsc_config &config);
+-	void copyTable(rkisp1_cif_isp_lsc_config &config, const lsc::Components &set0);
++	void copyTable(rkisp1_cif_isp_lsc_config &config,
++		       const lsc::Components<uint16_t> &set);
+ 
+ 	std::vector<double> xSize_;
+ 	std::vector<double> ySize_;
+@@ -55,7 +57,7 @@ private:
+ 	unsigned int lastAppliedCt_;
+ 	unsigned int lastAppliedQuantizedCt_;
+ 
+-	LscAlgorithm lscAlgo_;
++	LscAlgorithm<UQ<2, 10>> lscAlgo_;
+ };
+ 
+ } /* namespace ipa::rkisp1::algorithms */

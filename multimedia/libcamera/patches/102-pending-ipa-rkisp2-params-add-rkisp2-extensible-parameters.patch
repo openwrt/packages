@@ -1,0 +1,144 @@
+From 77a9a4a9daa7fcd9f14f3da8b610a968990b4957 Mon Sep 17 00:00:00 2001
+From: Paul Elder <paul.elder@ideasonboard.com>
+Date: Tue, 30 Jun 2026 11:52:24 +0900
+Subject: [PATCH] ipa: rkisp2: params: Add rkisp2 extensible parameters wrapper
+
+Add the libipa wrapper for extensible parameters for the rkisp2. This
+wraps the extensible parameters in the rkisp2 uapi to make them easier
+to use within libcamera.
+
+Signed-off-by: Paul Elder <paul.elder@ideasonboard.com>
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+This is in a separate patch to reduce the size of the other patches to
+make them easier to review.
+
+Changes in v2:
+- rename things so that it doesn't conflict with extensible stats that
+  have been added
+- add crop
+---
+ src/ipa/rkisp2/algorithms/algorithm.h | 27 +++++++++
+ src/ipa/rkisp2/params.h               | 85 +++++++++++++++++++++++++++
+ 2 files changed, 112 insertions(+)
+ create mode 100644 src/ipa/rkisp2/algorithms/algorithm.h
+ create mode 100644 src/ipa/rkisp2/params.h
+
+--- /dev/null
++++ b/src/ipa/rkisp2/algorithms/algorithm.h
+@@ -0,0 +1,27 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2026, Ideas On Board
++ *
++ * RkISP2 control algorithm interface
++ */
++
++#pragma once
++
++#include <linux/media/rockchip/rkisp2-config.h>
++
++#include <libipa/algorithm.h>
++
++#include "module.h"
++
++namespace libcamera {
++
++namespace ipa::rkisp2 {
++
++class Algorithm : public libcamera::ipa::Algorithm<Module>
++{
++};
++
++} /* namespace ipa::rkisp2 */
++
++} /* namespace libcamera */
++
+--- /dev/null
++++ b/src/ipa/rkisp2/params.h
+@@ -0,0 +1,85 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2026, Ideas On Board
++ *
++ * RkISP2 ISP Parameters
++ */
++
++#pragma once
++
++#include <stdint.h>
++
++#include <linux/media/rockchip/rkisp2-config.h>
++#include <linux/videodev2.h>
++
++#include <libipa/v4l2_params.h>
++
++namespace libcamera {
++
++namespace ipa::rkisp2 {
++
++enum class RkISP2ParamsBlocks : uint16_t {
++	Bls,
++	AwbGains,
++	Csm,
++	Ccm,
++	Goc,
++	Lsc,
++	Crop,
++	AeLite,
++	HistLite,
++	HistBig0,
++	HistBig1,
++	HistBig2,
++	AwbMeas,
++};
++
++namespace details {
++
++template<RkISP2ParamsBlocks B>
++struct block_type {
++};
++
++#define RkISP2_DEFINE_PARAMS_BLOCK_TYPE(id, cfgType, blkType)		\
++template<>								\
++struct block_type<RkISP2ParamsBlocks::id> {				\
++	using type = struct rkisp2_params_##cfgType;			\
++	static constexpr rkisp2_params_block_type blockType = 		\
++		rkisp2_params_block_type::RKISP2_PARAMS_BLOCK_##blkType;\
++}
++
++RkISP2_DEFINE_PARAMS_BLOCK_TYPE(Bls,		bls,		BLS);
++RkISP2_DEFINE_PARAMS_BLOCK_TYPE(AwbGains,	awb_gains,	AWB_GAINS);
++RkISP2_DEFINE_PARAMS_BLOCK_TYPE(Csm,		csm,		CSM);
++RkISP2_DEFINE_PARAMS_BLOCK_TYPE(Ccm,		ccm,		CCM);
++RkISP2_DEFINE_PARAMS_BLOCK_TYPE(Goc,		goc,		GOC);
++RkISP2_DEFINE_PARAMS_BLOCK_TYPE(Lsc,		lsc,		LSC);
++RkISP2_DEFINE_PARAMS_BLOCK_TYPE(Crop,		crop,		CROP);
++RkISP2_DEFINE_PARAMS_BLOCK_TYPE(AeLite,		ae_lite,	AE_LITE);
++RkISP2_DEFINE_PARAMS_BLOCK_TYPE(HistLite,	hist_lite,	HIST_LITE);
++RkISP2_DEFINE_PARAMS_BLOCK_TYPE(HistBig0,	hist_big,	HIST_BIG0);
++RkISP2_DEFINE_PARAMS_BLOCK_TYPE(HistBig1,	hist_big,	HIST_BIG1);
++RkISP2_DEFINE_PARAMS_BLOCK_TYPE(HistBig2,	hist_big,	HIST_BIG2);
++RkISP2_DEFINE_PARAMS_BLOCK_TYPE(AwbMeas,	awb_meas,	AWB_MEAS);
++
++struct param_traits {
++	using id_type = RkISP2ParamsBlocks;
++
++	template<id_type Id>
++	using id_to_details = block_type<Id>;
++};
++
++} /* namespace details */
++
++class RkISP2Params : public V4L2Params<details::param_traits>
++{
++public:
++	RkISP2Params(Span<uint8_t> data)
++		: V4L2Params(data, V4L2_ISP_VERSION_V1)
++	{
++	}
++};
++
++} /* namespace ipa::rkisp2 */
++
++} /* namespace libcamera */

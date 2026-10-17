@@ -1,0 +1,693 @@
+From 26e991c01cad259619d739dc36471beab84828ef Mon Sep 17 00:00:00 2001
+From: Paul Elder <paul.elder@ideasonboard.com>
+Date: Mon, 29 Jun 2026 15:05:22 +0900
+Subject: [PATCH] include: linux: rkisp2-config.h: update to v7.2-rc1
+
+Update rkisp2-config.h to the most recent version.
+
+Signed-off-by: Paul Elder <paul.elder@ideasonboard.com>
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+This comes from v2 of "media: rockchip: rkisp2: Add rkisp2 driver":
+https://lore.kernel.org/all/20260424175853.638202-1-paul.elder@ideasonboard.com/
+
+TODO change this ^ don't send the patch without updating the link!
+
+Changes in v3:
+- move the header file location to the new one
+
+Changes in v2:
+- update to the headers from v2 of the kernel patches (obviously...)
+- use extensible stats instead of non-extensible stats
+- add crop parameter
+---
+ include/linux/README                         |   2 +-
+ include/linux/media/rockchip/rkisp2-config.h | 640 +++++++++++++++++++
+ include/linux/videodev2.h                    |   4 +
+ 3 files changed, 645 insertions(+), 1 deletion(-)
+ create mode 100644 include/linux/media/rockchip/rkisp2-config.h
+
+--- a/include/linux/README
++++ b/include/linux/README
+@@ -1,4 +1,4 @@
+ # SPDX-License-Identifier: CC0-1.0
+ 
+-Files in this directory are imported from v7.1 of the Linux kernel. Do not
++Files in this directory are imported from v7.2-rc1-324-gd4c801b3cf6d of the Linux kernel. Do not
+ modify them manually.
+--- /dev/null
++++ b/include/linux/media/rockchip/rkisp2-config.h
+@@ -0,0 +1,640 @@
++/* SPDX-License-Identifier: ((GPL-2.0-or-later WITH Linux-syscall-note) OR MIT) */
++/*
++ * Rockchip ISP2 userspace API
++ * Copyright (C) 2017 Rockchip Electronics Co., Ltd.
++ * Copyright (C) 2026 Ideas on Board Oy.
++ */
++
++#ifndef _RKISP2_CONFIG_H
++#define _RKISP2_CONFIG_H
++
++#include <linux/types.h>
++
++#include <linux/media/v4l2-isp.h>
++
++#define RKISP2_ISP_GAMMA_OUT_MAX_SEGMENTS   49
++
++#define RKISP2_ISP_LSC_SAMPLES_MAX		17
++#define RKISP2_ISP_LSC_SECTORS_TBL_SIZE_MAX	16
++
++#define RKISP2_ISP_AE_MEAN_MAX_LITE	25
++#define RKISP2_ISP_AE_MEAN_MAX_BIG	225
++
++#define RKISP2_ISP_HIST_WEIGHT_GRIDS_SIZE_LITE	25
++#define RKISP2_ISP_HIST_WEIGHT_GRIDS_SIZE_BIG	225
++#define RKISP2_ISP_HIST_WEIGHT_GRIDS_SIZE_MAX		RKISP2_ISP_HIST_WEIGHT_GRIDS_SIZE_BIG
++
++#define RKISP2_ISP_HIST_BIN_N_MAX	256
++
++#define RKISP2_ISP_AWB_COUNTS_SIZE	225
++
++/**
++ * enum rkisp2_isp_version - ISP variants
++ *
++ * @RKISP3_V0: Used at least in RK3588
++ */
++enum rkisp2_isp_version {
++	RKISP3_V0 = 30,
++};
++
++/* See enum rkisp2_isp_goc_segments for logarithmic segment sizes */
++enum rkisp2_isp_goc_mode {
++	RKISP2_ISP_GOC_MODE_LOGARITHMIC,
++	RKISP2_ISP_GOC_MODE_EQUIDISTANT
++};
++
++/*
++ * The segments are:
++ * 1 x8, 2 x4, 4 x4, 8 x4, 16 x4, 32 x4, 64 x4, 128 x4, 256 x4, 512 x4
++ * In 48-segment mode, the last group of 512 x4 becomes 256 x8
++ */
++enum rkisp2_isp_goc_segments {
++	RKISP2_ISP_GOC_SEGMENTS_44,
++	RKISP2_ISP_GOC_SEGMENTS_48
++};
++
++enum rkisp2_isp_lsc_config {
++	RKISP2_ISP_LSC_CONFIG_8X8,
++	RKISP2_ISP_LSC_CONFIG_16X16
++};
++
++enum rkisp2_isp_set_active_table_when {
++	RKISP2_ISP_LSC_SET_ACTIVE_TABLE_AFTER,
++	RKISP2_ISP_LSC_SET_ACTIVE_TABLE_BEFORE,
++};
++
++enum rkisp2_isp_crop_en {
++	RKISP2_ISP_CROP_ENABLE_MAIN = 0x1,
++	RKISP2_ISP_CROP_ENABLE_SELF = 0x2,
++};
++
++enum rkisp2_isp_histogram_mode {
++	RKISP2_ISP_HISTOGRAM_MODE_DISABLE,
++	RKISP2_ISP_HISTOGRAM_MODE_R_HISTOGRAM = 2,
++	RKISP2_ISP_HISTOGRAM_MODE_G_HISTOGRAM,
++	RKISP2_ISP_HISTOGRAM_MODE_B_HISTOGRAM,
++	RKISP2_ISP_HISTOGRAM_MODE_Y_HISTOGRAM
++};
++
++/*
++ * This selects which bits are used from the input data to compute the
++ * histogram
++ */
++enum rkisp2_isp_histogram_data_sel {
++	RKISP2_ISP_HISTOGRAM_DATA_SEL_11_4,
++	RKISP2_ISP_HISTOGRAM_DATA_SEL_10_3,
++	RKISP2_ISP_HISTOGRAM_DATA_SEL_9_2,
++	RKISP2_ISP_HISTOGRAM_DATA_SEL_8_1,
++	RKISP2_ISP_HISTOGRAM_DATA_SEL_7_0,
++};
++
++/*---------- Statistics ------------*/
++
++/**
++ * enum rkisp2_stats_block_type - RkISP2 extensible stats block types
++ *
++ * @RKISP2_STATS_BLOCK_AE_LITE: Auto exposite (lite) measurements
++ * @RKISP2_STATS_BLOCK_HIST_LITE: Histogram (lite)
++ * @RKISP2_STATS_BLOCK_HIST_BIG0: Histogram (big 0)
++ * @RKISP2_STATS_BLOCK_HIST_BIG1: Histogram (big 1)
++ * @RKISP2_STATS_BLOCK_HIST_BIG2: Histogram (big 2)
++ * @RKISP2_STATS_BLOCK_AWB: Auto white balance counts
++ */
++enum rkisp2_stats_block_type {
++	RKISP2_STATS_BLOCK_AE_LITE,
++	RKISP2_STATS_BLOCK_HIST_LITE,
++	RKISP2_STATS_BLOCK_HIST_BIG0,
++	RKISP2_STATS_BLOCK_HIST_BIG1,
++	RKISP2_STATS_BLOCK_HIST_BIG2,
++	RKISP2_STATS_BLOCK_AWB,
++};
++
++/**
++ * struct rkisp2_stats_ae_lite - statistics auto exposure data
++ *
++ * @header: block header (type = RKISP2_STATS_BLOCK_AE_LITE)
++ * @exp_mean_r: Mean luminance value of block xy for r channel
++ * @exp_mean_g: Mean luminance value of block xy for g channel
++ * @exp_mean_b: Mean luminance value of block xy for b channel
++ * @done: This set to nonzero when the stats are ready
++ * @reserved: padding
++ *
++ * Image is divided into 5x5 blocks on lite and 15x15 blocks on big.
++ */
++struct rkisp2_stats_ae_lite {
++	struct v4l2_isp_block_header header;
++	__u16 exp_mean_r[RKISP2_ISP_AE_MEAN_MAX_LITE];
++	__u16 exp_mean_g[RKISP2_ISP_AE_MEAN_MAX_LITE];
++	__u16 exp_mean_b[RKISP2_ISP_AE_MEAN_MAX_LITE];
++	__u8 done;
++	__u8 reserved;
++};
++
++/**
++ * struct rkisp2_stats_hist - statistics histogram data
++ *
++ * @header: block header (type = RKISP2_STATS_BLOCK_HIST_{LITE,BIG0,BIG1,BIG2})
++ * @hist_bins: measured bin counters. Each bin is a 28 bits unsigned fixed point
++ *	       type. Bits 0-4 are the fractional part and bits 5-27 are the
++ *	       integer part.
++ * @done: This set to nonzero when the stats are ready
++ * @reserved: padding
++ *
++ * There are 256 bins, at least on 3.x.
++ */
++struct rkisp2_stats_hist {
++	struct v4l2_isp_block_header header;
++	__u32 hist_bins[RKISP2_ISP_HIST_BIN_N_MAX];
++	__u8 done;
++	__u8 reserved[7];
++};
++
++/**
++ * struct rkisp2_stats_awb - statistics auto white balance data
++ *
++ * @header: block header (type = RKISP2_STATS_BLOCK_AWB)
++ * @counts_r: Counts of red (18-bits)
++ * @counts_g: Counts of green (18-bits)
++ * @counts_b: Counts of blue (18-bits)
++ * @counts_w: Counts of white point (10-bits)
++ * @done: This set to nonzero when the stats are ready
++ * @reserved: padding
++ *
++ * TODO Figure out what is being counted
++ */
++struct rkisp2_stats_awb {
++	struct v4l2_isp_block_header header;
++	__u32 counts_r[RKISP2_ISP_AWB_COUNTS_SIZE];
++	__u32 counts_g[RKISP2_ISP_AWB_COUNTS_SIZE];
++	__u32 counts_b[RKISP2_ISP_AWB_COUNTS_SIZE];
++	__u16 counts_w[RKISP2_ISP_AWB_COUNTS_SIZE];
++	__u8 done;
++	__u8 reserved;
++};
++
++#define RKISP2_STATS_MAX_SIZE					\
++	(sizeof(struct rkisp2_stats_ae_lite)			+\
++	sizeof(struct rkisp2_stats_hist) * 4			+\
++	sizeof(struct rkisp2_stats_awb))
++
++/*---------- Parameters ------------*/
++
++/**
++ * enum rkisp2_params_block_type - RkISP2 extensible params block types
++ *
++ * @RKISP2_PARAMS_BLOCK_BLS: Black level subtraction
++ * @RKISP2_PARAMS_BLOCK_AWB_GAINS: AWB gains
++ * @RKISP2_PARAMS_BLOCK_CSM: Color conversion coefficients (in the ISP block)
++ * @RKISP2_PARAMS_BLOCK_CCM: Color correction matrix (in the CCM block)
++ * @RKISP2_PARAMS_BLOCK_GOC: Gamma out correction
++ * @RKISP2_PARAMS_BLOCK_LSC: Lens shading correction
++ * @RKISP2_PARAMS_BLOCK_CROP: Crop config
++ * @RKISP2_PARAMS_BLOCK_AE_LITE: AE measurement config (lite)
++ * @RKISP2_PARAMS_BLOCK_HIST_LITE: Histogram measurement config (lite)
++ * @RKISP2_PARAMS_BLOCK_HIST_BIG0: Histogram measurement config (zeroth big block)
++ * @RKISP2_PARAMS_BLOCK_HIST_BIG1: Histogram measurement config (first big block)
++ * @RKISP2_PARAMS_BLOCK_HIST_BIG2: Histogram measurement config (second big block)
++ * @RKISP2_PARAMS_BLOCK_AWB_MEAS: AWB measurements config
++ */
++enum rkisp2_params_block_type {
++	RKISP2_PARAMS_BLOCK_BLS,
++	RKISP2_PARAMS_BLOCK_AWB_GAINS,
++	RKISP2_PARAMS_BLOCK_CSM,
++	RKISP2_PARAMS_BLOCK_CCM,
++	RKISP2_PARAMS_BLOCK_GOC,
++	RKISP2_PARAMS_BLOCK_LSC,
++	RKISP2_PARAMS_BLOCK_CROP,
++	RKISP2_PARAMS_BLOCK_AE_LITE,
++	RKISP2_PARAMS_BLOCK_HIST_LITE,
++	RKISP2_PARAMS_BLOCK_HIST_BIG0,
++	RKISP2_PARAMS_BLOCK_HIST_BIG1,
++	RKISP2_PARAMS_BLOCK_HIST_BIG2,
++	RKISP2_PARAMS_BLOCK_AWB_MEAS,
++};
++
++/**
++ * struct rkisp2_isp_window -  measurement window.
++ *
++ * Measurements are calculated per window inside the frame.
++ * This struct represents a window for a measurement.
++ *
++ * @h_offs: the horizontal offset of the window from the left of the frame in pixels.
++ * @v_offs: the vertical offset of the window from the top of the frame in pixels.
++ * @h_size: the horizontal size of the window in pixels
++ * @v_size: the vertical size of the window in pixels.
++ */
++struct rkisp2_isp_window {
++	__u16 h_offs;
++	__u16 v_offs;
++	__u16 h_size;
++	__u16 v_size;
++};
++
++/**
++ * struct rkisp2_isp_bls_fixed_val - BLS fixed subtraction values
++ *
++ * These are signed 13-bit (-4096 to +4095).
++ *
++ * @a: Fixed black level value for Bayer channel 0
++ * @b: Fixed black level value for Bayer channel 1
++ * @c: Fixed black level value for Bayer channel 2
++ * @d: Fixed black level value for Bayer channel 3
++ */
++struct rkisp2_isp_bls_fixed_val {
++	__s16 a;
++	__s16 b;
++	__s16 c;
++	__s16 d;
++};
++
++/**
++ * struct rkisp2_isp_awb_gains - Auto white balance gain in the ISP block
++ *
++ * All fields in this struct are 16 bit, where:
++ * 0x100h = 1, unsigned integer value, range 0 to 63 with 8 bit fractional part.
++ *
++ * This leaves the upper two msb unaccounted for; it is unknown if these are
++ * unused or misdocumented.
++ *
++ * TODO investigate the upper two bits
++ *
++ * @r: gain value for red component.
++ * @gr: gain value for green component in red line.
++ * @b: gain value for blue component.
++ * @gb: gain value for green component in blue line.
++ */
++struct rkisp2_isp_awb_gains {
++	__u16 r;
++	__u16 gr;
++	__u16 b;
++	__u16 gb;
++};
++
++/**
++ * struct rkisp2_isp_color_cc - Color coefficients
++ *
++ * @r: Red coefficient
++ * @g: Green coefficient
++ * @b: Blue coefficient
++ */
++struct rkisp2_isp_color_cc {
++	__u8 r;
++	__u8 g;
++	__u8 b;
++};
++
++/**
++ * struct rkisp2_isp_awb_color_quad - Group of RGB and luminance for AWB
++ *
++ * TODO redesign this?
++ *
++ * @r: Red
++ * @g: Green
++ * @b: Blue
++ * @y: Y (luminance)
++ */
++struct rkisp2_isp_awb_color_quad {
++	__u8 r;
++	__u8 g;
++	__u8 b;
++	__u8 y;
++};
++
++/**
++ * struct rkisp2_params_bls - RkISP2 params BLS config
++ *
++ * RkISP2 parameters Black Level Subtraction configuration block.
++ * Identified by :c:type:`RKISP2_PARAMS_BLOCK_BLS`.
++ *
++ * TODO Check if auto-mode and window selection is for both blocks or just for
++ * one block (it might be the same as 2.x)
++ *
++ * @header: The RkISP2 parameters block header
++ * @enable_auto: Automatic mode activated means that the measured values
++ *		 are subtracted. Otherwise the fixed subtraction
++ *		 values will be subtracted.
++ * @enabled_windows: enabled window (bit 0 for window 1, bit 1 for window 2)
++ * @bls_window1: Measurement window 1 size
++ * @bls_window2: Measurement window 2 size
++ * @bls_samples: Set amount of measured pixels for each Bayer position
++ *		 (A, B, C and D) to 2^bls_samples. (TODO needs confirmation)
++ * @reserved: padding
++ * @bls_fixed_val: Black Level Subtraction fixed values for the BLS module at
++ *		   the front of the pipeline
++ * @bls1_fixed_val: Black Level Subtraction fixed values for the BLS module after
++ *		    bayer noise reduction
++ * @reserved1: padding
++ */
++struct rkisp2_params_bls {
++	struct v4l2_isp_params_block_header header;
++	__u8 enable_auto;
++	__u8 enabled_windows;
++	struct rkisp2_isp_window bls_window1;
++	struct rkisp2_isp_window bls_window2;
++	__u8 bls_samples;
++	__u8 reserved;
++	struct rkisp2_isp_bls_fixed_val bls_fixed_val;
++	struct rkisp2_isp_bls_fixed_val bls1_fixed_val;
++	__u8 reserved1[4];
++} __attribute__((aligned(8)));
++
++/**
++ * struct rkisp2_params_awb_gains - RKISP2 params AWB gains config
++ *
++ * RkISP2 parameters auto white balance gains configuration block.
++ * Identified by :c:type:`RKISP2_PARAMS_BLOCK_AWB_GAINS`.
++ *
++ * TODO investigate what the different blocks mean
++ *
++ * Block 0 is equivalent to the awb gains block on 2.x, but blocks 1 and
++ * 2 do not exist on 2.x.
++ *
++ * @header: The RkISP2 parameters block header
++ * @gains: Gains configuration for block i
++ */
++struct rkisp2_params_awb_gains {
++	struct v4l2_isp_params_block_header header;
++	struct rkisp2_isp_awb_gains gains[3];
++} __attribute__((aligned(8)));
++
++/**
++ * struct rkisp2_params_csm - Configuration used by Color Space Conversion
++ *
++ * RkISP2 parameters histogram configuration block.
++ * Identified by :c:type:`RKISP2_PARAMS_BLOCK_CSM`.
++ *
++ * @header: The RkISP2 parameters block header
++ * @coeff: color correction matrix. Values are 9-bit signed fixed-point numbers with 2 bit integer
++ *		and 7 bit fractional part, ranging from -2 (0x100) to +1.992 (0x0FF). 0 is
++ *		represented by 0x000 and a coefficient value of 1 as 0x080.
++ * @reserved: padding
++ */
++struct rkisp2_params_csm {
++	struct v4l2_isp_params_block_header header;
++	__u16 coeff[3][3];
++	__u8 reserved[6];
++} __attribute__((aligned(8)));
++
++/**
++ * struct rkisp2_params_ccm - Configuration used by Color Correction Matrix
++ *
++ * RkISP2 parameters histogram configuration block.
++ * Identified by :c:type:`RKISP2_PARAMS_BLOCK_CCM`.
++ *
++ * @header: The RkISP2 parameters block header
++ * @high_y_alpha_adj_en: Enable CCM high Y alpha adjustment (TODO figure out what this does)
++ * @reserved: padding
++ * @coeff: color correction matrix. Values are 11-bit signed fixed-point numbers with 4 bit integer
++ *		and 7 bit fractional part, ranging from -8 (0x400) to +7.992 (0x3FF). 0 is
++ *		represented by 0x000 and a coefficient value of 1 as 0x080. The
++ *		value is expanded 128 times (TODO figure out what this means).
++ * @offset: Red, Green, Blue offsets for the color correction matrix. 12-bits
++ *	    wide ranging from -4096 to 4095, but only for red; green and blue are 11-bit
++ *	    signed fixed-point like coeff, but are still 12-bits wide.
++ * @y_coeff: Red, Green, Blue coefficients for RGB2Y calculation. red and green
++ *	     are 11-bits wide and blue is 12-bits wide. The value is expanded 128 times.
++ * @alp: CCM curve y-axis point definition for ccm input pixel's luminance.
++ *       11-bit unsigned ranging from 0 to 1024. The value is expanded 128 times.
++ * @inflection_point: Inflection point of the ccm alpha interpolation curve.
++ *		      The inflection point is 2^inflection_point. Since the maximum y-value is
++ *		      1024, the maximum value of this field is expected to be 10 (0xa), but the
++ *		      documentation says 4'b10.
++ * @reserved1: padding
++ */
++struct rkisp2_params_ccm {
++	struct v4l2_isp_params_block_header header;
++	__u8 high_y_alpha_adj_en;
++	__u8 reserved;
++	__u16 coeff[3][3];
++	__u16 offset[3];
++	__u16 y_coeff[3];
++	__u16 alp[17];
++	__u8 inflection_point;
++	__u8 reserved1[5];
++} __attribute__((aligned(8)));
++
++/**
++ * struct rkisp2_params_goc - Configuration used by Gamma Out correction
++ *
++ * RkISP2 parameters gamma out correction configuration block.
++ * Identified by :c:type:`RKISP2_PARAMS_BLOCK_GOC`.
++ *
++ * @header: The RkISP2 parameters block header
++ * @mode: goc mode (from enum rkisp2_isp_goc_mode)
++ * @segments: segments mode (from enum rkisp2_isp_goc_segments)
++ * @offset: offset value of the gamma out curve
++ * @gamma_y: gamma out curve y-axis for all color components
++ * @reserved: padding
++ *
++ * The number of entries of @gamma_y depends on the segments mode. The entries
++ * are 12-bit unsigned.
++ */
++struct rkisp2_params_goc {
++	struct v4l2_isp_params_block_header header;
++	__u8 mode;
++	__u8 segments;
++	__u16 offset;
++	__u16 gamma_y[RKISP2_ISP_GAMMA_OUT_MAX_SEGMENTS];
++	__u8 reserved[2];
++} __attribute__((aligned(8)));
++
++/**
++ * struct rkisp2_params_lsc - Configuration used by Lens shading correction
++ *
++ * RkISP2 parameters lens shading correction configuration block.
++ * Identified by :c:type:`RKISP2_PARAMS_BLOCK_LSC`.
++ *
++ * The LSC module on the rkisp2 two tables: the 0th table and the 1th table.
++ * They can be programmed independently and (somewhat) simultaneously, and can be
++ * swapped by setting a single register. Hence the UAPI here is designed so
++ * that all these components can be controlled independently.
++ *
++ * In the first dimension of {r,gr,gb,b}_data_tbl we can designate which table
++ * to write the data to. write_table is then used to signal whether to write
++ * the data, and this can be controlled for both tables. active_table chooses
++ * which table to activate. set_active_table_when signals whether to set the
++ * active_table before or after programming the table. This allows
++ * optimizations such as setting a future table in one parameter buffer while
++ * swapping before setting it.
++ *
++ * This design gives us more control. For example, if we want to only program
++ * the 0th table without modifying the 1th table, we do not need to also
++ * populate the 1th table and we can use write_table to designate that we only
++ * want to program the 0th table. We can also swap tables without needing to
++ * re-populate the tables by setting active_table and unsetting write_table.
++ *
++ * {x,y}_sizes designates the grid of the LSC, and the table entries above
++ * correspond to the *vertices* of the grid. {x,y}_grads control the bilinear
++ * interpolation within the grid.
++ *
++ * @header: The RkISP2 parameters block header
++ * @r_data_tbl: Sample table red
++ * @gr_data_tbl: Sample table green (red)
++ * @gb_data_tbl: Sample table green (blue)
++ * @b_data_tbl: Sample table blue
++ * @write_table: Set to 1 to signal to write the respective table from above
++ * @active_table: Choose which of the two tables is active (0 or 1)
++ * @set_active_table_when: From rkisp2_isp_set_active_table_when; switch to the
++ *			   active table before or after programming the table
++ * @x_sizes: Sizes x
++ * @y_sizes: Sizes y
++ * @x_grads: Gradients x
++ * @y_grads: Gradients y
++ * @window_mode: From enum rkisp2_isp_lsc_config
++ * @reserved: padding
++ */
++struct rkisp2_params_lsc {
++	struct v4l2_isp_params_block_header header;
++
++	__u16 r_data_tbl[2][RKISP2_ISP_LSC_SAMPLES_MAX][RKISP2_ISP_LSC_SAMPLES_MAX];
++	__u16 gr_data_tbl[2][RKISP2_ISP_LSC_SAMPLES_MAX][RKISP2_ISP_LSC_SAMPLES_MAX];
++	__u16 gb_data_tbl[2][RKISP2_ISP_LSC_SAMPLES_MAX][RKISP2_ISP_LSC_SAMPLES_MAX];
++	__u16 b_data_tbl[2][RKISP2_ISP_LSC_SAMPLES_MAX][RKISP2_ISP_LSC_SAMPLES_MAX];
++	__u8 write_table[2];
++	__u8 active_table;
++	__u8 set_active_table_when;
++
++	__u16 x_sizes[RKISP2_ISP_LSC_SECTORS_TBL_SIZE_MAX];
++	__u16 y_sizes[RKISP2_ISP_LSC_SECTORS_TBL_SIZE_MAX];
++	__u16 x_grads[RKISP2_ISP_LSC_SECTORS_TBL_SIZE_MAX];
++	__u16 y_grads[RKISP2_ISP_LSC_SECTORS_TBL_SIZE_MAX];
++
++	__u8 window_mode;
++	__u8 reserved[3];
++} __attribute__((aligned(8)));
++
++/**
++ * struct rkisp2_params_crop - Crop configuration
++ *
++ * RkISP2 parameters crop configuration block.
++ * Identified by :c:type:`RKISP2_PARAMS_BLOCK_CROP`.
++ * This block is responsible for configuring main and self path crops. The
++ * driver will automatically compute the scaling factors for the resizer and
++ * any format conversions (eg. for converting subsampling factors).
++ *
++ * @header: The RkISP2 parameters block header
++ * @crop_en: Enable bits for main path and self path crop below. Comes from enum rkisp2_isp_crop_en
++ * @reserved: padding
++ * @mp_crop: Crop window for the main path, relative to the ISP source format size
++ * @sp_crop: Crop window for the self path, relative to the ISP source format size
++ * @reserved1: padding
++ */
++struct rkisp2_params_crop {
++	struct v4l2_isp_params_block_header header;
++	__u8 crop_en;
++	__u8 reserved;
++	struct rkisp2_isp_window mp_crop;
++	struct rkisp2_isp_window sp_crop;
++	__u8 reserved1[6];
++} __attribute__((aligned(8)));
++
++/**
++ * struct rkisp2_params_ae_lite - RKISP2 params AE lite config
++ *
++ * RkISP2 parameters auto exposure measurement configuration block.
++ * Identified by :c:type:`RKISP2_PARAMS_BLOCK_AE_LITE`.
++ *
++ * TODO change window_num to enum?
++ *
++ * @header: The RkISP2 parameters block header
++ * @window_num: 0 for 1x1, 1 for 5x5
++ * @reserved: padding
++ * @meas_window: Size of measurement window. First window for 5x5.
++ * @reserved1: padding
++ */
++struct rkisp2_params_ae_lite {
++	struct v4l2_isp_params_block_header header;
++	__u8 window_num;
++	__u8 reserved;
++	struct rkisp2_isp_window meas_window;
++	__u8 reserved1[6];
++} __attribute__((aligned(8)));
++
++/**
++ * struct rkisp2_params_hist_lite RKISP2 params histogram lite config
++ *
++ * RkISP2 parameters histogram configuration block.
++ * Identified by :c:type:`RKISP2_PARAMS_BLOCK_HIST_LITE`.
++ *
++ * @header: The RkISP2 parameters block header
++ * @data_sel: Data selection mode (from enum rkisp2_isp_histogram_data_sel)
++ * @mode: Histogram mode (from enum rkisp2_isp_histogram_mode)
++ * @stepsize: Predivider (count every <stepsize> pixel)
++ * @reserved: padding
++ * @waterline: Waterline for region statics
++ * @coeffs: Coefficients for raw2y formula
++ * @reserved1: padding
++ * @meas_window: Size of first measurement subwindow
++ * @weights: Weights
++ * @reserved2: padding
++ */
++struct rkisp2_params_hist_lite {
++	struct v4l2_isp_params_block_header header;
++	__u8 data_sel;
++	__u8 mode;
++	__u8 stepsize;
++	__u8 reserved;
++	__u16 waterline;
++	struct rkisp2_isp_color_cc coeffs;
++	__u8 reserved1;
++	struct rkisp2_isp_window meas_window;
++	__u8 weights[RKISP2_ISP_HIST_WEIGHT_GRIDS_SIZE_LITE];
++	__u8 reserved2[5];
++} __attribute__((aligned(8)));
++
++/**
++ * Same as struct rkisp2_params_hist_lite but for big channel
++ *
++ * RkISP2 parameters histogram configuration block.
++ * Identified by :c:type:`RKISP2_PARAMS_BLOCK_HIST_BIG{0,1,2}`.
++ *
++ * @window_num: 0 or 1 for 5x5, 2 or 3 for 15x15
++ */
++struct rkisp2_params_hist_big {
++	struct v4l2_isp_params_block_header header;
++	__u8 data_sel;
++	__u8 mode;
++	__u8 stepsize;
++	__u8 window_num;
++	__u16 waterline;
++	struct rkisp2_isp_color_cc coeffs;
++	__u8 reserved1;
++	struct rkisp2_isp_window meas_window;
++	__u8 weights[RKISP2_ISP_HIST_WEIGHT_GRIDS_SIZE_BIG];
++	__u8 reserved2[5];
++} __attribute__((aligned(8)));
++
++/**
++ * struct rkisp2_params_awb_meas - Configuration used by rawawb
++ *
++ * RkISP2 parameters AWB measurement configuration block.
++ * Identified by :c:type:`RKISP2_PARAMS_BLOCK_AWB_MEAS`.
++ *
++ * @header: The RkISP2 parameters block header
++ * @meas_window: Size of first measurement subwindow (13 bits)
++ * @limits: Limits for white point detection [min, max] (8 bits)
++ * @weights: Weights (6-bits)
++ * @reserved: padding
++ */
++struct rkisp2_params_awb_meas {
++	struct v4l2_isp_params_block_header header;
++	struct rkisp2_isp_window meas_window;
++	struct rkisp2_isp_awb_color_quad limits[2];
++	__u8 weights[RKISP2_ISP_AWB_COUNTS_SIZE];
++	__u8 reserved[7];
++} __attribute__((aligned(8)));
++
++#define RKISP2_PARAMS_MAX_SIZE					\
++	(sizeof(struct rkisp2_params_bls)			+\
++	sizeof(struct rkisp2_params_awb_gains)			+\
++	sizeof(struct rkisp2_params_csm)			+\
++	sizeof(struct rkisp2_params_ccm)			+\
++	sizeof(struct rkisp2_params_goc)			+\
++	sizeof(struct rkisp2_params_lsc)			+\
++	sizeof(struct rkisp2_params_crop)			+\
++	sizeof(struct rkisp2_params_ae_lite)			+\
++	sizeof(struct rkisp2_params_hist_lite)			+\
++	sizeof(struct rkisp2_params_hist_big) * 3		+\
++	sizeof(struct rkisp2_params_awb_meas))
++
++#endif /* _RKISP2_CONFIG_H */
+--- a/include/linux/videodev2.h
++++ b/include/linux/videodev2.h
+@@ -851,6 +851,10 @@ struct v4l2_pix_format {
+ #define V4L2_META_FMT_RK_ISP1_STAT_3A	v4l2_fourcc('R', 'K', '1', 'S') /* Rockchip ISP1 3A Statistics */
+ #define V4L2_META_FMT_RK_ISP1_EXT_PARAMS	v4l2_fourcc('R', 'K', '1', 'E') /* Rockchip ISP1 3a Extensible Parameters */
+ 
++/* Vendor specific - used for RKISP2 camera sub-system */
++#define V4L2_META_FMT_RKISP2_PARAMS	v4l2_fourcc('R', 'K', '2', 'P') /* Rockchip ISP2 Parameters */
++#define V4L2_META_FMT_RKISP2_STATS	v4l2_fourcc('R', 'K', '2', 'S') /* Rockchip ISP2 3A Statistics */
++
+ /* Vendor specific - used for C3_ISP */
+ #define V4L2_META_FMT_C3ISP_PARAMS	v4l2_fourcc('C', '3', 'P', 'M') /* Amlogic C3 ISP Parameters */
+ #define V4L2_META_FMT_C3ISP_STATS	v4l2_fourcc('C', '3', 'S', 'T') /* Amlogic C3 ISP Statistics */

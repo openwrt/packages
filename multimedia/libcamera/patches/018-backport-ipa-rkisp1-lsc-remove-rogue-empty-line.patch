@@ -1,0 +1,24 @@
+From 745a575db8caf28991e4c8637f3d6695b6dffec8 Mon Sep 17 00:00:00 2001
+From: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Date: Wed, 1 Jul 2026 09:48:40 +0200
+Subject: [PATCH] ipa: rkisp1: lsc: Remove rogue empty line
+
+Remove an additional empty line.
+
+Signed-off-by: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Reviewed-by: Kieran Bingham <kieran.bingham@ideasonboard.com>
+Reviewed-by: Stefan Klug <stefan.klug@ideasonboard.com>
+---
+ src/ipa/rkisp1/algorithms/lsc.cpp | 1 -
+ 1 file changed, 1 deletion(-)
+
+--- a/src/ipa/rkisp1/algorithms/lsc.cpp
++++ b/src/ipa/rkisp1/algorithms/lsc.cpp
+@@ -27,7 +27,6 @@ namespace libcamera {
+ 
+ namespace ipa::rkisp1::algorithms {
+ 
+-
+ LOG_DEFINE_CATEGORY(RkISP1Lsc)
+ 
+ namespace {
