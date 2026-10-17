@@ -1,0 +1,52 @@
+From 7cc8005e20d3165c26412ad9be3f5607d77eb5af Mon Sep 17 00:00:00 2001
+From: Stefan Klug <stefan.klug@ideasonboard.com>
+Date: Wed, 25 Mar 2026 16:13:42 +0100
+Subject: [PATCH] pipeline: rkisp1: Add a frameStart function to handle
+ DelayedControls::applyControls
+
+Move the call to applyControls into an intermediate function for
+upcoming modfications.
+
+As the frameStart handler checks for an activeCamera we can safely
+connect the signal in match() where all the other signals get connected.
+
+Signed-off-by: Stefan Klug <stefan.klug@ideasonboard.com>
+---
+ src/libcamera/pipeline/rkisp1/rkisp1.cpp | 12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
+
+--- a/src/libcamera/pipeline/rkisp1/rkisp1.cpp
++++ b/src/libcamera/pipeline/rkisp1/rkisp1.cpp
+@@ -1472,8 +1472,6 @@ int PipelineHandlerRkISP1::createCamera(
+ 	data->delayedCtrls_ =
+ 		std::make_unique<DelayedControls>(data->sensor_->device(),
+ 						  params);
+-	isp_->frameStart.connect(data->delayedCtrls_.get(),
+-				 &DelayedControls::applyControls);
+ 
+ 	uint32_t supportedBlocks = kDefaultExtParamsBlocks;
+ 
+@@ -1508,6 +1506,15 @@ int PipelineHandlerRkISP1::createCamera(
+ 	return 0;
+ }
+ 
++void PipelineHandlerRkISP1::frameStart(uint32_t sequence)
++{
++	if (!activeCamera_)
++		return;
++
++	RkISP1CameraData *data = cameraData(activeCamera_);
++	data->delayedCtrls_->applyControls(sequence);
++}
++
+ bool PipelineHandlerRkISP1::match(DeviceEnumerator *enumerator)
+ {
+ 	DeviceMatch dm("rkisp1");
+@@ -1550,6 +1557,7 @@ bool PipelineHandlerRkISP1::match(Device
+ 	if (hasSelfPath_ && !selfPath_.init(media_))
+ 		return false;
+ 
++	isp_->frameStart.connect(this, &PipelineHandlerRkISP1::frameStart);
+ 	mainPath_.bufferReady().connect(this, &PipelineHandlerRkISP1::imageBufferReady);
+ 	if (hasSelfPath_)
+ 		selfPath_.bufferReady().connect(this, &PipelineHandlerRkISP1::imageBufferReady);

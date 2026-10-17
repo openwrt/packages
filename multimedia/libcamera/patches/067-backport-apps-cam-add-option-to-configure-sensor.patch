@@ -1,0 +1,130 @@
+From 3683f9e4dc2a062aa071838284db35cee011a925 Mon Sep 17 00:00:00 2001
+From: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Date: Mon, 20 May 2024 17:31:09 +0530
+Subject: [PATCH] apps: cam: Add option to configure sensor
+
+Add a '-f|--sensor_format' option to cam to allow forcing a sensor
+configuration from the command line.
+
+As an example:
+cam -c1 -C -S --stream pixelformat=YUYV -f width=3840,height=2160,bitDepth=10
+
+Signed-off-by: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Signed-off-by: Paul Elder <paul.elder@ideasonboard.com>
+Signed-off-by: Kieran Bingham <kieran.bingham@ideasonboard.com>
+---
+ src/apps/cam/camera_session.cpp    |  7 +++++
+ src/apps/cam/main.cpp              |  4 +++
+ src/apps/cam/main.h                |  1 +
+ src/apps/common/stream_options.cpp | 42 ++++++++++++++++++++++++++++++
+ src/apps/common/stream_options.h   |  8 ++++++
+ 5 files changed, 62 insertions(+)
+
+--- a/src/apps/cam/camera_session.cpp
++++ b/src/apps/cam/camera_session.cpp
+@@ -118,6 +118,13 @@ CameraSession::CameraSession(CameraManag
+ 		return;
+ 	}
+ 
++	/* Apply a sensor configuration is requested. */
++	if (SensorKeyValueParser::updateConfiguration(config.get(),
++						      options_[OptSensorFmt])) {
++		std::cerr << "Failed to apply sensor configuration" << std::endl;
++		return;
++	}
++
+ 	bool strictFormats = options_.isSet(OptStrictFormats);
+ 
+ #ifdef HAVE_KMS
+--- a/src/apps/cam/main.cpp
++++ b/src/apps/cam/main.cpp
+@@ -119,6 +119,7 @@ int CamApp::exec()
+ int CamApp::parseOptions(int argc, char *argv[])
+ {
+ 	StreamKeyValueParser streamKeyValue;
++	SensorKeyValueParser sensorKeyValue;
+ 
+ 	OptionsParser parser;
+ 	parser.addOption(OptCamera, OptionString,
+@@ -189,6 +190,9 @@ int CamApp::parseOptions(int argc, char
+ 			 "Load a capture session configuration script from a file",
+ 			 "script", ArgumentRequired, "script", false,
+ 			 OptCamera);
++	parser.addOption(OptSensorFmt, &sensorKeyValue,
++			 "Apply a format to the sensor", "sensor_format", true,
++			 OptCamera);
+ 
+ 	options_ = parser.parse(argc, argv);
+ 	if (!options_.valid())
+--- a/src/apps/cam/main.h
++++ b/src/apps/cam/main.h
+@@ -19,6 +19,7 @@ enum {
+ 	OptMonitor = 'm',
+ 	OptOrientation = 'o',
+ 	OptSDL = 'S',
++	OptSensorFmt = 'f',
+ 	OptStream = 's',
+ 	OptVersion = 'v',
+ 	OptListControls = 256,
+--- a/src/apps/common/stream_options.cpp
++++ b/src/apps/common/stream_options.cpp
+@@ -118,3 +118,45 @@ std::optional<libcamera::StreamRole> Str
+ 
+ 	return {};
+ }
++
++SensorKeyValueParser::SensorKeyValueParser()
++{
++	addOption("bitDepth", OptionInteger, "Sensor format bit depth",
++		  ArgumentRequired);
++	addOption("width", OptionInteger, "Sensor frame width in pixels",
++		  ArgumentRequired);
++	addOption("height", OptionInteger, "Sensor frame height in pixels",
++		  ArgumentRequired);
++}
++
++int SensorKeyValueParser::updateConfiguration(CameraConfiguration *config,
++					      const OptionValue &values)
++{
++	if (!config) {
++		std::cerr << "No configuration provided" << std::endl;
++		return -EINVAL;
++	}
++
++	/* If no configuration values nothing to do. */
++	if (values.empty())
++		return 0;
++
++	const std::vector<OptionValue> &streamParameters = values.toArray();
++	SensorConfiguration sensorConfig;
++
++	for (auto const &value : streamParameters) {
++		KeyValueParser::Options opts = value.toKeyValues();
++
++		if (opts.isSet("width") && opts.isSet("height")) {
++			sensorConfig.outputSize.width = opts["width"];
++			sensorConfig.outputSize.height = opts["height"];
++		}
++
++		if (opts.isSet("bitDepth"))
++			sensorConfig.bitDepth = opts["bitDepth"];
++	}
++
++	config->sensorConfig = sensorConfig;
++
++	return 0;
++}
+--- a/src/apps/common/stream_options.h
++++ b/src/apps/common/stream_options.h
+@@ -27,3 +27,11 @@ public:
+ private:
+ 	static std::optional<libcamera::StreamRole> parseRole(const KeyValueParser::Options &options);
+ };
++
++class SensorKeyValueParser : public KeyValueParser
++{
++public:
++	SensorKeyValueParser();
++	static int updateConfiguration(libcamera::CameraConfiguration *config,
++				       const OptionValue &values);
++};

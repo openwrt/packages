@@ -1,0 +1,29 @@
+From d014fd2957d3b7e1120f08f351164556277193dd Mon Sep 17 00:00:00 2001
+From: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Date: Thu, 2 Jul 2026 18:15:44 +0200
+Subject: [PATCH] ipa: libipa: lsc: Document LscDescriptor::sensorSize usage
+
+Now that sensorSize_ has been removed from LscPolynomial and is
+passed to the Lsc algorithm through LscDescriptor document its intended
+purpose.
+
+Signed-off-by: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Reviewed-by: Stefan Klug <stefan.klug@ideasonboard.com>
+Reviewed-by: Kieran Bingham <kieran.bingham@ideasonboard.com>
+---
+ src/ipa/libipa/lsc.cpp | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+--- a/src/ipa/libipa/lsc.cpp
++++ b/src/ipa/libipa/lsc.cpp
+@@ -179,6 +179,10 @@ namespace lsc {
+  *          k4: 0.0
+  * \endcode
+  *
++ * The LSC polynomial definition is generated at tuning time in relation
++ * to the full sensor pixel array. This needs to be specified in
++ * LscDescriptor::sensorSize.
++ *
+  * At LscAlgorithm::configure() time the LSC tables are re-sampled on the
+  * sensor's crop rectangle in use to adapt them to the configuration in use for
+  * a streaming session. Polynomial LSC tables support re-sampling and can be

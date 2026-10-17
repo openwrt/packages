@@ -1,0 +1,87 @@
+From 1774576c59a9b75cdd54109859cdb36eb0c44955 Mon Sep 17 00:00:00 2001
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date: Sun, 21 Jun 2026 03:41:15 +0300
+Subject: [PATCH] ipa: libipa: lsc_polynomial: Don't inline ValueNode accessor
+
+There's no need to inline the ValueNode::Accessor::get() function for
+LscPolynomial. Move it to from lsc_polynomial.h to lsc_polynomial.cpp.
+
+While at it, replace C++-style comments with C-style comments according
+to the libcamera coding style.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Reviewed-by: Kieran Bingham <kieran.bingham@ideasonboard.com>
+Reviewed-by: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Signed-off-by: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+---
+ src/ipa/libipa/lsc_polynomial.cpp | 28 ++++++++++++++++++++++++++--
+ src/ipa/libipa/lsc_polynomial.h   | 26 --------------------------
+ 2 files changed, 26 insertions(+), 28 deletions(-)
+
+--- a/src/ipa/libipa/lsc_polynomial.cpp
++++ b/src/ipa/libipa/lsc_polynomial.cpp
+@@ -77,5 +77,29 @@ namespace ipa {
+  * \param size The size of the reference image
+  */
+ 
+-} // namespace ipa
+-} // namespace libcamera
++} /* namespace ipa */
++
++#ifndef __DOXYGEN__
++template<>
++std::optional<ipa::LscPolynomial>
++ValueNode::Accessor<ipa::LscPolynomial>::get(const ValueNode &obj) const
++{
++	std::optional<double> cx = obj["cx"].get<double>();
++	std::optional<double> cy = obj["cy"].get<double>();
++	std::optional<double> k0 = obj["k0"].get<double>();
++	std::optional<double> k1 = obj["k1"].get<double>();
++	std::optional<double> k2 = obj["k2"].get<double>();
++	std::optional<double> k3 = obj["k3"].get<double>();
++	std::optional<double> k4 = obj["k4"].get<double>();
++
++	if (!(cx && cy && k0 && k1 && k2 && k3 && k4)) {
++		LOG(LscPolynomial, Error)
++			<< "Polynomial is missing a parameter";
++		return std::nullopt;
++	}
++
++	return ipa::LscPolynomial(*cx, *cy, *k0, *k1, *k2, *k3, *k4);
++}
++#endif /* __DOXYGEN__ */
++
++} /* namespace libcamera */
+--- a/src/ipa/libipa/lsc_polynomial.h
++++ b/src/ipa/libipa/lsc_polynomial.h
+@@ -80,30 +80,4 @@ private:
+ 
+ } /* namespace ipa */
+ 
+-#ifndef __DOXYGEN__
+-
+-template<>
+-struct ValueNode::Accessor<ipa::LscPolynomial> {
+-	std::optional<ipa::LscPolynomial> get(const ValueNode &obj) const
+-	{
+-		std::optional<double> cx = obj["cx"].get<double>();
+-		std::optional<double> cy = obj["cy"].get<double>();
+-		std::optional<double> k0 = obj["k0"].get<double>();
+-		std::optional<double> k1 = obj["k1"].get<double>();
+-		std::optional<double> k2 = obj["k2"].get<double>();
+-		std::optional<double> k3 = obj["k3"].get<double>();
+-		std::optional<double> k4 = obj["k4"].get<double>();
+-
+-		if (!(cx && cy && k0 && k1 && k2 && k3 && k4)) {
+-			LOG(LscPolynomial, Error)
+-				<< "Polynomial is missing a parameter";
+-			return std::nullopt;
+-		}
+-
+-		return ipa::LscPolynomial(*cx, *cy, *k0, *k1, *k2, *k3, *k4);
+-	}
+-};
+-
+-#endif
+-
+ } /* namespace libcamera */

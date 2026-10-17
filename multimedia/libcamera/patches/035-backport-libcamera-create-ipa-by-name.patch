@@ -1,0 +1,238 @@
+From da129ccf17c1beed80e303c051d06cd33afaec6d Mon Sep 17 00:00:00 2001
+From: Hans de Goede <johannes.goede@oss.qualcomm.com>
+Date: Tue, 18 Aug 2026 16:05:41 +0200
+Subject: [PATCH] libcamera: Create IPA by name
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Currently createIPA() / IPAManager::module() assume that there is a 1:1
+relationship between pipeline handlers and IPAs and IPA matching is done
+based on matching the pipe to ipaModuleInfo.pipelineName[].
+
+One way to allow using a single IPA with multiple pipelines would be to
+allow the IPA to declare itself compatible with more than one pipeline,
+turning ipaModuleInfo.pipelineName[] into e.g. a vector. But the way
+ipaModuleInfo is loaded as an ELF symbol requires it to be a simple flat
+C-struct.
+
+Instead, move the IPA creation procedure to be name-based, introducing
+a PipelineHandler::createIPA(name, minVer, maxVer) overload that allows
+to specify the name of the IPA module to match. Pipeline handlers that
+wants to use their name as matching criteria can continue doing so using
+the already existing PipelineHandler::createIPA(minVer, maxVer) overload.
+
+Reviewed-by: Kieran Bingham <kieran.bingham@ideasonboard.com>
+Tested-by: Niklas Söderlund <niklas.soderlund+renesas@ragnatech.se>
+Reviewed-by: Barnabás Pőcze <barnabas.pocze@ideasonboard.com>
+Signed-off-by: Hans de Goede <johannes.goede@oss.qualcomm.com>
+Signed-off-by: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+---
+ include/libcamera/internal/ipa_manager.h      |  7 +++---
+ include/libcamera/internal/ipa_module.h       |  6 ++---
+ include/libcamera/internal/pipeline_handler.h |  9 ++++++-
+ src/libcamera/ipa_manager.cpp                 |  9 +++----
+ src/libcamera/ipa_module.cpp                  | 16 ++++++------
+ src/libcamera/pipeline_handler.cpp            | 25 +++++++++++++++++--
+ test/ipa/ipa_interface_test.cpp               |  2 +-
+ 7 files changed, 48 insertions(+), 26 deletions(-)
+
+--- a/include/libcamera/internal/ipa_manager.h
++++ b/include/libcamera/internal/ipa_manager.h
+@@ -25,7 +25,6 @@ LOG_DECLARE_CATEGORY(IPAManager)
+ class CameraManager;
+ class GlobalConfiguration;
+ class IPAModule;
+-class PipelineHandler;
+ 
+ class IPAManager
+ {
+@@ -34,10 +33,10 @@ public:
+ 	~IPAManager();
+ 
+ 	template<typename T>
+-	std::unique_ptr<T> createIPA(PipelineHandler *pipe, uint32_t minVersion,
++	std::unique_ptr<T> createIPA(const char *name, uint32_t minVersion,
+ 				     uint32_t maxVersion)
+ 	{
+-		IPAModule *m = module(pipe, minVersion, maxVersion);
++		IPAModule *m = module(name, minVersion, maxVersion);
+ 		if (!m)
+ 			return nullptr;
+ 
+@@ -68,7 +67,7 @@ private:
+ 		      std::vector<std::string> &files);
+ 	unsigned int addDir(const char *libDir, unsigned int maxDepth = 0);
+ 
+-	IPAModule *module(PipelineHandler *pipe, uint32_t minVersion,
++	IPAModule *module(const char *name, uint32_t minVersion,
+ 			  uint32_t maxVersion);
+ 
+ 	bool isSignatureValid(IPAModule *ipa) const;
+--- a/include/libcamera/internal/ipa_module.h
++++ b/include/libcamera/internal/ipa_module.h
+@@ -16,8 +16,6 @@
+ #include <libcamera/ipa/ipa_interface.h>
+ #include <libcamera/ipa/ipa_module_info.h>
+ 
+-#include "libcamera/internal/pipeline_handler.h"
+-
+ namespace libcamera {
+ 
+ class IPAModule : public Loggable
+@@ -36,8 +34,8 @@ public:
+ 
+ 	IPAInterface *createInterface();
+ 
+-	bool match(PipelineHandler *pipe,
+-		   uint32_t minVersion, uint32_t maxVersion) const;
++	bool match(const char *name, uint32_t minVersion,
++		   uint32_t maxVersion) const;
+ 
+ protected:
+ 	std::string logPrefix() const override;
+--- a/include/libcamera/internal/pipeline_handler.h
++++ b/include/libcamera/internal/pipeline_handler.h
+@@ -76,7 +76,14 @@ public:
+ 	std::unique_ptr<T> createIPA(uint32_t minVersion, uint32_t maxVersion)
+ 	{
+ 		IPAManager *ipaManager = manager_->_d()->ipaManager();
+-		return ipaManager->createIPA<T>(this, minVersion, maxVersion);
++		return ipaManager->createIPA<T>(name_, minVersion, maxVersion);
++	}
++
++	template<typename T>
++	std::unique_ptr<T> createIPA(const char *ipaName, uint32_t minVersion, uint32_t maxVersion)
++	{
++		IPAManager *ipaManager = manager_->_d()->ipaManager();
++		return ipaManager->createIPA<T>(ipaName, minVersion, maxVersion);
+ 	}
+ 
+ protected:
+--- a/src/libcamera/ipa_manager.cpp
++++ b/src/libcamera/ipa_manager.cpp
+@@ -21,7 +21,6 @@
+ #include "libcamera/internal/global_configuration.h"
+ #include "libcamera/internal/ipa_module.h"
+ #include "libcamera/internal/ipa_proxy.h"
+-#include "libcamera/internal/pipeline_handler.h"
+ 
+ /**
+  * \file ipa_manager.h
+@@ -248,15 +247,15 @@ unsigned int IPAManager::addDir(const ch
+ 
+ /**
+  * \brief Retrieve an IPA module that matches a given pipeline handler
+- * \param[in] pipe The pipeline handler
++ * \param[in] name The IPA module string identifier
+  * \param[in] minVersion Minimum acceptable version of IPA module
+  * \param[in] maxVersion Maximum acceptable version of IPA module
+  */
+-IPAModule *IPAManager::module(PipelineHandler *pipe, uint32_t minVersion,
++IPAModule *IPAManager::module(const char *name, uint32_t minVersion,
+ 			      uint32_t maxVersion)
+ {
+ 	for (const auto &module : modules_) {
+-		if (module->match(pipe, minVersion, maxVersion))
++		if (module->match(name, minVersion, maxVersion))
+ 			return module.get();
+ 	}
+ 
+@@ -266,7 +265,7 @@ IPAModule *IPAManager::module(PipelineHa
+ /**
+  * \fn IPAManager::createIPA()
+  * \brief Create an IPA proxy that matches a given pipeline handler
+- * \param[in] pipe The pipeline handler that wants a matching IPA proxy
++ * \param[in] name The IPA module name
+  * \param[in] minVersion Minimum acceptable version of IPA module
+  * \param[in] maxVersion Maximum acceptable version of IPA module
+  *
+--- a/src/libcamera/ipa_module.cpp
++++ b/src/libcamera/ipa_module.cpp
+@@ -24,8 +24,6 @@
+ #include <libcamera/base/span.h>
+ #include <libcamera/base/utils.h>
+ 
+-#include "libcamera/internal/pipeline_handler.h"
+-
+ /**
+  * \file ipa_module.h
+  * \brief Image Processing Algorithm module
+@@ -462,22 +460,22 @@ IPAInterface *IPAModule::createInterface
+ }
+ 
+ /**
+- * \brief Verify if the IPA module matches a given pipeline handler
+- * \param[in] pipe Pipeline handler to match with
++ * \brief Verify if the IPA module matches a given name
++ * \param[in] name The IPA module name
+  * \param[in] minVersion Minimum acceptable version of IPA module
+  * \param[in] maxVersion Maximum acceptable version of IPA module
+  *
+- * This function checks if this IPA module matches the \a pipe pipeline handler,
++ * This function checks if this IPA module matches the requested \a name
+  * and the input version range.
+  *
+- * \return True if the pipeline handler matches the IPA module, or false otherwise
++ * \return True if the IPA module matches, or false otherwise
+  */
+-bool IPAModule::match(PipelineHandler *pipe,
+-		      uint32_t minVersion, uint32_t maxVersion) const
++bool IPAModule::match(const char *name, uint32_t minVersion,
++		      uint32_t maxVersion) const
+ {
+ 	return info_.pipelineVersion >= minVersion &&
+ 	       info_.pipelineVersion <= maxVersion &&
+-	       !strcmp(info_.pipelineName, pipe->name());
++	       !strcmp(info_.name, name);
+ }
+ 
+ std::string IPAModule::logPrefix() const
+--- a/src/libcamera/pipeline_handler.cpp
++++ b/src/libcamera/pipeline_handler.cpp
+@@ -836,11 +836,32 @@ void PipelineHandler::disconnect()
+  */
+ 
+ /**
+- * \fn PipelineHandler::createIPA()
+- * \brief Create an IPA proxy that matches this pipeline handler
++ * \fn PipelineHandler::createIPA(const char *ipaName, uint32_t minVersion, uint32_t maxVersion)
++ * \brief Create an IPA proxy that matches the requested name and version
++ * \param[in] ipaName The IPA module name
+  * \param[in] minVersion Minimum acceptable version of IPA module
+  * \param[in] maxVersion Maximum acceptable version of IPA module
+  *
++ * Create an IPA module using \a ipaName as the matching identifier. This
++ * overload allows pipeline handlers to create an IPA module by specifying its
++ * name instead of relying on the fact that the IPA module matches the pipeline
++ * handler's one.
++ *
++ * \return A newly created IPA proxy, or nullptr if no matching IPA module is
++ * found or if the IPA proxy fails to initialize
++ */
++
++/**
++ * \fn PipelineHandler::createIPA(uint32_t minVersion, uint32_t maxVersion)
++ * \brief Create an IPA proxy that matches the pipeline handler name and the
++ * requested version
++ * \param[in] minVersion Minimum acceptable version of IPA module
++ * \param[in] maxVersion Maximum acceptable version of IPA module
++ *
++ * Create an IPA module using the pipeline handler name as the matching
++ * identifier. This overload allows pipeline handler to create an IPA module
++ * whose name matches the pipeline handler one.
++ *
+  * \return A newly created IPA proxy, or nullptr if no matching IPA module is
+  * found or if the IPA proxy fails to initialize
+  */
+--- a/test/ipa/ipa_interface_test.cpp
++++ b/test/ipa/ipa_interface_test.cpp
+@@ -99,7 +99,7 @@ protected:
+ 		EventDispatcher *dispatcher = thread()->eventDispatcher();
+ 		Timer timer;
+ 
+-		ipa_ = ipaManager_->createIPA<ipa::vimc::IPAProxyVimc>(pipe_.get(), 0, 0);
++		ipa_ = ipaManager_->createIPA<ipa::vimc::IPAProxyVimc>(pipe_->name(), 0, 0);
+ 		if (!ipa_) {
+ 			cerr << "Failed to create VIMC IPA interface" << endl;
+ 			return TestFail;
