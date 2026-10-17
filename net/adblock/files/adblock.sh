@@ -10,6 +10,7 @@
 #
 export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
+export GAWK_GNU_MATCHERS=1
 
 adb_enabled="0"
 adb_debug="0"
@@ -1428,16 +1429,15 @@ f_tld() {
 	# a stack of kept parents is needed, as siblings like 'com.foo-bar' sort between 'com.foo' and 'com.foo.sub'
 	#
 	if "${adb_awkcmd}" -v allow="${allow}" '
-		BEGIN { while ((getline line <allow) > 0) del[line] }
+		BEGIN { FS = "."; while ((getline line <allow) > 0) del[line] }
 		{
 			while (sp > 0 && index($0, stk[sp]) != 1) sp--
 			if (sp > 0 && index($0, stk[sp] ".") == 1) next
 			stk[++sp] = $0
-			n = split($0, seg, ".")
-			dom = seg[1]
+			dom = $1
 			if (dom in del) next
-			for (i = 2; i <= n; i++) {
-				dom = seg[i] "." dom
+			for (i = 2; i <= NF; i++) {
+				dom = $i "." dom
 				if (dom in del) next
 			}
 			print dom
