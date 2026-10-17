@@ -84,15 +84,6 @@ config LIBCURL_SSH2
 	bool "SCP / SFTP protocol"
 	default n
 
-config LIBCURL_SMB
-	bool "SMB protocol (CIFS)"
-	depends on LIBCURL_CRYPTO_AUTH && (LIBCURL_GNUTLS || LIBCURL_OPENSSL)
-	default n
-config LIBCURL_NO_SMB
-	string "SMB require 'cryptographic authentication' and either 'GnuTLS' or 'OpenSSL'"
-	depends on !LIBCURL_CRYPTO_AUTH || (!LIBCURL_GNUTLS && !LIBCURL_OPENSSL)
-	default "!"
-
 config LIBCURL_SMTP
 	bool "SMTP / SMTPS protocol"
 	default n
