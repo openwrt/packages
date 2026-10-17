@@ -1,0 +1,190 @@
+From 92212c52adc32c1db98e473f40a08b573df03df1 Mon Sep 17 00:00:00 2001
+From: Paul Elder <paul.elder@ideasonboard.com>
+Date: Mon, 18 May 2026 20:50:51 +0200
+Subject: [PATCH] ipa: rkisp2: data: Add tuning file for imx708
+
+Add a tuning file for rkisp2 for imx708. This was tuned using the rkisp2
+tuning script using images from [0] (at branch raspberrypi/imx708 in
+directory 2026-05-22), with some hand-modifications, such as removing
+lsc because it needs further investigation to function properly.
+
+[0] https://gitlab.freedesktop.org/camera/tuning
+
+Signed-off-by: Paul Elder <paul.elder@ideasonboard.com>
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+No change in v2
+---
+ src/ipa/rkisp2/data/imx708.yaml | 155 ++++++++++++++++++++++++++++++++
+ src/ipa/rkisp2/data/meson.build |   1 +
+ 2 files changed, 156 insertions(+)
+ create mode 100644 src/ipa/rkisp2/data/imx708.yaml
+
+--- /dev/null
++++ b/src/ipa/rkisp2/data/imx708.yaml
+@@ -0,0 +1,155 @@
++# SPDX-License-Identifier: CC0-1.0
++%YAML 1.1
++---
++version: 1
++algorithms:
++  - Crop:
++  - ColorSpaceConversion:
++  - Agc:
++      AeMeteringMode:
++        MeteringCentreWeighted: [ 0, 0, 0, 0, 0, 0, 6, 8, 6, 0, 0, 8, 16, 8, 0, 0, 6, 8, 6, 0, 0, 0, 0, 0, 0 ]
++      AeExposureMode:
++        ExposureNormal:
++          exposureTime: [ 100, 10000, 30000, 60000, 120000 ]
++          gain: [ 1.2, 2.0, 4.0, 6.0, 6.0 ]
++      AeConstraintMode:
++        ConstraintNormal:
++          lower:
++            qLo: 0.98
++            qHi: 1.0
++            yTarget: 0.1
++      relativeLuminanceTarget: 0.1
++  - Awb:
++      algorithm: "grey"
++      AwbMode:
++        AwbAuto:
++          lo: 2500
++          hi: 9000
++        AwbIncandescent:
++          lo: 2500
++          hi: 3000
++        AwbTungsten:
++          lo: 3000
++          hi: 3500
++        AwbFluorescent:
++          lo: 4000
++          hi: 4700
++        AwbIndoor:
++          lo: 3000
++          hi: 5000
++        AwbDaylight:
++          lo: 5500
++          hi: 6500
++        AwbCloudy:
++          lo: 6500
++          hi: 8000
++      priors:
++        - lux: 0
++          ct: [ 2000, 13000 ]
++          probability: [ 1.0, 1.0 ]
++      colourGains:
++        - ct: 2500
++          gains: [ 1.1199462425803561, 1.9142419601837672 ]
++        - ct: 3000
++          gains: [ 1.1242270938729624, 1.9015021867275146 ]
++        - ct: 3500
++          gains: [ 1.1583458820803894, 1.8109380659181455 ]
++        - ct: 4000
++          gains: [ 1.2714558169103625, 1.6165535079211122 ]
++        - ct: 4500
++          gains: [ 1.476886722788362, 1.4486455164421266 ]
++        - ct: 5000
++          gains: [ 1.64446637066272, 1.3819789939192924 ]
++        - ct: 5500
++          gains: [ 1.7822135091783995, 1.3487995683841383 ]
++        - ct: 6000
++          gains: [ 1.8677624206200971, 1.33422281521014 ]
++        - ct: 6500
++          gains: [ 1.9219680953296177, 1.3266118333775536 ]
++        - ct: 7000
++          gains: [ 1.9516003122560501, 1.3229263130043656 ]
++        - ct: 7500
++          gains: [ 1.9673421207948063, 1.321178491214163 ]
++        - ct: 8000
++          gains: [ 1.9845207382417145, 1.3190871916633689 ]
++        - ct: 8500
++          gains: [ 1.993620414673046, 1.3182177695755337 ]
++        - ct: 9000
++          gains: [ 2.006823198876179, 1.3170025023047545 ]
++      transversePos: 0.01269
++      transverseNeg: 0.01561
++  - BlackLevelSubtraction:
++  - Ccm:
++      ccms:
++        - ct: 2500
++          ccm: [
++                 1.72201, 0.27067, -0.99269, -0.64829, 2.48777, -0.83947, -0.08905, -0.54176,
++                 1.63081,
++               ]
++        - ct: 3000
++          ccm: [
++                 1.80587, 0.27132, -1.07719, -0.67445, 2.55729, -0.88284, -0.11544, -0.50189,
++                 1.61734,
++               ]
++        - ct: 3500
++          ccm: [
++                 1.83389, 0.37559, -1.20949, -0.69373, 2.67018, -0.97646, -0.15308, -0.47581,
++                 1.62889,
++               ]
++        - ct: 4000
++          ccm: [
++                 1.86271, 0.39818, -1.26089, -0.66884, 2.62966, -0.96082, -0.19298, -0.45096,
++                 1.64394,
++               ]
++        - ct: 4500
++          ccm: [
++                 1.78213, 0.40302, -1.18514, -0.61892, 2.47338, -0.85445, -0.24296, -0.38901,
++                 1.63197,
++               ]
++        - ct: 5000
++          ccm: [
++                 1.75328, 0.39113, -1.14441, -0.60457, 2.40168, -0.79711, -0.28013, -0.33477,
++                 1.61489,
++               ]
++        - ct: 5500
++          ccm: [
++                 1.67989, 0.42725, -1.10714, -0.60576, 2.35811, -0.75235, -0.30859, -0.29885,
++                 1.60744,
++               ]
++        - ct: 6000
++          ccm: [
++                 1.62571, 0.45052, -1.07622, -0.60271, 2.32574, -0.72302, -0.31931, -0.27971,
++                 1.59902,
++               ]
++        - ct: 6500
++          ccm: [
++                 1.60018, 0.43641, -1.03658, -0.59726, 2.29742, -0.70016, -0.31271, -0.28088,
++                 1.59358,
++               ]
++        - ct: 7000
++          ccm: [
++                 1.59364, 0.41222, -1.00585, -0.58752, 2.27837, -0.69085, -0.30352, -0.28323,
++                 1.58675,
++               ]
++        - ct: 7500
++          ccm: [
++                 1.59057, 0.40006, -0.99063, -0.58525, 2.26603, -0.68078, -0.29994, -0.28105,
++                 1.58099,
++               ]
++        - ct: 8000
++          ccm: [
++                 1.59551, 0.36878, -0.96428, -0.57195, 2.24572, -0.67377, -0.28793, -0.28858,
++                 1.57651,
++               ]
++        - ct: 8500
++          ccm: [
++                 1.60576, 0.33929, -0.94504, -0.56235, 2.23411, -0.67176, -0.27817, -0.29265,
++                 1.57082,
++               ]
++        - ct: 9000
++          ccm: [
++                 1.60867, 0.30611, -0.91478, -0.54939, 2.21074, -0.66135, -0.26915, -0.30127,
++                 1.57042,
++               ]
++  - GammaOutCorrection:
++      gamma: 2.2
+--- a/src/ipa/rkisp2/data/meson.build
++++ b/src/ipa/rkisp2/data/meson.build
+@@ -2,6 +2,7 @@
+ 
+ conf_files = files([
+     'imx219.yaml',
++    'imx708.yaml',
+     'uncalibrated.yaml',
+ ])
+ 

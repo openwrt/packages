@@ -1,0 +1,46 @@
+From 971d0058bfc4b1179fdeb57f88c33077be27641a Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 16 Oct 2026 12:36:15 +0100
+Subject: [PATCH] pipeline: rkisp2: Use a raw format the sensor supports
+
+The default configuration is built around the SRGGB10 media bus code,
+whatever the sensor produces. A sensor with another Bayer order has no
+size for that code and the default size computation dereferences the
+end of its empty size list.
+
+Select the first raw media bus code of the sensor that the pipeline
+supports, and fail the configuration generation when there is none.
+
+Assisted-by: LLM
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ src/libcamera/pipeline/rkisp2/rkisp2.cpp | 17 ++++++++++++++++-
+ 1 file changed, 16 insertions(+), 1 deletion(-)
+
+--- a/src/libcamera/pipeline/rkisp2/rkisp2.cpp
++++ b/src/libcamera/pipeline/rkisp2/rkisp2.cpp
+@@ -673,8 +673,23 @@ PipelineHandlerRkISP2::generateConfigura
+ 	bool isRaw = !data->usingIsp_ || role == StreamRole::Raw;
+ 	Size maxSize = isRaw ? vicapMaxSize : ispMaxSize;
+ 
++	/* Use the first raw media bus code of the sensor that is supported. */
++	unsigned int defaultMbusCode = 0;
++	for (unsigned int code : data->sensor_->mbusCodes()) {
++		const auto &it = std::find_if(rawFormats.begin(), rawFormats.end(),
++					      [code](const auto &value) { return value.second == code; });
++		if (it != rawFormats.end()) {
++			defaultMbusCode = code;
++			break;
++		}
++	}
++
++	if (!defaultMbusCode) {
++		LOG(RkISP2, Error) << "No raw format supported by sensor";
++		return nullptr;
++	}
++
+ 	Size defaultSize = { 1920, 1080 };
+-	unsigned int defaultMbusCode = MEDIA_BUS_FMT_SRGGB10_1X10;
+ 	PixelFormat rawFormat = data->getSensorFormat(defaultMbusCode,
+ 						      defaultSize, maxSize);
+ 

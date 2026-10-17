@@ -1,0 +1,439 @@
+From ea707198ffe2a84e8b32b8067a256e152a3a4014 Mon Sep 17 00:00:00 2001
+From: Stefan Klug <stefan.klug@ideasonboard.com>
+Date: Wed, 25 Mar 2026 16:13:54 +0100
+Subject: [PATCH] ipa: rkisp1: Lazy initialise frame context
+
+For per frame control we want to tick the IPA by the sensor frame
+sequence instead of the request sequence. This has the side effect
+that the IPA must be able to cope with situations where a frame context
+is required for a frame that was not queued before (computeParams is
+called without a corresponding request) or processStats is called for an
+unexpected sequence number (because a scratch buffer was used on kernel
+side).
+
+With the current FCQueue implementation this is not easy to model, as it
+has distinct calls for alloc() and get(). Simplify that by passing the
+FCQueue a callback that it can call to initialize a frame context when
+needed.
+
+This has the added benefit that the FCQueue can collate controls for
+requests that were queued in too late. This simplifies the logic on the
+IPA side.
+
+As fetching an uninitialized frame context is no error anymore, demote the
+corresponding warnings to debug messages.
+
+Signed-off-by: Stefan Klug <stefan.klug@ideasonboard.com>
+---
+ src/ipa/ipu3/ipu3.cpp         | 18 +++++--
+ src/ipa/libipa/fc_queue.h     | 97 +++++++++++++----------------------
+ src/ipa/mali-c55/mali-c55.cpp | 20 ++++++--
+ src/ipa/rkisp1/rkisp1.cpp     | 25 +++++----
+ src/ipa/softisp/softisp.cpp   | 18 +++++--
+ 5 files changed, 90 insertions(+), 88 deletions(-)
+
+--- a/src/ipa/ipu3/ipu3.cpp
++++ b/src/ipa/ipu3/ipu3.cpp
+@@ -172,6 +172,8 @@ private:
+ 
+ 	void setControls(unsigned int frame);
+ 	void calculateBdsGrid(const Size &bdsOutputSize);
++	void initializeFrameContext(IPAFrameContext &frameContext,
++				    const ControlList &controls);
+ 
+ 	std::map<unsigned int, MappedFrameBuffer> buffers_;
+ 
+@@ -190,6 +192,10 @@ private:
+ IPAIPU3::IPAIPU3()
+ 	: context_(kMaxFrameContexts)
+ {
++	context_.frameContexts.setInitCallback(
++		[this](IPAFrameContext &fc, const ControlList &c) {
++			this->initializeFrameContext(fc, c);
++		});
+ }
+ 
+ std::string IPAIPU3::logPrefix() const
+@@ -561,7 +567,7 @@ void IPAIPU3::computeParams(const uint32
+ 	 */
+ 	params->use = {};
+ 
+-	IPAFrameContext &frameContext = context_.frameContexts.get(frame);
++	IPAFrameContext &frameContext = context_.frameContexts.getOrInitContext(frame);
+ 
+ 	for (const auto &algo : algorithms())
+ 		algo->prepare(context_, frame, frameContext, params);
+@@ -594,7 +600,7 @@ void IPAIPU3::processStats(const uint32_
+ 	const ipu3_uapi_stats_3a *stats =
+ 		reinterpret_cast<ipu3_uapi_stats_3a *>(mem.data());
+ 
+-	IPAFrameContext &frameContext = context_.frameContexts.get(frame);
++	IPAFrameContext &frameContext = context_.frameContexts.getOrInitContext(frame);
+ 
+ 	frameContext.sensor.exposure = sensorControls.get(V4L2_CID_EXPOSURE).get<int32_t>();
+ 	frameContext.sensor.gain = camHelper_->gain(sensorControls.get(V4L2_CID_ANALOGUE_GAIN).get<int32_t>());
+@@ -627,10 +633,14 @@ void IPAIPU3::processStats(const uint32_
+  */
+ void IPAIPU3::queueRequest(const uint32_t frame, const ControlList &controls)
+ {
+-	IPAFrameContext &frameContext = context_.frameContexts.alloc(frame);
++	context_.frameContexts.getOrInitContext(frame, controls);
++}
+ 
++void IPAIPU3::initializeFrameContext(IPAFrameContext &frameContext,
++				     const ControlList &controls)
++{
+ 	for (const auto &algo : algorithms())
+-		algo->queueRequest(context_, frame, frameContext, controls);
++		algo->queueRequest(context_, frameContext.frame(), frameContext, controls);
+ }
+ 
+ /**
+--- a/src/ipa/libipa/fc_queue.h
++++ b/src/ipa/libipa/fc_queue.h
+@@ -11,6 +11,7 @@
+ #include <vector>
+ 
+ #include <libcamera/base/log.h>
++#include <libcamera/controls.h>
+ 
+ namespace libcamera {
+ 
+@@ -27,52 +28,33 @@ struct FrameContext {
+ private:
+ 	template<typename T> friend class FCQueue;
+ 	uint32_t frame_;
+-	bool initialised_ = false;
+ };
+ 
+ template<typename FC>
+ class FCQueue
+ {
+ public:
++	using InitCallback = std::function<void(FC &, const ControlList &)>;
++
+ 	FCQueue(unsigned int size)
+ 		: contexts_(size)
+ 	{
+ 	}
+ 
++	void setInitCallback(const InitCallback &cb)
++	{
++		initCallback_ = cb;
++	}
++
+ 	void clear()
+ 	{
+ 		for (FC &ctx : contexts_) {
+-			ctx.initialised_ = false;
+ 			ctx.frame_ = 0;
+ 		}
++		initialized_ = false;
+ 	}
+ 
+-	FC &alloc(const uint32_t frame)
+-	{
+-		FC &fc = contexts_[frame % contexts_.size()];
+-		FrameContext &frameContext = fc;
+-
+-		/*
+-		 * Do not re-initialise if a get() call has already fetched this
+-		 * frame context to preseve the context.
+-		 *
+-		 * \todo If the the sequence number of the context to initialise
+-		 * is smaller than the sequence number of the queue slot to use,
+-		 * it means that we had a serious request underrun and more
+-		 * frames than the queue size has been produced since the last
+-		 * time the application has queued a request. Does this deserve
+-		 * an error condition ?
+-		 */
+-		if (frame != 0 && frame <= frameContext.frame_)
+-			LOG(FCQueue, Warning)
+-				<< "Frame " << frame << " already initialised";
+-		else
+-			init(fc, frame);
+-
+-		return fc;
+-	}
+-
+-	FC &get(uint32_t frame)
++	FC &getOrInitContext(unsigned int frame, const ControlList &controls = {})
+ 	{
+ 		FC &fc = contexts_[frame % contexts_.size()];
+ 		FrameContext &frameContext = fc;
+@@ -90,51 +72,42 @@ public:
+ 					    << " has been overwritten by "
+ 					    << frameContext.frame_;
+ 
+-		if (frame == 0 && !frameContext.initialised_) {
+-			/*
+-			 * If the IPA calls get() at start() time it will get an
+-			 * un-intialized FrameContext as the below "frame ==
+-			 * frameContext.frame_" check will return success
+-			 * because FrameContexts are zeroed at creation time.
+-			 *
+-			 * Make sure the FrameContext gets initialised if get()
+-			 * is called before alloc() by the IPA for frame#0.
+-			 */
+-			init(fc, frame);
+-
++		if (initialized_ && frame == frameContext.frame_) {
++			if (!controls.empty()) {
++				/* Too late to apply the controls. Store them for later. */
++				LOG(FCQueue, Warning)
++					<< "Request underrun. Controls for frame "
++					<< frame << " are delayed ";
++				controlsToApply_.merge(controls,
++						       ControlList::MergePolicy::OverwriteExisting);
++			}
++			LOG(FCQueue, Debug) << "Got " << frame;
+ 			return fc;
+ 		}
+ 
+-		if (frame == frameContext.frame_)
+-			return fc;
++		const ControlList *controls2 = &controls;
++		if (!controlsToApply_.empty()) {
++			LOG(FCQueue, Debug) << "Applied late controls on frame" << frame;
++			controlsToApply_.merge(controls, ControlList::MergePolicy::OverwriteExisting);
++			controls2 = &controlsToApply_;
++		}
+ 
+-		/*
+-		 * The frame context has been retrieved before it was
+-		 * initialised through the initialise() call. This indicates an
+-		 * algorithm attempted to access a Frame context before it was
+-		 * queued to the IPA. Controls applied for this request may be
+-		 * left unhandled.
+-		 *
+-		 * \todo Set an error flag for per-frame control errors.
+-		 */
+-		LOG(FCQueue, Warning)
+-			<< "Obtained an uninitialised FrameContext for " << frame;
++		LOG(FCQueue, Debug) << "Init " << frame;
+ 
+-		init(fc, frame);
++		fc = {};
++		frameContext.frame_ = frame;
++		initCallback_(fc, *controls2);
++		initialized_ = true;
++		controlsToApply_.clear();
+ 
+ 		return fc;
+ 	}
+ 
+ private:
+-	void init(FC &fc, const uint32_t frame)
+-	{
+-		fc = {};
+-		FrameContext &frameContext = fc;
+-		frameContext.frame_ = frame;
+-		frameContext.initialised_ = true;
+-	}
+-
+ 	std::vector<FC> contexts_;
++	InitCallback initCallback_;
++	ControlList controlsToApply_;
++	bool initialized_;
+ };
+ 
+ } /* namespace ipa */
+--- a/src/ipa/mali-c55/mali-c55.cpp
++++ b/src/ipa/mali-c55/mali-c55.cpp
+@@ -71,6 +71,8 @@ private:
+ 	void updateControls(const IPACameraSensorInfo &sensorInfo,
+ 			    const ControlInfoMap &sensorControls,
+ 			    ControlInfoMap *ipaControls);
++	void initializeFrameContext(IPAFrameContext &frameContext,
++				    const ControlList &controls);
+ 	void setControls();
+ 
+ 	std::map<unsigned int, MappedFrameBuffer> buffers_;
+@@ -91,6 +93,10 @@ namespace {
+ IPAMaliC55::IPAMaliC55()
+ 	: context_(kMaxFrameContexts)
+ {
++	context_.frameContexts.setInitCallback(
++		[this](IPAFrameContext &fc, const ControlList &c) {
++			this->initializeFrameContext(fc, c);
++		});
+ }
+ 
+ std::string IPAMaliC55::logPrefix() const
+@@ -322,21 +328,25 @@ void IPAMaliC55::unmapBuffers(const std:
+ 	}
+ }
+ 
+-void IPAMaliC55::queueRequest(const uint32_t request, const ControlList &controls)
++void IPAMaliC55::queueRequest(const uint32_t frame, const ControlList &controls)
+ {
+-	IPAFrameContext &frameContext = context_.frameContexts.alloc(request);
++	context_.frameContexts.getOrInitContext(frame, controls);
++}
+ 
++void IPAMaliC55::initializeFrameContext(IPAFrameContext &frameContext,
++					const ControlList &controls)
++{
+ 	for (const auto &a : algorithms()) {
+ 		Algorithm *algo = static_cast<Algorithm *>(a.get());
+ 
+-		algo->queueRequest(context_, request, frameContext, controls);
++		algo->queueRequest(context_, frameContext.frame(), frameContext, controls);
+ 	}
+ }
+ 
+ void IPAMaliC55::fillParams(unsigned int request,
+ 			    [[maybe_unused]] uint32_t bufferId)
+ {
+-	IPAFrameContext &frameContext = context_.frameContexts.get(request);
++	IPAFrameContext &frameContext = context_.frameContexts.getOrInitContext(request);
+ 	MaliC55Params params(buffers_.at(bufferId).planes()[0]);
+ 
+ 	for (const auto &algo : algorithms())
+@@ -348,7 +358,7 @@ void IPAMaliC55::fillParams(unsigned int
+ void IPAMaliC55::processStats(unsigned int request, unsigned int bufferId,
+ 			      const ControlList &sensorControls)
+ {
+-	IPAFrameContext &frameContext = context_.frameContexts.get(request);
++	IPAFrameContext &frameContext = context_.frameContexts.getOrInitContext(request);
+ 	const mali_c55_stats_buffer *stats = nullptr;
+ 
+ 	stats = reinterpret_cast<mali_c55_stats_buffer *>(
+--- a/src/ipa/rkisp1/rkisp1.cpp
++++ b/src/ipa/rkisp1/rkisp1.cpp
+@@ -8,6 +8,7 @@
+ #include <algorithm>
+ #include <array>
+ #include <chrono>
++#include <functional>
+ #include <stdint.h>
+ #include <string.h>
+ 
+@@ -67,8 +68,7 @@ public:
+ 
+ 	void queueRequest(const uint32_t frame, const ControlList &controls) override;
+ 	void computeParams(const uint32_t frame, const uint32_t bufferId) override;
+-	void initializeFrameContext(const uint32_t frame,
+-				    IPAFrameContext &frameContext,
++	void initializeFrameContext(IPAFrameContext &frameContext,
+ 				    const ControlList &controls);
+ 	void processStats(const uint32_t frame, const uint32_t bufferId,
+ 			  const ControlList &sensorControls) override;
+@@ -131,6 +131,10 @@ const ControlInfoMap::Map rkisp1Controls
+ IPARkISP1::IPARkISP1()
+ 	: context_(kMaxFrameContexts)
+ {
++	context_.frameContexts.setInitCallback(
++		[this](IPAFrameContext &fc, const ControlList &c) {
++			this->initializeFrameContext(fc, c);
++		});
+ }
+ 
+ std::string IPARkISP1::logPrefix() const
+@@ -217,8 +221,7 @@ int IPARkISP1::init(const IPASettings &s
+ 
+ void IPARkISP1::start(const ControlList &controls, StartResult *result)
+ {
+-	IPAFrameContext frameContext = {};
+-	initializeFrameContext(0, frameContext, controls);
++	IPAFrameContext &frameContext = context_.frameContexts.getOrInitContext(0, controls);
+ 	result->controls = getSensorControls(frameContext);
+ 	result->code = 0;
+ }
+@@ -336,27 +339,23 @@ void IPARkISP1::unmapBuffers(const std::
+ 
+ void IPARkISP1::queueRequest(const uint32_t frame, const ControlList &controls)
+ {
+-	IPAFrameContext &frameContext = context_.frameContexts.alloc(frame);
+ 	context_.debugMetadata.enableByControl(controls);
+-
+-	initializeFrameContext(frame, frameContext, controls);
++	context_.frameContexts.getOrInitContext(frame, controls);
+ }
+ 
+-void IPARkISP1::initializeFrameContext(const uint32_t frame,
+-				       IPAFrameContext &frameContext,
+-				       const ControlList &controls)
++void IPARkISP1::initializeFrameContext(IPAFrameContext &fc, const ControlList &controls)
+ {
+ 	for (const auto &a : algorithms()) {
+ 		Algorithm *algo = static_cast<Algorithm *>(a.get());
+ 		if (algo->disabled_)
+ 			continue;
+-		algo->queueRequest(context_, frame, frameContext, controls);
++		algo->queueRequest(context_, fc.frame(), fc, controls);
+ 	}
+ }
+ 
+ void IPARkISP1::computeParams(const uint32_t frame, const uint32_t bufferId)
+ {
+-	IPAFrameContext &frameContext = context_.frameContexts.get(frame);
++	IPAFrameContext &frameContext = context_.frameContexts.getOrInitContext(frame);
+ 
+ 	/*
+ 	 * \todo: This needs discussion. In raw mode, computeParams is
+@@ -385,7 +384,7 @@ void IPARkISP1::computeParams(const uint
+ void IPARkISP1::processStats(const uint32_t frame, const uint32_t bufferId,
+ 			     const ControlList &sensorControls)
+ {
+-	IPAFrameContext &frameContext = context_.frameContexts.get(frame);
++	IPAFrameContext &frameContext = context_.frameContexts.getOrInitContext(frame);
+ 
+ 	/*
+ 	 * In raw capture mode, the ISP is bypassed and no statistics buffer is
+--- a/src/ipa/softisp/softisp.cpp
++++ b/src/ipa/softisp/softisp.cpp
+@@ -47,6 +47,10 @@ public:
+ 	IPASoftIsp()
+ 		: context_(kMaxFrameContexts)
+ 	{
++		context_.frameContexts.setInitCallback(
++			[this](IPAFrameContext &fc, const ControlList &c) {
++				this->initializeFrameContext(fc, c);
++			});
+ 	}
+ 
+ 	~IPASoftIsp();
+@@ -73,6 +77,8 @@ protected:
+ 
+ private:
+ 	void updateExposure(double exposureMSV);
++	void initializeFrameContext(IPAFrameContext &frameContext,
++				    const ControlList &controls);
+ 
+ 	DebayerParams *params_;
+ 	SwIspStats *stats_;
+@@ -277,17 +283,21 @@ void IPASoftIsp::stop()
+ 
+ void IPASoftIsp::queueRequest(const uint32_t frame, const ControlList &controls)
+ {
+-	IPAFrameContext &frameContext = context_.frameContexts.alloc(frame);
++	context_.frameContexts.getOrInitContext(frame, controls);
++}
+ 
++void IPASoftIsp::initializeFrameContext(IPAFrameContext &frameContext,
++					   const ControlList &controls)
++{
+ 	for (const auto &algo : algorithms())
+-		algo->queueRequest(context_, frame, frameContext, controls);
++		algo->queueRequest(context_, frameContext.frame(), frameContext, controls);
+ }
+ 
+ void IPASoftIsp::computeParams(const uint32_t frame)
+ {
+ 	context_.activeState.combinedMatrix = Matrix<float, 3, 3>::identity();
+ 
+-	IPAFrameContext &frameContext = context_.frameContexts.get(frame);
++	IPAFrameContext &frameContext = context_.frameContexts.getOrInitContext(frame);
+ 	for (const auto &algo : algorithms())
+ 		algo->prepare(context_, frame, frameContext, params_);
+ 	params_->combinedMatrix = context_.activeState.combinedMatrix;
+@@ -299,7 +309,7 @@ void IPASoftIsp::processStats(const uint
+ 			      [[maybe_unused]] const uint32_t bufferId,
+ 			      const ControlList &sensorControls)
+ {
+-	IPAFrameContext &frameContext = context_.frameContexts.get(frame);
++	IPAFrameContext &frameContext = context_.frameContexts.getOrInitContext(frame);
+ 
+ 	frameContext.sensor.exposure =
+ 		sensorControls.get(V4L2_CID_EXPOSURE).get<int32_t>();

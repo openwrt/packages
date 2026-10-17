@@ -1,0 +1,396 @@
+From 951b3d169f17b7155521309256c252efe3f9fdff Mon Sep 17 00:00:00 2001
+From: Kieran Bingham <kieran.bingham@ideasonboard.com>
+Date: Mon, 2 Feb 2026 08:42:40 +0000
+Subject: [PATCH] ipa: simple: awb: Port to use libipa AwbAlgorithm
+
+Port the SoftISP Awb algorithm to use the new libipa implementation
+of AwbAlgorithm.
+
+The awbAlgo_ class member is initialized with the Q<2, 8> type even if
+there is no physical register representation for SoftISP.
+
+The usage of libipa::awb::Context, which defines the gains vector as
+RGB<double>, in the SimpleIPA ActiveState and FrameContext requires
+changes to debayer_cpu.cpp and blc.cpp in order not to mix RGB<float>
+and RGB<double>.
+
+Signed-off-by: Kieran Bingham <kieran.bingham@ideasonboard.com>
+Signed-off-by: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Reviewed-by: Kieran Bingham <kieran.bingham@ideasonboard.com>
+Tested-by: Robert Mader <robert.mader@collabora.com>
+Tested-by: Milan Zamazal <mzamazal@redhat.com>
+Reviewed-by: Milan Zamazal <mzamazal@redhat.com>
+---
+ .../internal/software_isp/debayer_params.h    |   4 +-
+ src/ipa/simple/algorithms/awb.cpp             | 140 +++++++++++++-----
+ src/ipa/simple/algorithms/awb.h               |  28 ++++
+ src/ipa/simple/algorithms/blc.cpp             |   2 +-
+ src/ipa/simple/algorithms/ccm.cpp             |   2 +-
+ src/ipa/simple/ipa_context.h                  |  12 +-
+ src/libcamera/software_isp/debayer_cpu.cpp    |  12 +-
+ 7 files changed, 145 insertions(+), 55 deletions(-)
+
+--- a/include/libcamera/internal/software_isp/debayer_params.h
++++ b/include/libcamera/internal/software_isp/debayer_params.h
+@@ -21,10 +21,10 @@ struct DebayerParams {
+ 	Matrix<float, 3, 3> combinedMatrix = { { 1.0, 0.0, 0.0,
+ 						 0.0, 1.0, 0.0,
+ 						 0.0, 0.0, 1.0 } };
+-	RGB<float> blackLevel = RGB<float>({ 0.0, 0.0, 0.0 });
++	RGB<double> blackLevel = RGB<double>({ 0.0, 0.0, 0.0 });
+ 	float gamma = 1.0;
+ 	float contrastExp = 1.0;
+-	RGB<float> gains = RGB<float>({ 1.0, 1.0, 1.0 });
++	RGB<double> gains = RGB<double>({ 1.0, 1.0, 1.0 });
+ };
+ 
+ } /* namespace libcamera */
+--- a/src/ipa/simple/algorithms/awb.cpp
++++ b/src/ipa/simple/algorithms/awb.cpp
+@@ -14,50 +14,113 @@
+ 
+ #include <libcamera/control_ids.h>
+ 
+-#include "libipa/colours.h"
+-#include "simple/ipa_context.h"
+-
+ namespace libcamera {
+ 
+ LOG_DEFINE_CATEGORY(IPASoftAwb)
+ 
+ namespace ipa::soft::algorithms {
+ 
++/*
++ * \todo Replace it with a proper Lux algorithm
++ */
++static constexpr unsigned int kDefaultLux = 500;
++
++class SimpleAwbStats final : public AwbStats
++{
++public:
++	SimpleAwbStats() = default;
++
++	SimpleAwbStats(const RGB<double> &rgbMeans)
++	{
++		rgbMeans_ = rgbMeans;
++
++		rg_ = rgbMeans_.r() / rgbMeans_.g();
++		bg_ = rgbMeans_.b() / rgbMeans_.g();
++	}
++
++	double computeColourError(const RGB<double> &gains) const override
++	{
++		/*
++		 * Compute the sum of the squared colour error (non-greyness) as
++		 * it appears in the log likelihood equation.
++		 */
++		double deltaR = gains.r() * rg_ - 1.0;
++		double deltaB = gains.b() * bg_ - 1.0;
++		double delta2 = deltaR * deltaR + deltaB * deltaB;
++
++		return delta2;
++	}
++
++	RGB<double> rgbMeans() const override
++	{
++		return rgbMeans_;
++	}
++
++	bool valid() const override
++	{
++		/* Minimum mean value below which AWB can't operate. */
++		constexpr double minValue = 0.2;
++
++		return rgbMeans_.r() > minValue || rgbMeans_.g() > minValue ||
++		       rgbMeans_.b() > minValue;
++	}
++
++private:
++	RGB<double> rgbMeans_;
++	double rg_;
++	double bg_;
++};
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::init
++ */
++int Awb::init(IPAContext &context, const ValueNode &tuningData)
++{
++	return awbAlgo_.init(tuningData, context.ctrlMap);
++}
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::configure
++ */
+ int Awb::configure(IPAContext &context,
+ 		   [[maybe_unused]] const IPAConfigInfo &configInfo)
+ {
+-	auto &gains = context.activeState.awb.gains;
+-	gains = { { 1.0, 1.0, 1.0 } };
++	return awbAlgo_.configure(context.activeState.awb);
++}
+ 
+-	return 0;
++/**
++ * \copydoc libcamera::ipa::Algorithm::queueRequest
++ */
++void Awb::queueRequest(IPAContext &context, const uint32_t frame,
++		       IPAFrameContext &frameContext,
++		       const ControlList &controls)
++{
++	awbAlgo_.queueRequest(context.activeState.awb, frame, frameContext.awb,
++			      controls);
+ }
+ 
++/**
++ * \copydoc libcamera::ipa::Algorithm::prepare
++ */
+ void Awb::prepare(IPAContext &context,
+ 		  [[maybe_unused]] const uint32_t frame,
+ 		  IPAFrameContext &frameContext,
+ 		  DebayerParams *params)
+ {
+-	auto &gains = context.activeState.awb.gains;
++	awbAlgo_.prepare(context.activeState.awb, frameContext.awb);
+ 
+-	frameContext.gains = gains;
+-	params->gains = gains;
++	params->gains = frameContext.awb.gains;
+ }
+ 
+-void Awb::process(IPAContext &context,
+-		  [[maybe_unused]] const uint32_t frame,
+-		  IPAFrameContext &frameContext,
+-		  const SwIspStats *stats,
+-		  ControlList &metadata)
++SimpleAwbStats Awb::calculateRgbMeans(IPAContext &context,
++				      const SwIspStats *stats) const
+ {
++	if (!stats->valid)
++		return {};
++
+ 	const SwIspStats::Histogram &histogram = stats->yHistogram;
+ 	const uint8_t blackLevel = context.activeState.blc.level;
+ 
+-	metadata.set(controls::ColourGains, { frameContext.gains.r(),
+-					      frameContext.gains.b() });
+-
+-	if (!stats->valid)
+-		return;
+-
+ 	/*
+ 	 * Black level must be subtracted to get the correct AWB ratios, they
+ 	 * would be off if they were computed from the whole brightness range
+@@ -67,30 +130,31 @@ void Awb::process(IPAContext &context,
+ 		histogram.begin(), histogram.end(), uint64_t(0));
+ 	const uint64_t offset = blackLevel * nPixels;
+ 	const uint64_t minValid = 1;
++
+ 	/*
+ 	 * Make sure the sums are at least minValid, while preventing unsigned
+ 	 * integer underflow.
+ 	 */
+ 	const RGB<uint64_t> sum = stats->sum_.max(offset + minValid) - offset;
+ 
+-	/*
+-	 * Calculate red and blue gains for AWB.
+-	 * Clamp max gain at 4.0, this also avoids 0 division.
+-	 */
+-	auto &gains = context.activeState.awb.gains;
+-	gains = { {
+-		sum.r() <= sum.g() / 4 ? 4.0f : static_cast<float>(sum.g()) / sum.r(),
+-		1.0,
+-		sum.b() <= sum.g() / 4 ? 4.0f : static_cast<float>(sum.g()) / sum.b(),
+-	} };
+-
+-	RGB<double> rgbGains{ { 1 / gains.r(), 1 / gains.g(), 1 / gains.b() } };
+-	context.activeState.awb.temperatureK = estimateCCT(rgbGains);
+-	metadata.set(controls::ColourTemperature, context.activeState.awb.temperatureK);
+-
+-	LOG(IPASoftAwb, Debug)
+-		<< "gain R/B: " << gains << "; temperature: "
+-		<< context.activeState.awb.temperatureK;
++	RGB<double> rgbMeans = { { static_cast<double>(sum.r()) / nPixels,
++				   static_cast<double>(sum.g()) / nPixels,
++				   static_cast<double>(sum.b()) / nPixels } };
++
++	return SimpleAwbStats(rgbMeans);
++}
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::process
++ */
++void Awb::process(IPAContext &context, [[maybe_unused]] const uint32_t frame,
++		  IPAFrameContext &frameContext, const SwIspStats *stats,
++		  ControlList &metadata)
++{
++	SimpleAwbStats awbStats = calculateRgbMeans(context, stats);
++
++	awbAlgo_.process(context.activeState.awb, frameContext.awb, awbStats,
++			 kDefaultLux, metadata);
+ }
+ 
+ REGISTER_IPA_ALGORITHM(Awb, "Awb")
+--- a/src/ipa/simple/algorithms/awb.h
++++ b/src/ipa/simple/algorithms/awb.h
+@@ -7,19 +7,36 @@
+ 
+ #pragma once
+ 
++#include <libcamera/controls.h>
++
++#include "libcamera/internal/software_isp/debayer_params.h"
++#include "libcamera/internal/value_node.h"
++
++#include "libipa/awb.h"
++#include "libipa/fixedpoint.h"
++#include "simple/ipa_context.h"
++
+ #include "algorithm.h"
+ 
+ namespace libcamera {
+ 
+ namespace ipa::soft::algorithms {
+ 
++class SimpleAwbStats;
++
+ class Awb : public Algorithm
+ {
+ public:
+ 	Awb() = default;
+ 	~Awb() = default;
+ 
++	int init(IPAContext &context,
++		 const ValueNode &tuningData) override;
+ 	int configure(IPAContext &context, const IPAConfigInfo &configInfo) override;
++
++	void queueRequest(IPAContext &context, const uint32_t frame,
++			  IPAFrameContext &frameContext,
++			  const ControlList &controls) override;
+ 	void prepare(IPAContext &context,
+ 		     const uint32_t frame,
+ 		     IPAFrameContext &frameContext,
+@@ -29,6 +46,17 @@ public:
+ 		     IPAFrameContext &frameContext,
+ 		     const SwIspStats *stats,
+ 		     ControlList &metadata) override;
++
++private:
++	SimpleAwbStats calculateRgbMeans(IPAContext &context,
++					 const SwIspStats *stats) const;
++
++	/*
++	 * There actually is no Q register format for SoftISP, but allow the
++	 * colour gains to range in the [0.0f, 3.999f] interval, which seems
++	 * reasonable.
++	 */
++	AwbAlgorithm<UQ<2, 8>> awbAlgo_;
+ };
+ 
+ } /* namespace ipa::soft::algorithms */
+--- a/src/ipa/simple/algorithms/blc.cpp
++++ b/src/ipa/simple/algorithms/blc.cpp
+@@ -53,7 +53,7 @@ void BlackLevel::prepare(IPAContext &con
+ 			 DebayerParams *params)
+ {
+ 	/* Latch the blacklevel gain so GPUISP can apply. */
+-	params->blackLevel = RGB<float>(context.activeState.blc.level / 255.0f);
++	params->blackLevel = RGB<double>(context.activeState.blc.level / 255.0f);
+ }
+ 
+ void BlackLevel::process(IPAContext &context,
+--- a/src/ipa/simple/algorithms/ccm.cpp
++++ b/src/ipa/simple/algorithms/ccm.cpp
+@@ -44,7 +44,7 @@ int Ccm::init([[maybe_unused]] IPAContex
+ void Ccm::prepare(IPAContext &context, [[maybe_unused]] const uint32_t frame,
+ 		  IPAFrameContext &frameContext, [[maybe_unused]] DebayerParams *params)
+ {
+-	const unsigned int ct = context.activeState.awb.temperatureK;
++	const unsigned int ct = frameContext.awb.colourTemperature;
+ 
+ 	/* Change CCM only on bigger temperature changes. */
+ 	if (!currentCcm_ ||
+--- a/src/ipa/simple/ipa_context.h
++++ b/src/ipa/simple/ipa_context.h
+@@ -16,6 +16,7 @@
+ #include "libcamera/internal/matrix.h"
+ #include "libcamera/internal/vector.h"
+ 
++#include <libipa/awb.h>
+ #include <libipa/fc_queue.h>
+ 
+ #include "core_ipa_interface.h"
+@@ -36,6 +37,8 @@ struct IPASessionConfiguration {
+ };
+ 
+ struct IPAActiveState {
++	ipa::awb::ActiveState awb;
++
+ 	struct {
+ 		int32_t exposure;
+ 		double again;
+@@ -48,11 +51,6 @@ struct IPAActiveState {
+ 		double lastGain;
+ 	} blc;
+ 
+-	struct {
+-		RGB<float> gains;
+-		unsigned int temperatureK;
+-	} awb;
+-
+ 	Matrix<float, 3, 3> combinedMatrix;
+ 
+ 	struct {
+@@ -64,6 +62,8 @@ struct IPAActiveState {
+ };
+ 
+ struct IPAFrameContext : public FrameContext {
++	ipa::awb::FrameContext awb;
++
+ 	Matrix<float, 3, 3> ccm;
+ 
+ 	struct {
+@@ -71,8 +71,6 @@ struct IPAFrameContext : public FrameCon
+ 		double gain;
+ 	} sensor;
+ 
+-	RGB<float> gains;
+-
+ 	float gamma;
+ 	std::optional<float> contrast;
+ 	std::optional<float> saturation;
+--- a/src/libcamera/software_isp/debayer_cpu.cpp
++++ b/src/libcamera/software_isp/debayer_cpu.cpp
+@@ -1010,9 +1010,9 @@ void DebayerCpu::updateLookupTables(cons
+ 	};
+ 	const unsigned int gammaTableSize = gammaTable_.size();
+ 
+-	const RGB<float> blackIndex = params.blackLevel * kRGBLookupSize;
+-	const RGB<float> gains = params.gains;
+-	const RGB<float> div = (RGB<float>(kRGBLookupSize) - blackIndex).max(1.0);
++	const RGB<double> blackIndex = params.blackLevel * kRGBLookupSize;
++	const RGB<double> gains = params.gains;
++	const RGB<double> div = (RGB<double>(kRGBLookupSize) - blackIndex).max(1.0);
+ 
+ 	if (ccmEnabled_) {
+ 		if (gammaUpdateNeeded ||
+@@ -1025,7 +1025,7 @@ void DebayerCpu::updateLookupTables(cons
+ 			const unsigned int greenIndex = 1;
+ 			const unsigned int blueIndex = swapRedBlueGains_ ? 0 : 2;
+ 			for (unsigned int i = 0; i < kRGBLookupSize; i++) {
+-				const RGB<float> rgb = (gains * (RGB<float>(i) - blackIndex) * kRGBLookupSize / div)
++				const RGB<double> rgb = (gains * (RGB<double>(i) - blackIndex) * kRGBLookupSize / div)
+ 							       .clamp(0.0, kRGBLookupSize - 1);
+ 				red[i].r = std::round(rgb.r() * params.combinedMatrix[redIndex][0]);
+ 				red[i].g = std::round(rgb.r() * params.combinedMatrix[greenIndex][0]);
+@@ -1045,8 +1045,8 @@ void DebayerCpu::updateLookupTables(cons
+ 			auto &green = green_;
+ 			auto &blue = swapRedBlueGains_ ? red_ : blue_;
+ 			for (unsigned int i = 0; i < kRGBLookupSize; i++) {
+-				const RGB<float> lutGains =
+-					(gains * (RGB<float>(i) - blackIndex) * gammaTableSize / div)
++				const RGB<double> lutGains =
++					(gains * (RGB<double>(i) - blackIndex) * gammaTableSize / div)
+ 						.clamp(0.0, gammaTableSize - 1);
+ 				red[i] = gammaTable_[lutGains.r()];
+ 				green[i] = gammaTable_[lutGains.g()];

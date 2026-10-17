@@ -1,0 +1,53 @@
+From cbc73237418a0c8bae6d2d0537924789a6004d97 Mon Sep 17 00:00:00 2001
+From: Paul Elder <paul.elder@ideasonboard.com>
+Date: Thu, 2 Jul 2026 15:52:47 +0900
+Subject: [PATCH] ipa: rkisp2: data: Add uncalibrated tuning file
+
+Add uncalibrated tuning file for rkisp2 that just enables black level
+subtraction.
+
+Signed-off-by: Paul Elder <paul.elder@ideasonboard.com>
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+No change in v2
+---
+ src/ipa/rkisp2/data/meson.build       | 10 ++++++++++
+ src/ipa/rkisp2/data/uncalibrated.yaml |  7 +++++++
+ src/ipa/rkisp2/meson.build            |  1 +
+ 3 files changed, 18 insertions(+)
+ create mode 100644 src/ipa/rkisp2/data/meson.build
+ create mode 100644 src/ipa/rkisp2/data/uncalibrated.yaml
+
+--- /dev/null
++++ b/src/ipa/rkisp2/data/meson.build
+@@ -0,0 +1,10 @@
++# SPDX-License-Identifier: CC0-1.0
++
++conf_files = files([
++    'uncalibrated.yaml',
++])
++
++install_data(conf_files,
++             install_dir : ipa_data_dir / 'rkisp2',
++             install_tag : 'runtime')
++
+--- /dev/null
++++ b/src/ipa/rkisp2/data/uncalibrated.yaml
+@@ -0,0 +1,7 @@
++# SPDX-License-Identifier: CC0-1.0
++%YAML 1.1
++---
++version: 1
++algorithms:
++  - BlackLevelSubtraction:
++...
+--- a/src/ipa/rkisp2/meson.build
++++ b/src/ipa/rkisp2/meson.build
+@@ -1,6 +1,7 @@
+ # SPDX-License-Identifier: CC0-1.0
+ 
+ subdir('algorithms')
++subdir('data')
+ 
+ ipa_name = 'ipa_rkisp2'
+ 
