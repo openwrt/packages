@@ -1,0 +1,30 @@
+From 7c9dd15298187e215578786b6e8f4e3c7495ea10 Mon Sep 17 00:00:00 2001
+From: Stefan Klug <stefan.klug@ideasonboard.com>
+Date: Wed, 25 Mar 2026 16:13:38 +0100
+Subject: [PATCH] pipeline: rkisp1: Include frame number when pushing to
+ delayed controls
+
+Pass the frame number when pushing to delayed controls, to ease further
+development.
+
+Signed-off-by: Stefan Klug <stefan.klug@ideasonboard.com>
+Reviewed-by: Paul Elder <paul.elder@ideasonboard.com>
+---
+ src/libcamera/pipeline/rkisp1/rkisp1.cpp | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/src/libcamera/pipeline/rkisp1/rkisp1.cpp
++++ b/src/libcamera/pipeline/rkisp1/rkisp1.cpp
+@@ -500,10 +500,10 @@ void RkISP1CameraData::paramsComputed(un
+ 		selfPath_->queueBuffer(info->selfPathBuffer);
+ }
+ 
+-void RkISP1CameraData::setSensorControls([[maybe_unused]] unsigned int frame,
++void RkISP1CameraData::setSensorControls(unsigned int frame,
+ 					 const ControlList &sensorControls)
+ {
+-	delayedCtrls_->push(sensorControls);
++	delayedCtrls_->push(frame, sensorControls);
+ }
+ 
+ void RkISP1CameraData::metadataReady(unsigned int frame, const ControlList &metadata)

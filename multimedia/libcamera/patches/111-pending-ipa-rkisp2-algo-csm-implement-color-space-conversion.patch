@@ -1,0 +1,245 @@
+From 2a1e66d88650fc5980c022ad99c1e1f8e695ffe2 Mon Sep 17 00:00:00 2001
+From: Paul Elder <paul.elder@ideasonboard.com>
+Date: Tue, 30 Jun 2026 12:13:46 +0900
+Subject: [PATCH] ipa: rkisp2: algo: csm: Implement color space conversion
+
+Implement a static color space conversion algorithm for the rkisp2 IPA.
+
+Signed-off-by: Paul Elder <paul.elder@ideasonboard.com>
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+No change in v2
+---
+ src/ipa/rkisp2/algorithms/csm.cpp     | 177 ++++++++++++++++++++++++++
+ src/ipa/rkisp2/algorithms/csm.h       |  34 +++++
+ src/ipa/rkisp2/algorithms/meson.build |   1 +
+ 3 files changed, 212 insertions(+)
+ create mode 100644 src/ipa/rkisp2/algorithms/csm.cpp
+ create mode 100644 src/ipa/rkisp2/algorithms/csm.h
+
+--- /dev/null
++++ b/src/ipa/rkisp2/algorithms/csm.cpp
+@@ -0,0 +1,177 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2026, Ideas On Board
++ *
++ * RkISP2 Color space conversion
++ */
++
++#include "csm.h"
++
++#include <array>
++#include <cmath>
++
++#include <linux/media/rockchip/rkisp2-config.h>
++
++#include <libcamera/base/log.h>
++#include <libcamera/base/utils.h>
++
++#include <libcamera/color_space.h>
++#include <libcamera/control_ids.h>
++
++/**
++ * \file csm.h
++ */
++
++namespace libcamera {
++
++namespace ipa::rkisp2::algorithms {
++
++/**
++ * \class ColorSpaceConversion
++ * \brief RkISP2 Color space conversion
++ *
++ * This algorithm implements the color space conversion for the RkISP2.
++ */
++
++LOG_DEFINE_CATEGORY(RkISP2Csm)
++
++namespace {
++	struct CsmCoeffs {
++		uint16_t limited[9];
++		uint16_t full[9];
++	};
++
++	static const struct CsmCoeffs rec601Coeffs = {
++		{
++			0x0021, 0x0042, 0x000d,
++			0x01ed, 0x01db, 0x0038,
++			0x0038, 0x01d1, 0x01f7,
++		},
++		{
++			0x0026, 0x004b, 0x000f,
++			0x01ea, 0x01d6, 0x0040,
++			0x0040, 0x01ca, 0x01f6,
++		},
++	};
++
++	static const struct CsmCoeffs rec709Coeffs = {
++		{
++			0x0018, 0x0050, 0x0008,
++			0x01f3, 0x01d5, 0x0038,
++			0x0038, 0x01cd, 0x01fb,
++		},
++		{
++			0x001b, 0x005c, 0x0009,
++			0x01f1, 0x01cf, 0x0040,
++			0x0040, 0x01c6, 0x01fa,
++		},
++	};
++
++	static const struct CsmCoeffs rec2020Coeffs = {
++		{
++			0x001d, 0x004c, 0x0007,
++			0x01f0, 0x01d8, 0x0038,
++			0x0038, 0x01cd, 0x01fb,
++		},
++		{
++			0x0022, 0x0057, 0x0008,
++			0x01ee, 0x01d2, 0x0040,
++			0x0040, 0x01c5, 0x01fb,
++		},
++	};
++
++	static const struct CsmCoeffs smpte240mCoeffs = {
++		{
++			0x0018, 0x004f, 0x000a,
++			0x01f3, 0x01d5, 0x0038,
++			0x0038, 0x01ce, 0x01fa,
++		},
++		{
++			0x001b, 0x005a, 0x000b,
++			0x01f1, 0x01cf, 0x0040,
++			0x0040, 0x01c7, 0x01f9,
++		},
++	};
++
++	uint16_t identityCsm[9] = {
++		1, 0, 0,
++		0, 1, 0,
++		0, 0, 1,
++	};
++} /* namespace */
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::init
++ */
++int ColorSpaceConversion::init([[maybe_unused]] IPAContext &context,
++			       [[maybe_unused]] const ValueNode &tuningData)
++{
++	return 0;
++}
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::configure
++ */
++int ColorSpaceConversion::configure(IPAContext &context,
++				    [[maybe_unused]] const IPACameraSensorInfo &configInfo)
++{
++	const CsmCoeffs *coeffs;
++	switch (context.configuration.csm.colorSpaceEncoding) {
++	case static_cast<int>(ColorSpace::YcbcrEncoding::Rec601):
++		coeffs = &rec601Coeffs;
++		break;
++	case static_cast<int>(ColorSpace::YcbcrEncoding::Rec709):
++		coeffs = &rec709Coeffs;
++		break;
++	case static_cast<int>(ColorSpace::YcbcrEncoding::Rec2020):
++		coeffs = &rec2020Coeffs;
++		break;
++	default:
++		coeffs = nullptr;
++		break;
++	}
++
++	if (!coeffs) {
++		context.activeState.csm.csm = Matrix<uint16_t, 3, 3>(identityCsm);
++		return 0;
++	}
++
++	if (context.configuration.csm.colorSpaceRange == static_cast<int>(ColorSpace::Range::Limited))
++		context.activeState.csm.csm = Matrix<uint16_t, 3, 3>(coeffs->limited);
++	else
++		context.activeState.csm.csm = Matrix<uint16_t, 3, 3>(coeffs->full);
++	context.activeState.csm.update = true;
++
++	return 0;
++}
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::prepare
++ */
++void ColorSpaceConversion::prepare(IPAContext &context,
++				   [[maybe_unused]] const uint32_t frame,
++				   [[maybe_unused]] IPAFrameContext &frameContext,
++				   RkISP2Params *params)
++{
++	if (!context.activeState.csm.update)
++		return;
++
++	auto config = params->block<RkISP2ParamsBlocks::Csm>();
++	config.setEnabled(true);
++
++	/*
++	 * We'll use the active state directly as we don't support runtime
++	 * configuration of the csm
++	 */
++	for (size_t i = 0; i < 3; i++)
++		for (size_t j = 0; j < 3; j++)
++			config->coeff[i][j] = context.activeState.csm.csm[i][j];
++
++	context.activeState.csm.update = false;
++}
++
++REGISTER_IPA_ALGORITHM(ColorSpaceConversion, "ColorSpaceConversion")
++
++} /* namespace ipa::rkisp2::algorithms */
++
++} /* namespace libcamera */
+--- /dev/null
++++ b/src/ipa/rkisp2/algorithms/csm.h
+@@ -0,0 +1,34 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2026, Ideas On Board
++ *
++ * RkISP2 Color space conversion
++ */
++
++#pragma once
++
++#include "libcamera/internal/matrix.h"
++
++#include "algorithm.h"
++
++namespace libcamera {
++
++namespace ipa::rkisp2::algorithms {
++
++class ColorSpaceConversion : public Algorithm
++{
++public:
++	ColorSpaceConversion() = default;
++	~ColorSpaceConversion() = default;
++
++	int init(IPAContext &context, const ValueNode &tuningData) override;
++	int configure(IPAContext &context,
++		      const IPACameraSensorInfo &configInfo) override;
++	void prepare(IPAContext &context, const uint32_t frame,
++		     IPAFrameContext &frameContext,
++		     RkISP2Params *params) override;
++};
++
++} /* namespace ipa::rkisp2::algorithms */
++
++} /* namespace libcamera */
+--- a/src/ipa/rkisp2/algorithms/meson.build
++++ b/src/ipa/rkisp2/algorithms/meson.build
+@@ -5,5 +5,6 @@ rkisp2_ipa_algorithms = files([
+     'awb.cpp',
+     'bls.cpp',
+     'ccm.cpp',
++    'csm.cpp',
+ ])
+ 

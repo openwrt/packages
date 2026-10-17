@@ -1,0 +1,55 @@
+From f9748dcc975f2108c2ee974f082155c9346da742 Mon Sep 17 00:00:00 2001
+From: Stefan Klug <stefan.klug@ideasonboard.com>
+Date: Wed, 25 Mar 2026 16:13:44 +0100
+Subject: [PATCH] pipeline: rkisp1: Fix controls in raw mode
+
+After the pipeline restructuring setSensorControls is no longer emitted
+within process() but within computeParams(). In raw mode computeParams
+is not called and therefore setSensorControls is never emitted. Fix that
+by allowing computeParams to be called with an empty bufferId. This
+strategy is also used for processStats() to ensure that metadata gets
+filled in raw mode.  Then call computeParams within frameStart() when in
+raw mode.
+
+Signed-off-by: Stefan Klug <stefan.klug@ideasonboard.com>
+---
+ src/ipa/rkisp1/rkisp1.cpp                | 12 ++++++++++++
+ src/libcamera/pipeline/rkisp1/rkisp1.cpp |  6 ++++++
+ 2 files changed, 18 insertions(+)
+
+--- a/src/ipa/rkisp1/rkisp1.cpp
++++ b/src/ipa/rkisp1/rkisp1.cpp
+@@ -343,6 +343,18 @@ void IPARkISP1::computeParams(const uint
+ {
+ 	IPAFrameContext &frameContext = context_.frameContexts.get(frame);
+ 
++	/*
++	 * \todo: This needs discussion. In raw mode, computeParams is
++	 * called without a params buffer, to trigger the setSensorControls
++	 * signal. Currently our algorithms don't support prepare calls with
++	 * a nullptr. Do we need that or can we safely skip it?
++	 */
++	if (bufferId == 0) {
++		ControlList ctrls = getSensorControls(frameContext);
++		setSensorControls.emit(frame, ctrls);
++		return;
++	}
++
+ 	RkISP1Params params(context_.configuration.paramFormat,
+ 			    mappedBuffers_.at(bufferId).planes()[0]);
+ 
+--- a/src/libcamera/pipeline/rkisp1/rkisp1.cpp
++++ b/src/libcamera/pipeline/rkisp1/rkisp1.cpp
+@@ -1352,6 +1352,12 @@ int PipelineHandlerRkISP1::queueRequestD
+ 
+ 		if (data->selfPath_ && info->selfPathBuffer)
+ 			data->selfPath_->queueBuffer(info->selfPathBuffer);
++
++		/*
++		 * Call computeParams with an empty param buffer to trigger the
++		 * setSensorControls signal.
++		 */
++		data->ipa_->computeParams(data->frame_, 0);
+ 	} else {
+ 		data->ipa_->computeParams(data->frame_,
+ 					  info->paramBuffer->cookie());

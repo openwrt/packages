@@ -1,0 +1,40 @@
+From 57290a4a3afa51864c8b359b6f46445979b18698 Mon Sep 17 00:00:00 2001
+From: Stefan Klug <stefan.klug@ideasonboard.com>
+Date: Wed, 25 Mar 2026 16:13:53 +0100
+Subject: [PATCH] ipa: rkisp1: Allow processStats() to be called without stats
+ buffer
+
+When there are no stats available for a frame, it still makes sense to
+call processStats() to fill in the metadata of that frame. This
+mechanism is already used for the raw path. Allow it's use for non-raw
+also.
+
+The current code never produces buffers with id 0, but it is not
+enforced. Add a assert to enforce that.
+
+Signed-off-by: Stefan Klug <stefan.klug@ideasonboard.com>
+---
+ src/ipa/rkisp1/rkisp1.cpp | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+--- a/src/ipa/rkisp1/rkisp1.cpp
++++ b/src/ipa/rkisp1/rkisp1.cpp
+@@ -304,6 +304,9 @@ int IPARkISP1::configure(const IPAConfig
+ void IPARkISP1::mapBuffers(const std::vector<IPABuffer> &buffers)
+ {
+ 	for (const IPABuffer &buffer : buffers) {
++		/* A buffer id of 0 is considered invalid */
++		ASSERT(buffer.id != 0);
++
+ 		auto elem = buffers_.emplace(std::piecewise_construct,
+ 					     std::forward_as_tuple(buffer.id),
+ 					     std::forward_as_tuple(buffer.planes));
+@@ -389,7 +392,7 @@ void IPARkISP1::processStats(const uint3
+ 	 * provided.
+ 	 */
+ 	const rkisp1_stat_buffer *stats = nullptr;
+-	if (!context_.configuration.raw)
++	if (bufferId != 0)
+ 		stats = reinterpret_cast<rkisp1_stat_buffer *>(
+ 			mappedBuffers_.at(bufferId).planes()[0].data());
+ 

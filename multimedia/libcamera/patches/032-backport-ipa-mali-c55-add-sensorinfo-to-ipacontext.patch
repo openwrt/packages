@@ -1,0 +1,46 @@
+From 33afbad0ad8eb40b88de522164dc5409a9de22db Mon Sep 17 00:00:00 2001
+From: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Date: Wed, 10 Jun 2026 18:09:54 +0200
+Subject: [PATCH] ipa: mali-c55: Add sensorInfo to IPAContext
+
+Store the sensorInfo in the IPAContext. It will be used by the Lsc
+algorithm to support polynomial LSC tables.
+
+Signed-off-by: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Reviewed-by: Kieran Bingham <kieran.bingham@ideasonboard.com>
+Reviewed-by: Daniel Scally <dan.scally@ideasonboard.com>
+---
+ src/ipa/mali-c55/ipa_context.h | 3 +++
+ src/ipa/mali-c55/mali-c55.cpp  | 2 ++
+ 2 files changed, 5 insertions(+)
+
+--- a/src/ipa/mali-c55/ipa_context.h
++++ b/src/ipa/mali-c55/ipa_context.h
+@@ -10,6 +10,8 @@
+ #include <libcamera/base/utils.h>
+ #include <libcamera/controls.h>
+ 
++#include <libcamera/ipa/core_ipa_interface.h>
++
+ #include "libcamera/internal/bayer_format.h"
+ 
+ #include <libipa/fc_queue.h>
+@@ -77,6 +79,7 @@ struct IPAContext {
+ 	{
+ 	}
+ 
++	IPACameraSensorInfo sensorInfo;
+ 	IPASessionConfiguration configuration;
+ 	IPAActiveState activeState;
+ 
+--- a/src/ipa/mali-c55/mali-c55.cpp
++++ b/src/ipa/mali-c55/mali-c55.cpp
+@@ -101,6 +101,8 @@ std::string IPAMaliC55::logPrefix() cons
+ int IPAMaliC55::init(const IPASettings &settings, const IPAConfigInfo &ipaConfig,
+ 		     ControlInfoMap *ipaControls)
+ {
++	context_.sensorInfo = ipaConfig.sensorInfo;
++
+ 	camHelper_ = CameraSensorHelperFactoryBase::create(settings.sensorModel);
+ 	if (!camHelper_) {
+ 		LOG(IPAMaliC55, Error)

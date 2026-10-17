@@ -1,0 +1,428 @@
+From bc2d99f3df5fecdc800ed4f37a501f002465cb37 Mon Sep 17 00:00:00 2001
+From: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Date: Sat, 11 Oct 2025 17:03:30 +0100
+Subject: [PATCH] ipa: mali-c55: awb: Port to use libipa AwbAlgorithm
+
+Port the Mali-C55 Awb algorithm to use the new libipa implementation
+of AwbAlgorithm.
+
+The awbAlgo_ class member is initialized with the Q<4, 8> type that
+represents the register format and the MaliC55AwbStats type handles
+the WB statistics format as produced by the Mali-C55 which already
+calculates the mean values as R/G and B/G values.
+
+Signed-off-by: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Reviewed-by: Kieran Bingham <kieran.bingham@ideasonboard.com>
+Reviewed-by: Daniel Scally <dan.scally@ideasonboard.com>
+Tested-by: Daniel Scally <dan.scally@ideasonboard.com>
+---
+ src/ipa/mali-c55/algorithms/awb.cpp | 223 ++++++++++++++++------------
+ src/ipa/mali-c55/algorithms/awb.h   |  28 +++-
+ src/ipa/mali-c55/ipa_context.cpp    |   3 +
+ src/ipa/mali-c55/ipa_context.h      |  11 +-
+ 4 files changed, 157 insertions(+), 108 deletions(-)
+
+--- a/src/ipa/mali-c55/algorithms/awb.cpp
++++ b/src/ipa/mali-c55/algorithms/awb.cpp
+@@ -2,7 +2,7 @@
+ /*
+  * Copyright (C) 2024, Ideas On Board Oy
+  *
+- * Mali C55 grey world auto white balance algorithm
++ * Mali C55 auto white balance algorithm
+  */
+ 
+ #include "awb.h"
+@@ -14,60 +14,91 @@
+ 
+ #include <libcamera/control_ids.h>
+ 
+-#include "libipa/fixedpoint.h"
+-
+ namespace libcamera {
+ 
+ namespace ipa::mali_c55::algorithms {
+ 
+ LOG_DEFINE_CATEGORY(MaliC55Awb)
+ 
+-/* Number of frames at which we should run AWB at full speed */
+-static constexpr uint32_t kNumStartupFrames = 4;
++/* \todo Mali-C55 doesn't support the Lux algorithm. */
++static constexpr unsigned int kDefaultLux = 500;
++
++class MaliC55AwbStats final : public AwbStats
++{
++public:
++	MaliC55AwbStats() = default;
++	MaliC55AwbStats(const RGB<double> &rgbMeans)
++	{
++		/* The Mali-C55 ISP already provides stats as R/G and B/G ratios. */
++
++		rgbMeans_[0] = rgbMeans.r() * rgbMeans.g();
++		rgbMeans_[1] = 1.0;
++		rgbMeans_[2] = rgbMeans.b() * rgbMeans.g();
++
++		rg_ = rgbMeans_.r();
++		bg_ = rgbMeans_.b();
++	}
+ 
+-Awb::Awb()
++	double computeColourError(const RGB<double> &gains) const override
++	{
++		/*
++		 * Compute the sum of the squared colour error (non-greyness) as
++		 * it appears in the log likelihood equation.
++		 */
++		double deltaR = gains.r() * rg_ - 1.0;
++		double deltaB = gains.b() * bg_ - 1.0;
++		double delta2 = deltaR * deltaR + deltaB * deltaB;
++
++		return delta2;
++	}
++
++	RGB<double> rgbMeans() const override
++	{
++		return rgbMeans_;
++	}
++
++	bool valid() const override
++	{
++		/* Minimum mean value below which AWB can't operate. */
++		constexpr double minValue = 0.2;
++
++		return rgbMeans_.r() > minValue || rgbMeans_.g() > minValue ||
++		       rgbMeans_.b() > minValue;
++	}
++
++private:
++	RGB<double> rgbMeans_;
++	double rg_;
++	double bg_;
++};
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::init
++ */
++int Awb::init(IPAContext &context, const ValueNode &tuningData)
+ {
++	return awbAlgo_.init(tuningData, context.ctrlMap);
+ }
+ 
+-int Awb::configure([[maybe_unused]] IPAContext &context,
++/**
++ * \copydoc libcamera::ipa::Algorithm::configure
++ */
++int Awb::configure(IPAContext &context,
+ 		   [[maybe_unused]] const IPACameraSensorInfo &configInfo)
+ {
+-	/*
+-	 * Initially we have no idea what the colour balance will be like, so
+-	 * for the first frame we will make no assumptions and leave the R/B
+-	 * channels unmodified.
+-	 */
+-	context.activeState.awb.rGain = 1.0f;
+-	context.activeState.awb.bGain = 1.0f;
+-
+-	return 0;
++	return awbAlgo_.configure(context.activeState.awb);
+ }
+ 
+-void Awb::fillGainsParamBlock(MaliC55Params *params, IPAContext &context,
+-				IPAFrameContext &frameContext)
++/**
++ * \copydoc libcamera::ipa::Algorithm::queueRequest
++ */
++void Awb::queueRequest(IPAContext &context,
++		       const uint32_t frame,
++		       IPAFrameContext &frameContext,
++		       const ControlList &controls)
+ {
+-	UQ<4, 8> rGain = context.activeState.awb.rGain;
+-	UQ<4, 8> bGain = context.activeState.awb.bGain;
+-
+-	/*
+-	 * The gains here map as follows:
+-	 *	gain00 = R
+-	 *	gain01 = Gr
+-	 *	gain10 = Gb
+-	 *	gain11 = B
+-	 *
+-	 * This holds true regardless of the bayer order of the input data, as
+-	 * the mapping is done internally in the ISP.
+-	 */
+-	auto block = params->block<MaliC55Blocks::AwbGains>();
+-
+-	block->gain00 = rGain.quantized();
+-	block->gain01 = UQ<4, 8>(1.0f).quantized();
+-	block->gain10 = UQ<4, 8>(1.0f).quantized();
+-	block->gain11 = bGain.quantized();
+-
+-	frameContext.awb.rGain = rGain;
+-	frameContext.awb.bGain = bGain;
++	awbAlgo_.queueRequest(context.activeState.awb, frame, frameContext.awb,
++			      controls);
+ }
+ 
+ void Awb::fillConfigParamBlock(MaliC55Params *params)
+@@ -117,10 +148,33 @@ void Awb::fillConfigParamBlock(MaliC55Pa
+ 	block->cb_low = 64;
+ }
+ 
++/**
++ * \copydoc libcamera::ipa::Algorithm::prepare
++ */
+ void Awb::prepare(IPAContext &context, const uint32_t frame,
+ 		  IPAFrameContext &frameContext, MaliC55Params *params)
+ {
+-	fillGainsParamBlock(params, context, frameContext);
++	awbAlgo_.prepare(context.activeState.awb, frameContext.awb);
++
++	/*
++	 * The gains here map as follows:
++	 *	gain00 = R
++	 *	gain01 = Gr
++	 *	gain10 = Gb
++	 *	gain11 = B
++	 *
++	 * This holds true regardless of the bayer order of the input data, as
++	 * the mapping is done internally in the ISP.
++	 */
++	auto block = params->block<MaliC55Blocks::AwbGains>();
++	block.setEnabled(true);
++
++	block->gain00 = UQ<4, 8>(static_cast<float>(frameContext.awb.gains.r()))
++				.quantized();
++	block->gain01 = UQ<4, 8>(1.0f).quantized();
++	block->gain10 = UQ<4, 8>(1.0f).quantized();
++	block->gain11 = UQ<4, 8>(static_cast<float>(frameContext.awb.gains.b()))
++				.quantized();
+ 
+ 	if (frame > 0)
+ 		return;
+@@ -128,45 +182,43 @@ void Awb::prepare(IPAContext &context, c
+ 	fillConfigParamBlock(params);
+ }
+ 
+-void Awb::process(IPAContext &context, const uint32_t frame,
+-		  IPAFrameContext &frameContext, const mali_c55_stats_buffer *stats,
+-		  [[maybe_unused]] ControlList &metadata)
++MaliC55AwbStats Awb::calculateRgbMeans(const IPAFrameContext &frameContext,
++				       const mali_c55_stats_buffer *stats) const
+ {
+-	const struct mali_c55_awb_average_ratios *awb_ratios = stats->awb_ratios;
++	const struct mali_c55_awb_average_ratios *awb = stats->awb_ratios;
+ 
+ 	/*
+ 	 * The ISP produces average R:G and B:G ratios for zones. We take the
+-	 * average of all the zones with data and simply invert them to provide
+-	 * gain figures that we can apply to approximate a grey world.
++	 * average of all the zones with data and calculate the mean values.
+ 	 */
+-	unsigned int counted_zones = 0;
+-	float rgSum = 0, bgSum = 0;
++	unsigned int active_zones = 0;
++	double rgSum = 0, bgSum = 0;
+ 
+ 	for (unsigned int i = 0; i < 225; i++) {
+-		if (!awb_ratios[i].num_pixels)
++		if (!awb[i].num_pixels)
+ 			continue;
+ 
+ 		/*
+-		 * The statistics are in Q4.8 format, so we convert to float
++		 * The statistics are in Q4.8 format, so we convert to double
+ 		 * here.
+ 		 */
+-		rgSum += UQ<4, 8>(awb_ratios[i].avg_rg_gr).value();
+-		bgSum += UQ<4, 8>(awb_ratios[i].avg_bg_br).value();
+-		counted_zones++;
++		rgSum += UQ<4, 8>(awb[i].avg_rg_gr).value();
++		bgSum += UQ<4, 8>(awb[i].avg_bg_br).value();
++		active_zones++;
+ 	}
+ 
+ 	/*
+ 	 * Sometimes the first frame's statistics have no valid pixels, in which
+ 	 * case we'll just assume a grey world until they say otherwise.
+ 	 */
+-	float rgAvg, bgAvg;
+-	if (!counted_zones) {
+-		rgAvg = 1.0;
+-		bgAvg = 1.0;
+-	} else {
+-		rgAvg = rgSum / counted_zones;
+-		bgAvg = bgSum / counted_zones;
+-	}
++	if (!active_zones)
++		return {};
++
++	RGB<double> rgbMeans = { {
++		rgSum / active_zones,
++		1.0,
++		bgSum / active_zones,
++	} };
+ 
+ 	/*
+ 	 * The statistics are generated _after_ white balancing is performed in
+@@ -174,41 +226,22 @@ void Awb::process(IPAContext &context, c
+ 	 * figure by the gains that were applied when the statistics for this
+ 	 * frame were generated.
+ 	 */
+-	float rRatio = rgAvg / frameContext.awb.rGain.value();
+-	float bRatio = bgAvg / frameContext.awb.bGain.value();
+-
+-	/*
+-	 * And then we can simply invert the ratio to find the gain we should
+-	 * apply.
+-	 */
+-	float rGain = 1 / rRatio;
+-	float bGain = 1 / bRatio;
+-
+-	/*
+-	 * Running at full speed, this algorithm results in oscillations in the
+-	 * colour balance. To remove those we dampen the speed at which it makes
+-	 * changes in gain, unless we're in the startup phase in which case we
+-	 * want to fix the miscolouring as quickly as possible.
+-	 */
+-	float speed = frame < kNumStartupFrames ? 1.0f : 0.2f;
+-	rGain = speed * rGain + context.activeState.awb.rGain.value() * (1.0f - speed);
+-	bGain = speed * bGain + context.activeState.awb.bGain.value() * (1.0f - speed);
++	rgbMeans /= frameContext.awb.gains.max(0.01);
+ 
+-	context.activeState.awb.rGain = rGain;
+-	context.activeState.awb.bGain = bGain;
++	return MaliC55AwbStats(rgbMeans);
++}
+ 
+-	metadata.set(controls::ColourGains, {
+-		frameContext.awb.rGain.value(),
+-		frameContext.awb.bGain.value(),
+-	});
++/**
++ * \copydoc libcamera::ipa::Algorithm::process
++ */
++void Awb::process(IPAContext &context, [[maybe_unused]] const uint32_t frame,
++		  IPAFrameContext &frameContext, const mali_c55_stats_buffer *stats,
++		  ControlList &metadata)
++{
++	MaliC55AwbStats awbStats = calculateRgbMeans(frameContext, stats);
+ 
+-	LOG(MaliC55Awb, Debug) << "For frame number " << frame << ": "
+-		<< "Average R/G Ratio: " << rgAvg
+-		<< ", Average B/G Ratio: " << bgAvg
+-		<< "\nrGain applied to this frame: " << frameContext.awb.rGain
+-		<< ", bGain applied to this frame: " << frameContext.awb.bGain
+-		<< "\nrGain to apply: " << context.activeState.awb.rGain
+-		<< ", bGain to apply: " << context.activeState.awb.bGain;
++	awbAlgo_.process(context.activeState.awb, frameContext.awb, awbStats,
++			 kDefaultLux, metadata);
+ }
+ 
+ REGISTER_IPA_ALGORITHM(Awb, "Awb")
+--- a/src/ipa/mali-c55/algorithms/awb.h
++++ b/src/ipa/mali-c55/algorithms/awb.h
+@@ -2,24 +2,41 @@
+ /*
+  * Copyright (C) 2024, Ideas on Board Oy
+  *
+- * Mali C55 grey world auto white balance algorithm
++ * Mali C55 auto white balance algorithm
+  */
+ 
++#pragma once
++
++#include <linux/media/arm/mali-c55-config.h>
++
++#include <libcamera/controls.h>
++
++#include "libcamera/internal/value_node.h"
++
++#include "libipa/awb.h"
++#include "libipa/fixedpoint.h"
++
+ #include "algorithm.h"
+ #include "ipa_context.h"
++#include "params.h"
+ 
+ namespace libcamera {
+ 
+ namespace ipa::mali_c55::algorithms {
+ 
++class MaliC55AwbStats;
++
+ class Awb : public Algorithm
+ {
+ public:
+-	Awb();
+ 	~Awb() = default;
+ 
++	int init(IPAContext &context, const ValueNode &tuningData) override;
+ 	int configure(IPAContext &context,
+ 		      const IPACameraSensorInfo &configInfo) override;
++	void queueRequest(IPAContext &context, const uint32_t frame,
++			  IPAFrameContext &frameContext,
++			  const ControlList &controls) override;
+ 	void prepare(IPAContext &context, const uint32_t frame,
+ 		     IPAFrameContext &frameContext,
+ 		     MaliC55Params *params) override;
+@@ -29,10 +46,11 @@ public:
+ 		     ControlList &metadata) override;
+ 
+ private:
+-	void fillGainsParamBlock(MaliC55Params *params,
+-				 IPAContext &context,
+-				 IPAFrameContext &frameContext);
+ 	void fillConfigParamBlock(MaliC55Params *params);
++	MaliC55AwbStats calculateRgbMeans(const IPAFrameContext &frameContext,
++					  const mali_c55_stats_buffer *stats) const;
++
++	AwbAlgorithm<UQ<4, 8>> awbAlgo_;
+ };
+ 
+ } /* namespace ipa::mali_c55::algorithms */
+--- a/src/ipa/mali-c55/ipa_context.cpp
++++ b/src/ipa/mali-c55/ipa_context.cpp
+@@ -96,6 +96,9 @@ namespace libcamera::ipa::mali_c55 {
+  *
+  * \var IPAContext::frameContexts
+  * \brief Ring buffer of per-frame contexts
++ *
++ * \var IPAContext::ctrlMap
++ * \brief A ControlInfoMap::Map of controls populated by the algorithms
+  */
+ 
+ } /* namespace libcamera::ipa::mali_c55 */
+--- a/src/ipa/mali-c55/ipa_context.h
++++ b/src/ipa/mali-c55/ipa_context.h
+@@ -14,6 +14,7 @@
+ 
+ #include <libipa/fc_queue.h>
+ 
++#include "libipa/awb.h"
+ #include "libipa/fixedpoint.h"
+ 
+ namespace libcamera {
+@@ -54,10 +55,7 @@ struct IPAActiveState {
+ 		uint32_t temperatureK;
+ 	} agc;
+ 
+-	struct {
+-		UQ<4, 8> rGain;
+-		UQ<4, 8> bGain;
+-	} awb;
++	ipa::awb::ActiveState awb;
+ };
+ 
+ struct IPAFrameContext : public FrameContext {
+@@ -67,10 +65,7 @@ struct IPAFrameContext : public FrameCon
+ 		UQ<5, 8> ispGain;
+ 	} agc;
+ 
+-	struct {
+-		UQ<4, 8> rGain;
+-		UQ<4, 8> bGain;
+-	} awb;
++	ipa::awb::FrameContext awb;
+ };
+ 
+ struct IPAContext {
