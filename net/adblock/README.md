@@ -300,13 +300,18 @@ root@blackhole:~# /etc/init.d/adblock status
 **Recommendation for low memory systems**  
 adblock keeps all working data in RAM to avoid unnecessary flash wear. The number of parallel processing jobs and the sort buffer size are automatically scaled to the available memory, so on constrained devices adblock already throttles itself during feed processing. On devices with only 128–256 MB RAM, you can further reduce memory pressure with the following optimizations:
 * Limit CPU parallelism: the auto-detected core count is capped to the available memory; set `adb_cores=1` to force single-threaded processing with minimal peak memory. A manually set value is always used as-is — it is never lowered, so raising it on a constrained device is at your own risk
-* Use external storage: Set adb_basedir, adb_backupdir and adb_reportdir to a USB drive or SSD to offload temporary and persistent data
-* Enable blocklist shifting: Activate adb_dnsshift to store the generated blocklist on external storage and keep only a symlink in RAM
+* Use external storage: with the defaults the feed backups (`adb_backupdir`) and the final blocklist (`adb_dnsdir`) are kept in RAM permanently, not only during feed processing, e.g. 72 MB backups and a 53 MB blocklist with 1.1M entries. Set `adb_basedir`, `adb_backupdir` and `adb_reportdir` to a USB drive or SSD to offload the temporary and persistent data
+* Enable blocklist shifting: activate `adb_dnsshift` to store the generated blocklist in the backup directory on external storage and keep only a symlink in RAM
 * Use firewall‑based DNS redirection: Route DNS queries via nftables to external filtered DNS resolvers and keep only a minimal local blocklist active
 * Use compressed swap: install the `zram-swap` package so the kernel can page out cold memory into compressed RAM under pressure (see below)
 
-**Recommendation for slow CPUs**  
-The top level domain compression (`adb_tld`) is enabled by default and keeps the blocklist compact, but it needs an additional label reversal per feed and an extra pass over the merged blocklist. On slow CPUs this roughly doubles the processing time, while today's curated feeds are largely compressed already and the number of removed entries is small. If the processing time matters more than a slightly smaller blocklist, set `adb_tld=0`. Example: on a 2-core router with the hagezi pro and oisd big feeds the processing time drops from 14.5 to 7.5 seconds, the blocklist grows by 1.3% (~4,700 entries).
+**Top level domain compression (adb_tld)**  
+The top level domain compression is enabled by default. It removes all subdomains of already blocked domains (e.g. `ads.example.com` if `example.com` is blocked as well), for this it needs an additional label reversal per feed and an extra pass over the merged blocklist. How much it saves depends on the selected feeds: curated feeds like hagezi or oisd are largely compressed already, feeds with many plain host entries are not. Some measurements on 2-core routers:
+* Large feed selection with many host entries (1hosts, adguard, adguard_tracking, certpl, doh_blocklist, hagezi, ipfire_dbl, stevenblack, winspy), unbound, x86: the processing time rises from 78 to 109 seconds, but the blocklist shrinks from 2.94M to 1.07M entries (-64%). unbound loads it in 15 instead of 57 seconds and needs 400 MB instead of 1.1 GB RAM, including the restart of the DNS backend the whole run is even faster with `adb_tld=1`
+* Small feed selection (anti_ad, hagezi, yoyo), dnsmasq, ARM: the processing time rises by 2 seconds, the blocklist shrinks from 113k to 82k entries (-27%), dnsmasq needs 2.3 MB less RAM
+* Curated feeds only (hagezi pro, oisd big), dnsmasq: the processing time drops from 14.5 to 7.5 seconds with `adb_tld=0`, the blocklist grows by 1.3% (~4,700 entries)
+
+Recommendation: keep the default. Only on slow CPUs with curated, already compressed feeds `adb_tld=0` can save processing time at the cost of a slightly larger blocklist. To check it for your own feed selection, compare the number of blocked domains in the adblock status with and without the compression.
 
 **Use compressed swap (zram-swap) on low memory devices**  
 The simplest way to survive the memory peak during feed processing is to give the kernel a compressed swap device and let it page out cold memory under pressure. The `zram-swap` package sets this up automatically at boot — no scripting, no changes to adblock, and adblock benefits transparently. Because the swap lives in compressed RAM rather than on flash, this incurs no flash wear.
@@ -339,14 +344,13 @@ echo 'vm.swappiness=100' >> /etc/sysctl.conf
 sysctl -p
 ```
 
-Leave `adb_basedir` and `adb_backupdir` at their defaults. On very small devices (128 MB) compressed swap helps, but heavy swapping costs CPU — if RAM is truly marginal, the more honest fix is to activate fewer feeds.
+**Please note:** zram covers the short memory peak during feed processing, it does not replace external storage for the backups and the shifted blocklist (see above): without it, they occupy RAM permanently, and the gzip compressed backups can't be compressed any further by zram. On very small devices (128 MB) compressed swap helps, but heavy swapping costs CPU — if RAM is truly marginal, the more honest fix is to activate fewer feeds.
 
 **Sensible choice of blocklists**  
-The following feeds are just my personal recommendation as an initial setup:
+Don`t just blindly activate too many feeds at once, sooner or later this will lead to OOM conditions.The following feeds are just my personal recommendation as an initial setup:
 * `adguard`, `adguard_tracking` and `certpl`
 
 In total, this feed selection blocks about 280K domains. It may also be useful to include compilations like hagezi, stevenblack or oisd.
-Please note: don`t just blindly activate too many feeds at once, sooner or later this will lead to OOM conditions.
 
 **DNS reporting, enable the GeoIP Map**  
 adblock includes a powerful reporting tool on the DNS Report tab which shows the latest DNS statistics generated by tcpdump. To get the latest statistics always press the "Refresh" button.
@@ -369,7 +373,7 @@ mapshaper ne50.geojson -filter-fields -simplify 5% keep-shapes -o force precisio
 scp world-50m.json root@openwrt:/www/luci-static/resources/view/adblock/
 ```
 
-The result is roughly 105 kB, about three times the shipped file. Please note: this file is not part of any package, so it is removed on sysupgrade unless you add its path to `/etc/sysupgrade.conf`, and it stays behind when `luci-app-adblock` is uninstalled.
+The result is roughly 105 kB, about three times the shipped file. This file is not part of any package, so it is removed on sysupgrade unless you add its path to `/etc/sysupgrade.conf`, and it stays behind when `luci-app-adblock` is uninstalled.
 
 **DNS reporting, limit the tcpdump capture**  
 `adb_repfilter` takes a regular tcpdump/BPF expression which is logically ANDed to the internal reporting port filter. It narrows the capture for every `adb_repiface` setting, not just for `any`, e.g. to skip a single noisy client or to limit the report to certain network segments.
@@ -548,7 +552,14 @@ Please join the adblock discussion in this [forum thread](https://forum.openwrt.
 
 <a id="removal"></a>
 ## Removal
-Stop all adblock related services with _/etc/init.d/adblock stop_ and remove the adblock package if necessary.
+Stop all adblock related services with _/etc/init.d/adblock stop_ and remove the adblock package if necessary, e.g.:
+
+```sh
+/etc/init.d/adblock stop
+apk del luci-app-adblock adblock
+rm -f /etc/config/adblock
+rm -rf /tmp/luci-*
+```
 
 <a id="donations"></a>
 ## Donations
