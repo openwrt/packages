@@ -14,7 +14,7 @@ function get_str(iface, property) {
 }
 
 function get_int(iface, property) {
-	return int(get_str(iface, property));
+	return int(get_str(iface, property)) || 0;
 }
 
 function get_uptime() {
