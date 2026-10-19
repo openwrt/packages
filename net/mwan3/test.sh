@@ -37,3 +37,7 @@ actual=$(sanitize_route "$ipv6_route")
 	echo "actual:   '$actual'" >&2
 	exit 1
 }
+
+# Check that empty, missing and invalid rpcd state becomes zero.
+# Numeric values must be preserved.
+ucode -S "$(dirname "$0")/test-rpcd.uc"
