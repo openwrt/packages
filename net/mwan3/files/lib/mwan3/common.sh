@@ -84,17 +84,10 @@ mwan3_get_src_ip()
 			# use instead
 			network_get_prefix6 _src_ip "$true_iface"
 			if [ -n "$_src_ip" ]; then
-				# got a prefix like 2001:xxxx:yyyy::/48, clean it up to
-				# only contain the prefix -> 2001:xxxx:yyyy
-				_src_ip=$(echo "$_src_ip" | sed -e 's;:*/.*$;;')
-				# find an interface with a delegated address, and use
-				# it, this would be sth like 2001:xxxx:yyyy:zzzz:...
-				# we just select the first address that matches the prefix
-				# NOTE: is there a better/more reliable way to get a
-				#       usable address to use as source for pings here?
-				local pfx_sed
-				pfx_sed='s/ *inet6 \('"$_src_ip"':[0-6a-f:]\+\).* scope.*/\1/'
-				_src_ip=$($IP address ls | sed -ne "${pfx_sed};T;p;q")
+				# Let ip match the full prefix length and IPv6 spelling.
+				# A textual prefix can miss delegated subnets or select
+				# an address belonging to another upstream.
+				_src_ip=$($IP address ls to "$_src_ip" scope global | sed -ne "$sed_str")
 			fi
 		fi
 		if [ -z "$_src_ip" ]; then
