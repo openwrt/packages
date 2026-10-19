@@ -68,3 +68,29 @@ ucode -S "$(dirname "$0")/test-rpcd.uc"
 		done
 	done
 )
+
+# The kernel's expanded nexthop dump must be replayable without nhid.
+# These parser checks require no extra tools or changes to the routing tables.
+check_nexthop_route()
+{
+	actual=$(sanitize_route "$1")
+	[ "$actual" = "$2" ] || {
+		echo "failed to normalize nexthop route: '$1'" >&2
+		echo "expected: '$2'" >&2
+		echo "actual:   '$actual'" >&2
+		exit 1
+	}
+}
+
+check_nexthop_route \
+	'198.51.100.0/24 nhid 7 via 192.0.2.1 dev eth0 proto static metric 20' \
+	'198.51.100.0/24 via 192.0.2.1 dev eth0 proto static metric 20'
+check_nexthop_route \
+	'2001:db8:2::/64 nhid 8 via fe80::1 dev eth0 proto static metric 30 pref medium' \
+	'2001:db8:2::/64 via fe80::1 dev eth0 proto static metric 30 pref medium'
+check_nexthop_route '192.0.2.0/24 nhid 9 dev eth0 scope link' \
+	'192.0.2.0/24 dev eth0 scope link'
+check_nexthop_route '198.51.100.0/24 nhid 7 proto static metric 20' \
+	'198.51.100.0/24 nhid 7 proto static metric 20'
+check_nexthop_route '198.51.100.0/24 via 192.0.2.1 dev eth0 proto static metric 20' \
+	'198.51.100.0/24 via 192.0.2.1 dev eth0 proto static metric 20'
