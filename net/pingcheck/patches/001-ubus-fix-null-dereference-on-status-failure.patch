@@ -1,0 +1,35 @@
+From 54614ee55acf28d24bccfd68e7077acf5dd77bf1 Mon Sep 17 00:00:00 2001
+From: Samuele Barella <samuele.barella@unwired.at>
+Date: Mon, 19 Oct 2026 11:14:42 +0200
+Subject: [PATCH] ubus: fix NULL dereference when interface status call fails
+
+ubus_invoke() returns positive UBUS_STATUS_* codes on error, so the
+"ret < 0" check never catches a failed "status" call. On e.g. a timeout
+the result callback does not run, last_result_msg stays NULL and
+ubus_interface_get_status() passes it to blob_data()/blob_len(),
+crashing pingcheck:
+
+  do_page_fault(): sending SIGSEGV to pingcheck for invalid read access from 00000001
+
+Treat any status other than UBUS_STATUS_OK, or a missing reply, as an
+error.
+
+---
+ ubus.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+--- a/ubus.c
++++ b/ubus.c
+@@ -105,7 +105,11 @@ static bool ubus_interface_status(const
+ 
+ 	ret = ubus_invoke(ctx, id, "status", NULL, ubus_result_cb, NULL,
+ 					  UBUS_TIMEOUT);
+-	if (ret < 0) {
++	/* ubus errors are positive UBUS_STATUS_* codes, and on error (e.g.
++	 * timeout) the result callback never ran and last_result_msg is NULL */
++	if (ret != UBUS_STATUS_OK || last_result_msg == NULL) {
++		free(last_result_msg);
++		last_result_msg = NULL;
+ 		return false;
+ 	}
+ 
