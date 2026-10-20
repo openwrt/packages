@@ -1,0 +1,374 @@
+From 3ce5282fcf5519c288ab677def3e93488ec01b80 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Sun, 20 Sep 2026 19:55:55 +0100
+Subject: [PATCH] validation: skip cgroup v1 only resource fields
+
+The cgroup test bundles ask for memory.swappiness, memory.disableOOMKiller,
+memory.kernel, memory.kernelTCP, blockIO.leafWeight and the block IO
+weights on every host. None of those exist in the unified hierarchy, and
+the create operation requires a runtime that cannot apply a property to
+generate an error and not create the container. A correct cgroup v2 only
+runtime therefore fails these tests by doing exactly what the spec asks
+of it.
+
+Set those fields only where the hierarchy can carry them. cpu.shares goes
+the same way: runtimes map it onto cpu.weight with a lossy conversion the
+runtime-spec does not define, so the configured value cannot be recovered
+and asserting on it would test a convention rather than the spec.
+
+Compare the remaining fields with a helper that reports a value neither
+side carries as a diagnostic instead of a failure, so that one unsupported
+field no longer hides the checks that follow it: the block IO and cpu
+validators used to return early and silently drop every later assertion.
+linux_cgroups_relative_cpus grows the same behaviour by using the shared
+CPU validator its siblings already use rather than its own copy of it.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ .../linux_cgroups_blkio.go                    | 16 +++++--
+ .../linux_cgroups_cpus/linux_cgroups_cpus.go  |  5 +-
+ .../linux_cgroups_memory.go                   | 10 ++--
+ .../linux_cgroups_relative_blkio.go           | 13 ++++--
+ .../linux_cgroups_relative_cpus.go            | 41 +++--------------
+ .../linux_cgroups_relative_memory.go          | 10 ++--
+ validation/util/linux_cgroups.go              | 31 +++++++++++++
+ validation/util/linux_resources_blkio.go      | 24 ++--------
+ validation/util/linux_resources_cpus.go       | 46 +++----------------
+ validation/util/linux_resources_memory.go     | 28 ++++-------
+ 10 files changed, 92 insertions(+), 132 deletions(-)
+ create mode 100644 validation/util/linux_cgroups.go
+
+--- a/validation/linux_cgroups_blkio/linux_cgroups_blkio.go
++++ b/validation/linux_cgroups_blkio/linux_cgroups_blkio.go
+@@ -30,13 +30,19 @@ func testBlkioCgroups(rate uint64, isEmp
+ 
+ 	g.SetLinuxCgroupsPath(cgroups.AbsCgroupPath)
+ 
+-	if !isEmpty {
+-		g.SetLinuxResourcesBlockIOWeight(weight)
+-		g.SetLinuxResourcesBlockIOLeafWeight(leafWeight)
++	// The unified hierarchy has no leaf weights, and writes the weight to a
++	// file that depends on the IO scheduler in use, so it cannot be read
++	// back to compare it with the configured value.
++	if !util.UnifiedCgroups() {
++		if !isEmpty {
++			g.SetLinuxResourcesBlockIOWeight(weight)
++			g.SetLinuxResourcesBlockIOLeafWeight(leafWeight)
++		}
++
++		g.AddLinuxResourcesBlockIOWeightDevice(major, minor, weight)
++		g.AddLinuxResourcesBlockIOLeafWeightDevice(major, minor, leafWeight)
+ 	}
+ 
+-	g.AddLinuxResourcesBlockIOWeightDevice(major, minor, weight)
+-	g.AddLinuxResourcesBlockIOLeafWeightDevice(major, minor, leafWeight)
+ 	g.AddLinuxResourcesBlockIOThrottleReadBpsDevice(major, minor, rate)
+ 	g.AddLinuxResourcesBlockIOThrottleWriteBpsDevice(major, minor, rate)
+ 	g.AddLinuxResourcesBlockIOThrottleReadIOPSDevice(major, minor, rate)
+--- a/validation/linux_cgroups_cpus/linux_cgroups_cpus.go
++++ b/validation/linux_cgroups_cpus/linux_cgroups_cpus.go
+@@ -59,7 +59,10 @@ func testCPUCgroups() error {
+ 
+ 		g.SetLinuxCgroupsPath(cgroups.AbsCgroupPath)
+ 
+-		if c.shares > 0 {
++		// cpu.shares is mapped onto cpu.weight by a conversion the
++		// runtime-spec does not define, and the mapping is lossy, so
++		// the configured value cannot be recovered.
++		if c.shares > 0 && !util.UnifiedCgroups() {
+ 			g.SetLinuxResourcesCPUShares(c.shares)
+ 		}
+ 
+--- a/validation/linux_cgroups_memory/linux_cgroups_memory.go
++++ b/validation/linux_cgroups_memory/linux_cgroups_memory.go
+@@ -38,10 +38,12 @@ func main() {
+ 		g.SetLinuxResourcesMemoryLimit(c.limit)
+ 		g.SetLinuxResourcesMemoryReservation(c.limit)
+ 		g.SetLinuxResourcesMemorySwap(c.limit)
+-		g.SetLinuxResourcesMemoryKernel(c.limit)
+-		g.SetLinuxResourcesMemoryKernelTCP(c.limit)
+-		g.SetLinuxResourcesMemorySwappiness(c.swappiness)
+-		g.SetLinuxResourcesMemoryDisableOOMKiller(true)
++		if !util.UnifiedCgroups() {
++			g.SetLinuxResourcesMemoryKernel(c.limit)
++			g.SetLinuxResourcesMemoryKernelTCP(c.limit)
++			g.SetLinuxResourcesMemorySwappiness(c.swappiness)
++			g.SetLinuxResourcesMemoryDisableOOMKiller(true)
++		}
+ 		err = util.RuntimeOutsideValidate(g, t, util.ValidateLinuxResourcesMemory)
+ 		if err != nil {
+ 			t.Fail(err.Error())
+--- a/validation/linux_cgroups_relative_blkio/linux_cgroups_relative_blkio.go
++++ b/validation/linux_cgroups_relative_blkio/linux_cgroups_relative_blkio.go
+@@ -21,10 +21,15 @@ func main() {
+ 		util.Fatal(err)
+ 	}
+ 	g.SetLinuxCgroupsPath(cgroups.RelCgroupPath)
+-	g.SetLinuxResourcesBlockIOWeight(weight)
+-	g.SetLinuxResourcesBlockIOLeafWeight(leafWeight)
+-	g.AddLinuxResourcesBlockIOWeightDevice(major, minor, weight)
+-	g.AddLinuxResourcesBlockIOLeafWeightDevice(major, minor, leafWeight)
++	// The unified hierarchy has no leaf weights, and writes the weight to a
++	// file that depends on the IO scheduler in use, so it cannot be read
++	// back to compare it with the configured value.
++	if !util.UnifiedCgroups() {
++		g.SetLinuxResourcesBlockIOWeight(weight)
++		g.SetLinuxResourcesBlockIOLeafWeight(leafWeight)
++		g.AddLinuxResourcesBlockIOWeightDevice(major, minor, weight)
++		g.AddLinuxResourcesBlockIOLeafWeightDevice(major, minor, leafWeight)
++	}
+ 	g.AddLinuxResourcesBlockIOThrottleReadBpsDevice(major, minor, rate)
+ 	g.AddLinuxResourcesBlockIOThrottleWriteBpsDevice(major, minor, rate)
+ 	g.AddLinuxResourcesBlockIOThrottleReadIOPSDevice(major, minor, rate)
+--- a/validation/linux_cgroups_relative_cpus/linux_cgroups_relative_cpus.go
++++ b/validation/linux_cgroups_relative_cpus/linux_cgroups_relative_cpus.go
+@@ -2,7 +2,6 @@ package main
+ 
+ import (
+ 	"github.com/mndrix/tap-go"
+-	rspec "github.com/opencontainers/runtime-spec/specs-go"
+ 	"github.com/opencontainers/runtime-tools/cgroups"
+ 	"github.com/opencontainers/runtime-tools/validation/util"
+ )
+@@ -24,43 +23,17 @@ func main() {
+ 		util.Fatal(err)
+ 	}
+ 	g.SetLinuxCgroupsPath(cgroups.RelCgroupPath)
+-	g.SetLinuxResourcesCPUShares(shares)
++	// cpu.shares is mapped onto cpu.weight by a conversion the runtime-spec
++	// does not define, and the mapping is lossy, so the configured value
++	// cannot be recovered.
++	if !util.UnifiedCgroups() {
++		g.SetLinuxResourcesCPUShares(shares)
++	}
+ 	g.SetLinuxResourcesCPUQuota(quota)
+ 	g.SetLinuxResourcesCPUPeriod(period)
+ 	g.SetLinuxResourcesCPUCpus(cpus)
+ 	g.SetLinuxResourcesCPUMems(mems)
+-	err = util.RuntimeOutsideValidate(g, t, func(config *rspec.Spec, t *tap.T, state *rspec.State) error {
+-		cg, err := cgroups.FindCgroup()
+-		t.Ok((err == nil), "find cpus cgroup")
+-		if err != nil {
+-			t.Diagnostic(err.Error())
+-			return nil
+-		}
+-
+-		lcd, err := cg.GetCPUData(state.Pid, config.Linux.CgroupsPath)
+-		t.Ok((err == nil), "get cpus cgroup data")
+-		if err != nil {
+-			t.Diagnostic(err.Error())
+-			return nil
+-		}
+-
+-		t.Ok(*lcd.Shares == shares, "cpus shares limit is set correctly")
+-		t.Diagnosticf("expect: %d, actual: %d", shares, lcd.Shares)
+-
+-		t.Ok(*lcd.Quota == quota, "cpus quota is set correctly")
+-		t.Diagnosticf("expect: %d, actual: %d", quota, lcd.Quota)
+-
+-		t.Ok(*lcd.Period == period, "cpus period is set correctly")
+-		t.Diagnosticf("expect: %d, actual: %d", period, lcd.Period)
+-
+-		t.Ok(lcd.Cpus == cpus, "cpus cpus is set correctly")
+-		t.Diagnosticf("expect: %s, actual: %s", cpus, lcd.Cpus)
+-
+-		t.Ok(lcd.Mems == mems, "cpus mems is set correctly")
+-		t.Diagnosticf("expect: %s, actual: %s", mems, lcd.Mems)
+-
+-		return nil
+-	})
++	err = util.RuntimeOutsideValidate(g, t, util.ValidateLinuxResourcesCPU)
+ 
+ 	if err != nil {
+ 		t.Fail(err.Error())
+--- a/validation/linux_cgroups_relative_memory/linux_cgroups_relative_memory.go
++++ b/validation/linux_cgroups_relative_memory/linux_cgroups_relative_memory.go
+@@ -22,10 +22,12 @@ func main() {
+ 	g.SetLinuxResourcesMemoryLimit(limit)
+ 	g.SetLinuxResourcesMemoryReservation(limit)
+ 	g.SetLinuxResourcesMemorySwap(limit)
+-	g.SetLinuxResourcesMemoryKernel(limit)
+-	g.SetLinuxResourcesMemoryKernelTCP(limit)
+-	g.SetLinuxResourcesMemorySwappiness(swappiness)
+-	g.SetLinuxResourcesMemoryDisableOOMKiller(true)
++	if !util.UnifiedCgroups() {
++		g.SetLinuxResourcesMemoryKernel(limit)
++		g.SetLinuxResourcesMemoryKernelTCP(limit)
++		g.SetLinuxResourcesMemorySwappiness(swappiness)
++		g.SetLinuxResourcesMemoryDisableOOMKiller(true)
++	}
+ 	err = util.RuntimeOutsideValidate(g, t, util.ValidateLinuxResourcesMemory)
+ 	if err != nil {
+ 		t.Fail(err.Error())
+--- /dev/null
++++ b/validation/util/linux_cgroups.go
+@@ -0,0 +1,31 @@
++package util
++
++import (
++	"github.com/mndrix/tap-go"
++	"github.com/opencontainers/runtime-tools/cgroups"
++)
++
++// UnifiedCgroups reports whether the host mounts the unified hierarchy,
++// on which several of the cgroup v1 resource fields have no counterpart.
++func UnifiedCgroups() bool {
++	cg, err := cgroups.FindCgroup()
++	if err != nil {
++		return false
++	}
++
++	return cg.Version() == 2
++}
++
++// checkValue compares a configured resource with the value read back from
++// the cgroup filesystem. A field that either side does not carry is
++// reported as a diagnostic rather than counted as a failed check, because
++// the hierarchy in use may have no way to express it.
++func checkValue[T comparable](t *tap.T, name string, expected *T, actual *T) {
++	if expected == nil || actual == nil {
++		t.Diagnosticf("skipping %s: not expressed by this cgroup hierarchy", name)
++		return
++	}
++
++	t.Ok(*expected == *actual, name+" is set correctly")
++	t.Diagnosticf("expect: %v, actual: %v", *expected, *actual)
++}
+--- a/validation/util/linux_resources_blkio.go
++++ b/validation/util/linux_resources_blkio.go
+@@ -24,32 +24,16 @@ func ValidateLinuxResourcesBlockIO(confi
+ 		return nil
+ 	}
+ 
+-	if lbd.Weight == nil || config.Linux.Resources.BlockIO.Weight == nil {
+-		t.Diagnostic(fmt.Sprintf("unable to get weight: lbd.Weight == %v, config.Linux.Resources.BlockIO.Weight == %v", lbd.Weight, config.Linux.Resources.BlockIO.Weight))
+-		return nil
+-	}
+-
+-	t.Ok(*lbd.Weight == *config.Linux.Resources.BlockIO.Weight, "blkio weight is set correctly")
+-	t.Diagnosticf("expect: %d, actual: %d", *config.Linux.Resources.BlockIO.Weight, *lbd.Weight)
+-
+-	if lbd.LeafWeight == nil || config.Linux.Resources.BlockIO.LeafWeight == nil {
+-		t.Diagnostic(fmt.Sprintf("unable to get leafWeight: lbd.LeafWeight == %v, config.Linux.Resources.BlockIO.LeafWeight == %v", lbd.LeafWeight, config.Linux.Resources.BlockIO.LeafWeight))
+-		return nil
+-	}
+-
+-	t.Ok(*lbd.LeafWeight == *config.Linux.Resources.BlockIO.LeafWeight, "blkio leafWeight is set correctly")
+-	t.Diagnosticf("expect: %d, actual: %d", *config.Linux.Resources.BlockIO.LeafWeight, *lbd.LeafWeight)
++	checkValue(t, "blkio weight", config.Linux.Resources.BlockIO.Weight, lbd.Weight)
++	checkValue(t, "blkio leafWeight", config.Linux.Resources.BlockIO.LeafWeight, lbd.LeafWeight)
+ 
+ 	for _, device := range config.Linux.Resources.BlockIO.WeightDevice {
+ 		found := false
+ 		for _, wd := range lbd.WeightDevice {
+ 			if wd.Major == device.Major && wd.Minor == device.Minor {
+ 				found = true
+-				t.Ok(*wd.Weight == *device.Weight, fmt.Sprintf("blkio weight for %d:%d is set correctly", device.Major, device.Minor))
+-				t.Diagnosticf("expect: %d, actual: %d", *device.Weight, *wd.Weight)
+-
+-				t.Ok(*wd.LeafWeight == *device.LeafWeight, fmt.Sprintf("blkio leafWeight for %d:%d is set correctly", device.Major, device.Minor))
+-				t.Diagnosticf("expect: %d, actual: %d", *device.LeafWeight, *wd.LeafWeight)
++				checkValue(t, fmt.Sprintf("blkio weight for %d:%d", device.Major, device.Minor), device.Weight, wd.Weight)
++				checkValue(t, fmt.Sprintf("blkio leafWeight for %d:%d", device.Major, device.Minor), device.LeafWeight, wd.LeafWeight)
+ 			}
+ 		}
+ 		t.Ok(found, fmt.Sprintf("blkio weightDevice for %d:%d found", device.Major, device.Minor))
+--- a/validation/util/linux_resources_cpus.go
++++ b/validation/util/linux_resources_cpus.go
+@@ -35,26 +35,9 @@ func ValidateLinuxResourcesCPU(config *r
+ 		return nil
+ 	}
+ 
+-	if lcd.Shares == nil || config.Linux.Resources.CPU.Shares == nil {
+-		t.Diagnostic(fmt.Sprintf("unable to get cpu shares, lcd.Shares == %v, config.Linux.Resources.CPU.Shares == %v", lcd.Shares, config.Linux.Resources.CPU.Shares))
+-		return nil
+-	}
+-	t.Ok(*lcd.Shares == *config.Linux.Resources.CPU.Shares, "cpu shares is set correctly")
+-	t.Diagnosticf("expect: %d, actual: %d", *config.Linux.Resources.CPU.Shares, *lcd.Shares)
+-
+-	if lcd.Period == nil || config.Linux.Resources.CPU.Period == nil {
+-		t.Diagnostic(fmt.Sprintf("unable to get cpu period, lcd.Period == %v, config.Linux.Resources.CPU.Period == %v", lcd.Period, config.Linux.Resources.CPU.Period))
+-		return nil
+-	}
+-	t.Ok(*lcd.Period == *config.Linux.Resources.CPU.Period, "cpu period is set correctly")
+-	t.Diagnosticf("expect: %d, actual: %d", *config.Linux.Resources.CPU.Period, *lcd.Period)
+-
+-	if lcd.Quota == nil || config.Linux.Resources.CPU.Quota == nil {
+-		t.Diagnostic(fmt.Sprintf("unable to get cpu quota, lcd.Quota == %v, config.Linux.Resources.CPU.Quota == %v", lcd.Quota, config.Linux.Resources.CPU.Quota))
+-		return nil
+-	}
+-	t.Ok(*lcd.Quota == *config.Linux.Resources.CPU.Quota, "cpu quota is set correctly")
+-	t.Diagnosticf("expect: %d, actual: %d", *config.Linux.Resources.CPU.Quota, *lcd.Quota)
++	checkValue(t, "cpu shares", config.Linux.Resources.CPU.Shares, lcd.Shares)
++	checkValue(t, "cpu period", config.Linux.Resources.CPU.Period, lcd.Period)
++	checkValue(t, "cpu quota", config.Linux.Resources.CPU.Quota, lcd.Quota)
+ 
+ 	t.Ok(lcd.Cpus == config.Linux.Resources.CPU.Cpus, "cpu cpus is set correctly")
+ 	t.Diagnosticf("expect: %s, actual: %s", config.Linux.Resources.CPU.Cpus, lcd.Cpus)
+@@ -106,26 +89,9 @@ func ValidateLinuxResourcesCPUEmpty(conf
+ 		return nil
+ 	}
+ 
+-	if lcd.Shares == nil {
+-		t.Diagnostic(fmt.Sprintf("unable to get cpu shares, lcd.Shares == %v", lcd.Shares))
+-		return nil
+-	}
+-	t.Ok(*lcd.Shares == defaultShares, "cpu shares is set correctly")
+-	t.Diagnosticf("expect: %d, actual: %d", defaultShares, *lcd.Shares)
+-
+-	if lcd.Period == nil {
+-		t.Diagnostic(fmt.Sprintf("unable to get cpu period, lcd.Period == %v", lcd.Period))
+-		return nil
+-	}
+-	t.Ok(*lcd.Period == defaultPeriod, "cpu period is set correctly")
+-	t.Diagnosticf("expect: %d, actual: %d", defaultPeriod, *lcd.Period)
+-
+-	if lcd.Quota == nil {
+-		t.Diagnostic(fmt.Sprintf("unable to get cpu quota, lcd.Quota == %v", lcd.Quota))
+-		return nil
+-	}
+-	t.Ok(*lcd.Quota == defaultQuota, "cpu quota is set correctly")
+-	t.Diagnosticf("expect: %d, actual: %d", defaultQuota, *lcd.Quota)
++	checkValue(t, "cpu shares", &defaultShares, lcd.Shares)
++	checkValue(t, "cpu period", &defaultPeriod, lcd.Period)
++	checkValue(t, "cpu quota", &defaultQuota, lcd.Quota)
+ 
+ 	t.Ok(lcd.Cpus == defaultCpus, "cpu cpus is set correctly")
+ 	t.Diagnosticf("expect: %s, actual: %s", defaultCpus, lcd.Cpus)
+--- a/validation/util/linux_resources_memory.go
++++ b/validation/util/linux_resources_memory.go
+@@ -22,26 +22,14 @@ func ValidateLinuxResourcesMemory(config
+ 		return nil
+ 	}
+ 
+-	t.Ok(*lm.Limit == *config.Linux.Resources.Memory.Limit, "memory limit is set correctly")
+-	t.Diagnosticf("expect: %d, actual: %d", *config.Linux.Resources.Memory.Limit, *lm.Limit)
+-
+-	t.Ok(*lm.Reservation == *config.Linux.Resources.Memory.Reservation, "memory reservation is set correctly")
+-	t.Diagnosticf("expect: %d, actual: %d", *config.Linux.Resources.Memory.Reservation, *lm.Reservation)
+-
+-	t.Ok(*lm.Swap == *config.Linux.Resources.Memory.Swap, "memory swap is set correctly")
+-	t.Diagnosticf("expect: %d, actual: %d", *config.Linux.Resources.Memory.Swap, *lm.Reservation)
+-
+-	t.Ok(*lm.Kernel == *config.Linux.Resources.Memory.Kernel, "memory kernel is set correctly") //nolint:staticcheck // Ignore SA1019: lm.Kernel is deprecated
+-	t.Diagnosticf("expect: %d, actual: %d", *config.Linux.Resources.Memory.Kernel, *lm.Kernel)  //nolint:staticcheck // Ignore SA1019: config.Linux.Resources.Memory.Kernel is deprecated
+-
+-	t.Ok(*lm.KernelTCP == *config.Linux.Resources.Memory.KernelTCP, "memory kernelTCP is set correctly")
+-	t.Diagnosticf("expect: %d, actual: %d", *config.Linux.Resources.Memory.KernelTCP, *lm.Kernel) //nolint:staticcheck // Ignore SA1019: lm.Kernel is deprecated
+-
+-	t.Ok(*lm.Swappiness == *config.Linux.Resources.Memory.Swappiness, "memory swappiness is set correctly")
+-	t.Diagnosticf("expect: %d, actual: %d", *config.Linux.Resources.Memory.Swappiness, *lm.Swappiness)
+-
+-	t.Ok(*lm.DisableOOMKiller == *config.Linux.Resources.Memory.DisableOOMKiller, "memory oom is set correctly")
+-	t.Diagnosticf("expect: %t, actual: %t", *config.Linux.Resources.Memory.DisableOOMKiller, *lm.DisableOOMKiller)
++	lrm := config.Linux.Resources.Memory
++	checkValue(t, "memory limit", lrm.Limit, lm.Limit)
++	checkValue(t, "memory reservation", lrm.Reservation, lm.Reservation)
++	checkValue(t, "memory swap", lrm.Swap, lm.Swap)
++	checkValue(t, "memory kernel", lrm.Kernel, lm.Kernel) //nolint:staticcheck // Ignore SA1019: Kernel is deprecated
++	checkValue(t, "memory kernelTCP", lrm.KernelTCP, lm.KernelTCP)
++	checkValue(t, "memory swappiness", lrm.Swappiness, lm.Swappiness)
++	checkValue(t, "memory oom", lrm.DisableOOMKiller, lm.DisableOOMKiller)
+ 
+ 	return nil
+ }

@@ -1,0 +1,126 @@
+From be864c833e1910f3ddd9dbfc406769c95333af79 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Sun, 20 Sep 2026 19:58:55 +0100
+Subject: [PATCH] validation: drop hardcoded cgroup paths from delete
+
+Both delete tests build the cgroup directory out of a literal
+/sys/fs/cgroup/pids. On a unified hierarchy that directory never exists,
+so delete_only_create_resources fails when it tries to populate it and
+delete_resources passes without testing anything: the path it expects the
+runtime to have removed was never there.
+
+Ask the Cgroup implementation where the cgroup lives instead, which also
+picks up the real mount point rather than assuming one. Move a process
+with cgroup.procs, which both hierarchies provide, rather than with the
+cgroup v1 only tasks file.
+
+Fixes #807
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ cgroups/cgroups.go                                    |  1 +
+ cgroups/cgroups_v1.go                                 |  5 +++++
+ cgroups/cgroups_v2.go                                 |  7 +++++++
+ .../delete_only_create_resources.go                   | 11 ++++++++---
+ validation/delete_resources/delete_resources.go       |  8 ++++++--
+ 5 files changed, 27 insertions(+), 5 deletions(-)
+
+--- a/cgroups/cgroups.go
++++ b/cgroups/cgroups.go
+@@ -23,6 +23,7 @@ var (
+ // Cgroup represents interfaces for cgroup validation
+ type Cgroup interface {
+ 	Version() int
++	ControllerPath(controller string, cgPath string) string
+ 	GetBlockIOData(pid int, cgPath string) (*rspec.LinuxBlockIO, error)
+ 	GetCPUData(pid int, cgPath string) (*rspec.LinuxCPU, error)
+ 	GetDevicesData(pid int, cgPath string) ([]rspec.LinuxDeviceCgroup, error)
+--- a/cgroups/cgroups_v1.go
++++ b/cgroups/cgroups_v1.go
+@@ -22,6 +22,11 @@ func (cg *CgroupV1) Version() int {
+ 	return 1
+ }
+ 
++// ControllerPath returns the directory backing an absolute cgroupsPath
++func (cg *CgroupV1) ControllerPath(controller string, cgPath string) string {
++	return filepath.Join(cg.MountPath, controller, cgPath)
++}
++
+ // HugePageSizeUnitList is a list of the units used by the linux kernel when
+ // naming the HugePage control files.
+ // https://www.kernel.org/doc/Documentation/cgroup-v1/hugetlb.txt
+--- a/cgroups/cgroups_v2.go
++++ b/cgroups/cgroups_v2.go
+@@ -37,6 +37,13 @@ func (cg *CgroupV2) Version() int {
+ 	return 2
+ }
+ 
++// ControllerPath returns the directory backing an absolute cgroupsPath.
++// The unified hierarchy keeps every controller in one directory, so the
++// controller is ignored.
++func (cg *CgroupV2) ControllerPath(controller string, cgPath string) string {
++	return filepath.Join(unifiedPath, cgPath)
++}
++
+ func (cg *CgroupV2) dir(pid int, cgPath string) (string, error) {
+ 	if filepath.IsAbs(cgPath) {
+ 		path := filepath.Join(unifiedPath, cgPath)
+--- a/validation/delete_only_create_resources/delete_only_create_resources.go
++++ b/validation/delete_only_create_resources/delete_only_create_resources.go
+@@ -11,6 +11,7 @@ import (
+ 	tap "github.com/mndrix/tap-go"
+ 	"github.com/mrunalp/fileutils"
+ 	rspec "github.com/opencontainers/runtime-spec/specs-go"
++	"github.com/opencontainers/runtime-tools/cgroups"
+ 	"github.com/opencontainers/runtime-tools/specerror"
+ 	"github.com/opencontainers/runtime-tools/validation/util"
+ )
+@@ -19,9 +20,13 @@ func main() {
+ 	t := tap.New()
+ 	t.Header(0)
+ 
++	cg, err := cgroups.FindCgroup()
++	if err != nil {
++		util.Fatal(err)
++	}
++
+ 	// Create a cgroup
+-	cgPath := "/sys/fs/cgroup"
+-	testPath := filepath.Join(cgPath, "pids", "cgrouptest")
++	testPath := cg.ControllerPath("pids", cgroups.AbsCgroupPath)
+ 	os.Mkdir(testPath, 0o755)
+ 	defer os.RemoveAll(testPath)
+ 
+@@ -61,7 +66,7 @@ func main() {
+ 		util.Fatal(err)
+ 	}
+ 	// Add the container to the cgroup
+-	err = os.WriteFile(filepath.Join(testPath, "tasks"), []byte(strconv.Itoa(state.Pid)), 0o644)
++	err = os.WriteFile(filepath.Join(testPath, "cgroup.procs"), []byte(strconv.Itoa(state.Pid)), 0o644)
+ 	if err != nil {
+ 		util.Fatal(err)
+ 	}
+--- a/validation/delete_resources/delete_resources.go
++++ b/validation/delete_resources/delete_resources.go
+@@ -50,6 +50,11 @@ func main() {
+ 		util.Fatal(err)
+ 	}
+ 
++	cg, err := cgroups.FindCgroup()
++	if err != nil {
++		util.Fatal(err)
++	}
++
+ 	err = r.Create()
+ 	if err != nil {
+ 		util.Fatal(err)
+@@ -76,8 +81,7 @@ func main() {
+ 		t.Fail(err.Error())
+ 	}
+ 
+-	path := filepath.Join("/sys/fs/cgroup/pids", cgroups.AbsCgroupPath)
+-	_, err = os.Stat(path)
++	_, err = os.Stat(cg.ControllerPath("pids", cgroups.AbsCgroupPath))
+ 	util.SpecErrorOK(t, os.IsNotExist(err), specerror.NewError(specerror.DeleteResImplement, fmt.Errorf("Deleting a container MUST delete the resources that were created during the `create` step"), rspec.Version), nil)
+ 
+ 	t.AutoPlan()
