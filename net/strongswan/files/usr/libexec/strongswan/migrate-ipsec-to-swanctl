@@ -363,6 +363,19 @@ migrate_option_remote_values() {
 		uci -q rename "ipsec.${cfg}.rekeytime=rekey_time"
 	}
 
+	# keyingtries '%forever' becomes 0, which means unlimited in swanctl.
+	# The default of keyingtries was 3, the default in swanctl is 1, so the
+	# old default has to be set explicitly.
+	config_get value "$cfg" keyingtries ""
+	case "$value" in
+	"%forever")
+		uci -q set "ipsec.${cfg}.keyingtries=0"
+		;;
+	"")
+		uci -q set "ipsec.${cfg}.keyingtries=3"
+		;;
+	esac
+
 	config_get value "$cfg" overtime ""
 	[ -z "$value" ] || {
 		uci -q rename "ipsec.${cfg}.overtime=over_time"
