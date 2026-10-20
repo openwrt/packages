@@ -374,10 +374,30 @@ migrate_option_remote_values() {
 	}
 }
 
+# 'inactivity' was an option of the remote section, but is an option of the
+# child section in swanctl. Move it to all children of the remote section.
+migrate_inactivity_remote() {
+	local cfg="$1"
+
+	local value children child
+
+	config_get value "$cfg" inactivity ""
+	[ -n "$value" ] || return 0
+
+	config_get children "$cfg" child ""
+	for child in $children; do
+		[ -n "$(uci -q get "ipsec.${child}.inactivity")" ] ||
+			uci -q set "ipsec.${child}.inactivity=${value}"
+	done
+
+	uci -q delete "ipsec.${cfg}.inactivity"
+}
+
 migrate_options() {
 	config_load ipsec
 	config_foreach migrate_option_child_values child
 	config_foreach migrate_option_remote_values remote
+	config_foreach migrate_inactivity_remote remote
 }
 
 migrate_remote_to_connection() {
