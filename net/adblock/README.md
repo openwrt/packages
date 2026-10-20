@@ -126,7 +126,7 @@ Support of the following fully pre-configured domain blocklist feeds (free for p
 * A download utility with SSL support: `wget`, `uclient-fetch` with one of the `libustream-*` ssl libraries or `curl` is required
 * A certificate store such as `ca-bundle` or `ca-certificates`, as adblock checks the validity of the SSL certificates of all download sites by default
 * For E-Mail notifications you need to install and setup the additional `msmtp` package
-* For DNS reporting you need to install the additional package `tcpdump-mini` or `tcpdump`
+* For DNS reporting you need to install the additional package `tcpdump-mini` or `tcpdump`; with `adb_repiface` set to `any` only `tcpdump` works, as `tcpdump-mini` can't decode that capture
 
 **Please note:**  
 * Devices with less than 128MB of RAM are **_not_** supported
