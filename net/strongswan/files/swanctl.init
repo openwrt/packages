@@ -729,7 +729,7 @@ config_connection() {
 	[ $enabled -eq 0 ] && return
 
 	config_get keyingtries "$conf" keyingtries
-	config_get dpd_delay "$conf" dpd_delay "30s"
+	config_get dpd_delay "$conf" dpd_delay
 	config_get dpd_timeout "$conf" dpd_timeout ""
 	config_get_bool encap "$conf" encap 0
 	config_get keyexchange "$conf" keyexchange "ikev2"
