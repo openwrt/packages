@@ -362,6 +362,7 @@ config_child() {
 	local rekey_packets
 	local life_packets
 	local replay_window
+	local inactivity
 	local local_ts
 	local remote_ts
 
@@ -386,6 +387,7 @@ config_child() {
 	config_get rekey_packets "$conf" rekey_packets ""
 	config_get life_packets "$conf" life_packets ""
 	config_get replay_window "$conf" replay_window ""
+	config_get inactivity "$conf" inactivity ""
 
 	config_list_foreach "$conf" local_ts append_var local_ts ","
 	config_list_foreach "$conf" remote_ts append_var remote_ts ","
@@ -710,7 +712,6 @@ config_connection() {
 	local dpd_delay
 	local dpd_timeout
 	local encap
-	local inactivity
 	local keyexchange
 	local fragmentation
 	local mobike
@@ -731,7 +732,6 @@ config_connection() {
 	config_get dpd_delay "$conf" dpd_delay "30s"
 	config_get dpd_timeout "$conf" dpd_timeout ""
 	config_get_bool encap "$conf" encap 0
-	config_get inactivity "$conf" inactivity
 	config_get keyexchange "$conf" keyexchange "ikev2"
 	config_get fragmentation "$conf" fragmentation "yes"
 	config_get_bool mobike "$conf" mobike 1
