@@ -12,15 +12,15 @@ include ./openvswitch.mk
 
 # Checklist on version bump
 #
-#  - Check acinclude.m4 for range of supported kernel versions: "but version newer than .* is not supported"
+#  - Update net/ovn to a release whose ovs submodule matches this version
 #  - Check and update kmod dependencies when necessary (runtime module load check in the least)
 #
 PKG_NAME:=openvswitch
 PKG_VERSION:=$(ovs_version)
-PKG_RELEASE:=4
+PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.openvswitch.org/releases/
-PKG_HASH:=e1b3fa472676626853f22d63f959e5ad061e1bf57e1bbd444d0ed88f947ef8b1
+PKG_HASH:=b8936c2e95a024d37123536ca843648bc2f1d2520921f991dd3d06248859b70f
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
