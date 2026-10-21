@@ -573,7 +573,7 @@ mwan3_delete_iface_ipset_entries()
 
 mwan3_set_policy()
 {
-	local id iface family metric probability weight device is_lowest is_offline IPT IPTR total_weight current update error
+	local id iface family metric probability weight device is_lowest is_offline total_weight
 
 	is_lowest=0
 	config_get iface "$1" interface
@@ -592,16 +592,7 @@ mwan3_set_policy()
 	is_offline=$?
 
 	config_get family "$iface" family ipv4
-
-	if [ "$family" = "ipv4" ]; then
-		IPT="$IPT4"
-		IPTR="$IPT4R"
-	elif [ "$family" = "ipv6" ]; then
-		IPT="$IPT6"
-		IPTR="$IPT6R"
-	fi
-	current="$($IPT -S)"$'\n'
-	update="*mangle"
+	[ "$ipv" != "$family" ] && return
 
 	if [ "$family" = "ipv4" ] && [ $is_offline -eq 0 ]; then
 		if [ "$metric" -lt "$lowest_metric_v4" ]; then
@@ -652,18 +643,13 @@ mwan3_set_policy()
 				  -m comment --comment \"$iface $weight $total_weight\" \
 				  -j MARK --set-xmark "$(mwan3_id2mask id MMX_MASK)/$MMX_MASK"
 	elif [ -n "$device" ]; then
-		echo "$current" | grep -q "^-A mwan3_policy_$policy.*--comment .* [0-9]* [0-9]*" ||
+		echo "$update" | grep -q "^-[AI] mwan3_policy_$policy.*--comment .* [0-9]* [0-9]*" ||
 			mwan3_push_update -I "mwan3_policy_$policy" \
 					  -o "$device" \
 					  -m mark --mark 0x0/$MMX_MASK \
 					  -m comment --comment \"out $iface $device\" \
 					  -j MARK --set-xmark $MMX_DEFAULT/$MMX_MASK
 	fi
-	mwan3_push_update COMMIT
-	mwan3_push_update ""
-
-	echo "$update" > "${MWAN3_STATUS_IPTABLES_LOG_DIR}/iptables-set_policy-${1}.dump"
-	error=$(echo "$update" | $IPTR 2>&1) || LOG error "set_policy ($1): $error"
 }
 
 mwan3_create_policies_iptables()
@@ -689,6 +675,14 @@ mwan3_create_policies_iptables()
 		fi
 
 		mwan3_push_update -F "mwan3_policy_$1"
+
+		lowest_metric_v4=$DEFAULT_LOWEST_METRIC
+		total_weight_v4=0
+
+		lowest_metric_v6=$DEFAULT_LOWEST_METRIC
+		total_weight_v6=0
+
+		config_list_foreach "$1" use_member mwan3_set_policy
 
 		case "$last_resort" in
 			blackhole)
@@ -720,14 +714,6 @@ mwan3_create_policies_iptables()
 			error=$(echo "$update" | $IPT6R 2>&1) || LOG error "create_policies_iptables ($1): $error"
 		fi
 	done
-
-	lowest_metric_v4=$DEFAULT_LOWEST_METRIC
-	total_weight_v4=0
-
-	lowest_metric_v6=$DEFAULT_LOWEST_METRIC
-	total_weight_v6=0
-
-	config_list_foreach "$1" use_member mwan3_set_policy
 }
 
 mwan3_set_policies_iptables()
