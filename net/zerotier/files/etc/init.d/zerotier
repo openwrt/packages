@@ -50,8 +50,17 @@ start_service() {
 	# Create link or copy files from config_path to CONFIG_PATH
 	if [ -n "${config_path}" ]; then
 		if [ ! -d "${config_path}" ]; then
-			echo "ZeroTier config_path does not exist: ${config_path}" 1>&2
-			return
+			# Create persistent /etc state on every start, not just first boot.
+			case "${config_path}" in
+				/etc/*)
+					mkdir -p "${config_path}" || return 1
+					chmod 700 "${config_path}" || return 1
+					;;
+				*)
+					echo "ZeroTier config_path does not exist: ${config_path}" 1>&2
+					return 1
+					;;
+			esac
 		fi
 
 		if [ ${copy_config_path} -eq 1 ]; then
