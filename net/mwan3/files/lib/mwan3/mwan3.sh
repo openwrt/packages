@@ -573,7 +573,7 @@ mwan3_delete_iface_ipset_entries()
 
 mwan3_set_policy()
 {
-	local id iface family metric probability weight device is_lowest is_offline IPT IPTR total_weight current update error
+	local id iface family metric probability weight device is_lowest is_offline
 
 	is_lowest=0
 	config_get iface "$1" interface
@@ -592,36 +592,15 @@ mwan3_set_policy()
 	is_offline=$?
 
 	config_get family "$iface" family ipv4
+	[ "$ipv" != "$family" ] && return
 
-	if [ "$family" = "ipv4" ]; then
-		IPT="$IPT4"
-		IPTR="$IPT4R"
-	elif [ "$family" = "ipv6" ]; then
-		IPT="$IPT6"
-		IPTR="$IPT6R"
-	fi
-	current="$($IPT -S)"$'\n'
-	update="*mangle"
-
-	if [ "$family" = "ipv4" ] && [ $is_offline -eq 0 ]; then
-		if [ "$metric" -lt "$lowest_metric_v4" ]; then
+	if [ $is_offline -eq 0 ]; then
+		if [ "$metric" -lt "$lowest_metric" ]; then
 			is_lowest=1
-			total_weight_v4=$weight
-			lowest_metric_v4=$metric
-		elif [ "$metric" -eq "$lowest_metric_v4" ]; then
-			total_weight_v4=$((total_weight_v4+weight))
-			total_weight=$total_weight_v4
-		else
-			return
-		fi
-	elif [ "$family" = "ipv6" ] && [ $NO_IPV6 -eq 0 ] && [ $is_offline -eq 0 ]; then
-		if [ "$metric" -lt "$lowest_metric_v6" ]; then
-			is_lowest=1
-			total_weight_v6=$weight
-			lowest_metric_v6=$metric
-		elif [ "$metric" -eq "$lowest_metric_v6" ]; then
-			total_weight_v6=$((total_weight_v6+weight))
-			total_weight=$total_weight_v6
+			total_weight=$weight
+			lowest_metric=$metric
+		elif [ "$metric" -eq "$lowest_metric" ]; then
+			total_weight=$((total_weight+weight))
 		else
 			return
 		fi
@@ -652,23 +631,18 @@ mwan3_set_policy()
 				  -m comment --comment \"$iface $weight $total_weight\" \
 				  -j MARK --set-xmark "$(mwan3_id2mask id MMX_MASK)/$MMX_MASK"
 	elif [ -n "$device" ]; then
-		echo "$current" | grep -q "^-A mwan3_policy_$policy.*--comment .* [0-9]* [0-9]*" ||
+		echo "$update" | grep -q "^-[AI] mwan3_policy_$policy.*--comment .* [0-9]* [0-9]*" ||
 			mwan3_push_update -I "mwan3_policy_$policy" \
 					  -o "$device" \
 					  -m mark --mark 0x0/$MMX_MASK \
 					  -m comment --comment \"out $iface $device\" \
 					  -j MARK --set-xmark $MMX_DEFAULT/$MMX_MASK
 	fi
-	mwan3_push_update COMMIT
-	mwan3_push_update ""
-
-	echo "$update" > "${MWAN3_STATUS_IPTABLES_LOG_DIR}/iptables-set_policy-${1}.dump"
-	error=$(echo "$update" | $IPTR 2>&1) || LOG error "set_policy ($1): $error"
 }
 
 mwan3_create_policies_iptables()
 {
-	local last_resort lowest_metric_v4 lowest_metric_v6 total_weight_v4 total_weight_v6 policy IPT current update error
+	local last_resort ipv lowest_metric total_weight policy IPT IPTR current update error
 
 	policy="$1"
 
@@ -678,8 +652,10 @@ mwan3_create_policies_iptables()
 		LOG warn "Policy $1 exceeds max of 15 chars. Not setting policy" && return 0
 	fi
 
-	for IPT in "$IPT4" "$IPT6"; do
-		[ "$IPT" = "$IPT6" ] && [ $NO_IPV6 -ne 0 ] && continue
+	for ipv in "ipv4" "ipv6"; do
+		[ "$ipv" = "ipv6" ] && [ $NO_IPV6 -ne 0 ] && continue
+		case "$ipv" in ipv4) IPT="$IPT4"; IPTR="$IPT4R" ;; ipv6) IPT="$IPT6"; IPTR="$IPT6R" ;; esac
+
 		current="$($IPT -S)"$'\n'
 		update="*mangle"
 		if [ -n "${current##*-N mwan3_policy_$1$'\n'*}" ]; then
@@ -687,6 +663,10 @@ mwan3_create_policies_iptables()
 		fi
 
 		mwan3_push_update -F "mwan3_policy_$1"
+
+		lowest_metric=$DEFAULT_LOWEST_METRIC
+		total_weight=0
+		config_list_foreach "$1" use_member mwan3_set_policy
 
 		case "$last_resort" in
 			blackhole)
@@ -711,21 +691,9 @@ mwan3_create_policies_iptables()
 		mwan3_push_update COMMIT
 		mwan3_push_update ""
 
-		echo "$update" > "${MWAN3_STATUS_IPTABLES_LOG_DIR}/iptables-create_policies_iptables-${1}.dump"
-		if [ "$IPT" = "$IPT4" ]; then
-			error=$(echo "$update" | $IPT4R 2>&1) || LOG error "create_policies_iptables ($1): $error"
-		else
-			error=$(echo "$update" | $IPT6R 2>&1) || LOG error "create_policies_iptables ($1): $error"
-		fi
+		echo "$update" > "${MWAN3_STATUS_IPTABLES_LOG_DIR}/iptables-create_policies_iptables-${1}-${ipv}.dump"
+		error=$(echo "$update" | $IPTR 2>&1) || LOG error "create_policies_iptables ($1): $error"
 	done
-
-	lowest_metric_v4=$DEFAULT_LOWEST_METRIC
-	total_weight_v4=0
-
-	lowest_metric_v6=$DEFAULT_LOWEST_METRIC
-	total_weight_v6=0
-
-	config_list_foreach "$1" use_member mwan3_set_policy
 }
 
 mwan3_set_policies_iptables()
