@@ -642,7 +642,7 @@ mwan3_set_policy()
 
 mwan3_create_policies_iptables()
 {
-	local last_resort ipv lowest_metric total_weight policy IPT current update error
+	local last_resort ipv lowest_metric total_weight policy IPT IPTR current update error
 
 	policy="$1"
 
@@ -654,7 +654,7 @@ mwan3_create_policies_iptables()
 
 	for ipv in "ipv4" "ipv6"; do
 		[ "$ipv" = "ipv6" ] && [ $NO_IPV6 -ne 0 ] && continue
-		case "$ipv" in ipv4) IPT="$IPT4" ;; ipv6) IPT="$IPT6" ;; esac
+		case "$ipv" in ipv4) IPT="$IPT4"; IPTR="$IPT4R" ;; ipv6) IPT="$IPT6"; IPTR="$IPT6R" ;; esac
 
 		current="$($IPT -S)"$'\n'
 		update="*mangle"
@@ -692,11 +692,7 @@ mwan3_create_policies_iptables()
 		mwan3_push_update ""
 
 		echo "$update" > "${MWAN3_STATUS_IPTABLES_LOG_DIR}/iptables-create_policies_iptables-${1}-${ipv}.dump"
-		if [ "$IPT" = "$IPT4" ]; then
-			error=$(echo "$update" | $IPT4R 2>&1) || LOG error "create_policies_iptables ($1): $error"
-		else
-			error=$(echo "$update" | $IPT6R 2>&1) || LOG error "create_policies_iptables ($1): $error"
-		fi
+		error=$(echo "$update" | $IPTR 2>&1) || LOG error "create_policies_iptables ($1): $error"
 	done
 }
 
