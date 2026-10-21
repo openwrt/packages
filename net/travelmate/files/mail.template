@@ -1,27 +1,40 @@
-# travelmate mail template/include - a wlan connection manager for travel router
-# Copyright (c) 2016-2026 Dirk Brenken (dev@brenken.org)
-# This is free software, licensed under the GNU General Public License v3.
+{%-
+	// travelmate mail template (ucode), variables: banner, board (ubus system
+	// board), status (as 'travelmate status'), station_id; html() escapes them
 
-# info preparation
-#
-local travelmate_status station_info system_info mail_text
+	function html(s) {
+		return replace('' + (s ?? ''), /[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+	}
 
-travelmate_status="$(/etc/init.d/travelmate status 2>/dev/null)"
-system_info="$(strings /etc/banner 2>/dev/null
-	"${trm_ubuscmd}" call system board |
-	"${trm_awkcmd}" 'BEGIN{FS="[{}\"]"}{if($2=="kernel"||$2=="hostname"||$2=="system"||$2=="model"||$2=="description")printf "  + %-12s: %s\n",$2,$4}')"
-station_info="$("${trm_jsoncmd}" -i "${trm_rtfile}" -q -l1 -e '@.data.station_id')"
+	let info = [];
 
-# content header
-#
-mail_text="$(printf "%s\n" "<html><body><pre style='font-family:monospace;padding:20;background-color:#f3eee5;white-space:pre-wrap;overflow-x:auto;' >")"
+	for (let l in split(banner ?? '', '\n'))
+		if (length(trim(l)) >= 4)
+			push(info, rtrim(l));
 
-# content body
-#
-mail_text="$(printf "%s\n" "${mail_text}\n<strong>++\n++ System Information ++\n++</strong>\n${system_info:-"-"}")"
-mail_text="$(printf "%s\n" "${mail_text}\n\n<strong>++\n++ Travelmate Status ++\n++</strong>\n${travelmate_status:-"-"}")"
-[ -n "${station_info}" ] && mail_text="$(printf "%s\n" "${mail_text}\n\n<strong>++\n++ Connection Status ++\n++</strong>\ntravelmate connection to ${station_info}")"
+	for (let k in [ 'kernel', 'hostname', 'system', 'model' ])
+		if (board?.[k] != null)
+			push(info, sprintf('  + %-12s: %s', k, board[k]));
 
-# content footer
-#
-mail_text="$(printf "%s\n" "${mail_text}</pre></body></html>")"
+	if (board?.release?.description != null)
+		push(info, sprintf('  + %-12s: %s', 'description', board.release.description));
+-%}
+<html><body><pre style='font-family:monospace;padding:20;background-color:#f3eee5;white-space:pre-wrap;overflow-x:auto;' >
+<strong>++
+++ System Information ++
+++</strong>
+{{ html(length(info) ? join('\n', info) : '-') }}
+
+<strong>++
+++ Travelmate Status ++
+++</strong>
+{{ html(rtrim(status ?? '') || '-') }}
+{%- if (length(station_id ?? '')): %}
+
+
+<strong>++
+++ Connection Status ++
+++</strong>
+travelmate connection to {{ html(station_id) }}
+{%- endif %}
+</pre></body></html>

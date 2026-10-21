@@ -7,7 +7,6 @@
 # shellcheck disable=all
 
 trm_init="/etc/init.d/travelmate"
-trm_funlib="/usr/lib/travelmate-functions.sh"
 trm_ntplock="/var/run/travelmate/travelmate.ntp.lock"
 
 # ensure runtime directory exists
@@ -23,7 +22,6 @@ case "${stratum}" in
 esac
 if [ "${ACTION}" = "stratum" ] && "${trm_init}" enabled; then
 	if mkdir "${trm_ntplock}" 2>/dev/null; then
-		. "${trm_funlib}"
-		f_log "info" "get ntp time sync (stratum: ${stratum:-"-"})"
+		logger -p user.info -t "trm-ntp" "get ntp time sync (stratum: ${stratum:-"-"})"
 	fi
 fi
