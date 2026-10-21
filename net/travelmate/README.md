@@ -50,8 +50,8 @@ For a typical setup these few steps are enough to get travelmate up and running 
 * Continuously checks the existing uplink quality, e.g. for conditional uplink (dis)connections
 * Automatically add open uplinks to your wireless config, e.g. hotel captive portals
 * Captive portal detection with a 'heartbeat' function to keep the uplink connection up and running
-* Captive portal hook for auto-login configured via uci/LuCI, using an external script (see the examples below)
-* VPN hook supports 'wireguard' or 'openvpn' client setups to handle VPN (re)connections automatically
+* Captive portal hook for auto-login configured via uci/LuCI, using an external ucode script (see the examples below)
+* VPN hook handles VPN (re)connections automatically, for 'wireguard', 'openvpn' and every other vpn protocol netifd brings up, e.g. 'openconnect' or 'vpnc'
 * E-mail hook via 'msmtp' sends notification e-mails after every successful uplink connect
 * Proactively scan and switch to a higher priority uplink, replacing an existing connection
 * Check router subnet vs. uplink subnet, to show conflicts with the router LAN network
@@ -71,8 +71,9 @@ For a typical setup these few steps are enough to get travelmate up and running 
   * 'dnsmasq' as dns backend
   * 'ubus iwinfo' for wlan scanning
   * 'curl' for connection checking and all kinds of captive portal magic, e.g. cp detection and auto-logins
+* The `travelmate` package brings the 'ucode' interpreter and its fs, ubus, uci and log modules, the backend is written in ucode
   * a 'wpad' variant to support various WPA encrypted networks (WEP-based uplinks are no longer supported!)
-* optional: 'wireguard' or 'openvpn' for vpn client connections
+* optional: a vpn client like 'wireguard', 'openvpn' or another netifd vpn protocol for vpn client connections
 * optional: 'msmtp' to send out travelmate related status messages via e-mail
 
 <a id="installation-and-usage"></a>
@@ -125,7 +126,7 @@ Available commands:
 	info            Dump procd service info
 ```
 
-The `setup` sub-command is the CLI equivalent of the LuCI **Interface Wizard** and only needs to be run once. The `scan` sub-command writes its result to `/var/run/travelmate/travelmate.scan`, sorted by signal quality, and is used by the **Wireless Stations** tab in LuCI as well.
+The `setup` sub-command is the CLI equivalent of the LuCI **Interface Wizard** and only needs to be run once. The `scan` sub-command writes its result as JSON array to `/var/run/travelmate/travelmate.scan`, sorted by signal quality, and is used by the **Wireless Stations** tab in LuCI as well.
 
 The `status` sub-command prints the current runtime information:
 
@@ -133,15 +134,15 @@ The `status` sub-command prints the current runtime information:
 ~# /etc/init.d/travelmate status
 ::: travelmate runtime information
   + travelmate_status  : connected, net ok/100
-  + frontend_ver       : 2.4.7-1
-  + backend_ver        : 2.4.7-1
-  + station_id         : radio0/GlutenfreiVerbunden/-
-  + station_mac        : 42:40:45:EC:B3:D1
-  + station_interfaces : wwan, -
-  + station_subnet     : 10.168.20.0 (lan: 10.200.1.0)
-  + run_flags          : autoadd: ✘, captive: ✔, eviltwin: ✘, mail: ✔, netcheck: ✘, ntp: ✔, proactive: ✔, randomize: ✔, vpn: ✘
-  + last_run           : mode: start, date / time: 2026-08-06 09:08:24, memory: 412.35 MB available
-  + system_info        : cores: 2, fetch: curl, Cudy TR3000 v1, mediatek/filogic, OpenWrt SNAPSHOT (r32287-1c7ec8ab19)
+  + frontend_ver       : 3.0.0-r1
+  + backend_ver        : 3.0.0-r1
+  + station_id         : radio0/blackhole.nl/-
+  + station_mac        : 26:b7:ad:14:08:f7
+  + station_interfaces : wwan, wireguard
+  + station_subnet     : 192.168.1.0 (lan: 10.200.1.0)
+  + run_flags          : autoadd: ✔, captive: ✔, eviltwin: ✘, mail: ✔, netcheck: ✔, ntp: ✔, proactive: ✔, randomize: ✔, vpn: ✔
+  + last_run           : mode: start, date / time: 2026-10-21 17:34:13, memory: 306.00 MB available
+  + system_info        : cores: 2, fetch: curl, Cudy TR3000 v1, mediatek/filogic, OpenWrt SNAPSHOT (r37596-df70de353d)
 ```
 
 The `travelmate_status` field reports one of the following states:
@@ -174,11 +175,11 @@ A stopped service does not report a state at all, it truncates the runtime file 
 | trm_ssidfilter     | -, not set                         | list of SSID patterns for filtering/skipping specific open uplinks, e.g. 'Chromecast*'                |
 | trm_randomize      | 0, disabled                        | generate a random unicast MAC address for each uplink connection                                      |
 | trm_eviltwin       | 0, disabled                        | detect and skip access points with locally administered (LAA) BSSIDs to mitigate evil twin attacks    |
-| trm_triggerdelay   | 2                                  | additional trigger delay in seconds before travelmate processing begins                               |
+| trm_triggerdelay   | 5                                  | additional trigger delay in seconds before travelmate processing begins                               |
 | trm_maxretry       | 3                                  | retry limit to connect to an uplink, set to '0' for unlimited retries                                 |
 | trm_minquality     | 35                                 | minimum signal quality threshold as percent for conditional uplink (dis-) connections                 |
 | trm_maxwait        | 30                                 | how long should travelmate wait for a successful wlan uplink connection                               |
-| trm_timeout        | 60                                 | overall retry timeout in seconds                                                                      |
+| trm_timeout        | 30                                 | overall retry timeout in seconds                                                                      |
 | trm_maxautoadd     | 5                                  | limit the max. number of automatically added open uplinks. To disable this limitation set it to '0'   |
 | trm_captiveurl     | http://detectportal.firefox.com    | custom/pre-configured provider URLs that will be used for connectivity- and captive portal checks     |
 | trm_useragent      | Mozilla/5.0 ...                    | pre-configured user agents that will be used for connectivity- and captive portal checks              |
@@ -189,7 +190,7 @@ A stopped service does not report a state at all, it truncates the runtime file 
 | trm_mailtopic      | travelmate connection to '<sta>'   | topic for travelmate notification E-Mails                                                             |
 | trm_mailprofile    | trm_notify                         | profile used by 'msmtp' for travelmate notification E-Mails                                           |
 | trm_vpn            | 0, disabled                        | VPN connections will be managed by travelmate                                                         |
-| trm_stdvpnservice  | -, not set                         | standard vpn service which will be automatically added to new STA profiles                            |
+| trm_vpnifacelist   | -, not set                         | limit vpn processing to these interfaces, default: all wireguard/openvpn and all referenced vpn ones  |
 | trm_stdvpniface    | -, not set                         | standard vpn interface which will be automatically added to new STA profiles                          |
 
 **Please note:** 'trm_netcheck' is evaluated independently of 'trm_captive'. A detected captive portal does not count as an error as long as 'trm_captive' is enabled - such an uplink stays connected so that a manual or script based portal login is still possible. With 'trm_captive' disabled travelmate can neither allowlist the portal domain nor run a login script, so a detected portal is treated like a failed connectivity check. Only a failed connectivity check counts, and it is confirmed by a second probe before it is acted on. Such a failure is then handled like a failed connection attempt: after 'trm_maxretry' tries the affected uplink gets disabled in the travelmate config. A longer lasting outage of your upstream provider may therefore disable all configured uplinks, which have to be re-enabled manually.
@@ -207,8 +208,7 @@ A stopped service does not report a state at all, it truncates the runtime file 
 | script_args        | -, not set                         | optional runtime args for the auto login script                                                       |
 | macaddr            | -, not set                         | use a specified MAC address for the uplink                                                            |
 | vpn                | 0, disabled                        | automatically handle VPN (re-) connections                                                            |
-| vpnservice         | -, not set                         | reference the already configured 'wireguard' or 'openvpn' client instance as vpn provider             |
-| vpniface           | -, not set                         | the logical vpn interface, e.g. 'wg0' or 'tun0'                                                       |
+| vpniface           | -, not set                         | the logical vpn interface, e.g. 'wg0'                                                                 |
 
 <a id="examples"></a>
 ## Examples
@@ -218,14 +218,11 @@ Please read one of the following guides to get a working vpn client setup on you
 * [Wireguard client setup guide](https://openwrt.org/docs/guide-user/services/vpn/wireguard/client)
 * [OpenVPN client setup guide](https://openwrt.org/docs/guide-user/services/vpn/openvpn/client-luci)
 
-Make sure to uncheck the "Bring up on boot" option during vpn interface setup, so that netifd doesn't interfere with travelmate. Also prevent potential vpn protocol autostarts, e.g. add an additional 'globals' section in newer openvpn uci configs:
+Make sure to uncheck the "Bring up on boot" option during vpn interface setup, so that netifd doesn't interfere with travelmate.
 
-```
-config globals 'globals'
-        option autostart '0'
-```
+Once your vpn client connection setup is correct, you can reference the vpn interface in travelmate ('vpniface' per uplink or 'trm_stdvpniface' for new uplinks) to handle VPN (re-) connections automatically. Travelmate takes the vpn interface up and down via netifd, the vpn service follows its protocol: 'wireguard' and 'openvpn' interfaces are always known, interfaces with any other protocol (e.g. 'openconnect', 'vpnc', 'l2tp') are handled as soon as they are referenced or listed in 'trm_vpnifacelist'. The former 'vpnservice' and 'trm_stdvpnservice' options are gone.
 
-Once your vpn client connection setup is correct, you can reference that config in travelmate to handle VPN (re-) connections automatically.
+**Please note:** OpenVPN is a netifd protocol ('proto openvpn') now, the former setup with an openvpn init instance on a 'proto none' interface is no longer supported. Uplinks that referenced such an interface are pointed to the migrated openvpn interface on update.
 
 **E-Mail setup**  
 To use e-mail notifications you have to set up the package 'msmtp'. Modify the file `/etc/msmtprc`, e.g. for gmail:
@@ -249,21 +246,23 @@ password        zzz
 
 Finally enable e-mail support in travelmate and add a valid e-mail receiver address.
 
-**Captive portal auto-logins**  
-For automated captive portal logins you can reference an external shell script per uplink. All login scripts have to be executable and located in `/etc/travelmate` with the extension `.login`. A login script signals its result via the exit code: `0` means the login succeeded, any other value means it failed. Only `0` makes travelmate re-check the connectivity right away, every other value is just logged. The package ships multiple ready to run auto-login scripts:
+The mail body is rendered from the ucode template `/etc/travelmate/mail.template` (option 'trm_mailtemplate'), which gets `banner`, `board` (ubus 'system board'), `status` (as printed by `/etc/init.d/travelmate status`) and `station_id` as variables.
 
-* 'wifibahn.login' for german DB railway hotspots
-* 'telekom.login' for telekom hotspots (DE)
-* 'vodafone.login' for vodafone hotspots (DE)
-* 'generic-user-pass.login' a template to demonstrate the optional parameter handling in login scripts
+**Captive portal auto-logins**  
+For automated captive portal logins you can reference an external ucode script per uplink. All login scripts have to be executable and located in `/etc/travelmate` with the extension `.uc`, shell scripts (formerly `.login`) are no longer supported. On upgrade, an uplink that still references one of the shipped `.login` scripts is switched to the `.uc` script of the same name. A login script signals its result via the exit code: `0` means the login succeeded, any other value means it failed. Only `0` makes travelmate re-check the connectivity right away, every other value is just logged. The package ships multiple ready to run auto-login scripts:
+
+* 'wifibahn.uc' for german DB railway hotspots
+* 'telekom.uc' for telekom hotspots (DE)
+* 'vodafone.uc' for vodafone hotspots (DE)
+* 'generic-user-pass.uc' a template to demonstrate the optional parameter handling in login scripts
 
 A typical and successful captive portal login looks like this:
 
 ```
 [...]
-user.info trm-2.4.7-1[26222]: captive portal domain 'www.wifibahn.de' added to dhcp rebind allowlist
-user.info trm-2.4.7-1[26222]: captive portal login script for 'www.wifibahn.de' has been finished with rc '0'
-user.info trm-2.4.7-1[26222]: connected to uplink 'radio1/WIFI@DB/-' with mac 'B2:9D:F5:96:86:A4' (1/3)
+user.info trm-3.0.0-r1[26222]: captive portal domain 'www.wifibahn.de' added to dhcp rebind allowlist
+user.info trm-3.0.0-r1[26222]: captive portal login script for 'www.wifibahn.de' has been finished with rc '0'
+user.info trm-3.0.0-r1[26222]: connected to uplink 'radio1/WIFI@DB/-' with mac 'B2:9D:F5:96:86:A4' (1/3)
 [...]
 ```
 **Building your own login script**  
@@ -273,10 +272,10 @@ The fastest way to a working script is to record the login once by hand and then
 2. Open the developer tools (usually `F12`) and switch to the `Network` tab. Enable `Preserve log` (Chromium, Edge, Safari) resp. `Persist Logs` (Firefox, behind the gear icon) and `Disable cache`. A portal login almost always ends in a redirect, and without these options the recorded entries are dropped at that point.
 3. Perform the login manually and watch which requests are sent.
 4. Right-click the request that carries your credentials and choose `Copy` -> `Copy as cURL`. You now have the exact URL, method, headers, cookies and form fields as the browser sent them. `Save All As HAR` resp. `Export HAR` records the whole session if you want to study it later - note that recent Chromium versions strip cookies and authorization headers from the export unless you allow sensitive data in the devtools settings.
-5. Strip the copied command down: the browser adds a lot of `Accept*`, `Sec-*` and `Priority` headers that no portal cares about. Keep the request body, the `Content-Type` and whatever the portal actually validates, then replace curl's flags with travelmate's `${trm_fetchcmd} ${trm_fetchparm}` and `--user-agent "${trm_useragent}"`.
-6. Look for values that are only valid for one session - CSRF tokens, session ids, `sid` parameters. Those must not be copied into the script but fetched at runtime, see `wifibahn.login` (cookie jar plus awk) or `vodafone.login` (json response plus jsonfilter) for the two usual patterns.
-7. Never hardcode credentials. Pass them via the uplink's `script_args` option and read them as `${1}` and `${2}`, like `generic-user-pass.login` does.
-8. Test the script on the router while the portal is actually in the way: `sh -x /etc/travelmate/my.login user pass; echo "rc: ${?}"`. Make sure it only exits `0` when the login really succeeded - a script that reports success too eagerly is worse than one that fails, because travelmate will happily keep the uplink.
+5. Strip the copied command down: the browser adds a lot of `Accept*`, `Sec-*` and `Priority` headers that no portal cares about. Keep the request body, the `Content-Type` and whatever the portal actually validates, and pass them as `args` to `fetch()` from the `travelmate.login` module. `fetch(url, { args: [ '--data', 'a=b' ] })` runs curl with travelmate's own settings (timeouts, uplink device, user agent) and returns `{ rc, body }`, `follow: false` keeps curl from following redirects and `write_out` adds a curl `--write-out` format. The module also provides `lookup()`, `urlencode()`, `between()` (text between two tags, the usual way to cut an url out of a portal page), `https_on(url, host)` (check an url taken from a portal page before credentials are sent to it) and the configured `captiveurl` and `useragent`.
+6. Look for values that are only valid for one session - CSRF tokens, session ids, `sid` parameters. Those must not be copied into the script but fetched at runtime, see `wifibahn.uc` (cookie jar) or `vodafone.uc` (json response) for the two usual patterns.
+7. Never hardcode credentials. Pass them via the uplink's `script_args` option and read them as `ARGV[0]` and `ARGV[1]`, like `generic-user-pass.uc` does.
+8. Test the script on the router while the portal is actually in the way: `ucode /etc/travelmate/my.uc user pass; echo "rc: ${?}"`. Make sure it only exits `0` when the login really succeeded - a script that reports success too eagerly is worse than one that fails, because travelmate will happily keep the uplink.
 
 The portal domain travelmate detected is in the system log: `logread -e "trm-"` shows it as `captive portal domain '<domain>' added to dhcp rebind allowlist`.
 
@@ -291,9 +290,9 @@ If your router has more than one radio, keep the AP and the uplink on separate r
 `trm_minquality` (default 35%) decides twice: a scan result below the threshold is not considered as a connection candidate at all, and an existing connection that drops below it is torn down so that travelmate can look for something better. Raising the value makes travelmate switch away earlier, lowering it keeps weak uplinks alive longer. Values well above 50% tend to make travelmate restless in hotels.
 
 **Retry behaviour**  
-`trm_maxretry` (default 3) limits the connection attempts per uplink. When the limit is reached, the affected uplink is disabled in the travelmate config and has to be re-enabled manually - which is intentional for permanently broken credentials, but worth keeping in mind in combination with `trm_netcheck`. Set `trm_maxretry` to '0' for unlimited retries if you never want an uplink to be disabled automatically.
+`trm_maxretry` (default 3) limits the connection attempts per uplink. When the limit is reached, the affected uplink is disabled in the travelmate config and has to be re-enabled manually - which is intentional for permanently broken credentials, but worth keeping in mind in combination with `trm_netcheck`. Set `trm_maxretry` to '0' for unlimited retries if you never want an uplink to be disabled automatically. The disable shows up in the log as `uplink has been disabled '<radio>/<ssid>/<bssid>' (3/3)`, re-enable the uplink with the **On/Off** button in the LuCI station list or via `uci set travelmate.<section>.enabled='1'` and `uci commit travelmate`. With only one configured uplink, consider `revive` (see below), otherwise a longer outage or a slow radio after a wifi reload leaves you without uplink until you step in.
 
-Per uplink, `revive` softens that. With a value of n, an uplink disabled by the retry limit is set back to 'enabled' after n run cycles, so a network that was only temporarily unavailable comes back on its own. Values below 10 are raised to 10, since a run cycle is roughly `trm_timeout` seconds long and shorter intervals only produce needless reconnect attempts. The number of revivals is capped by the global `trm_maxretry`, which also means that `revive` has no effect with `trm_maxretry` set to '0'. The cycle and round counters are kept in the runtime file '/var/run/travelmate/travelmate.revive', they are never written to the config and are cleared when the service is stopped. The enable and disable itself is still recorded in the travelmate config, so the LuCI station list always shows the real state.
+Per uplink, `revive` softens that. With a value of n, an uplink disabled by the retry limit is set back to 'enabled' after n run cycles, so a network that was only temporarily unavailable comes back on its own. Values below 10 are raised to 10, since a run cycle is roughly `trm_timeout` seconds long and shorter intervals only produce needless reconnect attempts. The number of revivals is capped by the global `trm_maxretry`, which also means that `revive` has no effect with `trm_maxretry` set to '0'. The cycle and round counters are kept in the runtime file '/var/run/travelmate/travelmate.revive', they are never written to the config and are cleared when the service is stopped or restarted, e.g. by a config change, so an uplink switched off by hand stays off. A successful connection clears the counters of that uplink. The enable and disable itself is still recorded in the travelmate config, so the LuCI station list always shows the real state.
 
 **Open uplinks**  
 `trm_autoadd` adds open networks to your wireless config on the fly, which is handy in hotels and on trains. Keep `trm_maxautoadd` at a sane value so that a busy location doesn't flood your config, and use `trm_ssidfilter` to skip the usual noise, e.g. `Chromecast*` or printer and camera SSIDs.
@@ -302,7 +301,7 @@ Per uplink, `revive` softens that. With a value of n, an uplink disabled by the 
 `trm_randomize` generates a new random unicast MAC address for each uplink connection, so a hotspot operator can't trivially recognize your router across visits. `trm_eviltwin` skips access points with a locally administered (LAA) BSSID, which is a cheap indicator for a spoofed access point - note that some legit setups (mesh, repeaters) use LAA BSSIDs as well.
 
 **Timing**  
-`trm_maxwait` (default 30s) is the budget for a single connection attempt and also scales the internal curl timeouts. On slow uplinks or with captive portals that take their time, raising it to 45-60s helps, lowering it makes travelmate give up on weak candidates faster. `trm_triggerdelay` adds a delay before processing starts after an ifup event, which is useful if your uplink needs a moment to settle.
+`trm_maxwait` (default 30s) is the budget for a single connection attempt (association and DHCP) and scales the internal wait times, the curl requests use a fixed timeout of 5s per attempt. Some drivers need 30s and more to associate after a wifi reload, if attempts regularly time out ('uplink connection could not be established after ... seconds'), raise it to 45-60s. Lowering it makes travelmate give up on weak candidates faster. `trm_triggerdelay` adds a delay before processing starts after an ifup event, which is useful if your uplink needs a moment to settle.
 
 **Subnet conflicts**  
 Travelmate compares the uplink subnet against your router LAN network and logs a warning if both overlap. If you run into this frequently, change your LAN network to something uncommon, e.g. `10.200.1.0/24`, because most hotel networks use `192.168.0.0/24` or `192.168.1.0/24`.
@@ -314,9 +313,9 @@ Travelmate provides an optional debug mode that writes detailed diagnostic infor
 Whenever you encounter travelmate related processing problems, please enable `trm_debug`, restart travelmate and check the `Log View` tab in LuCI (or the syslog via `logread -e "trm-"`).
 
 Typical symptoms:
-* No uplink is found although it is in range: compare the reported signal quality in the debug log against `trm_minquality`, and make sure the uplink is still enabled in the travelmate config - the retry limit may have disabled it
+* No uplink is found although it is in range: compare the reported signal quality in the debug log against `trm_minquality`, and make sure the uplink is still enabled in the travelmate config - the retry limit may have disabled it (log line `uplink has been disabled`, see 'Retry behaviour' above)
 * An uplink connects but has no internet: the debug output of `f_net` shows the probe host, the effective url and the resulting state (`net ok`, `net cp '<domain>'` or `net nok`). A `net cp` state means a captive portal was detected and is waiting for a login
-* A captive portal login script doesn't run: it has to be executable and located in `/etc/travelmate` with the extension `.login`, everything else is rejected for security reasons
+* A captive portal login script doesn't run: it has to be an executable ucode script located in `/etc/travelmate` with the extension `.uc`, everything else is rejected for security reasons
 * The connection drops right after connecting: check for a subnet conflict warning between the uplink network and your router LAN network
 
 <a id="support"></a>
