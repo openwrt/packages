@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dnscrypt-proxy2
-PKG_VERSION:=2.1.18
+PKG_VERSION:=2.1.20
 PKG_RELEASE:=1
 
 PKG_SOURCE:=dnscrypt-proxy-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/DNSCrypt/dnscrypt-proxy/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=9b810d862ba07c383cc0b8f9f7f1f2ca8f74a02f849d818c4c4d37cc21a7dfa6
+PKG_HASH:=2e6adb32e0f91cb755f1d2c060cddcc80ffca6a181bf03c90df22bbade121607
 PKG_BUILD_DIR:=$(BUILD_DIR)/dnscrypt-proxy-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
@@ -31,7 +31,7 @@ include ../../lang/golang/golang-package.mk
 
 GO_MOD_ARGS:=
 GO_PKG_BUILD_VARS+= GO111MODULE=off
-GO_PKG_INSTALL_EXTRA:= dnscrypt-proxy/static/
+GO_PKG_INSTALL_EXTRA:=dnscrypt-proxy/static/ revera/go/data\.bin
 
 define Package/dnscrypt-proxy2
   SECTION:=net
