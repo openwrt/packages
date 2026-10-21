@@ -573,7 +573,7 @@ mwan3_delete_iface_ipset_entries()
 
 mwan3_set_policy()
 {
-	local id iface family metric probability weight device is_lowest is_offline total_weight
+	local id iface family metric probability weight device is_lowest is_offline
 
 	is_lowest=0
 	config_get iface "$1" interface
@@ -594,25 +594,13 @@ mwan3_set_policy()
 	config_get family "$iface" family ipv4
 	[ "$ipv" != "$family" ] && return
 
-	if [ "$family" = "ipv4" ] && [ $is_offline -eq 0 ]; then
-		if [ "$metric" -lt "$lowest_metric_v4" ]; then
+	if [ $is_offline -eq 0 ]; then
+		if [ "$metric" -lt "$lowest_metric" ]; then
 			is_lowest=1
-			total_weight_v4=$weight
-			lowest_metric_v4=$metric
-		elif [ "$metric" -eq "$lowest_metric_v4" ]; then
-			total_weight_v4=$((total_weight_v4+weight))
-			total_weight=$total_weight_v4
-		else
-			return
-		fi
-	elif [ "$family" = "ipv6" ] && [ $NO_IPV6 -eq 0 ] && [ $is_offline -eq 0 ]; then
-		if [ "$metric" -lt "$lowest_metric_v6" ]; then
-			is_lowest=1
-			total_weight_v6=$weight
-			lowest_metric_v6=$metric
-		elif [ "$metric" -eq "$lowest_metric_v6" ]; then
-			total_weight_v6=$((total_weight_v6+weight))
-			total_weight=$total_weight_v6
+			total_weight=$weight
+			lowest_metric=$metric
+		elif [ "$metric" -eq "$lowest_metric" ]; then
+			total_weight=$((total_weight+weight))
 		else
 			return
 		fi
@@ -654,7 +642,7 @@ mwan3_set_policy()
 
 mwan3_create_policies_iptables()
 {
-	local last_resort ipv lowest_metric_v4 lowest_metric_v6 total_weight_v4 total_weight_v6 policy IPT current update error
+	local last_resort ipv lowest_metric total_weight policy IPT current update error
 
 	policy="$1"
 
@@ -676,12 +664,8 @@ mwan3_create_policies_iptables()
 
 		mwan3_push_update -F "mwan3_policy_$1"
 
-		lowest_metric_v4=$DEFAULT_LOWEST_METRIC
-		total_weight_v4=0
-
-		lowest_metric_v6=$DEFAULT_LOWEST_METRIC
-		total_weight_v6=0
-
+		lowest_metric=$DEFAULT_LOWEST_METRIC
+		total_weight=0
 		config_list_foreach "$1" use_member mwan3_set_policy
 
 		case "$last_resort" in
