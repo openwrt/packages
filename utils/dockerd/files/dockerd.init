@@ -2,6 +2,7 @@
 
 USE_PROCD=1
 START=99
+STOP=10
 
 extra_command "uciadd" "<interface> <device> <zone> Add docker bridge configuration to network and firewall uci config"
 extra_command "ucidel" "<interface> <device> <zone> Delete docker bridge configuration from network and firewall uci config"
@@ -238,6 +239,8 @@ start_service() {
 		procd_set_param command /usr/bin/dockerd --config-file="${DOCKERD_CONF}"
 	fi
 	procd_set_param limits nofile="${nofile} ${nofile}"
+	# Give dockerd the time to stop the containers before it gets killed
+	procd_set_param term_timeout 300
 	procd_close_instance
 }
 
@@ -293,8 +296,14 @@ iptables_add_blocking_rule() {
 	config_list_foreach "${cfg}" blocked_interfaces handle_iptables_rule "${device}" "${extra_iptables_args}"
 }
 
-stop_service() {
-	if /etc/init.d/dockerd running; then
-		service_stop "/usr/bin/dockerd"
-	fi
+service_stopped() {
+	local i=0
+
+	# On shutdown procd sends SIGTERM after 15s and SIGKILL after 25s, use all of it
+	trap '' TERM
+	# Wait for dockerd, which exits after stopping the containers, so that a shutdown unmounts the data root after them
+	while [ "${i}" -lt 300 ] && pidof /usr/bin/dockerd > /dev/null; do
+		sleep 1
+		i=$((i + 1))
+	done
 }
