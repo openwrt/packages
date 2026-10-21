@@ -2,6 +2,7 @@
 
 USE_PROCD=1
 START=99
+STOP=10
 
 extra_command "uciadd" "<interface> <device> <zone> Add docker bridge configuration to network and firewall uci config"
 extra_command "ucidel" "<interface> <device> <zone> Delete docker bridge configuration from network and firewall uci config"
@@ -238,6 +239,8 @@ start_service() {
 		procd_set_param command /usr/bin/dockerd --config-file="${DOCKERD_CONF}"
 	fi
 	procd_set_param limits nofile="${nofile} ${nofile}"
+	# Give dockerd the time to stop the containers before it gets killed
+	procd_set_param term_timeout 300
 	procd_close_instance
 }
 
@@ -293,8 +296,50 @@ iptables_add_blocking_rule() {
 	config_list_foreach "${cfg}" blocked_interfaces handle_iptables_rule "${device}" "${extra_iptables_args}"
 }
 
+# Read procd's notifications until one contains the given text, or none comes for the given seconds
+procd_notification() {
+	local line
+
+	while read -r -t "${2}" line <&3; do
+		case "${line}" in
+		*"${1}"*) return 0 ;;
+		esac
+	done
+	return 1
+}
+
 stop_service() {
-	if /etc/init.d/dockerd running; then
-		service_stop "/usr/bin/dockerd"
-	fi
+	local i=0
+
+	procd_running dockerd || return 0
+
+	# Subscribe to procd's notifications before it stops dockerd, to learn when it is done.
+	# The subscriber leaves procd's lock (fd 1000) to this script, which releases it on exit.
+	STOP_EVENTS="/var/run/dockerd.stop.$$"
+	mkfifo "${STOP_EVENTS}" || return 0
+	ubus -t 330 subscribe service > "${STOP_EVENTS}" 1000>&- &
+	STOP_SUBSCRIBER=$!
+	exec 3< "${STOP_EVENTS}"
+
+	# The subscription takes effect a moment later, and a stop notified before it would be missed:
+	# wait until procd passes on an event sent to itself
+	while [ "${i}" -lt 10 ]; do
+		ubus call service event '{ "type": "dockerd.stopping", "data": {} }'
+		if procd_notification '"type":"dockerd.stopping"' 1; then
+			STOP_SUBSCRIBED=1
+			return 0
+		fi
+		i=$((i + 1))
+	done
+}
+
+service_stopped() {
+	[ -n "${STOP_EVENTS}" ] || return 0
+
+	# Wait for dockerd, which exits after stopping the containers, so that a shutdown unmounts the data root after them
+	[ -n "${STOP_SUBSCRIBED}" ] && procd_notification '"service.stop": {"service":"dockerd"}' 330
+	exec 3<&-
+	# A restart ignores SIGTERM while it stops dockerd, and so does the subscriber it started
+	kill -KILL "${STOP_SUBSCRIBER}" 2> /dev/null
+	rm -f "${STOP_EVENTS}"
 }
