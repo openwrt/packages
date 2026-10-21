@@ -1,0 +1,92 @@
+From 81cd94f18f183eb2276a10b9e1afa0a1ea9f9f60 Mon Sep 17 00:00:00 2001
+From: Ville Takio <ville+git@takio.fi>
+Date: Wed, 30 Sep 2026 06:06:28 +0000
+Subject: [PATCH] Linux: rewrite mount.veracrypt in POSIX sh (#1895)
+
+The fstab helper needed bash, passed each mount option as its own
+--mount-options although veracrypt only reads one value (so "system"
+dropped any other mount option), assumed "-o" is always the third
+argument, and still mapped the truecrypt option to --truecrypt, which
+was removed in 1.26.
+
+- /bin/sh only (busybox ash, dash)
+- build the veracrypt arguments as positional parameters, so values
+  with spaces (e.g. keyfile paths) stay single arguments
+- system, nokernelcrypto, headerbak and timestamp are collected into a
+  single --mount-options list
+- skip mount(8) flags before -o
+- reject truecrypt with a clear message instead of passing it on
+- password= is still passed as --password, as before
+
+Upstream-Status: Backport [https://github.com/veracrypt/VeraCrypt/commit/81cd94f18f183eb2276a10b9e1afa0a1ea9f9f60]
+
+Signed-off-by: Ville Takio <ville+git@takio.fi>
+---
+ src/Setup/Linux/mount.veracrypt | 59 ++++++++++++++++++++++-----------
+ 1 file changed, 39 insertions(+), 20 deletions(-)
+
+--- a/src/Setup/Linux/mount.veracrypt
++++ b/src/Setup/Linux/mount.veracrypt
+@@ -1,23 +1,42 @@
+-#!/bin/bash
+-DEV="$1"
+-MNTPT="$2"
+-VCOPTIONS=""
+-OPTIONS=""
++#!/bin/sh
++# mount.veracrypt <device> <mountpoint> [flags] [-o comma-options]
++DEV=$1
++MNTPT=$2
++MOUNTOPTS=
++OPTIONS=
+ 
+-shift 3
+-IFS=','
+-for arg in $*; do
+-  case "$arg" in
+-    truecrypt)        VCOPTIONS=(${VCOPTIONS[*]} --truecrypt);;
+-    system)           VCOPTIONS=(${VCOPTIONS[*]} --mount-options=system);;
+-    fs=*)             VCOPTIONS=(${VCOPTIONS[*]} --filesystem=${arg#*=});;
+-    keyfiles=*)       VCOPTIONS=(${VCOPTIONS[*]} --keyfiles=${arg#*=});;
+-    password=*)       VCOPTIONS=(${VCOPTIONS[*]} --password=${arg#*=});;
+-    pim=*)            VCOPTIONS=(${VCOPTIONS[*]} --pim=${arg#*=});;
+-    protect-hidden=*) VCOPTIONS=(${VCOPTIONS[*]} --protect-hidden=${arg#*=});;
+-    slot=*)           VCOPTIONS=(${VCOPTIONS[*]} --slot=${arg#*=});;
+-    *)                OPTIONS="${OPTIONS}${arg},";;
+-  esac
++shift 2
++while [ "$#" -gt 0 ] && [ "$1" != "-o" ]; do shift; done
++[ "$#" -gt 0 ] && shift
++
++OLDIFS=$IFS
++IFS=,
++set -f
++OPTSTR="$*"
++# Collect veracrypt arguments as positional parameters so values with spaces
++# (e.g. keyfile paths) stay single arguments.
++set --
++for arg in $OPTSTR; do
++	case $arg in
++		system|nokernelcrypto|headerbak|timestamp)
++		                  MOUNTOPTS="${MOUNTOPTS:+$MOUNTOPTS,}$arg" ;;
++		truecrypt)
++			echo "mount.veracrypt: TrueCrypt mode is no longer supported" >&2
++			exit 1 ;;
++		fs=*)             set -- "$@" "--filesystem=${arg#*=}" ;;
++		keyfiles=*)       set -- "$@" "--keyfiles=${arg#*=}" ;;
++		password=*)       set -- "$@" "--password=${arg#*=}" ;;
++		pim=*)            set -- "$@" "--pim=${arg#*=}" ;;
++		protect-hidden=*) set -- "$@" "--protect-hidden=${arg#*=}" ;;
++		slot=*)           set -- "$@" "--slot=${arg#*=}" ;;
++		*)                OPTIONS="${OPTIONS}${arg}," ;;
++	esac
+ done
++IFS=$OLDIFS
++set +f
++
++# veracrypt reads a single --mount-options value, so pass one comma list.
++[ -n "$MOUNTOPTS" ] && set -- "$@" "--mount-options=$MOUNTOPTS"
+ 
+-/usr/bin/veracrypt --text --non-interactive ${VCOPTIONS[*]} --fs-options="${OPTIONS%,*}" ${DEV} ${MNTPT}
++exec /usr/bin/veracrypt --text --non-interactive "$@" \
++	--fs-options="${OPTIONS%,}" "$DEV" "$MNTPT"

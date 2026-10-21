@@ -1,0 +1,392 @@
+#!/bin/sh /etc/rc.common
+# One-shot manager for the VeraCrypt volumes in /etc/config/veracrypt.
+#
+# start (and boot) mounts the volumes with auto_mount '1' in the background,
+# as key derivation takes minutes on a router; volumes on disks that appear
+# later are mounted from /etc/hotplug.d/block/90-veracrypt. "start <name>"
+# mounts one volume in the foreground and, without password_file, lets
+# veracrypt ask for the password on the terminal.
+#
+# stop [<name>] unmounts the configured volumes (also those mounted from
+# LuCI), never forced; volumes not configured here are left alone. A volume
+# still in use at shutdown, e.g. shared by a file server that has not
+# stopped yet, stays mounted and is logged. Removing a disk does not unmount
+# its volumes.
+
+START=45
+STOP=85
+
+VC=/usr/bin/veracrypt
+RUN=/var/run/veracrypt
+FAILED=$RUN/failed
+STOPPING=$RUN/stopping
+LOCK=/var/lock/veracrypt.init
+NL='
+'
+CR=$(printf '\r')
+umask 077
+
+log() {
+	logger -t veracrypt -p "daemon.$1" ${TTY_ERR:+-s} "$2"
+}
+
+# Uses $cfg and $volume of the calling mount_volume. A volume that cannot
+# be mounted is not retried on every block event, only on the next start.
+fail() {
+	log err "volume '$cfg': $1"
+	FAILED_ANY=1
+	[ -n "$volume" ] && echo "$volume" >> "$FAILED"
+}
+
+valid_name() {
+	case "$1" in
+	''|*[!A-Za-z0-9_]*) return 1 ;;
+	esac
+	[ "${#1}" -le 32 ]
+}
+
+valid_text() {
+	case "$1" in
+	*"$NL"*|*"$CR"*) return 1 ;;
+	esac
+	return 0
+}
+
+valid_absolute_path() {
+	case "$1" in
+	/|'') return 1 ;;
+	/*) valid_text "$1" ;;
+	*) return 1 ;;
+	esac
+}
+
+vc_mounted() {
+	"$VC" --text --non-interactive --list "$1" >/dev/null 2>&1
+}
+
+# Whether anything is mounted on $1; /proc/mounts escapes special characters.
+mountpoint_busy() {
+	MP=${1%/} awk 'BEGIN { m = ENVIRON["MP"] }
+		{
+			p = $2
+			gsub(/\\040/, " ", p); gsub(/\\011/, "\t", p)
+			gsub(/\\012/, "\n", p); gsub(/\\134/, "\\", p)
+			if (p == m) found = 1
+		}
+		END { exit !found }' /proc/mounts
+}
+
+# Secrets are stored in plain text: a regular file owned by root and readable
+# by root only, below directories only root can write to or that are sticky
+# (like /tmp: others cannot rename or remove root's entries there). busybox
+# has no stat.
+root_only() {
+	local type=$2 perms
+
+	set -f
+	set -- $(ls -lnd "$1" 2>/dev/null)
+	set +f
+	perms=$1
+	[ "$3" = 0 ] || return 1
+	case "$type:$perms" in
+	file:-r--------|file:-rw-------) return 0 ;;
+	dir:d????-??-?|dir:d????????t|dir:d????????T) return 0 ;;
+	esac
+	return 1
+}
+
+secure_file() {
+	local dir=$1
+
+	valid_absolute_path "$1" && [ -f "$1" ] && [ ! -L "$1" ] &&
+		root_only "$1" file || return 1
+	while dir=${dir%/*}; [ -n "$dir" ]; do
+		root_only "$dir" dir || return 1
+	done
+	root_only / dir
+}
+
+mount_volume() {
+	local cfg=$1 requested=$2 hotplug=$3
+	local auto_mount volume= mountpoint keyfiles password_file empty_password
+	local pim slot hash filesystem mount_options read_only token_lib kf line msg rc
+
+	if [ -n "$requested" ]; then
+		[ "$cfg" = "$requested" ] || return 0
+		TARGET_FOUND=1
+	else
+		config_get_bool auto_mount "$cfg" auto_mount 0
+		[ "$auto_mount" = 1 ] || return 0
+		[ -e "$STOPPING" ] && return 0
+	fi
+	valid_name "$cfg" || { fail "invalid section name"; return 0; }
+
+	config_get volume "$cfg" volume
+	config_get mountpoint "$cfg" mountpoint
+	config_get keyfiles "$cfg" keyfiles
+	config_get password_file "$cfg" password_file
+	config_get_bool empty_password "$cfg" empty_password 0
+	config_get pim "$cfg" pim
+	config_get slot "$cfg" slot
+	config_get hash "$cfg" hash
+	hash=$(printf '%s' "$hash" | tr A-Z a-z)
+	hash=${hash#hmac-}
+	config_get filesystem "$cfg" filesystem
+	config_get mount_options "$cfg" mount_options
+	config_get_bool read_only "$cfg" read_only 0
+	config_get token_lib main token_lib
+
+	valid_absolute_path "$volume" && valid_absolute_path "$mountpoint" ||
+		{ fail "volume and mountpoint must be absolute paths"; return 0; }
+	# The disk may appear later; the hotplug handler retries then.
+	if [ ! -e "$volume" ]; then
+		if [ -n "$requested" ]; then
+			fail "'$volume' is not available"
+		elif [ -z "$hotplug" ]; then
+			log info "volume '$cfg': '$volume' not present, mounting it when it appears"
+		fi
+		return 0
+	fi
+	[ -n "$hotplug" ] && grep -qxF "$volume" "$FAILED" 2>/dev/null && return 0
+	vc_mounted "$volume" && return 0
+
+	valid_text "$keyfiles" && valid_text "$password_file" ||
+		{ fail "options must not contain line breaks"; return 0; }
+	case "$pim" in
+	'') ;;
+	*[!0-9]*) fail "invalid pim"; return 0 ;;
+	*) [ "${#pim}" -le 7 ] && [ "$pim" -le 2147468 ] || { fail "invalid pim"; return 0; } ;;
+	esac
+	case "$slot" in
+	'') ;;
+	*[!0-9]*) fail "invalid slot"; return 0 ;;
+	*) [ "${#slot}" -le 2 ] && [ "$slot" -ge 1 ] && [ "$slot" -le 64 ] || { fail "invalid slot"; return 0; } ;;
+	esac
+	# Key derivation, as veracrypt --volume-properties shows it (case and an
+	# "HMAC-" prefix do not matter); without it, veracrypt tries each in turn.
+	case "$hash" in
+	''|sha-512|sha512|sha-256|sha256|whirlpool|blake2s-256|blake2s|streebog|argon2|argon2id) ;;
+	*) fail "unsupported hash '$hash'"; return 0 ;;
+	esac
+	case "$filesystem" in
+	''|ext2|ext3|ext4|fat|vfat|ntfs|ntfs3|kernel-ntfs|exfat) ;;
+	*) fail "unsupported filesystem '$filesystem'"; return 0 ;;
+	esac
+	# Keep in sync with the mount options luci-app-veracrypt offers.
+	case "$mount_options" in
+	''|nokernelcrypto) ;;
+	*) fail "unsupported mount_options '$mount_options'"; return 0 ;;
+	esac
+	if [ -n "$token_lib" ]; then
+		valid_absolute_path "$token_lib" && [ -r "$token_lib" ] ||
+			{ fail "token_lib '$token_lib' is not a readable absolute path"; return 0; }
+	fi
+	mountpoint_busy "$mountpoint" &&
+		{ fail "something else is mounted on '$mountpoint'"; return 0; }
+
+	if [ -n "$password_file" ]; then
+		secure_file "$password_file" ||
+			{ fail "password_file must be a root-only (0600) file below root-only directories"; return 0; }
+		# An empty password must be asked for with empty_password '1'.
+		IFS= read -r line < "$password_file"
+		[ -n "$line" ] || { fail "the first line of password_file is empty"; return 0; }
+		line=
+	elif [ "$empty_password" != 1 ]; then
+		# Keyfiles alone never imply an empty password.
+		if [ -z "$requested" ] || [ ! -t 0 ]; then
+			fail "needs password_file, or empty_password '1', or a terminal"
+			return 0
+		fi
+	fi
+	# Keyfiles may live elsewhere, e.g. on a USB stick whose filesystem has
+	# no Unix permissions: protecting them is the user's choice. One that is
+	# not plugged in yet is waited for like a missing volume.
+	set -f
+	IFS=,
+	set -- $keyfiles
+	unset IFS
+	set +f
+	for kf in "$@"; do
+		case "$kf" in
+		token://*)
+			# The token PIN can only be given on the command line, where
+			# any user could read it, or typed on a terminal.
+			if [ -z "$requested" ] || [ ! -t 0 ]; then
+				fail "security token keyfiles need a terminal (start $cfg) or LuCI"
+				return 0
+			fi
+			continue
+			;;
+		esac
+		if [ ! -e "$kf" ] && [ -z "$requested" ]; then
+			return 0
+		fi
+		valid_absolute_path "$kf" && [ -f "$kf" ] && [ ! -L "$kf" ] ||
+			{ fail "keyfile '$kf' must be an absolute path to a regular file"; return 0; }
+	done
+
+	set -- --text --protect-hidden=no
+	[ -n "$token_lib" ] && set -- "$@" --token-lib="$token_lib"
+	[ -n "$pim" ] && set -- "$@" --pim="$pim"
+	[ -n "$slot" ] && set -- "$@" --slot="$slot"
+	[ -n "$hash" ] && set -- "$@" --hash="$hash"
+	[ -n "$keyfiles" ] && set -- "$@" --keyfiles="$keyfiles"
+	[ -n "$filesystem" ] && set -- "$@" --filesystem="$filesystem"
+	if [ "$read_only" = 1 ]; then
+		set -- "$@" --mount-options="${mount_options:+$mount_options,}ro" --fs-options=ro
+	elif [ -n "$mount_options" ]; then
+		set -- "$@" --mount-options="$mount_options"
+	fi
+
+	mkdir -p "$mountpoint" || { fail "cannot create '$mountpoint'"; return 0; }
+	# The password is passed on stdin, never on the command line.
+	if [ -n "$password_file" ]; then
+		msg=$("$VC" "$@" --non-interactive --stdin "$volume" "$mountpoint" 2>&1 < "$password_file")
+		rc=$?
+	elif [ "$empty_password" = 1 ]; then
+		msg=$("$VC" "$@" --non-interactive --password= "$volume" "$mountpoint" 2>&1 < /dev/null)
+		rc=$?
+	else
+		# On a terminal: veracrypt asks for the password itself.
+		"$VC" "$@" "$volume" "$mountpoint"
+		rc=$?
+	fi
+	if [ "$rc" != 0 ] || ! vc_mounted "$volume"; then
+		fail "mounting '$volume' failed${msg:+: $msg}"
+		return 0
+	fi
+
+	# Stopped while key derivation was running: do not leave it mounted.
+	if [ -z "$requested" ] && [ -e "$STOPPING" ]; then
+		"$VC" --text --non-interactive --unmount "$volume" >/dev/null 2>&1
+		return 0
+	fi
+	log notice "volume '$cfg': mounted '$volume' on '$mountpoint'"
+}
+
+unmount_volume() {
+	local cfg=$1 requested=$2 volume msg
+
+	if [ -n "$requested" ]; then
+		[ "$cfg" = "$requested" ] || return 0
+		TARGET_FOUND=1
+	fi
+	config_get volume "$cfg" volume
+	if ! valid_absolute_path "$volume"; then
+		[ -n "$requested" ] && { log err "volume '$cfg': invalid volume path"; FAILED_ANY=1; }
+		return 0
+	fi
+	vc_mounted "$volume" || return 0
+	if msg=$("$VC" --text --non-interactive --unmount "$volume" 2>&1) ||
+		! vc_mounted "$volume"; then
+		log notice "volume '$cfg': unmounted '$volume'"
+	else
+		# Never forced: a volume still in use stays mounted.
+		log warn "volume '$cfg': '$volume' is in use, left mounted${msg:+: $msg}"
+		FAILED_ANY=1
+	fi
+}
+
+# The lock is held by a helper process: release it however the shell ends.
+take_lock() {
+	if ! lock -n "$LOCK"; then
+		[ -n "$TTY_ERR" ] && echo "veracrypt: waiting for another mount to finish" >&2
+		lock "$LOCK" || return 1
+	fi
+	trap 'lock -u "$LOCK"' EXIT
+	trap 'exit 1' INT TERM HUP
+}
+
+release_lock() {
+	lock -u "$LOCK"
+	trap - EXIT INT TERM HUP
+}
+
+mount_all() {
+	local requested=$1 hotplug=$2
+
+	TARGET_FOUND=0
+	FAILED_ANY=0
+	config_load veracrypt
+	config_foreach mount_volume volume "$requested" "$hotplug"
+	if [ -n "$requested" ] && [ "$TARGET_FOUND" = 0 ]; then
+		log err "no volume section named '$requested'"
+		return 1
+	fi
+	return "$FAILED_ANY"
+}
+
+# Mount the auto_mount volumes in the background.
+mount_background() {
+	(
+		take_lock || exit 1
+		mount_all "" "$1"
+		release_lock
+	) </dev/null >/dev/null 2>&1 &
+}
+
+boot() {
+	start
+}
+
+# Without a name, start returns at once and mounts in the background (also
+# when the package is installed or upgraded); "start <name>" waits and
+# returns whether the volume was mounted.
+start() {
+	local requested=$1 rc
+
+	[ -x "$VC" ] || return 1
+	mkdir -p "$RUN" /var/lock
+	case "$requested" in
+	'')
+		rm -f "$STOPPING" "$FAILED"
+		mount_background
+		return 0
+		;;
+	--hotplug)
+		# Stopped by hand: a new disk does not start mounting again.
+		[ -e "$STOPPING" ] && return 0
+		mount_background 1
+		return 0
+		;;
+	esac
+	[ -t 2 ] && TTY_ERR=1
+	valid_name "$requested" || { log err "invalid volume section name: $requested"; return 1; }
+	take_lock || return 1
+	mount_all "$requested"
+	rc=$?
+	release_lock
+	return "$rc"
+}
+
+# start leaves mounted volumes alone, so a restart does not tear down
+# volumes that were mounted by hand.
+restart() {
+	start "$@"
+}
+
+stop() {
+	local requested=$1
+
+	# opkg stops the service on upgrades: keep the volumes mounted.
+	[ "$PKG_UPGRADE" = 1 ] && return 0
+	[ -x "$VC" ] || return 0
+	if [ -n "$requested" ]; then
+		[ -t 2 ] && TTY_ERR=1
+		valid_name "$requested" || { log err "invalid volume section name: $requested"; return 1; }
+	else
+		# A background mount still running unmounts itself when done; do
+		# not wait for it, so that it cannot delay a shutdown.
+		mkdir -p "$RUN"
+		touch "$STOPPING"
+	fi
+	TARGET_FOUND=0
+	FAILED_ANY=0
+	config_load veracrypt
+	config_foreach unmount_volume volume "$requested"
+	if [ -n "$requested" ] && [ "$TARGET_FOUND" = 0 ]; then
+		log err "no volume section named '$requested'"
+		return 1
+	fi
+	return "$FAILED_ANY"
+}
