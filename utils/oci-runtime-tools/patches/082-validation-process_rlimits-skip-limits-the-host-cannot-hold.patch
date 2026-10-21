@@ -1,0 +1,142 @@
+From 336e2af2acde41fd41d9ef90d4031288532f842d Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Wed, 21 Oct 2026 12:51:26 +0100
+Subject: [PATCH] validation/process_rlimits: skip limits the host cannot hold
+
+A 32-bit kernel stores resource limits in an unsigned long and turns
+any value of 4 GiB or more into RLIM_INFINITY, so the hard limits for
+RLIMIT_CORE, RLIMIT_DATA, RLIMIT_FSIZE and RLIMIT_STACK can never match
+there. Probe the host by setting a 4 GiB soft RLIMIT_FSIZE on the test
+itself, raising the hard limit as far as that needs, and reading it
+back; leave out the limits of 4 GiB and more when this fails. A 32-bit
+userland on a 64-bit kernel still tests all of them, and a runner
+without CAP_SYS_RESOURCE under a lower hard limit leaves them out, as
+a runtime it starts could not set them either.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ validation/process_rlimits/process_rlimits.go | 29 ++++++++++++----
+ validation/util/rlimit_linux.go               | 34 +++++++++++++++++++
+ validation/util/rlimit_linux_test.go          | 24 +++++++++++++
+ validation/util/rlimit_other.go               |  9 +++++
+ 4 files changed, 89 insertions(+), 7 deletions(-)
+ create mode 100644 validation/util/rlimit_linux.go
+ create mode 100644 validation/util/rlimit_linux_test.go
+ create mode 100644 validation/util/rlimit_other.go
+
+--- a/validation/process_rlimits/process_rlimits.go
++++ b/validation/process_rlimits/process_rlimits.go
+@@ -18,15 +18,30 @@ func main() {
+ 		util.Fatal(err)
+ 	}
+ 
++	large, err := util.LargeRlimitsSupported()
++	if err != nil {
++		util.Fatal(err)
++	}
++
+ 	var gigaBytes uint64 = 1024 * 1024 * 1024
+-	g.AddProcessRlimits("RLIMIT_AS", 2*gigaBytes, 1*gigaBytes)
+-	g.AddProcessRlimits("RLIMIT_CORE", 4*gigaBytes, 3*gigaBytes)
+-	g.AddProcessRlimits("RLIMIT_DATA", 6*gigaBytes, 5*gigaBytes)
+-	g.AddProcessRlimits("RLIMIT_FSIZE", 8*gigaBytes, 7*gigaBytes)
+-	g.AddProcessRlimits("RLIMIT_STACK", 10*gigaBytes, 9*gigaBytes)
++	for _, r := range []struct {
++		rlimit     string
++		hard, soft uint64
++	}{
++		{"RLIMIT_AS", 2 * gigaBytes, 1 * gigaBytes},
++		{"RLIMIT_CORE", 4 * gigaBytes, 3 * gigaBytes},
++		{"RLIMIT_DATA", 6 * gigaBytes, 5 * gigaBytes},
++		{"RLIMIT_FSIZE", 8 * gigaBytes, 7 * gigaBytes},
++		{"RLIMIT_STACK", 10 * gigaBytes, 9 * gigaBytes},
++		{"RLIMIT_CPU", 120, 60},       // seconds
++		{"RLIMIT_NOFILE", 4000, 3000}, // number of files
++	} {
++		if !large && r.hard >= 4*gigaBytes {
++			continue
++		}
++		g.AddProcessRlimits(r.rlimit, r.hard, r.soft)
++	}
+ 
+-	g.AddProcessRlimits("RLIMIT_CPU", 120, 60)       // seconds
+-	g.AddProcessRlimits("RLIMIT_NOFILE", 4000, 3000) // number of files
+ 	err = util.RuntimeInsideValidate(g, nil, nil)
+ 	if err != nil {
+ 		util.Fatal(err)
+--- /dev/null
++++ b/validation/util/rlimit_linux.go
+@@ -0,0 +1,34 @@
++package util
++
++import (
++	"errors"
++
++	"golang.org/x/sys/unix"
++)
++
++// LargeRlimitsSupported reports whether resource limits of 4 GiB and more
++// can be set and read back on this host. A 32-bit kernel stores them in an
++// unsigned long and turns any larger value into RLIM_INFINITY, and without
++// CAP_SYS_RESOURCE a hard limit below 4 GiB cannot be raised to them.
++func LargeRlimitsSupported() (bool, error) {
++	const probe = 1 << 32
++	var old, cur unix.Rlimit
++
++	if err := unix.Prlimit(0, unix.RLIMIT_FSIZE, nil, &old); err != nil {
++		return false, err
++	}
++
++	cur = unix.Rlimit{Cur: probe, Max: max(old.Max, probe)}
++	if err := unix.Prlimit(0, unix.RLIMIT_FSIZE, &cur, nil); err != nil {
++		if errors.Is(err, unix.EPERM) {
++			return false, nil
++		}
++		return false, err
++	}
++	defer unix.Prlimit(0, unix.RLIMIT_FSIZE, &old, nil)
++
++	if err := unix.Prlimit(0, unix.RLIMIT_FSIZE, nil, &cur); err != nil {
++		return false, err
++	}
++	return cur.Cur == probe, nil
++}
+--- /dev/null
++++ b/validation/util/rlimit_linux_test.go
+@@ -0,0 +1,24 @@
++package util
++
++import (
++	"testing"
++
++	"golang.org/x/sys/unix"
++)
++
++func TestLargeRlimitsSupportedRestores(t *testing.T) {
++	var before, after unix.Rlimit
++
++	if err := unix.Prlimit(0, unix.RLIMIT_FSIZE, nil, &before); err != nil {
++		t.Fatal(err)
++	}
++	if _, err := LargeRlimitsSupported(); err != nil {
++		t.Fatal(err)
++	}
++	if err := unix.Prlimit(0, unix.RLIMIT_FSIZE, nil, &after); err != nil {
++		t.Fatal(err)
++	}
++	if before != after {
++		t.Errorf("RLIMIT_FSIZE changed from %+v to %+v", before, after)
++	}
++}
+--- /dev/null
++++ b/validation/util/rlimit_other.go
+@@ -0,0 +1,9 @@
++//go:build !linux
++
++package util
++
++// LargeRlimitsSupported reports whether the host kernel holds resource
++// limits of 4 GiB and more.
++func LargeRlimitsSupported() (bool, error) {
++	return true, nil
++}

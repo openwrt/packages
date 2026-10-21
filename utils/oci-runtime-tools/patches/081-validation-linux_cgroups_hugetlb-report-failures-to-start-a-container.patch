@@ -1,0 +1,104 @@
+From 0509f96714a8f5be5923df76f9cdce49478f4294 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Wed, 21 Oct 2026 12:50:04 +0100
+Subject: [PATCH] validation/linux_cgroups_hugetlb: report failures to start a
+ container
+
+When the runtime fails to create the container with a hugepage limit,
+testHugetlbCgroups() returns the error, its deferred AutoPlan() prints
+an empty plan and main() exits through util.Fatal(), so the failure
+never shows up as a failed test. The second check then does not run at
+all, and its own TAP header follows the first one in the same output.
+Report both checks on one TAP stream and record a failure to run the
+container as a failed test.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ .../linux_cgroups_hugetlb.go                  | 36 ++++++-------------
+ 1 file changed, 11 insertions(+), 25 deletions(-)
+
+--- a/validation/linux_cgroups_hugetlb/linux_cgroups_hugetlb.go
++++ b/validation/linux_cgroups_hugetlb/linux_cgroups_hugetlb.go
+@@ -11,11 +11,7 @@ import (
+ 	"github.com/opencontainers/runtime-tools/validation/util"
+ )
+ 
+-func testHugetlbCgroups(pageSizes []string) error {
+-	t := tap.New()
+-	t.Header(0)
+-	defer t.AutoPlan()
+-
++func testHugetlbCgroups(t *tap.T, pageSizes []string) {
+ 	// When setting the limit just for checking if writing works, the amount of memory
+ 	// requested does not matter, as all insigned integers will be accepted.
+ 	// Use 2GiB as an example
+@@ -24,7 +20,7 @@ func testHugetlbCgroups(pageSizes []stri
+ 	for _, pageSize := range pageSizes {
+ 		g, err := util.GetDefaultGenerator()
+ 		if err != nil {
+-			return err
++			util.Fatal(err)
+ 		}
+ 		g.SetLinuxCgroupsPath(cgroups.AbsCgroupPath)
+ 		g.AddLinuxResourcesHugepageLimit(pageSize, limit)
+@@ -47,14 +43,12 @@ func testHugetlbCgroups(pageSizes []stri
+ 			return nil
+ 		})
+ 		if err != nil {
+-			return err
++			t.Fail(err.Error())
+ 		}
+ 	}
+-
+-	return nil
+ }
+ 
+-func testWrongHugetlb() error {
++func testWrongHugetlb(t *tap.T) {
+ 	// We deliberately set the page size to a wrong value, "3MB", to see
+ 	// if the container really returns an error. Page sizes will always be a
+ 	// on the format 2^(integer)
+@@ -63,24 +57,17 @@ func testWrongHugetlb() error {
+ 
+ 	g, err := util.GetDefaultGenerator()
+ 	if err != nil {
+-		return err
++		util.Fatal(err)
+ 	}
+ 
+-	t := tap.New()
+-	t.Header(0)
+-	defer t.AutoPlan()
+-
+ 	g.SetLinuxCgroupsPath(cgroups.AbsCgroupPath)
+ 	g.AddLinuxResourcesHugepageLimit(page, limit)
+ 
+-	err = util.RuntimeOutsideValidate(g, t, func(config *rspec.Spec, t *tap.T, state *rspec.State) error {
+-		return nil
+-	})
++	err = util.RuntimeOutsideValidate(g, t, nil)
+ 	t.Ok(err != nil, "hugepage invalid pagesize results in an errror")
+ 	if err == nil {
+ 		t.Diagnosticf("expect: err != nil, actual: err == nil")
+ 	}
+-	return err
+ }
+ 
+ func main() {
+@@ -97,11 +84,10 @@ func main() {
+ 		os.Exit(0)
+ 	}
+ 
+-	if err := testHugetlbCgroups(pageSizes); err != nil {
+-		util.Fatal(err)
+-	}
++	t := tap.New()
++	t.Header(0)
++	defer t.AutoPlan()
+ 
+-	if err := testWrongHugetlb(); err == nil {
+-		util.Fatal(err)
+-	}
++	testHugetlbCgroups(t, pageSizes)
++	testWrongHugetlb(t)
+ }
