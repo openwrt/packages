@@ -1,0 +1,51 @@
+#!/bin/sh
+# Copyright (c) 2026 Dirk Brenken (dev@brenken.org)
+# This is free software, licensed under the GNU General Public License v3.
+
+[ -s "/etc/config/travelmate" ] || exit 0
+
+# return the openvpn interface name for a given network interface name
+#
+trm_ovpniface() {
+	local dev odev iface="${1}"
+
+	[ "$(uci -q get network."${iface}".proto)" = "none" ] || return 1
+	dev="$(uci -q get network."${iface}".device || uci -q get network."${iface}".ifname)"
+	[ -n "${dev}" ] || return 1
+	for iface in $(uci -q -X show network | sed -n "s/^network\.\([^.]*\)\.proto='openvpn'$/\1/p"); do
+		odev="$(uci -q get network."${iface}".dev)"
+		case "${odev}" in
+		"tun" | "tap") odev="${odev}0" ;;
+		esac
+		if [ "${odev}" = "${dev}" ]; then
+			printf "%s" "${iface}"
+			return 0
+		fi
+	done
+	return 1
+}
+
+# migrate travelmate config options to new format
+#
+for section in $(uci -q -X show travelmate | sed -n "s/^travelmate\.\([^.]*\)=uplink$/\1/p"); do
+	script="$(uci -q get travelmate."${section}".script)"
+	case "${script}" in
+	"/etc/travelmate/"*".login")
+		[ -x "${script%.login}.uc" ] && uci -q set travelmate."${section}".script="${script%.login}.uc"
+		;;
+	esac
+	vpniface="$(uci -q get travelmate."${section}".vpniface)"
+	if [ -n "${vpniface}" ] && iface="$(trm_ovpniface "${vpniface}")"; then
+		uci -q set travelmate."${section}".vpniface="${iface}"
+	fi
+	uci -q delete travelmate."${section}".vpnservice
+done
+
+vpniface="$(uci -q get travelmate.global.trm_stdvpniface)"
+if [ -n "${vpniface}" ] && iface="$(trm_ovpniface "${vpniface}")"; then
+	uci -q set travelmate.global.trm_stdvpniface="${iface}"
+fi
+uci -q delete travelmate.global.trm_stdvpnservice
+uci -q commit travelmate
+
+exit 0
