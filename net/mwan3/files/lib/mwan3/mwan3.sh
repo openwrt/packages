@@ -668,7 +668,7 @@ mwan3_set_policy()
 
 mwan3_create_policies_iptables()
 {
-	local last_resort lowest_metric_v4 lowest_metric_v6 total_weight_v4 total_weight_v6 policy IPT current update error
+	local last_resort ipv lowest_metric_v4 lowest_metric_v6 total_weight_v4 total_weight_v6 policy IPT current update error
 
 	policy="$1"
 
@@ -678,8 +678,10 @@ mwan3_create_policies_iptables()
 		LOG warn "Policy $1 exceeds max of 15 chars. Not setting policy" && return 0
 	fi
 
-	for IPT in "$IPT4" "$IPT6"; do
-		[ "$IPT" = "$IPT6" ] && [ $NO_IPV6 -ne 0 ] && continue
+	for ipv in "ipv4" "ipv6"; do
+		[ "$ipv" = "ipv6" ] && [ $NO_IPV6 -ne 0 ] && continue
+		case "$ipv" in ipv4) IPT="$IPT4" ;; ipv6) IPT="$IPT6" ;; esac
+
 		current="$($IPT -S)"$'\n'
 		update="*mangle"
 		if [ -n "${current##*-N mwan3_policy_$1$'\n'*}" ]; then
