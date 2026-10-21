@@ -713,7 +713,7 @@ mwan3_create_policies_iptables()
 		mwan3_push_update COMMIT
 		mwan3_push_update ""
 
-		echo "$update" > "${MWAN3_STATUS_IPTABLES_LOG_DIR}/iptables-create_policies_iptables-${1}.dump"
+		echo "$update" > "${MWAN3_STATUS_IPTABLES_LOG_DIR}/iptables-create_policies_iptables-${1}-${ipv}.dump"
 		if [ "$IPT" = "$IPT4" ]; then
 			error=$(echo "$update" | $IPT4R 2>&1) || LOG error "create_policies_iptables ($1): $error"
 		else
