@@ -934,6 +934,85 @@ config_charon_plugin_syslog() {
 	swan_xappend1 "}"
 }
 
+config_charon_plugin_filelog() {
+	local enabled path time_format append flush_line
+	config_get_bool enabled "filelog" enabled "0"
+	[ "$enabled" = "1" ] || return
+
+	config_get path "filelog" path "/var/log/charon.log"
+	case "$path" in
+		*/..|*/../*)
+			warning "filelog path '$path' must not contain '..', using default"
+			path="/var/log/charon.log"
+			;;
+		/tmp/?*|/var/log/?*)
+			;;
+		*)
+			warning "filelog path '$path' is not below /tmp/ or /var/log/, using default"
+			path="/var/log/charon.log"
+			;;
+	esac
+	config_get time_format "filelog" time_format "%b %e %T"
+	config_get_bool append "filelog" append "0"
+	config_get_bool flush_line "filelog" flush_line "1"
+
+	local app asn cfg chd dmn enc esp ike imc imv job knl lib mgr net pts tls tnc wch
+	config_get app "filelog" app "0"
+	config_get asn "filelog" asn "0"
+	config_get cfg "filelog" cfg "0"
+	config_get chd "filelog" chd "0"
+	config_get dmn "filelog" dmn "0"
+	config_get enc "filelog" enc "0"
+	config_get esp "filelog" esp "0"
+	config_get ike "filelog" ike "0"
+	config_get imc "filelog" imc "0"
+	config_get imv "filelog" imv "0"
+	config_get job "filelog" job "0"
+	config_get knl "filelog" knl "0"
+	config_get lib "filelog" lib "0"
+	config_get mgr "filelog" mgr "0"
+	config_get net "filelog" net "0"
+	config_get pts "filelog" pts "0"
+	config_get tls "filelog" tls "0"
+	config_get tnc "filelog" tnc "0"
+	config_get wch "filelog" wch "0"
+
+	mkdir -p "${path%/*}"
+
+	[ "$append" = "1" ] && append=yes || append=no
+	[ "$flush_line" = "1" ] && flush_line=yes || flush_line=no
+
+	swan_xappend1 "filelog {"
+	swan_xappend2 "charon {"
+	swan_xappend3 "path = $path"
+	swan_xappend3 "time_format = $time_format"
+	swan_xappend3 "append = $append"
+	swan_xappend3 "flush_line = $flush_line"
+	swan_xappend3 "default = -1"
+	swan_xappend3 "ike_name = yes"
+	swan_xappend3 "app = $app"
+	swan_xappend3 "asn = $asn"
+	swan_xappend3 "cfg = $cfg"
+	swan_xappend3 "chd = $chd"
+	swan_xappend3 "dmn = $dmn"
+	swan_xappend3 "enc = $enc"
+	swan_xappend3 "esp = $esp"
+	swan_xappend3 "ike = $ike"
+	swan_xappend3 "imc = $imc"
+	swan_xappend3 "imv = $imv"
+	swan_xappend3 "job = $job"
+	swan_xappend3 "knl = $knl"
+	swan_xappend3 "lib = $lib"
+	swan_xappend3 "mgr = $mgr"
+	swan_xappend3 "net = $net"
+	swan_xappend3 "pts = $pts"
+	swan_xappend3 "tls = $tls"
+	swan_xappend3 "tnc = $tnc"
+	swan_xappend3 "wch = $wch"
+	swan_xappend2 "}"
+	swan_xappend1 "}"
+}
+
 config_charon_plugin_netlink () {
 
 	local install_routes_xfrmi
@@ -1031,6 +1110,7 @@ config_strongswan_generate() {
 
 	swan_xappend0 "charon {"
 	config_charon_common "$conf"
+	config_charon_plugin_filelog
 	config_charon_plugin_syslog
 	config_charon_plugin_netlink
 	swan_xappend0 "}"
