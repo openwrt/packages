@@ -25,7 +25,7 @@
 #                                  registration tied to the old UUID
 #                                  is lost)
 #
-#   readsb-uuid -h, --help      -- this options banner
+#   readsb-uuid -h, --help      -- this help banner
 #
 # After any mutating run: `service readsb reload`.
 #

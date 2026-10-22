@@ -380,7 +380,10 @@ Passthrough for upstream readsb flags not surfaced as a UCI option, e.g.
 the camelCase `--write-binCraft-old` / `--write-json-binCraft-only=<n>`,
 `--dump-beast=<dir>,<interval>,<level>`, `--receiver-focus`,
 `--cpr-focus`, `--leg-focus`, `--trace-focus`, `--aggressive`.
-Whitespace-separated; appended verbatim to the daemon command line.
+Values are split on whitespace with pathname expansion disabled. Quotes
+and backslashes are literal characters, not shell quoting or escaping;
+arguments containing embedded whitespace cannot be expressed through
+this field. Each resulting token is appended as one daemon argument.
 
 ## SDR / hotplug behavior
 
@@ -873,7 +876,10 @@ filtering, GeoIP coordinate preservation, and optional companion consent,
 availability, installation and feeder selection. OpenWrt services, hardware
 and network tools are mocked; the tests do not change the host's UCI or
 contact external services. The scripts can also be run with `bash` or
-`busybox ash` to check shell compatibility.
+`busybox ash` to check shell compatibility. These scripts target BusyBox
+ash, dash, and Bash, all of which support the `local` extension used here;
+they do not claim portability to every POSIX-only `/bin/sh`. If the
+system's `sh` lacks `local`, invoke the scripts with Bash or BusyBox ash.
 
 For integration checks with a real UCI CLI, run:
 

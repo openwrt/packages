@@ -32,7 +32,7 @@
 #                                          info (visible in `logread -e
 #                                          readsb`)
 #
-#   readsb-geoip -h, --help             -- this options banner
+#   readsb-geoip -h, --help    -- this help banner
 #
 # After any mutating run: `service readsb reload`.
 #
