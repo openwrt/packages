@@ -1184,7 +1184,7 @@ service_triggers() {
 	}
 
 	procd_add_reload_trigger "ipsec"
-	config load "ipsec"
+	config_load "ipsec"
 
 	config_foreach service_trigger_ipsec globals
 }
@@ -1706,7 +1706,7 @@ legacy_prepare_env() {
 
 legacy_service_triggers() {
 	procd_add_reload_trigger "ipsec"
-	config load "ipsec"
+	config_load "ipsec"
 
 	config_foreach legacy_service_trigger_ipsec ipsec
 }
