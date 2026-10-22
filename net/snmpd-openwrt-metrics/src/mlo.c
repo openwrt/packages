@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * mlo.c - direct nl80211 query for Multi-Link Operation per-link data.
  *

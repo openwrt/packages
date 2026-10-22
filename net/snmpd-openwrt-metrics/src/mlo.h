@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * mlo.h - direct nl80211 query for Multi-Link Operation per-link data.
  */
@@ -19,9 +19,11 @@ struct mlo_link {
 	int32_t  txpower;      /* dBm */
 };
 
-/* Queries NL80211_CMD_GET_INTERFACE for ifname and extracts
+/*
+ * Queries NL80211_CMD_GET_INTERFACE for ifname and extracts
  * NL80211_ATTR_MLO_LINKS. Returns the number of links found: 0 for a
- * non-MLD interface, a query failure, or an interface with no links. */
+ * non-MLD interface, a query failure, or an interface with no links.
+ */
 size_t mlo_get_links(const char *ifname, struct mlo_link *out, size_t max);
 
 void mlo_cleanup(void);

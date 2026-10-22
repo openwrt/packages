@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * agent.c - AgentX subagent exporting OpenWrt metrics over SNMP.
  *
@@ -24,7 +24,9 @@
 
 #include "collect.h"
 
-#define AGENT_VERSION "1.0.0"
+#ifndef AGENT_VERSION
+#error "AGENT_VERSION must be provided by the Makefile"
+#endif
 
 static volatile sig_atomic_t running = 1;
 
@@ -38,9 +40,10 @@ static oid lm_fan_table_oid[]   = { 1,3,6,1,4,1,2021,13,16,3 };
 
 static void on_signal(int sig) { (void)sig; running = 0; }
 
-/* ------------------------------------------------------------------ */
-/* Scalars                                                             */
-/* ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------
+ * Scalars
+ * ------------------------------------------------------------------
+ */
 
 static int scalar_handler(netsnmp_mib_handler *handler,
 			  netsnmp_handler_registration *reginfo,
@@ -60,8 +63,10 @@ static int scalar_handler(netsnmp_mib_handler *handler,
 	return SNMP_ERR_NOERROR;
 }
 
-/* Device metadata, indexed by enum sys_field. Only fields the device
- * provides are registered, so an absent one is simply not instantiated. */
+/*
+ * Device metadata, indexed by enum sys_field. Only fields the device
+ * provides are registered, so an absent one is simply not instantiated.
+ */
 static char sys_values[SYS_FIELD_MAX + 1][SYS_VALUE_MAX];
 
 static int sys_handler(netsnmp_mib_handler *handler,
@@ -102,9 +107,10 @@ static void register_sysinfo(void)
 	}
 }
 
-/* ------------------------------------------------------------------ */
-/* Wireless interface table                                            */
-/* ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------
+ * Wireless interface table
+ * ------------------------------------------------------------------
+ */
 
 static netsnmp_variable_list *wl_next(void **loop, void **data,
 				      netsnmp_variable_list *idx,
@@ -159,17 +165,21 @@ static int wl_handler(netsnmp_mib_handler *handler,
 		if (!w || !ti)
 			continue;
 
-		/* An MLD netdev spans several radio links, so the per-radio
+				/*
+		 * An MLD netdev spans several radio links, so the per-radio
 		 * columns have no single answer. Reporting zero would look
-		 * like a real measurement. */
+		 * like a real measurement.
+		 */
 		if (!w->has_radio && (ti->colnum == 5 || ti->colnum == 6 ||
 				      ti->colnum == 16 || ti->colnum == 17)) {
 			netsnmp_request_set_error(req, SNMP_NOSUCHINSTANCE);
 			continue;
 		}
-		/* Even on a single-radio vif, libiwinfo's noise/txpower/survey
+				/*
+		 * Even on a single-radio vif, libiwinfo's noise/txpower/survey
 		 * calls can individually fail while channel/frequency succeed;
-		 * a bare 0 would then look like a real dBm/percent reading. */
+		 * a bare 0 would then look like a real dBm/percent reading.
+		 */
 		if (ti->colnum == 6 && !w->has_noise) {
 			netsnmp_request_set_error(req, SNMP_NOSUCHINSTANCE);
 			continue;
@@ -216,14 +226,17 @@ static int wl_handler(netsnmp_mib_handler *handler,
 	return SNMP_ERR_NOERROR;
 }
 
-/* ------------------------------------------------------------------ */
-/* Wireless link table (802.11be Multi-Link Operation)                 */
-/* ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------
+ * Wireless link table (802.11be Multi-Link Operation)
+ * ------------------------------------------------------------------
+ */
 
-/* Rows are (ifIndex, linkId) pairs flattened across every interface's
+/*
+ * Rows are (ifIndex, linkId) pairs flattened across every interface's
  * links[]; *loop is that flat position. wl[] is ifindex-sorted and each
  * iface's links[] is link_id-sorted (collect_mlo_links()), so walking flat
- * positions in order yields rows in index order as GETNEXT requires. */
+ * positions in order yields rows in index order as GETNEXT requires.
+ */
 static bool link_row_at(const struct snapshot *s, size_t flat,
 			const struct wl_iface **out_w, size_t *out_j)
 {
@@ -315,12 +328,15 @@ static int link_handler(netsnmp_mib_handler *handler,
 	return SNMP_ERR_NOERROR;
 }
 
-/* ------------------------------------------------------------------ */
-/* LM-SENSORS temperature and fan tables                               */
-/* ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------
+ * LM-SENSORS temperature and fan tables
+ * ------------------------------------------------------------------
+ */
 
-/* Both tables have the same shape, so one pair of hooks serves them; the
- * iterator info's my_loop_context selects which list to walk. */
+/*
+ * Both tables have the same shape, so one pair of hooks serves them; the
+ * iterator info's my_loop_context selects which list to walk.
+ */
 struct lm_ctx { bool fan; };
 static struct lm_ctx lm_temp_ctx = { .fan = false };
 static struct lm_ctx lm_fan_ctx  = { .fan = true };
@@ -429,8 +445,10 @@ static void register_table(const char *name, oid *base, size_t baselen,
 
 int main(int argc, char **argv)
 {
-	/* OpenWrt's snmpd writes "agentXSocket /var/run/agentx.sock"; net-snmp's
-	 * compiled-in default is elsewhere, so connect where snmpd listens. */
+		/*
+	 * OpenWrt's snmpd writes "agentXSocket /var/run/agentx.sock"; net-snmp's
+	 * compiled-in default is elsewhere, so connect where snmpd listens.
+	 */
 	const char *sock = "/var/run/agentx.sock";
 	int use_syslog = 1;
 	int i;
@@ -446,7 +464,7 @@ int main(int argc, char **argv)
 		} else if (!strcmp(argv[i], "--version") ||
 			  !strcmp(argv[i], "-V") ||
 			  !strcmp(argv[i], "--help")) {
-			printf("openwrt-snmp-agent " AGENT_VERSION "\n");
+			printf("%s " AGENT_VERSION "\n", argv[0]);
 			return 0;
 		}
 	}

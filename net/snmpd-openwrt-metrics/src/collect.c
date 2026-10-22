@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * collect.c - wireless metrics via libiwinfo, sensors via sysfs, device
  * metadata from /etc/os-release and /tmp/sysinfo.
@@ -45,8 +45,10 @@ static int ttl_seconds(void)
 	return (t > 0) ? t : DEFAULT_TTL;
 }
 
-/* Build "<dir>/<name>" only if it fits, so sysfs path construction cannot
- * silently truncate. */
+/*
+ * Build "<dir>/<name>" only if it fits, so sysfs path construction cannot
+ * silently truncate.
+ */
 static bool join(char *out, size_t len, const char *dir, const char *name)
 {
 	size_t dl = strlen(dir), nl = strlen(name);
@@ -82,17 +84,20 @@ static bool read_u32(const char *path, uint32_t *out)
 
 	if (slurp(path, buf, sizeof(buf)) < 0)
 		return false;
-	/* hwmon/thermal-zone temperatures are signed and can be sub-zero;
+		/*
+	 * hwmon/thermal-zone temperatures are signed and can be sub-zero;
 	 * Gauge32 cannot represent that, so clamp rather than let strtoul()
-	 * wrap a negative reading into a multi-billion milli-degree value. */
+	 * wrap a negative reading into a multi-billion milli-degree value.
+	 */
 	v = strtol(buf, NULL, 10);
 	*out = (v < 0) ? 0 : (uint32_t)v;
 	return true;
 }
 
-/* ------------------------------------------------------------------ */
-/* Wireless                                                            */
-/* ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------
+ * Wireless
+ * ------------------------------------------------------------------
+ */
 
 struct mac { uint8_t a[6]; };
 
@@ -106,9 +111,11 @@ static bool mac_seen(const struct mac *set, size_t n, const uint8_t *m)
 	return false;
 }
 
-/* Channel utilisation, in tenths of a percent, from the survey entry
+/*
+ * Channel utilisation, in tenths of a percent, from the survey entry
  * matching the operating channel. iwinfo_survey_entry has no in-use flag,
- * so the frequency is the key. */
+ * so the frequency is the key.
+ */
 static bool survey_utilisation(const struct iwinfo_ops *iw, const char *ifname,
 			       uint32_t mhz, uint32_t *pct)
 {
@@ -147,10 +154,12 @@ static int cmp_link_id(const void *a, const void *b)
 	return (x->link_id > y->link_id) - (x->link_id < y->link_id);
 }
 
-/* Queries this vif's MLO links directly over nl80211 (see mlo.c) and fills
+/*
+ * Queries this vif's MLO links directly over nl80211 (see mlo.c) and fills
  * in channel utilisation for each via the same survey data the single-radio
  * path uses, keyed by that link's own frequency. Returns the link count;
- * zero means ifname is not an MLD. */
+ * zero means ifname is not an MLD.
+ */
 static size_t collect_mlo_links(const struct iwinfo_ops *iw, const char *ifname,
 				struct wl_link *out, size_t max)
 {
@@ -176,10 +185,12 @@ static size_t collect_mlo_links(const struct iwinfo_ops *iw, const char *ifname,
 	return n;
 }
 
-/* hostapd reports the SSID it is actually serving over ubus. libiwinfo
+/*
+ * hostapd reports the SSID it is actually serving over ubus. libiwinfo
  * derives it from scan results or hostapd's generated config, which comes
  * back empty for some VAPs (seen on the second radio of a tri-band phy), so
- * ask hostapd first and keep iwinfo as the fallback. */
+ * ask hostapd first and keep iwinfo as the fallback.
+ */
 static struct ubus_context *ubus_ctx;
 static bool ubus_tried;
 
@@ -290,28 +301,34 @@ static void collect_wireless(struct snapshot *s)
 		if (w->ifindex <= 0)
 			continue;
 
-		/* iwinfo writes at most IWINFO_ESSID_MAX_SIZE + 1 bytes. An
+				/*
+		 * iwinfo writes at most IWINFO_ESSID_MAX_SIZE + 1 bytes. An
 		 * interface with no SSID (a monitor or a down VAP) falls back
-		 * to its name so the row is still identifiable. */
+		 * to its name so the row is still identifiable.
+		 */
 		if (ssid_buf[0])
 			memcpy(w->ssid, ssid_buf, strlen(ssid_buf) + 1);
 		else
 			memcpy(w->ssid, w->name, strlen(w->name) + 1);
 
-		/* An MLD netdev spans several links; query them directly over
+				/*
+		 * An MLD netdev spans several links; query them directly over
 		 * nl80211 rather than through libiwinfo, which has no MLO
 		 * awareness and reports whatever single link the kernel's
 		 * legacy top-level compat attributes happen to carry (seen
 		 * live: an arbitrary link's channel, and no tx power at
 		 * all). A non-MLD vif gets zero links here and falls through
-		 * to the existing single-radio path below unchanged. */
+		 * to the existing single-radio path below unchanged.
+		 */
 		w->link_count = collect_mlo_links(iw, de->d_name, w->links,
 						  WL_MAX_LINKS);
 
-		/* Radio-scoped values. An MLD netdev cannot answer these as a
+				/*
+		 * Radio-scoped values. An MLD netdev cannot answer these as a
 		 * single value; leave has_radio false so the agent reports
 		 * noSuchInstance rather than a misleading zero, and rely on
-		 * links[] above for its real per-radio data instead. */
+		 * links[] above for its real per-radio data instead.
+		 */
 		if (w->link_count == 0) {
 			val = 0;
 			if (iw->channel && iw->channel(de->d_name, &val))
@@ -367,11 +384,13 @@ static void collect_wireless(struct snapshot *s)
 				snr_sum += snr;
 				w->clients++;
 
-				/* openwrtWirelessClientCount is documented to exclude
+								/*
+				 * openwrtWirelessClientCount is documented to exclude
 				 * this device's own upstream associations, so only
 				 * an AP/master-mode row's peers count as clients;
 				 * a STA-mode uplink's one "peer" is the AP above us,
-				 * not a client of ours. */
+				 * not a client of ours.
+				 */
 				if (mode == IWINFO_OPMODE_MASTER &&
 				    seen_n < sizeof(seen) / sizeof(seen[0]) &&
 				    !mac_seen(seen, seen_n, e->mac)) {
@@ -395,12 +414,15 @@ static void collect_wireless(struct snapshot *s)
 	s->client_total = (uint32_t)seen_n;
 }
 
-/* ------------------------------------------------------------------ */
-/* Sensors                                                             */
-/* ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------
+ * Sensors
+ * ------------------------------------------------------------------
+ */
 
-/* Records which thermal zones are already exposed through hwmon so the
- * thermal-zone pass does not report them a second time. */
+/*
+ * Records which thermal zones are already exposed through hwmon so the
+ * thermal-zone pass does not report them a second time.
+ */
 struct zone_cover { int zone[SENSOR_MAX]; size_t n; };
 
 static bool zone_covered(const struct zone_cover *c, int z)
@@ -527,16 +549,19 @@ static void collect_sensors(struct snapshot *s)
 	closedir(d);
 }
 
-/* ------------------------------------------------------------------ */
-/* Device metadata                                                     */
-/* ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------
+ * Device metadata
+ * ------------------------------------------------------------------
+ */
 
 #define OS_RELEASE     "/etc/os-release"
 #define SYSINFO_MODEL  "/tmp/sysinfo/model"
 
-/* Value of KEY in an os-release file: KEY=value lines, value optionally
+/*
+ * Value of KEY in an os-release file: KEY=value lines, value optionally
  * wrapped in double or single quotes. OpenWrt's own file never uses the
- * backslash escapes the format allows, so they are not interpreted. */
+ * backslash escapes the format allows, so they are not interpreted.
+ */
 static bool os_release_value(const char *key, char *out, size_t len)
 {
 	char buf[4096], *line, *save = NULL;
@@ -569,9 +594,11 @@ static bool os_release_value(const char *key, char *out, size_t len)
 	return false;
 }
 
-/* /tmp is world-writable and the agent runs as root, so only trust a
+/*
+ * /tmp is world-writable and the agent runs as root, so only trust a
  * regular, root-owned file there and never follow a symlink to one. Like
- * os_release_value(), a value that does not fit is rejected, not cut. */
+ * os_release_value(), a value that does not fit is rejected, not cut.
+ */
 static bool read_tmp_value(const char *path, char *out, size_t len)
 {
 	char buf[SYS_VALUE_MAX + 2];
@@ -646,13 +673,16 @@ void snapshot_cleanup(void)
 	snap_valid = false;
 }
 
-/* ------------------------------------------------------------------ */
-/* Diagnostic dump                                                     */
-/* ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------
+ * Diagnostic dump
+ * ------------------------------------------------------------------
+ */
 
-/* Mirrors collect_wireless()'s discovery and call order exactly, including
+/*
+ * Mirrors collect_wireless()'s discovery and call order exactly, including
  * the per-interface iwinfo_finish(), so whatever state dependency causes
- * the CLI/in-process divergence is reproduced rather than avoided. */
+ * the CLI/in-process divergence is reproduced rather than avoided.
+ */
 void collect_dump(void)
 {
 	DIR *d;

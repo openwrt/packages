@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * collect.h - data collection for the OpenWrt SNMP subagent.
  *
@@ -19,10 +19,12 @@
 #define SENSOR_MAX      64
 #define LABEL_MAX       64
 
-/* One radio link of a multi-link (MLD) interface. A regular single-link vif
+/*
+ * One radio link of a multi-link (MLD) interface. A regular single-link vif
  * has none of these; an MLD's own channel/noise/txpower/chanutil columns are
  * absent for the same reason (see has_radio below) and these rows are where
- * that per-radio data actually lives instead, one row per link. */
+ * that per-radio data actually lives instead, one row per link.
+ */
 struct wl_link {
 	int       link_id;
 	uint8_t   addr[6];
@@ -33,9 +35,11 @@ struct wl_link {
 	uint32_t  chanutil;       /* tenths of a percent */
 };
 
-/* Columns an MLD (multi-link) interface cannot answer are marked absent
+/*
+ * Columns an MLD (multi-link) interface cannot answer are marked absent
  * rather than reported as zero; the agent returns noSuchInstance for them.
- * Their real per-radio data is in links[] / link_count instead. */
+ * Their real per-radio data is in links[] / link_count instead.
+ */
 struct wl_iface {
 	int       ifindex;
 	char      name[32];
@@ -89,18 +93,22 @@ enum sys_field {
 
 #define SYS_VALUE_MAX   256     /* DisplayString SIZE (0..255) + NUL */
 
-/* Reads one metadata field into out. False if the device does not provide
+/*
+ * Reads one metadata field into out. False if the device does not provide
  * it, or it is empty. None of these change without a reboot, so the agent
- * reads them once at startup. */
+ * reads them once at startup.
+ */
 bool sysinfo_read(enum sys_field f, char *out, size_t len);
 
 /* Returns the current snapshot, refreshing it if older than the TTL. */
 const struct snapshot *snapshot_get(void);
 void snapshot_cleanup(void);
 
-/* Prints the raw return code and value of every wireless op, per interface,
+/*
+ * Prints the raw return code and value of every wireless op, per interface,
  * to stdout. Diagnostic tool for cases where libiwinfo behaves differently
- * in-process than via the iwinfo CLI (see agent.c --dump). */
+ * in-process than via the iwinfo CLI (see agent.c --dump).
+ */
 void collect_dump(void);
 
 #endif /* OPENWRT_SNMP_COLLECT_H */

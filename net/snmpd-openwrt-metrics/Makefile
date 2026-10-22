@@ -45,7 +45,8 @@ endef
 
 TARGET_CFLAGS += \
 	-I$(STAGING_DIR)/usr/include/libnl-tiny \
-	-D_GNU_SOURCE
+	-D_GNU_SOURCE \
+	-DAGENT_VERSION=\"$(PKG_VERSION)\"
 
 define Build/Prepare
 	mkdir -p $(PKG_BUILD_DIR)
