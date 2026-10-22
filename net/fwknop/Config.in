@@ -4,7 +4,7 @@ menu "Configuration"
 
 config FWKNOPD_GPG
 	bool "Enable GPG support"
-	select PACKAGE_gnupg
+	select PACKAGE_gnupg2
 	default n
 
 config FWKNOPD_NFQ_CAPTURE
