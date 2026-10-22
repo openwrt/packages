@@ -326,6 +326,39 @@ test_uuid_permissions() (
 )
 run_test 'pre-existing world-readable UUID file is restricted before writing' test_uuid_permissions success
 run_test 'failed UUID permission change prevents writing or starting the uploader' test_uuid_permissions failure
+test_runtime_permissions() (
+	scenario=$1
+	seed 'adsbexchange-stats.main.enabled=1'
+	runtime="$tmpdir/private runtime"
+	trap 'command rm -f "$runtime/env" "$runtime/uuid" "$runtime/new.json"; [ ! -d "$runtime" ] || command rmdir "$runtime"' 0
+	ADSBX_RUNTIME_DIR=$runtime ADSBX_ENV_FILE="$runtime/env" ADSBX_UUID_FILE="$runtime/uuid"
+	umask 022
+	before_umask=$(umask)
+	if [ "$scenario" != new ]; then
+		mkdir -m 755 "$runtime" || return 1
+		printf 'old scratch data\n' > "$runtime/new.json"
+	fi
+	if [ "$scenario" = failure ]; then
+		chmod() {
+			[ "${2:-}" != "$ADSBX_RUNTIME_DIR" ] || return 9
+			command chmod "$@"
+		}
+	fi
+	rc=0
+	start_instance main || rc=$?
+	assert_equal "$(umask)" "$before_umask" || return 1
+	if [ "$scenario" = failure ]; then
+		assert_equal "$rc" 1 && [ ! -f "$runtime/uuid" ] && [ ! -f "$runtime/env" ] &&
+			! grep -q '^open$' "$tmpdir/calls" &&
+			grep -q 'cannot prepare the uploader environment' "$tmpdir/log"
+	else
+		assert_equal "$rc" 0 && assert_equal "$(stat -c %a "$runtime")" 700 &&
+			grep -q '^open$' "$tmpdir/calls"
+	fi
+)
+run_test 'new runtime directory is private without changing the caller umask' test_runtime_permissions new
+run_test 'existing runtime directory is restricted before writing or starting' test_runtime_permissions existing
+run_test 'failed runtime permission change prevents writes and startup' test_runtime_permissions failure
 test_start_logging() (
 	level=$1 interval=$2 expected_level=$3 expected_interval=$4
 	seed 'adsbexchange-stats.main.enabled=1' \

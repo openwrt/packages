@@ -102,6 +102,12 @@ The shared helpers preserve preconfigured `ADSBX_RUNTIME_DIR`,
 When file paths are unset, they are derived from the runtime directory.
 Procd also passes the runtime directory to the uploader, keeping its
 diagnostic fallback files in the directory cleaned when the service stops.
+The runtime directory is created with mode `0700`; existing directories are
+restricted before any UUID/environment write or uploader startup. A failed
+permission change prevents startup. The patched uploader enforces the same
+private-directory requirement before creating its scratch files.
+Runtime and source paths containing spaces or quotes remain intact in the
+upstream UUID read, stat, copy, remove, and JSON-redirection operations.
 
 Reload triggers are registered on **both** `adsbexchange-stats` and
 `readsb`, so the recommended workflow is:
@@ -245,6 +251,8 @@ Curl diagnostics redact the station UUID, authorization headers, and
 cookies before logging, including on transport failures. Hostnames,
 addresses, URLs, and other connection details remain visible; use level
 3 only when needed for troubleshooting. Startup notices omit the UUID.
+The upstream startup message no longer prints it; stdout remains captured
+for other uploader diagnostics.
 Raw diagnostics are captured in private temporary files. If temporary-file
 allocation fails, the runtime fallback is restricted to mode `0600` before
 curl writes to it, including when the file already exists. Failure to
@@ -323,6 +331,22 @@ dash and Bash; they use the supported `local` extension and do not
 claim strict POSIX-only portability. Test cleanup preserves the test
 exit status and warns about leftovers without recursively deleting
 unexpected files.
+
+To exercise the actual patched upstream uploader, provide the unmodified
+`json-status` from pinned commit `11647f27de3eef51fb19bcb39f0dc0b8500a6671`:
+
+```sh
+bash utils/adsbexchange-stats/tests/uploader.sh /path/to/pinned/json-status
+```
+
+This runs one real uploader cycle for plain paths, spaces, and single quotes.
+It checks payload identity, private runtime permissions, and absence of the
+UUID in startup output. HTTP, sleeps, and jq's unchanged transformation are
+stubbed; the actual UUID/path consumers, copy/remove operations, compression,
+and file redirections execute. Legacy host defaults are redirected to a
+test-owned path. A simulated chmod failure also verifies that the uploader
+exits before writing scratch files. The host test needs Git, GNU patch/stat,
+gzip, Python 3, and timeout, performs no downloads, and makes no uploads.
 
 ## License
 

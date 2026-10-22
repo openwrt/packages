@@ -8,16 +8,17 @@ after legacy overrides. Route uploads through the optional helper for
 consent and feeder-identity checks, diagnostics, and upload metrics.
 Make the optional Perl-based curl-version probe tolerate missing Perl.
 
+Keep runtime directories private, quote source and scratch paths, and
+avoid printing the station UUID in upstream startup diagnostics.
+
 The upstream payload remains MIT licensed. OpenWrt integration changes
 are distributed under GPL-2.0-only.
 
 Signed-off-by: Dr Bill Mcilhargey <contributor@mcilhargey.com>
 ---
-diff --git a/json-status b/json-status
-index c4b260c..13e5313 100755
 --- a/json-status
 +++ b/json-status
-@@ -16,8 +16,8 @@ DNS_TTL=600
+@@ -16,8 +16,8 @@
  DNS_IGNORE_LOCAL=0
  
  # List all paths, IN PREFERRED ORDER, separated by a SPACE
@@ -28,7 +29,7 @@ index c4b260c..13e5313 100755
  
  ######################################################################################################################
  # If you know what you're doing, and you want to override the search path, you can do it easily in
-@@ -28,10 +28,7 @@ JSON_PATHS=("/run/adsbexchange-feed")
+@@ -28,10 +28,7 @@
  ######################################################################################################################
  
  # UUID file
@@ -40,7 +41,7 @@ index c4b260c..13e5313 100755
  
  # source local overrides (commonly the JSON_PATH, or DNS cache settings)
  if [ -r /etc/default/adsbexchange-stats ]; then
-@@ -44,6 +41,11 @@ if [ -r /etc/default/adsbexchange-stats ]; then
+@@ -44,6 +41,11 @@
  	fi
  fi
  
@@ -52,7 +53,7 @@ index c4b260c..13e5313 100755
  # Small bit of sanity...
  if [ "${#JSON_PATHS[@]}" -le 0 ]; then
  	echo "FATAL - You broke something.  JSON_PATHS variable has no locations listed.  Please fix."
-@@ -52,12 +54,13 @@ fi
+@@ -52,12 +54,16 @@
  
  JSON_DIR=""
  
@@ -63,12 +64,33 @@ index c4b260c..13e5313 100755
  
  # Sanity to make sure we can write to our scratch dir in /run
 -T=$(touch $TMPFILE 2>&1)
-+mkdir -p "$TEMP_DIR" || exit 99
++if ! mkdir -p -m 700 "$TEMP_DIR" || ! chmod 700 "$TEMP_DIR"; then
++    echo "ERROR: Unable to prepare private runtime directory $TEMP_DIR" >&2
++    exit 99
++fi
 +T=$(touch "$TMPFILE" 2>&1)
  RV=$?
  if [ $RV -ne 0 ]; then
      echo "ERROR: Unable to write to $TMPFILE, aborting!  ($T)"
-@@ -213,9 +216,8 @@ if ! command -v host &>/dev/null || ! command -v perl &>/dev/null; then
+@@ -75,7 +81,7 @@
+ 	for i in ${!JSON_PATHS[@]}; do
+ 		CHECK=${JSON_PATHS[$i]}
+ 
+-		if [ -d $CHECK ]; then
++		if [ -d "$CHECK" ]; then
+ 			JSON_DIR=$CHECK
+ 			break
+ 		fi
+@@ -95,7 +101,7 @@
+ 	fi
+ done
+ 
+-UUID=$(cat $UUID_FILE)
++UUID=$(cat "$UUID_FILE")
+ 
+ if ! [[ $UUID =~ ^\{?[A-F0-9a-f]{8}-[A-F0-9a-f]{4}-[A-F0-9a-f]{4}-[A-F0-9a-f]{4}-[A-F0-9a-f]{12}\}?$ ]]; then
+     # Data in UUID file is invalid
+@@ -213,9 +219,8 @@
      DNS_CACHE=0
  fi
  
@@ -80,7 +102,53 @@ index c4b260c..13e5313 100755
  	echo "WARNING: curl version is too old ($CURL_VER < 7.22.0), not using script's DNS cache."
  	DNS_CACHE=0
  fi
-@@ -355,16 +357,27 @@ while true; do
+@@ -225,7 +230,6 @@
+ # -- DNS Setup done
+ 
+ 
+-echo "Using UUID [${UUID}] for stats uploads"
+ echo "Using JSON directory [${JSON_DIR}] for source data"
+ 
+ 
+@@ -240,7 +244,7 @@
+ STAT_COUNT=0
+ # Grab the current timestamp of the file.   Try in a loop a few times, in case
+ while [ $STAT_COUNT -lt 5 ]; do
+-	JSON_STAT=$(stat --printf="%Y" $JSON_FILE 2> /dev/null)
++	JSON_STAT=$(stat --printf="%Y" -- "$JSON_FILE" 2> /dev/null)
+ 	RV=$?
+ 
+ 	if [ $RV -eq 0 ]; then
+@@ -289,7 +293,7 @@
+     NOW=$(date +%s)
+ 
+     # Grab new stat.  If it fails, wait longer (otherwise assign to the main var)
+-    NEW_STAT=$(stat --printf="%Y" $JSON_FILE 2> /dev/null)
++    NEW_STAT=$(stat --printf="%Y" -- "$JSON_FILE" 2> /dev/null)
+     RV=$?
+     if [ $RV -ne 0 ]; then
+         sleep 10
+@@ -307,8 +311,8 @@
+ 
+ 	# Move the JSON somewhere before operating on it...
+ 
+-	rm -f $TMPFILE $NEWFILE
+-	CP=$(cp $JSON_FILE $TMPFILE 2>&1)
++	rm -f -- "$TMPFILE" "$NEWFILE"
++	CP=$(cp -- "$JSON_FILE" "$TMPFILE" 2>&1)
+ 	RV=$?
+ 	if [ $RV -ne 0 ]; then
+ 		# cp failed (file changed during copy, usually), wait a few and loop again
+@@ -331,7 +335,7 @@
+             | ."rssi"=(if (.aircraft | length <= 0) then 0 else ([.aircraft[].rssi] | select(. >=0) | add / length | floor) end)
+             | ."rssi-min"=(if (.aircraft | length <= 0) then 0 else ([.aircraft[].rssi] | select(. >=0) | min | floor) end)
+             | ."rssi-max"=(if (.aircraft | length <= 0) then 0 else ([.aircraft[].rssi] | select(. >=0) | max | floor) end)
+-        ' < $TMPFILE > $NEWFILE
++        ' < "$TMPFILE" > "$NEWFILE"
+     then
+         # this shouldn't happen, don't spam the syslog with the error quite as much
+         sleep 15
+@@ -355,16 +359,27 @@
  	fi
  
      sleep 0.314

@@ -121,7 +121,9 @@ start_instance() {
 	config_get feeder "$cfg" feeder
 	uuid=$(adsbx_require_uuid "$feeder") || return 1
 
-	if ! mkdir -p "$ADSBX_RUNTIME_DIR" || ! write_env "$cfg" "$uuid" "$feeder"; then
+	if ! mkdir -p -m 700 "$ADSBX_RUNTIME_DIR" \
+	   || ! chmod 700 "$ADSBX_RUNTIME_DIR" \
+	   || ! write_env "$cfg" "$uuid" "$feeder"; then
 		adsbx_err "cannot prepare the uploader environment; not starting"
 		return 1
 	fi
