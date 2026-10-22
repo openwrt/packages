@@ -7,10 +7,6 @@ strongswan-charon-cmd)
 	charon-cmd --version 2>&1 | grep -F "$PKG_VERSION"
 	;;
 
-strongswan-ipsec)
-	ipsec --version 2>&1 | grep -F "$PKG_VERSION"
-	;;
-
 strongswan-pki)
 	pki --help 2>&1 | grep -F "$PKG_VERSION"
 	;;
@@ -91,7 +87,6 @@ strongswan-mod-socket-dynamic|\
 strongswan-mod-sql|\
 strongswan-mod-sqlite|\
 strongswan-mod-sshkey|\
-strongswan-mod-stroke|\
 strongswan-mod-test-vectors|\
 strongswan-mod-unity|\
 strongswan-mod-updown|\
