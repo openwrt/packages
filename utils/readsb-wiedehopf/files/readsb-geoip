@@ -153,6 +153,10 @@ sanitize_ip() {
 	printf '%s' "$1" | tr -cd '0-9a-fA-F:.'
 }
 
+sanitize_log() {
+	LC_ALL=C tr -c '[:print:]' ' '
+}
+
 # fetch <url>: stdout = response body (may be empty). Always rc 0.
 fetch() {
 	local url=$1 body="" rc client_err=""
@@ -164,7 +168,7 @@ fetch() {
 		tmp_err=$(mktemp 2>/dev/null) || tmp_err=""
 		if [ -n "$tmp_err" ]; then
 			body=$(uclient-fetch -qO- --timeout=8 "$url" 2>"$tmp_err"); rc=$?
-			client_err=$(head -n 5 "$tmp_err" 2>/dev/null | tr '\n' ' ')
+			client_err=$(head -n 5 "$tmp_err" 2>/dev/null | sanitize_log)
 			rm -f "$tmp_err"
 		else
 			body=$(uclient-fetch -qO- --timeout=8 "$url" 2>/dev/null); rc=$?
@@ -208,7 +212,7 @@ lookup() {
 	if [ -z "$coords" ] && [ -n "$body" ]; then
 		# ipapi.co rate-limit body: {"error":true,"reason":"RateLimited"}
 		local err_reason
-		err_reason=$(printf '%s' "$body" | jsonfilter -e '@.reason' 2>/dev/null)
+		err_reason=$(printf '%s' "$body" | jsonfilter -e '@.reason' 2>/dev/null | sanitize_log)
 		_warn "ipapi.co returned no lat/lon (body_len=${#body}${err_reason:+ reason=\"$err_reason\"})"
 	fi
 
@@ -218,8 +222,8 @@ lookup() {
 		coords=$(parse_provider "$body" '@.latitude' '@.longitude' '@.ip') && provider="ipwho.is"
 		if [ -z "$coords" ] && [ -n "$body" ]; then
 			local success msg
-			success=$(printf '%s' "$body" | jsonfilter -e '@.success' 2>/dev/null)
-			msg=$(printf    '%s' "$body" | jsonfilter -e '@.message' 2>/dev/null)
+			success=$(printf '%s' "$body" | jsonfilter -e '@.success' 2>/dev/null | sanitize_log)
+			msg=$(printf    '%s' "$body" | jsonfilter -e '@.message' 2>/dev/null | sanitize_log)
 			_warn "ipwho.is returned no lat/lon (body_len=${#body} success=${success:-?} message=\"${msg:-}\")"
 		fi
 	fi
@@ -227,7 +231,7 @@ lookup() {
 	[ -n "$coords" ] || { _warn "all geoip providers returned empty"; return 1; }
 	set -- $coords
 	lat=$1; lon=$2; ip=${3:--}
-	is_coord "$lat" && is_coord "$lon" || { _warn "$provider returned non-numeric coords (lat=$lat lon=$lon ip=$ip); rejecting"; return 1; }
+	is_coord "$lat" && is_coord "$lon" || { _warn "$(printf '%s' "$provider returned non-numeric coords (lat=$lat lon=$lon ip=$ip); rejecting" | sanitize_log)"; return 1; }
 	in_range "$lat" 90 && in_range "$lon" 180 || { _warn "$provider returned out-of-range coords (lat=$lat lon=$lon ip=$ip); rejecting"; return 1; }
 	_log "geoip provider $provider returned lat=$lat lon=$lon public_ip=$ip"
 	printf '%s\n' "$coords"

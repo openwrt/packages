@@ -707,7 +707,9 @@ cmd_add() {
 		return 2
 	}
 	_emit_mutation "feeder '$name' added (preset=$preset)"
-	readsb_warn_companions "$preset" "$name"
+	readsb_warn_companions "$preset" "$name" || \
+		_warn "feeder '$name' was saved, but optional companion diagnostics failed"
+	return 0
 }
 
 # --- command: --set --------------------------------------------------------
@@ -778,8 +780,10 @@ cmd_enable_disable() {
 	# Surface companion-package warnings on enable; nothing to warn about on disable.
 	if [ "$want" = 1 ]; then
 		preset=$(uci -q get "readsb.${name}.preset")
-		readsb_warn_companions "$preset" "$name"
+		readsb_warn_companions "$preset" "$name" || \
+			_warn "feeder '$name' was enabled, but optional companion diagnostics failed"
 	fi
+	return 0
 }
 
 # --- command: --remove -----------------------------------------------------

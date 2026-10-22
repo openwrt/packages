@@ -299,7 +299,11 @@ test_add_feeder() (
 
 	uci() { mutation_uci "$@"; }
 	_notice() { :; }
-	readsb_warn_companions() { echo companions >> "$tmpdir/calls"; }
+	readsb_warn_companions() {
+		echo companions >> "$tmpdir/calls"
+		return "${companion_warning_rc:-0}"
+	}
+	_warn() { printf 'warn: %s\n' "$*" >&2; }
 
 	rc=0
 	output=$(cmd_add test "$@" 2>&1) || rc=$?
@@ -337,6 +341,11 @@ test_add_feeder() (
 	fi
 )
 run_test '--add preset commits disabled defaults' test_add_feeder '' 0 adsblol
+test_add_companion_failure() (
+	companion_warning_rc=9
+	test_add_feeder '' 0 adsblol
+)
+run_test '--add remains successful when optional companion diagnostics fail' test_add_companion_failure
 run_test '--add custom commits every validated option' test_add_feeder '' 0 custom \
 	host=feed.example.com port=30004 protocol=beast_reduce_plus_out enabled=1 silent_fail=1 \
 	uuid=00000000-0000-4000-8000-000000000000
@@ -429,7 +438,11 @@ test_enable_disable() (
 	: > "$tmpdir/calls"
 	uci() { mutation_uci "$@"; }
 	_notice() { :; }
-	readsb_warn_companions() { echo companions >> "$tmpdir/calls"; }
+	readsb_warn_companions() {
+		echo companions >> "$tmpdir/calls"
+		return "${companion_warning_rc:-0}"
+	}
+	_warn() { printf 'warn: %s\n' "$*" >&2; }
 	rc=0
 	output=$(cmd_enable_disable "$name" "$want" 2>&1) || rc=$?
 	assert_equal "$rc" "$expected_rc" || { printf '%s\n' "$output" >&2; return 1; }
@@ -446,6 +459,11 @@ test_enable_disable() (
 )
 run_test '--enable commits only after a successful write' test_enable_disable 1 '' 0 \
 	"$(printf 'set readsb.test.enabled=1\ncommit readsb\ncompanions')"
+test_enable_companion_failure() (
+	companion_warning_rc=9
+	test_enable_disable 1 '' 0 "$(printf 'set readsb.test.enabled=1\ncommit readsb\ncompanions')"
+)
+run_test '--enable remains successful when optional companion diagnostics fail' test_enable_companion_failure
 run_test '--disable commits only after a successful write' test_enable_disable 0 '' 0 \
 	"$(printf 'set readsb.test.enabled=0\ncommit readsb')"
 for want in 0 1; do

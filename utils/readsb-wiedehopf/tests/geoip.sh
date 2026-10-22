@@ -4,7 +4,7 @@
 package_dir=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd) || exit 1
 test_dir="./.readsb-geoip-test.$$"
 (umask 077 && mkdir "$test_dir") || exit 1
-trap 'rm -f "$test_dir/functions.sh" "$test_dir/options.sh" "$test_dir/tooling.sh" "$test_dir/dispatch.sh" "$test_dir/exit.sh" "$test_dir/calls" "$test_dir/output" "$test_dir/lat" "$test_dir/lon" "$test_dir/stage-path" "$test_dir/bin/mktemp" "$test_dir/bin/rm" "$test_dir/bin/rmdir"; rmdir "$test_dir/bin" "$test_dir"' 0
+trap 'rm -f "$test_dir/functions.sh" "$test_dir/options.sh" "$test_dir/tooling.sh" "$test_dir/dispatch.sh" "$test_dir/exit.sh" "$test_dir/providers.sh" "$test_dir/calls" "$test_dir/output" "$test_dir/lat" "$test_dir/lon" "$test_dir/stage-path" "$test_dir/bin/mktemp" "$test_dir/bin/rm" "$test_dir/bin/rmdir" "$test_dir/bin/uclient-fetch"; rmdir "$test_dir/bin" "$test_dir"' 0
 trap 'exit 1' HUP INT TERM
 mkdir "$test_dir/bin" || exit 1
 for tool in mktemp rm rmdir; do
@@ -19,6 +19,8 @@ sed -n '/^verbose=0$/p; /^force=0$/,/^_verbose_apply$/p' "$package_dir/files/rea
 sed -n '/^last_stage="tool-detect"$/,/^# Strict numeric check;/p' "$package_dir/files/readsb-geoip" > "$test_dir/tooling.sh" || exit 1
 sed -n '/^if \[ -n "\$section" \]; then$/,$p' "$package_dir/files/readsb-geoip" > "$test_dir/dispatch.sh" || exit 1
 sed -n '/^on_exit() {/,/^}/p; /^trap on_exit /p' "$package_dir/files/readsb-geoip" > "$test_dir/exit.sh" || exit 1
+sed -n '/^is_coord() {/,/^}/p; /^in_range() {/,/^}/p; /^sanitize_ip() {/,/^}/p; /^sanitize_log() {/,/^}/p; /^fetch() {/,/^}/p; /^parse_provider() {/,/^}/p; /^lookup() {/,/^}/p' \
+	"$package_dir/files/readsb-geoip" > "$test_dir/providers.sh" || exit 1
 # shellcheck source=/dev/null
 . "$test_dir/functions.sh"
 set -u
@@ -48,6 +50,48 @@ _log() { printf 'log: %s\n' "$*" >&2; }
 _notice() { printf '%s\n' "$*"; }
 _warn() { printf 'warn: %s\n' "$*" >&2; }
 _err() { printf 'error: %s\n' "$*" >&2; }
+
+test_provider_log_controls() (
+	scenario=$1
+	# shellcheck source=/dev/null
+	. "$test_dir/providers.sh"
+	control_text=$(printf 'remote\r\nforged\t\033[31mmessage\177')
+	if [ "$scenario" = client ]; then
+		have_uclient=1 have_wget=0
+		# shellcheck disable=SC2016
+		printf '%s\n' '#!/bin/sh' 'printf "%s" "$READSB_TEST_CLIENT_ERR" >&2' \
+			'exit 9' > "$test_dir/bin/uclient-fetch" || return 1
+		chmod 700 "$test_dir/bin/uclient-fetch" || return 1
+		export READSB_TEST_CLIENT_ERR=$control_text
+		PATH="$test_dir/bin:$PATH"
+		fetch https://example.invalid/ > /dev/null 2> "$test_dir/output"
+		rm -f "$test_dir/bin/uclient-fetch" || return 1
+		expected_lines=1
+	else
+		fetch() {
+			case "$scenario:$1" in
+				reason:https://ipapi.co/json/|message:https://ipwho.is/*) printf '{}';;
+			esac
+		}
+		jsonfilter() {
+			case $2 in
+				@.reason|@.message) printf '%s' "$control_text" ;;
+				@.success) printf false ;;
+				*) return 1 ;;
+			esac
+		}
+		rc=0
+		lookup > /dev/null 2> "$test_dir/output" || rc=$?
+		assert_equal "$rc" 1 || return 1
+		expected_lines=2
+	fi
+	! LC_ALL=C grep -q '[^[:print:]]' "$test_dir/output" &&
+		assert_equal "$(wc -l < "$test_dir/output" | tr -d ' ')" "$expected_lines" &&
+		grep -q remote "$test_dir/output"
+)
+for source in client reason message; do
+	run_test "GeoIP $source diagnostics stay printable and single-line" test_provider_log_controls "$source"
+done
 
 lookup() {
 	printf 'lookup\n' >> "$test_dir/calls"

@@ -279,6 +279,9 @@ Without `--force`, `readsb-geoip` fills only missing coordinates. If
 latitude or longitude is already set, that value is preserved even
 when the other coordinate needs a lookup. Use `--force` only when both
 values should be replaced with the approximate GeoIP result.
+Provider error messages and HTTP-client diagnostics are normalized to
+printable, single-line text before logging; control bytes cannot create
+additional syslog records or terminal escape sequences.
 The setup wizard follows the same rule for partial locations. If both
 coordinates exist and you explicitly choose to change the location,
 it explains that auto-detection will replace both values before asking
@@ -573,6 +576,10 @@ readsb-feeder --add mycustom custom \
     enabled=1 silent_fail=1
 service readsb reload
 ```
+
+After a successful `--add` or `--enable` commit, optional companion
+diagnostic failures are warnings, not feeder mutation failures. Saved
+feeders remain successful even when companion metadata/tools are unavailable.
 
 `--add` validates all options before staging a new named section and
 checks every write. A failed write or commit returns 2 without an
