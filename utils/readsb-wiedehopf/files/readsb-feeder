@@ -88,7 +88,7 @@ _commit() {
 # --- command: --list -------------------------------------------------------
 cmd_list() {
 	local main_uuid total=0
-	main_uuid=$(uci -q get readsb.main.uuid)
+	main_uuid=$(uci -q get 'readsb.@readsb[0].uuid')
 
 	printf '%-16s %-6s %-12s %-32s %-5s %s\n' \
 		NAME ENABLED PRESET HOST PORT PROTOCOL
@@ -122,7 +122,7 @@ cmd_list() {
 # --- command: --url --------------------------------------------------------
 cmd_url() {
 	local want=$1 main_uuid printed=0 missing=0
-	main_uuid=$(uci -q get readsb.main.uuid)
+	main_uuid=$(uci -q get 'readsb.@readsb[0].uuid')
 
 	_one() {
 		local fcfg=$1 url
@@ -180,7 +180,7 @@ _probe_tcp() {
 
 cmd_probe() {
 	local want=$1 main_uuid bad=0 skipped=0 probed=0 rsb_pid
-	main_uuid=$(uci -q get readsb.main.uuid)
+	main_uuid=$(uci -q get 'readsb.@readsb[0].uuid')
 	rsb_pid=$(readsb_pid)
 
 	_one() {
@@ -290,7 +290,7 @@ cmd_health() {
 		echo "readsb-feeder: no feeder section named '$want'" >&2
 		return 3
 	fi
-	main_uuid=$(uci -q get readsb.main.uuid)
+	main_uuid=$(uci -q get 'readsb.@readsb[0].uuid')
 
 	# Daemon-level preface: if not running, every feeder is by
 	# definition not live. Bail with rc 2.
@@ -480,7 +480,7 @@ cmd_companions() {
 	fi
 
 	# All-enabled-feeders mode.
-	main_uuid=$(uci -q get readsb.main.uuid)
+	main_uuid=$(uci -q get 'readsb.@readsb[0].uuid')
 	_one() {
 		local fcfg=$1
 		readsb_feeder_resolve "$fcfg" "$main_uuid" || return 0
@@ -510,7 +510,7 @@ cmd_setup_companions() {
 	fi
 	wiz_available || { echo "readsb-feeder: optional setup needs an interactive terminal" >&2; return 1; }
 	config_load readsb
-	main_uuid=$(uci -q get readsb.main.uuid)
+	main_uuid=$(uci -q get 'readsb.@readsb[0].uuid')
 	readsb_feeder_resolve "$name" "$main_uuid" || {
 		echo "readsb-feeder: feeder '$name' ${readsb_feeder_error:-is malformed}" >&2
 		return 2

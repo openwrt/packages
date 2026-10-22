@@ -4,8 +4,8 @@
 
 # readsb-uuid -- inspect / generate / regenerate the station UUID.
 #
-# Manages the station UUID stored in readsb.@readsb[0].uuid (i.e.
-# /etc/config/readsb, the `main` section). Aggregators that
+# Manages the station UUID stored in readsb.@readsb[0].uuid (the first
+# config readsb section, named `main` by default). Aggregators that
 # authenticate by UUID need a stable value over time -- DO NOT
 # regenerate after registering.
 #
@@ -75,12 +75,12 @@ fi
 # Atomic UUID write: set + commit, with consistent error reporting.
 _write_uuid() {
 	local new=$1
-	if ! uci -q set "readsb.main.uuid=$new"; then
-		_err "uci set failed (is the readsb 'main' section present?)"
+	if ! uci -q set "readsb.@readsb[0].uuid=$new"; then
+		_err "uci set failed (is a 'config readsb' section present?)"
 		return 2
 	fi
 	uci -q commit readsb || { _err "uci commit failed"; return 2; }
-	_notice "wrote readsb.main.uuid=$new (run '/etc/init.d/readsb reload' to apply)"
+	_notice "wrote readsb.@readsb[0].uuid=$new (run '/etc/init.d/readsb reload' to apply)"
 	return 0
 }
 
@@ -95,7 +95,7 @@ _gen_and_write() {
 	echo "$new"
 }
 
-current=$(uci -q get readsb.main.uuid)
+current=$(uci -q get 'readsb.@readsb[0].uuid')
 
 case $mode in
 	print)
@@ -121,7 +121,7 @@ case $mode in
 	wizard)
 		wiz_say ""
 		wiz_say "=== readsb-uuid ==="
-		wiz_say "Manage the station UUID stored in readsb.main.uuid."
+		wiz_say "Manage the station UUID stored in readsb.@readsb[0].uuid."
 		wiz_say "Aggregators authenticate by UUID; regenerating after"
 		wiz_say "registering loses that registration."
 		wiz_say ""

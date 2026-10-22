@@ -315,7 +315,8 @@ seed_hotplug_state() {
 }
 
 # --- USB-settle wait -------------------------------------------------------
-# Off by default. Honored when at least one section sets `option hotplug 1`.
+# The wait is off by default (timeout 0). A configured wait applies if
+# any section has hotplug enabled (default 1; opt out with hotplug=0).
 USB_WAIT_TIMEOUT_DEFAULT=0
 USB_WAIT_INTERVAL_DEFAULT=2
 usb_wait_timeout=""

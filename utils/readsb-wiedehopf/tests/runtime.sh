@@ -103,7 +103,7 @@ uci() {
 		get)
 			case $2 in
 				system.@system\[0\].log_level) printf '%s\n' "${test_log_level:-info}" ;;
-				readsb.main.*)
+				readsb.main.*|readsb.@readsb\[0\].*)
 					_test_get=''
 					config_get _test_get main "${2##*.}"
 					printf '%s\n' "$_test_get"
@@ -567,6 +567,12 @@ test_auto_pin() (
 	run_hotplug add "$2" "$(printf '%s\n' "$first_serial" "$2")" || return 1
 	assert_equal "$(wc -l < "$tmpdir/writes")" "$writes_before"
 )
+test_default_frequency_pin() (
+	reset_config "readsb.main.device=$2" "readsb.main.device_auto=$2"
+	[ "$1" != empty ] || printf '%s\n' 'readsb.main.freq=' >> "$tmpdir/config"
+	run_hotplug add 1090 "$(printf '%s\n' 978 1090)" || return 1
+	assert_config device 1090 && assert_config device_auto 1090 && assert_config net_only 0
+)
 test_manual_pin() (
 	reset_config "readsb.main.device=$1" "readsb.main.device_auto=$2"
 	case $1 in
@@ -695,6 +701,12 @@ test_hotplug_isolation() (
 run_test '978 then 1090 reselects the matching auto pin, including seed replays' test_auto_pin 978 1090
 run_test '1090 then 978 keeps the matching auto pin' test_auto_pin 1090 978
 run_test 'serial-less automatic index is reselected when 1090 arrives' test_auto_pin '' 1090
+for frequency in unset empty; do
+	run_test "$frequency frequency selects the default 1090 serial from multiple SDRs" \
+		test_default_frequency_pin "$frequency" ''
+	run_test "$frequency frequency replaces a wrong-band automatic pin with 1090" \
+		test_default_frequency_pin "$frequency" 978
+done
 run_test 'changing frequency re-evaluates an automatic pin' test_changed_frequency_pin
 run_test 'manual serial pin is preserved' test_manual_pin 978 ''
 run_test 'manual numeric pin is preserved' test_manual_pin 0 ''

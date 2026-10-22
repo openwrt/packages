@@ -252,6 +252,17 @@ service readsb reload
 
 ## `/etc/config/readsb` -- main section options
 
+For station defaults, `readsb-setup`, `readsb-uuid`, and `readsb-feeder`
+use the first `config readsb` section, addressed as `readsb.@readsb[0]`
+in UCI. It is named `main` in the shipped configuration,
+which is what the examples below use. Renaming it or making it anonymous
+does not change which section the helpers manage; with multiple sections,
+configuration order determines the primary section, not its name.
+`readsb-uuid` updates only that section, and feeder diagnostics and the
+optional statistics uploader use its UUID as their station fallback.
+The daemon still starts every enabled readsb section, while USB hotplug
+auto-configures only the primary section.
+
 Only options that need explanation are documented here. The full list
 ships in the conffile; setting an option to `''` (empty) means "let
 readsb apply its built-in default". Boolean options take `'0'` or `'1'`.
@@ -408,7 +419,9 @@ rtl_eeprom -s 978
 ```
 
 The section's `option freq` (in Hz, MHz, or `1090MHz`-style) selects
-which serial it claims. Automatically selected pins are re-evaluated
+which serial it claims. An unset or empty frequency uses the upstream
+default of 1090 MHz, including multi-SDR automatic selection.
+Automatically selected pins are re-evaluated
 on subsequent add events and boot-time replay. Thus plugging the `978`
 dongle first does not prevent selecting `1090` when that dongle arrives.
 If no serial matches, a still-attached automatic serial is kept only
@@ -455,8 +468,9 @@ logging occur only after the update is committed.
 The init script (`START=90`) handles three pre-flight conditions before
 spawning the daemon:
 
-1. **USB-settle wait** -- only when at least one section sets
-   `option hotplug 1` and `option usb_wait_timeout` is non-zero. Polls
+1. **USB-settle wait** -- only when at least one section has hotplug
+   enabled (default `1`; opt out with `hotplug=0`) and
+   `option usb_wait_timeout` is non-zero. Polls
    `/sys/bus/usb/devices/` every `usb_wait_interval` seconds until an
    RTL-SDR appears or the timeout elapses. Off by default so net-only
    units pay no boot cost.
@@ -848,6 +862,8 @@ sh utils/readsb-wiedehopf/tests/uci.sh /path/to/uci
 This suite uses temporary config and delta directories. It checks that
 pending scalar, list, deletion, and same-key edits block automatic
 commits, including shared edits appearing during private staging. It
-also tests write/commit failures and verifies that later list additions
-are not applied twice. The commit-permission failure case runs only
+also tests write/commit failures, verifies that later list additions
+are not applied twice, and exercises UUID, feeder URL, and configuration
+CLIs against named, renamed, and anonymous primary readsb sections without
+changing a secondary section. The commit-permission failure case runs only
 when the tests are not run as root.

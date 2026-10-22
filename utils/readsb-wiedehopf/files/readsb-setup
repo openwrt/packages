@@ -227,14 +227,14 @@ if [ "$mode" = config ]; then
 	fi
 
 	echo
-	echo "[ main section ]"
-	if uci -q show readsb.main >/dev/null 2>&1; then
-		uci -q show readsb.main 2>/dev/null \
+	echo "[ primary readsb section ]"
+	if uci -q show 'readsb.@readsb[0]' >/dev/null 2>&1; then
+		uci -q show 'readsb.@readsb[0]' 2>/dev/null \
 			| grep -v "=readsb$" \
-			| sed 's/^readsb\.main\./  /' \
+			| sed 's/^readsb\.[^.]*\./  /' \
 			| sort
 	else
-		echo "  (no main section -- config is broken)"
+		echo "  (no readsb section -- config is broken)"
 	fi
 
 	echo
@@ -381,14 +381,14 @@ if [ "$mode" = stats ]; then
 
 	# Diagnose: `option stats '0'` is the most common cause of a quiet
 	# buffer right after a restart.
-	stats_uci=$(uci -q get readsb.main.stats 2>/dev/null)
-	stats_every_uci=$(uci -q get readsb.main.stats_every 2>/dev/null)
+	stats_uci=$(uci -q get 'readsb.@readsb[0].stats' 2>/dev/null)
+	stats_every_uci=$(uci -q get 'readsb.@readsb[0].stats_every' 2>/dev/null)
 	echo "  last stats block: (none in current syslog buffer)"
 	echo
 	if [ "$stats_uci" = "0" ]; then
-		echo "  reason          : readsb.main.stats='0' -- periodic stats"
+		echo "  reason          : readsb.@readsb[0].stats='0' -- periodic stats"
 		echo "                    block emission is DISABLED in UCI."
-		echo "  to enable       : uci set readsb.main.stats=1; uci commit readsb"
+		echo "  to enable       : uci set 'readsb.@readsb[0].stats=1'; uci commit readsb"
 		echo "                    service readsb reload"
 	else
 		echo "  likely cause    : the daemon just (re)started and has not"
@@ -565,14 +565,14 @@ if [ "$mode" = status ]; then
 	# closing footer points at `readsb-setup --health`.
 	missing=0
 
-	cur_lat=$(uci -q get readsb.main.lat 2>/dev/null)
-	cur_lon=$(uci -q get readsb.main.lon 2>/dev/null)
-	cur_uuid=$(uci -q get readsb.main.uuid 2>/dev/null)
-	cur_gain=$(uci -q get readsb.main.gain 2>/dev/null)
-	cur_ppm=$(uci -q get readsb.main.ppm 2>/dev/null)
-	cur_agc=$(uci -q get readsb.main.enable_agc 2>/dev/null)
-	cur_bias=$(uci -q get readsb.main.enable_biastee 2>/dev/null)
-	enabled=$(uci -q get readsb.main.enabled 2>/dev/null)
+	cur_lat=$(uci -q get 'readsb.@readsb[0].lat' 2>/dev/null)
+	cur_lon=$(uci -q get 'readsb.@readsb[0].lon' 2>/dev/null)
+	cur_uuid=$(uci -q get 'readsb.@readsb[0].uuid' 2>/dev/null)
+	cur_gain=$(uci -q get 'readsb.@readsb[0].gain' 2>/dev/null)
+	cur_ppm=$(uci -q get 'readsb.@readsb[0].ppm' 2>/dev/null)
+	cur_agc=$(uci -q get 'readsb.@readsb[0].enable_agc' 2>/dev/null)
+	cur_bias=$(uci -q get 'readsb.@readsb[0].enable_biastee' 2>/dev/null)
+	enabled=$(uci -q get 'readsb.@readsb[0].enabled' 2>/dev/null)
 	fc=$(readsb_count_feeders)
 	sc=$(readsb_count_sdrs)
 	running=no
@@ -610,8 +610,8 @@ if [ "$mode" = status ]; then
 
 	# Configured mode (UCI snapshot). For LIVE mode (what the running
 	# daemon is actually doing right now), see `readsb-setup --health`.
-	_dt_uci=$(uci -q get readsb.main.device_type)
-	_no_uci=$(uci -q get readsb.main.net_only)
+	_dt_uci=$(uci -q get 'readsb.@readsb[0].device_type')
+	_no_uci=$(uci -q get 'readsb.@readsb[0].net_only')
 	if [ "$_no_uci" = 1 ] || [ -z "$_dt_uci" ]; then
 		printf '  mode (UCI)      : net-only\n'
 	else
@@ -649,7 +649,7 @@ if [ "$mode" = status ]; then
 	echo "[ ports (UCI-configured) ]"
 	_emit_port() {
 		local label=$1 ucikey=$2 v
-		v=$(uci -q get "readsb.main.$ucikey")
+		v=$(uci -q get "readsb.@readsb[0].$ucikey")
 		[ -n "$v" ] && printf '  %-15s : %s\n' "$label" "$v"
 	}
 	_emit_port 'beast-out'      net_bo_port
@@ -661,7 +661,7 @@ if [ "$mode" = status ]; then
 	_emit_port 'api'            net_api_port
 	_emit_port 'beast-reduce'   net_beast_reduce_out_port
 	# Fall-through note when nothing is set.
-	if ! uci -q show readsb.main 2>/dev/null \
+	if ! uci -q show 'readsb.@readsb[0]' 2>/dev/null \
 		| grep -q -E 'net_(bo|bi|ri|ro|sbs|json|api|beast_reduce_out)_port='; then
 		printf '  (no listen ports configured -- net-out only)\n'
 	fi
@@ -908,8 +908,8 @@ if [ "$mode" = health ]; then
 	printf '  mode (live)     : %s\n' "$rsb_mode"
 
 	# Drift check between UCI intent and live cmdline.
-	_dt_uci=$(uci -q get readsb.main.device_type)
-	_no_uci=$(uci -q get readsb.main.net_only)
+	_dt_uci=$(uci -q get 'readsb.@readsb[0].device_type')
+	_no_uci=$(uci -q get 'readsb.@readsb[0].net_only')
 	case "$rsb_mode" in
 		net-only*)
 			if [ -n "$_dt_uci" ] && [ "$_no_uci" != 1 ]; then
@@ -1149,9 +1149,9 @@ wiz_say ""
 changes_made=0
 sc=$(readsb_count_sdrs)
 
-# Set readsb.main.<key>=<val>; bail with rc 2 on UCI failure.
+# Set an option on the primary readsb section; bail with rc 2 on failure.
 _set_main() {
-	uci -q set "readsb.main.$1=$2" || { _err "uci set $1 failed"; exit 2; }
+	uci -q set "readsb.@readsb[0].$1=$2" || { _err "uci set $1 failed"; exit 2; }
 }
 _commit_main() {
 	uci -q commit readsb || { _err "uci commit failed"; exit 2; }
@@ -1162,7 +1162,7 @@ _commit_main() {
 _run_uuid() {
 	local flags=$1 new_uuid
 	if readsb-uuid $flags >/dev/null; then
-		new_uuid=$(uci -q get readsb.main.uuid)
+		new_uuid=$(uci -q get 'readsb.@readsb[0].uuid')
 		wiz_say "  UUID: $new_uuid"
 		changes_made=1
 	else
@@ -1172,9 +1172,9 @@ _run_uuid() {
 
 # --- step 1: location ------------------------------------------------------
 wiz_say "[1/5] station location (lat/lon)"
-cur_lat=$(uci -q get readsb.main.lat 2>/dev/null)
-cur_lon=$(uci -q get readsb.main.lon 2>/dev/null)
-cur_geoip_auto=$(uci -q get readsb.main.geoip_auto 2>/dev/null)
+cur_lat=$(uci -q get 'readsb.@readsb[0].lat' 2>/dev/null)
+cur_lon=$(uci -q get 'readsb.@readsb[0].lon' 2>/dev/null)
+cur_geoip_auto=$(uci -q get 'readsb.@readsb[0].geoip_auto' 2>/dev/null)
 if [ -n "$cur_lat" ] && [ -n "$cur_lon" ]; then
 	wiz_say "  current: lat=$cur_lat lon=$cur_lon"
 	wiz_yesno upd "  change location?" N || exit 1
@@ -1254,7 +1254,7 @@ wiz_say ""
 
 # --- step 2: UUID ----------------------------------------------------------
 wiz_say "[2/5] station UUID"
-cur_uuid=$(uci -q get readsb.main.uuid 2>/dev/null)
+cur_uuid=$(uci -q get 'readsb.@readsb[0].uuid')
 if readsb_is_uuid "$cur_uuid"; then
 	wiz_say "  current: $cur_uuid"
 	wiz_yesno regen "  regenerate? (loses any aggregator registration tied to this UUID)" N || exit 1
@@ -1274,10 +1274,10 @@ if [ "$sc" -eq 0 ]; then
 	wiz_say "  (re-run 'readsb-setup' after plugging an SDR to tune gain etc.)"
 else
 	wiz_say "  $sc RTL-SDR(s) detected"
-	cur_gain=$(uci -q get readsb.main.gain 2>/dev/null)
-	cur_ppm=$(uci -q get readsb.main.ppm 2>/dev/null)
-	cur_agc=$(uci -q get readsb.main.enable_agc 2>/dev/null)
-	cur_bias=$(uci -q get readsb.main.enable_biastee 2>/dev/null)
+	cur_gain=$(uci -q get 'readsb.@readsb[0].gain' 2>/dev/null)
+	cur_ppm=$(uci -q get 'readsb.@readsb[0].ppm' 2>/dev/null)
+	cur_agc=$(uci -q get 'readsb.@readsb[0].enable_agc' 2>/dev/null)
+	cur_bias=$(uci -q get 'readsb.@readsb[0].enable_biastee' 2>/dev/null)
 	wiz_say "  current: gain=${cur_gain:-auto} ppm=${cur_ppm:-0} agc=${cur_agc:-0} bias-t=${cur_bias:-0}"
 	wiz_yesno tune "  tune SDR settings?" N || exit 1
 	if [ "$tune" = 1 ]; then
