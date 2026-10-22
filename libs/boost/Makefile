@@ -116,22 +116,6 @@ define Package/boost
 endef
 
 define Package/boost/config
-	# Invisible config dependency
-	config boost-context-exclude
-		bool
-		default y if (TARGET_arc770 || TARGET_archs38)
-		default n
-
-	config boost-coroutine-exclude
-		bool
-		default y if boost-context-exclude
-		default n
-
-	config boost-fiber-exclude
-		bool
-		default y if boost-coroutine-exclude
-		default n
-
 	menu "Select Boost Options"
 		depends on PACKAGE_boost
 		comment "Boost compilation options."
@@ -284,9 +268,6 @@ define Package/boost/config
 		config PACKAGE_boost-$(lib)
 			prompt "Boost $(lib) $(if $(findstring python3,$(lib)),$(paren_left)v$(BOOST_PYTHON3_VER)$(paren_right) ,)library."
 			default m if ALL
-			$(if $(findstring fiber,$(lib)),depends on !boost-fiber-exclude,)\
-			$(if $(findstring context,$(lib)),depends on !boost-context-exclude,)
-			$(if $(findstring coroutine,$(lib)),depends on !boost-coroutine-exclude,)
 		)
 	endmenu
 endef
@@ -340,12 +321,12 @@ $(eval $(call DefineBoostLibrary,charconv,,,,$(if $(filter i386 x86_64 powerpc p
 $(eval $(call DefineBoostLibrary,chrono))
 $(eval $(call DefineBoostLibrary,cobalt,container context date_time,,,libopenssl))
 $(eval $(call DefineBoostLibrary,container))
-$(eval $(call DefineBoostLibrary,context,chrono ,,!boost-context-exclude))
+$(eval $(call DefineBoostLibrary,context,chrono))
 $(eval $(call DefineBoostLibrary,contract,atomic chrono container date_time thread))
-$(eval $(call DefineBoostLibrary,coroutine,chrono context thread,,!boost-coroutine-exclude))
+$(eval $(call DefineBoostLibrary,coroutine,chrono context thread))
 $(eval $(call DefineBoostLibrary,date_time,container))
 #$(eval $(call DefineBoostLibrary,exception,,))
-$(eval $(call DefineBoostLibrary,fiber,coroutine filesystem regex,,!boost-fiber-exclude))
+$(eval $(call DefineBoostLibrary,fiber,coroutine filesystem regex))
 $(eval $(call DefineBoostLibrary,filesystem,atomic))
 $(eval $(call DefineBoostLibrary,graph,atomic chrono container date_time math random serialization thread))
 $(eval $(call DefineBoostLibrary,iostreams,random regex,,,zlib liblzma libbz2 libzstd))
