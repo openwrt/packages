@@ -339,6 +339,11 @@ readsb_feeder_resolve() {
 		readsb_feeder_proto=$3
 	fi
 
+	if ! wiz_v_protocol "$readsb_feeder_proto"; then
+		readsb_feeder_error="uses unsupported protocol '$readsb_feeder_proto'"
+		return 1
+	fi
+
 	config_get readsb_feeder_uuid "$fcfg" uuid
 	[ -n "$readsb_feeder_uuid" ] || readsb_feeder_uuid=$fallback
 	return 0
@@ -1336,8 +1341,16 @@ wiz_v_uci_name() {
 	esac
 }
 wiz_v_uuid() { readsb_is_uuid "$1"; }
+# Match the connector argument parser in the packaged upstream v3.16.11.
 wiz_v_protocol() {
-	case $1 in ''|*[!A-Za-z0-9_+-]*) return 1 ;; esac
+	case $1 in
+		beast_out|beast_in|beast_reduce_out|beast_reduce_plus_out|\
+		raw_out|raw_in|vrs_out|sbs_in|sbs_in_mlat|sbs_in_jaero|sbs_in_prio|\
+		sbs_out|sbs_out_replay|sbs_out_mlat|sbs_out_jaero|sbs_out_prio|\
+		asterix_out|asterix_in|json_out|feedmap_out|gpsd_in|uat_in|\
+		planefinder_in) return 0 ;;
+	esac
+	return 1
 }
 wiz_v_host() {
 	# Reject empty/whitespace; UCI doesn't validate DNS so anything else passes.

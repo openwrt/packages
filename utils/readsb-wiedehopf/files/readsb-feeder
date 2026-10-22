@@ -604,7 +604,7 @@ _parse_kv() {
 			fi ;;
 		protocol)
 			if ! wiz_v_protocol "$val"; then
-				echo "readsb-feeder: invalid protocol '$val'" >&2
+				echo "readsb-feeder: unsupported protocol '$val' (see the package README)" >&2
 				return 1
 			fi ;;
 		enabled|silent_fail)
@@ -846,7 +846,7 @@ cmd_wizard() {
 		wiz_ask_validated port  "feed port" "30004" wiz_v_port \
 			"port must be a number 1..65535" || return 0
 		wiz_ask_validated proto "feed protocol" "beast_reduce_plus_out" wiz_v_protocol \
-			"protocol must use letters, digits, underscores, plus or minus" || return 0
+			"protocol must be supported by readsb (for example beast_reduce_plus_out)" || return 0
 	fi
 
 	# 4. Third-party connection consent + retry behavior.

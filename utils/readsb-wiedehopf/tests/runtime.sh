@@ -415,6 +415,20 @@ test_sdr_args() (
 		fi
 	fi
 )
+test_invalid_connector_protocol() (
+	reset_config 'readsb.bad.enabled=1' 'readsb.bad.preset=custom' \
+		'readsb.bad.host=bad.example' 'readsb.bad.port=30004' 'readsb.bad.protocol=bogus' \
+		'readsb.good.enabled=1' 'readsb.good.preset=custom' \
+		'readsb.good.host=good.example' 'readsb.good.port=30004' 'readsb.good.protocol=beast_out'
+	procd_append_param() { shift; printf '%s\n' "$@" >> "$tmpdir/commands"; }
+	feeder_to_connector bad main || return 1
+	feeder_to_connector good main || return 1
+	assert_equal "$(cat "$tmpdir/commands")" \
+		'--net-connector=good.example,30004,beast_out,silent_fail' &&
+		grep -q "unsupported protocol 'bogus'" "$tmpdir/messages"
+)
+run_test 'unsupported configured protocol is warned and skipped without losing a valid feeder' \
+	test_invalid_connector_protocol
 run_test 'init normalizes MHz and omits gain=max' test_sdr_args 978 max 0 978000000 ''
 run_test 'init normalizes suffixed MHz and keeps numeric gain' test_sdr_args 1090MHz 49.6 +1 1090000000 49.6
 run_test 'init preserves Hz and auto gain' test_sdr_args 1090000000 auto -1 1090000000 auto

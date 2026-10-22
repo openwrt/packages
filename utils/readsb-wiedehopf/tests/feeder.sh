@@ -26,6 +26,8 @@ sed -n '
 	/^cmd_enable_disable() {/,/^}/p
 	/^cmd_wizard() {/,/^}/p
 ' "$package_dir/files/readsb-feeder" > "$tmpdir/functions.sh" || exit 1
+sed -n '/^wiz_ask_validated() {/,/^}/p' "$package_dir/files/readsb.functions.sh" \
+	| sed 's|>/dev/tty|>> "$tmpdir/calls"|' >> "$tmpdir/functions.sh" || exit 1
 # shellcheck source=/dev/null
 . "$tmpdir/functions.sh"
 
@@ -316,6 +318,9 @@ test_add_feeder() (
 			assert_equal "$(uci -q get readsb.test.enabled)" 0
 		fi
 	else
+		if [ "$rc" = 1 ]; then
+			! grep -Eq '^(set|delete|commit) ' "$tmpdir/calls" || return 1
+		fi
 		! printf '%s\n' "$output" | grep -q 'added' || return 1
 		! grep -q '^companions$' "$tmpdir/calls" || return 1
 		! grep -Eq '^readsb[.](test|cfgnew)[.=]' "$tmpdir/committed" || return 1
@@ -345,6 +350,8 @@ for fail in create readsb.test.preset=custom readsb.test.enabled=0 \
 done
 run_test '--add validates all options before any mutation' test_add_feeder '' 1 custom \
 	host=feed.example.com port=invalid
+run_test '--add rejects an unsupported syntax-safe protocol before any mutation' \
+	test_add_feeder '' 1 custom host=feed.example.com port=30004 protocol=bogus enabled=1
 
 test_set_feeder() (
 	scenario=$1 fail=$2 expected_rc=$3 expected_calls=$4
@@ -407,6 +414,8 @@ run_test '--set reports commit failure without success output' test_set_feeder e
 run_test '--set rejects a missing feeder before mutation' test_set_feeder missing '' 3 '' enabled=1
 run_test '--set validates all arguments before mutation' test_set_feeder existing '' 1 '' enabled=1 port=bad
 run_test '--set rejects an unknown option before mutation' test_set_feeder existing '' 1 '' enabled=1 unknown=value
+run_test '--set rejects an unsupported syntax-safe protocol before any mutation' \
+	test_set_feeder existing '' 1 '' enabled=1 protocol=bogus
 run_test '--set rejects an incomplete custom endpoint before mutation' test_set_feeder missing-port '' 1 '' preset=custom
 run_test '--set retains later overriding values' test_set_feeder existing '' 0 \
 	"$(printf 'set readsb.test.enabled=1\nset readsb.test.enabled=0\ncommit readsb')" enabled=1 enabled=0
@@ -469,7 +478,10 @@ test_wizard_exit() (
 			name) export "$1=test" ;;
 			host) export "$1=feed.example.com" ;;
 			port) export "$1=30004" ;;
-			proto) export "$1=beast_reduce_plus_out" ;;
+			proto)
+				assert_equal "$4" wiz_v_protocol || return 99
+				export "$1=beast_reduce_plus_out"
+				;;
 			uuid) export "$1=00000000-0000-4000-8000-000000000000" ;;
 			*) return 99 ;;
 		esac
@@ -516,13 +528,35 @@ for abort_at in preset name host port proto enabled silent want_uuid uuid __wcf_
 		test_wizard_exit "$abort_at" 0
 done
 run_test 'wizard successful confirmation still adds a feeder' test_wizard_exit none 0
-run_test 'protocol validator accepts supported token syntax' wiz_v_protocol beast_reduce_plus_out
+for protocol in beast_out beast_in beast_reduce_out beast_reduce_plus_out raw_out raw_in \
+	vrs_out sbs_in sbs_in_mlat sbs_in_jaero sbs_in_prio sbs_out sbs_out_replay \
+	sbs_out_mlat sbs_out_jaero sbs_out_prio asterix_out asterix_in json_out \
+	feedmap_out gpsd_in uat_in planefinder_in; do
+	run_test "protocol validator accepts upstream-supported $protocol" wiz_v_protocol "$protocol"
+done
 test_invalid_protocols() (
-	for protocol in '' 'beast out' 'beast*' 'beast?' 'beast,out'; do
+	for protocol in '' 'beast out' 'beast*' 'beast?' 'beast,out' bogus BEAST_OUT uat_replay_out; do
 		! wiz_v_protocol "$protocol" || return 1
 	done
 )
-run_test 'protocol validator rejects whitespace, glob characters and delimiters' test_invalid_protocols
+run_test 'protocol validator rejects malformed and upstream-unsupported names' test_invalid_protocols
+test_protocol_prompt() (
+	attempts=0 selected=''
+	: > "$tmpdir/calls"
+	wiz_ask() {
+		attempts=$((attempts + 1))
+		case $attempts in
+			1) export "$1=bogus" ;;
+			2) export "$1=beast_reduce_plus_out" ;;
+			*) return 1 ;;
+		esac
+	}
+	wiz_ask_validated selected protocol beast_reduce_plus_out wiz_v_protocol \
+		'unsupported protocol' || return 1
+	assert_equal "$attempts" 2 && assert_equal "$selected" beast_reduce_plus_out &&
+		grep -q 'unsupported protocol' "$tmpdir/calls"
+)
+run_test 'wizard rejects an unknown protocol and prompts for a supported correction' test_protocol_prompt
 run_test 'wizard mutation failure remains a failure' test_wizard_exit none 2 2
 run_test 'wizard still rejects invocation without a terminal' test_wizard_exit no-tty 1
 run_test 'ADSBx wizard offers optional stats only after a successful enabled feeder add' \

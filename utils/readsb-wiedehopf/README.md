@@ -532,6 +532,21 @@ For anything else, use `preset 'custom'` and supply `host`, `port`,
 and (optionally) `protocol`. Run `readsb-feeder --presets` on the device
 to dump the live list.
 
+Custom connector protocols must be supported by the packaged upstream
+version (v3.16.11):
+
+```text
+beast_out beast_in beast_reduce_out beast_reduce_plus_out raw_out raw_in
+vrs_out sbs_in sbs_in_mlat sbs_in_jaero sbs_in_prio sbs_out sbs_out_replay
+sbs_out_mlat sbs_out_jaero sbs_out_prio asterix_out asterix_in json_out
+feedmap_out gpsd_in uat_in planefinder_in
+```
+
+The CLI rejects unknown names before making UCI changes, and the wizard
+prompts for a supported correction. At startup, an unsupported protocol
+in a manually edited feeder is warned about and skipped so it cannot
+prevent valid feeders and the decoder from starting.
+
 ### Adding a feeder
 
 Interactive (recommended -- prompts for everything, validates as you go):
