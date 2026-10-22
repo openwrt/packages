@@ -10,7 +10,7 @@ include $(INCLUDE_DIR)/nls.mk
 
 PKG_NAME:=curl
 PKG_VERSION:=8.23.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/curl/curl/releases/download/curl-$(subst .,_,$(PKG_VERSION))/ \
@@ -119,6 +119,7 @@ CONFIGURE_ARGS += \
 	--enable-static \
 	--without-nss \
 	--without-librtmp \
+	--without-brotli \
 	--without-ca-path \
 	--without-libpsl \
 	--without-zstd \
