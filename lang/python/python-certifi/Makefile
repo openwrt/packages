@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-certifi
-PKG_VERSION:=2026.1.4
+PKG_VERSION:=2026.10.19
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Eneas U de Queiroz <cotequeiroz@gmail.com>
@@ -15,7 +15,7 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:certifi:certifi
 
 PYPI_NAME:=certifi
-PKG_HASH:=ac726dd470482006e014ad384921ed6438c457018f4b3d204aea4281258b2120
+PKG_HASH:=035c1e85572b141bf1c3a3eff0e33a8eb74917522f2559075ff8d2fea780a1ae
 
 HOST_BUILD_DEPENDS:= \
 	python3/host \
