@@ -27,7 +27,7 @@ define KernelPackage/mtd-rw
 	SUBMENU:=Other modules
 	TITLE:=Write-enabler for MTD partitions
 	FILES:=$(PKG_BUILD_DIR)/mtd-rw.ko
-	DEPENDS:=@!(TARGET_x86||TARGET_bcm27xx||TARGET_octeontx)
+	DEPENDS:=@!(TARGET_x86||TARGET_bcm27xx)
 endef
 
 define KernelPackage/mtd-rw/description
