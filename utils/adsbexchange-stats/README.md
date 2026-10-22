@@ -90,7 +90,7 @@ inside the conffile itself. (The same convention is used by the
 companion `readsb-wiedehopf` package.)
 
 The init script reads the conffile together with the selected feeder's
-UUID and `readsb.main.write_json` from `/etc/config/readsb`, renders an env
+UUID and `readsb.@readsb[0].write_json` from `/etc/config/readsb`, renders an env
 file at `/var/run/adsbexchange-stats/env`, and supervises the uploader
 under procd.
 Scalar values in that generated file are shell-quoted, including log
@@ -100,6 +100,8 @@ preserved as data rather than interpreted as commands.
 The shared helpers preserve preconfigured `ADSBX_RUNTIME_DIR`,
 `ADSBX_ENV_FILE`, `ADSBX_UUID_FILE`, and `ADSBX_UPLOADER` values.
 When file paths are unset, they are derived from the runtime directory.
+Procd also passes the runtime directory to the uploader, keeping its
+diagnostic fallback files in the directory cleaned when the service stops.
 
 Reload triggers are registered on **both** `adsbexchange-stats` and
 `readsb`, so the recommended workflow is:
@@ -121,7 +123,7 @@ or incorrectly typed main section is reported as a configuration error.
 | ---------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `enabled`              | `0`     | separate opt-in for external statistics uploads; installation alone does not change it |
 | `feeder`               | empty   | one enabled `adsbexchange` feeder section in `/etc/config/readsb`; chosen by the setup wizard or `activate` |
-| `json_paths_override`  | empty   | space-separated list of directories searched for `aircraft.json`, in preferred order. Empty = derive from `readsb.main.write_json` plus built-in fallbacks. Tokens are restricted to `[A-Za-z0-9/_.+-]`. |
+| `json_paths_override`  | empty   | space-separated list of directories searched for `aircraft.json`, in preferred order. Empty = derive from `readsb.@readsb[0].write_json` plus built-in fallbacks. Tokens are restricted to `[A-Za-z0-9/_.+-]`. |
 | `log_level`            | `1`     | uploader verbosity: `0` errors only, `1` + periodic summary, `2` + per-cycle line, `3` + redacted curl `-v` diagnostics |
 | `log_summary_interval` | `300`   | seconds between summary lines at `log_level >= 1`                                                                                                              |
 | `dns_cache`            | `0`     | enable the uploader's in-process DNS self-cache. Auto-disabled if a `127.0.0.0/8` resolver is in use or if `host`/`perl` are missing.                          |
@@ -135,7 +137,7 @@ uploads. False or unrecognized values do not authorize uploading.
 `json_paths_override` resolution order:
 
 1. `option json_paths_override` (this file)
-2. `readsb.main.write_json` from `/etc/config/readsb`, plus the built-in
+2. `readsb.@readsb[0].write_json` from `/etc/config/readsb`, plus the built-in
    fallbacks (`/var/run/readsb`, `/run/adsbexchange-feed`, `/run/dump1090`,
    `/run/dump1090-fa`)
 3. built-in fallbacks alone
@@ -148,7 +150,11 @@ Tokens that contain shell-metacharacters are dropped at startup with a
 The uploader uses the identity of the selected ADSBexchange feeder:
 
 1. Nonempty `readsb.<feeder>.uuid`, if configured.
-2. Otherwise `readsb.main.uuid`.
+2. Otherwise `readsb.@readsb[0].uuid`.
+
+The primary decoder configuration is the first `config readsb` section,
+named `main` by default. Renamed and anonymous primary sections are
+supported; a later section named `main` does not take precedence.
 
 A malformed override is rejected, not silently replaced by the main
 UUID. The station fallback can be managed with:
@@ -239,6 +245,10 @@ Curl diagnostics redact the station UUID, authorization headers, and
 cookies before logging, including on transport failures. Hostnames,
 addresses, URLs, and other connection details remain visible; use level
 3 only when needed for troubleshooting. Startup notices omit the UUID.
+Raw diagnostics are captured in private temporary files. If temporary-file
+allocation fails, the runtime fallback is restricted to mode `0600` before
+curl writes to it, including when the file already exists. Failure to
+prepare that private fallback logs an error and prevents the upload.
 
 Errors go to syslog and, by default, stderr for interactive or scripted
 commands. Procd sets `ADSBX_LOG_STDERR=0` for the uploader to prevent
@@ -266,7 +276,7 @@ This package **hard-depends** on `readsb-wiedehopf` (`DEPENDS:= ...
   this package's helpers source. Feeder-aware activation requires the
   matching readsb companion-integration update.
 * **Shared `aircraft.json`.** The default `json_paths_override` reads
-  from `readsb.main.write_json` (default `/var/run/readsb`).
+  from `readsb.@readsb[0].write_json` (default `/var/run/readsb`).
 
 The dependency link is one-way: `adsbexchange-stats` depends on
 `readsb-wiedehopf`, not the other way around. Reload triggers are
@@ -303,9 +313,11 @@ sh utils/adsbexchange-stats/tests/stats.sh /path/to/utils/readsb-wiedehopf
 The tests use mocked UCI, procd, package hooks and HTTP calls. They cover
 default-off installation, upgrade enable-state preservation, selected
 feeder UUID resolution, explicit activation, option validation and
-per-request consent/identity guards. They perform no uploads or host
-configuration changes. Run with `bash` or `busybox ash` as well for
-shell compatibility.
+per-request consent/identity guards, runtime-directory propagation, and
+private curl fallback files. They also check identity, JSON paths, and
+upload snapshots with named, renamed, and anonymous primary readsb sections.
+They perform no uploads or host configuration
+changes. Run with `bash` or `busybox ash` as well for shell compatibility.
 The shared helpers target OpenWrt's BusyBox ash and are tested with
 dash and Bash; they use the supported `local` extension and do not
 claim strict POSIX-only portability. Test cleanup preserves the test
@@ -320,3 +332,7 @@ Licenses by component:
   GPL-2.0-only (matches the surrounding OpenWrt feed).
 * Upstream `json-status` payload (ADSBexchange.com, (c) 2020) -- MIT,
   preserved as-is in the source tarball.
+
+`PKG_LICENSE` lists these SPDX identifiers separated by spaces, following
+OpenWrt's package metadata convention. Each license applies to its own
+component; this is not a choice of alternative licenses for all files.

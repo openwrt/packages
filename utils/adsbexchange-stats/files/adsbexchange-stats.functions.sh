@@ -24,8 +24,11 @@ READSB_LOG_TAG=$ADSBX_LOG_TAG
 : "${ADSBX_UPLOADER:=/usr/share/adsbexchange-stats/json-status}"
 : "${ADSBX_LOG_STDERR:=1}"
 
+# Shared by shell checks and the upload snapshot's awk parser.
+ADSBX_TRUE_VALUES='1|on|true|yes|enabled'
+
 # Fallback aircraft.json search list when neither the UCI override nor
-# readsb.main.write_json is set.
+# the primary readsb section's write_json is set.
 : "${ADSBX_FALLBACK_PATHS:=/var/run/readsb /run/adsbexchange-feed /run/dump1090 /run/dump1090-fa}"
 
 # Public per-station stats URL template (mirrors readsb-wiedehopf's
@@ -59,6 +62,14 @@ adsbx_uint() {
 	printf '%s\n' "$number"
 }
 
+adsbx_is_enabled() {
+	local IFS='|' value
+	for value in $ADSBX_TRUE_VALUES; do
+		[ "${1:-}" = "$value" ] && return 0
+	done
+	return 1
+}
+
 # --- UUID -------------------------------------------------------------
 adsbx_get_uuid() {
 	local feeder=${1:-} preset enabled uuid
@@ -74,12 +85,12 @@ adsbx_get_uuid() {
 		adsbx_err "feeder '$feeder' is not an adsbexchange preset"
 		return 1
 	fi
-	case $enabled in
-		1|on|true|yes|enabled) ;;
-		*) adsbx_err "feeder '$feeder' is disabled; statistics uploads are suspended"; return 1 ;;
-	esac
+	if ! adsbx_is_enabled "$enabled"; then
+		adsbx_err "feeder '$feeder' is disabled; statistics uploads are suspended"
+		return 1
+	fi
 	uuid=$(uci -q get "readsb.$feeder.uuid")
-	[ -n "$uuid" ] || uuid=$(uci -q get readsb.main.uuid)
+	[ -n "$uuid" ] || uuid=$(uci -q get 'readsb.@readsb[0].uuid')
 	printf '%s\n' "$uuid"
 }
 
@@ -116,7 +127,7 @@ _adsbx_safe_path() {
 
 # Resolve aircraft.json search paths in priority order:
 #   1. adsbexchange-stats.main.json_paths_override (UCI)
-#   2. readsb.main.write_json + ADSBX_FALLBACK_PATHS
+#   2. primary readsb section's write_json + ADSBX_FALLBACK_PATHS
 #   3. ADSBX_FALLBACK_PATHS alone
 #
 # Subshell so `set -f` (disable globbing while word-splitting UCI input)
@@ -136,7 +147,7 @@ adsbx_resolve_json_paths() (
 		done
 		[ -n "$clean" ] && { echo "$clean"; return; }
 	fi
-	readsb_dir=$(uci -q get readsb.main.write_json)
+	readsb_dir=$(uci -q get 'readsb.@readsb[0].write_json')
 	if [ -n "$readsb_dir" ] && _adsbx_safe_path "$readsb_dir"; then
 		# Emit readsb_dir first, then fallbacks excluding readsb_dir, so
 		# the merged list stays in priority order without a duplicate
@@ -151,6 +162,6 @@ adsbx_resolve_json_paths() (
 		return
 	fi
 	[ -n "$readsb_dir" ] && \
-		adsbx_warn "readsb.main.write_json contains unsafe chars; using fallbacks only"
+		adsbx_warn "primary readsb write_json contains unsafe chars; using fallbacks only"
 	echo "$ADSBX_FALLBACK_PATHS"
 )

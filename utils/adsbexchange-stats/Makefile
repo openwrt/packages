@@ -48,8 +48,9 @@ define Package/adsbexchange-stats/description
   Periodically reads aircraft.json from readsb (via readsb-wiedehopf),
   aggregates per-aircraft RSSI and counts, and POSTs the result to
   https://adsbexchange.com identified by the selected enabled feeder's
-  UUID (its override, or readsb.main.uuid). Installation does not enable
-  or start uploads. Use readsb-feeder --setup-companions <name> to opt in.
+  UUID (its override, or the primary readsb section's UUID).
+  Installation does not enable or start uploads.
+  Use readsb-feeder --setup-companions <name> to opt in.
 
   Service knobs live in /etc/config/adsbexchange-stats.
   Manage the station UUID with `readsb-uuid`.
@@ -134,8 +135,8 @@ endef
 define Package/adsbexchange-stats/postrm
 #!/bin/sh
 # Tidy the runtime dir; /var/run is tmpfs and would clear at reboot
-# anyway. Intentionally untouched: readsb.main.uuid (shared station
-# identity) and /etc/config/adsbexchange-stats (opkg `conffiles`).
+# anyway. Intentionally untouched: the shared readsb station identity
+# and /etc/config/adsbexchange-stats (opkg `conffiles`).
 [ -n "$${IPKG_INSTROOT}" ] && exit 0
 rm -rf /var/run/adsbexchange-stats
 exit 0

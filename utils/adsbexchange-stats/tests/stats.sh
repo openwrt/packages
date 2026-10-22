@@ -16,7 +16,8 @@ cleanup() {
 	rm -f "$tmpdir/functions.sh" "$tmpdir/init.sh" "$tmpdir/upload.sh" \
 		"$tmpdir/postinst.sh" "$tmpdir/prerm.sh" "$tmpdir/config" \
 		"$tmpdir/calls" "$tmpdir/log" "$tmpdir/uuid" "$tmpdir/env" "$tmpdir/env-check.sh" \
-		"$tmpdir/uci-calls" "$tmpdir/cleanup-output" "$tmpdir/stderr" "$tmpdir/stdout" || \
+		"$tmpdir/uci-calls" "$tmpdir/cleanup-output" "$tmpdir/stderr" "$tmpdir/stdout" \
+		"$tmpdir/procd-env" "$tmpdir/curl.stderr" || \
 		printf 'cleanup: could not remove test files in %s\n' "$tmpdir" >&2
 	rmdir "$tmpdir" 2>/dev/null || \
 		printf 'cleanup: temporary directory retained at %s (leftover files or removal failure)\n' "$tmpdir" >&2
@@ -45,7 +46,9 @@ ADSBX_RUNTIME_DIR=$tmpdir ADSBX_UUID_FILE="$tmpdir/uuid" ADSBX_ENV_FILE="$tmpdir
 main_uuid=00000000-0000-4000-8000-000000000001
 override_uuid=00000000-0000-4000-8000-000000000002
 seed() {
-	printf '%s\n' "readsb.main.uuid=$main_uuid" 'readsb.main.write_json=/var/run/readsb' \
+	local primary=${test_readsb_primary:-main}
+	printf '%s\n' "readsb.$primary=readsb" "readsb.$primary.uuid=$main_uuid" \
+		"readsb.$primary.write_json=/var/run/readsb" \
 		'readsb.first=feeder' 'readsb.first.preset=adsbexchange' 'readsb.first.enabled=1' \
 		'readsb.second=feeder' 'readsb.second.preset=adsbexchange' 'readsb.second.enabled=1' \
 		"readsb.second.uuid=$override_uuid" \
@@ -54,10 +57,23 @@ seed() {
 	: > "$tmpdir/calls"
 	: > "$tmpdir/uci-calls"
 	: > "$tmpdir/log"
-	rm -f "$tmpdir/env" "$tmpdir/uuid"
+	rm -f "$tmpdir/env" "$tmpdir/uuid" "$tmpdir/procd-env" "$tmpdir/curl.stderr"
+}
+test_uci_key() {
+	local key=$1 prefix='readsb.@readsb[0]' primary
+	case $key in
+		"$prefix"|"$prefix".*)
+			primary=$(awk -F= '
+				$1 ~ /^readsb\.[^.]+$/ && $2 == "readsb" { print $1; exit }
+			' "$tmpdir/config")
+			[ -n "$primary" ] || return 1
+			key="$primary${key#"$prefix"}"
+			;;
+	esac
+	printf '%s\n' "$key"
 }
 uci() {
-	local staging=''
+	local staging='' key
 	if [ "$1" = -t ]; then staging=$2; shift 2; fi
 	[ "$1" != -q ] || shift
 	printf '%s\n' "$1" >> "$tmpdir/uci-calls"
@@ -66,6 +82,7 @@ uci() {
 			[ "${fail_batch:-0}" != 1 ] || return 9
 			while read -r operation key; do
 				[ "$operation" = show ] || return 99
+				key=$(test_uci_key "$key") || return 1
 				awk -v key="$key" '
 					{
 						separator = index($0, "=")
@@ -78,7 +95,8 @@ uci() {
 			done
 			;;
 		get)
-			awk -v key="$2=" 'index($0,key)==1 { value=substr($0,length(key)+1); found=1 }
+			key=$(test_uci_key "$2") || return 1
+			awk -v key="$key=" 'index($0,key)==1 { value=substr($0,length(key)+1); found=1 }
 				END { if (!found) exit 1; print value }' "$tmpdir/config"
 			;;
 		changes)
@@ -211,6 +229,39 @@ run_test 'empty selection is not guessed from multiple feeders' test_identity ''
 run_test 'malformed feeder override is rejected, not replaced by main UUID' test_identity second 2 '' \
 	'readsb.second.uuid=invalid'
 
+test_primary_readsb() (
+	test_readsb_primary=$1 action=$2
+	seed 'adsbexchange-stats.main.enabled=1' \
+		"readsb.$test_readsb_primary.write_json=/var/run/primary-readsb"
+	if [ "$test_readsb_primary" != main ]; then
+		printf '%s\n' 'readsb.main=readsb' "readsb.main.uuid=$override_uuid" \
+			'readsb.main.write_json=/var/run/secondary-readsb' >> "$tmpdir/config"
+	fi
+	case $action in
+		identity)
+			assert_equal "$(adsbx_require_uuid)" "$main_uuid" || return 1
+			start_instance main || return 1
+			assert_equal "$(cat "$tmpdir/uuid")" "$main_uuid"
+			;;
+		paths)
+			paths=$(adsbx_resolve_json_paths) || return 1
+			assert_equal "${paths%% *}" /var/run/primary-readsb
+			;;
+		upload)
+			ADSBX_FEEDER=first UUID=$main_uuid
+			curl() { echo curl >> "$tmpdir/calls"; printf 200; }
+			adsbx_curl_upload "$tmpdir/config" || return 1
+			assert_equal "$(cat "$tmpdir/calls")" curl
+			;;
+	esac
+)
+for primary in main receiver '@readsb[0]'; do
+	for action in identity paths upload; do
+		run_test "stats $action follows primary readsb section [$primary], not a later main" \
+			test_primary_readsb "$primary" "$action"
+	done
+done
+
 test_disabled_start() (
 	seed
 	start_instance main || return 1
@@ -224,6 +275,30 @@ test_enabled_start() (
 	grep -qx "ADSBX_FEEDER='second'" "$tmpdir/env" && grep -q '^open$' "$tmpdir/calls" &&
 		grep -q 'ADSBX_LOG_STDERR=0' "$tmpdir/calls"
 )
+test_uploader_runtime() (
+	seed 'adsbexchange-stats.main.enabled=1'
+	procd_set_param() {
+		local assignment
+		[ "$1" = env ] || return 0
+		shift
+		: > "$tmpdir/procd-env"
+		for assignment in "$@"; do
+			_env_assignment "${assignment%%=*}" "${assignment#*=}" >> "$tmpdir/procd-env" || return 1
+		done
+	}
+	start_instance main || return 1
+	sed '\|^\. /usr/lib/adsbexchange-stats/json-status-helpers.sh$|d' "$tmpdir/env" > "$tmpdir/env-check.sh"
+	bash -c '
+		unset ADSBX_RUNTIME_DIR ADSBX_ENV_FILE ADSBX_UUID_FILE ADSBX_UPLOADER
+		. "$1" || exit 1
+		. "$2" || exit 1
+		. "$3" || exit 1
+		[ "$ADSBX_RUNTIME_DIR" = "$4" ] &&
+		[ "$TEMP_DIR" = "$4" ] &&
+		[ "$ADSBX_LOG_STDERR" = 0 ]
+	' test "$tmpdir/procd-env" "$tmpdir/env-check.sh" "$tmpdir/functions.sh" "$ADSBX_RUNTIME_DIR"
+)
+run_test 'procd preserves the runtime override when uploader helpers initialize' test_uploader_runtime
 test_environment_failure() (
 	seed 'adsbexchange-stats.main.enabled=1'
 	export ADSBX_UUID_FILE="$tmpdir/missing/uuid"
@@ -378,6 +453,53 @@ test_curl_redaction() (
 run_test 'successful verbose uploads redact UUID and sensitive headers' test_curl_redaction 3 0 debug
 run_test 'failed verbose uploads redact UUID and sensitive headers' test_curl_redaction 3 9 warn
 run_test 'failure diagnostics are redacted even below debug level' test_curl_redaction 0 9 warn
+test_curl_fallback() (
+	scenario=$1
+	seed 'adsbexchange-stats.main.enabled=1' 'adsbexchange-stats.main.feeder=second'
+	ADSBX_FEEDER=second UUID=$override_uuid ADSBX_LOG_LEVEL=3
+	ADSBX_HTTP_LAST=200 ADSBX_ELAPSED_LAST=42
+	umask 022
+	original_umask=$(umask)
+	mktemp() { return 1; }
+	case $scenario in
+		existing|chmod-failure)
+			printf '%s\n' 'old diagnostic' > "$tmpdir/curl.stderr"
+			chmod 644 "$tmpdir/curl.stderr" || return 1
+			;;
+	esac
+	case $scenario in
+		chmod-failure) chmod() { return 9; } ;;
+		mkdir-failure) mkdir() { return 9; } ;;
+	esac
+	curl() {
+		printf 'curl %s\n' "$(stat -c %a "$ADSBX_RUNTIME_DIR/curl.stderr")" >> "$tmpdir/calls"
+		printf '> adsbx-uuid: %s\n' "$UUID" >&2
+		printf 200
+	}
+	logger() { cat >> "$tmpdir/log"; }
+	rc=0
+	adsbx_curl_upload "$tmpdir/config" || rc=$?
+	assert_equal "$(umask)" "$original_umask" || return 1
+	case $scenario in
+		chmod-failure|mkdir-failure)
+			assert_equal "$rc" 1 && [ ! -s "$tmpdir/calls" ] &&
+				assert_equal "$ADSBX_HTTP_LAST" 000 &&
+				assert_equal "$ADSBX_ELAPSED_LAST" 0 &&
+				grep -q '^error:.*private curl diagnostics' "$tmpdir/log"
+			;;
+		*)
+			assert_equal "$rc" 0 &&
+				assert_equal "$(cat "$tmpdir/calls")" 'curl 600' &&
+				[ ! -e "$tmpdir/curl.stderr" ] &&
+				grep -q '\[redacted\]' "$tmpdir/log" &&
+				! grep -Fq "$UUID" "$tmpdir/log"
+			;;
+	esac
+)
+run_test 'mktemp failure creates private curl diagnostics without changing the umask' test_curl_fallback new
+run_test 'pre-existing curl fallback is restricted before receiving diagnostics' test_curl_fallback existing
+run_test 'curl fallback permission failure blocks the upload with an error' test_curl_fallback chmod-failure
+run_test 'curl fallback directory failure blocks the upload with an error' test_curl_fallback mkdir-failure
 test_upload_log_level() (
 	seed 'adsbexchange-stats.main.enabled=1' 'adsbexchange-stats.main.feeder=second'
 	ADSBX_FEEDER=second UUID=$override_uuid ADSBX_LOG_LEVEL=$1
@@ -485,7 +607,15 @@ test_boolean_consistency() (
 		start_service || return 1
 		grep -q '^open$' "$tmpdir/calls"
 	else
-		! grep -q '^curl$' "$tmpdir/calls"
+		! grep -q '^curl$' "$tmpdir/calls" || return 1
+		rc=0
+		start_service || rc=$?
+		if [ "$scope" = uploader ]; then
+			assert_equal "$rc" 0 || return 1
+		else
+			assert_equal "$rc" 1 || return 1
+		fi
+		! grep -q '^open$' "$tmpdir/calls"
 	fi
 )
 for scope in uploader feeder; do
@@ -493,8 +623,8 @@ for scope in uploader feeder; do
 		run_test "$scope boolean '$value' permits an approved upload and startup" \
 			test_boolean_consistency "$scope" "$value" 0
 	done
-	for value in 0 off false no disabled invalid ''; do
-		run_test "$scope boolean '$value' blocks upload" \
+	for value in 0 off false no disabled invalid '' TRUE 01 'yes ' '1|on'; do
+		run_test "$scope boolean '$value' blocks upload and startup" \
 			test_boolean_consistency "$scope" "$value" 1
 	done
 done

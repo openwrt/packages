@@ -51,14 +51,14 @@ adsbx_upload_uuid() {
 	snapshot=$(uci -q batch <<EOF
 show adsbexchange-stats.main
 show readsb.$feeder
-show readsb.main.uuid
+show readsb.@readsb[0]
 EOF
 	) || {
 		adsbx_err "could not read the upload configuration snapshot"
 		return 1
 	}
-	uuid=$(printf '%s\n' "$snapshot" | awk -v feeder="$feeder" '
-		function enabled(value) { return value ~ /^(1|on|true|yes|enabled)$/ }
+	uuid=$(printf '%s\n' "$snapshot" | awk -v feeder="$feeder" -v enabled_values="$ADSBX_TRUE_VALUES" '
+		function enabled(value) { return value ~ ("^(" enabled_values ")$") }
 		{
 			separator = index($0, "=")
 			if (!separator) next
@@ -66,6 +66,7 @@ EOF
 			value = substr($0, separator + 1)
 			if (value ~ /^\047.*\047$/) value = substr(value, 2, length(value) - 2)
 			settings[key] = value
+			if (key ~ /^readsb\.[^.]+$/ && value == "readsb") primary = key
 		}
 		END {
 			uploader = "adsbexchange-stats.main"
@@ -76,8 +77,9 @@ EOF
 			if (settings[selected] != "feeder" ||
 			    settings[selected ".preset"] != "adsbexchange" ||
 			    !enabled(settings[selected ".enabled"])) exit 3
+			if (primary == "") exit 4
 			uuid = settings[selected ".uuid"]
-			if (uuid == "") uuid = settings["readsb.main.uuid"]
+			if (uuid == "") uuid = settings[primary ".uuid"]
 			print uuid
 		}
 	')
@@ -87,6 +89,7 @@ EOF
 		1) adsbx_warn "statistics uploads are disabled or unconfigured"; return 1 ;;
 		2) adsbx_warn "selected feeder changed; reload adsbexchange-stats before uploading"; return 1 ;;
 		3) adsbx_warn "selected ADSBexchange feeder is missing or disabled"; return 1 ;;
+		4) adsbx_err "primary readsb section is missing; not uploading"; return 1 ;;
 		*) adsbx_err "could not interpret the upload configuration snapshot"; return 1 ;;
 	esac
 	if ! readsb_is_uuid "$uuid"; then
@@ -140,12 +143,18 @@ adsbx_curl_upload() {
 		"$REMOTE_URL"
 	[ "$ADSBX_LOG_LEVEL" -ge 3 ] && set -- -v "$@"
 
-	errfile=$(mktemp -t adsbx-curl.XXXXXX 2>/dev/null)
-	if [ -z "$errfile" ]; then
-		# Keep diagnostics available even when mktemp fails.
-		mkdir -p "$ADSBX_RUNTIME_DIR" 2>/dev/null
+	if ! errfile=$(mktemp -t adsbx-curl.XXXXXX 2>/dev/null) || [ -z "$errfile" ]; then
+		adsbx_warn "could not allocate temporary curl diagnostics; using the private runtime fallback"
 		errfile="$ADSBX_RUNTIME_DIR/curl.stderr"
-		: >"$errfile" 2>/dev/null || errfile=/dev/null
+		if ! (
+			umask 077
+			mkdir -p "$ADSBX_RUNTIME_DIR" &&
+				: >> "$errfile" &&
+				chmod 600 "$errfile"
+		) 2>/dev/null; then
+			adsbx_err "cannot prepare private curl diagnostics; not uploading"
+			return 1
+		fi
 	fi
 	t0=$(date +%s)
 	http=$(curl "$@" < "$payload" 2>"$errfile") || rv=$?
@@ -153,14 +162,14 @@ adsbx_curl_upload() {
 	ADSBX_HTTP_LAST=${http:-000}
 	ADSBX_ELAPSED_LAST=$((t1 - t0))
 
-	if [ "$errfile" != /dev/null ] && [ -s "$errfile" ]; then
+	if [ -s "$errfile" ]; then
 		if [ "$rv" -ne 0 ]; then
 			adsbx_log_curl_diagnostics warn "$errfile"
 		elif [ "$ADSBX_LOG_LEVEL" -ge 3 ]; then
 			adsbx_log_curl_diagnostics debug "$errfile"
 		fi
 	fi
-	[ "$errfile" != /dev/null ] && rm -f "$errfile"
+	rm -f "$errfile" || adsbx_warn "could not remove curl diagnostics file"
 	return "$rv"
 }
 
