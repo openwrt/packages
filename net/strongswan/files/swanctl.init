@@ -1149,6 +1149,12 @@ prepare_env() {
 }
 
 reload_service() {
+	# Stop a running daemon if the service has been globally disabled
+	is_enabled || {
+		running && stop
+		return
+	}
+
 	running && {
 		prepare_env
 		[ $WAIT_FOR_INTF -eq 0 ] && {
@@ -1177,6 +1183,12 @@ stop_service() {
 }
 
 service_triggers() {
+	# Only watch for config changes if the service is globally disabled
+	is_enabled || {
+		procd_add_reload_trigger "ipsec"
+		return
+	}
+
 	# Use legacy service_trigger for /etc/config/ipsec
 	is_legacy_config && {
 		legacy_service_triggers
@@ -1198,6 +1210,11 @@ service_trigger_ipsec() {
 }
 
 start_service() {
+	is_enabled || {
+		logger -t ipsec -p user.notice "Service is globally disabled, not starting"
+		return
+	}
+
 	is_legacy_config && {
 		legacy_prepare_env
 		return
@@ -1223,6 +1240,16 @@ start_service() {
 	procd_set_param respawn
 
 	procd_close_instance
+}
+
+# Checks the global enable flag (option 'enabled' in the 'globals' section).
+# The service is enabled if the option is not set.
+is_enabled() {
+	case "$(uci -q get ipsec.globals.enabled)" in
+	0|off|false|no|disabled)
+		return 1 ;;
+	esac
+	return 0
 }
 
 is_legacy_config() {
