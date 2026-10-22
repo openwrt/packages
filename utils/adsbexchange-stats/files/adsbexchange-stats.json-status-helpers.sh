@@ -110,7 +110,7 @@ adsbx_log_curl_diagnostics() {
 			}
 			print
 		}
-	' "$2" | logger -t "$ADSBX_LOG_TAG" -p "daemon.$1"
+	' < "$2" | logger -t "$ADSBX_LOG_TAG" -p "daemon.$1"
 }
 
 # adsbx_curl_upload <gz_payload>
@@ -148,9 +148,9 @@ adsbx_curl_upload() {
 		errfile="$ADSBX_RUNTIME_DIR/curl.stderr"
 		if ! (
 			umask 077
-			mkdir -p "$ADSBX_RUNTIME_DIR" &&
+			mkdir -p -- "$ADSBX_RUNTIME_DIR" &&
 				: >> "$errfile" &&
-				chmod 600 "$errfile"
+				chmod 600 -- "$errfile"
 		) 2>/dev/null; then
 			adsbx_err "cannot prepare private curl diagnostics; not uploading"
 			return 1
@@ -169,7 +169,7 @@ adsbx_curl_upload() {
 			adsbx_log_curl_diagnostics debug "$errfile"
 		fi
 	fi
-	rm -f "$errfile" || adsbx_warn "could not remove curl diagnostics file"
+	rm -f -- "$errfile" || adsbx_warn "could not remove curl diagnostics file"
 	return "$rv"
 }
 

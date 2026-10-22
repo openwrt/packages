@@ -74,7 +74,7 @@ write_env() (
 
 	umask 077
 	: >> "$ADSBX_UUID_FILE" || return 1
-	chmod 600 "$ADSBX_UUID_FILE" || return 1
+	chmod 600 -- "$ADSBX_UUID_FILE" || return 1
 	echo "$uuid" > "$ADSBX_UUID_FILE" || return 1
 
 	umask 022
@@ -121,8 +121,8 @@ start_instance() {
 	config_get feeder "$cfg" feeder
 	uuid=$(adsbx_require_uuid "$feeder") || return 1
 
-	if ! mkdir -p -m 700 "$ADSBX_RUNTIME_DIR" \
-	   || ! chmod 700 "$ADSBX_RUNTIME_DIR" \
+	if ! mkdir -p -m 700 -- "$ADSBX_RUNTIME_DIR" \
+	   || ! chmod 700 -- "$ADSBX_RUNTIME_DIR" \
 	   || ! write_env "$cfg" "$uuid" "$feeder"; then
 		adsbx_err "cannot prepare the uploader environment; not starting"
 		return 1
@@ -169,13 +169,13 @@ stop_service() {
 service_stopped() {
 	[ -d "$ADSBX_RUNTIME_DIR" ] || return 0
 	adsbx_notice "clearing known runtime files in $ADSBX_RUNTIME_DIR"
-	rm -f "$ADSBX_ENV_FILE" "$ADSBX_UUID_FILE" \
+	rm -f -- "$ADSBX_ENV_FILE" "$ADSBX_UUID_FILE" \
 		"$ADSBX_RUNTIME_DIR/tmp.json" "$ADSBX_RUNTIME_DIR/new.json" \
 		"$ADSBX_RUNTIME_DIR/upload.gz" "$ADSBX_RUNTIME_DIR/curl.stderr" || {
 		adsbx_err "could not remove uploader runtime files"
 		return 1
 	}
-	rmdir "$ADSBX_RUNTIME_DIR" 2>/dev/null || \
+	rmdir -- "$ADSBX_RUNTIME_DIR" 2>/dev/null || \
 		adsbx_warn "retaining $ADSBX_RUNTIME_DIR (unexpected files or directory removal failed)"
 }
 

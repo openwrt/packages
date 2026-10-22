@@ -15,8 +15,8 @@ if [[ $(git hash-object "$source_file") != c4b260cbf5bec4965eac29b1ea207943f94dd
 	exit 1
 fi
 tmpdir=$(mktemp -d) || exit 1
-runtime_dirs=("$tmpdir/runtime" "$tmpdir/runtime space" "$tmpdir/runtime's path" "$tmpdir/runtime denied")
-data_dirs=("$tmpdir/data" "$tmpdir/data space" "$tmpdir/data's path" "$tmpdir/data denied")
+runtime_dirs=("$tmpdir/runtime" "$tmpdir/runtime space" "$tmpdir/runtime's path" "$tmpdir/runtime denied" "$tmpdir/-runtime")
+data_dirs=("$tmpdir/data" "$tmpdir/data space" "$tmpdir/data's path" "$tmpdir/data denied" "$tmpdir/-data")
 cleanup() {
 	status=$?
 	trap - EXIT
@@ -30,7 +30,7 @@ cleanup() {
 	done
 	rm -f "$tmpdir/json-status" "$tmpdir/json-status.orig" "$tmpdir/patch.log" \
 		"$tmpdir/reject" "$tmpdir/env" "$tmpdir/stdout" "$tmpdir/stderr" \
-		"$tmpdir/result" "$tmpdir/payload.json" "$tmpdir/uploader"
+		"$tmpdir/result" "$tmpdir/payload.json" "$tmpdir/uploader" "$tmpdir/-env"
 	rmdir "$tmpdir" || printf 'uploader test retained temporary files in %s\n' "$tmpdir" >&2
 	exit "$status"
 }
@@ -53,10 +53,13 @@ bash -n "$tmpdir/uploader" || exit 1
 
 test_uploader() (
 	runtime=$1 data=$2 expect_failure=${3:-0}
+	cd "$tmpdir" || return 1
+	env_file="$tmpdir/env"
+	[[ $runtime != -runtime ]] || env_file=-env
 	umask 022
-	mkdir -m 755 "$runtime" "$data" || return 1
+	mkdir -m 755 -- "$runtime" "$data" || return 1
 	printf '%s\n' 00000000-0000-4000-8000-000000000001 > "$runtime/uuid"
-	chmod 600 "$runtime/uuid" || return 1
+	chmod 600 -- "$runtime/uuid" || return 1
 	printf '{"now":1,"aircraft":[]}\n' > "$data/aircraft.json"
 	rm -f "$tmpdir/result" "$tmpdir/payload.json"
 	{
@@ -109,14 +112,14 @@ ENV
 		if [[ $expect_failure = 1 ]]; then
 			cat <<'ENV'
 chmod() {
-	[[ ${2:-} != "$TEMP_DIR" ]] || return 9
+	[[ ${3:-${2:-}} != "$TEMP_DIR" ]] || return 9
 	command chmod "$@"
 }
 ENV
 		fi
-	} > "$tmpdir/env"
+	} > "$env_file"
 	rc=0
-	ADSBX_TEST_LEGACY="$tmpdir/missing-defaults" ADSBX_ENV_FILE="$tmpdir/env" \
+	ADSBX_TEST_LEGACY="$tmpdir/missing-defaults" ADSBX_ENV_FILE="$env_file" \
 		timeout 10 bash "$tmpdir/uploader" \
 		> "$tmpdir/stdout" 2> "$tmpdir/stderr" || rc=$?
 	if [[ $expect_failure = 1 ]]; then
@@ -135,7 +138,7 @@ ENV
 		printf 'upstream startup exposed the station UUID\n' >&2
 		return 1
 	}
-	[[ $(stat -c %a "$runtime") = 700 ]] || {
+	[[ $(stat -c %a -- "$runtime") = 700 ]] || {
 		printf 'upstream runtime directory was not restricted to 0700\n' >&2
 		return 1
 	}
@@ -155,5 +158,11 @@ else
 	printf 'not ok 4 - runtime chmod failure stops the actual uploader before scratch writes\n'
 	failures=$((failures + 1))
 fi
-printf '4 tests, %s failures\n' "$failures"
+if test_uploader -runtime -data; then
+	printf 'ok 5 - actual uploader treats leading-dash paths as file operands\n'
+else
+	printf 'not ok 5 - actual uploader treats leading-dash paths as file operands\n'
+	failures=$((failures + 1))
+fi
+printf '5 tests, %s failures\n' "$failures"
 [[ $failures = 0 ]]

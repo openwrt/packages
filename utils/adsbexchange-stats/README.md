@@ -108,6 +108,9 @@ permission change prevents startup. The patched uploader enforces the same
 private-directory requirement before creating its scratch files.
 Runtime and source paths containing spaces or quotes remain intact in the
 upstream UUID read, stat, copy, remove, and JSON-redirection operations.
+Filesystem commands treat leading-dash paths as operands, not options.
+Curl diagnostic files are read through stdin so special filenames are
+never interpreted as awk options or variable assignments.
 
 Reload triggers are registered on **both** `adsbexchange-stats` and
 `readsb`, so the recommended workflow is:
@@ -339,7 +342,8 @@ To exercise the actual patched upstream uploader, provide the unmodified
 bash utils/adsbexchange-stats/tests/uploader.sh /path/to/pinned/json-status
 ```
 
-This runs one real uploader cycle for plain paths, spaces, and single quotes.
+This runs real uploader cycles for plain paths, spaces, single quotes,
+and leading-dash paths.
 It checks payload identity, private runtime permissions, and absence of the
 UUID in startup output. HTTP, sleeps, and jq's unchanged transformation are
 stubbed; the actual UUID/path consumers, copy/remove operations, compression,

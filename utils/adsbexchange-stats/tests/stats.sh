@@ -340,7 +340,7 @@ test_runtime_permissions() (
 	fi
 	if [ "$scenario" = failure ]; then
 		chmod() {
-			[ "${2:-}" != "$ADSBX_RUNTIME_DIR" ] || return 9
+			[ "${3:-${2:-}}" != "$ADSBX_RUNTIME_DIR" ] || return 9
 			command chmod "$@"
 		}
 	fi
@@ -486,6 +486,51 @@ test_curl_redaction() (
 run_test 'successful verbose uploads redact UUID and sensitive headers' test_curl_redaction 3 0 debug
 run_test 'failed verbose uploads redact UUID and sensitive headers' test_curl_redaction 3 9 warn
 run_test 'failure diagnostics are redacted even below debug level' test_curl_redaction 0 9 warn
+test_leading_dash_paths() (
+	scenario=$1
+	seed 'adsbexchange-stats.main.enabled=1' 'adsbexchange-stats.main.feeder=second'
+	work="$tmpdir/option-paths"
+	mkdir "$work" || return 1
+	trap 'command rm -f -- "$work/-runtime/env" "$work/-runtime/uuid" "$work/-runtime/tmp.json" "$work/-runtime/new.json" "$work/-runtime/upload.gz" "$work/-runtime/curl.stderr"; [ ! -d "$work/-runtime" ] || command rmdir -- "$work/-runtime"; command rmdir -- "$work"' 0
+	cd "$work" || return 1
+	ADSBX_RUNTIME_DIR=-runtime ADSBX_ENV_FILE=-runtime/env ADSBX_UUID_FILE=-runtime/uuid
+	case $scenario in
+		start)
+			start_instance main || return 1
+			[ -f ./-runtime/env ] && [ -f ./-runtime/uuid ] || return 1
+			;;
+		upload|cleanup)
+			command mkdir -m 700 -- -runtime || return 1
+			;;
+	esac
+	if [ "$scenario" = upload ]; then
+		ADSBX_FEEDER=second UUID=$override_uuid ADSBX_LOG_LEVEL=3
+		mktemp() { return 1; }
+		curl() { printf '> adsbx-uuid: %s\n' "$UUID" >&2; printf 200; }
+		logger() { cat >> "$tmpdir/log"; }
+		adsbx_curl_upload "$tmpdir/config" || return 1
+		grep -q '\[redacted\]' "$tmpdir/log" || return 1
+	fi
+	service_stopped || return 1
+	[ ! -d ./-runtime ]
+)
+for operation in start upload cleanup; do
+	run_test "$operation handles a runtime directory beginning with a dash" test_leading_dash_paths "$operation"
+done
+test_diagnostic_filename() (
+	seed
+	work="$tmpdir/diagnostic-paths"
+	mkdir "$work" || return 1
+	trap 'command rm -f -- "$work/-" "$work/-trace" "$work/trace=one"; command rmdir -- "$work"' 0
+	cd "$work" || return 1
+	printf 'retained diagnostic\n' > "$1"
+	logger() { cat >> "$tmpdir/log"; }
+	adsbx_log_curl_diagnostics warn "$1" < /dev/null || return 1
+	grep -q 'retained diagnostic' "$tmpdir/log"
+)
+for filename in - -trace trace=one; do
+	run_test "diagnostic filename [$filename] is read as a file, not an awk argument" test_diagnostic_filename "$filename"
+done
 test_curl_fallback() (
 	scenario=$1
 	seed 'adsbexchange-stats.main.enabled=1' 'adsbexchange-stats.main.feeder=second'

@@ -47,7 +47,7 @@ Signed-off-by: Dr Bill Mcilhargey <contributor@mcilhargey.com>
  
 +# UCI-rendered settings take precedence over legacy local overrides.
 +if [ -n "${ADSBX_ENV_FILE:-}" ] && [ -r "$ADSBX_ENV_FILE" ]; then
-+	. "$ADSBX_ENV_FILE"
++	. -- "$ADSBX_ENV_FILE"
 +fi
 +
  # Small bit of sanity...
@@ -64,11 +64,11 @@ Signed-off-by: Dr Bill Mcilhargey <contributor@mcilhargey.com>
  
  # Sanity to make sure we can write to our scratch dir in /run
 -T=$(touch $TMPFILE 2>&1)
-+if ! mkdir -p -m 700 "$TEMP_DIR" || ! chmod 700 "$TEMP_DIR"; then
++if ! mkdir -p -m 700 -- "$TEMP_DIR" || ! chmod 700 -- "$TEMP_DIR"; then
 +    echo "ERROR: Unable to prepare private runtime directory $TEMP_DIR" >&2
 +    exit 99
 +fi
-+T=$(touch "$TMPFILE" 2>&1)
++T=$(touch -- "$TMPFILE" 2>&1)
  RV=$?
  if [ $RV -ne 0 ]; then
      echo "ERROR: Unable to write to $TMPFILE, aborting!  ($T)"
@@ -86,7 +86,7 @@ Signed-off-by: Dr Bill Mcilhargey <contributor@mcilhargey.com>
  done
  
 -UUID=$(cat $UUID_FILE)
-+UUID=$(cat "$UUID_FILE")
++UUID=$(cat -- "$UUID_FILE")
  
  if ! [[ $UUID =~ ^\{?[A-F0-9a-f]{8}-[A-F0-9a-f]{4}-[A-F0-9a-f]{4}-[A-F0-9a-f]{4}-[A-F0-9a-f]{12}\}?$ ]]; then
      # Data in UUID file is invalid
@@ -163,7 +163,7 @@ Signed-off-by: Dr Bill Mcilhargey <contributor@mcilhargey.com>
 +		adsbx_curl_upload "$TEMP_DIR/upload.gz"
 +		RV=$?
 +		ADSBX_AIRCRAFT=$(jq -r '.aircraft | length' < "$NEWFILE")
-+		ADSBX_GZ_BYTES=$(stat --printf="%s" "$TEMP_DIR/upload.gz")
++		ADSBX_GZ_BYTES=$(stat --printf="%s" -- "$TEMP_DIR/upload.gz")
 +		adsbx_record_upload "$ADSBX_AIRCRAFT" "$ADSBX_GZ_BYTES"
 +	else
 +		curl -m $MAX_CURL_TIME $CURL_EXTRA -sS -X POST -H "adsbx-uuid: ${UUID}" -H "Content_Encoding: gzip" --data-binary @- $REMOTE_URL 2>&1 <"$TEMP_DIR/upload.gz"
