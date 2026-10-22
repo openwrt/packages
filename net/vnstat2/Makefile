@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vnstat2
 PKG_VERSION:=2.13
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=vnstat-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://humdi.net/vnstat
@@ -30,12 +30,12 @@ define Package/vnstat2/Default
   CATEGORY:=Network
   URL:=https://humdi.net/vnstat/
   DEPENDS:=+libsqlite3
-  CONFLICTS:=vnstat
 endef
 
 define Package/vnstat2
 $(call Package/vnstat2/Default)
   TITLE:=Console-based network traffic monitor
+  PROVIDES:=vnstat
 endef
 
 define Package/vnstat2/description
@@ -49,6 +49,7 @@ define Package/vnstati2
 $(call Package/vnstat2/Default)
   DEPENDS+=vnstat2 +libgd
   TITLE:=PNG image output support for vnStat
+  PROVIDES:=vnstati
 endef
 
 define Package/vnstati2/description
