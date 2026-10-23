@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openlist
-PKG_VERSION:=4.2.5
+PKG_VERSION:=4.2.7
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/OpenListTeam/OpenList/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=dd9f19bb4dc9b8a06bb839dff91eb69833b2b9c77a9bfe82fc8caf1f47e97df1
+PKG_HASH:=5d2201596a81e85146eb8aec4028f66aacff65945fef5936193cbd41fc7e68b5
 PKG_BUILD_DIR:=$(BUILD_DIR)/OpenList-$(PKG_VERSION)
 
 PKG_LICENSE:=AGPL-3.0-only
@@ -22,9 +22,9 @@ PKG_BUILD_PARALLEL:=1
 PKG_BUILD_FLAGS:=no-mips16
 
 GO_PKG:=github.com/OpenListTeam/OpenList/v4
-GO_PKG_LDFLAGS_X = \
+GO_PKG_LDFLAGS_X:= \
 	$(GO_PKG)/internal/conf.Version=$(PKG_VERSION) \
-	$(GO_PKG)/internal/conf.WebVersion=$(WEB_VERSION)
+	$(GO_PKG)/internal/conf.WebVersion=$(PKG_VERSION)
 ifeq ($(filter aarch64 x86_64, $(ARCH)),)
   GO_PKG_EXCLUDES:=drivers/lark
 endif
@@ -51,13 +51,12 @@ define Package/openlist/conffiles
 /etc/config/openlist
 endef
 
-WEB_VERSION:=4.2.5
-WEB_FILE:=$(PKG_NAME)-frontend-dist-v$(WEB_VERSION).tar.gz
+WEB_FILE:=$(PKG_NAME)-frontend-dist-v$(PKG_VERSION).tar.gz
 define Download/openlist-web
-	URL:=https://github.com/OpenListTeam/OpenList-Frontend/releases/download/v$(WEB_VERSION)/
+	URL:=https://github.com/OpenListTeam/OpenList-Frontend/releases/download/v$(PKG_VERSION)/
 	URL_FILE:=$(WEB_FILE)
 	FILE:=$(WEB_FILE)
-	HASH:=78e957e5b8855e30d00767458ab90ec11125a0344a238cc1e1990f46553d4308
+	HASH:=88aba5260646ed784847a11e473880d749b17b80af53caf895fe1f31f36aa3e3
 endef
 
 define Build/Prepare
