@@ -1,0 +1,39 @@
+From cb1d9a4c3be194da24eaa500e1ea3d4323be8b72 Mon Sep 17 00:00:00 2001
+From: Ville Takio <ville+git@takio.fi>
+Date: Thu, 8 Oct 2026 21:28:13 +0000
+Subject: [PATCH] Crypto: no unaligned 64-bit accesses on 32-bit ARM (#1908)
+
+CRYPTOPP_ALLOW_UNALIGNED_DATA_ACCESS was defined whenever
+__ARM_FEATURE_UNALIGNED is set, which includes 32-bit ARMv6/ARMv7. There
+the hardware handles unaligned single-word loads and stores, but not
+LDRD/STRD/LDM, which the compiler uses for 64-bit words. Camellia
+(camellia_load64/camellia_store64) and Whirlpool (HashMultipleBlocks on
+unaligned input) then access 64-bit words through unaligned pointers.
+
+camellia_set_key() raised SIGBUS in the XTS self-test on an ARMv7
+(cortex-a15) build whose test key happened to be only 2-byte aligned.
+
+Define the macro for AArch64 only among the ARM targets; on 32-bit ARM
+the memcpy and aligned-copy paths are used instead.
+
+Upstream-Status: Backport [https://github.com/veracrypt/VeraCrypt/commit/cb1d9a4c3be194da24eaa500e1ea3d4323be8b72]
+
+Signed-off-by: Ville Takio <ville+git@takio.fi>
+---
+ src/Crypto/config.h | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+--- a/src/Crypto/config.h
++++ b/src/Crypto/config.h
+@@ -263,7 +263,10 @@
+ #endif
+ 
+ #if !defined(CRYPTOPP_NO_UNALIGNED_DATA_ACCESS) && !defined(CRYPTOPP_ALLOW_UNALIGNED_DATA_ACCESS)
+-#if (CRYPTOPP_BOOL_X64 || CRYPTOPP_BOOL_X86 || CRYPTOPP_BOOL_X32 || defined(__powerpc__) || (__ARM_FEATURE_UNALIGNED >= 1))
++// Users of this macro (Camellia, Whirlpool) load and store 64-bit words through
++// unaligned pointers. 32-bit ARM supports unaligned single-word accesses only:
++// the LDRD/STRD/LDM instructions used for 64-bit words still fault (SIGBUS).
++#if (CRYPTOPP_BOOL_X64 || CRYPTOPP_BOOL_X86 || CRYPTOPP_BOOL_X32 || defined(__powerpc__) || (defined(__aarch64__) && __ARM_FEATURE_UNALIGNED >= 1))
+     #define CRYPTOPP_ALLOW_UNALIGNED_DATA_ACCESS
+ #endif
+ #endif

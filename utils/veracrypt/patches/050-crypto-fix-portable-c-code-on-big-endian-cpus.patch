@@ -1,0 +1,839 @@
+From 425cea6c9c0d1526f10178e3cd31e900b9f2b35c Mon Sep 17 00:00:00 2001
+From: Ville Takio <ville+git@takio.fi>
+Date: Sun, 4 Oct 2026 00:51:59 +0000
+Subject: [PATCH] Crypto: fix portable C code on big-endian CPUs (#1899)
+
+* Crypto: fix portable C code on big-endian CPUs
+
+On big-endian CPUs (e.g. MIPS and PowerPC) the portable C code of
+several algorithms assumes a little-endian host, so ciphertext, hashes
+and derived keys are wrong and "veracrypt --text --test" fails:
+
+- Twofish: the key-dependent S-box bytes are read back from 32-bit
+  words through a union, and blocks are loaded/stored as native words.
+- Camellia: blocks and keys are always byte-swapped to big-endian.
+- Kuznyechik: keys and blocks are loaded/stored as native 64-bit words
+  while the tables expect the little-endian interpretation.
+- SHA-256/SHA-512: message words, length and digest are always
+  byte-swapped.
+- BLAKE2s: the parameter block and message words are read as native
+  little-endian data. The parameter block is now built from its fields,
+  so it is right for any parameters, not only the ones VeraCrypt uses.
+- Streebog: the existing big-endian code path is never enabled, and
+  BSWAP64 used by it is not defined (its buffer512 initializer also has
+  one pair of braces too many). Its add512() also differs from the
+  little-endian one, which drops a carry on purpose (existing volumes
+  depend on it); do the same limb arithmetic on big-endian.
+- misc.h: the rotate-based bswap_32 (non-Linux, non-Apple, non-MSVC
+  builds) lacks outer parentheses, so "bswap_32(a) ^ b" is parsed
+  wrongly, and the fallback bswap_64 does not parenthesise its argument.
+- PBKDF2: the block number is always byte-swapped.
+
+Swap only where the host byte order differs from the data, and enable
+the Streebog big-endian path. On big-endian hosts the message words,
+keys and blocks of SHA-2, BLAKE2s, Twofish and Kuznyechik are read and
+written byte-wise (new VcLoad*/VcStore* inline helpers in misc.h), so
+these paths also work on misaligned buffers on strict-alignment CPUs.
+On little-endian CPUs the code is unchanged: the object files of all
+touched sources are byte-identical before and after this change
+(checked on x86_64, aarch64 and mipsel). With it, all self-tests pass on
+mips (big-endian) under qemu.
+
+Signed-off-by: Ville Takio <ville+git@takio.fi>
+
+* Volume: avoid unaligned 64-bit header and test vector accesses
+
+The volume header (de)serialisation and TestXtsAES read and write 64-bit
+fields through casted pointers into byte buffers at offsets that are
+only 4-byte aligned (e.g. the header field at offset 12). CPUs that trap
+on misaligned access without kernel fix-up (SPARC, MIPS64 on some
+systems, qemu-user) then fail with SIGBUS in "veracrypt --test" and when
+creating or opening any volume. Use memcpy instead, and have
+DeserializeEntryAt check that the whole entry, not only its start, lies
+inside the header.
+
+The XTS code also accesses its local byte arrays (whitening values,
+data unit number) through uint64 pointers; declare them 8-byte aligned
+instead of relying on the compiler's stack layout.
+
+Signed-off-by: Ville Takio <ville+git@takio.fi>
+
+* Volume: test multi-block PBKDF2 output and the Streebog carry case
+
+The PBKDF2 self-tests only check the first 4 bytes of each derivation,
+so the block counter of the second and later output blocks is never
+checked. Also compare the complete output of a 192-byte derivation for
+every PRF, which covers the later blocks and how they are joined, and
+hash a message whose block sum hits the carry case of Streebog's
+add512(), which has to stay bit-compatible across CPUs. The message
+buffer is 8-byte aligned, as the portable Streebog code reads it as
+64-bit words. The expected values are those of the existing
+little-endian code, and match independent implementations for all five
+PRFs (Python hashlib/hmac, OpenSSL for Whirlpool, gostcrypto for
+Streebog).
+
+Signed-off-by: Ville Takio <ville+git@takio.fi>
+
+---------
+
+Upstream-Status: Backport [https://github.com/veracrypt/VeraCrypt/commit/425cea6c9c0d1526f10178e3cd31e900b9f2b35c]
+
+Signed-off-by: Ville Takio <ville+git@takio.fi>
+---
+ src/Common/Pkcs5.c               |  18 ++--
+ src/Crypto/Camellia.c            |   6 ++
+ src/Crypto/Sha2.c                |  30 +++++--
+ src/Crypto/Streebog.c            |  37 +++++---
+ src/Crypto/Twofish.c             |  51 ++++++-----
+ src/Crypto/blake2s.c             |  30 ++++++-
+ src/Crypto/kuznyechik.c          |  34 +++++---
+ src/Crypto/misc.h                |  50 ++++++++++-
+ src/Volume/EncryptionModeXTS.cpp |  12 +--
+ src/Volume/EncryptionTest.cpp    | 144 ++++++++++++++++++++++++++++++-
+ src/Volume/VolumeHeader.cpp      |  13 ++-
+ 11 files changed, 353 insertions(+), 72 deletions(-)
+
+--- a/src/Common/Pkcs5.c
++++ b/src/Common/Pkcs5.c
+@@ -22,6 +22,14 @@
+ #include "Whirlpool.h"
+ #include "cpu.h"
+ #include "misc.h"
++#include "Endian.h"
++
++/* PBKDF2 block numbers are big-endian: swap only on little-endian hosts. */
++#if BYTE_ORDER == BIG_ENDIAN
++#define PKCS5_BE32(x) (x)
++#else
++#define PKCS5_BE32(x) (bswap_32(x))
++#endif
+ #else
+ #pragma optimize ("t", on)
+ #include <string.h>
+@@ -180,7 +188,7 @@ static void derive_u_sha256 (const unsig
+ 	memset (&k[salt_len], 0, 3);
+ 	k[salt_len + 3] = (unsigned char) b;
+ #else
+-    b = bswap_32 (b);
++    b = PKCS5_BE32 (b);
+     memcpy (&k[salt_len], &b, 4);
+ #endif	
+ 
+@@ -433,7 +441,7 @@ static void derive_u_sha512 (const unsig
+ 	/* iteration 1 */
+ 	memcpy (k, salt, salt_len);	/* salt */
+ 	/* big-endian block number */
+-    b = bswap_32 (b);
++    b = PKCS5_BE32 (b);
+ 	memcpy (&k[salt_len], &b, 4);
+ 
+ 	hmac_sha512_internal (k, salt_len + 4, hmac);
+@@ -681,7 +689,7 @@ static void derive_u_blake2s (const unsi
+ 	memset (&k[salt_len], 0, 3);
+ 	k[salt_len + 3] = (unsigned char) b;
+ #else
+-    b = bswap_32 (b);
++    b = PKCS5_BE32 (b);
+     memcpy (&k[salt_len], &b, 4);
+ #endif	
+ 
+@@ -911,7 +919,7 @@ static void derive_u_whirlpool (const un
+ 	/* iteration 1 */
+ 	memcpy (k, salt, salt_len);	/* salt */
+ 	/* big-endian block number */
+-    b = bswap_32 (b);
++    b = PKCS5_BE32 (b);
+ 	memcpy (&k[salt_len], &b, 4);
+ 
+ 	hmac_whirlpool_internal (k, salt_len + 4, hmac);
+@@ -1114,7 +1122,7 @@ static void derive_u_streebog (const uns
+ 	/* iteration 1 */
+ 	memcpy (k, salt, salt_len);	/* salt */
+ 	/* big-endian block number */
+-    b = bswap_32 (b);
++    b = PKCS5_BE32 (b);
+ 	memcpy (&k[salt_len], &b, 4);
+ 
+ 	hmac_streebog_internal (k, salt_len + 4, hmac);
+--- a/src/Crypto/Camellia.c
++++ b/src/Crypto/Camellia.c
+@@ -1523,12 +1523,18 @@ static const uint64 S[8][256] = {
+ 
+ 	VC_INLINE uint64 camellia_load_be64(const unsigned __int8 *ptr)
+ 	{
++#if BYTE_ORDER == BIG_ENDIAN
++		return camellia_load64(ptr);
++#else
+ 		return bswap_64(camellia_load64(ptr));
++#endif
+ 	}
+ 
+ 	VC_INLINE void camellia_store_be64(unsigned __int8 *ptr, uint64 value)
+ 	{
++#if BYTE_ORDER != BIG_ENDIAN
+ 		value = bswap_64(value);
++#endif
+ 		camellia_store64(ptr, value);
+ 	}
+ 
+--- a/src/Crypto/Sha2.c
++++ b/src/Crypto/Sha2.c
+@@ -10,6 +10,24 @@ and released into public domain.
+ #include "Crypto/cpu.h"
+ #include "Crypto/misc.h"
+ 
++/* SHA-2 words are big-endian: swap only on little-endian hosts. */
++#if BYTE_ORDER == BIG_ENDIAN
++#define SHA2_BE32(x) (x)
++#define SHA2_BE64(x) (x)
++#else
++#define SHA2_BE32(x) (bswap_32(x))
++#define SHA2_BE64(x) (bswap_64(x))
++#endif
++
++/* Message word i of the block at p (big-endian; byte-wise on big-endian hosts). */
++#if BYTE_ORDER == BIG_ENDIAN
++#define SHA2_LOAD_BE32(p, i) VcLoadBE32((const uint8 *) (p) + 4 * (i))
++#define SHA2_LOAD_BE64(p, i) VcLoadBE64((const uint8 *) (p) + 8 * (i))
++#else
++#define SHA2_LOAD_BE32(p, i) bswap_32(((const uint_32t *) (p))[i])
++#define SHA2_LOAD_BE64(p, i) bswap_64(((const uint_64t *) (p))[i])
++#endif
++
+ #if defined(_UEFI) || defined(CRYPTOPP_DISABLE_ASM)
+ #define NO_OPTIMIZED_VERSIONS
+ #endif
+@@ -99,7 +117,7 @@ void StdTransform(sha512_ctx* ctx, void*
+ 
+ 		for (i = 0; i < 128 / 8; i++)
+ 		{
+-			W[i] = bswap_64((((const uint_64t*)(mp))[blk * 16 + i]));
++			W[i] = SHA2_LOAD_BE64(mp, blk * 16 + i);
+ 		}
+ 
+ 		a = ctx->hash[0];
+@@ -244,12 +262,12 @@ void sha512_end(unsigned char * result,
+ 		pos = 0;
+ 	}
+ 	memset(m + pos, 0, (size_t) (128 - pos));
+-	mlen = bswap_64(ctx->count[1]);
++	mlen = SHA2_BE64(ctx->count[1]);
+ 	memcpy(m + (128 - 8), &mlen, 64 / 8);
+ 	transfunc(ctx, m, 1);
+ 	for (i = 0; i < 8; i++)
+ 	{
+-		ctx->hash[i] = bswap_64(ctx->hash[i]);
++		ctx->hash[i] = SHA2_BE64(ctx->hash[i]);
+ 	}
+ 	memcpy(result, ctx->hash, 64);
+ }
+@@ -672,7 +690,7 @@ void StdSha256Transform(sha256_ctx* ctx,
+ 
+ 		for (i = 0; i < 64 / 4; i++)
+ 		{
+-			W[i] = bswap_32((((const uint_32t*)(mp))[blk * 16 + i]));
++			W[i] = SHA2_LOAD_BE32(mp, blk * 16 + i);
+ 		}
+ 
+ 		a = ctx->hash[0];
+@@ -846,12 +864,12 @@ void sha256_end(unsigned char * result,
+ 		pos = 0;
+ 	}
+ 	memset(m + pos, 0, (size_t) (56 - pos));
+-	mlen = bswap_64((uint_64t) ctx->count[1]);
++	mlen = SHA2_BE64((uint_64t) ctx->count[1]);
+ 	memcpy(m + (64 - 8), &mlen, 64 / 8);
+ 	sha256transfunc(ctx, m, 1);
+ 	for (i = 0; i < 8; i++)
+ 	{
+-		ctx->hash[i] = bswap_32(ctx->hash[i]);
++		ctx->hash[i] = SHA2_BE32(ctx->hash[i]);
+ 	}
+ 	memcpy(result, ctx->hash, 32);
+ }
+--- a/src/Crypto/Streebog.c
++++ b/src/Crypto/Streebog.c
+@@ -8,6 +8,14 @@
+ 
+ #include "Streebog.h"
+ #include "cpu.h"
++#include "Common/Endian.h"
++
++/* The big-endian code paths below come from the original implementation. */
++#if BYTE_ORDER == BIG_ENDIAN
++#include "misc.h"
++#define __GOST3411_BIG_ENDIAN__
++#define BSWAP64(x) bswap_64(x)
++#endif
+ 
+ #if defined (_MSC_VER) && (_MSC_VER < 1600)
+ #error "Streebog SSE code requires at least Visual C++ 2010 when building on Windows"
+@@ -24,8 +32,8 @@ STREEBOG_ALIGN(16) static const unsigned
+ STREEBOG_ALIGN(16) static const unsigned long long buffer512[8] = {0x0000000000000200ULL,
+     0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL };
+ #else
+-STREEBOG_ALIGN(16) static const unsigned long long buffer512[8] = {{ 0x0002000000000000ULL,
+-    0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL }};
++STREEBOG_ALIGN(16) static const unsigned long long buffer512[8] = { 0x0002000000000000ULL,
++    0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL };
+ #endif
+ 
+ #ifndef __GOST3411_BIG_ENDIAN__
+@@ -1783,20 +1791,21 @@ add512(const unsigned long long *x, cons
+         r[i] = tmp;
+ 	}
+ #else
+-    const unsigned char *xp, *yp;
+-    unsigned char *rp;
+-    unsigned int i;
+-    int buf;
++    /* Same limb-wise arithmetic as the little-endian path above (including
++     * its dropped carry, which existing volumes depend on), applied to the
++     * byte-swapped 64-bit limbs. */
++    unsigned int CF = 0, OF, i;
++    unsigned long long a, b, tmp;
+ 
+-    xp = (const unsigned char *) x;
+-    yp = (const unsigned char *) y;
+-    rp = (unsigned char *) r;
+-
+-    buf = 0;
+-    for (i = 0; i < 64; i++)
++    for (i = 0; i < 8; i++)
+     {
+-        buf = xp[i] + yp[i] + (buf >> 8);
+-        rp[i] = (unsigned char) buf & 0xFF;
++        a = BSWAP64(x[i]);
++        b = BSWAP64(y[i]);
++        tmp = a + b;
++        OF = tmp < a;
++        tmp += CF;
++        CF = OF;
++        r[i] = BSWAP64(tmp);
+     }
+ #endif
+ }
+--- a/src/Crypto/Twofish.c
++++ b/src/Crypto/Twofish.c
+@@ -44,6 +44,17 @@
+ 
+ #include "misc.h"
+ 
++/* The cipher works on little-endian words: swap only on big-endian hosts. */
++#if BYTE_ORDER == BIG_ENDIAN
++#define TWOFISH_LE32(x) (bswap_32(x))
++#define TWOFISH_LOAD(p, i) VcLoadLE32((p) + (i))
++#define TWOFISH_STORE(p, i, v) VcStoreLE32((p) + (i), (v))
++#else
++#define TWOFISH_LE32(x) (x)
++#define TWOFISH_LOAD(p, i) ((p)[i])
++#define TWOFISH_STORE(p, i, v) ((p)[i] = (v))
++#endif
++
+ /* C implementation based on code written by kerukuro for cppcrypto library 
+    (http://cppcrypto.sourceforge.net/) and released into public domain.
+    With ideas from Botan library	(C) 1999-2007 Jack Lloyd
+@@ -610,10 +621,10 @@ void twofish_set_key(TwofishInstance *in
+ 	unsigned int i;
+    const uint8* key = (const uint8*) in_key;
+ 
+-	us.S32[0] = RS[0][key[0]] ^ RS[1][key[1]] ^ RS[2][key[2]] ^ RS[3][key[3]] ^ RS[4][key[4]] ^ RS[5][key[5]] ^ RS[6][key[6]] ^ RS[7][key[7]];
+-	us.S32[1] = RS[0][key[8]] ^ RS[1][key[9]] ^ RS[2][key[10]] ^ RS[3][key[11]] ^ RS[4][key[12]] ^ RS[5][key[13]] ^ RS[6][key[14]] ^ RS[7][key[15]];
+-	us.S32[2] = RS[0][key[16]] ^ RS[1][key[17]] ^ RS[2][key[18]] ^ RS[3][key[19]] ^ RS[4][key[20]] ^ RS[5][key[21]] ^ RS[6][key[22]] ^ RS[7][key[23]];
+-	us.S32[3] = RS[0][key[24]] ^ RS[1][key[25]] ^ RS[2][key[26]] ^ RS[3][key[27]] ^ RS[4][key[28]] ^ RS[5][key[29]] ^ RS[6][key[30]] ^ RS[7][key[31]];
++	us.S32[0] = TWOFISH_LE32(RS[0][key[0]] ^ RS[1][key[1]] ^ RS[2][key[2]] ^ RS[3][key[3]] ^ RS[4][key[4]] ^ RS[5][key[5]] ^ RS[6][key[6]] ^ RS[7][key[7]]);
++	us.S32[1] = TWOFISH_LE32(RS[0][key[8]] ^ RS[1][key[9]] ^ RS[2][key[10]] ^ RS[3][key[11]] ^ RS[4][key[12]] ^ RS[5][key[13]] ^ RS[6][key[14]] ^ RS[7][key[15]]);
++	us.S32[2] = TWOFISH_LE32(RS[0][key[16]] ^ RS[1][key[17]] ^ RS[2][key[18]] ^ RS[3][key[19]] ^ RS[4][key[20]] ^ RS[5][key[21]] ^ RS[6][key[22]] ^ RS[7][key[23]]);
++	us.S32[3] = TWOFISH_LE32(RS[0][key[24]] ^ RS[1][key[25]] ^ RS[2][key[26]] ^ RS[3][key[27]] ^ RS[4][key[28]] ^ RS[5][key[29]] ^ RS[6][key[30]] ^ RS[7][key[31]]);
+ 
+ 	for (i = 0; i < 256; ++i)
+ 	{
+@@ -1003,10 +1014,10 @@ void twofish_encrypt(TwofishInstance *ks
+ {   
+ 	uint32* rk = ks->l_key;
+ 
+-	uint32 x0 = in_blk[0] ^ rk[0];
+-	uint32 x1 = in_blk[1] ^ rk[1];
+-	uint32 x2 = in_blk[2] ^ rk[2];
+-	uint32 x3 = in_blk[3] ^ rk[3];
++	uint32 x0 = TWOFISH_LOAD(in_blk, 0) ^ rk[0];
++	uint32 x1 = TWOFISH_LOAD(in_blk, 1) ^ rk[1];
++	uint32 x2 = TWOFISH_LOAD(in_blk, 2) ^ rk[2];
++	uint32 x3 = TWOFISH_LOAD(in_blk, 3) ^ rk[3];
+ 	uint32 f0, f1;
+ 
+ #ifdef UNROLL_TWOFISH
+@@ -1027,10 +1038,10 @@ void twofish_encrypt(TwofishInstance *ks
+ 	x1 ^= rk[7];
+ 
+ 
+-	out_blk[0] = x2;
+-	out_blk[1] = x3;
+-	out_blk[2] = x0;
+-	out_blk[3] = x1;
++	TWOFISH_STORE(out_blk, 0, x2);
++	TWOFISH_STORE(out_blk, 1, x3);
++	TWOFISH_STORE(out_blk, 2, x0);
++	TWOFISH_STORE(out_blk, 3, x1);
+ }
+ #endif
+ #else // TC_MINIMIZE_CODE_SIZE
+@@ -1075,10 +1086,10 @@ void twofish_encrypt(TwofishInstance *in
+ void twofish_decrypt(TwofishInstance *ks, const u4byte in_blk[4], u4byte out_blk[4])
+ {
+ 	uint32* rk = ks->l_key;
+-	uint32 x0 = in_blk[0] ^ rk[4];
+-	uint32 x1 = in_blk[1] ^ rk[5];
+-	uint32 x2 = in_blk[2] ^ rk[6];
+-	uint32 x3 = in_blk[3] ^ rk[7];
++	uint32 x0 = TWOFISH_LOAD(in_blk, 0) ^ rk[4];
++	uint32 x1 = TWOFISH_LOAD(in_blk, 1) ^ rk[5];
++	uint32 x2 = TWOFISH_LOAD(in_blk, 2) ^ rk[6];
++	uint32 x3 = TWOFISH_LOAD(in_blk, 3) ^ rk[7];
+ 	uint32 f0, f1;
+ 
+ #ifdef UNROLL_TWOFISH
+@@ -1097,10 +1108,10 @@ void twofish_decrypt(TwofishInstance *ks
+ 	x0 ^= rk[2];
+ 	x1 ^= rk[3];
+ 
+-	out_blk[0] = x2;
+-	out_blk[1] = x3;
+-	out_blk[2] = x0;
+-	out_blk[3] = x1;
++	TWOFISH_STORE(out_blk, 0, x2);
++	TWOFISH_STORE(out_blk, 1, x3);
++	TWOFISH_STORE(out_blk, 2, x0);
++	TWOFISH_STORE(out_blk, 3, x1);
+ };
+ #endif
+ #else // TC_MINIMIZE_CODE_SIZE
+--- a/src/Crypto/blake2s.c
++++ b/src/Crypto/blake2s.c
+@@ -28,6 +28,13 @@
+ // load32 is always called in SSE case which implies little endian 
+ #define load32(x)	*((uint32*) (x))
+ 
++/* Message words are little-endian: read them byte-wise on big-endian hosts. */
++#if BYTE_ORDER == BIG_ENDIAN
++#define BLAKE2S_LOAD32(p) VcLoadLE32(p)
++#else
++#define BLAKE2S_LOAD32(p) (*((uint32*) (p)))
++#endif
++
+ const uint32 blake2s_IV[8] =
+ {
+   0x6A09E667UL, 0xBB67AE85UL, 0x3C6EF372UL, 0xA54FF53AUL,
+@@ -70,6 +77,26 @@ void blake2s_init_param( blake2s_state *
+ {
+   size_t i;
+   /*blake2s_init0( S ); */
++#if BYTE_ORDER == BIG_ENDIAN
++  /* IV XOR ParamBlock: the parameter block is defined as little-endian
++   * words, so build them from the (native) fields. */
++  uint32 w[8];
++
++  memset( S, 0, sizeof( blake2s_state ) );
++  w[0] = ( uint32 ) P->digest_length | ( ( uint32 ) P->key_length << 8 )
++    | ( ( uint32 ) P->fanout << 16 ) | ( ( uint32 ) P->depth << 24 );
++  w[1] = P->leaf_length;
++  w[2] = P->node_offset;
++  w[3] = ( uint32 ) P->xof_length | ( ( uint32 ) P->node_depth << 16 )
++    | ( ( uint32 ) P->inner_length << 24 );
++  w[4] = VcLoadLE32( P->salt );
++  w[5] = VcLoadLE32( P->salt + 4 );
++  w[6] = VcLoadLE32( P->personal );
++  w[7] = VcLoadLE32( P->personal + 4 );
++
++  for( i = 0; i < 8; ++i )
++    S->h[i] = blake2s_IV[i] ^ w[i];
++#else
+   const uint8 * v = ( const uint8 * )( blake2s_IV );
+   const uint8 * p = ( const uint8 * )( P );
+   uint8 * h = ( uint8 * )( S->h );
+@@ -77,6 +104,7 @@ void blake2s_init_param( blake2s_state *
+   memset( S, 0, sizeof( blake2s_state ) );
+ 
+   for( i = 0; i < BLAKE2S_OUTBYTES; ++i ) h[i] = v[i] ^ p[i];
++#endif
+ 
+   S->outlen = P->digest_length;
+ }
+@@ -126,7 +154,7 @@ static void blake2s_compress_std( blake2
+   size_t i;
+ 
+   for( i = 0; i < 16; ++i ) {
+-	m[i] = *((uint32*) (in + i * sizeof( m[i] )));
++	m[i] = BLAKE2S_LOAD32( in + i * sizeof( m[i] ) );
+   }
+ 
+   for( i = 0; i < 8; ++i ) {
+--- a/src/Crypto/kuznyechik.c
++++ b/src/Crypto/kuznyechik.c
+@@ -6,6 +6,16 @@ and released into public domain.
+ #include "kuznyechik.h"
+ #include "cpu.h"
+ #include "misc.h"
++#include "Common/Endian.h"
++
++/* Keys and blocks are used as little-endian words: swap only on big-endian hosts. */
++#if BYTE_ORDER == BIG_ENDIAN
++#define KUZNYECHIK_LOAD64(p) VcLoadLE64(p)
++#define KUZNYECHIK_STORE64(p, v) VcStoreLE64((p), (v))
++#else
++#define KUZNYECHIK_LOAD64(p) (*(const uint64*)(p))
++#define KUZNYECHIK_STORE64(p, v) (*(uint64*)(p) = (v))
++#endif
+ 
+ #ifdef _MSC_VER
+ #define inline __forceinline
+@@ -2210,10 +2220,10 @@ void kuznyechik_decrypt_blocks_simd(uint
+ #endif
+ 		{
+ 			int i;
+-			uint64 k00 = *(const uint64*)key;
+-			uint64 k01 = *(((const uint64*)key) + 1);
+-			uint64 k10 = *(((const uint64*)key) + 2);
+-			uint64 k11 = *(((const uint64*)key) + 3);
++			uint64 k00 = KUZNYECHIK_LOAD64(key);
++			uint64 k01 = KUZNYECHIK_LOAD64(key + 8);
++			uint64 k10 = KUZNYECHIK_LOAD64(key + 16);
++			uint64 k11 = KUZNYECHIK_LOAD64(key + 24);
+ 			uint64 t00, t01, t10, t11;
+ 
+ 			kds->rke[0] = k00;
+@@ -2268,8 +2278,8 @@ void kuznyechik_decrypt_blocks_simd(uint
+ 		else
+ #endif
+ 		{
+-			uint64 x1 = *(const uint64*)in;
+-			uint64 x2 = *(((const uint64*)in)+1);
++			uint64 x1 = KUZNYECHIK_LOAD64(in);
++			uint64 x2 = KUZNYECHIK_LOAD64(in + 8);
+ 			uint64 t1, t2;
+ 			x1 ^= kds->rke[0];
+ 			x2 ^= kds->rke[1];
+@@ -2300,8 +2310,8 @@ void kuznyechik_decrypt_blocks_simd(uint
+ 			LS(x1, x2, t1, t2);
+ 			t1 ^= kds->rke[18];
+ 			t2 ^= kds->rke[19];
+-			*(uint64*)out = t1;
+-			*(((uint64*)out) + 1) = t2;
++			KUZNYECHIK_STORE64(out, t1);
++			KUZNYECHIK_STORE64(out + 8, t2);
+ 		}
+ 	}
+ 
+@@ -2335,8 +2345,8 @@ void kuznyechik_decrypt_blocks_simd(uint
+ 		else
+ #endif
+ 		{
+-			uint64 x1 = *(const uint64*)in;
+-			uint64 x2 = *(((const uint64*)in) + 1);
++			uint64 x1 = KUZNYECHIK_LOAD64(in);
++			uint64 x2 = KUZNYECHIK_LOAD64(in + 8);
+ 			uint64 t1, t2;
+ 
+ 			ILSS(x1, x2, t1, t2);
+@@ -2370,8 +2380,8 @@ void kuznyechik_decrypt_blocks_simd(uint
+ 			ISI((uint8*)&t2);
+ 			t1 ^= kds->rkd[0];
+ 			t2 ^= kds->rkd[1];
+-			*(uint64*)out = t1;
+-			*(((uint64*)out) + 1) = t2;
++			KUZNYECHIK_STORE64(out, t1);
++			KUZNYECHIK_STORE64(out + 8, t2);
+ 		}
+ 	}
+ 
+--- a/src/Crypto/misc.h
++++ b/src/Crypto/misc.h
+@@ -101,17 +101,61 @@ extern "C" {
+ #define bswap_64 OSSwapInt64
+ #else
+ #if CRYPTOPP_FAST_ROTATE(32)
+-#define bswap_32(x)	(rotr32((x), 8U) & 0xff00ff00) | (rotl32((x), 8U) & 0x00ff00ff)
++#define bswap_32(x)	((rotr32((x), 8U) & 0xff00ff00) | (rotl32((x), 8U) & 0x00ff00ff))
+ #else
+ #define CRYPTOPP_BYTESWAP_AVAILABLE
+ #define bswap_32(x)	(rotl32((((x) & 0xFF00FF00) >> 8) | (((x) & 0x00FF00FF) << 8), 16U))
+-#define bswap_64(x)	rotl64(((((((x & LL(0xFF00FF00FF00FF00)) >> 8) | ((x & LL(0x00FF00FF00FF00FF)) << 8)) & LL(0xFFFF0000FFFF0000)) >> 16) | (((((x & LL(0xFF00FF00FF00FF00)) >> 8) | ((x & LL(0x00FF00FF00FF00FF)) << 8)) & LL(0x0000FFFF0000FFFF)) << 16)), 32U)
++#define bswap_64(x)	rotl64((((((((x) & LL(0xFF00FF00FF00FF00)) >> 8) | (((x) & LL(0x00FF00FF00FF00FF)) << 8)) & LL(0xFFFF0000FFFF0000)) >> 16) | ((((((x) & LL(0xFF00FF00FF00FF00)) >> 8) | (((x) & LL(0x00FF00FF00FF00FF)) << 8)) & LL(0x0000FFFF0000FFFF)) << 16)), 32U)
+ #endif
+ #ifndef TC_NO_COMPILER_INT64
+-#define bswap_64(x)	rotl64(((((((x & LL(0xFF00FF00FF00FF00)) >> 8) | ((x & LL(0x00FF00FF00FF00FF)) << 8)) & LL(0xFFFF0000FFFF0000)) >> 16) | (((((x & LL(0xFF00FF00FF00FF00)) >> 8) | ((x & LL(0x00FF00FF00FF00FF)) << 8)) & LL(0x0000FFFF0000FFFF)) << 16)), 32U)
++#define bswap_64(x)	rotl64((((((((x) & LL(0xFF00FF00FF00FF00)) >> 8) | (((x) & LL(0x00FF00FF00FF00FF)) << 8)) & LL(0xFFFF0000FFFF0000)) >> 16) | ((((((x) & LL(0xFF00FF00FF00FF00)) >> 8) | (((x) & LL(0x00FF00FF00FF00FF)) << 8)) & LL(0x0000FFFF0000FFFF)) << 16)), 32U)
+ #endif
+ #endif
+ 
++/* Alignment-safe loads and stores of little- and big-endian words in byte
++ * buffers (used by the big-endian code paths). */
++VC_INLINE uint32 VcLoadLE32 (const void *ptr)
++{
++	const uint8 *p = (const uint8 *) ptr;
++	return (uint32) p[0] | ((uint32) p[1] << 8) | ((uint32) p[2] << 16) | ((uint32) p[3] << 24);
++}
++
++VC_INLINE uint32 VcLoadBE32 (const void *ptr)
++{
++	const uint8 *p = (const uint8 *) ptr;
++	return ((uint32) p[0] << 24) | ((uint32) p[1] << 16) | ((uint32) p[2] << 8) | (uint32) p[3];
++}
++
++VC_INLINE void VcStoreLE32 (void *ptr, uint32 value)
++{
++	uint8 *p = (uint8 *) ptr;
++	p[0] = (uint8) value;
++	p[1] = (uint8) (value >> 8);
++	p[2] = (uint8) (value >> 16);
++	p[3] = (uint8) (value >> 24);
++}
++
++#ifndef TC_NO_COMPILER_INT64
++VC_INLINE uint64 VcLoadLE64 (const void *ptr)
++{
++	const uint8 *p = (const uint8 *) ptr;
++	return (uint64) VcLoadLE32 (p) | ((uint64) VcLoadLE32 (p + 4) << 32);
++}
++
++VC_INLINE uint64 VcLoadBE64 (const void *ptr)
++{
++	const uint8 *p = (const uint8 *) ptr;
++	return ((uint64) VcLoadBE32 (p) << 32) | (uint64) VcLoadBE32 (p + 4);
++}
++
++VC_INLINE void VcStoreLE64 (void *ptr, uint64 value)
++{
++	uint8 *p = (uint8 *) ptr;
++	VcStoreLE32 (p, (uint32) value);
++	VcStoreLE32 (p + 4, (uint32) (value >> 32));
++}
++#endif
++
+ VC_INLINE uint32 ByteReverseWord32 (uint32 value)
+ {
+ #if defined(__GNUC__) && defined(CRYPTOPP_X86_ASM_AVAILABLE)
+--- a/src/Volume/EncryptionModeXTS.cpp
++++ b/src/Volume/EncryptionModeXTS.cpp
+@@ -70,9 +70,9 @@ namespace VeraCrypt
+ 	void EncryptionModeXTS::EncryptBufferXTS (const Cipher &cipher, const Cipher &secondaryCipher, uint8 *buffer, uint64 length, uint64 startDataUnitNo, unsigned int startCipherBlockNo) const
+ 	{
+                 uint8 finalCarry;
+-		uint8 whiteningValues [ENCRYPTION_DATA_UNIT_SIZE];
+-		uint8 whiteningValue [BYTES_PER_XTS_BLOCK];
+-		uint8 byteBufUnitNo [BYTES_PER_XTS_BLOCK];
++		CRYPTOPP_ALIGN_DATA(8) uint8 whiteningValues [ENCRYPTION_DATA_UNIT_SIZE];
++		CRYPTOPP_ALIGN_DATA(8) uint8 whiteningValue [BYTES_PER_XTS_BLOCK];
++		CRYPTOPP_ALIGN_DATA(8) uint8 byteBufUnitNo [BYTES_PER_XTS_BLOCK];
+ 		uint64 *whiteningValuesPtr64 = (uint64 *) whiteningValues;
+ 		uint64 *whiteningValuePtr64 = (uint64 *) whiteningValue;
+ 		uint64 *bufPtr = (uint64 *) buffer;
+@@ -249,9 +249,9 @@ namespace VeraCrypt
+ 	void EncryptionModeXTS::DecryptBufferXTS (const Cipher &cipher, const Cipher &secondaryCipher, uint8 *buffer, uint64 length, uint64 startDataUnitNo, unsigned int startCipherBlockNo) const
+ 	{
+ 		uint8 finalCarry;
+-		uint8 whiteningValues [ENCRYPTION_DATA_UNIT_SIZE];
+-		uint8 whiteningValue [BYTES_PER_XTS_BLOCK];
+-		uint8 byteBufUnitNo [BYTES_PER_XTS_BLOCK];
++		CRYPTOPP_ALIGN_DATA(8) uint8 whiteningValues [ENCRYPTION_DATA_UNIT_SIZE];
++		CRYPTOPP_ALIGN_DATA(8) uint8 whiteningValue [BYTES_PER_XTS_BLOCK];
++		CRYPTOPP_ALIGN_DATA(8) uint8 byteBufUnitNo [BYTES_PER_XTS_BLOCK];
+ 		uint64 *whiteningValuesPtr64 = (uint64 *) whiteningValues;
+ 		uint64 *whiteningValuePtr64 = (uint64 *) whiteningValue;
+ 		uint64 *bufPtr = (uint64 *) buffer;
+--- a/src/Volume/EncryptionTest.cpp
++++ b/src/Volume/EncryptionTest.cpp
+@@ -511,7 +511,8 @@ namespace VeraCrypt
+ 
+ 			memcpy (p, XtsTestVectors[i].plaintext, sizeof (p));
+ 
+-			dataUnitNo = Endian::Big (*((uint64 *) XtsTestVectors[i].dataUnitNo));
++			memcpy (&dataUnitNo, XtsTestVectors[i].dataUnitNo, sizeof (dataUnitNo));
++			dataUnitNo = Endian::Big (dataUnitNo);
+ 
+ 			aes.EncryptSectors (p, dataUnitNo, sizeof (p) / ENCRYPTION_DATA_UNIT_SIZE, ENCRYPTION_DATA_UNIT_SIZE);
+ 
+@@ -1200,6 +1201,147 @@ namespace VeraCrypt
+ 		if (memcmp (derivedKey.Ptr(), "\xd0\x53\xa2\x30", 4) != 0)
+ 			throw TestFailed (SRC_POS);
+ 
++		// Output longer than one hash block: PBKDF2 block counters 2 and up,
++		// and how the output blocks are joined (password "password", salt
++		// 0x12345678, 5 iterations, 192 bytes).
++		static const uint8 longKeyBlake2s[192] =
++		{
++			0x8d, 0x51, 0xfa, 0x31, 0x46, 0x25, 0x37, 0x67, 0xa3, 0x29, 0x6b, 0x3c,
++			0x6b, 0xc1, 0x5d, 0xb2, 0xee, 0xe1, 0x6c, 0x28, 0x00, 0x26, 0xea, 0x08,
++			0x65, 0x9c, 0x12, 0xf1, 0x07, 0xde, 0x0d, 0xb9, 0x9b, 0x4f, 0x39, 0xfa,
++			0xc6, 0x80, 0x26, 0xb1, 0x8f, 0x8e, 0x48, 0x89, 0x85, 0x2d, 0x24, 0x2d,
++			0xbd, 0x63, 0x72, 0x4a, 0x6c, 0xc6, 0x19, 0x7e, 0xc3, 0x1a, 0x5d, 0xf7,
++			0x61, 0xdc, 0x0d, 0xc8, 0x16, 0x3d, 0xd1, 0x1b, 0x02, 0x9b, 0x84, 0xd1,
++			0xc1, 0xee, 0x73, 0xf7, 0x1a, 0x36, 0x82, 0x50, 0xd0, 0xe7, 0x57, 0x16,
++			0x2b, 0x27, 0x00, 0x97, 0xee, 0x6e, 0xa1, 0x55, 0x44, 0x55, 0x19, 0x4f,
++			0x1f, 0xea, 0xe4, 0x48, 0x30, 0xfd, 0xaa, 0xa1, 0xe6, 0x9e, 0x1e, 0x3c,
++			0x5c, 0x43, 0x56, 0x10, 0x29, 0x4f, 0x72, 0x57, 0x3a, 0x14, 0x15, 0x77,
++			0xa6, 0x0a, 0x56, 0xd2, 0x7b, 0xfa, 0x86, 0x22, 0x20, 0x65, 0xd8, 0xc2,
++			0x64, 0x24, 0x68, 0x95, 0xc5, 0x52, 0x0d, 0x22, 0x33, 0x3c, 0xa6, 0x7c,
++			0x89, 0x17, 0xde, 0x0b, 0xc9, 0x62, 0xaf, 0x52, 0x2b, 0xda, 0x14, 0x24,
++			0xb0, 0x3d, 0xe1, 0x2b, 0xea, 0x23, 0x3c, 0xd8, 0xca, 0x8a, 0xe3, 0x7a,
++			0xa7, 0x6f, 0xdd, 0x4a, 0x2c, 0x31, 0x46, 0xa2, 0xeb, 0x3e, 0x2a, 0x07,
++			0xf2, 0x08, 0x21, 0x42, 0xb3, 0xde, 0x03, 0x53, 0x36, 0xb5, 0xff, 0x24
++		};
++		static const uint8 longKeySha512[192] =
++		{
++			0x13, 0x64, 0xae, 0xf8, 0x0d, 0xf5, 0x57, 0x6c, 0x30, 0xd5, 0x71, 0x4c,
++			0xa7, 0x75, 0x3f, 0xfd, 0x00, 0xe5, 0x25, 0x8b, 0x39, 0xc7, 0x44, 0x7f,
++			0xce, 0x23, 0x3d, 0x08, 0x75, 0xe0, 0x2f, 0x48, 0xd6, 0x30, 0xd7, 0x00,
++			0xb6, 0x24, 0xdb, 0xe0, 0x5a, 0xd7, 0x47, 0xef, 0x52, 0xca, 0xa6, 0x34,
++			0x83, 0x47, 0xe5, 0xcb, 0xe9, 0x87, 0xf1, 0x20, 0x59, 0x6a, 0xe6, 0xa9,
++			0xcf, 0x51, 0x78, 0xc6, 0xb6, 0x23, 0xa6, 0x74, 0x0d, 0xe8, 0x91, 0xbe,
++			0x1a, 0xd0, 0x28, 0xcc, 0xce, 0x16, 0x98, 0x9a, 0xbe, 0xfb, 0xdc, 0x78,
++			0xc9, 0xe1, 0x7d, 0x72, 0x67, 0xce, 0xe1, 0x61, 0x56, 0x5f, 0x96, 0x68,
++			0xe6, 0xe1, 0xdd, 0xf4, 0xbf, 0x1b, 0x80, 0xe0, 0x19, 0x1c, 0xf4, 0xc4,
++			0xd3, 0xdd, 0xd5, 0xd5, 0x57, 0x2d, 0x83, 0xc7, 0xa3, 0x37, 0x87, 0xf4,
++			0x4e, 0xe0, 0xf6, 0xd8, 0x6d, 0x65, 0xdc, 0xa0, 0x52, 0xa3, 0x13, 0xbe,
++			0x81, 0xfc, 0x30, 0xbe, 0x7d, 0x69, 0x58, 0x34, 0xb6, 0xdd, 0x41, 0xc6,
++			0x21, 0x50, 0xf5, 0x60, 0x44, 0xf9, 0x87, 0x69, 0xfd, 0x75, 0x75, 0xcb,
++			0x10, 0xe5, 0xe0, 0xfd, 0xf0, 0x7d, 0x3f, 0x79, 0xe2, 0xa0, 0x68, 0xb5,
++			0xbf, 0xd1, 0x76, 0x91, 0xc8, 0x68, 0x67, 0xd9, 0x01, 0x00, 0x4c, 0x1b,
++			0xfc, 0x1a, 0xd3, 0x39, 0x7b, 0x9d, 0x3d, 0x88, 0x71, 0xfc, 0x55, 0x1a
++		};
++		static const uint8 longKeyWhirlpool[192] =
++		{
++			0x50, 0x7c, 0x36, 0x6f, 0xee, 0x10, 0x2e, 0x9a, 0xe2, 0x8a, 0xd5, 0x82,
++			0x72, 0x7d, 0x27, 0x0f, 0xe8, 0x4d, 0x7f, 0x68, 0x7a, 0xcf, 0xb5, 0xe7,
++			0x43, 0x67, 0xaa, 0x98, 0x93, 0x52, 0x2b, 0x09, 0x6e, 0x42, 0xdf, 0x2c,
++			0x59, 0x4a, 0x91, 0x6d, 0x7e, 0x10, 0xae, 0xb2, 0x1a, 0x89, 0x8f, 0xb9,
++			0x8f, 0xe6, 0x31, 0xa9, 0xd8, 0x9f, 0x98, 0x26, 0xf4, 0xda, 0xcd, 0x7d,
++			0x65, 0x65, 0xde, 0x10, 0x95, 0x91, 0xb4, 0x84, 0x26, 0xae, 0x43, 0xa1,
++			0x00, 0x5b, 0x1e, 0xb8, 0x38, 0x97, 0xa4, 0x1e, 0x4b, 0xd2, 0x65, 0x64,
++			0xbc, 0xfa, 0x1f, 0x35, 0x85, 0xdb, 0x4f, 0x97, 0x65, 0x6f, 0xbd, 0x24,
++			0xd4, 0xe2, 0x28, 0x89, 0xec, 0xcf, 0x3a, 0xa4, 0x1b, 0x56, 0xe9, 0x61,
++			0xa3, 0x1f, 0x6f, 0xd6, 0xac, 0x9b, 0x92, 0xf4, 0xe6, 0xc2, 0x26, 0xbc,
++			0xd4, 0x99, 0x45, 0xf2, 0xcd, 0x46, 0xd0, 0x57, 0x44, 0xc7, 0x4b, 0x5d,
++			0xed, 0x17, 0x8e, 0x68, 0x0a, 0x6d, 0x5d, 0xbe, 0x72, 0xf4, 0x6d, 0xc6,
++			0x9e, 0x19, 0xcc, 0x09, 0xaa, 0x90, 0xb0, 0xcb, 0x40, 0xa3, 0x61, 0xd1,
++			0xe5, 0x1b, 0x90, 0xfb, 0x82, 0x5d, 0xec, 0xd6, 0xb9, 0x11, 0x9b, 0xe9,
++			0xa3, 0x70, 0xe5, 0x9a, 0x2e, 0x9c, 0x3a, 0x35, 0x25, 0xcd, 0x15, 0xe3,
++			0xfc, 0x1a, 0x00, 0x40, 0xa5, 0x71, 0x11, 0xfc, 0x82, 0x74, 0xe3, 0x90
++		};
++		static const uint8 longKeySha256[192] =
++		{
++			0xf2, 0xa0, 0x4f, 0xb2, 0xd3, 0xe9, 0xa5, 0xd8, 0x51, 0x0b, 0x5c, 0x06,
++			0xdf, 0x70, 0x8e, 0x24, 0xe9, 0xc7, 0xd9, 0x15, 0x3d, 0x22, 0xcd, 0xde,
++			0xb8, 0xa6, 0xdb, 0xfd, 0x71, 0x85, 0xc6, 0x99, 0x32, 0xc0, 0xee, 0x37,
++			0x27, 0xf7, 0x24, 0xcf, 0xea, 0xa6, 0xac, 0x73, 0xa1, 0x4c, 0x4e, 0x52,
++			0x9b, 0x94, 0xf3, 0x54, 0x06, 0xfc, 0x04, 0x65, 0xa1, 0x0a, 0x24, 0xfe,
++			0xf0, 0x98, 0x1d, 0xa6, 0x22, 0x28, 0xeb, 0x24, 0x55, 0x74, 0xce, 0x6a,
++			0x3a, 0x28, 0xe2, 0x04, 0x3a, 0x59, 0x13, 0xec, 0x3f, 0xf2, 0xdb, 0xcf,
++			0x58, 0xdd, 0x53, 0xd9, 0xf9, 0x17, 0xf6, 0xda, 0x74, 0x06, 0x3c, 0x0b,
++			0x66, 0xf5, 0x0f, 0xf5, 0x58, 0xa3, 0x27, 0x52, 0x8c, 0x5b, 0x07, 0x91,
++			0xd0, 0x81, 0xeb, 0xb6, 0xbc, 0x30, 0x69, 0x42, 0x71, 0xf2, 0xd7, 0x18,
++			0x42, 0xbe, 0xe8, 0x02, 0x93, 0x70, 0x66, 0xad, 0x35, 0x65, 0xbc, 0xf7,
++			0x96, 0x8e, 0x64, 0xf1, 0xc6, 0x92, 0xda, 0xe0, 0xdc, 0x1f, 0xb5, 0xf4,
++			0x15, 0xe8, 0xda, 0x2b, 0xb8, 0xd5, 0x96, 0x06, 0x50, 0x0e, 0xdb, 0xd7,
++			0xbf, 0x5d, 0x14, 0x7e, 0x16, 0x3c, 0xbd, 0x69, 0x29, 0x11, 0x45, 0x25,
++			0xaa, 0xc1, 0x7c, 0x6f, 0x0e, 0xcb, 0xe6, 0x86, 0x83, 0x77, 0xf0, 0xf4,
++			0x66, 0xbb, 0x34, 0x82, 0x3a, 0x84, 0x88, 0xde, 0xda, 0x8e, 0xce, 0x85
++		};
++		static const uint8 longKeyStreebog[192] =
++		{
++			0xd0, 0x53, 0xa2, 0x30, 0x6f, 0x45, 0x81, 0xeb, 0xbc, 0x06, 0x81, 0xc5,
++			0xe7, 0x53, 0xa8, 0x5d, 0xc7, 0xf1, 0x23, 0x33, 0x1e, 0xbe, 0x64, 0x2c,
++			0x3b, 0x0f, 0x26, 0xd7, 0x00, 0xe1, 0x95, 0xc9, 0x65, 0x26, 0xb1, 0x85,
++			0xbe, 0x1e, 0xe2, 0xf4, 0x9b, 0xfc, 0x6b, 0x14, 0x84, 0xda, 0x24, 0x61,
++			0xa0, 0x1b, 0x9e, 0x79, 0x5c, 0xee, 0x69, 0x6e, 0xf9, 0x25, 0xb1, 0x1d,
++			0xca, 0xa0, 0x31, 0xba, 0x02, 0x6f, 0x9e, 0x99, 0x0f, 0xdb, 0x25, 0x01,
++			0x5b, 0xf1, 0xc7, 0x10, 0x19, 0x53, 0x3b, 0x29, 0x3f, 0x18, 0x00, 0xd6,
++			0xfc, 0x85, 0x03, 0xdc, 0xf2, 0xe5, 0xe9, 0x5a, 0xb1, 0x1e, 0x61, 0xde,
++			0xa7, 0xc8, 0xd0, 0x4c, 0x72, 0xca, 0xfb, 0x01, 0x37, 0x13, 0x89, 0x3f,
++			0x90, 0x3c, 0x38, 0xe8, 0x4c, 0xfd, 0x72, 0x23, 0x61, 0x10, 0x81, 0x59,
++			0x0c, 0xcc, 0x97, 0xd6, 0x8a, 0x66, 0xbb, 0xc4, 0xd7, 0xbc, 0x76, 0xfc,
++			0xdc, 0xbf, 0x5c, 0xc4, 0x7c, 0xd1, 0x4f, 0xb5, 0xaa, 0x34, 0x32, 0x4c,
++			0x1a, 0x98, 0x68, 0x7c, 0x18, 0xf4, 0x0a, 0xc4, 0x03, 0x9e, 0x86, 0x9b,
++			0x87, 0x5e, 0x25, 0x1a, 0x38, 0x90, 0x49, 0x22, 0xdd, 0xfc, 0x83, 0x43,
++			0x9e, 0x83, 0xb5, 0xf9, 0x2c, 0x2d, 0x88, 0x1b, 0x53, 0xb2, 0x0a, 0x2a,
++			0xf7, 0x0b, 0x5b, 0xac, 0x6b, 0xc2, 0xa0, 0x53, 0x7f, 0x07, 0xa2, 0xea
++		};
++		Buffer longKey (192);
++		if (pkcs5HmacBlake2s.DeriveKey (longKey, password, salt, 5) != 0)
++			throw TestFailed (SRC_POS);
++		if (memcmp (longKey.Ptr(), longKeyBlake2s, sizeof (longKeyBlake2s)) != 0)
++			throw TestFailed (SRC_POS);
++		if (pkcs5HmacSha512.DeriveKey (longKey, password, salt, 5) != 0)
++			throw TestFailed (SRC_POS);
++		if (memcmp (longKey.Ptr(), longKeySha512, sizeof (longKeySha512)) != 0)
++			throw TestFailed (SRC_POS);
++		if (pkcs5HmacWhirlpool.DeriveKey (longKey, password, salt, 5) != 0)
++			throw TestFailed (SRC_POS);
++		if (memcmp (longKey.Ptr(), longKeyWhirlpool, sizeof (longKeyWhirlpool)) != 0)
++			throw TestFailed (SRC_POS);
++		if (pkcs5HmacSha256.DeriveKey (longKey, password, salt, 5) != 0)
++			throw TestFailed (SRC_POS);
++		if (memcmp (longKey.Ptr(), longKeySha256, sizeof (longKeySha256)) != 0)
++			throw TestFailed (SRC_POS);
++		if (pkcs5HmacStreebog.DeriveKey (longKey, password, salt, 5) != 0)
++			throw TestFailed (SRC_POS);
++		if (memcmp (longKey.Ptr(), longKeyStreebog, sizeof (longKeyStreebog)) != 0)
++			throw TestFailed (SRC_POS);
++
++		// Streebog: message blocks whose 512-bit sum hits the carry case of
++		// add512() must hash the same on every CPU. VeraCrypt's add512()
++		// drops this carry on purpose (existing volumes depend on it), so
++		// the expected digest is not the GOST R 34.11-2012 one (which would
++		// be c392d229...83639757).
++		{
++			// Read as 64-bit words by the portable Streebog code.
++			CRYPTOPP_ALIGN_DATA(8) uint8 message[128];
++			memset (message, 0, sizeof (message));
++			memset (message, 0xff, 16);
++			message[64] = 1;
++
++			Streebog streebog;
++			Buffer digest (streebog.GetDigestSize ());
++			streebog.ProcessData (ConstBufferPtr (message, sizeof (message)));
++			streebog.GetDigest (digest);
++			if (memcmp (digest.Ptr(), "\xf0\x7f\x6f\xae\x81\x90\xe4\x9d\x54\xe6\x98\x5a\x30\x44\xb3\x3d\xd8\xdb\x37\x08\x6b\x81\x83\x16\xcb\x19\xe2\x33\xf1\xa5\x81\x08"
++				"\xb1\x2e\x7f\x02\x74\x48\x32\x31\x1c\x09\x44\x68\x70\xb4\xbb\x45\x4b\xb5\x4f\xa3\x41\x39\x2a\xfd\xdd\x62\x25\x2b\xaf\x8a\x08\x09", 64) != 0)
++				throw TestFailed (SRC_POS);
++		}
++
+ 	#ifndef VC_DCS_DISABLE_ARGON2
+ 		Pkcs5Argon2 pkcs5Argon2;
+ 		static const uint8 argon2SaltData[] = { 's', 'o', 'm', 'e', 's', 'a', 'l', 't' };
+--- a/src/Volume/VolumeHeader.cpp
++++ b/src/Volume/VolumeHeader.cpp
+@@ -363,16 +363,20 @@ namespace VeraCrypt
+ 		if (offset > header.Size())
+ 			throw ParameterIncorrect (SRC_POS);
+ 
+-		return Endian::Big (*reinterpret_cast<const T *> (header.Get() + offset - sizeof (T)));
++		T value;
++		memcpy (&value, header.Get() + offset - sizeof (T), sizeof (T));
++		return Endian::Big (value);
+ 	}
+ 
+ 	template <typename T>
+ 	T VolumeHeader::DeserializeEntryAt (const ConstBufferPtr &header, const size_t &offset) const
+ 	{
+-		if (offset > header.Size())
++		if (offset > header.Size() || header.Size() - offset < sizeof (T))
+ 			throw ParameterIncorrect (SRC_POS);
+ 
+-		return Endian::Big (*reinterpret_cast<const T *> (header.Get() + offset));
++		T value;
++		memcpy (&value, header.Get() + offset, sizeof (T));
++		return Endian::Big (value);
+ 	}
+ 
+ 	void VolumeHeader::EncryptNew (const BufferPtr &newHeaderBuffer, const ConstBufferPtr &newSalt, const ConstBufferPtr &newHeaderKey, shared_ptr <Pkcs5Kdf> newPkcs5Kdf)
+@@ -486,7 +490,8 @@ namespace VeraCrypt
+ 		if (offset > header.Size())
+ 			throw ParameterIncorrect (SRC_POS);
+ 
+-		*reinterpret_cast<T *> (header.Get() + offset - sizeof (T)) = Endian::Big (entry);
++		T value = Endian::Big (entry);
++		memcpy (header.Get() + offset - sizeof (T), &value, sizeof (T));
+ 	}
+ 
+ 	void VolumeHeader::SetSize (uint32 headerSize)
