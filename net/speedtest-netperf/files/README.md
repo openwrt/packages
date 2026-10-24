@@ -44,23 +44,27 @@ opkg install speedtest-netperf_1.0.0-1_all.ipk
 
 ## Usage
 
+> [!WARNING]
+> You may now need to specify a passphrase for the selected netperf server with the `-Z` option. The passphrase for the default netperf server can be found at http://netperf.bufferbloat.net/.
+
 The speedtest-netperf.sh script measures throughput, latency and CPU usage during file transfers and when idle. To invoke it:
 
-    speedtest-netperf.sh [-4 | -6] [-H netperf-server] [-t duration] [-p host-to-ping] [-n simultaneous-streams ] [-s | -c [duration] ] [ -i [duration] ]
+    speedtest-netperf.sh [-4 | -6] [-H netperf-server] [-t duration] [-p host-to-ping] [-n simultaneous-streams ] [-s | -c [duration] ] [ -i [duration] ] [ -Z passphrase ]
 
 Options, if present, are:
 
     -4 | -6:           Enable ipv4 or ipv6 testing (default - ipv4)
     -H | --host:       DNS or Address of a netperf server (default - netperf.bufferbloat.net)
                        Alternate servers are netperf-east (US, east coast),
-                       netperf-west (US, California), and netperf-eu (Denmark).
+                       netperf-west (US, California) and netperf-eu (Denmark).
     -t | --time:       Duration for how long each direction's test should run - (default - 30 seconds)
     -p | --ping:       Host to ping to measure latency (default - one.one.one.one)
     -n | --number:     Number of simultaneous sessions (default - 5 sessions)
     -s | --sequential: Sequential download/upload (default - disabled)
     -c | --concurrent: Concurrent download/upload (default - disabled)
     -i | --idle:       Measure idle latency before speed test (default - disabled)
-
+    -Z | --passphrase: Passphrase to access the selected host. (default - none)
+                       See http://netperf.bufferbloat.net for the passphrase.
 The primary script output shows download and upload speeds, together with the percent packet loss, and a summary of latencies, including min, max, average, median, and 10th and 90th percentiles so you can get a sense of the distribution.
 
 The tool also summarizes CPU usage statistics during the test, to highlight whether speeds may be CPU-bound during testing, and to provide a better sense of how much CPU "headroom" would be available during normal operation. The data includes per-CPU load and frequency (if supported), and CPU usage of the `netperf` test programs.
