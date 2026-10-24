@@ -1,0 +1,68 @@
+#!/bin/sh
+#
+# SPDX-License-Identifier: GPL-2.0-only
+
+#Migrate crowdsec-firewall-bouncer to its own config file
+
+. /lib/functions.sh
+
+CCONFIG=crowdsec
+CFBCONFIG=crowdsec-firewall-bouncer
+CFBCONFFILE="/etc/config/$CFBCONFIG"
+
+FOUNDBOUNCER=false
+
+section_to_erase=""
+
+not_autoname () {
+	local name="$1"
+	case $name in
+		cfg*) return 1;;
+		*) return 0;;
+	esac
+}
+
+#Custom callbacks to transfer bouncer sections from crowdsec to crowdsec-firewall-bouncer config
+config_cb() {
+	local type="$1"
+	section_name="$2"
+	if [ -n "$section_to_erase" ]; then
+		uci delete $CCONFIG.$section_to_erase
+		section_to_erase=""
+	fi
+	if [ "$type" == "bouncer" ]; then
+		section_to_erase=$section_name
+		if ! $FOUNDBOUNCER; then
+			FOUNDBOUNCER=true
+			if [ -f "$CFBCONFFILE" ]; then
+				echo "Moving existing '$CFBCONFFILE' to '$CFBCONFFILE.apk-new' as it is the default package version"
+				mv $CFBCONFFILE $CFBCONFFILE.apk-new
+			fi
+			touch $CFBCONFFILE && chmod 600 $CFBCONFFILE
+		fi
+		cfbsection_name="$(uci add $CFBCONFIG $type)"
+		if not_autoname	$section_name; then
+			uci rename $CFBCONFIG.$cfbsection_name="$section_name"
+			cfbsection_name=$section_name
+		fi
+		option_cb() {
+			local option="$1" value="$2"
+			uci set $CFBCONFIG.$cfbsection_name.$option="$value"
+		}
+		list_cb() {
+			local list="$1" value="$2"
+			uci add_list $CFBCONFIG.$cfbsection_name.$list="$value"
+		}
+	else
+		option_cb() { return 0; }
+		list_cb() { return 0; }
+	fi
+}
+
+#Load crowdsec so callback functions do the transfering of bouncer sections
+config_load $CCONFIG
+
+#Reset callbacks
+reset_cb
+
+exit 0
