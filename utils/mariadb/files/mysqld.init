@@ -15,7 +15,6 @@ LOGGER="/usr/bin/logger -p user.err -s -t $NAME --"
 
 MYSQLD="/usr/bin/$NAME"
 
-pidfile=""
 
 # mysqladmin likes to read /root/.my.cnf which could cause issues.
 export HOME="/etc/mysql"
@@ -27,11 +26,22 @@ mysqld_get_param() {
 	"$MYSQLD" --help --verbose | sed -n 's|^'"$1"'[[:blank:]]\+||p'
 }
 
+
+mariadb_get_pidfile() {
+	if [ -z "$pidfile" ]; then
+		pidfile="$(mysqld_get_param pid-file)"
+	fi
+	if [ -z "$pidfile" ]; then
+		sockdir="$(dirname "$(mysqld_get_param socket)")"
+		pidfile=$sockdir/mariadb.pid
+	fi
+}
+
 # Send kill signal to MariaDB process
 #
 # Usage: boolean mysqld_kill signal
 mysql_kill() {
-	[ -n "$pidfile" ] || pidfile="$(mysqld_get_param pid-file)"
+	mariadb_get_pidfile
 	[ -f "$pidfile" ] || return 1
 	pid="$(cat "$pidfile")"
 	[ -n "$pid" ] || return 2
@@ -48,8 +58,8 @@ mysql_kill() {
 #
 # Usage: boolean mysqld_status [check_alive|check_dead]
 mysqld_status() {
+	mariadb_get_pidfile
 	ps_alive=0
-	pidfile="$(mysqld_get_param pid-file)"
 	if [ -f "$pidfile" ] && mysql_kill -0 2> /dev/null && \
 	   [ "$(readlink "/proc/$(cat "$pidfile")/exe")" = "$MYSQLD" ]; then
 		ps_alive=1
@@ -195,8 +205,9 @@ start_service() {
 	# Start daemon
 	procd_open_instance
 
+	mariadb_get_pidfile
 	# shellcheck disable=SC2154 disable=SC2086
-	procd_set_param command "$MYSQLD" $options
+	procd_set_param command "$MYSQLD" $options --pid-file="${pidfile}"
 	procd_set_param respawn "${respawn_threshold:-3600}" "${respawn_timeout:-5}" "${respawn_retry:-5}"
 	# run as user
 	procd_set_param user "$my_user"
