@@ -10,6 +10,9 @@ local function scrape()
   local metric_temp_celsius = metric("node_hwmon_temp_celsius", "gauge")
   local metric_pwm = metric("node_hwmon_pwm", "gauge")
 
+  local temp_sensors = {}
+  local temp_sensor_counts = {}
+
   for hwmon_path in fs.glob("/sys/class/hwmon/hwmon*") do
     -- Produce node_hwmon_chip_names
     -- See https://github.com/prometheus/node_exporter/blob/7c564bcbeffade3dacac43b07c2eeca4957ca71d/collector/hwmon_linux.go#L415
@@ -35,11 +38,17 @@ local function scrape()
       metric_sensor_label({chip=chip, sensor=sensor, label=sensor_label}, 1)
     end
 
-    -- Produce node_hwmon_temp_celsius
+    -- Collect node_hwmon_temp_celsius
     for sensor_path in fs.glob(hwmon_path .. "/temp*_input") do
       local sensor = string.gsub(fs.basename(sensor_path), "_input$", "")
-      local temp = get_contents(sensor_path) / 1000
-      metric_temp_celsius({chip=chip, sensor=sensor}, temp)
+      local key = chip .. "\0" .. sensor
+      temp_sensor_counts[key] = (temp_sensor_counts[key] or 0) + 1
+      temp_sensors[#temp_sensors + 1] = {
+        chip = chip,
+        chip_name = chip_name,
+        sensor = sensor,
+        temp = get_contents(sensor_path) / 1000,
+      }
     end
 
     -- Produce node_hwmon_pwm
@@ -50,6 +59,15 @@ local function scrape()
         metric_pwm({chip=chip, sensor=sensor}, pwm)
       end
     end
+  end
+
+  -- Produce node_hwmon_temp_celsius without duplicates
+  for _, sensor_data in ipairs(temp_sensors) do
+    local labels = {chip=sensor_data.chip, sensor=sensor_data.sensor}
+    if (temp_sensor_counts[sensor_data.chip .. "\0" .. sensor_data.sensor] or 0) > 1 then
+      labels.chip_name = sensor_data.chip_name
+    end
+    metric_temp_celsius(labels, sensor_data.temp)
   end
 end
 
