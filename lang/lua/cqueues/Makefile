@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cqueues
 PKG_VERSION:=20200726
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_MAINTAINER:=Siger Yang <siger.yang@outlook.com>
 
 PKG_MIRROR_HASH:=214a09c250e92d12cd63cdaedce9491f874a920e8222cc4faf10a978ec7bd1bd
@@ -81,8 +81,8 @@ ifeq ($(BUILD_VARIANT),lua54)
   MAKE_FLAGS += \
 	LUA_APIS="5.4" \
 	LUA54_CPPFLAGS="-I$(STAGING_DIR)/usr/include/lua5.4" \
-	lua54cpath="/usr/local/lib/lua/5.4" \
-	lua54path="/usr/local/lib/lua/5.4"
+	lua54cpath="/usr/lib/lua/5.4" \
+	lua54path="/usr/lib/lua/5.4"
 endif
 
 define Package/cqueues/install
@@ -101,11 +101,11 @@ define Package/cqueues-lua5.3/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/local/lib/lua/5.3/cqueues $(1)/usr/local/lib/lua/5.3
 endef
 define Package/cqueues-lua5.4/install
-	$(INSTALL_DIR) $(1)/usr/local/lib/lua/5.4
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/local/lib/lua/5.4/_cqueues.so $(1)/usr/local/lib/lua/5.4
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/local/lib/lua/5.4/cqueues.lua $(1)/usr/local/lib/lua/5.4
+	$(INSTALL_DIR) $(1)/usr/lib/lua/5.4
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/lua/5.4/_cqueues.so $(1)/usr/lib/lua/5.4
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/lua/5.4/cqueues.lua $(1)/usr/lib/lua/5.4
 
-	$(CP) $(PKG_INSTALL_DIR)/usr/local/lib/lua/5.4/cqueues $(1)/usr/local/lib/lua/5.4
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lua/5.4/cqueues $(1)/usr/lib/lua/5.4
 endef
 
 $(eval $(call BuildPackage,cqueues))

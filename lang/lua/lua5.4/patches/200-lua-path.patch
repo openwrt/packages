@@ -1,0 +1,25 @@
+From dd82c673231224361dc9ec3cd2861418fd4ce731 Mon Sep 17 00:00:00 2001
+From: Alexandru Ardelean <alex@shruggie.ro>
+Date: Wed, 22 Jul 2026 14:52:14 +0300
+Subject: [PATCH] lua5.4: point LUA_ROOT at /usr for OpenWrt module paths
+
+luaconf.h hardcodes LUA_ROOT to /usr/local/, where nothing installs on
+OpenWrt; point it at /usr/ so modules under /usr/{share,lib}/lua/5.4/
+are found.
+
+Signed-off-by: Alexandru Ardelean <alex@shruggie.ro>
+---
+ src/luaconf.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/src/luaconf.h
++++ b/src/luaconf.h
+@@ -223,7 +223,7 @@
+ 
+ #else			/* }{ */
+ 
+-#define LUA_ROOT	"/usr/local/"
++#define LUA_ROOT	"/usr/"
+ #define LUA_LDIR	LUA_ROOT "share/lua/" LUA_VDIR "/"
+ #define LUA_CDIR	LUA_ROOT "lib/lua/" LUA_VDIR "/"
+ 
