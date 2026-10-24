@@ -1,0 +1,32 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] use multiprocess userstart for v2 config
+
+--- a/qat_init.c
++++ b/qat_init.c
+@@ -377,10 +377,21 @@ int qat_init(ENGINE *e)
+         return 0;
+     }
+ 
+-    /* Initialise the QAT hardware */
++    /* Initialise the QAT hardware.
++     * icp_sal_userStartMultiProcess() (rather than plain icp_sal_userStart())
++     * is required for the "simplified"/v2 config file format (ConfigVersion=2,
++     * NumProcesses-based sections): it additionally resolves pProcessName to
++     * the actual per-process config section via icp_adf_userProcessToStart(),
++     * which icp_sal_userStart() never does. Without that resolution step,
++     * cpaCyGetNumInstances() silently returns 0 even though the section (e.g.
++     * "[SSL]\nNumProcesses = 1") and its instances are configured correctly -
++     * confirmed against the same config file via the vendor's own
++     * cpa_sample_code, which defaults to configFileVer=2 and calls
++     * icp_sal_userStartMultiProcess() for exactly this reason. */
+     if (CPA_STATUS_SUCCESS !=
+-        icp_sal_userStart(ICPConfigSectionName_libcrypto)) {
+-        WARN("icp_sal_userStart failed\n");
++        icp_sal_userStartMultiProcess(ICPConfigSectionName_libcrypto,
++                                       CPA_FALSE)) {
++        WARN("icp_sal_userStartMultiProcess failed\n");
+         QATerr(QAT_F_QAT_INIT, QAT_R_ICP_SAL_USERSTART_FAIL);
+         pthread_key_delete(thread_local_variables);
+         pthread_mutex_unlock(&qat_engine_mutex);

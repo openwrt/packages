@@ -1,0 +1,16 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] osal iommu skip bus based check on new kernels
+
+--- a/quickassist/utilities/osal/src/linux/kernel_space/OsalIOMMUMgmt.c
++++ b/quickassist/utilities/osal/src/linux/kernel_space/OsalIOMMUMgmt.c
+@@ -215,7 +215,7 @@ size_t osalIOMMUgetRemappingSize(size_t
+ 
+ int osalIOMMUInit(void)
+ {
+-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,29))
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,29)) && (LINUX_VERSION_CODE < KERNEL_VERSION(6,13,0))
+ #if LINUX_VERSION_CODE <= KERNEL_VERSION(3,1,10)
+     if (iommu_found()) {
+ #else

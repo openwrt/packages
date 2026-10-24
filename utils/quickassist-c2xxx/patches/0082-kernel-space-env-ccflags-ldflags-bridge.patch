@@ -1,0 +1,26 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] kernel space env ccflags ldflags bridge
+
+--- a/quickassist/build_system/build_files/env_files/linux_2.6_kernel_space.mk
++++ b/quickassist/build_system/build_files/env_files/linux_2.6_kernel_space.mk
+@@ -85,4 +85,18 @@ INCLUDES+= -I$(API_DIR) \
+ 
+ EXTRA_CFLAGS += $(INCLUDES)
+ EXTRA_CFLAGS += $(cmd_line_cflags)
++
++# Modern Kbuild (~6.13+) dropped its own "ccflags-y += $(EXTRA_CFLAGS)"
++# legacy-name bridge (still present in scripts/Makefile.lib on older
++# kernels), so components using this shared env file need to fold the
++# above into ccflags-y themselves to have any effect.
++ccflags-y += $(EXTRA_CFLAGS)
+ EXTRA_LDFLAGS +=-whole-archive
++
++# Same legacy-name bridge issue as EXTRA_CFLAGS above, but for the linker:
++# modern Kbuild dropped its "ldflags-y += $(EXTRA_LDFLAGS)" bridge, so
++# -whole-archive above would silently never reach the final module link,
++# causing the linker to lazily (not fully) pull in the static archives
++# below -- resulting in "was exported without definition" for every
++# symbol whose containing .a member nothing else already referenced.
++ldflags-y += $(EXTRA_LDFLAGS)
