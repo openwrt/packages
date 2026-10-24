@@ -1,0 +1,43 @@
+#!/bin/sh /etc/rc.common
+USE_PROCD=1
+START=61
+STOP=19
+
+RUNDIR="/var/run/pipewire"
+PW_USER="pipewire"
+
+start_service() {
+	# RUNDIR is set up by the pipewire service (see pipewire.init); wireplumber
+	# is a client and leaves it unchanged.
+
+	procd_open_instance
+	# main-embedded: upstream's profile for system-wide instances without
+	# per-user session features (device reservation, portal, logind) and
+	# without restoring runtime state (default nodes, profiles, routes,
+	# stream properties and targets)
+	procd_set_param command /usr/bin/wireplumber --profile main-embedded
+	# retry=0 -> respawn indefinitely. WirePlumber exits if it cannot connect
+	# to pipewire (e.g. at boot, before the daemon has created its socket) and
+	# when its connection is lost, so it is started again 5 seconds later until
+	# pipewire is available, and after every restart of the pipewire service.
+	procd_set_param respawn 3600 5 0
+	procd_set_param user "${PW_USER}"
+	# primary group audio, as in pipewire.init
+	procd_set_param group audio
+	# WIREPLUMBER_CONFIG_DIR is not set on purpose: in WirePlumber 0.5 it
+	# replaces the configuration search path instead of extending it, so
+	# /usr/share/wireplumber with the base wireplumber.conf would no longer be
+	# found. The default search path includes /etc/wireplumber already.
+	procd_set_param env \
+		XDG_RUNTIME_DIR="${RUNDIR}" \
+		PIPEWIRE_RUNTIME_DIR="${RUNDIR}" \
+		HOME="${RUNDIR}" \
+		PW_LOG=2
+	# Realtime for the audio data threads: wireplumber hosts the bluez sink
+	# nodes (SBC encoding runs in this process), so it needs the same limits
+	# as pipewire (see pipewire.init and 20-openwrt-rt.conf).
+	procd_set_param limits rtprio="95 95" nice="40 40"
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_close_instance
+}

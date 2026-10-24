@@ -1,0 +1,58 @@
+# HACK! Restart the PipeWire stack when an ALSA sound card appears or
+# disappears.
+#
+# This script is not installed by the package and its code is commented out:
+# it outlines one way to handle such events. To use it, install it as
+# /etc/hotplug.d/sound/20-pipewire and remove the comment markers in front of
+# the code.
+#
+# OpenWrt uses libudev-zero (no udevd rules/properties), so the udev-based ALSA
+# monitor of the session manager only sees the sound cards present when it
+# starts: libudev-zero's monitor listens on netlink group 0x4, to which udevd
+# would rebroadcast the kernel uevents, and nothing does so here. A card
+# hot-plugged at runtime therefore needs a stack restart to appear. This hook
+# automates that, at the cost of a few seconds of audio interruption per
+# plug/unplug event.
+#
+# SERVICES lists further services that are PipeWire clients and are restarted
+# along with the stack.
+#
+# NOTE: sourced (not executed) by hotplug-call - no exit/shebang, no set -e.
+
+#SERVICES=""
+
+#pw_hotplug_restart() {
+#	logger -t pipewire-hotplug "sound card $ACTION ($DEVICENAME): restarting PipeWire stack"
+#	/etc/init.d/pipewire restart
+#	sleep 3
+#	[ -x /etc/init.d/pipewire-pulse ] && /etc/init.d/pipewire-pulse restart
+#	[ -x /etc/init.d/wireplumber ] && /etc/init.d/wireplumber restart
+#	sleep 5
+#	# their pipewire connections die with the daemon, so restart those of
+#	# the listed services that are installed and enabled
+#	for svc in $SERVICES; do
+#		[ -x /etc/init.d/$svc ] && /etc/init.d/$svc enabled 2>/dev/null && /etc/init.d/$svc restart
+#		sleep 1
+#	done
+#	rmdir /var/run/pipewire-hotplug.lock 2>/dev/null
+#}
+
+#case "$ACTION" in
+#	add|remove)
+#		case "$DEVICENAME" in
+#			snd/controlC*|controlC*)
+#				# one control device per card -> one event per plug/unplug.
+#				# Skip while pipewire isn't running (boot-time coldplug
+#				# replay - the cards present at boot are found when the
+#				# stack starts).
+#				if pidof pipewire >/dev/null 2>&1; then
+#					# debounce bursts (add+remove pairs, multi-function
+#					# cards): only one restart runs at a time
+#					if mkdir /var/run/pipewire-hotplug.lock 2>/dev/null; then
+#						pw_hotplug_restart &
+#					fi
+#				fi
+#				;;
+#		esac
+#		;;
+#esac
