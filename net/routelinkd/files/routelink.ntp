@@ -1,0 +1,8 @@
+# busybox ntpd reports sync events here; routelinkd writes data to disk only once the clock is set.
+# "periodic" also covers a daemon that was (re)started after ntpd had already synchronised.
+case "$ACTION" in
+stratum | step | periodic)
+	ubus -t 2 call routelink ntp_synced >/dev/null 2>&1
+	;;
+esac
+exit 0
