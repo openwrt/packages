@@ -1,0 +1,39 @@
+From 2d1989d27da618a40e6340c7c9ffe8708f1cc067 Mon Sep 17 00:00:00 2001
+From: Sven Kirmess <sven.kirmess@kzone.ch>
+Date: Fri, 8 May 2026 00:00:00 +0200
+Subject: [PATCH] fix CA initialization for musl/busybox compatibility
+
+- chown --reference=: GNU coreutils only, not available in Busybox; the
+  target directory is always owned by root on OpenWrt, so this is a no-op
+- ps -elf / w: GNU ps flags and the w command are not available on
+  Busybox/OpenWrt; seed the noise file from /dev/urandom instead
+- sha1sum: not compiled into Busybox by default; use sha256sum which is
+  available in Busybox by default instead
+
+Signed-off-by: Sven Kirmess <sven.kirmess@kzone.ch>
+---
+ qdevices/corosync-qnetd-certutil.sh | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
+
+--- a/qdevices/corosync-qnetd-certutil.sh
++++ b/qdevices/corosync-qnetd-certutil.sh
+@@ -62,9 +62,7 @@ usage() {
+ }
+ 
+ chown_ref_cfgdir() {
+-    if [ "$UID" == "0" ];then
+-        chown --reference="$CONFIG_DIR" "$@" 2>/dev/null || chown "$(stat -f "%u:%g" "$CONFIG_DIR")" "$@" 2>/dev/null || return $?
+-    fi
++    : # All files owned by root on OpenWrt, nothing to do
+ }
+ 
+ # get_perm [directory]
+@@ -83,7 +81,7 @@ create_new_noise_file() {
+     if [ ! -e "$noise_file" ];then
+         echo "Creating new noise file $noise_file"
+ 
+-        (ps -elf; date; w) | sha1sum | (read sha_sum rest; echo $sha_sum) > "$noise_file"
++        dd if=/dev/urandom bs=1024 count=1 2>/dev/null | sha256sum | (read sha_sum rest; echo $sha_sum) > "$noise_file"
+ 
+         chown_ref_cfgdir "$noise_file"
+         chmod "$(get_perm)" "$noise_file"
