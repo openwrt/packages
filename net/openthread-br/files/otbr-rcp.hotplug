@@ -1,0 +1,32 @@
+# Copyright (c) 2026 Project CHIP Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+if [ "$ACTION" = bind ]; then
+    for listener in /var/run/otbr-rcp.hotplug.*; do
+        pid="${listener#/var/run/otbr-rcp.hotplug.}"
+        [ "$pid" != "*" ] && kill -ALRM "$pid"
+    done
+
+    # A newly bound device is the cue for Thread interfaces that failed
+    # setup for want of an RCP dongle: ifup lifts their restart block.
+    # Matching on the recorded error keeps this away from interfaces an
+    # administrator took down on purpose, and interfaces that are up
+    # keep their running agent.
+    for iface in $(ubus call network.interface dump 2>/dev/null \
+        | jsonfilter -e '@.interface[@.proto="openthread"&&@.up=false].interface'); do
+        ubus call network.interface."$iface" status 2>/dev/null \
+            | jsonfilter -q -e '@.errors[@.code="RCP_NOT_FOUND"]' >/dev/null \
+            && ifup "$iface"
+    done
+fi

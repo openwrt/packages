@@ -25,6 +25,30 @@ the package will likely result in more bug reports. As the package and its
 dependencies are unlikely to fit in any router with small flash (16MB or less),
 I don't see much point in making things configurable for reducing size either.
 
+### Vendor and product name
+
+`OTBR_VENDOR_NAME` and `OTBR_PRODUCT_NAME` have to be set: this release removed
+the built-in defaults, and otbr-agent exits with `Vendor name must be set.`
+without them.
+
+They are deliberately set to the values those defaults had, `OpenThread` and
+`BorderRouter`, rather than to something OpenWrt specific. The pair forms the
+MeshCoP service instance name as `<vendor> <product>`, which is the name shown
+when adding the border router in a Thread client and the one already-paired
+clients have recorded, so changing it would rename every existing user's border
+router on upgrade.
+
+### Version string
+
+`OTBR_VERSION` is set to `PKG_VERSION`. Without it the build falls back to the
+CMake project version, because the repacked source tree has no git directory
+for `git describe` to read, so `otbr-agent --version` and the `Running ...`
+line it logs on every start would report `0.3.0` rather than the release the
+package was built from.
+
+The version test in the package CI matches on that string, so dropping this
+option would make the package fail it again.
+
 ### Firewall support
 
 OpenWrt uses firewall4 with nftables by default, but the OpenThread firewall
@@ -35,17 +59,36 @@ Therefore, firewall support is disabled completely.
 This can be revised once the following feature request is implemented:
 https://github.com/openthread/ot-br-posix/issues/1675
 
-### mDNSResponder
+### mDNS
 
-The package depends on mDNSResponder. The alternative, Avahi, depends on D-Bus,
-which is not something I feel comfortable with running on any router. While
-there are Avahi packages without D-Bus support, using OpenThread Border Router
-with Avahi requires libavahi-client, and this requires Avahi to be built with
-D-Bus support.
+The package uses OpenThread's internal mDNS implementation
+(`-DOTBR_MDNS=openthread`), which is upstream's default. This drops the
+mDNSResponder dependency entirely: no separate daemon, and no Avahi, whose
+libavahi-client requirement would have pulled in D-Bus.
+
+The internal implementation advertises on a single infrastructure interface,
+the one selected by the `backbone_network` option. Anything that needs to be
+announced on more than one interface still needs a general-purpose responder.
+
+It coexists with umdns, which remains the provider for other packages'
+services. Both bind the wildcard address on port 5353 with SO_REUSEADDR, which
+is what admits the second bind and gets multicast delivered to both, and they
+never contend for a name: OpenThread's mDNS names its host after the Thread
+extended address, while umdns keeps `<hostname>.local`.
+
+Only multicast reaches both. A unicast datagram to port 5353 is delivered to
+one socket, so a unicast reply meant for one daemon can be received by the
+other. umdns does set SO_REUSEPORT, but only on a retry after its own bind
+fails, and that does not happen here because SO_REUSEADDR already admits the
+bind, so no SO_REUSEPORT group forms in either start order.
 
 ### REST Server
 
 The REST server is enabled to make this package compatible with Home Assistant.
+It listens on 127.0.0.1 by default. `rest_listen_address` and
+`rest_listen_port` can move it, but the API is unauthenticated and can read and
+replace the Thread dataset — including the network key — so any non-loopback
+address must be firewalled to trusted hosts.
 
 ### TREL support
 
@@ -83,14 +126,58 @@ config interface 'thread'
         option device 'wpan0'
         option proto 'openthread'
         option backbone_network 'lan'
-        option radio_url 'spinel+hdlc+uart:///dev/ttyACM0?uart-baudrate=460800'
+        option rcp '2-1'
+        option uart_baudrate '460800'
         list prefix 'fd6f:5772:5468:7200::/64 paros'
         option verbose '0'
 ```
 
-Prefix and verbose are optional. Everything else is required. The protocol
-handler will fail if a required setting is missing. If something isn't working,
-check ifstatus for the OpenThread interface:
+Only backbone_network and device are required. A radio need not be named at
+all: with neither rcp nor radio_url set the handler behaves as if `rcp 'any'`
+were given and auto-discovers a dongle, failing the interface with
+RCP_NOT_FOUND only when none is found. It also fails if backbone_network names
+an interface that has no device. Everything else — dataset, prefix, verbose,
+rest_listen_address and rest_listen_port — is optional. See
+[REST Server](#rest-server) before moving the REST API off the loopback
+default.
+
+### Finding the RCP
+
+The radio is named with the `rcp` option rather than a full radio URL. It takes
+one of three forms:
+
+| value | meaning |
+| --- | --- |
+| `/dev/ttyACM0` | a fixed serial device; no discovery is done |
+| `2-1` | a USB bus position, resolved to whatever serial device it currently exposes |
+| `any` (the default) | pick a dongle automatically |
+
+`uart_baudrate` and `uart_flow_control` are appended to the resulting URL, and
+the port is always opened exclusively. `uart_baudrate` is unset by default,
+leaving the port at otbr-agent's own default; `uart_flow_control` defaults to
+1, so hardware flow control is on unless it is set to 0. Turn it off for a
+3-wire UART, or for a dongle that never asserts CTS. Setting `radio_url`
+directly still works and overrides all of this.
+
+Discovery resolves USB dongles, which requires the cdc_acm driver: only an
+interface bound to it is accepted, and the `/dev/ttyACM*` node does not exist
+without it. Install `kmod-usb-acm` if it is not already present. A
+UART-attached radio named through `/dev/tty*` or `radio_url` needs none of
+this.
+
+Prefer a bus position to `any` unless the dongle advertises itself. Unattended
+selection only accepts a device whose USB product string contains the word
+"OpenThread", which many dongles — the Home Assistant Connect ZBT-2 among them
+— do not. Naming the bus position is the operator saying "this one is the RCP",
+so no product string is needed. `ls /sys/bus/usb/devices/` shows the positions.
+
+`otbr-rcp` also has a plugin point for installing or updating dongle firmware,
+used when `rcp_firmware_update` is set. It is off by default, and no handlers
+ship with this package, so nothing is flashed unless you both add a handler and
+ask for it.
+
+If something isn't working, check ifstatus for the OpenThread
+interface:
 
 ```
 # ifup thread
@@ -187,7 +274,8 @@ config interface 'thread'
         option backbone_network 'lan'
         option dataset '0e080000000000010000000300000f35060004001fffe0020836b86cd9746ab3080708fd9850cbe719b1d205101f11a11320828c7a6ebc2f2e675c0dca030e686f6d652d617373697374616e740102716f041025804ed78614258ebedf4e2db37b3b6e0c0402a0f7f8'
         list prefix 'fd6f:5772:5468:7200::/64 paros'
-        option radio_url 'spinel+hdlc+uart:///dev/ttyACM0?uart-baudrate=460800'
+        option rcp '2-1'
+        option uart_baudrate '460800'
         option verbose '0'
 ```
 
