@@ -1,6 +1,17 @@
+From 37a37bab0b6a632461f484de298c52f872842774 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Tue, 1 Jan 2019 23:55:24 -0800
+Subject: [PATCH] Fix compilation without deprecated OpenSSL 1.x APIs
+
+---
+ src/crypto-openssl.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/src/crypto-openssl.c b/src/crypto-openssl.c
+index d5a6a0b..427838b 100644
 --- a/src/crypto-openssl.c
 +++ b/src/crypto-openssl.c
-@@ -20,6 +20,7 @@
+@@ -11,6 +11,7 @@
  #include <string.h>
  #include <errno.h>
  #include <openssl/pem.h>
@@ -8,7 +19,7 @@
  #include "config.h"
  #include "sysdep.h"
  #include "crypto.h"
-@@ -35,10 +36,12 @@ crypto_ctx *crypto_ctx_new(crypto_error
+@@ -26,10 +27,12 @@ crypto_ctx *crypto_ctx_new(crypto_error **error)
  		return NULL;
  	}
  
@@ -21,3 +32,6 @@
  
  	memset(ctx, 0, sizeof(crypto_ctx));
  	ctx->stack = sk_X509_new_null();
+-- 
+2.43.0
+
