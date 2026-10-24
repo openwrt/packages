@@ -1,0 +1,2454 @@
+From 7305912d42053e72ebe4c70960204efd51e42806 Mon Sep 17 00:00:00 2001
+From: Self-Hosting-Group
+ <155233284+Self-Hosting-Group@users.noreply.github.com>
+Date: Mon, 12 Oct 2026 00:00:00 +0000
+Subject: [PATCH] miniupnpd: Improve logging and CGNAT use
+
+* Clearer logging of enabled protocols/ports, IPv6 mapping, and UPnP IGD
+  compatibility mode… in start banner
+* Log warnings with an enabled allow third-party mapping option
+* Change the log level (less verbose) of many internal or normally
+  occurring messages, and some error messages, without functional
+  restrictions, to DEBUG, client requests/actions and their errors to
+  INFO, and only daemon-wide messages to NOTICE/WARNING/ERR…
+* Comment out some log-filling messages when internal interfaces lose
+  link, and for e.g. `rule with label '%s' is not a IGD pinhole`, as
+  normally occurring
+* Log IPv4 mapping disabled/enabled messages by default
+* Fix IPv4 mapping re-enable after external interface down/up with a
+  CGNAT option set; handling was previously not entirely implemented for
+  both options, incl. miniupnp/miniupnp@bbdd738, miniupnp/miniupnp#905
+* No IPv4 mapping disabled logging on requests, but more cases
+* Clearer IPv4 mapping disabled/enabled logging
+* Add `default_min_port`/max options for IPv6/IPv4
+* Standardise request/action logging with `LOG_INFO`
+
+Fixes: https://github.com/openwrt/packages/issues/11971
+Fixes: https://github.com/openwrt/packages/issues/17601
+Fixes: https://github.com/openwrt/packages/issues/26483
+Link: https://github.com/miniupnp/miniupnp/pull/764
+---
+ INSTALL                       |  45 +++---
+ asyncsendto.c                 |   4 +-
+ getifaddr.c                   |   4 +-
+ minissdp.c                    |  24 +--
+ miniupnpd.c                   | 244 ++++++++++++++++++------------
+ miniupnpd.conf                | 258 +++++++++++++++++---------------
+ natpmp.c                      |  39 ++---
+ netfilter/iptcrdr.c           |  13 +-
+ netfilter/iptpinhole.c        |  10 +-
+ netfilter_nft/nftnlrdr.c      |   4 +-
+ netfilter_nft/nftnlrdr_misc.c |   8 +-
+ netfilter_nft/nftpinhole.c    |  16 +-
+ options.c                     |   7 +-
+ options.h                     |   6 +-
+ pcpserver.c                   | 100 ++++++++-----
+ pf/obsdrdr.c                  |   2 +-
+ pf/pfpinhole.c                |  12 +-
+ upnpdescgen.c                 |   2 +-
+ upnpglobalvars.h              |   2 +-
+ upnphttp.c                    |   6 +-
+ upnppermissions.c             |  14 +-
+ upnppermissions.h             |   3 +
+ upnppinhole.c                 |  16 +-
+ upnpredirect.c                |  32 ++--
+ upnpsoap.c                    | 107 +++++++------
+ upnpstun.c                    |  37 ++---
+ 26 files changed, 554 insertions(+), 461 deletions(-)
+
+--- a/INSTALL
++++ b/INSTALL
+@@ -156,7 +156,7 @@ ext_ifname :   WAN network interface (in
+ listening_ip : LAN network interface (network where to supply NAT traversal)
+ enable_pcp_pmp=yes
+ enable_upnp=yes
+-and the permission rules (see below).
++and the access control settings (see below).
+ 
+ Historically, LAN had to be specified by IP/mask, such as
+ listening_ip=192.168.0.1/24
+@@ -168,42 +168,31 @@ the wrong mask would be picked. You can
+ names :
+ listening_ip=eth0/24
+ 
+-Some users want to use miniupnpd on a NAT router which is connected to the
+-internet through another NAT router (NAT behind NAT). This kind of setup is
+-strongly discouraged. By default, miniupnpd will refuses to launch when
+-detecting a private (RFC1918) "WAN" IP address. The ext_ip option sould be
+-added :
+-ext_ifname=eth1  # "WAN" network interface, whose IP could be 192.168.1.22
+-ext_ip=80.1.2.3  # Real public IP address
+-listening_ip=eth0
+-Please note that miniupnpd doesn't redirect any port on the other NAT router.
+-UPNP requests forwarding is not implemented.
+-In such NAT behind NAT setups, it is also possible to use STUN :
+-See the ext_perform_stun / ext_stun_host / ext_stun_port options.
+-If you know what you do and want to disable the restriction on the "WAN" IP
+-address, you can use the option :
+-ext_allow_private_ipv4=yes
+-
+ it is also possible to set a different interface for IPv6 WAN
+ ext_ifname=eth0
+ ext_ifname6=sit0
+ 
++Allow CGNAT use
++To enable IPv4 mapping even when using a CGNAT with a private/CGNAT-reserved
++external IPv4 address, users should refer to the documentation for the
++ext_allow_cgnat option in the sample miniupnpd.conf config file
++
+ miniupnpd supports some kind of security check for allowing or disallowing
+-redirection to be made. The UPnP permission rules are read from the
++port maps to be made. Access control list (ACL) entries are read from the
+ miniupnpd.conf configuration file.
+-When a new redirection is requested, permission rules are evaluated in
+-top-down order and the first permission rule matched gives the response :
+-redirection allowed or denied. If no rule is matching, the redirection is
+-allowed, so it is a good practice to have a "catch all" deny permission
+-rule at the end of your permission ruleset.
+-Sample permission ruleset :
++When a new port map is requested, ACL entries are evaluated in
++top-down order and the first ACL entry matched gives the response :
++port map allowed or denied. If no entry is matching, the port map is
++allowed, so it is a good practice to have a "catch all" deny ACL entry
++at the end of your ACL.
++Sample ACL:
+ allow 4662-4672 192.168.1.34/32 4662-4672
+-deny 0-65535 192.168.1.34/32 0-65535
++deny 1-65535 192.168.1.34 1-65535
+ allow 1024-65535 192.168.1.0/24 1024-65535
+-deny 0-65535 0.0.0.0/0 0-65535
+-With this ruleset, redirections are allowed only for host on the subnet
++deny 1-65535 0.0.0.0/0 1-65535
++With this ACL, port maps are allowed only for host on the subnet
+ 192.168.1.0/255.255.255.0 for the ports 1024 or above. There is an exception
+-for the host 192.168.1.34 for which only redirections from/to port 4662 to
++for the host 192.168.1.34 for which only port maps from/to port 4662 to
+ 4672 are allowed.
+ 
+ You can generate the uuid for your UPnP device with the uuidgen available
+--- a/asyncsendto.c
++++ b/asyncsendto.c
+@@ -254,9 +254,9 @@ int try_sendto(fd_set * writefds)
+ 					/* uncatched error */
+ 					if(sockaddr_to_string(elt->dest_addr, addr_str, sizeof(addr_str)) <= 0)
+ 						addr_str[0] = '\0';
+-					syslog(LOG_ERR, "%s(sock=%d, len=%u, dest=%s): sendto: %m",
++					/*syslog(LOG_DEBUG, "%s(sock=%d, len=%u, dest=%s): sendto: %m",
+ 					       "try_sendto", elt->sockfd, (unsigned)elt->len,
+-					       addr_str);
++					       addr_str);*/
+ 					ret--;
+ 				}
+ 			} else if((int)n != (int)elt->len) {
+--- a/getifaddr.c
++++ b/getifaddr.c
+@@ -74,7 +74,7 @@ getifaddr(const char * ifname, char * bu
+ 		} else {
+ 			r = GETIFADDR_IOCTL_ERROR;
+ 		}
+-		syslog(LOG_ERR, "ioctl(s, SIOCGIFADDR, ...): %m");
++		syslog(LOG_DEBUG, "ioctl(s, SIOCGIFADDR, ...): %m");
+ 		close(s);
+ 		return r;
+ 	}
+@@ -149,7 +149,7 @@ getifaddr(const char * ifname, char * bu
+ 		if(addr) *addr = ((struct sockaddr_in *)candidate->ifa_addr)->sin_addr;
+ 		if(mask) *mask = ((struct sockaddr_in *)candidate->ifa_netmask)->sin_addr;
+ 	} else {
+-		syslog(LOG_WARNING, "no AF_INET address found for %s", ifname);
++		syslog(LOG_DEBUG, "no AF_INET address found for %s", ifname);
+ 		freeifaddrs(ifap);
+ 		return GETIFADDR_NO_ADDRESS;
+ 	}
+--- a/minissdp.c
++++ b/minissdp.c
+@@ -743,8 +743,8 @@ SendSSDPNotify(int s, const struct socka
+ 	}
+ 	n = sendto_or_schedule(s, bufr, l, 0, dest, dest_len);
+ 	if(n < 0) {
+-		syslog(LOG_ERR, "sendto(udp_notify=%d, %s): %m", s,
+-		       host ? host : "NULL");
++		/*syslog(LOG_DEBUG, "sendto(udp_notify=%d, %s): %m", s,
++		       host ? host : "NULL");*/
+ 	} else if(n != l) {
+ 		syslog(LOG_NOTICE, "sendto() sent %d out of %d bytes", n, l);
+ 	}
+@@ -754,8 +754,8 @@ SendSSDPNotify(int s, const struct socka
+ 	 * discovery messages SHOULD NOT be sent more than three times. */
+ 	n = sendto_schedule(s, bufr, l, 0, dest, dest_len, 250);
+ 	if(n < 0) {
+-		syslog(LOG_ERR, "sendto(udp_notify=%d, %s): %m", s,
+-		       host ? host : "NULL");
++		/*syslog(LOG_DEBUG, "sendto(udp_notify=%d, %s): %m", s,
++		       host ? host : "NULL");*/
+ 	}
+ }
+ 
+@@ -1060,7 +1060,7 @@ ProcessSSDPData(int s, const char *bufr,
+ 	}
+ 	if(lan_addr == NULL)
+ 	{
+-		syslog(LOG_WARNING, "SSDP packet sender %s (if_index=%d) not from a LAN, ignoring",
++		syslog(LOG_DEBUG, "SSDP packet sender %s (if_index=%d) not from a LAN, ignoring",
+ 		       sender_str, source_if);
+ 		return;
+ 	}
+@@ -1175,7 +1175,7 @@ ProcessSSDPData(int s, const char *bufr,
+ 	           sender_str );*/
+ 		if(st && (st_len > 0))
+ 		{
+-			syslog(LOG_INFO, "SSDP M-SEARCH from %s ST: %.*s",
++			syslog(LOG_DEBUG, "SSDP M-SEARCH from %s ST: %.*s",
+ 			       sender_str, st_len, st);
+ 			/* find in which sub network the client is */
+ #ifdef ENABLE_IPV6
+@@ -1288,7 +1288,7 @@ ProcessSSDPData(int s, const char *bufr,
+ 					else
+ 						snprintf(ver_str, sizeof(ver_str), "%d", known_service_types[i].version);
+ #endif
+-					syslog(LOG_INFO, "Single search found");
++					syslog(LOG_DEBUG, "Single search found");
+ #ifdef DELAY_MSEARCH_RESPONSE
+ 					delay = random() / (1 + RAND_MAX / (1000 * mx_value));
+ #ifdef DEBUG
+@@ -1317,7 +1317,7 @@ ProcessSSDPData(int s, const char *bufr,
+ #ifdef DELAY_MSEARCH_RESPONSE
+ 				unsigned int delay_increment = (mx_value * 1000) / 15;
+ #endif
+-				syslog(LOG_INFO, "ssdp:all found");
++				syslog(LOG_DEBUG, "ssdp:all found");
+ 				for(i=0; known_service_types[i].s; i++)
+ 				{
+ #ifdef DELAY_MSEARCH_RESPONSE
+@@ -1375,7 +1375,7 @@ ProcessSSDPData(int s, const char *bufr,
+ #endif
+ 				if(0 == memcmp(st, uuidvalue_igd, l))
+ 				{
+-					syslog(LOG_INFO, "ssdp:uuid (IGD) found");
++					syslog(LOG_DEBUG, "ssdp:uuid (IGD) found");
+ 					SendSSDPResponse(s, sender, st, st_len, "",
+ 					                 announced_host, http_port,
+ #ifdef ENABLE_HTTPS
+@@ -1385,7 +1385,7 @@ ProcessSSDPData(int s, const char *bufr,
+ 				}
+ 				else if(0 == memcmp(st, uuidvalue_wan, l))
+ 				{
+-					syslog(LOG_INFO, "ssdp:uuid (WAN) found");
++					syslog(LOG_DEBUG, "ssdp:uuid (WAN) found");
+ 					SendSSDPResponse(s, sender, st, st_len, "",
+ 					                 announced_host, http_port,
+ #ifdef ENABLE_HTTPS
+@@ -1395,7 +1395,7 @@ ProcessSSDPData(int s, const char *bufr,
+ 				}
+ 				else if(0 == memcmp(st, uuidvalue_wcd, l))
+ 				{
+-					syslog(LOG_INFO, "ssdp:uuid (WCD) found");
++					syslog(LOG_DEBUG, "ssdp:uuid (WCD) found");
+ 					SendSSDPResponse(s, sender, st, st_len, "",
+ 					                 announced_host, http_port,
+ #ifdef ENABLE_HTTPS
+@@ -1456,7 +1456,7 @@ SendSSDPbyebye(int s, const struct socka
+ 	n = sendto_or_schedule(s, bufr, l, 0, dest, destlen);
+ 	if(n < 0)
+ 	{
+-		syslog(LOG_ERR, "sendto(udp_shutdown=%d) to %s: %m", s, dest_str);
++		syslog(LOG_DEBUG, "sendto(udp_shutdown=%d) to %s: %m", s, dest_str);
+ 		return -1;
+ 	}
+ 	else if(n != l)
+--- a/miniupnpd.c
++++ b/miniupnpd.c
+@@ -495,7 +495,7 @@ ProcessIncomingHTTP(int shttpl, const ch
+ 		if(get_lan_for_peer((struct sockaddr *)&clientname) == NULL)
+ 		{
+ 			/* The peer is not a LAN ! */
+-			syslog(LOG_WARNING,
++			syslog(LOG_DEBUG,
+ 			       "%s peer %s is not from a LAN, closing the connection",
+ 			       protocol, addr_str);
+ 			close(shttp);
+@@ -866,7 +866,7 @@ set_startup_time(void)
+ 			}
+ 			else
+ 			{
+-				syslog(LOG_INFO, "system uptime is %lu seconds", uptime);
++				syslog(LOG_DEBUG, "system uptime is %lu seconds", uptime);
+ 			}
+ 			fclose(f);
+ 			startup_time -= uptime;
+@@ -1059,11 +1059,11 @@ parselanaddr(struct lan_addr_s * lan_add
+ 				return -1;
+ 			}
+ 			if(addr_is_reserved(&lan_addr->ext_ip_addr)) {
+-				if (GETFLAG(ALLOWPRIVATEIPV4MASK)) {
+-					syslog(LOG_WARNING, "IGNORED : option ext_ip address contains reserved / private address : %s", lan_addr->ext_ip_str);
++				if (GETFLAG(REPORTPRIVATEIPV4MASK)) {
++					syslog(LOG_WARNING, "WARNING: IPv4 mapping enabled forcibly, as ext_allow_cgnat=report-private-ipv4 set; check security note if not set");
+ 				} else {
+ 					/* error */
+-					INIT_PRINT_ERR("Error: option ext_ip address contains reserved / private address : %s\n", lan_addr->ext_ip_str);
++					INIT_PRINT_ERR("Option ext_ip set to private/CGNAT-reserved (%s) IPv4, exiting\n", lan_addr->ext_ip_str);
+ 					return -1;
+ 				}
+ 			}
+@@ -1117,20 +1117,19 @@ parselan_error:
+ 
+ static char ext_addr_str[INET_ADDRSTRLEN];
+ 
+-int update_ext_ip_addr_from_stun(int init)
++int update_ext_ip_addr_from_stun(void)
+ {
+ 	struct in_addr if_addr, ext_addr;
+-	int restrictive_nat;
++	int restrictive_nat, reserved;
+ 	char if_addr_str[INET_ADDRSTRLEN];
+ 
+-	syslog(LOG_INFO, "STUN: Performing with host=%s and port=%u ...", ext_stun_host, (unsigned)ext_stun_port);
+-
+ 	if (getifaddr(ext_if_name, if_addr_str, INET_ADDRSTRLEN, &if_addr, NULL) < 0) {
+-		syslog(LOG_ERR, "STUN: Cannot get IP address for ext interface %s", ext_if_name);
++		syslog(LOG_ERR, "Detected no IPv4 address on external network interface %s", ext_if_name);
+ 		return 1;
+ 	}
++	syslog(LOG_INFO, "STUN: Detecting public IPv4 and testing for unrestricted endpoint-independent (1:1) CGNAT via %s:%u...", ext_stun_host, ext_stun_port ? ext_stun_port : 3478);
+ 	if (perform_stun(ext_if_name, if_addr_str, ext_stun_host, ext_stun_port, &ext_addr, &restrictive_nat) != 0) {
+-		syslog(LOG_ERR, "STUN: Performing STUN failed: %s", strerror(errno));
++		syslog(LOG_ERR, "STUN: Performing test failed");
+ 		return 1;
+ 	}
+ 	if (!inet_ntop(AF_INET, &ext_addr, ext_addr_str, sizeof(ext_addr_str))) {
+@@ -1138,32 +1137,29 @@ int update_ext_ip_addr_from_stun(int ini
+ 		return 1;
+ 	}
+ 
+-	if ((init || disable_port_forwarding) && !restrictive_nat) {
+-		if (addr_is_reserved(&if_addr))
+-			syslog(LOG_INFO, "STUN: ext interface %s with IP address %s is now behind unrestricted full-cone NAT 1:1 with public IP address %s and firewall does not block incoming connections set by miniupnpd", ext_if_name, if_addr_str, ext_addr_str);
+-		else
+-			syslog(LOG_INFO, "STUN: ext interface %s has now public IP address %s and firewall does not block incoming connections set by miniupnpd", ext_if_name, if_addr_str);
+-		syslog(LOG_INFO, "Port forwarding is now enabled");
+-	} else if ((init || !disable_port_forwarding) && restrictive_nat) {
+-		if (addr_is_reserved(&if_addr)) {
+-			syslog(LOG_WARNING, "STUN: ext interface %s with private IP address %s is now possibly behind restrictive or symmetric NAT with public IP address %s which does not support port forwarding", ext_if_name, if_addr_str, ext_addr_str);
+-			syslog(LOG_WARNING, "NAT on upstream router blocks incoming connections set by miniupnpd");
+-			syslog(LOG_WARNING, "Turn off NAT on upstream router or change it to full-cone NAT 1:1 type");
++	reserved = addr_is_reserved(&if_addr);
++	if (!restrictive_nat && !reserved) {
++		syslog(LOG_INFO, "STUN: Detected unrestricted public external IPv4 %s on %s", if_addr_str, ext_if_name);
++	} else if (!restrictive_nat && reserved) {
++		syslog(LOG_INFO, "STUN: Detected unrestricted endpoint-independent (1:1) CGNAT with public IPv4 %s and %s as external on %s", ext_addr_str, if_addr_str, ext_if_name);
++	} else if (restrictive_nat && !reserved) {
++		syslog(LOG_INFO, "STUN: Detected restricted public external IPv4 %s on %s, IPv4 mapping may not work", if_addr_str, ext_if_name);
++	} else if (restrictive_nat && reserved) {
++		syslog(LOG_INFO, "STUN: Detected restricted or address- and port-dependent (symmetric) CGNAT with public IPv4 %s and %s as external on %s, IPv4 mapping may not work", ext_addr_str, if_addr_str, ext_if_name);
++	}
++
++	use_ext_ip_addr = ext_addr_str;
++	if (!restrictive_nat || GETFLAG(ALLOWFILTEREDSTUNMASK)) {
++		if (!restrictive_nat) {
++			syslog(LOG_NOTICE, "IPv4 mapping enabled, and reachability/non-filtering tested via STUN");
+ 		} else {
+-			syslog(LOG_WARNING, "STUN: ext interface %s has now public IP address %s but firewall filters incoming connections set by miniunnpd", ext_if_name, if_addr_str);
+-			syslog(LOG_WARNING, "Check configuration of firewall on local machine and also on upstream router");
+-		}
+-		if (!GETFLAG(ALLOWFILTEREDSTUNMASK)) {
+-			syslog(LOG_WARNING, "Port forwarding is now disabled");
+-			syslog(LOG_WARNING, "Set ext_perform_stun=allow-filtered if you still want to use port forwarding in current situation");
++			syslog(LOG_WARNING, "WARNING: IPv4 mapping enabled forcibly, as ext_allow_cgnat=allow-filtered set; check security note if not set");
+ 		}
++		disable_port_forwarding = 0;
+ 	} else {
+-		syslog(LOG_INFO, "STUN: ... done");
++		syslog(LOG_WARNING, "IPv4 mapping disabled, as own/upstream router filters incoming, or there is an address- and port-dependent (symmetric) CGNAT; to workaround current daemon limitation, or enable it anyway, set ext_allow_cgnat=allow-filtered; check security note if not set");
++		disable_port_forwarding = 1;
+ 	}
+-
+-	use_ext_ip_addr = ext_addr_str;
+-	if (!GETFLAG(ALLOWFILTEREDSTUNMASK))
+-		disable_port_forwarding = restrictive_nat;
+ 	return 0;
+ }
+ 
+@@ -1183,32 +1179,41 @@ static void update_disable_port_forwardi
+ 			syslog(LOG_WARNING, "ext interface %s is down", ext_if_name);
+ 			break;
+ 		case GETIFADDR_NO_ADDRESS:
+-			syslog(LOG_WARNING, "ext interface %s has no IPv4 address. Network is down", ext_if_name);
++			syslog(LOG_ERR, "Detected no IPv4 address on external network interface %s", ext_if_name);
+ 			break;
+ 		default:
+-			syslog(LOG_ERR, "Error getting IPv4 address for ext interface %s. Network is down", ext_if_name);
++			syslog(LOG_ERR, "Detected no IPv4 address on external network interface %s", ext_if_name);
+ 		}
++		syslog(LOG_WARNING, "IPv4 mapping disabled");
+ 		disable_port_forwarding = 1;
++
+ 	} else {
+ 		int reserved = addr_is_reserved(&addr);
+-		if (!disable_port_forwarding && reserved) {
+-			if (GETFLAG(ALLOWPRIVATEIPV4MASK)) {
+-				syslog(LOG_WARNING, "IGNORED : Reserved / private IP address %s on ext interface %s", if_addr, ext_if_name);
+-			} else {
+-				syslog(LOG_WARNING, "Reserved / private IP address %s on ext interface %s: Port forwarding is impossible", if_addr, ext_if_name);
+-				syslog(LOG_INFO, "You are probably behind NAT, enable option ext_perform_stun=yes to detect public IP address");
+-				syslog(LOG_INFO, "Or use ext_ip= / -o option to declare public IP address");
+-				syslog(LOG_INFO, "In case that miniupnpd is thinking that it's behind symmetric NAT while it actually is full-cone");
+-				syslog(LOG_INFO, "You can set option ext_allow_private_ipv4=yes to enable port forwarding");
+-				syslog(LOG_INFO, "But you may still need to configure stun server or ext_ip to make it work correctly");
+-				syslog(LOG_INFO, "Public IP address is required by UPnP/PCP/PMP protocols and clients do not work without it");
+-				disable_port_forwarding = 1;
+-			}
+-		} else if (disable_port_forwarding &&
+-		           (!reserved || GETFLAG(ALLOWPRIVATEIPV4MASK))) {
+-			syslog(LOG_INFO, "%s IP address %s on ext interface %s: Port forwarding is enabled",
+-			       reserved ? "Reserved / private" : "Public", if_addr, ext_if_name);
++		if (!reserved) {
++			syslog(LOG_INFO, "Detected public external IPv4 %s on %s", if_addr, ext_if_name);
++		} else {
++			syslog(LOG_INFO, "Detected private/CGNAT-reserved external IPv4 %s on %s, IPv4 mapping may not work", if_addr, ext_if_name);
++		}
++
++		if (!reserved || GETFLAG(REPORTPRIVATEIPV4MASK)) {
++			if (!reserved) {
++				syslog(LOG_NOTICE, "IPv4 mapping enabled");
++			} else {
++				syslog(LOG_WARNING, "WARNING: IPv4 mapping enabled forcibly, as ext_allow_cgnat=report-private-ipv4 set; check compatibility/security notes if not set");
++			}
+ 			disable_port_forwarding = 0;
++		} else {
++			syslog(LOG_WARNING, "IPv4 mapping disabled by default, as private/CGNAT-reserved external IPv4 detected. Prevented for:");
++			syslog(LOG_WARNING, "- Info, as port maps not reachable via internet without an unrestricted endpoint-independent (1:1) IPv4 CGNAT, but possibly from within");
++			syslog(LOG_WARNING, "- Compatibility, as many UPnP IGD & PCP/NAT-PMP clients require a returned public external IPv4 address");
++			syslog(LOG_WARNING, "- Security, to prevent access via internet if the external/internal network interface has been configured swapped");
++			syslog(LOG_WARNING, "To enable IPv4 mapping in this case, select a priority-listed option:");
++			syslog(LOG_WARNING, "A) Detect public external IPv4 and test for unrestricted endpoint-independent (1:1) CGNAT via STUN server, set ext_allow_cgnat=yes");
++			syslog(LOG_WARNING, "B) As A, but workaround filtered CGNAT result daemon limitation (without extra firewall rule), set ext_allow_cgnat=allow-filtered; check security note");
++			syslog(LOG_WARNING, "C) Manually override reported external IPv4 with public, set ext_ip; check security note");
++			syslog(LOG_WARNING, "D) Report private/CGNAT-reserved external IPv4 to clients, set ext_allow_cgnat=report-private-ipv4; check compatibility/security notes");
++			syslog(LOG_WARNING, "IPv4 mapping disabled");
++			disable_port_forwarding = 1;
+ 		}
+ 	}
+ }
+@@ -1458,11 +1463,7 @@ init(int argc, char * * argv, struct run
+ 			case UPNPEXT_IP:
+ 				use_ext_ip_addr = ary_options[i].value;
+ 				break;
+-			case UPNPEXT_ALLOW_PRIVATE_IPV4:
+-				if(strcmp(ary_options[i].value, "yes") == 0)
+-					SETFLAG(ALLOWPRIVATEIPV4MASK);
+-				break;
+-			case UPNPEXT_PERFORM_STUN:
++			case UPNPEXT_ALLOW_CGNAT:
+ 				if(strcmp(ary_options[i].value, "yes") == 0)
+ 					SETFLAG(PERFORMSTUNMASK);
+ 				else if(strcmp(ary_options[i].value, "allow-filtered") == 0)
+@@ -1470,6 +1471,14 @@ init(int argc, char * * argv, struct run
+ 					SETFLAG(PERFORMSTUNMASK);
+ 					SETFLAG(ALLOWFILTEREDSTUNMASK);
+ 				}
++				else if(strcmp(ary_options[i].value, "report-private-ipv4") == 0)
++				{
++					SETFLAG(REPORTPRIVATEIPV4MASK);
++				}
++				break;
++			case UPNPEXT_REPORT_PRIVATE_IPV4:
++				if(strcmp(ary_options[i].value, "yes") == 0)
++					SETFLAG(REPORTPRIVATEIPV4MASK);
+ 				break;
+ 			case UPNPEXT_STUN_HOST:
+ 				ext_stun_host = ary_options[i].value;
+@@ -1509,6 +1518,12 @@ init(int argc, char * * argv, struct run
+ 					SETFLAG(IPV6DISABLEDMASK);
+ 				break;
+ #endif /* ENABLE_IPV6 */
++			case DEFAULT_MIN_PORT:
++				default_min_port = atoi(ary_options[i].value);
++				break;
++			case DEFAULT_MAX_PORT:
++				default_max_port = atoi(ary_options[i].value);
++				break;
+ 			case UPNPPORT:
+ 				v->port = atoi(ary_options[i].value);
+ 				break;
+@@ -1696,7 +1711,7 @@ init(int argc, char * * argv, struct run
+ 		}
+ #endif	/* ENABLE_PCP */
+ 		if (GETFLAG(PERFORMSTUNMASK) && !ext_stun_host) {
+-			INIT_PRINT_ERR("You must specify ext_stun_host= when ext_perform_stun=yes\n");
++			INIT_PRINT_ERR("You must specify ext_stun_host= when ext_allow_cgnat=yes/allow-filtered\n");
+ 			return 1;
+ 		}
+ 	}
+@@ -2083,7 +2098,7 @@ init(int argc, char * * argv, struct run
+ #endif
+ 
+ 	if (use_ext_ip_addr && GETFLAG(PERFORMSTUNMASK)) {
+-		INIT_PRINT_ERR("Error: options ext_ip= and ext_perform_stun=yes cannot be specified together\n");
++		INIT_PRINT_ERR("Error: options ext_ip= and ext_allow_cgnat=yes/allow-filtered cannot be specified together\n");
+ 		return 1;
+ 	}
+ 
+@@ -2093,10 +2108,10 @@ init(int argc, char * * argv, struct run
+ 			return 1;
+ 		}
+ 		if (addr_is_reserved(&addr)) {
+-			if (GETFLAG(ALLOWPRIVATEIPV4MASK)) {
+-				syslog(LOG_WARNING, "IGNORED : option ext_ip contains reserved / private address %s, not public routable", use_ext_ip_addr);
++			if (GETFLAG(REPORTPRIVATEIPV4MASK)) {
++				syslog(LOG_WARNING, "WARNING: IPv4 mapping enabled forcibly, as ext_allow_cgnat=report-private-ipv4 set; check compatibility/security notes if not set");
+ 			} else {
+-				INIT_PRINT_ERR("Error: option ext_ip contains reserved / private address %s, not public routable\n", use_ext_ip_addr);
++				INIT_PRINT_ERR("Option ext_ip set to private/CGNAT-reserved (%s) IPv4, exiting\n", use_ext_ip_addr);
+ 				return 1;
+ 			}
+ 		}
+@@ -2229,6 +2244,25 @@ init(int argc, char * * argv, struct run
+ 		pidfilename = NULL;
+ #endif
+ 
++	syslog(LOG_NOTICE, "MiniUPnP daemon " MINIUPNPD_VERSION " starting, enabled protocols %s%s%s, ext_ifname=%s BOOTID=%u",
++		GETFLAG(ENABLEUPNPMASK) ? "UPnP IGD" : "",
++#ifdef ENABLE_NATPMP
++		GETFLAG(ENABLEUPNPMASK) && GETFLAG(ENABLENATPMPMASK) ? " & " : "",
++#ifdef ENABLE_PCP
++		GETFLAG(ENABLENATPMPMASK) ? "PCP/NAT-PMP" : "",
++#else
++		GETFLAG(ENABLENATPMPMASK) ? "NAT-PMP" : "",
++#endif
++#else
++		"", "",
++#endif
++		ext_if_name, upnp_bootid);
++	syslog(LOG_INFO, "More information at https://miniupnp.tuxfamily.org or http://miniupnp.free.fr");
++	syslog(LOG_NOTICE, "Extra logging with log level info (-v) or debug (-v -v)");
++
++	syslog(LOG_INFO, "Options default_min/max_port set to %d/%d apply to IPv6 and to IPv4 only, with no matching or default reject ACL entries",
++		default_min_port, default_max_port);
++
+ #ifdef USE_SYSTEMD
+ 	if (systemd_flag) {
+ 		int r = sd_notify(0,
+@@ -2240,9 +2274,10 @@ init(int argc, char * * argv, struct run
+ #endif
+ 
+ #ifdef ENABLE_LEASEFILE
+-	/*remove(lease_file);*/
+-	syslog(LOG_INFO, "Reloading rules from lease file");
+-	reload_from_lease_file();
++	if (lease_file && lease_file[0] != '\0') {
++		syslog(LOG_INFO, "Reloading port maps from lease file %s", lease_file);
++		reload_from_lease_file();
++	}
+ #ifdef ENABLE_UPNPPINHOLE
+ 	reload_from_lease_file6();
+ #endif
+@@ -2432,28 +2467,16 @@ main(int argc, char * * argv)
+ 		goto shutdown;
+ 	}
+ 
+-	syslog(LOG_INFO, "version " MINIUPNPD_VERSION " starting%s%sext if %s BOOTID=%u",
+-#ifdef ENABLE_NATPMP
+-#ifdef ENABLE_PCP
+-	       GETFLAG(ENABLENATPMPMASK) ? " NAT-PMP/PCP " : " ",
+-#else
+-	       GETFLAG(ENABLENATPMPMASK) ? " NAT-PMP " : " ",
+-#endif
+-#else
+-	       " ",
+-#endif
+-	       GETFLAG(ENABLEUPNPMASK) ? "UPnP-IGD " : "",
+-	       ext_if_name, upnp_bootid);
+ #ifdef ENABLE_IPV6
+ 	if (strcmp(ext_if_name6, ext_if_name) != 0) {
+-		syslog(LOG_INFO, "specific IPv6 ext if %s", ext_if_name6);
++		syslog(LOG_INFO, "Separate ext_ifname6=%s set", ext_if_name6);
+ 	}
+ #endif
+ 
+ 	if(GETFLAG(PERFORMSTUNMASK))
+ 	{
+-		if (update_ext_ip_addr_from_stun(1) != 0) {
+-			syslog(LOG_ERR, "Performing STUN failed. EXITING");
++		if (update_ext_ip_addr_from_stun() != 0) {
++			syslog(LOG_ERR, "STUN: Performing test failed, exiting");
+ 			return_code = 1;
+ 			goto shutdown;
+ 		}
+@@ -2461,6 +2484,8 @@ main(int argc, char * * argv)
+ 	else if (!use_ext_ip_addr)
+ 	{
+ 		update_disable_port_forwarding();
++	} else {
++		syslog(LOG_NOTICE, "IPv4 mapping enabled");
+ 	}
+ 
+ #ifdef DYNAMIC_OS_VERSION
+@@ -2487,7 +2512,7 @@ main(int argc, char * * argv)
+ #ifdef ENABLE_NFQUEUE
+ 		nfqueue_data.http_port = listen_port;
+ #endif /* ENABLE_NFQUEUE */
+-		syslog(LOG_NOTICE, "HTTP listening on port %d", v.port);
++		syslog(LOG_NOTICE, "Listening for UPnP IGD (SOAP/HTTP) traffic on port %d/TCP, SSDP 1900/UDP", v.port);
+ #if defined(V6SOCKETS_ARE_V6ONLY) && defined(ENABLE_IPV6)
+ 		if(!GETFLAG(IPV6DISABLEDMASK))
+ 		{
+@@ -2518,7 +2543,7 @@ main(int argc, char * * argv)
+ #ifdef ENABLE_NFQUEUE
+ 		nfqueue_data.https_port = listen_port;
+ #endif /* ENABLE_NFQUEUE */
+-		syslog(LOG_NOTICE, "HTTPS listening on port %d", v.https_port);
++		syslog(LOG_NOTICE, "Listening for UPnP IGD (SOAP/HTTPS) traffic on port %d/TCP", v.https_port);
+ #if defined(V6SOCKETS_ARE_V6ONLY) && defined(ENABLE_IPV6)
+ 		shttpsl_v4 =  OpenAndConfHTTPSocket(&listen_port, 0);
+ 		if(shttpsl_v4 < 0)
+@@ -2533,11 +2558,11 @@ main(int argc, char * * argv)
+ 		if(!GETFLAG(IPV6DISABLEDMASK)) {
+ 			if(find_ipv6_addr(lan_addrs.lh_first ? lan_addrs.lh_first->ifname : NULL,
+ 			                  ipv6_addr_for_http_with_brackets, sizeof(ipv6_addr_for_http_with_brackets)) > 0) {
+-				syslog(LOG_NOTICE, "HTTP IPv6 address given to control points : %s",
++				syslog(LOG_INFO, "Address given to UPnP IGDv2 IPv6 clients: %s",
+ 				       ipv6_addr_for_http_with_brackets);
+ 			} else {
+ 				memcpy(ipv6_addr_for_http_with_brackets, "[::1]", 6);
+-				syslog(LOG_WARNING, "no HTTP IPv6 address, disabling IPv6");
++				syslog(LOG_DEBUG, "no HTTP IPv6 address, disabling IPv6");
+ 				SETFLAG(IPV6DISABLEDMASK);
+ 			}
+ 		}
+@@ -2594,7 +2619,7 @@ main(int argc, char * * argv)
+ 			if(SendSSDPGoodbye(snotify, addr_count * 2) < 0)
+ #endif
+ 			{
+-				syslog(LOG_WARNING, "Failed to broadcast good-bye notifications");
++				syslog(LOG_DEBUG, "Failed to broadcast good-bye notifications");
+ 			}
+ 		}
+ #endif /* UPNP_STRICT */
+@@ -2619,16 +2644,16 @@ main(int argc, char * * argv)
+ 		if(OpenAndConfNATPMPSockets(snatpmp) < 0)
+ #ifdef ENABLE_PCP
+ 		{
+-			syslog(LOG_ERR, "Failed to open sockets for NAT-PMP/PCP.");
++			syslog(LOG_ERR, "Failed to open port 5351/UDP for PCP/NAT-PMP");
+ 		} else {
+-			syslog(LOG_NOTICE, "Listening for NAT-PMP/PCP traffic on port %u",
++			syslog(LOG_NOTICE, "Listening for PCP/NAT-PMP traffic on port %u/UDP",
+ 			       NATPMP_PORT);
+ 		}
+ #else
+ 		{
+-			syslog(LOG_ERR, "Failed to open sockets for NAT PMP.");
++			syslog(LOG_ERR, "Failed to open port 5351/UDP for NAT-PMP");
+ 		} else {
+-			syslog(LOG_NOTICE, "Listening for NAT-PMP traffic on port %u",
++			syslog(LOG_NOTICE, "Listening for NAT-PMP traffic on port %u/UDP",
+ 			       NATPMP_PORT);
+ 		}
+ #endif
+@@ -2739,6 +2764,30 @@ main(int argc, char * * argv)
+ 	}
+ #endif /* HAS_LIBCAP_NG */
+ 
++if (GETFLAG(ENABLEUPNPMASK) && !GETFLAG(SECUREMODEMASK))
++	syslog(LOG_WARNING, "WARNING: Allow adding port maps for non-requesting IP addresses via UPnP IGD, as secure_mode=no set");
++#ifdef ENABLE_PCP
++if (GETFLAG(ENABLENATPMPMASK) && GETFLAG(PCP_ALLOWTHIRDPARTYMASK))
++	syslog(LOG_WARNING, "WARNING: Allow adding port maps for non-requesting IP addresses via PCP, as pcp_allow_thirdparty=yes set");
++#endif
++#ifdef ENABLE_IPV6
++if (GETFLAG(IPV6DISABLEDMASK))
++	syslog(LOG_NOTICE, "IPv6 mapping disabled");
++#else
++syslog(LOG_NOTICE, "IPv6 mapping disabled");
++#endif
++if (GETFLAG(ENABLEUPNPMASK)) {
++#ifdef IGD_V2
++	if (GETFLAG(FORCEIGDDESCV1MASK)) {
++		syslog(LOG_NOTICE, "UPnP IGD compatibility mode set to IGDv1 (IPv4 only)");
++	} else {
++		syslog(LOG_NOTICE, "UPnP IGD compatibility mode set to IGDv2");
++	}
++#else
++	syslog(LOG_NOTICE, "UPnP IGD compatibility mode set to IGDv1 (IPv4 only)");
++#endif
++}
++
+ #ifdef USE_SYSTEMD
+ 	if (v.systemd_notify) {
+ 		upnp_update_status();
+@@ -2768,12 +2817,13 @@ main(int argc, char * * argv)
+ 		/* send public address change notifications if needed */
+ 		if(should_send_public_address_change_notif)
+ 		{
+-			syslog(LOG_INFO, "should send external iface address change notification(s)");
++			syslog(LOG_NOTICE, "External network interface link/address change detected");
+ 			if(GETFLAG(PERFORMSTUNMASK))
+ 			{
+-				if (update_ext_ip_addr_from_stun(0) != 0) {
++				if (update_ext_ip_addr_from_stun() != 0) {
+ 					/* if stun succeed it updates disable_port_forwarding;
+ 					 * if stun failed (non-zero return value) then port forwarding would not work, so disable it */
++					syslog(LOG_WARNING, "IPv4 mapping disabled");
+ 					disable_port_forwarding = 1;
+ 				}
+ 			}
+@@ -3049,7 +3099,7 @@ main(int argc, char * * argv)
+ 		}
+ 		i = try_sendto(&writeset);
+ 		if(i < 0) {
+-			syslog(LOG_ERR, "try_sendto failed to send %d packets", -i);
++			/*syslog(LOG_DEBUG, "try_sendto failed to send %d packets", -i);*/
+ 		}
+ #ifdef USE_MINIUPNPDCTL
+ 		for(ectl = ctllisthead.lh_first; ectl;)
+@@ -3149,7 +3199,7 @@ main(int argc, char * * argv)
+ 					if(lan_addr == NULL) {
+ 						char sender_str[64];
+ 						sockaddr_to_string((struct sockaddr *)&senderaddr, sender_str, sizeof(sender_str));
+-						syslog(LOG_WARNING, "NAT-PMP packet sender %s not from a LAN, ignoring",
++						syslog(LOG_DEBUG, "NAT-PMP packet sender %s not from a LAN, ignoring",
+ 						       sender_str);
+ 						continue;
+ 					}
+@@ -3172,7 +3222,7 @@ main(int argc, char * * argv)
+ 				if(lan_addr == NULL) {
+ 					char sender_str[64];
+ 					sockaddr_to_string((struct sockaddr *)&senderaddr, sender_str, sizeof(sender_str));
+-					syslog(LOG_WARNING, "NAT-PMP packet sender %s not from a LAN, ignoring",
++					syslog(LOG_DEBUG, "NAT-PMP packet sender %s not from a LAN, ignoring",
+ 					       sender_str);
+ 					continue;
+ 				}
+@@ -3206,7 +3256,7 @@ main(int argc, char * * argv)
+ 		/* process SSDP packets */
+ 		if(sudp >= 0 && FD_ISSET(sudp, &readset))
+ 		{
+-			/*syslog(LOG_INFO, "Received UDP Packet");*/
++			/*syslog(LOG_DEBUG, "Received UDP Packet");*/
+ #ifdef ENABLE_HTTPS
+ 			ProcessSSDPRequest(sudp, (unsigned short)v.port, (unsigned short)v.https_port);
+ #else
+@@ -3216,7 +3266,7 @@ main(int argc, char * * argv)
+ #ifdef ENABLE_IPV6
+ 		if(sudpv6 >= 0 && FD_ISSET(sudpv6, &readset))
+ 		{
+-			syslog(LOG_INFO, "Received UDP Packet (IPv6)");
++			/*syslog(LOG_DEBUG, "Received UDP Packet (IPv6)");*/
+ #ifdef ENABLE_HTTPS
+ 			ProcessSSDPRequest(sudpv6, (unsigned short)v.port, (unsigned short)v.https_port);
+ #else
+@@ -3318,7 +3368,7 @@ main(int argc, char * * argv)
+ 
+ shutdown:
+ 
+-	syslog(LOG_NOTICE, "shutting down MiniUPnPd");
++	syslog(LOG_NOTICE, "Shutting down MiniUPnPd");
+ #ifdef USE_SYSTEMD
+ 	if (v.systemd_notify) {
+ 		sd_notify(0,
+@@ -3337,7 +3387,7 @@ shutdown:
+ 		if(SendSSDPGoodbye(snotify, addr_count * 2) < 0)
+ #endif
+ 		{
+-			syslog(LOG_ERR, "Failed to broadcast good-bye notifications");
++			syslog(LOG_DEBUG, "Failed to broadcast good-bye notifications");
+ 		}
+ 	}
+ 	/* try to send pending packets */
+--- a/miniupnpd.conf
++++ b/miniupnpd.conf
+@@ -3,50 +3,49 @@
+ 
+ # CAUTION: mixing up WAN and LAN interfaces may introduce security risks!
+ # Be sure to assign the correct interfaces to LAN and WAN and consider
+-# implementing UPnP permission rules at the bottom of this configuration file
++# configuring access control settings at the bottom of this file
++
++##### EXTERNAL (WAN) NETWORK INTERFACE #####
+ 
+-# WAN network interface
+ #ext_ifname=eth1
+ 
+-# if the WAN network interface for IPv6 is different than for IPv4,
+-# set ext_ifname6
++# If the WAN network interface for IPv6 is different than for IPv4
+ #ext_ifname6=eth2
+ 
+-# If the WAN interface has several IP addresses, you
+-# can specify the one to use below.
+-# Setting ext_ip is also useful in double NAT setup, you can declare here
+-# the public IP address.
++# Allow CGNAT use (default is no)
++# By default, daemon disables IPv4 mapping if a private/CGNAT-reserved external
++# IPv4 address is detected for the following reasons:
++# - Info, as port maps not reachable via internet without an unrestricted
++#   endpoint-independent (1:1) IPv4 CGNAT, but possibly from within
++# - Compatibility, as many UPnP IGD & PCP/NAT-PMP clients require a returned
++#   public external IPv4 address
++# - Security, to prevent access via internet if the external/internal network
++#   interface has been configured swapped
++# To enable IPv4 mapping in this case, select a priority-listed option:
++# A) Detect public external IPv4 and test for unrestricted endpoint-independent
++#    (1:1) CGNAT via STUN server, set ext_allow_cgnat=yes
++# B) As A, but workaround filtered CGNAT result daemon limitation (without extra
++#    firewall rule), set ext_allow_cgnat=allow-filtered; check security note
++# C) Manually override reported external IPv4 with public, set ext_ip; check
++#    security note
++# D) Report private/CGNAT-reserved external IPv4 to clients, set
++#    ext_allow_cgnat=report-private-ipv4; check compatibility/security notes
++#ext_allow_cgnat=yes
++#ext_allow_cgnat=allow-filtered
++#ext_allow_cgnat=report-private-ipv4
++
++# Configure STUN server
++# Some CHANGE-REQUEST's capable public servers: stun.nextcloud.com,
++#  stun.sipgate.net, stun.3cx.com, stun.counterpath.com, stun.miwifi.com
++ext_stun_host=stun.nextcloud.com
++#ext_stun_port=3478
++
++# Override external IPv4
++# Report custom public/external (WAN) IPv4 address to clients
++# If external interface has several IPv4 addresses, you can set which to report
+ #ext_ip=
+ 
+-# Allow private IP address on external interface. When set to yes, program
+-# won't just disable port forwarding when external address is private IP.
+-# This option is disabled by default.
+-#ext_allow_private_ipv4=yes
+-
+-# The WAN interface must have a public IP address. Otherwise it is behind NAT
+-# and port forwarding is impossible. In some cases WAN interface can be
+-# behind unrestricted full-cone NAT 1:1 when all incoming traffic is NAT-ed and
+-# routed to WAN interfaces without any filtering. In this cases miniupnpd
+-# needs to know the public IP address and it can be learnt by asking external
+-# server via STUN protocol. Following option enable retrieving external
+-# public IP address from STUN server and detection of NAT type. You need
+-# to specify also external STUN server in stun_host option below.
+-# STUN CGNAT filter check result would be ignored when deciding whether to
+-# disable port forwarding if setting this option to allow-filtered.
+-# This option is disabled by default.
+-#ext_perform_stun=yes
+-#ext_perform_stun=allow-filtered
+-
+-# Specify STUN server, either hostname or IP address
+-# Some public STUN servers:
+-# stun.nextcloud.com
+-# stun.sipgate.net
+-# stun.3cx.com
+-# stun.counterpath.com
+-# stun.miwifi.com
+-#ext_stun_host=stun.nextcloud.com
+-# Specify STUN UDP port, by default it is standard port 3478.
+-#ext_stun_port=3478
++##### INTERNAL (LAN) NETWORK INTERFACES #####
+ 
+ # LAN network interfaces IPs / networks
+ # There can be multiple listening IPs for SSDP traffic, in that case
+@@ -64,33 +63,77 @@
+ #listening_ip=10.5.0.0/16
+ #listening_ip=eth0
+ 
++##### DAEMON CONFIGURATION #####
++
++# Enable UPNP support (default is yes)
++#enable_upnp=no
++
++# Enable NAT-PMP and PCP support (default is no)
++#enable_pcp_pmp=yes
++
++# Lease file location
++#lease_file=/var/log/upnp.leases
++
++# Report system uptime instead of daemon uptime
++system_uptime=yes
++
++# Unused rules cleaning.
++# never remove any rule before this threshold for the number
++# of redirections is exceeded. default to 20
++#clean_ruleset_threshold=10
++# Clean process work interval in seconds. default to 0 (disabled).
++# a 600 seconds (10 minutes) interval makes sense
++clean_ruleset_interval=600
++
++##### UPNP IGD CONFIGURATION #####
++
++# If compiled with IGD_V2 defined, force reporting IGDv1 in rootDesc (default
++# is no)
++#force_igd_desc_v1=no
++
++# Bitrates reported by daemon in bits per second
++# by default miniupnpd tries to get WAN interface speed
++#bitrate_up=1000000
++#bitrate_down=10000000
++
++# Daemon's serial and model number when reporting to clients
++# (in XML description)
++#serial=12345678
++#model_number=1
++
++# Default presentation URL is HTTP address on port 80
++# If set to an empty string, no presentationURL element will appear
++# in the XML description of the device, which prevents MS Windows
++# from displaying an icon in the "Network Connections" panel.
++#presentation_url=http://www.mylan/index.php
++
++# UUID, generate your own UUID with "make genuuid"
++uuid=00000000-0000-0000-0000-000000000000
++
+ # Port for HTTP (descriptions and SOAP) traffic. Set to 0 for autoselect.
+ #http_port=0
+ 
+ # Port for HTTPS. Set to 0 for autoselect (default)
+ #https_port=0
+ 
++# Notify interval in seconds. default is 900 seconds.
++# As advised in the standard, announcement have a lifetime double of this value.
++notify_interval=900
++
+ # Path to the UNIX socket used to communicate with MiniSSDPd
+ # If running, MiniSSDPd will manage M-SEARCH answering.
+ # default is /var/run/minissdpd.sock
+ #minissdpdsocket=/var/run/minissdpd.sock
+ 
+-# Disable IPv6 (default is no : IPv6 enabled if enabled at build time)
+-#ipv6_disable=yes
+-
+-# Enable NAT-PMP and PCP support (default is no)
+-#enable_pcp_pmp=yes
+-
+-# Enable UPNP support (default is yes)
+-#enable_upnp=no
++##### PCP CONFIGURATION #####
+ 
+ # PCP
+ # Configure the minimum and maximum lifetime of a port mapping in seconds
+ # 120s and 86400s (24h) are suggested values from PCP-base
+ #min_lifetime=120
+ #max_lifetime=86400
+-# allow THIRD_PARTY Option for MAP and PEER Opcodes (default is no)
+-#pcp_allow_thirdparty=yes
++
++##### LINUX NFTABLES/IPTABLES FIREWALL CONFIGURATION #####
+ 
+ # table names for netfilter nft. Default is "filter" for both
+ #upnp_table_name=
+@@ -103,8 +146,27 @@
+ #upnp_nat_postrouting_chain=UPnP-Postrouting
+ #upnp_nftables_family_split=no
+ 
+-# Lease file location
+-#lease_file=/var/log/upnp.leases
++##### BSD'S PF FIREWALL CONFIGURATION #####
++
++# Log packets in pf (default is no)
++#packet_log=no
++
++# Anchor name in pf (default is miniupnpd)
++#anchor=miniupnpd
++
++# ALTQ queue in pf
++# Filter rules must be used for this to be used.
++# compile with PF_ENABLE_FILTER_RULES (see config.h file)
++#queue=queue_name1
++
++# Tag name in pf
++#tag=tag_name1
++
++# Make filter rules in pf quick or not. default is yes
++# active when compiled with PF_ENABLE_FILTER_RULES (see config.h file)
++#quickrules=no
++
++##### CUSTOM UPNP IGD MANUFACTURER INFORMATION #####
+ 
+ # To enable the next few runtime options, see compile time
+ # ENABLE_MANUFACTURER_INFO_CONFIGURATION (config.h)
+@@ -127,83 +189,41 @@
+ # Model URL, default is URL of OS vendor
+ #model_url=https://miniupnp.tuxfamily.org/
+ 
+-# Bitrates reported by daemon in bits per second
+-# by default miniupnpd tries to get WAN interface speed
+-#bitrate_up=1000000
+-#bitrate_down=10000000
+-
+-# Secure Mode, UPnP clients can only add mappings to their own IP
+-# Enabled by default
+-#secure_mode=no
+-
+-# Default presentation URL is HTTP address on port 80
+-# If set to an empty string, no presentationURL element will appear
+-# in the XML description of the device, which prevents MS Windows
+-# from displaying an icon in the "Network Connections" panel.
+-#presentation_url=http://www.mylan/index.php
+-
+-# Report system uptime instead of daemon uptime
+-system_uptime=yes
++##### ACCESS CONTROL #####
+ 
+-# Notify interval in seconds. default is 900 seconds.
+-# As advised in the standard, announcement have a lifetime double of this value.
+-notify_interval=900
++# Default minimum/maximum port for IPv4/IPv6 port maps (default is 1)
++# Specify the default min/max accepted internal/external port. Applies with no
++# matching or default reject IPv4 ACL entries, but for all IPv6 devices, as no
++# IPv6 ACL.
++# For private use, min. of 1024 recommended; planned default in >=2.4.0 release.
++# However, for use cases where low ports (e.g. 80/443 for HTTP/HTTPS) need to be
++# made reachable via internet, it's recommended to make min. user configurable
++#default_min_port=1
++#default_max_port=65535
+ 
+-# Unused rules cleaning.
+-# never remove any rule before this threshold for the number
+-# of redirections is exceeded. default to 20
+-#clean_ruleset_threshold=10
+-# Clean process work interval in seconds. default to 0 (disabled).
+-# a 600 seconds (10 minutes) interval makes sense
+-clean_ruleset_interval=600
+-
+-# Log packets in pf (default is no)
+-#packet_log=no
+-
+-# Anchor name in pf (default is miniupnpd)
+-#anchor=miniupnpd
+-
+-# ALTQ queue in pf
+-# Filter rules must be used for this to be used.
+-# compile with PF_ENABLE_FILTER_RULES (see config.h file)
+-#queue=queue_name1
+-
+-# Tag name in pf
+-#tag=tag_name1
+-
+-# Make filter rules in pf quick or not. default is yes
+-# active when compiled with PF_ENABLE_FILTER_RULES (see config.h file)
+-#quickrules=no
+-
+-# UUID, generate your own UUID with "make genuuid"
+-uuid=00000000-0000-0000-0000-000000000000
+-
+-# Daemon's serial and model number when reporting to clients
+-# (in XML description)
+-#serial=12345678
+-#model_number=1
++# Disable IPv6 mapping (default is no, available if ENABLE_IPV6 set at build)
++#ipv6_disable=yes
+ 
+-# If compiled with IGD_V2 defined, force reporting IGDv1 in rootDesc (default
+-# is no)
+-#force_igd_desc_v1=no
++# Allow third-party mapping (use with care)
++# Allow adding port maps for non-requesting IP addresses; use with care
++# To allow this via UPnP IGD protocol, set secure_mode=no (default is yes)
++# To allow this via PCP protocol, set pcp_allow_thirdparty=yes (default is no)
++#secure_mode=no
++#pcp_allow_thirdparty=yes
+ 
+-# UPnP permission rules (also enforced for NAT-PMP and PCP) for IPv4
+-# (allow|deny) (external port range) IP/mask (internal port range) (optional regex filter)
+-# A port range is <min port>-<max port> or <port> if there is only
+-# one port in the range.
+-# IP/mask format must be nnn.nnn.nnn.nnn/nn
++# Access control list (ACL) entries, for IPv4 only
++# The ACL specifies which IPv4 addresses and ports can be mapped
++# (allow/deny) (ext port/range) IP/mask (int port/range) (optional regex filter)
+ # Regex support must be enabled at build time : ./configure --regex
+-# It is advised to only allow redirection of ports >= 1024
+-# and end the rule set with "deny 0-65535 0.0.0.0/0 0-65535"
++# It is advised to end the rule set with "deny 1-65535 0.0.0.0/0 1-65535"
+ # The following default ruleset allows specific LAN side IP addresses
+-# to request only ephemeral ports. It is recommended that users
++# to request only high ports. It is recommended that users
+ # modify the IP ranges to match their own internal networks, and
+ # also consider implementing network-specific restrictions
+-# CAUTION: failure to enforce any rules may permit insecure requests to be made!
+ allow 1024-65535 192.168.0.0/24 1024-65535
+-# disallow requests whose description string matches the given regex
+-# deny 1024-65535 192.168.1.0/24 1024-65535 "My evil app ver [[:digit:]]*"
++# To disallow requests whose description string matches the given regex
++#  deny 1024-65535 192.168.1.0/24 1024-65535 "My evil app ver [[:digit:]]*"
++# CAUTION: failure to enforce any rules may permit insecure requests to be made!
+ allow 1024-65535 192.168.1.0/24 1024-65535
+-allow 1024-65535 192.168.0.0/23 22
+-allow 12345 192.168.7.113/32 54321
+-deny 0-65535 0.0.0.0/0 0-65535
++allow 12345 192.168.7.113 54321
++deny 1-65535 0.0.0.0/0 0-65535
+--- a/natpmp.c
++++ b/natpmp.c
+@@ -106,10 +106,10 @@ static void FillPublicAddressResponse(un
+ 			resp[3] = 3;	/* Network Failure (e.g. NAT box itself
+ 			                 * has not obtained a DHCP lease) */
+ 		} else if(getifaddr(ext_if_name, tmp, INET_ADDRSTRLEN, &addr, NULL) < 0) {
+-			syslog(LOG_ERR, "Failed to get IP for interface %s", ext_if_name);
++			syslog(LOG_DEBUG, "Failed to get IP for interface %s", ext_if_name);
+ 			resp[3] = 3;	/* Network Failure (e.g. NAT box itself
+ 			                 * has not obtained a DHCP lease) */
+-		} else if (!GETFLAG(ALLOWPRIVATEIPV4MASK) && addr_is_reserved(&addr)) {
++		} else if (!GETFLAG(REPORTPRIVATEIPV4MASK) && addr_is_reserved(&addr)) {
+ 			resp[3] = 3;	/* Network Failure, box has not obtained
+ 			                   public IP address */
+ 		} else {
+@@ -231,7 +231,7 @@ void ProcessIncomingNATPMPPacket(int s,
+ 		syslog(LOG_ERR, "inet_ntop(natpmp): %m");
+ 	}
+ 
+-	syslog(LOG_INFO, "NAT-PMP request received from %s:%hu %dbytes",
++	syslog(LOG_DEBUG, "NAT-PMP request received from %s:%hu %d bytes",
+ 	       senderaddrstr, ntohs(senderaddr->sin_port), n);
+ 
+ 	if(n<2 || ((((req[1]-1)&~1)==0) && n<12)) {
+@@ -260,7 +260,7 @@ void ProcessIncomingNATPMPPacket(int s,
+ 		resp[3] = 1;	/* unsupported version */
+ 	} else switch(req[1]) {
+ 	case 0:	/* Public address request */
+-		syslog(LOG_INFO, "NAT-PMP public address request");
++		syslog(LOG_DEBUG, "NAT-PMP public address request");
+ 		FillPublicAddressResponse(resp, senderaddr->sin_addr.s_addr);
+ 		resplen = 12;
+ 		break;
+@@ -280,10 +280,6 @@ void ProcessIncomingNATPMPPacket(int s,
+ 			eport = READNU16(req+6);
+ 			lifetime = READNU32(req+8);
+ 			proto = (req[1]==1)?IPPROTO_UDP:IPPROTO_TCP;
+-			syslog(LOG_INFO, "NAT-PMP port mapping request : "
+-			                 "%hu->%s:%hu %s lifetime=%us",
+-			                 eport, senderaddrstr, iport,
+-			                 (req[1]==1)?"udp":"tcp", lifetime);
+ 			/* TODO: accept port mapping if iport ok but eport not ok
+ 			 * (and set eport correctly) */
+ 			if(lifetime == 0) {
+@@ -319,8 +315,8 @@ void ProcessIncomingNATPMPPacket(int s,
+ 								resp[3] = 2;	/* Not Authorized/Refused */
+ 								break;
+ 							} else {
+-								syslog(LOG_INFO, "NAT-PMP %s port %hu mapping removed",
+-								       proto2==IPPROTO_TCP?"TCP":"UDP", eport2);
++								syslog(LOG_INFO, "Delete IPv4 port map %hu:%s:%hu/%s via NAT-PMP",
++									eport2, senderaddrstr, iport, proto2 == IPPROTO_TCP ? "TCP" : "UDP");
+ 								index--;
+ 							}
+ 						}
+@@ -340,8 +336,8 @@ void ProcessIncomingNATPMPPacket(int s,
+ 						eport_first = eport;
+ 					} else if(eport == eport_first) { /* no eport available */
+ 						if(any_eport_allowed == 0) { /* all eports rejected by permissions */
+-							syslog(LOG_ERR, "No allowed eport for NAT-PMP %hu %s->%s:%hu",
+-							       eport, proto_itoa(proto), senderaddrstr, iport);
++							syslog(LOG_INFO, "Reject IPv4 port map %hu:%s:%hu/%s via NAT-PMP reason ACL/default-min/max-port",
++								eport, senderaddrstr, iport, proto_itoa(proto));
+ 							resp[3] = 2;	/* Not Authorized/Refused */
+ 						} else { /* at least one eport allowed (but none available) */
+ 							syslog(LOG_ERR, "Failed to find available eport for NAT-PMP %hu %s->%s:%hu",
+@@ -358,7 +354,7 @@ void ProcessIncomingNATPMPPacket(int s,
+ 					any_eport_allowed = 1;	/* at lease one eport is allowed */
+ #ifdef CHECK_PORTINUSE
+ 					if (port_in_use(ext_if_name, eport, proto, senderaddrstr, iport) > 0) {
+-						syslog(LOG_INFO, "port %hu protocol %s already in use",
++						syslog(LOG_INFO, "Reject IPv4 port map %hu:?:?/%s via NAT-PMP reason port in use",
+ 						       eport, proto_itoa(proto));
+ 						eport++;
+ 						if(eport == 0) eport++; /* skip port zero */
+@@ -373,8 +369,8 @@ void ProcessIncomingNATPMPPacket(int s,
+ 						if(strcmp(senderaddrstr, iaddr_old)==0
+ 						    && iport==iport_old) {
+ 							/* redirection already existing */
+-							syslog(LOG_INFO, "port %hu %s already redirected to %s:%hu, replacing",
+-							       eport, (proto==IPPROTO_TCP)?"tcp":"udp", iaddr_old, iport_old);
++							syslog(LOG_INFO, "Renew IPv4 port map %hu:%s:%hu/%s lifetime %u via NAT-PMP",
++								eport, senderaddrstr, iport, proto_itoa(proto), lifetime);
+ 							/* remove and then add again */
+ 							if(_upnp_delete_redir(eport, proto) < 0) {
+ 								syslog(LOG_ERR, "failed to remove port mapping");
+@@ -394,13 +390,17 @@ void ProcessIncomingNATPMPPacket(int s,
+ 					if(upnp_redirect_internal(NULL, eport, senderaddrstr,
+ 					                          iport, proto, desc,
+ 					                          timestamp) < 0) {
+-						syslog(LOG_ERR, "Failed to add NAT-PMP %hu %s->%s:%hu '%s'",
++						syslog(LOG_DEBUG, "Failed to add NAT-PMP %hu %s->%s:%hu '%s'",
+ 						       eport, proto_itoa(proto), senderaddrstr, iport, desc);
+ 						resp[3] = 3;  /* Failure */
+ 					}
+ 					break;
+ 				}
+ 			}
++			if (resp[3] == 0 && lifetime) {
++				syslog(LOG_INFO, "Add IPv4 port map %hu:%s:%hu/%s lifetime %u via NAT-PMP",
++					eport, senderaddrstr, iport, req[1] == 1 ? "UDP" : "TCP", lifetime);
++			}
+ 			WRITENU16(resp+8, iport);	/* private port */
+ 			WRITENU16(resp+10, eport);	/* public port */
+ 			WRITENU32(resp+12, lifetime);	/* Port Mapping lifetime */
+@@ -410,6 +410,7 @@ void ProcessIncomingNATPMPPacket(int s,
+ 	default:
+ 		resp[3] = 5;	/* Unsupported OPCODE */
+ 	}
++
+ 	n = sendto_or_schedule(s, resp, resplen, 0,
+ 	           (struct sockaddr *)senderaddr, sizeof(*senderaddr));
+ 	if(n<0) {
+@@ -443,7 +444,7 @@ void SendNATPMPPublicAddressChangeNotifi
+ 	FillPublicAddressResponse(notif, 0);
+ 	if(notif[3])
+ 	{
+-		syslog(LOG_WARNING, "%s: cannot get public IP address, stopping",
++		syslog(LOG_DEBUG, "%s: cannot get public IP address, stopping",
+ 		       "SendNATPMPPublicAddressChangeNotification");
+ 		return;
+ 	}
+@@ -471,7 +472,7 @@ void SendNATPMPPublicAddressChangeNotifi
+ 		           (struct sockaddr *)&sockname, sizeof(struct sockaddr_in));
+ 		if(n < 0)
+ 		{
+-			syslog(LOG_ERR, "%s: sendto(s_udp=%d, port=%d): %m",
++			syslog(LOG_DEBUG, "%s: sendto(s_udp=%d, port=%d): %m",
+ 			       "SendNATPMPPublicAddressChangeNotification", sockets[j], NATPMP_PORT);
+ 			return;
+ 		}
+@@ -481,7 +482,7 @@ void SendNATPMPPublicAddressChangeNotifi
+ 		           (struct sockaddr *)&sockname, sizeof(struct sockaddr_in));
+ 		if(n < 0)
+ 		{
+-			syslog(LOG_ERR, "%s: sendto(s_udp=%d, port=%d): %m",
++			syslog(LOG_DEBUG, "%s: sendto(s_udp=%d, port=%d): %m",
+ 			       "SendNATPMPPublicAddressChangeNotification", sockets[j], NATPMP_NOTIF_PORT);
+ 			return;
+ 		}
+--- a/netfilter/iptcrdr.c
++++ b/netfilter/iptcrdr.c
+@@ -715,7 +715,7 @@ delete_filter_rule(const char * ifname,
+ 						continue;
+ 				}
+ 				index = i;
+-				/*syslog(LOG_INFO, "Trying to delete filter rule at index %u", index);*/
++				/*syslog(LOG_DEBUG, "Trying to delete filter rule at index %u", index);*/
+ 				r = delete_rule_and_commit(index, h, miniupnpd_forward_chain, "delete_filter_rule");
+ 				h = NULL;
+ 				break;
+@@ -808,7 +808,7 @@ delete_redirect_and_filter_rules(unsigne
+ #endif
+ 	if(r == 0)
+ 	{
+-		syslog(LOG_INFO, "Trying to delete nat rule at index %u", index);
++		syslog(LOG_DEBUG, "Trying to delete nat rule at index %u", index);
+ 		/* Now delete both rules */
+ 		/* first delete the nat rule */
+ 		h = iptc_init("nat");
+@@ -852,7 +852,7 @@ delete_redirect_and_filter_rules(unsigne
+ 					if(iaddr != e->ip.dst.s_addr)
+ 						continue;
+ 					index = i;
+-					syslog(LOG_INFO, "Trying to delete filter rule at index %u", index);
++					syslog(LOG_DEBUG, "Trying to delete filter rule at index %u", index);
+ 					r = delete_rule_and_commit(index, h, miniupnpd_forward_chain, "delete_filter_rule");
+ 					h = NULL;
+ 					break;
+@@ -867,6 +867,9 @@ delete_redirect_and_filter_rules(unsigne
+ 				iptc_free(&h);
+ #endif
+ 		}
++	} else {
++		syslog(LOG_INFO, "Non-existing IPv4 port map to delete %hu:?:?/%s via UPnP IGD",
++			eport, proto == IPPROTO_TCP ? "TCP" : "UDP");
+ 	}
+ 
+ 	/*delete PEER rule*/
+@@ -910,7 +913,7 @@ delete_redirect_and_filter_rules(unsigne
+ 				}
+ 
+ 				index = i;
+-				syslog(LOG_INFO, "Trying to delete peer rule at index %u", index);
++				syslog(LOG_DEBUG, "Trying to delete peer rule at index %u", index);
+ 				r2 = delete_rule_and_commit(index, h, miniupnpd_nat_postrouting_chain, "delete_peer_rule");
+ 				h = NULL;
+ 				break;
+@@ -962,7 +965,7 @@ delete_redirect_and_filter_rules(unsigne
+ 				if(iaddr != e->ip.src.s_addr)
+ 					continue;
+ 				index = i;
+-				syslog(LOG_INFO, "Trying to delete dscp rule at index %u", index);
++				syslog(LOG_DEBUG, "Trying to delete dscp rule at index %u", index);
+ 				r2 = delete_rule_and_commit(index, h, miniupnpd_nat_chain, "delete_dscp_rule");
+ 				h = NULL;
+ 				break;
+--- a/netfilter/iptpinhole.c
++++ b/netfilter/iptpinhole.c
+@@ -232,13 +232,13 @@ int add_pinhole(const char * ifname,
+ 		strncpy(e->ipv6.iniface, ifname, IFNAMSIZ);
+ 	if(rem_host && (rem_host[0] != '\0')) {
+ 		if(inet_pton(AF_INET6, rem_host, &e->ipv6.src) < 1) {
+-			syslog(LOG_WARNING, "failed to parse INET6 address \"%s\"", rem_host);
++			syslog(LOG_DEBUG, "Failed to parse remote IPv6 address (%s)", rem_host);
+ 		} else {
+ 			memset(&e->ipv6.smsk, 0xff, sizeof(e->ipv6.smsk));
+ 		}
+ 	}
+ 	if (inet_pton(AF_INET6, int_client, &e->ipv6.dst) < 1) {
+-		syslog(LOG_WARNING, "failed to parse INET6 address \"%s\"", int_client);
++		syslog(LOG_DEBUG, "Failed to parse IPv6 address (%s)", int_client);
+ 	} else {
+ 		memset(&e->ipv6.dmsk, 0xff, sizeof(e->ipv6.dmsk));
+ 	}
+@@ -295,14 +295,14 @@ find_pinhole(const char * ifname,
+ 
+ 	if(rem_host && (rem_host[0] != '\0')) {
+ 		if (inet_pton(AF_INET6, rem_host, &saddr) < 1) {
+-			syslog(LOG_WARNING, "Failed to parse INET6 address \"%s\"", rem_host);
++			syslog(LOG_DEBUG, "Failed to parse remote IPv6 address (%s)", rem_host);
+ 			memset(&saddr, 0, sizeof(struct in6_addr));
+ 		}
+ 	} else {
+ 		memset(&saddr, 0, sizeof(struct in6_addr));
+ 	}
+ 	if (inet_pton(AF_INET6, int_client, &daddr) < 1) {
+-		syslog(LOG_WARNING, "Failed to parse INET6 address \"%s\"", int_client);
++		syslog(LOG_DEBUG, "Failed to parse IPv6 address (%s)", int_client);
+ 		memset(&daddr, 0, sizeof(struct in6_addr));
+ 	}
+ 	for(p = pinhole_list.lh_first; p != NULL; p = p->entries.le_next) {
+@@ -483,7 +483,7 @@ clean_pinhole_list(unsigned int * next_t
+ 	while(p != NULL) {
+ 		if(p->timestamp <= (unsigned int)current_time) {
+ 			unsigned short uid = p->uid;
+-			syslog(LOG_INFO, "removing expired pinhole with uid=%hu", uid);
++			syslog(LOG_INFO, "Expire IPv6 port map [?]:?/?");
+ 			p = p->entries.le_next;
+ 			if(delete_pinhole(uid) == 0)
+ 				n++;
+--- a/netfilter_nft/nftnlrdr.c
++++ b/netfilter_nft/nftnlrdr.c
+@@ -353,8 +353,8 @@ delete_redirect_and_filter_rules(unsigne
+ 			}
+ 		}
+ 	} else {
+-		syslog(LOG_WARNING, "%s: redirect rule with eport=%hu proto %d NOT FOUND",
+-		       "delete_redirect_and_filter_rules", eport, proto);
++		syslog(LOG_INFO, "Non-existing IPv4 port map to delete %hu:?:?/%s via UPnP IGD",
++			eport, proto == IPPROTO_TCP ? "TCP" : "UDP");
+ 	}
+ 
+ 	iaddr = 0;
+--- a/netfilter_nft/nftnlrdr_misc.c
++++ b/netfilter_nft/nftnlrdr_misc.c
+@@ -110,7 +110,7 @@ nft_mnl_connect(void)
+ 		return -1;
+ 	}
+ 	mnl_portid = mnl_socket_get_portid(mnl_sock);
+-	syslog(LOG_INFO, "mnl_socket bound, port_id=%u", mnl_portid);
++	syslog(LOG_DEBUG, "mnl_socket bound, port_id=%u", mnl_portid);
+ 	return 0;
+ }
+ 
+@@ -755,7 +755,7 @@ refresh_nft_cache(struct rule_list *head
+ 		errno = 0;
+ 		ret = mnl_cb_run(buf, n, mnl_seq, mnl_portid, table_cb, &data);
+ 		if (ret <= -1 /*== MNL_CB_ERROR*/) {
+-			syslog(LOG_ERR, "%s: mnl_cb_run returned %d: %m",
++			syslog(LOG_DEBUG, "%s: mnl_cb_run returned %d: %m",
+ 			       "refresh_nft_cache", ret);
+ 			return -1;
+ 		}
+@@ -1331,7 +1331,7 @@ nft_send_rule(struct nftnl_rule * rule,
+ 
+ 		result = send_batch(batch);
+ 		if (result < 0) {
+-			syslog(LOG_ERR, "%s(%p, %d, %d) send_batch failed %d",
++			syslog(LOG_DEBUG, "%s(%p, %d, %d) send_batch failed %d",
+ 			       "nft_send_rule", rule, (int)cmd, (int)chain_type, result);
+ 		}
+ 	}
+@@ -1517,7 +1517,7 @@ send_batch(struct mnl_nlmsg_batch *batch
+ 		errno = 0;
+ 		ret = mnl_cb_run(buf, n, 0, mnl_portid, NULL, NULL);
+ 		if (ret <= -1 /*== MNL_CB_ERROR*/) {
+-			syslog(LOG_ERR, "%s: mnl_cb_run returned %d: %m",
++			syslog(LOG_DEBUG, "%s: mnl_cb_run returned %d: %m",
+ 			       "send_batch", ret);
+ 			return -4;
+ 		}
+--- a/netfilter_nft/nftpinhole.c
++++ b/netfilter_nft/nftpinhole.c
+@@ -90,12 +90,12 @@ int add_pinhole(const char * ifname,
+ 		if (inet_pton(AF_INET6, rem_host, &rhost_addr) == 1) {
+ 			rhost_addr_p = &rhost_addr;
+ 		} else {
+-			syslog(LOG_WARNING, "Failed to parse INET6 address \"%s\"", rem_host);
++			syslog(LOG_DEBUG, "Failed to parse remote IPv6 address (%s)", rem_host);
+ 		}
+ 	}
+ 
+ 	if (inet_pton(AF_INET6, int_client, &ihost_addr) != 1) {
+-		syslog(LOG_WARNING, "Failed to parse INET6 address \"%s\"", int_client);
++		syslog(LOG_DEBUG, "Failed to parse IPv6 address (%s)", int_client);
+ 	}
+ 
+ 	snprintf(comment, NFT_DESCR_SIZE,
+@@ -133,7 +133,7 @@ find_pinhole(const char * ifname,
+ 
+ 	if (rem_host && rem_host[0] != '\0' && rem_host[0] != '*') {
+ 		if (inet_pton(AF_INET6, rem_host, &saddr) < 1) {
+-			syslog(LOG_WARNING, "Failed to parse INET6 address \"%s\"", rem_host);
++			syslog(LOG_DEBUG, "Failed to parse remote IPv6 address (%s)", rem_host);
+ 			memset(&saddr, 0, sizeof(struct in6_addr));
+ 		}
+ 	} else {
+@@ -141,7 +141,7 @@ find_pinhole(const char * ifname,
+ 	}
+ 
+ 	if (inet_pton(AF_INET6, int_client, &daddr) < 1) {
+-		syslog(LOG_WARNING, "Failed to parse INET6 address \"%s\"", int_client);
++		syslog(LOG_DEBUG, "Failed to parse IPv6 address (%s)", int_client);
+ 		memset(&daddr, 0, sizeof(struct in6_addr));
+ 	}
+ 
+@@ -163,7 +163,7 @@ find_pinhole(const char * ifname,
+ 		   (0 == memcmp(&daddr, &p->daddr6, sizeof(struct in6_addr)))) {
+ 
+ 			if (sscanf(p->desc, PINEHOLE_LABEL_FORMAT_SKIPDESC, &uid, &ts) != 2) {
+-				syslog(LOG_DEBUG, "rule with label '%s' is not a IGD pinhole", p->desc);
++				/*syslog(LOG_DEBUG, "rule with label '%s' is not a IGD pinhole", p->desc);*/
+ 				continue;
+ 			}
+ 
+@@ -400,7 +400,7 @@ get_pinhole_info(unsigned short uid,
+ 			if (timestamp) {
+ 				int uid_temp;
+ 				if (sscanf(p->desc, PINEHOLE_LABEL_FORMAT_SKIPDESC, &uid_temp, &ts) != 2) {
+-					syslog(LOG_DEBUG, "rule with label '%s' is not a IGD pinhole", p->desc);
++					/*syslog(LOG_DEBUG, "rule with label '%s' is not a IGD pinhole", p->desc);*/
+ 					continue;
+ 				}
+ 
+@@ -464,12 +464,12 @@ clean_pinhole_list(unsigned int * next_t
+ 			continue;
+ 
+ 		if (sscanf(p->desc, PINEHOLE_LABEL_FORMAT_SKIPDESC, &uid, &ts) != 2) {
+-			syslog(LOG_DEBUG, "rule with label '%s' is not a IGD pinhole", p->desc);
++			/*syslog(LOG_DEBUG, "rule with label '%s' is not a IGD pinhole", p->desc);*/
+ 			continue;
+ 		}
+ 
+ 		if (ts <= (unsigned int)current_time) {
+-			syslog(LOG_INFO, "removing expired pinhole '%s'", p->desc);
++			syslog(LOG_INFO, "Expire IPv6 port map [?]:?/?");
+ 			r = rule_del_handle(p);
+ 			nft_send_rule(r, NFT_MSG_DELRULE, RULE_CHAIN_FILTER);
+ 			n++;
+--- a/options.c
++++ b/options.c
+@@ -35,8 +35,9 @@ static const struct {
+ 	{ UPNPEXT_IFNAME6, "ext_ifname6" },
+ #endif
+ 	{ UPNPEXT_IP,	"ext_ip" },
+-	{ UPNPEXT_ALLOW_PRIVATE_IPV4, "ext_allow_private_ipv4" },
+-	{ UPNPEXT_PERFORM_STUN, "ext_perform_stun" },
++	{ UPNPEXT_ALLOW_CGNAT, "ext_allow_cgnat" },
++	{ UPNPEXT_ALLOW_CGNAT, "ext_perform_stun" },
++	{ UPNPEXT_REPORT_PRIVATE_IPV4, "ext_allow_private_ipv4" },
+ 	{ UPNPEXT_STUN_HOST, "ext_stun_host" },
+ 	{ UPNPEXT_STUN_PORT, "ext_stun_port" },
+ 	{ UPNPLISTENING_IP, "listening_ip" },
+@@ -44,6 +45,8 @@ static const struct {
+ 	{ UPNPIPV6_LISTENING_IP, "ipv6_listening_ip" },
+ 	{ UPNPIPV6_DISABLE, "ipv6_disable" },
+ #endif /* ENABLE_IPV6 */
++	{ DEFAULT_MIN_PORT, "default_min_port" },
++	{ DEFAULT_MAX_PORT, "default_max_port" },
+ 	{ UPNPPORT, "port" },
+ 	{ UPNPPORT, "http_port" },	/* "port" and "http_port" are synonims */
+ #ifdef ENABLE_HTTPS
+--- a/options.h
++++ b/options.h
+@@ -25,8 +25,8 @@ enum upnpconfigoptions {
+ 	UPNPEXT_IFNAME6,		/*!< ext_ifname6 */
+ #endif
+ 	UPNPEXT_IP,				/*!< ext_ip */
+-	UPNPEXT_ALLOW_PRIVATE_IPV4,	/*!< ext_allow_private_ipv4 */
+-	UPNPEXT_PERFORM_STUN,		/*!< ext_perform_stun */
++	UPNPEXT_ALLOW_CGNAT,		/*!< ext_allow_cgnat */
++	UPNPEXT_REPORT_PRIVATE_IPV4,	/*!< old ext_allow_private_ipv4 */
+ 	UPNPEXT_STUN_HOST,		/*!< ext_stun_host */
+ 	UPNPEXT_STUN_PORT,		/*!< ext_stun_port */
+ 	UPNPLISTENING_IP,		/*!< listening_ip */
+@@ -34,6 +34,8 @@ enum upnpconfigoptions {
+ 	UPNPIPV6_LISTENING_IP,		/*!< listening address for IPv6 */
+ 	UPNPIPV6_DISABLE,		/*!< ipv6_disable */
+ #endif /* ENABLE_IPV6 */
++	DEFAULT_MIN_PORT,		/*!< default_min_port */
++	DEFAULT_MAX_PORT,		/*!< default_max_port */
+ 	UPNPPORT,				/*!< "port" / "http_port" */
+ #ifdef ENABLE_HTTPS
+ 	UPNPHTTPSPORT,			/*!< "https_port" */
+--- a/pcpserver.c
++++ b/pcpserver.c
+@@ -631,7 +631,7 @@ static int CheckExternalAddress(pcp_info
+ 	}
+ 
+ 	if (!IN6_ARE_ADDR_EQUAL(pcp_msg_info->ext_ip, &external_addr)) {
+-		syslog(LOG_ERR,
++		syslog(LOG_DEBUG,
+ 		       "PCP: External IP in request didn't match interface IP \n");
+ #ifdef DEBUG
+ 		{
+@@ -943,7 +943,7 @@ static int CreatePCPMap_NAT(pcp_info_t *
+ 							   ((struct in_addr*)pcp_msg_info->mapped_ip->s6_addr)[3],
+ 							   pcp_msg_info->int_port, pcp_msg_info->desc)))) {
+ 			if (pcp_msg_info->pfailure_present) {
+-				return PCP_ERR_CANNOT_PROVIDE_EXTERNAL;
++				return PCP_ERR_NOT_AUTHORIZED;
+ 			}
+ 			pcp_msg_info->ext_port++;
+ 			if (pcp_msg_info->ext_port == 0) { /* skip port zero */
+@@ -955,7 +955,7 @@ static int CreatePCPMap_NAT(pcp_info_t *
+ #ifdef CHECK_PORTINUSE
+ 		if (port_in_use(ext_if_name, pcp_msg_info->ext_port, pcp_msg_info->protocol,
+ 				pcp_msg_info->mapped_str, pcp_msg_info->int_port) > 0) {
+-			syslog(LOG_INFO, "port %hu protocol %s already in use",
++			syslog(LOG_INFO, "Reject IPv4 port map %hu:?:?/%s via PCP reason port in use",
+ 			       pcp_msg_info->ext_port,
+ 			       proto_itoa(pcp_msg_info->protocol));
+ 			pcp_msg_info->ext_port++;
+@@ -980,9 +980,9 @@ static int CreatePCPMap_NAT(pcp_info_t *
+ 					return PCP_ERR_CANNOT_PROVIDE_EXTERNAL;
+ 				}
+ 			} else {
+-				syslog(LOG_INFO, "port %hu %s already redirected to %s:%hu, replacing",
+-				       pcp_msg_info->ext_port, proto_itoa(pcp_msg_info->protocol),
+-				       iaddr_old, iport_old);
++				syslog(LOG_INFO, "Renew IPv4 port map %hu:%s:%hu/%s lifetime %d via PCP",
++					pcp_msg_info->ext_port, iaddr_old, iport_old,
++					proto_itoa(pcp_msg_info->protocol), pcp_msg_info->lifetime);
+ 				/* remove and then add again */
+ 				if (_upnp_delete_redir(pcp_msg_info->ext_port,
+ 						       pcp_msg_info->protocol)==0) {
+@@ -1016,6 +1016,14 @@ static int CreatePCPMap_FW(pcp_info_t *p
+ 	int uid;
+ 	int r;
+ 	char desc[64];
++
++	if (!IN6_IS_ADDR_V4MAPPED(pcp_msg_info->mapped_ip) &&
++			(pcp_msg_info->int_port < default_min_port || pcp_msg_info->int_port > default_max_port)) {
++		syslog(LOG_INFO, "Reject IPv6 port map [%s]:%hu/%s via PCP reason default-min/max-port",
++			pcp_msg_info->mapped_str, pcp_msg_info->int_port, proto_itoa(pcp_msg_info->protocol));
++		return PCP_ERR_NOT_AUTHORIZED;
++	}
++
+ 	/* first check if pinhole already exists */
+ 	uid = upnp_find_inboundpinhole(NULL, 0,
+ 					pcp_msg_info->mapped_str,
+@@ -1027,13 +1035,14 @@ static int CreatePCPMap_FW(pcp_info_t *p
+ 		/* pinhole already exists, updating */
+ 		if (0 != strcmp(desc, pcp_msg_info->desc)) {
+ 			/* nonce does not match */
+-			syslog(LOG_ERR, "Unauthorized to update pinhole : \"%s\" != \"%s\"",
+-			       desc, pcp_msg_info->desc);
++			syslog(LOG_INFO, "Reject IPv6 port map [%s]:%hu/%s via PCP nonce %s reason nonce not matching",
++				pcp_msg_info->mapped_str, pcp_msg_info->int_port,
++				proto_itoa(pcp_msg_info->protocol), pcp_msg_info->desc + 8);
+ 			return PCP_ERR_NOT_AUTHORIZED;
+ 		}
+-		syslog(LOG_INFO, "updating pinhole %d to %s:%hu %s",
+-		       uid, pcp_msg_info->mapped_str, pcp_msg_info->int_port,
+-		       proto_itoa(pcp_msg_info->protocol));
++		syslog(LOG_INFO, "Renew IPv6 port map [%s]:%hu/%s lifetime %d via PCP",
++			pcp_msg_info->mapped_str, pcp_msg_info->int_port,
++			proto_itoa(pcp_msg_info->protocol), pcp_msg_info->lifetime);
+ 		r = upnp_update_inboundpinhole((unsigned short)uid, pcp_msg_info->lifetime);
+ 		return r >= 0 ? PCP_SUCCESS : PCP_ERR_NO_RESOURCES;
+ 	} else {
+@@ -1089,19 +1098,25 @@ static void CreatePCPMap(pcp_info_t *pcp
+ {
+ 	int r;
+ 
+-	if (pcp_msg_info->is_fw)
++	if (pcp_msg_info->is_fw) {
+ 		r = CreatePCPMap_FW(pcp_msg_info);
+-	else
++		syslog(LOG_INFO,
++		      "%s IPv6 port map [%s]:%hu/%s remote IP ?/? remote port ? lifetime %d via PCP nonce %s %s",
++		       r == PCP_SUCCESS ? "Add" : "Reject",
++		       pcp_msg_info->mapped_str, pcp_msg_info->int_port,
++		       proto_itoa(pcp_msg_info->protocol), pcp_msg_info->lifetime,
++		       pcp_msg_info->desc + 8, r == PCP_ERR_NOT_AUTHORIZED ? "reason default-min/max-port" : "");
++	} else {
+ 		r = CreatePCPMap_NAT(pcp_msg_info);
++		syslog(LOG_INFO,
++		      "%s IPv4 port map %hu:%s:%hu/%s remote IP ?/? remote port ? lifetime %d via PCP nonce %s %s",
++		       r == PCP_SUCCESS ? "Add" : "Reject",
++		       pcp_msg_info->ext_port,
++		       pcp_msg_info->mapped_str, pcp_msg_info->int_port,
++		       proto_itoa(pcp_msg_info->protocol), pcp_msg_info->lifetime,
++		       pcp_msg_info->desc + 8, r == PCP_ERR_NOT_AUTHORIZED ? "reason ACL/default-min/max-port" : "");
++	}
+ 	pcp_msg_info->result_code = r;
+-	syslog(r == PCP_SUCCESS ? LOG_INFO : LOG_ERR,
+-	      "PCP MAP: %s mapping %s %hu->%s:%hu '%s'",
+-	       r == PCP_SUCCESS ? "added" : "failed to add",
+-	       proto_itoa(pcp_msg_info->protocol),
+-	       pcp_msg_info->ext_port,
+-	       pcp_msg_info->mapped_str,
+-	       pcp_msg_info->int_port,
+-	       pcp_msg_info->desc);
+ }
+ 
+ static void DeletePCPMap(pcp_info_t *pcp_msg_info)
+@@ -1136,8 +1151,8 @@ static void DeletePCPMap(pcp_info_t *pcp
+ 				if(0 != strcmp(desc, pcp_msg_info->desc)) {
+ 					/* nonce does not match */
+ 					pcp_msg_info->result_code = PCP_ERR_NOT_AUTHORIZED;
+-					syslog(LOG_ERR, "Unauthorized to remove PCP mapping internal port %hu, protocol %s",
+-					       iport, proto_itoa(pcp_msg_info->protocol));
++					syslog(LOG_INFO, "Reject IPv6 port map [?]:%hu/%s via PCP nonce %s reason nonce not matching",
++					       iport, proto_itoa(pcp_msg_info->protocol), pcp_msg_info->desc + 8);
+ 					return;
+ 				} else {
+ 					r = _upnp_delete_redir(eport2, proto2);
+@@ -1154,15 +1169,15 @@ static void DeletePCPMap(pcp_info_t *pcp
+ 						desc, sizeof(desc),
+ 						NULL /* lifetime */);
+ 		if (uid < 0) {
+-			syslog(LOG_ERR, "Failed to find mapping to %s:%hu, protocol %s",
+-			       pcp_msg_info->mapped_str, iport, proto_itoa(pcp_msg_info->protocol));
++			syslog(LOG_INFO, "Non-existing IPv6 port map to delete [%s]:%hu/%s via PCP nonce %s",
++			       pcp_msg_info->mapped_str, iport, proto_itoa(pcp_msg_info->protocol), pcp_msg_info->desc + 8);
+ 			return;
+ 		} else {
+ 			if(0 != strcmp(desc, pcp_msg_info->desc)) {
+ 				/* nonce does not match */
+ 				pcp_msg_info->result_code = PCP_ERR_NOT_AUTHORIZED;
+-				syslog(LOG_ERR, "Unauthorized to remove PCP mapping internal port %hu, protocol %s",
+-				       iport, proto_itoa(pcp_msg_info->protocol));
++				syslog(LOG_INFO, "Reject IPv6 port map [?]:%hu/%s via PCP nonce %s reason nonce not matching",
++				       iport, proto_itoa(pcp_msg_info->protocol), pcp_msg_info->desc + 8);
+ 				return;
+ 			} else {
+ 				r = upnp_delete_inboundpinhole(uid);
+@@ -1173,11 +1188,21 @@ static void DeletePCPMap(pcp_info_t *pcp
+ #endif /* ENABLE_UPNPPINHOLE */
+ 	}
+ 	if (r >= 0) {
+-		syslog(LOG_INFO, "PCP: %s port %hu mapping removed",
+-		       proto==IPPROTO_TCP?"TCP":"UDP", (pcp_msg_info->is_fw ? iport : eport2));
++			if (!pcp_msg_info->is_fw) {
++				syslog(LOG_INFO, "Delete IPv4 port map %hu:%s:%hu/%s via PCP nonce %s",
++					iport, pcp_msg_info->mapped_str, iport, proto_itoa(proto), pcp_msg_info->desc + 8);
++			} else {
++				syslog(LOG_INFO, "Delete IPv6 port map [%s]:%hu/%s via PCP nonce %s",
++					pcp_msg_info->mapped_str, iport, proto_itoa(proto), pcp_msg_info->desc + 8);
++			}
+ 	} else {
+-		syslog(LOG_ERR, "Failed to remove PCP mapping to %s:%hu %s",
+-		       pcp_msg_info->mapped_str, iport, proto_itoa(proto));
++		if (!pcp_msg_info->is_fw) {
++			syslog(LOG_INFO, "Non-existing IPv4 port map to delete ?:%s:%hu/%s via PCP nonce %s",
++		       pcp_msg_info->mapped_str, iport, proto_itoa(proto), pcp_msg_info->desc + 8);
++		} else {
++			syslog(LOG_INFO, "Non-existing IPv6 port map to delete %s:%hu/%s via PCP nonce %s",
++		       pcp_msg_info->mapped_str, iport, proto_itoa(proto), pcp_msg_info->desc + 8);
++		}
+ 		pcp_msg_info->result_code = PCP_ERR_NO_RESOURCES;
+ 	}
+ }
+@@ -1199,6 +1224,7 @@ static int ValidatePCPMsg(pcp_info_t *pc
+ 
+ 	if (pcp_msg_info->thirdp_ip) {
+ 		if (!GETFLAG(PCP_ALLOWTHIRDPARTYMASK)) {
++			syslog(LOG_INFO, "Reject IPv? port map ?:?:?/? via PCP reason for third-party from ?");
+ 			pcp_msg_info->result_code = PCP_ERR_UNSUPP_OPTION;
+ 			return 0;
+ 		}
+@@ -1253,8 +1279,8 @@ static int ValidatePCPMsg(pcp_info_t *pc
+ 		snprintf(pcp_msg_info->desc, sizeof(pcp_msg_info->desc),
+ 			 "PCP %s %08x%08x%08x",
+ 			 getPCPOpCodeStr(pcp_msg_info->opcode),
+-			 pcp_msg_info->nonce[0],
+-			 pcp_msg_info->nonce[1], pcp_msg_info->nonce[2]);
++			 ntohl(pcp_msg_info->nonce[0]),
++			 ntohl(pcp_msg_info->nonce[1]), ntohl(pcp_msg_info->nonce[2]));
+ 		break;
+ 	}
+ 	return 1;
+@@ -1399,7 +1425,7 @@ static int processPCPRequest(void * req,
+ 					CreatePCPMap(pcp_msg_info);
+ 				}
+ 			} else {
+-				syslog(LOG_ERR, "PCP: Invalid PCP v2 MAP message.");
++				syslog(LOG_DEBUG, "PCP: Invalid PCP v2 MAP message.");
+ 				return pcp_msg_info->result_code;
+ 			}
+ 
+@@ -1609,7 +1635,7 @@ int ProcessIncomingPCPPacket(int s, unsi
+ 	if (!GETFLAG(PCP_ALLOWTHIRDPARTYMASK)) {
+ 		lan_addr = get_lan_for_peer(senderaddr);
+ 		if(lan_addr == NULL) {
+-			syslog(LOG_WARNING, "PCP packet sender %s not from a LAN, ignoring",
++			syslog(LOG_DEBUG, "PCP packet sender %s not from a LAN, ignoring",
+ 			       addr_str);
+ 			return 0;
+ 		}
+@@ -1730,7 +1756,7 @@ void PCPSendUnsolicitedAnnounce(int * so
+ 		}
+ 		len = sendto_or_schedule(sockets[i], buff, PCP_MIN_LEN, 0, (struct sockaddr *)&addr, sizeof(struct sockaddr_in));
+ 		if( len < 0 ) {
+-			syslog(LOG_ERR, "PCPSendUnsolicitedAnnounce(sockets[%d]) sendto(): %m", i);
++			syslog(LOG_DEBUG, "PCPSendUnsolicitedAnnounce(sockets[%d]) sendto(): %m", i);
+ 		}
+ 	}
+ #ifdef ENABLE_IPV6
+@@ -1741,7 +1767,7 @@ void PCPSendUnsolicitedAnnounce(int * so
+ 		addr6.sin6_port = htons(5350);
+ 		len = sendto_or_schedule(socket6, buff, PCP_MIN_LEN, 0, (struct sockaddr *)&addr6, sizeof(struct sockaddr_in6));
+ 		if( len < 0 ) {
+-			syslog(LOG_ERR, "PCPSendUnsolicitedAnnounce() IPv6 sendto(): %m");
++			syslog(LOG_DEBUG, "PCPSendUnsolicitedAnnounce() IPv6 sendto(): %m");
+ 		}
+ 	}
+ #endif /* ENABLE_IPV6 */
+--- a/pf/obsdrdr.c
++++ b/pf/obsdrdr.c
+@@ -1302,7 +1302,7 @@ priv_delete_redirect_rule_check_desc(con
+ 		}
+ 	}
+ 	if (r == -2)
+-		syslog(LOG_NOTICE, "could not find redirect rule to delete eport=%hu", eport);
++		syslog(LOG_DEBUG, "could not find redirect rule to delete eport=%hu", eport);
+ 	release_ticket(dev, tnum);
+ 	return r;
+ }
+--- a/pf/pfpinhole.c
++++ b/pf/pfpinhole.c
+@@ -246,12 +246,12 @@ int find_pinhole(const char * ifname,
+ 		   (0 == memcmp(&daddr, &RULE.dst.addr.v.a.addr.v6, sizeof(struct in6_addr)))) {
+ #ifdef USE_LIBPFCTL
+ 			if(sscanf(RULE.label[0], PINEHOLE_LABEL_FORMAT_SKIPDESC, &uid, &ts) != 2) {
+-				syslog(LOG_DEBUG, "rule with label '%s' is not a IGD pinhole", RULE.label[0]);
++				/*syslog(LOG_DEBUG, "rule with label '%s' is not a IGD pinhole", RULE.label[0]);*/
+ 				continue;
+ 			}
+ #else /* USE_LIBPFCTL */
+ 			if(sscanf(RULE.label, PINEHOLE_LABEL_FORMAT_SKIPDESC, &uid, &ts) != 2) {
+-				syslog(LOG_DEBUG, "rule with label '%s' is not a IGD pinhole", RULE.label);
++				/*syslog(LOG_DEBUG, "rule with label '%s' is not a IGD pinhole", RULE.label);*/
+ 				continue;
+ 			}
+ #endif /* USE_LIBPFCTL */
+@@ -565,7 +565,7 @@ int clean_pinhole_list(unsigned int * ne
+ 			return -1;
+ 		}
+ 		if(sscanf(RULE.label[0], PINEHOLE_LABEL_FORMAT_SKIPDESC, &uid, &ts) != 2) {
+-			syslog(LOG_DEBUG, "rule with label '%s' is not a IGD pinhole", RULE.label[0]);
++			/*syslog(LOG_DEBUG, "rule with label '%s' is not a IGD pinhole", RULE.label[0]);*/
+ 			continue;
+ 		}
+ #else /* USE_LIBPFCTL */
+@@ -576,7 +576,7 @@ int clean_pinhole_list(unsigned int * ne
+ 			return -1;
+ 		}
+ 		if(sscanf(RULE.label, PINEHOLE_LABEL_FORMAT_SKIPDESC, &uid, &ts) != 2) {
+-			syslog(LOG_DEBUG, "rule with label '%s' is not a IGD pinhole", RULE.label);
++			/*syslog(LOG_DEBUG, "rule with label '%s' is not a IGD pinhole", RULE.label);*/
+ 			continue;
+ 		}
+ #endif /* USE_LIBPFCTL */
+@@ -589,9 +589,9 @@ int clean_pinhole_list(unsigned int * ne
+ 			pr.ticket = ri.ticket;
+ 			pr.nr = i;
+ 			strlcpy(pr.anchor, anchor_name, MAXPATHLEN);
+-			syslog(LOG_INFO, "removing expired pinhole '%s'", RULE.label[0]);
++			syslog(LOG_INFO, "Expire IPv6 port map [?]:?/?");
+ #else /* USE_LIBPFCTL */
+-			syslog(LOG_INFO, "removing expired pinhole '%s'", RULE.label);
++			syslog(LOG_INFO, "Expire IPv6 port map [?]:?/?");
+ #endif /* USE_LIBPFCTL */
+ 			pr.action = PF_CHANGE_GET_TICKET;
+ 			if(ioctl(dev, DIOCCHANGERULE, &pr) < 0) {
+--- a/upnpdescgen.c
++++ b/upnpdescgen.c
+@@ -1311,7 +1311,7 @@ genEventVars(int * len, const struct ser
+ 				else {
+ 					struct in_addr addr;
+ 					char ext_ip_addr[INET_ADDRSTRLEN];
+-					if(getifaddr(ext_if_name, ext_ip_addr, INET_ADDRSTRLEN, &addr, NULL) < 0 || (!GETFLAG(ALLOWPRIVATEIPV4MASK) && addr_is_reserved(&addr))) {
++					if(getifaddr(ext_if_name, ext_ip_addr, INET_ADDRSTRLEN, &addr, NULL) < 0 || (!GETFLAG(REPORTPRIVATEIPV4MASK) && addr_is_reserved(&addr))) {
+ 						str = strcat_str(str, len, &tmplen, "0.0.0.0");
+ 					} else {
+ 						str = strcat_str(str, len, &tmplen, ext_ip_addr);
+--- a/upnpglobalvars.h
++++ b/upnpglobalvars.h
+@@ -102,7 +102,7 @@ extern int runtime_flags;
+ #define PERFORMSTUNMASK    0x1000
+ 
+ /*! \brief Allow the external IPv4 to be private */
+-#define ALLOWPRIVATEIPV4MASK 0x2000
++#define REPORTPRIVATEIPV4MASK 0x2000
+ /*! \brief do not stop on STUN detecting restricive NAT */
+ #define ALLOWFILTEREDSTUNMASK 0x4000
+ 
+--- a/upnphttp.c
++++ b/upnphttp.c
+@@ -554,7 +554,7 @@ ProcessHTTPPOST_upnphttp(struct upnphttp
+ 		if(h->req_soapActionOff > 0)
+ 		{
+ 			/* we can process the request */
+-			syslog(LOG_INFO, "SOAPAction: %.*s",
++			syslog(LOG_DEBUG, "SOAPAction: %.*s",
+ 			       h->req_soapActionLen, h->req_buf + h->req_soapActionOff);
+ 			ExecuteSoapAction(h,
+ 				h->req_buf + h->req_soapActionOff,
+@@ -854,7 +854,7 @@ ProcessHttpQuery_upnphttp(struct upnphtt
+ 	for(i = 0; i<15 && *p != '\r'; i++)
+ 		HttpVer[i] = *(p++);
+ 	HttpVer[i] = '\0';
+-	syslog(LOG_INFO, "HTTP REQUEST from %s : %s %s (%s)",
++	syslog(LOG_DEBUG, "HTTP REQUEST from %s : %s %s (%s)",
+ 	       h->clientaddr_str, HttpCommand, HttpUrl, HttpVer);
+ 	ParseHttpHeaders(h);
+ 	if(h->req_contentlen > CONTENT_LENGTH_LIMIT) {
+@@ -940,7 +940,7 @@ ProcessHttpQuery_upnphttp(struct upnphtt
+ 			return;
+ 		}
+ #endif
+-		syslog(LOG_NOTICE, "%s not found, responding ERROR 404", HttpUrl);
++		syslog(LOG_DEBUG, "%s not found, responding ERROR 404", HttpUrl);
+ 		Send404(h);
+ 	}
+ #ifdef ENABLE_EVENTS
+--- a/upnppermissions.c
++++ b/upnppermissions.c
+@@ -23,6 +23,9 @@
+ #include "upnppermissions.h"
+ #include "upnputils.h"
+ 
++uint16_t default_min_port = 1;
++uint16_t default_max_port = 65535;
++
+ static int
+ isodigit(char c)
+ {
+@@ -523,14 +526,19 @@ check_upnp_rule_against_permissions(cons
+ 		if(match_permission(permary + i, eport, address, iport, desc))
+ 		{
+ 			syslog(LOG_DEBUG,
+-			       "UPnP permission rule %d matched : port mapping %s",
++			       "ACL entry %d matched, port mapping %s",
+ 			       i, (permary[i].type == UPNPPERM_ALLOW)?"accepted":"rejected"
+ 			       );
+ 			return (permary[i].type == UPNPPERM_ALLOW);
+ 		}
+ 	}
+-	syslog(LOG_DEBUG, "no permission rule matched : accept by default (n_perms=%d)", n_perms);
+-	return 1;	/* Default : accept */
++
++	if (iport < default_min_port || eport < default_min_port || iport > default_max_port || eport > default_max_port) {
++		return 0;
++	} else {
++		syslog(LOG_DEBUG, "No ACL entry matched, ACL accepted by default");
++		return 1;	/* Default : accept */
++	}
+ }
+ 
+ void
+--- a/upnppermissions.h
++++ b/upnppermissions.h
+@@ -18,6 +18,9 @@
+ #include <regex.h>
+ #endif
+ 
++extern uint16_t default_min_port;
++extern uint16_t default_max_port;
++
+ /* UPnP permission rule samples:
+  * allow 1024-65535 192.168.3.0/24 1024-65535
+  * deny 0-65535 192.168.1.125/32 0-65535 */
+--- a/upnppinhole.c
++++ b/upnppinhole.c
+@@ -110,7 +110,7 @@ lease_file6_add(const char * rem_client,
+ 
+ 	fd = fopen( lease_file6, "a");
+ 	if (fd==NULL) {
+-		syslog(LOG_ERR, "could not open lease file: %s", lease_file);
++		syslog(LOG_DEBUG, "could not open lease file: %s", lease_file);
+ 		return -1;
+ 	}
+ 
+@@ -398,7 +398,7 @@ int lease_file6_expire(void)
+ 		// Internal Host
+ 		p = strchr(line, ';');
+ 		if(!p) {
+-			syslog(LOG_ERR, "unrecognized data in lease file");
++			syslog(LOG_DEBUG, "unrecognized data in lease file (non-critical bug)");
+ 			continue;
+ 		}
+ 		*(p++) = '\0';
+@@ -489,7 +489,7 @@ int reload_from_lease_file6(void)
+ 	if(!lease_file6) return -1;
+ 	fd = fopen( lease_file6, "r");
+ 	if (fd==NULL) {
+-		syslog(LOG_ERR, "could not open lease file: %s", lease_file6);
++		syslog(LOG_DEBUG, "could not open lease file: %s", lease_file6);
+ 		return -1;
+ 	}
+ 	if(unlink(lease_file6) < 0) {
+@@ -560,11 +560,6 @@ int reload_from_lease_file6(void)
+ 		while(isspace(*p) && (p > desc))
+ 			*(p--) = '\0';
+ 
+-		/* Ensure port is non-privileged and RemoteHost is valid */
+-		if (int_port < 1024) {
+-		    syslog(LOG_WARNING, "ignoring lease file pinhole with privileged port %hu", int_port);
+-		    continue;
+-		}
+ 		if (rem_client && rem_client[0] != '\0' && rem_client[0] != '*') {
+ 			struct in6_addr rem_addr;
+ 			if (inet_pton(AF_INET6, rem_client, &rem_addr) != 1) {
+@@ -575,7 +570,7 @@ int reload_from_lease_file6(void)
+ 
+ 		if(timestamp > 0) {
+ 			if(timestamp <= (unsigned int)current_unix_time) {
+-				syslog(LOG_NOTICE, "already expired lease in lease file");
++				syslog(LOG_INFO, "Expire IPv6 port map ?:[?]:[?]/? reason lease file reload");
+ 				continue;
+ 			} else {
+ 				leaseduration = timestamp - current_unix_time;
+@@ -652,7 +647,8 @@ upnp_add_inboundpinhole(const char * rad
+ 
+ 	*uid = upnp_find_inboundpinhole(raddr, rport, iaddr, iport, proto, NULL, 0, NULL);
+ 	if(*uid >= 0) {
+-		syslog(LOG_INFO, "Pinhole for inbound traffic from [%s]:%hu to [%s]:%hu with proto %d found uid=%d. Updating it.", raddr, rport, iaddr, iport, proto, *uid);
++		syslog(LOG_INFO, "Renew IPv6 port map [%s]:%hu/%s remote IP %s remote port %hu lifetime %d via UPnP IGDv2 IPv6 UID %d",
++			iaddr, iport, proto_itoa(proto), raddr[0] != '\0' ? raddr : "any", rport, leasetime, *uid);
+ 		r = upnp_update_inboundpinhole(*uid, leasetime);
+ #ifdef ENABLE_LEASEFILE
+ 		if (r >= 0) {
+--- a/upnpredirect.c
++++ b/upnpredirect.c
+@@ -67,7 +67,7 @@ lease_file_add(const char * rhost,
+ 
+ 	fd = fopen( lease_file, "a");
+ 	if (fd==NULL) {
+-		syslog(LOG_ERR, "could not open lease file: %s", lease_file);
++		syslog(LOG_DEBUG, "could not open lease file: %s", lease_file);
+ 		return -1;
+ 	}
+ 
+@@ -196,7 +196,7 @@ int reload_from_lease_file(void)
+ 	if(!lease_file) return -1;
+ 	fd = fopen( lease_file, "r");
+ 	if (fd==NULL) {
+-		syslog(LOG_ERR, "could not open lease file: %s", lease_file);
++		syslog(LOG_DEBUG, "could not open lease file: %s", lease_file);
+ 		return -1;
+ 	}
+ 	if(unlink(lease_file) < 0) {
+@@ -266,7 +266,7 @@ int reload_from_lease_file(void)
+ 			timestamp += current_time;	/* convert to our time */
+ #else
+ 			if(timestamp <= (unsigned int)current_unix_time) {
+-				syslog(LOG_NOTICE, "already expired lease in lease file (%hu=>%s:%hu %s)",
++				syslog(LOG_INFO, "Expire IPv4 port map %hu:%s:%hu/%s reason lease file reload",
+ 				       eport, iaddr, iport, proto);
+ 				continue;
+ 			} else {
+@@ -348,8 +348,8 @@ upnp_redirect(const char * rhost, unsign
+ 
+ 	if(!check_upnp_rule_against_permissions(upnppermlist, num_upnpperm,
+ 	                                        eport, address, iport, desc)) {
+-		syslog(LOG_INFO, "redirection permission check failed for "
+-		                 "%hu->%s:%hu %s %s", eport, iaddr, iport, protocol, desc);
++		syslog(LOG_INFO, "Reject IPv4 port map %hu:%s:%hu/%s via UPnP IGD reason ACL/default-min/max-port",
++			eport, iaddr, iport, protocol);
+ 		return -3;
+ 	}
+ 
+@@ -397,8 +397,8 @@ upnp_redirect(const char * rhost, unsign
+ 		   ((rhost == NULL && rhost_old[0]=='\0') ||
+ 		    (rhost && (strcmp(rhost, "*") == 0) && rhost_old[0]=='\0') ||
+ 		    (rhost && (strcmp(rhost, rhost_old) == 0)))) {
+-			syslog(LOG_INFO, "updating existing port mapping %hu %s (rhost '%s') => %s:%hu",
+-				eport, protocol, rhost_old, iaddr_old, iport_old);
++			syslog(LOG_INFO, "Renew IPv4 port map %hu:%s:%hu/%s remote IP %s lifetime %d via UPnP IGD",
++				eport, iaddr_old, iport_old, protocol, rhost_old[0] != '\0' ? rhost_old : "any", leaseduration);
+ 			timestamp = (leaseduration > 0) ? upnp_time() + leaseduration : 0;
+ 			if(iport != iport_old) {
+ 				r = update_portmapping(ext_if_name, eport, proto, iport, desc, timestamp);
+@@ -413,19 +413,19 @@ upnp_redirect(const char * rhost, unsign
+ #endif /* ENABLE_LEASEFILE */
+ 			return r;
+ 		} else {
+-			syslog(LOG_INFO, "port %hu %s (rhost '%s') already redirected to %s:%hu",
+-				eport, protocol, rhost_old, iaddr_old, iport_old);
++			syslog(LOG_INFO, "Reject IPv4 port map %hu:%s:%hu/%s via UPnP IGD reason port in use",
++				eport, iaddr_old, iport_old, protocol);
+ 			return -2;
+ 		}
+ #ifdef CHECK_PORTINUSE
+ 	} else if (port_in_use(ext_if_name, eport, proto, iaddr, iport) > 0) {
+-		syslog(LOG_INFO, "port %hu protocol %s already in use",
+-		       eport, protocol);
++		syslog(LOG_INFO, "Reject IPv4 port map %hu:%s:%hu/%s via UPnP IGD reason port in use",
++			eport, iaddr, iport, protocol);
+ 		return -4;
+ #endif /* CHECK_PORTINUSE */
+ 	} else {
+ 		timestamp = (leaseduration > 0) ? upnp_time() + leaseduration : 0;
+-		syslog(LOG_INFO, "redirecting port %hu to %s:%hu protocol %s for: %s",
++		syslog(LOG_DEBUG, "redirecting port %hu to %s:%hu protocol %s for: %s",
+ 			eport, iaddr, iport, protocol, desc);
+ 		return upnp_redirect_internal(rhost, eport, iaddr, iport, proto,
+ 		                              desc, timestamp);
+@@ -438,8 +438,6 @@ upnp_redirect_internal(const char * rhos
+                        int proto, const char * desc,
+                        unsigned int timestamp)
+ {
+-	/*syslog(LOG_INFO, "redirecting port %hu to %s:%hu protocol %s for: %s",
+-		eport, iaddr, iport, protocol, desc);			*/
+ 	if(disable_port_forwarding)
+ 		return -1;
+ 	if(add_redirect_rule2(ext_if_name, rhost, eport, iaddr, iport, proto,
+@@ -450,8 +448,6 @@ upnp_redirect_internal(const char * rhos
+ #ifdef ENABLE_LEASEFILE
+ 	lease_file_add(rhost, eport, iaddr, iport, proto, desc, timestamp);
+ #endif
+-/*	syslog(LOG_INFO, "creating pass rule to %s:%hu protocol %s for: %s",
+-		iaddr, iport, protocol, desc);*/
+ 	if(add_filter_rule2(ext_if_name, rhost, iaddr, eport, iport, proto, desc) < 0) {
+ 		/* clean up the redirect rule */
+ #if !defined(__linux__)
+@@ -571,7 +567,7 @@ _upnp_delete_redir(unsigned short eport,
+ int
+ upnp_delete_redirection(unsigned short eport, const char * protocol)
+ {
+-	syslog(LOG_INFO, "removing redirect rule port %hu %s", eport, protocol);
++	syslog(LOG_INFO, "Delete IPv4 port map %hu:?:?/%s via UPnP IGD", eport, protocol);
+ 	return _upnp_delete_redir(eport, proto_atoi(protocol));
+ }
+ 
+@@ -675,7 +671,7 @@ get_upnp_rules_state_list(int max_rules_
+ 	{
+ 		if(tmp->to_remove)
+ 		{
+-			syslog(LOG_NOTICE, "remove port mapping %hu %s because it has expired",
++			syslog(LOG_INFO, "Expire IPv4 port map %hu:?:?/%s",
+ 			       tmp->eport, proto_itoa(tmp->proto));
+ 			_upnp_delete_redir(tmp->eport, tmp->proto);
+ 			*p = tmp->next;
+--- a/upnpsoap.c
++++ b/upnpsoap.c
+@@ -412,18 +412,9 @@ GetExternalIPAddress(struct upnphttp * h
+ 	else
+ 	{
+ 		struct in_addr addr;
+-		if(getifaddr(ext_if_name, ext_ip_addr, INET_ADDRSTRLEN, &addr, NULL) < 0)
+-		{
+-			syslog(LOG_ERR, "Failed to get ip address for interface %s",
+-				ext_if_name);
+-			ext_ip_addr[0] = '\0';
+-		} else if (addr_is_reserved(&addr)) {
+-			if (GETFLAG(ALLOWPRIVATEIPV4MASK)) {
+-				syslog(LOG_WARNING, "IGNORED : private/reserved address %s is not suitable for external IP", ext_ip_addr);
+-			} else {
+-				syslog(LOG_NOTICE, "private/reserved address %s is not suitable for external IP", ext_ip_addr);
++		if (getifaddr(ext_if_name, ext_ip_addr, INET_ADDRSTRLEN, &addr, NULL) < 0 ||
++			(addr_is_reserved(&addr) && !GETFLAG(REPORTPRIVATEIPV4MASK))) {
+ 				ext_ip_addr[0] = '\0';
+-			}
+ 		}
+ 	}
+ #else
+@@ -545,7 +536,7 @@ AddPortMapping(struct upnphttp * h, cons
+ 		}
+ 		else
+ 		{
+-			syslog(LOG_ERR, "Failed to convert hostname '%s' to ip address", int_ip);
++			syslog(LOG_INFO, "Failed to parse or resolve to (%s) IPv4 address via UPnP IGD", int_ip);
+ 			ClearNameValueList(&data);
+ 			SoapError(h, 402, "Invalid Args");
+ 			return;
+@@ -557,8 +548,8 @@ AddPortMapping(struct upnphttp * h, cons
+ 	{
+ 		if(h->clientaddr.s_addr != result_ip.s_addr)
+ 		{
+-			syslog(LOG_INFO, "Client %s tried to redirect port to %s",
+-			       inet_ntoa(h->clientaddr), int_ip);
++			syslog(LOG_INFO, "Reject IPv4 port map ?:%s:?/? via UPnP IGD reason for third-party from %s",
++				int_ip, inet_ntoa(h->clientaddr));
+ 			ClearNameValueList(&data);
+ #ifdef IGD_V2
+ 			SoapError(h, 606, "Action not authorized");
+@@ -606,9 +597,9 @@ AddPortMapping(struct upnphttp * h, cons
+ 		leaseduration = 604800;
+ #endif
+ 
+-	syslog(LOG_INFO, "%s: ext port %hu to %s:%hu protocol %s for: %s leaseduration=%u rhost=%s",
+-	       action, eport, int_ip, iport, protocol, desc, leaseduration,
+-	       r_host ? r_host : "NULL");
++	syslog(LOG_INFO, "Add IPv4 port map %hu:%s:%hu/%s remote IP %s lifetime %u via UPnP IGD",
++		eport, int_ip, iport, protocol, r_host[0] != '\0' ? r_host : "any",
++		leaseduration);
+ 
+ 	r = upnp_redirect(r_host, eport, int_ip, iport, protocol, desc, leaseduration);
+ 
+@@ -750,7 +741,7 @@ AddAnyPortMapping(struct upnphttp * h, c
+ 		}
+ 		else
+ 		{
+-			syslog(LOG_ERR, "Failed to convert hostname '%s' to ip address", int_ip);
++			syslog(LOG_INFO, "Failed to parse or resolve to (%s) IPv4 address via UPnP IGDv2 AddAny", int_ip);
+ 			ClearNameValueList(&data);
+ 			SoapError(h, 402, "Invalid Args");
+ 			return;
+@@ -762,8 +753,8 @@ AddAnyPortMapping(struct upnphttp * h, c
+ 	{
+ 		if(h->clientaddr.s_addr != result_ip.s_addr)
+ 		{
+-			syslog(LOG_INFO, "Client %s tried to redirect port to %s",
+-			       inet_ntoa(h->clientaddr), int_ip);
++			syslog(LOG_INFO, "Reject IPv4 port map ?:%s:?/? via UPnP IGDv2 AddAny reason for third-party from %s",
++				int_ip, inet_ntoa(h->clientaddr));
+ 			ClearNameValueList(&data);
+ 			SoapError(h, 606, "Action not authorized");
+ 			return;
+@@ -826,6 +817,8 @@ AddAnyPortMapping(struct upnphttp * h, c
+ 			SoapError(h, 501, "Action Failed");
+ 			return;
+ 		}
++		syslog(LOG_INFO, "Add IPv4 port map %hu:%s:%hu/%s remote IP %s lifetime %u via UPnP IGDv2 AddAny",
++			eport, int_ip, iport, protocol, r_host[0] != '\0' ? r_host : "any", leaseduration);
+ 		BuildSendAndCloseSoapResp(h, body, bodylen);
+ 		break;
+ 	case -2:	/* already redirected */
+@@ -913,7 +906,7 @@ GetSpecificPortMappingEntry(struct upnph
+ 	}
+ 	else
+ 	{
+-		syslog(LOG_INFO, "%s: rhost='%s' %s %s found => %s:%u desc='%s' duration=%u",
++		syslog(LOG_DEBUG, "%s: rhost='%s' %s %s found => %s:%u desc='%s' duration=%u",
+ 		       action,
+ 		       r_host ? r_host : "NULL", ext_port, protocol, int_ip,
+ 		       (unsigned int)iport, desc, leaseduration);
+@@ -1003,7 +996,7 @@ DeletePortMapping(struct upnphttp * h, c
+ 		return;
+ 	}
+ 
+-	syslog(LOG_INFO, "%s: external port: %hu, protocol: %s",
++	syslog(LOG_DEBUG, "%s: external port: %hu, protocol: %s",
+ 		action, eport, protocol);
+ 
+ 	/* if in secure mode, check the IP
+@@ -1042,6 +1035,8 @@ DeletePortMapping(struct upnphttp * h, c
+ 
+ 	if(r < 0)
+ 	{
++		syslog(LOG_INFO, "Non-existing IPv4 port map to delete %hu:?:?/%s via UPnP IGD",
++			eport, protocol);
+ 		SoapError(h, 714, "NoSuchEntryInArray");
+ 	}
+ 	else
+@@ -1109,8 +1104,8 @@ DeletePortMappingRange(struct upnphttp *
+ 		return;
+ 	}
+ 
+-	syslog(LOG_INFO, "%s: deleting external ports: %hu-%hu, protocol: %s",
+-	       action, startport, endport, protocol);
++	syslog(LOG_INFO, "Delete IPv4 port map %hu-%hu:?:?/%s via UPnP IGDv2 DeleteRange",
++		startport, endport, protocol);
+ 
+ 	port_list = upnp_get_portmappings_in_range(startport, endport,
+ 	                                           protocol, &number);
+@@ -1125,7 +1120,7 @@ DeletePortMappingRange(struct upnphttp *
+ 	for(i = 0; i < number; i++)
+ 	{
+ 		r = upnp_delete_redirection(port_list[i], protocol);
+-		syslog(LOG_INFO, "%s: deleting external port: %hu, protocol: %s: %s",
++		syslog(LOG_DEBUG, "%s: deleting external port: %hu, protocol: %s: %s",
+ 		       action, port_list[i], protocol, r < 0 ? "failed" : "ok");
+ 	}
+ 	free(port_list);
+@@ -1196,7 +1191,7 @@ GetGenericPortMappingEntry(struct upnpht
+ 		return;
+ 	}
+ 
+-	syslog(LOG_INFO, "%s: index=%d", action, (int)index);
++	syslog(LOG_DEBUG, "%s: index=%d", action, (int)index);
+ 
+ 	rhost[0] = '\0';
+ 	r = upnp_get_redirection_infos_by_index((int)index, &eport, protocol, &iport,
+@@ -1777,8 +1772,8 @@ PinholeVerification(struct upnphttp * h,
+ 			struct addrinfo hints, *ai, *p;
+ 			int found = 0;
+ 
+-			syslog(LOG_INFO, "%s: InternalClient %s is not an IPv6, assume hostname and convert",
+-			       "PinholeVerification", int_ip);
++			syslog(LOG_DEBUG, "Resolve hostname (%s) to IPv6 address",
++			       int_ip);
+ 
+ 			memset(&hints, 0, sizeof(hints));
+ 			hints.ai_family = AF_UNSPEC;
+@@ -1788,8 +1783,8 @@ PinholeVerification(struct upnphttp * h,
+ 			r = getaddrinfo(int_ip, NULL, &hints, &ai);
+ 			if (r != 0)
+ 			{
+-				syslog(LOG_WARNING, "%s: Failed to convert hostname '%s' to IP address : %s",
+-				       "PinholeVerification", int_ip, gai_strerror(r));
++				syslog(LOG_INFO, "Failed to parse or resolve to (%s) IPv6 address via UPnP IGDv2 IPv6",
++				       int_ip);
+ 				SoapError(h, 402, "Invalid Args");
+ 				return -1;
+ 			}
+@@ -1803,12 +1798,12 @@ PinholeVerification(struct upnphttp * h,
+ 
+ 						if (inet_ntop(AF_INET6, &result_ip, int_ip_resolved, INET6_ADDRSTRLEN) == NULL)
+ 						{
+-							syslog(LOG_WARNING, "%s: inet_ntop(): %m", "PinholeVerification");
++							syslog(LOG_INFO, "%s: inet_ntop(): %m", "PinholeVerification");
+ 							SoapError(h, 501, "Action Failed");
+ 							return -1;
+ 						}
+-						syslog(LOG_INFO, "%s: InternalClient \"%s\" resolved as %s",
+-						       "PinholeVerification", int_ip, int_ip_resolved);
++						syslog(LOG_DEBUG, "Resolve hostname (%s) to IPv6 address (%s)",
++						       int_ip, int_ip_resolved);
+ 						found = 1;
+ 					}
+ 					else
+@@ -1823,8 +1818,8 @@ PinholeVerification(struct upnphttp * h,
+ 			freeaddrinfo(ai);
+ 			if (!found)
+ 			{
+-				syslog(LOG_NOTICE, "%s: No IPv6 address for hostname '%s'",
+-				       "PinholeVerification", int_ip);
++				syslog(LOG_INFO, "Failed to parse or resolve to (%s) IPv6 address via UPnP IGDv2 IPv6",
++				       int_ip);
+ 				SoapError(h, 402, "Invalid Args");
+ 				return -1;
+ 			}
+@@ -1841,7 +1836,7 @@ PinholeVerification(struct upnphttp * h,
+ 		/* no need to copy to int_ip_resolved, but we still need to fill result_ip up */
+ 		if (inet_pton(AF_INET6, int_ip, &result_ip) <= 0)
+ 		{
+-			syslog(LOG_ERR, "inet_pton(%s)", int_ip);
++			syslog(LOG_DEBUG, "inet_pton(%s)", int_ip);
+ 			SoapError(h, 501, "Action Failed");
+ 			return -1;
+ 		}
+@@ -1855,8 +1850,8 @@ PinholeVerification(struct upnphttp * h,
+ 
+ 	if(memcmp(&h->clientaddr_v6, &result_ip, sizeof(struct in6_addr)) != 0)
+ 	{
+-		syslog(LOG_INFO, "%s: Client %s tried to access pinhole for internal %s and is not authorized",
+-		       "PinholeVerification", clientaddr_str, int_ip_resolved == NULL ? int_ip : int_ip_resolved);
++		syslog(LOG_INFO, "Reject IPv6 port map [%s]:?/? via UPnP IGDv2 IPv6 reason for third-party from %s",
++		       int_ip_resolved == NULL ? int_ip : int_ip_resolved, clientaddr_str);
+ 		SoapError(h, 606, "Action not authorized");
+ 		return 0;
+ 	}
+@@ -1868,11 +1863,10 @@ PinholeVerification(struct upnphttp * h,
+ 	}
+ #endif
+ 
+-	/* Pinhole InternalPort must be greater than or equal to 1024 */
+-	if (int_port < 1024)
++	if (int_port < default_min_port || int_port > default_max_port)
+ 	{
+-		syslog(LOG_INFO, "Client %s tried to access pinhole with port < 1024 and is not authorized to do it",
+-		       clientaddr_str);
++		syslog(LOG_INFO, "Reject IPv6 port map [%s]:%hu/? via UPnP IGDv2 IPv6 reason default-min/max-port",
++		       clientaddr_str, int_port);
+ 		SoapError(h, 606, "Action not authorized");
+ 		return 0;
+ 	}
+@@ -1974,7 +1968,7 @@ AddPinhole(struct upnphttp * h, const ch
+ 					inet_ntop(AF_INET6,
+ 					          &(((struct sockaddr_in6 *)p->ai_addr)->sin6_addr),
+ 					          rem_ip, sizeof(rem_ip));
+-					syslog(LOG_INFO, "resolved '%s' to '%s'", rem_host, rem_ip);
++					syslog(LOG_DEBUG, "Resolve hostname (%s) to IPv6 address (%s)", rem_host, rem_ip);
+ 					rem_host = rem_ip;
+ 					break;
+ 				}
+@@ -1983,8 +1977,8 @@ AddPinhole(struct upnphttp * h, const ch
+ 		}
+ 		else
+ 		{
+-			syslog(LOG_WARNING, "AddPinhole : getaddrinfo(%s) : %s",
+-			       rem_host, gai_strerror(err));
++			syslog(LOG_INFO, "Failed to parse or resolve to (%s) IPv6 address via UPnP IGDv2 IPv6",
++				rem_host);
+ #if 0
+ 			SoapError(h, 402, "Invalid Args");
+ 			goto clear_and_exit;
+@@ -2017,10 +2011,8 @@ AddPinhole(struct upnphttp * h, const ch
+ 	if(PinholeVerification(h, int_ip, iport, int_ip_resolved) <= 0)
+ 		goto clear_and_exit;
+ 
+-	syslog(LOG_INFO, "%s: (inbound) from [%s]:%hu to [%s]:%hu with proto %ld during %d sec",
+-	       action, rem_host?rem_host:"any",
+-	       rport, int_ip_resolved, iport,
+-	       proto, ltime);
++	syslog(LOG_INFO, "Add IPv6 port map [%s]:%hu/%s remote IP %s remote port %hu lifetime %d via UPnP IGDv2 IPv6",
++	       int_ip_resolved, iport, proto_itoa(proto), rem_host[0] != '\0' ? rem_host : "any", rport, ltime);
+ 
+ 	/* In cases where the RemoteHost, RemotePort, InternalPort,
+ 	 * InternalClient and Protocol are the same than an existing pinhole,
+@@ -2124,8 +2116,8 @@ UpdatePinhole(struct upnphttp * h, const
+ 		return;
+ 	}
+ 
+-	syslog(LOG_INFO, "%s: (inbound) updating lease duration to %d for pinhole with ID: %d",
+-	       action, ltime, uid);
++	syslog(LOG_INFO, "Renew IPv6 port map [?]:?/? lifetime %d via UPnP IGDv2 IPv6 Update UID %d",
++		ltime, uid);
+ 
+ 	n = upnp_update_inboundpinhole(uid, ltime);
+ 	if(n == -1)
+@@ -2188,7 +2180,7 @@ GetOutboundPinholeTimeout(struct upnphtt
+ 	iport = (unsigned short)atoi(int_port);
+ 	/*proto = atoi(protocol);*/
+ 
+-	syslog(LOG_INFO, "%s: retrieving timeout for outbound pinhole from [%s]:%hu to [%s]:%hu protocol %s", action, int_ip, iport,rem_host, rport, protocol);
++	syslog(LOG_DEBUG, "%s: retrieving timeout for outbound pinhole from [%s]:%hu to [%s]:%hu protocol %s", action, int_ip, iport,rem_host, rport, protocol);
+ 
+ 	/* TODO */
+ 	r = -1;/*upnp_check_outbound_pinhole(proto, &opt);*/
+@@ -2264,11 +2256,14 @@ DeletePinhole(struct upnphttp * h, const
+ 	                          &leasetime, NULL);
+ 	if (n >= 0)
+ 	{
+-		if(PinholeVerification(h, iaddr, iport, NULL) <= 0)
++		if(PinholeVerification(h, iaddr, iport, NULL) <= 0) {
++			syslog(LOG_INFO, "Non-existing IPv6 port map to delete via UPnP IGDv2 IPv2 UID %d", uid);
+ 			return;
++		}
+ 	}
+ 	else if(n == -2)
+ 	{
++		syslog(LOG_INFO, "Non-existing IPv6 port map to delete via UPnP IGDv2 IPv2 UID %d", uid);
+ 		SoapError(h, 704, "NoSuchEntry");
+ 		return;
+ 	}
+@@ -2286,8 +2281,8 @@ DeletePinhole(struct upnphttp * h, const
+ 		SoapError(h, 501, "Action Failed");
+ 		return;
+ 	}
+-	syslog(LOG_INFO, "%s: (inbound) pinhole with ID %d successfully removed",
+-	       action, uid);
++	syslog(LOG_INFO, "Delete IPv6 port map [?]:?/? via UPnP IGDv2 IPv6 UID %d",
++	       uid);
+ 	bodylen = snprintf(body, sizeof(body), resp,
+ 	                   action, ns, action);
+ 	if (bodylen < 0 || bodylen >= (int)sizeof(body)) {
+@@ -2696,7 +2691,7 @@ SoapError(struct upnphttp * h, int errCo
+ 	char body[2048];
+ 	int bodylen;
+ 
+-	syslog(LOG_INFO, "Returning UPnPError %d: %s", errCode, errDesc);
++	syslog(LOG_DEBUG, "Returning UPnPError %d: %s", errCode, errDesc);
+ 	bodylen = snprintf(body, sizeof(body), resp, errCode, errDesc);
+ 	if(bodylen < 0) {
+ 		syslog(LOG_ERR, "snprintf() returned %d", bodylen);
+--- a/upnpstun.c
++++ b/upnpstun.c
+@@ -10,9 +10,10 @@
+ /*! \file upnpstun.c
+  * \brief STUN client implementation
+  *
+- * - https://datatracker.ietf.org/doc/html/rfc3489 (obsolete)
+- * - https://datatracker.ietf.org/doc/html/rfc5389
+- * - https://datatracker.ietf.org/doc/html/rfc5780 (experimental)
++ * - https://www.rfc-editor.org/info/rfc3489/ (classic STUN, obsoleted)
++ * - https://www.rfc-editor.org/info/rfc5389/ (STUN obsoleted)
++ * - https://www.rfc-editor.org/info/rfc5780/ (STUN NAT behavior, experimental)
++ * - https://www.rfc-editor.org/info/rfc8489/ (STUN current, not implemented)
+  */
+ #include <sys/select.h>
+ #include <sys/time.h>
+@@ -124,8 +125,8 @@ static int resolve_stun_host(const char
+ 
+ 	r = getaddrinfo(stun_host, service, &hints, &result);
+ 	if (r != 0) {
+-		syslog(LOG_ERR, "%s: getaddrinfo(%s, %s, ...) failed : %s",
+-		       "resolve_stun_host", stun_host, service, gai_strerror(r));
++		syslog(LOG_ERR, "STUN: Failed to resolve hostname (%s) to IPv4 address (%s)",
++		       stun_host, gai_strerror(r));
+ 		errno = EHOSTUNREACH;
+ 		return -1;
+ 	}
+@@ -149,8 +150,8 @@ static int resolve_stun_host(const char
+ 	} else {
+ 		char addr_str[48];
+ 		if (sockaddr_to_string((struct sockaddr *)sock_addr, addr_str, sizeof(addr_str)) > 0) {
+-			syslog(LOG_DEBUG, "%s: %s:%s => %s",
+-			       "resolve_stun_host", stun_host, service, addr_str);
++			syslog(LOG_DEBUG, "%s: Resolve hostname (%s) and connect to %s",
++				"resolve_stun_host", stun_host, addr_str);
+ 		}
+ 	}
+ 
+@@ -274,7 +275,7 @@ static int wait_for_stun_responses(int f
+ 			FD_SET(fds[i], &fdset);
+ 		}
+ 
+-		syslog(LOG_DEBUG, "%s: waiting %ld secs and %ld usecs", "wait_for_stun_responses", (long)timeout.tv_sec, (long)timeout.tv_usec);
++		syslog(LOG_DEBUG, "%s: waiting %ld.%ld s", "wait_for_stun_responses", (long)timeout.tv_sec, (long)timeout.tv_usec);
+ 		ret = select(max_fd+1, &fdset, NULL, NULL, &timeout);
+ 		if (ret < 0) {
+ 			if (errno == EINTR)
+@@ -484,7 +485,8 @@ static int parse_stun_response(unsigned
+ 	if (!have_other_address && have_address) {
+ 		syslog(LOG_ERR, "STUN server not supported, not returning "
+ 			"OTHER-ADDRESS / support CHANGE-REQUEST's required for "
+-			"endpoint-independent (1:1) CGNAT filtering tests per RFC 5780.");
++			"endpoint-independent (1:1) CGNAT filtering tests per RFC 5780, "
++			"see compatible servers in sample config");
+ 		return -1;
+ 	}
+ 	return (have_address && have_other_address) ? 0 : -1;
+@@ -529,13 +531,13 @@ int perform_stun(const char *if_name, co
+ 
+ 		/* Determine unrestricted endpoint-independent (1:1) CGNAT in two STUN requests per RFC 5780 4.4 test I/II */
+ 		/* 1. Connectivity (binding, detect public IPv4), 2. CHANGE-REQUEST with change-IP and change-port set */
+-		/* https://datatracker.ietf.org/doc/html/rfc5780#section-4.4 */
++		/* https://www.rfc-editor.org/info/rfc5780/#section-4.4 */
+ 		fill_request(requests[i], i, i);
+ 		transaction_ids[i] = requests[i]+8;
+ 	}
+ 
+-	syslog(LOG_INFO, "%s: local ports %hu %hu %hu %hu",
+-	       "perform_stun", local_ports[0], local_ports[1],
++	syslog(LOG_INFO, "STUN: Testing with local UDP ports %hu %hu %hu %hu",
++		local_ports[0], local_ports[1],
+ 	       local_ports[2], local_ports[3]);
+ 
+ 	/* Unblock local ports */
+@@ -600,16 +602,15 @@ int perform_stun(const char *if_name, co
+ 	if (mapped_addrs_count < 4) {
+ 		/* We have not received all four responses,
+ 		 * therefore NAT or firewall is doing some filtering */
+-		syslog(LOG_NOTICE, "%s: %d response out of 4 received",
+-		       "perform_stun", mapped_addrs_count);
++		syslog(LOG_NOTICE, "STUN: Filtering detected as %d/4 responses received (1: IPv4 detection, 2-4: filtering tests)",
++			mapped_addrs_count);
+ 		*restrictive_nat = 1;
+ 	}
+ 
+ 	if (memcmp(&remote_addr, &peer_addrs[0], sizeof(peer_addrs[0])) != 0) {
+ 		/* We received STUN response from different address
+ 		 * even we did not asked for it, so some strange NAT is active */
+-		syslog(LOG_NOTICE, "%s: address changed",
+-		       "perform_stun");
++		syslog(LOG_NOTICE, "STUN: Public IPv4 change detected in responses");
+ 		*restrictive_nat = 1;
+ 	}
+ 
+@@ -621,8 +622,8 @@ int perform_stun(const char *if_name, co
+ 			sockaddr_to_string((struct sockaddr *)&mapped_addrs[i], mapped_addr_str, sizeof(mapped_addr_str));
+ 			/* External IP address or port was changed,
+ 			 * therefore symmetric NAT is active */
+-			syslog(LOG_NOTICE, "%s: #%d external address or port changed : %s:%hu => %s",
+-			       "perform_stun", i, inet_ntoa(*ext_addr), local_ports[i], mapped_addr_str);
++			syslog(LOG_NOTICE, "STUN: Public IPv4/port change detected in response #%d (%s:%hu => %s)",
++				i+1, inet_ntoa(*ext_addr), local_ports[i], mapped_addr_str);
+ 			*restrictive_nat = 1;
+ 		}
+ 	}
