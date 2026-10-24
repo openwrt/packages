@@ -10,9 +10,9 @@ function debug(...s) {
 		warn("DEBUG: ", ...s, "\n");
 }
 
-function puts(...s) {
+let puts = function(...s) {
 	return uhttpd.send(...s, "\n");
-}
+};
 
 function govalue(value) {
 	if (value == Infinity)
