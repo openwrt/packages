@@ -1,0 +1,79 @@
+#!/bin/sh /etc/rc.common
+
+START=95
+STOP=10
+
+USE_PROCD=1
+
+NAME=ntfy
+PROG=/usr/bin/ntfy
+
+# Read a top level option out of the YAML config. $1 is a regex, so pass
+# 'cache[-_]file' to accept both the dash and the underscore spelling.
+yml_get() {
+	sed -n -E "s/^[[:space:]]*$1[[:space:]]*:[[:space:]]*[\"']?([^\"'#[:space:]]+).*/\1/p" \
+		"$2" | tail -n1
+}
+
+ensure_dir() {
+	mkdir -p "$1"
+	chown "$2" "$1"
+	chmod 0750 "$1"
+}
+
+start_service() {
+	local enabled conf_file user group
+	local cache_file auth_file attachment_dir
+
+	config_load "$NAME"
+	config_get_bool enabled  main enabled 0
+	config_get conf_file main conf_file /etc/ntfy/server.yml
+	config_get user      main user  ntfy
+	config_get group     main group ntfy
+
+	[ "$enabled" -eq 1 ] || {
+		echo "$NAME is disabled in /etc/config/$NAME" >&2
+		return 1
+	}
+
+	[ -f "$conf_file" ] || {
+		echo "$NAME: config file $conf_file not found" >&2
+		return 1
+	}
+
+	# ntfy runs unprivileged and the config may hold credentials, so keep it
+	# 0600 but hand it to the service user. It is installed as root:root.
+	chown "$user:$group" "$conf_file"
+	chmod 0600 "$conf_file"
+
+	# The paths ntfy actually uses come from conf_file, so derive the
+	# directories that have to exist from it instead of duplicating them in
+	# UCI, where the two could silently drift apart.
+	cache_file=$(yml_get 'cache[-_]file' "$conf_file")
+	auth_file=$(yml_get 'auth[-_]file' "$conf_file")
+	attachment_dir=$(yml_get 'attachment[-_]cache[-_]dir' "$conf_file")
+
+	[ -n "$cache_file" ] && ensure_dir "$(dirname "$cache_file")" "$user:$group"
+	[ -n "$auth_file" ] && ensure_dir "$(dirname "$auth_file")" "$user:$group"
+	[ -n "$attachment_dir" ] && ensure_dir "$attachment_dir" "$user:$group"
+
+	procd_open_instance "$NAME"
+	procd_set_param command "$PROG" serve --config "$conf_file"
+
+	procd_set_param user "$user"
+	procd_set_param group "$group"
+	procd_set_param file "$conf_file"
+	procd_set_param limits nofile="8192 8192"
+	procd_set_param respawn 3600 5 5
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_close_instance
+}
+
+service_triggers() {
+	procd_add_reload_trigger "$NAME"
+}
+
+reload_service() {
+	restart
+}
