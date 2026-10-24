@@ -1,0 +1,69 @@
+From 23aa3298918c9b86f95980539f7921bf891cedd7 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Thu, 17 Sep 2026 13:45:03 +0100
+Subject: [PATCH 3/3] scripts: compute the gyroscope bias without numpy
+
+The gyroscope calibration is an average over a few hundred samples, so
+requiring numpy for it keeps a headless box from calibrating a remote at
+all. Average in plain Python and import numpy where it earns its place,
+in the accelerometer fit that scipy drives anyway.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ scripts/calibrate.py | 14 ++++++++------
+ 1 file changed, 8 insertions(+), 6 deletions(-)
+
+--- a/scripts/calibrate.py
++++ b/scripts/calibrate.py
+@@ -1,5 +1,4 @@
+ #!/usr/bin/env python3
+-import numpy as np
+ import csv
+ import json
+ import argparse
+@@ -21,7 +20,7 @@ def load_imu_csv(filename):
+                 g.append([float(row[5]), float(row[6]), float(row[7])])
+             except ValueError:
+                 continue  # skip invalid lines
+-    return np.array(a), np.array(g)
++    return a, g
+ 
+ def save_calibration_json(filename, bias=(), matrix=(), gyro_bias=(0,0,0)):
+     bias_list = [float(f"{v:.6f}") for v in bias]
+@@ -45,6 +44,7 @@ def save_calibration_json(filename, bias
+ # Define residuals for least squares
+ # x = [b_x, b_y, b_z, M00, M01, M02, M10, M11, M12, M20, M21, M22]
+ def residuals(x, accel):
++    import numpy as np
+     b = x[0:3]                  # bias
+     M = x[3:].reshape(3, 3)     # 3x3 scale/misalignment
+     res = []
+@@ -55,10 +55,13 @@ def residuals(x, accel):
+ 
+ # -----------------------------
+ def calibrate_accel(accel_samples):
++    import numpy as np
+     from scipy.optimize import least_squares
+     if len(accel_samples) < 6:
+         raise ValueError("Need at least 6 samples in different orientations")
+ 
++    accel_samples = np.array(accel_samples)
++
+     # Initial guess: bias=mean, M=identity
+     b0 = np.mean(accel_samples, axis=0)
+     M0 = np.eye(3).flatten()
+@@ -73,11 +76,10 @@ def calibrate_accel(accel_samples):
+ 
+ 
+ def calibrate_gyro_bias(gyro_samples):
+-    if gyro_samples.ndim != 2 or gyro_samples.shape[1] != 3:
+-        raise ValueError("gyro_samples must be (N, 3) array")
++    if not gyro_samples or any(len(s) != 3 for s in gyro_samples):
++        raise ValueError("gyro_samples must be a non-empty list of triples")
+ 
+-    bias = np.mean(gyro_samples, axis=0)
+-    return bias.tolist()
++    return [sum(axis) / len(gyro_samples) for axis in zip(*gyro_samples)]
+ 
+ def main():
+     parser = argparse.ArgumentParser(description="Calculate calibration values from raw IMU samples")
