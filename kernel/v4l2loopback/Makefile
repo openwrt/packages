@@ -7,7 +7,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=v4l2loopback
 PKG_VERSION:=0.15.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/umlaeute/v4l2loopback
@@ -36,12 +36,10 @@ define KernelPackage/v4l2loopback/description
 endef
 
 MAKE_OPTS:= \
-	ARCH="$(LINUX_KARCH)" \
-	CROSS_COMPILE="$(TARGET_CROSS)" \
 	M="$(PKG_BUILD_DIR)"
 
 define Build/Compile
-	$(MAKE) -C "$(LINUX_DIR)" \
+	$(KERNEL_MAKE) \
 		$(MAKE_OPTS) \
 		CONFIG_PACKAGE_kmod-v4l2loopback=m \
 		modules
