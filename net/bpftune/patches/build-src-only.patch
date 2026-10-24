@@ -1,0 +1,28 @@
+From ef5d2d5e44dfc4e38e53da92843731b6317aa32d Mon Sep 17 00:00:00 2001
+From: Shon Sebastian <fluffball3@proton.me>
+Date: Tue, 22 Sep 2026 03:25:50 +0530
+Subject: [PATCH] build src only
+
+Simplify build
+
+Signed-off-by: Shon Sebastian <fluffball3@proton.me>
+---
+ Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Makefile b/Makefile
+index 5e93dc0..c23a5f0 100644
+--- a/Makefile
++++ b/Makefile
+@@ -33,7 +33,7 @@ INSTALLPATH = $(installprefix)
+ 
+ .PHONY: all clean
+ 
+-all: srcdir docdir testdir
++all: srcdir
+ 	
+ srcdir:
+ 	cd src; make
+-- 
+2.55.0
+

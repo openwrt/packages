@@ -1,0 +1,46 @@
+From 1de39854a279b1ec17306679c88ddf14fb06cabd Mon Sep 17 00:00:00 2001
+From: Shon Sebastian <fluffball3@proton.me>
+Date: Tue, 22 Sep 2026 03:33:35 +0530
+Subject: [PATCH] libbpftune: musl fixes
+
+Fixes for compiling with musl
+
+Signed-off-by: Shon Sebastian <fluffball3@proton.me>
+---
+ src/libbpftune.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/src/libbpftune.c b/src/libbpftune.c
+index 39e2c66..ee8525d 100644
+--- a/src/libbpftune.c
++++ b/src/libbpftune.c
+@@ -2167,7 +2167,7 @@ static void bpftuner_strategy_update(struct bpftuner *tuner)
+ 		bpftuner_strategy_set(tuner, max_strategy);
+ }
+ 
+-static void bpftuner_strategy_timeout(sigval_t sigval)
++static void bpftuner_strategy_timeout(union sigval sigval)
+ {
+ 	struct bpftuner *tuner = sigval.sival_ptr;
+ 
+@@ -2583,7 +2583,7 @@ void *bpftune_server_thread(void *arg)
+ 	if (port == 0) {
+ 		len = sizeof(saddr);
+ 
+-		if (!getsockname(fd, &saddr, &len))
++		if (!getsockname(fd, (struct sockaddr *)&saddr, &len))
+ 			port = ntohs(saddr.sin_port);
+ 	}
+ 	if (port != 0) {
+@@ -2604,7 +2604,7 @@ void *bpftune_server_thread(void *arg)
+ 		char buf[BPFTUNE_SERVER_MSG_MAX];
+ 		char req[81];
+ 		struct sockaddr_in caddr;
+-		int cfd = accept(fd, (struct sockaddr_in *)&caddr, &len);
++		int cfd = accept(fd, (struct sockaddr *)&caddr, &len);
+ 		ssize_t req_len;
+ 		unsigned long i;
+ 
+-- 
+2.55.0
+
