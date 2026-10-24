@@ -66,7 +66,7 @@ Signed-off-by: Josef Schlehofer <pepe.schlehofer@gmail.com>
  }
 --- a/src/lj_dispatch.h
 +++ b/src/lj_dispatch.h
-@@ -66,6 +66,36 @@ GOTDEF(GOTENUM)
+@@ -67,6 +67,36 @@ GOTDEF(GOTENUM)
  };
  #endif
  
@@ -103,7 +103,7 @@ Signed-off-by: Josef Schlehofer <pepe.schlehofer@gmail.com>
  /* Type of hot counter. Must match the code in the assembler VM. */
  /* 16 bits are sufficient. Only 0.0015% overhead with maximum slot penalty. */
  typedef uint16_t HotCount;
-@@ -93,7 +123,7 @@ typedef struct GG_State {
+@@ -94,7 +124,7 @@ typedef struct GG_State {
    /* Make g reachable via K12 encoded DISPATCH-relative addressing. */
    uint8_t align1[(16-sizeof(global_State))&15];
  #endif

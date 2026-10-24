@@ -29,7 +29,7 @@ Signed-off-by: Josef Schlehofer <pepe.schlehofer@gmail.com>
 
 --- a/src/vm_ppc.dasc
 +++ b/src/vm_ppc.dasc
-@@ -1833,7 +1833,7 @@ static void build_subroutines(BuildCtx *
+@@ -1852,7 +1852,7 @@ static void build_subroutines(BuildCtx *
    |  lwz TMP2, WORD_HI(TMP1)
    |.else
    |  lwzux TMP2, TMP1, TMP3
