@@ -1,0 +1,44 @@
+From 382519f3c170607b1b886a2e41118973101b6dab Mon Sep 17 00:00:00 2001
+From: Martin Schiller <ms@dev.tdt.de>
+Date: Wed, 22 Jul 2026 10:03:42 +0200
+Subject: [PATCH] notification: output real error reason of
+ es9p_handle_notification
+
+This adds usefull error reasons like "HTTP transport failed" to
+notification outputs.
+
+Signed-off-by: Martin Schiller <ms@dev.tdt.de>
+---
+ src/applet/notification/process.c | 2 +-
+ src/applet/notification/replay.c  | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/applet/notification/process.c b/src/applet/notification/process.c
+index 7e134d1..7d6752a 100644
+--- a/src/applet/notification/process.c
++++ b/src/applet/notification/process.c
+@@ -29,7 +29,7 @@ static int _process_single(const uint32_t seqNumber, const bool autoremove) {
+ 
+     jprint_progress("es9p_handle_notification", str_seqNumber);
+     if (es9p_handle_notification(&euicc_ctx, notification.b64_PendingNotification)) {
+-        jprint_error("es9p_handle_notification", NULL);
++        jprint_error("es9p_handle_notification", euicc_ctx.http.status.message);
+         return -1;
+     }
+ 
+diff --git a/src/applet/notification/replay.c b/src/applet/notification/replay.c
+index 80c399b..624f6e6 100644
+--- a/src/applet/notification/replay.c
++++ b/src/applet/notification/replay.c
+@@ -68,7 +68,7 @@ static int handle_notification(const uint32_t seqNumber, const struct es10b_pend
+ 
+     jprint_progress("es9p_handle_notification", str_seqNumber);
+     if (es9p_handle_notification(&euicc_ctx, notification.b64_PendingNotification)) {
+-        jprint_error("es9p_handle_notification", NULL);
++        jprint_error("es9p_handle_notification", euicc_ctx.http.status.message);
+         return -1;
+     }
+ 
+-- 
+2.47.3
+

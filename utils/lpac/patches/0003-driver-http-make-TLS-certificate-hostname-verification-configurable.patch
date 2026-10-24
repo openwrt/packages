@@ -1,0 +1,109 @@
+From 39d9bc3bc06500f89fa5cc02ddbc4555fbd94df5 Mon Sep 17 00:00:00 2001
+From: Martin Schiller <ms@dev.tdt.de>
+Date: Wed, 22 Jul 2026 06:16:03 +0000
+Subject: [PATCH] driver/http: make TLS certificate/hostname verification
+ configurable
+
+By default lpac's HTTP backends do not verify the SM-DP+/SM-DS
+server's TLS certificate or hostname, since some servers use
+certificates issued by CAs that are not (yet) part of the GSMA CI
+trust store shipped with common OS trust stores. This makes it
+impossible to opt back into full verification even when the target
+server's certificate is trusted.
+
+Add an environment variable to opt back into standard TLS
+verification:
+
+  LPAC_HTTP_SSL_VERIFY=1
+
+This version of lpac only ships the curl HTTP backend, so
+driver/http/curl.c is the only backend affected here.
+
+When unset or falsy, behavior is unchanged (verification disabled),
+preserving backward compatibility. When set to a truthy value, both
+peer certificate and hostname verification are enabled
+(CURLOPT_SSL_VERIFYHOST is set to 2, matching curl's requirement that
+this option only accepts 0 or 2).
+
+The setting is read once in libhttpinterface_init() and applied to
+every request made via http_interface_transmit().
+
+Signed-off-by: Martin Schiller <ms@dev.tdt.de>
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ driver/http/curl.c | 38 ++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 36 insertions(+), 2 deletions(-)
+
+diff --git a/driver/http/curl.c b/driver/http/curl.c
+index b15b3ff..b6660bc 100644
+--- a/driver/http/curl.c
++++ b/driver/http/curl.c
+@@ -7,6 +7,18 @@
+ #include <stdlib.h>
+ #include <string.h>
+ 
++#include <lpac/utils.h>
++
++/*
++ * By default lpac does not verify the SM-DP+/SM-DS server's TLS certificate
++ * or hostname, since some servers use certificates issued by CAs that are
++ * not (yet) part of the GSMA CI trust store shipped with common OS trust
++ * stores. Setting this environment variable to a truthy value re-enables
++ * both checks. This is intentionally not backend-specific (see
++ * HTTP_ENV_NAME), so all HTTP backends that support it use the same name.
++ */
++#define ENV_SSL_VERIFY "LPAC_HTTP_SSL_VERIFY"
++
+ #ifndef _WIN32
+ #    include <curl/curl.h>
+ #else
+@@ -49,6 +61,15 @@ static struct libcurl_interface {
+     void (*_curl_slist_free_all)(struct curl_slist *list);
+ } libcurl;
+ 
++/*
++ * Populated once in libhttpinterface_init() from ENV_SSL_VERIFY.
++ * CURLOPT_SSL_VERIFYHOST only accepts 0 (disabled) or 2 (enabled, match the
++ * hostname against the certificate) - 1 is a legacy value curl no longer
++ * accepts.
++ */
++static long ssl_verifypeer = 0L;
++static long ssl_verifyhost = 0L;
++
+ static size_t http_trans_write_callback(void *contents, size_t size, size_t nmemb, void *userp) {
+     size_t realsize = size * nmemb;
+     struct http_trans_response_data *mem = (struct http_trans_response_data *)userp;
+@@ -87,8 +108,8 @@ static int http_interface_transmit(struct euicc_ctx *ctx, const char *url, uint3
+     libcurl._curl_easy_setopt(curl, CURLOPT_URL, url);
+     libcurl._curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, http_trans_write_callback);
+     libcurl._curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&responseData);
+-    libcurl._curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+-    libcurl._curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
++    libcurl._curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, ssl_verifypeer);
++    libcurl._curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, ssl_verifyhost);
+     for (int i = 0; h[i] != NULL; i++) {
+         nheaders = libcurl._curl_slist_append(headers, h[i]);
+         if (nheaders == NULL) {
+@@ -169,6 +190,19 @@ static int libhttpinterface_init(struct euicc_http_interface *ifstruct) {
+         return -1;
+     }
+ 
++    /*
++     * TLS certificate/hostname verification is disabled by default for
++     * backward compatibility (see ENV_SSL_VERIFY above). Set the env
++     * variable to enable it.
++     */
++    if (getenv_or_default(ENV_SSL_VERIFY, false)) {
++        ssl_verifypeer = 1L;
++        ssl_verifyhost = 2L;
++    } else {
++        ssl_verifypeer = 0L;
++        ssl_verifyhost = 0L;
++    }
++
+     ifstruct->transmit = http_interface_transmit;
+ 
+     return 0;
+-- 
+2.43.0
+
