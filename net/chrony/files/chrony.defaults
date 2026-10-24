@@ -1,0 +1,10 @@
+#!/bin/sh
+
+uci -q get chrony.driftfile >/dev/null && exit 0
+
+uci -q batch <<-EOF
+	set chrony.driftfile=driftfile
+	set chrony.driftfile.restore_time='0'
+	set chrony.driftfile.file='/var/run/chrony/drift'
+	commit chrony
+EOF
