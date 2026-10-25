@@ -18,7 +18,7 @@ Signed-off-by: Georgi Valkov <gvalkov@gmail.com>
 -				${revision}.${patchlevel}.${subversion}"
 -		case "$osvers" in
 -	        1[5-9]*|[2-9]*)
--			shrpldflags="$shrpldflags -install_name `pwd`/\$@ -Xlinker -headerpad_max_install_names"
+-			shrpldflags="$shrpldflags -install_name `pwd -P`/\$@ -Xlinker -headerpad_max_install_names"
 -			exeldflags="-Xlinker -headerpad_max_install_names"
 -			;;
 -		*)
@@ -30,7 +30,7 @@ Signed-off-by: Georgi Valkov <gvalkov@gmail.com>
  		;;
  	cygwin*)
  		shrpldflags="$shrpldflags -Wl,--out-implib=libperl.dll.a"
-@@ -359,14 +351,6 @@ MANIFEST_SRT = MANIFEST.srt
+@@ -360,14 +352,6 @@ MANIFEST_SRT = MANIFEST.srt
  
  !GROK!THIS!
  
@@ -45,7 +45,7 @@ Signed-off-by: Georgi Valkov <gvalkov@gmail.com>
  case "$usecrosscompile$perl" in
  define?*)
  	$spitshell >>$Makefile <<!GROK!THIS!
-@@ -1062,20 +1046,6 @@ $(PERL_EXE): $& $(perlmain_dep) $(LIBPER
+@@ -1066,20 +1050,6 @@ $(PERL_EXE): $& $(perlmain_dep) $(LIBPER
  	$(SHRPENV) $(CC) -o perl $(CLDFLAGS) $(CCDLFLAGS) $(perlmain_objs) $(LLIBPERL) $(static_ext) `cat ext.libs` $(libs)
  !NO!SUBS!
          ;;
@@ -74,9 +74,9 @@ Signed-off-by: Georgi Valkov <gvalkov@gmail.com>
      strip("$installbin/$perl_verbase$ver$exe_ext");
 -    fix_dep_names("$installbin/$perl_verbase$ver$exe_ext");
      chmod(0755, "$installbin/$perl_verbase$ver$exe_ext");
-     `chtag -r "$installbin/$perl_verbase$ver$exe_ext"` if ($^O eq 'os390');
  }
-@@ -350,7 +349,6 @@ foreach my $file (@corefiles) {
+ 
+@@ -349,7 +348,6 @@ foreach my $file (@corefiles) {
      if (copy_if_diff($file,"$installarchlib/CORE/$file")) {
  	if ($file =~ /\.(\Q$so\E|\Q$dlext\E)$/) {
  	    strip("-S", "$installarchlib/CORE/$file") if $^O eq 'darwin';
@@ -84,7 +84,7 @@ Signed-off-by: Georgi Valkov <gvalkov@gmail.com>
  	    chmod($SO_MODE, "$installarchlib/CORE/$file");
  	} else {
  	    chmod($NON_SO_MODE, "$installarchlib/CORE/$file");
-@@ -749,27 +747,4 @@ sub strip
+@@ -745,27 +743,4 @@ sub strip
      }
  }
  
