@@ -42,6 +42,7 @@ igmp_add_phyint() {
 	append netdevs "$device"
 
 	[ "$direction" = "upstream" ] && has_upstream=1
+	[ "$direction" = "downstream" ] && has_downstream=1
 
 	printf '\nphyint %s %s ratelimit 0 threshold 1\n' "$device" "$direction" >> "$CONFIGFILE" || config_error=1
 
@@ -128,6 +129,7 @@ start_service() {
 	local config_tmp
 
 	has_upstream=
+	has_downstream=
 	netdevs=
 	logopts=
 	config_error=0
@@ -141,7 +143,7 @@ start_service() {
 		logger -t igmpproxy 'Failed to generate multicast configuration'
 		return 1
 	fi
-	if [ -z "$has_upstream" ]; then
+	if [ -z "$has_upstream" ] || [ -z "$has_downstream" ]; then
 		rm -f "$config_tmp"
 		return
 	fi
