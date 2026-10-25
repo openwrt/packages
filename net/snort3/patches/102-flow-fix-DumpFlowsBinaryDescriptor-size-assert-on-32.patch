@@ -1,0 +1,41 @@
+From c900939698e2e45d6894f0116c13da2bb1b6ddb4 Mon Sep 17 00:00:00 2001
+From: John Audia <therealgraysky@proton.me>
+Date: Fri, 6 Nov 2026 08:54:44 +0000
+Subject: [PATCH] flow: fix DumpFlowsBinaryDescriptor size assert on 32-bit
+ non-x86
+
+The static_assert assumes the struct is 132 bytes on all 32-bit targets.
+That only holds on i386, where uint64_t is 4-byte aligned inside structs.
+ARM EABI, MIPS o32 and PowerPC align uint64_t to 8, which adds padding
+before client_pkts and before flow_mem, so sizeof is 136 and the build fails:
+
+  dump_flows_descriptor.h:353:49: error: static assertion failed
+  note: the comparison reduces to '(136 == 132)'
+
+Account for uint64_t alignment in the expected size. The struct layout is
+unchanged, so the binary record format stays the same on every arch.
+
+Seen in OpenWrt CI: x86_64/aarch64/riscv64 (144) and i386 (132) pass,
+arm, mips, mipsel and powerpc fail with 136.
+
+---
+ src/flow/dump_flows_descriptor.h | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
+
+--- a/src/flow/dump_flows_descriptor.h
++++ b/src/flow/dump_flows_descriptor.h
+@@ -348,9 +348,11 @@ struct DumpFlowsBinaryDescriptor
+     uint64_t peak_flow_mem = 0;  // Flow::get_peak_mem_usage() for the current logical session
+ };
+ 
+-// Size is ABI-dependent: 144 bytes on 64-bit, 132 on 32-bit. This assert is a
+-// tripwire so a layout change can't slip through unnoticed.
+-static_assert(sizeof(DumpFlowsBinaryDescriptor) == (sizeof(void*) == 8 ? 144 : 132),
++// Size is ABI-dependent: 144 bytes on 64-bit, 136 on 32-bit ABIs that align
++// uint64_t to 8 (ARM, MIPS, PPC) and 132 on those that align it to 4 (i386).
++// This assert is a tripwire so a layout change can't slip through unnoticed.
++static_assert(sizeof(DumpFlowsBinaryDescriptor) ==
++    (sizeof(void*) == 8 ? 144 : (alignof(uint64_t) == 8 ? 136 : 132)),
+     "binary flow record format may have changed; ensure all consumers are updated");
+ 
+ class DumpFlowsDescriptor
