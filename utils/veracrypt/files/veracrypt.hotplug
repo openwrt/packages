@@ -1,0 +1,8 @@
+# Mount auto_mount VeraCrypt volumes whose disk has just appeared (10-mount
+# has mounted its filesystems by now). Ignore devices that never hold them.
+
+[ "$ACTION" = add ] || exit 0
+case "$DEVNAME" in
+loop*|dm-*|ram*|zram*|mtdblock*|ubiblock*) exit 0 ;;
+esac
+/etc/init.d/veracrypt enabled && /etc/init.d/veracrypt start --hotplug
