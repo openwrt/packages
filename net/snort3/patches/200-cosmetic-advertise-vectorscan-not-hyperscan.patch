@@ -1,7 +1,7 @@
 --- a/src/main/process.cc
 +++ b/src/main/process.cc
-@@ -704,7 +704,7 @@ int DisplayBanner()
-     LogMessage("           Copyright (C) 1998-2013 Sourcefire, Inc., et al.\n");
+@@ -721,7 +721,7 @@ int DisplayBanner()
+ #endif
      LogMessage("           Using DAQ version %s\n", daq_version_string());
  #ifdef HAVE_HYPERSCAN
 -    LogMessage("           Using Hyperscan version %s\n", hs_version());
