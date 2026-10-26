@@ -1,0 +1,50 @@
+From f7b87d3e0ea0e43f0819d22160920a901d04442f Mon Sep 17 00:00:00 2001
+From: Antonio Pastor <antonio.pastor@gmail.com>
+Date: Mon, 26 Oct 2026 17:35:40 -0400
+Subject: [PATCH] netatalk: make use of libunwind optional
+
+meson scripts add a dependency for libunwind if the library is present
+in the system.
+On targets creating packages for installation such as OpenWrt, the
+library might be present on build machines but not on target system.
+Instead of creating a hard dependency on libunwind, add a build
+option to make the use of libunwind optional.
+
+--- a/meson.build
++++ b/meson.build
+@@ -61,6 +61,7 @@ enable_debugging = get_option('with-debu
+ enable_dtrace = get_option('with-dtrace')
+ enable_fce = get_option('with-fce')
+ enable_gssapi = get_option('with-gssapi')
++enable_libunwind = get_option('with-libunwind')
+ enable_iconv = get_option('with-libiconv')
+ enable_kerberos = get_option('with-kerberos')
+ enable_krb5_uam = get_option('with-krbV-uam')
+@@ -842,7 +843,11 @@ endif
+ # Check for mysql CNID backend
+ 
+ # Backtraces on musl, which ships no execinfo
+-libunwind = dependency('libunwind', required: false)
++if enable_libunwind
++    libunwind = dependency('libunwind', required: false)
++else
++    libunwind = disabler()
++endif
+ 
+ if libunwind.found()
+     cdata.set('HAVE_LIBUNWIND', 1)
+--- a/meson_options.txt
++++ b/meson_options.txt
+@@ -136,6 +136,12 @@ option(
+     description: 'Enable iconv support',
+ )
+ option(
++    'with-libunwind',
++    type: 'boolean',
++    value: true,
++    description: 'Enable libunwind use if library is present',
++)
++option(
+     'with-overwrite',
+     type: 'boolean',
+     value: false,
