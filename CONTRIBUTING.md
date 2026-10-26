@@ -27,13 +27,18 @@ prompts given to the automated LLM reviewer.
 
 ## AI policy
 
+This is the short version. [AI_POLICY.md](AI_POLICY.md) explains how to
+disclose, what your `Signed-off-by` covers, how to test and how the review bot
+fits in.
+
 > [!WARNING]
 > You **must** disclose any LLM usage in your pull request, description or
 > commit messages.
 
 We support the use of LLMs for coding, but we hold a high bar for all
 contributions, and we expect a human in the loop who genuinely understands the
-work an LLM produces on their behalf.
+work an LLM produces on their behalf. You add your `Signed-off-by` yourself,
+never a tool, and it covers the parts an LLM wrote.
 
 > [!IMPORTANT]
 > Don't rely on LLMs to write the whole thing for you when communicating with
@@ -41,7 +46,9 @@ work an LLM produces on their behalf.
 
 We expect comments on our projects to be written by humans. The readers are
 humans, and we'd like to hear from you, not from a model. We may hide or remove
-any comments that we believe are LLM-generated.
+any comments that we believe are LLM-generated. Commit messages and pull
+request and issue descriptions are different: an LLM may draft them, and you
+disclose that as described above.
 
 If you're using an LLM to edit or – as a non-native English speaker – to
 translate your comments, keep them short, review before posting, and make sure
