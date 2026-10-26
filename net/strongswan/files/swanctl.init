@@ -715,6 +715,7 @@ config_connection() {
 	local keyexchange
 	local fragmentation
 	local mobike
+	local aggressive
 	local rekey_time
 	local over_time
 	local send_cert
@@ -735,6 +736,7 @@ config_connection() {
 	config_get keyexchange "$conf" keyexchange "ikev2"
 	config_get fragmentation "$conf" fragmentation "yes"
 	config_get_bool mobike "$conf" mobike 1
+	config_get_bool aggressive "$conf" aggressive 0
 	config_get rekey_time "$conf" rekey_time
 	config_get over_time "$conf" over_time
 	config_get send_cert "$conf" send_cert
@@ -799,6 +801,14 @@ config_connection() {
 		keyexchange=
 		;;
 	esac
+
+	if [ $aggressive -eq 1 ]; then
+		if [ "$keyexchange" = "ikev2" ]; then
+			warning "Aggressive mode is only supported with IKEv1, ignoring it for $conf"
+		else
+			swanctl_xappend2 "aggressive = yes"
+		fi
+	fi
 
 	[ -n "$send_cert" ] && swanctl_xappend2 "send_cert = $send_cert"
 	[ $send_certreq -eq 1 ] && swanctl_xappend2 "send_certreq = yes" || swanctl_xappend2 "send_certreq = no"
