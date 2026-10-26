@@ -736,6 +736,7 @@ config_connection() {
 	local rekey_time
 	local over_time
 	local rand_time
+	local reauth_time
 	local send_cert
 	local send_certreq
 	local pull
@@ -760,6 +761,7 @@ config_connection() {
 	config_get rekey_time "$conf" rekey_time
 	config_get over_time "$conf" over_time
 	config_get rand_time "$conf" rand_time
+	config_get reauth_time "$conf" reauth_time
 	config_get send_cert "$conf" send_cert
 	config_get_bool send_certreq "$conf" send_certreq 1
 	config_get_bool pull "$conf" pull 1
@@ -864,6 +866,7 @@ config_connection() {
 	fi
 	[ -n "$over_time" ] && swanctl_xappend2 "over_time = $over_time"
 	[ -n "$rand_time" ] && swanctl_xappend2 "rand_time = $rand_time"
+	[ -n "$reauth_time" ] && swanctl_xappend2 "reauth_time = $reauth_time"
 
 	[ -n "$ike_proposal" ] && swanctl_xappend2 "proposals = $ike_proposal"
 	[ -n "$dpd_delay" ] && swanctl_xappend2 "dpd_delay = $dpd_delay"
