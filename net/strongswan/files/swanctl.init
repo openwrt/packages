@@ -197,6 +197,18 @@ swanctl_is_valid_mark() {
 	return 0
 }
 
+# valid: six digit binary string, e.g. 101110
+swanctl_is_valid_dscp() {
+	local dscp="$1"
+
+	case "$dscp" in
+	[01][01][01][01][01][01])
+		return 0
+		;;
+	esac
+	return 1
+}
+
 is_aead() {
 	local cipher="$1"
 
@@ -716,6 +728,7 @@ config_connection() {
 	local fragmentation
 	local mobike
 	local aggressive
+	local dscp
 	local rekey_time
 	local over_time
 	local send_cert
@@ -737,6 +750,7 @@ config_connection() {
 	config_get fragmentation "$conf" fragmentation "yes"
 	config_get_bool mobike "$conf" mobike 1
 	config_get_bool aggressive "$conf" aggressive 0
+	config_get dscp "$conf" dscp
 	config_get rekey_time "$conf" rekey_time
 	config_get over_time "$conf" over_time
 	config_get send_cert "$conf" send_cert
@@ -807,6 +821,14 @@ config_connection() {
 			warning "Aggressive mode is only supported with IKEv1, ignoring it for $conf"
 		else
 			swanctl_xappend2 "aggressive = yes"
+		fi
+	fi
+
+	if [ -n "$dscp" ]; then
+		if swanctl_is_valid_dscp "$dscp"; then
+			swanctl_xappend2 "dscp = $dscp"
+		else
+			fatal "DSCP $dscp not supported, expected six digit binary string"
 		fi
 	fi
 
