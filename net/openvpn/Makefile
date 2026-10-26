@@ -51,7 +51,7 @@ endef
 
 Package/openvpn-openssl=$(call Package/openvpn/Default,openssl,OpenSSL,+PACKAGE_openvpn-openssl:libopenssl)
 Package/openvpn-mbedtls=$(call Package/openvpn/Default,mbedtls,mbedTLS,+PACKAGE_openvpn-mbedtls:libmbedtls,1)
-Package/openvpn-wolfssl=$(call Package/openvpn/Default,wolfssl,WolfSSL,+PACKAGE_openvpn-wolfssl:libwolfssl @BROKEN)
+Package/openvpn-wolfssl=$(call Package/openvpn/Default,wolfssl,WolfSSL,+PACKAGE_openvpn-wolfssl:libwolfssl)
 
 define Package/openvpn/config/Default
 	source "$(SOURCE)/Config-$(1).in"
