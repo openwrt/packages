@@ -729,6 +729,7 @@ config_connection() {
 	local mobike
 	local aggressive
 	local dscp
+	local unique
 	local rekey_time
 	local over_time
 	local send_cert
@@ -751,6 +752,7 @@ config_connection() {
 	config_get_bool mobike "$conf" mobike 1
 	config_get_bool aggressive "$conf" aggressive 0
 	config_get dscp "$conf" dscp
+	config_get unique "$conf" unique
 	config_get rekey_time "$conf" rekey_time
 	config_get over_time "$conf" over_time
 	config_get send_cert "$conf" send_cert
@@ -831,6 +833,17 @@ config_connection() {
 			fatal "DSCP $dscp not supported, expected six digit binary string"
 		fi
 	fi
+
+	case "$unique" in
+	"")
+		;;
+	no|never|keep|replace)
+		swanctl_xappend2 "unique = $unique"
+		;;
+	*)
+		fatal "Unique $unique not supported"
+		;;
+	esac
 
 	[ -n "$send_cert" ] && swanctl_xappend2 "send_cert = $send_cert"
 	[ $send_certreq -eq 1 ] && swanctl_xappend2 "send_certreq = yes" || swanctl_xappend2 "send_certreq = no"
