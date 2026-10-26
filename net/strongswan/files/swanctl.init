@@ -364,6 +364,7 @@ config_child() {
 	local mark_in
 	local mark_out
 	local rekey_time
+	local rand_time
 	local ipcomp
 	local interface
 	local hw_offload
@@ -389,6 +390,7 @@ config_child() {
 	config_get mark_in "$conf" mark_in ""
 	config_get mark_out "$conf" mark_out ""
 	config_get rekey_time "$conf" rekey_time ""
+	config_get rand_time "$conf" rand_time ""
 	config_get_bool ipcomp "$conf" ipcomp 0
 	config_get interface "$conf" interface ""
 	config_get hw_offload "$conf" hw_offload ""
@@ -496,6 +498,7 @@ config_child() {
 		swanctl_xappend4 "life_time = $(seconds2time $(((110 * $(time2seconds $rekey_time)) / 100)))"
 	fi
 	[ -n "$rekey_time" ] && swanctl_xappend4 "rekey_time = $rekey_time"
+	[ -n "$rand_time" ] && swanctl_xappend4 "rand_time = $rand_time"
 	if [ -n "$life_bytes" ]; then
 		swanctl_xappend4 "life_bytes = $life_bytes"
 	elif [ -n "$rekey_bytes" ]; then
