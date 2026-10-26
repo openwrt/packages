@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netatalk
 PKG_VERSION:=4.6.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/netatalk
@@ -100,6 +100,7 @@ MESON_ARGS += \
 	-Dwith-quota=false \
 	-Dwith-spotlight=false \
 	-Dwith-cracklib=false \
+	-Dwith-libunwind=false \
 	-Dwith-tests=false \
 	-Dwith-testsuite=false \
 	-Dwith-dtrace=false \
