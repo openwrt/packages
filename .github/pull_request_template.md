@@ -23,7 +23,7 @@
 - [ ] I have reviewed the [contributing guidelines](https://github.com/openwrt/packages/blob/master/CONTRIBUTING.md).
 - [ ] I have reviewed the [AI policy](https://github.com/openwrt/packages/blob/master/CONTRIBUTING.md#ai-policy).
     - [ ] I have used AI or LLM in my pull request, description, or commit
-          messages.
+          messages, and the description says what it was used for.
 
 ### If your PR contains a patch:
 
