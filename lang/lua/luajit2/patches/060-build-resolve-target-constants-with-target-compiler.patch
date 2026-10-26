@@ -1,0 +1,542 @@
+From 29b26196ce61f5625441c004c586e0af3ba563ee Mon Sep 17 00:00:00 2001
+From: Mirko Vogt <foss@mirko.in>
+Date: Wed, 30 Sep 2026 23:50:42 +0000
+Subject: [PATCH] build: resolve target constants for buildvm with the target
+ compiler
+
+buildvm is compiled with the host compiler, but the DynASM-generated
+backend passes offsets and sizes of the LuaJIT core data structures to
+dasm_put(). These are only correct if the host compiler uses the same
+pointer size and alignment rules as the target. Cross-compiling for a
+32 bit target on a 64 bit host therefore required a 32 bit host
+toolchain (HOST_CC="gcc -m32") and a kernel which executes 32 bit
+binaries. A host with CONFIG_IA32_EMULATION disabled cannot build
+LuaJIT for 32 bit targets at all.
+
+Resolve these constants with the target compiler instead:
+
+- host/genoffsets.lua rewrites every dasm_put() call in the DynASM
+  output into asm statements which make the compiler emit the value of
+  each constant argument, together with a flag whether the argument is
+  constant (__builtin_constant_p).
+- buildvm.c is compiled with the target compiler (-S only, the output
+  is never assembled or run) with LJ_BUILDVM_PROBE defined, which
+  includes this variant of the backend. Optimization is disabled so
+  that every probe appears exactly once.
+- The values are substituted into the DynASM output, which becomes
+  host/buildvm_arch.h. Arguments which are not constant (they depend
+  on the bytecode opcode or a loop variable) and arguments in code the
+  compiler dropped are left unchanged. A non-constant argument which
+  depends on the data layout is rejected.
+- offsetof() and the DynASM type macros are redefined in the resulting
+  header to reference an undefined function, so a remaining reachable
+  use fails when linking buildvm instead of being evaluated by the
+  host compiler.
+
+lj_arch.h derives the pointer size of a PowerPC target from _LP64,
+which is a property of the compiler in use, not of the target. The
+host compile of buildvm therefore has to be told the pointer size of
+the target: LJ_ARCH_BITS can now be predefined for PowerPC, like
+LJ_ARCH_ENDIAN already can, and the Makefile passes the value found
+in the target configuration. Otherwise a 64 bit host builds buildvm
+for a ppc64 target, which has no JIT compiler, and the generated
+files do not match the 32 bit target build.
+
+The pointer size check in buildvm is removed, and the host tools are
+built with the default host compiler. The MSVC and console build
+scripts are unaffected: they generate host/buildvm_arch.h with DynASM
+directly and compile buildvm as before.
+
+Verified by comparing lj_vm.S, lj_bcdef.h, lj_ffdef.h, lj_libdef.h,
+lj_recdef.h, lj_folddef.h and jit/vmdef.lua against the previous
+method (HOST_CC matching the pointer size of the target): the files
+are byte-identical for x64 (native), x86 (gcc -m32), arm
+(arm-openwrt-linux-muslgnueabi, hard float), arm64
+(aarch64-openwrt-linux-musl), ppc (powerpc-openwrt-linux-musl, 8548
+soft float and 464fp hard float), each built with a 64 bit host
+buildvm, and for x64 and arm64 built with a 32 bit host buildvm. The
+DynASM output for mips, mipsel, mips64el and riscv64 was checked for
+arguments the script cannot resolve; there are none.
+
+Upstream-Status: Pending
+Link: https://github.com/LuaJIT/LuaJIT/issues/664
+Assisted-By: Claude Fable 5.1 <noreply@anthropic.com>
+Signed-off-by: Mirko Vogt <foss@mirko.in>
+---
+ doc/install.html        |  23 ++--
+ src/Makefile            |  37 ++++++-
+ src/Makefile.dep        |   5 +
+ src/host/.gitignore     |   3 +
+ src/host/buildvm.c      |  11 +-
+ src/host/genoffsets.lua | 237 ++++++++++++++++++++++++++++++++++++++++
+ src/lj_arch.h           |   8 +-
+ 7 files changed, 299 insertions(+), 25 deletions(-)
+ create mode 100644 src/host/genoffsets.lua
+
+--- a/doc/install.html
++++ b/doc/install.html
+@@ -272,10 +272,7 @@ for any supported target:
+ </p>
+ <ul>
+ <li>Yes, you need a toolchain for both your host <em>and</em> your target!</li>
+-<li>Both host and target architectures must have the same pointer size.</li>
+-<li>E.g. if you want to cross-compile to a 32 bit target on a 64 bit host, you need to install the multilib development package (e.g. <tt>libc6-dev-i386</tt> on Debian/Ubuntu) and build a 32 bit host part (<tt>HOST_CC="gcc -m32"</tt>).</li>
+-<li>On some distro versions, multilib conflicts with cross-compilers. The workaround is to install the x86 cross-compiler package <tt>gcc-i686-linux-gnu</tt> and use it to build the host part (<tt>HOST_CC=i686-linux-gnu-gcc</tt>).</li>
+-<li>64 bit targets always require compilation on a 64 bit host.</li>
++<li>The host and target architectures may have different pointer sizes. The constants which depend on the data layout of the target are resolved with the target compiler during the build.</li>
+ </ul>
+ <p>
+ You need to specify <tt>TARGET_SYS</tt> whenever the host OS and the
+@@ -294,7 +291,7 @@ Here are some examples where host and ta
+ make CC="gcc -m32"
+ 
+ # Cross-compile on Debian/Ubuntu for Windows (mingw32 package)
+-make HOST_CC="gcc -m32" CROSS=i586-mingw32msvc- TARGET_SYS=Windows
++make CROSS=i586-mingw32msvc- TARGET_SYS=Windows
+ </pre>
+ <p id="cross2">
+ The <tt>CROSS</tt> prefix allows specifying a standard GNU cross-compile
+@@ -318,26 +315,26 @@ Here are some examples for targets with
+ </p>
+ <pre class="code">
+ # ARM soft-float
+-make HOST_CC="gcc -m32" CROSS=arm-linux-gnueabi- \
++make CROSS=arm-linux-gnueabi- \
+      TARGET_CFLAGS="-mfloat-abi=soft"
+ 
+ # ARM soft-float ABI with VFP (example for Cortex-A9)
+-make HOST_CC="gcc -m32" CROSS=arm-linux-gnueabi- \
++make CROSS=arm-linux-gnueabi- \
+      TARGET_CFLAGS="-mcpu=cortex-a9 -mfloat-abi=softfp"
+ 
+ # ARM hard-float ABI with VFP (armhf, most modern toolchains)
+-make HOST_CC="gcc -m32" CROSS=arm-linux-gnueabihf-
++make CROSS=arm-linux-gnueabihf-
+ 
+ # ARM64
+ make CROSS=aarch64-linux-gnu-
+ 
+ # PPC
+-make HOST_CC="gcc -m32" CROSS=powerpc-linux-gnu-
++make CROSS=powerpc-linux-gnu-
+ 
+ # MIPS32 big-endian
+-make HOST_CC="gcc -m32" CROSS=mips-linux-gnu-
++make CROSS=mips-linux-gnu-
+ # MIPS32 little-endian
+-make HOST_CC="gcc -m32" CROSS=mipsel-linux-gnu-
++make CROSS=mipsel-linux-gnu-
+ 
+ # MIPS64 big-endian
+ make CROSS=mips-linux- TARGET_CFLAGS="-mips64r2 -mabi=64"
+@@ -365,7 +362,7 @@ NDKDIR=/opt/android/ndk
+ NDKBIN=$NDKDIR/toolchains/llvm/prebuilt/linux-x86_64/bin
+ NDKCROSS=$NDKBIN/arm-linux-androideabi-
+ NDKCC=$NDKBIN/armv7a-linux-androideabi16-clang
+-make HOST_CC="gcc -m32" CROSS=$NDKCROSS \
++make CROSS=$NDKCROSS \
+      STATIC_CC=$NDKCC DYNAMIC_CC="$NDKCC -fPIC" \
+      TARGET_LD=$NDKCC TARGET_AR="$NDKBIN/llvm-ar rcus" \
+      TARGET_STRIP=$NDKBIN/llvm-strip
+@@ -410,7 +407,7 @@ To cross-compile for <b id="ps3">PS3</b>
+ 32&nbsp;bit MinGW), run this command:
+ </p>
+ <pre class="code">
+-make HOST_CC="gcc -m32" CROSS=ppu-lv2-
++make CROSS=ppu-lv2-
+ </pre>
+ <p>
+ To cross-compile for the other consoles from a Windows host, open a
+--- a/src/Makefile
++++ b/src/Makefile
+@@ -185,8 +185,8 @@ endif
+ #   CROSS    HOST_SYS      TARGET_SYS      TARGET_FLAGS
+ #
+ # Cross-compilation examples:
+-#   make HOST_CC="gcc -m32" CROSS=i586-mingw32msvc- TARGET_SYS=Windows
+-#   make HOST_CC="gcc -m32" CROSS=powerpc-linux-gnu-
++#   make CROSS=i586-mingw32msvc- TARGET_SYS=Windows
++#   make CROSS=powerpc-linux-gnu-
+ 
+ ASOPTIONS= $(CCOPT) $(CCWARN) $(XCFLAGS) $(CFLAGS)
+ CCOPTIONS= $(CCDEBUG) $(ASOPTIONS)
+@@ -259,6 +259,11 @@ ifneq (,$(findstring LJ_TARGET_PPC ,$(TA
+   else
+     TARGET_ARCH= -DLJ_ARCH_ENDIAN=LUAJIT_BE
+   endif
++  ifneq (,$(findstring LJ_ARCH_BITS 64,$(TARGET_TESTARCH)))
++    TARGET_ARCH+= -DLJ_ARCH_BITS=64
++  else
++    TARGET_ARCH+= -DLJ_ARCH_BITS=32
++  endif
+   TARGET_LJARCH= ppc
+ else
+ ifneq (,$(findstring LJ_TARGET_MIPS ,$(TARGET_TESTARCH)))
+@@ -569,8 +574,10 @@ LUAJIT_T= luajit
+ 
+ ALL_T= $(LUAJIT_T) $(LUAJIT_A) $(LUAJIT_SO) $(HOST_T)
+ ALL_HDRGEN= lj_bcdef.h lj_ffdef.h lj_libdef.h lj_recdef.h lj_folddef.h \
+-	    host/buildvm_arch.h luajit.h
+-ALL_GEN= $(LJVM_S) $(ALL_HDRGEN) luajit_relver.txt $(LIB_VMDEFP)
++	    host/buildvm_arch_dasm.h host/buildvm_probe.h host/buildvm_arch.h \
++	    luajit.h
++ALL_GEN= $(LJVM_S) $(ALL_HDRGEN) host/buildvm_probe.s luajit_relver.txt \
++	 $(LIB_VMDEFP)
+ WIN_RM= *.obj *.lib *.exp *.dll *.exe *.manifest *.pdb *.ilk
+ ALL_RM= $(ALL_T) $(ALL_GEN) *.o host/*.o $(WIN_RM)
+ 
+@@ -680,6 +687,8 @@ depend:
+ 	      -e "s| lj_target_\S*\.h| lj_target_*.h|g" \
+ 	      -e "s| lj_emit_\S*\.h| lj_emit_*.h|g" \
+ 	      -e "s| lj_asm_\S*\.h| lj_asm_*.h|g" >Makefile.dep
++	@$(HOST_CC) $(HOST_ACFLAGS) -DLJ_BUILDVM_PROBE -MM -MT host/buildvm_probe.s \
++	  host/buildvm.c | sed -e "s| [^ ]*/dasm_\S*\.h||g" >>Makefile.dep
+ 	@for file in $(ALL_HDRGEN); do \
+ 	  test -s $$file || $(HOST_RM) $$file; \
+ 	  done
+@@ -699,10 +708,28 @@ luajit.h: $(MINILUA_DEP) $(GIT_DEP) luaj
+ 	$(Q)$(GIT_RELVER)
+ 	$(Q)$(HOST_LUA) host/genversion.lua
+ 
+-host/buildvm_arch.h: $(DASM_DASC) $(MINILUA_DEP) lj_arch.h lua.h luaconf.h
++host/buildvm_arch_dasm.h: $(DASM_DASC) $(MINILUA_DEP) lj_arch.h lua.h luaconf.h
+ 	$(E) "DYNASM    $@"
+ 	$(Q)$(DASM) $(DASM_FLAGS) -o $@ $(DASM_DASC)
+ 
++# The constants in the DynASM output which depend on the data layout of the
++# target are resolved with the target compiler: buildvm.c is compiled for
++# the target with a variant of the backend which emits them into the
++# assembler output (never assembled or run), then substituted by their
++# values. The host tools therefore need not match the pointer size of the
++# target. Optimization is disabled, so every probe appears exactly once.
++host/buildvm_probe.h: host/buildvm_arch_dasm.h host/genoffsets.lua $(MINILUA_DEP)
++	$(E) "OFFSETS   $@"
++	$(Q)$(HOST_LUA) host/genoffsets.lua probe host/buildvm_arch_dasm.h $@
++
++host/buildvm_probe.s: host/buildvm_probe.h $(DASM_DIR)/dasm_*.h
++	$(E) "CC        $@"
++	$(Q)$(TARGET_CC) $(TARGET_ACFLAGS) $(TARGET_ARCH) -I. -O0 -fno-lto -DLJ_BUILDVM_PROBE -S -o $@ host/buildvm.c
++
++host/buildvm_arch.h: host/buildvm_arch_dasm.h host/buildvm_probe.s host/genoffsets.lua $(MINILUA_DEP)
++	$(E) "OFFSETS   $@"
++	$(Q)$(HOST_LUA) host/genoffsets.lua apply host/buildvm_arch_dasm.h host/buildvm_probe.s $@
++
+ host/buildvm.o: $(DASM_DIR)/dasm_*.h
+ 
+ $(BUILDVM_T): $(BUILDVM_O)
+--- a/src/Makefile.dep
++++ b/src/Makefile.dep
+@@ -248,6 +248,11 @@ host/buildvm.o: host/buildvm.c host/buil
+  lj_ircall.h lj_ir.h lj_jit.h lj_frame.h lj_bc.h lj_dispatch.h lj_ctype.h \
+  lj_gc.h lj_ccall.h lj_ctype.h luajit.h \
+  host/buildvm_arch.h lj_traceerr.h
++host/buildvm_probe.s: host/buildvm.c host/buildvm.h lj_def.h lua.h luaconf.h \
++ lj_arch.h lj_obj.h lj_def.h lj_arch.h lj_gc.h lj_obj.h lj_bc.h lj_ir.h \
++ lj_ircall.h lj_ir.h lj_jit.h lj_frame.h lj_bc.h lj_dispatch.h lj_ctype.h \
++ lj_gc.h lj_ccall.h lj_ctype.h luajit.h \
++ host/buildvm_probe.h lj_traceerr.h
+ host/buildvm_asm.o: host/buildvm_asm.c host/buildvm.h lj_def.h lua.h luaconf.h \
+  lj_arch.h lj_bc.h lj_def.h lj_arch.h
+ host/buildvm_fold.o: host/buildvm_fold.c host/buildvm.h lj_def.h lua.h \
+--- a/src/host/.gitignore
++++ b/src/host/.gitignore
+@@ -1,3 +1,6 @@
+ minilua
+ buildvm
+ buildvm_arch.h
++buildvm_arch_dasm.h
++buildvm_probe.h
++buildvm_probe.s
+--- a/src/host/buildvm.c
++++ b/src/host/buildvm.c
+@@ -76,7 +76,12 @@ static int collect_reloc(BuildCtx *ctx,
+ #endif
+ 
+ /* Embed generated architecture-specific backend. */
++#if LJ_BUILDVM_PROBE
++/* Variant which lets the target compiler emit the target constants. */
++#include "buildvm_probe.h"
++#else
+ #include "buildvm_arch.h"
++#endif
+ 
+ /* ------------------------------------------------------------------------ */
+ 
+@@ -450,12 +455,6 @@ int main(int argc, char **argv)
+   BuildCtx *ctx = &ctx_;
+   int status, binmode;
+ 
+-  if (sizeof(void *) != 4*LJ_32+8*LJ_64) {
+-    fprintf(stderr,"Error: pointer size mismatch in cross-build.\n");
+-    fprintf(stderr,"Try: make HOST_CC=\"gcc -m32\" CROSS=...\n\n");
+-    return 1;
+-  }
+-
+   UNUSED(argc);
+   parseargs(ctx, argv);
+ 
+--- /dev/null
++++ b/src/host/genoffsets.lua
+@@ -0,0 +1,237 @@
++----------------------------------------------------------------------------
++-- LuaJIT VM builder: resolve target constants in the DynASM output.
++--
++-- Copyright (C) 2026 Mirko Vogt. See Copyright Notice in luajit.h
++----------------------------------------------------------------------------
++-- The DynASM-generated backend of buildvm passes many constant expressions
++-- to dasm_put(): offsets and sizes of the LuaJIT core data structures, and
++-- constants derived from them. Evaluating them with the host compiler is
++-- only correct if the host matches the pointer size and alignment rules of
++-- the target. This script resolves them with the target compiler instead,
++-- which removes the requirement that the host tools are built for the
++-- pointer size of the target.
++--
++--   probe: Rewrite every dasm_put() call in the DynASM output into asm
++--     statements which make the compiler emit the value of each constant
++--     argument. buildvm.c is compiled with the target compiler (-S only,
++--     the result is never run) with LJ_BUILDVM_PROBE defined, which selects
++--     this variant of the backend.
++--
++--   apply: Substitute the values from the probe assembler output into the
++--     DynASM output. Arguments which are not constant (they depend on the
++--     bytecode opcode etc.) and arguments in unreachable code (the compiler
++--     dropped the probe) are left unchanged. All constructs which depend on
++--     the target data layout are then redefined to reference an undefined
++--     function, so a remaining reachable use fails when linking buildvm
++--     instead of being evaluated by the host compiler.
++--
++-- Usage:
++--   minilua genoffsets.lua probe <dynasm output> <probe header>
++--   minilua genoffsets.lua apply <dynasm output> <probe assembler> <output>
++----------------------------------------------------------------------------
++
++local MARKER = "->lj_buildvm_const"
++local UNRESOLVED = "lj_buildvm_unresolved_target_constant()"
++
++local function die(fmt, ...)
++  io.stderr:write("genoffsets.lua: ", string.format(fmt, ...), "\n")
++  os.exit(1)
++end
++
++local function readlines(name)
++  local fp = io.open(name, "r") or die("cannot open %s", name)
++  local lines = {}
++  for line in fp:lines() do lines[#lines+1] = line end
++  fp:close()
++  return lines
++end
++
++local function writelines(name, lines)
++  local fp = io.open(name, "w") or die("cannot create %s", name)
++  fp:write(table.concat(lines, "\n"), "\n")
++  fp:close()
++end
++
++-- Split the argument list of a dasm_put() call at the top-level commas.
++local function splitargs(s)
++  local args, depth, start = {}, 0, 1
++  for i=1,#s do
++    local c = s:sub(i, i)
++    if c == "(" or c == "[" then
++      depth = depth + 1
++    elseif c == ")" or c == "]" then
++      depth = depth - 1
++    elseif c == "," and depth == 0 then
++      args[#args+1] = s:sub(start, i-1)
++      start = i + 1
++    end
++  end
++  args[#args+1] = s:sub(start)
++  for i=1,#args do args[i] = args[i]:match("^%s*(.-)%s*$") end
++  return args
++end
++
++local function isliteral(arg)
++  return arg:match("^%-?%d+$") or arg:match("^0[xX]%x+$")
++end
++
++-- Check for constructs which depend on the data layout of the target,
++-- including the macros in the LuaJIT headers which are defined with them.
++local function islayout(arg)
++  for _, pat in ipairs{ "Dt%x+%(", "sizeof", "offsetof", "DISPATCH_",
++			"PC2PROTO", "GL_J", "GG_", "TV2MARKOFS",
++			"HOTCOUNT_PCMASK", "SCALE_NUM_GCO", "size%a" } do
++    if arg:find(pat) then return true end
++  end
++  return false
++end
++
++-- Call func for every dasm_put() line. Every argument gets an id, counted
++-- in file order, so both passes refer to the same argument by the same id.
++local function foreach_dasm_put(lines, func)
++  local id = 0
++  for n, line in ipairs(lines) do
++    local indent, start, rest =
++      line:match("^(%s*)dasm_put%(Dst, (%d+)(.-)%);%s*$")
++    if indent then
++      local args = {}
++      if rest ~= "" then
++        rest = rest:match("^,%s*(.*)$") or
++               die("line %d: unexpected dasm_put() call", n)
++        args = splitargs(rest)
++      end
++      local ids = {}
++      for i=1,#args do
++        id = id + 1
++        ids[i] = id
++      end
++      func(n, indent, start, args, ids)
++    elseif line:find("dasm_put%(") and not line:match("^%s*//") then
++      die("line %d: unexpected dasm_put() call", n)
++    end
++  end
++end
++
++local function probe(dasm, out)
++  local lines = readlines(dasm)
++  foreach_dasm_put(lines, function(n, indent, start, args, ids)
++    local stmts = {}
++    for i, arg in ipairs(args) do
++      if not isliteral(arg) then
++        -- dasm_put() reads every argument as an int. Cast pointer-typed
++        -- arguments via ptrdiff_t to avoid a warning.
++        local e = "(int)(ptrdiff_t)("..arg..")"
++        local c = "__builtin_constant_p("..e..")"
++        stmts[#stmts+1] = string.format(
++          '__asm__ __volatile__("\\n%s %d %%0 %%1" : : "i"(%s), "i"(%s ? %s : 0));',
++          MARKER, ids[i], c, c, e)
++      end
++    end
++    if #stmts > 0 then
++      lines[n] = indent.."{ "..table.concat(stmts, " ").." }"
++    end
++  end)
++  writelines(out, lines)
++end
++
++local function apply(dasm, probe_s, out)
++  -- Collect the constants. The compiler prints immediates with the
++  -- punctuation of the target assembler ($ or #), which is skipped.
++  local values, nonconst = {}, {}
++  for line in io.lines(probe_s) do
++    local id, const, value =
++      line:match("^%->lj_buildvm_const (%d+)%s+[%$#]?(%d+)%s+[%$#]?(%-?%d+)")
++    if id then
++      id = tonumber(id)
++      if const == "1" then
++        value = tonumber(value)
++        if values[id] ~= nil and values[id] ~= value then
++          die("conflicting values %d and %d for constant %d",
++              values[id], value, id)
++        end
++        values[id] = value
++      else
++        nonconst[id] = true
++      end
++    end
++  end
++  if next(values) == nil then die("no constants found in %s", probe_s) end
++
++  local lines = readlines(dasm)
++  foreach_dasm_put(lines, function(n, indent, start, args, ids)
++    local changed = false
++    for i, arg in ipairs(args) do
++      local v = values[ids[i]]
++      if nonconst[ids[i]] and islayout(arg) then
++        -- A non-constant argument is evaluated at run time by buildvm.
++        -- It must not depend on the data layout of the target.
++        die("line %d: argument %s is not constant", n, arg)
++      end
++      if v and not nonconst[ids[i]] and not isliteral(arg) then
++        if v == -2147483648 then
++          args[i] = "(-2147483647-1)"
++        else
++          args[i] = string.format("%d", v)
++        end
++        changed = true
++      end
++    end
++    if changed then
++      lines[n] = indent.."dasm_put(Dst, "..start..
++                 (#args > 0 and ", "..table.concat(args, ", ") or "")..");"
++    end
++  end)
++
++  -- Redefine the DynASM type macros. They expand to the offset of a
++  -- struct member as seen by the compiler of buildvm.
++  local ntype, nredef = 0, 0
++  for n, line in ipairs(lines) do
++    if line:match("^#define Dt%x+%(") then
++      ntype = ntype + 1
++      local name, ctype = line:match(
++        "^#define (Dt%x+%(_V%)) %(int%)%(ptrdiff_t%)&%(%(%((.-) %*%)0%)_V%)$")
++      if name then
++        lines[n] = "#define "..name.."\t"..UNRESOLVED.."\t/* "..ctype.." */"
++        nredef = nredef + 1
++      end
++    end
++  end
++  if nredef ~= ntype then die("unrecognized DynASM type macro definition") end
++
++  -- Insert the redefinition of offsetof() after the header comment, before
++  -- the first line directive, and undo it at the end. sizeof() cannot be
++  -- redefined, since the C code in the *.dasc files uses it legitimately.
++  local pos = 1
++  for n, line in ipairs(lines) do
++    if line:match("^#line") then pos = n break end
++  end
++  local prologue = {
++    "/*",
++    "** All constants which depend on the data layout of the target have been",
++    "** resolved with the target compiler and substituted by their values",
++    "** (see host/genoffsets.lua). offsetof() and the DynASM type macros must",
++    "** not be evaluated by the host compiler anymore. A remaining reachable",
++    "** use fails when linking buildvm, since the referenced function is not",
++    "** defined.",
++    "*/",
++    "extern int lj_buildvm_unresolved_target_constant(void);",
++    "#undef offsetof",
++    "#define offsetof(type, member)\t"..UNRESOLVED,
++    "",
++  }
++  for i=#prologue,1,-1 do table.insert(lines, pos, prologue[i]) end
++  lines[#lines+1] = ""
++  lines[#lines+1] = "#undef offsetof"
++  writelines(out, lines)
++end
++
++local mode, in1, in2, out = ...
++if mode == "probe" and in1 and in2 then
++  probe(in1, in2)
++elseif mode == "apply" and in1 and in2 and out then
++  apply(in1, in2, out)
++else
++  io.stderr:write("Usage: genoffsets.lua probe <dynasm output> <probe header>\n",
++                  "       genoffsets.lua apply <dynasm output> <probe assembler> <output>\n")
++  os.exit(1)
++end
+--- a/src/lj_arch.h
++++ b/src/lj_arch.h
+@@ -332,15 +332,21 @@
+ #endif
+ #endif
+ 
++#ifndef LJ_ARCH_BITS
+ #if _LP64
+ #define LJ_ARCH_BITS		64
++#else
++#define LJ_ARCH_BITS		32
++#endif
++#endif
++
++#if LJ_ARCH_BITS == 64
+ #if LJ_ARCH_ENDIAN == LUAJIT_LE
+ #define LJ_ARCH_NAME		"ppc64le"
+ #else
+ #define LJ_ARCH_NAME		"ppc64"
+ #endif
+ #else
+-#define LJ_ARCH_BITS		32
+ #define LJ_ARCH_NAME		"ppc"
+ 
+ #if !defined(LJ_ARCH_HASFPU)
