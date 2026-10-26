@@ -19,6 +19,7 @@ start_service() {
 	procd_add_jail_mount /etc/ssl/certs
 	procd_add_jail_mount "$corefile"
 	config_list_foreach daemon ro_mount procd_add_jail_mount
+	config_list_foreach daemon rw_mount procd_add_jail_mount_rw
 
 	procd_set_param command "$PROG" -conf "$corefile"
 	procd_set_param respawn
