@@ -1,0 +1,21 @@
+From a18ec92752cd05ad5335bfaa5420a258b81f9afc Mon Sep 17 00:00:00 2001
+From: Antoine du Hamel <duhamelantoine1995@gmail.com>
+Date: Mon, 12 Oct 2026 22:42:14 +0200
+Subject: [PATCH] src: expose `BROTLI_DECODER_ERROR_FORMAT_BLOCK_SWITCH`
+
+Signed-off-by: Antoine du Hamel <duhamelantoine1995@gmail.com>
+PR-URL: https://github.com/nodejs-private/node-private/pull/1002
+Reviewed-By: Matteo Collina <matteo.collina@gmail.com>
+CVE-ID: CVE-2026-111497
+[Backported to Node.js 20: dropped the test hunk, the test differs]
+---
+--- a/src/node_zlib.cc
++++ b/src/node_zlib.cc
+@@ -1455,6 +1455,7 @@ void DefineZlibConstants(Local<Object> t
+   NODE_DEFINE_CONSTANT(target, BROTLI_DECODER_ERROR_FORMAT_PADDING_1);
+   NODE_DEFINE_CONSTANT(target, BROTLI_DECODER_ERROR_FORMAT_PADDING_2);
+   NODE_DEFINE_CONSTANT(target, BROTLI_DECODER_ERROR_FORMAT_DISTANCE);
++  NODE_DEFINE_CONSTANT(target, BROTLI_DECODER_ERROR_FORMAT_BLOCK_SWITCH);
+   NODE_DEFINE_CONSTANT(target, BROTLI_DECODER_ERROR_DICTIONARY_NOT_SET);
+   NODE_DEFINE_CONSTANT(target, BROTLI_DECODER_ERROR_INVALID_ARGUMENTS);
+   NODE_DEFINE_CONSTANT(target, BROTLI_DECODER_ERROR_ALLOC_CONTEXT_MODES);
