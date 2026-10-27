@@ -649,6 +649,7 @@ config_local() {
 	local auth
 	local id
 	local certs
+	local cert
 	local pubkeys
 	local pubkey
 	local key
@@ -656,7 +657,8 @@ config_local() {
 
 	config_get auth "$conf" auth "pubkey"
 	config_get id "$conf" id ""
-	config_get certs "$conf" certs ""
+	config_list_foreach "$conf" certs append_var certs ","
+	[ -z "$certs" ] && config_get certs "$conf" certs ""
 	config_list_foreach "$conf" pubkeys append_var pubkeys ","
 	config_get key "$conf" key ""
 
@@ -676,10 +678,12 @@ config_local() {
 	fi
 
 	if [ "$auth" = "pubkey" ] && [ -n "$certs" ]; then
-		[ "$(dirname "$certs")" != "." ] && \
-			fatal "local certs \'$certs\' can't be pathname"
-		[ -f "/etc/swanctl/x509/${certs}" ] || \
-			fatal "local certs \'$certs\' not found"
+		for cert in $(echo "$certs" | tr ',' ' '); do
+			[ "$(dirname "$cert")" != "." ] && \
+				fatal "local certs \'$cert\' can't be pathname"
+			[ -f "/etc/swanctl/x509/${cert}" ] || \
+				fatal "local certs \'$cert\' not found"
+		done
 	fi
 
 	if [ "$auth" = "pubkey" ] && [ -n "$pubkeys" ]; then
@@ -698,7 +702,7 @@ config_local() {
 	swanctl_xappend3 "auth = $auth"
 	[ -n "$id" ] && swanctl_xappend3 "id = \"$id\""
 	[ "$auth" = "pubkey" ] && [ -n "$certs" ] && \
-		swanctl_xappend3 "certs = $certs"
+		swanctl_xappend3 "certs = \"$certs\""
 	[ "$auth" = "pubkey" ] && [ -n "$pubkeys" ] && \
 		swanctl_xappend3 "pubkeys = \"$pubkeys\""
 	swanctl_xappend2 "}"
