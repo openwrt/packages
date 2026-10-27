@@ -47,7 +47,8 @@ define Package/python3-setuptools-rust
     +python3-logging \
     +python3-semantic-version \
     +python3-setuptools \
-    +rust
+    +rust \
+    @!USE_RUST_TOOLCHAIN
   BUILDONLY:=1
 endef
 
