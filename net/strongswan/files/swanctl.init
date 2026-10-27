@@ -653,12 +653,14 @@ config_local() {
 	local pubkeys
 	local pubkey
 	local aaa_id
+	local eap_id
 	local key
 	local suffix
 
 	config_get auth "$conf" auth "pubkey"
 	config_get id "$conf" id ""
 	config_get aaa_id "$conf" aaa_id ""
+	config_get eap_id "$conf" eap_id ""
 	config_list_foreach "$conf" certs append_var certs ","
 	[ -z "$certs" ] && config_get certs "$conf" certs ""
 	config_list_foreach "$conf" pubkeys append_var pubkeys ","
@@ -709,6 +711,7 @@ config_local() {
 		swanctl_xappend3 "pubkeys = \"$pubkeys\""
 	case "$auth" in
 	eap-mschapv2|eap-tls)
+		[ -n "$eap_id" ] && swanctl_xappend3 "eap_id = \"$eap_id\""
 		[ -n "$aaa_id" ] && swanctl_xappend3 "aaa_id = \"$aaa_id\""
 		;;
 	esac
