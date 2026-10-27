@@ -683,7 +683,16 @@ config_local() {
 		}
 	fi
 
-	if [ "$auth" = "pubkey" ] && [ -n "$certs" ]; then
+	# certificates are only used for pubkey and EAP-TLS authentication
+	case "$auth" in
+	pubkey|eap-tls)
+		;;
+	*)
+		certs=""
+		;;
+	esac
+
+	if [ -n "$certs" ]; then
 		for cert in $(echo "$certs" | tr ',' ' '); do
 			[ "$(dirname "$cert")" != "." ] && \
 				fatal "local certs \'$cert\' can't be pathname"
@@ -707,8 +716,7 @@ config_local() {
 	swanctl_xappend2 "local${suffix} {"
 	swanctl_xappend3 "auth = $auth"
 	[ -n "$id" ] && swanctl_xappend3 "id = \"$id\""
-	[ "$auth" = "pubkey" ] && [ -n "$certs" ] && \
-		swanctl_xappend3 "certs = \"$certs\""
+	[ -n "$certs" ] && swanctl_xappend3 "certs = \"$certs\""
 	[ "$auth" = "pubkey" ] && [ -n "$pubkeys" ] && \
 		swanctl_xappend3 "pubkeys = \"$pubkeys\""
 	case "$auth" in
