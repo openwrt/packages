@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-setuptools-rust
 PKG_VERSION:=1.13.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=setuptools-rust
 PYPI_SOURCE_NAME:=setuptools_rust
@@ -27,14 +27,16 @@ HOST_BUILD_DEPENDS:= \
 	python-installer/host \
 	python-wheel/host \
 	python-setuptools-scm/host \
-	python-semantic-version/host \
-	rust/host
+	python-semantic-version/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
 include ../python3-package.mk
 include ../python3-host-build.mk
+include $(INCLUDE_DIR)/rust-values.mk
+
+HOST_BUILD_DEPENDS+=$(RUST_HOST_BUILD_DEPENDS)
 
 define Package/python3-setuptools-rust
   SUBMENU:=Python
@@ -47,8 +49,8 @@ define Package/python3-setuptools-rust
     +python3-logging \
     +python3-semantic-version \
     +python3-setuptools \
-    +rust \
-    @!USE_RUST_TOOLCHAIN
+    +!USE_RUST_TOOLCHAIN:rust \
+    $(RUST_ARCH_DEPENDS)
   BUILDONLY:=1
 endef
 
