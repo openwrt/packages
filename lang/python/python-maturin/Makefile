@@ -30,6 +30,7 @@ include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 include ../python3-host-build.mk
+include ../../rust/rust-values.mk
 
 define Package/python3-maturin
   SECTION:=lang

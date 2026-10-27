@@ -24,6 +24,7 @@ PKG_BUILD_DEPENDS:=libffi/host python-cffi/host python-maturin/host python-setup
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
+include ../../rust/rust-values.mk
 
 define Package/python3-cryptography
   SECTION:=lang

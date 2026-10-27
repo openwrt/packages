@@ -24,6 +24,7 @@ PKG_BUILD_DEPENDS:=python-maturin/host
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
+include ../../rust/rust-values.mk
 
 define Package/python3-rpds-py
   SECTION:=lang
