@@ -696,13 +696,25 @@ config_remote() {
 	local auth
 	local id
 	local cacerts
+	local pubkeys
+	local pubkey
 	local eap_id
 	local suffix
 
 	config_get auth "$conf" auth "pubkey"
 	config_get id "$conf" id ""
 	config_list_foreach "$conf" cacerts append_var cacerts ","
+	config_list_foreach "$conf" pubkeys append_var pubkeys ","
 	config_get eap_id "$conf" eap_id "%any"
+
+	if [ "$auth" = "pubkey" ] && [ -n "$pubkeys" ]; then
+		for pubkey in $(echo "$pubkeys" | tr ',' ' '); do
+			[ "$(dirname "$pubkey")" != "." ] && \
+				fatal "remote pubkeys \'$pubkey\' can't be pathname"
+			[ -f "/etc/swanctl/pubkey/${pubkey}" ] || \
+				fatal "remote pubkeys \'$pubkey\' not found"
+		done
+	fi
 
 	REMOTE_ROUND=$((REMOTE_ROUND + 1))
 	[ "$REMOTE_ROUND" -eq 1 ] && suffix="" || suffix="$REMOTE_ROUND"
@@ -711,6 +723,8 @@ config_remote() {
 	swanctl_xappend3 "auth = $auth"
 	[ -n "$id" ] && swanctl_xappend3 "id = \"$id\""
 	[ -n "$cacerts" ] && swanctl_xappend3 "cacerts = \"$cacerts\""
+	[ "$auth" = "pubkey" ] && [ -n "$pubkeys" ] && \
+		swanctl_xappend3 "pubkeys = \"$pubkeys\""
 	case "$auth" in
 	eap-mschapv2|eap-tls)
 		swanctl_xappend3 "eap_id = $eap_id"
