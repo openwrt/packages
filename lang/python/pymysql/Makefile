@@ -23,6 +23,7 @@ PKG_CONFIG_DEPENDS:=CONFIG_PYTHON3_PYMYSQL_SHA_PASSWORD_SUPPORT
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
+include ../../rust/rust-values.mk
 
 define Package/python3-pymysql/Default
   SUBMENU:=Python

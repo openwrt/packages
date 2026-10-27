@@ -11,7 +11,6 @@
 # For PYTHON3_VERSION
 python3_mk_path:=$(dir $(lastword $(MAKEFILE_LIST)))
 include $(python3_mk_path)python3-version.mk
-include $(python3_mk_path)../rust/rust-values.mk
 
 # Unset environment variables
 
