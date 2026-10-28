@@ -3,7 +3,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=tac_plus
 PKG_VERSION:=4.0.4.28
 PKG_REV:=259251e6f1c2d5c98081a43c6f66d9eb2989cfd8
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE_VERSION:=$(PKG_REV)
 PKG_SOURCE_DATE:=2019.02.11
@@ -49,6 +49,7 @@ $(call Package/tac_plus/Default)
 	TITLE+= (with PAM support)
 	DEPENDS+= +libpam
 	VARIANT:=with-pam
+	CONFLICTS:=tac_plus
 endef
 
 define Package/tac_plus/Default/description
