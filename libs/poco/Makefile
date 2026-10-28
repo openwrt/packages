@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=poco
 PKG_VERSION:=1.11.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 ifeq ($(BUILD_VARIANT),all)
 _PKG_VERSION:=${PKG_VERSION}-all
@@ -54,6 +54,7 @@ define Package/poco-all
   TITLE+=(Complete Edition)
   DEPENDS+=+libopenssl +libmariadb +libpq +unixodbc
   VARIANT:=all
+  CONFLICTS:=poco
 endef
 
 define Package/poco-all/description
