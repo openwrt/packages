@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wifidog
 PKG_VERSION:=1.3.0
-PKG_RELEASE:=9
+PKG_RELEASE:=10
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/wifidog/wifidog-gateway
@@ -43,6 +43,7 @@ define Package/wifidog-tls
 $(call Package/wifidog/Default)
   DEPENDS+= +PACKAGE_wifidog-tls:libwolfssl
   VARIANT:=tls
+  CONFLICTS:=wifidog
 endef
 
 
