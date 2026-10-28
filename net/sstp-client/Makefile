@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sstp-client
 PKG_VERSION:=1.0.20
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://gitlab.com/sstp-project/sstp-client/-/archive/1.0.20/
@@ -45,7 +45,6 @@ Features:
 endef
 
 define Package/sstp-client/conffiles
-/etc/ppp/chap-secrets
 /etc/ppp/peers/peer-sstp-example-nopty.txt
 /etc/ppp/peers/peer-sstp-example.txt
 endef
