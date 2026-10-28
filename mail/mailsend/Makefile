@@ -23,24 +23,24 @@ PKG_LICENSE_FILES:=COPYRIGHT
 include $(INCLUDE_DIR)/package.mk
 
 define Package/mailsend/default
-	SECTION:=mail
-	CATEGORY:=Mail
-	TITLE:=A command-line mail sender
-	URL:=https://github.com/muquit/mailsend
+  SECTION:=mail
+  CATEGORY:=Mail
+  TITLE:=A command-line mail sender
+  URL:=https://github.com/muquit/mailsend
 endef
 
 define Package/mailsend-nossl
-	$(call Package/mailsend/default)
-	TITLE+= (without SSL)
-	VARIANT:=nossl
+  $(call Package/mailsend/default)
+  TITLE+= (without SSL)
+  VARIANT:=nossl
   CONFLICTS:=mailsend
 endef
 
 define Package/mailsend
-	$(call Package/mailsend/default)
-	TITLE+= (with SSL)
-	DEPENDS:=+libopenssl
-	VARIANT:=ssl
+  $(call Package/mailsend/default)
+  TITLE+= (with SSL)
+  DEPENDS:=+libopenssl
+  VARIANT:=ssl
 endef
 
 ifeq ($(BUILD_VARIANT),ssl)
