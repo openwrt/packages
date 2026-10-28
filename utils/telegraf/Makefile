@@ -66,23 +66,23 @@ include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
 
 define Package/telegraf/Default
-	SECTION:=utils
-	CATEGORY:=Utilities
-	TITLE:=Telegraf
-	DEPENDS:=$(GO_ARCH_DEPENDS)
+  SECTION:=utils
+  CATEGORY:=Utilities
+  TITLE:=Telegraf
+  DEPENDS:=$(GO_ARCH_DEPENDS)
 endef
 
 define Package/telegraf-full
-	$(call Package/telegraf/Default)
-	TITLE+= (Full)
-	VARIANT:=full
+  $(call Package/telegraf/Default)
+  TITLE+= (Full)
+  VARIANT:=full
   CONFLICTS:=telegraf
 endef
 
 define Package/telegraf
-	$(call Package/telegraf/Default)
-	TITLE+= (Small)
-	VARIANT:=small
+  $(call Package/telegraf/Default)
+  TITLE+= (Small)
+  VARIANT:=small
 endef
 
 define Package/telegraf/description/Default
