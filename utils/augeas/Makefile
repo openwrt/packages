@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=augeas
 PKG_VERSION:=1.14.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/hercules-team/augeas/releases/download/release-$(PKG_VERSION)
@@ -87,7 +87,7 @@ endef
 
 define Package/augeas-lenses/install
 	$(INSTALL_DIR) $(1)/usr/share/augeas/lenses/dist
-	$(CP) $(PKG_INSTALL_DIR)/usr/share/augeas/lenses/dist/* $(1)/usr/share/augeas/lenses/dist/
+	$(CP) $(PKG_INSTALL_DIR)/usr/share/augeas/lenses/dist/*.aug $(1)/usr/share/augeas/lenses/dist/
 endef
 
 define Package/augeas-lenses-tests/install
