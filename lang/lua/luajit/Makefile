@@ -3,7 +3,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=luajit
 PKG_VERSION:=2.1.0
 PKG_REAL_VERSION:=$(PKG_VERSION)-beta3
-PKG_RELEASE:=8
+PKG_RELEASE:=9
 
 PKG_SOURCE:=LuaJIT-$(PKG_REAL_VERSION).tar.gz
 PKG_SOURCE_URL:=https://luajit.org/download
@@ -27,6 +27,7 @@ define Package/luajit
   TITLE:=LuaJIT
   URL:=https://www.luajit.org
   DEPENDS:=@HAS_LUAJIT_ARCH @!riscv64
+  CONFLICTS:=luajit2
 endef
 
 define Package/luajit/description
