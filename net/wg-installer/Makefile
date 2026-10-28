@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wg-installer
-PKG_RELEASE:=28
+PKG_RELEASE:=29
 
 PKG_MAINTAINER:=Nick Hainke <vincent@systemli.org>
 
@@ -18,18 +18,27 @@ define Package/wg-installer/Default
 	DEPENDS:=+kmod-wireguard +wireguard-tools +owipcalc
 endef
 
+define Package/wg-installer-common
+  $(call Package/wg-installer/Default)
+  TITLE+= (common files)
+endef
+
+define Package/wg-installer-common/install
+	$(INSTALL_DIR) $(1)/usr/share/wginstaller/
+	$(INSTALL_BIN) ./common/wg.sh $(1)/usr/share/wginstaller/wg.sh
+endef
+
 define Package/wg-installer-server
 	$(call Package/wg-installer/Default)
 	TITLE+= (server)
 	MENU:=1
-	DEPENDS+=+rpcd +uhttpd +uhttpd-mod-ubus +coreutils-dirname
+  DEPENDS+=+rpcd +uhttpd +uhttpd-mod-ubus +coreutils-dirname +wg-installer-common
 endef
 
 define Package/wg-installer-server/install
 	$(INSTALL_DIR) $(1)/usr/share/wginstaller/
 	$(INSTALL_BIN) ./wg-server/lib/install_wginstaller_user.sh $(1)/usr/share/wginstaller/install_wginstaller_user.sh
 	$(INSTALL_BIN) ./wg-server/lib/wg_functions.sh $(1)/usr/share/wginstaller/wg_functions.sh
-	$(INSTALL_BIN) ./common/wg.sh $(1)/usr/share/wginstaller/wg.sh
 
 	$(INSTALL_DIR) $(1)/usr/libexec/rpcd/
 	$(INSTALL_BIN) ./wg-server/wginstaller.sh $(1)/usr/libexec/rpcd/wginstaller
@@ -78,13 +87,12 @@ endef
 define Package/wg-installer-client
 	$(call Package/wg-installer/Default)
 	TITLE+= (client)
-	DEPENDS+=+curl
+  DEPENDS+=+curl +wg-installer-common
 endef
 
 define Package/wg-installer-client/install
 	$(INSTALL_DIR) $(1)/usr/share/wginstaller/
 	$(INSTALL_BIN) ./wg-client/lib/rpcd_ubus.sh $(1)/usr/share/wginstaller/rpcd_ubus.sh
-	$(INSTALL_BIN) ./common/wg.sh $(1)/usr/share/wginstaller/wg.sh
 
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) ./wg-client/wg-client-installer.sh $(1)/usr/bin/wg-client-installer
@@ -97,6 +105,7 @@ define Package/wg-installer-client/conffiles
 /etc/config/wgclient
 endef
 
+$(eval $(call BuildPackage,wg-installer-common))
 $(eval $(call BuildPackage,wg-installer-server))
 $(eval $(call BuildPackage,wg-installer-server-hotplug-babeld))
 $(eval $(call BuildPackage,wg-installer-server-hotplug-olsrd))
