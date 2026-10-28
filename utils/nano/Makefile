@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nano
 PKG_VERSION:=9.3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/nano
@@ -45,12 +45,14 @@ define Package/nano-tiny
   $(call Package/nano/Default)
   TITLE:=GNU Nano text editor (minimal features)
   VARIANT:=tiny
+  CONFLICTS:=nano
 endef
 
 define Package/nano-full
   $(call Package/nano/Default)
   TITLE:=GNU Nano text editor (all features, Unicode)
   VARIANT:=full
+  CONFLICTS:=nano nano-tiny
 endef
 
 define Package/nano/Default/description
