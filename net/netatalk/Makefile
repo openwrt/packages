@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netatalk
 PKG_VERSION:=4.6.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/netatalk
@@ -38,12 +38,14 @@ define Package/netatalk-small
   $(call Package/netatalk/Default)
   TITLE+= (afpd only)
   VARIANT:=small
+  CONFLICTS:=netatalk-full
 endef
 
 define Package/netatalk
   $(call Package/netatalk/Default)
   TITLE+= with AppleTalk support
   VARIANT:=appletalk
+  CONFLICTS:=netatalk-small netatalk-full
   DEPENDS+=+kmod-appletalk
 endef
 
