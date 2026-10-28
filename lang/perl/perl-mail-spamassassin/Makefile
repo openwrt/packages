@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-mail-spamassassin
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_VERSION:=4.0.1
 PKG_HASH:=5c6bb222e18405f1a276816d04e1ffc5cc90785e1265714b4506c2b541d6d5e5
 
@@ -53,6 +53,7 @@ define Package/spamc-ssl
   TITLE+= (with SSL)
   DEPENDS+=+libopenssl
   VARIANT:=ssl
+  CONFLICTS:=spamc
 endef
 
 ifeq ($(BUILD_VARIANT),ssl)
