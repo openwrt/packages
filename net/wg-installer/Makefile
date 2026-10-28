@@ -10,12 +10,12 @@ include $(INCLUDE_DIR)/package.mk
 Build/Compile=
 
 define Package/wg-installer/Default
-	SECTION:=net
-	CATEGORY:=Network
-	TITLE:=WireGuard Installer
-	URL:=https://github.com/Freifunk-Spalter/
-	PKGARCH:=all
-	DEPENDS:=+kmod-wireguard +wireguard-tools +owipcalc
+  SECTION:=net
+  CATEGORY:=Network
+  TITLE:=WireGuard Installer
+  URL:=https://github.com/Freifunk-Spalter/
+  PKGARCH:=all
+  DEPENDS:=+kmod-wireguard +wireguard-tools +owipcalc
 endef
 
 define Package/wg-installer-common
@@ -29,9 +29,9 @@ define Package/wg-installer-common/install
 endef
 
 define Package/wg-installer-server
-	$(call Package/wg-installer/Default)
-	TITLE+= (server)
-	MENU:=1
+  $(call Package/wg-installer/Default)
+  TITLE+= (server)
+  MENU:=1
   DEPENDS+=+rpcd +uhttpd +uhttpd-mod-ubus +coreutils-dirname +wg-installer-common
 endef
 
@@ -65,8 +65,8 @@ define Package/wg-installer-server/postinst
 endef
 
 define Package/wg-installer-server-hotplug-babeld
-	$(call Package/wg-installer-server)
-	DEPENDS:=wg-installer-server
+  $(call Package/wg-installer-server)
+  DEPENDS:=wg-installer-server
 endef
 
 define Package/wg-installer-server-hotplug-babeld/install
@@ -75,8 +75,8 @@ define Package/wg-installer-server-hotplug-babeld/install
 endef
 
 define Package/wg-installer-server-hotplug-olsrd
-	$(call Package/wg-installer-server)
-	DEPENDS:=wg-installer-server
+  $(call Package/wg-installer-server)
+  DEPENDS:=wg-installer-server
 endef
 
 define Package/wg-installer-server-hotplug-olsrd/install
@@ -85,8 +85,8 @@ define Package/wg-installer-server-hotplug-olsrd/install
 endef
 
 define Package/wg-installer-client
-	$(call Package/wg-installer/Default)
-	TITLE+= (client)
+  $(call Package/wg-installer/Default)
+  TITLE+= (client)
   DEPENDS+=+curl +wg-installer-common
 endef
 
