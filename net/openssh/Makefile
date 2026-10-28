@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=openssh
 PKG_REALVERSION:=10.6p1
 PKG_VERSION:=10.6_p1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_REALVERSION).tar.gz
 PKG_SOURCE_URL:=https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/ \
@@ -111,6 +111,7 @@ define Package/openssh-server-pam
   DEPENDS+= +USE_GLIBC:libcrypt-compat +libopenssl +zlib +libpthread +openssh-keygen +libpam
   TITLE+= server (with PAM support)
   VARIANT:=with-pam
+  CONFLICTS:=openssh-server
   USERID:=sshd=22:sshd=22
 endef
 
