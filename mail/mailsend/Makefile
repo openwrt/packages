@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mailsend
 PKG_VERSION:=1.19
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/muquit/mailsend/archive/$(PKG_VERSION)
@@ -33,6 +33,7 @@ define Package/mailsend-nossl
 	$(call Package/mailsend/default)
 	TITLE+= (without SSL)
 	VARIANT:=nossl
+  CONFLICTS:=mailsend
 endef
 
 define Package/mailsend
