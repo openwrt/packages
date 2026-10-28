@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=LVM2
 PKG_VERSION:=2.03.42
 PKG_VERSION_DM:=1.02.216
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME).$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=https://sourceware.org/pub/lvm2 \
@@ -42,6 +42,8 @@ endef
 define Package/libdevmapper
   $(call Package/libdevmapper/Default)
   VARIANT := normal
+  DEFAULT_VARIANT:=1
+  CONFLICTS:=libdevmapper-selinux
 endef
 
 define Package/libdevmapper-selinux
@@ -75,6 +77,8 @@ define Package/lvm2
   $(call Package/lvm2/default)
   VARIANT := normal
   DEPENDS += +libdevmapper
+  DEFAULT_VARIANT:=1
+  CONFLICTS:=lvm2-selinux
 endef
 
 define Package/lvm2-selinux
