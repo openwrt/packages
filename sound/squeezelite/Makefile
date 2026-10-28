@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=squeezelite
 PKG_VERSION:=2.0.0.1584
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/ralph-irving/squeezelite
@@ -38,6 +38,7 @@ define Package/squeezelite-full
     VARIANT:=full
     DEPENDS+= +libfaad2 +libffmpeg-audio-dec +libflac +libmpg123 \
               +libopenssl +libopusfile +libsoxr +libvorbis
+  CONFLICTS:=squeezelite-dynamic squeezelite-custom
 endef
 
 define Package/squeezelite-dynamic
@@ -45,6 +46,7 @@ define Package/squeezelite-dynamic
     TITLE+= (dynamic)
     VARIANT:=dynamic
     DEPENDS+= +libmpg123
+  CONFLICTS:=squeezelite-custom
 endef
 
 define Package/squeezelite-custom
