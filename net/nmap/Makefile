@@ -14,7 +14,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nmap
 PKG_VERSION:=7.992
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Nuno Gonçalves <nunojpg@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -56,6 +56,7 @@ define Package/nmap-ssl
 $(call Package/nmap/default)
   DEPENDS:=$(NMAP_DEPENDS) $(SSL_DEPENDS)
   VARIANT:=ssl
+  CONFLICTS:=nmap
   TITLE:=Nmap (with OpenSSL support)
 endef
 
@@ -63,6 +64,7 @@ define Package/nmap-full
 $(call Package/nmap/default)
   DEPENDS:=$(NMAP_DEPENDS) $(SSL_DEPENDS) +liblua5.4 +libssh2
   VARIANT:=full
+  CONFLICTS:=nmap nmap-ssl
   TITLE:=Nmap (with OpenSSL and scripting support)
 endef
 
@@ -77,6 +79,7 @@ define Package/ncat-ssl
 $(call Package/nmap/default)
   DEPENDS:=$(NCAT_DEPENDS) $(SSL_DEPENDS)
   VARIANT:=ssl
+  CONFLICTS:=ncat
   TITLE:=Ncat (with OpenSSL support)
 endef
 
@@ -84,6 +87,7 @@ define Package/ncat-full
 $(call Package/nmap/default)
   DEPENDS:=$(NCAT_DEPENDS) $(SSL_DEPENDS) +liblua5.4
   VARIANT:=full
+  CONFLICTS:=ncat ncat-ssl
   TITLE:=Ncat (with OpenSSL and scripting support)
 endef
 
@@ -98,6 +102,7 @@ define Package/nping-ssl
 $(call Package/nmap/default)
   DEPENDS:=$(NPING_DEPENDS) $(SSL_DEPENDS)
   VARIANT:=ssl
+  CONFLICTS:=nping
   TITLE:=Nping (with OpenSSL support)
 endef
 
