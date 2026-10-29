@@ -6,27 +6,30 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=procs
 PKG_VERSION:=0.14.12
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/dalance/procs/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=f2fab583fe98a9ae9505c5eecf4f3d9d4ad9bcb5d478a8222d52c87aa1ac602e
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-vendor.tar.zst
+PKG_SOURCE_URL:=@OPENWRT
+PKG_SOURCE_PROTO:=cargo-vendor-github
+PKG_VENDOR_REPO:=dalance/procs
+PKG_VENDOR_TAG:=v$(PKG_VERSION)
+PKG_VENDOR_HASH:=f2fab583fe98a9ae9505c5eecf4f3d9d4ad9bcb5d478a8222d52c87aa1ac602e
+PKG_HASH:=eb5ba2fd63e74327dcbad3232361a1223086a033630e2e7ba2e7ffa1aa58de26
 
 PKG_MAINTAINER:=Facundo Acevedo <facevedo@disroot.org>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENCE
 
-PKG_BUILD_DEPENDS:=rust/host
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
-include ../../lang/rust/rust-package.mk
+include $(INCLUDE_DIR)/rust-package.mk
 
 define Package/procs
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Procs is feature-rich alternative to the 'ps'
-  DEPENDS:=$(RUST_ARCH_DEPENDS)
+  DEPENDS:=$(RUST_PKG_DEPENDS)
   URL:=https://github.com/dalance/procs/
 endef
 
