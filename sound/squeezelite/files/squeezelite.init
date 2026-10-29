@@ -14,7 +14,7 @@ checkcodec() {
 
 	if [ "$codec" -eq 0 ] ; then
 		if [ -z "$3" ] ; then
-			echo "-e $2"
+			echo "$2"
 		else
 			echo "$3,$2"
 	        fi
@@ -23,24 +23,30 @@ checkcodec() {
 	fi
 }
 
+# Append args as separate argv entries; cmdline is kept for logging only
+add_arg() {
+	procd_append_param command "$@"
+	cmdline="$cmdline $*"
+}
+
 make_cmdline() {
 	cmdline=""
 
 	local name
 	config_get name options name "SqueezeWrt"
-	cmdline="$cmdline -n $name"
+	add_arg -n "$name"
 
 	local model_name
 	config_get model_name options model_name "SqueezeLite"
-	cmdline="$cmdline -M $model_name"
+	add_arg -M "$model_name"
 
 	local interface
 	config_get interface options interface ""
-	[ -n "$interface" ] && cmdline="$cmdline -I $interface"
+	[ -n "$interface" ] && add_arg -I "$interface"
 
 	local device
 	config_get device options device ""
-	[ -n "$device" ] && cmdline="$cmdline -o $device"
+	[ -n "$device" ] && add_arg -o "$device"
 
 	local alsa_buffer
 	config_get alsa_buffer options alsa_buffer 200
@@ -56,40 +62,38 @@ make_cmdline() {
 
 	local alsa_mmap
 	config_get alsa_mmap options alsa_mmap 0
-	cmdline="$cmdline -a $alsa_buffer:$alsa_period:$alsa_format:$alsa_mmap"
+	add_arg -a "$alsa_buffer:$alsa_period:$alsa_format:$alsa_mmap"
 
 	local stream_bufsiz
 	local out_bufsiz
 	config_get stream_bufsiz options stream_bufsiz 2048
 	config_get out_bufsiz options out_bufsiz 3763
-	cmdline="$cmdline -b $stream_bufsiz:$out_bufsiz"
+	add_arg -b "$stream_bufsiz:$out_bufsiz"
 
 	local max_sr
 	config_get max_sr options max_sr 0
 	[ "$max_sr" -ne 0 ] && {
-		max_sr="-r $max_sr"
-
 		local sr_delay
 		config_get sr_delay options sr_delay 0
 		[ "$sr_delay" -ne 0 ] && max_sr="$max_sr:$sr_delay"
-		cmdline="$cmdline $max_sr"
+		add_arg -r "$max_sr"
 	}
 
 	local close_delay
 	config_get close_delay options close_delay 0
-	[ "$close_delay" -ne 0 ] && cmdline="$cmdline -C $close_delay"
+	[ "$close_delay" -ne 0 ] && add_arg -C "$close_delay"
 
 	local server_addr
 	config_get server_addr options server_addr ""
 	[ -n "$server_addr" ] && {
 		local server_port
 		config_get server_port options server_port 3483
-		cmdline="$cmdline -s $server_addr:$server_port"
+		add_arg -s "$server_addr:$server_port"
 	}
 
 	local priority
 	config_get priority options priority 0
-	[ "$priority" -ne 0 ] && cmdline="$cmdline -p $priority"
+	[ "$priority" -ne 0 ] && add_arg -p "$priority"
 
 	local excl_codecs=""
 	excl_codecs=$(checkcodec decode_flac flac "$excl_codecs")
@@ -97,15 +101,30 @@ make_cmdline() {
 	excl_codecs=$(checkcodec decode_aac aac "$excl_codecs")
 	excl_codecs=$(checkcodec decode_ogg ogg "$excl_codecs")
 	excl_codecs=$(checkcodec decode_wma_alac wma,alac "$excl_codecs")
-	cmdline="$cmdline $excl_codecs"
+	[ -n "$excl_codecs" ] && add_arg -e "$excl_codecs"
 
 	local dop
 	config_get dop options dsd_over_pcm 0
-	[ "$dop" -eq 1 ] && cmdline="$cmdline -D"
+	[ "$dop" -eq 1 ] && add_arg -D
 
-	local unmute
-	config_get unmute options unmute ""
-	[ -n "$unmute" ] && cmdline="$cmdline -U $unmute"
+	local mixer_device
+	config_get mixer_device options mixer_device ""
+	[ -n "$mixer_device" ] && add_arg -O "$mixer_device"
+
+	# -V and -U are mutually exclusive: a volume control implies unmuted
+	local mixer
+	config_get mixer options mixer ""
+	if [ -n "$mixer" ]; then
+		add_arg -V "$mixer"
+
+		local linear_volume
+		config_get_bool linear_volume options linear_volume 0
+		[ "$linear_volume" -eq 1 ] && add_arg -X
+	else
+		local unmute
+		config_get unmute options unmute ""
+		[ -n "$unmute" ] && add_arg -U "$unmute"
+	fi
 }
 
 start_service() {
@@ -115,12 +134,10 @@ start_service() {
 	config_get_bool enabled options 'enabled' 0
 	[ "$enabled" -eq 0 ] && return
 
-	# Build command params
-	make_cmdline
-
 	procd_open_instance
+	procd_set_param command "$PROG"
+	make_cmdline
 	logger -t 'squeezelite' "$cmdline"
-	procd_set_param command "$PROG" $cmdline
 	procd_close_instance
 }
 
