@@ -1,0 +1,95 @@
+From 9ce56146fbe483e09d7ccb98e3b4189c5dc41929 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Mon, 19 Oct 2026 11:57:12 +0100
+Subject: [PATCH] gstreamer: Negotiate downstream buffer strides
+
+V4L2 encoders advertise row padding through allocation metadata.
+Configure the camera with that stride before allocating capture buffers
+so hardware consumers can import them directly. Reject padding layouts
+that the camera cannot represent.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ src/gstreamer/gstlibcamerasrc.cpp | 57 +++++++++++++++++++++++++++++++
+ 1 file changed, 57 insertions(+)
+
+--- a/src/gstreamer/gstlibcamerasrc.cpp
++++ b/src/gstreamer/gstlibcamerasrc.cpp
+@@ -32,6 +32,8 @@
+ #include <libcamera/control_ids.h>
+ 
+ #include <gst/base/base.h>
++#include <gst/video/gstvideometa.h>
++#include <gst/video/gstvideopool.h>
+ 
+ #include "gstlibcamera-controls.h"
+ #include "gstlibcamera-utils.h"
+@@ -585,6 +587,31 @@ gst_libcamera_create_video_pool(GstLibca
+ 	return { std::exchange(pool, nullptr), 0 };
+ }
+ 
++static int
++gst_libcamera_requested_stride(GstPad *srcpad)
++{
++	g_autoptr(GstCaps) caps = gst_pad_get_current_caps(srcpad);
++	g_autoptr(GstQuery) query = gst_query_new_allocation(caps, true);
++	const GstStructure *params = nullptr;
++	GstVideoAlignment alignment;
++	GstVideoInfo info;
++	guint index;
++
++	if (!gst_pad_peer_query(srcpad, query) ||
++	    !gst_query_find_allocation_meta(query, GST_VIDEO_META_API_TYPE, &index))
++		return 0;
++
++	gst_query_parse_nth_allocation_meta(query, index, &params);
++	if (!params || !gst_buffer_pool_config_get_video_alignment(params, &alignment))
++		return 0;
++	if (alignment.padding_top || alignment.padding_bottom || alignment.padding_left)
++		return -EINVAL;
++	if (!gst_video_info_from_caps(&info, caps) || !gst_video_info_align(&info, &alignment))
++		return -EINVAL;
++
++	return info.stride[0];
++}
++
+ /* Must be called with stream_lock held. */
+ static bool
+ gst_libcamera_src_negotiate(GstLibcameraSrc *self)
+@@ -651,6 +678,36 @@ gst_libcamera_src_negotiate(GstLibcamera
+ 			return false;
+ 	}
+ 
++	std::vector<unsigned int> strides(state->srcpads_.size());
++	bool strideChanged = false;
++	for (gsize i = 0; i < state->srcpads_.size(); i++) {
++		StreamConfiguration &cfg = state->config_->at(i);
++		int stride = gst_libcamera_requested_stride(state->srcpads_[i]);
++
++		if (stride < 0) {
++			GST_ELEMENT_ERROR(self, RESOURCE, SETTINGS,
++					  ("Unsupported downstream buffer padding"), (nullptr));
++			return false;
++		}
++		strides[i] = stride;
++		if (strides[i] > cfg.stride) {
++			cfg.stride = strides[i];
++			strideChanged = true;
++		}
++	}
++	if (strideChanged && state->cam_->configure(state->config_.get())) {
++		GST_ELEMENT_ERROR(self, RESOURCE, SETTINGS,
++				  ("Failed to configure downstream buffer strides"), (nullptr));
++		return false;
++	}
++	for (gsize i = 0; i < strides.size(); i++) {
++		if (state->config_->at(i).stride < strides[i]) {
++			GST_ELEMENT_ERROR(self, RESOURCE, SETTINGS,
++					  ("Camera cannot provide the requested buffer stride"), (nullptr));
++			return false;
++		}
++	}
++
+ 	if (self->allocator)
+ 		g_clear_object(&self->allocator);
+ 
