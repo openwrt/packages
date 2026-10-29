@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pymysql
 PKG_VERSION:=1.2.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=pymysql
 PKG_HASH:=d5b288529782e536ae171866df3ca9dc4f6cbfb3cc2f18e6f837fbb90dbc262b
@@ -23,7 +23,7 @@ PKG_CONFIG_DEPENDS:=CONFIG_PYTHON3_PYMYSQL_SHA_PASSWORD_SUPPORT
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
-include ../../rust/rust-values.mk
+include $(INCLUDE_DIR)/rust-values.mk
 
 define Package/python3-pymysql/Default
   SUBMENU:=Python
