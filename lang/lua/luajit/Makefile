@@ -21,12 +21,12 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
 
 define Package/luajit
- SUBMENU:=Lua
- SECTION:=lang
- CATEGORY:=Languages
- TITLE:=LuaJIT
- URL:=https://www.luajit.org
- DEPENDS:=@HAS_LUAJIT_ARCH
+  SUBMENU:=Lua
+  SECTION:=lang
+  CATEGORY:=Languages
+  TITLE:=LuaJIT
+  URL:=https://www.luajit.org
+  DEPENDS:=@HAS_LUAJIT_ARCH
 endef
 
 define Package/luajit/description
