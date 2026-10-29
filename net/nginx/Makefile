@@ -125,7 +125,6 @@ define Package/nginx-ssl
   PROVIDES:=nginx
   VARIANT:=ssl
   DEFAULT_VARIANT:=1
-  CONFLICTS:=nginx-full
 endef
 
 Package/nginx-ssl/description = $(Package/nginx/description) \

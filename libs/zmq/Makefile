@@ -46,6 +46,7 @@ endef
 define Package/libzmq-nc
   $(call Package/libzmq/default)
   VARIANT:=nc
+  DEFAULT_VARIANT:=1
   DEPENDS+=+LIBZMQ_NC_WITH_OPENPGM:openpgm
 endef
 

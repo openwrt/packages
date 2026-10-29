@@ -43,7 +43,6 @@ define Package/mini_snmpd
 # (e.g busybox sysntpd)
   DEPENDS:=+jsonfilter +ubus +procd +ubox +confuse
   VARIANT:=default
-  CONFLICTS:=mini_snmpd-16 mini_snmpd-52
 endef
 
 define Package/mini_snmpd-16
@@ -51,7 +50,6 @@ define Package/mini_snmpd-16
   TITLE+= (16 ports)
   PROVIDES:=mini_snmpd
   VARIANT:=16
-  CONFLICTS:=mini_snmpd-52
 endef
 
 define Package/mini_snmpd-52
@@ -59,7 +57,6 @@ define Package/mini_snmpd-52
   TITLE+= (52 ports)
   PROVIDES:=mini_snmpd
   VARIANT:=52
-  CONFLICTS:=
 endef
 
 CONFIGURE_ARGS+= \

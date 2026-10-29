@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libreswan
 PKG_VERSION:=4.12
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.libreswan.org/
@@ -31,12 +31,12 @@ define Package/libreswan/default
   CATEGORY:=Network
   TITLE:=Libreswan
   URL:=https://libreswan.org/
-  PROVIDES:=openswan
   CONFLICTS:=strongswan
 endef
 
 define Package/libreswan
   $(Package/libreswan/default)
+  PROVIDES:=openswan
   DEPENDS:= \
 	  +USE_GLIBC:libcrypt-compat \
 	  +kmod-ip-vti +IPV6:kmod-ip6-vti \

@@ -157,7 +157,6 @@ define Package/ripe-atlas-probe
   DEPENDS+=+ripe-atlas-common
   PROVIDES:=ripe-atlas atlas-sw-probe atlas-probe
   DEFAULT_VARIANT:=1
-  CONFLICTS:=ripe-atlas-anchor
 endef
 
 define Package/ripe-atlas-probe/description

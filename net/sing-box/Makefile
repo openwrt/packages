@@ -52,7 +52,6 @@ define Package/sing-box-tiny
   TITLE+= (tiny)
   PROVIDES:=sing-box
   VARIANT:=tiny
-  CONFLICTS:=sing-box
 endef
 
 Package/sing-box-tiny/description:=$(Package/sing-box/description)

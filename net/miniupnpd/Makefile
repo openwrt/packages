@@ -58,7 +58,6 @@ define Package/miniupnpd-nftables
   TITLE+= (nftables)
   VARIANT:=nftables
   DEFAULT_VARIANT:=1
-  CONFLICTS:=miniupnpd-iptables
 endef
 
 define Package/miniupnpd/conffiles/Default

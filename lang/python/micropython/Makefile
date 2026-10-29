@@ -41,7 +41,6 @@ define Package/micropython-mbedtls
 $(call Package/micropython/Default)
   TITLE+= (mbedtls)
   DEPENDS+= +PACKAGE_micropython-mbedtls:libmbedtls
-  CONFLICTS:=micropython-nossl
   VARIANT:=mbedtls
   DEFAULT_VARIANT:=1
 endef

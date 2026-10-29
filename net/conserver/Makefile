@@ -32,7 +32,6 @@ define Package/conserver
   DEPENDS:=+libopenssl
   MAINTAINER:=Bjørn Mork <bjorn@mork.no>
   VARIANT:=default
-  CONFLICTS:=conserver-ipmi
 endef
 
 define Package/conserver-ipmi
@@ -41,7 +40,6 @@ define Package/conserver-ipmi
   PROVIDES:=conserver
   DEPENDS+=+libipmiconsole
   VARIANT:=ipmi
-  CONFLICTS:=
 endef
 
 define Package/conserver/description

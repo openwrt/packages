@@ -40,7 +40,6 @@ $(call Package/chrony/Default)
   TITLE+= (without NTS)
   VARIANT:=normal
   DEFAULT_VARIANT:=1
-  CONFLICTS:=chrony-nts
 endef
 
 define Package/chrony-nts

@@ -63,7 +63,6 @@ define Package/weechat-minimal
   VARIANT:=minimal
   DEFAULT_VARIANT:=1
   PROVIDES:=weechat
-  CONFLICTS:=weechat-full
 endef
 
 define Package/weechat-minimal/description

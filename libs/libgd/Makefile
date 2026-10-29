@@ -38,7 +38,6 @@ define Package/libgd
   MENU:=1
   DEPENDS+=+LIBGD_TIFF:libtiff +LIBGD_FREETYPE:libfreetype
   VARIANT:=default
-  CONFLICTS:=libgd-full
 endef
 
 define Package/libgd-full

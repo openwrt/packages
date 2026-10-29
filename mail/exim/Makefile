@@ -54,7 +54,6 @@ endef
 define Package/exim
   $(call Package/exim/Default)
   VARIANT:=nossl
-  CONFLICTS:=exim-openssl exim-gnutls exim-ldap
 endef
 
 define Package/exim-gnutls
@@ -63,7 +62,6 @@ define Package/exim-gnutls
   VARIANT:=gnutls
   DEPENDS+=+PACKAGE_exim-gnutls:libgnutls +EXIM_GNUTLS_DANE:libgnutls-dane
   PROVIDES:=exim
-  CONFLICTS:=exim-openssl exim-ldap
 endef
 define Package/exim-openssl
   $(call Package/exim/Default)
@@ -71,7 +69,6 @@ define Package/exim-openssl
   VARIANT:=openssl
   DEPENDS+=+PACKAGE_exim-openssl:libopenssl
   PROVIDES:=exim
-  CONFLICTS:=exim-ldap
 endef
 
 define Package/exim-ldap
