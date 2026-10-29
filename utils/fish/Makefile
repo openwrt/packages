@@ -6,38 +6,37 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fish
 PKG_VERSION:=4.7.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://github.com/fish-shell/fish-shell/releases/download/$(PKG_VERSION)
-PKG_HASH:=6f4d5b438a6338e3f5dcda19a28261e2ece7a9b7ff97686685e6abdc31dbb7df
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-vendor.tar.zst
+PKG_SOURCE_URL:=@OPENWRT
+PKG_SOURCE_PROTO:=cargo-vendor-archive
+PKG_VENDOR_FILE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_VENDOR_URL:=https://github.com/fish-shell/fish-shell/releases/download/$(PKG_VERSION)
+PKG_VENDOR_HASH:=6f4d5b438a6338e3f5dcda19a28261e2ece7a9b7ff97686685e6abdc31dbb7df
+PKG_HASH:=dc666b727390954976d35b1899f104020db973ddd9b28f65e7287a672ec84a2c
 
 PKG_MAINTAINER:=Curtis Jiang <jqqqqqqqqqq@gmail.com>
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:fishshell:fish
 
-PKG_BUILD_DEPENDS:=rust/host pcre2
+PKG_BUILD_DEPENDS:=pcre2
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/rust-values.mk
 include $(INCLUDE_DIR)/cmake.mk
-include ../../lang/rust/rust-values.mk
 
 # Disable static linking for pcre2-sys
 export PCRE2_SYS_STATIC=0
-
-# For pcre2-sys
-export CC=$(TARGET_CC)
-export RUSTFLAGS+=-C target-feature=-crt-static
-export CARGO_TARGET_$(shell echo $(RUSTC_TARGET_ARCH) | sed -e 'y/abcdefghijklmnopqrstuvwxyz-/ABCDEFGHIJKLMNOPQRSTUVWXYZ_/')_LINKER:=$(TARGET_CC)
 
 define Package/fish
   SECTION:=utils
   CATEGORY:=Utilities
   SUBMENU:=Shells
   TITLE:=A smart and user-friendly command line shell
-  DEPENDS:=$(RUST_ARCH_DEPENDS) +libpcre2 +libpcre2-32
+  DEPENDS:=$(RUST_PKG_DEPENDS) +libpcre2 +libpcre2-32
   URL:=https://fishshell.com
 endef
 
@@ -51,7 +50,6 @@ endef
 CMAKE_OPTIONS += \
 	-DWITH_DOCS=OFF \
 	-DWITH_MESSAGE_LOCALIZATION=OFF \
-	-DRust_CARGO_TARGET=$(RUSTC_TARGET_ARCH) \
 	-DFISH_USE_SYSTEM_PCRE2=ON
 
 define Package/fish/conffiles
