@@ -26,7 +26,7 @@ define Package/luajit
   CATEGORY:=Languages
   TITLE:=LuaJIT
   URL:=https://www.luajit.org
-  DEPENDS:=@HAS_LUAJIT_ARCH
+  DEPENDS:=@HAS_LUAJIT_ARCH @!riscv64
 endef
 
 define Package/luajit/description
