@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-good
 PKG_VERSION:=1.28.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=gst-plugins-good-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gst-plugins-good/
@@ -94,6 +94,8 @@ GST_COND_SELECT = -D$(1)=$(if $(CONFIG_PACKAGE_gst1-mod-$(1)),en,dis)abled
 GST_VERSION:=1.0
 
 MESON_ARGS += \
+	$(call GST_COND_SELECT,adaptivedemux2) \
+	-Dhls-crypto=nettle \
 	$(call GST_COND_SELECT,alpha) \
 	$(call GST_COND_SELECT,apetag) \
 	$(call GST_COND_SELECT,audiofx) \
@@ -220,6 +222,7 @@ define GstBuildPlugin
   $$(eval $$(call BuildPackage,gst1-mod-$(1)))
 endef
 
+$(eval $(call GstBuildPlugin,adaptivedemux2,adaptive streaming demuxer,net pbutils tag,,+libxml2 +libnettle +libsoup3))
 $(eval $(call GstBuildPlugin,alaw,alaw codec,audio,,))
 $(eval $(call GstBuildPlugin,alpha,alpha support,video,,))
 $(eval $(call GstBuildPlugin,apetag,apetag support,audio pbutils tag video,,))
