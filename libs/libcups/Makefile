@@ -9,21 +9,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cups
-PKG_VERSION:=2.2.12
-PKG_RELEASE:=2
+PKG_VERSION:=2.4.20
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-source.tar.gz
-PKG_SOURCE_URL:=https://github.com/apple/cups/releases/download/v$(PKG_VERSION)/
-PKG_HASH:=0f61ab449e4748a24c6ab355b481ff7691247a140d327b2b7526fce34b7f9aa8
+PKG_SOURCE_URL:=https://github.com/OpenPrinting/cups/releases/download/v$(PKG_VERSION)/
+PKG_HASH:=ab4d9cd7f3e58060091d2b24972223d6401675f11c49b65abf4f6ef31dea22ff
 PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>
-PKG_LICENSE:=GPL-2.0
-PKG_LICENSE_FILES:=LICENSE.txt
-PKG_CPE_ID:=cpe:/a:apple:cups
+PKG_LICENSE:=Apache-2.0
+PKG_LICENSE_FILES:=LICENSE NOTICE
+PKG_CPE_ID:=cpe:/a:openprinting:cups
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/libcups/Default
-  URL:=https://www.cups.org/
+  URL:=https://openprinting.github.io/cups/
   SUBMENU:=Printing
 endef
 
@@ -31,7 +31,7 @@ define Package/libcups
 $(call Package/cups/Default)
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+zlib +libpthread +libpng +libjpeg +libusb-1.0
+  DEPENDS:=+zlib +libpthread
   TITLE:=Common UNIX Printing System - Core library
   BUILDONLY:=1
 endef
@@ -43,40 +43,22 @@ endef
 CONFIGURE_ARGS+=--with-cups-user="nobody" \
 		--with-cups-group="nogroup" \
 		--with-components="core" \
-		--with-pdftops="none" \
-		--without-perl \
-		--without-python \
-		--without-php \
+		--with-dnssd=no \
+		--with-tls=no \
 		--enable-shared \
-		--enable-image \
-		--enable-libusb \
 		--disable-acl \
 		--disable-dbus \
-		--disable-dnssd \
-		--disable-launchd \
-		--disable-ldap \
-		--disable-pam \
-		--disable-slp \
-		--disable-gnutls \
-		--disable-openssl \
-		--disable-cdsassl \
-		--disable-ssl \
 		--disable-gssapi \
-		--disable-tiff \
-		UNAME="Linux" \
-		LIBS="$(TARGET_LDFLAGS) -lz -lpng -ljpeg"
+		--disable-libusb \
+		--disable-pam \
+		UNAME="Linux"
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR)/cups \
 		$(TARGET_CONFIGURE_OPTS) \
 		DSTROOT="$(PKG_INSTALL_DIR)" \
 		STRIP="/bin/true" \
-		libcups.so.2 install-libs install-headers
-	$(MAKE) -C $(PKG_BUILD_DIR)/filter \
-		$(TARGET_CONFIGURE_OPTS) \
-		DSTROOT="$(PKG_INSTALL_DIR)" \
-		STRIP="/bin/true" \
-		libcupsimage.so.2 install-libs install-headers
+		libcups.so.2 libcupsimage.so.2 install-libs install-headers
 	$(INSTALL_DIR) $(PKG_INSTALL_DIR)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cups-config $(PKG_INSTALL_DIR)/usr/bin
 endef
