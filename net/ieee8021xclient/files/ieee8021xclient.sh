@@ -85,18 +85,25 @@ EOF
 }
 
 proto_ieee8021xclient_teardown() {
-	local ifname="$1"
+	local interface="$1"
+	local ifname="$2"
 	local errorstring=$(ieee8021xclient_exitcode_tostring $ERROR)
+
+	# netifd passes the interface name first and the device name second.
+	# The supplicant is registered under the device name, so config_remove
+	# needs the second argument; using the interface name left a stale
+	# section behind whenever the two differed.
+	[ -n "$ifname" ] || ifname="$interface"
 
 	case "$ERROR" in
 		0)
 		;;
 		2)
-			proto_notify_error "$ifname" "$errorstring"
-			proto_block_restart "$ifname"
+			proto_notify_error "$interface" "$errorstring"
+			proto_block_restart "$interface"
 		;;
 		*)
-			proto_notify_error "$ifname" "$errorstring"
+			proto_notify_error "$interface" "$errorstring"
 		;;
 	esac
 
