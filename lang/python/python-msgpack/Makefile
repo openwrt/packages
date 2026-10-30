@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-msgpack
-PKG_VERSION:=1.2.1
+PKG_VERSION:=1.2.3
 PKG_RELEASE:=1
 
 PYPI_NAME:=msgpack
-PKG_HASH:=04c721c2c7448767e9e3f2520a475663d8ee0f09c31890f6d2bd70fd636a9647
+PKG_HASH:=32edb81a2b5eb7cd7c9d941b2bfbbb082fd2cd09e0e725930316af6b708db186
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=Apache-2.0
