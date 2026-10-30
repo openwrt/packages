@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-bidict
-PKG_VERSION:=0.23.1
+PKG_VERSION:=0.24.1
 PKG_RELEASE:=1
 
 PYPI_NAME:=bidict
-PKG_HASH:=03069d763bc387bbd20e7d49914e75fc4132a41937fa3405417e1a5a2d006d71
+PKG_HASH:=4dca6c17f0b01700e9f24359daa5ebabf7be022d99f4cb2a257b6af2a5076c88
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MPL-2.0
