@@ -3,9 +3,9 @@
 # shellcheck disable=SC1091,SC3043,SC3060
 
 # shellcheck disable=SC2034
-START=20
+START=30
 # shellcheck disable=SC2034
-STOP=15
+STOP=51
 # shellcheck disable=SC2034
 USE_PROCD=1
 
