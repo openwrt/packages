@@ -1,11 +1,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-boto3
-PKG_VERSION:=1.43.67
+PKG_VERSION:=1.43.118
 PKG_RELEASE:=1
 
 PYPI_NAME:=boto3
-PKG_HASH:=75fe983b70d39cfdc274dc51f9bb02b8a0a104bdad4fa073c1af85a35e707c91
+PKG_HASH:=c0620f799e0f0c222ba42c337b65cdbcd3da38a3121187f634d8926cbbb28a9c
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=Apache-2.0
