@@ -1,6 +1,6 @@
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -110,7 +110,7 @@ libhpmud_la_SOURCES += io/hpmud/musb_lib
+@@ -122,7 +122,7 @@ libhpmud_la_SOURCES += io/hpmud/musb_lib
  libhpmud_la_LDFLAGS += -lusb
  else
  libhpmud_la_SOURCES += io/hpmud/musb.c 
@@ -9,7 +9,7 @@
  libhpmud_la_LDFLAGS += -lusb-1.0
  endif
  
-@@ -366,7 +366,7 @@ hpmudext_la_CFLAGS += -Iprotocol/discove
+@@ -378,7 +378,7 @@ hpmudext_la_CFLAGS += -Iprotocol/discove
  endif
  
  if !LIBUSB01_BUILD
@@ -20,7 +20,7 @@
  # ui (qt3)
 --- a/configure.in
 +++ b/configure.in
-@@ -627,6 +627,10 @@ if test "$class_driver" = "no" && test "
+@@ -619,6 +619,10 @@ if test "$class_driver" = "no" && test "
     else
        AC_CHECK_LIB([usb-1.0], [libusb_init], [LIBS="$LIBS"], [AC_MSG_ERROR([cannot find libusb 1.0 support], 2)])
        AC_CHECK_HEADERS(libusb-1.0/libusb.h, ,[AC_MSG_ERROR([cannot find libusb-1.0-devel support], 11)])
