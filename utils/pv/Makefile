@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pv
-PKG_VERSION:=1.11.0
+PKG_VERSION:=1.12.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.ivarch.com/programs/sources
-PKG_HASH:=fc02c9fc2b82b20a92cc8d98f844be63f22abd98751a8e4abc875e1d803662eb
+PKG_HASH:=31fdbdb449c7143cd2968567bef7599e9f031950e6158ee7bb76e40aebf6ffb8
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=docs/COPYING
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
