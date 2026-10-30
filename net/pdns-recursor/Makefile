@@ -2,11 +2,16 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pdns-recursor
 PKG_VERSION:=5.2.13
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=https://downloads.powerdns.com/releases/
-PKG_HASH:=ee0eacc776aa48ef0be92f6b910048ee8606d1715133649806356ec38fed1e86
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-vendor.tar.zst
+PKG_SOURCE_URL:=@OPENWRT
+PKG_SOURCE_PROTO:=cargo-vendor-archive
+PKG_VENDOR_FILE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_VENDOR_URL:=https://downloads.powerdns.com/releases/
+PKG_VENDOR_SUBDIR:=settings/rust
+PKG_VENDOR_HASH:=ee0eacc776aa48ef0be92f6b910048ee8606d1715133649806356ec38fed1e86
+PKG_HASH:=1de7bef950d7f474a3999e6fde401ebd6a1380d5d4d7f1f4bdb46a253c6c8818
 
 PKG_MAINTAINER:=Peter van Dijk <peter.van.dijk@powerdns.com>, Remi Gacogne <remi.gacogne@powerdns.com>
 PKG_LICENSE:=GPL-2.0-only
@@ -14,12 +19,17 @@ PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:powerdns:recursor
 
 PKG_FIXUP:=autoreconf
-PKG_BUILD_DEPENDS:=rust/host
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
+# The Rust code is a static library inside pdns_recursor.
+RUST_PREFER_DYNAMIC:=0
+
 include $(INCLUDE_DIR)/package.mk
-include ../../lang/rust/rust-values.mk
+include $(INCLUDE_DIR)/rust-values.mk
+
+PKG_BUILD_DEPENDS+=$(RUST_PKG_BUILD_DEPENDS)
+PKG_CONFIG_DEPENDS+=$(RUST_PKG_CONFIG_DEPENDS)
 
 define Package/pdns-recursor
   SECTION:=net
@@ -28,7 +38,7 @@ define Package/pdns-recursor
   USERID:=pdns:pdns
   TITLE:=PowerDNS Recursor
   DEPENDS:=+boost +boost-context +boost-filesystem +libatomic +liblua +libopenssl +libfstrm +libcurl \
-    @!USE_RUST_TOOLCHAIN
+    $(RUST_PKG_DEPENDS)
   URL:=https://www.powerdns.com/recursor.html
 endef
 
@@ -55,6 +65,9 @@ CONFIGURE_ARGS += \
 	--enable-reproducible \
 	--disable-silent-rules
 
+CONFIGURE_VARS += CARGO=$(CARGO)
+
+MAKE_VARS += $(CARGO_PKG_CONFIG_VARS)
 MAKE_VARS += RUSTC_TARGET_ARCH=$(RUSTC_TARGET_ARCH)
 MAKE_VARS += RUST_TARGET=--target=$(RUSTC_TARGET_ARCH)
 
