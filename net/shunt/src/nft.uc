@@ -187,7 +187,7 @@ export function compile(policies, opts) {
 			// policy down with it.
 			if (opts?.tproxy === false) {
 				reject(pname, null,
-					'tproxy needs kmod-nft-tproxy - policy skipped');
+					'tproxy is not available in this kernel - install kmod-nft-tproxy, policy skipped');
 				continue;
 			}
 
@@ -198,6 +198,12 @@ export function compile(policies, opts) {
 					'invalid or missing tproxy_port - expected 1-65535');
 				continue;
 			}
+
+			// Applied anyway: only clients behind a bridge are hit, and the
+			// switch is not shunt's to flip.
+			if (length(opts?.br_netfilter))
+				reject(pname, null, sprintf('%s at 1 - tproxy fails for clients behind a bridge, set to 0',
+					join(' and ', opts.br_netfilter)));
 
 			let fb = p.fallback ?? 'main';
 

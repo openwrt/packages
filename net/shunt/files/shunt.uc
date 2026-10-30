@@ -8,7 +8,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (c) 2026 Dirk Brenken <dev@brenken.org>
 
-import { popen, writefile, readfile, unlink, mkdir, access, error as fs_error } from 'fs';
+import { popen, writefile, readfile, unlink, mkdir, error as fs_error } from 'fs';
 import { openlog, syslog, LOG_PID, LOG_DAEMON, LOG_ERR, LOG_WARNING,
 	LOG_NOTICE, LOG_INFO, LOG_DEBUG } from 'log';
 import { load as cfg_load, parse as cfg_parse, MIN as cfg_min } from 'shunt.config';
@@ -22,6 +22,7 @@ import { names as poll_names, plan as poll_plan,
 	addresses as poll_addresses,
 	index_results as poll_index } from 'shunt.poll';
 import { resolve as netifd_resolve } from 'shunt.netifd';
+import { tproxy as tproxy_available, br_netfilter, ipv6 } from 'shunt.probe';
 import { create as dedupe_create } from 'shunt.dedupe';
 
 const RT_TABLES = '/etc/iproute2/rt_tables.d/shunt.conf';
@@ -287,17 +288,6 @@ function check_rp_filter(policies) {
 			dev, dev));
 }
 
-// kmod-nft-tproxy is not a dependency, so a tproxy policy may name a module
-// that is not there - and nft loads the ruleset as one batch, so one rule
-// the kernel cannot resolve would take every policy down. Loaded, or
-// installed and left to the kernel's autoload on first use.
-function tproxy_available() {
-	let rel = trim(readfile('/proc/sys/kernel/osrelease') ?? '');
-
-	return !!(access('/sys/module/nft_tproxy') ||
-		(length(rel) && access(`/lib/modules/${rel}/nft_tproxy.ko`)));
-}
-
 // silent: build only what a teardown consumes and say nothing about the
 // configuration - flush() needs route.del and nothing else.
 function build_state(silent) {
@@ -326,14 +316,18 @@ function build_state(silent) {
 	// A teardown renders without the check: a policy whose module has
 	// gone since it was applied still owns a table and rules to remove.
 	// Kept, so a refresh renders against the same set of policies.
-	let opts = { tproxy: silent ? true : tproxy_available() };
+	let opts = { tproxy: silent ? true : tproxy_available(cfg.policies),
+		br_netfilter: silent ? [] : br_netfilter(), ipv6: ipv6() };
 	let n = nft_compile(cfg.policies, opts);
 	if (!silent)
 		report('nft', n.issues);
 
-	let r = route_compile(cfg.policies, n.marks);
-	if (!silent)
+	let r = route_compile(cfg.policies, n.marks, opts);
+	if (!silent) {
 		report('route', r.issues);
+		if (!opts.ipv6)
+			log('info', 'no IPv6 in this kernel - IPv6 routes and rules skipped');
+	}
 
 	return { cfg, matcher, files, opts, nft: n, route: r };
 }
@@ -575,7 +569,7 @@ function run() {
 			pending = null;
 
 			let resolved = netifd_resolve(state.cfg.policies, netifd_dump());
-			let r = route_compile(resolved, state.nft.marks);
+			let r = route_compile(resolved, state.nft.marks, state.opts);
 
 			report('route', r.issues);
 

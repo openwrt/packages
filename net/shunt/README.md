@@ -65,7 +65,9 @@ shunt check
 * OpenWrt with fw4/nftables
 * `ucode` plus `ucode-mod-fs`, `ucode-mod-socket`, `ucode-mod-uci`, `ucode-mod-uloop`, `ucode-mod-resolv`, `ucode-mod-ubus`, `ucode-mod-rtnl`, `ucode-mod-log` and `rpcd-mod-ucode` - all pulled in by the package; `ip` is not needed, routes and rules are written over rtnetlink
 
-`kmod-nft-tproxy` only for a `tproxy` policy. It is not pulled in: without it a tproxy policy is skipped as an issue and everything else is applied.
+`kmod-nft-tproxy` only for a `tproxy` policy, unless the kernel has tproxy built in. It is not pulled in: without it a tproxy policy is skipped as an issue and everything else is applied.
+
+IPv6 is optional. On a kernel without it - booted with `ipv6.disable=1` - the IPv6 routes and rules are not rendered, which costs one line in the log; the IPv4 side is applied as usual.
 
 `ucode-mod-resolv` and `ucode-mod-ubus` are soft at runtime: without resolv, poll is skipped and the observer carries the service alone; without ubus, gateway discovery and interface events are skipped and the config's own values are used. Both cost one warning in the log, not a failed start.
 
@@ -132,6 +134,8 @@ uci commit firewall
 `network` names a **logical interface**, not a device. For a device netifd does not manage - a tunnel brought up outside netifd - use `uci add_list firewall.@zone[-1].device='wg0'` instead. And if the policy interface already has a zone, because it is an ordinary second uplink, there is nothing to do here.
 
 Symptoms of getting this wrong are worth knowing, because they do not look like a firewall problem: the prerouting counters rise, `nft list set` shows the learned address being hit, and the client's connection simply times out.
+
+**The router's own traffic needs the masquerade as well.** A policy without client selectors also covers what the router sends itself, in the `output` chain. Such a packet gets its source address before shunt sees it, from the route `main` would take - usually the WAN address. The mark re-routes the packet into the tunnel, the address stays, and the far end drops it: a WireGuard peer accepts only sources within its `allowed_ips`, and most providers filter the same way. fw4's source NAT runs for local traffic too, so the zone's `masq` fixes this - the zone above is therefore needed even if no LAN client ever uses the policy. Measured: without it, the router's own traffic through a `route` policy is lost, including another tunnel's encapsulated packets; with it, it passes. Destinations `main` already routes into the tunnel - the tunnel's own subnet - are not affected, their source address fits from the start.
 
 <a id="installation-and-usage"></a>
 ## Installation and Usage
@@ -339,7 +343,7 @@ Order matters and only order: a bypass section placed after the policy it is mea
 <a id="transparent-proxy-tproxy"></a>
 ### Transparent proxy: tproxy
 
-`action 'tproxy'` hands the selected traffic to a transparent proxy running on the router - `hev-socks5-tproxy`, `sing-box` or `xray` in tproxy mode, or anything else that accepts `IP_TRANSPARENT` connections. shunt only steers: it does not start, configure or watch the proxy. It needs `kmod-nft-tproxy`.
+`action 'tproxy'` hands the selected traffic to a transparent proxy running on the router - `hev-socks5-tproxy`, `sing-box` or `xray` in tproxy mode, or anything else that accepts `IP_TRANSPARENT` connections. shunt only steers: it does not start, configure or watch the proxy. It needs `kmod-nft-tproxy`, or a kernel with tproxy built in. A loaded or installed module is taken from the file system; otherwise shunt asks the kernel itself, with an `nft -c` dry run of a single tproxy rule that installs nothing.
 
 ```
 config policy 'proxy'
@@ -402,6 +406,8 @@ udp:
 
 Point `socks5` at your server, then enable the service with `uci set hev-socks5-tproxy.config.enabled='1'`, `uci commit hev-socks5-tproxy` and `/etc/init.d/hev-socks5-tproxy start`. Its own connections to the SOCKS5 server start on the router, so the tproxy policy never sees them; a `route` policy can still send them through a tunnel.
 
+**br_netfilter breaks tproxy behind a bridge.** With `kmod-br-netfilter` loaded and `net.bridge.bridge-nf-call-iptables` (or `-ip6tables`) at `1` - dockerd needs it and turns it on - bridged traffic runs through the inet hooks in the bridge's own pass. For a client on `br-lan` the tproxy statement still finds the listener, but TCP answers the client's SYN with a reset, and the connection never opens. This is the kernel's behaviour, not shunt's; it fails the same way with a hand-written tproxy rule. shunt does not change a box-wide switch that something else set, it reports it as an issue on each tproxy policy. Setting the key back to `0` makes tproxy work, at the price of whatever needed it.
+
 <a id="local-traffic-keep_local"></a>
 ### Local traffic: keep_local
 
@@ -454,6 +460,21 @@ config policy 'isp'
 In both forms the policy's own table decides for its clients in both address families, so the metrics matter only for traffic no policy selects. Set them explicitly on both sides anyway, including `wan6` where IPv6 comes from an interface of its own: netifd's default `metric 0` stays 0 for IPv4, but the kernel stores an IPv6 route with metric 0 as 1024. An interface left at the default therefore wins the IPv4 default route and loses the IPv6 one against any interface with an explicit metric - unselected clients then leave through different uplinks per family.
 
 `fallback 'block'` covers the policy's clients only. In the tunnel-as-default form, unselected clients move to the uplink when the tunnel goes down, because netifd withdraws the tunnel's route from `main` and the uplink's is left. Preventing that is a matter of the firewall, not of shunt.
+
+**A tunnel inside another tunnel needs no policy.** To carry WireGuard `wg1` through `wg2`, route `wg1`'s endpoint into `wg2` with a plain route in `main`. Only the destination decides, and WireGuard's own route lookup sees that route, so it picks `wg2` and its address together. A policy would mark the encapsulated packets only after that, with the WAN address already set, and need masquerade on top - see [Prerequisites](#prerequisites). netifd already pins each endpoint with a host route; `tunlink` keeps `wg2`'s on the uplink, so it cannot follow a default route through `wg1` into a loop:
+
+```
+config interface 'wg2'
+	option proto 'wireguard'
+	option tunlink 'wan'
+	...
+
+config route
+	option interface 'wg2'
+	option target '<wg1 endpoint>/32'
+```
+
+`wg2`'s peer must cover that endpoint in `allowed_ips` - `0.0.0.0/0` with `route_allowed_ips '0'` does, and keeps `wg2` usable as a policy interface for other traffic. `wg1` needs an MTU at least 80 below `wg2`'s. To send the router's own traffic through `wg1`, make it the default in `main` as above (`route_allowed_ips '1'`, lower `metric` than the uplink); shunt is then left with what it is for, the exceptions.
 
 <a id="how-addresses-are-learned"></a>
 ## How addresses are learned
@@ -750,7 +771,6 @@ These are consequences of the design, stated rather than worked around:
 * **DNS over TCP is not observed.** Port 53 over TCP needs reassembly, which is out of scope; answers large enough to force TCP are rare in the traffic shunt cares about.
 * **Route and rule application is best effort.** At boot a tunnel interface may not exist yet. A rule over an empty table falls through to `main`, so the failure mode is "policy not applied yet", never "traffic broken". Each distinct reason is one warning line.
 * **No interface hotplug.** A device that appears later is picked up on the next `ifup` event or within one poll interval, not immediately.
-* **tproxy is detected by its module file.** shunt applies a tproxy policy when `nft_tproxy` is loaded or installed under `/lib/modules`. A custom kernel with tproxy built in has neither, and its tproxy policies are skipped as an issue.
 * **An outside flush of nftables is repaired, not prevented.** Any tool may delete shunt's table - `fw4 flush` does. shunt re-applies it within one poll interval, or sooner, and until then nothing is marked.
 
 **Out of scope permanently:** resolver-integrated set population (dnsmasq `nftset`, AdGuard Home etc.). Being independent of the DNS backend is the entire point of the project, so adopting a backend-specific mechanism would give up the one property that distinguishes it. Also out: DSCP tagging and user include files.

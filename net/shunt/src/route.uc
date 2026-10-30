@@ -45,6 +45,9 @@ function to_bool(v, dflt) {
 
 export function compile(policies, marks, opts) {
 	let mask = opts?.mask ?? DEFAULTS.mask;
+	// Without the IPv6 family the kernel refuses every IPv6 operation, so
+	// none is rendered; the nft side loads either way.
+	let fams = (opts?.ipv6 === false) ? [ '4' ] : [ '4', '6' ];
 	let add = [], del = [], tables = [], issues = [];
 
 	let by_name = {};
@@ -77,7 +80,7 @@ export function compile(policies, marks, opts) {
 
 			push(tables, sprintf('%d\tshunt_%s', m.rt_table, m.name));
 
-			for (let fam in [ '4', '6' ]) {
+			for (let fam in fams) {
 				let family = AF[fam];
 
 				push(add, { cmd: 'newroute', msg: { family,
@@ -137,7 +140,7 @@ export function compile(policies, marks, opts) {
 
 		push(tables, sprintf('%d\tshunt_%s', m.rt_table, m.name));
 
-		for (let fam in [ '4', '6' ]) {
+		for (let fam in fams) {
 			let family = AF[fam];
 
 			// `ip route replace default [via gw] dev iface table n`: a

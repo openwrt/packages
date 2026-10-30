@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (c) 2026 Dirk Brenken <dev@brenken.org>
 
-import { popen, readfile, access } from 'fs';
+import { popen, readfile } from 'fs';
 
 const ubus = require('ubus');
 const rtnl = require('rtnl');
@@ -23,6 +23,7 @@ import { load as files_load } from 'shunt.list_file';
 import { action_name, compile as nft_compile } from 'shunt.nft';
 import { compile as route_compile } from 'shunt.route';
 import { names as poll_names } from 'shunt.poll';
+import { tproxy as tproxy_available, br_netfilter, ipv6 } from 'shunt.probe';
 
 const TABLE_FAMILY = 'inet';
 const TABLE_NAME = 'shunt';
@@ -36,14 +37,6 @@ function daemon_status() {
 	let r = conn.call('shunt', 'status');
 
 	return r ?? null;
-}
-
-// Same test as the daemon's, so LuCI reports the policy the daemon skips.
-function tproxy_available() {
-	let rel = trim(readfile('/proc/sys/kernel/osrelease') ?? '');
-
-	return !!(access('/sys/module/nft_tproxy') ||
-		(length(rel) && access(`/lib/modules/${rel}/nft_tproxy.ko`)));
 }
 
 // The same sequence as the daemon's build_state(), minus the logging: two
@@ -72,8 +65,9 @@ function render() {
 	cfg.policies = f.policies;
 
 	let m = match_compile(cfg.policies);
-	let n = nft_compile(cfg.policies, { tproxy: tproxy_available() });
-	let r = route_compile(cfg.policies, n.marks);
+	let n = nft_compile(cfg.policies, { tproxy: tproxy_available(cfg.policies),
+		br_netfilter: br_netfilter() });
+	let r = route_compile(cfg.policies, n.marks, { ipv6: ipv6() });
 
 	return { cfg, files: f, matcher: m, nft: n, route: r };
 }
@@ -234,8 +228,11 @@ function kernel_routes(marks) {
 				break;
 			}
 
+			// A kernel without a family's dump handler answers with
+			// every family it has - IPv4 under an IPv6 request on a kernel
+			// without IPv6 - so the family is checked, not assumed.
 			for (let r in res)
-				if (r?.table == m.rt_table)
+				if (r?.table == m.rt_table && r?.family == fam)
 					n++;
 		}
 

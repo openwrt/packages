@@ -150,8 +150,12 @@ export function parse(sections) {
 			continue;
 		}
 
-		if (s?.type != 'policy')
+		// A typo in a section type would otherwise leave the section
+		// silently unread - a misspelt `config global` runs on defaults.
+		if (s?.type != 'policy') {
+			reject(s?.name, null, sprintf("unknown section type '%s' - ignored", s?.type));
 			continue;
+		}
 
 		let v = s.values ?? {};
 

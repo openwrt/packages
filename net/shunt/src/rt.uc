@@ -3,10 +3,12 @@
 // Sends the operations route.uc renders to the kernel over rtnetlink,
 // through ucode-mod-rtnl, where an `ip` process per command used to be.
 //
-// rtnl.request() answers null on success, false when the kernel refused
-// and null again when an attribute did not encode - an `oif` naming a
-// device that is not there yet, the boot-time case. So the return value
-// is not the verdict; rtnl.error() is, and it is null after a success.
+// rtnl.request() answers a bare acknowledgement with null - with true
+// from ucode 2026-10-18 on, which 25.12 does not have - false when the
+// kernel refused, and null again when an attribute did not encode: an
+// `oif` naming a device that is not there yet, the boot-time case. So the
+// return value is not the verdict; rtnl.error() is, and it is null after
+// a success on every version.
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (c) 2026 Dirk Brenken <dev@brenken.org>
