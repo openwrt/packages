@@ -122,7 +122,7 @@ f_mem() {
 # load adblock environment
 #
 f_load() {
-	local cnt bg_pid port filter tcpdump_filter free_mem mem_cores
+	local free_mem mem_cores
 
 	# load adblock config and set debug log file
 	#
@@ -162,7 +162,7 @@ f_load() {
 	# load dns backend and fetch utility
 	#
 	case "${adb_action}" in
-	"report" | "mail") ;;
+	"report" | "mail" | "dump") ;;
 	"search")
 		f_dns
 		;;
@@ -172,55 +172,50 @@ f_load() {
 		;;
 	esac
 
-	# check if reporting is enabled and tcpdump is available
+	# check if reporting is enabled and tcpdump is available,
+	# the capture itself runs as separate procd instance 'report'
 	#
 	if [ "${adb_report}" = "1" ] && [ ! -x "${adb_dumpcmd}" ]; then
 		f_log "info" "please install the package 'tcpdump' or 'tcpdump-mini' to use the reporting feature"
-	elif [ -x "${adb_dumpcmd}" ]; then
-		bg_pid="$("${adb_pgrepcmd}" -nf "${adb_reportdir}/adb_report.pcap")"
-		if [ -n "${bg_pid}" ] && { [ "${adb_report}" = "0" ] || [ "${adb_action}" = "stop" ] || [ "${adb_action}" = "restart" ]; }; then
-			if kill -HUP "${bg_pid}" 2>>"${adb_errorlog}"; then
-				for cnt in 1 2 3; do
-					kill -0 "${bg_pid}" >/dev/null 2>&1 || break
-					sleep 1
-				done
-			fi
-			bg_pid="$("${adb_pgrepcmd}" -nf "${adb_reportdir}/adb_report.pcap")"
-			"${adb_rmcmd}" -f "${adb_reportdir}"/adb_report.pcap*
-		fi
+	elif [ "${adb_report}" = "0" ] || [ "${adb_action}" = "stop" ]; then
+		"${adb_rmcmd}" -f "${adb_reportdir}"/adb_report.pcap* "${adb_reportdir}/adb_report.cfg"
+	fi
+}
 
-		if [ "${adb_report}" = "1" ] && [ -z "${bg_pid}" ] && [ "${adb_action}" != "report" ] && [ "${adb_action}" != "stop" ]; then
-			[ ! -d "${adb_reportdir}" ] && mkdir -p "${adb_reportdir}"
-			if [ -z "${adb_repiface}" ]; then
-				network_get_device adb_repiface "lan"
-				[ -z "${adb_repiface}" ] && network_get_physdev adb_repiface "lan"
-				uci_set adblock global adb_repiface "${adb_repiface:-"any"}"
-				f_uci "adblock"
-			fi
-			for port in ${adb_repport}; do
-				[ -n "${filter}" ] && filter="${filter} or "
-				filter="${filter}(udp port ${port}) or (tcp port ${port})"
-			done
-			tcpdump_filter="(${filter}) and greater 28"
-			[ -n "${adb_repfilter}" ] && tcpdump_filter="${tcpdump_filter} and (${adb_repfilter})"
-			if [ -n "${adb_repiface}" ] && [ -d "${adb_reportdir}" ]; then
-				(
-					"${adb_dumpcmd}" --immediate-mode -nn -p -s0 -i "${adb_repiface}" \
-						"${tcpdump_filter}" \
-						-C "${adb_repchunksize}" -W "${adb_repchunkcnt}" \
-						-w "${adb_reportdir}/adb_report.pcap" >/dev/null 2>&1 &
-				)
-				sleep 1
-				bg_pid="$("${adb_pgrepcmd}" -nf "${adb_reportdir}/adb_report.pcap")"
-				if [ -n "${bg_pid}" ]; then
-					f_log "info" "tcpdump background process started for interface: ${adb_repiface}, port: ${adb_repport}, filter: ${adb_repfilter:-"-"}, dir: ${adb_reportdir}, pid: ${bg_pid}"
-				else
-					f_log "info" "tcpdump background process could not be started, please check the reporting filter: ${adb_repfilter:-"-"}"
-				fi
-			else
-				f_log "info" "please set the reporting interface 'adb_repiface' and reporting directory 'adb_reportdir' manually"
-			fi
+# run the tcpdump capture for reporting
+#
+f_dump() {
+	local port filter cfg
+
+	[ "${adb_report}" != "1" ] || [ ! -x "${adb_dumpcmd}" ] && return 0
+
+	[ ! -d "${adb_reportdir}" ] && [ -d "${adb_reportdir%/*}" ] && mkdir "${adb_reportdir}"
+	if [ -z "${adb_repiface}" ]; then
+		network_get_device adb_repiface "lan"
+		[ -z "${adb_repiface}" ] && network_get_physdev adb_repiface "lan"
+		adb_repiface="${adb_repiface:-"any"}"
+		uci_set adblock global adb_repiface "${adb_repiface}"
+		f_uci "adblock"
+	fi
+	for port in ${adb_repport}; do
+		[ -n "${filter}" ] && filter="${filter} or "
+		filter="${filter}(udp port ${port}) or (tcp port ${port})"
+	done
+	filter="(${filter}) and greater 28"
+	[ -n "${adb_repfilter}" ] && filter="${filter} and (${adb_repfilter})"
+
+	if [ -d "${adb_reportdir}" ]; then
+		cfg="${adb_repiface}|${adb_repport}|${adb_repfilter}|${adb_repchunksize}|${adb_repchunkcnt}"
+		if [ "$("${adb_catcmd}" "${adb_reportdir}/adb_report.cfg" 2>/dev/null)" != "${cfg}" ]; then
+			"${adb_rmcmd}" -f "${adb_reportdir}"/adb_report.pcap*
+			printf '%s\n' "${cfg}" >"${adb_reportdir}/adb_report.cfg"
 		fi
+		f_log "info" "tcpdump capture starting for interface: ${adb_repiface}, port: ${adb_repport}, filter: ${adb_repfilter:-"-"}, dir: ${adb_reportdir}"
+		exec "${adb_dumpcmd}" --immediate-mode -nn -p -s0 -i "${adb_repiface}" "${filter}" \
+			-C "${adb_repchunksize}" -W "${adb_repchunkcnt}" \
+			-w "${adb_reportdir}/adb_report.pcap"
+	else
+		f_log "info" "the reporting directory '${adb_reportdir}' does not exist/is not mounted yet, please set 'adb_reportdir' accordingly"
 	fi
 }
 
@@ -2168,7 +2163,7 @@ f_main() {
 f_report() {
 	local report_raw report_txt content status total start end start_date start_time end_date end_time blocked percent top_list top array item index value key key_list
 	local domain rc map_seen ip request requests iface_v4 iface_v6 ip_v4 ip_v6 map_jsn cnt report_srt report_jsn top_tmpclients top_tmpdomains top_tmpblocked
-	local file jsn resolve="-nn" action="${1}" top_count="${2:-"10"}" res_count="${3:-"50"}" search="${4:-"+"}"
+	local file jsn eflag resolve="-nn" action="${1}" top_count="${2:-"10"}" res_count="${3:-"50"}" search="${4:-"+"}"
 
 	report_raw="${adb_reportdir}/adb_report.raw"
 	report_srt="${adb_reportdir}/adb_report.srt"
@@ -2185,12 +2180,13 @@ f_report() {
 		: >"${report_srt}" >"${report_txt}" >"${report_jsn}" >"${map_jsn}"
 		: >"${top_tmpclients}" >"${top_tmpdomains}" >"${top_tmpblocked}"
 		[ "${adb_represolve}" = "1" ] && resolve=""
+		[ "${adb_repiface}" != "any" ] && eflag="-e"
 		[ "${action}" = "gen" ] && printf '%s\n' "0" >"${adb_rundir}/adblock.report"
 		cnt="1"
 		for file in "${adb_reportdir}/adb_report.pcap"*; do
 			[ -s "${file}" ] || continue
 			(
-				"${adb_dumpcmd}" ${resolve} --immediate-mode -tttt -T domain -r "${file}" 2>/dev/null |
+				"${adb_dumpcmd}" ${resolve} ${eflag} --immediate-mode -tttt -T domain -r "${file}" 2>/dev/null |
 					"${adb_awkcmd}" -v repiface="${adb_repiface}" '
 					BEGIN {
 						pending = 0
@@ -2205,11 +2201,20 @@ f_report() {
 						date = $1
 						split($2, t, ":")
 						time = t[1] ":" t[2] ":" substr(t[3],1,2)
-						interface = repiface
-						client = $4
+						# client/interface detection
+						vlan = ""
+						for (i = 3; i < NF; i++) {
+							if ($i == "vlan") {
+								vlan = $(i+1)
+								sub(/,$/, "", vlan)
+							}
+							if ($i == ">" && $(i+1) ~ /:$/) break
+						}
+						client = $(i-1)
 						if (repiface == "any") {
-							interface = $3
-							client = $6
+							interface = ($3 ~ /^IP6?$/) ? "any" : $3
+						} else {
+							interface = (vlan != "") ? repiface "." vlan : repiface
 						}
 						sub(/\.[0-9]+$/, "", client)
 						domain = $(NF-1)
@@ -2640,6 +2645,9 @@ case "${adb_action}" in
 	;;
 "search")
 	f_search "${2}"
+	;;
+"dump")
+	f_dump
 	;;
 "boot" | "start" | "reload")
 	f_env
