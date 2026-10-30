@@ -162,7 +162,7 @@ start_instance()
 	if [ ! -s "${key}" ]; then
 		# ssh-keygen would ask before replacing an empty file.
 		rm -f "${key}" "${key}.pub"
-		if ! ssh-keygen -q -t rsa -P '' -C "$(uname -n)" -f "${key}" \
+		if ! ssh-keygen -q -t ed25519 -P '' -C "$(uname -n)" -f "${key}" \
 				< /dev/null; then
 			logger -t ripe-atlas -p daemon.err "cannot create ${key}"
 			return 1
