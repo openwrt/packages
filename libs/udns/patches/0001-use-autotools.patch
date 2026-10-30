@@ -4,7 +4,7 @@
 +# Copyright 2016 Yousong Zhou
 +
 +AC_PREREQ([2.67])
-+AC_INIT([libudns], [0.4])
++AC_INIT([libudns], [0.7])
 +AC_CONFIG_HEADERS([config.h])
 +
 +AM_INIT_AUTOMAKE([foreign])
