@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hplip
-PKG_VERSION:=3.25.6
+PKG_VERSION:=3.26.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/hplip
-PKG_HASH:=a6af314a7af0572f2ab6967b2fe68760e64d74628ef0e6237f8504d81047edbe
+PKG_HASH:=5fb2235a9cb6ec07cb4786c4066b151359c301324d54aaabf69ae7eef35606b3
 
 PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>
 PKG_LICENSE:=GPL-2.0 GPL-2.0-or-later
@@ -71,6 +71,11 @@ CONFIGURE_ARGS += \
 	--disable-hpps-install \
 	--disable-cups-drv-install \
 	--enable-lite-build
+
+# hplip adds its own hardening flags. -fstack-clash-protection fails on
+# MIPS16 and -D_FORTIFY_SOURCE=2 overrides the toolchain's setting; leave
+# hardening to the OpenWrt toolchain options instead.
+MAKE_FLAGS += SECURITY_CFLAGS= SECURITY_LDFLAGS=
 
 define Build/Install
 	mkdir -p $(PKG_INSTALL_DIR)/usr/share/sane
