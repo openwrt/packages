@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-werkzeug
-PKG_VERSION:=3.1.8
+PKG_VERSION:=3.1.9
 PKG_RELEASE:=1
 
 PYPI_NAME:=Werkzeug
 PYPI_SOURCE_NAME:=werkzeug
-PKG_HASH:=9bad61a4268dac112f1c5cd4630a56ede601b6ed420300677a869083d70a4c44
+PKG_HASH:=55ca7c70a75689be937aa27f8ff4b018f06ff4838fc73045560bf0f5a1291060
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
