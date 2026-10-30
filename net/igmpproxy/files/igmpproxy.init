@@ -15,11 +15,9 @@ igmp_header() {
 	[ $verbose = "2" ] && logopts="-v"
 	[ $verbose = "3" ] && logopts="-v -v"
 
-	mkdir -p /var/etc
-	rm -f /var/etc/igmpproxy.conf
-	[ $quickleave -gt 0 ] && echo "quickleave" >> /var/etc/igmpproxy.conf
-
-	[ -L /etc/igmpproxy.conf ] || ln -nsf /var/etc/igmpproxy.conf /etc/igmpproxy.conf
+	if [ "$quickleave" -gt 0 ]; then
+		printf 'quickleave\n' >> "$CONFIGFILE" || config_error=1
+	fi
 }
 
 igmp_add_phyint() {
@@ -44,15 +42,24 @@ igmp_add_phyint() {
 	append netdevs "$device"
 
 	[ "$direction" = "upstream" ] && has_upstream=1
+	[ "$direction" = "downstream" ] && has_downstream=1
 
-	echo -e "\nphyint $device $direction ratelimit 0 threshold 1" >> /var/etc/igmpproxy.conf
+	printf '\nphyint %s %s ratelimit 0 threshold 1\n' "$device" "$direction" >> "$CONFIGFILE" || config_error=1
 
 	if [ -n "$altnets" ]; then
 		local altnet
 		for altnet in $altnets; do
-			echo -e "\taltnet $altnet" >> /var/etc/igmpproxy.conf
+			printf '\taltnet %s\n' "$altnet" >> "$CONFIGFILE" || config_error=1
 		done
 	fi
+
+}
+
+igmp_render_config() {
+	local CONFIGFILE="$1"
+
+	config_foreach igmp_header igmpproxy
+	config_foreach igmp_add_phyint phyint
 }
 
 igmp_add_network() {
@@ -119,14 +126,34 @@ service_triggers() {
 }
 
 start_service() {
+	local config_tmp
+
 	has_upstream=
+	has_downstream=
 	netdevs=
 	logopts=
+	config_error=0
 	config_load igmpproxy
 
-	config_foreach igmp_header igmpproxy
-	config_foreach igmp_add_phyint phyint
-	[ -n "$has_upstream" ] || return
+	mkdir -p "${CONFIGFILE%/*}" || return 1
+	config_tmp="$(mktemp "${CONFIGFILE}.XXXXXX")" || return 1
+	igmp_render_config "$config_tmp"
+	if [ "$config_error" -ne 0 ]; then
+		rm -f "$config_tmp"
+		logger -t igmpproxy 'Failed to generate multicast configuration'
+		return 1
+	fi
+	if [ -z "$has_upstream" ] || [ -z "$has_downstream" ]; then
+		rm -f "$config_tmp"
+		return
+	fi
+	# procd can respawn the daemon while an interface event renders this file.
+	# Keep its parser on a complete generation, including during reload.
+	mv -f "$config_tmp" "$CONFIGFILE" || {
+		rm -f "$config_tmp"
+		return 1
+	}
+	[ -L /etc/igmpproxy.conf ] || ln -nsf "$CONFIGFILE" /etc/igmpproxy.conf
 
 	procd_open_instance
 	procd_set_param command $PROG '-n'
