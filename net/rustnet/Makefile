@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rustnet
-PKG_VERSION:=1.6.0
+PKG_VERSION:=1.7.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/domcyrus/rustnet/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=245fc7074d5f142fbf1c798233be86b715b4f2ce3b3cfec10fabdcbbc9345ddb
+PKG_HASH:=9d3f6509da06f832c04c5accc7b777c18f3de8b32c885137c9a1346990694dda
 
 PKG_MAINTAINER:=Jonir Rings <i@jonirrings.com>
 PKG_LICENSE:=Apache-2.0
@@ -45,6 +45,9 @@ endef
 # resolver-v2 host/target feature+rustflags split) is fixed independently
 # via patches/ - see that patch's header comment. See openwrt/packages#24375.
 RUSTC_LDFLAGS+= $(if $(INTL_FULL),-L$(INTL_PREFIX)/lib -lintl)
+
+# Fixes for rustc i128/u128 under aarch64 glibc
+TARGET_CFLAGS+= -D__u128=__uint128_t -D__s128=__int128_t
 
 define Package/rustnet/install
 	$(INSTALL_DIR) $(1)/usr/bin
