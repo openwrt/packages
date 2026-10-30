@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rsyslog
 PKG_VERSION:=8.2606.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
@@ -35,7 +35,7 @@ define Package/rsyslog
   URL:=https://www.rsyslog.com/
   DEPENDS:= \
 	+RSYSLOG_gssapi_krb5:krb5-libs +RSYSLOG_elasticsearch:libcurl \
-	+RSYSLOG_libdbi:libdbi +libestr +libfastjson +RSYSLOG_gnutls:libgnutls \
+	+libestr +libfastjson +RSYSLOG_gnutls:libgnutls \
 	+RSYSLOG_mmdblookup:libmaxminddb +RSYSLOG_mysql:libmysqlclient \
 	+RSYSLOG_omhttp:libcurl +RSYSLOG_openssl:libopenssl \
 	+RSYSLOG_pgsql:libpq +RSYSLOG_libyaml:libyaml +libuuid +zlib
@@ -56,7 +56,6 @@ CONFIGURE_ARGS+= \
 	$(if $(CONFIG_RSYSLOG_gssapi_krb5),--enable-gssapi-krb5) \
 	$(if $(CONFIG_RSYSLOG_mysql),--enable-mysql) \
 	$(if $(CONFIG_RSYSLOG_pgsql),--enable-pgsql) \
-	$(if $(CONFIG_RSYSLOG_libdbi),--enable-libdbi) \
 	$(if $(CONFIG_RSYSLOG_elasticsearch),--enable-elasticsearch) \
 	$(if $(CONFIG_RSYSLOG_omhttp),--enable-omhttp) \
 	$(if $(CONFIG_RSYSLOG_openssl),--enable-openssl) \

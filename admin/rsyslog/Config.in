@@ -22,11 +22,6 @@ if PACKAGE_rsyslog
 		default n
 		help
 		  Enable PostgreSQL support in rsyslog
-	config RSYSLOG_libdbi
-		bool "Enable libdbi support"
-		default n
-		help
-		  Enable libdbi support in rsyslog
 	config RSYSLOG_elasticsearch
 		bool "Enable ElasticSearch module support"
 		default n
