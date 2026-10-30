@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mailsend
 PKG_VERSION:=1.19
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/muquit/mailsend/archive/$(PKG_VERSION)
@@ -23,23 +23,24 @@ PKG_LICENSE_FILES:=COPYRIGHT
 include $(INCLUDE_DIR)/package.mk
 
 define Package/mailsend/default
-	SECTION:=mail
-	CATEGORY:=Mail
-	TITLE:=A command-line mail sender
-	URL:=https://github.com/muquit/mailsend
+  SECTION:=mail
+  CATEGORY:=Mail
+  TITLE:=A command-line mail sender
+  URL:=https://github.com/muquit/mailsend
 endef
 
 define Package/mailsend-nossl
-	$(call Package/mailsend/default)
-	TITLE+= (without SSL)
-	VARIANT:=nossl
+  $(call Package/mailsend/default)
+  TITLE+= (without SSL)
+  VARIANT:=nossl
+  CONFLICTS:=mailsend
 endef
 
 define Package/mailsend
-	$(call Package/mailsend/default)
-	TITLE+= (with SSL)
-	DEPENDS:=+libopenssl
-	VARIANT:=ssl
+  $(call Package/mailsend/default)
+  TITLE+= (with SSL)
+  DEPENDS:=+libopenssl
+  VARIANT:=ssl
 endef
 
 ifeq ($(BUILD_VARIANT),ssl)
