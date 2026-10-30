@@ -72,6 +72,14 @@ network={
 	${eap_workaround:+eap_workaround=1}
 }
 EOF
+
+	# The file carries the 802.1X identity and password, so keep it private.
+	# wpa_supplicant drops privileges and runs as the "network" user since
+	# OpenWrt 21.02, so hand the file to that user instead of making it
+	# world readable.
+	chown network:network "$_config"
+	chmod 600 "$_config"
+
 	ubus wait_for wpa_supplicant
 	ubus call wpa_supplicant config_add "{ \"driver\":\"wired\", \"iface\": \"$ifname\", \"config\": \"$_config\" }"
 }
