@@ -172,7 +172,6 @@ define Package/libavahi-dbus-support
   DEFAULT_VARIANT:=1
   DEPENDS:=+PACKAGE_libavahi-dbus-support:dbus
   TITLE+= (D-Bus support)
-  CONFLICTS:=libavahi-nodbus-support
 endef
 
 define Package/libavahi-nodbus-support

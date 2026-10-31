@@ -39,6 +39,7 @@ define Package/mosquitto-ssl
     DEPENDS+= +libopenssl +MOSQUITTO_LWS:libwebsockets-openssl +MOSQUITTO_DYNAMIC_SECURITY:cJSON
     VARIANT:=ssl
     PROVIDES:=mosquitto
+    DEFAULT_VARIANT:=1
 endef
 
 define Package/mosquitto-nossl
@@ -83,6 +84,7 @@ define Package/mosquitto-client-ssl
     TITLE+= (With SSL support)
     DEPENDS+=+libmosquitto-ssl
     VARIANT:=ssl
+    DEFAULT_VARIANT:=1
 endef
 define Package/mosquitto-client-nossl
     $(call Package/mosquitto-client/default)
@@ -120,6 +122,7 @@ define Package/libmosquitto-ssl
     TITLE+= (With SSL Support)
     DEPENDS+= +libopenssl
     VARIANT=ssl
+    DEFAULT_VARIANT:=1
 endef
 define Package/libmosquitto-nossl
     $(call Package/libmosquitto/default)

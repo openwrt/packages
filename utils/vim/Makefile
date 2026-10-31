@@ -44,7 +44,6 @@ define Package/vim-full
   $(call Package/vim/Default)
   TITLE+= (Normal)
   PROVIDES:=vim
-  CONFLICTS:=vim
   DEPENDS:=+vim-runtime
   EXTRA_DEPENDS:=vim-runtime (=$(PKG_VERSION)-r$(PKG_RELEASE))
 endef
@@ -53,7 +52,6 @@ define Package/vim-fuller
   $(call Package/vim/Default)
   TITLE+= (Huge)
   PROVIDES:=vim vim-full
-  CONFLICTS:=vim vim-full
   DEPENDS:=+vim-runtime
   EXTRA_DEPENDS:=vim-runtime (=$(PKG_VERSION)-r$(PKG_RELEASE))
 endef

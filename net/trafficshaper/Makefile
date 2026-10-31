@@ -38,7 +38,6 @@ define Package/trafficshaper-iptables
   TITLE+= (iptables)
   DEPENDS+= +iptables +IPV6:ip6tables +iptables-mod-conntrack-extra
   VARIANT:=iptables
-  CONFLICTS:=trafficshaper
 endef
 
 define Package/trafficshaper/description

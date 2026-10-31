@@ -47,7 +47,6 @@ endef
 define Package/tor
 $(call Package/tor/Default)
   TITLE+= (full)
-  CONFLICTS:=tor-basic
   PROVIDES:=tor-basic
   VARIANT:=full
 endef

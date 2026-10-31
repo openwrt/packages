@@ -50,7 +50,6 @@ define Package/nfs-kernel-server
 	DEPENDS+= +kmod-fs-nfsd +kmod-fs-nfs +rpcbind +libevent2-core +libreadline
 	VARIANT:=v3
 	USERID:=nfs:nfs
-	CONFLICTS:=nfs-kernel-server-v4
 endef
 
 define Package/nfs-kernel-server/description
@@ -74,7 +73,6 @@ define Package/nfs-utils
 	$(call Package/nfs-utils/Default)
 	TITLE:=NFS mount and umount utils (NFSv3)
 	DEPENDS:=+libtirpc +libuuid
-	CONFLICTS:=nfs-utils-v4
 	VARIANT:=v3
 endef
 
