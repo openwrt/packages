@@ -84,7 +84,7 @@ For a typical setup these few steps are enough to get banIP up and running — s
 | uceprotect1         | spam protection level 1        |    x    |          |                   | [Link](https://www.uceprotect.net/en/index.php)              |
 | uceprotect2         | spam protection level 2        |    x    |          |                   | [Link](https://www.uceprotect.net/en/index.php)              |
 | uceprotect3         | spam protection level 3        |    x    |          |                   | [Link](https://www.uceprotect.net/en/index.php)              |
-| urlhaus             | urlhaus IDS IPs                |         |    x     | tcp, udp: 80, 443 | [Link](https://urlhaus.abuse.ch)                             |
+| urlhaus             | urlhaus malware IPs            |         |    x     | tcp, udp: 80, 443 | [Link](https://urlhaus.abuse.ch)                             |
 | urlvir              | malware related IPs            |         |    x     | tcp, udp: 80, 443 | [Link](https://iplists.firehol.org/?ipset=urlvir)            |
 | webclient           | malware related IPs            |         |    x     | tcp, udp: 80, 443 | [Link](https://iplists.firehol.org/?ipset=firehol_webclient) |
 | voip                | VoIP fraud blocklist           |    x    |          |                   | [Link](https://voipbl.org)                                   |
@@ -239,6 +239,7 @@ The `report` sub-command accepts an output mode: `text` (default, human-readable
 | ban_region              | list   | -                             | Regional Internet Registry (RIR) country selection. Supported regions are: AFRINIC, ARIN, APNIC, LACNIC and RIPE  |
 | ban_country             | list   | -                             | country iso codes for the `country` feed, e.g. `ru`                                                               |
 | ban_countrysplit        | option | -                             | the selected countries are stored in separate Sets                                                                |
+| ban_authkey             | option | -                             | auth-key for feeds with an `{authkey}` URL placeholder, e.g. the abuse.ch key for `urlhaus`                       |
 | ban_blockpolicy         | option | drop                          | `drop` packets silently on input and forwardwan chains or actively `reject` the traffic                           |
 | ban_feedin              | list   | -                             | limit the selected feeds to the inbound chain (wan-input and wan-forward)                                         |
 | ban_feedout             | list   | -                             | limit the selected feeds to the outbound chain (lan-forward)                                                      |
@@ -662,6 +663,8 @@ The `country` and `asn` feeds are special: banIP fetches one file per selected c
 Pointing `url_4` and `url_6` at the same file is the dual-stack case described above, so each country file is downloaded only once and processed for both address families. This source includes GeoLite2 data created by MaxMind, available from https://www.maxmind.com - its use is subject to the MaxMind GeoLite End User License Agreement.
 
 Keep in mind that alternative sources come with their own license terms, which you have to check yourself, and that they differ in semantics (geolocation vs. RIR allocation), granularity (set sizes and memory footprint may grow considerably) and code coverage (a missing country file only logs a download failure for that code).
+
+Some feed sources require a personal API or auth-key in the download URL. Set the key with the `ban_authkey` option (LuCI: Feed Selection tab), banIP replaces the `{authkey}` placeholder in the feed URL with this key, so it can be used in custom feeds as well. As long as no valid key is set (allowed characters: `A-Z a-z 0-9 _ -`), feeds with this placeholder are skipped with an info message in the log. Download utilities may print the full URL in the debug error log, so banIP masks the key there as `<authkey>`. Only one key is supported, so all feeds with this placeholder share it. The shipped `urlhaus` feed uses this mechanism and requires a free abuse.ch Auth-Key, available at https://auth.abuse.ch - the same key also works for other abuse.ch services like ThreatFox.
 
 **The `rule` field**  
 The rule consists of max. 4 individual, space separated parameters:
