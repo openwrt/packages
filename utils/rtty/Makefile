@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtty
 PKG_VERSION:=9.1.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL=https://github.com/zhaojh329/rtty/releases/download/v$(PKG_VERSION)
@@ -31,11 +31,12 @@ define Package/rtty/Default
   DEPENDS:= +USE_GLIBC:libcrypt-compat +libev +libinih $(2)
   VARIANT:=$(1)
   PROVIDES:=rtty
+  CONFLICTS:=$(3)
 endef
 
-Package/rtty-openssl=$(call Package/rtty/Default,openssl,+PACKAGE_rtty-openssl:libopenssl)
-Package/rtty-wolfssl=$(call Package/rtty/Default,wolfssl,+PACKAGE_rtty-wolfssl:libwolfssl)
-Package/rtty-mbedtls=$(call Package/rtty/Default,mbedtls,+PACKAGE_rtty-mbedtls:libmbedtls +PACKAGE_rtty-mbedtls:zlib)
+Package/rtty-openssl=$(call Package/rtty/Default,openssl,+PACKAGE_rtty-openssl:libopenssl,rtty-wolfssl rtty-mbedtls rtty-nossl)
+Package/rtty-wolfssl=$(call Package/rtty/Default,wolfssl,+PACKAGE_rtty-wolfssl:libwolfssl,rtty-mbedtls rtty-nossl)
+Package/rtty-mbedtls=$(call Package/rtty/Default,mbedtls,+PACKAGE_rtty-mbedtls:libmbedtls +PACKAGE_rtty-mbedtls:zlib,rtty-nossl)
 Package/rtty-nossl=$(call Package/rtty/Default,nossl)
 
 define Package/rtty-openssl/conffiles
