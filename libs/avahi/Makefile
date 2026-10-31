@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=avahi
 PKG_VERSION:=0.9_rc5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-0.9-rc5.tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/avahi/avahi/tar.gz/v0.9-rc5?
@@ -87,7 +87,7 @@ define Package/avahi-dbus-daemon
   DEPENDS:=+libavahi-dbus-support +libexpat +librt +libdaemon
   TITLE+= (daemon)
   USERID:=avahi=105:avahi=105
-  CONFLICTS:=libavahi-nodbus-support
+  CONFLICTS:=avahi-nodbus-daemon libavahi-nodbus-support
 endef
 
 define Package/avahi-nodbus-daemon
