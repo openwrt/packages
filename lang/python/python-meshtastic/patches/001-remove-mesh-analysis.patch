@@ -1,0 +1,21 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Austin Lane <vidplace7@gmail.com>
+Date: Wed, 16 Sep 2026 20:02:45 -0400
+Subject: [PATCH] Remove the mesh-analysis console script
+
+The mesh-analysis tool is an analysis UI built on
+dash, plotly and pyarrow. None of those are packaged for
+OpenWrt or defined in the package dependencies.
+The generated /usr/bin/mesh-analysis entrypoint can never run.
+Drop it so the package does not ship a broken executable.
+
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -73,7 +73,6 @@ analysis = ["dash", "dash-bootstrap-comp
+ [tool.poetry.scripts]
+ meshtastic = "meshtastic.__main__:main"
+ mesh-tunnel = "meshtastic.__main__:tunnelMain [tunnel]"
+-mesh-analysis = "meshtastic.analysis.__main__:main [analysis]"
+ 
+ # "Poe the poet" (optional) provides an easy way of running non python tools inside the poetry virtualenv
+ # if you would like to use it run "pipx install poe"
