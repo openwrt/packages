@@ -9,29 +9,31 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=librespeed-cli-rust
 PKG_VERSION:=1.2.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/librespeed/speedtest-cli-rust/tar.gz/refs/tags/v$(PKG_VERSION)?
-PKG_HASH:=14362549f3f210b6aa6cd1f06bf00e115f9f82519cff756264718f8f1bd53b2b
-PKG_BUILD_DIR:=$(BUILD_DIR)/speedtest-cli-rust-$(PKG_VERSION)
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-vendor.tar.zst
+PKG_SOURCE_URL:=@OPENWRT
+PKG_SOURCE_PROTO:=cargo-vendor-github
+PKG_VENDOR_REPO:=librespeed/speedtest-cli-rust
+PKG_VENDOR_TAG:=refs/tags/v$(PKG_VERSION)
+PKG_VENDOR_HASH:=14362549f3f210b6aa6cd1f06bf00e115f9f82519cff756264718f8f1bd53b2b
+PKG_HASH:=1d5cedb116373fb8e686b42d66d3c4250e5ef7b79567a2d69c1e72eb7759403b
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=LGPL-3.0-only
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_DEPENDS:=rust/host
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
-include ../../lang/rust/rust-package.mk
+include $(INCLUDE_DIR)/rust-package.mk
 
 define Package/librespeed-cli-rust
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Command line client for LibreSpeed (Rust)
   URL:=https://github.com/librespeed/speedtest-cli-rust
-  DEPENDS:=$(RUST_ARCH_DEPENDS) +libopenssl
+  DEPENDS:=$(RUST_PKG_DEPENDS) +libopenssl
   PROVIDES:=@librespeed-cli
   CONFLICTS:=librespeed-cli
   DEFAULT_VARIANT:=1
