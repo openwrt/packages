@@ -35,7 +35,8 @@ keepalived_dump() {
 
 	pids=$(pidof /usr/sbin/keepalived)
 	if [ -n "$pids" ]; then
-		kill -37 "$pids" > /dev/null 2>&1
+		kill -"$(/usr/sbin/keepalived --signum=JSON)" "$pids" > /dev/null 2>&1
+		sleep 1
 		json_load "{ \"status\" :  $(cat $stats_file) }"
 	else
 		json_init
