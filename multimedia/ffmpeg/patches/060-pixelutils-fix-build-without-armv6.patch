@@ -1,0 +1,25 @@
+From 2b1c0e7f4a3d9c8e5f6a7b8c9d0e1f2a3b4c5d6e Mon Sep 17 00:00:00 2001
+From: Dragos Cosmin <zahariadragoscosmin@hotmail.com>
+Subject: [PATCH] avutil/pixelutils: fix build on ARM without ARMv6
+
+arm/pixelutils.h is only included when ARCH_ARM && HAVE_ARMV6, but
+ff_pixelutils_sad_init_arm() was called for any ARCH_ARM, breaking
+the build for ARMv4/ARMv5 targets (e.g. Faraday FA526):
+
+  libavutil/pixelutils.c: error: implicit declaration of function
+  'ff_pixelutils_sad_init_arm'
+
+Assisted-by: Claude:claude-opus-5-5
+Signed-off-by: Dragos Cosmin <zahariadragoscosmin@hotmail.com>
+---
+--- a/libavutil/pixelutils.c
++++ b/libavutil/pixelutils.c
+@@ -98,7 +98,7 @@ av_pixelutils_sad_fn av_pixelutils_get_s
+ 
+ #if ARCH_AARCH64 && HAVE_NEON
+     ff_pixelutils_sad_init_aarch64(sad, aligned);
+-#elif ARCH_ARM
++#elif ARCH_ARM && HAVE_ARMV6
+     ff_pixelutils_sad_init_arm(sad, aligned);
+ #elif ARCH_MIPS && HAVE_MSA
+     ff_pixelutils_sad_init_mips(sad, aligned);
