@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libwebsockets
 PKG_VERSION:=4.5.8
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
@@ -56,7 +56,7 @@ endef
 define Package/libwebsockets-openssl
 	$(call Package/libwebsockets/Default)
 	TITLE += (OpenSSL)
-	DEPENDS += +libopenssl
+  DEPENDS += +libopenssl +@OPENSSL_WITH_DEPRECATED
 	VARIANT:=openssl
 	CONFLICTS:=libwebsockets-full
 endef
@@ -73,7 +73,7 @@ endef
 define Package/libwebsockets-full
 	$(call Package/libwebsockets/Default)
 	TITLE += (Full - OpenSSL, libuv, plugins, CGI)
-	DEPENDS += +libopenssl +libuv
+  DEPENDS += +libopenssl +libuv +@OPENSSL_WITH_DEPRECATED
 	VARIANT:=full
 	PROVIDES:=libwebsockets libwebsockets-openssl
 endef
