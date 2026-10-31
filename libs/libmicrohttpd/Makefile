@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmicrohttpd
 PKG_VERSION:=1.0.10
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/libmicrohttpd
@@ -36,6 +36,7 @@ $(call Package/libmicrohttpd/default)
   TITLE:=GNU libmicrohttpd is an embedded HTTP server library
   VARIANT:=nossl
   DEFAULT_VARIANT:=1
+  CONFLICTS:=libmicrohttpd-ssl
   PROVIDES:=libmicrohttpd
 endef
 
