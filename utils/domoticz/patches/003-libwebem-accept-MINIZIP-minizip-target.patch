@@ -1,0 +1,27 @@
+From 1b41f66000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: David Woodhouse <dwmw2@infradead.org>
+Date: Fri, 31 Oct 2026 10:30:00 +0000
+Subject: [PATCH] libwebem: accept the MINIZIP::minizip imported target name
+
+The minizip cmake config shipped by minizip 4.x exports its imported
+target in an uppercase MINIZIP:: namespace; webem only looked for
+minizip::minizip and failed at generate time despite minizip_FOUND.
+
+--- a/extern/libwebem/CMakeLists.txt
++++ b/extern/libwebem/CMakeLists.txt
+@@ -207,10 +207,14 @@ if(WEBEM_ENABLE_ZIP)
+         target_link_libraries(webem PRIVATE minizip)
+     elseif(TARGET minizip::minizip)
+         target_link_libraries(webem PRIVATE minizip::minizip)
++    elseif(TARGET MINIZIP::minizip)
++        target_link_libraries(webem PRIVATE MINIZIP::minizip)
+     else()
+         find_package(minizip QUIET)
+-        if(minizip_FOUND)
++        if(TARGET minizip::minizip)
+             target_link_libraries(webem PRIVATE minizip::minizip)
++        elseif(TARGET MINIZIP::minizip)
++            target_link_libraries(webem PRIVATE MINIZIP::minizip)
+         else()
+             message(WARNING "minizip not found - disabling ZIP support. Install minizip to enable it.")
+             target_compile_definitions(webem PUBLIC WEBSERVER_DONT_USE_ZIP)

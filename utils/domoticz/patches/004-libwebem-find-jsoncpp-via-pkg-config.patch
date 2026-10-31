@@ -1,0 +1,35 @@
+From 344e73e000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: David Woodhouse <dwmw2@infradead.org>
+Date: Fri, 31 Oct 2026 10:31:00 +0000
+Subject: [PATCH] libwebem: fall back to pkg-config to find jsoncpp
+
+Distros (OpenWrt among them) may ship jsoncpp with only a pkg-config
+file. Config-mode find_package() then finds nothing - or worse, when
+cross-compiling, finds the build host's config and links a foreign-
+architecture library. Try pkg-config, which handles cross-compilation
+correctly, before resorting to FetchContent.
+
+--- a/extern/libwebem/CMakeLists.txt
++++ b/extern/libwebem/CMakeLists.txt
+@@ -171,9 +171,20 @@ elseif(TARGET jsoncpp_lib)
+     target_link_libraries(webem PUBLIC jsoncpp_lib)
+ else()
+     find_package(jsoncpp QUIET)
+-    if(jsoncpp_FOUND)
++    if(NOT TARGET jsoncpp_lib)
++        # No usable cmake config for jsoncpp (when cross-compiling, a host
++        # config must not count); pkg-config gets cross-compilation right.
++        find_package(PkgConfig QUIET)
++        if(PKG_CONFIG_FOUND)
++            pkg_check_modules(JSONCPP IMPORTED_TARGET jsoncpp)
++        endif()
++    endif()
++    if(TARGET jsoncpp_lib)
+         message(STATUS "webem: using system jsoncpp")
+         target_link_libraries(webem PUBLIC jsoncpp_lib)
++    elseif(TARGET PkgConfig::JSONCPP)
++        message(STATUS "webem: using pkg-config jsoncpp")
++        target_link_libraries(webem PUBLIC PkgConfig::JSONCPP)
+     else()
+         message(STATUS "webem: fetching jsoncpp 1.9.6 via FetchContent")
+         set(JSONCPP_WITH_TESTS              OFF CACHE BOOL "" FORCE)
