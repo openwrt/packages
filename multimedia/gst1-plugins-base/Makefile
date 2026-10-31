@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-base
 PKG_VERSION:=1.28.7
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
 PKG_SOURCE:=gst-plugins-base-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gst-plugins-base
@@ -27,12 +27,14 @@ include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/meson.mk
 
 PKG_CONFIG_DEPENDS:= \
+	CONFIG_PACKAGE_gst1-device-monitor \
 	CONFIG_PACKAGE_gst1-mod-alsa \
 	CONFIG_PACKAGE_gst1-mod-app \
 	CONFIG_PACKAGE_gst1-mod-audioconvert \
 	CONFIG_PACKAGE_gst1-mod-audiorate \
 	CONFIG_PACKAGE_gst1-mod-audioresample \
 	CONFIG_PACKAGE_gst1-mod-audiotestsrc \
+	CONFIG_PACKAGE_gst1-mod-encoding \
 	CONFIG_PACKAGE_gst1-mod-playback \
 	CONFIG_PACKAGE_gst1-mod-gio \
 	CONFIG_PACKAGE_gst1-mod-ogg \
@@ -61,6 +63,16 @@ endef
 
 define Package/gstreamer1-base/description/Default
  GStreamer open source multimedia framework
+endef
+
+define Package/gst1-device-monitor
+  $(call Package/gstreamer1-base/Default)
+  TITLE+= device discovery utility
+endef
+
+define Package/gst1-device-monitor/description
+  List devices, their capabilities and GStreamer source properties using
+  the upstream gst-device-monitor-1.0 utility.
 endef
 
 
@@ -169,7 +181,7 @@ MESON_ARGS += \
 	\
 	-Dexamples=disabled \
 	-Dtests=disabled \
-	-Dtools=disabled \
+	-Dtools=$(if $(CONFIG_PACKAGE_gst1-device-monitor),en,dis)abled \
 	-Dintrospection=disabled \
 	-Dnls=enabled \
 	-Dorc=disabled \
@@ -219,6 +231,12 @@ endef
 
 define Package/gstreamer1-plugins-base/install
   true
+endef
+
+define Package/gst1-device-monitor/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gst-device-monitor-$(GST_VERSION) \
+		$(1)/usr/bin/
 endef
 
 # 1: short name
@@ -338,3 +356,4 @@ $(eval $(call GstBuildPlugin,vorbis,Vorbis,audio tag,ogg,+libvorbis))
 
 $(eval $(call BuildPackage,gstreamer1-plugins-base))
 $(eval $(call BuildPackage,gst1-plugins-base))
+$(eval $(call BuildPackage,gst1-device-monitor))

@@ -1,0 +1,160 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Thu, 29 Oct 2026 18:34:34 +0000
+Subject: [PATCH] rtsp: allocate the message arrays on the heap
+
+gst_rtsp_connection_send_messages_usec(), gst_rtsp_source_dispatch_write(),
+gst_rtsp_watch_write_serialized_messages() and
+gst_rtsp_watch_send_messages() allocate the serialized messages, the
+output vectors and the map infos with g_newa(). Their sizes grow with
+the number of RTP packets in a frame: a 4K H.265 frame of 1.5 MB is
+1100 packets and needs about 250 KB on the stack of the server's send
+thread. On systems whose default thread stack is small, such as musl
+with 128 KiB, the stack pointer jumps past the guard page into the
+neighbouring heap mapping and the arrays overwrite the GstBuffers of
+the very packets being sent, which shows up as GST_IS_BUFFER and
+GST_MINI_OBJECT_IS_LOCKABLE assertions and a crash at PLAY. Use the
+heap for the four arrays and free them on every exit.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ gst-libs/gst/rtsp/gstrtspconnection.c | 48 ++++++++++++++++-----------
+ 1 file changed, 29 insertions(+), 19 deletions(-)
+
+--- a/gst-libs/gst/rtsp/gstrtspconnection.c
++++ b/gst-libs/gst/rtsp/gstrtspconnection.c
+@@ -2127,9 +2127,7 @@ gst_rtsp_connection_send_messages_usec (
+   g_return_val_if_fail (conn != NULL, GST_RTSP_EINVAL);
+   g_return_val_if_fail (messages != NULL || n_messages == 0, GST_RTSP_EINVAL);
+ 
+-  serialized_messages = g_newa (GstRTSPSerializedMessage, n_messages);
+-  memset (serialized_messages, 0,
+-      sizeof (GstRTSPSerializedMessage) * n_messages);
++  serialized_messages = g_new0 (GstRTSPSerializedMessage, n_messages);
+ 
+   for (i = 0, n_vectors = 0, n_memories = 0, bytes_to_write = 0; i < n_messages;
+       i++) {
+@@ -2202,8 +2200,8 @@ gst_rtsp_connection_send_messages_usec (
+     }
+   }
+ 
+-  vectors = g_newa (GOutputVector, n_vectors);
+-  map_infos = n_memories ? g_newa (GstMapInfo, n_memories) : NULL;
++  vectors = g_new (GOutputVector, n_vectors);
++  map_infos = n_memories ? g_new (GstMapInfo, n_memories) : NULL;
+ 
+   for (i = 0, j = 0, k = 0; i < n_messages; i++) {
+     vectors[j].buffer = serialized_messages[i].data_is_data_header ?
+@@ -2266,6 +2264,9 @@ gst_rtsp_connection_send_messages_usec (
+ 
+     g_free (serialized_messages[i].data);
+   }
++  g_free (map_infos);
++  g_free (vectors);
++  g_free (serialized_messages);
+ 
+   return res;
+ 
+@@ -2274,6 +2275,7 @@ no_message:
+     for (i = 0; i < n_messages; i++) {
+       gst_rtsp_serialized_message_clear (&serialized_messages[i]);
+     }
++    g_free (serialized_messages);
+     g_warning ("Wrong message");
+     return GST_RTSP_EINVAL;
+   }
+@@ -4307,11 +4309,9 @@ gst_rtsp_source_dispatch_write (GPollabl
+       }
+     }
+ 
+-    vectors = g_newa (GOutputVector, n_vectors);
+-    map_infos = n_memories ? g_newa (GstMapInfo, n_memories) : NULL;
+-    ids = n_ids ? g_newa (guint, n_ids + 1) : NULL;
+-    if (ids)
+-      memset (ids, 0, sizeof (guint) * (n_ids + 1));
++    vectors = g_new (GOutputVector, n_vectors);
++    map_infos = n_memories ? g_new (GstMapInfo, n_memories) : NULL;
++    ids = n_ids ? g_new0 (guint, n_ids + 1) : NULL;
+ 
+     for (i = 0, j = 0, n_mmap = 0, l = 0, bytes_to_write = 0; i < n_messages;
+         i++) {
+@@ -4460,16 +4460,21 @@ gst_rtsp_source_dispatch_write (GPollabl
+ 
+     /* notify all messages that were successfully written */
+     if (ids) {
+-      while (*ids) {
++      guint *id = ids;
++
++      while (*id) {
+         /* only decrease the counter for messages that have an id. Only
+          * the last message of a messages chunk is counted */
+         watch->messages_count--;
+ 
+         if (watch->funcs.message_sent)
+-          watch->funcs.message_sent (watch, *ids, watch->user_data);
+-        ids++;
++          watch->funcs.message_sent (watch, *id, watch->user_data);
++        id++;
+       }
+     }
++    g_free (ids);
++    g_free (map_infos);
++    g_free (vectors);
+ 
+     if (res == GST_RTSP_EINTR) {
+       goto write_blocked;
+@@ -4778,8 +4783,8 @@ gst_rtsp_watch_write_serialized_messages
+       }
+     }
+ 
+-    vectors = g_newa (GOutputVector, n_vectors);
+-    map_infos = n_memories ? g_newa (GstMapInfo, n_memories) : NULL;
++    vectors = g_new (GOutputVector, n_vectors);
++    map_infos = n_memories ? g_new (GstMapInfo, n_memories) : NULL;
+ 
+     for (i = 0, j = 0, k = 0, bytes_to_write = 0; i < n_messages; i++) {
+       vectors[j].buffer = messages[i].data_is_data_header ?
+@@ -4827,6 +4832,8 @@ gst_rtsp_watch_write_serialized_messages
+     for (k = 0; k < n_memories; k++) {
+       gst_memory_unmap (map_infos[k].memory, &map_infos[k]);
+     }
++    g_free (map_infos);
++    g_free (vectors);
+ 
+     if (res != GST_RTSP_EINTR) {
+       /* actual error or done completely */
+@@ -5073,27 +5080,30 @@ gst_rtsp_watch_send_messages (GstRTSPWat
+     guint n_messages, guint * id)
+ {
+   GstRTSPSerializedMessage *serialized_messages;
++  GstRTSPResult res;
+   gint i;
+ 
+   g_return_val_if_fail (watch != NULL, GST_RTSP_EINVAL);
+   g_return_val_if_fail (messages != NULL || n_messages == 0, GST_RTSP_EINVAL);
+ 
+-  serialized_messages = g_newa (GstRTSPSerializedMessage, n_messages);
+-  memset (serialized_messages, 0,
+-      sizeof (GstRTSPSerializedMessage) * n_messages);
++  serialized_messages = g_new0 (GstRTSPSerializedMessage, n_messages);
+ 
+   for (i = 0; i < n_messages; i++) {
+     if (!serialize_message (watch->conn, &messages[i], &serialized_messages[i]))
+       goto error;
+   }
+ 
+-  return gst_rtsp_watch_write_serialized_messages (watch, serialized_messages,
++  res = gst_rtsp_watch_write_serialized_messages (watch, serialized_messages,
+       n_messages, id);
++  g_free (serialized_messages);
++
++  return res;
+ 
+ error:
+   for (i = 0; i < n_messages; i++) {
+     gst_rtsp_serialized_message_clear (&serialized_messages[i]);
+   }
++  g_free (serialized_messages);
+ 
+   return GST_RTSP_EINVAL;
+ }

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-bad
 PKG_VERSION:=1.28.7
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=gst-plugins-bad-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gst-plugins-bad/
@@ -21,6 +21,8 @@ PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
 PKG_LICENSE:=LGPL-2.1-or-later GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING.LIB COPYING
 PKG_CPE_ID:=cpe:/a:freedesktop:gst-plugins-bad
+
+PKG_CONFIG_DEPENDS += CONFIG_PACKAGE_gst1-mod-unixfd
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -152,6 +154,7 @@ MESON_ARGS += \
 	$(call GST_COND_SELECT,subenc) \
 	$(call GST_COND_SELECT,switchbin) \
 	$(call GST_COND_SELECT,timecode) \
+	$(call GST_COND_SELECT,unixfd) \
 	-Dvideofilters=$(if $(CONFIG_PACKAGE_gst1-mod-videofiltersbad),en,dis)abled \
 	$(call GST_COND_SELECT,videoframe_audiolevel) \
 	-Dvideoparsers=$(if $(CONFIG_PACKAGE_gst1-mod-videoparsersbad),en,dis)abled \
@@ -429,6 +432,7 @@ $(eval $(call GstBuildPlugin,speed,speed support,audio,,))
 $(eval $(call GstBuildPlugin,subenc,subenc support,controller,,))
 $(eval $(call GstBuildPlugin,switchbin,switchbin support,,,))
 $(eval $(call GstBuildPlugin,timecode,timecode support,,,))
+$(eval $(call GstBuildPlugin,unixfd,Unix file descriptor transport support,allocators,,))
 $(eval $(call GstBuildPlugin,v4l2codecs,V4L2 stateless codecs support,codecs,,+libgudev))
 $(eval $(call GstBuildPlugin,videofiltersbad,videofiltersbad support,,,))
 $(eval $(call GstBuildPlugin,videoframe_audiolevel,videoframe_audiolevel support,,,))
