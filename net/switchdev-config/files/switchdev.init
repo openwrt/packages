@@ -1,0 +1,114 @@
+#!/bin/sh /etc/rc.common
+# SPDX-License-Identifier: GPL-2.0-only
+# Apply /etc/config/switchdev: port mirroring and rate limits through tc,
+# static FDB entries through bridge. Rules use skip_sw, so a setting the
+# switch cannot offload fails instead of falling back to the CPU.
+
+START=25
+USE_PROCD=1
+
+STATE=/var/run/switchdev
+
+log() {
+	logger -t switchdev "$*"
+}
+
+run() {
+	local err
+
+	err=$("$@" 2>&1 >/dev/null) || log "failed: $* ($err)"
+}
+
+clear_state() {
+	local dev line
+
+	[ -f "$STATE.clsact" ] && for dev in $(cat "$STATE.clsact"); do
+		tc qdisc del dev "$dev" clsact 2>/dev/null
+	done
+	[ -f "$STATE.root" ] && for dev in $(cat "$STATE.root"); do
+		tc qdisc del dev "$dev" root 2>/dev/null
+	done
+	[ -f "$STATE.fdb" ] && while read -r line; do
+		bridge fdb del $line 2>/dev/null
+	done < "$STATE.fdb"
+	rm -f "$STATE.clsact" "$STATE.root" "$STATE.fdb"
+}
+
+ensure_clsact() {
+	grep -qx "$1" "$STATE.clsact" 2>/dev/null && return
+	run tc qdisc add dev "$1" clsact
+	echo "$1" >> "$STATE.clsact"
+}
+
+apply_mirror() {
+	local cfg="$1" enabled target direction sources src dir
+
+	config_get_bool enabled "$cfg" enabled 1
+	config_get target "$cfg" target
+	config_get direction "$cfg" direction both
+	config_get sources "$cfg" source
+	[ "$enabled" = 1 ] && [ -n "$target" ] || return
+
+	for src in $sources; do
+		[ "$src" = "$target" ] && continue
+		ensure_clsact "$src"
+		for dir in ingress egress; do
+			[ "$direction" = both ] || [ "$direction" = "$dir" ] || continue
+			run tc filter add dev "$src" "$dir" matchall skip_sw \
+				action mirred egress mirror dev "$target"
+		done
+	done
+}
+
+apply_ratelimit() {
+	local cfg="$1" enabled port ingress egress burst
+
+	config_get_bool enabled "$cfg" enabled 1
+	config_get port "$cfg" port
+	config_get ingress "$cfg" ingress
+	config_get egress "$cfg" egress
+	config_get burst "$cfg" burst 32k
+	[ "$enabled" = 1 ] && [ -n "$port" ] || return
+
+	if [ -n "$ingress" ] && [ "$ingress" -gt 0 ]; then
+		ensure_clsact "$port"
+		run tc filter add dev "$port" ingress protocol all flower skip_sw \
+			action police rate "${ingress}mbit" burst "$burst" conform-exceed drop/ok
+	fi
+
+	if [ -n "$egress" ] && [ "$egress" -gt 0 ]; then
+		run tc qdisc replace dev "$port" root tbf rate "${egress}mbit" burst "$burst" latency 1ms
+		echo "$port" >> "$STATE.root"
+	fi
+}
+
+apply_fdb() {
+	local cfg="$1" mac port vlan args
+
+	config_get mac "$cfg" mac
+	config_get port "$cfg" port
+	config_get vlan "$cfg" vlan
+	[ -n "$mac" ] && [ -n "$port" ] || return
+
+	args="$mac dev $port master static${vlan:+ vlan $vlan}"
+	run bridge fdb replace $args
+	echo "$args" >> "$STATE.fdb"
+}
+
+start_service() {
+	clear_state
+	config_load switchdev
+	config_foreach apply_fdb fdb
+	config_foreach apply_mirror mirror
+	config_foreach apply_ratelimit ratelimit
+}
+
+stop_service() {
+	clear_state
+}
+
+service_triggers() {
+	procd_add_reload_trigger switchdev
+	# ports leave and rejoin the bridge when netifd reloads, which drops FDB entries
+	procd_add_raw_trigger "interface.*.up" 2000 /etc/init.d/switchdev reload
+}
