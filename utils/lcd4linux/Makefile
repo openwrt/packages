@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lcd4linux
-PKG_RELEASE:=11
+PKG_RELEASE:=12
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/feckert/lcd4linux
@@ -156,6 +156,7 @@ $(call Package/lcd4linux/Default)
   MENU:=1
   PROVIDES:=lcd4linux
   VARIANT=custom
+  CONFLICTS:=lcd4linux-full
 endef
 
 define Package/lcd4linux-custom/config
