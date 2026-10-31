@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gummiboot
 PKG_VERSION:=48.1
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://dev.alpinelinux.org/archive/gummiboot/
@@ -19,6 +19,8 @@ PKG_BUILD_DEPENDS:=gnu-efi
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+
+PKG_DT_RELR:=0
 
 include $(INCLUDE_DIR)/package.mk
 
