@@ -1,0 +1,17 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] drop objects catchall blocking real targets
+
+--- a/quickassist/build_system/build_files/OS/linux_2.6_kernel_space_rules.mk
++++ b/quickassist/build_system/build_files/OS/linux_2.6_kernel_space_rules.mk
+@@ -58,9 +58,6 @@
+ # 
+ #  version: QAT1.5.L.1.13.0-19
+ 
+-$(OBJECTS): 
+-	@echo Error: $@: To get object files in kernel space, you need to build a static library or a module;
+-
+ ifndef SOURCES
+ obj-m+=$(OUTPUT_NAME).o
+ $(OUTPUT_NAME)-objs := $(patsubst %.c,%.o, $(MODULE_SOURCES)) $(ADDITIONAL_KERNEL_LIBS)
