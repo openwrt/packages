@@ -99,6 +99,7 @@ ban_devup=""
 ban_fetchcmd=""
 ban_fetchparm=""
 ban_fetchinsecure=""
+ban_authkey=""
 ban_fetchretry="5"
 ban_rdapparm=""
 ban_etagparm=""
@@ -1001,7 +1002,7 @@ f_skipfeed() {
 	return 0
 }
 
-# build a country/asn feed url from a template
+# build a feed url from a template (country, asn, authkey)
 #
 f_feedurl() {
 	local url="${1}" key="${2}" value="${3}"
@@ -1014,6 +1015,7 @@ f_feedurl() {
 		case "${key}" in
 		"country") printf '%s%s-aggregated.zone' "${url}" "${value}" ;;
 		"asn") printf '%sAS%s' "${url}" "${value}" ;;
+		*) printf '%s' "${url}" ;;
 		esac
 		;;
 	esac
