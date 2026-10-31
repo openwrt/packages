@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mtr
 PKG_VERSION:=0.95
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/traviscross/mtr/tar.gz/v$(PKG_VERSION)?
@@ -45,6 +45,7 @@ define Package/mtr-nojson
 	TITLE+= Without JSON
 	VARIANT:=nojson
 	DEFAULT_VARIANT:=1
+	CONFLICTS:=mtr-json
 endef
 
 define Package/mtr-json
