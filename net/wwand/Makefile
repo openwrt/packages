@@ -25,12 +25,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wwand
-PKG_VERSION:=1.6.9
+PKG_VERSION:=1.8.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ddimension/wwand/tar.gz/refs/tags/v$(PKG_VERSION)?
-PKG_HASH:=8b509e2f26103dc4a3c2099c1cf82f72d02c639eba194e0835d774572ae88d50
+PKG_HASH:=d9dff7d4ffd6ea42fdffe9b6a614b642e0c18683435735c73691eac5c91efcac
 
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=LICENSE
@@ -76,7 +76,7 @@ UCDIR:=/usr/share/ucode/wwand
 WWAND_BASE_UC:=apndb.uc atcmd.uc atcmd_parse.uc atport.uc backend.uc board.uc \
 	carrier_config.uc \
 	client.uc config.uc config_check.uc context_common.uc context_monitor_qmi.uc \
-	ctx_settings.uc daemon.uc deps.uc discovery.uc hwops.uc log.uc modem_common.uc \
+	ctx_settings.uc daemon.uc deps.uc discovery.uc fcc_fibocom.uc hwops.uc log.uc modem_common.uc \
 	modem_datapath_qmi.uc modem_init_qmi.uc modem_quirks.uc modeswitch.uc plugins.uc \
 	ncm_vendors.uc netlink.uc netsel_ops.uc protocol_switch.uc reconnect.uc \
 	recovery.uc regdetail.uc sim.uc sim_plmn.uc simops.uc siminventory.uc sms.uc sms_pdu.uc \
@@ -84,8 +84,8 @@ WWAND_BASE_UC:=apndb.uc atcmd.uc atcmd_parse.uc atport.uc backend.uc board.uc \
 	version.uc \
 	wwandctl_fmt.uc
 WWAND_BASE_CODEC:=arfcn_bands.uc hex.uc qmux.uc tlv.uc
-WWAND_BASE_SCHEMA:=cat.uc ctl.uc dms.uc dsd.uc loc.uc loc_lazy.uc merge.uc nas.uc \
-	pdc.uc rat.uc tmd.uc uim.uc wda.uc wds.uc wms.uc wms_lazy.uc
+WWAND_BASE_SCHEMA:=cat.uc ctl.uc dms.uc dsd.uc merge.uc nas.uc pdc.uc rat.uc \
+	tmd.uc uim.uc wda.uc wds.uc wms.uc wms_lazy.uc
 
 # Readable .uc source is what ships by default, so modules can be edited live
 # under /usr/share/ucode/wwand and tracebacks carry source line numbers;
@@ -157,6 +157,10 @@ endef
 # no place in a general package feed, so this packaging does not build it. The
 # release tarball carries it either way.
 # check-packaging: not-installed src-ucode/apntest/plan.uc
+# check-packaging: not-installed src-ucode/apntest/runner.uc
+# check-packaging: not-installed src-ucode/apntest_cli.uc
+# check-packaging: not-installed files/apntest.config
+# check-packaging: not-installed files/wwand-apntest.init
 
 define Package/wwand/install
 	# native transport module (built by the cmake step from io/)
@@ -247,6 +251,9 @@ define Package/wwand-qmi/install
 	$(INSTALL_DATA) $(WWAND_UCODE)/qmi_backend.uc $(1)$(UCDIR)/
 	$(INSTALL_DATA) $(WWAND_UCODE)/callend.uc $(1)$(UCDIR)/
 	$(INSTALL_DATA) $(WWAND_UCODE)/qmi_lazy.uc $(1)$(UCDIR)/
+	# modem.uc imports it at load time, so it ships beside it: without it
+	# every QMI modem fails to load, QRTR or not
+	$(INSTALL_DATA) $(WWAND_UCODE)/qmi_over_qrtr.uc $(1)$(UCDIR)/
 	# Datapath plug-ins for the two VENDOR QMAP drivers (qmi_wwan_q on USB,
 	# pcie_mhi on PCIe/MHI). Neither driver is in the kernel tree, so on an
 	# OpenWrt kernel these are inert: each probe() looks for the QMAP children
@@ -273,7 +280,9 @@ define Package/wwand-mbim
   # conditional for the same reason as wwand-qmi: the ucode side is
   # transport-neutral, and on MHI the transport is kmod-mhi-wwan-mbim, which
   # wwand-mhi already pulls
-  DEPENDS:=+wwand-qmi +USB_SUPPORT:kmod-usb-net-cdc-mbim
+  # +ucode-mod-digest: the Fibocom FM350 FCC unlock (fcc_fibocom.uc) hashes the
+  # GTFCCLOCK challenge with sha256, injected from here (modem_mbim.uc)
+  DEPENDS:=+wwand-qmi +ucode-mod-digest +USB_SUPPORT:kmod-usb-net-cdc-mbim
   # coexists with the stock OpenWrt MBIM stack (netifd `mbim` proto, package
   # umbim): wwand manages a cdc_mbim modem only once its interface has been
   # migrated to `proto wwand` (LuCI modem list / migrate CLI), so both stacks can
@@ -450,6 +459,10 @@ define Package/wwand-gps/description
   GSV/GLL/VTG/ZDA from ANY talker, reported through `modem_gps` as numbers, with
   the satellites in view and their SNR, the fix type and the DOP values.
 
+  A modem WITHOUT an NMEA port gets the same NMEA over QMI LOC instead — on a
+  QMI modem natively, on an MBIM modem over the QMI passthrough. The port wins
+  where there is one. The LOC session is stopped before its client is released.
+
   ONE READER PER MODEM, so a two-modem router has two positions. `option
   gnss_set_time` hands the receiver's clock to wwand's own set_clock, which only
   ever steps a clock that is plainly unset and so never fights sysntpd.
@@ -464,6 +477,8 @@ define Package/wwand-gps/install
 	$(INSTALL_DIR) $(1)$(UCDIR)
 	$(INSTALL_DATA) $(WWAND_UCODE)/gps.uc $(1)$(UCDIR)/
 	$(INSTALL_DATA) $(WWAND_UCODE)/nmea.uc $(1)$(UCDIR)/
+	$(INSTALL_DIR) $(1)$(UCDIR)/codec/schema
+	$(INSTALL_DATA) $(WWAND_UCODE)/codec/schema/loc.uc $(1)$(UCDIR)/codec/schema/
 endef
 
 $(eval $(call BuildPackage,wwand))
