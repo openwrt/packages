@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vnstat2
-PKG_VERSION:=2.13
-PKG_RELEASE:=2
+PKG_VERSION:=2.14
+PKG_RELEASE:=1
 
 PKG_SOURCE:=vnstat-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://humdi.net/vnstat
-PKG_HASH:=c9fe19312d1ec3ddfbc4672aa951cf9e61ca98dc14cad3d3565f7d9803a6b187
+PKG_HASH:=8ba2119b3c6f780775135f9c9fa7236867da67e2f93649f1313319b9cf48f87c
 
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING
@@ -66,6 +66,10 @@ define Package/vnstat2/conffiles
 endef
 
 CONFIGURE_ARGS += --disable-extra-paths
+
+# Prevent build failure for libgd without FreeType, and also avoid dependency
+# on it when libgd-full is available during build
+CONFIGURE_VARS += ac_cv_have_decl_gdImageStringFT="no"
 
 define Package/vnstat2/install
 	$(INSTALL_DIR) $(1)/usr/bin
