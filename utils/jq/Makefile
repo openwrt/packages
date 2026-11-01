@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=jq
 PKG_VERSION:=1.8.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/jqlang/jq/releases/download/$(PKG_NAME)-$(PKG_VERSION)/
@@ -38,6 +38,7 @@ define Package/jq
   TITLE+= (noregex)
   VARIANT:=noregex
   DEFAULT_VARIANT:=1
+  CONFLICTS:=jq-full
 endef
 
 define Package/jq/description

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=motion
 PKG_VERSION:=4.7.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-release-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/Motion-Project/motion/tar.gz/release-$(PKG_VERSION)?
@@ -49,6 +49,7 @@ $(call Package/motion/Default)
   TITLE+= (w/o FFMPEG support)
   VARIANT:=noffmpeg
   DEFAULT_VARIANT:=1
+  CONFLICTS:=motion-ffmpeg
 endef
 
 define Package/motion-noffmpeg/description

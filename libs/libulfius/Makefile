@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libulfius
 PKG_VERSION:=2.7.15
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/babelouest/ulfius/tar.gz/v$(PKG_VERSION)?
@@ -36,6 +36,7 @@ define Package/libulfius-nossl
 $(call Package/libulfius/default)
   VARIANT:=nossl
   DEFAULT_VARIANT:=1
+  CONFLICTS:=libulfius-gnutls
   DEPENDS:=+libmicrohttpd +libcurl +liborcania
   PROVIDES:=libulfius
 endef
