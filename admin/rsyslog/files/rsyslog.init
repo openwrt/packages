@@ -63,14 +63,14 @@ expand_config() {
 
 	config_load "${UCI_CONF}"
 	config_list_foreach syslog modules handle_module
-	config_get_bool tcp_input syslog tcp_input
+	config_get_bool tcp_input syslog tcp_input 0
 	if [ "${tcp_input}" -eq 1 ]; then
 		modules="${modules} imtcp"
 		config_get tcp_port syslog tcp_input_port
 		input_t="input(type=\"imtcp\" port=\"${tcp_port}\")"
 	fi
 
-	config_get_bool udp_input syslog udp_input
+	config_get_bool udp_input syslog udp_input 0
 	if [ "${udp_input}" -eq 1 ]; then
 		modules="${modules} imudp"
 		config_get udp_port syslog udp_input_port
