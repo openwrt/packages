@@ -230,7 +230,7 @@ The `report` sub-command accepts an output mode: `text` (default, human-readable
 | ban_nftpolicy           | option | memory                        | nft policy for banIP-related Sets, values: memory, performance                                                    |
 | ban_nftexpiry           | option | -                             | expiry time (ms|s|m|h|d) for auto added blocklist members (also controls the monitor cache refresh interval)      |
 | ban_nftretry            | option | 3                             | number of Set load attempts in case of an error                                                                   |
-| ban_nftcount            | option | 0                             | enable nft counter for every Set element                                                                          |
+| ban_nftcount            | option | 0                             | enable nft counter for every Set element and for the base chain rules                                             |
 | ban_bcp38               | option | 0                             | block packets with spoofed source IP addresses in all supported chains                                            |
 | ban_map                 | option | 0                             | enable a GeoIP Map with suspicious Set elements                                                                   |
 | ban_feed                | list   | -                             | external download feeds, e.g. `yoyo`, `doh`, `country` or `talos` (see feed table)                                |
@@ -386,7 +386,7 @@ nftables supports the atomic loading of firewall rules (incl. elements), which i
 * point `ban_basedir`, `ban_reportdir`, `ban_backupdir` and `ban_errordir` to an external usb drive or ssd
 * set `ban_cores` to `1` (only useful on a multicore system) to force sequential feed processing. The autodetected value is additionally capped to the available memory; a manually set value is always used as-is and is never lowered
 * set `ban_splitsize` e.g. to `1024` to split the load of an external Set after every 1024 lines/elements
-* set `ban_nftcount` to `0` to deactivate the CPU- and memory-intensive creation of counter elements at chain / Set level. With this setting, all packet counters are disabled, the Set Reporting will show zero values for these even when the protection rules are actively dropping traffic. Only the DoS protection counters (`syn-flood`, `udp-flood`, `icmp-flood`, etc.) are always enabled.
+* set `ban_nftcount` to `0` to deactivate the CPU- and memory-intensive creation of counter elements at Set level and the counters of the base chain rules. The feed rule counters and the DoS protection counters (`syn-flood`, `udp-flood`, `icmp-flood`, etc.) are always enabled, so the Set Reporting still shows the packet totals per Set.
 
 **Sensible choice of blocklists**  
 The following feeds are just my personal recommendation as an initial setup:
@@ -510,19 +510,19 @@ BCP38 (**B**est **C**urrent **P**ractice, RFC 2827) defines ingress filtering to
 In banIP, the BCP38 implementation uses nftables’ FIB lookup to enforce this. It checks whether the packet’s source address is not valid for the incoming interface or whether the routing table reports no route for this source on this interface. Packets that fail this check are dropped.
 
 **Reporting Counter behavior**  
-The `ban_nftcount` option globally controls all Reporting counters in the banIP table — both per-Set element counters and chain rule counters. Default is `0` (disabled) to keep memory usage and CPU overhead low on constrained devices. Only the DoS protection counters (`cnt_synflood`, `cnt_udpflood`, `cnt_icmpflood`, `cnt_tcpinvalid`, `cnt_ctinvalid`, `cnt_bcp38`) become always populated and visible in `/etc/init.d/banip report`.
+The `ban_nftcount` option controls the per-Set element counters and the counters of the base chain rules (`pre-routing`, `wan-input`, `wan-forward`, `lan-forward`). Default is `0` (disabled) to keep memory usage and CPU overhead low on constrained devices. The feed rule counters (one per Set and direction) and the DoS protection counters (`cnt_synflood`, `cnt_udpflood`, `cnt_icmpflood`, `cnt_tcpinvalid`, `cnt_ctinvalid`, `cnt_bcp38`) are always populated and visible in `/etc/init.d/banip report`.
 
 When enabled (`ban_nftcount=1`):
 * every Set element gets its own packet/byte counter (memory cost: ~16 bytes per element, so ~1.6 MB for a 100k-element feed)
-* all chain rules count packets and bytes
+* the base chain rules count packets and bytes
 * the GeoIP Map (`ban_map=1`) becomes available, as it requires per-element counters to identify hit IPs
 
 When disabled (`ban_nftcount=0`):
 * memory footprint is minimal, suitable for low memory routers
-* the Set Reporting still works structurally, but packet counts will all read as zero
+* the Set Reporting shows the packet totals per Set, but no per-element hits
 * the GeoIP Map cannot be enabled
 
-For most modern routers with ≥512 MB RAM, enabling `ban_nftcount` is recommended for full visibility into what banIP is actually blocking.
+The runtime status and the Set Reporting read the Sets one by one from the plain text listing, so the additional userspace memory with `ban_nftcount=1` stays small. Enabling `ban_nftcount` is recommended for full visibility into what banIP is actually blocking, on low memory routers (256 MB RAM) with large Sets keep an eye on the memory usage during reloads and reports.
 
 **Log Limit / Options**  
 All log rules (prerouting flood protection, inbound and outbound feeds) share a single nft limit named `loglimit`. The default of 10/second with burst 5 is intentionally aligned with typical kernel printk rate limits, so banIP log messages are not dropped by the kernel. Tune via `ban_logratelimit` and `ban_logburstlimit` accordingly if you have adjusted the kernel defaults. Set the `ban_logratelimit` to `0` to disable rate limiting entirely, e.g. when using ulogd or other userspace log handlers without printk constraints.
@@ -531,7 +531,7 @@ All log rules (prerouting flood protection, inbound and outbound feeds) share a 
 banIP includes a powerful reporting tool on the Set Reporting tab which shows the latest NFT banIP Set statistics. To get the latest statistics always press the "Refresh" button.
 In addition to a tabular overview banIP reporting includes a GeoIP map in a modal popup window/iframe that shows the geolocation of your own uplink addresses (in green) and the locations of potential attackers (in red). To enable the GeoIP Map set the following options (in "Feed/Set Settings" config tab):
 
-* set `ban_nftcount` to `1` to enable the nft counter for every Set element
+* set `ban_nftcount` to `1` to enable the nft counter for every Set element and the base chain rules
 * set `ban_map` to `1` to include the external components listed below and activate the GeoIP map
 
 To make this work, banIP uses the following external components:
