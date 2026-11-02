@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xfsprogs
-PKG_VERSION:=6.19.0
+PKG_VERSION:=7.2.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/utils/fs/xfs/xfsprogs
-PKG_HASH:=f3b0d758ed3802b20f838fefc42bbff431e0f0df2fe03cd50d0aa4ad86dcd0fc
+PKG_HASH:=c45f5fd81fdebcdae61938fcfdff86c9960b39fc89a06df633730d93876cd27d
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=GPL-2.0-only
