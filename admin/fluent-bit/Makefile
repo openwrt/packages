@@ -1,13 +1,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fluent-bit
-PKG_VERSION:=5.0.8
-PKG_RELEASE:=3
+PKG_VERSION:=5.1.5
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/fluent/fluent-bit.git
 PKG_SOURCE_VERSION=v$(PKG_VERSION)
-PKG_MIRROR_HASH:=e512206f301abee2f326a62faeaae258d1a2b3a5d698d6c4dc45909d0a9e0dca
+PKG_MIRROR_HASH:=639484a98927ad48cfe2ff9325d406671a09a81f8c170d57660e9e9d27930de6
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=Apache-2.0
