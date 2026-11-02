@@ -1265,7 +1265,11 @@ reload_service() {
 	}
 
 	running && {
-		prepare_env
+		if is_legacy_config; then
+			legacy_prepare_env
+		else
+			prepare_env
+		fi
 		[ $WAIT_FOR_INTF -eq 0 ] && {
 			# Load '/var/swanctl/swanctl.conf'
 			# NOTE: The command 'swanctl --load-all --noprompt'
@@ -1324,12 +1328,12 @@ start_service() {
 		return
 	}
 
-	is_legacy_config && {
+	if is_legacy_config; then
+		logger -t ipsec -p user.notice "Legacy UCI config in use, starting anyway; please migrate to the new schema."
 		legacy_prepare_env
-		return
-	}
-
-	prepare_env
+	else
+		prepare_env
+	fi
 
 	[ $WAIT_FOR_INTF -eq 1 ] && return
 
