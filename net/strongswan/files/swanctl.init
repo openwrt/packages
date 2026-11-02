@@ -1204,6 +1204,17 @@ config_charon_common_aggressive() {
 		swan_xappend1 "i_dont_care_about_security_and_use_aggressive_mode_psk = yes"
 }
 
+config_charon_common_cache_crls() {
+	local conf="$1"
+
+	local cache_crls
+
+	config_get_bool cache_crls "$conf" cache_crls 0
+	[ $cache_crls -eq 1 ] && cache_crls=yes || cache_crls=no
+
+	swan_xappend1 "cache_crls = $cache_crls"
+}
+
 config_charon_common() {
 	local conf="$1"
 
@@ -1212,6 +1223,7 @@ config_charon_common() {
 	config_charon_common_ignore_routing_tables "$conf"
 	config_charon_common_install_routes "$conf"
 	config_charon_common_aggressive "$conf"
+	config_charon_common_cache_crls "$conf"
 }
 
 config_strongswan_generate() {
