@@ -3017,12 +3017,28 @@ f_monitor() {
 				;;
 			esac
 		} | ban_logterm_map="${ban_logterm_map}" "${ban_awkcmd}" -v threshold="${ban_logcount}" -v limit=5000 '
-			function pick_ip(s, mode, m, res) {
+			function valid_ip(c, n) {
+				if (c ~ /\./) return 1
+				if (c !~ /[A-Fa-f0-9]/ || c ~ /:::/ || c ~ /::.*::/) return 0
+				n = gsub(/:/, ":", c)
+				return (c ~ /::/) ? (n <= 7) : (n == 7)
+			}
+			function pick_ip(s, mode, m, res, c, pre, last) {
 				res = ""
+				last = " "
 				while (match(s, /([0-9]{1,3}\.){3}[0-9]{1,3}|([A-Fa-f0-9]{0,4}:){2,7}[A-Fa-f0-9]{0,4}/, m)) {
-					res = m[0]
-					if (mode == "first") break
+					c = m[0]
+					pre = (RSTART > 1) ? substr(s, RSTART - 1, 1) : last
+					last = substr(c, length(c), 1)
 					s = substr(s, RSTART + RLENGTH)
+					if (c ~ /^:[^:]/) {
+						c = substr(c, 2)
+						pre = ":"
+					}
+					if (c ~ /[^:]:$/) c = substr(c, 1, length(c) - 1)
+					if (pre ~ /[A-Za-z0-9_]/ || !valid_ip(c)) continue
+					res = c
+					if (mode == "first") break
 				}
 				return res
 			}
@@ -3044,7 +3060,7 @@ f_monitor() {
 			}
 			{
 				pos = all_last ? "last" : anchor_for($0)
-				$0 = gensub(/(([0-9]{1,3}\.){3}[0-9]{1,3}):[0-9]+/, "\\1", "g", $0)
+				$0 = gensub(/(^|[^A-Fa-f0-9:])::[Ff]{4}:(([0-9]{1,3}\.){3}[0-9]{1,3})/, "\\1\\2", "g", $0)
 				sub(/\]:[0-9]+/, "]", $0)
 				gsub(/[<>[\]]/, "", $0)
 				ip = ""
@@ -3056,8 +3072,7 @@ f_monitor() {
 						proto = ".v4"
 					}
 				} else if (cand ~ /:/) {
-					sub(/%.*/, "", cand)
-					if (cand !~ /^[0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}$/ && cand !~ /^([A-Fa-f0-9]{2}:){5}[A-Fa-f0-9]{2}$/) {
+					if (cand !~ /^[0:]*(:0*1)?$/) {
 						ip = cand
 						proto = ".v6"
 					}
