@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=comrade
-PKG_VERSION:=0.3.3
+PKG_VERSION:=0.3.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/dangowrt/comrade/releases/download/v$(PKG_VERSION)
-PKG_HASH:=1ea0b4b4880eb59b6ff9fabc8bb0c7f411b7c01c32656443b6e82cbe4161a4a5
+PKG_HASH:=9c54ad3e025c7c9b7c553e18c03dd22c339beb6535f47c9aabc66682b53b3770
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=AGPL-3.0-or-later
