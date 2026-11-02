@@ -740,6 +740,7 @@ config_remote() {
 	local pubkeys
 	local pubkey
 	local eap_id
+	local revocation
 	local suffix
 
 	config_get auth "$conf" auth "pubkey"
@@ -747,6 +748,15 @@ config_remote() {
 	config_list_foreach "$conf" cacerts append_var cacerts ","
 	config_list_foreach "$conf" pubkeys append_var pubkeys ","
 	config_get eap_id "$conf" eap_id "%any"
+	config_get revocation "$conf" revocation ""
+
+	case "$revocation" in
+	""|strict|ifuri|relaxed)
+		;;
+	*)
+		fatal "remote revocation \'$revocation\' is invalid"
+		;;
+	esac
 
 	if [ "$auth" = "pubkey" ] && [ -n "$pubkeys" ]; then
 		for pubkey in $(echo "$pubkeys" | tr ',' ' '); do
@@ -766,6 +776,7 @@ config_remote() {
 	[ -n "$cacerts" ] && swanctl_xappend3 "cacerts = \"$cacerts\""
 	[ "$auth" = "pubkey" ] && [ -n "$pubkeys" ] && \
 		swanctl_xappend3 "pubkeys = \"$pubkeys\""
+	[ -n "$revocation" ] && swanctl_xappend3 "revocation = $revocation"
 	case "$auth" in
 	eap-mschapv2|eap-tls)
 		swanctl_xappend3 "eap_id = $eap_id"
