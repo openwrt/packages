@@ -442,7 +442,12 @@ For every matched line banIP picks the attacker's address out of the log entry. 
 Some formats instead lead with the source IP — most notably web-server access logs, where the client address is the first field. For those, prefix the term with `first:`:
 
 ```
-nginx : 'first:"[A-Z]+ /wp-login\.php[^"]*" 40[13]'
+nginx    : 'first:"[A-Z]+ /wp-login\.php[^"]*" 40[13]'
+haproxy1 : 'first:haproxy .* SSL handshake failure .*error:.*:wrong version number'
+haproxy2 : 'first:haproxy .* SSL handshake failure .*error:.*:http request'
+haproxy3 : 'first:haproxy .* SSL handshake failure .*error:.*:unsupported protocol'
+haproxy4 : 'first:haproxy .* SSL handshake failure .*error:.*:no shared cipher'
+haproxy5 : 'first:haproxy .* SSL handshake failure .*error:.*:bad key share'
 ```
 
 The `first:`/`last:` prefix is parsed off before matching and applies only to that single term, so terms with different anchors can be mixed freely.
