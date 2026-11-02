@@ -12,7 +12,7 @@ PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=https://github.com/openthread/ot-br-posix.git
 PKG_MIRROR_HASH:=bf049340f4a1372c9ba44cf6debedd735824baa538d1e96f043c25ed8fb5b429
 
-PKG_MAINTAINER:=Stijn Tintel <stijn@linux-ipv6.be>
+PKG_MAINTAINER:=Stijn Tintel <stijn@linux-ipv6.be>, Christian Glombek <c.glombek@cosa.systems>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 
