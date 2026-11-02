@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=weechat
-PKG_VERSION:=4.10.1
-PKG_RELEASE:=2
+PKG_VERSION:=4.10.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://weechat.org/files/src/
-PKG_HASH:=b8744c6f5dc5543062791f563e0516dbc96a36161e1a03c468b3b7dcc8be5aff
+PKG_HASH:=6fcd05f350c808a4206d6951af36a9eec11b145b6a1a2a8a2b29dd3502e07022
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
