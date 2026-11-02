@@ -4,12 +4,12 @@
 . /usr/share/libubox/jshn.sh
 
 migrate_ipsec() {
-	# Skip migration if the 'globals' section already exists
-	uci show ipsec.globals 1>/dev/null 2>/dev/null
-	[ "$?" = "0" ] && return
+	# Skip migration if there is no 'ipsec' section to rename
+	uci show ipsec.@ipsec[0] 1>/dev/null 2>/dev/null
+	[ "$?" = "0" ] || return
 
 	# Rename last ipsec section to 'globals'
-	uci -q rename ipsec.@ipsec[-1]=globals
+	uci -q rename ipsec.@ipsec[0]=globals
 	uci -q set ipsec.globals=globals
 }
 
