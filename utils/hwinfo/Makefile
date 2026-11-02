@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hwinfo
 PKG_VERSION:=21.71
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/openSUSE/hwinfo/tar.gz/$(PKG_VERSION)?
@@ -32,6 +32,8 @@ define Host/Install
 	$(CP) $(HOST_BUILD_DIR)/src/isdn/cdb/mk_isdnhwdb $(STAGING_DIR_HOST)/share/hwinfo/
 		
 	$(CP) $(HOST_BUILD_DIR)/src/ids/check_hd $(STAGING_DIR_HOST)/share/hwinfo/
+	$(CP) $(HOST_BUILD_DIR)/src/ids/hd.ids $(STAGING_DIR_HOST)/share/hwinfo/
+	$(CP) $(HOST_BUILD_DIR)/src/ids/hd_ids.h $(STAGING_DIR_HOST)/share/hwinfo/
 endef
 
 define Build/Configure
@@ -42,16 +44,16 @@ define Build/Configure
 		
 	$(INSTALL_DIR) $(PKG_BUILD_DIR)/src/ids/
 	$(CP) $(STAGING_DIR_HOST)/share/hwinfo/check_hd $(PKG_BUILD_DIR)/src/ids/
+	$(CP) $(STAGING_DIR_HOST)/share/hwinfo/hd.ids $(PKG_BUILD_DIR)/src/ids/
+	$(CP) $(STAGING_DIR_HOST)/share/hwinfo/hd_ids.h $(PKG_BUILD_DIR)/src/ids/
 
 
-	# Set copied files modtime to one day in the future
+	# Set the ISDN tools' modtime to one day in the future
 	# to prevent rebuilding them
 	perl -e 'utime(time() + 86400, time() + 86400, $$$$ARGV[0])' \
 		$(PKG_BUILD_DIR)/src/isdn/cdb/isdn_cdb
 	perl -e 'utime(time() + 86400, time() + 86400, $$$$ARGV[0])' \
 		$(PKG_BUILD_DIR)/src/isdn/cdb/mk_isdnhwdb
-	perl -e 'utime(time() + 86400, time() + 86400, $$$$ARGV[0])' \
-		$(PKG_BUILD_DIR)/src/ids/check_hd
 endef
 
 
