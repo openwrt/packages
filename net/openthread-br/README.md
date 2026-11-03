@@ -128,6 +128,15 @@ configured in /etc/config/network. This way, you can add a static route to the
 Thread prefix(es) in your main router, making it possible to access devices on
 the Thread network from your entire network.
 
+Likewise, `extaddr` (16 hex digits) and `ba_id` (32 hex digits) pin the node's
+extended address and Border Agent ID. OpenThread keeps its own copy in
+/var/lib/thread, on tmpfs, so without them both change at every boot;
+`ot-ctl extaddr` and `ot-ctl ba id` print the current ones. Each must be unique
+to its router, so leave them out when copying the section to another one. The
+rest of that state, frame counters and children among it, still starts afresh,
+and after a reboot shorter than about 100 seconds neighbouring routers may
+ignore the node until they time out its old entry.
+
 ## Create network
 
 When starting the OpenThread Border Router for the first time, a Thread network
@@ -151,8 +160,8 @@ Only backbone_network and device are required. A radio need not be named at
 all: with neither rcp nor radio_url set the handler behaves as if `rcp 'any'`
 were given and auto-discovers a dongle, failing the interface with
 RCP_NOT_FOUND only when none is found. It also fails if backbone_network names
-an interface that has no device. Everything else — dataset, prefix, verbose,
-rest_listen_address and rest_listen_port — is optional. See
+an interface that has no device. Everything else — dataset, prefix, extaddr,
+ba_id, verbose, rest_listen_address and rest_listen_port — is optional. See
 [REST Server](#rest-server) before moving the REST API off the loopback
 default.
 
