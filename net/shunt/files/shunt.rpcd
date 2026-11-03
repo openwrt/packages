@@ -66,7 +66,7 @@ function render() {
 
 	let m = match_compile(cfg.policies);
 	let n = nft_compile(cfg.policies, { tproxy: tproxy_available(cfg.policies),
-		br_netfilter: br_netfilter() });
+		br_netfilter: br_netfilter(), track: length(cfg.global.track_ips) > 0 });
 	let r = route_compile(cfg.policies, n.marks, { ipv6: ipv6() });
 
 	return { cfg, files: f, matcher: m, nft: n, route: r };

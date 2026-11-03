@@ -73,6 +73,8 @@ export function exec(rtnl, op) {
 	switch (op?.cmd) {
 	case 'newroute':
 		return call(rtnl, C.RTM_NEWROUTE, C.NLM_F_CREATE | C.NLM_F_REPLACE, op.msg);
+	case 'delroute':
+		return call(rtnl, C.RTM_DELROUTE, 0, op.msg);
 	case 'newrule':
 		return call(rtnl, C.RTM_NEWRULE, C.NLM_F_CREATE | C.NLM_F_EXCL, op.msg);
 	case 'delrule':
@@ -102,6 +104,10 @@ export function describe(op) {
 			m.table == 254 ? 'main' : sprintf('%d', m.table),
 			m.suppress_prefixlen != null
 				? sprintf(' suppress_prefixlength %d', m.suppress_prefixlen) : '');
+	case 'delroute':
+		return sprintf('ip %s route del default%s%s table %d', v,
+			m.gateway ? ` via ${m.gateway}` : '',
+			m.oif ? ` dev ${m.oif}` : '', m.table);
 	case 'delrule':
 		return sprintf('ip %s rule del pref %d', v, m.priority);
 	case 'flush':

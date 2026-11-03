@@ -6,6 +6,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (c) 2026 Dirk Brenken <dev@brenken.org>
 
+import { addr_family } from 'shunt.nft';
+
 export const DEFAULTS = {
 	enabled: true,
 	poll_interval: 300,
@@ -13,7 +15,8 @@ export const DEFAULTS = {
 	snoop: true,
 	snoop_devices: [ 'br-lan' ],
 	debug: false,
-	rp_filter_manage: false
+	rp_filter_manage: false,
+	track_ips: []
 };
 
 export const MIN = {
@@ -146,6 +149,21 @@ export function parse(sections) {
 				else
 					reject(s.name ?? 'global', 'snoop_device',
 						'no usable device, default kept');
+			}
+
+			// Plain host addresses: a prefix is not something to ping.
+			if (v.track_ip != null) {
+				let ips = [];
+
+				for (let a in to_list(v.track_ip)) {
+					if (type(a) == 'string' && addr_family(a) && index(a, '/') < 0)
+						push(ips, a);
+					else
+						reject(s.name ?? 'global', 'track_ip',
+							sprintf('not a host address: %J, entry dropped', a));
+				}
+
+				g.track_ips = uniq(ips);
 			}
 			continue;
 		}

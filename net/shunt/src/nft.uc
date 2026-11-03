@@ -150,6 +150,36 @@ export function compile(policies, opts) {
 	let mask = opts?.mask ?? DEFAULTS.mask;
 	let shift = mask_shift(mask);
 	let capacity = mask >> shift;
+
+	// Health tracking probes every device a route policy uses, each from a
+	// socket with a mark of its own that routes it through the device's
+	// probe table. Those marks come from the top of the mask, so policy
+	// marks keep their numbers whether tracking is on or not.
+	let probes = [], probe_of = {};
+
+	if (opts?.track)
+		for (let p in (policies ?? [])) {
+			let dev = p?.interface;
+
+			if (action_name(p?.action) != 'route' || type(dev) != 'string' ||
+			    !length(dev) || probe_of[dev])
+				continue;
+
+			let n = length(probes) + 1;
+
+			probe_of[dev] = { dev, mark: (capacity + 1 - n) << shift,
+				rt_table: 8500 + n, rt_prio: 30000 + n };
+			push(probes, probe_of[dev]);
+		}
+
+	capacity -= length(probes);
+
+	// fallback 'main' route policies mark new flows from a chain of their
+	// own, which the daemon empties while the policy's device is dead: a
+	// flow born then is unmarked, takes the normal uplink and keeps it when
+	// the device comes back, instead of being moved under it - masquerade
+	// resets a flow whose output interface changes.
+	let chains = {};
 	// Rule records, not strings: a MAC rule belongs in prerouting only, and
 	// both chains must render from one ordered list or precedence breaks.
 	let issues = [], marks = [], sets = [], rules4 = [], rules6 = [];
@@ -346,8 +376,10 @@ export function compile(policies, opts) {
 		// A bypass policy owns no mark, no table and no rule - it only ends
 		// evaluation - so it costs nothing from the mark capacity.
 		if (action != 'bypass' && ++idx > capacity) {
-			reject(pname, null,
-				sprintf('mark capacity exceeded (%d policies fit in mask 0x%08x)',
+			reject(pname, null, length(probes)
+				? sprintf('mark capacity exceeded (%d policies fit in mask 0x%08x beside %d tracked interface(s))',
+					capacity, mask, length(probes))
+				: sprintf('mark capacity exceeded (%d policies fit in mask 0x%08x)',
 					capacity, mask));
 			continue;
 		}
@@ -392,6 +424,14 @@ export function compile(policies, opts) {
 				~mask & 0xffffffff, mark, ~mask & 0xffffffff, mark)
 			: '';
 
+		let chain = null;
+
+		if (action == 'route' && probe_of[p.interface] &&
+		    (p.fallback ?? 'main') == 'main') {
+			chain = `mk_${pname}`;
+			chains[pname] = { chain, dev: p.interface, stmt: trim(setmark) };
+		}
+
 		// tproxy names the family of its address, so its statement exists
 		// once per family. When the socket lookup finds no listener the
 		// statement ends the rule unmatched and the packet goes on to the
@@ -400,6 +440,8 @@ export function compile(policies, opts) {
 		function stmt(fam) {
 			if (action == 'bypass')
 				return sprintf('%scounter return', l4);
+			if (chain)
+				return sprintf('%scounter goto %s', l4, chain);
 			if (action == 'tproxy')
 				return sprintf('%s%stproxy %s to %s:%s %scounter return', l4, fib,
 					fam == '4' ? 'ip' : 'ip6', TPROXY_ADDR[fam], tp_port, setmark);
@@ -620,10 +662,28 @@ export function compile(policies, opts) {
 		? [ '\t\tct state != new counter return' ] : [];
 	let settled_out = length(restore_out) ? settled : [];
 
+	// A probe leaves with its mark set and must keep it: a track_ip inside
+	// a policy's destinations would otherwise be re-marked into that
+	// policy's table.
+	let guards = map(probes, (pr) => sprintf(
+		'\t\tmeta mark & 0x%08x == 0x%08x counter return', mask, pr.mark));
+
+	let mkchains = [];
+
+	for (let n in sort(keys(chains))) {
+		let c = chains[n];
+
+		push(mkchains, `\tchain ${c.chain} {`);
+		if (!opts?.dead?.[c.dev])
+			push(mkchains, `\t\t${c.stmt}`);
+		push(mkchains, '\t}');
+	}
+
 	let setup = join('\n', [
 		`destroy table ${TABLE}`,
 		`table ${TABLE} {`,
 		...sets,
+		...mkchains,
 		'\tchain prerouting {',
 		'\t\ttype filter hook prerouting priority mangle; policy accept;',
 		...restore, ...settled,
@@ -631,6 +691,7 @@ export function compile(policies, opts) {
 		'\t}',
 		'\tchain output {',
 		'\t\ttype route hook output priority mangle; policy accept;',
+		...guards,
 		...restore_out, ...settled_out,
 		...map(filter(rules4, (r) => r.out), (r) => r.text),
 		...map(filter(rules6, (r) => r.out), (r) => r.text),
@@ -639,8 +700,24 @@ export function compile(policies, opts) {
 		''
 	]);
 
-	return { setup, marks, issues, learn,
+	return { setup, marks, issues, learn, probes, chains,
 		fill: length(fill) ? join('\n', fill) + '\n' : '' };
+};
+
+// The mark chains in the state the dead devices call for, as one batch:
+// flushed and refilled together, so no new flow sees a chain half done.
+export function flip(chains, dead) {
+	let out = [];
+
+	for (let n in sort(keys(chains ?? {}))) {
+		let c = chains[n];
+
+		push(out, sprintf('flush chain %s %s', TABLE, c.chain));
+		if (!dead?.[c.dev])
+			push(out, sprintf('add rule %s %s %s', TABLE, c.chain, c.stmt));
+	}
+
+	return length(out) ? join('\n', out) + '\n' : '';
 };
 
 // A write may carry its own timeout - the TTL of the answer it came from,

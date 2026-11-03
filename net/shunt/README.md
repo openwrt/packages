@@ -52,6 +52,7 @@ shunt check
 * Wildcard domains (`*.example.com`), learned passively as clients use them
 * Domain and address lists from a file - a community-maintained set of thousands of names or networks, without a single UCI entry per line
 * Per-policy killswitch: reject the traffic when the interface or proxy is gone, instead of leaking it out of the normal uplink - clients fail at once rather than on a timeout
+* Optional health tracking: an interface that is up but dead - a WireGuard tunnel whose peer is gone - is detected by ICMP probes through the interface itself, and its policies fall back until it answers again
 * Per-policy action: `route` marks the traffic for the policy interface, `bypass` exempts it from every policy below, `tproxy` hands it to a transparent proxy on the router
 * Your own networks stay reachable from a policy client, without listing them anywhere
 * Puts its own table back when something deletes it, `fw4 flush` included
@@ -182,6 +183,7 @@ Logging goes to syslog under the tag `shunt`, so `logread -e shunt` shows everyt
 | entry_ttl | `1200` | ceiling for the lifetime of learned elements, at least 60 |
 | snoop | `1` | enable the passive DNS observer |
 | snoop_device | `br-lan` | LAN devices to observe, a list, one entry per segment |
+| track_ip | | addresses to probe through every policy interface, a list; none means no tracking, see [Health tracking](#health-tracking-track_ip) |
 
 Values below the minimum are clamped, not rejected, and the clamp is logged. `entry_ttl` should stay well above `poll_interval` - a polled element is rewritten once its remaining timeout drops below half of `entry_ttl`, so the default pair refreshes comfortably within two poll cycles. Elements learned by snoop expire with the TTL of the answer instead, see [How addresses are learned](#how-addresses-are-learned).
 
@@ -436,6 +438,31 @@ Note that domain precedence is resolved *before* this, at the matcher: the most 
 
 `fallback 'block'` adds a `prohibit` default at metric 9999 to the policy table. While the interface is up its own default has the lower metric and wins; when the interface drops, the kernel withdraws that route and the prohibit route catches everything, answering it with ICMP admin-prohibited - a connection attempt fails at once instead of on a timeout, measured. That is the killswitch: traffic belonging to the policy stops rather than leaking out of the wrong interface. It stops at the destinations the policy actually owns - see [keep_local](#local-traffic-keep_local) for what a marked packet to one of your own networks does, and how to make the killswitch hermetic.
 
+<a id="health-tracking-track_ip"></a>
+### Health tracking: track_ip
+
+The fallback takes over when the policy interface goes down - and only then. An interface can be up and dead: netifd keeps a WireGuard interface up whether or not its peer answers, and a tunnel whose server is gone, or an uplink with an outage behind the modem, looks exactly like a working one. `track_ip` closes that gap. List one or more addresses that answer ICMP echo and are reachable through every policy interface - public resolvers are the usual choice:
+
+```
+config global
+	list track_ip '1.1.1.1'
+	list track_ip '9.9.9.9'
+	list track_ip '2606:4700:4700::1111'
+```
+
+Every device a `route` policy uses is then probed every 5 seconds, each target once per round. A round counts as answered when any target replies, so one unreachable target, or a tunnel without IPv6, does not take the device down. Three unanswered rounds in a row make the device dead, three answered ones bring it back - 15 to 20 seconds either way, measured. The timing has no options.
+
+A dead device is handled exactly like one whose link went down: the default route leaves its policies' tables and the [fallback](#fallback-main-or-block) takes over. With `block` new connections are rejected at once; with `main` they take the normal uplink. Connections that were running into the dead interface are moved by that too and reset by the kernel, which they would not have survived anyway. Connections opened through `main` during the outage are left unmarked, so they stay on the normal uplink when the interface comes back instead of being torn down - only new connections return to it, measured. `tproxy` and `bypass` policies are not tracked.
+
+The probes leave from the router through the policy device itself: from a raw socket bound to the device, with a mark of its own that leads to a probe table holding the same default route as the device's policies. That table is never withdrawn, so a dead device keeps being probed and is noticed when it recovers, and the binding keeps a probe from ever leaving through another uplink and reporting the wrong interface alive. Two things follow from that path. The replies arrive on the policy device from an address the main table routes elsewhere, so `rp_filter` must be loose there - as it must for shunt anyway, see [Which tunnels work](#which-tunnels-work). And on WireGuard the targets must lie within the peer's `AllowedIPs`, which a full tunnel's `0.0.0.0/0` and `::/0` cover.
+
+Without `track_ip` none of this exists and the ruleset is the same as without the option. `ubus call shunt status` lists each tracked device under `track`, alive or not and since when, and `shunt check` prints its probe mark and table. State changes are logged:
+
+```
+shunt: track: wg0 does not answer - its policies fall back until it does
+shunt: track: wg0 answers again - its policies are back on it
+```
+
 <a id="default-uplink-and-exceptions"></a>
 ### Default uplink and exceptions
 
@@ -640,15 +667,19 @@ table inet shunt                     own table, see below
   set i_<policy>                     client ingress devices, no family digit, counter
 
 fwmark                               <index> << 24, mask 0xff000000
+                                     with track_ip: 0xff000000 counting down, one per tracked device
 ct mark                              same bits, set on a flow's first packet
-ip rule pref                         31000 + <index> keep_local's main lookup
+ip rule pref                         30000 + <n> a tracked device's probes, with track_ip
+                                     31000 + <index> keep_local's main lookup
                                      31500 + <index> the policy table
 routing table                        8000 + <index>, for tproxy: local default dev lo
                                      with fallback 'block': prohibit default metric 9999
+                                     8500 + <n>, a tracked device's probe table
+chain mk_<policy>                    with track_ip, a fallback 'main' policy's mark statement
 /etc/iproute2/rt_tables.d/shunt.conf the table name mapping, for `ip route show` only
 ```
 
-A `bypass` policy is only a rule in the prerouting and output chains: no mark, no table, no ip rule, and it does not count against the 255. A `tproxy` policy has rules in prerouting only, and no keep_local rule. The mark mask is fixed at `0xff000000`, which allows 255 policies. The `output` chain is `type route` so the router's own marked traffic is re-routed after the mark is set.
+A `bypass` policy is only a rule in the prerouting and output chains: no mark, no table, no ip rule, and it does not count against the 255. A `tproxy` policy has rules in prerouting only, and no keep_local rule. The mark mask is fixed at `0xff000000`, which allows 255 policies; with `track_ip` each tracked device takes one of those marks for its probes. The `output` chain is `type route` so the router's own marked traffic is re-routed after the mark is set.
 
 Every set carries per-element counters, so "is this element ever hit" is one look at `nft list set inet shunt <set>` rather than a tcpdump session. The two kinds count different things: nftables tests a rule left to right, so a **client** set counts every packet that matched the selector, whether or not the destination matched afterwards; a **learned** set is the last lookup in the rule, so a hit there means the packet really was marked. A busy client beside learned addresses at zero is a client that has not visited any of the routed domains, not a fault.
 
@@ -678,8 +709,8 @@ Running both at once during a migration is safe by construction:
 | | pbr | mwan3 | shunt |
 | :--- | :--- | :--- | :--- |
 | fwmark and ct mark mask | `0x00ff0000` | `0x00003f00` | `0xff000000` |
-| ip rule pref | 30000 counting down | ~1001-3250 | 31000 and 31500 counting up |
-| routing tables | dynamic from ~256 | 1-250 | 8000+n |
+| ip rule pref | 30000 counting down | ~1001-3250 | 31000 and 31500 counting up, 30001 up with `track_ip` |
+| routing tables | dynamic from ~256 | 1-250 | 8000+n, 8500+n with `track_ip` |
 | nft | chains in fw4's table | | own `inet shunt` table |
 
 The mark bits are disjoint and all three mask their writes. Where pbr and shunt both match, pbr's lower rule priority wins, deterministically. So move policies over one at a time and retire pbr once its config is empty.
