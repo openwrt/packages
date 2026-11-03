@@ -60,14 +60,6 @@ CMAKE_OPTIONS += \
 	-Dpython-egg-info=ON
 endif
 
-define Build/Install
-	$(call Build/Install/Default)
-ifneq ($(CONFIG_PACKAGE_python3-libtorrent),)
-	mv $(PKG_INSTALL_DIR)$(PYTHON3_PKG_DIR)/libtorrent.cpython-*.so \
-		$(PKG_INSTALL_DIR)$(PYTHON3_PKG_DIR)/libtorrent.so
-endif
-endef
-
 define Package/libtorrent-rasterbar/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libtorrent-rasterbar.so.* $(1)/usr/lib/
