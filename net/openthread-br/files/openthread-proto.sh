@@ -22,11 +22,18 @@ proto_openthread_add_prefix() {
 	[ -n "$prefix" ] && $OTCTL prefix add $prefix
 }
 
+proto_openthread_ctl() {
+	# ot-ctl exits 0 on errors too; only "Done" means the command took.
+	$OTCTL "$@" | grep -q '^Done'
+}
+
 proto_openthread_init_config() {
 	proto_config_add_array 'prefix:list(string)'
 	proto_config_add_boolean verbose
 	proto_config_add_string backbone_network
 	proto_config_add_string dataset
+	proto_config_add_string extaddr
+	proto_config_add_string ba_id
 	proto_config_add_string radio_url
 	proto_config_add_string rcp
 	proto_config_add_boolean rcp_firmware_update
@@ -64,7 +71,7 @@ proto_openthread_setup() {
 
 	mkdir -p /var/lib/thread
 
-	json_get_vars backbone_network dataset device radio_url rcp \
+	json_get_vars backbone_network ba_id dataset device extaddr radio_url rcp \
 		rcp_firmware_update:0 uart_baudrate:0 uart_flow_control:1 \
 		rest_listen_address rest_listen_port verbose:0
 
@@ -125,6 +132,13 @@ proto_openthread_setup() {
 	[ -n "$dataset" ] && {
 		$OTCTL dataset set active "$dataset"
 	}
+
+	# Settings are on tmpfs, so these would change at every boot. Thread is
+	# still stopped here, which the extended address requires.
+	[ -z "$extaddr" ] || proto_openthread_ctl extaddr "$extaddr" || \
+		proto_openthread_setup_error "$interface" INVALID_EXTADDR
+	[ -z "$ba_id" ] || proto_openthread_ctl ba id "$ba_id" || \
+		proto_openthread_setup_error "$interface" INVALID_BA_ID
 
 	json_for_each_item proto_openthread_add_prefix prefix
 	ubus call otbr threadstart || proto_openthread_setup_error "$interface" MISSING_UBUS_OBJ
