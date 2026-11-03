@@ -54,7 +54,6 @@ config dnsmasq
   option domain 'yourdomain'
   option noresolv '1'
   option port '53'
-  option resolvfile '/tmp/resolv.conf.auto'
   list server '127.0.0.1#1053'
   list server '::1#1053'
   ...
@@ -79,7 +78,6 @@ config dnsmasq
   option domain 'yourdomain'
   option noresolv '1'
   option port '1053'
-  option resolvfile '/tmp/resolv.conf.auto'
   ...
 
 config dhcp 'lan'

@@ -39,8 +39,14 @@ UB_SRV_CONF=$UB_VARDIR/unbound_srv.conf
 UB_EXT_CONF=$UB_VARDIR/unbound_ext.conf
 
 # resolver file complex
-UB_RESOLV_CONF=/tmp/resolv.conf
+UB_RESOLV_LINK=/tmp/resolv.conf
+UB_RESOLV_CONF=/tmp/resolv.conf.d/resolv.conf
 UB_RESOLV_AUTO=/tmp/resolv.conf.d/resolv.conf.auto
+
+resolv_link() {
+  [ "$( readlink $UB_RESOLV_LINK )" = "$UB_RESOLV_CONF" ] \
+  || ln -sf $UB_RESOLV_CONF $UB_RESOLV_LINK
+}
 
 # TLS keys
 UB_TLS_KEY_FILE="TLS server UCI not implemented"
