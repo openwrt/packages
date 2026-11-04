@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nsd
 PKG_VERSION:=4.6.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.nlnetlabs.nl/downloads/nsd
@@ -54,6 +54,7 @@ define Package/nsd-nossl
   $(Package/nsd/default)
   TITLE += (without SSL support)
   VARIANT:=nossl
+  CONFLICTS:=nsd
 endef
 
 define Package/nsd-nossl/description
