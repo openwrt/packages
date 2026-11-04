@@ -11,7 +11,7 @@ PKG_NAME:=isc-dhcp
 UPSTREAM_NAME:=dhcp
 PKG_REALVERSION:=4.4.3-P1
 PKG_VERSION:=4.4.3_p1
-PKG_RELEASE:=16
+PKG_RELEASE:=17
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -52,6 +52,7 @@ define Package/isc-dhcp-relay-ipv6
   $(call Package/isc-dhcp/Default)
   TITLE+= relay (with IPv6)
   VARIANT:=ipv6
+  CONFLICTS:=isc-dhcp-relay-ipv4
 endef
 
 define Package/isc-dhcp-relay/description
@@ -88,6 +89,7 @@ define Package/isc-dhcp-client-ipv6
   $(call Package/isc-dhcp/Default)
   TITLE+= client (with IPv6)
   VARIANT:=ipv6
+  CONFLICTS:=isc-dhcp-client-ipv4
 endef
 
 define Package/isc-dhcp-client/description
@@ -116,6 +118,7 @@ define Package/isc-dhcp-server-ipv6
   $(call Package/isc-dhcp/Default)
   TITLE+= server (with IPv6)
   VARIANT:=ipv6
+  CONFLICTS:=isc-dhcp-server-ipv4
 endef
 
 define Package/isc-dhcp-server/description
@@ -159,6 +162,7 @@ define Package/isc-dhcp-omshell-ipv6
   DEPENDS:= +isc-dhcp-server-ipv6
   TITLE+= omshell (with IPv6)
   VARIANT:=ipv6
+  CONFLICTS:=isc-dhcp-omshell-ipv4
 endef
 
 define Package/isc-dhcp-omshell/description
