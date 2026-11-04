@@ -24,7 +24,7 @@ Signed-off-by: Álvaro Fernández Rojas <noltari@gmail.com>
  fi
  
  LOCAL_MODE=0
-@@ -567,7 +567,7 @@ checkDependencies() {
+@@ -673,7 +673,7 @@ checkDependencies() {
        echo "Run with -h for more information."
        echo
        echo "To enable immediate update programming of the EEPROM"
@@ -33,7 +33,7 @@ Signed-off-by: Álvaro Fernández Rojas <noltari@gmail.com>
        echo "RPI_EEPROM_IMMEDIATE_UPDATE=1"
        echo "CM4_ENABLE_RPI_EEPROM_UPDATE=1"
        echo
-@@ -659,7 +659,7 @@ The system should then boot normally.
+@@ -761,7 +761,7 @@ The system should then boot normally.
  
  If /boot does not correspond to the boot partition and this
  is not a NOOBS system, then the mount point for BOOTFS should be defined
@@ -42,8 +42,8 @@ Signed-off-by: Álvaro Fernández Rojas <noltari@gmail.com>
  
  A backup of the current EEPROM config file is written to ${FIRMWARE_BACKUP_DIR}
  before applying the update.
-@@ -691,7 +691,7 @@ Options:
-    -u Install the specified VL805 (USB EEPROM) image file.
+@@ -795,7 +795,7 @@ Options:
+       (RPI_EEPROM_ALLOW_DOWNGRADE=1). Does not bypass the MFG_VER check.
  
  Environment:
 -Environment variables should be defined in /etc/default/rpi-eeprom-update
@@ -51,7 +51,7 @@ Signed-off-by: Álvaro Fernández Rojas <noltari@gmail.com>
  
  EEPROM_CONFIG_HOOK
  
-@@ -763,7 +763,7 @@ must first be enabled by removing ENABLE
+@@ -884,7 +884,7 @@ must first be enabled by removing ENABLE
  via usbboot.
  
  After enabling self-update set the CM4_ENABLE_RPI_EEPROM_UPDATE=1 environment
