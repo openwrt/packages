@@ -1,0 +1,121 @@
+From 862d95420ccc894a8fc0392f2c6a768023fe138a Mon Sep 17 00:00:00 2001
+From: Joshua Covington <joshuacov@gmail.com>
+Date: Fri, 6 Nov 2026 15:06:54 +0000
+Subject: [PATCH] rpi-eeprom-update/rpi-eeprom-config: drop sudo
+
+OpenWrt has no sudo. Drop it from rpi-eeprom-update and
+rpi-eeprom-config
+
+Signed-off-by: Joshua Covington <joshuacov@gmail.com>
+---
+ rpi-eeprom-config | 13 ++++++-------
+ rpi-eeprom-update | 16 ++++++++--------
+ 2 files changed, 14 insertions(+), 15 deletions(-)
+
+--- a/rpi-eeprom-config
++++ b/rpi-eeprom-config
+@@ -551,7 +551,7 @@ Operating modes:
+    rpi-eeprom-config --config boot.conf --out newimage.bin pieeprom.bin
+ 
+    The new image file can be installed via rpi-eeprom-update
+-   sudo rpi-eeprom-update -d -f newimage.bin
++   rpi-eeprom-update -d -f newimage.bin
+ 
+ 4. Applies a given config file to an EEPROM image and invokes rpi-eeprom-update
+    to schedule an update of the bootloader when the system is rebooted.
+@@ -559,7 +559,7 @@ Operating modes:
+    Since this command launches rpi-eeprom-update to schedule the EEPROM update
+    it must be run as root.
+ 
+-   sudo rpi-eeprom-config --apply boot.conf [pieeprom.bin]
++   rpi-eeprom-config --apply boot.conf [pieeprom.bin]
+ 
+    If the 'eeprom' argument is not specified then the latest available image
+    is selected by calling 'rpi-eeprom-update -l'.
+@@ -576,14 +576,13 @@ Operating modes:
+        * The cached bootloader configuration 'vcgencmd bootloader_config'
+        * The current pending update - typically /boot/firmware/pieeprom.upd
+ 
+-   sudo -E rpi-eeprom-config --edit [pieeprom.bin]
++   rpi-eeprom-config --edit [pieeprom.bin]
+ 
+-   To cancel the pending update run 'sudo rpi-eeprom-update -r'
++   To cancel the pending update run 'rpi-eeprom-update -r'
+ 
+    The default text editor is vi and may be overridden by setting the 'EDITOR'
+-   environment variable and passing '-E' to 'sudo' to preserve the environment.
+-   EDITOR may include arguments (e.g. EDITOR='code --wait'), so a path that
+-   contains spaces must be quoted inside it (e.g. EDITOR='"/opt/My Editor/ed"').
++   environment variable. EDITOR may include arguments (e.g. EDITOR='code --wait'),
++   so a path that contains spaces must be quoted inside it (e.g. EDITOR='"/opt/My Editor/ed"').
+ 
+ 6. Signing the bootloader config file.
+    Updates an EEPROM binary with a signed config file (created by rpi-eeprom-digest) plus
+--- a/rpi-eeprom-update
++++ b/rpi-eeprom-update
+@@ -431,7 +431,7 @@ applyRecoveryUpdate()
+    echo "EEPROM updates pending. Please reboot to apply the update."
+ 
+    if [ "${RPI_EEPROM_IMMEDIATE_UPDATE}" = 0 ]; then
+-      echo "To cancel a pending update run \"sudo rpi-eeprom-update -r\"."
++      echo "To cancel a pending update run \"rpi-eeprom-update -r\"."
+    fi
+ }
+ 
+@@ -458,7 +458,7 @@ printFlashromChipDetails() {
+ }
+ 
+ applyUpdate() {
+-   [ "$(id -u)" = "0" ] || die "* Must be run as root - try 'sudo rpi-eeprom-update'"
++   [ "$(id -u)" = "0" ] || die "* Must be run as root - try 'rpi-eeprom-update'"
+ 
+    if [ "${IGNORE_DPKG_CHECKSUMS}" = 0 ]; then
+       (
+@@ -819,7 +819,7 @@ STRICT_MIN_VER_CHECK
+ Images with an MFG_VER older than the board manufacture version are
+ rejected. Set to 0 to warn and install anyway. The -y option does not
+ override this check e.g. to force the install run:
+-   sudo STRICT_MIN_VER_CHECK=0 rpi-eeprom-update -d -f pieeprom.bin -y
++   STRICT_MIN_VER_CHECK=0 rpi-eeprom-update -d -f pieeprom.bin -y
+ 
+ The bootloader repeats this check, so self-update and recovery.bin updates
+ also require bootloader_allow_mfg_downgrade=1 in config.txt. flashrom and
+@@ -861,7 +861,7 @@ To update the configuration file in an E
+    rpi-eeprom-config pieeprom.bin --config bootconf.txt --out pieeprom-new.bin
+ 
+ To flash the new image:
+-   sudo rpi-eeprom-update -d -f ./pieeprom-new.bin
++   rpi-eeprom-update -d -f ./pieeprom-new.bin
+ 
+ The syntax is the same as config.txt See online documentation for the list of parameters.
+ 
+@@ -943,7 +943,7 @@ printVersions()
+       elif [ "$(id -u)" = "0" ]; then
+          echo "     VL805: up to date"
+       else
+-         echo "     VL805: version unknown. Try sudo rpi-eeprom-update"
++         echo "     VL805: version unknown. Try rpi-eeprom-update"
+       fi
+ 
+       echo "   CURRENT: ${VL805_CURRENT_VERSION}"
+@@ -1172,9 +1172,9 @@ checkVersion()
+    if [ "${ACTION_UPDATE_BOOTLOADER}" = 1 ] || [ "${ACTION_UPDATE_VL805}" = 1 ]; then
+       echo "*** UPDATE AVAILABLE ***"
+       echo ""
+-      echo "Run \"sudo rpi-eeprom-update -a\" to install this update without a prompt."
++      echo "Run \"rpi-eeprom-update -a\" to install this update without a prompt."
+       echo
+-      echo "To configure the bootloader update policy run \"sudo ${RPI_EEPROM_UPDATE_CONFIG_TOOL}\""
++      echo "To configure the bootloader update policy run \"${RPI_EEPROM_UPDATE_CONFIG_TOOL}\""
+       echo ""
+       printVersions
+       if offerUpdatePrompt; then
+@@ -1286,7 +1286,7 @@ while getopts A:abdhilf:m:ju:rsy option;
+       ;;
+    h) usage
+       ;;
+-   r) [ "$(id -u)" = "0" ] || die "* Must be run as root - try 'sudo rpi-eeprom-update -r'"
++   r) [ "$(id -u)" = "0" ] || die "* Must be run as root - try 'rpi-eeprom-update -r'"
+       echo "Removing temporary files from previous EEPROM update"
+       checkDependencies
+       removePreviousUpdates
