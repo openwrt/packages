@@ -1,26 +1,28 @@
+# AntiBlock UCI configuration
+#
+# AntiBlock 3.x uses an interface name as the first field of each -r rule.
+# The init script also accepts the legacy 'gateway' option for compatibility
+# with existing AntiBlock 2.x configurations.
 
-#config main 'config'
-#Required parameters:
-	#option enabled       '0'
-#Optional parameters:
-	#option log			  '1'
-	#option stat		  '1'
-	#list blacklist 	  'x.x.x.x/xx'
-	#list blacklist 	  'x.x.x.x/xx'
+# config main 'config'
+#     option enabled '0'
+#     option listen  '192.168.1.1:53'  # optional; default: network.lan.ipaddr:53
+#     option log     '1'
+#     option stat    '1'
+#     option test    '0'
+#     list blacklist 'x.x.x.x/xx'
+#     list blacklist 'x.x.x.x/xx'
 
-#It is necessary to enter from 1 to 32 values:
-#config route
-	#option gateway       'gateway1'
-	#option domains_path  'https://test1.com'
+# Enter from 1 to 32 route sections:
+# config route
+#     option interface    'wg0'
+#     option domains_path 'https://example.com/domains.txt'
 
-#config route
-	#option gateway       'gateway2'
-	#option domains_path  '/test1.txt'
+# config route
+#     option interface    'eth1'
+#     option domains_path '/etc/antiblock/domains.txt'
 
-#config route
-	#option gateway       'gateway2'
-	#option domains_path  '/test2.txt'
-
-#config route
-	#option gateway       'gateway1'
-	#option domains_path  'https://test2.com'
+# Legacy AntiBlock 2.x form remains accepted:
+# config route
+#     option gateway      'wg0'
+#     option domains_path '/etc/antiblock/domains-legacy.txt'
