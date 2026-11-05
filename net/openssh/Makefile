@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=openssh
 PKG_REALVERSION:=10.6p2
 PKG_VERSION:=10.6_p2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_REALVERSION).tar.gz
 PKG_SOURCE_URL:=https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/ \
@@ -245,6 +245,8 @@ define Package/openssh-server/install
 	sed -r -i 's,^#(HostKey /etc/ssh/ssh_host_(rsa|ed25519|mldsa44_ed25519)_key)$$$$,\1,' $(1)/etc/ssh/sshd_config
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/sshd.init $(1)/etc/init.d/sshd
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/sshd.dropbear-keys $(1)/etc/uci-defaults/50-openssh-dropbear-keys
 	$(INSTALL_DIR) $(1)/lib/preinit
 	$(INSTALL_BIN) ./files/sshd.failsafe $(1)/lib/preinit/99_10_failsafe_sshd
 	$(INSTALL_DIR) $(1)/usr/sbin

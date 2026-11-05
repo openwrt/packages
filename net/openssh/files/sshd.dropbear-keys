@@ -1,0 +1,34 @@
+#!/bin/sh
+# LuCI's SSH-Keys page and ssh-copy-id write root's keys to
+# /etc/dropbear/authorized_keys on OpenWrt, but sshd reads
+# /root/.ssh/authorized_keys. Make sshd's path a symlink to the dropbear
+# file so both use one list. The link points this way because rpcd checks
+# LuCI's ACL against the resolved path. Only link when that can't change
+# which keys sshd accepts.
+
+DB_KEYS=/etc/dropbear/authorized_keys
+SSHD_KEYS=/root/.ssh/authorized_keys
+
+keys() {
+	[ -f "$1" ] && grep -v -E '^[[:space:]]*(#|$)' "$1" | sort -u
+}
+
+[ -L "$SSHD_KEYS" ] && exit 0
+
+if [ -n "$(keys "$DB_KEYS")" ] &&
+   [ "$(keys "$DB_KEYS")" != "$(keys "$SSHD_KEYS")" ]; then
+	logger -t sshd "$DB_KEYS and $SSHD_KEYS hold different keys;" \
+		"sshd only uses $SSHD_KEYS. Merge them into $DB_KEYS," \
+		"remove $SSHD_KEYS and reinstall openssh-server to link them."
+	exit 0
+fi
+
+mkdir -p -m 0700 /root/.ssh /etc/dropbear
+if [ -f "$SSHD_KEYS" ]; then
+	mv -f "$SSHD_KEYS" "$DB_KEYS"
+elif [ ! -f "$DB_KEYS" ]; then
+	touch "$DB_KEYS"
+fi
+chmod 0600 "$DB_KEYS"
+ln -s "$DB_KEYS" "$SSHD_KEYS"
+exit 0
