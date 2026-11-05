@@ -1,0 +1,5 @@
+#!/bin/sh
+
+[ -f /etc/corosync/qnetd/nssdb/cert9.db ] || /usr/bin/corosync-qnetd-certutil -i
+
+exit 0
