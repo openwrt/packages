@@ -5,7 +5,7 @@ Subject: [PATCH] Fix host build with LibreSSL
 
 --- a/Modules/_ssl.c
 +++ b/Modules/_ssl.c
-@@ -4553,7 +4553,7 @@ set_sni_callback(PySSLContext *self, PyO
+@@ -4628,7 +4628,7 @@ set_sni_callback(PySSLContext *self, PyO
      return 0;
  }
  
@@ -14,7 +14,7 @@ Subject: [PATCH] Fix host build with LibreSSL
  static X509_OBJECT *x509_object_dup(const X509_OBJECT *obj)
  {
      int ok;
-@@ -4626,7 +4626,11 @@ _ssl__SSLContext_cert_store_stats_impl(P
+@@ -4701,7 +4701,11 @@ _ssl__SSLContext_cert_store_stats_impl(P
      int x509 = 0, crl = 0, ca = 0, i;
  
      store = SSL_CTX_get_cert_store(self->ctx);
@@ -26,7 +26,7 @@ Subject: [PATCH] Fix host build with LibreSSL
      if (objs == NULL) {
          PyErr_SetString(PyExc_MemoryError, "failed to query cert store");
          return NULL;
-@@ -4681,7 +4685,11 @@ _ssl__SSLContext_get_ca_certs_impl(PySSL
+@@ -4756,7 +4760,11 @@ _ssl__SSLContext_get_ca_certs_impl(PySSL
      }
  
      store = SSL_CTX_get_cert_store(self->ctx);
