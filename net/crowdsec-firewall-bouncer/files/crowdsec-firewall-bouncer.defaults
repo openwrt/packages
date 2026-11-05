@@ -1,0 +1,79 @@
+#!/bin/sh
+#
+# SPDX-License-Identifier: GPL-2.0-only
+
+#Migrate crowdsec-firewall-bouncer to its own config file
+
+. /lib/functions.sh
+
+CCONFIG=crowdsec
+CFBCONFIG=crowdsec-firewall-bouncer
+CCONFFILE="/etc/config/$CCONFIG"
+CFBCONFFILE="/etc/config/$CFBCONFIG"
+
+
+section_to_erase=""
+found_crowdsec_section=false
+found_bouncer_section=false
+
+not_autoname() {
+	local name="$1"
+	case $name in
+		cfg*) return 1;;
+		*) return 0;;
+	esac
+}
+
+#Custom callbacks to transfer bouncer sections from crowdsec to crowdsec-firewall-bouncer config file
+config_cb() {
+	local type="$1"
+	section_name="$2"
+	if [ -n "$section_to_erase" ]; then
+		uci delete $CCONFIG.$section_to_erase
+		section_to_erase=""
+	fi
+	if [ "$type" == "bouncer" ]; then
+		section_to_erase=$section_name
+		if ! $found_bouncer_section; then
+			found_bouncer_section=true
+			if [ -f "$CFBCONFFILE" ]; then
+				echo "Found 'bouncer' section(s) in '$CCONFFILE' that will be migrated to '$CFBCONFFILE'."
+				echo "Beforehand moving pre-existing '$CFBCONFFILE' to '$CFBCONFFILE.apk-new' as it is the default package version."
+				echo "Please check whether migrated 'bouncer' section(s) in '$CFBCONFFILE' needs to be updated by comparing it to that in '$CFBCONFFILE.apk-new'."
+				echo "Once you are done, erase '$CFBCONFFILE.apk-new'."
+				mv $CFBCONFFILE $CFBCONFFILE.apk-new
+			fi
+			touch $CFBCONFFILE && chmod 600 $CFBCONFFILE
+		fi
+		cfbsection_name="$(uci add $CFBCONFIG $type)"
+		if not_autoname "$section_name"; then
+			uci rename $CFBCONFIG.$cfbsection_name="$section_name"
+			cfbsection_name="$section_name"
+		fi
+		option_cb() {
+			local option="$1" value="$2"
+			uci set $CFBCONFIG.$cfbsection_name.$option="$value"
+		}
+		list_cb() {
+			local list="$1" value="$2"
+			uci add_list $CFBCONFIG.$cfbsection_name.$list="$value"
+		}
+	else
+		[ "$type" == "crowdsec" ] && found_crowdsec_section=true
+		option_cb() { return 0; }
+		list_cb() { return 0; }
+	fi
+}
+
+#Load crowdsec so callback functions do the transfering of bouncer sections
+config_load $CCONFIG
+
+#Reset callbacks
+reset_cb
+
+#Erase crowdsec config file if it did not contain a crowdsec section
+if ! $found_crowdsec_section; then
+	echo "Erasing '$CCONFFILE' as no 'crowdsec' section was found in it so it is now empty!"
+	rm -f $CCONFFILE
+fi
+exit 0
