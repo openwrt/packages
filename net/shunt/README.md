@@ -53,6 +53,7 @@ shunt check
 * Domain and address lists from a file - a community-maintained set of thousands of names or networks, without a single UCI entry per line
 * Per-policy killswitch: reject the traffic when the interface or proxy is gone, instead of leaking it out of the normal uplink - clients fail at once rather than on a timeout
 * Optional health tracking: an interface that is up but dead - a WireGuard tunnel whose peer is gone - is detected by ICMP probes through the interface itself, and its policies fall back until it answers again
+* Failover per policy: list several interfaces in order, and new connections move to the next one when an interface goes down or stops answering - running connections stay where they started
 * Per-policy action: `route` marks the traffic for the policy interface, `bypass` exempts it from every policy below, `tproxy` hands it to a transparent proxy on the router
 * Your own networks stay reachable from a policy client, without listing them anywhere
 * Puts its own table back when something deletes it, `fw4 flush` included
@@ -195,11 +196,11 @@ Each `config policy` section is one routing policy. **The section must be named,
 | :--- | :--- |
 | enabled | `0` skips the section entirely |
 | action | `route` (default), `bypass` or `tproxy`, see below |
-| interface | netifd logical name (`wan`, `trm_wwan`) or raw netdev (`wg0`, `phy0-sta0`); `route` only |
+| interface | netifd logical name (`wan`, `trm_wwan`) or raw netdev (`wg0`, `phy0-sta0`); a list, in order, for [failover](#failover-several-interfaces); `route` only |
 | tproxy_port | port the transparent proxy listens on; `tproxy` only, required there |
 | fallback | `main` (default) or `block`, see below; `route` and `tproxy` |
 | keep_local | `1` (default) keeps traffic on `main` where `main` has a route for it, see below; `route` only |
-| gw4 / gw6 | gateway override; normally unnecessary |
+| gw4 / gw6 | gateway override for a single interface; normally unnecessary |
 | src | client addresses or CIDRs whose traffic this policy owns |
 | src_mac | client MAC addresses, ORed with `src` |
 | src_dev | ingress devices (`br-guest`, `lan2`), ORed with `src` and `src_mac`, see below |
@@ -212,7 +213,7 @@ Each `config policy` section is one routing policy. **The section must be named,
 
 `src`, `src_mac`, `src_dev`, `dst`, `dst_file`, `domain` and `domain_file` are lists and may repeat.
 
-Interfaces are resolved through netifd: a logical name resolves to its `l3_device`, a raw netdev is adopted if netifd knows it, and a device netifd knows nothing about passes through as given - which on OpenWrt means a tunnel started outside netifd, since wireguard and the other tunnel types have netifd protocols of their own. Gateways are discovered from the same dump, merged across sibling entries, because netifd splits families. `gw4`/`gw6` override discovery and always win; on a point to point interface no gateway is needed at all.
+Interfaces are resolved through netifd: a logical name resolves to its `l3_device`, a raw netdev is adopted if netifd knows it, and a device netifd knows nothing about passes through as given - which on OpenWrt means a tunnel started outside netifd, since wireguard and the other tunnel types have netifd protocols of their own. Gateways are discovered from the same dump, merged across sibling entries, because netifd splits families. `gw4`/`gw6` override discovery for a policy with a single interface and always win there; on a point to point interface no gateway is needed at all.
 
 There is deliberately no list of supported tunnel protocols. shunt asks netifd for the device and the gateway and renders a default route into the policy table - `default via <gw> dev <device>` when a gateway is known, `default dev <device>` when none is needed. Wireguard, OpenVPN in both `tun` and `tap` mode, L2TP, PPTP, Tailscale, NetBird, a second physical uplink or a mobile connection all reduce to those two shapes, so none of them needs a case of its own. See [Which tunnels work](#which-tunnels-work) for the one thing that genuinely does not fit.
 
@@ -450,18 +451,45 @@ config global
 	list track_ip '2606:4700:4700::1111'
 ```
 
-Every device a `route` policy uses is then probed every 5 seconds, each target once per round. A round counts as answered when any target replies, so one unreachable target, or a tunnel without IPv6, does not take the device down. Three unanswered rounds in a row make the device dead, three answered ones bring it back - 15 to 20 seconds either way, measured. The timing has no options.
+Every interface a `route` policy uses is then probed every 5 seconds, each target once per round. A round counts as answered when any target replies, so one unreachable target, or a tunnel without IPv6, does not take the interface down. Three unanswered rounds in a row make the interface dead, three answered ones bring it back - 15 to 20 seconds either way, measured. The timing has no options.
 
 A dead device is handled exactly like one whose link went down: the default route leaves its policies' tables and the [fallback](#fallback-main-or-block) takes over. With `block` new connections are rejected at once; with `main` they take the normal uplink. Connections that were running into the dead interface are moved by that too and reset by the kernel, which they would not have survived anyway. Connections opened through `main` during the outage are left unmarked, so they stay on the normal uplink when the interface comes back instead of being torn down - only new connections return to it, measured. `tproxy` and `bypass` policies are not tracked.
 
 The probes leave from the router through the policy device itself: from a raw socket bound to the device, with a mark of its own that leads to a probe table holding the same default route as the device's policies. That table is never withdrawn, so a dead device keeps being probed and is noticed when it recovers, and the binding keeps a probe from ever leaving through another uplink and reporting the wrong interface alive. Two things follow from that path. The replies arrive on the policy device from an address the main table routes elsewhere, so `rp_filter` must be loose there - as it must for shunt anyway, see [Which tunnels work](#which-tunnels-work). And on WireGuard the targets must lie within the peer's `AllowedIPs`, which a full tunnel's `0.0.0.0/0` and `::/0` cover.
 
-Without `track_ip` none of this exists and the ruleset is the same as without the option. `ubus call shunt status` lists each tracked device under `track`, alive or not and since when, and `shunt check` prints its probe mark and table. State changes are logged:
+Without `track_ip` none of this exists and the ruleset is the same as without the option. `ubus call shunt status` lists each tracked interface under `track`, by its configured name with its current device, alive or not and since when, and `shunt check` prints its probe mark and table. State changes are logged:
 
 ```
 shunt: track: wg0 does not answer - its policies fall back until it does
 shunt: track: wg0 answers again - its policies are back on it
 ```
+
+<a id="failover-several-interfaces"></a>
+### Failover: several interfaces
+
+`interface` takes a list. The interfaces are used in the order given: new connections go to the first one that works, and when it goes down - netifd reports it down, or with [track_ip](#health-tracking-track_ip) it stops answering - they go to the next one. When an earlier interface works again, new connections return to it. Only when none works does the policy's [fallback](#fallback-main-or-block) apply.
+
+```
+config policy 'streaming'
+	list interface 'wg0'
+	list interface 'wg1'
+	list interface 'wan'
+	list domain '*.example.com'
+	option fallback 'block'
+```
+
+A connection stays on the interface it started on. Each interface of the policy has a mark of its own, recorded on the connection's conntrack entry, so a switch moves new connections only: those running on the backup when the first interface returns keep the backup until they end - nothing is reset by the return, measured. Those running on an interface that dies are moved by its fallback and reset, as with a single interface; they would not have survived the dead path anyway.
+
+Without `track_ip` the switch follows netifd's interface state, at once on `ifdown` and `ifup`. That covers an interface that really goes down - a PPPoE or LTE link, a wifi uplink. A WireGuard interface stays up when its peer is gone, so for tunnels the switch needs `track_ip`.
+
+Each interface costs one of the 255 marks, with its own routing table and rules. `gw4`/`gw6` name the gateway of one interface, so with several they are ignored with an issue, and every interface takes the gateway netifd reports for it. `shunt check` prints a line per interface, `ubus call shunt status` shows under `active` which interface each policy's new connections use, and every switch is logged:
+
+```
+shunt: policy streaming: new connections use wg1
+shunt: policy streaming: no interface left - fallback block
+```
+
+There is no load balancing: an interface is used while it works and the next one only when it does not.
 
 <a id="default-uplink-and-exceptions"></a>
 ### Default uplink and exceptions
@@ -484,7 +512,9 @@ config policy 'isp'
 	list  src_mac    'aa:bb:cc:dd:ee:ff'
 ```
 
-In both forms the policy's own table decides for its clients in both address families, so the metrics matter only for traffic no policy selects. Set them explicitly on both sides anyway, including `wan6` where IPv6 comes from an interface of its own: netifd's default `metric 0` stays 0 for IPv4, but the kernel stores an IPv6 route with metric 0 as 1024. An interface left at the default therefore wins the IPv4 default route and loses the IPv6 one against any interface with an explicit metric - unselected clients then leave through different uplinks per family.
+In both forms the policy's own table decides for its clients in both address families, so the metrics matter only for traffic no policy selects. Set them explicitly on both sides anyway: netifd's default `metric 0` stays 0 for IPv4, but the kernel stores an IPv6 route with metric 0 as 1024. An interface left at the default therefore wins the IPv4 default route and loses the IPv6 one against any interface with an explicit metric - unselected clients then leave through different uplinks per family.
+
+**On a DHCPv6 uplink the `metric` of `wan6` has no effect on IPv6.** odhcp6c gives the routes from the router advertisement a metric of their own - the default route 512 at the router's medium preference, 384 at high, 640 at low, on-link prefixes 256 - and netifd applies an interface's `metric` only to routes without one. IPv4 from DHCP does take the interface metric. So the tunnel's metric has to sit on the right side of both values: for the ISP as default above the uplink's IPv4 metric and above 640, `1024` covers both; for the tunnel as default below the uplink's IPv4 metric and below 384.
 
 `fallback 'block'` covers the policy's clients only. In the tunnel-as-default form, unselected clients move to the uplink when the tunnel goes down, because netifd withdraws the tunnel's route from `main` and the uplink's is left. Preventing that is a matter of the firewall, not of shunt.
 
@@ -666,20 +696,21 @@ table inet shunt                     own table, see below
   set m_<policy>                     client MACs, no family digit, counter
   set i_<policy>                     client ingress devices, no family digit, counter
 
-fwmark                               <index> << 24, mask 0xff000000
-                                     with track_ip: 0xff000000 counting down, one per tracked device
+fwmark                               <index> << 24, mask 0xff000000, one index per policy interface
+                                     with track_ip: 0xff000000 counting down, one per tracked interface
 ct mark                              same bits, set on a flow's first packet
-ip rule pref                         30000 + <n> a tracked device's probes, with track_ip
+ip rule pref                         30000 + <n> a tracked interface's probes, with track_ip
                                      31000 + <index> keep_local's main lookup
                                      31500 + <index> the policy table
 routing table                        8000 + <index>, for tproxy: local default dev lo
                                      with fallback 'block': prohibit default metric 9999
-                                     8500 + <n>, a tracked device's probe table
-chain mk_<policy>                    with track_ip, a fallback 'main' policy's mark statement
+                                     8500 + <n>, a tracked interface's probe table
+chain mk_<policy>                    the mark statement of the interface in use, for a policy
+                                     with several interfaces, or with track_ip and fallback 'main'
 /etc/iproute2/rt_tables.d/shunt.conf the table name mapping, for `ip route show` only
 ```
 
-A `bypass` policy is only a rule in the prerouting and output chains: no mark, no table, no ip rule, and it does not count against the 255. A `tproxy` policy has rules in prerouting only, and no keep_local rule. The mark mask is fixed at `0xff000000`, which allows 255 policies; with `track_ip` each tracked device takes one of those marks for its probes. The `output` chain is `type route` so the router's own marked traffic is re-routed after the mark is set.
+A `bypass` policy is only a rule in the prerouting and output chains: no mark, no table, no ip rule, and it does not count against the 255. A `tproxy` policy has rules in prerouting only, and no keep_local rule. The mark mask is fixed at `0xff000000`, which allows 255 policy interfaces - a policy with several interfaces takes one for each; with `track_ip` each tracked interface takes one more for its probes. The `output` chain is `type route` so the router's own marked traffic is re-routed after the mark is set.
 
 Every set carries per-element counters, so "is this element ever hit" is one look at `nft list set inet shunt <set>` rather than a tcpdump session. The two kinds count different things: nftables tests a rule left to right, so a **client** set counts every packet that matched the selector, whether or not the destination matched afterwards; a **learned** set is the last lookup in the rule, so a hit there means the packet really was marked. A busy client beside learned addresses at zero is a client that has not visited any of the routed domains, not a fault.
 

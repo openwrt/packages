@@ -183,7 +183,11 @@ export function parse(sections) {
 		push(policies, {
 			name: s.name,
 			action: v.action,
-			interface: v.interface,
+			// In order: the first is used while it works, the next ones
+			// take over one after the other. A single entry is the plain
+			// one-interface policy.
+			interfaces: uniq(filter(to_list(v.interface),
+				(i) => type(i) == 'string' && length(i))),
 			fallback: v.fallback,
 			keep_local: v.keep_local,
 			gw4: v.gw4,

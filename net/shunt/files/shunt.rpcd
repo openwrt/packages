@@ -85,27 +85,29 @@ function rp_filter_blocked(policies) {
 	let seen = {}, blocked = [];
 
 	for (let p in (policies ?? [])) {
-		let dev = p.interface;
-
 		// A bypass policy routes into nothing, so its interface - if one is
 		// left over in the config at all - is not a device shunt marks for.
 		if (action_name(p.action) != 'route')
 			continue;
 
-		if (!length(dev ?? '') || seen[dev])
-			continue;
+		for (let mb in (p.members ?? [ { dev: p.interface } ])) {
+			let dev = mb.dev;
 
-		seen[dev] = true;
+			if (!length(dev ?? '') || seen[dev])
+				continue;
 
-		let v = rp(dev);
+			seen[dev] = true;
 
-		// Absent device: no traffic, nothing dropped - not blocked. The
-		// daemon re-checks on ifup when it appears.
-		if (v == '')
-			continue;
+			let v = rp(dev);
 
-		if (v != '2')
-			push(blocked, dev);
+			// Absent device: no traffic, nothing dropped - not blocked. The
+			// daemon re-checks on ifup when it appears.
+			if (v == '')
+				continue;
+
+			if (v != '2')
+				push(blocked, dev);
+		}
 	}
 
 	return blocked;
@@ -176,7 +178,7 @@ function kernel_rules(marks) {
 
 	for (let m in (marks ?? []))
 		if (m.mark != null)
-			want[sprintf('%d', m.mark)] = m.name;
+			want[sprintf('%d', m.mark)] = sprintf('%d', m.mark);
 
 	let res = rtnl.request(RT.RTM_GETRULE, RT.NLM_F_DUMP,
 		{ family: RT.AF_UNSPEC });
@@ -236,7 +238,7 @@ function kernel_routes(marks) {
 					n++;
 		}
 
-		out[m.name] = n;
+		out[sprintf('%d', m.mark)] = n;
 	}
 
 	return out;
@@ -272,15 +274,19 @@ return {
 						mark: m.mark,
 						rt_table: m.rt_table,
 						rt_prio: m.rt_prio,
-						interface: (m.action == 'route') ? p?.interface : null,
+						interface: (m.action == 'route')
+							? (p?.members?.[m.member]?.dev ?? p?.interface) : null,
+						iface: (m.action == 'route') ? m.iface : null,
+						member: m.member,
+						members: (m.action == 'route') ? length(p?.members ?? [ 1 ]) : null,
 						fallback: (m.action != 'bypass') ? p?.fallback : null,
 						tproxy_port: m.port,
 						domains: length(p?.domains ?? []),
 						file_domains: length(p?.file_domains ?? []),
 						file_dst: length(p?.file_dst ?? []),
 						rules: (m.action != 'bypass' && rules)
-							? length(rules[m.name] ?? []) : null,
-						routes: (m.action != 'bypass') ? routes[m.name] : null
+							? length(rules[sprintf('%d', m.mark)] ?? []) : null,
+						routes: (m.action != 'bypass') ? routes[sprintf('%d', m.mark)] : null
 					});
 				}
 
