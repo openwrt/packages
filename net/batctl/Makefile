@@ -4,7 +4,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=batctl
 PKG_VERSION:=2026.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://downloads.open-mesh.org/batman/releases/batman-adv-$(PKG_VERSION)
@@ -25,7 +25,7 @@ define Package/batctl/Default
   SUBMENU:=Wireless
   URL:=https://www.open-mesh.org/
   DEPENDS:=+libnl-tiny +libc +librt
-  PROVIDES:=batctl
+  PROVIDES:=@batctl-any
 endef
 
 define Package/batctl/description
@@ -52,6 +52,7 @@ define Package/batctl-default
   TITLE:=B.A.T.M.A.N. Advanced user space configuration tool (Default)
   VARIANT:=default
   ALTERNATIVES:=200:/usr/sbin/batctl:/usr/libexec/batctl-default
+  DEFAULT_VARIANT:=1
 endef
 
 define Package/batctl-default/description
