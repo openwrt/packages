@@ -5,7 +5,7 @@ Subject: [PATCH] Do not run compileall
 
 --- a/Makefile.pre.in
 +++ b/Makefile.pre.in
-@@ -2575,6 +2575,7 @@ libinstall:	all $(srcdir)/Modules/xxmodu
+@@ -2580,6 +2580,7 @@ libinstall:	all $(srcdir)/Modules/xxmodu
  		echo "Applying app store compliance patch"; \
  		patch --force --reject-file "$(abs_builddir)/app-store-compliance.rej" --strip 2 --directory "$(DESTDIR)$(LIBDEST)" --input "$(abs_srcdir)/$(APP_STORE_COMPLIANCE_PATCH)" || true ; \
  	fi
@@ -13,7 +13,7 @@ Subject: [PATCH] Do not run compileall
  	@ # Build PYC files for the 3 optimization levels (0, 1, 2)
  	-PYTHONPATH=$(DESTDIR)$(LIBDEST) $(RUNSHARED) \
  		$(PYTHON_FOR_BUILD) -Wi $(DESTDIR)$(LIBDEST)/compileall.py \
-@@ -2585,6 +2586,7 @@ libinstall:	all $(srcdir)/Modules/xxmodu
+@@ -2590,6 +2591,7 @@ libinstall:	all $(srcdir)/Modules/xxmodu
  		$(PYTHON_FOR_BUILD) -Wi $(DESTDIR)$(LIBDEST)/compileall.py \
  		-o 0 -o 1 -o 2 $(COMPILEALL_OPTS) -d $(LIBDEST)/site-packages -f \
  		-x badsyntax $(DESTDIR)$(LIBDEST)/site-packages
