@@ -1,0 +1,77 @@
+sh.ip() hands system() an argument VECTOR rather than a joined string, so the
+command is execvp()'d directly with no shell in between. This pins the two
+things that buys: an argument containing a space stays ONE argv element instead
+of being re-split, and shell metacharacters in UCI-derived values are inert.
+
+mocklib.commands() cannot see either property -- it flattens an array call with
+join(' '), so ['a b','c'] and ['a','b','c'] record identically. The assertions
+below therefore read mocklib.argvs(), which keeps the array as an array.
+
+The one call that must NOT become an array is the `rule del ... 2>/dev/null`
+inside a rule replace: system() has no fd redirection, and that delete is
+expected to fail when the rule is absent, so its stderr has to be suppressed by
+a shell. It stays a string and gets quote()d instead -- asserted here so a later
+cleanup does not silently drop the redirect or the quoting.
+
+-- Testcase --
+import create_sys from 'sys';
+import pkgmod from 'pkg';
+
+let mocklib = global.mocklib;
+let pkg = pkgmod.pkg;
+let sh = create_sys(require('fs'), pkg);
+
+// ── an argument containing a space survives as one element ──────────
+mocklib.clear_commands();
+sh.ip('-4', 'rule', 'add', 'fwmark', '0x1000', 'table', 'my table');
+let a = mocklib.argvs()[0];
+
+// ── shell metacharacters are passed through, not interpreted ────────
+mocklib.clear_commands();
+sh.ip('-6', 'route', 'add', 'dev', 'a;touch /tmp/pbr_pwned');
+let b = mocklib.argvs()[0];
+
+// ── rule replace: the add is an array, the del stays a quoted string ─
+mocklib.clear_commands();
+sh.ip('-4', 'rule', 'replace', 'fwmark', '0x1000', 'priority', '30000');
+let calls = mocklib.argvs();
+
+// ── no-family form still passes a vector ────────────────────────────
+mocklib.clear_commands();
+sh.ip('route', 'flush', 'cache');
+let d = mocklib.argvs()[0];
+
+let checks = [
+	['space_arg_is_array',   type(a) == 'array'],
+	['space_arg_not_split',  length(a) == 8 && a[7] == 'my table'],
+	['space_arg_argv0',      a[0] == pkg.ip_full && a[1] == '-4'],
+	['metachar_one_element', type(b) == 'array' && length(b) == 6 &&
+	                         b[5] == 'a;touch /tmp/pbr_pwned'],
+	['replace_two_calls',    length(calls) == 2],
+	// the delete keeps its shell for 2>/dev/null, and quotes the priority
+	['del_is_string',        type(calls[0]) == 'string'],
+	['del_keeps_redirect',   index(calls[0], '2>/dev/null') >= 0],
+	['del_quotes_priority',  index(calls[0], "priority '30000'") >= 0],
+	// the add carries the vector, with pref appended after the filtered args
+	['add_is_array',         type(calls[1]) == 'array'],
+	['add_has_pref',         calls[1][length(calls[1]) - 2] == 'pref' &&
+	                         calls[1][length(calls[1]) - 1] == '30000'],
+	['add_drops_priority',   !('priority' in calls[1])],
+	['no_family_is_array',   type(d) == 'array' && d[0] == pkg.ip_full && d[1] == 'route'],
+];
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("sh_ip_argv: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+sh_ip_argv: 12/12 passed
+-- End --

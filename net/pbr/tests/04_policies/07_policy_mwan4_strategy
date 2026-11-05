@@ -1,0 +1,165 @@
+Testing that policies targeting mwan4_strategy_<name> resolve cleanly
+and emit goto rules pointing at the mwan4 strategy chain.
+
+-- File fs/access~_etc_init_d_mwan4~x.txt --
+true
+-- End --
+
+-- File fs/stat~_etc_config_mwan4.json --
+{"type":"file"}
+-- End --
+
+-- File uci/network.json --
+{
+	"interface": [
+		{
+			".name": "loopback",
+			"device": "lo",
+			"proto": "static",
+			"ipaddr": "127.0.0.1",
+			"netmask": "255.0.0.0"
+		},
+		{
+			".name": "lan",
+			"device": "br-lan",
+			"proto": "static",
+			"ipaddr": "192.168.1.1/24"
+		},
+		{
+			".name": "wan",
+			"device": "eth1",
+			"proto": "dhcp"
+		},
+		{
+			".name": "wan6",
+			"device": "eth1",
+			"proto": "dhcpv6"
+		}
+	]
+}
+-- End --
+
+-- File uci/pbr.json --
+{
+	"pbr": [
+		{
+			".name": "config",
+			"enabled": "1",
+			"fw_mask": "00ff0000",
+			"ipv6_enabled": "1",
+			"nft_rule_counter": "0",
+			"nft_set_auto_merge": "1",
+			"nft_set_counter": "0",
+			"nft_set_flags_interval": "1",
+			"nft_set_flags_timeout": "0",
+			"nft_set_policy": "performance",
+			"debug_performance": "0",
+			"nft_user_set_counter": "0",
+			"procd_boot_trigger_delay": "5000",
+			"procd_reload_delay": "0",
+			"resolver_set": "dnsmasq.nftset",
+			"strict_enforcement": "1",
+			"uplink_interface": "wan",
+			"uplink_interface6": "wan6",
+			"uplink_ip_rules_priority": "30000",
+			"uplink_mark": "00010000",
+			"verbosity": "2",
+			"ignored_interface": ["vpnserver"],
+			"lan_device": ["br-lan"],
+			"resolver_instance": ["*"]
+		}
+	],
+	"policy": [
+		{
+			".name": "policy_strategy_v4",
+			"name": "Route v4 via mwan4 strategy",
+			"enabled": "1",
+			"interface": "mwan4_strategy_balanced",
+			"src_addr": "192.168.5.0/24",
+			"dest_addr": "",
+			"src_port": "",
+			"dest_port": "",
+			"proto": "",
+			"chain": "prerouting"
+		},
+		{
+			".name": "policy_strategy_v6",
+			"name": "Route v6 via mwan4 strategy",
+			"enabled": "1",
+			"interface": "mwan4_strategy_balanced",
+			"src_addr": "2001:db8:5::/64",
+			"dest_addr": "",
+			"src_port": "",
+			"dest_port": "",
+			"proto": "",
+			"chain": "prerouting"
+		}
+	],
+	"dns_policy": [],
+	"include": []
+}
+-- End --
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+let result = pbr.start_service(['on_start']);
+let nft_content = global.mocklib.read_captured('/var/run/pbr.nft') || '';
+let errors = result?.errors || [];
+
+let unknown_fwmark_errors = filter(errors,
+	e => e.code == 'errorPolicyProcessUnknownFwmark');
+
+let lines = split(nft_content, '\n');
+let strategy_rules = filter(lines,
+	l => index(l, 'mwan4 strategy') >= 0 && index(l, 'add rule') == 0);
+
+let v4_rules = filter(strategy_rules, l => index(l, 'goto mwan4_strategy_balanced_ipv4') >= 0);
+let v6_rules = filter(strategy_rules, l => index(l, 'goto mwan4_strategy_balanced_ipv6') >= 0);
+
+// Snippet should also declare the strategy chain alias via `define`
+let define_lines = filter(lines, l => index(l, 'define pbr_mwan4_strategy_balanced_chain') == 0);
+
+let strategy_in_gateways = filter(result?.gateways || [],
+	g => index(g.name || '', 'mwan4_strategy_') == 0);
+
+let labels = result?.interface_labels || {};
+let wan_gw = filter(result?.gateways || [], g => g.name == 'wan')?.[0];
+
+let checks = [
+	['result_not_null',          result != null],
+	['no_unknown_fwmark',        length(unknown_fwmark_errors) == 0],
+	['has_strategy_rule',        length(strategy_rules) >= 2],
+	['ipv4_goto_strategy',       length(v4_rules) >= 1],
+	['ipv6_goto_strategy',       length(v6_rules) >= 1],
+	['nft_defines_strategy',     length(define_lines) >= 1],
+	['strategy_not_in_gateways', length(strategy_in_gateways) == 0],
+	// Labeling: strategy has the mwan4:strategy: prefix in the dropdown map
+	['strategy_labeled',
+		labels['mwan4_strategy_balanced'] == 'mwan4:strategy:balanced'],
+	['strategy_labeled_failover',
+		labels['mwan4_strategy_failover'] == 'mwan4:strategy:failover'],
+	// 'ignore' has a self-label (no prefix)
+	['ignore_self_labeled',      labels['ignore'] == 'ignore'],
+	// Plain WAN (not netifd or mwan4 managed in this test) → label == name
+	['wan_self_labeled',         labels['wan'] == 'wan'],
+	// gateways[] entries carry a label field
+	['wan_gateway_has_label',    wan_gw?.label == 'wan'],
+];
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("policy_mwan4_strategy: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+policy_mwan4_strategy: 12/12 passed
+-- End --

@@ -1,0 +1,15 @@
+{
+	"kernel": "6.1.0",
+	"hostname": "OpenWrt",
+	"system": "Test System",
+	"model": "Test Device",
+	"board_name": "test",
+	"rootfs_type": "squashfs",
+	"release": {
+		"distribution": "OpenWrt",
+		"version": "24.10.0",
+		"revision": "r0-mock",
+		"target": "x86/64",
+		"description": "OpenWrt 24.10.0 r0-mock"
+	}
+}

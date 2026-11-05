@@ -1,0 +1,44 @@
+Testing that start() discovers gateways correctly from ubus data.
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+let result = pbr.start_service(['on_start']);
+
+let checks = [];
+if (result && result.gateways) {
+	for (let gw in result.gateways) {
+		if (gw.name == 'wan') {
+			push(checks, ['wan_gw4',     gw.gateway_ipv4 == '203.0.113.1']);
+			push(checks, ['wan_dev4',    gw.device_ipv4 == 'eth1']);
+			push(checks, ['wan_mark',    gw.mark != '' && gw.mark != null]);
+			push(checks, ['wan_tid',     gw.table_id != '' && gw.table_id != null]);
+			push(checks, ['wan_action',  gw.action == 'create']);
+		}
+		if (gw.name == 'vpn') {
+			push(checks, ['vpn_gw4',    gw.gateway_ipv4 == '10.8.0.1']);
+			push(checks, ['vpn_dev4',   gw.device_ipv4 == 'tun0']);
+			push(checks, ['vpn_mark',   gw.mark != '' && gw.mark != null]);
+			push(checks, ['vpn_action', gw.action == 'create']);
+		}
+	}
+} else {
+	push(checks, ['result_has_gateways', false]);
+}
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("gateway_discovery: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+gateway_discovery: 9/9 passed
+-- End --
