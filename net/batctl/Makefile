@@ -4,7 +4,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=batctl
 PKG_VERSION:=2026.3
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://downloads.open-mesh.org/batman/releases/batman-adv-$(PKG_VERSION)
@@ -28,13 +28,6 @@ define Package/batctl/Default
   PROVIDES:=@batctl-any
 endef
 
-define Package/batctl/description
-  batctl is a more intuitive management utility for B.A.T.M.A.N.-Advanced.
-  It is an easier method for configuring batman-adv and provides some
-  additional tools for debugging as well. This package builds
-  version $(PKG_VERSION) of the user space utility.
-endef
-
 define Package/batctl-tiny
   $(call Package/batctl/Default)
   TITLE:=B.A.T.M.A.N. Advanced user space configuration tool (Minimal)
@@ -47,17 +40,19 @@ define Package/batctl-tiny/description
   Only configuration relevant subcommands are enabled.
 endef
 
-define Package/batctl-default
+define Package/batctl
   $(call Package/batctl/Default)
   TITLE:=B.A.T.M.A.N. Advanced user space configuration tool (Default)
   VARIANT:=default
-  ALTERNATIVES:=200:/usr/sbin/batctl:/usr/libexec/batctl-default
+  ALTERNATIVES:=200:/usr/sbin/batctl:/usr/libexec/batctl
   DEFAULT_VARIANT:=1
 endef
 
-define Package/batctl-default/description
-  $(Package/batctl/description)
-  Standard subcommands for configuration and online debugging are enabled.
+define Package/batctl/description
+  batctl is a more intuitive management utility for B.A.T.M.A.N.-Advanced.
+  It is an easier method for configuring batman-adv and provides some
+  additional tools for debugging as well. This package builds
+  version $(PKG_VERSION) of the user space utility.
 endef
 
 MAKE_VARS += \
@@ -198,10 +193,10 @@ define Package/batctl-tiny/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/batctl $(1)/usr/libexec/batctl-tiny
 endef
 
-define Package/batctl-default/install
+define Package/batctl/install
 	$(INSTALL_DIR) $(1)/usr/libexec
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/batctl $(1)/usr/libexec/batctl-default
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/batctl $(1)/usr/libexec/batctl
 endef
 
-$(eval $(call BuildPackage,batctl-default))
+$(eval $(call BuildPackage,batctl))
 $(eval $(call BuildPackage,batctl-tiny))
