@@ -4,7 +4,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=batctl
 PKG_VERSION:=2026.3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://downloads.open-mesh.org/batman/releases/batman-adv-$(PKG_VERSION)
@@ -58,18 +58,6 @@ endef
 define Package/batctl-default/description
   $(Package/batctl/description)
   Standard subcommands for configuration and online debugging are enabled.
-endef
-
-define Package/batctl-full
-  $(call Package/batctl/Default)
-  TITLE:=B.A.T.M.A.N. Advanced user space configuration tool (Full)
-  VARIANT:=full
-  ALTERNATIVES:=300:/usr/sbin/batctl:/usr/libexec/batctl-full
-endef
-
-define Package/batctl-full/description
-  $(Package/batctl/description)
-  Subcommands for configuration, online and offline debugging are enabled.
 endef
 
 MAKE_VARS += \
@@ -184,9 +172,6 @@ config-tools := \
 	traceroute \
 	translate \
 
-config-extratools := \
-	bisect_iv \
-
 ifeq ($(BUILD_VARIANT),tiny)
 
 config-y := \
@@ -204,17 +189,6 @@ config-y := \
 
 endif
 
-ifeq ($(BUILD_VARIANT),full)
-
-config-y := \
-	$(config-settings) \
-	$(config-tables) \
-	$(config-json) \
-	$(config-tools) \
-	$(config-extratools) \
-
-endif
-
 MAKE_FLAGS += \
 	$(patsubst %,CONFIG_%=n,$(config-n)) \
 	$(patsubst %,CONFIG_%=y,$(config-y))
@@ -229,11 +203,5 @@ define Package/batctl-default/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/batctl $(1)/usr/libexec/batctl-default
 endef
 
-define Package/batctl-full/install
-	$(INSTALL_DIR) $(1)/usr/libexec
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/batctl $(1)/usr/libexec/batctl-full
-endef
-
 $(eval $(call BuildPackage,batctl-default))
 $(eval $(call BuildPackage,batctl-tiny))
-$(eval $(call BuildPackage,batctl-full))
