@@ -6,21 +6,24 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dufs
 PKG_VERSION:=0.47.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/sigoden/dufs/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=bab9d4fa1654adc6c88523b61bb8697f575334248cf554282e1f87e2329c0569
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-vendor.tar.zst
+PKG_SOURCE_URL:=@OPENWRT
+PKG_SOURCE_PROTO:=cargo-vendor-github
+PKG_VENDOR_REPO:=sigoden/dufs
+PKG_VENDOR_TAG:=v$(PKG_VERSION)
+PKG_VENDOR_HASH:=bab9d4fa1654adc6c88523b61bb8697f575334248cf554282e1f87e2329c0569
+PKG_HASH:=33b7618c4050e247afcb00f8a8ba346081bede821cb466be7ebfda82dc1c6c8a
 
 PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
 PKG_LICENSE:=Apache-2.0 MIT
 PKG_LICENSE_FILES:=LICENSE-APACHE LICENSE-MIT
 
-PKG_BUILD_DEPENDS:=rust/host
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
-include ../../lang/rust/rust-package.mk
+include $(INCLUDE_DIR)/rust-package.mk
 
 define Package/dufs
   SECTION:=net
@@ -28,7 +31,7 @@ define Package/dufs
   SUBMENU:=Web Servers/Proxies
   TITLE:=A distinctive utility file server
   URL:=https://github.com/sigoden/dufs
-  DEPENDS:=$(RUST_ARCH_DEPENDS) @!(i386||mips64) +liblzma
+  DEPENDS:=$(RUST_PKG_DEPENDS) @!(i386||mips64) +liblzma
 endef
 
 define Package/dufs/description
