@@ -20,9 +20,9 @@ Signed-off-by: Álvaro Fernández Rojas <noltari@gmail.com>
  FIRMWARE_RELEASE_STATUS=${FIRMWARE_RELEASE_STATUS:-default}
 -FIRMWARE_BACKUP_DIR=${FIRMWARE_BACKUP_DIR:-/var/lib/raspberrypi/bootloader/backup}
 +FIRMWARE_BACKUP_DIR=${FIRMWARE_BACKUP_DIR:-${FIRMWARE_ROOT}/backup}
+ # Install an older bootloader without confirmation (-y)
+ RPI_EEPROM_ALLOW_DOWNGRADE=${RPI_EEPROM_ALLOW_DOWNGRADE:-0}
  ENABLE_VL805_UPDATES=${ENABLE_VL805_UPDATES:-1}
- CM4_ENABLE_RPI_EEPROM_UPDATE=${CM4_ENABLE_RPI_EEPROM_UPDATE:-0}
- RPI_EEPROM_UPDATE_CONFIG_TOOL="${RPI_EEPROM_UPDATE_CONFIG_TOOL:-raspi-config}"
 --- a/rpi-eeprom-update-default
 +++ b/rpi-eeprom-update-default
 @@ -1,7 +1,7 @@
