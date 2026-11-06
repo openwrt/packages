@@ -1,0 +1,154 @@
+#!/bin/sh /etc/rc.common
+# apmond 2.x procd init script
+
+START=99
+STOP=10
+USE_PROCD=1
+
+PROG=/usr/sbin/apmond
+CONFIG=/etc/config/apmond
+
+# The log directory must exist and belong to user apmond before the jail mounts it
+prepare_log_dir() {
+	local dir="$1"
+
+	mkdir -p "$dir"
+	chown -R apmond:apmond "$dir"
+}
+
+# Node id step 1: newer ujail mounts an empty tmpfs over /sys/firmware, hiding the
+# device tree, so copy the label-mac-device alias and that node's MAC properties
+# to /tmp/apmond/devicetree first (root owned, read only for the daemon)
+copy_devicetree_label() {
+	local base=/sys/firmware/devicetree/base
+	local copy=/tmp/apmond/devicetree
+	local node
+	local prop
+
+	rm -rf "$copy"
+	if [ ! -f "$base/aliases/label-mac-device" ]; then
+		return 0
+	fi
+	node="$(tr -d '\000' < "$base/aliases/label-mac-device")"
+	case "$node" in
+		/*)
+			;;
+		*)
+			return 0
+			;;
+	esac
+	case "$node" in
+		*..*)
+			return 0
+			;;
+	esac
+	mkdir -p "$copy/aliases" "$copy$node"
+	cp "$base/aliases/label-mac-device" "$copy/aliases/label-mac-device"
+	for prop in mac-address local-mac-address; do
+		if [ -f "$base$node/$prop" ]; then
+			cp "$base$node/$prop" "$copy$node/$prop"
+		fi
+	done
+	chown -R root:root "$copy"
+	chmod -R a+rX,go-w "$copy"
+}
+
+# ujail needs procd-ujail and PID, IPC and UTS namespaces in the kernel
+jail_available() {
+	[ -x /sbin/ujail ] || return 1
+	[ -e /etc/capabilities/apmond.json ] || return 1
+	[ -e /proc/self/ns/pid ] || return 1
+	[ -e /proc/self/ns/ipc ] || return 1
+	[ -e /proc/self/ns/uts ] || return 1
+	return 0
+}
+
+start_service() {
+	local log_mountpoint
+	local enabled
+
+	config_load apmond
+	# option enabled '0': do not open an instance, or procd respawns the daemon until it is marked crashed
+	config_get_bool enabled setup enabled 1
+	if [ "$enabled" -ne 1 ]; then
+		return 0
+	fi
+	config_get log_mountpoint setup log_mountpoint /tmp
+	log_mountpoint="${log_mountpoint%/}"
+	if [ -z "$log_mountpoint" ]; then
+		log_mountpoint=/tmp
+	fi
+
+	# self-heal (as the bind and knot packages do): recreate what USERID apmond=468:apmond=468 made
+	if ! type user_exists >/dev/null 2>&1; then
+		. /lib/functions.sh
+	fi
+	if ! group_exists apmond; then
+		group_add apmond 468
+		logger -t apmond -p daemon.notice "group apmond was missing, recreated with gid 468"
+	fi
+	if ! user_exists apmond; then
+		user_add apmond 468 468 apmond /var/run/apmond /bin/false
+		logger -t apmond -p daemon.notice "user apmond was missing, recreated with uid 468"
+	fi
+
+	# fail closed: never run the daemon as root without the jail or the -u switch
+	if ! id apmond >/dev/null 2>&1; then
+		logger -t apmond -p daemon.err "user apmond does not exist, not starting (reinstall the apmond package)"
+		return 1
+	fi
+
+	procd_open_instance
+	procd_set_param command "$PROG" run
+	procd_set_param respawn 3600 5 5
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+
+	# the daemon reads its config through group apmond; uci commit keeps the mode, not the group
+	chgrp apmond "$CONFIG"
+	chmod 0640 "$CONFIG"
+	prepare_log_dir /tmp/apmond
+	copy_devicetree_label
+	if [ "$log_mountpoint" != "/tmp" ] && [ -d "$log_mountpoint" ]; then
+		prepare_log_dir "$log_mountpoint/apmond"
+	fi
+
+	if jail_available; then
+		# ujail as user apmond with CAP_NET_ADMIN only (ULA addresses over netlink), like sysntpd
+		procd_add_jail apmond log ubus procfs sysfs
+		procd_add_jail_mount /etc/config /etc/openwrt_release /tmp/sysinfo
+		# /usr/sbin, not just the binary: installed_sha256 must see a replaced file
+		procd_add_jail_mount /usr/sbin
+		# wired speed fallback: popen("swconfig ...") needs a shell
+		procd_add_jail_mount /bin/sh /sbin/swconfig
+		# node id: the device tree copy is in /tmp/apmond (above), then board.json label_macaddr
+		if [ -f /etc/board.json ]; then
+			procd_add_jail_mount /etc/board.json
+		fi
+		if [ -d /overlay ]; then
+			procd_add_jail_mount /overlay
+		fi
+		procd_add_jail_mount_rw /tmp/apmond
+		if [ "$log_mountpoint" != "/tmp" ] && [ -d "$log_mountpoint" ]; then
+			procd_add_jail_mount_rw "$log_mountpoint"
+		fi
+		procd_set_param capabilities /etc/capabilities/apmond.json
+		procd_set_param user apmond
+		procd_set_param group apmond
+		procd_set_param no_new_privs 1
+	else
+		# no ujail or no PID/IPC/UTS namespaces: apmond switches to user apmond itself,
+		# keeping CAP_NET_ADMIN only
+		procd_append_param command -u apmond
+	fi
+	procd_close_instance
+}
+
+service_triggers() {
+	procd_add_reload_trigger "apmond"
+}
+
+reload_service() {
+	stop
+	start
+}
