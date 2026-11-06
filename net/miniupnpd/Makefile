@@ -9,11 +9,16 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=miniupnpd
 PKG_VERSION:=2.3.11
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
-PKG_SOURCE_URL:=https://github.com/miniupnp/miniupnp/releases/download/miniupnpd_$(subst .,_,$(PKG_VERSION))
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=91994b127da735b2c97f19992e34420648c0e8c4ace8a4bcb0596e7685c48678
+# Build from GitHub archives, as release archives differ from Git in code comments; patches cannot be 1:1 applied
+PKG_SOURCE_VERSION:=f8c4f4c3320820e615b281147b3043f66c195f17
+PKG_SOURCE_URL:=https://codeload.github.com/miniupnp/miniupnp/tar.gz/$(PKG_SOURCE_VERSION)?
+PKG_SOURCE:=miniupnp-$(PKG_SOURCE_VERSION).tar.gz
+PKG_HASH:=341e76bce32f93660fa9cf022b07dc10bea3dbcaff9953097c2329d05fa408fc
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)/miniupnpd
+TAR_OPTIONS+= --strip-components 1
+TAR_CMD=$(HOST_TAR) -C $(1)/.. $(TAR_OPTIONS)
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
@@ -98,8 +103,10 @@ define Package/miniupnpd/install/Default
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/miniupnpd $(1)/usr/sbin/miniupnpd
 	$(INSTALL_BIN) ./files/miniupnpd.init $(1)/etc/init.d/miniupnpd
+	$(INSTALL_BIN) ./files/upnpd-migration.uci-defaults $(1)/etc/uci-defaults/99-miniupnpd-upnpd-migration
 	$(INSTALL_CONF) ./files/upnpd.config $(1)/etc/config/upnpd
 	$(INSTALL_DATA) ./files/miniupnpd.hotplug $(1)/etc/hotplug.d/iface/50-miniupnpd
 endef
