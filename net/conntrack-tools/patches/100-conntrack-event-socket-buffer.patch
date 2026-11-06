@@ -1,0 +1,42 @@
+From 214527f0f0ca2353dabbb5a0ac3e220f9cad15b9 Mon Sep 17 00:00:00 2001
+From: Yuen Su <zypulsecore@gmail.com>
+Date: Sun, 18 Oct 2026 11:23:27 +0800
+Subject: [PATCH] conntrack: apply the receive buffer size to the event socket
+
+CT_EVENT receives notifications on event_sock after socket
+consolidation, but --buffer-size still configures and queries the
+separate control socket. A larger value therefore leaves the active
+event receive buffer unchanged while reporting success. Use event_sock
+for the forced setting, fallback setting and effective-size readback.
+
+Fixes: 5ec684be0854 ("conntrack: consolidate socket open call")
+Signed-off-by: Yuen Su <zypulsecore@gmail.com>
+Upstream-Status: Submitted [netfilter-devel, 2026-10-18; Message-ID: <CAC9WPdyPZNTHOMmm+C2shvJntRytoD6Zj17Q3MWFmjZQTv5+QA@mail.gmail.com>]
+
+---
+ src/conntrack.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+--- a/src/conntrack.c
++++ b/src/conntrack.c
+@@ -3449,17 +3449,17 @@ static int do_command_ct(const char *pro
+ 
+ 			socklen_t socklen = sizeof(socketbuffersize);
+ 
+-			res = setsockopt(mnl_socket_get_fd(sock->mnl),
++			res = setsockopt(mnl_socket_get_fd(event_sock->mnl),
+ 					 SOL_SOCKET, SO_RCVBUFFORCE,
+ 					 &socketbuffersize,
+ 					 sizeof(socketbuffersize));
+ 			if (res < 0) {
+-				setsockopt(mnl_socket_get_fd(sock->mnl),
++				setsockopt(mnl_socket_get_fd(event_sock->mnl),
+ 					   SOL_SOCKET, SO_RCVBUF,
+ 					   &socketbuffersize,
+ 					   sizeof(socketbuffersize));
+ 			}
+-			getsockopt(mnl_socket_get_fd(sock->mnl), SOL_SOCKET,
++			getsockopt(mnl_socket_get_fd(event_sock->mnl), SOL_SOCKET,
+ 				   SO_RCVBUF, &socketbuffersize, &socklen);
+ 			fprintf(stderr, "NOTICE: Netlink socket buffer size "
+ 					"has been set to %zu bytes.\n",
