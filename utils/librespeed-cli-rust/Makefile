@@ -34,7 +34,6 @@ define Package/librespeed-cli-rust
   DEPENDS:=$(RUST_ARCH_DEPENDS) +libopenssl
   PROVIDES:=@librespeed-cli
   CONFLICTS:=librespeed-cli
-  DEFAULT_VARIANT:=1
 endef
 
 define Package/librespeed-cli-rust/description
