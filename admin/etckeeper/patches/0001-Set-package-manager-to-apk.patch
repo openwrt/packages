@@ -1,0 +1,24 @@
+From 6ce913433bc1499df51f063c092893ca88ab41ee Mon Sep 17 00:00:00 2001
+From: Rimas Kudelis <rimas@kudelis.lt>
+Date: Fri, 6 Nov 2026 14:02:34 +0200
+Subject: Set package manager to apk
+---
+ etcleeper.conf |  4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/etckeeper.conf
++++ b/etckeeper.conf
+@@ -34,11 +34,11 @@ DARCS_COMMIT_OPTIONS="-a"
+ 
+ # The high-level package manager that's being used.
+ # (apt, pacman, pacman-g2, yum, dnf, zypper, apk, xbps, emerge, cave, etc)
+-HIGHLEVEL_PACKAGE_MANAGER=apt
++HIGHLEVEL_PACKAGE_MANAGER=apk
+ 
+ # The low-level package manager that's being used.
+ # (dpkg, rpm, pacman, pacmatic, pacman-g2, apk, xbps, cave, qlist, etc)
+-LOWLEVEL_PACKAGE_MANAGER=dpkg
++LOWLEVEL_PACKAGE_MANAGER=apk
+ 
+ # To push each commit to a remote, put the name of the remote here.
+ # (eg, "origin" for git). Space-separated lists of multiple remotes

@@ -1,0 +1,25 @@
+From 3ca8d733742931368352fd796f0060e638e32f00 Mon Sep 17 00:00:00 2001
+From: Rimas Kudelis <rimas@kudelis.lt>
+Date: Fri, 6 Nov 2026 14:10:03 +0200
+Subject: Use sed instead of perl to update etckeeper version
+
+---
+ Makefile | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
+
+--- a/Makefile
++++ b/Makefile
+@@ -90,11 +90,9 @@ endif
+ 	rm -rf $(TESTDIR)
+ 
+ etckeeper.spec:
+-	sed -i~ "s/Version:.*/Version: $$(perl -e '$$_=<>;m/\((.*?)(-.*)?\)/;print $$1;'<CHANGELOG)/" etckeeper.spec
+-	rm -f etckeeper.spec~
++	sed -i "s/Version: [0-9.]\{1,\}/Version: $$(sed '1 {s/^.*(\([0-9.]\{1,\}\).*/\1/; q}' CHANGELOG)/" etckeeper.spec
+ 
+ etckeeper.version:
+-	sed -i~ "s/Version:.*/Version: $$(perl -e '$$_=<>;m/\((.*?)(-.*)?\)/;print $$1;' <CHANGELOG)\"/" etckeeper
+-	rm -f etckeeper~
++	sed -i "s/Version: [0-9.]\{1,\}/Version: $$(sed '1 {s/^.*(\([0-9.]\{1,\}\).*/\1/; q}' CHANGELOG)/" etckeeper
+ 
+ .PHONY: etckeeper.spec etckeeper.version

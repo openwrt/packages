@@ -1,0 +1,44 @@
+From 6ce913433bc1499df51f063c092893ca88ab41ee Mon Sep 17 00:00:00 2001
+From: Rimas Kudelis <rimas@kudelis.lt>
+Date: Fri, 6 Nov 2026 14:04:34 +0200
+Subject: Add pre-commit/post-commit hook for apk
+
+The hook is based on one currently distributed in the Alpine packages repository.
+---
+ Makefile |  4 ++++
+ apk.hook | 16 ++++++++++++++++
+ 2 files changed, 20 insertions(+)
+ create mode 100644 apk.hook
+
+--- a/Makefile
++++ b/Makefile
+@@ -70,6 +70,10 @@ ifeq ($(HIGHLEVEL_PACKAGE_MANAGER),zyppe
+ 	mkdir -p $(DESTDIR)$(prefix)/lib/zypp/plugins/commit
+ 	$(INSTALL) zypper-etckeeper.py $(DESTDIR)$(prefix)/lib/zypp/plugins/commit/zypper-etckeeper.py
+ endif
++ifeq ($(LOWLEVEL_PACKAGE_MANAGER),apk)
++	mkdir -p $(DESTDIR)$(etcdir)/apk/commit_hooks.d
++	$(INSTALL_EXE) apk.hook $(DESTDIR)$(etcdir)/apk/commit_hooks.d/etckeeper
++endif
+ 	-$(PYTHON) ./etckeeper-bzr/__init__.py install --root=$(DESTDIR) ${PYTHON_INSTALL_OPTS} || echo "** bzr support not installed"
+ 	echo "** installation successful"
+ 
+--- /dev/null
++++ b/apk.hook
+@@ -0,0 +1,16 @@
++#!/bin/sh
++
++[ -x /usr/bin/etckeeper ] || exit
++
++case "$1" in
++	pre-commit)
++		etckeeper pre-install
++		;;
++	post-commit)
++		etckeeper post-install
++		;;
++
++	*)
++		echo "$0: Un-handled action: $1"
++		;;
++esac
