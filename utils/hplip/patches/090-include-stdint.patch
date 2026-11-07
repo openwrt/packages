@@ -1,0 +1,24 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Sander van Deijck <sander@vandeijck.com>
+Date: Fri, 30 Oct 2026 12:00:00 +0100
+Subject: [PATCH] OrbliteScan: include stdint.h before LinuxCommon.h
+
+LinuxCommon.h uses int64_t and uint64_t, but only includes
+<sys/types.h>, which does not define uint64_t with glibc. Include
+<stdint.h> first.
+
+Signed-off-by: Sander van Deijck <sander@vandeijck.com>
+---
+ scan/sane/OrbliteScan/MacCommon.h | 1 +
+ 1 file changed, 1 insertion(+)
+
+--- a/scan/sane/OrbliteScan/MacCommon.h
++++ b/scan/sane/OrbliteScan/MacCommon.h
+@@ -7,6 +7,7 @@
+ #endif
+ 
+ #ifdef __linux__
++#    include <stdint.h>
+ #    include "LinuxCommon.h"
+ #endif
+ 

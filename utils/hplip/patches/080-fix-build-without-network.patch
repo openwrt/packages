@@ -1,0 +1,36 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Sander van Deijck <sander@vandeijck.com>
+Date: Fri, 30 Oct 2026 12:00:00 +0100
+Subject: [PATCH] fix build with --disable-network-build
+
+The hp backend and ptest link libhpdiscovery.la directly, but that
+library is only built with the network build enabled, so linking fails
+with "cannot find ./.libs/libhpdiscovery.a". libhpmud.la already pulls
+in libhpdiscovery.la when the network build is enabled, so drop the
+direct references.
+
+Signed-off-by: Sander van Deijck <sander@vandeijck.com>
+---
+ Makefile.am | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -58,7 +58,7 @@ if !HPLIP_CLASS_DRIVER
+ hpdir = $(cupsbackenddir)
+ hp_PROGRAMS = hp
+ hp_SOURCES = prnt/backend/hp.c
+-hp_LDADD = libhpmud.la libhpdiscovery.la $(DBUS_LIBS)
++hp_LDADD = libhpmud.la $(DBUS_LIBS)
+ hp_LDFLAGS = $(libhpmud_la_LDFLAGS)
+ hp_CFLAGS = $(DBUS_CFLAGS)
+ endif #HPLIP_CLASS_DRIVER 
+@@ -265,7 +265,7 @@ if !HPLIP_CLASS_DRIVER
+ # ptest
+ noinst_PROGRAMS += ptest
+ ptest_SOURCES = pcard/ptest.c pcard/ptest.h pcard/fat.c pcard/fat.h
+-ptest_LDADD = libhpmud.la libhpdiscovery.la
++ptest_LDADD = libhpmud.la
+ endif #!HPLIP_CLASS_DRIVER
+ 
+ # data
