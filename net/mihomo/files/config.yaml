@@ -1,0 +1,30 @@
+# mihomo default configuration
+# See https://wiki.metacubex.one for the full reference.
+mixed-port: 7890
+allow-lan: false
+bind-address: '*'
+mode: rule
+log-level: warning
+ipv6: false
+
+external-controller: '127.0.0.1:9090'
+
+dns:
+  enable: true
+  ipv6: false
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  nameserver:
+    - 223.5.5.5
+    - 119.29.29.29
+
+proxies: []
+
+proxy-groups:
+  - { name: 'Proxy', type: select, proxies: [DIRECT] }
+
+rules:
+  - 'DOMAIN-SUFFIX,local,DIRECT'
+  - 'IP-CIDR,127.0.0.0/8,DIRECT,no-resolve'
+  - 'IP-CIDR,192.168.0.0/16,DIRECT,no-resolve'
+  - 'MATCH,Proxy'
