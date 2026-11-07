@@ -3,12 +3,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=batman-adv
-PKG_VERSION:=2026.3
+PKG_VERSION:=2026.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://downloads.open-mesh.org/batman/releases/batman-adv-$(PKG_VERSION)
-PKG_HASH:=c3524e7d8f148786a052654a7b1090e394746d3a71ee5d657f986dd7af161762
+PKG_HASH:=022848e450e3ace29e7510eefc0f876e4f7c780bd52736ef2c80359e9e333a20
 PKG_EXTMOD_SUBDIRS:=net/batman-adv
 
 PKG_MAINTAINER:=Simon Wunderlich <sw@simonwunderlich.de>
@@ -34,7 +34,7 @@ define KernelPackage/batman-adv
   SUBMENU:=Network Support
   TITLE:=B.A.T.M.A.N. Adv
   URL:=https://www.open-mesh.org/
-  DEPENDS:=+BATMAN_ADV_BLA:kmod-lib-crc16 +kmod-cfg80211 +batctl
+  DEPENDS:=+BATMAN_ADV_BLA:kmod-lib-crc16 +kmod-cfg80211 +batctl-any
   FILES:=$(PKG_BUILD_DIR)/net/batman-adv/batman-adv.$(LINUX_KMOD_SUFFIX)
   AUTOLOAD:=$(call AutoProbe,batman-adv)
 endef
