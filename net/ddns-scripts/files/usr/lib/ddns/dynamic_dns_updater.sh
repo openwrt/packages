@@ -321,6 +321,8 @@ while : ; do
 		|| NEXT_TIME=$(( $LAST_TIME + $FORCE_SECONDS ))
 
 	get_uptime CURR_TIME		# get current uptime
+	WAIT_SECONDS=$CHECK_SECONDS	# time to wait before next loop
+	WAIT_TYPE="Check Interval"
 
 	# send update when current time > next time or current ip different from registered ip
 	if [ $CURR_TIME -ge $NEXT_TIME -o "$CURRENT_IP" != "$REGISTERED_IP" ]; then
@@ -352,6 +354,9 @@ while : ; do
 				|| write_log 6 "Forced update successful - IP: '$CURRENT_IP' send"
 		elif [ $ERR_LAST -eq 127 ]; then
 			write_log 3 "No update send to DDNS Provider"
+			# nothing was sent to the provider (e.g. only ULA/private IP so far), so retrying soon is safe
+			WAIT_SECONDS=$RETRY_SECONDS
+			WAIT_TYPE="Retry Interval"
 		else
 			write_log 3 "IP update not accepted by DDNS Provider"
 		fi
@@ -360,10 +365,10 @@ while : ; do
 	# now we wait for check interval before testing if update was recognized
 	[ $DRY_RUN -eq 0 ] && {
 		get_uptime NOW_TIME
-		echo $(($NOW_TIME + $CHECK_SECONDS)) > $CHKFILE   # save the next scheduled check time
-		NEXT_CHECK_TIME=$( date -d @$(( $(date +%s) + $CHECK_SECONDS )) +"$ddns_dateformat" )
-		write_log 7 "Waiting $CHECK_SECONDS seconds (Check Interval); Next check at $NEXT_CHECK_TIME"
-		sleep $CHECK_SECONDS &
+		echo $(($NOW_TIME + $WAIT_SECONDS)) > $CHKFILE   # save the next scheduled check time
+		NEXT_CHECK_TIME=$( date -d @$(( $(date +%s) + $WAIT_SECONDS )) +"$ddns_dateformat" )
+		write_log 7 "Waiting $WAIT_SECONDS seconds ($WAIT_TYPE); Next check at $NEXT_CHECK_TIME"
+		sleep $WAIT_SECONDS &
 		PID_SLEEP=$!
 		wait $PID_SLEEP	# enable trap-handler
 		PID_SLEEP=0
