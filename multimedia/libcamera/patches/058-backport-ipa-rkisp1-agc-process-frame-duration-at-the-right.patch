@@ -1,0 +1,92 @@
+From 54c20c617416eb1926d5df214d76f0fd47eb9e47 Mon Sep 17 00:00:00 2001
+From: Stefan Klug <stefan.klug@ideasonboard.com>
+Date: Wed, 25 Mar 2026 16:13:48 +0100
+Subject: [PATCH] ipa: rkisp1: agc: Process frame duration at the right time
+
+The frame duration and vblank should not be calculated during process()
+but within prepare(), where the data for that frame get's computed.
+
+In raw mode, process is not called, so also update it in queueRequest().
+
+Signed-off-by: Stefan Klug <stefan.klug@ideasonboard.com>
+Reviewed-by: Paul Elder <paul.elder@ideasonboard.com>
+---
+ src/ipa/rkisp1/algorithms/agc.cpp | 23 +++++++++++++----------
+ src/ipa/rkisp1/algorithms/agc.h   |  3 +--
+ 2 files changed, 14 insertions(+), 12 deletions(-)
+
+--- a/src/ipa/rkisp1/algorithms/agc.cpp
++++ b/src/ipa/rkisp1/algorithms/agc.cpp
+@@ -340,6 +340,9 @@ void Agc::queueRequest(IPAContext &conte
+ 	}
+ 	frameContext.agc.minFrameDuration = agc.minFrameDuration;
+ 	frameContext.agc.maxFrameDuration = agc.maxFrameDuration;
++
++	/* V-blank needs to be valid for the start controls handling. Update it. */
++	processFrameDuration(context, frameContext);
+ }
+ 
+ /**
+@@ -383,6 +386,12 @@ void Agc::prepare(IPAContext &context, c
+ 
+ 	frameContext.agc.yTarget = context.activeState.agc.automatic.yTarget;
+ 
++	/*
++	 * Expand the target frame duration so that we do not run faster than
++	 * the minimum frame duration when we have short exposures.
++	 */
++	processFrameDuration(context, frameContext);
++
+ 	if (frame > 0 && !frameContext.agc.updateMetering)
+ 		return;
+ 
+@@ -511,11 +520,13 @@ double Agc::estimateLuminance(double gai
+  * Compute and populate vblank from the target frame duration.
+  */
+ void Agc::processFrameDuration(IPAContext &context,
+-			       IPAFrameContext &frameContext,
+-			       utils::Duration frameDuration)
++			       IPAFrameContext &frameContext)
+ {
+ 	IPACameraSensorInfo &sensorInfo = context.sensorInfo;
+ 	utils::Duration lineDuration = context.configuration.sensor.lineDuration;
++	utils::Duration frameDuration = frameContext.agc.exposure * lineDuration;
++
++	frameDuration = std::max(frameDuration, frameContext.agc.minFrameDuration);
+ 
+ 	frameContext.agc.vblank = (frameDuration / lineDuration) - sensorInfo.outputSize.height;
+ 
+@@ -539,8 +550,6 @@ void Agc::process(IPAContext &context, [
+ 		  ControlList &metadata)
+ {
+ 	if (!stats) {
+-		processFrameDuration(context, frameContext,
+-				     frameContext.agc.minFrameDuration);
+ 		fillMetadata(context, frameContext, metadata);
+ 		return;
+ 	}
+@@ -642,12 +651,6 @@ void Agc::process(IPAContext &context, [
+ 	activeState.agc.automatic.gain = aGain;
+ 	activeState.agc.automatic.quantizationGain = qGain;
+ 	activeState.agc.automatic.yTarget = effectiveYTarget();
+-	/*
+-	 * Expand the target frame duration so that we do not run faster than
+-	 * the minimum frame duration when we have short exposures.
+-	 */
+-	processFrameDuration(context, frameContext,
+-			     std::max(frameContext.agc.minFrameDuration, newExposureTime));
+ 
+ 	fillMetadata(context, frameContext, metadata);
+ 	expMeans_ = {};
+--- a/src/ipa/rkisp1/algorithms/agc.h
++++ b/src/ipa/rkisp1/algorithms/agc.h
+@@ -51,8 +51,7 @@ private:
+ 			  ControlList &metadata);
+ 	double estimateLuminance(double gain) const override;
+ 	void processFrameDuration(IPAContext &context,
+-				  IPAFrameContext &frameContext,
+-				  utils::Duration frameDuration);
++				  IPAFrameContext &frameContext);
+ 
+ 	Span<const uint8_t> expMeans_;
+ 	Span<const uint8_t> weights_;

@@ -95,7 +95,7 @@ let get_bootdev = function(void) {
 			bdf.seek(440);
 			let bduuid = bdf.read(4);
 			bdf.close();
-			if (uuidarg == sprintf("%x%x%x%x", ord(bduuid, 3), ord(bduuid, 2), ord(bduuid, 1), ord(bduuid, 0))) {
+			if (uuidarg == sprintf("%02x%02x%02x%02x", ord(bduuid, 3), ord(bduuid, 2), ord(bduuid, 1), ord(bduuid, 0))) {
 				uevent = sprintf("/sys/class/block/%s/uevent", bd);
 				break;
 				}

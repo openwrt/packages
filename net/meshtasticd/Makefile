@@ -3,14 +3,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=meshtasticd
-PKG_VERSION:=2.7.15
-PKG_SOURCE_VERSION:=v$(PKG_VERSION).567b8ea
-PKG_RELEASE:=2
+PKG_VERSION:=2.7.26
+PKG_SOURCE_VERSION:=v$(PKG_VERSION).54e0d8d
+PKG_RELEASE:=1
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/meshtastic/firmware.git
-PKG_MIRROR_HASH:=07a85f6fb62103e841b88fbc38c2ed235b12dab8310fe4fe619c8a1754a9aa22
+PKG_MIRROR_HASH:=dc1d9843514b92590eaac0a329208b699e330522688215cfc8441c8945de4782
 
 FRONTEND_VERSION:=2.6.7
 FRONTEND_DEST:=$(PKG_NAME)-frontend-$(FRONTEND_VERSION).tar
@@ -166,7 +166,7 @@ define Package/meshtasticd-full/install
 	$(INSTALL_BIN) ./files/meshtasticd.init $(1)/etc/init.d/meshtasticd
 
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/full/buildroot/program $(1)/usr/bin/meshtasticd
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/full/buildroot/meshtasticd $(1)/usr/bin/meshtasticd
 endef
 
 define Package/meshtasticd-avahi-service/install

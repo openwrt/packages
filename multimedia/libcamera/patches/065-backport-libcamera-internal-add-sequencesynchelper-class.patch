@@ -1,0 +1,155 @@
+From afb22c4844a4b841ee8ecadf65ab8244069ef2af Mon Sep 17 00:00:00 2001
+From: Stefan Klug <stefan.klug@ideasonboard.com>
+Date: Wed, 25 Mar 2026 16:13:55 +0100
+Subject: [PATCH] libcamera: internal: Add SequenceSyncHelper class
+
+On a V4L2 buffer the assigned sequence is not known until the buffer is
+dequeued. But for per frame controls we have to prepare other data like
+sensor controls and ISP params in advance. So we try to anticipate the
+sequence number a given buffer will be. In a perfect world this works
+well as long as the initial sequence is assigned correctly. But it
+breaks as soon as things like running out of buffers or incomplete
+images happen. To make things even more complicated, in most cases
+more than one buffer is queued to the kernel at a time.
+
+So as soon as a sequence number doesn't match the expected one after
+dequeuing, most likely all the already queued buffers will be dequeued
+with the same error.  It is not sufficient to simply add the correction
+after dequeuing because the error on all queued frames would accumulate
+and the whole system starts to oscillate. To work around that add a
+SequenceSyncHelper class that tracks the expected error and allows to
+easily query the necessary correction when queuing new buffers.
+
+Signed-off-by: Stefan Klug <stefan.klug@ideasonboard.com>
+---
+ include/libcamera/internal/meson.build        |  1 +
+ .../libcamera/internal/sequence_sync_helper.h | 76 +++++++++++++++++++
+ src/libcamera/meson.build                     |  1 +
+ src/libcamera/sequence_sync_helper.cpp        | 21 +++++
+ 4 files changed, 99 insertions(+)
+ create mode 100644 include/libcamera/internal/sequence_sync_helper.h
+ create mode 100644 src/libcamera/sequence_sync_helper.cpp
+
+--- a/include/libcamera/internal/meson.build
++++ b/include/libcamera/internal/meson.build
+@@ -40,6 +40,7 @@ libcamera_internal_headers = files([
+     'process.h',
+     'pub_key.h',
+     'request.h',
++    'sequence_sync_helper.h',
+     'shared_mem_object.h',
+     'source_paths.h',
+     'sysfs.h',
+--- /dev/null
++++ b/include/libcamera/internal/sequence_sync_helper.h
+@@ -0,0 +1,76 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2025, Ideas on Board
++ *
++ * Sequence sync helper
++ */
++
++#pragma once
++
++#include <queue>
++
++#include <libcamera/base/log.h>
++
++namespace libcamera {
++
++LOG_DECLARE_CATEGORY(SequenceSyncHelper)
++
++class SequenceSyncHelper
++{
++public:
++	int gotFrame(size_t expectedSequence, size_t actualSequence)
++	{
++		ASSERT(!corrections_.empty());
++		int diff = actualSequence - expectedSequence;
++		int corr = corrections_.front();
++		corrections_.pop();
++		expectedOffset_ -= corr;
++		int necessaryCorrection = diff - expectedOffset_;
++		correctionToApply_ += necessaryCorrection;
++
++		LOG(SequenceSyncHelper, Debug) << "Sync frame "
++					       << "expected: " << expectedSequence
++					       << " actual: " << actualSequence
++					       << " correction: " << corr
++					       << " expectedOffset: " << expectedOffset_
++					       << " correctionToApply " << correctionToApply_;
++
++		expectedOffset_ += necessaryCorrection;
++		return necessaryCorrection;
++	}
++
++	void cancelFrame()
++	{
++		int corr = corrections_.front();
++		corrections_.pop();
++		expectedOffset_ -= corr;
++	}
++
++	/* Value to be added to the source sequence */
++	int correction()
++	{
++		return correctionToApply_;
++	}
++
++	void pushCorrection(int correction)
++	{
++		corrections_.push(correction);
++		correctionToApply_ -= correction;
++		LOG(SequenceSyncHelper, Debug)
++			<< "Push correction " << correction
++			<< " correctionToApply " << correctionToApply_;
++	}
++
++	void reset()
++	{
++		corrections_ = {};
++		correctionToApply_ = 0;
++		expectedOffset_ = 0;
++	}
++
++	std::queue<int> corrections_;
++	int correctionToApply_ = 0;
++	int expectedOffset_ = 0;
++};
++
++} /* namespace libcamera */
+--- a/src/libcamera/meson.build
++++ b/src/libcamera/meson.build
+@@ -49,6 +49,7 @@ libcamera_internal_sources = files([
+     'pipeline_handler.cpp',
+     'process.cpp',
+     'pub_key.cpp',
++    'sequence_sync_helper.cpp',
+     'shared_mem_object.cpp',
+     'source_paths.cpp',
+     'sysfs.cpp',
+--- /dev/null
++++ b/src/libcamera/sequence_sync_helper.cpp
+@@ -0,0 +1,21 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2026, Ideas on Board.
++ *
++ * Helper to easily record debug metadata inside libcamera.
++ */
++
++#include "libcamera/internal/sequence_sync_helper.h"
++
++#include <libcamera/base/log.h>
++
++namespace libcamera {
++
++LOG_DEFINE_CATEGORY(SequenceSyncHelper)
++
++/**
++ * \file debug_controls.h
++ * \brief Helper to synchronize buffer sequences
++ */
++
++} /* namespace libcamera */

@@ -27,4 +27,9 @@ if PACKAGE_rsync
 		prompt "Enable xxhash, extremely fast hash"
 		default n
 
+	config RSYNC_idn
+		bool
+		prompt "Enable international domain names support"
+		default n
+
 endif

@@ -1,0 +1,43 @@
+From 49502f0cdd1331d73e8747552d791aea31706784 Mon Sep 17 00:00:00 2001
+From: Chet Ramey <chet.ramey@case.edu>
+Date: Tue, 15 Sep 2026 11:15:57 -0400
+Subject: Bash-5.3 patch 18: fix readline crash with a prompt that exceeds 256
+ wrapped lines; fix readline redisplay code to print the entire prompt if the
+ first few characters are identical but part of a terminal escape sequence and
+ the prompt needs to be redrawn.
+
+--- a/lib/readline/display.c
++++ b/lib/readline/display.c
+@@ -1024,6 +1024,7 @@ rl_redisplay (void)
+       while (local_prompt_newlines[newlines+1] != -1)
+ 	{
+ 	  temp = local_prompt_newlines[newlines+1];
++	  CHECK_INV_LBREAKS ();
+ 	  inv_lbreaks[++newlines] = temp;
+ 	}  
+ 
+@@ -2261,11 +2262,12 @@ update_line (char *old, char *old_face,
+   od = ofd - old;	/* index of first difference in visible line */
+   nd = nfd - new;	/* nd, od are buffer indexes */
+   if (current_line == 0 && !_rl_horizontal_scroll_mode &&
+-      _rl_term_cr && lendiff > prompt_visible_length && _rl_last_c_pos > 0 &&
++      _rl_term_cr && lendiff > prompt_visible_length && _rl_last_c_pos >= 0 &&
+       (((od > 0 || nd > 0) && (od <= prompt_last_invisible || nd <= prompt_last_invisible)) ||
+ 		((od >= lendiff) && _rl_last_c_pos < PROMPT_ENDING_INDEX)))
+     {
+-      _rl_cr ();
++      if (_rl_last_c_pos > 0)
++	_rl_cr ();
+       if (modmark)
+ 	_rl_output_some_chars ("*", 1);
+       _rl_output_some_chars (local_prompt, lendiff);
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 17
++#define PATCHLEVEL 18
+ 
+ #endif /* _PATCHLEVEL_H_ */

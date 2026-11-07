@@ -1,0 +1,27 @@
+From 4f9b180e61aa223a18f4b3fb7471118863b5be0a Mon Sep 17 00:00:00 2001
+From: Stefan Klug <stefan.klug@ideasonboard.com>
+Date: Wed, 25 Mar 2026 16:13:35 +0100
+Subject: [PATCH] libcamera: delayed_controls: Increase log level for dummy
+ pushes
+
+When an automatic no-op is queued a debug message is printed. Change the
+debug level to warning, because that situation is actually an indication
+of something going seriously out of sync.
+
+Signed-off-by: Stefan Klug <stefan.klug@ideasonboard.com>
+Reviewed-by: Paul Elder <paul.elder@ideasonboard.com>
+---
+ src/libcamera/delayed_controls.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/src/libcamera/delayed_controls.cpp
++++ b/src/libcamera/delayed_controls.cpp
+@@ -313,7 +313,7 @@ void DelayedControls::applyControls(uint
+ 	writeCount_ = sequence + 1;
+ 
+ 	while (writeCount_ > queueCount_) {
+-		LOG(DelayedControls, Debug)
++		LOG(DelayedControls, Warning)
+ 			<< "Queue is empty, auto queue no-op.";
+ 		push(queueCount_, {});
+ 	}

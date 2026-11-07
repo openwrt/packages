@@ -3,14 +3,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=realtek-poe
-PKG_VERSION:=1.3.1
+PKG_VERSION:=1.3.2
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_MAINTAINER:=Martin Kennedy <hurricos@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/Hurricos/realtek-poe/archive/refs/tags/v$(PKG_VERSION)
-PKG_HASH:=e4d3b8fec1bd7cdab0355fd65b66e0f598d223e1dc92f460f28dfa5a94566c9a
+PKG_HASH:=2bb14d1043849eeaa6e8a4387e10227cf427e729d169578ab18a38fd4421d363
 CMAKE_SOURCE_SUBDIR:=src
 
 include $(INCLUDE_DIR)/package.mk

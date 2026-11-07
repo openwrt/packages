@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libzip
 PKG_VERSION:=1.11.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://libzip.org/download/
@@ -33,6 +33,7 @@ define Package/libzip/Default
   DEPENDS:=+zlib $(3)
   VARIANT:=$(1)
   PROVIDES:=libzip
+  CONFLICTS:=$(4)
 endef
 
 define Package/libzip-$(BUILD_VARIANT)/description
@@ -40,9 +41,9 @@ define Package/libzip-$(BUILD_VARIANT)/description
 endef
 
 Package/libzip-nossl=$(call Package/libzip/Default,nossl,w/o encryption support)
-Package/libzip-openssl=$(call Package/libzip/Default,openssl,OpenSSL,+PACKAGE_libzip-openssl:libopenssl)
-Package/libzip-gnutls=$(call Package/libzip/Default,gnutls,GnuTLS,+PACKAGE_libzip-gnutls:libgnutls)
-Package/libzip-mbedtls=$(call Package/libzip/Default,mbedtls,mbedTLS,+PACKAGE_libzip-mbedtls:libmbedtls)
+Package/libzip-openssl=$(call Package/libzip/Default,openssl,OpenSSL,+PACKAGE_libzip-openssl:libopenssl,libzip-nossl)
+Package/libzip-gnutls=$(call Package/libzip/Default,gnutls,GnuTLS,+PACKAGE_libzip-gnutls:libgnutls,libzip-mbedtls libzip-openssl libzip-nossl)
+Package/libzip-mbedtls=$(call Package/libzip/Default,mbedtls,mbedTLS,+PACKAGE_libzip-mbedtls:libmbedtls,libzip-openssl libzip-nossl)
 
 define Package/zipcmp
   TITLE:=zipcmp

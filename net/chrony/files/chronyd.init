@@ -107,7 +107,7 @@ handle_systemclock() {
 	config_get precision "$cfg" precision
 	config_get leapsecmode "$cfg" leapsecmode
 	[ -n "$precision" ] && echo clockprecision "$precision"
-	[ -n "$leapsecmode" ] && echo clockleapsecmode "$leapsecmode"
+	[ -n "$leapsecmode" ] && echo leapsecmode "$leapsecmode"
 }
 
 handle_logging() {

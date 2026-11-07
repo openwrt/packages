@@ -1,0 +1,165 @@
+From b718c269448c800d23fc34743a768cea2afea921 Mon Sep 17 00:00:00 2001
+From: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Date: Tue, 18 Aug 2026 16:05:42 +0200
+Subject: [PATCH] ipa: ipa_module: Remove pipelineName
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+All the IPA modules declare a pipelineName that is identical
+to their name. As we now support creating IPAs by name
+(either explicitly provided by the pipeline handlers or by using the
+pipeline name), the duplicated information in IPAModuleInfo is
+redundant.
+
+Remove it.
+
+Reviewed-by: Barnabás Pőcze <barnabas.pocze@ideasonboard.com>
+Reviewed-by: Kieran Bingham <kieran.bingham@ideasonboard.com>
+Reviewed-by: Hans de Goede <johannes.goede@oss.qualcomm.com>
+Tested-by: Niklas Söderlund <niklas.soderlund+renesas@ragnatech.se>
+Signed-off-by: Hans de Goede <johannes.goede@oss.qualcomm.com>
+Signed-off-by: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+---
+ include/libcamera/ipa/ipa_module_info.h |  1 -
+ src/ipa/ipu3/ipu3.cpp                   |  1 -
+ src/ipa/mali-c55/mali-c55.cpp           |  1 -
+ src/ipa/rkisp1/rkisp1.cpp               |  1 -
+ src/ipa/rpi/pisp/pisp.cpp               |  1 -
+ src/ipa/rpi/vc4/vc4.cpp                 |  1 -
+ src/ipa/simple/soft_simple.cpp          |  1 -
+ src/ipa/vimc/vimc.cpp                   |  1 -
+ src/libcamera/ipa_module.cpp            | 15 ++++++---------
+ test/ipa/ipa_module_test.cpp            |  3 ---
+ 10 files changed, 6 insertions(+), 20 deletions(-)
+
+--- a/include/libcamera/ipa/ipa_module_info.h
++++ b/include/libcamera/ipa/ipa_module_info.h
+@@ -16,7 +16,6 @@ namespace libcamera {
+ struct IPAModuleInfo {
+ 	int moduleAPIVersion;
+ 	uint32_t pipelineVersion;
+-	char pipelineName[256];
+ 	char name[256];
+ } __attribute__((packed));
+ 
+--- a/src/ipa/ipu3/ipu3.cpp
++++ b/src/ipa/ipu3/ipu3.cpp
+@@ -672,7 +672,6 @@ const struct IPAModuleInfo ipaModuleInfo
+ 	IPA_MODULE_API_VERSION,
+ 	1,
+ 	"ipu3",
+-	"ipu3",
+ };
+ 
+ /**
+--- a/src/ipa/mali-c55/mali-c55.cpp
++++ b/src/ipa/mali-c55/mali-c55.cpp
+@@ -382,7 +382,6 @@ const struct IPAModuleInfo ipaModuleInfo
+ 	IPA_MODULE_API_VERSION,
+ 	1,
+ 	"mali-c55",
+-	"mali-c55",
+ };
+ 
+ IPAInterface *ipaCreate()
+--- a/src/ipa/rkisp1/rkisp1.cpp
++++ b/src/ipa/rkisp1/rkisp1.cpp
+@@ -481,7 +481,6 @@ const struct IPAModuleInfo ipaModuleInfo
+ 	IPA_MODULE_API_VERSION,
+ 	1,
+ 	"rkisp1",
+-	"rkisp1",
+ };
+ 
+ IPAInterface *ipaCreate()
+--- a/src/ipa/rpi/pisp/pisp.cpp
++++ b/src/ipa/rpi/pisp/pisp.cpp
+@@ -1147,7 +1147,6 @@ const IPAModuleInfo ipaModuleInfo = {
+ 	IPA_MODULE_API_VERSION,
+ 	1,
+ 	"rpi/pisp",
+-	"rpi/pisp",
+ };
+ 
+ IPAInterface *ipaCreate()
+--- a/src/ipa/rpi/vc4/vc4.cpp
++++ b/src/ipa/rpi/vc4/vc4.cpp
+@@ -633,7 +633,6 @@ const struct IPAModuleInfo ipaModuleInfo
+ 	IPA_MODULE_API_VERSION,
+ 	1,
+ 	"rpi/vc4",
+-	"rpi/vc4",
+ };
+ 
+ IPAInterface *ipaCreate()
+--- a/src/ipa/simple/soft_simple.cpp
++++ b/src/ipa/simple/soft_simple.cpp
+@@ -343,7 +343,6 @@ const struct IPAModuleInfo ipaModuleInfo
+ 	IPA_MODULE_API_VERSION,
+ 	0,
+ 	"simple",
+-	"simple",
+ };
+ 
+ IPAInterface *ipaCreate()
+--- a/src/ipa/vimc/vimc.cpp
++++ b/src/ipa/vimc/vimc.cpp
+@@ -183,7 +183,6 @@ const struct IPAModuleInfo ipaModuleInfo
+ 	IPA_MODULE_API_VERSION,
+ 	0,
+ 	"vimc",
+-	"vimc",
+ };
+ 
+ IPAInterface *ipaCreate()
+--- a/src/libcamera/ipa_module.cpp
++++ b/src/libcamera/ipa_module.cpp
+@@ -213,18 +213,15 @@ Span<const uint8_t> elfLoadSymbol(Span<c
+  * \var IPAModuleInfo::pipelineVersion
+  * \brief The pipeline handler version that the IPA module is for
+  *
+- * \var IPAModuleInfo::pipelineName
+- * \brief The name of the pipeline handler that the IPA module is for
+- *
+- * This name is used to match a pipeline handler with the module.
+- *
+  * \var IPAModuleInfo::name
+  * \brief The name of the IPA module
+  *
+- * The name may be used to build file system paths to IPA-specific resources.
+- * It shall only contain printable characters, and may not contain '*', '?' or
+- * '\'. For IPA modules included in libcamera, it shall match the directory of
+- * the IPA module in the source tree.
++ * This name is used to match the IPA module.
++ *
++ * The name may also be used to build file system paths to IPA-specific
++ * resources. It shall only contain printable characters, and may not contain
++ * '*', '?' or '\'. For IPA modules included in libcamera, it shall match the
++ * directory of the IPA module in the source tree.
+  *
+  * \todo Allow user to choose to isolate open source IPAs
+  */
+--- a/test/ipa/ipa_module_test.cpp
++++ b/test/ipa/ipa_module_test.cpp
+@@ -37,12 +37,10 @@ protected:
+ 			cerr << "IPA module information mismatch: expected:" << endl
+ 			     << "moduleAPIVersion = "     << testInfo.moduleAPIVersion << endl
+ 			     << "pipelineVersion = "      << testInfo.pipelineVersion << endl
+-			     << "pipelineName = "         << testInfo.pipelineName << endl
+ 			     << "name = "                 << testInfo.name
+ 			     << "got: " << endl
+ 			     << "moduleAPIVersion = "     << info.moduleAPIVersion << endl
+ 			     << "pipelineVersion = "      << info.pipelineVersion << endl
+-			     << "pipelineName = "         << info.pipelineName << endl
+ 			     << "name = "                 << info.name << endl;
+ 		}
+ 
+@@ -58,7 +56,6 @@ protected:
+ 			IPA_MODULE_API_VERSION,
+ 			0,
+ 			"vimc",
+-			"vimc",
+ 		};
+ 
+ 		count += runTest("src/ipa/vimc/ipa_vimc.so", testInfo);

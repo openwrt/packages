@@ -163,10 +163,7 @@ transmission() {
 
 	procd_add_jail transmission log
 	procd_add_jail_mount "$config_file"
-	procd_add_jail_mount_rw "$config_dir/resume"
-	procd_add_jail_mount_rw "$config_dir/torrents"
-	procd_add_jail_mount_rw "$config_dir/blocklists"
-	procd_add_jail_mount_rw "$config_dir/stats.json"
+	procd_add_jail_mount_rw "$config_dir"
 	procd_add_jail_mount_rw "$download_dir"
 	[ "$incomplete_dir_enabled" = "1" ] && procd_add_jail_mount_rw "$incomplete_dir"
 	[ "$watch_dir_enabled" = "1" ] && procd_add_jail_mount_rw "$watch_dir"

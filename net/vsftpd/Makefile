@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vsftpd
 PKG_VERSION:=3.0.5
-PKG_RELEASE:=7
+PKG_RELEASE:=8
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://security.appspot.com/downloads/
@@ -40,6 +40,7 @@ endef
 define Package/vsftpd-tls
 $(call Package/vsftpd/Default)
   VARIANT:=tls
+  CONFLICTS:=vsftpd
   TITLE+= (TLS)
   DEPENDS+=+libopenssl
 endef

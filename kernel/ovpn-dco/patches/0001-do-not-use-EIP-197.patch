@@ -15,7 +15,7 @@ cryptographic engine [1]. Disable async until this is fixed.
 
 --- a/drivers/net/ovpn/crypto_aead.c
 +++ b/drivers/net/ovpn/crypto_aead.c
-@@ -134,7 +134,7 @@ static struct scatterlist *ovpn_aead_cry
+@@ -135,7 +135,7 @@ static struct scatterlist *ovpn_aead_cry
  			     __alignof__(struct scatterlist));
  }
  
@@ -24,7 +24,7 @@ cryptographic engine [1]. Disable async until this is fixed.
  static inline void ovpn_encrypt_post_compl(struct crypto_async_request *req, int ret)
  {
  	ovpn_encrypt_post(req->data, ret);
-@@ -235,11 +235,13 @@ int ovpn_aead_encrypt(struct ovpn_peer *
+@@ -236,11 +236,13 @@ int ovpn_aead_encrypt(struct ovpn_peer *
  
  	/* setup async crypto operation */
  	aead_request_set_tfm(req, ks->encrypt);
@@ -38,7 +38,7 @@ cryptographic engine [1]. Disable async until this is fixed.
  	aead_request_set_crypt(req, sg, sg,
  			       skb->len - ovpn_aead_encap_overhead(ks), iv);
  	aead_request_set_ad(req, OVPN_AAD_SIZE);
-@@ -248,7 +250,7 @@ int ovpn_aead_encrypt(struct ovpn_peer *
+@@ -249,7 +251,7 @@ int ovpn_aead_encrypt(struct ovpn_peer *
  	return crypto_aead_encrypt(req);
  }
  
@@ -47,7 +47,7 @@ cryptographic engine [1]. Disable async until this is fixed.
  static inline void ovpn_decrypt_post_compl(struct crypto_async_request *req, int ret)
  {
  	ovpn_decrypt_post(req->data, ret);
-@@ -333,11 +335,13 @@ int ovpn_aead_decrypt(struct ovpn_peer *
+@@ -334,11 +336,13 @@ int ovpn_aead_decrypt(struct ovpn_peer *
  
  	/* setup async crypto operation */
  	aead_request_set_tfm(req, ks->decrypt);
@@ -61,7 +61,7 @@ cryptographic engine [1]. Disable async until this is fixed.
  	aead_request_set_crypt(req, sg, sg, payload_len + tag_size, iv);
  
  	aead_request_set_ad(req, OVPN_AAD_SIZE);
-@@ -355,7 +359,7 @@ static struct crypto_aead *ovpn_aead_ini
+@@ -356,7 +360,7 @@ static struct crypto_aead *ovpn_aead_ini
  	struct crypto_aead *aead;
  	int ret;
  

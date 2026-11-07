@@ -38,4 +38,10 @@ case "$ACTION" in
 	ifdown)
 		ddns_service "ifdown" "$INTERFACE"
 		;;
+	ifupdate)
+		[ -z "$IFUPDATE_ADDRESSES" ] && exit 0
+		ddns_service "ifdown" "$INTERFACE"
+		sleep 1	# give time to shutdown
+		/etc/init.d/ddns enabled && ddns_service "ifup" "$INTERFACE"
+		;;
 esac

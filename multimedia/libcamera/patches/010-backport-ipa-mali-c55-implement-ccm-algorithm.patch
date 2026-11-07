@@ -1,0 +1,325 @@
+From c2c26d387e2da17c68d7af265230e25dbd68d377 Mon Sep 17 00:00:00 2001
+From: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Date: Fri, 22 May 2026 18:53:27 +0200
+Subject: [PATCH] ipa: mali-c55: Implement Ccm algorithm
+
+Implement Ccm algorithm for Mali-C55 base on the libipa CcmAlgorithm class.
+
+Mali has configurable colour gains as part of the CCM hardware block.
+Fix them to 1.0 for the time being as white balance is performed by the
+dedicated Awb algorithm in the Bayer colour space.
+
+The existing Mali Ccm algorithm implementation is a bit more strict on
+when to re-interpolate the CCM coefficients. Keep the algorithm a little
+more strict and only interpolate on 20% color temperature changes.
+
+Signed-off-by: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Reviewed-by: Kieran Bingham <kieran.bingham@ideasonboard.com>
+---
+ src/ipa/mali-c55/algorithms/ccm.cpp     | 173 ++++++++++++++++++++++++
+ src/ipa/mali-c55/algorithms/ccm.h       |  66 +++++++++
+ src/ipa/mali-c55/algorithms/meson.build |   1 +
+ src/ipa/mali-c55/ipa_context.h          |   3 +
+ src/ipa/mali-c55/params.h               |   2 +
+ 5 files changed, 245 insertions(+)
+ create mode 100644 src/ipa/mali-c55/algorithms/ccm.cpp
+ create mode 100644 src/ipa/mali-c55/algorithms/ccm.h
+
+--- /dev/null
++++ b/src/ipa/mali-c55/algorithms/ccm.cpp
+@@ -0,0 +1,173 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2026, Ideas On Board
++ *
++ * Mali C55 Color Correction Matrix control algorithm
++ */
++
++#include "ccm.h"
++
++#include <libcamera/base/log.h>
++
++/**
++ * \file ccm.h
++ * \brief Mali-C55 CCM implementation
++ */
++
++namespace libcamera {
++
++namespace ipa::mali_c55::algorithms {
++
++LOG_DEFINE_CATEGORY(MaliC55Ccm)
++
++/**
++ * \class Ccm
++ * \brief Mali-C55 color correction matrix algorithm
++ */
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::init
++ */
++int Ccm::init(IPAContext &context, const ValueNode &tuningData)
++{
++	auto &cmap = context.ctrlMap;
++	int ret = ccmAlgo_.init(tuningData, cmap);
++	if (ret)
++		return ret;
++
++	/*
++	 * Mali-C55 allows to perform WB in the RGB color space as part of the
++	 * CCM. Fix the gains at 1.0 as we perform White Balance in the Bayer
++	 * domain.
++	 */
++	gain_ = 1.0;
++
++	return 0;
++}
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::configure
++ */
++int Ccm::configure(IPAContext &context,
++		   [[maybe_unused]] const IPACameraSensorInfo &configInfo)
++{
++	lastCt_ = context.activeState.awb.automatic.colourTemperature;
++	return ccmAlgo_.configure(context.activeState.ccm, lastCt_);
++}
++
++void Ccm::queueRequest(IPAContext &context,
++		       [[maybe_unused]] const uint32_t frame,
++		       IPAFrameContext &frameContext,
++		       const ControlList &controls)
++{
++	/* Nothing to do here, the ccm will be calculated in prepare() */
++	if (frameContext.awb.autoEnabled)
++		return;
++
++	ccmAlgo_.queueRequest(context.activeState.ccm, frameContext.ccm, controls);
++}
++
++void Ccm::setParameters(MaliC55Params *params, const IPAFrameContext &frameContext)
++{
++	auto config = params->block<MaliC55Blocks::Ccm>();
++
++	for (unsigned int i = 0; i < 3; i++)
++		config->gains[i] = UQ<4, 8>(gain_).quantized();
++
++	for (unsigned int i = 0; i < 3; i++)
++		config->offs[i] = frameContext.ccm.offsets[i][0];
++
++	const Matrix<float, 3, 3> &ccm = frameContext.ccm.ccm;
++	for (unsigned int i = 0; i < 3; i++) {
++		for (unsigned int j = 0; j < 3; j++) {
++			uint16_t val = Q<5, 8>(ccm[i][j]).quantized();
++
++			/*
++			 * CCM coefficients are expected to be in sign/magnitude
++			 * format.
++			 *
++			 * As we're here handling the case where ccm[i][j] is
++			 * negative, its quantized representation is stored in
++			 * 'val' as 2's complement.
++			 *
++			 * We need to invert the 2's complement by
++			 * re-complementing it to 1 and adding 1 back.
++			 *
++			 * Let's make a practical example on how to reverse the
++			 * 2's complement of -7 with 4 bits and BIT(5) for sign.
++			 *
++			 * 2's complement (ignore sign bit)
++			 *  - 1's complement of abs(-7)
++			 *    2^4 - 1 - 7 = 8 -> 	1000
++			 *  - Add one: 8 + 1 = 9 -> 	1001
++			 *
++			 * -7 is then [1 1001] in memory in 2's complement
++			 *
++			 * Reverse 2's complement (ignore sign bit)
++			 *  - 1's complement of the 2's complement representation
++			 *    2^4 - 1 - 9 = 6 ->	0110
++			 *  - add one: 6 + 1 = 7 ->	0111
++			 *
++			 *  -7 is then [1 0111] in memory in Sign/Magnitude
++			 */
++			if (val && ccm[i][j] < 0)
++				val = ((~(val & ~(1 << 12)) & 0x1fff) + 1) | (1 << 12);
++
++			config->coeffs[i][j] = val;
++		}
++	}
++
++	config.setEnabled(true);
++
++	LOG(MaliC55Ccm, Debug) << "Setting ccm: " << ccm << " offsets: "
++			       << frameContext.ccm.offsets
++			       << " with fixed gain " << gain_;
++}
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::prepare
++ */
++void Ccm::prepare(IPAContext &context, const uint32_t frame,
++		  IPAFrameContext &frameContext, MaliC55Params *params)
++{
++	if (!frameContext.awb.autoEnabled) {
++		setParameters(params, frameContext);
++		return;
++	}
++
++	/*
++	 * The Mali-C55 Ccm implementation is slightly stricter than the
++	 * CcmAlgorithm class and only re-interpolates if the colour temperature
++	 * changes of a certain amount.
++	 */
++	float ct = frameContext.awb.colourTemperature * 1.0f;
++	if (frame > 0 && (ct < lastCt_ * 1.2 && ct > lastCt_ * 0.8)) {
++		frameContext.ccm.ccm = context.activeState.ccm.automatic.ccm;
++		frameContext.ccm.offsets = context.activeState.ccm.automatic.offsets;
++		lastCt_ = ct;
++
++		return;
++	}
++
++	ccmAlgo_.prepare(context.activeState.ccm, frameContext.ccm, frame, ct);
++	setParameters(params, frameContext);
++	lastCt_ = ct;
++}
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::process
++ */
++void Ccm::process([[maybe_unused]] IPAContext &context,
++		  [[maybe_unused]] const uint32_t frame,
++		  IPAFrameContext &frameContext,
++		  [[maybe_unused]] const mali_c55_stats_buffer *stats,
++		  ControlList &metadata)
++{
++	ccmAlgo_.process(frameContext.ccm, metadata);
++}
++
++REGISTER_IPA_ALGORITHM(Ccm, "Ccm")
++
++} /* namespace ipa::mali_c55::algorithms */
++
++} /* namespace libcamera */
+--- /dev/null
++++ b/src/ipa/mali-c55/algorithms/ccm.h
+@@ -0,0 +1,66 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2026, Ideas On Board
++ *
++ * Mali C55 Color Correction Matrix control algorithm
++ */
++
++#pragma once
++
++#include <linux/media/arm/mali-c55-config.h>
++
++#include <libcamera/controls.h>
++
++#include "libcamera/internal/value_node.h"
++
++#include "libipa/ccm.h"
++#include "libipa/fixedpoint.h"
++
++#include "algorithm.h"
++#include "ipa_context.h"
++#include "params.h"
++
++namespace libcamera {
++
++namespace ipa::mali_c55::algorithms {
++
++class Ccm : public Algorithm
++{
++public:
++	Ccm() {}
++	~Ccm() = default;
++
++	int init(IPAContext &context, const ValueNode &tuningData) override;
++	int configure(IPAContext &context,
++		      const IPACameraSensorInfo &configInfo) override;
++	void queueRequest(IPAContext &context,
++			  const uint32_t frame,
++			  IPAFrameContext &frameContext,
++			  const ControlList &controls) override;
++	void prepare(IPAContext &context, const uint32_t frame,
++		     IPAFrameContext &frameContext,
++		     MaliC55Params *params) override;
++	void process(IPAContext &context, const uint32_t frame,
++		     IPAFrameContext &frameContext,
++		     const mali_c55_stats_buffer *stats,
++		     ControlList &metadata) override;
++
++private:
++	void setParameters(MaliC55Params *params, const IPAFrameContext &context);
++
++	/*
++	 * The CCM coefficient registers are said to be in Q<4,8> but this
++	 * doesn't include the sign bit as the register is 13 bits wide
++	 * (Q-format TI variant).
++	 *
++	 * As the Quantized class uses the ARM variant of the Q-format notation,
++	 * make it <5, 8> to include the sign bit.
++	 */
++	CcmAlgorithm<Q<5, 8>> ccmAlgo_;
++	float gain_;
++	float lastCt_;
++};
++
++} /* namespace ipa::mali_c55::algorithms */
++
++} /* namespace libcamera */
+--- a/src/ipa/mali-c55/algorithms/meson.build
++++ b/src/ipa/mali-c55/algorithms/meson.build
+@@ -4,5 +4,6 @@ mali_c55_ipa_algorithms = files([
+     'agc.cpp',
+     'awb.cpp',
+     'blc.cpp',
++    'ccm.cpp',
+     'lsc.cpp',
+ ])
+--- a/src/ipa/mali-c55/ipa_context.h
++++ b/src/ipa/mali-c55/ipa_context.h
+@@ -15,6 +15,7 @@
+ #include <libipa/fc_queue.h>
+ 
+ #include "libipa/awb.h"
++#include "libipa/ccm.h"
+ #include "libipa/fixedpoint.h"
+ 
+ namespace libcamera {
+@@ -56,6 +57,7 @@ struct IPAActiveState {
+ 	} agc;
+ 
+ 	ipa::awb::ActiveState awb;
++	ipa::ccm::ActiveState ccm;
+ };
+ 
+ struct IPAFrameContext : public FrameContext {
+@@ -66,6 +68,7 @@ struct IPAFrameContext : public FrameCon
+ 	} agc;
+ 
+ 	ipa::awb::FrameContext awb;
++	ipa::ccm::FrameContext ccm;
+ };
+ 
+ struct IPAContext {
+--- a/src/ipa/mali-c55/params.h
++++ b/src/ipa/mali-c55/params.h
+@@ -29,6 +29,7 @@ enum class MaliC55Blocks : uint16_t {
+ 	AwbConfig,
+ 	MeshShadingConfig,
+ 	MeshShadingSel,
++	Ccm,
+ };
+ 
+ namespace details {
+@@ -55,6 +56,7 @@ MALI_C55_DEFINE_BLOCK_TYPE(AwbGains,		aw
+ MALI_C55_DEFINE_BLOCK_TYPE(AwbConfig,		awb_config,		BLOCK_AWB_CONFIG);
+ MALI_C55_DEFINE_BLOCK_TYPE(MeshShadingConfig,	mesh_shading_config,	MESH_SHADING_CONFIG);
+ MALI_C55_DEFINE_BLOCK_TYPE(MeshShadingSel,	mesh_shading_selection,	MESH_SHADING_SELECTION);
++MALI_C55_DEFINE_BLOCK_TYPE(Ccm,			ccm,			BLOCK_CCM);
+ 
+ struct param_traits {
+ 	using id_type = MaliC55Blocks;

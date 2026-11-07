@@ -1,0 +1,62 @@
+From e1881933a8b830e5098b043c40bd4eaca64f8821 Mon Sep 17 00:00:00 2001
+From: Stefan Klug <stefan.klug@ideasonboard.com>
+Date: Wed, 25 Mar 2026 16:13:43 +0100
+Subject: [PATCH] ipa: rkisp1: Move setSensorControls signal to computeParams
+
+The setSensorControls event is emitted in the processStats() function.
+On first sight this looks reasonable as in processStats() we got the
+latest statistics and can therefore calculate the most up to date sensor
+controls.
+
+In the light of per-frame-controls however it produces difficult to
+solve timing issues:
+
+- The frame context in processStats() is the frame context of the frame
+  that produced the stats, not for the frame that should be prepared and
+sent to the sensor.
+
+- To synchronize digital gain applied in the ISP with the analog gain
+  applied in the sensor the set of parameters prepared for sensor and
+ISP must also be synchronized, which is not the case.
+
+To fix that, move the calculation and setting of sensor controls into
+the computeParams(). This way the model is far more easy to understand.
+
+We loose a tiny option for optimizations in that (in theory) we could
+delay the calculation of ISP parameters by another frame (assuming the
+sensor has a typical 2-frame delay). But all discussions and tests
+showed that keeping all parameters in sync is more important than that
+possible optimization for one frame.
+
+Signed-off-by: Stefan Klug <stefan.klug@ideasonboard.com>
+Reviewed-by: Paul Elder <paul.elder@ideasonboard.com>
+---
+ src/ipa/rkisp1/rkisp1.cpp | 10 +++-------
+ 1 file changed, 3 insertions(+), 7 deletions(-)
+
+--- a/src/ipa/rkisp1/rkisp1.cpp
++++ b/src/ipa/rkisp1/rkisp1.cpp
+@@ -349,6 +349,9 @@ void IPARkISP1::computeParams(const uint
+ 	for (const auto &algo : algorithms())
+ 		algo->prepare(context_, frame, frameContext, &params);
+ 
++	ControlList ctrls = getSensorControls(frameContext);
++	setSensorControls.emit(frame, ctrls);
++
+ 	paramsComputed.emit(frame, params.bytesused());
+ }
+ 
+@@ -380,13 +383,6 @@ void IPARkISP1::processStats(const uint3
+ 		algo->process(context_, frame, frameContext, stats, metadata);
+ 	}
+ 
+-	/*
+-	 * \todo: Here we should do a lookahead that takes the sensor delays
+-	 * into account.
+-	 */
+-	ControlList ctrls = getSensorControls(frameContext);
+-	setSensorControls.emit(frame, ctrls);
+-
+ 	context_.debugMetadata.moveEntries(metadata);
+ 	metadataReady.emit(frame, metadata);
+ }

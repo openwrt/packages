@@ -1,0 +1,27 @@
+From 3514b5f7c16d8d303b74f0311352f87793c7fea1 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Fri, 11 Sep 2026 15:23:09 -0700
+Subject: [PATCH] meson: conditionally use libm
+
+Add a small compile test to figure out whether libm is needed or not.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ meson.build | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+--- a/meson.build
++++ b/meson.build
+@@ -438,7 +438,11 @@ endif
+ 
+ # Core Dependencies
+ 
+-libm_dep = cc.find_library('m', required : true)
++if cc.links('#include <math.h>\nint main(){log(0);}')
++  libm_dep = declare_dependency()
++else
++  libm_dep = cc.find_library('m')
++endif
+ 
+ thread_dep = dependency('threads')
+ foreach f : [

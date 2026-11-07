@@ -44,24 +44,11 @@ define Package/alpine
 $(call Package/alpine/Default)
   TITLE+= (with OpenSSL support)
   DEPENDS+= +libopenssl
-  VARIANT:=ssl
 endef
 
 define Package/alpine/description
 $(call Package/alpine/Default/description)
  This package is built with OpenSSL support.
-endef
-
-define Package/alpine-nossl
-$(call Package/alpine/Default)
-  TITLE+= (without OpenSSL support)
-  DEPENDS+= @BROKEN
-  VARIANT:=nossl
-endef
-
-define Package/alpine-nossl/description
-$(call Package/alpine/Default/description)
- This package is built without OpenSSL support.
 endef
 
 CONFIGURE_ARGS += \
@@ -78,20 +65,13 @@ CONFIGURE_ARGS += \
 	--disable-debug \
 	--disable-mouse \
 	--with-c-client-target=slx \
+	--with-ssl-include-dir=$(STAGING_DIR)/usr/include \
+	--with-ssl-lib-dir=$(STAGING_DIR)/usr/lib \
 	$(if $(CONFIG_IPV6),--with,--without)-ipv6
 
 CONFIGURE_VARS += \
 	ac_cv_func_qsort_argtype=void \
 	top_builddir=$(PKG_BUILD_DIR)
-
-ifeq ($(BUILD_VARIANT),ssl)
-	CONFIGURE_ARGS += \
-		--with-ssl-include-dir=$(STAGING_DIR)/usr/include \
-		--with-ssl-lib-dir=$(STAGING_DIR)/usr/lib
-else
-	CONFIGURE_ARGS += \
-		--without-ssl
-endif
 
 define Build/Compile
 	( cd $(PKG_BUILD_DIR)/pith ; \
@@ -108,7 +88,4 @@ define Package/alpine/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/alpine $(1)/usr/bin/
 endef
 
-Package/alpine-nossl/install = $(Package/alpine/install)
-
 $(eval $(call BuildPackage,alpine))
-$(eval $(call BuildPackage,alpine-nossl))

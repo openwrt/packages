@@ -124,7 +124,7 @@ unexport \
   GOBOOTSTRAP_TOOLEXEC
 
 
-GO_DEFAULT_VERSION:=1.26
+GO_DEFAULT_VERSION:=1.27
 GO_HOST_VERSION:=$(patsubst golang%/host,%,$(filter golang%/host,$(PKG_BUILD_DEPENDS)))
 ifeq ($(GO_HOST_VERSION),)
   GO_HOST_VERSION:=$(GO_DEFAULT_VERSION)

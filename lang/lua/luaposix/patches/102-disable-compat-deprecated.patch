@@ -1,6 +1,15 @@
+From c0737ff195b5aa7778aab99cf5055f063b22cda7 Mon Sep 17 00:00:00 2001
+From: Maxim Storchak <m.storchak@gmail.com>
+Date: Mon, 19 Oct 2026 16:05:36 +0300
+Subject: [PATCH] disable deprecated and compat injections
+
+---
+ lib/posix/init.lua | 8 --------
+ 1 file changed, 8 deletions(-)
+
 --- a/lib/posix/init.lua
 +++ b/lib/posix/init.lua
-@@ -437,14 +437,6 @@ do
+@@ -435,14 +435,6 @@ do
        end
     end
  

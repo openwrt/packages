@@ -1,0 +1,29 @@
+From 03a3aaa4141a94c8c51d9f51c8bf5fbeaa877769 Mon Sep 17 00:00:00 2001
+From: Paul Elder <paul.elder@ideasonboard.com>
+Date: Wed, 25 Feb 2026 11:48:15 +0900
+Subject: [PATCH] utils: update-kernel-headers: Add rkisp2-config.h
+
+Add rkisp2-config.h to the list of kernel headers to update, as we will
+soon be adding support for the rkisp2 pipeline.
+
+Signed-off-by: Paul Elder <paul.elder@ideasonboard.com>
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+Changes in v3:
+- pull from the new directory
+
+No change in v2
+---
+ utils/update-kernel-headers.sh | 1 +
+ 1 file changed, 1 insertion(+)
+
+--- a/utils/update-kernel-headers.sh
++++ b/utils/update-kernel-headers.sh
+@@ -56,6 +56,7 @@ headers="
+ 	linux/media-bus-format.h
+ 	linux/media.h
+ 	linux/media/arm/mali-c55-config.h
++	linux/media/rockchip/rkisp2-config.h
+ 	linux/media/v4l2-isp.h
+ 	linux/rkisp1-config.h
+ 	linux/stddef.h

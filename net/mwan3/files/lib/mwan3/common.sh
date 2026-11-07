@@ -84,17 +84,10 @@ mwan3_get_src_ip()
 			# use instead
 			network_get_prefix6 _src_ip "$true_iface"
 			if [ -n "$_src_ip" ]; then
-				# got a prefix like 2001:xxxx:yyyy::/48, clean it up to
-				# only contain the prefix -> 2001:xxxx:yyyy
-				_src_ip=$(echo "$_src_ip" | sed -e 's;:*/.*$;;')
-				# find an interface with a delegated address, and use
-				# it, this would be sth like 2001:xxxx:yyyy:zzzz:...
-				# we just select the first address that matches the prefix
-				# NOTE: is there a better/more reliable way to get a
-				#       usable address to use as source for pings here?
-				local pfx_sed
-				pfx_sed='s/ *inet6 \('"$_src_ip"':[0-6a-f:]\+\).* scope.*/\1/'
-				_src_ip=$($IP address ls | sed -ne "${pfx_sed};T;p;q")
+				# Let ip match the full prefix length and IPv6 spelling.
+				# A textual prefix can miss delegated subnets or select
+				# an address belonging to another upstream.
+				_src_ip=$($IP address ls to "$_src_ip" scope global | sed -ne "$sed_str")
 			fi
 		fi
 		if [ -z "$_src_ip" ]; then
@@ -157,7 +150,7 @@ mwan3_get_mwan3track_status()
 
 mwan3_init()
 {
-	local bitcnt mmdefault source_routing
+	local bitcnt mmdefault route_modifiers source_routing
 
 	config_load mwan3
 
@@ -180,10 +173,17 @@ mwan3_init()
 		LOG debug "Max interface count is ${MWAN3_INTERFACE_MAX}"
 	fi
 
-	# remove "linkdown", expiry and source based routing modifiers from route lines
+	# remove unsupported flags, expiry and source based routing modifiers
 	config_get_bool source_routing globals source_routing 0
 	[ $source_routing -eq 1 ] && unset source_routing
-	MWAN3_ROUTE_LINE_EXP="s/offload//; s/linkdown //; s/expires [0-9]\+sec//; s/error [0-9]\+//; ${source_routing:+s/default\(.*\) from [^ ]*/default\1/;} p"
+	route_modifiers="s/offload//; s/ dead / /; s/ dead$/ /;"
+	route_modifiers="$route_modifiers s/ linkdown / /; s/ linkdown$/ /;"
+	route_modifiers="$route_modifiers s/expires [0-9]\+sec//;"
+	route_modifiers="$route_modifiers s/error [0-9]\+//;"
+	# With nexthop_compat_mode the kernel dumps nhid plus via/dev. Replaying both
+	# nhid and its expansion is rejected; retain ID-only routes unmodified.
+	route_modifiers="$route_modifiers / nhid [0-9]\+/ { / via \| dev / s/ nhid [0-9]\+//; };"
+	MWAN3_ROUTE_LINE_EXP="$route_modifiers ${source_routing:+s/default\(.*\) from [^ ]*/default\1/;} p"
 
 	# mark mask constants
 	bitcnt=$(mwan3_count_one_bits MMX_MASK)

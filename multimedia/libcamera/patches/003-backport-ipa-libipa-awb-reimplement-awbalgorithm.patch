@@ -1,0 +1,1393 @@
+From def68f79cc8eb1ad183f90c4a366e611f3a2ba43 Mon Sep 17 00:00:00 2001
+From: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Date: Mon, 2 Feb 2026 10:02:16 +0000
+Subject: [PATCH] ipa: libipa: awb: Reimplement AwbAlgorithm
+
+The current implementation of AwbAlgorithm is the following one:
+
+AwbAlgorithm o---- RkISP1Awb
+    ^
+    |
+ |-----|
+ |     |
+Bayes Grey
+
+The platform-specific Awb implementation instantiate one of
+the Bayes or Grey Awb helper classes and both inherit from the
+AwbAlgorithm base class.
+
+The handling of libcamera controls is split between the base and the
+derived (mostly Bayes) class.
+
+We want instead the AwbAlgorithm to handle all-things-libcamera and let
+the Bayes and Grey classes implement the logic. In order to achieve that
+use composition also in the AwbAlgorithm class and introduce an
+AwbImplementation base class from which Bayes and Grey derive from.
+
+AwbImplementation o---- AwbAlgorithmBase
+    ^                           ^
+    |                           |
+ |-----|                AwbAlgorithm<Q<x,y>> o---- RkISP1Awb
+ |     |
+Bayes Grey
+
+The AwbAlgorithm<> class is instantiated with a Q<x, y> template
+argument that represents the platform-specific register format which
+is used to initialize controls and clamp gains to the hardware limits.
+
+Signed-off-by: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Signed-off-by: Kieran Bingham <kieran.bingham@ideasonboard.com>
+Reviewed-by: Daniel Scally <dan.scally@ideasonboard.com>
+Tested-by: Daniel Scally <dan.scally@ideasonboard.com>
+Tested-by: Robert Mader <robert.mader@collabora.com>
+---
+ src/ipa/libipa/awb.cpp            | 418 ++++++++++++++++++++++++++----
+ src/ipa/libipa/awb.h              | 100 +++++--
+ src/ipa/libipa/awb_bayes.cpp      |  52 ++--
+ src/ipa/libipa/awb_bayes.h        |  12 +-
+ src/ipa/libipa/awb_grey.cpp       |  16 +-
+ src/ipa/libipa/awb_grey.h         |   6 +-
+ src/ipa/rkisp1/algorithms/awb.cpp | 191 ++------------
+ src/ipa/rkisp1/algorithms/awb.h   |  18 +-
+ src/ipa/rkisp1/algorithms/ccm.cpp |   4 +-
+ src/ipa/rkisp1/algorithms/lsc.cpp |   2 +-
+ src/ipa/rkisp1/ipa_context.h      |  29 +--
+ 11 files changed, 549 insertions(+), 299 deletions(-)
+
+--- a/src/ipa/libipa/awb.cpp
++++ b/src/ipa/libipa/awb.cpp
+@@ -2,7 +2,7 @@
+ /*
+  * Copyright (C) 2024 Ideas on Board Oy
+  *
+- * Generic AWB algorithms
++ * libIPA AWB algorithms
+  */
+ 
+ #include "awb.h"
+@@ -11,9 +11,16 @@
+ 
+ #include <libcamera/control_ids.h>
+ 
++#include "awb_bayes.h"
++#include "awb_grey.h"
++
++constexpr int32_t kMinColourTemperature = 2500;
++constexpr int32_t kMaxColourTemperature = 10000;
++constexpr int32_t kDefaultColourTemperature = 5000;
++
+ /**
+  * \file awb.h
+- * \brief Base classes for AWB algorithms
++ * \brief libipa AWB implementation
+  */
+ 
+ namespace libcamera {
+@@ -22,30 +29,55 @@ LOG_DEFINE_CATEGORY(Awb)
+ 
+ namespace ipa {
+ 
++namespace awb {
++
+ /**
+- * \class AwbResult
+- * \brief The result of an AWB calculation
++ * \struct Context
++ * \brief AWB gains and colour temperature
++ *
++ * \var Context::gains
++ * \brief The white balance gains
+  *
+- * This class holds the result of an auto white balance calculation.
++ * \var Context::colourTemperature
++ * \brief The colour temperature, in Kelvin
+  */
+ 
+ /**
+- * \var AwbResult::gains
+- * \brief The calculated white balance gains
++ * \struct ActiveState
++ * \brief Active AWB state shared across frames
++ *
++ * \var ActiveState::manual
++ * \brief The most recent manually requested AWB state
++ *
++ * \var ActiveState::automatic
++ * \brief The most recent automatically calculated AWB state
++ *
++ * \var ActiveState::autoEnabled
++ * \brief True when automatic AWB is selected
+  */
+ 
+ /**
+- * \var AwbResult::colourTemperature
+- * \brief The calculated colour temperature in Kelvin
++ * \struct FrameContext
++ * \brief Per-frame AWB state
++ *
++ * \var FrameContext::autoEnabled
++ * \brief True when automatic AWB is in use
+  */
+ 
++} /* namespace awb */
++
+ /**
+  * \class AwbStats
+  * \brief An abstraction class wrapping hardware-specific AWB statistics
+  *
+- * IPA modules using an AWB algorithm based on the AwbAlgorithm class need to
+- * implement this class to give the algorithm access to the hardware-specific
+- * statistics data.
++ * IPA modules using libIPA AwbAlgorithm class need to provide a derived
++ * implementation of this class to give the algorithm access to the
++ * hardware-specific statistics data.
++ */
++
++/**
++ * AwbStat::~AwbStat
++ * \brief Virtual class destructor
+  */
+ 
+ /**
+@@ -65,6 +97,17 @@ namespace ipa {
+  */
+ 
+ /**
++ * \fn AwbStats::valid()
++ * \brief Retrieve if the AWB statistics are valid
++ *
++ * If the colour mean values are too small, the AwbAlgorithm class doesn't have
++ * enough information to meaningfully calculate white-balance gains. Freeze the
++ * algorithm in that case.
++ *
++ * \return True if the AWB statistics are valid, false otherwise
++ */
++
++/**
+  * \fn AwbStats::rgbMeans()
+  * \brief Get RGB means of the statistics
+  *
+@@ -72,31 +115,63 @@ namespace ipa {
+  * dimensionless and only the ratios are used for further calculations. This is
+  * used by the simple grey world model to calculate the gains to apply.
+  *
++ * \todo Make a requirement to return statistics in the [0, 1] range.
++ *
+  * \return The RGB means
+  */
+ 
+ /**
+- * \class AwbAlgorithm
+- * \brief A base class for auto white balance algorithms
++ * \class AwbImplementation
++ * \brief Pure virtual base class for AWB algorithms implementations
++ *
++ * The AwbImplementation class defines the interface for the AWB algorithm
++ * implementations.
++ *
++ * It is currently implemented by the AwbGrey and AwbBayes classes.
++ *
++ * The interface defines an init() function to initialize the algorithm with the
++ * content of the tuning file and two functions to compute colour gains
++ * according to the algorithm operating mode (auto or manual) in use.
+  *
+- * This class is a base class for auto white balance algorithms. It defines an
+- * interface for the algorithms to implement, and is used by the IPAs to
+- * interact with the concrete implementation.
++ * The calculateAwb() function calculates colour gains given a set of statistics
++ * provided by the IPA module. It is used when the algorithm operates in auto
++ * mode and gains are dynamically computed given a new set of statistics from
++ * the AWB engine.
++ *
++ * The gainsFromColourTemperature() function instead computes the white balance
++ * gains from a colour temperature. This function does not take any statistics
++ * into account. It is used to compute the colour gains when the user manually
++ * specifies a colour temperature.
+  */
+ 
+ /**
+- * \fn AwbAlgorithm::init()
+- * \brief Initialize the algorithm with the given tuning data
+- * \param[in] tuningData The tuning data to use for the algorithm
++ * \struct AwbImplementation::Result
++ * \brief The result of an AWB computation
+  *
+- * \return 0 on success, a negative error code otherwise
++ * \var AwbImplementation::Result::gains
++ * \brief The computed white balance gains
++ *
++ * \var AwbImplementation::Result::colourTemperature
++ * \brief The computed colour temperature, in Kelvin
+  */
+ 
+ /**
+- * \fn AwbAlgorithm::calculateAwb()
++ * \fn AwbImplementation::~AwbImplementation
++ * \brief Virtual class destructor
++ */
++
++/**
++ * \fn AwbImplementation::init()
++ * \param[in] tuningData
++ * \brief Initialize the algorithm by parsing \a tuningData
++ */
++
++/**
++ * \fn AwbImplementation::calculateAwb()
+  * \brief Calculate AWB data from the given statistics
+  * \param[in] stats The statistics to use for the calculation
+  * \param[in] lux The lux value of the scene
++ * \param[in] range The colour temperature search limits
+  *
+  * Calculate an AwbResult object from the given statistics and lux value. A \a
+  * lux value of 0 means it is unknown or invalid and the algorithm shall ignore
+@@ -106,7 +181,7 @@ namespace ipa {
+  */
+ 
+ /**
+- * \fn AwbAlgorithm::gainsFromColourTemperature()
++ * \fn AwbImplementation::gainsFromColourTemperature()
+  * \brief Compute white balance gains from a colour temperature
+  * \param[in] colourTemperature The colour temperature in Kelvin
+  *
+@@ -118,26 +193,225 @@ namespace ipa {
+  */
+ 
+ /**
+- * \fn AwbAlgorithm::controls()
+- * \brief Get the controls info map for this algorithm
++ * \class AwbAlgorithmBase
++ * \brief Base class for AwbAlgorithm for non-templated functions implementation
++ *
++ * Base class for AwbAlgorithm where non-templated functions are implemented.
++ * IPA implementations shall use AwbAlgorithm and not this class.
++ */
++
++/**
++ * \brief Initialize the algorithm with the given tuning data
++ * \param[in] tuningData The tuning data to use for the algorithm
+  *
+- * \return The controls info map
++ * Parse \a tuningData to initialize the AWB algorithm and register controls.
++ * IPA modules are expected to call this function as part of their
++ * implementation of Algorithm::init().
++ *
++ * \return 0 on success, a negative error code otherwise
+  */
++int AwbAlgorithmBase::init(const ValueNode &tuningData)
++{
++	bayes_ = false;
++
++	if (!tuningData.contains("algorithm"))
++		LOG(Awb, Info) << "No AWB algorithm specified, using grey world";
++
++	auto mode = tuningData["algorithm"].get<std::string>("grey");
++	if (mode == "grey") {
++		impl_ = std::make_unique<AwbGrey>();
++	} else if (mode == "bayes") {
++		impl_ = std::make_unique<AwbBayes>();
++		bayes_ = true;
++	} else {
++		LOG(Awb, Error) << "Unknown AWB algorithm: " << mode;
++		return -EINVAL;
++	}
++
++	LOG(Awb, Debug) << "Using AWB algorithm: " << mode;
++
++	int ret = impl_->init(tuningData);
++	if (ret)
++		return ret;
++
++	controls_[&controls::ColourTemperature] =
++		ControlInfo(kMinColourTemperature, kMaxColourTemperature,
++			    kDefaultColourTemperature);
++	controls_[&controls::AwbEnable] = ControlInfo(false, true);
++
++	return parseModeConfigs(tuningData, controls::AwbAuto);
++}
+ 
+ /**
+- * \fn AwbAlgorithm::handleControls()
+- * \param[in] controls The controls to handle
+- * \brief Handle the controls supplied in a request
++ * \brief Configure the AWB algorithm
++ * \param[in] state The AWB active state
++ * \return 0 if successful, an error code otherwise
+  */
++int AwbAlgorithmBase::configure(awb::ActiveState &state)
++{
++	state.manual.gains = RGB<double>{ 1.0 };
++	auto gains = impl_->gainsFromColourTemperature(kDefaultColourTemperature);
++	if (gains)
++		state.automatic.gains = *gains;
++	else
++		state.automatic.gains = RGB<double>{ 1.0 };
++
++	state.autoEnabled = true;
++	state.manual.colourTemperature = kDefaultColourTemperature;
++	state.automatic.colourTemperature = kDefaultColourTemperature;
++
++	return 0;
++}
+ 
+ /**
++ * \brief Queue a Request to the AWB algorithm
++ * \param[in] state The AWB active state
++ * \param[in] frame The frame number
++ * \param[in] frameContext The AWB frame context
++ * \param[in] controls The list of controls part of the Request
++ *
++ * Queue a new Request to the AWB algorithm and modify its behaviour according
++ * to the provided controls.
++ *
++ * The currently handled controls are:
++ * - controls::AwbEnable
++ * - controls::AwbMode
++ * - controls::ColourGains
++ * - controls::ColourTemperature
++ */
++void AwbAlgorithmBase::queueRequest(awb::ActiveState &state,
++				    [[maybe_unused]] const uint32_t frame,
++				    awb::FrameContext &frameContext,
++				    const ControlList &controls)
++{
++	const auto &awbEnable = controls.get(controls::AwbEnable);
++	if (awbEnable && *awbEnable != state.autoEnabled) {
++		state.autoEnabled = *awbEnable;
++
++		LOG(Awb, Debug)
++			<< (*awbEnable ? "Enabling" : "Disabling") << " Awb";
++	}
++
++	auto mode = controls.get(controls::AwbMode);
++	if (mode) {
++		auto it = modes_.find(static_cast<controls::AwbModeEnum>(*mode));
++		if (it == modes_.end()) {
++			LOG(Awb, Error) << "Unsupported AWB mode " << *mode;
++			return;
++		}
++
++		currentMode_ = &it->second;
++	}
++
++	frameContext.autoEnabled = state.autoEnabled;
++
++	if (frameContext.autoEnabled)
++		return;
++
++	const auto &colourGains = controls.get(controls::ColourGains);
++	const auto &colourTemperature = controls.get(controls::ColourTemperature);
++	bool update = false;
++	if (colourGains) {
++		state.manual.gains.r() = (*colourGains)[0];
++		state.manual.gains.b() = (*colourGains)[1];
++		/*
++		 * \todo Colour temperature reported in metadata is now
++		 * incorrect, as we can't deduce the temperature from the gains.
++		 * This will be fixed with the bayes AWB algorithm.
++		 */
++		update = true;
++	} else if (colourTemperature) {
++		state.manual.colourTemperature = *colourTemperature;
++		const auto &gains = impl_->gainsFromColourTemperature(*colourTemperature);
++		if (gains) {
++			state.manual.gains.r() = gains->r();
++			state.manual.gains.b() = gains->b();
++			update = true;
++		}
++	}
++
++	if (update)
++		LOG(Awb, Debug)
++			<< "Set colour gains to " << state.manual.gains;
++
++	frameContext.gains = state.manual.gains;
++	frameContext.colourTemperature = state.manual.colourTemperature;
++}
++
++/**
++ * \brief Set the gains and colour temperature values in \a frameContext
++ * \param[in] state The AWB active state
++ * \param[in] frameContext The AWB frame context
++ *
++ * If auto mode is enabled, take the most recently computed gains and use them
++ * for the current frame. Otherwise, if in manual mode, gains and colour
++ * temperature for a frame are set at queueRequest() time.
++ */
++void AwbAlgorithmBase::prepare(awb::ActiveState &state,
++			       awb::FrameContext &frameContext)
++{
++	if (frameContext.autoEnabled) {
++		frameContext.gains = state.automatic.gains;
++		frameContext.colourTemperature = state.automatic.colourTemperature;
++	}
++}
++
++/**
++ * \brief Process AWB statistics to calculate gains and populate metadata
++ * \param[in] state The AWB active state
++ * \param[in] frameContext The AWB frame context
++ * \param[in] stats The AWB statistics
++ * \param[in] lux The lux value as estimated by the IPA module
++ * \param[out] metadata The metadata list
++ *
++ * Process \a stats to calculate new gains and colour temperature and populate
++ * \a metadata with the results.
++ */
++void AwbAlgorithmBase::process(awb::ActiveState &state,
++			       awb::FrameContext &frameContext,
++			       const AwbStats &stats, unsigned int lux,
++			       ControlList &metadata)
++{
++	if (!stats.valid())
++		return;
++
++	auto awbResult = impl_->calculateAwb(stats, lux, { currentMode_->ctLo,
++							   currentMode_->ctHi });
++
++	/*
++	 * Clamp the gain values to the hardware, according to the gainMin_
++	 * and gainMax_ values.
++	 */
++	awbResult.gains = awbResult.gains.clamp(gainMin_, gainMax_);
++
++	/* Smooth color gains adjustments. */
++	double speed = 0.2;
++	double ct = awbResult.colourTemperature;
++	ct = ct * speed + state.automatic.colourTemperature * (1 - speed);
++
++	state.automatic.colourTemperature = awbResult.colourTemperature;
++	state.automatic.gains = awbResult.gains * speed +
++				state.automatic.gains * (1 - speed);
++
++	/* Populate metadata. */
++	metadata.set(controls::AwbEnable, frameContext.autoEnabled);
++	metadata.set(controls::ColourGains, { static_cast<float>(frameContext.gains.r()),
++					      static_cast<float>(frameContext.gains.b()) });
++	metadata.set(controls::ColourTemperature, frameContext.colourTemperature);
++
++	LOG(Awb, Debug) << std::showpoint << "Means " << stats.rgbMeans()
++			<< ", gains " << state.automatic.gains
++			<< ", temp " << state.automatic.colourTemperature << "K";
++}
++
++/*
+  * \brief Parse the mode configurations from the tuning data
+  * \param[in] tuningData the ValueNode representing the tuning data
+  * \param[in] def The default value for the AwbMode control
+  *
+  * Utility function to parse the tuning data for an AwbMode entry and read all
+- * provided modes. It adds controls::AwbMode to AwbAlgorithm::controls_ and
+- * populates AwbAlgorithm::modes_. For a list of possible modes see \ref
++ * provided modes. It adds controls::AwbMode to AwbAlgorithmBase::controls_ and
++ * populates AwbAlgorithmBase::modes_. For a list of possible modes see \ref
+  * controls::AwbModeEnum.
+  *
+  * Each mode entry must contain a "lo" and "hi" key to specify the lower and
+@@ -156,15 +430,23 @@ namespace ipa {
+  *       ...
+  * \endcode
+  *
+- * If \a def is supplied but not contained in the the \a tuningData, -EINVAL is
++ * If \a def is supplied but not contained in the \a tuningData, -EINVAL is
+  * returned.
+  *
++ * AwbModes are only used by the AwbBayes implementation.
++ *
+  * \sa controls::AwbModeEnum
+  * \return Zero on success, negative error code otherwise
+  */
+-int AwbAlgorithm::parseModeConfigs(const ValueNode &tuningData,
+-				   const ControlValue &def)
++int AwbAlgorithmBase::parseModeConfigs(const ValueNode &tuningData,
++				       const ControlValue &def)
+ {
++	if (!bayes_) {
++		/* AwbGrey does not support and does not use modes. */
++		currentMode_ = &AwbGreyMode;
++		return 0;
++	}
++
+ 	std::vector<ControlValue> availableModes;
+ 
+ 	const ValueNode &modes = tuningData[controls::AwbMode.name()];
+@@ -227,37 +509,83 @@ int AwbAlgorithm::parseModeConfigs(const
+ 	}
+ 
+ 	controls_[&controls::AwbMode] = ControlInfo(availableModes, def);
++	currentMode_ = &modes_[controls::AwbAuto];
+ 
+ 	return 0;
+ }
+ 
+ /**
+- * \class AwbAlgorithm::ModeConfig
++ * \var AwbAlgorithmBase::controls_
++ * \brief Controls info map for the controls registered by the AWB algorithm
++ */
++
++/**
++ * \var AwbAlgorithmBase::gainMin_
++ * \brief The minimum supported gain value
++ *
++ * Minimum gain value used to clamp the AWB algorithm calculation results in the
++ * range supported by the platform AWB engine.
++ *
++ * The min and max gain values are initialized by AwbAlgorithm::init().
++ */
++
++/**
++ * \var AwbAlgorithmBase::gainMax_
++ * \brief The maximum supported gain value
++ *
++ * Maximum gain value used to clamp the AWB algorithm calculation results in the
++ * range supported by the platform AWB engine.
++ *
++ * The min and max gain values are initialized by AwbAlgorithm::init().
++ */
++
++/*
++ * \class AwbAlgorithmBase::ModeConfig
+  * \brief Holds the configuration of a single AWB mode
+  *
+  * AWB modes limit the regulation of the AWB algorithm to a specific range of
+- * colour temperatures.
++ * colour temperatures. Use by AwbBayes only.
+  */
+ 
+-/**
+- * \var AwbAlgorithm::ModeConfig::ctLo
++/*
++ * \var AwbAlgorithmBase::ModeConfig::ctLo
+  * \brief The lowest valid colour temperature of that mode
+  */
+ 
+-/**
+- * \var AwbAlgorithm::ModeConfig::ctHi
++/*
++ * \var AwbAlgorithmBase::ModeConfig::ctHi
+  * \brief The highest valid colour temperature of that mode
+  */
+ 
++/*
++ * \var AwbAlgorithmBase::modes_
++ * \brief Map of all configured modes
++ * \sa AwbAlgorithmBase::parseModeConfigs
++ */
++
+ /**
+- * \var AwbAlgorithm::controls_
+- * \brief Controls info map for the controls provided by the algorithm
++ * \class AwbAlgorithm
++ * \brief The libipa AWB algorithm
++ * \tparam Q The fixedpoint register representation of gain values
++ *
++ * Implement the AWB algorithm for libipa.
++ *
++ * The AwbAlgorithm class implements an interface similar in spirit to the one
++ * of the Algorithm class. IPA modules are expected to store an instance of
++ * AwbAlgorithm as class member, template it with the AWB engine gain register
++ * representation and call its function in their implementations of the
++ * Algorithm interface.
++ *
++ * The AwbAlgorithm instantiates an AwbImplementation implementation (AwbGrey or
++ * AwbBayes) at init() time by parsing the tuning data and uses it to compute
++ * the RGB gains and estimate a colour temperature given a set of statistics
++ * in the form of a AwbStats derived implementation.
+  */
+ 
+ /**
+- * \var AwbAlgorithm::modes_
+- * \brief Map of all configured modes
+- * \sa AwbAlgorithm::parseModeConfigs
++ * \fn AwbAlgorithm::init()
++ * \param[in] controls The info map of the IPA controls
++ * \copydoc AwbAlgorithmBase::init()
+  */
+ 
+ } /* namespace ipa */
+--- a/src/ipa/libipa/awb.h
++++ b/src/ipa/libipa/awb.h
+@@ -2,11 +2,12 @@
+ /*
+  * Copyright (C) 2024 Ideas on Board Oy
+  *
+- * Generic AWB algorithms
++ * libIPA AWB algorithms
+  */
+ 
+ #pragma once
+ 
++#include <array>
+ #include <map>
+ #include <optional>
+ 
+@@ -20,46 +21,113 @@ namespace libcamera {
+ 
+ namespace ipa {
+ 
+-struct AwbResult {
++namespace awb {
++
++struct Context {
+ 	RGB<double> gains;
+-	double colourTemperature;
++	unsigned int colourTemperature;
+ };
+ 
++struct ActiveState {
++	Context manual;
++	Context automatic;
++
++	bool autoEnabled;
++};
++
++struct FrameContext : public Context {
++	bool autoEnabled;
++};
++
++} /* namespace awb */
++
+ struct AwbStats {
+ 	virtual double computeColourError(const RGB<double> &gains) const = 0;
++	virtual bool valid() const = 0;
+ 	virtual RGB<double> rgbMeans() const = 0;
+ 
+ protected:
+ 	~AwbStats() = default;
+ };
+ 
+-class AwbAlgorithm
++class AwbImplementation
+ {
+ public:
+-	virtual ~AwbAlgorithm() = default;
++	struct Result {
++		RGB<double> gains;
++		unsigned int colourTemperature;
++	};
+ 
++	virtual ~AwbImplementation() = default;
+ 	virtual int init(const ValueNode &tuningData) = 0;
+-	virtual AwbResult calculateAwb(const AwbStats &stats, unsigned int lux) = 0;
+-	virtual std::optional<RGB<double>> gainsFromColourTemperature(double colourTemperature) = 0;
++	virtual Result calculateAwb(const AwbStats &stats, unsigned int lux,
++				    std::array<double, 2> range) = 0;
++	virtual std::optional<RGB<double>>
++	gainsFromColourTemperature(double colourTemperature) = 0;
++};
+ 
+-	const ControlInfoMap::Map &controls() const
+-	{
+-		return controls_;
+-	}
++class AwbAlgorithmBase
++{
++public:
++	int init(const ValueNode &tuningData);
++
++	int configure(awb::ActiveState &state);
+ 
+-	virtual void handleControls([[maybe_unused]] const ControlList &controls) {}
++	void queueRequest(awb::ActiveState &state,
++			  const uint32_t frame,
++			  awb::FrameContext &frameContext,
++			  const ControlList &controls);
++
++	void prepare(awb::ActiveState &state, awb::FrameContext &frameContext);
++
++	void process(awb::ActiveState &state, awb::FrameContext &frameContext,
++		     const AwbStats &stats, unsigned int lux,
++		     ControlList &metadata);
+ 
+ protected:
+-	int parseModeConfigs(const ValueNode &tuningData,
+-			     const ControlValue &def = {});
++	AwbAlgorithmBase() = default;
+ 
++	ControlInfoMap::Map controls_;
++	float gainMin_;
++	float gainMax_;
++
++private:
+ 	struct ModeConfig {
+ 		double ctHi;
+ 		double ctLo;
+ 	};
+ 
+-	ControlInfoMap::Map controls_;
+-	std::map<controls::AwbModeEnum, AwbAlgorithm::ModeConfig> modes_;
++	/* AwbGrey does not support modes; */
++	static constexpr ModeConfig AwbGreyMode = { 0.0, 0.0 };
++
++	int parseModeConfigs(const ValueNode &tuningData,
++			     const ControlValue &def = {});
++
++	std::map<controls::AwbModeEnum, AwbAlgorithmBase::ModeConfig> modes_;
++	const ModeConfig *currentMode_ = nullptr;
++	std::unique_ptr<AwbImplementation> impl_;
++	bool bayes_ = false;
++};
++
++template<typename Q>
++class AwbAlgorithm : public AwbAlgorithmBase
++{
++public:
++	int init(const ValueNode &tuningData, ControlInfoMap::Map &controls)
++	{
++		AwbAlgorithmBase::init(tuningData);
++
++		gainMin_ = std::max(Q::TraitsType::min, 1.0f);
++		gainMax_ = Q::TraitsType::max;
++
++		controls_[&controls::ColourGains] =
++			ControlInfo(gainMin_, gainMax_,
++				    Span<const float, 2>{ { 1.0f, 1.0f } });
++
++		controls.insert(controls_.begin(), controls_.end());
++
++		return 0;
++	}
+ };
+ 
+ } /* namespace ipa */
+--- a/src/ipa/libipa/awb_bayes.cpp
++++ b/src/ipa/libipa/awb_bayes.cpp
+@@ -140,11 +140,6 @@ void Interpolator<Pwl>::interpolate(cons
+  * \brief How far to wander off CT curve towards "more green"
+  */
+ 
+-/**
+- * \var AwbBayes::currentMode_
+- * \brief The currently selected mode
+- */
+-
+ int AwbBayes::init(const ValueNode &tuningData)
+ {
+ 	int ret = colourGainCurve_.readYaml(tuningData["colourGains"], "ct", "gains");
+@@ -172,14 +167,6 @@ int AwbBayes::init(const ValueNode &tuni
+ 		return ret;
+ 	}
+ 
+-	ret = parseModeConfigs(tuningData, controls::AwbAuto);
+-	if (ret) {
+-		LOG(Awb, Error)
+-			<< "Failed to parse mode parameter from tuning file";
+-		return ret;
+-	}
+-	currentMode_ = &modes_[controls::AwbAuto];
+-
+ 	transversePos_ = tuningData["transversePos"].get<double>(0.01);
+ 	transverseNeg_ = tuningData["transverseNeg"].get<double>(0.01);
+ 	if (transversePos_ <= 0 || transverseNeg_ <= 0) {
+@@ -260,18 +247,16 @@ int AwbBayes::readPriors(const ValueNode
+ 	return 0;
+ }
+ 
+-void AwbBayes::handleControls(const ControlList &controls)
+-{
+-	auto mode = controls.get(controls::AwbMode);
+-	if (mode) {
+-		auto it = modes_.find(static_cast<controls::AwbModeEnum>(*mode));
+-		if (it != modes_.end())
+-			currentMode_ = &it->second;
+-		else
+-			LOG(Awb, Error) << "Unsupported AWB mode " << *mode;
+-	}
+-}
+-
++/**
++ * \brief Compute white balance gains from a colour temperature
++ * \param[in] colourTemperature The colour temperature in Kelvin
++ *
++ * Compute the white balance gains from a \a colourTemperature. This function
++ * does not take any statistics into account. It simply interpolates the colour
++ * gains curve on a new colour temperature.
++ *
++ * \return The RGB gain values adjusted to \a temperatureK
++ */
+ std::optional<RGB<double>> AwbBayes::gainsFromColourTemperature(double colourTemperature)
+ {
+ 	/*
+@@ -283,7 +268,9 @@ std::optional<RGB<double>> AwbBayes::gai
+ 	return RGB<double>{ { gains[0], 1.0, gains[1] } };
+ }
+ 
+-AwbResult AwbBayes::calculateAwb(const AwbStats &stats, unsigned int lux)
++AwbImplementation::Result
++AwbBayes::calculateAwb(const AwbStats &stats, unsigned int lux,
++		       std::array<double, 2> range)
+ {
+ 	ipa::Pwl prior;
+ 	if (lux > 0) {
+@@ -295,7 +282,7 @@ AwbResult AwbBayes::calculateAwb(const A
+ 		prior.append(0, 1.0);
+ 	}
+ 
+-	double t = coarseSearch(prior, stats);
++	double t = coarseSearch(prior, stats, range);
+ 	double r = ctR_.eval(t);
+ 	double b = ctB_.eval(t);
+ 	LOG(Awb, Debug)
+@@ -316,14 +303,15 @@ AwbResult AwbBayes::calculateAwb(const A
+ 		<< "After fine search: r " << r << " b " << b << " (gains r "
+ 		<< 1 / r << " b " << 1 / b << ")";
+ 
+-	return { { { 1.0 / r, 1.0, 1.0 / b } }, t };
++	return { { { 1.0 / r, 1.0, 1.0 / b } }, static_cast<unsigned int>(t) };
+ }
+ 
+-double AwbBayes::coarseSearch(const ipa::Pwl &prior, const AwbStats &stats) const
++double AwbBayes::coarseSearch(const ipa::Pwl &prior, const AwbStats &stats,
++			      Span<double> range) const
+ {
+ 	std::vector<Pwl::Point> points;
+ 	size_t bestPoint = 0;
+-	double t = currentMode_->ctLo;
++	double t = range[0];
+ 	int spanR = -1;
+ 	int spanB = -1;
+ 	LimitsRecorder<double> errorLimits;
+@@ -345,14 +333,14 @@ double AwbBayes::coarseSearch(const ipa:
+ 		if (points.back().y() < points[bestPoint].y())
+ 			bestPoint = points.size() - 1;
+ 
+-		if (t == currentMode_->ctHi)
++		if (t == range[1])
+ 			break;
+ 
+ 		/*
+ 		 * Ensure even steps along the r/b curve by scaling them by the
+ 		 * current t.
+ 		 */
+-		t = std::min(t + t / 10 * kSearchStep, currentMode_->ctHi);
++		t = std::min(t + t / 10 * kSearchStep, range[1]);
+ 	}
+ 
+ 	t = points[bestPoint].x();
+--- a/src/ipa/libipa/awb_bayes.h
++++ b/src/ipa/libipa/awb_bayes.h
+@@ -20,22 +20,24 @@ namespace libcamera {
+ 
+ namespace ipa {
+ 
+-class AwbBayes : public AwbAlgorithm
++class AwbBayes : public AwbImplementation
+ {
+ public:
+ 	AwbBayes() = default;
+ 
+ 	int init(const ValueNode &tuningData) override;
+-	AwbResult calculateAwb(const AwbStats &stats, unsigned int lux) override;
++	AwbImplementation::Result
++	calculateAwb(const AwbStats &stats, unsigned int lux,
++		     std::array<double, 2> range) override;
+ 	std::optional<RGB<double>> gainsFromColourTemperature(double temperatureK) override;
+-	void handleControls(const ControlList &controls) override;
+ 
+ private:
+ 	int readPriors(const ValueNode &tuningData);
+ 
+ 	void fineSearch(double &t, double &r, double &b, ipa::Pwl const &prior,
+ 			const AwbStats &stats) const;
+-	double coarseSearch(const ipa::Pwl &prior, const AwbStats &stats) const;
++	double coarseSearch(const ipa::Pwl &prior, const AwbStats &stats,
++			    Span<double> range) const;
+ 	double interpolateQuadratic(ipa::Pwl::Point const &a,
+ 				    ipa::Pwl::Point const &b,
+ 				    ipa::Pwl::Point const &c) const;
+@@ -50,8 +52,6 @@ private:
+ 
+ 	double transversePos_;
+ 	double transverseNeg_;
+-
+-	ModeConfig *currentMode_ = nullptr;
+ };
+ 
+ } /* namespace ipa */
+--- a/src/ipa/libipa/awb_grey.cpp
++++ b/src/ipa/libipa/awb_grey.cpp
+@@ -60,6 +60,7 @@ int AwbGrey::init(const ValueNode &tunin
+  * \brief Calculate AWB data from the given statistics
+  * \param[in] stats The statistics to use for the calculation
+  * \param[in] lux The lux value of the scene
++ * \param[in] range The colour temperature search limits
+  *
+  * The colour temperature is estimated based on the colours::estimateCCT()
+  * function. The gains are calculated purely based on the RGB means provided by
+@@ -70,9 +71,11 @@ int AwbGrey::init(const ValueNode &tunin
+  *
+  * \return The AWB result
+  */
+-AwbResult AwbGrey::calculateAwb(const AwbStats &stats, [[maybe_unused]] unsigned int lux)
++AwbImplementation::Result
++AwbGrey::calculateAwb(const AwbStats &stats, [[maybe_unused]] unsigned int lux,
++		      [[maybe_unused]] std::array<double, 2> range)
+ {
+-	AwbResult result;
++	AwbImplementation::Result result;
+ 	auto means = stats.rgbMeans();
+ 	result.colourTemperature = estimateCCT(means);
+ 
+@@ -93,15 +96,16 @@ AwbResult AwbGrey::calculateAwb(const Aw
+  *
+  * Compute the white balance gains from a \a colourTemperature. This function
+  * does not take any statistics into account. It simply interpolates the colour
+- * gains configured in the colour temperature curve.
++ * gains curve (if provided in the tuning file) on a new colour temperature.
+  *
+- * \return The colour gains if a colour temperature curve is available,
+- * [1, 1, 1] otherwise.
++ * \return The RGB gain values adjusted to \a colourTemperature or std::nullopt if
++ * no gain curve is specified in the tuning data
+  */
+ std::optional<RGB<double>> AwbGrey::gainsFromColourTemperature(double colourTemperature)
+ {
+ 	if (!colourGainCurve_) {
+-		LOG(Awb, Error) << "No gains defined";
++		LOG(Awb, Info) << "No gains curve defined, "
++			       << "unable to interpolate gains to colour temperature";
+ 		return std::nullopt;
+ 	}
+ 
+--- a/src/ipa/libipa/awb_grey.h
++++ b/src/ipa/libipa/awb_grey.h
+@@ -18,13 +18,15 @@ namespace libcamera {
+ 
+ namespace ipa {
+ 
+-class AwbGrey : public AwbAlgorithm
++class AwbGrey : public AwbImplementation
+ {
+ public:
+ 	AwbGrey() = default;
+ 
+ 	int init(const ValueNode &tuningData) override;
+-	AwbResult calculateAwb(const AwbStats &stats, unsigned int lux) override;
++	AwbImplementation::Result
++	calculateAwb(const AwbStats &stats, unsigned int lux,
++		     std::array<double, 2> range) override;
+ 	std::optional<RGB<double>> gainsFromColourTemperature(double colourTemperature) override;
+ 
+ private:
+--- a/src/ipa/rkisp1/algorithms/awb.cpp
++++ b/src/ipa/rkisp1/algorithms/awb.cpp
+@@ -8,17 +8,12 @@
+ #include "awb.h"
+ 
+ #include <algorithm>
+-#include <ios>
+ 
+ #include <libcamera/base/log.h>
+ 
+-#include <libcamera/control_ids.h>
+-
+ #include <libcamera/ipa/core_ipa_interface.h>
+ 
+-#include "libipa/awb_bayes.h"
+-#include "libipa/awb_grey.h"
+-#include "libipa/colours.h"
++#include "libcamera/internal/vector.h"
+ 
+ /**
+  * \file awb.h
+@@ -28,20 +23,8 @@ namespace libcamera {
+ 
+ namespace ipa::rkisp1::algorithms {
+ 
+-/**
+- * \class Awb
+- * \brief Manage the white balance with automatic and manual controls
+- */
+-
+ LOG_DEFINE_CATEGORY(RkISP1Awb)
+ 
+-constexpr int32_t kMinColourTemperature = 2500;
+-constexpr int32_t kMaxColourTemperature = 10000;
+-constexpr int32_t kDefaultColourTemperature = 5000;
+-
+-/* Minimum mean value below which AWB can't operate. */
+-constexpr double kMeanMinThreshold = 2.0;
+-
+ class RkISP1AwbStats final : public AwbStats
+ {
+ public:
+@@ -70,12 +53,26 @@ public:
+ 		return rgbMeans_;
+ 	}
+ 
++	bool valid() const override
++	{
++		/* Minimum mean value below which AWB can't operate. */
++		constexpr double minValue = 2.0;
++
++		return rgbMeans_.r() > minValue || rgbMeans_.g() > minValue ||
++		       rgbMeans_.b() > minValue;
++	}
++
+ private:
+ 	RGB<double> rgbMeans_;
+ 	double rg_;
+ 	double bg_;
+ };
+ 
++/**
++ * \class Awb
++ * \brief Manage the white balance with automatic and manual controls
++ */
++
+ Awb::Awb()
+ 	: rgbMode_(false)
+ {
+@@ -86,40 +83,7 @@ Awb::Awb()
+  */
+ int Awb::init(IPAContext &context, const ValueNode &tuningData)
+ {
+-	auto &cmap = context.ctrlMap;
+-	cmap[&controls::ColourTemperature] = ControlInfo(kMinColourTemperature,
+-							 kMaxColourTemperature,
+-							 kDefaultColourTemperature);
+-	cmap[&controls::AwbEnable] = ControlInfo(false, true);
+-
+-	cmap[&controls::ColourGains] = ControlInfo(0.0f, 3.996f,
+-						   Span<const float, 2>{ { 1.0f, 1.0f } });
+-
+-	if (!tuningData.contains("algorithm"))
+-		LOG(RkISP1Awb, Info) << "No AWB algorithm specified."
+-				     << " Default to grey world";
+-
+-	auto mode = tuningData["algorithm"].get<std::string>("grey");
+-	if (mode == "grey") {
+-		awbAlgo_ = std::make_unique<AwbGrey>();
+-	} else if (mode == "bayes") {
+-		awbAlgo_ = std::make_unique<AwbBayes>();
+-	} else {
+-		LOG(RkISP1Awb, Error) << "Unknown AWB algorithm: " << mode;
+-		return -EINVAL;
+-	}
+-	LOG(RkISP1Awb, Debug) << "Using AWB algorithm: " << mode;
+-
+-	int ret = awbAlgo_->init(tuningData);
+-	if (ret) {
+-		LOG(RkISP1Awb, Error) << "Failed to init AWB algorithm";
+-		return ret;
+-	}
+-
+-	const auto &src = awbAlgo_->controls();
+-	cmap.insert(src.begin(), src.end());
+-
+-	return 0;
++	return awbAlgo_.init(tuningData, context.ctrlMap);
+ }
+ 
+ /**
+@@ -128,16 +92,7 @@ int Awb::init(IPAContext &context, const
+ int Awb::configure(IPAContext &context,
+ 		   const IPACameraSensorInfo &configInfo)
+ {
+-	context.activeState.awb.manual.gains = RGB<double>{ 1.0 };
+-	auto gains = awbAlgo_->gainsFromColourTemperature(kDefaultColourTemperature);
+-	if (gains)
+-		context.activeState.awb.automatic.gains = *gains;
+-	else
+-		context.activeState.awb.automatic.gains = RGB<double>{ 1.0 };
+-
+-	context.activeState.awb.autoEnabled = true;
+-	context.activeState.awb.manual.temperatureK = kDefaultColourTemperature;
+-	context.activeState.awb.automatic.temperatureK = kDefaultColourTemperature;
++	awbAlgo_.configure(context.activeState.awb);
+ 
+ 	/*
+ 	 * Define the measurement window for AWB as a centered rectangle
+@@ -156,56 +111,12 @@ int Awb::configure(IPAContext &context,
+ /**
+  * \copydoc libcamera::ipa::Algorithm::queueRequest
+  */
+-void Awb::queueRequest(IPAContext &context,
+-		       [[maybe_unused]] const uint32_t frame,
++void Awb::queueRequest(IPAContext &context, const uint32_t frame,
+ 		       IPAFrameContext &frameContext,
+ 		       const ControlList &controls)
+ {
+-	auto &awb = context.activeState.awb;
+-
+-	const auto &awbEnable = controls.get(controls::AwbEnable);
+-	if (awbEnable && *awbEnable != awb.autoEnabled) {
+-		awb.autoEnabled = *awbEnable;
+-
+-		LOG(RkISP1Awb, Debug)
+-			<< (*awbEnable ? "Enabling" : "Disabling") << " AWB";
+-	}
+-
+-	awbAlgo_->handleControls(controls);
+-
+-	frameContext.awb.autoEnabled = awb.autoEnabled;
+-
+-	if (awb.autoEnabled)
+-		return;
+-
+-	const auto &colourGains = controls.get(controls::ColourGains);
+-	const auto &colourTemperature = controls.get(controls::ColourTemperature);
+-	bool update = false;
+-	if (colourGains) {
+-		awb.manual.gains.r() = (*colourGains)[0];
+-		awb.manual.gains.b() = (*colourGains)[1];
+-		/*
+-		 * \todo Colour temperature reported in metadata is now
+-		 * incorrect, as we can't deduce the temperature from the gains.
+-		 * This will be fixed with the bayes AWB algorithm.
+-		 */
+-		update = true;
+-	} else if (colourTemperature) {
+-		awb.manual.temperatureK = *colourTemperature;
+-		const auto &gains = awbAlgo_->gainsFromColourTemperature(*colourTemperature);
+-		if (gains) {
+-			awb.manual.gains.r() = gains->r();
+-			awb.manual.gains.b() = gains->b();
+-			update = true;
+-		}
+-	}
+-
+-	if (update)
+-		LOG(RkISP1Awb, Debug)
+-			<< "Set colour gains to " << awb.manual.gains;
+-
+-	frameContext.awb.gains = awb.manual.gains;
+-	frameContext.awb.temperatureK = awb.manual.temperatureK;
++	awbAlgo_.queueRequest(context.activeState.awb, frame, frameContext.awb,
++			      controls);
+ }
+ 
+ /**
+@@ -214,15 +125,7 @@ void Awb::queueRequest(IPAContext &conte
+ void Awb::prepare(IPAContext &context, const uint32_t frame,
+ 		  IPAFrameContext &frameContext, RkISP1Params *params)
+ {
+-	/*
+-	 * This is the latest time we can read the active state. This is the
+-	 * most up-to-date automatic values we can read.
+-	 */
+-	if (frameContext.awb.autoEnabled) {
+-		const auto &awb = context.activeState.awb;
+-		frameContext.awb.gains = awb.automatic.gains;
+-		frameContext.awb.temperatureK = awb.automatic.temperatureK;
+-	}
++	awbAlgo_.prepare(context.activeState.awb, frameContext.awb);
+ 
+ 	auto gainConfig = params->block<BlockType::AwbGain>();
+ 	gainConfig.setEnabled(true);
+@@ -291,15 +194,6 @@ void Awb::process(IPAContext &context,
+ 		  const rkisp1_stat_buffer *stats,
+ 		  ControlList &metadata)
+ {
+-	IPAActiveState &activeState = context.activeState;
+-
+-	metadata.set(controls::AwbEnable, frameContext.awb.autoEnabled);
+-	metadata.set(controls::ColourGains, {
+-			static_cast<float>(frameContext.awb.gains.r()),
+-			static_cast<float>(frameContext.awb.gains.b())
+-		});
+-	metadata.set(controls::ColourTemperature, frameContext.awb.temperatureK);
+-
+ 	if (!stats || !(stats->meas_type & RKISP1_CIF_ISP_STAT_AWB)) {
+ 		LOG(RkISP1Awb, Error) << "AWB data is missing in statistics";
+ 		return;
+@@ -313,45 +207,14 @@ void Awb::process(IPAContext &context,
+ 		return;
+ 	}
+ 
+-	RGB<double> rgbMeans = calculateRgbMeans(frameContext, awb);
+-
+-	/*
+-	 * If the means are too small we don't have enough information to
+-	 * meaningfully calculate gains. Freeze the algorithm in that case.
+-	 */
+-	if (rgbMeans.r() < kMeanMinThreshold && rgbMeans.g() < kMeanMinThreshold &&
+-	    rgbMeans.b() < kMeanMinThreshold)
+-		return;
+-
+-	RkISP1AwbStats awbStats{ rgbMeans };
+-	AwbResult awbResult = awbAlgo_->calculateAwb(awbStats, frameContext.lux.lux);
+-
+-	/*
+-	 * Clamp the gain values to the hardware, which expresses gains as Q2.8
+-	 * unsigned integer values. Set the minimum just above zero to avoid
+-	 * divisions by zero when computing the raw means in subsequent
+-	 * iterations.
+-	 */
+-	awbResult.gains = awbResult.gains.clamp(1.0 / 256, 1023.0 / 256);
++	RkISP1AwbStats awbStats = calculateRgbMeans(frameContext, awb);
+ 
+-	/* Filter the values to avoid oscillations. */
+-	double speed = 0.2;
+-	double ct = awbResult.colourTemperature;
+-	ct = ct * speed + activeState.awb.automatic.temperatureK * (1 - speed);
+-	awbResult.gains = awbResult.gains * speed +
+-			  activeState.awb.automatic.gains * (1 - speed);
+-
+-	activeState.awb.automatic.temperatureK = static_cast<unsigned int>(ct);
+-	activeState.awb.automatic.gains = awbResult.gains;
+-
+-	LOG(RkISP1Awb, Debug)
+-		<< std::showpoint
+-		<< "Means " << rgbMeans << ", gains "
+-		<< activeState.awb.automatic.gains << ", temp "
+-		<< activeState.awb.automatic.temperatureK << "K";
++	awbAlgo_.process(context.activeState.awb, frameContext.awb, awbStats,
++			 frameContext.lux.lux, metadata);
+ }
+ 
+-RGB<double> Awb::calculateRgbMeans(const IPAFrameContext &frameContext, const rkisp1_cif_isp_awb_stat *awb) const
++RkISP1AwbStats Awb::calculateRgbMeans(const IPAFrameContext &frameContext,
++				      const rkisp1_cif_isp_awb_stat *awb) const
+ {
+ 	Vector<double, 3> rgbMeans;
+ 
+@@ -419,7 +282,7 @@ RGB<double> Awb::calculateRgbMeans(const
+ 	 */
+ 	rgbMeans /= frameContext.awb.gains.max(0.01);
+ 
+-	return rgbMeans;
++	return RkISP1AwbStats(rgbMeans);
+ }
+ 
+ REGISTER_IPA_ALGORITHM(Awb, "Awb")
+--- a/src/ipa/rkisp1/algorithms/awb.h
++++ b/src/ipa/rkisp1/algorithms/awb.h
+@@ -7,17 +7,25 @@
+ 
+ #pragma once
+ 
+-#include "libcamera/internal/vector.h"
++#include <linux/rkisp1-config.h>
++
++#include <libcamera/controls.h>
++
++#include "libcamera/internal/value_node.h"
+ 
+ #include "libipa/awb.h"
+-#include "libipa/interpolator.h"
++#include "libipa/fixedpoint.h"
+ 
+ #include "algorithm.h"
++#include "ipa_context.h"
++#include "params.h"
+ 
+ namespace libcamera {
+ 
+ namespace ipa::rkisp1::algorithms {
+ 
++class RkISP1AwbStats;
++
+ class Awb : public Algorithm
+ {
+ public:
+@@ -38,10 +46,10 @@ public:
+ 		     ControlList &metadata) override;
+ 
+ private:
+-	RGB<double> calculateRgbMeans(const IPAFrameContext &frameContext,
+-				      const rkisp1_cif_isp_awb_stat *awb) const;
++	RkISP1AwbStats calculateRgbMeans(const IPAFrameContext &frameContext,
++					 const rkisp1_cif_isp_awb_stat *awb) const;
+ 
+-	std::unique_ptr<AwbAlgorithm> awbAlgo_;
++	AwbAlgorithm<UQ<2, 8>> awbAlgo_;
+ 
+ 	bool rgbMode_;
+ };
+--- a/src/ipa/rkisp1/algorithms/ccm.cpp
++++ b/src/ipa/rkisp1/algorithms/ccm.cpp
+@@ -77,7 +77,7 @@ int Ccm::configure(IPAContext &context,
+ {
+ 	auto &as = context.activeState;
+ 	as.ccm.manual = kIdentity3x3;
+-	as.ccm.automatic = ccm_.getInterpolated(as.awb.automatic.temperatureK);
++	as.ccm.automatic = ccm_.getInterpolated(as.awb.automatic.colourTemperature);
+ 	return 0;
+ }
+ 
+@@ -140,7 +140,7 @@ void Ccm::prepare(IPAContext &context, c
+ 		return;
+ 	}
+ 
+-	uint32_t ct = frameContext.awb.temperatureK;
++	uint32_t ct = frameContext.awb.colourTemperature;
+ 	if (frame > 0 && ct == ct_) {
+ 		frameContext.ccm.ccm = context.activeState.ccm.automatic;
+ 		return;
+--- a/src/ipa/rkisp1/algorithms/lsc.cpp
++++ b/src/ipa/rkisp1/algorithms/lsc.cpp
+@@ -512,7 +512,7 @@ void LensShadingCorrection::prepare([[ma
+ 				    IPAFrameContext &frameContext,
+ 				    RkISP1Params *params)
+ {
+-	uint32_t ct = frameContext.awb.temperatureK;
++	uint32_t ct = frameContext.awb.colourTemperature;
+ 	unsigned int quantizedCt = quantize(ct, kColourTemperatureQuantization);
+ 
+ 	/* Check if we can skip the update. */
+--- a/src/ipa/rkisp1/ipa_context.h
++++ b/src/ipa/rkisp1/ipa_context.h
+@@ -25,6 +25,7 @@
+ #include "libcamera/internal/vector.h"
+ 
+ #include "libipa/agc_mean_luminance.h"
++#include "libipa/awb.h"
+ #include "libipa/camera_sensor_helper.h"
+ #include "libipa/fc_queue.h"
+ #include "libipa/fixedpoint.h"
+@@ -48,15 +49,17 @@ struct IPAHwSettings {
+ 	bool compand;
+ };
+ 
++struct RKISP1AwbSession {
++	struct rkisp1_cif_isp_window measureWindow;
++	bool enabled;
++};
++
+ struct IPASessionConfiguration {
+ 	struct {
+ 		struct rkisp1_cif_isp_window measureWindow;
+ 	} agc;
+ 
+-	struct {
+-		struct rkisp1_cif_isp_window measureWindow;
+-		bool enabled;
+-	} awb;
++	struct RKISP1AwbSession awb;
+ 
+ 	struct {
+ 		bool supported;
+@@ -100,17 +103,7 @@ struct IPAActiveState {
+ 		utils::Duration maxFrameDuration;
+ 	} agc;
+ 
+-	struct {
+-		struct AwbState {
+-			RGB<double> gains;
+-			unsigned int temperatureK;
+-		};
+-
+-		AwbState manual;
+-		AwbState automatic;
+-
+-		bool autoEnabled;
+-	} awb;
++	ipa::awb::ActiveState awb;
+ 
+ 	struct {
+ 		Matrix<float, 3, 3> manual;
+@@ -176,11 +169,7 @@ struct IPAFrameContext : public FrameCon
+ 		bool autoGainModeChange;
+ 	} agc;
+ 
+-	struct {
+-		RGB<double> gains;
+-		bool autoEnabled;
+-		unsigned int temperatureK;
+-	} awb;
++	ipa::awb::FrameContext awb;
+ 
+ 	struct {
+ 		float actualBrightness;

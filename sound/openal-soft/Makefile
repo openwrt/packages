@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openal-soft
 PKG_VERSION:=1.25.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/kcat/openal-soft/tar.gz/$(PKG_VERSION)?
@@ -15,6 +15,8 @@ PKG_LICENSE_FILES:=BSD-3Clause COPYING LICENSE-pffft
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
+TARGET_LDFLAGS += -Wl,--as-needed
+
 CMAKE_OPTIONS +=\
 	-DALSOFT_UTILS=OFF \
 	-DALSOFT_EXAMPLES=OFF \
@@ -25,7 +27,7 @@ define Package/openal-soft
   SECTION:=sound
   CATEGORY:=Sound
   TITLE:=OpenAL Soft
-  DEPENDS:=+libatomic +libstdcpp
+  DEPENDS:=+libstdcpp
   URL:=https://openal-soft.org
 endef
 

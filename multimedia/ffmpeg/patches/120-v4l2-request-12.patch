@@ -1,0 +1,78 @@
+From 6d218019f1d8294ab17648358a3259082d9b64a4 Mon Sep 17 00:00:00 2001
+From: Jernej Skrabec <jernej.skrabec@gmail.com>
+Date: Sun, 14 Dec 2025 01:12:06 +0000
+Subject: [PATCH 12/13] avutil/hwcontext_v4l2request: Add support for
+ AFBC_16X16_SPLIT pix fmts
+
+Add support for YUV420_8_AFBC_16X16_SPLIT and YUV420_10_AFBC_16X16_SPLIT
+used by Cedrus decoder.
+
+Signed-off-by: Jernej Skrabec <jernej.skrabec@gmail.com>
+Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
+---
+ libavutil/hwcontext_v4l2request.c | 40 +++++++++++++++++++++++++------
+ 1 file changed, 33 insertions(+), 7 deletions(-)
+
+--- a/libavutil/hwcontext_v4l2request.c
++++ b/libavutil/hwcontext_v4l2request.c
+@@ -85,6 +85,28 @@ static const struct {
+     { V4L2_PIX_FMT_NV12MT_10_COL128, AV_PIX_FMT_YUV420P10, DRM_FORMAT_P030, DRM_FORMAT_MOD_BROADCOM_SAND128, 10 },
+ #endif
+ #endif
++#if defined(V4L2_PIX_FMT_YUV420_8_AFBC_16X16_SPLIT)
++    {
++        .pixelformat = V4L2_PIX_FMT_YUV420_8_AFBC_16X16_SPLIT,
++        .sw_format = AV_PIX_FMT_YUV420P,
++        .drm_format = DRM_FORMAT_YUV420_8BIT,
++        .format_modifier = DRM_FORMAT_MOD_ARM_AFBC(AFBC_FORMAT_MOD_BLOCK_SIZE_16x16 |
++                                                   AFBC_FORMAT_MOD_SPARSE |
++                                                   AFBC_FORMAT_MOD_SPLIT),
++        .bit_depth = 8,
++    },
++#endif
++#if defined(V4L2_PIX_FMT_YUV420_10_AFBC_16X16_SPLIT)
++    {
++        .pixelformat = V4L2_PIX_FMT_YUV420_10_AFBC_16X16_SPLIT,
++        .sw_format = AV_PIX_FMT_YUV420P10,
++        .drm_format = DRM_FORMAT_YUV420_10BIT,
++        .format_modifier = DRM_FORMAT_MOD_ARM_AFBC(AFBC_FORMAT_MOD_BLOCK_SIZE_16x16 |
++                                                   AFBC_FORMAT_MOD_SPARSE |
++                                                   AFBC_FORMAT_MOD_SPLIT),
++        .bit_depth = 10,
++    },
++#endif
+ };
+ 
+ static int v4l2request_set_drm_descriptor(AVDRMFrameDescriptor *desc,
+@@ -115,7 +137,7 @@ static int v4l2request_set_drm_descripto
+     }
+ 
+     desc->nb_layers = 1;
+-    layer->nb_planes = 2;
++    layer->nb_planes = 1;
+ 
+     layer->planes[0].object_index = 0;
+     layer->planes[0].offset = 0;
+@@ -123,12 +145,16 @@ static int v4l2request_set_drm_descripto
+                              format->fmt.pix_mp.plane_fmt[0].bytesperline :
+                              format->fmt.pix.bytesperline;
+ 
+-    layer->planes[1].object_index = 0;
+-    layer->planes[1].offset = layer->planes[0].pitch *
+-                              (V4L2_TYPE_IS_MULTIPLANAR(format->type) ?
+-                               format->fmt.pix_mp.height :
+-                               format->fmt.pix.height);
+-    layer->planes[1].pitch = layer->planes[0].pitch;
++    // AFBC formats only use 1 plane, remaining use 2 planes
++    if ((desc->objects[0].format_modifier >> 56) != DRM_FORMAT_MOD_VENDOR_ARM) {
++        layer->nb_planes = 2;
++        layer->planes[1].object_index = 0;
++        layer->planes[1].offset = layer->planes[0].pitch *
++                                  (V4L2_TYPE_IS_MULTIPLANAR(format->type) ?
++                                   format->fmt.pix_mp.height :
++                                   format->fmt.pix.height);
++        layer->planes[1].pitch = layer->planes[0].pitch;
++    }
+ 
+ #if defined(V4L2_PIX_FMT_NV12MT_COL128) && defined(V4L2_PIX_FMT_NV12MT_10_COL128)
+     // Raspberry Pi formats need special handling

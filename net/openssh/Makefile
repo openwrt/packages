@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openssh
-PKG_REALVERSION:=10.4p1
-PKG_VERSION:=10.4_p1
-PKG_RELEASE:=2
+PKG_REALVERSION:=10.6p2
+PKG_VERSION:=10.6_p2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_REALVERSION).tar.gz
 PKG_SOURCE_URL:=https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/ \
 		https://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/
-PKG_HASH:=ef6026dd2aea8d56059638d5d3262902c892ceba9f88395835e0d06d3fb63238
+PKG_HASH:=9ae44872090cf2f06b3cf9ff147e7f16f309671340763ed2f99248398ae29d5b
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(if $(BUILD_VARIANT),$(PKG_NAME)-$(BUILD_VARIANT)/)$(PKG_NAME)-$(PKG_REALVERSION)
 
 PKG_LICENSE:=BSD-2-Clause BSD-3-Clause ISC
@@ -31,7 +31,7 @@ define Package/openssh/Default
   CATEGORY:=Network
   DEPENDS:=
   TITLE:=OpenSSH
-  MAINTAINER:=Peter Wagner <tripolar@gmx.at>
+  MAINTAINER:=John Audia <therealgraysky@proton.me>
   URL:=https://www.openssh.com/
   SUBMENU:=SSH
 endef
@@ -101,6 +101,8 @@ define Package/openssh-server/conffiles
 /etc/ssh/sshd_config.d/
 /etc/ssh/ssh_host_ed25519_key
 /etc/ssh/ssh_host_ed25519_key.pub
+/etc/ssh/ssh_host_mldsa44_ed25519_key
+/etc/ssh/ssh_host_mldsa44_ed25519_key.pub
 /etc/ssh/ssh_host_rsa_key
 /etc/ssh/ssh_host_rsa_key.pub
 /root/.ssh/authorized_keys
@@ -111,6 +113,7 @@ define Package/openssh-server-pam
   DEPENDS+= +USE_GLIBC:libcrypt-compat +libopenssl +zlib +libpthread +openssh-keygen +libpam
   TITLE+= server (with PAM support)
   VARIANT:=with-pam
+  CONFLICTS:=openssh-server
   USERID:=sshd=22:sshd=22
 endef
 
@@ -239,7 +242,7 @@ endef
 define Package/openssh-server/install
 	install -d -m0755 $(1)/etc/ssh $(1)/etc/ssh/sshd_config.d
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/ssh/sshd_config $(1)/etc/ssh/
-	sed -r -i 's,^#(HostKey /etc/ssh/ssh_host_(rsa|ed25519)_key)$$$$,\1,' $(1)/etc/ssh/sshd_config
+	sed -r -i 's,^#(HostKey /etc/ssh/ssh_host_(rsa|ed25519|mldsa44_ed25519)_key)$$$$,\1,' $(1)/etc/ssh/sshd_config
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/sshd.init $(1)/etc/init.d/sshd
 	$(INSTALL_DIR) $(1)/lib/preinit

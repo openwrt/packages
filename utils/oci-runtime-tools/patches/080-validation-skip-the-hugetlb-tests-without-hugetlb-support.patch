@@ -1,0 +1,190 @@
+From dcde22446ff823a75dd176db3ef42c3288a1f74a Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Wed, 21 Oct 2026 12:49:40 +0100
+Subject: [PATCH] validation: skip the hugetlb tests without hugetlb support
+
+A kernel built without huge pages or without the hugetlb cgroup
+controller cannot apply hugepage limits, so no runtime can pass the
+hugetlb tests there; they failed on reading /sys/kernel/mm/hugepages.
+Skip both tests unless /proc/cgroups lists the hugetlb controller as
+enabled and the kernel offers at least one huge page size.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ .../linux_cgroups_hugetlb.go                  | 19 ++++---
+ .../linux_cgroups_relative_hugetlb.go         | 14 ++++--
+ validation/util/linux_resources_hugetlb.go    | 50 +++++++++++++++++++
+ .../util/linux_resources_hugetlb_test.go      | 33 ++++++++++++
+ 4 files changed, 105 insertions(+), 11 deletions(-)
+ create mode 100644 validation/util/linux_resources_hugetlb.go
+ create mode 100644 validation/util/linux_resources_hugetlb_test.go
+
+--- a/validation/linux_cgroups_hugetlb/linux_cgroups_hugetlb.go
++++ b/validation/linux_cgroups_hugetlb/linux_cgroups_hugetlb.go
+@@ -2,6 +2,7 @@ package main
+ 
+ import (
+ 	"fmt"
++	"os"
+ 	"runtime"
+ 
+ 	"github.com/mndrix/tap-go"
+@@ -10,16 +11,11 @@ import (
+ 	"github.com/opencontainers/runtime-tools/validation/util"
+ )
+ 
+-func testHugetlbCgroups() error {
++func testHugetlbCgroups(pageSizes []string) error {
+ 	t := tap.New()
+ 	t.Header(0)
+ 	defer t.AutoPlan()
+ 
+-	pageSizes, err := cgroups.GetHugePageSize()
+-	if err != nil {
+-		t.Fail(fmt.Sprintf("error when getting hugepage sizes: %+v", err))
+-	}
+-
+ 	// When setting the limit just for checking if writing works, the amount of memory
+ 	// requested does not matter, as all insigned integers will be accepted.
+ 	// Use 2GiB as an example
+@@ -92,7 +88,16 @@ func main() {
+ 		util.Fatal(fmt.Errorf("linux-specific cgroup test"))
+ 	}
+ 
+-	if err := testHugetlbCgroups(); err != nil {
++	pageSizes, err := util.GetHugetlbPageSizes()
++	if err != nil {
++		util.Fatal(fmt.Errorf("error when getting hugepage sizes: %+v", err))
++	}
++	if len(pageSizes) == 0 {
++		util.Skip("no huge pages or hugetlb cgroup controller on the host", nil)
++		os.Exit(0)
++	}
++
++	if err := testHugetlbCgroups(pageSizes); err != nil {
+ 		util.Fatal(err)
+ 	}
+ 
+--- a/validation/linux_cgroups_relative_hugetlb/linux_cgroups_relative_hugetlb.go
++++ b/validation/linux_cgroups_relative_hugetlb/linux_cgroups_relative_hugetlb.go
+@@ -2,6 +2,7 @@ package main
+ 
+ import (
+ 	"fmt"
++	"os"
+ 
+ 	"github.com/mndrix/tap-go"
+ 	rspec "github.com/opencontainers/runtime-spec/specs-go"
+@@ -10,14 +11,19 @@ import (
+ )
+ 
+ func main() {
++	pageSizes, err := util.GetHugetlbPageSizes()
++	if err != nil {
++		util.Fatal(fmt.Errorf("error when getting hugepage sizes: %+v", err))
++	}
++	if len(pageSizes) == 0 {
++		util.Skip("no huge pages or hugetlb cgroup controller on the host", nil)
++		os.Exit(0)
++	}
++
+ 	t := tap.New()
+ 	t.Header(0)
+ 	defer t.AutoPlan()
+ 
+-	pageSizes, err := cgroups.GetHugePageSize()
+-	if err != nil {
+-		t.Fail(fmt.Sprintf("error when getting hugepage sizes: %+v", err))
+-	}
+ 	// When setting the limit just for checking if writing works, the amount of memory
+ 	// requested does not matter, as all insigned integers will be accepted.
+ 	// Use 2GiB as an example
+--- /dev/null
++++ b/validation/util/linux_resources_hugetlb.go
+@@ -0,0 +1,50 @@
++package util
++
++import (
++	"bufio"
++	"errors"
++	"io"
++	"os"
++	"strings"
++
++	"github.com/opencontainers/runtime-tools/cgroups"
++)
++
++// GetHugetlbPageSizes returns the huge page sizes of the host. The list is
++// empty when the kernel offers no huge pages or no hugetlb cgroup
++// controller, in which case no runtime can apply hugepage limits.
++func GetHugetlbPageSizes() ([]string, error) {
++	enabled, err := cgroupControllerEnabled("hugetlb")
++	if err != nil || !enabled {
++		return nil, err
++	}
++
++	pageSizes, err := cgroups.GetHugePageSize()
++	if errors.Is(err, os.ErrNotExist) {
++		return nil, nil
++	}
++	return pageSizes, err
++}
++
++// cgroupControllerEnabled reports whether the kernel provides the named
++// cgroup controller, as listed in /proc/cgroups for both cgroup versions.
++func cgroupControllerEnabled(name string) (bool, error) {
++	f, err := os.Open("/proc/cgroups")
++	if err != nil {
++		return false, err
++	}
++	defer f.Close()
++
++	return controllerEnabled(f, name)
++}
++
++func controllerEnabled(r io.Reader, name string) (bool, error) {
++	s := bufio.NewScanner(r)
++	for s.Scan() {
++		fields := strings.Fields(s.Text())
++		if len(fields) == 4 && fields[0] == name {
++			return fields[3] == "1", nil
++		}
++	}
++	return false, s.Err()
++}
+--- /dev/null
++++ b/validation/util/linux_resources_hugetlb_test.go
+@@ -0,0 +1,33 @@
++package util
++
++import (
++	"strings"
++	"testing"
++)
++
++const procCgroups = `#subsys_name	hierarchy	num_cgroups	enabled
++cpuset	0	12	1
++cpu	0	12	1
++memory	0	12	0
++pids	0	12	1
++`
++
++func TestControllerEnabled(t *testing.T) {
++	for _, tc := range []struct {
++		name    string
++		enabled bool
++	}{
++		{"cpu", true},
++		{"pids", true},
++		{"memory", false},
++		{"hugetlb", false},
++	} {
++		enabled, err := controllerEnabled(strings.NewReader(procCgroups), tc.name)
++		if err != nil {
++			t.Fatalf("%s: %v", tc.name, err)
++		}
++		if enabled != tc.enabled {
++			t.Errorf("%s: enabled %v, want %v", tc.name, enabled, tc.enabled)
++		}
++	}
++}

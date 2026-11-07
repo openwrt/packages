@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mosquitto
 PKG_VERSION:=2.0.22
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://mosquitto.org/files/source/
@@ -39,6 +39,7 @@ define Package/mosquitto-ssl
     DEPENDS+= +libopenssl +MOSQUITTO_LWS:libwebsockets-openssl +MOSQUITTO_DYNAMIC_SECURITY:cJSON
     VARIANT:=ssl
     PROVIDES:=mosquitto
+  CONFLICTS:=mosquitto-nossl
 endef
 
 define Package/mosquitto-nossl
@@ -83,6 +84,7 @@ define Package/mosquitto-client-ssl
     TITLE+= (With SSL support)
     DEPENDS+=+libmosquitto-ssl
     VARIANT:=ssl
+  CONFLICTS:=mosquitto-client-nossl
 endef
 define Package/mosquitto-client-nossl
     $(call Package/mosquitto-client/default)
@@ -120,6 +122,7 @@ define Package/libmosquitto-ssl
     TITLE+= (With SSL Support)
     DEPENDS+= +libopenssl
     VARIANT=ssl
+  CONFLICTS:=libmosquitto-nossl
 endef
 define Package/libmosquitto-nossl
     $(call Package/libmosquitto/default)

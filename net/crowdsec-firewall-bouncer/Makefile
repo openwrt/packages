@@ -6,16 +6,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=crowdsec-firewall-bouncer
-PKG_VERSION:=0.0.34
+PKG_VERSION:=0.0.36
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/crowdsecurity/cs-firewall-bouncer/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=5bd62250f40fc0a05d2431f3ea1cb211d7fc4cc755b53a23585aa2cede8ff985
+PKG_HASH:=46c41cce09df0be41ca091499fffd3ca2e61f85fb66e4f82060043e0894290cf
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=Gerald Kerma <gandalf@gk2.net>
+PKG_MAINTAINER:=S. Brusch <ne20002@gmx.ch>
 
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
@@ -25,7 +25,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/cs-firewall-bouncer-$(PKG_VERSION)
 CSFB_BUILD_VERSION?=v$(PKG_VERSION)
 CSFB_BUILD_TIMESTAMP:=$(shell date +%F"_"%T)
 CSFB_BUILD_TAG:=openwrt-$(PKG_VERSION)-$(PKG_RELEASE)
-CSFB_VERSION_PKG:=github.com/crowdsecurity/cs-firewall-bouncer/pkg/version
+CSFB_VERSION_PKG:=github.com/crowdsecurity/go-cs-lib/version
 
 GO_PKG:=github.com/crowdsecurity/cs-firewall-bouncer
 GO_PKG_INSTALL_ALL:=1

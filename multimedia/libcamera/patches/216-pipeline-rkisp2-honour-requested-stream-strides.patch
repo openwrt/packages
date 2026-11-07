@@ -1,0 +1,44 @@
+From 632dcf0d683f28c7b1450a0b3437123339df7879 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Mon, 19 Oct 2026 11:57:12 +0100
+Subject: [PATCH] pipeline: rkisp2: Honour requested stream strides
+
+DMA consumers can require padding between image rows. Pass the requested
+stream stride through format validation and capture configuration, and
+report the resulting stride and frame size.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ src/libcamera/pipeline/rkisp2/rkisp2.cpp | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+--- a/src/libcamera/pipeline/rkisp2/rkisp2.cpp
++++ b/src/libcamera/pipeline/rkisp2/rkisp2.cpp
+@@ -664,11 +664,19 @@ CameraConfiguration::Status RkISP2Camera
+ 	V4L2DeviceFormat format;
+ 	format.fourcc = data_->video_->toV4L2PixelFormat(cfg.pixelFormat);
+ 	format.size = cfg.size;
++	format.planes[0].bpl = cfg.stride;
+ 
+ 	int ret = data_->mainPath_->tryFormat(&format);
+ 	if (ret)
+ 		return Invalid;
+ 
++	if (cfg.stride && cfg.stride != format.planes[0].bpl)
++		status = Adjusted;
++	cfg.stride = format.planes[0].bpl;
++	cfg.frameSize = 0;
++	for (unsigned int i = 0; i < format.planesCount; i++)
++		cfg.frameSize += format.planes[i].size;
++
+ 	cfg.bufferCount = kRkISP2StreamBufferCount;
+ 
+ 	std::transform(rawFormats.begin(), rawFormats.end(),
+@@ -880,6 +888,7 @@ int PipelineHandlerRkISP2::configure(Cam
+ 	outputFormat.fourcc = mainPathFormat(mainPath_.get(), cfg.pixelFormat);
+ 	outputFormat.size = cfg.size;
+ 	outputFormat.colorSpace = cfg.colorSpace;
++	outputFormat.planes[0].bpl = cfg.stride;
+ 
+ 	LOG(RkISP2, Debug) << "Configuring main path with: " << outputFormat;
+ 	ret = mainPath_->setFormat(&outputFormat);

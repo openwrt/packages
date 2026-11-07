@@ -1,0 +1,390 @@
+From 2a1a6b6a6a9dc294702ae11fab4fa0325dabacd4 Mon Sep 17 00:00:00 2001
+From: Hans de Goede <johannes.goede@oss.qualcomm.com>
+Date: Tue, 18 Aug 2026 16:05:47 +0200
+Subject: [PATCH] ipa: softisp: Rename ipa::soft namespace to ipa::softisp
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Rename ipa::soft namespace to ipa::softisp to match the softisp IPA name.
+
+Reviewed-by: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Reviewed-by: Barnabás Pőcze <barnabas.pocze@ideasonboard.com>
+Signed-off-by: Hans de Goede <johannes.goede@oss.qualcomm.com>
+Signed-off-by: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+---
+ include/libcamera/internal/software_isp/software_isp.h | 4 ++--
+ include/libcamera/ipa/softisp.mojom                    | 2 +-
+ src/ipa/softisp/algorithms/adjust.cpp                  | 4 ++--
+ src/ipa/softisp/algorithms/adjust.h                    | 4 ++--
+ src/ipa/softisp/algorithms/agc.cpp                     | 4 ++--
+ src/ipa/softisp/algorithms/agc.h                       | 4 ++--
+ src/ipa/softisp/algorithms/algorithm.h                 | 4 ++--
+ src/ipa/softisp/algorithms/awb.cpp                     | 4 ++--
+ src/ipa/softisp/algorithms/awb.h                       | 4 ++--
+ src/ipa/softisp/algorithms/blc.cpp                     | 4 ++--
+ src/ipa/softisp/algorithms/blc.h                       | 4 ++--
+ src/ipa/softisp/algorithms/ccm.cpp                     | 4 ++--
+ src/ipa/softisp/algorithms/ccm.h                       | 4 ++--
+ src/ipa/softisp/ipa_context.cpp                        | 4 ++--
+ src/ipa/softisp/ipa_context.h                          | 4 ++--
+ src/ipa/softisp/module.h                               | 4 ++--
+ src/ipa/softisp/softisp.cpp                            | 8 ++++----
+ src/libcamera/pipeline/simple/simple.cpp               | 2 +-
+ src/libcamera/software_isp/software_isp.cpp            | 4 ++--
+ 19 files changed, 38 insertions(+), 38 deletions(-)
+
+--- a/include/libcamera/internal/software_isp/software_isp.h
++++ b/include/libcamera/internal/software_isp/software_isp.h
+@@ -65,7 +65,7 @@ public:
+ 
+ 	int configure(const StreamConfiguration &inputCfg,
+ 		      const std::vector<std::reference_wrapper<const StreamConfiguration>> &outputCfgs,
+-		      const ipa::soft::IPAConfigInfo &configInfo);
++		      const ipa::softisp::IPAConfigInfo &configInfo);
+ 
+ 	int exportBuffers(const Stream *stream, unsigned int count,
+ 			  std::vector<std::unique_ptr<FrameBuffer>> *buffers);
+@@ -101,7 +101,7 @@ private:
+ 	DmaBufAllocator dmaHeap_;
+ 	bool ccmEnabled_;
+ 
+-	std::unique_ptr<ipa::soft::IPAProxySoftIsp> ipa_;
++	std::unique_ptr<ipa::softisp::IPAProxySoftIsp> ipa_;
+ 	std::deque<FrameBuffer *> queuedInputBuffers_;
+ 	std::deque<FrameBuffer *> queuedOutputBuffers_;
+ };
+--- a/include/libcamera/ipa/softisp.mojom
++++ b/include/libcamera/ipa/softisp.mojom
+@@ -4,7 +4,7 @@
+  * \todo Document the interface and remove the related EXCLUDE_PATTERNS entry.
+  */
+ 
+-module ipa.soft;
++module ipa.softisp;
+ 
+ import "include/libcamera/ipa/core.mojom";
+ 
+--- a/src/ipa/softisp/algorithms/adjust.cpp
++++ b/src/ipa/softisp/algorithms/adjust.cpp
+@@ -17,7 +17,7 @@
+ 
+ namespace libcamera {
+ 
+-namespace ipa::soft::algorithms {
++namespace ipa::softisp::algorithms {
+ 
+ constexpr float kDefaultContrast = 1.0f;
+ constexpr float kDefaultSaturation = 1.0f;
+@@ -129,6 +129,6 @@ void Adjust::process([[maybe_unused]] IP
+ 
+ REGISTER_IPA_ALGORITHM(Adjust, "Adjust")
+ 
+-} /* namespace ipa::soft::algorithms */
++} /* namespace ipa::softisp::algorithms */
+ 
+ } /* namespace libcamera */
+--- a/src/ipa/softisp/algorithms/adjust.h
++++ b/src/ipa/softisp/algorithms/adjust.h
+@@ -15,7 +15,7 @@
+ 
+ namespace libcamera {
+ 
+-namespace ipa::soft::algorithms {
++namespace ipa::softisp::algorithms {
+ 
+ constexpr float kDefaultGamma = 2.2f;
+ 
+@@ -45,6 +45,6 @@ private:
+ 	void applySaturation(Matrix<float, 3, 3> &ccm, float saturation);
+ };
+ 
+-} /* namespace ipa::soft::algorithms */
++} /* namespace ipa::softisp::algorithms */
+ 
+ } /* namespace libcamera */
+--- a/src/ipa/softisp/algorithms/agc.cpp
++++ b/src/ipa/softisp/algorithms/agc.cpp
+@@ -19,7 +19,7 @@ namespace libcamera {
+ 
+ LOG_DEFINE_CATEGORY(IPASoftIspExposure)
+ 
+-namespace ipa::soft::algorithms {
++namespace ipa::softisp::algorithms {
+ 
+ /*
+  * The number of bins to use for the optimal exposure calculations.
+@@ -194,6 +194,6 @@ void Agc::process(IPAContext &context,
+ 
+ REGISTER_IPA_ALGORITHM(Agc, "Agc")
+ 
+-} /* namespace ipa::soft::algorithms */
++} /* namespace ipa::softisp::algorithms */
+ 
+ } /* namespace libcamera */
+--- a/src/ipa/softisp/algorithms/agc.h
++++ b/src/ipa/softisp/algorithms/agc.h
+@@ -11,7 +11,7 @@
+ 
+ namespace libcamera {
+ 
+-namespace ipa::soft::algorithms {
++namespace ipa::softisp::algorithms {
+ 
+ class Agc : public Algorithm
+ {
+@@ -28,6 +28,6 @@ private:
+ 	void updateExposure(IPAContext &context, IPAFrameContext &frameContext, double exposureMSV);
+ };
+ 
+-} /* namespace ipa::soft::algorithms */
++} /* namespace ipa::softisp::algorithms */
+ 
+ } /* namespace libcamera */
+--- a/src/ipa/softisp/algorithms/algorithm.h
++++ b/src/ipa/softisp/algorithms/algorithm.h
+@@ -13,10 +13,10 @@
+ 
+ namespace libcamera {
+ 
+-namespace ipa::soft {
++namespace ipa::softisp {
+ 
+ using Algorithm = libcamera::ipa::Algorithm<Module>;
+ 
+-} /* namespace ipa::soft */
++} /* namespace ipa::softisp */
+ 
+ } /* namespace libcamera */
+--- a/src/ipa/softisp/algorithms/awb.cpp
++++ b/src/ipa/softisp/algorithms/awb.cpp
+@@ -18,7 +18,7 @@ namespace libcamera {
+ 
+ LOG_DEFINE_CATEGORY(IPASoftIspAwb)
+ 
+-namespace ipa::soft::algorithms {
++namespace ipa::softisp::algorithms {
+ 
+ /*
+  * \todo Replace it with a proper Lux algorithm
+@@ -159,6 +159,6 @@ void Awb::process(IPAContext &context, [
+ 
+ REGISTER_IPA_ALGORITHM(Awb, "Awb")
+ 
+-} /* namespace ipa::soft::algorithms */
++} /* namespace ipa::softisp::algorithms */
+ 
+ } /* namespace libcamera */
+--- a/src/ipa/softisp/algorithms/awb.h
++++ b/src/ipa/softisp/algorithms/awb.h
+@@ -20,7 +20,7 @@
+ 
+ namespace libcamera {
+ 
+-namespace ipa::soft::algorithms {
++namespace ipa::softisp::algorithms {
+ 
+ class SoftIspAwbStats;
+ 
+@@ -59,6 +59,6 @@ private:
+ 	AwbAlgorithm<UQ<2, 8>> awbAlgo_;
+ };
+ 
+-} /* namespace ipa::soft::algorithms */
++} /* namespace ipa::softisp::algorithms */
+ 
+ } /* namespace libcamera */
+--- a/src/ipa/softisp/algorithms/blc.cpp
++++ b/src/ipa/softisp/algorithms/blc.cpp
+@@ -15,7 +15,7 @@
+ 
+ namespace libcamera {
+ 
+-namespace ipa::soft::algorithms {
++namespace ipa::softisp::algorithms {
+ 
+ LOG_DEFINE_CATEGORY(IPASoftIspBL)
+ 
+@@ -119,6 +119,6 @@ void BlackLevel::process(IPAContext &con
+ 
+ REGISTER_IPA_ALGORITHM(BlackLevel, "BlackLevel")
+ 
+-} /* namespace ipa::soft::algorithms */
++} /* namespace ipa::softisp::algorithms */
+ 
+ } /* namespace libcamera */
+--- a/src/ipa/softisp/algorithms/blc.h
++++ b/src/ipa/softisp/algorithms/blc.h
+@@ -14,7 +14,7 @@
+ 
+ namespace libcamera {
+ 
+-namespace ipa::soft::algorithms {
++namespace ipa::softisp::algorithms {
+ 
+ class BlackLevel : public Algorithm
+ {
+@@ -37,6 +37,6 @@ private:
+ 	std::optional<uint8_t> definedLevel_;
+ };
+ 
+-} /* namespace ipa::soft::algorithms */
++} /* namespace ipa::softisp::algorithms */
+ 
+ } /* namespace libcamera */
+--- a/src/ipa/softisp/algorithms/ccm.cpp
++++ b/src/ipa/softisp/algorithms/ccm.cpp
+@@ -12,7 +12,7 @@
+ 
+ namespace libcamera {
+ 
+-namespace ipa::soft::algorithms {
++namespace ipa::softisp::algorithms {
+ 
+ LOG_DEFINE_CATEGORY(IPASoftIspCcm)
+ 
+@@ -79,6 +79,6 @@ void Ccm::process([[maybe_unused]] IPACo
+ 
+ REGISTER_IPA_ALGORITHM(Ccm, "Ccm")
+ 
+-} /* namespace ipa::soft::algorithms */
++} /* namespace ipa::softisp::algorithms */
+ 
+ } /* namespace libcamera */
+--- a/src/ipa/softisp/algorithms/ccm.h
++++ b/src/ipa/softisp/algorithms/ccm.h
+@@ -19,7 +19,7 @@
+ 
+ namespace libcamera {
+ 
+-namespace ipa::soft::algorithms {
++namespace ipa::softisp::algorithms {
+ 
+ class Ccm : public Algorithm
+ {
+@@ -45,6 +45,6 @@ private:
+ 	CcmAlgorithm<Q<4, 16>> ccmAlgo_;
+ };
+ 
+-} /* namespace ipa::soft::algorithms */
++} /* namespace ipa::softisp::algorithms */
+ 
+ } /* namespace libcamera */
+--- a/src/ipa/softisp/ipa_context.cpp
++++ b/src/ipa/softisp/ipa_context.cpp
+@@ -13,7 +13,7 @@
+  * \brief Context and state information shared between the algorithms
+  */
+ 
+-namespace libcamera::ipa::soft {
++namespace libcamera::ipa::softisp {
+ 
+ /**
+  * \struct IPASessionConfiguration
+@@ -99,4 +99,4 @@ namespace libcamera::ipa::soft {
+  * \brief Black level used for the gamma table computation
+  */
+ 
+-} /* namespace libcamera::ipa::soft */
++} /* namespace libcamera::ipa::softisp */
+--- a/src/ipa/softisp/ipa_context.h
++++ b/src/ipa/softisp/ipa_context.h
+@@ -24,7 +24,7 @@
+ 
+ namespace libcamera {
+ 
+-namespace ipa::soft {
++namespace ipa::softisp {
+ 
+ struct IPASessionConfiguration {
+ 	struct {
+@@ -91,6 +91,6 @@ struct IPAContext {
+ 	bool ccmEnabled = false;
+ };
+ 
+-} /* namespace ipa::soft */
++} /* namespace ipa::softisp */
+ 
+ } /* namespace libcamera */
+--- a/src/ipa/softisp/module.h
++++ b/src/ipa/softisp/module.h
+@@ -20,11 +20,11 @@
+ 
+ namespace libcamera {
+ 
+-namespace ipa::soft {
++namespace ipa::softisp {
+ 
+ using Module = ipa::Module<IPAContext, IPAFrameContext, IPAConfigInfo,
+ 			   DebayerParams, SwIspStats>;
+ 
+-} /* namespace ipa::soft */
++} /* namespace ipa::softisp */
+ 
+ } /* namespace libcamera */
+--- a/src/ipa/softisp/softisp.cpp
++++ b/src/ipa/softisp/softisp.cpp
+@@ -36,12 +36,12 @@ LOG_DEFINE_CATEGORY(IPASoftIsp)
+ 
+ using namespace std::literals::chrono_literals;
+ 
+-namespace ipa::soft {
++namespace ipa::softisp {
+ 
+ /* Maximum number of frame contexts to be held */
+ static constexpr uint32_t kMaxFrameContexts = 16;
+ 
+-class IPASoftIsp : public ipa::soft::IPASoftIspInterface, public Module
++class IPASoftIsp : public ipa::softisp::IPASoftIspInterface, public Module
+ {
+ public:
+ 	IPASoftIsp()
+@@ -333,7 +333,7 @@ std::string IPASoftIsp::logPrefix() cons
+ 	return "IPASoftIsp";
+ }
+ 
+-} /* namespace ipa::soft */
++} /* namespace ipa::softisp */
+ 
+ /*
+  * External IPA module interface
+@@ -347,7 +347,7 @@ const struct IPAModuleInfo ipaModuleInfo
+ 
+ IPAInterface *ipaCreate()
+ {
+-	return new ipa::soft::IPASoftIsp();
++	return new ipa::softisp::IPASoftIsp();
+ }
+ 
+ } /* extern "C" */
+--- a/src/libcamera/pipeline/simple/simple.cpp
++++ b/src/libcamera/pipeline/simple/simple.cpp
+@@ -1603,7 +1603,7 @@ int SimplePipelineHandler::configure(Cam
+ 	if (data->converter_) {
+ 		return data->converter_->configure(inputCfg, outputCfgs);
+ 	} else {
+-		ipa::soft::IPAConfigInfo configInfo;
++		ipa::softisp::IPAConfigInfo configInfo;
+ 		configInfo.sensorControls = data->sensor_->controls();
+ 		return data->swIsp_->configure(inputCfg, outputCfgs, configInfo);
+ 	}
+--- a/src/libcamera/software_isp/software_isp.cpp
++++ b/src/libcamera/software_isp/software_isp.cpp
+@@ -135,7 +135,7 @@ SoftwareIsp::SoftwareIsp(PipelineHandler
+ 	debayer_->inputBufferReady.connect(this, &SoftwareIsp::inputReady);
+ 	debayer_->outputBufferReady.connect(this, &SoftwareIsp::outputReady);
+ 
+-	ipa_ = pipe->createIPA<ipa::soft::IPAProxySoftIsp>(0, 0);
++	ipa_ = pipe->createIPA<ipa::softisp::IPAProxySoftIsp>(0, 0);
+ 	if (!ipa_) {
+ 		LOG(SoftwareIsp, Error)
+ 			<< "Creating IPA for software ISP failed";
+@@ -284,7 +284,7 @@ uint32_t SoftwareIsp::preferredInputStri
+  */
+ int SoftwareIsp::configure(const StreamConfiguration &inputCfg,
+ 			   const std::vector<std::reference_wrapper<const StreamConfiguration>> &outputCfgs,
+-			   const ipa::soft::IPAConfigInfo &configInfo)
++			   const ipa::softisp::IPAConfigInfo &configInfo)
+ {
+ 	ASSERT(ipa_ && debayer_);
+ 

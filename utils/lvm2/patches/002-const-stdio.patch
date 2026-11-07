@@ -1,6 +1,23 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Sat, 25 Apr 2015 23:34:05 +0200
+Subject: [PATCH] const-stdio: guard glibc-specific stream buffering behind
+ __GLIBC__
+
+create_toolcontext()/destroy_toolcontext() tune glibc's stdio stream
+buffering directly via glibc-only internals; _check_standard_fds() has
+a musl-compatible fallback path already available. Wrap the
+glibc-specific code in #ifdef __GLIBC__ so this builds against musl.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ lib/commands/toolcontext.c | 4 ++++
+ tools/lvmcmdline.c         | 7 +++++++
+ 2 files changed, 11 insertions(+)
+
 --- a/lib/commands/toolcontext.c
 +++ b/lib/commands/toolcontext.c
-@@ -1665,6 +1665,7 @@ struct cmd_context *create_toolcontext(c
+@@ -1666,6 +1666,7 @@ struct cmd_context *create_toolcontext(c
  	/* FIXME Make this configurable? */
  	reset_lvm_errno(1);
  
@@ -8,7 +25,7 @@
  	/* Set in/out stream buffering before glibc */
  	if (set_buffering
  	    && !cmd->running_on_valgrind /* Skipping within valgrind execution. */
-@@ -1709,6 +1710,7 @@ struct cmd_context *create_toolcontext(c
+@@ -1710,6 +1711,7 @@ struct cmd_context *create_toolcontext(c
  	} else if (!set_buffering)
  		/* Without buffering, must not use stdin/stdout */
  		init_silent(1);
@@ -16,7 +33,7 @@
  
  	/*
  	 * Environment variable LVM_SYSTEM_DIR overrides this below.
-@@ -2047,6 +2049,7 @@ void destroy_toolcontext(struct cmd_cont
+@@ -2048,6 +2050,7 @@ void destroy_toolcontext(struct cmd_cont
  	if (cmd->cft_def_hash)
  		dm_hash_destroy(cmd->cft_def_hash);
  
@@ -24,7 +41,7 @@
  	if (!cmd->running_on_valgrind && cmd->linebuffer) {
  		int flags;
  		/* Reset stream buffering to defaults */
-@@ -2070,6 +2073,7 @@ void destroy_toolcontext(struct cmd_cont
+@@ -2071,6 +2074,7 @@ void destroy_toolcontext(struct cmd_cont
  
  		free(cmd->linebuffer);
  	}

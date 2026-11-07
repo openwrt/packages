@@ -50,11 +50,8 @@ case "$script_type" in
 
 		[ -n "$ifconfig_local" ] && proto_add_ipv4_address "$ifconfig_local" "${ifconfig_netmask:-255.255.255.255}"
 
-		[ -n "$trusted_ip" ] && {
-			if [ -n "$route_net_gateway" -a "$route_net_gateway" != "0.0.0.0" -a "${nohostroute}" != "1" ]; then
-				proto_add_host_dependency "$INTERFACE" "$trusted_ip"
-			fi
-		}
+		[ -n "$trusted_ip" ] && [ "$nohostroute" != "1" ] && \
+			proto_add_host_dependency "$INTERFACE" "$trusted_ip"
 
 		[ -n "$route_vpn_gateway" ] && proto_add_ipv4_route "0.0.0.0" 0 "$route_vpn_gateway"
 
@@ -77,13 +74,8 @@ case "$script_type" in
 				proto_add_ipv6_address "$v6addr" "$v6plen"
 			fi
 
-			[ -n "$trusted_ip6" ] && {
-				# to detect net_gateway_ipv6, source routing on wan6 has to be disabled
-				# consider removing check for net_gateway_ipv6
-				if [ -n "$net_gateway_ipv6" -a "$net_gateway_ipv6" != "::" -a "${nohostroute}" != "1" ]; then
-					proto_add_host_dependency "$INTERFACE" "$trusted_ip6"
-				fi
-			}
+			[ -n "$trusted_ip6" ] && [ "$nohostroute" != "1" ] && \
+				proto_add_host_dependency "$INTERFACE" "$trusted_ip6"
 
 			[ -n "$ifconfig_ipv6_remote" ] && proto_add_ipv6_route "::" 0 "$ifconfig_ipv6_remote"
 

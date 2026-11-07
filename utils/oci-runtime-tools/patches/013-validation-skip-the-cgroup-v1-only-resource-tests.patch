@@ -1,0 +1,113 @@
+From 658e64ba017a8902c1465a6b57da3153a47005fb Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Sun, 20 Sep 2026 19:56:48 +0100
+Subject: [PATCH] validation: skip the cgroup v1 only resource tests
+
+linux.resources.network and linux.resources.devices have no counterpart
+in the unified hierarchy at all. net_cls and net_prio were never ported,
+and device access is enforced by an eBPF program that cannot be read back
+from the filesystem, so there is nothing for these tests to compare the
+configuration against.
+
+Skip the four tests where the host runs a unified hierarchy, the way the
+suite already skips tests that do not apply to the platform it runs on.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ validation/linux_cgroups_devices/linux_cgroups_devices.go  | 7 +++++++
+ validation/linux_cgroups_network/linux_cgroups_network.go  | 6 ++++++
+ .../linux_cgroups_relative_devices.go                      | 7 +++++++
+ .../linux_cgroups_relative_network.go                      | 7 +++++++
+ 4 files changed, 27 insertions(+)
+
+--- a/validation/linux_cgroups_devices/linux_cgroups_devices.go
++++ b/validation/linux_cgroups_devices/linux_cgroups_devices.go
+@@ -1,6 +1,8 @@
+ package main
+ 
+ import (
++	"os"
++
+ 	"github.com/mndrix/tap-go"
+ 	"github.com/opencontainers/runtime-tools/cgroups"
+ 	"github.com/opencontainers/runtime-tools/validation/util"
+@@ -9,6 +11,11 @@ import (
+ func main() {
+ 	var major1, minor1, major2, minor2, major3, minor3 int64 = 10, 229, 8, 20, 10, 200
+ 
++	if util.UnifiedCgroups() {
++		util.Skip("cgroup v1 specific linux.resources.devices test", nil)
++		os.Exit(0)
++	}
++
+ 	t := tap.New()
+ 	t.Header(0)
+ 	defer t.AutoPlan()
+--- a/validation/linux_cgroups_network/linux_cgroups_network.go
++++ b/validation/linux_cgroups_network/linux_cgroups_network.go
+@@ -3,6 +3,7 @@ package main
+ import (
+ 	"fmt"
+ 	"net"
++	"os"
+ 	"runtime"
+ 
+ 	"github.com/mndrix/tap-go"
+@@ -102,6 +103,11 @@ func main() {
+ 		util.Fatal(fmt.Errorf("linux-specific cgroup test"))
+ 	}
+ 
++	if util.UnifiedCgroups() {
++		util.Skip("cgroup v1 specific linux.resources.network test", nil)
++		os.Exit(0)
++	}
++
+ 	if err := testNetworkCgroups(); err != nil {
+ 		util.Fatal(err)
+ 	}
+--- a/validation/linux_cgroups_relative_devices/linux_cgroups_relative_devices.go
++++ b/validation/linux_cgroups_relative_devices/linux_cgroups_relative_devices.go
+@@ -1,6 +1,8 @@
+ package main
+ 
+ import (
++	"os"
++
+ 	"github.com/mndrix/tap-go"
+ 	"github.com/opencontainers/runtime-tools/cgroups"
+ 	"github.com/opencontainers/runtime-tools/validation/util"
+@@ -9,6 +11,11 @@ import (
+ func main() {
+ 	var major1, minor1, major2, minor2, major3, minor3 int64 = 10, 229, 8, 20, 10, 200
+ 
++	if util.UnifiedCgroups() {
++		util.Skip("cgroup v1 specific linux.resources.devices test", nil)
++		os.Exit(0)
++	}
++
+ 	t := tap.New()
+ 	t.Header(0)
+ 	defer t.AutoPlan()
+--- a/validation/linux_cgroups_relative_network/linux_cgroups_relative_network.go
++++ b/validation/linux_cgroups_relative_network/linux_cgroups_relative_network.go
+@@ -1,6 +1,8 @@
+ package main
+ 
+ import (
++	"os"
++
+ 	"github.com/mndrix/tap-go"
+ 	"github.com/opencontainers/runtime-tools/cgroups"
+ 	"github.com/opencontainers/runtime-tools/validation/util"
+@@ -10,6 +12,11 @@ func main() {
+ 	var id, prio uint32 = 255, 10
+ 	ifName := "lo"
+ 
++	if util.UnifiedCgroups() {
++		util.Skip("cgroup v1 specific linux.resources.network test", nil)
++		os.Exit(0)
++	}
++
+ 	t := tap.New()
+ 	t.Header(0)
+ 	defer t.AutoPlan()

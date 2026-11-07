@@ -1,0 +1,664 @@
+From 7d9a21cfbe833081d4dc30934024b2a9b776fec7 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Wed, 28 Oct 2026 07:27:22 +0000
+Subject: [PATCH] ipa: rkisp2: Add the ISPP parameters path
+
+The RV1126 ISPP post-processor behind the ISP takes its module
+parameters (temporal noise reduction, noise reduction, sharpening, FEC
+motion mesh, ORB feature detection) through its own extensible params
+node. Add a second params buffer kind to the IPA interface, filled by
+the algorithms through a prepareIspp() hook alongside the ISP params,
+and an Ispp algorithm that sends the modules configured in the tuning
+file with every frame, each tuning dictionary naming the fields of the
+UAPI block.
+
+The imx415 tuning file lists the algorithm without modules, so the
+driver's state stands until a tuning provides the tables.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ include/libcamera/ipa/rkisp2.mojom    |   2 +
+ src/ipa/rkisp2/algorithms/algorithm.h |  11 +-
+ src/ipa/rkisp2/algorithms/ispp.cpp    | 408 ++++++++++++++++++++++++++
+ src/ipa/rkisp2/algorithms/ispp.h      |  39 +++
+ src/ipa/rkisp2/algorithms/meson.build |   1 +
+ src/ipa/rkisp2/algorithms/module.h    |   1 +
+ src/ipa/rkisp2/data/imx415.yaml       |   1 +
+ src/ipa/rkisp2/ispp_params.h          |  69 +++++
+ src/ipa/rkisp2/rkisp2.cpp             |  14 +
+ 9 files changed, 545 insertions(+), 1 deletion(-)
+ create mode 100644 src/ipa/rkisp2/algorithms/ispp.cpp
+ create mode 100644 src/ipa/rkisp2/algorithms/ispp.h
+ create mode 100644 src/ipa/rkisp2/ispp_params.h
+
+--- a/include/libcamera/ipa/rkisp2.mojom
++++ b/include/libcamera/ipa/rkisp2.mojom
+@@ -35,12 +35,15 @@ interface IPARkISP2Interface {
+ 
+ 	[async] queueRequest(uint32 frame, libcamera.ControlList reqControls);
+ 	[async] computeParams(uint32 frame, uint32 bufferId);
++	[async] computeIsppParams(uint32 frame, uint32 bufferId);
++	primeIsppParams(uint32 frame, uint32 bufferId) => (uint32 bytesused);
+ 	[async] processStats(uint32 frame, uint32 bufferId,
+ 			     libcamera.ControlList sensorControls);
+ };
+ 
+ interface IPARkISP2EventInterface {
+ 	paramsComputed(uint32 frame, uint32 bufferId, uint32 bytesused);
++	isppParamsComputed(uint32 frame, uint32 bufferId, uint32 bytesused);
+ 	setSensorControls(uint32 frame, libcamera.ControlList sensorControls);
+ 	metadataReady(libcamera.ControlList metadata);
+ };
+--- a/src/ipa/rkisp2/algorithms/algorithm.h
++++ b/src/ipa/rkisp2/algorithms/algorithm.h
+@@ -19,9 +19,18 @@ namespace ipa::rkisp2 {
+ 
+ class Algorithm : public libcamera::ipa::Algorithm<Module>
+ {
++public:
++	/*
++	 * Fill an ISPP parameters buffer. The ISPP runs free behind the ISP,
++	 * its buffers are not tied to a request and carry no frame context.
++	 */
++	virtual void prepareIspp([[maybe_unused]] IPAContext &context,
++				 [[maybe_unused]] const uint32_t frame,
++				 [[maybe_unused]] RkISPPParams *params)
++	{
++	}
+ };
+ 
+ } /* namespace ipa::rkisp2 */
+ 
+ } /* namespace libcamera */
+-
+--- /dev/null
++++ b/src/ipa/rkisp2/algorithms/ispp.cpp
+@@ -0,0 +1,408 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2026, Daniel Golle
++ *
++ * RkISPP module parameters from the tuning file
++ */
++
++#include "ispp.h"
++
++#include <stddef.h>
++#include <string.h>
++#include <type_traits>
++#include <vector>
++
++#include <linux/media/rockchip/rkisp2-config.h>
++#include <linux/media/v4l2-isp.h>
++
++#include <libcamera/base/log.h>
++#include <libcamera/base/span.h>
++
++#include "libcamera/internal/value_node.h"
++
++/**
++ * \file ispp.h
++ */
++
++namespace libcamera {
++
++namespace ipa::rkisp2::algorithms {
++
++/**
++ * \class Ispp
++ * \brief RkISPP module parameters from the tuning file
++ *
++ * The ISPP post-processor (temporal noise reduction, noise reduction,
++ * sharpening, FEC motion mesh and ORB feature detection) takes its
++ * parameters through its own params node. This algorithm sends the modules
++ * configured in the tuning file with every frame, each tuning dictionary
++ * filling the fields of the corresponding UAPI block by name:
++ *
++ * \code{.unparsed}
++ * algorithms:
++ *   - Ispp:
++ *       Shp:
++ *         tile_xcnt: 18
++ *         tile_ycnt: 121
++ *         pbf_k: [ 2, 1, 0 ]
++ *       Nr:
++ *         uvnr_step1_en: 1
++ * \endcode
++ *
++ * A module absent from the tuning file is not sent and keeps the driver's
++ * state; a field absent from a module dictionary is zero.
++ */
++
++LOG_DEFINE_CATEGORY(RkISP2Ispp)
++
++namespace {
++
++struct Field {
++	const char *name;
++	size_t offset;
++	size_t count;
++	size_t size;
++	bool isSigned;
++};
++
++template<typename T>
++constexpr size_t fieldCount()
++{
++	return sizeof(T) / sizeof(std::remove_all_extents_t<T>);
++}
++
++template<typename T>
++constexpr size_t fieldSize()
++{
++	return sizeof(std::remove_all_extents_t<T>);
++}
++
++template<typename T>
++constexpr bool fieldSigned()
++{
++	return std::is_signed_v<std::remove_all_extents_t<T>>;
++}
++
++#define ISPP_FIELD(type, name)						\
++	{ #name, offsetof(struct type, name),				\
++	  fieldCount<decltype(type::name)>(),				\
++	  fieldSize<decltype(type::name)>(),				\
++	  fieldSigned<decltype(type::name)>() }
++
++constexpr Field tnrFields[] = {
++	ISPP_FIELD(rkispp_params_tnr, mode),
++	ISPP_FIELD(rkispp_params_tnr, opty_en),
++	ISPP_FIELD(rkispp_params_tnr, optc_en),
++	ISPP_FIELD(rkispp_params_tnr, gain_en),
++	ISPP_FIELD(rkispp_params_tnr, pk0_y),
++	ISPP_FIELD(rkispp_params_tnr, pk1_y),
++	ISPP_FIELD(rkispp_params_tnr, pk0_c),
++	ISPP_FIELD(rkispp_params_tnr, pk1_c),
++	ISPP_FIELD(rkispp_params_tnr, glb_gain_cur_sqrt),
++	ISPP_FIELD(rkispp_params_tnr, sigma_x),
++	ISPP_FIELD(rkispp_params_tnr, gfcoef_y0),
++	ISPP_FIELD(rkispp_params_tnr, gfcoef_y1),
++	ISPP_FIELD(rkispp_params_tnr, gfcoef_y2),
++	ISPP_FIELD(rkispp_params_tnr, gfcoef_y3),
++	ISPP_FIELD(rkispp_params_tnr, gfcoef_yg0),
++	ISPP_FIELD(rkispp_params_tnr, gfcoef_yg1),
++	ISPP_FIELD(rkispp_params_tnr, gfcoef_yg2),
++	ISPP_FIELD(rkispp_params_tnr, gfcoef_yg3),
++	ISPP_FIELD(rkispp_params_tnr, gfcoef_yl0),
++	ISPP_FIELD(rkispp_params_tnr, gfcoef_yl1),
++	ISPP_FIELD(rkispp_params_tnr, gfcoef_yl2),
++	ISPP_FIELD(rkispp_params_tnr, gfcoef_cg0),
++	ISPP_FIELD(rkispp_params_tnr, gfcoef_cg1),
++	ISPP_FIELD(rkispp_params_tnr, gfcoef_cg2),
++	ISPP_FIELD(rkispp_params_tnr, gfcoef_cl0),
++	ISPP_FIELD(rkispp_params_tnr, gfcoef_cl1),
++	ISPP_FIELD(rkispp_params_tnr, weight_y),
++	ISPP_FIELD(rkispp_params_tnr, glb_gain_cur),
++	ISPP_FIELD(rkispp_params_tnr, glb_gain_nxt),
++	ISPP_FIELD(rkispp_params_tnr, glb_gain_cur_div),
++	ISPP_FIELD(rkispp_params_tnr, txt_th1_y),
++	ISPP_FIELD(rkispp_params_tnr, txt_th0_c),
++	ISPP_FIELD(rkispp_params_tnr, txt_th1_c),
++	ISPP_FIELD(rkispp_params_tnr, txt_thy_dlt),
++	ISPP_FIELD(rkispp_params_tnr, txt_thc_dlt),
++	ISPP_FIELD(rkispp_params_tnr, txt_th0_y),
++	ISPP_FIELD(rkispp_params_tnr, sigma_y),
++	ISPP_FIELD(rkispp_params_tnr, luma_curve),
++	ISPP_FIELD(rkispp_params_tnr, scale_yg),
++	ISPP_FIELD(rkispp_params_tnr, scale_yl),
++	ISPP_FIELD(rkispp_params_tnr, scale_cg),
++	ISPP_FIELD(rkispp_params_tnr, scale_y2cg),
++	ISPP_FIELD(rkispp_params_tnr, scale_cl),
++	ISPP_FIELD(rkispp_params_tnr, scale_y2cl),
++};
++
++constexpr Field nrFields[] = {
++	ISPP_FIELD(rkispp_params_nr, uvnr_step1_en),
++	ISPP_FIELD(rkispp_params_nr, uvnr_step2_en),
++	ISPP_FIELD(rkispp_params_nr, nr_gain_en),
++	ISPP_FIELD(rkispp_params_nr, uvnr_sd32_self_en),
++	ISPP_FIELD(rkispp_params_nr, uvnr_nobig_en),
++	ISPP_FIELD(rkispp_params_nr, uvnr_big_en),
++	ISPP_FIELD(rkispp_params_nr, uvnr_gain_1sigma),
++	ISPP_FIELD(rkispp_params_nr, uvnr_gain_offset),
++	ISPP_FIELD(rkispp_params_nr, uvnr_gain_t2gen),
++	ISPP_FIELD(rkispp_params_nr, uvnr_gain_iso),
++	ISPP_FIELD(rkispp_params_nr, uvnr_t1gen_m3alpha),
++	ISPP_FIELD(rkispp_params_nr, uvnr_t1flt_mode),
++	ISPP_FIELD(rkispp_params_nr, uvnr_t1flt_wtp),
++	ISPP_FIELD(rkispp_params_nr, uvnr_t2gen_m3alpha),
++	ISPP_FIELD(rkispp_params_nr, uvnr_t2gen_wtp),
++	ISPP_FIELD(rkispp_params_nr, uvnr_gain_uvgain),
++	ISPP_FIELD(rkispp_params_nr, uvnr_t1flt_wtq),
++	ISPP_FIELD(rkispp_params_nr, uvnr_t2gen_wtq),
++	ISPP_FIELD(rkispp_params_nr, uvnr_t2flt_wtp),
++	ISPP_FIELD(rkispp_params_nr, uvnr_t2flt_wt),
++	ISPP_FIELD(rkispp_params_nr, ynr_sgm_dx),
++	ISPP_FIELD(rkispp_params_nr, ynr_lci),
++	ISPP_FIELD(rkispp_params_nr, ynr_lgain_min),
++	ISPP_FIELD(rkispp_params_nr, ynr_lgain_max),
++	ISPP_FIELD(rkispp_params_nr, ynr_lmerge_bound),
++	ISPP_FIELD(rkispp_params_nr, ynr_lmerge_ratio),
++	ISPP_FIELD(rkispp_params_nr, ynr_lweit_flt),
++	ISPP_FIELD(rkispp_params_nr, ynr_hlci),
++	ISPP_FIELD(rkispp_params_nr, ynr_lhci),
++	ISPP_FIELD(rkispp_params_nr, ynr_hhci),
++	ISPP_FIELD(rkispp_params_nr, ynr_hgain_sgm),
++	ISPP_FIELD(rkispp_params_nr, ynr_hweit_d),
++	ISPP_FIELD(rkispp_params_nr, ynr_hgrad_y),
++	ISPP_FIELD(rkispp_params_nr, ynr_hmax_adjust),
++	ISPP_FIELD(rkispp_params_nr, ynr_hstrength),
++	ISPP_FIELD(rkispp_params_nr, ynr_lweit_cmp),
++	ISPP_FIELD(rkispp_params_nr, ynr_lmaxgain_lv4),
++	ISPP_FIELD(rkispp_params_nr, uvnr_t1flt_msigma),
++	ISPP_FIELD(rkispp_params_nr, uvnr_t2gen_msigma),
++	ISPP_FIELD(rkispp_params_nr, uvnr_t2flt_msigma),
++	ISPP_FIELD(rkispp_params_nr, ynr_lsgm_y),
++	ISPP_FIELD(rkispp_params_nr, ynr_hsgm_y),
++	ISPP_FIELD(rkispp_params_nr, ynr_hweit),
++	ISPP_FIELD(rkispp_params_nr, ynr_hstv_y),
++	ISPP_FIELD(rkispp_params_nr, ynr_st_scale),
++};
++
++constexpr Field shpFields[] = {
++	ISPP_FIELD(rkispp_params_shp, rotation),
++	ISPP_FIELD(rkispp_params_shp, scl_down_v),
++	ISPP_FIELD(rkispp_params_shp, scl_down_h),
++	ISPP_FIELD(rkispp_params_shp, tile_ycnt),
++	ISPP_FIELD(rkispp_params_shp, tile_xcnt),
++	ISPP_FIELD(rkispp_params_shp, alpha_adp_en),
++	ISPP_FIELD(rkispp_params_shp, yin_flt_en),
++	ISPP_FIELD(rkispp_params_shp, edge_avg_en),
++	ISPP_FIELD(rkispp_params_shp, ehf_th),
++	ISPP_FIELD(rkispp_params_shp, pbf_ratio),
++	ISPP_FIELD(rkispp_params_shp, edge_thed),
++	ISPP_FIELD(rkispp_params_shp, dir_min),
++	ISPP_FIELD(rkispp_params_shp, pbf_shf_bits),
++	ISPP_FIELD(rkispp_params_shp, mbf_shf_bits),
++	ISPP_FIELD(rkispp_params_shp, hbf_shf_bits),
++	ISPP_FIELD(rkispp_params_shp, m_ratio),
++	ISPP_FIELD(rkispp_params_shp, h_ratio),
++	ISPP_FIELD(rkispp_params_shp, pbf_k),
++	ISPP_FIELD(rkispp_params_shp, mrf_k),
++	ISPP_FIELD(rkispp_params_shp, mbf_k),
++	ISPP_FIELD(rkispp_params_shp, hrf_k),
++	ISPP_FIELD(rkispp_params_shp, hbf_k),
++	ISPP_FIELD(rkispp_params_shp, eg_coef),
++	ISPP_FIELD(rkispp_params_shp, eg_smoth),
++	ISPP_FIELD(rkispp_params_shp, eg_gaus),
++	ISPP_FIELD(rkispp_params_shp, dog_k),
++	ISPP_FIELD(rkispp_params_shp, lum_point),
++	ISPP_FIELD(rkispp_params_shp, pbf_sigma),
++	ISPP_FIELD(rkispp_params_shp, lum_clp_m),
++	ISPP_FIELD(rkispp_params_shp, lum_min_m),
++	ISPP_FIELD(rkispp_params_shp, mbf_sigma),
++	ISPP_FIELD(rkispp_params_shp, lum_clp_h),
++	ISPP_FIELD(rkispp_params_shp, hbf_sigma),
++	ISPP_FIELD(rkispp_params_shp, edge_lum_thed),
++	ISPP_FIELD(rkispp_params_shp, clamp_pos),
++	ISPP_FIELD(rkispp_params_shp, clamp_neg),
++	ISPP_FIELD(rkispp_params_shp, detail_alpha),
++	ISPP_FIELD(rkispp_params_shp, hbf_ratio),
++	ISPP_FIELD(rkispp_params_shp, smoth_th4),
++	ISPP_FIELD(rkispp_params_shp, l_alpha),
++	ISPP_FIELD(rkispp_params_shp, g_alpha),
++	ISPP_FIELD(rkispp_params_shp, rfl_ratio),
++	ISPP_FIELD(rkispp_params_shp, rfh_ratio),
++};
++
++constexpr Field fecFields[] = {
++	ISPP_FIELD(rkispp_params_fec, mesh_density),
++	ISPP_FIELD(rkispp_params_fec, crop_en),
++	ISPP_FIELD(rkispp_params_fec, crop_width),
++	ISPP_FIELD(rkispp_params_fec, crop_height),
++	ISPP_FIELD(rkispp_params_fec, mesh_size),
++};
++
++constexpr Field orbFields[] = {
++	ISPP_FIELD(rkispp_params_orb, limit_value),
++	ISPP_FIELD(rkispp_params_orb, max_feature),
++};
++
++void storeValue(uint8_t *dst, const Field &field, int64_t value)
++{
++	switch (field.size) {
++	case 1:
++		if (field.isSigned)
++			*reinterpret_cast<int8_t *>(dst) = value;
++		else
++			*reinterpret_cast<uint8_t *>(dst) = value;
++		break;
++	case 2: {
++		uint16_t v = field.isSigned ? static_cast<int16_t>(value)
++					    : static_cast<uint16_t>(value);
++		memcpy(dst, &v, sizeof(v));
++		break;
++	}
++	default: {
++		uint32_t v = field.isSigned ? static_cast<int32_t>(value)
++					    : static_cast<uint32_t>(value);
++		memcpy(dst, &v, sizeof(v));
++		break;
++	}
++	}
++}
++
++int loadField(const ValueNode &node, const Field &field, uint8_t *block)
++{
++	uint8_t *dst = block + field.offset;
++
++	if (field.count == 1) {
++		std::optional<int32_t> value = node.get<int32_t>();
++		if (!value) {
++			LOG(RkISP2Ispp, Error)
++				<< "Invalid value for " << field.name;
++			return -EINVAL;
++		}
++
++		storeValue(dst, field, *value);
++		return 0;
++	}
++
++	std::optional<std::vector<int32_t>> values =
++		node.get<std::vector<int32_t>>();
++	if (!values || values->size() != field.count) {
++		LOG(RkISP2Ispp, Error)
++			<< field.name << " needs " << field.count << " values";
++		return -EINVAL;
++	}
++
++	for (size_t i = 0; i < field.count; i++)
++		storeValue(dst + i * field.size, field, (*values)[i]);
++
++	return 0;
++}
++
++template<typename T>
++int loadBlock(const ValueNode &tuningData, const char *name,
++	      Span<const Field> fields, std::optional<T> &block)
++{
++	if (!tuningData.contains(name))
++		return 0;
++
++	const ValueNode &node = tuningData[name];
++	if (!node.isDictionary()) {
++		LOG(RkISP2Ispp, Error) << name << " is not a dictionary";
++		return -EINVAL;
++	}
++
++	T data = {};
++	uint8_t *raw = reinterpret_cast<uint8_t *>(&data);
++
++	for (const auto &[key, value] : node.asDict()) {
++		const Field *field = nullptr;
++
++		for (const Field &f : fields) {
++			if (key == f.name) {
++				field = &f;
++				break;
++			}
++		}
++
++		if (!field) {
++			LOG(RkISP2Ispp, Error)
++				<< "Unknown " << name << " field " << key;
++			return -EINVAL;
++		}
++
++		int ret = loadField(value, *field, raw);
++		if (ret)
++			return ret;
++	}
++
++	block = data;
++	LOG(RkISP2Ispp, Debug) << "Loaded the " << name << " module parameters";
++
++	return 0;
++}
++
++template<typename T>
++void sendBlock(V4L2ParamsBlock<T> block, const T &data)
++{
++	constexpr size_t header = sizeof(struct v4l2_isp_params_block_header);
++
++	memcpy(reinterpret_cast<uint8_t *>(&*block) + header,
++	       reinterpret_cast<const uint8_t *>(&data) + header,
++	       sizeof(T) - header);
++	block.setEnabled(true);
++}
++
++} /* namespace */
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::init
++ */
++int Ispp::init([[maybe_unused]] IPAContext &context, const ValueNode &tuningData)
++{
++	int ret;
++
++	ret = loadBlock(tuningData, "Tnr", tnrFields, tnr_);
++	if (ret)
++		return ret;
++
++	ret = loadBlock(tuningData, "Nr", nrFields, nr_);
++	if (ret)
++		return ret;
++
++	ret = loadBlock(tuningData, "Shp", shpFields, shp_);
++	if (ret)
++		return ret;
++
++	ret = loadBlock(tuningData, "Fec", fecFields, fec_);
++	if (ret)
++		return ret;
++
++	return loadBlock(tuningData, "Orb", orbFields, orb_);
++}
++
++/**
++ * \brief Send the configured ISPP module parameters with the frame
++ * \param[in] context The shared IPA context
++ * \param[in] frame The ISPP frame number
++ * \param[out] params The ISPP parameters buffer
++ */
++void Ispp::prepareIspp([[maybe_unused]] IPAContext &context,
++		       [[maybe_unused]] const uint32_t frame,
++		       RkISPPParams *params)
++{
++	if (tnr_)
++		sendBlock(params->block<RkISPPParamsBlocks::Tnr>(), *tnr_);
++	if (nr_)
++		sendBlock(params->block<RkISPPParamsBlocks::Nr>(), *nr_);
++	if (shp_)
++		sendBlock(params->block<RkISPPParamsBlocks::Shp>(), *shp_);
++	if (fec_)
++		sendBlock(params->block<RkISPPParamsBlocks::Fec>(), *fec_);
++	if (orb_)
++		sendBlock(params->block<RkISPPParamsBlocks::Orb>(), *orb_);
++}
++
++REGISTER_IPA_ALGORITHM(Ispp, "Ispp")
++
++} /* namespace ipa::rkisp2::algorithms */
++
++} /* namespace libcamera */
+--- /dev/null
++++ b/src/ipa/rkisp2/algorithms/ispp.h
+@@ -0,0 +1,39 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2026, Daniel Golle
++ *
++ * RkISPP module parameters from the tuning file
++ */
++
++#pragma once
++
++#include <optional>
++
++#include <linux/media/rockchip/rkisp2-config.h>
++
++#include "algorithm.h"
++
++namespace libcamera {
++
++namespace ipa::rkisp2::algorithms {
++
++class Ispp : public Algorithm
++{
++public:
++	Ispp() = default;
++	~Ispp() = default;
++
++	int init(IPAContext &context, const ValueNode &tuningData) override;
++	void prepareIspp(IPAContext &context, const uint32_t frame,
++			 RkISPPParams *params) override;
++
++private:
++	std::optional<struct rkispp_params_tnr> tnr_;
++	std::optional<struct rkispp_params_nr> nr_;
++	std::optional<struct rkispp_params_shp> shp_;
++	std::optional<struct rkispp_params_fec> fec_;
++	std::optional<struct rkispp_params_orb> orb_;
++};
++
++} /* namespace ipa::rkisp2::algorithms */
++} /* namespace libcamera */
+--- a/src/ipa/rkisp2/algorithms/meson.build
++++ b/src/ipa/rkisp2/algorithms/meson.build
+@@ -8,6 +8,7 @@ rkisp2_ipa_algorithms = files([
+     'crop.cpp',
+     'csm.cpp',
+     'goc.cpp',
++    'ispp.cpp',
+     'lsc.cpp',
+ ])
+ 
+--- a/src/ipa/rkisp2/algorithms/module.h
++++ b/src/ipa/rkisp2/algorithms/module.h
+@@ -14,6 +14,7 @@
+ #include <libipa/module.h>
+ 
+ #include "ipa_context.h"
++#include "ispp_params.h"
+ #include "params.h"
+ #include "stats.h"
+ 
+--- a/src/ipa/rkisp2/data/imx415.yaml
++++ b/src/ipa/rkisp2/data/imx415.yaml
+@@ -4,6 +4,7 @@
+ version: 1
+ algorithms:
+   - Crop:
++  - Ispp:
+   - Agc:
+       AeMeteringMode:
+         MeteringCentreWeighted: [0, 0, 0, 0, 0, 0, 6, 8, 6, 0, 0, 8, 16, 8, 0, 0, 6, 8, 6, 0, 0, 0, 0, 0, 0]
+--- /dev/null
++++ b/src/ipa/rkisp2/ispp_params.h
+@@ -0,0 +1,69 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2026, Daniel Golle
++ *
++ * RkISPP Parameters
++ */
++
++#pragma once
++
++#include <stdint.h>
++
++#include <linux/media/rockchip/rkisp2-config.h>
++#include <linux/videodev2.h>
++
++#include <libipa/v4l2_params.h>
++
++namespace libcamera {
++
++namespace ipa::rkisp2 {
++
++enum class RkISPPParamsBlocks : uint16_t {
++	Tnr,
++	Nr,
++	Shp,
++	Fec,
++	Orb,
++};
++
++namespace details {
++
++template<RkISPPParamsBlocks B>
++struct ispp_block_type {
++};
++
++#define RkISPP_DEFINE_PARAMS_BLOCK_TYPE(id, cfgType, blkType)		\
++template<>								\
++struct ispp_block_type<RkISPPParamsBlocks::id> {			\
++	using type = struct rkispp_params_##cfgType;			\
++	static constexpr rkispp_params_block_type blockType =		\
++		rkispp_params_block_type::RKISPP_PARAMS_BLOCK_##blkType;\
++}
++
++RkISPP_DEFINE_PARAMS_BLOCK_TYPE(Tnr,	tnr,	TNR);
++RkISPP_DEFINE_PARAMS_BLOCK_TYPE(Nr,	nr,	NR);
++RkISPP_DEFINE_PARAMS_BLOCK_TYPE(Shp,	shp,	SHP);
++RkISPP_DEFINE_PARAMS_BLOCK_TYPE(Fec,	fec,	FEC);
++RkISPP_DEFINE_PARAMS_BLOCK_TYPE(Orb,	orb,	ORB);
++
++struct ispp_param_traits {
++	using id_type = RkISPPParamsBlocks;
++
++	template<id_type Id>
++	using id_to_details = ispp_block_type<Id>;
++};
++
++} /* namespace details */
++
++class RkISPPParams : public V4L2Params<details::ispp_param_traits>
++{
++public:
++	RkISPPParams(Span<uint8_t> data)
++		: V4L2Params(data, V4L2_ISP_VERSION_V1)
++	{
++	}
++};
++
++} /* namespace ipa::rkisp2 */
++
++} /* namespace libcamera */
+--- a/src/ipa/rkisp2/rkisp2.cpp
++++ b/src/ipa/rkisp2/rkisp2.cpp
+@@ -66,6 +66,8 @@ public:
+ 
+ 	void queueRequest(const uint32_t frame, const ControlList &controls) override;
+ 	void computeParams(const uint32_t frame, const uint32_t bufferId) override;
++	void computeIsppParams(const uint32_t frame, const uint32_t bufferId) override;
++	uint32_t primeIsppParams(const uint32_t frame, const uint32_t bufferId) override;
+ 	void initializeFrameContext(IPAFrameContext &frameContext,
+ 				    const ControlList &controls);
+ 	void processStats(const uint32_t frame, const uint32_t bufferId,
+@@ -300,6 +302,24 @@ void IPARkISP2::computeParams(const uint
+ 	paramsComputed.emit(frame, bufferId, params.bytesused());
+ }
+ 
++uint32_t IPARkISP2::primeIsppParams(const uint32_t frame, const uint32_t bufferId)
++{
++	RkISPPParams params(mappedBuffers_.at(bufferId).planes()[0]);
++
++	for (const auto &a : algorithms()) {
++		Algorithm *algo = static_cast<Algorithm *>(a.get());
++
++		algo->prepareIspp(context_, frame, &params);
++	}
++
++	return params.bytesused();
++}
++
++void IPARkISP2::computeIsppParams(const uint32_t frame, const uint32_t bufferId)
++{
++	isppParamsComputed.emit(frame, bufferId, primeIsppParams(frame, bufferId));
++}
++
+ void IPARkISP2::processStats(const uint32_t frame, const uint32_t bufferId,
+ 			     const ControlList &sensorControls)
+ {

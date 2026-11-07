@@ -13,7 +13,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=uanytun
 PKG_VERSION:=0.3.7
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://anytun.org/download/
@@ -64,6 +64,7 @@ define Package/uanytun-nettle
   $(call Package/uanytun/template)
   TITLE+= (nettle)
   VARIANT:=nettle
+  CONFLICTS:=uanytun
   DEPENDS+=+libnettle
 endef
 
@@ -75,6 +76,7 @@ define Package/uanytun-sslcrypt
   $(call Package/uanytun/template)
   TITLE+= (openssl)
   VARIANT:=sslcrypt
+  CONFLICTS:=uanytun uanytun-nettle
   DEPENDS+=+libopenssl
 endef
 
@@ -86,6 +88,7 @@ define Package/uanytun-nocrypt
   $(call Package/uanytun/template)
   TITLE+= (no crypt)
   VARIANT:=nocrypt
+  CONFLICTS:=uanytun uanytun-nettle uanytun-sslcrypt
 endef
 
 Package/uanytun-nocrypt/conffiles=$(Package/uanytun/conffiles)

@@ -1,0 +1,38 @@
+From 7f7a181036dc6f4ddefad62f5bb04d25e61bb9e5 Mon Sep 17 00:00:00 2001
+From: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Date: Wed, 8 Jul 2026 16:48:45 +0200
+Subject: [PATCH] ipa: libipa: lsc_polynomial: Fix polynomial parsing error
+
+If any of the polynomial component is missing in the tuning file the
+ValueNode::Accessor<ipa::LscPolynomial> specialization emits an
+error message but continues and dereferences a potentially
+invalid object.
+
+Fix it by returning std::nullopt if a polynomial component is missing.
+
+The caller already checks if the returned value is valid or not, causing
+the algorithm initialization to fail if the tuning file is invalid.
+
+Suggested-by: Milan Zamazal <mzamazal@redhat.com>
+Signed-off-by: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Reviewed-by: Kieran Bingham <kieran.bingham@ideasonboard.com>
+Reviewed-by: Stefan Klug <stefan.klug@ideasonboard.com>
+---
+ src/ipa/libipa/lsc_polynomial.h | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+--- a/src/ipa/libipa/lsc_polynomial.h
++++ b/src/ipa/libipa/lsc_polynomial.h
+@@ -94,9 +94,11 @@ struct ValueNode::Accessor<ipa::LscPolyn
+ 		std::optional<double> k3 = obj["k3"].get<double>();
+ 		std::optional<double> k4 = obj["k4"].get<double>();
+ 
+-		if (!(cx && cy && k0 && k1 && k2 && k3 && k4))
++		if (!(cx && cy && k0 && k1 && k2 && k3 && k4)) {
+ 			LOG(LscPolynomial, Error)
+ 				<< "Polynomial is missing a parameter";
++			return std::nullopt;
++		}
+ 
+ 		return ipa::LscPolynomial(*cx, *cy, *k0, *k1, *k2, *k3, *k4);
+ 	}

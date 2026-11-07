@@ -1,0 +1,456 @@
+From 00efeba1ffea0ae498c7a35e9133172b102cc983 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Thu, 29 Oct 2026 07:21:42 +0000
+Subject: [PATCH] pipeline: rkisp2: Add the ISPP scaler stream
+
+The ISPP path exposes one stream, the unscaled main output, so an
+application that wants a preview next to the full-size frame has to
+scale it itself. The ISPP has scaler outputs for exactly that.
+
+Open the first scaler output and offer it as a second stream behind
+the main one: any of the scaler's formats, no larger than the main
+stream, 1280x720 NV12 by default. The scaler node is configured,
+started and stopped with the main output, a request carrying a
+scaler buffer queues it to the node, and the request completes once
+both buffers of the frame are back.
+
+A request is numbered as the frame after the one in flight, so the IPA
+frame contexts and the statistics sequence stay aligned across request
+gaps, and the sensor controls the IPA computes for a request are kept
+for the next ISP frame start. The statistics path keeps reading the
+values in effect for each ISP sequence.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ src/libcamera/pipeline/rkisp2/rkisp2.cpp |  233 +++++++++++++++++++++--
+ 1 file changed, 213 insertions(+), 20 deletions(-)
+
+--- a/src/libcamera/pipeline/rkisp2/rkisp2.cpp
++++ b/src/libcamera/pipeline/rkisp2/rkisp2.cpp
+@@ -148,7 +148,8 @@ public:
+ 		 V4L2VideoDevice *rawrd, V4L2Subdevice *isp,
+ 		 V4L2VideoDevice *mainPath, V4L2VideoDevice *param,
+ 		 V4L2VideoDevice *stat, V4L2Subdevice *isppSubdev,
+-		 V4L2VideoDevice *isppMain, V4L2VideoDevice *isppParam);
++		 V4L2VideoDevice *isppMain, V4L2VideoDevice *isppScale,
++		 V4L2VideoDevice *isppParam);
+ 	PixelFormat getSensorFormat(unsigned int mbusCode, const Size &size,
+ 				    const Size &maxSize);
+ 
+@@ -167,6 +168,7 @@ public:
+ 	void rawrdBufferReady(FrameBuffer *buffer);
+ 	void ispFrameStart(uint32_t sequence);
+ 	void ispBufferReady(FrameBuffer *buffer);
++	void isppScaleBufferReady(FrameBuffer *buffer);
+ 	void statBufferReady(FrameBuffer *buffer);
+ 	void isppParamBufferReady(FrameBuffer *buffer);
+ 
+@@ -223,8 +225,11 @@ public:
+ 	V4L2VideoDevice *stat_;
+ 	V4L2Subdevice *isppSubdev_;
+ 	V4L2VideoDevice *isppMain_;
++	V4L2VideoDevice *isppScale_;
+ 	V4L2VideoDevice *isppParam_;
+ 	Stream stream_;
++	Stream scaleStream_;
++	bool scaleActive_;
+ 
+ 	std::unique_ptr<ipa::rkisp2::IPAProxyRkISP2> ipa_;
+ 	ControlInfoMap ipaControls_;
+@@ -321,6 +326,8 @@ private:
+ 	int processControls(RkISP2CameraData *data, const ControlList &ctrls);
+ 	int configureIspp(RkISP2CameraData *data, StreamConfiguration &cfg,
+ 			  V4L2SubdeviceFormat &format);
++	int configureIsppScale(RkISP2CameraData *data,
++			       CameraConfiguration *config);
+ 	int configureIpa(RkISP2CameraData *data, const StreamConfiguration &cfg);
+ 	int startIspp(Camera *camera, const ControlList *controls);
+ 	void stopIspp(Camera *camera);
+@@ -357,6 +364,7 @@ private:
+ 	std::shared_ptr<MediaDevice> isppMedia_;
+ 	std::unique_ptr<V4L2Subdevice> isppSubdev_;
+ 	std::unique_ptr<V4L2VideoDevice> isppMain_;
++	std::unique_ptr<V4L2VideoDevice> isppScale_;
+ 	std::unique_ptr<V4L2VideoDevice> isppParam_;
+ };
+ 
+@@ -365,7 +373,8 @@ int RkISP2CameraData::init(bool usingIsp
+ 			   V4L2Subdevice *isp,
+ 			   V4L2VideoDevice *mainPath, V4L2VideoDevice *param,
+ 			   V4L2VideoDevice *stat, V4L2Subdevice *isppSubdev,
+-			   V4L2VideoDevice *isppMain, V4L2VideoDevice *isppParam)
++			   V4L2VideoDevice *isppMain, V4L2VideoDevice *isppScale,
++			   V4L2VideoDevice *isppParam)
+ {
+ 	usingIsp_ = usingIsp;
+ 	usingIspp_ = usingIsp && isppMain;
+@@ -378,8 +387,10 @@ int RkISP2CameraData::init(bool usingIsp
+ 	stat_ = stat;
+ 	isppSubdev_ = isppSubdev;
+ 	isppMain_ = isppMain;
++	isppScale_ = isppScale;
+ 	isppParam_ = isppParam;
+ 	isppFrame_ = 0;
++	scaleActive_ = false;
+ 
+ 	ControlInfoMap::Map ctrls;
+ 
+@@ -402,6 +413,8 @@ int RkISP2CameraData::init(bool usingIsp
+ 	if (usingIspp_) {
+ 		isp_->frameStart.connect(this, &RkISP2CameraData::ispFrameStart);
+ 		isppMain_->bufferReady.connect(this, &RkISP2CameraData::ispBufferReady);
++		if (isppScale_)
++			isppScale_->bufferReady.connect(this, &RkISP2CameraData::isppScaleBufferReady);
+ 		isppParam_->bufferReady.connect(this, &RkISP2CameraData::isppParamBufferReady);
+ 	}
+ 
+@@ -589,7 +602,8 @@ void RkISP2CameraData::ispBufferReady(Fr
+ 	if (buffer->metadata().status == FrameMetadata::FrameCancelled) {
+ 		syncHelper_.cancelFrame();
+ 		pipe()->completeBuffer(request, buffer);
+-		pipe()->completeRequest(request);
++		if (!request->_d()->hasPendingBuffers())
++			pipe()->completeRequest(request);
+ 		return;
+ 	}
+ 
+@@ -608,6 +622,27 @@ void RkISP2CameraData::ispBufferReady(Fr
+ 				      buffer->metadata().timestamp);
+ 
+ 	pipe()->completeBuffer(request, buffer);
++
++	/* The scaler buffer of the same frame completes the request after this. */
++	if (request->_d()->hasPendingBuffers())
++		return;
++
++	tryCompleteRequest(request, buffer);
++}
++
++void RkISP2CameraData::isppScaleBufferReady(FrameBuffer *buffer)
++{
++	Request *request = buffer->request();
++
++	pipe()->completeBuffer(request, buffer);
++	if (request->_d()->hasPendingBuffers())
++		return;
++
++	if (buffer->metadata().status == FrameMetadata::FrameCancelled) {
++		pipe()->completeRequest(request);
++		return;
++	}
++
+ 	tryCompleteRequest(request, buffer);
+ }
+ 
+@@ -646,6 +681,12 @@ void RkISP2CameraData::paramsComputed(un
+ void RkISP2CameraData::setSensorControls(unsigned int frame,
+ 					 const ControlList &sensorControls)
+ {
++	/* The ISP runs free: the request's frame has started before its controls arrive */
++	if (usingIspp_) {
++		isppSensorControls_ = sensorControls;
++		return;
++	}
++
+ 	delayedCtrls_->push(frame + ispBase_, sensorControls);
+ }
+ 
+@@ -738,12 +779,6 @@ CameraConfiguration::Status RkISP2Camera
+ 		}
+ 	}
+ 
+-	/* \todo Support self path */
+-	if (config_.size() != 1) {
+-		config_.resize(1);
+-		status = Adjusted;
+-	}
+-
+ 	StreamConfiguration &cfg = config_[0];
+ 
+ 	/* \todo Support YUV sensors */
+@@ -752,6 +787,13 @@ CameraConfiguration::Status RkISP2Camera
+ 	if (usingIsp && info.colourEncoding == PixelFormatInfo::ColourEncodingRAW)
+ 		usingIsp = false;
+ 
++	/* A second stream only from the ISPP scaler, behind a processed one */
++	size_t maxStreams = usingIsp && data_->usingIspp_ && data_->isppScale_ ? 2 : 1;
++	if (config_.size() > maxStreams) {
++		config_.resize(maxStreams);
++		status = Adjusted;
++	}
++
+ 	const Size &maxSize = usingIsp ? ispMaxSize : vicapMaxSize;
+ 
+ 	if (!usingIsp) {
+@@ -868,6 +910,47 @@ CameraConfiguration::Status RkISP2Camera
+ 	if (sensorFormat_.size.isNull())
+ 		status = Invalid;
+ 
++	if (config_.size() < 2)
++		return status;
++
++	/* The scaler output: any of its formats, no larger than the main one. */
++	StreamConfiguration &scaleCfg = config_[1];
++	V4L2VideoDevice *scale = data_->isppScale_;
++
++	if (!scale->toV4L2PixelFormat(scaleCfg.pixelFormat).isValid()) {
++		scaleCfg.pixelFormat = formats::NV12;
++		status = Adjusted;
++	}
++
++	if (scaleCfg.size.width > cfg.size.width ||
++	    scaleCfg.size.height > cfg.size.height) {
++		scaleCfg.size = cfg.size;
++		status = Adjusted;
++	}
++
++	V4L2DeviceFormat scaleFormat;
++	scaleFormat.fourcc = scale->toV4L2PixelFormat(scaleCfg.pixelFormat);
++	scaleFormat.size = scaleCfg.size;
++	scaleFormat.planes[0].bpl = scaleCfg.stride;
++
++	ret = scale->tryFormat(&scaleFormat);
++	if (ret)
++		return Invalid;
++
++	if (scaleFormat.size != scaleCfg.size) {
++		scaleCfg.size = scaleFormat.size;
++		status = Adjusted;
++	}
++
++	if (scaleCfg.stride && scaleCfg.stride != scaleFormat.planes[0].bpl)
++		status = Adjusted;
++	scaleCfg.stride = scaleFormat.planes[0].bpl;
++	scaleCfg.frameSize = 0;
++	for (unsigned int i = 0; i < scaleFormat.planesCount; i++)
++		scaleCfg.frameSize += scaleFormat.planes[i].size;
++
++	scaleCfg.bufferCount = kRkISP2StreamBufferCount;
++
+ 	return status;
+ }
+ 
+@@ -899,14 +982,16 @@ PipelineHandlerRkISP2::generateConfigura
+ 	if (roles.empty())
+ 		return config;
+ 
+-	if (roles.size() > 1) {
+-		LOG(RkISP2, Error) << "Too many roles requested";
+-		return config;
+-	}
+-
+ 	const StreamRole &role = roles[0];
+ 
+ 	bool isRaw = !data->usingIsp_ || role == StreamRole::Raw;
++
++	/* The ISPP scaler carries one more stream behind a processed one. */
++	unsigned int maxRoles = data->usingIspp_ && data->isppScale_ && !isRaw ? 2 : 1;
++	if (roles.size() > maxRoles) {
++		LOG(RkISP2, Error) << "Too many roles requested";
++		return config;
++	}
+ 	Size maxSize = isRaw ? vicapMaxSize : ispMaxSize;
+ 
+ 	/* Use the first raw media bus code of the sensor that is supported. */
+@@ -952,6 +1037,27 @@ PipelineHandlerRkISP2::generateConfigura
+ 
+ 	config->addConfiguration(cfg);
+ 
++	if (roles.size() == 2) {
++		std::map<PixelFormat, std::vector<SizeRange>> scaleFormats;
++
++		/* The scaler output has its own format list. */
++		for (const auto &format : data->isppScale_->formats()) {
++			PixelFormat pixelFormat = format.first.toPixelFormat();
++
++			if (pixelFormat.isValid())
++				scaleFormats[pixelFormat] = sizes;
++		}
++
++		StreamFormats scaleStreamFormats(scaleFormats);
++		StreamConfiguration scaleCfg(scaleStreamFormats);
++
++		scaleCfg.pixelFormat = formats::NV12;
++		scaleCfg.size = { 1280, 720 };
++		scaleCfg.colorSpace = ColorSpace::Sycc;
++		scaleCfg.bufferCount = kRkISP2StreamBufferCount;
++		config->addConfiguration(scaleCfg);
++	}
++
+ 	config->validate();
+ 
+ 	return config;
+@@ -1016,8 +1122,13 @@ int PipelineHandlerRkISP2::configure(Cam
+ 		return 0;
+ 	}
+ 
+-	if (data->usingIspp_)
+-		return configureIspp(data, cfg, format);
++	if (data->usingIspp_) {
++		ret = configureIspp(data, cfg, format);
++		if (ret)
++			return ret;
++
++		return configureIsppScale(data, config);
++	}
+ 
+ 	/*
+ 	 * The ISP takes its input from the raw readback node only while the
+@@ -1166,6 +1277,43 @@ int PipelineHandlerRkISP2::configureIspp
+ 	return configureIpa(data, cfg);
+ }
+ 
++/* The scaler output takes the ISPP frame down to the second stream's size. */
++int PipelineHandlerRkISP2::configureIsppScale(RkISP2CameraData *data,
++					      CameraConfiguration *config)
++{
++	int ret;
++
++	data->scaleActive_ = false;
++	if (config->size() < 2)
++		return 0;
++
++	StreamConfiguration &cfg = config->at(1);
++
++	V4L2DeviceFormat scaleFormat;
++	scaleFormat.fourcc = isppScale_->toV4L2PixelFormat(cfg.pixelFormat);
++	scaleFormat.size = cfg.size;
++	scaleFormat.colorSpace = cfg.colorSpace;
++	scaleFormat.planes[0].bpl = cfg.stride;
++
++	LOG(RkISP2, Debug) << "Configuring ISPP scaler output with: " << scaleFormat;
++	ret = isppScale_->setFormat(&scaleFormat);
++	if (ret)
++		return ret;
++
++	if (scaleFormat.size != cfg.size ||
++	    scaleFormat.fourcc != isppScale_->toV4L2PixelFormat(cfg.pixelFormat)) {
++		LOG(RkISP2, Error)
++			<< "Unable to configure the ISPP scaler in " << cfg.toString();
++		return -EINVAL;
++	}
++
++	cfg.setStream(&data->scaleStream_);
++	cfg.stride = scaleFormat.planes[0].bpl;
++	data->scaleActive_ = true;
++
++	return 0;
++}
++
+ int PipelineHandlerRkISP2::configureIpa(RkISP2CameraData *data,
+ 					const StreamConfiguration &cfg)
+ {
+@@ -1219,6 +1367,9 @@ int PipelineHandlerRkISP2::exportFrameBu
+ 	if (!data->usingIsp_ || data->isRaw_)
+ 		return data->video_->exportBuffers(count, buffers);
+ 
++	if (stream == &data->scaleStream_)
++		return data->isppScale_->exportBuffers(count, buffers);
++
+ 	if (data->usingIspp_)
+ 		return data->isppMain_->exportBuffers(count, buffers);
+ 
+@@ -1289,6 +1440,17 @@ int PipelineHandlerRkISP2::startIspp(Cam
+ 	}
+ 	actions += [&]() { data->isppMain_->releaseBuffers(); };
+ 
++	if (data->scaleActive_) {
++		unsigned int scaleCount = data->scaleStream_.configuration().bufferCount;
++
++		ret = data->isppScale_->importBuffers(scaleCount);
++		if (ret < 0) {
++			LOG(RkISP2, Error) << "Failed to import buffers to the ISPP scaler";
++			return ret;
++		}
++		actions += [&]() { data->isppScale_->releaseBuffers(); };
++	}
++
+ 	for (const std::unique_ptr<FrameBuffer> &buffer : data->statBuffers_) {
+ 		ret = data->stat_->queueBuffer(buffer.get());
+ 		if (ret < 0)
+@@ -1316,6 +1478,13 @@ int PipelineHandlerRkISP2::startIspp(Cam
+ 		return ret;
+ 	actions += [&]() { data->isppMain_->streamOff(); };
+ 
++	if (data->scaleActive_) {
++		ret = data->isppScale_->streamOn();
++		if (ret < 0)
++			return ret;
++		actions += [&]() { data->isppScale_->streamOff(); };
++	}
++
+ 	if (controls) {
+ 		ret = processControls(data, *controls);
+ 		if (ret < 0)
+@@ -1330,10 +1499,14 @@ void PipelineHandlerRkISP2::stopIspp(Cam
+ {
+ 	RkISP2CameraData *data = cameraData(camera);
+ 
++	if (data->scaleActive_)
++		data->isppScale_->streamOff();
+ 	data->isppMain_->streamOff();
+ 	data->isp_->setFrameStartEnabled(false);
+ 	data->ipa_->stop();
+ 
++	if (data->scaleActive_)
++		data->isppScale_->releaseBuffers();
+ 	data->isppMain_->releaseBuffers();
+ 
+ 	data->stat_->streamOff();
+@@ -1559,10 +1732,20 @@ int PipelineHandlerRkISP2::queueRequestD
+ 	data->computeParamBuffers(data->frame_ - data->ispBase_);
+ 	data->frame_++;
+ 
+-	if (data->usingIspp_)
+-		return data->isppMain_->queueBuffer(buffer);
++	if (!data->usingIspp_)
++		return data->mainPath_->queueBuffer(buffer);
+ 
+-	return data->mainPath_->queueBuffer(buffer);
++	if (data->scaleActive_) {
++		FrameBuffer *scaleBuffer = request->findBuffer(&data->scaleStream_);
++
++		if (scaleBuffer) {
++			ret = data->isppScale_->queueBuffer(scaleBuffer);
++			if (ret < 0)
++				return ret;
++		}
++	}
++
++	return data->isppMain_->queueBuffer(buffer);
+ }
+ 
+ int PipelineHandlerRkISP2::updateControls(RkISP2CameraData *data)
+@@ -1589,7 +1772,8 @@ bool PipelineHandlerRkISP2::createCamera
+ 		std::make_unique<RkISP2CameraData>(this, media_.get());
+ 	if (data->init(usingIsp, sensor_.get(), video_.get(), rawrd_.get(),
+ 		       isp_.get(), mainPath_.get(), param_.get(), stat_.get(),
+-		       isppSubdev_.get(), isppMain_.get(), isppParam_.get())) {
++		       isppSubdev_.get(), isppMain_.get(), isppScale_.get(),
++		       isppParam_.get())) {
+ 		LOG(RkISP2, Error) << "Failed to initialize data";
+ 		return false;
+ 	}
+@@ -1624,6 +1808,8 @@ bool PipelineHandlerRkISP2::createCamera
+ 
+ 	const std::string &id = data->sensor_->id();
+ 	std::set<Stream *> streams{ &data->stream_ };
++	if (data->isppScale_)
++		streams.insert(&data->scaleStream_);
+ 	std::shared_ptr<Camera> camera =
+ 		Camera::create(std::move(data), id, streams);
+ 	registerCamera(std::move(camera));
+@@ -1816,6 +2002,13 @@ bool PipelineHandlerRkISP2::match(Device
+ 		return false;
+ 	}
+ 
++	/* The first scaler output carries a second, scaled stream. */
++	isppScale_ = V4L2VideoDevice::fromEntityName(isppMedia_.get(), "rkispp_scale0");
++	if (isppScale_ && isppScale_->open() < 0) {
++		LOG(RkISP2, Warning) << "Failed to open the rkispp scaler output";
++		isppScale_.reset();
++	}
++
+ 	return createCamera(true);
+ }
+ 

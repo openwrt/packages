@@ -1,0 +1,111 @@
+From a5f4367d2aaabfcad67eb7382bf83ee0aead1f35 Mon Sep 17 00:00:00 2001
+From: Chet Ramey <chet.ramey@case.edu>
+Date: Tue, 15 Sep 2026 11:12:23 -0400
+Subject: Bash-5.3 patch 16: accommodate macOS dynamic pipe sizing, avoiding
+ hangs
+
+--- a/configure
++++ b/configure
+@@ -23133,7 +23133,7 @@ hpux*)		LOCAL_CFLAGS="-DHPUX -DTGETENT_B
+ dgux*)		LOCAL_CFLAGS=-D_DGUX_SOURCE; LOCAL_LIBS=-ldgc ;;
+ isc*)		LOCAL_CFLAGS=-Disc386 ;;
+ rhapsody*)	LOCAL_CFLAGS=-DRHAPSODY ;;
+-darwin*)	LOCAL_CFLAGS=-DMACOSX ;;
++darwin*)	LOCAL_CFLAGS="-DMACOSX -DPIPESIZE_DYNAMIC" ;;
+ sco3.2v5*)	LOCAL_CFLAGS="-b elf -DWAITPID_BROKEN -DPATH_MAX=1024" ;;
+ sco3.2v4*)	LOCAL_CFLAGS="-DMUST_UNBLOCK_CHLD -DPATH_MAX=1024" ;;
+ sco3.2*)	LOCAL_CFLAGS=-DMUST_UNBLOCK_CHLD ;;
+--- a/configure.ac
++++ b/configure.ac
+@@ -1209,7 +1209,7 @@ hpux*)		LOCAL_CFLAGS="-DHPUX -DTGETENT_B
+ dgux*)		LOCAL_CFLAGS=-D_DGUX_SOURCE; LOCAL_LIBS=-ldgc ;;
+ isc*)		LOCAL_CFLAGS=-Disc386 ;;
+ rhapsody*)	LOCAL_CFLAGS=-DRHAPSODY ;;
+-darwin*)	LOCAL_CFLAGS=-DMACOSX ;;
++darwin*)	LOCAL_CFLAGS="-DMACOSX -DPIPESIZE_DYNAMIC" ;;
+ sco3.2v5*)	LOCAL_CFLAGS="-b elf -DWAITPID_BROKEN -DPATH_MAX=1024" ;;
+ sco3.2v4*)	LOCAL_CFLAGS="-DMUST_UNBLOCK_CHLD -DPATH_MAX=1024" ;;
+ sco3.2*)	LOCAL_CFLAGS=-DMUST_UNBLOCK_CHLD ;;
+--- a/general.c
++++ b/general.c
+@@ -595,6 +595,27 @@ sh_unset_nodelay_mode (int fd)
+   return 0;
+ }
+ 
++int
++sh_setnodelay (int fd)
++{
++  int flags;
++
++  if ((flags = fcntl (fd, F_GETFL, 0)) < 0)
++    return -1;
++
++  /* This is defined to O_NDELAY in filecntl.h if O_NONBLOCK is not present
++     and O_NDELAY is defined. */
++#ifdef O_NONBLOCK
++  flags |= O_NONBLOCK;
++#endif
++
++#ifdef O_NDELAY
++  flags |= O_NDELAY;
++#endif
++
++  return (fcntl (fd, F_SETFL, flags));
++}
++
+ /* Just a wrapper for the define in include/filecntl.h */
+ int
+ sh_setclexec (int fd)
+--- a/general.h
++++ b/general.h
+@@ -317,6 +317,7 @@ extern int line_isblank (const char *);
+ extern int assignment (const char *, int);
+ 
+ extern int sh_unset_nodelay_mode (int);
++extern int sh_setnodelay (int);
+ extern int sh_setclexec (int);
+ extern int sh_validfd (int);
+ extern int fd_ispipe (int);
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 15
++#define PATCHLEVEL 16
+ 
+ #endif /* _PATCHLEVEL_H_ */
+--- a/redir.c
++++ b/redir.c
+@@ -472,7 +472,30 @@ here_document_to_fd (WORD_DESC *redirect
+ 	}
+ #endif
+ 
++#if defined (PIPESIZE_DYNAMIC)
++      /* If we can't count on the pipe size determined at compile time to be
++	 constant across systems, define PIPESIZE_DYNAMIC in configure.ac.
++	 We set the pipe's write end to be non-blocking, try to write, and
++	 fall back to a temp file on error. */
++      if (sh_setnodelay (herepipe[1]) < 0)
++	{
++	  close (herepipe[0]);
++	  close (herepipe[1]);
++	  goto use_tempfile;
++	}
++#endif
++
+       r = heredoc_write (herepipe[1], document, document_len);
++
++#if defined (PIPESIZE_DYNAMIC)
++      if (r == ENOSPC || r == EAGAIN)
++	{
++	  close (herepipe[0]);
++	  close (herepipe[1]);
++	  goto use_tempfile;
++	}
++#endif
++
+       if (document != redirectee->word)
+ 	free (document);
+       close (herepipe[1]);

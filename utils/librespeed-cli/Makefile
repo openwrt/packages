@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=librespeed-cli
-PKG_VERSION:=1.0.13
+PKG_VERSION:=1.0.14
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/librespeed/speedtest-cli/tar.gz/v${PKG_VERSION}?
-PKG_HASH:=5ad938b61e3edc0ca95e2ccff0c06e97a69383f3cbb0243bd47b21b9865f9f55
+PKG_HASH:=3031e0f7babd7f9c51a1c49b95026d12532668455e8cc459049160f1bd525bf3
 
 PKG_MAINTAINER:=Michal Vasilek <michal.vasilek@nic.cz>
 PKG_LICENSE:=LGPL-3.0-only

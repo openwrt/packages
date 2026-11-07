@@ -11,6 +11,7 @@ read -r ban_starttime _ <"/proc/uptime"
 ban_starttime="${ban_starttime%%.*}"
 ban_funlib="/usr/lib/banip-functions.sh"
 [ -z "${ban_bver}" ] && . "${ban_funlib}"
+trap 'f_exit' EXIT
 
 # load config and set banIP environment
 #
@@ -46,37 +47,29 @@ f_log "info" "start banIP download processes"
 f_getfeed
 [ "${ban_deduplicate}" = "1" ] && printf '\n' >"${ban_tmpfile}.deduplicate"
 
+# handle allowlistonly mode
+#
+if [ "${ban_allowlistonly}" = "1" ] && [ "${ban_monitorallowed}" = "1" ]; then
+	ban_monitorfeed="allowlist.local"
+fi
+
 # handle downloads
 #
 cnt="1"
-for feed in allowlist ${ban_feed} blocklist; do
+for feed in allowlist ${ban_monitorfeed} ${ban_feed} blocklist; do
 
 	# local feeds (sequential processing)
 	#
-	if [ "${feed}" = "allowlist" ] || [ "${feed}" = "blocklist" ]; then
+	if [ "${feed%%.*}" = "allowlist" ] || [ "${feed}" = "blocklist" ]; then
 		for proto in 4MAC 6MAC 4 6; do
-			f_down "${feed}" "${proto}" "-" "-" "inout"
+			chain="inout"
+			if [ "${feed}" = "allowlist.local" ]; then
+				case "${proto}" in *MAC) continue ;; esac
+				chain="none"
+			fi
+			f_down "${feed}" "${proto}" "-" "-" "${chain}"
 		done
 		continue
-	fi
-
-	# skip external feeds in allowlistonly mode
-	#
-	if [ "${ban_allowlistonly}" = "1" ]; then
-		case " ${ban_feedin} " in
-		*" allowlist "*) ;;
-
-		*)
-			case " ${ban_feedout} " in
-			*" allowlist "*) ;;
-
-			*)
-				f_log "info" "skip feed '${feed}' in allowlistonly mode"
-				continue
-				;;
-			esac
-			;;
-		esac
 	fi
 
 	# external feeds (parallel processing on multicore hardware)
@@ -93,6 +86,21 @@ for feed in allowlist ${ban_feed} blocklist; do
 	done
 	json_select ..
 
+	# resolve the auth-key placeholder, skip the feed without a valid key
+	#
+	case "${feed_url_4}${feed_url_6}" in
+	*"{authkey}"*)
+		case "${ban_authkey}" in
+		"" | *[!A-Za-z0-9_-]*)
+			f_log "info" "skip feed '${feed}', no valid auth-key set"
+			continue
+			;;
+		esac
+		feed_url_4="$(f_feedurl "${feed_url_4}" "authkey" "${ban_authkey}")"
+		feed_url_6="$(f_feedurl "${feed_url_6}" "authkey" "${ban_authkey}")"
+		;;
+	esac
+
 	# skip incomplete feeds
 	#
 	if { [ -z "${feed_url_4}" ] && [ -z "${feed_url_6}" ]; } ||
@@ -106,24 +114,38 @@ for feed in allowlist ${ban_feed} blocklist; do
 	if [ "${ban_protov4}" = "1" ] && [ -n "${feed_url_4}" ] && [ -n "${feed_rule}" ]; then
 		feed_ipv="4"
 		if [ "${feed}" = "country" ] && [ "${ban_countrysplit}" = "1" ]; then
-			for country in ${ban_country}; do
-				(f_down "${feed}.${country}" "${feed_ipv}" "${feed_url_4}" "${feed_rule}" "${feed_chain:-"in"}" "${feed_flag}") &
-				[ "${cnt}" -gt "${ban_cores}" ] && wait -n
-				cnt="$((cnt + 1))"
-			done
+			if [ "${feed_url_4}" = "${feed_url_6}" ]; then
+				feed_url_6="local"
+				for country in ${ban_country}; do
+					f_down "${feed}.${country}" "${feed_ipv}" "${feed_url_4}" "${feed_rule}" "${feed_chain:-"in"}" "${feed_flag}"
+				done
+			else
+				for country in ${ban_country}; do
+					(f_down "${feed}.${country}" "${feed_ipv}" "${feed_url_4}" "${feed_rule}" "${feed_chain:-"in"}" "${feed_flag}") &
+					[ "${cnt}" -ge "${ban_cores}" ] && wait -n
+					cnt="$((cnt + 1))"
+				done
+			fi
 		elif [ "${feed}" = "asn" ] && [ "${ban_asnsplit}" = "1" ]; then
-			for asn in ${ban_asn}; do
-				(f_down "${feed}.${asn}" "${feed_ipv}" "${feed_url_4}" "${feed_rule}" "${feed_chain:-"in"}" "${feed_flag}") &
-				[ "${cnt}" -gt "${ban_cores}" ] && wait -n
-				cnt="$((cnt + 1))"
-			done
+			if [ "${feed_url_4}" = "${feed_url_6}" ]; then
+				feed_url_6="local"
+				for asn in ${ban_asn}; do
+					f_down "${feed}.${asn}" "${feed_ipv}" "${feed_url_4}" "${feed_rule}" "${feed_chain:-"in"}" "${feed_flag}"
+				done
+			else
+				for asn in ${ban_asn}; do
+					(f_down "${feed}.${asn}" "${feed_ipv}" "${feed_url_4}" "${feed_rule}" "${feed_chain:-"in"}" "${feed_flag}") &
+					[ "${cnt}" -ge "${ban_cores}" ] && wait -n
+					cnt="$((cnt + 1))"
+				done
+			fi
 		else
 			if [ "${feed_url_4}" = "${feed_url_6}" ]; then
 				feed_url_6="local"
 				f_down "${feed}" "${feed_ipv}" "${feed_url_4}" "${feed_rule}" "${feed_chain:-"in"}" "${feed_flag}"
 			else
 				(f_down "${feed}" "${feed_ipv}" "${feed_url_4}" "${feed_rule}" "${feed_chain:-"in"}" "${feed_flag}") &
-				[ "${cnt}" -gt "${ban_cores}" ] && wait -n
+				[ "${cnt}" -ge "${ban_cores}" ] && wait -n
 				cnt="$((cnt + 1))"
 			fi
 		fi
@@ -136,23 +158,32 @@ for feed in allowlist ${ban_feed} blocklist; do
 		if [ "${feed}" = "country" ] && [ "${ban_countrysplit}" = "1" ]; then
 			for country in ${ban_country}; do
 				(f_down "${feed}.${country}" "${feed_ipv}" "${feed_url_6}" "${feed_rule}" "${feed_chain:-"in"}" "${feed_flag}") &
-				[ "${cnt}" -gt "${ban_cores}" ] && wait -n
+				[ "${cnt}" -ge "${ban_cores}" ] && wait -n
 				cnt="$((cnt + 1))"
 			done
 		elif [ "${feed}" = "asn" ] && [ "${ban_asnsplit}" = "1" ]; then
 			for asn in ${ban_asn}; do
 				(f_down "${feed}.${asn}" "${feed_ipv}" "${feed_url_6}" "${feed_rule}" "${feed_chain:-"in"}" "${feed_flag}") &
-				[ "${cnt}" -gt "${ban_cores}" ] && wait -n
+				[ "${cnt}" -ge "${ban_cores}" ] && wait -n
 				cnt="$((cnt + 1))"
 			done
 		else
 			(f_down "${feed}" "${feed_ipv}" "${feed_url_6}" "${feed_rule}" "${feed_chain:-"in"}" "${feed_flag}") &
-			[ "${cnt}" -gt "${ban_cores}" ] && wait -n
+			[ "${cnt}" -ge "${ban_cores}" ] && wait -n
 			cnt="$((cnt + 1))"
 		fi
 	fi
 done
 wait
+
+# mask the auth-key in the debug error log (download utilities may print the full url)
+#
+case "${ban_authkey}" in
+"" | *[!A-Za-z0-9_-]*) ;;
+*)
+	[ -s "${ban_errorlog}" ] && "${ban_sedcmd}" -i "s/${ban_authkey}/<authkey>/g" "${ban_errorlog}"
+	;;
+esac
 f_rmset
 f_genstatus "active"
 
@@ -162,7 +193,7 @@ f_log "info" "start banIP domain lookup"
 cnt="1"
 for list in allowlist blocklist; do
 	(f_lookup "${list}") &
-	[ "${cnt}" -gt "${ban_cores}" ] && wait -n
+	[ "${cnt}" -ge "${ban_cores}" ] && wait -n
 	cnt="$((cnt + 1))"
 done
 wait
@@ -180,6 +211,13 @@ f_log "info" "finish banIP processing"
 	rm -rf "${ban_lock}"
 ) &
 
-# start detached log service (infinite loop)
+# start detached log service (infinite loop),
+# restart the monitor if the log reader terminates (e.g. logd restart),
+# stop if the pidfile has been cleared by f_rmpid
 #
-f_monitor
+while :; do
+	f_monitor
+	sleep 5
+	[ "$("${ban_catcmd}" "${ban_pidfile}" 2>/dev/null)" = "${$}" ] || break
+	f_log "info" "log reader terminated, restart detached banIP log service"
+done

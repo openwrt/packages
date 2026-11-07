@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luaossl
 PKG_VERSION:=20220711
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_MAINTAINER:=Siger Yang <siger.yang@outlook.com>
 
 PKG_MIRROR_HASH:=7abb1070da36906f9ef310af1a12827543bb5de4bbe239068420fd8b3e3858d2
@@ -69,6 +69,7 @@ ifeq ($(BUILD_VARIANT),lua51)
 	LUA51_CPPFLAGS="-I$(STAGING_DIR)/usr/include" \
 	lua51cpath="/usr/lib/lua" \
 	lua51path="/usr/lib/lua"
+  LUA_INSTALL_DIR:=/usr/lib/lua
 endif
 ifeq ($(BUILD_VARIANT),lua53)
   MAKE_FLAGS += \
@@ -76,36 +77,26 @@ ifeq ($(BUILD_VARIANT),lua53)
 	LUA53_CPPFLAGS="-I$(STAGING_DIR)/usr/include/lua5.3" \
 	lua53cpath="/usr/local/lib/lua/5.3" \
 	lua53path="/usr/local/lib/lua/5.3"
+  LUA_INSTALL_DIR:=/usr/local/lib/lua/5.3
 endif
 ifeq ($(BUILD_VARIANT),lua54)
   MAKE_FLAGS += \
 	LUA_APIS="5.4" \
 	LUA54_CPPFLAGS="-I$(STAGING_DIR)/usr/include/lua5.4" \
-	lua54cpath="/usr/local/lib/lua/5.4" \
-	lua54path="/usr/local/lib/lua/5.4"
+	lua54cpath="/usr/lib/lua/5.4" \
+	lua54path="/usr/lib/lua/5.4"
+  LUA_INSTALL_DIR:=/usr/lib/lua/5.4
 endif
 
 define Package/luaossl/install
-	$(INSTALL_DIR) $(1)/usr/lib/lua
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/lua/_openssl.so $(1)/usr/lib/lua/
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/lua/openssl.lua $(1)/usr/lib/lua/
+	$(INSTALL_DIR) $(1)$(LUA_INSTALL_DIR)
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)$(LUA_INSTALL_DIR)/_openssl.so $(1)$(LUA_INSTALL_DIR)/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)$(LUA_INSTALL_DIR)/openssl.lua $(1)$(LUA_INSTALL_DIR)/
 
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lua/openssl $(1)/usr/lib/lua/
+	$(CP) $(PKG_INSTALL_DIR)$(LUA_INSTALL_DIR)/openssl $(1)$(LUA_INSTALL_DIR)/
 endef
-define Package/luaossl-lua5.3/install
-	$(INSTALL_DIR) $(1)/usr/local/lib/lua/5.3
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/local/lib/lua/5.3/_openssl.so $(1)/usr/local/lib/lua/5.3/
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/local/lib/lua/5.3/openssl.lua $(1)/usr/local/lib/lua/5.3/
-
-	$(CP) $(PKG_INSTALL_DIR)/usr/local/lib/lua/5.3/openssl $(1)/usr/local/lib/lua/5.3/
-endef
-define Package/luaossl-lua5.4/install
-	$(INSTALL_DIR) $(1)/usr/local/lib/lua/5.4
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/local/lib/lua/5.4/_openssl.so $(1)/usr/local/lib/lua/5.4/
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/local/lib/lua/5.4/openssl.lua $(1)/usr/local/lib/lua/5.4/
-
-	$(CP) $(PKG_INSTALL_DIR)/usr/local/lib/lua/5.4/openssl $(1)/usr/local/lib/lua/5.4/
-endef
+Package/luaossl-lua5.3/install = $(Package/luaossl/install)
+Package/luaossl-lua5.4/install = $(Package/luaossl/install)
 
 $(eval $(call BuildPackage,luaossl))
 $(eval $(call BuildPackage,luaossl-lua5.3))

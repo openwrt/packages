@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-bad
-PKG_VERSION:=1.26.4
-PKG_RELEASE:=1
+PKG_VERSION:=1.28.7
+PKG_RELEASE:=5
 
 PKG_SOURCE:=gst-plugins-bad-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gst-plugins-bad/
-PKG_HASH:=33dba95ed3933b742e4eac22063cdb81e14d54dc4cdd354a0000517273012661
+PKG_HASH:=dc525383c18b2c265bbe6a43d498656cd918aaa130aa4e3abeabcdaa741c3ffe
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-bad-$(PKG_VERSION)
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
@@ -21,6 +21,8 @@ PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
 PKG_LICENSE:=LGPL-2.1-or-later GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING.LIB COPYING
 PKG_CPE_ID:=cpe:/a:freedesktop:gst-plugins-bad
+
+PKG_CONFIG_DEPENDS += CONFIG_PACKAGE_gst1-mod-unixfd
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -96,6 +98,7 @@ GST_COND_SELECT = -D$(1)=$(if $(CONFIG_PACKAGE_gst1-mod-$(1)),en,dis)abled
 GST_VERSION:=1.0
 
 MESON_ARGS += \
+	-Dauto_features=disabled \
 	$(call GST_COND_SELECT,accurip) \
 	$(call GST_COND_SELECT,adpcmdec) \
 	$(call GST_COND_SELECT,adpcmenc) \
@@ -151,12 +154,12 @@ MESON_ARGS += \
 	$(call GST_COND_SELECT,subenc) \
 	$(call GST_COND_SELECT,switchbin) \
 	$(call GST_COND_SELECT,timecode) \
+	$(call GST_COND_SELECT,unixfd) \
 	-Dvideofilters=$(if $(CONFIG_PACKAGE_gst1-mod-videofiltersbad),en,dis)abled \
 	$(call GST_COND_SELECT,videoframe_audiolevel) \
 	-Dvideoparsers=$(if $(CONFIG_PACKAGE_gst1-mod-videoparsersbad),en,dis)abled \
 	$(call GST_COND_SELECT,videosignal) \
 	$(call GST_COND_SELECT,vmnc) \
-	-Dy4m=$(if $(CONFIG_PACKAGE_gst1-mod-y4mdec),en,dis)abled \
 	\
 	-Dopencv=disabled \
 	-Dwayland=$(if $(CONFIG_PACKAGE_libgst1gl),en,dis)abled \
@@ -258,6 +261,7 @@ MESON_ARGS += \
 	-Dexamples=disabled \
 	-Dtests=disabled \
 	-Dintrospection=disabled \
+	-Dnls=enabled \
 	-Dorc=disabled \
 	-Dgobject-cast-checks=disabled \
 	-Dglib-asserts=disabled \
@@ -428,13 +432,13 @@ $(eval $(call GstBuildPlugin,speed,speed support,audio,,))
 $(eval $(call GstBuildPlugin,subenc,subenc support,controller,,))
 $(eval $(call GstBuildPlugin,switchbin,switchbin support,,,))
 $(eval $(call GstBuildPlugin,timecode,timecode support,,,))
-$(eval $(call GstBuildPlugin,v4l2codecs,V4L2 stateless codecs support,codecs,,))
+$(eval $(call GstBuildPlugin,unixfd,Unix file descriptor transport support,allocators,,))
+$(eval $(call GstBuildPlugin,v4l2codecs,V4L2 stateless codecs support,codecs,,+libgudev))
 $(eval $(call GstBuildPlugin,videofiltersbad,videofiltersbad support,,,))
 $(eval $(call GstBuildPlugin,videoframe_audiolevel,videoframe_audiolevel support,,,))
 $(eval $(call GstBuildPlugin,videoparsersbad,videoparsersbad support,codecparsers,,))
 $(eval $(call GstBuildPlugin,videosignal,videosignal support,,,))
 $(eval $(call GstBuildPlugin,vmnc,vmnc support,,,))
-$(eval $(call GstBuildPlugin,y4mdec,y4mdec support,,,))
 
 $(eval $(call GstBuildPlugin,bluez,bluez support,,,+bluez-libs))
 #$(eval $(call GstBuildPlugin,bz2,bzip2 support,,,+libbz2))

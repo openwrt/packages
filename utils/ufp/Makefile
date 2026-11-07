@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ufp
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Felix Fietkau <nbd@nbd.name>
@@ -26,7 +26,14 @@ define Package/ufp
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Device fingerprinting daemon
-  DEPENDS:=+ucode +ucode-mod-fs +ucode-mod-struct +libubox +udhcpsnoop +unetmsg
+  DEPENDS:= \
+  	    +ucode \
+  	    +ucode-mod-fs \
+  	    +ucode-mod-struct \
+  	    +ucode-mod-rtnl \
+  	    +libubox \
+  	    +udhcpsnoop \
+  	    +unetmsg
 endef
 
 define Package/ufp-neigh

@@ -1,0 +1,42 @@
+From d75d6595a66f4829ddb1aa154a98e285aabc600c Mon Sep 17 00:00:00 2001
+From: Stefan Klug <stefan.klug@ideasonboard.com>
+Date: Wed, 25 Mar 2026 16:13:51 +0100
+Subject: [PATCH] libcamera: delayed_controls: Ignore double pushes for the
+ same frame number
+
+For successful PFC a single sequence must only be pushed once to delayed
+controls. Such a situation can occur if no-ops were pushed in delayed
+controls due to a buffer underrun.
+
+Signed-off-by: Stefan Klug <stefan.klug@ideasonboard.com>
+Reviewed-by: Paul Elder <paul.elder@ideasonboard.com>
+---
+ src/libcamera/delayed_controls.cpp | 10 +++++++---
+ 1 file changed, 7 insertions(+), 3 deletions(-)
+
+--- a/src/libcamera/delayed_controls.cpp
++++ b/src/libcamera/delayed_controls.cpp
+@@ -173,8 +173,9 @@ bool DelayedControls::push(uint32_t sequ
+ {
+ 	if (sequence < queueCount_) {
+ 		LOG(DelayedControls, Warning)
+-			<< "Double push for sequence " << sequence
+-			<< " current queue index: " << queueCount_;
++			<< "Ignored double push for sequence " << sequence
++			<< ". Current queue index: " << queueCount_;
++		return true;
+ 	}
+ 
+ 	while (sequence > queueCount_) {
+@@ -277,7 +278,10 @@ ControlList DelayedControls::get(uint32_
+  */
+ void DelayedControls::applyControls(uint32_t sequence)
+ {
+-	LOG(DelayedControls, Debug) << "frame " << sequence << " started";
++	LOG(DelayedControls, Debug)
++		<< "Apply controls for: " << sequence
++		<< " (instant controls for frame "
++		<< (sequence - maxDelay_) << ")";
+ 
+ 	while (queueCount_ - 1 < sequence) {
+ 		LOG(DelayedControls, Warning)

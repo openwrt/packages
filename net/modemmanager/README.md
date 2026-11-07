@@ -27,7 +27,8 @@ Once installed, you can configure the 2G/3G/4G modem connections directly in
         option signalrate  '30'
         option allow_roaming '1'
         option force_connection '1'
-        option init_epsbearer '<none|default|custom>'
+        option init_epsbearer '<modem|network|connection|custom>'
+        option timeout     '120'
 
 Only 'device' and 'proto' are mandatory options, the remaining ones are all
 optional.
@@ -45,20 +46,35 @@ The 'plmn' option allows to set the network operator MCCMNC.
 The 'signalrate' option set's the signal refresh rate (in seconds) for the device.
 You can call signal info with command: mmcli -m 0 --signal-get
 
+The 'timeout' option set's the command timeout (in seconds) for the long
+running 'mmcli' calls ('enable', 'simple-connect',
+3gpp-register-in-operator' and '3gpp-set-initial-eps-bearer-settings')
+in the modemmanager protohandler. The default value is 120 seconds, if
+no value is configured.
+
 The 'force_connection' option is designed to ensure that the modem automatically
 attempts to reconnect regardless of any errors encountered during the
 connection process.
 
-If there is no Circuit switch network available, then an initial EPS
-bearer must be set, so this could be used during the network registration
-process in 4G and 5G network. For this resaon a new configuration option
-'init_epsbearer' was added, which could have the following values.
-* none:    Do not set an initial EPS bearer (default)
-* default: Use the configuration option 'apn', 'iptype', 'allowedauth',
-           'username' and 'password' for setting the initial EPS bearer.
-           These are the same options as when establishing a connection.
-* custom:  This could be used to use diffrent options when establishing a
-           connection. The options are prefixed with an 'init'. So we have
-           the following options 'init_apn', 'init_iptype',
-           'init_allowedauth', 'init_username' and 'init_password' for
-           setting the initial EPS bearer.
+On 4G and 5G networks, the modem attaches to the network with an initial
+EPS bearer, before the data connection is established. The 'init_epsbearer'
+option selects where the settings for this initial EPS bearer come from:
+* modem:      Leave the initial EPS bearer settings stored on the modem
+              unchanged (default). These are usually provided by the carrier
+              firmware or set by a previous configuration.
+* network:    Set an empty initial EPS bearer, so the network assigns the APN.
+              Use this to override settings left on the modem, e.g. after
+              swapping the SIM card.
+* connection: Use the options 'apn', 'iptype', 'allowedauth', 'username' and
+              'password', the same options as for the data connection.
+* custom:     Use separate options, prefixed with 'init_': 'init_apn',
+              'init_iptype', 'init_allowedauth', 'init_username' and
+              'init_password'.
+
+The values 'none' and 'default' are deprecated aliases for 'modem' and
+'connection'.
+
+The initial EPS bearer settings stored on the modem can also be cleared once
+manually:
+
+    mmcli -m <modem> --3gpp-set-initial-eps-bearer-settings=""

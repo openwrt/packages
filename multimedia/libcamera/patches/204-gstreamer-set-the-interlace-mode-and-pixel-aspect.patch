@@ -1,0 +1,43 @@
+From d4a5fb80b141725fc08134ebd5730b275b1691df Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 16 Oct 2026 13:49:54 +0100
+Subject: [PATCH] gstreamer: Set the interlace mode and pixel aspect ratio in
+ the caps
+
+The raw video caps of libcamerasrc carry the format, size, colorimetry
+and framerate only. GStreamer's raw video caps also carry the interlace
+mode and the pixel aspect ratio, and elements whose accept-caps query
+is the default subset check against their own caps, such as v4l2sink,
+reject the caps event of libcamerasrc because its caps lack the fields
+theirs carry. The source then renegotiates and restarts the camera
+endlessly without any error.
+
+Set the interlace mode to progressive and the pixel aspect ratio to 1:1
+on raw video caps.
+
+Assisted-by: LLM
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ src/gstreamer/gstlibcamera-utils.cpp | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+--- a/src/gstreamer/gstlibcamera-utils.cpp
++++ b/src/gstreamer/gstlibcamera-utils.cpp
+@@ -419,6 +419,17 @@ gst_libcamera_stream_configuration_to_ca
+ 			  "height", G_TYPE_INT, stream_cfg.size.height,
+ 			  nullptr);
+ 
++	/*
++	 * Raw video caps carry the interlace mode and the pixel aspect ratio,
++	 * elements that accept only subsets of their own caps (such as the
++	 * V4L2 sinks) reject caps without them.
++	 */
++	if (gst_structure_has_name(s, "video/x-raw"))
++		gst_structure_set(s,
++				  "interlace-mode", G_TYPE_STRING, "progressive",
++				  "pixel-aspect-ratio", GST_TYPE_FRACTION, 1, 1,
++				  nullptr);
++
+ 	if (stream_cfg.colorSpace) {
+ 		GstVideoColorimetry colorimetry = colorimetry_from_colorspace(stream_cfg.colorSpace.value(), transfer);
+ 		g_autofree gchar *colorimetry_str = gst_video_colorimetry_to_string(&colorimetry);

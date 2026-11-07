@@ -12,10 +12,10 @@ Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
 
 --- a/lib/automake.mk
 +++ b/lib/automake.mk
-@@ -10,6 +10,8 @@ lib_LTLIBRARIES += lib/libopenvswitch.la
+@@ -9,6 +9,8 @@ lib_LTLIBRARIES += lib/libopenvswitch.la
+ 
  lib_libopenvswitch_la_LIBADD = $(SSL_LIBS)
  lib_libopenvswitch_la_LIBADD += $(CAPNG_LDADD)
- lib_libopenvswitch_la_LIBADD += $(LIBBPF_LDADD)
 +lib_libopenvswitch_la_LIBADD += $(LIBUNBOUND_LDADD)
 +lib_libopenvswitch_la_LIBADD += $(LIBUNWIND_LDADD)
  
@@ -27,12 +27,12 @@ Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
  Description: Open vSwitch library
  Version: @VERSION@
  Libs: -L${libdir} -lopenvswitch
--Libs.private: @LIBS@ @SSL_LIBS@ @CAPNG_LDADD@ @LIBBPF_LDADD@
-+Libs.private: @LIBS@ @SSL_LIBS@ @CAPNG_LDADD@ @LIBBPF_LDADD@ @LIBUNBOUND_LDADD@ @LIBUNWIND_LDADD@
+-Libs.private: @LIBS@ @SSL_LIBS@ @CAPNG_LDADD@
++Libs.private: @LIBS@ @SSL_LIBS@ @CAPNG_LDADD@ @LIBUNBOUND_LDADD@ @LIBUNWIND_LDADD@
  Cflags: -I${includedir}
 --- a/m4/openvswitch.m4
 +++ b/m4/openvswitch.m4
-@@ -677,7 +677,8 @@ AC_DEFUN([OVS_CHECK_UNBOUND],
+@@ -726,7 +726,8 @@ AC_DEFUN([OVS_CHECK_UNBOUND],
    [AC_CHECK_LIB(unbound, ub_ctx_create, [HAVE_UNBOUND=yes], [HAVE_UNBOUND=no])
     if test "$HAVE_UNBOUND" = yes; then
       AC_DEFINE([HAVE_UNBOUND], [1], [Define to 1 if unbound is detected.])
@@ -42,7 +42,7 @@ Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
     fi
     AM_CONDITIONAL([HAVE_UNBOUND], [test "$HAVE_UNBOUND" = yes])
     AC_SUBST([HAVE_UNBOUND])])
-@@ -689,7 +690,8 @@ AC_DEFUN([OVS_CHECK_UNWIND],
+@@ -738,7 +739,8 @@ AC_DEFUN([OVS_CHECK_UNWIND],
     [HAVE_UNWIND=no])
     if test "$HAVE_UNWIND" = yes; then
       AC_DEFINE([HAVE_UNWIND], [1], [Define to 1 if unwind is detected.])

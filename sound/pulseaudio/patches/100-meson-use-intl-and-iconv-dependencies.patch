@@ -1,0 +1,62 @@
+From 2535498c5109f6a5d55544c29528c99fd5781761 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Fri, 11 Sep 2026 15:17:42 -0700
+Subject: [PATCH] meson: use intl and iconv dependencies
+
+There's currently some issue with musl + external libintl where linking
+is required but it's not doing it. Instead of adjusting, update meson to
+61.2 (version in Ubuntu 22.04) and use iconv and intl dependencies,
+which tend to work better.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ meson.build | 25 ++++---------------------
+ 1 file changed, 4 insertions(+), 21 deletions(-)
+
+--- a/meson.build
++++ b/meson.build
+@@ -1,6 +1,6 @@
+ project('pulseaudio', 'c',
+         version : run_command(find_program('git-version-gen'), join_paths(meson.current_source_dir(), '.tarball-version'), check : false).stdout().strip(),
+-        meson_version : '>= 0.56.0',
++        meson_version : '>= 0.61.2',
+         default_options : [ 'c_std=gnu11', 'cpp_std=c++17' ]
+         )
+ 
+@@ -373,15 +373,7 @@ if cc.has_header_symbol('sys/syscall.h',
+   cdata.set('HAVE_MEMFD', 1)
+ endif
+ 
+-if cc.has_function('dgettext')
+-  if host_machine.system() != 'windows'
+-    libintl_dep = []
+-  else
+-    libintl_dep = cc.find_library('intl')
+-  endif
+-else
+-  libintl_dep = cc.find_library('intl')
+-endif
++libintl_dep = dependency('intl')
+ 
+ # Symbols
+ 
+@@ -472,17 +464,8 @@ if cc.has_function('dladdr', dependencie
+   cdata.set('HAVE_DLADDR', 1)
+ endif
+ 
+-have_iconv = false
+-if cc.has_function('iconv_open')
+-  iconv_dep = dependency('', required : false)
+-  have_iconv = true
+-  # tell the libiconv header to pretend to be libc iconv
+-  cdata.set('LIBICONV_PLUG', 1)
+-else
+-  iconv_dep = cc.find_library('iconv', required : false)
+-  have_iconv = iconv_dep.found()
+-endif
+-if have_iconv
++iconv_dep = dependency('iconv', required: false)
++if iconv_dep.found()
+   cdata.set('HAVE_ICONV', 1)
+   iconvconsttest = '''#include <iconv.h>
+ size_t iconv (iconv_t cd, char * *inbuf, size_t *inbytesleft, char * *outbuf, size_t *outbytesleft);

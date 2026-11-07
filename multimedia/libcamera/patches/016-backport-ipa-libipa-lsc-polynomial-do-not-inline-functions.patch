@@ -1,0 +1,140 @@
+From b2fb2ebc0b08a04f18f8d075ea79c5a93f477b6d Mon Sep 17 00:00:00 2001
+From: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Date: Tue, 30 Jun 2026 17:11:45 +0200
+Subject: [PATCH] ipa: libipa: lsc_polynomial: Do not inline functions
+
+There is no reason to inline the Polynomial class implementation.
+
+Move functions implementation to the corresponding .cpp file.
+
+While at it remove a rougue empty line between class members
+definitions.
+
+Signed-off-by: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Reviewed-by: Kieran Bingham <kieran.bingham@ideasonboard.com>
+Reviewed-by: Stefan Klug <stefan.klug@ideasonboard.com>
+---
+ src/ipa/libipa/lsc_polynomial.cpp | 34 ++++++++++++++++++++++++++---
+ src/ipa/libipa/lsc_polynomial.h   | 36 +++----------------------------
+ 2 files changed, 34 insertions(+), 36 deletions(-)
+
+--- a/src/ipa/libipa/lsc_polynomial.cpp
++++ b/src/ipa/libipa/lsc_polynomial.cpp
+@@ -47,7 +47,6 @@ namespace lsc {
+  */
+ 
+ /**
+- * \fn Polynomial::sampleAtNormalizedPixelPos(double x, double y)
+  * \brief Sample the polynomial at the given normalized pixel position
+  *
+  * This functions samples the polynomial at the given pixel position divided by
+@@ -57,9 +56,20 @@ namespace lsc {
+  * \param y y position in normalized coordinates
+  * \return The sampled value
+  */
++double Polynomial::sampleAtNormalizedPixelPos(double x, double y) const
++{
++	double dx = x - cnx_;
++	double dy = y - cny_;
++	double r = sqrt(dx * dx + dy * dy);
++	double res = 1.0;
++
++	for (unsigned int i = 0; i < coefficients_.size(); i++)
++		res += coefficients_[i] * std::pow(r, (i + 1) * 2);
++
++	return res;
++}
+ 
+ /**
+- * \fn Polynomial::getM()
+  * \brief Get the value m as described in the dng specification
+  *
+  * Returns m according to dng spec. m represents the Euclidean distance
+@@ -68,9 +78,17 @@ namespace lsc {
+  *
+  * \return The sampled value
+  */
++double Polynomial::getM() const
++{
++	double cpx = imageSize_.width * cx_;
++	double cpy = imageSize_.height * cy_;
++	double mx = std::max(cpx, std::fabs(imageSize_.width - cpx));
++	double my = std::max(cpy, std::fabs(imageSize_.height - cpy));
++
++	return sqrt(mx * mx + my * my);
++}
+ 
+ /**
+- * \fn Polynomial::setReferenceImageSize(const Size &size)
+  * \brief Set the reference image size
+  *
+  * Set the reference image size that is used for subsequent calls to getM() and
+@@ -78,6 +96,16 @@ namespace lsc {
+  *
+  * \param size The size of the reference image
+  */
++void Polynomial::setReferenceImageSize(const Size &size)
++{
++	assert(!size.isNull());
++	imageSize_ = size;
++
++	/* Calculate normalized centers */
++	double m = getM();
++	cnx_ = (size.width * cx_) / m;
++	cny_ = (size.height * cy_) / m;
++}
+ 
+ } /* namespace lsc */
+ 
+--- a/src/ipa/libipa/lsc_polynomial.h
++++ b/src/ipa/libipa/lsc_polynomial.h
+@@ -37,38 +37,9 @@ public:
+ 	{
+ 	}
+ 
+-	double sampleAtNormalizedPixelPos(double x, double y) const
+-	{
+-		double dx = x - cnx_;
+-		double dy = y - cny_;
+-		double r = sqrt(dx * dx + dy * dy);
+-		double res = 1.0;
+-		for (unsigned int i = 0; i < coefficients_.size(); i++) {
+-			res += coefficients_[i] * std::pow(r, (i + 1) * 2);
+-		}
+-		return res;
+-	}
+-
+-	double getM() const
+-	{
+-		double cpx = imageSize_.width * cx_;
+-		double cpy = imageSize_.height * cy_;
+-		double mx = std::max(cpx, std::fabs(imageSize_.width - cpx));
+-		double my = std::max(cpy, std::fabs(imageSize_.height - cpy));
+-
+-		return sqrt(mx * mx + my * my);
+-	}
+-
+-	void setReferenceImageSize(const Size &size)
+-	{
+-		assert(!size.isNull());
+-		imageSize_ = size;
+-
+-		/* Calculate normalized centers */
+-		double m = getM();
+-		cnx_ = (size.width * cx_) / m;
+-		cny_ = (size.height * cy_) / m;
+-	}
++	double sampleAtNormalizedPixelPos(double x, double y) const;
++	double getM() const;
++	void setReferenceImageSize(const Size &size);
+ 
+ private:
+ 	double cx_;
+@@ -76,7 +47,6 @@ private:
+ 	double cnx_;
+ 	double cny_;
+ 	std::array<double, 5> coefficients_;
+-
+ 	Size imageSize_;
+ };
+ 

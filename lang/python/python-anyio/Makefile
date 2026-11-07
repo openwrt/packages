@@ -3,11 +3,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-anyio
-PKG_VERSION:=4.14.2
+PKG_VERSION:=4.15.1
 PKG_RELEASE:=1
 
 PYPI_NAME:=anyio
-PKG_HASH:=cfa139f3ed1a23ee8f88a145ddb5ac7605b8bbfd8592baacd7ce3d8bb4313c7f
+PKG_HASH:=9f28306018cbd6d329e64a36d58256edff76dd996fe423bc957326e578b82a94
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT
@@ -37,6 +37,7 @@ define Package/python3-anyio
     +python3-light \
     +python3-logging \
     +python3-openssl \
+    +python3-typing-extensions \
     +python3-urllib
 endef
 

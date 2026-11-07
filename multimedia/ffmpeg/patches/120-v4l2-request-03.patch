@@ -1,0 +1,371 @@
+From 9a5d025a873145afc16fea3078ae3410d2291280 Mon Sep 17 00:00:00 2001
+From: Jonas Karlman <jonas@kwiboo.se>
+Date: Tue, 6 Aug 2024 09:06:01 +0000
+Subject: [PATCH 03/13] avcodec: Add common V4L2 Request API code
+
+Add initial helpers for supporting V4L2 Request API hwaccels.
+
+Basic flow for initialization follows the kernel Memory-to-memory
+Stateless Video Decoder Interface > Initialization [1].
+
+In init a hw frame ctx is created and initialized to start a new V4L2
+video decoding session, initial CAPTURE buffers is pre-allocated,
+OUTPUT buffers and request objects are allocated for a circular queue.
+
+In frame_params the codec pixel format and optional codec-specific
+extended controls is configured before the hw frame ctx is initialized.
+
+In uninit any pending request is flushed before resources are released.
+
+[1] https://www.kernel.org/doc/html/latest/userspace-api/media/v4l/dev-stateless-decoder.html#initialization
+
+Co-developed-by: Jernej Skrabec <jernej.skrabec@gmail.com>
+Signed-off-by: Jernej Skrabec <jernej.skrabec@gmail.com>
+Co-developed-by: Alex Bee <knaerzche@gmail.com>
+Signed-off-by: Alex Bee <knaerzche@gmail.com>
+Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
+---
+ libavcodec/Makefile       |   2 +
+ libavcodec/v4l2_request.c | 249 ++++++++++++++++++++++++++++++++++++++
+ libavcodec/v4l2_request.h |  64 ++++++++++
+ 3 files changed, 315 insertions(+)
+ create mode 100644 libavcodec/v4l2_request.c
+ create mode 100644 libavcodec/v4l2_request.h
+
+--- a/libavcodec/Makefile
++++ b/libavcodec/Makefile
+@@ -185,6 +185,7 @@ OBJS-$(CONFIG_VIDEODSP)                +
+ OBJS-$(CONFIG_VP3DSP)                  += vp3dsp.o
+ OBJS-$(CONFIG_VP8DSP)                  += vp8dsp.o
+ OBJS-$(CONFIG_V4L2_M2M)                += v4l2_m2m.o v4l2_context.o v4l2_buffers.o v4l2_fmt.o
++OBJS-$(CONFIG_V4L2_REQUEST)            += v4l2_request.o
+ OBJS-$(CONFIG_WMA_FREQS)               += wma_freqs.o
+ OBJS-$(CONFIG_WMV2DSP)                 += wmv2dsp.o
+ 
+@@ -1357,6 +1358,7 @@ SKIPHEADERS-$(CONFIG_VIDEOTOOLBOX)     +
+ SKIPHEADERS-$(CONFIG_VULKAN)           += ffv1_vulkan.h prores_vulkan.h vulkan_video.h \
+                                           vulkan_encode.h vulkan_decode.h
+ SKIPHEADERS-$(CONFIG_V4L2_M2M)         += v4l2_buffers.h v4l2_context.h v4l2_m2m.h
++SKIPHEADERS-$(CONFIG_V4L2_REQUEST)     += v4l2_request.h
+ SKIPHEADERS-$(CONFIG_ZLIB)             += zlib_wrapper.h
+ 
+ TESTPROGS = avcodec                                                     \
+--- /dev/null
++++ b/libavcodec/v4l2_request.c
+@@ -0,0 +1,249 @@
++/*
++ * This file is part of FFmpeg.
++ *
++ * FFmpeg is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * FFmpeg is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with FFmpeg; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++ */
++
++#include "config.h"
++
++#include <linux/media.h>
++#include <sys/ioctl.h>
++#include <sys/mman.h>
++#include <unistd.h>
++
++#include "libavutil/hwcontext_v4l2request_internal.h"
++#include "libavutil/mem.h"
++#include "decode.h"
++#include "internal.h"
++#include "v4l2_request.h"
++
++static const AVClass v4l2_request_context_class = {
++    .class_name = "V4L2RequestContext",
++    .item_name  = av_default_item_name,
++    .version    = LIBAVUTIL_VERSION_INT,
++};
++
++static inline V4L2RequestContext *v4l2_request_context(AVCodecContext *avctx)
++{
++    return (V4L2RequestContext *)avctx->internal->hwaccel_priv_data;
++}
++
++static void v4l2_request_output_buffer_uninit(V4L2RequestOutputBuffer *output)
++{
++    // Close the request associated with the OUTPUT buffer
++    if (output->request_fd >= 0) {
++        close(output->request_fd);
++        output->request_fd = -1;
++    }
++
++    // Umap the OUTPUT buffer memory
++    if (output->addr) {
++        munmap(output->addr, output->size);
++        output->addr = NULL;
++    }
++
++    // Return the OUTPUT buffer to the frames context OUTPUT pool
++    av_buffer_unref(&output->ref);
++}
++
++static int v4l2_request_output_buffer_init(V4L2RequestContext *ctx,
++                                           V4L2RequestOutputBuffer *output)
++{
++    struct v4l2_format *format = &ctx->fctxi->output.format;
++    struct v4l2_buffer *buffer;
++    off_t offset;
++    void *addr;
++    int ret;
++
++    // Get an OUTPUT buffer from frames context OUTPUT pool
++    output->ref = av_buffer_pool_get(ctx->fctxi->output.pool);
++    if (!output->ref)
++        return AVERROR(ENOMEM);
++
++    buffer = (struct v4l2_buffer *)output->ref->data;
++    output->index = buffer->index;
++    output->size = V4L2_TYPE_IS_MULTIPLANAR(format->type) ?
++                   format->fmt.pix_mp.plane_fmt[0].sizeimage :
++                   format->fmt.pix.sizeimage;
++    output->bytesused = 0;
++
++    // Map the OUTPUT buffer memory, raw bitstream data is written into it
++    offset = V4L2_TYPE_IS_MULTIPLANAR(buffer->type) ?
++             buffer->m.planes[0].m.mem_offset :
++             buffer->m.offset;
++    addr = mmap(NULL, output->size, PROT_READ | PROT_WRITE, MAP_SHARED,
++                ctx->fctxi->video_fd, offset);
++    if (addr == MAP_FAILED) {
++        ret = AVERROR(errno);
++        av_log(ctx, AV_LOG_ERROR, "Failed to map OUTPUT buffer %d: %s (%d)\n",
++               output->index, strerror(errno), errno);
++        goto fail;
++    }
++    output->addr = addr;
++
++    // Allocate and associated a request for the OUTPUT buffer
++    if (ioctl(ctx->fctxi->media_fd, MEDIA_IOC_REQUEST_ALLOC, &output->request_fd) < 0) {
++        ret = AVERROR(errno);
++        av_log(ctx, AV_LOG_ERROR, "Failed to allocate request for OUTPUT buffer %d: %s (%d)\n",
++               output->index, strerror(errno), errno);
++        goto fail;
++    }
++
++    return 0;
++
++fail:
++    v4l2_request_output_buffer_uninit(output);
++    return ret;
++}
++
++int ff_v4l2_request_frame_params(AVCodecContext *avctx,
++                                 AVBufferRef *hw_frames_ctx,
++                                 uint32_t pixelformat,
++                                 uint8_t bit_depth)
++{
++    V4L2RequestContext *ctx = v4l2_request_context(avctx);
++    AVHWFramesContext *hwfc = (AVHWFramesContext *)hw_frames_ctx->data;
++    AVV4L2RequestFramesContext *fctx = hwfc->hwctx;
++
++    // Set parameters used during frames context initialization
++    fctx->pixelformat = pixelformat;
++    fctx->bit_depth = bit_depth;
++    if (ctx) {
++        fctx->init_controls = ctx->init_controls;
++        fctx->nb_init_controls = ctx->nb_init_controls;
++    }
++
++    hwfc->format = AV_PIX_FMT_DRM_PRIME;
++    hwfc->sw_format = AV_PIX_FMT_NONE;
++    hwfc->width = avctx->coded_width;
++    hwfc->height = avctx->coded_height;
++
++    // Pre-allocate CAPTURE buffers to ensure CAPTURE queue can be started
++    hwfc->initial_pool_size = 1;
++
++    return 0;
++}
++
++int ff_v4l2_request_uninit(AVCodecContext *avctx)
++{
++    V4L2RequestContext *ctx = v4l2_request_context(avctx);
++    enum v4l2_buf_type type;
++
++    if (ctx->fctxi) {
++        // TODO: Flush and wait on all pending requests
++
++        // Stop streaming on OUTPUT queue
++        type = ctx->fctxi->output.format.type;
++        if (ioctl(ctx->fctxi->video_fd, VIDIOC_STREAMOFF, &type) < 0)
++            av_log(ctx, AV_LOG_WARNING, "Failed to stop OUTPUT streaming: %s (%d)\n",
++                   strerror(errno), errno);
++
++        // Stop streaming on CAPTURE queue
++        type = ctx->fctxi->capture.format.type;
++        if (ioctl(ctx->fctxi->video_fd, VIDIOC_STREAMOFF, &type) < 0)
++            av_log(ctx, AV_LOG_WARNING, "Failed to stop CAPTURE streaming: %s (%d)\n",
++                   strerror(errno), errno);
++
++        // Release OUTPUT buffers and requests
++        for (int i = 0; i < FF_ARRAY_ELEMS(ctx->output); i++)
++            v4l2_request_output_buffer_uninit(&ctx->output[i]);
++
++        ctx->fctxi = NULL;
++    }
++
++    av_buffer_unref(&ctx->frames_ref);
++    ff_mutex_destroy(&ctx->mutex);
++
++    return 0;
++}
++
++int ff_v4l2_request_init(AVCodecContext *avctx,
++                         struct v4l2_ext_control *control, int count,
++                         int (*post_frames_ctx)(AVCodecContext *avctx))
++{
++    V4L2RequestContext *ctx = v4l2_request_context(avctx);
++    AVHWFramesContext *hwfc;
++    AVV4L2RequestFramesContext *fctx;
++    enum v4l2_buf_type type;
++    int ret;
++
++    // Set initial default values
++    ctx->av_class = &v4l2_request_context_class;
++    ctx->init_controls = control;
++    ctx->nb_init_controls = count;
++    ff_mutex_init(&ctx->mutex, NULL);
++    for (int i = 0; i < FF_ARRAY_ELEMS(ctx->output); i++) {
++        ctx->output[i].index = i;
++        ctx->output[i].request_fd = -1;
++    }
++
++    // Create frames context and allocate initial CAPTURE buffers
++    ret = ff_decode_get_hw_frames_ctx(avctx, AV_HWDEVICE_TYPE_V4L2REQUEST);
++    if (ret < 0)
++        goto fail;
++
++    ctx->frames_ref = av_buffer_ref(avctx->hw_frames_ctx);
++    if (!ctx->frames_ref) {
++        ret = AVERROR(ENOMEM);
++        goto fail;
++    }
++
++    // Get internal hwctx from frames context
++    hwfc = (AVHWFramesContext *)ctx->frames_ref->data;
++    fctx = hwfc->hwctx;
++    ctx->fctxi = fctx->internal;
++
++    // Reset init controls after successful frames context initialization
++    ctx->init_controls = NULL;
++    ctx->nb_init_controls = 0;
++
++    // Check codec-specific controls, e.g. profile and level
++    if (post_frames_ctx) {
++        ret = post_frames_ctx(avctx);
++        if (ret < 0)
++            goto fail;
++    }
++
++    // Allocate OUTPUT buffers and requests for circular queue
++    for (int i = 0; i < FF_ARRAY_ELEMS(ctx->output); i++) {
++        ret = v4l2_request_output_buffer_init(ctx, &ctx->output[i]);
++        if (ret < 0)
++            goto fail;
++    }
++
++    // Start streaming on OUTPUT queue
++    type = ctx->fctxi->output.format.type;
++    if (ioctl(ctx->fctxi->video_fd, VIDIOC_STREAMON, &type) < 0) {
++        ret = AVERROR(errno);
++        av_log(ctx, AV_LOG_ERROR, "Failed to start OUTPUT streaming: %s (%d)\n",
++               strerror(errno), errno);
++        goto fail;
++    }
++
++    // Start streaming on CAPTURE queue
++    type = ctx->fctxi->capture.format.type;
++    if (ioctl(ctx->fctxi->video_fd, VIDIOC_STREAMON, &type) < 0) {
++        ret = AVERROR(errno);
++        av_log(ctx, AV_LOG_ERROR, "Failed to start CAPTURE streaming: %s (%d)\n",
++               strerror(errno), errno);
++        goto fail;
++    }
++
++    return 0;
++
++fail:
++    ff_v4l2_request_uninit(avctx);
++    return ret;
++}
+--- /dev/null
++++ b/libavcodec/v4l2_request.h
+@@ -0,0 +1,64 @@
++/*
++ * This file is part of FFmpeg.
++ *
++ * FFmpeg is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * FFmpeg is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with FFmpeg; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++ */
++
++#ifndef AVCODEC_V4L2_REQUEST_H
++#define AVCODEC_V4L2_REQUEST_H
++
++#include <stdbool.h>
++#include <stdint.h>
++#include <linux/videodev2.h>
++
++#include "libavutil/buffer.h"
++#include "libavutil/log.h"
++#include "libavutil/thread.h"
++#include "avcodec.h"
++
++typedef struct AVV4L2RequestFramesContextInternal AVV4L2RequestFramesContextInternal;
++
++typedef struct V4L2RequestOutputBuffer {
++    AVBufferRef *ref;
++    uint32_t index;
++    int request_fd;
++    uint8_t *addr;
++    uint32_t size;
++    uint32_t bytesused;
++    struct timeval timestamp;
++} V4L2RequestOutputBuffer;
++
++typedef struct V4L2RequestContext {
++    const AVClass *av_class;
++    AVBufferRef *frames_ref;
++    AVV4L2RequestFramesContextInternal *fctxi;
++    AVMutex mutex;
++    V4L2RequestOutputBuffer output[4];
++    struct v4l2_ext_control *init_controls;
++    int nb_init_controls;
++} V4L2RequestContext;
++
++int ff_v4l2_request_frame_params(AVCodecContext *avctx,
++                                 AVBufferRef *hw_frames_ctx,
++                                 uint32_t pixelformat,
++                                 uint8_t bit_depth);
++
++int ff_v4l2_request_uninit(AVCodecContext *avctx);
++
++int ff_v4l2_request_init(AVCodecContext *avctx,
++                         struct v4l2_ext_control *control, int count,
++                         int (*post_frames_ctx)(AVCodecContext *avctx));
++
++#endif /* AVCODEC_V4L2_REQUEST_H */

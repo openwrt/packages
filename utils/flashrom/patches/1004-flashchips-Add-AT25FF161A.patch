@@ -1,0 +1,70 @@
+From 86ea3102aa021083e223d89b806cb7dad9fea41d Mon Sep 17 00:00:00 2001
+From: Mathew Blowers <mathew.blowers@raspberrypi.com>
+Date: Tue, 26 May 2026 16:29:36 +0100
+Subject: [PATCH] Add AT25FF161A
+
+Signed-off-by: Mathew Blowers <mathew.blowers@raspberrypi.com>
+[joshuacov: adapted from 86ea3102, use BP2 printlock to match unlock]
+Signed-off-by: Joshua Covington <joshuacov@gmail.com>
+---
+ flashchips/atmel.c   | 38 ++++++++++++++++++++++++++++++++++++++
+ include/flashchips.h |  1 +
+ 2 files changed, 39 insertions(+)
+
+--- a/flashchips/atmel.c
++++ b/flashchips/atmel.c
+@@ -831,6 +831,44 @@
+ 
+ 	{
+ 		.vendor		= "Atmel",
++		.name		= "AT25FF161A",
++		.bustype	= BUS_SPI,
++		.manufacture_id	= ATMEL_ID,
++		.model_id	= ATMEL_AT25FF161A,
++		.total_size	= 2048,
++		.page_size	= 256,
++		.feature_bits	= FEATURE_WRSR_WREN | FEATURE_OTP | FEATURE_WRSR2,
++		.tested		= TEST_OK_PREW,
++		.probe		= PROBE_SPI_RDID,
++		.probe_timing	= TIMING_ZERO,
++		.block_erasers	=
++		{
++			{
++				.eraseblocks = { {4 * 1024, 512} },
++				.block_erase = SPI_BLOCK_ERASE_20,
++			}, {
++				.eraseblocks = { {32 * 1024, 64} },
++				.block_erase = SPI_BLOCK_ERASE_52,
++			}, {
++				.eraseblocks = { {64 * 1024, 32} },
++				.block_erase = SPI_BLOCK_ERASE_D8,
++			}, {
++				.eraseblocks = { {2048 * 1024, 1} },
++				.block_erase = SPI_BLOCK_ERASE_60,
++			}, {
++				.eraseblocks = { {2048 * 1024, 1} },
++				.block_erase = SPI_BLOCK_ERASE_C7,
++			}
++		},
++		.printlock	= SPI_PRETTYPRINT_STATUS_REGISTER_BP2_SRWD,
++		.unlock		= SPI_DISABLE_BLOCKPROTECT_BP2_SRWD,
++		.write		= SPI_CHIP_WRITE256,
++		.read		= SPI_CHIP_READ,
++		.voltage	= {1650, 3600},
++	},
++
++	{
++		.vendor		= "Atmel",
+ 		.name		= "AT25FS010",
+ 		.bustype	= BUS_SPI,
+ 		.manufacture_id	= ATMEL_ID,
+--- a/include/flashchips.h
++++ b/include/flashchips.h
+@@ -140,6 +140,7 @@
+ #define ATMEL_AT25F2048		0x63	/* Needs AT25F_RDID */
+ #define ATMEL_AT25F4096		0x64	/* Needs AT25F_RDID */
+ #define ATMEL_AT25FF041A	0x4408
++#define ATMEL_AT25FF161A	0x4608
+ #define ATMEL_AT25FS010		0x6601
+ #define ATMEL_AT25FS040		0x6604
+ #define ATMEL_AT25SF041		0x8401

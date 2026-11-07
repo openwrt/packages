@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=tinc
 PKG_VERSION:=1.1_pre18
 PKG_REALVERSION:=1.1pre18
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_REALVERSION).tar.gz
 PKG_SOURCE_URL:=https://tinc-vpn.org/packages
@@ -22,7 +22,6 @@ PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:tinc-vpn:tinc
 
-PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 

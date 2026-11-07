@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-base
-PKG_VERSION:=1.26.4
-PKG_RELEASE:=2
+PKG_VERSION:=1.28.7
+PKG_RELEASE:=3
 
 PKG_SOURCE:=gst-plugins-base-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gst-plugins-base
-PKG_HASH:=d6fcca7be4253e5d8541c6e3e07729120a16e1dc356f9a14a4a83a901120742f
+PKG_HASH:=ed6e5410f496d171818763af2265e7977154bc7f9b827e98acf8c5bed21dd5a7
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-base-$(PKG_VERSION)
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
@@ -27,12 +27,14 @@ include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/meson.mk
 
 PKG_CONFIG_DEPENDS:= \
+	CONFIG_PACKAGE_gst1-device-monitor \
 	CONFIG_PACKAGE_gst1-mod-alsa \
 	CONFIG_PACKAGE_gst1-mod-app \
 	CONFIG_PACKAGE_gst1-mod-audioconvert \
 	CONFIG_PACKAGE_gst1-mod-audiorate \
 	CONFIG_PACKAGE_gst1-mod-audioresample \
 	CONFIG_PACKAGE_gst1-mod-audiotestsrc \
+	CONFIG_PACKAGE_gst1-mod-encoding \
 	CONFIG_PACKAGE_gst1-mod-playback \
 	CONFIG_PACKAGE_gst1-mod-gio \
 	CONFIG_PACKAGE_gst1-mod-ogg \
@@ -61,6 +63,16 @@ endef
 
 define Package/gstreamer1-base/description/Default
  GStreamer open source multimedia framework
+endef
+
+define Package/gst1-device-monitor
+  $(call Package/gstreamer1-base/Default)
+  TITLE+= device discovery utility
+endef
+
+define Package/gst1-device-monitor/description
+  List devices, their capabilities and GStreamer source properties using
+  the upstream gst-device-monitor-1.0 utility.
 endef
 
 
@@ -169,7 +181,7 @@ MESON_ARGS += \
 	\
 	-Dexamples=disabled \
 	-Dtests=disabled \
-	-Dtools=disabled \
+	-Dtools=$(if $(CONFIG_PACKAGE_gst1-device-monitor),en,dis)abled \
 	-Dintrospection=disabled \
 	-Dnls=enabled \
 	-Dorc=disabled \
@@ -221,6 +233,12 @@ define Package/gstreamer1-plugins-base/install
   true
 endef
 
+define Package/gst1-device-monitor/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gst-device-monitor-$(GST_VERSION) \
+		$(1)/usr/bin/
+endef
+
 # 1: short name
 # 2: description
 # 3: dependencies on other gstreamer libraries (short name)
@@ -266,7 +284,7 @@ $(eval $(call GstBuildLibrary,rtp,RTP,,))
 $(eval $(call GstBuildLibrary,rtsp,RTSP,,))
 $(eval $(call GstBuildLibrary,sdp,SDP,pbutils rtp,))
 $(eval $(call GstBuildLibrary,tag,tag support,,))
-$(eval $(call GstBuildLibrary,video,video,,))
+$(eval $(call GstBuildLibrary,video,video,allocators,))
 
 # 1: short name
 # 2: description
@@ -315,7 +333,7 @@ $(eval $(call GstBuildPlugin,encoding,encoding plugin,pbutils video,,))
 $(eval $(call GstBuildPlugin,gio,GIO,,,))
 $(eval $(call GstBuildPlugin,opengl,GL,gl controller,,+libgraphene +libjpeg +libpng,HAVE_MESA))
 $(eval $(call GstBuildPlugin,overlaycomposition,overlay composition,video,,))
-$(eval $(call GstBuildPlugin,pbtypes,pbtypes,video,,))
+$(eval $(call GstBuildPlugin,pbtypes,pbtypes,audio video,,))
 $(eval $(call GstBuildPlugin,playback,playback,pbutils,,))
 $(eval $(call GstBuildPlugin,subparse,subparse,video,,))
 $(eval $(call GstBuildPlugin,rawparse,parse raw media,audio video,,))
@@ -338,3 +356,4 @@ $(eval $(call GstBuildPlugin,vorbis,Vorbis,audio tag,ogg,+libvorbis))
 
 $(eval $(call BuildPackage,gstreamer1-plugins-base))
 $(eval $(call BuildPackage,gst1-plugins-base))
+$(eval $(call BuildPackage,gst1-device-monitor))

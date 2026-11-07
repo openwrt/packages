@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libevdev
 PKG_VERSION:=1.13.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.freedesktop.org/software/libevdev/
@@ -24,6 +24,7 @@ define Package/libevdev
   CATEGORY:=Libraries
   TITLE:=a wrapper library for evdev devices
   URL:=https://www.freedesktop.org/wiki/Software/libevdev/
+  DEPENDS:=input-support
 endef
 
 define Package/libevdev/description

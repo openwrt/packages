@@ -1,0 +1,1377 @@
+From d05ef4a1ad9f3ab67345636869721b04e0d9094e Mon Sep 17 00:00:00 2001
+From: Paul Elder <paul.elder@ideasonboard.com>
+Date: Tue, 2 Dec 2025 19:36:40 +0900
+Subject: [PATCH] pipeline: rkisp2: Implement pipeline handler for rkisp2
+
+Implement the pipeline handler for rkisp2. This currently supports the
+ISP version integrated on the Rockchip RK3588. The current version only
+supports memory-to-memory mode and only the main path and only raw
+sensors.
+
+Signed-off-by: Paul Elder <paul.elder@ideasonboard.com>
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+Changes in v2:
+- split dma rx pads
+- split main/self path capture pads
+- no more configuring crop rectangles, as they have been moved to
+  parameters buffers
+---
+ Documentation/runtime_configuration.rst   |    9 +
+ meson.build                               |    1 +
+ meson_options.txt                         |    1 +
+ src/libcamera/pipeline/rkisp2/meson.build |    5 +
+ src/libcamera/pipeline/rkisp2/rkisp2.cpp  | 1293 +++++++++++++++++++++
+ 5 files changed, 1309 insertions(+)
+ create mode 100644 src/libcamera/pipeline/rkisp2/meson.build
+ create mode 100644 src/libcamera/pipeline/rkisp2/rkisp2.cpp
+
+--- a/Documentation/runtime_configuration.rst
++++ b/Documentation/runtime_configuration.rst
+@@ -81,6 +81,8 @@ Configuration file example
+          supported_devices:
+            - driver: mxc-isi
+              software_isp: true
++       rkisp2:
++         isp_enable: true
+      software_isp:
+        copy_input_buffer: false
+        measure:
+@@ -157,6 +159,13 @@ pipelines.simple.supported_devices.drive
+ 
+    Example `software_isp` value: ``true``
+ 
++pipelines.rkisp2.isp_enable
++   Configure whether or not to use the ISP. Default (when unconfigured) is
++   true. When set to false the ISP will not be used, so only the VICAP will be
++   used for capture.
++
++   Example value: ``false``
++
+ software_isp.copy_input_buffer
+    Define whether input buffers should be copied into standard (cached)
+    memory in software ISP. This is done by default to prevent very slow
+--- a/meson.build
++++ b/meson.build
+@@ -219,6 +219,7 @@ pipelines_support = {
+     'ipu3':         arch_x86,
+     'mali-c55':     arch_arm,
+     'rkisp1':       arch_arm,
++    'rkisp2':       arch_arm,
+     'rpi/pisp':     arch_arm,
+     'rpi/vc4':      arch_arm,
+     'simple':       ['any'],
+--- a/meson_options.txt
++++ b/meson_options.txt
+@@ -82,6 +82,7 @@ option('pipelines',
+             'ipu3',
+             'mali-c55',
+             'rkisp1',
++            'rkisp2',
+             'rpi/pisp',
+             'rpi/vc4',
+             'simple',
+--- /dev/null
++++ b/src/libcamera/pipeline/rkisp2/meson.build
+@@ -0,0 +1,5 @@
++# SPDX-License-Identifier: CC0-1.0
++
++libcamera_internal_sources += files([
++    'rkisp2.cpp',
++])
+--- /dev/null
++++ b/src/libcamera/pipeline/rkisp2/rkisp2.cpp
+@@ -0,0 +1,1293 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2026, Ideas on Board Oy.
++ *
++ * Pipeline handler for Rockchip ISP2
++ */
++
++#include <algorithm>
++#include <deque>
++#include <memory>
++#include <set>
++#include <vector>
++
++#include <libcamera/base/log.h>
++#include <libcamera/base/utils.h>
++
++#include <libcamera/camera.h>
++#include <libcamera/control_ids.h>
++#include <libcamera/controls.h>
++#include <libcamera/formats.h>
++#include <libcamera/geometry.h>
++
++#include <libcamera/ipa/core_ipa_interface.h>
++#include <libcamera/ipa/rkisp2_ipa_interface.h>
++#include <libcamera/ipa/rkisp2_ipa_proxy.h>
++
++#include "libcamera/internal/buffer_queue.h"
++#include "libcamera/internal/camera.h"
++#include "libcamera/internal/camera_manager.h"
++#include "libcamera/internal/camera_sensor.h"
++#include "libcamera/internal/delayed_controls.h"
++#include "libcamera/internal/device_enumerator.h"
++#include "libcamera/internal/formats.h"
++#include "libcamera/internal/framebuffer.h"
++#include "libcamera/internal/global_configuration.h"
++#include "libcamera/internal/ipa_manager.h"
++#include "libcamera/internal/media_device.h"
++#include "libcamera/internal/pipeline_handler.h"
++#include "libcamera/internal/request.h"
++#include "libcamera/internal/sequence_sync_helper.h"
++#include "libcamera/internal/v4l2_subdevice.h"
++#include "libcamera/internal/v4l2_videodevice.h"
++
++namespace libcamera {
++
++static const Size ispMaxSize = Size(4416, 3312);
++static const Size vicapMaxSize = Size(8192, 8192);
++
++/* \todo Re-add NV21 and YUV422 and YVU422 after it's fixed in the driver */
++const std::map<PixelFormat, uint32_t> formatToMediaBus = {
++	{ formats::UYVY, MEDIA_BUS_FMT_YUYV8_2X8 },
++	{ formats::NV12, MEDIA_BUS_FMT_YUYV8_2X8 },
++	{ formats::NV16, MEDIA_BUS_FMT_YUYV8_2X8 },
++	{ formats::NV61, MEDIA_BUS_FMT_YUYV8_2X8 },
++	{ formats::YUV420, MEDIA_BUS_FMT_YUYV8_1_5X8 },
++	{ formats::YVU420, MEDIA_BUS_FMT_YUYV8_1_5X8 },
++	{ formats::R8, MEDIA_BUS_FMT_YUYV8_2X8 },
++};
++
++/* \todo Deduplicate this (we have the same thing in rkisp1) */
++const std::map<PixelFormat, uint32_t> rawFormats = {
++	{ formats::SBGGR8, MEDIA_BUS_FMT_SBGGR8_1X8 },
++	{ formats::SGBRG8, MEDIA_BUS_FMT_SGBRG8_1X8 },
++	{ formats::SGRBG8, MEDIA_BUS_FMT_SGRBG8_1X8 },
++	{ formats::SRGGB8, MEDIA_BUS_FMT_SRGGB8_1X8 },
++	{ formats::SBGGR10, MEDIA_BUS_FMT_SBGGR10_1X10 },
++	{ formats::SGBRG10, MEDIA_BUS_FMT_SGBRG10_1X10 },
++	{ formats::SGRBG10, MEDIA_BUS_FMT_SGRBG10_1X10 },
++	{ formats::SRGGB10, MEDIA_BUS_FMT_SRGGB10_1X10 },
++	{ formats::SBGGR12, MEDIA_BUS_FMT_SBGGR12_1X12 },
++	{ formats::SGBRG12, MEDIA_BUS_FMT_SGBRG12_1X12 },
++	{ formats::SGRBG12, MEDIA_BUS_FMT_SGRBG12_1X12 },
++	{ formats::SRGGB12, MEDIA_BUS_FMT_SRGGB12_1X12 },
++};
++
++LOG_DEFINE_CATEGORY(RkISP2)
++
++class PipelineHandlerRkISP2;
++
++struct RkISP2FrameInfo {
++	RkISP2FrameInfo(Request *_request,
++			FrameBuffer *_buffer,
++			const ControlList &_metadata = ControlList(controls::controls),
++			bool _metadataProcessed = false)
++		: request(_request), mainPathBuffer(_buffer), metadataProcessed(_metadataProcessed)
++	{
++		metadata.merge(_metadata);
++	}
++
++	Request *request = nullptr;
++	FrameBuffer *mainPathBuffer = nullptr;
++	ControlList metadata = ControlList(controls::controls);
++	bool metadataProcessed = false;
++};
++
++struct RkISP2RequestInfo {
++	Request *request = nullptr;
++	size_t sequence = 0;
++	bool sequenceValid = false;
++};
++
++class RkISP2CameraData : public Camera::Private
++{
++public:
++	RkISP2CameraData(PipelineHandler *pipe, MediaDevice *media)
++		: Camera::Private(pipe), media_(media), frame_(0)
++	{
++	}
++
++	~RkISP2CameraData()
++	{
++	}
++
++	int init(bool usingIsp, CameraSensor *sensor, V4L2VideoDevice *video,
++		 V4L2VideoDevice *rawrd, V4L2Subdevice *isp,
++		 V4L2VideoDevice *mainPath, V4L2VideoDevice *param,
++		 V4L2VideoDevice *stat);
++	PixelFormat getSensorFormat(unsigned int mbusCode, const Size &size,
++				    const Size &maxSize);
++
++	PipelineHandlerRkISP2 *pipe();
++	const PipelineHandlerRkISP2 *pipe() const;
++	int loadIPA();
++
++	void computeParamBuffers(unsigned int frame);
++
++	void tryCompleteRequest(Request *request, FrameBuffer *buffer);
++	void tryCompleteRequest(const ControlList &metadata);
++
++	void vicapBufferReady(FrameBuffer *buffer);
++	void rawrdBufferReady(FrameBuffer *buffer);
++	void ispBufferReady(FrameBuffer *buffer);
++	void statBufferReady(FrameBuffer *buffer);
++
++	void paramsComputed(unsigned int frame, unsigned int bufferId, unsigned int bytesused);
++	void setSensorControls(unsigned int frame, const ControlList &sensorControls);
++	void metadataReady(const ControlList &metadata);
++
++	/* These are the buffers that go between the vicap and the isp */
++	std::vector<std::unique_ptr<FrameBuffer>> internalBuffers_;
++
++	std::vector<std::unique_ptr<FrameBuffer>> statBuffers_;
++	std::unique_ptr<BufferQueue> paramQueue_;
++
++	std::unique_ptr<DelayedControls> delayedCtrls_;
++
++	/*
++	 * These are the buffers that are half-complete, as in either metadata
++	 * is ready or the frame has been completed from the ISP. Both
++	 * ready-handlers populate and complete from the front of the queue.
++	 *
++	 * The stat-ready handler flushes the queue however, because in general
++	 * more images complete than stats do, so this prevents the queue from
++	 * perpetually growing and making the metadata out of date.
++	 */
++	std::deque<RkISP2FrameInfo> pendingCompleteBuffers_;
++
++	/*
++	 * This is for tracking sequence numbers of requests for synchronizing
++	 * between stats and params and images for any dropped frames
++	 */
++	std::deque<RkISP2RequestInfo> pendingCompleteRequests_;
++
++	std::vector<IPABuffer> ipaBuffers_;
++
++	bool usingIsp_;
++	bool isRaw_;
++
++	MediaDevice *media_;
++	CameraSensor *sensor_;
++	V4L2VideoDevice *video_;
++	V4L2VideoDevice *rawrd_;
++	V4L2Subdevice *isp_;
++	V4L2VideoDevice *mainPath_;
++	V4L2VideoDevice *param_;
++	V4L2VideoDevice *stat_;
++	Stream stream_;
++
++	std::unique_ptr<ipa::rkisp2::IPAProxyRkISP2> ipa_;
++	ControlInfoMap ipaControls_;
++
++	/*
++	 * The sensor frame sequence of the last request queued to the pipeline
++	 * handler
++	 */
++	unsigned int frame_;
++	SequenceSyncHelper syncHelper_;
++};
++
++class RkISP2CameraConfiguration : public CameraConfiguration
++{
++public:
++	RkISP2CameraConfiguration(const RkISP2CameraData *data);
++
++	Status validate() override;
++
++	const V4L2SubdeviceFormat &sensorFormat() { return sensorFormat_; }
++
++private:
++	const RkISP2CameraData *data_;
++
++	V4L2SubdeviceFormat sensorFormat_;
++};
++
++namespace {
++
++/*
++ * This many internal buffers (or rather parameter and statistics buffer
++ * pairs) ensures that the pipeline runs smoothly, without frame drops.
++ */
++static constexpr unsigned int kRkISP2MinBufferCount = 4;
++
++} /* namespace */
++
++class PipelineHandlerRkISP2 : public PipelineHandler
++{
++public:
++	PipelineHandlerRkISP2(CameraManager *manager);
++
++	std::unique_ptr<CameraConfiguration>
++	generateConfiguration(Camera *camera,
++			      Span<const StreamRole> roles) override;
++
++	int configure(Camera *camera, CameraConfiguration *config) override;
++
++	int exportFrameBuffers(Camera *camera, Stream *stream,
++			       std::vector<std::unique_ptr<FrameBuffer>> *buffers) override;
++
++	int start(Camera *camera, const ControlList *controls) override;
++	void stopDevice(Camera *camera) override;
++
++	int queueRequestDevice(Camera *camera, Request *request) override;
++
++	bool match(DeviceEnumerator *enumerator) override;
++
++private:
++	RkISP2CameraData *cameraData(Camera *camera)
++	{
++		return static_cast<RkISP2CameraData *>(camera->_d());
++	}
++
++	int updateControls(RkISP2CameraData *data);
++	bool createCamera(bool usingIsp);
++	int processControls(RkISP2CameraData *data, const ControlList &ctrls);
++
++	int allocateBuffers(Camera *camera);
++	int freeBuffers(Camera *camera);
++
++	Size clampSensorSize(RkISP2CameraData *data, unsigned int mbus,
++			     const Size &maxSize);
++
++	std::shared_ptr<MediaDevice> media_;
++	std::unique_ptr<CameraSensor> sensor_;
++	std::unique_ptr<V4L2Subdevice> csi_;
++	std::unique_ptr<V4L2Subdevice> cif_;
++	std::unique_ptr<V4L2VideoDevice> video_;
++
++	std::shared_ptr<MediaDevice> ispMedia_;
++	std::unique_ptr<V4L2VideoDevice> rawrd_;
++	std::unique_ptr<V4L2Subdevice> isp_;
++	std::unique_ptr<V4L2VideoDevice> mainPath_;
++	std::unique_ptr<V4L2VideoDevice> param_;
++	std::unique_ptr<V4L2VideoDevice> stat_;
++};
++
++int RkISP2CameraData::init(bool usingIsp, CameraSensor *sensor,
++			   V4L2VideoDevice *video, V4L2VideoDevice *rawrd,
++			   V4L2Subdevice *isp,
++			   V4L2VideoDevice *mainPath, V4L2VideoDevice *param,
++			   V4L2VideoDevice *stat)
++{
++	usingIsp_ = usingIsp;
++	sensor_ = sensor;
++	video_ = video;
++	rawrd_ = rawrd;
++	isp_ = isp;
++	mainPath_ = mainPath;
++	param_ = param;
++	stat_ = stat;
++
++	ControlInfoMap::Map ctrls;
++
++	auto &testPatterns = sensor_->testPatternModes();
++	if (testPatterns.size()) {
++		ctrls.emplace(&controls::draft::TestPatternMode,
++			      ControlInfo(testPatterns.front(), testPatterns.back(),
++					  testPatterns.front()));
++	} else
++		LOG(RkISP2, Warning) << "Sensor doesn't support any test pattern modes";
++
++	controlInfo_ = ControlInfoMap(std::move(ctrls), controls::controls);
++
++	video_->bufferReady.connect(this, &RkISP2CameraData::vicapBufferReady);
++	if (mainPath_) {
++		rawrd_->bufferReady.connect(this, &RkISP2CameraData::rawrdBufferReady);
++		mainPath_->bufferReady.connect(this, &RkISP2CameraData::ispBufferReady);
++		stat_->bufferReady.connect(this, &RkISP2CameraData::statBufferReady);
++	}
++
++	return 0;
++}
++
++PixelFormat RkISP2CameraData::getSensorFormat(unsigned int mbusCode,
++					      const Size &size,
++					      const Size &maxSize)
++{
++	std::vector<unsigned int> mbusCodes = { mbusCode };
++	V4L2SubdeviceFormat format = sensor_->getFormat(mbusCodes, size, maxSize);
++	const auto &ret = std::find_if(rawFormats.begin(), rawFormats.end(),
++				       [format](const auto &value) { return value.second == format.code; });
++	if (ret != rawFormats.end())
++		return (*ret).first;
++
++	LOG(RkISP2, Error) << "No raw format supported by sensor";
++	return formats::SRGGB10;
++}
++
++PipelineHandlerRkISP2 *RkISP2CameraData::pipe()
++{
++	return static_cast<PipelineHandlerRkISP2 *>(Camera::Private::pipe());
++}
++
++const PipelineHandlerRkISP2 *RkISP2CameraData::pipe() const
++{
++	return static_cast<const PipelineHandlerRkISP2 *>(Camera::Private::pipe());
++}
++
++int RkISP2CameraData::loadIPA()
++{
++	ipa_ = pipe()->createIPA<ipa::rkisp2::IPAProxyRkISP2>(1, 1);
++	if (!ipa_)
++		return -ENOENT;
++
++	ipa_->paramsComputed.connect(this, &RkISP2CameraData::paramsComputed);
++	ipa_->setSensorControls.connect(this, &RkISP2CameraData::setSensorControls);
++	ipa_->metadataReady.connect(this, &RkISP2CameraData::metadataReady);
++
++	/* The IPA tuning file is made from the sensor name. */
++	std::string ipaTuningFile =
++		ipa_->configurationFile(sensor_->model() + ".yaml", "uncalibrated.yaml");
++
++	IPACameraSensorInfo sensorInfo{};
++	int ret = sensor_->sensorInfo(&sensorInfo);
++	if (ret) {
++		LOG(RkISP2, Error) << "Camera sensor information not available";
++		return ret;
++	}
++
++	ret = ipa_->init({ ipaTuningFile, sensor_->model() },
++			 sensorInfo, sensor_->controls(),
++			 &ipaControls_);
++	if (ret < 0) {
++		LOG(RkISP2, Error) << "IPA initialization failure";
++		return ret;
++	}
++
++	return 0;
++}
++
++void RkISP2CameraData::computeParamBuffers(unsigned int frame)
++{
++	while (paramQueue_->nextSequence() <= frame) {
++		if (paramQueue_->empty(BufferQueue::Idle)) {
++			LOG(RkISP2, Warning) << "Out of param buffers";
++			return;
++		}
++
++		uint32_t paramsSequence;
++		FrameBuffer *paramBuffer = paramQueue_->front(BufferQueue::Idle);
++		paramQueue_->prepareBuffer(&paramsSequence);
++		ipa_->computeParams(paramsSequence, paramBuffer->cookie());
++	}
++}
++
++void RkISP2CameraData::vicapBufferReady(FrameBuffer *buffer)
++{
++	Request *request = buffer->request();
++
++	if (!mainPath_ || isRaw_) {
++		pipe()->completeBuffer(request, buffer);
++		pipe()->completeRequest(request);
++		return;
++	}
++
++	if (buffer->metadata().status == FrameMetadata::FrameCancelled)
++		return;
++
++	rawrd_->queueBuffer(buffer);
++}
++
++void RkISP2CameraData::rawrdBufferReady(FrameBuffer *buffer)
++{
++	if (buffer->metadata().status == FrameMetadata::FrameCancelled)
++		return;
++
++	video_->queueBuffer(buffer);
++}
++
++void RkISP2CameraData::ispBufferReady(FrameBuffer *buffer)
++{
++	Request *request = buffer->request();
++
++	if (buffer->metadata().status == FrameMetadata::FrameCancelled) {
++		syncHelper_.cancelFrame();
++		pipe()->completeBuffer(request, buffer);
++		pipe()->completeRequest(request);
++		return;
++	}
++
++	RkISP2RequestInfo info = pendingCompleteRequests_.front();
++	pendingCompleteRequests_.pop_front();
++	ASSERT(info.request == buffer->request());
++
++	int droppedFrames = syncHelper_.gotFrame(info.sequence, buffer->metadata().sequence);
++	if (droppedFrames > 0) {
++		LOG(RkISP2, Debug)
++			<< "Dropped frames " << droppedFrames << " expected "
++			<< info.sequence << " got " << buffer->metadata().sequence;
++	}
++
++	pipe()->completeBuffer(request, buffer);
++	tryCompleteRequest(request, buffer);
++}
++
++void RkISP2CameraData::statBufferReady(FrameBuffer *buffer)
++{
++	size_t sequence = buffer->metadata().sequence;
++
++	if (buffer->metadata().status == FrameMetadata::FrameCancelled)
++		return;
++
++	ipa_->processStats(sequence, buffer->cookie(),
++			   delayedCtrls_->get(sequence));
++
++	stat_->queueBuffer(buffer);
++}
++
++void RkISP2CameraData::paramsComputed(unsigned int frame,
++				      unsigned int bufferId,
++				      unsigned int bytesused)
++{
++	FrameBuffer *buffer = paramQueue_->front(BufferQueue::Preparing);
++
++	ASSERT(buffer->cookie() == bufferId);
++
++	buffer->_d()->metadata().planes()[0].bytesused = bytesused;
++
++	int ret = paramQueue_->preparedBuffer();
++	if (ret < 0) {
++		LOG(RkISP2, Error)
++			<< "Failed to queue parameter buffer for frame "
++			<< frame << ": " << strerror(-ret);
++	}
++}
++
++void RkISP2CameraData::setSensorControls([[maybe_unused]] unsigned int frame,
++					 const ControlList &sensorControls)
++{
++	delayedCtrls_->push(sensorControls);
++}
++
++void RkISP2CameraData::metadataReady(const ControlList &metadata)
++{
++	tryCompleteRequest(metadata);
++}
++
++void RkISP2CameraData::tryCompleteRequest(Request *request, FrameBuffer *buffer)
++{
++	if (pendingCompleteBuffers_.empty()) {
++		pendingCompleteBuffers_.emplace_back(request, buffer);
++		return;
++	}
++
++	RkISP2FrameInfo &info = pendingCompleteBuffers_.front();
++	if (info.request != nullptr || info.mainPathBuffer != nullptr || !info.metadataProcessed) {
++		pendingCompleteBuffers_.emplace_back(request, buffer);
++		return;
++	}
++
++	info = pendingCompleteBuffers_.front();
++	request->_d()->metadata().merge(info.metadata);
++	pendingCompleteBuffers_.pop_front();
++
++	pipe()->completeRequest(request);
++}
++
++void RkISP2CameraData::tryCompleteRequest(const ControlList &metadata)
++{
++	if (pendingCompleteBuffers_.empty()) {
++		pendingCompleteBuffers_.emplace_back(nullptr, nullptr, metadata, true);
++		return;
++	}
++
++	RkISP2FrameInfo &info = pendingCompleteBuffers_.front();
++	if (!info.metadata.empty() || info.metadataProcessed) {
++		/*
++		 * Generally more metadata complete than images, so flush the
++		 * queue when adding new metadata to to the queue to prevent
++		 * metadata in the queue from becoming too old
++		 */
++		pendingCompleteBuffers_.clear();
++		pendingCompleteBuffers_.emplace_back(nullptr, nullptr, metadata, true);
++		return;
++	}
++
++	Request *request = info.request;
++	request->_d()->metadata().merge(metadata);
++	pendingCompleteBuffers_.pop_front();
++
++	pipe()->completeRequest(request);
++}
++
++RkISP2CameraConfiguration::RkISP2CameraConfiguration(const RkISP2CameraData *data)
++	: CameraConfiguration(), data_(data)
++{
++}
++
++CameraConfiguration::Status RkISP2CameraConfiguration::validate()
++{
++	const CameraSensor *sensor = data_->sensor_;
++	std::vector<unsigned int> mbusCodes;
++	Status status = Valid;
++
++	if (config_.empty())
++		return Invalid;
++
++	/*
++	 * Make sure that if a sensor configuration has been requested it
++	 * is valid.
++	 */
++	if (sensorConfig) {
++		if (!sensorConfig->isValid()) {
++			LOG(RkISP2, Error)
++				<< "Invalid sensor configuration request";
++
++			return Invalid;
++		}
++
++		unsigned int bitDepth = sensorConfig->bitDepth;
++		if (bitDepth != 8 && bitDepth != 10 && bitDepth != 12) {
++			LOG(RkISP2, Error)
++				<< "Invalid sensor configuration bit depth";
++
++			return Invalid;
++		}
++	}
++
++	/* \todo Support self path */
++	if (config_.size() != 1) {
++		config_.resize(1);
++		status = Adjusted;
++	}
++
++	StreamConfiguration &cfg = config_[0];
++
++	/* \todo Support YUV sensors */
++	const PixelFormatInfo &info = PixelFormatInfo::info(cfg.pixelFormat);
++	bool usingIsp = data_->usingIsp_;
++	if (usingIsp && info.colourEncoding == PixelFormatInfo::ColourEncodingRAW)
++		usingIsp = false;
++
++	const Size &maxSize = usingIsp ? ispMaxSize : vicapMaxSize;
++
++	if (!usingIsp) {
++		if (!rawFormats.count(cfg.pixelFormat)) {
++			cfg.pixelFormat = formats::SRGGB10;
++			status = Adjusted;
++		}
++
++		unsigned int mbusCode = rawFormats.at(cfg.pixelFormat);
++		auto sizes = sensor->sizes(mbusCode);
++
++		Size bestSize;
++		for (const Size &s : sizes) {
++			/* Ignore smaller sizes. */
++			if (s.width < cfg.size.width ||
++			    s.height < cfg.size.height)
++				continue;
++
++			/* Make sure the width stays in the limits. */
++			if (s.width > maxSize.width)
++				continue;
++
++			bestSize = s;
++			break;
++		}
++
++		if (bestSize.isNull()) {
++			LOG(RkISP2, Error) << "Unable to find a suitable sensor format";
++			return Invalid;
++		}
++
++		if (bestSize != cfg.size)
++			status = Adjusted;
++		cfg.size = bestSize;
++
++		mbusCodes = { mbusCode };
++		sensorFormat_ = sensor->getFormat(mbusCodes, cfg.size, maxSize);
++
++		ASSERT(sensorFormat_.code == mbusCode);
++		ASSERT(sensorFormat_.size == cfg.size);
++
++		return status;
++	}
++
++	if (!formatToMediaBus.count(cfg.pixelFormat)) {
++		cfg.pixelFormat = formats::UYVY;
++		status = Adjusted;
++	}
++
++	/* \todo Adjust sizes a bit better */
++	if (cfg.size > ispMaxSize) {
++		cfg.size = ispMaxSize;
++		status = Adjusted;
++	}
++	V4L2DeviceFormat format;
++	format.fourcc = data_->video_->toV4L2PixelFormat(cfg.pixelFormat);
++	format.size = cfg.size;
++
++	int ret = data_->mainPath_->tryFormat(&format);
++	if (ret)
++		return Invalid;
++
++	cfg.bufferCount = 4;
++
++	std::transform(rawFormats.begin(), rawFormats.end(),
++		       std::back_inserter(mbusCodes),
++		       [](const auto &value) { return value.second; });
++	sensorFormat_ = sensor->getFormat(mbusCodes, cfg.size, maxSize);
++	if (sensorFormat_.size.isNull())
++		status = Invalid;
++
++	return status;
++}
++
++PipelineHandlerRkISP2::PipelineHandlerRkISP2(CameraManager *manager)
++	: PipelineHandler(manager)
++{
++}
++
++Size PipelineHandlerRkISP2::clampSensorSize(RkISP2CameraData *data, unsigned int mbus,
++					    const Size &maxSize)
++{
++	const std::vector<Size> &sizes = data->sensor_->sizes(mbus);
++
++	for (auto it = sizes.rbegin(); it != sizes.rend(); ++it) {
++		if (it->width <= maxSize.width &&
++		    it->height <= maxSize.height)
++			return *it;
++	}
++
++	return *sizes.begin();
++}
++
++std::unique_ptr<CameraConfiguration>
++PipelineHandlerRkISP2::generateConfiguration(Camera *camera,
++					     Span<const StreamRole> roles)
++{
++	RkISP2CameraData *data = cameraData(camera);
++	auto config = std::make_unique<RkISP2CameraConfiguration>(data);
++	if (roles.empty())
++		return config;
++
++	if (roles.size() > 1) {
++		LOG(RkISP2, Error) << "Too many roles requested";
++		return config;
++	}
++
++	const StreamRole &role = roles[0];
++
++	bool isRaw = !data->usingIsp_ || role == StreamRole::Raw;
++	Size maxSize = isRaw ? vicapMaxSize : ispMaxSize;
++
++	Size defaultSize = { 1920, 1080 };
++	unsigned int defaultMbusCode = MEDIA_BUS_FMT_SRGGB10_1X10;
++	PixelFormat rawFormat = data->getSensorFormat(defaultMbusCode,
++						      defaultSize, maxSize);
++
++	/* Enumerate formats */
++	std::vector<SizeRange> sizes = { { Size(32, 32), maxSize } };
++	auto makeStream = [sizes](auto const &pair) {
++		return std::make_pair(pair.first, sizes);
++	};
++	std::map<PixelFormat, std::vector<SizeRange>> streamFormats;
++	std::transform(formatToMediaBus.begin(), formatToMediaBus.end(),
++		       std::inserter(streamFormats, streamFormats.end()),
++		       makeStream);
++	std::transform(rawFormats.begin(), rawFormats.end(),
++		       std::inserter(streamFormats, streamFormats.end()),
++		       makeStream);
++
++	StreamFormats formats(streamFormats);
++	StreamConfiguration cfg(formats);
++	/* UYVY is always supported by this ISP */
++	cfg.pixelFormat = isRaw ? rawFormat : formats::UYVY;
++	cfg.size = clampSensorSize(data, defaultMbusCode, maxSize);
++	cfg.colorSpace = isRaw ? ColorSpace::Raw : ColorSpace::Sycc;
++	cfg.bufferCount = 4;
++
++	config->addConfiguration(cfg);
++
++	config->validate();
++
++	return config;
++}
++
++int PipelineHandlerRkISP2::configure(Camera *camera,
++				     CameraConfiguration *c)
++{
++	RkISP2CameraData *data = cameraData(camera);
++	RkISP2CameraConfiguration *config =
++		static_cast<RkISP2CameraConfiguration *>(c);
++	/* \todo Support multiple streams */
++	StreamConfiguration &cfg = config->at(0);
++	int ret;
++
++	const PixelFormatInfo &info = PixelFormatInfo::info(cfg.pixelFormat);
++	data->isRaw_ = info.colourEncoding == PixelFormatInfo::ColourEncodingRAW;
++
++	V4L2SubdeviceFormat format = config->sensorFormat();
++	LOG(RkISP2, Debug) << "Configuring sensor with " << format;
++
++	if (config->sensorConfig)
++		ret = sensor_->applyConfiguration(*config->sensorConfig,
++						  Transform::Identity, &format);
++	else
++		ret = sensor_->setFormat(&format);
++	if (ret < 0)
++		return ret;
++
++	LOG(RkISP2, Debug) << "Sensor configured with " << format;
++
++	LOG(RkISP2, Debug) << "Configuring CSI with : " << format;
++	ret = csi_->setFormat(0, &format);
++	if (ret)
++		return ret;
++
++	LOG(RkISP2, Debug) << "Configuring VICAP with : " << format;
++	ret = cif_->setFormat(0, &format);
++	if (ret)
++		return ret;
++
++	ret = cif_->setFormat(1, &format);
++	if (ret)
++		return ret;
++
++	Size maxSize = data->isRaw_ ? vicapMaxSize : ispMaxSize;
++	PixelFormat vicapPixelFormat =
++		data->getSensorFormat(format.code, format.size, maxSize);
++
++	V4L2DeviceFormat vicapOutputFormat;
++	vicapOutputFormat.fourcc = video_->toV4L2PixelFormat(vicapPixelFormat);
++	vicapOutputFormat.size = format.size;
++
++	LOG(RkISP2, Debug) << "Configuring VICAP capture node with : " << vicapOutputFormat;
++	ret = data->video_->setFormat(&vicapOutputFormat);
++	if (ret)
++		return ret;
++
++	if (!data->usingIsp_ || data->isRaw_) {
++		cfg.setStream(&data->stream_);
++		cfg.stride = vicapOutputFormat.planes[0].bpl;
++		return 0;
++	}
++
++	/*
++	 * \todo Figure out if these should go in the pipeline handler
++	 * or camera data
++	 */
++	LOG(RkISP2, Debug) << "Configuring rawrd0 with: " << vicapOutputFormat;
++	ret = rawrd_->setFormat(&vicapOutputFormat);
++	if (ret)
++		return ret;
++
++	LOG(RkISP2, Debug) << "Configuring ISP input with: " << format;
++	ret = isp_->setFormat(0, &format);
++	if (ret)
++		return ret;
++
++	format.code = formatToMediaBus.at(cfg.pixelFormat);
++	format.size = cfg.size;
++	LOG(RkISP2, Debug) << "Configuring ISP output with: " << format;
++	ret = isp_->setFormat(5, &format);
++	if (ret)
++		return ret;
++
++	V4L2DeviceFormat outputFormat;
++	outputFormat.fourcc = mainPath_->toV4L2PixelFormat(cfg.pixelFormat);
++	outputFormat.size = cfg.size;
++
++	LOG(RkISP2, Debug) << "Configuring main path with: " << outputFormat;
++	ret = mainPath_->setFormat(&outputFormat);
++	if (ret)
++		return ret;
++
++	if (outputFormat.size != cfg.size ||
++	    outputFormat.fourcc != data->mainPath_->toV4L2PixelFormat(cfg.pixelFormat)) {
++		LOG(RkISP2, Error)
++			<< "Unable to configure capture in " << cfg.toString();
++		return -EINVAL;
++	}
++
++	cfg.setStream(&data->stream_);
++	cfg.stride = outputFormat.planes[0].bpl;
++
++	V4L2DeviceFormat paramFormat;
++	paramFormat.fourcc = V4L2PixelFormat(V4L2_META_FMT_RKISP2_PARAMS);
++	ret = param_->setFormat(&paramFormat);
++	if (ret)
++		return ret;
++
++	V4L2DeviceFormat statFormat;
++	statFormat.fourcc = V4L2PixelFormat(V4L2_META_FMT_RKISP2_STATS);
++	ret = stat_->setFormat(&statFormat);
++	if (ret)
++		return ret;
++
++	IPACameraSensorInfo sensorInfo;
++	ret = data->sensor_->sensorInfo(&sensorInfo);
++	if (ret)
++		return ret;
++
++	int colorSpaceEncoding = -1;
++	int colorSpaceRange = -1;
++	if (cfg.colorSpace) {
++		colorSpaceEncoding = static_cast<int>(cfg.colorSpace->ycbcrEncoding);
++		colorSpaceRange = static_cast<int>(cfg.colorSpace->range);
++	}
++
++	/* Inform IPA of stream configuration and sensor controls. */
++	ipa::rkisp2::IPAConfigInfo ipaConfig{ sensorInfo,
++					      data->sensor_->controls(),
++					      colorSpaceEncoding,
++					      colorSpaceRange };
++
++	ret = data->ipa_->configure(ipaConfig, &data->ipaControls_);
++	if (ret) {
++		LOG(RkISP2, Error) << "failed configuring IPA (" << ret << ")";
++		return ret;
++	}
++
++	return updateControls(data);
++}
++
++int PipelineHandlerRkISP2::exportFrameBuffers(Camera *camera, Stream *stream,
++					      std::vector<std::unique_ptr<FrameBuffer>> *buffers)
++{
++	unsigned int count = stream->configuration().bufferCount;
++	RkISP2CameraData *data = cameraData(camera);
++
++	if (!data->usingIsp_ || data->isRaw_)
++		return data->video_->exportBuffers(count, buffers);
++
++	return data->mainPath_->exportBuffers(count, buffers);
++}
++
++int PipelineHandlerRkISP2::start(Camera *camera,
++				 const ControlList *controls)
++{
++	RkISP2CameraData *data = cameraData(camera);
++	unsigned int count = data->stream_.configuration().bufferCount;
++	bool useMP = data->usingIsp_ && !data->isRaw_;
++	utils::ScopeExitActions actions;
++	int ret;
++
++	data->frame_ = 0;
++
++	LOG(RkISP2, Debug) << (useMP ? "Using" : "Not using") << " main path";
++
++	if (useMP) {
++		/* Allocate buffers for params and stats */
++		ret = allocateBuffers(camera);
++		if (ret) {
++			LOG(RkISP2, Error) << "Failed to allocate buffers";
++			return ret;
++		}
++		actions += [&]() { freeBuffers(camera); };
++
++		/* \todo Support start controls */
++		ret = data->ipa_->start();
++		if (ret) {
++			LOG(RkISP2, Error)
++				<< "Failed to start IPA " << camera->id();
++			return ret;
++		}
++		actions += [&]() { data->ipa_->stop(); };
++
++		ret = data->param_->streamOn();
++		if (ret) {
++			LOG(RkISP2, Error)
++				<< "Failed to start parameters " << camera->id();
++			return ret;
++		}
++		actions += [&]() { data->param_->streamOff(); };
++	}
++
++	ret = data->video_->importBuffers(kRkISP2MinBufferCount);
++	if (ret < 0) {
++		LOG(RkISP2, Error) << "Failed to import buffers to vicap";
++		return ret;
++	}
++
++	actions += [&]() { data->video_->releaseBuffers(); };
++
++	if (useMP) {
++		ret = data->rawrd_->importBuffers(count);
++		if (ret < 0) {
++			LOG(RkISP2, Error) << "Failed to import buffers to rawrd";
++			return ret;
++		}
++
++		actions += [&]() { data->rawrd_->releaseBuffers(); };
++
++		ret = data->mainPath_->importBuffers(count);
++		if (ret < 0) {
++			LOG(RkISP2, Error) << "Failed to import buffers to main path";
++			return ret;
++		}
++
++		actions += [&]() { data->mainPath_->releaseBuffers(); };
++
++		auto queueBuffers = [&](const std::vector<std::unique_ptr<FrameBuffer>> &buffers,
++					V4L2VideoDevice *device, std::string_view name) {
++			for (const std::unique_ptr<FrameBuffer> &buffer : buffers) {
++				ret = device->queueBuffer(buffer.get());
++				if (ret < 0) {
++					LOG(RkISP2, Warning)
++						<< "Failed to queue buffer "
++						<< &buffer << " to " << name
++						<< ": " << ret;
++				}
++			}
++		};
++
++		queueBuffers(data->internalBuffers_, data->video_, "vicap");
++		queueBuffers(data->statBuffers_, data->stat_, "stat");
++	}
++
++	ret = data->video_->streamOn();
++	if (ret < 0)
++		return ret;
++
++	actions += [&]() { data->video_->streamOff(); };
++
++	if (useMP) {
++		ret = data->rawrd_->streamOn();
++		if (ret < 0)
++			return ret;
++
++		actions += [&]() { data->rawrd_->streamOff(); };
++
++		ret = data->stat_->streamOn();
++		if (ret) {
++			LOG(RkISP2, Error)
++				<< "Failed to start stats " << camera->id();
++			return ret;
++		}
++		actions += [&]() { data->stat_->streamOff(); };
++
++		ret = data->mainPath_->streamOn();
++		if (ret < 0)
++			return ret;
++
++		actions += [&]() { data->mainPath_->streamOff(); };
++	}
++
++	if (controls) {
++		ret = processControls(data, *controls);
++		if (ret < 0)
++			return ret;
++	}
++
++	if (useMP)
++		data->isp_->setFrameStartEnabled(true);
++
++	actions.release();
++	return 0;
++}
++
++void PipelineHandlerRkISP2::stopDevice(Camera *camera)
++{
++	RkISP2CameraData *data = cameraData(camera);
++	bool useMP = data->usingIsp_ && !data->isRaw_;
++
++	if (useMP)
++		data->isp_->setFrameStartEnabled(false);
++
++	data->video_->streamOff();
++	data->video_->releaseBuffers();
++
++	if (!useMP)
++		return;
++
++	data->ipa_->stop();
++
++	data->rawrd_->streamOff();
++	data->rawrd_->releaseBuffers();
++
++	data->mainPath_->streamOff();
++	data->mainPath_->releaseBuffers();
++
++	data->stat_->streamOff();
++	data->stat_->releaseBuffers();
++
++	data->param_->streamOff();
++
++	data->internalBuffers_.clear();
++	data->statBuffers_.clear();
++	freeBuffers(camera);
++}
++
++int PipelineHandlerRkISP2::queueRequestDevice(Camera *camera, Request *request)
++{
++	RkISP2CameraData *data = cameraData(camera);
++	FrameBuffer *buffer = request->findBuffer(&data->stream_);
++	if (!buffer) {
++		LOG(RkISP2, Error)
++			<< "Attempt to queue request with invalid stream";
++		return -ENOENT;
++	}
++
++	int ret = processControls(data, request->controls());
++	if (ret < 0)
++		return ret;
++
++	if (!data->usingIsp_ || data->isRaw_)
++		return data->video_->queueBuffer(buffer);
++
++	int correction = data->syncHelper_.correction();
++	data->frame_ += correction;
++	data->syncHelper_.pushCorrection(correction);
++
++	data->pendingCompleteRequests_.push_back({ request, data->frame_, true });
++
++	data->ipa_->queueRequest(data->frame_, request->controls());
++	data->computeParamBuffers(data->frame_);
++	data->frame_++;
++
++	return data->mainPath_->queueBuffer(buffer);
++}
++
++int PipelineHandlerRkISP2::updateControls(RkISP2CameraData *data)
++{
++	ControlInfoMap::Map controls;
++
++	/* Add the pipeline handler registered controls to list of camera controls. */
++	for (const auto &phControl : data->controlInfo_)
++		controls[phControl.first] = phControl.second;
++
++	/* Add the IPA registered controls to list of camera controls. */
++	for (const auto &ipaControl : data->ipaControls_)
++		controls[ipaControl.first] = ipaControl.second;
++
++	data->controlInfo_ = ControlInfoMap(std::move(controls),
++					    controls::controls);
++
++	return 0;
++}
++
++bool PipelineHandlerRkISP2::createCamera(bool usingIsp)
++{
++	std::unique_ptr<RkISP2CameraData> data =
++		std::make_unique<RkISP2CameraData>(this, media_.get());
++	if (data->init(usingIsp, sensor_.get(), video_.get(), rawrd_.get(),
++		       isp_.get(), mainPath_.get(), param_.get(), stat_.get())) {
++		LOG(RkISP2, Error) << "Failed to initialize data";
++		return false;
++	}
++
++	/* Initialize the camera properties. */
++	data->properties_ = data->sensor_->properties();
++
++	const CameraSensorProperties::SensorDelays &delays = data->sensor_->sensorDelays();
++	std::unordered_map<uint32_t, DelayedControls::ControlParams> params = {
++		{ V4L2_CID_ANALOGUE_GAIN, { delays.gainDelay, false } },
++		{ V4L2_CID_EXPOSURE, { delays.exposureDelay, false } },
++		{ V4L2_CID_VBLANK, { delays.vblankDelay, true } },
++	};
++
++	if (usingIsp) {
++		data->delayedCtrls_ =
++			std::make_unique<DelayedControls>(data->sensor_->device(),
++							  params);
++		isp_->frameStart.connect(data->delayedCtrls_.get(),
++					 &DelayedControls::applyControls);
++
++		int ret = data->loadIPA();
++		if (ret) {
++			LOG(RkISP2, Error) << "Failed to load IPA";
++			return false;
++		}
++
++		updateControls(data.get());
++
++		data->paramQueue_ =
++			std::make_unique<BufferQueue>(std::make_unique<BufferQueueDelegate<V4L2VideoDevice>>(param_.get()),
++						      BufferQueue::PrepareStage, "Params");
++	}
++
++	const std::string &id = data->sensor_->id();
++	std::set<Stream *> streams{ &data->stream_ };
++	std::shared_ptr<Camera> camera =
++		Camera::create(std::move(data), id, streams);
++	registerCamera(std::move(camera));
++
++	LOG(RkISP2, Debug)
++		<< "RkISP2 device registered "
++		<< (usingIsp ? "with" : "without") << " ISP";
++
++	return true;
++}
++
++bool PipelineHandlerRkISP2::match(DeviceEnumerator *enumerator)
++{
++	DeviceMatch dm("rockchip-cif");
++	/* \todo Generalize this for the other csi ports */
++	/*
++	 * I think we will have one camera per csi port, and then 4 streams
++	 * each that correspond to the 4 channels. Not sure how to handle
++	 * routing to the ISP though. For now we'll just assume one camera.
++	 */
++	dm.add("rkcif-mipi2");
++	/* \todo Generalize this for the other channels */
++	dm.add("rkcif-mipi2-id0");
++	dm.add("dw-mipi-csi2rx fdd30000.csi");
++
++	media_ = acquireMediaDevice(enumerator, dm);
++	if (!media_)
++		return false;
++
++	csi_ = V4L2Subdevice::fromEntityName(media_.get(), "dw-mipi-csi2rx fdd30000.csi");
++	if (!csi_ || csi_->open() < 0) {
++		LOG(RkISP2, Error) << "Failed to open csi";
++		return false;
++	}
++
++	cif_ = V4L2Subdevice::fromEntityName(media_.get(), "rkcif-mipi2");
++	if (!cif_ || cif_->open() < 0) {
++		LOG(RkISP2, Error) << "Failed to open cif";
++		return false;
++	}
++
++	/* \todo Support multiple streams */
++	video_ = V4L2VideoDevice::fromEntityName(media_.get(), "rkcif-mipi2-id0");
++	if (!video_ || video_->open() < 0) {
++		LOG(RkISP2, Error) << "Failed to open capture device";
++		return false;
++	}
++
++	for (MediaEntity *entity : media_->locateEntities(MEDIA_ENT_F_CAM_SENSOR)) {
++		LOG(RkISP2, Debug) << "Identified " << entity->name();
++		sensor_ = CameraSensorFactoryBase::create(entity);
++		/* Just get the first sensor for now */
++		if (sensor_)
++			break;
++	}
++
++	if (!sensor_) {
++		LOG(RkISP2, Error) << "Failed to find sensor";
++		return false;
++	}
++
++	const GlobalConfiguration &configuration = cameraManager()->_d()->configuration();
++	bool usingIsp = configuration.configuration()["pipelines"]["rkisp2"]["isp_enable"].get<bool>(true);
++	if (!usingIsp) {
++		LOG(RkISP2, Info) << "ISP disabled in configuration file";
++		return createCamera(usingIsp);
++	}
++
++	/* Match ISP */
++
++	DeviceMatch dmIsp("rkisp2");
++	dmIsp.add("rkisp2_isp");
++	/* \todo Generalize this for the other channels */
++	dmIsp.add("rkisp2_rawrd0");
++	/* \todo Support self path */
++	dmIsp.add("rkisp2_mainpath");
++
++	ispMedia_ = acquireMediaDevice(enumerator, dmIsp);
++	if (!ispMedia_) {
++		usingIsp = false;
++		LOG(RkISP2, Debug) << "ISP not found";
++		return createCamera(usingIsp);
++	}
++
++	/* \todo Support the other rawrd nodes */
++	rawrd_ = V4L2VideoDevice::fromEntityName(ispMedia_.get(), "rkisp2_rawrd0");
++	if (!rawrd_ || rawrd_->open() < 0) {
++		LOG(RkISP2, Error) << "Failed to open rkisp2 rawrd device";
++		return false;
++	}
++
++	isp_ = V4L2Subdevice::fromEntityName(ispMedia_.get(), "rkisp2_isp");
++	if (!isp_ || isp_->open() < 0) {
++		LOG(RkISP2, Error) << "Failed to open rkisp2 isp";
++		return false;
++	}
++
++	/* \todo Support self path */
++	mainPath_ = V4L2VideoDevice::fromEntityName(ispMedia_.get(), "rkisp2_mainpath");
++	if (!mainPath_ || mainPath_->open() < 0) {
++		LOG(RkISP2, Error) << "Failed to open rkisp2 main path";
++		return false;
++	}
++
++	param_ = V4L2VideoDevice::fromEntityName(ispMedia_.get(), "rkisp2_params");
++	if (!param_ || param_->open() < 0) {
++		LOG(RkISP2, Error) << "Failed to open rkisp2 params";
++		return false;
++	}
++
++	stat_ = V4L2VideoDevice::fromEntityName(ispMedia_.get(), "rkisp2_stats");
++	if (!stat_ || stat_->open() < 0) {
++		LOG(RkISP2, Error) << "Failed to open rkisp2 stats";
++		return false;
++	}
++
++	return createCamera(true);
++}
++
++int PipelineHandlerRkISP2::processControls(RkISP2CameraData *data, const ControlList &ctrls)
++{
++	const auto &testPattern = ctrls.get(controls::draft::TestPatternMode);
++	if (testPattern)
++		data->sensor_->setTestPatternMode(static_cast<controls::draft::TestPatternModeEnum>(*testPattern));
++
++	return 0;
++}
++
++/* This is only called when using the ISP */
++int PipelineHandlerRkISP2::allocateBuffers(Camera *camera)
++{
++	RkISP2CameraData *data = cameraData(camera);
++	unsigned int ipaBufferId = 1;
++	utils::ScopeExitActions actions;
++
++	int ret = data->video_->exportBuffers(kRkISP2MinBufferCount, &data->internalBuffers_);
++	if (ret < 0)
++		return ret;
++
++	actions += [&]() { data->video_->releaseBuffers(); };
++
++	ret = data->stat_->allocateBuffers(kRkISP2MinBufferCount, &data->statBuffers_);
++	if (ret < 0)
++		return ret;
++
++	actions += [&]() { data->stat_->releaseBuffers(); };
++
++	ret = data->paramQueue_->allocateBuffers(kRkISP2MinBufferCount);
++	if (ret < 0)
++		return ret;
++
++	actions += [&]() { data->paramQueue_->releaseBuffers(); };
++
++	auto pushBuffers = [&](const std::vector<std::unique_ptr<FrameBuffer>> &buffers) {
++		for (const std::unique_ptr<FrameBuffer> &buffer : buffers) {
++			Span<const FrameBuffer::Plane> planes = buffer->planes();
++
++			buffer->setCookie(ipaBufferId++);
++			data->ipaBuffers_.emplace_back(buffer->cookie(),
++						       std::vector<FrameBuffer::Plane>{ planes.begin(),
++											planes.end() });
++		}
++	};
++
++	pushBuffers(data->paramQueue_->buffers());
++	pushBuffers(data->statBuffers_);
++
++	data->ipa_->mapBuffers(data->ipaBuffers_);
++
++	actions.release();
++	return 0;
++}
++
++int PipelineHandlerRkISP2::freeBuffers(Camera *camera)
++{
++	RkISP2CameraData *data = cameraData(camera);
++
++	std::vector<unsigned int> ids;
++	for (IPABuffer &ipabuf : data->ipaBuffers_)
++		ids.push_back(ipabuf.id);
++
++	data->ipa_->unmapBuffers(ids);
++	data->ipaBuffers_.clear();
++
++	data->paramQueue_->releaseBuffers();
++
++	return 0;
++}
++
++REGISTER_PIPELINE_HANDLER(PipelineHandlerRkISP2, "rkisp2")
++
++} /* namespace libcamera */

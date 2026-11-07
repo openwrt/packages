@@ -1,0 +1,221 @@
+From d3684f3e4aae33a6b8f93b3e941a5f247a97fe22 Mon Sep 17 00:00:00 2001
+From: Paul Elder <paul.elder@ideasonboard.com>
+Date: Tue, 30 Jun 2026 12:14:00 +0900
+Subject: [PATCH] ipa: rkisp2: algo: goc: Implement gamma out correction
+
+Implement a manual gamma out correction algorithm for the rkisp2 IPA. It
+takes the gamma control and applies the gamma out correction curve to
+the ISP.
+
+Signed-off-by: Paul Elder <paul.elder@ideasonboard.com>
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+No change in v2
+---
+ src/ipa/rkisp2/algorithms/goc.cpp     | 143 ++++++++++++++++++++++++++
+ src/ipa/rkisp2/algorithms/goc.h       |  42 ++++++++
+ src/ipa/rkisp2/algorithms/meson.build |   1 +
+ 3 files changed, 186 insertions(+)
+ create mode 100644 src/ipa/rkisp2/algorithms/goc.cpp
+ create mode 100644 src/ipa/rkisp2/algorithms/goc.h
+
+--- /dev/null
++++ b/src/ipa/rkisp2/algorithms/goc.cpp
+@@ -0,0 +1,143 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2026, Ideas On Board
++ *
++ * RkISP2 Gamma out control
++ */
++
++#include "goc.h"
++
++#include <cmath>
++
++#include <linux/media/rockchip/rkisp2-config.h>
++
++#include <libcamera/base/log.h>
++#include <libcamera/base/utils.h>
++
++#include <libcamera/control_ids.h>
++
++/**
++ * \file goc.h
++ */
++
++namespace libcamera {
++
++namespace ipa::rkisp2::algorithms {
++
++/**
++ * \class GammaOutCorrection
++ * \brief RkISP2 Gamma out correction
++ *
++ * This algorithm implements the gamma out curve for the RkISP2. It defaults to
++ * a gamma value of 2.2.
++ *
++ * As gamma is internally represented as a piecewise linear function with only
++ * 17 knots, the difference between gamma=2.2 and sRGB gamma is minimal.
++ * Therefore sRGB gamma was not implemented as special case.
++ *
++ * Useful links:
++ * - https://www.cambridgeincolour.com/tutorials/gamma-correction.htm
++ * - https://en.wikipedia.org/wiki/SRGB
++ */
++
++LOG_DEFINE_CATEGORY(RkISP2Gamma)
++
++const float kDefaultGamma = 2.2f;
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::init
++ */
++int GammaOutCorrection::init(IPAContext &context, const ValueNode &tuningData)
++{
++	defaultGamma_ = tuningData["gamma"].get<double>(kDefaultGamma);
++	context.ctrlMap[&controls::Gamma] = ControlInfo(0.1f, 10.0f, defaultGamma_);
++
++	return 0;
++}
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::configure
++ */
++int GammaOutCorrection::configure(IPAContext &context,
++				  [[maybe_unused]] const IPACameraSensorInfo &configInfo)
++{
++	context.activeState.goc.gamma = defaultGamma_;
++	return 0;
++}
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::queueRequest
++ */
++void GammaOutCorrection::queueRequest(IPAContext &context,
++				      [[maybe_unused]] const uint32_t frame,
++				      IPAFrameContext &frameContext,
++				      const ControlList &controls)
++{
++	frameContext.goc.gamma = context.activeState.goc.gamma;
++
++	const auto &gamma = controls.get(controls::Gamma);
++	if (!gamma)
++		return;
++
++	context.activeState.goc.gamma = *gamma;
++
++	frameContext.goc.gamma = context.activeState.goc.gamma;
++}
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::prepare
++ */
++void GammaOutCorrection::prepare([[maybe_unused]] IPAContext &context,
++				 [[maybe_unused]] const uint32_t frame,
++				 [[maybe_unused]] IPAFrameContext &frameContext,
++				 [[maybe_unused]] RkISP2Params *params)
++{
++	/* \todo Optimize so we don't have to write it every frame */
++
++	/*
++	 * The logarithmic segments as specified in the reference, plus an
++	 * additional 0 to make the loop easier
++	 *
++	 * Just use 44 mode for now. 48 mode is when the last four 512 are
++	 * split into eight pieces of 256.
++	 */
++	static constexpr std::array<unsigned int, 45> segments = {
++		0, 1, 1, 1, 1, 1, 1, 1, 1,
++		2, 2, 2, 2, 4, 4, 4, 4,
++		8, 8, 8, 8, 16, 16, 16, 16,
++		32, 32, 32, 32, 64, 64, 64, 64,
++		128, 128, 128, 128, 256, 256, 256, 256,
++		512, 512, 512, 512
++	};
++
++	auto config = params->block<RkISP2ParamsBlocks::Goc>();
++	config.setEnabled(true);
++
++	unsigned x = 0;
++	for (const auto [i, size] : utils::enumerate(segments)) {
++		config->gamma_y[i] = static_cast<uint16_t>(std::pow(x / 4096.0, 1.0 / frameContext.goc.gamma) * 4096.0);
++		x += size;
++	}
++
++	config->mode = RKISP2_ISP_GOC_MODE_LOGARITHMIC;
++	config->segments = RKISP2_ISP_GOC_SEGMENTS_44;
++	config->offset = 0;
++}
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::process
++ */
++void GammaOutCorrection::process([[maybe_unused]] IPAContext &context,
++				 [[maybe_unused]] const uint32_t frame,
++				 IPAFrameContext &frameContext,
++				 [[maybe_unused]] const RkISP2Stats *stats,
++				 ControlList &metadata)
++{
++	metadata.set(controls::Gamma, frameContext.goc.gamma);
++}
++
++REGISTER_IPA_ALGORITHM(GammaOutCorrection, "GammaOutCorrection")
++
++} /* namespace ipa::rkisp2::algorithms */
++
++} /* namespace libcamera */
+--- /dev/null
++++ b/src/ipa/rkisp2/algorithms/goc.h
+@@ -0,0 +1,42 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2026, Ideas On Board
++ *
++ * RkISP2 Gamma out control
++ */
++
++#pragma once
++
++#include "algorithm.h"
++
++namespace libcamera {
++
++namespace ipa::rkisp2::algorithms {
++
++class GammaOutCorrection : public Algorithm
++{
++public:
++	GammaOutCorrection() = default;
++	~GammaOutCorrection() = default;
++
++	int init(IPAContext &context, const ValueNode &tuningData) override;
++	int configure(IPAContext &context,
++		      const IPACameraSensorInfo &configInfo) override;
++	void queueRequest(IPAContext &context,
++			  const uint32_t frame,
++			  IPAFrameContext &frameContext,
++			  const ControlList &controls) override;
++	void prepare(IPAContext &context, const uint32_t frame,
++		     IPAFrameContext &frameContext,
++		     RkISP2Params *params) override;
++	void process(IPAContext &context, const uint32_t frame,
++		     IPAFrameContext &frameContext,
++		     const RkISP2Stats *stats,
++		     ControlList &metadata) override;
++
++private:
++	float defaultGamma_;
++};
++
++} /* namespace ipa::rkisp2::algorithms */
++} /* namespace libcamera */
+--- a/src/ipa/rkisp2/algorithms/meson.build
++++ b/src/ipa/rkisp2/algorithms/meson.build
+@@ -6,5 +6,6 @@ rkisp2_ipa_algorithms = files([
+     'bls.cpp',
+     'ccm.cpp',
+     'csm.cpp',
++    'goc.cpp',
+ ])
+ 

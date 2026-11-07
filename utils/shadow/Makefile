@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shadow
-PKG_VERSION:=4.19.4
-PKG_RELEASE:=2
+PKG_VERSION:=4.20.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/shadow-maint/shadow/releases/download/$(PKG_VERSION)
-PKG_HASH:=ce57a313e315a0a7cb04a8f50cc20753e994e487bbe9b78a2a824ca75cb486c0
+PKG_HASH:=b89f432b75ae55a2d852b446d0365484795fdf533ab97d550e325fa15594a224
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
@@ -28,9 +28,9 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
 SHADOW_APPLETS := \
-	chage chfn chgpasswd chpasswd chsh expiry faillog gpasswd \
-	groupadd groupdel groupmems groupmod grpck grpconv grpunconv \
-	login logoutd newgrp newgidmap newuidmap newusers nologin \
+	chage chfn chgpasswd chpasswd chsh faillog gpasswd \
+	groupadd groupdel groupmod grpck grpconv grpunconv \
+	login newgrp newgidmap newuidmap newusers nologin \
 	passwd pwck pwconv pwunconv su \
 	useradd userdel usermod vipw
 
@@ -138,7 +138,7 @@ define Package/shadow-common/install
 	$(INSTALL_DIR) $(1)/etc
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/login.defs $(1)/etc/
 	$(SED) 's,SU_NAME,#SU_NAME,g' $(1)/etc/login.defs
-	$(SED) 's,#ENCRYPT_METHOD DES,ENCRYPT_METHOD BCRYPT,g' $(1)/etc/login.defs
+	$(SED) 's,#ENCRYPT_METHOD SHA512,ENCRYPT_METHOD BCRYPT,g' $(1)/etc/login.defs
 endef
 
 define Package/shadow-utils/install

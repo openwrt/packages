@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-good
-PKG_VERSION:=1.26.4
-PKG_RELEASE:=1
+PKG_VERSION:=1.28.7
+PKG_RELEASE:=3
 
 PKG_SOURCE:=gst-plugins-good-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gst-plugins-good/
-PKG_HASH:=49bdff25526bae33b683eab25fe28f761d33d51b08986653632b6ee31657a4f3
+PKG_HASH:=87256969c82cf3bc8574301f3e7044a90de0ac500a5a27d8ba38c4dde894dd8b
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-good-$(PKG_VERSION)
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
@@ -94,6 +94,8 @@ GST_COND_SELECT = -D$(1)=$(if $(CONFIG_PACKAGE_gst1-mod-$(1)),en,dis)abled
 GST_VERSION:=1.0
 
 MESON_ARGS += \
+	$(call GST_COND_SELECT,adaptivedemux2) \
+	-Dhls-crypto=nettle \
 	$(call GST_COND_SELECT,alpha) \
 	$(call GST_COND_SELECT,apetag) \
 	$(call GST_COND_SELECT,audiofx) \
@@ -220,6 +222,7 @@ define GstBuildPlugin
   $$(eval $$(call BuildPackage,gst1-mod-$(1)))
 endef
 
+$(eval $(call GstBuildPlugin,adaptivedemux2,adaptive streaming demuxer,net pbutils tag,,+libxml2 +libnettle +libsoup3))
 $(eval $(call GstBuildPlugin,alaw,alaw codec,audio,,))
 $(eval $(call GstBuildPlugin,alpha,alpha support,video,,))
 $(eval $(call GstBuildPlugin,apetag,apetag support,audio pbutils tag video,,))
@@ -262,7 +265,7 @@ $(eval $(call GstBuildPlugin,videofilter,videofilter support,video,,))
 $(eval $(call GstBuildPlugin,videomixer,videomixer support,video,,))
 $(eval $(call GstBuildPlugin,wavenc,Wav encoder,riff,,))
 $(eval $(call GstBuildPlugin,wavparse,Wav parser,audio riff tag,,))
-#$(eval $(call GstBuildPlugin,y4m,sty4menc support,video,,))
+$(eval $(call GstBuildPlugin,y4m,y4m encoder/decoder,video,,))
 
 #$(eval $(call GstBuildPlugin,1394,IEEE 1394 support,,,))
 #$(eval $(call GstBuildPlugin,aalib,aalib text console video sink,,,))

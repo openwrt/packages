@@ -1,0 +1,43 @@
+From 58503cb722ad34311379eee9d316c84aa25f6bcd Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 16 Oct 2026 18:57:51 +0100
+Subject: [PATCH] ipa: rkisp2: Skip the statistics blocks that are missing
+
+The kernel driver only includes the statistics blocks whose
+measurement completed, so a frame can arrive without the blocks the
+algorithms ask for. The block accessor returns a null pointer for a
+missing block, which the AGC and the AWB dereference unchecked, and the
+IPA worker dies with a segmentation fault, after which the camera runs
+without automatic control. Return early when a required block is not in
+the buffer.
+
+Assisted-by: LLM
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ src/ipa/rkisp2/algorithms/agc.cpp | 3 +++
+ src/ipa/rkisp2/algorithms/awb.cpp | 2 ++
+ 2 files changed, 5 insertions(+)
+
+--- a/src/ipa/rkisp2/algorithms/agc.cpp
++++ b/src/ipa/rkisp2/algorithms/agc.cpp
+@@ -374,6 +374,9 @@ void Agc::process([[maybe_unused]] IPACo
+ 	auto aeLite = stats->block<RkISP2StatsBlocks::AeLite>();
+ 	auto histBig = stats->block<RkISP2StatsBlocks::HistBig0>();
+ 
++	if (!aeLite || !histBig)
++		return;
++
+ 	/*
+ 	 * \todo Verify that the exposure and gain applied by the sensor for
+ 	 * this frame match what has been requested. This isn't a hard
+--- a/src/ipa/rkisp2/algorithms/awb.cpp
++++ b/src/ipa/rkisp2/algorithms/awb.cpp
+@@ -177,6 +177,8 @@ RkISP2AwbStats Awb::calculateRgbMeans([[
+ 				      const RkISP2Stats *stats) const
+ {
+ 	auto awb = stats->block<RkISP2StatsBlocks::Awb>();
++	if (!awb)
++		return {};
+ 
+ 	if (!awb->done) {
+ 		LOG(RkISP2Awb, Error) << "No awb stats";

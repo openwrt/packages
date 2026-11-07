@@ -1,0 +1,30 @@
+From 65b8a2bad912c39e8fd63b772dc952e8bbd40f1b Mon Sep 17 00:00:00 2001
+From: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Date: Mon, 28 Sep 2026 07:56:27 +0200
+Subject: [PATCH] configure: do not probe dcbzl when it is disabled
+
+The dcbzl probe runs unconditionally and re-enables dcbzl whenever the
+assembler accepts it, overriding --disable-dcbzl and the "disable dcbzl"
+in the e500 and e500v2 --cpu cases. e500 cores trap on dcbzl, so ffmpeg
+dies with SIGILL in ff_blockdsp_init_ppc() on a P2020 (e500v2) as soon
+as it opens an MPEG-2 decoder.
+
+Only run the probe when dcbzl is not disabled.
+
+Fixes: https://code.ffmpeg.org/FFmpeg/FFmpeg/issues/24747
+Link: https://code.ffmpeg.org/FFmpeg/FFmpeg/pulls/24748
+Suggested-by: Michael Niedermayer <michael@niedermayer.cc>
+Original-patch-by: Peter Krefting <peter@softwolves.pp.se>
+Signed-off-by: Josef Schlehofer <pepe.schlehofer@gmail.com>
+---
+--- a/configure
++++ b/configure
+@@ -6802,7 +6802,7 @@ elif enabled parisc; then
+ 
+ elif enabled ppc; then
+ 
+-    check_inline_asm dcbzl     '"dcbzl 0, %0" :: "r"(0)'
++    disabled dcbzl || check_inline_asm dcbzl '"dcbzl 0, %0" :: "r"(0)'
+     check_inline_asm ibm_asm   '"add 0, 0, 0"'
+     check_inline_asm ppc4xx    '"maclhw r10, r11, r12"'
+     check_inline_asm xform_asm '"lwzx %1, %y0" :: "Z"(*(int*)0), "r"(0)'

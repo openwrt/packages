@@ -1,0 +1,41 @@
+From 0844bb8ed448e5ae7245163206c22cee38331ae3 Mon Sep 17 00:00:00 2001
+From: Stefan Klug <stefan.klug@ideasonboard.com>
+Date: Wed, 25 Mar 2026 16:13:45 +0100
+Subject: [PATCH] ipa: rkisp1: Add initializeFrameContext() function
+
+In preparation to handling startup controls, split the frame context
+initialization from queueRequest into a separate function.
+
+This patch contains no functional changes.
+
+Signed-off-by: Stefan Klug <stefan.klug@ideasonboard.com>
+---
+ src/ipa/rkisp1/rkisp1.cpp | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+--- a/src/ipa/rkisp1/rkisp1.cpp
++++ b/src/ipa/rkisp1/rkisp1.cpp
+@@ -67,6 +67,9 @@ public:
+ 
+ 	void queueRequest(const uint32_t frame, const ControlList &controls) override;
+ 	void computeParams(const uint32_t frame, const uint32_t bufferId) override;
++	void initializeFrameContext(const uint32_t frame,
++				    IPAFrameContext &frameContext,
++				    const ControlList &controls);
+ 	void processStats(const uint32_t frame, const uint32_t bufferId,
+ 			  const ControlList &sensorControls) override;
+ 
+@@ -331,6 +334,13 @@ void IPARkISP1::queueRequest(const uint3
+ 	IPAFrameContext &frameContext = context_.frameContexts.alloc(frame);
+ 	context_.debugMetadata.enableByControl(controls);
+ 
++	initializeFrameContext(frame, frameContext, controls);
++}
++
++void IPARkISP1::initializeFrameContext(const uint32_t frame,
++				       IPAFrameContext &frameContext,
++				       const ControlList &controls)
++{
+ 	for (const auto &a : algorithms()) {
+ 		Algorithm *algo = static_cast<Algorithm *>(a.get());
+ 		if (algo->disabled_)

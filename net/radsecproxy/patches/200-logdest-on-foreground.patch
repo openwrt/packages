@@ -1,6 +1,16 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Toke=20H=C3=B8iland-J=C3=B8rgensen?= <toke@toke.dk>
+Date: Thu, 31 Jul 2014 14:09:44 +0200
+Subject: [PATCH] set the log destination even when running in the foreground
+
+OpenWrt runs radsecproxy under procd, which keeps it in the foreground,
+so the logdestination option from the config file would never be applied.
+
+Upstream-Status: Inappropriate [OpenWrt-specific service integration]
+---
 --- a/radsecproxy.c
 +++ b/radsecproxy.c
-@@ -3637,16 +3637,13 @@ int radsecproxy_main(int argc, char **ar
+@@ -3661,16 +3661,13 @@ int radsecproxy_main(int argc, char **ar
          options.loglevel = loglevel;
      else if (options.loglevel)
          debug_set_level(options.loglevel);

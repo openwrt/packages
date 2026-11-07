@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=librespeed-cli-rust
-PKG_VERSION:=0.1.1
-PKG_RELEASE:=1
+PKG_VERSION:=1.2.0
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/BKPepe/speedtest-cli-rust/tar.gz/refs/tags/v$(PKG_VERSION)?
-PKG_HASH:=fb658ea4e988c6d60cf4d01df6a3e4a7ed1b55192217a4a712d089584da5c9ec
+PKG_SOURCE_URL:=https://codeload.github.com/librespeed/speedtest-cli-rust/tar.gz/refs/tags/v$(PKG_VERSION)?
+PKG_HASH:=14362549f3f210b6aa6cd1f06bf00e115f9f82519cff756264718f8f1bd53b2b
 PKG_BUILD_DIR:=$(BUILD_DIR)/speedtest-cli-rust-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
@@ -30,10 +30,11 @@ define Package/librespeed-cli-rust
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Command line client for LibreSpeed (Rust)
-  URL:=https://github.com/BKPepe/speedtest-cli-rust
+  URL:=https://github.com/librespeed/speedtest-cli-rust
   DEPENDS:=$(RUST_ARCH_DEPENDS) +libopenssl
-  PROVIDES:=librespeed-cli
+  PROVIDES:=@librespeed-cli
   CONFLICTS:=librespeed-cli
+  DEFAULT_VARIANT:=1
 endef
 
 define Package/librespeed-cli-rust/description

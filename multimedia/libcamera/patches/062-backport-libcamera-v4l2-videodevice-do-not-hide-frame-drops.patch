@@ -1,0 +1,58 @@
+From 942fa5b8433f38ebe6dfa4fcb186d778da97a33f Mon Sep 17 00:00:00 2001
+From: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Date: Wed, 25 Mar 2026 16:13:52 +0100
+Subject: [PATCH] libcamera: v4l2_videodevice: Do not hide frame drops
+
+Autocorrecting the sequence number in case it doesn't start with 0
+produces difficult to debug problems in cases where the first frame got
+lost. We need to handle these properly in the pipeline handler (and fix
+kernel drivers if needed).
+
+Signed-off-by: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Signed-off-by: Stefan Klug <stefan.klug@ideasonboard.com>
+---
+ include/libcamera/internal/v4l2_videodevice.h |  1 -
+ src/libcamera/v4l2_videodevice.cpp            | 15 ---------------
+ 2 files changed, 16 deletions(-)
+
+--- a/include/libcamera/internal/v4l2_videodevice.h
++++ b/include/libcamera/internal/v4l2_videodevice.h
+@@ -286,7 +286,6 @@ private:
+ 	std::unique_ptr<EventNotifier> fdBufferNotifier_;
+ 
+ 	State state_;
+-	std::optional<unsigned int> firstFrame_;
+ 
+ 	Timer watchdog_;
+ 	utils::Duration watchdogDuration_;
+--- a/src/libcamera/v4l2_videodevice.cpp
++++ b/src/libcamera/v4l2_videodevice.cpp
+@@ -1902,19 +1902,6 @@ FrameBuffer *V4L2VideoDevice::dequeueBuf
+ 	if (V4L2_TYPE_IS_OUTPUT(buf.type))
+ 		return buffer;
+ 
+-	/*
+-	 * Detect kernel drivers which do not reset the sequence number to zero
+-	 * on stream start.
+-	 */
+-	if (!firstFrame_.has_value()) {
+-		if (buf.sequence)
+-			LOG(V4L2, Info)
+-				<< "Zero sequence expected for first frame (got "
+-				<< buf.sequence << ")";
+-		firstFrame_ = buf.sequence;
+-	}
+-	metadata.sequence -= firstFrame_.value();
+-
+ 	Span<const FrameBuffer::Plane> framebufferPlanes = buffer->planes();
+ 	unsigned int numV4l2Planes = multiPlanar ? buf.length : 1;
+ 
+@@ -1991,8 +1978,6 @@ int V4L2VideoDevice::streamOn()
+ {
+ 	int ret;
+ 
+-	firstFrame_.reset();
+-
+ 	ret = ioctl(VIDIOC_STREAMON, &bufferType_);
+ 	if (ret < 0) {
+ 		LOG(V4L2, Error)

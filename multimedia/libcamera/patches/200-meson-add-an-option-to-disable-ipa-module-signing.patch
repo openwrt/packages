@@ -1,0 +1,69 @@
+From 7fb70155eca451e8084d07dffeaa587cc7fa08a1 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 16 Oct 2026 11:48:06 +0100
+Subject: [PATCH] meson: Add an option to disable IPA module signing
+
+IPA module signing is enabled whenever an openssl executable and a
+gnutls or OpenSSL library are found, so the result depends on the
+build host and on what is installed in the sysroot. Add the ipa-signing
+feature option, which defaults to auto, so that distributions can build
+with the IPA modules always isolated and avoid the crypto dependency.
+
+Assisted-by: LLM
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ meson_options.txt         |  5 +++++
+ src/libcamera/meson.build | 14 +++++++++-----
+ src/meson.build           |  2 +-
+ 3 files changed, 15 insertions(+), 6 deletions(-)
+
+--- a/meson_options.txt
++++ b/meson_options.txt
+@@ -46,6 +46,11 @@ option('gstreamer',
+         value : 'auto',
+         description : 'Compile libcamera GStreamer plugin')
+ 
++option('ipa-signing',
++        type : 'feature',
++        value : 'auto',
++        description : 'Sign the IPA modules and verify the signature when loading them')
++
+ option('ipas',
+         type : 'array',
+         choices : ['ipu3', 'mali-c55', 'rkisp1', 'rkisp2', 'rpi/pisp', 'rpi/vc4',
+--- a/src/libcamera/meson.build
++++ b/src/libcamera/meson.build
+@@ -90,13 +90,17 @@ libyaml = dependency('yaml-0.1', default
+ ])
+ 
+ # Use one of gnutls or libcrypto (provided by OpenSSL), trying gnutls first.
+-libcrypto = dependency('gnutls', required : false)
+-if libcrypto.found()
+-    config_h.set('HAVE_GNUTLS', 1)
++if get_option('ipa-signing').disabled()
++    libcrypto = dependency('', required : false)
+ else
+-    libcrypto = dependency('libcrypto', required : false)
++    libcrypto = dependency('gnutls', required : false)
+     if libcrypto.found()
+-        config_h.set('HAVE_CRYPTO', 1)
++        config_h.set('HAVE_GNUTLS', 1)
++    else
++        libcrypto = dependency('libcrypto', required : false)
++        if libcrypto.found()
++            config_h.set('HAVE_CRYPTO', 1)
++        endif
+     endif
+ endif
+ 
+--- a/src/meson.build
++++ b/src/meson.build
+@@ -15,7 +15,7 @@ summary({
+          }, section : 'Paths')
+ 
+ # Module Signing
+-openssl = find_program('openssl', required : false)
++openssl = find_program('openssl', required : get_option('ipa-signing'))
+ if openssl.found()
+     ipa_priv_key = custom_target('ipa-priv-key',
+                                  output : ['ipa-priv-key.pem'],

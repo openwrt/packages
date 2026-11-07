@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tcpreplay
-PKG_VERSION:=4.5.2
-PKG_RELEASE:=5
+PKG_VERSION:=4.6.1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/appneta/tcpreplay/releases/download/v$(PKG_VERSION)
-PKG_HASH:=2df15bc6d49f96a77617d137049f998193bbae95c1a31b04ca02856a24cbf384
+PKG_HASH:=14b96e3565d6e66e813000d0d510afeaecb871f2b533182c391c6ccf948c3e21
 
 PKG_LICENSE:=GPL-3.0-only
 PKG_LICENSE_FILES:=docs/LICENSE
@@ -35,7 +35,7 @@ define Package/tcpreplay/default
   CATEGORY:=Network
   URL:=https://tcpreplay.appneta.com/
   MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
-  DEPENDS:=+librt +libpcap +libdnet +libbpf +libxdp +USE_MUSL:musl-fts
+  DEPENDS:=+librt +libpcap +libdnet +libbpf +libxdp +KERNEL_IO_URING:liburing +USE_MUSL:musl-fts
 endef
 
 define Package/tcpbridge
@@ -139,7 +139,10 @@ CONFIGURE_ARGS += \
 	--with-libdnet="$(STAGING_DIR)/usr" \
 	--with-libpcap="$(STAGING_DIR)/usr"
 
-TARGET_CFLAGS += -std=gnu11
+# 4.6.0's txring.h (<linux/if_ether.h>) and sendpacket.h
+# (<netinet/if_ether.h>) both define struct ethhdr on musl; have the
+# kernel header defer it to libc to avoid the redefinition.
+TARGET_CFLAGS += -std=gnu11 -D__UAPI_DEF_ETHHDR=0
 TARGET_LDFLAGS += $(if $(CONFIG_USE_MUSL),-lfts)
 
 define tcpreplayTemplate

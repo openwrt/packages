@@ -1,12 +1,8 @@
 #!/bin/sh
 
 _mpd_test() {
-	# Version check
-	mpd --version | grep -F "$2"
-
-	# Confirm the binary reports at least one supported output plugin;
-	# "null" is always compiled in and safe for testing.
-	mpd --version | grep -i "null"
+	# Running mpd is not possible on the emulated CI targets, see
+	# test-version.sh; only the init script's shell logic is tested here.
 
 	# Test playlist_directory parsing logic from the init script:
 	# explicit value

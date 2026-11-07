@@ -1,0 +1,41 @@
+From 9e73fd8ddde844d755f3f992ca9cd7bb0502d87e Mon Sep 17 00:00:00 2001
+From: Pepper Gray <hello@peppergray.xyz>
+Date: Tue, 11 Aug 2026 00:03:34 +0200
+Subject: [PATCH] add syscall for close_range for non-glibc targets
+
+compiling on musl fails with error:
+```
+error[E0425]: cannot find function `close_range` in crate `libc`
+```
+
+use syscall for targets which do not provide a `close-range`-wrapper
+
+Closes: #730
+Signed-off-by: Pepper Gray <hello@peppergray.xyz>
+---
+ src/main.rs | 12 +++++++++++-
+ 1 file changed, 11 insertions(+), 1 deletion(-)
+
+--- a/src/main.rs
++++ b/src/main.rs
+@@ -32,9 +32,19 @@ enum SubCommand {
+     Version(version::Version),
+ }
+ 
++#[cfg(any(all(target_os = "linux", target_env = "gnu"), target_os = "freebsd",))]
++unsafe fn close_range(first: libc::c_uint, last: libc::c_uint, flags: libc::c_int) -> libc::c_int {
++    unsafe { libc::close_range(first, last, flags) }
++}
++
++#[cfg(all(target_os = "linux", not(target_env = "gnu"),))]
++unsafe fn close_range(first: libc::c_uint, last: libc::c_uint, flags: libc::c_int) -> libc::c_int {
++    unsafe { libc::syscall(libc::SYS_close_range, first, last, flags) as libc::c_int }
++}
++
+ fn main() {
+     // Close all fds we inherited from our parent process, we only need stdio.
+-    let _ = unsafe { libc::close_range(3, libc::c_uint::MAX, 0) };
++    let _ = unsafe { close_range(3, libc::c_uint::MAX, 0) };
+ 
+     let formatter = Formatter3164 {
+         facility: Facility::LOG_USER,

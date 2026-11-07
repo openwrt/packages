@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tio
 PKG_VERSION:=3.9
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/tio/tio/releases/download/v$(PKG_VERSION)
@@ -30,7 +30,7 @@ define Package/tio
   SUBMENU:=Terminal
   TITLE:=A simple TTY terminal I/O application
   URL:=https://tio.github.io/
-  DEPENDS:=+lua +glib2
+  DEPENDS:=+liblua5.4 +glib2
 endef
 
 define Package/tio/description

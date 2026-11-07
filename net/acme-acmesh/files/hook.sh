@@ -105,6 +105,7 @@ get)
 	esac
 
 	log info "Running ACME for $main_domain with validation_method $validation_method"
+        lock_file="$state_dir/acme-sh.lock"
 
 	staging_moved=0
 	if [ -e "$domain_dir" ]; then
@@ -117,7 +118,7 @@ get)
 			log info "$ACME $*"
 			trap "handle_signal renew Renewal" INT TERM
 			add_nft_rule "$main_domain" "$listen_port"
-			$ACME "$@" &
+			flock "$lock_file" $ACME "$@" &
 			wait $!
 			status=$?
 			trap - INT TERM
@@ -199,7 +200,7 @@ get)
 
 	log info "$ACME $*"
 	trap "handle_signal issue Issuance" INT TERM
-	"$ACME" "$@" \
+	flock "$lock_file" "$ACME" "$@" \
 		--pre-hook "$NOTIFY prepare" \
 		--renew-hook "$NOTIFY renewed" &
 	wait $!

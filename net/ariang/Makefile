@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ariang
-PKG_VERSION:=1.3.11
-PKG_RELEASE:=1
+PKG_VERSION:=1.3.15
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).zip
 PKG_SOURCE_URL:=https://github.com/mayswind/AriaNg/releases/download/$(PKG_VERSION)
-PKG_HASH:=deaaebaf8d59901f0fbdb839daceb1f2768b3d65425e393202786fa2c804bcf9
+PKG_HASH:=d2317e441966ad31f1e342cb6a6cc1c51808fb0a10cf6e39cb30b0517b3e7823
 UNPACK_CMD=unzip -q -d $(1) $(DL_DIR)/$(PKG_SOURCE)
 
 PKG_MAINTAINER:=Ansuel Smith <ansuelsmth@gmail.com>
@@ -39,8 +39,9 @@ endef
 
 define Package/ariang-nginx
   $(Package/ariang/default)
-  DEPENDS += +nginx
+  EXTRA_DEPENDS:=nginx$(if $(CONFIG_USE_APK), (>=0))
   TITLE += for nginx webserver
+  CONFLICTS:=ariang
 endef
 
 define Build/Compile

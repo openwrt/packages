@@ -1,0 +1,135 @@
+From 71677e8e96bb95060d45deab86f15c48dec11d4d Mon Sep 17 00:00:00 2001
+From: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Date: Thu, 2 Jul 2026 18:14:15 +0200
+Subject: [PATCH] ipa: libipa: lsc: Document Components parsing
+
+Document with examples how different IPA modules parse the tuning
+file depending on the number of colour channels they support.
+
+Signed-off-by: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Reviewed-by: Stefan Klug <stefan.klug@ideasonboard.com>
+Reviewed-by: Kieran Bingham <kieran.bingham@ideasonboard.com>
+---
+ src/ipa/libipa/lsc.cpp | 111 +++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 111 insertions(+)
+
+--- a/src/ipa/libipa/lsc.cpp
++++ b/src/ipa/libipa/lsc.cpp
+@@ -68,6 +68,117 @@ namespace lsc {
+  * tables are indexed by colour temperature with per-colour-components vectors
+  * of gain values or polynomial coefficients.
+  *
++ * The colour components names are IPA-implementation specific and depend on the
++ * ISP LSC engine design. Some LSC engine support 4 colour components (r, gr,
++ * gb, b), some only support 3 colour components (r, g, b). The name (and
++ * number) of the expected colour components shall be provided to
++ * LscAlgorithm::init() using the LscDescriptor::keys field.
++ *
++ * Example of a tabular lens shading tuning file with 'r', 'g' and 'b' colour
++ * components. The gain table has been omitted here, but the expected number
++ * of entries has to be equal to
++ * LscDescriptor::numHSamples * LscDescriptor::numVSamples.
++ *
++ * \code{.yaml}
++ * - Lsc:
++ *    sets:
++ *      - ct: 2500
++ *        r: [
++ *        	.. gains table omitted..
++ *        ]
++ *        g: [
++ *        	.. gains table omitted..
++ *        ]
++ *        b: [
++ *        	.. gains table omitted..
++ *        ]
++ *      - ct: 6500
++ *        r: [
++ *        	.. gains table omitted..
++ *        ]
++ *        g: [
++ *        	.. gains table omitted..
++ *        ]
++ *        b: [
++ *        	.. gains table omitted..
++ *        ]
++ * \endcode
++ *
++ * Example of a polynomial lens shading tuning file with 'r', 'gr', 'gb' and 'b'
++ * colour components:
++ *
++ * \code{.yaml}
++ * - Lsc:
++ *    type: "polynomial"
++ *    sets:
++ *      - ct: 2500
++ *        r:
++ *          cx: 0.5006571711950275
++ *          cy: 0.510093737499277
++ *          k0: 1.5393282208428813
++ *          k1: -1.1434559757908016
++ *          k2: 4.332602305814554
++ *          k3: 0.0
++ *          k4: 0.0
++ *        gr:
++ *          cx: 0.5009320529087338
++ *          cy: 0.511208038949085
++ *          k0: 1.5634738574805407
++ *          k1: -1.5623484259968348
++ *          k2: 4.846686073656501
++ *          k3: 0.0
++ *          k4: 0.0
++ *        gb:
++ *          cx: 0.5012013290343839
++ *          cy: 0.5128251541578288
++ *          k0: 1.526147944919103
++ *          k1: -1.4316976083689723
++ *          k2: 4.792604063222728
++ *          k3: 0.0
++ *          k4: 0.0
++ *        b:
++ *          cx: 0.49864139511067784
++ *          cy: 0.5162095081739346
++ *          k0: 1.0405245474038738
++ *          k1: 0.05618339879447103
++ *          k2: 1.8792813594001752
++ *          k3: 0.0
++ *          k4: 0.0
++ *      - ct: 6000
++ *        r:
++ *          cx: 0.5006202239353942
++ *          cy: 0.5099531318307661
++ *          k0: 1.4702946023945032
++ *          k1: -0.8893767547927631
++ *          k2: 3.920547732201387
++ *          k3: 0.0
++ *          k4: 0.0
++ *        gr:
++ *          cx: 0.500907874178317
++ *          cy: 0.511084916024106
++ *          k0: 1.5336172760559457
++ *          k1: -1.39964026514435
++ *          k2: 4.565487728954618
++ *          k3: 0.0
++ *          k4: 0.0
++ *        gb:
++ *          cx: 0.5011898608900477
++ *          cy: 0.5126797906745105
++ *          k0: 1.5013145790354843
++ *          k1: -1.2747407173754124
++ *          k2: 4.514682876897286
++ *          k3: 0.0
++ *          k4: 0.0
++ *        b:
++ *          cx: 0.4987561413116136
++ *          cy: 0.5159619420778772
++ *          k0: 1.0102986422191802
++ *          k1: 0.13263449763985727
++ *          k2: 1.686556107316064
++ *          k3: 0.0
++ *          k4: 0.0
++ * \endcode
++ *
+  * At LscAlgorithm::configure() time the LSC tables are re-sampled on the
+  * sensor's crop rectangle in use to adapt them to the configuration in use for
+  * a streaming session. Polynomial LSC tables support re-sampling and can be

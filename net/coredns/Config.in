@@ -92,6 +92,21 @@ config COREDNS_PLUGIN_ON
 	help
 	  Execute a command on server start/shutdown events.
 
+config COREDNS_PLUGIN_SIIT
+	bool "SIIT plugin"
+	default n
+	help
+	  Synthesize A records from AAAA records within a SIIT prefix
+	  (IPv6->IPv4 translation, RFC 6052 / RFC 7757 EAM).
+
+config COREDNS_PLUGIN_DYNUPDATE
+	bool "Dynamic update plugin"
+	default n
+	help
+	  Accept TSIG-authenticated RFC 2136 DNS UPDATE messages for an
+	  opt-in authoritative zone, optionally persisted in a local bbolt
+	  database. Experimental.
+
 comment "Third-party Plugins"
 
 config COREDNS_PLUGIN_WGSD
@@ -111,6 +126,28 @@ config COREDNS_PLUGIN_NETBOX
 	select COREDNS_REQUIRE_GO_GET
 	help
 	  Serve DNS records from a NetBox IPAM/DCIM instance.
+
+config COREDNS_PLUGIN_GSLB
+	bool "GSLB plugin"
+	default n
+	select COREDNS_REQUIRE_GO_GET
+	help
+	  CoreDNS-GSLB adds Global Server Load Balancing to CoreDNS for
+	  non-Kubernetes infrastructures (VMs, bare metal, hybrid cloud).
+	  Features: health monitoring (HTTP/S, TCP, ICMP, MySQL, gRPC, Lua),
+	  GeoIP and weighted/round-robin/IP-hash selection, failover policies,
+	  live config reload, REST API, Prometheus metrics and optional
+	  Redis-backed HA synchronization.
+
+config COREDNS_PLUGIN_MULTICLUSTER
+	bool "Multicluster plugin"
+	default n
+	select COREDNS_REQUIRE_GO_GET
+	help
+	  Implementation of the Kubernetes DNS-Based Multicluster Service
+	  Discovery Specification (clusterset.local). Adds a large
+	  k8s.io/client-go dependency tree and is only useful when
+	  querying remote Kubernetes clusters.
 
 config COREDNS_PLUGIN_FANOUT
 	bool "Fanout plugin"

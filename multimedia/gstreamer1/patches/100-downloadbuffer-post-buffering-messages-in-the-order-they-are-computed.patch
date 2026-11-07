@@ -1,0 +1,313 @@
+From 35f54d3c2c0caf2dba697ba092babcb411efab6d Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 30 Oct 2026 10:46:23 +0000
+Subject: [PATCH] downloadbuffer: post buffering messages in the order they are
+ computed
+
+update_buffering() computes the buffering percentage and builds the
+message while holding the queue lock, but every caller posts the message
+after releasing it. The upstream thread in chain() and the downstream
+thread in loop() or get_range() both update the level, so a message
+computed by one thread can be posted after a newer one from the other.
+When a stale message below 100% lands after the 100% message, the
+application waits for buffering that has already finished, and the
+element, no longer buffering, posts nothing further.
+
+Keep the state update under the queue lock and post from a new
+gst_download_buffer_post_buffering(), which takes a dedicated lock,
+reads the current percentage and posts it when it differs from the last
+one posted. queue2 uses the same scheme.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ plugins/elements/gstdownloadbuffer.c | 112 +++++++++++++--------------
+ plugins/elements/gstdownloadbuffer.h |   3 +
+ 2 files changed, 59 insertions(+), 56 deletions(-)
+
+--- a/plugins/elements/gstdownloadbuffer.c
++++ b/plugins/elements/gstdownloadbuffer.c
+@@ -174,7 +174,7 @@ G_DEFINE_TYPE_WITH_CODE (GstDownloadBuff
+ GST_ELEMENT_REGISTER_DEFINE (downloadbuffer, "downloadbuffer", GST_RANK_NONE,
+     GST_TYPE_DOWNLOAD_BUFFER);
+ 
+-static GstMessage *update_buffering (GstDownloadBuffer * dlbuf);
++static void update_buffering (GstDownloadBuffer * dlbuf);
+ 
+ static void gst_download_buffer_finalize (GObject * object);
+ 
+@@ -329,6 +329,9 @@ gst_download_buffer_init (GstDownloadBuf
+   dlbuf->waiting_add = FALSE;
+   g_cond_init (&dlbuf->item_add);
+ 
++  g_mutex_init (&dlbuf->buffering_post_lock);
++  dlbuf->last_posted_buffering_percent = -1;
++
+   /* tempfile related */
+   dlbuf->temp_template = NULL;
+   dlbuf->temp_location = NULL;
+@@ -343,6 +346,7 @@ gst_download_buffer_finalize (GObject *
+ 
+   g_mutex_clear (&dlbuf->qlock);
+   g_cond_clear (&dlbuf->item_add);
++  g_mutex_clear (&dlbuf->buffering_post_lock);
+   g_timer_destroy (dlbuf->in_timer);
+   g_timer_destroy (dlbuf->out_timer);
+ 
+@@ -562,52 +566,61 @@ get_buffering_stats (GstDownloadBuffer *
+   }
+ }
+ 
+-static GstMessage *
++static void
++gst_download_buffer_post_buffering (GstDownloadBuffer * dlbuf)
++{
++  GstMessage *msg = NULL;
++  gint percent = -1;
++
++  g_mutex_lock (&dlbuf->buffering_post_lock);
++
++  GST_DOWNLOAD_BUFFER_MUTEX_LOCK (dlbuf);
++  if (dlbuf->last_posted_buffering_percent != dlbuf->buffering_percent) {
++    GstBufferingMode mode;
++    gint avg_in, avg_out;
++    gint64 buffering_left;
++
++    percent = dlbuf->buffering_percent;
++    get_buffering_stats (dlbuf, percent, &mode, &avg_in, &avg_out,
++        &buffering_left);
++
++    msg = gst_message_new_buffering (GST_OBJECT_CAST (dlbuf), percent);
++    gst_message_set_buffering_stats (msg, mode, avg_in, avg_out,
++        buffering_left);
++  }
++  GST_DOWNLOAD_BUFFER_MUTEX_UNLOCK (dlbuf);
++
++  if (msg != NULL) {
++    if (gst_element_post_message (GST_ELEMENT_CAST (dlbuf), msg))
++      dlbuf->last_posted_buffering_percent = percent;
++    else
++      GST_DEBUG_OBJECT (dlbuf, "could not post buffering message");
++  }
++
++  g_mutex_unlock (&dlbuf->buffering_post_lock);
++}
++
++static void
+ update_buffering (GstDownloadBuffer * dlbuf)
+ {
+   gint percent;
+-  gboolean post = FALSE;
+-  GstMessage *message = NULL;
+ 
+   if (!get_buffering_percent (dlbuf, NULL, &percent))
+-    return NULL;
++    return;
+ 
+   if (dlbuf->is_buffering) {
+-    post = TRUE;
+     /* if we were buffering see if we reached the high watermark */
+     if (percent >= dlbuf->high_percent)
+       dlbuf->is_buffering = FALSE;
++    dlbuf->buffering_percent = percent;
+   } else {
+     /* we were not buffering, check if we need to start buffering if we drop
+      * below the low threshold */
+     if (percent < dlbuf->low_percent) {
+       dlbuf->is_buffering = TRUE;
+-      post = TRUE;
+-    }
+-  }
+-
+-  if (post) {
+-    if (percent == dlbuf->buffering_percent)
+-      post = FALSE;
+-    else
+       dlbuf->buffering_percent = percent;
++    }
+   }
+-
+-  if (post) {
+-    GstBufferingMode mode;
+-    gint avg_in, avg_out;
+-    gint64 buffering_left;
+-
+-    get_buffering_stats (dlbuf, percent, &mode, &avg_in, &avg_out,
+-        &buffering_left);
+-
+-    message = gst_message_new_buffering (GST_OBJECT_CAST (dlbuf),
+-        (gint) percent);
+-    gst_message_set_buffering_stats (message, mode,
+-        avg_in, avg_out, buffering_left);
+-  }
+-
+-  return message;
+ }
+ 
+ static gboolean
+@@ -1071,8 +1084,6 @@ gst_download_buffer_handle_sink_event (G
+     }
+     default:
+       if (GST_EVENT_IS_SERIALIZED (event)) {
+-        GstMessage *msg = NULL;
+-
+         /* serialized events go in the buffer */
+         GST_DOWNLOAD_BUFFER_MUTEX_LOCK_CHECK (dlbuf, dlbuf->sinkresult,
+             out_flushing);
+@@ -1084,7 +1095,7 @@ gst_download_buffer_handle_sink_event (G
+             /* update the buffering status */
+             update_levels (dlbuf, dlbuf->max_level.bytes);
+             /* update the buffering */
+-            msg = update_buffering (dlbuf);
++            update_buffering (dlbuf);
+             /* wakeup the waiter and let it recheck */
+             GST_DOWNLOAD_BUFFER_SIGNAL_ADD (dlbuf, -1);
+             break;
+@@ -1102,8 +1113,7 @@ gst_download_buffer_handle_sink_event (G
+         }
+         gst_event_unref (event);
+         GST_DOWNLOAD_BUFFER_MUTEX_UNLOCK (dlbuf);
+-        if (msg != NULL)
+-          gst_element_post_message (GST_ELEMENT_CAST (dlbuf), msg);
++        gst_download_buffer_post_buffering (dlbuf);
+       } else {
+         /* non-serialized events are passed upstream. */
+         ret = gst_pad_push_event (dlbuf->srcpad, event);
+@@ -1152,7 +1162,6 @@ gst_download_buffer_chain (GstPad * pad,
+   guint64 offset;
+   gsize res, available;
+   GError *error = NULL;
+-  GstMessage *msg = NULL;
+ 
+   dlbuf = GST_DOWNLOAD_BUFFER (parent);
+ 
+@@ -1236,12 +1245,11 @@ gst_download_buffer_chain (GstPad * pad,
+   }
+ 
+   /* update the buffering */
+-  msg = update_buffering (dlbuf);
++  update_buffering (dlbuf);
+ 
+   GST_DOWNLOAD_BUFFER_MUTEX_UNLOCK (dlbuf);
+ 
+-  if (msg != NULL)
+-    gst_element_post_message (GST_ELEMENT_CAST (dlbuf), msg);
++  gst_download_buffer_post_buffering (dlbuf);
+ 
+   return GST_FLOW_OK;
+ 
+@@ -1295,15 +1303,14 @@ completed:
+     dlbuf->write_pos = dlbuf->upstream_size;
+     dlbuf->filling = FALSE;
+     update_levels (dlbuf, dlbuf->max_level.bytes);
+-    msg = update_buffering (dlbuf);
++    update_buffering (dlbuf);
+     complete_message = gst_message_new_element (GST_OBJECT_CAST (dlbuf),
+         gst_structure_new ("GstCacheDownloadComplete",
+             "location", G_TYPE_STRING, dlbuf->temp_location, NULL));
+     GST_DOWNLOAD_BUFFER_MUTEX_UNLOCK (dlbuf);
+ 
+     gst_element_post_message (GST_ELEMENT_CAST (dlbuf), complete_message);
+-    if (msg != NULL)
+-      gst_element_post_message (GST_ELEMENT_CAST (dlbuf), msg);
++    gst_download_buffer_post_buffering (dlbuf);
+ 
+     return GST_FLOW_EOS;
+   }
+@@ -1317,7 +1324,6 @@ gst_download_buffer_loop (GstPad * pad)
+   GstDownloadBuffer *dlbuf;
+   GstFlowReturn ret;
+   GstBuffer *buffer = NULL;
+-  GstMessage *msg = NULL;
+ 
+   dlbuf = GST_DOWNLOAD_BUFFER (GST_PAD_PARENT (pad));
+ 
+@@ -1341,12 +1347,11 @@ gst_download_buffer_loop (GstPad * pad)
+ 
+ 
+   /* update the buffering */
+-  msg = update_buffering (dlbuf);
++  update_buffering (dlbuf);
+ 
+   GST_DOWNLOAD_BUFFER_MUTEX_UNLOCK (dlbuf);
+ 
+-  if (msg != NULL)
+-    gst_element_post_message (GST_ELEMENT_CAST (dlbuf), msg);
++  gst_download_buffer_post_buffering (dlbuf);
+ 
+   ret = gst_pad_push (dlbuf->srcpad, buffer);
+ 
+@@ -1643,7 +1648,6 @@ gst_download_buffer_get_range (GstPad *
+ {
+   GstDownloadBuffer *dlbuf;
+   GstFlowReturn ret;
+-  GstMessage *msg = NULL;
+ 
+   dlbuf = GST_DOWNLOAD_BUFFER_CAST (parent);
+ 
+@@ -1651,12 +1655,11 @@ gst_download_buffer_get_range (GstPad *
+   /* FIXME - function will block when the range is not yet available */
+   ret = gst_download_buffer_read_buffer (dlbuf, offset, length, buffer);
+   /* update the buffering */
+-  msg = update_buffering (dlbuf);
++  update_buffering (dlbuf);
+ 
+   GST_DOWNLOAD_BUFFER_MUTEX_UNLOCK (dlbuf);
+ 
+-  if (msg != NULL)
+-    gst_element_post_message (GST_ELEMENT_CAST (dlbuf), msg);
++  gst_download_buffer_post_buffering (dlbuf);
+ 
+   return ret;
+ 
+@@ -1897,7 +1900,6 @@ gst_download_buffer_set_property (GObjec
+     guint prop_id, const GValue * value, GParamSpec * pspec)
+ {
+   GstDownloadBuffer *dlbuf = GST_DOWNLOAD_BUFFER (object);
+-  GstMessage *msg = NULL;
+ 
+   /* someone could change levels here, and since this
+    * affects the get/put funcs, we need to lock for safety. */
+@@ -1906,11 +1908,11 @@ gst_download_buffer_set_property (GObjec
+   switch (prop_id) {
+     case PROP_MAX_SIZE_BYTES:
+       dlbuf->max_level.bytes = g_value_get_uint (value);
+-      msg = CAPACITY_CHANGE (dlbuf);
++      CAPACITY_CHANGE (dlbuf);
+       break;
+     case PROP_MAX_SIZE_TIME:
+       dlbuf->max_level.time = g_value_get_uint64 (value);
+-      msg = CAPACITY_CHANGE (dlbuf);
++      CAPACITY_CHANGE (dlbuf);
+       break;
+     case PROP_LOW_PERCENT:
+       dlbuf->low_percent = g_value_get_int (value);
+@@ -1931,9 +1933,7 @@ gst_download_buffer_set_property (GObjec
+ 
+   GST_DOWNLOAD_BUFFER_MUTEX_UNLOCK (dlbuf);
+ 
+-  if (msg != NULL)
+-    gst_element_post_message (GST_ELEMENT_CAST (dlbuf), msg);
+-
++  gst_download_buffer_post_buffering (dlbuf);
+ }
+ 
+ static void
+--- a/plugins/elements/gstdownloadbuffer.h
++++ b/plugins/elements/gstdownloadbuffer.h
+@@ -82,6 +82,7 @@ struct _GstDownloadBuffer
+   /* current buffering state */
+   gboolean is_buffering;
+   gint buffering_percent;
++  gint last_posted_buffering_percent;
+ 
+   /* for measuring input/output rates */
+   GTimer *in_timer;
+@@ -112,6 +113,8 @@ struct _GstDownloadBuffer
+ 
+   GstEvent *stream_start_event;
+   GstEvent *segment_event;
++
++  GMutex buffering_post_lock;   /* assures only one posted at a time */
+ };
+ 
+ struct _GstDownloadBufferClass

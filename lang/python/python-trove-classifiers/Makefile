@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-trove-classifiers
-PKG_VERSION:=2026.6.1.19
+PKG_VERSION:=2026.9.21.13
 PKG_RELEASE:=1
 
 PYPI_NAME:=trove-classifiers
 PYPI_SOURCE_NAME:=trove_classifiers
-PKG_HASH:=c5132b4b61a829d11cfbd2d72e97f20a45ed6edb95e45c5efdeb5e00836b2745
+PKG_HASH:=0a9ebc8d4e2f3e8a22848c5258033035bec17a3012ac3fea16dbaa764489eb71
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE

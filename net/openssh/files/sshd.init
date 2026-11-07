@@ -8,10 +8,10 @@ USE_PROCD=1
 PROG=/usr/sbin/sshd
 
 start_service() {
-	for type in rsa ed25519
+	for type in rsa ed25519 mldsa44-ed25519
 	do
 		# check for keys
-		key=/etc/ssh/ssh_host_${type}_key
+		key=/etc/ssh/ssh_host_$(echo $type | tr - _)_key
 		[ -f $key ] && {
 			[ -x /usr/bin/ssh-keygen ] && {
 				if ! /usr/bin/ssh-keygen -y -f $key > /dev/null 2>&1; then

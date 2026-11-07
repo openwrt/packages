@@ -1,7 +1,22 @@
 #!/bin/sh
+
+# Fix the group ownership and permissions of DVB device nodes after
+# procd creates them. When the last node of an adapter goes away, also
+# remove its empty directory, as devtmpfs does, so that applications
+# watching /dev/dvb (such as tvheadend) notice that the adapter is gone.
+# /dev/dvb itself is kept.
+
+case "$DEVNAME" in
+dvb/adapter*/*) ;;
+*) exit 0 ;;
+esac
+
 case "$ACTION" in
-  add)
-    chgrp -R dvb /dev/dvb/*
-    chmod -R g+rwX /dev/dvb/*
-    ;;
+add)
+	chgrp dvb "/dev/$DEVNAME" || exit 0
+	chmod g+rw "/dev/$DEVNAME"
+	;;
+remove)
+	rmdir "/dev/${DEVNAME%/*}" 2>/dev/null
+	;;
 esac

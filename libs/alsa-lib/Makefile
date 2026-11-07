@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=alsa-lib
 PKG_VERSION:=1.2.11
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://www.alsa-project.org/files/pub/lib/ \
@@ -31,7 +31,7 @@ define Package/alsa-lib
   CATEGORY:=Libraries
   TITLE:=ALSA (Advanced Linux Sound Architecture) library
   URL:=https://www.alsa-project.org/
-  DEPENDS:=@AUDIO_SUPPORT +kmod-sound-core +libpthread +librt
+  DEPENDS:=audio-support +kmod-sound-core +libpthread +librt
   LICENSE:=LGPL-2.1-or-later
   LICENSE_FILES:=COPYING
 endef

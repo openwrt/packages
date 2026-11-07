@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libnetconf2
-PKG_VERSION:=3.7.10
+PKG_VERSION:=4.4.10
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/CESNET/libnetconf2/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=7146932ea4fc8e12b9152e23e18e46699174c531ef1e0fc351b05fcd12295a81
+PKG_HASH:=ee52910da3e09f7cfb00f980ec7adb66b792373278b28ec43476934cb123112b
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
@@ -32,7 +32,7 @@ define Package/libnetconf2
   CATEGORY:=Libraries
   TITLE:=NETCONF library
   URL:=https://github.com/CESNET/libnetconf2
-  DEPENDS:= +libyang +libcurl +libssh +libopenssl +libpthread
+  DEPENDS:=+libyang +libcurl +libssh +libopenssl +libpthread
 endef
 
 define Package/libnetconf2/description
@@ -45,6 +45,9 @@ endef
 define Package/libnetconf2/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libnetconf2.so* $(1)/usr/lib/
+
+	$(INSTALL_DIR) $(1)/etc/netconf2/modules
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/yang/modules/libnetconf2/*.yang 		$(1)/etc/netconf2/modules/
 endef
 
 $(eval $(call BuildPackage,libnetconf2))

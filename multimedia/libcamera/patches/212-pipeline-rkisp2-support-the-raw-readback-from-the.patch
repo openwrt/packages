@@ -1,0 +1,442 @@
+From af1faca420e32d380a21b87508df3b55845919d1 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 16 Oct 2026 23:59:28 +0100
+Subject: [PATCH] pipeline: rkisp2: Support the raw readback from the RV1126
+ VICAP
+
+The pipeline handler matches the VICAP media device by the entity names
+of the RK3588 and queues the raw frames to the readback node in a way
+that the RV1126 does not accept. Add the support for the SoC, where the
+VICAP is the frame source of the ISP through an in-kernel binding:
+
+ - match the media device by driver name only, locate the sensor and
+   walk the enabled links to the first capture node, opening the
+   subdevices on the way, and set the sensor format on the sink and
+   source pads of each;
+ - enable the link from the readback node to the ISP, which the RV1126
+   driver creates disabled;
+ - start the main path first and the readback node last, as the ISP
+   selects the readback as its input when the main path starts, and
+   stop them in the opposite order;
+ - size the buffers that the VICAP capture node allocates for the
+   readback, which has more lines than the frame, while the capture
+   node stays the allocator because the VICAP has no IOMMU;
+ - apply the delayed sensor controls from the VICAP frame timing, as the
+   ISP frame start comes a full frame after the sensor started the frame;
+ - keep six requests in flight, so that the sensor controls of a request
+   are queued before the VICAP completes the frame three frames ahead of
+   the one they are for.
+
+Assisted-by: LLM
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ src/libcamera/pipeline/rkisp2/rkisp2.cpp | 241 ++++++++++++++++-------
+ 1 file changed, 173 insertions(+), 68 deletions(-)
+
+--- a/src/libcamera/pipeline/rkisp2/rkisp2.cpp
++++ b/src/libcamera/pipeline/rkisp2/rkisp2.cpp
+@@ -230,6 +230,13 @@ namespace {
+  */
+ static constexpr unsigned int kRkISP2MinBufferCount = 4;
+ 
++/*
++ * A request completes a frame after the VICAP capture, the readback and the
++ * statistics processing, so the sensor controls of the request queued in its
++ * place reach the sensor in time only with this many requests in flight.
++ */
++static constexpr unsigned int kRkISP2StreamBufferCount = 6;
++
+ } /* namespace */
+ 
+ class PipelineHandlerRkISP2 : public PipelineHandler
+@@ -269,13 +276,22 @@ private:
+ 	Size clampSensorSize(RkISP2CameraData *data, unsigned int mbus,
+ 			     const Size &maxSize);
+ 
++	/* A subdevice on the path from the sensor to the VICAP capture node */
++	struct CifSubdevice {
++		std::unique_ptr<V4L2Subdevice> subdev;
++		unsigned int sinkPad;
++		unsigned int sourcePad;
++	};
++
++	static MediaLink *downstreamLink(const MediaEntity *entity);
++
+ 	std::shared_ptr<MediaDevice> media_;
+ 	std::unique_ptr<CameraSensor> sensor_;
+-	std::unique_ptr<V4L2Subdevice> csi_;
+-	std::unique_ptr<V4L2Subdevice> cif_;
++	std::vector<CifSubdevice> cifSubdevs_;
+ 	std::unique_ptr<V4L2VideoDevice> video_;
+ 
+ 	std::shared_ptr<MediaDevice> ispMedia_;
++	MediaLink *rawrdLink_ = nullptr;
+ 	std::unique_ptr<V4L2VideoDevice> rawrd_;
+ 	std::unique_ptr<V4L2Subdevice> isp_;
+ 	std::unique_ptr<V4L2VideoDevice> mainPath_;
+@@ -405,6 +421,13 @@ void RkISP2CameraData::vicapBufferReady(
+ 	if (buffer->metadata().status == FrameMetadata::FrameCancelled)
+ 		return;
+ 
++	/*
++	 * The sensor starts the next frame when the VICAP completes one. The
++	 * ISP frame start follows the readback and lags behind the sensor.
++	 */
++	delayedCtrls_->applyControls(buffer->metadata().sequence + 1 +
++				     delayedCtrls_->maxDelay());
++
+ 	rawrd_->queueBuffer(buffer);
+ }
+ 
+@@ -473,10 +496,10 @@ void RkISP2CameraData::paramsComputed(un
+ 	}
+ }
+ 
+-void RkISP2CameraData::setSensorControls([[maybe_unused]] unsigned int frame,
++void RkISP2CameraData::setSensorControls(unsigned int frame,
+ 					 const ControlList &sensorControls)
+ {
+-	delayedCtrls_->push(sensorControls);
++	delayedCtrls_->push(frame, sensorControls);
+ }
+ 
+ void RkISP2CameraData::metadataReady(const ControlList &metadata)
+@@ -643,7 +666,7 @@ CameraConfiguration::Status RkISP2Camera
+ 	if (ret)
+ 		return Invalid;
+ 
+-	cfg.bufferCount = 4;
++	cfg.bufferCount = kRkISP2StreamBufferCount;
+ 
+ 	std::transform(rawFormats.begin(), rawFormats.end(),
+ 		       std::back_inserter(mbusCodes),
+@@ -732,7 +755,7 @@ PipelineHandlerRkISP2::generateConfigura
+ 	cfg.pixelFormat = isRaw ? rawFormat : formats::UYVY;
+ 	cfg.size = clampSensorSize(data, defaultMbusCode, maxSize);
+ 	cfg.colorSpace = isRaw ? ColorSpace::Raw : ColorSpace::Sycc;
+-	cfg.bufferCount = 4;
++	cfg.bufferCount = kRkISP2StreamBufferCount;
+ 
+ 	config->addConfiguration(cfg);
+ 
+@@ -767,19 +790,19 @@ int PipelineHandlerRkISP2::configure(Cam
+ 
+ 	LOG(RkISP2, Debug) << "Sensor configured with " << format;
+ 
+-	LOG(RkISP2, Debug) << "Configuring CSI with : " << format;
+-	ret = csi_->setFormat(0, &format);
+-	if (ret)
+-		return ret;
++	for (CifSubdevice &sd : cifSubdevs_) {
++		LOG(RkISP2, Debug)
++			<< "Configuring " << sd.subdev->entity()->name()
++			<< " with : " << format;
+ 
+-	LOG(RkISP2, Debug) << "Configuring VICAP with : " << format;
+-	ret = cif_->setFormat(0, &format);
+-	if (ret)
+-		return ret;
++		ret = sd.subdev->setFormat(sd.sinkPad, &format);
++		if (ret)
++			return ret;
+ 
+-	ret = cif_->setFormat(1, &format);
+-	if (ret)
+-		return ret;
++		ret = sd.subdev->setFormat(sd.sourcePad, &format);
++		if (ret)
++			return ret;
++	}
+ 
+ 	Size maxSize = data->isRaw_ ? vicapMaxSize : ispMaxSize;
+ 	PixelFormat vicapPixelFormat =
+@@ -789,18 +812,26 @@ int PipelineHandlerRkISP2::configure(Cam
+ 	vicapOutputFormat.fourcc = video_->toV4L2PixelFormat(vicapPixelFormat);
+ 	vicapOutputFormat.size = format.size;
+ 
+-	LOG(RkISP2, Debug) << "Configuring VICAP capture node with : " << vicapOutputFormat;
+-	ret = data->video_->setFormat(&vicapOutputFormat);
+-	if (ret)
+-		return ret;
+-
+ 	if (!data->usingIsp_ || data->isRaw_) {
++		LOG(RkISP2, Debug) << "Configuring VICAP capture node with : " << vicapOutputFormat;
++		ret = data->video_->setFormat(&vicapOutputFormat);
++		if (ret)
++			return ret;
++
+ 		cfg.setStream(&data->stream_);
+ 		cfg.stride = vicapOutputFormat.planes[0].bpl;
+ 		return 0;
+ 	}
+ 
+ 	/*
++	 * The ISP takes its input from the raw readback node only while the
++	 * link is enabled; the in-kernel VICAP binding feeds it otherwise.
++	 */
++	ret = rawrdLink_->setEnabled(true);
++	if (ret)
++		return ret;
++
++	/*
+ 	 * \todo Figure out if these should go in the pipeline handler
+ 	 * or camera data
+ 	 */
+@@ -809,6 +840,26 @@ int PipelineHandlerRkISP2::configure(Cam
+ 	if (ret)
+ 		return ret;
+ 
++	/*
++	 * The VICAP capture node allocates the buffers shared with the raw
++	 * readback node, which may read more lines than the frame has. Ask
++	 * the capture node for buffers of the readback size.
++	 */
++	unsigned int rawSize = vicapOutputFormat.planes[0].size;
++
++	LOG(RkISP2, Debug) << "Configuring VICAP capture node with : " << vicapOutputFormat;
++	ret = data->video_->setFormat(&vicapOutputFormat);
++	if (ret)
++		return ret;
++
++	if (vicapOutputFormat.planes[0].size < rawSize) {
++		LOG(RkISP2, Error)
++			<< "VICAP buffers of " << vicapOutputFormat.planes[0].size
++			<< " bytes are too small for the raw readback ("
++			<< rawSize << " bytes)";
++		return -EINVAL;
++	}
++
+ 	LOG(RkISP2, Debug) << "Configuring ISP input with: " << format;
+ 	ret = isp_->setFormat(0, &format);
+ 	if (ret)
+@@ -929,6 +980,7 @@ int PipelineHandlerRkISP2::start(Camera
+ 			return ret;
+ 		}
+ 		actions += [&]() { data->ipa_->stop(); };
++		data->delayedCtrls_->reset();
+ 
+ 		ret = data->param_->streamOn();
+ 		if (ret) {
+@@ -987,13 +1039,12 @@ int PipelineHandlerRkISP2::start(Camera
+ 
+ 	actions += [&]() { data->video_->streamOff(); };
+ 
++	/*
++	 * The main path starts the ISP, which selects the readback as its
++	 * input and must be running before the readback node issues its
++	 * first read.
++	 */
+ 	if (useMP) {
+-		ret = data->rawrd_->streamOn();
+-		if (ret < 0)
+-			return ret;
+-
+-		actions += [&]() { data->rawrd_->streamOff(); };
+-
+ 		ret = data->stat_->streamOn();
+ 		if (ret) {
+ 			LOG(RkISP2, Error)
+@@ -1007,6 +1058,12 @@ int PipelineHandlerRkISP2::start(Camera
+ 			return ret;
+ 
+ 		actions += [&]() { data->mainPath_->streamOff(); };
++
++		ret = data->rawrd_->streamOn();
++		if (ret < 0)
++			return ret;
++
++		actions += [&]() { data->rawrd_->streamOff(); };
+ 	}
+ 
+ 	if (controls) {
+@@ -1015,9 +1072,6 @@ int PipelineHandlerRkISP2::start(Camera
+ 			return ret;
+ 	}
+ 
+-	if (useMP)
+-		data->isp_->setFrameStartEnabled(true);
+-
+ 	actions.release();
+ 	return 0;
+ }
+@@ -1027,21 +1081,28 @@ void PipelineHandlerRkISP2::stopDevice(C
+ 	RkISP2CameraData *data = cameraData(camera);
+ 	bool useMP = data->usingIsp_ && !data->isRaw_;
+ 
++	/*
++	 * Stop the main path while the readback still feeds the ISP, so that
++	 * the ISP stops at a frame boundary. The capture node is stopped
++	 * before the readback node and vice versa, as each hands the buffers
++	 * it completes to the other.
++	 */
+ 	if (useMP)
+-		data->isp_->setFrameStartEnabled(false);
++		data->mainPath_->streamOff();
+ 
+ 	data->video_->streamOff();
+-	data->video_->releaseBuffers();
+ 
+-	if (!useMP)
++	if (!useMP) {
++		data->video_->releaseBuffers();
+ 		return;
++	}
+ 
+ 	data->ipa_->stop();
+ 
+ 	data->rawrd_->streamOff();
+-	data->rawrd_->releaseBuffers();
+ 
+-	data->mainPath_->streamOff();
++	data->video_->releaseBuffers();
++	data->rawrd_->releaseBuffers();
+ 	data->mainPath_->releaseBuffers();
+ 
+ 	data->stat_->streamOff();
+@@ -1126,8 +1187,6 @@ bool PipelineHandlerRkISP2::createCamera
+ 		data->delayedCtrls_ =
+ 			std::make_unique<DelayedControls>(data->sensor_->device(),
+ 							  params);
+-		isp_->frameStart.connect(data->delayedCtrls_.get(),
+-					 &DelayedControls::applyControls);
+ 
+ 		int ret = data->loadIPA();
+ 		if (ret) {
+@@ -1155,47 +1214,48 @@ bool PipelineHandlerRkISP2::createCamera
+ 	return true;
+ }
+ 
+-bool PipelineHandlerRkISP2::match(DeviceEnumerator *enumerator)
++/*
++ * Return the link to follow from \a entity towards the capture node: the
++ * first enabled link from a source pad, or the first link if none is enabled.
++ */
++MediaLink *PipelineHandlerRkISP2::downstreamLink(const MediaEntity *entity)
+ {
+-	DeviceMatch dm("rockchip-cif");
+-	/* \todo Generalize this for the other csi ports */
+-	/*
+-	 * I think we will have one camera per csi port, and then 4 streams
+-	 * each that correspond to the 4 channels. Not sure how to handle
+-	 * routing to the ISP though. For now we'll just assume one camera.
+-	 */
+-	dm.add("rkcif-mipi2");
+-	/* \todo Generalize this for the other channels */
+-	dm.add("rkcif-mipi2-id0");
+-	dm.add("dw-mipi-csi2rx fdd30000.csi");
++	MediaLink *fallback = nullptr;
+ 
+-	media_ = acquireMediaDevice(enumerator, dm);
+-	if (!media_)
+-		return false;
++	for (const MediaPad *pad : entity->pads()) {
++		if (!(pad->flags() & MEDIA_PAD_FL_SOURCE))
++			continue;
+ 
+-	csi_ = V4L2Subdevice::fromEntityName(media_.get(), "dw-mipi-csi2rx fdd30000.csi");
+-	if (!csi_ || csi_->open() < 0) {
+-		LOG(RkISP2, Error) << "Failed to open csi";
+-		return false;
+-	}
++		for (MediaLink *link : pad->links()) {
++			if (link->source() != pad)
++				continue;
+ 
+-	cif_ = V4L2Subdevice::fromEntityName(media_.get(), "rkcif-mipi2");
+-	if (!cif_ || cif_->open() < 0) {
+-		LOG(RkISP2, Error) << "Failed to open cif";
+-		return false;
++			if (link->flags() & MEDIA_LNK_FL_ENABLED)
++				return link;
++
++			if (!fallback)
++				fallback = link;
++		}
+ 	}
+ 
+-	/* \todo Support multiple streams */
+-	video_ = V4L2VideoDevice::fromEntityName(media_.get(), "rkcif-mipi2-id0");
+-	if (!video_ || video_->open() < 0) {
+-		LOG(RkISP2, Error) << "Failed to open capture device";
++	return fallback;
++}
++
++bool PipelineHandlerRkISP2::match(DeviceEnumerator *enumerator)
++{
++	DeviceMatch dm("rockchip-cif");
++
++	media_ = acquireMediaDevice(enumerator, dm);
++	if (!media_)
+ 		return false;
+-	}
+ 
++	/*
++	 * \todo Support one camera per CSI port, with the four VICAP channels
++	 * as streams. For now take the first sensor only.
++	 */
+ 	for (MediaEntity *entity : media_->locateEntities(MEDIA_ENT_F_CAM_SENSOR)) {
+ 		LOG(RkISP2, Debug) << "Identified " << entity->name();
+ 		sensor_ = CameraSensorFactoryBase::create(entity);
+-		/* Just get the first sensor for now */
+ 		if (sensor_)
+ 			break;
+ 	}
+@@ -1205,6 +1265,45 @@ bool PipelineHandlerRkISP2::match(Device
+ 		return false;
+ 	}
+ 
++	/*
++	 * Walk the graph from the sensor to the first capture node, opening the
++	 * subdevices on the way (the CSI-2 receiver and the VICAP interface).
++	 */
++	const MediaEntity *entity = sensor_->entity();
++	while (entity->type() != MediaEntity::Type::V4L2VideoDevice) {
++		MediaLink *link = downstreamLink(entity);
++		if (!link) {
++			LOG(RkISP2, Error)
++				<< "No capture path from " << entity->name();
++			return false;
++		}
++
++		if (!(link->flags() & MEDIA_LNK_FL_ENABLED) &&
++		    link->setEnabled(true) < 0)
++			return false;
++
++		if (!cifSubdevs_.empty())
++			cifSubdevs_.back().sourcePad = link->source()->index();
++
++		entity = link->sink()->entity();
++		if (entity->type() != MediaEntity::Type::V4L2Subdevice)
++			continue;
++
++		auto subdev = std::make_unique<V4L2Subdevice>(entity);
++		if (subdev->open() < 0) {
++			LOG(RkISP2, Error) << "Failed to open " << entity->name();
++			return false;
++		}
++
++		cifSubdevs_.push_back({ std::move(subdev), link->sink()->index(), 0 });
++	}
++
++	video_ = std::make_unique<V4L2VideoDevice>(entity);
++	if (video_->open() < 0) {
++		LOG(RkISP2, Error) << "Failed to open capture device";
++		return false;
++	}
++
+ 	const GlobalConfiguration &configuration = cameraManager()->_d()->configuration();
+ 	bool usingIsp = configuration.configuration()["pipelines"]["rkisp2"]["isp_enable"].get<bool>(true);
+ 	if (!usingIsp) {
+@@ -1241,6 +1340,12 @@ bool PipelineHandlerRkISP2::match(Device
+ 		return false;
+ 	}
+ 
++	rawrdLink_ = ispMedia_->link("rkisp2_rawrd0", 0, "rkisp2_isp", 0);
++	if (!rawrdLink_) {
++		LOG(RkISP2, Error) << "Failed to find the rkisp2 rawrd link";
++		return false;
++	}
++
+ 	/* \todo Support self path */
+ 	mainPath_ = V4L2VideoDevice::fromEntityName(ispMedia_.get(), "rkisp2_mainpath");
+ 	if (!mainPath_ || mainPath_->open() < 0) {

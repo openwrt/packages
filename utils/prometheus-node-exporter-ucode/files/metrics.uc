@@ -10,9 +10,9 @@ function debug(...s) {
 		warn("DEBUG: ", ...s, "\n");
 }
 
-function puts(...s) {
+let puts = function(...s) {
 	return uhttpd.send(...s, "\n");
-}
+};
 
 function govalue(value) {
 	if (value == Infinity)
@@ -156,8 +156,10 @@ global.handle_request = function(env) {
 
 	httpstatus("200 OK");
 
-	let duration = gauge("node_scrape_collector_duration_seconds");
-	let success = gauge("node_scrape_collector_success");
+	let duration = gauge("node_scrape_collector_duration_seconds",
+		"node_exporter: Duration of a collector scrape.");
+	let success = gauge("node_scrape_collector_success",
+		"node_exporter: Whether a collector succeeded.");
 
 	for (let col in cols) {
 		let ok = false;

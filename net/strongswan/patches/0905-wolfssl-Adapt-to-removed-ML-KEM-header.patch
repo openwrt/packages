@@ -1,0 +1,24 @@
+From 98b133c54c5e3f66f46a5bb11c9b09d06fdc8469 Mon Sep 17 00:00:00 2001
+From: Tobias Brunner <tobias@strongswan.org>
+Date: Fri, 26 Jun 2026 08:10:16 +0200
+Subject: [PATCH] wolfssl: Adapt to removed ML-KEM header
+
+The mlkem.h header that mainly defined aliases for the old wc_Kyber* API
+has been removed and its contents moved to the wc_mlkem.h header.
+---
+ src/libstrongswan/plugins/wolfssl/wolfssl_kem.c | 3 ---
+ 1 file changed, 3 deletions(-)
+
+--- a/src/libstrongswan/plugins/wolfssl/wolfssl_kem.c
++++ b/src/libstrongswan/plugins/wolfssl/wolfssl_kem.c
+@@ -25,10 +25,7 @@
+ 
+ #ifdef WOLFSSL_HAVE_MLKEM
+ 
+-#include <wolfssl/wolfcrypt/mlkem.h>
+-#ifdef WOLFSSL_WC_MLKEM
+ #include <wolfssl/wolfcrypt/wc_mlkem.h>
+-#endif
+ 
+ typedef struct private_key_exchange_t private_key_exchange_t;
+ 

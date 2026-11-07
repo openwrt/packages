@@ -1,0 +1,25 @@
+From 23a183b63a4c94ae7cd0f36c63ee7eb905be60fd Mon Sep 17 00:00:00 2001
+From: Rui Chen <rui@chenrui.dev>
+Date: Mon, 5 Oct 2026 22:55:47 -0400
+Subject: [PATCH] Fix destination enumeration without DNS-SD
+
+Add the local destination fields used by cups_enum_dests to the non-DNS-SD callback data structure.
+
+Fixes #1739
+
+Signed-off-by: Rui Chen <rui@chenrui.dev>
+---
+ cups/dest.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+--- a/cups/dest.c
++++ b/cups/dest.c
+@@ -125,6 +125,8 @@ typedef struct _cups_getdata_s
+ {
+   int		num_dests;		/* Number of destinations */
+   cups_dest_t	*dests;			/* Destinations */
++  int		num_local;		/* Number of local cupsd queues */
++  cups_dest_t	*local_dests;		/* Local cupsd queues */
+   char		def_name[1024],		/* Default printer name, if any */
+ 		*def_instance;		/* Default printer instance, if any */
+ } _cups_getdata_t;

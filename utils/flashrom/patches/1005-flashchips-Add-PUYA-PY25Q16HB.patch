@@ -1,0 +1,77 @@
+From da5d731d8c91f157167513cc7abfbde4b90451eb Mon Sep 17 00:00:00 2001
+From: Mathew Blowers <mathew.blowers@raspberrypi.com>
+Date: Thu, 6 Aug 2026 15:47:59 +0100
+Subject: [PATCH] flashchips: Add PUYA PY25Q16HB
+
+Datasheet: https://datasheet4u.com/pdf/1603106/PY25Q16HB.pdf
+Tested: probe, read, write and erase
+Tested-with: Raspberry Pi 5
+http://paste.flashrom.org/view.php?id=3884
+
+Change-Id: Ice337ab2b52a54b316567684f6b59d68fd2effcc
+Signed-off-by: Mathew Blowers <mathew.blowers@raspberrypi.com>
+Reviewed-on: https://review.coreboot.org/c/flashrom/+/94756
+Reviewed-by: Anastasia Klimchuk <aklm@chromium.org>
+Tested-by: build bot (Jenkins) <no-reply@coreboot.org>
+---
+ flashchips/puya.c    | 38 ++++++++++++++++++++++++++++++++++++++
+ include/flashchips.h |  1 +
+ 2 files changed, 39 insertions(+)
+
+--- a/flashchips/puya.c
++++ b/flashchips/puya.c
+@@ -12,6 +12,44 @@
+ 
+ 	{
+ 		.vendor		= "PUYA",
++		.name		= "P25Q16HB",
++		.bustype	= BUS_SPI,
++		.manufacture_id	= PUYA_ID,
++		.model_id	= PUYA_P25Q16HB,
++		.total_size	= 2048,
++		.page_size	= 256,
++		.feature_bits	= FEATURE_WRSR_WREN | FEATURE_OTP,
++		.tested		= TEST_OK_PREW,
++		.probe		= PROBE_SPI_RDID,
++		.probe_timing	= TIMING_ZERO,
++		.block_erasers	=
++		{
++			{
++				.eraseblocks = { {4 * 1024, 512} },
++				.block_erase = SPI_BLOCK_ERASE_20,
++			}, {
++				.eraseblocks = { {32 * 1024, 64} },
++				.block_erase = SPI_BLOCK_ERASE_52,
++			}, {
++				.eraseblocks = { {64 * 1024, 32} },
++				.block_erase = SPI_BLOCK_ERASE_D8,
++			}, {
++				.eraseblocks = { {2 * 1024 * 1024, 1} },
++				.block_erase = SPI_BLOCK_ERASE_60,
++			}, {
++				.eraseblocks = { {2 * 1024 * 1024, 1} },
++				.block_erase = SPI_BLOCK_ERASE_C7,
++			}
++		},
++		.printlock	= SPI_PRETTYPRINT_STATUS_REGISTER_BP4_SRWD,
++		.unlock		= SPI_DISABLE_BLOCKPROTECT_BP4_SRWD,
++		.write		= SPI_CHIP_WRITE256,
++		.read		= SPI_CHIP_READ,
++		.voltage	= {2300, 3600},
++	},
++
++	{
++		.vendor		= "PUYA",
+ 		.name		= "P25Q06H",
+ 		.bustype	= BUS_SPI,
+ 		.manufacture_id	= PUYA_ID,
+--- a/include/flashchips.h
++++ b/include/flashchips.h
+@@ -669,6 +669,7 @@
+ #define PMC_PM49FL004		0x6E
+ 
+ #define PUYA_ID			0x85
++#define PUYA_P25Q16HB		0x2015
+ #define PUYA_P25Q06H		0x4010
+ #define PUYA_P25Q11H		0x4011
+ #define PUYA_P25Q21H		0x4012

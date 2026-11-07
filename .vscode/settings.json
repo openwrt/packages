@@ -1,6 +1,9 @@
 {
     "git.alwaysSignOff": true,
     "files.trimTrailingWhitespace": true,
+    "[diff]": {
+        "files.trimTrailingWhitespace": false
+    },
     "files.insertFinalNewline": true,
     "files.trimFinalNewlines": true,
     "files.eol": "\n",

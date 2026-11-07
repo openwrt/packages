@@ -1,0 +1,334 @@
+From e11279c4b6c5837599a67a6579409c5c150ca90f Mon Sep 17 00:00:00 2001
+From: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Date: Tue, 9 Jun 2026 17:55:48 +0200
+Subject: [PATCH] ipa: mali-c55: Port to use LscAlgorithm
+
+Port the Mali-C55 LSC algorithm to use libIPA LscAlgorithm.
+
+As we now need to specify the expected grid size at LscAlgorithm::init()
+time, only tables of 32x32 are now supported.
+
+Signed-off-by: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Reviewed-by: Kieran Bingham <kieran.bingham@ideasonboard.com>
+Reviewed-by: Daniel Scally <dan.scally@ideasonboard.com>
+---
+ src/ipa/mali-c55/algorithms/lsc.cpp | 160 +++++++++++++++++-----------
+ src/ipa/mali-c55/algorithms/lsc.h   |  32 ++++--
+ src/ipa/mali-c55/ipa_context.h      |   3 +
+ 3 files changed, 123 insertions(+), 72 deletions(-)
+
+--- a/src/ipa/mali-c55/algorithms/lsc.cpp
++++ b/src/ipa/mali-c55/algorithms/lsc.cpp
+@@ -7,40 +7,77 @@
+ 
+ #include "lsc.h"
+ 
++#include <libcamera/base/log.h>
+ #include <libcamera/base/utils.h>
+ 
+-#include "libcamera/internal/value_node.h"
+-
+ namespace libcamera {
+ 
+ namespace ipa::mali_c55::algorithms {
+ 
+ LOG_DEFINE_CATEGORY(MaliC55Lsc)
+ 
+-int Lsc::init([[maybe_unused]] IPAContext &context, const ValueNode &tuningData)
++/* Gain values in [1, 5] range */
++static constexpr unsigned int kMeshScale = 6;
++
++/* Mali-C55 hw supports configurable mesh sizes; we fix it to 32. */
++static constexpr unsigned int kMeshSize = 32;
++static constexpr unsigned int kGridSize = kMeshSize * kMeshSize;
++
++/* Per-colour component page offsets in the mesh table. */
++static constexpr unsigned int kRedOffset = 0;
++static constexpr unsigned int kGreenOffset = 1024;
++static constexpr unsigned int kBlueOffset = 2048;
++
++/*
++ * \todo Clarify if Mali-C55 can support up to 4 colour temperatures.
++ *
++ * The uAPI only expose MALI_C55_NUM_MESH_SHADING_ELEMENTS (3072) gain elements,
++ * which correspond to three pages of 1024 (32x32) entries.
++ */
++static constexpr unsigned int kMaxColourTemperatures = 3;
++
++/*
++ * The LSC algorithm implementation only supports 32x32 grids. Create a list of
++ * positions from the grid size.
++ */
++std::vector<double> Lsc::segmentsToPosition() const
+ {
+-	if (!tuningData.contains("meshScale")) {
+-		LOG(MaliC55Lsc, Error) << "meshScale missing from tuningData";
+-		return -EINVAL;
+-	}
++	std::vector<double> positions(kMeshSize);
++	for (double i = 0.0; i < kMeshSize; ++i)
++		positions[i] = i / (kMeshSize - 1);
+ 
+-	meshScale_ = tuningData["meshScale"].get<uint32_t>(0);
++	return positions;
++}
+ 
+-	const ValueNode &sets = tuningData["sets"];
+-	if (!sets.isList()) {
+-		LOG(MaliC55Lsc, Error) << "LSC tables missing or invalid";
+-		return -EINVAL;
+-	}
++int Lsc::init(IPAContext &context, const ValueNode &tuningData)
++{
++	gridPos_ = segmentsToPosition();
+ 
+-	size_t tableSize = 0;
+-	for (const auto &set : sets.asList()) {
+-		uint32_t ct = set["ct"].get<uint32_t>(0);
++	return lscAlgo_.init(tuningData, context.ctrlMap, {
++				.keys = { "r", "g", "b" },
++				.numHSamples = kMeshSize,
++				.numVSamples = kMeshSize,
++				.sensorSize = context.sensorInfo.activeAreaSize
++			     });
++}
+ 
+-		if (!ct) {
+-			LOG(MaliC55Lsc, Error) << "Invalid colour temperature";
+-			return -EINVAL;
+-		}
++int Lsc::configure(IPAContext &context, const IPACameraSensorInfo &configInfo)
++{
++	int ret = lscAlgo_.configure(context.activeState.lsc, configInfo.analogCrop,
++				     gridPos_, gridPos_);
++	if (ret)
++		return ret;
++
++	/* Re-initialize the mesh tables and reserve space for enough entries. */
++	mesh_ = std::vector<uint32_t>(kGridSize * kMaxColourTemperatures);
++	colourTemperatures_.clear();
+ 
++	/*
++	 * Get the lsc tables per colour components and populate mesh_ with
++	 * their content.
++	 */
++	auto &components = lscAlgo_.getComponents();
++	for (auto const &[ct, component] : components) {
+ 		if (std::count(colourTemperatures_.begin(),
+ 			       colourTemperatures_.end(), ct)) {
+ 			LOG(MaliC55Lsc, Error)
+@@ -48,44 +85,26 @@ int Lsc::init([[maybe_unused]] IPAContex
+ 			return -EINVAL;
+ 		}
+ 
+-		std::vector<uint8_t> rTable =
+-			set["r"].get<std::vector<uint8_t>>().value_or(utils::defopt);
+-		std::vector<uint8_t> gTable =
+-			set["g"].get<std::vector<uint8_t>>().value_or(utils::defopt);
+-		std::vector<uint8_t> bTable =
+-			set["b"].get<std::vector<uint8_t>>().value_or(utils::defopt);
+-
+-		/*
+-		 * Some validation to do; only 16x16 and 32x32 tables of
+-		 * coefficients are acceptable, and all tables across all of the
+-		 * sets must be the same size. The first time we encounter a
+-		 * table we check that it is an acceptable size and if so make
+-		 * sure all other tables are of equal size.
+-		 */
+-		if (!tableSize) {
+-			if (rTable.size() != 256 && rTable.size() != 1024) {
+-				LOG(MaliC55Lsc, Error)
+-					<< "Invalid table size for colour temperature " << ct;
+-				return -EINVAL;
+-			}
+-			tableSize = rTable.size();
+-		}
++		const std::vector<uint8_t> &rTable = component.at("r");
++		const std::vector<uint8_t> &gTable = component.at("g");
++		const std::vector<uint8_t> &bTable = component.at("b");
++
++		/* Only 32x32 tables of coefficients are accepted. */
++		ASSERT(rTable.size() == kGridSize &&
++		       gTable.size() == kGridSize &&
++		       bTable.size() != kGridSize);
+ 
+-		if (rTable.size() != tableSize ||
+-		    gTable.size() != tableSize ||
+-		    bTable.size() != tableSize) {
+-			LOG(MaliC55Lsc, Error)
+-				<< "Invalid or mismatched table size for colour temperature " << ct;
+-			return -EINVAL;
+-		}
+-
+-		if (colourTemperatures_.size() >= 3) {
++		if (colourTemperatures_.size() >= kMaxColourTemperatures) {
+ 			LOG(MaliC55Lsc, Error)
+ 				<< "A maximum of 3 colour temperatures are supported";
+ 			return -EINVAL;
+ 		}
+ 
+-		for (unsigned int i = 0; i < tableSize; i++) {
++		/*
++		 * Create the mesh table entries by assembling up to 3 gains per
++		 * colour temperature in a u32 word.
++		 */
++		for (unsigned int i = 0; i < kGridSize; i++) {
+ 			mesh_[kRedOffset + i] |=
+ 				(rTable[i] << (colourTemperatures_.size() * 8));
+ 			mesh_[kGreenOffset + i] |=
+@@ -97,35 +116,36 @@ int Lsc::init([[maybe_unused]] IPAContex
+ 		colourTemperatures_.push_back(ct);
+ 	}
+ 
+-	/*
+-	 * The mesh has either 16x16 or 32x32 nodes, we tell the driver which it
+-	 * is based on the number of values in the tuning data's table.
+-	 */
+-	if (tableSize == 256)
+-		meshSize_ = 15;
+-	else
+-		meshSize_ = 31;
+-
+ 	return 0;
+ }
+ 
++/**
++ * \copydoc libcamera::ipa::Algorithm::queueRequest
++ */
++void Lsc::queueRequest(IPAContext &context, [[maybe_unused]] const uint32_t frame,
++		       IPAFrameContext &frameContext, const ControlList &controls)
++{
++	lscAlgo_.queueRequest(context.activeState.lsc, frameContext.lsc,
++			      controls);
++}
++
+ void Lsc::fillConfigParamsBlock(MaliC55Params *params) const
+ {
+ 	auto block = params->block<MaliC55Blocks::MeshShadingConfig>();
+ 
+ 	block->mesh_show = false;
+-	block->mesh_scale = meshScale_;
++	block->mesh_scale = kMeshScale;
+ 	block->mesh_page_r = 0;
+ 	block->mesh_page_g = 1;
+ 	block->mesh_page_b = 2;
+-	block->mesh_width = meshSize_;
+-	block->mesh_height = meshSize_;
++	block->mesh_width = kMeshSize - 1;
++	block->mesh_height = kMeshSize - 1;
+ 
+ 	std::copy(mesh_.begin(), mesh_.end(), block->mesh);
+ }
+ 
+ void Lsc::fillSelectionParamsBlock(MaliC55Params *params, uint8_t bank,
+-				     uint8_t alpha) const
++				   uint8_t alpha) const
+ {
+ 	auto block = params->block<MaliC55Blocks::MeshShadingSel>();
+ 
+@@ -198,6 +218,18 @@ void Lsc::prepare(IPAContext &context, [
+ 	fillConfigParamsBlock(params);
+ }
+ 
++/**
++ * \copydoc libcamera::ipa::Algorithm::process
++ */
++void Lsc::process([[maybe_unused]] IPAContext &context,
++		  [[maybe_unused]] const uint32_t frame,
++		  IPAFrameContext &frameContext,
++		  [[maybe_unused]] const mali_c55_stats_buffer *stats,
++		  ControlList &metadata)
++{
++	lscAlgo_.process(frameContext.lsc, metadata);
++}
++
+ REGISTER_IPA_ALGORITHM(Lsc, "Lsc")
+ 
+ } /* namespace ipa::mali_c55::algorithms */
+--- a/src/ipa/mali-c55/algorithms/lsc.h
++++ b/src/ipa/mali-c55/algorithms/lsc.h
+@@ -5,10 +5,19 @@
+  * Mali-C55 Lens shading correction algorithm
+  */
+ 
+-#include <map>
++#include <vector>
+ #include <tuple>
+ 
++#include <linux/media/arm/mali-c55-config.h>
++
++#include "libcamera/internal/value_node.h"
++
++#include "libipa/fixedpoint.h"
++#include "libipa/lsc.h"
++
+ #include "algorithm.h"
++#include "ipa_context.h"
++#include "params.h"
+ 
+ namespace libcamera {
+ 
+@@ -21,23 +30,30 @@ public:
+ 	~Lsc() = default;
+ 
+ 	int init(IPAContext &context, const ValueNode &tuningData) override;
++	int configure(IPAContext &context, const IPACameraSensorInfo &configInfo) override;
++	void queueRequest(IPAContext &context, const uint32_t frame,
++			  IPAFrameContext &frameContext,
++			  const ControlList &controls) override;
+ 	void prepare(IPAContext &context, const uint32_t frame,
+ 		     IPAFrameContext &frameContext,
+ 		     MaliC55Params *params) override;
++	void process(IPAContext &context, const uint32_t frame,
++		     IPAFrameContext &frameContext,
++		     const mali_c55_stats_buffer *stats,
++		     ControlList &metadata) override;
+ private:
+-	static constexpr unsigned int kRedOffset = 0;
+-	static constexpr unsigned int kGreenOffset = 1024;
+-	static constexpr unsigned int kBlueOffset = 2048;
+-
++	std::vector<double> segmentsToPosition() const;
+ 	void fillConfigParamsBlock(MaliC55Params *params) const;
+ 	void fillSelectionParamsBlock(MaliC55Params *params,
+ 				      uint8_t bank, uint8_t alpha) const;
+ 	std::tuple<uint8_t, uint8_t> findBankAndAlpha(uint32_t ct) const;
+ 
+-	std::vector<uint32_t> mesh_ = std::vector<uint32_t>(3072);
+ 	std::vector<uint32_t> colourTemperatures_;
+-	uint32_t meshScale_;
+-	uint32_t meshSize_;
++	std::vector<uint32_t> mesh_;
++
++	std::vector<double> gridPos_;
++
++	LscAlgorithm<UQ<2, 6>> lscAlgo_;
+ };
+ 
+ } /* namespace ipa::mali_c55::algorithms */
+--- a/src/ipa/mali-c55/ipa_context.h
++++ b/src/ipa/mali-c55/ipa_context.h
+@@ -19,6 +19,7 @@
+ #include "libipa/awb.h"
+ #include "libipa/ccm.h"
+ #include "libipa/fixedpoint.h"
++#include "libipa/lsc.h"
+ 
+ namespace libcamera {
+ 
+@@ -60,6 +61,7 @@ struct IPAActiveState {
+ 
+ 	ipa::awb::ActiveState awb;
+ 	ipa::ccm::ActiveState ccm;
++	ipa::lsc::ActiveState lsc;
+ };
+ 
+ struct IPAFrameContext : public FrameContext {
+@@ -71,6 +73,7 @@ struct IPAFrameContext : public FrameCon
+ 
+ 	ipa::awb::FrameContext awb;
+ 	ipa::ccm::FrameContext ccm;
++	ipa::lsc::FrameContext lsc;
+ };
+ 
+ struct IPAContext {

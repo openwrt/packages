@@ -1,6 +1,19 @@
+From d4399c664ec1f1c9fc2c2e19a3db1e0948d37859 Mon Sep 17 00:00:00 2001
+From: Alexandru Ardelean <alex@shruggie.ro>
+Date: Wed, 20 Aug 2026 09:00:00 +0300
+Subject: [PATCH] su: tolerate the absence of a controlling terminal
+
+su drops the controlling terminal when running a command, treating a
+missing one (ENXIO from open) as success. On musl, open("/dev/tty")
+can fail with EACCES instead, or TIOCNOTTY can fail with ENOTTY;
+handle both so "su <user> -c <cmd>" works without a controlling
+terminal (init scripts, service supervisors). OpenWrt issue #1521.
+
+Signed-off-by: Alexandru Ardelean <alex@shruggie.ro>
+---
 --- a/src/su.c
 +++ b/src/su.c
-@@ -1169,8 +1169,12 @@ int main (int argc, char **argv)
+@@ -1165,8 +1165,12 @@ int main (int argc, char **argv)
  
  		if (fd >= 0) {
  			err = ioctl (fd, TIOCNOTTY, (char *) NULL);

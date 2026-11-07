@@ -1,6 +1,28 @@
+From f2763b95afc57b88dc9d494b3fbf3841ba38a314 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Wed, 7 Sep 2022 18:24:22 +0100
+Subject: [PATCH] fix-build: avoid spurious extra vararg and a missing stdlib.h
+ include
+
+exim_nullstd() calls string_open_failed("/dev/null", NULL) - a
+variadic, format-string-checked helper - with a literal path as the
+format string and an unused NULL vararg, since the literal contains
+no conversion specifier. Use a proper "%s" format with the path as
+its argument instead, via a named devnullpath constant shared with
+the preceding open() call.
+
+local_scan.h is missing an explicit #include <stdlib.h>, relying on
+it being pulled in transitively by another header.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ src/exim.c       | 6 ++++--
+ src/local_scan.h | 1 +
+ 2 files changed, 5 insertions(+), 2 deletions(-)
+
 --- a/src/exim.c
 +++ b/src/exim.c
-@@ -660,13 +660,15 @@ exim_nullstd(void)
+@@ -668,13 +668,15 @@ exim_nullstd(void)
  {
  int devnull = -1;
  struct stat statbuf;
@@ -12,7 +34,7 @@
      {
 -    if (devnull < 0) devnull = open("/dev/null", O_RDWR);
 +    if (devnull < 0) devnull = open(devnullpath, O_RDWR);
-     if (devnull < 0) log_write_die(0, LOG_MAIN, "%s",
+     if (devnull < 0) log_write_die(LOG_MAIN, "%s",
 -      string_open_failed("/dev/null", NULL));
 +      string_open_failed("%s", devnullpath));
      if (devnull != i) (void)dup2(devnull, i);
@@ -20,10 +42,10 @@
    }
 --- a/src/local_scan.h
 +++ b/src/local_scan.h
-@@ -29,6 +29,7 @@ store.c
- settings, and the store functions. */
+@@ -30,6 +30,7 @@ settings, and the store functions. */
  
  #include <stdarg.h>
+ #include <stdint.h>
 +#include <stdlib.h>
  #include <sys/types.h>
  #pragma GCC visibility push(default)

@@ -1,0 +1,808 @@
+From 317d9f303b63f9e7d86cdd575139392738c0250f Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Wed, 28 Oct 2026 07:27:22 +0000
+Subject: [PATCH] pipeline: rkisp2: Drive the ISPP on the RV1126
+
+On the RV1126 the ISP main path can feed the ISPP post-processor
+through an in-kernel pool, with the VICAP feeding the ISP inside the
+kernel as well; the ISPP main output then carries the processed frames
+and the ISPP params node takes the module parameters. Match the ISPP
+media device when it exists and run the pipe through it:
+
+ - the readback link stays disabled, the ISP input takes the sensor
+   format and the ISPP input pad follows the ISPP output pad of the ISP,
+   which decides the pipe size;
+ - the ISPP main output is the capture node of the stream, at the pipe
+   size and in the formats the node offers;
+ - the ISPP params buffers circulate through the IPA. The root start of
+   the ISPP waits for the params stream and its first buffer, whose
+   blocks set the module mask, so the start fills every buffer with the
+   synchronous IPA call and queues it before the params node streams
+   on: the asynchronous reply of the per-frame call could only be
+   dispatched after the blocking start of the main output returned;
+ - the ISP params and statistics nodes run as before for the 3A;
+ - the delayed sensor controls are pushed and applied from the ISP
+   frame start event, one slot per frame, with the controls of the
+   latest request. The ISP runs free, so requests are not aligned with
+   the frames: a push per request would repeat or skip slots, which
+   DelayedControls reports as warnings. With the pool pipe the ISP
+   starts a frame while the sensor already exposes the second frame
+   after it: a control written at the ISP frame start of frame S is
+   first visible in frame S+3 on the RV1126, measured with
+   sequence-tagged frames, so the hook applies the controls for that
+   lag plus the sensor delays.
+
+Without an ISPP media device the ISP main path remains the output.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ src/libcamera/pipeline/rkisp2/rkisp2.cpp |  505 +++++++++++++++++++++--
+ 1 file changed, 481 insertions(+), 24 deletions(-)
+
+--- a/src/libcamera/pipeline/rkisp2/rkisp2.cpp
++++ b/src/libcamera/pipeline/rkisp2/rkisp2.cpp
+@@ -95,6 +95,18 @@ static V4L2PixelFormat mainPathFormat(V4
+ 	return fourcc;
+ }
+ 
++/* The memory planes of a frame in the V4L2 format mainPathFormat() picked */
++static unsigned int mainPathPlanes(const V4L2PixelFormat &fourcc,
++				   const PixelFormat &pixelFormat)
++{
++	const PixelFormatInfo &info = PixelFormatInfo::info(pixelFormat);
++
++	if (info.v4l2Formats.size() > 1 && fourcc == info.v4l2Formats.back())
++		return info.numPlanes();
++
++	return 1;
++}
++
+ class PipelineHandlerRkISP2;
+ 
+ struct RkISP2FrameInfo {
+@@ -123,7 +135,8 @@ class RkISP2CameraData : public Camera::
+ {
+ public:
+ 	RkISP2CameraData(PipelineHandler *pipe, MediaDevice *media)
+-		: Camera::Private(pipe), media_(media), frame_(0)
++		: Camera::Private(pipe), media_(media), frame_(0), ispSequence_(0),
++		  ispBase_(0), ispBaseSet_(false), isppPushSequence_(1)
+ 	{
+ 	}
+ 
+@@ -134,7 +147,8 @@ public:
+ 	int init(bool usingIsp, CameraSensor *sensor, V4L2VideoDevice *video,
+ 		 V4L2VideoDevice *rawrd, V4L2Subdevice *isp,
+ 		 V4L2VideoDevice *mainPath, V4L2VideoDevice *param,
+-		 V4L2VideoDevice *stat);
++		 V4L2VideoDevice *stat, V4L2Subdevice *isppSubdev,
++		 V4L2VideoDevice *isppMain, V4L2VideoDevice *isppParam);
+ 	PixelFormat getSensorFormat(unsigned int mbusCode, const Size &size,
+ 				    const Size &maxSize);
+ 
+@@ -143,16 +157,21 @@ public:
+ 	int loadIPA();
+ 
+ 	void computeParamBuffers(unsigned int frame);
++	void computeIsppParamBuffer(FrameBuffer *buffer);
++	int primeIsppParamBuffer(FrameBuffer *buffer);
+ 
+ 	void tryCompleteRequest(Request *request, FrameBuffer *buffer);
+ 	void tryCompleteRequest(const ControlList &metadata);
+ 
+ 	void vicapBufferReady(FrameBuffer *buffer);
+ 	void rawrdBufferReady(FrameBuffer *buffer);
++	void ispFrameStart(uint32_t sequence);
+ 	void ispBufferReady(FrameBuffer *buffer);
+ 	void statBufferReady(FrameBuffer *buffer);
++	void isppParamBufferReady(FrameBuffer *buffer);
+ 
+ 	void paramsComputed(unsigned int frame, unsigned int bufferId, unsigned int bytesused);
++	void isppParamsComputed(unsigned int frame, unsigned int bufferId, unsigned int bytesused);
+ 	void setSensorControls(unsigned int frame, const ControlList &sensorControls);
+ 	void metadataReady(const ControlList &metadata);
+ 
+@@ -162,6 +181,13 @@ public:
+ 	std::vector<std::unique_ptr<FrameBuffer>> statBuffers_;
+ 	std::unique_ptr<BufferQueue> paramQueue_;
+ 
++	/*
++	 * The ISPP takes one params buffer per frame; the buffers circulate
++	 * through the IPA, which fills each one as the ISPP completes it.
++	 */
++	std::vector<std::unique_ptr<FrameBuffer>> isppParamBuffers_;
++	unsigned int isppFrame_;
++
+ 	std::unique_ptr<DelayedControls> delayedCtrls_;
+ 
+ 	/*
+@@ -184,6 +210,7 @@ public:
+ 	std::vector<IPABuffer> ipaBuffers_;
+ 
+ 	bool usingIsp_;
++	bool usingIspp_;
+ 	bool isRaw_;
+ 
+ 	MediaDevice *media_;
+@@ -194,6 +221,9 @@ public:
+ 	V4L2VideoDevice *mainPath_;
+ 	V4L2VideoDevice *param_;
+ 	V4L2VideoDevice *stat_;
++	V4L2Subdevice *isppSubdev_;
++	V4L2VideoDevice *isppMain_;
++	V4L2VideoDevice *isppParam_;
+ 	Stream stream_;
+ 
+ 	std::unique_ptr<ipa::rkisp2::IPAProxyRkISP2> ipa_;
+@@ -204,6 +234,20 @@ public:
+ 	 * handler
+ 	 */
+ 	unsigned int frame_;
++	/* The ISP frame sequence of the last frame start on the ISPP path */
++	unsigned int ispSequence_;
++	/* Sensor controls of the latest request, pushed at the next frame start */
++	ControlList isppSensorControls_;
++	/* The next DelayedControls slot, one push per ISP frame start */
++	unsigned int isppPushSequence_;
++	/*
++	 * The ISP frame sequence of the first request on the ISPP path: the
++	 * IPA numbers its frames from 0 and initialises the one-shot blocks
++	 * on the first ones, while the sensor controls and the statistics
++	 * carry the ISP sequence.
++	 */
++	unsigned int ispBase_;
++	bool ispBaseSet_;
+ 	SequenceSyncHelper syncHelper_;
+ };
+ 
+@@ -237,6 +281,12 @@ static constexpr unsigned int kRkISP2Min
+  */
+ static constexpr unsigned int kRkISP2StreamBufferCount = 6;
+ 
++/* The source pad of the ISP subdevice that feeds the ISPP */
++static constexpr unsigned int kRkISP2IspPadSourceIspp = 8;
++
++/* Sensor frames exposed past a frame's ISP start, measured on the RV1126 */
++static constexpr unsigned int kRkISP2IsppFrameStartLag = 2;
++
+ } /* namespace */
+ 
+ class PipelineHandlerRkISP2 : public PipelineHandler
+@@ -269,6 +319,11 @@ private:
+ 	int updateControls(RkISP2CameraData *data);
+ 	bool createCamera(bool usingIsp);
+ 	int processControls(RkISP2CameraData *data, const ControlList &ctrls);
++	int configureIspp(RkISP2CameraData *data, StreamConfiguration &cfg,
++			  V4L2SubdeviceFormat &format);
++	int configureIpa(RkISP2CameraData *data, const StreamConfiguration &cfg);
++	int startIspp(Camera *camera, const ControlList *controls);
++	void stopIspp(Camera *camera);
+ 
+ 	int allocateBuffers(Camera *camera);
+ 	int freeBuffers(Camera *camera);
+@@ -297,15 +352,23 @@ private:
+ 	std::unique_ptr<V4L2VideoDevice> mainPath_;
+ 	std::unique_ptr<V4L2VideoDevice> param_;
+ 	std::unique_ptr<V4L2VideoDevice> stat_;
++
++	/* The ISPP post-processor behind the ISP, where the SoC has one */
++	std::shared_ptr<MediaDevice> isppMedia_;
++	std::unique_ptr<V4L2Subdevice> isppSubdev_;
++	std::unique_ptr<V4L2VideoDevice> isppMain_;
++	std::unique_ptr<V4L2VideoDevice> isppParam_;
+ };
+ 
+ int RkISP2CameraData::init(bool usingIsp, CameraSensor *sensor,
+ 			   V4L2VideoDevice *video, V4L2VideoDevice *rawrd,
+ 			   V4L2Subdevice *isp,
+ 			   V4L2VideoDevice *mainPath, V4L2VideoDevice *param,
+-			   V4L2VideoDevice *stat)
++			   V4L2VideoDevice *stat, V4L2Subdevice *isppSubdev,
++			   V4L2VideoDevice *isppMain, V4L2VideoDevice *isppParam)
+ {
+ 	usingIsp_ = usingIsp;
++	usingIspp_ = usingIsp && isppMain;
+ 	sensor_ = sensor;
+ 	video_ = video;
+ 	rawrd_ = rawrd;
+@@ -313,6 +376,10 @@ int RkISP2CameraData::init(bool usingIsp
+ 	mainPath_ = mainPath;
+ 	param_ = param;
+ 	stat_ = stat;
++	isppSubdev_ = isppSubdev;
++	isppMain_ = isppMain;
++	isppParam_ = isppParam;
++	isppFrame_ = 0;
+ 
+ 	ControlInfoMap::Map ctrls;
+ 
+@@ -332,6 +399,11 @@ int RkISP2CameraData::init(bool usingIsp
+ 		mainPath_->bufferReady.connect(this, &RkISP2CameraData::ispBufferReady);
+ 		stat_->bufferReady.connect(this, &RkISP2CameraData::statBufferReady);
+ 	}
++	if (usingIspp_) {
++		isp_->frameStart.connect(this, &RkISP2CameraData::ispFrameStart);
++		isppMain_->bufferReady.connect(this, &RkISP2CameraData::ispBufferReady);
++		isppParam_->bufferReady.connect(this, &RkISP2CameraData::isppParamBufferReady);
++	}
+ 
+ 	return 0;
+ }
+@@ -368,6 +440,7 @@ int RkISP2CameraData::loadIPA()
+ 		return -ENOENT;
+ 
+ 	ipa_->paramsComputed.connect(this, &RkISP2CameraData::paramsComputed);
++	ipa_->isppParamsComputed.connect(this, &RkISP2CameraData::isppParamsComputed);
+ 	ipa_->setSensorControls.connect(this, &RkISP2CameraData::setSensorControls);
+ 	ipa_->metadataReady.connect(this, &RkISP2CameraData::metadataReady);
+ 
+@@ -393,19 +466,73 @@ int RkISP2CameraData::loadIPA()
+ 	return 0;
+ }
+ 
++/*
++ * One parameter buffer per request, computed for the request's own frame
++ * context. On the ISPP path the ISP runs free, so the frames it processed
++ * while no request was queued have no frame context and get no parameters;
++ * the parameter queue's own sequence only serves its completion accounting.
++ */
+ void RkISP2CameraData::computeParamBuffers(unsigned int frame)
+ {
+-	while (paramQueue_->nextSequence() <= frame) {
+-		if (paramQueue_->empty(BufferQueue::Idle)) {
+-			LOG(RkISP2, Warning) << "Out of param buffers";
+-			return;
+-		}
++	if (paramQueue_->empty(BufferQueue::Idle)) {
++		LOG(RkISP2, Warning) << "Out of param buffers";
++		return;
++	}
++
++	FrameBuffer *paramBuffer = paramQueue_->front(BufferQueue::Idle);
++	paramQueue_->prepareBuffer();
++	ipa_->computeParams(frame, paramBuffer->cookie());
++}
++
++/*
++ * The IPA call is asynchronous: a synchronous call from a buffer-ready
++ * handler would nest the event loop in the isolated proxy while the
++ * dispatcher still iterates its notifiers.
++ */
++void RkISP2CameraData::computeIsppParamBuffer(FrameBuffer *buffer)
++{
++	ipa_->computeIsppParams(isppFrame_++, buffer->cookie());
++}
++
++/* The start cannot dispatch the asynchronous reply before the first buffer */
++int RkISP2CameraData::primeIsppParamBuffer(FrameBuffer *buffer)
++{
++	unsigned int bytesused = ipa_->primeIsppParams(isppFrame_++, buffer->cookie());
+ 
+-		uint32_t paramsSequence;
+-		FrameBuffer *paramBuffer = paramQueue_->front(BufferQueue::Idle);
+-		paramQueue_->prepareBuffer(&paramsSequence);
+-		ipa_->computeParams(paramsSequence, paramBuffer->cookie());
++	buffer->_d()->metadata().planes()[0].bytesused = bytesused;
++
++	return isppParam_->queueBuffer(buffer);
++}
++
++void RkISP2CameraData::isppParamsComputed(unsigned int frame,
++					   unsigned int bufferId,
++					   unsigned int bytesused)
++{
++	auto it = std::find_if(isppParamBuffers_.begin(), isppParamBuffers_.end(),
++			       [bufferId](const std::unique_ptr<FrameBuffer> &b) {
++				       return b->cookie() == bufferId;
++			       });
++	if (it == isppParamBuffers_.end()) {
++		LOG(RkISP2, Error) << "Unknown ISPP parameters buffer " << bufferId;
++		return;
+ 	}
++
++	FrameBuffer *buffer = it->get();
++	buffer->_d()->metadata().planes()[0].bytesused = bytesused;
++
++	int ret = isppParam_->queueBuffer(buffer);
++	if (ret < 0)
++		LOG(RkISP2, Error)
++			<< "Failed to queue the ISPP parameters for frame "
++			<< frame << ": " << strerror(-ret);
++}
++
++void RkISP2CameraData::isppParamBufferReady(FrameBuffer *buffer)
++{
++	if (buffer->metadata().status == FrameMetadata::FrameCancelled)
++		return;
++
++	computeIsppParamBuffer(buffer);
+ }
+ 
+ void RkISP2CameraData::vicapBufferReady(FrameBuffer *buffer)
+@@ -439,6 +566,22 @@ void RkISP2CameraData::rawrdBufferReady(
+ 	video_->queueBuffer(buffer);
+ }
+ 
++void RkISP2CameraData::ispFrameStart(uint32_t sequence)
++{
++	unsigned int slot = sequence + kRkISP2IsppFrameStartLag +
++			    delayedCtrls_->maxDelay();
++
++	ispSequence_ = sequence;
++
++	/* DelayedControls warns about every gap and every repeat in the slots */
++	while (isppPushSequence_ < slot)
++		delayedCtrls_->push(isppPushSequence_++, {});
++	delayedCtrls_->push(isppPushSequence_++, isppSensorControls_);
++	isppSensorControls_.clear();
++
++	delayedCtrls_->applyControls(slot);
++}
++
+ void RkISP2CameraData::ispBufferReady(FrameBuffer *buffer)
+ {
+ 	Request *request = buffer->request();
+@@ -475,8 +618,9 @@ void RkISP2CameraData::statBufferReady(F
+ 	if (buffer->metadata().status == FrameMetadata::FrameCancelled)
+ 		return;
+ 
+-	ipa_->processStats(sequence, buffer->cookie(),
+-			   delayedCtrls_->get(sequence));
++	if (sequence >= ispBase_)
++		ipa_->processStats(sequence - ispBase_, buffer->cookie(),
++				   delayedCtrls_->get(sequence));
+ 
+ 	stat_->queueBuffer(buffer);
+ }
+@@ -502,7 +646,7 @@ void RkISP2CameraData::paramsComputed(un
+ void RkISP2CameraData::setSensorControls(unsigned int frame,
+ 					 const ControlList &sensorControls)
+ {
+-	delayedCtrls_->push(frame, sensorControls);
++	delayedCtrls_->push(frame + ispBase_, sensorControls);
+ }
+ 
+ void RkISP2CameraData::metadataReady(const ControlList &metadata)
+@@ -566,6 +710,7 @@ CameraConfiguration::Status RkISP2Camera
+ 	const CameraSensor *sensor = data_->sensor_;
+ 	std::vector<unsigned int> mbusCodes;
+ 	Status status;
++	int ret;
+ 
+ 	if (config_.empty())
+ 		return Invalid;
+@@ -661,12 +806,49 @@ CameraConfiguration::Status RkISP2Camera
+ 		cfg.size = ispMaxSize;
+ 		status = Adjusted;
+ 	}
++
++	V4L2VideoDevice *capture = data_->usingIspp_ ? data_->isppMain_
++						     : data_->mainPath_;
++
++	if (data_->usingIspp_) {
++		/* The ISPP main output passes the ISP frame through unscaled. */
++		std::transform(rawFormats.begin(), rawFormats.end(),
++			       std::back_inserter(mbusCodes),
++			       [](const auto &value) { return value.second; });
++		sensorFormat_ = sensor->getFormat(mbusCodes, cfg.size, maxSize);
++		if (sensorFormat_.size.isNull())
++			return Invalid;
++		mbusCodes.clear();
++
++		/* The pipe size is what the ISP makes of the sensor frame. */
++		V4L2SubdeviceFormat pipeFormat = sensorFormat_;
++		ret = data_->isp_->setFormat(0, &pipeFormat,
++					     V4L2Subdevice::TryFormat);
++		if (ret)
++			return Invalid;
++		ret = data_->isp_->getFormat(kRkISP2IspPadSourceIspp, &pipeFormat,
++					     V4L2Subdevice::TryFormat);
++		if (ret)
++			return Invalid;
++
++		if (cfg.size != pipeFormat.size) {
++			cfg.size = pipeFormat.size;
++			status = Adjusted;
++		}
++
++		if (!mainPathFormat(capture, cfg.pixelFormat).isValid()) {
++			cfg.pixelFormat = formats::NV12;
++			status = Adjusted;
++		}
++	}
++
+ 	V4L2DeviceFormat format;
+-	format.fourcc = data_->video_->toV4L2PixelFormat(cfg.pixelFormat);
++	format.fourcc = mainPathFormat(capture, cfg.pixelFormat);
+ 	format.size = cfg.size;
++	format.planesCount = mainPathPlanes(format.fourcc, cfg.pixelFormat);
+ 	format.planes[0].bpl = cfg.stride;
+ 
+-	int ret = data_->mainPath_->tryFormat(&format);
++	ret = capture->tryFormat(&format);
+ 	if (ret)
+ 		return Invalid;
+ 
+@@ -834,6 +1016,9 @@ int PipelineHandlerRkISP2::configure(Cam
+ 		return 0;
+ 	}
+ 
++	if (data->usingIspp_)
++		return configureIspp(data, cfg, format);
++
+ 	/*
+ 	 * The ISP takes its input from the raw readback node only while the
+ 	 * link is enabled; the in-kernel VICAP binding feeds it otherwise.
+@@ -911,6 +1096,81 @@ int PipelineHandlerRkISP2::configure(Cam
+ 	cfg.setStream(&data->stream_);
+ 	cfg.stride = outputFormat.planes[0].bpl;
+ 
++	return configureIpa(data, cfg);
++}
++
++/*
++ * The ISPP pipe: the VICAP feeds the ISP inside the kernel (the readback
++ * link stays disabled), the ISP main path writes into the ISPP input pool
++ * and the ISPP main output is the capture node. The ISPP output pad of the
++ * ISP decides the pipe size.
++ */
++int PipelineHandlerRkISP2::configureIspp(RkISP2CameraData *data,
++					 StreamConfiguration &cfg,
++					 V4L2SubdeviceFormat &format)
++{
++	int ret;
++
++	ret = rawrdLink_->setEnabled(false);
++	if (ret)
++		return ret;
++
++	LOG(RkISP2, Debug) << "Configuring ISP input with: " << format;
++	ret = isp_->setFormat(0, &format);
++	if (ret)
++		return ret;
++
++	/* The ISPP input follows the ISP output pad, the query syncs them. */
++	V4L2SubdeviceFormat isppFormat;
++	ret = isppSubdev_->getFormat(0, &isppFormat);
++	if (ret)
++		return ret;
++
++	LOG(RkISP2, Debug) << "ISPP input: " << isppFormat;
++
++	V4L2DeviceFormat outputFormat;
++	outputFormat.fourcc = mainPathFormat(isppMain_.get(), cfg.pixelFormat);
++	outputFormat.size = isppFormat.size;
++	outputFormat.colorSpace = cfg.colorSpace;
++	outputFormat.planesCount = mainPathPlanes(outputFormat.fourcc,
++						  cfg.pixelFormat);
++	outputFormat.planes[0].bpl = cfg.stride;
++
++	LOG(RkISP2, Debug) << "Configuring ISPP main output with: " << outputFormat;
++	ret = isppMain_->setFormat(&outputFormat);
++	if (ret)
++		return ret;
++
++	if (outputFormat.fourcc != mainPathFormat(isppMain_.get(), cfg.pixelFormat)) {
++		LOG(RkISP2, Error)
++			<< "Unable to configure the ISPP output in " << cfg.toString();
++		return -EINVAL;
++	}
++
++	if (outputFormat.size != cfg.size) {
++		LOG(RkISP2, Warning)
++			<< "ISPP pipe runs at " << outputFormat.size
++			<< " for the requested " << cfg.size;
++		cfg.size = outputFormat.size;
++	}
++
++	cfg.setStream(&data->stream_);
++	cfg.stride = outputFormat.planes[0].bpl;
++
++	V4L2DeviceFormat isppParamFormat;
++	isppParamFormat.fourcc = V4L2PixelFormat(V4L2_META_FMT_RKISP2_PARAMS);
++	ret = isppParam_->setFormat(&isppParamFormat);
++	if (ret)
++		return ret;
++
++	return configureIpa(data, cfg);
++}
++
++int PipelineHandlerRkISP2::configureIpa(RkISP2CameraData *data,
++					const StreamConfiguration &cfg)
++{
++	int ret;
++
+ 	V4L2DeviceFormat paramFormat;
+ 	paramFormat.fourcc = V4L2PixelFormat(V4L2_META_FMT_RKISP2_PARAMS);
+ 	ret = param_->setFormat(&paramFormat);
+@@ -959,9 +1219,133 @@ int PipelineHandlerRkISP2::exportFrameBu
+ 	if (!data->usingIsp_ || data->isRaw_)
+ 		return data->video_->exportBuffers(count, buffers);
+ 
++	if (data->usingIspp_)
++		return data->isppMain_->exportBuffers(count, buffers);
++
+ 	return data->mainPath_->exportBuffers(count, buffers);
+ }
+ 
++/*
++ * The ISPP root stream start waits for the params stream and its first
++ * buffer, so the params are up, with every buffer filled and queued, before
++ * the main output starts; the statistics node starts with the ISP.
++ */
++int PipelineHandlerRkISP2::startIspp(Camera *camera, const ControlList *controls)
++{
++	RkISP2CameraData *data = cameraData(camera);
++	unsigned int count = data->stream_.configuration().bufferCount;
++	utils::ScopeExitActions actions;
++	int ret;
++
++	data->frame_ = 0;
++	data->ispSequence_ = 0;
++	data->ispBase_ = 0;
++	data->ispBaseSet_ = false;
++	data->isppFrame_ = 0;
++
++	ret = allocateBuffers(camera);
++	if (ret) {
++		LOG(RkISP2, Error) << "Failed to allocate buffers";
++		return ret;
++	}
++	actions += [&]() { freeBuffers(camera); };
++
++	ret = data->ipa_->start();
++	if (ret) {
++		LOG(RkISP2, Error) << "Failed to start IPA " << camera->id();
++		return ret;
++	}
++	actions += [&]() { data->ipa_->stop(); };
++	data->delayedCtrls_->reset();
++	data->isppPushSequence_ = 1;
++	data->isppSensorControls_.clear();
++
++	ret = data->param_->streamOn();
++	if (ret) {
++		LOG(RkISP2, Error) << "Failed to start parameters " << camera->id();
++		return ret;
++	}
++	actions += [&]() { data->param_->streamOff(); };
++
++	for (const std::unique_ptr<FrameBuffer> &buffer : data->isppParamBuffers_) {
++		ret = data->primeIsppParamBuffer(buffer.get());
++		if (ret < 0) {
++			LOG(RkISP2, Error) << "Failed to queue the ISPP parameters";
++			return ret;
++		}
++	}
++
++	ret = data->isppParam_->streamOn();
++	if (ret) {
++		LOG(RkISP2, Error) << "Failed to start ISPP parameters " << camera->id();
++		return ret;
++	}
++	actions += [&]() { data->isppParam_->streamOff(); };
++
++	ret = data->isppMain_->importBuffers(count);
++	if (ret < 0) {
++		LOG(RkISP2, Error) << "Failed to import buffers to the ISPP main output";
++		return ret;
++	}
++	actions += [&]() { data->isppMain_->releaseBuffers(); };
++
++	for (const std::unique_ptr<FrameBuffer> &buffer : data->statBuffers_) {
++		ret = data->stat_->queueBuffer(buffer.get());
++		if (ret < 0)
++			LOG(RkISP2, Warning)
++				<< "Failed to queue buffer " << &buffer
++				<< " to stat: " << ret;
++	}
++
++	ret = data->stat_->streamOn();
++	if (ret) {
++		LOG(RkISP2, Error) << "Failed to start stats " << camera->id();
++		return ret;
++	}
++	actions += [&]() { data->stat_->streamOff(); };
++
++	ret = data->isp_->setFrameStartEnabled(true);
++	if (ret) {
++		LOG(RkISP2, Error) << "Failed to enable the ISP frame start event";
++		return ret;
++	}
++	actions += [&]() { data->isp_->setFrameStartEnabled(false); };
++
++	ret = data->isppMain_->streamOn();
++	if (ret < 0)
++		return ret;
++	actions += [&]() { data->isppMain_->streamOff(); };
++
++	if (controls) {
++		ret = processControls(data, *controls);
++		if (ret < 0)
++			return ret;
++	}
++
++	actions.release();
++	return 0;
++}
++
++void PipelineHandlerRkISP2::stopIspp(Camera *camera)
++{
++	RkISP2CameraData *data = cameraData(camera);
++
++	data->isppMain_->streamOff();
++	data->isp_->setFrameStartEnabled(false);
++	data->ipa_->stop();
++
++	data->isppMain_->releaseBuffers();
++
++	data->stat_->streamOff();
++	data->stat_->releaseBuffers();
++
++	data->isppParam_->streamOff();
++	data->param_->streamOff();
++
++	data->statBuffers_.clear();
++	freeBuffers(camera);
++}
++
+ int PipelineHandlerRkISP2::start(Camera *camera,
+ 				 const ControlList *controls)
+ {
+@@ -971,7 +1355,11 @@ int PipelineHandlerRkISP2::start(Camera
+ 	utils::ScopeExitActions actions;
+ 	int ret;
+ 
++	if (useMP && data->usingIspp_)
++		return startIspp(camera, controls);
++
+ 	data->frame_ = 0;
++	data->ispBase_ = 0;
+ 
+ 	LOG(RkISP2, Debug) << (useMP ? "Using" : "Not using") << " main path";
+ 
+@@ -1093,6 +1481,11 @@ void PipelineHandlerRkISP2::stopDevice(C
+ 	RkISP2CameraData *data = cameraData(camera);
+ 	bool useMP = data->usingIsp_ && !data->isRaw_;
+ 
++	if (useMP && data->usingIspp_) {
++		stopIspp(camera);
++		return;
++	}
++
+ 	/*
+ 	 * Stop the main path while the readback still feeds the ISP, so that
+ 	 * the ISP stops at a frame boundary. The capture node is stopped
+@@ -1148,12 +1541,27 @@ int PipelineHandlerRkISP2::queueRequestD
+ 	data->frame_ += correction;
+ 	data->syncHelper_.pushCorrection(correction);
+ 
++	/*
++	 * The ISP runs free on the ISPP path: a request queued now can only
++	 * reach the frame after the one in flight, so the IPA frame contexts
++	 * and the statistics sequence stay aligned across request gaps.
++	 */
++	if (data->usingIspp_ && data->frame_ <= data->ispSequence_)
++		data->frame_ = data->ispSequence_ + 1;
++	if (data->usingIspp_ && !data->ispBaseSet_) {
++		data->ispBase_ = data->frame_;
++		data->ispBaseSet_ = true;
++	}
++
+ 	data->pendingCompleteRequests_.push_back({ request, data->frame_, true });
+ 
+-	data->ipa_->queueRequest(data->frame_, request->controls());
+-	data->computeParamBuffers(data->frame_);
++	data->ipa_->queueRequest(data->frame_ - data->ispBase_, request->controls());
++	data->computeParamBuffers(data->frame_ - data->ispBase_);
+ 	data->frame_++;
+ 
++	if (data->usingIspp_)
++		return data->isppMain_->queueBuffer(buffer);
++
+ 	return data->mainPath_->queueBuffer(buffer);
+ }
+ 
+@@ -1180,7 +1588,8 @@ bool PipelineHandlerRkISP2::createCamera
+ 	std::unique_ptr<RkISP2CameraData> data =
+ 		std::make_unique<RkISP2CameraData>(this, media_.get());
+ 	if (data->init(usingIsp, sensor_.get(), video_.get(), rawrd_.get(),
+-		       isp_.get(), mainPath_.get(), param_.get(), stat_.get())) {
++		       isp_.get(), mainPath_.get(), param_.get(), stat_.get(),
++		       isppSubdev_.get(), isppMain_.get(), isppParam_.get())) {
+ 		LOG(RkISP2, Error) << "Failed to initialize data";
+ 		return false;
+ 	}
+@@ -1377,6 +1786,36 @@ bool PipelineHandlerRkISP2::match(Device
+ 		return false;
+ 	}
+ 
++	/* The ISPP is optional, the ISP main path is the output without it. */
++	DeviceMatch dmIspp("rkispp");
++	dmIspp.add("rkispp-subdev");
++	dmIspp.add("rkispp_m_bypass");
++	dmIspp.add("rkispp_params");
++
++	isppMedia_ = acquireMediaDevice(enumerator, dmIspp);
++	if (!isppMedia_) {
++		LOG(RkISP2, Debug) << "ISPP not found";
++		return createCamera(true);
++	}
++
++	isppSubdev_ = V4L2Subdevice::fromEntityName(isppMedia_.get(), "rkispp-subdev");
++	if (!isppSubdev_ || isppSubdev_->open() < 0) {
++		LOG(RkISP2, Error) << "Failed to open the rkispp subdev";
++		return false;
++	}
++
++	isppMain_ = V4L2VideoDevice::fromEntityName(isppMedia_.get(), "rkispp_m_bypass");
++	if (!isppMain_ || isppMain_->open() < 0) {
++		LOG(RkISP2, Error) << "Failed to open the rkispp main output";
++		return false;
++	}
++
++	isppParam_ = V4L2VideoDevice::fromEntityName(isppMedia_.get(), "rkispp_params");
++	if (!isppParam_ || isppParam_->open() < 0) {
++		LOG(RkISP2, Error) << "Failed to open the rkispp params";
++		return false;
++	}
++
+ 	return createCamera(true);
+ }
+ 
+@@ -1395,12 +1834,15 @@ int PipelineHandlerRkISP2::allocateBuffe
+ 	RkISP2CameraData *data = cameraData(camera);
+ 	unsigned int ipaBufferId = 1;
+ 	utils::ScopeExitActions actions;
++	int ret;
+ 
+-	int ret = data->video_->exportBuffers(kRkISP2MinBufferCount, &data->internalBuffers_);
+-	if (ret < 0)
+-		return ret;
++	if (!data->usingIspp_) {
++		ret = data->video_->exportBuffers(kRkISP2MinBufferCount, &data->internalBuffers_);
++		if (ret < 0)
++			return ret;
+ 
+-	actions += [&]() { data->video_->releaseBuffers(); };
++		actions += [&]() { data->video_->releaseBuffers(); };
++	}
+ 
+ 	ret = data->stat_->allocateBuffers(kRkISP2MinBufferCount, &data->statBuffers_);
+ 	if (ret < 0)
+@@ -1414,6 +1856,15 @@ int PipelineHandlerRkISP2::allocateBuffe
+ 
+ 	actions += [&]() { data->paramQueue_->releaseBuffers(); };
+ 
++	if (data->usingIspp_) {
++		ret = data->isppParam_->allocateBuffers(kRkISP2MinBufferCount,
++							&data->isppParamBuffers_);
++		if (ret < 0)
++			return ret;
++
++		actions += [&]() { data->isppParam_->releaseBuffers(); };
++	}
++
+ 	auto pushBuffers = [&](const std::vector<std::unique_ptr<FrameBuffer>> &buffers) {
+ 		for (const std::unique_ptr<FrameBuffer> &buffer : buffers) {
+ 			Span<const FrameBuffer::Plane> planes = buffer->planes();
+@@ -1427,6 +1878,7 @@ int PipelineHandlerRkISP2::allocateBuffe
+ 
+ 	pushBuffers(data->paramQueue_->buffers());
+ 	pushBuffers(data->statBuffers_);
++	pushBuffers(data->isppParamBuffers_);
+ 
+ 	data->ipa_->mapBuffers(data->ipaBuffers_);
+ 
+@@ -1447,6 +1899,11 @@ int PipelineHandlerRkISP2::freeBuffers(C
+ 
+ 	data->paramQueue_->releaseBuffers();
+ 
++	if (data->usingIspp_) {
++		data->isppParamBuffers_.clear();
++		data->isppParam_->releaseBuffers();
++	}
++
+ 	return 0;
+ }
+ 

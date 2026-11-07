@@ -1,0 +1,96 @@
+From 9695bbb8b432b397dd6b4011ad4067936512294a Mon Sep 17 00:00:00 2001
+From: Stefan Klug <stefan.klug@ideasonboard.com>
+Date: Wed, 25 Mar 2026 16:13:46 +0100
+Subject: [PATCH] pipeline: rkisp1: Apply initial controls
+
+Controls passed to Camera::start() are not handled at the moment.
+Implement that by initializing a separate frame
+context and then returning the controls synchronously to the caller. In
+the pipeline the controls get passed to the sensor before the call to
+streamOn() to ensure the controls are applied right away. Passing the
+controls to the pipeline using the setSensorControls signal is not
+appropriate because it is asynchronous and would reach the sensor too
+late (initial controls need to be applied before the sensor starts and
+before delayed controls initializes it's start condition.)
+
+Signed-off-by: Stefan Klug <stefan.klug@ideasonboard.com>
+---
+ include/libcamera/ipa/rkisp1.mojom       |  7 ++++++-
+ src/ipa/rkisp1/rkisp1.cpp                | 10 ++++++----
+ src/libcamera/pipeline/rkisp1/rkisp1.cpp | 11 +++++++++--
+ 3 files changed, 21 insertions(+), 7 deletions(-)
+
+--- a/include/libcamera/ipa/rkisp1.mojom
++++ b/include/libcamera/ipa/rkisp1.mojom
+@@ -14,13 +14,18 @@ struct IPAConfigInfo {
+ 	uint32 paramFormat;
+ };
+ 
++struct StartResult {
++	libcamera.ControlList controls;
++	int32 code;
++};
++
+ interface IPARkISP1Interface {
+ 	init(libcamera.IPASettings settings,
+ 	     uint32 hwRevision, uint32 supportedBlocks,
+ 	     libcamera.IPACameraSensorInfo sensorInfo,
+ 	     libcamera.ControlInfoMap sensorControls)
+ 		=> (int32 ret, libcamera.ControlInfoMap ipaControls);
+-	start() => (int32 ret);
++	start(libcamera.ControlList controls) => (StartResult result);
+ 	stop();
+ 
+ 	configure(IPAConfigInfo configInfo,
+--- a/src/ipa/rkisp1/rkisp1.cpp
++++ b/src/ipa/rkisp1/rkisp1.cpp
+@@ -56,7 +56,7 @@ public:
+ 		 const IPACameraSensorInfo &sensorInfo,
+ 		 const ControlInfoMap &sensorControls,
+ 		 ControlInfoMap *ipaControls) override;
+-	int start() override;
++	void start(const ControlList &controls, StartResult *result) override;
+ 	void stop() override;
+ 
+ 	int configure(const IPAConfigInfo &ipaConfig,
+@@ -215,10 +215,12 @@ int IPARkISP1::init(const IPASettings &s
+ 	return 0;
+ }
+ 
+-int IPARkISP1::start()
++void IPARkISP1::start(const ControlList &controls, StartResult *result)
+ {
+-	/* \todo Properly handle startup controls. */
+-	return 0;
++	IPAFrameContext frameContext = {};
++	initializeFrameContext(0, frameContext, controls);
++	result->controls = getSensorControls(frameContext);
++	result->code = 0;
+ }
+ 
+ void IPARkISP1::stop()
+--- a/src/libcamera/pipeline/rkisp1/rkisp1.cpp
++++ b/src/libcamera/pipeline/rkisp1/rkisp1.cpp
+@@ -1240,13 +1240,20 @@ int PipelineHandlerRkISP1::start(Camera
+ 		return ret;
+ 	actions += [&]() { freeBuffers(camera); };
+ 
+-	ret = data->ipa_->start();
+-	if (ret) {
++	ControlList ctrls;
++	if (!!controls)
++		ctrls = *controls;
++
++	ipa::rkisp1::StartResult res;
++	data->ipa_->start(ctrls, &res);
++	if (res.code) {
+ 		LOG(RkISP1, Error)
+ 			<< "Failed to start IPA " << camera->id();
+ 		return ret;
+ 	}
+ 	actions += [&]() { data->ipa_->stop(); };
++	data->sensor_->setControls(&res.controls);
++	data->delayedCtrls_->reset();
+ 
+ 	data->frame_ = 0;
+ 

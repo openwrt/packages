@@ -9,15 +9,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=LVM2
-PKG_VERSION:=2.03.41
-PKG_VERSION_DM:=1.02.215
-PKG_RELEASE:=1
+PKG_VERSION:=2.03.42
+PKG_VERSION_DM:=1.02.216
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME).$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=https://sourceware.org/pub/lvm2 \
                 https://www.mirrorservice.org/sites/sourceware.org/pub/lvm2
 
-PKG_HASH:=d58011b845df8ec13816ca13ea6c39d4cb3d038cd2d7d387acdf5681ad7d6637
+PKG_HASH:=352703ef5b72ebb22d4f250284a29b89fe64d4049c6bf64c693f9af486c8081e
 PKG_BUILD_DIR:=$(BUILD_DIR)/lvm2-$(BUILD_VARIANT)/$(PKG_NAME).$(PKG_VERSION)
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
@@ -42,6 +42,8 @@ endef
 define Package/libdevmapper
   $(call Package/libdevmapper/Default)
   VARIANT := normal
+  DEFAULT_VARIANT:=1
+  CONFLICTS:=libdevmapper-selinux
 endef
 
 define Package/libdevmapper-selinux
@@ -75,6 +77,8 @@ define Package/lvm2
   $(call Package/lvm2/default)
   VARIANT := normal
   DEPENDS += +libdevmapper
+  DEFAULT_VARIANT:=1
+  CONFLICTS:=lvm2-selinux
 endef
 
 define Package/lvm2-selinux

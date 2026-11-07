@@ -1,0 +1,298 @@
+From dc644930288ef10d3f116bf3b3cbf3a93af0a8bc Mon Sep 17 00:00:00 2001
+From: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Date: Wed, 1 Jul 2026 10:52:33 +0200
+Subject: [PATCH] ipa: libipa: lsc_table: Move LscTable from RkISP1
+
+Move the LscTableImpl class to libipa from RkISP1.
+
+Rename the class from LscTableImpl to a simpler LscTable.
+The class is copied verbatim, only documntation has been added.
+
+The implementation still contains RkISP1 specific data which will be
+removed once the class is generalized.
+
+Signed-off-by: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Reviewed-by: Kieran Bingham <kieran.bingham@ideasonboard.com>
+Reviewed-by: Stefan Klug <stefan.klug@ideasonboard.com>
+---
+ src/ipa/libipa/lsc_table.cpp      | 95 +++++++++++++++++++++++++++++++
+ src/ipa/libipa/lsc_table.h        | 50 ++++++++++++++++
+ src/ipa/libipa/meson.build        |  2 +
+ src/ipa/rkisp1/algorithms/lsc.cpp | 81 +-------------------------
+ 4 files changed, 149 insertions(+), 79 deletions(-)
+ create mode 100644 src/ipa/libipa/lsc_table.cpp
+ create mode 100644 src/ipa/libipa/lsc_table.h
+
+--- /dev/null
++++ b/src/ipa/libipa/lsc_table.cpp
+@@ -0,0 +1,95 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2026, Ideas On Board
++ *
++ * Table-based LSC implementation
++ */
++
++#include "lsc_table.h"
++
++/* \todo Remove RkISP1 from libipa. */
++#include "linux/rkisp1-config.h"
++
++namespace libcamera {
++
++LOG_DEFINE_CATEGORY(LscTable)
++
++namespace ipa {
++
++/**
++ * \class LscTable
++ * \brief Table based LSC algorithm implementation
++ *
++ * Table based LSC algorithm implementation. The LSCTable class implements LSC
++ * support using tabular LSC data.
++ *
++ * \sa LscImplementation
++ */
++
++/**
++ * \brief Parse tabular LSC data
++ * \param[in] sets The tuning file content
++ *
++ * Parse the LSC data in tabular form from the \a sets tuning data.
++ *
++ * \return 0 on success or a negative error number otherwise
++ */
++int LscTable::parseLscData(const ValueNode &sets)
++{
++	for (const auto &set : sets.asList()) {
++		uint32_t ct = set["ct"].get<uint32_t>(0);
++
++		if (lscData_.count(ct)) {
++			LOG(LscTable, Error)
++				<< "Multiple sets found for color temperature "
++				<< ct;
++			return -EINVAL;
++		}
++
++		lsc::Components components;
++		components.r = parseTable(set, "r");
++		components.gr = parseTable(set, "gr");
++		components.gb = parseTable(set, "gb");
++		components.b = parseTable(set, "b");
++
++		if (components.r.empty() || components.gr.empty() ||
++		    components.gb.empty() || components.b.empty()) {
++			LOG(LscTable, Error)
++				<< "Set for color temperature " << ct
++				<< " is missing tables";
++			return -EINVAL;
++		}
++
++		lscData_.emplace(ct, std::move(components));
++	}
++
++	if (lscData_.empty()) {
++		LOG(LscTable, Error) << "Failed to load any sets";
++		return -EINVAL;
++	}
++
++	return 0;
++}
++
++std::vector<uint16_t> LscTable::parseTable(const ValueNode &tuningData,
++					   const char *prop)
++{
++	static constexpr unsigned int kLscNumSamples =
++		RKISP1_CIF_ISP_LSC_SAMPLES_MAX * RKISP1_CIF_ISP_LSC_SAMPLES_MAX;
++
++	std::vector<uint16_t> table =
++		tuningData[prop].get<std::vector<uint16_t>>().value_or(utils::defopt);
++	if (table.size() != kLscNumSamples) {
++		LOG(LscTable, Error)
++			<< "Invalid '" << prop << "' values: expected "
++			<< kLscNumSamples
++			<< " elements, got " << table.size();
++		return {};
++	}
++
++	return table;
++}
++
++} /* namespace ipa */
++
++} /* namespace libcamera */
+--- /dev/null
++++ b/src/ipa/libipa/lsc_table.h
+@@ -0,0 +1,50 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2026, Ideas On Board
++ *
++ * Table-based Lsc implementation
++ */
++#pragma once
++
++#include <vector>
++
++#include <libcamera/base/log.h>
++#include <libcamera/base/span.h>
++
++#include <libcamera/geometry.h>
++
++#include "libcamera/internal/value_node.h"
++
++#include "lsc_base.h"
++
++namespace libcamera {
++
++LOG_DECLARE_CATEGORY(LscTable)
++
++namespace ipa {
++
++class LscTable : public LscImplementation
++{
++public:
++	int parseLscData(const ValueNode &sets) override;
++
++	lsc::ComponentsMap
++	sampleForCrop([[maybe_unused]] const Rectangle &cropRectangle,
++		      [[maybe_unused]] Span<const double> xSizes,
++		      [[maybe_unused]] Span<const double> ySizes) override
++	{
++		LOG(LscTable, Warning)
++			<< "Tabular LSC data doesn't support resampling";
++		return lscData_;
++	}
++
++private:
++	std::vector<uint16_t> parseTable(const ValueNode &tuningData,
++					 const char *prop);
++
++	lsc::ComponentsMap lscData_;
++};
++
++} /* namespace ipa */
++
++} /* namespace libcamera */
+--- a/src/ipa/libipa/meson.build
++++ b/src/ipa/libipa/meson.build
+@@ -16,6 +16,7 @@ libipa_headers = files([
+     'interpolator.h',
+     'lsc_base.h',
+     'lsc_polynomial.h',
++    'lsc_table.h',
+     'lux.h',
+     'module.h',
+     'pwl.h',
+@@ -40,6 +41,7 @@ libipa_sources = files([
+     'interpolator.cpp',
+     'lsc_base.cpp',
+     'lsc_polynomial.cpp',
++    'lsc_table.cpp',
+     'lux.cpp',
+     'module.cpp',
+     'pwl.cpp',
+--- a/src/ipa/rkisp1/algorithms/lsc.cpp
++++ b/src/ipa/rkisp1/algorithms/lsc.cpp
+@@ -17,6 +17,7 @@
+ #include "libcamera/internal/value_node.h"
+ 
+ #include "libipa/lsc_polynomial.h"
++#include "libipa/lsc_table.h"
+ #include "linux/rkisp1-config.h"
+ 
+ /**
+@@ -33,84 +34,6 @@ namespace {
+ 
+ constexpr int kColourTemperatureQuantization = 10;
+ 
+-class LscTableImpl : public LscImplementation
+-{
+-public:
+-	int parseLscData(const ValueNode &sets) override;
+-
+-	lsc::ComponentsMap
+-	sampleForCrop([[maybe_unused]] const Rectangle &cropRectangle,
+-		      [[maybe_unused]] Span<const double> xSizes,
+-		      [[maybe_unused]] Span<const double> ySizes) override
+-	{
+-		LOG(RkISP1Lsc, Warning)
+-			<< "Tabular LSC data doesn't support resampling";
+-		return lscData_;
+-	}
+-
+-private:
+-	std::vector<uint16_t> parseTable(const ValueNode &tuningData,
+-					 const char *prop);
+-
+-	lsc::ComponentsMap lscData_;
+-};
+-
+-int LscTableImpl::parseLscData(const ValueNode &sets)
+-{
+-	for (const auto &set : sets.asList()) {
+-		uint32_t ct = set["ct"].get<uint32_t>(0);
+-
+-		if (lscData_.count(ct)) {
+-			LOG(RkISP1Lsc, Error)
+-				<< "Multiple sets found for color temperature "
+-				<< ct;
+-			return -EINVAL;
+-		}
+-
+-		lsc::Components components;
+-		components.r = parseTable(set, "r");
+-		components.gr = parseTable(set, "gr");
+-		components.gb = parseTable(set, "gb");
+-		components.b = parseTable(set, "b");
+-
+-		if (components.r.empty() || components.gr.empty() ||
+-		    components.gb.empty() || components.b.empty()) {
+-			LOG(RkISP1Lsc, Error)
+-				<< "Set for color temperature " << ct
+-				<< " is missing tables";
+-			return -EINVAL;
+-		}
+-
+-		lscData_.emplace(ct, std::move(components));
+-	}
+-
+-	if (lscData_.empty()) {
+-		LOG(RkISP1Lsc, Error) << "Failed to load any sets";
+-		return -EINVAL;
+-	}
+-
+-	return 0;
+-}
+-
+-std::vector<uint16_t> LscTableImpl::parseTable(const ValueNode &tuningData,
+-						 const char *prop)
+-{
+-	static constexpr unsigned int kLscNumSamples =
+-		RKISP1_CIF_ISP_LSC_SAMPLES_MAX * RKISP1_CIF_ISP_LSC_SAMPLES_MAX;
+-
+-	std::vector<uint16_t> table =
+-		tuningData[prop].get<std::vector<uint16_t>>().value_or(utils::defopt);
+-	if (table.size() != kLscNumSamples) {
+-		LOG(RkISP1Lsc, Error)
+-			<< "Invalid '" << prop << "' values: expected "
+-			<< kLscNumSamples
+-			<< " elements, got " << table.size();
+-		return {};
+-	}
+-
+-	return table;
+-}
+-
+ std::vector<double> parseSizes(const ValueNode &tuningData,
+ 			       const char *prop)
+ {
+@@ -190,7 +113,7 @@ int LensShadingCorrection::init([[maybe_
+ 	std::string type = tuningData["type"].get<std::string>("table");
+ 	if (type == "table") {
+ 		LOG(RkISP1Lsc, Debug) << "Loading tabular LSC data.";
+-		algo_ = std::make_unique<LscTableImpl>();
++		algo_ = std::make_unique<LscTable>();
+ 		ret = algo_->parseLscData(sets);
+ 	} else if (type == "polynomial") {
+ 		LOG(RkISP1Lsc, Debug) << "Loading polynomial LSC data.";

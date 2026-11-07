@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ustreamer
 PKG_VERSION:=6.52
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Georgi Valkov <gvalkov@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -20,13 +20,14 @@ PKG_LICENSE_FILES:=LICENSE
 include $(INCLUDE_DIR)/package.mk
 
 MAKE_FLAGS += WITH_SETPROCTITLE=0
+TARGET_LDFLAGS += -Wl,--as-needed
 
 define Package/ustreamer
-	SECTION:=multimedia
-	CATEGORY:=Multimedia
-	TITLE:=Lightweight and fast MJPEG-HTTP streamer
-	DEPENDS:=+libatomic +libjpeg +libevent2 +libevent2-pthreads
-	URL:=https://github.com/pikvm/ustreamer
+  SECTION:=multimedia
+  CATEGORY:=Multimedia
+  TITLE:=Lightweight and fast MJPEG-HTTP streamer
+  DEPENDS:=$(ATOMIC64_DEPENDS) +libjpeg +libevent2 +libevent2-pthreads
+  URL:=https://github.com/pikvm/ustreamer
 endef
 
 define Package/ustreamer/description

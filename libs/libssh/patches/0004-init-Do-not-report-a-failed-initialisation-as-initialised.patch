@@ -1,0 +1,46 @@
+From cf7f79a2f4a4dba8f9b9fa074a7171479ffa6c84 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 28 Aug 2026 08:40:52 +0100
+Subject: [PATCH 2/2] init: Do not report a failed initialisation as initialised
+Message-ID: <apE7hG3Qwp8HsTIS@makrotopia.org>
+To: libssh@libssh.org
+Cc: John Crispin <john@phrozen.org>
+
+is_ssh_initialized() answered only whether _ssh_init() had run, not
+whether it had succeeded: the counter is incremented before anything is
+attempted and stays raised when initialisation fails (_ssh_finalize()
+relies on that to skip tearing down what was never set up). After a
+failed constructor initialisation, for example with no usable entropy
+source, the guard in ssh_connect() therefore passed and the session ran
+into the unusable crypto state instead of failing with the intended
+"Library not initialized" error.
+
+Report the library as initialised only when the recorded initialisation
+result is a success.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ src/init.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+--- a/src/init.c
++++ b/src/init.c
+@@ -277,7 +277,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL,
+  * @internal
+  * @brief Return whether the library is initialized
+  *
+- * @returns true if the library is initialized; false otherwise.
++ * @returns true if the library is initialized and initialization
++ *          succeeded; false otherwise.
+  *
+  * @see ssh_init()
+  */
+@@ -286,7 +287,7 @@ bool is_ssh_initialized(void) {
+     bool is_initialized = false;
+ 
+     ssh_mutex_lock(&ssh_init_mutex);
+-    is_initialized = _ssh_initialized > 0;
++    is_initialized = _ssh_initialized > 0 && _ssh_init_ret == 0;
+     ssh_mutex_unlock(&ssh_init_mutex);
+ 
+     return is_initialized;

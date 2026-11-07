@@ -1,6 +1,0 @@
-{
-	"name": "dnsmax.com",
-	"ipv4": {
-		"url": "http://update.dnsmax.com/update/?username=[USERNAME]&password=[PASSWORD]&resellerid=1&clientname=openwrt&clientversion=8.09&protocolversion=2.0&updatehostname=[DOMAIN]&ip=[IP]"
-	}
-}

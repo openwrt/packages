@@ -1,0 +1,24 @@
+From 647c9ec875f1b6ed263ac90bc2bbc8ffa0118d72 Mon Sep 17 00:00:00 2001
+From: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Date: Mon, 28 Sep 2026 10:58:43 +0200
+Subject: [PATCH] configure: do not probe ppc4xx when it is disabled
+
+The ppc4xx probe re-enables ppc4xx whenever the assembler accepts
+maclhw, overriding --disable-ppc4xx. Only run the probe when ppc4xx
+is not disabled.
+
+Link: https://code.ffmpeg.org/FFmpeg/FFmpeg/issues/22698
+Link: https://code.ffmpeg.org/FFmpeg/FFmpeg/pulls/24750
+Signed-off-by: Josef Schlehofer <pepe.schlehofer@gmail.com>
+---
+--- a/configure
++++ b/configure
+@@ -6804,7 +6804,7 @@ elif enabled ppc; then
+ 
+     disabled dcbzl || check_inline_asm dcbzl '"dcbzl 0, %0" :: "r"(0)'
+     check_inline_asm ibm_asm   '"add 0, 0, 0"'
+-    check_inline_asm ppc4xx    '"maclhw r10, r11, r12"'
++    disabled ppc4xx || check_inline_asm ppc4xx '"maclhw r10, r11, r12"'
+     check_inline_asm xform_asm '"lwzx %1, %y0" :: "Z"(*(int*)0), "r"(0)'
+ 
+     if enabled altivec; then

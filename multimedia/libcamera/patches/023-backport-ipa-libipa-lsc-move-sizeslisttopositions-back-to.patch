@@ -1,0 +1,223 @@
+From d30de3ef101f1a1614e417e7e3bd1e6b7f46a4b9 Mon Sep 17 00:00:00 2001
+From: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Date: Wed, 1 Jul 2026 14:42:34 +0200
+Subject: [PATCH] ipa: libipa: lsc: Move sizesListToPositions() back to rkisp1
+
+The LscPolynomial::sampleForCrop() function is designed to receive a
+list of segment sizes and translates it to a list of grid vertexes
+internally with the sizesListToPositions() function.
+
+As the sizesListToPositions() implementation is RkISP1-specific, move it
+back to the RkISP1 IPA as a static helper and change the prototype of
+the sampleForCrop() function to accept a vector of grid vertexes instead
+of a span of segment sizes.
+
+Signed-off-by: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Reviewed-by: Stefan Klug <stefan.klug@ideasonboard.com>
+Reviewed-by: Kieran Bingham <kieran.bingham@ideasonboard.com>
+---
+ src/ipa/libipa/lsc_base.cpp       |  6 ++---
+ src/ipa/libipa/lsc_base.h         |  3 +--
+ src/ipa/libipa/lsc_polynomial.cpp | 38 ++++---------------------------
+ src/ipa/libipa/lsc_polynomial.h   |  4 +---
+ src/ipa/libipa/lsc_table.h        |  4 ++--
+ src/ipa/rkisp1/algorithms/lsc.cpp | 31 ++++++++++++++++++++++++-
+ src/ipa/rkisp1/algorithms/lsc.h   |  2 ++
+ 7 files changed, 43 insertions(+), 45 deletions(-)
+
+--- a/src/ipa/libipa/lsc_base.cpp
++++ b/src/ipa/libipa/lsc_base.cpp
+@@ -88,8 +88,8 @@ void Interpolator<lsc::Components>::
+  * \fn LscImplementation::sampleForCrop
+  * \brief Re-sample the LSC components for \a cropRectangle
+  * \param[in] cropRectangle The sensor analogue crop rectangle
+- * \param[in] xSizes List of horizontal positions of the LSC grid nodes
+- * \param[in] ySizes List of vertical positions of the LSC grid nodes
++ * \param[in] xPos List of horizontal positions of the LSC grid nodes
++ * \param[in] yPos List of vertical positions of the LSC grid nodes
+  *
+  * LSC tables have to be re-sampled every time a new sensor configuration is
+  * used, as each streaming session might use a different sensor crop rectangle
+@@ -98,7 +98,7 @@ void Interpolator<lsc::Components>::
+  * \a cropRectangle represents the size of the frame on which the LSC tables
+  * have to be re-sampled on.
+  *
+- * \a xSizes and \a ySizes represent the position of the grid nodes vertexes in
++ * \a xPos and \a yPos represent the position of the grid nodes vertexes in
+  * the [0, 1] interval. For example an equally spaced grid of 16 nodes will have
+  * each segment of size 0.0625 and the list of nodes position will be
+  * [0, 0.0625, 0.125, 0.1875, ... , 1]. It is expected that the first position
+--- a/src/ipa/libipa/lsc_base.h
++++ b/src/ipa/libipa/lsc_base.h
+@@ -65,8 +65,7 @@ public:
+ 
+ 	virtual lsc::ComponentsMap
+ 	sampleForCrop(const Rectangle &cropRectangle,
+-		      Span<const double> xSizes,
+-		      Span<const double> ySizes) = 0;
++		      std::vector<double> xPos, std::vector<double> yPos) = 0;
+ };
+ 
+ } /* namespace ipa */
+--- a/src/ipa/libipa/lsc_polynomial.cpp
++++ b/src/ipa/libipa/lsc_polynomial.cpp
+@@ -184,8 +184,8 @@ int LscPolynomial::parseLscData(const Va
+ /**
+  * \brief Re-sample the LSC components for \a cropRectangle
+  * \param[in] cropRectangle The sensor analogue crop rectangle
+- * \param[in] xSizes List of horizontal positions of the LSc grid nodes
+- * \param[in] ySizes List of vertical positions of the LSC grid nodes
++ * \param[in] xPos List of horizontal positions of the LSC grid nodes
++ * \param[in] yPos List of vertical positions of the LSC grid nodes
+  *
+  * LSC tables have to be re-sampled every time a new sensor configuration is
+  * used, as each streaming session might use a different sensor crop rectangle.
+@@ -197,7 +197,7 @@ int LscPolynomial::parseLscData(const Va
+  * \a cropRectangle represents the size of the frame on which the LSC tables
+  * have to be re-sampled on.
+  *
+- * \a xSizes and \a ySizes represent the position of the grid nodes vertexes in
++ * \a xPos and \a yPos represent the position of the grid nodes vertexes in
+  * the [0, 1] interval. In example an equally spaced grid of 16 nodes will have
+  * each segment of size 0.0625 and the list of nodes position will be
+  * [0, 0.0625, 0.125, 0.1875, ... , 1]. It is expected that the first position
+@@ -205,11 +205,8 @@ int LscPolynomial::parseLscData(const Va
+  */
+ lsc::ComponentsMap
+ LscPolynomial::sampleForCrop(const Rectangle &cropRectangle,
+-			     Span<const double> xSizes,
+-			     Span<const double> ySizes)
++			     std::vector<double> xPos, std::vector<double> yPos)
+ {
+-	std::vector<double> xPos = sizesListToPositions(xSizes);
+-	std::vector<double> yPos = sizesListToPositions(ySizes);
+ 
+ 	lsc::ComponentsMap components;
+ 
+@@ -259,33 +256,6 @@ LscPolynomial::samplePolynomial(const ls
+ 	return samples;
+ }
+ 
+-/*
+- * The rkisp1 LSC grid spacing is defined by the cell sizes on the top-left
+- * quadrant of the grid. This is then mirrored in hardware to the other
+- * quadrants. See parseSizes() for further details. For easier handling, this
+- * function converts the cell sizes of half the grid to a list of position of
+- * the whole grid (on one axis). Example:
+- *
+- * input:   | 0.2 | 0.3 |
+- * output: 0.0   0.2   0.5   0.8   1.0
+- */
+-std::vector<double>
+-LscPolynomial::sizesListToPositions(Span<const double> sizes)
+-{
+-	const int half = sizes.size();
+-	std::vector<double> positions(half * 2 + 1);
+-	double x = 0.0;
+-
+-	positions[half] = 0.5;
+-	for (int i = 1; i <= half; i++) {
+-		x += sizes[half - i];
+-		positions[half - i] = 0.5 - x;
+-		positions[half + i] = 0.5 + x;
+-	}
+-
+-	return positions;
+-}
+-
+ } /* namespace ipa */
+ 
+ #ifndef __DOXYGEN__
+--- a/src/ipa/libipa/lsc_polynomial.h
++++ b/src/ipa/libipa/lsc_polynomial.h
+@@ -71,11 +71,9 @@ public:
+ 
+ 	lsc::ComponentsMap
+ 	sampleForCrop(const Rectangle &cropRectangle,
+-		      Span<const double> xSizes,
+-		      Span<const double> ySizes) override;
++		      std::vector<double> xPos, std::vector<double> yPos) override;
+ 
+ private:
+-	std::vector<double> sizesListToPositions(Span<const double> sizes);
+ 	std::vector<uint16_t> samplePolynomial(const lsc::Polynomial &poly,
+ 					       Span<const double> xPositions,
+ 					       Span<const double> yPositions,
+--- a/src/ipa/libipa/lsc_table.h
++++ b/src/ipa/libipa/lsc_table.h
+@@ -30,8 +30,8 @@ public:
+ 
+ 	lsc::ComponentsMap
+ 	sampleForCrop([[maybe_unused]] const Rectangle &cropRectangle,
+-		      [[maybe_unused]] Span<const double> xSizes,
+-		      [[maybe_unused]] Span<const double> ySizes) override
++		      [[maybe_unused]] std::vector<double> xPos,
++		      [[maybe_unused]] std::vector<double> yPos) override
+ 	{
+ 		LOG(LscTable, Warning)
+ 			<< "Tabular LSC data doesn't support resampling";
+--- a/src/ipa/rkisp1/algorithms/lsc.cpp
++++ b/src/ipa/rkisp1/algorithms/lsc.cpp
+@@ -64,6 +64,32 @@ std::vector<double> parseSizes(const Val
+ 	return sizes;
+ }
+ 
++/*
++ * The rkisp1 LSC grid spacing is defined by the cell sizes on the top-left
++ * quadrant of the grid. This is then mirrored in hardware to the other
++ * quadrants. See parseSizes() for further details. For easier handling, this
++ * function converts the cell sizes of half the grid to a list of position of
++ * the whole grid (on one axis). Example:
++ *
++ * input:   | 0.2 | 0.3 |
++ * output: 0.0   0.2   0.5   0.8   1.0
++ */
++std::vector<double> sizesListToPositions(Span<const double> sizes)
++{
++	const int half = sizes.size();
++	std::vector<double> positions(half * 2 + 1);
++	double x = 0.0;
++
++	positions[half] = 0.5;
++	for (int i = 1; i <= half; i++) {
++		x += sizes[half - i];
++		positions[half - i] = 0.5 - x;
++		positions[half + i] = 0.5 + x;
++	}
++
++	return positions;
++}
++
+ unsigned int quantize(unsigned int value, unsigned int step)
+ {
+ 	return std::lround(value / static_cast<double>(step)) * step;
+@@ -100,6 +126,9 @@ int LensShadingCorrection::init([[maybe_
+ 	if (xSize_.empty() || ySize_.empty())
+ 		return -EINVAL;
+ 
++	xPos_ = sizesListToPositions(xSize_);
++	yPos_ = sizesListToPositions(ySize_);
++
+ 	/* Get all defined sets to apply. */
+ 	const ValueNode &sets = tuningData["sets"];
+ 	if (!sets.isList()) {
+@@ -171,7 +200,7 @@ int LensShadingCorrection::configure(IPA
+ 
+ 	LOG(RkISP1Lsc, Debug) << "Sample LSC data for " << configInfo.analogCrop;
+ 	lsc::ComponentsMap shadingData = algo_->sampleForCrop(configInfo.analogCrop,
+-							      xSize_, ySize_);
++							      xPos_, yPos_);
+ 	sets_.setData(std::move(shadingData));
+ 
+ 	context.activeState.lsc.enabled = true;
+--- a/src/ipa/rkisp1/algorithms/lsc.h
++++ b/src/ipa/rkisp1/algorithms/lsc.h
+@@ -42,6 +42,8 @@ private:
+ 
+ 	std::vector<double> xSize_;
+ 	std::vector<double> ySize_;
++	std::vector<double> xPos_;
++	std::vector<double> yPos_;
+ 	uint16_t xGrad_[RKISP1_CIF_ISP_LSC_SECTORS_TBL_SIZE];
+ 	uint16_t yGrad_[RKISP1_CIF_ISP_LSC_SECTORS_TBL_SIZE];
+ 	uint16_t xSizes_[RKISP1_CIF_ISP_LSC_SECTORS_TBL_SIZE];

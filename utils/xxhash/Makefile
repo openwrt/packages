@@ -11,13 +11,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xxhash
-PKG_VERSION:=0.8.3
+PKG_VERSION:=0.8.4
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 PKG_SOURCE_URL:=https://github.com/Cyan4973/xxHash
-PKG_MIRROR_HASH:=573f8b8ca3b6c2be412f4b68ee0a82f43c32f59607981a8b68f9c8985d979fe1
+PKG_MIRROR_HASH:=4265c80d0ba3ec3aeb866572048cb77457ca3bcb61dec8ba1fe53814650fa6d4
 
 # The source for the library (xxhash.c and xxhash.h) is BSD
 # The source for the command line tool (xxhsum.c) is GPLv2+
@@ -25,7 +25,7 @@ PKG_LICENSE:=BSD-2-Clause GPL-2.0-or-later
 PKG_LICENSE_FILES:=LICENSE cli/COPYING
 PKG_MAINTAINER:=Julien Malik <julien.malik@paraiso.me>
 
-CMAKE_SOURCE_SUBDIR:=cmake_unofficial
+CMAKE_SOURCE_SUBDIR:=build/cmake
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk

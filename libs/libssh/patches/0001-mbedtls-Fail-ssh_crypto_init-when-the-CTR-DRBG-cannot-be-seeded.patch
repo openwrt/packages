@@ -1,0 +1,30 @@
+From 01141368cbab5bd54f680b12a772948bad0513f6 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 28 Aug 2026 09:10:24 +0100
+Subject: [PATCH] mbedtls: Fail ssh_crypto_init() when the CTR-DRBG cannot be
+ seeded
+
+A failed mbedtls_ctr_drbg_seed() freed the DRBG context but still
+reported success and marked the backend initialised, leaving every
+later RNG call to operate on a freed context. Free the entropy context
+as well and return SSH_ERROR, so the failure reaches the callers.
+
+Backport of the mbedtls 3.x part of upstream master commit ac4b723c
+("mbedtls: Initial migration to PSA-Crypto API (v4)").
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ src/libmbedcrypto.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+--- a/src/libmbedcrypto.c
++++ b/src/libmbedcrypto.c
+@@ -1079,6 +1079,8 @@ int ssh_crypto_init(void)
+             &ssh_mbedtls_entropy, NULL, 0);
+     if (rc != 0) {
+         mbedtls_ctr_drbg_free(&ssh_mbedtls_ctr_drbg);
++        mbedtls_entropy_free(&ssh_mbedtls_entropy);
++        return SSH_ERROR;
+     }
+ 
+ #if !(defined(MBEDTLS_CHACHA20_C) && defined(MBEDTLS_POLY1305_C))

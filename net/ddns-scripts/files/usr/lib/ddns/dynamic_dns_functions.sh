@@ -86,7 +86,6 @@ LUCI_HELPER=$(printf %s "$MYPROG" | grep -i "luci")
 BIND_HOST=$(command -v host)
 KNOT_HOST=$(command -v khost)
 DRILL=$(command -v drill)
-HOSTIP=$(command -v hostip)
 NSLOOKUP=$(command -v nslookup)
 RESOLVEIP=$(command -v resolveip)
 jsonfilter=$(command -v jsonfilter)
@@ -1013,30 +1012,6 @@ get_registered_ip() {
 
 		__RUNPROG="$__PROG >$DATFILE 2>$ERRFILE"
 		__PROG="drill"
-	elif [ -n "$HOSTIP" ]; then	# hostip package installed
-		__PROG="$HOSTIP"
-		[ $force_dnstcp -ne 0 ] && \
-			write_log 14 "hostip - no support for 'DNS over TCP'"
-
-		# is IP given as dns_server ?
-		__IP=$(echo $dns_server | grep -m 1 -o "$IPV4_REGEX")
-		[ -z "$__IP" ] && __IP=$(echo $dns_server | grep -m 1 -o "$IPV6_REGEX")
-
-		# we got NO ip for dns_server, so build command
-		[ -z "$__IP" -a -n "$dns_server" ] && {
-			__IP="\`$HOSTIP"
-			[ $use_ipv6 -eq 1 -a $force_ipversion -eq 1 ] && __IP="$__IP -6"
-			__IP="$__IP $dns_server | grep -m 1 -o"
-			[ $use_ipv6 -eq 1 -a $force_ipversion -eq 1 ] \
-				&& __IP="$__IP '$IPV6_REGEX'" \
-				|| __IP="$__IP '$IPV4_REGEX'"
-			__IP="$__IP \`"
-		}
-
-		[ $use_ipv6 -eq 1 ] && __PROG="$__PROG -6"
-		[ -n "$dns_server" ] && __PROG="$__PROG -r $__IP"
-		__RUNPROG="$__PROG $lookup_host >$DATFILE 2>$ERRFILE"
-		__PROG="hostip"
 	elif [ -n "$NSLOOKUP" ]; then	# last use BusyBox nslookup
 		NSLOOKUP_MUSL=$($(command -v nslookup) localhost 2>&1 | grep -F "(null)")	# not empty busybox compiled with musl
 		[ $force_dnstcp -ne 0 ] && \
@@ -1066,8 +1041,6 @@ get_registered_ip() {
 				fi
 			elif [ -n "$DRILL" ]; then
 				__DATA=$(cat $DATFILE | awk '/^'"$lookup_host"'/ {print $5; exit}' )
-			elif [ -n "$HOSTIP" ]; then
-				__DATA=$(cat $DATFILE | grep -om1 "$__REGEX")
 			elif [ -n "$NSLOOKUP" ]; then
 				__DATA=$(cat $DATFILE | sed -ne "/^Name:/,\$ { s/^Address[0-9 ]\{0,\}: \($__REGEX\).*$/\\1/p }" )
 			fi

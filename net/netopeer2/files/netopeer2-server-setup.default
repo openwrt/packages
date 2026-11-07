@@ -2,105 +2,80 @@
 
 # Warning, problems can occur if the device restarts in the middle of this uci-default script
 
-# install YANG modules
-SYSREPOCTL=`which sysrepoctl`
-MODDIR="/etc/netopeer2/modules"
+SYSREPOCTL=$(which sysrepoctl)
 PERMS=600
-OWNER=root
-GROUP=root
 
-# array of modules to install
-MODULES="\
-ietf-netconf-acm@2018-02-14.yang
-ietf-netconf@2013-09-29.yang -e writable-running -e candidate -e rollback-on-error -e validate -e startup -e url -e xpath
-ietf-netconf-monitoring@2010-10-04.yang
-ietf-netconf-nmda@2019-01-07.yang -e origin -e with-defaults
-nc-notifications@2008-07-14.yang
-notifications@2008-07-14.yang
+NP2_MODDIR=/etc/netopeer2/modules
+LN2_MODDIR=/etc/netconf2/modules
+
+LN2_MODULES="iana-ssh-encryption-algs@2024-10-16.yang
+iana-ssh-key-exchange-algs@2024-10-16.yang
+iana-ssh-mac-algs@2024-10-16.yang
+iana-ssh-public-key-algs@2024-10-16.yang
+iana-tls-cipher-suite-algs@2024-10-16.yang
 ietf-x509-cert-to-name@2014-12-10.yang
-ietf-crypto-types@2019-07-02.yang
-ietf-keystore@2019-07-02.yang -e keystore-supported
-ietf-truststore@2019-07-02.yang -e truststore-supported -e x509-certificates
-ietf-tcp-common@2019-07-02.yang -e keepalives-supported
-ietf-ssh-server@2019-07-02.yang -e local-client-auth-supported
-ietf-tls-server@2019-07-02.yang -e local-client-auth-supported
-ietf-netconf-server@2019-07-02.yang -e ssh-listen -e tls-listen -e ssh-call-home -e tls-call-home"
+iana-crypt-hash@2014-04-04.yang -e crypt-hash-md5 -e crypt-hash-sha-256 -e crypt-hash-sha-512
+ietf-crypto-types@2024-10-10.yang -e cleartext-passwords -e cleartext-private-keys
+ietf-keystore@2024-10-10.yang -e central-keystore-supported -e inline-definitions-supported -e asymmetric-keys
+ietf-truststore@2024-10-10.yang -e central-truststore-supported -e inline-definitions-supported -e certificates -e public-keys
+ietf-tcp-common@2024-10-10.yang -e keepalives-supported
+ietf-tcp-server@2024-10-10.yang -e tcp-server-keepalives
+ietf-tcp-client@2024-10-10.yang -e local-binding-supported -e tcp-client-keepalives
+ietf-ssh-common@2024-10-10.yang -e algorithm-discovery -e transport-params
+ietf-ssh-server@2024-10-10.yang -e local-users-supported -e local-user-auth-publickey -e local-user-auth-password -e local-user-auth-none
+ietf-tls-common@2024-10-10.yang -e algorithm-discovery -e tls12 -e tls13 -e hello-params
+ietf-tls-server@2024-10-10.yang -e server-ident-x509-cert -e client-auth-supported -e client-auth-x509-cert
+ietf-netconf-server@2025-04-24.yang -e ssh-listen -e tls-listen -e ssh-call-home -e tls-call-home -e central-netconf-server-supported
+libnetconf2-netconf-server@2026-04-17.yang"
 
-# functions
-INSTALL_MODULE() {
-    local module=`echo "$1" | sed 's/\s.*$//'`
-    $SYSREPOCTL -a -i $MODDIR/$module -s $MODDIR -p $PERMS -o $OWNER -g $GROUP -v2
-    local rc=$?
-    if [ $rc -ne 0 ]; then
-        exit $rc
-    fi
+NP2_MODULES="ietf-interfaces@2018-02-20.yang
+ietf-ip@2018-02-22.yang
+ietf-netconf@2013-09-29.yang -e writable-running -e candidate -e rollback-on-error -e validate -e startup -e url -e xpath -e confirmed-commit
+ietf-netconf-nmda@2019-01-07.yang -e origin -e with-defaults
+notifications@2008-07-14.yang
+nc-notifications@2008-07-14.yang
+ietf-netconf-monitoring@2010-10-04.yang
+ietf-network-instance@2019-01-21.yang
+ietf-subscribed-notifications@2019-09-09.yang -e encode-xml -e replay -e subtree -e xpath
+ietf-yang-push@2019-09-09.yang -e on-change
+netopeer-notifications@2026-01-05.yang
+ietf-system-capabilities@2022-02-17.yang
+ietf-notification-capabilities@2022-02-17.yang
+ietf-netconf-private-candidate@2026-02-03.yang -e private-candidate"
+
+SCTL_MODULES=$($SYSREPOCTL -l)
+
+setup_modules() {
+	_dir=$1
+	_list=/tmp/netopeer2-modules.$$
+	printf '%s\n' "$2" > "$_list"
+
+	while read -r _file _features; do
+		[ -n "$_file" ] || continue
+		_name=${_file%%@*}
+
+		if echo "$SCTL_MODULES" | grep -q "^$_name \+|[^|]*| I"; then
+			continue
+		fi
+
+		if ! $SYSREPOCTL -i "$_dir/$_file" -s "$_dir" -p $PERMS -v2; then
+			rm -f "$_list"
+			exit 1
+		fi
+
+		for _feature in $_features; do
+			[ "$_feature" = "-e" ] && continue
+			if ! $SYSREPOCTL -c "$_name" -e "$_feature" -v2; then
+				rm -f "$_list"
+				exit 1
+			fi
+		done
+	done < "$_list"
+
+	rm -f "$_list"
 }
 
-UPDATE_MODULE() {
-    $SYSREPOCTL -a -U $MODDIR/$1 -s $MODDIR -p $PERMS -o $OWNER -g $GROUP -v2
-    local rc=$?
-    if [ $rc -ne 0 ]; then
-        exit $rc
-    fi
-}
-
-ENABLE_FEATURE() {
-    $SYSREPOCTL -a -c $1 -e $2 -v2
-    local rc=$?
-    if [ $rc -ne 0 ]; then
-        exit $rc
-    fi
-}
-
-ENABLE_FEATURES() {
-    # parse sysrepoctl features and add extra space at the end for easier matching
-    local sctl_features="`echo "$SCTL_MODULE" | sed 's/\([^|]*|\)\{6\}\(.*\)/\2/'` "
-    # parse features we want to enable
-    local features=`echo "$1" | sed 's/[^ ]* \(.*\)/\1/'`
-    while [ "${features:0:3}" = "-e " ]; do
-        # skip "-e "
-        features=${features:3}
-        # parse feature
-        local feature=`echo "$features" | sed 's/\([^[:space:]]*\).*/\1/'`
-
-        # enable feature if not already
-        sctl_feature=`echo "$sctl_features" | grep " ${feature} "`
-        if [ -z "$sctl_feature" ]; then
-            # enable feature
-            ENABLE_FEATURE $name $feature
-        fi
-
-        # next iteration, skip this feature
-        features=`echo "$features" | sed 's/[^[:space:]]* \(.*\)/\1/'`
-    done
-}
-
-# get current modules
-SCTL_MODULES=`$SYSREPOCTL -l`
-
-IFS=$'\n'
-for i in $MODULES; do
-    name=`echo "$i" | sed 's/\([^@]*\).*/\1/'`
-
-    SCTL_MODULE=`echo "$SCTL_MODULES" | grep "^$name \+|[^|]*| I"`
-    if [ -z "$SCTL_MODULE" ]; then
-        # install module
-        INSTALL_MODULE "$i"
-        ENABLE_FEATURES "$i"
-        continue
-    fi
-
-    sctl_revision=`echo "$SCTL_MODULE" | sed 's/[^|]*| \([^ ]*\).*/\1/'`
-    revision=`echo "$i" | sed 's/[^@]*@\([^\.]*\).*/\1/'`
-    if [ "$sctl_revision" \< "$revision" ]; then
-        # update module without any features
-        file=`echo "$i" | cut -d' ' -f 1`
-        UPDATE_MODULE $file
-    fi
-
-    ENABLE_FEATURES "$i"
-done
-
-unset IFS
+setup_modules "$LN2_MODDIR" "$LN2_MODULES"
+setup_modules "$NP2_MODDIR" "$NP2_MODULES"
 
 exit 0

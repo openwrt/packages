@@ -146,8 +146,17 @@ start_service() {
 	done
 
 	# Migration from old versions
+	file_version=''
+	for f in mariadb_upgrade_info mysql_upgrade_info .version; do
+		if [ -f "$datadir"/$f ]; then
+			file_version=$(cat "$datadir/$f")
+			# removing trailing suffix
+			file_version=${file_version%%-*}
+			break
+		fi
+	done
 	# shellcheck disable=SC2154
-	if [ "$(cat "$datadir"/.version 2> /dev/null)" \!= "$version" ] && [ "$autoupgrade" -gt 0 ]; then
+	if [ "${file_version}" != "$version" ] && [ "$autoupgrade" -gt 0 ]; then
 		# Check for correct owner
 		local owner="$(stat --format %U:%G "$datadir" 2> /dev/null)"
 		if [ -n "$owner" ] && [ "$owner" != "$my_user:$my_group" ]; then
@@ -168,8 +177,7 @@ start_service() {
 			exit 1
 		}
 		# Upgrade the database
-		mysql_upgrade --upgrade-system-tables --socket=/tmp/mysql_upgrade.sock
-		echo "$version" > "$datadir"/.version
+		mariadb-upgrade --upgrade-system-tables --socket=/tmp/mysql_upgrade.sock
 		# Stop the upgrade instance
 		kill "$PID"
 		i=0

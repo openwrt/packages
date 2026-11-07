@@ -12,14 +12,14 @@ extra_command "scan" "[<radio>|<ifname>] Scan for available nearby uplinks"
 extra_command "setup" "[<iface>] [<zone>] [<metric>] Setup the travelmate uplink interface, by default 'trm_wwan' with firewall zone 'wan' and metric '100'"
 
 trm_init="/etc/init.d/travelmate"
-trm_service="/usr/bin/travelmate-service.sh"
-trm_funlib="/usr/lib/travelmate-functions.sh"
+trm_daemon="/usr/sbin/travelmate"
+trm_pidfile="/var/run/travelmate/travelmate.pid"
+trm_actionfile="/var/run/travelmate/travelmate.action"
 
 if [ -z "${IPKG_INSTROOT}" ]; then
 	if [ "${action}" = "boot" ] && "${trm_init}" running; then
 		exit 0
 	fi
-	. "${trm_funlib}"
 fi
 
 boot() {
@@ -34,62 +34,35 @@ start_service() {
 		if [ "${action}" = "boot" ]; then
 			return 0
 		fi
+		mkdir -p "${trm_pidfile%/*}"
+		printf "%s" "${1:-"${action}"}" >"${trm_actionfile}"
 		procd_open_instance "travelmate"
-		procd_set_param command "${trm_service}" "${@:-"${action}"}"
+		procd_set_param command "${trm_daemon}" run
 		procd_set_param pidfile "${trm_pidfile}"
 		procd_set_param nice "$(uci_get travelmate global trm_nice "0")"
 		procd_set_param stdout 0
 		procd_set_param stderr 1
 		procd_close_instance
 	else
-		f_log "err" "travelmate service autostart is disabled"
+		logger -p user.err -t "trm-init" "travelmate service autostart is disabled"
+		return 1
 	fi
 }
 
 reload_service() {
-	f_rmpid
+	procd_send_signal travelmate travelmate HUP
 }
 
 stop_service() {
-	rc_procd "${trm_service}" stop
+	"${trm_daemon}" stop
 }
 
 status_service() {
-	f_getstatus
+	"${trm_daemon}" status
 }
 
 scan() {
-	local result radio="${1:-radio0}"
-
-	case "${radio}" in
-	*[!a-z0-9]*) return 1 ;;
-	esac
-
-	result="$(f_scan "${radio}" full)"
-	if [ -z "${result}" ]; then
-		: >"${trm_tmpfile}"
-		mv -f "${trm_tmpfile}" "${trm_scanfile}"
-		return 0
-	fi
-
-	printf "%s\n" "${result}" | "${trm_awkcmd}" '
-	{
-		quality = $1
-		channel = $2
-		bssid   = $3
-		rsn     = $4
-		cipher  = $5
-		auth    = $6
-		ssid = ""
-		for (i=7; i<=NF; i++) {
-			ssid = ssid $i " "
-		}
-		sub(/[ \t]+$/, "", ssid)
-		printf "%3s %3s %17s %-12s %-10s %-10s %s\n",
-			quality, channel, bssid, rsn, cipher, auth, ssid
-	}' | "${trm_sortcmd}" -rn >"${trm_tmpfile}"
-
-	mv -f "${trm_tmpfile}" "${trm_scanfile}"
+	"${trm_daemon}" scan "${1:-radio0}"
 }
 
 setup() {

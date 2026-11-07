@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ngircd
 PKG_VERSION:=28
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ngircd.barton.de/pub/ngircd
@@ -61,6 +61,7 @@ define Package/ngircd-nossl
 $(call Package/ngircd/Default)
   TITLE+= (without OpenSSL support)
   VARIANT:=nossl
+  CONFLICTS:=ngircd
 endef
 
 Package/ngircd-nossl/conffiles = $(Package/ngircd/conffiles)

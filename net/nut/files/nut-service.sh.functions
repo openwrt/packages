@@ -21,6 +21,8 @@ NUT_KILLPOWER="/var/run/killpower"
 
 # Disable NUT hotplug path
 NUT_DISABLE_HOTPLUG_PATH="/var/run/nut/disable-hotplug"
+# Must be present to allow hotplug
+NUT_HOTPLUG_BOOT_COMPLETE_PATH="/var/run/nut-hotplug-boot-complete"
 
 # Fallback STATEPATH setting
 NUT_BASE_STATEPATH="/var/run/nut"
@@ -48,6 +50,9 @@ allow_hotplug_restart() {
 	# or nutshutdown
 	[ ! -f "$NUT_DISABLE_HOTPLUG_PATH" ] || return 1
 
+	# Initial boot complete; NUT hotplug allowed sentinel
+	# Created by nut-server initscript
+	[ -f "$NUT_HOTPLUG_BOOT_COMPLETE_PATH" ] || return 1
 	return 0
 }
 
@@ -211,14 +216,23 @@ find_runas() {
 	) || return $?
 }
 
-# Detect if service is running under procd, with no instances
-# (e.g. upsd with no UPS drivers running)
+# Detect if a service is active with procd, and if it has
+# any instances.
+#
+# Returns:
+#  0 - service is registered (active) but has no instances
+#  1 - service is not registered (active) at all
+#  2 - service is registered (active) and has instances
+#  3 - error condition encountered
 service_active_no_instances() {
 	local service="$1"
 	local active_instances
 	local active_var service_filter
 
-	check_safe_uci_name "$service" || return 1
+	check_safe_uci_name "$service" || {
+		log_error "Invalid service name '$service' in service_active_no_instances" nut-service.sh nut-service
+		return 3
+	}
 
 	service_filter="@['""${service}""']"
 	active_instances="$(_procd_ubus_call list "{\"name\":\"$service\"}" | jsonfilter -l 1 -e active_var="$service_filter")"
@@ -232,14 +246,16 @@ service_active_no_instances() {
 		;;
 	*)
 		log_error "Unexpected value '$active_instances' for 'active_instances' from jsonfilter in service_active_no_instances" nut-service.sh nut-service
-		return 1
+		return 3
 		;;
 	esac
 
 	# active_var is only empty, but present, if there are no instances for the service
 	[ -z "$active_var" ] && return 0
 
-	return 1
+	# otherwise there are instances, in any state, for the service; to check if
+	# any are running use procd_running
+	return 2
 }
 
 # Setup triggers in procd for changes to specified network interfaces

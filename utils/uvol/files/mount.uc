@@ -47,6 +47,18 @@ uvol_mount = {
 		return mount_ubus.error() ? -1 : 0;
 	},
 
+	registered: function(vol_name, dev_name) {
+		if (!dev_name)
+			return false;
+
+		let info = mount_ubus.call({
+			object: "block",
+			method: "info",
+			data: { device: dev_name },
+		});
+		return info?.target == uvol_target(vol_name);
+	},
+
 	unregister: function(dev_name) {
 		if (!dev_name)
 			return 22;

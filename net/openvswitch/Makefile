@@ -12,15 +12,15 @@ include ./openvswitch.mk
 
 # Checklist on version bump
 #
-#  - Check acinclude.m4 for range of supported kernel versions: "but version newer than .* is not supported"
+#  - Update net/ovn to a release whose ovs submodule matches this version
 #  - Check and update kmod dependencies when necessary (runtime module load check in the least)
 #
 PKG_NAME:=openvswitch
 PKG_VERSION:=$(ovs_version)
-PKG_RELEASE:=3
+PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.openvswitch.org/releases/
-PKG_HASH:=e1b3fa472676626853f22d63f959e5ad061e1bf57e1bbd444d0ed88f947ef8b1
+PKG_HASH:=b8936c2e95a024d37123536ca843648bc2f1d2520921f991dd3d06248859b70f
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
@@ -45,42 +45,30 @@ source "$(SOURCE)/Config.in"
 endef
 
 ovs_kmod_packages:=
-ovs_kmod_intree_kernel_patchver_min:=3.10
-ovs_kmod_intree_kernel_patchver_max:=5.5
-ovs_kmod_intree_not_supported:=$(strip $(call kernel_patchver_lt,$(ovs_kmod_intree_kernel_patchver_min))$(call kernel_patchver_gt,$(ovs_kmod_intree_kernel_patchver_max)))
-ovs_kmod_intree_dir:=$(PKG_BUILD_DIR)/datapath/linux
 ovs_kmod_upstream_dir:=$(LINUX_DIR)/net/openvswitch
 ovs_kmod_package_name=$(if $(filter openvswitch,$(1)),openvswitch,$(1))
-ovs_kmod_is_intree=$(filter %-intree,$(1))
-ovs_kmod_upstream_name=kmod-$(call ovs_kmod_package_name,$(patsubst %-intree,%,$(1)))
-ovs_kmod_package_provides=$(call ovs_kmod_upstream_name,$(1))
-# Do not use PROVIDES for any OVS kmod. The provider-alternation logic in
-# scripts/package-metadata.pl generates recursive Kconfig dependencies when
-# kmod-openvswitch-intree provides kmod-openvswitch, because userspace
-# packages (openvswitch, ovsd, ovn-host) that +depend on kmod-openvswitch
-# get cross-referenced against the intree provider via PACKAGE_<provider>
-# < PACKAGE_<requester> conditions (#22664).
 define OvsKmodPackageTemplate
-ifeq ($(if $(call ovs_kmod_is_intree,$(1)),$(ovs_kmod_intree_not_supported)),)
   define KernelPackage/$(call ovs_kmod_package_name,$(1))
      SECTION:=kernel
      CATEGORY:=Kernel modules
      SUBMENU:=Network Support
      TITLE:=$(ovs_kmod_$(1)_title)
-     DEPENDS:=$(ovs_kmod_$(1)_depends) $(if $(call ovs_kmod_is_intree,$(1)),@IPV6 @DEVEL)
+     DEPENDS:=$(ovs_kmod_$(1)_depends)
      KCONFIG:=$(ovs_kmod_$(1)_kconfig)
      FILES:=$(ovs_kmod_$(1)_files)
      AUTOLOAD:=$(call AutoProbe,$(foreach m,$(ovs_kmod_$(1)_files),$(notdir $(patsubst %.ko,%,$(basename $(m))))))
   endef
 
   ovs_kmod_packages+=$(call ovs_kmod_package_name,$(1))
-endif
 endef
 
+# NOTE depends
+#
+#  - kmod-ipt-conntrack-extra: required for nf_conncount.ko
+#
 ovs_kmod_openvswitch_title:=Open vSwitch kernel datapath (upstream)
 ovs_kmod_openvswitch_kconfig:=CONFIG_OPENVSWITCH
 ovs_kmod_openvswitch_depends:=\
-	  +kmod-lib-crc32c \
 	  +kmod-mpls \
 	  +kmod-nf-nat \
 	  +IPV6:kmod-nf-nat6 \
@@ -109,47 +97,6 @@ ovs_kmod_openvswitch-geneve_kconfig:= CONFIG_OPENVSWITCH_GENEVE
 ovs_kmod_openvswitch-geneve_depends:= +kmod-openvswitch +kmod-geneve
 ovs_kmod_openvswitch-geneve_files:= $(ovs_kmod_upstream_dir)/vport-geneve.ko
 $(eval $(call OvsKmodPackageTemplate,openvswitch-geneve))
-
-# NOTE depends
-#
-#  - kmod-ipt-conntrack-extra: required for nf_conncount.ko
-#
-ovs_kmod_openvswitch-intree_title:=Open vSwitch kernel datapath (in tree)
-ovs_kmod_openvswitch-intree_depends:=\
-	  +kmod-lib-crc32c \
-	  +kmod-nf-nat \
-	  +IPV6:kmod-nf-nat6 \
-	  +kmod-nf-conntrack \
-	  +kmod-udptunnel4 \
-	  +kmod-ipt-conntrack-extra \
-
-ovs_kmod_openvswitch-intree_files:= $(ovs_kmod_intree_dir)/openvswitch.ko
-$(eval $(call OvsKmodPackageTemplate,openvswitch-intree))
-
-ovs_kmod_openvswitch-gre-intree_title:=Open vSwitch GRE tunneling support (in tree)
-ovs_kmod_openvswitch-gre-intree_depends:= +kmod-openvswitch-intree +kmod-gre
-ovs_kmod_openvswitch-gre-intree_files:= $(ovs_kmod_intree_dir)/vport-gre.ko
-$(eval $(call OvsKmodPackageTemplate,openvswitch-gre-intree))
-
-ovs_kmod_openvswitch-vxlan-intree_title:=Open vSwitch VXLAN tunneling support (in tree)
-ovs_kmod_openvswitch-vxlan-intree_depends:= +kmod-openvswitch-intree +kmod-vxlan
-ovs_kmod_openvswitch-vxlan-intree_files:= $(ovs_kmod_intree_dir)/vport-vxlan.ko
-$(eval $(call OvsKmodPackageTemplate,openvswitch-vxlan-intree))
-
-ovs_kmod_openvswitch-geneve-intree_title:=Open vSwitch Geneve tunneling support (in tree)
-ovs_kmod_openvswitch-geneve-intree_depends:= +kmod-openvswitch-intree +kmod-geneve
-ovs_kmod_openvswitch-geneve-intree_files:= $(ovs_kmod_intree_dir)/vport-geneve.ko
-$(eval $(call OvsKmodPackageTemplate,openvswitch-geneve-intree))
-
-ovs_kmod_openvswitch-stt-intree_title:=Open vSwitch STT tunneling support (in tree)
-ovs_kmod_openvswitch-stt-intree_depends:= +kmod-openvswitch-intree
-ovs_kmod_openvswitch-stt-intree_files:= $(ovs_kmod_intree_dir)/vport-stt.ko
-$(eval $(call OvsKmodPackageTemplate,openvswitch-stt-intree))
-
-ovs_kmod_openvswitch-lisp-intree_title:=Open vSwitch LISP tunneling support (in tree)
-ovs_kmod_openvswitch-lisp-intree_depends:= +kmod-openvswitch-intree
-ovs_kmod_openvswitch-lisp-intree_files:= $(ovs_kmod_intree_dir)/vport-lisp.ko
-$(eval $(call OvsKmodPackageTemplate,openvswitch-lisp-intree))
 
 # Dependency review
 #
@@ -260,23 +207,9 @@ CONFIGURE_VARS += \
 	ovs_cv_python3=$(PYTHON3) \
 	ovs_cv_python3_host=$(HOST_PYTHON3_BIN) \
 	SPHINXBUILD=none \
-	KARCH=$(LINUX_KARCH) \
-
-ovs_intree_kmod_configs:=CONFIG_PACKAGE_kmod-openvswitch-intree
-ovs_intree_kmod_enabled:=$(strip $(foreach c,$(ovs_intree_kmod_configs),$($(c))))
-PKG_CONFIG_DEPENDS+=$(ovs_intree_kmod_configs)
-ifneq ($(ovs_intree_kmod_enabled),)
-  ifeq ($(ovs_kmod_intree_not_supported),)
-    CONFIGURE_ARGS += --with-linux=$(LINUX_DIR)
-  else
-    $(warning XXX: openvswitch: intree kmods selected but not supported)
-  endif
-endif
 
 TARGET_CFLAGS += -std=gnu99
 MAKE_VARS += PYTHONPATH="$(HOST_PYTHON3PATH)"
-
-export OVS_KERNEL_MAKE_FLAGS=$(KERNEL_MAKE_FLAGS)
 
 override CONFIG_AUTOREMOVE=
 

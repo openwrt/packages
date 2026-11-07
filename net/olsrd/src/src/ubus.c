@@ -108,7 +108,7 @@ static int olsrd_ubus_del_interface(struct ubus_context *ctx_local,
   struct blob_buf b = {0};
   int ret;
   char *ifname;
-  struct olsr_if *tmp_if, *del_if;
+  struct olsr_if *del_if, **prev;
 
   blobmsg_parse(interface_policy, __INTERFACE_MAX, tb, blob_data(msg),
                 blob_len(msg));
@@ -118,33 +118,27 @@ static int olsrd_ubus_del_interface(struct ubus_context *ctx_local,
 
   ifname = blobmsg_get_string(tb[INTERFACE_IFNAME]);
 
-  struct interface_olsr *tmp = if_ifwithname(ifname);
-
-  if (tmp != NULL) {
-
-    struct olsr_if *temp = olsr_cnf->interfaces, *prev;
-    if (temp != NULL && (strcmp(temp->name, ifname) == 0)) {
-      olsr_cnf->interfaces = temp->next;
-      olsr_remove_interface(temp);
-      goto send_reply;
-    }
-
-    while (temp != NULL && (strcmp(temp->name, ifname) != 0)) {
-      prev = temp;
-      temp = temp->next;
-    }
-
-    if (temp == NULL) {
-      goto send_reply;
-    }
-
-    prev->next = temp->next;
-    olsr_remove_interface(temp);
-  } else {
-    return UBUS_STATUS_PERMISSION_DENIED;
+  /*
+   * Look for the configured interface, not for the active one. When the
+   * device is already gone, olsrd has taken the active interface down by
+   * itself, but the configured entry stays and is polled every
+   * NicChgsPollInt seconds forever. The kernel answers each lookup of a
+   * device that does not exist with two calls of modprobe.
+   */
+  for (prev = &olsr_cnf->interfaces; (del_if = *prev) != NULL;
+       prev = &del_if->next) {
+    if (strcmp(del_if->name, ifname) == 0)
+      break;
   }
 
-send_reply:
+  if (del_if == NULL)
+    return UBUS_STATUS_NOT_FOUND;
+
+  *prev = del_if->next;
+
+  /* only an interface that is up has something to take down */
+  if (del_if->interf != NULL)
+    olsr_remove_interface(del_if);
 
   blob_buf_init(&b, 0);
   blobmsg_add_string(&b, "deleting", ifname);

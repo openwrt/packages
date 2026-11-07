@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libinput
 PKG_VERSION:=1.31.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://gitlab.freedesktop.org/$(PKG_NAME)/$(PKG_NAME)/-/archive/$(PKG_VERSION)
@@ -40,6 +40,7 @@ MESON_ARGS += \
 	-Depoll-dir=no \
 	-Dlibwacom=true \
 	-Ddebug-gui=false \
+	-Dlua-plugins=disabled \
 	-Dtests=false \
 	-Dzshcompletiondir=no
 

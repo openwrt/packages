@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libtorrent
 PKG_VERSION:=0.15.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/rakshasa/libtorrent
@@ -53,7 +53,7 @@ CONFIGURE_ARGS += \
 	--with-zlib=$(STAGING_DIR)/usr \
 	--without-kqueue
 
-CONFIGURE_VARS = \
+CONFIGURE_VARS += \
 	ax_cv_cxx_compile_cxx17=yes
 
 define Build/InstallDev

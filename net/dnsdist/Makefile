@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dnsdist
-PKG_VERSION:=2.0.6
-PKG_RELEASE:=1
+PKG_VERSION:=2.1.3
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://downloads.powerdns.com/releases/
-PKG_HASH:=b861d74abb0da59cff4e58760266198196eee7c10f2bfe86a3f5ccbd6768626b
+PKG_HASH:=41cc224817ff0f7753b46fe5b814ddb9221dd9dbf76e9eb1a09f01c3c5cbb4aa
 
 PKG_MAINTAINER:=Peter van Dijk <peter.van.dijk@powerdns.com>, Remi Gacogne <remi.gacogne@powerdns.com>
 PKG_LICENSE:=GPL-2.0-only
@@ -71,6 +71,7 @@ endef
 
 define Package/dnsdist
   $(call Package/dnsdist/Default,mini,- minimal version with a restricted feature set)
+  CONFLICTS:=dnsdist-full
   DEPENDS+= \
 	  +DNSDIST_LIBEDIT:libedit \
 	  +DNSDIST_DNSTAP:libfstrm \

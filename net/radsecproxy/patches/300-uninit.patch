@@ -1,8 +1,17 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Sat, 29 Jan 2022 14:16:59 -0800
+Subject: [PATCH] initialize path in pushgconfpaths()
+
+GCC errors on the uninitialized variable, seen on powerpc64.
+
+Upstream-Status: Pending
+---
 --- a/gconfig.c
 +++ b/gconfig.c
-@@ -120,7 +120,7 @@ FILE *pushgconfpaths(struct gconffile **
-     int i;
-     FILE *f = NULL;
+@@ -120,7 +120,7 @@ FILE *pushgconfpath(struct gconffile **c
+ int pushgconfpaths(struct gconffile **cf, const char *cfgpath) {
+     int i, result, n = 0;
      glob_t globbuf;
 -    char *path, *curfile = NULL, *dir;
 +    char *path = NULL, *curfile = NULL, *dir;

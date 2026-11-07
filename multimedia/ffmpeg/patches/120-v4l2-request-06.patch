@@ -1,0 +1,83 @@
+From 55d176a32f6e55543261889e172270df833ce19b Mon Sep 17 00:00:00 2001
+From: Boris Brezillon <boris.brezillon@collabora.com>
+Date: Tue, 6 Aug 2024 09:06:05 +0000
+Subject: [PATCH 06/13] avcodec/h264dec: add ref_pic_marking and pic_order_cnt
+ bit_size to slice context
+
+The V4L2_CID_STATELESS_H264_DECODE_PARAMS control require following:
+
+- dec_ref_pic_marking_bit_size
+  Size in bits of the dec_ref_pic_marking() syntax element.
+
+- pic_order_cnt_bit_size
+  Combined size in bits of the picture order count related syntax
+  elements: pic_order_cnt_lsb, delta_pic_order_cnt_bottom,
+  delta_pic_order_cnt0, and delta_pic_order_cnt1.
+
+Save the bit sizes while parsing for later use in hwaccel, similar to
+short/long_term_ref_pic_set_size in hevcdec.
+
+Signed-off-by: Boris Brezillon <boris.brezillon@collabora.com>
+Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
+---
+ libavcodec/h264_slice.c | 6 +++++-
+ libavcodec/h264dec.h    | 2 ++
+ 2 files changed, 7 insertions(+), 1 deletion(-)
+
+--- a/libavcodec/h264_slice.c
++++ b/libavcodec/h264_slice.c
+@@ -1702,7 +1702,7 @@ static int h264_slice_header_parse(const
+     unsigned int slice_type, tmp, i;
+     int field_pic_flag, bottom_field_flag;
+     int first_slice = sl == h->slice_ctx && !h->current_slice;
+-    int picture_structure;
++    int picture_structure, pos;
+ 
+     if (first_slice)
+         av_assert0(!h->setup_finished);
+@@ -1793,6 +1793,7 @@ static int h264_slice_header_parse(const
+ 
+     sl->poc_lsb = 0;
+     sl->delta_poc_bottom = 0;
++    pos = get_bits_left(&sl->gb);
+     if (sps->poc_type == 0) {
+         sl->poc_lsb = get_bits(&sl->gb, sps->log2_max_poc_lsb);
+ 
+@@ -1807,6 +1808,7 @@ static int h264_slice_header_parse(const
+         if (pps->pic_order_present == 1 && picture_structure == PICT_FRAME)
+             sl->delta_poc[1] = get_se_golomb(&sl->gb);
+     }
++    sl->pic_order_cnt_bit_size = pos - get_bits_left(&sl->gb);
+ 
+     sl->redundant_pic_count = 0;
+     if (pps->redundant_pic_cnt_present)
+@@ -1846,9 +1848,11 @@ static int h264_slice_header_parse(const
+ 
+     sl->explicit_ref_marking = 0;
+     if (nal->ref_idc) {
++        pos = get_bits_left(&sl->gb);
+         ret = ff_h264_decode_ref_pic_marking(sl, &sl->gb, nal, h->avctx);
+         if (ret < 0 && (h->avctx->err_recognition & AV_EF_EXPLODE))
+             return AVERROR_INVALIDDATA;
++        sl->ref_pic_marking_bit_size = pos - get_bits_left(&sl->gb);
+     }
+ 
+     if (sl->slice_type_nos != AV_PICTURE_TYPE_I && pps->cabac) {
+--- a/libavcodec/h264dec.h
++++ b/libavcodec/h264dec.h
+@@ -322,6 +322,7 @@ typedef struct H264SliceContext {
+     MMCO mmco[H264_MAX_MMCO_COUNT];
+     int  nb_mmco;
+     int explicit_ref_marking;
++    int ref_pic_marking_bit_size;
+ 
+     int frame_num;
+     int idr_pic_id;
+@@ -330,6 +331,7 @@ typedef struct H264SliceContext {
+     int delta_poc[2];
+     int curr_pic_num;
+     int max_pic_num;
++    int pic_order_cnt_bit_size;
+ } H264SliceContext;
+ 
+ /**

@@ -1,3 +1,16 @@
+From b78cdd741551c86c8e5bf9a9441195842aff367d Mon Sep 17 00:00:00 2001
+From: Jo-Philipp Wich <jow@openwrt.org>
+Date: Thu, 6 Jan 2011 09:57:53 +0000
+Subject: [PATCH] xtables-addons: use "make kernelversion" in configure
+
+The configure first calls "make kernelrelease" which then triggers
+a silentoldconfig of the tree for the sole purpose of adding the
+localversion which is then stripped anyway. Let it call
+"make kernelversion" instead which does not have such issues.
+This patch should fix #8535.
+
+SVN-Revision: 24920
+
 --- a/configure.ac
 +++ b/configure.ac
 @@ -41,7 +41,7 @@ regular_CFLAGS="-Wall -Waggregate-return

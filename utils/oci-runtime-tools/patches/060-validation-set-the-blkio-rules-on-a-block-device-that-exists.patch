@@ -1,0 +1,104 @@
+From 9aa4348c28e3e1658c8622af69e1b62ea9ef03ba Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Tue, 20 Oct 2026 17:33:58 +0100
+Subject: [PATCH] validation: set the blkio rules on a block device that exists
+
+Both blkio tests name device 8:0 and assume that /dev/sda exists. On a
+host whose disks are virtio, NVMe or MMC there is no 8:0, the kernel
+refuses an io.max entry for it, and a runtime that reports the failed
+write cannot create the container, so the tests fail without having
+looked at the runtime's blkio handling. Take the device number of a
+whole disk from /sys/block instead, preferring one backed by hardware.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ .../linux_cgroups_blkio.go                    |  9 +++--
+ .../linux_cgroups_relative_blkio.go           |  6 +++-
+ validation/util/linux_resources_blkio.go      | 34 +++++++++++++++++++
+ 3 files changed, 43 insertions(+), 6 deletions(-)
+
+--- a/validation/linux_cgroups_blkio/linux_cgroups_blkio.go
++++ b/validation/linux_cgroups_blkio/linux_cgroups_blkio.go
+@@ -13,11 +13,10 @@ func testBlkioCgroups(rate uint64, isEmp
+ 	var weight uint16 = 500
+ 	var leafWeight uint16 = 300
+ 
+-	// It's assumed that a device /dev/sda (8:0) exists on the test system.
+-	// The minor number must be always 0, as it's only allowed to set blkio
+-	// weights to a whole block device /dev/sda, not to partitions like sda1.
+-	var major int64 = 8
+-	var minor int64
++	major, minor, err := util.GetBlockDevice()
++	if err != nil {
++		return err
++	}
+ 
+ 	t := tap.New()
+ 	t.Header(0)
+--- a/validation/linux_cgroups_relative_blkio/linux_cgroups_relative_blkio.go
++++ b/validation/linux_cgroups_relative_blkio/linux_cgroups_relative_blkio.go
+@@ -9,9 +9,13 @@ import (
+ func main() {
+ 	var weight uint16 = 500
+ 	var leafWeight uint16 = 300
+-	var major, minor int64 = 8, 0
+ 	var rate uint64 = 102400
+ 
++	major, minor, err := util.GetBlockDevice()
++	if err != nil {
++		util.Fatal(err)
++	}
++
+ 	t := tap.New()
+ 	t.Header(0)
+ 	defer t.AutoPlan()
+--- a/validation/util/linux_resources_blkio.go
++++ b/validation/util/linux_resources_blkio.go
+@@ -1,13 +1,47 @@
+ package util
+ 
+ import (
++	"errors"
+ 	"fmt"
++	"os"
++	"path/filepath"
++	"strings"
+ 
+ 	"github.com/mndrix/tap-go"
+ 	rspec "github.com/opencontainers/runtime-spec/specs-go"
+ 	"github.com/opencontainers/runtime-tools/cgroups"
+ )
+ 
++// GetBlockDevice returns the device number of a whole block device on
++// the host, as blkio device rules have to name one that exists. Devices
++// backed by hardware are preferred over loop and RAM disks, which may
++// have nothing behind them.
++func GetBlockDevice() (int64, int64, error) {
++	devs, err := filepath.Glob("/sys/block/*/dev")
++	if err != nil {
++		return 0, 0, err
++	}
++
++	for _, hardware := range []bool{true, false} {
++		for _, dev := range devs {
++			if _, err := os.Stat(filepath.Join(filepath.Dir(dev), "device")); hardware && err != nil {
++				continue
++			}
++			contents, err := os.ReadFile(dev)
++			if err != nil {
++				continue
++			}
++			var major, minor int64
++			if _, err := fmt.Sscanf(strings.TrimSpace(string(contents)), "%d:%d", &major, &minor); err != nil {
++				continue
++			}
++			return major, minor, nil
++		}
++	}
++
++	return 0, 0, errors.New("no block device found in /sys/block")
++}
++
+ // ValidateLinuxResourcesBlockIO validates linux.resources.blockIO.
+ func ValidateLinuxResourcesBlockIO(config *rspec.Spec, t *tap.T, state *rspec.State) error {
+ 	cg, err := cgroups.FindCgroup()
