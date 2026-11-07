@@ -113,7 +113,7 @@ $(call Package/sane-backends/Default)
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE+= (all backends)
-  DEPENDS:=$(foreach backend,$(SANE_BACKENDS),$(strip $(call SaneBackendDependency,$(backend))))
+  DEPENDS:=$(foreach backend,$(SANE_BACKENDS),$(strip $(call SaneBackendDependency,$(backend)))) +sane-airscan
   HIDDEN:=1
 endef
 
