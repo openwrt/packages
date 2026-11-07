@@ -15,7 +15,7 @@ validate_section_udp_broadcast_relay_redux()
 		'port:port' \
 		'network:list(string)' \
 		'src_override:ip4addr' \
-		'dest_override:ip4addr' \
+		'dest_override:list(string)' \
 		'multicast:ip4addr'
 
 	[ -z "$id" ] && return 1
@@ -28,7 +28,7 @@ validate_section_udp_broadcast_relay_redux()
 }
 
 udp_broadcast_relay_redux_instance() {
-	local net network ifname id port src_override dest_override multicast
+	local net network ifname ifnames id port src_override dest_override dest dest_net dest_iface dest_ip multicast
 
 	validate_section_udp_broadcast_relay_redux "${1}" || {
 		echo "Validation failed"
@@ -54,6 +54,7 @@ udp_broadcast_relay_redux_instance() {
 		if [ -n "$ifname" ]; then
 			procd_append_param command "--dev" "$ifname"
 			procd_append_param netdev "$ifname"
+			ifnames="$ifnames $ifname"
 		fi
 	done
 
@@ -61,9 +62,43 @@ udp_broadcast_relay_redux_instance() {
 		procd_append_param command "-s" "$src_override"
 	fi
 
-	if [ -n "$dest_override" ] ; then
-		procd_append_param command "-t" "$dest_override"
-	fi
+	for dest in $dest_override; do
+		# Strip an optional "iface:" prefix before validating the address.
+		dest_ip="${dest#*:}"
+		if ! /sbin/validate_data ip4addr "$dest_ip" >/dev/null 2>&1; then
+			echo "Invalid dest_override target: $dest"
+			return 1
+		fi
+
+		if [ "$dest_ip" != "$dest" ]; then
+			# The prefix is a UCI network name, same as the "network" list above;
+			# resolve it to its literal device the same way, since the binary matches
+			# qualified targets against literal --dev device names, not UCI network names.
+			dest_net="${dest%%:*}"
+			dest_iface=""
+			network_get_device dest_iface "$dest_net"
+			if [ -z "$dest_iface" ]; then
+				network_get_physdev dest_iface "$dest_net"
+			fi
+
+			if [ -z "$dest_iface" ]; then
+				echo "dest_override '$dest' references unknown network '$dest_net'"
+				return 1
+			fi
+
+			case " $ifnames " in
+				*" $dest_iface "*) ;;
+				*)
+					echo "dest_override '$dest' targets network '$dest_net' (device '$dest_iface'), which is not in this instance's own \"network\" list"
+					return 1
+					;;
+			esac
+
+			dest="$dest_iface:$dest_ip"
+		fi
+
+		procd_append_param command "-t" "$dest"
+	done
 
 	if [ -n "$multicast" ] ; then
 		procd_append_param command "--multicast" "$multicast"
