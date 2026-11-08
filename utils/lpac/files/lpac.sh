@@ -7,12 +7,17 @@ APDU_DEBUG="$(uci_get lpac global apdu_debug 0)"
 
 HTTP_BACKEND="$(uci_get lpac global http_backend curl)"
 HTTP_DEBUG="$(uci_get lpac global http_debug 0)"
+HTTP_SSL_VERIFY="$(uci_get lpac global http_ssl_verify 1)"
 
 CUSTOM_ISD_R_AID="$(uci_get lpac global custom_isd_r_aid A0000005591010FFFFFFFF8900000100)"
 
 export LPAC_HTTP="$HTTP_BACKEND"
 if [ "$HTTP_DEBUG" -eq 1 ]; then
     export LIBEUICC_DEBUG_HTTP="1"
+fi
+
+if [ "$HTTP_SSL_VERIFY" -eq 1 ]; then
+    export LPAC_HTTP_SSL_VERIFY=1
 fi
 
 export LPAC_APDU="$APDU_BACKEND"
@@ -35,6 +40,9 @@ elif [ "$APDU_BACKEND" = "mbim" ]; then
     MBIM_PROXY="$(uci_get lpac mbim proxy 1)"
     export LPAC_APDU_MBIM_DEVICE="$MBIM_DEVICE"
     export LPAC_APDU_MBIM_USE_PROXY="$MBIM_PROXY"
+elif [ "$APDU_BACKEND" = "qmi" ]; then
+    QMI_DEV="$(uci_get lpac qmi device /dev/cdc-wdm0)"
+    export LPAC_APDU_QMI_DEVICE="$QMI_DEV"
 fi
 
 export LPAC_CUSTOM_ISD_R_AID="$CUSTOM_ISD_R_AID"
