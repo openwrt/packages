@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libwebsockets
-PKG_VERSION:=4.5.8
-PKG_RELEASE:=2
+PKG_VERSION:=5.1.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=https://codeload.github.com/warmcat/libwebsockets/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=b6ade658f4af3a823d0dc806ae5ef0623f0f4f5e2aeb895a0f77c4783840c30e
+PKG_HASH:=9acbba00aaa9e6178ae09c6f920d95449b527c1417e81d2cdd4103bc6d64d13f
 
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 
@@ -27,15 +27,20 @@ PKG_BUILD_DEPENDS:=libubox
 TARGET_CFLAGS += -Wno-error=discarded-qualifiers
 
 CMAKE_INSTALL:=1
+CMAKE_BINARY_SUBDIR:=build
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
 CMAKE_OPTIONS += -DLWS_IPV6=$(if $(CONFIG_IPV6),ON,OFF)
-CMAKE_OPTIONS += -DISABLE_WERROR=ON
+CMAKE_OPTIONS += -DDISABLE_WERROR=ON
 CMAKE_OPTIONS += -DCMAKE_BUILD_TYPE=Release
 CMAKE_OPTIONS += -DLWS_WITH_EXTERNAL_POLL=ON
 CMAKE_OPTIONS += -DLWS_WITH_ULOOP=ON
+
+# Disable HTTP/3 and QUIC for all TLS variants.
+CMAKE_OPTIONS += -DLWS_ROLE_QUIC=OFF
+CMAKE_OPTIONS += -DLWS_WITH_HTTP3=OFF
 
 # turn off all test apps
 CMAKE_OPTIONS += -DLWS_WITHOUT_TESTAPPS=ON
@@ -45,37 +50,38 @@ CMAKE_OPTIONS += -DLWS_WITHOUT_TEST_PING=ON
 CMAKE_OPTIONS += -DLWS_WITHOUT_TEST_CLIENT=ON
 
 define Package/libwebsockets/Default
-	SECTION:=libs
-	CATEGORY:=Libraries
-	TITLE:=libwebsockets
-	DEPENDS:=+zlib +libcap +libubox
-	URL:=https://libwebsockets.org
-	MAINTAINER:=Karl Palsson <karlp@etactica.com>
+  SECTION:=libs
+  CATEGORY:=Libraries
+  TITLE:=libwebsockets
+  ABI_VERSION:=23
+  DEPENDS:=+zlib +libcap +libubox
+  URL:=https://libwebsockets.org
+  MAINTAINER:=Karl Palsson <karlp@etactica.com>
 endef
 
 define Package/libwebsockets-openssl
-	$(call Package/libwebsockets/Default)
-	TITLE += (OpenSSL)
-	DEPENDS += +libopenssl
-	VARIANT:=openssl
-	CONFLICTS:=libwebsockets-full
+  $(call Package/libwebsockets/Default)
+  TITLE += (OpenSSL)
+  DEPENDS += +libopenssl
+  VARIANT:=openssl
+  CONFLICTS:=libwebsockets-full
 endef
 
 define Package/libwebsockets-mbedtls
-	$(call Package/$(PKG_NAME)/Default)
-	TITLE += (mbedTLS)
-	DEPENDS += +libmbedtls
-	VARIANT:=mbedtls
-	PROVIDES:=libwebsockets
+  $(call Package/libwebsockets/Default)
+  TITLE += (mbedTLS)
+  DEPENDS += +libmbedtls
+  VARIANT:=mbedtls
+  PROVIDES:=libwebsockets
   CONFLICTS:=libwebsockets-openssl libwebsockets-full
 endef
 
 define Package/libwebsockets-full
-	$(call Package/libwebsockets/Default)
-	TITLE += (Full - OpenSSL, libuv, plugins, CGI)
-	DEPENDS += +libopenssl +libuv
-	VARIANT:=full
-	PROVIDES:=libwebsockets libwebsockets-openssl
+  $(call Package/libwebsockets/Default)
+  TITLE += (Full - OpenSSL, libuv, plugins, CGI)
+  DEPENDS += +libopenssl +libuv
+  VARIANT:=full
+  PROVIDES:=libwebsockets libwebsockets-openssl
 endef
 
 ifeq ($(BUILD_VARIANT),openssl)
