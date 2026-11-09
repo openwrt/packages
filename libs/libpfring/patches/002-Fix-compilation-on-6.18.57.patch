@@ -1,0 +1,20 @@
+From 10050952d12b1017ef45c750e19e3474d6900ef9 Mon Sep 17 00:00:00 2001
+From: Alfredo Cardigliano <cardigliano@ntop.org>
+Date: Mon, 9 Nov 2026 18:18:13 +0100
+Subject: [PATCH] Fix compilation on 6.18.57+
+
+---
+ kernel/pf_ring.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/kernel/pf_ring.c
++++ b/kernel/pf_ring.c
+@@ -5847,7 +5847,7 @@ static int packet_ring_bind(struct sock
+ /* ************************************* */
+ 
+ /* Bind to a device */
+-#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,19,0)
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,18,57) /* sockaddr_unsized introduced in 6.19, backported to 6.18.57 */
+ static int ring_bind(struct socket *sock, struct sockaddr_unsized *sa, int addr_len)
+ #else
+ static int ring_bind(struct socket *sock, struct sockaddr *sa, int addr_len)
