@@ -1,0 +1,33 @@
+#!/bin/sh
+# SPDX-License-Identifier: Apache-2.0
+# Prometheus scrape endpoint. Inert unless trafficctl.metrics.enabled=1.
+#
+# This serves device names, addresses and traffic volumes with no LuCI session,
+# so it stays disabled by default and supports an optional shared token:
+#   uci set trafficctl.metrics.token=<secret>
+#   scrape ...  /cgi-bin/trafficctl-metrics?token=<secret>
+# Prefer also restricting the port to the LAN in your firewall.
+
+TOKEN=$(uci -q get trafficctl.metrics.token 2>/dev/null)
+
+deny() {
+    printf 'Status: 403 Forbidden\r\n'
+    printf 'Content-Type: text/plain\r\n\r\n'
+    printf '%s\n' "$1"
+    exit 0
+}
+
+[ "$(uci -q get trafficctl.metrics.enabled 2>/dev/null)" = "1" ] \
+    || deny "trafficctl metrics disabled"
+
+if [ -n "$TOKEN" ]; then
+    # QUERY_STRING is the only channel a stock Prometheus scrape config can use
+    # without custom headers.
+    case "&${QUERY_STRING}&" in
+        *"&token=${TOKEN}&"*) ;;
+        *) deny "invalid or missing token" ;;
+    esac
+fi
+
+printf 'Content-Type: text/plain; version=0.0.4; charset=utf-8\r\n\r\n'
+exec /usr/libexec/trafficctl/trafficctl-metrics.sh

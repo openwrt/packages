@@ -1,0 +1,42 @@
+#!/bin/sh /etc/rc.common
+# SPDX-License-Identifier: Apache-2.0
+# shellcheck shell=dash
+# Sampler and flusher for the durable per-period traffic history.
+#
+# Why a service and not a cron line: there are TWO cadences and they are not
+# interchangeable. Sampling must be frequent — with a conntrack source, a flow
+# that starts and finishes between two samples is invisible to all of them —
+# and costs a tmpfs write. Flushing touches durable storage and is therefore
+# rare. One process runs both; see trafficctl-history.sh for the accuracy
+# model that forces the split.
+#
+# Respawns, unlike the cut keeper: this is a steady-state service, and a
+# sampler that quietly died would not fail loudly — it would just leave a
+# month with a plausible-looking number in it that is far too low.
+#
+# Enabled at boot, but the loop itself refuses to do anything while
+# trafficctl.history.enabled is 0, and re-reads that on every tick. So
+# switching history on in the UI does not require knowing there is a service
+# behind it.
+#
+# START/STOP/USE_PROCD are consumed by the sourced /etc/rc.common framework.
+# shellcheck disable=SC2034
+START=96
+STOP=10
+USE_PROCD=1
+
+start_service() {
+	procd_open_instance history
+	procd_set_param command /usr/libexec/trafficctl/trafficctl-history.sh keeper
+	procd_set_param respawn 3600 5 0
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_close_instance
+}
+
+service_triggers() {
+	# A change to the store location or the intervals is picked up by the loop
+	# itself, but enabling history for the first time should start sampling
+	# without waiting for a reboot.
+	procd_add_reload_trigger "trafficctl"
+}
