@@ -159,6 +159,30 @@ function active_member(c, dead) {
 	return (c.fallback == 'main') ? null : 0;
 }
 
+// What a mark chain holds. With every interface dead and fallback 'block',
+// tcp is reset here, in the ruleset, before the first interface's mark sends
+// the rest to the prohibit route. The kernel rate-limits the ICMP errors
+// that route answers with, per client: one that keeps retrying flows into
+// the blocked policy uses up the budget, and its next connection attempt is
+// dropped silently and times out instead of failing - measured. A reset is
+// not rate-limited, so a tcp connection fails at once whatever else the
+// client sends. Only new flows get here, the settled ones return before.
+function chain_rules(c, dead) {
+	let j = active_member(c, dead);
+
+	if (j == null)
+		return [];
+
+	let out = [];
+
+	if (c.fallback == 'block' && dead?.[c.members[j].name])
+		push(out, 'meta l4proto tcp counter reject with tcp reset');
+
+	push(out, c.members[j].stmt);
+
+	return out;
+}
+
 function mask_shift(mask) {
 	let n = 0;
 	while (n < 32 && !((mask >> n) & 1))
@@ -460,7 +484,10 @@ export function compile(policies, opts) {
 		let chain = null;
 		let fb = p.fallback ?? 'main';
 
-		if (action == 'route' && (k > 1 ||
+		// A chain where the state of an interface changes what is marked:
+		// several interfaces, a tracked one with fallback 'main', and any
+		// with fallback 'block', whose chain resets tcp while it is dead.
+		if (action == 'route' && (k > 1 || fb == 'block' ||
 		    (probe_of[members[0]?.name] && fb == 'main'))) {
 			chain = `mk_${pname}`;
 			chains[pname] = { chain, fallback: fb, members: map(members,
@@ -718,11 +745,10 @@ export function compile(policies, opts) {
 
 	for (let n in sort(keys(chains))) {
 		let c = chains[n];
-		let j = active_member(c, opts?.dead);
 
 		push(mkchains, `\tchain ${c.chain} {`);
-		if (j != null)
-			push(mkchains, `\t\t${c.members[j].stmt}`);
+		for (let r in chain_rules(c, opts?.dead))
+			push(mkchains, `\t\t${r}`);
 		push(mkchains, '\t}');
 	}
 
@@ -758,11 +784,10 @@ export function flip(chains, dead) {
 
 	for (let n in sort(keys(chains ?? {}))) {
 		let c = chains[n];
-		let j = active_member(c, dead);
 
 		push(out, sprintf('flush chain %s %s', TABLE, c.chain));
-		if (j != null)
-			push(out, sprintf('add rule %s %s %s', TABLE, c.chain, c.members[j].stmt));
+		for (let r in chain_rules(c, dead))
+			push(out, sprintf('add rule %s %s %s', TABLE, c.chain, r));
 	}
 
 	return length(out) ? join('\n', out) + '\n' : '';
