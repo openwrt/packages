@@ -1,0 +1,114 @@
+Testing that nft.cleanup()'s 'main_table' delete window never reaches IP rule
+priority 0.
+
+Regression guard for 12b9937, the router-bricking one. The window runs from
+uplink_ip_rules_priority + 1 down to uplink_ip_rules_priority - (fw_mask /
+uplink_mark), and every rule inside it is deleted. With a widened mask that
+lower bound goes negative, so the window swallows priority 0 -- the kernel's
+own 'from all lookup local' rule. Deleting it kills local delivery: the router
+stops answering on its own addresses and needs a physical reset.
+
+This config is the one from the fix's own comment: uplink_ip_rules_priority=99
+(the clamp floor) with fw_mask=ffff0000 and uplink_mark=00010000, so
+max_ifaces is 65535 and the unclamped lower bound would be -65436. The floor
+at files/lib/pbr/nft.uc:643 pins it to 1, which guards both the v4 and the v6
+loop since each tests 'prio < prio_min'.
+
+The deletes go straight to system(), so they leave no trace in
+/var/run/pbr.nft; this asserts on the recorded system() calls instead. The
+'ip rule show' fixtures below are what the loops iterate over -- priority 0 is
+present in both, exactly as it is on a real router.
+
+-- File fs/popen~_usr_libexec_ip-full_-4_rule_show_2_dev_null.txt --
+0:	from all lookup local
+99:	from all lookup pbr_wan
+100:	from all lookup main suppress_prefixlength 1
+32766:	from all lookup main
+32767:	from all lookup default
+-- End --
+
+-- File fs/popen~_usr_libexec_ip-full_-6_rule_show_2_dev_null.txt --
+0:	from all lookup local
+99:	from all lookup pbr_wan
+100:	from all lookup main suppress_prefixlength 1
+32766:	from all lookup main
+-- End --
+
+-- File uci/pbr.json --
+{
+	"pbr": [
+		{
+			".name": "config",
+			"enabled": "1",
+			"fw_mask": "ffff0000",
+			"ipv6_enabled": "1",
+			"prefixlength": "1",
+			"resolver_set": "dnsmasq.nftset",
+			"strict_enforcement": "1",
+			"uplink_interface": "wan",
+			"uplink_interface6": "wan6",
+			"uplink_ip_rules_priority": "99",
+			"uplink_mark": "00010000",
+			"verbosity": "2",
+			"lan_device": ["br-lan"],
+			"resolver_instance": ["*"],
+			"debug_performance": "0"
+		}
+	],
+	"policy": [],
+	"dns_policy": [],
+	"include": []
+}
+-- End --
+
+-- Testcase --
+import create_pbr from 'pbr';
+
+let mocklib = global.mocklib;
+
+mocklib.clear_commands();
+
+let pbr = create_pbr();
+pbr.start_service(['on_start']);
+
+let deletes = mocklib.commands(/rule del priority /);
+
+let checks = [
+	// the guard itself -- both families, both loops
+	['no_v4_priority_zero',   !mocklib.has_command("-4 rule del priority '0'")],
+	['no_v6_priority_zero',   !mocklib.has_command("-6 rule del priority '0'")],
+	['no_negative_priority',  !mocklib.has_command(/rule del priority '?-/)],
+	// the window still does its job, or the checks above would pass vacuously
+	['v4_in_window_deleted',   mocklib.has_command("-4 rule del priority '99'")],
+	['v6_in_window_deleted',   mocklib.has_command("-6 rule del priority '99'")],
+	['v4_prio_max_deleted',    mocklib.has_command("-4 rule del priority '100'")],
+	// and stays inside its bounds at the top end
+	['above_window_kept',     !mocklib.has_command("rule del priority '32766'")],
+	['default_rule_kept',     !mocklib.has_command("rule del priority '32767'")],
+	// the unconditional suppress_prefixlength deletes are unaffected
+	['v4_suppress_deleted',    mocklib.has_command("-4 rule del lookup main suppress_prefixlength '1'")],
+	['v6_suppress_deleted',    mocklib.has_command("-6 rule del lookup main suppress_prefixlength '1'")],
+	// the invariant behind all of the above, over every delete pbr issues --
+	// the cleanup window and the per-interface deletes alike
+	['all_priorities_positive',
+		length(filter(map(deletes, d => {
+			let m = match(d, /priority (-?\d+)/);
+			return m ? +m[1] : 1;
+		}), prio => prio <= 0)) == 0],
+];
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("prio_min_floor: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+prio_min_floor: 11/11 passed
+-- End --

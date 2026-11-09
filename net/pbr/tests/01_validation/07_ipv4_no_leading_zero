@@ -1,0 +1,61 @@
+Testing that is_ipv4() and is_domain() both refuse an address with a leading
+zero, or any other four numbers that are not an address.
+
+nft reads a leading zero as octal, so '192.168.0.09' and '1.2.3.4/08' are not
+valid to it, and the whole generated file fails with them. is_ipv4() must say no.
+is_domain() must say no as well: it is asked next, and calling these a domain
+would give a set dnsmasq can never fill.
+
+-- Testcase --
+import create_validators from 'validators';
+let V = create_validators();
+
+let refused = [
+	'192.168.0.09', '192.168.0.08', '192.168.09.1', '192.09.0.1', '09.2.3.4',
+	'01.2.3.4', '00.2.3.4', '1.2.3.00', '001.2.3.4', '010.0.0.1', '256.1.1.1',
+	'1.2.3.1000',
+];
+let refused_prefix = [
+	'1.2.3.4/08', '1.2.3.4/09', '1.2.3.4/00', '1.2.3.4/01', '1.2.3.4/032',
+];
+let still_valid = [
+	'0.0.0.0', '10.0.0.1', '100.0.0.1', '1.2.3.100', '1.2.3.199', '1.2.3.200',
+	'1.2.3.8', '1.2.3.9', '1.2.3.4/0', '1.2.3.4/8', '1.2.3.4/9', '1.2.3.4/10',
+	'1.2.3.4/29', '1.2.3.4/32',
+];
+let still_domains = [
+	'1.2.3', '1.2.3.4.5', '1.2.3.example', '1a.2.3.4', 'host1', '12345',
+];
+
+let pass = 0, fail = 0;
+function check(what, value, actual, expected) {
+	if (actual === expected) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s(%J) — expected %J, got %J\n", what, value, expected, actual);
+	}
+}
+
+for (let v in refused) {
+	check('is_ipv4', v, V.is_ipv4(v), false);
+	check('is_domain', v, V.is_domain(v), false);
+}
+for (let v in refused_prefix) {
+	check('is_ipv4', v, V.is_ipv4(v), false);
+	check('is_domain', v, V.is_domain(v), false);
+}
+for (let v in still_valid) {
+	check('is_ipv4', v, V.is_ipv4(v), true);
+	check('is_domain', v, V.is_domain(v), false);
+}
+for (let v in still_domains) {
+	check('is_ipv4', v, V.is_ipv4(v), false);
+	check('is_domain', v, V.is_domain(v), true);
+}
+printf("ipv4_no_leading_zero: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+ipv4_no_leading_zero: 74/74 passed
+-- End --

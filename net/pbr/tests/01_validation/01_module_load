@@ -1,0 +1,41 @@
+Testing that pbr module loads correctly and exports expected API.
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+// Verify the module exports exist
+let checks = [
+	['pkg',                     type(pbr.pkg) == 'object'],
+	['pkg.name',                pbr.pkg.name == 'pbr'],
+	['pkg.version',             type(pbr.pkg.version) == 'string'],
+	['pkg.nft_table',           pbr.pkg.nft_table == 'fw4'],
+	['pkg.nft_prefix',          pbr.pkg.nft_prefix == 'pbr'],
+	['start_service',           type(pbr.start_service) == 'function'],
+	['stop_service',            type(pbr.stop_service) == 'function'],
+	['status_service',          type(pbr.status_service) == 'function'],
+	['netifd',                  type(pbr.netifd) == 'function'],
+	['support',                 type(pbr.support) == 'function'],
+	['get_init_status',         type(pbr.get_init_status) == 'function'],
+	['get_init_list',           type(pbr.get_init_list) == 'function'],
+	['get_platform_support',    type(pbr.get_platform_support) == 'function'],
+	['get_supported_interfaces',type(pbr.get_supported_interfaces) == 'function'],
+	['service_started',         type(pbr.service_started) == 'function'],
+	['emit_procd_shell',        type(pbr.emit_procd_shell) == 'function'],
+];
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("module_load: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+module_load: 16/16 passed
+-- End --

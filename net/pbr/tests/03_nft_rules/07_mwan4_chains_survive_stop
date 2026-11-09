@@ -1,0 +1,114 @@
+Testing that stopping pbr leaves mwan4's chains alone.
+
+The README promises pbr and mwan4 can share a router, and stop_service() only
+cleans up what pbr owns: it removes its own nft file and calls
+nft.cleanup('main_table', 'rt_tables') -- no chain teardown at all. Nothing
+asserted that. 04_policies/07_policy_mwan4_strategy covers strategy targeting
+only and never calls stop_service.
+
+Teardown is nft calls and 'ip rule del' calls, not a written ruleset, so there
+is nothing to read back from /var/run/pbr.nft; this asserts on the recorded
+system() calls instead. The guard is deliberately phrased around what pbr may
+touch -- its own pbr_-prefixed chains -- rather than freezing today's exact
+teardown, so a future change that does clean pbr's chains still passes, while
+one that reaches mwan4's chains or fw4's base chains fails.
+
+-- File fs/access~_etc_init_d_mwan4~x.txt --
+true
+-- End --
+
+-- File fs/stat~_etc_config_mwan4.json --
+{"type":"file"}
+-- End --
+
+-- File fs/popen~_usr_libexec_ip-full_-4_rule_show_2_dev_null.txt --
+0:	from all lookup local
+2001:	from all fwmark 0x100/0x3f00 lookup mwan4_iface_wan
+29999:	from all lookup pbr_vpn
+30000:	from all lookup main suppress_prefixlength 1
+32766:	from all lookup main
+32767:	from all lookup default
+-- End --
+
+-- File fs/popen~nft_list_table_inet_fw4_2_dev_null.txt --
+table inet fw4 {
+	chain forward {
+		type filter hook forward priority filter; policy drop;
+	}
+
+	chain mwan4_hook {
+		jump mwan4_iface_in_wan
+	}
+
+	chain mwan4_iface_in_wan {
+		meta mark set 0x00000100
+	}
+
+	chain mwan4_strategy_balanced {
+		meta nfproto ipv4 jump mwan4_strategy_balanced_ipv4
+	}
+
+	chain pbr_mark_wan {
+		meta mark set 0x00010000
+	}
+
+	chain pbr_mark_vpn {
+		meta mark set 0x00020000
+	}
+
+	chain pbr_forward {
+		jump pbr_mark_wan
+	}
+}
+-- End --
+
+-- Testcase --
+import create_pbr from 'pbr';
+
+let mocklib = global.mocklib;
+
+let pbr = create_pbr();
+pbr.start_service(['on_start']);
+
+// record the teardown only
+mocklib.clear_commands();
+pbr.stop_service();
+
+let stop_commands = mocklib.commands();
+let chain_ops = mocklib.commands(/^nft (delete|flush) chain /);
+let foreign_chain_ops = filter(chain_ops, cmd => !match(cmd, /inet fw4 pbr_/));
+
+let checks = [
+	// the stop actually ran, or everything below passes vacuously
+	['stop_ran',            length(stop_commands) > 0],
+	['fw4_reloaded',        mocklib.has_command('fw4 -q reload')],
+	['route_cache_flushed', mocklib.has_command('route flush cache')],
+	['rt_tables_synced',    mocklib.has_command('sync')],
+	['pbr_rules_removed',   mocklib.has_command("-4 rule del priority '29999'")],
+	// the promise: nothing pbr does on stop goes near mwan4 -- not its chains,
+	// and not the ip rules it parks well below pbr's cleanup window either
+	['mwan4_untouched',     !mocklib.has_command('mwan4')],
+	['mwan4_ip_rule_kept',  !mocklib.has_command("rule del priority '2001'")],
+	['kernel_local_kept',   !mocklib.has_command("rule del priority '0'")],
+	['no_foreign_chain_op', length(foreign_chain_ops) == 0],
+	// fw4's own chains are not pbr's to tear down either
+	['fw4_base_chains_kept',
+		!mocklib.has_command(/inet fw4 (forward|output|prerouting|dstnat)( |$)/)],
+	['no_table_teardown',   !mocklib.has_command(/^nft (delete|flush) table /)],
+];
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("mwan4_chains_survive_stop: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+mwan4_chains_survive_stop: 11/11 passed
+-- End --

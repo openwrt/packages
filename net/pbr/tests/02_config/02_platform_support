@@ -1,0 +1,30 @@
+Testing get_platform_support() detects available tools.
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+let result = pbr.get_platform_support();
+let ps = result['pbr'];
+
+let checks = [
+	['has_pbr_key',        ps != null],
+	['nft_installed',      ps.nft_installed == true],
+	['dnsmasq_nftset',     ps.dnsmasq_nftset_support == true],
+];
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("platform_support: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+platform_support: 3/3 passed
+-- End --

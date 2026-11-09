@@ -1,0 +1,28 @@
+{
+	"dnsmasq": [
+		{
+			".name": "cfg01411c",
+			"domainneeded": "1",
+			"localise_queries": "1",
+			"rebind_protection": "1",
+			"rebind_localhost": "1",
+			"local": "/lan/",
+			"domain": "lan",
+			"expandhosts": "1",
+			"authoritative": "1",
+			"readethers": "1",
+			"leasefile": "/tmp/dhcp.leases",
+			"resolvfile": "/tmp/resolv.conf.d/resolv.conf.auto"
+		}
+	],
+	"dhcp": [
+		{
+			".name": "lan",
+			"interface": "lan",
+			"start": "100",
+			"limit": "150",
+			"leasetime": "12h",
+			"force": "1"
+		}
+	]
+}

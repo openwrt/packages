@@ -1,0 +1,29 @@
+{
+	"up": true,
+	"pending": false,
+	"available": true,
+	"autostart": true,
+	"dynamic": false,
+	"uptime": 3600,
+	"l3_device": "eth1",
+	"device": "eth1",
+	"proto": "dhcp",
+	"ipv4-address": [
+		{
+			"address": "203.0.113.10",
+			"mask": 24
+		}
+	],
+	"route": [
+		{
+			"target": "0.0.0.0",
+			"mask": 0,
+			"nexthop": "203.0.113.1",
+			"source": "203.0.113.10/24"
+		}
+	],
+	"dns-server": [
+		"8.8.8.8",
+		"8.8.4.4"
+	]
+}
