@@ -1,11 +1,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sqlparse
-PKG_VERSION:=0.6.0
+PKG_VERSION:=0.6.1
 PKG_RELEASE:=1
 
 PYPI_NAME:=sqlparse
-PKG_HASH:=113c35c75365ab9cc9c7231d68c6428fb11c085fc8e9eb1ad659b7ddbf6cd2b9
+PKG_HASH:=ca722573f848ff2d30e40ea30f53a104b7dea7635ea9285891263eb2c58fb6e7
 
 PKG_MAINTAINER:=Peter Stadler <peter.stadler@student.uibk.ac.at>
 PKG_LICENSE:=BSD-3-Clause
@@ -28,8 +28,8 @@ define Package/python3-sqlparse
 endef
 
 define Package/python3-sqlparse/description
-sqlparse is a non-validating SQL parser for Python. It provides support
-for parsing, splitting and formatting SQL statements.
+  sqlparse is a non-validating SQL parser for Python. It provides support
+  for parsing, splitting and formatting SQL statements.
 endef
 
 $(eval $(call Py3Package,python3-sqlparse))
