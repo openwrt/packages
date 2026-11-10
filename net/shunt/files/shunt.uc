@@ -19,7 +19,8 @@ import { PATH as LEARNED, fingerprints as learned_fps, save as learned_save,
 import { action_name, compile as nft_compile, flip as nft_flip, active as nft_active,
 	refresh, teardown,
 	addr_family, TABLE } from 'shunt.nft';
-import { compile as route_compile, state_ops as route_state_ops } from 'shunt.route';
+import { compile as route_compile, state_ops as route_state_ops,
+	stale as route_stale, route_key, conf_dev } from 'shunt.route';
 import { open as rt_open, exec as rt_exec, describe as rt_describe } from 'shunt.rt';
 import { open as snoop_open, observe, RECV_LEN } from 'shunt.snoop';
 import { names as poll_names, plan as poll_plan,
@@ -190,6 +191,23 @@ function queue_writes(st, writes, now) {
 		if (!d)
 			continue;
 
+		// Anybody on an observed segment can put a frame on the wire that
+		// reads as a DNS answer, so what a set learns is bounded - see
+		// dedupe.uc. Counted per policy, both families together, and said
+		// once per set and poll interval.
+		if (d == 'full') {
+			let pname = substr(w.set, 3);
+
+			st.stats.capped[pname] = (st.stats.capped[pname] ?? 0) + 1;
+
+			if (!st.full_warned[w.set]) {
+				st.full_warned[w.set] = true;
+				log('warn', sprintf('set %s is full, learn_limit is %d - new addresses are not learned until older ones expire',
+					w.set, st.state.cfg.global.learn_limit));
+			}
+			continue;
+		}
+
 		st.pending[`${w.set}/${w.addr}`] = w;
 		if (d == 'new')
 			fresh++;
@@ -240,11 +258,13 @@ function apply(state) {
 	if (!nft_pipe(state.nft.setup, 'setup'))
 		return false;
 
-	if (length(state.route.rt_tables)) {
-		mkdir('/etc/iproute2/rt_tables.d', 0o755);
-		if (!writefile(RT_TABLES, state.route.rt_tables))
-			log('warn', sprintf('cannot write %s: %s', RT_TABLES, fs_error()));
-	}
+	// Releases up to 0.4.2 kept a name for every table in this file, for
+	// `ip route show table <name>` with iproute2 installed. Nothing of shunt
+	// ever read it, BusyBox ip cannot, and it cost flash writes on every
+	// start and stop - so it is gone, and what an earlier release left
+	// behind is removed once.
+	if (readfile(RT_TABLES) != null)
+		unlink(RT_TABLES);
 
 	rt_quiet(state.route.del);
 
@@ -295,17 +315,15 @@ function flush(state) {
 		rt_quiet(state.route.del);
 
 	nft_pipe(teardown(), 'teardown');
-
-	if (readfile(RT_TABLES) != null)
-		unlink(RT_TABLES);
 }
 
 function rp_read(k) {
 	return trim(readfile(`/proc/sys/net/ipv4/conf/${k}/rp_filter`) ?? '');
 }
 
-// Distinct, existing policy devices. Deduped so a device shared by several
-// policies is set or reported once.
+// Distinct policy devices, as far as the name is one a /proc path may be
+// built from - see conf_dev() in route.uc. Deduped so a device shared by
+// several policies is set or reported once.
 function policy_devices(policies) {
 	let seen = {}, out = [];
 
@@ -317,7 +335,7 @@ function policy_devices(policies) {
 		for (let mb in (p.members ?? [ { dev: p.interface } ])) {
 			let dev = mb.dev;
 
-			if (length(dev ?? '') && !seen[dev]) {
+			if (conf_dev(dev) && !seen[dev]) {
 				seen[dev] = true;
 				push(out, dev);
 			}
@@ -470,8 +488,8 @@ function drain_writes(st) {
 	if (!length(due))
 		return;
 
-	let r = refresh(due, st.state.cfg.global.entry_ttl,
-		st.interval + WRITE_SLACK);
+	let slack = st.interval + WRITE_SLACK;
+	let r = refresh(due, st.state.cfg.global.entry_ttl, slack);
 	report('refresh', r.issues);
 
 	if (!length(r.batch))
@@ -481,11 +499,37 @@ function drain_writes(st) {
 	let ok = nft_pipe(r.batch, 'refresh');
 	let cost = mono() - t0;
 
-	if (ok)
-		debug(sprintf('%d element(s) written in %ds', length(due), cost));
-	else if (ensure_table(st) == 'recreated')
+	if (ok) {
 		for (let w in due)
-			st.pending[`${w.set}/${w.addr}`] = w;
+			st.cache.written(w.set, w.addr, slack);
+
+		debug(sprintf('%d element(s) written in %ds', length(due), cost));
+	}
+	else
+		switch (ensure_table(st)) {
+		case 'recreated':
+			for (let w in due)
+				st.pending[`${w.set}/${w.addr}`] = w;
+			break;
+
+		// The table is there and the batch was refused all the same. The
+		// cache has every element of it on record as written, and would
+		// hold back the next answer for the same address until half its
+		// lifetime is over - with the address in no set all that time. So
+		// the batch goes out once more with the next write, and what fails
+		// a second time is forgotten: the next answer or poll cycle brings
+		// it back as new.
+		case 'ok':
+			for (let w in due) {
+				if (w.retried)
+					st.cache.forget(w.set, w.addr);
+				else {
+					w.retried = true;
+					st.pending[`${w.set}/${w.addr}`] = w;
+				}
+			}
+			break;
+		}
 
 	let want = cost * WRITE_FACTOR;
 
@@ -646,11 +690,12 @@ function run() {
 
 	mkdir(FILES_DIR, 0o755);
 
-	let cache = dedupe_create(state.cfg.global.entry_ttl);
+	let cache = dedupe_create(state.cfg.global.entry_ttl,
+		state.cfg.global.learn_limit);
 	let targets = poll_names(state.cfg.policies);
 
 	let stats = { started: time(), resolv: false, snoop: [],
-		matched: 0, drops: {}, reapplied: 0,
+		matched: 0, drops: {}, reapplied: 0, capped: {},
 		files: { count: state.files.files, entries: state.files.entries,
 			addresses: state.files.addresses, refreshed: null } };
 
@@ -669,7 +714,7 @@ function run() {
 
 	let wq = { state, cache, stats, pending: {}, lost: false,
 		interval: WRITE_MIN, timer: null, fresh_at: 0, fresh_wait: false,
-		later: null };
+		later: null, full_warned: {} };
 
 	// The deferred run of drain_fresh(). The timer is kept and re-armed, not
 	// created per run, so nothing depends on how a given ucode release keeps
@@ -770,6 +815,7 @@ function run() {
 
 		poll_cycle();
 		cache.prune(mono());
+		wq.full_warned = {};
 	}
 
 	wq.timer = uloop.interval(WRITE_MIN * 1000, () => drain_writes(wq));
@@ -824,8 +870,20 @@ function run() {
 			apply_dead(state, wq, false);
 			r = route_compile(resolved, state.nft.marks, route_opts(state));
 
-			rt_quiet(state.route.del);
-			rt_quiet(r.add);
+			// Applied on top of what is there, not after taking it out: a
+			// rule that exists answers EEXIST, a route is replaced in place.
+			// Only what the new rendering no longer has is removed, and
+			// that after the new one is in - see stale() in route.uc.
+			let rt = rtnl(), failed = {};
+
+			for (let op in r.add) {
+				let why = rt ? rt_exec(rt, op) : 'ucode-mod-rtnl missing';
+
+				if (why != null && op.cmd == 'newroute')
+					failed[route_key(op.msg)] = true;
+			}
+
+			rt_quiet(route_stale(state.route.add, r.add, failed));
 
 			state.route = r;
 
@@ -888,6 +946,7 @@ function run() {
 				},
 				reapplied: stats.reapplied,
 				dedupe: cache.size(),
+				capped: stats.capped,
 				files: stats.files,
 				track: track_status(),
 				active: nft_active(state.nft.chains, state.opts.dead),

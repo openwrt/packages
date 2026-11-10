@@ -182,6 +182,7 @@ Logging goes to syslog under the tag `shunt`, so `logread -e shunt` shows everyt
 | rp_filter_manage | `0` | set rp_filter=2 on shunt's own policy devices, at start and on ifup |
 | poll_interval | `300` | seconds between poll cycles, at least 30 |
 | entry_ttl | `1200` | ceiling for the lifetime of learned elements, at least 60 |
+| learn_limit | `4096` | most addresses one learned set holds, 64 to 65536; see [How addresses are learned](#how-addresses-are-learned) |
 | snoop | `1` | enable the passive DNS observer |
 | snoop_device | `br-lan` | LAN devices to observe, a list, one entry per segment |
 | track_ip | | addresses to probe through every policy interface, a list; none means no tracking, see [Health tracking](#health-tracking-track_ip) |
@@ -567,6 +568,7 @@ What that means in practice:
 * **One entry per layer 2 segment.** A guest or IoT VLAN on its own device never carries the answers of the main LAN, so it needs its own `snoop_device` entry. A device that cannot be opened costs one warning; the others keep running.
 * **The router's own lookups are not seen.** poll's queries leave through the uplink, not the LAN device.
 * Not seen either: DNS over TCP, DNS on a port other than 53, and a second stacked VLAN tag.
+* **An observed segment is a trusted one.** snoop takes what crosses the device for what the resolver said - it cannot tell a DNS answer from a frame built to look like one. A host on an observed segment can therefore put addresses of its choosing into the learned set of any domain policy whose pattern it can name: into a `route` policy that sends more traffic through the tunnel, into a `bypass` policy it takes traffic out of the policies below, a killswitch included. Passive observation has no way around this, so do not observe a segment you would not let near the policy - a guest or IoT network is better covered by `src_dev` with addresses, ports or `dst_file`. What is bounded is the damage: a learned set holds at most `learn_limit` addresses, 4096 unless configured, counted per policy and address family - so a flooded set costs a bounded amount of memory and leaves every other policy learning as before. An address beyond the limit is not learned until older ones expire, which for the policy means it takes the normal uplink; the log names the full set once per poll interval, and `ubus call shunt status` counts the addresses turned away per policy under `capped`. A policy with a very large list or several hundred polled names can come near the default honestly - if `capped` shows up without an attacker, raise the limit.
 
 A name in a `domain` list that never resolves is reported once, by name and policy:
 
@@ -710,7 +712,6 @@ routing table                        8000 + <index>, for tproxy: local default d
 chain mk_<policy>                    the mark statement of the interface in use, for a policy
                                      with several interfaces, with fallback 'block' (plus a tcp
                                      reset while all are dead), or with track_ip and fallback 'main'
-/etc/iproute2/rt_tables.d/shunt.conf the table name mapping, for `ip route show` only
 /var/run/shunt.learned               learned addresses across a restart or reload, deleted on start
 ```
 
@@ -815,7 +816,7 @@ A number that keeps climbing means something on the box flushes nftables repeate
 
 ### When a policy stops applying after a reconnect
 
-The kernel removes routes from a policy table when the interface goes down, after which the fwmark rule falls through to `main` while every counter keeps counting. shunt handles this on two levels: a ubus listener on `network.interface` rebuilds the route half on ifup/ifdown, and every poll tick replays the route commands as a keeper. Learned sets survive both. If ubus is unavailable, only the keeper remains, so recovery takes up to one `poll_interval`.
+The kernel removes routes from a policy table when the interface goes down, after which the fwmark rule falls through to `main` while every counter keeps counting. shunt handles this on two levels: a ubus listener on `network.interface` rebuilds the route half on ifup/ifdown, and every poll tick replays the route commands as a keeper. Learned sets survive both. The rebuild is applied on top of what is there - a rule that exists stays, a route is replaced in place, and only the default route of an interface that is down now is taken out - so an interface event, whichever interface it is about, opens no gap in which marked traffic would take the main table. If ubus is unavailable, only the keeper remains, so recovery takes up to one `poll_interval`.
 
 ### Debug logging
 
@@ -836,6 +837,7 @@ These are consequences of the design, stated rather than worked around:
 * **Wildcards require snoop.** poll can only resolve names it was given, and `*.example.com` is not a name.
 * **One CDN address serves many domains.** If a policy routes `example.com` and the address behind it also serves a thousand other sites, those sites follow the same policy. This is unsolvable at layer 3 by anything that routes on addresses.
 * **The first connection to a newly seen address takes the old path.** snoop learns from the response the client is reading at that moment, so the client's SYN is usually out before the element reaches the set - a new address is written right away, but that still takes an `nft` run, and a client connects within milliseconds of its answer. Holding the answer back until the set is written would put shunt between client and resolver, which is exactly what snoop avoids. That connection stays where it started, by design: a flow's route is decided on its first packet and kept on the conntrack entry, so the switch happens at a connection boundary and never mid-stream - see [What shunt creates on the system](#what-shunt-creates-on-the-system). The next connection to the same host starts on the policy interface. Listing the entry point explicitly closes the gap, because poll warms it before any client asks.
+* **What snoop learns is only as trustworthy as the observed segment.** A forged answer is learned like a real one, see [How addresses are learned](#how-addresses-are-learned); each learned set is capped at `learn_limit` addresses.
 * **DNS over TCP is not observed.** Port 53 over TCP needs reassembly, which is out of scope; answers large enough to force TCP are rare in the traffic shunt cares about.
 * **Route and rule application is best effort.** At boot a tunnel interface may not exist yet, so its default route cannot be added and the policy's `fallback` applies: with `main` the rule falls through to the main table, with `block` it hits the prohibit route, which needs no interface. The missing routes follow on the interface's ifup event, no restart needed, and the log says so in one info line naming the interfaces. A route that fails for any other reason - or through an interface netifd does not know at all - is a warning, one line per distinct reason.
 * **No interface hotplug.** A device that appears later is picked up on the next `ifup` event or within one poll interval, not immediately.
