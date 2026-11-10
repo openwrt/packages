@@ -1,0 +1,1580 @@
+#!/usr/bin/ucode -S
+// SPDX-License-Identifier: Apache-2.0
+//
+// Samples BIRD's Babel neighbours and default route selection into an
+// in-memory ring buffer and serves it on ubus as "bird-babel".
+// BIRD is only ever queried in restricted (read-only) mode.
+
+'use strict';
+
+import * as socket from 'socket';
+import * as struct from 'struct';
+import * as uloop from 'uloop';
+import * as ubus from 'ubus';
+import { cursor } from 'uci';
+import { readfile, writefile, rename, stat, mkdir, unlink, glob, popen } from 'fs';
+import * as rtnl from 'rtnl';
+import { log as ln } from 'math';
+import { query as resolv_query } from 'resolv';
+import { openlog, syslog, LOG_PID, LOG_DAEMON, LOG_INFO } from 'log';
+
+const HISTORY_SECONDS = 86400;
+// History per neighbour in blocks of BLOCK seconds on multiples of BLOCK: a
+// header, a summary per minute, a histogram, then a record per change
+const BLOCK = 900, MINUTE = 60;
+const BLOCK_HDR = '<IHHH', BLOCK_HDR_SIZE = 10;	// start, seconds covered, records, histogram bytes
+const REC_FMT = '<HHHbb', REC_SIZE = 8;		// seconds into the block, cost, rtt (0.1 ms), role4, role6
+// Per minute: seconds the neighbour was present, cost sum/min/max, seconds
+// with an RTT and its sum/min/max, and the roles (ROLE_MIXED unless the same
+// for the whole minute). Weighted by seconds, so any sampling interval adds up.
+const MIN_FMT = '<HIHHHIHHbb', MIN_SIZE = 22, MINUTES = BLOCK / MINUTE;
+const ROLE_MIXED = 99;
+// Sparse histograms (8 bins per octave over 1..65535) per block for percentiles
+const HIST_SCALE = 8 / ln(2);
+const HIST_BINS = 128;
+// Seconds between samples by the RAM (MB): small devices sample once a minute,
+// those with 384 MB or more at BIRD's default Babel hello interval; values
+// only change with hellos, sampling faster would just repeat them
+const SAMPLE_TIERS = [ [ 96, 60 ], [ 192, 30 ], [ 384, 15 ] ], SAMPLE_MIN = 4;
+const BOARD_TTL = 6 * 3600, BOARD_RETRY = 3600, BOARD_DENIED = 24 * 3600, RID_TTL = 600;
+const BABEL_ROUTES_EVERY = 30;
+// Name lookups, see "names" below
+const NAME_RETRY_MIN = 20, NAME_RETRY_MAX = 600, NAME_RECHECK = 6 * 3600, NAME_KEEP = 7 * 86400;
+const NAME_ROUTES_EVERY = 60;
+const TMPDIR = '/tmp/bird-babel';
+// LuCI calls without a login carry this session (a public status page). Their
+// history queries are rounded so viewers share cached results, and the ones
+// that need computing are rate limited: ANON_BURST at once, then one every
+// ANON_REFILL seconds. Logged in and local calls are not limited.
+const ANON_SESSION = '00000000000000000000000000000000';
+const ANON_BURST = 5, ANON_REFILL = 10, ANON_POINTS = 60, ANON_ROUND = 60;
+const HCACHE_SIZE = 4;
+const UBUS_STATUS_TIMEOUT = 7;		// "try again later"
+
+const MAX_EVENTS = 1000;
+const INF = 0xFFFF;
+
+// Role of the default route through a neighbour
+const ROLE_SELECTED = 1, ROLE_STANDBY = 0, ROLE_LEAF = -1, ROLE_ABSENT = -4;
+
+let conf = {
+	socket: '/var/run/bird.ctl',
+	protocol: '',
+	interval: 0,
+	memory_budget: 0,
+	persist: false,
+	persist_path: '/etc/bird-babel/history.json.gz',
+};
+
+let state = {
+	started: time(),
+	interval: 60,
+	budget: 0,
+	protos: null,	// [{ name, table4, table6: { name, sadr } }]
+	complete: {},	// protocol -> its tables carry all its default routes
+	babel_defaults: null,
+	bird_version: null,
+	sock: null,
+	buf: '',
+	hist: {},		// key -> { blocks: [ packed ], open: { t0, recs, n }, last: [ cost, rtt, role4, role6 ] }
+	hist_bytes: 0,	// size of all closed blocks
+	cover: [],		// [ [ start, end ] ] while the collector was sampling
+	neighbors: {},	// key -> meta
+	events: [],
+	live: null,
+	live_ts: 0,
+	names: {},
+	names_mtime: {},
+	local_ll: {},
+	ifaddr4: {},	// interface -> its (first) IPv4 address
+	ifll: {},		// interface -> its link-local address
+	traces: {},		// route key -> { time, hops: [{ addr, name }], reached, src }
+	trace_last: {},	// v4/v6 -> when a trace was last started
+	trace_busy: {},
+	trace_key: {},	// v4/v6 -> the route being traced
+	ifnames: {},
+	mac4: {},
+	mac6: {},		// "iface|link-local" -> MAC, from the IPv6 neighbour table
+	via4: {},		// neighbour key -> its IPv4 next hop, once known
+	rid4: {},		// IPv4 next hop -> { time, router_id }
+	macany: {},
+	ifmac: {},
+	rid: {},		// key -> { time, router_id, ip4 }
+	idents: {},		// device (MAC, else link-local address) -> what is known about its name
+	ptr: {},		// address -> { time, name } from reverse DNS
+	name_routes: null,	// { time, ifaces, vias: { iface: [ IPv4 next hops ] } }
+	boards: {},		// ip4 -> { time, ok, id, name }
+	board_queue: [],
+	board_busy: false,
+	hcache: [],		// [ { key, at, res } ], most recent first
+	anon_tokens: ANON_BURST, anon_ts: 0,
+	last_sel: { v4: null, v6: null },
+	hostname: null,
+	domain: null,
+	mesh_hints: {},
+	error: null,
+};
+
+let ubus_conn = null;
+let tick_timer = null;
+
+function log(msg) {
+	syslog(LOG_INFO, '%s', msg);
+}
+
+// Optional hints which device and radio serve a mesh network, e.g. a mesh AP
+// bridging its 802.11s interface into a VLAN of this router:
+//   config mesh
+//     option network 'mesh_hof_s'
+//     option host 'gub37-hof-s'
+//     option band '5 GHz'
+//     option ifname 'wlan5-mesh'
+//     option vendor 'Cudy'		# used when the device does not report its model
+//     option model 'AP3000 Outdoor (v1)'
+function load_mesh_hints() {
+	let hints = {};
+	cursor().foreach('bird-babel', 'mesh', s => {
+		if (s.network) hints[s.network] = { host: s.host, band: s.band, ifname: s.ifname, vendor: s.vendor, model: s.model };
+	});
+	return hints;
+}
+
+
+// The values config_get_bool takes as true, as for "enabled" in the init script
+function uci_bool(v) {
+	return v in [ '1', 'true', 'yes', 'on', 'enabled' ];
+}
+
+function load_config() {
+	let s = cursor().get_all('bird-babel', 'collector');
+	if (!s) return;
+	for (let k in [ 'socket', 'protocol', 'persist_path' ])
+		if (s[k]) conf[k] = s[k];
+	for (let k in [ 'interval', 'memory_budget' ])
+		if (s[k] != null) conf[k] = +s[k];
+	conf.persist = uci_bool(s.persist);
+}
+
+// ---- BIRD control socket -------------------------------------------------
+
+function bird_close() {
+	if (state.sock) state.sock.close();
+	state.sock = null;
+	state.buf = '';
+}
+
+// Read one reply: "NNNN-text" continues, " text" continues the previous
+// code, "NNNN text" ends the reply. Received data is split into lines once,
+// so long replies take linear time. With keep, only the text lines matching
+// it are kept (and the final line).
+function bird_reply(keep) {
+	let lines = [], code = 0;
+	for (;;) {
+		let ls = split(state.buf, '\n');
+		state.buf = pop(ls);
+		for (let i = 0; i < length(ls); i++) {
+			let m = match(ls[i], /^([0-9]{4})([ -])(.*)$/);
+			let text = m ? m[3] : substr(ls[i], 1);
+			if (m) code = +m[1];
+			if (m && m[2] == ' ') {
+				push(lines, { code, text });
+				state.buf = join('\n', [ ...slice(ls, i + 1), state.buf ]);
+				return lines;
+			}
+			if (!keep || match(text, keep)) push(lines, { code, text });
+		}
+		let chunk = state.sock.recv(65536);
+		if (chunk == null || chunk == '') {
+			bird_close();
+			return null;
+		}
+		state.buf += chunk;
+	}
+}
+
+function bird_cmd_raw(cmd, keep) {
+	if (!state.sock.send(cmd + '\n')) {
+		bird_close();
+		return null;
+	}
+	return bird_reply(keep);
+}
+
+function bird_open() {
+	if (!stat(conf.socket)) {
+		state.error = `BIRD is not running (no control socket at ${conf.socket})`;
+		return false;
+	}
+	let s = socket.connect({ path: conf.socket }, null, null, 2000);
+	if (!s) {
+		state.error = `BIRD is not running (cannot connect to ${conf.socket})`;
+		return false;
+	}
+	state.sock = s;
+	state.buf = '';
+	let hello = bird_reply();
+	state.bird_version = match(hello?.[0]?.text ?? '', /^BIRD (\S+) ready/)?.[1];
+	let r = hello ? bird_cmd_raw('restrict') : null;
+	if (!r || r[-1].code != 16) {
+		state.error = 'BIRD refused restricted mode';
+		bird_close();
+		return false;
+	}
+	return true;
+}
+
+// Returns the text lines of a reply (only those matching keep, if given), or
+// null on error.
+function bird(cmd, keep) {
+	for (let attempt = 0; attempt < 2; attempt++) {
+		if (!state.sock && !bird_open()) return null;
+		let r = bird_cmd_raw(cmd, keep);
+		if (r == null) continue;
+		if (r[-1].code >= 8000) {
+			state.error = `${cmd}: ${r[-1].text}`;
+			return null;
+		}
+		state.error = null;
+		return map(filter(r, l => l.code != 0), l => l.text);
+	}
+	return null;
+}
+
+// ---- discovery and parsing -----------------------------------------------
+
+// All Babel protocols (or the configured one) and the tables of their channels
+function discover() {
+	let protos = [];
+	for (let l in bird('show protocols') ?? []) {
+		let f = split(trim(l), /\s+/);
+		if (f[1] == 'Babel' && (!conf.protocol || f[0] == conf.protocol))
+			push(protos, { name: f[0], table4: null, table6: null });
+	}
+	for (let p in protos) {
+		let chan = null;
+		for (let l in bird(`show protocols all ${p.name}`) ?? []) {
+			let m = match(l, /^\s+Channel (\S+)/);
+			if (m) { chan = m[1]; continue; }
+			m = match(l, /^\s+Table:\s+(\S+)/);
+			if (m && chan == 'ipv4') p.table4 = m[1];
+			else if (m && index(chan, 'ipv6') == 0) p.table6 = { name: m[1], sadr: chan == 'ipv6-sadr' };
+		}
+	}
+	state.protos = length(protos) ? protos : null;
+	return state.protos != null;
+}
+
+function parse_neighbors() {
+	let res = [];
+	for (let p in state.protos) {
+		let lines = bird(`show babel neighbors ${p.name}`);
+		if (lines == null) return null;
+		for (let l in lines) {
+			let f = split(trim(l), /\s+/);
+			if (length(f) < 7 || !match(f[0], /^[0-9a-f]*:[0-9a-f:]*$/i)) continue;
+			push(res, {
+				addr: f[0], iface: f[1], metric: +f[2], routes: +f[3],
+				hellos: +f[4], expires: +f[5], auth: f[6] == 'Yes',
+				rtt: (length(f) > 7 && +f[7] > 0) ? +f[7] : null,
+				protocol: p.name,
+			});
+		}
+	}
+	return res;
+}
+
+function parse_interfaces() {
+	let res = [];
+	for (let p in state.protos)
+		for (let l in bird(`show babel interfaces ${p.name}`) ?? []) {
+			let f = split(trim(l), /\s+/);
+			if (length(f) < 6 || f[0] == 'Interface' || f[0] == `${p.name}:`) continue;
+			push(res, {
+				iface: f[0], network: state.ifnames[f[0]], up: f[1] == 'Up', auth: f[2] == 'Yes', rxcost: +f[3],
+				neighbors: +f[4], nexthop4: f[6], nexthop6: f[7], protocol: p.name,
+				wireless: stat(`/sys/class/net/${f[0]}/phy80211`) != null,
+			});
+		}
+	return res;
+}
+
+// Default route candidates: [{ proto, selected, metric, router_id, via, iface, from }]
+function parse_defaults(lines) {
+	let res = [], cur = null;
+	for (let l in lines ?? []) {
+		// POSIX regex: "unicast [proto time from addr] * (pref/metric) [router-id]"
+		let m = match(l, /unicast \[([^] ]+)([^]]*)\] *(\*)? *\(([0-9]+)(\/([0-9]+))?\)( *\[([0-9a-fA-F:]+)\])?/);
+		if (m) {
+			cur = {
+				proto: m[1], from: match(m[2], / from ([^ ]+)/)?.[1], selected: m[3] == '*',
+				metric: (m[6] != null) ? +m[6] : null, router_id: m[8],
+			};
+			push(res, cur);
+			continue;
+		}
+		if (!cur) continue;
+		m = match(l, /^\s+via (\S+) on (\S+)/);
+		if (m) { cur.via = m[1]; cur.iface = m[2]; continue; }
+		m = match(l, /^\s+dev (\S+)/);
+		if (m) { cur.iface = m[1]; continue; }
+		m = match(l, /^\s+from: (\S+)/);
+		if (m) { cur.from = m[1]; continue; }
+		// BIRD 3 "babel_metric: N", BIRD 2 "Babel.metric: N"
+		m = match(l, /^\s+[Bb]abel[._]metric: ([0-9]+)/);
+		if (m) cur.metric = +m[1];
+	}
+	return res;
+}
+
+function query_defaults() {
+	let d = { v4: [], v6: [] }, seen = {};
+	for (let p in state.protos) {
+		if (p.table4 && !seen['4|' + p.table4]) {
+			seen['4|' + p.table4] = true;
+			push(d.v4, ...parse_defaults(bird(`show route table ${p.table4} for 0.0.0.0/0 all`)));
+		}
+		if (p.table6 && !seen['6|' + p.table6.name]) {
+			seen['6|' + p.table6.name] = true;
+			push(d.v6, ...parse_defaults(bird(p.table6.sadr
+				? `show route table ${p.table6.name} where net.dst = ::/0 all`
+				: `show route table ${p.table6.name} for ::/0 all`)));
+		}
+	}
+	return d;
+}
+
+// Stock BIRD only puts the best Babel route of a prefix into the table, so
+// the default routes other neighbours offer (standby) are only visible in
+// Babel's own route list. That list holds every route of the mesh and can be
+// large, so it is read every BABEL_ROUTES_EVERY seconds or 10 samples at
+// most, and rarely enough to cost at most about 1% CPU, and not at all for a
+// protocol once a table carries two of its default routes for one family (as
+// patched BIRD builds do).
+// "::/0 from 2001:bf7::/32  fe80::1  eth0  640 *  2095  55.165": prefix,
+// optional source prefix, next hop, interface, metric, feasibility (* selected,
+// + feasible, blank unfeasible), seqno, expiry.
+function parse_babel_defaults(lines, proto) {
+	let res = [];
+	for (let l in lines ?? []) {
+		let m = match(l, /^\s*(0\.0\.0\.0\/0|::\/0)( from \S+)?\s+(\S+)\s+(\S+)\s+([0-9]+)\s+([*+]?)\s*[0-9]+\s+[0-9.]+\s*$/);
+		if (m && m[6] != '')
+			push(res, { family: (m[1] == '::/0') ? 'v6' : 'v4', via: m[3], iface: m[4], metric: +m[5], selected: m[6] == '*', proto });
+	}
+	return res;
+}
+
+function query_babel_defaults(def) {
+	for (let fam in [ 'v4', 'v6' ]) {
+		let n = {};
+		for (let d in def[fam]) {
+			n[d.proto] = (n[d.proto] ?? 0) + 1;
+			if (n[d.proto] > 1) state.complete[d.proto] = true;
+		}
+	}
+	let todo = filter(state.protos, p => !state.complete[p.name]);
+	if (!length(todo)) return [];
+	if (state.babel_defaults && time() < state.babel_defaults.next)
+		return state.babel_defaults.list;
+	let t0 = clock(true), list = [];
+	for (let p in todo)
+		push(list, ...parse_babel_defaults(bird(`show babel routes ${p.name}`, /^\s*(0\.0\.0\.0|::)\/0\s/), p.name));
+	let t1 = clock(true), took = (t1[0] - t0[0]) + (t1[1] - t0[1]) / 1e9;
+	state.babel_defaults = { next: time() + max(BABEL_ROUTES_EVERY, 10 * state.interval, int(100 * took)), list };
+	return list;
+}
+
+// ---- names ---------------------------------------------------------------
+
+function hosts_files() {
+	return [ '/etc/hosts', ...(glob('/tmp/hosts/*') ?? []) ];
+}
+
+function load_names() {
+	let files = hosts_files(), changed = (length(files) != length(keys(state.names_mtime)));
+	for (let f in files) {
+		let mt = stat(f)?.mtime ?? 0;
+		if (state.names_mtime[f] !== mt) changed = true;
+		state.names_mtime[f] = mt;
+	}
+	if (!changed) return;
+	state.names_mtime = {};
+	for (let f in files) state.names_mtime[f] = stat(f)?.mtime ?? 0;
+	let names = {};
+	for (let f in files) {
+		let data = readfile(f);
+		if (!data) continue;
+		for (let l in split(data, '\n')) {
+			let fl = split(trim(split(l, '#')[0]), /\s+/);
+			if (length(fl) < 2 || names[fl[0]]) continue;
+			// prefer the plain node name over interface-prefixed aliases
+			let best = fl[1];
+			for (let i = 2; i < length(fl); i++)
+				if (length(split(fl[i], '.')) < length(split(best, '.'))) best = fl[i];
+			names[fl[0]] = best;
+		}
+	}
+	state.names = names;
+}
+
+// Node name without the local domain and interface prefixes, e.g. with the
+// local domain "ff": "mid9.emma-core.ff" / "switch0_11.gub37-core.ff" -> "emma-core"
+function short_name(fqdn) {
+	if (!fqdn) return null;
+	let d = state.domain;
+	if (!d || substr(fqdn, -(length(d) + 1)) != '.' + d) return fqdn;
+	return split(substr(fqdn, 0, -(length(d) + 1)), '.')[-1];
+}
+
+// fe80::97:dff:fe08:3064 -> 02:97:0d:08:30:64 (EUI-64 with the U/L bit flipped)
+function ll_to_mac(addr) {
+	let g = split(addr, ':');
+	if (length(g) < 4) return null;
+	let w = map(slice(g, -4), x => hex(x || '0'));
+	if ((w[1] & 0xff) != 0xff || (w[2] >> 8) != 0xfe) return null;
+	let b = [ (w[0] >> 8) ^ 2, w[0] & 0xff, w[1] >> 8, w[2] & 0xff, w[3] >> 8, w[3] & 0xff ];
+	return join(':', map(b, x => sprintf('%02x', x)));
+}
+
+const RT_SCOPE_LINK = 253;
+
+// Interface MACs, the router's own IPv6 link-local addresses and the IPv4
+// neighbour table, straight from the kernel
+function load_links() {
+	let C = rtnl.const;
+	let ifnames = {}, local_ll = {}, ifll = {}, ifaddr4 = {}, mac4 = {}, mac6 = {}, macany = {}, ifmac = {};
+	for (let l in rtnl.request(C.RTM_GETLINK, C.NLM_F_DUMP, {}) ?? [])
+		if (l.address) ifmac[l.ifname] = l.address;
+	for (let i in ubus_conn.call('network.interface', 'dump')?.interface ?? [])
+		if (i.l3_device && !ifnames[i.l3_device]) ifnames[i.l3_device] = i.interface;
+	for (let a in rtnl.request(C.RTM_GETADDR, C.NLM_F_DUMP, { family: C.AF_INET6 }) ?? [])
+		if (a.scope == RT_SCOPE_LINK && a.address) {
+			local_ll[split(a.address, '/')[0]] = a.dev;
+			ifll[a.dev] ??= split(a.address, '/')[0];
+		}
+	for (let a in rtnl.request(C.RTM_GETADDR, C.NLM_F_DUMP, { family: C.AF_INET }) ?? [])
+		if (a.address && a.dev) ifaddr4[a.dev] ??= split(a.address, '/')[0];
+	for (let e in rtnl.request(C.RTM_GETNEIGH, C.NLM_F_DUMP, { family: C.AF_INET }) ?? [])
+		if (e.lladdr && e.dev && e.dst) {
+			mac4[`${e.dev}|${e.lladdr}`] = e.dst;
+			macany[e.lladdr] ??= e.dst;
+		}
+	for (let e in rtnl.request(C.RTM_GETNEIGH, C.NLM_F_DUMP, { family: C.AF_INET6 }) ?? [])
+		if (e.lladdr && e.dev && e.dst && index(e.dst, 'fe80:') == 0)
+			mac6[`${e.dev}|${e.dst}`] = e.lladdr;
+	state.ifnames = ifnames;
+	state.local_ll = local_ll;
+	state.ifll = ifll;
+	state.ifaddr4 = ifaddr4;
+	state.mac4 = mac4;
+	state.mac6 = mac6;
+	state.macany = macany;
+	state.ifmac = ifmac;
+}
+
+// ---- sampling ------------------------------------------------------------
+
+// Is "via" (a route's next hop on nb's interface) this neighbour? IPv6 next
+// hops are its link-local address, IPv4 ones its IPv4 address; on a link
+// with a single neighbour any next hop is that neighbour.
+function is_via(nb, via, nbs) {
+	if (via == nb.addr || (nb.ip4 && via == nb.ip4)) return true;
+	return length(filter(nbs, n => n.iface == nb.iface)) == 1;
+}
+
+// The role of the default route through a neighbour, from the tables, plus
+// standby routes only Babel's own route list shows (alt, maybe 30 s old, so
+// it never decides which route is selected)
+function role_for(defaults, alt, nb, nbs, family) {
+	let r = ROLE_LEAF, m = INF;
+	for (let d in defaults) {
+		if (((family == 4) ? d.from : d.via) != nb.addr || d.iface != nb.iface) continue;
+		if (d.selected) r = ROLE_SELECTED;
+		else if (r != ROLE_SELECTED) r = ROLE_STANDBY;
+		if (d.metric != null && d.metric < m) m = d.metric;
+	}
+	for (let a in alt) {
+		if (r != ROLE_LEAF) break;
+		if (a.family != `v${family}` || a.iface != nb.iface || !is_via(nb, a.via, nbs)) continue;
+		r = ROLE_STANDBY;
+		m = a.metric;
+	}
+	return [ r, m ];
+}
+
+function add_event(type, data) {
+	data.type = type;
+	data.time = time();
+	push(state.events, data);
+	if (length(state.events) > MAX_EVENTS)
+		state.events = slice(state.events, -MAX_EVENTS);
+}
+
+// Babel router IDs from "randomize router id" carry the node's IPv4 address
+// in their last four bytes
+function rid_ip4(rid) {
+	let b = rid ? split(rid, ':') : [];
+	return (length(b) >= 4) ? join('.', map(slice(b, -4), x => hex(x))) : null;
+}
+
+// The lowest-metric route via a neighbour is the neighbour's own prefix
+function router_id_of(nb) {
+	let c = state.rid[nb.key];
+	if (c && time() - c.time < (c.router_id ? RID_TTL : NAME_RETRY_MIN)) return c;
+	c = state.rid[nb.key] = { time: time() };
+	let t6 = filter(state.protos ?? [], p => p.name == nb.protocol)[0]?.table6;
+	if (!t6) return c;
+	let best = INF;
+	for (let l in bird(`show route table ${t6.name} where gw = ${nb.addr}`) ?? []) {
+		let m = match(l, /\([0-9]+\/([0-9]+)\) \[([0-9a-fA-F:]+)\]/);
+		if (m && +m[1] < best) { best = +m[1]; c.router_id = m[2]; }
+	}
+	c.ip4 = rid_ip4(c.router_id);
+	return c;
+}
+
+// Model and manufacturer from the neighbour's LuCI ubus (luci-rpc getBoardJSON).
+// Only nodes that allow it for anonymous sessions answer, e.g. those with
+// luci-app-olsr, whose "unauthenticated" ACL grants luci-rpc; stock OpenWrt
+// refuses and other devices may not run LuCI at all. Fetched in the
+// background, one at a time; refusals are retried after BOARD_DENIED, no
+// answer after BOARD_RETRY, and without a model the neighbour is shown without.
+function board_next() {
+	if (state.board_busy || !length(state.board_queue)) return;
+	let q = shift(state.board_queue), key = q[0];
+	let out = `${TMPDIR}/board-` + replace(key, /[^0-9a-zA-Z.]/g, '_') + '.json';
+	state.board_busy = true;
+	let body = '{"jsonrpc":"2.0","id":1,"method":"call","params":["00000000000000000000000000000000","luci-rpc","getBoardJSON",{}]}';
+	// uclient-fetch reports TLS and connection errors on stderr even with -q
+	uloop.process('/bin/sh', [ '-c', 'exec /bin/uclient-fetch -q -T 5 --no-check-certificate -O "$1" --post-data "$2" "$3" 2>/dev/null',
+			'sh', out, body, `https://${q[1]}/ubus` ], {}, (code) => {
+		let raw = readfile(out), d = null;
+		unlink(out);
+		try { d = json(raw ?? 'null'); } catch (e) { d = null; }
+		let model = d?.result?.[1]?.model;
+		state.boards[key] = model?.name
+			? { time: time(), ok: true, id: model.id, name: model.name }
+			: { time: time(), ok: false, denied: d != null };
+		state.board_busy = false;
+		board_next();
+	});
+}
+
+// key names the device, host is how to reach it: an IPv4 address or a
+// link-local one with its interface, "[fe80::1%eth0]"
+function board_of(key, host) {
+	if (!key || !host) return null;
+	let b = state.boards[key];
+	let ttl = b?.ok ? BOARD_TTL : b?.denied ? BOARD_DENIED : BOARD_RETRY;
+	if ((!b || time() - b.time > ttl) && !length(filter(state.board_queue, q => q[0] == key))) {
+		state.boards[key] ??= { time: time(), ok: false };
+		state.boards[key].time = time();
+		push(state.board_queue, [ key, host ]);
+		board_next();
+	}
+	return b?.ok ? b : null;
+}
+
+// "Linksys E8450 (UBI)" -> { vendor: "Linksys", model: "E8450" }. Flash
+// layout variants like "(UBI)" are dropped, hardware versions like "(v2)" kept.
+function clean_model(name) {
+	return trim(replace(name, /[ ]*\(([^)]*(UBI|NAND|NOR|eMMC|layout|U-Boot|OpenWrt)[^)]*)\)/gi, ''));
+}
+
+function split_board(b) {
+	if (!b?.name) return null;
+	let name = clean_model(b.name);
+	let m = match(name, /^([^ ]+) (.+)$/);
+	return m ? { vendor: m[1], model: m[2] } : { vendor: null, model: name };
+}
+
+// Address and model of the devices named in the hints, for the graph
+let host_ips = {};
+function mesh_hints_live() {
+	let out = {};
+	for (let net, h in state.mesh_hints) {
+		let c = host_ips[h.host];
+		if (h.host && (!c || time() - c.time > RID_TTL)) {
+			let fqdn = state.domain ? `${h.host}.${state.domain}` : h.host;
+			let r = resolv_query(uniq([ h.host, fqdn ]), { type: [ 'A' ], nameserver: [ '127.0.0.1' ], timeout: 500 });
+			c = host_ips[h.host] = { time: time(), ip: r?.[h.host]?.A?.[0] ?? r?.[fqdn]?.A?.[0] };
+		}
+		let b = split_board(board_of(c?.ip, c?.ip));
+		out[net] = { ...h, ip: c?.ip, vendor: b?.vendor ?? h.vendor, model: b?.model ?? h.model };
+	}
+	return out;
+}
+
+// Router ID of the lowest-metric route through an IPv4 next hop
+function via4_router_id(via, proto) {
+	let c = state.rid4[via];
+	if (c && time() - c.time < RID_TTL) return c.router_id;
+	c = state.rid4[via] = { time: time() };
+	let t4 = filter(state.protos ?? [], p => p.name == proto)[0]?.table4;
+	let best = INF;
+	for (let l in (t4 ? bird(`show route table ${t4} where gw = ${via}`) : null) ?? []) {
+		let m = match(l, /\([0-9]+\/([0-9]+)\) \[([0-9a-fA-F:]+)\]/);
+		if (m && +m[1] < best) { best = +m[1]; c.router_id = m[2]; }
+	}
+	return c.router_id;
+}
+
+// IPv4 next hops of standby routes that neither the tables nor the kernel's
+// neighbour tables tie to a neighbour: on a link where only one neighbour has
+// no known IPv4 address it is that one's, else the one with the same router ID
+function resolve_via4(nbs, alt) {
+	for (let a in alt) {
+		if (a.family != 'v4' || index(a.via, ':') >= 0) continue;
+		if (length(filter(nbs, n => n.iface == a.iface && n.ip4 == a.via))) continue;
+		let cand = filter(nbs, n => n.iface == a.iface && !n.ip4 && !n.self);
+		let pick = (length(cand) == 1) ? cand[0] : null;
+		if (length(cand) > 1) {
+			let rid = via4_router_id(a.via, a.proto);
+			if (rid) pick = filter(cand, n => router_id_of(n).router_id == rid)[0];
+		}
+		if (pick) pick.ip4 = state.via4[pick.key] = a.via;
+	}
+}
+
+// ---- names ---------------------------------------------------------------
+//
+// A neighbour is named from the hosts files, or reverse DNS, via one of its
+// addresses. Every sample tries the cheap sources: its IPv4 address from a
+// default route or the kernel's neighbour tables. When they give no name, the
+// expensive ones are tried on a schedule per device: the IPv4 address in its
+// router ID, its IPv4 address from Babel's route list (which also keeps the
+// routes of neighbours too poor to use, which the tables never see) and
+// reverse DNS. An unnamed device is tried again after NAME_RETRY_MIN seconds,
+// doubling up to NAME_RETRY_MAX, and at once when it reappears; a named one
+// only after NAME_RECHECK. What is found is remembered per device, by MAC
+// address (the same on all its interfaces), for NAME_KEEP and saved with the
+// history, so a device that is only heard now and then keeps its name.
+
+// Name for an address from the hosts files, else (with lookup) reverse DNS
+function addr_name(addr, lookup) {
+	if (!addr) return null;
+	if (state.names[addr]) return state.names[addr];
+	if (!lookup) return null;
+	let c = state.ptr[addr];
+	if (!c || time() - c.time > (c.name ? NAME_RECHECK : NAME_RETRY_MAX)) {
+		let r = resolv_query([ addr ], { type: [ 'PTR' ], timeout: 500 });
+		let name = null;
+		for (let k, v in r ?? {})
+			name ??= v?.PTR?.[0];
+		c = state.ptr[addr] = { time: time(), name };
+	}
+	return c.name;
+}
+
+// IPv4 next hops per interface from Babel's route list, only for the given
+// interfaces, read at most every NAME_ROUTES_EVERY seconds
+function babel_vias4(ifaces) {
+	let c = state.name_routes;
+	if (c && time() - c.time < NAME_ROUTES_EVERY && !length(filter(ifaces, i => index(c.ifaces, i) < 0)))
+		return c.vias;
+	let keep = regexp('^\\s*[0-9.]+/[0-9]+( from [^ ]+)?\\s+[0-9.]+\\s+(' +
+		join('|', map(ifaces, i => replace(i, /[^a-zA-Z0-9_-]/g, '.'))) + ')\\s');
+	let vias = {};
+	for (let p in state.protos)
+		for (let l in bird(`show babel routes ${p.name}`, keep) ?? []) {
+			let m = match(l, /^\s*[0-9.]+\/[0-9]+( from [^ ]+)?\s+([0-9.]+)\s+([^ ]+)\s/);
+			if (!m) continue;
+			vias[m[3]] ??= [];
+			if (index(vias[m[3]], m[2]) < 0) push(vias[m[3]], m[2]);
+		}
+	state.name_routes = { time: time(), ifaces, vias };
+	return vias;
+}
+
+// The IPv4 address of an unnamed neighbour from Babel's route list: on its
+// link, the one next hop that belongs to no other neighbour, if it is the
+// only neighbour there without a known IPv4 address
+function babel_ip4(nb, nbs) {
+	let unknown = filter(nbs, n => n.iface == nb.iface && !n.self && !n.ip4);
+	if (length(unknown) != 1) return null;
+	let vias = babel_vias4(uniq(map(filter(nbs, n => !n.self && !n.ip4), n => n.iface)))[nb.iface] ?? [];
+	let taken = map(filter(nbs, n => n.iface == nb.iface && n.ip4), n => n.ip4);
+	let free = filter(vias, v => index(taken, v) < 0);
+	return (length(free) == 1) ? free[0] : null;
+}
+
+// The expensive lookups for an unnamed neighbour; fills in what it learns
+function name_search(nb, id, nbs) {
+	let rid = router_id_of(nb);
+	if (rid.router_id) id.router_id = rid.router_id;
+	if (rid.ip4) id.node_ip4 = rid.ip4;
+	let host = addr_name(id.node_ip4, true);
+	if (!host && !nb.ip4) {
+		let ip4 = babel_ip4(nb, nbs);
+		if (ip4) {
+			nb.ip4 = id.ip4 = state.via4[nb.key] = ip4;
+			host = addr_name(ip4, true);
+		}
+	}
+	return host ?? addr_name(nb.ip4, true);
+}
+
+function resolve_name(nb, nbs) {
+	let now = time();
+	let id = state.idents[nb.mac ?? nb.addr] ??= { fails: 0, next: 0 };
+	id.seen = now;
+	if (nb.ip4) id.ip4 = nb.ip4;
+	nb.ip4 ??= id.ip4;
+
+	let host = addr_name(nb.ip4) ?? addr_name(id.node_ip4);
+	if (!host && now >= id.next)
+		host = name_search(nb, id, nbs);
+	if (host) {
+		id.hostname = host;
+		id.confirmed = now;
+		id.fails = 0;
+		if (id.next < now) id.next = now + NAME_RECHECK;
+	}
+	else if (now >= id.next) {
+		id.fails++;
+		id.next = now + min(NAME_RETRY_MAX, NAME_RETRY_MIN * (1 << min(10, id.fails - 1)));
+	}
+
+	nb.hostname = host ?? id.hostname;
+	// remembered from before the collector started, not confirmed since
+	nb.name_cached = !host && id.hostname != null && id.confirmed < state.started;
+	nb.router_id = id.router_id;
+	nb.node_ip4 = id.node_ip4;
+}
+
+// An unnamed device that reappears is looked up again at once
+function name_retry_now(nb) {
+	let id = state.idents[nb.mac ?? nb.addr];
+	if (id && !id.hostname) id.next = 0;
+}
+
+function prune_idents() {
+	let cutoff = time() - NAME_KEEP;
+	for (let k, id in state.idents)
+		if (id.seen < cutoff) delete state.idents[k];
+	for (let k, c in state.ptr)
+		if (time() - c.time > NAME_RECHECK) delete state.ptr[k];
+}
+
+// Identity of a neighbour: key, network, loop detection and IPv4 address
+function annotate(nb, def) {
+	nb.key = `${nb.iface}|${nb.addr}`;
+	nb.network = state.ifnames[nb.iface];
+	nb.self = state.local_ll[nb.addr] != null;
+	if (nb.self) nb.self_iface = state.local_ll[nb.addr];
+
+	// IPv4 address of the neighbour: the next hop of an IPv4 default route
+	// through it (remembered, as it stays the same), else the neighbour tables
+	let ip4 = null;
+	for (let d in def.v4)
+		if (d.from == nb.addr && d.iface == nb.iface && d.via) { ip4 = state.via4[nb.key] = d.via; break; }
+	ip4 ??= state.via4[nb.key];
+	let mac = state.mac6[nb.key] ?? ll_to_mac(nb.addr);
+	if (!ip4 && mac) ip4 = state.mac4[`${nb.iface}|${mac}`] ?? state.macany[mac];
+	nb.mac = mac;
+	nb.ip4 = ip4;
+}
+
+// Name, default route roles and board of a neighbour
+function annotate_rest(nb, def, alt, nbs) {
+	let d4 = role_for(def.v4, alt, nb, nbs, 4), d6 = role_for(def.v6, alt, nb, nbs, 6);
+	nb.role4 = d4[0]; nb.metric4 = d4[1];
+	nb.role6 = d6[0]; nb.metric6 = d6[1];
+
+	if (nb.self) {
+		nb.hostname = null;
+		nb.name = nb.addr;
+		nb.mac_rx = state.ifmac[nb.iface];
+		nb.mac_tx = state.ifmac[nb.self_iface];
+		return;
+	}
+	resolve_name(nb, nbs);
+	nb.name = short_name(nb.hostname) ?? nb.ip4 ?? nb.node_ip4 ?? nb.addr;
+	// the board answers on the link-local address too, without any IPv4
+	let b = split_board(board_of(nb.mac ?? nb.addr, nb.ip4 ?? `[${nb.addr}%${nb.iface}]`));
+	if (b) { nb.vendor = b.vendor; nb.model = b.model; }
+}
+
+// Unpacker for n repetitions of a format, cached
+let unpackers = {};
+function unpacker(fmt1, n) {
+	let k = fmt1 + n;
+	if (!unpackers[k]) {
+		let fmt = '<';
+		for (let i = 0; i < n; i++) fmt += substr(fmt1, 1);
+		unpackers[k] = struct.new(fmt);
+	}
+	return unpackers[k];
+}
+
+// ---- route to the gateway -------------------------------------------------
+//
+// BIRD knows the selected default route's next hop (a neighbour) and its
+// originator, whose router ID ("randomize router id") carries its IPv4
+// address; Babel is distance-vector, the routers in between are found with
+// traceroute. Only when the route switches to one without a path from the
+// last TRACE_KEEP seconds (a route flapping between two known paths needs
+// none), and while the gateway was not reached; at most every TRACE_CAP
+// seconds per family, a flapping route waits for that.
+const TRACE_CAP = 300, TRACE_KEEP = 3600, TRACE_MAX_HOPS = 16;
+
+// Without "randomize router id" the bytes are no address; mesh addresses are
+// private, so nothing else is looked up
+function private_ip4(a) {
+	let b = map(split(a, '.'), x => +x);
+	return b[0] == 10 || (b[0] == 172 && (b[1] & 0xf0) == 16) || (b[0] == 192 && b[1] == 168) ||
+		(b[0] == 100 && (b[1] & 0xc0) == 64);
+}
+
+// IPv6 address as 8 numbers
+function ip6_words(a) {
+	let halves = split(a, '::');
+	let head = length(halves[0]) ? split(halves[0], ':') : [];
+	let tail = (length(halves) > 1 && length(halves[1])) ? split(halves[1], ':') : [];
+	let w = map(head, x => hex(x));
+	for (let i = length(head) + length(tail); i < 8; i++) push(w, 0);
+	push(w, ...map(tail, x => hex(x)));
+	return w;
+}
+
+function in_prefix6(a, prefix) {
+	let p = split(prefix, '/'), bits = +p[1], wa = ip6_words(a), wp = ip6_words(p[0]);
+	for (let i = 0; bits > 0; i++, bits -= 16) {
+		let mask = (bits >= 16) ? 0xffff : (0xffff << (16 - bits)) & 0xffff;
+		if ((wa[i] & mask) != (wp[i] & mask)) return false;
+	}
+	return true;
+}
+
+// A prefix the router with this ID announces, other than the default route
+function announced_prefix6(proto, rid) {
+	let t6 = filter(state.protos ?? [], p => p.name == proto)[0]?.table6;
+	if (!t6) return null;
+	for (let l in bird(`show route table ${t6.name}`) ?? []) {
+		let m = match(l, /^([0-9a-fA-F:]+\/[0-9]+)( from [^ ]+)? +unicast .*\[([0-9a-fA-F:]+)\]\s*$/);
+		if (m && m[3] == rid && m[1] != '::/0' && match(m[1], /::\/[0-9]+$/)) return m[1];
+	}
+	return null;
+}
+
+// Gateway and traceroute target for the selected default route of a family
+function trace_target(fam, sel) {
+	let gw4 = rid_ip4(sel?.router_id);
+	if (fam == 'v4')
+		return (gw4 && private_ip4(gw4)) ? { addr: gw4, dst: gw4 } : null;
+	let prefix = sel ? announced_prefix6(sel.proto, sel.router_id) : null;
+	return prefix ? { prefix, dst: split(prefix, '/')[0] + '1', name4: gw4 } : null;
+}
+
+function trace_parse(fam, out, target) {
+	let hops = [], reached = false;
+	for (let l in split(readfile(out) ?? '', '\n')) {
+		// " 1  10.31.11.43  0.854 ms", no reply: " 3  *"
+		let m = match(l, /^\s*[0-9]+\s+(\*|[0-9a-fA-F.:]+)/);
+		if (!m) continue;
+		let addr = (m[1] == '*') ? null : m[1];
+		push(hops, { addr, name: short_name(addr_name(addr, true)) });
+		if (addr && ((fam == 'v4') ? addr == target.addr : in_prefix6(addr, target.prefix))) {
+			reached = true;
+			break;
+		}
+	}
+	return { hops, reached };
+}
+
+// Trace the route with this key in the background; the path is kept per
+// route, whichever is selected when it is done
+function trace_start(fam, key, sel) {
+	let target = trace_target(fam, sel);
+	if (!target) {
+		state.traces[key] = { time: time(), hops: [], reached: false };
+		return;
+	}
+	state.trace_busy[fam] = true;
+	state.trace_key[fam] = key;
+	state.trace_last[fam] = time();
+	let out = `${TMPDIR}/trace-${fam}.txt`, v = (fam == 'v4') ? '4' : '6';
+	// the source address this router uses, then the hops
+	uloop.process('/bin/sh', [ '-c', 'ip -$4 route get "$1" 2>/dev/null | sed -n "s/.* src \\([^ ]*\\).*/\\1/p" | head -n1 >"$2.src"; ' +
+			'exec $5 -n -q 1 -w 1 -m "$3" "$1" >"$2" 2>/dev/null',
+			'sh', target.dst, out, '' + TRACE_MAX_HOPS, v, (fam == 'v4') ? 'traceroute' : 'traceroute6' ], {}, (code) => {
+		state.trace_busy[fam] = false;
+		let r = trace_parse(fam, out, target);
+		let src = trim(readfile(out + '.src') ?? '') || null;
+		unlink(out); unlink(out + '.src');
+		// the gateway's IPv6 interface has no name of its own, it has its IPv4 one
+		if (r.reached && !r.hops[-1].name)
+			r.hops[-1].name = short_name(addr_name(target.addr ?? target.name4, true));
+		state.traces[key] = { time: time(), hops: r.hops, reached: r.reached, src };
+		for (let k, t in state.traces)
+			if (time() - t.time > 2 * TRACE_KEEP) delete state.traces[k];
+	});
+}
+
+function gateway_route(fam, sel, nbs) {
+	if (!sel?.router_id) return null;
+	let gw = rid_ip4(sel.router_id);
+	if (gw && !private_ip4(gw)) gw = null;
+	let key = `${sel.iface}|${(fam == 'v4') ? (sel.from ?? sel.via) : sel.via}`;
+	let nb = filter(nbs, n => n.key == key)[0];
+	let r = {
+		self: { name: state.hostname, addr: (fam == 'v4') ? state.ifaddr4[sel.iface] : state.ifll[sel.iface] },
+		via: { key, name: nb?.name, addr: (fam == 'v4') ? (nb?.ip4 ?? sel.via) : sel.via },
+		gateway: { router_id: sel.router_id, addr: gw, name: gw ? short_name(addr_name(gw, true)) : null },
+		// the next hop is the gateway itself
+		direct: !!(nb?.router_id && nb.router_id == sel.router_id),
+		metric: sel.metric, trace_cap: TRACE_CAP,
+	};
+	if (r.direct) return r;
+	let tkey = `${sel.router_id}|${sel.iface}|${sel.via}`, now = time(), t = state.traces[tkey];
+	let fresh = t && now - t.time < TRACE_KEEP;
+	if ((!fresh || (!t.reached && now - t.time >= TRACE_CAP)) && !state.trace_busy[fam] &&
+	    now - (state.trace_last[fam] ?? 0) >= TRACE_CAP)
+		trace_start(fam, tkey, sel);
+	t = state.traces[tkey];
+	fresh = t && now - t.time < TRACE_KEEP;
+	if (fresh) r.trace = { time: t.time, hops: t.hops, reached: t.reached, src: t.src };
+	// without the whole path: when it is traced (now if it is being traced)
+	if (!fresh || !t.reached)
+		r.trace_next = (state.trace_busy[fam] && state.trace_key[fam] == tkey) ? now :
+			max(now, fresh ? t.time + TRACE_CAP : 0, (state.trace_last[fam] ?? 0) + TRACE_CAP);
+	return r;
+}
+
+function collect() {
+	if (!state.protos && !discover()) {
+		state.live = { error: state.error ?? 'no Babel protocol found in BIRD', time: time() };
+		state.live_ts = time();
+		return null;
+	}
+	let nbs = parse_neighbors();
+	if (nbs == null) {
+		state.protos = null;	// rediscover next time, BIRD may have restarted
+		state.complete = {};
+		state.babel_defaults = null;
+		state.live = { error: state.error, time: time() };
+		state.live_ts = time();
+		return null;
+	}
+	let ifs = parse_interfaces();
+	let def = query_defaults();
+	let alt = query_babel_defaults(def);
+	let now = time();
+
+	let present = {};
+	for (let nb in nbs) {
+		annotate(nb, def);
+		let meta = state.neighbors[nb.key];
+		if (!meta || meta.gone) name_retry_now(nb);
+	}
+	resolve_via4(nbs, alt);
+	for (let nb in nbs) {
+		annotate_rest(nb, def, alt, nbs);
+		present[nb.key] = true;
+		let meta = state.neighbors[nb.key];
+		// the router hearing its own hellos is a loop, not a neighbour event
+		if ((!meta || meta.gone) && !nb.self)
+			add_event('neighbor_up', { key: nb.key, name: nb.name, iface: nb.iface });
+		meta ??= state.neighbors[nb.key] = { first_seen: now };
+		meta.gone = false;
+		meta.last_seen = now;
+		for (let k in [ 'addr', 'iface', 'network', 'ip4', 'hostname', 'name', 'self', 'vendor', 'model', 'router_id' ])
+			meta[k] = nb[k];
+	}
+	for (let k, meta in state.neighbors)
+		if (!present[k] && !meta.gone) {
+			meta.gone = true;
+			if (!meta.self)
+				add_event('neighbor_down', { key: k, name: meta.name, iface: meta.iface });
+		}
+
+	for (let fam in [ 'v4', 'v6' ]) {
+		let sel = null;
+		for (let d in def[fam]) if (d.selected) sel = d;
+		let key = sel ? `${sel.iface}|${(fam == 'v4') ? (sel.from ?? sel.via) : sel.via}` : null;
+		if (key !== state.last_sel[fam]) {
+			let prev = state.last_sel[fam];
+			add_event('gateway_change', {
+				family: fam, from: prev, to: key,
+				from_name: state.neighbors[prev]?.name,
+				to_name: state.neighbors[key]?.name ?? sel?.proto,
+				metric: sel?.metric,
+			});
+			state.last_sel[fam] = key;
+		}
+	}
+
+	let route = {};
+	for (let fam in [ 'v4', 'v6' ])
+		route[fam] = gateway_route(fam, filter(def[fam], d => d.selected)[0], nbs);
+
+	state.live = {
+		time: now, hostname: state.hostname, mesh_hints: mesh_hints_live(), bird_version: state.bird_version,
+		route4: route.v4, route6: route.v6,
+		protocols: map(state.protos, p => ({ name: p.name, table4: p.table4, table6: p.table6?.name, sadr: p.table6?.sadr ?? false })),
+		neighbors: nbs, interfaces: ifs, defaults: def,
+	};
+	state.live_ts = now;
+	return nbs;
+}
+
+// ---- history storage -------------------------------------------------------
+//
+// Per neighbour, one string per BLOCK seconds (on multiples of BLOCK): header,
+// a summary per minute, a histogram, then a record whenever any of its values
+// change (D in the design notes: memory follows how often links change, not
+// the sampling interval). The open block keeps its records in a growing
+// string and gets its summaries when it closes. A record lasts until the next
+// one; a neighbour that disappears gets an absent record, and times the
+// collector did not sample (state.cover) count as no data.
+
+function merge_run(runs, start, end, role, gap) {
+	let last = length(runs) ? runs[-1] : null;
+	if (last && last[2] == role && start <= last[1] + gap) {
+		if (end > last[1]) last[1] = end;
+	}
+	else {
+		push(runs, [ start, end, role ]);
+	}
+}
+
+function hist_bin(v) {
+	return (v < 1) ? 0 : min(HIST_BINS - 1, int(ln(v) * HIST_SCALE));
+}
+
+// Note a sample at t: extend the coverage, or start a new stretch after a gap
+function cover_add(t) {
+	let c = length(state.cover) ? state.cover[-1] : null;
+	if (c && t <= c[1] + 2 * state.interval) c[1] = t + state.interval;
+	else push(state.cover, [ t, t + state.interval ]);
+}
+
+// The covered parts of a..b
+function cover_in(a, b) {
+	let res = [];
+	for (let c in state.cover) {
+		if (c[1] <= a) continue;
+		if (c[0] >= b) break;
+		push(res, [ max(a, c[0]), min(b, c[1]) ]);
+	}
+	return res;
+}
+
+// Pack a block: minute summaries and the histogram from its records, clipped
+// to the coverage; `len` is how many seconds of the block it covers
+function block_pack(t0, len, recs, n) {
+	let r = unpacker(REC_FMT, n).unpack(recs), end = t0 + len;
+	let m = [], hm = {}, hr = {};
+	for (let i = 0; i < MINUTES; i++)
+		push(m, [ 0, 0, INF, 0, 0, 0, INF, 0, null, null ]);
+	for (let i = 0, o = 0; i < n; i++, o += 5) {
+		if (r[o + 3] == ROLE_ABSENT) continue;
+		let s = t0 + r[o], e = (i + 1 < n) ? t0 + r[o + 5] : end;
+		let cost = r[o + 1], rtt = r[o + 2], r4 = r[o + 3], r6 = r[o + 4];
+		for (let c in cover_in(s, e)) {
+			for (let p = c[0]; p < c[1];) {
+				let mi = int((p - t0) / MINUTE), q = min(c[1], t0 + (mi + 1) * MINUTE), secs = q - p, x = m[mi];
+				x[0] += secs; x[1] += cost * secs;
+				if (cost < x[2]) x[2] = cost;
+				if (cost > x[3]) x[3] = cost;
+				hm[hist_bin(cost)] = (hm[hist_bin(cost)] ?? 0) + secs;
+				if (rtt != INF && rtt > 0) {
+					x[4] += secs; x[5] += rtt * secs;
+					if (rtt < x[6]) x[6] = rtt;
+					if (rtt > x[7]) x[7] = rtt;
+					hr[hist_bin(rtt)] = (hr[hist_bin(rtt)] ?? 0) + secs;
+				}
+				x[8] = (x[8] == null || x[8] == r4) ? r4 : ROLE_MIXED;
+				x[9] = (x[9] == null || x[9] == r6) ? r6 : ROLE_MIXED;
+				p = q;
+			}
+		}
+	}
+	let mins = '';
+	for (let x in m) {
+		// roles only count for a minute the neighbour was present all of
+		let full = (x[0] == MINUTE);
+		mins += struct.pack(MIN_FMT, x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7],
+			full ? x[8] : ROLE_MIXED, full ? x[9] : ROLE_MIXED);
+	}
+	// sparse (bin, seconds) pairs, cost then RTT after a 255
+	let hist = '';
+	for (let b, v in hm) hist += struct.pack('<BH', +b, v);
+	hist += chr(255);
+	for (let b, v in hr) hist += struct.pack('<BH', +b, v);
+	return struct.pack(BLOCK_HDR, t0, len, n, length(hist)) + mins + hist + recs;
+}
+
+function block_close(h) {
+	let o = h.open;
+	h.open = null;
+	if (!o?.n) return;
+	let b = block_pack(o.t0, BLOCK, o.recs, o.n);
+	push(h.blocks, b);
+	state.hist_bytes += length(b);
+}
+
+function hist_put(h, now, t0, v) {
+	let l = h.last;
+	if (h.open && l[0] == v[0] && l[1] == v[1] && l[2] == v[2] && l[3] == v[3]) return;
+	h.open ??= { t0, recs: '', n: 0 };
+	h.open.recs += struct.pack(REC_FMT, now - t0, v[0], v[1], v[2], v[3]);
+	h.open.n++;
+	h.last = v;
+}
+
+function block_t0(b) {
+	return struct.unpack('<I', b)[0];
+}
+
+// Drop what is older than HISTORY_SECONDS, and the oldest blocks of all while
+// over the memory budget
+function hist_prune(now) {
+	let cutoff = now - HISTORY_SECONDS;
+	for (let k, h in state.hist) {
+		while (length(h.blocks) && block_t0(h.blocks[0]) + BLOCK <= cutoff)
+			state.hist_bytes -= length(shift(h.blocks));
+		if (!length(h.blocks) && !h.open) delete state.hist[k];
+	}
+	while (state.hist_bytes > state.budget) {
+		let oldest = null;
+		for (let k, h in state.hist)
+			if (length(h.blocks) && (!oldest || block_t0(h.blocks[0]) < block_t0(state.hist[oldest].blocks[0])))
+				oldest = k;
+		if (!oldest) break;
+		state.hist_bytes -= length(shift(state.hist[oldest].blocks));
+	}
+	while (length(state.cover) && state.cover[0][1] <= cutoff) shift(state.cover);
+	if (length(state.cover) && state.cover[0][0] < cutoff) state.cover[0][0] = cutoff;
+	for (let k, meta in state.neighbors)
+		if (meta.gone && meta.last_seen < cutoff) delete state.neighbors[k];
+}
+
+function record(nbs) {
+	let now = time(), t0 = now - now % BLOCK, seen = {}, closed = false;
+	cover_add(now);
+	for (let k, h in state.hist)
+		if (h.open && h.open.t0 != t0) { block_close(h); closed = true; }
+	for (let nb in nbs) {
+		seen[nb.key] = true;
+		let rtt = (nb.rtt == null) ? INF : min(INF - 1, int(nb.rtt * 10 + 0.5));
+		hist_put(state.hist[nb.key] ??= { blocks: [], open: null, last: null }, now, t0,
+			[ min(INF, nb.metric), rtt, nb.role4, nb.role6 ]);
+	}
+	for (let k, h in state.hist)
+		if (!seen[k] && h.last && h.last[2] != ROLE_ABSENT)
+			hist_put(h, now, t0, [ INF, INF, ROLE_ABSENT, ROLE_ABSENT ]);
+	if (closed) hist_prune(now);
+}
+
+function oldest() {
+	return length(state.cover) ? state.cover[0][0] : time();
+}
+
+// ---- sampling interval -----------------------------------------------------
+
+function mem_total() {
+	let m = match(readfile('/proc/meminfo') ?? '', /MemTotal:\s+([0-9]+)/);
+	return m ? +m[1] * 1024 : 64 * 1024 * 1024;
+}
+
+function sample_interval() {
+	if (conf.interval > 0) return max(1, conf.interval);
+	let mb = mem_total() / 1048576;
+	for (let t in SAMPLE_TIERS)
+		if (mb < t[0]) return t[1];
+	return SAMPLE_MIN;
+}
+
+// ---- persistence ---------------------------------------------------------
+//
+// History lives in RAM. Saving it to flash is optional and only done when the
+// collector stops (so on reboot and shutdown), right before sysupgrade or a
+// config backup takes the file (/lib/upgrade hook calling the "save" method),
+// and when asked to with "ubus call bird-babel save". gzip compressed, written
+// to a temporary file and renamed, so a power cut leaves the previous copy. A
+// file without compression is read as well.
+
+function shell_quote(s) {
+	return "'" + replace(s, "'", "'\\''") + "'";
+}
+
+function persist_save() {
+	if (!conf.persist) return false;
+	let dir = match(conf.persist_path, /^(.*)\//)?.[1];
+	if (dir) mkdir(dir);
+	let blocks = {}, now = time();
+	for (let k, h in state.hist) {
+		let list = map(h.blocks, b => b64enc(b));
+		// the open block as covered so far, without closing it
+		if (h.open?.n)
+			push(list, b64enc(block_pack(h.open.t0, min(BLOCK, now - h.open.t0), h.open.recs, h.open.n)));
+		if (length(list)) blocks[k] = list;
+	}
+	let out = {
+		version: 4, saved: now, neighbors: state.neighbors, events: state.events, idents: state.idents,
+		cover: map(state.cover, c => [ c[0], min(c[1], now) ]), blocks,
+	};
+	let tmp = conf.persist_path + '.tmp';
+	let gz = popen('exec gzip -c > ' + shell_quote(tmp), 'w');
+	let ok = gz && gz.write(sprintf('%J', out)) != null;
+	ok = (gz?.close() === 0) && ok && rename(tmp, conf.persist_path);
+	if (!ok) {
+		unlink(tmp);
+		log(`saving history to ${conf.persist_path} failed`);
+		return false;
+	}
+	return true;
+}
+
+function persist_read(path) {
+	if (!stat(path)) return null;
+	// gzip magic; compared as hex, a '\x8b' literal would be UTF-8 encoded
+	if (hexenc(readfile(path, 2) ?? '') != '1f8b')
+		return readfile(path);
+	let gz = popen('exec gzip -dc ' + shell_quote(path), 'r');
+	let raw = gz?.read('all');
+	return (gz?.close() === 0) ? raw : null;
+}
+
+function persist_load() {
+	if (!conf.persist) return;
+	let d = null;
+	try { d = json(persist_read(conf.persist_path) ?? 'null'); } catch (e) { d = null; }
+	if (d?.version != 4) return;
+	for (let k, list in d.blocks ?? {}) {
+		let h = state.hist[k] = { blocks: [], open: null, last: null };
+		for (let b in list) {
+			b = b64dec(b);
+			push(h.blocks, b);
+			state.hist_bytes += length(b);
+		}
+	}
+	state.cover = d.cover ?? [];
+	// keep the saved presence and gateway state so a restart does not
+	// replay "appeared" and "default route" events
+	state.neighbors = d.neighbors ?? {};
+	state.events = d.events ?? [];
+	// names found before; unnamed devices are looked up again right away
+	state.idents = d.idents ?? {};
+	for (let k, id in state.idents)
+		if (!id.hostname) id.next = 0;
+	for (let e in state.events)
+		if (e.type == 'gateway_change') state.last_sel[e.family] = e.to;
+	hist_prune(time());
+}
+
+// ---- history queries -----------------------------------------------------
+
+// Per-neighbour bucket accumulators as flat numeric arrays (no per-sample
+// allocations, ucode is slow at those). Values are weighted by seconds.
+function acc_new(points) {
+	let a = { n: [], ms: [], mmin: [], mmax: [], rn: [], rs: [], rmin: [], rmax: [], r4: [], r6: [], hm: [], hr: [] };
+	for (let i = 0; i < HIST_BINS; i++) { push(a.hm, 0); push(a.hr, 0); }
+	for (let i = 0; i < points; i++) {
+		push(a.n, 0); push(a.ms, 0); push(a.mmin, INF); push(a.mmax, 0);
+		push(a.rn, 0); push(a.rs, 0); push(a.rmin, INF); push(a.rmax, 0);
+	}
+	return a;
+}
+
+function hist_add(a, blk, off, len) {
+	let acc = a.hm, end = off + len;
+	for (let i = off; i < end;) {
+		if (ord(blk, i) == 255) { acc = a.hr; i++; continue; }
+		acc[ord(blk, i)] += ord(blk, i + 1) | (ord(blk, i + 2) << 8);
+		i += 3;
+	}
+}
+
+// A constant stretch s..e of one record into the buckets of q; hist adds it
+// to the histograms too (the open block has none yet), HIST_ONLY only there
+const HIST_ONLY = 2;
+function add_stretch(a, q, s, e, r, o, hist) {
+	let r4 = r[o + 3];
+	if (r4 == ROLE_ABSENT) return;
+	let cost = r[o + 1], rtt = r[o + 2], rok = (rtt != INF && rtt > 0);
+	if (hist) {
+		a.hm[hist_bin(cost)] += e - s;
+		if (rok) a.hr[hist_bin(rtt)] += e - s;
+		if (hist == HIST_ONLY) return;
+	}
+	merge_run(a.r4, s, e, r4, q.gap);
+	merge_run(a.r6, s, e, r[o + 4], q.gap);
+	while (s < e) {
+		let b = int((s - q.from) / q.bucket), next = min(e, q.from + (b + 1) * q.bucket), secs = next - s;
+		a.n[b] += secs; a.ms[b] += cost * secs;
+		if (cost < a.mmin[b]) a.mmin[b] = cost;
+		if (cost > a.mmax[b]) a.mmax[b] = cost;
+		if (rok) {
+			a.rn[b] += secs; a.rs[b] += rtt * secs;
+			if (rtt < a.rmin[b]) a.rmin[b] = rtt;
+			if (rtt > a.rmax[b]) a.rmax[b] = rtt;
+		}
+		s = next;
+	}
+}
+
+// Replay the records r (n of them, block t0..end) over the covered parts of
+// a..b; i is where to start looking, returns where the next span can
+function replay(a, q, r, n, t0, end, i, from, to, hist) {
+	for (let c in cover_in(from, to)) {
+		while (i + 1 < n && t0 + r[(i + 1) * 5] <= c[0]) i++;
+		for (let j = i, o = i * 5; j < n; j++, o += 5) {
+			let s = t0 + r[o], e = (j + 1 < n) ? t0 + r[o + 5] : end;
+			if (s >= c[1]) break;
+			if (e > c[0]) add_stretch(a, q, max(s, c[0]), min(e, c[1]), r, o, hist);
+		}
+	}
+	return i;
+}
+
+// One neighbour over q.qfrom..q.to: whole minutes inside a bucket from the
+// summaries, the rest replayed from the records
+function query_neighbor(h, a, q) {
+	let min_unpacker = unpacker(MIN_FMT, MINUTES);
+	for (let blk in h.blocks) {
+		let hd = struct.unpack(BLOCK_HDR, blk), t0 = hd[0], end = t0 + hd[1];
+		if (end <= q.from || t0 >= q.to) continue;
+		let moff = BLOCK_HDR_SIZE, hoff = moff + MINUTES * MIN_SIZE, roff = hoff + hd[3];
+		if (q.p99) hist_add(a, blk, hoff, hd[3]);
+		if (t0 + BLOCK <= q.qfrom) continue;	// only for the percentiles
+		let r = null, ri = 0, sv = (q.bucket >= MINUTE) ? min_unpacker.unpack(blk, moff) : null;
+		let spans = sv ? [] : [ [ max(t0, q.qfrom), min(end, q.to) ] ];
+		for (let m = 0; sv && m < MINUTES; m++) {
+			let ms = t0 + m * MINUTE, me = ms + MINUTE, o = m * 10;
+			if (me <= q.qfrom || ms >= q.to || ms >= end || !sv[o]) continue;
+			if (ms >= q.qfrom && me <= q.to && sv[o] == MINUTE && sv[o + 8] != ROLE_MIXED && sv[o + 9] != ROLE_MIXED) {
+				let b = int((ms - q.from) / q.bucket);
+				a.n[b] += sv[o]; a.ms[b] += sv[o + 1];
+				if (sv[o + 2] < a.mmin[b]) a.mmin[b] = sv[o + 2];
+				if (sv[o + 3] > a.mmax[b]) a.mmax[b] = sv[o + 3];
+				if (sv[o + 4]) {
+					a.rn[b] += sv[o + 4]; a.rs[b] += sv[o + 5];
+					if (sv[o + 6] < a.rmin[b]) a.rmin[b] = sv[o + 6];
+					if (sv[o + 7] > a.rmax[b]) a.rmax[b] = sv[o + 7];
+				}
+				merge_run(a.r4, ms, me, sv[o + 8], q.gap);
+				merge_run(a.r6, ms, me, sv[o + 9], q.gap);
+				continue;
+			}
+			// in order with the summaries, so the role runs merge
+			r ??= unpacker(REC_FMT, hd[2]).unpack(blk, roff);
+			ri = replay(a, q, r, hd[2], t0, end, ri, max(ms, q.qfrom), min(me, end, q.to), false);
+		}
+		for (let sp in spans) {
+			r ??= unpacker(REC_FMT, hd[2]).unpack(blk, roff);
+			replay(a, q, r, hd[2], t0, end, 0, sp[0], sp[1], false);
+		}
+	}
+	let o = h.open;
+	if (o?.n && o.t0 < q.to) {
+		let end = min(q.to, time() + state.interval), r = unpacker(REC_FMT, o.n).unpack(o.recs);
+		// before qfrom only for the percentiles
+		if (q.p99 && o.t0 < q.qfrom)
+			replay(a, q, r, o.n, o.t0, end, 0, max(o.t0, q.from), q.qfrom, HIST_ONLY);
+		replay(a, q, r, o.n, o.t0, end, 0, max(o.t0, q.qfrom), end, q.p99);
+	}
+}
+
+// Stretches of from..to without samples (before the history begins, and
+// while the collector was not running), longer than 2 sample intervals
+function no_data(from, to) {
+	let gaps = [], at = from;
+	for (let c in cover_in(from, to)) {
+		if (c[0] - at > 2 * state.interval) push(gaps, [ at, c[0] ]);
+		at = c[1];
+	}
+	if (to - at > 2 * state.interval) push(gaps, [ at, to ]);
+	return gaps;
+}
+
+// Bucket width for a requested one: at least the sampling interval, whole
+// minutes from a minute up, below that a divisor of a minute, so buckets line
+// up with the minute summaries
+function pick_bucket(want) {
+	let b = max(state.interval, want);
+	if (b >= MINUTE) return max(1, int(b / MINUTE + 0.5)) * MINUTE;
+	let best = 1;
+	for (let d in [ 1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30 ])
+		if (d <= b) best = d;
+	return best;
+}
+
+// Percentile from a histogram, interpolated within the bin and clamped to
+// the exact range of the data.
+function hist_percentile(h, q, lo, hi) {
+	let total = 0;
+	for (let n in h) total += n;
+	if (!total) return null;
+	let target = q * total, cum = 0;
+	for (let b = 0; b < HIST_BINS; b++) {
+		if (!h[b]) continue;
+		if (cum + h[b] >= target) {
+			let v = 2 ** ((b + (target - cum) / h[b]) / 8);
+			return max(lo, min(hi, v));
+		}
+		cum += h[b];
+	}
+	return hi;
+}
+
+// Per-neighbour series bucketed to about `points` buckets, plus exact
+// run-length role segments for the timeline. The range ends now, or at `end`
+// for a zoomed in window of the past; `now` in the result is that end. With
+// `since`, only buckets from there on are computed and no percentiles (the
+// UI polling for new data, it keeps the ones it has).
+function history_compute(range, points, end, since) {
+	range = max(60, min(HISTORY_SECONDS, +(range || HISTORY_SECONDS)));
+	points = max(10, min(2000, +(points || 720)));
+	let now = time();
+	if (+end > 0 && +end < now) now = int(+end);
+	let bucket = pick_bucket(range / points);
+	// buckets on multiples of their width, so a refresh puts samples into the
+	// same buckets as before instead of reshuffling them (lines would wobble)
+	let from = int((now - range) / bucket) * bucket;
+	points = int((now - from + bucket - 1) / bucket);
+	let qfrom = from;
+	if (+since > from) qfrom = min(from + int((+since - from) / bucket) * bucket, now);
+	// percentiles of the whole range barely move between polls, which leave
+	// them out (merging the histograms of all blocks is most of their cost)
+	let q = { from, qfrom, to: now, bucket, gap: 2 * state.interval, p99: (qfrom == from) };
+
+	let out = {};
+	for (let k, h in state.hist) {
+		let a = acc_new(points);
+		query_neighbor(h, a, q);
+		let m = [], r = [], hn = 0;
+		for (let b = int((qfrom - from) / bucket); b < points; b++) {
+			if (!a.n[b]) continue;
+			let t = from + int((b + 0.5) * bucket);
+			push(m, [ t, int(a.ms[b] / a.n[b] + 0.5), a.mmin[b], a.mmax[b] ]);
+			// RTT is stored in 0.1 ms units, keep that precision
+			if (a.rn[b]) push(r, [ t, int(a.rs[b] / a.rn[b] + 0.5) / 10.0, a.rmin[b] / 10.0, a.rmax[b] / 10.0 ]);
+		}
+		for (let v in a.hm) hn += v;
+		if (!length(m) && !length(a.r4) && !hn) continue;
+		out[k] = { meta: state.neighbors[k], metric: m, rtt: r, roles4: a.r4, roles6: a.r6 };
+		if (q.p99) {
+			let mlo = INF, mhi = 0, rlo = INF, rhi = 0;
+			for (let b = 0; b < points; b++) {
+				if (a.n[b]) { mlo = min(mlo, a.mmin[b]); mhi = max(mhi, a.mmax[b]); }
+				if (a.rn[b]) { rlo = min(rlo, a.rmin[b]); rhi = max(rhi, a.rmax[b]); }
+			}
+			let pm = (mlo <= mhi) ? hist_percentile(a.hm, 0.99, mlo, mhi) : null;
+			let pr = (rlo <= rhi) ? hist_percentile(a.hr, 0.99, rlo, rhi) : null;
+			out[k].p99 = { metric: (pm != null) ? int(pm + 0.5) : null, rtt: (pr != null) ? int(pr + 0.5) / 10.0 : null };
+		}
+	}
+	return { now, from, range, bucket, since: (qfrom > from) ? qfrom : null, oldest: oldest(), interval: state.interval,
+		neighbors: out, nodata: no_data(qfrom, now) };
+}
+
+// Take a token for an anonymous history computation, false when out of them
+function anon_allow() {
+	let now = time();
+	state.anon_tokens = min(ANON_BURST, state.anon_tokens + (now - state.anon_ts) / ANON_REFILL);
+	state.anon_ts = now;
+	if (state.anon_tokens < 1) return false;
+	state.anon_tokens--;
+	return true;
+}
+
+// Results are cached briefly, the UI polls and several browsers may be open.
+// Polls for the last few minutes are cheap and not rate limited.
+function history(range, points, end, since, session) {
+	let anon = (session == ANON_SESSION);
+	range = +range || 0; points = +points || 0; end = +end || 0; since = +since || 0;
+	if (anon) {
+		let round = v => int((v + ANON_ROUND / 2) / ANON_ROUND) * ANON_ROUND;
+		points = max(ANON_POINTS, min(600, int(points / ANON_POINTS) * ANON_POINTS));
+		if (range) range = max(ANON_ROUND, round(range));
+		if (end) end = round(end);
+	}
+	let ck = `${range}|${points}|${end}|${since}`, now = time();
+	for (let i = 0; i < length(state.hcache); i++) {
+		let c = state.hcache[i];
+		if (c.key == ck && now - c.at < max(5, min(30, c.res.bucket)))
+			return c.res;
+	}
+	if (anon && !(since && since >= now - 300) && !anon_allow())
+		return UBUS_STATUS_TIMEOUT;
+	let res = history_compute(range, points, end, since);
+	state.hcache = [ { key: ck, at: now, res }, ...filter(state.hcache, c => c.key != ck) ];
+	if (length(state.hcache) > HCACHE_SIZE)
+		state.hcache = slice(state.hcache, 0, HCACHE_SIZE);
+	return res;
+}
+
+// ---- main ----------------------------------------------------------------
+
+function tick() {
+	let nbs = collect();
+	if (nbs != null) record(nbs);
+	tick_timer.set(state.interval * 1000);
+}
+
+openlog('bird-babel-collector', LOG_PID, LOG_DAEMON);
+load_config();
+state.hostname = cursor().get_first('system', 'system', 'hostname') ?? (trim(readfile('/proc/sys/kernel/hostname') ?? '') || null);
+state.domain = cursor().get_first('dhcp', 'dnsmasq', 'domain');
+state.mesh_hints = load_mesh_hints();
+// a cap the history should never reach (~2 MB for 8 neighbours at most)
+state.budget = (conf.memory_budget > 0) ? conf.memory_budget :
+	max(256 * 1024, min(16 * 1024 * 1024, int(mem_total() / 64)));
+state.interval = sample_interval();
+
+uloop.init();
+mkdir(TMPDIR);
+ubus_conn = ubus.connect();
+if (!ubus_conn) die('cannot connect to ubus\n');
+
+load_names();
+load_links();
+persist_load();
+
+ubus_conn.publish('bird-babel', {
+	status: {
+		call: function(req) {
+			// refresh live data at most once per second for fast UI polling
+			if (time() - state.live_ts >= 1) collect();
+			return {
+				...state.live,
+				collector: {
+					started: state.started, interval: state.interval,
+					budget: state.budget, history_bytes: state.hist_bytes, oldest: oldest(),
+					history_seconds: HISTORY_SECONDS, persist: conf.persist, error: state.error,
+				},
+			};
+		},
+		args: { ubus_rpc_session: '' },
+	},
+	history: {
+		call: req => history(req.args.range, req.args.points, req.args.end, req.args.since, req.args.ubus_rpc_session),
+		args: { range: 0, points: 0, end: 0, since: 0, ubus_rpc_session: '' },
+	},
+	// Save the history now (sysupgrade hook, and for development); not in
+	// the LuCI ACL, local only
+	save: {
+		call: () => conf.persist ? { saved: persist_save(), path: conf.persist_path } : { saved: false },
+		args: {},
+	},
+	events: {
+		call: function(req) {
+			let since = +(req.args.since || 0);
+			return { events: filter(state.events, e => e.time >= since) };
+		},
+		args: { since: 0, ubus_rpc_session: '' },
+	},
+});
+
+tick_timer = uloop.timer(10, tick);
+uloop.interval(30000, () => { load_names(); load_links(); prune_idents(); });
+
+let restored = 0;
+for (let k, h in state.hist) restored += length(h.blocks);
+add_event('collector_start', { interval: state.interval, budget: state.budget, restored });
+log(`started: budget ${state.budget} bytes, interval ${state.interval}s`);
+
+uloop.run();
+persist_save();
+bird_close();

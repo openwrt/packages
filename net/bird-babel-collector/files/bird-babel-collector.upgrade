@@ -1,0 +1,12 @@
+# Sourced by sysupgrade: save the history right before the config backup
+# takes it; otherwise the history is only saved when the collector stops
+
+add_bird_babel_conffiles() {
+	local filelist="$1" path
+
+	path="$(ubus -t 60 call bird-babel save 2>/dev/null | jsonfilter -q -e '@.path')"
+	[ -n "$path" ] && [ -f "$path" ] || return 0
+	grep -qxF "$path" "$filelist" || echo "$path" >> "$filelist"
+}
+
+sysupgrade_init_conffiles="$sysupgrade_init_conffiles add_bird_babel_conffiles"
