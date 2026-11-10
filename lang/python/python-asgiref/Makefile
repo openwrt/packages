@@ -1,11 +1,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-asgiref
-PKG_VERSION:=3.12.1
+PKG_VERSION:=3.13.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=asgiref
-PKG_HASH:=59dcb51c272ad209d59bed5708a64a333083e86017d7fcdd67498eeab7784340
+PKG_HASH:=034cc8cbf72d00553b4be256703ac545120b4e50af13b49dec99da899aeeecb4
 
 PKG_BUILD_DEPENDS:=python-setuptools/host
 
