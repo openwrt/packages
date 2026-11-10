@@ -1,0 +1,74 @@
+#!/bin/sh /etc/rc.common
+
+START=95
+STOP=10
+USE_PROCD=1
+
+append_mode() {
+	procd_append_param command --mode "$1"
+}
+
+append_script() {
+	[ -f "$1" ] && procd_append_param command --scripts "$1"
+}
+
+append_set() {
+	procd_append_param command --set "$1"
+}
+
+start_service() {
+	local enabled ui listen_host listen_port confdir ssl_insecure
+	local web_host web_port flow_detail
+
+	config_load mitmproxy
+	config_get_bool enabled main enabled 0
+	[ "$enabled" -eq 1 ] || return 0
+
+	config_get ui main ui dump
+	config_get listen_host main listen_host
+	config_get listen_port main listen_port 8080
+	config_get confdir main confdir /etc/mitmproxy
+	config_get_bool ssl_insecure main ssl_insecure 0
+
+	mkdir -p "$confdir"
+	chmod 0700 "$confdir"
+
+	procd_open_instance
+
+	case "$ui" in
+	web)
+		config_get web_host main web_host 127.0.0.1
+		config_get web_port main web_port 8081
+		procd_set_param command /usr/bin/mitmweb \
+			--web-host "$web_host" \
+			--web-port "$web_port" \
+			--set web_open_browser=false
+		;;
+	*)
+		config_get flow_detail main flow_detail 1
+		procd_set_param command /usr/bin/mitmdump \
+			--set flow_detail="$flow_detail"
+		;;
+	esac
+
+	procd_append_param command \
+		--set confdir="$confdir" \
+		--listen-port "$listen_port"
+	[ -n "$listen_host" ] && \
+		procd_append_param command --listen-host "$listen_host"
+	[ "$ssl_insecure" -eq 1 ] && \
+		procd_append_param command --ssl-insecure
+
+	config_list_foreach main mode append_mode
+	config_list_foreach main script append_script
+	config_list_foreach main set append_set
+
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_set_param respawn
+	procd_close_instance
+}
+
+service_triggers() {
+	procd_add_reload_trigger "mitmproxy"
+}
