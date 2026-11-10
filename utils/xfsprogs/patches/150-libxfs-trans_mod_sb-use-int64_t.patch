@@ -1,0 +1,38 @@
+From 522af6fdb6399f5820d46633011d0399bc08259c Mon Sep 17 00:00:00 2001
+From: Roberto Andrei Bolda <rbolda@taladin.ro>
+Date: Tue, 17 Nov 2026 10:39:06 +0200
+Subject: [PATCH] libxfs: use int64_t for xfs_trans_mod_sb() delta
+
+xfs_trans_mod_sb() is declared with an int64_t delta in xfs_trans.h but
+with long in xfs_platform.h, and libxfs_trans_mod_sb() is defined with
+long in trans.c. The types differ on 32-bit targets and the build fails
+with conflicting types. Use int64_t everywhere.
+
+Signed-off-by: Roberto Andrei Bolda <rbolda@taladin.ro>
+---
+ libxfs/trans.c        | 2 +-
+ libxfs/xfs_platform.h | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+--- a/libxfs/trans.c
++++ b/libxfs/trans.c
+@@ -845,7 +845,7 @@ void
+ libxfs_trans_mod_sb(
+ 	xfs_trans_t		*tp,
+ 	uint			field,
+-	long			delta)
++	int64_t		delta)
+ {
+ 	switch (field) {
+ 	case XFS_TRANS_SB_RES_FDBLOCKS:
+--- a/libxfs/xfs_platform.h
++++ b/libxfs/xfs_platform.h
+@@ -408,7 +408,7 @@ int  libxfs_mod_incore_sb(struct xfs_mou
+ /* percpu counters in mp are #defined to the superblock sb_ counters */
+ #define xfs_reinit_percpu_counters(mp)
+ 
+-void xfs_trans_mod_sb(struct xfs_trans *, uint, long);
++void xfs_trans_mod_sb(struct xfs_trans *, uint, int64_t);
+ 
+ void xfs_verifier_error(struct xfs_buf *bp, int error,
+ 			xfs_failaddr_t failaddr);
