@@ -1,0 +1,224 @@
+#  Changelog
+
+## 07 July 2026
+### Pull Request Review Fixes, Part 2
+
+* **fix(UCI config):**
+  * Migrated from shell-sourced `/etc/config/nss-switch-conf` to proper UCI format `/etc/config/nss-switch`.
+  * Added `uci_load_config()` with automatic creation of a default config file if missing.
+  * Updated `cmd_config()` to use `uci` commands for reading/writing configuration.
+  * Updated `debug.sh` `cmd_debug_log()` to use `uci` for enabling/disabling debug mode.
+  * Update lifecycle methods to get vars via UCI.
+
+* **fix(comment validation):**
+  * Added `nft_validate_comment()` to reject forbidden characters: `;`, `"`, `'`, `\`, `$`, `|`, control characters.
+  * Updated `rules_validate()` to accept `$comment` as the 7th parameter, and validate them.
+  * Fixed `cmd_add()` to pass comment to `rules_validate()`.
+
+* **fix(nft rules, ct mark preservation):**
+  * Replaced mark-overwriting rules (`ct mark set meta mark and ${NSS_MARK}`) with bit-preserving operations (`ct mark set (ct mark & ~${NSS_MARK}) | (meta mark & ${NSS_MARK})`) to avoid clobbering bits used by QoS, `fw4`, policy routing, and other subsystems.
+  * Moved preservation rules from global `nft_add_chains()` into per-rule `_nft_emit_rule()`, so they only apply to matching connections.
+  * Added `mangle_output` hook to apply bypass rules to router-originated traffic.
+
+* **fix(conntrack flushing):**
+  * Added `_ct_clear_all_marks()` helper to clean all NSS-Switch marks from conntrack.
+  * `ct_clear_rule_marks()` now always calls `_ct_clear_all_marks()` after flushing, ensuring no residual marks remain.
+  * Enhanced interface flushing to use `conntrack -D -i`, with fallback to IP/subnet-based flushing for both src/dst.
+
+* **fix(`nss-ct-dump.c` IPv6 compression bug):**
+  * Fixed `compress_ipv6()`: a zero-group run not starting at group 0 emitted only a single `:` instead of `::`, producing malformed addresses (e.g. `2606:4700:4700:1111` instead of `2606:4700:4700::1111`) that were invalid both for `nft_validate_ipv6()` and for nftables syntax.
+  * Root cause fixed at the source (compression), so no downstream expansion/workaround is needed in `rules_validate()` or `_nft_emit_rule()`.
+  * Removed hardcoded `NSS_MARK` define; now read dynamically from UCI via `get_nss_mark_from_uci()`.
+  * Added `strcpy(iface, "?")` before `popen()` to prevent reuse of stale interface values from previous lookups.
+  * Improved local IP detection via `load_local_ips()` / `is_local_ip()` for more accurate interface display of router-originated traffic.
+
+* **fix(watch UI, sorting):**
+  * Added interactive column sorting in watch mode.
+  * Added `_flush_input()` helper to prevent key echo and input buffer flooding.
+  * Updated `ui_conn_header()` to display numbered column titles (`NUM₁ PROTO₂ SRC₃ DST₄ IFACE₅ NSS₆`).
+  * Updated `ui_hint_bar()` to display current sort column and available key shortcuts.
+
+* **fix(postrm & `flush --all`):**
+  * Corrected `flush --all` to remove `/etc/firewall.d/nss-bypass-rules` instead of the incorrect path previously used.
+  * Added `conntrack -D -m "$NSS_MARK"` to `flush --all` to remove residual conntrack marks.
+  * Removed deletion of conffiles from `postrm` to respect `opkg` conffile handling and preserve user configuration during package removal.
+
+* **fix(debug logging):**
+  * Debug log (`/tmp/nss-switch.log`) is now created only when explicitly enabled via `nss-switch debug log`.
+  * `dbg()` writes to the log only when debug mode is enabled and the log file already exists.
+  * `nft_apply()` redirects firewall reload output to the debug log only while debug logging is enabled.
+
+* **fix(`debug env`, BusyBox version)**
+
+* **fix(nft_generate_script execution):**
+  * Added explicit execution of the generated firewall script (`sh "$FW_SCRIPT"`) inside `nft_apply()` after firewall reload, ensuring generated nftables rules are actually applied.
+
+---
+
+## 28 May 2026:
+
+* feat(kill): Added nss-switch kill command to forcibly flush conntrack entries matching a rule ID or custom criteria (--proto, --src-ip, --dst-ip, --src-port, --dst-port, --iface). Removes the rule automatically when ID is given.
+
+* feat(nft): Added mangle_output hook to apply bypass rules to locally generated traffic (router-originated DNS, NTP, WireGuard, etc...).
+
+* fix(interface display): Improved `nss-ct-dump` to show real output interface (pppoe-wan, etc.) instead of lo for router-originated traffic by checking local IPs and using dst_ip for route lookup.
+
+* fix(conntrack flush): Enhanced interface handling in kill command to derive IP/subnet from interface name for both input (iifname) and output (oifname/local:) cases.
+
+---
+
+## 27 May 2026:
+
+### OpenWrt PR Review Fixes Part 1
+
+* **fix(paths):**
+  * Relocated all package files to standard FHS paths: `/usr/lib/nss-switch/` for binaries/libraries, `/etc/config/nss-switch-conf` for configuration, `/etc/nss-switch/rules.conf` for persistent rules, and `/etc/firewall.d/nss-bypass-rules` for firewall hooks.
+  * Fixed Makefile installation paths to match new directory structure.
+  * Removed hardcoded interface names (`lan2`, `lan3`, etc.) from `_normalize_iface_rule()`; now only strips direction prefixes (`out:`, `in:`, `local:`).
+
+* **fix(nft):**
+  - **IPv4/IPv6 support:** `_nft_emit_rule()` now detects IP version and uses `ip saddr/daddr` for IPv4, `ip6 saddr/daddr` for IPv6.
+  - **Port rules:** No longer generates invalid syntax when `proto=any` with port macthes; ports only added when protocol is specified.
+  - **Comment escaping:** User-provided comments sanitised to prevent nftables syntax errors and command injection.
+  - **Interface direction:** `local:` prefix now correctly maps to `oifname` (router-originated traffic), while unprefixed interfaces map to `iifname` (normal ingress).
+
+* **fix(interface validation):**
+  - `nft_validate_iface()` now strips direction prefixes (`out:`, `in:`, `local:`) before validating interface existance with `ip link show`.
+
+* **fix(conntrack clearing):**
+  - `ct_clear_rule_marks()` no longer appends duplicate `-s` filter when `--src-ip` is already specified; interface-derived subnet is only added when no source IP is provided.
+
+* **fix(UCI integration):**
+  - Replaced direct config file editing (`sed`/`printf >>`) with proper `uci` commands for adding and removing firewall include sections (`_nft_ensure_uci_include`, `_nft_remove_uci_include`).
+  - Fixed `prerm` UCI existence check: now uses `uci -q get firewall.nss_bypass_include.type` instead of invalid `uci get firewall.nss_bypass_include`.
+
+* **fix(debug logging):**
+  - `DEBUG_LOG` (`/tmp/nss-switch.log`) is now only created when debug is explicitly enabled via `nss-switch debug log` menu.
+  - `dbg()` function no longer writes to log unless debug is active AND log file exists.
+  - `nft_apply()` only redirects firewall reload output to debug log when debug is enabled.
+
+* **fix(cursor restoration):**
+  - Corrected `ui_cursor_show` --> `ui_cursor_hide` in `cmd_watch()` (comment said hide, code was showing).
+
+* **fix(dependencies):**
+  - Removed unnecessary `conntrackd` dependency from Makefile (only `conntrack` is required).
+
+* **fix(port extraction in UI):**
+  - `ui_conn_row()` now correctly extracts destination port from `ip:port`, `[ipv6]:port`, and `ip#port` formats using `case` statement.
+
+* **fix(comment validation):**
+  - Added `nft_validate_comment()` to reject forbidden characters (`;`, `"`, `'`, `\`, `$`, `|`, control chars) in rule comments.
+
+* **fix(input validation in `pick`):**
+  - `ui_ask_input()` now supports type validation: `ip`, `port`, `proto`, `string`. Invalid inputs are rejected and retried.
+
+* **fix(`ui_ask_yn`):**
+  - Now strictly accepts `y/Y/yes/YES` or `n/N/no/NO`; any other input (including garbage) is rejected and reprompts. `q/Q` cancels the entire operation.
+
+* **fix(rule listing UI alignment):**
+  - Implemented dynamic column width calculation in `rules_list()` to avoid hardcoded widths that broke layout; colours preserved for ID, PERSIST, and COMMENT fields.
+
+* **fix(nss-ct-dump binary performance):**
+  - `get_nss_state()` now caches `access()` results for debugfs paths (`ecm_nss_ipv4`, `ecm_sfe_ipv4`), eliminating redundant syscalls on every conntrack line (optimisation for large connection tables).
+
+* **fix(C interface resolution):**
+  - `get_iface_for_ip()` simplified: no longer attempts to parse MAC addresses or bridge names; returns `lo` for router-local IPs, otherwise passes through `ip route get` output unchanged.
+  - Removed `normalize_iface()` hardcoded transformations (`pppoe-wan` -> `wan`, `br-lan` ->`lan`); interface names now appear as-is.
+
+* **fix(protocol display):**
+  - Expanded protocol number-to-name mapping in C binary to include all common protocols (GRE, ESP, AH, SCTP, etc.) using data from `/etc/protocols` for visual display while preserving numeric values for nftables rules.
+
+### New Features & Enhancements (beyond PR review)
+
+* **feat(offload engine compatibility):**
+  - Complete rewrite of `ecm.sh` to support multiple offload engines:
+    - **NSS** --> Qualcomm NSS hardware offload (ECM debugfs)
+    - **SFE_ECM** --> Qualcomm SFE as ECM frontend
+    - **SFE** --> Qualcomm SFE standalone (`/dev/sfe`, `shortcut_fe` module)
+    - **MTK_PPE** --> MediaTek PPE/HNAT hardware offload (`/sys/kernel/debug/ppe0`)
+    - **SW_FLOW** --> Linux `nf_flow_table` software flow offload
+  - Unified API (`ecm_frontend`, `ecm_defunct_all`, `ecm_restart`, `ecm_connections`, `ecm_stats`) works across all engines.
+  - Added `offload_detect()` with result caching to avoid redundant detection.
+  - `detect_check_all()` now shows engine-specific information and warnings.
+
+* **feat(UI improvements):**
+  - `ui_ask_input` now validates IP addresses, ports, and protocols in real-time.
+  - `debug log` command now interactive: shows status, last lines, and prompts to enable/disable logging.
+  - Better coloured output in `nss-switch list`.
+
+* **feat(ECM connections parser):**
+  - `ecm_connections()` now parses connection data directly from engine sources (ecm_dump.sh, /dev/sfe, PPE debugfs, conntrack) without external dependencies.
+
+* **refactor(build system):**
+  - Restructured package directories to follow OpenWrt and FHS standards.
+  - Makefile now explicitly lists all library scripts (no wildcards).
+  - `preinst` detects offload engine type and reports to user during installation.
+
+
+### 22 May 2026: Release v1.0.0 (aarch64, C compiled components)
+
+- **Architecture:** native aarch64 support for Qualcomm IPQ807x / NSS platform
+- **Performance:** `ct_dump_all_full()` fully migrated from shell to C
+  - **Speed improvement: ~30s ->  <100ms for 1000+ connections**
+- **Hybrid design:** UI remains in shell , heavy parsing in C (fast)
+- **APK:** aarch64-only, includes both shell scripts and compiled binary, ccompiled with GitHub Actions for transparency
+
+
+
+### 21 May 2026
+* **feat(ui):**
+  * Added PROTO name mapping for common ports (SSH, HTTP, HTTPS, DNS, WG, MYSQL, PG, MONGO, REDIS, etc...) max 6 chars.
+  * Implemented terminal width check (`ui_check_width`), requires minimum 120 columns for proper UI display.
+  * Improved spinner with colour cycling animation.
+* **feat(conntrack):**
+  * Added interface normalisation functions `_normalize_iface_display` and `_normalize_iface_rule`.
+  * Normalised interface names: `local:pppoe-wan`/`pppoe-wan` -> `wan`, `local:br-lan`/`br-lan` -> `lan`, etc.
+* **fix(cleanup):**
+  * Fixed cursor not restoring after exit in `cmd_watch()` and `cmd_pick()` commands.
+  * Fixed cleanup for orphaned `/tmp/nss-iface.*` files on trap and exit.
+  * Unified temporary file cleanup in `_clean_tmp()`.
+* **fix(nft):**
+  * Added interface normalisation for rule validation and emission, now `wan`, `wan.20`, `pppoe-wan`, `wan_6` all belong to `pppoe-wan` for nftables rules.
+
+
+### 20 May 2026
+* **fix(ui):**
+  * Adjusted and fixed column widths to a strict `45/45/6` layout.
+  * Disabled `alt_screen` buffer to enable native terminal scrolling.
+  * Integrated a visual loading indicator.
+  * Corrected colour palette rendering issues specifically for the `ash` shell environment.
+* **fix(watch):**
+  * Added `printf "\033[2J\033[3J"` to clear both screen and scrollback buffer on each `watch` refresh.
+  * Eliminated garbage/artifacts left behind after terminal scroll or PgUp/PgDown.
+  * Unified header bar, hint bar, separator lines and footer messages to match exact table width.
+  * Added `ui_table_width()` function to calculate total table width dynamically.
+* **fix(pick):**
+  * Removed pagination, now shows ALL connections at once with native terminal scroll.
+  * Fixed tmpfile persistence issue that caused "Connection X not found" errors.
+  * Disabled alt_screen for proper PgUp/PgDown support.
+* **fix(colours):**
+  * Finalised ANSI colour pattern using `ESC=$(printf '\033')` for ash/BusyBox v1.1+ compatibility.
+
+### 19 May 2026
+* **feat:**
+  * Introduced initial **IPv6 support**.
+  * Added a dedicated real-time debug monitor (`nss-switch debug monitor`).
+  * Added debug subcommands: `env`, `ecm`, `nft`, `conntrack`, `mark`, `defunct-all`, `frontend-stop`, `frontend-restart`, `log`, `log-clear`, `rules-raw`, `script-raw`.
+  * Resolved underlying issues within the `pick` command execution logic.
+  * Unified the connection tracking dump tool (`ct_dump`).
+  * Optimised network rule validation routines and post-execution cleanup processes.
+
+### 14 May 2026
+* **fix:** Corrected IPv6 compression logic and standardised bracketed notation `[]:` for address configurations.
+
+### 13 May 2026
+* **feat:**
+  * Extended IPv6 operational support.
+  * Introduced `ct_mark_all_full` logic designed for robust Local Loopback (`lo`) and Wide Area Network (`wan`) boundary management.
+  * Patched and stabilised the Command Line Interface (CLI) UI layout.
+
+### 11 May 2026
+* **fix/feat:**
+  * Refactored multiple instances of legacy syntax to strictly comply with `ash` shell constraints.
+  * Rolled out comprehensive `conntrack` filtering support across parameters: interfaces (`iface`), source IPs (`src_ip`), destination IPs (`dst_ip`), destination ports, protocols, and auxiliary variables.
+  * Drafted and committed **Blueprint 1** for the *NSS Switch Test Tool*.
