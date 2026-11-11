@@ -12,7 +12,7 @@ PKG_NAME:=softethervpn
 PKG_REALVERSION:=4.38-9760
 PKG_VERSION:=$(word 1,$(subst -, ,$(PKG_REALVERSION)))
 PKG_VERREL:=rtm
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=softether-src-v$(PKG_REALVERSION)-$(PKG_VERREL).tar.gz
 PKG_SOURCE_URL:=https://github.com/SoftEtherVPN/SoftEtherVPN_Stable/releases/download/v$(PKG_REALVERSION)-$(PKG_VERREL)
@@ -91,6 +91,7 @@ define Package/softethervpn/default
   SUBMENU:=VPN
   TITLE:=Free Cross-platform Multi-protocol VPN server and client
   URL:=https://www.softether.org/
+  CONFLICTS:=softethervpn5-libs
 endef
 
 define Package/softethervpn/description
