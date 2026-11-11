@@ -82,7 +82,7 @@ define Package/bind/Default
   EXTRA_DEPENDS:=bind-libs (=$(PKG_VERSION)-r$(PKG_RELEASE))
   TITLE:=bind
   URL:=https://www.isc.org/software/bind
-  SUBMENU:=IP Addresses and Names
+  SUBMENU:=BIND
   VARIANT:=without-gssapi
   DEFAULT_VARIANT:=1
 endef
