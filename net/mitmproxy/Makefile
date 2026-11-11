@@ -8,7 +8,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/mitmproxy/mitmproxy/tar.gz/v$(PKG_VERSION)?
 PKG_HASH:=699d61561cf20f374fd654a30afc0e82af609976b1f589c42e1809210eb6f89b
 
-PKG_MAINTAINER:=Your Real Name <your.real@email.address>
+PKG_MAINTAINER:=Alan Chung <alan@9hack.ing>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:mitmproxy:mitmproxy
