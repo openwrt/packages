@@ -9,7 +9,7 @@ Subject: [PATCH 06/10] extmod: Use system mbedtls
 
 --- a/extmod/extmod.mk
 +++ b/extmod/extmod.mk
-@@ -243,91 +243,12 @@ SRC_THIRDPARTY_C += $(addprefix $(AXTLS_
+@@ -244,91 +244,12 @@ SRC_THIRDPARTY_C += $(addprefix $(AXTLS_
  	crypto/sha1.c \
  	)
  else ifeq ($(MICROPY_SSL_MBEDTLS),1)
