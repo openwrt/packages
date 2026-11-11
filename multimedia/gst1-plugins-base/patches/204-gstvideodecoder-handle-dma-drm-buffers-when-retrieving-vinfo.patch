@@ -1,0 +1,33 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Dave Stevenson <dave.stevenson@raspberrypi.com>
+Date: Tue, 17 Feb 2026 15:52:22 +0000
+Subject: [PATCH] gstvideodecoder: Handle DMA_DRM buffers when retrieving vinfo
+
+gst_video_decoder_decide_allocation_default didn't consider the
+buffer being a DMA DRM buffer, and got the wrong vinfo.
+
+Link: https://gitlab.freedesktop.org/gstreamer/gstreamer/-/merge_requests/9247
+---
+ gst-libs/gst/video/gstvideodecoder.c | 11 +++++++++--
+ 1 file changed, 9 insertions(+), 2 deletions(-)
+
+--- a/gst-libs/gst/video/gstvideodecoder.c
++++ b/gst-libs/gst/video/gstvideodecoder.c
+@@ -4273,8 +4273,15 @@ gst_video_decoder_decide_allocation_defa
+ 
+   gst_query_parse_allocation (query, &outcaps, NULL);
+   gst_video_info_init (&vinfo);
+-  if (outcaps)
+-    gst_video_info_from_caps (&vinfo, outcaps);
++  if (outcaps) {
++    if (gst_video_is_dma_drm_caps (outcaps)) {
++      GstVideoInfoDmaDrm drm_info;
++      if (gst_video_info_dma_drm_from_caps (&drm_info, outcaps))
++        vinfo = drm_info.vinfo;
++    } else {
++      gst_video_info_from_caps (&vinfo, outcaps);
++    }
++  }
+ 
+   /* we got configuration from our peer or the decide_allocation method,
+    * parse them */
