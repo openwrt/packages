@@ -1,0 +1,32 @@
+From 27303ab2242e62abab58a9339b7b535415f4652a Mon Sep 17 00:00:00 2001
+From: Rimas Kudelis <rimas@kudelis.lt>
+Date: Fri, 6 Nov 2026 14:06:32 +0200
+Subject: Add extra fallback to `uname -n` for `hostname`
+
+---
+ commit.d/50vcs-commit | 2 +-
+ init.d/40vcs-init     | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+--- a/commit.d/50vcs-commit
++++ b/commit.d/50vcs-commit
+@@ -29,7 +29,7 @@ else
+ 	logfile=""
+ fi
+ 
+-hostname=`hostname 2>/dev/null || cat /etc/hostname`
++hostname=`hostname 2>/dev/null || uname -n 2>/dev/null || cat /etc/hostname`
+ hostname="${hostname%%.*}"
+ dnsdomainname=`dnsdomainname 2>/dev/null || true`
+ if [ -n "$dnsdomainname" ]; then
+--- a/init.d/40vcs-init
++++ b/init.d/40vcs-init
+@@ -1,7 +1,7 @@
+ #!/bin/sh
+ set -e
+ 
+-description="$(hostname 2>/dev/null || cat /etc/hostname) /etc repository"
++description="$(hostname 2>/dev/null || uname -n 2>/dev/null || cat /etc/hostname) /etc repository"
+ if [ "$VCS" = git ] && [ ! -e .git ]; then
+ 	git init
+ 	echo "$description" > .git/description
