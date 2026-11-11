@@ -1,0 +1,30 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Dave Stevenson <dave.stevenson@raspberrypi.com>
+Date: Wed, 7 May 2025 18:10:25 +0100
+Subject: [PATCH] v4l2codecs: Update bit_size and data_byte_offset based on
+ updated docs
+
+From discussion whilst upstreaming the Raspberry Pi HEVC decoder,
+the bit_size and data_byte_offset definitions have been clarified.
+They haven't been used by drivers until now.
+
+Update the usage to match the new documentation.
+
+Link: https://gitlab.freedesktop.org/gstreamer/gstreamer/-/merge_requests/9247
+---
+ sys/v4l2codecs/gstv4l2codech265dec.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/sys/v4l2codecs/gstv4l2codech265dec.c
++++ b/sys/v4l2codecs/gstv4l2codech265dec.c
+@@ -793,8 +793,8 @@ gst_v4l2_codec_h265_dec_fill_slice_param
+   /* *INDENT-OFF* */
+   params = &g_array_index (self->slice_params, struct v4l2_ctrl_hevc_slice_params, n);
+   *params = (struct v4l2_ctrl_hevc_slice_params) {
+-    .bit_size = (slice_size + sc_offset) * 8,
+-    .data_byte_offset = get_slice_header_byte_offset (slice) + sc_offset,
++    .bit_size = (slice_size - get_slice_header_byte_offset(slice)) * 8,
++    .data_byte_offset = get_slice_header_byte_offset (slice) + sc_offset + self->bitstream_map.size,
+     .num_entry_point_offsets = slice_hdr->num_entry_point_offsets,
+     .nal_unit_type = slice->nalu.type,
+     .nuh_temporal_id_plus1 = slice->nalu.temporal_id_plus1,

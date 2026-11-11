@@ -1,0 +1,99 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Sun, 1 Nov 2026 09:54:58 +0000
+Subject: [PATCH] v4l2codecs: h264, h265: negotiate with the first picture
+
+When the caps carry codec data, the sequence is parsed while decodebin
+pushes the sticky events into the new decoder, before it exposes the
+decoder's src pad. Negotiating right there sends the allocation query
+to a pad nothing answers, so DMABuf caps are found without GstVideoMeta
+and the caps event fails with not-negotiated. Record that negotiation
+is needed and do it when the first picture starts, as the AV1 decoder
+already does; by then the pad is exposed and linked to the sink.
+
+Part-of: <https://gitlab.freedesktop.org/gstreamer/gstreamer/-/merge_requests/12917>
+---
+ sys/v4l2codecs/gstv4l2codech264dec.c | 15 +++++++++++----
+ sys/v4l2codecs/gstv4l2codech265dec.c | 15 +++++++++++----
+ 2 files changed, 22 insertions(+), 8 deletions(-)
+
+--- a/sys/v4l2codecs/gstv4l2codech264dec.c
++++ b/sys/v4l2codecs/gstv4l2codech264dec.c
+@@ -112,6 +112,7 @@ struct _GstV4l2CodecH264Dec
+   gboolean streaming;
+   gboolean interlaced;
+   gboolean need_sequence;
++  gboolean need_negotiation;
+   gboolean copy_frames;
+   gboolean scaling_matrix_present;
+ 
+@@ -982,12 +983,10 @@ gst_v4l2_codec_h264_dec_new_sequence (Gs
+   gst_v4l2_codec_h264_dec_fill_sequence (self, sps);
+   self->need_sequence = TRUE;
+ 
++  /* downstream may not be linked yet when the sequence comes from caps */
+   if (negotiation_needed) {
+     gst_v4l2_codec_h264_dec_streamoff (self);
+-    if (!gst_video_decoder_negotiate (GST_VIDEO_DECODER (self))) {
+-      GST_ERROR_OBJECT (self, "Failed to negotiate with downstream");
+-      return GST_FLOW_NOT_NEGOTIATED;
+-    }
++    self->need_negotiation = TRUE;
+   }
+ 
+   return GST_FLOW_OK;
+@@ -1027,6 +1026,14 @@ gst_v4l2_codec_h264_dec_start_picture (G
+ {
+   GstV4l2CodecH264Dec *self = GST_V4L2_CODEC_H264_DEC (decoder);
+ 
++  if (self->need_negotiation) {
++    if (!gst_video_decoder_negotiate (GST_VIDEO_DECODER (self))) {
++      GST_ERROR_OBJECT (self, "Failed to negotiate with downstream");
++      return GST_FLOW_NOT_NEGOTIATED;
++    }
++    self->need_negotiation = FALSE;
++  }
++
+   /* FIXME base class should not call us if negotiation failed */
+   if (!self->sink_allocator)
+     return GST_FLOW_NOT_NEGOTIATED;
+--- a/sys/v4l2codecs/gstv4l2codech265dec.c
++++ b/sys/v4l2codecs/gstv4l2codech265dec.c
+@@ -112,6 +112,7 @@ struct _GstV4l2CodecH265Dec
+   gboolean streaming;
+   gboolean copy_frames;
+   gboolean need_sequence;
++  gboolean need_negotiation;
+ 
+   struct v4l2_ctrl_hevc_sps sps;
+   struct v4l2_ctrl_hevc_pps pps;
+@@ -1096,12 +1097,10 @@ gst_v4l2_codec_h265_dec_new_sequence (Gs
+   gst_v4l2_codec_h265_dec_fill_sequence (self, sps);
+   gst_v4l2_codec_h265_dec_fill_ext_sps_rps (self, sps);
+ 
++  /* downstream may not be linked yet when the sequence comes from caps */
+   if (negotiation_needed) {
+     gst_v4l2_codec_h265_dec_streamoff (self);
+-    if (!gst_video_decoder_negotiate (GST_VIDEO_DECODER (self))) {
+-      GST_ERROR_OBJECT (self, "Failed to negotiate with downstream");
+-      return GST_FLOW_NOT_NEGOTIATED;
+-    }
++    self->need_negotiation = TRUE;
+   }
+ 
+   return GST_FLOW_OK;
+@@ -1198,6 +1197,14 @@ gst_v4l2_codec_h265_dec_start_picture (G
+ {
+   GstV4l2CodecH265Dec *self = GST_V4L2_CODEC_H265_DEC (decoder);
+ 
++  if (self->need_negotiation) {
++    if (!gst_video_decoder_negotiate (GST_VIDEO_DECODER (self))) {
++      GST_ERROR_OBJECT (self, "Failed to negotiate with downstream");
++      return GST_FLOW_NOT_NEGOTIATED;
++    }
++    self->need_negotiation = FALSE;
++  }
++
+   /* FIXME base class should not call us if negotiation failed */
+   if (!self->sink_allocator)
+     return GST_FLOW_NOT_NEGOTIATED;

@@ -1,0 +1,146 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Thu, 12 Nov 2026 16:04:23 +0000
+Subject: [PATCH] av1decoder: Drop frames on non-keyframe format change
+
+AV1 allows inter frames to change the frame size, and the base class
+hands such a frame to the subclass in any case. A subclass that cannot
+reallocate its pictures while decoding has no way to opt out, so it
+renegotiates mid-stream and fails.
+
+Add gst_av1_decoder_set_non_keyframe_format_change_support(), as the
+VP9 base class has. When a subclass sets it to FALSE, a non-keyframe
+format change drains the output queue, clears the DPB and drops frames
+until the next keyframe, which then carries the new format.
+---
+ gst-libs/gst/codecs/gstav1decoder.c | 59 +++++++++++++++++++++++++++++
+ gst-libs/gst/codecs/gstav1decoder.h |  4 ++
+ 2 files changed, 63 insertions(+)
+
+--- a/gst-libs/gst/codecs/gstav1decoder.c
++++ b/gst-libs/gst/codecs/gstav1decoder.c
+@@ -52,6 +52,10 @@ struct _GstAV1DecoderPrivate
+   gboolean is_live;
+ 
+   gboolean input_state_changed;
++
++  gboolean support_non_kf_change;
++  gboolean wait_keyframe;
++  gboolean drop_frame;
+ };
+ 
+ typedef struct
+@@ -125,6 +129,7 @@ gst_av1_decoder_init (GstAV1Decoder * se
+ 
+   self->priv = priv = gst_av1_decoder_get_instance_private (self);
+ 
++  priv->support_non_kf_change = TRUE;
+   priv->output_queue =
+       gst_vec_deque_new_for_struct (sizeof (GstAV1DecoderOutputFrame), 1);
+   gst_vec_deque_set_clear_func (priv->output_queue,
+@@ -156,6 +161,8 @@ gst_av1_decoder_reset (GstAV1Decoder * s
+   gst_clear_av1_picture (&priv->current_picture);
+   priv->current_frame = NULL;
+   priv->profile = GST_AV1_PROFILE_UNDEFINED;
++  priv->wait_keyframe = FALSE;
++  priv->drop_frame = FALSE;
+ 
+   if (priv->dpb)
+     gst_av1_dpb_clear (priv->dpb);
+@@ -439,6 +446,9 @@ gst_av1_decoder_decode_tile_group (GstAV
+   GstAV1Tile tile;
+   GstFlowReturn ret = GST_FLOW_OK;
+ 
++  if (priv->drop_frame)
++    return GST_FLOW_OK;
++
+   if (!picture) {
+     GST_ERROR_OBJECT (self, "No picture has created for current frame");
+     return GST_FLOW_ERROR;
+@@ -494,6 +504,28 @@ gst_av1_decoder_decode_frame_header (Gst
+     return GST_FLOW_ERROR;
+   }
+ 
++  if (priv->wait_keyframe) {
++    if (frame_header->show_existing_frame ||
++        frame_header->frame_type != GST_AV1_KEY_FRAME) {
++      GST_DEBUG_OBJECT (self, "Drop frame while waiting for a keyframe");
++      priv->drop_frame = TRUE;
++      return GST_FLOW_OK;
++    }
++
++    priv->wait_keyframe = FALSE;
++    priv->drop_frame = FALSE;
++  } else if (!priv->support_non_kf_change &&
++      !frame_header->show_existing_frame &&
++      frame_header->frame_type != GST_AV1_KEY_FRAME &&
++      gst_av1_decoder_is_format_change (self, frame_header)) {
++    GST_DEBUG_OBJECT (self, "Drop frame on non-keyframe format change");
++    gst_av1_decoder_drain_output_queue (self, 0, &ret);
++    gst_av1_dpb_clear (priv->dpb);
++    priv->wait_keyframe = TRUE;
++    priv->drop_frame = TRUE;
++    return ret;
++  }
++
+   if (frame_header->show_existing_frame) {
+     GstAV1Picture *ref_picture;
+ 
+@@ -720,6 +752,7 @@ gst_av1_decoder_handle_frame (GstVideoDe
+       frame->system_frame_number, in_buf);
+ 
+   priv->current_frame = frame;
++  priv->drop_frame = FALSE;
+   g_assert (!priv->current_picture);
+ 
+   if (!gst_buffer_map (in_buf, &map, GST_MAP_READ)) {
+@@ -751,6 +784,13 @@ gst_av1_decoder_handle_frame (GstVideoDe
+     total_consumed += consumed;
+   }
+ 
++  if (priv->drop_frame) {
++    gst_buffer_unmap (in_buf, &map);
++    priv->current_frame = NULL;
++    gst_video_decoder_release_frame (decoder, frame);
++    return GST_FLOW_OK;
++  }
++
+   if (!priv->current_picture) {
+     GST_ERROR_OBJECT (self, "No valid picture after exhaust input frame");
+     ret = GST_FLOW_ERROR;
+@@ -840,3 +880,22 @@ out:
+ 
+   return ret;
+ }
++
++/**
++ * gst_av1_decoder_set_non_keyframe_format_change_support:
++ * @decoder: a #GstAV1Decoder
++ * @support: whether subclass can support non-keyframe format change
++ *
++ * Called to set non-keyframe format change awareness. Without it, frames
++ * that change the format are dropped until the next keyframe.
++ *
++ * Since: 1.30
++ */
++void
++gst_av1_decoder_set_non_keyframe_format_change_support (GstAV1Decoder *
++    decoder, gboolean support)
++{
++  g_return_if_fail (GST_IS_AV1_DECODER (decoder));
++
++  decoder->priv->support_non_kf_change = support;
++}
+--- a/gst-libs/gst/codecs/gstav1decoder.h
++++ b/gst-libs/gst/codecs/gstav1decoder.h
+@@ -190,6 +190,10 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(GstAV1Deco
+ GST_CODECS_API
+ GType gst_av1_decoder_get_type (void);
+ 
++GST_CODECS_API
++void gst_av1_decoder_set_non_keyframe_format_change_support (
++    GstAV1Decoder * decoder, gboolean support);
++
+ G_END_DECLS
+ 
+ #endif /* __GST_AV1_DECODER_H__ */
