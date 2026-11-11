@@ -57,12 +57,38 @@ function default_route(fam, table, iface, gw) {
 	return route;
 }
 
+// Whether a name can stand for one device under /proc/sys/net/ipv4/conf: an
+// interface name and nothing else - no path that leads out of that directory,
+// and not `all` or `default`, which are entries there but not devices, so
+// that a policy naming one of them never changes the setting of every
+// interface.
+export function conf_dev(dev) {
+	return type(dev) == 'string' && match(dev, RE_IFACE) != null &&
+		dev != 'all' && dev != 'default';
+};
+
+// A rule is deleted by its priority and its mark, never by the priority
+// alone: the kernel takes every attribute left out as a wildcard, and a rule
+// of somebody else's that happens to sit on one of shunt's priorities is not
+// shunt's to remove. Priority and mark are both derived from the policy's
+// index, so every rule a released version ever added still matches.
+function rule_del(family, priority, fwmark, fwmask) {
+	return { cmd: 'delrule', msg: { family, priority, fwmark, fwmask } };
+}
+
+// What tells one route of a policy table from another: the kernel replaces a
+// route of the same destination and metric in place, and every route shunt
+// renders is a default route.
+export function route_key(msg) {
+	return sprintf('%d/%d/%d', msg?.family, msg?.table, msg?.priority ?? 0);
+};
+
 export function compile(policies, marks, opts) {
 	let mask = opts?.mask ?? DEFAULTS.mask;
 	// Without the IPv6 family the kernel refuses every IPv6 operation, so
 	// none is rendered; the nft side loads either way.
 	let fams = (opts?.ipv6 === false) ? [ '4' ] : [ '4', '6' ];
-	let add = [], del = [], tables = [], issues = [];
+	let add = [], del = [], issues = [];
 
 	// A tracked device gets a probe table with the default route of its first
 	// policy, and a rule that leads the device's probe mark there. It is
@@ -102,8 +128,6 @@ export function compile(policies, marks, opts) {
 			if (to_bool(p.keep_local, false) === true)
 				reject(p.name, p.keep_local, 'keep_local does not apply to tproxy, ignored');
 
-			push(tables, sprintf('%d\tshunt_%s', m.rt_table, m.name));
-
 			for (let fam in fams) {
 				let family = AF[fam];
 
@@ -117,8 +141,8 @@ export function compile(policies, marks, opts) {
 					fwmark: m.mark, fwmask: mask, table: m.rt_table } });
 
 				unshift(del, { cmd: 'flush', msg: { family, table: m.rt_table } });
-				unshift(del, { cmd: 'delrule', msg: { family, priority: m.rt_prio } });
-				unshift(del, { cmd: 'delrule', msg: { family, priority: m.rt_prio_local } });
+				unshift(del, rule_del(family, m.rt_prio, m.mark, mask));
+				unshift(del, rule_del(family, m.rt_prio_local, m.mark, mask));
 			}
 			continue;
 		}
@@ -191,15 +215,10 @@ export function compile(policies, marks, opts) {
 			let mgw = many ? { '4': mb.gw4, '6': mb.gw6 } : gw;
 			let table = m.rt_table;
 
-			push(tables, many
-				? sprintf('%d\tshunt_%s_%s', table, m.name, name)
-				: sprintf('%d\tshunt_%s', table, m.name));
-
 			let pr = probe_of[name];
 
 			if (pr && !probed[name]) {
 				probed[name] = true;
-				push(tables, sprintf('%d\tshunt_track_%s', pr.rt_table, name));
 
 				for (let fam in fams) {
 					push(add, { cmd: 'newroute',
@@ -209,7 +228,7 @@ export function compile(policies, marks, opts) {
 						fwmark: pr.mark, fwmask: mask, table: pr.rt_table } });
 
 					unshift(del, { cmd: 'flush', msg: { family: AF[fam], table: pr.rt_table } });
-					unshift(del, { cmd: 'delrule', msg: { family: AF[fam], priority: pr.rt_prio } });
+					unshift(del, rule_del(AF[fam], pr.rt_prio, pr.mark, mask));
 				}
 			}
 
@@ -248,10 +267,10 @@ export function compile(policies, marks, opts) {
 					fwmark: m.mark, fwmask: mask, table } });
 
 				unshift(del, { cmd: 'flush', msg: { family, table } });
-				unshift(del, { cmd: 'delrule', msg: { family, priority: m.rt_prio } });
+				unshift(del, rule_del(family, m.rt_prio, m.mark, mask));
 				// Deleted whether or not it is rendered now: keep_local may
 				// have been on when the running ruleset was applied.
-				unshift(del, { cmd: 'delrule', msg: { family, priority: m.rt_prio_local } });
+				unshift(del, rule_del(family, m.rt_prio_local, m.mark, mask));
 			}
 		}
 	}
@@ -259,7 +278,6 @@ export function compile(policies, marks, opts) {
 	return {
 		add,
 		del,
-		rt_tables: length(tables) ? join('\n', tables) + '\n' : '',
 		issues
 	};
 };
@@ -276,6 +294,40 @@ export function state_ops(policies, marks, opts, name) {
 			push(ops, opts?.dead?.[name]
 				? { cmd: 'delroute', msg: op.msg }
 				: { cmd: op.cmd, msg: op.msg });
+
+	return ops;
+};
+
+// What is left to remove once a new rendering has been applied on top of
+// the old one. The new routes replace the old ones in place and the rules are
+// the same ones again, so nothing has to go first - and nothing may: with the
+// rules or a default route gone, even for the moment it takes to put them
+// back, marked traffic takes the main table, a blocking policy leaks, and
+// masquerade resets every running flow whose packet falls into that gap.
+// Left over is only what the new rendering no longer has - the default route
+// of an interface that is dead now - and an old route whose replacement the
+// kernel refused: a wrong route is not better than the fallback.
+export function stale(old_ops, new_ops, failed) {
+	let routes = {}, rules = {}, ops = [];
+
+	for (let op in (new_ops ?? [])) {
+		if (op?.cmd == 'newroute')
+			routes[route_key(op.msg)] = sprintf('%J', op.msg);
+		else if (op?.cmd == 'newrule')
+			rules[sprintf('%J', op.msg)] = true;
+	}
+
+	for (let op in (old_ops ?? [])) {
+		if (op?.cmd == 'newroute') {
+			let k = route_key(op.msg);
+
+			if (routes[k] == null ||
+			    (failed?.[k] && routes[k] != sprintf('%J', op.msg)))
+				push(ops, { cmd: 'delroute', msg: op.msg });
+		}
+		else if (op?.cmd == 'newrule' && !rules[sprintf('%J', op.msg)])
+			push(ops, { cmd: 'delrule', msg: op.msg });
+	}
 
 	return ops;
 };

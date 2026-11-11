@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (c) 2026 Dirk Brenken <dev@brenken.org>
 
-import { popen, readfile } from 'fs';
+import { popen, readfile, stat } from 'fs';
 
 const ubus = require('ubus');
 const rtnl = require('rtnl');
@@ -19,9 +19,9 @@ const RT = rtnl.const;
 import { load as config_load, parse as config_parse } from 'shunt.config';
 import { resolve as netifd_resolve } from 'shunt.netifd';
 import { compile as match_compile } from 'shunt.match';
-import { load as files_load } from 'shunt.list_file';
+import { load as files_load, resolve as file_resolve } from 'shunt.list_file';
 import { action_name, compile as nft_compile } from 'shunt.nft';
-import { compile as route_compile } from 'shunt.route';
+import { compile as route_compile, conf_dev } from 'shunt.route';
 import { names as poll_names } from 'shunt.poll';
 import { tproxy as tproxy_available, br_netfilter, ipv6 } from 'shunt.probe';
 
@@ -39,8 +39,36 @@ function daemon_status() {
 	return r ?? null;
 }
 
+// What tells whether a list file has to be read again: the file itself is
+// not opened for it.
+function file_stamps(policies) {
+	let out = [];
+
+	for (let p in (policies ?? []))
+		for (let name in [ ...(p?.domain_files ?? []), ...(p?.dst_files ?? []) ]) {
+			let path = file_resolve(name);
+			let st = (path != null) ? stat(path) : null;
+
+			push(out, [ name, st?.mtime, st?.size, st?.ino ]);
+		}
+
+	return out;
+}
+
+// The last rendering and what it was rendered from. rpcd keeps this script
+// loaded, so the variable lives from one call to the next.
+let rendered = null;
+
 // The same sequence as the daemon's build_state(), minus the logging: two
 // readings of one config file are how a status view starts to lie.
+//
+// The status page asks every few seconds, and reading the list files and
+// compiling a matcher and a ruleset from them is what a start of the daemon
+// costs - seconds with a large list, in a process that answers every other
+// LuCI call as well. So the rendering is kept and done again only when
+// something it is made from has changed: the configuration, what netifd
+// says about the interfaces, the kernel probes, or a list file. And only
+// what the status reports is kept - the counts, not the lists.
 function render() {
 	let sections = config_load();
 
@@ -60,16 +88,42 @@ function render() {
 
 	cfg.policies = netifd_resolve(cfg.policies, dump);
 
+	let opts = { tproxy: tproxy_available(cfg.policies),
+		br_netfilter: br_netfilter(), track: length(cfg.global.track_ips) > 0 };
+	let v6 = ipv6();
+	let sig = sprintf('%J', [ cfg, opts, v6, file_stamps(cfg.policies) ]);
+
+	if (rendered?.sig == sig)
+		return rendered.st;
+
 	let f = files_load(cfg.policies);
 
 	cfg.policies = f.policies;
 
 	let m = match_compile(cfg.policies);
-	let n = nft_compile(cfg.policies, { tproxy: tproxy_available(cfg.policies),
-		br_netfilter: br_netfilter(), track: length(cfg.global.track_ips) > 0 });
-	let r = route_compile(cfg.policies, n.marks, { ipv6: ipv6() });
+	let n = nft_compile(cfg.policies, opts);
+	let r = route_compile(cfg.policies, n.marks, { ipv6: v6 });
 
-	return { cfg, files: f, matcher: m, nft: n, route: r };
+	let st = {
+		global: cfg.global,
+		marks: n.marks,
+		poll_names: length(poll_names(cfg.policies)),
+		policies: map(cfg.policies, (p) => ({
+			name: p.name,
+			action: p.action,
+			interface: p.interface,
+			fallback: p.fallback,
+			members: p.members ? map(p.members, (mb) => ({ dev: mb.dev })) : null,
+			domains: length(p.domains ?? []),
+			file_domains: length(p.file_domains ?? []),
+			file_dst: length(p.file_dst ?? [])
+		})),
+		issues: [ ...cfg.issues, ...f.issues, ...m.issues, ...n.issues, ...r.issues ]
+	};
+
+	rendered = { sig, st };
+
+	return st;
 }
 
 // Policy devices whose marked traffic the kernel would drop: max(all, <dev>),
@@ -93,7 +147,7 @@ function rp_filter_blocked(policies) {
 		for (let mb in (p.members ?? [ { dev: p.interface } ])) {
 			let dev = mb.dev;
 
-			if (!length(dev ?? '') || seen[dev])
+			if (!conf_dev(dev) || seen[dev])
 				continue;
 
 			seen[dev] = true;
@@ -125,9 +179,24 @@ function rp_filter_strict() {
 	return strict;
 }
 
-function nft_table() {
-	let fh = popen(sprintf('nft -j list table %s %s 2>/dev/null',
-		TABLE_FAMILY, TABLE_NAME), 'r');
+// Whether the table is in the kernel, and nothing more: terse, so nft does
+// not fetch a single element for an answer of one bit.
+function nft_applied() {
+	return system([ '/bin/sh', '-c', 'exec "$0" "$@" >/dev/null 2>&1',
+		'nft', '-t', 'list', 'table', TABLE_FAMILY, TABLE_NAME ]) == 0;
+}
+
+// How many elements of one set a report carries. A set filled from a
+// dst_file can hold a hundred thousand prefixes; all of them in one answer
+// is megabytes through rpcd and a page the browser does not survive. What
+// is wanted from a set that size is one address, and that is what `search`
+// is for.
+const REPORT_MAX = 250;
+
+const RE_SET = /^[a-z][46]?_[A-Za-z0-9_]{1,24}$/;
+
+function nft_json(args) {
+	let fh = popen(sprintf('nft -j %s 2>/dev/null', args), 'r');
 
 	if (!fh)
 		return null;
@@ -139,38 +208,64 @@ function nft_table() {
 	if (!length(out ?? ''))
 		return null;
 
-	let j = json(out);
-
-	return j?.nftables ? j : null;
+	return json(out)?.nftables ?? null;
 }
 
-function nft_sets(table) {
-	let out = {};
+// The names of the sets in the table, without a single element: terse.
+function nft_set_names() {
+	let items = nft_json(sprintf('-t list table %s %s', TABLE_FAMILY, TABLE_NAME));
 
-	for (let item in (table?.nftables ?? [])) {
-		let s = item?.set;
+	if (items == null)
+		return null;
 
-		if (!s?.name)
+	let names = [];
+
+	for (let item in items)
+		if (type(item?.set?.name) == 'string' && match(item.set.name, RE_SET))
+			push(names, item.set.name);
+
+	return names;
+}
+
+// What a report says about one set, from the set as nft lists it: how much
+// it holds in all, how much of that the search matches, and of the matches
+// the entries with the most traffic.
+function set_report(set, search) {
+	let hot = [], cold = [], total = 0;
+
+	for (let e in (set?.elem ?? [])) {
+		let v = e?.elem ?? e;
+		let val = v?.val ?? v;
+		// nft merges adjacent prefixes of an interval set, and what is no
+		// longer one prefix comes back as a range.
+		let addr = (type(val) != 'object') ? val
+			: val.prefix ? sprintf('%s/%d', val.prefix.addr, val.prefix.len)
+			: (type(val.range) == 'array') ? join('-', val.range)
+			: null;
+
+		total++;
+
+		if (search != null && index(lc(`${addr}`), search) != 0)
 			continue;
 
-		let elems = [];
-
-		for (let e in (s.elem ?? [])) {
-			let v = e?.elem ?? e;
-			let val = v?.val ?? v;
-
-			push(elems, {
-				addr: (type(val) == 'object') ? (val.prefix ? sprintf('%s/%d', val.prefix.addr, val.prefix.len) : null) : val,
-				expires: v?.expires,
-				packets: v?.counter?.packets,
-				bytes: v?.counter?.bytes
-			});
-		}
-
-		out[s.name] = elems;
+		push(v?.counter?.packets ? hot : cold, {
+			addr,
+			expires: v?.expires,
+			packets: v?.counter?.packets,
+			bytes: v?.counter?.bytes
+		});
 	}
 
-	return out;
+	let matched = length(hot) + length(cold);
+
+	// Only the entries that saw traffic are worth ordering, and in a set
+	// too large to show they are the few among the many.
+	if (matched > REPORT_MAX && length(hot) > 1)
+		sort(hot, (a, b) => b.packets - a.packets);
+
+	let elems = slice([ ...hot, ...slice(cold, 0, REPORT_MAX) ], 0, REPORT_MAX);
+
+	return { elems, total, matched };
 }
 
 function kernel_rules(marks) {
@@ -212,34 +307,33 @@ function kernel_rules(marks) {
 	return out;
 }
 
+// How many routes each policy table holds. One dump per address family,
+// counted by table - not one per table and family, each of which the kernel
+// answers with the whole FIB anyway.
 function kernel_routes(marks) {
-	let out = {};
+	let count = {}, failed = false;
 
-	for (let m in (marks ?? [])) {
-		let n = 0;
+	for (let fam in [ RT.AF_INET, RT.AF_INET6 ]) {
+		let res = rtnl.request(RT.RTM_GETROUTE, RT.NLM_F_DUMP, { family: fam });
 
-		if (m.rt_table == null)
-			continue;
-
-		for (let fam in [ RT.AF_INET, RT.AF_INET6 ]) {
-			let res = rtnl.request(RT.RTM_GETROUTE, RT.NLM_F_DUMP,
-				{ family: fam, table: m.rt_table });
-
-			if (res == null) {
-				n = null;
-				break;
-			}
-
-			// A kernel without a family's dump handler answers with
-			// every family it has - IPv4 under an IPv6 request on a kernel
-			// without IPv6 - so the family is checked, not assumed.
-			for (let r in res)
-				if (r?.table == m.rt_table && r?.family == fam)
-					n++;
+		if (res == null) {
+			failed = true;
+			break;
 		}
 
-		out[sprintf('%d', m.mark)] = n;
+		// A kernel without a family's dump handler answers with every
+		// family it has - IPv4 under an IPv6 request on a kernel without
+		// IPv6 - so the family is checked, not assumed.
+		for (let r in res)
+			if (r?.family == fam && r?.table != null)
+				count[r.table] = (count[r.table] ?? 0) + 1;
 	}
+
+	let out = {};
+
+	for (let m in (marks ?? []))
+		if (m.rt_table != null)
+			out[sprintf('%d', m.mark)] = failed ? null : (count[m.rt_table] ?? 0);
 
 	return out;
 }
@@ -256,15 +350,14 @@ return {
 					return { error: 'cannot read /etc/config/shunt' };
 
 				let svc = daemon_status();
-				let table = nft_table();
-				let rules = kernel_rules(st.nft.marks);
-				let routes = kernel_routes(st.nft.marks);
+				let rules = kernel_rules(st.marks);
+				let routes = kernel_routes(st.marks);
 				let policies = [];
 
-				for (let m in st.nft.marks) {
+				for (let m in st.marks) {
 					let p = null;
 
-					for (let c in st.cfg.policies)
+					for (let c in st.policies)
 						if (c.name == m.name)
 							p = c;
 
@@ -281,9 +374,9 @@ return {
 						members: (m.action == 'route') ? length(p?.members ?? [ 1 ]) : null,
 						fallback: (m.action != 'bypass') ? p?.fallback : null,
 						tproxy_port: m.port,
-						domains: length(p?.domains ?? []),
-						file_domains: length(p?.file_domains ?? []),
-						file_dst: length(p?.file_dst ?? []),
+						domains: p?.domains ?? 0,
+						file_domains: p?.file_domains ?? 0,
+						file_dst: p?.file_dst ?? 0,
 						rules: (m.action != 'bypass' && rules)
 							? length(rules[sprintf('%d', m.mark)] ?? []) : null,
 						routes: (m.action != 'bypass') ? routes[sprintf('%d', m.mark)] : null
@@ -292,49 +385,69 @@ return {
 
 				return {
 					running: (svc != null),
-					applied: (table != null),
+					applied: nft_applied(),
 					service: svc,
-					global: st.cfg.global,
+					global: st.global,
 					policies,
-					poll_names: length(poll_names(st.cfg.policies)),
-					rp_filter_blocked: rp_filter_blocked(st.cfg.policies),
+					poll_names: st.poll_names,
+					rp_filter_blocked: rp_filter_blocked(st.policies),
 					rp_filter_strict: rp_filter_strict(),
-					issues: [
-						...st.cfg.issues,
-						...st.files.issues,
-						...st.matcher.issues,
-						...st.nft.issues,
-						...st.route.issues
-					]
+					issues: st.issues
 				};
 			}
 		},
 
+		// `sets` has the elements, at most REPORT_MAX of each set, and
+		// `info` says for every set how many it holds and how many of
+		// them the search matched.
 		sets: {
-			args: { policy: '' },
+			args: { policy: '', search: '' },
 			call: function(req) {
-				let table = nft_table();
-
-				if (!table)
-					return { sets: {} };
-
-				let all = nft_sets(table);
 				let want = req.args?.policy;
+				let search = req.args?.search;
 
-				if (!length(want ?? ''))
-					return { sets: all };
+				search = (type(search) == 'string' && length(trim(search)))
+					? lc(substr(trim(search), 0, 64)) : null;
 
-				let out = {};
+				let sets = {}, info = {};
 
-				// m_ and i_ carry no family digit, every other kind does.
-				for (let name in all) {
-					let at = (index('mi', substr(name, 0, 1)) >= 0) ? 2 : 3;
+				function report(set) {
+					let r = set_report(set, search);
 
-					if (substr(name, at) == want)
-						out[name] = all[name];
+					sets[set.name] = r.elems;
+					info[set.name] = { total: r.total, matched: r.matched };
 				}
 
-				return { sets: out };
+				// Every policy: the whole table in one listing. One policy:
+				// its sets one by one, so that it does not pay for the sets
+				// of all the others.
+				if (!length(want ?? '')) {
+					for (let item in (nft_json(sprintf('list table %s %s',
+							TABLE_FAMILY, TABLE_NAME)) ?? []))
+						if (type(item?.set?.name) == 'string')
+							report(item.set);
+				}
+				else
+					for (let name in (nft_set_names() ?? [])) {
+						// m_ and i_ carry no family digit, every other kind does.
+						let at = (index('mi', substr(name, 0, 1)) >= 0) ? 2 : 3;
+
+						if (substr(name, at) != want)
+							continue;
+
+						for (let item in (nft_json(sprintf('list set %s %s %s',
+								TABLE_FAMILY, TABLE_NAME, name)) ?? []))
+							if (item?.set?.name == name)
+								report(item.set);
+					}
+
+				// What a learned set holds at most, so that the report can
+				// tell a full set from a large one.
+				let sections = config_load();
+				let cfg = (sections != null) ? config_parse(sections) : null;
+
+				return { sets, info, max: REPORT_MAX,
+					learn_limit: cfg?.global?.learn_limit };
 			}
 		}
 	}

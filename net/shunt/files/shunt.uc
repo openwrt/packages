@@ -14,10 +14,13 @@ import { openlog, syslog, LOG_PID, LOG_DAEMON, LOG_ERR, LOG_WARNING,
 import { load as cfg_load, parse as cfg_parse, MIN as cfg_min } from 'shunt.config';
 import { compile as match_compile } from 'shunt.match';
 import { load as files_load, DIR as FILES_DIR } from 'shunt.list_file';
+import { PATH as LEARNED, fingerprints as learned_fps, save as learned_save,
+	load as learned_load } from 'shunt.learned';
 import { action_name, compile as nft_compile, flip as nft_flip, active as nft_active,
 	refresh, teardown,
 	addr_family, TABLE } from 'shunt.nft';
-import { compile as route_compile, state_ops as route_state_ops } from 'shunt.route';
+import { compile as route_compile, state_ops as route_state_ops,
+	stale as route_stale, route_key, conf_dev } from 'shunt.route';
 import { open as rt_open, exec as rt_exec, describe as rt_describe } from 'shunt.rt';
 import { open as snoop_open, observe, RECV_LEN } from 'shunt.snoop';
 import { names as poll_names, plan as poll_plan,
@@ -151,9 +154,66 @@ function nft_pipe(batch, what) {
 	return true;
 }
 
+// Seconds on CLOCK_MONOTONIC. Everything that measures a lifetime or a
+// duration uses it: the kernel's element timeouts do not follow the wall
+// clock either, and the wall clock jumps - at boot an OpenWrt box starts
+// from the newest file timestamp and NTP moves it, forward or back, while
+// shunt is already running. time() is left for what is shown as a date.
+function mono() {
+	return clock(true)[0];
+}
+
 // shunt's table check
 function table_present() {
 	return quiet([ 'nft', '-t', 'list', 'table', ...split(TABLE, ' ') ]) == 0;
+}
+
+// A write from snoop carries the TTL of the answer it was learned from; one
+// from poll carries none. Either way the element lives no longer than
+// entry_ttl and no shorter than its floor, so a zero TTL still gets a few
+// seconds of coverage and a week-long one does not pin a stale address.
+function queue_writes(st, writes, now) {
+	let max = st.state.cfg.global.entry_ttl;
+	let min = cfg_min.entry_ttl;
+	let fresh = 0;
+
+	for (let w in writes) {
+		if (!st.state.nft.learn[w.set])
+			continue;
+
+		// A kept element brings the time it has left, which may well be
+		// below the floor; it is not stretched to it.
+		let ttl = w.ttl ?? max;
+		w.ttl = (ttl < min && !w.kept) ? min : (ttl > max) ? max : ttl;
+
+		let d = st.cache.due(w.set, w.addr, now, w.ttl);
+
+		if (!d)
+			continue;
+
+		// Anybody on an observed segment can put a frame on the wire that
+		// reads as a DNS answer, so what a set learns is bounded - see
+		// dedupe.uc. Counted per policy, both families together, and said
+		// once per set and poll interval.
+		if (d == 'full') {
+			let pname = substr(w.set, 3);
+
+			st.stats.capped[pname] = (st.stats.capped[pname] ?? 0) + 1;
+
+			if (!st.full_warned[w.set]) {
+				st.full_warned[w.set] = true;
+				log('warn', sprintf('set %s is full, learn_limit is %d - new addresses are not learned until older ones expire',
+					w.set, st.state.cfg.global.learn_limit));
+			}
+			continue;
+		}
+
+		st.pending[`${w.set}/${w.addr}`] = w;
+		if (d == 'new')
+			fresh++;
+	}
+
+	return fresh;
 }
 
 // Re-creates the table if it went away
@@ -173,8 +233,23 @@ function ensure_table(st) {
 
 	st.lost = false;
 	st.stats.reapplied++;
+
+	// The kernel lost the learned elements with the table, shunt did not:
+	// queue what is still running for the next write, with the time it has
+	// left. Not written from here - ensure_table() runs inside
+	// drain_writes() too.
+	let now = mono();
+	let keep = st.cache.dump(now);
+
 	st.cache.reset();
-	log('notice', 'ruleset re-applied - learned addresses refill from the next poll cycle and from snoop');
+	for (let e in keep) {
+		e.ttl = e.exp - now;
+		e.kept = true;
+	}
+	queue_writes(st, keep, now);
+
+	log('notice', sprintf('ruleset re-applied - %d learned address(es) queued to be written back',
+		length(keep)));
 
 	return 'recreated';
 }
@@ -183,34 +258,54 @@ function apply(state) {
 	if (!nft_pipe(state.nft.setup, 'setup'))
 		return false;
 
-	if (length(state.route.rt_tables)) {
-		mkdir('/etc/iproute2/rt_tables.d', 0o755);
-		if (!writefile(RT_TABLES, state.route.rt_tables))
-			log('warn', sprintf('cannot write %s: %s', RT_TABLES, fs_error()));
-	}
+	// Releases up to 0.4.2 kept a name for every table in this file, for
+	// `ip route show table <name>` with iproute2 installed. Nothing of shunt
+	// ever read it, BusyBox ip cannot, and it cost flash writes on every
+	// start and stop - so it is gone, and what an earlier release left
+	// behind is removed once.
+	if (readfile(RT_TABLES) != null)
+		unlink(RT_TABLES);
 
 	rt_quiet(state.route.del);
 
+	// Devices of interfaces netifd knows but has not brought up. A route
+	// through one cannot be added before the device exists - at boot a
+	// tunnel usually does not yet - and its ifup rebuilds the routes
+	// anyway, so that failure is expected and not a warning. An interface
+	// netifd does not know at all has `up` null and is not excused.
+	let later = {};
+
+	for (let p in (state.resolved ?? []))
+		for (let mb in (p.members ?? []))
+			if (mb.up === false && mb.dev != null)
+				later[mb.dev] = true;
+
 	let rt = rtnl();
-	let failed = 0;
-	let reasons = {};
+	let reasons = {}, waiting = {};
 
 	for (let op in state.route.add) {
 		let why = rt ? rt_exec(rt, op) : 'ucode-mod-rtnl missing';
 
-		if (why != null) {
-			failed++;
+		if (why == null)
+			continue;
+
+		debug(sprintf('not applied: %s - %s', rt_describe(op), why));
+
+		let dev = op.msg?.oif;
+
+		if (rt && dev != null && later[dev])
+			waiting[dev] = (waiting[dev] ?? 0) + 1;
+		else
 			reasons[why] = (reasons[why] ?? 0) + 1;
-			debug(sprintf('not applied: %s - %s', rt_describe(op), why));
-		}
 	}
 
 	for (let why in reasons)
 		log('warn', sprintf('%d of %d route/rule operation(s) not applied - %s',
 			reasons[why], length(state.route.add), why));
 
-	if (failed)
-		log('warn', 'policy not applied yet - traffic falls through to main; restart once the interface is up');
+	if (length(waiting))
+		log('info', sprintf('routes through %s follow on ifup - not up yet',
+			join(', ', sort(keys(waiting)))));
 
 	return true;
 }
@@ -220,17 +315,15 @@ function flush(state) {
 		rt_quiet(state.route.del);
 
 	nft_pipe(teardown(), 'teardown');
-
-	if (readfile(RT_TABLES) != null)
-		unlink(RT_TABLES);
 }
 
 function rp_read(k) {
 	return trim(readfile(`/proc/sys/net/ipv4/conf/${k}/rp_filter`) ?? '');
 }
 
-// Distinct, existing policy devices. Deduped so a device shared by several
-// policies is set or reported once.
+// Distinct policy devices, as far as the name is one a /proc path may be
+// built from - see conf_dev() in route.uc. Deduped so a device shared by
+// several policies is set or reported once.
 function policy_devices(policies) {
 	let seen = {}, out = [];
 
@@ -242,7 +335,7 @@ function policy_devices(policies) {
 		for (let mb in (p.members ?? [ { dev: p.interface } ])) {
 			let dev = mb.dev;
 
-			if (length(dev ?? '') && !seen[dev]) {
+			if (conf_dev(dev) && !seen[dev]) {
 				seen[dev] = true;
 				push(out, dev);
 			}
@@ -374,34 +467,18 @@ function build_state(silent) {
 // with large sets from another tool one add element costs seconds of CPU.
 // Writes are collected and applied by a timer whose interval follows the
 // measured cost: an ordinary box stays at the floor, an expensive one backs
-// off.
+// off. An address the sets have not seen yet does not wait for the timer
+// while the interval sits at the floor: its batch is written right after the
+// answer that brought it, at most once a second, so the further connections
+// a client opens after its lookup find the element in place. Refreshes of
+// known elements stay on the timer.
 const WRITE_MIN = 2;
 const WRITE_MAX = 60;
 const WRITE_FACTOR = 3;
 // Kernel timeouts run this much past the lifetime on top of the current
 // write interval: the replacement for an expiring element waits up to one
-// interval in the queue, and time() rounds to the second on both ends.
+// interval in the queue, and the clock rounds to the second on both ends.
 const WRITE_SLACK = 2;
-
-// A write from snoop carries the TTL of the answer it was learned from; one
-// from poll carries none. Either way the element lives no longer than
-// entry_ttl and no shorter than its floor, so a zero TTL still gets a few
-// seconds of coverage and a week-long one does not pin a stale address.
-function queue_writes(st, writes, now) {
-	let max = st.state.cfg.global.entry_ttl;
-	let min = cfg_min.entry_ttl;
-
-	for (let w in writes) {
-		if (!st.state.nft.learn[w.set])
-			continue;
-
-		let ttl = w.ttl ?? max;
-		w.ttl = (ttl < min) ? min : (ttl > max) ? max : ttl;
-
-		if (st.cache.due(w.set, w.addr, now, w.ttl))
-			st.pending[`${w.set}/${w.addr}`] = w;
-	}
-}
 
 function drain_writes(st) {
 	let due = values(st.pending);
@@ -411,22 +488,48 @@ function drain_writes(st) {
 	if (!length(due))
 		return;
 
-	let r = refresh(due, st.state.cfg.global.entry_ttl,
-		st.interval + WRITE_SLACK);
+	let slack = st.interval + WRITE_SLACK;
+	let r = refresh(due, st.state.cfg.global.entry_ttl, slack);
 	report('refresh', r.issues);
 
 	if (!length(r.batch))
 		return;
 
-	let t0 = time();
+	let t0 = mono();
 	let ok = nft_pipe(r.batch, 'refresh');
-	let cost = time() - t0;
+	let cost = mono() - t0;
 
-	if (ok)
-		debug(sprintf('%d element(s) written in %ds', length(due), cost));
-	else if (ensure_table(st) == 'recreated')
+	if (ok) {
 		for (let w in due)
-			st.pending[`${w.set}/${w.addr}`] = w;
+			st.cache.written(w.set, w.addr, slack);
+
+		debug(sprintf('%d element(s) written in %ds', length(due), cost));
+	}
+	else
+		switch (ensure_table(st)) {
+		case 'recreated':
+			for (let w in due)
+				st.pending[`${w.set}/${w.addr}`] = w;
+			break;
+
+		// The table is there and the batch was refused all the same. The
+		// cache has every element of it on record as written, and would
+		// hold back the next answer for the same address until half its
+		// lifetime is over - with the address in no set all that time. So
+		// the batch goes out once more with the next write, and what fails
+		// a second time is forgotten: the next answer or poll cycle brings
+		// it back as new.
+		case 'ok':
+			for (let w in due) {
+				if (w.retried)
+					st.cache.forget(w.set, w.addr);
+				else {
+					w.retried = true;
+					st.pending[`${w.set}/${w.addr}`] = w;
+				}
+			}
+			break;
+		}
 
 	let want = cost * WRITE_FACTOR;
 
@@ -443,9 +546,50 @@ function drain_writes(st) {
 	}
 }
 
+// Writes the queue now when it holds an address the sets have not seen. Only
+// at the floor interval - where it is above, a write costs seconds and the
+// timer is the throttle - and at most once per second, so a burst of new
+// answers on a busy segment is one nft run, not one per answer. A new
+// address that hits the limit goes out with one deferred run a second
+// later instead of waiting for the next tick.
+function drain_fresh(st, fresh) {
+	if (!fresh || st.interval > WRITE_MIN)
+		return;
+
+	let now = mono();
+
+	if (st.fresh_at != now) {
+		st.fresh_at = now;
+		drain_writes(st);
+		return;
+	}
+
+	if (st.fresh_wait)
+		return;
+
+	st.fresh_wait = true;
+	st.later(1000);
+}
+
 // The route renderer needs the probe tables the nft renderer numbered.
 function route_opts(state) {
 	return { ...state.opts, probes: state.nft.probes };
+}
+
+// The interface each policy's new connections take, null for the fallback.
+// nft_active() answers which member's mark is set, and with fallback
+// 'block' that is the first member even when all are dead - its table
+// then holds only the prohibit route.
+function in_use(chains, dead) {
+	let act = nft_active(chains, dead), out = {};
+
+	for (let pn, j in act) {
+		let mb = (j != null) ? chains[pn]?.members?.[j] : null;
+
+		out[pn] = (mb && !dead?.[mb.name]) ? mb.name : null;
+	}
+
+	return out;
 }
 
 // Link or probe state changed. Interfaces that became dead or alive are
@@ -465,7 +609,7 @@ function apply_dead(state, wq, routes) {
 	if (!length(changed))
 		return;
 
-	let before = nft_active(state.nft.chains, state.opts.dead);
+	let before = in_use(state.nft.chains, state.opts.dead);
 
 	state.opts.dead = dead;
 
@@ -477,17 +621,16 @@ function apply_dead(state, wq, routes) {
 	if (length(batch) && !nft_pipe(batch, 'track'))
 		ensure_table(wq);
 
-	let after = nft_active(n.chains, dead);
+	let after = in_use(n.chains, dead);
 
 	for (let pn in sort(keys(after))) {
 		if (before[pn] === after[pn])
 			continue;
 
 		let p = filter(state.resolved, (x) => x.name == pn)[0];
-		let mb = (after[pn] != null) ? p?.members?.[after[pn]] : null;
 
-		log('notice', mb
-			? sprintf('policy %s: new connections use %s', pn, mb.name)
+		log('notice', (after[pn] != null)
+			? sprintf('policy %s: new connections use %s', pn, after[pn])
 			: sprintf('policy %s: no interface left - fallback %s', pn, p?.fallback ?? 'main'));
 	}
 
@@ -547,11 +690,12 @@ function run() {
 
 	mkdir(FILES_DIR, 0o755);
 
-	let cache = dedupe_create(state.cfg.global.entry_ttl);
+	let cache = dedupe_create(state.cfg.global.entry_ttl,
+		state.cfg.global.learn_limit);
 	let targets = poll_names(state.cfg.policies);
 
 	let stats = { started: time(), resolv: false, snoop: [],
-		matched: 0, drops: {}, reapplied: 0,
+		matched: 0, drops: {}, reapplied: 0, capped: {},
 		files: { count: state.files.files, entries: state.files.entries,
 			addresses: state.files.addresses, refreshed: null } };
 
@@ -569,7 +713,26 @@ function run() {
 	let unresolved = {};
 
 	let wq = { state, cache, stats, pending: {}, lost: false,
-		interval: WRITE_MIN, timer: null };
+		interval: WRITE_MIN, timer: null, fresh_at: 0, fresh_wait: false,
+		later: null, full_warned: {} };
+
+	// The deferred run of drain_fresh(). The timer is kept and re-armed, not
+	// created per run, so nothing depends on how a given ucode release keeps
+	// an unreferenced timer alive.
+	let fresh_timer = null;
+
+	function fresh_run() {
+		wq.fresh_wait = false;
+		wq.fresh_at = mono();
+		drain_writes(wq);
+	}
+
+	wq.later = (ms) => {
+		if (fresh_timer)
+			fresh_timer.set(ms);
+		else
+			fresh_timer = uloop.timer(ms, fresh_run);
+	};
 
 	// Re-reads the list files, swaps the matcher and refills the address
 	// file sets - the two things a changed list needs. Nothing else moves:
@@ -637,7 +800,8 @@ function run() {
 			}
 		}
 
-		queue_writes(wq, poll_plan(res, state.matcher, targets), time());
+		drain_fresh(wq, queue_writes(wq, poll_plan(res, state.matcher,
+			targets), mono()));
 	}
 
 	// The cache is pruned here and not at the tail of poll_cycle():
@@ -650,10 +814,23 @@ function run() {
 		ensure_table(wq);
 
 		poll_cycle();
-		cache.prune(time());
+		cache.prune(mono());
+		wq.full_warned = {};
 	}
 
 	wq.timer = uloop.interval(WRITE_MIN * 1000, () => drain_writes(wq));
+
+	let kept = learned_load(LEARNED,
+		learned_fps(state.cfg.policies, state.nft.learn), mono());
+
+	if (kept?.bad)
+		log('warn', sprintf('%s unreadable - learned addresses start empty', LEARNED));
+	else if (kept) {
+		queue_writes(wq, kept.writes, mono());
+		drain_writes(wq);
+		log('info', sprintf('%d learned address(es) carried over, %d dropped with a changed or removed policy',
+			length(kept.writes), kept.dropped));
+	}
 
 	poll_cycle();
 	uloop.interval(state.cfg.global.poll_interval * 1000, tick);
@@ -693,8 +870,20 @@ function run() {
 			apply_dead(state, wq, false);
 			r = route_compile(resolved, state.nft.marks, route_opts(state));
 
-			rt_quiet(state.route.del);
-			rt_quiet(r.add);
+			// Applied on top of what is there, not after taking it out: a
+			// rule that exists answers EEXIST, a route is replaced in place.
+			// Only what the new rendering no longer has is removed, and
+			// that after the new one is in - see stale() in route.uc.
+			let rt = rtnl(), failed = {};
+
+			for (let op in r.add) {
+				let why = rt ? rt_exec(rt, op) : 'ucode-mod-rtnl missing';
+
+				if (why != null && op.cmd == 'newroute')
+					failed[route_key(op.msg)] = true;
+			}
+
+			rt_quiet(route_stale(state.route.add, r.add, failed));
 
 			state.route = r;
 
@@ -757,6 +946,7 @@ function run() {
 				},
 				reapplied: stats.reapplied,
 				dedupe: cache.size(),
+				capped: stats.capped,
 				files: stats.files,
 				track: track_status(),
 				active: nft_active(state.nft.chains, state.opts.dead),
@@ -808,7 +998,7 @@ function run() {
 			// Each handler closes over its own socket; binding the loop
 			// variable would leave them all reading the last one opened.
 			uloop.handle(sock, () => {
-				let frame;
+				let frame, fresh = 0;
 
 				while ((frame = sock.recv(RECV_LEN, socket.MSG_DONTWAIT)) != null) {
 					let v = observe(frame, state.matcher);
@@ -830,8 +1020,10 @@ function run() {
 
 					debug(sprintf('snoop: %s -> %s (%d addr)',
 						v.qname, join(', ', v.policies), length(writes)));
-					queue_writes(wq, writes, time());
+					fresh += queue_writes(wq, writes, mono());
 				}
+
+				drain_fresh(wq, fresh);
 			}, uloop.ULOOP_READ);
 		}
 
@@ -870,7 +1062,12 @@ function run() {
 			delete h.socks[fam];
 		}
 
+		// Every state change of a round goes into one apply_dead(): two
+		// tunnels failing in the same round are one flip, not a switch to
+		// the second one followed by the fallback.
 		function round() {
+			let changed = false;
+
 			for (let h in tracked) {
 				if (h.sent) {
 					let change = track_step(h, h.got);
@@ -881,7 +1078,7 @@ function run() {
 							? sprintf('track: %s does not answer - its policies fall back until it does', h.name)
 							: sprintf('track: %s answers again - its policies are back on it', h.name));
 						state.alive[h.name] = h.alive;
-						apply_dead(state, wq, true);
+						changed = true;
 					}
 				}
 
@@ -938,6 +1135,9 @@ function run() {
 					}
 				}
 			}
+
+			if (changed)
+				apply_dead(state, wq, true);
 		}
 
 		round();
@@ -957,6 +1157,9 @@ function run() {
 	uloop.run();
 
 	log('notice', 'stopping');
+	if (!learned_save(LEARNED, cache.dump(mono()),
+			learned_fps(state.cfg.policies, state.nft.learn)))
+		log('warn', sprintf('cannot write %s: %s', LEARNED, fs_error()));
 	for (let sock in socks)
 		sock.close();
 	for (let h in tracked)
