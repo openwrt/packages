@@ -1,7 +1,7 @@
-From 9a5d025a873145afc16fea3078ae3410d2291280 Mon Sep 17 00:00:00 2001
+From ea8242494080f0c10f718dcdf7fb42be188981ac Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Tue, 6 Aug 2024 09:06:01 +0000
-Subject: [PATCH 03/13] avcodec: Add common V4L2 Request API code
+Subject: [PATCH 03/11] avcodec: Add common V4L2 Request API code
 
 Add initial helpers for supporting V4L2 Request API hwaccels.
 
@@ -24,14 +24,38 @@ Signed-off-by: Jernej Skrabec <jernej.skrabec@gmail.com>
 Co-developed-by: Alex Bee <knaerzche@gmail.com>
 Signed-off-by: Alex Bee <knaerzche@gmail.com>
 Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
+(cherry picked from commit b002d7464d0c5824f21e01f66261bba815f3ae4f)
 ---
+ .forgejo/CODEOWNERS       |   1 +
+ Changelog                 |   2 +
  libavcodec/Makefile       |   2 +
  libavcodec/v4l2_request.c | 249 ++++++++++++++++++++++++++++++++++++++
  libavcodec/v4l2_request.h |  64 ++++++++++
- 3 files changed, 315 insertions(+)
+ 5 files changed, 318 insertions(+)
  create mode 100644 libavcodec/v4l2_request.c
  create mode 100644 libavcodec/v4l2_request.h
 
+--- a/.forgejo/CODEOWNERS
++++ b/.forgejo/CODEOWNERS
+@@ -64,6 +64,7 @@ libavcodec/.*siren.* @lynne
+ libavcodec/smpte_436m.* @programmerjake
+ libavcodec/svq1.* @pross
+ libavcodec/svq3.* @pross
++libavcodec/v4l2_request.* @Kwiboo @jernej @knaerzche
+ libavcodec/.*vc2.* @lynne
+ libavcodec/videotoolbox.* @ePirat
+ libavcodec/vp3.* @pross
+--- a/Changelog
++++ b/Changelog
+@@ -140,6 +140,8 @@ version 8.1:
+ - ProRes Vulkan encoder
+ - LCEVC parser
+ - LCEVC enhancement layer exporting in MPEG-TS
++- Extend AMF Color Converter (vf_vpp_amf) HDR capabilities
++- V4L2 Request API stateless decoder support
+ 
+ 
+ version 8.0:
 --- a/libavcodec/Makefile
 +++ b/libavcodec/Makefile
 @@ -185,6 +185,7 @@ OBJS-$(CONFIG_VIDEODSP)                +

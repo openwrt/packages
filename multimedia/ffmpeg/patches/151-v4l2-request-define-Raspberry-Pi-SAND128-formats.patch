@@ -1,0 +1,36 @@
+From e22ff2a19e49219d60395d6033dc5962e30091f1 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Sun, 8 Nov 2026 22:26:27 +0000
+Subject: [PATCH] v4l2-request: define the Raspberry Pi SAND128 pixelformats
+
+The capture format table maps the Raspberry Pi HEVC decoder's
+NV12MT_COL128 and NV12MT_10_COL128 formats to DRM SAND128 frames only
+where linux/videodev2.h defines them. Both are Raspberry Pi kernel
+additions that the mainline kernel headers of a cross toolchain lack,
+so the table is built without them, the hwaccel finds no capture
+format it supports on rpi-hevc-dec, and HEVC falls back to software
+decoding. Define them when absent, with the values of the Raspberry Pi
+kernel UAPI.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ libavutil/hwcontext_v4l2request.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+--- a/libavutil/hwcontext_v4l2request.c
++++ b/libavutil/hwcontext_v4l2request.c
+@@ -34,6 +34,14 @@
+ #include "hwcontext_v4l2request_internal.h"
+ #include "mem.h"
+ 
++#ifndef V4L2_PIX_FMT_NV12MT_COL128
++#define V4L2_PIX_FMT_NV12MT_COL128              v4l2_fourcc('N', 'c', '1', '2')
++#endif
++
++#ifndef V4L2_PIX_FMT_NV12MT_10_COL128
++#define V4L2_PIX_FMT_NV12MT_10_COL128           v4l2_fourcc('N', 'c', '3', '0')
++#endif
++
+ typedef struct V4L2RequestVideoDecoder {
+     dev_t media_dev;
+     dev_t video_dev;

@@ -61,6 +61,7 @@ config FFMPEG_LIBDRM
 
 config FFMPEG_V4L2_M2M
 	bool "V4L2 mem2mem (stateful) decoders/encoders"
+	select FFMPEG_LIBDRM
 	default y
 
 config FFMPEG_V4L2_REQUEST

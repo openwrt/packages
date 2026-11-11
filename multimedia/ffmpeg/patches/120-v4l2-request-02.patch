@@ -1,7 +1,7 @@
-From 2d317790a8e86fe5451c48d28f4925f3372591e3 Mon Sep 17 00:00:00 2001
+From 313288eef1c579f199c0df6eb2c83d796e30d12b Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Tue, 6 Aug 2024 09:06:02 +0000
-Subject: [PATCH 02/13] avutil/hwcontext_v4l2request: Probe for a capable media
+Subject: [PATCH 02/11] avutil/hwcontext_v4l2request: Probe for a capable media
  and video device
 
 Probe all media devices and its linked video devices to locate a video
@@ -21,6 +21,7 @@ Signed-off-by: Jernej Skrabec <jernej.skrabec@gmail.com>
 Co-developed-by: Alex Bee <knaerzche@gmail.com>
 Signed-off-by: Alex Bee <knaerzche@gmail.com>
 Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
+(cherry picked from commit b61e532f75d0b5937d010f65c1df099cc5a5983c)
 ---
  configure                         |   9 +-
  libavutil/hwcontext_v4l2request.c | 513 +++++++++++++++++++++++++++++-
