@@ -1,0 +1,51 @@
+From 8a3f10e0295a1587fd4beef414386290aca89605 Mon Sep 17 00:00:00 2001
+From: Amr Fateem <amr.fateem@yahoo.com>
+Date: Wed, 11 Nov 2026 21:06:01 +0200
+Subject: [PATCH] openwrt: clean residual transparent-proxy rules on stop
+
+When a core process stops, the in-memory transparentOn flag may be
+false even though tproxy rules from an earlier process are still
+installed.  The early return leaves those rules and the policy route
+behind, so stopping the proxy or the service leaves no internet.
+
+The stop request can also arrive when no core process is tracked, for
+example after a process restart.  Clean the residual rules in that path
+too.  The normal path still runs the transparent-proxy hooks and removes
+the rules as before.
+
+Signed-off-by: Amr Fateem <amr.fateem@yahoo.com>
+---
+ kernel/v2ray/processManager.go | 15 ++++++++++++---
+ 1 file changed, 12 insertions(+), 3 deletions(-)
+
+--- a/kernel/v2ray/processManager.go
++++ b/kernel/v2ray/processManager.go
+@@ -170,9 +170,13 @@ func (m *CoreProcessManager) CheckAndSto
+ 
+ func (m *CoreProcessManager) checkAndStopTransparentProxy(setting *configure.Setting) {
+ 	if !m.transparentOn.Swap(false) {
+-		// Nothing installed by this process, so nothing to remove and no hook
+-		// to run. Rules left behind by an earlier process are removed by
+-		// cleanupResidualTransparentProxyRules when the rules are set up.
++		// Clean residual rules from an earlier process too: after a
++		// restart the in-memory flag is false while the tproxy rules
++		// may still be installed, which blackholes all traffic when
++		// the core stops.
++		if setting != nil && setting.Transparent != configure.TransparentClose {
++			deleteTransparentProxyRules()
++		}
+ 		return
+ 	}
+ 	if setting == nil {
+@@ -237,6 +241,11 @@ func (m *CoreProcessManager) Stop(saveRu
+ 	m.mu.Lock()
+ 	defer m.mu.Unlock()
+ 	if m.p == nil {
++		// A previous process may have left tproxy rules behind; a stop
++		// request must still restore direct connectivity.
++		hostMu.Lock()
++		deleteTransparentProxyRules()
++		hostMu.Unlock()
+ 		return
+ 	}
+ 	if saveRunning {

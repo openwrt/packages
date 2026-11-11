@@ -99,6 +99,17 @@ start_service() {
 	procd_close_instance
 }
 
+stop_service() {
+	# v2rayA normally removes its tproxy rules on SIGTERM, but a killed
+	# process or a proxy-only stop can leave them behind.  Remove any
+	# residual state so stopping the service always restores connectivity.
+	nft delete table inet v2raya 2>/dev/null
+	ip rule del fwmark 0x40/0xc0 table 100 2>/dev/null
+	ip -6 rule del fwmark 0x40/0xc0 table 100 2>/dev/null
+	ip route flush table 100 2>/dev/null
+	ip -6 route flush table 100 2>/dev/null
+}
+
 reload_service() {
 	# v2rayA does not reload its configuration on SIGHUP; a restart is the
 	# only safe way to apply new UCI values.
