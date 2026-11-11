@@ -1,0 +1,105 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Thu, 12 Nov 2026 15:57:51 +0000
+Subject: [PATCH] v4l2codecs: Renegotiate after a restart
+
+stop() releases the allocators and the output state but keeps the
+negotiated video info. After a restart on the same stream, the format
+checks in new_sequence() and new_picture() find nothing changed, so
+the AV1 decoder never calls negotiate() and crashes on the first
+picture, which has no allocators. The other decoders renegotiate only
+because resetting min_pool_size along with the pool happens to force
+it; without that, as in 1.28, VP9 drops every frame and H.264 and
+H.265 fail with not-negotiated.
+
+Reset the video info in stop() of every decoder, so that the first
+sequence after a restart negotiates again. The VP9 and AV1 decoders
+now stream off through their helper there, as the others do, which
+also clears the streaming flag.
+---
+ sys/v4l2codecs/gstv4l2codecav1dec.c   | 6 +++---
+ sys/v4l2codecs/gstv4l2codech264dec.c  | 2 ++
+ sys/v4l2codecs/gstv4l2codech265dec.c  | 2 ++
+ sys/v4l2codecs/gstv4l2codecmpeg2dec.c | 2 ++
+ sys/v4l2codecs/gstv4l2codecvp8dec.c   | 2 ++
+ sys/v4l2codecs/gstv4l2codecvp9dec.c   | 6 +++---
+ 6 files changed, 14 insertions(+), 6 deletions(-)
+
+--- a/sys/v4l2codecs/gstv4l2codecav1dec.c
++++ b/sys/v4l2codecs/gstv4l2codecav1dec.c
+@@ -282,11 +282,11 @@ gst_v4l2_codec_av1_dec_stop (GstVideoDec
+ {
+   GstV4l2CodecAV1Dec *self = GST_V4L2_CODEC_AV1_DEC (decoder);
+ 
+-  gst_v4l2_decoder_streamoff (self->decoder, GST_PAD_SINK);
+-  gst_v4l2_decoder_streamoff (self->decoder, GST_PAD_SRC);
+-
++  gst_v4l2_codec_av1_dec_streamoff (self);
+   gst_v4l2_codec_av1_dec_reset_allocation (self);
+ 
++  gst_video_info_dma_drm_init (&self->vinfo_drm);
++
+   if (self->output_state)
+     gst_video_codec_state_unref (self->output_state);
+   self->output_state = NULL;
+--- a/sys/v4l2codecs/gstv4l2codech264dec.c
++++ b/sys/v4l2codecs/gstv4l2codech264dec.c
+@@ -298,6 +298,8 @@ gst_v4l2_codec_h264_dec_stop (GstVideoDe
+   gst_v4l2_codec_h264_dec_streamoff (self);
+   gst_v4l2_codec_h264_dec_reset_allocation (self);
+ 
++  gst_video_info_dma_drm_init (&self->vinfo_drm);
++
+   if (self->output_state)
+     gst_video_codec_state_unref (self->output_state);
+   self->output_state = NULL;
+--- a/sys/v4l2codecs/gstv4l2codech265dec.c
++++ b/sys/v4l2codecs/gstv4l2codech265dec.c
+@@ -358,6 +358,8 @@ gst_v4l2_codec_h265_dec_stop (GstVideoDe
+   gst_v4l2_codec_h265_dec_streamoff (self);
+   gst_v4l2_codec_h265_dec_reset_allocation (self);
+ 
++  gst_video_info_dma_drm_init (&self->vinfo_drm);
++
+   if (self->output_state)
+     gst_video_codec_state_unref (self->output_state);
+   self->output_state = NULL;
+--- a/sys/v4l2codecs/gstv4l2codecmpeg2dec.c
++++ b/sys/v4l2codecs/gstv4l2codecmpeg2dec.c
+@@ -214,6 +214,8 @@ gst_v4l2_codec_mpeg2_dec_stop (GstVideoD
+   gst_v4l2_codec_mpeg2_dec_streamoff (self);
+   gst_v4l2_codec_mpeg2_dec_reset_allocation (self);
+ 
++  gst_video_info_dma_drm_init (&self->vinfo_drm);
++
+   if (self->output_state)
+     gst_video_codec_state_unref (self->output_state);
+   self->output_state = NULL;
+--- a/sys/v4l2codecs/gstv4l2codecvp8dec.c
++++ b/sys/v4l2codecs/gstv4l2codecvp8dec.c
+@@ -216,6 +216,8 @@ gst_v4l2_codec_vp8_dec_stop (GstVideoDec
+   gst_v4l2_codec_vp8_dec_streamoff (self);
+   gst_v4l2_codec_vp8_dec_reset_allocation (self);
+ 
++  gst_video_info_dma_drm_init (&self->vinfo_drm);
++
+   if (self->output_state)
+     gst_video_codec_state_unref (self->output_state);
+   self->output_state = NULL;
+--- a/sys/v4l2codecs/gstv4l2codecvp9dec.c
++++ b/sys/v4l2codecs/gstv4l2codecvp9dec.c
+@@ -481,11 +481,11 @@ gst_v4l2_codec_vp9_dec_stop (GstVideoDec
+ {
+   GstV4l2CodecVp9Dec *self = GST_V4L2_CODEC_VP9_DEC (decoder);
+ 
+-  gst_v4l2_decoder_streamoff (self->decoder, GST_PAD_SINK);
+-  gst_v4l2_decoder_streamoff (self->decoder, GST_PAD_SRC);
+-
++  gst_v4l2_codec_vp9_dec_streamoff (self);
+   gst_v4l2_codec_vp9_dec_reset_allocation (self);
+ 
++  gst_video_info_dma_drm_init (&self->vinfo_drm);
++
+   if (self->output_state)
+     gst_video_codec_state_unref (self->output_state);
+   self->output_state = NULL;

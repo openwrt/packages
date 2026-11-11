@@ -1,27 +1,28 @@
-From ca2995c3cf9c887ff1605cc07ac6bb4bacfc0797 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Daniel Golle <daniel@makrotopia.org>
 Date: Thu, 29 Oct 2026 18:51:46 +0200
 Subject: [PATCH] v4l2codecs: propagate flushing when acquiring the output
  buffer
 
-When a flush, such as the one a seek performs, reaches a stateless
-decoder while its streaming thread is between the slice decode and
-end_picture, acquiring the output buffer from the src pool returns
-GST_FLOW_FLUSHING. The h264, h265 and mpeg2 decoders passed that through
-the gboolean ensure_output_buffer() and submit_bitstream() as a plain
-FALSE, and decode_slice() and end_picture() turned it into
-GST_FLOW_ERROR. gst_*_decoder_handle_frame() posts GST_VIDEO_DECODER_ERROR
-only for GST_FLOW_ERROR, so a flush arriving mid-frame was reported as a
-fatal "Failed to decode data" and playback stopped. A looping video that
-seeks while frames are still in flight triggers this on hardware;
-software decoders, idle at the seek, and the av1, vp8 and vp9 decoders
-here, which already return the acquire flow, are unaffected.
+The h264, h265 and mpeg2 decoders take the output buffer for a picture
+from their src pool when they submit it. When downstream holds on to
+the decoded frames, as WebKit's video sink does, the pool runs empty
+and gst_buffer_pool_acquire_buffer() blocks until a frame comes back.
+A flush, such as the one a seek or a looping video performs, then
+unblocks it with GST_FLOW_FLUSHING. ensure_output_buffer() and
+submit_bitstream() returned that as a plain FALSE, which decode_slice()
+and end_picture() turned into GST_FLOW_ERROR, so the flush was reported
+as a fatal "Failed to decode data" and playback stopped.
 
 Make ensure_output_buffer() and submit_bitstream() return GstFlowReturn
 and propagate it through decode_slice() and end_picture(), so
 GST_FLOW_FLUSHING reaches the base class, which completes the flush.
+Commit eedb5a27ba ("v4l2codecs: av1/vp9: Properly propagate flow ret
+such as FLUSHING") did the same for av1 and vp9, and vp8 already
+returns the acquire flow.
 
 Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+Part-of: <https://gitlab.freedesktop.org/gstreamer/gstreamer/-/merge_requests/12894>
 ---
  sys/v4l2codecs/gstv4l2codech264dec.c  | 35 +++++++++++++++------------
  sys/v4l2codecs/gstv4l2codech265dec.c  | 35 +++++++++++++++------------
