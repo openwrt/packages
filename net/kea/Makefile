@@ -49,7 +49,7 @@ Package/kea-dhcp4-helper/conffiles = /etc/config/dhcp
 
 ###### *************************************************************************
 define Package/kea
-	$(call Package/kea/Default)
+  $(call Package/kea/Default)
   TITLE+=ISC Kea
 endef
 # shown in LuCI package description
@@ -64,9 +64,9 @@ endef
 
 ###### *************************************************************************
 define Package/kea-libs
-	$(call Package/kea/Default)
-	TITLE+=Libraries
-	DEPENDS:=+libopenssl +libstdcpp +log4cplus +boost
+  $(call Package/kea/Default)
+  TITLE+=Libraries
+  DEPENDS:=+libopenssl +libstdcpp +log4cplus +boost
 endef
 define Package/kea-libs/description
 		Kea required Libraries.
@@ -74,10 +74,10 @@ endef
 
 ###### *************************************************************************
 define Package/kea-ctrl
-	$(call Package/kea/Default)
-	TITLE+=Control
-	DEPENDS:=+procps-ng +procps-ng-ps +kea-dhcp4 \
-		+IPV6:kea-dhcp6 +kea-dhcp-ddns
+  $(call Package/kea/Default)
+  TITLE+=Control
+  DEPENDS:=+procps-ng +procps-ng-ps +kea-dhcp4 \
+    +IPV6:kea-dhcp6 +kea-dhcp-ddns
 endef
 define Package/kea-ctrl/description
 	Tool to start, stop, reconfigure, and report status for the Kea servers.
@@ -85,9 +85,9 @@ endef
 
 ###### *************************************************************************
 define Package/kea-dhcp4
-	$(call Package/kea/Default)
-	TITLE+=DHCP Server v4
-	DEPENDS:=+kea-libs
+  $(call Package/kea/Default)
+  TITLE+=DHCP Server v4
+  DEPENDS:=+kea-libs
 endef
 define Package/kea-dhcp4/description
     The DHCPv4 server process. This process responds to DHCPv4 queries from clients.
@@ -95,9 +95,9 @@ endef
 
 ###### *************************************************************************
 define Package/kea-dhcp4-helper
-	$(call Package/kea/Default)
-	TITLE+=DHCP Server v4 importer of legacy UCI configs and Bind helper
-	DEPENDS:=@PACKAGE_bind-server +kea-dhcp4 +bind-rndc +bind-client
+  $(call Package/kea/Default)
+  TITLE+=DHCP Server v4 importer of legacy UCI configs and Bind helper
+  DEPENDS:=@PACKAGE_bind-server +kea-dhcp4 +bind-rndc +bind-client
 endef
 define Package/kea-dhcp4-helper/description
     The DHCPv4 UCI importer. This helper imports legacy UCI configs and then
@@ -106,9 +106,9 @@ endef
 
 ###### *************************************************************************
 define Package/kea-dhcp6
-	$(call Package/kea/Default)
-	TITLE+=DHCP Server v6
-	DEPENDS:=@IPV6 +kea-libs
+  $(call Package/kea/Default)
+  TITLE+=DHCP Server v6
+  DEPENDS:=@IPV6 +kea-libs
 endef
 define Package/kea-dhcp6/description
     The DHCPv6 server process. This process responds to DHCPv6 queries from clients.
@@ -116,9 +116,9 @@ endef
 
 ###### *************************************************************************
 define Package/kea-dhcp-ddns
-	$(call Package/kea/Default)
-	TITLE+=DHCP Dynamic DNS
-	DEPENDS:=+kea-libs
+  $(call Package/kea/Default)
+  TITLE+=DHCP Dynamic DNS
+  DEPENDS:=+kea-libs
 endef
 define Package/kea-dhcp-ddns/description
 		The DHCP Dynamic DNS process. This process acts as an intermediary between
@@ -128,9 +128,9 @@ endef
 
 ###### *************************************************************************
 define Package/kea-admin
-	$(call Package/kea/Default)
-	TITLE+=Admin
-	DEPENDS:=+kea-libs
+  $(call Package/kea/Default)
+  TITLE+=Admin
+  DEPENDS:=+kea-libs
 endef
 define Package/kea-admin/description
    	A useful tool for database backend maintenance (creating a new database,
@@ -139,9 +139,9 @@ endef
 
 ###### *************************************************************************
 define Package/kea-hook-ha
-	$(call Package/kea/Default)
-	TITLE+=High Availability hook library
-	DEPENDS:=+kea-libs +kea-hook-lease-cmds
+  $(call Package/kea/Default)
+  TITLE+=High Availability hook library
+  DEPENDS:=+kea-libs +kea-hook-lease-cmds
 endef
 define Package/kea-hook-ha/description
 	The high availability hook library.
@@ -149,9 +149,9 @@ endef
 
 ###### *************************************************************************
 define Package/kea-hook-lease-cmds
-	$(call Package/kea/Default)
-	TITLE+=Lease Commands hook library
-	DEPENDS:=+kea-libs
+  $(call Package/kea/Default)
+  TITLE+=Lease Commands hook library
+  DEPENDS:=+kea-libs
 endef
 define Package/kea-hook-lease-cmds/description
 	The lease commands hook library.
@@ -159,9 +159,9 @@ endef
 
 ##### *************************************************************************
 define Package/kea-lfc
-	$(call Package/kea/Default)
-	TITLE+=lfc
-	DEPENDS:=+kea-libs
+  $(call Package/kea/Default)
+  TITLE+=lfc
+  DEPENDS:=+kea-libs
 endef
 define Package/kea-lfc/description
     This process removes redundant information from the files used to provide
@@ -171,9 +171,9 @@ endef
 
 ##### *************************************************************************
 define Package/kea-perfdhcp
-	$(call Package/kea/Default)
-	TITLE+=perfdhcp (Benchmarking)
-	DEPENDS:=+kea-libs
+  $(call Package/kea/Default)
+  TITLE+=perfdhcp (Benchmarking)
+  DEPENDS:=+kea-libs
 endef
 define Package/kea-perfdhcp/description
      A DHCP benchmarking tool which simulates multiple clients to test both
@@ -182,9 +182,9 @@ endef
 
 ###### *************************************************************************
 define Package/kea-shell
-	$(call Package/kea/Default)
-	TITLE+=shell
-	DEPENDS:=+kea-libs +python3-light +python3-urllib +python3-openssl
+  $(call Package/kea/Default)
+  TITLE+=shell
+  DEPENDS:=+kea-libs +python3-light +python3-urllib +python3-openssl
 endef
 define Package/kea-shell/description
      This simple text client uses the REST interface to connect to the Kea
@@ -193,9 +193,9 @@ endef
 
 ###### *************************************************************************
 define Package/kea-uci
-	$(call Package/kea/Default)
-	TITLE+=UCI support
-	DEPENDS:=@(PACKAGE_kea-ctrl||PACKAGE_kea-dhcp4||PACKAGE_kea-dhcp6||PACKAGE_kea-dhcp-ddns)
+  $(call Package/kea/Default)
+  TITLE+=UCI support
+  DEPENDS:=@(PACKAGE_kea-ctrl||PACKAGE_kea-dhcp4||PACKAGE_kea-dhcp6||PACKAGE_kea-dhcp-ddns)
 endef
 define Package/kea-uci/description
 	Kea PROCD/UCI support. This package installs a UCI config file and
