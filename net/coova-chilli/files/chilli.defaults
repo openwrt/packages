@@ -1,0 +1,9 @@
+#!/bin/sh
+uci -q batch <<-EOF
+	delete firewall.chilli
+	set firewall.chilli=include
+	set firewall.chilli.type=script
+	set firewall.chilli.path=/usr/share/coova-chilli/firewall.sh
+	set firewall.chilli.fw4_compatible=1
+	commit firewall
+EOF
