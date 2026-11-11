@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cache-domains
 PKG_VERSION:=2.4.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Gerard Ryan <G.M0N3Y.2503@gmail.com>
 
@@ -49,6 +49,7 @@ define Package/cache-domains-mbedtls
   TITLE += (mbedtls)
   DEPENDS += +libustream-mbedtls
   VARIANT:=mbedtls
+  CONFLICTS:=cache-domains-openssl
 endef
 Package/cache-domains-mbedtls/description = $(Package/cache-domains/description/default)
 Package/cache-domains-mbedtls/install = $(Package/cache-domains/install/default)
@@ -59,6 +60,7 @@ define Package/cache-domains-wolfssl
   DEPENDS += +libustream-wolfssl
   VARIANT:=wolfssl
   DEFAULT_VARIANT:=1
+  CONFLICTS:=cache-domains-openssl cache-domains-mbedtls
 endef
 Package/cache-domains-wolfssl/description = $(Package/cache-domains/description/default)
 Package/cache-domains-wolfssl/install = $(Package/cache-domains/install/default)
