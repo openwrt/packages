@@ -1,0 +1,54 @@
+From a15d506dbefb531366ad605c44686043de30fb3e Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Wed, 9 Sep 2026 02:14:14 +0100
+Subject: [PATCH] udev_enumerate: scan the classes of matched subsystems
+
+/sys/dev lists only devices that own a device node, so an enumeration
+never returns class members without one, such as the sound card
+objects PipeWire's ALSA plugin looks for: it sees the control and PCM
+nodes but never a card. For each subsystem the caller matched, also
+scan /sys/class/<subsystem>, skipping syspaths already listed.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ udev_enumerate.c | 15 ++++++++++++++-
+ 1 file changed, 14 insertions(+), 1 deletion(-)
+
+--- a/udev_enumerate.c
++++ b/udev_enumerate.c
+@@ -241,7 +241,9 @@ static void add_device(struct udev_enume
+         return;
+     }
+ 
+-    udev_list_entry_add(&udev_enumerate->devices, udev_device_get_syspath(udev_device), NULL, 0);
++    if (!udev_list_entry_get_by_name(&udev_enumerate->devices, udev_device_get_syspath(udev_device))) {
++        udev_list_entry_add(&udev_enumerate->devices, udev_device_get_syspath(udev_device), NULL, 0);
++    }
+ 
+     udev_device_unref(udev_device);
+ }
+@@ -279,6 +281,8 @@ static int scan_devices(struct udev_enum
+ int udev_enumerate_scan_devices(struct udev_enumerate *udev_enumerate)
+ {
+     const char *path[] = { "/sys/dev/block", "/sys/dev/char", NULL };
++    struct udev_list_entry *list_entry;
++    char class_path[PATH_MAX];
+     int i;
+ 
+     if (!udev_enumerate) {
+@@ -291,6 +295,15 @@ int udev_enumerate_scan_devices(struct u
+         }
+     }
+ 
++    /* /sys/dev only lists devices with a node; a matched class may hold more */
++    list_entry = udev_list_entry_get_next(&udev_enumerate->subsystem_match);
++
++    while (list_entry) {
++        snprintf(class_path, sizeof(class_path), "/sys/class/%s", udev_list_entry_get_name(list_entry));
++        scan_devices(udev_enumerate, class_path);
++        list_entry = udev_list_entry_get_next(list_entry);
++    }
++
+     return 0;
+ }
+ 
