@@ -1,0 +1,37 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Dave Stevenson <dave.stevenson@raspberrypi.com>
+Date: Thu, 19 Feb 2026 11:28:47 +0000
+Subject: [PATCH] egl: Translate column mode tile strides
+
+With the GST_VIDEO_TILE_MODE_COLUMN tile mode, the stride that needs
+to be passed to Wayland (or DRM) is a vertical stride, so handle
+that case.
+
+Link: https://gitlab.freedesktop.org/gstreamer/gstreamer/-/merge_requests/9247
+---
+ gst-libs/gst/gl/egl/gsteglimage.c | 14 ++++++++++++--
+ 1 file changed, 12 insertions(+), 2 deletions(-)
+
+--- a/gst-libs/gst/gl/egl/gsteglimage.c
++++ b/gst-libs/gst/gl/egl/gsteglimage.c
+@@ -633,8 +633,18 @@ get_egl_stride (const GstVideoInfo * inf
+   if (!GST_VIDEO_FORMAT_INFO_IS_TILED (finfo))
+     return stride;
+ 
+-  return GST_VIDEO_TILE_X_TILES (stride) *
+-      GST_VIDEO_FORMAT_INFO_TILE_STRIDE (finfo, plane);
++  switch (finfo->tile_mode) {
++    case GST_VIDEO_TILE_MODE_ZFLIPZ_2X2:
++    case GST_VIDEO_TILE_MODE_LINEAR:
++      return GST_VIDEO_TILE_X_TILES (stride) *
++          GST_VIDEO_FORMAT_INFO_TILE_STRIDE (finfo, plane);
++    case GST_VIDEO_TILE_MODE_COLUMN:
++      return GST_VIDEO_TILE_Y_TILES (stride) *
++          GST_VIDEO_FORMAT_INFO_TILE_HEIGHT (finfo, plane);
++    default:
++      g_assert_not_reached ();
++      return 0;
++  }
+ }
+ 
+ /**

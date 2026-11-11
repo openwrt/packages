@@ -1,0 +1,27 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 13 Nov 2026 15:16:41 +0000
+Subject: [PATCH] video: list NV12_10LE32_128C8 for big-endian hosts
+
+GST_VIDEO_FORMATS_ALL_STR has one list per byte order, and
+NV12_10LE32_128C8 is in the little-endian one only. Add it to the
+big-endian list next to NV12_10LE40, so that GST_VIDEO_FORMATS_ALL
+covers every format on big-endian hosts as well.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ gst-libs/gst/video/video-format.h | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+--- a/gst-libs/gst/video/video-format.h
++++ b/gst-libs/gst/video/video-format.h
+@@ -1213,7 +1213,8 @@ gconstpointer  gst_video_format_get_pale
+     "P012_BE, P012_LE, Y444_10BE, GBR_10BE, Y444_10LE, GBR_10LE, r210, " \
+     "BGR10x2_LE, RGB10x2_LE, I422_10BE, I422_10LE, NV16_10LE40, NV16_10LE32, " \
+     "Y210, UYVP, v210, I420_10BE, I420_10LE, P010_10BE, MT2110R, MT2110T, " \
+-    "NV12_10BE_8L128, NV12_10LE40_4L4, P010_10LE, NV12_10LE40, NV12_10LE32, " \
++    "NV12_10BE_8L128, NV12_10LE40_4L4, P010_10LE, NV12_10LE32_128C8, " \
++    "NV12_10LE40, NV12_10LE32, " \
+     "Y444, BGRP, GBR, RGBP, NV24, v308, IYU2, RGBx, xRGB, BGRx, xBGR, RGB, " \
+     "BGR, Y42B, NV16, NV61, YUY2, YVYU, UYVY, VYUY, I420, YV12, NV12, NV21, " \
+     "NV12_128C8, NV12_16L32S, NV12_32L32, NV12_4L4, NV12_64Z32, NV12_8L128, " \

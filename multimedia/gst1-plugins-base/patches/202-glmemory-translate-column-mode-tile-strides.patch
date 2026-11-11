@@ -1,0 +1,37 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Dave Stevenson <dave.stevenson@raspberrypi.com>
+Date: Wed, 18 Feb 2026 18:28:33 +0000
+Subject: [PATCH] glmemory: Translate column mode tile strides
+
+With the GST_VIDEO_TILE_MODE_COLUMN tile mode, the stride that needs
+to be passed to Wayland (or DRM) is a vertical stride, so handle
+that case.
+
+Link: https://gitlab.freedesktop.org/gstreamer/gstreamer/-/merge_requests/9247
+---
+ gst-libs/gst/gl/gstglmemory.c | 14 ++++++++++++--
+ 1 file changed, 12 insertions(+), 2 deletions(-)
+
+--- a/gst-libs/gst/gl/gstglmemory.c
++++ b/gst-libs/gst/gl/gstglmemory.c
+@@ -159,8 +159,18 @@ _get_mem_stride (GstGLMemory * gl_mem)
+   if (!GST_VIDEO_FORMAT_INFO_IS_TILED (finfo))
+     return stride;
+ 
+-  return GST_VIDEO_TILE_X_TILES (stride) *
+-      GST_VIDEO_FORMAT_INFO_TILE_STRIDE (finfo, gl_mem->plane);
++  switch (finfo->tile_mode) {
++    case GST_VIDEO_TILE_MODE_ZFLIPZ_2X2:
++    case GST_VIDEO_TILE_MODE_LINEAR:
++      return GST_VIDEO_TILE_X_TILES (stride) *
++          GST_VIDEO_FORMAT_INFO_TILE_STRIDE (finfo, gl_mem->plane);
++    case GST_VIDEO_TILE_MODE_COLUMN:
++      return GST_VIDEO_TILE_Y_TILES (stride) *
++          GST_VIDEO_FORMAT_INFO_TILE_HEIGHT (finfo, gl_mem->plane);
++    default:
++      g_assert_not_reached ();
++      return 0;
++  }
+ }
+ 
+ static inline void
