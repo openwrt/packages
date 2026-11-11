@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=kea
 PKG_VERSION:=3.2.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ftp.isc.org/isc/kea/$(PKG_VERSION)
@@ -97,7 +97,7 @@ endef
 define Package/kea-dhcp4-helper
   $(call Package/kea/Default)
   TITLE+=DHCP Server v4 importer of legacy UCI configs and Bind helper
-  DEPENDS:=@PACKAGE_bind-server +kea-dhcp4 +bind-rndc +bind-client
+  DEPENDS:=@(PACKAGE_bind-server||PACKAGE_bind-server-gssapi) +kea-dhcp4 +bind-rndc +bind-client
 endef
 define Package/kea-dhcp4-helper/description
     The DHCPv4 UCI importer. This helper imports legacy UCI configs and then
