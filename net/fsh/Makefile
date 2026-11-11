@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fsh
-PKG_VERSION:=4.11.0
-PKG_RELEASE:=2
+PKG_VERSION:=4.12.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/heiher/hev-fsh/releases/download/$(PKG_VERSION)
-PKG_HASH:=767f493233cbad076fad5f837066eacdd50c92c807acdab258fd3fe418eeaeff
+PKG_HASH:=43f4c9c4ca726f8c04e727b7c4e2ef740c358b46b0f90f26714a599101af5ff4
 
 PKG_MAINTAINER:=Ray Wang <git@hev.cc>
 PKG_LICENSE:=MIT
