@@ -1,9 +1,0 @@
-{
-	"name": "cnkuai.cn",
-	"ipv4": {
-		"url": "update_cnkuai_cn.sh"
-	},
-	"ipv6": {
-		"url": "update_cnkuai_cn.sh"
-	}
-}

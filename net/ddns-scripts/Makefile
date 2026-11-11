@@ -246,22 +246,6 @@ define Package/ddns-scripts-route53/description
 endef
 
 
-define Package/ddns-scripts-cnkuai
-  $(call Package/ddns-scripts/Default)
-  TITLE:=CnKuai API
-  DEPENDS:=ddns-scripts +curl +giflib-utils
-  PROVIDES:=ddns-scripts_cnkuai_cn
-endef
-
-define Package/ddns-scripts-cnkuai/description
-  Dynamic DNS Client scripts extension for 'cnkuai.cn'.
-  It requires:
-  'option username' to be a valid CnKuai control panel id
-  'option password' to be the matching CnKuai control panel password
-  'option domain' to contain the domain
-endef
-
-
 define Package/ddns-scripts-gandi
   $(call Package/ddns-scripts/Default)
   TITLE:=Gandi API (Deprecated)
@@ -500,7 +484,6 @@ define Package/ddns-scripts-services/install
 	rm $(1)/usr/share/ddns/default/bind-nsupdate.json
 	rm $(1)/usr/share/ddns/default/blazingfast.io.json
 	rm $(1)/usr/share/ddns/default/route53-v1.json
-	rm $(1)/usr/share/ddns/default/cnkuai.cn.json
 	rm $(1)/usr/share/ddns/default/gandi.net.json
 	rm $(1)/usr/share/ddns/default/gandi.net-v2.json
 	rm $(1)/usr/share/ddns/default/beget.com.json
@@ -805,25 +788,6 @@ exit 0
 endef
 
 
-define Package/ddns-scripts-cnkuai/install
-	$(INSTALL_DIR) $(1)/usr/lib/ddns
-	$(INSTALL_BIN) ./files/usr/lib/ddns/update_cnkuai_cn.sh \
-		$(1)/usr/lib/ddns
-
-	$(INSTALL_DIR) $(1)/usr/share/ddns/default
-	$(INSTALL_DATA) ./files/usr/share/ddns/default/cnkuai.cn.json \
-		$(1)/usr/share/ddns/default
-endef
-
-define Package/ddns-scripts-cnkuai/prerm
-#!/bin/sh
-if [ -z "$${IPKG_INSTROOT}" ]; then
-	/etc/init.d/ddns stop
-fi
-exit 0
-endef
-
-
 define Package/ddns-scripts-gandi/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_gandi_net.sh \
@@ -1063,7 +1027,6 @@ $(eval $(call BuildPackage,ddns-scripts-dnspod-v3))
 $(eval $(call BuildPackage,ddns-scripts-noip))
 $(eval $(call BuildPackage,ddns-scripts-nsupdate))
 $(eval $(call BuildPackage,ddns-scripts-route53))
-$(eval $(call BuildPackage,ddns-scripts-cnkuai))
 $(eval $(call BuildPackage,ddns-scripts-gandi))
 $(eval $(call BuildPackage,ddns-scripts-gandi-v2))
 $(eval $(call BuildPackage,ddns-scripts-beget))
