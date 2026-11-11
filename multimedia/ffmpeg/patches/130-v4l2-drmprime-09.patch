@@ -1,0 +1,52 @@
+From 643781487540802c2ac9281caf00c99d474495a9 Mon Sep 17 00:00:00 2001
+From: Rudi Heitbaum <rudi@heitbaum.com>
+Date: Sun, 11 Oct 2026 13:30:36 +1100
+Subject: [PATCH 9/9] libavcodec: v4l2m2m: adapt to the removal of
+ AVCodec.pix_fmts
+
+FFmpeg 9 dropped the public pix_fmts field from AVCodec, so the
+decoder can no longer set .p.pix_fmts or read avctx->codec->pix_fmts
+back to pass to ff_get_format().
+
+Keep the list in a file-scope array and use it both for the
+FFCodec pix_fmts field through CODEC_PIXFMTS_ARRAY() and for the
+ff_get_format() call in v4l2_decode_init().
+---
+ libavcodec/v4l2_m2m_dec.c | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
+
+--- a/libavcodec/v4l2_m2m_dec.c
++++ b/libavcodec/v4l2_m2m_dec.c
+@@ -41,6 +41,12 @@
+ #include "v4l2_m2m.h"
+ #include "v4l2_fmt.h"
+ 
++static const enum AVPixelFormat v4l2_m2m_pix_fmts[] = {
++    AV_PIX_FMT_DRM_PRIME,
++    AV_PIX_FMT_NV12,
++    AV_PIX_FMT_NONE
++};
++
+ static int v4l2_try_start(AVCodecContext *avctx)
+ {
+     V4L2m2mContext *s = ((V4L2m2mPriv*)avctx->priv_data)->context;
+@@ -218,7 +224,7 @@ static av_cold int v4l2_decode_init(AVCo
+      *   - the DRM frame format is passed in the DRM frame descriptor layer.
+      *       check the v4l2_get_drm_frame function.
+      */
+-    switch (ff_get_format(avctx, avctx->codec->pix_fmts)) {
++    switch (ff_get_format(avctx, v4l2_m2m_pix_fmts)) {
+     case AV_PIX_FMT_DRM_PRIME:
+         s->output_drm = 1;
+         break;
+@@ -331,9 +337,7 @@ static const AVCodecHWConfigInternal *v4
+         .caps_internal  = FF_CODEC_CAP_NOT_INIT_THREADSAFE | \
+                           FF_CODEC_CAP_INIT_CLEANUP, \
+         .p.wrapper_name = "v4l2m2m", \
+-        .p.pix_fmts     = (const enum AVPixelFormat[]) { AV_PIX_FMT_DRM_PRIME, \
+-                                                         AV_PIX_FMT_NV12, \
+-                                                         AV_PIX_FMT_NONE}, \
++        CODEC_PIXFMTS_ARRAY(v4l2_m2m_pix_fmts), \
+         .hw_configs     = v4l2_m2m_hw_configs, \
+     }
+ 

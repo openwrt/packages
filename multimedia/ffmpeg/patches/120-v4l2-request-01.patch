@@ -1,7 +1,7 @@
-From 900fa8e6625a0134432a1dccf87633b499af5fb1 Mon Sep 17 00:00:00 2001
+From 46708ffcee91d3808ce13c1971ef0fdfae281059 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Tue, 6 Aug 2024 09:06:00 +0000
-Subject: [PATCH 01/13] avutil/hwcontext: Add hwdevice type for V4L2 Request
+Subject: [PATCH 01/11] avutil/hwcontext: Add hwdevice type for V4L2 Request
  API
 
 Add a hwdevice type for use with V4L2 Request API stateless decoding.
@@ -20,7 +20,9 @@ CAPTURE buffer, and frames are returned with AVFrame.data[0] pointing
 to a AVDRMFrameDescriptor and AVFrame.data[1] the CAPTURE buffer index.
 
 Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
+(cherry picked from commit ea330b5f5e503039db5b48e7bec4e77976b7e3ee)
 ---
+ .forgejo/CODEOWNERS                        |   1 +
  configure                                  |   8 +
  libavutil/Makefile                         |   4 +
  libavutil/hwcontext.c                      |   4 +
@@ -29,11 +31,21 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
  libavutil/hwcontext_v4l2request.c          | 617 +++++++++++++++++++++
  libavutil/hwcontext_v4l2request.h          |  70 +++
  libavutil/hwcontext_v4l2request_internal.h |  67 +++
- 8 files changed, 772 insertions(+)
+ 9 files changed, 773 insertions(+)
  create mode 100644 libavutil/hwcontext_v4l2request.c
  create mode 100644 libavutil/hwcontext_v4l2request.h
  create mode 100644 libavutil/hwcontext_v4l2request_internal.h
 
+--- a/.forgejo/CODEOWNERS
++++ b/.forgejo/CODEOWNERS
+@@ -178,6 +178,7 @@ libavutil/film_grain.* @haasn
+ libavutil/dovi_meta.* @haasn
+ libavutil/hwcontext_oh.* @quink
+ libavutil/hwcontext_mediacodec.* @quink
++libavutil/hwcontext_v4l2request.* @Kwiboo @jernej @knaerzche
+ libavutil/hwcontext_videotoolbox.* @ePirat
+ libavutil/iamf.* @jamrial
+ libavutil/integer.* @michaelni
 --- a/configure
 +++ b/configure
 @@ -365,6 +365,7 @@ External library support:

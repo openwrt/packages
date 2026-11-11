@@ -1,7 +1,7 @@
-From 55d176a32f6e55543261889e172270df833ce19b Mon Sep 17 00:00:00 2001
+From a17bfbdffd8dabfaac72348ffc40002196fab761 Mon Sep 17 00:00:00 2001
 From: Boris Brezillon <boris.brezillon@collabora.com>
 Date: Tue, 6 Aug 2024 09:06:05 +0000
-Subject: [PATCH 06/13] avcodec/h264dec: add ref_pic_marking and pic_order_cnt
+Subject: [PATCH 06/11] avcodec/h264dec: add ref_pic_marking and pic_order_cnt
  bit_size to slice context
 
 The V4L2_CID_STATELESS_H264_DECODE_PARAMS control require following:
@@ -19,6 +19,7 @@ short/long_term_ref_pic_set_size in hevcdec.
 
 Signed-off-by: Boris Brezillon <boris.brezillon@collabora.com>
 Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
+(cherry picked from commit ae6ff569eb85f767a09b8d60b1d167a654dfb34b)
 ---
  libavcodec/h264_slice.c | 6 +++++-
  libavcodec/h264dec.h    | 2 ++

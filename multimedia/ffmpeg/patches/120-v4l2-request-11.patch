@@ -1,7 +1,7 @@
-From 6b67aa32fc3b9cad3e2487875e058ba726e0513d Mon Sep 17 00:00:00 2001
+From 8a02c6e1e35cb788c24a98e69a1522bd7c4392c6 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sat, 6 Jul 2024 08:41:30 +0000
-Subject: [PATCH 11/13] avcodec: Add V4L2 Request API av1 hwaccel
+Subject: [PATCH 11/11] avcodec: Add V4L2 Request API av1 hwaccel
 
 Add a V4L2 Request API hwaccel for AV1.
 
@@ -9,6 +9,7 @@ Support for AV1 is enabled when Linux kernel headers declare the
 control id V4L2_CID_STATELESS_AV1_FRAME, added in v6.5.
 
 Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
+(cherry picked from commit 3ac4e07593eeeeac8be43e3f6353161a8d1ce8be)
 ---
  configure                     |   3 +
  libavcodec/Makefile           |   1 +

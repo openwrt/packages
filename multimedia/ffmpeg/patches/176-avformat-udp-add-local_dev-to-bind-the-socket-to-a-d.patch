@@ -1,0 +1,249 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Sat, 24 Oct 2026 23:08:09 +0100
+Subject: [PATCH] avformat/udp: add local_dev to bind the socket to a device
+
+A UDP or RTP stream can only be tied to an uplink by its local
+address, which goes stale when the interface's address changes, and
+a multicast group is joined on whatever interface the route to it
+names. local_dev binds the socket to a named device with
+SO_BINDTODEVICE and joins multicast groups, and source-specific ones,
+on that device's index. RTP passes it on to its UDP sockets.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+Link: https://code.ffmpeg.org/FFmpeg/FFmpeg/pulls/26065
+---
+ doc/protocols.texi     |  8 +++++
+ libavformat/rtpproto.c |  8 +++++
+ libavformat/udp.c      | 77 +++++++++++++++++++++++++++++++++++++-----
+ 3 files changed, 84 insertions(+), 9 deletions(-)
+
+--- a/doc/protocols.texi
++++ b/doc/protocols.texi
+@@ -1225,6 +1225,10 @@ set to 1) or to a default remote address
+ Local IP address of a network interface used for sending packets or joining
+ multicast groups.
+ 
++@item local_dev=@var{device}
++Network device the RTP and RTCP sockets are bound to, passed on to the
++underlying UDP protocol. Linux only.
++
+ @item timeout=@var{n}
+ Set timeout (in microseconds) of socket I/O operations to @var{n}.
+ @end table
+@@ -2258,6 +2262,10 @@ Override the local UDP port to bind with
+ Local IP address of a network interface used for sending packets or joining
+ multicast groups.
+ 
++@item local_dev=@var{device}
++Network device the socket is bound to, so packets leave and arrive through
++that device and multicast groups are joined on it. Linux only.
++
+ @item pkt_size=@var{size}
+ Set the size in bytes of UDP packets.
+ 
+--- a/libavformat/rtpproto.c
++++ b/libavformat/rtpproto.c
+@@ -24,6 +24,8 @@
+  * RTP protocol
+  */
+ 
++#define _DEFAULT_SOURCE /* SO_BINDTODEVICE with glibc */
++
+ #include "libavutil/mem.h"
+ #include "libavutil/parseutils.h"
+ #include "libavutil/avstring.h"
+@@ -62,6 +64,7 @@ typedef struct RTPContext {
+     char *fec_options_str;
+     int64_t rw_timeout;
+     char *localaddr;
++    char *local_dev;
+ } RTPContext;
+ 
+ #define OFFSET(x) offsetof(RTPContext, x)
+@@ -87,6 +90,9 @@ static const AVOption options[] = {
+     { "block",              "Block list",                                                       OFFSET(block),           AV_OPT_TYPE_STRING, { .str = NULL },               .flags = D|E },
+     { "fec",                "FEC",                                                              OFFSET(fec_options_str), AV_OPT_TYPE_STRING, { .str = NULL },               .flags = E },
+     { "localaddr",          "Local address",                                                    OFFSET(localaddr),       AV_OPT_TYPE_STRING, { .str = NULL },               .flags = D|E },
++#ifdef SO_BINDTODEVICE
++    { "local_dev",          "Local network device",                                             OFFSET(local_dev),       AV_OPT_TYPE_STRING, { .str = NULL },               .flags = D|E },
++#endif
+     { NULL }
+ };
+ 
+@@ -205,6 +211,8 @@ static void build_udp_url(RTPContext *s,
+         url_add_option(buf, buf_size, "block=%s", exclude_sources);
+     if (localaddr && localaddr[0])
+         url_add_option(buf, buf_size, "localaddr=%s", localaddr);
++    if (s->local_dev && s->local_dev[0])
++        url_add_option(buf, buf_size, "local_dev=%s", s->local_dev);
+ }
+ 
+ /**
+--- a/libavformat/udp.c
++++ b/libavformat/udp.c
+@@ -46,6 +46,10 @@
+ #include "TargetConditionals.h"
+ #endif
+ 
++#ifdef SO_BINDTODEVICE
++#include <net/if.h>
++#endif
++
+ #if HAVE_UDPLITE_H
+ #include "udplite.h"
+ #else
+@@ -118,6 +122,7 @@ typedef struct UDPContext {
+     uint8_t tmp[UDP_MAX_PKT_SIZE + sizeof(UDPQueuedPacketHeader)];
+     int remaining_in_dg;
+     char *localaddr;
++    char *local_dev;
+     int timeout;
+     int dscp;
+     struct sockaddr_storage local_addr_storage;
+@@ -138,6 +143,9 @@ static const AVOption options[] = {
+     { "localport",      "Local port",                                      OFFSET(local_port),     AV_OPT_TYPE_INT,    { .i64 = -1 },    -1, INT_MAX, D|E },
+     { "local_port",     "Local port",                                      OFFSET(local_port),     AV_OPT_TYPE_INT,    { .i64 = -1 },    -1, INT_MAX, .flags = D|E },
+     { "localaddr",      "Local address",                                   OFFSET(localaddr),      AV_OPT_TYPE_STRING, { .str = NULL },               .flags = D|E },
++#ifdef SO_BINDTODEVICE
++    { "local_dev",      "Local network device",                            OFFSET(local_dev),      AV_OPT_TYPE_STRING, { .str = NULL },               .flags = D|E },
++#endif
+     { "udplite_coverage", "choose UDPLite head size which should be validated by checksum", OFFSET(udplite_coverage), AV_OPT_TYPE_INT, {.i64 = 0}, 0, INT_MAX, D|E },
+     { "pkt_size",       "Maximum UDP packet size",                         OFFSET(pkt_size),       AV_OPT_TYPE_INT,    { .i64 = 1472 },  -1, INT_MAX, .flags = D|E },
+     { "reuse",          "explicitly allow reusing UDP sockets",            OFFSET(reuse_socket),   AV_OPT_TYPE_BOOL,   { .i64 = -1 },    -1, 1,       D|E },
+@@ -209,9 +217,41 @@ static int udp_set_multicast_ttl(int soc
+     return 0;
+ }
+ 
++static unsigned udp_local_ifindex(const UDPContext *s)
++{
++#ifdef SO_BINDTODEVICE
++    if (s->local_dev)
++        return if_nametoindex(s->local_dev);
++#endif
++    return 0;
++}
++
++#ifdef SO_BINDTODEVICE
++static int udp_membership_ifindex(int sockfd, int cmd, struct sockaddr *addr,
++                                  unsigned ifindex, void *logctx,
++                                  const char *name)
++{
++    struct ip_mreqn mreqn = { 0 };
++
++    mreqn.imr_multiaddr = ((struct sockaddr_in *)addr)->sin_addr;
++    mreqn.imr_ifindex   = ifindex;
++    if (setsockopt(sockfd, IPPROTO_IP, cmd, &mreqn, sizeof(mreqn)) < 0) {
++        ff_log_net_error(logctx, AV_LOG_ERROR, name);
++        return ff_neterrno();
++    }
++    return 0;
++}
++#endif
++
+ static int udp_join_multicast_group(int sockfd, struct sockaddr *addr,
+-                                    struct sockaddr *local_addr, void *logctx)
++                                    struct sockaddr *local_addr,
++                                    unsigned ifindex, void *logctx)
+ {
++#if defined(SO_BINDTODEVICE) && defined(IP_ADD_MEMBERSHIP)
++    if (addr->sa_family == AF_INET && ifindex)
++        return udp_membership_ifindex(sockfd, IP_ADD_MEMBERSHIP, addr, ifindex,
++                                      logctx, "setsockopt(IP_ADD_MEMBERSHIP)");
++#endif
+ #ifdef IP_ADD_MEMBERSHIP
+     if (addr->sa_family == AF_INET) {
+         struct ip_mreq mreq;
+@@ -233,7 +273,7 @@ static int udp_join_multicast_group(int
+ 
+         memcpy(&mreq6.ipv6mr_multiaddr, &(((struct sockaddr_in6 *)addr)->sin6_addr), sizeof(struct in6_addr));
+         //TODO: Interface index should be looked up from local_addr
+-        mreq6.ipv6mr_interface = 0;
++        mreq6.ipv6mr_interface = ifindex;
+         if (setsockopt(sockfd, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP, &mreq6, sizeof(mreq6)) < 0) {
+             ff_log_net_error(logctx, AV_LOG_ERROR, "setsockopt(IPV6_ADD_MEMBERSHIP)");
+             return ff_neterrno();
+@@ -244,8 +284,14 @@ static int udp_join_multicast_group(int
+ }
+ 
+ static int udp_leave_multicast_group(int sockfd, struct sockaddr *addr,
+-                                     struct sockaddr *local_addr, void *logctx)
++                                     struct sockaddr *local_addr,
++                                     unsigned ifindex, void *logctx)
+ {
++#if defined(SO_BINDTODEVICE) && defined(IP_DROP_MEMBERSHIP)
++    if (addr->sa_family == AF_INET && ifindex)
++        return udp_membership_ifindex(sockfd, IP_DROP_MEMBERSHIP, addr, ifindex,
++                                      logctx, "setsockopt(IP_DROP_MEMBERSHIP)");
++#endif
+ #ifdef IP_DROP_MEMBERSHIP
+     if (addr->sa_family == AF_INET) {
+         struct ip_mreq mreq;
+@@ -267,7 +313,7 @@ static int udp_leave_multicast_group(int
+ 
+         memcpy(&mreq6.ipv6mr_multiaddr, &(((struct sockaddr_in6 *)addr)->sin6_addr), sizeof(struct in6_addr));
+         //TODO: Interface index should be looked up from local_addr
+-        mreq6.ipv6mr_interface = 0;
++        mreq6.ipv6mr_interface = ifindex;
+         if (setsockopt(sockfd, IPPROTO_IPV6, IPV6_DROP_MEMBERSHIP, &mreq6, sizeof(mreq6)) < 0) {
+             ff_log_net_error(logctx, AV_LOG_ERROR, "setsockopt(IPV6_DROP_MEMBERSHIP)");
+             return -1;
+@@ -283,17 +329,19 @@ static int udp_set_multicast_sources(URL
+                                      struct sockaddr_storage *sources,
+                                      int nb_sources, int include)
+ {
+-    if (addr->sa_family != AF_INET) {
++    unsigned ifindex = udp_local_ifindex(h->priv_data);
++
++    if (addr->sa_family != AF_INET || ifindex) {
+ #if HAVE_STRUCT_GROUP_SOURCE_REQ && defined(MCAST_BLOCK_SOURCE)
+         /* For IPv4 prefer the old approach, as that alone works reliably on
+          * Windows and it also supports supplying the interface based on its
+-         * address. */
++         * address. Only this one takes an interface index for a device. */
+         for (int i = 0; i < nb_sources; i++) {
+             struct group_source_req mreqs;
+             int level = addr->sa_family == AF_INET ? IPPROTO_IP : IPPROTO_IPV6;
+ 
+             //TODO: Interface index should be looked up from local_addr
+-            mreqs.gsr_interface = 0;
++            mreqs.gsr_interface = ifindex;
+             memcpy(&mreqs.gsr_group, addr, addr_len);
+             memcpy(&mreqs.gsr_source, &sources[i], sizeof(*sources));
+ 
+@@ -387,6 +435,15 @@ static int udp_socket_create(URLContext
+     if (udp_fd < 0)
+         goto fail;
+ 
++#ifdef SO_BINDTODEVICE
++    if (s->local_dev &&
++        setsockopt(udp_fd, SOL_SOCKET, SO_BINDTODEVICE, s->local_dev,
++                   strlen(s->local_dev))) {
++        ff_log_net_error(h, AV_LOG_ERROR, "setsockopt(SO_BINDTODEVICE)");
++        goto fail;
++    }
++#endif
++
+     memcpy(addr, res->ai_addr, res->ai_addrlen);
+     *addr_len = res->ai_addrlen;
+ 
+@@ -853,7 +910,8 @@ static int udp_open(URLContext *h, const
+                     goto fail;
+             } else {
+                 if ((ret = udp_join_multicast_group(udp_fd, (struct sockaddr *)&s->dest_addr,
+-                                                    (struct sockaddr *)&s->local_addr_storage, h)) < 0)
++                                                    (struct sockaddr *)&s->local_addr_storage,
++                                                    udp_local_ifindex(s), h)) < 0)
+                     goto fail;
+             }
+             if (s->filters.nb_exclude_addrs) {
+@@ -1107,7 +1165,8 @@ static int udp_close(URLContext *h)
+ 
+     if (s->is_multicast && (h->flags & AVIO_FLAG_READ))
+         udp_leave_multicast_group(s->udp_fd, (struct sockaddr *)&s->dest_addr,
+-                                  (struct sockaddr *)&s->local_addr_storage, h);
++                                  (struct sockaddr *)&s->local_addr_storage,
++                                  udp_local_ifindex(s), h);
+ #if HAVE_PTHREAD_CANCEL
+     if (s->thread_started) {
+         int ret;

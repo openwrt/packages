@@ -1,7 +1,7 @@
-From f227da5a137d45d44d37e1d2be6427e9f7c247b3 Mon Sep 17 00:00:00 2001
+From 5dc84ec4addf2f42407cc54cb5c8d70fc8b26e11 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Tue, 6 Aug 2024 09:06:03 +0000
-Subject: [PATCH 04/13] avcodec/v4l2request: Add common decode support for
+Subject: [PATCH 04/11] avcodec/v4l2request: Add common decode support for
  hwaccels
 
 Add common support for decoding using the V4L2 Request API.
@@ -36,6 +36,7 @@ Signed-off-by: Jernej Skrabec <jernej.skrabec@gmail.com>
 Co-developed-by: Alex Bee <knaerzche@gmail.com>
 Signed-off-by: Alex Bee <knaerzche@gmail.com>
 Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
+(cherry picked from commit 77b4c717f87fa56039f5b69fe7dccba3a3154ebd)
 ---
  configure                 |   3 +-
  libavcodec/hwconfig.h     |   2 +

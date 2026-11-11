@@ -1,7 +1,7 @@
-From adab6e2bb9472e9e8f9716569d54aeede50c1aa3 Mon Sep 17 00:00:00 2001
+From 430eaaedb3b71b724bdd7032e0fea87bf00d4b47 Mon Sep 17 00:00:00 2001
 From: Jernej Skrabec <jernej.skrabec@gmail.com>
 Date: Tue, 6 Aug 2024 09:06:07 +0000
-Subject: [PATCH 08/13] avcodec: Add V4L2 Request API hevc hwaccel
+Subject: [PATCH 08/11] avcodec: Add V4L2 Request API hevc hwaccel
 
 Add a V4L2 Request API hwaccel for HEVC, supporting both slice and
 frame decoding modes.
@@ -16,6 +16,7 @@ Signed-off-by: Alex Bee <knaerzche@gmail.com>
 Signed-off-by: Jernej Skrabec <jernej.skrabec@gmail.com>
 Co-developed-by: Jonas Karlman <jonas@kwiboo.se>
 Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
+(cherry picked from commit 4fadd45596963236c1b4974620b47d7f8381c456)
 ---
  configure                      |   5 +
  libavcodec/Makefile            |   1 +

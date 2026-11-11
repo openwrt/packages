@@ -1,0 +1,410 @@
+From fbf32777c95ced9d41c05db3477fc8580b139980 Mon Sep 17 00:00:00 2001
+From: Lukas Rusak <lorusak@gmail.com>
+Date: Tue, 24 Apr 2018 23:00:23 -0700
+Subject: [PATCH 1/9] libavcodec: v4l2m2m: output AVDRMFrameDescriptor
+
+This allows for a zero-copy output by exporting the v4l2 buffer then wrapping that buffer
+in the AVDRMFrameDescriptor like it is done in rkmpp.
+
+This has been in use for quite some time with great success on many platforms including:
+ - Amlogic S905
+ - Raspberry Pi
+ - i.MX6
+ - Dragonboard 410c
+
+This was developed in conjunction with Kodi to allow handling the zero-copy buffer rendering.
+A simply utility for testing is also available here: https://github.com/BayLibre/ffmpeg-drm
+
+todo:
+ - allow selecting pixel format output from decoder
+ - allow configuring amount of output and capture buffers
+
+V2:
+ - allow selecting AV_PIX_FMT_DRM_PRIME
+
+V3:
+ - use get_format to select AV_PIX_FMT_DRM_PRIME
+ - use hw_configs
+ - add handling of AV_PIX_FMT_YUV420P format (for raspberry pi)
+ - add handling of AV_PIX_FMT_YUYV422 format (for i.MX6 coda decoder)
+
+V4:
+ - rebased on 4.2.2
+
+V5:
+ - rebased on 4.3
+---
+ libavcodec/v4l2_buffers.c | 153 ++++++++++++++++++++++++++++++++++++--
+ libavcodec/v4l2_buffers.h |   4 +
+ libavcodec/v4l2_context.c |  40 +++++++++-
+ libavcodec/v4l2_m2m.h     |   3 +
+ libavcodec/v4l2_m2m_dec.c |  23 ++++++
+ 5 files changed, 212 insertions(+), 11 deletions(-)
+
+--- a/libavcodec/v4l2_buffers.c
++++ b/libavcodec/v4l2_buffers.c
+@@ -21,6 +21,7 @@
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+  */
+ 
++#include <drm/drm_fourcc.h>
+ #include <linux/videodev2.h>
+ #include <sys/ioctl.h>
+ #include <sys/mman.h>
+@@ -29,6 +30,7 @@
+ #include <poll.h>
+ #include "libavcodec/avcodec.h"
+ #include "libavutil/attributes.h"
++#include "libavutil/hwcontext.h"
+ #include "libavutil/pixdesc.h"
+ #include "libavutil/refstruct.h"
+ #include "v4l2_context.h"
+@@ -234,6 +236,78 @@ static void v4l2_get_interlacing(AVFrame
+     }
+ }
+ 
++static uint8_t * v4l2_get_drm_frame(V4L2Buffer *avbuf)
++{
++    AVDRMFrameDescriptor *drm_desc = &avbuf->drm_frame;
++    AVDRMLayerDescriptor *layer;
++
++    /* fill the DRM frame descriptor */
++    drm_desc->nb_objects = avbuf->num_planes;
++    drm_desc->nb_layers = 1;
++
++    layer = &drm_desc->layers[0];
++    layer->nb_planes = avbuf->num_planes;
++
++    for (int i = 0; i < avbuf->num_planes; i++) {
++        layer->planes[i].object_index = i;
++        layer->planes[i].offset = 0;
++        layer->planes[i].pitch = avbuf->plane_info[i].bytesperline;
++    }
++
++    switch (avbuf->context->av_pix_fmt) {
++    case AV_PIX_FMT_YUYV422:
++
++        layer->format = DRM_FORMAT_YUYV;
++        layer->nb_planes = 1;
++
++        break;
++
++    case AV_PIX_FMT_NV12:
++    case AV_PIX_FMT_NV21:
++
++        layer->format = avbuf->context->av_pix_fmt == AV_PIX_FMT_NV12 ?
++            DRM_FORMAT_NV12 : DRM_FORMAT_NV21;
++
++        if (avbuf->num_planes > 1)
++            break;
++
++        layer->nb_planes = 2;
++
++        layer->planes[1].object_index = 0;
++        layer->planes[1].offset = avbuf->plane_info[0].bytesperline *
++            avbuf->context->format.fmt.pix.height;
++        layer->planes[1].pitch = avbuf->plane_info[0].bytesperline;
++        break;
++
++    case AV_PIX_FMT_YUV420P:
++
++        layer->format = DRM_FORMAT_YUV420;
++
++        if (avbuf->num_planes > 1)
++            break;
++
++        layer->nb_planes = 3;
++
++        layer->planes[1].object_index = 0;
++        layer->planes[1].offset = avbuf->plane_info[0].bytesperline *
++            avbuf->context->format.fmt.pix.height;
++        layer->planes[1].pitch = avbuf->plane_info[0].bytesperline >> 1;
++
++        layer->planes[2].object_index = 0;
++        layer->planes[2].offset = layer->planes[1].offset +
++            ((avbuf->plane_info[0].bytesperline *
++              avbuf->context->format.fmt.pix.height) >> 2);
++        layer->planes[2].pitch = avbuf->plane_info[0].bytesperline >> 1;
++        break;
++
++    default:
++        drm_desc->nb_layers = 0;
++        break;
++    }
++
++    return (uint8_t *) drm_desc;
++}
++
+ static void v4l2_free_buffer(void *opaque, uint8_t *unused)
+ {
+     V4L2Buffer* avbuf = opaque;
+@@ -258,6 +332,36 @@ static void v4l2_free_buffer(void *opaqu
+     }
+ }
+ 
++static int v4l2_buffer_export_drm(V4L2Buffer* avbuf)
++{
++    struct v4l2_exportbuffer expbuf;
++    int i, ret;
++
++    for (i = 0; i < avbuf->num_planes; i++) {
++        memset(&expbuf, 0, sizeof(expbuf));
++
++        expbuf.index = avbuf->buf.index;
++        expbuf.type = avbuf->buf.type;
++        expbuf.plane = i;
++
++        ret = ioctl(buf_to_m2mctx(avbuf)->fd, VIDIOC_EXPBUF, &expbuf);
++        if (ret < 0)
++            return AVERROR(errno);
++
++        if (V4L2_TYPE_IS_MULTIPLANAR(avbuf->buf.type)) {
++            /* drm frame */
++            avbuf->drm_frame.objects[i].size = avbuf->buf.m.planes[i].length;
++            avbuf->drm_frame.objects[i].fd = expbuf.fd;
++        } else {
++            /* drm frame */
++            avbuf->drm_frame.objects[0].size = avbuf->buf.length;
++            avbuf->drm_frame.objects[0].fd = expbuf.fd;
++        }
++    }
++
++    return 0;
++}
++
+ static int v4l2_buf_increase_ref(V4L2Buffer *in)
+ {
+     V4L2m2mContext *s = buf_to_m2mctx(in);
+@@ -276,6 +380,24 @@ static int v4l2_buf_increase_ref(V4L2Buf
+     return 0;
+ }
+ 
++static int v4l2_buf_to_bufref_drm(V4L2Buffer *in, AVBufferRef **buf)
++{
++    int ret;
++
++    *buf = av_buffer_create((uint8_t *) &in->drm_frame,
++                            sizeof(in->drm_frame),
++                            v4l2_free_buffer,
++                            in, AV_BUFFER_FLAG_READONLY);
++    if (!*buf)
++        return AVERROR(ENOMEM);
++
++    ret = v4l2_buf_increase_ref(in);
++    if (ret)
++         av_buffer_unref(buf);
++
++    return ret;
++}
++
+ static int v4l2_buf_to_bufref(V4L2Buffer *in, int plane, AVBufferRef **buf)
+ {
+     int ret;
+@@ -325,13 +447,24 @@ static int v4l2_buffer_buf_to_swframe(AV
+ 
+     frame->format = avbuf->context->av_pix_fmt;
+ 
+-    for (i = 0; i < avbuf->num_planes; i++) {
+-        ret = v4l2_buf_to_bufref(avbuf, i, &frame->buf[i]);
++    if (buf_to_m2mctx(avbuf)->output_drm) {
++        /* 1. get references to the actual data */
++        ret = v4l2_buf_to_bufref_drm(avbuf, &frame->buf[0]);
+         if (ret)
+             return ret;
+ 
+-        frame->linesize[i] = avbuf->plane_info[i].bytesperline;
+-        frame->data[i] = frame->buf[i]->data;
++        frame->data[0] = (uint8_t *) v4l2_get_drm_frame(avbuf);
++        frame->format = AV_PIX_FMT_DRM_PRIME;
++    } else {
++        /* 1. get references to the actual data */
++        for (i = 0; i < avbuf->num_planes; i++) {
++            ret = v4l2_buf_to_bufref(avbuf, i, &frame->buf[i]);
++            if (ret)
++                return ret;
++
++            frame->linesize[i] = avbuf->plane_info[i].bytesperline;
++            frame->data[i] = frame->buf[i]->data;
++        }
+     }
+ 
+     /* fixup special cases */
+@@ -567,9 +700,6 @@ int ff_v4l2_buffer_initialize(V4L2Buffer
+ 
+     avbuf->status = V4L2BUF_AVAILABLE;
+ 
+-    if (V4L2_TYPE_IS_OUTPUT(ctx->type))
+-        return 0;
+-
+     if (V4L2_TYPE_IS_MULTIPLANAR(ctx->type)) {
+         avbuf->buf.m.planes = avbuf->planes;
+         avbuf->buf.length   = avbuf->num_planes;
+@@ -579,6 +709,15 @@ int ff_v4l2_buffer_initialize(V4L2Buffer
+         avbuf->buf.length    = avbuf->planes[0].length;
+     }
+ 
++    if (V4L2_TYPE_IS_OUTPUT(ctx->type))
++        return 0;
++
++    if (buf_to_m2mctx(avbuf)->output_drm) {
++        ret = v4l2_buffer_export_drm(avbuf);
++        if (ret)
++                return ret;
++    }
++
+     return ff_v4l2_buffer_enqueue(avbuf);
+ }
+ 
+--- a/libavcodec/v4l2_buffers.h
++++ b/libavcodec/v4l2_buffers.h
+@@ -29,6 +29,7 @@
+ #include <linux/videodev2.h>
+ 
+ #include "libavutil/frame.h"
++#include "libavutil/hwcontext_drm.h"
+ #include "packet.h"
+ 
+ enum V4L2Buffer_status {
+@@ -44,6 +45,9 @@ typedef struct V4L2Buffer {
+     /* each buffer needs to have a reference to its context */
+     struct V4L2Context *context;
+ 
++    /* DRM descriptor */
++    AVDRMFrameDescriptor drm_frame;
++
+     /* This object is refcounted per-plane, so we need to keep track
+      * of how many context-refs we are holding.
+      * This pointer is a RefStruct reference. */
+--- a/libavcodec/v4l2_context.c
++++ b/libavcodec/v4l2_context.c
+@@ -446,22 +446,54 @@ static int v4l2_release_buffers(V4L2Cont
+     struct v4l2_requestbuffers req = {
+         .memory = V4L2_MEMORY_MMAP,
+         .type = ctx->type,
+-        .count = 0, /* 0 -> unmaps buffers from the driver */
++        .count = 0, /* 0 -> unmap all buffers from the driver */
+     };
+-    int i, j;
++    int ret, i, j;
+ 
+     for (i = 0; i < ctx->num_buffers; i++) {
+         V4L2Buffer *buffer = &ctx->buffers[i];
+ 
+         for (j = 0; j < buffer->num_planes; j++) {
+             struct V4L2Plane_info *p = &buffer->plane_info[j];
++
++            if (V4L2_TYPE_IS_OUTPUT(ctx->type)) {
++                /* output buffers are not EXPORTED */
++                goto unmap;
++            }
++
++            if (ctx_to_m2mctx(ctx)->output_drm) {
++                /* use the DRM frame to close */
++                if (buffer->drm_frame.objects[j].fd >= 0) {
++                    if (close(buffer->drm_frame.objects[j].fd) < 0) {
++                        av_log(logger(ctx), AV_LOG_ERROR, "%s close drm fd "
++                            "[buffer=%2d, plane=%d, fd=%2d] - %s \n",
++                            ctx->name, i, j, buffer->drm_frame.objects[j].fd,
++                            av_err2str(AVERROR(errno)));
++                    }
++                }
++            }
++unmap:
+             if (p->mm_addr && p->length)
+                 if (munmap(p->mm_addr, p->length) < 0)
+-                    av_log(logger(ctx), AV_LOG_ERROR, "%s unmap plane (%s))\n", ctx->name, av_err2str(AVERROR(errno)));
++                    av_log(logger(ctx), AV_LOG_ERROR, "%s unmap plane (%s))\n",
++                        ctx->name, av_err2str(AVERROR(errno)));
+         }
+     }
+ 
+-    return ioctl(ctx_to_m2mctx(ctx)->fd, VIDIOC_REQBUFS, &req);
++    ret = ioctl(ctx_to_m2mctx(ctx)->fd, VIDIOC_REQBUFS, &req);
++    if (ret < 0) {
++            av_log(logger(ctx), AV_LOG_ERROR, "release all %s buffers (%s)\n",
++                ctx->name, av_err2str(AVERROR(errno)));
++
++            if (ctx_to_m2mctx(ctx)->output_drm)
++                av_log(logger(ctx), AV_LOG_ERROR,
++                    "Make sure the DRM client releases all FB/GEM objects before closing the codec (ie):\n"
++                    "for all buffers: \n"
++                    "  1. drmModeRmFB(..)\n"
++                    "  2. drmIoctl(.., DRM_IOCTL_GEM_CLOSE,... )\n");
++    }
++
++    return ret;
+ }
+ 
+ static inline int v4l2_try_raw_format(V4L2Context* ctx, enum AVPixelFormat pixfmt)
+--- a/libavcodec/v4l2_m2m.h
++++ b/libavcodec/v4l2_m2m.h
+@@ -66,6 +66,9 @@ typedef struct V4L2m2mContext {
+ 
+     /* reference back to V4L2m2mPriv */
+     void *priv;
++
++    /* generate DRM frames */
++    int output_drm;
+ } V4L2m2mContext;
+ 
+ typedef struct V4L2m2mPriv {
+--- a/libavcodec/v4l2_m2m_dec.c
++++ b/libavcodec/v4l2_m2m_dec.c
+@@ -23,6 +23,9 @@
+ 
+ #include <linux/videodev2.h>
+ #include <sys/ioctl.h>
++
++#include "libavutil/hwcontext.h"
++#include "libavutil/hwcontext_drm.h"
+ #include "libavutil/pixfmt.h"
+ #include "libavutil/pixdesc.h"
+ #include "libavutil/opt.h"
+@@ -30,6 +33,9 @@
+ #include "codec_internal.h"
+ #include "libavcodec/decode.h"
+ 
++#include "libavcodec/hwaccels.h"
++#include "libavcodec/internal.h"
++
+ #include "v4l2_context.h"
+ #include "v4l2_m2m.h"
+ #include "v4l2_fmt.h"
+@@ -205,6 +211,15 @@ static av_cold int v4l2_decode_init(AVCo
+     capture->av_codec_id = AV_CODEC_ID_RAWVIDEO;
+     capture->av_pix_fmt = avctx->pix_fmt;
+ 
++    /* the client requests the codec to generate DRM frames:
++     *   - data[0] will therefore point to the returned AVDRMFrameDescriptor
++     *       check the ff_v4l2_buffer_to_avframe conversion function.
++     *   - the DRM frame format is passed in the DRM frame descriptor layer.
++     *       check the v4l2_get_drm_frame function.
++     */
++    if (ff_get_format(avctx, avctx->codec->pix_fmts) == AV_PIX_FMT_DRM_PRIME)
++        s->output_drm = 1;
++
+     s->avctx = avctx;
+     ret = ff_v4l2_m2m_codec_init(priv);
+     if (ret) {
+@@ -230,6 +245,11 @@ static const AVOption options[] = {
+     { NULL},
+ };
+ 
++static const AVCodecHWConfigInternal *v4l2_m2m_hw_configs[] = {
++    HW_CONFIG_INTERNAL(DRM_PRIME),
++    NULL
++};
++
+ #define M2MDEC_CLASS(NAME) \
+     static const AVClass v4l2_m2m_ ## NAME ## _dec_class = { \
+         .class_name = #NAME "_v4l2m2m_decoder", \
+@@ -255,6 +275,9 @@ static const AVOption options[] = {
+         .caps_internal  = FF_CODEC_CAP_NOT_INIT_THREADSAFE | \
+                           FF_CODEC_CAP_INIT_CLEANUP, \
+         .p.wrapper_name = "v4l2m2m", \
++        .p.pix_fmts     = (const enum AVPixelFormat[]) { AV_PIX_FMT_DRM_PRIME, \
++                                                         AV_PIX_FMT_NONE}, \
++        .hw_configs     = v4l2_m2m_hw_configs, \
+     }
+ 
+ M2MDEC(h264,  "H.264", AV_CODEC_ID_H264,       "h264_mp4toannexb");

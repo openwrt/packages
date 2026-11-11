@@ -1,0 +1,101 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Sat, 24 Oct 2026 20:29:23 +0100
+Subject: [PATCH] avformat/tcp: add local_dev to bind the socket to a device
+
+local_addr pins a connection to the address an interface holds when the
+URL is opened. A DHCP renewal or an IPv6 privacy or prefix change takes
+that address away during a long session, and an IPv4 address leaves no
+way to reach the same uplink over IPv6. local_dev binds the socket to a
+named device with SO_BINDTODEVICE, so each connection uses the address of
+its family the device holds at the time, and children of a segmented
+format inherit it like local_addr.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+Link: https://code.ffmpeg.org/FFmpeg/FFmpeg/pulls/26065
+---
+ doc/protocols.texi    |  5 +++++
+ libavformat/aviobuf.c |  2 +-
+ libavformat/tcp.c     | 18 ++++++++++++++++++
+ 3 files changed, 24 insertions(+), 1 deletion(-)
+
+--- a/doc/protocols.texi
++++ b/doc/protocols.texi
+@@ -2019,6 +2019,11 @@ Local IP address of a network interface
+ @item local_port=@var{port}
+ Local port used for tcp socket connect.
+ 
++@item local_dev=@var{device}
++Network device the tcp socket is bound to before it connects, so the
++connection leaves through that device and takes whichever address it holds
++at the time. Linux only.
++
+ @item timeout=@var{microseconds}
+ Set raise error timeout, expressed in microseconds.
+ 
+--- a/libavformat/aviobuf.c
++++ b/libavformat/aviobuf.c
+@@ -1015,7 +1015,7 @@ int ffio_copy_url_options(AVIOContext* p
+ {
+     const char *opts[] = {
+         "headers", "user_agent", "cookies", "http_proxy", "referer", "rw_timeout", "icy",
+-        "local_addr", NULL };
++        "local_addr", "local_dev", NULL };
+     const char **opt = opts;
+     uint8_t *buf = NULL;
+     int ret = 0;
+--- a/libavformat/tcp.c
++++ b/libavformat/tcp.c
+@@ -18,6 +18,9 @@
+  * License along with FFmpeg; if not, write to the Free Software
+  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+  */
++
++#define _DEFAULT_SOURCE /* SO_BINDTODEVICE with glibc */
++
+ #include "avformat.h"
+ #include "libavutil/avassert.h"
+ #include "libavutil/mem.h"
+@@ -32,6 +35,7 @@
+ #if HAVE_POLL_H
+ #include <poll.h>
+ #endif
++#include <string.h>
+ 
+ typedef struct TCPContext {
+     const AVClass *class;
+@@ -39,6 +43,7 @@ typedef struct TCPContext {
+     int listen;
+     char *local_port;
+     char *local_addr;
++    char *local_dev;
+     int open_timeout;
+     int rw_timeout;
+     int listen_timeout;
+@@ -58,6 +63,9 @@ static const AVOption options[] = {
+     { "listen",          "Listen for incoming connections",  OFFSET(listen),         AV_OPT_TYPE_INT, { .i64 = 0 },     0,       2,       .flags = D|E },
+     { "local_port",      "Local port",                                         OFFSET(local_port),     AV_OPT_TYPE_STRING, { .str = NULL },     0,       0, .flags = D|E },
+     { "local_addr",      "Local address",                                      OFFSET(local_addr),     AV_OPT_TYPE_STRING, { .str = NULL },     0,       0, .flags = D|E },
++#ifdef SO_BINDTODEVICE
++    { "local_dev",       "Local network device",                               OFFSET(local_dev),      AV_OPT_TYPE_STRING, { .str = NULL },     0,       0, .flags = D|E },
++#endif
+     { "timeout",     "set timeout (in microseconds) of socket I/O operations", OFFSET(rw_timeout),     AV_OPT_TYPE_INT, { .i64 = -1 },         -1, INT_MAX, .flags = D|E },
+     { "listen_timeout",  "Connection awaiting timeout (in milliseconds)",      OFFSET(listen_timeout), AV_OPT_TYPE_INT, { .i64 = -1 },         -1, INT_MAX, .flags = D|E },
+     { "send_buffer_size", "Socket send buffer size (in bytes)",                OFFSET(send_buffer_size), AV_OPT_TYPE_INT, { .i64 = -1 },         -1, INT_MAX, .flags = D|E },
+@@ -80,6 +88,16 @@ static const AVClass tcp_class = {
+ static int customize_fd(void *ctx, int fd, int family)
+ {
+     TCPContext *s = ctx;
++#ifdef SO_BINDTODEVICE
++    int err;
++
++    if (s->local_dev &&
++        setsockopt(fd, SOL_SOCKET, SO_BINDTODEVICE, s->local_dev, strlen(s->local_dev))) {
++        err = ff_neterrno();
++        ff_log_net_error(ctx, AV_LOG_ERROR, "setsockopt(SO_BINDTODEVICE)");
++        return err;
++    }
++#endif
+ 
+     if (s->local_addr || s->local_port) {
+         struct addrinfo hints = { 0 }, *ai, *cur_ai;

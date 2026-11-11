@@ -1,0 +1,41 @@
+From 1463a028fa1b15eedc796393f135940260470c17 Mon Sep 17 00:00:00 2001
+From: Lukas Rusak <lorusak@gmail.com>
+Date: Thu, 16 Aug 2018 21:10:53 -0700
+Subject: [PATCH 4/9] libavcodec: v4l2m2m: only mmap the buffer when it is
+ output type and drm prime is used
+
+---
+ libavcodec/v4l2_buffers.c | 20 ++++++++++++++------
+ 1 file changed, 14 insertions(+), 6 deletions(-)
+
+--- a/libavcodec/v4l2_buffers.c
++++ b/libavcodec/v4l2_buffers.c
+@@ -686,14 +686,22 @@ int ff_v4l2_buffer_initialize(V4L2Buffer
+ 
+         if (V4L2_TYPE_IS_MULTIPLANAR(ctx->type)) {
+             avbuf->plane_info[i].length = avbuf->buf.m.planes[i].length;
+-            avbuf->plane_info[i].mm_addr = mmap(NULL, avbuf->buf.m.planes[i].length,
+-                                           PROT_READ | PROT_WRITE, MAP_SHARED,
+-                                           buf_to_m2mctx(avbuf)->fd, avbuf->buf.m.planes[i].m.mem_offset);
++
++            if ((V4L2_TYPE_IS_OUTPUT(ctx->type) && buf_to_m2mctx(avbuf)->output_drm) ||
++                !buf_to_m2mctx(avbuf)->output_drm) {
++                avbuf->plane_info[i].mm_addr = mmap(NULL, avbuf->buf.m.planes[i].length,
++                                               PROT_READ | PROT_WRITE, MAP_SHARED,
++                                               buf_to_m2mctx(avbuf)->fd, avbuf->buf.m.planes[i].m.mem_offset);
++            }
+         } else {
+             avbuf->plane_info[i].length = avbuf->buf.length;
+-            avbuf->plane_info[i].mm_addr = mmap(NULL, avbuf->buf.length,
+-                                          PROT_READ | PROT_WRITE, MAP_SHARED,
+-                                          buf_to_m2mctx(avbuf)->fd, avbuf->buf.m.offset);
++
++            if ((V4L2_TYPE_IS_OUTPUT(ctx->type) && buf_to_m2mctx(avbuf)->output_drm) ||
++                !buf_to_m2mctx(avbuf)->output_drm) {
++                avbuf->plane_info[i].mm_addr = mmap(NULL, avbuf->buf.length,
++                                               PROT_READ | PROT_WRITE, MAP_SHARED,
++                                               buf_to_m2mctx(avbuf)->fd, avbuf->buf.m.offset);
++            }
+         }
+ 
+         if (avbuf->plane_info[i].mm_addr == MAP_FAILED)
