@@ -1,6 +1,19 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Roberto Andrei Bolda <rbolda@taladin.ro>
+Date: Tue, 17 Nov 2026 12:00:00 +0200
+Subject: [PATCH] ports/unix: hardcode UNAME_S to Linux
+
+Set UNAME_S to Linux instead of probing the build host with uname, so
+the build does not depend on the host OS (for example Darwin).
+
+Signed-off-by: Roberto Andrei Bolda <rbolda@taladin.ro>
+---
+ ports/unix/Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
 --- a/ports/unix/Makefile
 +++ b/ports/unix/Makefile
-@@ -34,7 +34,7 @@ QSTR_DEFS += qstrdefsport.h
+@@ -38,7 +38,7 @@ QSTR_DEFS += qstrdefsport.h
  QSTR_GLOBAL_DEPENDENCIES += $(VARIANT_DIR)/mpconfigvariant.h
  
  # OS name, for simple autoconfig
