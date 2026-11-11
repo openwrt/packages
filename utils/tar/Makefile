@@ -68,6 +68,7 @@ define Package/tar/config
 
 	config PACKAGE_TAR_XZ
 		bool "tar: Enable seamless xz support"
+		depends on PACKAGE_xz-utils
 		default y
 
 	config PACKAGE_TAR_ZSTD
