@@ -223,18 +223,6 @@ unbound_mkdir() {
   local filestuff
 
 
-  if [ "$UB_D_DHCP_LINK" = "odhcpd" ] ; then
-    local dhcp_origin=$( uci_get dhcp.@odhcpd[0].leasefile )
-    local dhcp_dir=$( dirname $dhcp_origin )
-
-
-    if [ ! -d "$dhcp_dir" ] ; then
-      # make sure odhcpd has a directory to write (not done itself, yet)
-      mkdir -p "$dhcp_dir"
-    fi
-  fi
-
-
   if [ -f $UB_RKEY_FILE ] ; then
     filestuff=$( cat $UB_RKEY_FILE )
 

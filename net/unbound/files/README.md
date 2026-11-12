@@ -89,7 +89,7 @@ config dhcp 'lan'
 ```
 
 ### Unbound and odhcpd
-You may ask, "can Unbound replace dnsmasq?" You can have DHCP-DNS records with Unbound and [odhcpd](https://github.com/openwrt/odhcpd/blob/master/README) only. The UCI scripts will allow Unbound to act like dnsmasq. When odhcpd configures each DHCP lease, it will call a script. The script provided with Unbound will read the lease file for DHCP-DNS records. The unbound-control application is required, because simply rewriting conf-files and restarting unbound is too much overhead.
+You may ask, "can Unbound replace dnsmasq?" You can have DHCP-DNS records with Unbound and [odhcpd](https://github.com/openwrt/odhcpd/blob/master/README.md) only. The UCI scripts will allow Unbound to act like dnsmasq. Whenever the leases of odhcpd change, odhcpd sends a `dhcp.hosts.update` ubus event, which triggers a script provided with Unbound. The script gets the current leases from odhcpd via ubus and loads the DHCP-DNS records. The unbound-control application is required, because simply rewriting conf-files and restarting unbound is too much overhead.
 - Default OpenWrt has dnsmasq+odhcpd with `odhcpd-ipv6only` limited to DHCPv6.
 - If you use dnsmasq+odhcpd together, then use dnsmasq serial or parallel methods above.
 - You must install package `odhcpd` (full) to use odhcpd alone.
@@ -126,9 +126,6 @@ config dhcp 'lan'
   ...
 
 config odhcpd 'odhcpd'
-  option leasefile '/var/lib/odhcpd/dhcp.leases'
-  # this is where the magic happens
-  option leasetrigger '/usr/lib/unbound/odhcpd.sh'
   option maindhcp '1'
 ```
 

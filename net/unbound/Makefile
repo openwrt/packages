@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unbound
 PKG_VERSION:=1.26.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://nlnetlabs.nl/downloads/unbound
@@ -48,7 +48,7 @@ endef
 define Package/unbound-daemon
   $(call Package/unbound/Default)
   TITLE+= (daemon)
-  DEPENDS+= +libunbound
+  DEPENDS+= +libunbound +ucode +ucode-mod-fs +ucode-mod-ubus +ucode-mod-uci
 endef
 
 define Package/unbound-daemon/description
@@ -221,12 +221,13 @@ define Package/unbound-daemon/install
 	$(INSTALL_BIN)  ./files/unbound.ntpd $(1)/etc/hotplug.d/ntp/25-unbound
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN)  ./files/unbound.init $(1)/etc/init.d/unbound
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN)  ./files/unbound.defaults $(1)/etc/uci-defaults/60_unbound
 	$(INSTALL_DIR) $(1)/usr/lib/unbound
 	$(INSTALL_DATA) ./files/defaults.sh $(1)/usr/lib/unbound/defaults.sh
 	$(INSTALL_DATA) ./files/dnsmasq.sh $(1)/usr/lib/unbound/dnsmasq.sh
 	$(INSTALL_DATA) ./files/iptools.sh $(1)/usr/lib/unbound/iptools.sh
-	$(INSTALL_BIN)  ./files/odhcpd.sh $(1)/usr/lib/unbound/odhcpd.sh
-	$(INSTALL_DATA) ./files/odhcpd.awk $(1)/usr/lib/unbound/odhcpd.awk
+	$(INSTALL_BIN)  ./files/odhcpd.uc $(1)/usr/lib/unbound/odhcpd.uc
 	$(INSTALL_DATA) ./files/stopping.sh $(1)/usr/lib/unbound/stopping.sh
 	$(INSTALL_DATA) ./files/unbound.sh $(1)/usr/lib/unbound/unbound.sh
 endef

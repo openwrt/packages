@@ -1,0 +1,10 @@
+#!/bin/sh
+# The odhcpd lease trigger script is gone, the DHCP-DNS records are now loaded
+# via a procd trigger on odhcpd's "dhcp.hosts.update" ubus event
+
+if [ "$(uci -q get dhcp.odhcpd.leasetrigger)" = "/usr/lib/unbound/odhcpd.sh" ]; then
+	uci -q delete dhcp.odhcpd.leasetrigger
+	uci commit dhcp
+fi
+
+exit 0
