@@ -1,0 +1,75 @@
+#!/bin/sh /etc/rc.common
+# tinyssh
+
+START=50
+STOP=10
+
+USE_PROCD=1
+
+NAME=tinyssh
+LISTEN=/usr/sbin/tinysshd-listen
+TINYSSHD=/usr/sbin/tinysshd
+
+ensure_keys() {
+	local keydir="$1" tmp
+
+	[ -d "$keydir" ] && return 0
+
+	tmp=$(mktemp -d) || return 1
+	/usr/sbin/tinysshd-makekey -q "$tmp/keys" || {
+		rm -rf "$tmp"
+		return 1
+	}
+	mkdir -p "$(dirname "$keydir")"
+	mv "$tmp/keys" "$keydir"
+	rmdir "$tmp"
+}
+
+start_service() {
+	local enabled interface port maxconnections verbose keydir bindaddr ipaddr
+
+	. /lib/functions.sh
+	. /lib/functions/network.sh
+
+	config_load tinyssh
+	config_get_bool enabled main enabled 1
+	[ "$enabled" = 1 ] || return 0
+
+	config_get interface main interface
+	config_get port main port 22
+	config_get maxconnections main maxconnections 20
+	config_get_bool verbose main verbose 0
+	config_get keydir main keydir /etc/tinyssh/sshkeydir
+
+	ensure_keys "$keydir" || {
+		logger -s -t "$NAME" -p daemon.err "unable to generate host keys in '$keydir'"
+		return 1
+	}
+
+	bindaddr="0.0.0.0"
+	if [ -n "$interface" ]; then
+		if network_is_up "$interface"; then
+			network_get_ipaddr ipaddr "$interface"
+			[ -n "$ipaddr" ] && bindaddr="$ipaddr"
+		else
+			logger -t "$NAME" -p daemon.warn \
+				"interface '$interface' is not up, binding to all interfaces instead"
+		fi
+	fi
+
+	procd_open_instance
+	procd_set_param command "$LISTEN"
+	case "$maxconnections" in
+		''|*[!0-9]*|0) ;;
+		*) procd_append_param command -c "$maxconnections" ;;
+	esac
+	procd_append_param command "$bindaddr" "$port" "$TINYSSHD"
+	[ "$verbose" = 1 ] && procd_append_param command -v
+	procd_append_param command "$keydir"
+	procd_set_param respawn
+	procd_close_instance
+}
+
+service_triggers() {
+	procd_add_reload_trigger "tinyssh"
+}
