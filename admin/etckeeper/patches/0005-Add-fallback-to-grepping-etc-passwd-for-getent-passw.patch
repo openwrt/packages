@@ -1,0 +1,20 @@
+From 9b7e3020b9ebbe4d1ab880deb89236895ec5e6bd Mon Sep 17 00:00:00 2001
+From: Rimas Kudelis <rimas@kudelis.lt>
+Date: Fri, 6 Nov 2026 14:08:58 +0200
+Subject: Add fallback to grepping /etc/passwd for `getent passwd`
+
+---
+ commit.d/50vcs-commit | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/commit.d/50vcs-commit
++++ b/commit.d/50vcs-commit
+@@ -59,7 +59,7 @@ if [ "$VCS" = git ] && [ -d .git ]; then
+ 	if [ -n "$USER" ]; then
+ 		# Use user.name and user.email from the gitconfig belonging
+ 		# to USER.
+-		USER_HOME="$(getent passwd "$USER" | cut -d: -f6)"
++		USER_HOME="$( (getent passwd "$USER" 2>/dev/null || grep "^$USER:" /etc/passwd) | cut -d: -f6)"
+ 		if [ -n "$USER_HOME" ] && [ -e "$USER_HOME/.gitconfig" ]; then
+ 			if [ -z "$GIT_AUTHOR_NAME" ]; then
+ 				GIT_AUTHOR_NAME="$(git config -f "$USER_HOME/.gitconfig" user.name)" || true
