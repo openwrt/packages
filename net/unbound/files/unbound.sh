@@ -244,6 +244,13 @@ unbound_mkdir() {
   cp -p $UB_ETCDIR/root.* $UB_VARDIR/
 
 
+  if [ "$UB_D_DHCP_LINK" = "odhcpd" ] ; then
+    # Seed the DHCP-DNS records with the current leases, otherwise they are
+    # only loaded once odhcpd's leases change after Unbound has been started
+    $UB_LIBDIR/odhcpd.uc seed
+  fi
+
+
   if [ ! -f $UB_RHINT_FILE ] ; then
     if [ -f /usr/share/dns/root.hints ] ; then
       # Debian-like package dns-root-data

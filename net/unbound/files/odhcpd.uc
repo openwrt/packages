@@ -23,7 +23,8 @@
  * which is included when Unbound is (re)started.
  *
  * This is run by a procd trigger on odhcpd's "dhcp.hosts.update" event (see
- * unbound.init).
+ * unbound.init), and with "seed" as argument before Unbound is started, to
+ * only write the configuration file with the current records.
  */
 
 'use strict';
@@ -225,7 +226,7 @@ function unbound_control(cmd, lines) {
 	return p.close() == 0;
 }
 
-function main() {
+function main(seed) {
 	const uci = cursor();
 	const opt = (name) => uci.get_first('unbound', 'unbound', name);
 	const opts = {
@@ -246,7 +247,8 @@ function main() {
 		log('invalid exclude_ipv6_ga value, using default (0)');
 	}
 
-	if (opt('dhcp_link') != 'odhcpd' || !length(opts.domain) || !access(UB_TOTAL_CONF))
+	if (opt('dhcp_link') != 'odhcpd' || !length(opts.domain) ||
+	    (!seed && !access(UB_TOTAL_CONF)))
 		return 0;
 
 	const lock = open(UB_ODHCPD_LOCK, 'w');
@@ -283,6 +285,12 @@ function main() {
 
 	writefile(UB_DHCP_CONF, join('\n', current.conf));
 
+	if (seed) {
+		/* Unbound isn't running yet and loads UB_DHCP_CONF when started */
+		writefile(UB_DHCP_RECORDS, join('\n', keys(current.records)) + '\n');
+		return 0;
+	}
+
 	if (!unbound_control('local_datas_remove', keys(removed_names)) ||
 	    !unbound_control('local_datas', add)) {
 		/*
@@ -302,4 +310,4 @@ function main() {
 	return 0;
 }
 
-exit(main());
+exit(main(ARGV[0] == 'seed'));
