@@ -1,3 +1,5 @@
 #!/bin/sh
+set -eu
 
-antiblock | grep "AntiBlock $PKG_VERSION"
+# shellcheck disable=SC2154
+antiblock --help | grep -F "AntiBlock $PKG_VERSION"
