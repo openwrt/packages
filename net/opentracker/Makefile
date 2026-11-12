@@ -12,7 +12,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://erdgeist.org/arts/software/opentracker/
 PKG_HASH:=be4318e50affa65000e80963a6d05245d32cd4b73875df19aeec2aeee81c8fc7
 
-PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
+PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>, Mirko Vogt <mirko-openwrt@nanl.de>
 PKG_LICENSE:=Beerware
 
 include $(INCLUDE_DIR)/package.mk
