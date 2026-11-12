@@ -74,6 +74,12 @@ service_triggers() {
   else
     procd_add_reload_trigger "unbound" "dhcp"
   fi
+
+
+  if [ "$( uci_get unbound.@unbound[0].dhcp_link )" = "odhcpd" ] ; then
+    # (Re)load the DHCP-DNS records whenever odhcpd's leases change
+    procd_add_raw_trigger "dhcp.hosts.update" 1000 $UB_LIBDIR/odhcpd.uc
+  fi
 }
 
 ##############################################################################
