@@ -7,9 +7,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nfs-kernel-server
-PKG_VERSION:=2.9.1
-PKG_RELEASE:=2
-PKG_HASH:=302846343bf509f8f884c23bdbd0fe853b7f7cbb6572060a9082279d13b21a2c
+PKG_VERSION:=3.1.1
+PKG_RELEASE:=1
+PKG_HASH:=7dbc05eb8b32828b322872b759a62cb3979cb4118f344dd8616813d1390e84e0
 
 PKG_SOURCE:=nfs-utils-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/utils/nfs-utils/$(PKG_VERSION)
@@ -73,7 +73,7 @@ endef
 define Package/nfs-utils
 	$(call Package/nfs-utils/Default)
 	TITLE:=NFS mount and umount utils (NFSv3)
-	DEPENDS:=+libtirpc +libuuid
+  DEPENDS:=+libtirpc +libuuid +libnl-core +libnl-genl
 	CONFLICTS:=nfs-utils-v4
 	VARIANT:=v3
 endef
@@ -85,7 +85,7 @@ endef
 define Package/nfs-utils-v4
 	$(call Package/nfs-utils/Default)
 	TITLE:=NFS mount and umount utils (NFSv4.x)
-	DEPENDS:=+libtirpc +libuuid +libkeyutils +libdevmapper
+  DEPENDS:=+libtirpc +libuuid +libkeyutils +libdevmapper +libnl-core +libnl-genl
 	VARIANT:=v4
 	PROVIDES:=nfs-utils
 endef
@@ -97,7 +97,7 @@ endef
 define Package/nfs-kernel-server-utils
 	$(call Package/nfs-kernel-server/Default)
 	TITLE:=NFS server utils
-	DEPENDS:=nfs-kernel-server +libtirpc
+  DEPENDS:=nfs-kernel-server +libtirpc +libnl-core +libnl-genl
 endef
 
 define Package/nfs-kernel-server-utils/description
