@@ -33,7 +33,7 @@
  
 --- a/utils/statd/statd.c
 +++ b/utils/statd/statd.c
-@@ -161,7 +161,7 @@ usage(void)
+@@ -163,7 +163,7 @@ usage(void)
  	fprintf(stderr,"      -H                   Specify a high-availability callout program.\n");
  }
  
