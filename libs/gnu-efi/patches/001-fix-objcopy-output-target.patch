@@ -1,0 +1,18 @@
+--- a/Make.rules
++++ b/Make.rules
+@@ -39,13 +39,13 @@
+ %.efi: %.so
+ 	$(OBJCOPY) -j .text -j .sdata -j .data -j .dynamic -j .dynsym -j .rel \
+ 		    -j .rela -j .rel.* -j .rela.* -j .rel* -j .rela* \
+-		    -j .reloc $(FORMAT) $*.so $@
++		    -j .reloc --output-target efi-app-$(ARCH) $*.so $@
+ 
+ %.efi.debug: %.so
+ 	$(OBJCOPY) -j .debug_info -j .debug_abbrev -j .debug_aranges \
+ 		-j .debug_line -j .debug_str -j .debug_ranges \
+ 		-j .note.gnu.build-id \
+-		$(FORMAT) $*.so $@
++		--output-target efi-app-$(ARCH) $*.so $@
+ 
+ %.so: %.o
+ 	$(LD) $(LDFLAGS) $^ -o $@ $(LOADLIBES)
