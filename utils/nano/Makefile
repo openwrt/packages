@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nano
 PKG_VERSION:=9.3
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/nano
@@ -136,14 +136,15 @@ endef
 
 define Package/nano/install
 	$(call Package/nano-tiny/install,$1)
-	$(INSTALL_DIR) $(1)/etc/profile.d $(1)/usr/share/nano
+	$(INSTALL_DIR) $(1)/etc/uci-defaults $(1)/usr/lib/profile.d $(1)/usr/share/nano
 	$(INSTALL_DATA) ./files/nanorc $(1)/etc/nanorc
 	$(INSTALL_DATA) ./files/uci.nanorc $(1)/usr/share/nano
 	$(INSTALL_DATA) ./files/ucode.nanorc $(1)/usr/share/nano
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/nano/javascript.nanorc $(1)/usr/share/nano
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/nano/patch.nanorc $(1)/usr/share/nano
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/nano/sh.nanorc $(1)/usr/share/nano
-	$(INSTALL_DATA) ./files/nano-default-editor.sh $(1)/etc/profile.d
+	$(INSTALL_DATA) ./files/nano-default-editor.sh $(1)/usr/lib/profile.d
+	$(INSTALL_DATA) ./files/nano.defaults $(1)/etc/uci-defaults/50-nano
 endef
 
 define Package/nano-full/install
