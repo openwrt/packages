@@ -1,0 +1,314 @@
+From 60adcc31208a3eb29d2b7c6346b1908aa4f10bbd Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Sun, 18 Oct 2026 17:05:10 +0100
+Subject: [PATCH 17/19] feat: configure a shared device UUID for CGI and
+ discovery
+
+A device reached through several interfaces needs one endpoint identity.
+Accept a configured UUID in text and JSON configurations and through the
+discovery command line. Validate and canonicalise the shared value while
+retaining MAC-derived identities for existing configurations.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ README.md                        | 10 +++++++-
+ conf.c                           | 42 ++++++++++++++++++--------------
+ onvif_simple_server.conf.example |  1 +
+ test/test_cgi.py                 | 13 ++++++++++
+ test/test_utils.c                | 18 ++++++++++++++
+ utils.c                          | 20 +++++++++++++++
+ utils.h                          |  1 +
+ wsd_simple_server.c              | 17 ++++++++++---
+ 8 files changed, 99 insertions(+), 23 deletions(-)
+
+--- a/README.md
++++ b/README.md
+@@ -123,6 +123,7 @@ manufacturer=Yi
+ firmware_ver=x.y.z
+ hardware_id=AFUS
+ serial_num=AFUSY12ABCDE3F456789
++device_uuid=b47bd8ea-7b8b-58c7-8354-88dbaddf57aa
+ #ifs=wlan0  # optional: override interface (auto-detected from client address if omitted)
+ port=80
+ scope=onvif://www.onvif.org/Profile/Streaming
+@@ -313,8 +314,13 @@ Check the code for information.
+ ### wsd_simple_server
+ wsd_simple server supports the following options
+ 
++Set `device_uuid` in the CGI configuration and pass the same UUID through
++`--uuid` to discovery. This keeps one device identity across network
++interfaces and address families. Generate and persist a distinct UUID for
++each device instance. Omitting it retains MAC-derived identity selection.
++
+ ```
+-Usage: /tmp/sd/yi-hack/bin/wsd_simple_server [-i INTERFACE] -x XADDR [-m MODEL] [-n MANUFACTURER] -p PID_FILE [-t TEMPLATE_DIR] [-f] [-d LEVEL]
++Usage: /tmp/sd/yi-hack/bin/wsd_simple_server [-i INTERFACE] -x XADDR [-m MODEL] [-n MANUFACTURER] -p PID_FILE [-u UUID] [-t TEMPLATE_DIR] [-f] [-d LEVEL]
+ 
+         -i, --if_name
+                 network interface (auto-detected; use -i to force a specific interface)
+@@ -327,6 +333,8 @@ Usage: /tmp/sd/yi-hack/bin/wsd_simple_se
+                 hardware manufacturer
+         -p, --pid_file
+                 pid file
++        -u, --uuid
++                configured device UUID
+         -t, --template_dir
+                 template directory (default: /etc/wsd_simple_server)
+         -f, --foreground
+--- a/conf.c
++++ b/conf.c
+@@ -138,6 +138,19 @@ static int service_address_resolve(void)
+     return 0;
+ }
+ 
++static void service_identity_resolve(void)
++{
++    uint8_t mac[6] = {0};
++
++    if (service_ctx.device_uuid[0])
++        return;
++    if (get_mac_by_ifname(service_ctx.ifs, mac) == 0)
++        gen_uuid_v5_mac(service_ctx.device_uuid, mac);
++    else
++        gen_uuid(service_ctx.device_uuid);
++    log_info("Device UUID: %s", service_ctx.device_uuid);
++}
++
+ int process_conf_file(char *file)
+ {
+     FILE *fF;
+@@ -162,6 +175,7 @@ int process_conf_file(char *file)
+     service_ctx.serial_num = NULL;
+     service_ctx.hardware_id = NULL;
+     service_ctx.ifs = NULL;
++    service_ctx.device_uuid[0] = '\0';
+     service_ctx.factory_default_command = NULL;
+     service_ctx.adv_enable_media2 = 0;
+     service_ctx.adv_empty_if_unknown = 0;
+@@ -287,6 +301,9 @@ int process_conf_file(char *file)
+         } else if (strcasecmp(param, "hardware_id") == 0) {
+             service_ctx.hardware_id = (char *) malloc(strlen(value) + 1);
+             snprintf(service_ctx.hardware_id, strlen(value) + 1, "%s", value);
++        } else if (strcasecmp(param, "device_uuid") == 0) {
++            if (uuid_string_set(service_ctx.device_uuid, value))
++                return -2;
+         } else if (strcasecmp(param, "scope") == 0) {
+             service_ctx.scopes_num++;
+             service_ctx.scopes = (char **) realloc(service_ctx.scopes, service_ctx.scopes_num * sizeof(char *));
+@@ -788,15 +805,7 @@ int process_conf_file(char *file)
+     if (service_address_resolve())
+         return -2;
+ 
+-    /* Stable device UUID from MAC */
+-    {
+-        uint8_t mac[6] = {0};
+-        if (get_mac_by_ifname(service_ctx.ifs, mac) == 0)
+-            gen_uuid_v5_mac(service_ctx.device_uuid, mac);
+-        else
+-            gen_uuid(service_ctx.device_uuid);
+-        log_info("Device UUID: %s", service_ctx.device_uuid);
+-    }
++    service_identity_resolve();
+ 
+     return profiles_validate();
+ }
+@@ -909,6 +918,7 @@ int process_json_conf_file(char *file)
+     service_ctx.serial_num = NULL;
+     service_ctx.hardware_id = NULL;
+     service_ctx.ifs = NULL;
++    service_ctx.device_uuid[0] = '\0';
+     service_ctx.factory_default_command = NULL;
+     service_ctx.adv_enable_media2 = 0;
+     service_ctx.adv_empty_if_unknown = 0;
+@@ -964,6 +974,10 @@ int process_json_conf_file(char *file)
+     get_string_from_json(&(service_ctx.serial_num), json_file, "serial_num");
+     get_string_from_json(&(service_ctx.factory_default_command), json_file, "factory_default_command");
+     get_string_from_json(&(service_ctx.ifs), json_file, "ifs");
++    if (json_object_object_get_ex(json_file, "device_uuid", &value) &&
++        (!json_object_is_type(value, json_type_string) ||
++         uuid_string_set(service_ctx.device_uuid, json_object_get_string(value))))
++        return -2;
+     get_int_from_json(&(service_ctx.port), json_file, "port");
+ 
+     if (json_object_object_get_ex(json_file, "scopes", &value)) {
+@@ -1025,15 +1039,7 @@ int process_json_conf_file(char *file)
+     if (service_address_resolve())
+         return -2;
+ 
+-    /* Stable device UUID from MAC */
+-    {
+-        uint8_t mac[6] = {0};
+-        if (get_mac_by_ifname(service_ctx.ifs, mac) == 0)
+-            gen_uuid_v5_mac(service_ctx.device_uuid, mac);
+-        else
+-            gen_uuid(service_ctx.device_uuid);
+-        log_info("Device UUID: %s", service_ctx.device_uuid);
+-    }
++    service_identity_resolve();
+ 
+     // Print debug
+     log_debug("model: %s", service_ctx.model);
+--- a/onvif_simple_server.conf.example
++++ b/onvif_simple_server.conf.example
+@@ -4,6 +4,7 @@ firmware_ver=0.0.1
+ hardware_id=HWID
+ serial_num=SN1234567890
+ #ifs=wlan0  # optional: override interface (auto-detected from client address if omitted)
++#device_uuid=b47bd8ea-7b8b-58c7-8354-88dbaddf57aa
+ port=8080
+ scope=onvif://www.onvif.org/Profile/Streaming
+ scope=onvif://www.onvif.org/Profile/T
+--- a/test/test_cgi.py
++++ b/test/test_cgi.py
+@@ -83,6 +83,19 @@ def helper_configuration():
+ 
+ 
+ class CGITests(unittest.TestCase):
++    def test_configured_device_identity(self):
++        identifier = 'b47bd8ea-7b8b-58c7-8354-88dbaddf57aa'
++        config = configuration(1)
++        config['device_uuid'] = identifier
++        text = ('ifs=lo\ndevice_uuid=' + identifier + '\nname=Profile_0\n'
++                'width=640\nheight=480\ntype=H264\naudio_encoder=NONE\n')
++        for settings in [config, text]:
++            for address in ['192.0.2.10', '2001:db8::10']:
++                status, root = request('device', 'GetEndpointReference', config=settings,
++                                       server_address=address)
++                self.assertEqual(status, 200)
++                self.assertEqual(root.findtext('.//{*}GUID'), 'urn:uuid:' + identifier)
++
+     def test_socket_local_addresses(self):
+         text = ('ifs=lo\nname=Profile_0\nwidth=640\nheight=480\ntype=H264\n'
+                 'url=rtsp://%s:8554/test\naudio_encoder=NONE\n')
+--- a/test/test_utils.c
++++ b/test/test_utils.c
+@@ -124,6 +124,23 @@ static void test_determinism(void)
+ /* -------------------------------------------------------------------------
+  * main
+  * ---------------------------------------------------------------------- */
++static void test_configured_uuid(void)
++{
++    char uuid[UUID_LEN + 2];
++
++    uuid[UUID_LEN + 1] = 'x';
++    CHECK("configured UUID accepted",
++          uuid_string_set(uuid, "B47BD8EA-7B8B-58C7-8354-88DBADDF57AA") == 0);
++    CHECK("configured UUID canonicalised",
++          !strcmp(uuid, "b47bd8ea-7b8b-58c7-8354-88dbaddf57aa"));
++    CHECK("configured UUID canary preserved", uuid[UUID_LEN + 1] == 'x');
++    CHECK("short UUID rejected", uuid_string_set(uuid, "1234") < 0);
++    CHECK("UUID separators checked",
++          uuid_string_set(uuid, "b47bd8ea_7b8b-58c7-8354-88dbaddf57aa") < 0);
++    CHECK("UUID hexadecimal checked",
++          uuid_string_set(uuid, "z47bd8ea-7b8b-58c7-8354-88dbaddf57aa") < 0);
++}
++
+ int main(void)
+ {
+     printf("=== test_utils: gen_uuid_v5_mac ===\n");
+@@ -131,6 +148,7 @@ int main(void)
+     test_output_format();
+     test_determinism();
+     test_buffer_canary();
++    test_configured_uuid();
+     printf("---\n%d/%d passed", g_pass, g_tests);
+     if (g_fail)
+         printf("  (%d FAILED)", g_fail);
+--- a/utils.c
++++ b/utils.c
+@@ -1473,6 +1473,26 @@ int detect_local_address(const char *rem
+         return connect_trick_v4(clean, local_addr, len);
+ }
+ 
++int uuid_string_set(char *destination, const char *value)
++{
++    int i;
++
++    if (!value || strlen(value) != UUID_LEN)
++        return -1;
++    for (i = 0; i < UUID_LEN; i++) {
++        if (i == 8 || i == 13 || i == 18 || i == 23) {
++            if (value[i] != '-')
++                return -1;
++        } else if (!isxdigit((unsigned char)value[i])) {
++            return -1;
++        }
++    }
++    for (i = 0; i < UUID_LEN; i++)
++        destination[i] = tolower((unsigned char)value[i]);
++    destination[UUID_LEN] = '\0';
++    return 0;
++}
++
+ void gen_uuid_v5_mac(char *uuid_str, const uint8_t mac[6])
+ {
+     char name[32];
+--- a/utils.h
++++ b/utils.h
+@@ -110,6 +110,7 @@ int detect_outbound_address_v6(char *add
+ int get_ip6_address(char *addr_str, size_t len, const char *if_name);
+ int detect_local_address(const char *remote_addr, char *local_addr, size_t len);
+ void gen_uuid_v5_mac(char *uuid_str, const uint8_t mac[6]);
++int uuid_string_set(char *destination, const char *value);
+ int get_from_query_string(char **ret, int *ret_size, char *par);
+ int set_video_codec(char *buffer, int buffer_len, int codec, int ver);
+ int set_audio_codec(char *buffer, int buffer_len, int codec, int ver);
+--- a/wsd_simple_server.c
++++ b/wsd_simple_server.c
+@@ -218,7 +218,8 @@ void signal_handler(int signal)
+ 
+ void print_usage(char *progname)
+ {
+-    fprintf(stderr, "\nUsage: %s [-i INTERFACE] -x XADDR [-m MODEL] [-n MANUFACTURER] -p PID_FILE [-t TEMPLATE_DIR] [-f] [-d LEVEL]\n\n", progname);
++    fprintf(stderr, "\nUsage: %s [-i INTERFACE] -x XADDR [-m MODEL] [-n MANUFACTURER] "
++            "-p PID_FILE [-u UUID] [-t TEMPLATE_DIR] [-f] [-d LEVEL]\n\n", progname);
+     fprintf(stderr, "\t-i, --if_name\n");
+     fprintf(stderr, "\t\tnetwork interface (auto-detected; use -i to force a specific interface)\n");
+     fprintf(stderr, "\t-x, --xaddr\n");
+@@ -230,6 +231,8 @@ void print_usage(char *progname)
+     fprintf(stderr, "\t\thardware manufacturer\n");
+     fprintf(stderr, "\t-p, --pid_file\n");
+     fprintf(stderr, "\t\tpid file\n");
++    fprintf(stderr, "\t-u, --uuid\n");
++    fprintf(stderr, "\t\tconfigured device UUID\n");
+     fprintf(stderr, "\t-t, --template_dir\n");
+     fprintf(stderr, "\t\ttemplate directory (default: %s)\n", DEFAULT_TEMPLATE_DIR);
+     fprintf(stderr, "\t-f, --foreground\n");
+@@ -315,6 +318,7 @@ int main(int argc, char **argv)
+             {"if_name",      required_argument, 0, 'i'},
+             {"pid_file",     required_argument, 0, 'p'},
+             {"xaddr",        required_argument, 0, 'x'},
++            {"uuid",         required_argument, 0, 'u'},
+ 
+             {"model",        required_argument, 0, 'm'},
+             {"hardware",     required_argument, 0, 'n'},
+@@ -325,12 +329,18 @@ int main(int argc, char **argv)
+             {0, 0, 0, 0}
+         };
+         int option_index = 0;
+-        c = getopt_long(argc, argv, "i:p:x:m:n:t:fd:h", long_options, &option_index);
++        c = getopt_long(argc, argv, "i:p:x:u:m:n:t:fd:h", long_options, &option_index);
+         if (c == -1) break;
+ 
+         switch (c) {
+         case 'i': if_name  = optarg; break;
+         case 'x': xaddr_s  = optarg; break;
++        case 'u':
++            if (uuid_string_set(uuid, optarg)) {
++                print_usage(argv[0]);
++                exit(EXIT_FAILURE);
++            }
++            break;
+ 
+         case 'm':
+             if (strlen(optarg) < sizeof(model)) snprintf(model, sizeof(model), "%s", optarg);
+@@ -440,8 +450,7 @@ int main(int argc, char **argv)
+         fclose(fLog); exit(EXIT_FAILURE);
+     }
+ 
+-    /* ---- Stable UUID from MAC (WS-Discovery 1.1 EPR stability req.) ---- */
+-    {
++    if (!uuid[0]) {
+         uint8_t mac[6] = {0};
+         int mac_ok;
+         if (if_name) {

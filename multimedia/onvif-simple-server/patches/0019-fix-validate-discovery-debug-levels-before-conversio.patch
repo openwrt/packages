@@ -1,0 +1,52 @@
+From d5e3c45c758d84c23bbcde1affbb45b81aa3c5d3 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Sun, 18 Oct 2026 17:25:26 +0100
+Subject: [PATCH 19/19] fix: validate discovery debug levels before conversion
+
+The debug argument was narrowed to int before checking its range,
+allowing large values to wrap into accepted levels. Validate strtol
+errors, the complete input and the long result before assigning the
+logging level.
+
+Fixes: e1c34ca6dd91 ("First commit")
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ wsd_simple_server.c | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+--- a/wsd_simple_server.c
++++ b/wsd_simple_server.c
+@@ -311,13 +311,13 @@ static void handle_probe(struct discover
+  * ---------------------------------------------------------------------- */
+ int main(int argc, char **argv)
+ {
+-    int errno;
+     char *endptr;
+     int c, ret;
+     char *if_name, *pid_file, *xaddr_s;
+     struct discovery_packet packet;
+     const char *log_file;
+     int foreground;
++    long debug_level;
+     char recv_buffer[RECV_BUFFER_LEN];
+ 
+     if_name = pid_file = xaddr_s = NULL;
+@@ -371,13 +371,13 @@ int main(int argc, char **argv)
+             break;
+         case 'f': foreground = 1; break;
+         case 'd':
+-            debug = strtol(optarg, &endptr, 10);
+-            if ((errno == ERANGE && (debug == LONG_MAX || debug == LONG_MIN)) ||
+-                (errno != 0 && debug == 0) || endptr == optarg ||
+-                debug < LOG_TRACE || debug > LOG_FATAL) {
++            errno = 0;
++            debug_level = strtol(optarg, &endptr, 10);
++            if (errno || endptr == optarg || *endptr ||
++                debug_level < LOG_TRACE || debug_level > LOG_FATAL) {
+                 print_usage(argv[0]); exit(EXIT_FAILURE);
+             }
+-            debug = 5 - debug;
++            debug = LOG_FATAL - debug_level;
+             break;
+         case 'h': print_usage(argv[0]); exit(EXIT_SUCCESS);
+         case '?': break;

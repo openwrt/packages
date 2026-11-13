@@ -1,0 +1,202 @@
+From 50e936982397939701fe7a5422729aa6793662c2 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Sun, 18 Oct 2026 11:57:08 +0100
+Subject: [PATCH 14/15] fix: load compressed templates for generated
+ capabilities
+
+Share template opening between text substitution and XML generation so USE_ZLIB deployments continue to work with compressed templates alone.
+
+Fixes: b3028a5c57d9 ("feat: expose camera imaging through optional control helpers")
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ device_advertisement.c  |  2 +-
+ media_capabilities.c    |  2 +-
+ soap.c                  | 13 +++++++++++++
+ soap.h                  |  1 +
+ test/README.md          |  3 +++
+ test/test_cgi.py        |  4 ++--
+ test/test_compressed.py | 27 +++++++++++++++++++++++++++
+ utils.c                 | 40 ++++++++++++++++++++--------------------
+ utils.h                 |  1 +
+ 9 files changed, 69 insertions(+), 24 deletions(-)
+ create mode 100644 test/test_compressed.py
+
+--- a/device_advertisement.c
++++ b/device_advertisement.c
+@@ -147,7 +147,7 @@ int device_advertisement_send(int servic
+         return send_fault("device_service", "Receiver", "ter:ActionNotSupported", "ter:NoSuchService",
+                           "No such service", "The requested service category is unavailable");
+     }
+-    envelope = ezxml_parse_file(filename);
++    envelope = soap_template_load(filename);
+     if (!envelope || *ezxml_error(envelope)) {
+         ezxml_free(envelope);
+         return send_action_failed_fault("device_service", -1);
+--- a/media_capabilities.c
++++ b/media_capabilities.c
+@@ -59,7 +59,7 @@ int media_capabilities_send(int version)
+ {
+     ezxml_t envelope;
+ 
+-    envelope = ezxml_parse_file(version == 1 ? "media_service_files/GetServiceCapabilities.xml" :
++    envelope = soap_template_load(version == 1 ? "media_service_files/GetServiceCapabilities.xml" :
+                                 "media2_service_files/GetServiceCapabilities.xml");
+     if (!envelope || *ezxml_error(envelope)) {
+         ezxml_free(envelope);
+--- a/soap.c
++++ b/soap.c
+@@ -59,6 +59,19 @@ ezxml_t soap_response_create(int version
+     return soap_member_add(body, version, name);
+ }
+ 
++ezxml_t soap_template_load(char *filename)
++{
++    ezxml_t document;
++    FILE *file;
++
++    file = template_open(filename);
++    if (!file)
++        return NULL;
++    document = ezxml_parse_fp(file);
++    fclose(file);
++    return document;
++}
++
+ int soap_response_send(ezxml_t response)
+ {
+     ezxml_t envelope;
+--- a/soap.h
++++ b/soap.h
+@@ -9,6 +9,7 @@ ezxml_t soap_number_add(ezxml_t parent,
+ void soap_range_add(ezxml_t parent, const char *name, double minimum, double maximum);
+ ezxml_t soap_member_add(ezxml_t parent, int version, const char *name);
+ ezxml_t soap_response_create(int version, const char *operation);
++ezxml_t soap_template_load(char *filename);
+ int soap_response_send(ezxml_t response);
+ 
+ #endif
+--- a/test/README.md
++++ b/test/README.md
+@@ -32,3 +32,6 @@ UHTTPD_COMMAND='["/usr/sbin/uhttpd"]' py
+ The test starts an isolated server on a temporary loopback port, installs
+ CGI wrappers and checks profile enumeration and SOAP HTTP fault status.
+ No camera or RTSP server is required by these protocol tests.
++
++After building with `USE_ZLIB=1`, run `python3 test/test_compressed.py` to
++check capability responses with only gzip-compressed templates available.
+--- a/test/test_cgi.py
++++ b/test/test_cgi.py
+@@ -26,7 +26,7 @@ def configuration(count=2):
+                 for i in range(count)]}
+ 
+ 
+-def request(service, operation, content='', config=None, namespace=None):
++def request(service, operation, content='', config=None, namespace=None, template_dir=ROOT):
+     config = configuration() if config is None else config
+     namespace = namespace or {'device': 'http://www.onvif.org/ver10/device/wsdl',
+                  'media': NS['trt'], 'media2': NS['tr2'],
+@@ -41,7 +41,7 @@ def request(service, operation, content=
+                    REMOTE_ADDR='127.0.0.1', CONTENT_LENGTH=str(len(body)))
+         result = subprocess.run([str(ROOT / 'onvif_simple_server'),
+                                  '-c', str(path), f'{service}_service'],
+-                                input=body, capture_output=True, cwd=ROOT,
++                                input=body, capture_output=True, cwd=template_dir,
+                                 env=env, timeout=10)
+     if result.returncode:
+         raise AssertionError(result.stderr.decode())
+--- /dev/null
++++ b/test/test_compressed.py
+@@ -0,0 +1,27 @@
++import gzip
++from pathlib import Path
++import tempfile
++import unittest
++
++from test_cgi import request, ROOT
++
++
++class CompressedTests(unittest.TestCase):
++    def test_capability_templates(self):
++        with tempfile.TemporaryDirectory() as directory:
++            for source in ROOT.glob('*_files/*.xml'):
++                target = Path(directory) / source.relative_to(ROOT)
++                target.parent.mkdir(exist_ok=True)
++                target.with_suffix('.xml.gz').write_bytes(gzip.compress(source.read_bytes()))
++            for service, operation, content in [
++                ('device', 'GetServices', '<IncludeCapability>true</IncludeCapability>'),
++                ('device', 'GetCapabilities', ''),
++                ('media', 'GetServiceCapabilities', ''),
++                ('media2', 'GetServiceCapabilities', '')]:
++                with self.subTest(service=service, operation=operation):
++                    self.assertEqual(request(service, operation, content,
++                                             template_dir=directory)[0], 200)
++
++
++if __name__ == '__main__':
++    unittest.main()
+--- a/utils.c
++++ b/utils.c
+@@ -346,6 +346,25 @@ long cat_soap_fault(char* out, const cha
+  * @param ... The argument list to replace: src1, dst1, src2, dst2, etc...
+  * @return the number of processed bytes
+  */
++FILE *template_open(char *filename)
++{
++    FILE *file;
++
++#ifdef USE_ZLIB
++    file = tmpfile();
++    if (!file)
++        return NULL;
++    if (gzip_d(file, filename)) {
++        fclose(file);
++        return NULL;
++    }
++    rewind(file);
++#else
++    file = fopen(filename, "r");
++#endif
++    return file;
++}
++
+ long cat(char *out, char *filename, int num, ...)
+ {
+     va_list valist;
+@@ -360,26 +379,7 @@ long cat(char *out, char *filename, int
+     // Reset SOAP fault flag for normal file operations
+     g_last_response_was_soap_fault = 0;
+ 
+-#ifdef USE_ZLIB
+-    file = tmpfile();
+-    if (file == NULL) {
+-        log_error("Unable to open file %s", filename);
+-        return -1;
+-    }
+-    if (gzip_d(file, filename) != 0) {
+-        log_error("Unable to decompress file %s", filename);
+-        fclose(file);
+-        return -2;
+-    }
+-    rewind(file);
+-#else
+-    file = fopen(filename, "r");
+-    if (!file) {
+-        log_error("Unable to open file %s", filename);
+-        return -3;
+-    }
+-#endif
+-
++    file = template_open(filename);
+     if (!file) {
+         log_error("Unable to open file %s", filename);
+         // Return ONVIF-compliant SOAP fault instead of empty response
+--- a/utils.h
++++ b/utils.h
+@@ -79,6 +79,7 @@ void *create_shared_memory(int create);
+ void destroy_shared_memory(void *shared_area, int destroy_all);
+ int sem_memory_wait();
+ int sem_memory_post();
++FILE *template_open(char *filename);
+ long cat(char *out, char *filename, int num, ...);
+ long cat_soap_fault(char* out, const char* fault_subcode, const char* fault_reason, const char* fault_detail);
+ void output_http_headers(long content_length);

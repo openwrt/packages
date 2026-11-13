@@ -1,0 +1,128 @@
+From ca9fca2c14f99a3f4dfbabdf6a78396104dd82e1 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Sun, 18 Oct 2026 00:52:25 +0100
+Subject: [PATCH 03/15] feat: allow CGI logging to stderr
+
+Accept ONVIF_LOG_FILE in the CGI environment. The value - routes logs
+to stderr so the HTTP host can manage them; a pathname selects an
+append-only file. Preserve the existing default log rotation.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ README.md             |  4 +++
+ onvif_simple_server.c | 11 +++++--
+ test/test_cgi.py      | 67 +++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 79 insertions(+), 3 deletions(-)
+ create mode 100644 test/test_cgi.py
+
+--- a/README.md
++++ b/README.md
+@@ -66,6 +66,10 @@ diff -Naur busybox-1.36.1.ori/networking
+ ```
+ 
+ ## Configuration
++Set `ONVIF_LOG_FILE=-` in the CGI environment to log to stderr. A pathname
++selects an append-only log managed by the HTTP host. With the variable unset,
++the existing log file and rotation behaviour are retained.
++
+ ### onvif_simple_server
+ onvif_simple server supports the following options but you should use them just for debugging purpose
+ 
+--- a/onvif_simple_server.c
++++ b/onvif_simple_server.c
+@@ -154,6 +154,7 @@ int main(int argc, char ** argv)
+     int c, ret, i, itmp;
+     char *conf_file;
+     char *prog_name;
++    char *log_file;
+     const char *method;
+     username_token_t security;
+     int auth_error = 0;
+@@ -163,10 +164,14 @@ int main(int argc, char ** argv)
+     static char conf_file_buffer[256];
+ 
+     // Set default log file and conf file
+-    rotate_log();
+-    fLog = fopen(DEFAULT_LOG_FILE, "w");
++    log_file = getenv("ONVIF_LOG_FILE");
++    if (log_file == NULL) {
++        log_file = DEFAULT_LOG_FILE;
++        rotate_log();
++    }
++    fLog = strcmp(log_file, "-") == 0 ? stderr : fopen(log_file, "a");
+     if (fLog == NULL) {
+-        fprintf(stderr, "Unable to open log file %s\n", DEFAULT_LOG_FILE);
++        fprintf(stderr, "Unable to open log file %s\n", log_file);
+         exit(EXIT_FAILURE);
+     }
+     conf_file = conf_file_buffer;
+--- /dev/null
++++ b/test/test_cgi.py
+@@ -0,0 +1,67 @@
++import json
++import os
++from pathlib import Path
++import subprocess
++import tempfile
++import unittest
++import xml.etree.ElementTree as ET
++
++ROOT = Path(__file__).resolve().parent.parent
++NS = {'s': 'http://www.w3.org/2003/05/soap-envelope',
++      'tt': 'http://www.onvif.org/ver10/schema',
++      'trt': 'http://www.onvif.org/ver10/media/wsdl',
++      'tr2': 'http://www.onvif.org/ver20/media/wsdl',
++      'timg': 'http://www.onvif.org/ver20/imaging/wsdl'}
++
++
++def configuration(count=2):
++    return {'ifs': 'lo', 'port': 8080, 'adv_enable_media2': True,
++            'model': 'CGI test', 'profiles': [
++                {'name': f'Profile_{i}', 'width': 1920 // (i + 1),
++                 'height': 1080 // (i + 1), 'type': 'H264',
++                 'bitrate': 12000 // (i + 1), 'framerate': 30 - i,
++                 'url': f'rtsp://%s:8554/camera/{i}',
++                 'audio_encoder': 'NONE', 'audio_decoder': 'NONE'}
++                for i in range(count)]}
++
++
++def request(service, operation, content='', config=None):
++    config = configuration() if config is None else config
++    namespace = {'device': 'http://www.onvif.org/ver10/device/wsdl',
++                 'media': NS['trt'], 'media2': NS['tr2'],
++                 'imaging': NS['timg']}[service]
++    body = (f'<s:Envelope xmlns:s="{NS["s"]}" xmlns:tt="{NS["tt"]}">'
++            f'<s:Body><op:{operation} xmlns:op="{namespace}">'
++            f'{content}</op:{operation}></s:Body></s:Envelope>').encode()
++    with tempfile.TemporaryDirectory() as directory:
++        path = Path(directory) / 'config.json'
++        path.write_text(json.dumps(config))
++        env = dict(os.environ, ONVIF_LOG_FILE='-', REQUEST_METHOD='POST',
++                   REMOTE_ADDR='127.0.0.1', CONTENT_LENGTH=str(len(body)))
++        result = subprocess.run([str(ROOT / 'onvif_simple_server'),
++                                 '-c', str(path), f'{service}_service'],
++                                input=body, capture_output=True, cwd=ROOT,
++                                env=env, timeout=10)
++    if result.returncode:
++        raise AssertionError(result.stderr.decode())
++    headers, xml = result.stdout.split(b'\r\n\r\n', 1)
++    fields = dict(line.split(b': ', 1) for line in headers.split(b'\r\n'))
++    assert int(fields[b'Content-Length']) == len(xml)
++    status = int(fields.get(b'Status', b'200').split()[0])
++    return status, ET.fromstring(xml)
++
++
++class CGITests(unittest.TestCase):
++    def test_device(self):
++        status, root = request('device', 'GetDeviceInformation')
++        self.assertEqual(status, 200)
++        self.assertEqual(root.findtext('.//{*}Model'), 'CGI test')
++
++    def test_fault(self):
++        status, root = request('media', 'NotImplemented')
++        self.assertEqual(status, 500)
++        self.assertIsNotNone(root.find('.//s:Fault', NS))
++
++
++if __name__ == '__main__':
++    unittest.main()

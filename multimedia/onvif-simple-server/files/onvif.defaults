@@ -1,0 +1,17 @@
+#!/bin/sh
+
+[ -n "$IPKG_INSTROOT" ] && exit 0
+if ! uci -q get onvif-simple-server.main.uuid >/dev/null; then
+	read -r uuid </proc/sys/kernel/random/uuid || exit 1
+	uci set onvif-simple-server.main.uuid="$uuid" || exit 1
+	uci commit onvif-simple-server || exit 1
+fi
+uci -q get uhttpd.onvif >/dev/null && exit 0
+uci -q batch <<'EOF'
+set uhttpd.onvif=uhttpd
+add_list uhttpd.onvif.listen_http='0.0.0.0:8080'
+add_list uhttpd.onvif.listen_http='[::]:8080'
+set uhttpd.onvif.home='/www/onvif'
+set uhttpd.onvif.cgi_prefix='/onvif'
+commit uhttpd
+EOF
