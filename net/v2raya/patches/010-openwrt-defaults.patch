@@ -1,0 +1,74 @@
+From a3969341ed6c97e5322747236be9a3166d08baf1 Mon Sep 17 00:00:00 2001
+From: Amr Fateem <amr.fateem@yahoo.com>
+Date: Wed, 11 Nov 2026 13:09:50 +0200
+Subject: [PATCH] openwrt: keep the LAN bridge and DNS defaults safe
+
+OpenWrt's LAN is a bridge.  v2rayA 2.5.x excludes br-* from the
+transparent proxy by default, which silently bypasses every LAN client.
+The previous OpenWrt package also did not hijack DNS, and nodes that do
+not carry UDP break client DNS when it is enabled.
+
+Keep the previous behaviour, and size the logging and DNS cache for a
+router.  QUIC sniffing stays enabled so HTTP/3 traffic still matches
+domain routing rules.  Carrying this as a patch makes a source change
+fail the build instead of silently dropping the defaults.
+
+Signed-off-by: Amr Fateem <amr.fateem@yahoo.com>
+---
+ db/configure/migrate_dns.go |  4 ++--
+ db/configure/setting.go     | 12 ++++++------
+ 2 files changed, 8 insertions(+), 8 deletions(-)
+
+--- a/db/configure/migrate_dns.go
++++ b/db/configure/migrate_dns.go
+@@ -59,9 +59,9 @@ func MigrateDnsRules(oldRules []DnsRule)
+ // MigrateSetting 将旧设置配置迁移到新格式，为缺失的新 DNS 配置字段填充默认值。
+ // 该函数只填充零值字段，不会覆盖用户已显式设置的字段。
+ func MigrateSetting(setting *Setting) {
+-	// DNS interception keeps the historical behaviour when the field is absent.
++	// OpenWrt keeps DNS interception off when the field is absent.
+ 	if setting.DnsHijack == "" {
+-		setting.DnsHijack = Yes
++		setting.DnsHijack = No
+ 	}
+ 	// The mode supersedes the opt-out, so an absent one is written out from
+ 	// it once; after this the stored mode is what every reader uses.
+--- a/db/configure/setting.go
++++ b/db/configure/setting.go
+@@ -51,7 +51,7 @@ type Setting struct {
+ 
+ func NewSetting() (setting *Setting) {
+ 	return &Setting{
+-		LogLevel:                           "info",
++		LogLevel:                           "warn",
+ 		RulePortMode:                       WhitelistMode,
+ 		ProxyModeWhenSubscribe:             ProxyModeDirect,
+ 		GFWListAutoUpdateMode:              NotAutoUpdate,
+@@ -61,21 +61,21 @@ func NewSetting() (setting *Setting) {
+ 		TcpFastOpen:                        Default,
+ 		MuxOn:                              No,
+ 		Mux:                                8,
+ 		InboundSniffing:                    "http,tls,quic",
+ 		Transparent:                        TransparentClose,
+-		DnsHijack:                          Yes,
++		DnsHijack:                          No,
+ 		IpForward:                          ipforward.IsIpForwardOn(),
+ 		PortSharing:                        false,
+ 		TransparentType:                    TransparentRedirect,
+-		TproxyExcludedInterfaces:           "docker*,veth*,wg*,ppp*,br-*",
++		TproxyExcludedInterfaces:           "docker*,veth*,wg*,ppp*",
+ 		TunAutoRoute:                       true,
+ 		// 新 DNS 模块默认值
+ 		DnsListenAddr:    "0.0.0.0:52353",
+ 		DnsCacheEnabled:  true,
+-		DnsCacheSize:     4096,
++		DnsCacheSize:     1024,
+ 		DnsCacheMinTTL:   60,
+ 		DnsCacheMaxTTL:   86400,
+-		DnsPrefetch:      true,
+-		DnsNegativeCache: true,
++		DnsPrefetch:      false,
++		DnsNegativeCache: false,
+ 	}
+ }
+ 

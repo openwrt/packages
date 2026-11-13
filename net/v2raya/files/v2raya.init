@@ -1,29 +1,37 @@
 #!/bin/sh /etc/rc.common
+# SPDX-License-Identifier: GPL-3.0-only
+#
 # Copyright (C) 2021 Tianling Shen <cnsztl@immortalwrt.org>
+# Copyright (C) 2026 Amr Fateem <amr.fateem@yahoo.com>
+#
+# All settings are kept in UCI (/etc/config/v2raya) and passed to v2rayA as
+# V2RAYA_* environment variables, which is the interface gonfig documents
+# upstream.  Keeping the command line short also means paths with spaces or
+# shell metacharacters cannot break the service.
 
 USE_PROCD=1
 START=99
+STOP=10
 
 CONF="v2raya"
 PROG="/usr/bin/v2raya"
+CONF_DIR="/etc/v2raya"
+LOG_DIR="/var/log/v2raya"
+DEFAULT_ASSETS="/usr/share/v2ray"
 
 is_enabled() {
 	local enabled
 	config_get_bool enabled "$1" "$2" "${3:-0}"
-	if [ "$enabled" -eq "1" ]; then
-		return 0
-	else
-		return 1
-	fi
+	[ "$enabled" -eq 1 ]
 }
 
 append_env() {
-	procd_append_param env "V2RAYA_$(echo "$1" | tr "[a-z]" "[A-Z]")"="$2"
+	procd_append_param env "V2RAYA_$(echo "$1" | tr 'a-z' 'A-Z')=$2"
 }
 
 append_env_arg() {
 	local value
-	config_get value "$1" "$2" $3
+	config_get value "$1" "$2" "$3"
 	[ -n "$value" ] && append_env "$2" "$value"
 }
 
@@ -34,35 +42,80 @@ append_env_bool() {
 start_service() {
 	config_load "$CONF"
 
-	is_enabled "config" "enabled" || return 1
+	is_enabled "config" "enabled" || return 0
+
+	local assets_dir gomemlimit gomaxprocs gogc nofile
+	config_get assets_dir "config" "v2ray_assetsdir" "$DEFAULT_ASSETS"
+	config_get gomemlimit "config" "gomemlimit" "64MiB"
+	config_get gomaxprocs "config" "gomaxprocs" "2"
+	config_get gogc "config" "gogc" "0"
+	config_get nofile "config" "nofile" "16384"
+
+	mkdir -p "$CONF_DIR" "$LOG_DIR"
+	[ -n "$assets_dir" ] && mkdir -p "$assets_dir"
+	chmod 750 "$CONF_DIR"
+	chmod 755 "$LOG_DIR"
 
 	procd_open_instance "$CONF"
 	procd_set_param command "$PROG"
-	procd_set_param env XDG_DATA_HOME="/usr/share"
+	procd_set_param env "V2RAYA_CONFIG=$CONF_DIR" "V2RAYA_LOG_FILE=$LOG_DIR/v2raya.log"
 
-	append_env "config" "/etc/v2raya"
-	append_env "log_file" "/var/log/v2raya/v2raya.log"
+	# The core inherits this environment, so one limit covers both processes.
+	[ -n "$gomemlimit" ] && [ "$gomemlimit" != "0" ] && \
+		procd_append_param env "GOMEMLIMIT=$gomemlimit"
+	[ -n "$gomaxprocs" ] && [ "$gomaxprocs" -gt 0 ] 2>/dev/null && \
+		procd_append_param env "GOMAXPROCS=$gomaxprocs"
+	[ -n "$gogc" ] && [ "$gogc" -gt 0 ] 2>/dev/null && \
+		procd_append_param env "GOGC=$gogc"
 
+	append_env_arg "config" "v2ray_assetsdir" "$DEFAULT_ASSETS"
 	append_env_arg "config" "address" "0.0.0.0:2017"
+	append_env_arg "config" "baseurl" "/"
 	append_env_arg "config" "ipv6_support" "auto"
 	append_env_arg "config" "nftables_support" "auto"
-	append_env_arg "config" "log_level" "info"
-	append_env_arg "config" "log_max_days" "3"
+	append_env_arg "config" "core_startup_timeout" "15"
+	append_env_arg "config" "log_level" "warn"
+	append_env_arg "config" "log_max_days" "1"
 	append_env_arg "config" "v2ray_bin"
 	append_env_arg "config" "v2ray_confdir"
 	append_env_arg "config" "transparent_hook"
 	append_env_arg "config" "core_hook"
 	append_env_arg "config" "plugin_manager"
+
 	append_env_bool "config" "log_disable_color"
 	append_env_bool "config" "log_disable_timestamp"
+	append_env_bool "config" "redirect_respect_bound_device"
 
-	procd_set_param limits core="unlimited"
-	procd_set_param limits nofile="1000000 1000000"
+	# No core dumps on a router: they fill the overlay and can trip a
+	# marginal NAND.  A 16384 descriptor ceiling is plenty for the LAN and
+	# keeps a connection flood from allocating unbounded socket buffers.
+	[ -n "$nofile" ] || nofile=16384
+	procd_set_param limits core="0 0"
+	procd_set_param limits nofile="$nofile $nofile"
 	procd_set_param respawn
+	procd_set_param term_timeout 30
 	procd_set_param stdout 1
 	procd_set_param stderr 1
 
 	procd_close_instance
+}
+
+stop_service() {
+	# v2rayA normally removes its tproxy rules on SIGTERM, but a killed
+	# process or a proxy-only stop can leave them behind.  Remove any
+	# residual state so stopping the service always restores connectivity.
+	nft delete table inet v2raya 2>/dev/null
+	nft delete table inet v2raya_dns 2>/dev/null
+	ip rule del fwmark 0x40/0xc0 table 100 2>/dev/null
+	ip -6 rule del fwmark 0x40/0xc0 table 100 2>/dev/null
+	ip route flush table 100 2>/dev/null
+	ip -6 route flush table 100 2>/dev/null
+}
+
+reload_service() {
+	# v2rayA does not reload its configuration on SIGHUP; a restart is the
+	# only safe way to apply new UCI values.
+	restart
 }
 
 service_triggers() {

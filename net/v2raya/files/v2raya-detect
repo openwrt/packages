@@ -1,0 +1,131 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-3.0-only
+#
+# Copyright (C) 2026 Amr Fateem <amr.fateem@yahoo.com>
+#
+# Emit a small key=value report about installed proxy cores and services.
+# Called by the LuCI overview; values are single-line and contain no newlines.
+#
+# This script is read-only.  It never installs, removes, starts or stops
+# anything.  It exists so the UI can show that an existing Xray-core or
+# sing-box installation is present and will not be duplicated or replaced.
+
+set -u
+
+first_bin() {
+	for path in "$@"; do
+		if [ -x "$path" ]; then
+			printf '%s' "$path"
+			return 0
+		fi
+	done
+	return 1
+}
+
+version_line() {
+	bin="$1"
+	shift
+	[ -n "$bin" ] || return 0
+	"$bin" "$@" 2>/dev/null | sed -n '1p' | tr -d '\r'
+}
+
+pkg_list=""
+if command -v opkg >/dev/null 2>&1; then
+	pkg_list=$(opkg list-installed 2>/dev/null | awk '{ print $1 }')
+elif command -v apk >/dev/null 2>&1; then
+	pkg_list=$(apk info 2>/dev/null)
+fi
+
+pkg_has() {
+	printf '%s\n' "$pkg_list" | grep -qx "$1"
+}
+
+core_bin=$(first_bin /usr/bin/v2raya_core /usr/sbin/v2raya_core) || core_bin=""
+xray_bin=$(first_bin /usr/bin/xray /usr/sbin/xray /usr/bin/xray-core) || xray_bin=""
+singbox_bin=$(first_bin /usr/bin/sing-box /usr/sbin/sing-box /usr/bin/singbox /usr/sbin/singbox) || singbox_bin=""
+v2ray_bin=$(first_bin /usr/bin/v2ray /usr/sbin/v2ray /usr/bin/v2ray-core) || v2ray_bin=""
+
+xray_pkg=0
+pkg_has xray-core && xray_pkg=1
+pkg_has xray && xray_pkg=1
+singbox_pkg=0
+pkg_has sing-box && singbox_pkg=1
+v2ray_pkg=0
+pkg_has v2ray-core && v2ray_pkg=1
+pkg_has v2ray && v2ray_pkg=1
+pkg_version() {
+	if command -v opkg >/dev/null 2>&1; then
+		opkg list-installed "$1" 2>/dev/null | awk '{ print $3 }' | sed -n '1p'
+	elif [ -f /lib/apk/db/installed ]; then
+		awk -v p="$1" '$0 == "P:" p { getline; sub(/^V:/, ""); print; exit }' \
+			/lib/apk/db/installed
+	fi
+}
+
+version_lt() {
+	[ -n "$1" ] || return 1
+	awk -v a="$1" -v b="$2" 'BEGIN {
+		n = split(a, x, "."); m = split(b, y, ".");
+		for (i = 1; i <= 3; i++) {
+			xs = (i <= n) ? x[i] : 0;
+			ys = (i <= m) ? y[i] : 0;
+			sub(/-.*/, "", xs); sub(/-.*/, "", ys);
+			if (xs + 0 < ys + 0) exit 0;
+			if (xs + 0 > ys + 0) exit 1;
+		}
+		exit 1;
+	}'
+}
+
+old_v2raya_pkg=0
+pkg_has v2raya-nextgen && old_v2raya_pkg=1
+pkg_has v2raya-core-nextgen && old_v2raya_pkg=1
+pkg_has luci-app-v2raya-nextgen && old_v2raya_pkg=1
+if pkg_has v2raya; then
+	version_lt "$(pkg_version v2raya)" "2.5" && old_v2raya_pkg=1
+fi
+
+# The service may use /usr/share/v2ray or the older /usr/share/v2raya.
+# Check the configured directory first, then both well-known paths, so
+# the report is correct with either package set.
+assets_dirs=""
+configured_assets=$(uci -q get v2raya.config.v2ray_assetsdir 2>/dev/null) || configured_assets=""
+[ -n "$configured_assets" ] && assets_dirs="$configured_assets "
+assets_dirs="$assets_dirs/usr/share/v2ray /usr/local/share/v2ray /usr/share/v2raya /usr/local/share/v2raya"
+
+geoip_present=0
+geosite_present=0
+for dir in $assets_dirs; do
+	[ -f "$dir/geoip.dat" ] && geoip_present=1
+	[ -f "$dir/geosite.dat" ] && geosite_present=1
+done
+
+present=""
+enabled=""
+for service in xray sing-box v2ray passwall passwall2 ssrplus openclash shellcrash mihomo clash byedpi; do
+	[ -x "/etc/init.d/$service" ] || continue
+
+	present="${present}${present:+,}$service"
+	if "/etc/init.d/$service" enabled >/dev/null 2>&1; then
+		enabled="${enabled}${enabled:+,}$service"
+	fi
+done
+
+cat <<EOF
+core_path=$core_bin
+core_version=$(version_line "$core_bin" version)
+xray_path=$xray_bin
+xray_version=$(version_line "$xray_bin" version)
+xray_package=$xray_pkg
+singbox_path=$singbox_bin
+singbox_version=$(version_line "$singbox_bin" version)
+singbox_package=$singbox_pkg
+v2ray_path=$v2ray_bin
+v2ray_version=$(version_line "$v2ray_bin" version)
+v2ray_package=$v2ray_pkg
+old_v2raya_package=$old_v2raya_pkg
+geoip_present=$geoip_present
+geosite_present=$geosite_present
+services_present=$present
+services_enabled=$enabled
+EOF
