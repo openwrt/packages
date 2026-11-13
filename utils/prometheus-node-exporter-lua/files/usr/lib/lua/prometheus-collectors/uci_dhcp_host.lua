@@ -1,21 +1,27 @@
 local uci=require("uci")
 
+local function values(v)
+  if v == nil then return {} end
+  if type(v) == "table" then return v end
+  return {v}
+end
+
 local function scrape()
   local curs=uci.cursor()
   local metric_uci_host = metric("uci_dhcp_host", "gauge")
 
   curs:foreach("dhcp", "host", function(s)
-    local labels = {name=s["name"], dns=s["dns"], ip=s["ip"], duid=s["duid"]}
-
-    if s["mac"] == nil then
-      metric_uci_host(labels, 1)
-      return
+    local emitted = false
+    for _, mac in ipairs(values(s["mac"])) do
+      metric_uci_host({name=s["name"], dns=s["dns"], ip=s["ip"], mac=string.upper(mac)}, 1)
+      emitted = true
     end
-
-    local macs = type(s["mac"]) == "table" and s["mac"] or {s["mac"]}
-    for _, mac in ipairs(macs) do
-      labels["mac"] = string.upper(mac)
-      metric_uci_host(labels, 1)
+    for _, duid in ipairs(values(s["duid"])) do
+      metric_uci_host({name=s["name"], dns=s["dns"], ip=s["ip"], duid=duid}, 1)
+      emitted = true
+    end
+    if not emitted then
+      metric_uci_host({name=s["name"], dns=s["dns"], ip=s["ip"]}, 1)
     end
   end)
 end
