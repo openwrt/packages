@@ -223,18 +223,6 @@ unbound_mkdir() {
   local filestuff
 
 
-  if [ "$UB_D_DHCP_LINK" = "odhcpd" ] ; then
-    local dhcp_origin=$( uci_get dhcp.@odhcpd[0].leasefile )
-    local dhcp_dir=$( dirname $dhcp_origin )
-
-
-    if [ ! -d "$dhcp_dir" ] ; then
-      # make sure odhcpd has a directory to write (not done itself, yet)
-      mkdir -p "$dhcp_dir"
-    fi
-  fi
-
-
   if [ -f $UB_RKEY_FILE ] ; then
     filestuff=$( cat $UB_RKEY_FILE )
 
@@ -254,6 +242,13 @@ unbound_mkdir() {
   touch $UB_TOTAL_CONF
   cp -p $UB_ETCDIR/*.conf $UB_VARDIR/
   cp -p $UB_ETCDIR/root.* $UB_VARDIR/
+
+
+  if [ "$UB_D_DHCP_LINK" = "odhcpd" ] ; then
+    # Seed the DHCP-DNS records with the current leases, otherwise they are
+    # only loaded once odhcpd's leases change after Unbound has been started
+    $UB_LIBDIR/odhcpd.uc seed
+  fi
 
 
   if [ ! -f $UB_RHINT_FILE ] ; then
