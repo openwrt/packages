@@ -1,0 +1,548 @@
+From e374d53671c85ec96e6c6f06d053cb99fad4447c Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Sun, 18 Oct 2026 10:50:28 +0100
+Subject: [PATCH 08/15] feat: add a generic external control helper protocol
+
+Exchange versioned JSON with configured executables over stdin/stdout
+without a shell. Drain both directions concurrently, validate replies,
+and map backend failures to SOAP faults. Support an optional uptime
+based deadline and reap failed, cancelled and timed-out children.
+
+Test literal executable paths and data, malformed and oversized output,
+backend errors, premature exit and child completion after stdout closes.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ CONTROL_HELPERS.md    |  28 +++++
+ Makefile              |  11 +-
+ Makefile.static       |   2 +-
+ README.md             |   3 +
+ conf.c                |  21 ++++
+ control_helper.c      | 249 ++++++++++++++++++++++++++++++++++++++++++
+ control_helper.h      |  20 ++++
+ onvif_simple_server.h |   3 +
+ test/test_helper.c    |  27 +++++
+ test/test_helper.py   |  40 +++++++
+ 10 files changed, 401 insertions(+), 3 deletions(-)
+ create mode 100644 CONTROL_HELPERS.md
+ create mode 100644 control_helper.c
+ create mode 100644 control_helper.h
+ create mode 100644 test/test_helper.c
+ create mode 100644 test/test_helper.py
+
+--- /dev/null
++++ b/CONTROL_HELPERS.md
+@@ -0,0 +1,28 @@
++# External control helpers
++
++Optional global `encoder_helper` and `imaging_helper` settings select absolute
++executable paths. They are independent of the operating system's camera
++framework. The server invokes the executable directly, with one operation
++argument, a JSON request on stdin and a JSON response on stdout. It does not
++interpret command strings. Helpers may be compiled programs or executable
++scripts. Diagnostics belong on stderr.
++
++The request envelope contains `version: 1`, `operation` and an object `data`.
++The response contains `version: 1`, `status` and, on success, an object `data`.
++Status values are `ok`, `unsupported`, `not_found`, `invalid`, `busy`, `failed`.
++A protocol response, including an error status, uses process exit status zero.
++Non-zero exit, malformed output, unsupported protocol versions and output
++exceeding the CGI message size of 16 KiB are application failures. Return
++exactly one JSON object. Child output is drained while request input is sent.
++
++`helper_timeout_ms` is an optional positive deadline. Its default is zero,
++which leaves the deadline to the CGI host. Configure it below the HTTP
++server's script limit when helpers may block. The deadline uses uptime and
++includes both communication and child completion. Failed/timed-out children
++are terminated and reaped. Helpers must remain synchronous and must not
++daemonise or leave background work behind.
++
++Operation-specific encoder and imaging contracts are described alongside
++their service implementations. A helper is responsible for serialising
++changes to shared camera resources and for returning success only after a
++change is applied. The server does not commit its generated configuration.
+--- a/Makefile
++++ b/Makefile
+@@ -1,7 +1,7 @@
+ # Set HAVE_WOLFSSL or HAVE_MBEDTLS variable if you want to use WOLFSSL or
+ # MBEDTLS instead of LIBTOMCRYPT
+ 
+-OBJECTS_O = media_options.o soap.o media_profiles.o onvif_simple_server.o device_service.o media_service.o media2_service.o ptz_service.o events_service.o deviceio_service.o fault.o conf.o utils_zlib.o log.o ezxml_wrapper.o ezxml/ezxml.o
++OBJECTS_O = control_helper.o media_options.o soap.o media_profiles.o onvif_simple_server.o device_service.o media_service.o media2_service.o ptz_service.o events_service.o deviceio_service.o fault.o conf.o utils_zlib.o log.o ezxml_wrapper.o ezxml/ezxml.o
+ OBJECTS_N = onvif_notify_server.o conf.o utils.o log.o ezxml_wrapper.o ezxml/ezxml.o
+ OBJECTS_W = wsd_simple_server.o utils.o log.o ezxml_wrapper.o ezxml/ezxml.o
+ ifdef HAVE_WOLFSSL
+@@ -59,10 +59,16 @@ test-cgi: onvif_simple_server
+ 
+ # Build and run unit tests using the native host compiler.
+ # Uses stub mbedTLS headers from test/ so no crypto library is required.
+-test: test/test_utils test/test_faults test/test_xml
++test: test/test_utils test/test_faults test/test_xml test/test_helper
+ 	./test/test_utils
+ 	python3 test/test_faults.py
+ 	./test/test_xml
++	python3 test/test_helper.py
++
++test/test_helper: test/test_helper.c test/stubs.c control_helper.c fault.c utils.c log.c
++	cc -I. -Itest -DHAVE_MBEDTLS -D_GNU_SOURCE -std=c99 \
++		test/test_helper.c test/stubs.c control_helper.c fault.c utils.c log.c \
++		-ljson-c -lz -lpthread -lrt -o test/test_helper
+ 
+ test/test_xml: test/test_xml.c test/stubs.c ezxml_wrapper.c ezxml/ezxml.c utils.c log.c
+ 	cc -I. -Itest -DHAVE_MBEDTLS -D_GNU_SOURCE -std=c99 \
+@@ -86,6 +92,7 @@ clean:
+ 	rm -f test/test_utils
+ 	rm -f test/test_faults
+ 	rm -f test/test_xml
++	rm -f test/test_helper
+ 	rm -f $(OBJECTS_O)
+ 	rm -f $(OBJECTS_N)
+ 	rm -f $(OBJECTS_W)
+--- a/Makefile.static
++++ b/Makefile.static
+@@ -1,7 +1,7 @@
+ # Set HAVE_WOLFSSL or HAVE_MBEDTLS variable if you want to use WOLFSSL or
+ # MBEDTLS instead of LIBTOMCRYPT
+ 
+-OBJECTS_O = media_options.o soap.o media_profiles.o onvif_simple_server.o device_service.o media_service.o media2_service.o ptz_service.o events_service.o deviceio_service.o fault.o conf.o utils_zlib.o log.o ezxml_wrapper.o ezxml/ezxml.o
++OBJECTS_O = control_helper.o media_options.o soap.o media_profiles.o onvif_simple_server.o device_service.o media_service.o media2_service.o ptz_service.o events_service.o deviceio_service.o fault.o conf.o utils_zlib.o log.o ezxml_wrapper.o ezxml/ezxml.o
+ OBJECTS_N = onvif_notify_server.o conf.o utils.o log.o ezxml_wrapper.o ezxml/ezxml.o
+ OBJECTS_W = wsd_simple_server.o utils.o log.o ezxml_wrapper.o ezxml/ezxml.o
+ ifdef HAVE_WOLFSSL
+--- a/README.md
++++ b/README.md
+@@ -68,6 +68,9 @@ diff -Naur busybox-1.36.1.ori/networking
+ ## Configuration
+ ### Video parameters
+ 
++The optional external control protocol is documented in
++[CONTROL_HELPERS.md](CONTROL_HELPERS.md).
++
+ Each profile accepts `bitrate` (kbps), `framerate` (numerator),
+ `framerate_den` (default 1), `gov_length`, `encoding_interval`, `quality`
+ and `encoding_profile` (for example `Baseline`, `Main` or `High`). Text and
+--- a/conf.c
++++ b/conf.c
+@@ -56,6 +56,10 @@ static int profiles_validate(void)
+     int i;
+     int j;
+ 
++    if (service_ctx.helper_timeout_ms < 0 ||
++        (service_ctx.encoder_helper && service_ctx.encoder_helper[0] != '/') ||
++        (service_ctx.imaging_helper && service_ctx.imaging_helper[0] != '/'))
++        return -2;
+     if (service_ctx.source_width < 0 || service_ctx.source_height < 0 ||
+         service_ctx.source_framerate < 0 || service_ctx.source_framerate_den <= 0 ||
+         (!!service_ctx.source_width != !!service_ctx.source_height))
+@@ -118,6 +122,9 @@ int process_conf_file(char *file)
+     service_ctx.source_height = 0;
+     service_ctx.source_framerate = 0;
+     service_ctx.source_framerate_den = 1;
++    service_ctx.helper_timeout_ms = 0;
++    service_ctx.encoder_helper = NULL;
++    service_ctx.imaging_helper = NULL;
+     service_ctx.scopes = NULL;
+     service_ctx.scopes_num = 0;
+     service_ctx.ptz_node.enable = 0;
+@@ -255,6 +262,12 @@ int process_conf_file(char *file)
+             service_ctx.factory_default_command = (char *) malloc(strlen(value) + 1);
+             snprintf(service_ctx.factory_default_command, strlen(value) + 1, "%s", value);
+ 
++        } else if (strcasecmp(param, "encoder_helper") == 0) {
++            service_ctx.encoder_helper = strdup(value);
++        } else if (strcasecmp(param, "imaging_helper") == 0) {
++            service_ctx.imaging_helper = strdup(value);
++        } else if (strcasecmp(param, "helper_timeout_ms") == 0) {
++            service_ctx.helper_timeout_ms = atoi(value);
+         } else if (strcasecmp(param, "source_width") == 0) {
+             service_ctx.source_width = atoi(value);
+         } else if (strcasecmp(param, "source_height") == 0) {
+@@ -886,6 +899,9 @@ int process_json_conf_file(char *file)
+     service_ctx.source_height = 0;
+     service_ctx.source_framerate = 0;
+     service_ctx.source_framerate_den = 1;
++    service_ctx.helper_timeout_ms = 0;
++    service_ctx.encoder_helper = NULL;
++    service_ctx.imaging_helper = NULL;
+     service_ctx.scopes = NULL;
+     service_ctx.scopes_num = 0;
+     service_ctx.ptz_node.enable = 0;
+@@ -949,6 +965,9 @@ int process_json_conf_file(char *file)
+     get_bool_from_json(&(service_ctx.adv_empty_if_unknown), json_file, "adv_empty_if_unknown");
+     get_bool_from_json(&(service_ctx.adv_fault_if_unknown), json_file, "adv_fault_if_unknown");
+     get_bool_from_json(&(service_ctx.adv_fault_if_set), json_file, "adv_fault_if_set");
++    get_string_from_json(&service_ctx.encoder_helper, json_file, "encoder_helper");
++    get_string_from_json(&service_ctx.imaging_helper, json_file, "imaging_helper");
++    get_int_from_json(&service_ctx.helper_timeout_ms, json_file, "helper_timeout_ms");
+     get_int_from_json(&service_ctx.source_width, json_file, "source_width");
+     get_int_from_json(&service_ctx.source_height, json_file, "source_height");
+     get_int_from_json(&service_ctx.source_framerate, json_file, "source_framerate");
+@@ -1347,6 +1366,8 @@ int process_json_conf_file(char *file)
+ 
+ void free_conf_file()
+ {
++    free(service_ctx.encoder_helper);
++    free(service_ctx.imaging_helper);
+     int i;
+ 
+     if (service_ctx.events_enable == 1) {
+--- /dev/null
++++ b/control_helper.c
+@@ -0,0 +1,249 @@
++/* SPDX-License-Identifier: GPL-3.0-only */
++#include <sys/wait.h>
++#include <errno.h>
++#include <fcntl.h>
++#include <poll.h>
++#include <signal.h>
++#include <string.h>
++#include <time.h>
++#include <unistd.h>
++
++#include "control_helper.h"
++#include "onvif_simple_server.h"
++#include "fault.h"
++
++#define HELPER_MESSAGE_SIZE (16 * 1024)
++#define MSEC_PER_SEC 1000
++#define NSEC_PER_MSEC 1000000
++
++extern service_context_t service_ctx;
++
++static volatile sig_atomic_t notify_fd = -1;
++static volatile sig_atomic_t cancelled;
++
++static void child_notify(int signo)
++{
++    int saved_errno;
++    char event;
++
++    saved_errno = errno;
++    event = 0;
++    if (signo == SIGTERM)
++        cancelled = 1;
++    if (notify_fd >= 0)
++        (void)write(notify_fd, &event, sizeof(event));
++    errno = saved_errno;
++}
++
++static long long uptime_ms(void)
++{
++    struct timespec now;
++
++#ifdef CLOCK_BOOTTIME
++    clock_gettime(CLOCK_BOOTTIME, &now);
++#else
++    clock_gettime(CLOCK_MONOTONIC, &now);
++#endif
++    return (long long)now.tv_sec * MSEC_PER_SEC + now.tv_nsec / NSEC_PER_MSEC;
++}
++
++static int pipe_create(int descriptors[2])
++{
++    int i;
++
++    if (pipe(descriptors))
++        return -1;
++    for (i = 0; i < 2; i++) {
++        if (fcntl(descriptors[i], F_SETFD, FD_CLOEXEC) < 0 ||
++            fcntl(descriptors[i], F_SETFL, O_NONBLOCK) < 0) {
++            close(descriptors[0]);
++            close(descriptors[1]);
++            return -1;
++        }
++    }
++    return 0;
++}
++
++static int helper_exchange(const char *path, const char *operation,
++                           const char *request, char *response)
++{
++    struct sigaction action, old_child, old_term, old_pipe;
++    struct pollfd descriptors[3];
++    int input[2], output[2], notification[2];
++    size_t written, received, request_length;
++    long long deadline, remaining;
++    int finished, status, timeout, ok;
++    char events[HELPER_MESSAGE_SIZE];
++    ssize_t count;
++    pid_t child;
++
++    if (pipe_create(input))
++        return -1;
++    if (pipe_create(output)) {
++        close(input[0]);
++        close(input[1]);
++        return -1;
++    }
++    if (pipe_create(notification)) {
++        close(input[0]);
++        close(input[1]);
++        close(output[0]);
++        close(output[1]);
++        return -1;
++    }
++    memset(&action, 0, sizeof(action));
++    sigemptyset(&action.sa_mask);
++    action.sa_handler = child_notify;
++    notify_fd = notification[1];
++    cancelled = 0;
++    sigaction(SIGCHLD, &action, &old_child);
++    sigaction(SIGTERM, &action, &old_term);
++    action.sa_handler = SIG_IGN;
++    sigaction(SIGPIPE, &action, &old_pipe);
++    child = fork();
++    if (child == 0) {
++        dup2(input[0], STDIN_FILENO);
++        dup2(output[1], STDOUT_FILENO);
++        fcntl(STDIN_FILENO, F_SETFL, 0);
++        fcntl(STDOUT_FILENO, F_SETFL, 0);
++        execl(path, path, operation, (char *)NULL);
++        _exit(127);
++    }
++    close(input[0]);
++    close(output[1]);
++    descriptors[0].fd = input[1];
++    descriptors[0].events = POLLOUT;
++    descriptors[1].fd = output[0];
++    descriptors[1].events = POLLIN;
++    descriptors[2].fd = notification[0];
++    descriptors[2].events = POLLIN;
++    request_length = strlen(request);
++    deadline = service_ctx.helper_timeout_ms ? uptime_ms() + service_ctx.helper_timeout_ms : 0;
++    written = received = 0;
++    finished = status = ok = 0;
++    while (child > 0 && !cancelled) {
++        if (!finished && waitpid(child, &status, WNOHANG) == child)
++            finished = 1;
++        if (finished && descriptors[1].fd < 0) {
++            ok = WIFEXITED(status) && WEXITSTATUS(status) == 0;
++            break;
++        }
++        remaining = deadline ? deadline - uptime_ms() : -1;
++        if (deadline && remaining <= 0)
++            break;
++        timeout = remaining;
++        if (poll(descriptors, sizeof(descriptors) / sizeof(descriptors[0]), timeout) < 0) {
++            if (errno == EINTR)
++                continue;
++            break;
++        }
++        if (descriptors[2].revents)
++            (void)read(notification[0], events, sizeof(events));
++        if (descriptors[0].fd >= 0 && descriptors[0].revents) {
++            count = write(descriptors[0].fd, request + written, request_length - written);
++            if (count > 0)
++                written += count;
++            if (written == request_length || (count < 0 && errno != EAGAIN && errno != EINTR)) {
++                close(descriptors[0].fd);
++                descriptors[0].fd = -1;
++            }
++        }
++        if (descriptors[1].fd < 0 || !descriptors[1].revents)
++            continue;
++        count = read(descriptors[1].fd, response + received, HELPER_MESSAGE_SIZE - received);
++        if (count > 0) {
++            received += count;
++            if (received == HELPER_MESSAGE_SIZE)
++                break;
++        } else if (count == 0) {
++            close(descriptors[1].fd);
++            descriptors[1].fd = -1;
++        } else if (errno != EAGAIN && errno != EINTR) {
++            break;
++        }
++    }
++    if (child > 0 && !finished) {
++        kill(child, SIGKILL);
++        while (waitpid(child, &status, 0) < 0 && errno == EINTR)
++            ;
++    }
++    if (descriptors[0].fd >= 0)
++        close(descriptors[0].fd);
++    if (descriptors[1].fd >= 0)
++        close(descriptors[1].fd);
++    notify_fd = -1;
++    close(notification[0]);
++    close(notification[1]);
++    sigaction(SIGCHLD, &old_child, NULL);
++    sigaction(SIGTERM, &old_term, NULL);
++    sigaction(SIGPIPE, &old_pipe, NULL);
++    response[received] = '\0';
++    return ok ? 0 : -1;
++}
++
++enum helper_status helper_call(const char *path, const char *operation,
++                               json_object *data, json_object **result)
++{
++    static const char *statuses[] = { "ok", "unsupported", "not_found", "invalid", "busy", "failed" };
++    char response[HELPER_MESSAGE_SIZE + 1];
++    struct json_tokener *tokener;
++    json_object *request, *reply, *value;
++    const char *request_text;
++    enum helper_status status;
++    size_t i;
++
++    *result = NULL;
++    if (!path || !*path)
++        return HELPER_UNSUPPORTED;
++    request = json_object_new_object();
++    json_object_object_add(request, "version", json_object_new_int(1));
++    json_object_object_add(request, "operation", json_object_new_string(operation));
++    json_object_object_add(request, "data", json_object_get(data));
++    request_text = json_object_to_json_string_ext(request, JSON_C_TO_STRING_PLAIN);
++    status = HELPER_FAILED;
++    if (strlen(request_text) >= HELPER_MESSAGE_SIZE ||
++        helper_exchange(path, operation, request_text, response)) {
++        json_object_put(request);
++        return status;
++    }
++    json_object_put(request);
++    tokener = json_tokener_new();
++    json_tokener_set_flags(tokener, JSON_TOKENER_STRICT);
++    reply = json_tokener_parse_ex(tokener, response, strlen(response) + 1);
++    if (json_tokener_get_error(tokener) != json_tokener_success ||
++        !json_object_is_type(reply, json_type_object))
++        goto out;
++    if (!json_object_object_get_ex(reply, "version", &value) ||
++        !json_object_is_type(value, json_type_int) || json_object_get_int(value) != 1)
++        goto out;
++    if (!json_object_object_get_ex(reply, "status", &value) ||
++        !json_object_is_type(value, json_type_string))
++        goto out;
++    for (i = 0; i < sizeof(statuses) / sizeof(statuses[0]); i++)
++        if (!strcmp(json_object_get_string(value), statuses[i]))
++            status = i;
++    if (status == HELPER_OK) {
++        if (!json_object_object_get_ex(reply, "data", &value) ||
++            !json_object_is_type(value, json_type_object))
++            status = HELPER_FAILED;
++        else
++            *result = json_object_get(value);
++    }
++out:
++    json_object_put(reply);
++    json_tokener_free(tokener);
++    return status;
++}
++
++int helper_fault(const char *service, enum helper_status status)
++{
++    if (status == HELPER_UNSUPPORTED)
++        return send_action_not_supported_fault((char *)service);
++    if (status == HELPER_NOT_FOUND)
++        return send_fault((char *)service, "Sender", "ter:InvalidArgVal", "ter:NoConfig",
++                          "Unknown token", "The requested configuration does not exist");
++    if (status == HELPER_INVALID)
++        return send_fault((char *)service, "Sender", "ter:InvalidArgVal", "ter:ConfigModify",
++                          "Invalid settings", "The requested settings are not supported");
++    return send_action_failed_fault((char *)service, status);
++}
+--- /dev/null
++++ b/control_helper.h
+@@ -0,0 +1,20 @@
++/* SPDX-License-Identifier: GPL-3.0-only */
++#ifndef CONTROL_HELPER_H
++#define CONTROL_HELPER_H
++
++#include <json-c/json.h>
++
++enum helper_status {
++    HELPER_OK,
++    HELPER_UNSUPPORTED,
++    HELPER_NOT_FOUND,
++    HELPER_INVALID,
++    HELPER_BUSY,
++    HELPER_FAILED
++};
++
++enum helper_status helper_call(const char *path, const char *operation,
++                               json_object *data, json_object **result);
++int helper_fault(const char *service, enum helper_status status);
++
++#endif
+--- a/onvif_simple_server.h
++++ b/onvif_simple_server.h
+@@ -144,6 +144,9 @@ typedef struct {
+     int source_height;
+     int source_framerate;
+     int source_framerate_den;
++    int helper_timeout_ms;
++    char *encoder_helper;
++    char *imaging_helper;
+ 
+     char **scopes;
+     int scopes_num;
+--- /dev/null
++++ b/test/test_helper.c
+@@ -0,0 +1,27 @@
++#include <stdio.h>
++#include <stdlib.h>
++
++#include "control_helper.h"
++#include "onvif_simple_server.h"
++
++service_context_t service_ctx;
++
++int main(int argc, char **argv)
++{
++    json_object *data;
++    json_object *result;
++    enum helper_status status;
++
++    if (argc != 4)
++        return 1;
++    service_ctx.helper_timeout_ms = atoi(argv[3]);
++    data = json_object_new_object();
++    json_object_object_add(data, "value", json_object_new_string(";$(false) & quoted ' data"));
++    status = helper_call(argv[1], argv[2], data, &result);
++    printf("%d\n", status);
++    if (result)
++        puts(json_object_to_json_string_ext(result, JSON_C_TO_STRING_PLAIN));
++    json_object_put(data);
++    json_object_put(result);
++    return 0;
++}
+--- /dev/null
++++ b/test/test_helper.py
+@@ -0,0 +1,40 @@
++import json
++from pathlib import Path
++import subprocess
++import tempfile
++
++with tempfile.TemporaryDirectory() as directory:
++    helper = Path(directory) / 'control helper; literal'
++    helper.write_text('''#!/usr/bin/env python3
++import json, os, sys, time
++request = json.load(sys.stdin)
++assert request['version'] == 1
++assert request['operation'] == sys.argv[1]
++operation = sys.argv[1]
++if operation == 'oversized':
++    print('x' * 20000)
++elif operation == 'malformed':
++    print('{} trailing')
++elif operation == 'timeout':
++    time.sleep(60)
++elif operation == 'exit':
++    sys.exit(1)
++else:
++    status = 'invalid' if operation == 'invalid' else 'ok'
++    print(json.dumps({'version': 1, 'status': status, 'data': request['data']}))
++    if operation == 'close':
++        sys.stdout.flush()
++        os.close(1)
++        time.sleep(0.01)
++''')
++    helper.chmod(0o700)
++    for operation, expected in [('echo', 0), ('invalid', 3), ('malformed', 5),
++                                ('oversized', 5), ('timeout', 5), ('exit', 5),
++                                ('close', 0)]:
++        timeout = '50' if operation == 'timeout' else '1000'
++        result = subprocess.check_output(['./test/test_helper', str(helper), operation,
++                                          timeout], timeout=3).decode().splitlines()
++        assert int(result[0]) == expected, (operation, result)
++        if expected == 0:
++            assert json.loads(result[1])['value'] == ";$(false) & quoted ' data"
++print('External helper transport: 7 passed')

@@ -1,0 +1,567 @@
+From c4a92068a398c4e8dd8890d8db9b79b74cbe255e Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Sun, 18 Oct 2026 11:09:38 +0100
+Subject: [PATCH 11/15] fix: report capabilities for every configured video
+ profile
+
+Keep profile limits, codec instance counts, options and sensor modes consistent with the configured streams and physical source.
+
+Fixes: 2f098ae69cb6 ("feat: enumerate configured media profiles without a two-stream limit")
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ Makefile               |   2 +-
+ Makefile.static        |   2 +-
+ device_advertisement.c |   2 +
+ media2_service.c       |  78 +---------------------
+ media_capabilities.c   | 143 +++++++++++++++++++++++++++++++++++++++++
+ media_capabilities.h   |  11 ++++
+ media_options.c        | 101 +++++++++++++++++++++++++++--
+ media_service.c        |  34 +---------
+ test/test_cgi.py       |  32 +++++++++
+ 9 files changed, 292 insertions(+), 113 deletions(-)
+ create mode 100644 media_capabilities.c
+ create mode 100644 media_capabilities.h
+
+--- a/Makefile
++++ b/Makefile
+@@ -1,7 +1,7 @@
+ # Set HAVE_WOLFSSL or HAVE_MBEDTLS variable if you want to use WOLFSSL or
+ # MBEDTLS instead of LIBTOMCRYPT
+ 
+-OBJECTS_O = device_advertisement.o imaging_service.o encoder_control.o control_helper.o media_options.o soap.o media_profiles.o onvif_simple_server.o device_service.o media_service.o media2_service.o ptz_service.o events_service.o deviceio_service.o fault.o conf.o utils_zlib.o log.o ezxml_wrapper.o ezxml/ezxml.o
++OBJECTS_O = media_capabilities.o device_advertisement.o imaging_service.o encoder_control.o control_helper.o media_options.o soap.o media_profiles.o onvif_simple_server.o device_service.o media_service.o media2_service.o ptz_service.o events_service.o deviceio_service.o fault.o conf.o utils_zlib.o log.o ezxml_wrapper.o ezxml/ezxml.o
+ OBJECTS_N = onvif_notify_server.o conf.o utils.o log.o ezxml_wrapper.o ezxml/ezxml.o
+ OBJECTS_W = wsd_simple_server.o utils.o log.o ezxml_wrapper.o ezxml/ezxml.o
+ ifdef HAVE_WOLFSSL
+--- a/Makefile.static
++++ b/Makefile.static
+@@ -1,7 +1,7 @@
+ # Set HAVE_WOLFSSL or HAVE_MBEDTLS variable if you want to use WOLFSSL or
+ # MBEDTLS instead of LIBTOMCRYPT
+ 
+-OBJECTS_O = device_advertisement.o imaging_service.o encoder_control.o control_helper.o media_options.o soap.o media_profiles.o onvif_simple_server.o device_service.o media_service.o media2_service.o ptz_service.o events_service.o deviceio_service.o fault.o conf.o utils_zlib.o log.o ezxml_wrapper.o ezxml/ezxml.o
++OBJECTS_O = media_capabilities.o device_advertisement.o imaging_service.o encoder_control.o control_helper.o media_options.o soap.o media_profiles.o onvif_simple_server.o device_service.o media_service.o media2_service.o ptz_service.o events_service.o deviceio_service.o fault.o conf.o utils_zlib.o log.o ezxml_wrapper.o ezxml/ezxml.o
+ OBJECTS_N = onvif_notify_server.o conf.o utils.o log.o ezxml_wrapper.o ezxml/ezxml.o
+ OBJECTS_W = wsd_simple_server.o utils.o log.o ezxml_wrapper.o ezxml/ezxml.o
+ ifdef HAVE_WOLFSSL
+--- a/device_advertisement.c
++++ b/device_advertisement.c
+@@ -5,6 +5,7 @@
+ #include "device_advertisement.h"
+ #include "ezxml_wrapper.h"
+ #include "fault.h"
++#include "media_capabilities.h"
+ #include "onvif_simple_server.h"
+ #include "soap.h"
+ #include "utils.h"
+@@ -152,6 +153,7 @@ int device_advertisement_send(int servic
+         return send_action_failed_fault("device_service", -1);
+     }
+     template_fill(envelope, values);
++    media_capabilities_update(envelope);
+     response = envelope->child->child;
+     if (service_ctx.imaging_helper) {
+         ezxml_set_attr(envelope, "xmlns:timg", "http://www.onvif.org/ver20/imaging/wsdl");
+--- a/media2_service.c
++++ b/media2_service.c
+@@ -19,6 +19,7 @@
+ 
+ #include "media2_service.h"
+ #include "conf.h"
++#include "media_capabilities.h"
+ #include "fault.h"
+ #include "utils.h"
+ #include "log.h"
+@@ -28,89 +29,16 @@
+ 
+ extern service_context_t service_ctx;
+ 
+-/*
+- * The ONVIF VideoSource models the physical sensor, which is independent of any
+- * single encoder profile. Report it from the profile with the largest frame area
+- * so a low resolution sub stream never shrinks the advertised source dimensions.
+- */
+-static int get_video_source_index()
+-{
+-    int i, idx = 0;
+-    long best = -1;
+-
+-    for (i = 0; i < service_ctx.profiles_num; i++) {
+-        long area = (long) service_ctx.profiles[i].width * service_ctx.profiles[i].height;
+-        if (area > best) {
+-            best = area;
+-            idx = i;
+-        }
+-    }
+-
+-    return idx;
+-}
+ 
+ int media2_get_service_capabilities()
+ {
+-    char cap[256];
+-
+-    cap[0] = '\0';
+-    snprintf(cap + strlen(cap), sizeof(cap) - strlen(cap), "%s", "VideoSource VideoEncoder");
+-    if ((service_ctx.profiles[0].audio_encoder != AUDIO_NONE) ||
+-            ((service_ctx.profiles_num == 2) && (service_ctx.profiles[1].audio_encoder != AUDIO_NONE))) {
+-
+-        snprintf(cap + strlen(cap), sizeof(cap) - strlen(cap), "%s", " AudioSource AudioEncoder");
+-    }
+-    if ((service_ctx.profiles[0].audio_decoder != AUDIO_NONE) ||
+-            ((service_ctx.profiles_num == 2) && (service_ctx.profiles[1].audio_decoder != AUDIO_NONE))) {
+-
+-        snprintf(cap + strlen(cap), sizeof(cap) - strlen(cap), "%s", " AudioOutput AudioDecoder");
+-    }
+-    if (service_ctx.ptz_node.enable == 1) {
+-        snprintf(cap + strlen(cap), sizeof(cap) - strlen(cap), "%s", " PTZ");
+-    }
+-
+-    long size = cat(NULL, "media2_service_files/GetServiceCapabilities.xml", 2,
+-            "%CAPABILITIES%", cap);
+-
+-    output_http_headers(size);
+-
+-    return cat("stdout", "media2_service_files/GetServiceCapabilities.xml", 2,
+-            "%CAPABILITIES%", cap);
++    return media_capabilities_send(2);
+ }
+ 
+ 
+ int media2_get_video_source_modes()
+ {
+-    const char *token = get_element("VideoSourceToken", "Body");
+-    char stmp_w[16], stmp_h[16], video_enc[16];
+-
+-    if (strcasecmp("VideoSourceToken", token) == 0) {
+-
+-        // Get data from the largest profile (the physical source)
+-        char stmp_fps[8];
+-        int vsrc = get_video_source_index();
+-        snprintf(stmp_w, sizeof(stmp_w), "%d", service_ctx.profiles[vsrc].width);
+-        snprintf(stmp_h, sizeof(stmp_h), "%d", service_ctx.profiles[vsrc].height);
+-        snprintf(stmp_fps, sizeof(stmp_fps), "%d", service_ctx.profiles[vsrc].framerate);
+-        set_video_codec(video_enc, 16, service_ctx.profiles[vsrc].type, 2);
+-        long size = cat(NULL, "media2_service_files/GetVideoSourceModes.xml", 8,
+-                "%WIDTH%", stmp_w,
+-                "%HEIGHT%", stmp_h,
+-                "%VIDEO_ENCODING%", video_enc,
+-                "%FRAMERATE%", stmp_fps);
+-
+-        output_http_headers(size);
+-
+-        return cat("stdout", "media2_service_files/GetVideoSourceModes.xml", 8,
+-                "%WIDTH%", stmp_w,
+-                "%HEIGHT%", stmp_h,
+-                "%VIDEO_ENCODING%", video_enc,
+-                "%FRAMERATE%", stmp_fps);
+-
+-    } else {
+-        send_fault("media2_service", "Sender", "ter:InvalidArgVal", "ter:NoVideoSource", "No video source", "The requested video source does not exist");
+-        return -1;
+-    }
++    return media_source_modes_send();
+ }
+ 
+ 
+--- /dev/null
++++ b/media_capabilities.c
+@@ -0,0 +1,143 @@
++/* SPDX-License-Identifier: GPL-3.0-only */
++#include <stdio.h>
++#include <string.h>
++
++#include "ezxml_wrapper.h"
++#include "fault.h"
++#include "media_capabilities.h"
++#include "media_profiles.h"
++#include "onvif_simple_server.h"
++#include "soap.h"
++#include "utils.h"
++
++extern service_context_t service_ctx;
++
++void media_capabilities_update(ezxml_t node)
++{
++    char configurations[MAX_LEN];
++    char number[32];
++    const char *namespace;
++    ezxml_t child;
++    int snapshot;
++    int input;
++    int output;
++    int count;
++    int i;
++
++    namespace = xml_namespace_get(node);
++    snapshot = 0;
++    input = 0;
++    output = 0;
++    count = 0;
++    for (i = 0; i < service_ctx.profiles_num; i++) {
++        snapshot |= service_ctx.profiles[i].snapurl && *service_ctx.profiles[i].snapurl;
++        input |= service_ctx.profiles[i].audio_encoder != AUDIO_NONE;
++        output |= service_ctx.profiles[i].audio_decoder != AUDIO_NONE;
++        count += !namespace || strcmp(namespace, "http://www.onvif.org/ver10/media/wsdl") ||
++                 service_ctx.profiles[i].type != H265;
++    }
++    if (ezxml_attr(node, "MaximumNumberOfProfiles")) {
++        snprintf(number, sizeof(number), "%d", count);
++        ezxml_set_attr_d(node, "MaximumNumberOfProfiles", number);
++    }
++    if (ezxml_attr(node, "ConfigurationsSupported")) {
++        snprintf(configurations, sizeof(configurations), "VideoSource VideoEncoder%s%s%s",
++                 input ? " AudioSource AudioEncoder" : "",
++                 output ? " AudioOutput AudioDecoder" : "",
++                 service_ctx.ptz_node.enable ? " PTZ" : "");
++        ezxml_set_attr_d(node, "ConfigurationsSupported", configurations);
++    }
++    if (ezxml_attr(node, "SnapshotUri"))
++        ezxml_set_attr(node, "SnapshotUri", snapshot ? "true" : "false");
++    if (ezxml_attr(node, "WebRTC"))
++        ezxml_set_attr(node, "WebRTC", "0");
++    for (child = node->child; child; child = child->ordered)
++        media_capabilities_update(child);
++}
++
++int media_capabilities_send(int version)
++{
++    ezxml_t envelope;
++
++    envelope = ezxml_parse_file(version == 1 ? "media_service_files/GetServiceCapabilities.xml" :
++                                "media2_service_files/GetServiceCapabilities.xml");
++    if (!envelope || *ezxml_error(envelope)) {
++        ezxml_free(envelope);
++        return send_action_failed_fault(version == 1 ? "media_service" : "media2_service", -1);
++    }
++    media_capabilities_update(envelope);
++    return soap_response_send(envelope);
++}
++
++int media_guaranteed_instances_send(void)
++{
++    const char *token;
++    ezxml_t response;
++    int jpeg;
++    int h264;
++    int mpeg4;
++    int i;
++
++    token = get_element("ConfigurationToken", "Body");
++    if (!token || strcmp(token, "VideoSourceConfigToken"))
++        return send_fault("media_service", "Sender", "ter:InvalidArgVal", "ter:NoConfig",
++                          "Unknown configuration", "The source configuration does not exist");
++    jpeg = 0;
++    h264 = 0;
++    mpeg4 = 0;
++    for (i = 0; i < service_ctx.profiles_num; i++) {
++        jpeg += service_ctx.profiles[i].type == JPEG;
++        h264 += service_ctx.profiles[i].type == H264;
++        mpeg4 += service_ctx.profiles[i].type == MPEG4;
++    }
++    response = soap_response_create(1, "GetGuaranteedNumberOfVideoEncoderInstances");
++    soap_number_add(response, "trt:TotalNumber", jpeg + h264 + mpeg4);
++    soap_number_add(response, "trt:JPEG", jpeg);
++    soap_number_add(response, "trt:H264", h264);
++    soap_number_add(response, "trt:MPEG4", mpeg4);
++    return soap_response_send(response);
++}
++
++int media_source_modes_send(void)
++{
++    const char *token;
++    ezxml_t response;
++    ezxml_t mode;
++    ezxml_t resolution;
++    char encodings[MAX_LEN];
++    char codec[16];
++    double framerate;
++    int height;
++    int width;
++    int type;
++    int found;
++    int i;
++
++    token = get_element("VideoSourceToken", "Body");
++    if (!token || strcmp(token, "VideoSourceToken"))
++        return send_fault("media2_service", "Sender", "ter:InvalidArgVal", "ter:NoVideoSource",
++                          "Unknown source", "The requested video source does not exist");
++    media_source_info(&width, &height, &framerate);
++    response = soap_response_create(2, "GetVideoSourceModes");
++    mode = soap_member_add(response, 2, "VideoSourceModes");
++    ezxml_set_attr(mode, "Enabled", "true");
++    ezxml_set_attr(mode, "token", "VideoSourceModeToken");
++    soap_number_add(mode, "tr2:MaxFramerate", framerate);
++    resolution = soap_child_add(mode, "tr2:MaxResolution", NULL);
++    soap_number_add(resolution, "tt:Width", width);
++    soap_number_add(resolution, "tt:Height", height);
++    encodings[0] = '\0';
++    for (type = JPEG; type <= H265; type++) {
++        found = 0;
++        for (i = 0; i < service_ctx.profiles_num; i++)
++            found |= service_ctx.profiles[i].type == type;
++        if (!found)
++            continue;
++        set_video_codec(codec, sizeof(codec), type, 2);
++        snprintf(encodings + strlen(encodings), sizeof(encodings) - strlen(encodings),
++                 "%s%s", *encodings ? " " : "", codec);
++    }
++    soap_child_add(mode, "tr2:Encodings", encodings);
++    soap_child_add(mode, "tr2:Reboot", "false");
++    return soap_response_send(response);
++}
+--- /dev/null
++++ b/media_capabilities.h
+@@ -0,0 +1,11 @@
++/* SPDX-License-Identifier: GPL-3.0-only */
++#ifndef MEDIA_CAPABILITIES_H
++#define MEDIA_CAPABILITIES_H
++#include "ezxml/ezxml.h"
++
++void media_capabilities_update(ezxml_t node);
++int media_capabilities_send(int version);
++int media_guaranteed_instances_send(void);
++int media_source_modes_send(void);
++
++#endif
+--- a/media_options.c
++++ b/media_options.c
+@@ -1,5 +1,6 @@
+ /* SPDX-License-Identifier: GPL-3.0-only */
+ #include <stdio.h>
++#include <math.h>
+ #include <string.h>
+ 
+ #include "ezxml_wrapper.h"
+@@ -64,7 +65,7 @@ static void encoder_options_add(ezxml_t
+     ezxml_t encoder;
+     double framerate;
+ 
+-    framerate = (double)profile->framerate / profile->framerate_den;
++    framerate = media_profile_framerate(profile);
+     set_video_codec(codec, sizeof(codec), profile->type, version);
+     options = soap_member_add(response, version, "Options");
+     if (version == 2) {
+@@ -92,8 +93,7 @@ static void encoder_options_add(ezxml_t
+     }
+     if (profile->type == H264 || profile->type == MPEG4)
+         soap_range_add(encoder, "tt:GovLengthRange", profile->gov_length, profile->gov_length);
+-    framerate = ((long long)profile->framerate + profile->framerate_den - 1) /
+-                profile->framerate_den;
++    framerate = ceil(media_profile_framerate(profile));
+     soap_range_add(encoder, "tt:FrameRateRange", framerate, framerate);
+     soap_range_add(encoder, "tt:EncodingIntervalRange", profile->encoding_interval,
+                    profile->encoding_interval);
+@@ -103,6 +103,94 @@ static void encoder_options_add(ezxml_t
+         soap_child_add(encoder, "tt:Mpeg4ProfilesSupported", "SP");
+ }
+ 
++static void media1_options_add(ezxml_t response, int index)
++{
++    stream_profile_t *profile;
++    ezxml_t options;
++    ezxml_t encoder;
++    ezxml_t resolution;
++    char codec[16];
++    char name[32];
++    double quality_min;
++    double quality_max;
++    double rate_min;
++    double rate_max;
++    int interval_min;
++    int interval_max;
++    int gov_min;
++    int gov_max;
++    int type;
++    int i;
++    int j;
++
++    quality_min = 0;
++    quality_max = 0;
++    for (i = 0; i < service_ctx.profiles_num; i++) {
++        profile = &service_ctx.profiles[i];
++        if ((index >= 0 && index != i) || profile->type == H265)
++            continue;
++        if (quality_max == 0 || floor(profile->quality) < quality_min)
++            quality_min = floor(profile->quality);
++        if (ceil(profile->quality) > quality_max)
++            quality_max = ceil(profile->quality);
++    }
++    options = soap_member_add(response, 1, "Options");
++    soap_range_add(options, "tt:QualityRange", quality_min, quality_max);
++    for (type = JPEG; type <= H264; type++) {
++        encoder = NULL;
++        rate_min = 0;
++        rate_max = 0;
++        interval_min = 0;
++        interval_max = 0;
++        gov_min = 0;
++        gov_max = 0;
++        for (i = 0; i < service_ctx.profiles_num; i++) {
++            profile = &service_ctx.profiles[i];
++            if ((index >= 0 && index != i) || profile->type != type)
++                continue;
++            if (!encoder) {
++                set_video_codec(codec, sizeof(codec), type, 1);
++                snprintf(name, sizeof(name), "tt:%s", codec);
++                encoder = soap_child_add(options, name, NULL);
++            }
++            resolution = soap_child_add(encoder, "tt:ResolutionsAvailable", NULL);
++            soap_number_add(resolution, "tt:Width", profile->width);
++            soap_number_add(resolution, "tt:Height", profile->height);
++            if (!rate_min || ceil(media_profile_framerate(profile)) < rate_min)
++                rate_min = ceil(media_profile_framerate(profile));
++            if (ceil(media_profile_framerate(profile)) > rate_max)
++                rate_max = ceil(media_profile_framerate(profile));
++            if (!interval_min || profile->encoding_interval < interval_min)
++                interval_min = profile->encoding_interval;
++            if (profile->encoding_interval > interval_max)
++                interval_max = profile->encoding_interval;
++            if (!gov_min || profile->gov_length < gov_min)
++                gov_min = profile->gov_length;
++            if (profile->gov_length > gov_max)
++                gov_max = profile->gov_length;
++        }
++        if (!encoder)
++            continue;
++        if (type != JPEG)
++            soap_range_add(encoder, "tt:GovLengthRange", gov_min, gov_max);
++        soap_range_add(encoder, "tt:FrameRateRange", rate_min, rate_max);
++        soap_range_add(encoder, "tt:EncodingIntervalRange", interval_min, interval_max);
++        for (i = 0; i < service_ctx.profiles_num && type != JPEG; i++) {
++            profile = &service_ctx.profiles[i];
++            if ((index >= 0 && index != i) || profile->type != type)
++                continue;
++            for (j = 0; j < i; j++)
++                if ((index < 0 || index == j) && service_ctx.profiles[j].type == type &&
++                    !strcmp(service_ctx.profiles[j].encoding_profile, profile->encoding_profile))
++                    break;
++            if (j == i)
++                soap_child_add(encoder, type == H264 ? "tt:H264ProfilesSupported" :
++                               "tt:Mpeg4ProfilesSupported", type == H264 ?
++                               profile->encoding_profile : "SP");
++        }
++    }
++}
++
+ int media_options_dispatch(const char *operation, int version)
+ {
+     const char *configuration_token;
+@@ -144,14 +232,17 @@ int media_options_dispatch(const char *o
+         soap_response_send(response);
+         return 1;
+     }
++    if (version == 1) {
++        media1_options_add(response, index);
++        soap_response_send(response);
++        return 1;
++    }
+     for (i = 0; i < service_ctx.profiles_num; i++) {
+         if (index >= 0 && index != i)
+             continue;
+         if (version == 1 && service_ctx.profiles[i].type == H265)
+             continue;
+         encoder_options_add(response, &service_ctx.profiles[i], version);
+-        if (version == 1)
+-            break;
+     }
+     soap_response_send(response);
+     return 1;
+--- a/media_service.c
++++ b/media_service.c
+@@ -19,6 +19,7 @@
+ 
+ #include "media_service.h"
+ #include "conf.h"
++#include "media_capabilities.h"
+ #include "fault.h"
+ #include "utils.h"
+ #include "log.h"
+@@ -31,11 +32,7 @@ extern service_context_t service_ctx;
+ 
+ int media_get_service_capabilities()
+ {
+-    long size = cat(NULL, "media_service_files/GetServiceCapabilities.xml", 0);
+-
+-    output_http_headers(size);
+-
+-    return cat("stdout", "media_service_files/GetServiceCapabilities.xml", 0);
++    return media_capabilities_send(1);
+ }
+ 
+ 
+@@ -62,32 +59,7 @@ int media_create_profile()
+ 
+ int media_get_guaranteed_number_of_video_encoder_instances()
+ {
+-    char stmp[8];
+-    const char *configuration_token = get_element("ConfigurationToken", "Body");
+-
+-    if ((service_ctx.profiles_num >= 0) && (service_ctx.profiles_num <= 2)) {
+-        snprintf(stmp, sizeof(stmp), "%d", service_ctx.profiles_num);
+-    } else {
+-        send_action_failed_fault("media_service", -1);
+-        return -1;
+-    }
+-
+-    if (strncasecmp("VideoSourceConfigToken", configuration_token, 22) == 0) {
+-
+-        long size = cat(NULL, "media_service_files/GetGuaranteedNumberOfVideoEncoderInstances.xml", 4,
+-                "%TOTAL_NUMBER%", stmp,
+-                "%NUMBER_H264%", stmp);
+-
+-        output_http_headers(size);
+-
+-        return cat("stdout", "media_service_files/GetGuaranteedNumberOfVideoEncoderInstances.xml", 4,
+-                "%TOTAL_NUMBER%", stmp,
+-                "%NUMBER_H264%", stmp);
+-
+-    } else {
+-        send_fault("media_service", "Sender", "ter:InvalidArgVal", "ter:NoConfig", "No config", "The requested configuration indicated does not exist");
+-        return -2;
+-    }
++    return media_guaranteed_instances_send();
+ }
+ 
+ 
+--- a/test/test_cgi.py
++++ b/test/test_cgi.py
+@@ -79,6 +79,38 @@ def helper_configuration():
+ 
+ 
+ class CGITests(unittest.TestCase):
++    def test_capabilities_and_modes(self):
++        for count in [0, 1, 4, 12]:
++            config = configuration(count)
++            for service in ['media', 'media2']:
++                status, root = request(service, 'GetServiceCapabilities', config=config)
++                self.assertEqual(status, 200)
++                self.assertEqual(root.find('.//{*}ProfileCapabilities').get('MaximumNumberOfProfiles'),
++                                 str(count))
++            status, root = request('device', 'GetServices', '<IncludeCapability>true</IncludeCapability>', config)
++            self.assertEqual(status, 200)
++            self.assertEqual([n.get('MaximumNumberOfProfiles') for n in root.findall('.//{*}ProfileCapabilities')],
++                             [str(count), str(count)])
++        config = configuration(4)
++        config['profiles'][1]['type'] = 'JPEG'
++        config['profiles'][2]['type'] = 'H265'
++        status, root = request('media', 'GetGuaranteedNumberOfVideoEncoderInstances',
++                               '<ConfigurationToken>VideoSourceConfigToken</ConfigurationToken>', config)
++        self.assertEqual(status, 200)
++        self.assertEqual(root.findtext('.//trt:TotalNumber', namespaces=NS), '3')
++        self.assertEqual(root.findtext('.//trt:H264', namespaces=NS), '2')
++        self.assertEqual(root.findtext('.//trt:JPEG', namespaces=NS), '1')
++        config.update(source_width=3840, source_height=2160, source_framerate=30)
++        status, root = request('media2', 'GetVideoSourceModes',
++                               '<VideoSourceToken>VideoSourceToken</VideoSourceToken>', config)
++        self.assertEqual(status, 200)
++        self.assertEqual(root.findtext('.//tt:Width', namespaces=NS), '3840')
++        status, root = request('media', 'GetVideoEncoderConfigurationOptions', config=config)
++        self.assertEqual(status, 200)
++        self.assertIsNotNone(root.find('.//tt:JPEG', NS))
++        self.assertIsNotNone(root.find('.//tt:H264', NS))
++        self.assertEqual(len(root.findall('.//tt:H264/tt:ResolutionsAvailable', NS)), 2)
++
+     def test_imaging(self):
+         with helper_configuration() as (config, path):
+             config['imaging_helper'] = config.pop('encoder_helper')
