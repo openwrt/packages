@@ -1,0 +1,129 @@
+From 93a0352d855aa2f5578c83c1265021f9e7ca60ef Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Thu, 5 Nov 2026 12:59:52 +0000
+Subject: [PATCH 240/243] libcamera: controls: Add the rkisp2 lens controls
+
+The RkISP2 ISPP corrects lens distortion through a mesh generated from a
+lens model, and the model differs from one board to the next. Add rkisp2
+vendor controls for the lens model (OCamCalib or OpenCV fisheye), its
+optical centre, distortion coefficients and focal length, and the
+strength of the correction, in a new vendor range.
+
+Assisted-by: LLM
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ include/libcamera/meson.build         |  1 +
+ src/libcamera/control_ids_rkisp2.yaml | 84 +++++++++++++++++++++++++++
+ src/libcamera/control_ranges.yaml     |  4 +-
+ 3 files changed, 88 insertions(+), 1 deletion(-)
+ create mode 100644 src/libcamera/control_ids_rkisp2.yaml
+
+--- a/include/libcamera/meson.build
++++ b/include/libcamera/meson.build
+@@ -37,6 +37,7 @@ controls_map = {
+         'core': 'control_ids_core.yaml',
+         'debug': 'control_ids_debug.yaml',
+         'draft': 'control_ids_draft.yaml',
++        'rkisp2': 'control_ids_rkisp2.yaml',
+         'rpi/pisp': 'control_ids_rpi.yaml',
+         'rpi/vc4': 'control_ids_rpi.yaml',
+     },
+--- /dev/null
++++ b/src/libcamera/control_ids_rkisp2.yaml
+@@ -0,0 +1,84 @@
++# SPDX-License-Identifier: LGPL-2.1-or-later
++#
++# Copyright (C) 2026, Daniel Golle
++#
++%YAML 1.1
++---
++# Rockchip RkISP2 (RV1126 ISP and ISPP) specific vendor controls
++vendor: rkisp2
++controls:
++  - LensModel:
++      type: int32_t
++      direction: inout
++      description: |
++        Lens distortion model corrected by the ISPP FEC.
++
++        The model parameters are given by LensCentre, LensCoefficients and
++        LensFocalLength, the strength of the correction by
++        LensCorrectionLevel.
++
++        The FEC is the slowest stage of the ISPP: it samples the picture at
++        about 134 megapixels per second. With a model other than
++        LensModelNone a 3856x2192 stream runs at about 15 frames per second;
++        a 1920x1080 picture takes about 16 ms and a 2688x1520 picture about
++        30 ms in the FEC.
++
++        \sa LensCentre LensCoefficients LensFocalLength LensCorrectionLevel
++      enum:
++        - name: LensModelNone
++          value: 0
++          description: No lens correction.
++        - name: LensModelOcamCalib
++          value: 1
++          description: |
++            Omnidirectional camera model of the OCamCalib toolbox
++            (Scaramuzza): the ray of a pixel at distance rho from the centre
++            has the axial component a0 + a2 rho^2 + a3 rho^3 + a4 rho^4.
++            LensCoefficients holds a0, a2, a3 and a4.
++        - name: LensModelFisheye
++          value: 2
++          description: |
++            Fisheye model of OpenCV: a ray at angle theta from the axis lands
++            at theta (1 + k1 theta^2 + k2 theta^4 + k3 theta^6 + k4 theta^8)
++            times the focal length from the centre. LensCoefficients holds
++            k1 to k4, LensFocalLength the focal length.
++
++  - LensCentre:
++      type: float
++      direction: inout
++      size: [2]
++      description: |
++        Optical centre of the lens in pixels of the full sensor picture, as
++        x and y.
++
++        \sa LensModel
++
++  - LensCoefficients:
++      type: float
++      direction: inout
++      size: [4]
++      description: |
++        Distortion coefficients of the lens model selected by LensModel.
++
++        \sa LensModel
++
++  - LensFocalLength:
++      type: float
++      direction: inout
++      size: [2]
++      description: |
++        Focal length of the lens in pixels, horizontal and vertical, for the
++        fisheye model.
++
++        \sa LensModel
++
++  - LensCorrectionLevel:
++      type: int32_t
++      direction: inout
++      description: |
++        Strength of the lens correction from 0 (none) to 255 (full). The
++        sampled source position moves linearly from the uncorrected to the
++        fully corrected one.
++
++        \sa LensModel
++...
+--- a/src/libcamera/control_ranges.yaml
++++ b/src/libcamera/control_ranges.yaml
+@@ -15,6 +15,8 @@ ranges:
+   rpi: 20000
+   # Controls for debug metadata
+   debug: 30000
+-  # Next range starts at 40000
++  # Rockchip RkISP2 vendor controls
++  rkisp2: 40000
++  # Next range starts at 50000
+ 
+ ...

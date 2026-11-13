@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libcamera
 PKG_VERSION:=0.7.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://git.libcamera.org/libcamera/libcamera.git
@@ -78,7 +78,7 @@ endef
 define Package/libcamera-cam
   $(call Package/libcamera/Default)
   TITLE:=libcamera command line capture tool
-  DEPENDS:=+libcamera +libevent2 +libevent2-pthreads
+  DEPENDS:=+libcamera +libevent2 +libevent2-pthreads +libtiff
 endef
 
 define Package/libcamera-cam/description
@@ -127,7 +127,7 @@ MESON_ARGS += \
 	-Dlc-compliance=disabled \
 	-Dlibdw=disabled \
 	-Dlibunwind=disabled \
-	-Dapps-output-dng=disabled \
+	-Dapps-output-dng=enabled \
 	-Dpipelines=imx8-isi,ipu3,mali-c55,rkisp1,rkisp2,rpi/vc4,simple,uvcvideo \
 	-Dpycamera=disabled \
 	-Dqcam=disabled \

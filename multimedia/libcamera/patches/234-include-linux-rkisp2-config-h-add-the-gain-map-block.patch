@@ -1,0 +1,73 @@
+From bf63642f8d98f7cb6b67009a560c72efe3b81a1b Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Wed, 4 Nov 2026 21:31:44 +0000
+Subject: [PATCH] include: linux: rkisp2-config.h: Add the gain map block
+
+Sync the header copy with the kernel's gain map block.
+
+Assisted-by: LLM
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ include/linux/media/rockchip/rkisp2-config.h | 30 +++++++++++++++++++-
+ 1 file changed, 29 insertions(+), 1 deletion(-)
+
+--- a/include/linux/media/rockchip/rkisp2-config.h
++++ b/include/linux/media/rockchip/rkisp2-config.h
+@@ -228,6 +228,7 @@ struct rkisp2_stats_awb_mean {
+  * @RKISP2_PARAMS_BLOCK_DPCC: Defect pixel cluster correction config
+  * @RKISP2_PARAMS_BLOCK_CPROC: Color processing config
+  * @RKISP2_PARAMS_BLOCK_WDR: Wide dynamic range config
++ * @RKISP2_PARAMS_BLOCK_GAIN: Gain map config
+  */
+ enum rkisp2_params_block_type {
+ 	RKISP2_PARAMS_BLOCK_BLS,
+@@ -246,6 +247,7 @@ enum rkisp2_params_block_type {
+ 	RKISP2_PARAMS_BLOCK_DPCC,
+ 	RKISP2_PARAMS_BLOCK_CPROC,
+ 	RKISP2_PARAMS_BLOCK_WDR,
++	RKISP2_PARAMS_BLOCK_GAIN,
+ };
+ 
+ /* DPCC: three method sets, each with a green and a red/blue variant */
+@@ -873,6 +875,32 @@ struct rkisp2_params_wdr {
+ 	__u32 coe_off;
+ } __attribute__((aligned(8)));
+ 
++/* gain map: three exposure gains, as in the HDR merge */
++#define RKISP2_ISP_GAIN_NUM 3
++
++/**
++ * struct rkisp2_params_gain - RkISP2 params gain map config
++ *
++ * RkISP2 parameters gain map configuration block. With each frame the ISP
++ * hands to the ISPP it writes a map of the gain applied to every 4x8 pixel
++ * block, which the ISPP temporal and spatial noise reduction scale their noise
++ * model with. A map entry is 16 times the square root of the block gain: the
++ * exposure gain below, times the lens shading gain and, with the WDR block
++ * enabled, its local tone gain. Identified by
++ * :c:type:`RKISP2_PARAMS_BLOCK_GAIN`.
++ *
++ * Without the block enabled the ISP writes a map of zeros.
++ *
++ * @header: The RkISP2 parameters block header
++ * @gain: Exposure gain in 12.6 fixed point, for the long, middle and short
++ *	  exposures of an HDR merge; a linear exposure sets all three. The
++ *	  first holds 18 bits, the other two 14 bits.
++ */
++struct rkisp2_params_gain {
++	struct v4l2_isp_params_block_header header;
++	__u32 gain[RKISP2_ISP_GAIN_NUM];
++} __attribute__((aligned(8)));
++
+ #define RKISP2_PARAMS_MAX_SIZE                                                 \
+ 	(sizeof(struct rkisp2_params_bls) +                                    \
+ 	 sizeof(struct rkisp2_params_awb_gains) +                              \
+@@ -885,7 +913,7 @@ struct rkisp2_params_wdr {
+ 	 sizeof(struct rkisp2_params_awb_meas) +                               \
+ 	 sizeof(struct rkisp2_params_dpcc) +                                   \
+ 	 sizeof(struct rkisp2_params_cproc) +                                  \
+-	 sizeof(struct rkisp2_params_wdr))
++	 sizeof(struct rkisp2_params_wdr) + sizeof(struct rkisp2_params_gain))
+ 
+ /*---------- ISPP (image post-processing) ------------*/
+ 

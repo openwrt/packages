@@ -34,7 +34,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
  	cfg.bufferCount = kRkISP2StreamBufferCount;
  
  	std::transform(rawFormats.begin(), rawFormats.end(),
-@@ -880,6 +888,7 @@ int PipelineHandlerRkISP2::configure(Cam
+@@ -865,6 +873,7 @@ int PipelineHandlerRkISP2::configure(Cam
  	outputFormat.fourcc = mainPathFormat(mainPath_.get(), cfg.pixelFormat);
  	outputFormat.size = cfg.size;
  	outputFormat.colorSpace = cfg.colorSpace;
