@@ -1,0 +1,6 @@
+. /lib/functions.sh
+
+profile_d_retire nano-default-editor.sh \
+	cbfa9ed2c28ba50f3aa50cc7810d079d97ff60b289b17750d787306b627d7bcb
+
+exit 0
