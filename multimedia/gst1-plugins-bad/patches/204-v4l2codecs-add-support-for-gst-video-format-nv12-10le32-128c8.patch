@@ -1,0 +1,37 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Dave Stevenson <dave.stevenson@raspberrypi.com>
+Date: Tue, 17 Jun 2025 18:09:26 +0100
+Subject: [PATCH] v4l2codecs: Add support for
+ GST_VIDEO_FORMAT_NV12_10LE32_128C8
+
+This format is used by the Raspberry Pi HEVC decoder for 10bit
+content
+
+Fixes #1488
+
+Link: https://gitlab.freedesktop.org/gstreamer/gstreamer/-/merge_requests/9247
+---
+ sys/v4l2codecs/gstv4l2format.c | 1 +
+ sys/v4l2codecs/gstv4l2format.h | 1 +
+ 2 files changed, 2 insertions(+)
+
+--- a/sys/v4l2codecs/gstv4l2format.c
++++ b/sys/v4l2codecs/gstv4l2format.c
+@@ -54,6 +54,7 @@ static const GstV4l2FormatDesc gst_v4l2_
+   {V4L2_PIX_FMT_SUNXI_TILED_NV12, GST_VIDEO_FORMAT_NV12_32L32,      DRM_FORMAT_INVALID, DRM_FORMAT_MOD_INVALID, 0},
+   {V4L2_PIX_FMT_NV12_4L4,         GST_VIDEO_FORMAT_NV12_4L4,        DRM_FORMAT_INVALID, DRM_FORMAT_MOD_INVALID, 0},
+   {V4L2_PIX_FMT_NV12MT_COL128,    GST_VIDEO_FORMAT_NV12_128C8,      DRM_FORMAT_INVALID, DRM_FORMAT_MOD_INVALID, 0},
++  {V4L2_PIX_FMT_NV12MT_10_COL128, GST_VIDEO_FORMAT_NV12_10LE32_128C8,DRM_FORMAT_INVALID, DRM_FORMAT_MOD_INVALID, 0},
+   {V4L2_PIX_FMT_NC12,             GST_VIDEO_FORMAT_UNKNOWN,         DRM_FORMAT_NV12,    DRM_FORMAT_MOD_BROADCOM_SAND128, 2},
+   {V4L2_PIX_FMT_NV12,             GST_VIDEO_FORMAT_NV12,            DRM_FORMAT_INVALID, DRM_FORMAT_MOD_INVALID, 0},
+   {V4L2_PIX_FMT_YUV420M,          GST_VIDEO_FORMAT_I420,            DRM_FORMAT_INVALID, DRM_FORMAT_MOD_INVALID, 0},
+--- a/sys/v4l2codecs/gstv4l2format.h
++++ b/sys/v4l2codecs/gstv4l2format.h
+@@ -40,6 +40,7 @@
+     "NV12_32L32, " \
+     "NV12_4L4, " \
+     "NV12_128C8, " \
++    "NV12_10LE32_128C8, " \
+     "NV12, " \
+     "I420, " \
+     "}"

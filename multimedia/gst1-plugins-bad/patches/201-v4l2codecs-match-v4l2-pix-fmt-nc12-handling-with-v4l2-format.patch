@@ -1,0 +1,28 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Dave Stevenson <dave.stevenson@raspberrypi.com>
+Date: Tue, 17 Jun 2025 14:04:14 +0100
+Subject: [PATCH] v4l2codecs: Match V4L2_PIX_FMT_NC12 handling with V4L2 format
+
+Commit b275f63b1318 ("v4l2codecs: format: Add V4L2_PIX_FMT_NC12")
+added the handling based on DRM format and modifier.
+We're about to add the replacement V4L2_PIX_FMT_NV12MT_COL128 as a
+full GStreamer format, match on V4L2 pixel format to avoid forcing
+the new format to have the same constraints.
+
+Link: https://gitlab.freedesktop.org/gstreamer/gstreamer/-/merge_requests/9247
+---
+ sys/v4l2codecs/gstv4l2format.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+--- a/sys/v4l2codecs/gstv4l2format.c
++++ b/sys/v4l2codecs/gstv4l2format.c
+@@ -203,8 +203,7 @@ gst_v4l2_format_to_dma_drm_info (struct
+     n_planes = 1;
+   }
+ 
+-  if (drm_fourcc == DRM_FORMAT_NV12
+-      && drm_mod == DRM_FORMAT_MOD_BROADCOM_SAND128) {
++  if (pix_mp->pixelformat == V4L2_PIX_FMT_NC12) {
+     out_drm_info->vinfo.offset[1] = pix_mp->height * 128;
+     out_drm_info->vinfo.stride[0] = pix_mp->plane_fmt[0].bytesperline;
+     out_drm_info->vinfo.stride[1] = pix_mp->plane_fmt[0].bytesperline;

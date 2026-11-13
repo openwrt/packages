@@ -1,0 +1,43 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Thu, 12 Nov 2026 15:57:02 +0000
+Subject: [PATCH] v4l2codecs: av1: Keep the pool on downstream renegotiation
+
+The AV1 decoder allocates the same way as the VP9 one: a downstream
+reconfiguration while streaming runs decide_allocation() again through
+the "Ignore downstream renegotiation request" path of negotiate(), and
+a second set of OUTPUT and CAPTURE buffers is created next to the one
+in the streaming queues, up to the VB2 limit of 32 buffers.
+
+Keep the current allocation while streaming as long as the allocators
+are in place. negotiate() resets the allocation on a format change, so
+inter-frame resolution changes still get new buffers. The check was
+dropped with commit 7fb19b37d8 ("v4l2codecs: av1: Allow inter-frames
+resolution change").
+
+Link: https://gitlab.freedesktop.org/gstreamer/gstreamer/-/merge_requests/13069
+---
+ sys/v4l2codecs/gstv4l2codecav1dec.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+--- a/sys/v4l2codecs/gstv4l2codecav1dec.c
++++ b/sys/v4l2codecs/gstv4l2codecav1dec.c
+@@ -414,6 +414,10 @@ gst_v4l2_codec_av1_dec_decide_allocation
+   guint min = 0, num_bitstream;
+   gboolean has_videometa;
+ 
++  /* negotiate() only resets the allocation on a format change */
++  if (self->streaming && self->src_allocator)
++    goto no_internal_changes;
++
+   g_clear_object (&self->src_pool);
+   g_clear_object (&self->src_allocator);
+   g_clear_object (&self->sink_allocator);
+@@ -483,6 +487,7 @@ gst_v4l2_codec_av1_dec_decide_allocation
+   self->src_pool =
+       gst_v4l2_codec_pool_new (self->src_allocator, &self->vinfo_drm);
+ 
++no_internal_changes:
+   /* Our buffer pool is internal, we will let the base class create a video
+    * pool, and use it if we are running out of buffers or if downstream does
+    * not support GstVideoMeta */

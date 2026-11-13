@@ -1,0 +1,30 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Thu, 12 Nov 2026 16:04:23 +0000
+Subject: [PATCH] v4l2codecs: av1: Wait for a keyframe without REMOVE_BUFS
+
+A frame size change on an inter frame makes the decoder renegotiate
+while it is streaming, which needs VIDIOC_REMOVE_BUFS to replace the
+CAPTURE buffers. Without it, the OUTPUT format cannot be set or the
+old buffers cannot be released, and decoding fails.
+
+Tell the base class whether the driver supports REMOVE_BUFS, as the
+VP9 decoder does, so that without it frames are dropped until the next
+keyframe, where the decoder streams off and reallocates.
+---
+ sys/v4l2codecs/gstv4l2codecav1dec.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+--- a/sys/v4l2codecs/gstv4l2codecav1dec.c
++++ b/sys/v4l2codecs/gstv4l2codecav1dec.c
+@@ -241,6 +241,10 @@ gst_v4l2_codec_av1_dec_open (GstVideoDec
+   self->fill_film_grain =
+       gst_v4l2_decoder_query_control_size (self->decoder,
+       V4L2_CID_STATELESS_AV1_FILM_GRAIN, NULL);
++
++  gst_av1_decoder_set_non_keyframe_format_change_support (GST_AV1_DECODER
++      (self), gst_v4l2_decoder_has_remove_bufs (self->decoder));
++
+   return TRUE;
+ }
+ 
