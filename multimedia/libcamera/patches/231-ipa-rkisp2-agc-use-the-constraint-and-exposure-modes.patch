@@ -1,0 +1,31 @@
+From a9b5d2f0a8cce864c0543d779874c8e93ed5b30b Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Wed, 4 Nov 2026 14:19:46 +0000
+Subject: [PATCH] ipa: rkisp2: agc: Use the constraint and exposure modes
+
+The AGC takes the AeConstraintMode and AeExposureMode controls and the
+modes of the tuning file into the frame context but always computes the
+exposure with the first mode of each. Pass the modes of the frame.
+
+Assisted-by: LLM
+---
+ src/ipa/rkisp2/algorithms/agc.cpp | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+--- a/src/ipa/rkisp2/algorithms/agc.cpp
++++ b/src/ipa/rkisp2/algorithms/agc.cpp
+@@ -448,11 +448,12 @@ void Agc::process([[maybe_unused]] IPACo
+ 
+ 	/* \todo Support lux estimation */
+ 
+-	/* \todo Support setting constraint and exposure modes */
+ 	utils::Duration newExposureTime;
+ 	double aGain, qGain, dGain;
+ 	std::tie(newExposureTime, aGain, qGain, dGain) =
+-		calculateNewEv(0, 0, hist, effectiveExposureValue);
++		calculateNewEv(frameContext.agc.constraintMode,
++			       frameContext.agc.exposureMode,
++			       hist, effectiveExposureValue);
+ 
+ 	LOG(RkISP2Agc, Debug)
+ 		<< "Divided up exposure time, analogue gain, quantization gain"

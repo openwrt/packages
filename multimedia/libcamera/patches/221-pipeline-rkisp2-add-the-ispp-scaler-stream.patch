@@ -296,7 +296,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
  
  	/*
  	 * The ISP takes its input from the raw readback node only while the
-@@ -1166,6 +1277,43 @@ int PipelineHandlerRkISP2::configureIspp
+@@ -1151,6 +1262,43 @@ int PipelineHandlerRkISP2::configureIspp
  	return configureIpa(data, cfg);
  }
  
@@ -340,7 +340,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
  int PipelineHandlerRkISP2::configureIpa(RkISP2CameraData *data,
  					const StreamConfiguration &cfg)
  {
-@@ -1219,6 +1367,9 @@ int PipelineHandlerRkISP2::exportFrameBu
+@@ -1204,6 +1352,9 @@ int PipelineHandlerRkISP2::exportFrameBu
  	if (!data->usingIsp_ || data->isRaw_)
  		return data->video_->exportBuffers(count, buffers);
  
@@ -350,7 +350,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
  	if (data->usingIspp_)
  		return data->isppMain_->exportBuffers(count, buffers);
  
-@@ -1289,6 +1440,17 @@ int PipelineHandlerRkISP2::startIspp(Cam
+@@ -1274,6 +1425,17 @@ int PipelineHandlerRkISP2::startIspp(Cam
  	}
  	actions += [&]() { data->isppMain_->releaseBuffers(); };
  
@@ -368,7 +368,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
  	for (const std::unique_ptr<FrameBuffer> &buffer : data->statBuffers_) {
  		ret = data->stat_->queueBuffer(buffer.get());
  		if (ret < 0)
-@@ -1316,6 +1478,13 @@ int PipelineHandlerRkISP2::startIspp(Cam
+@@ -1301,6 +1463,13 @@ int PipelineHandlerRkISP2::startIspp(Cam
  		return ret;
  	actions += [&]() { data->isppMain_->streamOff(); };
  
@@ -382,7 +382,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
  	if (controls) {
  		ret = processControls(data, *controls);
  		if (ret < 0)
-@@ -1330,10 +1499,14 @@ void PipelineHandlerRkISP2::stopIspp(Cam
+@@ -1315,10 +1484,14 @@ void PipelineHandlerRkISP2::stopIspp(Cam
  {
  	RkISP2CameraData *data = cameraData(camera);
  
@@ -397,7 +397,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
  	data->isppMain_->releaseBuffers();
  
  	data->stat_->streamOff();
-@@ -1559,10 +1732,20 @@ int PipelineHandlerRkISP2::queueRequestD
+@@ -1544,10 +1717,20 @@ int PipelineHandlerRkISP2::queueRequestD
  	data->computeParamBuffers(data->frame_ - data->ispBase_);
  	data->frame_++;
  
@@ -421,7 +421,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
  }
  
  int PipelineHandlerRkISP2::updateControls(RkISP2CameraData *data)
-@@ -1589,7 +1772,8 @@ bool PipelineHandlerRkISP2::createCamera
+@@ -1574,7 +1757,8 @@ bool PipelineHandlerRkISP2::createCamera
  		std::make_unique<RkISP2CameraData>(this, media_.get());
  	if (data->init(usingIsp, sensor_.get(), video_.get(), rawrd_.get(),
  		       isp_.get(), mainPath_.get(), param_.get(), stat_.get(),
@@ -431,7 +431,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
  		LOG(RkISP2, Error) << "Failed to initialize data";
  		return false;
  	}
-@@ -1624,6 +1808,8 @@ bool PipelineHandlerRkISP2::createCamera
+@@ -1609,6 +1793,8 @@ bool PipelineHandlerRkISP2::createCamera
  
  	const std::string &id = data->sensor_->id();
  	std::set<Stream *> streams{ &data->stream_ };
@@ -440,7 +440,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
  	std::shared_ptr<Camera> camera =
  		Camera::create(std::move(data), id, streams);
  	registerCamera(std::move(camera));
-@@ -1816,6 +2002,13 @@ bool PipelineHandlerRkISP2::match(Device
+@@ -1801,6 +1987,13 @@ bool PipelineHandlerRkISP2::match(Device
  		return false;
  	}
  

@@ -1,0 +1,388 @@
+From df2b080201a42f0fc2a54a2ae7ec2c7b384ea492 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Wed, 4 Nov 2026 09:49:12 +0000
+Subject: [PATCH] ipa: rkisp2: Add the defect pixel cluster correction
+
+The ISP 2.0 passes every hot pixel of the sensor through to the picture
+while its DPCC instances stay unprogrammed, which shows as a sky of
+single bright pixels on a covered IMX415 at full gain.
+
+Port the RkISP1 defect pixel cluster correction algorithm to the RkISP2
+IPA. The tuning sets keep the RkISP1 keys and gain the distance method
+of the ISP 2.0 (rk-min-distance, rk-distance-scale), the output
+selection bits and a min-gain per set: hot pixels rise out of the noise
+floor with the analogue gain, so each set and the fixed set of the
+hardware come into use once the gain of the frame reaches their
+threshold, and the block is sent again whenever that selection changes.
+
+Seed the imx415 tuning with the method sets of the vendor tuning for
+this sensor module, with the sets the vendor enables from ISO 400 tied
+to a gain of 8.
+
+Assisted-by: LLM
+---
+ src/ipa/rkisp2/algorithms/dpcc.cpp    | 211 ++++++++++++++++++++++++++
+ src/ipa/rkisp2/algorithms/dpcc.h      |  38 +++++
+ src/ipa/rkisp2/algorithms/meson.build |   1 +
+ src/ipa/rkisp2/data/imx415.yaml       |  64 ++++++++
+ src/ipa/rkisp2/params.h               |   2 +
+ 5 files changed, 316 insertions(+)
+ create mode 100644 src/ipa/rkisp2/algorithms/dpcc.cpp
+ create mode 100644 src/ipa/rkisp2/algorithms/dpcc.h
+
+--- /dev/null
++++ b/src/ipa/rkisp2/algorithms/dpcc.cpp
+@@ -0,0 +1,211 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2021-2022, Ideas On Board
++ *
++ * RkISP2 Defect Pixel Cluster Correction control
++ */
++
++#include "dpcc.h"
++
++#include <libcamera/base/log.h>
++#include <libcamera/base/utils.h>
++
++#include "libcamera/internal/value_node.h"
++
++/**
++ * \file dpcc.h
++ */
++
++namespace libcamera {
++
++namespace ipa::rkisp2::algorithms {
++
++/**
++ * \class DefectPixelClusterCorrection
++ * \brief RkISP2 Defect Pixel Cluster Correction control
++ *
++ * Depending on the sensor quality, some pixels can be defective and then
++ * appear significantly brighter or darker than the other pixels.
++ *
++ * The Defect Pixel Cluster Correction detects such pixels on the fly with up
++ * to three sets of methods and replaces them by an interpolation of their
++ * neighbours. The ISP 2.0 adds a distance based method to the sets of the
++ * ISP1. Hot pixels rise out of the noise floor with the analogue gain, so
++ * each set, and the fixed set of the hardware, can name a minimum gain and
++ * is used once the gain of the frame reaches it.
++ */
++
++LOG_DEFINE_CATEGORY(RkISP2Dpcc)
++
++namespace {
++
++/*
++ * Read the green and red/blue values of a method parameter, enable the
++ * method for the components present in the tuning data and return the
++ * values packed with the red/blue one at \a redBlueShift.
++ */
++uint32_t parseMethod(const ValueNode &object, uint32_t &method,
++		     uint32_t greenEnable, uint32_t redBlueEnable,
++		     unsigned int redBlueShift = 8)
++{
++	uint32_t value = 0;
++
++	if (object.contains("green")) {
++		method |= greenEnable;
++		value |= object["green"].get<uint16_t>(0);
++	}
++
++	if (object.contains("red-blue")) {
++		method |= redBlueEnable;
++		value |= object["red-blue"].get<uint16_t>(0) << redBlueShift;
++	}
++
++	return value;
++}
++
++} /* namespace */
++
++DefectPixelClusterCorrection::DefectPixelClusterCorrection()
++	: config_({}), setMinGain_{}, numSets_(0), setUse_(0)
++{
++}
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::init
++ */
++int DefectPixelClusterCorrection::init([[maybe_unused]] IPAContext &context,
++				       const ValueNode &tuningData)
++{
++	config_.mode = RKISP2_ISP_DPCC_MODE_STAGE1_ENABLE;
++	config_.output_mode = RKISP2_ISP_DPCC_OUTPUT_MODE_STAGE1_INCL_G_CENTER
++			    | RKISP2_ISP_DPCC_OUTPUT_MODE_STAGE1_INCL_RB_CENTER;
++
++	if (tuningData["output-select"].get<bool>(false))
++		config_.output_mode |= RKISP2_ISP_DPCC_OUTPUT_MODE_DPCC_OUTPUT_SEL;
++
++	uint16_t rkOutputSelect = tuningData["rk-output-select"].get<uint16_t>(0);
++	config_.output_mode |= RKISP2_ISP_DPCC_OUTPUT_MODE_RK_OUT_SEL(rkOutputSelect & 3);
++
++	if (tuningData["fixed-set"].get<bool>(false))
++		fixedSetMinGain_ = 0.0;
++	else
++		fixedSetMinGain_ = tuningData["fixed-set-min-gain"].get<double>();
++
++	/* Get all defined sets to apply (up to 3). */
++	const ValueNode &setsObject = tuningData["sets"];
++	if (!setsObject.isList()) {
++		LOG(RkISP2Dpcc, Error)
++			<< "'sets' parameter not found in tuning file";
++		return -EINVAL;
++	}
++
++	if (setsObject.size() > RKISP2_ISP_DPCC_METHODS_MAX) {
++		LOG(RkISP2Dpcc, Error)
++			<< "'sets' size in tuning file (" << setsObject.size()
++			<< ") exceeds the maximum hardware capacity (3)";
++		return -EINVAL;
++	}
++
++	numSets_ = setsObject.size();
++
++	for (unsigned int i = 0; i < numSets_; ++i) {
++		struct rkisp2_isp_dpcc_methods_config &method = config_.methods[i];
++		const ValueNode &set = setsObject[i];
++
++		setMinGain_[i] = set["min-gain"].get<double>(0.0);
++
++		method.pg_fac = parseMethod(set["pg-factor"], method.method,
++					    RKISP2_ISP_DPCC_METHODS_SET_PG_GREEN_ENABLE,
++					    RKISP2_ISP_DPCC_METHODS_SET_PG_RED_BLUE_ENABLE);
++
++		uint32_t roLimits = parseMethod(set["ro-limits"], method.method,
++						RKISP2_ISP_DPCC_METHODS_SET_RO_GREEN_ENABLE,
++						RKISP2_ISP_DPCC_METHODS_SET_RO_RED_BLUE_ENABLE,
++						2);
++		config_.ro_limits |= roLimits << (i * 4);
++
++		method.rg_fac = parseMethod(set["rg-factor"], method.method,
++					    RKISP2_ISP_DPCC_METHODS_SET_RG_GREEN_ENABLE,
++					    RKISP2_ISP_DPCC_METHODS_SET_RG_RED_BLUE_ENABLE);
++
++		uint32_t rndOffsets = parseMethod(set["rnd-offsets"], method.method,
++						  RKISP2_ISP_DPCC_METHODS_SET_RND_GREEN_ENABLE,
++						  RKISP2_ISP_DPCC_METHODS_SET_RND_RED_BLUE_ENABLE,
++						  2);
++		config_.rnd_offs |= rndOffsets << (i * 4);
++
++		method.rnd_thresh = parseMethod(set["rnd-threshold"], method.method,
++						RKISP2_ISP_DPCC_METHODS_SET_RND_GREEN_ENABLE,
++						RKISP2_ISP_DPCC_METHODS_SET_RND_RED_BLUE_ENABLE);
++
++		method.line_thresh = parseMethod(set["line-threshold"], method.method,
++						 RKISP2_ISP_DPCC_METHODS_SET_LC_GREEN_ENABLE,
++						 RKISP2_ISP_DPCC_METHODS_SET_LC_RED_BLUE_ENABLE);
++
++		method.line_mad_fac = parseMethod(set["line-mad-factor"], method.method,
++						  RKISP2_ISP_DPCC_METHODS_SET_LC_GREEN_ENABLE,
++						  RKISP2_ISP_DPCC_METHODS_SET_LC_RED_BLUE_ENABLE);
++
++		/* The distance method of the ISP 2.0 lives in the upper half of the LC registers. */
++		uint32_t minDistance = parseMethod(set["rk-min-distance"], method.method,
++						   RKISP2_ISP_DPCC_METHODS_SET_RK_GREEN_ENABLE,
++						   RKISP2_ISP_DPCC_METHODS_SET_RK_RED_BLUE_ENABLE);
++		method.line_thresh |= minDistance << 16;
++
++		const ValueNode &scaleObject = set["rk-distance-scale"];
++		method.line_mad_fac |=
++			RKISP2_ISP_DPCC_LINE_MAD_FAC_DIS_SCALE_MAX(scaleObject["max"].get<uint16_t>(0)) |
++			RKISP2_ISP_DPCC_LINE_MAD_FAC_DIS_SCALE_MIN(scaleObject["min"].get<uint16_t>(0));
++	}
++
++	return 0;
++}
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::prepare
++ */
++void DefectPixelClusterCorrection::prepare(IPAContext &context,
++					   const uint32_t frame,
++					   IPAFrameContext &frameContext,
++					   RkISP2Params *params)
++{
++	if (context.configuration.raw)
++		return;
++
++	double gain = frameContext.agc.gain;
++	uint32_t setUse = 0;
++
++	for (unsigned int i = 0; i < numSets_; ++i) {
++		if (gain >= setMinGain_[i])
++			setUse |= RKISP2_ISP_DPCC_SET_USE_STAGE1_USE_SET(i);
++	}
++
++	if (fixedSetMinGain_ && gain >= *fixedSetMinGain_)
++		setUse |= RKISP2_ISP_DPCC_SET_USE_STAGE1_USE_FIX_SET;
++
++	if (frame > 1 && setUse == setUse_)
++		return;
++
++	setUse_ = setUse;
++
++	LOG(RkISP2Dpcc, Debug)
++		<< "Frame " << frame << ": gain " << gain
++		<< ", method sets " << utils::hex(setUse);
++
++	auto config = params->block<RkISP2ParamsBlocks::Dpcc>();
++	config.setEnabled(true);
++
++	config->mode = config_.mode;
++	config->output_mode = config_.output_mode;
++	config->set_use = setUse;
++	for (unsigned int i = 0; i < RKISP2_ISP_DPCC_METHODS_MAX; ++i)
++		config->methods[i] = config_.methods[i];
++	config->ro_limits = config_.ro_limits;
++	config->rnd_offs = config_.rnd_offs;
++}
++
++REGISTER_IPA_ALGORITHM(DefectPixelClusterCorrection, "DefectPixelClusterCorrection")
++
++} /* namespace ipa::rkisp2::algorithms */
++
++} /* namespace libcamera */
+--- /dev/null
++++ b/src/ipa/rkisp2/algorithms/dpcc.h
+@@ -0,0 +1,38 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2021-2022, Ideas On Board
++ *
++ * RkISP2 Defect Pixel Cluster Correction control
++ */
++
++#pragma once
++
++#include <optional>
++
++#include "algorithm.h"
++
++namespace libcamera {
++
++namespace ipa::rkisp2::algorithms {
++
++class DefectPixelClusterCorrection : public Algorithm
++{
++public:
++	DefectPixelClusterCorrection();
++	~DefectPixelClusterCorrection() = default;
++
++	int init(IPAContext &context, const ValueNode &tuningData) override;
++	void prepare(IPAContext &context, const uint32_t frame,
++		     IPAFrameContext &frameContext,
++		     RkISP2Params *params) override;
++
++private:
++	struct rkisp2_params_dpcc config_;
++	double setMinGain_[RKISP2_ISP_DPCC_METHODS_MAX];
++	std::optional<double> fixedSetMinGain_;
++	unsigned int numSets_;
++	uint32_t setUse_;
++};
++
++} /* namespace ipa::rkisp2::algorithms */
++} /* namespace libcamera */
+--- a/src/ipa/rkisp2/algorithms/meson.build
++++ b/src/ipa/rkisp2/algorithms/meson.build
+@@ -7,6 +7,7 @@ rkisp2_ipa_algorithms = files([
+     'ccm.cpp',
+     'crop.cpp',
+     'csm.cpp',
++    'dpcc.cpp',
+     'goc.cpp',
+     'ispp.cpp',
+     'lsc.cpp',
+--- a/src/ipa/rkisp2/data/imx415.yaml
++++ b/src/ipa/rkisp2/data/imx415.yaml
+@@ -53,6 +53,70 @@ algorithms:
+         - ct: 5658
+           gains: [ 2.22321, 2.18627 ]
+   - BlackLevelSubtraction:
++  - DefectPixelClusterCorrection:
++      fixed-set-min-gain: 8.0
++      output-select: true
++      rk-output-select: 1
++      sets:
++        # PG, LC, RO, RND, RG, RK
++        - min-gain: 8.0
++          rk-min-distance:
++            green: 0
++            red-blue: 0
++          line-threshold:
++            green: 8
++            red-blue: 8
++          line-mad-factor:
++            green: 4
++            red-blue: 4
++          pg-factor:
++            green: 3
++            red-blue: 4
++          rnd-threshold:
++            green: 10
++            red-blue: 10
++          rnd-offsets:
++            green: 3
++            red-blue: 3
++          rg-factor:
++            green: 32
++            red-blue: 32
++          ro-limits:
++            green: 2
++            red-blue: 2
++        # PG, LC, RO, RK
++        - rk-min-distance:
++            green: 8
++            red-blue: 8
++          rk-distance-scale:
++            min: 9
++            max: 9
++          line-threshold:
++            green: 8
++            red-blue: 8
++          line-mad-factor:
++            green: 6
++            red-blue: 7
++          pg-factor:
++            green: 4
++            red-blue: 4
++          ro-limits:
++            green: 2
++            red-blue: 2
++        # PG, LC, RO
++        - min-gain: 8.0
++          line-threshold:
++            green: 32
++            red-blue: 32
++          line-mad-factor:
++            green: 4
++            red-blue: 4
++          pg-factor:
++            green: 3
++            red-blue: 4
++          ro-limits:
++            green: 2
++            red-blue: 2
+   - Ccm:
+       ccms:
+         - ct: 2698
+--- a/src/ipa/rkisp2/params.h
++++ b/src/ipa/rkisp2/params.h
+@@ -32,6 +32,7 @@ enum class RkISP2ParamsBlocks : uint16_t
+ 	HistBig1,
+ 	HistBig2,
+ 	AwbMeas,
++	Dpcc,
+ };
+ 
+ namespace details {
+@@ -61,6 +62,7 @@ RkISP2_DEFINE_PARAMS_BLOCK_TYPE(HistBig0
+ RkISP2_DEFINE_PARAMS_BLOCK_TYPE(HistBig1,	hist_big,	HIST_BIG1);
+ RkISP2_DEFINE_PARAMS_BLOCK_TYPE(HistBig2,	hist_big,	HIST_BIG2);
+ RkISP2_DEFINE_PARAMS_BLOCK_TYPE(AwbMeas,	awb_meas,	AWB_MEAS);
++RkISP2_DEFINE_PARAMS_BLOCK_TYPE(Dpcc,		dpcc,		DPCC);
+ 
+ struct param_traits {
+ 	using id_type = RkISP2ParamsBlocks;

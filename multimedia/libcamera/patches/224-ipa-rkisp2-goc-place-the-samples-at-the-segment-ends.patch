@@ -1,0 +1,76 @@
+From 652a8265928beeb69b93e5332104415e4b772e56 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Wed, 4 Nov 2026 11:58:18 +0000
+Subject: [PATCH] ipa: rkisp2: goc: Place the samples at the segment ends
+
+The gamma out block of the ISP 2.0 takes each of the 44 samples as the
+output at the end of its logarithmic segment and the offset register as
+the output at zero; the 45th sample is never read. The algorithm
+evaluates the curve at the segment starts, so the whole curve sits one
+segment too low: an identity curve returns 0.85 of the input, and the
+output tops out at the value computed for x = 3584, 241 of 255 for the
+2.2 power curve, so whites come out grey. Measured on the RV1126 against
+the bypassed block in the same capture session.
+
+Evaluate the curve at the segment ends and clamp the samples to the
+12-bit range, which the last one, y(4096), needs.
+
+Assisted-by: LLM
+---
+ src/ipa/rkisp2/algorithms/goc.cpp | 18 +++++++++++++-----
+ 1 file changed, 13 insertions(+), 5 deletions(-)
+
+--- a/src/ipa/rkisp2/algorithms/goc.cpp
++++ b/src/ipa/rkisp2/algorithms/goc.cpp
+@@ -7,6 +7,7 @@
+ 
+ #include "goc.h"
+ 
++#include <algorithm>
+ #include <cmath>
+ 
+ #include <linux/media/rockchip/rkisp2-config.h>
+@@ -44,6 +45,9 @@ LOG_DEFINE_CATEGORY(RkISP2Gamma)
+ 
+ const float kDefaultGamma = 2.2f;
+ 
++/* The gamma out samples are 12-bit values */
++constexpr unsigned int kGammaOutMax = 4095;
++
+ /**
+  * \copydoc libcamera::ipa::Algorithm::init
+  */
+@@ -95,14 +99,15 @@ void GammaOutCorrection::prepare([[maybe
+ 	/* \todo Optimize so we don't have to write it every frame */
+ 
+ 	/*
+-	 * The logarithmic segments as specified in the reference, plus an
+-	 * additional 0 to make the loop easier
++	 * The logarithmic segments as specified in the reference. The hardware
++	 * takes each sample as the output at the end of its segment and the
++	 * offset register as the output at zero; the 45th sample is not read.
+ 	 *
+ 	 * Just use 44 mode for now. 48 mode is when the last four 512 are
+ 	 * split into eight pieces of 256.
+ 	 */
+-	static constexpr std::array<unsigned int, 45> segments = {
+-		0, 1, 1, 1, 1, 1, 1, 1, 1,
++	static constexpr std::array<unsigned int, 44> segments = {
++		1, 1, 1, 1, 1, 1, 1, 1,
+ 		2, 2, 2, 2, 4, 4, 4, 4,
+ 		8, 8, 8, 8, 16, 16, 16, 16,
+ 		32, 32, 32, 32, 64, 64, 64, 64,
+@@ -115,9 +120,12 @@ void GammaOutCorrection::prepare([[maybe
+ 
+ 	unsigned x = 0;
+ 	for (const auto [i, size] : utils::enumerate(segments)) {
+-		config->gamma_y[i] = static_cast<uint16_t>(std::pow(x / 4096.0, 1.0 / frameContext.goc.gamma) * 4096.0);
+ 		x += size;
++		unsigned int y = std::lround(std::pow(x / 4096.0, 1.0 / frameContext.goc.gamma) * 4096.0);
++
++		config->gamma_y[i] = std::min(y, kGammaOutMax);
+ 	}
++	config->gamma_y[segments.size()] = kGammaOutMax;
+ 
+ 	config->mode = RKISP2_ISP_GOC_MODE_LOGARITHMIC;
+ 	config->segments = RKISP2_ISP_GOC_SEGMENTS_44;

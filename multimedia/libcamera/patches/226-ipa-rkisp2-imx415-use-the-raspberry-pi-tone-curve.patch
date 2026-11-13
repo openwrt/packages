@@ -1,0 +1,27 @@
+From 173c390f6ca7344a97a140d5a1a5bb06a504c7de Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Wed, 4 Nov 2026 11:58:18 +0000
+Subject: [PATCH] ipa: rkisp2: imx415: Use the Raspberry Pi tone curve
+
+The imx415 tuning already carries the colour matrices of the Raspberry
+Pi tuning for this sensor; take its gamma_curve too, so the shadows get
+a toe and the mid-tones the contrast that the power curve lacks.
+
+Assisted-by: LLM
+---
+ src/ipa/rkisp2/data/imx415.yaml | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+--- a/src/ipa/rkisp2/data/imx415.yaml
++++ b/src/ipa/rkisp2/data/imx415.yaml
+@@ -145,5 +145,10 @@ algorithms:
+                  1.73041,
+                ]
+   - GammaOutCorrection:
++      curve: [ 0, 0, 1024, 5040, 2048, 9338, 3072, 12356, 4096, 15312, 5120, 18051, 6144, 20790, 7168, 23193,
++               8192, 25744, 9216, 27942, 10240, 30035, 11264, 32005, 12288, 33975, 13312, 35815, 14336, 37600,
++               15360, 39168, 16384, 40642, 18432, 43379, 20480, 45749, 22528, 47753, 24576, 49621, 26624, 51253,
++               28672, 52698, 30720, 53796, 32768, 54876, 36864, 57012, 40960, 58656, 45056, 59954, 49152, 61183,
++               53248, 62355, 57344, 63419, 61440, 64476, 65535, 65535 ]
+   - ColorSpaceConversion:
+ ...

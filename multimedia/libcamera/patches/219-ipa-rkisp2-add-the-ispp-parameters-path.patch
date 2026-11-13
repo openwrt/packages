@@ -73,7 +73,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
 -
 --- /dev/null
 +++ b/src/ipa/rkisp2/algorithms/ispp.cpp
-@@ -0,0 +1,408 @@
+@@ -0,0 +1,407 @@
 +/* SPDX-License-Identifier: LGPL-2.1-or-later */
 +/*
 + * Copyright (C) 2026, Daniel Golle
@@ -109,7 +109,8 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
 + * \brief RkISPP module parameters from the tuning file
 + *
 + * The ISPP post-processor (temporal noise reduction, noise reduction,
-+ * sharpening, FEC motion mesh and ORB feature detection) takes its
++ * sharpening, FEC lens distortion correction and ORB feature detection)
++ * takes its
 + * parameters through its own params node. This algorithm sends the modules
 + * configured in the tuning file with every frame, each tuning dictionary
 + * filling the fields of the corresponding UAPI block by name:
@@ -307,11 +308,9 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
 +};
 +
 +constexpr Field fecFields[] = {
-+	ISPP_FIELD(rkispp_params_fec, mesh_density),
 +	ISPP_FIELD(rkispp_params_fec, crop_en),
 +	ISPP_FIELD(rkispp_params_fec, crop_width),
 +	ISPP_FIELD(rkispp_params_fec, crop_height),
-+	ISPP_FIELD(rkispp_params_fec, mesh_size),
 +};
 +
 +constexpr Field orbFields[] = {
