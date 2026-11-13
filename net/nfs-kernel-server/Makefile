@@ -213,6 +213,7 @@ endef
 
 define Package/nfs-kernel-server-v4/conffiles
 /etc/exports
+/etc/nfs.conf
 endef
 
 define Package/nfs-utils/InstallDev
@@ -240,6 +241,7 @@ endef
 define Package/nfs-kernel-server-v4/install
 	$(INSTALL_DIR) $(1)/etc/config $(1)/usr/sbin $(1)/etc/init.d
 	$(INSTALL_DATA) ./files/nfsd.exports $(1)/etc/exports
+	$(INSTALL_DATA) ./files/nfsd.v4.nfs.conf $(1)/etc/nfs.conf
 	$(INSTALL_BIN) ./files/nfsd.v4.init $(1)/etc/init.d/nfsd
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utils/statd/sm-notify $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utils/nfsd/nfsd $(1)/usr/sbin/rpc.nfsd
