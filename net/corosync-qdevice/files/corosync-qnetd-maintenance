@@ -1,0 +1,197 @@
+#!/bin/sh
+
+set -eu
+
+CONFIG_DIR=/etc/corosync/qnetd
+ACTIVE_DIR="$CONFIG_DIR/nssdb"
+ROLLBACK_DIR="$CONFIG_DIR/nssdb.rollback"
+SWAP_DIR="$CONFIG_DIR/nssdb.swap"
+LOCK_DIR=/var/lock/corosync-qnetd-maintenance.lock
+CERTUTIL=/usr/sbin/corosync-qnetd-certutil
+NSS_CERTUTIL=/usr/bin/certutil
+QNETD_TOOL=/usr/sbin/corosync-qnetd-tool
+SERVICE=/etc/init.d/corosync-qnetd
+RUN_USER=coroqnetd
+RECOVERY_MODE=
+WAS_RUNNING=0
+
+die() {
+	echo "$*" >&2
+	exit 1
+}
+
+cleanup() {
+	case "$RECOVERY_MODE" in
+		rotate)
+			# The rollback directory exists only after the original was moved.
+			if [ -d "$ROLLBACK_DIR" ]; then
+				if ! { rm -rf "$ACTIVE_DIR" && mv "$ROLLBACK_DIR" "$ACTIVE_DIR" && fix_permissions; }; then
+					echo "Could not restore the previous QNetd certificate database" >&2
+					rmdir "$LOCK_DIR" 2>/dev/null || true
+					exit 1
+				fi
+			fi
+			restore_service_state || echo "Could not restart QNetd after failed rotation" >&2
+			;;
+		rollback)
+			if [ -d "$SWAP_DIR" ]; then
+				if [ -d "$ACTIVE_DIR" ] && [ ! -d "$ROLLBACK_DIR" ]; then
+					mv "$ACTIVE_DIR" "$ROLLBACK_DIR"
+				fi
+				[ -d "$ACTIVE_DIR" ] || mv "$SWAP_DIR" "$ACTIVE_DIR"
+			fi
+			[ ! -d "$ACTIVE_DIR" ] || fix_permissions
+			restore_service_state
+			;;
+	esac
+	rmdir "$LOCK_DIR" 2>/dev/null || true
+}
+
+lock() {
+	mkdir -p /var/lock
+	mkdir "$LOCK_DIR" 2>/dev/null || die "Another QNetd maintenance operation is running"
+	trap cleanup EXIT
+	trap 'exit 130' INT
+	trap 'exit 143' TERM
+}
+
+fingerprint_dir() {
+	local db_dir="$1"
+	[ -f "$db_dir/cert9.db" ] || return 1
+	LC_ALL=C "$NSS_CERTUTIL" -L -d "$db_dir" -n "QNet CA" 2>/dev/null |
+		awk '/Fingerprint \(SHA-256\):/{ getline; gsub(/^[[:space:]]+|[[:space:]]+$/, ""); print; exit }'
+}
+
+connected_clients() {
+	local status count
+	status=$(LC_ALL=C "$QNETD_TOOL" -s 2>/dev/null) || return 1
+	count=$(printf '%s\n' "$status" |
+		sed -n 's/^Connected clients:[[:space:]]*\([0-9][0-9]*\)[[:space:]]*$/\1/p')
+	case "$count" in
+		''|*[!0-9]*) return 1 ;;
+		*) printf '%s\n' "$count" ;;
+	esac
+}
+
+guard_state() {
+	local expected_fingerprint="$1"
+	local expected_clients="$2"
+	local actual_fingerprint actual_clients
+
+	actual_fingerprint=$(fingerprint_dir "$ACTIVE_DIR") || die "The active QNetd CA is missing"
+	actual_clients=$(connected_clients) ||
+		die "Cannot determine the QNetd client count; verify the daemon is running and retry"
+	[ "$expected_fingerprint" = "$actual_fingerprint" ] ||
+		die "The active QNetd CA changed; refresh status and retry"
+	[ "$expected_clients" = "$actual_clients" ] ||
+		die "The connected client count changed; refresh status and retry"
+}
+
+remember_service_state() {
+	WAS_RUNNING=0
+	pidof corosync-qnetd >/dev/null 2>&1 && WAS_RUNNING=1
+}
+
+restore_service_state() {
+	[ "$WAS_RUNNING" = 0 ] || "$SERVICE" start
+}
+
+fix_permissions() {
+	chown -R "$RUN_USER:$RUN_USER" "$ACTIVE_DIR" || return 1
+	chmod 0770 "$ACTIVE_DIR"
+}
+
+initialize() {
+	lock
+	[ ! -e "$ACTIVE_DIR" ] || die "The QNetd certificate database already exists"
+	mkdir -p "$CONFIG_DIR"
+	chown root:root "$CONFIG_DIR"
+	chmod 0755 "$CONFIG_DIR"
+	if ! "$CERTUTIL" -i; then
+		rm -rf "$ACTIVE_DIR"
+		die "QNetd certificate initialization failed"
+	fi
+	fix_permissions
+}
+
+rotate() {
+	local expected_fingerprint="$1"
+	local expected_clients="$2"
+	local allow_connected="${3:-0}"
+
+	lock
+	guard_state "$expected_fingerprint" "$expected_clients"
+	[ "$expected_clients" = 0 ] || [ "$allow_connected" = 1 ] ||
+		die "Clients are connected; explicit disruption approval is required"
+	[ ! -e "$ROLLBACK_DIR" ] || die "A rollback CA already exists; purge it before rotating again"
+	remember_service_state
+	"$SERVICE" stop
+	RECOVERY_MODE=rotate
+	mv "$ACTIVE_DIR" "$ROLLBACK_DIR" || die "Could not move the active QNetd certificate database"
+	if ! "$CERTUTIL" -i; then
+		die "Could not initialize the new QNetd certificate database"
+	fi
+	fix_permissions
+	chmod 0700 "$ROLLBACK_DIR"
+	chown -R root:root "$ROLLBACK_DIR"
+	RECOVERY_MODE=
+	restore_service_state
+}
+
+rollback() {
+	local expected_fingerprint="$1"
+	local expected_clients="$2"
+	local allow_connected="${3:-0}"
+
+	lock
+	guard_state "$expected_fingerprint" "$expected_clients"
+	[ "$expected_clients" = 0 ] || [ "$allow_connected" = 1 ] ||
+		die "Clients are connected; explicit disruption approval is required"
+	[ -f "$ROLLBACK_DIR/cert9.db" ] || die "No rollback CA is available"
+	[ ! -e "$SWAP_DIR" ] || die "A stale certificate swap directory exists"
+	remember_service_state
+	"$SERVICE" stop
+	RECOVERY_MODE=rollback
+	mv "$ACTIVE_DIR" "$SWAP_DIR"
+	mv "$ROLLBACK_DIR" "$ACTIVE_DIR"
+	mv "$SWAP_DIR" "$ROLLBACK_DIR"
+	fix_permissions
+	chmod 0700 "$ROLLBACK_DIR"
+	chown -R root:root "$ROLLBACK_DIR"
+	RECOVERY_MODE=
+	restore_service_state
+}
+
+purge_rollback() {
+	lock
+	guard_state "$1" "$2"
+	[ -d "$ROLLBACK_DIR" ] || die "No rollback CA is available"
+	rm -rf "$ROLLBACK_DIR"
+}
+
+health() {
+	local fingerprint rollback_fingerprint ca_valid=0 server_valid=0 clients
+	fingerprint=$(fingerprint_dir "$ACTIVE_DIR") || fingerprint=
+	rollback_fingerprint=$(fingerprint_dir "$ROLLBACK_DIR") || rollback_fingerprint=
+	if [ -n "$fingerprint" ]; then
+		"$NSS_CERTUTIL" -V -d "$ACTIVE_DIR" -n "QNet CA" -u L >/dev/null 2>&1 && ca_valid=1
+		"$NSS_CERTUTIL" -V -d "$ACTIVE_DIR" -n "QNetd Cert" -u V >/dev/null 2>&1 && server_valid=1
+	fi
+	clients=$(connected_clients) || clients=unknown
+	printf 'initialized=%s\n' "$([ -n "$fingerprint" ] && echo 1 || echo 0)"
+	printf 'fingerprint=%s\n' "$fingerprint"
+	printf 'ca_valid=%s\n' "$ca_valid"
+	printf 'server_valid=%s\n' "$server_valid"
+	printf 'connected_clients=%s\n' "$clients"
+	printf 'rollback_available=%s\n' "$([ -n "$rollback_fingerprint" ] && echo 1 || echo 0)"
+	printf 'rollback_fingerprint=%s\n' "$rollback_fingerprint"
+}
+
+case "${1:-}" in
+	health) health ;;
+	initialize) initialize ;;
+	rotate) [ "$#" -ge 3 ] || die "Usage: $0 rotate FINGERPRINT CLIENTS [ALLOW_CONNECTED]"; rotate "$2" "$3" "${4:-0}" ;;
+	rollback) [ "$#" -ge 3 ] || die "Usage: $0 rollback FINGERPRINT CLIENTS [ALLOW_CONNECTED]"; rollback "$2" "$3" "${4:-0}" ;;
+	purge-rollback) [ "$#" -eq 3 ] || die "Usage: $0 purge-rollback FINGERPRINT CLIENTS"; purge_rollback "$2" "$3" ;;
+	*) die "Usage: $0 {health|initialize|rotate|rollback|purge-rollback}" ;;
+esac
