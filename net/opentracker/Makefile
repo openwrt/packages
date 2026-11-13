@@ -5,18 +5,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=opentracker
+PKG_VERSION:=2.2.1
 PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://erdgeist.org/gitweb/opentracker
-PKG_SOURCE_DATE:=2026-05-26
-PKG_SOURCE_VERSION:=1c7fac4cc23801ac81a2abd7d3110683831c4811
-PKG_MIRROR_HASH:=091b87ecf0de75e89e3a52f2b773a4847951d5dd83f4013b32c03f34b9da415e
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE_URL:=https://erdgeist.org/arts/software/opentracker/
+PKG_HASH:=be4318e50affa65000e80963a6d05245d32cd4b73875df19aeec2aeee81c8fc7
 
-PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
+PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>, Mirko Vogt <mirko-openwrt@nanl.de>
 PKG_LICENSE:=Beerware
-
-PKG_BUILD_DEPENDS:=libowfat
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -26,7 +23,7 @@ define Package/opentracker
   CATEGORY:=Network
   TITLE:=opentracker
   URL:=https://erdgeist.org/arts/software/opentracker/
-  DEPENDS:=+zlib +libpthread
+  DEPENDS:=+zlib +libpthread +USE_MUSL:libbsd $(ATOMIC64_DEPENDS)
   PROVIDES:=opentracker6
 endef
 
@@ -42,9 +39,19 @@ define Package/opentracker/description
  opentracker now supports listening on both IPv4 and IPv6 at the same time.
 endef
 
-MAKE_FLAGS += PREFIX="$(STAGING_DIR)/usr"
+# Hardening and stripping follow the OpenWrt toolchain settings
+MAKE_FLAGS += \
+	HARDENING= \
+	HARDENING_LD= \
+	STRIP=:
 
-TARGET_CFLAGS += -DWANT_NO_AUTO_FREE
+# Skip opentracker.debug, as not needed and ignoring CFLAGS, causing build failure
+MAKE_FLAGS += opentracker
+
+# musl lacks arc4random(), use libbsd's
+TARGET_LDFLAGS += $(if $(CONFIG_USE_MUSL),-lbsd)
+# for non-native 64-bit atomics: link libatomic
+TARGET_LDFLAGS += $(if $(CONFIG_HAS_ATOMIC64),,-latomic)
 
 define Package/opentracker/conffiles
 /etc/opentracker.conf
