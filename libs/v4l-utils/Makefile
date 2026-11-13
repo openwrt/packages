@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=v4l-utils
-PKG_VERSION:=1.30.1
+PKG_VERSION:=1.32.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.linuxtv.org/downloads/v4l-utils
-PKG_HASH:=c1cf549c2ec3cf39eb5ec7bf15731349e61b26a21b5e963922db422333bae197
+PKG_HASH:=6828828a17775526eb93fb258a9294d1d1073d633c344dd71ecd4e7a1ffb7dfc
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
