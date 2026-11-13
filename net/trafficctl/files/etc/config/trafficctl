@@ -1,0 +1,166 @@
+config trafficctl 'main'
+	option enabled '1'
+	option default_mode 'limiter'
+	# Write per-device blocks and rate limits to /etc/trafficctl/rules.json so
+	# the ifup-lan hook can restore them after a reboot.
+	#
+	# On by default since #105. It used to ship off, which made the same
+	# intention behave two ways: a traffic SHAPE persists unconditionally (the
+	# shaper has to record which HTB class belongs to which device, so
+	# shapes.json is always written and always restored), while a block or a
+	# limit vanished on reboot — and the default mode is the limiter, so the
+	# out-of-the-box path was the one that forgot. That was an unexamined
+	# default sitting next to a deliberate one, not a design.
+	#
+	# The cost is one small write to /etc per rule CHANGE. Not periodic, so
+	# unlike the byte counters — which live in tmpfs precisely because they are
+	# rewritten every poll — this is not a flash-wear concern.
+	#
+	# NOT the same switch as the global cut's "keep after reboot": that one is
+	# its own opt-in because an all-devices cut can lock out whoever
+	# administers the router through a LAN host, so a reboot must be able to
+	# undo it. See the cut section below.
+	option persist_rules '1'
+	# Extra subnets to monitor (space-separated CIDRs), for downstream-router
+	# clients that have no kernel route on this router. Subnets with a
+	# "via" route over a LAN interface are picked up automatically.
+	option extra_subnets ''
+	# Resolve names for devices with no DHCP lease here (routed/downstream
+	# clients) via reverse DNS. rdns_server is a space-separated list of
+	# resolvers tried in order before the system resolver — point it at the
+	# downstream router (e.g. a MikroTik) so its lease names get used.
+	option resolve_names '1'
+	option rdns_server ''
+	option rdns_ttl '300'
+	# Optional netifyd (DPI) integration — adds application labels per device.
+	# Inactive unless the agent is installed and its socket exists.
+	option netify_enabled '1'
+	option netify_socket '/var/run/netifyd/netifyd.sock'
+	# Where flow telemetry is published. Agent v5's unix socket is a
+	# request/response API that never pushes flows — the socket SINK does,
+	# usually tcp://127.0.0.1:1780. Empty = auto-detect from
+	# /etc/netifyd/netify-sink-socket.json.
+	option netify_endpoint ''
+	option netify_interval '45'
+	# IFB device used to shape upload pre-NAT (needs kmod-ifb).
+	option shape_ifb 'tctl-ifb0'
+	# Dashboard defaults for a browser that has not chosen its own. The Poll
+	# and Window chips still override per-browser — these only decide what a
+	# fresh session starts with, which is the part an admin can usefully set
+	# once for a router rather than per person (#12).
+	#
+	# poll_interval: seconds between live samples; 0 disables polling.
+	#   A smaller number costs a conntrack read per tick on the router, which
+	#   is the overhead the request was about.
+	# avg_window: seconds of history the displayed speed is averaged over.
+	#   Samples kept per device are avg_window/poll_interval, so a long window
+	#   with a short poll is the expensive combination.
+	option poll_interval '2'
+	option avg_window '15'
+
+config newdevice 'newdevice'
+	# Apply a limit automatically the first time a device is seen. Off by
+	# default: it is the only setting here that restricts a device nobody
+	# has looked at yet. limit_kbit 0 means "no limit" and makes enabled
+	# a no-op. An existing limit is never overwritten.
+	option enabled '0'
+	option limit_kbit '0'
+	option limit_mode 'limiter'
+
+config cut 'cut'
+	# Global internet cut (all devices at once). Only PREFERENCES live here —
+	# whether the cut is currently engaged never does, because /etc/config
+	# survives a reboot and this control must not. It is the one control that
+	# can lock out its own operator: anyone administering the router through a
+	# LAN host (Tailscale on a NAS, a tunnel from a LAN box, a jump host) loses
+	# that path while it is on, and a reboot has to be able to undo it.
+	#
+	# persist is its own opt-in and deliberately NOT the global persist_rules
+	# flag: somebody who turned that on so their rate limits survive a reboot
+	# must not inherit a persistent internet kill as a side effect.
+	option persist '0'
+	# Duration offered by default, in seconds; 0 means indefinite — the cut
+	# stays on until it is switched off.
+	#
+	# Indefinite is the default because it is what the feature is FOR: the
+	# requester's case (#55) is holding a new device off the internet until it
+	# has been configured, which has no predictable duration, and a cut that
+	# auto-released halfway through would silently let the device out. The
+	# safety net is that the engaged state lives in tmpfs, so a reboot always
+	# restores the internet — a timer is a convenience on top of that, not the
+	# thing standing between the operator and a permanent lockout.
+	option default_duration '0'
+
+config history 'history'
+	# Durable per-device traffic history (#89, #90). OFF by default: every
+	# other persistent store in this app was deliberately kept off the write
+	# path, and this one writes to flash on a schedule.
+	option enabled '0'
+	# Where the period files live. One file per accounting period, replaced
+	# atomically through a temp file in this same directory — so a network
+	# mount works, but see the note on `interval` before reaching for one.
+	option dir '/etc/trafficctl/history'
+	# day | week | month. The period IS the reset: a new period is a new file.
+	option period 'month'
+	# Seconds between flushes to durable storage. Floored at 300. Hourly is
+	# roughly 24 writes a day of a few KB, which is not a wear problem — this
+	# is the setting to raise if flash wear is the worry, in preference to
+	# pointing `dir` at a share that can hang when the NAS sleeps.
+	option interval '3600'
+	# Seconds between samples of the live accumulator. tmpfs only, no flash.
+	# Separate from `interval` on purpose and much shorter: with a conntrack
+	# byte source, a flow that starts and ends between two samples is
+	# invisible to both, so an hourly sample would miss most short traffic.
+	option sample_interval '60'
+	# How many FINISHED periods to retain. The current one is never a
+	# retention candidate.
+	option keep '12'
+	# Also accumulate per-INTERFACE totals (#102), in their own file per
+	# period. A second series rather than a breakdown of the device one: these
+	# are the kernel's interface counters, so they include the router's own
+	# traffic and broadcast, they legitimately disagree with the sum over
+	# devices, and under flow offloading they are the MORE accurate of the two
+	# because they come from the driver rather than from conntrack. They also
+	# answer what the device series cannot: how much went out of wan1 versus
+	# wan2. Off is reasonable on a single-WAN router.
+	option interfaces '1'
+
+config logging 'logging'
+	option enabled '1'
+	option log_file '/tmp/trafficctl/activity.log'
+	option max_lines '500'
+	option syslog '1'
+	option log_blocks '1'
+	option log_ratelimits '1'
+	option log_shapes '1'
+	option log_telegram '1'
+	option log_config '1'
+
+config telegram 'telegram'
+	option enabled '0'
+	option bot_token ''
+	option chat_id ''
+	option poll_interval '3'
+	option notify_new_device '1'
+	option notify_known_device '0'
+	option control_enabled '1'
+	option notify_template ''
+	option btn_block_inet '1'
+	option btn_block_wifi '1'
+	option btn_limiter '1'
+	option btn_shaper '1'
+
+config metrics 'metrics'
+	# Prometheus/OpenMetrics exporter. Off by default: it exposes device
+	# names, addresses and traffic volumes without a LuCI session.
+	option enabled '0'
+	# Shared token for the CGI endpoint (empty = no token check).
+	option token ''
+	# Per-device gauges (connections, blocked, limits, name/mac). Costs a
+	# full summary run per scrape — set 0 for byte counters only.
+	option state '1'
+	# Port-forward metrics.
+	option portfw '1'
+	# DPI application metrics. Off by default: device x application is a
+	# cardinality trap on a busy network.
+	option apps '0'

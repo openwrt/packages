@@ -1,0 +1,123 @@
+#!/bin/sh
+# SPDX-License-Identifier: Apache-2.0
+# shellcheck shell=dash
+# Restore persistent rules after LAN interface comes up
+
+. /usr/libexec/trafficctl/trafficctl-fw.sh
+
+# Clean up nft monitor table on lan ifdown to avoid stale counters
+if [ "$ACTION" = "ifdown" ] && [ "$INTERFACE" = "lan" ]; then
+    nft delete table inet trafficctl_mon 2>/dev/null
+    exit 0
+fi
+
+[ "$ACTION" = "ifup" ] && [ "$INTERFACE" = "lan" ] || exit 0
+
+SHAPES_FILE="/etc/trafficctl/shapes.json"
+RULES_FILE="/etc/trafficctl/rules.json"
+
+# Wait for network stack to be ready (up to 10 seconds)
+tries=0
+while ! tc qdisc show dev "$(tctl_get_lan_device)" >/dev/null 2>&1; do
+    tries=$((tries + 1))
+    [ "$tries" -ge 20 ] && break
+    sleep 0.5 2>/dev/null || sleep 1
+done
+
+# Restore shaping rules
+if [ -f "$SHAPES_FILE" ]; then
+    jsonfilter -i "$SHAPES_FILE" -e '@[*].ip' 2>/dev/null | while read -r ip; do
+        rate=$(jsonfilter -i "$SHAPES_FILE" -e "@[@.ip='$ip'].rate_kbit" 2>/dev/null)
+        # Absent on symmetric records, which is all of them before asymmetric
+        # shaping existed; trafficctl-shape.sh reads empty as "same as
+        # download". The label has to be passed explicitly because the upload
+        # rate is the fifth positional.
+        rate_up=$(jsonfilter -i "$SHAPES_FILE" -e "@[@.ip='$ip'].rate_kbit_up" 2>/dev/null)
+        if [ -n "$rate" ] && [ "$rate" != "0" ]; then
+            /usr/libexec/trafficctl/trafficctl-shape.sh add "$ip" "$rate" "shape_$ip" "$rate_up" || \
+                logger -t trafficctl "Failed to restore shape for $ip (${rate}kbit)"
+        fi
+    done
+fi
+
+# Restore blocks and ratelimits (if persist enabled)
+if [ -f "$RULES_FILE" ] && tctl_persist_enabled; then
+    # How many records there are comes from the file, not from a constant.
+    # `seq 0 99` stopped at the hundredth, so every rule past it was silently
+    # not restored: present in rules.json, shown by the UI as persisted, and
+    # absent from the kernel after a reboot (#108). Raising 99 to a bigger
+    # number would only move the cliff. The absent-record sentinel below is
+    # what ends the loop, exactly as it did before.
+    #
+    # (The line that used to sit here piped '@[*]' into a loop whose body was
+    # `true` — an abandoned attempt at this same iteration that did nothing.)
+    # Advanced at the TOP, so there is exactly one increment and `continue`
+    # below cannot skip it. With the increment at the bottom, a record that
+    # has a type but no ip — a truncated or hand-edited file — would spin the
+    # loop forever on the same index, inside a boot hook. That is a worse
+    # failure than the one being fixed here.
+    idx=-1
+    while :; do
+        idx=$((idx + 1))
+        type=$(jsonfilter -i "$RULES_FILE" -e "@[$idx].type" 2>/dev/null)
+        [ -z "$type" ] && break
+        ip=$(jsonfilter -i "$RULES_FILE" -e "@[$idx].ip" 2>/dev/null)
+        param=$(jsonfilter -i "$RULES_FILE" -e "@[$idx].param" 2>/dev/null)
+        [ -z "$ip" ] && continue
+
+        case "$type" in
+            block)
+                tctl_block_add "$ip" "$(tctl_block_comment "$ip")" 2>/dev/null || \
+                    logger -t trafficctl "Failed to restore block for $ip"
+                ;;
+            ratelimit)
+                # Records written before the mode was stored have none; they
+                # get the same default the CLI would have given the target, so
+                # a subnet does not change meaning across the upgrade.
+                mode=$(jsonfilter -i "$RULES_FILE" -e "@[$idx].mode" 2>/dev/null)
+                [ -z "$mode" ] && mode=$(tctl_ratelimit_default_mode "$ip")
+                # Absent on every record written before the directions could
+                # differ, and on every symmetric one since. tctl_ratelimit_add
+                # reads that as "same as download", which is what those records
+                # have always meant.
+                param_up=$(jsonfilter -i "$RULES_FILE" -e "@[$idx].param_up" 2>/dev/null)
+                [ -n "$param" ] && [ "$param" != "0" ] && \
+                    tctl_ratelimit_add "$ip" "$param" "$(tctl_ratelimit_comment "$ip")" "$mode" "$param_up" 2>/dev/null || \
+                    logger -t trafficctl "Failed to restore ratelimit for $ip (${param}kbit)"
+                ;;
+            pfw_pause|pfw_limit)
+                # ip field is a composite key: scope/proto/ip|local/port
+                _scope=${ip%%/*}; _rest=${ip#*/}
+                _proto=${_rest%%/*}; _rest=${_rest#*/}
+                _pip=${_rest%%/*}; _pport=${_rest#*/}
+                [ "$_pip" = "local" ] && _pip="-"
+                if [ "$type" = "pfw_pause" ]; then
+                    /usr/libexec/trafficctl/trafficctl-portfw.sh pause "$_scope" "$_proto" "$_pip" "$_pport" >/dev/null 2>&1 || \
+                        logger -t trafficctl "Failed to restore port pause for $_pport"
+                else
+                    [ -n "$param" ] && [ "$param" != "0" ] && \
+                        /usr/libexec/trafficctl/trafficctl-portfw.sh limit "$_scope" "$_proto" "$_pip" "$_pport" "$param" >/dev/null 2>&1 || \
+                        logger -t trafficctl "Failed to restore port limit for $_pport"
+                fi
+                ;;
+        esac
+    done
+fi
+
+# Restore a global internet cut the operator explicitly asked to keep.
+#
+# Guarded on the cut's OWN opt-in, not on tctl_persist_enabled: the global
+# persist_rules flag exists so per-device rate limits survive a reboot, and
+# inheriting a persistent internet kill from it would be a lockout reached
+# through an unrelated decision. Only a cut engaged with "keep after reboot"
+# leaves a file in /etc, so the file's existence is the consent. The restore
+# path honours the original deadline and refuses to restart the clock.
+if [ -f /etc/trafficctl/cut.state ]; then
+    /usr/libexec/trafficctl/trafficctl-cut.sh restore >/dev/null 2>&1 || \
+        logger -t trafficctl "Failed to restore the global internet cut"
+fi
+
+# Pre-create nft monitor table if software offload is active
+if [ "$(tctl_get_offload_mode)" = "software" ]; then
+    /usr/libexec/trafficctl/trafficctl-bytes-nft.sh >/dev/null 2>&1 &
+fi

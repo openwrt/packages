@@ -1,0 +1,29 @@
+#!/bin/sh /etc/rc.common
+# SPDX-License-Identifier: Apache-2.0
+# shellcheck shell=dash
+# Keeper for the global internet cut: enforces the auto-revert deadline and
+# re-asserts the rule if the table it lives in is ever taken out from under it.
+#
+# Not enabled at boot on purpose. The cut's engaged state lives in tmpfs, so
+# after a reboot there is normally nothing to keep; the one case that does
+# survive — an operator who ticked "keep after reboot" — is restored from the
+# ifup-lan hotplug, which starts this service itself.
+#
+# No respawn either: the loop is meant to end when the cut does, and a
+# respawning keeper would restart into an empty state forever. If it dies
+# anyway, `trafficctl-cut.sh status` notices and starts a fresh one, and it
+# enforces the deadline itself in the meantime.
+#
+# START/STOP/USE_PROCD are consumed by the sourced /etc/rc.common framework.
+# shellcheck disable=SC2034
+START=95
+STOP=10
+USE_PROCD=1
+
+start_service() {
+	procd_open_instance cut
+	procd_set_param command /usr/libexec/trafficctl/trafficctl-cut.sh keeper
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_close_instance
+}

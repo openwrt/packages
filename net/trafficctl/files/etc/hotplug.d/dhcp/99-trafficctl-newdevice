@@ -1,0 +1,104 @@
+#!/bin/sh
+# SPDX-License-Identifier: Apache-2.0
+# shellcheck shell=dash
+# Triggered by dnsmasq on DHCP events (add/old/del).
+# Available env vars: ACTION, MACADDR, IPADDR, HOSTNAME
+#
+# Two consumers sit on "this MAC is new":
+#   * the Telegram bot, which wants a notification
+#   * the default-limit feature, which applies a rate limit or shape
+#
+# They are deliberately independent — either can be on without the other —
+# and they use different notions of "known". The bot has always keyed off its
+# own telegram_known.json, which the bot itself rewrites; the limiter uses the
+# seen-MAC ledger in trafficctl-fw.sh, because applying a limit is not an
+# action that may be repeated or misfired.
+
+[ "$ACTION" = "add" ] || exit 0
+[ -n "$MACADDR" ] || exit 0
+
+# ── Telegram notification ──────────────────────────────────────────────────
+
+KNOWN_FILE="/etc/trafficctl/telegram_known.json"
+NOTIFY_FLAG="/tmp/trafficctl_tg_newdev"
+
+if [ "$(uci -q get trafficctl.telegram.enabled)" = "1" ] &&
+    ! grep -q "\"$MACADDR\"" "$KNOWN_FILE" 2>/dev/null; then
+    mkdir -p "$(dirname "$NOTIFY_FLAG")"
+    # HOSTNAME comes from the dnsmasq dhcp hotplug environment (see header),
+    # not a POSIX shell builtin — shellcheck's SC3028 is a false positive.
+    # shellcheck disable=SC3028
+    printf '%s\t%s\t%s\n' "$MACADDR" "${IPADDR:-?}" "${HOSTNAME:-unknown}" >> "$NOTIFY_FLAG"
+fi
+
+# ── Default limit for a device seen for the first time ─────────────────────
+
+[ "$(uci -q get trafficctl.newdevice.enabled 2>/dev/null)" = "1" ] || exit 0
+
+LIMIT_KBIT=$(uci -q get trafficctl.newdevice.limit_kbit 2>/dev/null)
+[ -n "$LIMIT_KBIT" ] && [ "$LIMIT_KBIT" -gt 0 ] 2>/dev/null || exit 0
+
+. /usr/libexec/trafficctl/trafficctl-fw.sh
+
+# The ledger decides what "new" means, so a run that has no ledger yet cannot
+# answer the question — and the wrong answer here limits every device on the
+# LAN as its lease renews.
+#
+# Seeding alone would not make that answer trustworthy: the seed reads the
+# leases and the neighbour table, and both can be thin or empty early in boot,
+# so a device missing from them would look new purely because the router had
+# not noticed it yet. The first pass therefore records the baseline and
+# applies nothing at all, whatever the seed happened to find.
+if ! tctl_seen_ready; then
+    tctl_seen_seed
+    tctl_seen_mark "$MACADDR"
+    logger -t trafficctl "newdevice: seeded the seen-MAC ledger ($(tctl_seen_count) devices); no limit applied on this pass"
+    exit 0
+fi
+
+tctl_seen_known "$MACADDR" && exit 0
+
+# Mark BEFORE acting. A failure while applying the limit must not leave the
+# device unmarked, or every subsequent lease renewal retries — and each retry
+# is another chance to race with an operator setting a limit by hand.
+tctl_seen_mark "$MACADDR"
+
+[ -n "$IPADDR" ] || {
+    logger -t trafficctl "newdevice: $MACADDR is new but has no address yet; no limit applied"
+    exit 0
+}
+
+# Never override a limit somebody set deliberately.
+if tctl_has_limit "$IPADDR"; then
+    logger -t trafficctl "newdevice: $IPADDR ($MACADDR) already has a limit; left alone"
+    exit 0
+fi
+
+LIMIT_MODE=$(uci -q get trafficctl.newdevice.limit_mode 2>/dev/null)
+[ -n "$LIMIT_MODE" ] || LIMIT_MODE="limiter"
+
+case "$LIMIT_MODE" in
+    shaper)
+        TCTL_VIA=newdevice TCTL_SRC=hotplug \
+            /usr/libexec/trafficctl/trafficctl-shape.sh add "$IPADDR" "$LIMIT_KBIT" \
+            "shape_$IPADDR" >/dev/null 2>&1
+        rc=$?
+        ;;
+    *)
+        TCTL_VIA=newdevice TCTL_SRC=hotplug \
+            /usr/libexec/trafficctl/trafficctl-ratelimit.sh "$IPADDR" "$LIMIT_KBIT" \
+            "$(tctl_ratelimit_comment "$IPADDR")" >/dev/null 2>&1
+        rc=$?
+        ;;
+esac
+
+if [ "$rc" = "0" ]; then
+    # trafficctl-ratelimit.sh writes its own activity-log entry and picks up
+    # the via=newdevice/src=hotplug exported above, so the limiter path is
+    # already recorded. trafficctl-shape.sh logs nothing, hence this branch.
+    [ "$LIMIT_MODE" = "shaper" ] &&
+        tctl_log "shape_set" "$IPADDR" \
+            "${LIMIT_KBIT}kbit default for new device $MACADDR" "newdevice" "hotplug"
+else
+    logger -t trafficctl "newdevice: failed to apply ${LIMIT_KBIT}kbit to $IPADDR ($MACADDR)"
+fi
