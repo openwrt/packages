@@ -1,0 +1,1041 @@
+From 44fa9b6aef69cecb7ee95b85321be94044651976 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Mon, 28 Sep 2026 15:07:03 +0100
+Subject: [PATCH] voice: bridge the remote microphone into PipeWire
+
+The remote carries a microphone but sends nothing until the host sends
+the vendor command F9 03 as a two-byte SET_REPORT on the feature report,
+after which it emits 124-byte reports at 66.7 per second, each holding
+two 60-byte HFP wideband blocks: an H2 header and a 57-byte mSBC frame.
+That is a live 15 ms stream, so it belongs in an audio graph rather than
+in a file.
+
+Add a small daemon that reads the remote's hidraw node, arms and re-arms
+the stream, decodes the frames with libsbc and publishes a PipeWire
+source of S16LE mono at 16 kHz. Decoding in userspace keeps mSBC out of
+the kernel, where there is no format to carry it and no decoder to use.
+
+The microphone button alone does not start the stream on real hardware
+either, so arming is a host policy: by default while the button is held
+plus a tail, optionally whenever a client records or unconditionally.
+The remote stops on its own after about six seconds, which the restart
+opcode every 4 s prevents, and a second without audio is treated as the
+stream having died.
+
+The button is read as KEY_VOICECOMMAND from the input device the kernel
+module registers, so the report layout is decoded in one place. The
+remote drops the link when idle and reconnects on the next key press,
+so the daemon runs for the whole session: it waits on udev for a remote
+bound to lgmagic and attaches once its hidraw and evdev nodes are both
+accessible.
+
+The udev rule gives the seat owner access to those two nodes, which the
+daemon needs and which are otherwise root-only.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ .gitignore                   |   3 +
+ 52-lgmagic-hidraw.rules      |   4 +
+ voice/Makefile               |  29 ++
+ voice/lg-magic-voice.service |  12 +
+ voice/lg_magic_voice.c       | 928 +++++++++++++++++++++++++++++++++++
+ 5 files changed, 976 insertions(+)
+ create mode 100644 52-lgmagic-hidraw.rules
+ create mode 100644 voice/Makefile
+ create mode 100644 voice/lg-magic-voice.service
+ create mode 100644 voice/lg_magic_voice.c
+
+--- a/.gitignore
++++ b/.gitignore
+@@ -19,3 +19,6 @@ __pycache__/
+ 
+ # Host-side tests
+ tests/test_airmouse_math
++
++# Voice bridge
++voice/lg-magic-voice
+--- /dev/null
++++ b/52-lgmagic-hidraw.rules
+@@ -0,0 +1,4 @@
++SUBSYSTEM=="hidraw", SUBSYSTEMS=="hid", DRIVERS=="lgmagic", \
++    MODE="0660", GROUP="input", TAG+="uaccess"
++SUBSYSTEM=="input", KERNEL=="event*", SUBSYSTEMS=="hid", DRIVERS=="lgmagic", \
++    MODE="0660", GROUP="input", TAG+="uaccess"
+--- /dev/null
++++ b/voice/Makefile
+@@ -0,0 +1,29 @@
++PKGS := libpipewire-0.3 libudev sbc
++
++PKG_CONFIG ?= pkg-config
++
++CFLAGS ?= -O2 -Wall -Wextra -Wno-unused-parameter
++override CFLAGS += $(shell $(PKG_CONFIG) --cflags $(PKGS))
++override LDLIBS += $(shell $(PKG_CONFIG) --libs $(PKGS))
++
++PREFIX ?= /usr/local
++BINDIR ?= $(PREFIX)/bin
++UNITDIR ?= $(PREFIX)/lib/systemd/user
++
++all: lg-magic-voice
++
++lg-magic-voice: lg_magic_voice.c
++	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS) $(LDLIBS)
++
++install: lg-magic-voice
++	install -D -m 0755 lg-magic-voice $(DESTDIR)$(BINDIR)/lg-magic-voice
++	install -D -m 0644 lg-magic-voice.service \
++		$(DESTDIR)$(UNITDIR)/lg-magic-voice.service
++
++install-bin: lg-magic-voice
++	install -D -m 0755 lg-magic-voice $(DESTDIR)$(BINDIR)/lg-magic-voice
++
++clean:
++	rm -f lg-magic-voice
++
++.PHONY: all install install-bin clean
+--- /dev/null
++++ b/voice/lg-magic-voice.service
+@@ -0,0 +1,12 @@
++[Unit]
++Description=LG Magic Remote microphone bridge
++Wants=pipewire.service
++After=pipewire.service
++
++[Service]
++Type=simple
++ExecStart=/usr/local/bin/lg-magic-voice
++Restart=on-failure
++
++[Install]
++WantedBy=default.target
+--- /dev/null
++++ b/voice/lg_magic_voice.c
+@@ -0,0 +1,928 @@
++/*  This is part of lg_magic_dkms
++
++    This program is free software; you can redistribute it and/or modify
++    it under the terms of the GNU General Public License as published by
++    the Free Software Foundation; either version 2 of the License, or
++    (at your option) any later version.
++
++    This program is distributed in the hope that it will be useful,
++    but WITHOUT ANY WARRANTY; without even the implied warranty of
++    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
++    GNU General Public License for more details.
++
++    You should have received a copy of the GNU General Public License
++    along with this program; if not, write to the Free Software
++    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
++*/
++
++#include <ctype.h>
++#include <errno.h>
++#include <fcntl.h>
++#include <getopt.h>
++#include <limits.h>
++#include <signal.h>
++#include <stdarg.h>
++#include <stdbool.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <sys/ioctl.h>
++#include <time.h>
++#include <unistd.h>
++
++#include <linux/hidraw.h>
++#include <linux/input.h>
++
++#include <libudev.h>
++
++#include <sbc/sbc.h>
++
++#include <pipewire/pipewire.h>
++#include <spa/param/audio/format-utils.h>
++#include <spa/utils/result.h>
++
++#define LGMAGIC_REPORT_CMD		0xF9
++#define LGMAGIC_REPORT_VOICE		0xFE
++
++#define LGMAGIC_VOICE_SIZE		124
++
++#define LGMAGIC_CMD_VOICE_START		0x03
++#define LGMAGIC_CMD_VOICE_STOP		0x04
++#define LGMAGIC_CMD_VOICE_RESTART	0x05
++
++#define LGMAGIC_CODE_VOICE_START	0x800A
++#define LGMAGIC_CODE_VOICE_STOP		0x800D
++
++#define LGMAGIC_BLOCK_SIZE		60
++#define LGMAGIC_FRAME_OFFSET		2
++#define LGMAGIC_FRAME_SIZE		58
++#define LGMAGIC_H2_SYNC			0x01
++#define LGMAGIC_MSBC_SYNC		0xAD
++
++#define LGMAGIC_RATE			16000
++#define LGMAGIC_CHANNELS		1
++#define LGMAGIC_STRIDE			(2 * LGMAGIC_CHANNELS)
++#define LGMAGIC_RING_FRAMES		(LGMAGIC_RATE / 2)
++
++#define LGMAGIC_DRIVER			"lgmagic"
++
++#define LGMAGIC_LONG_BITS		(8 * sizeof(unsigned long))
++#define LGMAGIC_KEY_LONGS		(KEY_MAX / LGMAGIC_LONG_BITS + 1)
++
++#define LGMAGIC_TICK_MS			200
++#define LGMAGIC_REARM_MS		4000
++#define LGMAGIC_SILENCE_MS		1000
++#define LGMAGIC_RETRY_MAX		3
++#define LGMAGIC_BACKOFF_MS		5000
++
++enum lgmagic_mode {
++	LGMAGIC_MODE_BUTTON,
++	LGMAGIC_MODE_CLIENT,
++	LGMAGIC_MODE_ALWAYS,
++};
++
++struct lgmagic_voice {
++	int16_t ring[LGMAGIC_RING_FRAMES * LGMAGIC_CHANNELS];
++	struct udev_monitor *monitor;
++	struct pw_main_loop *loop;
++	struct pw_stream *stream;
++	struct spa_source *udev_io;
++	struct spa_source *key_io;
++	struct spa_source *tick;
++	struct spa_source *io;
++	enum lgmagic_mode mode;
++	const char *device;
++	struct udev *udev;
++	sbc_t sbc;
++	int64_t backoff_until;
++	int64_t button_until;
++	int64_t last_command;
++	int64_t last_audio;
++	unsigned int ring_fill;
++	unsigned int ring_head;
++	unsigned int underruns;
++	unsigned int tail_ms;
++	unsigned int retries;
++	bool consumer_active;
++	bool button_held;
++	bool sbc_ready;
++	bool streaming;
++	bool verbose;
++	bool armed;
++	int key_fd;
++	int fd;
++};
++
++static void lgmagic_log(struct lgmagic_voice *voice, const char *fmt, ...)
++{
++	va_list ap;
++
++	if (!voice->verbose)
++		return;
++
++	va_start(ap, fmt);
++	vfprintf(stderr, fmt, ap);
++	va_end(ap);
++	fputc('\n', stderr);
++}
++
++static int64_t lgmagic_now_ms(void)
++{
++	struct timespec ts;
++
++	clock_gettime(CLOCK_MONOTONIC, &ts);
++
++	return (int64_t)ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
++}
++
++static uint16_t lgmagic_be16(const unsigned char *p)
++{
++	return ((uint16_t)p[0] << 8) | p[1];
++}
++
++static bool lgmagic_bit_test(const unsigned long *bits, unsigned int bit)
++{
++	return (bits[bit / LGMAGIC_LONG_BITS] >> (bit % LGMAGIC_LONG_BITS)) & 1;
++}
++
++static int lgmagic_command(struct lgmagic_voice *voice, unsigned char opcode)
++{
++	unsigned char buf[2];
++	int ret;
++
++	buf[0] = LGMAGIC_REPORT_CMD;
++	buf[1] = opcode;
++
++	voice->last_command = lgmagic_now_ms();
++
++	if (ioctl(voice->fd, HIDIOCSFEATURE(sizeof(buf)), buf) >= 0)
++		return 0;
++
++	ret = -errno;
++	fprintf(stderr, "lg-magic-voice: command %02x failed: %s\n", opcode,
++		strerror(-ret));
++
++	return ret;
++}
++
++static void lgmagic_ring_write(struct lgmagic_voice *voice,
++			       const int16_t *samples, unsigned int frames)
++{
++	unsigned int space, tail, chunk;
++
++	if (frames > LGMAGIC_RING_FRAMES)
++		frames = LGMAGIC_RING_FRAMES;
++
++	space = LGMAGIC_RING_FRAMES - voice->ring_fill;
++
++	if (frames > space) {
++		voice->ring_head = (voice->ring_head + frames - space) %
++				   LGMAGIC_RING_FRAMES;
++		voice->ring_fill = LGMAGIC_RING_FRAMES - frames;
++	}
++
++	tail = (voice->ring_head + voice->ring_fill) % LGMAGIC_RING_FRAMES;
++	chunk = LGMAGIC_RING_FRAMES - tail;
++	if (chunk > frames)
++		chunk = frames;
++
++	memcpy(voice->ring + tail * LGMAGIC_CHANNELS, samples,
++	       chunk * LGMAGIC_STRIDE);
++	memcpy(voice->ring, samples + chunk * LGMAGIC_CHANNELS,
++	       (frames - chunk) * LGMAGIC_STRIDE);
++
++	voice->ring_fill += frames;
++}
++
++static unsigned int lgmagic_ring_read(struct lgmagic_voice *voice,
++				      int16_t *samples, unsigned int frames)
++{
++	unsigned int chunk;
++
++	if (frames > voice->ring_fill)
++		frames = voice->ring_fill;
++
++	chunk = LGMAGIC_RING_FRAMES - voice->ring_head;
++	if (chunk > frames)
++		chunk = frames;
++
++	memcpy(samples, voice->ring + voice->ring_head * LGMAGIC_CHANNELS,
++	       chunk * LGMAGIC_STRIDE);
++	memcpy(samples + chunk * LGMAGIC_CHANNELS, voice->ring,
++	       (frames - chunk) * LGMAGIC_STRIDE);
++
++	voice->ring_head = (voice->ring_head + frames) % LGMAGIC_RING_FRAMES;
++	voice->ring_fill -= frames;
++
++	return frames;
++}
++
++static void lgmagic_decode_block(struct lgmagic_voice *voice,
++				 const unsigned char *block)
++{
++	int16_t pcm[480];
++	size_t written;
++	ssize_t ret;
++
++	if (block[0] != LGMAGIC_H2_SYNC ||
++	    block[LGMAGIC_FRAME_OFFSET] != LGMAGIC_MSBC_SYNC) {
++		lgmagic_log(voice, "dropped block, sync %02x %02x", block[0],
++			    block[LGMAGIC_FRAME_OFFSET]);
++		return;
++	}
++
++	written = 0;
++	ret = sbc_decode(&voice->sbc, block + LGMAGIC_FRAME_OFFSET,
++			 LGMAGIC_FRAME_SIZE, pcm, sizeof(pcm), &written);
++	if (ret < 0 || !written) {
++		lgmagic_log(voice, "mSBC decode failed: %zd", ret);
++		return;
++	}
++
++	lgmagic_ring_write(voice, pcm, written / LGMAGIC_STRIDE);
++}
++
++static void lgmagic_voice_report(struct lgmagic_voice *voice,
++				 const unsigned char *data, int size)
++{
++	uint16_t code;
++	int offset;
++
++	if (size != LGMAGIC_VOICE_SIZE)
++		return;
++
++	voice->last_audio = lgmagic_now_ms();
++	voice->retries = 0;
++
++	code = lgmagic_be16(&data[2]);
++	if (code == LGMAGIC_CODE_VOICE_START && !voice->streaming) {
++		voice->streaming = true;
++		lgmagic_log(voice, "stream started");
++	} else if (code == LGMAGIC_CODE_VOICE_STOP) {
++		voice->streaming = false;
++		lgmagic_log(voice, "stream stopped by the remote");
++	}
++
++	for (offset = 4; offset + LGMAGIC_BLOCK_SIZE <= size;
++	     offset += LGMAGIC_BLOCK_SIZE)
++		lgmagic_decode_block(voice, data + offset);
++}
++
++static void lgmagic_close(struct lgmagic_voice *voice)
++{
++	struct pw_loop *loop = pw_main_loop_get_loop(voice->loop);
++
++	if (voice->io)
++		pw_loop_destroy_source(loop, voice->io);
++	if (voice->key_io)
++		pw_loop_destroy_source(loop, voice->key_io);
++	if (voice->fd >= 0)
++		close(voice->fd);
++	if (voice->key_fd >= 0)
++		close(voice->key_fd);
++
++	voice->io = NULL;
++	voice->key_io = NULL;
++	voice->fd = -1;
++	voice->key_fd = -1;
++	voice->armed = false;
++	voice->streaming = false;
++	voice->retries = 0;
++	voice->button_held = false;
++	voice->button_until = 0;
++}
++
++static void lgmagic_on_hidraw(void *data, int fd, uint32_t mask)
++{
++	struct lgmagic_voice *voice = data;
++	unsigned char buf[1024];
++	ssize_t size;
++
++	if (mask & (SPA_IO_ERR | SPA_IO_HUP)) {
++		lgmagic_log(voice, "remote disconnected");
++		lgmagic_close(voice);
++		return;
++	}
++
++	for (;;) {
++		size = read(fd, buf, sizeof(buf));
++		if (size < 0) {
++			if (errno == EINTR)
++				continue;
++			if (errno != EAGAIN && errno != EWOULDBLOCK) {
++				fprintf(stderr, "lg-magic-voice: read: %m\n");
++				lgmagic_close(voice);
++			}
++			return;
++		}
++
++		if (!size)
++			return;
++
++		if (buf[0] == LGMAGIC_REPORT_VOICE)
++			lgmagic_voice_report(voice, buf, size);
++	}
++}
++
++static void lgmagic_key_set(struct lgmagic_voice *voice, bool pressed)
++{
++	if (voice->button_held && !pressed)
++		voice->button_until = lgmagic_now_ms() + voice->tail_ms;
++
++	voice->button_held = pressed;
++}
++
++static void lgmagic_key_sync(struct lgmagic_voice *voice)
++{
++	unsigned long keys[LGMAGIC_KEY_LONGS];
++
++	memset(keys, 0, sizeof(keys));
++	if (ioctl(voice->key_fd, EVIOCGKEY(sizeof(keys)), keys) < 0)
++		return;
++
++	lgmagic_key_set(voice, lgmagic_bit_test(keys, KEY_VOICECOMMAND));
++}
++
++static void lgmagic_key_event(struct lgmagic_voice *voice,
++			      const struct input_event *ev)
++{
++	if (ev->type == EV_SYN && ev->code == SYN_DROPPED) {
++		lgmagic_key_sync(voice);
++		return;
++	}
++
++	if (ev->type != EV_KEY || ev->code != KEY_VOICECOMMAND)
++		return;
++
++	if (ev->value == 0 || ev->value == 1)
++		lgmagic_key_set(voice, ev->value);
++}
++
++static void lgmagic_on_key(void *data, int fd, uint32_t mask)
++{
++	struct lgmagic_voice *voice = data;
++	struct input_event ev;
++	ssize_t size;
++
++	if (mask & (SPA_IO_ERR | SPA_IO_HUP)) {
++		lgmagic_log(voice, "remote disconnected");
++		lgmagic_close(voice);
++		return;
++	}
++
++	for (;;) {
++		size = read(fd, &ev, sizeof(ev));
++		if (size < 0) {
++			if (errno == EINTR)
++				continue;
++			if (errno != EAGAIN && errno != EWOULDBLOCK) {
++				fprintf(stderr, "lg-magic-voice: read: %m\n");
++				lgmagic_close(voice);
++			}
++			return;
++		}
++
++		if (size != sizeof(ev))
++			return;
++
++		lgmagic_key_event(voice, &ev);
++	}
++}
++
++static bool lgmagic_key_capable(int fd)
++{
++	unsigned long keys[LGMAGIC_KEY_LONGS];
++
++	memset(keys, 0, sizeof(keys));
++	if (ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(keys)), keys) < 0)
++		return false;
++
++	return lgmagic_bit_test(keys, KEY_VOICECOMMAND);
++}
++
++static int lgmagic_key_try(struct udev *udev, const char *syspath)
++{
++	struct udev_device *dev;
++	const char *devnode;
++	int fd = -1;
++
++	dev = udev_device_new_from_syspath(udev, syspath);
++	if (!dev)
++		return -1;
++
++	devnode = udev_device_get_devnode(dev);
++	if (devnode)
++		fd = open(devnode, O_RDONLY | O_NONBLOCK | O_CLOEXEC);
++
++	udev_device_unref(dev);
++
++	if (fd >= 0 && !lgmagic_key_capable(fd)) {
++		close(fd);
++		fd = -1;
++	}
++
++	return fd;
++}
++
++static int lgmagic_key_open(struct lgmagic_voice *voice,
++			    struct udev_device *hid)
++{
++	struct udev_list_entry *entry;
++	struct udev_enumerate *e;
++	int fd = -1;
++
++	e = udev_enumerate_new(voice->udev);
++	if (!e)
++		return -1;
++
++	udev_enumerate_add_match_parent(e, hid);
++	udev_enumerate_add_match_subsystem(e, "input");
++	udev_enumerate_add_match_sysname(e, "event*");
++	udev_enumerate_add_match_is_initialized(e);
++	udev_enumerate_scan_devices(e);
++
++	udev_list_entry_foreach(entry, udev_enumerate_get_list_entry(e)) {
++		fd = lgmagic_key_try(voice->udev,
++				     udev_list_entry_get_name(entry));
++		if (fd >= 0)
++			break;
++	}
++
++	udev_enumerate_unref(e);
++
++	return fd;
++}
++
++static int lgmagic_open(struct lgmagic_voice *voice, struct udev_device *hidraw)
++{
++	struct pw_loop *loop = pw_main_loop_get_loop(voice->loop);
++	struct udev_device *hid;
++	const char *devnode;
++	const char *driver;
++	int key_fd, fd;
++
++	devnode = udev_device_get_devnode(hidraw);
++	if (!devnode || (voice->device && strcmp(devnode, voice->device)))
++		return -ENODEV;
++
++	hid = udev_device_get_parent_with_subsystem_devtype(hidraw, "hid", NULL);
++	if (!hid)
++		return -ENODEV;
++
++	driver = udev_device_get_driver(hid);
++	if (!driver || strcmp(driver, LGMAGIC_DRIVER))
++		return -ENODEV;
++
++	fd = open(devnode, O_RDWR | O_NONBLOCK | O_CLOEXEC);
++	if (fd < 0)
++		return -errno;
++
++	key_fd = lgmagic_key_open(voice, hid);
++	if (key_fd < 0) {
++		close(fd);
++		return -ENODEV;
++	}
++
++	voice->fd = fd;
++	voice->key_fd = key_fd;
++	voice->io = pw_loop_add_io(loop, fd, SPA_IO_IN, false,
++				   lgmagic_on_hidraw, voice);
++	voice->key_io = pw_loop_add_io(loop, key_fd, SPA_IO_IN, false,
++				       lgmagic_on_key, voice);
++	if (!voice->io || !voice->key_io) {
++		lgmagic_close(voice);
++		return -ENOMEM;
++	}
++
++	lgmagic_key_sync(voice);
++	lgmagic_log(voice, "using %s", devnode);
++
++	return 0;
++}
++
++static int lgmagic_open_syspath(struct lgmagic_voice *voice,
++				const char *syspath)
++{
++	struct udev_device *dev;
++	int ret;
++
++	dev = udev_device_new_from_syspath(voice->udev, syspath);
++	if (!dev)
++		return -ENODEV;
++
++	ret = lgmagic_open(voice, dev);
++	udev_device_unref(dev);
++
++	return ret;
++}
++
++static void lgmagic_scan(struct lgmagic_voice *voice)
++{
++	struct udev_list_entry *entry;
++	struct udev_enumerate *e;
++
++	if (voice->fd >= 0)
++		return;
++
++	e = udev_enumerate_new(voice->udev);
++	if (!e)
++		return;
++
++	udev_enumerate_add_match_subsystem(e, "hidraw");
++	udev_enumerate_add_match_is_initialized(e);
++	udev_enumerate_scan_devices(e);
++
++	udev_list_entry_foreach(entry, udev_enumerate_get_list_entry(e)) {
++		if (!lgmagic_open_syspath(voice,
++					  udev_list_entry_get_name(entry)))
++			break;
++	}
++
++	udev_enumerate_unref(e);
++}
++
++/* hidraw and evdev finish udev separately; either may complete the pair. */
++static void lgmagic_on_udev(void *data, int fd, uint32_t mask)
++{
++	struct lgmagic_voice *voice = data;
++	struct udev_device *dev;
++	const char *action;
++	bool removed;
++
++	dev = udev_monitor_receive_device(voice->monitor);
++	if (!dev)
++		return;
++
++	action = udev_device_get_action(dev);
++	removed = action && !strcmp(action, "remove");
++	udev_device_unref(dev);
++
++	if (!removed)
++		lgmagic_scan(voice);
++}
++
++static int lgmagic_udev_setup(struct lgmagic_voice *voice)
++{
++	struct pw_loop *loop = pw_main_loop_get_loop(voice->loop);
++
++	voice->udev = udev_new();
++	if (!voice->udev)
++		return -ENOMEM;
++
++	voice->monitor = udev_monitor_new_from_netlink(voice->udev, "udev");
++	if (!voice->monitor)
++		return -ENOMEM;
++
++	if (udev_monitor_filter_add_match_subsystem_devtype(voice->monitor,
++							    "hidraw", NULL) ||
++	    udev_monitor_filter_add_match_subsystem_devtype(voice->monitor,
++							    "input", NULL) ||
++	    udev_monitor_enable_receiving(voice->monitor))
++		return -EIO;
++
++	voice->udev_io = pw_loop_add_io(loop,
++					udev_monitor_get_fd(voice->monitor),
++					SPA_IO_IN, false, lgmagic_on_udev,
++					voice);
++	if (!voice->udev_io)
++		return -ENOMEM;
++
++	return 0;
++}
++
++static bool lgmagic_wanted(struct lgmagic_voice *voice)
++{
++	if (voice->mode == LGMAGIC_MODE_ALWAYS)
++		return true;
++
++	if (voice->mode == LGMAGIC_MODE_CLIENT)
++		return voice->consumer_active;
++
++	return voice->button_held || lgmagic_now_ms() < voice->button_until;
++}
++
++static void lgmagic_arm(struct lgmagic_voice *voice)
++{
++	voice->armed = true;
++	voice->last_audio = lgmagic_now_ms();
++	lgmagic_command(voice, LGMAGIC_CMD_VOICE_START);
++	lgmagic_log(voice, "armed");
++}
++
++static void lgmagic_disarm(struct lgmagic_voice *voice)
++{
++	voice->armed = false;
++	voice->streaming = false;
++	voice->retries = 0;
++	lgmagic_command(voice, LGMAGIC_CMD_VOICE_STOP);
++	lgmagic_log(voice, "disarmed");
++}
++
++static void lgmagic_on_tick(void *data, uint64_t expirations)
++{
++	struct lgmagic_voice *voice = data;
++	int64_t now = lgmagic_now_ms();
++	bool want;
++
++	if (voice->fd < 0)
++		return;
++
++	want = lgmagic_wanted(voice);
++
++	if (want && !voice->armed) {
++		if (now >= voice->backoff_until)
++			lgmagic_arm(voice);
++		return;
++	}
++
++	if (!want && voice->armed) {
++		lgmagic_disarm(voice);
++		return;
++	}
++
++	if (!voice->armed)
++		return;
++
++	if (now - voice->last_audio > LGMAGIC_SILENCE_MS) {
++		if (voice->retries++ >= LGMAGIC_RETRY_MAX) {
++			fprintf(stderr,
++				"lg-magic-voice: no audio, giving up\n");
++			voice->button_until = 0;
++			voice->backoff_until = now + LGMAGIC_BACKOFF_MS;
++			lgmagic_disarm(voice);
++			return;
++		}
++
++		lgmagic_log(voice, "no audio for %d ms, re-arming",
++			    LGMAGIC_SILENCE_MS);
++		voice->streaming = false;
++		voice->last_audio = now;
++		lgmagic_command(voice, LGMAGIC_CMD_VOICE_START);
++		return;
++	}
++
++	if (now - voice->last_command > LGMAGIC_REARM_MS)
++		lgmagic_command(voice, LGMAGIC_CMD_VOICE_RESTART);
++}
++
++static void lgmagic_on_process(void *data)
++{
++	struct lgmagic_voice *voice = data;
++	struct pw_buffer *b;
++	unsigned int frames;
++	unsigned int have;
++	int16_t *dst;
++
++	b = pw_stream_dequeue_buffer(voice->stream);
++	if (!b)
++		return;
++
++	dst = b->buffer->datas[0].data;
++	if (!dst) {
++		pw_stream_queue_buffer(voice->stream, b);
++		return;
++	}
++
++	frames = b->buffer->datas[0].maxsize / LGMAGIC_STRIDE;
++	if (b->requested && b->requested < frames)
++		frames = b->requested;
++
++	have = lgmagic_ring_read(voice, dst, frames);
++	if (have < frames) {
++		memset(dst + have * LGMAGIC_CHANNELS, 0,
++		       (frames - have) * LGMAGIC_STRIDE);
++		if (voice->streaming)
++			voice->underruns++;
++	}
++
++	b->buffer->datas[0].chunk->offset = 0;
++	b->buffer->datas[0].chunk->stride = LGMAGIC_STRIDE;
++	b->buffer->datas[0].chunk->size = frames * LGMAGIC_STRIDE;
++
++	pw_stream_queue_buffer(voice->stream, b);
++}
++
++static void lgmagic_on_state(void *data, enum pw_stream_state old,
++			     enum pw_stream_state state, const char *error)
++{
++	struct lgmagic_voice *voice = data;
++
++	voice->consumer_active = state == PW_STREAM_STATE_STREAMING;
++	lgmagic_log(voice, "stream state %s", pw_stream_state_as_string(state));
++
++	if (state == PW_STREAM_STATE_ERROR)
++		fprintf(stderr, "lg-magic-voice: stream error: %s\n",
++			error ? error : "unknown");
++}
++
++static const struct pw_stream_events lgmagic_stream_events = {
++	PW_VERSION_STREAM_EVENTS,
++	.state_changed = lgmagic_on_state,
++	.process = lgmagic_on_process,
++};
++
++static int lgmagic_stream_setup(struct lgmagic_voice *voice)
++{
++	const struct spa_pod *params[1];
++	struct pw_properties *props;
++	struct spa_pod_builder b;
++	uint8_t buffer[1024];
++
++	props = pw_properties_new(PW_KEY_MEDIA_TYPE, "Audio",
++				  PW_KEY_MEDIA_CLASS, "Audio/Source",
++				  PW_KEY_NODE_NAME, "lg-magic-voice",
++				  PW_KEY_NODE_DESCRIPTION,
++				  "LG Magic Remote microphone", NULL);
++	if (!props)
++		return -ENOMEM;
++
++	voice->stream = pw_stream_new_simple(pw_main_loop_get_loop(voice->loop),
++					     "LG Magic Remote", props,
++					     &lgmagic_stream_events, voice);
++	if (!voice->stream)
++		return -ENOMEM;
++
++	spa_pod_builder_init(&b, buffer, sizeof(buffer));
++	params[0] = spa_format_audio_raw_build(&b, SPA_PARAM_EnumFormat,
++					       &SPA_AUDIO_INFO_RAW_INIT(
++						.format = SPA_AUDIO_FORMAT_S16,
++						.rate = LGMAGIC_RATE,
++						.channels = LGMAGIC_CHANNELS));
++
++	return pw_stream_connect(voice->stream, PW_DIRECTION_OUTPUT, PW_ID_ANY,
++				 PW_STREAM_FLAG_MAP_BUFFERS, params, 1);
++}
++
++static void lgmagic_usage(const char *argv0)
++{
++	fprintf(stderr,
++		"usage: %s [-d /dev/hidrawN] [-m button|client|always] [-t ms] [-v]\n"
++		"\n"
++		"  -d, --device   hidraw node of the remote, any LG Magic Remote by default\n"
++		"  -m, --mode     when to arm the microphone, default button\n"
++		"  -t, --tail     how long to keep streaming after the button, ms\n"
++		"  -v, --verbose  log state transitions\n",
++		argv0);
++}
++
++static int lgmagic_mode_parse(const char *name, enum lgmagic_mode *mode)
++{
++	if (!strcmp(name, "button"))
++		*mode = LGMAGIC_MODE_BUTTON;
++	else if (!strcmp(name, "client"))
++		*mode = LGMAGIC_MODE_CLIENT;
++	else if (!strcmp(name, "always"))
++		*mode = LGMAGIC_MODE_ALWAYS;
++	else
++		return -EINVAL;
++
++	return 0;
++}
++
++/* strtoul() accepts a sign and wraps a negative value, so require a digit. */
++static int lgmagic_ms_parse(const char *arg, unsigned int *ms)
++{
++	unsigned long val;
++	char *end;
++
++	if (!isdigit((unsigned char)*arg))
++		return -EINVAL;
++
++	errno = 0;
++	val = strtoul(arg, &end, 0);
++	if (errno || *end || val > UINT_MAX)
++		return -EINVAL;
++
++	*ms = val;
++
++	return 0;
++}
++
++static void lgmagic_signal(void *data, int signal_number)
++{
++	struct lgmagic_voice *voice = data;
++
++	pw_main_loop_quit(voice->loop);
++}
++
++int main(int argc, char *argv[])
++{
++	static const struct option options[] = {
++		{ "device", required_argument, NULL, 'd' },
++		{ "mode", required_argument, NULL, 'm' },
++		{ "tail", required_argument, NULL, 't' },
++		{ "verbose", no_argument, NULL, 'v' },
++		{ "help", no_argument, NULL, 'h' },
++		{ NULL, 0, NULL, 0 },
++	};
++	struct timespec interval = { 0, LGMAGIC_TICK_MS * 1000000 };
++	struct lgmagic_voice voice;
++	struct pw_loop *loop;
++	int status = 1;
++	int ret, opt;
++
++	memset(&voice, 0, sizeof(voice));
++	voice.mode = LGMAGIC_MODE_BUTTON;
++	voice.tail_ms = 1500;
++	voice.key_fd = -1;
++	voice.fd = -1;
++
++	while ((opt = getopt_long(argc, argv, "d:m:t:vh", options, NULL)) != -1) {
++		switch (opt) {
++		case 'd':
++			voice.device = optarg;
++			break;
++		case 'm':
++			if (lgmagic_mode_parse(optarg, &voice.mode)) {
++				lgmagic_usage(argv[0]);
++				return 1;
++			}
++			break;
++		case 't':
++			if (lgmagic_ms_parse(optarg, &voice.tail_ms)) {
++				lgmagic_usage(argv[0]);
++				return 1;
++			}
++			break;
++		case 'v':
++			voice.verbose = true;
++			break;
++		default:
++			lgmagic_usage(argv[0]);
++			return opt == 'h' ? 0 : 1;
++		}
++	}
++
++	ret = sbc_init_msbc(&voice.sbc, 0);
++	if (ret < 0) {
++		fprintf(stderr, "lg-magic-voice: cannot set up mSBC: %s\n",
++			strerror(-ret));
++		return 1;
++	}
++	voice.sbc_ready = true;
++
++	pw_init(&argc, &argv);
++
++	voice.loop = pw_main_loop_new(NULL);
++	if (!voice.loop) {
++		fprintf(stderr, "lg-magic-voice: cannot create a loop\n");
++		goto out;
++	}
++
++	loop = pw_main_loop_get_loop(voice.loop);
++
++	pw_loop_add_signal(loop, SIGINT, lgmagic_signal, &voice);
++	pw_loop_add_signal(loop, SIGTERM, lgmagic_signal, &voice);
++
++	voice.tick = pw_loop_add_timer(loop, lgmagic_on_tick, &voice);
++
++	ret = lgmagic_stream_setup(&voice);
++	if (ret < 0) {
++		fprintf(stderr, "lg-magic-voice: cannot create a source: %s\n",
++			spa_strerror(ret));
++		goto out;
++	}
++
++	ret = lgmagic_udev_setup(&voice);
++	if (ret < 0) {
++		fprintf(stderr, "lg-magic-voice: cannot monitor udev: %s\n",
++			strerror(-ret));
++		goto out;
++	}
++
++	lgmagic_scan(&voice);
++	if (voice.fd < 0)
++		lgmagic_log(&voice, "waiting for an LG Magic Remote");
++
++	pw_loop_update_timer(loop, voice.tick, &interval, &interval, false);
++
++	pw_main_loop_run(voice.loop);
++	status = 0;
++
++	if (voice.armed)
++		lgmagic_disarm(&voice);
++
++	if (voice.underruns)
++		lgmagic_log(&voice, "%u underruns", voice.underruns);
++
++out:
++	if (voice.loop)
++		lgmagic_close(&voice);
++	if (voice.udev_io)
++		pw_loop_destroy_source(pw_main_loop_get_loop(voice.loop),
++				       voice.udev_io);
++	if (voice.monitor)
++		udev_monitor_unref(voice.monitor);
++	if (voice.udev)
++		udev_unref(voice.udev);
++	if (voice.stream)
++		pw_stream_destroy(voice.stream);
++	if (voice.loop)
++		pw_main_loop_destroy(voice.loop);
++	if (voice.sbc_ready)
++		sbc_finish(&voice.sbc);
++
++	pw_deinit();
++
++	return status;
++}

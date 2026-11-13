@@ -1,0 +1,63 @@
+From 957ded4248cffa5ee24c8c59bb89f926edeac2bd Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 13 Nov 2026 13:57:53 +0000
+Subject: [PATCH] voice: check that the evdev node belongs to the remote
+
+The key device is looked up by enumerating the event nodes below the
+remote's HID device. libudev-zero implements the parent match as a stub
+that accepts every device, so there the enumeration returns all event
+nodes of the system and the first one able to report KEY_VOICECOMMAND
+is taken, whichever device it belongs to.
+
+Compare the HID ancestor of each candidate with the remote's HID device
+before opening it, which holds with either libudev.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ voice/lg_magic_voice.c | 19 ++++++++++++++-----
+ 1 file changed, 14 insertions(+), 5 deletions(-)
+
+--- a/voice/lg_magic_voice.c
++++ b/voice/lg_magic_voice.c
+@@ -400,18 +400,28 @@ static bool lgmagic_key_capable(int fd)
+ 	return lgmagic_bit_test(keys, KEY_VOICECOMMAND);
+ }
+ 
+-static int lgmagic_key_try(struct udev *udev, const char *syspath)
++static bool lgmagic_key_child(struct udev_device *dev, struct udev_device *hid)
++{
++	struct udev_device *parent;
++
++	parent = udev_device_get_parent_with_subsystem_devtype(dev, "hid", NULL);
++
++	return parent && !strcmp(udev_device_get_syspath(parent),
++				 udev_device_get_syspath(hid));
++}
++
++static int lgmagic_key_try(struct udev_device *hid, const char *syspath)
+ {
+ 	struct udev_device *dev;
+ 	const char *devnode;
+ 	int fd = -1;
+ 
+-	dev = udev_device_new_from_syspath(udev, syspath);
++	dev = udev_device_new_from_syspath(udev_device_get_udev(hid), syspath);
+ 	if (!dev)
+ 		return -1;
+ 
+ 	devnode = udev_device_get_devnode(dev);
+-	if (devnode)
++	if (devnode && lgmagic_key_child(dev, hid))
+ 		fd = open(devnode, O_RDONLY | O_NONBLOCK | O_CLOEXEC);
+ 
+ 	udev_device_unref(dev);
+@@ -442,8 +452,7 @@ static int lgmagic_key_open(struct lgmag
+ 	udev_enumerate_scan_devices(e);
+ 
+ 	udev_list_entry_foreach(entry, udev_enumerate_get_list_entry(e)) {
+-		fd = lgmagic_key_try(voice->udev,
+-				     udev_list_entry_get_name(entry));
++		fd = lgmagic_key_try(hid, udev_list_entry_get_name(entry));
+ 		if (fd >= 0)
+ 			break;
+ 	}
