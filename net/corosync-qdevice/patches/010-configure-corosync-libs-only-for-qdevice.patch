@@ -1,0 +1,39 @@
+From 13e43ba9bc4b9a4cadfc2cb153a3b0bce214da4f Mon Sep 17 00:00:00 2001
+From: Christian Sandberg <chrsandb@gmail.com>
+Date: Fri, 13 Nov 2026 22:54:06 +0100
+Subject: [PATCH] configure: check Corosync libraries only for qdevice
+
+The qnetd daemon only links against NSS.  Do not require the Corosync client
+libraries when building qnetd without the qdevice client.
+
+Upstream-Status: Submitted [https://github.com/corosync/corosync-qdevice/pull/41]
+Signed-off-by: Christian Sandberg <chrsandb@gmail.com>
+---
+ configure.ac | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
+
+--- a/configure.ac
++++ b/configure.ac
+@@ -97,9 +97,6 @@ AC_TYPE_SSIZE_T
+ 
+ # Checks for libraries.
+ PKG_CHECK_MODULES([nss],[nss])
+-PKG_CHECK_MODULES([corosync_common], [libcorosync_common])
+-PKG_CHECK_MODULES([cmap], [libcmap])
+-PKG_CHECK_MODULES([votequorum], [libvotequorum])
+ 
+ AC_CONFIG_FILES([Makefile
+ 		 qdevices/Makefile
+@@ -181,6 +178,12 @@ AC_ARG_ENABLE([qdevices],
+ 	[  --disable-qdevices              : Quorum devices support ],,
+ 	[ enable_qdevices="yes" ])
+ AM_CONDITIONAL(BUILD_QDEVICES, test x$enable_qdevices = xyes)
++AS_IF([test x$enable_qdevices = xyes], [
++	PKG_CHECK_MODULES([corosync_common], [libcorosync_common])
++	PKG_CHECK_MODULES([cmap], [libcmap])
++	PKG_CHECK_MODULES([votequorum], [libvotequorum])
++])
++
+ AC_ARG_ENABLE([qnetd],
+ 	[  --disable-qnetd                 : Quorum Net Daemon support ],,
+ 	[ enable_qnetd="yes" ])

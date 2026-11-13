@@ -1,0 +1,45 @@
+From f963b11a27df7609a40c3040ae0c5674f8e4aa94 Mon Sep 17 00:00:00 2001
+From: Christian Sandberg <chrsandb@gmail.com>
+Date: Fri, 13 Nov 2026 22:54:06 +0100
+Subject: [PATCH] qnetd-certutil: support minimal BusyBox systems
+
+BusyBox chown does not implement GNU chown's --reference option and stat may
+not be installed. Try the GNU stat syntax, then obtain the numeric ownership
+from ls as a final fallback. Minimal OpenWrt images may also omit sha1sum and
+w, so use /dev/urandom directly when sha1sum is unavailable.
+
+Upstream-Status: Submitted [https://github.com/corosync/corosync-qdevice/pull/47]
+Signed-off-by: Christian Sandberg <chrsandb@gmail.com>
+---
+ qdevices/corosync-qnetd-certutil.sh | 13 +++++++++++--
+ 1 file changed, 11 insertions(+), 2 deletions(-)
+
+--- a/qdevices/corosync-qnetd-certutil.sh
++++ b/qdevices/corosync-qnetd-certutil.sh
+@@ -63,7 +63,12 @@ usage() {
+ 
+ chown_ref_cfgdir() {
+     if [ "$UID" == "0" ];then
+-        chown --reference="$CONFIG_DIR" "$@" 2>/dev/null || chown "$(stat -f "%u:%g" "$CONFIG_DIR")" "$@" 2>/dev/null || return $?
++        chown --reference="$CONFIG_DIR" "$@" 2>/dev/null && return 0
++        if command -v stat >/dev/null;then
++            chown "$(stat -c "%u:%g" "$CONFIG_DIR")" "$@" 2>/dev/null && return 0
++            chown "$(stat -f "%u:%g" "$CONFIG_DIR")" "$@" 2>/dev/null && return 0
++        fi
++        chown "$(ls -nd "$CONFIG_DIR" | awk '{ print $3 ":" $4 }')" "$@" 2>/dev/null || return $?
+     fi
+ }
+ 
+@@ -83,7 +88,11 @@ create_new_noise_file() {
+     if [ ! -e "$noise_file" ];then
+         echo "Creating new noise file $noise_file"
+ 
+-        (ps -elf; date; w) | sha1sum | (read sha_sum rest; echo $sha_sum) > "$noise_file"
++        if command -v sha1sum >/dev/null; then
++            (ps -elf; date; w) | sha1sum | (read sha_sum rest; echo $sha_sum) > "$noise_file"
++        else
++            dd if=/dev/urandom of="$noise_file" bs=64 count=1 2>/dev/null
++        fi
+ 
+         chown_ref_cfgdir "$noise_file"
+         chmod "$(get_perm)" "$noise_file"
