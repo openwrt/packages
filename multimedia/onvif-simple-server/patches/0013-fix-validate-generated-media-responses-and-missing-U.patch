@@ -1,0 +1,187 @@
+From e645356997a6fb327522cb4f47708ef94bd04bda Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Sun, 18 Oct 2026 11:53:13 +0100
+Subject: [PATCH 13/15] fix: validate generated media responses and missing
+ URIs
+
+Preserve audio configuration ordering and backchannel entries while generating profiles. Format integral SOAP values without scientific notation and reject URI requests without a configured endpoint.
+
+Fixes: 2f098ae69cb6 ("feat: enumerate configured media profiles without a two-stream limit")
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ conf.c              |  3 ++-
+ media_profiles.c    | 43 ++++++++++++++++++++++++++++++++++++-------
+ soap.c              |  3 ++-
+ test/test_cgi.py    | 29 +++++++++++++++++++++++++++++
+ test/test_schema.py |  8 ++++++++
+ 5 files changed, 77 insertions(+), 9 deletions(-)
+
+--- a/conf.c
++++ b/conf.c
+@@ -1366,9 +1366,10 @@ int process_json_conf_file(char *file)
+ 
+ void free_conf_file()
+ {
++    int i;
++
+     free(service_ctx.encoder_helper);
+     free(service_ctx.imaging_helper);
+-    int i;
+ 
+     if (service_ctx.events_enable == 1) {
+         for (i = service_ctx.events_num - 1; i >= 0; i--) {
+--- a/media_profiles.c
++++ b/media_profiles.c
+@@ -160,11 +160,6 @@ static void profile_add(ezxml_t node, in
+                                "tt:VideoSourceConfiguration" : "tr2:VideoSource", NULL);
+         media_source_configuration_add(child);
+     }
+-    if (version == 1 || type_requested("VideoEncoder")) {
+-        child = soap_child_add(configurations, version == 1 ?
+-                               "tt:VideoEncoderConfiguration" : "tr2:VideoEncoder", NULL);
+-        encoder_configuration_add(child, index, version);
+-    }
+     if (profile->audio_encoder != AUDIO_NONE &&
+         (version == 1 || type_requested("AudioSource"))) {
+         child = soap_child_add(configurations, version == 1 ?
+@@ -174,6 +169,11 @@ static void profile_add(ezxml_t node, in
+         soap_number_add(child, "tt:UseCount", service_ctx.profiles_num);
+         soap_child_add(child, "tt:SourceToken", "AudioSourceToken");
+     }
++    if (version == 1 || type_requested("VideoEncoder")) {
++        child = soap_child_add(configurations, version == 1 ?
++                               "tt:VideoEncoderConfiguration" : "tr2:VideoEncoder", NULL);
++        encoder_configuration_add(child, index, version);
++    }
+     if (profile->audio_encoder != AUDIO_NONE &&
+         (version == 1 || type_requested("AudioEncoder"))) {
+         child = soap_child_add(configurations, version == 1 ?
+@@ -184,10 +184,14 @@ static void profile_add(ezxml_t node, in
+         soap_number_add(child, "tt:UseCount", 1);
+         set_audio_codec(codec, sizeof(codec), profile->audio_encoder, version);
+         soap_child_add(child, "tt:Encoding", codec);
++        if (version == 2)
++            multicast_add(child);
+         soap_number_add(child, "tt:Bitrate", 50);
+         soap_number_add(child, "tt:SampleRate", 16);
+-        multicast_add(child);
+-        soap_child_add(child, "tt:SessionTimeout", "PT0S");
++        if (version == 1) {
++            multicast_add(child);
++            soap_child_add(child, "tt:SessionTimeout", "PT0S");
++        }
+     }
+     if (service_ctx.ptz_node.enable && (version == 1 || type_requested("PTZ"))) {
+         child = soap_child_add(configurations, version == 1 ?
+@@ -197,6 +201,22 @@ static void profile_add(ezxml_t node, in
+         soap_number_add(child, "tt:UseCount", service_ctx.profiles_num);
+         soap_child_add(child, "tt:NodeToken", "PTZNodeToken");
+     }
++    if (version == 2 && profile->audio_decoder != AUDIO_NONE && type_requested("AudioOutput")) {
++        child = soap_child_add(configurations, "tr2:AudioOutput", NULL);
++        ezxml_set_attr(child, "token", "AudioOutputConfigToken");
++        soap_child_add(child, "tt:Name", "AudioOutputConfig");
++        soap_number_add(child, "tt:UseCount", service_ctx.profiles_num);
++        soap_child_add(child, "tt:OutputToken", "AudioOutputToken");
++        soap_child_add(child, "tt:SendPrimacy", "www.onvif.org/ver20/HalfDuplex/Client");
++        soap_number_add(child, "tt:OutputLevel", 1);
++    }
++    if (version == 2 && profile->audio_decoder != AUDIO_NONE && type_requested("AudioDecoder")) {
++        child = soap_child_add(configurations, "tr2:AudioDecoder", NULL);
++        snprintf(name, sizeof(name), "%s_AudioDecoderToken", profile->name);
++        ezxml_set_attr_d(child, "token", name);
++        soap_child_add(child, "tt:Name", profile->name);
++        soap_number_add(child, "tt:UseCount", 1);
++    }
+ }
+ 
+ static void uri_add(ezxml_t response, int index, int version, int snapshot)
+@@ -279,6 +299,15 @@ int media_profiles_dispatch(const char *
+     }
+     response = soap_response_create(version, operation);
+     if (uri) {
++        if ((!strcmp(operation, "GetSnapshotUri") &&
++             (!service_ctx.profiles[index].snapurl || !*service_ctx.profiles[index].snapurl)) ||
++            (!strcmp(operation, "GetStreamUri") &&
++             (!service_ctx.profiles[index].url || !*service_ctx.profiles[index].url))) {
++            ezxml_free(response->parent->parent);
++            send_fault((char *)service, "Sender", "ter:InvalidArgVal", "ter:IncompleteConfiguration",
++                       "Missing URI", "The requested profile has no configured URI");
++            return 1;
++        }
+         uri_add(response, index, version, !strcmp(operation, "GetSnapshotUri"));
+         soap_response_send(response);
+         return 1;
+--- a/soap.c
++++ b/soap.c
+@@ -1,5 +1,6 @@
+ /* SPDX-License-Identifier: GPL-3.0-only */
+ #include <stdio.h>
++#include <math.h>
+ #include <string.h>
+ 
+ #include "soap.h"
+@@ -19,7 +20,7 @@ ezxml_t soap_number_add(ezxml_t parent,
+ {
+     char number[MAX_LEN];
+ 
+-    snprintf(number, sizeof(number), "%.9g", value);
++    snprintf(number, sizeof(number), value == trunc(value) ? "%.0f" : "%.9g", value);
+     return soap_child_add(parent, name, number);
+ }
+ 
+--- a/test/test_cgi.py
++++ b/test/test_cgi.py
+@@ -206,6 +206,35 @@ class CGITests(unittest.TestCase):
+             path.write_text(original)
+             self.assertEqual(request('media2', 'SetVideoEncoderConfiguration',
+                                      '<Configuration token="missing"/>', config)[0], 500)
++
++    def test_encoder_setter_codecs(self):
++        with helper_configuration() as (config, path):
++            original = path.read_text()
++            for service, codec in [('media', 'H264'), ('media', 'JPEG'),
++                                   ('media2', 'H264'), ('media2', 'H265'), ('media2', 'JPEG')]:
++                state = json.loads(original)
++                state['profiles'][3].update(type=codec, encoding_profile='Main')
++                path.write_text(json.dumps(state))
++                operation = 'GetVideoEncoderConfiguration' if service == 'media' else 'GetVideoEncoderConfigurations'
++                status, root = request(service, operation,
++                                       '<ConfigurationToken>Profile_3_VideoEncoderToken</ConfigurationToken>', config)
++                self.assertEqual(status, 200)
++                node = root.find('.//{*}Configuration') if service == 'media' else root.find('.//{*}Configurations')
++                node.tag = 'Configuration'
++                node.find('tt:RateControl/tt:BitrateLimit', NS).text = '2345'
++                content = ET.tostring(node).decode()
++                status, root = request(service, 'SetVideoEncoderConfiguration', content, config)
++                self.assertEqual(status, 200, (service, codec))
++                self.assertEqual(json.loads(path.read_text())['last_set']['configuration']['bitrate'], 2345)
++                state = json.loads(path.read_text())
++                state['bad_reply'] = True
++                path.write_text(json.dumps(state))
++                self.assertEqual(request(service, 'SetVideoEncoderConfiguration', content, config)[0], 500)
++
++    def test_missing_snapshot(self):
++        for service in ['media', 'media2']:
++            self.assertEqual(request(service, 'GetSnapshotUri',
++                                     '<ProfileToken>Profile_0</ProfileToken>')[0], 500)
+     def test_operation_namespace(self):
+         status, root = request('media', 'GetProfiles', namespace='urn:unrelated')
+         self.assertEqual(status, 500)
+--- a/test/test_schema.py
++++ b/test/test_schema.py
+@@ -67,6 +67,14 @@ class SchemaTests(unittest.TestCase):
+                 self.validate(service, 'GetProfiles', '<Type>All</Type>', config)
+                 self.validate(service, 'GetVideoEncoderConfigurationOptions', config=config)
+ 
++    def test_audio_profile_order(self):
++        config = configuration(4)
++        for profile in config['profiles']:
++            profile['audio_encoder'] = 'AAC'
++            profile['audio_decoder'] = 'AAC'
++        for service in ['media', 'media2']:
++            self.validate(service, 'GetProfiles', '<Type>All</Type>', config)
++
+     def test_imaging_helper(self):
+         with helper_configuration() as (config, path):
+             config['imaging_helper'] = config.pop('encoder_helper')

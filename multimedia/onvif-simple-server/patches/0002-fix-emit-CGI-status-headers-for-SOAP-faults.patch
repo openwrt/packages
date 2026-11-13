@@ -1,0 +1,114 @@
+From 2d449074298d8f25df4e46de60a7a5c54582c8f6 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Sun, 18 Oct 2026 00:51:38 +0100
+Subject: [PATCH 02/15] fix: emit CGI status headers for SOAP faults
+
+CGI servers consume Status headers rather than HTTP response lines.
+Return the intended failure status through the CGI interface so uhttpd
+and other CGI hosts can relay SOAP faults correctly.
+
+Fixes: 041f9ba8a189 ("Change template Error.xml to Fault.xml")
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ Makefile            |  9 ++++++++-
+ fault.c             |  9 +++------
+ test/test_faults.c  | 19 +++++++++++++++++++
+ test/test_faults.py | 11 +++++++++++
+ 4 files changed, 41 insertions(+), 7 deletions(-)
+ create mode 100644 test/test_faults.c
+ create mode 100644 test/test_faults.py
+
+--- a/Makefile
++++ b/Makefile
+@@ -56,8 +56,14 @@ wsd_simple_server: $(OBJECTS_W)
+ 
+ # Build and run unit tests using the native host compiler.
+ # Uses stub mbedTLS headers from test/ so no crypto library is required.
+-test: test/test_utils
++test: test/test_utils test/test_faults
+ 	./test/test_utils
++	python3 test/test_faults.py
++
++test/test_faults: test/test_faults.c test/stubs.c fault.c utils.c log.c
++	cc -I. -Itest -DHAVE_MBEDTLS -D_GNU_SOURCE -std=c99 \
++		test/test_faults.c test/stubs.c fault.c utils.c log.c \
++		-lz -lpthread -lrt -o test/test_faults
+ 
+ test/test_utils: test/test_utils.c test/stubs.c utils.c log.c
+ 	cc -I. -Itest -DHAVE_MBEDTLS -D_GNU_SOURCE -std=c99 \
+@@ -69,6 +75,7 @@ clean:
+ 	rm -f onvif_notify_server
+ 	rm -f wsd_simple_server
+ 	rm -f test/test_utils
++	rm -f test/test_faults
+ 	rm -f $(OBJECTS_O)
+ 	rm -f $(OBJECTS_N)
+ 	rm -f $(OBJECTS_W)
+--- a/fault.c
++++ b/fault.c
+@@ -70,8 +70,7 @@ int send_fault(char *service, char *rec_
+             "%REASON%", reason,
+             "%DETAIL%", detail);
+ 
+-//    fprintf(stdout, "Status: 500 Internal Server Error\r\n");
+-    fprintf(stdout, "HTTP/1.1 500 Internal Server Error\r\n");
++    fprintf(stdout, "Status: 500 Internal Server Error\r\n");
+     fprintf(stdout, "Content-type: application/soap+xml\r\n");
+     fprintf(stdout, "Content-Length: %ld\r\n", size);
+     fprintf(stdout, "\r\n");
+@@ -93,8 +92,7 @@ int send_pull_messages_fault(char *timeo
+         "%MAX_TIMEOUT%", timeout,
+         "%MAX_MESSAGE_LIMIT%", message_limit);
+ 
+-//    fprintf(stdout, "Status: 500 Internal Server Error\r\n");
+-    fprintf(stdout, "HTTP/1.1 500 Internal Server Error\r\n");
++    fprintf(stdout, "Status: 500 Internal Server Error\r\n");
+     fprintf(stdout, "Content-type: application/soap+xml\r\n");
+     fprintf(stdout, "Content-Length: %ld\r\n\r\n", size);
+ 
+@@ -121,8 +119,7 @@ int send_authentication_error()
+ {
+     long size = cat(NULL, "generic_files/AuthenticationError.xml", 0);
+ 
+-//    fprintf(stdout, "Status: 400 Bad request\r\n");
+-    fprintf(stdout, "HTTP/1.1 400 Bad request\r\n");
++    fprintf(stdout, "Status: 400 Bad request\r\n");
+     fprintf(stdout, "Content-type: application/soap+xml\r\n");
+     fprintf(stdout, "Content-Length: %ld\r\n\r\n", size);
+ 
+--- /dev/null
++++ b/test/test_faults.c
+@@ -0,0 +1,19 @@
++#include <string.h>
++
++#include "onvif_simple_server.h"
++#include "fault.h"
++
++service_context_t service_ctx;
++
++int main(int argc, char **argv)
++{
++    service_ctx.port = 80;
++    strcpy(service_ctx.address_url, "127.0.0.1");
++    if (argc != 2)
++        return 1;
++    if (!strcmp(argv[1], "authentication"))
++        return send_authentication_error() < 0;
++    if (!strcmp(argv[1], "pull"))
++        return send_pull_messages_fault("PT1S", "1") < 0;
++    return send_action_not_supported_fault("media_service") < 0;
++}
+--- /dev/null
++++ b/test/test_faults.py
+@@ -0,0 +1,11 @@
++import subprocess
++import xml.etree.ElementTree as ET
++
++for operation, status in [('action', 500), ('pull', 500), ('authentication', 400)]:
++    response = subprocess.check_output(['./test/test_faults', operation])
++    headers, body = response.split(b'\r\n\r\n', 1)
++    fields = dict(line.split(b': ', 1) for line in headers.split(b'\r\n'))
++    assert int(fields[b'Status'].split()[0]) == status
++    assert int(fields[b'Content-Length']) == len(body)
++    ET.fromstring(body)
++print('CGI fault status, length and XML: 3 passed')

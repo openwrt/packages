@@ -1,0 +1,1320 @@
+From 4c87faf36913489ce993828c30101bf2a96ac2c0 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Sun, 18 Oct 2026 10:18:45 +0100
+Subject: [PATCH 06/15] feat: describe configured video encoding parameters
+ accurately
+
+Configure codec profile, GOP, quality, encoding interval and fractional
+frame rate in both input formats. Share source and encoder options with
+configuration responses and allow explicit sensor dimensions.
+
+Expose H265 through Media2, omit H264 members from JPEG configurations,
+and preserve literal percent escapes when formatting stream URLs.
+Media1 uses an integer upper bound for fractional frame-rate limits.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ Makefile              |   7 +-
+ Makefile.static       |   2 +-
+ README.md             |  21 ++++
+ conf.c                | 114 ++++++++++++++++-----
+ media2_service.c      | 144 ---------------------------
+ media2_service.h      |   3 -
+ media_options.c       | 158 +++++++++++++++++++++++++++++
+ media_options.h       |   7 ++
+ media_profiles.c      |  84 +++++++++++-----
+ media_profiles.h      |   5 +
+ media_service.c       | 225 ------------------------------------------
+ media_service.h       |   6 --
+ onvif_simple_server.c |  19 ++--
+ onvif_simple_server.h |   9 ++
+ soap.c                |   9 ++
+ soap.h                |   1 +
+ test/test_cgi.py      |  69 ++++++++++++-
+ 17 files changed, 442 insertions(+), 441 deletions(-)
+ create mode 100644 media_options.c
+ create mode 100644 media_options.h
+
+--- a/Makefile
++++ b/Makefile
+@@ -1,7 +1,7 @@
+ # Set HAVE_WOLFSSL or HAVE_MBEDTLS variable if you want to use WOLFSSL or
+ # MBEDTLS instead of LIBTOMCRYPT
+ 
+-OBJECTS_O = soap.o media_profiles.o onvif_simple_server.o device_service.o media_service.o media2_service.o ptz_service.o events_service.o deviceio_service.o fault.o conf.o utils_zlib.o log.o ezxml_wrapper.o ezxml/ezxml.o
++OBJECTS_O = media_options.o soap.o media_profiles.o onvif_simple_server.o device_service.o media_service.o media2_service.o ptz_service.o events_service.o deviceio_service.o fault.o conf.o utils_zlib.o log.o ezxml_wrapper.o ezxml/ezxml.o
+ OBJECTS_N = onvif_notify_server.o conf.o utils.o log.o ezxml_wrapper.o ezxml/ezxml.o
+ OBJECTS_W = wsd_simple_server.o utils.o log.o ezxml_wrapper.o ezxml/ezxml.o
+ ifdef HAVE_WOLFSSL
+@@ -52,7 +52,10 @@ wsd_simple_server: $(OBJECTS_W)
+ 	$(CC) $(OBJECTS_W) $(LIBS_W) -fPIC -Os -o $@
+ 	$(STRIP) $@
+ 
+-.PHONY: all clean test
++.PHONY: all clean test test-cgi
++
++test-cgi: onvif_simple_server
++	python3 test/test_cgi.py
+ 
+ # Build and run unit tests using the native host compiler.
+ # Uses stub mbedTLS headers from test/ so no crypto library is required.
+--- a/Makefile.static
++++ b/Makefile.static
+@@ -1,7 +1,7 @@
+ # Set HAVE_WOLFSSL or HAVE_MBEDTLS variable if you want to use WOLFSSL or
+ # MBEDTLS instead of LIBTOMCRYPT
+ 
+-OBJECTS_O = soap.o media_profiles.o onvif_simple_server.o device_service.o media_service.o media2_service.o ptz_service.o events_service.o deviceio_service.o fault.o conf.o utils_zlib.o log.o ezxml_wrapper.o ezxml/ezxml.o
++OBJECTS_O = media_options.o soap.o media_profiles.o onvif_simple_server.o device_service.o media_service.o media2_service.o ptz_service.o events_service.o deviceio_service.o fault.o conf.o utils_zlib.o log.o ezxml_wrapper.o ezxml/ezxml.o
+ OBJECTS_N = onvif_notify_server.o conf.o utils.o log.o ezxml_wrapper.o ezxml/ezxml.o
+ OBJECTS_W = wsd_simple_server.o utils.o log.o ezxml_wrapper.o ezxml/ezxml.o
+ ifdef HAVE_WOLFSSL
+--- a/README.md
++++ b/README.md
+@@ -66,6 +66,27 @@ diff -Naur busybox-1.36.1.ori/networking
+ ```
+ 
+ ## Configuration
++### Video parameters
++
++Each profile accepts `bitrate` (kbps), `framerate` (numerator),
++`framerate_den` (default 1), `gov_length`, `encoding_interval`, `quality`
++and `encoding_profile` (for example `Baseline`, `Main` or `High`). Text and
++JSON configurations use the same field names. Profile names must be unique.
++Set these fields to the actual encoder configuration. Compatibility defaults
++are 30 fps, GOP 40, quality 100, encoding interval 1 and H264 High/H265 Main.
++A bitrate of zero denotes an unspecified limit; no bandwidth is invented.
++
++Media2 reports fractional frame rates. Media1 requires an integer upper
++frame-rate limit, so a fractional rate is rounded upwards for that field.
++H265 streams are exposed through Media2 and excluded from Media1. JPEG
++descriptions omit inter-frame codec settings. Static configuration options
++describe current settings.
++
++Optional global `source_width`, `source_height`, `source_framerate` and
++`source_framerate_den` describe the sensor independently of encoded outputs.
++Without source dimensions, the largest configured output provides the legacy
++fallback. The source token remains stable when profiles change.
++
+ Set `ONVIF_LOG_FILE=-` in the CGI environment to log to stderr. A pathname
+ selects an append-only log managed by the HTTP host. With the variable unset,
+ the existing log file and rotation behaviour are retained.
+--- a/conf.c
++++ b/conf.c
+@@ -24,6 +24,7 @@
+ #include <limits.h>
+ #include <errno.h>
+ #include <net/if.h>
++#include <math.h>
+ 
+ #include <json-c/json.h>
+ #include "conf.h"
+@@ -33,6 +34,54 @@
+ 
+ extern service_context_t service_ctx;
+ 
++#define DEFAULT_GOV_LENGTH 40
++#define DEFAULT_VIDEO_QUALITY 100
++#define DEFAULT_FRAME_RATE 30
++
++static void profile_init(stream_profile_t *profile)
++{
++    memset(profile, 0, sizeof(*profile));
++    profile->type = H264;
++    profile->framerate = DEFAULT_FRAME_RATE;
++    profile->framerate_den = 1;
++    profile->gov_length = DEFAULT_GOV_LENGTH;
++    profile->encoding_interval = 1;
++    profile->quality = DEFAULT_VIDEO_QUALITY;
++    profile->audio_encoder = AAC;
++}
++
++static int profiles_validate(void)
++{
++    stream_profile_t *profile;
++    int i;
++    int j;
++
++    if (service_ctx.source_width < 0 || service_ctx.source_height < 0 ||
++        service_ctx.source_framerate < 0 || service_ctx.source_framerate_den <= 0 ||
++        (!!service_ctx.source_width != !!service_ctx.source_height))
++        return -2;
++    for (i = 0; i < service_ctx.profiles_num; i++) {
++        profile = &service_ctx.profiles[i];
++        if (!profile->name || !*profile->name || profile->width <= 0 ||
++            profile->height <= 0 || profile->framerate <= 0 ||
++            profile->framerate_den <= 0 || profile->bitrate < 0 ||
++            profile->gov_length <= 0 || profile->encoding_interval <= 0 ||
++            !isfinite(profile->quality) || profile->quality < 0)
++            return -2;
++        for (j = 0; j < i; j++)
++            if (!strcmp(profile->name, service_ctx.profiles[j].name))
++                return -2;
++        if (!profile->encoding_profile)
++            profile->encoding_profile = strdup(profile->type == H265 ? "Main" : "High");
++        if (profile->type == H264 && strcmp(profile->encoding_profile, "Baseline") &&
++            strcmp(profile->encoding_profile, "Main") &&
++            strcmp(profile->encoding_profile, "Extended") &&
++            strcmp(profile->encoding_profile, "High"))
++            return -2;
++    }
++    return 0;
++}
++
+ int process_conf_file(char *file)
+ {
+     FILE *fF;
+@@ -65,6 +114,10 @@ int process_conf_file(char *file)
+     service_ctx.adv_synology_nvr = 0;
+     service_ctx.profiles = NULL;
+     service_ctx.profiles_num = 0;
++    service_ctx.source_width = 0;
++    service_ctx.source_height = 0;
++    service_ctx.source_framerate = 0;
++    service_ctx.source_framerate_den = 1;
+     service_ctx.scopes = NULL;
+     service_ctx.scopes_num = 0;
+     service_ctx.ptz_node.enable = 0;
+@@ -202,10 +255,20 @@ int process_conf_file(char *file)
+             service_ctx.factory_default_command = (char *) malloc(strlen(value) + 1);
+             snprintf(service_ctx.factory_default_command, strlen(value) + 1, "%s", value);
+ 
++        } else if (strcasecmp(param, "source_width") == 0) {
++            service_ctx.source_width = atoi(value);
++        } else if (strcasecmp(param, "source_height") == 0) {
++            service_ctx.source_height = atoi(value);
++        } else if (strcasecmp(param, "source_framerate") == 0) {
++            service_ctx.source_framerate = atoi(value);
++        } else if (strcasecmp(param, "source_framerate_den") == 0) {
++            service_ctx.source_framerate_den = atoi(value);
++
+         //Media Profile for ONVIF Media Service
+         } else if (strcasecmp(param, "name") == 0) {
+             service_ctx.profiles_num++;
+             service_ctx.profiles = (stream_profile_t *) realloc(service_ctx.profiles, service_ctx.profiles_num * sizeof(stream_profile_t));
++            profile_init(&service_ctx.profiles[service_ctx.profiles_num - 1]);
+ 
+             size_t vlen = strlen(value);
+             while (vlen > 0 && value[vlen - 1] == '_') value[--vlen] = '\0';
+@@ -221,15 +284,6 @@ int process_conf_file(char *file)
+             }
+             service_ctx.profiles[service_ctx.profiles_num - 1].name = (char *) malloc(strlen(value) + 1);
+             snprintf(service_ctx.profiles[service_ctx.profiles_num - 1].name, strlen(value) + 1, "%s", value);
+-            service_ctx.profiles[service_ctx.profiles_num - 1].width = 0;
+-            service_ctx.profiles[service_ctx.profiles_num - 1].height = 0;
+-            service_ctx.profiles[service_ctx.profiles_num - 1].url = NULL;
+-            service_ctx.profiles[service_ctx.profiles_num - 1].snapurl = NULL;
+-            service_ctx.profiles[service_ctx.profiles_num - 1].type = H264;
+-            service_ctx.profiles[service_ctx.profiles_num - 1].bitrate = 0;
+-            service_ctx.profiles[service_ctx.profiles_num - 1].framerate = 30;
+-            service_ctx.profiles[service_ctx.profiles_num - 1].audio_encoder = AAC;
+-            service_ctx.profiles[service_ctx.profiles_num - 1].audio_decoder = AUDIO_NONE;
+         } else if (strcasecmp(param, "width") == 0) {
+             errno = 0;
+             service_ctx.profiles[service_ctx.profiles_num - 1].width = strtol(value, &endptr, 10);
+@@ -275,6 +329,16 @@ int process_conf_file(char *file)
+             service_ctx.profiles[service_ctx.profiles_num - 1].bitrate = atoi(value);
+         } else if (strcasecmp(param, "framerate") == 0) {
+             service_ctx.profiles[service_ctx.profiles_num - 1].framerate = atoi(value);
++        } else if (strcasecmp(param, "framerate_den") == 0) {
++            service_ctx.profiles[service_ctx.profiles_num - 1].framerate_den = atoi(value);
++        } else if (strcasecmp(param, "gov_length") == 0) {
++            service_ctx.profiles[service_ctx.profiles_num - 1].gov_length = atoi(value);
++        } else if (strcasecmp(param, "encoding_interval") == 0) {
++            service_ctx.profiles[service_ctx.profiles_num - 1].encoding_interval = atoi(value);
++        } else if (strcasecmp(param, "quality") == 0) {
++            service_ctx.profiles[service_ctx.profiles_num - 1].quality = strtod(value, NULL);
++        } else if (strcasecmp(param, "encoding_profile") == 0) {
++            service_ctx.profiles[service_ctx.profiles_num - 1].encoding_profile = strdup(value);
+         } else if (strcasecmp(param, "audio_encoder") == 0) {
+             if (strcasecmp(value, "NONE") == 0)
+                 service_ctx.profiles[service_ctx.profiles_num - 1].audio_encoder = AUDIO_NONE;
+@@ -699,7 +763,7 @@ int process_conf_file(char *file)
+         log_info("Device UUID: %s", service_ctx.device_uuid);
+     }
+ 
+-    return 0;
++    return profiles_validate();
+ }
+ 
+ // Remember to free the string
+@@ -734,7 +798,7 @@ void get_double_from_json(double* var, j
+     json_object* d = NULL;
+ 
+     if (json_object_object_get_ex(j, name, &d)) {
+-        if (json_object_is_type(d, json_type_double)) {
++        if (json_object_is_type(d, json_type_double) || json_object_is_type(d, json_type_int)) {
+             *var = json_object_get_double(d);
+         }
+     }
+@@ -818,6 +882,10 @@ int process_json_conf_file(char *file)
+     service_ctx.adv_synology_nvr = 0;
+     service_ctx.profiles = NULL;
+     service_ctx.profiles_num = 0;
++    service_ctx.source_width = 0;
++    service_ctx.source_height = 0;
++    service_ctx.source_framerate = 0;
++    service_ctx.source_framerate_den = 1;
+     service_ctx.scopes = NULL;
+     service_ctx.scopes_num = 0;
+     service_ctx.ptz_node.enable = 0;
+@@ -881,6 +949,10 @@ int process_json_conf_file(char *file)
+     get_bool_from_json(&(service_ctx.adv_empty_if_unknown), json_file, "adv_empty_if_unknown");
+     get_bool_from_json(&(service_ctx.adv_fault_if_unknown), json_file, "adv_fault_if_unknown");
+     get_bool_from_json(&(service_ctx.adv_fault_if_set), json_file, "adv_fault_if_set");
++    get_int_from_json(&service_ctx.source_width, json_file, "source_width");
++    get_int_from_json(&service_ctx.source_height, json_file, "source_height");
++    get_int_from_json(&service_ctx.source_framerate, json_file, "source_framerate");
++    get_int_from_json(&service_ctx.source_framerate_den, json_file, "source_framerate_den");
+     get_bool_from_json(&(service_ctx.adv_synology_nvr), json_file, "adv_synology_nvr");
+ 
+     // Apply sane defaults for required fields if not provided in config
+@@ -988,18 +1060,8 @@ int process_json_conf_file(char *file)
+ 
+                 service_ctx.profiles_num++;
+                 service_ctx.profiles = (stream_profile_t *) realloc(service_ctx.profiles, service_ctx.profiles_num * sizeof(stream_profile_t));
++            profile_init(&service_ctx.profiles[service_ctx.profiles_num - 1]);
+ 
+-                // Init defaults
+-                service_ctx.profiles[service_ctx.profiles_num - 1].name = NULL;
+-                service_ctx.profiles[service_ctx.profiles_num - 1].width = 0;
+-                service_ctx.profiles[service_ctx.profiles_num - 1].height = 0;
+-                service_ctx.profiles[service_ctx.profiles_num - 1].url = NULL;
+-                service_ctx.profiles[service_ctx.profiles_num - 1].snapurl = NULL;
+-                service_ctx.profiles[service_ctx.profiles_num - 1].type = H264;
+-                service_ctx.profiles[service_ctx.profiles_num - 1].bitrate = 0;
+-                service_ctx.profiles[service_ctx.profiles_num - 1].framerate = 30;
+-                service_ctx.profiles[service_ctx.profiles_num - 1].audio_encoder = AAC;
+-                service_ctx.profiles[service_ctx.profiles_num - 1].audio_decoder = AUDIO_NONE;
+ 
+                 get_string_from_json(&(service_ctx.profiles[service_ctx.profiles_num - 1].name), item, "name");
+                 char *n = service_ctx.profiles[service_ctx.profiles_num - 1].name;
+@@ -1020,6 +1082,11 @@ int process_json_conf_file(char *file)
+                 get_int_from_json(&(service_ctx.profiles[service_ctx.profiles_num - 1].height), item, "height");
+                 get_int_from_json(&(service_ctx.profiles[service_ctx.profiles_num - 1].bitrate), item, "bitrate");
+                 get_int_from_json(&(service_ctx.profiles[service_ctx.profiles_num - 1].framerate), item, "framerate");
++                get_int_from_json(&service_ctx.profiles[i].framerate_den, item, "framerate_den");
++                get_int_from_json(&service_ctx.profiles[i].gov_length, item, "gov_length");
++                get_int_from_json(&service_ctx.profiles[i].encoding_interval, item, "encoding_interval");
++                get_double_from_json(&service_ctx.profiles[i].quality, item, "quality");
++                get_string_from_json(&service_ctx.profiles[i].encoding_profile, item, "encoding_profile");
+                 get_string_from_json(&(service_ctx.profiles[service_ctx.profiles_num - 1].url), item, "url");
+                 get_string_from_json(&(service_ctx.profiles[service_ctx.profiles_num - 1].snapurl), item, "snapurl");
+                 tmp = NULL;
+@@ -1275,7 +1342,7 @@ int process_json_conf_file(char *file)
+     json_object_put(json_file);
+     free(buffer);
+ 
+-    return 0;
++    return profiles_validate();
+ }
+ 
+ void free_conf_file()
+@@ -1321,6 +1388,7 @@ void free_conf_file()
+         if (service_ctx.profiles[i].snapurl != NULL) free(service_ctx.profiles[i].snapurl);
+         if (service_ctx.profiles[i].url != NULL) free(service_ctx.profiles[i].url);
+         if (service_ctx.profiles[i].name != NULL) free(service_ctx.profiles[i].name);
++        free(service_ctx.profiles[i].encoding_profile);
+     }
+     if (service_ctx.profiles != NULL) free(service_ctx.profiles);
+ 
+--- a/media2_service.c
++++ b/media2_service.c
+@@ -113,153 +113,9 @@ int media2_get_video_source_modes()
+     }
+ }
+ 
+-int media2_get_video_source_configurations()
+-{
+-    const char *configuration_token = get_element("ConfigurationToken", "Body");
+-    const char *profile_token = get_element("ProfileToken", "Body");
+-    char token[23];
+-    char profiles_num[2], stmp_w[16], stmp_h[16];
+-
+-    memset(token, '\0', sizeof(token));
+-    if (profile_token != NULL) {
+-        // Extract "Profile_x" from token Profile_x
+-        strncpy(token, profile_token, 9);
+-    } else if (configuration_token != NULL) {
+-        strncpy(token, configuration_token, 22);
+-    } else if (service_ctx.profiles_num > 0) {
+-        strncpy(token, service_ctx.profiles[0].name, 9);
+-    }
+-
+-    if ((strcasecmp(service_ctx.profiles[0].name, token) == 0) ||
+-            (strcasecmp(service_ctx.profiles[1].name, token) == 0) ||
+-            (strcasecmp("VideoSourceConfigToken", token) == 0)) {
+-
+-        int vsrc = get_video_source_index();
+-        snprintf(profiles_num, sizeof(profiles_num), "%d", service_ctx.profiles_num);
+-        snprintf(stmp_w, sizeof(stmp_w), "%d", service_ctx.profiles[vsrc].width);
+-        snprintf(stmp_h, sizeof(stmp_h), "%d", service_ctx.profiles[vsrc].height);
+-        long size = cat(NULL, "media2_service_files/GetVideoSourceConfigurations.xml", 6,
+-                "%PROFILES_NUM%", profiles_num,
+-                "%WIDTH%", stmp_w,
+-                "%HEIGHT%", stmp_h);
+ 
+-        output_http_headers(size);
+ 
+-        return cat("stdout", "media2_service_files/GetVideoSourceConfigurations.xml", 6,
+-                "%PROFILES_NUM%", profiles_num,
+-                "%WIDTH%", stmp_w,
+-                "%HEIGHT%", stmp_h);
+-    } else {
+-        send_fault("media2_service", "Sender", "ter:InvalidArgVal", "ter:NoConfig", "No config", "The requested configuration indicated does not exist");
+-        return -1;
+-    }
+-}
+-
+-int media2_get_video_source_configuration_options()
+-{
+-    const char *configuration_token = get_element("ConfigurationToken", "Body");
+-    const char *profile_token = get_element("ProfileToken", "Body");
+-    char token[23];
+-    char stmp_w[16], stmp_h[16];
+ 
+-    memset(token, '\0', sizeof(token));
+-    if (profile_token != NULL) {
+-        // Extract "Profile_x" from token Profile_x
+-        strncpy(token, profile_token, 9);
+-    } else if (configuration_token != NULL) {
+-        strncpy(token, configuration_token, 22);
+-    } else if (service_ctx.profiles_num > 0) {
+-        strncpy(token, service_ctx.profiles[0].name, 9);
+-    }
+-
+-    if ((strcasecmp(service_ctx.profiles[0].name, token) == 0) ||
+-            (strcasecmp(service_ctx.profiles[1].name, token) == 0) ||
+-            (strcasecmp("VideoSourceConfigToken", token) == 0)) {
+-
+-        int vsrc = get_video_source_index();
+-        snprintf(stmp_w, sizeof(stmp_w), "%d", service_ctx.profiles[vsrc].width);
+-        snprintf(stmp_h, sizeof(stmp_h), "%d", service_ctx.profiles[vsrc].height);
+-        long size = cat(NULL, "media2_service_files/GetVideoSourceConfigurationOptions.xml", 4,
+-                "%WIDTH%", stmp_w,
+-                "%HEIGHT%", stmp_h);
+-
+-        output_http_headers(size);
+-
+-        return cat("stdout", "media2_service_files/GetVideoSourceConfigurationOptions.xml", 4,
+-                "%WIDTH%", stmp_w,
+-                "%HEIGHT%", stmp_h);
+-
+-    } else {
+-        send_fault("media2_service", "Sender", "ter:InvalidArgVal", "ter:NoConfig", "No config", "The requested configuration indicated does not exist");
+-        return -1;
+-    }
+-}
+-
+-
+-int media2_get_video_encoder_configuration_options()
+-{
+-    char stmp_w[16], stmp_h[16];
+-    const char *configuration_token = get_element("ConfigurationToken", "Body");
+-    const char *profile_token = get_element("ProfileToken", "Body");
+-    char token[10];
+-    char video_enc[16];
+-
+-    memset(token, '\0', sizeof(token));
+-    if (configuration_token != NULL) {
+-        // Extract "Profile_x" from token Profile_x_VideoEncoderConfig
+-        strncpy(token, configuration_token, 9);
+-    } else if (profile_token != NULL) {
+-        // Extract "Profile_x" from token Profile_x
+-        strncpy(token, profile_token, 9);
+-    } else if (service_ctx.profiles_num > 0) {
+-        strncpy(token, service_ctx.profiles[0].name, 9);
+-    }
+-
+-    if ((service_ctx.profiles_num > 0) &&
+-            (strcasecmp(service_ctx.profiles[0].name, token) == 0)) {
+-
+-        snprintf(stmp_w, sizeof(stmp_w), "%d", service_ctx.profiles[0].width);
+-        snprintf(stmp_h, sizeof(stmp_h), "%d", service_ctx.profiles[0].height);
+-        set_video_codec(video_enc, 16, service_ctx.profiles[0].type, 2);
+-        long size = cat(NULL, "media2_service_files/GetVideoEncoderConfigurationOptions.xml", 8,
+-                "%WIDTH%", stmp_w,
+-                "%HEIGHT%", stmp_h,
+-                "%H264PROFILE%", "High",
+-                "%VIDEO_ENCODING%", video_enc);
+-
+-        output_http_headers(size);
+-
+-        return cat("stdout", "media2_service_files/GetVideoEncoderConfigurationOptions.xml", 8,
+-                "%WIDTH%", stmp_w,
+-                "%HEIGHT%", stmp_h,
+-                "%H264PROFILE%", "High",
+-                "%VIDEO_ENCODING%", video_enc);
+-
+-    } else if ((service_ctx.profiles_num == 2) &&
+-            (strcasecmp(service_ctx.profiles[1].name, token) == 0)) {
+-
+-        snprintf(stmp_w, sizeof(stmp_w), "%d", service_ctx.profiles[1].width);
+-        snprintf(stmp_h, sizeof(stmp_h), "%d", service_ctx.profiles[1].height);
+-        set_video_codec(video_enc, 16, service_ctx.profiles[1].type, 2);
+-        long size = cat(NULL, "media2_service_files/GetVideoEncoderConfigurationOptions.xml", 8,
+-                "%WIDTH%", stmp_w,
+-                "%HEIGHT%", stmp_h,
+-                "%H264PROFILE%", "Main",
+-                "%VIDEO_ENCODING%", video_enc);
+-
+-        output_http_headers(size);
+-
+-        return cat("stdout", "media2_service_files/GetVideoEncoderConfigurationOptions.xml", 8,
+-                "%WIDTH%", stmp_w,
+-                "%HEIGHT%", stmp_h,
+-                "%H264PROFILE%", "Main",
+-                "%VIDEO_ENCODING%", video_enc);
+-
+-    } else {
+-        send_fault("media2_service", "Sender", "ter:InvalidArgVal", "ter:NoProfile", "No profile", "The requested profile does not exist");
+-        return -1;
+-    }
+-}
+ 
+ int media2_get_audio_source_configurations()
+ {
+--- a/media2_service.h
++++ b/media2_service.h
+@@ -19,9 +19,6 @@
+ 
+ int media2_get_service_capabilities();
+ int media2_get_video_source_modes();
+-int media2_get_video_source_configurations();
+-int media2_get_video_source_configuration_options();
+-int media2_get_video_encoder_configuration_options();
+ int media2_get_audio_source_configurations();
+ int media2_get_audio_source_configuration_options();
+ int media2_get_audio_encoder_configurations();
+--- /dev/null
++++ b/media_options.c
+@@ -0,0 +1,158 @@
++/* SPDX-License-Identifier: GPL-3.0-only */
++#include <stdio.h>
++#include <string.h>
++
++#include "ezxml_wrapper.h"
++#include "media_options.h"
++#include "media_profiles.h"
++#include "onvif_simple_server.h"
++#include "fault.h"
++#include "soap.h"
++#include "utils.h"
++
++extern service_context_t service_ctx;
++
++static int source_operation(const char *operation)
++{
++    return !strcmp(operation, "GetVideoSources") ||
++        !strcmp(operation, "GetVideoSourceConfigurations") ||
++        !strcmp(operation, "GetVideoSourceConfiguration") ||
++        !strcmp(operation, "GetCompatibleVideoSourceConfigurations") ||
++        !strcmp(operation, "GetVideoSourceConfigurationOptions");
++}
++
++static void source_add(ezxml_t response, const char *operation, int version)
++{
++    double framerate;
++    ezxml_t member;
++    ezxml_t bounds;
++    int height;
++    int width;
++
++    media_source_info(&width, &height, &framerate);
++    if (!strcmp(operation, "GetVideoSources")) {
++        member = soap_member_add(response, version, "VideoSources");
++        ezxml_set_attr(member, "token", "VideoSourceToken");
++        soap_number_add(member, "tt:Framerate", framerate);
++        bounds = soap_child_add(member, "tt:Resolution", NULL);
++        soap_number_add(bounds, "tt:Width", width);
++        soap_number_add(bounds, "tt:Height", height);
++        return;
++    }
++    if (!strcmp(operation, "GetVideoSourceConfigurationOptions")) {
++        member = soap_member_add(response, version, "Options");
++        bounds = soap_child_add(member, "tt:BoundsRange", NULL);
++        soap_range_add(bounds, "tt:XRange", 0, 0);
++        soap_range_add(bounds, "tt:YRange", 0, 0);
++        soap_range_add(bounds, "tt:WidthRange", width, width);
++        soap_range_add(bounds, "tt:HeightRange", height, height);
++        soap_child_add(member, "tt:VideoSourceTokensAvailable", "VideoSourceToken");
++        return;
++    }
++    member = soap_member_add(response, version,
++                             !strcmp(operation, "GetVideoSourceConfiguration") ?
++                             "Configuration" : "Configurations");
++    media_source_configuration_add(member);
++}
++
++static void encoder_options_add(ezxml_t response, stream_profile_t *profile, int version)
++{
++    char number[MAX_LEN];
++    char codec[MAX_LEN];
++    ezxml_t resolution;
++    ezxml_t options;
++    ezxml_t encoder;
++    double framerate;
++
++    framerate = (double)profile->framerate / profile->framerate_den;
++    set_video_codec(codec, sizeof(codec), profile->type, version);
++    options = soap_member_add(response, version, "Options");
++    if (version == 2) {
++        snprintf(number, sizeof(number), "%.9g", framerate);
++        ezxml_set_attr_d(options, "FrameRatesSupported", number);
++        if (profile->type == H264 || profile->type == H265) {
++            snprintf(number, sizeof(number), "%d %d", profile->gov_length, profile->gov_length);
++            ezxml_set_attr_d(options, "GovLengthRange", number);
++            ezxml_set_attr_d(options, "ProfilesSupported", profile->encoding_profile);
++        }
++        soap_child_add(options, "tt:Encoding", codec);
++    }
++    soap_range_add(options, "tt:QualityRange", profile->quality, profile->quality);
++    encoder = options;
++    if (version == 1) {
++        snprintf(number, sizeof(number), "tt:%s", codec);
++        encoder = soap_child_add(options, number, NULL);
++    }
++    resolution = soap_child_add(encoder, "tt:ResolutionsAvailable", NULL);
++    soap_number_add(resolution, "tt:Width", profile->width);
++    soap_number_add(resolution, "tt:Height", profile->height);
++    if (version == 2) {
++        soap_range_add(encoder, "tt:BitrateRange", profile->bitrate, profile->bitrate);
++        return;
++    }
++    if (profile->type == H264 || profile->type == MPEG4)
++        soap_range_add(encoder, "tt:GovLengthRange", profile->gov_length, profile->gov_length);
++    framerate = ((long long)profile->framerate + profile->framerate_den - 1) /
++                profile->framerate_den;
++    soap_range_add(encoder, "tt:FrameRateRange", framerate, framerate);
++    soap_range_add(encoder, "tt:EncodingIntervalRange", profile->encoding_interval,
++                   profile->encoding_interval);
++    if (profile->type == H264)
++        soap_child_add(encoder, "tt:H264ProfilesSupported", profile->encoding_profile);
++    if (profile->type == MPEG4)
++        soap_child_add(encoder, "tt:Mpeg4ProfilesSupported", "SP");
++}
++
++int media_options_dispatch(const char *operation, int version)
++{
++    const char *configuration_token;
++    const char *profile_token;
++    const char *service;
++    ezxml_t response;
++    int source;
++    int index;
++    int i;
++
++    source = source_operation(operation);
++    if (!source && strcmp(operation, "GetVideoEncoderConfigurationOptions"))
++        return 0;
++    service = version == 1 ? "media_service" : "media2_service";
++    configuration_token = get_element("ConfigurationToken", "Body");
++    profile_token = get_element("ProfileToken", "Body");
++    index = profile_token ? media_profile_find(profile_token, "") : -1;
++    if (profile_token && index < 0) {
++        send_fault((char *)service, "Sender", "ter:InvalidArgVal", "ter:NoProfile",
++                   "No profile", "The requested profile does not exist");
++        return 1;
++    }
++    if (configuration_token && source && strcmp(configuration_token, "VideoSourceConfigToken")) {
++        send_fault((char *)service, "Sender", "ter:InvalidArgVal", "ter:NoConfig",
++                   "No configuration", "The requested source configuration does not exist");
++        return 1;
++    }
++    if (configuration_token && !source) {
++        index = media_profile_find(configuration_token, "_VideoEncoderToken");
++        if (index < 0) {
++            send_fault((char *)service, "Sender", "ter:InvalidArgVal", "ter:NoConfig",
++                       "No configuration", "The requested encoder configuration does not exist");
++            return 1;
++        }
++    }
++    response = soap_response_create(version, operation);
++    if (source) {
++        source_add(response, operation, version);
++        soap_response_send(response);
++        return 1;
++    }
++    for (i = 0; i < service_ctx.profiles_num; i++) {
++        if (index >= 0 && index != i)
++            continue;
++        if (version == 1 && service_ctx.profiles[i].type == H265)
++            continue;
++        encoder_options_add(response, &service_ctx.profiles[i], version);
++        if (version == 1)
++            break;
++    }
++    soap_response_send(response);
++    return 1;
++}
+--- /dev/null
++++ b/media_options.h
+@@ -0,0 +1,7 @@
++/* SPDX-License-Identifier: GPL-3.0-only */
++#ifndef MEDIA_OPTIONS_H
++#define MEDIA_OPTIONS_H
++
++int media_options_dispatch(const char *operation, int version);
++
++#endif
+--- a/media_profiles.c
++++ b/media_profiles.c
+@@ -11,7 +11,7 @@
+ 
+ extern service_context_t service_ctx;
+ 
+-static int profile_find(const char *token, const char *suffix)
++int media_profile_find(const char *token, const char *suffix)
+ {
+     char name[MAX_LEN];
+     int i;
+@@ -40,11 +40,9 @@ static void multicast_add(ezxml_t parent
+     soap_child_add(multicast, "tt:AutoStart", "false");
+ }
+ 
+-static void source_configuration_add(ezxml_t node)
++void media_source_info(int *width, int *height, double *framerate)
+ {
+     stream_profile_t *source;
+-    char number[MAX_LEN];
+-    ezxml_t bounds;
+     int i;
+ 
+     source = NULL;
+@@ -52,6 +50,22 @@ static void source_configuration_add(ezx
+         if (!source || (long long)service_ctx.profiles[i].width * service_ctx.profiles[i].height >
+             (long long)source->width * source->height)
+             source = &service_ctx.profiles[i];
++    *width = service_ctx.source_width ? service_ctx.source_width : source ? source->width : 0;
++    *height = service_ctx.source_height ? service_ctx.source_height : source ? source->height : 0;
++    *framerate = service_ctx.source_framerate ?
++        (double)service_ctx.source_framerate / service_ctx.source_framerate_den :
++        source ? (double)source->framerate / source->framerate_den : 0;
++}
++
++void media_source_configuration_add(ezxml_t node)
++{
++    char number[MAX_LEN];
++    double framerate;
++    ezxml_t bounds;
++    int height;
++    int width;
++
++    media_source_info(&width, &height, &framerate);
+     ezxml_set_attr(node, "token", "VideoSourceConfigToken");
+     soap_child_add(node, "tt:Name", "VideoSourceConfig");
+     soap_number_add(node, "tt:UseCount", service_ctx.profiles_num);
+@@ -59,9 +73,9 @@ static void source_configuration_add(ezx
+     bounds = soap_child_add(node, "tt:Bounds", NULL);
+     ezxml_set_attr(bounds, "x", "0");
+     ezxml_set_attr(bounds, "y", "0");
+-    snprintf(number, sizeof(number), "%d", source ? source->width : 0);
++    snprintf(number, sizeof(number), "%d", width);
+     ezxml_set_attr_d(bounds, "width", number);
+-    snprintf(number, sizeof(number), "%d", source ? source->height : 0);
++    snprintf(number, sizeof(number), "%d", height);
+     ezxml_set_attr_d(bounds, "height", number);
+ }
+ 
+@@ -84,23 +98,30 @@ static void encoder_configuration_add(ez
+     resolution = soap_child_add(node, "tt:Resolution", NULL);
+     soap_number_add(resolution, "tt:Width", profile->width);
+     soap_number_add(resolution, "tt:Height", profile->height);
+-    soap_number_add(node, "tt:Quality", 100);
++    if (version == 1)
++        soap_number_add(node, "tt:Quality", profile->quality);
+     rate = soap_child_add(node, "tt:RateControl", NULL);
+-    soap_number_add(rate, "tt:FrameRateLimit", profile->framerate);
++    soap_number_add(rate, "tt:FrameRateLimit", version == 1 ?
++                    ((long long)profile->framerate + profile->framerate_den - 1) /
++                    profile->framerate_den :
++                    (double)profile->framerate / profile->framerate_den);
+     if (version == 1)
+-        soap_number_add(rate, "tt:EncodingInterval", 1);
++        soap_number_add(rate, "tt:EncodingInterval", profile->encoding_interval);
+     soap_number_add(rate, "tt:BitrateLimit", profile->bitrate);
+-    if (version == 1) {
++    if (version == 1 && profile->type == H264) {
+         h264 = soap_child_add(node, "tt:H264", NULL);
+-        soap_number_add(h264, "tt:GovLength", 40);
+-        soap_child_add(h264, "tt:H264Profile", index ? "Main" : "High");
+-    } else {
+-        ezxml_set_attr(node, "GovLength", "40");
+-        ezxml_set_attr(node, "Profile", index ? "Main" : "High");
++        soap_number_add(h264, "tt:GovLength", profile->gov_length);
++        soap_child_add(h264, "tt:H264Profile", profile->encoding_profile);
++    } else if (version == 2 && (profile->type == H264 || profile->type == H265)) {
++        snprintf(name, sizeof(name), "%d", profile->gov_length);
++        ezxml_set_attr_d(node, "GovLength", name);
++        ezxml_set_attr_d(node, "Profile", profile->encoding_profile);
+     }
+     multicast_add(node);
+     if (version == 1)
+         soap_child_add(node, "tt:SessionTimeout", "PT0S");
++    else
++        soap_number_add(node, "tt:Quality", profile->quality);
+ }
+ 
+ static int type_requested(const char *name)
+@@ -125,13 +146,13 @@ static void profile_add(ezxml_t node, in
+     profile = &service_ctx.profiles[index];
+     ezxml_set_attr_d(node, "token", profile->name);
+     ezxml_set_attr(node, "fixed", "true");
+-    child = soap_member_add(node, version, "Name");
++    child = soap_child_add(node, version == 1 ? "tt:Name" : "tr2:Name", NULL);
+     ezxml_set_txt_d(child, profile->name);
+     configurations = version == 1 ? node : soap_member_add(node, version, "Configurations");
+     if (version == 1 || type_requested("VideoSource")) {
+         child = soap_child_add(configurations, version == 1 ?
+                                "tt:VideoSourceConfiguration" : "tr2:VideoSource", NULL);
+-        source_configuration_add(child);
++        media_source_configuration_add(child);
+     }
+     if (version == 1 || type_requested("VideoEncoder")) {
+         child = soap_child_add(configurations, version == 1 ?
+@@ -176,6 +197,7 @@ static void uri_add(ezxml_t response, in
+ {
+     stream_profile_t *profile;
+     char uri[MAX_LEN];
++    const char *placeholder;
+     const char *format;
+     ezxml_t member;
+ 
+@@ -183,13 +205,16 @@ static void uri_add(ezxml_t response, in
+     format = snapshot ? profile->snapurl : profile->url;
+     if (!format)
+         return;
+-    snprintf(uri, sizeof(uri), format, service_ctx.address_url);
+-    if (version == 2 || snapshot) {
+-        member = soap_member_add(response, version, snapshot ? "MediaUri" : "Uri");
+-        if (version == 2) {
+-            ezxml_set_txt_d(member, uri);
+-            return;
+-        }
++    placeholder = strstr(format, "%s");
++    if (placeholder)
++        snprintf(uri, sizeof(uri), "%.*s%s%s", (int)(placeholder - format), format,
++                 service_ctx.address_url, placeholder + strlen("%s"));
++    else
++        snprintf(uri, sizeof(uri), "%s", format);
++    if (version == 2) {
++        member = soap_member_add(response, version, "Uri");
++        ezxml_set_txt_d(member, uri);
++        return;
+     } else {
+         member = soap_member_add(response, version, "MediaUri");
+     }
+@@ -222,19 +247,24 @@ int media_profiles_dispatch(const char *
+     if (version == 2 && profiles)
+         profile_token = get_element("Token", "Body");
+     configuration_token = get_element("ConfigurationToken", "Body");
+-    index = profile_token ? profile_find(profile_token, "") : -1;
++    index = profile_token ? media_profile_find(profile_token, "") : -1;
+     if (profile_token && index < 0) {
+         send_fault((char *)service, "Sender", "ter:InvalidArgVal", "ter:NoProfile",
+                    "No profile", "The requested profile does not exist");
+         return 1;
+     }
+     if (configuration_token)
+-        index = profile_find(configuration_token, "_VideoEncoderToken");
++        index = media_profile_find(configuration_token, "_VideoEncoderToken");
+     if (configuration_token && index < 0) {
+         send_fault((char *)service, "Sender", "ter:InvalidArgVal", "ter:NoConfig",
+                    "No configuration", "The requested configuration does not exist");
+         return 1;
+     }
++    if (index >= 0 && version == 1 && service_ctx.profiles[index].type == H265) {
++        send_fault((char *)service, "Sender", "ter:InvalidArgVal", "ter:NoProfile",
++                   "No profile", "H265 profiles are available through Media2");
++        return 1;
++    }
+     if ((uri || !strcmp(operation, "GetProfile") ||
+          !strcmp(operation, "GetVideoEncoderConfiguration")) && index < 0) {
+         send_fault((char *)service, "Sender", "ter:InvalidArgVal", "ter:NoProfile",
+@@ -248,6 +278,8 @@ int media_profiles_dispatch(const char *
+         return 1;
+     }
+     for (i = 0; i < service_ctx.profiles_num; i++) {
++        if (version == 1 && service_ctx.profiles[i].type == H265)
++            continue;
+         if (index >= 0 && index != i)
+             continue;
+         member = soap_member_add(response, version, profiles ?
+--- a/media_profiles.h
++++ b/media_profiles.h
+@@ -2,6 +2,11 @@
+ #ifndef MEDIA_PROFILES_H
+ #define MEDIA_PROFILES_H
+ 
++#include "ezxml/ezxml.h"
++
+ int media_profiles_dispatch(const char *operation, int version);
++int media_profile_find(const char *token, const char *suffix);
++void media_source_info(int *width, int *height, double *framerate);
++void media_source_configuration_add(ezxml_t node);
+ 
+ #endif
+--- a/media_service.c
++++ b/media_service.c
+@@ -28,26 +28,6 @@
+ 
+ extern service_context_t service_ctx;
+ 
+-/*
+- * The ONVIF VideoSource models the physical sensor, which is independent of any
+- * single encoder profile. Report it from the profile with the largest frame area
+- * so a low resolution sub stream never shrinks the advertised source dimensions.
+- */
+-static int get_video_source_index()
+-{
+-    int i, idx = 0;
+-    long best = -1;
+-
+-    for (i = 0; i < service_ctx.profiles_num; i++) {
+-        long area = (long) service_ctx.profiles[i].width * service_ctx.profiles[i].height;
+-        if (area > best) {
+-            best = area;
+-            idx = i;
+-        }
+-    }
+-
+-    return idx;
+-}
+ 
+ int media_get_service_capabilities()
+ {
+@@ -58,148 +38,10 @@ int media_get_service_capabilities()
+     return cat("stdout", "media_service_files/GetServiceCapabilities.xml", 0);
+ }
+ 
+-int media_get_video_sources()
+-{
+-    // Get the video source from the profile with the largest frame area
+-    char stmp_w[16], stmp_h[16], stmp_fps[8];
+-    int vsrc = get_video_source_index();
+-
+-    snprintf(stmp_w, sizeof(stmp_w), "%d", service_ctx.profiles[vsrc].width);
+-    snprintf(stmp_h, sizeof(stmp_h), "%d", service_ctx.profiles[vsrc].height);
+-    snprintf(stmp_fps, sizeof(stmp_fps), "%d", service_ctx.profiles[vsrc].framerate);
+-    long size = cat(NULL, "media_service_files/GetVideoSources.xml", 6,
+-            "%WIDTH%", stmp_w,
+-            "%HEIGHT%", stmp_h,
+-            "%FRAMERATE%", stmp_fps);
+-
+-    output_http_headers(size);
+-
+-    return cat("stdout", "media_service_files/GetVideoSources.xml", 6,
+-            "%WIDTH%", stmp_w,
+-            "%HEIGHT%", stmp_h,
+-            "%FRAMERATE%", stmp_fps);
+-}
+ 
+-int media_get_video_source_configurations()
+-{
+-    char profiles_num[2], stmp_w[16], stmp_h[16];
+-    int vsrc = get_video_source_index();
+ 
+-    snprintf(profiles_num, sizeof(profiles_num), "%d", service_ctx.profiles_num);
+-    snprintf(stmp_w, sizeof(stmp_w), "%d", service_ctx.profiles[vsrc].width);
+-    snprintf(stmp_h, sizeof(stmp_h), "%d", service_ctx.profiles[vsrc].height);
+-    long size = cat(NULL, "media_service_files/GetVideoSourceConfigurations.xml", 6,
+-            "%PROFILES_NUM%", profiles_num,
+-            "%WIDTH%", stmp_w,
+-            "%HEIGHT%", stmp_h);
+ 
+-    output_http_headers(size);
+ 
+-    return cat("stdout", "media_service_files/GetVideoSourceConfigurations.xml", 6,
+-            "%PROFILES_NUM%", profiles_num,
+-            "%WIDTH%", stmp_w,
+-            "%HEIGHT%", stmp_h);
+-}
+-
+-int media_get_video_source_configuration()
+-{
+-    const char *configuration_token = get_element("ConfigurationToken", "Body");
+-    char profiles_num[2], stmp_w[16], stmp_h[16];
+-
+-    if (configuration_token == NULL) {
+-        send_fault("media_service", "Sender", "ter:InvalidArgVal", "ter:NoConfig", "No config", "The requested configuration indicated does not exist");
+-        return -1;
+-    }
+-
+-    if (strncasecmp("VideoSourceConfigToken", configuration_token, 22) == 0) {
+-
+-        int vsrc = get_video_source_index();
+-        snprintf(profiles_num, sizeof(profiles_num), "%d", service_ctx.profiles_num);
+-        snprintf(stmp_w, sizeof(stmp_w), "%d", service_ctx.profiles[vsrc].width);
+-        snprintf(stmp_h, sizeof(stmp_h), "%d", service_ctx.profiles[vsrc].height);
+-        long size = cat(NULL, "media_service_files/GetVideoSourceConfiguration.xml", 6,
+-                "%PROFILES_NUM%", profiles_num,
+-                "%WIDTH%", stmp_w,
+-                "%HEIGHT%", stmp_h);
+-
+-        output_http_headers(size);
+-
+-        return cat("stdout", "media_service_files/GetVideoSourceConfiguration.xml", 6,
+-                "%PROFILES_NUM%", profiles_num,
+-                "%WIDTH%", stmp_w,
+-                "%HEIGHT%", stmp_h);
+-
+-    } else {
+-        send_fault("media_service", "Sender", "ter:InvalidArgVal", "ter:NoConfig", "No config", "The requested configuration indicated does not exist");
+-        return -2;
+-    }
+-}
+-
+-int media_get_compatible_video_source_configurations()
+-{
+-    // Get the video source configuration from the 1st profile
+-    // Ignore the requested token
+-    char profiles_num[2];
+-    char stmp_w[16], stmp_h[16];
+-    int vsrc = get_video_source_index();
+-
+-    snprintf(profiles_num, sizeof(profiles_num), "%d", service_ctx.profiles_num);
+-    snprintf(stmp_w, sizeof(stmp_w), "%d", service_ctx.profiles[vsrc].width);
+-    snprintf(stmp_h, sizeof(stmp_h), "%d", service_ctx.profiles[vsrc].height);
+-    long size = cat(NULL, "media_service_files/GetCompatibleVideoSourceConfigurations.xml", 8,
+-            "%PROFILES_NUM%", profiles_num,
+-            "%WIDTH%", stmp_w,
+-            "%HEIGHT%", stmp_h,
+-            "%PROFILE_TYPE", "High");
+-
+-    output_http_headers(size);
+-
+-    return cat("stdout", "media_service_files/GetCompatibleVideoSourceConfigurations.xml", 8,
+-            "%PROFILES_NUM%", profiles_num,
+-            "%WIDTH%", stmp_w,
+-            "%HEIGHT%", stmp_h,
+-            "%PROFILE_TYPE", "High");
+-}
+-
+-int media_get_video_source_configuration_options()
+-{
+-    const char *configuration_token = get_element("ConfigurationToken", "Body");
+-    const char *profile_token = get_element("ProfileToken", "Body");
+-    char token[23];
+-    char stmp_w[16], stmp_h[16];
+-
+-    memset(token, '\0', sizeof(token));
+-    if (profile_token != NULL) {
+-        // Extract "Profile_x" from token Profile_x
+-        strncpy(token, profile_token, 9);
+-    } else if (configuration_token != NULL) {
+-        strncpy(token, configuration_token, 22);
+-    } else {
+-        strncpy(token, service_ctx.profiles[0].name, 9);
+-    }
+-
+-    if ((strcasecmp(service_ctx.profiles[0].name, token) == 0) ||
+-            (strcasecmp(service_ctx.profiles[1].name, token) == 0) ||
+-            (strcasecmp("VideoSourceConfigToken", token) == 0)) {
+-
+-        int vsrc = get_video_source_index();
+-        snprintf(stmp_w, sizeof(stmp_w), "%d", service_ctx.profiles[vsrc].width);
+-        snprintf(stmp_h, sizeof(stmp_h), "%d", service_ctx.profiles[vsrc].height);
+-        long size = cat(NULL, "media_service_files/GetVideoSourceConfigurationOptions.xml", 4,
+-                "%WIDTH%", stmp_w,
+-                "%HEIGHT%", stmp_h);
+-
+-        output_http_headers(size);
+-
+-        return cat("stdout", "media_service_files/GetVideoSourceConfigurationOptions.xml", 4,
+-                "%WIDTH%", stmp_w,
+-                "%HEIGHT%", stmp_h);
+-
+-    } else {
+-        send_fault("media_service", "Sender", "ter:InvalidArgVal", "ter:NoConfig", "No config", "The requested configuration indicated does not exist");
+-        return -1;
+-    }
+-}
+ 
+ 
+ 
+@@ -217,73 +59,6 @@ int media_create_profile()
+ 
+ 
+ 
+-int media_get_video_encoder_configuration_options()
+-{
+-    char stmp_w[16], stmp_h[16], stmp_fps[16];
+-    const char *configuration_token = get_element("ConfigurationToken", "Body");
+-    const char *profile_token = get_element("ProfileToken", "Body");
+-    char vec_token[128];
+-    int profile_idx = 0;
+-
+-    if (configuration_token != NULL) {
+-        snprintf(vec_token, sizeof(vec_token), "%s_VideoEncoderToken",
+-                 service_ctx.profiles[0].name);
+-        if (strcasecmp(configuration_token, vec_token) == 0) {
+-            profile_idx = 0;
+-        } else if (service_ctx.profiles_num == 2) {
+-            snprintf(vec_token, sizeof(vec_token), "%s_VideoEncoderToken",
+-                     service_ctx.profiles[1].name);
+-            profile_idx = (strcasecmp(configuration_token, vec_token) == 0) ? 1 : 0;
+-        }
+-    } else if (profile_token != NULL) {
+-        if ((service_ctx.profiles_num == 2) &&
+-                (strcasecmp(service_ctx.profiles[1].name, profile_token) == 0))
+-            profile_idx = 1;
+-    }
+-
+-    if ((service_ctx.profiles_num > 0) && profile_idx == 0) {
+-
+-        snprintf(stmp_w, sizeof(stmp_w), "%d", service_ctx.profiles[0].width);
+-        snprintf(stmp_h, sizeof(stmp_h), "%d", service_ctx.profiles[0].height);
+-        snprintf(stmp_fps, sizeof(stmp_fps), "%d", service_ctx.profiles[0].framerate > 0 ? service_ctx.profiles[0].framerate : 30);
+-        long size = cat(NULL, "media_service_files/GetVideoEncoderConfigurationOptions.xml", 8,
+-                "%WIDTH%", stmp_w,
+-                "%HEIGHT%", stmp_h,
+-                "%FRAMERATE%", stmp_fps,
+-                "%PROFILE%", "High");
+-
+-        output_http_headers(size);
+-
+-        return cat("stdout", "media_service_files/GetVideoEncoderConfigurationOptions.xml", 8,
+-                "%WIDTH%", stmp_w,
+-                "%HEIGHT%", stmp_h,
+-                "%FRAMERATE%", stmp_fps,
+-                "%PROFILE%", "High");
+-
+-    } else if ((service_ctx.profiles_num == 2) && profile_idx == 1) {
+-
+-        snprintf(stmp_w, sizeof(stmp_w), "%d", service_ctx.profiles[1].width);
+-        snprintf(stmp_h, sizeof(stmp_h), "%d", service_ctx.profiles[1].height);
+-        snprintf(stmp_fps, sizeof(stmp_fps), "%d", service_ctx.profiles[1].framerate > 0 ? service_ctx.profiles[1].framerate : 30);
+-        long size = cat(NULL, "media_service_files/GetVideoEncoderConfigurationOptions.xml", 8,
+-                "%WIDTH%", stmp_w,
+-                "%HEIGHT%", stmp_h,
+-                "%FRAMERATE%", stmp_fps,
+-                "%PROFILE%", "Main");
+-
+-        output_http_headers(size);
+-
+-        return cat("stdout", "media_service_files/GetVideoEncoderConfigurationOptions.xml", 8,
+-                "%WIDTH%", stmp_w,
+-                "%HEIGHT%", stmp_h,
+-                "%FRAMERATE%", stmp_fps,
+-                "%PROFILE%", "Main");
+-
+-    } else {
+-        send_fault("media_service", "Sender", "ter:InvalidArgVal", "ter:NoProfile", "No profile", "The requested profile does not exist");
+-        return -1;
+-    }
+-}
+ 
+ int media_get_guaranteed_number_of_video_encoder_instances()
+ {
+--- a/media_service.h
++++ b/media_service.h
+@@ -18,14 +18,8 @@
+ #define MEDIA_SERVICE_H
+ 
+ int media_get_service_capabilities();
+-int media_get_video_sources();
+-int media_get_video_source_configurations();
+-int media_get_video_source_configuration();
+-int media_get_compatible_video_source_configurations();
+-int media_get_video_source_configuration_options();
+ int media_create_profile();
+ int media_get_guaranteed_number_of_video_encoder_instances();
+-int media_get_video_encoder_configuration_options();
+ int media_get_audio_sources();
+ int media_get_audio_source_configurations();
+ int media_get_audio_source_configuration();
+--- a/onvif_simple_server.c
++++ b/onvif_simple_server.c
+@@ -29,6 +29,7 @@
+ #include "device_service.h"
+ #include "media_service.h"
+ #include "media_profiles.h"
++#include "media_options.h"
+ #include "media2_service.h"
+ #include "ptz_service.h"
+ #include "events_service.h"
+@@ -517,15 +518,15 @@ int main(int argc, char ** argv)
+             if (strcasecmp(method, "GetServiceCapabilities") == 0) {
+                 media_get_service_capabilities();
+             } else if (strcasecmp(method, "GetVideoSources") == 0) {
+-                media_get_video_sources();
++                media_options_dispatch("GetVideoSources", 1);
+             } else if (strcasecmp(method, "GetVideoSourceConfigurations") == 0) {
+-                media_get_video_source_configurations();
++                media_options_dispatch("GetVideoSourceConfigurations", 1);
+             } else if (strcasecmp(method, "GetVideoSourceConfiguration") == 0) {
+-                media_get_video_source_configuration();
++                media_options_dispatch("GetVideoSourceConfiguration", 1);
+             } else if (strcasecmp(method, "GetCompatibleVideoSourceConfigurations") == 0) {
+-                media_get_compatible_video_source_configurations();
++                media_options_dispatch("GetCompatibleVideoSourceConfigurations", 1);
+             } else if (strcasecmp(method, "GetVideoSourceConfigurationOptions") == 0) {
+-                media_get_video_source_configuration_options();
++                media_options_dispatch("GetVideoSourceConfigurationOptions", 1);
+             } else if (strcasecmp(method, "GetProfiles") == 0) {
+                 media_profiles_dispatch("GetProfiles", 1);
+             } else if (strcasecmp(method, "GetProfile") == 0) {
+@@ -539,7 +540,7 @@ int main(int argc, char ** argv)
+             } else if (strcasecmp(method, "GetCompatibleVideoEncoderConfigurations") == 0) {
+                 media_profiles_dispatch("GetCompatibleVideoEncoderConfigurations", 1);
+             } else if (strcasecmp(method, "GetVideoEncoderConfigurationOptions") == 0) {
+-                media_get_video_encoder_configuration_options();
++                media_options_dispatch("GetVideoEncoderConfigurationOptions", 1);
+             } else if (strcasecmp(method, "GetGuaranteedNumberOfVideoEncoderInstances") == 0) {
+                 media_get_guaranteed_number_of_video_encoder_instances();
+             } else if (strcasecmp(method, "GetSnapshotUri") == 0) {
+@@ -607,13 +608,13 @@ int main(int argc, char ** argv)
+             } else if (strcasecmp(method, "GetVideoSourceModes") == 0) {
+                 media2_get_video_source_modes();
+             } else if (strcasecmp(method, "GetVideoSourceConfigurations") == 0) {
+-                media2_get_video_source_configurations();
++                media_options_dispatch("GetVideoSourceConfigurations", 2);
+             } else if (strcasecmp(method, "GetVideoSourceConfigurationOptions") == 0) {
+-                media2_get_video_source_configuration_options();
++                media_options_dispatch("GetVideoSourceConfigurationOptions", 2);
+             } else if (strcasecmp(method, "GetVideoEncoderConfigurations") == 0) {
+                 media_profiles_dispatch("GetVideoEncoderConfigurations", 2);
+             } else if (strcasecmp(method, "GetVideoEncoderConfigurationOptions") == 0) {
+-                media2_get_video_encoder_configuration_options();
++                media_options_dispatch("GetVideoEncoderConfigurationOptions", 2);
+             } else if (strcasecmp(method, "GetAudioSourceConfigurations") == 0) {
+                 media2_get_audio_source_configurations();
+             } else if (strcasecmp(method, "GetAudioSourceConfigurationOptions") == 0) {
+--- a/onvif_simple_server.h
++++ b/onvif_simple_server.h
+@@ -61,6 +61,11 @@ typedef struct {
+     int  type;
+     int  bitrate;       /* kbps, 0 = unknown */
+     int  framerate;     /* fps, 0 = unknown */
++    int framerate_den;
++    int gov_length;
++    int encoding_interval;
++    double quality;
++    char *encoding_profile;
+     int  audio_encoder;
+     int  audio_decoder;
+ } stream_profile_t;
+@@ -135,6 +140,10 @@ typedef struct {
+ 
+     stream_profile_t *profiles;
+     int profiles_num;
++    int source_width;
++    int source_height;
++    int source_framerate;
++    int source_framerate_den;
+ 
+     char **scopes;
+     int scopes_num;
+--- a/soap.c
++++ b/soap.c
+@@ -32,6 +32,15 @@ ezxml_t soap_member_add(ezxml_t parent,
+     return soap_child_add(parent, qualified, NULL);
+ }
+ 
++void soap_range_add(ezxml_t parent, const char *name, double minimum, double maximum)
++{
++    ezxml_t range;
++
++    range = soap_child_add(parent, name, NULL);
++    soap_number_add(range, "tt:Min", minimum);
++    soap_number_add(range, "tt:Max", maximum);
++}
++
+ ezxml_t soap_response_create(int version, const char *operation)
+ {
+     char name[MAX_LEN];
+--- a/soap.h
++++ b/soap.h
+@@ -6,6 +6,7 @@
+ 
+ ezxml_t soap_child_add(ezxml_t parent, const char *name, const char *text);
+ ezxml_t soap_number_add(ezxml_t parent, const char *name, double value);
++void soap_range_add(ezxml_t parent, const char *name, double minimum, double maximum);
+ ezxml_t soap_member_add(ezxml_t parent, int version, const char *name);
+ ezxml_t soap_response_create(int version, const char *operation);
+ int soap_response_send(ezxml_t response);
+--- a/test/test_cgi.py
++++ b/test/test_cgi.py
+@@ -34,8 +34,8 @@ def request(service, operation, content=
+             f'<s:Body><op:{operation} xmlns:op="{namespace}">'
+             f'{content}</op:{operation}></s:Body></s:Envelope>').encode()
+     with tempfile.TemporaryDirectory() as directory:
+-        path = Path(directory) / 'config.json'
+-        path.write_text(json.dumps(config))
++        path = Path(directory) / ('config.conf' if isinstance(config, str) else 'config.json')
++        path.write_text(config if isinstance(config, str) else json.dumps(config))
+         env = dict(os.environ, ONVIF_LOG_FILE='-', REQUEST_METHOD='POST',
+                    REMOTE_ADDR='127.0.0.1', CONTENT_LENGTH=str(len(body)))
+         result = subprocess.run([str(ROOT / 'onvif_simple_server'),
+@@ -52,6 +52,71 @@ def request(service, operation, content=
+ 
+ 
+ class CGITests(unittest.TestCase):
++    def test_text_encoder_parameters(self):
++        config = ('ifs=lo\nname=Profile_0\nwidth=640\nheight=480\n'
++                  'type=H264\nencoding_profile=Baseline\ngov_length=61\n'
++                  'quality=42\nbitrate=1234\nframerate=25\naudio_encoder=NONE\n')
++        status, root = request('media', 'GetProfiles', config=config)
++        self.assertEqual(status, 200)
++        self.assertEqual(root.findtext('.//tt:H264Profile', namespaces=NS), 'Baseline')
++        self.assertEqual(root.findtext('.//tt:GovLength', namespaces=NS), '61')
++        self.assertEqual(root.findtext('.//tt:BitrateLimit', namespaces=NS), '1234')
++
++    def test_encoder_parameters(self):
++        config = configuration(5)
++        encodings = ['H264', 'H264', 'H264', 'H265', 'JPEG']
++        profiles = ['Baseline', 'Main', 'High', 'Main', 'High']
++        for i, profile in enumerate(config['profiles']):
++            profile.update(type=encodings[i], encoding_profile=profiles[i],
++                           gov_length=31 + i, quality=20 + i)
++        config['profiles'][3].update(framerate=30000, framerate_den=1001)
++        for service, count in [('media', 4), ('media2', 5)]:
++            status, root = request(service, 'GetVideoEncoderConfigurations', config=config)
++            self.assertEqual(status, 200)
++            entries = root.findall('.//{*}Configurations')
++            self.assertEqual(len(entries), count)
++            for entry in entries:
++                token = entry.get('token')
++                index = int(token.split('_')[1])
++                self.assertEqual(entry.findtext('tt:Encoding', namespaces=NS), encodings[index])
++                self.assertEqual(float(entry.findtext('tt:Quality', namespaces=NS)), 20 + index)
++                if service == 'media2' and index < 4:
++                    self.assertEqual(entry.get('Profile'), profiles[index])
++                    self.assertEqual(entry.get('GovLength'), str(31 + index))
++                elif index < 3:
++                    self.assertEqual(entry.findtext('tt:H264/tt:H264Profile', namespaces=NS),
++                                     profiles[index])
++                if encodings[index] == 'JPEG':
++                    self.assertIsNone(entry.find('tt:H264', NS))
++            if service == 'media2':
++                self.assertAlmostEqual(float(entries[3].findtext('tt:RateControl/tt:FrameRateLimit',
++                                                                 namespaces=NS)), 30000 / 1001,
++                                       places=6)
++
++    def test_source_and_options(self):
++        config = configuration(12)
++        config.update(source_width=3840, source_height=2160, source_framerate=30)
++        status, root = request('media', 'GetVideoSources', config=config)
++        self.assertEqual(root.findtext('.//tt:Width', namespaces=NS), '3840')
++        for service in ['media', 'media2']:
++            status, root = request(service, 'GetVideoSourceConfigurations', config=config)
++            self.assertEqual(status, 200)
++            self.assertEqual(root.findtext('.//tt:UseCount', namespaces=NS), '12')
++            status, root = request(service, 'GetVideoEncoderConfigurationOptions',
++                                   '<ConfigurationToken>Profile_11_VideoEncoderToken'
++                                   '</ConfigurationToken>', config)
++            self.assertEqual(status, 200)
++            self.assertEqual(root.findtext('.//tt:ResolutionsAvailable/tt:Width',
++                                          namespaces=NS), '160')
++
++    def test_uri_percent_escape(self):
++        config = configuration()
++        config['profiles'][0]['url'] = 'rtsp://%s:8554/a%20b?n=1&x=2'
++        status, root = request('media', 'GetStreamUri',
++                               '<ProfileToken>Profile_0</ProfileToken>', config)
++        self.assertEqual(status, 200)
++        self.assertEqual(root.findtext('.//{*}Uri'), 'rtsp://127.0.0.1:8554/a%20b?n=1&x=2')
++
+     def test_multiple_profiles(self):
+         for count in [0, 1, 2, 4, 12]:
+             config = configuration(count)

@@ -1,0 +1,56 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+USE_PROCD=1
+
+start_service() {
+	local enabled config uuid listen port namespace keys key scope name hardware
+
+	config_load onvif-simple-server
+	config_get_bool enabled main enabled 1
+	config_get uuid main uuid
+	config_get config main config_file /var/run/onvif-simple-server/config.json
+	[ "$enabled" = 1 ] && [ -r "$config" ] || return 0
+	[ -n "$uuid" ] || return 1
+	json_set_namespace onvif_identity_ namespace
+	json_load_file "$config"
+	if json_select scopes; then
+		json_get_keys keys
+		for key in $keys; do
+			json_get_var scope "$key"
+			case "$scope" in
+				onvif://www.onvif.org/name/*)
+					name="${scope#onvif://www.onvif.org/name/}" ;;
+				onvif://www.onvif.org/hardware/*)
+					hardware="${scope#onvif://www.onvif.org/hardware/}" ;;
+			esac
+		done
+	fi
+	json_cleanup
+	json_set_namespace "$namespace"
+	config_load uhttpd
+	config_get listen onvif listen_http
+	listen="${listen%% *}"
+	port="${listen##*:}"
+	case "$port" in
+		''|*[!0-9]*) return 1 ;;
+	esac
+	[ "$port" -ge 1 ] && [ "$port" -le 65535 ] || return 1
+	mkdir -p /var/run/onvif-simple-server || return 1
+
+	procd_open_instance discovery
+	procd_set_param command /usr/bin/wsd_simple_server -f -u "$uuid" \
+		-p /var/run/onvif-simple-server/wsd.pid \
+		-t /usr/share/onvif-simple-server/wsd_files \
+		-x "http://%s:$port/onvif/device_service"
+	[ -z "$name" ] || procd_append_param command -m "$name"
+	[ -z "$hardware" ] || procd_append_param command -n "$hardware"
+	procd_set_param file "$config"
+	procd_set_param stderr 1
+	procd_set_param respawn
+	procd_close_instance
+}
+
+service_triggers() {
+	procd_add_reload_trigger onvif-simple-server uhttpd
+}
