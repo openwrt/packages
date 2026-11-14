@@ -1,0 +1,69 @@
+suppress_prefixlength is interpolated into an `ip rule` command line, but UCI
+declares it a plain string with no bound, so whatever is in /etc/config/pbr
+reached the shell verbatim. This pins the normalisation added in config.uc:
+anything that is not a run of digits falls back to the default '1', and values
+above the 128-bit protocol maximum are clamped.
+
+The fixture sets a value carrying a shell metacharacter. Two things must hold
+afterwards: cfg.prefixlength is the sanitised '1', and the `ip rule del` command
+built from it -- which keeps a shell for its 2>/dev/null -- contains no trailing
+injected command.
+
+-- Testcase --
+import create_pbr from 'pbr';
+
+let mocklib = global.mocklib;
+let pbr = create_pbr();
+
+// start_service() is what turns cfg.prefixlength into an `ip rule` invocation
+mocklib.clear_commands();
+pbr.start_service(['on_start']);
+
+let dels = mocklib.commands('suppress_prefixlength');
+let injected = mocklib.commands(/touch \/tmp\/pbr_pwned/);
+
+let checks = [
+	['suppress_rule_issued',  length(dels) >= 1],
+	// the metacharacter payload never reaches a command line
+	['no_injected_command',   length(injected) == 0],
+	// and the value used is the sanitised default, quoted
+	['uses_sanitised_value',  mocklib.has_command("suppress_prefixlength '1'")],
+];
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("prefixlength_validated: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- File uci/pbr.json --
+{
+	"pbr": [
+		{
+			".name": "config",
+			"enabled": "1",
+			"fw_mask": "00ff0000",
+			"ipv6_enabled": "0",
+			"prefixlength": "1; touch /tmp/pbr_pwned",
+			"strict_enforcement": "1",
+			"uplink_interface": "wan",
+			"uplink_interface6": "wan6",
+			"uplink_ip_rules_priority": "30000",
+			"uplink_mark": "00010000",
+			"verbosity": "2",
+			"lan_device": ["br-lan"],
+			"resolver_instance": ["*"]
+		}
+	]
+}
+-- End --
+
+-- Expect stdout --
+prefixlength_validated: 3/3 passed
+-- End --

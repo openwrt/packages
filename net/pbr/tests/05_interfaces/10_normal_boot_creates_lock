@@ -1,0 +1,34 @@
+Testing that when the uplink is UP at start time, service_started writes the lock file.
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+let result = pbr.start_service(['on_start']);
+
+// Simulate the wrapper script deleting pbr.boot if it existed
+global.mocklib.delete_captured('/var/run/pbr.boot');
+
+// normal service started
+pbr.service_started('on_start');
+
+let checks = [
+	['start_service_returns_full',    result?.deferredToBoot != true],
+	['lock_file_created',             global.mocklib.has_captured('/var/run/pbr.lock')],
+];
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("normal_boot_creates_lock: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+normal_boot_creates_lock: 2/2 passed
+-- End --

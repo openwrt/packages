@@ -1,0 +1,28 @@
+{
+	"up": true,
+	"pending": false,
+	"available": true,
+	"autostart": true,
+	"dynamic": false,
+	"uptime": 1800,
+	"l3_device": "tun0",
+	"device": "tun0",
+	"proto": "openvpn",
+	"ipv4-address": [
+		{
+			"address": "10.8.0.2",
+			"mask": 24
+		}
+	],
+	"route": [
+		{
+			"target": "0.0.0.0",
+			"mask": 0,
+			"nexthop": "10.8.0.1",
+			"source": "10.8.0.2/24"
+		}
+	],
+	"dns-server": [
+		"10.8.0.1"
+	]
+}

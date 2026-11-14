@@ -1,37 +1,135 @@
-#!/bin/bash
-# Test: IPv4 address validation
-. "$(dirname "$0")/../lib/setup.sh"
+Testing is_ipv4() directly, and through filter_options(), which is how pbr sorts
+a policy's addresses by family.
 
-oneTimeTearDown() { rm -rf "${MOCK_ROOT:-}"; }
+A value with an embedded newline is left out on purpose, as the answer depends
+on the interpreter: from ucode 8a8b4d1 on, ^ and $ also match at a line break,
+so '1.2.3.4\n' passes on ucode master and fails on OpenWrt 25.12.
 
-testIpv4ValidStandard() {
-	assertTrue "Standard private IP" "is_ipv4 '192.168.1.1'"
-	assertTrue "Class A private" "is_ipv4 '10.0.0.1'"
-	assertTrue "Class B private" "is_ipv4 '172.16.0.1'"
-	assertTrue "Google DNS" "is_ipv4 '8.8.8.8'"
-	assertTrue "All zeros" "is_ipv4 '0.0.0.0'"
-	assertTrue "All ones" "is_ipv4 '255.255.255.255'"
-	assertTrue "Simple IP" "is_ipv4 '1.2.3.4'"
+-- Testcase --
+import create_validators from 'validators';
+let V = create_validators();
+
+let tests = [
+	// ── Valid addresses ──
+	['192.168.1.1',          true,  'private address'],
+	['10.0.0.0',             true,  'network address'],
+	['172.16.0.1',           true,  'private address'],
+	['0.0.0.0',              true,  'lowest address'],
+	['255.255.255.255',      true,  'highest address'],
+
+	// ── Every branch of the octet pattern, in every position ──
+	['9.99.100.199',         true,  'one, two and three digits up to 199'],
+	['199.100.99.9',         true,  'the same, reversed'],
+	['200.249.250.255',      true,  'the 2xx branches at their limits'],
+	['1.2.3.249',            true,  'the 2xx branch in the last position'],
+	['255.250.249.200',      true,  'the same, reversed'],
+
+	// ── Out of range, in every position ──
+	['256.1.1.1',            false, 'first octet 256'],
+	['1.256.1.1',            false, 'second octet 256'],
+	['1.1.256.1',            false, 'third octet 256'],
+	['1.1.1.256',            false, 'fourth octet 256'],
+	['260.1.1.1',            false, 'first octet 260'],
+	['1.1.1.260',            false, 'fourth octet 260'],
+	['300.1.1.1',            false, 'first octet 300'],
+	['1.1.1.300',            false, 'fourth octet 300'],
+	['1000.1.1.1',           false, 'four digits, first octet'],
+	['1.1.1.1000',           false, 'four digits, fourth octet'],
+
+	// ── Valid prefix lengths ──
+	['0.0.0.0/0',            true,  'prefix 0'],
+	['1.2.3.4/9',            true,  'prefix 9'],
+	['10.0.0.0/8',           true,  'prefix 8'],
+	['1.2.3.4/10',           true,  'prefix 10'],
+	['1.2.3.4/19',           true,  'prefix 19'],
+	['1.2.3.4/20',           true,  'prefix 20'],
+	['192.168.1.0/24',       true,  'prefix 24'],
+	['1.2.3.4/29',           true,  'prefix 29'],
+	['1.2.3.4/30',           true,  'prefix 30'],
+	['1.2.3.4/31',           true,  'prefix 31'],
+	['192.168.1.1/32',       true,  'prefix 32'],
+
+	// ── Invalid prefixes ──
+	['192.168.1.0/33',       false, 'prefix 33'],
+	['1.2.3.4/39',           false, 'prefix 39'],
+	['1.2.3.4/40',           false, 'prefix 40'],
+	['1.2.3.4/100',          false, 'prefix 100'],
+	['1.2.3.4/-1',           false, 'negative prefix'],
+	['1.2.3.4/',             false, 'empty prefix'],
+	['1.2.3.4/a',            false, 'prefix is not a number'],
+	['1.2.3.4/24/24',        false, 'two prefixes'],
+	['1.2.3.4/255.255.255.0', false, 'netmask notation'],
+
+	// ── Wrong shape ──
+	['192.168.1',            false, 'three octets'],
+	['192.168.1.1.1',        false, 'five octets'],
+	['1.2.3.4.',             false, 'trailing dot'],
+	['.1.2.3.4',             false, 'leading dot'],
+	['1..3.4',               false, 'empty octet'],
+	['abc.def.ghi.jkl',      false, 'letters'],
+	['0x7f.0.0.1',           false, 'hexadecimal'],
+	['2130706433',           false, 'address as one number'],
+	['1.2.3.4:80',           false, 'with a port'],
+	['1.2.3.4-1.2.3.9',      false, 'range'],
+	['1,2,3,4',              false, 'commas'],
+	[' 1.2.3.4',             false, 'leading space'],
+	['1.2.3.4 ',             false, 'trailing space'],
+	['!1.2.3.4',             false, 'negation is the caller\'s to strip'],
+	['@1.2.3.4',             false, 'device prefix'],
+
+	// ── Other families ──
+	['::1',                  false, 'IPv6'],
+	['::ffff:1.2.3.4',       false, 'IPv4-mapped IPv6'],
+	['aa:bb:cc:dd:ee:ff',    false, 'MAC address'],
+	['example.com',          false, 'domain'],
+
+	// ── Empty and non-string ──
+	['',                     false, 'empty string'],
+	[null,                   false, 'null'],
+	[0,                      false, 'number zero'],
+	[2130706433,             false, 'number'],
+];
+
+let pass = 0, fail = 0;
+for (let t in tests) {
+	let input = t[0];
+	let expected = t[1];
+	let desc = t[2];
+	let actual = V.is_ipv4(input);
+	if (actual === expected) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: is_ipv4(%J) — expected %J, got %J  [%s]\n", input, expected, actual, desc);
+	}
 }
+printf("ipv4_validation: %d/%d passed\n", pass, pass + fail);
 
-testIpv4ValidCIDR() {
-	assertTrue "CIDR /8" "is_ipv4 '10.0.0.0/8'"
-	assertTrue "CIDR /24" "is_ipv4 '192.168.1.0/24'"
-	assertTrue "CIDR /32" "is_ipv4 '10.0.0.1/32'"
-	assertTrue "Default route" "is_ipv4 '0.0.0.0/0'"
+let mixed = '192.168.1.1 10.0.0.0/8 not_ipv4 ::1 256.1.1.1 !172.16.0.1 !::2 !999.1.1.1';
+let filters = [
+	['ipv4',          mixed,               '192.168.1.1 10.0.0.0/8', 'keeps only valid positive IPv4'],
+	['ipv4_negative', mixed,               '!172.16.0.1',            'keeps only valid negated IPv4, with its !'],
+	['ipv4',          '  1.2.3.4   5.6.7.8\t9.9.9.9\n', '1.2.3.4 5.6.7.8 9.9.9.9', 'any whitespace separates values'],
+	['ipv4',          '::1 example.com',   '',                       'nothing left'],
+	['ipv4_negative', '1.2.3.4',           '',                       'no negated value'],
+	['ipv4',          '',                  '',                       'empty string'],
+	['ipv4',          null,                '',                       'null'],
+];
+
+pass = 0; fail = 0;
+for (let f in filters) {
+	let actual = V.filter_options(f[0], f[1]);
+	if (actual === f[2]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: filter_options(%J, %J) — expected %J, got %J  [%s]\n", f[0], f[1], f[2], actual, f[3]);
+	}
 }
+printf("ipv4_filter_options: %d/%d passed\n", pass, pass + fail);
+-- End --
 
-testIpv4Invalid() {
-	assertFalse "Octet > 255" "is_ipv4 '256.1.1.1'"
-	assertFalse "Last octet > 255" "is_ipv4 '1.2.3.256'"
-	assertFalse "Not an IP" "is_ipv4 'not_an_ip'"
-	assertFalse "Empty string" "is_ipv4 ''"
-	assertFalse "Only 3 octets" "is_ipv4 '192.168.1'"
-	assertFalse "5 octets" "is_ipv4 '192.168.1.1.1'"
-	assertFalse "CIDR > 32" "is_ipv4 '192.168.1.1/33'"
-	assertFalse "IPv6 loopback" "is_ipv4 '::1'"
-	assertFalse "IPv6 link-local" "is_ipv4 'fe80::1'"
-	assertFalse "Domain name" "is_ipv4 'example.com'"
-}
-
-. shunit2
+-- Expect stdout --
+ipv4_validation: 63/63 passed
+ipv4_filter_options: 7/7 passed
+-- End --

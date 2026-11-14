@@ -1,0 +1,16 @@
+{
+	"up": true,
+	"pending": false,
+	"available": true,
+	"autostart": true,
+	"dynamic": false,
+	"l3_device": "br-lan",
+	"device": "br-lan",
+	"proto": "static",
+	"ipv4-address": [
+		{
+			"address": "192.168.1.1",
+			"mask": 24
+		}
+	]
+}

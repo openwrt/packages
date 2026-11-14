@@ -1,0 +1,79 @@
+Testing that the wrapper around a shell user file defines nft4 and nft6, and that nft6 is a no-op when ipv6 is disabled.
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+global.mocklib.capture('/usr/share/pbr/test_user.sh', "nft4 add rule inet fw4 pbr_prerouting return\n");
+
+// The wrapper is deleted once the user file has run, so record it as it is written
+let fs = require('fs');
+let real_writefile = fs.writefile;
+let wrapper = '';
+fs.writefile = function(path, data) {
+	if (path == '/var/run/pbr.user_wrapper.sh') wrapper = data;
+	return real_writefile(path, data);
+};
+
+pbr.start_service(['on_start']);
+
+let checks = [
+	['nft_defined', index(wrapper, 'nft() {') >= 0],
+	['nft4_defined', index(wrapper, 'nft4() { nft "$@"; }') >= 0],
+	['nft6_noop', index(wrapper, 'nft6() { return 0; }') >= 0],
+];
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("shell_nft4_nft6_ipv6_disabled: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- File uci/pbr.json --
+{
+	"pbr": [
+		{
+			".name": "config",
+			"enabled": "1",
+			"fw_mask": "00ff0000",
+			"ipv6_enabled": "0",
+			"strict_enforcement": "1",
+			"uplink_interface": "wan",
+			"uplink_interface6": "wan6",
+			"uplink_ip_rules_priority": "30000",
+			"uplink_mark": "00010000",
+			"verbosity": "2",
+			"lan_device": ["br-lan"],
+			"resolver_instance": ["*"],
+			"debug_performance": "0",
+			"nft_set_auto_merge": "1",
+			"nft_set_flags_interval": "1",
+			"nft_set_flags_timeout": "0",
+			"nft_set_policy": "performance",
+			"ignored_interface": ["vpnserver"]
+		}
+	],
+	"policy": [],
+	"include": [
+		{
+			".name": "user_test",
+			"enabled": "1",
+			"path": "/usr/share/pbr/test_user.sh"
+		}
+	]
+}
+-- End --
+
+-- File fs/stat~_usr_share_pbr_test_user_sh.json --
+{ "type": "file", "size": 100 }
+-- End --
+
+-- Expect stdout --
+shell_nft4_nft6_ipv6_disabled: 3/3 passed
+-- End --

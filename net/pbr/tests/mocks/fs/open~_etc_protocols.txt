@@ -1,0 +1,8 @@
+ip	0	IP
+icmp	1	ICMP
+tcp	6	TCP
+udp	17	UDP
+gre	47	GRE
+esp	50	IPSEC-ESP
+ah	51	IPSEC-AH
+icmpv6	58	IPv6-ICMP

@@ -1,66 +1,66 @@
-#!/bin/bash
-# Test: Domain, host, and hostname validation
-. "$(dirname "$0")/../lib/setup.sh"
+Testing is_domain() validation, including punycode-encoded TLDs.
 
-oneTimeTearDown() { rm -rf "${MOCK_ROOT:-}"; }
+-- Testcase --
+import create_validators from 'validators';
+let V = create_validators();
 
-testIsHost() {
-	assertTrue "Simple hostname" "is_host 'router'"
-	assertTrue "Hostname with hyphen" "is_host 'my-host'"
-	assertTrue "Hostname with numbers" "is_host 'host123'"
-	assertTrue "Single character" "is_host 'A'"
-	assertFalse "Empty string" "is_host ''"
-	assertFalse "Starts with hyphen" "is_host '-invalid'"
+let tests = [
+	// ── Plain ASCII ──
+	['example.com',                            true,  'standard ASCII'],
+	['sub.example.com',                        true,  'subdomain'],
+	['a.b.c.d.example.com',                    true,  'deep subdomain'],
+	['localhost',                              true,  'single-label hostname'],
+	['x',                                      true,  'single character'],
+	['my-server',                              true,  'hyphen in middle'],
+	['my_server',                              true,  'underscore in middle (lenient)'],
+
+	// ── Punycode-encoded labels with ASCII TLD (worked before fix) ──
+	['xn--bcher-kva.de',                       true,  'punycode label, ASCII TLD'],
+
+	// ── Punycode-encoded TLDs (THE FIX) ──
+	['xn--p1ai',                               true,  'bare .рф TLD'],
+	['xn--90ais',                              true,  'bare .бел TLD'],
+	['example.xn--p1ai',                       true,  'ASCII label + punycode TLD'],
+	['xn--e1adjldbbpv.xn--90ais',              true,  'punycode label + punycode TLD'],
+	['xn--80aaa1cvac.xn--p1ai',                true,  'punycode label + .рф'],
+
+	// ── Unicode form (deferred, must remain rejected) ──
+	['пример.бел',                             false, 'Unicode label rejected (deferred)'],
+	['bücher.de',                              false, 'Unicode label rejected (deferred)'],
+
+	// ── IPs and MACs must still be rejected ──
+	['192.168.1.1',                            false, 'IPv4 rejected'],
+	['192.168.1.0/24',                         false, 'IPv4 CIDR rejected'],
+	['AA-BB-CC-DD-EE-FF',                      false, 'MAC (dash form) rejected'],
+
+	// ── Malformed must still be rejected ──
+	['',                                       false, 'empty string'],
+	[null,                                     false, 'null'],
+	['-leading-hyphen.com',                    false, 'leading hyphen in label'],
+	['trailing-hyphen-.com',                   false, 'trailing hyphen in label'],
+	['example.-tld',                           false, 'leading hyphen in TLD'],
+	['example.tld-',                           false, 'trailing hyphen in TLD'],
+	['example..com',                           false, 'consecutive dots'],
+	['.example.com',                           false, 'leading dot'],
+	['example.com.',                           false, 'trailing dot'],
+];
+
+let pass = 0, fail = 0;
+for (let t in tests) {
+	let input = t[0];
+	let expected = t[1];
+	let desc = t[2];
+	let actual = V.is_domain(input);
+	if (actual === expected) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: is_domain(%J) — expected %J, got %J  [%s]\n", input, expected, actual, desc);
+	}
 }
+printf("domain_validation: %d/%d passed\n", pass, pass + fail);
+-- End --
 
-testIsHostname() {
-	assertTrue "Simple domain" "is_hostname 'example.com'"
-	assertTrue "Subdomain" "is_hostname 'sub.example.com'"
-	assertTrue "Deep subdomain" "is_hostname 'deep.sub.example.com'"
-	assertTrue "Hyphenated with ccTLD" "is_hostname 'my-site.co.uk'"
-	assertFalse "Single label" "is_hostname 'localhost'"
-	assertFalse "Empty string" "is_hostname ''"
-	assertFalse "IP address" "is_hostname '192.168.1.1'"
-}
-
-testIsPunycode() {
-	# Multi-label names where at least one label is xn--*
-	assertTrue "Punycode label, ASCII TLD" "is_punycode 'xn--bcher-kva.de'"
-	assertTrue "ASCII label, punycode TLD (.рф)" "is_punycode 'example.xn--p1ai'"
-	assertTrue "Punycode label, punycode TLD (пример.бел)" "is_punycode 'xn--e1adjldbbpv.xn--90ais'"
-	assertTrue "Punycode label, .рф TLD" "is_punycode 'xn--80aaa1cvac.xn--p1ai'"
-	# Plain ASCII names should NOT match is_punycode (they go through is_hostname)
-	assertFalse "Plain ASCII domain" "is_punycode 'example.com'"
-	assertFalse "ASCII subdomain" "is_punycode 'sub.example.com'"
-	# Single-label cases go through is_host, not is_punycode
-	assertFalse "Bare punycode TLD (single label)" "is_punycode 'xn--p1ai'"
-	assertFalse "Single label localhost" "is_punycode 'localhost'"
-	# Unicode forms rejected (deferred)
-	assertFalse "Unicode label rejected (deferred)" "is_punycode 'пример.бел'"
-	assertFalse "Unicode label rejected (deferred)" "is_punycode 'bücher.de'"
-	# Edge cases
-	assertFalse "Empty string" "is_punycode ''"
-	assertFalse "IP address" "is_punycode '192.168.1.1'"
-}
-
-testIsDomain() {
-	assertTrue "Standard domain" "is_domain 'example.com'"
-	assertTrue "Single-label host" "is_domain 'router'"
-	assertTrue "Local domain" "is_domain 'my-server.local'"
-	assertFalse "IPv4 not a domain" "is_domain '192.168.1.1'"
-	assertFalse "Empty string" "is_domain ''"
-	assertFalse "Bad MAC notation" "is_domain 'AA-BB-CC-DD-EE-FF'"
-}
-
-testIsDomainPunycode() {
-	# is_domain composes is_host || is_hostname || is_punycode — all paths covered
-	assertTrue "Bare punycode TLD via is_host" "is_domain 'xn--p1ai'"
-	assertTrue "Bare punycode TLD via is_host" "is_domain 'xn--90ais'"
-	assertTrue "Punycode label, ASCII TLD" "is_domain 'xn--bcher-kva.de'"
-	assertTrue "ASCII label, punycode TLD" "is_domain 'example.xn--p1ai'"
-	assertTrue "Punycode label, punycode TLD" "is_domain 'xn--e1adjldbbpv.xn--90ais'"
-	assertFalse "Unicode form rejected (deferred)" "is_domain 'пример.бел'"
-	assertFalse "Unicode form rejected (deferred)" "is_domain 'bücher.de'"
-}
-
-. shunit2
+-- Expect stdout --
+domain_validation: 27/27 passed
+-- End --
