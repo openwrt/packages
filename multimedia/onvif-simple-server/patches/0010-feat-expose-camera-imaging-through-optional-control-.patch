@@ -1,0 +1,1090 @@
+From b3028a5c57d958576a10858a3ad68df2bb21cf2a Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Sun, 18 Oct 2026 11:00:59 +0100
+Subject: [PATCH 10/15] feat: expose camera imaging through optional control
+ helpers
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ CONTROL_HELPERS.md      |  29 +++
+ Makefile                |   2 +-
+ Makefile.static         |   2 +-
+ device_advertisement.c  | 164 +++++++++++++++++
+ device_advertisement.h  |   7 +
+ device_service.c        | 398 +---------------------------------------
+ imaging_service.c       | 273 +++++++++++++++++++++++++++
+ imaging_service.h       |   7 +
+ onvif_simple_server.c   |   4 +
+ soap.c                  |   2 +-
+ test/control_fixture.py |   8 +-
+ test/test_cgi.py        |  50 +++++
+ 12 files changed, 547 insertions(+), 399 deletions(-)
+ create mode 100644 device_advertisement.c
+ create mode 100644 device_advertisement.h
+ create mode 100644 imaging_service.c
+ create mode 100644 imaging_service.h
+
+--- a/CONTROL_HELPERS.md
++++ b/CONTROL_HELPERS.md
+@@ -56,3 +56,32 @@ effective `configuration` after applying
+ true, as required by the current Media specification; Media2 also persists
+ encoder changes. Rejected changes must leave the camera unchanged. Setters
+ remain unavailable when no encoder helper is configured.
++
++## Imaging operations
++
++An `imaging_helper` enables the Imaging service at `/onvif/imaging_service`
++and advertises it through Device GetServices and GetCapabilities. Install a
++CGI wrapper selecting that service, as for the existing media endpoints.
++All operations receive `token: "VideoSourceToken"`, the sole camera source.
++
++`get` returns `revision` and a `settings` object. `options` returns `revision`
++and an `options` object. Supported top-level keys, in either object, are
++`brightness`, `colour_saturation`, `contrast`, `exposure`, `sharpness` and
++`white_balance`. Omit controls the camera does not support.
++
++Exposure contains `mode` and optional `min_exposure_time`, `max_exposure_time`,
++`min_gain`, `max_gain`, `min_iris`, `max_iris`, `exposure_time`, `gain`, `iris`.
++Exposure times are microseconds; gain and iris attenuation are dB. White
++balance contains `mode` and optional unitless `cr_gain` (red) and `cb_gain`
++(blue). Settings use a single `AUTO` or `MANUAL` mode and numeric values.
++Options use an array of supported modes and numeric `{min, max}` ranges.
++The adapter uses the ONVIF schema's `YrGain`/`YbGain` names for white-balance
++options, and `CrGain`/`CbGain` for settings.
++
++`set` receives `settings`, a partial object of changes, and the caller's
++`force_persistence` boolean, false when omitted. Each exposure/white-balance
++object includes its mode. Apply the whole request as one transaction. Return
++`revision` and the effective `settings` after application. The helper must
++reject unsupported controls or values, honour persistence and preserve
++unchanged controls. Unknown XML controls are rejected rather than ignored.
++Focus, presets, IR-cut, WDR and exposure masks are outside this interface.
+--- a/Makefile
++++ b/Makefile
+@@ -1,7 +1,7 @@
+ # Set HAVE_WOLFSSL or HAVE_MBEDTLS variable if you want to use WOLFSSL or
+ # MBEDTLS instead of LIBTOMCRYPT
+ 
+-OBJECTS_O = encoder_control.o control_helper.o media_options.o soap.o media_profiles.o onvif_simple_server.o device_service.o media_service.o media2_service.o ptz_service.o events_service.o deviceio_service.o fault.o conf.o utils_zlib.o log.o ezxml_wrapper.o ezxml/ezxml.o
++OBJECTS_O = device_advertisement.o imaging_service.o encoder_control.o control_helper.o media_options.o soap.o media_profiles.o onvif_simple_server.o device_service.o media_service.o media2_service.o ptz_service.o events_service.o deviceio_service.o fault.o conf.o utils_zlib.o log.o ezxml_wrapper.o ezxml/ezxml.o
+ OBJECTS_N = onvif_notify_server.o conf.o utils.o log.o ezxml_wrapper.o ezxml/ezxml.o
+ OBJECTS_W = wsd_simple_server.o utils.o log.o ezxml_wrapper.o ezxml/ezxml.o
+ ifdef HAVE_WOLFSSL
+--- a/Makefile.static
++++ b/Makefile.static
+@@ -1,7 +1,7 @@
+ # Set HAVE_WOLFSSL or HAVE_MBEDTLS variable if you want to use WOLFSSL or
+ # MBEDTLS instead of LIBTOMCRYPT
+ 
+-OBJECTS_O = encoder_control.o control_helper.o media_options.o soap.o media_profiles.o onvif_simple_server.o device_service.o media_service.o media2_service.o ptz_service.o events_service.o deviceio_service.o fault.o conf.o utils_zlib.o log.o ezxml_wrapper.o ezxml/ezxml.o
++OBJECTS_O = device_advertisement.o imaging_service.o encoder_control.o control_helper.o media_options.o soap.o media_profiles.o onvif_simple_server.o device_service.o media_service.o media2_service.o ptz_service.o events_service.o deviceio_service.o fault.o conf.o utils_zlib.o log.o ezxml_wrapper.o ezxml/ezxml.o
+ OBJECTS_N = onvif_notify_server.o conf.o utils.o log.o ezxml_wrapper.o ezxml/ezxml.o
+ OBJECTS_W = wsd_simple_server.o utils.o log.o ezxml_wrapper.o ezxml/ezxml.o
+ ifdef HAVE_WOLFSSL
+--- /dev/null
++++ b/device_advertisement.c
+@@ -0,0 +1,164 @@
++/* SPDX-License-Identifier: GPL-3.0-only */
++#include <stdio.h>
++#include <string.h>
++
++#include "device_advertisement.h"
++#include "ezxml_wrapper.h"
++#include "fault.h"
++#include "onvif_simple_server.h"
++#include "soap.h"
++#include "utils.h"
++
++extern service_context_t service_ctx;
++
++struct template_value {
++    const char *key;
++    const char *value;
++};
++
++static void template_fill(ezxml_t node, const struct template_value *values)
++{
++    ezxml_t child;
++    int i;
++    int j;
++
++    for (i = 0; values[i].key; i++) {
++        if (!strcmp(node->txt, values[i].key))
++            ezxml_set_txt_d(node, values[i].value);
++        for (j = 0; node->attr[j]; j += 2)
++            if (!strcmp(node->attr[j + 1], values[i].key))
++                ezxml_set_attr_d(node, node->attr[j], values[i].value);
++    }
++    for (child = node->child; child; child = child->ordered)
++        template_fill(child, values);
++}
++
++static void imaging_service_add(ezxml_t response, const char *address, int include)
++{
++    ezxml_t service;
++    ezxml_t version;
++    ezxml_t capabilities;
++
++    service = ezxml_add_child_d(response, "tds:Service", strlen(response->txt));
++    soap_child_add(service, "tds:Namespace", "http://www.onvif.org/ver20/imaging/wsdl");
++    soap_child_add(service, "tds:XAddr", address);
++    if (include) {
++        capabilities = soap_child_add(service, "tds:Capabilities", NULL);
++        soap_child_add(capabilities, "timg:Capabilities", NULL);
++    }
++    version = soap_child_add(service, "tds:Version", NULL);
++    soap_number_add(version, "tt:Major", 2);
++    soap_number_add(version, "tt:Minor", 0);
++}
++
++static void imaging_capabilities_add(ezxml_t response, const char *address)
++{
++    ezxml_t capabilities;
++    ezxml_t imaging;
++    ezxml_t media;
++
++    capabilities = get_element_in_element_ptr("Capabilities", response);
++    media = get_element_in_element_ptr("Media", capabilities);
++    imaging = ezxml_add_child_d(capabilities, "tt:Imaging",
++                                media && media->off ? media->off - 1 : 0);
++    soap_child_add(imaging, "tt:XAddr", address);
++}
++
++int device_advertisement_send(int services)
++{
++    char device[MAX_LEN], media[MAX_LEN], media2[MAX_LEN], ptz[MAX_LEN];
++    char events[MAX_LEN], deviceio[MAX_LEN], imaging[MAX_LEN];
++    char audio_sources[16], audio_outputs[16], relay_outputs[16];
++    char filename[MAX_LEN];
++    char port[8];
++    const char *category;
++    const char *cap;
++    ezxml_t envelope;
++    ezxml_t response;
++    int audio_input;
++    int audio_output;
++    int include;
++    int i;
++    struct template_value values[] = {
++        { "%DEVICE_SERVICE_ADDRESS%", device },
++        { "%MEDIA_SERVICE_ADDRESS%", media },
++        { "%MEDIA2_SERVICE_ADDRESS%", media2 },
++        { "%PTZ_SERVICE_ADDRESS%", ptz },
++        { "%EVENTS_SERVICE_ADDRESS%", events },
++        { "%DEVICEIO_SERVICE_ADDRESS%", deviceio },
++        { "%EVENTS_BASESUBSCRIPTION%", "false" },
++        { "%EVENTS_PULLPOINT%", "false" },
++        { "%AUDIO_SOURCES%", audio_sources },
++        { "%AUDIO_OUTPUTS%", audio_outputs },
++        { "%RELAY_OUTPUTS%", relay_outputs },
++        { NULL, NULL }
++    };
++
++    port[0] = '\0';
++    if (service_ctx.port != 80)
++        snprintf(port, sizeof(port), ":%d", service_ctx.port);
++    snprintf(device, sizeof(device), "http://%s%s/onvif/device_service", service_ctx.address_url, port);
++    snprintf(media, sizeof(media), "http://%s%s/onvif/media_service", service_ctx.address_url, port);
++    snprintf(media2, sizeof(media2), "http://%s%s/onvif/media2_service", service_ctx.address_url, port);
++    snprintf(ptz, sizeof(ptz), "http://%s%s/onvif/ptz_service", service_ctx.address_url, port);
++    snprintf(events, sizeof(events), "http://%s%s/onvif/events_service", service_ctx.address_url, port);
++    snprintf(deviceio, sizeof(deviceio), "http://%s%s/onvif/deviceio_service", service_ctx.address_url, port);
++    snprintf(imaging, sizeof(imaging), "http://%s%s/onvif/imaging_service", service_ctx.address_url, port);
++    audio_input = 0;
++    audio_output = 0;
++    for (i = 0; i < service_ctx.profiles_num; i++) {
++        audio_input |= service_ctx.profiles[i].audio_encoder != AUDIO_NONE;
++        audio_output |= service_ctx.profiles[i].audio_decoder != AUDIO_NONE;
++    }
++    snprintf(audio_sources, sizeof(audio_sources), "%d", audio_input);
++    snprintf(audio_outputs, sizeof(audio_outputs), "%d", audio_output);
++    snprintf(relay_outputs, sizeof(relay_outputs), "%d", service_ctx.relay_outputs_num);
++    if (service_ctx.events_enable == EVENTS_BASESUBSCRIPTION || service_ctx.events_enable == EVENTS_BOTH)
++        values[6].value = "true";
++    if (service_ctx.events_enable == EVENTS_PULLPOINT || service_ctx.events_enable == EVENTS_BOTH)
++        values[7].value = "true";
++    category = get_element("Category", "Body");
++    cap = get_element("IncludeCapability", "Body");
++    include = cap && (!strcmp(cap, "true") || !strcmp(cap, "1"));
++    if (services)
++        snprintf(filename, sizeof(filename), "device_service_files/GetServices_%s%s_%s.xml",
++                 include ? "with_capabilities_" : "",
++                 service_ctx.ptz_node.enable ? "ptz" : "no_ptz",
++                 service_ctx.adv_enable_media2 ? "media2" : "no_media2");
++    else if (!category || !strcmp(category, "All"))
++        snprintf(filename, sizeof(filename), "device_service_files/GetCapabilities_%s.xml",
++                 service_ctx.ptz_node.enable ? "ptz" : "no_ptz");
++    else if (!strcmp(category, "Imaging") && service_ctx.imaging_helper) {
++        envelope = ezxml_new("SOAP-ENV:Envelope");
++        ezxml_set_attr(envelope, "xmlns:SOAP-ENV", "http://www.w3.org/2003/05/soap-envelope");
++        ezxml_set_attr(envelope, "xmlns:tds", "http://www.onvif.org/ver10/device/wsdl");
++        ezxml_set_attr(envelope, "xmlns:tt", "http://www.onvif.org/ver10/schema");
++        response = soap_child_add(envelope, "SOAP-ENV:Body", NULL);
++        response = soap_child_add(response, "tds:GetCapabilitiesResponse", NULL);
++        soap_child_add(response, "tds:Capabilities", NULL);
++        imaging_capabilities_add(response, imaging);
++        return soap_response_send(response);
++    } else if (!strcmp(category, "Device") || !strcmp(category, "Media") ||
++               !strcmp(category, "Events") ||
++               (!strcmp(category, "PTZ") && service_ctx.ptz_node.enable)) {
++        snprintf(filename, sizeof(filename), "device_service_files/Get%sCapabilities.xml", category);
++    } else {
++        return send_fault("device_service", "Receiver", "ter:ActionNotSupported", "ter:NoSuchService",
++                          "No such service", "The requested service category is unavailable");
++    }
++    envelope = ezxml_parse_file(filename);
++    if (!envelope || *ezxml_error(envelope)) {
++        ezxml_free(envelope);
++        return send_action_failed_fault("device_service", -1);
++    }
++    template_fill(envelope, values);
++    response = envelope->child->child;
++    if (service_ctx.imaging_helper) {
++        ezxml_set_attr(envelope, "xmlns:timg", "http://www.onvif.org/ver20/imaging/wsdl");
++        if (services)
++            imaging_service_add(response, imaging, include);
++        else if (!category || !strcmp(category, "All"))
++            imaging_capabilities_add(response, imaging);
++    }
++    return soap_response_send(response);
++}
+--- /dev/null
++++ b/device_advertisement.h
+@@ -0,0 +1,7 @@
++/* SPDX-License-Identifier: GPL-3.0-only */
++#ifndef DEVICE_ADVERTISEMENT_H
++#define DEVICE_ADVERTISEMENT_H
++
++int device_advertisement_send(int services);
++
++#endif
+--- a/device_service.c
++++ b/device_service.c
+@@ -23,6 +23,7 @@
+ #include <pthread.h>
+ 
+ #include "device_service.h"
++#include "device_advertisement.h"
+ #include "fault.h"
+ #include "utils.h"
+ #include "log.h"
+@@ -33,237 +34,7 @@ extern service_context_t service_ctx;
+ 
+ int device_get_services()
+ {
+-    char device_service_address[MAX_LEN];
+-    char media_service_address[MAX_LEN];
+-    char media2_service_address[MAX_LEN];
+-    char ptz_service_address[MAX_LEN];
+-    char events_service_address[MAX_LEN];
+-    char deviceio_service_address[MAX_LEN];
+-    char port[8];
+-    const char *cap;
+-
+-    char ebasesubscription[8], epullpoint[8];
+-
+-    char audio_sources[2], audio_outputs[2], relay_outputs[2];
+-
+-    port[0] = '\0';
+-    if (service_ctx.port != 80)
+-        snprintf(port, sizeof(port), ":%d", service_ctx.port);
+-    snprintf(device_service_address, sizeof(device_service_address), "http://%s%s/onvif/device_service", service_ctx.address_url, port);
+-    snprintf(media_service_address, sizeof(media_service_address), "http://%s%s/onvif/media_service", service_ctx.address_url, port);
+-    snprintf(media2_service_address, sizeof(media2_service_address), "http://%s%s/onvif/media2_service", service_ctx.address_url, port);
+-    snprintf(ptz_service_address, sizeof(ptz_service_address), "http://%s%s/onvif/ptz_service", service_ctx.address_url, port);
+-    snprintf(events_service_address, sizeof(events_service_address), "http://%s%s/onvif/events_service", service_ctx.address_url, port);
+-    snprintf(deviceio_service_address, sizeof(deviceio_service_address), "http://%s%s/onvif/deviceio_service", service_ctx.address_url, port);
+-
+-    if ((service_ctx.events_enable == EVENTS_PULLPOINT) || (service_ctx.events_enable == EVENTS_BOTH)) {
+-        snprintf(epullpoint, sizeof(epullpoint), "%s", "true");
+-    } else {
+-        snprintf(epullpoint, sizeof(epullpoint), "%s", "false");
+-    }
+-    if ((service_ctx.events_enable == EVENTS_BASESUBSCRIPTION) || (service_ctx.events_enable == EVENTS_BOTH)) {
+-        snprintf(ebasesubscription, sizeof(ebasesubscription), "%s", "true");
+-    } else {
+-        snprintf(ebasesubscription, sizeof(ebasesubscription), "%s", "false");
+-    }
+-
+-    if ((service_ctx.profiles[0].audio_encoder != AUDIO_NONE) ||
+-            ((service_ctx.profiles_num == 2) && (service_ctx.profiles[1].audio_encoder != AUDIO_NONE))) {
+-
+-        snprintf(audio_sources, sizeof(audio_sources), "%d", 1);
+-    } else {
+-        snprintf(audio_sources, sizeof(audio_sources), "%d", 0);
+-    }
+-    if ((service_ctx.profiles[0].audio_decoder != AUDIO_NONE) ||
+-            ((service_ctx.profiles_num == 2) && (service_ctx.profiles[1].audio_decoder != AUDIO_NONE))) {
+-
+-        snprintf(audio_outputs, sizeof(audio_outputs), "%d", 1);
+-    } else {
+-        snprintf(audio_outputs, sizeof(audio_outputs), "%d", 0);
+-    }
+-
+-    snprintf(relay_outputs, sizeof(relay_outputs), "%d", service_ctx.relay_outputs_num);
+-
+-    cap = get_element("IncludeCapability", "Body");
+-    if ((cap != NULL) && (strcasecmp(cap, "true")) == 0) {
+-        if ((service_ctx.ptz_node.enable == 0) && (service_ctx.adv_enable_media2 == 0)) {
+-            long size = cat(NULL, "device_service_files/GetServices_with_capabilities_no_ptz_no_media2.xml", 18,
+-                    "%DEVICE_SERVICE_ADDRESS%", device_service_address,
+-                    "%MEDIA_SERVICE_ADDRESS%", media_service_address,
+-                    "%EVENTS_SERVICE_ADDRESS%", events_service_address,
+-                    "%EVENTS_BASESUBSCRIPTION%", ebasesubscription,
+-                    "%EVENTS_PULLPOINT%", epullpoint,
+-                    "%DEVICEIO_SERVICE_ADDRESS%", deviceio_service_address,
+-                    "%AUDIO_SOURCES%", audio_sources,
+-                    "%AUDIO_OUTPUTS%", audio_outputs,
+-                    "%RELAY_OUTPUTS%", relay_outputs);
+-
+-            output_http_headers(size);
+-
+-            return cat("stdout", "device_service_files/GetServices_with_capabilities_no_ptz_no_media2.xml", 18,
+-                    "%DEVICE_SERVICE_ADDRESS%", device_service_address,
+-                    "%MEDIA_SERVICE_ADDRESS%", media_service_address,
+-                    "%EVENTS_SERVICE_ADDRESS%", events_service_address,
+-                    "%EVENTS_BASESUBSCRIPTION%", ebasesubscription,
+-                    "%EVENTS_PULLPOINT%", epullpoint,
+-                    "%DEVICEIO_SERVICE_ADDRESS%", deviceio_service_address,
+-                    "%AUDIO_SOURCES%", audio_sources,
+-                    "%AUDIO_OUTPUTS%", audio_outputs,
+-                    "%RELAY_OUTPUTS%", relay_outputs);
+-
+-        } else if ((service_ctx.ptz_node.enable == 0) && (service_ctx.adv_enable_media2 == 1)) {
+-            long size = cat(NULL, "device_service_files/GetServices_with_capabilities_no_ptz_media2.xml", 20,
+-                    "%DEVICE_SERVICE_ADDRESS%", device_service_address,
+-                    "%MEDIA_SERVICE_ADDRESS%", media_service_address,
+-                    "%MEDIA2_SERVICE_ADDRESS%", media2_service_address,
+-                    "%EVENTS_SERVICE_ADDRESS%", events_service_address,
+-                    "%EVENTS_BASESUBSCRIPTION%", ebasesubscription,
+-                    "%EVENTS_PULLPOINT%", epullpoint,
+-                    "%DEVICEIO_SERVICE_ADDRESS%", deviceio_service_address,
+-                    "%AUDIO_SOURCES%", audio_sources,
+-                    "%AUDIO_OUTPUTS%", audio_outputs,
+-                    "%RELAY_OUTPUTS%", relay_outputs);
+-
+-            output_http_headers(size);
+-
+-            return cat("stdout", "device_service_files/GetServices_with_capabilities_no_ptz_media2.xml", 20,
+-                    "%DEVICE_SERVICE_ADDRESS%", device_service_address,
+-                    "%MEDIA_SERVICE_ADDRESS%", media_service_address,
+-                    "%MEDIA2_SERVICE_ADDRESS%", media2_service_address,
+-                    "%EVENTS_SERVICE_ADDRESS%", events_service_address,
+-                    "%EVENTS_BASESUBSCRIPTION%", ebasesubscription,
+-                    "%EVENTS_PULLPOINT%", epullpoint,
+-                    "%DEVICEIO_SERVICE_ADDRESS%", deviceio_service_address,
+-                    "%AUDIO_SOURCES%", audio_sources,
+-                    "%AUDIO_OUTPUTS%", audio_outputs,
+-                    "%RELAY_OUTPUTS%", relay_outputs);
+-
+-        } else if ((service_ctx.ptz_node.enable == 1) && (service_ctx.adv_enable_media2 == 0)) {
+-            long size = cat(NULL, "device_service_files/GetServices_with_capabilities_ptz_no_media2.xml", 20,
+-                    "%DEVICE_SERVICE_ADDRESS%", device_service_address,
+-                    "%MEDIA_SERVICE_ADDRESS%", media_service_address,
+-                    "%PTZ_SERVICE_ADDRESS%", ptz_service_address,
+-                    "%EVENTS_SERVICE_ADDRESS%", events_service_address,
+-                    "%EVENTS_BASESUBSCRIPTION%", ebasesubscription,
+-                    "%EVENTS_PULLPOINT%", epullpoint,
+-                    "%DEVICEIO_SERVICE_ADDRESS%", deviceio_service_address,
+-                    "%AUDIO_SOURCES%", audio_sources,
+-                    "%AUDIO_OUTPUTS%", audio_outputs,
+-                    "%RELAY_OUTPUTS%", relay_outputs);
+-
+-            output_http_headers(size);
+-
+-            return cat("stdout", "device_service_files/GetServices_with_capabilities_ptz_no_media2.xml", 20,
+-                    "%DEVICE_SERVICE_ADDRESS%", device_service_address,
+-                    "%MEDIA_SERVICE_ADDRESS%", media_service_address,
+-                    "%PTZ_SERVICE_ADDRESS%", ptz_service_address,
+-                    "%EVENTS_SERVICE_ADDRESS%", events_service_address,
+-                    "%EVENTS_BASESUBSCRIPTION%", ebasesubscription,
+-                    "%EVENTS_PULLPOINT%", epullpoint,
+-                    "%DEVICEIO_SERVICE_ADDRESS%", deviceio_service_address,
+-                    "%AUDIO_SOURCES%", audio_sources,
+-                    "%AUDIO_OUTPUTS%", audio_outputs,
+-                    "%RELAY_OUTPUTS%", relay_outputs);
+-
+-        } else if ((service_ctx.ptz_node.enable == 1) && (service_ctx.adv_enable_media2 == 1)) {
+-            long size = cat(NULL, "device_service_files/GetServices_with_capabilities_ptz_media2.xml", 22,
+-                    "%DEVICE_SERVICE_ADDRESS%", device_service_address,
+-                    "%MEDIA_SERVICE_ADDRESS%", media_service_address,
+-                    "%MEDIA2_SERVICE_ADDRESS%", media2_service_address,
+-                    "%PTZ_SERVICE_ADDRESS%", ptz_service_address,
+-                    "%EVENTS_SERVICE_ADDRESS%", events_service_address,
+-                    "%EVENTS_BASESUBSCRIPTION%", ebasesubscription,
+-                    "%EVENTS_PULLPOINT%", epullpoint,
+-                    "%DEVICEIO_SERVICE_ADDRESS%", deviceio_service_address,
+-                    "%AUDIO_SOURCES%", audio_sources,
+-                    "%AUDIO_OUTPUTS%", audio_outputs,
+-                    "%RELAY_OUTPUTS%", relay_outputs);
+-
+-            output_http_headers(size);
+-
+-            return cat("stdout", "device_service_files/GetServices_with_capabilities_ptz_media2.xml", 22,
+-                    "%DEVICE_SERVICE_ADDRESS%", device_service_address,
+-                    "%MEDIA_SERVICE_ADDRESS%", media_service_address,
+-                    "%MEDIA2_SERVICE_ADDRESS%", media2_service_address,
+-                    "%PTZ_SERVICE_ADDRESS%", ptz_service_address,
+-                    "%EVENTS_SERVICE_ADDRESS%", events_service_address,
+-                    "%EVENTS_BASESUBSCRIPTION%", ebasesubscription,
+-                    "%EVENTS_PULLPOINT%", epullpoint,
+-                    "%DEVICEIO_SERVICE_ADDRESS%", deviceio_service_address,
+-                    "%AUDIO_SOURCES%", audio_sources,
+-                    "%AUDIO_OUTPUTS%", audio_outputs,
+-                    "%RELAY_OUTPUTS%", relay_outputs);
+-        }
+-    } else {
+-        if ((service_ctx.ptz_node.enable == 0) && (service_ctx.adv_enable_media2 == 0)) {
+-            long size = cat(NULL, "device_service_files/GetServices_no_ptz_no_media2.xml", 8,
+-                    "%DEVICE_SERVICE_ADDRESS%", device_service_address,
+-                    "%MEDIA_SERVICE_ADDRESS%", media_service_address,
+-                    "%EVENTS_SERVICE_ADDRESS%", events_service_address,
+-                    "%DEVICEIO_SERVICE_ADDRESS%", deviceio_service_address);
+-
+-            output_http_headers(size);
+-
+-            return cat("stdout", "device_service_files/GetServices_no_ptz_no_media2.xml", 8,
+-                    "%DEVICE_SERVICE_ADDRESS%", device_service_address,
+-                    "%MEDIA_SERVICE_ADDRESS%", media_service_address,
+-                    "%EVENTS_SERVICE_ADDRESS%", events_service_address,
+-                    "%DEVICEIO_SERVICE_ADDRESS%", deviceio_service_address);
+-
+-        } else if ((service_ctx.ptz_node.enable == 0) && (service_ctx.adv_enable_media2 == 1)) {
+-            long size = cat(NULL, "device_service_files/GetServices_no_ptz_media2.xml", 10,
+-                    "%DEVICE_SERVICE_ADDRESS%", device_service_address,
+-                    "%MEDIA_SERVICE_ADDRESS%", media_service_address,
+-                    "%MEDIA2_SERVICE_ADDRESS%", media2_service_address,
+-                    "%EVENTS_SERVICE_ADDRESS%", events_service_address,
+-                    "%DEVICEIO_SERVICE_ADDRESS%", deviceio_service_address);
+-
+-            output_http_headers(size);
+-
+-            return cat("stdout", "device_service_files/GetServices_no_ptz_media2.xml", 10,
+-                    "%DEVICE_SERVICE_ADDRESS%", device_service_address,
+-                    "%MEDIA_SERVICE_ADDRESS%", media_service_address,
+-                    "%MEDIA2_SERVICE_ADDRESS%", media2_service_address,
+-                    "%EVENTS_SERVICE_ADDRESS%", events_service_address,
+-                    "%DEVICEIO_SERVICE_ADDRESS%", deviceio_service_address);
+-
+-        } else if ((service_ctx.ptz_node.enable == 1) && (service_ctx.adv_enable_media2 == 0)) {
+-            long size = cat(NULL, "device_service_files/GetServices_ptz_no_media2.xml", 10,
+-                    "%DEVICE_SERVICE_ADDRESS%", device_service_address,
+-                    "%MEDIA_SERVICE_ADDRESS%", media_service_address,
+-                    "%PTZ_SERVICE_ADDRESS%", ptz_service_address,
+-                    "%EVENTS_SERVICE_ADDRESS%", events_service_address,
+-                    "%DEVICEIO_SERVICE_ADDRESS%", deviceio_service_address);
+-
+-            output_http_headers(size);
+-
+-            return cat("stdout", "device_service_files/GetServices_ptz_no_media2.xml", 10,
+-                    "%DEVICE_SERVICE_ADDRESS%", device_service_address,
+-                    "%MEDIA_SERVICE_ADDRESS%", media_service_address,
+-                    "%PTZ_SERVICE_ADDRESS%", ptz_service_address,
+-                    "%EVENTS_SERVICE_ADDRESS%", events_service_address,
+-                    "%DEVICEIO_SERVICE_ADDRESS%", deviceio_service_address);
+-
+-        } else if ((service_ctx.ptz_node.enable == 1) && (service_ctx.adv_enable_media2 == 1)) {
+-            long size = cat(NULL, "device_service_files/GetServices_ptz_media2.xml", 12,
+-                    "%DEVICE_SERVICE_ADDRESS%", device_service_address,
+-                    "%MEDIA_SERVICE_ADDRESS%", media_service_address,
+-                    "%MEDIA2_SERVICE_ADDRESS%", media2_service_address,
+-                    "%PTZ_SERVICE_ADDRESS%", ptz_service_address,
+-                    "%EVENTS_SERVICE_ADDRESS%", events_service_address,
+-                    "%DEVICEIO_SERVICE_ADDRESS%", deviceio_service_address);
+-
+-            output_http_headers(size);
+-
+-            return cat("stdout", "device_service_files/GetServices_ptz_media2.xml", 12,
+-                    "%DEVICE_SERVICE_ADDRESS%", device_service_address,
+-                    "%MEDIA_SERVICE_ADDRESS%", media_service_address,
+-                    "%MEDIA2_SERVICE_ADDRESS%", media2_service_address,
+-                    "%PTZ_SERVICE_ADDRESS%", ptz_service_address,
+-                    "%EVENTS_SERVICE_ADDRESS%", events_service_address,
+-                    "%DEVICEIO_SERVICE_ADDRESS%", deviceio_service_address);
+-        }
+-    }
++    return device_advertisement_send(1);
+ }
+ 
+ int device_get_service_capabilities()
+@@ -478,170 +249,7 @@ int device_get_wsdl_url()
+ 
+ int device_get_capabilities()
+ {
+-    char device_service_address[MAX_LEN];
+-    char media_service_address[MAX_LEN];
+-    char ptz_service_address[MAX_LEN];
+-    char events_service_address[MAX_LEN];
+-    char deviceio_service_address[MAX_LEN];
+-    char port[8];
+-    int icategory;
+-    const char *category;
+-
+-    char ebasesubscription[8], epullpoint[8];
+-
+-    char audio_sources[2], audio_outputs[2], relay_outputs[2];
+-
+-    category = get_element("Category", "Body");
+-    if (category != NULL) {
+-        if (strcasecmp(category, "Device") == 0) {
+-            icategory = 1;
+-        } else if (strcasecmp(category, "Media") == 0) {
+-            icategory = 2;
+-        } else if (strcasecmp(category, "PTZ") == 0) {
+-            icategory = 4;
+-        } else if (strcasecmp(category, "Events") == 0) {
+-            icategory = 8;
+-        } else if (strcasecmp(category, "All") == 0) {
+-            icategory = 15;
+-        } else {
+-            send_fault("device_service", "Receiver", "ter:ActionNotSupported", "ter:NoSuchService", "No such service", "The requested WSDL service category is not supported by the device");
+-            return -2;
+-        }
+-    } else {
+-        icategory = 15;
+-    }
+-
+-    port[0] = '\0';
+-    if (service_ctx.port != 80)
+-        snprintf(port, sizeof(port), ":%d", service_ctx.port);
+-    snprintf(device_service_address, sizeof(device_service_address), "http://%s%s/onvif/device_service", service_ctx.address_url, port);
+-    snprintf(media_service_address, sizeof(media_service_address), "http://%s%s/onvif/media_service", service_ctx.address_url, port);
+-    snprintf(ptz_service_address, sizeof(ptz_service_address), "http://%s%s/onvif/ptz_service", service_ctx.address_url, port);
+-    snprintf(events_service_address, sizeof(events_service_address), "http://%s%s/onvif/events_service", service_ctx.address_url, port);
+-    snprintf(deviceio_service_address, sizeof(deviceio_service_address), "http://%s%s/onvif/deviceio_service", service_ctx.address_url, port);
+-
+-    if ((service_ctx.events_enable == EVENTS_PULLPOINT) || (service_ctx.events_enable == EVENTS_BOTH)) {
+-        snprintf(epullpoint, sizeof(epullpoint), "%s", "true");
+-    } else {
+-        snprintf(epullpoint, sizeof(epullpoint), "%s", "false");
+-    }
+-    if ((service_ctx.events_enable == EVENTS_BASESUBSCRIPTION) || (service_ctx.events_enable == EVENTS_BOTH)) {
+-        snprintf(ebasesubscription, sizeof(ebasesubscription), "%s", "true");
+-    } else {
+-        snprintf(ebasesubscription, sizeof(ebasesubscription), "%s", "false");
+-    }
+-
+-    if ((service_ctx.profiles[0].audio_encoder != AUDIO_NONE) ||
+-            ((service_ctx.profiles_num == 2) && (service_ctx.profiles[1].audio_encoder != AUDIO_NONE))) {
+-
+-        snprintf(audio_sources, sizeof(audio_sources), "%d", 1);
+-    } else {
+-        snprintf(audio_sources, sizeof(audio_sources), "%d", 0);
+-    }
+-    if ((service_ctx.profiles[0].audio_decoder != AUDIO_NONE) ||
+-            ((service_ctx.profiles_num == 2) && (service_ctx.profiles[1].audio_decoder != AUDIO_NONE))) {
+-
+-        snprintf(audio_outputs, sizeof(audio_outputs), "%d", 1);
+-    } else {
+-        snprintf(audio_outputs, sizeof(audio_outputs), "%d", 0);
+-    }
+-
+-    snprintf(relay_outputs, sizeof(relay_outputs), "%d", service_ctx.relay_outputs_num);
+-
+-    if (icategory == 1) {
+-        long size = cat(NULL, "device_service_files/GetDeviceCapabilities.xml", 2,
+-                "%DEVICE_SERVICE_ADDRESS%", device_service_address);
+-
+-        output_http_headers(size);
+-
+-        return cat("stdout", "device_service_files/GetDeviceCapabilities.xml", 2,
+-                "%DEVICE_SERVICE_ADDRESS%", device_service_address);
+-    } else if (icategory == 2) {
+-        long size = cat(NULL, "device_service_files/GetMediaCapabilities.xml", 2,
+-                "%MEDIA_SERVICE_ADDRESS%", media_service_address);
+-
+-        output_http_headers(size);
+-
+-        return cat("stdout", "device_service_files/GetMediaCapabilities.xml", 2,
+-                "%MEDIA_SERVICE_ADDRESS%", media_service_address);
+-    } else if (icategory == 4) {
+-        if (service_ctx.ptz_node.enable == 1) {
+-            long size = cat(NULL, "device_service_files/GetPTZCapabilities.xml", 2,
+-                    "%PTZ_SERVICE_ADDRESS%", ptz_service_address);
+-
+-            output_http_headers(size);
+-
+-            return cat("stdout", "device_service_files/GetPTZCapabilities.xml", 2,
+-                    "%PTZ_SERVICE_ADDRESS%", ptz_service_address);
+-        } else {
+-            send_fault("device_service", "Receiver", "ter:ActionNotSupported", "ter:NoSuchService", "No such service", "The requested WSDL service category is not supported by the device");
+-            return -3;
+-        }
+-    } else if (icategory == 8) {
+-        long size = cat(NULL, "device_service_files/GetEventsCapabilities.xml", 6,
+-                "%EVENTS_SERVICE_ADDRESS%", events_service_address,
+-                "%EVENTS_BASESUBSCRIPTION%", ebasesubscription,
+-                "%EVENTS_PULLPOINT%", epullpoint);
+-
+-        output_http_headers(size);
+-
+-        return cat("stdout", "device_service_files/GetEventsCapabilities.xml", 6,
+-                "%EVENTS_SERVICE_ADDRESS%", events_service_address,
+-                "%EVENTS_BASESUBSCRIPTION%", ebasesubscription,
+-                "%EVENTS_PULLPOINT%", epullpoint);
+-    } else {
+-        if (service_ctx.ptz_node.enable == 0) {
+-            long size = cat(NULL, "device_service_files/GetCapabilities_no_ptz.xml", 18,
+-                    "%DEVICE_SERVICE_ADDRESS%", device_service_address,
+-                    "%MEDIA_SERVICE_ADDRESS%", media_service_address,
+-                    "%EVENTS_SERVICE_ADDRESS%", events_service_address,
+-                    "%EVENTS_BASESUBSCRIPTION%", ebasesubscription,
+-                    "%EVENTS_PULLPOINT%", epullpoint,
+-                    "%DEVICEIO_SERVICE_ADDRESS%", deviceio_service_address,
+-                    "%AUDIO_SOURCES%", audio_sources,
+-                    "%AUDIO_OUTPUTS%", audio_outputs,
+-                    "%RELAY_OUTPUTS%", relay_outputs);
+-
+-            output_http_headers(size);
+-
+-            return cat("stdout", "device_service_files/GetCapabilities_no_ptz.xml", 18,
+-                    "%DEVICE_SERVICE_ADDRESS%", device_service_address,
+-                    "%MEDIA_SERVICE_ADDRESS%", media_service_address,
+-                    "%EVENTS_SERVICE_ADDRESS%", events_service_address,
+-                    "%EVENTS_BASESUBSCRIPTION%", ebasesubscription,
+-                    "%EVENTS_PULLPOINT%", epullpoint,
+-                    "%DEVICEIO_SERVICE_ADDRESS%", deviceio_service_address,
+-                    "%AUDIO_SOURCES%", audio_sources,
+-                    "%AUDIO_OUTPUTS%", audio_outputs,
+-                    "%RELAY_OUTPUTS%", relay_outputs);
+-        } else {
+-            long size = cat(NULL, "device_service_files/GetCapabilities_ptz.xml", 20,
+-                    "%DEVICE_SERVICE_ADDRESS%", device_service_address,
+-                    "%MEDIA_SERVICE_ADDRESS%", media_service_address,
+-                    "%PTZ_SERVICE_ADDRESS%", ptz_service_address,
+-                    "%EVENTS_SERVICE_ADDRESS%", events_service_address,
+-                    "%EVENTS_BASESUBSCRIPTION%", ebasesubscription,
+-                    "%EVENTS_PULLPOINT%", epullpoint,
+-                    "%DEVICEIO_SERVICE_ADDRESS%", deviceio_service_address,
+-                    "%AUDIO_SOURCES%", audio_sources,
+-                    "%AUDIO_OUTPUTS%", audio_outputs,
+-                    "%RELAY_OUTPUTS%", relay_outputs);
+-
+-            output_http_headers(size);
+-
+-            return cat("stdout", "device_service_files/GetCapabilities_ptz.xml", 20,
+-                    "%DEVICE_SERVICE_ADDRESS%", device_service_address,
+-                    "%MEDIA_SERVICE_ADDRESS%", media_service_address,
+-                    "%PTZ_SERVICE_ADDRESS%", ptz_service_address,
+-                    "%EVENTS_SERVICE_ADDRESS%", events_service_address,
+-                    "%EVENTS_BASESUBSCRIPTION%", ebasesubscription,
+-                    "%EVENTS_PULLPOINT%", epullpoint,
+-                    "%DEVICEIO_SERVICE_ADDRESS%", deviceio_service_address,
+-                    "%AUDIO_SOURCES%", audio_sources,
+-                    "%AUDIO_OUTPUTS%", audio_outputs,
+-                    "%RELAY_OUTPUTS%", relay_outputs);
+-        }
+-    }
++    return device_advertisement_send(0);
+ }
+ 
+ int device_get_network_interfaces()
+--- /dev/null
++++ b/imaging_service.c
+@@ -0,0 +1,273 @@
++/* SPDX-License-Identifier: GPL-3.0-only */
++#include <float.h>
++#include <math.h>
++#include <stdio.h>
++#include <string.h>
++
++#include "control_helper.h"
++#include "ezxml_wrapper.h"
++#include "fault.h"
++#include "imaging_service.h"
++#include "onvif_simple_server.h"
++#include "soap.h"
++
++extern service_context_t service_ctx;
++
++struct imaging_field {
++    const char *key;
++    const char *name;
++    const struct imaging_field *children;
++};
++
++static const struct imaging_field exposure_fields[] = {
++    { "mode", "Mode", NULL },
++    { "min_exposure_time", "MinExposureTime", NULL },
++    { "max_exposure_time", "MaxExposureTime", NULL },
++    { "min_gain", "MinGain", NULL },
++    { "max_gain", "MaxGain", NULL },
++    { "min_iris", "MinIris", NULL },
++    { "max_iris", "MaxIris", NULL },
++    { "exposure_time", "ExposureTime", NULL },
++    { "gain", "Gain", NULL },
++    { "iris", "Iris", NULL },
++    { NULL, NULL, NULL }
++};
++
++static const struct imaging_field white_balance_fields[] = {
++    { "mode", "Mode", NULL },
++    { "cr_gain", "CrGain", NULL },
++    { "cb_gain", "CbGain", NULL },
++    { NULL, NULL, NULL }
++};
++
++static const struct imaging_field imaging_fields[] = {
++    { "brightness", "Brightness", NULL },
++    { "colour_saturation", "ColorSaturation", NULL },
++    { "contrast", "Contrast", NULL },
++    { "exposure", "Exposure", exposure_fields },
++    { "sharpness", "Sharpness", NULL },
++    { "white_balance", "WhiteBalance", white_balance_fields },
++    { NULL, NULL, NULL }
++};
++
++static int number_read(json_object *value, double *number)
++{
++    if (!json_object_is_type(value, json_type_double) &&
++        !json_object_is_type(value, json_type_int))
++        return -1;
++    *number = json_object_get_double(value);
++    return isfinite(*number) && fabs(*number) <= FLT_MAX ? 0 : -1;
++}
++
++static int mode_add(ezxml_t parent, json_object *value, int options)
++{
++    json_object *entry;
++    const char *mode;
++    size_t count;
++    size_t i;
++
++    if (options && !json_object_is_type(value, json_type_array))
++        return -1;
++    count = options ? json_object_array_length(value) : 1;
++    if (!count || count > 2)
++        return -1;
++    for (i = 0; i < count; i++) {
++        entry = options ? json_object_array_get_idx(value, i) : value;
++        if (!json_object_is_type(entry, json_type_string))
++            return -1;
++        mode = json_object_get_string(entry);
++        if (strcmp(mode, "AUTO") && strcmp(mode, "MANUAL"))
++            return -1;
++        soap_child_add(parent, "tt:Mode", mode);
++    }
++    return 0;
++}
++
++static int numeric_add(ezxml_t parent, const char *name, json_object *value, int options)
++{
++    json_object *minimum_value;
++    json_object *maximum_value;
++    double minimum;
++    double maximum;
++
++    if (!options) {
++        if (number_read(value, &minimum))
++            return -1;
++        soap_number_add(parent, name, minimum);
++        return 0;
++    }
++    if (!json_object_is_type(value, json_type_object) ||
++        !json_object_object_get_ex(value, "min", &minimum_value) ||
++        !json_object_object_get_ex(value, "max", &maximum_value) ||
++        number_read(minimum_value, &minimum) || number_read(maximum_value, &maximum) ||
++        maximum < minimum)
++        return -1;
++    soap_range_add(parent, name, minimum, maximum);
++    return 0;
++}
++
++static int fields_add(ezxml_t parent, json_object *object,
++                      const struct imaging_field *fields, int options)
++{
++    const struct imaging_field *field;
++    json_object *value;
++    char name[64];
++    int found;
++
++    if (!json_object_is_type(object, json_type_object))
++        return -1;
++    found = 0;
++    for (field = fields; field->key; field++) {
++        if (!json_object_object_get_ex(object, field->key, &value))
++            continue;
++        found++;
++        snprintf(name, sizeof(name), "tt:%s", field->name);
++        if (options && fields == white_balance_fields && !strcmp(field->key, "cr_gain"))
++            snprintf(name, sizeof(name), "tt:YrGain");
++        if (options && fields == white_balance_fields && !strcmp(field->key, "cb_gain"))
++            snprintf(name, sizeof(name), "tt:YbGain");
++        if (field->children) {
++            if (fields_add(soap_child_add(parent, name, NULL), value, field->children, options))
++                return -1;
++        } else if (!strcmp(field->key, "mode")) {
++            if (mode_add(parent, value, options))
++                return -1;
++        } else if (numeric_add(parent, name, value, options)) {
++            return -1;
++        }
++    }
++    if (found != json_object_object_length(object))
++        return -1;
++    if (fields != imaging_fields && !json_object_object_get_ex(object, "mode", &value))
++        return -1;
++    return 0;
++}
++
++static json_object *fields_parse(ezxml_t node, const struct imaging_field *fields)
++{
++    const struct imaging_field *field;
++    const char *namespace;
++    const char *name;
++    json_object *object;
++    json_object *value;
++    ezxml_t child;
++    char *end;
++    double number;
++
++    if (!node)
++        return NULL;
++    object = json_object_new_object();
++    for (child = node->child; child; child = child->ordered) {
++        namespace = xml_namespace_get(child);
++        if (!namespace || strcmp(namespace, "http://www.onvif.org/ver10/schema"))
++            goto invalid;
++        name = strchr(child->name, ':');
++        name = name ? name + 1 : child->name;
++        for (field = fields; field->key && strcmp(field->name, name); field++)
++            ;
++        if (!field->key || json_object_object_get_ex(object, field->key, &value))
++            goto invalid;
++        if (field->children)
++            value = fields_parse(child, field->children);
++        else if (!strcmp(field->key, "mode"))
++            value = json_object_new_string(child->txt);
++        else {
++            number = strtod(child->txt, &end);
++            if (!*child->txt || *end || !isfinite(number))
++                goto invalid;
++            value = json_object_new_double(number);
++        }
++        if (!value)
++            goto invalid;
++        json_object_object_add(object, field->key, value);
++    }
++    return object;
++invalid:
++    json_object_put(object);
++    return NULL;
++}
++
++static enum helper_status imaging_call(const char *operation, json_object **reply)
++{
++    enum helper_status status;
++    const char *persistence;
++    json_object *request;
++    json_object *settings;
++    ezxml_t validation;
++
++    request = json_object_new_object();
++    json_object_object_add(request, "token", json_object_new_string("VideoSourceToken"));
++    if (!strcmp(operation, "set")) {
++        settings = fields_parse(get_element_ptr(NULL, "ImagingSettings", "Body"), imaging_fields);
++        validation = ezxml_new("settings");
++        if (!settings || !json_object_object_length(settings) ||
++            fields_add(validation, settings, imaging_fields, 0)) {
++            json_object_put(settings);
++            json_object_put(request);
++            ezxml_free(validation);
++            return HELPER_INVALID;
++        }
++        ezxml_free(validation);
++        json_object_object_add(request, "settings", settings);
++        persistence = get_element("ForcePersistence", "Body");
++        if (persistence && strcmp(persistence, "true") && strcmp(persistence, "1") &&
++            strcmp(persistence, "false") && strcmp(persistence, "0")) {
++            json_object_put(request);
++            return HELPER_INVALID;
++        }
++        json_object_object_add(request, "force_persistence", json_object_new_boolean(
++            persistence && (!strcmp(persistence, "true") || !strcmp(persistence, "1"))));
++    }
++    status = helper_call(service_ctx.imaging_helper, operation, request, reply);
++    json_object_put(request);
++    return status;
++}
++
++int imaging_dispatch(const char *operation)
++{
++    enum helper_status status;
++    const char *token;
++    const char *action;
++    json_object *reply;
++    json_object *value;
++    ezxml_t response;
++    ezxml_t member;
++    int options;
++    int setter;
++
++    if (!service_ctx.imaging_helper)
++        return send_action_not_supported_fault("imaging_service");
++    if (!strcmp(operation, "GetServiceCapabilities")) {
++        response = soap_response_create(3, operation);
++        soap_member_add(response, 3, "Capabilities");
++        return soap_response_send(response);
++    }
++    options = !strcmp(operation, "GetOptions");
++    setter = !strcmp(operation, "SetImagingSettings");
++    if (!options && !setter && strcmp(operation, "GetImagingSettings"))
++        return send_action_not_supported_fault("imaging_service");
++    token = get_element("VideoSourceToken", "Body");
++    if (!token || strcmp(token, "VideoSourceToken"))
++        return send_fault("imaging_service", "Sender", "ter:InvalidArgVal", "ter:NoSource",
++                          "Unknown source", "The requested video source does not exist");
++    action = options ? "options" : setter ? "set" : "get";
++    status = imaging_call(action, &reply);
++    if (status != HELPER_OK)
++        return helper_fault("imaging_service", status);
++    response = soap_response_create(3, operation);
++    member = setter ? ezxml_new("settings") : soap_member_add(response, 3,
++             options ? "ImagingOptions" : "ImagingSettings");
++    status = HELPER_FAILED;
++    if (json_object_object_get_ex(reply, "revision", &value) &&
++        json_object_is_type(value, json_type_string) && *json_object_get_string(value) &&
++        json_object_object_get_ex(reply, options ? "options" : "settings", &value) &&
++        !fields_add(member, value, imaging_fields, options))
++        status = HELPER_OK;
++    json_object_put(reply);
++    if (setter)
++        ezxml_free(member);
++    if (status == HELPER_OK)
++        return soap_response_send(response);
++    ezxml_free(response->parent->parent);
++    return helper_fault("imaging_service", status);
++}
+--- /dev/null
++++ b/imaging_service.h
+@@ -0,0 +1,7 @@
++/* SPDX-License-Identifier: GPL-3.0-only */
++#ifndef IMAGING_SERVICE_H
++#define IMAGING_SERVICE_H
++
++int imaging_dispatch(const char *operation);
++
++#endif
+--- a/onvif_simple_server.c
++++ b/onvif_simple_server.c
+@@ -29,6 +29,7 @@
+ #include "device_service.h"
+ #include "media_service.h"
+ #include "encoder_control.h"
++#include "imaging_service.h"
+ #include "media_profiles.h"
+ #include "media_options.h"
+ #include "media2_service.h"
+@@ -297,6 +298,7 @@ int main(int argc, char ** argv)
+         if ((strstr(tmp, "device_service") != NULL) ||
+                 (strstr(tmp, "media_service") != NULL) ||
+                 (strstr(tmp, "media2_service") != NULL) ||
++                (strstr(tmp, "imaging_service") != NULL) ||
+                 (strstr(tmp, "ptz_service") != NULL) ||
+                 (strstr(tmp, "events_service") != NULL) ||
+                 (strstr(tmp, "deviceio_service") != NULL)) {
+@@ -636,6 +638,8 @@ int main(int argc, char ** argv)
+                     media_unsupported(method);
+                 }
+             }
++        } else if (strcasecmp("imaging_service", prog_name) == 0) {
++            imaging_dispatch(method);
+         } else if ((service_ctx.adv_enable_media2 == 1) && (strcasecmp("media2_service", prog_name) == 0)) {
+             if (encoder_control_dispatch(method, 2))
+                 goto response_done;
+--- a/soap.c
++++ b/soap.c
+@@ -28,7 +28,7 @@ ezxml_t soap_member_add(ezxml_t parent,
+     char qualified[MAX_LEN];
+ 
+     snprintf(qualified, sizeof(qualified), "%s:%s",
+-             version == 1 ? "trt" : "tr2", name);
++             version == 1 ? "trt" : version == 2 ? "tr2" : "timg", name);
+     return soap_child_add(parent, qualified, NULL);
+ }
+ 
+--- a/test/control_fixture.py
++++ b/test/control_fixture.py
+@@ -14,16 +14,22 @@ status = state.get('status', 'ok')
+ result = {'revision': state.get('revision', 'test-revision')}
+ if operation == 'get':
+     result['profiles'] = state.get('profiles', [])
++    if 'settings' in state:
++        result['settings'] = state['settings']
+ elif operation == 'options':
+     result['options'] = state.get('options', [])
+ elif operation == 'set':
+     state['last_set'] = data
+-    configuration = data['configuration']
++    configuration = data.get('configuration', {})
+     for profile in state.get('profiles', []):
+         if profile['token'] == data['token']:
+             profile.update(configuration)
+     path.write_text(json.dumps(state))
+     result['configuration'] = configuration
++    if 'settings' in data:
++        state['settings'].update(data['settings'])
++        path.write_text(json.dumps(state))
++        result['settings'] = state['settings']
+ if state.get('bad_reply'):
+     result = {}
+ print(json.dumps({'version': 1, 'status': status, 'data': result}))
+--- a/test/test_cgi.py
++++ b/test/test_cgi.py
+@@ -79,6 +79,56 @@ def helper_configuration():
+ 
+ 
+ class CGITests(unittest.TestCase):
++    def test_imaging(self):
++        with helper_configuration() as (config, path):
++            config['imaging_helper'] = config.pop('encoder_helper')
++            state = {'settings': {'brightness': 40, 'colour_saturation': 30,
++                                 'exposure': {'mode': 'AUTO', 'gain': 12},
++                                 'white_balance': {'mode': 'AUTO'}},
++                     'options': {'brightness': {'min': 0, 'max': 100},
++                                 'exposure': {'mode': ['AUTO', 'MANUAL'],
++                                              'exposure_time': {'min': 50, 'max': 30000},
++                                              'gain': {'min': 0, 'max': 48}},
++                                 'white_balance': {'mode': ['AUTO', 'MANUAL'],
++                                                   'cr_gain': {'min': 0.1, 'max': 4},
++                                                   'cb_gain': {'min': 0.1, 'max': 4}}}}
++            path.write_text(json.dumps(state))
++            source = '<VideoSourceToken>VideoSourceToken</VideoSourceToken>'
++            status, root = request('imaging', 'GetOptions', source, config)
++            self.assertEqual(status, 200)
++            self.assertEqual(root.findtext('.//tt:WhiteBalance/tt:YrGain/tt:Max', namespaces=NS), '4')
++            status, root = request('imaging', 'GetImagingSettings', source, config)
++            self.assertEqual(status, 200)
++            self.assertEqual(root.findtext('.//tt:Exposure/tt:Mode', namespaces=NS), 'AUTO')
++            settings = ('<ImagingSettings><tt:Exposure><tt:Mode>MANUAL</tt:Mode>'
++                        '<tt:ExposureTime>10000</tt:ExposureTime><tt:Gain>6</tt:Gain>'
++                        '</tt:Exposure><tt:WhiteBalance><tt:Mode>MANUAL</tt:Mode>'
++                        '<tt:CrGain>1.2</tt:CrGain><tt:CbGain>1.5</tt:CbGain>'
++                        '</tt:WhiteBalance></ImagingSettings>')
++            status, root = request('imaging', 'SetImagingSettings', source + settings +
++                                   '<ForcePersistence>false</ForcePersistence>', config)
++            self.assertEqual(status, 200)
++            applied = json.loads(path.read_text())
++            self.assertFalse(applied['last_set']['force_persistence'])
++            self.assertEqual(applied['settings']['exposure']['exposure_time'], 10000)
++            status, root = request('imaging', 'GetImagingSettings', source, config)
++            self.assertEqual(root.findtext('.//tt:WhiteBalance/tt:CrGain', namespaces=NS), '1.2')
++            for settings in ['<tt:Exposure><tt:Mode>BAD</tt:Mode></tt:Exposure>',
++                             '<tt:Exposure><tt:Gain>2</tt:Gain></tt:Exposure>',
++                             '<tt:Brightness>NaN</tt:Brightness>',
++                             '<tt:Unknown>1</tt:Unknown>']:
++                status, root = request('imaging', 'SetImagingSettings', source +
++                                       f'<ImagingSettings>{settings}</ImagingSettings>', config)
++                self.assertEqual(status, 500)
++            self.assertEqual(request('imaging', 'GetOptions',
++                                     '<VideoSourceToken>missing</VideoSourceToken>', config)[0], 500)
++            for operation in ['GetServices', 'GetCapabilities']:
++                status, root = request('device', operation, config=config)
++                self.assertEqual(status, 200)
++                self.assertIn('http://127.0.0.1:8080/onvif/imaging_service',
++                              [n.text for n in root.findall('.//{*}XAddr')])
++            self.assertEqual(request('imaging', 'GetImagingSettings', source)[0], 500)
++
+     def test_encoder_helper_get_options_set(self):
+         with helper_configuration() as (config, path):
+             for service in ['media', 'media2']:

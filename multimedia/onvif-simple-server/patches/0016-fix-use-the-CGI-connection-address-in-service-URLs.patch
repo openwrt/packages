@@ -1,0 +1,250 @@
+From 06d96723d0a5aaf8a36daa4576670e347d94e4f5 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Sun, 18 Oct 2026 17:02:50 +0100
+Subject: [PATCH 16/19] fix: use the CGI connection address in service URLs
+
+Address selection from a configured interface or a route to the client
+can advertise a different local endpoint on a multihomed device. Prefer
+the web server CGI SERVER_ADDR value and share address resolution between
+text and JSON configuration readers.
+
+Fixes: cdc5939bbe97 ("feat: auto-detect local address from REMOTE_ADDR; ifs= now optional override")
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ conf.c            | 114 ++++++++++++++++++++--------------------------
+ test/test_cgi.py  |  23 +++++++++-
+ test/test_http.py |  17 +++++--
+ 3 files changed, 85 insertions(+), 69 deletions(-)
+
+--- a/conf.c
++++ b/conf.c
+@@ -26,6 +26,7 @@
+ #include <net/if.h>
+ #include <math.h>
+ #include <float.h>
++#include <arpa/inet.h>
+ 
+ #include <json-c/json.h>
+ #include "conf.h"
+@@ -92,6 +93,51 @@ static int profiles_validate(void)
+     return 0;
+ }
+ 
++static int service_address_resolve(void)
++{
++    unsigned char binary[sizeof(struct in6_addr)];
++    char netmask[INET_ADDRSTRLEN];
++    char interface[IFNAMSIZ];
++    const char *remote;
++    const char *local;
++
++    local = getenv("SERVER_ADDR");
++    if (local && *local) {
++        if (inet_pton(AF_INET, local, binary) != 1 &&
++            inet_pton(AF_INET6, local, binary) != 1) {
++            log_error("Invalid SERVER_ADDR.");
++            return -2;
++        }
++        snprintf(service_ctx.address, sizeof(service_ctx.address), "%s", local);
++    } else if (service_ctx.ifs) {
++        if (get_ip_address(service_ctx.address, netmask, service_ctx.ifs) < 0) {
++            log_error("Cannot get IP address from interface %s.", service_ctx.ifs);
++            return -2;
++        }
++    } else {
++        remote = getenv("REMOTE_ADDR");
++        if (!remote || detect_local_address(remote, service_ctx.address,
++                                            sizeof(service_ctx.address))) {
++            log_error("Cannot determine local address.");
++            return -2;
++        }
++    }
++    if (!service_ctx.ifs) {
++        if (get_ifname_by_addr(service_ctx.address, interface, sizeof(interface)))
++            snprintf(interface, sizeof(interface), "%s", DEFAULT_IFS);
++        service_ctx.ifs = strdup(interface);
++        if (!service_ctx.ifs)
++            return -2;
++    }
++    if (strchr(service_ctx.address, ':'))
++        snprintf(service_ctx.address_url, sizeof(service_ctx.address_url),
++                 "[%s]", service_ctx.address);
++    else
++        snprintf(service_ctx.address_url, sizeof(service_ctx.address_url),
++                 "%s", service_ctx.address);
++    return 0;
++}
++
+ int process_conf_file(char *file)
+ {
+     FILE *fF;
+@@ -739,38 +785,8 @@ int process_conf_file(char *file)
+         service_ctx.hardware_id = (char *) malloc(strlen(DEFAULT_HW_ID) + 1);
+         snprintf(service_ctx.hardware_id, strlen(DEFAULT_HW_ID) + 1, "%s", DEFAULT_HW_ID);
+     }
+-    /* Address and interface resolution */
+-    if (service_ctx.ifs != NULL) {
+-        /* Interface explicitly configured: derive address from it */
+-        char netmask[16];
+-        if (get_ip_address(service_ctx.address, netmask, service_ctx.ifs) < 0) {
+-            log_fatal("Cannot get IP address from interface %s.", service_ctx.ifs);
+-            exit(EXIT_FAILURE);
+-        }
+-    } else {
+-        /* Auto-detect: derive address from REMOTE_ADDR, then detect interface */
+-        const char *remote = getenv("REMOTE_ADDR");
+-        if (!remote || detect_local_address(remote, service_ctx.address,
+-                                            sizeof(service_ctx.address)) != 0) {
+-            log_fatal("Cannot determine local address: REMOTE_ADDR not available.");
+-            exit(EXIT_FAILURE);
+-        }
+-        char auto_ifs[IFNAMSIZ];
+-        if (get_ifname_by_addr(service_ctx.address, auto_ifs, sizeof(auto_ifs)) == 0) {
+-            service_ctx.ifs = (char *) malloc(strlen(auto_ifs) + 1);
+-            snprintf(service_ctx.ifs, strlen(auto_ifs) + 1, "%s", auto_ifs);
+-        } else {
+-            service_ctx.ifs = (char *) malloc(strlen(DEFAULT_IFS) + 1);
+-            snprintf(service_ctx.ifs, strlen(DEFAULT_IFS) + 1, "%s", DEFAULT_IFS);
+-        }
+-    }
+-    if (strchr(service_ctx.address, ':'))
+-        snprintf(service_ctx.address_url, sizeof(service_ctx.address_url),
+-                 "[%s]", service_ctx.address);
+-    else
+-        strncpy(service_ctx.address_url, service_ctx.address,
+-                sizeof(service_ctx.address_url) - 1);
+-    service_ctx.address_url[sizeof(service_ctx.address_url) - 1] = '\0';
++    if (service_address_resolve())
++        return -2;
+ 
+     /* Stable device UUID from MAC */
+     {
+@@ -1006,38 +1022,8 @@ int process_json_conf_file(char *file)
+         if (service_ctx.hardware_id)
+             snprintf(service_ctx.hardware_id, strlen(DEFAULT_HW_ID) + 1, "%s", DEFAULT_HW_ID);
+     }
+-    /* Address and interface resolution */
+-    if (service_ctx.ifs != NULL) {
+-        /* Interface explicitly configured: derive address from it */
+-        char netmask[16];
+-        if (get_ip_address(service_ctx.address, netmask, service_ctx.ifs) < 0) {
+-            log_fatal("Cannot get IP address from interface %s.", service_ctx.ifs);
+-            exit(EXIT_FAILURE);
+-        }
+-    } else {
+-        /* Auto-detect: derive address from REMOTE_ADDR, then detect interface */
+-        const char *remote = getenv("REMOTE_ADDR");
+-        if (!remote || detect_local_address(remote, service_ctx.address,
+-                                            sizeof(service_ctx.address)) != 0) {
+-            log_fatal("Cannot determine local address: REMOTE_ADDR not available.");
+-            exit(EXIT_FAILURE);
+-        }
+-        char auto_ifs[IFNAMSIZ];
+-        if (get_ifname_by_addr(service_ctx.address, auto_ifs, sizeof(auto_ifs)) == 0) {
+-            service_ctx.ifs = (char*) malloc(strlen(auto_ifs) + 1);
+-            if (service_ctx.ifs) snprintf(service_ctx.ifs, strlen(auto_ifs) + 1, "%s", auto_ifs);
+-        } else {
+-            service_ctx.ifs = (char*) malloc(strlen(DEFAULT_IFS) + 1);
+-            if (service_ctx.ifs) snprintf(service_ctx.ifs, strlen(DEFAULT_IFS) + 1, "%s", DEFAULT_IFS);
+-        }
+-    }
+-    if (strchr(service_ctx.address, ':'))
+-        snprintf(service_ctx.address_url, sizeof(service_ctx.address_url),
+-                 "[%s]", service_ctx.address);
+-    else
+-        strncpy(service_ctx.address_url, service_ctx.address,
+-                sizeof(service_ctx.address_url) - 1);
+-    service_ctx.address_url[sizeof(service_ctx.address_url) - 1] = '\0';
++    if (service_address_resolve())
++        return -2;
+ 
+     /* Stable device UUID from MAC */
+     {
+--- a/test/test_cgi.py
++++ b/test/test_cgi.py
+@@ -26,7 +26,8 @@ def configuration(count=2):
+                 for i in range(count)]}
+ 
+ 
+-def request(service, operation, content='', config=None, namespace=None, template_dir=ROOT):
++def request(service, operation, content='', config=None, namespace=None, template_dir=ROOT,
++            server_address=None):
+     config = configuration() if config is None else config
+     namespace = namespace or {'device': 'http://www.onvif.org/ver10/device/wsdl',
+                  'media': NS['trt'], 'media2': NS['tr2'],
+@@ -39,6 +40,9 @@ def request(service, operation, content=
+         path.write_text(config if isinstance(config, str) else json.dumps(config))
+         env = dict(os.environ, ONVIF_LOG_FILE='-', REQUEST_METHOD='POST',
+                    REMOTE_ADDR='127.0.0.1', CONTENT_LENGTH=str(len(body)))
++        env.pop('SERVER_ADDR', None)
++        if server_address is not None:
++            env['SERVER_ADDR'] = server_address
+         result = subprocess.run([str(ROOT / 'onvif_simple_server'),
+                                  '-c', str(path), f'{service}_service'],
+                                 input=body, capture_output=True, cwd=template_dir,
+@@ -79,6 +83,23 @@ def helper_configuration():
+ 
+ 
+ class CGITests(unittest.TestCase):
++    def test_socket_local_addresses(self):
++        text = ('ifs=lo\nname=Profile_0\nwidth=640\nheight=480\ntype=H264\n'
++                'url=rtsp://%s:8554/test\naudio_encoder=NONE\n')
++        for config in [configuration(1), text]:
++            for address, host in [('192.0.2.10', '192.0.2.10'),
++                                  ('2001:db8::10', '[2001:db8::10]')]:
++                status, root = request('media', 'GetStreamUri',
++                                       '<ProfileToken>Profile_0</ProfileToken>',
++                                       config, server_address=address)
++                self.assertEqual(status, 200)
++                self.assertTrue(root.findtext('.//{*}Uri').startswith(f'rtsp://{host}:8554/'))
++                status, root = request('device', 'GetServices', config=config,
++                                       server_address=address)
++                self.assertEqual(status, 200)
++                self.assertTrue(all(f'://{host}' in node.text
++                                    for node in root.findall('.//{*}XAddr')))
++
+     def test_capabilities_and_modes(self):
+         for count in [0, 1, 4, 12]:
+             config = configuration(count)
+--- a/test/test_http.py
++++ b/test/test_http.py
+@@ -34,7 +34,8 @@ class HTTPTests(unittest.TestCase):
+             listener.bind(('127.0.0.1', 0))
+             cls.port = listener.getsockname()[1]
+         command = json.loads(os.environ['UHTTPD_COMMAND'])
+-        command += ['-f', '-p', f'127.0.0.1:{cls.port}', '-h', str(directory), '-x', '/onvif']
++        command += ['-f', '-p', f'0.0.0.0:{cls.port}', '-p', f'[::1]:{cls.port}',
++                    '-h', str(directory), '-x', '/onvif']
+         cls.server = subprocess.Popen(command, env=dict(os.environ, ONVIF_LOG_FILE='-'),
+                                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+         cls.addClassCleanup(cls.stop_server)
+@@ -52,11 +53,11 @@ class HTTPTests(unittest.TestCase):
+         cls.server.terminate()
+         cls.server.wait(timeout=5)
+ 
+-    def post(self, operation):
++    def post(self, operation, address='127.0.0.1', content='<tr2:Type>All</tr2:Type>'):
+         body = (f'<s:Envelope xmlns:s="{NS["s"]}"><s:Body>'
+-                f'<tr2:{operation} xmlns:tr2="{NS["tr2"]}"><tr2:Type>All</tr2:Type>'
++                f'<tr2:{operation} xmlns:tr2="{NS["tr2"]}">{content}'
+                 f'</tr2:{operation}></s:Body></s:Envelope>')
+-        connection = http.client.HTTPConnection('127.0.0.1', self.port, timeout=5)
++        connection = http.client.HTTPConnection(address, self.port, timeout=5)
+         self.addCleanup(connection.close)
+         connection.request('POST', '/onvif/media2_service', body.encode(),
+                            {'Content-Type': 'application/soap+xml; charset=utf-8'})
+@@ -78,6 +79,14 @@ class HTTPTests(unittest.TestCase):
+         self.assertEqual(status, 500)
+         self.assertIsNotNone(root.find('.//s:Fault', NS))
+ 
++    def test_socket_local_stream_uris(self):
++        for address, host in [('127.0.0.1', '127.0.0.1'),
++                              ('127.0.0.2', '127.0.0.2'), ('::1', '[::1]')]:
++            status, root = self.post('GetStreamUri', address,
++                                     '<tr2:ProfileToken>Profile_0</tr2:ProfileToken>')
++            self.assertEqual(status, 200)
++            self.assertEqual(root.findtext('.//{*}Uri'), f'rtsp://{host}:8554/camera/0')
++
+ 
+ if __name__ == '__main__':
+     unittest.main()

@@ -1,0 +1,41 @@
+From ea260f377ba06766e26ff2fbfe7d4ef9dd103ca3 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Sun, 18 Oct 2026 09:57:24 +0100
+Subject: [PATCH 04/15] fix: read profile bitrate from JSON configuration
+
+JSON profiles initialise bitrate to zero but never load the configured
+value. Read it alongside dimensions and frame rate so CGI responses
+report the configured limit instead of the template fallback.
+
+Fixes: 74ab3f7586cf ("feat: report live encoding type and bitrate in video encoder config responses")
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ conf.c           | 1 +
+ test/test_cgi.py | 6 ++++++
+ 2 files changed, 7 insertions(+)
+
+--- a/conf.c
++++ b/conf.c
+@@ -1018,6 +1018,7 @@ int process_json_conf_file(char *file)
+                 }
+                 get_int_from_json(&(service_ctx.profiles[service_ctx.profiles_num - 1].width), item, "width");
+                 get_int_from_json(&(service_ctx.profiles[service_ctx.profiles_num - 1].height), item, "height");
++                get_int_from_json(&(service_ctx.profiles[service_ctx.profiles_num - 1].bitrate), item, "bitrate");
+                 get_int_from_json(&(service_ctx.profiles[service_ctx.profiles_num - 1].framerate), item, "framerate");
+                 get_string_from_json(&(service_ctx.profiles[service_ctx.profiles_num - 1].url), item, "url");
+                 get_string_from_json(&(service_ctx.profiles[service_ctx.profiles_num - 1].snapurl), item, "snapurl");
+--- a/test/test_cgi.py
++++ b/test/test_cgi.py
+@@ -52,6 +52,12 @@ def request(service, operation, content=
+ 
+ 
+ class CGITests(unittest.TestCase):
++    def test_json_bitrate(self):
++        status, root = request('media', 'GetProfiles')
++        self.assertEqual(status, 200)
++        self.assertEqual([n.text for n in root.findall('.//tt:BitrateLimit', NS)],
++                         ['12000', '6000'])
++
+     def test_device(self):
+         status, root = request('device', 'GetDeviceInformation')
+         self.assertEqual(status, 200)

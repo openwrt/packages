@@ -1,0 +1,627 @@
+From 8b9126c995558885a2ffd1e922bde12002a6a595 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Sun, 18 Oct 2026 10:46:00 +0100
+Subject: [PATCH 07/15] fix: traverse SOAP request elements without suffix
+ underflow
+
+Match local names without subtracting unchecked lengths and advance
+through every sibling. Keep searches within their requested subtree,
+reject malformed envelopes and DTD input, and verify the operation
+namespace against its service endpoint. Terminate the CGI input buffer.
+
+Fixes: d2f362bdb0dc ("Add new functions to ezxml_wrapper")
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ Makefile              |   9 +-
+ ezxml_wrapper.c       | 385 +++++++++++-------------------------------
+ ezxml_wrapper.h       |   2 +
+ onvif_simple_server.c |  37 +++-
+ test/test_cgi.py      |   9 +-
+ test/test_xml.c       |  33 ++++
+ 6 files changed, 182 insertions(+), 293 deletions(-)
+ create mode 100644 test/test_xml.c
+
+--- a/Makefile
++++ b/Makefile
+@@ -59,9 +59,15 @@ test-cgi: onvif_simple_server
+ 
+ # Build and run unit tests using the native host compiler.
+ # Uses stub mbedTLS headers from test/ so no crypto library is required.
+-test: test/test_utils test/test_faults
++test: test/test_utils test/test_faults test/test_xml
+ 	./test/test_utils
+ 	python3 test/test_faults.py
++	./test/test_xml
++
++test/test_xml: test/test_xml.c test/stubs.c ezxml_wrapper.c ezxml/ezxml.c utils.c log.c
++	cc -I. -Itest -DHAVE_MBEDTLS -D_GNU_SOURCE -std=c99 \
++		test/test_xml.c test/stubs.c ezxml_wrapper.c ezxml/ezxml.c utils.c log.c \
++		-lz -lpthread -lrt -o test/test_xml
+ 
+ test/test_faults: test/test_faults.c test/stubs.c fault.c utils.c log.c
+ 	cc -I. -Itest -DHAVE_MBEDTLS -D_GNU_SOURCE -std=c99 \
+@@ -79,6 +85,7 @@ clean:
+ 	rm -f wsd_simple_server
+ 	rm -f test/test_utils
+ 	rm -f test/test_faults
++	rm -f test/test_xml
+ 	rm -f $(OBJECTS_O)
+ 	rm -f $(OBJECTS_N)
+ 	rm -f $(OBJECTS_W)
+--- a/ezxml_wrapper.c
++++ b/ezxml_wrapper.c
+@@ -14,340 +14,149 @@
+  * along with this program. If not, see <http://www.gnu.org/licenses/>.
+  */
+ 
+-#include "string.h"
++#include <string.h>
+ 
+ #include "ezxml_wrapper.h"
+ #include "utils.h"
+-#include "log.h"
+ 
+-ezxml_t root_xml;
++static ezxml_t root_xml;
+ 
+-/**
+- * Init xml parser
+- * @param buffer The buffer contaning the xml file
+- * @param buffer_size The size of the buffer
+- */
+-void init_xml(char *buffer, int buffer_size)
++static const char *local_name(ezxml_t node)
+ {
+-    root_xml = ezxml_parse_str(buffer, buffer_size);
+-}
++    const char *colon;
+ 
+-/**
+- * Close xml parser
+- */
+-void close_xml()
+-{
+-    ezxml_free(root_xml); 
++    if (!node)
++        return "";
++    colon = strchr(node->name, ':');
++    return colon ? colon + 1 : node->name;
+ }
+ 
+-/**
+- * Get the method (the 1st element after <Body>)
+- * @param skip_prefix 1 to skip the prefix of the element (<prefix:method>)
+- * @return A pointer to the name of the method, NULL if not found
+- */
+-const char *get_method(int skip_prefix)
++const char *xml_namespace_get(ezxml_t node)
+ {
+-    ezxml_t xml;
+-    char first_node[256];
+-    int len;
+-    char *c;
+-
+-    // Check if "Body" element exists
+-    snprintf(first_node, sizeof(first_node), "%s", "Body");
+-    xml = root_xml->child;
+-    while (xml && strcmp(first_node, xml->name)) xml = xml->ordered;
+-    if ((xml) && (xml->child)) {
+-        if (skip_prefix) {
+-            c = strchr(xml->child->name, ':');
+-            if (c == NULL) {
+-                return xml->child->name;
+-            } else {
+-                c++;
+-                return c;
+-            }
+-        }
+-    }
++    char attribute[MAX_LEN];
++    const char *namespace;
++    const char *colon;
+ 
+-    // Check if "something:Body" element exists
+-    xml = root_xml->child;
+-    snprintf(first_node, sizeof(first_node), "%s", ":Body");
+-    while (xml) {
+-        len = strlen(xml->name);
+-        if (strcmp(first_node, &(xml->name)[len - 5]) == 0) break;
+-        xml = xml->ordered;
+-    }
+-    if ((xml) && (xml->child)) {
+-        if (skip_prefix) {
+-            c = strchr(xml->child->name, ':');
+-            if (c == NULL) {
+-                return xml->child->name;
+-            } else {
+-                c++;
+-                return c;
+-            }
+-        }
++    if (!node)
++        return NULL;
++    colon = strchr(node->name, ':');
++    if (colon && colon - node->name >= MAX_LEN - (int)sizeof("xmlns:"))
++        return NULL;
++    if (colon)
++        snprintf(attribute, sizeof(attribute), "xmlns:%.*s",
++                 (int)(colon - node->name), node->name);
++    else
++        snprintf(attribute, sizeof(attribute), "xmlns");
++    for (; node; node = node->parent) {
++        namespace = ezxml_attr(node, attribute);
++        if (namespace)
++            return namespace;
+     }
+-
+     return NULL;
+ }
+ 
+-int go_to_parent;
++static ezxml_t child_find(ezxml_t node, const char *name)
++{
++    ezxml_t child;
++
++    for (child = node ? node->child : NULL; child; child = child->ordered)
++        if (!strcmp(local_name(child), name))
++            return child;
++    return NULL;
++}
+ 
+-/**
+- * Internal recursive function: get the 1st element with name "name" starting from "first_node"
+- * @param xml The xml structure
+- * @param name The name of the element to find
+- * @param first_node The node where to find the element
+- * @return A pointer to the value of the element, NULL if not found
+- */
+-const char *get_element_rec(ezxml_t xml, char *name, char *first_node)
++static ezxml_t descendant_find(ezxml_t node, const char *name)
+ {
+-    const char *ret;
+-    char name_copy[256];
+-    ezxml_t px, pk;
+-
+-    if (go_to_parent) return NULL;
+-
+-    // If it's the root of the document choose the first node ("Header" or "Body")
+-    if (xml->parent == NULL) {
+-        px = xml->child;
+-        snprintf(name_copy, sizeof(name_copy), "%s", first_node);
+-        while (px) {
+-            if (strcmp(first_node, &(px->name)[strlen(px->name) - strlen(first_node)]) == 0) {
+-                ret = get_element_rec(px, name, first_node);
+-                return ret;
+-            } else {
+-                px = px->ordered;
+-            }
+-        }
+-        // 1st node not found, exit
+-    } else {
+-        // Check if this node is "<name>"
+-        if (strcmp(name, xml->name) == 0) {
+-            return xml->txt;
+-        }
+-
+-        // Check if this node is "<something:name>"
+-        name_copy[0] = ':';
+-        snprintf(&name_copy[1], sizeof(name_copy) - 1, "%s", name);
+-        if (strcmp(name_copy, &(xml->name)[strlen(xml->name) - strlen(name_copy)]) == 0) {
+-            return xml->txt;
+-        }
+-
+-        // Check children
+-        if (xml->child) {
+-            ret = get_element_rec(xml->child, name, first_node);
+-            go_to_parent = 0;
+-            if (ret != NULL) return ret;
+-        }
+-
+-        // Check brothers
+-        if((pk = xml->ordered)) {
+-            ret = get_element_rec(pk, name, first_node);
+-            if (go_to_parent) return NULL;
+-            if (ret != NULL) return ret;
+-        }
++    ezxml_t found;
++    ezxml_t child;
+ 
+-        go_to_parent = 1;
++    if (!node)
++        return NULL;
++    if (!strcmp(local_name(node), name))
++        return node;
++    for (child = node->child; child; child = child->ordered) {
++        found = descendant_find(child, name);
++        if (found)
++            return found;
+     }
+-
+     return NULL;
+ }
+ 
+-/**
+- * Get the 1st element with name "name" starting from "first_node"
+- * @param name The name of the element to find
+- * @param first_node The node where to find the element
+- * @return A pointer to the value of the element, NULL if not found
+- */
+-const char *get_element(char *name, char *first_node)
++void init_xml(char *buffer, int buffer_size)
+ {
+-    char *ret;
++    static const char declaration[] = "<!DOCTYPE";
++    const char *namespace;
++    int i;
++
++    root_xml = NULL;
++    if (buffer_size <= 0)
++        return;
++    for (i = 0; i + sizeof(declaration) - 1 <= (size_t)buffer_size; i++)
++        if (!memcmp(buffer + i, declaration, sizeof(declaration) - 1))
++            return;
++    root_xml = ezxml_parse_str(buffer, buffer_size);
++    namespace = xml_namespace_get(root_xml);
++    if (!root_xml || *ezxml_error(root_xml) ||
++        strcmp(local_name(root_xml), "Envelope") || !namespace ||
++        strcmp(namespace, "http://www.w3.org/2003/05/soap-envelope")) {
++        ezxml_free(root_xml);
++        root_xml = NULL;
++    }
++}
+ 
+-    go_to_parent = 0;
+-    ret = (char *) get_element_rec(root_xml, name, first_node);
+-    if (ret == NULL) return NULL;
+-    else return trim_mf(ret);
+-    // Warning: the line above change the xml content
+-    // ret should be a (const char *)
+-}
+-
+-/**
+- * Internal recursive function: get the 1st element with name "name" starting from "start_from"
+- * @param xml The xml structure
+- * @param name The name of the element to find
+- * @param first_node The node where to find the element
+- * @return ezxml_t type pointing to the element, NULL if not found
+- */
+-ezxml_t get_element_rec_ptr(ezxml_t xml, char *name, char *first_node)
++void close_xml(void)
+ {
+-    ezxml_t ret;
+-    char name_copy[256];
+-    ezxml_t px, pk;
+-
+-    if (go_to_parent) return NULL;
+-
+-    // If it's the root of the document choose the first node ("Header" or "Body")
+-    if (xml->parent == NULL) {
+-        px = xml->child;
+-        snprintf(name_copy, sizeof(name_copy), "%s", first_node);
+-        while (px) {
+-            if (strcmp(first_node, &(px->name)[strlen(px->name) - strlen(first_node)]) == 0) {
+-                ret = get_element_rec_ptr(px, name, first_node);
+-                return ret;
+-            } else {
+-                px = px->ordered;
+-            }
+-        }
+-        // 1st node not found, exit
+-    } else {
+-        // Check if this node is "<name>"
+-        if (strcmp(name, xml->name) == 0) {
+-            return xml;
+-        }
+-
+-        // Check if this node is "<something:name>"
+-        name_copy[0] = ':';
+-        snprintf(&name_copy[1], sizeof(name_copy) - 1, "%s", name);
+-        if (strcmp(name_copy, &(xml->name)[strlen(xml->name) - strlen(name_copy)]) == 0) {
+-            return xml;
+-        }
+-
+-        // Check children
+-        if (xml->child) {
+-            ret = get_element_rec_ptr(xml->child, name, first_node);
+-            go_to_parent = 0;
+-            if (ret != NULL) return ret;
+-        }
+-
+-        // Check brothers
+-        if((pk = xml->ordered)) {
+-            ret = get_element_rec_ptr(pk, name, first_node);
+-            if (go_to_parent) return NULL;
+-            if (ret != NULL) return ret;
+-        }
++    ezxml_free(root_xml);
++    root_xml = NULL;
++}
+ 
+-        go_to_parent = 1;
+-    }
++const char *get_method(int skip_prefix)
++{
++    ezxml_t body;
+ 
+-    return NULL;
++    body = child_find(root_xml, "Body");
++    if (!body || !body->child)
++        return NULL;
++    return skip_prefix ? local_name(body->child) : body->child->name;
++}
++
++const char *get_method_namespace(void)
++{
++    ezxml_t body;
++
++    body = child_find(root_xml, "Body");
++    return body ? xml_namespace_get(body->child) : NULL;
+ }
+ 
+-/**
+- * Get the 1st element with name "name" starting from "start_from"
+- * @param start_from The element where to start
+- * @param name The name of the element to find
+- * @param first_node The 1st level node where to find the element
+- * @return ezxml_t type pointing to the element, NULL if not found
+- */
+ ezxml_t get_element_ptr(ezxml_t start_from, char *name, char *first_node)
+ {
+-    ezxml_t ret;
++    if (!start_from)
++        start_from = child_find(root_xml, first_node);
++    return descendant_find(start_from, name);
++}
+ 
+-    go_to_parent = 0;
+-    if (start_from == NULL)
+-        ret = get_element_rec_ptr(root_xml, name, first_node);
+-    else
+-        ret = get_element_rec_ptr(start_from, name, first_node);
++const char *get_element(char *name, char *first_node)
++{
++    ezxml_t node;
+ 
+-    return ret;
++    node = get_element_ptr(NULL, name, first_node);
++    return node ? trim_mf(node->txt) : NULL;
+ }
+ 
+-/**
+- * Get the child element with name "name" starting from node "father"
+- * @param name The name of the element to find
+- * @param father The node where to find the element
+- * @return A pointer to the value of the element, NULL if not found
+- */
+ const char *get_element_in_element(const char *name, ezxml_t father)
+ {
+-    char name_copy[256];
+-    ezxml_t child = father->child;
+-    ezxml_t pk;
+-
+-    if (child != NULL) {
+-        // Check if this node is "<name>"
+-        if (strcmp(name, child->name) == 0) {
+-            return child->txt;
+-        }
+-
+-        // Check if this node is "<something:name>"
+-        name_copy[0] = ':';
+-        snprintf(&name_copy[1], sizeof(name_copy) - 1, "%s", name);
+-        if (strcmp(name_copy, &(child->name)[strlen(child->name) - strlen(name_copy)]) == 0) {
+-            return child->txt;
+-        }
+-
+-        // Check brothers
+-        while((pk = child->ordered)) {
+-            // Check if this node is "<name>"
+-            if (strcmp(name, pk->name) == 0) {
+-                return pk->txt;
+-            }
+-
+-            // Check if this node is "<something:name>"
+-            name_copy[0] = ':';
+-            snprintf(&name_copy[1], sizeof(name_copy) - 1, "%s", name);
+-            if (strcmp(name_copy, &(pk->name)[strlen(pk->name) - strlen(name_copy)]) == 0) {
+-                return pk->txt;
+-            }
+-        }
+-    }
++    ezxml_t node;
+ 
+-    return NULL;
++    node = child_find(father, name);
++    return node ? node->txt : NULL;
+ }
+ 
+-/**
+- * Get the child element with name "name" starting from node "father"
+- * @param name The name of the element to find
+- * @param father The node where to find the element
+- * @return ezxml_t type pointing to the element, NULL if not found
+- */
+ ezxml_t get_element_in_element_ptr(const char *name, ezxml_t father)
+ {
+-    char name_copy[256];
+-    ezxml_t child = father->child;
+-    ezxml_t pk;
+-
+-    if (child != NULL) {
+-        // Check if this node is "<name>"
+-        if (strcmp(name, child->name) == 0) {
+-            return child;
+-        }
+-
+-        // Check if this node is "<something:name>"
+-        name_copy[0] = ':';
+-        snprintf(&name_copy[1], sizeof(name_copy) - 1, "%s", name);
+-        if (strcmp(name_copy, &(child->name)[strlen(child->name) - strlen(name_copy)]) == 0) {
+-            return child;
+-        }
+-
+-        // Check brothers
+-        while((pk = child->ordered)) {
+-            // Check if this node is "<name>"
+-            if (strcmp(name, pk->name) == 0) {
+-                return pk;
+-            }
+-
+-            // Check if this node is "<something:name>"
+-            name_copy[0] = ':';
+-            snprintf(&name_copy[1], sizeof(name_copy) - 1, "%s", name);
+-            if (strcmp(name_copy, &(pk->name)[strlen(pk->name) - strlen(name_copy)]) == 0) {
+-                return pk;
+-            }
+-        }
+-    }
+-
+-    return NULL;
++    return child_find(father, name);
+ }
+ 
+-/**
+- * Get the attribute of a node with name "name"
+- * @param node The node where to find the attribute
+- * @param name The name of the attribute to find
+- * @return A pointer to the value of the attribute, NULL if not found
+- */
+ const char *get_attribute(ezxml_t node, char *name)
+ {
+-    return ezxml_attr(node, name);
++    return node ? ezxml_attr(node, name) : NULL;
+ }
+--- a/ezxml_wrapper.h
++++ b/ezxml_wrapper.h
+@@ -22,6 +22,8 @@
+ void init_xml(char *buffer, int buffer_size);
+ void close_xml();
+ const char *get_method(int skip_prefix);
++const char *get_method_namespace(void);
++const char *xml_namespace_get(ezxml_t node);
+ const char *get_element(char *name, char *first_node);
+ ezxml_t get_element_ptr(ezxml_t start_from, char *name, char *first_node);
+ const char *get_element_in_element(const char *name, ezxml_t father);
+--- a/onvif_simple_server.c
++++ b/onvif_simple_server.c
+@@ -148,6 +148,30 @@ void print_usage(char *progname)
+     fprintf(stderr, "\t\tprint this help\n");
+ }
+ 
++static int service_namespace_matches(const char *service, const char *namespace)
++{
++    static const struct {
++        const char *service;
++        const char *namespace;
++    } services[] = {
++        { "device_service", "http://www.onvif.org/ver10/device/wsdl" },
++        { "media_service", "http://www.onvif.org/ver10/media/wsdl" },
++        { "media2_service", "http://www.onvif.org/ver20/media/wsdl" },
++        { "ptz_service", "http://www.onvif.org/ver20/ptz/wsdl" },
++        { "events_service", "http://www.onvif.org/ver10/events/wsdl" },
++        { "deviceio_service", "http://www.onvif.org/ver10/deviceIO/wsdl" },
++        { "imaging_service", "http://www.onvif.org/ver20/imaging/wsdl" }
++    };
++    size_t i;
++
++    if (!namespace)
++        return 0;
++    for (i = 0; i < sizeof(services) / sizeof(services[0]); i++)
++        if (!strcmp(service, services[i].service))
++            return !strcmp(namespace, services[i].namespace);
++    return 0;
++}
++
+ int main(int argc, char ** argv)
+ {
+     char *tmp;
+@@ -342,10 +366,11 @@ int main(int argc, char ** argv)
+     }
+     int input_size;
+     // Use static buffer instead of malloc to avoid heap issues
+-    static char input_buffer[16 * 1024];
++    static char input_buffer[16 * 1024 + 1];
+     char* input = input_buffer;
+     log_debug("Static buffer allocated, input pointer points to %p", input);
+-    input_size = fread(input, 1, 16 * 1024 * sizeof(char), stdin);
++    input_size = fread(input, 1, sizeof(input_buffer) - 1, stdin);
++    input[input_size] = '\0';
+     if (input_size == 0) {
+         log_fatal("Error: input is empty");
+         fclose(fLog);
+@@ -371,6 +396,14 @@ int main(int argc, char ** argv)
+ 
+     log_debug("Method: %s", method);
+ 
++    if (!service_namespace_matches(prog_name, get_method_namespace())) {
++        send_action_not_supported_fault(prog_name);
++        close_xml();
++        free_conf_file();
++        fclose(fLog);
++        return 0;
++    }
++
+     if (service_ctx.user != NULL) {
+         if ((get_element("Security", "Header") != NULL) && (get_element("UsernameToken", "Header") != NULL)) {
+             unsigned long nonce_size = 128;
+--- a/test/test_cgi.py
++++ b/test/test_cgi.py
+@@ -25,9 +25,9 @@ def configuration(count=2):
+                 for i in range(count)]}
+ 
+ 
+-def request(service, operation, content='', config=None):
++def request(service, operation, content='', config=None, namespace=None):
+     config = configuration() if config is None else config
+-    namespace = {'device': 'http://www.onvif.org/ver10/device/wsdl',
++    namespace = namespace or {'device': 'http://www.onvif.org/ver10/device/wsdl',
+                  'media': NS['trt'], 'media2': NS['tr2'],
+                  'imaging': NS['timg']}[service]
+     body = (f'<s:Envelope xmlns:s="{NS["s"]}" xmlns:tt="{NS["tt"]}">'
+@@ -52,6 +52,11 @@ def request(service, operation, content=
+ 
+ 
+ class CGITests(unittest.TestCase):
++    def test_operation_namespace(self):
++        status, root = request('media', 'GetProfiles', namespace='urn:unrelated')
++        self.assertEqual(status, 500)
++        self.assertIsNotNone(root.find('.//s:Fault', NS))
++
+     def test_text_encoder_parameters(self):
+         config = ('ifs=lo\nname=Profile_0\nwidth=640\nheight=480\n'
+                   'type=H264\nencoding_profile=Baseline\ngov_length=61\n'
+--- /dev/null
++++ b/test/test_xml.c
+@@ -0,0 +1,33 @@
++#include <assert.h>
++#include <stdio.h>
++#include <string.h>
++
++#include "ezxml_wrapper.h"
++
++int main(void)
++{
++    char request[] = "<s:Envelope xmlns:s='http://www.w3.org/2003/05/soap-envelope'>"
++        "<s:Header><a/></s:Header><s:Body><m:Set xmlns:m='urn:test'>"
++        "<a/><b/><m:Value>42</m:Value><m:Next>43</m:Next>"
++        "</m:Set></s:Body></s:Envelope>";
++    char malformed[] = "<x>";
++    ezxml_t operation;
++
++    init_xml(request, strlen(request));
++    assert(!strcmp(get_method(1), "Set"));
++    assert(!strcmp(get_method_namespace(), "urn:test"));
++    operation = get_element_ptr(NULL, "Set", "Body");
++    assert(operation);
++    assert(!strcmp(get_element_in_element("Value", operation), "42"));
++    assert(!strcmp(get_element_in_element("Next", operation), "43"));
++    assert(get_element_in_element_ptr("Next", operation));
++    assert(!get_element_in_element("Missing", operation));
++    assert(!get_element("Value", "Header"));
++    close_xml();
++    init_xml(malformed, strlen(malformed));
++    assert(!get_method(1));
++    assert(!get_element("Value", "Body"));
++    close_xml();
++    puts("XML navigation: passed");
++    return 0;
++}

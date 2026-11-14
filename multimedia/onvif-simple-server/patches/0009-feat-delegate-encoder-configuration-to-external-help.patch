@@ -1,0 +1,855 @@
+From 135cec8b6b04670f0c533150d35eee0a267721bd Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Sun, 18 Oct 2026 10:57:48 +0100
+Subject: [PATCH 09/15] feat: delegate encoder configuration to external
+ helpers
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ CONTROL_HELPERS.md      |  30 +++
+ Makefile                |   3 +-
+ Makefile.static         |   3 +-
+ encoder_control.c       | 522 ++++++++++++++++++++++++++++++++++++++++
+ encoder_control.h       |   7 +
+ media_profiles.c        |  14 +-
+ media_profiles.h        |   2 +
+ onvif_simple_server.c   |   6 +
+ onvif_simple_server.h   |   1 +
+ test/control_fixture.py |  29 +++
+ test/test_cgi.py        |  72 ++++++
+ 11 files changed, 683 insertions(+), 6 deletions(-)
+ create mode 100644 encoder_control.c
+ create mode 100644 encoder_control.h
+ create mode 100644 test/control_fixture.py
+
+--- a/CONTROL_HELPERS.md
++++ b/CONTROL_HELPERS.md
+@@ -26,3 +26,33 @@ Operation-specific encoder and imaging c
+ their service implementations. A helper is responsible for serialising
+ changes to shared camera resources and for returning success only after a
+ change is applied. The server does not commit its generated configuration.
++
++## Encoder operations
++
++`get` receives `tokens`, an array of configured encoder tokens. Return
++`revision` and `profiles`, exactly one full configuration per requested token.
++Each entry contains `token`, `type` (`JPEG`, `H264`, `H265`), integer `width`,
++`height`, `bitrate` (kbps), numeric `frame_rate` (fps) and `quality`.
++Interframe codecs also require `gov_length` and `encoding_profile`.
++`encoding_interval` is optional and defaults to the configured interval.
++These live values replace metadata for the current request only. An
++`unsupported` get retains static metadata; other errors produce SOAP faults.
++
++`options` receives optional `token` and `profile_token` filters. Return
++`revision` and an `options` array. Each codec entry contains `type`,
++`resolutions` (objects with `width` and `height`), `frame_rates` (descending
++positive fps), `quality`, `bitrate`, `encoding_interval` and, for interframe
++codecs, `gov_length` and `encoding_profiles`. Ranges are objects with `min`
++and `max`. Integer ONVIF ranges require integral endpoints. Encoding profiles
++use ONVIF spelling, such as `Baseline`, `Main`, `High`, `Main10`.
++Media1 accepts one entry per codec, in JPEG then H264 order, with the same
++integer quality range. Media2 accepts multiple entries per codec. Options
++must account for shared resources and the requested profile. `unsupported`
++retains the static, current-settings-only options.
++
++`set` receives `token`, `configuration` and `force_persistence`. Configuration
++uses the same fields as get, without token. Return `revision` and the complete
++effective `configuration` after applying it. Media1 persistence is always
++true, as required by the current Media specification; Media2 also persists
++encoder changes. Rejected changes must leave the camera unchanged. Setters
++remain unavailable when no encoder helper is configured.
+--- a/Makefile
++++ b/Makefile
+@@ -1,7 +1,7 @@
+ # Set HAVE_WOLFSSL or HAVE_MBEDTLS variable if you want to use WOLFSSL or
+ # MBEDTLS instead of LIBTOMCRYPT
+ 
+-OBJECTS_O = control_helper.o media_options.o soap.o media_profiles.o onvif_simple_server.o device_service.o media_service.o media2_service.o ptz_service.o events_service.o deviceio_service.o fault.o conf.o utils_zlib.o log.o ezxml_wrapper.o ezxml/ezxml.o
++OBJECTS_O = encoder_control.o control_helper.o media_options.o soap.o media_profiles.o onvif_simple_server.o device_service.o media_service.o media2_service.o ptz_service.o events_service.o deviceio_service.o fault.o conf.o utils_zlib.o log.o ezxml_wrapper.o ezxml/ezxml.o
+ OBJECTS_N = onvif_notify_server.o conf.o utils.o log.o ezxml_wrapper.o ezxml/ezxml.o
+ OBJECTS_W = wsd_simple_server.o utils.o log.o ezxml_wrapper.o ezxml/ezxml.o
+ ifdef HAVE_WOLFSSL
+@@ -20,6 +20,7 @@ LIBS_N = -Wl,--gc-sections -ltomcrypt -l
+ endif
+ endif
+ LIBS_W = -Wl,--gc-sections
++LIBS_O += -lm
+ 
+ ifdef USE_ZLIB
+ DUSE_ZLIB = -DUSE_ZLIB
+--- a/Makefile.static
++++ b/Makefile.static
+@@ -1,7 +1,7 @@
+ # Set HAVE_WOLFSSL or HAVE_MBEDTLS variable if you want to use WOLFSSL or
+ # MBEDTLS instead of LIBTOMCRYPT
+ 
+-OBJECTS_O = control_helper.o media_options.o soap.o media_profiles.o onvif_simple_server.o device_service.o media_service.o media2_service.o ptz_service.o events_service.o deviceio_service.o fault.o conf.o utils_zlib.o log.o ezxml_wrapper.o ezxml/ezxml.o
++OBJECTS_O = encoder_control.o control_helper.o media_options.o soap.o media_profiles.o onvif_simple_server.o device_service.o media_service.o media2_service.o ptz_service.o events_service.o deviceio_service.o fault.o conf.o utils_zlib.o log.o ezxml_wrapper.o ezxml/ezxml.o
+ OBJECTS_N = onvif_notify_server.o conf.o utils.o log.o ezxml_wrapper.o ezxml/ezxml.o
+ OBJECTS_W = wsd_simple_server.o utils.o log.o ezxml_wrapper.o ezxml/ezxml.o
+ ifdef HAVE_WOLFSSL
+@@ -20,6 +20,7 @@ LIBS_N = -Wl,--gc-sections extras/libtom
+ endif
+ endif
+ LIBS_W = -Wl,--gc-sections
++LIBS_O += -lm
+ 
+ ifdef USE_ZLIB
+ DUSE_ZLIB = -DUSE_ZLIB
+--- /dev/null
++++ b/encoder_control.c
+@@ -0,0 +1,522 @@
++/* SPDX-License-Identifier: GPL-3.0-only */
++#include <limits.h>
++#include <math.h>
++#include <stdio.h>
++#include <string.h>
++
++#include "control_helper.h"
++#include "encoder_control.h"
++#include "ezxml_wrapper.h"
++#include "media_profiles.h"
++#include "onvif_simple_server.h"
++#include "soap.h"
++#include "utils.h"
++
++extern service_context_t service_ctx;
++
++static int integer_get(json_object *object, const char *key, int *number, int minimum)
++{
++    json_object *value;
++    int64_t integer;
++
++    if (!json_object_object_get_ex(object, key, &value) ||
++        !json_object_is_type(value, json_type_int))
++        return -1;
++    integer = json_object_get_int64(value);
++    if (integer < minimum || integer > INT_MAX)
++        return -1;
++    *number = integer;
++    return 0;
++}
++
++static int number_get(json_object *object, const char *key, double *number)
++{
++    json_object *value;
++
++    if (!json_object_object_get_ex(object, key, &value) ||
++        (!json_object_is_type(value, json_type_double) &&
++         !json_object_is_type(value, json_type_int)))
++        return -1;
++    *number = json_object_get_double(value);
++    return isfinite(*number) ? 0 : -1;
++}
++
++static int profile_update(stream_profile_t *profile, json_object *object)
++{
++    stream_profile_t candidate;
++    json_object *value;
++    const char *codec;
++    const char *encoding_profile;
++
++    candidate = *profile;
++    if (!json_object_object_get_ex(object, "type", &value) ||
++        !json_object_is_type(value, json_type_string))
++        return -1;
++    codec = json_object_get_string(value);
++    if (!strcmp(codec, "H264"))
++        candidate.type = H264;
++    else if (!strcmp(codec, "H265"))
++        candidate.type = H265;
++    else if (!strcmp(codec, "JPEG"))
++        candidate.type = JPEG;
++    else
++        return -1;
++    if (integer_get(object, "width", &candidate.width, 1) ||
++        integer_get(object, "height", &candidate.height, 1) ||
++        integer_get(object, "bitrate", &candidate.bitrate, 0) ||
++        number_get(object, "frame_rate", &candidate.frame_rate) ||
++        candidate.frame_rate <= 0 || candidate.frame_rate > INT_MAX ||
++        number_get(object, "quality", &candidate.quality) || candidate.quality < 0)
++        return -1;
++    encoding_profile = profile->encoding_profile;
++    if (candidate.type != JPEG) {
++        if (integer_get(object, "gov_length", &candidate.gov_length, 1) ||
++            !json_object_object_get_ex(object, "encoding_profile", &value) ||
++            !json_object_is_type(value, json_type_string))
++            return -1;
++        encoding_profile = json_object_get_string(value);
++        if (candidate.type == H264 && strcmp(encoding_profile, "Baseline") &&
++            strcmp(encoding_profile, "Main") && strcmp(encoding_profile, "High") &&
++            strcmp(encoding_profile, "Extended"))
++            return -1;
++        if (candidate.type == H265 && strcmp(encoding_profile, "Main") &&
++            strcmp(encoding_profile, "Main10"))
++            return -1;
++    }
++    if (json_object_object_get_ex(object, "encoding_interval", &value) &&
++        integer_get(object, "encoding_interval", &candidate.encoding_interval, 1))
++        return -1;
++    candidate.encoding_profile = strdup(encoding_profile);
++    if (!candidate.encoding_profile)
++        return -1;
++    free(profile->encoding_profile);
++    *profile = candidate;
++    return 0;
++}
++
++static int revision_valid(json_object *data)
++{
++    json_object *value;
++
++    return json_object_object_get_ex(data, "revision", &value) &&
++        json_object_is_type(value, json_type_string) && *json_object_get_string(value);
++}
++
++static int range_get(json_object *object, const char *key, double *minimum,
++                     double *maximum, int integer)
++{
++    json_object *range;
++
++    if (!json_object_object_get_ex(object, key, &range) ||
++        number_get(range, "min", minimum) || number_get(range, "max", maximum) ||
++        *minimum < 0 || *maximum < *minimum || *maximum > INT_MAX ||
++        (integer && (*minimum != (int)*minimum || *maximum != (int)*maximum)))
++        return -1;
++    return 0;
++}
++
++static int option_add(ezxml_t response, ezxml_t common, json_object *object, int version)
++{
++    json_object *value, *entries, *entry;
++    const char *codec;
++    const char *profile;
++    char numbers[MAX_LEN];
++    char profiles[MAX_LEN];
++    ezxml_t options;
++    ezxml_t encoder;
++    ezxml_t resolution;
++    double minimum;
++    double maximum;
++    double rate;
++    double previous;
++    size_t used;
++    size_t i;
++    int width;
++    int height;
++    int written;
++
++    if (!json_object_object_get_ex(object, "type", &value) ||
++        !json_object_is_type(value, json_type_string))
++        return -1;
++    codec = json_object_get_string(value);
++    if (strcmp(codec, "JPEG") && strcmp(codec, "H264") && strcmp(codec, "H265"))
++        return -1;
++    if (version == 1 && !strcmp(codec, "H265"))
++        return 0;
++    options = version == 1 ? common : soap_member_add(response, version, "Options");
++    if (range_get(object, "quality", &minimum, &maximum, version == 1))
++        return -1;
++    if (version == 2)
++        soap_child_add(options, "tt:Encoding", codec);
++    if (version == 2 || !options->child)
++        soap_range_add(options, "tt:QualityRange", minimum, maximum);
++    else {
++        snprintf(numbers, sizeof(numbers), "%.9g", minimum);
++        if (strcmp(get_element_in_element("Min", options->child), numbers))
++            return -1;
++        snprintf(numbers, sizeof(numbers), "%.9g", maximum);
++        if (strcmp(get_element_in_element("Max", options->child), numbers))
++            return -1;
++    }
++    encoder = options;
++    if (version == 1) {
++        snprintf(numbers, sizeof(numbers), "tt:%s", codec);
++        if (get_element_in_element_ptr(codec, options))
++            return -1;
++        encoder = soap_child_add(options, numbers, NULL);
++    }
++    if (!json_object_object_get_ex(object, "resolutions", &entries) ||
++        !json_object_is_type(entries, json_type_array) || !json_object_array_length(entries))
++        return -1;
++    for (i = 0; i < json_object_array_length(entries); i++) {
++        entry = json_object_array_get_idx(entries, i);
++        if (integer_get(entry, "width", &width, 1) || integer_get(entry, "height", &height, 1))
++            return -1;
++        resolution = soap_child_add(encoder, "tt:ResolutionsAvailable", NULL);
++        soap_number_add(resolution, "tt:Width", width);
++        soap_number_add(resolution, "tt:Height", height);
++    }
++    if (strcmp(codec, "JPEG")) {
++        if (range_get(object, "gov_length", &minimum, &maximum, 1) || minimum < 1)
++            return -1;
++        if (version == 1)
++            soap_range_add(encoder, "tt:GovLengthRange", minimum, maximum);
++        else {
++            snprintf(numbers, sizeof(numbers), "%.0f %.0f", minimum, maximum);
++            ezxml_set_attr_d(options, "GovLengthRange", numbers);
++        }
++    }
++    if (!json_object_object_get_ex(object, "frame_rates", &entries) ||
++        !json_object_is_type(entries, json_type_array) || !json_object_array_length(entries))
++        return -1;
++    used = 0;
++    previous = INT_MAX;
++    maximum = 0;
++    minimum = INT_MAX;
++    for (i = 0; i < json_object_array_length(entries); i++) {
++        entry = json_object_array_get_idx(entries, i);
++        if (!json_object_is_type(entry, json_type_int) &&
++            !json_object_is_type(entry, json_type_double))
++            return -1;
++        rate = json_object_get_double(entry);
++        if (!isfinite(rate) || rate <= 0 || rate > previous)
++            return -1;
++        previous = rate;
++        if (ceil(rate) > maximum)
++            maximum = ceil(rate);
++        if (ceil(rate) < minimum)
++            minimum = ceil(rate);
++        written = snprintf(numbers + used, sizeof(numbers) - used, "%s%.9g", i ? " " : "", rate);
++        if (written < 0 || (size_t)written >= sizeof(numbers) - used)
++            return -1;
++        used += written;
++    }
++    if (version == 1) {
++        soap_range_add(encoder, "tt:FrameRateRange", minimum, maximum);
++        if (range_get(object, "encoding_interval", &minimum, &maximum, 1) || minimum < 1)
++            return -1;
++        soap_range_add(encoder, "tt:EncodingIntervalRange", minimum, maximum);
++    } else {
++        ezxml_set_attr_d(options, "FrameRatesSupported", numbers);
++        if (range_get(object, "bitrate", &minimum, &maximum, 1))
++            return -1;
++        soap_range_add(encoder, "tt:BitrateRange", minimum, maximum);
++    }
++    if (!strcmp(codec, "JPEG"))
++        return 0;
++    if (!json_object_object_get_ex(object, "encoding_profiles", &entries) ||
++        !json_object_is_type(entries, json_type_array) || !json_object_array_length(entries))
++        return -1;
++    used = 0;
++    for (i = 0; i < json_object_array_length(entries); i++) {
++        entry = json_object_array_get_idx(entries, i);
++        if (!json_object_is_type(entry, json_type_string))
++            return -1;
++        profile = json_object_get_string(entry);
++        if (!strcmp(codec, "H264") && strcmp(profile, "Baseline") &&
++            strcmp(profile, "Main") && strcmp(profile, "High") && strcmp(profile, "Extended"))
++            return -1;
++        if (!strcmp(codec, "H265") && strcmp(profile, "Main") && strcmp(profile, "Main10"))
++            return -1;
++        if (version == 1)
++            soap_child_add(encoder, "tt:H264ProfilesSupported", profile);
++        written = snprintf(profiles + used, sizeof(profiles) - used, "%s%s", i ? " " : "", profile);
++        if (written < 0 || (size_t)written >= sizeof(profiles) - used)
++            return -1;
++        used += written;
++    }
++    if (version == 2)
++        ezxml_set_attr_d(options, "ProfilesSupported", profiles);
++    return 0;
++}
++
++static enum helper_status encoder_options(int version)
++{
++    json_object *request, *reply, *entries;
++    const char *configuration_token;
++    const char *profile_token;
++    enum helper_status status;
++    ezxml_t response;
++    ezxml_t common;
++    size_t i;
++
++    configuration_token = get_element("ConfigurationToken", "Body");
++    profile_token = get_element("ProfileToken", "Body");
++    if ((configuration_token && media_profile_find(configuration_token, "_VideoEncoderToken") < 0) ||
++        (profile_token && media_profile_find(profile_token, "") < 0))
++        return HELPER_NOT_FOUND;
++    request = json_object_new_object();
++    if (configuration_token)
++        json_object_object_add(request, "token", json_object_new_string(configuration_token));
++    if (profile_token)
++        json_object_object_add(request, "profile_token", json_object_new_string(profile_token));
++    status = helper_call(service_ctx.encoder_helper, "options", request, &reply);
++    json_object_put(request);
++    if (status != HELPER_OK)
++        return status;
++    response = soap_response_create(version, "GetVideoEncoderConfigurationOptions");
++    common = version == 1 ? soap_member_add(response, version, "Options") : NULL;
++    status = HELPER_FAILED;
++    if (!revision_valid(reply) || !json_object_object_get_ex(reply, "options", &entries) ||
++        !json_object_is_type(entries, json_type_array) || !json_object_array_length(entries))
++        goto out;
++    for (i = 0; i < json_object_array_length(entries); i++)
++        if (option_add(response, common, json_object_array_get_idx(entries, i), version))
++            goto out;
++    if (common && !common->child) {
++        status = HELPER_UNSUPPORTED;
++        goto out;
++    }
++    soap_response_send(response);
++    response = NULL;
++    status = HELPER_OK;
++out:
++    if (response)
++        ezxml_free(response->parent->parent);
++    json_object_put(reply);
++    return status;
++}
++
++static enum helper_status encoder_refresh(void)
++{
++    stream_profile_t *profiles;
++    json_object *request, *tokens, *reply, *entries, *entry, *token;
++    enum helper_status status;
++    char name[MAX_LEN];
++    unsigned char *seen;
++    size_t i;
++    int index;
++
++    request = json_object_new_object();
++    tokens = json_object_new_array();
++    for (i = 0; i < (size_t)service_ctx.profiles_num; i++) {
++        snprintf(name, sizeof(name), "%s_VideoEncoderToken", service_ctx.profiles[i].name);
++        json_object_array_add(tokens, json_object_new_string(name));
++    }
++    json_object_object_add(request, "tokens", tokens);
++    status = helper_call(service_ctx.encoder_helper, "get", request, &reply);
++    json_object_put(request);
++    if (status != HELPER_OK)
++        return status;
++    profiles = NULL;
++    seen = NULL;
++    status = HELPER_FAILED;
++    if (!revision_valid(reply) || !json_object_object_get_ex(reply, "profiles", &entries) ||
++        !json_object_is_type(entries, json_type_array) ||
++        json_object_array_length(entries) != (size_t)service_ctx.profiles_num)
++        goto out;
++    profiles = calloc(service_ctx.profiles_num, sizeof(*profiles));
++    seen = calloc(service_ctx.profiles_num, sizeof(*seen));
++    if (service_ctx.profiles_num && (!profiles || !seen))
++        goto out;
++    for (i = 0; i < (size_t)service_ctx.profiles_num; i++) {
++        profiles[i] = service_ctx.profiles[i];
++        profiles[i].encoding_profile = strdup(service_ctx.profiles[i].encoding_profile);
++        if (!profiles[i].encoding_profile)
++            goto out;
++    }
++    for (i = 0; i < json_object_array_length(entries); i++) {
++        entry = json_object_array_get_idx(entries, i);
++        if (!json_object_object_get_ex(entry, "token", &token) ||
++            !json_object_is_type(token, json_type_string))
++            goto out;
++        index = media_profile_find(json_object_get_string(token), "_VideoEncoderToken");
++        if (index < 0 || seen[index] || profile_update(&profiles[index], entry))
++            goto out;
++        seen[index] = 1;
++    }
++    for (i = 0; i < (size_t)service_ctx.profiles_num; i++)
++        free(service_ctx.profiles[i].encoding_profile);
++    free(service_ctx.profiles);
++    service_ctx.profiles = profiles;
++    profiles = NULL;
++    status = HELPER_OK;
++out:
++    if (profiles)
++        for (i = 0; i < (size_t)service_ctx.profiles_num; i++)
++            free(profiles[i].encoding_profile);
++    free(profiles);
++    free(seen);
++    json_object_put(reply);
++    return status;
++}
++
++static int xml_number_add(json_object *object, const char *key,
++                          ezxml_t node, const char *name, int integer)
++{
++    const char *text;
++    char *end;
++    double value;
++
++    text = get_element_in_element(name, node);
++    if (!text || !*text)
++        return -1;
++    value = strtod(text, &end);
++    if (*end || !isfinite(value) || value < 0 || value > INT_MAX ||
++        (integer && value != (int)value))
++        return -1;
++    json_object_object_add(object, key, integer ? json_object_new_int(value) :
++                           json_object_new_double(value));
++    return 0;
++}
++
++static json_object *configuration_parse(ezxml_t node, int version)
++{
++    const char *encoding_profile;
++    const char *codec;
++    const char *gov;
++    json_object *object;
++    ezxml_t resolution;
++    ezxml_t rate;
++    ezxml_t h264;
++    char *end;
++    long length;
++
++    codec = get_element_in_element("Encoding", node);
++    resolution = get_element_in_element_ptr("Resolution", node);
++    rate = get_element_in_element_ptr("RateControl", node);
++    if (!codec || !resolution || !rate)
++        return NULL;
++    object = json_object_new_object();
++    json_object_object_add(object, "type", json_object_new_string(codec));
++    if (xml_number_add(object, "width", resolution, "Width", 1) ||
++        xml_number_add(object, "height", resolution, "Height", 1) ||
++        xml_number_add(object, "bitrate", rate, "BitrateLimit", 1) ||
++        xml_number_add(object, "frame_rate", rate, "FrameRateLimit", version == 1) ||
++        xml_number_add(object, "quality", node, "Quality", 0))
++        goto invalid;
++    if (version == 1 && xml_number_add(object, "encoding_interval", rate,
++                                      "EncodingInterval", 1))
++        goto invalid;
++    if (!strcmp(codec, "JPEG"))
++        return object;
++    h264 = get_element_in_element_ptr("H264", node);
++    if (version == 1) {
++        encoding_profile = get_element_in_element("H264Profile", h264);
++        if (strcmp(codec, "H264") || !encoding_profile ||
++            xml_number_add(object, "gov_length", h264, "GovLength", 1))
++            goto invalid;
++    } else {
++        encoding_profile = get_attribute(node, "Profile");
++        gov = get_attribute(node, "GovLength");
++        if (!gov || !*gov)
++            goto invalid;
++        length = strtol(gov, &end, 10);
++        if (*end || length < 1 || length > INT_MAX)
++            goto invalid;
++        json_object_object_add(object, "gov_length", json_object_new_int(length));
++    }
++    if (!encoding_profile)
++        goto invalid;
++    json_object_object_add(object, "encoding_profile", json_object_new_string(encoding_profile));
++    return object;
++invalid:
++    json_object_put(object);
++    return NULL;
++}
++
++static enum helper_status encoder_set(int version)
++{
++    stream_profile_t candidate;
++    json_object *request, *configuration, *reply, *effective;
++    const char *persistence;
++    const char *token;
++    enum helper_status status;
++    ezxml_t node;
++    int index;
++
++    node = get_element_ptr(NULL, "Configuration", "Body");
++    token = get_attribute(node, "token");
++    index = media_profile_find(token, "_VideoEncoderToken");
++    if (index < 0)
++        return HELPER_NOT_FOUND;
++    configuration = configuration_parse(node, version);
++    if (!configuration)
++        return HELPER_INVALID;
++    candidate = service_ctx.profiles[index];
++    candidate.encoding_profile = strdup(candidate.encoding_profile);
++    if (!candidate.encoding_profile) {
++        json_object_put(configuration);
++        return HELPER_FAILED;
++    }
++    if (profile_update(&candidate, configuration)) {
++        free(candidate.encoding_profile);
++        json_object_put(configuration);
++        return HELPER_INVALID;
++    }
++    free(candidate.encoding_profile);
++    request = json_object_new_object();
++    json_object_object_add(request, "token", json_object_new_string(token));
++    json_object_object_add(request, "configuration", configuration);
++    persistence = get_element("ForcePersistence", "Body");
++    if (persistence && strcmp(persistence, "true") && strcmp(persistence, "1") &&
++        strcmp(persistence, "false") && strcmp(persistence, "0")) {
++        json_object_put(request);
++        return HELPER_INVALID;
++    }
++    json_object_object_add(request, "force_persistence", json_object_new_boolean(1));
++    status = helper_call(service_ctx.encoder_helper, "set", request, &reply);
++    json_object_put(request);
++    if (status != HELPER_OK)
++        return status;
++    if (!revision_valid(reply) || !json_object_object_get_ex(reply, "configuration", &effective) ||
++        profile_update(&service_ctx.profiles[index], effective))
++        status = HELPER_FAILED;
++    json_object_put(reply);
++    return status;
++}
++
++int encoder_control_dispatch(const char *operation, int version)
++{
++    enum helper_status status;
++    const char *service;
++    int setter;
++
++    if (!service_ctx.encoder_helper)
++        return 0;
++    setter = !strcmp(operation, "SetVideoEncoderConfiguration");
++    if (!setter && strncmp(operation, "Get", strlen("Get")))
++        return 0;
++    service = version == 1 ? "media_service" : "media2_service";
++    if (!strcmp(operation, "GetVideoEncoderConfigurationOptions")) {
++        status = encoder_options(version);
++        if (status == HELPER_UNSUPPORTED)
++            return 0;
++        if (status != HELPER_OK)
++            helper_fault(service, status);
++        return 1;
++    }
++    if (setter) {
++        status = encoder_set(version);
++        if (status == HELPER_OK)
++            soap_response_send(soap_response_create(version, operation));
++        else
++            helper_fault(service, status);
++        return 1;
++    }
++    status = encoder_refresh();
++    if (status == HELPER_OK || status == HELPER_UNSUPPORTED)
++        return 0;
++    helper_fault(service, status);
++    return 1;
++}
+--- /dev/null
++++ b/encoder_control.h
+@@ -0,0 +1,7 @@
++/* SPDX-License-Identifier: GPL-3.0-only */
++#ifndef ENCODER_CONTROL_H
++#define ENCODER_CONTROL_H
++
++int encoder_control_dispatch(const char *operation, int version);
++
++#endif
+--- a/media_profiles.c
++++ b/media_profiles.c
+@@ -1,5 +1,6 @@
+ /* SPDX-License-Identifier: GPL-3.0-only */
+ #include <stdio.h>
++#include <math.h>
+ #include <string.h>
+ 
+ #include "ezxml_wrapper.h"
+@@ -11,6 +12,12 @@
+ 
+ extern service_context_t service_ctx;
+ 
++double media_profile_framerate(const stream_profile_t *profile)
++{
++    return profile->frame_rate > 0 ? profile->frame_rate :
++        (double)profile->framerate / profile->framerate_den;
++}
++
+ int media_profile_find(const char *token, const char *suffix)
+ {
+     char name[MAX_LEN];
+@@ -54,7 +61,7 @@ void media_source_info(int *width, int *
+     *height = service_ctx.source_height ? service_ctx.source_height : source ? source->height : 0;
+     *framerate = service_ctx.source_framerate ?
+         (double)service_ctx.source_framerate / service_ctx.source_framerate_den :
+-        source ? (double)source->framerate / source->framerate_den : 0;
++        source ? media_profile_framerate(source) : 0;
+ }
+ 
+ void media_source_configuration_add(ezxml_t node)
+@@ -102,9 +109,8 @@ static void encoder_configuration_add(ez
+         soap_number_add(node, "tt:Quality", profile->quality);
+     rate = soap_child_add(node, "tt:RateControl", NULL);
+     soap_number_add(rate, "tt:FrameRateLimit", version == 1 ?
+-                    ((long long)profile->framerate + profile->framerate_den - 1) /
+-                    profile->framerate_den :
+-                    (double)profile->framerate / profile->framerate_den);
++                    ceil(media_profile_framerate(profile)) :
++                    media_profile_framerate(profile));
+     if (version == 1)
+         soap_number_add(rate, "tt:EncodingInterval", profile->encoding_interval);
+     soap_number_add(rate, "tt:BitrateLimit", profile->bitrate);
+--- a/media_profiles.h
++++ b/media_profiles.h
+@@ -3,9 +3,11 @@
+ #define MEDIA_PROFILES_H
+ 
+ #include "ezxml/ezxml.h"
++#include "onvif_simple_server.h"
+ 
+ int media_profiles_dispatch(const char *operation, int version);
+ int media_profile_find(const char *token, const char *suffix);
++double media_profile_framerate(const stream_profile_t *profile);
+ void media_source_info(int *width, int *height, double *framerate);
+ void media_source_configuration_add(ezxml_t node);
+ 
+--- a/onvif_simple_server.c
++++ b/onvif_simple_server.c
+@@ -28,6 +28,7 @@
+ #include "onvif_simple_server.h"
+ #include "device_service.h"
+ #include "media_service.h"
++#include "encoder_control.h"
+ #include "media_profiles.h"
+ #include "media_options.h"
+ #include "media2_service.h"
+@@ -548,6 +549,8 @@ int main(int argc, char ** argv)
+                 }
+             }
+         } else if (strcasecmp("media_service", prog_name) == 0) {
++            if (encoder_control_dispatch(method, 1))
++                goto response_done;
+             if (strcasecmp(method, "GetServiceCapabilities") == 0) {
+                 media_get_service_capabilities();
+             } else if (strcasecmp(method, "GetVideoSources") == 0) {
+@@ -634,6 +637,8 @@ int main(int argc, char ** argv)
+                 }
+             }
+         } else if ((service_ctx.adv_enable_media2 == 1) && (strcasecmp("media2_service", prog_name) == 0)) {
++            if (encoder_control_dispatch(method, 2))
++                goto response_done;
+             if (strcasecmp(method, "GetServiceCapabilities") == 0) {
+                 media2_get_service_capabilities();
+             } else if (strcasecmp(method, "GetProfiles") == 0) {
+@@ -778,6 +783,7 @@ int main(int argc, char ** argv)
+         }
+     }
+ 
++response_done:
+     close_xml();
+ 
+     free_conf_file();
+--- a/onvif_simple_server.h
++++ b/onvif_simple_server.h
+@@ -62,6 +62,7 @@ typedef struct {
+     int  bitrate;       /* kbps, 0 = unknown */
+     int  framerate;     /* fps, 0 = unknown */
+     int framerate_den;
++    double frame_rate;
+     int gov_length;
+     int encoding_interval;
+     double quality;
+--- /dev/null
++++ b/test/control_fixture.py
+@@ -0,0 +1,29 @@
++#!/usr/bin/env python3
++import json
++from pathlib import Path
++import sys
++
++path = Path(__file__).with_suffix('.json')
++state = json.loads(path.read_text())
++request = json.load(sys.stdin)
++assert request['version'] == 1
++assert request['operation'] == sys.argv[1]
++data = request['data']
++operation = request['operation']
++status = state.get('status', 'ok')
++result = {'revision': state.get('revision', 'test-revision')}
++if operation == 'get':
++    result['profiles'] = state.get('profiles', [])
++elif operation == 'options':
++    result['options'] = state.get('options', [])
++elif operation == 'set':
++    state['last_set'] = data
++    configuration = data['configuration']
++    for profile in state.get('profiles', []):
++        if profile['token'] == data['token']:
++            profile.update(configuration)
++    path.write_text(json.dumps(state))
++    result['configuration'] = configuration
++if state.get('bad_reply'):
++    result = {}
++print(json.dumps({'version': 1, 'status': status, 'data': result}))
+--- a/test/test_cgi.py
++++ b/test/test_cgi.py
+@@ -1,4 +1,5 @@
+ import json
++from contextlib import contextmanager
+ import os
+ from pathlib import Path
+ import subprocess
+@@ -51,7 +52,78 @@ def request(service, operation, content=
+     return status, ET.fromstring(xml)
+ 
+ 
++@contextmanager
++def helper_configuration():
++    with tempfile.TemporaryDirectory() as directory:
++        helper = Path(directory) / 'helper.py'
++        helper.write_text((ROOT / 'test/control_fixture.py').read_text())
++        helper.chmod(0o755)
++        config = configuration(4)
++        config['encoder_helper'] = str(helper)
++        state = {'profiles': [dict(token=f'Profile_{i}_VideoEncoderToken',
++                                  type='H264', width=640, height=480,
++                                  frame_rate=29.97, bitrate=4567, quality=37,
++                                  gov_length=57, encoding_profile='Baseline')
++                              for i in range(4)],
++                 'options': [dict(type='H264', quality={'min': 1, 'max': 100},
++                                  resolutions=[{'width': 640, 'height': 480},
++                                               {'width': 1920, 'height': 1080}],
++                                  frame_rates=[30, 25, 15],
++                                  encoding_profiles=['Baseline', 'Main', 'High'],
++                                  encoding_interval={'min': 1, 'max': 1},
++                                  gov_length={'min': 1, 'max': 120},
++                                  bitrate={'min': 100, 'max': 16000})]}
++        path = helper.with_suffix('.json')
++        path.write_text(json.dumps(state))
++        yield config, path
++
++
+ class CGITests(unittest.TestCase):
++    def test_encoder_helper_get_options_set(self):
++        with helper_configuration() as (config, path):
++            for service in ['media', 'media2']:
++                status, root = request(service, 'GetProfiles', '<Type>All</Type>', config)
++                self.assertEqual(status, 200)
++                self.assertEqual(root.findtext('.//tt:BitrateLimit', namespaces=NS), '4567')
++                expected = 30 if service == 'media' else 29.97
++                self.assertEqual(float(root.findtext('.//tt:FrameRateLimit', namespaces=NS)), expected)
++                status, root = request(service, 'GetVideoEncoderConfigurationOptions', config=config)
++                self.assertEqual(status, 200)
++                self.assertEqual(len(root.findall('.//tt:ResolutionsAvailable', NS)), 2)
++            status, root = request('media2', 'GetVideoEncoderConfigurations',
++                                   '<ConfigurationToken>Profile_3_VideoEncoderToken'
++                                   '</ConfigurationToken>', config)
++            node = root.find('.//tr2:Configurations', NS)
++            node.tag = 'Configuration'
++            node.find('tt:Resolution/tt:Width', NS).text = '1280'
++            status, root = request('media2', 'SetVideoEncoderConfiguration', ET.tostring(node).decode(), config)
++            self.assertEqual(status, 200)
++            state = json.loads(path.read_text())
++            self.assertEqual(state['last_set']['token'], 'Profile_3_VideoEncoderToken')
++            self.assertEqual(state['last_set']['configuration']['width'], 1280)
++            self.assertEqual(state['profiles'][0]['width'], 640)
++            status, root = request('media2', 'GetVideoEncoderConfigurations',
++                                   '<ConfigurationToken>Profile_3_VideoEncoderToken'
++                                   '</ConfigurationToken>', config)
++            self.assertEqual(root.findtext('.//tt:Width', namespaces=NS), '1280')
++
++    def test_encoder_helper_failures(self):
++        with helper_configuration() as (config, path):
++            original = path.read_text()
++            for status in ['invalid', 'busy', 'failed', 'not_found']:
++                state = json.loads(original)
++                state['status'] = status
++                path.write_text(json.dumps(state))
++                code, root = request('media2', 'GetProfiles', config=config)
++                self.assertEqual(code, 500)
++                self.assertIsNotNone(root.find('.//s:Fault', NS))
++            state = json.loads(original)
++            state['bad_reply'] = True
++            path.write_text(json.dumps(state))
++            self.assertEqual(request('media2', 'GetProfiles', config=config)[0], 500)
++            path.write_text(original)
++            self.assertEqual(request('media2', 'SetVideoEncoderConfiguration',
++                                     '<Configuration token="missing"/>', config)[0], 500)
+     def test_operation_namespace(self):
+         status, root = request('media', 'GetProfiles', namespace='urn:unrelated')
+         self.assertEqual(status, 500)

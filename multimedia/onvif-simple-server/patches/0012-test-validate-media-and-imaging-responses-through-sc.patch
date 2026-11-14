@@ -1,0 +1,285 @@
+From 6ff93ddc47d711af945fa8d8da4f1e69bb15fc75 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Sun, 18 Oct 2026 11:44:47 +0100
+Subject: [PATCH 12/15] test: validate media and imaging responses through
+ schemas and uhttpd
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ test/README.md        | 34 +++++++++++++++++
+ test/fetch_schemas.py | 50 ++++++++++++++++++++++++
+ test/test_http.py     | 83 ++++++++++++++++++++++++++++++++++++++++
+ test/test_schema.py   | 88 +++++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 255 insertions(+)
+ create mode 100644 test/README.md
+ create mode 100644 test/fetch_schemas.py
+ create mode 100644 test/test_http.py
+ create mode 100644 test/test_schema.py
+
+--- /dev/null
++++ b/test/README.md
+@@ -0,0 +1,34 @@
++# Host integration tests
++
++Build with an installed crypto backend, for example
++`make HAVE_WOLFSSL=1 STRIP=true`. Run `make test` for native unit tests and
++`make test-cgi HAVE_WOLFSSL=1` for real CGI requests on the loopback interface.
++CGI tests use a synchronous JSON helper fixture and exercise live encoder
++settings, supported options, persistence, imaging transactions and faults.
++
++Schema checks require Python packages `lxml` and `xmlschema` (tested with
++6.1.3 and 4.3.2). Fetch the official definitions once:
++
++```
++python3 test/fetch_schemas.py /tmp/onvif-schemas
++ONVIF_SCHEMA_DIR=/tmp/onvif-schemas python3 test/test_schema.py
++```
++
++ONVIF files are pinned to `68ee1b540a40f848c9599eba2c55b87547c588d6`
++of `onvif/specs`. External W3C/OASIS dependencies retain their published
++locations; the downloaded manifest records their SHA-256 hashes. Definitions
++remain unchanged. Validation runs offline using XSD 1.1 because recent ONVIF
++content models contain optional elements followed by `##any` wildcards.
++The tests validate complete service responses for JPEG, H264, H265, source
++configuration, URI, capabilities and helper-backed encoder/imaging reads.
++
++HTTP checks require a host-runnable uhttpd executable. Supply its command as
++a JSON argument array, including any loader arguments needed on the host:
++
++```
++UHTTPD_COMMAND='["/usr/sbin/uhttpd"]' python3 test/test_http.py
++```
++
++The test starts an isolated server on a temporary loopback port, installs
++CGI wrappers and checks profile enumeration and SOAP HTTP fault status.
++No camera or RTSP server is required by these protocol tests.
+--- /dev/null
++++ b/test/fetch_schemas.py
+@@ -0,0 +1,50 @@
++import hashlib
++import json
++from pathlib import Path
++import sys
++from urllib.parse import urljoin
++from urllib.request import urlopen
++import xml.etree.ElementTree as ET
++
++REVISION = '68ee1b540a40f848c9599eba2c55b87547c588d6'
++root = Path(sys.argv[1]).resolve()
++sources = {
++    'https://www.w3.org/2005/05/xmlmime': root / 'external/xmlmime.xsd',
++    'https://www.w3.org/2003/05/soap-envelope': root / 'external/soap-envelope.xsd',
++    'http://docs.oasis-open.org/wsn/b-2.xsd': root / 'external/b-2.xsd',
++    'https://www.w3.org/2004/08/xop/include': root / 'external/xop.xsd',
++}
++for name in ['ver10/schema/onvif.xsd', 'ver10/schema/common.xsd',
++             'ver10/media/wsdl/media.wsdl', 'ver20/media/wsdl/media.wsdl',
++             'ver20/imaging/wsdl/imaging.wsdl']:
++    url = f'https://raw.githubusercontent.com/onvif/specs/{REVISION}/wsdl/{name}'
++    sources[url] = root / 'wsdl' / name
++pending = list(sources)
++seen = set()
++while pending:
++    url = pending.pop(0)
++    if url in seen:
++        continue
++    seen.add(url)
++    path = sources[url]
++    if not path.exists():
++        data = urlopen(url.replace('http://', 'https://'), timeout=20).read()
++        path.parent.mkdir(parents=True, exist_ok=True)
++        path.write_bytes(data)
++    document = ET.parse(path)
++    schemas = [document.getroot(), *document.findall('.//{http://www.w3.org/2001/XMLSchema}schema')]
++    for schema in schemas:
++        for node in schema:
++            location = node.get('schemaLocation')
++            if not location:
++                continue
++            dependency = urljoin(url, location)
++            if dependency not in sources:
++                sources[dependency] = root / 'external' / dependency.split('/')[-1]
++            pending.append(dependency)
++    print(path)
++(root / 'catalogue.json').write_text(json.dumps({u: str(p) for u, p in sources.items()}))
++(root / 'manifest.json').write_text(json.dumps({
++    'revision': REVISION,
++    'sha256': {str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest()
++               for p in sources.values()}}, indent=2))
+--- /dev/null
++++ b/test/test_http.py
+@@ -0,0 +1,83 @@
++import http.client
++import json
++import os
++from pathlib import Path
++import shlex
++import socket
++import subprocess
++import tempfile
++import time
++import unittest
++import xml.etree.ElementTree as ET
++
++from test_cgi import configuration, NS, ROOT
++
++
++class HTTPTests(unittest.TestCase):
++    @classmethod
++    def setUpClass(cls):
++        cls.directory = tempfile.TemporaryDirectory()
++        cls.addClassCleanup(cls.directory.cleanup)
++        directory = Path(cls.directory.name)
++        config = directory / 'config.json'
++        config.write_text(json.dumps(configuration(4)))
++        endpoints = directory / 'onvif'
++        endpoints.mkdir()
++        for service in ['device', 'media', 'media2', 'imaging']:
++            script = endpoints / f'{service}_service'
++            command = [str(ROOT / 'onvif_simple_server'), '-c', str(config),
++                       f'{service}_service']
++            script.write_text('#!/bin/sh\nexport ONVIF_LOG_FILE=-\ncd ' +
++                              shlex.quote(str(ROOT)) + '\nexec ' + shlex.join(command) + '\n')
++            script.chmod(0o755)
++        with socket.socket() as listener:
++            listener.bind(('127.0.0.1', 0))
++            cls.port = listener.getsockname()[1]
++        command = json.loads(os.environ['UHTTPD_COMMAND'])
++        command += ['-f', '-p', f'127.0.0.1:{cls.port}', '-h', str(directory), '-x', '/onvif']
++        cls.server = subprocess.Popen(command, env=dict(os.environ, ONVIF_LOG_FILE='-'),
++                                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
++        cls.addClassCleanup(cls.stop_server)
++        deadline = time.monotonic() + 5
++        while time.monotonic() < deadline:
++            try:
++                with socket.create_connection(('127.0.0.1', cls.port), timeout=0.1):
++                    return
++            except OSError:
++                time.sleep(0.01)
++        raise AssertionError('uhttpd did not start')
++
++    @classmethod
++    def stop_server(cls):
++        cls.server.terminate()
++        cls.server.wait(timeout=5)
++
++    def post(self, operation):
++        body = (f'<s:Envelope xmlns:s="{NS["s"]}"><s:Body>'
++                f'<tr2:{operation} xmlns:tr2="{NS["tr2"]}"><tr2:Type>All</tr2:Type>'
++                f'</tr2:{operation}></s:Body></s:Envelope>')
++        connection = http.client.HTTPConnection('127.0.0.1', self.port, timeout=5)
++        self.addCleanup(connection.close)
++        connection.request('POST', '/onvif/media2_service', body.encode(),
++                           {'Content-Type': 'application/soap+xml; charset=utf-8'})
++        response = connection.getresponse()
++        data = response.read()
++        try:
++            root = ET.fromstring(data)
++        except ET.ParseError:
++            self.fail((response.status, data.decode(errors='replace')))
++        return response.status, root
++
++    def test_profiles(self):
++        status, root = self.post('GetProfiles')
++        self.assertEqual(status, 200)
++        self.assertEqual(len(root.findall('.//tr2:Profiles', NS)), 4)
++
++    def test_fault(self):
++        status, root = self.post('UnknownOperation')
++        self.assertEqual(status, 500)
++        self.assertIsNotNone(root.find('.//s:Fault', NS))
++
++
++if __name__ == '__main__':
++    unittest.main()
+--- /dev/null
++++ b/test/test_schema.py
+@@ -0,0 +1,88 @@
++import json
++import os
++from pathlib import Path
++import unittest
++import xml.etree.ElementTree as ET
++
++from lxml import etree
++import xmlschema
++
++from test_cgi import configuration, helper_configuration, request, NS
++
++XS = '{http://www.w3.org/2001/XMLSchema}'
++SCHEMA_DIR = Path(os.environ['ONVIF_SCHEMA_DIR'])
++
++
++def schema_load(service):
++    paths = {'media': 'ver10/media/wsdl/media.wsdl',
++             'media2': 'ver20/media/wsdl/media.wsdl',
++             'imaging': 'ver20/imaging/wsdl/imaging.wsdl'}
++    path = SCHEMA_DIR / 'wsdl' / paths[service]
++    parser = etree.XMLParser(no_network=True)
++    document = etree.parse(str(path), parser)
++    node = document.find('.//' + XS + 'schema')
++    catalogue = json.loads((SCHEMA_DIR / 'catalogue.json').read_text())
++    return xmlschema.XMLSchema11(etree.tostring(node), base_url=str(path.parent),
++                                 uri_mapper=catalogue, allow='local')
++
++
++class SchemaTests(unittest.TestCase):
++    @classmethod
++    def setUpClass(cls):
++        cls.schemas = {service: schema_load(service) for service in ['media', 'media2', 'imaging']}
++
++    def validate(self, service, operation, content='', config=None):
++        status, root = request(service, operation, content, config)
++        self.assertEqual(status, 200)
++        payload = root.find('s:Body', NS)[0]
++        self.schemas[service].validate(ET.tostring(payload))
++        return root
++
++    def test_media(self):
++        config = configuration(5)
++        config.update(source_width=3840, source_height=2160, source_framerate=30)
++        for i, codec in enumerate(['JPEG', 'H264', 'H264', 'H265', 'H264']):
++            config['profiles'][i]['type'] = codec
++            config['profiles'][i]['encoding_profile'] = 'Main' if codec == 'H265' else 'High'
++        config['profiles'][0]['snapurl'] = 'http://%s/snapshot.jpg'
++        for service in ['media', 'media2']:
++            for operation, content in [
++                ('GetProfiles', '<Type>All</Type>'),
++                ('GetVideoEncoderConfigurations', ''),
++                ('GetVideoEncoderConfigurationOptions', ''),
++                ('GetVideoSourceConfigurations', ''),
++                ('GetVideoSourceConfigurationOptions', ''),
++                ('GetServiceCapabilities', ''),
++                ('GetStreamUri', '<ProfileToken>Profile_0</ProfileToken>'),
++                ('GetSnapshotUri', '<ProfileToken>Profile_0</ProfileToken>')]:
++                with self.subTest(service=service, operation=operation):
++                    self.validate(service, operation, content, config)
++        self.validate('media', 'GetVideoSources', config=config)
++        self.validate('media2', 'GetVideoSourceModes',
++                      '<VideoSourceToken>VideoSourceToken</VideoSourceToken>', config)
++
++    def test_encoder_helper(self):
++        with helper_configuration() as (config, path):
++            for service in ['media', 'media2']:
++                self.validate(service, 'GetProfiles', '<Type>All</Type>', config)
++                self.validate(service, 'GetVideoEncoderConfigurationOptions', config=config)
++
++    def test_imaging_helper(self):
++        with helper_configuration() as (config, path):
++            config['imaging_helper'] = config.pop('encoder_helper')
++            path.write_text(json.dumps({'settings': {'brightness': 45,
++                                                   'exposure': {'mode': 'MANUAL', 'gain': 12,
++                                                                'exposure_time': 10000},
++                                                   'white_balance': {'mode': 'AUTO'}},
++                                        'options': {'exposure': {'mode': ['AUTO', 'MANUAL'],
++                                                                 'gain': {'min': 0, 'max': 40}},
++                                                    'white_balance': {'mode': ['AUTO', 'MANUAL'],
++                                                                      'cr_gain': {'min': 0.1, 'max': 4}}}}))
++            source = '<VideoSourceToken>VideoSourceToken</VideoSourceToken>'
++            self.validate('imaging', 'GetImagingSettings', source, config)
++            self.validate('imaging', 'GetOptions', source, config)
++            self.validate('imaging', 'GetServiceCapabilities', config=config)
++
++
++if __name__ == '__main__':
++    unittest.main()
