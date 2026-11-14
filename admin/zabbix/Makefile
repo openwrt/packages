@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
-PKG_VERSION:=7.0.32
+PKG_VERSION:=8.0.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://cdn.zabbix.com/zabbix/sources/stable/$(basename $(PKG_VERSION))/ \
 	https://cdn.zabbix.com/zabbix/sources/oldstable/$(basename $(PKG_VERSION))/
-PKG_HASH:=ead5b0723ad965eb0e79f98d5d2b89088e7c898ae194eeba767e5d1fb2d50a96
+PKG_HASH:=55469ac599fd1443370ecf4288655d4d62109ad3a686711c4f3e0d428338ca77
 
 PKG_MAINTAINER:=Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
 PKG_LICENSE:=AGPL-3.0-only
@@ -32,7 +32,8 @@ PKG_CONFIG_DEPENDS:= \
   CONFIG_ZABBIX_MYSQL \
   CONFIG_ZABBIX_NETSNMP \
   CONFIG_ZABBIX_OPENSSL \
-  CONFIG_ZABBIX_POSTGRESQL
+  CONFIG_ZABBIX_POSTGRESQL \
+  CONFIG_ZABBIX_SQLITE
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -113,6 +114,7 @@ define Package/zabbix-agentd/Default
   TITLE+= agentd
   DEPENDS+= \
     $(ICONV_DEPENDS) \
+    +libatomic \
     +libevent2-pthreads \
     +libpcre2 \
     +zlib
@@ -167,6 +169,7 @@ define Package/zabbix-get
     $(ICONV_DEPENDS) \
     +ZABBIX_GNUTLS:libgnutls \
     +ZABBIX_OPENSSL:libopenssl \
+    +libatomic \
     +libpcre2 \
     +zlib
   PROVIDES:= \
@@ -187,6 +190,7 @@ define Package/zabbix-server-or-proxy/Default
   DEPENDS+= \
     $(ICONV_DEPENDS) \
     +fping \
+    +libatomic \
     +libevent2 \
     +libevent2-pthreads \
     +libevent2-extra \
@@ -251,6 +255,7 @@ define Package/zabbix-sender
     $(ICONV_DEPENDS) \
     +ZABBIX_GNUTLS:libgnutls \
     +ZABBIX_OPENSSL:libopenssl \
+    +libatomic \
     +libpcre2 \
     +zlib
   PROVIDES:= \
@@ -376,6 +381,9 @@ Provides the Web UI (frontend server) for Zabbix.
 endef
 
 ifneq ($(BUILD_VARIANT),no-configure)
+
+TARGET_LDFLAGS += -latomic
+
 CONFIGURE_ARGS+= \
   $(call autoconf_bool,CONFIG_IPV6,ipv6) \
   --disable-java \
@@ -442,8 +450,6 @@ define Build/Install
 	true
 endef
 
-endif
-
 ifdef CONFIG_PACKAGE_zabbix-extra-mac80211
 define Build/Prepare
 	$(call Build/Prepare/Default)
@@ -463,6 +469,7 @@ define Build/Compile
 		$(PKG_BUILD_DIR)/zabbix-extra-mac80211/zabbix_helper_mac80211.c \
 		-o $(PKG_BUILD_DIR)/zabbix-extra-mac80211/zabbix_helper_mac80211
 endef
+endif
 endif
 
 MAKE_FLAGS += ARCH="linux"

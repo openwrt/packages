@@ -11,7 +11,7 @@ Created 2025-12-17. Updated 2026-07-16.
 3. If started as root, drop privileges to zabbix-server user (instead of
    zabbix user shared with agent and proxy, or root) per upstream
    recommendation:
-   https://www.zabbix.com/documentation/7.0/en/manual/installation/install#security-recommendation.
+   https://www.zabbix.com/documentation/8.0/en/manual/installation/install#security-recommendation.
 4. Set the fping location properly for OpenWrt (/usr/bin not /usr/sbin).
 5. Configure fping as the ipv6 fping as well.
 6. For privacy, disable the public API call to check Zabbix version.
@@ -54,7 +54,7 @@ Signed-off-by: Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
  ### Option: SocketDir
  #	IPC socket directory.
  #		Directory to store IPC sockets used by internal Zabbix services.
-@@ -611,6 +616,7 @@ Timeout=4
+@@ -657,6 +662,7 @@ Timeout=4
  # Mandatory: no
  # Default:
  # FpingLocation=/usr/sbin/fping
@@ -62,7 +62,7 @@ Signed-off-by: Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
  
  ### Option: Fping6Location
  #	Location of fping6.
-@@ -620,6 +626,7 @@ Timeout=4
+@@ -666,6 +672,7 @@ Timeout=4
  # Mandatory: no
  # Default:
  # Fping6Location=/usr/sbin/fping6
@@ -70,7 +70,7 @@ Signed-off-by: Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
  
  ### Option: SSHKeyLocation
  #	Location of public and private keys for SSH checks and actions.
-@@ -699,6 +706,7 @@ LogSlowQueries=3000
+@@ -745,6 +752,7 @@ LogSlowQueries=3000
  # Mandatory: no
  # Default:
  # User=zabbix
@@ -78,7 +78,7 @@ Signed-off-by: Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
  
  ### Option: SSLCertLocation
  #	Location of SSL client certificates.
-@@ -1050,7 +1058,7 @@ EnableGlobalScripts=0
+@@ -1163,7 +1171,7 @@ EnableGlobalScripts=0
  #
  # Mandatory: no
  # Default:
@@ -87,7 +87,7 @@ Signed-off-by: Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
  
  ### Option: SMSDevices
  #	List of comma delimited modem files allowed to use Zabbix server
-@@ -1125,3 +1133,4 @@ EnableGlobalScripts=0
+@@ -1257,3 +1265,4 @@ EnableGlobalScripts=0
  # Include=/usr/local/etc/zabbix_server.general.conf
  # Include=/usr/local/etc/zabbix_server.conf.d/
  # Include=/usr/local/etc/zabbix_server.conf.d/*.conf

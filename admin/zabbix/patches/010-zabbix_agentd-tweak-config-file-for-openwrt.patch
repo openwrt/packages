@@ -15,7 +15,7 @@ Tweaked further 2026-07-16.
 6. If started as root, drop privileges to the zabbix-agent user, not
    a shared (with server and proxy) zabbix user or root, per upstream
    recommendation:
-   https://www.zabbix.com/documentation/7.0/en/manual/installation/install#security-recommendation
+   https://www.zabbix.com/documentation/8.0/en/manual/installation/install#security-recommendation
 7. Include configuration files under /etc/zabbix_agentd.conf.d/.
 8. Require configurations under /etc/zabbix_agentd.conf.d/ end in .conf.
    (other files are ignored for configuration purposes).
@@ -56,7 +56,7 @@ Signed-off-by: Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
  
  ### Option: LogFileSize
  #	Maximum size of log file in MB.
-@@ -136,6 +142,7 @@ Server=127.0.0.1
+@@ -167,6 +173,7 @@ Server=127.0.0.1
  # Range: 0-100
  # Default:
  # StartAgents=10
@@ -64,7 +64,7 @@ Signed-off-by: Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
  
  ##### Active checks related
  
-@@ -166,7 +173,7 @@ Server=127.0.0.1
+@@ -197,7 +204,7 @@ Server=127.0.0.1
  # Default:
  # ServerActive=
  
@@ -73,7 +73,7 @@ Signed-off-by: Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
  
  ### Option: Hostname
  #	List of comma delimited unique, case sensitive hostnames.
-@@ -177,7 +184,7 @@ ServerActive=127.0.0.1
+@@ -208,7 +215,7 @@ ServerActive=127.0.0.1
  # Default:
  # Hostname=
  
@@ -82,7 +82,7 @@ Signed-off-by: Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
  
  ### Option: HostnameItem
  #	Item used for generating Hostname if it is undefined. Ignored if Hostname is defined.
-@@ -318,6 +325,7 @@ Hostname=Zabbix server
+@@ -349,6 +356,7 @@ Hostname=Zabbix server
  # Mandatory: no
  # Default:
  # User=zabbix
@@ -90,7 +90,7 @@ Signed-off-by: Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
  
  ####### USER-DEFINED MONITORED PARAMETERS #######
  
-@@ -549,3 +557,5 @@ Hostname=Zabbix server
+@@ -580,3 +588,5 @@ Hostname=Zabbix server
  # Include=/usr/local/etc/zabbix_agentd.userparams.conf
  # Include=/usr/local/etc/zabbix_agentd.conf.d/
  # Include=/usr/local/etc/zabbix_agentd.conf.d/*.conf
