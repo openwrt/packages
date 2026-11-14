@@ -9,6 +9,18 @@ GROUP=ripe-atlas
 extra_command "get_key" "Print the public key to register the probe with"
 extra_command "probeid" "Print the probe ID"
 
+# Anchors report interface traffic unless rxtx_report says otherwise, as
+# the Debian and RHEL packages put RXTXRPT=yes into the config.txt of a new
+# anchor.
+rxtx_default()
+{
+	if [ "$(cat /usr/share/ripe-atlas/variant 2> /dev/null)" = anchor ]; then
+		echo 1
+	else
+		echo 0
+	fi
+}
+
 validate_config()
 {
 	uci_load_validate 'ripe-atlas' 'ripe-atlas' "${1}" "${2}" \
@@ -16,7 +28,7 @@ validate_config()
 		'log_stderr:bool:0' \
 		'log_stdout:bool:0' \
 		'mode:string:prod' \
-		'rxtx_report:bool:0'
+		"rxtx_report:bool:$(rxtx_default)"
 }
 
 create_dir()
@@ -119,7 +131,7 @@ start_instance()
 	enabled="$(get_bool "${enabled}" 1)"
 	log_stderr="$(get_bool "${log_stderr}" 0)"
 	log_stdout="$(get_bool "${log_stdout}" 0)"
-	rxtx_report="$(get_bool "${rxtx_report}" 0)"
+	rxtx_report="$(get_bool "${rxtx_report}" "$(rxtx_default)")"
 
 	if [ ${enabled} -eq 0 ]; then
 		return 1
