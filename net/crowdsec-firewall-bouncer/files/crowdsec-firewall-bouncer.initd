@@ -9,14 +9,11 @@ PROG=/usr/bin/cs-firewall-bouncer
 VARCONFIGDIR=/var/etc/crowdsec/bouncers
 VARCONFIG=/var/etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
 
-CONFIGURATION=crowdsec
-
 TABLE="crowdsec"
 TABLE6="crowdsec6"
 
 service_triggers() {
-	procd_add_reload_trigger crowdsec-firewall-bouncer
-	procd_add_config_trigger "config.change" "crowdsec" /etc/init.d/crowdsec-firewall-bouncer reload
+	procd_add_reload_trigger "$NAME"
 }
 
 init_yaml() {
@@ -167,13 +164,13 @@ init_nftables() {
 	local interface="${interface// /, }"
 
 	#as of kernel 3.18 we can delete a table without need to flush it
-	nft delete table ip crowdsec 2>/dev/null
-	nft delete table ip6 crowdsec6 2>/dev/null
+	nft delete table ip "$TABLE" 2>/dev/null
+	nft delete table ip6 "$TABLE6" 2>/dev/null
 
 	if [ "$ipv4" -eq "1" ] ; then
 
-		nft add table ip crowdsec
-		nft add set ip crowdsec crowdsec-blacklists '{ type ipv4_addr; flags timeout; }'
+		nft add table ip "$TABLE"
+		nft add set ip "$TABLE" crowdsec-blacklists '{ type ipv4_addr; flags timeout; }'
 
 		if [ "$filter_input" -eq "1" ] ; then
 			nft add chain ip "$TABLE" $chain_name-input "{ type filter hook input priority $hook_priority; policy accept; }"
@@ -189,9 +186,8 @@ init_nftables() {
 
 	if [ "$ipv6" -eq "1" ] ; then
 
-		nft add table ip6 crowdsec6
-		nft add set ip6 crowdsec6 crowdsec6-blacklists '{ type ipv6_addr; flags timeout; }'
-
+		nft add table ip6 "$TABLE6"
+		nft add set ip6 "$TABLE6" crowdsec6-blacklists '{ type ipv6_addr; flags timeout; }'
 		if [ "$filter_input" -eq "1" ] ; then
 			nft add chain ip6 "$TABLE6" $chain6_name-input "{ type filter hook input priority $hook_priority; policy accept; }"
 			nft add rule ip6 "$TABLE6" $chain6_name-input ct state established,related accept
@@ -234,7 +230,7 @@ run_bouncer() {
 
 start_service() {
 
-	config_load "${CONFIGURATION}"
+	config_load "$NAME"
 	config_foreach run_bouncer bouncer
 }
 
@@ -242,6 +238,6 @@ service_stopped() {
 
 	rm $VARCONFIG
 
-	nft delete table ip crowdsec 2>/dev/null
-	nft delete table ip6 crowdsec6 2>/dev/null
+	nft delete table ip "$TABLE" 2>/dev/null
+	nft delete table ip6 "$TABLE6" 2>/dev/null
 }
