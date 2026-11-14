@@ -1,0 +1,163 @@
+From 1e0b28800e1c3c4db0e9f32e18455b2f200ce387 Mon Sep 17 00:00:00 2001
+From: Arun Iyengar <aiyengar1990@gmail.com>
+Date: Tue, 10 Nov 2026 05:49:19 +0000
+Subject: [PATCH] avcodec/v4l2_request: keep returning frames of a closed
+ session safe
+
+Frames wait for their CAPTURE buffer in post_process(), which the
+decoder runs when it returns the frame, through a pointer to the
+V4L2RequestContext. With frame threading a frame thread can re-create
+the hwaccel, e.g. for a VP9 key frame of a new size, while frames of
+the old session are still waiting for output in other threads: the old
+context is freed (or reused for the new session, whose fctxi is NULL
+until its device is open), and returning such a frame dereferences it.
+
+Give each session a reference counted object that the frames decoded
+in it hold. The session clears its pointer to the context once all its
+requests have completed (uninit flushes first), so a frame returned
+later needs no waiting.
+
+Tested on an Allwinner H616 (Cedrus, Linux 7.3) with the 36 VP9
+vp90-2-14-resize-*fp-tiles-* and resize-10frames vectors, default
+frame threads: without this, 3 of 5 runs over these vectors had one
+segfault, each time on another vector (resize-fp-tiles-16-1, -2-4,
+resize-10frames-fp-tiles-2-1); with it, 20 runs over all 36 (720
+decodes) match the libvpx md5s, no crash.
+
+Assisted-by: LLM
+Signed-off-by: Arun Iyengar <aiyengar1990@gmail.com>
+Link: https://code.ffmpeg.org/FFmpeg/FFmpeg/pulls/20847#issuecomment-83194
+---
+ libavcodec/v4l2_request.c | 65 ++++++++++++++++++++++++++++++++++++---
+ libavcodec/v4l2_request.h |  3 ++
+ 2 files changed, 63 insertions(+), 5 deletions(-)
+
+--- a/libavcodec/v4l2_request.c
++++ b/libavcodec/v4l2_request.c
+@@ -26,6 +26,7 @@
+ 
+ #include "libavutil/hwcontext_v4l2request_internal.h"
+ #include "libavutil/mem.h"
++#include "libavutil/refstruct.h"
+ #include "decode.h"
+ #include "internal.h"
+ #include "v4l2_request.h"
+@@ -490,14 +491,45 @@ int ff_v4l2_request_decode_frame(AVCodec
+     return v4l2_request_queue_decode(avctx, pic, control, count, true, true);
+ }
+ 
++/*
++ * A decoded frame can be returned to the application after its decoder
++ * session has been closed, e.g. when a frame thread re-creates the hwaccel
++ * for a new frame size while frames of the old size are still waiting for
++ * output in other threads. Such a frame holds a reference to this object
++ * instead of a pointer to the V4L2RequestContext, which is freed with the
++ * session; ctx is cleared once all requests of the session have completed.
++ */
++struct V4L2RequestSession {
++    AVMutex mutex;
++    V4L2RequestContext *ctx;
++};
++
++static void v4l2_request_session_free(AVRefStructOpaque opaque, void *obj)
++{
++    V4L2RequestSession *session = obj;
++
++    ff_mutex_destroy(&session->mutex);
++}
++
++static void v4l2_request_session_unref(void *session)
++{
++    av_refstruct_unref(&session);
++}
++
+ static int v4l2_request_post_process(void *logctx, AVFrame *frame)
+ {
+     uint32_t index = v4l2_request_frameindex(frame);
+     FrameDecodeData *fdd = frame->private_ref;
+-    V4L2RequestContext *ctx = fdd->hwaccel_priv;
++    V4L2RequestSession *session = fdd->hwaccel_priv;
++    int ret = 0;
+ 
+     // Wait on CAPTURE buffer before returning the frame to application
+-    return v4l2_request_wait_on_capture(ctx, index);
++    ff_mutex_lock(&session->mutex);
++    if (session->ctx)
++        ret = v4l2_request_wait_on_capture(session->ctx, index);
++    ff_mutex_unlock(&session->mutex);
++
++    return ret;
+ }
+ 
+ int ff_v4l2_request_reset_picture(AVCodecContext *avctx, V4L2RequestPictureContext *pic)
+@@ -532,7 +564,12 @@ int ff_v4l2_request_start_frame(AVCodecC
+         return ret;
+ 
+     // Wait on CAPTURE buffer in post_process() before returning to application
+-    fdd->hwaccel_priv = ctx;
++    if (fdd->hwaccel_priv != ctx->session) {
++        if (fdd->hwaccel_priv_free)
++            fdd->hwaccel_priv_free(fdd->hwaccel_priv);
++        fdd->hwaccel_priv = av_refstruct_ref(ctx->session);
++        fdd->hwaccel_priv_free = v4l2_request_session_unref;
++    }
+     fdd->post_process = v4l2_request_post_process;
+ 
+     // CAPTURE buffer used for current frame
+@@ -675,10 +712,19 @@ int ff_v4l2_request_uninit(AVCodecContex
+     V4L2RequestContext *ctx = v4l2_request_context(avctx);
+     enum v4l2_buf_type type;
+ 
+-    if (ctx->fctxi) {
+-        // Flush and wait on all pending requests
++    // Flush and wait on all pending requests
++    if (ctx->fctxi)
+         ff_v4l2_request_flush(avctx);
+ 
++    // Frames of this session still to be returned need no more waiting
++    if (ctx->session) {
++        ff_mutex_lock(&ctx->session->mutex);
++        ctx->session->ctx = NULL;
++        ff_mutex_unlock(&ctx->session->mutex);
++        av_refstruct_unref(&ctx->session);
++    }
++
++    if (ctx->fctxi) {
+         // Stop streaming on OUTPUT queue
+         type = ctx->fctxi->output.format.type;
+         if (ioctl(ctx->fctxi->video_fd, VIDIOC_STREAMOFF, &type) < 0)
+@@ -724,6 +770,15 @@ int ff_v4l2_request_init(AVCodecContext
+         ctx->output[i].request_fd = -1;
+     }
+ 
++    ctx->session = av_refstruct_alloc_ext(sizeof(*ctx->session), 0, NULL,
++                                          v4l2_request_session_free);
++    if (!ctx->session) {
++        ret = AVERROR(ENOMEM);
++        goto fail;
++    }
++    ff_mutex_init(&ctx->session->mutex, NULL);
++    ctx->session->ctx = ctx;
++
+     // Create frames context and allocate initial CAPTURE buffers
+     ret = ff_decode_get_hw_frames_ctx(avctx, AV_HWDEVICE_TYPE_V4L2REQUEST);
+     if (ret < 0)
+--- a/libavcodec/v4l2_request.h
++++ b/libavcodec/v4l2_request.h
+@@ -29,6 +29,7 @@
+ #include "avcodec.h"
+ 
+ typedef struct AVV4L2RequestFramesContextInternal AVV4L2RequestFramesContextInternal;
++typedef struct V4L2RequestSession V4L2RequestSession;
+ 
+ typedef struct V4L2RequestOutputBuffer {
+     AVBufferRef *ref;
+@@ -45,6 +46,8 @@ typedef struct V4L2RequestContext {
+     AVBufferRef *frames_ref;
+     AVV4L2RequestFramesContextInternal *fctxi;
+     AVMutex mutex;
++    // Shared with the frames decoded in this session, see v4l2_request_post_process()
++    V4L2RequestSession *session;
+     V4L2RequestOutputBuffer output[4];
+     uint8_t next_output;
+     uint32_t queued_output;

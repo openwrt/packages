@@ -13,7 +13,7 @@ Signed-off-by: Josef Schlehofer <pepe.schlehofer@gmail.com>
 ---
 --- a/configure
 +++ b/configure
-@@ -6804,7 +6804,7 @@ elif enabled ppc; then
+@@ -6805,7 +6805,7 @@ elif enabled ppc; then
  
      disabled dcbzl || check_inline_asm dcbzl '"dcbzl 0, %0" :: "r"(0)'
      check_inline_asm ibm_asm   '"add 0, 0, 0"'

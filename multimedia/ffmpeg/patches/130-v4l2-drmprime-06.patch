@@ -1,0 +1,99 @@
+From e5c227e9fa3c0ca20d1b33851ee6a1fad0809271 Mon Sep 17 00:00:00 2001
+From: Lukas Rusak <lorusak@gmail.com>
+Date: Mon, 24 Sep 2018 13:39:31 -0700
+Subject: [PATCH 6/9] libavcodec: v4l2m2m: implement hwcontext
+
+---
+ libavcodec/v4l2_buffers.c | 22 ++++++++++++++++++++++
+ libavcodec/v4l2_context.h |  2 ++
+ libavcodec/v4l2_m2m.h     |  2 ++
+ libavcodec/v4l2_m2m_dec.c | 11 +++++++++++
+ 4 files changed, 37 insertions(+)
+
+--- a/libavcodec/v4l2_buffers.c
++++ b/libavcodec/v4l2_buffers.c
+@@ -457,6 +457,7 @@ static int v4l2_buffer_buf_to_swframe(AV
+ 
+         frame->data[0] = (uint8_t *) v4l2_get_drm_frame(avbuf);
+         frame->format = AV_PIX_FMT_DRM_PRIME;
++        frame->hw_frames_ctx = av_buffer_ref(avbuf->context->frames_ref);
+     } else {
+         /* 1. get references to the actual data */
+         for (i = 0; i < avbuf->num_planes; i++) {
+@@ -659,6 +660,27 @@ int ff_v4l2_buffer_initialize(V4L2Buffer
+     avbuf->buf.type = ctx->type;
+     avbuf->buf.index = index;
+ 
++    if (buf_to_m2mctx(avbuf)->output_drm) {
++        AVHWFramesContext *hwframes;
++
++        av_buffer_unref(&ctx->frames_ref);
++
++        ctx->frames_ref = av_hwframe_ctx_alloc(buf_to_m2mctx(avbuf)->device_ref);
++        if (!ctx->frames_ref) {
++            ret = AVERROR(ENOMEM);
++            return ret;
++        }
++
++        hwframes = (AVHWFramesContext*)ctx->frames_ref->data;
++        hwframes->format = AV_PIX_FMT_DRM_PRIME;
++        hwframes->sw_format = ctx->av_pix_fmt;
++        hwframes->width = ctx->width;
++        hwframes->height = ctx->height;
++        ret = av_hwframe_ctx_init(ctx->frames_ref);
++        if (ret < 0)
++            return ret;
++    }
++
+     if (V4L2_TYPE_IS_MULTIPLANAR(ctx->type)) {
+         avbuf->buf.length = VIDEO_MAX_PLANES;
+         avbuf->buf.m.planes = avbuf->planes;
+--- a/libavcodec/v4l2_context.h
++++ b/libavcodec/v4l2_context.h
+@@ -93,6 +93,8 @@ typedef struct V4L2Context {
+      */
+     int done;
+ 
++    AVBufferRef *frames_ref;
++
+ } V4L2Context;
+ 
+ /**
+--- a/libavcodec/v4l2_m2m.h
++++ b/libavcodec/v4l2_m2m.h
+@@ -67,6 +67,8 @@ typedef struct V4L2m2mContext {
+     /* reference back to V4L2m2mPriv */
+     void *priv;
+ 
++    AVBufferRef *device_ref;
++
+     /* generate DRM frames */
+     int output_drm;
+ } V4L2m2mContext;
+--- a/libavcodec/v4l2_m2m_dec.c
++++ b/libavcodec/v4l2_m2m_dec.c
+@@ -35,6 +35,7 @@
+ 
+ #include "libavcodec/hwaccels.h"
+ #include "libavcodec/internal.h"
++#include "libavcodec/hwconfig.h"
+ 
+ #include "v4l2_context.h"
+ #include "v4l2_m2m.h"
+@@ -228,6 +229,16 @@ static av_cold int v4l2_decode_init(AVCo
+         break;
+     }
+ 
++    s->device_ref = av_hwdevice_ctx_alloc(AV_HWDEVICE_TYPE_DRM);
++    if (!s->device_ref) {
++        ret = AVERROR(ENOMEM);
++        return ret;
++    }
++
++    ret = av_hwdevice_ctx_init(s->device_ref);
++    if (ret < 0)
++        return ret;
++
+     s->avctx = avctx;
+     ret = ff_v4l2_m2m_codec_init(priv);
+     if (ret) {

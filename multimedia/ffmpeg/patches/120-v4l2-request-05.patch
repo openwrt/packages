@@ -1,7 +1,7 @@
-From 51a441640119ef3359a38dae67290a96ed77e6a0 Mon Sep 17 00:00:00 2001
+From e8e43948633e4b158cb37d0dfa93054f9f3f62f9 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Tue, 6 Aug 2024 09:06:04 +0000
-Subject: [PATCH 05/13] avcodec: Add V4L2 Request API mpeg2 hwaccel
+Subject: [PATCH 05/11] avcodec: Add V4L2 Request API mpeg2 hwaccel
 
 Add a V4L2 Request API hwaccel for MPEG2.
 
@@ -11,6 +11,7 @@ control id V4L2_CID_STATELESS_MPEG2_SEQUENCE, added in v5.14.
 This also change v4l2_request hwaccel to use autodetect in configure.
 
 Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
+(cherry picked from commit f0798eeda542f88a63de09d549a193adc76468d6)
 ---
  configure                       |   7 +-
  libavcodec/Makefile             |   1 +

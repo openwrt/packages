@@ -1,7 +1,7 @@
-From 84bb22c3eba4b8ed70322f65882dd52cdeec31ed Mon Sep 17 00:00:00 2001
+From c83c406572779c2784b67e2ca8164b3acef001b6 Mon Sep 17 00:00:00 2001
 From: Jernej Skrabec <jernej.skrabec@gmail.com>
 Date: Tue, 6 Aug 2024 09:06:06 +0000
-Subject: [PATCH 07/13] avcodec: Add V4L2 Request API h264 hwaccel
+Subject: [PATCH 07/11] avcodec: Add V4L2 Request API h264 hwaccel
 
 Add a V4L2 Request API hwaccel for H.264, supporting both slice and
 frame decoding modes.
@@ -12,6 +12,7 @@ control id V4L2_CID_STATELESS_H264_DECODE_MODE, added in v5.11.
 Signed-off-by: Jernej Skrabec <jernej.skrabec@gmail.com>
 Co-developed-by: Jonas Karlman <jonas@kwiboo.se>
 Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
+(cherry picked from commit 3fe8dbf4ff5210d930138f961e67e12d2d3fbea9)
 ---
  configure                      |   3 +
  libavcodec/Makefile            |   1 +
