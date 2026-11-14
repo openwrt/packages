@@ -1,0 +1,718 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Date: Fri, 13 Nov 2026 02:04:59 +0100
+Subject: [PATCH] fix: fail the run when no selected server answers (#153)
+
+When all selected servers are down, or there is none to test, exit 1
+and report each server's failure to stderr instead of emitting an
+empty report. Runs with at least one successful server still exit 0.
+
+The probe reads at most 512 bytes of the ping response instead of
+all of it.
+
+[Backported to 1.0.14, which has neither the NegotiatedTLS field nor
+--json-stream: both are left out, the latter also from the tests.]
+
+Signed-off-by: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Upstream-Status: Backport [https://github.com/librespeed/speedtest-cli/commit/8aefd77bd4bde428cd86d3622102f0ac0443d96e]
+---
+ defs/checkup_test.go | 109 +++++++++++++
+ defs/server.go       |  42 ++++-
+ main_test.go         | 378 +++++++++++++++++++++++++++++++++++++++++++
+ speedtest/helper.go  |  47 +++++-
+ 4 files changed, 565 insertions(+), 11 deletions(-)
+ create mode 100644 defs/checkup_test.go
+ create mode 100644 main_test.go
+
+--- /dev/null
++++ b/defs/checkup_test.go
+@@ -0,0 +1,109 @@
++package defs
++
++import (
++	"bytes"
++	"errors"
++	"net"
++	"net/http"
++	"net/http/httptest"
++	"sync/atomic"
++	"testing"
++)
++
++// A backend that answers its probe, but not as a backend should, is down and
++// says what it answered: the status when it is wrong, even with the error page
++// a web server sends along, and a body otherwise.
++func TestCheckUpNamesWhatTheProbeAnswered(t *testing.T) {
++	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++		switch r.URL.Path {
++		case "/empty.php":
++		case "/body.php":
++			w.Write([]byte("hello"))
++		case "/error-page.php":
++			w.WriteHeader(http.StatusNotFound)
++			w.Write([]byte("<html><body><h1>404 Not Found</h1></body></html>\n"))
++		case "/server-error.php":
++			w.WriteHeader(http.StatusInternalServerError)
++			w.Write([]byte("<html><body><h1>500 Internal Server Error</h1></body></html>\n"))
++		case "/unknown-status.php":
++			w.WriteHeader(599)
++		default:
++			w.WriteHeader(http.StatusNotFound)
++		}
++	}))
++	defer srv.Close()
++
++	cases := []struct {
++		ping string
++		want string // "" when the backend is up
++	}{
++		{"empty.php", ""},
++		{"body.php", "the ping request returned a non-empty body"},
++		{"missing.php", "the ping request returned HTTP 404 Not Found"},
++		{"error-page.php", "the ping request returned HTTP 404 Not Found"},
++		{"server-error.php", "the ping request returned HTTP 500 Internal Server Error"},
++		{"unknown-status.php", "the ping request returned HTTP 599"},
++	}
++	for _, c := range cases {
++		t.Run(c.ping, func(t *testing.T) {
++			s := Server{Name: "probe", Server: srv.URL, PingURL: c.ping}
++			err := s.CheckUp()
++			switch {
++			case c.want == "" && err != nil:
++				t.Fatalf("CheckUp() = %q, want nil", err)
++			case c.want != "" && (err == nil || err.Error() != c.want):
++				t.Fatalf("CheckUp() = %v, want %q", err, c.want)
++			}
++			if up := s.IsUp(); up != (c.want == "") {
++				t.Errorf("IsUp() = %t, disagrees with CheckUp() = %v", up, err)
++			}
++		})
++	}
++}
++
++// A backend that cannot be reached is down for the reason the connection
++// failed, which the caller can still inspect.
++func TestCheckUpKeepsWhyTheConnectionFailed(t *testing.T) {
++	ln, err := net.Listen("tcp", "127.0.0.1:0")
++	if err != nil {
++		t.Fatalf("listen: %v", err)
++	}
++	addr := ln.Addr().String()
++	ln.Close()
++
++	s := Server{Name: "dead", Server: "http://" + addr + "/", PingURL: "empty.php"}
++	err = s.CheckUp()
++	var opErr *net.OpError
++	if !errors.As(err, &opErr) || opErr.Op != "dial" {
++		t.Fatalf("CheckUp() = %v, want the dial error", err)
++	}
++	if s.IsUp() {
++		t.Error("IsUp() = true for a server nothing listens on")
++	}
++}
++
++// A probe that answers with a huge body is down, and CheckUp stops reading
++// it instead of taking in everything the server sends.
++func TestCheckUpStopsReadingAHugeBody(t *testing.T) {
++	const huge = 64 << 20
++	var sentAll atomic.Bool
++	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++		chunk := bytes.Repeat([]byte("x"), 32<<10)
++		for sent := 0; sent < huge; sent += len(chunk) {
++			if _, err := w.Write(chunk); err != nil {
++				return
++			}
++		}
++		sentAll.Store(true)
++	}))
++
++	s := Server{Name: "huge", Server: srv.URL, PingURL: "huge.php"}
++	err := s.CheckUp()
++	srv.Close() // waits for the handler
++	if err == nil || err.Error() != "the ping request returned a non-empty body" {
++		t.Fatalf("CheckUp() = %v, want the non-empty body", err)
++	}
++	if sentAll.Load() {
++		t.Errorf("CheckUp() read all %d bytes of the body", huge)
++	}
++}
+--- a/defs/server.go
++++ b/defs/server.go
+@@ -42,27 +42,39 @@ type Server struct {
+ 	TLog   TelemetryLog `json:"-"`
+ }
+ 
++// maxProbeBody is how much of the ping response CheckUp reads.
++const maxProbeBody = 512
++
+ // IsUp checks the speed test backend is up by accessing the ping URL
+ func (s *Server) IsUp() bool {
++	return s.CheckUp() == nil
++}
++
++// CheckUp checks the speed test backend is up by accessing the ping URL,
++// which must answer 200 with an empty body, and returns why it is not up.
++func (s *Server) CheckUp() error {
+ 	t := time.Now()
+ 	defer func() {
+ 		s.TLog.Logf("Check backend is up took %s", time.Since(t).String())
+ 	}()
+ 
+-	u, _ := s.GetURL()
++	u, err := s.GetURL()
++	if err != nil {
++		return err
++	}
+ 	u.Path = path.Join(u.Path, s.PingURL)
+ 
+ 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+ 	if err != nil {
+ 		output.WriteDebug("Failed when creating HTTP request: %s\n", err)
+-		return false
++		return err
+ 	}
+ 	req.Header.Set("User-Agent", UserAgent)
+ 
+ 	resp, err := http.DefaultClient.Do(req)
+ 	if err != nil {
+ 		output.WriteDebug("Error checking for server status: %s\n", err)
+-		return false
++		return err
+ 	}
+ 	defer resp.Body.Close()
+ 
+@@ -80,15 +92,29 @@ func (s *Server) IsUp() bool {
+ 		output.WriteDebug("Connection is not encrypted\n")
+ 	}
+ 
+-	b, err := io.ReadAll(resp.Body)
++	// Any body at all means the backend is down, so the start of it is
++	// enough to decide and to show in the debug line.
++	b, err := io.ReadAll(io.LimitReader(resp.Body, maxProbeBody))
+ 	if err != nil || len(b) > 0 {
+ 		// %q rather than Sanitize: this is a raw response body where newlines are
+ 		// legitimate, and quoting escapes control chars without losing them
+ 		output.WriteDebug("Failed when parsing get IP result: %q\n", b)
+-		return false
+ 	}
+-	// only return online if the ping URL returns nothing and 200
+-	return resp.StatusCode == http.StatusOK
++	// only return online if the ping URL returns nothing and 200; the status
++	// first, since a 404 or 500 usually comes with an error page
++	switch {
++	case resp.StatusCode != http.StatusOK:
++		// Go's phrase for the code; over HTTP/1.x resp.Status has the server's own
++		if text := http.StatusText(resp.StatusCode); text != "" {
++			return fmt.Errorf("the ping request returned HTTP %d %s", resp.StatusCode, text)
++		}
++		return fmt.Errorf("the ping request returned HTTP %d", resp.StatusCode)
++	case err != nil:
++		return fmt.Errorf("reading the ping response: %w", err)
++	case len(b) > 0:
++		return errors.New("the ping request returned a non-empty body")
++	}
++	return nil
+ }
+ 
+ // rttMillis converts a round-trip time to milliseconds without discarding the
+@@ -585,7 +611,7 @@ func (s *Server) GetIPInfo(distanceUnit
+ 	if len(b) > 0 {
+ 		if err := json.Unmarshal(b, &ipInfo); err != nil {
+ 			output.WriteDebug("Failed when parsing get IP result: %s\n", err)
+-			// %q rather than Sanitize: see IsUp
++			// %q rather than Sanitize: see CheckUp
+ 			output.WriteDebug("Received payload: %q\n", b)
+ 			// A server may return rawIspInfo as an empty string rather than an
+ 			// object (or wrap the whole payload in processedString); recover
+--- /dev/null
++++ b/main_test.go
+@@ -0,0 +1,378 @@
++package main
++
++import (
++	"bytes"
++	"context"
++	"encoding/json"
++	"net"
++	"net/http"
++	"net/http/httptest"
++	"os"
++	"os/exec"
++	"path/filepath"
++	"strings"
++	"testing"
++	"time"
++)
++
++// runMainEnv makes the test binary run the CLI instead of the tests, so a test
++// can run it as a separate process and see its exit status, stdout and stderr
++// as a script wrapping it would.
++const runMainEnv = "LIBRESPEED_CLI_TEST_RUN_MAIN"
++
++func TestMain(m *testing.M) {
++	if os.Getenv(runMainEnv) == "1" {
++		main()
++		os.Exit(0)
++	}
++	os.Exit(m.Run())
++}
++
++type cliResult struct {
++	code    int
++	stdout  string
++	stderr  string
++	elapsed time.Duration
++}
++
++// failure is the error the CLI terminated with, from the line main prints
++// for it. The test fails when there is no such line.
++func (r cliResult) failure(t *testing.T) string {
++	t.Helper()
++
++	const prefix = "Terminated due to error: "
++	for _, line := range strings.Split(r.stderr, "\n") {
++		if msg, ok := strings.CutPrefix(line, prefix); ok {
++			return msg
++		}
++	}
++	t.Fatalf("stderr has no %q line:\n%s", prefix, r.stderr)
++	return ""
++}
++
++func runCLI(t *testing.T, args ...string) cliResult {
++	t.Helper()
++
++	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
++	defer cancel()
++
++	cmd := exec.CommandContext(ctx, os.Args[0], args...)
++	cmd.Env = append(os.Environ(), runMainEnv+"=1")
++	var stdout, stderr bytes.Buffer
++	cmd.Stdout = &stdout
++	cmd.Stderr = &stderr
++
++	start := time.Now()
++	err := cmd.Run()
++	elapsed := time.Since(start)
++	code := 0
++	if exitErr, ok := err.(*exec.ExitError); ok {
++		code = exitErr.ExitCode()
++	} else if err != nil {
++		t.Fatalf("running the CLI: %v", err)
++	}
++	return cliResult{code: code, stdout: stdout.String(), stderr: stderr.String(), elapsed: elapsed}
++}
++
++// mockBackend answers like a speed test backend, with ping URLs that answer
++// the probe wrongly in the ways a misconfigured or broken one does.
++func mockBackend(t *testing.T) *httptest.Server {
++	t.Helper()
++
++	release := make(chan struct{})
++	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++		switch r.URL.Path {
++		case "/empty.php":
++		case "/getIP.php":
++			w.Header().Set("Content-Type", "application/json")
++			w.Write([]byte(`{"processedString":"127.0.0.1 - localhost","rawIspInfo":""}`))
++		case "/body.php":
++			w.Write([]byte("hello"))
++		case "/error-page.php":
++			w.WriteHeader(http.StatusNotFound)
++			w.Write([]byte("<html><body><h1>404 Not Found</h1></body></html>\n"))
++		case "/server-error.php":
++			w.WriteHeader(http.StatusInternalServerError)
++			w.Write([]byte("<html><body><h1>500 Internal Server Error</h1></body></html>\n"))
++		case "/hang.php":
++			select {
++			case <-r.Context().Done():
++			case <-release:
++			}
++		default:
++			w.WriteHeader(http.StatusNotFound)
++		}
++	}))
++	t.Cleanup(func() {
++		close(release)
++		srv.Close()
++	})
++	return srv
++}
++
++// deadURL is a server URL nothing listens on.
++func deadURL(t *testing.T) string {
++	t.Helper()
++
++	ln, err := net.Listen("tcp", "127.0.0.1:0")
++	if err != nil {
++		t.Fatalf("listen: %v", err)
++	}
++	defer ln.Close()
++	return "http://" + ln.Addr().String() + "/"
++}
++
++type listedServer struct {
++	id   int
++	name string
++	url  string
++	ping string
++}
++
++// writeServerList writes a server list for --local-json and returns its path.
++func writeServerList(t *testing.T, servers ...listedServer) string {
++	t.Helper()
++
++	type entry struct {
++		ID          int    `json:"id"`
++		Name        string `json:"name"`
++		Server      string `json:"server"`
++		DownloadURL string `json:"dlURL"`
++		UploadURL   string `json:"ulURL"`
++		PingURL     string `json:"pingURL"`
++		GetIPURL    string `json:"getIpURL"`
++	}
++	entries := []entry{}
++	for _, s := range servers {
++		entries = append(entries, entry{s.id, s.name, s.url, "garbage.php", "empty.php", s.ping, "getIP.php"})
++	}
++	b, err := json.Marshal(entries)
++	if err != nil {
++		t.Fatalf("marshal server list: %v", err)
++	}
++	path := filepath.Join(t.TempDir(), "servers.json")
++	if err := os.WriteFile(path, b, 0o644); err != nil {
++		t.Fatalf("write server list: %v", err)
++	}
++	return path
++}
++
++// outputModes are the ways the CLI prints its report: the default one and
++// each output option.
++var outputModes = []string{"", "--json", "--csv", "--simple"}
++
++// withMode is args with the option for an output mode from outputModes.
++func withMode(mode string, args ...string) []string {
++	if mode != "" {
++		args = append(args, mode)
++	}
++	return args
++}
++
++// A server from a cached list that cannot be reached, as on an uplink that is
++// down, fails the run in every mode: exit status 1, the server and the cause
++// on stderr, and no report on stdout -- not a null a script would take for a
++// result.
++func TestDownServerFailsTheRunInEveryMode(t *testing.T) {
++	const down = "Selected server Dead (127.0.0.1) is not responding: "
++	list := writeServerList(t, listedServer{1, "Dead", deadURL(t), "empty.php"})
++
++	for _, mode := range outputModes {
++		t.Run("mode="+mode, func(t *testing.T) {
++			r := runCLI(t, withMode(mode, "--local-json", list, "--server", "1", "--duration", "1", "--no-icmp")...)
++
++			if r.code != 1 {
++				t.Errorf("exit status %d, want 1; stderr:\n%s", r.code, r.stderr)
++			}
++			if r.stdout != "" {
++				t.Errorf("stdout = %q, want no report", r.stdout)
++			}
++			// the cause's wording is Go's and the OS's; defs checks its type
++			if msg := r.failure(t); !strings.HasPrefix(msg, down) || len(msg) == len(down) {
++				t.Errorf("error = %q, want %q and a cause", msg, down)
++			}
++			if mode == "" && !strings.Contains(r.stderr, "\nSelected server Dead (127.0.0.1) is not responding at the moment, try again later\n") {
++				t.Errorf("the usual line is missing from stderr:\n%s", r.stderr)
++			}
++		})
++	}
++}
++
++// A backend that answers its probe wrongly fails the run and says what it
++// answered: the status when it is wrong, even with an error page along, and
++// the body otherwise.
++func TestServerAnsweringItsProbeWronglyFailsTheRun(t *testing.T) {
++	backend := mockBackend(t)
++
++	for _, c := range []struct{ ping, answered string }{
++		{"missing.php", "HTTP 404 Not Found"},
++		{"error-page.php", "HTTP 404 Not Found"},
++		{"server-error.php", "HTTP 500 Internal Server Error"},
++		{"body.php", "a non-empty body"},
++	} {
++		list := writeServerList(t, listedServer{1, "Wrong", backend.URL, c.ping})
++		for _, mode := range outputModes {
++			t.Run(c.ping+"/mode="+mode, func(t *testing.T) {
++				r := runCLI(t, withMode(mode, "--local-json", list, "--server", "1", "--no-icmp")...)
++
++				if r.code != 1 {
++					t.Errorf("exit status %d, want 1; stderr:\n%s", r.code, r.stderr)
++				}
++				if r.stdout != "" {
++					t.Errorf("stdout = %q, want no report", r.stdout)
++				}
++				want := "Selected server Wrong (127.0.0.1) is not responding: the ping request returned " + c.answered
++				if got := r.failure(t); got != want {
++					t.Errorf("error = %q, want %q", got, want)
++				}
++			})
++		}
++	}
++}
++
++// A backend that does not answer within --timeout fails the run when the
++// timeout runs out, not the default 15 seconds.
++func TestHangingServerFailsTheRunWithTheTimeout(t *testing.T) {
++	const down = "Selected server Hang (127.0.0.1) is not responding: "
++	backend := mockBackend(t)
++	list := writeServerList(t, listedServer{1, "Hang", backend.URL, "hang.php"})
++
++	for _, mode := range outputModes {
++		t.Run("mode="+mode, func(t *testing.T) {
++			t.Parallel() // each run waits out the timeout
++			r := runCLI(t, withMode(mode, "--local-json", list, "--server", "1", "--no-icmp", "--timeout", "1")...)
++
++			if r.code != 1 {
++				t.Errorf("exit status %d, want 1; stderr:\n%s", r.code, r.stderr)
++			}
++			if r.stdout != "" {
++				t.Errorf("stdout = %q, want no report", r.stdout)
++			}
++			if msg := r.failure(t); !strings.HasPrefix(msg, down) || len(msg) == len(down) {
++				t.Errorf("error = %q, want %q and a cause", msg, down)
++			}
++			if r.elapsed >= 10*time.Second {
++				t.Errorf("the run took %s, want about the 1 second --timeout", r.elapsed)
++			}
++		})
++	}
++}
++
++// With more than one server and none of them answering, the error names every
++// one with its own cause, not only the last server tried.
++func TestRunWhoseServersAreAllDownNamesEach(t *testing.T) {
++	backend := mockBackend(t)
++	list := writeServerList(t,
++		listedServer{1, "Dead", deadURL(t), "empty.php"},
++		listedServer{2, "Wrong", backend.URL, "error-page.php"},
++	)
++
++	r := runCLI(t, "--local-json", list, "--server", "1", "--server", "2", "--duration", "1", "--no-icmp", "--json")
++
++	if r.code != 1 {
++		t.Errorf("exit status %d, want 1; stderr:\n%s", r.code, r.stderr)
++	}
++	if r.stdout != "" {
++		t.Errorf("stdout = %q, want no report", r.stdout)
++	}
++	msg := r.failure(t)
++	causes, ok := strings.CutPrefix(msg, "None of the 2 selected servers is responding: ")
++	dead, wrong, split := strings.Cut(causes, "; ")
++	if !ok || !split {
++		t.Fatalf("error = %q, want both servers named", msg)
++	}
++	if !strings.HasPrefix(dead, "Dead (127.0.0.1): ") || len(dead) == len("Dead (127.0.0.1): ") {
++		t.Errorf("first cause = %q, want Dead and a cause", dead)
++	}
++	if want := "Wrong (127.0.0.1): the ping request returned HTTP 404 Not Found"; wrong != want {
++		t.Errorf("second cause = %q, want %q", wrong, want)
++	}
++}
++
++// With more than one server, a run that measured any of them reports those
++// and succeeds.
++func TestDownServerAmongOthersLeavesTheRunToTheOnesThatAnswer(t *testing.T) {
++	backend := mockBackend(t)
++	list := writeServerList(t,
++		listedServer{1, "Live", backend.URL, "empty.php"},
++		listedServer{2, "Dead", deadURL(t), "empty.php"},
++	)
++
++	r := runCLI(t, "--local-json", list, "--server", "1", "--server", "2",
++		"--duration", "1", "--no-download", "--no-upload", "--no-icmp", "--json")
++
++	if r.code != 0 {
++		t.Fatalf("exit status %d, want 0; stderr:\n%s", r.code, r.stderr)
++	}
++	var reports []struct {
++		Server struct {
++			Name string `json:"name"`
++		} `json:"server"`
++	}
++	if err := json.Unmarshal([]byte(r.stdout), &reports); err != nil {
++		t.Fatalf("stdout is not a JSON report: %v\n%s", err, r.stdout)
++	}
++	if len(reports) != 1 || reports[0].Server.Name != "Live" {
++		t.Errorf("reports = %s, want the one for Live", r.stdout)
++	}
++}
++
++// Without --server the fastest server is picked and a down one is skipped,
++// as before: with every server down the run fails before any test.
++func TestAutomaticSelectionWithEveryServerDownFailsAsBefore(t *testing.T) {
++	backend := mockBackend(t)
++	list := writeServerList(t,
++		listedServer{1, "Dead", deadURL(t), "empty.php"},
++		listedServer{2, "Wrong", backend.URL, "error-page.php"},
++	)
++
++	r := runCLI(t, "--local-json", list, "--no-icmp", "--json")
++
++	if r.code != 1 {
++		t.Errorf("exit status %d, want 1; stderr:\n%s", r.code, r.stderr)
++	}
++	if r.stdout != "" {
++		t.Errorf("stdout = %q, want no report", r.stdout)
++	}
++	if !strings.Contains(r.stderr, "No server is currently available, please try again later.\n") {
++		t.Errorf("stderr does not say no server is available:\n%s", r.stderr)
++	}
++}
++
++// A run with no server to test, as with --server -1 and an empty list, fails
++// in every mode like one whose servers are all down, without an empty report.
++func TestRunWithNoServerToTestFails(t *testing.T) {
++	list := writeServerList(t)
++
++	for _, mode := range outputModes {
++		t.Run("mode="+mode, func(t *testing.T) {
++			r := runCLI(t, withMode(mode, "--local-json", list, "--server", "-1")...)
++
++			if r.code != 1 {
++				t.Errorf("exit status %d, want 1; stderr:\n%s", r.code, r.stderr)
++			}
++			if r.stdout != "" {
++				t.Errorf("stdout = %q, want no report", r.stdout)
++			}
++			if got, want := r.failure(t), "No server to test: the server list is empty"; got != want {
++				t.Errorf("error = %q, want %q", got, want)
++			}
++		})
++	}
++}
++
++// A server list that cannot be fetched fails the run as it always did.
++func TestUnreachableServerListStillFailsTheRun(t *testing.T) {
++	r := runCLI(t, "--server-json", deadURL(t)+"servers.json", "--server", "1", "--json")
++
++	if r.code != 1 {
++		t.Errorf("exit status %d, want 1; stderr:\n%s", r.code, r.stderr)
++	}
++	if r.stdout != "" {
++		t.Errorf("stdout = %q, want nothing", r.stdout)
++	}
++	r.failure(t)
++	if !strings.Contains(r.stderr, "Error when fetching server list: ") {
++		t.Errorf("stderr does not say the list could not be fetched:\n%s", r.stderr)
++	}
++}
+--- a/speedtest/helper.go
++++ b/speedtest/helper.go
+@@ -3,6 +3,7 @@ package speedtest
+ import (
+ 	"bytes"
+ 	"encoding/json"
++	"errors"
+ 	"fmt"
+ 	"io"
+ 	"math"
+@@ -28,12 +29,21 @@ const (
+ 
+ // doSpeedTest is where the actual speed test happens
+ func doSpeedTest(c *cli.Context, servers []defs.Server, telemetryServer defs.TelemetryServer, network string, silent bool, noICMP bool) error {
++	// With nothing to test the report would be empty, like when every server
++	// is down (--server -1 with an empty list gets here).
++	if len(servers) == 0 {
++		return errors.New("No server to test: the server list is empty")
++	}
++
+ 	if serverCount := len(servers); serverCount > 1 {
+ 		output.WriteUI("Testing against %d servers\n", serverCount)
+ 	}
+ 
+ 	var reps_json []report.JSONReport
+ 	var reps_csv []report.CSVReport
++	var measured bool
++	// each server that did not answer its probe, and why
++	var down []downServer
+ 
+ 	// fetch current user's IP info
+ 	for _, currentServer := range servers {
+@@ -47,13 +57,13 @@ func doSpeedTest(c *cli.Context, servers
+ 		}
+ 
+ 		output.WriteUI("Selected server: %s [%s]\n", output.Sanitize(currentServer.Name), output.Sanitize(u.Hostname()))
+-output.WriteDebug("Testing against %s (%s)\n", output.Sanitize(currentServer.Name), output.Sanitize(u.String()))
++		output.WriteDebug("Testing against %s (%s)\n", output.Sanitize(currentServer.Name), output.Sanitize(u.String()))
+ 
+ 		if sponsorMsg := currentServer.Sponsor(); sponsorMsg != "" {
+ 			output.WriteUI("Sponsored by: %s\n", output.Sanitize(sponsorMsg))
+ 		}
+ 
+-		if currentServer.IsUp() {
++		if upErr := currentServer.CheckUp(); upErr == nil {
+ 			output.WriteDebug("Fetching IP info\n")
+ 			ispInfo, err := currentServer.GetIPInfo(c.String(defs.OptionDistance))
+ 			if err != nil {
+@@ -61,7 +71,7 @@ output.WriteDebug("Testing against %s (%
+ 				return err
+ 			}
+ 			output.WriteUI("You're testing from: %s\n", output.Sanitize(ispInfo.ProcessedString))
+-output.WriteDebug("IP info: %s\n", output.Sanitize(ispInfo.ProcessedString))
++			output.WriteDebug("IP info: %s\n", output.Sanitize(ispInfo.ProcessedString))
+ 
+ 			// get ping and jitter value
+ 			var pb *spinner.Spinner
+@@ -208,8 +218,14 @@ output.WriteDebug("IP info: %s\n", outpu
+ 
+ 				reps_json = append(reps_json, rep)
+ 			}
++
++			measured = true
+ 		} else {
+ 			output.WriteUI("Selected server %s (%s) is not responding at the moment, try again later\n", output.Sanitize(currentServer.Name), output.Sanitize(u.Hostname()))
++			down = append(down, downServer{
++				server: fmt.Sprintf("%s (%s)", output.Sanitize(currentServer.Name), output.Sanitize(u.Hostname())),
++				reason: output.Sanitize(upErr.Error()),
++			})
+ 		}
+ 
+ 		//add a new line after each test if testing multiple servers
+@@ -218,6 +234,12 @@ output.WriteDebug("IP info: %s\n", outpu
+ 		}
+ 	}
+ 
++	// No server answered: fail instead of printing an empty report, which
++	// with exit status 0 would pass for a result.
++	if !measured && len(down) > 0 {
++		return noneResponding(down)
++	}
++
+ 	// check for --csv or --json. the program prioritize the --csv before the --json. this is the same behavior as speedtest-cli
+ 	if c.Bool(defs.OptionCSV) {
+ 		var buf bytes.Buffer
+@@ -238,6 +260,25 @@ output.WriteDebug("IP info: %s\n", outpu
+ 	return nil
+ }
+ 
++// downServer is a selected server that did not answer its probe.
++type downServer struct {
++	server string // name and host, ready to print
++	reason string
++}
++
++// noneResponding names every selected server with its cause. It is printed
++// after "Terminated due to error: ", hence the capital letter.
++func noneResponding(down []downServer) error {
++	if len(down) == 1 {
++		return fmt.Errorf("Selected server %s is not responding: %s", down[0].server, down[0].reason)
++	}
++	causes := make([]string, 0, len(down))
++	for _, d := range down {
++		causes = append(causes, d.server+": "+d.reason)
++	}
++	return fmt.Errorf("None of the %d selected servers is responding: %s", len(down), strings.Join(causes, "; "))
++}
++
+ // sendTelemetry sends the telemetry result to server, if --share is given
+ func sendTelemetry(telemetryServer defs.TelemetryServer, ispInfo *defs.GetIPResult, download, upload, pingVal, jitter float64, logs string, extra defs.TelemetryExtra) (string, error) {
+ 	var buf bytes.Buffer
