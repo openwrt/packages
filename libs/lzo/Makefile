@@ -20,8 +20,10 @@ PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:oberhumer:lzo
 
 CMAKE_BINARY_SUBDIR:=openwrt-build
+HOST_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/cmake.mk
 
 define Package/liblzo
@@ -42,6 +44,11 @@ CMAKE_OPTIONS += \
 	-DENABLE_STATIC=ON \
 	-DBUILD_TESTING=OFF
 
+CMAKE_HOST_OPTIONS += \
+	-DENABLE_SHARED=OFF \
+	-DENABLE_STATIC=ON \
+	-DBUILD_TESTING=OFF
+
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include $(1)/usr/lib $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/lzo $(1)/usr/include/
@@ -56,4 +63,5 @@ define Package/liblzo/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/liblzo2.so.* $(1)/usr/lib/
 endef
 
+$(eval $(call HostBuild))
 $(eval $(call BuildPackage,liblzo))
