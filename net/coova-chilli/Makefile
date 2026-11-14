@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=coova-chilli
 PKG_VERSION:=1.8
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://github.com/coova/coova-chilli/releases/download/$(PKG_VERSION)
@@ -44,7 +44,7 @@ define Package/coova-chilli
   CATEGORY:=Network
   DEPENDS:=+kmod-tun +COOVACHILLI_MINIPORTAL:haserl \
   +COOVACHILLI_WOLFSSL:libwolfssl +COOVACHILLI_OPENSSL:libopenssl \
-  +COOVACHILLI_JSONINTERFACE:libjson-c
+  +COOVACHILLI_JSONINTERFACE:libjson-c +firewall4
   TITLE:=Wireless LAN HotSpot controller (Coova Chilli Version)
   URL:=https://coova.github.io/
   MENU:=1
@@ -67,7 +67,7 @@ endef
 define KernelPackage/ipt-coova
   URL:=https://coova.github.io/CoovaChilli/
   SUBMENU:=Netfilter Extensions
-  DEPENDS:=+kmod-ipt-core +libxtables
+  DEPENDS:=+kmod-ipt-core +kmod-nft-compat +libxtables +iptables-nft
   TITLE:=Coova netfilter module
   FILES:=$(PKG_BUILD_DIR)/src/linux/xt_*.$(LINUX_KMOD_SUFFIX)
   AUTOLOAD:=$(call AutoProbe,xt_coova)
@@ -129,6 +129,23 @@ define Package/coova-chilli/install
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/chilli.conf $(1)/etc/
 	$(INSTALL_DIR) $(1)/etc/chilli
 	$(CP) $(PKG_INSTALL_DIR)/etc/chilli/* $(1)/etc/chilli/
+	$(INSTALL_BIN) files/chilli.up.sh $(1)/etc/chilli/up.sh
+	$(INSTALL_BIN) files/chilli.down.sh $(1)/etc/chilli/down.sh
+	$(INSTALL_DIR) $(1)/usr/share/coova-chilli
+	$(INSTALL_DATA) files/chilli.fw4.sh $(1)/usr/share/coova-chilli/fw4.sh
+	$(INSTALL_BIN) files/chilli.firewall.sh $(1)/usr/share/coova-chilli/firewall.sh
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) files/chilli.defaults $(1)/etc/uci-defaults/40-chilli
+	$(INSTALL_DIR) $(1)/usr/share/nftables.d/table-post
+	$(LN) /var/run/chilli/fw4/table.nft $(1)/usr/share/nftables.d/table-post/30-chilli.nft
+	$(INSTALL_DIR) $(1)/usr/share/nftables.d/chain-pre/input
+	$(LN) /var/run/chilli/fw4/input.nft $(1)/usr/share/nftables.d/chain-pre/input/30-chilli.nft
+	$(INSTALL_DIR) $(1)/usr/share/nftables.d/chain-pre/forward
+	$(LN) /var/run/chilli/fw4/forward.nft $(1)/usr/share/nftables.d/chain-pre/forward/30-chilli.nft
+	$(INSTALL_DIR) $(1)/usr/share/nftables.d/chain-pre/mangle_forward
+	$(LN) /var/run/chilli/fw4/mangle_forward.nft $(1)/usr/share/nftables.d/chain-pre/mangle_forward/30-chilli.nft
+	$(INSTALL_DIR) $(1)/usr/share/nftables.d/chain-pre/dstnat
+	$(LN) /var/run/chilli/fw4/dstnat.nft $(1)/usr/share/nftables.d/chain-pre/dstnat/30-chilli.nft
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/chilli* $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/usr/lib/
@@ -141,6 +158,14 @@ define Package/coova-chilli/install
 	$(INSTALL_BIN) files/chilli.init $(1)/etc/init.d/chilli
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DATA) files/chilli.config $(1)/etc/config/chilli
+endef
+
+define Package/coova-chilli/postrm
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ] && [ "$$(uci -q get firewall.chilli.path)" = /usr/share/coova-chilli/firewall.sh ]; then
+	uci -q delete firewall.chilli
+	uci commit firewall
+fi
 endef
 
 $(eval $(call BuildPackage,coova-chilli))
