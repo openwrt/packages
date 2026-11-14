@@ -1,0 +1,27 @@
+#!/bin/sh /etc/rc.common
+
+START=95
+STOP=10
+USE_PROCD=1
+
+start_service() {
+	config_load routelink
+	config_get_bool enabled main enabled 1
+	[ "$enabled" -eq 1 ] || return 0
+
+	procd_open_instance
+	procd_set_param command /usr/sbin/routelinkd
+	procd_set_param respawn 3600 5 5
+	procd_set_param term_timeout 15
+	procd_set_param stderr 1
+	procd_close_instance
+}
+
+service_triggers() {
+	# system: the daemon buckets days and months in the router's time zone
+	procd_add_reload_trigger routelink system
+}
+
+reload_service() {
+	procd_send_signal routelink
+}
