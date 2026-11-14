@@ -12,6 +12,7 @@ proto_yggdrasil_init_config() {
 
 	# Yggdrasil
 	proto_config_add_string "private_key"
+	proto_config_add_string "group_password"
 	proto_config_add_boolean "allocate_listen_addresses"
 
 	# Jumper
@@ -162,6 +163,7 @@ proto_yggdrasil_setup() {
 
 	local private_key
 	local public_key
+	local group_password
 	local mtu
 	local listen_addresses
 	local whitelisted_keys
@@ -171,6 +173,7 @@ proto_yggdrasil_setup() {
 	config_load network
 	config_get private_key "${config}" "private_key"
 	config_get public_key "${config}" "public_key"
+	config_get group_password "${config}" "group_password"
 	config_get mtu "${config}" "mtu"
 	config_get node_info "${config}" "node_info"
 	config_get node_info_privacy "${config}" "node_info_privacy"
@@ -198,6 +201,9 @@ EOF
 
 	json_add_string "PrivateKey" ${private_key}
 	json_add_string "PublicKey" ${public_key}
+	if [ -n "${group_password}" ]; then
+		json_add_string "GroupPassword" "${group_password}"
+	fi
 
 	if [ ! -z $mtu ]; then
 		json_add_int "IfMTU" ${mtu}
