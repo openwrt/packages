@@ -1,0 +1,63 @@
+From 584578c0deac728780108a6b80ecda4e6e608cca Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Wed, 9 Sep 2026 02:09:58 +0100
+Subject: [PATCH] udev_device: mark sound cards as initialised
+
+PipeWire's ALSA udev plugin skips every sound card whose udev device
+lacks the SOUND_INITIALIZED property, which udev's 78-sound-card rule
+sets once alsactl has restored the card. Without udev nothing sets it,
+so PipeWire never sees a card and offers only a dummy output. Add the
+property to sound card devices the way ID_INPUT is synthesised for
+input devices.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ udev_device.c | 23 +++++++++++++++++++++++
+ 1 file changed, 23 insertions(+)
+
+--- a/udev_device.c
++++ b/udev_device.c
+@@ -540,6 +540,27 @@ static void set_properties_from_props(st
+     udev_list_entry_add(&udev_device->properties, "ID_PATH", id, 0);
+ }
+ 
++static void set_properties_from_sound(struct udev_device *udev_device)
++{
++    const char *devpath, *subsystem, *name;
++
++    subsystem = udev_device_get_subsystem(udev_device);
++    devpath = udev_device_get_devpath(udev_device);
++
++    if (!subsystem || !devpath || strcmp(subsystem, "sound") != 0) {
++        return;
++    }
++
++    name = strrchr(devpath, '/');
++
++    if (!name || strncmp(name, "/card", 5) != 0) {
++        return;
++    }
++
++    /* udev sets this once alsactl has run; nothing else can here */
++    udev_list_entry_add(&udev_device->properties, "SOUND_INITIALIZED", "1", 0);
++}
++
+ struct udev_device *udev_device_new_from_syspath(struct udev *udev, const char *syspath)
+ {
+     char *subsystem, *driver, *sysname;
+@@ -593,6 +614,7 @@ struct udev_device *udev_device_new_from
+ 
+     set_properties_from_evdev(udev_device);
+     set_properties_from_props(udev_device);
++    set_properties_from_sound(udev_device);
+ 
+     free(driver);
+     free(subsystem);
+@@ -712,6 +734,7 @@ struct udev_device *udev_device_new_from
+ 
+     set_properties_from_props(udev_device);
+     set_properties_from_evdev(udev_device);
++    set_properties_from_sound(udev_device);
+     return udev_device;
+ }
+ 
