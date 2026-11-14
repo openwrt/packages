@@ -17,7 +17,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
 
 --- a/lib/commands/toolcontext.c
 +++ b/lib/commands/toolcontext.c
-@@ -1666,6 +1666,7 @@ struct cmd_context *create_toolcontext(c
+@@ -1697,6 +1697,7 @@ struct cmd_context *create_toolcontext(c
  	/* FIXME Make this configurable? */
  	reset_lvm_errno(1);
  
@@ -25,7 +25,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
  	/* Set in/out stream buffering before glibc */
  	if (set_buffering
  	    && !cmd->running_on_valgrind /* Skipping within valgrind execution. */
-@@ -1710,6 +1711,7 @@ struct cmd_context *create_toolcontext(c
+@@ -1741,6 +1742,7 @@ struct cmd_context *create_toolcontext(c
  	} else if (!set_buffering)
  		/* Without buffering, must not use stdin/stdout */
  		init_silent(1);
@@ -33,7 +33,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
  
  	/*
  	 * Environment variable LVM_SYSTEM_DIR overrides this below.
-@@ -2048,6 +2050,7 @@ void destroy_toolcontext(struct cmd_cont
+@@ -2077,6 +2079,7 @@ void destroy_toolcontext(struct cmd_cont
  	if (cmd->cft_def_hash)
  		dm_hash_destroy(cmd->cft_def_hash);
  
@@ -41,7 +41,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
  	if (!cmd->running_on_valgrind && cmd->linebuffer) {
  		int flags;
  		/* Reset stream buffering to defaults */
-@@ -2071,6 +2074,7 @@ void destroy_toolcontext(struct cmd_cont
+@@ -2100,6 +2103,7 @@ void destroy_toolcontext(struct cmd_cont
  
  		free(cmd->linebuffer);
  	}
@@ -51,7 +51,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
  
 --- a/tools/lvmcmdline.c
 +++ b/tools/lvmcmdline.c
-@@ -3395,6 +3395,7 @@ int lvm_split(char *str, int *argc, char
+@@ -3422,6 +3422,7 @@ int lvm_split(char *str, int *argc, char
  /* Make sure we have always valid filedescriptors 0,1,2 */
  static int _check_standard_fds(void)
  {
@@ -59,7 +59,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
  	int err = is_valid_fd(STDERR_FILENO);
  
  	if (!is_valid_fd(STDIN_FILENO) &&
-@@ -3421,6 +3422,12 @@ static int _check_standard_fds(void)
+@@ -3448,6 +3449,12 @@ static int _check_standard_fds(void)
  		       strerror(errno));
  		return 0;
  	}
