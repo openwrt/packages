@@ -1,0 +1,25 @@
+From 1193e1157e114f9b6481abd784770d0fd87e0367 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Wed, 4 Nov 2026 14:19:56 +0000
+Subject: [PATCH] gstreamer: Expose the wide dynamic range controls
+
+Add the WdrMode, WdrStrength and WdrMaxBrightPixels controls to the
+controls libcamerasrc offers as properties, so pipelines can switch the
+tone mapping of IPAs that implement them.
+
+Assisted-by: LLM
+---
+ utils/codegen/gen-gst-controls.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/utils/codegen/gen-gst-controls.py
++++ b/utils/codegen/gen-gst-controls.py
+@@ -25,7 +25,7 @@ exposed_controls = [
+     'Brightness', 'Contrast', 'AwbEnable', 'AwbMode', 'ColourGains',
+     'Saturation', 'Sharpness', 'ColourCorrectionMatrix', 'ScalerCrop',
+     'DigitalGain', 'AfMode', 'AfRange', 'AfSpeed', 'AfMetering', 'AfWindows',
+-    'LensPosition', 'Gamma',
++    'LensPosition', 'Gamma', 'WdrMode', 'WdrStrength', 'WdrMaxBrightPixels',
+ ]
+ 
+ 

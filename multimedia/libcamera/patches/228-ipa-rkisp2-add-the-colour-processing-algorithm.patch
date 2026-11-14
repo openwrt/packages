@@ -1,0 +1,393 @@
+From 1b64e6333fa47f88b3213bee7696655f6188b007 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Wed, 4 Nov 2026 12:22:07 +0000
+Subject: [PATCH] ipa: rkisp2: Add the colour processing algorithm
+
+Port the RkISP1 colour processing algorithm to the RkISP2 IPA: the
+Brightness, Contrast, Saturation and Hue controls program the CPROC
+block, with the brightness kept neutral at mid grey when the contrast
+changes as the RkISP1 algorithm does, and the block's range flags follow
+the colour space range of the stream. List the algorithm in the imx415
+tuning.
+
+Assisted-by: LLM
+---
+ src/ipa/rkisp2/algorithms/cproc.cpp   | 241 ++++++++++++++++++++++++++
+ src/ipa/rkisp2/algorithms/cproc.h     |  38 ++++
+ src/ipa/rkisp2/algorithms/meson.build |   1 +
+ src/ipa/rkisp2/data/imx415.yaml       |   1 +
+ src/ipa/rkisp2/ipa_context.h          |  24 +++
+ src/ipa/rkisp2/params.h               |   2 +
+ 6 files changed, 307 insertions(+)
+ create mode 100644 src/ipa/rkisp2/algorithms/cproc.cpp
+ create mode 100644 src/ipa/rkisp2/algorithms/cproc.h
+
+--- /dev/null
++++ b/src/ipa/rkisp2/algorithms/cproc.cpp
+@@ -0,0 +1,241 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2021-2022, Ideas On Board
++ *
++ * RkISP2 Color Processing control
++ */
++
++#include "cproc.h"
++
++#include <algorithm>
++#include <cmath>
++
++#include <libcamera/base/log.h>
++
++#include <libcamera/color_space.h>
++#include <libcamera/control_ids.h>
++
++/**
++ * \file cproc.h
++ */
++
++namespace libcamera {
++
++namespace ipa::rkisp2::algorithms {
++
++/**
++ * \class ColorProcessing
++ * \brief RkISP2 Color Processing control
++ *
++ * The ColorProcessing algorithm is responsible for applying brightness,
++ * contrast and saturation corrections. The values are directly provided
++ * through requests by the corresponding controls.
++ */
++
++LOG_DEFINE_CATEGORY(RkISP2CProc)
++
++namespace {
++
++constexpr float kDefaultBrightness = 0.0f;
++constexpr float kDefaultContrast = 1.0f;
++constexpr float kDefaultHue = 0.0f;
++constexpr float kDefaultSaturation = 1.0f;
++
++/*
++ * The Hue scale is negated as the hardware performs the opposite phase shift
++ * to what is expected and defined from the libcamera Hue control value.
++ */
++constexpr float kHueScale = -90.0f;
++
++void applyRequestedBrightness(IPAActiveState &activeState)
++{
++	auto &cproc = activeState.cproc;
++
++	/*
++	 * The CPROC module applies the transfer function
++	 *
++	 * Yout = Yin * contrast + brightness/2
++	 *
++	 * The calculations are done one bit wider than the input data to
++	 * account for the maximum contrast of 2x without clamping. Brightness
++	 * is applied after and therefore affects the output only with half the
++	 * value.
++	 *
++	 * Most users expect that changing contrast doesn't change the middle
++	 * gray and that the brightness value is normalized to one. So they
++	 * expect a transfer function of
++	 *
++	 * Yout = (Yin - 0.5) * contrast + 0.5 + user brightness
++	 *
++	 * This can be achieved by computing the hardware brightness value from
++	 * the user brightness and contrast:
++	 *
++	 * Yout = Yin * contrast + 0.5 - 0.5 * contrast + user brightness
++	 *      = Yin * contrast + (1 - contrast + 2 * user brightness) / 2
++	 */
++	cproc.brightness = 1 - cproc.contrast.value() + 2 * cproc.requestedBrightness;
++
++	/*
++	 * The cproc.brightness value is clamped to the hardware limits by the
++	 * Quantized class. This effectively clamps the user brightness to
++	 * limits that now depend on the contrast. Calculate the actual user
++	 * brightness to report in metadata by inverting the formula.
++	 */
++	cproc.actualBrightness = (cproc.brightness.value() - 1 + cproc.contrast.value()) / 2;
++}
++
++} /* namespace */
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::init
++ */
++int ColorProcessing::init(IPAContext &context,
++			  [[maybe_unused]] const ValueNode &tuningData)
++{
++	auto &cmap = context.ctrlMap;
++
++	cmap[&controls::Brightness] = ControlInfo(-1.0f, 0.993f, kDefaultBrightness);
++	cmap[&controls::Contrast] = ControlInfo(0.0f, 1.993f, kDefaultContrast);
++	cmap[&controls::Saturation] = ControlInfo(0.0f, 1.993f, kDefaultSaturation);
++
++	/* Hue adjustment is negated by kHueScale, min/max are swapped */
++	cmap[&controls::Hue] = ControlInfo(HueQ::TraitsType::max * kHueScale,
++					   HueQ::TraitsType::min * kHueScale,
++					   kDefaultHue);
++
++	return 0;
++}
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::configure
++ */
++int ColorProcessing::configure(IPAContext &context,
++			       [[maybe_unused]] const IPACameraSensorInfo &configInfo)
++{
++	auto &cproc = context.activeState.cproc;
++
++	cproc.requestedBrightness = kDefaultBrightness;
++	cproc.contrast = ContrastQ(kDefaultContrast);
++	applyRequestedBrightness(context.activeState);
++
++	cproc.hue = HueQ(kDefaultHue);
++	cproc.saturation = SaturationQ(kDefaultSaturation);
++
++	return 0;
++}
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::queueRequest
++ */
++void ColorProcessing::queueRequest(IPAContext &context,
++				   const uint32_t frame,
++				   IPAFrameContext &frameContext,
++				   const ControlList &controls)
++{
++	auto &cproc = context.activeState.cproc;
++	bool update = false;
++
++	if (frame == 0)
++		update = true;
++
++	const auto &contrast = controls.get(controls::Contrast);
++	if (contrast) {
++		ContrastQ value = *contrast;
++		if (cproc.contrast != value) {
++			cproc.contrast = value;
++			update = true;
++		}
++
++		LOG(RkISP2CProc, Debug) << "Set contrast to " << value;
++	}
++
++	const auto &brightness = controls.get(controls::Brightness);
++	if (brightness)
++		cproc.requestedBrightness = *brightness;
++
++	if (update || brightness) {
++		BrightnessQ old = cproc.brightness;
++		applyRequestedBrightness(context.activeState);
++		if (cproc.brightness != old)
++			update = true;
++
++		LOG(RkISP2CProc, Debug) << "Set brightness to " << cproc.actualBrightness;
++	}
++
++	const auto &hue = controls.get(controls::Hue);
++	if (hue) {
++		/* Scale the Hue from ]-90, +90] */
++		HueQ value = *hue / kHueScale;
++		if (cproc.hue != value) {
++			cproc.hue = value;
++			update = true;
++		}
++
++		LOG(RkISP2CProc, Debug) << "Set hue to " << value;
++	}
++
++	const auto saturation = controls.get(controls::Saturation);
++	if (saturation) {
++		SaturationQ value = *saturation;
++		if (cproc.saturation != value) {
++			cproc.saturation = value;
++			update = true;
++		}
++
++		LOG(RkISP2CProc, Debug) << "Set saturation to " << value;
++	}
++
++	frameContext.cproc.brightness = cproc.brightness;
++	frameContext.cproc.actualBrightness = cproc.actualBrightness;
++	frameContext.cproc.contrast = cproc.contrast;
++	frameContext.cproc.hue = cproc.hue;
++	frameContext.cproc.saturation = cproc.saturation;
++	frameContext.cproc.update = update;
++}
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::prepare
++ */
++void ColorProcessing::prepare(IPAContext &context,
++			      [[maybe_unused]] const uint32_t frame,
++			      IPAFrameContext &frameContext,
++			      RkISP2Params *params)
++{
++	/* Check if the algorithm configuration has been updated. */
++	if (!frameContext.cproc.update)
++		return;
++
++	bool fullRange = context.configuration.csm.colorSpaceRange !=
++			 static_cast<int>(ColorSpace::Range::Limited);
++
++	auto config = params->block<RkISP2ParamsBlocks::Cproc>();
++	config.setEnabled(true);
++	config->c_out_range = fullRange;
++	config->y_in_range = fullRange;
++	config->y_out_range = fullRange;
++	config->brightness = frameContext.cproc.brightness.quantized();
++	config->contrast = frameContext.cproc.contrast.quantized();
++	config->hue = frameContext.cproc.hue.quantized();
++	config->sat = frameContext.cproc.saturation.quantized();
++}
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::process
++ */
++void ColorProcessing::process([[maybe_unused]] IPAContext &context,
++			      [[maybe_unused]] const uint32_t frame,
++			      IPAFrameContext &frameContext,
++			      [[maybe_unused]] const RkISP2Stats *stats,
++			      ControlList &metadata)
++{
++	metadata.set(controls::Brightness, frameContext.cproc.actualBrightness);
++	metadata.set(controls::Contrast, frameContext.cproc.contrast.value());
++	metadata.set(controls::Hue, frameContext.cproc.hue.value() * kHueScale);
++	metadata.set(controls::Saturation, frameContext.cproc.saturation.value());
++}
++
++REGISTER_IPA_ALGORITHM(ColorProcessing, "ColorProcessing")
++
++} /* namespace ipa::rkisp2::algorithms */
++
++} /* namespace libcamera */
+--- /dev/null
++++ b/src/ipa/rkisp2/algorithms/cproc.h
+@@ -0,0 +1,38 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2021-2022, Ideas On Board
++ *
++ * RkISP2 Color Processing control
++ */
++
++#pragma once
++
++#include "algorithm.h"
++
++namespace libcamera {
++
++namespace ipa::rkisp2::algorithms {
++
++class ColorProcessing : public Algorithm
++{
++public:
++	ColorProcessing() = default;
++	~ColorProcessing() = default;
++
++	int init(IPAContext &context, const ValueNode &tuningData) override;
++	int configure(IPAContext &context,
++		      const IPACameraSensorInfo &configInfo) override;
++	void queueRequest(IPAContext &context, const uint32_t frame,
++			  IPAFrameContext &frameContext,
++			  const ControlList &controls) override;
++	void prepare(IPAContext &context, const uint32_t frame,
++		     IPAFrameContext &frameContext,
++		     RkISP2Params *params) override;
++	void process(IPAContext &context, const uint32_t frame,
++		     IPAFrameContext &frameContext,
++		     const RkISP2Stats *stats,
++		     ControlList &metadata) override;
++};
++
++} /* namespace ipa::rkisp2::algorithms */
++} /* namespace libcamera */
+--- a/src/ipa/rkisp2/algorithms/meson.build
++++ b/src/ipa/rkisp2/algorithms/meson.build
+@@ -5,6 +5,7 @@ rkisp2_ipa_algorithms = files([
+     'awb.cpp',
+     'bls.cpp',
+     'ccm.cpp',
++    'cproc.cpp',
+     'crop.cpp',
+     'csm.cpp',
+     'dpcc.cpp',
+--- a/src/ipa/rkisp2/data/imx415.yaml
++++ b/src/ipa/rkisp2/data/imx415.yaml
+@@ -150,5 +150,6 @@ algorithms:
+                15360, 39168, 16384, 40642, 18432, 43379, 20480, 45749, 22528, 47753, 24576, 49621, 26624, 51253,
+                28672, 52698, 30720, 53796, 32768, 54876, 36864, 57012, 40960, 58656, 45056, 59954, 49152, 61183,
+                53248, 62355, 57344, 63419, 61440, 64476, 65535, 65535 ]
++  - ColorProcessing:
+   - ColorSpaceConversion:
+ ...
+--- a/src/ipa/rkisp2/ipa_context.h
++++ b/src/ipa/rkisp2/ipa_context.h
+@@ -36,6 +36,11 @@ namespace libcamera {
+ 
+ namespace ipa::rkisp2 {
+ 
++using BrightnessQ = Q<1, 7>;
++using ContrastQ = UQ<1, 7>;
++using HueQ = Q<1, 7>;
++using SaturationQ = UQ<1, 7>;
++
+ struct IPAHwSettings {
+ 	unsigned int numAeCells;
+ 	unsigned int numHistogramBins;
+@@ -109,6 +114,15 @@ struct IPAActiveState {
+ 	ipa::ccm::ActiveState ccm;
+ 
+ 	struct {
++		float requestedBrightness;
++		float actualBrightness;
++		BrightnessQ brightness;
++		ContrastQ contrast;
++		HueQ hue;
++		SaturationQ saturation;
++	} cproc;
++
++	struct {
+ 		double lux;
+ 	} lux;
+ 
+@@ -168,6 +182,16 @@ struct IPAFrameContext : public FrameCon
+ 	ipa::ccm::FrameContext ccm;
+ 
+ 	struct {
++		float actualBrightness;
++		BrightnessQ brightness;
++		ContrastQ contrast;
++		HueQ hue;
++		SaturationQ saturation;
++
++		bool update;
++	} cproc;
++
++	struct {
+ 		double lux;
+ 	} lux;
+ 
+--- a/src/ipa/rkisp2/params.h
++++ b/src/ipa/rkisp2/params.h
+@@ -33,6 +33,7 @@ enum class RkISP2ParamsBlocks : uint16_t
+ 	HistBig2,
+ 	AwbMeas,
+ 	Dpcc,
++	Cproc,
+ };
+ 
+ namespace details {
+@@ -63,6 +64,7 @@ RkISP2_DEFINE_PARAMS_BLOCK_TYPE(HistBig1
+ RkISP2_DEFINE_PARAMS_BLOCK_TYPE(HistBig2,	hist_big,	HIST_BIG2);
+ RkISP2_DEFINE_PARAMS_BLOCK_TYPE(AwbMeas,	awb_meas,	AWB_MEAS);
+ RkISP2_DEFINE_PARAMS_BLOCK_TYPE(Dpcc,		dpcc,		DPCC);
++RkISP2_DEFINE_PARAMS_BLOCK_TYPE(Cproc,		cproc,		CPROC);
+ 
+ struct param_traits {
+ 	using id_type = RkISP2ParamsBlocks;

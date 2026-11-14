@@ -1,4 +1,4 @@
-From af1faca420e32d380a21b87508df3b55845919d1 Mon Sep 17 00:00:00 2001
+From f7ac6188a0bf7e938e197eac80b586c88b7ea35a Mon Sep 17 00:00:00 2001
 From: Daniel Golle <daniel@makrotopia.org>
 Date: Fri, 16 Oct 2026 23:59:28 +0100
 Subject: [PATCH] pipeline: rkisp2: Support the raw readback from the RV1126
@@ -18,9 +18,8 @@ VICAP is the frame source of the ISP through an in-kernel binding:
  - start the main path first and the readback node last, as the ISP
    selects the readback as its input when the main path starts, and
    stop them in the opposite order;
- - size the buffers that the VICAP capture node allocates for the
-   readback, which has more lines than the frame, while the capture
-   node stays the allocator because the VICAP has no IOMMU;
+ - configure the VICAP capture node, which allocates the buffers shared
+   with the readback because the VICAP has no IOMMU;
  - apply the delayed sensor controls from the VICAP frame timing, as the
    ISP frame start comes a full frame after the sensor started the frame;
  - keep six requests in flight, so that the sensor controls of a request
@@ -30,8 +29,8 @@ VICAP is the frame source of the ISP through an in-kernel binding:
 Assisted-by: LLM
 Signed-off-by: Daniel Golle <daniel@makrotopia.org>
 ---
- src/libcamera/pipeline/rkisp2/rkisp2.cpp | 241 ++++++++++++++++-------
- 1 file changed, 173 insertions(+), 68 deletions(-)
+ src/libcamera/pipeline/rkisp2/rkisp2.cpp | 226 ++++++++++++++++-------
+ 1 file changed, 158 insertions(+), 68 deletions(-)
 
 --- a/src/libcamera/pipeline/rkisp2/rkisp2.cpp
 +++ b/src/libcamera/pipeline/rkisp2/rkisp2.cpp
@@ -182,34 +181,19 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
  	 * \todo Figure out if these should go in the pipeline handler
  	 * or camera data
  	 */
-@@ -809,6 +840,26 @@ int PipelineHandlerRkISP2::configure(Cam
+@@ -809,6 +840,11 @@ int PipelineHandlerRkISP2::configure(Cam
  	if (ret)
  		return ret;
  
-+	/*
-+	 * The VICAP capture node allocates the buffers shared with the raw
-+	 * readback node, which may read more lines than the frame has. Ask
-+	 * the capture node for buffers of the readback size.
-+	 */
-+	unsigned int rawSize = vicapOutputFormat.planes[0].size;
-+
 +	LOG(RkISP2, Debug) << "Configuring VICAP capture node with : " << vicapOutputFormat;
 +	ret = data->video_->setFormat(&vicapOutputFormat);
 +	if (ret)
 +		return ret;
 +
-+	if (vicapOutputFormat.planes[0].size < rawSize) {
-+		LOG(RkISP2, Error)
-+			<< "VICAP buffers of " << vicapOutputFormat.planes[0].size
-+			<< " bytes are too small for the raw readback ("
-+			<< rawSize << " bytes)";
-+		return -EINVAL;
-+	}
-+
  	LOG(RkISP2, Debug) << "Configuring ISP input with: " << format;
  	ret = isp_->setFormat(0, &format);
  	if (ret)
-@@ -929,6 +980,7 @@ int PipelineHandlerRkISP2::start(Camera
+@@ -929,6 +965,7 @@ int PipelineHandlerRkISP2::start(Camera
  			return ret;
  		}
  		actions += [&]() { data->ipa_->stop(); };
@@ -217,7 +201,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
  
  		ret = data->param_->streamOn();
  		if (ret) {
-@@ -987,13 +1039,12 @@ int PipelineHandlerRkISP2::start(Camera
+@@ -987,13 +1024,12 @@ int PipelineHandlerRkISP2::start(Camera
  
  	actions += [&]() { data->video_->streamOff(); };
  
@@ -236,7 +220,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
  		ret = data->stat_->streamOn();
  		if (ret) {
  			LOG(RkISP2, Error)
-@@ -1007,6 +1058,12 @@ int PipelineHandlerRkISP2::start(Camera
+@@ -1007,6 +1043,12 @@ int PipelineHandlerRkISP2::start(Camera
  			return ret;
  
  		actions += [&]() { data->mainPath_->streamOff(); };
@@ -249,7 +233,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
  	}
  
  	if (controls) {
-@@ -1015,9 +1072,6 @@ int PipelineHandlerRkISP2::start(Camera
+@@ -1015,9 +1057,6 @@ int PipelineHandlerRkISP2::start(Camera
  			return ret;
  	}
  
@@ -259,7 +243,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
  	actions.release();
  	return 0;
  }
-@@ -1027,21 +1081,28 @@ void PipelineHandlerRkISP2::stopDevice(C
+@@ -1027,21 +1066,28 @@ void PipelineHandlerRkISP2::stopDevice(C
  	RkISP2CameraData *data = cameraData(camera);
  	bool useMP = data->usingIsp_ && !data->isRaw_;
  
@@ -293,7 +277,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
  	data->mainPath_->releaseBuffers();
  
  	data->stat_->streamOff();
-@@ -1126,8 +1187,6 @@ bool PipelineHandlerRkISP2::createCamera
+@@ -1126,8 +1172,6 @@ bool PipelineHandlerRkISP2::createCamera
  		data->delayedCtrls_ =
  			std::make_unique<DelayedControls>(data->sensor_->device(),
  							  params);
@@ -302,7 +286,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
  
  		int ret = data->loadIPA();
  		if (ret) {
-@@ -1155,47 +1214,48 @@ bool PipelineHandlerRkISP2::createCamera
+@@ -1155,47 +1199,48 @@ bool PipelineHandlerRkISP2::createCamera
  	return true;
  }
  
@@ -381,7 +365,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
  		if (sensor_)
  			break;
  	}
-@@ -1205,6 +1265,45 @@ bool PipelineHandlerRkISP2::match(Device
+@@ -1205,6 +1250,45 @@ bool PipelineHandlerRkISP2::match(Device
  		return false;
  	}
  
@@ -427,7 +411,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
  	const GlobalConfiguration &configuration = cameraManager()->_d()->configuration();
  	bool usingIsp = configuration.configuration()["pipelines"]["rkisp2"]["isp_enable"].get<bool>(true);
  	if (!usingIsp) {
-@@ -1241,6 +1340,12 @@ bool PipelineHandlerRkISP2::match(Device
+@@ -1241,6 +1325,12 @@ bool PipelineHandlerRkISP2::match(Device
  		return false;
  	}
  

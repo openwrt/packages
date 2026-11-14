@@ -1,0 +1,440 @@
+From a908745a9e725808d1a07500b5104ecc966176f8 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Thu, 5 Nov 2026 10:40:56 +0000
+Subject: [PATCH 237/239] ipa: rkisp2: Share the ISO step calibration helpers
+
+The Rockchip AIQ calibrates its noise reduction and sharpening per ISO
+step and runs them on one gain state, the ratio by which the gain map
+is scaled at low and high gain. The temporal noise reduction kept both
+the calibration helpers and that state to itself.
+
+Move the helpers to a calibration module and the gain, its ratio and
+the use of the gain map to the active state, where the spatial noise
+reduction can use them too.
+
+Assisted-by: LLM
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ src/ipa/rkisp2/algorithms/calibration.cpp |  90 +++++++++++++++++++
+ src/ipa/rkisp2/algorithms/calibration.h   |  72 +++++++++++++++
+ src/ipa/rkisp2/algorithms/meson.build     |   1 +
+ src/ipa/rkisp2/algorithms/tnr.cpp         | 104 +++++++---------------
+ src/ipa/rkisp2/algorithms/tnr.h           |   3 +-
+ src/ipa/rkisp2/ipa_context.h              |   6 ++
+ 6 files changed, 201 insertions(+), 75 deletions(-)
+ create mode 100644 src/ipa/rkisp2/algorithms/calibration.cpp
+ create mode 100644 src/ipa/rkisp2/algorithms/calibration.h
+
+--- /dev/null
++++ b/src/ipa/rkisp2/algorithms/calibration.cpp
+@@ -0,0 +1,90 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2026, Daniel Golle
++ *
++ * RkISP2 ISO step calibrations of the Rockchip AIQ
++ */
++
++#include "calibration.h"
++
++/**
++ * \file calibration.h
++ * \brief Helpers for the ISO step calibrations of the Rockchip AIQ
++ *
++ * The noise reduction and sharpening calibrations of a Rockchip IQ file hold
++ * one setting per ISO step, ISO 50 being unity gain. The AIQ interpolates
++ * them linearly between the two steps around the ISO of a frame and clamps to
++ * the first and last step.
++ */
++
++namespace libcamera {
++
++namespace ipa::rkisp2::calibration {
++
++LOG_DEFINE_CATEGORY(RkISP2Calibration)
++
++/**
++ * \brief Round half away from zero, as ROUND_F() of the AIQ
++ * \param[in] x The value to round
++ * \return The rounded value
++ */
++long roundF(double x)
++{
++	return static_cast<long>(x + (x > 0 ? 0.5 : -0.5));
++}
++
++/**
++ * \brief Interpolate linearly
++ * \param[in] r The position between \a lo (0) and \a hi (1)
++ * \param[in] lo The value at 0
++ * \param[in] hi The value at 1
++ * \return The interpolated value
++ */
++double lerp(double r, double lo, double hi)
++{
++	return r * (hi - lo) + lo;
++}
++
++/**
++ * \brief Read a scalar of a calibration entry
++ * \param[in] node The calibration entry
++ * \param[in] key The key of the scalar
++ * \param[out] out The value
++ * \return True on success
++ */
++bool readScalar(const ValueNode &node, const char *key, double &out)
++{
++	std::optional<double> v = node[key].get<double>();
++
++	if (!v) {
++		LOG(RkISP2Calibration, Error) << "Invalid " << key;
++		return false;
++	}
++
++	out = *v;
++	return true;
++}
++
++/**
++ * \brief Find the ISO steps around an ISO
++ * \param[in] isos The ISO of each step, ascending, two at least
++ * \param[in] iso The ISO to look up
++ * \return The steps below and above \a iso and its position between them,
++ * clamped to the first and last step
++ */
++IsoInterval isoInterval(const std::vector<double> &isos, double iso)
++{
++	for (size_t i = 0; i + 1 < isos.size(); i++) {
++		if (iso >= isos[i] && iso <= isos[i + 1])
++			return { i, i + 1, (iso - isos[i]) / (isos[i + 1] - isos[i]) };
++	}
++
++	if (iso < isos.front())
++		return { 0, 1, 0.0 };
++
++	return { isos.size() - 2, isos.size() - 1, 1.0 };
++}
++
++} /* namespace ipa::rkisp2::calibration */
++
++} /* namespace libcamera */
+--- /dev/null
++++ b/src/ipa/rkisp2/algorithms/calibration.h
+@@ -0,0 +1,72 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2026, Daniel Golle
++ *
++ * RkISP2 ISO step calibrations of the Rockchip AIQ
++ */
++
++#pragma once
++
++#include <algorithm>
++#include <array>
++#include <optional>
++#include <stddef.h>
++#include <vector>
++
++#include <libcamera/base/log.h>
++
++#include "libcamera/internal/value_node.h"
++
++namespace libcamera {
++
++namespace ipa::rkisp2::calibration {
++
++LOG_DECLARE_CATEGORY(RkISP2Calibration)
++
++constexpr double kIsoUnity = 50.0;
++
++/* Relative gain change below which a converted block is reused */
++constexpr double kGainTolerance = 0.005;
++
++struct IsoInterval {
++	size_t lo;
++	size_t hi;
++	double r;
++};
++
++long roundF(double x);
++double lerp(double r, double lo, double hi);
++bool readScalar(const ValueNode &node, const char *key, double &out);
++IsoInterval isoInterval(const std::vector<double> &isos, double iso);
++
++template<size_t N>
++bool readArray(const ValueNode &node, const char *key,
++	       std::array<double, N> &out)
++{
++	std::optional<std::vector<double>> v =
++		node[key].get<std::vector<double>>();
++
++	if (!v || v->size() != N) {
++		LOG(RkISP2Calibration, Error) << key << " needs " << N << " values";
++		return false;
++	}
++
++	std::copy(v->begin(), v->end(), out.begin());
++	return true;
++}
++
++template<size_t N>
++std::array<double, N> lerp(double r, const std::array<double, N> &lo,
++			   const std::array<double, N> &hi)
++{
++	std::array<double, N> out;
++
++	for (size_t k = 0; k < N; k++)
++		out[k] = lerp(r, lo[k], hi[k]);
++
++	return out;
++}
++
++} /* namespace ipa::rkisp2::calibration */
++
++} /* namespace libcamera */
+--- a/src/ipa/rkisp2/algorithms/meson.build
++++ b/src/ipa/rkisp2/algorithms/meson.build
+@@ -4,6 +4,7 @@ rkisp2_ipa_algorithms = files([
+     'agc.cpp',
+     'awb.cpp',
+     'bls.cpp',
++    'calibration.cpp',
+     'ccm.cpp',
+     'cproc.cpp',
+     'crop.cpp',
+--- a/src/ipa/rkisp2/algorithms/tnr.cpp
++++ b/src/ipa/rkisp2/algorithms/tnr.cpp
+@@ -22,6 +22,8 @@
+ 
+ #include "libcamera/internal/value_node.h"
+ 
++#include "calibration.h"
++
+ /**
+  * \file tnr.h
+  */
+@@ -68,7 +70,10 @@ LOG_DEFINE_CATEGORY(RkISP2Tnr)
+ 
+ namespace {
+ 
+-constexpr unsigned int kIsoUnity = 50;
++using calibration::lerp;
++using calibration::readArray;
++using calibration::readScalar;
++
+ constexpr unsigned int kPolyOrder = 4;
+ constexpr unsigned int kCalBits = 12;
+ constexpr unsigned int kRange = 1 << kCalBits;
+@@ -102,19 +107,9 @@ constexpr std::array<double, 2> kGainTh0
+ constexpr std::array<double, 2> kGainTh1 = { 4.0, 64.0 };
+ constexpr std::array<double, 3> kGainRatio = { 16.0, 1.0, 1.0 / 16.0 };
+ 
+-long roundD(double x)
+-{
+-	return static_cast<long>(x + (x > 0 ? 0.5 : -0.5));
+-}
+-
+ long fix(double x, int bits)
+ {
+-	return roundD(x * (1 << bits));
+-}
+-
+-double lerp(double r, double lo, double hi)
+-{
+-	return r * (hi - lo) + lo;
++	return calibration::roundF(x * (1 << bits));
+ }
+ 
+ double inverse(double v)
+@@ -122,35 +117,6 @@ double inverse(double v)
+ 	return v ? 1.0 / v : std::numeric_limits<double>::infinity();
+ }
+ 
+-template<size_t N>
+-bool readArray(const ValueNode &node, const char *key,
+-	       std::array<double, N> &out)
+-{
+-	std::optional<std::vector<double>> v =
+-		node[key].get<std::vector<double>>();
+-
+-	if (!v || v->size() != N) {
+-		LOG(RkISP2Tnr, Error) << key << " needs " << N << " values";
+-		return false;
+-	}
+-
+-	std::copy(v->begin(), v->end(), out.begin());
+-	return true;
+-}
+-
+-bool readScalar(const ValueNode &node, const char *key, double &out)
+-{
+-	std::optional<double> v = node[key].get<double>();
+-
+-	if (!v) {
+-		LOG(RkISP2Tnr, Error) << "Invalid " << key;
+-		return false;
+-	}
+-
+-	out = *v;
+-	return true;
+-}
+-
+ /* The index of the kernel tap (i, j) among the unique taps of a symmetric kernel */
+ unsigned int kernelTap(int i, int j, int rad)
+ {
+@@ -285,6 +251,7 @@ int TemporalNoiseReduction::init([[maybe
+ 			LOG(RkISP2Tnr, Error) << "Settings not sorted by iso";
+ 			return -EINVAL;
+ 		}
++		isos_.push_back(s.iso);
+ 		settings_.push_back(std::move(s));
+ 	}
+ 
+@@ -299,13 +266,14 @@ int TemporalNoiseReduction::init([[maybe
+ /**
+  * \copydoc libcamera::ipa::Algorithm::configure
+  */
+-int TemporalNoiseReduction::configure([[maybe_unused]] IPAContext &context,
++int TemporalNoiseReduction::configure(IPAContext &context,
+ 				      [[maybe_unused]] const IPACameraSensorInfo &configInfo)
+ {
+ 	gainStateFull_ = -1;
+ 	gainState_ = -1;
+-	gain_ = 1.0;
+-	ratio_ = gainRatio(gain_);
++	context.activeState.noiseGain.gain = 1.0;
++	context.activeState.noiseGain.ratio = gainRatio(1.0);
++	context.activeState.noiseGain.localGain = localGain_;
+ 	tnr_.reset();
+ 
+ 	return 0;
+@@ -356,28 +324,12 @@ double TemporalNoiseReduction::gainRatio
+ TemporalNoiseReduction::Selection
+ TemporalNoiseReduction::select(double iso) const
+ {
+-	size_t lo = 0, hi = 1;
+-	double r = 0.0;
++	calibration::IsoInterval in = calibration::isoInterval(isos_, iso);
++	const Setting &L = settings_[in.lo];
++	const Setting &H = settings_[in.hi];
++	double r = in.r;
+ 	Selection s;
+ 
+-	for (size_t i = 0; i + 1 < settings_.size(); i++) {
+-		if (iso >= settings_[i].iso && iso <= settings_[i + 1].iso) {
+-			lo = i;
+-			hi = i + 1;
+-			r = (iso - settings_[i].iso) /
+-			    (settings_[i + 1].iso - settings_[i].iso);
+-			break;
+-		}
+-		if (iso > settings_.back().iso) {
+-			lo = settings_.size() - 2;
+-			hi = settings_.size() - 1;
+-			r = 1.0;
+-		}
+-	}
+-
+-	const Setting &L = settings_[lo];
+-	const Setting &H = settings_[hi];
+-
+ 	auto li = [r](const auto &a, const auto &b, auto &out) {
+ 		for (size_t k = 0; k < out.size(); k++)
+ 			out[k] = lerp(r, a[k], b[k]);
+@@ -598,24 +550,27 @@ void TemporalNoiseReduction::fixTransfer
+ /**
+  * \copydoc libcamera::ipa::Algorithm::prepare
+  */
+-void TemporalNoiseReduction::prepare([[maybe_unused]] IPAContext &context,
++void TemporalNoiseReduction::prepare(IPAContext &context,
+ 				     [[maybe_unused]] const uint32_t frame,
+ 				     IPAFrameContext &frameContext,
+ 				     RkISP2Params *params)
+ {
++	auto &noiseGain = context.activeState.noiseGain;
+ 	double gain = frameContext.agc.gain;
+ 	uint32_t map;
+ 
+ 	if (gain <= 0.0)
+ 		gain = 1.0;
+ 
+-	gain_ = gain;
+-	ratio_ = gainRatio(gain);
++	noiseGain.gain = gain;
++	noiseGain.ratio = gainRatio(gain);
+ 
+ 	auto config = params->block<RkISP2ParamsBlocks::Gain>();
+ 	config.setEnabled(true);
+ 
+-	map = std::max<long>(roundD(gain * ratio_ * (1 << kFracMapGain)), 0);
++	map = std::max<long>(calibration::roundF(gain * noiseGain.ratio *
++						 (1 << kFracMapGain)),
++			     0);
+ 	config->gain[0] = std::min(map, kMapGain0Max);
+ 	config->gain[1] = std::min(map, kMapGain12Max);
+ 	config->gain[2] = std::min(map, kMapGain12Max);
+@@ -627,23 +582,26 @@ void TemporalNoiseReduction::prepare([[m
+  * \param[in] frame The ISPP frame number
+  * \param[out] params The ISPP parameters buffer
+  */
+-void TemporalNoiseReduction::prepareIspp([[maybe_unused]] IPAContext &context,
++void TemporalNoiseReduction::prepareIspp(IPAContext &context,
+ 					 [[maybe_unused]] const uint32_t frame,
+ 					 RkISPPParams *params)
+ {
+ 	constexpr size_t header = sizeof(struct v4l2_isp_params_block_header);
+-	double scaled = gain_ * ratio_;
++	const auto &noiseGain = context.activeState.noiseGain;
++	double scaled = noiseGain.gain * noiseGain.ratio;
+ 
+-	if (!tnr_ || std::abs(scaled - tnrGain_) > 0.005 * tnrGain_) {
++	if (!tnr_ ||
++	    std::abs(scaled - tnrGain_) > calibration::kGainTolerance * tnrGain_) {
+ 		struct rkispp_params_tnr tnr = {};
+ 
+-		fixTransfer(select(gain_ * kIsoUnity), scaled, &tnr);
++		fixTransfer(select(noiseGain.gain * calibration::kIsoUnity),
++			    scaled, &tnr);
+ 		tnr.gain_en = !localGain_;
+ 		tnr_ = tnr;
+ 		tnrGain_ = scaled;
+ 
+ 		LOG(RkISP2Tnr, Debug)
+-			<< "gain " << gain_ << " ratio " << ratio_
++			<< "gain " << noiseGain.gain << " ratio " << noiseGain.ratio
+ 			<< " sigma " << tnr.sigma_y[4] << " pk "
+ 			<< static_cast<unsigned int>(tnr.pk0_y);
+ 	}
+--- a/src/ipa/rkisp2/algorithms/tnr.h
++++ b/src/ipa/rkisp2/algorithms/tnr.h
+@@ -96,13 +96,12 @@ private:
+ 	double gainRatio(double gain);
+ 
+ 	std::vector<Setting> settings_;
++	std::vector<double> isos_;
+ 	double sigmaScale_;
+ 	bool localGain_;
+ 
+ 	int gainStateFull_;
+ 	int gainState_;
+-	double gain_;
+-	double ratio_;
+ 
+ 	std::optional<struct rkispp_params_tnr> tnr_;
+ 	double tnrGain_;
+--- a/src/ipa/rkisp2/ipa_context.h
++++ b/src/ipa/rkisp2/ipa_context.h
+@@ -144,6 +144,12 @@ struct IPAActiveState {
+ 		Rectangle crop;
+ 		bool set;
+ 	} crop;
++
++	struct {
++		double gain;
++		double ratio;
++		bool localGain;
++	} noiseGain;
+ };
+ 
+ struct IPAFrameContext : public FrameContext {
