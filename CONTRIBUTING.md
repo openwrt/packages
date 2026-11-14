@@ -27,13 +27,18 @@ prompts given to the automated LLM reviewer.
 
 ## AI policy
 
+This is the short version. [AI_POLICY.md](AI_POLICY.md) explains how to
+disclose, what your `Signed-off-by` covers, how to test and how the review bot
+fits in.
+
 > [!WARNING]
 > You **must** disclose any LLM usage in your pull request, description or
 > commit messages.
 
 We support the use of LLMs for coding, but we hold a high bar for all
 contributions, and we expect a human in the loop who genuinely understands the
-work an LLM produces on their behalf.
+work an LLM produces on their behalf. You add your `Signed-off-by` yourself,
+never a tool, and it covers the parts an LLM wrote.
 
 > [!IMPORTANT]
 > Don't rely on LLMs to write the whole thing for you when communicating with
@@ -41,7 +46,9 @@ work an LLM produces on their behalf.
 
 We expect comments on our projects to be written by humans. The readers are
 humans, and we'd like to hear from you, not from a model. We may hide or remove
-any comments that we believe are LLM-generated.
+any comments that we believe are LLM-generated. Commit messages and pull
+request and issue descriptions are different: an LLM may draft them, and you
+disclose that as described above.
 
 If you're using an LLM to edit or – as a non-native English speaker – to
 translate your comments, keep them short, review before posting, and make sure
@@ -51,6 +58,7 @@ they say what you mean.
 > Do not use autonomous agents for contributing to our projects.
 
 We will close any pull requests that we believe were created autonomously.
+The same goes for untested pull requests opened in bulk.
 
 ## Package Sources (archives and repositories)
 
@@ -107,6 +115,24 @@ We will close any pull requests that we believe were created autonomously.
   PKG_RELEASE.
 - Avoid reuse of <strong>PKG_NAME</strong> in call, define and eval lines to improve
   readability.
+
+### OpenWrt integration files
+
+The files that make a package work on OpenWrt, such as the init script, the
+default UCI config, uci-defaults and hotplug scripts, and rpcd ACLs, live in
+`files/` next to the Makefile and are installed from there. Do not install
+them from the upstream source archive, even when upstream ships them.
+
+They decide how the software runs on every installation, so they are reviewed
+here. If they come from the archive, a version bump only shows a new version
+and hash, and changes to them are never reviewed. Keeping them here also lets
+us fix them at any time, change many packages in one treewide commit and ship
+the fix with a `PKG_RELEASE` bump, without waiting for an upstream release.
+
+Packages whose upstream is hosted by the OpenWrt project, such as usteer, are
+exempt, because OpenWrt developers can change the files there. Existing
+packages that install these files from the archive should move them to
+`files/` when they are next updated.
 
 ### Patches
 
@@ -190,6 +216,9 @@ diff, so refreshing an existing patch will not cost you its text.
   GitHub private email addresses will not be accepted.
 - Follow all [Submission Guidelines](https://openwrt.org/submitting-patches#submission_guidelines)
   requirements, including maximum characters per line.
+- Explain what changes and why, in proportion to the change. A one-line fix
+  needs a few sentences in the commit message and pull request description,
+  not a page.
 
 ## Advice on pull requests
 
