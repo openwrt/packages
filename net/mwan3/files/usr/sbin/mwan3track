@@ -11,6 +11,10 @@ IFDOWN_EVENT=0
 IFUP_EVENT=0
 
 stop_subprocs() {
+	# busybox ash 'jobs -p' also lists already terminated jobs, whose PIDs
+	# may have been reused by unrelated processes. A plain 'jobs' reaps and
+	# removes terminated jobs from the job table.
+	jobs >/dev/null 2>&1
 	local killpids="$(jobs -p)"
 	[ -n "$killpids" ] && kill $killpids
 }
