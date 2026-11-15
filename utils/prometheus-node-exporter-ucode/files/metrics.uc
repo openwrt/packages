@@ -129,6 +129,10 @@ global.handle_request = function(env) {
 
 			return nextline(f);
 		},
+		raw: function(s) {
+			if (length(s))
+				puts(s);
+		},
 	};
 
 	if (length(collectors) < 1) {
