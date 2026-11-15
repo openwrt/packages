@@ -96,6 +96,12 @@ define Build/Compile
 	patchelf --set-soname 'libcurl-gnutls.so.$(PKG_ABI_VERSION)' $(PKG_BUILD_DIR)/lib/.libs/libcurl.so.$(PKG_ABI_VERSION).*
 endef
 
+# patchelf puts the new string table at the end of the file, sstrip -z cuts
+# its trailing zero bytes and readelf can no longer read the SONAME
+ifeq ($(CONFIG_NO_STRIP),)
+STRIP:=$(TARGET_CROSS)strip --strip-all
+endif
+
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libcurl.so.$(PKG_ABI_VERSION).* $(1)/usr/lib/libcurl-gnutls.so.$(PKG_ABI_VERSION)
