@@ -232,6 +232,7 @@ define Package/bind-tools
   TITLE+= administration tools (all)
   DEPENDS:= \
 	+bind-check \
+	+bind-client \
 	+bind-ddns-confgen \
 	+bind-delv \
 	+bind-dig \
@@ -241,6 +242,7 @@ define Package/bind-tools
 	+bind-rndc
   EXTRA_DEPENDS:= \
 	bind-check (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
+	bind-client (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
 	bind-ddns-confgen (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
 	bind-delv (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
 	bind-dig (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
@@ -256,6 +258,7 @@ define Package/bind-tools-gssapi
   TITLE+= administration tools (all) with GSSAPI
   DEPENDS:= \
 	+bind-check-gssapi \
+	+bind-client-gssapi \
 	+bind-ddns-confgen-gssapi \
 	+bind-delv-gssapi \
 	+bind-dig-gssapi \
@@ -265,6 +268,7 @@ define Package/bind-tools-gssapi
 	+bind-rndc-gssapi
   EXTRA_DEPENDS:= \
 	bind-check-gssapi (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
+	bind-client-gssapi (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
 	bind-ddns-confgen-gssapi (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
 	bind-delv-gssapi (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
 	bind-dig-gssapi (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
