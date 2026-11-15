@@ -11,7 +11,7 @@ PKG_NAME:=dovecot-pigeonhole
 PKG_VERSION_PLUGIN:=0.5.21.1
 PKG_VERSION_DOVECOT:=$(shell make --no-print-directory -C ../dovecot/ val.PKG_VERSION V=s)
 PKG_VERSION:=$(PKG_VERSION_DOVECOT).$(PKG_VERSION_PLUGIN)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 DOVECOT_VERSION:=2.3
 
@@ -48,7 +48,7 @@ CONFIGURE_ARGS += \
   --with-dovecot=$(STAGING_DIR)/usr/lib/dovecot/
 
 CONFIGURE_VARS += \
-  LDFLAGS="$(TARGET_LDFLAGS) -L$(STAGING_DIR)/usr/lib/dovecot/" \
+  LDFLAGS="$(TARGET_LDFLAGS) -L$(STAGING_DIR)/usr/lib/dovecot/ -Wl,-rpath,/usr/lib/dovecot" \
   CPPFLAGS="$(TARGET_CPPFLAGS) -I$(STAGING_DIR)/usr/include/dovecot/"
 
 define Package/dovecot-pigeonhole/install
