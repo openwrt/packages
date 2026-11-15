@@ -10,7 +10,7 @@ include $(INCLUDE_DIR)/nls.mk
 
 PKG_NAME:=curl
 PKG_VERSION:=8.23.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/curl/curl/releases/download/curl-$(subst .,_,$(PKG_VERSION))/ \
@@ -20,6 +20,7 @@ PKG_HASH:=8dadd7d2536a314f982ad05a651b713f426bf7d02cc2c76cffb9796f2218e6c5
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:haxx:libcurl
+PKG_ABI_VERSION:=4
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -79,13 +80,15 @@ define Package/curl/Default
   CATEGORY:=Network
   URL:=https://curl.se/
   MAINTAINER:=
+  TITLE:=A client-side URL transfer
 endef
 
 define Package/curl
   $(call Package/curl/Default)
   SUBMENU:=File Transfer
   DEPENDS:=+libcurl
-  TITLE:=A client-side URL transfer utility
+  TITLE+= utility
+  VARIANT:=default
 endef
 
 define Package/libcurl
@@ -96,18 +99,100 @@ define Package/libcurl
   DEPENDS += +LIBCURL_ZLIB:zlib +LIBCURL_ZSTD:libzstd +LIBCURL_THREADED_RESOLVER:libpthread +LIBCURL_LDAP:libopenldap
   DEPENDS += +LIBCURL_LIBIDN2:libidn2 +LIBCURL_SSH2:libssh2 +LIBCURL_HTTP2:libnghttp2 +LIBCURL_HTTP3:libnghttp3 +LIBCURL_HTTP3:libngtcp2 +ca-bundle
   DEPENDS += +LIBCURL_KERBEROS_AUTH:krb5-libs
-  TITLE:=A client-side URL transfer library
+  TITLE+= library
   MENU:=1
-  ABI_VERSION:=4
+  ABI_VERSION:=$(PKG_ABI_VERSION)
+  VARIANT:=default
 endef
 
 define Package/libcurl/config
   source "$(SOURCE)/Config.in"
 endef
 
+define Package/libcurl-gnutls
+  $(call Package/curl/Default)
+  SECTION:=libs
+  CATEGORY:=Libraries
+  DEPENDS:=+libgnutls +libidn2 +zlib
+  TITLE+= library (GnuTLS)
+  ABI_VERSION:=$(PKG_ABI_VERSION)
+  VARIANT:=gnutls
+endef
+
 TARGET_CFLAGS += $(FPIC)
-TARGET_CPPFLAGS += $(if $(CONFIG_LIBCURL_NTLM),,-DCURL_DISABLE_NTLM)
 TARGET_LDFLAGS += -Wl,--gc-sections
+
+ifeq ($(BUILD_VARIANT),gnutls)
+
+# libcurl-gnutls has a fixed feature set, the LIBCURL_* options do not apply
+CONFIGURE_ARGS += \
+	$(call autoconf_bool,CONFIG_IPV6,ipv6) \
+	--with-gnutls="$(STAGING_DIR)/usr" \
+	--with-libidn2="$(STAGING_DIR)/usr" \
+	--with-zlib="$(STAGING_DIR)/usr" \
+	--with-ca-path="/etc/ssl/certs/" \
+	--enable-shared \
+	--enable-static \
+	--without-brotli \
+	--without-libssh2 \
+	--without-winidn \
+	--without-nghttp2 \
+	--without-nghttp3 \
+	--without-wolfssl \
+	--without-libpsl \
+	--without-openssl \
+	--without-schannel \
+	--without-zstd \
+	--disable-libcurl-option \
+	--disable-ares \
+	--disable-sspi \
+	--disable-basic-auth \
+	--disable-bearer-auth \
+	--disable-digest-auth \
+	--disable-kerberos-auth \
+	--disable-negotiate-auth \
+	--disable-aws \
+	--disable-ntlm \
+	--disable-ldap \
+	--disable-ldaps \
+	--disable-mqtt \
+	--disable-rtsp \
+	--disable-dict \
+	--disable-telnet \
+	--disable-tftp \
+	--disable-pop3 \
+	--disable-imap \
+	--disable-smtp \
+	--disable-gopher \
+	--disable-file \
+	--disable-ftp \
+	--disable-debug \
+	--disable-manual \
+	--disable-verbose
+
+define Build/Compile
+	$(call Build/Compile/Default)
+	patchelf --set-soname 'libcurl-gnutls.so.$(PKG_ABI_VERSION)' $(PKG_BUILD_DIR)/lib/.libs/libcurl.so.$(PKG_ABI_VERSION).*
+endef
+
+# patchelf puts the new string table at the end of the file, sstrip -z cuts
+# its trailing zero bytes and readelf can no longer read the SONAME
+ifeq ($(CONFIG_NO_STRIP),)
+STRIP:=$(TARGET_CROSS)strip --strip-all
+endif
+
+# Only the headers and libcurl-gnutls.so, so nothing that links with -lcurl
+# picks up this build
+define Build/InstallDev
+	$(INSTALL_DIR) $(1)/usr/include $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/curl $(1)/usr/include/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libcurl.so.$(PKG_ABI_VERSION).* $(1)/usr/lib/libcurl-gnutls.so.$(PKG_ABI_VERSION)
+	$(LN) libcurl-gnutls.so.$(PKG_ABI_VERSION) $(1)/usr/lib/libcurl-gnutls.so
+endef
+
+else
+
+TARGET_CPPFLAGS += $(if $(CONFIG_LIBCURL_NTLM),,-DCURL_DISABLE_NTLM)
 
 CONFIGURE_ARGS += \
 	--disable-debug \
@@ -175,6 +260,8 @@ define Build/InstallDev
 	$(LN) $(STAGING_DIR)/usr/bin/curl-config $(2)/bin/
 endef
 
+endif
+
 define Package/curl/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/curl $(1)/usr/bin/
@@ -185,5 +272,12 @@ define Package/libcurl/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libcurl.so.* $(1)/usr/lib/
 endef
 
+define Package/libcurl-gnutls/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libcurl.so.$(PKG_ABI_VERSION).* $(1)/usr/lib/libcurl-gnutls.so.$(PKG_ABI_VERSION)
+	$(LN) libcurl-gnutls.so.$(PKG_ABI_VERSION) $(1)/usr/lib/libcurl-gnutls.so
+endef
+
 $(eval $(call BuildPackage,libcurl))
 $(eval $(call BuildPackage,curl))
+$(eval $(call BuildPackage,libcurl-gnutls))
