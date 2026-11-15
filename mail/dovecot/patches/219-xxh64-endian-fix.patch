@@ -1,0 +1,46 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Noah Meyerhans <noahm@debian.org>
+Subject: [PATCH] lib: xxh64: fix byte ordering issue on big-endian systems
+
+The fix for CVE-2026-40017 adds xxh64. Without this change it reads its
+input in host byte order and computes different hashes on big-endian
+systems than on little-endian ones.
+
+Sent upstream as https://github.com/dovecot/core/pull/314, upstream
+fixed it in its own way based on this patch:
+  https://github.com/dovecot/core/commit/536eb46c065ff6c6cce2ab5ea4af150830c906a4
+Debian bug:
+  https://bugs.debian.org/1146449
+
+Taken from the Debian bookworm security update (dovecot
+1:2.3.19.1+dfsg1-2.1+deb12u7), which carries these fixes for 2.3, and
+applied to 2.3.21.1.
+
+--- a/src/lib/xxh64.c
++++ b/src/lib/xxh64.c
+@@ -8,6 +8,8 @@
+ #include "lib.h"
+ #include "xxh64.h"
+ 
++#include <endian.h>
++
+ #define XXH64_PRIME1  UINT64_C(0x9E3779B185EBCA87)
+ #define XXH64_PRIME2  UINT64_C(0xC2B2AE3D27D4EB4F)
+ #define XXH64_PRIME3  UINT64_C(0x165667B19E3779F9)
+@@ -20,14 +22,14 @@ static inline uint64_t xxh64_read64(cons
+ {
+ 	uint64_t v;
+ 	memcpy(&v, p, sizeof(v));
+-	return v;
++	return le64toh(v);  /* Convert from little-endian to host byte order */
+ }
+ 
+ static inline uint32_t xxh64_read32(const void *p)
+ {
+ 	uint32_t v;
+ 	memcpy(&v, p, sizeof(v));
+-	return v;
++	return le32toh(v);  /* Convert from little-endian to host byte order */
+ }
+ 
+ static uint64_t ATTR_UNSIGNED_WRAPS xxh64_round(uint64_t acc, uint64_t input)
