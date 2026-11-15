@@ -1,0 +1,92 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Date: Sun, 15 Nov 2026 11:31:47 +0100
+Subject: [PATCH] Use the system SQLite library
+
+netdata 1.33.1 compiles its own copy of SQLite 3.36.0 from June 2021
+into the daemon. Link the daemon against the SQLite library of the
+system instead, so that SQLite is updated together with the libsqlite3
+package.
+
+The bundled copy is built with SQLITE_ENABLE_UPDATE_DELETE_LIMIT, which
+the OpenWrt library does not have. Apart from the unit test, the only
+statement that needs it is in the cloud code under
+ENABLE_NEW_CLOUD_PROTOCOL, which the OpenWrt package does not build.
+The unit test skips its two LIMIT statements when the library lacks
+the option.
+
+The bundled sqlite3.c and sqlite3.h stay in the tree unused. The
+includes are switched to <sqlite3.h>, because the bundled header sits
+in the same directory as the files that include it.
+
+This is not meant for upstream. 1.33.1 is no longer maintained there
+and current netdata builds its own SQLite during the build.
+
+Signed-off-by: Josef Schlehofer <pepe.schlehofer@gmail.com>
+---
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -456,8 +456,6 @@ RRD_PLUGIN_FILES = \
+     database/sqlite/sqlite_aclk_chart.h \
+     database/sqlite/sqlite_aclk_alert.c \
+     database/sqlite/sqlite_aclk_alert.h \
+-    database/sqlite/sqlite3.c \
+-    database/sqlite/sqlite3.h \
+     $(NULL)
+ 
+ if ENABLE_DBENGINE
+@@ -958,6 +956,7 @@ endif
+ 
+ netdata_LDADD = \
+     $(NETDATA_COMMON_LIBS) \
++    -lsqlite3 \
+     $(NULL)
+ 
+ if ENABLE_ACLK
+--- a/daemon/unit_test.c
++++ b/daemon/unit_test.c
+@@ -1478,6 +1478,11 @@ int test_sqlite(void) {
+         return 1;
+     }
+ 
++    if (!sqlite3_compileoption_used("ENABLE_UPDATE_DELETE_LIMIT")) {
++        fprintf(stderr,"SQLite is OK (UPDATE and DELETE with LIMIT not tested, the library is built without them)\n");
++        return 0;
++    }
++
+     rc = sqlite3_exec(db_meta, "DELETE FROM MINE LIMIT 1;", 0, 0, NULL);
+     if (rc != SQLITE_OK) {
+         fprintf(stderr,"Failed to test SQLite: Delete with LIMIT failed\n");
+--- a/database/sqlite/sqlite_aclk.h
++++ b/database/sqlite/sqlite_aclk.h
+@@ -3,7 +3,7 @@
+ #ifndef NETDATA_SQLITE_ACLK_H
+ #define NETDATA_SQLITE_ACLK_H
+ 
+-#include "sqlite3.h"
++#include <sqlite3.h>
+ 
+ // TODO: To be added
+ #include "../../aclk/schema-wrappers/chart_stream.h"
+--- a/database/sqlite/sqlite_functions.h
++++ b/database/sqlite/sqlite_functions.h
+@@ -4,7 +4,7 @@
+ #define NETDATA_SQLITE_FUNCTIONS_H
+ 
+ #include "daemon/common.h"
+-#include "sqlite3.h"
++#include <sqlite3.h>
+ 
+ // return a node list
+ struct node_instance_list {
+--- a/database/sqlite/sqlite_health.h
++++ b/database/sqlite/sqlite_health.h
+@@ -3,7 +3,7 @@
+ #ifndef NETDATA_SQLITE_HEALTH_H
+ #define NETDATA_SQLITE_HEALTH_H
+ #include "../../daemon/common.h"
+-#include "sqlite3.h"
++#include <sqlite3.h>
+ 
+ extern sqlite3 *db_meta;
+ extern void sql_health_alarm_log_load(RRDHOST *host);
