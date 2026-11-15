@@ -29,7 +29,7 @@ define Package/radicale3
   TITLE:=Radicale 3.x CalDAV/CardDAV server
   USERID:=radicale3=226:radicale3=226
   DEPENDS:=+python3 +python3-dateutil +python3-vobject +python3-setuptools \
-    +python3-defusedxml +python3-libpass +python3-requests +python3-pika
+    +python3-defusedxml +python3-libpass
   PROVIDES:=radicale radicale2
 endef
 
