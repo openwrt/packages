@@ -247,10 +247,35 @@ define Package/bind-tools
 	bind-host (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
 	bind-nslookup (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
 	bind-rndc (=$(PKG_VERSION)-r$(PKG_RELEASE))
+  CONFLICTS:=bind-tools-gssapi
 endef
 
-define Package/bind-tools/config
-	# These options don't actually relate to bind-tools, they are generic.
+define Package/bind-tools-gssapi
+  $(call Package/bind-gssapi/Default)
+  TITLE+= administration tools (all) with GSSAPI
+  DEPENDS:= \
+	+bind-check-gssapi \
+	+bind-ddns-confgen-gssapi \
+	+bind-delv-gssapi \
+	+bind-dig-gssapi \
+	+bind-dnssec-gssapi \
+	+bind-host-gssapi \
+	+bind-nslookup-gssapi \
+	+bind-rndc-gssapi
+  EXTRA_DEPENDS:= \
+	bind-check-gssapi (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
+	bind-ddns-confgen-gssapi (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
+	bind-delv-gssapi (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
+	bind-dig-gssapi (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
+	bind-dnssec-gssapi (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
+	bind-host-gssapi (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
+	bind-nslookup-gssapi (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
+	bind-rndc-gssapi (=$(PKG_VERSION)-r$(PKG_RELEASE))
+  PROVIDES:=bind-tools
+endef
+
+define Package/bind-tools-gssapi/config
+	# These options don't actually relate to this package, they are generic.
 	# Putting them here makes sure they end up at the end of the menu.
 	source "$(SOURCE)/Config.in"
 endef
@@ -393,6 +418,7 @@ Package/bind-server-gssapi/conffiles=$(Package/bind-server/conffiles)
 define Package/bind-tools/install
 	true
 endef
+Package/bind-tools-gssapi/install=$(Package/bind-tools/install)
 
 $(eval $(call BuildPackage,bind-libs))
 $(eval $(call BuildPackage,bind-libs-gssapi))
@@ -417,3 +443,4 @@ $(eval $(call BuildPackage,bind-rndc-gssapi))
 $(eval $(call BuildPackage,bind-server))
 $(eval $(call BuildPackage,bind-server-gssapi))
 $(eval $(call BuildPackage,bind-tools))
+$(eval $(call BuildPackage,bind-tools-gssapi))
