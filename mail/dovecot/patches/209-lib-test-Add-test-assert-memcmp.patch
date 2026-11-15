@@ -1,0 +1,103 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Stephan Bosch <stephan.bosch@open-xchange.com>
+Subject: [PATCH] lib-test: Add test_assert_memcmp*()
+
+Upstream commit:
+  https://github.com/dovecot/core/commit/4677492d038f5187363790b5a93bd5fccc989a98
+
+Needed by the test of the fix for CVE-2026-33604.
+
+Taken from the Debian bookworm security update (dovecot
+1:2.3.19.1+dfsg1-2.1+deb12u7), which carries these fixes for 2.3, and
+applied to 2.3.21.1.
+
+--- a/src/lib-test/test-common.c
++++ b/src/lib-test/test-common.c
+@@ -82,6 +82,39 @@ void test_assert_failed_strcmp_idx(const
+ #endif
+ }
+ 
++static void print_memcmp_data(const void *_data, size_t len)
++{
++	const unsigned char *data = _data;
++	size_t i;
++
++	for (i = 0; i < len; i++) {
++		if (data[i] >= 0x20 && data[i] < 0x7f)
++			printf("%c", data[i]);
++		else
++			printf("\\x%02X", data[i]);
++	}
++}
++
++void test_assert_failed_memcmp_idx(const char *code, const char *file, unsigned int line,
++				   const void *src, const void *dst, size_t len, long long i)
++{
++	printf("%s:%u: Assert", file, line);
++	if (i == LLONG_MIN)
++		printf(" failed: %s\n", code);
++	else
++		printf("(#%lld) failed: %s\n", i, code);
++	printf("        \"");
++	print_memcmp_data(src, len);
++	printf("\" != \"");
++	print_memcmp_data(dst, len);
++	printf("\" (len == %zu)", len);
++	fflush(stdout);
++	test_success = FALSE;
++#ifdef STATIC_CHECKER
++	i_unreached();
++#endif
++}
++
+ void test_assert_failed_cmp_intmax_idx(const char *code, const char *file,
+ 				       unsigned int line,
+ 				       intmax_t src, intmax_t dst,
+--- a/src/lib-test/test-common.h
++++ b/src/lib-test/test-common.h
+@@ -32,7 +32,14 @@ void test_begin(const char *name);
+ 		test_assert_strcmp_idx(s1, s2, LLONG_MIN); \
+ 	} STMT_END
+ 
+-/* Same as test_assert_strcmp expect that it takes an additional i as input.
++/* Additional parameters are m1 (source) and m2 (destination) memory and len
++ * in memcmp().
++ */
++#define test_assert_memcmp(m1, m2, len) STMT_START { \
++		test_assert_memcmp_idx(m1, m2, len, LLONG_MIN); \
++	} STMT_END
++
++/* Same as test_assert_strcmp except that it takes an additional i as input.
+  * When i is greater than or equals 0 it is used to identify the barrage of
+  * tests failed like in test_assert_idx.
+ */
+@@ -44,6 +51,19 @@ void test_begin(const char *name);
+ 						      __FILE__, __LINE__, _temp_s1, _temp_s2, i); \
+ 	} STMT_END
+ 
++/* Same as test_assert_memcmp except that it takes an additional i as input.
++ * When i is greater than or equals 0 it is used to identify the barrage of
++ * tests failed like in test_assert_idx.
++*/
++#define test_assert_memcmp_idx(_m1, _m2, _len, i) STMT_START { \
++		const void *_temp_m1 = (_m1); \
++		const void *_temp_m2 = (_m2); \
++		const size_t _temp_len = (_len); \
++		if ((memcmp(_temp_m1,_temp_m2, _temp_len) != 0)) \
++			test_assert_failed_memcmp_idx("memcmp(" #_m1 ","  #_m2 ","  #_len ")", \
++						      __FILE__, __LINE__, _temp_m1, _temp_m2, _temp_len, i); \
++	} STMT_END
++
+ #define test_assert_cmp(_value1, _op, _value2) \
+ 	test_assert_cmp_idx(_value1, _op, _value2, LLONG_MIN)
+ #define test_assert_cmp_idx(_value1, _op, _value2, _idx) STMT_START { \
+@@ -81,6 +101,9 @@ void test_assert_failed_idx(const char *
+ void test_assert_failed_strcmp_idx(const char *code, const char *file, unsigned int line,
+ 				   const char * src, const char * dst, long long i)
+ 	ATTR_STATIC_CHECKER_NORETURN;
++void test_assert_failed_memcmp_idx(const char *code, const char *file, unsigned int line,
++				   const void *src, const void *dst, size_t len, long long i)
++	ATTR_STATIC_CHECKER_NORETURN;
+ void test_assert_failed_cmp_intmax_idx(const char *code, const char *file,
+ 				       unsigned int line,
+ 				       intmax_t src, intmax_t dst,

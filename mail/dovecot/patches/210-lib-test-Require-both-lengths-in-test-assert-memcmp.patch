@@ -1,0 +1,45 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Aki Tuomi <aki.tuomi@open-xchange.com>
+Subject: [PATCH] lib-test: Require both lengths in test_assert_memcmp()
+
+Upstream commit:
+  https://github.com/dovecot/core/commit/8f04979a7e72d3b3e04f3a93bd8088f5e2332dd9
+
+Needed by the test of the fix for CVE-2026-33604.
+
+Taken from the Debian bookworm security update (dovecot
+1:2.3.19.1+dfsg1-2.1+deb12u7), which carries these fixes for 2.3, and
+applied to 2.3.21.1.
+
+--- a/src/lib-test/test-common.h
++++ b/src/lib-test/test-common.h
+@@ -35,8 +35,8 @@ void test_begin(const char *name);
+ /* Additional parameters are m1 (source) and m2 (destination) memory and len
+  * in memcmp().
+  */
+-#define test_assert_memcmp(m1, m2, len) STMT_START { \
+-		test_assert_memcmp_idx(m1, m2, len, LLONG_MIN); \
++#define test_assert_memcmp(m1, len1, m2, len2) STMT_START { \
++		test_assert_memcmp_idx(m1, len1, m2, len2, LLONG_MIN); \
+ 	} STMT_END
+ 
+ /* Same as test_assert_strcmp except that it takes an additional i as input.
+@@ -55,12 +55,14 @@ void test_begin(const char *name);
+  * When i is greater than or equals 0 it is used to identify the barrage of
+  * tests failed like in test_assert_idx.
+ */
+-#define test_assert_memcmp_idx(_m1, _m2, _len, i) STMT_START { \
++#define test_assert_memcmp_idx(_m1, _len1, _m2, _len2, i) STMT_START { \
+ 		const void *_temp_m1 = (_m1); \
+ 		const void *_temp_m2 = (_m2); \
+-		const size_t _temp_len = (_len); \
+-		if ((memcmp(_temp_m1,_temp_m2, _temp_len) != 0)) \
+-			test_assert_failed_memcmp_idx("memcmp(" #_m1 ","  #_m2 ","  #_len ")", \
++		const size_t _temp_len = I_MIN((_len1), (_len2)); \
++		if ((_len1) != (_len2)) \
++			test_assert_failed_ucmp_intmax_idx(#_len1 " == " #_len2, __FILE__, __LINE__, _len1, _len2, "=", i); \
++		if ((memcmp(_temp_m1, _temp_m2, _temp_len) != 0)) \
++			test_assert_failed_memcmp_idx("memcmp(" #_m1 ","  #_m2 ","  #_len2 ")", \
+ 						      __FILE__, __LINE__, _temp_m1, _temp_m2, _temp_len, i); \
+ 	} STMT_END
+ 
