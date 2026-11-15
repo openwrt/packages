@@ -207,6 +207,11 @@ for (let col in cols) {
 		delete config[".name"];
 	}
 
+	if (config["disabled"] == "1") {
+		warn(`collector '${name}' is disabled\n`);
+		continue;
+	}
+
 	collectors[name] = {
 		func,
 		config,
