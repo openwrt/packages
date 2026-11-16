@@ -1,10 +1,13 @@
+case "$DEVNAME" in
+video*) ;;
+*) exit 0 ;;
+esac
+
+/etc/init.d/ustreamer enabled || exit 0
+
+# A jailed instance keeps the device node it was started with, so restart
+# on add to pick up a new node, and reload on remove to drop the instance.
 case "$ACTION" in
-	add)
-		# start process
-		ls /dev/video* > /dev/null && /etc/init.d/ustreamer start
-		;;
-	remove)
-		# stop process
-		ls /dev/video* > /dev/null || /etc/init.d/ustreamer stop
-		;;
+add) /etc/init.d/ustreamer restart ;;
+remove) /etc/init.d/ustreamer reload ;;
 esac
