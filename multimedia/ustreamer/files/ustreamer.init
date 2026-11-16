@@ -7,6 +7,29 @@ STOP=10
 USE_PROCD=1
 PROG=/usr/bin/ustreamer
 
+# Mount the configured M2M device into the jail. Without one, ustreamer
+# falls back to a platform-specific default, so mount every M2M device.
+jail_add_m2m() {
+	local dev
+
+	if [ -n "$1" ]; then
+		procd_add_jail_mount_rw "$1"
+		return
+	fi
+
+	[ "$m2m_scanned" -eq 0 ] || return
+	m2m_scanned=1
+
+	for dev in /dev/video*; do
+		[ -c "$dev" ] || continue
+		[ "$dev" = "$m2m_device" -o "$dev" = "$h264_m2m_device" ] && continue
+		case "$(/usr/libexec/v4l-id "$dev" 2>/dev/null |
+			jsonfilter -e '@.video_m2m' -e '@.video_m2m_mplane')" in
+		*true*) procd_add_jail_mount_rw "$dev" ;;
+		esac
+	done
+}
+
 start_instance() {
 	local enabled=0
 	local device="/dev/video0"
@@ -101,6 +124,9 @@ start_instance() {
 	local flip_vertical=""
 	local rotate=""
 
+	# jail
+	local m2m_scanned=0
+
 	# primary
 	config_get input "$1" 'input' "$input"
 	config_get format "$1" 'format' "$format"
@@ -188,6 +214,21 @@ start_instance() {
 	# configure service
 	procd_open_instance
 	procd_set_param command "$PROG"
+	procd_set_param user ustreamer
+	procd_set_param group video-capture
+
+	if [ -x /sbin/ujail ]; then
+		procd_add_jail ustreamer
+		procd_add_jail_mount_rw "$device"
+		case "$encoder" in
+		[Mm]2[Mm]-*|[Oo][Mm][Xx]) jail_add_m2m "$m2m_device" ;;
+		esac
+		[ -n "$h264_sink" ] && jail_add_m2m "$h264_m2m_device"
+		[ -n "$static" ] && procd_add_jail_mount "$static"
+		[ -n "$unix" ] && procd_add_jail_mount_rw "${unix%/*}"
+		[ -n "$jpeg_sink$raw_sink$h264_sink" ] && procd_add_jail_mount_rw /dev/shm
+		procd_set_param no_new_privs 1
+	fi
 
 	# primary
 	[ -n "$device" ] && procd_append_param command --device "$device"

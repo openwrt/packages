@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ustreamer
 PKG_VERSION:=6.52
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_MAINTAINER:=Georgi Valkov <gvalkov@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -26,8 +26,9 @@ define Package/ustreamer
   SECTION:=multimedia
   CATEGORY:=Multimedia
   TITLE:=Lightweight and fast MJPEG-HTTP streamer
-  DEPENDS:=$(ATOMIC64_DEPENDS) +libjpeg +libevent2 +libevent2-pthreads
+  DEPENDS:=$(ATOMIC64_DEPENDS) video-support +libjpeg +libevent2 +libevent2-pthreads
   URL:=https://github.com/pikvm/ustreamer
+  USERID:=ustreamer:video-capture=36:video=40
 endef
 
 define Package/ustreamer/description
@@ -47,8 +48,8 @@ define Package/ustreamer/install
 	$(INSTALL_CONF) ./files/ustreamer.config $(1)/etc/config/ustreamer
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/ustreamer.init $(1)/etc/init.d/ustreamer
-	$(INSTALL_DIR) $(1)/etc/hotplug.d/usb
-	$(INSTALL_DATA) ./files/ustreamer.hotplug $(1)/etc/hotplug.d/usb/20-ustreamer
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/video4linux
+	$(INSTALL_DATA) ./files/ustreamer.hotplug $(1)/etc/hotplug.d/video4linux/50-ustreamer
 endef
 
 $(eval $(call BuildPackage,ustreamer))
