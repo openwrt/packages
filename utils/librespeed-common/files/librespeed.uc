@@ -36,21 +36,6 @@ function read_json(path) {
 	return value;
 }
 
-// The process group of a pid, read from /proc: the runner is spawned detached
-// (start-stop-daemon -b or setsid), so its group holds the whole measurement
-// tree and nothing else. Parsed after the comm field's closing parenthesis,
-// the one place a process can put spaces.
-function pgid_of(pid) {
-	const st = readfile(`/proc/${pid}/stat`);
-
-	if (!st)
-		return 0;
-
-	const f = split(trim(substr(st, rindex(st, ')') + 1)), ' ');
-
-	return int(f[2] ?? 0);
-}
-
 // Each interface's last failure, newest first, kept until its link succeeds.
 // A name neither configured nor scheduled any more (removed, renamed) is left
 // out: no run can clear it, and a page would show a name that is gone.
@@ -251,12 +236,17 @@ const methods = {
 			if (name in (known.down ?? []))
 				return { error: 'interface is down' };
 
-			// Detached: the frontend polls status instead of waiting here.
+			// --start returns once the run holds the lock and status names
+			// it. A start already past the checks above is refused there.
 			const arg = (iface != '') ? ` ${iface}` : '';
+			const p = popen(`${RUN} --start${arg} 2>&1`, 'r');
+			const out = trim(p?.read('all') ?? '');
+			const rc = p?.close();
 
-			system(`start-stop-daemon -S -b -x ${RUN}${arg ? ' --' + arg : ''} >/dev/null 2>&1 || ( setsid ${RUN}${arg} >/dev/null 2>&1 & )`);
+			if (rc === 0)
+				return { started: true };
 
-			return { started: true };
+			return { error: (rc === 3) ? 'already running' : (out || 'not started') };
 		}
 	},
 
@@ -264,18 +254,14 @@ const methods = {
 		call: function() {
 			const st = read_json(STATE);
 
-			// Kill the whole process group, not just the wrapper shell:
-			// librespeed-cli and the sampler must die with it, or a "stopped"
-			// answer would leave the measurement running on inherited fds.
-			// busybox kill takes the negative pgid without `--`.
-			if (is_running() && st?.pid) {
-				const pg = pgid_of(int(st.pid));
+			// The run's trap ends librespeed-cli and the sampler with it.
+			// Only a librespeed-run is signalled, not whatever holds the pid
+			// of a stale record.
+			const pid = int(st?.pid ?? 0);
+			const cmd = (pid > 1) ? (readfile(`/proc/${pid}/cmdline`) ?? '') : '';
 
-				if (pg > 0)
-					system(`kill -TERM -${pg} 2>/dev/null`);
-				else
-					system(`kill -TERM ${int(st.pid)} 2>/dev/null`);
-			}
+			if (is_running() && index(cmd, 'librespeed-run') >= 0)
+				system(`kill -TERM ${pid} 2>/dev/null`);
 
 			return { stopped: true };
 		}

@@ -2,13 +2,14 @@
 #
 # Runs one LibreSpeed measurement and records the result.
 #
-# The only thing that starts a measurement: LuCI reaches it through rpcd, the
-# scheduler calls it directly. Holding the lock for the whole run means a second
-# invocation from either side waits instead of measuring against the first.
+# The only thing that starts a measurement: LuCI reaches it through rpcd as
+# --start, the scheduler calls it directly. Holding the lock for the whole run
+# means a second invocation never measures against the first. The scheduler
+# waits for it, and --start refuses at once.
 
 # Packaging checks probe every executable for these; a runner that ignored
 # them would start a measurement instead of answering.
-links=""
+links="" start="" child=""
 case "$1" in
 --version)
 	echo "librespeed-common %%VERSION%%"
@@ -16,7 +17,7 @@ case "$1" in
 	;;
 --help|-h)
 	cat <<'EOF'
-Usage: librespeed-run [INTERFACE]
+Usage: librespeed-run [--start] [INTERFACE]
 Runs one LibreSpeed measurement according to /etc/config/librespeed and
 records the result for the ubus interface. Started by LuCI or cron.
 INTERFACE is a logical interface (default: librespeed.main.interface).
@@ -24,10 +25,23 @@ It is measured bound to the device of its link and recorded under the
 link (wan6 beside wan counts as wan). It is not measured, and that is
 recorded as its failure, when its link is down, netifd does not know it
 or netifd does not answer.
+--start  measure in the background and return once the run holds the
+         lock and state.json names it, or refuse at once with "already
+         running" (exit 3). ubus start runs this.
 --links  print each interface's link, the links to offer and the
          interfaces whose link is down, as JSON
 EOF
 	exit 0
+	;;
+--start)
+	start=1
+	shift
+	;;
+--child)
+	# Internal: the background run of --start. It takes the lock itself and
+	# reports "ready" or "busy" on its stdout.
+	child=1
+	shift
 	;;
 --links)
 	[ $# -eq 1 ] || { echo "Usage: librespeed-run --links" >&2; exit 2; }
@@ -38,12 +52,31 @@ esac
 
 # The name reaches jsonfilter expressions and the crontab: UCI's alphabet only.
 usage() {
-	echo "Usage: librespeed-run [INTERFACE]" >&2
+	echo "Usage: librespeed-run [--start] [INTERFACE]" >&2
 	exit 2
 }
 [ $# -le 1 ] || usage
 case "$1" in *[!A-Za-z0-9_]*) usage ;; esac
 want=$1
+
+# ubus start answers once the run holds the lock and has named itself in
+# state.json, so status says running right after it and a second start is
+# refused. The run reports on the pipe read here, and one that dies before
+# it is ready closes the pipe without a word.
+if [ -n "$start" ]; then
+	# Descriptors 3 to 8 that rpcd left open are not handed on.
+	exec 3>&- 4>&- 5>&- 6>&- 7>&- 8>&-
+	detach=""
+	command -v setsid >/dev/null && detach=setsid
+	ready=$($detach "$0" --child ${want:+"$want"} </dev/null 2>/dev/null &)
+	case "$ready" in
+	*ready) exit 0 ;;
+	*busy) echo "already running"; exit 3 ;;
+	esac
+	logger -t librespeed "measurement of ${want:-the default interface} did not start"
+	echo "the measurement did not start"
+	exit 1
+fi
 
 . /lib/functions.sh
 . /usr/share/libubox/jshn.sh
@@ -259,6 +292,9 @@ fi
 # (BusyBox flock has no -w) and writes nothing meanwhile, then gives up
 # (exit 3) and records that as its interface's failure.
 exec 9>"$LOCK"
+if [ -n "$child" ]; then
+	flock -n 9 || { echo busy; exit 3; }
+fi
 tries=0
 until flock -n 9; do
 	if [ "$tries" = 0 ]; then
@@ -281,17 +317,44 @@ until flock -n 9; do
 	sleep 5
 done
 
+# A stop signals the run alone. Its trap ends the client and the helpers,
+# which run in the background so that the trap fires at once, and records
+# that the run was stopped rather than that the measurement failed.
+cli_pid="" reader_pid="" sampler_pid=""
+# All children, read from /proc, so that one forked an instant before its
+# pid was kept is ended too. The subshell reading them is left out.
+children() {
+	local stat l me
+	read -r me < /proc/self/stat
+	me=${me%% *}
+	for stat in /proc/[0-9]*/stat; do
+		{ read -r l < "$stat"; } 2>/dev/null || continue
+		set -- ${l##*)}
+		stat=${stat%/stat}
+		stat=${stat#/proc/}
+		[ "$2" = "$$" ] && [ "$stat" != "$me" ] && echo "$stat"
+	done
+}
+stop_run() {
+	kill $(children) 2>/dev/null
+	set -- $cli_pid $reader_pid $sampler_pid
+	[ $# = 0 ] || wait "$@" 2>/dev/null
+	rm -f "$STATE_DIR/stream" "$STATE_DIR/report.json" "$STATE_DIR/reports.json"
+	write_state 0 "" "" "$(date +%s)" "stopped"
+	exit 1
+}
+trap stop_run TERM INT HUP
+
 # From here status reads state.json as this run's: clear the last interface.
 state_iface="" for_iface=""
 started=$(date +%s)
 write_state 1 $$ "$started"
 
-# stop kills our whole process group, so librespeed-cli dies with us; ash runs
-# this trap once the foreground child has exited, and it records that the run
-# was stopped rather than pretending the measurement failed.
-sampler_pid=
-trap '[ -n "$sampler_pid" ] && kill "$sampler_pid" 2>/dev/null
-	write_state 0 "" "" "$(date +%s)" "stopped"; exit 1' TERM
+# --start may answer now.
+if [ -n "$child" ]; then
+	echo ready
+	exec >/dev/null
+fi
 
 config_load librespeed
 config_get iface main interface wan
@@ -308,7 +371,7 @@ config_get hist_retention history retention 30d
 # a guess. Failures go under the name asked for, once bound under its link.
 for_iface=$iface
 case "$for_iface" in *[!A-Za-z0-9_]*) for_iface="" ;; esac
-ifdump=$(ubus call network.interface dump 2>/dev/null)
+ifdump=$(ubus -t 5 call network.interface dump 2>/dev/null)
 [ -n "$ifdump" ] || fail "netifd did not answer"
 ifdump_get known "[@.interface='$for_iface'].interface" ||
 	fail "interface disabled or not configured"
@@ -384,11 +447,12 @@ esac
 write_state 1 $$ "$started"
 
 if [ "$stream" = 1 ]; then
-	# The while runs in a subshell, so the reports cannot come back in a
-	# variable; they land in a file instead. State updates are throttled to
+	# The reader runs in the background, so the reports cannot come back in
+	# a variable. They land in a file instead. State updates are throttled to
 	# nothing -- one arrives a second and state.json lives in tmpfs.
-	rm -f "$STATE_DIR/reports.json"
-	"$@" 2>"$STATE_DIR/stderr.log" < /dev/null | while IFS= read -r line; do
+	rm -f "$STATE_DIR/reports.json" "$STATE_DIR/stream"
+	mkfifo "$STATE_DIR/stream" || fail "no pipe for the client's progress"
+	while IFS= read -r line; do
 		case "$line" in
 		*'"event":"result"'*)
 			printf '%s' "$line" | jsonfilter -e '@.reports' \
@@ -405,11 +469,18 @@ if [ "$stream" = 1 ]; then
 				"$(printf '%s' "$line" | jsonfilter -e '@.phase' 2>/dev/null)" ""
 			;;
 		esac
-	done
-	# The pipeline's status is the reader's, so success is judged by what the
-	# stream delivered: a client that failed never emitted a result event.
+	done < "$STATE_DIR/stream" 9>&- &
+	reader_pid=$!
+	"$@" > "$STATE_DIR/stream" 2>"$STATE_DIR/stderr.log" < /dev/null &
+	cli_pid=$!
+	wait "$cli_pid"
+	cli_pid=""
+	wait "$reader_pid"
+	reader_pid=""
+	# Success is judged by what the stream delivered: a client that failed
+	# never emitted a result event.
 	out=$(cat "$STATE_DIR/reports.json" 2>/dev/null)
-	rm -f "$STATE_DIR/reports.json"
+	rm -f "$STATE_DIR/reports.json" "$STATE_DIR/stream"
 	if [ -z "$out" ]; then
 		# tail succeeds on an empty file, so the substitution guards the
 		# value, not the command: an empty log still reports a failure.
@@ -420,13 +491,23 @@ else
 	# Not with fd 9: its last sleep would hold the lock after the run.
 	sampler "$dev" 9>&- &
 	sampler_pid=$!
-	out=$("$@" 2>"$STATE_DIR/stderr.log" < /dev/null); rc=$?
-	[ -n "$sampler_pid" ] && kill "$sampler_pid" 2>/dev/null
+	"$@" > "$STATE_DIR/report.json" 2>"$STATE_DIR/stderr.log" < /dev/null &
+	cli_pid=$!
+	wait "$cli_pid"; rc=$?
+	cli_pid=""
+	kill "$sampler_pid" 2>/dev/null
+	wait "$sampler_pid" 2>/dev/null
+	sampler_pid=""
+	out=$(cat "$STATE_DIR/report.json" 2>/dev/null)
+	rm -f "$STATE_DIR/report.json"
 	if [ "$rc" != 0 ]; then
 		err=$(tail -n 1 "$STATE_DIR/stderr.log" 2>/dev/null)
 		fail "${err:-measurement failed (exit $rc)}"
 	fi
 fi
+
+# The measurement is over: a stop now would only lose its result.
+trap '' TERM INT HUP
 
 finished=$(date +%s)
 
