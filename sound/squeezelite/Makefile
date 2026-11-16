@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=squeezelite
 PKG_VERSION:=2.0.0.1584
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/ralph-irving/squeezelite
@@ -33,11 +33,11 @@ define Package/squeezelite/default
 endef
 
 define Package/squeezelite-full
-    $(call Package/squeezelite/default)
-    TITLE+= (full)
-    VARIANT:=full
-    DEPENDS+= +libfaad2 +libffmpeg-audio-dec +libflac +libmpg123 \
-              +libopenssl +libopusfile +libsoxr +libvorbis
+  $(call Package/squeezelite/default)
+  TITLE+= (full)
+  VARIANT:=full
+  DEPENDS+= +libfaad2 +libffmpeg +libflac +libmpg123 \
+            +libopenssl +libopusfile +libsoxr +libvorbis
   CONFLICTS:=squeezelite-dynamic squeezelite-custom
 endef
 
@@ -62,9 +62,9 @@ define Package/squeezelite-custom
               +SQUEEZELITE_RESAMPLE:libsoxr \
               +SQUEEZELITE_SSL:libopenssl \
               +SQUEEZELITE_VORBIS:libvorbis \
-              +SQUEEZELITE_VORBIS_TREMOR:libvorbisidec \
-              +SQUEEZELITE_WMA_ALAC:libffmpeg-audio-dec
+              +SQUEEZELITE_VORBIS_TREMOR:libvorbisidec
     MENU:=1
+    $(if $(CONFIG_SQUEEZELITE_WMA_ALAC),DEPENDS+=libffmpeg)
 endef
 
 define Package/squeezelite-custom/config
@@ -131,6 +131,7 @@ define Package/squeezelite-custom/config
 
 		config SQUEEZELITE_WMA_ALAC
 		    bool "WMA/ALAC decode support"
+		    select PACKAGE_libffmpeg
 		    help
 			WMA and ALAC codec support
 		    default n
@@ -169,7 +170,7 @@ define Package/squeezelite-dynamic/description
         * FLAC (libflac)
         * Ogg (libvorbis or libvorbisidec)
         * Opus (libopusfile)
-        * WMA and ALAC (libffmpeg-audio-dec)
+        * WMA and ALAC (libffmpeg)
 endef
 
 define Package/squeezelite-custom/description
