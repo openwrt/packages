@@ -56,22 +56,43 @@ test_install() {
 # Names outside UCI's alphabet and extra arguments are refused.
 test_args() {
 	echo "== test_args"
-	expect 2 '^Usage: librespeed-run \[INTERFACE\]$' "librespeed-run accepted 'a;b'" $RUN 'a;b'
-	expect 2 '^Usage: librespeed-run \[INTERFACE\]$' "librespeed-run accepted 'a-b'" $RUN a-b
-	expect 2 '^Usage: librespeed-run \[INTERFACE\]$' "librespeed-run accepted two arguments" $RUN a b
+	expect 2 '^Usage: librespeed-run \[--start\] \[INTERFACE\]$' "librespeed-run accepted 'a;b'" $RUN 'a;b'
+	expect 2 '^Usage: librespeed-run \[--start\] \[INTERFACE\]$' "librespeed-run accepted 'a-b'" $RUN a-b
+	expect 2 '^Usage: librespeed-run \[--start\] \[INTERFACE\]$' "librespeed-run accepted two arguments" $RUN a b
 	expect 2 '^Usage: librespeed-run --links$' "--links accepted an argument" $RUN --links x
+	expect 2 '^Usage: librespeed-run \[--start\] \[INTERFACE\]$' "--start accepted 'a-b'" $RUN --start a-b
+	expect 2 '^Usage: librespeed-run \[--start\] \[INTERFACE\]$' "--child accepted 'a-b'" $RUN --child a-b
 }
 
-# Stubs, first in PATH: ubus prints $WORK_DIR/dump as netifd's dump,
-# start-stop-daemon records launches, and grep marks that the runner's client
-# probe asked the client, holding it while $WORK_DIR/hold exists. The client
-# of a run fails against a closed port.
+# Stubs, first in PATH: ubus prints $WORK_DIR/dump as netifd's dump, once
+# $WORK_DIR/grab is gone with the lock taken, if free, for another run while
+# $WORK_DIR/hold exists. The setsid stub records launches and runs the real
+# one, and the grep stub marks that the runner's client probe asked the
+# client, holding it while $WORK_DIR/hold exists. The client of a run fails
+# against a closed port.
 setup() {
 	mkdir -p "$WORK_DIR/bin" "$WORK_DIR/uci" "$STATE_DIR/failed"
 	cp "$STATE_DIR/state.json" "$WORK_DIR/" 2>/dev/null
-	printf '#!/bin/sh\ncat %s/dump\n' "$WORK_DIR" > "$WORK_DIR/bin/ubus"
-	printf '#!/bin/sh\necho "$*" >> %s/launched\n' "$WORK_DIR" \
-		> "$WORK_DIR/bin/start-stop-daemon"
+	cat > "$WORK_DIR/bin/ubus" <<-EOF
+	#!/bin/sh
+	if [ -e $WORK_DIR/grab ]; then
+		rm -f $WORK_DIR/grab
+		(exec 8>/var/lock/librespeed.lock; flock -n 8 || exit; touch $WORK_DIR/grabbed
+			while [ -e $WORK_DIR/hold ]; do sleep 1; done) </dev/null >/dev/null 2>&1 &
+		wait_grab=0
+		while [ ! -e $WORK_DIR/grabbed ] && [ \$wait_grab -lt 5 ]; do
+			sleep 1
+			wait_grab=\$((wait_grab + 1))
+		done
+	fi
+	cat $WORK_DIR/dump
+	EOF
+	cat > "$WORK_DIR/bin/setsid" <<-EOF
+	#!/bin/sh
+	echo "\$*" >> $WORK_DIR/launched
+	[ ! -e $WORK_DIR/nochild ] || exit 1
+	exec "\$(PATH=\${PATH#*:} command -v setsid)" "\$@"
+	EOF
 	# BusyBox sleep takes whole seconds only.
 	cat > "$WORK_DIR/bin/grep" <<-EOF
 	#!/bin/sh
@@ -83,7 +104,7 @@ setup() {
 	esac
 	PATH=\${PATH#*:} exec grep "\$@"
 	EOF
-	chmod +x "$WORK_DIR/bin/ubus" "$WORK_DIR/bin/start-stop-daemon" "$WORK_DIR/bin/grep"
+	chmod +x "$WORK_DIR/bin/ubus" "$WORK_DIR/bin/setsid" "$WORK_DIR/bin/grep"
 	: > "$WORK_DIR/uci/network"
 	cat > "$WORK_DIR/uci/librespeed" <<-'EOF'
 	config librespeed 'main'
@@ -110,6 +131,13 @@ plant_failure() { # NAME TEXT
 cleanup() {
 	local name
 
+	# A run a failed test left held would write state.json after it is
+	# restored below.
+	if [ -e "$WORK_DIR/hold" ]; then
+		rm -f "$WORK_DIR/hold"
+		call stop > /dev/null
+		wait_unlocked
+	fi
 	uci revert librespeed
 	resync
 	sort -u "$WORK_DIR/planted" 2>/dev/null | while read -r name; do
@@ -263,23 +291,63 @@ call() {
 		printf("%s %J\n", getenv("M"), m[getenv("M")].call({ args: {} }));'
 }
 
-# ubus start refuses at once what a run would refuse, and launches nothing
-# then; links answers an error for a silent netifd, not an empty map. A down
+# wait_unlocked: until no run holds the lock, at most 10 s.
+wait_unlocked() {
+	local waited=0
+
+	until flock -n /var/lock/librespeed.lock true; do
+		[ "$waited" -lt 10 ] || return 1
+		sleep 1
+		waited=$((waited + 1))
+	done
+}
+
+# ubus start refuses at once what a run would refuse and launches nothing then.
+# links answers an error for a silent netifd, not an empty map. A down
 # interface whose link is up starts. Start without an interface runs the
-# default, which the plugin takes from the live config (wan when unset).
+# default, which the plugin takes from the live config (wan when unset), and
+# the run from the private one, a planted name here. A started run, held in
+# its client probe, has the lock and is in state.json when start answers, a
+# second start is refused and stop records it as stopped. A start past the
+# checks while another run holds the lock is refused, and a run that dies
+# before it is ready is reported.
 test_start() {
-	local main
+	local main pid
 
 	echo "== test_start"
 	main=$(uci -q get librespeed.main.interface)
 	[ -n "$main" ] || main=wan
-	fixture "$main:up:dhcp:eth9:eth9:def4"
+	planted lsstart
+	sed -i "s/option interface 'lsdown'/option interface 'lsstart'/" "$WORK_DIR/uci/librespeed"
+	fixture "$main:up:dhcp:eth9:eth9:def4" lsstart:up:dhcp:eth9:eth9
+	touch "$WORK_DIR/hold"
 	expect 0 '"started"' "start did not launch a link netifd lists" call start
-	[ -s "$WORK_DIR/launched" ] || fail "start launched nothing"
+	grep -q -- '--child' "$WORK_DIR/launched" || fail "start did not launch its run"
+	pid=$(jsonfilter -i "$STATE_DIR/state.json" -e @.pid)
+	[ "$(jsonfilter -i "$STATE_DIR/state.json" -e @.running)" = true ] && [ -n "$pid" ] ||
+		fail "start replied before state.json named the run"
+	expect 0 '"already running"' "a start during a run was not refused" call start
+	expect 0 '"stopped"' "stop did not answer" call stop
+	rm -f "$WORK_DIR/hold"
+	wait_unlocked || fail "a stopped run kept the lock"
+	[ "$(jsonfilter -i "$STATE_DIR/state.json" -e @.last_error)" = stopped ] ||
+		fail "a started run, stopped, is not recorded as stopped"
 	rm -f "$WORK_DIR/launched"
+	touch "$WORK_DIR/hold" "$WORK_DIR/grab"
+	expect 0 '"already running"' "a start past the check above was not refused" call start
+	[ -e "$WORK_DIR/grabbed" ] || fail "the lock was not taken during start"
+	[ "$(jsonfilter -i "$STATE_DIR/state.json" -e @.running)" != true ] ||
+		fail "a start refused for the lock left a run"
+	rm -f "$WORK_DIR/hold"
+	wait_unlocked || fail "the lock taken during start was kept"
+	touch "$WORK_DIR/nochild"
+	expect 0 '"the measurement did not start"' "a run that died before it was ready" call start
+	rm -f "$WORK_DIR/nochild" "$WORK_DIR/launched"
+	wait_unlocked || fail "a run that never started kept the lock"
 	fixture "$main:down:dhcp::eth9" "ls${main}6:up:dhcpv6:eth9:eth9"
 	expect 0 '"started"' "start did not launch a down interface whose link is up" call start
 	[ -s "$WORK_DIR/launched" ] || fail "start launched nothing for a link that is up"
+	wait_unlocked || fail "a run kept the lock"
 	rm -f "$WORK_DIR/launched"
 	fixture "ls$main:up:dhcp:eth9:eth9:def4"
 	expect 0 '"interface disabled or not configured"' \
@@ -290,10 +358,12 @@ test_start() {
 	expect 0 '"netifd did not answer"' "start did not refuse while netifd gave no dump" call start
 	[ ! -e "$WORK_DIR/launched" ] || fail "start launched a refused run"
 	expect 0 '"error"' "links read a silent netifd as no links" call links
+	sed -i "s/option interface 'lsstart'/option interface 'lsdown'/" "$WORK_DIR/uci/librespeed"
 }
 
 # A stop is no failure: it records "stopped" and leaves the interface's
-# earlier failure as it was. The run is held in its client probe and stopped.
+# earlier failure as it was. A run started from a shell, as cron starts one,
+# is stopped through ubus while held in its client probe.
 test_stop() {
 	local run_pid waited=0
 
@@ -308,7 +378,7 @@ test_stop() {
 		sleep 1
 		waited=$((waited + 1))
 	done
-	kill -TERM "$run_pid"
+	expect 0 '"stopped"' "stop did not answer" call stop
 	rm -f "$WORK_DIR/hold"
 	wait "$run_pid"
 	[ $? = 1 ] && [ "$(jsonfilter -i "$STATE_DIR/state.json" -e @.last_error)" = stopped ] &&
@@ -333,6 +403,12 @@ test_lock() {
 	planted lsbusy
 	expect 3 '^already running$' "a run that never got the lock" \
 		env PATH="$WORK_DIR/bin:$PATH" UCI_CONFIG_DIR="$WORK_DIR/uci" $RUN lsbusy
+	# --start refuses at once and leaves state.json alone, as does its run.
+	expect 3 '^already running$' "--start while the lock is taken" \
+		env PATH="$WORK_DIR/bin:$PATH" UCI_CONFIG_DIR="$WORK_DIR/uci" $RUN --start lsbusy
+	expect 3 '^busy$' "--child while the lock is taken" \
+		env PATH="$WORK_DIR/bin:$PATH" UCI_CONFIG_DIR="$WORK_DIR/uci" $RUN --child lsbusy
+	rm -f "$WORK_DIR/launched"
 	exec 8>&-
 	rm "$WORK_DIR/bin/sleep"
 	grep -E '^[0-9]+ skipped: ' "$STATE_DIR/failed/lsbusy" || fail "a skipped run left no failure"
