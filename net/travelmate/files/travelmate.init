@@ -31,7 +31,9 @@ boot() {
 
 start_service() {
 	if "${trm_init}" enabled; then
-		if [ "${action}" = "boot" ]; then
+		# no instance on boot (the interface trigger starts it) and none as
+		# long as travelmate is disabled, the triggers stay in place
+		if [ "${action}" = "boot" ] || [ "$(uci_get travelmate global trm_enabled "0")" != "1" ]; then
 			return 0
 		fi
 		mkdir -p "${trm_pidfile%/*}"
@@ -53,8 +55,15 @@ reload_service() {
 	procd_send_signal travelmate travelmate HUP
 }
 
+# the cleanup runs after procd has stopped the daemon (service_stopped),
+# otherwise the daemon could still write its runtime file afterwards;
+# procd removes the pid file with the daemon, so keep the pid for the log
 stop_service() {
-	"${trm_daemon}" stop
+	trm_pid="$(cat "${trm_pidfile}" 2>/dev/null)"
+}
+
+service_stopped() {
+	"${trm_daemon}" stop "${trm_pid}"
 }
 
 status_service() {
@@ -66,14 +75,27 @@ scan() {
 }
 
 setup() {
-	local rc cnt net iface input="${1:-"trm_wwan"}" zone="${2:-"wan"}" metric="${3:-"100"}"
+	local rc cnt net iface laniface reason input="${1:-"trm_wwan"}" zone="${2:-"wan"}" metric="${3:-"100"}"
 
 	input="${input//[!a-zA-Z0-9_]/}"
 	zone="${zone//[!a-zA-Z0-9_]/}"
 	metric="${metric//[!0-9]/}"
 	iface="$(uci_get travelmate global trm_iface)"
 
-	if [ -z "${input}" ] || { [ -n "${iface}" ] && [ "${iface}" = "${input}" ]; }; then
+	# an existing interface is only taken over if it is a dhcp client and not
+	# the lan interface, it ends up in the given firewall zone
+	laniface="$(uci_get travelmate global trm_laniface "lan")"
+	if [ -z "${input}" ]; then
+		reason="no valid interface name"
+	elif [ "${input}" = "${iface}" ]; then
+		reason="it is already the uplink interface"
+	elif [ -n "$(uci_get network ${input})" ] && [ "${input}" = "${laniface}" ]; then
+		reason="it is the lan interface"
+	elif [ -n "$(uci_get network ${input})" ] && [ "$(uci_get network ${input} proto)" != "dhcp" ]; then
+		reason="it is no dhcp client"
+	fi
+	if [ -n "${reason}" ]; then
+		logger -p user.err -t "trm-init" "interface '${input:-"-"}' can't be set up as uplink interface, ${reason}"
 		return 1
 	fi
 

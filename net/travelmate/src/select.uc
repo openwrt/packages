@@ -1,5 +1,5 @@
 // travelmate - uplink selection: walks the configured stations against the
-// ranked scan of one radio, steps (op): log sta keep mismatch add try noscan
+// ranked scan of one radio, steps (op): log sta keep add try noscan
 
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (c) 2016-2026 Dirk Brenken <dev@brenken.org>
@@ -178,6 +178,11 @@ export function plan(opts) {
 			continue;
 		}
 
+		// a station of another radio can't match this scan, don't scan or
+		// walk the results for it
+		if (sradio != radio)
+			continue;
+
 		push(out, { op: 'sta', section: sta.section, radio: sradio, bssid: sbssid, essid: sessid });
 
 		if (cur && radio == cur.radio && sradio == cur.radio &&
@@ -205,11 +210,8 @@ export function plan(opts) {
 			if (e.quality < cfg.minquality)
 				break;
 
-			if (length(sbssid) && radio == sradio && e.bssid != sbssid && named) {
-				push(out, { op: 'mismatch', bssid: e.bssid });
-				continue;
-			}
-
+			// a pinned uplink only matches its own bss, another bss of
+			// the ssid (multi-ap network) is just passed over
 			if (((named && (!length(sbssid) || e.bssid == sbssid)) ||
 			     (e.bssid == sbssid && e.hidden)) && radio == sradio) {
 				if (cfg.eviltwin && !length(sbssid) && !e.hidden && laa(e.bssid)) {

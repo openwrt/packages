@@ -10,7 +10,7 @@ import { connect as ubus_connect } from 'ubus';
 import { RUNDIR, FETCH_TIMEOUT, global as cfg_global, typed, words, fetch_args, capture, have } from 'travelmate.common';
 import { rank as scan_rank, report as scan_report } from 'travelmate.scan';
 import { plan as select_plan, normbssid } from 'travelmate.select';
-import { classify as net_classify, debug as net_debug, hostname, MARKER } from 'travelmate.net';
+import { classify as net_classify, debug as net_debug, hostname, MARKER, BODY_MAX } from 'travelmate.net';
 import { queries as probe_queries, ready as probe_ready } from 'travelmate.probe';
 import { init as check_init, round as check_round } from 'travelmate.check';
 import { sta_info, compose as status_compose } from 'travelmate.status';
@@ -26,6 +26,7 @@ export const FILES = {
 	scanfile: RUNDIR + '/travelmate.scan',
 	rtfile: RUNDIR + '/travelmate.runtime.json',
 	revivefile: RUNDIR + '/travelmate.revive',
+	rebindfile: RUNDIR + '/travelmate.rebind',
 	actionfile: RUNDIR + '/travelmate.action'
 };
 
@@ -46,10 +47,13 @@ export function system_io(log_fn) {
 
 			return conn;
 		},
-		// run directly (no shell), return the exit code
-		exec: (argv) => system(argv),
+		// run directly (no shell), return the exit code; with a timeout in
+		// seconds the command is killed when it is over (negative code)
+		exec: (argv, timeout) => (timeout > 0) ? system(argv, timeout * 1000) : system(argv),
 		capture,
 		sleep: (s) => { if (s > 0) sleep(s * 1000); },
+		// monotonic seconds, for time budgets
+		now: () => clock(true)[0],
 		time: () => {
 			let t = localtime();
 
@@ -65,6 +69,17 @@ export function system_io(log_fn) {
 		}
 	};
 };
+
+// rebind allowlist entries per uplink connection, a portal that answers
+// every probe with a new host name must not fill the dnsmasq config
+const REBIND_MAX = 3;
+
+// messages remembered as 'logged once', they carry ssids and bssids of the
+// surroundings and would pile up on a router that travels
+const NOTED_MAX = 64;
+
+// seconds a captive portal login script may run, the daemon waits for it
+const LOGIN_TIMEOUT = 90;
 
 function dash(v) {
 	return length('' + (v ?? '')) ? '' + v : '-';
@@ -314,11 +329,28 @@ export function create(io, files) {
 		return have_all || io.exec([ 'ubus', '-t', '' + timeout, 'wait_for', ...objs ]) == 0;
 	}
 
-	// the curl status probe of the vpn handling
-	function vpn_net() {
-		let rc = io.capture([ 'curl', ...T.fetch, '--user-agent', cfg('useragent'),
+	// layer 3 device of an interface, '' if unknown
+	function iface_device(iface) {
+		let s = io.ubus()?.call('network.interface.' + iface, 'status');
+
+		return '' + (s?.l3_device ?? s?.device ?? '');
+	}
+
+	// the curl status probe of the vpn handling, bound to the vpn device
+	// instead of the uplink device: the request has to pass the tunnel;
+	// without curl retry where the caller probes in a loop anyway
+	function vpn_net(iface, retry) {
+		let device = iface_device(iface);
+
+		// unbound the request would take the uplink and report a tunnel
+		// that is not there
+		if (!length(device))
+			return 'no device';
+
+		let rc = io.capture([ 'curl', ...fetch_args(T.cfg, device), '--user-agent', cfg('useragent'),
 			'--header', 'Cache-Control: no-cache, no-store, must-revalidate, max-age=0',
-			'--write-out', '%{response_code}', '--output', '/dev/null', cfg('captiveurl') ]).out;
+			...(retry ? [] : [ '--retry', '0' ]),
+			'--write-out', '%{response_code}', '--output', '/dev/null', '--url', cfg('captiveurl') ]).out;
 
 		return (rc == '200' || rc == '204') ? 'net ok' : rc;
 	}
@@ -352,11 +384,13 @@ export function create(io, files) {
 		if (!wait_for(int(maxwait / 6), 'network.interface.' + iface))
 			log('info', sprintf("travelmate vpn interface '%s' does not appear on ubus on ifup event", iface));
 
-		let net_status = '';
+		// a time budget, not a number of rounds: a probe into a dead tunnel
+		// takes its full timeout, an interface that is not up yet a second
+		let net_status = '', start = io.now();
 
-		for (let cnt = 0; ; cnt++) {
+		while (true) {
 			if (iface_up(iface) === true) {
-				net_status = vpn_net();
+				net_status = vpn_net(iface);
 
 				if (net_status == 'net ok') {
 					writefile(files.vpnfile, '');
@@ -366,7 +400,7 @@ export function create(io, files) {
 				}
 			}
 
-			if (cnt >= int(maxwait / 3)) {
+			if (io.now() - start >= maxwait) {
 				if_down(iface);
 				if_remove(iface);
 				unlink(files.vpnfile);
@@ -413,6 +447,17 @@ export function create(io, files) {
 
 			case 'pgm':
 				rc = vpn_program(s.action, s.iface, s.service);
+				break;
+
+			// the tunnel of an established vpn connection: set it up again if
+			// the interface is gone or the probe (with retry) gets no reply
+			case 'check':
+				let state = (iface_up(s.iface) === true) ? vpn_net(s.iface, true) : 'interface down';
+
+				if (state != 'net ok') {
+					log('info', sprintf("%s client connection lost '%s' (rc: %s)", s.service, s.iface, dash(state)));
+					rc = vpn_program('enable', s.iface, s.service);
+				}
 				break;
 			}
 		}
@@ -566,9 +611,16 @@ export function create(io, files) {
 		// a mail header line, no control characters from an ssid
 		topic = replace(topic, /[[:cntrl:]]/g, ' ');
 
-		if (is_file(cfg('mailtemplate'))) {
+		// the template is ucode that runs in the daemon, like the login
+		// scripts it has to be located in /etc/travelmate
+		let template = realpath(cfg('mailtemplate')) ?? '';
+
+		if (is_file(template) && substr(template, 0, 16) != '/etc/travelmate/') {
+			log('info', 'mail template rejected, it has to be located in /etc/travelmate');
+		}
+		else if (is_file(template)) {
 			try {
-				text = render(cfg('mailtemplate'), {
+				text = render(template, {
 					banner: readfile('/etc/banner') ?? '', board,
 					status: getstatus_text(), station_id
 				});
@@ -644,7 +696,7 @@ export function create(io, files) {
 	function net() {
 		let raw = io.capture([ 'curl', ...T.fetch, '--user-agent', cfg('useragent'),
 			'--header', 'Cache-Control: no-cache, no-store, must-revalidate, max-age=0',
-			'--write-out', '\\n' + MARKER + '%{json}', cfg('captiveurl') ]).out;
+			'--max-filesize', '' + BODY_MAX, '--write-out', '\\n' + MARKER + '%{json}', '--url', cfg('captiveurl') ]).out;
 		let r = net_classify(raw, cfg('captiveurl'), cfg('captive'));
 
 		log('debug', sprintf('f_net       ::: timeout: %d, %s', FETCH_TIMEOUT, net_debug(r)));
@@ -652,16 +704,31 @@ export function create(io, files) {
 		return r;
 	}
 
-	// add the captive portal domain to the dnsmasq rebind allowlist
-	function rebind_allow(domain) {
+	// the rebind allowlist entries travelmate added for the current uplink
+	function rebind_read() {
+		let l = null;
+
+		try { l = json(readfile(files.rebindfile) ?? ''); } catch (e) { }
+
+		return (type(l) == 'array') ? filter(l, (d) => type(d) == 'string') : [];
+	}
+
+	function rebind_section() {
 		let sid = null;
 
+		c().foreach('dhcp', 'dnsmasq', (s) => { sid ??= s['.name']; });
+
+		return sid;
+	}
+
+	// add the captive portal domain to the dnsmasq rebind allowlist
+	function rebind_allow(domain) {
 		// only a dns name, an address or a malformed host never goes into
 		// the dnsmasq config
 		if (!hostname(domain))
 			return false;
 
-		c().foreach('dhcp', 'dnsmasq', (s) => { sid ??= s['.name']; });
+		let sid = rebind_section();
 
 		if (sid == null)
 			return false;
@@ -673,16 +740,61 @@ export function create(io, files) {
 		if (domain in l)
 			return false;
 
+		let added = rebind_read();
+
+		if (length(added) >= REBIND_MAX) {
+			log('debug', sprintf("f_rebind    ::: limit of %d rebind allowlist entries reached, domain '%s' skipped", REBIND_MAX, domain));
+			return false;
+		}
+
 		c().set('dhcp', sid, 'rebind_domain', [ ...l, domain ]);
 		c().save('dhcp');
 
 		if (uci_changes('dhcp'))
 			uci_commit('dhcp');
 
+		push(added, domain);
+		writefile(files.rebindfile, sprintf('%J\n', added));
 		io.exec([ '/etc/init.d/dnsmasq', 'reload' ]);
 		log('info', sprintf("captive portal domain '%s' added to dhcp rebind allowlist", domain));
 
 		return true;
+	}
+
+	// remove the entries of the previous uplink, an entry that was already
+	// there before travelmate came along is not tracked and stays
+	function rebind_drop() {
+		let added = rebind_read();
+
+		if (!length(added))
+			return;
+
+		let sid = is_file('/etc/config/dhcp') ? rebind_section() : null;
+
+		if (sid != null) {
+			let l = c().get('dhcp', sid, 'rebind_domain');
+
+			l = (type(l) == 'array') ? l : words(l);
+
+			let keep = filter(l, (d) => !(d in added));
+
+			if (length(keep) != length(l)) {
+				if (length(keep))
+					c().set('dhcp', sid, 'rebind_domain', keep);
+				else
+					c().delete('dhcp', sid, 'rebind_domain');
+
+				c().save('dhcp');
+
+				if (uci_changes('dhcp'))
+					uci_commit('dhcp');
+
+				io.exec([ '/etc/init.d/dnsmasq', 'reload' ]);
+				log('info', sprintf("captive portal domain(s) '%s' removed from dhcp rebind allowlist", join(' ', filter(l, (d) => d in added))));
+			}
+		}
+
+		unlink(files.rebindfile);
 	}
 
 	// login script: '/etc/travelmate/*.uc', executable, credentials as args
@@ -702,9 +814,12 @@ export function create(io, files) {
 		if (!is_file(script) || access(script, 'x') != true)
 			return null;
 
-		let rc = io.exec([ script, ...words(getval('script_args')) ]);
+		let rc = io.exec([ script, ...words(getval('script_args')) ], LOGIN_TIMEOUT);
 
-		log('info', sprintf("captive portal login script for '%s' has been finished with rc '%d'", domain, rc));
+		if (rc == -9)
+			log('info', sprintf("captive portal login script for '%s' has been killed, it ran longer than %d seconds", domain, LOGIN_TIMEOUT));
+		else
+			log('info', sprintf("captive portal login script for '%s' has been finished with rc '%d'", domain, rc));
 
 		return rc;
 	}
@@ -916,6 +1031,19 @@ export function create(io, files) {
 			revive_write(out);
 	}
 
+	// on service stop: the revive entries of uplinks that are still disabled
+	// survive a restart, a manually re-enabled uplink starts over
+	function revive_prune() {
+		let list = revive_read();
+		let out = filter(list, (e) => uplink_option(uplinks(),
+			uplink_ref(uplinks(), e.radio, e.essid, e.bssid), 'enabled') == '0');
+
+		if (!length(out))
+			unlink(files.revivefile);
+		else if (length(out) != length(list))
+			revive_write(out);
+	}
+
 	function revive() {
 		let list = revive_read(), out = [];
 
@@ -1071,6 +1199,8 @@ export function create(io, files) {
 			cur.radio = cur.essid = cur.bssid = '';
 		}
 
+		rebind_drop();
+
 		let maxretry = cfg('maxretry'), retry_display = (maxretry == 0) ? '-' : '' + maxretry;
 		let sta = sprintf('%s/%s/%s', ctx.radio, ctx.essid, dash(ctx.bssid));
 
@@ -1203,8 +1333,12 @@ export function create(io, files) {
 						if (s.once && T.noted[s.msg])
 							log('debug', s.msg);
 						else {
-							if (s.once)
+							if (s.once) {
+								if (length(T.noted) >= NOTED_MAX)
+									T.noted = {};
+
 								T.noted[s.msg] = true;
+							}
 
 							log(s.class, s.msg);
 						}
@@ -1226,16 +1360,6 @@ export function create(io, files) {
 						log('debug', sprintf('f_main-4    ::: config_radio: %s, config_essid: %s, config_bssid: %s',
 							cur.radio, cur.essid, dash(cur.bssid)));
 						return;
-
-					case 'mismatch':
-						if (length(T.uplinkcfg)) {
-							uci_set('travelmate', T.uplinkcfg, 'enabled', '0');
-							uci_commit('travelmate');
-							touch_once(files.refreshfile, 'cfg_reload');
-						}
-
-						log('info', sprintf("bssid mismatch (evil-twin) '%s/%s/%s => %s'", ctx.radio, ctx.essid, ctx.bssid, s.bssid));
-						break;
 
 					case 'add':
 						let section = addsta(s.radio, s.essid);
@@ -1317,6 +1441,14 @@ export function create(io, files) {
 
 		T.fetch = fetch_args(T.cfg, (device != null) ? '' + device : '');
 
+		let url = c().get('travelmate', 'global', 'trm_captiveurl');
+		let msg = sprintf("invalid 'trm_captiveurl', only http(s) urls are supported, using '%s'", cfg('captiveurl'));
+
+		if (url != null && url != cfg('captiveurl') && !T.noted[msg]) {
+			T.noted[msg] = true;
+			log('info', msg);
+		}
+
 		log('debug', sprintf('f_conf      ::: frontend: %s, backend: %s, sys_ver: %s, fetch_parm: %s',
 			T.fver, T.bver, T.sysver, join(' ', T.fetch)));
 
@@ -1336,7 +1468,7 @@ export function create(io, files) {
 			if (!is_file('/etc/config/travelmate'))
 				log('err', 'no travelmate config');
 
-			if (cursor().get('travelmate', 'global', 'trm_enabled') == '0')
+			if (cursor().get('travelmate', 'global', 'trm_enabled') != '1')
 				log('err', 'travelmate is disabled');
 		}
 
@@ -1348,7 +1480,7 @@ export function create(io, files) {
 	}
 
 	return {
-		T, startup, conf, main, getgw, log, genstatus,
+		T, startup, conf, main, getgw, log, genstatus, rebind_drop, revive_prune,
 		scan: (radio) => scan_report(io.ubus()?.call('iwinfo', 'scan', { device: radio })?.results),
 		status_text: getstatus_text
 	};

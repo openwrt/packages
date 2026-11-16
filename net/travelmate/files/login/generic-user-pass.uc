@@ -3,9 +3,9 @@
 // Copyright (c) 2020-2026 Dirk Brenken (dev@brenken.org)
 // This is free software, licensed under the GNU General Public License v3.
 
-import { fetch, lookup } from 'travelmate.login';
+import { fetch, lookup, urlencode } from 'travelmate.login';
 
-let user = ARGV[0] ?? '', password = ARGV[1] ?? '';
+let user = urlencode(ARGV[0] ?? ''), password = urlencode(ARGV[1] ?? '');
 let domain = 'example.com';
 
 if (!lookup(domain))

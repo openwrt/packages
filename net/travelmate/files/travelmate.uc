@@ -5,12 +5,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (c) 2016-2026 Dirk Brenken <dev@brenken.org>
 
-import { readfile, writefile, rename, unlink, open, readlink } from 'fs';
+import { readfile, writefile, rename, unlink, open, readlink, mkdir } from 'fs';
 import { create, system_io, FILES } from 'travelmate.daemon';
+import { RUNDIR } from 'travelmate.common';
 
 function usage() {
 	warn('usage: travelmate run [<action>]\n' +
-		'       travelmate stop\n' +
+		'       travelmate stop [<pid>]\n' +
 		'       travelmate scan <radio|ifname>\n' +
 		'       travelmate status\n');
 	exit(1);
@@ -45,19 +46,36 @@ function make_io() {
 	let io = system_io(log_line);
 
 	if (trace) {
+		// a virtual clock that only the traced sleeps move on
+		let vclock = 0;
+
 		io.sleep = (s) => {
 			let fh = open(trace, 'a');
 
 			fh?.write(sprintf('SLEEP %d\n', s));
 			fh?.close();
+			vclock += s;
 		};
+		io.now = () => vclock;
 		io.time = () => '2026-01-01 00:00:00';
 	}
 
 	return io;
 }
 
-function stop_service() {
+// what a stopped service leaves behind: an empty runtime file tells LuCI
+// that travelmate is not running
+function cleanup(d) {
+	d.rebind_drop();
+	d.revive_prune();
+	writefile(FILES.rtfile, '');
+}
+
+// the daemon stops itself: clean up first, procd kills the init script
+// together with the daemon before it gets to its own cleanup
+function stop_service(d) {
+	cleanup(d);
+	d.log('info', sprintf('travelmate instance stopped ::: action: stop, pid: %d', +readlink('/proc/self')));
 	system([ '/etc/init.d/travelmate', 'stop' ]);
 	exit(0);
 }
@@ -89,7 +107,7 @@ function run(action) {
 	d.startup(length(action) ? action : 'start');
 
 	if (!d.conf())
-		stop_service();
+		stop_service(d);
 
 	if (length(d.T.action)) {
 		d.log('info', sprintf('travelmate instance started ::: action: %s, pid: %d', d.T.action, +readlink('/proc/self')));
@@ -101,24 +119,22 @@ function run(action) {
 		idle(d);
 
 		if (!d.conf())
-			stop_service();
+			stop_service(d);
 
 		d.main();
 	}
 }
 
-function stop() {
+// called by the init script once procd has stopped the daemon, pid: the
+// former daemon pid (procd has removed the pid file by then)
+function stop(pid) {
 	let d = create(make_io());
-	let pid = trim(readfile(FILES.pidfile) ?? '');
 
 	d.startup('stop');
+	cleanup(d);
 
-	if (length(pid)) {
+	if (match(pid ?? '', /^[0-9]+$/))
 		d.log('info', sprintf('travelmate instance stopped ::: action: stop, pid: %s', pid));
-		writefile(FILES.rtfile, '');
-		writefile(FILES.revivefile, '');
-		writefile(FILES.pidfile, '');
-	}
 
 	return 0;
 }
@@ -130,8 +146,13 @@ function scan(radio) {
 	let d = create(make_io());
 	let tmp = FILES.scanfile + '.tmp';
 
-	writefile(tmp, sprintf('%J\n', d.scan(radio)));
-	rename(tmp, FILES.scanfile);
+	// the runtime directory is missing as long as the service never ran
+	mkdir(RUNDIR);
+
+	if (writefile(tmp, sprintf('%J\n', d.scan(radio))) == null || !rename(tmp, FILES.scanfile)) {
+		unlink(tmp);
+		return 1;
+	}
 
 	return 0;
 }
@@ -148,7 +169,7 @@ case 'run':
 	break;
 
 case 'stop':
-	exit(stop());
+	exit(stop(ARGV[1]));
 
 case 'scan':
 	exit(scan(ARGV[1]));

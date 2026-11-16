@@ -6,6 +6,14 @@
 
 export const MARKER = '#trm-meta#';
 
+// the probe reply curl may load at most, in bytes
+export const BODY_MAX = 1048576;
+
+// the part of a long body line that is searched for a redirect, in bytes,
+// and how much of it lies before the hit
+const LINE_MAX = 4096;
+const LINE_LEAD = 256;
+
 // lowercased host, port stripped (the host ends up in the dnsmasq rebind
 // allowlist), an IPv6 literal keeps its brackets
 function host(h) {
@@ -61,13 +69,20 @@ function target_host(t) {
 	return replace(t, /[:\/?#;>"' \t].*$/, '');
 }
 
-// first body line with a redirect, the host of its target
+// first body line with a redirect, the host of its target; of a longer
+// line (minified pages) only the part around the first hit is looked at,
+// ascii() and the regex are too expensive for a line of some 100 KB
 function redirect(lines, needle, re) {
 	for (let l in lines) {
 		l = lc(l);
 
-		if (index(l, needle) < 0)
+		let i = index(l, needle);
+
+		if (i < 0)
 			continue;
+
+		if (length(l) > LINE_MAX)
+			l = substr(l, (i > LINE_LEAD) ? i - LINE_LEAD : 0, LINE_MAX);
 
 		l = ascii(l);
 

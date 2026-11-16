@@ -8,7 +8,7 @@ import { popen, access } from 'fs';
 
 export const RUNDIR = '/var/run/travelmate';
 
-// seconds per curl attempt and between its retries
+// seconds per curl attempt
 export const FETCH_TIMEOUT = 5;
 
 // option: [ type, default, min ]; bool: '1' is on, int: default if not a
@@ -80,14 +80,21 @@ export function global(c) {
 	for (let k, o in OPTIONS)
 		cfg[k] = typed(o[0], g[k], o[1], o[2]);
 
+	// the probe url ends up on the curl command line, http(s) only
+	if (!match(cfg.trm_captiveurl, /^https?:\/\/[^\/ \t]/i))
+		cfg.trm_captiveurl = OPTIONS.trm_captiveurl[1];
+
 	return cfg;
 };
 
-// curl arguments of every fetch, bound to the uplink device if known
+// curl arguments of every fetch, http(s) only (also after a redirect) and
+// bound to the uplink device if known; one
+// retry after a second, a fetch without reply ends after 2 * timeout + 1
+// seconds - the daemon is blocked that long and probes again anyway
 export function fetch_args(cfg, device) {
-	let t = '' + FETCH_TIMEOUT;
 	let args = [ '--silent', '--location', '--fail', '--referer', 'http://www.example.com',
-		'--retry', '2', '--retry-delay', t, '--max-time', t ];
+		'--retry', '1', '--retry-delay', '1', '--max-time', '' + FETCH_TIMEOUT,
+		'--proto', '=http,https', '--proto-redir', '=http,https' ];
 
 	if (length(device ?? ''))
 		push(args, '--interface', device);

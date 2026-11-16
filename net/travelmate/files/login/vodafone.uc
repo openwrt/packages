@@ -3,9 +3,9 @@
 // Copyright (c) 2021-2026 Dirk Brenken (dev@brenken.org)
 // This is free software, licensed under the GNU General Public License v3.
 
-import { fetch, lookup, captiveurl } from 'travelmate.login';
+import { fetch, lookup, urlencode, captiveurl } from 'travelmate.login';
 
-let username = ARGV[0] ?? '', password = ARGV[1] ?? '';
+let username = urlencode(ARGV[0] ?? ''), password = urlencode(ARGV[1] ?? '');
 let domain = 'hotspot.vodafone.de';
 
 if (!lookup(domain))

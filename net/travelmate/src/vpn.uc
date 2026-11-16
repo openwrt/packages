@@ -1,5 +1,5 @@
 // travelmate - vpn handling decisions: plan() returns the steps for an action
-// (op: down, clear, rc, pgm), infolist() the usable vpn interfaces
+// (op: down, clear, rc, pgm, check), infolist() the usable vpn interfaces
 
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (c) 2016-2026 Dirk Brenken <dev@brenken.org>
@@ -52,6 +52,12 @@ export function plan(st, up, is_up) {
 		    (st.ntp && up.vpn && enable && !connected)) {
 			if (st.connection || action == 'disable')
 				push(out, { op: 'pgm', action: up.vpn ? action : 'disable', iface: up.iface, service: up.service });
+		}
+
+		// an established vpn connection of a working uplink is verified
+		// in every run cycle
+		else if (up.vpn && action == 'enable_keep' && connected && st.connection) {
+			push(out, { op: 'check', iface: up.iface, service: up.service });
 		}
 	}
 
