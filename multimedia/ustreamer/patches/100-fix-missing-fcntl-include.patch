@@ -1,0 +1,21 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: John Audia <therealgraysky@proton.me>
+Date: Mon, 16 Nov 2026 20:35:51 +0000
+Subject: [PATCH] ustreamer: stream.c: include fcntl.h
+
+stream.c uses fcntl.h definitions without including the header, which
+breaks the build against musl. Not yet fixed upstream.
+---
+ src/ustreamer/stream.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+--- a/src/ustreamer/stream.c
++++ b/src/ustreamer/stream.c
+@@ -25,6 +25,7 @@
+ #include <stdlib.h>
+ #include <stdatomic.h>
+ #include <limits.h>
++#include <fcntl.h>
+ #include <unistd.h>
+ #include <errno.h>
+ #include <math.h>
