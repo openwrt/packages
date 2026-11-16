@@ -308,7 +308,18 @@ define Package/wwand-mbim/install
 	$(INSTALL_DATA) $(WWAND_UCODE)/atcmd_mbim.uc $(1)$(UCDIR)/
 	$(INSTALL_DATA) $(WWAND_UCODE)/atcmd_mbim_lazy.uc $(1)$(UCDIR)/
 	$(INSTALL_DATA) $(WWAND_UCODE)/codec/mbim.uc $(1)$(UCDIR)/codec/
-	$(INSTALL_DATA) $(WWAND_UCODE)/codec/mbim_schema/*.uc $(1)$(UCDIR)/codec/mbim_schema/
+	# The service schemas by name, like every other module here. They are
+	# loaded by name at run time (wwand.codec.mbim_schema.<service>), so one
+	# missing from this list is an import failure on a live modem — which is
+	# what tools/check-packaging.py in the wwand tree is run against the
+	# release tarball for at every version bump.
+	$(INSTALL_DATA) $(WWAND_UCODE)/codec/mbim_schema/basic_connect.uc $(1)$(UCDIR)/codec/mbim_schema/
+	$(INSTALL_DATA) $(WWAND_UCODE)/codec/mbim_schema/compal.uc $(1)$(UCDIR)/codec/mbim_schema/
+	$(INSTALL_DATA) $(WWAND_UCODE)/codec/mbim_schema/fibocom.uc $(1)$(UCDIR)/codec/mbim_schema/
+	$(INSTALL_DATA) $(WWAND_UCODE)/codec/mbim_schema/ms_basic_connect_ext.uc $(1)$(UCDIR)/codec/mbim_schema/
+	$(INSTALL_DATA) $(WWAND_UCODE)/codec/mbim_schema/ms_voice_ext.uc $(1)$(UCDIR)/codec/mbim_schema/
+	$(INSTALL_DATA) $(WWAND_UCODE)/codec/mbim_schema/qmi_passthrough.uc $(1)$(UCDIR)/codec/mbim_schema/
+	$(INSTALL_DATA) $(WWAND_UCODE)/codec/mbim_schema/quectel.uc $(1)$(UCDIR)/codec/mbim_schema/
 endef
 
 # ---------------------------------------------------------------------------
