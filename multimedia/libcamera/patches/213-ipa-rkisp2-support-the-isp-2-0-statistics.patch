@@ -1,0 +1,242 @@
+From f3c634a93a008add4a6a363b9be0def1d65f0b7a Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 16 Oct 2026 23:59:28 +0100
+Subject: [PATCH] ipa: rkisp2: Support the ISP 2.0 statistics
+
+The ISP 2.0 of the RV1126 reports the statistics a little differently
+from the ISP of the RK3588 that the algorithms were written for.
+
+The raw white balance block has no per-cell counts, so use the means of
+the white balance measurement of the ISP core. Those means are taken
+after the colour gains and are divided by the gains that the frame was
+captured with. The measurement leaves out the pixels that exceed its
+limits, which leaves nothing to average on a blown-out frame and reads as
+saturated in every channel; skip the statistics when less than a sixteenth
+of the window was measured. The hardware reports a full window as a count
+of 2^23.
+
+The big histogram selected bits 9 to 2 of the 12 bit raw data and weighted
+the channels with coefficients that sum to 78, so that values above 1023
+wrapped around and a saturated scene reached bin 106 at most. The
+quantile constraint of the AGC then held the exposure up on over-exposed
+frames. Select bits 11 to 4 and use coefficients that sum to 187, which
+maps a fully saturated pixel to the last bin on the RV1126.
+
+The colour gain registers of the ISP 2.0 are 10 bits wide, with 256 as
+unity, so the largest gain is just under 4. Larger values wrap around
+in the register, which turned a blue gain of 38 into 2 and made the
+white balance chase a measurement that did not follow its own gains.
+Limit the gains to what the registers hold.
+
+Assisted-by: LLM
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ include/linux/media/rockchip/rkisp2-config.h | 39 +++++++++++--
+ src/ipa/rkisp2/algorithms/agc.cpp            |  7 ++-
+ src/ipa/rkisp2/algorithms/awb.cpp            | 59 ++++++++++++++++++--
+ src/ipa/rkisp2/algorithms/awb.h              |  2 +-
+ src/ipa/rkisp2/stats.h                       |  2 +
+ 5 files changed, 96 insertions(+), 13 deletions(-)
+
+--- a/include/linux/media/rockchip/rkisp2-config.h
++++ b/include/linux/media/rockchip/rkisp2-config.h
+@@ -99,6 +99,7 @@ enum rkisp2_isp_histogram_data_sel {
+  * @RKISP2_STATS_BLOCK_HIST_BIG1: Histogram (big 1)
+  * @RKISP2_STATS_BLOCK_HIST_BIG2: Histogram (big 2)
+  * @RKISP2_STATS_BLOCK_AWB: Auto white balance counts
++ * @RKISP2_STATS_BLOCK_AWB_MEAN: Auto white balance means (ISP 2.0)
+  */
+ enum rkisp2_stats_block_type {
+ 	RKISP2_STATS_BLOCK_AE_LITE,
+@@ -107,6 +108,7 @@ enum rkisp2_stats_block_type {
+ 	RKISP2_STATS_BLOCK_HIST_BIG1,
+ 	RKISP2_STATS_BLOCK_HIST_BIG2,
+ 	RKISP2_STATS_BLOCK_AWB,
++	RKISP2_STATS_BLOCK_AWB_MEAN,
+ };
+ 
+ /**
+@@ -172,10 +174,35 @@ struct rkisp2_stats_awb {
+ 	__u8 reserved;
+ };
+ 
+-#define RKISP2_STATS_MAX_SIZE					\
+-	(sizeof(struct rkisp2_stats_ae_lite)			+\
+-	sizeof(struct rkisp2_stats_hist) * 4			+\
+-	sizeof(struct rkisp2_stats_awb))
++/**
++ * struct rkisp2_stats_awb_mean - statistics auto white balance means
++ *
++ * @header: block header (type = RKISP2_STATS_BLOCK_AWB_MEAN)
++ * @count: Number of pixels within the limits of the measurement
++ * @mean_r: Mean red value of those pixels (8 bits)
++ * @mean_g: Mean green value of those pixels (8 bits)
++ * @mean_b: Mean blue value of those pixels (8 bits)
++ * @done: This set to nonzero when the stats are ready
++ *
++ * The ISP 2.0 measures the means of the AWB measurement window, which spans
++ * the 15x15 grid of the sub-windows given by the AWB measurement
++ * configuration, and provides this block in place of the counts. The means
++ * are measured after the white balance gains have been applied.
++ */
++struct rkisp2_stats_awb_mean {
++	struct v4l2_isp_block_header header;
++	__u32 count;
++	__u8 mean_r;
++	__u8 mean_g;
++	__u8 mean_b;
++	__u8 done;
++};
++
++#define RKISP2_STATS_MAX_SIZE                   \
++	(sizeof(struct rkisp2_stats_ae_lite) +  \
++	 sizeof(struct rkisp2_stats_hist) * 4 + \
++	 sizeof(struct rkisp2_stats_awb) +      \
++	 sizeof(struct rkisp2_stats_awb_mean))
+ 
+ /*---------- Parameters ------------*/
+ 
+@@ -615,6 +642,10 @@ struct rkisp2_params_hist_big {
+  * @limits: Limits for white point detection [min, max] (8 bits)
+  * @weights: Weights (6-bits)
+  * @reserved: padding
++ *
++ * The ISP 2.0 measures the means over the grid of sub-windows, keeps the
++ * pixels below the maximum limits of the red, green and blue values and
++ * ignores the weights.
+  */
+ struct rkisp2_params_awb_meas {
+ 	struct v4l2_isp_params_block_header header;
+--- a/src/ipa/rkisp2/algorithms/agc.cpp
++++ b/src/ipa/rkisp2/algorithms/agc.cpp
+@@ -273,13 +273,14 @@ void Agc::prepare(IPAContext &context, [
+ 
+ 	hstConfig->window_num = 0;
+ 	/* \todo choose this based on the bitdepth */
+-	hstConfig->data_sel = RKISP2_ISP_HISTOGRAM_DATA_SEL_9_2;
++	hstConfig->data_sel = RKISP2_ISP_HISTOGRAM_DATA_SEL_11_4;
+ 	hstConfig->mode = RKISP2_ISP_HISTOGRAM_MODE_Y_HISTOGRAM;
+ 	/* waterline means to exclude everything above this value */
+ 	hstConfig->waterline = 0x0;
+ 	hstConfig->stepsize = 0;
+-	hstConfig->coeffs.r = 0x21;
+-	hstConfig->coeffs.g = 0x20;
++	/* The coefficients sum to 187, which maps a saturated pixel to the last bin */
++	hstConfig->coeffs.r = 0x28;
++	hstConfig->coeffs.g = 0x86;
+ 	hstConfig->coeffs.b = 0x0d;
+ 
+ 	hstConfig->meas_window = context.configuration.agc.measureWindow15;
+--- a/src/ipa/rkisp2/algorithms/awb.cpp
++++ b/src/ipa/rkisp2/algorithms/awb.cpp
+@@ -74,6 +74,15 @@ private:
+ 
+ namespace {
+ 
++/* The pixel count of a window in which every pixel qualifies */
++constexpr uint32_t kAwbFullCount = 1 << 23;
++
++/* The colour gain registers are 10 bits wide, larger values wrap around */
++constexpr int kAwbGainMax = 0x3ff;
++
++/* Share of the window below which the means are not representative */
++constexpr uint32_t kAwbMinCountDivisor = 16;
++
+ } /* namespace */
+ 
+ /**
+@@ -136,10 +145,10 @@ void Awb::prepare([[maybe_unused]] IPACo
+ 	RGB<double> gains = frameContext.awb.gains;
+ 
+ 	/* \todo Use quantized class */
+-	gainConfig->gains[0].gb = std::clamp<int>(256 * 1.0, 0, 0x3fff);
+-	gainConfig->gains[0].b = std::clamp<int>(256 * gains.b(), 0, 0x3fff);
+-	gainConfig->gains[0].r = std::clamp<int>(256 * gains.r(), 0, 0x3fff);
+-	gainConfig->gains[0].gr = std::clamp<int>(256 * 1.0, 0, 0x3fff);
++	gainConfig->gains[0].gb = std::clamp<int>(256 * 1.0, 0, kAwbGainMax);
++	gainConfig->gains[0].b = std::clamp<int>(256 * gains.b(), 0, kAwbGainMax);
++	gainConfig->gains[0].r = std::clamp<int>(256 * gains.r(), 0, kAwbGainMax);
++	gainConfig->gains[0].gr = std::clamp<int>(256 * 1.0, 0, kAwbGainMax);
+ 
+ 	auto measConfig = params->block<RkISP2ParamsBlocks::AwbMeas>();
+ 	measConfig.setEnabled(true);
+@@ -173,9 +182,49 @@ void Awb::process([[maybe_unused]] IPACo
+ 			 frameContext.lux.lux, metadata);
+ }
+ 
+-RkISP2AwbStats Awb::calculateRgbMeans([[maybe_unused]] const IPAFrameContext &frameContext,
++RkISP2AwbStats Awb::calculateRgbMeans(const IPAFrameContext &frameContext,
+ 				      const RkISP2Stats *stats) const
+ {
++	/*
++	 * The ISP 2.0 provides the means of the window instead of the counts.
++	 * It measures them after applying the colour gains, divide by the
++	 * gains that were used to get the raw means from the sensor.
++	 */
++	auto awbMean = stats->block<RkISP2StatsBlocks::AwbMean>();
++	if (awbMean) {
++		if (!awbMean->done) {
++			LOG(RkISP2Awb, Error) << "No awb stats";
++			return {};
++		}
++
++		/*
++		 * Pixels outside the measurement limits do not count, which
++		 * leaves nothing to average on a blown-out frame.
++		 */
++		if (awbMean->count < kAwbFullCount / kAwbMinCountDivisor) {
++			LOG(RkISP2Awb, Debug) << "Too few pixels measured, ignoring stats";
++			return {};
++		}
++
++		/*
++		 * The gains are only known for frames that went through
++		 * prepare(); the statistics of any other frame can't be used.
++		 */
++		if (frameContext.awb.gains.r() == 0.0 ||
++		    frameContext.awb.gains.g() == 0.0 ||
++		    frameContext.awb.gains.b() == 0.0) {
++			LOG(RkISP2Awb, Debug) << "No gains for the frame, ignoring stats";
++			return {};
++		}
++
++		RGB<double> means{ { awbMean->mean_r * 1.0,
++				     awbMean->mean_g * 1.0,
++				     awbMean->mean_b * 1.0 } };
++		means /= frameContext.awb.gains;
++
++		return RkISP2AwbStats(means);
++	}
++
+ 	auto awb = stats->block<RkISP2StatsBlocks::Awb>();
+ 	if (!awb)
+ 		return {};
+--- a/src/ipa/rkisp2/algorithms/awb.h
++++ b/src/ipa/rkisp2/algorithms/awb.h
+@@ -49,7 +49,7 @@ private:
+ 	RkISP2AwbStats calculateRgbMeans(const IPAFrameContext &frameContext,
+ 					 const RkISP2Stats *stats) const;
+ 
+-	AwbAlgorithm<UQ<6, 8>> awbAlgo_;
++	AwbAlgorithm<UQ<2, 8>> awbAlgo_;
+ };
+ 
+ } /* namespace ipa::rkisp2::algorithms */
+--- a/src/ipa/rkisp2/stats.h
++++ b/src/ipa/rkisp2/stats.h
+@@ -25,6 +25,7 @@ enum class RkISP2StatsBlocks : uint16_t
+ 	HistBig1,
+ 	HistBig2,
+ 	Awb,
++	AwbMean,
+ };
+ 
+ template<RkISP2StatsBlocks B>
+@@ -45,6 +46,7 @@ RKISP2_DEFINE_STATS_BLOCK_TYPE(HistBig0,
+ RKISP2_DEFINE_STATS_BLOCK_TYPE(HistBig1,	hist,		HIST_BIG1);
+ RKISP2_DEFINE_STATS_BLOCK_TYPE(HistBig2,	hist,		HIST_BIG2);
+ RKISP2_DEFINE_STATS_BLOCK_TYPE(Awb,		awb,		AWB);
++RKISP2_DEFINE_STATS_BLOCK_TYPE(AwbMean,		awb_mean,	AWB_MEAN);
+ 
+ struct stats_traits {
+ 	using id_type = RkISP2StatsBlocks;

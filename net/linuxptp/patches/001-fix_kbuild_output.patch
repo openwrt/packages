@@ -1,0 +1,11 @@
+--- a/incdefs.sh
++++ b/incdefs.sh
+@@ -152,7 +152,7 @@ user_flags()
+ kernel_flags()
+ {
+ 	prefix=""
+-	tstamp=/usr/include/linux/net_tstamp.h
++	tstamp=/include/uapi/linux/net_tstamp.h
+ 	ptp_clock=/usr/include/linux/ptp_clock.h
+ 	if_team=/usr/include/linux/if_team.h
+ 

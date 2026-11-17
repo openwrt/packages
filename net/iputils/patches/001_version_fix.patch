@@ -1,0 +1,24 @@
+Description: set a static version string rather than discern it from git
+--- a/meson.build
++++ b/meson.build
+@@ -20,6 +20,7 @@ add_project_arguments(
+ 
+ conf = configuration_data()
+ conf.set_quoted('PACKAGE_NAME', meson.project_name())
++conf.set('VCS_TAG', meson.project_version())
+ 
+ build_arping = get_option('BUILD_ARPING')
+ build_clockdiff = get_option('BUILD_CLOCKDIFF')
+@@ -149,10 +150,10 @@ foreach h : [
+ 	endif
+ endforeach
+ 
+-git_version_h = vcs_tag(
++git_version_h = configure_file(
+ 	input : 'git-version.h.meson',
+ 	output : 'git-version.h',
+-	fallback : meson.project_version()
++	configuration: conf
+ )
+ 
+ config_h = configure_file(

@@ -1,0 +1,65 @@
+From ff41950e17c4af14369be82f64197f138977b4ac Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 28 Aug 2026 08:40:38 +0100
+Subject: [PATCH 1/2] mbedtls: Guard the CTR-DRBG against use before it is seeded
+Message-ID: <apE7dljmkHRzSCXq@makrotopia.org>
+To: libssh@libssh.org
+Cc: John Crispin <john@phrozen.org>
+
+When ssh_crypto_init() cannot seed the CTR-DRBG, typically because no
+entropy source is available, it frees the DRBG context and reports
+failure. The automatic constructor initialisation has no way to hand
+that failure to the application, so the library remains loaded with a
+zeroed DRBG context, and the first ssh_get_random() call runs
+mbedtls_ctr_drbg_random() on that zeroed context and crashes inside
+mbedtls (SIGSEGV or SIGBUS, depending on the platform). The same holds
+for any RNG use after ssh_finalize().
+
+Make ssh_mbedtls_initialized() available with mbedtls 3.x as well and
+check it in ssh_mbedtls_random() before touching the DRBG, returning
+failure exactly as the PSA (mbedtls 4.x) implementation already does.
+The callers of ssh_get_random() all handle a failure return.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ include/libssh/libmbedcrypto.h | 1 +
+ src/getrandom_mbedcrypto.c     | 3 +++
+ src/libmbedcrypto.c            | 5 +++++
+ 3 files changed, 9 insertions(+)
+
+--- a/include/libssh/libmbedcrypto.h
++++ b/include/libssh/libmbedcrypto.h
+@@ -135,6 +135,7 @@ int ssh_mbedcry_hex2bn(bignum *dest, cha
+ 
+ mbedtls_ctr_drbg_context *ssh_get_mbedtls_ctr_drbg_context(void);
+ 
++int ssh_mbedtls_initialized(void);
+ int ssh_mbedtls_random(void *where, int len, int strong);
+ 
+ ssh_string make_ecpoint_string(const mbedtls_ecp_group *g, const
+--- a/src/getrandom_mbedcrypto.c
++++ b/src/getrandom_mbedcrypto.c
+@@ -32,6 +32,9 @@ int
+ ssh_mbedtls_random(void *where, int len, int strong)
+ {
+     int rc = 0;
++    if (!ssh_mbedtls_initialized()) {
++        return 0;
++    }
+     if (strong) {
+         mbedtls_ctr_drbg_set_prediction_resistance(&ssh_mbedtls_ctr_drbg,
+                                                    MBEDTLS_CTR_DRBG_PR_ON);
+--- a/src/libmbedcrypto.c
++++ b/src/libmbedcrypto.c
+@@ -60,6 +60,11 @@ int ssh_kdf(struct ssh_crypto_struct *cr
+                              key_type, output, requested_len);
+ }
+ 
++int ssh_mbedtls_initialized(void)
++{
++    return libmbedcrypto_initialized;
++}
++
+ HMACCTX hmac_init(const void *key, size_t len, enum ssh_hmac_e type)
+ {
+     HMACCTX ctx = NULL;

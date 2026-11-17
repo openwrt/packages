@@ -1,0 +1,80 @@
+From 111206169bdcb88a0a44d4d6ba32895779fd8938 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Wed, 4 Nov 2026 12:22:07 +0000
+Subject: [PATCH] include: linux: rkisp2-config.h: Add the CPROC block
+
+Sync the header copy with the kernel's colour processing block and the
+corrected description of the gamma out samples.
+
+Assisted-by: LLM
+---
+ include/linux/media/rockchip/rkisp2-config.h | 37 +++++++++++++++++++-
+ 1 file changed, 36 insertions(+), 1 deletion(-)
+
+--- a/include/linux/media/rockchip/rkisp2-config.h
++++ b/include/linux/media/rockchip/rkisp2-config.h
+@@ -226,6 +226,7 @@ struct rkisp2_stats_awb_mean {
+  * @RKISP2_PARAMS_BLOCK_HIST_BIG2: Histogram measurement config (second big block)
+  * @RKISP2_PARAMS_BLOCK_AWB_MEAS: AWB measurements config
+  * @RKISP2_PARAMS_BLOCK_DPCC: Defect pixel cluster correction config
++ * @RKISP2_PARAMS_BLOCK_CPROC: Color processing config
+  */
+ enum rkisp2_params_block_type {
+ 	RKISP2_PARAMS_BLOCK_BLS,
+@@ -242,6 +243,7 @@ enum rkisp2_params_block_type {
+ 	RKISP2_PARAMS_BLOCK_HIST_BIG2,
+ 	RKISP2_PARAMS_BLOCK_AWB_MEAS,
+ 	RKISP2_PARAMS_BLOCK_DPCC,
++	RKISP2_PARAMS_BLOCK_CPROC,
+ };
+ 
+ /* DPCC: three method sets, each with a green and a red/blue variant */
+@@ -771,6 +773,38 @@ struct rkisp2_params_dpcc {
+ 	__u32 reserved;
+ } __attribute__((aligned(8)));
+ 
++/**
++ * struct rkisp2_params_cproc - RkISP2 params color processing config
++ *
++ * RkISP2 parameters color processing configuration block, the brightness,
++ * contrast, saturation and hue adjustment of the YUV output.
++ * Identified by :c:type:`RKISP2_PARAMS_BLOCK_CPROC`.
++ *
++ * @header: The RkISP2 parameters block header
++ * @c_out_range: Chrominance pixel clipping range at output (0 for limited,
++ *		 1 for full)
++ * @y_in_range: Luminance pixel clipping range at input (0 for limited, 1 for
++ *		full)
++ * @y_out_range: Luminance pixel clipping range at output (0 for limited, 1
++ *		 for full)
++ * @contrast: 00~ff, 0.0~1.992
++ * @brightness: 80~7f, -128~+127
++ * @sat: saturation, 00~ff, 0.0~1.992
++ * @hue: 80~7f, -90~+87.188
++ * @reserved: padding
++ */
++struct rkisp2_params_cproc {
++	struct v4l2_isp_params_block_header header;
++	__u8 c_out_range;
++	__u8 y_in_range;
++	__u8 y_out_range;
++	__u8 contrast;
++	__u8 brightness;
++	__u8 sat;
++	__u8 hue;
++	__u8 reserved;
++} __attribute__((aligned(8)));
++
+ #define RKISP2_PARAMS_MAX_SIZE                                                 \
+ 	(sizeof(struct rkisp2_params_bls) +                                    \
+ 	 sizeof(struct rkisp2_params_awb_gains) +                              \
+@@ -781,7 +815,8 @@ struct rkisp2_params_dpcc {
+ 	 sizeof(struct rkisp2_params_hist_lite) +                              \
+ 	 sizeof(struct rkisp2_params_hist_big) * 3 +                           \
+ 	 sizeof(struct rkisp2_params_awb_meas) +                               \
+-	 sizeof(struct rkisp2_params_dpcc))
++	 sizeof(struct rkisp2_params_dpcc) +                                   \
++	 sizeof(struct rkisp2_params_cproc))
+ 
+ /*---------- ISPP (image post-processing) ------------*/
+ 

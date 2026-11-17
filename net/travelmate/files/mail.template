@@ -1,0 +1,40 @@
+{%-
+	// travelmate mail template (ucode), variables: banner, board (ubus system
+	// board), status (as 'travelmate status'), station_id; html() escapes them
+
+	function html(s) {
+		return replace('' + (s ?? ''), /[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+	}
+
+	let info = [];
+
+	for (let l in split(banner ?? '', '\n'))
+		if (length(trim(l)) >= 4)
+			push(info, rtrim(l));
+
+	for (let k in [ 'kernel', 'hostname', 'system', 'model' ])
+		if (board?.[k] != null)
+			push(info, sprintf('  + %-12s: %s', k, board[k]));
+
+	if (board?.release?.description != null)
+		push(info, sprintf('  + %-12s: %s', 'description', board.release.description));
+-%}
+<html><body><pre style='font-family:monospace;padding:20;background-color:#f3eee5;white-space:pre-wrap;overflow-x:auto;' >
+<strong>++
+++ System Information ++
+++</strong>
+{{ html(length(info) ? join('\n', info) : '-') }}
+
+<strong>++
+++ Travelmate Status ++
+++</strong>
+{{ html(rtrim(status ?? '') || '-') }}
+{%- if (length(station_id ?? '')): %}
+
+
+<strong>++
+++ Connection Status ++
+++</strong>
+travelmate connection to {{ html(station_id) }}
+{%- endif %}
+</pre></body></html>

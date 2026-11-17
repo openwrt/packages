@@ -1,0 +1,177 @@
+From d04a7b4229d36cbdee2f2d8dfd315e8cf412f261 Mon Sep 17 00:00:00 2001
+From: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Date: Mon, 20 Jul 2026 10:56:05 +0200
+Subject: [PATCH] ipa: libipa: lsc: Quantize gains in IPA
+
+The libIPA Lsc algorithm currently assumes the register format of
+the RkISP1 platform (16 bits UQ2.10 format), as that's where the
+implementation has been derived from.
+
+Make lsc::Components use floats as the default exchange type between the
+LscAlgorithm and the IPA module and move the gains quantization to the
+plaltform IPA module.
+
+Signed-off-by: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Reviewed-by: Kieran Bingham <kieran.bingham@ideasonboard.com>
+Reviewed-by: Stefan Klug <stefan.klug@ideasonboard.com>
+---
+ src/ipa/libipa/lsc_base.h         |  2 +-
+ src/ipa/libipa/lsc_polynomial.cpp | 17 +++++------------
+ src/ipa/libipa/lsc_polynomial.h   |  8 ++++----
+ src/ipa/libipa/lsc_table.cpp      | 22 ++++++++++++++++------
+ src/ipa/libipa/lsc_table.h        |  2 +-
+ src/ipa/rkisp1/algorithms/lsc.cpp | 23 +++++++++++++++--------
+ 6 files changed, 42 insertions(+), 32 deletions(-)
+
+--- a/src/ipa/libipa/lsc_base.h
++++ b/src/ipa/libipa/lsc_base.h
+@@ -26,7 +26,7 @@ namespace ipa {
+ 
+ namespace lsc {
+ 
+-using Components = std::map<std::string, std::vector<uint16_t>, std::less<>>;
++using Components = std::map<std::string, std::vector<float>, std::less<>>;
+ using ComponentsMap = std::map<unsigned int, Components>;
+ 
+ } /* namespace lsc */
+--- a/src/ipa/libipa/lsc_polynomial.cpp
++++ b/src/ipa/libipa/lsc_polynomial.cpp
+@@ -212,7 +212,7 @@ LscPolynomial::sampleForCrop(const Recta
+ 	return components;
+ }
+ 
+-std::vector<uint16_t>
++std::vector<float>
+ LscPolynomial::samplePolynomial(const lsc::Polynomial &poly,
+ 				Span<const double> xPositions,
+ 				Span<const double> yPositions,
+@@ -223,7 +223,7 @@ LscPolynomial::samplePolynomial(const ls
+ 	double y0 = cropRectangle.y / m;
+ 	double w = cropRectangle.width / m;
+ 	double h = cropRectangle.height / m;
+-	std::vector<uint16_t> samples;
++	std::vector<float> samples;
+ 
+ 	samples.reserve(xPositions.size() * yPositions.size());
+ 
+@@ -231,16 +231,9 @@ LscPolynomial::samplePolynomial(const ls
+ 		for (double x : xPositions) {
+ 			double xp = x0 + x * w;
+ 			double yp = y0 + y * h;
+-			/*
+-			 * The hardware uses 2.10 fixed point format and limits
+-			 * the legal values to [1..3.999]. Scale and clamp the
+-			 * sampled value accordingly.
+-			 */
+-			int v = static_cast<int>(
+-				poly.sampleAtNormalizedPixelPos(xp, yp) *
+-				1024);
+-			v = std::clamp(v, 1024, 4095);
+-			samples.push_back(v);
++
++			samples.push_back(static_cast<float>
++					 (poly.sampleAtNormalizedPixelPos(xp, yp)));
+ 		}
+ 	}
+ 	return samples;
+--- a/src/ipa/libipa/lsc_polynomial.h
++++ b/src/ipa/libipa/lsc_polynomial.h
+@@ -65,10 +65,10 @@ public:
+ 		      std::vector<double> xPos, std::vector<double> yPos) override;
+ 
+ private:
+-	std::vector<uint16_t> samplePolynomial(const lsc::Polynomial &poly,
+-					       Span<const double> xPositions,
+-					       Span<const double> yPositions,
+-					       const Rectangle &cropRectangle);
++	std::vector<float> samplePolynomial(const lsc::Polynomial &poly,
++					    Span<const double> xPositions,
++					    Span<const double> yPositions,
++					    const Rectangle &cropRectangle);
+ 	PolynomialComponentsMap lscData_;
+ };
+ 
+--- a/src/ipa/libipa/lsc_table.cpp
++++ b/src/ipa/libipa/lsc_table.cpp
+@@ -30,6 +30,11 @@ namespace ipa {
+  *
+  * Parse the LSC data in tabular form from the \a sets tuning data.
+  *
++ * \todo Currently the gain values parsed from tuning file are expressed in the
++ * platform fixed-point register format. Use gains in floating point
++ * representation for tabular LSC data in order to facilitate re-use of LSC
++ * tuning data across different platforms.
++ *
+  * \return 0 on success or a negative error number otherwise
+  */
+ int LscTable::parseLscData(const ValueNode &sets,
+@@ -82,15 +87,20 @@ int LscTable::parseLscComponent(const Va
+ 	return 0;
+ }
+ 
+-std::vector<uint16_t> LscTable::parseTable(const ValueNode &tuningData,
+-					   const char *prop,
+-					   unsigned int numHSamples,
+-					   unsigned int numVSamples)
++std::vector<float> LscTable::parseTable(const ValueNode &tuningData,
++					const char *prop,
++					unsigned int numHSamples,
++					unsigned int numVSamples)
+ {
+ 	unsigned int lscNumSamples = numHSamples * numVSamples;
+ 
+-	std::vector<uint16_t> table =
+-		tuningData[prop].get<std::vector<uint16_t>>().value_or(utils::defopt);
++	/*
++	 * Cast to float even if gains are expressed as fixed-point
++	 * representations. This prepares to express gains in floating point
++	 * formats in tuning files.
++	 */
++	std::vector<float> table =
++		tuningData[prop].get<std::vector<float>>().value_or(utils::defopt);
+ 	if (table.size() != lscNumSamples) {
+ 		LOG(LscTable, Error)
+ 			<< "Invalid '" << prop << "' values: expected "
+--- a/src/ipa/libipa/lsc_table.h
++++ b/src/ipa/libipa/lsc_table.h
+@@ -42,7 +42,7 @@ public:
+ private:
+ 	int parseLscComponent(const ValueNode &yamlSet,
+ 			      unsigned int ct, const LscDescriptor &descriptor);
+-	std::vector<uint16_t> parseTable(const ValueNode &tuningData,
++	std::vector<float> parseTable(const ValueNode &tuningData,
+ 					 const char *prop,
+ 					 unsigned int numHSamples,
+ 					 unsigned int numVSamples);
+--- a/src/ipa/rkisp1/algorithms/lsc.cpp
++++ b/src/ipa/rkisp1/algorithms/lsc.cpp
+@@ -177,14 +177,21 @@ void LensShadingCorrection::setParameter
+ void LensShadingCorrection::copyTable(rkisp1_cif_isp_lsc_config &config,
+ 				      const lsc::Components &set)
+ {
+-	const auto &r = set.at("r");
+-	std::copy(r.begin(), r.end(), &config.r_data_tbl[0][0]);
+-	const auto &gr = set.at("gr");
+-	std::copy(gr.begin(), gr.end(), &config.gr_data_tbl[0][0]);
+-	const auto &gb = set.at("gb");
+-	std::copy(gb.begin(), gb.end(), &config.gb_data_tbl[0][0]);
+-	const auto &b = set.at("b");
+-	std::copy(b.begin(), b.end(), &config.b_data_tbl[0][0]);
++	/*
++	 * The hardware uses 2.10 fixed point format and limits the legal values
++	 * to [1..3.999]. Scale and clamp the sampled values accordingly.
++	 */
++	const auto quantizeSet = [&](const std::string &key, uint16_t *dst) {
++		const auto &s = set.at(key);
++		std::transform(s.begin(), s.end(), dst, [](float f) {
++				return std::clamp<uint16_t>(f * 1024, 1024, 4095);
++				});
++	};
++
++	quantizeSet("r", &config.r_data_tbl[0][0]);
++	quantizeSet("gr", &config.gr_data_tbl[0][0]);
++	quantizeSet("gb", &config.gb_data_tbl[0][0]);
++	quantizeSet("b", &config.b_data_tbl[0][0]);
+ }
+ 
+ /**

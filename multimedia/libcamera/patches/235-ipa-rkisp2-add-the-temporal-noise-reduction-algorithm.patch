@@ -1,0 +1,941 @@
+From 3b15a0296420c9f815b75e747df38974f7262c05 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Wed, 4 Nov 2026 21:35:53 +0000
+Subject: [PATCH] ipa: rkisp2: Add the temporal noise reduction algorithm
+
+The ISPP TNR filters each frame against its filtered predecessor with a
+noise model calibrated per ISO step, and scales the model block by block
+with the gain map the ISP writes along with the frame.
+
+Add an algorithm that programs the ISP gain map with the analogue gain
+and fills the ISPP TNR block with the calibration interpolated at that
+gain. The conversion follows the Rockchip AIQ MFNR algorithm, including
+its gain state ratio, so that the IQ calibration of a sensor applies as
+is. The TNR block moves out of the static Ispp parameters.
+
+Assisted-by: LLM
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ src/ipa/rkisp2/algorithms/ispp.cpp    |  65 +--
+ src/ipa/rkisp2/algorithms/ispp.h      |   1 -
+ src/ipa/rkisp2/algorithms/meson.build |   1 +
+ src/ipa/rkisp2/algorithms/tnr.cpp     | 662 ++++++++++++++++++++++++++
+ src/ipa/rkisp2/algorithms/tnr.h       | 112 +++++
+ src/ipa/rkisp2/params.h               |   2 +
+ 6 files changed, 783 insertions(+), 60 deletions(-)
+ create mode 100644 src/ipa/rkisp2/algorithms/tnr.cpp
+ create mode 100644 src/ipa/rkisp2/algorithms/tnr.h
+
+--- a/src/ipa/rkisp2/algorithms/ispp.cpp
++++ b/src/ipa/rkisp2/algorithms/ispp.cpp
+@@ -32,12 +32,12 @@ namespace ipa::rkisp2::algorithms {
+  * \class Ispp
+  * \brief RkISPP module parameters from the tuning file
+  *
+- * The ISPP post-processor (temporal noise reduction, noise reduction,
+- * sharpening, FEC lens distortion correction and ORB feature detection)
+- * takes its
+- * parameters through its own params node. This algorithm sends the modules
+- * configured in the tuning file with every frame, each tuning dictionary
+- * filling the fields of the corresponding UAPI block by name:
++ * The ISPP post-processor (noise reduction, sharpening, FEC lens distortion
++ * correction and ORB feature detection) takes its parameters through its own
++ * params node; the temporal noise reduction has an algorithm of its own. This
++ * algorithm sends the modules configured in the tuning file with every frame,
++ * each tuning dictionary filling the fields of the corresponding UAPI block by
++ * name:
+  *
+  * \code{.unparsed}
+  * algorithms:
+@@ -90,53 +90,6 @@ constexpr bool fieldSigned()
+ 	  fieldSize<decltype(type::name)>(),				\
+ 	  fieldSigned<decltype(type::name)>() }
+ 
+-constexpr Field tnrFields[] = {
+-	ISPP_FIELD(rkispp_params_tnr, mode),
+-	ISPP_FIELD(rkispp_params_tnr, opty_en),
+-	ISPP_FIELD(rkispp_params_tnr, optc_en),
+-	ISPP_FIELD(rkispp_params_tnr, gain_en),
+-	ISPP_FIELD(rkispp_params_tnr, pk0_y),
+-	ISPP_FIELD(rkispp_params_tnr, pk1_y),
+-	ISPP_FIELD(rkispp_params_tnr, pk0_c),
+-	ISPP_FIELD(rkispp_params_tnr, pk1_c),
+-	ISPP_FIELD(rkispp_params_tnr, glb_gain_cur_sqrt),
+-	ISPP_FIELD(rkispp_params_tnr, sigma_x),
+-	ISPP_FIELD(rkispp_params_tnr, gfcoef_y0),
+-	ISPP_FIELD(rkispp_params_tnr, gfcoef_y1),
+-	ISPP_FIELD(rkispp_params_tnr, gfcoef_y2),
+-	ISPP_FIELD(rkispp_params_tnr, gfcoef_y3),
+-	ISPP_FIELD(rkispp_params_tnr, gfcoef_yg0),
+-	ISPP_FIELD(rkispp_params_tnr, gfcoef_yg1),
+-	ISPP_FIELD(rkispp_params_tnr, gfcoef_yg2),
+-	ISPP_FIELD(rkispp_params_tnr, gfcoef_yg3),
+-	ISPP_FIELD(rkispp_params_tnr, gfcoef_yl0),
+-	ISPP_FIELD(rkispp_params_tnr, gfcoef_yl1),
+-	ISPP_FIELD(rkispp_params_tnr, gfcoef_yl2),
+-	ISPP_FIELD(rkispp_params_tnr, gfcoef_cg0),
+-	ISPP_FIELD(rkispp_params_tnr, gfcoef_cg1),
+-	ISPP_FIELD(rkispp_params_tnr, gfcoef_cg2),
+-	ISPP_FIELD(rkispp_params_tnr, gfcoef_cl0),
+-	ISPP_FIELD(rkispp_params_tnr, gfcoef_cl1),
+-	ISPP_FIELD(rkispp_params_tnr, weight_y),
+-	ISPP_FIELD(rkispp_params_tnr, glb_gain_cur),
+-	ISPP_FIELD(rkispp_params_tnr, glb_gain_nxt),
+-	ISPP_FIELD(rkispp_params_tnr, glb_gain_cur_div),
+-	ISPP_FIELD(rkispp_params_tnr, txt_th1_y),
+-	ISPP_FIELD(rkispp_params_tnr, txt_th0_c),
+-	ISPP_FIELD(rkispp_params_tnr, txt_th1_c),
+-	ISPP_FIELD(rkispp_params_tnr, txt_thy_dlt),
+-	ISPP_FIELD(rkispp_params_tnr, txt_thc_dlt),
+-	ISPP_FIELD(rkispp_params_tnr, txt_th0_y),
+-	ISPP_FIELD(rkispp_params_tnr, sigma_y),
+-	ISPP_FIELD(rkispp_params_tnr, luma_curve),
+-	ISPP_FIELD(rkispp_params_tnr, scale_yg),
+-	ISPP_FIELD(rkispp_params_tnr, scale_yl),
+-	ISPP_FIELD(rkispp_params_tnr, scale_cg),
+-	ISPP_FIELD(rkispp_params_tnr, scale_y2cg),
+-	ISPP_FIELD(rkispp_params_tnr, scale_cl),
+-	ISPP_FIELD(rkispp_params_tnr, scale_y2cl),
+-};
+-
+ constexpr Field nrFields[] = {
+ 	ISPP_FIELD(rkispp_params_nr, uvnr_step1_en),
+ 	ISPP_FIELD(rkispp_params_nr, uvnr_step2_en),
+@@ -359,10 +312,6 @@ int Ispp::init([[maybe_unused]] IPAConte
+ {
+ 	int ret;
+ 
+-	ret = loadBlock(tuningData, "Tnr", tnrFields, tnr_);
+-	if (ret)
+-		return ret;
+-
+ 	ret = loadBlock(tuningData, "Nr", nrFields, nr_);
+ 	if (ret)
+ 		return ret;
+@@ -388,8 +337,6 @@ void Ispp::prepareIspp([[maybe_unused]]
+ 		       [[maybe_unused]] const uint32_t frame,
+ 		       RkISPPParams *params)
+ {
+-	if (tnr_)
+-		sendBlock(params->block<RkISPPParamsBlocks::Tnr>(), *tnr_);
+ 	if (nr_)
+ 		sendBlock(params->block<RkISPPParamsBlocks::Nr>(), *nr_);
+ 	if (shp_)
+--- a/src/ipa/rkisp2/algorithms/ispp.h
++++ b/src/ipa/rkisp2/algorithms/ispp.h
+@@ -28,7 +28,6 @@ public:
+ 			 RkISPPParams *params) override;
+ 
+ private:
+-	std::optional<struct rkispp_params_tnr> tnr_;
+ 	std::optional<struct rkispp_params_nr> nr_;
+ 	std::optional<struct rkispp_params_shp> shp_;
+ 	std::optional<struct rkispp_params_fec> fec_;
+--- a/src/ipa/rkisp2/algorithms/meson.build
++++ b/src/ipa/rkisp2/algorithms/meson.build
+@@ -12,6 +12,7 @@ rkisp2_ipa_algorithms = files([
+     'goc.cpp',
+     'ispp.cpp',
+     'lsc.cpp',
++    'tnr.cpp',
+     'wdr.cpp',
+ ])
+ 
+--- /dev/null
++++ b/src/ipa/rkisp2/algorithms/tnr.cpp
+@@ -0,0 +1,662 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2026, Daniel Golle
++ *
++ * RkISP2 temporal noise reduction
++ */
++
++#include "tnr.h"
++
++#include <algorithm>
++#include <cmath>
++#include <errno.h>
++#include <limits>
++#include <stddef.h>
++#include <stdint.h>
++#include <string.h>
++
++#include <linux/media/rockchip/rkisp2-config.h>
++#include <linux/media/v4l2-isp.h>
++
++#include <libcamera/base/log.h>
++
++#include "libcamera/internal/value_node.h"
++
++/**
++ * \file tnr.h
++ */
++
++namespace libcamera {
++
++namespace ipa::rkisp2::algorithms {
++
++/**
++ * \class TemporalNoiseReduction
++ * \brief RkISP2 temporal noise reduction of the ISPP
++ *
++ * The ISPP TNR blends each frame with its filtered predecessor, weighting the
++ * blend by a multi-level noise model: a luminance dependent noise sigma curve,
++ * guided filter kernels and scales per pyramid level and direction. The ISP
++ * supplies a gain map with every frame, which the TNR and the NR scale the
++ * model with block by block.
++ *
++ * The model is calibrated per ISO step, ISO 50 being unity gain. For each
++ * frame the algorithm programs the ISP gain map with the analogue gain and
++ * interpolates the calibration at that gain into the ISPP TNR block, following
++ * the Rockchip AIQ MFNR algorithm (select_mfnr_params_by_ISO() and
++ * mfnr_fix_transfer() of camera_engine_rkaiq) so that its IQ calibration can
++ * be used as is. The calibration is converted from an IQ file with
++ * mfnr-iq2yaml.py.
++ *
++ * \code{.unparsed}
++ * algorithms:
++ *   - TemporalNoiseReduction:
++ *       local-gain: true
++ *       sigma-scale: 1.0
++ *       settings:
++ *         - iso: 50
++ *           weight-limit-y: [ 0, 0, 0, 0 ]
++ *           ...
++ * \endcode
++ *
++ * With local-gain the TNR takes the gain of each block from the ISP gain map,
++ * otherwise from the global gain. The sigma-scale multiplies the noise sigma
++ * curve; the AIQ raises it together with its motion detection only.
++ */
++
++LOG_DEFINE_CATEGORY(RkISP2Tnr)
++
++namespace {
++
++constexpr unsigned int kIsoUnity = 50;
++constexpr unsigned int kPolyOrder = 4;
++constexpr unsigned int kCalBits = 12;
++constexpr unsigned int kRange = 1 << kCalBits;
++constexpr unsigned int kProcBits = 8;
++constexpr unsigned int kStep = 1 << (kCalBits - kProcBits);
++constexpr double kSigmaLimit = 1 << 6;
++
++/* fractional bits of the TNR register fields, from the AIQ */
++constexpr int kFracGain = 8;
++constexpr int kFracGainSqrt = 4;
++constexpr int kFracGainSqrtInv = 13;
++constexpr int kFracSigma = 6;
++constexpr int kFracLumaScale = 6;
++constexpr int kFracTxtRatio = 6;
++constexpr int kFracConvWeight = 8;
++constexpr int kFracScaleL = 8;
++constexpr int kFracScaleLUv = 6;
++constexpr int kFracLumaWInChroma = 5;
++
++/* fractional bits of the ISP gain map exposure gains */
++constexpr int kFracMapGain = 6;
++constexpr uint32_t kMapGain0Max = (1u << 18) - 1;
++constexpr uint32_t kMapGain12Max = (1u << 14) - 1;
++
++/*
++ * The gain state of the AIQ ANRGainRatioProcess(): the map and global gains
++ * are scaled by 16 at low gain and by 1/16 at high gain, with hysteresis
++ * between the two thresholds of each switch.
++ */
++constexpr std::array<double, 2> kGainTh0 = { 2.0, 32.0 };
++constexpr std::array<double, 2> kGainTh1 = { 4.0, 64.0 };
++constexpr std::array<double, 3> kGainRatio = { 16.0, 1.0, 1.0 / 16.0 };
++
++long roundD(double x)
++{
++	return static_cast<long>(x + (x > 0 ? 0.5 : -0.5));
++}
++
++long fix(double x, int bits)
++{
++	return roundD(x * (1 << bits));
++}
++
++double lerp(double r, double lo, double hi)
++{
++	return r * (hi - lo) + lo;
++}
++
++double inverse(double v)
++{
++	return v ? 1.0 / v : std::numeric_limits<double>::infinity();
++}
++
++template<size_t N>
++bool readArray(const ValueNode &node, const char *key,
++	       std::array<double, N> &out)
++{
++	std::optional<std::vector<double>> v =
++		node[key].get<std::vector<double>>();
++
++	if (!v || v->size() != N) {
++		LOG(RkISP2Tnr, Error) << key << " needs " << N << " values";
++		return false;
++	}
++
++	std::copy(v->begin(), v->end(), out.begin());
++	return true;
++}
++
++bool readScalar(const ValueNode &node, const char *key, double &out)
++{
++	std::optional<double> v = node[key].get<double>();
++
++	if (!v) {
++		LOG(RkISP2Tnr, Error) << "Invalid " << key;
++		return false;
++	}
++
++	out = *v;
++	return true;
++}
++
++/* The index of the kernel tap (i, j) among the unique taps of a symmetric kernel */
++unsigned int kernelTap(int i, int j, int rad)
++{
++	int ia = i > rad ? 2 * rad - i : i;
++	int ja = j > rad ? 2 * rad - j : j;
++	unsigned int n = 0;
++
++	if (ja < ia)
++		std::swap(ia, ja);
++
++	for (int ii = rad; ii >= 0; ii--) {
++		for (int jj = rad; jj >= ii; jj--) {
++			if (ia == ii && ja == jj)
++				return n;
++			n++;
++		}
++	}
++
++	return 0;
++}
++
++/* Quantise a kernel; the centre tap takes up the rounding so that it sums to one */
++template<size_t N>
++void kernelFix(int rad, const std::array<double, N> &coef, uint8_t *out)
++{
++	double sum = 0.0;
++	long tap;
++
++	for (int i = 0; i < 2 * rad + 1; i++) {
++		for (int j = 0; j < 2 * rad + 1; j++) {
++			unsigned int k = kernelTap(i, j, rad);
++
++			tap = fix(coef[k], kFracConvWeight);
++			out[k] = tap;
++			sum += static_cast<double>(tap) / (1 << kFracConvWeight);
++		}
++	}
++
++	tap = fix(static_cast<double>(out[0]) / (1 << kFracConvWeight) +
++			  (1.0 - sum),
++		  kFracConvWeight);
++	out[0] = tap;
++}
++
++/* The tail of the curve repeats its last position, a 0 field as in the AIQ */
++uint8_t sigmaInterval(unsigned int from, unsigned int to)
++{
++	if (to <= from)
++		return 0;
++	return static_cast<uint8_t>(std::max(std::log2(to - from) - 2, 0.0));
++}
++
++} /* namespace */
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::init
++ */
++int TemporalNoiseReduction::init([[maybe_unused]] IPAContext &context,
++				 const ValueNode &tuningData)
++{
++	localGain_ = tuningData["local-gain"].get<bool>().value_or(true);
++	sigmaScale_ = tuningData["sigma-scale"].get<double>().value_or(1.0);
++
++	if (!tuningData.contains("settings")) {
++		LOG(RkISP2Tnr, Error) << "No settings";
++		return -EINVAL;
++	}
++
++	for (const auto &node : tuningData["settings"].asList()) {
++		std::array<double, 5> curve;
++		bool ok = true;
++		Setting s;
++		double x0;
++
++		ok &= readScalar(node, "iso", s.iso);
++		ok &= readArray(node, "weight-limit-y", s.weightLimitY);
++		ok &= readArray(node, "weight-limit-uv", s.weightLimitUv);
++		ok &= readArray(node, "ratio-frq", s.ratioFrq);
++		ok &= readArray(node, "luma-w-in-chroma", s.lumaWInChroma);
++		ok &= readArray(node, "noise-curve", curve);
++		ok &= readScalar(node, "noise-curve-x00", x0);
++		ok &= readArray(node, "y-lo-noiseprofile", s.noiseProfile[0]);
++		ok &= readArray(node, "y-hi-noiseprofile", s.noiseProfile[1]);
++		ok &= readArray(node, "y-lo-bfscale", s.bfScale[0]);
++		ok &= readArray(node, "y-hi-bfscale", s.bfScale[1]);
++		ok &= readArray(node, "y-lumanrcurve", s.lumaNrCurve);
++		ok &= readScalar(node, "y-denoisestrength", s.denoiseStrength);
++		ok &= readArray(node, "y-lo-lvl0-gfdelta", s.gfDelta0[0]);
++		ok &= readArray(node, "y-hi-lvl0-gfdelta", s.gfDelta0[1]);
++		ok &= readArray(node, "y-lo-lvl1-gfdelta", s.gfDelta[0][0]);
++		ok &= readArray(node, "y-lo-lvl2-gfdelta", s.gfDelta[0][1]);
++		ok &= readArray(node, "y-lo-lvl3-gfdelta", s.gfDelta[0][2]);
++		ok &= readArray(node, "y-hi-lvl1-gfdelta", s.gfDelta[1][0]);
++		ok &= readArray(node, "y-hi-lvl2-gfdelta", s.gfDelta[1][1]);
++		ok &= readArray(node, "uv-lo-noiseprofile", s.noiseProfileUv[0]);
++		ok &= readArray(node, "uv-hi-noiseprofile", s.noiseProfileUv[1]);
++		ok &= readArray(node, "uv-lo-bfscale", s.bfScaleUv[0]);
++		ok &= readArray(node, "uv-hi-bfscale", s.bfScaleUv[1]);
++		ok &= readScalar(node, "uv-denoisestrength", s.denoiseStrengthUv);
++		ok &= readArray(node, "uv-lo-lvl0-gfdelta", s.gfDeltaUv0[0]);
++		ok &= readArray(node, "uv-hi-lvl0-gfdelta", s.gfDeltaUv0[1]);
++		ok &= readArray(node, "uv-lo-lvl1-gfdelta", s.gfDeltaUv[0][0]);
++		ok &= readArray(node, "uv-lo-lvl2-gfdelta", s.gfDeltaUv[0][1]);
++		ok &= readArray(node, "uv-hi-lvl1-gfdelta", s.gfDeltaUv[1][0]);
++		ok &= readArray(node, "lvl0-gfsigma", s.gfSigma0);
++		ok &= readArray(node, "lvl1-gfsigma", s.gfSigma[0]);
++		ok &= readArray(node, "lvl2-gfsigma", s.gfSigma[1]);
++		ok &= readArray(node, "lvl3-gfsigma", s.gfSigma[2]);
++		if (!ok)
++			return -EINVAL;
++
++		/* the high direction of the chroma has two levels */
++		s.gfDeltaUv[1][1] = {};
++
++		/* the noise sigma polynomial, flat beyond its last point */
++		s.noiseCurveX0 = std::min<unsigned int>(x0, kRange - 1);
++		s.noiseSigma.resize(kRange);
++		for (unsigned int j = 0; j < kRange; j++) {
++			double y = curve[kPolyOrder];
++			double xp = 1.0;
++
++			for (unsigned int o = 1; o <= kPolyOrder; o++) {
++				xp *= j;
++				y += xp * curve[kPolyOrder - o];
++			}
++			s.noiseSigma[j] = y;
++		}
++		for (unsigned int j = s.noiseCurveX0 + 1; j < kRange; j++)
++			s.noiseSigma[j] = s.noiseSigma[s.noiseCurveX0];
++
++		if (!settings_.empty() && s.iso <= settings_.back().iso) {
++			LOG(RkISP2Tnr, Error) << "Settings not sorted by iso";
++			return -EINVAL;
++		}
++		settings_.push_back(std::move(s));
++	}
++
++	if (settings_.size() < 2) {
++		LOG(RkISP2Tnr, Error) << "Need two settings at least";
++		return -EINVAL;
++	}
++
++	return 0;
++}
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::configure
++ */
++int TemporalNoiseReduction::configure([[maybe_unused]] IPAContext &context,
++				      [[maybe_unused]] const IPACameraSensorInfo &configInfo)
++{
++	gainStateFull_ = -1;
++	gainState_ = -1;
++	gain_ = 1.0;
++	ratio_ = gainRatio(gain_);
++	tnr_.reset();
++
++	return 0;
++}
++
++double TemporalNoiseReduction::gainRatio(double gain)
++{
++	std::array<double, 2> th;
++	int full, cur = -1;
++
++	for (unsigned int i = 0; i < th.size(); i++)
++		th[i] = std::exp2((std::log2(kGainTh0[i]) +
++				   std::log2(kGainTh1[i])) / 2);
++
++	if (gain <= kGainTh0[0]) {
++		full = 0;
++		cur = 0;
++	} else if (gain <= kGainTh1[0]) {
++		full = 1;
++	} else if (gain <= kGainTh0[1]) {
++		full = 2;
++		cur = 1;
++	} else if (gain <= kGainTh1[1]) {
++		full = 3;
++	} else {
++		full = 4;
++		cur = 2;
++	}
++
++	if (gainState_ < 0 ||
++	    (std::abs(full - gainStateFull_) >= 2 && cur < 0))
++		cur = gain <= th[0] ? 0 : gain <= th[1] ? 1 : 2;
++
++	if (cur >= 0) {
++		gainState_ = cur;
++		gainStateFull_ = full;
++	}
++
++	return kGainRatio[gainState_];
++}
++
++/**
++ * \brief Interpolate the calibration at an ISO
++ * \param[in] iso The ISO, 50 times the gain
++ *
++ * \return The calibration of the AIQ select_mfnr_params_by_ISO()
++ */
++TemporalNoiseReduction::Selection
++TemporalNoiseReduction::select(double iso) const
++{
++	size_t lo = 0, hi = 1;
++	double r = 0.0;
++	Selection s;
++
++	for (size_t i = 0; i + 1 < settings_.size(); i++) {
++		if (iso >= settings_[i].iso && iso <= settings_[i + 1].iso) {
++			lo = i;
++			hi = i + 1;
++			r = (iso - settings_[i].iso) /
++			    (settings_[i + 1].iso - settings_[i].iso);
++			break;
++		}
++		if (iso > settings_.back().iso) {
++			lo = settings_.size() - 2;
++			hi = settings_.size() - 1;
++			r = 1.0;
++		}
++	}
++
++	const Setting &L = settings_[lo];
++	const Setting &H = settings_[hi];
++
++	auto li = [r](const auto &a, const auto &b, auto &out) {
++		for (size_t k = 0; k < out.size(); k++)
++			out[k] = lerp(r, a[k], b[k]);
++	};
++	auto liInv = [r](const auto &a, const auto &b, auto &out) {
++		for (size_t k = 0; k < out.size(); k++)
++			out[k] = lerp(r, inverse(a[k]), inverse(b[k]));
++	};
++
++	li(L.weightLimitY, H.weightLimitY, s.weightLimitY);
++	li(L.weightLimitUv, H.weightLimitUv, s.weightLimitUv);
++	li(L.ratioFrq, H.ratioFrq, s.ratioFrq);
++	li(L.lumaWInChroma, H.lumaWInChroma, s.lumaWInChroma);
++	li(L.lumaNrCurve, H.lumaNrCurve, s.lumaNrCurve);
++	li(L.gfSigma0, H.gfSigma0, s.gfSigma0);
++	s.dnStr = lerp(r, L.denoiseStrength, H.denoiseStrength);
++	s.dnStrUv = lerp(r, L.denoiseStrengthUv, H.denoiseStrengthUv);
++	for (unsigned int d = 0; d < 2; d++) {
++		liInv(L.noiseProfile[d], H.noiseProfile[d], s.ci[d]);
++		li(L.bfScale[d], H.bfScale[d], s.scale[d]);
++		li(L.gfDelta0[d], H.gfDelta0[d], s.gfDelta0[d]);
++		liInv(L.noiseProfileUv[d], H.noiseProfileUv[d], s.ciUv[d]);
++		li(L.bfScaleUv[d], H.bfScaleUv[d], s.scaleUv[d]);
++		li(L.gfDeltaUv0[d], H.gfDeltaUv0[d], s.gfDeltaUv0[d]);
++		for (unsigned int l = 0; l < kLevels - 1; l++)
++			li(L.gfDelta[d][l], H.gfDelta[d][l], s.gfDelta[d][l]);
++		for (unsigned int l = 0; l < kLevelsUv - 1; l++)
++			li(L.gfDeltaUv[d][l], H.gfDeltaUv[d][l], s.gfDeltaUv[d][l]);
++	}
++	for (unsigned int l = 0; l < kLevels - 1; l++)
++		li(L.gfSigma[l], H.gfSigma[l], s.gfSigma[l]);
++
++	std::vector<double> sigma(kRange + 1);
++	for (unsigned int j = 0; j < kRange; j++)
++		sigma[j] = lerp(r, L.noiseSigma[j], H.noiseSigma[j]);
++	sigma[kRange] = sigma[kRange - 1];
++
++	/*
++	 * The curve is sampled at 17 points: dense at the start, at the curve
++	 * end and at its extrema, each step a power of two.
++	 */
++	unsigned int x0 = std::max(L.noiseCurveX0, H.noiseCurveX0);
++	std::vector<unsigned int> maxima, minima, pos;
++	for (unsigned int i = 1; i < x0; i++) {
++		if (sigma[i] > sigma[i - 1] && sigma[i] > sigma[i + 1])
++			maxima.push_back(i);
++		if (sigma[i] < sigma[i - 1] && sigma[i] < sigma[i + 1])
++			minima.push_back(i);
++	}
++	pos = { 0, x0 };
++	for (size_t i = 0; i < std::min<size_t>(maxima.size(), 2); i++)
++		pos.push_back(maxima[i]);
++	if (!minima.empty())
++		pos.push_back(minima[0]);
++	std::sort(pos.begin(), pos.end());
++	pos.push_back(kRange);
++
++	for (size_t i = 1; i < pos.size(); i++) {
++		unsigned int q = i == 1 ? kStep * 4 : kStep * 16;
++
++		pos[i] = pos[i] / q * q;
++	}
++	pos.erase(std::unique(pos.begin(), pos.end()), pos.end());
++
++	const unsigned int o4 = 4 * kStep, o8 = 8 * kStep;
++	const unsigned int o16 = 16 * kStep, o32 = 32 * kStep;
++	std::array<unsigned int, kCurvePoints> fx;
++	unsigned int off = 0;
++	size_t idx = 1;
++
++	for (unsigned int n = 0; n < kCurvePoints - 1; n++) {
++		unsigned int st, d;
++
++		if (idx >= pos.size() && off >= kRange) {
++			fx[n] = kRange;
++			continue;
++		}
++		fx[n] = off;
++		if (off & o4)
++			st = o4;
++		else if (off & o8)
++			st = o8;
++		else if (off < 64 * kStep || off & o16)
++			st = o16;
++		else
++			st = o32;
++		if (off + st > pos[idx] && off != pos[idx]) {
++			d = pos[idx] - off;
++			st = d & o4 ? o4 : d & o8 ? o8 : d & o16 ? o16 : o32;
++		}
++		if (off + st == pos[idx])
++			idx++;
++		off += st;
++	}
++	fx[kCurvePoints - 1] = kRange;
++
++	double sMax = 0.0;
++	for (unsigned int i = 0; i < kCurvePoints; i++) {
++		s.noiseSigma[i] = std::abs(sigma[fx[i]] / kStep);
++		s.fixX[i] = fx[i] / kStep;
++		sMax = std::max(sMax, s.noiseSigma[i]);
++	}
++
++	double scaleScale = 1.0, sigScale = sigmaScale_;
++	if (sMax * sigmaScale_ > kSigmaLimit) {
++		scaleScale = kSigmaLimit / (sMax * sigmaScale_);
++		sigScale = sigmaScale_ * scaleScale;
++	}
++	for (double &v : s.noiseSigma)
++		v *= sigScale;
++	for (unsigned int d = 0; d < 2; d++) {
++		for (double &v : s.scale[d])
++			v *= scaleScale;
++		for (double &v : s.scaleUv[d])
++			v *= scaleScale;
++	}
++
++	return s;
++}
++
++/**
++ * \brief Convert a calibration to the TNR block
++ * \param[in] s The calibration at the frame ISO
++ * \param[in] gain The global gain, scaled by the gain state ratio
++ * \param[out] tnr The TNR block, without its header
++ *
++ * Port of the AIQ mfnr_fix_transfer() at unity strength.
++ */
++void TemporalNoiseReduction::fixTransfer(const Selection &s, double gain,
++					 struct rkispp_params_tnr *tnr)
++{
++	double gs = std::sqrt(gain);
++	double gsi, clp;
++
++	auto u16 = [](long v) { return static_cast<uint16_t>(v); };
++	auto pk = [](double v) {
++		return static_cast<uint8_t>(std::min<long>(static_cast<long>(v), 0xff));
++	};
++	auto sly = [&s](unsigned int d, unsigned int l) {
++		return s.ci[d][l] * s.scale[d][l] / s.dnStr;
++	};
++	auto slyUv = [&s](unsigned int d, unsigned int l) {
++		return s.ci[d][l] * s.scaleUv[d][l] / s.dnStrUv;
++	};
++	auto slUv = [&s](unsigned int d, unsigned int l) {
++		return s.ciUv[d][l] * s.scaleUv[d][l] / s.dnStrUv;
++	};
++
++	tnr->mode = RKISPP_TNR_MODE_2_TO_1;
++	tnr->opty_en = 1;
++	tnr->optc_en = 1;
++	tnr->pk0_y = pk(s.weightLimitY[0]);
++	tnr->pk1_y = pk(s.weightLimitY[kLevels - 1]);
++	tnr->pk0_c = pk(s.weightLimitUv[0]);
++	tnr->pk1_c = pk(s.weightLimitUv[kLevelsUv - 1]);
++
++	tnr->glb_gain_cur = std::min<long>(fix(gain, kFracGain), 0xffff);
++	tnr->glb_gain_nxt = tnr->glb_gain_cur;
++	gsi = 1.0 / gs;
++	clp = std::clamp<long>(static_cast<long>(gsi * (1 << kFracGainSqrtInv)),
++			       -((1 << kFracGainSqrtInv) - 1),
++			       (1 << kFracGainSqrtInv) - 1);
++	clp /= 1 << kFracGainSqrtInv;
++	tnr->glb_gain_cur_div =
++		std::min<long>(fix(clp, kFracGainSqrtInv), 0x1fff);
++	tnr->glb_gain_cur_sqrt = std::min<long>(fix(gs, kFracGainSqrt), 0xff);
++
++	for (unsigned int i = 0; i < kCurvePoints - 1; i++)
++		tnr->sigma_x[i] = sigmaInterval(s.fixX[i], s.fixX[i + 1]);
++	for (unsigned int i = 0; i < kCurvePoints; i++)
++		tnr->sigma_y[i] = u16(fix(s.noiseSigma[i], kFracSigma));
++	for (unsigned int i = 0; i < RKISPP_TNR_LUMA_CURVE_SIZE; i++)
++		tnr->luma_curve[i] = u16(fix(s.lumaNrCurve[i], kFracLumaScale));
++
++	tnr->txt_th0_y = u16(fix(s.ratioFrq[0], kFracTxtRatio));
++	tnr->txt_th1_y = u16(fix(s.ratioFrq[1], kFracTxtRatio));
++	tnr->txt_th0_c = u16(fix(s.ratioFrq[2], kFracTxtRatio));
++	tnr->txt_th1_c = u16(fix(s.ratioFrq[3], kFracTxtRatio));
++	tnr->txt_thy_dlt = u16(std::floor((1 << kFracTxtRatio) /
++					  (s.ratioFrq[1] - s.ratioFrq[0])));
++	tnr->txt_thc_dlt = u16(std::floor((1 << kFracTxtRatio) /
++					  (s.ratioFrq[3] - s.ratioFrq[2])));
++
++	kernelFix(2, s.gfSigma0, tnr->gfcoef_y0);
++	kernelFix(1, s.gfSigma[0], tnr->gfcoef_y1);
++	kernelFix(1, s.gfSigma[1], tnr->gfcoef_y2);
++	kernelFix(1, s.gfSigma[2], tnr->gfcoef_y3);
++	kernelFix(2, s.gfDelta0[0], tnr->gfcoef_yg0);
++	kernelFix(1, s.gfDelta[0][0], tnr->gfcoef_yg1);
++	kernelFix(1, s.gfDelta[0][1], tnr->gfcoef_yg2);
++	kernelFix(1, s.gfDelta[0][2], tnr->gfcoef_yg3);
++	kernelFix(2, s.gfDelta0[1], tnr->gfcoef_yl0);
++	kernelFix(1, s.gfDelta[1][0], tnr->gfcoef_yl1);
++	kernelFix(1, s.gfDelta[1][1], tnr->gfcoef_yl2);
++	kernelFix(2, s.gfDeltaUv0[0], tnr->gfcoef_cg0);
++	kernelFix(1, s.gfDeltaUv[0][0], tnr->gfcoef_cg1);
++	kernelFix(1, s.gfDeltaUv[0][1], tnr->gfcoef_cg2);
++	kernelFix(2, s.gfDeltaUv0[1], tnr->gfcoef_cl0);
++	kernelFix(1, s.gfDeltaUv[1][0], tnr->gfcoef_cl1);
++
++	for (unsigned int l = 0; l < RKISPP_TNR_SCALE_YG_SIZE; l++)
++		tnr->scale_yg[l] = u16(fix(sly(0, l), kFracScaleL));
++	for (unsigned int l = 0; l < RKISPP_TNR_SCALE_YL_SIZE; l++)
++		tnr->scale_yl[l] = u16(fix(sly(1, l), kFracScaleL));
++	for (unsigned int l = 0; l < RKISPP_TNR_SCALE_CG_SIZE; l++) {
++		tnr->scale_cg[l] = u16(fix(slUv(0, l), kFracScaleLUv));
++		tnr->scale_y2cg[l] = u16(fix(slyUv(0, l), kFracScaleLUv));
++	}
++	for (unsigned int l = 0; l < RKISPP_TNR_SCALE_CL_SIZE; l++)
++		tnr->scale_cl[l] = u16(fix(slUv(1, l), kFracScaleLUv));
++	for (unsigned int l = 0; l < RKISPP_TNR_SCALE_Y2CL_SIZE; l++)
++		tnr->scale_y2cl[l] = u16(fix(slyUv(1, l), kFracScaleLUv));
++	for (unsigned int l = 0; l < RKISPP_TNR_WEIGHT_Y_SIZE; l++)
++		tnr->weight_y[l] = static_cast<uint8_t>(
++			fix(s.lumaWInChroma[l], kFracLumaWInChroma));
++}
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::prepare
++ */
++void TemporalNoiseReduction::prepare([[maybe_unused]] IPAContext &context,
++				     [[maybe_unused]] const uint32_t frame,
++				     IPAFrameContext &frameContext,
++				     RkISP2Params *params)
++{
++	double gain = frameContext.agc.gain;
++	uint32_t map;
++
++	if (gain <= 0.0)
++		gain = 1.0;
++
++	gain_ = gain;
++	ratio_ = gainRatio(gain);
++
++	auto config = params->block<RkISP2ParamsBlocks::Gain>();
++	config.setEnabled(true);
++
++	map = std::max<long>(roundD(gain * ratio_ * (1 << kFracMapGain)), 0);
++	config->gain[0] = std::min(map, kMapGain0Max);
++	config->gain[1] = std::min(map, kMapGain12Max);
++	config->gain[2] = std::min(map, kMapGain12Max);
++}
++
++/**
++ * \brief Send the TNR block for the gain of the latest ISP frame
++ * \param[in] context The shared IPA context
++ * \param[in] frame The ISPP frame number
++ * \param[out] params The ISPP parameters buffer
++ */
++void TemporalNoiseReduction::prepareIspp([[maybe_unused]] IPAContext &context,
++					 [[maybe_unused]] const uint32_t frame,
++					 RkISPPParams *params)
++{
++	constexpr size_t header = sizeof(struct v4l2_isp_params_block_header);
++	double scaled = gain_ * ratio_;
++
++	if (!tnr_ || std::abs(scaled - tnrGain_) > 0.005 * tnrGain_) {
++		struct rkispp_params_tnr tnr = {};
++
++		fixTransfer(select(gain_ * kIsoUnity), scaled, &tnr);
++		tnr.gain_en = !localGain_;
++		tnr_ = tnr;
++		tnrGain_ = scaled;
++
++		LOG(RkISP2Tnr, Debug)
++			<< "gain " << gain_ << " ratio " << ratio_
++			<< " sigma " << tnr.sigma_y[4] << " pk "
++			<< static_cast<unsigned int>(tnr.pk0_y);
++	}
++
++	auto block = params->block<RkISPPParamsBlocks::Tnr>();
++	memcpy(reinterpret_cast<uint8_t *>(&*block) + header,
++	       reinterpret_cast<const uint8_t *>(&*tnr_) + header,
++	       sizeof(*tnr_) - header);
++	block.setEnabled(true);
++}
++
++REGISTER_IPA_ALGORITHM(TemporalNoiseReduction, "TemporalNoiseReduction")
++
++} /* namespace ipa::rkisp2::algorithms */
++
++} /* namespace libcamera */
+--- /dev/null
++++ b/src/ipa/rkisp2/algorithms/tnr.h
+@@ -0,0 +1,112 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2026, Daniel Golle
++ *
++ * RkISP2 temporal noise reduction
++ */
++
++#pragma once
++
++#include <array>
++#include <optional>
++#include <vector>
++
++#include <linux/media/rockchip/rkisp2-config.h>
++
++#include "algorithm.h"
++
++namespace libcamera {
++
++namespace ipa::rkisp2::algorithms {
++
++class TemporalNoiseReduction : public Algorithm
++{
++public:
++	TemporalNoiseReduction() = default;
++	~TemporalNoiseReduction() = default;
++
++	int init(IPAContext &context, const ValueNode &tuningData) override;
++	int configure(IPAContext &context,
++		      const IPACameraSensorInfo &configInfo) override;
++	void prepare(IPAContext &context, const uint32_t frame,
++		     IPAFrameContext &frameContext,
++		     RkISP2Params *params) override;
++	void prepareIspp(IPAContext &context, const uint32_t frame,
++			 RkISPPParams *params) override;
++
++	static constexpr unsigned int kLevels = 4;
++	static constexpr unsigned int kLevelsUv = 3;
++	static constexpr unsigned int kCurvePoints = 17;
++
++	using Lvl = std::array<double, kLevels>;
++	using LvlUv = std::array<double, kLevelsUv>;
++	using Coef6 = std::array<double, 6>;
++	using Coef3 = std::array<double, 3>;
++
++	struct Setting {
++		double iso;
++		Lvl weightLimitY;
++		LvlUv weightLimitUv;
++		std::array<double, 4> ratioFrq;
++		LvlUv lumaWInChroma;
++		unsigned int noiseCurveX0;
++		std::vector<double> noiseSigma;
++		std::array<Lvl, 2> noiseProfile;
++		std::array<Lvl, 2> bfScale;
++		Coef6 lumaNrCurve;
++		double denoiseStrength;
++		std::array<Coef6, 2> gfDelta0;
++		std::array<std::array<Coef3, kLevels - 1>, 2> gfDelta;
++		std::array<LvlUv, 2> noiseProfileUv;
++		std::array<LvlUv, 2> bfScaleUv;
++		double denoiseStrengthUv;
++		std::array<Coef6, 2> gfDeltaUv0;
++		std::array<std::array<Coef3, kLevelsUv - 1>, 2> gfDeltaUv;
++		Coef6 gfSigma0;
++		std::array<Coef3, kLevels - 1> gfSigma;
++	};
++
++	struct Selection {
++		Lvl weightLimitY;
++		LvlUv weightLimitUv;
++		std::array<double, 4> ratioFrq;
++		LvlUv lumaWInChroma;
++		std::array<Lvl, 2> ci;
++		std::array<Lvl, 2> scale;
++		Coef6 lumaNrCurve;
++		double dnStr;
++		std::array<Coef6, 2> gfDelta0;
++		std::array<std::array<Coef3, kLevels - 1>, 2> gfDelta;
++		std::array<LvlUv, 2> ciUv;
++		std::array<LvlUv, 2> scaleUv;
++		double dnStrUv;
++		std::array<Coef6, 2> gfDeltaUv0;
++		std::array<std::array<Coef3, kLevelsUv - 1>, 2> gfDeltaUv;
++		Coef6 gfSigma0;
++		std::array<Coef3, kLevels - 1> gfSigma;
++		std::array<double, kCurvePoints> noiseSigma;
++		std::array<unsigned int, kCurvePoints> fixX;
++	};
++
++	Selection select(double iso) const;
++	static void fixTransfer(const Selection &s, double gain,
++				struct rkispp_params_tnr *tnr);
++
++private:
++	double gainRatio(double gain);
++
++	std::vector<Setting> settings_;
++	double sigmaScale_;
++	bool localGain_;
++
++	int gainStateFull_;
++	int gainState_;
++	double gain_;
++	double ratio_;
++
++	std::optional<struct rkispp_params_tnr> tnr_;
++	double tnrGain_;
++};
++
++} /* namespace ipa::rkisp2::algorithms */
++} /* namespace libcamera */
+--- a/src/ipa/rkisp2/params.h
++++ b/src/ipa/rkisp2/params.h
+@@ -35,6 +35,7 @@ enum class RkISP2ParamsBlocks : uint16_t
+ 	Dpcc,
+ 	Cproc,
+ 	Wdr,
++	Gain,
+ };
+ 
+ namespace details {
+@@ -67,6 +68,7 @@ RkISP2_DEFINE_PARAMS_BLOCK_TYPE(AwbMeas,
+ RkISP2_DEFINE_PARAMS_BLOCK_TYPE(Dpcc,		dpcc,		DPCC);
+ RkISP2_DEFINE_PARAMS_BLOCK_TYPE(Cproc,		cproc,		CPROC);
+ RkISP2_DEFINE_PARAMS_BLOCK_TYPE(Wdr,		wdr,		WDR);
++RkISP2_DEFINE_PARAMS_BLOCK_TYPE(Gain,		gain,		GAIN);
+ 
+ struct param_traits {
+ 	using id_type = RkISP2ParamsBlocks;

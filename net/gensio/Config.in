@@ -1,0 +1,34 @@
+	config GENSIO_SSL
+		depends on PACKAGE_libgensio
+		bool "Enable SSL-support via OpenSSL"
+		default n
+
+	config GENSIO_WRAP
+		depends on PACKAGE_libgensio
+		bool "Build with libwrap"
+		default n
+
+	config GENSIO_SCTP
+		depends on PACKAGE_libgensio && IPV6
+		bool "Enable SCTP-support via libsctp"
+		default n
+
+	config GENSIO_PTHREADS
+		depends on PACKAGE_libgensio
+		bool "Enable pthreads"
+		default y
+
+	config GENSIO_AVAHI
+		depends on PACKAGE_libgensio
+		bool "Enable mDNS via Avahi"
+		default n
+
+	config GENSIO_GLIB
+		depends on PACKAGE_libgensio
+		bool "Build with glib2"
+		default n
+
+	config GENSIO_TCL
+		depends on PACKAGE_libgensio
+		bool "Build with tcl"
+		default n

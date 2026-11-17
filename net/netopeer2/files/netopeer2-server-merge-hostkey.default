@@ -1,0 +1,37 @@
+#!/bin/sh
+
+set -e
+
+SYSREPOCFG=$(which sysrepocfg)
+OPENSSL=$(which openssl)
+
+KEYSTORE_KEY=$($SYSREPOCFG -X -x "/ietf-keystore:keystore/asymmetric-keys/asymmetric-key[name='genkey']")
+if [ -n "$KEYSTORE_KEY" ]; then
+	exit 0
+fi
+
+OLD_UMASK=$(umask)
+umask 077
+PRIVPEM=$($OPENSSL genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -outform PEM 2>/dev/null)
+umask "$OLD_UMASK"
+
+if [ -z "$PRIVPEM" ]; then
+	echo "Failed to generate RSA key with openssl." >&2
+	exit 1
+fi
+
+PRIVKEY=$(echo "$PRIVPEM" | grep -v -- "-----" | tr -d "\n")
+
+CONFIG="<keystore xmlns=\"urn:ietf:params:xml:ns:yang:ietf-keystore\">
+    <asymmetric-keys>
+        <asymmetric-key>
+            <name>genkey</name>
+            <public-key-format xmlns:ct=\"urn:ietf:params:xml:ns:yang:ietf-crypto-types\">ct:ssh-public-key-format</public-key-format>
+            <private-key-format xmlns:ct=\"urn:ietf:params:xml:ns:yang:ietf-crypto-types\">ct:rsa-private-key-format</private-key-format>
+            <cleartext-private-key>${PRIVKEY}</cleartext-private-key>
+        </asymmetric-key>
+    </asymmetric-keys>
+</keystore>"
+
+echo "$CONFIG" | $SYSREPOCFG --edit -d startup -f xml -m ietf-keystore -v2
+$SYSREPOCFG -C startup -m ietf-keystore -v2

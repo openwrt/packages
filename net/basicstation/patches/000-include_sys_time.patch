@@ -1,0 +1,24 @@
+From ca1eb77bf89697e1bacbb21ed7aae8b5134a7bf5 Mon Sep 17 00:00:00 2001
+From: Marcus Schref <mschref@web.de>
+Date: Mon, 22 Aug 2022 10:13:52 +0200
+Subject: [PATCH] basicstation: include sys/time.h
+
+Change time.h include directory to add compatibility with musl and fix
+compilation error
+
+Signed-off-by: Marcus Schref <mschref@web.de>
+---
+ src/aio.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/src/aio.c
++++ b/src/aio.c
+@@ -27,7 +27,7 @@
+  */
+ 
+ #include <unistd.h>
+-#include <time.h>
++#include <sys/time.h>
+ #include <errno.h>
+ #include <fcntl.h>
+ #include "rt.h"

@@ -1,0 +1,40 @@
+From 8ceae920ff60974b22c7b1b8139310584702bf0f Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Fri, 11 Sep 2026 16:16:53 -0700
+Subject: [PATCH] avcodec/mips/cabac: do not use the inline assembly in MIPS16
+ mode
+
+The MIPS CABAC inline assembly uses 32-bit-only registers and
+instructions (sll with $25, movz, movn) and is included by every CABAC
+decoder without an inline-asm guard. Compiled with -mips16, as OpenWrt
+builds MIPS packages, the assembler rejects it:
+
+  {standard input}:9366: Error: invalid operands `sll $25,$4,0x11'
+  {standard input}:9369: Error: opcode not supported on this processor:
+  mips32r2 (mips32r2) `movz $6,$16,$17'
+
+Fall back to the C implementation when __mips16 is defined.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ libavcodec/mips/cabac.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/libavcodec/mips/cabac.h
++++ b/libavcodec/mips/cabac.h
+@@ -30,7 +30,7 @@
+ #include "libavutil/mips/mmiutils.h"
+ #include "config.h"
+ 
+-#if !HAVE_MIPS32R6 && !HAVE_MIPS64R6
++#if !defined(__mips16) && !HAVE_MIPS32R6 && !HAVE_MIPS64R6
+ #define get_cabac_inline get_cabac_inline_mips
+ static av_always_inline int get_cabac_inline_mips(CABACContext *c,
+                                                   uint8_t * const state){
+@@ -226,5 +226,5 @@ static av_always_inline int get_cabac_by
+ 
+     return res;
+ }
+-#endif /* !HAVE_MIPS32R6 && !HAVE_MIPS64R6 */
++#endif /* !defined(__mips16) && !HAVE_MIPS32R6 && !HAVE_MIPS64R6 */
+ #endif /* AVCODEC_MIPS_CABAC_H */

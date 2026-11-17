@@ -1,0 +1,7 @@
+{
+	"name": "sitelutions.com",
+	"ipv4": {
+		"url": "https://dnsup.sitelutions.com/dnsup?user=[USERNAME]&pass=[PASSWORD]&id=[DOMAIN]&ip=[IP]",
+		"answer": "success"
+	}
+}

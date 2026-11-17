@@ -1,0 +1,65 @@
+From a3dec2cbe5e539b5a270bed86eed78b283c79cdb Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Thu, 27 May 2021 01:18:20 +0200
+Subject: [PATCH] add support for Sierra Wireless qcserial NMEA-0183 interface
+
+Sierra Wireless EM 74xx modems come with a serial port outputting
+NMEA-0183 GPS sentences. In order to make it work, the magic string
+'$GPS_START' needs to be written to the modem, as only then the modem
+firmware starts sending NMEA-0183 output.
+Add option 'sierragpsstart' which if set to anything else than 0 will
+make kplex send the magic string when the device is opened.
+---
+ serial.c | 13 ++++++++++---
+ 1 file changed, 10 insertions(+), 3 deletions(-)
+
+--- a/serial.c
++++ b/serial.c
+@@ -24,6 +24,7 @@
+ #include <pwd.h>
+ 
+ #define DEFSERIALQSIZE 32
++#define SIERRA_GPS_START "$GPS_START\n"
+ 
+ struct if_serial {
+     int fd;
+@@ -290,7 +291,8 @@ struct iface *init_serial (struct iface
+     int ret;
+     struct kopts *opt;
+     int qsize=DEFSERIALQSIZE;
+-    
++    int send_gps_start = 0;
++
+     for(opt=ifa->options;opt;opt=opt->next) {
+         if (!strcasecmp(opt->var,"filename"))
+             devname=opt->val;
+@@ -324,7 +326,9 @@ struct iface *init_serial (struct iface
+                 logerr(0,"Invalid queue size specified: %s",opt->val);
+                 return(NULL);
+             }
+-        } else  {
++        } else if (!strcasecmp(opt->var, "sierragpsstart")) {
++            send_gps_start=atoi(opt->val);
++        } else {
+             logerr(0,"unknown interface option %s",opt->var);
+             return(NULL);
+         }
+@@ -337,7 +341,7 @@ struct iface *init_serial (struct iface
+     }
+ 
+     /* Open interface or die */
+-    if ((ifs->fd=ttyopen(devname,ifa->direction)) < 0) {
++    if ((ifs->fd=ttyopen(devname, send_gps_start?BOTH:ifa->direction)) < 0) {
+         return(NULL);
+     }
+     DEBUG(3,"%s: opened serial device %s for %s",ifa->name,devname,
+@@ -358,6 +362,9 @@ struct iface *init_serial (struct iface
+     ifs->saved=1;
+     ifs->slavename=NULL;
+ 
++    if (send_gps_start)
++        write(ifs->fd, SIERRA_GPS_START, strlen(SIERRA_GPS_START));
++
+     /* Assign pointers to read, write and cleanup routines */
+     ifa->read=do_read;
+     ifa->readbuf=read_serial;

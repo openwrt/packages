@@ -1,0 +1,8 @@
+#!/bin/sh
+
+. /lib/functions.sh
+
+uci_add firewall include libreswan
+uci_set firewall libreswan path '/etc/libreswan_firewall.sh'
+uci_set firewall libreswan reload 1
+uci_commit firewall

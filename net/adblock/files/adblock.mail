@@ -1,0 +1,73 @@
+#!/bin/sh
+# send mail script for adblock notifications
+# Copyright (c) 2015-2026 Dirk Brenken (dev@brenken.org)
+# This is free software, licensed under the GNU General Public License v3.
+
+# Please note: you have to manually install and configure the package 'msmtp' before using this script
+
+# set (s)hellcheck exceptions
+# shellcheck disable=all
+
+[ -r "/usr/bin/adblock.sh" ] && . "/usr/bin/adblock.sh" "mail"
+
+adb_debug="$(uci_get adblock global adb_debug "0")"
+adb_mailsender="$(uci_get adblock global adb_mailsender "no-reply@adblock")"
+adb_mailreceiver="$(uci_get adblock global adb_mailreceiver)"
+adb_mailtopic="$(uci_get adblock global adb_mailtopic "adblock notification")"
+adb_mailprofile="$(uci_get adblock global adb_mailprofile "adb_notify")"
+
+[ -z "${adb_mailreceiver}" ] && f_log "info" "please set the mail receiver with the 'adb_mailreceiver' option"
+[ "${adb_debug}" = "1" ] && debug="--debug"
+
+# info preparation
+#
+sys_info="$(
+	strings /etc/banner 2>/dev/null
+	"${adb_ubuscmd}" call system board | "${adb_awkcmd}" 'BEGIN{FS="[{}\"]"}{if($2=="kernel"||$2=="hostname"||$2=="system"||$2=="model"||$2=="description")printf "  + %-12s: %s\n",$2,$4}' 2>/dev/null
+)"
+adb_info="$(/etc/init.d/adblock status 2>/dev/null)"
+rep_info="${1}"
+if [ -x "${adb_logreadcmd}" ]; then
+	log_info="$("${adb_logreadcmd}" -l 100 -e "adblock-" 2>/dev/null)"
+fi
+
+# mail body
+#
+adb_mailtext="$(
+	printf '%s\n' "<html><body><pre style='display:block;font-family:monospace;font-size:1rem;padding:20;background-color:#f3eee5;white-space:pre'>"
+	printf '\n%s\n' "<strong>++
+++ System Information ++
+++</strong>"
+	printf '%s\n' "${sys_info:-"-"}"
+	printf '\n%s\n' "<strong>++
+++ Adblock Information ++
+++</strong>"
+	printf '%s\n' "${adb_info:-"-"}"
+	if [ -n "${rep_info}" ]; then
+		printf '\n%s\n' "<strong>++
+++ Report Information ++
+++</strong>"
+		printf '%s\n' "${rep_info}"
+	fi
+	printf '\n%s\n' "<strong>++
+++ Logfile Information ++
+++</strong>"
+	printf '%s\n' "${log_info:-"-"}"
+	printf '%s\n' "</pre></body></html>"
+)"
+
+# send mail
+#
+if [ -x "${adb_mailcmd}" ]; then
+	adb_mailhead="From: ${adb_mailsender}\nTo: ${adb_mailreceiver}\nSubject: ${adb_mailtopic}\nReply-to: ${adb_mailsender}\nMime-Version: 1.0\nContent-Type: text/html;charset=utf-8\nContent-Disposition: inline\n\n"
+	printf '%b' "${adb_mailhead}${adb_mailtext}" 2>/dev/null | "${adb_mailcmd}" ${debug} -a "${adb_mailprofile}" "${adb_mailreceiver}" 2>>"${adb_errorlog}"
+	mail_rc="${?}"
+	if [ "${mail_rc}" = "0" ]; then
+		f_log "info" "mail successfully sent to '${adb_mailreceiver}'"
+	else
+		f_log "info" "failed to send mail to '${adb_mailreceiver}' with rc '${mail_rc}'"
+	fi
+else
+	f_log "info" "msmtp mail daemon not found"
+fi
+exit 0

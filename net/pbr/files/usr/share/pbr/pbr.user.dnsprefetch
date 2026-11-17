@@ -1,0 +1,106 @@
+#!/bin/sh
+# When using pbr with dnsmasq's nft set support, a domain-based policy will not take effect until
+# the remote domain name has been resolved by dnsmasq. Resolve all domain names in pbr policies in advance.
+# shellcheck disable=SC3043
+
+(
+	pipe_nslookup="/var/run/${packageName}.nslookup.$$"
+
+	output() {
+		local msg="$*"
+
+		msg="$(printf '%b' "$msg" | sed 's/\x1b\[[0-9;]*m//g')"
+		# shellcheck disable=SC2154
+		logger -t "$packageName [$$]" "$(printf '%b' "$msg")"
+	}
+
+	nft_ready() {
+		local timeout_nft='10'
+
+		while ! /usr/sbin/nft list sets 'inet' | grep -q "pbr"; do
+			[ "$timeout_nft" -eq '0' ] && {
+				return 1
+			}
+			sleep '1' && timeout_nft="$((timeout_nft - 1))"
+		done
+	}
+
+	run_nslookup() {
+		local output reason
+
+		output="$(nslookup "$1" 127.0.0.1)" && { echo '0' > "$pipe_nslookup"; return; }
+		reason="$(printf '%s' "$output" | grep -Eo -m 1 'NXDOMAIN|SERVFAIL|timed out')" && \
+		output "$_WARNING_ Lookup failed for $domain ($reason)"
+		echo '1' > "$pipe_nslookup"
+	}
+
+	nslookup_tracker() {
+		local entries errors
+
+		while read -r rc; do
+			entries="$((entries + 1))"
+			[ "$rc" -eq '1' ] && errors="$((errors + 1))"
+		done < "$pipe_nslookup"
+
+		output "Finished resolving $entries domain names in policies (${errors:-0} failed) $__OK__"
+	}
+
+	main() {
+		local pipe_ubus="/var/run/${packageName}.ubus.$$"
+		local timeout_dnsmasq='20'
+		local msg_abort='domain names in policies not resolved'
+		local dnsmasq_restarted ubus_listen_pid event domain entries
+		local rc='0'
+
+		[ -n "$resolverSetSupported" ] || {
+			output "Resolver set support disabled, $msg_abort $__FAIL__"
+			rc='1'
+			return "$rc"
+		}
+		mkfifo "$pipe_ubus"
+		mkfifo "$pipe_nslookup"
+		# The subshell may be necessary for "$!" to expand to a correct value
+		( exec ubus listen -m 'ubus.object.add' > "$pipe_ubus" ) &
+		ubus_listen_pid="$!"
+
+		# shellcheck disable=SC3045
+		while read -t "$timeout_dnsmasq" -r event; do
+			echo "$event" | grep -q "dnsmasq.dns" || continue
+			dnsmasq_restarted='1'
+			# shellcheck disable=SC2154
+			[ -f "$packageDnsmasqFile" ] || {
+				output "File $packageDnsmasqFile not found, $msg_abort $__FAIL__"
+				rc='1'
+				break
+			}
+			nft_ready || {
+				output "Pbr's nft sets not found, $msg_abort $__FAIL__"
+				rc='1'
+				break
+			}
+			nslookup_tracker & exec 3>"$pipe_nslookup"
+			(
+				output "Resolving domain names in policies..."
+				while IFS='/' read -r _ domain _; do
+					[ -n "$domain" ] && run_nslookup "$domain" &
+					entries="$((entries + 1))"
+				done < "$packageDnsmasqFile"
+				wait
+			)
+			exec 3>&-
+			break
+		done < "$pipe_ubus"
+
+		[ -n "$dnsmasq_restarted" ] || {
+			output "Dnsmasq hasn't restarted, $msg_abort $__FAIL__"
+			rc='1'
+		}
+		kill "$ubus_listen_pid"
+		rm -f "$pipe_ubus"
+		rm -f "$pipe_nslookup"
+		return "$rc"
+	}
+	
+	main
+	return "$?"
+) &

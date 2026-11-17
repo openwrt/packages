@@ -1,0 +1,3 @@
+#!/bin/sh
+/etc/init.d/fail2ban enabled && /etc/init.d/fail2ban restart
+exit 0

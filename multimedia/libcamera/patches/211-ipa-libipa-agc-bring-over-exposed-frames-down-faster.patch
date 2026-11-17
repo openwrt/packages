@@ -1,0 +1,56 @@
+From a988d666f9b54f93903042cf073be8d5f7ded59d Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 16 Oct 2026 21:04:33 +0100
+Subject: [PATCH] ipa: libipa: agc: Bring over-exposed frames down faster
+
+The exposure filter moves 20% of the way to the target per frame. After
+a change from a dark to a bright scene the AGC needs about a second and
+a half to get out of saturation, during which the picture stays blown
+out.
+
+Use a filter speed of 0.5 while the filtered exposure exceeds the target
+by more than 20%. Raising the exposure keeps the slower speed.
+
+Assisted-by: LLM
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ src/ipa/libipa/agc_mean_luminance.cpp | 14 ++++++++++++--
+ 1 file changed, 12 insertions(+), 2 deletions(-)
+
+--- a/src/ipa/libipa/agc_mean_luminance.cpp
++++ b/src/ipa/libipa/agc_mean_luminance.cpp
+@@ -39,6 +39,13 @@ namespace ipa {
+ static constexpr uint32_t kNumStartupFrames = 10;
+ 
+ /*
++ * Filter speed used while the filtered exposure is more than 20% above the
++ * target. Clipped highlights carry no information about the scene, so an
++ * over-exposed frame is brought down faster than a dark one is brought up.
++ */
++static constexpr double kOverExposedFilterSpeed = 0.5;
++
++/*
+  * Default relative luminance target
+  *
+  * This value should be chosen so that when the camera points at a grey target,
+@@ -626,8 +633,8 @@ double AgcMeanLuminance::effectiveYTarge
+  * \param[in] exposureValue The target exposure from the AGC algorithm
+  *
+  * The speed of the filter is adaptive, and will produce the target quicker
+- * during startup, or when the target exposure is within 20% of the most recent
+- * filter output.
++ * during startup, when the target exposure is within 20% of the most recent
++ * filter output, or when the filter output exceeds the target by more than 20%.
+  *
+  * \return The filtered exposure
+  */
+@@ -639,6 +646,9 @@ utils::Duration AgcMeanLuminance::filter
+ 	if (frameCount_ < kNumStartupFrames)
+ 		speed = 1.0;
+ 
++	if (filteredExposure_ > 1.2 * exposureValue)
++		speed = std::max(speed, kOverExposedFilterSpeed);
++
+ 	/*
+ 	 * If we are close to the desired result, go faster to avoid making
+ 	 * multiple micro-adjustments.

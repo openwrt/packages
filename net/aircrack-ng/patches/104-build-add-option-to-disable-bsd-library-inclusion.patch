@@ -1,0 +1,58 @@
+From 0265e79f3c9a27a3ffd186e7d3bcd2f744052605 Mon Sep 17 00:00:00 2001
+From: Christian Marangi <ansuelsmth@gmail.com>
+Date: Sat, 28 Oct 2023 17:30:09 +0200
+Subject: [PATCH] build: add option to disable bsd library inclusion
+
+It might be needed to disable bsd inclusion and fallback to the compat
+functions even if bsd headers are detected.
+
+This is the case when multiple library are cross-compiled and someone
+wants to explicitly compile aircrack-ng without linking to bsd library.
+
+With the current implementation, if a bsd header is detected, the bsd
+library is always linked even if unwanted. Add option to configure this
+with the combo --with-libbsd=yes|no|auto with auto set by default.
+
+Also add an extra featurw with introducing the possibility of requiring
+the bsd library and fail the configure phase.
+
+Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
+---
+ build/m4/aircrack_ng_compat.m4 | 24 +++++++++++++++++++++---
+ 1 file changed, 21 insertions(+), 3 deletions(-)
+
+--- a/build/m4/aircrack_ng_compat.m4
++++ b/build/m4/aircrack_ng_compat.m4
+@@ -38,11 +38,29 @@ dnl If you delete this exception stateme
+ dnl program, then also delete it here.
+ 
+ AC_DEFUN([AIRCRACK_NG_COMPAT], [
++AC_ARG_WITH(libbsd,
++	[AS_HELP_STRING([--with-libbsd[[=auto|yes|no]]], [use BSD library, [default=auto]])])
++
++case $with_libbsd in
++	yes | "" | auto)
++		AC_CHECK_HEADERS([bsd/string.h], [HAVE_BSD_STRING_H=yes])
++		AC_CHECK_LIB([bsd], [strlcpy], [:])
++		AC_CHECK_FUNCS([strlcpy strlcat], [:])
++		;;
++esac
+ 
+-AC_CHECK_HEADERS([bsd/string.h], [HAVE_BSD_STRING_H=yes], [HAVE_BSD_STRING_H=no])
+ AM_CONDITIONAL([HAVE_BSD_STRING_H], [test "$HAVE_BSD_STRING_H" = yes])
+-AC_CHECK_LIB([bsd], [strlcpy], [ LIBS="$LIBS -lbsd" ], [:])
+-AC_CHECK_FUNCS([strlcpy strlcat], [:])
++
++if test $with_libbsd != no
++then
++	if test $ac_cv_lib_bsd_strlcpy = yes
++	then
++		LIBS="$LIBS -lbsd"
++	elif test $with_libbsd = yes
++	then
++		AC_MSG_ERROR([cannot configure required bsd library])
++	fi
++fi
+ 
+ have_bsd=no
+ if test "$cross_compiling" != yes

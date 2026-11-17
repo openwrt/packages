@@ -1,0 +1,9 @@
+{
+	"name": "beget.com",
+	"ipv4": {
+		"url": "update_beget_com.sh"
+	},
+	"ipv6": {
+		"url": "update_beget_com.sh"
+	}
+}

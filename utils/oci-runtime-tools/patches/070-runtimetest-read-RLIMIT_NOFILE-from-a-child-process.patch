@@ -1,0 +1,162 @@
+From 260c404b20952ba5b2f8cd3e3cafaf179f75fe6a Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Tue, 20 Oct 2026 17:35:21 +0100
+Subject: [PATCH] runtimetest: read RLIMIT_NOFILE from a child process
+
+Since Go 1.19 the runtime raises its own soft RLIMIT_NOFILE to one below
+the hard limit at start-up, so runtimetest reads that raised value and
+not the one the runtime configured: the soft RLIMIT_NOFILE check fails
+against every runtime whenever the configured soft limit is lower. Go
+restores the original limit in the processes it starts, so read the
+limits of a child from its /proc/self/limits instead; the other limits
+are left untouched by Go and are still read directly.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ cmd/runtimetest/main.go        | 62 ++++++++++++++++++++++++++++++++--
+ cmd/runtimetest/rlimit_test.go | 54 +++++++++++++++++++++++++++++
+ 2 files changed, 114 insertions(+), 2 deletions(-)
+ create mode 100644 cmd/runtimetest/rlimit_test.go
+
+--- a/cmd/runtimetest/main.go
++++ b/cmd/runtimetest/main.go
+@@ -8,6 +8,7 @@ import (
+ 	"fmt"
+ 	"io"
+ 	"os"
++	"os/exec"
+ 	"path/filepath"
+ 	"runtime"
+ 	"strconv"
+@@ -341,6 +342,63 @@ func (c *complianceTester) validateHostn
+ 	return nil
+ }
+ 
++func parseProcLimit(value string) (uint64, error) {
++	if value == "unlimited" {
++		return unix.RLIM_INFINITY, nil
++	}
++
++	return strconv.ParseUint(value, 10, 64)
++}
++
++// parseNofileLimits extracts RLIMIT_NOFILE from the contents of a
++// /proc/<pid>/limits file.
++func parseNofileLimits(limits string) (syscall.Rlimit, error) {
++	var rlimit syscall.Rlimit
++
++	for _, line := range strings.Split(limits, "\n") {
++		rest, ok := strings.CutPrefix(line, "Max open files")
++		if !ok {
++			continue
++		}
++		fields := strings.Fields(rest)
++		if len(fields) < 2 {
++			break
++		}
++		soft, err := parseProcLimit(fields[0])
++		if err != nil {
++			return rlimit, err
++		}
++		hard, err := parseProcLimit(fields[1])
++		if err != nil {
++			return rlimit, err
++		}
++		rlimit.Cur = soft
++		rlimit.Max = hard
++		return rlimit, nil
++	}
++
++	return rlimit, errors.New("no RLIMIT_NOFILE entry in the process limits")
++}
++
++// getRlimit reads a resource limit as the runtime set it. The Go runtime
++// raises its own soft RLIMIT_NOFILE at start-up and restores the original
++// in the processes it starts, so that one is read from a child.
++func getRlimit(resource int) (syscall.Rlimit, error) {
++	var rlimit syscall.Rlimit
++
++	if resource != syscall.RLIMIT_NOFILE {
++		err := syscall.Getrlimit(resource, &rlimit)
++		return rlimit, err
++	}
++
++	limits, err := exec.Command("/bin/cat", "/proc/self/limits").Output()
++	if err != nil {
++		return rlimit, err
++	}
++
++	return parseNofileLimits(string(limits))
++}
++
+ func (c *complianceTester) validateRlimits(spec *rspec.Spec) error {
+ 	if spec.Process == nil {
+ 		c.harness.Skip(1, "process.rlimits not set")
+@@ -353,8 +411,8 @@ func (c *complianceTester) validateRlimi
+ 			return err
+ 		}
+ 
+-		var rlimit syscall.Rlimit
+-		if err := syscall.Getrlimit(rl, &rlimit); err != nil {
++		rlimit, err := getRlimit(rl)
++		if err != nil {
+ 			return err
+ 		}
+ 
+--- /dev/null
++++ b/cmd/runtimetest/rlimit_test.go
+@@ -0,0 +1,54 @@
++package main
++
++import (
++	"syscall"
++	"testing"
++
++	"golang.org/x/sys/unix"
++)
++
++func TestParseNofileLimits(t *testing.T) {
++	limits := `Limit                     Soft Limit           Hard Limit           Units
++Max processes             63432                63432                processes
++Max open files            3000                 4000                 files
++Max locked memory         8388608              8388608              bytes
++`
++	rlimit, err := parseNofileLimits(limits)
++	if err != nil {
++		t.Fatal(err)
++	}
++	if rlimit.Cur != 3000 || rlimit.Max != 4000 {
++		t.Errorf("limits == %d/%d, expected 3000/4000", rlimit.Cur, rlimit.Max)
++	}
++
++	rlimit, err = parseNofileLimits("Max open files            unlimited            unlimited            files\n")
++	if err != nil {
++		t.Fatal(err)
++	}
++	if rlimit.Cur != unix.RLIM_INFINITY || rlimit.Max != unix.RLIM_INFINITY {
++		t.Errorf("limits == %d/%d, expected unlimited", rlimit.Cur, rlimit.Max)
++	}
++
++	if _, err := parseNofileLimits("Max processes 1 1 processes\n"); err == nil {
++		t.Error("expected an error without a RLIMIT_NOFILE entry")
++	}
++}
++
++func TestGetRlimitNofile(t *testing.T) {
++	var own syscall.Rlimit
++	if err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &own); err != nil {
++		t.Fatal(err)
++	}
++
++	rlimit, err := getRlimit(syscall.RLIMIT_NOFILE)
++	if err != nil {
++		t.Skipf("cannot read the limits of a child: %v", err)
++	}
++	// Go only raises the soft limit, never the hard one.
++	if rlimit.Max != own.Max {
++		t.Errorf("hard limit == %d, expected %d", rlimit.Max, own.Max)
++	}
++	if rlimit.Cur > own.Cur {
++		t.Errorf("soft limit %d of a child exceeds our own %d", rlimit.Cur, own.Cur)
++	}
++}

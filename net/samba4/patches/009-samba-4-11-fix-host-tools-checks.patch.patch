@@ -1,0 +1,20 @@
+--- a/wscript_configure_embedded_heimdal
++++ b/wscript_configure_embedded_heimdal
+@@ -7,6 +7,17 @@ if not conf.env['BISON']:
+ conf.define('USING_EMBEDDED_HEIMDAL', 1)
+ conf.RECURSE('third_party/heimdal_build')
+ 
++def check_system_heimdal_binary(name):
++    if conf.LIB_MAY_BE_BUNDLED(name):
++        return False
++    if not conf.find_program(name, var=name.upper()):
++        return False
++    conf.define('USING_SYSTEM_%s' % name.upper(), 1)
++    return True
++
++check_system_heimdal_binary("compile_et")
++check_system_heimdal_binary("asn1_compile")
++
+ #
+ # See https://github.com/heimdal/heimdal/pull/1234
+ # and https://github.com/krb5/krb5/pull/1329

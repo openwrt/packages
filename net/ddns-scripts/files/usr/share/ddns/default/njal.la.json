@@ -1,0 +1,9 @@
+{
+	"name": "njal.la",
+	"ipv4": {
+		"url": "https://njal.la/update/?h=[DOMAIN]&k=[PASSWORD]&a=[IP]"
+	},
+	"ipv6": {
+		"url": "https://njal.la/update/?h=[DOMAIN]&k=[PASSWORD]&aaaa=[IP]"
+	}
+}

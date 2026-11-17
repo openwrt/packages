@@ -1,0 +1,45 @@
+From c5054b215089f9e3cdc9602232649c2b5b1de743 Mon Sep 17 00:00:00 2001
+From: Lucas De Marchi <lucas.de.marchi@gmail.com>
+Date: Wed, 6 Mar 2024 08:58:04 -0600
+Subject: [PATCH] build: Allow to install over dirty dir
+
+Before commit e98cef6f3f8c ("make: install/uninstall tools symlinks to
+kmod") it was possible to call `make install DESTDIR=<dir>` multiple
+times. Use `ln -sf` so the symlink is always re-created.
+
+It would be preferred to remove install in an empty dir, but there's
+not a bad consequence of re-using the same, so let the user decide.
+Fixes the following errors while installing for the second time:
+
+	ln: failed to create symbolic link '/tmp/inst/usr/bin/insmod': File exists
+	ln: failed to create symbolic link '/tmp/inst/usr/bin/lsmod': File exists
+	ln: failed to create symbolic link '/tmp/inst/usr/bin/rmmod': File exists
+	ln: failed to create symbolic link '/tmp/inst/usr/bin/depmod': File exists
+	ln: failed to create symbolic link '/tmp/inst/usr/bin/modprobe': File exists
+	ln: failed to create symbolic link '/tmp/inst/usr/bin/modinfo': File exists
+	make[3]: *** [Makefile:2679: install-exec-hook] Error 1
+	make[2]: *** [Makefile:2553: install-exec-am] Error 2
+	make[1]: *** [Makefile:2439: install-am] Error 2
+	make: *** [Makefile:1848: install-recursive] Error 1
+
+Cc: Emil Velikov <emil.l.velikov@gmail.com>
+Closes: https://github.com/kmod-project/kmod/issues/35
+Reviewed-by: Emil Velikov <emil.l.velikov@gmail.com>
+Link: https://lore.kernel.org/r/20240306145804.135709-1-lucas.de.marchi@gmail.com
+Upstream-Status: Backport [https://github.com/kmod-project/kmod/commit/c5054b215089f9e3cdc9602232649c2b5b1de743]
+Signed-off-by: Lucas De Marchi <lucas.de.marchi@gmail.com>
+---
+ Makefile.am | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -113,7 +113,7 @@ install-exec-hook:
+ 	fi
+ if BUILD_TOOLS
+ 	for tool in insmod lsmod rmmod depmod modprobe modinfo; do \
+-		$(LN_S) kmod $(DESTDIR)$(bindir)/$$tool; \
++		$(LN_S) -f kmod $(DESTDIR)$(bindir)/$$tool; \
+ 	done
+ endif
+ 

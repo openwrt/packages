@@ -1,0 +1,8 @@
+--- a/config/filter.d/ignorecommands/apache-fakegooglebot
++++ b/config/filter.d/ignorecommands/apache-fakegooglebot
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env fail2ban-python
++#!/usr/bin/env python3
+ # Inspired by https://isc.sans.edu/forums/diary/When+Google+isnt+Google/15968/
+ #
+ # Written in Python to reuse built-in Python batteries and not depend on

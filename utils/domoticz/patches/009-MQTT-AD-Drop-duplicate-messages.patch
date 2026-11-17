@@ -1,0 +1,36 @@
+From 39dbe8121339917ab4c2f856aec714f0507af2a5 Mon Sep 17 00:00:00 2001
+From: David Woodhouse <dwmw2@infradead.org>
+Date: Mon, 1 Dec 2025 10:14:54 +0000
+Subject: [PATCH 2/7] MQTT-AD: Drop duplicate messages
+
+ESPHome sends duplicate messages to MQTT every time it polls the hardware
+sensor, even if the value hasn't changed. Drop them in MQTT-AD if the
+previous one is less than ten minutes old, rather than wasting a lot of
+time processing the 'updates'.
+---
+ hardware/MQTTAutoDiscover.cpp | 14 +++++++++++++-
+ 1 file changed, 13 insertions(+), 1 deletion(-)
+--- a/hardware/MQTTAutoDiscover.cpp
++++ b/hardware/MQTTAutoDiscover.cpp
+@@ -2090,8 +2090,20 @@ void MQTTAutoDiscover::handle_auto_disco
+ 		{
+ 			szValue = qMessage;
+ 		}
++		// ESPHome repeatedly sends MQTT updates each time it polls the sensor,
++		// even when the value doesn't change. Discard duplicates if the last
++		// value is the same, and less than ten minutes old.
++		auto now = mytime(nullptr);
++		if (pSensor->last_topic == topic && pSensor->last_value == szValue &&
++		    pSensor->last_received > (now - 600))
++		{
++#ifdef _DEBUG
++			Log(LOG_NORM, "Dropping duplicate MQTT message to %s (%ld seconds old)", topic.c_str(), now - pSensor->last_received);
++#endif
++			return;
++		}
+ 		pSensor->last_value = szValue;
+-		pSensor->last_received = mytime(nullptr);
++		pSensor->last_received = now;
+ 		pSensor->last_topic = topic;
+ 		pSensor->bIsJSON = bIsJSON;
+ 		if (bIsJSON)

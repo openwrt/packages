@@ -1,0 +1,61 @@
+#!/bin/bash
+# Test: String utility functions
+. "$(dirname "$0")/../lib/setup.sh"
+
+oneTimeTearDown() { rm -rf "${MOCK_ROOT:-}"; }
+
+testStrContains() {
+	assertTrue "Contains word" "str_contains 'hello world' 'world'"
+	assertTrue "Contains substring" "str_contains 'hello world' 'lo wo'"
+	assertTrue "Contains middle" "str_contains 'abcdef' 'bcd'"
+	assertFalse "Does not contain" "str_contains 'hello' 'xyz'"
+	assertFalse "Empty haystack" "str_contains '' 'test'"
+	# In bash, ${1//} with empty pattern doesn't remove anything, so returns false
+	assertFalse "Empty needle returns false" "str_contains 'hello' ''"
+}
+
+testStrContainsWord() {
+	assertTrue "Contains exact word" "str_contains_word 'one two three' 'two'"
+	assertFalse "Partial not word match" "str_contains_word 'one twothree' 'two'"
+	assertTrue "Single word" "str_contains_word 'one' 'one'"
+	assertFalse "Word not present" "str_contains_word 'one two three' 'four'"
+}
+
+testStrToLower() {
+	assertEquals "All caps to lower" "hello" "$(str_to_lower 'HELLO')"
+	assertEquals "Mixed case" "hello" "$(str_to_lower 'Hello')"
+	assertEquals "Already lowercase" "hello" "$(str_to_lower 'hello')"
+	assertEquals "With numbers" "123abc" "$(str_to_lower '123ABC')"
+}
+
+testStrToUpper() {
+	assertEquals "All lower to upper" "HELLO" "$(str_to_upper 'hello')"
+	assertEquals "Mixed case" "HELLO" "$(str_to_upper 'Hello')"
+	assertEquals "With numbers" "123ABC" "$(str_to_upper '123abc')"
+}
+
+testStrFirstWord() {
+	assertEquals "First of two" "hello" "$(str_first_word 'hello world')"
+	assertEquals "First of three" "one" "$(str_first_word 'one two three')"
+	assertEquals "Single word" "single" "$(str_first_word 'single')"
+}
+
+testStrReplace() {
+	assertEquals "Replace word" "hello universe" "$(str_replace 'hello world' 'world' 'universe')"
+	assertEquals "Replace dots" "aXbXc" "$(str_replace 'a.b.c' '.' 'X')"
+	assertEquals "No match unchanged" "hello world" "$(str_replace 'hello world' 'xyz' 'abc')"
+}
+
+testStrExtrasToUnderscore() {
+	assertEquals "Dot to underscore" "hello_world" "$(str_extras_to_underscore 'hello.world')"
+	assertEquals "Spaces to underscores" "a_b_c" "$(str_extras_to_underscore 'a b c')"
+	assertEquals "Slash to underscore" "test_path" "$(str_extras_to_underscore 'test/path')"
+	assertEquals "Multiple dots collapsed" "no_dups" "$(str_extras_to_underscore 'no..dups')"
+}
+
+testStrExtrasToSpace() {
+	assertEquals "Delimiters to spaces" "a b c d" "$(str_extras_to_space 'a,b;c{d')"
+	assertEquals "Closing brace to space" "a b" "$(str_extras_to_space 'a}b')"
+}
+
+. shunit2

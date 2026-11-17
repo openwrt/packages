@@ -1,0 +1,103 @@
+From 26b088193a55624df4cbe2a0d33c7bba5bca108d Mon Sep 17 00:00:00 2001
+From: Vincent Fazio <vfazio@gmail.com>
+Date: Sat, 7 Jan 2023 21:02:48 -0600
+Subject: [PATCH] Do not require the IANA PEN registry file
+
+Previously, ipmitool would fail to run if the local copy of the IANA PEN
+registry could not be parsed.
+
+When the registry is not available the manufacturer will be "Unknown" but
+ipmitool will otherwise function so should not be considered fatal.
+
+Also, fix an issue with improperly handling the `oem_info_list_load`
+return value. Previously, in `ipmi_oem_info_init`, if `oem_info_list_load`
+returned a negative value due to the registry file not existing, an
+improper count would cause `oem_info_init_from_list` to aallocate a list
+that didn't encompass the full header/tail list.
+
+  IANA PEN registry open failed: No such file or directory
+    Allocating      3 entries
+    [     1] 16777214 | A Debug Assisting Company, Ltd.
+    [     0]  1048575 | Unspecified
+
+Now, use a signed int and ensure a valid count of loaded OEMs is used.
+
+Signed-off-by: Vincent Fazio <vfazio@gmail.com>
+---
+ include/ipmitool/ipmi_strings.h |  2 +-
+ lib/ipmi_main.c                 |  5 +----
+ lib/ipmi_strings.c              | 19 +++++--------------
+ 3 files changed, 7 insertions(+), 19 deletions(-)
+
+--- a/include/ipmitool/ipmi_strings.h
++++ b/include/ipmitool/ipmi_strings.h
+@@ -55,7 +55,7 @@ extern const struct valstr ipmi_integrit
+ extern const struct valstr ipmi_encryption_algorithms[];
+ extern const struct valstr ipmi_user_enable_status_vals[];
+ extern const struct valstr *ipmi_oem_info;
+-int ipmi_oem_info_init();
++void ipmi_oem_info_init();
+ void ipmi_oem_info_free();
+ 
+ extern const struct valstr picmg_frucontrol_vals[];
+--- a/lib/ipmi_main.c
++++ b/lib/ipmi_main.c
+@@ -853,10 +853,7 @@ ipmi_main(int argc, char ** argv,
+ 	}
+ 
+ 	/* load the IANA PEN registry */
+-	if (ipmi_oem_info_init()) {
+-		lprintf(LOG_ERR, "Failed to initialize the OEM info dictionary");
+-		goto out_free;
+-	}
++	ipmi_oem_info_init();
+ 
+ 	/* run OEM setup if found */
+ 	if (oemtype &&
+--- a/lib/ipmi_strings.c
++++ b/lib/ipmi_strings.c
+@@ -1719,39 +1719,30 @@ out:
+ 	return rc;
+ }
+ 
+-int ipmi_oem_info_init()
++void ipmi_oem_info_init()
+ {
+ 	oem_valstr_list_t terminator = { { -1, NULL}, NULL }; /* Terminator */
+ 	oem_valstr_list_t *oemlist = &terminator;
+ 	bool free_strings = true;
+-	size_t count;
+-	int rc = -4;
++	int count;
+ 
+ 	lprintf(LOG_INFO, "Loading IANA PEN Registry...");
+ 
+ 	if (ipmi_oem_info) {
+ 		lprintf(LOG_INFO, "IANA PEN Registry is already loaded");
+-		rc = 0;
+ 		goto out;
+ 	}
+ 
+-	if (!(count = oem_info_list_load(&oemlist))) {
+-		/*
+-		 * We can't identify OEMs without a loaded registry.
+-		 * Set the pointer to dummy and return.
+-		 */
+-		ipmi_oem_info = ipmi_oem_info_dummy;
+-		goto out;
++	if ((count = oem_info_list_load(&oemlist)) < 1) {
++		lprintf(LOG_WARN, "Failed to load entries from IANA PEN Registry");
++		count = 0;
+ 	}
+ 
+ 	/* In the array was allocated, don't free the strings at cleanup */
+ 	free_strings = !oem_info_init_from_list(oemlist, count);
+ 
+-	rc = IPMI_CC_OK;
+-
+ out:
+ 	oem_info_list_free(&oemlist, free_strings);
+-	return rc;
+ }
+ 
+ void ipmi_oem_info_free()

@@ -1,0 +1,29 @@
+From 0beeb4e78730ab11e975d19eaf6bb53679ec6086 Mon Sep 17 00:00:00 2001
+From: Michael R Sweet <msweet@msweet.org>
+Date: Thu, 29 Oct 2026 15:33:19 -0400
+Subject: [PATCH] Validate printer/server responses (GHSA-hp44-ph36-rc52)
+
+---
+ cups/dest.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+--- a/cups/dest.c
++++ b/cups/dest.c
+@@ -1449,6 +1449,17 @@ _cupsGetDests(http_t       *http,	/* I
+ 
+   if ((response = cupsDoRequest(http, request, "/")) != NULL)
+   {
++   /*
++    * Make sure the server is OK...
++    */
++
++    if (!ippValidateAttributes(response))
++    {
++      // No, don't try to use any of its response...
++      ippDelete(response);
++      return (num_dests);
++    }
++
+     for (attr = response->attrs; attr != NULL; attr = attr->next)
+     {
+      /*

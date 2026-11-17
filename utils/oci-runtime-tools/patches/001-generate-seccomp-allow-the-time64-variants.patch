@@ -1,0 +1,120 @@
+From 0fb16eda6601c559644aa9e410217bd58282126b Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Tue, 20 Oct 2026 16:16:23 +0100
+Subject: [PATCH] generate/seccomp: allow the time64 variants of allowed
+ syscalls
+
+On 32-bit architectures with a 64-bit time_t ABI (Linux 5.1 and later)
+libc and the Go runtime call the *_time64 syscalls instead of the
+32-bit time ones; Go uses futex_time64 once the kernel is new enough.
+The default profile only lists the old names, so its default errno
+action denies futex_time64 and the runtimetest binary aborts inside
+the container on i386, arm and mips. Allow the time64 variant of every
+syscall the profile already allows.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ generate/seccomp/seccomp_default.go | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
+
+--- a/generate/seccomp/seccomp_default.go
++++ b/generate/seccomp/seccomp_default.go
+@@ -49,8 +49,11 @@ func DefaultProfile(rs *rspec.Spec) *rsp
+ 				"chown",
+ 				"chown32",
+ 				"clock_getres",
++				"clock_getres_time64",
+ 				"clock_gettime",
++				"clock_gettime64",
+ 				"clock_nanosleep",
++				"clock_nanosleep_time64",
+ 				"close",
+ 				"connect",
+ 				"copy_file_range",
+@@ -100,6 +103,7 @@ func DefaultProfile(rs *rspec.Spec) *rsp
+ 				"ftruncate",
+ 				"ftruncate64",
+ 				"futex",
++				"futex_time64",
+ 				"futimesat",
+ 				"getcpu",
+ 				"getcwd",
+@@ -185,7 +189,9 @@ func DefaultProfile(rs *rspec.Spec) *rsp
+ 				"mq_notify",
+ 				"mq_open",
+ 				"mq_timedreceive",
++				"mq_timedreceive_time64",
+ 				"mq_timedsend",
++				"mq_timedsend_time64",
+ 				"mq_unlink",
+ 				"mremap",
+ 				"msgctl",
+@@ -206,11 +212,13 @@ func DefaultProfile(rs *rspec.Spec) *rsp
+ 				"pipe2",
+ 				"poll",
+ 				"ppoll",
++				"ppoll_time64",
+ 				"prctl",
+ 				"pread64",
+ 				"preadv",
+ 				"prlimit64",
+ 				"pselect6",
++				"pselect6_time64",
+ 				"pwrite64",
+ 				"pwritev",
+ 				"read",
+@@ -221,6 +229,7 @@ func DefaultProfile(rs *rspec.Spec) *rsp
+ 				"recv",
+ 				"recvfrom",
+ 				"recvmmsg",
++				"recvmmsg_time64",
+ 				"recvmsg",
+ 				"remap_file_pages",
+ 				"removexattr",
+@@ -236,6 +245,7 @@ func DefaultProfile(rs *rspec.Spec) *rsp
+ 				"rt_sigreturn",
+ 				"rt_sigsuspend",
+ 				"rt_sigtimedwait",
++				"rt_sigtimedwait_time64",
+ 				"rt_tgsigqueueinfo",
+ 				"sched_getaffinity",
+ 				"sched_getattr",
+@@ -244,6 +254,7 @@ func DefaultProfile(rs *rspec.Spec) *rsp
+ 				"sched_get_priority_min",
+ 				"sched_getscheduler",
+ 				"sched_rr_get_interval",
++				"sched_rr_get_interval_time64",
+ 				"sched_setaffinity",
+ 				"sched_setattr",
+ 				"sched_setparam",
+@@ -255,6 +266,7 @@ func DefaultProfile(rs *rspec.Spec) *rsp
+ 				"semget",
+ 				"semop",
+ 				"semtimedop",
++				"semtimedop_time64",
+ 				"send",
+ 				"sendfile",
+ 				"sendfile64",
+@@ -321,10 +333,14 @@ func DefaultProfile(rs *rspec.Spec) *rsp
+ 				"timer_delete",
+ 				"timerfd_create",
+ 				"timerfd_gettime",
++				"timerfd_gettime64",
+ 				"timerfd_settime",
++				"timerfd_settime64",
+ 				"timer_getoverrun",
+ 				"timer_gettime",
++				"timer_gettime64",
+ 				"timer_settime",
++				"timer_settime64",
+ 				"times",
+ 				"tkill",
+ 				"truncate",
+@@ -336,6 +352,7 @@ func DefaultProfile(rs *rspec.Spec) *rsp
+ 				"unlinkat",
+ 				"utime",
+ 				"utimensat",
++				"utimensat_time64",
+ 				"utimes",
+ 				"vfork",
+ 				"vmsplice",

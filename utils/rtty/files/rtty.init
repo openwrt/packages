@@ -1,0 +1,92 @@
+#!/bin/sh /etc/rc.common
+
+USE_PROCD=1
+START=99
+
+BIN=/usr/sbin/rtty
+
+validate_rtty_section() {
+	uci_load_validate rtty rtty "$1" "$2" \
+		'interface:uci("network", "@interface"):lan' \
+		'id:maxlength(32)' \
+		'group:maxlength(16)' \
+		'description:maxlength(126)' \
+		'host:host' \
+		'port:port' \
+		'ssl:bool:0' \
+		'insecure:bool:0' \
+		'token:maxlength(32)' \
+		'username:string' \
+		'heartbeat:uinteger' \
+		'verbose:bool:0' \
+		'http_timeout:uinteger:30' \
+		'reconnect:bool:0' \
+		'cacert:file' \
+		'cert:file' \
+		'key:file'
+}
+
+start_rtty() {
+	. /lib/functions/network.sh
+
+	local ifname
+
+	[ "$2" = 0 ] || {
+		echo "validation failed" >&2
+		return 1
+	}
+
+	[ -n "$interface" ] && network_get_device ifname "$interface"
+
+	[ -z "$ifname" -a -z "$id" ] && {
+		echo "You must specify an interface or ID" >&2
+		return 1
+	}
+
+	[ -z "$host" ] && {
+		echo "host required" >&2
+		return 1
+	}
+
+	[ -z "$id" ] && {
+		id=$(sed 's/://g' /sys/class/net/$ifname/address | tr 'a-z' 'A-Z')
+	}
+
+	mkdir -p /var/etc
+	local conf_file=/var/etc/rtty.ini
+
+	printf '[rtty]\n' > "$conf_file"
+	printf 'id = %s\n' "$id" >> "$conf_file"
+	[ -n "$group" ] && printf 'group = %s\n' "$group" >> "$conf_file"
+	[ -n "$description" ] && printf 'description = %s\n' "$description" >> "$conf_file"
+	printf 'host = %s\n' "$host" >> "$conf_file"
+	[ -n "$port" ] && printf 'port = %s\n' "$port" >> "$conf_file"
+	[ -n "$token" ] && printf 'token = %s\n' "$token" >> "$conf_file"
+	[ -n "$username" ] && printf 'username = %s\n' "$username" >> "$conf_file"
+	[ -n "$heartbeat" ] && printf 'heartbeat = %s\n' "$heartbeat" >> "$conf_file"
+	[ -n "$http_timeout" ] && printf 'http-timeout = %s\n' "$http_timeout" >> "$conf_file"
+	[ "$reconnect" = "1" ] && printf 'reconnect = true\n' >> "$conf_file"
+	[ "$verbose" = "1" ] && printf 'verbose = true\n' >> "$conf_file"
+
+	printf '\n[ssl]\n' >> "$conf_file"
+	[ "$ssl" = "1" ] && printf 'enabled = true\n' >> "$conf_file"
+	[ "$insecure" = "1" ] && printf 'insecure = true\n' >> "$conf_file"
+	[ -n "$cacert" ] && printf 'cacert = %s\n' "$cacert" >> "$conf_file"
+	[ -n "$cert" ] && printf 'cert = %s\n' "$cert" >> "$conf_file"
+	[ -n "$key" ] && printf 'key = %s\n' "$key" >> "$conf_file"
+
+	procd_open_instance
+	procd_set_param command $BIN --conf "$conf_file"
+	procd_set_param respawn
+	procd_close_instance
+}
+
+start_service() {
+	config_load rtty
+	config_foreach validate_rtty_section rtty start_rtty
+}
+
+service_triggers() {
+	procd_add_reload_trigger "rtty"
+	procd_add_validation validate_rtty_section
+}

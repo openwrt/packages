@@ -1,0 +1,14 @@
+{
+	"bool": [
+		"IgnoreSelected",
+		"ReportByDevice",
+		"ReportInodes",
+		"ValuesAbsolute",
+		"ValuesPercentage"
+	],
+	"list": [
+		"Device",
+		"MountPoint",
+		"FSType"
+	]
+}

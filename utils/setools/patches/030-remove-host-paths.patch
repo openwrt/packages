@@ -1,0 +1,11 @@
+--- a/setup.py
++++ b/setup.py
+@@ -10,7 +10,7 @@ from Cython.Build import cythonize
+ 
+ 
+ # Library linkage
+-lib_dirs: list[str] = ['.', '/usr/lib64', '/usr/lib', '/usr/local/lib']
++lib_dirs: list[str] = ['.', os.environ["STAGING_DIR"] + '/usr/lib']
+ include_dirs: list[str] = []
+ 
+ userspace_src = os.getenv("USERSPACE_SRC", "")

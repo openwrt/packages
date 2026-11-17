@@ -1,0 +1,12 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+
+# install cleanup script that executes every 10 min
+boot() {
+    test -f /etc/crontabs/root || touch /etc/crontabs/root
+    grep -q '/usr/share/wginstaller/wg.sh cleanup_wginterfaces' /etc/crontabs/root || {
+        echo "*/10 * * * *	/usr/share/wginstaller/wg.sh cleanup_wginterfaces" >> /etc/crontabs/root
+    }
+    /etc/init.d/cron restart
+}

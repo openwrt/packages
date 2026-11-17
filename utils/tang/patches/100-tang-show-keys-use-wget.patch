@@ -1,0 +1,24 @@
+--- a/src/tang-show-keys
++++ b/src/tang-show-keys
+@@ -25,17 +25,17 @@ if [ $# -gt 2 ]; then
+     exit 1
+ fi
+ 
+-port=${1-80}
++port=${1-9090}
+ 
+ if test -n "$2"; then
+   first_letter=$(printf %.1s "$2")
+   if [ "${first_letter}" = "/" ]; then
+-      adv=$(curl -sSf "localhost:$port$2/adv")
++      adv=$(wget -qO- "http://127.0.0.1:$port$2/adv")
+   else
+-      adv=$(curl -sSf "localhost:$port/$2/adv")
++      adv=$(wget -qO- "http://127.0.0.1:$port/$2/adv")
+   fi
+ else
+-  adv=$(curl -sSf "localhost:$port/adv")
++  adv=$(wget -qO- "http://127.0.0.1:$port/adv")
+ fi
+ 
+ THP_DEFAULT_HASH=S256    # SHA-256.

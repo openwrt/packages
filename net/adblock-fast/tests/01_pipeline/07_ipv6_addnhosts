@@ -1,0 +1,50 @@
+Test that dnsmasq.addnhosts with ipv6_enabled produces both
+127.0.0.1 and :: entries (dual-stack).
+
+-- Testcase --
+import adb from 'adblock-fast';
+import { readfile } from 'fs';
+let ti = adb._test_internals;
+
+adb.env.load_config();
+ti.set_cfg('dns', 'dnsmasq.addnhosts');
+ti.set_cfg('ipv6_enabled', true);
+ti.set_cfg('dnsmasq_sanity_check', false);
+ti.set_cfg('dnsmasq_validity_check', false);
+ti.set_cfg('heartbeat_domain', null);
+ti.set_cfg('config_update_enabled', false);
+ti.set_cfg('update_config_sizes', false);
+ti.env.dns_set_output_values('dnsmasq.addnhosts');
+ti.append_urls();
+
+let ok = ti.download_lists();
+if (!ok) {
+	print('download_lists failed\n');
+} else {
+	let content = readfile(ti.dns_output.file) || '';
+	let lines = filter(split(content, '\n'), l => length(l) > 0);
+
+	let ipv4_lines = filter(lines, l => match(l, /^127\.0\.0\.1 /));
+	let ipv6_lines = filter(lines, l => match(l, /^:: /));
+
+	let results = [];
+	push(results, sprintf('ipv4_count: %d', length(ipv4_lines)));
+	push(results, sprintf('ipv6_count: %d', length(ipv6_lines)));
+	push(results, sprintf('counts_match: %s', length(ipv4_lines) == length(ipv6_lines) ? 'YES' : 'NO'));
+
+	// Spot-check a specific domain appears in both
+	let test_domain = 'ad.doubleclick.test.example.com';
+	let has_ipv4 = index(content, '127.0.0.1 ' + test_domain) >= 0;
+	let has_ipv6 = index(content, ':: ' + test_domain) >= 0;
+	push(results, sprintf('dual_stack_%s: %s', test_domain, (has_ipv4 && has_ipv6) ? 'YES' : 'NO'));
+
+	print(join('\n', results) + '\n');
+}
+-- End --
+
+-- Expect stdout --
+ipv4_count: 165
+ipv6_count: 165
+counts_match: YES
+dual_stack_ad.doubleclick.test.example.com: YES
+-- End --

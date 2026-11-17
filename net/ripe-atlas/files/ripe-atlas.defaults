@@ -1,0 +1,83 @@
+#!/bin/sh
+
+# Take over a probe left behind by atlas-sw-probe: RIPE knows a probe by
+# its ssh key. Once /etc/ripe-atlas/probe_key holds a key, ripe-atlas owns
+# the identity. A failed run is retried on the next boot, and until it
+# succeeds the init does not start the probe.
+
+. /lib/functions.sh
+
+NEW_KEY=/etc/ripe-atlas/probe_key
+OLD_INIT=/etc/init.d/atlas
+SEC='ripe-atlas.@ripe-atlas[0]'
+
+fail()
+{
+	rm -f "$NEW_KEY.new" "$NEW_KEY.pub.new"
+	logger -t ripe-atlas -p daemon.err "taking over atlas-sw-probe failed: $*"
+	exit 1
+}
+
+# Only one probe may present the key.
+finish()
+{
+	if [ -x "$OLD_INIT" ]; then
+		"$OLD_INIT" stop
+		"$OLD_INIT" disable
+		! "$OLD_INIT" enabled || fail "cannot disable $OLD_INIT"
+	fi
+	# create_key left the old copy world readable.
+	chmod 0600 /usr/libexec/atlas-probe-scripts/etc/probe_key /etc/atlas/probe_key \
+		2> /dev/null
+	exit 0
+}
+
+# The key atlas-sw-probe used, then the /etc/atlas copy create_key made,
+# which is all a sysupgrade keeps.
+for old_key in /usr/libexec/atlas-probe-scripts/etc/probe_key /etc/atlas/probe_key; do
+	[ -s "$old_key" ] && break
+	old_key=
+done
+[ -n "$old_key" ] || exit 0
+
+if [ -s "$NEW_KEY" ]; then
+	# The same key: finish a takeover that was interrupted.
+	cmp -s "$old_key" "$NEW_KEY" && finish
+	exit 0
+fi
+
+(umask 077 && cp "$old_key" "$NEW_KEY.new") || fail "cannot copy $old_key"
+# Deriving the public key also checks the private one. ssh-keygen does not
+# notice when the write fails.
+{ ssh-keygen -y -P '' -f "$NEW_KEY.new" < /dev/null > "$NEW_KEY.pub.new" &&
+	[ -s "$NEW_KEY.pub.new" ]; } || fail "cannot derive the public key of $old_key"
+
+# A full flash may have left the config empty, see the commit below.
+uci -q get "$SEC" > /dev/null ||
+	{ (umask 077 && touch /etc/config/ripe-atlas) &&
+		uci -q add ripe-atlas ripe-atlas > /dev/null; } ||
+	fail "cannot add a ripe-atlas section"
+if uci -q get atlas.common > /dev/null; then
+	uci set "$SEC.log_stdout=$(get_bool "$(uci -q get atlas.common.log_stdout)" 0)"
+	uci set "$SEC.log_stderr=$(get_bool "$(uci -q get atlas.common.log_stderr)" 0)"
+	uci set "$SEC.rxtx_report=$(get_bool "$(uci -q get atlas.common.rxtxrpt)" 1)"
+else
+	# The package manager removed the unmodified atlas.conf: its defaults.
+	uci set "$SEC.log_stderr=1"
+	uci set "$SEC.rxtx_report=1"
+fi
+mode="$(cat /usr/libexec/atlas-probe-scripts/state/mode 2> /dev/null)"
+case "$mode" in
+	prod|test|dev) uci set "$SEC.mode=$mode" ;;
+esac
+[ -x "$OLD_INIT" ] && ! "$OLD_INIT" enabled && uci set "$SEC.enabled=0"
+# uci commit can miss a full flash and leave an empty file.
+{ uci commit ripe-atlas && uci -q get "$SEC" > /dev/null; } ||
+	fail "cannot save the ripe-atlas config"
+
+{ mv "$NEW_KEY.pub.new" "$NEW_KEY.pub" && mv "$NEW_KEY.new" "$NEW_KEY"; } ||
+	fail "cannot install $NEW_KEY"
+# The caller deletes this script right away.
+sync
+logger -t ripe-atlas -p daemon.notice "took over the atlas-sw-probe key from $old_key"
+finish

@@ -1,0 +1,65 @@
+From 7f328b93ee2aa8bb4e94613b6ed218e7525d8dc0 Mon Sep 17 00:00:00 2001
+From: David Seifert <soap@gentoo.org>
+Date: Sat, 10 Jul 2021 13:06:57 +0200
+Subject: [PATCH] Do not force inlining of indirect functions
+
+* A function called indirectly cannot be decorated
+  with `__attribute((always_inline))`, as this is
+  guaranteed to only work with direct calls:
+    https://gcc.gnu.org/bugzilla/show_bug.cgi?id=63220#c1
+
+Bug: https://bugs.gentoo.org/798045
+---
+ libFDK/include/fft.h | 4 ++--
+ libFDK/src/fft.cpp   | 6 +++---
+ 2 files changed, 5 insertions(+), 5 deletions(-)
+
+--- a/libFDK/include/fft.h
++++ b/libFDK/include/fft.h
+@@ -139,7 +139,7 @@ void ifft(int length, FIXP_DBL *pInput,
+  * bit scale headroom. The values are interleaved, real/imag pairs.
+  */
+ LNK_SECTION_CODE_L1
+-static FDK_FORCEINLINE void fft_4(FIXP_DBL *x) {
++static inline void fft_4(FIXP_DBL *x) {
+   FIXP_DBL a00, a10, a20, a30, tmp0, tmp1;
+ 
+   a00 = (x[0] + x[4]) >> 1; /* Re A + Re B */
+@@ -168,7 +168,7 @@ static FDK_FORCEINLINE void fft_4(FIXP_D
+ 
+ #ifndef FUNCTION_fft_8
+ LNK_SECTION_CODE_L1
+-static FDK_FORCEINLINE void fft_8(FIXP_DBL *x) {
++static inline void fft_8(FIXP_DBL *x) {
+   FIXP_SPK w_PiFOURTH = {{FIXP_SGL(0x5A82), FIXP_SGL(0x5A82)}};
+ 
+   FIXP_DBL a00, a10, a20, a30;
+--- a/libFDK/src/fft.cpp
++++ b/libFDK/src/fft.cpp
+@@ -170,7 +170,7 @@ amm-info@iis.fraunhofer.de
+ 
+ /* Performs the FFT of length 2. Input vector unscaled, output vector scaled
+  * with factor 0.5 */
+-static FDK_FORCEINLINE void fft2(FIXP_DBL *RESTRICT pDat) {
++static inline void fft2(FIXP_DBL *RESTRICT pDat) {
+   FIXP_DBL r1, i1;
+   FIXP_DBL r2, i2;
+ 
+@@ -196,7 +196,7 @@ static FDK_FORCEINLINE void fft2(FIXP_DB
+ 
+ #ifndef FUNCTION_fft3
+ /* Performs the FFT of length 3 according to the algorithm after winograd. */
+-static FDK_FORCEINLINE void fft3(FIXP_DBL *RESTRICT pDat) {
++static inline void fft3(FIXP_DBL *RESTRICT pDat) {
+   FIXP_DBL r1, r2;
+   FIXP_DBL s1, s2;
+   FIXP_DBL pD;
+@@ -233,7 +233,7 @@ static FDK_FORCEINLINE void fft3(FIXP_DB
+ 
+ /* performs the FFT of length 5 according to the algorithm after winograd */
+ /* This version works with a prescale of 2 instead of 3 */
+-static FDK_FORCEINLINE void fft5(FIXP_DBL *RESTRICT pDat) {
++static inline void fft5(FIXP_DBL *RESTRICT pDat) {
+   FIXP_DBL r1, r2, r3, r4;
+   FIXP_DBL s1, s2, s3, s4;
+   FIXP_DBL t;

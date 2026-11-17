@@ -1,0 +1,13 @@
+<restconf>
+    <enable>true</enable>
+    <auth-type>none</auth-type>
+    <pretty>false</pretty>
+    <debug>0</debug>
+    <log-destination>syslog</log-destination>
+    <socket>
+      <namespace>default</namespace>
+      <address>0.0.0.0</address>
+      <port>80</port>
+      <ssl>false</ssl>
+    </socket>
+</restconf>

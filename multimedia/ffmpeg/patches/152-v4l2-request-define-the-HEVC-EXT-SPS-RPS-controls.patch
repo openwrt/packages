@@ -1,0 +1,54 @@
+From ed659ff2949bd9460cb6f921a8cf2cf78087078b Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 13 Nov 2026 19:30:35 +0000
+Subject: [PATCH] v4l2-request: define the HEVC EXT SPS RPS controls
+
+The HEVC hwaccel sets V4L2_CID_STATELESS_HEVC_EXT_SPS_ST_RPS and
+V4L2_CID_STATELESS_HEVC_EXT_SPS_LT_RPS only where linux/videodev2.h
+defines them. They are Linux 7.0 UAPI, newer than the kernel headers of
+the cross toolchain, so the hwaccel is built without them and rkvdec
+decodes HEVC inter pictures without its reference picture set tables.
+Define the two controls and their payloads when absent, as in Linux
+7.0 include/uapi/linux/v4l2-controls.h.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ libavcodec/v4l2_request_hevc.c | 27 +++++++++++++++++++++++++++
+ 1 file changed, 27 insertions(+)
+
+--- a/libavcodec/v4l2_request_hevc.c
++++ b/libavcodec/v4l2_request_hevc.c
+@@ -25,6 +25,33 @@
+ #include "internal.h"
+ #include "v4l2_request.h"
+ 
++#ifndef V4L2_CID_STATELESS_HEVC_EXT_SPS_ST_RPS
++#define V4L2_CID_STATELESS_HEVC_EXT_SPS_ST_RPS  (V4L2_CID_CODEC_STATELESS_BASE + 408)
++#define V4L2_CID_STATELESS_HEVC_EXT_SPS_LT_RPS  (V4L2_CID_CODEC_STATELESS_BASE + 409)
++
++#define V4L2_HEVC_EXT_SPS_ST_RPS_FLAG_INTER_REF_PIC_SET_PRED    0x1
++
++struct v4l2_ctrl_hevc_ext_sps_st_rps {
++    __u8    delta_idx_minus1;
++    __u8    delta_rps_sign;
++    __u8    num_negative_pics;
++    __u8    num_positive_pics;
++    __u32   used_by_curr_pic;
++    __u32   use_delta_flag;
++    __u16   abs_delta_rps_minus1;
++    __u16   delta_poc_s0_minus1[16];
++    __u16   delta_poc_s1_minus1[16];
++    __u16   flags;
++};
++
++#define V4L2_HEVC_EXT_SPS_LT_RPS_FLAG_USED_LT   0x1
++
++struct v4l2_ctrl_hevc_ext_sps_lt_rps {
++    __u16   lt_ref_pic_poc_lsb_sps;
++    __u16   flags;
++};
++#endif
++
+ #define V4L2_HEVC_CONTROLS_MAX 8
+ 
+ typedef struct V4L2RequestContextHEVC {

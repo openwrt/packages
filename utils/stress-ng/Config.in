@@ -1,0 +1,62 @@
+menu "Configuration"
+
+comment "Stressors that need an external library"
+
+config STRESS_NG_LIB_ACL
+	bool "libacl - POSIX access control list stressors"
+	default n
+
+config STRESS_NG_LIB_AIO
+	bool "libaio - asynchronous I/O stressors"
+	default y
+
+config STRESS_NG_LIB_APPARMOR
+	bool "libapparmor - AppArmor stressors"
+	default n
+
+config STRESS_NG_LIB_BSD
+	bool "libbsd - BSD compatibility stressors"
+	default y
+
+config STRESS_NG_LIB_CRYPT
+	bool "libcrypt - password hashing stressors"
+	default y
+
+config STRESS_NG_LIB_GMP
+	bool "libgmp - multiple-precision integer stressors"
+	default n
+
+config STRESS_NG_LIB_JPEG
+	bool "libjpeg - JPEG compression stressors"
+	default y
+
+config STRESS_NG_LIB_KMOD
+	bool "libkmod - kernel module stressors"
+	default y
+
+config STRESS_NG_LIB_LZMA
+	bool "liblzma - LZMA compression stressors"
+	default n
+
+config STRESS_NG_LIB_MD
+	bool "libmd - message digest stressors"
+	default n
+
+config STRESS_NG_LIB_MPFR
+	bool "libmpfr - multiple-precision float stressors"
+	select STRESS_NG_LIB_GMP
+	default n
+
+config STRESS_NG_LIB_SCTP
+	bool "libsctp - SCTP network stressors"
+	default y
+
+config STRESS_NG_LIB_XXHASH
+	bool "libxxhash - xxhash digest stressors"
+	default n
+
+config STRESS_NG_LIB_Z
+	bool "zlib - zlib compression stressors"
+	default y
+
+endmenu

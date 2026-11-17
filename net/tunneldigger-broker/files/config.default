@@ -1,0 +1,25 @@
+config broker
+	list port '53'
+	list port '123'
+	list port '8942'
+	option interface 'loopback'
+	option max_tunnels '1024'
+	option tunnel_id_base '100'
+	option pmtu '0'
+	option connection_rate_limit '0.2'
+	option connection_rate_limit_per_ip_count '0'
+	option connection_rate_limit_per_ip_time '0'
+
+config log
+	option verbosity 'INFO'
+	option log_ip_addresses '0'
+
+# To automatically put tunnel interfaces into pre-exitsing bridges
+# via the hook scripts, then create a bridge section for each 
+# supported mtu.  If pmtu is set to non-zero above, then only that 
+# bridge is needed.  To isolate the bridge ports, set isolate to '1'.
+# '0' is the default
+#config bridge
+#	option interface 'br-mybridge'
+#	option mtu '1446'
+#	option isolate '1'

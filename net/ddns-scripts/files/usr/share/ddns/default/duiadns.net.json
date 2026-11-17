@@ -1,0 +1,9 @@
+{
+	"name": "duiadns.net",
+	"ipv4": {
+		"url": "http://ip.duiadns.net/dynamic.duia?host=[DOMAIN]&password=[PASSWORD]&ip4=[IP]"
+	},
+	"ipv6": {
+		"url": "http://ip.duiadns.net/dynamic.duia?host=[DOMAIN]&password=[PASSWORD]&ip6=[IP]"
+	}
+}

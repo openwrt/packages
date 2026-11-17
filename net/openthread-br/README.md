@@ -1,0 +1,288 @@
+# OpenThread Border Router
+
+This package contains the OpenThread Border Router.
+
+## Requirements
+
+To use this package, you need a Thread Radio Co-Processor (RCP). Testing of
+this package was done with Nordic Semiconductor nRF52840 USB dongles.
+
+Building and flashing the dongle with the Thread RCP firmware is out of scope
+of this document.
+
+One caveat for this dongle is worth mentioning here. The nRF52840 USB dongle
+seems to come with the U2F bootloader. To get it in mass storage mode to copy a
+firmware file, you need to plug it in while pressing the reset button. However,
+after the initial flash with the ot-rcp firmware, this method stops working.
+Instead, you need to double press the reset button after plugging in the dongle.
+
+## Packaging decisions
+
+### Configurable package build
+
+OpenThread is complex software. Adding config options to change the build of
+the package will likely result in more bug reports. As the package and its
+dependencies are unlikely to fit in any router with small flash (16MB or less),
+I don't see much point in making things configurable for reducing size either.
+
+### Vendor and product name
+
+`OTBR_VENDOR_NAME` and `OTBR_PRODUCT_NAME` have to be set: the 2026.08.0 release removed
+the built-in defaults, and otbr-agent exits with `Vendor name must be set.`
+without them.
+
+They are deliberately set to the values those defaults had, `OpenThread` and
+`BorderRouter`, rather than to something OpenWrt specific. The pair forms the
+MeshCoP service instance name as `<vendor> <product>`, which is the name shown
+when adding the border router in a Thread client and the one already-paired
+clients have recorded, so changing it would rename every existing user's border
+router on upgrade.
+
+### Version string
+
+`OTBR_VERSION` is set to `PKG_VERSION`. Without it the build falls back to the
+CMake project version, because the repacked source tree has no git directory
+for `git describe` to read, so `otbr-agent --version` and the `Running ...`
+line it logs on every start would report `0.3.0` rather than the release the
+package was built from.
+
+The version test in the package CI matches on that string, so dropping this
+option would make the package fail it again.
+
+### Firewall support
+
+OpenWrt uses firewall4 with nftables. The OpenThread posix platform's own
+firewall (`OT_FIREWALL`) produces ipset/ip6tables rules, so it has always been
+disabled here and no Thread ingress filter existed at all.
+
+Since v2026.09.0 upstream provides exactly what
+https://github.com/openthread/ot-br-posix/issues/1675 asked for: an in-process
+nftables backend (`OTBR_NFTABLES`). It is enabled, so otbr-agent now installs
+the Thread ingress filter itself, through nftables in a table of its own,
+`inet otbr_<thread-if>`, matching what the rest of the system uses. It puts
+the table back when something else deletes it, as `fw4 flush` does on every
+firewall stop. This needs nf_tables kernel support at runtime, hence the
+`kmod-nft-core` dependency. The backend's NAT44 masquerade is only installed
+with `OTBR_NAT64`, which this package builds without, so `kmod-nft-nat` is
+not needed. `OT_FIREWALL` deliberately stays off: the in-process backend
+replaces its ipset producer wholesale, and upstream's CI builds the same
+pairing.
+
+The build also writes a `/usr/share/otbr/nftables-backend` marker recording
+which backend owns the rules. Nothing on an OpenWrt target reads it today (its
+consumers are upstream's setup scripts, which this package does not install);
+it is shipped as a debugging aid and for anything that later needs to tell the
+backends apart.
+
+### mDNS
+
+The package uses OpenThread's internal mDNS implementation
+(`-DOTBR_MDNS=openthread`), which is upstream's default. This drops the
+mDNSResponder dependency entirely: no separate daemon, and no Avahi, whose
+libavahi-client requirement would have pulled in D-Bus.
+
+The internal implementation advertises on a single infrastructure interface,
+the one selected by the `backbone_network` option. Anything that needs to be
+announced on more than one interface still needs a general-purpose responder.
+
+It coexists with umdns, which remains the provider for other packages'
+services. Both bind the wildcard address on port 5353 with SO_REUSEADDR, which
+is what admits the second bind and gets multicast delivered to both, and they
+never contend for a name: OpenThread's mDNS names its host after the Thread
+extended address, while umdns keeps `<hostname>.local`.
+
+Only multicast reaches both. A unicast datagram to port 5353 is delivered to
+one socket, so a unicast reply meant for one daemon can be received by the
+other. umdns does set SO_REUSEPORT, but only on a retry after its own bind
+fails, and that does not happen here because SO_REUSEADDR already admits the
+bind, so no SO_REUSEPORT group forms in either start order.
+
+### REST Server
+
+The REST server is enabled to make this package compatible with Home Assistant.
+It listens on 127.0.0.1 by default. `rest_listen_address` and
+`rest_listen_port` can move it, but the API is unauthenticated and can read and
+replace the Thread dataset — including the network key — so any non-loopback
+address must be firewalled to trusted hosts.
+
+### TREL support
+
+Thread Radio Encapsulation Link support is enabled, as it allows Border Routers
+to communicate over other links (e.g. Ethernet), reducing traffic over the
+802.15.4 radios.
+
+The following Github discussion contains a good explanation of TREL:
+https://github.com/openthread/openthread/discussions/8478
+
+### UCI/netifd support
+
+The package contains a minimal netifd protocol handler. This allows configuring
+the Thread network in /etc/config/network. The agent will be started by netifd,
+rather than using an init script.
+
+OpenThread does not store prefix information in non-volatile storage. As a
+result, every time the agent is restarted, a different prefix would be used.
+This is not very nice, and makes it very difficult to run the OpenThread Border
+Router on a device that is not your main router. Therefore, prefixes can be
+configured in /etc/config/network. This way, you can add a static route to the
+Thread prefix(es) in your main router, making it possible to access devices on
+the Thread network from your entire network.
+
+## Create network
+
+When starting the OpenThread Border Router for the first time, a Thread network
+must be created.
+
+As the agent is started by netifd, we first need to create an interface in
+/etc/config/network:
+
+```
+config interface 'thread'
+        option device 'wpan0'
+        option proto 'openthread'
+        option backbone_network 'lan'
+        option radio_url 'spinel+hdlc+uart:///dev/ttyACM0?uart-baudrate=460800'
+        list prefix 'fd6f:5772:5468:7200::/64 paros'
+        option verbose '0'
+```
+
+Only backbone_network, device and radio_url are required; the protocol handler
+fails the interface if one of them is missing, or if backbone_network names an
+interface that has no device. Everything else — dataset, prefix, verbose,
+rest_listen_address and rest_listen_port — is optional. See
+[REST Server](#rest-server) before moving the REST API off the loopback
+default. If something isn't working, check ifstatus for the OpenThread
+interface:
+
+```
+# ifup thread
+# ifstatus thread
+{
+        "up": false,
+        "pending": false,
+        "available": true,
+        "autostart": false,
+        "dynamic": false,
+        "proto": "openthread",
+        "data": {
+
+        },
+        "errors": [
+                {
+                        "subsystem": "openthread",
+                        "code": "MISSING_BACKBONE_NETWORK"
+                }
+        ]
+}
+```
+
+In the above example, the backbone_network option is missing.
+
+The protocol handler will automatically start the the Thread network, so we
+need to bring it down for the initial setup. This only needs to be done once.
+
+```
+ubus call otbr threadstop
+```
+
+### LuCI
+
+This package no longer ships a LuCI application; the web UI lives in the
+`luci-app-openthread` package in the openwrt/luci repository
+(https://github.com/openwrt/luci/pull/8871). Install that alongside this package
+for a web interface, on a LuCI feed recent enough to carry it — older feeds will
+not have the package yet.
+
+### CLI
+
+```
+ot-ctl dataset init new
+ot-ctl dataset panid 0x12ab
+ot-ctl dataset extpanid 12ab12ab12ab12ab
+ot-ctl dataset networkname OpenWrThread
+ot-ctl dataset networkkey ddf429af1c52d1735ffaf36fae343ee8
+ot-ctl dataset commit active
+ot-ctl ifconfig up
+ot-ctl thread start
+ot-ctl netdata register
+```
+
+### Configure route
+
+Before you can join a device to your new Thread network, you must add a route
+to the Thread prefix on the commissioner device via the OpenWrt router running
+the OpenThread Border Router.
+
+Get the prefix:
+```
+ot-ctl prefix
+```
+
+Example output:
+
+```
+fd6b:a92f:c531:1::/64 paros low f000
+Done
+```
+
+Configuring the route is out of scope of this document, but it must be done, or
+joining Thread devices will fail.
+
+### Get hex-encoded operational dataset TLV
+
+This is needed to join devices to the Thread Network.
+
+```
+ot-ctl dataset active -x
+```
+
+Example output:
+
+```
+0e080000000000010000000300001035060004001fffe00708fd488c6a892ec30c04106e220c964a14a7e10e9004691920ec390c0402a0f7f80102ffff030b5468726541646c6576696f0208ffffffffffffffff0510ddf429af1c52d1735ffaf36fae343ee8
+```
+
+## Join another OpenThread Border Router
+
+Simply configure the active dataset in /etc/config/network:
+
+```
+config interface 'thread'
+        option device 'wpan0'
+        option proto 'openthread'
+        option backbone_network 'lan'
+        option dataset '0e080000000000010000000300000f35060004001fffe0020836b86cd9746ab3080708fd9850cbe719b1d205101f11a11320828c7a6ebc2f2e675c0dca030e686f6d652d617373697374616e740102716f041025804ed78614258ebedf4e2db37b3b6e0c0402a0f7f8'
+        list prefix 'fd6f:5772:5468:7200::/64 paros'
+        option radio_url 'spinel+hdlc+uart:///dev/ttyACM0?uart-baudrate=460800'
+        option verbose '0'
+```
+
+Afterwards, bring up the interface:
+
+```
+ifup thread
+```
+
+## Join a Thread device via Matter
+
+### ESP32
+The following procedure has been tested with an ESP32-C6 using [the Matter
+lighting-app example](https://github.com/project-chip/connectedhomeip/tree/master/examples/lighting-app/esp32).
+Building and flashing that app is out of scope of this document.
+
+During startup, the lighting app will print the SetupQRCode to the serial
+console:
+
+```
+I (1614) chip[SVR]: SetupQRCode: [MT:Y.K9042C00KA0648G00]
+I (1624) chip[SVR]: Copy/paste the below URL in a browser to see the QR Code:
+I (1634) chip[SVR]: https://project-chip.github.io/connectedhomeip/qrcode.html?data=MT%3AY.K9042C00KA0648G00
+I (1644) chip[SVR]: Manual pairing code: [34970112332]
+```
+
+Decide on a node ID for the device.
+
+```
+./chip-tool pairing code-thread 0x65737933320000 hex:0e080000000000010000000300001035060004001fffe00708fd488c6a892ec30c04106e220c964a14a7e10e9004691920ec390c0402a0f7f80102ffff030b5468726541646c6576696f0208ffffffffffffffff0510ddf429af1c52d1735ffaf36fae343ee8 MT:Y.K9042C00KA0648G00 --paa-trust-store-path /path/to/connectedhomeip/credentials/test/attestation/
+```
+

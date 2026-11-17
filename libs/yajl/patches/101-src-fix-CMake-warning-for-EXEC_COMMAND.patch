@@ -1,0 +1,39 @@
+From c3358a76eb225ccc23f6bc6d65f15580a16888f6 Mon Sep 17 00:00:00 2001
+From: Christian Marangi <ansuelsmth@gmail.com>
+Date: Tue, 11 Nov 2025 18:19:54 +0100
+Subject: [PATCH] src: fix CMake warning for EXEC_COMMAND
+
+Fix CMake warning for EXEC_COMMAND by using the modern execute_process
+and add_custom_command.
+
+Fix CMake warning:
+
+CMake Warning (dev) at src/CMakeLists.txt:70 (EXEC_PROGRAM):
+  Policy CMP0153 is not set: The exec_program command should not be called.
+  Run "cmake --help-policy CMP0153" for policy details.  Use the cmake_policy
+  command to set the policy and suppress this warning.
+
+  Use execute_process() instead.
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
+---
+ src/CMakeLists.txt | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -67,9 +67,11 @@ CONFIGURE_FILE(yajl.pc.cmake ${shareDir}
+ FOREACH (header ${PUB_HDRS})
+   SET (header ${CMAKE_CURRENT_SOURCE_DIR}/${header})
+ 
+-  EXEC_PROGRAM(${CMAKE_COMMAND} ARGS -E copy_if_different ${header} ${incDir})
++  execute_process(
++    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${header} ${incDir}
++  )
+ 
+-  ADD_CUSTOM_COMMAND(TARGET yajl_s POST_BUILD
++  add_custom_command(TARGET yajl_s POST_BUILD
+       COMMAND ${CMAKE_COMMAND} -E copy_if_different ${header} ${incDir})
+ ENDFOREACH (header ${PUB_HDRS})
+ 

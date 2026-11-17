@@ -1,0 +1,36 @@
+From 7fb040bde69ebdfce48cf1a01c1a62fd4f8eef0a Mon Sep 17 00:00:00 2001
+From: Jules Maselbas <jmaselbas@zdiv.net>
+Date: Thu, 16 May 2024 12:01:00 +0200
+Subject: [PATCH] libapparamor: Define a portable version of gnu basename
+
+Since musl 1.2.5, basename(3) prototype is only provided in libgen.h
+(as mandated by POSIX) and not in strings.h. Also there is a major
+difference between the gnu basename and the one defined in libgen.h,
+the latter modify the argument string making them incompatible.
+
+Fix this by defining a portable version of basename using strchr.
+---
+ libraries/libapparmor/testsuite/test_multi.c | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+--- a/libraries/libapparmor/testsuite/test_multi.c
++++ b/libraries/libapparmor/testsuite/test_multi.c
+@@ -1,5 +1,3 @@
+-#define _GNU_SOURCE /* for glibc's basename version */
+-
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+@@ -7,6 +5,12 @@
+ 
+ #include <aalogparse.h>
+ 
++static const char *basename(const char *path)
++{
++	const char *p = strrchr(path, '/');
++	return p ? p + 1 : path;
++}
++
+ int print_results(aa_log_record *record);
+ 
+ int main(int argc, char **argv)

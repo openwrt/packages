@@ -1,0 +1,97 @@
+#!/bin/sh /etc/rc.common
+
+#
+# This is free software, licensed under the GNU General Public License v2.
+# See /LICENSE for more information.
+#
+
+START=99
+USE_PROCD=1
+alfred_args=""
+vis_args=""
+facters_dir="/etc/alfred"
+enable=0
+vis_enable=0
+
+append_interface()
+{
+	append "interfaces" "$1" ","
+}
+
+alfred_start() {
+	local args=""
+	local section="$1"
+	local disabled interface mode
+	local interfaces
+
+	# check if section is disabled
+	config_get_bool disabled "$section" disabled 0
+	[ $disabled = 0 ] || return 1
+
+	args="-f"
+
+	config_list_foreach "$section" "interface" append_interface
+	if [ -z "$interfaces" ]; then
+		config_get interface "$section" interface
+		append_interface "$interface"
+	fi
+	append args "-i $interfaces"
+
+	config_get mode "$section" mode
+	[ "$mode" = "master" ] && append args "-m"
+
+	config_get batmanif "$section" batmanif
+	append args "-b $batmanif"
+
+	append alfred_args "$args"
+	enable=1
+
+	config_get_bool start_vis "$section" start_vis 0
+	if [ "$start_vis" = 1 ] && [ -x /usr/sbin/batadv-vis ]; then
+		vis_enable=1
+		append vis_args "-i $batmanif -s"
+	fi
+
+	config_get_bool run_facters "$section" run_facters 0
+
+	return 0
+}
+
+start_service() {
+	config_load "alfred"
+	config_foreach alfred_start alfred
+
+	[ "$enable" = "0" ] && return 0
+
+	procd_open_instance "alfred"
+	procd_set_param command /usr/sbin/alfred
+	procd_append_param command ${alfred_args}
+	procd_close_instance
+
+	[ "$vis_enable" = "1" ] && {
+		procd_open_instance "batadv-vis"
+		procd_set_param command /usr/sbin/batadv-vis
+		procd_append_param command ${vis_args}
+		procd_close_instance
+	}
+
+	[ "$run_facters" = "1" ] && {
+		( for file in $facters_dir/* ; do [ -x $file ] && $file ; done )
+		if ! ( grep -q "for file in $facters_dir/\* ; do " /etc/crontabs/root 2>/dev/null ) ; then
+			echo "*/5 * * * * ( for file in $facters_dir/* ; do [ -x \$file ] && \$file ; done )" >> /etc/crontabs/root
+			/etc/init.d/cron enable
+			/etc/init.d/cron restart
+		fi
+	}
+}
+
+service_triggers() {
+	procd_add_reload_trigger "alfred"
+}
+
+stop_service() {
+	[ -e /etc/crontabs/root ] && {
+		sed "\|for file in $facters_dir/\* ; do |d" -i /etc/crontabs/root
+		/etc/init.d/cron restart
+	}
+}

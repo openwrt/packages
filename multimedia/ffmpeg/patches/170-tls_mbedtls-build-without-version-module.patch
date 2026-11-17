@@ -1,0 +1,49 @@
+From e8979a51f671fe2cb51d34c670abe10dfebc4c3f Mon Sep 17 00:00:00 2001
+From: Mirko Vogt <foss@mirko.in>
+Date: Thu, 10 Sep 2026 22:34:12 +0000
+Subject: [PATCH] avformat/tls_mbedtls: build without mbedTLS's version module
+
+mbedTLS's version module (MBEDTLS_VERSION_C) is optional and distributions
+building a size-optimised mbedTLS leave it out; mbedtls/version.h then does
+not declare mbedtls_version_get_number() and the unconditional call in
+tls_open() fails to compile:
+
+  libavformat/tls_mbedtls.c:637:9: error: implicit declaration of function
+  'mbedtls_version_get_number'
+
+The call only exists to detect mbedTLS 3.6.0, whose TLS 1.3 code cannot
+disable certificate verification. Query the version at runtime when the
+module is available and fall back to the compile-time MBEDTLS_VERSION_NUMBER
+otherwise; the two only differ when the headers do not match the library.
+
+Signed-off-by: Mirko Vogt <foss@mirko.in>
+
+---
+--- a/libavformat/tls_mbedtls.c
++++ b/libavformat/tls_mbedtls.c
+@@ -44,6 +44,16 @@
+ #include "libavutil/avstring.h"
+ #include "libavutil/random_seed.h"
+ 
++/* The version module is optional in mbedTLS (MBEDTLS_VERSION_C). */
++static unsigned int tls_mbedtls_version_number(void)
++{
++#if defined(MBEDTLS_VERSION_C)
++    return mbedtls_version_get_number();
++#else
++    return MBEDTLS_VERSION_NUMBER;
++#endif
++}
++
+ static int mbedtls_x509_fingerprint(char *cert_buf, size_t cert_sz, char **fingerprint)
+ {
+     unsigned char md[32];
+@@ -634,7 +644,7 @@ static int tls_open(URLContext *h, const
+ 
+ #ifdef MBEDTLS_SSL_PROTO_TLS1_3
+     // this version does not allow disabling certificate verification with TLSv1.3 (yes, really).
+-    if (mbedtls_version_get_number() == 0x03060000 && !shr->verify) {
++    if (tls_mbedtls_version_number() == 0x03060000 && !shr->verify) {
+         av_log(h, AV_LOG_INFO, "Forcing TLSv1.2 because certificate verification is disabled\n");
+         mbedtls_ssl_conf_max_tls_version(&tls_ctx->ssl_config, MBEDTLS_SSL_VERSION_TLS1_2);
+     }

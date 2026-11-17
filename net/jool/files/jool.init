@@ -1,0 +1,57 @@
+#!/bin/sh /etc/rc.common
+
+START=54
+STOP=54
+
+PROG_NAT64="/usr/bin/jool"
+PROG_SIIT="/usr/bin/jool_siit"
+
+CONFIGFILE_NAT64="/etc/jool/jool-nat64.conf.json"
+CONFIGFILE_SIIT="/etc/jool/jool-siit.conf.json"
+
+config_parser(){
+	enabled=0
+	enabled_nat64=0
+	enabled_siit=0
+
+	config_load "jool"
+
+	#verify if the services are enabled in the configuration and populate it's variables
+	config_get_bool enabled general enabled 0
+	config_get_bool enabled_nat64 nat64 enabled 0
+	config_get_bool enabled_siit siit enabled 0
+
+	#If the main service is not enabled exit
+	[ "$enabled" -eq 0 ] && return 1
+
+	#if nat64 is enabled continue
+	if [ "$enabled_nat64" -gt 0 ]; then
+		#check if the orer is to start or stop
+		if [ "$1" -gt 0 ]; then
+			#start jool
+			$PROG_NAT64 file handle $CONFIGFILE_NAT64
+		else
+			$PROG_NAT64 -f $CONFIGFILE_NAT64 instance remove
+		fi
+	fi
+
+	#if siit is enabled continue
+	if [ "$enabled_siit" -gt 0 ]; then
+		#check if the orer is to start or stop
+		if [ "$1" -gt 0 ]; then
+			#start jool
+			$PROG_SIIT file handle $CONFIGFILE_SIIT
+		else
+			$PROG_SIIT -f $CONFIGFILE_SIIT instance remove
+		fi
+	fi
+}
+
+start() {
+	config_parser 1
+}
+
+stop() {
+	config_parser 0
+
+}

@@ -1,0 +1,85 @@
+# SPDX-FileCopyrightText: 2022-2023 Stijn Tintel <stijn@linux-ipv6.be>
+# SPDX-License-Identifier: GPL-2.0-only
+
+include $(TOPDIR)/rules.mk
+
+PKG_NAME:=openthread-br
+PKG_VERSION:=2026.10.0
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+PKG_RELEASE:=1
+
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL=https://github.com/openthread/ot-br-posix.git
+PKG_MIRROR_HASH:=6f6d065f304e9a30de85c012cc0e075ec542183c4713b677d43b393c74e01693
+
+PKG_MAINTAINER:=Stijn Tintel <stijn@linux-ipv6.be>
+PKG_LICENSE:=BSD-3-Clause
+PKG_LICENSE_FILES:=LICENSE
+
+include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/cmake.mk
+
+define Package/openthread-br
+  CATEGORY:=Network
+  SECTION:=net
+  TITLE:=OpenThread Border Router
+  DEPENDS:= \
+	+kmod-nft-core \
+	+kmod-tun \
+	+libblobmsg-json \
+	+libjson-c \
+	+cJSON \
+	+libmnl \
+	+libncurses \
+	+libnetfilter-queue \
+	+libnftnl \
+	+libreadline \
+	+libstdcpp \
+	+libubox \
+	+libubus
+endef
+
+define Package/openthread-br/description
+  A Thread border router for POSIX-based platforms.
+endef
+
+define Package/openthread-br/conffiles
+/var/lib/thread
+endef
+
+CMAKE_OPTIONS += \
+	-DOT_BORDER_ROUTER=ON \
+	-DOT_CHANNEL_MANAGER=ON \
+	-DOT_CHANNEL_MONITOR=ON \
+	-DOT_FIREWALL=OFF \
+	-DOT_NAT64_BORDER_ROUTING=OFF \
+	-DOT_TARGET_OPENWRT=ON \
+	-DOTBR_BACKBONE_ROUTER=ON \
+	-DOTBR_BORDER_ROUTING=ON \
+	-DOTBR_MDNS=openthread \
+	-DOTBR_NAT64=OFF \
+	-DOTBR_NFTABLES=ON \
+	-DOTBR_OPENWRT=ON \
+	-DOTBR_PRODUCT_NAME=BorderRouter \
+	-DOTBR_REST=ON \
+	-DOTBR_SRP_SERVER_AUTO_ENABLE=ON \
+	-DOTBR_TREL=ON \
+	-DOTBR_VENDOR_NAME=OpenThread \
+	-DOTBR_VERSION=$(PKG_VERSION)
+
+TARGET_CFLAGS += -DOPENTHREAD_POSIX_CONFIG_DAEMON_SOCKET_BASENAME=\\\"/var/run/openthread-%s\\\"
+
+define Package/openthread-br/install
+	$(INSTALL_DIR) \
+		$(1)/etc/init.d \
+		$(1)/lib/netifd/proto \
+		$(1)/usr/sbin \
+		$(1)/usr/share/otbr
+	$(INSTALL_BIN) ./files/openthread-proto.sh $(1)/lib/netifd/proto/openthread.sh
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/* $(1)/usr/sbin
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/otbr/nftables-backend \
+		$(1)/usr/share/otbr
+endef
+
+
+$(eval $(call BuildPackage,openthread-br))

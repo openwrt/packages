@@ -1,0 +1,154 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2021 Tianling Shen <cnsztl@immortalwrt.org>
+
+USE_PROCD=1
+START=90
+
+CONF="dnsproxy"
+PROG="/usr/bin/dnsproxy"
+
+is_enabled() {
+	local enabled
+	config_get_bool enabled "$1" "$2" "0"
+	if [ "$enabled" -eq "1" ]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
+is_empty() {
+	local empty
+	config_get empty "$1" "$2" $3
+	if [ -z "$empty" ]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
+append_param() {
+	procd_append_param command "$1" $2
+}
+
+append_param_arg() {
+	local value
+	config_get value "$1" "$2" $4
+	[ -n "$value" ] && append_param "$3" "$value"
+}
+
+append_param_bool() {
+	is_enabled "$1" "$2" && append_param "--${2//_/-}"
+}
+
+load_config_arg() {
+	append_param_bool "$1" "http3"
+	append_param_bool "$1" "insecure"
+	append_param_bool "$1" "ipv6_disabled"
+	append_param_bool "$1" "refuse_any"
+	append_param_bool "$1" "verbose"
+}
+
+load_config_list() {
+	if is_empty "global" "listen_addr"; then
+		append_param "--listen" "127.0.0.1"
+	else
+		config_list_foreach "global" "listen_addr" "append_param '--listen'"
+	fi
+
+	if is_empty "global" "listen_port"; then
+		append_param "--port" "5353"
+	else
+		config_list_foreach "global" "listen_port" "append_param '--port'"
+	fi
+
+	is_empty "bogus_nxdomain" "ip_addr" || config_list_foreach "bogus_nxdomain" "ip_addr" "append_param '--bogus-nxdomain'"
+
+	is_enabled "private_rdns" "enabled" && {
+		append_param "--use-private-rdns"
+		config_list_foreach "private_rdns" "upstream" "append_param '--private-rdns-upstream'"
+	}
+
+	for i in "bootstrap" "fallback" "upstream"; do
+		is_empty "servers" "$i" || config_list_foreach "servers" "$i" "append_param '--$i'"
+	done
+}
+
+load_config_param() {
+	append_param_arg "global" "log_file" "--output"
+	append_param_arg "global" "max_go_routines" "--max-go-routines"
+	append_param_arg "global" "rate_limit" "--ratelimit"
+	append_param_arg "global" "timeout" "--timeout"
+	append_param_arg "global" "udp_buf_size" "--udp-buf-size"
+	append_param_arg "global" "upstream_mode" "--upstream-mode"
+
+	is_enabled "cache" "enabled" && {
+		append_param "--cache"
+		append_param_bool "cache" "cache_optimistic"
+		append_param_arg "cache" "size" "--cache-size"
+		append_param_arg "cache" "min_ttl" "--cache-min-ttl"
+		append_param_arg "cache" "max_ttl" "--cache-max-ttl"
+	}
+
+	is_enabled "dns64" "enabled" && {
+		append_param "--dns64"
+		append_param_arg "dns64" "dns64_prefix" "--dns64-prefix"
+	}
+
+	is_enabled "edns" "enabled" && {
+		append_param "--edns"
+		append_param_arg "edns" "edns_addr" "--edns-addr"
+	}
+
+	is_enabled "tls" "enabled" && {
+		append_param_arg "tls" "tls_crt" "--tls-crt"
+		append_param_arg "tls" "tls_key" "--tls-key"
+		append_param_arg "tls" "https_port" "--https-port"
+		append_param_arg "tls" "tls_port" "--tls-port"
+		append_param_arg "tls" "quic_port" "--quic-port"
+	}
+}
+
+start_service() {
+	config_load "$CONF"
+
+	is_enabled "global" "enabled" || return 1
+
+	local log_file tls_crt tls_key
+	config_get log_file global log_file
+	config_get tls_crt tls tls_crt
+	config_get tls_key tls tls_key
+
+	procd_open_instance "$CONF"
+	procd_set_param command "$PROG"
+
+	load_config_arg "global"
+	load_config_list
+	load_config_param
+
+	# This must be set at last, all other options set after this will be ignored
+	is_enabled "hosts" "enabled" && {
+		append_param "--hosts-file-enabled=true"
+		config_list_foreach "hosts" "hosts_files" "append_param '--hosts-files'"
+	} || append_param "--hosts-file-enabled=false"
+
+	procd_set_param respawn
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_set_param user dnsproxy
+
+	procd_add_jail dnsproxy ronly log
+	procd_set_param capabilities "/etc/capabilities/dnsproxy.json"
+	procd_add_jail_mount "/etc/hosts"
+	procd_add_jail_mount "/etc/ssl/certs/ca-certificates.crt"
+	[ -z "$log_file" ] || procd_add_jail_mount_rw "$log_file"
+	[ -z "$tls_crt" ] || procd_add_jail_mount "$tls_crt"
+	[ -z "$tls_key" ] || procd_add_jail_mount "$tls_key"
+	is_enabled "hosts" "enabled" && config_list_foreach "hosts" "hosts_files" "procd_add_jail_mount"
+
+	procd_close_instance
+}
+
+service_triggers() {
+	procd_add_reload_trigger "$CONF"
+}

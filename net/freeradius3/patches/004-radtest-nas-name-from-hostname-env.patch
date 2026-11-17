@@ -1,0 +1,28 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Alexandru Ardelean <alex@shruggie.ro>
+Date: Wed, 3 Jun 2026 01:48:03 +0300
+Subject: [PATCH] radtest: use $HOSTNAME for the NAS name when it is set
+
+radtest derives the NAS name from `hostname` or `uname -n`, neither of
+which is guaranteed to be present in a minimal image. Prefer the
+$HOSTNAME environment variable when the shell exports it, and keep the
+original command substitution as the fallback.
+
+Signed-off-by: Alexandru Ardelean <alex@shruggie.ro>
+---
+--- a/src/main/radtest.in
++++ b/src/main/radtest.in
+@@ -117,7 +117,12 @@ if [ "$7" ]
+ then
+ 	nas=$7
+ else
+-	nas=`(hostname || uname -n) 2>/dev/null | sed 1q`
++	if [ -n "$HOSTNAME" ]
++	then
++		nas=$HOSTNAME
++	else
++		nas=`(hostname || uname -n) 2>/dev/null | sed 1q`
++	fi
+ fi
+ 
+ (

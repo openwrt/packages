@@ -1,0 +1,330 @@
+--- a/pkg/utils/broadcast_rule.go
++++ b/pkg/utils/broadcast_rule.go
+@@ -25,7 +25,7 @@ func addPostRoutingBroadcastRule(opts ma
+ 
+ 	tb := &nftables.Table{
+ 		Name:   tableName,
+-		Family: nftables.TableFamilyIPv4,
++		Family: nftables.TableFamilyINet,
+ 	}
+ 
+ 	ch := &nftables.Chain{
+--- a/pkg/utils/chain_jump_rule.go
++++ b/pkg/utils/chain_jump_rule.go
+@@ -26,11 +26,8 @@ func DeleteJumpRule(v, tableName, srcCha
+ 	tb := &nftables.Table{
+ 		Name: tableName,
+ 	}
+-	if v == "4" {
+-		tb.Family = nftables.TableFamilyIPv4
+-	} else {
+-		tb.Family = nftables.TableFamilyIPv6
+-	}
++
++	tb.Family = nftables.TableFamilyINet
+ 
+ 	ch := &nftables.Chain{
+ 		Name:  srcChainName,
+@@ -159,11 +156,8 @@ func createJumpRule(v, tableName, srcCha
+ 	tb := &nftables.Table{
+ 		Name: tableName,
+ 	}
+-	if v == "4" {
+-		tb.Family = nftables.TableFamilyIPv4
+-	} else {
+-		tb.Family = nftables.TableFamilyIPv6
+-	}
++
++	tb.Family = nftables.TableFamilyINet
+ 
+ 	ch := &nftables.Chain{
+ 		Name:  srcChainName,
+--- a/pkg/utils/chains.go
++++ b/pkg/utils/chains.go
+@@ -33,14 +33,8 @@ func IsChainExists(v, tableName, chainNa
+ 		if chain.Table.Name != tableName {
+ 			continue
+ 		}
+-		if v == "4" {
+-			if chain.Table.Family != nftables.TableFamilyIPv4 {
+-				continue
+-			}
+-		} else {
+-			if chain.Table.Family != nftables.TableFamilyIPv6 {
+-				continue
+-			}
++		if chain.Table.Family != nftables.TableFamilyINet {
++			continue
+ 		}
+ 		return true, nil
+ 	}
+@@ -100,11 +94,8 @@ func CreateChain(v, tableName, chainName
+ 		Name: tableName,
+ 	}
+ 
+-	if v == "4" {
+-		tb.Family = nftables.TableFamilyIPv4
+-	} else {
+-		tb.Family = nftables.TableFamilyIPv6
+-	}
++	tb.Family = nftables.TableFamilyINet
++
+ 	ch := &nftables.Chain{
+ 		Name:  chainName,
+ 		Table: tb,
+@@ -178,11 +169,9 @@ func CreateFilterForwardChain(v, tableNa
+ 	tb := &nftables.Table{
+ 		Name: tableName,
+ 	}
+-	if v == "4" {
+-		tb.Family = nftables.TableFamilyIPv4
+-	} else {
+-		tb.Family = nftables.TableFamilyIPv6
+-	}
++
++	tb.Family = nftables.TableFamilyINet
++
+ 	ch := &nftables.Chain{
+ 		Name:     chainName,
+ 		Table:    tb,
+@@ -217,11 +206,8 @@ func DeleteChain(v, tableName, chainName
+ 	tb := &nftables.Table{
+ 		Name: tableName,
+ 	}
+-	if v == "4" {
+-		tb.Family = nftables.TableFamilyIPv4
+-	} else {
+-		tb.Family = nftables.TableFamilyIPv6
+-	}
++
++	tb.Family = nftables.TableFamilyINet
+ 
+ 	ch := &nftables.Chain{
+ 		Name:  chainName,
+--- a/pkg/utils/dest_nat.go
++++ b/pkg/utils/dest_nat.go
+@@ -34,11 +34,8 @@ func AddDestinationNatRules(opts map[str
+ 	tb := &nftables.Table{
+ 		Name: tableName,
+ 	}
+-	if v == "4" {
+-		tb.Family = nftables.TableFamilyIPv4
+-	} else {
+-		tb.Family = nftables.TableFamilyIPv6
+-	}
++
++	tb.Family = nftables.TableFamilyINet
+ 
+ 	ch := &nftables.Chain{
+ 		Name:  chainName,
+--- a/pkg/utils/dest_nat_rewrite.go
++++ b/pkg/utils/dest_nat_rewrite.go
+@@ -28,11 +28,8 @@ func AddDestinationNatRewriteRules(opts
+ 	tb := &nftables.Table{
+ 		Name: tableName,
+ 	}
+-	if v == "4" {
+-		tb.Family = nftables.TableFamilyIPv4
+-	} else {
+-		tb.Family = nftables.TableFamilyIPv6
+-	}
++
++	tb.Family = nftables.TableFamilyINet
+ 
+ 	ch := &nftables.Chain{
+ 		Name:  chainName,
+--- a/pkg/utils/filter_forward_inbound_traffic_rule.go
++++ b/pkg/utils/filter_forward_inbound_traffic_rule.go
+@@ -16,11 +16,8 @@ func addFilterForwardInboundTrafficRule(
+ 	tb := &nftables.Table{
+ 		Name: tableName,
+ 	}
+-	if v == "4" {
+-		tb.Family = nftables.TableFamilyIPv4
+-	} else {
+-		tb.Family = nftables.TableFamilyIPv6
+-	}
++
++	tb.Family = nftables.TableFamilyINet
+ 
+ 	ch := &nftables.Chain{
+ 		Name:  chainName,
+--- a/pkg/utils/filter_forward_intra_interface_rule.go
++++ b/pkg/utils/filter_forward_intra_interface_rule.go
+@@ -16,11 +16,8 @@ func addFilterForwardIntraInterfaceRule(
+ 	tb := &nftables.Table{
+ 		Name: tableName,
+ 	}
+-	if v == "4" {
+-		tb.Family = nftables.TableFamilyIPv4
+-	} else {
+-		tb.Family = nftables.TableFamilyIPv6
+-	}
++
++	tb.Family = nftables.TableFamilyINet
+ 
+ 	ch := &nftables.Chain{
+ 		Name:  chainName,
+--- a/pkg/utils/filter_forward_mapped_port_rules.go
++++ b/pkg/utils/filter_forward_mapped_port_rules.go
+@@ -32,11 +32,8 @@ func AddFilterForwardMappedPortRules(opt
+ 	tb := &nftables.Table{
+ 		Name: tableName,
+ 	}
+-	if v == "4" {
+-		tb.Family = nftables.TableFamilyIPv4
+-	} else {
+-		tb.Family = nftables.TableFamilyIPv6
+-	}
++
++	tb.Family = nftables.TableFamilyINet
+ 
+ 	ch := &nftables.Chain{
+ 		Name:  chainName,
+@@ -247,11 +244,8 @@ func RemoveFilterForwardMappedPortRules(
+ 	tb := &nftables.Table{
+ 		Name: tableName,
+ 	}
+-	if v == "4" {
+-		tb.Family = nftables.TableFamilyIPv4
+-	} else {
+-		tb.Family = nftables.TableFamilyIPv6
+-	}
++
++	tb.Family = nftables.TableFamilyINet
+ 
+ 	ch := &nftables.Chain{
+ 		Name:  chainName,
+--- a/pkg/utils/filter_forward_outbound_traffic_rule.go
++++ b/pkg/utils/filter_forward_outbound_traffic_rule.go
+@@ -16,11 +16,8 @@ func addFilterForwardOutboundTrafficRule
+ 	tb := &nftables.Table{
+ 		Name: tableName,
+ 	}
+-	if v == "4" {
+-		tb.Family = nftables.TableFamilyIPv4
+-	} else {
+-		tb.Family = nftables.TableFamilyIPv6
+-	}
++
++	tb.Family = nftables.TableFamilyINet
+ 
+ 	ch := &nftables.Chain{
+ 		Name:  chainName,
+--- a/pkg/utils/get_chain_props.go
++++ b/pkg/utils/get_chain_props.go
+@@ -33,14 +33,8 @@ func GetChainProps(v, tableName, chainNa
+ 	var chain *nftables.Chain
+ 
+ 	for _, c := range chains {
+-		if v == "4" {
+-			if c.Table.Family != nftables.TableFamilyIPv4 {
+-				continue
+-			}
+-		} else {
+-			if c.Table.Family != nftables.TableFamilyIPv6 {
+-				continue
+-			}
++		if c.Table.Family != nftables.TableFamilyINet {
++			continue
+ 		}
+ 		if chainName != c.Name {
+ 			continue
+@@ -66,11 +60,8 @@ func GetChainProps(v, tableName, chainNa
+ 	tb := &nftables.Table{
+ 		Name: tableName,
+ 	}
+-	if v == "4" {
+-		tb.Family = nftables.TableFamilyIPv4
+-	} else {
+-		tb.Family = nftables.TableFamilyIPv6
+-	}
++
++	tb.Family = nftables.TableFamilyINet
+ 
+ 	ch := &nftables.Chain{
+ 		Name:  chainName,
+--- a/pkg/utils/local_multicast_rule.go
++++ b/pkg/utils/local_multicast_rule.go
+@@ -23,11 +23,8 @@ func addPostRoutingLocalMulticastRule(op
+ 	tb := &nftables.Table{
+ 		Name: tableName,
+ 	}
+-	if v == "4" {
+-		tb.Family = nftables.TableFamilyIPv4
+-	} else {
+-		tb.Family = nftables.TableFamilyIPv6
+-	}
++
++	tb.Family = nftables.TableFamilyINet
+ 
+ 	ch := &nftables.Chain{
+ 		Name:  chainName,
+--- a/pkg/utils/log_deny_rule.go
++++ b/pkg/utils/log_deny_rule.go
+@@ -16,11 +16,8 @@ func addLogDenyRule(v, tableName, chainN
+ 	tb := &nftables.Table{
+ 		Name: tableName,
+ 	}
+-	if v == "4" {
+-		tb.Family = nftables.TableFamilyIPv4
+-	} else {
+-		tb.Family = nftables.TableFamilyIPv6
+-	}
++
++	tb.Family = nftables.TableFamilyINet
+ 
+ 	ch := &nftables.Chain{
+ 		Name:  chainName,
+--- a/pkg/utils/source_nat.go
++++ b/pkg/utils/source_nat.go
+@@ -29,7 +29,7 @@ func addPostRoutingSourceNatRule(opts ma
+ 
+ 	tb := &nftables.Table{
+ 		Name:   tableName,
+-		Family: nftables.TableFamilyIPv4,
++		Family: nftables.TableFamilyINet,
+ 	}
+ 
+ 	ch := &nftables.Chain{
+@@ -97,7 +97,7 @@ func AddPostRoutingDestNatRule(opts map[
+ 
+ 	tb := &nftables.Table{
+ 		Name:   tableName,
+-		Family: nftables.TableFamilyIPv4,
++		Family: nftables.TableFamilyINet,
+ 	}
+ 
+ 	ch := &nftables.Chain{
+--- a/pkg/utils/tables.go
++++ b/pkg/utils/tables.go
+@@ -34,14 +34,8 @@ func IsTableExist(v, tableName string) (
+ 		if table.Name != tableName {
+ 			continue
+ 		}
+-		if v == "4" {
+-			if table.Family != nftables.TableFamilyIPv4 {
+-				continue
+-			}
+-		} else {
+-			if table.Family != nftables.TableFamilyIPv6 {
+-				continue
+-			}
++		if table.Family != nftables.TableFamilyINet {
++			continue
+ 		}
+ 		return true, nil
+ 	}
+@@ -62,11 +56,7 @@ func CreateTable(v, tableName string) er
+ 	t := &nftables.Table{
+ 		Name: tableName,
+ 	}
+-	if v == "4" {
+-		t.Family = nftables.TableFamilyIPv4
+-	} else {
+-		t.Family = nftables.TableFamilyIPv6
+-	}
++	t.Family = nftables.TableFamilyINet
+ 	conn.AddTable(t)
+ 	if err := conn.Flush(); err != nil {
+ 		return err

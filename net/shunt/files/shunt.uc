@@ -1,0 +1,1279 @@
+#!/usr/bin/ucode
+// shunt - policy based routing daemon
+//
+// Reads the config, renders the ruleset and the routes, applies them, then
+// keeps the learned sets fed from a poll cycle and a passive DNS observer.
+// All decisions live in the modules; this file is wiring.
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (c) 2026 Dirk Brenken <dev@brenken.org>
+
+import { popen, writefile, readfile, unlink, mkdir, error as fs_error } from 'fs';
+import { openlog, syslog, LOG_PID, LOG_DAEMON, LOG_ERR, LOG_WARNING,
+	LOG_NOTICE, LOG_INFO, LOG_DEBUG } from 'log';
+import { load as cfg_load, parse as cfg_parse, MIN as cfg_min } from 'shunt.config';
+import { compile as match_compile } from 'shunt.match';
+import { load as files_load, DIR as FILES_DIR } from 'shunt.list_file';
+import { PATH as LEARNED, fingerprints as learned_fps, save as learned_save,
+	load as learned_load } from 'shunt.learned';
+import { action_name, compile as nft_compile, flip as nft_flip, active as nft_active,
+	refresh, teardown,
+	addr_family, TABLE } from 'shunt.nft';
+import { compile as route_compile, state_ops as route_state_ops,
+	stale as route_stale, route_key, conf_dev } from 'shunt.route';
+import { open as rt_open, exec as rt_exec, describe as rt_describe } from 'shunt.rt';
+import { open as snoop_open, observe, RECV_LEN } from 'shunt.snoop';
+import { names as poll_names, plan as poll_plan,
+	addresses as poll_addresses,
+	index_results as poll_index } from 'shunt.poll';
+import { resolve as netifd_resolve } from 'shunt.netifd';
+import { tproxy as tproxy_available, br_netfilter, ipv6 } from 'shunt.probe';
+import { create as dedupe_create } from 'shunt.dedupe';
+import { TRACK, echo as track_echo, reply as track_reply, step as track_step,
+	targets as track_targets, open as track_open } from 'shunt.track';
+
+const RT_TABLES = '/etc/iproute2/rt_tables.d/shunt.conf';
+const TAG = 'shunt';
+
+let verbose = false;
+
+let dbg = false;
+
+// syslog(3) through the binding, not a `logger` process per line. '%s' as the
+// format because syslog() runs sprintf over its arguments, and an ip error
+// text can contain a percent sign.
+const PRIO = { err: LOG_ERR, warn: LOG_WARNING, notice: LOG_NOTICE,
+	info: LOG_INFO, debug: LOG_DEBUG };
+
+openlog(TAG, LOG_PID, LOG_DAEMON);
+
+function log(prio, msg) {
+	syslog(PRIO[prio] ?? LOG_NOTICE, '%s', msg);
+
+	if (verbose)
+		warn(sprintf('[%s] %s\n', prio, msg));
+}
+
+function debug(msg) {
+	if (dbg)
+		log('debug', msg);
+}
+
+let ubus_conn = null;
+
+function ubus() {
+	if (ubus_conn != null)
+		return ubus_conn;
+
+	try {
+		ubus_conn = require('ubus').connect();
+	}
+	catch (e) {
+		ubus_conn = false;
+	}
+
+	if (!ubus_conn)
+		log('warn', 'ubus unavailable - gateway discovery and interface events disabled');
+
+	return ubus_conn;
+}
+
+function netifd_dump() {
+	let c = ubus();
+	return c ? c.call('network.interface', 'dump') : null;
+}
+
+function load_config() {
+	let sections = cfg_load();
+
+	if (sections == null) {
+		log('err', 'ucode-mod-uci missing');
+		return null;
+	}
+
+	return cfg_parse(sections);
+}
+
+function report(kind, issues) {
+	for (let i in issues)
+		log('warn', sprintf('%s: %J', kind, i));
+}
+
+// The one remaining child process besides `nft -f -`: nft's own existence
+// check for the table. Not called `run` - that name is the daemon's own
+// entry point.
+function quiet(argv) {
+	return system([ '/bin/sh', '-c', 'exec "$0" "$@" 2>/dev/null', ...argv ]);
+}
+
+let rtnl_mod = null;
+
+// Routes and rules go over rtnetlink through ucode-mod-rtnl. Without the
+// module nothing can be routed, so a missing one is an error, once.
+function rtnl() {
+	if (rtnl_mod != null)
+		return rtnl_mod;
+
+	rtnl_mod = rt_open() ?? false;
+
+	if (!rtnl_mod)
+		log('err', 'ucode-mod-rtnl missing - routes and rules cannot be applied');
+
+	return rtnl_mod;
+}
+
+// Fire and forget, the keeper's and the teardown's way: an EEXIST on a
+// rule that is already there or an ESRCH on one that is already gone is
+// the expected answer, not a fault.
+function rt_quiet(ops) {
+	let rt = rtnl();
+
+	if (!rt)
+		return;
+
+	for (let op in ops)
+		rt_exec(rt, op);
+}
+
+function nft_pipe(batch, what) {
+	let fh = popen('nft -f -', 'w');
+
+	if (!fh) {
+		log('err', sprintf('%s: cannot spawn nft: %s', what, fs_error()));
+		return false;
+	}
+
+	fh.write(batch);
+
+	let rc = fh.close();
+	if (rc != 0) {
+		log('err', sprintf('%s: nft exited %d', what, rc));
+		return false;
+	}
+
+	return true;
+}
+
+// Seconds on CLOCK_MONOTONIC. Everything that measures a lifetime or a
+// duration uses it: the kernel's element timeouts do not follow the wall
+// clock either, and the wall clock jumps - at boot an OpenWrt box starts
+// from the newest file timestamp and NTP moves it, forward or back, while
+// shunt is already running. time() is left for what is shown as a date.
+function mono() {
+	return clock(true)[0];
+}
+
+// shunt's table check
+function table_present() {
+	return quiet([ 'nft', '-t', 'list', 'table', ...split(TABLE, ' ') ]) == 0;
+}
+
+// A write from snoop carries the TTL of the answer it was learned from; one
+// from poll carries none. Either way the element lives no longer than
+// entry_ttl and no shorter than its floor, so a zero TTL still gets a few
+// seconds of coverage and a week-long one does not pin a stale address.
+function queue_writes(st, writes, now) {
+	let max = st.state.cfg.global.entry_ttl;
+	let min = cfg_min.entry_ttl;
+	let fresh = 0;
+
+	for (let w in writes) {
+		if (!st.state.nft.learn[w.set])
+			continue;
+
+		// A kept element brings the time it has left, which may well be
+		// below the floor; it is not stretched to it.
+		let ttl = w.ttl ?? max;
+		w.ttl = (ttl < min && !w.kept) ? min : (ttl > max) ? max : ttl;
+
+		let d = st.cache.due(w.set, w.addr, now, w.ttl);
+
+		if (!d)
+			continue;
+
+		// Anybody on an observed segment can put a frame on the wire that
+		// reads as a DNS answer, so what a set learns is bounded - see
+		// dedupe.uc. Counted per policy, both families together, and said
+		// once per set and poll interval.
+		if (d == 'full') {
+			let pname = substr(w.set, 3);
+
+			st.stats.capped[pname] = (st.stats.capped[pname] ?? 0) + 1;
+
+			if (!st.full_warned[w.set]) {
+				st.full_warned[w.set] = true;
+				log('warn', sprintf('set %s is full, learn_limit is %d - new addresses are not learned until older ones expire',
+					w.set, st.state.cfg.global.learn_limit));
+			}
+			continue;
+		}
+
+		st.pending[`${w.set}/${w.addr}`] = w;
+		if (d == 'new')
+			fresh++;
+	}
+
+	return fresh;
+}
+
+// Re-creates the table if it went away
+function ensure_table(st) {
+	if (table_present()) {
+		st.lost = false;
+		return 'ok';
+	}
+
+	if (!st.lost) {
+		st.lost = true;
+		log('warn', 'ruleset gone from the kernel - re-applying; `fw4 flush`, as run by `/etc/init.d/firewall stop`, deletes every nftables table');
+	}
+
+	if (!nft_pipe(st.state.nft.setup, 'setup'))
+		return 'failed';
+
+	st.lost = false;
+	st.stats.reapplied++;
+
+	// The kernel lost the learned elements with the table, shunt did not:
+	// queue what is still running for the next write, with the time it has
+	// left. Not written from here - ensure_table() runs inside
+	// drain_writes() too.
+	let now = mono();
+	let keep = st.cache.dump(now);
+
+	st.cache.reset();
+	for (let e in keep) {
+		e.ttl = e.exp - now;
+		e.kept = true;
+	}
+	queue_writes(st, keep, now);
+
+	log('notice', sprintf('ruleset re-applied - %d learned address(es) queued to be written back',
+		length(keep)));
+
+	return 'recreated';
+}
+
+function apply(state) {
+	if (!nft_pipe(state.nft.setup, 'setup'))
+		return false;
+
+	// Releases up to 0.4.2 kept a name for every table in this file, for
+	// `ip route show table <name>` with iproute2 installed. Nothing of shunt
+	// ever read it, BusyBox ip cannot, and it cost flash writes on every
+	// start and stop - so it is gone, and what an earlier release left
+	// behind is removed once.
+	if (readfile(RT_TABLES) != null)
+		unlink(RT_TABLES);
+
+	rt_quiet(state.route.del);
+
+	// Devices of interfaces netifd knows but has not brought up. A route
+	// through one cannot be added before the device exists - at boot a
+	// tunnel usually does not yet - and its ifup rebuilds the routes
+	// anyway, so that failure is expected and not a warning. An interface
+	// netifd does not know at all has `up` null and is not excused.
+	let later = {};
+
+	for (let p in (state.resolved ?? []))
+		for (let mb in (p.members ?? []))
+			if (mb.up === false && mb.dev != null)
+				later[mb.dev] = true;
+
+	let rt = rtnl();
+	let reasons = {}, waiting = {};
+
+	for (let op in state.route.add) {
+		let why = rt ? rt_exec(rt, op) : 'ucode-mod-rtnl missing';
+
+		if (why == null)
+			continue;
+
+		debug(sprintf('not applied: %s - %s', rt_describe(op), why));
+
+		let dev = op.msg?.oif;
+
+		if (rt && dev != null && later[dev])
+			waiting[dev] = (waiting[dev] ?? 0) + 1;
+		else
+			reasons[why] = (reasons[why] ?? 0) + 1;
+	}
+
+	for (let why in reasons)
+		log('warn', sprintf('%d of %d route/rule operation(s) not applied - %s',
+			reasons[why], length(state.route.add), why));
+
+	if (length(waiting))
+		log('info', sprintf('routes through %s follow on ifup - not up yet',
+			join(', ', sort(keys(waiting)))));
+
+	return true;
+}
+
+function flush(state) {
+	if (state)
+		rt_quiet(state.route.del);
+
+	nft_pipe(teardown(), 'teardown');
+}
+
+function rp_read(k) {
+	return trim(readfile(`/proc/sys/net/ipv4/conf/${k}/rp_filter`) ?? '');
+}
+
+// Distinct policy devices, as far as the name is one a /proc path may be
+// built from - see conf_dev() in route.uc. Deduped so a device shared by
+// several policies is set or reported once.
+function policy_devices(policies) {
+	let seen = {}, out = [];
+
+	for (let p in (policies ?? [])) {
+		// bypass policies route into nothing - rp_filter does not apply.
+		if (action_name(p.action) != 'route')
+			continue;
+
+		for (let mb in (p.members ?? [ { dev: p.interface } ])) {
+			let dev = mb.dev;
+
+			if (conf_dev(dev) && !seen[dev]) {
+				seen[dev] = true;
+				push(out, dev);
+			}
+		}
+	}
+
+	return out;
+}
+
+// Which policy devices the kernel would drop marked traffic on. rp_filter
+// takes max(conf.all, conf.<dev>), so a device is blocked only when all is
+// strict (1 - 0 is off, 2 is loose) AND the device is not loosened itself. A
+// device with no /proc entry does not exist yet and inherits default.
+function rp_filter_blocked(policies) {
+	if (rp_read('all') != '1')
+		return [];
+
+	let blocked = [];
+
+	for (let dev in policy_devices(policies)) {
+		let v = rp_read(dev);
+
+		if (v == '')
+			continue;
+
+		if (v != '2')
+			push(blocked, dev);
+	}
+
+	return blocked;
+}
+
+// With rp_filter_manage set, shunt loosens rp_filter on its own policy devices
+// - the per-interface fix the README documents, done automatically. Bounded to
+// exactly the devices shunt routes into, never all/default, and only on a
+// device that exists. Off by default: changing a security setting is opt-in.
+function rp_filter_apply(policies) {
+	for (let dev in policy_devices(policies))
+		if (rp_read(dev) != '' && rp_read(dev) != '2' &&
+			!writefile(`/proc/sys/net/ipv4/conf/${dev}/rp_filter`, '2\n'))
+			log('warn', sprintf('cannot set rp_filter on %s: %s', dev, fs_error()));
+}
+
+// Reads the live /proc value, so when rp_filter_apply has done its job the
+// list is empty on its own - no need to consult the switch a second time.
+function check_rp_filter(policies) {
+	for (let dev in rp_filter_blocked(policies))
+		log('warn', sprintf('rp_filter is strict on %s - shunt\'s marked traffic will be dropped there; set net.ipv4.conf.%s.rp_filter=2 or enable rp_filter_manage, see the README',
+			dev, dev));
+}
+
+// Link state of every configured policy interface as netifd reports it:
+// false when it is down, null when netifd does not manage it.
+function link_state(policies) {
+	let link = {};
+
+	for (let p in (policies ?? []))
+		for (let mb in (p.members ?? []))
+			if (mb.name != null)
+				link[mb.name] = mb.up;
+
+	return link;
+}
+
+// An interface is dead when netifd has it down or the probes do not get
+// through it; either way its policies move on to the next one.
+function dead_of(link, alive) {
+	let dead = {};
+
+	for (let n in keys(link ?? {}))
+		if (link[n] === false)
+			dead[n] = true;
+
+	for (let n in keys(alive ?? {}))
+		if (alive[n] === false)
+			dead[n] = true;
+
+	return dead;
+}
+
+// silent: build only what a teardown consumes and say nothing about the
+// configuration - flush() needs route.del and nothing else.
+function build_state(silent) {
+	let cfg = load_config();
+	if (!cfg)
+		return null;
+
+	if (!silent)
+		report('config', cfg.issues);
+
+	cfg.policies = netifd_resolve(cfg.policies, netifd_dump());
+
+	let matcher = null, files = null;
+
+	// The files are read only when the matcher is built from them - a
+	// teardown renders the policy from its config alone, see nft.uc.
+	if (!silent) {
+		files = files_load(cfg.policies);
+		cfg.policies = files.policies;
+		report('file', files.issues);
+
+		matcher = match_compile(cfg.policies);
+		report('domain', matcher.issues);
+	}
+
+	// A teardown renders without the check: a policy whose module has
+	// gone since it was applied still owns a table and rules to remove.
+	// Kept, so a refresh renders against the same set of policies.
+	let link = link_state(cfg.policies);
+	let opts = { tproxy: silent ? true : tproxy_available(cfg.policies),
+		br_netfilter: silent ? [] : br_netfilter(), ipv6: ipv6(),
+		track: length(cfg.global.track_ips) > 0, dead: dead_of(link, {}) };
+	let n = nft_compile(cfg.policies, opts);
+	if (!silent)
+		report('nft', n.issues);
+
+	let r = route_compile(cfg.policies, n.marks, { ...opts, probes: n.probes });
+	if (!silent) {
+		report('route', r.issues);
+		if (!opts.ipv6)
+			log('info', 'no IPv6 in this kernel - IPv6 routes and rules skipped');
+	}
+
+	return { cfg, matcher, files, opts, nft: n, route: r, resolved: cfg.policies,
+		link, alive: {} };
+}
+
+// nft -f reads the entire ruleset before resolving a single name, so on a box
+// with large sets from another tool one add element costs seconds of CPU.
+// Writes are collected and applied by a timer whose interval follows the
+// measured cost: an ordinary box stays at the floor, an expensive one backs
+// off. An address the sets have not seen yet does not wait for the timer
+// while the interval sits at the floor: its batch is written right after the
+// answer that brought it, at most once a second, so the further connections
+// a client opens after its lookup find the element in place. Refreshes of
+// known elements stay on the timer.
+const WRITE_MIN = 2;
+const WRITE_MAX = 60;
+const WRITE_FACTOR = 3;
+// Kernel timeouts run this much past the lifetime on top of the current
+// write interval: the replacement for an expiring element waits up to one
+// interval in the queue, and the clock rounds to the second on both ends.
+const WRITE_SLACK = 2;
+
+function drain_writes(st) {
+	let due = values(st.pending);
+
+	st.pending = {};
+
+	if (!length(due))
+		return;
+
+	let slack = st.interval + WRITE_SLACK;
+	let r = refresh(due, st.state.cfg.global.entry_ttl, slack);
+	report('refresh', r.issues);
+
+	if (!length(r.batch))
+		return;
+
+	let t0 = mono();
+	let ok = nft_pipe(r.batch, 'refresh');
+	let cost = mono() - t0;
+
+	if (ok) {
+		for (let w in due)
+			st.cache.written(w.set, w.addr, slack);
+
+		debug(sprintf('%d element(s) written in %ds', length(due), cost));
+	}
+	else
+		switch (ensure_table(st)) {
+		case 'recreated':
+			for (let w in due)
+				st.pending[`${w.set}/${w.addr}`] = w;
+			break;
+
+		// The table is there and the batch was refused all the same. The
+		// cache has every element of it on record as written, and would
+		// hold back the next answer for the same address until half its
+		// lifetime is over - with the address in no set all that time. So
+		// the batch goes out once more with the next write, and what fails
+		// a second time is forgotten: the next answer or poll cycle brings
+		// it back as new.
+		case 'ok':
+			for (let w in due) {
+				if (w.retried)
+					st.cache.forget(w.set, w.addr);
+				else {
+					w.retried = true;
+					st.pending[`${w.set}/${w.addr}`] = w;
+				}
+			}
+			break;
+		}
+
+	let want = cost * WRITE_FACTOR;
+
+	if (want < WRITE_MIN)
+		want = WRITE_MIN;
+	if (want > WRITE_MAX)
+		want = WRITE_MAX;
+
+	if (want != st.interval) {
+		debug(sprintf('write interval %ds -> %ds (last write %ds)',
+			st.interval, want, cost));
+		st.interval = want;
+		st.timer.set(want * 1000);
+	}
+}
+
+// Writes the queue now when it holds an address the sets have not seen. Only
+// at the floor interval - where it is above, a write costs seconds and the
+// timer is the throttle - and at most once per second, so a burst of new
+// answers on a busy segment is one nft run, not one per answer. A new
+// address that hits the limit goes out with one deferred run a second
+// later instead of waiting for the next tick.
+function drain_fresh(st, fresh) {
+	if (!fresh || st.interval > WRITE_MIN)
+		return;
+
+	let now = mono();
+
+	if (st.fresh_at != now) {
+		st.fresh_at = now;
+		drain_writes(st);
+		return;
+	}
+
+	if (st.fresh_wait)
+		return;
+
+	st.fresh_wait = true;
+	st.later(1000);
+}
+
+// The route renderer needs the probe tables the nft renderer numbered.
+function route_opts(state) {
+	return { ...state.opts, probes: state.nft.probes };
+}
+
+// The interface each policy's new connections take, null for the fallback.
+// nft_active() answers which member's mark is set, and with fallback
+// 'block' that is the first member even when all are dead - its table
+// then holds only the prohibit route.
+function in_use(chains, dead) {
+	let act = nft_active(chains, dead), out = {};
+
+	for (let pn, j in act) {
+		let mb = (j != null) ? chains[pn]?.members?.[j] : null;
+
+		out[pn] = (mb && !dead?.[mb.name]) ? mb.name : null;
+	}
+
+	return out;
+}
+
+// Link or probe state changed. Interfaces that became dead or alive are
+// handled as one batch: the mark chains of the affected policies are refilled
+// for the interface now in use, and the default routes of the changed
+// interfaces taken out or put back - unless the caller renders every route
+// anyway. All is rendered again for the keeper, a re-apply after an outside
+// flush, and the next interface event.
+function apply_dead(state, wq, routes) {
+	let dead = dead_of(state.link, state.alive);
+	let changed = [];
+
+	for (let n in keys({ ...dead, ...state.opts.dead }))
+		if (!!dead[n] != !!state.opts.dead[n])
+			push(changed, n);
+
+	if (!length(changed))
+		return;
+
+	let before = in_use(state.nft.chains, state.opts.dead);
+
+	state.opts.dead = dead;
+
+	let n = nft_compile(state.cfg.policies, state.opts);
+	let batch = nft_flip(n.chains, dead);
+
+	state.nft = n;
+
+	if (length(batch) && !nft_pipe(batch, 'track'))
+		ensure_table(wq);
+
+	let after = in_use(n.chains, dead);
+
+	for (let pn in sort(keys(after))) {
+		if (before[pn] === after[pn])
+			continue;
+
+		let p = filter(state.resolved, (x) => x.name == pn)[0];
+
+		log('notice', (after[pn] != null)
+			? sprintf('policy %s: new connections use %s', pn, after[pn])
+			: sprintf('policy %s: no interface left - fallback %s', pn, p?.fallback ?? 'main'));
+	}
+
+	if (!routes)
+		return;
+
+	let rt = rtnl();
+
+	for (let name in changed)
+		for (let op in route_state_ops(state.resolved, n.marks, route_opts(state), name)) {
+			let why = rt ? rt_exec(rt, op) : 'ucode-mod-rtnl missing';
+
+			if (why != null)
+				debug(sprintf('track: not applied: %s - %s', rt_describe(op), why));
+		}
+
+	state.route = route_compile(state.resolved, n.marks, route_opts(state));
+}
+
+function run() {
+	let uloop, resolv;
+
+	try {
+		uloop = require('uloop');
+	}
+	catch (e) {
+		log('err', 'ucode-mod-uloop missing');
+		return 1;
+	}
+
+	let state = build_state();
+	if (!state)
+		return 2;
+
+	dbg = verbose || state.cfg.global.debug;
+
+	if (!state.cfg.global.enabled) {
+		log('notice', 'disabled in config - running idle; enable and reload to start');
+		state.cfg.policies = [];
+		state.matcher = match_compile([]);
+		state.nft = nft_compile([]);
+		state.route = route_compile([], state.nft.marks);
+	}
+
+	if (!length(state.nft.marks))
+		log('warn', 'no usable policy - running idle; configure a policy and reload, `shunt check` shows the reasons');
+
+	if (state.cfg.global.rp_filter_manage)
+		rp_filter_apply(state.cfg.policies);
+
+	check_rp_filter(state.cfg.policies);
+
+	if (!apply(state)) {
+		flush(state);
+		return 1;
+	}
+
+	mkdir(FILES_DIR, 0o755);
+
+	let cache = dedupe_create(state.cfg.global.entry_ttl,
+		state.cfg.global.learn_limit);
+	let targets = poll_names(state.cfg.policies);
+
+	let stats = { started: time(), resolv: false, snoop: [],
+		matched: 0, drops: {}, reapplied: 0, capped: {},
+		files: { count: state.files.files, entries: state.files.entries,
+			addresses: state.files.addresses, refreshed: null } };
+
+	try {
+		resolv = require('resolv');
+	}
+	catch (e) {
+		resolv = null;
+		if (length(targets))
+			log('warn', 'ucode-mod-resolv missing - poll disabled, snoop only');
+	}
+
+	stats.resolv = (resolv != null);
+
+	let unresolved = {};
+
+	let wq = { state, cache, stats, pending: {}, lost: false,
+		interval: WRITE_MIN, timer: null, fresh_at: 0, fresh_wait: false,
+		later: null, full_warned: {} };
+
+	// The deferred run of drain_fresh(). The timer is kept and re-armed, not
+	// created per run, so nothing depends on how a given ucode release keeps
+	// an unreferenced timer alive.
+	let fresh_timer = null;
+
+	function fresh_run() {
+		wq.fresh_wait = false;
+		wq.fresh_at = mono();
+		drain_writes(wq);
+	}
+
+	wq.later = (ms) => {
+		if (fresh_timer)
+			fresh_timer.set(ms);
+		else
+			fresh_timer = uloop.timer(ms, fresh_run);
+	};
+
+	// Re-reads the list files, swaps the matcher and refills the address
+	// file sets - the two things a changed list needs. Nothing else moves:
+	// the sets exist whether the file does, poll never had the file names,
+	// routes and rules are not touched, and the learned addresses stay put.
+	// The ruleset is rendered again from the same config with the new file
+	// contents, so a re-apply after an outside flush carries them too; its
+	// issues were reported at start and are not repeated. Runs on the uloop
+	// thread between callbacks, so snoop never sees a half-built matcher.
+	function refresh_files() {
+		let f = files_load(state.cfg.policies);
+
+		report('file', f.issues);
+
+		state.cfg.policies = f.policies;
+		state.matcher = match_compile(state.cfg.policies);
+
+		if (state.cfg.global.enabled) {
+			let n = nft_compile(state.cfg.policies, state.opts);
+
+			if (length(n.fill) && !nft_pipe(n.fill, 'refresh'))
+				ensure_table(wq);
+
+			state.nft = n;
+		}
+
+		stats.files = { count: f.files, entries: f.entries,
+			addresses: f.addresses, refreshed: time() };
+
+		log('info', sprintf('refresh: %d file(s), %d pattern(s), %d address(es), %d issue(s)',
+			f.files, f.entries, f.addresses, length(f.issues)));
+
+		return { files: f.files, entries: f.entries, addresses: f.addresses,
+			issues: f.issues };
+	}
+
+	function poll_cycle() {
+		if (!resolv || !length(targets))
+			return;
+
+		let res = resolv.query(targets, { type: [ 'A', 'AAAA' ],
+			timeout: 2000, retries: 1 });
+		if (!res) {
+			log('warn', 'poll: query failed');
+			return;
+		}
+
+		let by = poll_index(res);
+
+		for (let name in targets) {
+			let got = poll_addresses(by, name);
+			let n = length(got.a) + length(got.aaaa);
+
+			if (n && unresolved[name]) {
+				unresolved[name] = false;
+				log('info', sprintf('poll: %s resolves again', name));
+			}
+			else if (!n && !unresolved[name]) {
+				let owners = state.matcher.test(name);
+
+				unresolved[name] = true;
+				log('warn', sprintf('poll: %s%s has no address - the policy entry has no effect until it resolves',
+					name, owners != null
+						? sprintf(' (policy %s)', join(', ', owners)) : ''));
+			}
+		}
+
+		drain_fresh(wq, queue_writes(wq, poll_plan(res, state.matcher,
+			targets), mono()));
+	}
+
+	// The cache is pruned here and not at the tail of poll_cycle():
+	// poll_cycle() returns early without resolv, without pollable names
+	// and on a failed query, while snoop keeps feeding queue_writes() in
+	// all three cases.
+	function tick() {
+		rt_quiet(state.route.add);
+
+		ensure_table(wq);
+
+		poll_cycle();
+		cache.prune(mono());
+		wq.full_warned = {};
+	}
+
+	wq.timer = uloop.interval(WRITE_MIN * 1000, () => drain_writes(wq));
+
+	let kept = learned_load(LEARNED,
+		learned_fps(state.cfg.policies, state.nft.learn), mono());
+
+	if (kept?.bad)
+		log('warn', sprintf('%s unreadable - learned addresses start empty', LEARNED));
+	else if (kept) {
+		queue_writes(wq, kept.writes, mono());
+		drain_writes(wq);
+		log('info', sprintf('%d learned address(es) carried over, %d dropped with a changed or removed policy',
+			length(kept.writes), kept.dropped));
+	}
+
+	poll_cycle();
+	uloop.interval(state.cfg.global.poll_interval * 1000, tick);
+
+	if (resolv && length(targets))
+		log('info', sprintf('poll: %d name(s) every %ds', length(targets),
+			state.cfg.global.poll_interval));
+
+	let c = ubus();
+
+	if (c) {
+		let pending = null;
+
+		function rebuild_routes() {
+			pending = null;
+
+			let resolved = netifd_resolve(state.cfg.policies, netifd_dump());
+			let r = route_compile(resolved, state.nft.marks, route_opts(state));
+
+			report('route', r.issues);
+
+			// A policy device may have just appeared - the boot-time case a
+			// static sysctl.d file misses, since /proc/<dev> did not exist
+			// yet. Re-apply so it is loose from the moment it comes up, then
+			// re-check: with manage on the check reads the value just set
+			// and stays silent, without it this is the moment to warn.
+			if (state.cfg.global.rp_filter_manage)
+				rp_filter_apply(resolved);
+
+			check_rp_filter(resolved);
+
+			state.resolved = resolved;
+			state.link = link_state(resolved);
+
+			// The mark chains follow the new link state now; the routes are
+			// rendered below as a whole, with the new state in them.
+			apply_dead(state, wq, false);
+			r = route_compile(resolved, state.nft.marks, route_opts(state));
+
+			// Applied on top of what is there, not after taking it out: a
+			// rule that exists answers EEXIST, a route is replaced in place.
+			// Only what the new rendering no longer has is removed, and
+			// that after the new one is in - see stale() in route.uc.
+			let rt = rtnl(), failed = {};
+
+			for (let op in r.add) {
+				let why = rt ? rt_exec(rt, op) : 'ucode-mod-rtnl missing';
+
+				if (why != null && op.cmd == 'newroute')
+					failed[route_key(op.msg)] = true;
+			}
+
+			rt_quiet(route_stale(state.route.add, r.add, failed));
+
+			state.route = r;
+
+			for (let h in (stats.track ?? []))
+				for (let p in resolved)
+					for (let mb in (p.members ?? []))
+						if (mb.name == h.name && mb.dev != h.dev) {
+							h.rebind = true;
+							h.dev = mb.dev;
+						}
+		}
+
+		c.listener('network.interface', (type, msg) => {
+			if (msg?.action != 'ifup' && msg?.action != 'ifdown')
+				return;
+
+			log('info', sprintf('%s %s - rebuilding routes',
+				msg.action, msg.interface ?? '?'));
+
+			if (pending)
+				pending.set(500);
+			else
+				pending = uloop.timer(500, rebuild_routes);
+		});
+
+		function track_status() {
+			if (!length(stats.track ?? []))
+				return null;
+
+			let devs = {};
+
+			for (let h in stats.track)
+				devs[h.name] = { dev: h.dev, alive: h.alive, since: h.since };
+
+			return { interval: TRACK.interval, down: TRACK.down, up: TRACK.up,
+				targets: state.cfg.global.track_ips, devices: devs };
+		}
+
+		// Must be total: an exception in a ubus handler halts uloop and takes
+		// snoop, poll and the keeper down with the reply.
+		function status_reply() {
+			let names = [];
+
+			for (let m in state.nft.marks)
+				if (!m.member)
+					push(names, m.name);
+
+			return {
+				started: stats.started,
+				policies: names,
+				poll: {
+					resolv: stats.resolv,
+					names: length(targets),
+					interval: state.cfg.global.poll_interval
+				},
+				snoop: {
+					devices: stats.snoop,
+					matched: stats.matched,
+					drops: stats.drops
+				},
+				reapplied: stats.reapplied,
+				dedupe: cache.size(),
+				capped: stats.capped,
+				files: stats.files,
+				track: track_status(),
+				active: nft_active(state.nft.chains, state.opts.dead),
+				down: filter(keys(state.link), (n) => state.link[n] === false)
+			};
+		}
+
+		function refresh_reply() {
+			try {
+				return refresh_files();
+			}
+			catch (e) {
+				log('err', sprintf('refresh failed: %s', e));
+				return { error: `${e}` };
+			}
+		}
+
+		let obj = c.publish('shunt', {
+			status: { call: () => status_reply() },
+			refresh: { call: () => refresh_reply() }
+		});
+
+		if (!obj)
+			log('warn', sprintf('cannot publish ubus object: %s',
+				require('ubus').error() ?? 'unknown'));
+	}
+
+	let socks = [];
+
+	if (state.cfg.global.snoop && length(state.nft.marks)) {
+		let socket = null;
+
+		for (let dev in state.cfg.global.snoop_devices) {
+			let s = snoop_open(dev);
+
+			if (!s.ok) {
+				log('err', sprintf('snoop %s: %s', dev, s.err));
+				continue;
+			}
+
+			if (socket == null)
+				socket = require('socket');
+
+			let sock = s.sock;
+
+			push(socks, sock);
+			push(stats.snoop, dev);
+
+			// Each handler closes over its own socket; binding the loop
+			// variable would leave them all reading the last one opened.
+			uloop.handle(sock, () => {
+				let frame, fresh = 0;
+
+				while ((frame = sock.recv(RECV_LEN, socket.MSG_DONTWAIT)) != null) {
+					let v = observe(frame, state.matcher);
+
+					if (v.drop != null) {
+						stats.drops[v.drop] = (stats.drops[v.drop] ?? 0) + 1;
+						continue;
+					}
+
+					stats.matched++;
+
+					let writes = [];
+					for (let policy in v.policies) {
+						for (let a in v.a)
+							push(writes, { set: `d4_${policy}`, addr: a, ttl: v.ttl });
+						for (let a in v.aaaa)
+							push(writes, { set: `d6_${policy}`, addr: a, ttl: v.ttl });
+					}
+
+					debug(sprintf('snoop: %s -> %s (%d addr)',
+						v.qname, join(', ', v.policies), length(writes)));
+					fresh += queue_writes(wq, writes, mono());
+				}
+
+				drain_fresh(wq, fresh);
+			}, uloop.ULOOP_READ);
+		}
+
+		if (length(socks))
+			log('info', sprintf('snoop: listening on %s',
+				join(', ', stats.snoop)));
+		else if (!resolv || !length(targets)) {
+			log('err', 'neither snoop nor poll available - nothing to do');
+			flush(state);
+			return 1;
+		}
+	}
+
+	// One probe round every TRACK.interval seconds. A round is judged when the
+	// next one starts, so a reply has the whole interval to arrive; the
+	// device is alive for the round if any target answered.
+	let tracked = [];
+
+	if (state.opts.track && length(state.nft.probes)) {
+		let sock = require('socket');
+		let tg = track_targets(state.cfg.global.track_ips, addr_family, state.opts.ipv6);
+
+		for (let pr in state.nft.probes)
+			push(tracked, { name: pr.name, dev: pr.dev, mark: pr.mark, alive: true, good: 0,
+				bad: 0, seq: 0, got: false, sent: false, since: time(),
+				socks: {}, err: null });
+
+		function close_sock(h, fam) {
+			let k = h.socks[fam];
+
+			if (!k)
+				return;
+
+			k.handle.delete();
+			k.s.close();
+			delete h.socks[fam];
+		}
+
+		// Every state change of a round goes into one apply_dead(): two
+		// tunnels failing in the same round are one flip, not a switch to
+		// the second one followed by the fallback.
+		function round() {
+			let changed = false;
+
+			for (let h in tracked) {
+				if (h.sent) {
+					let change = track_step(h, h.got);
+
+					if (change) {
+						h.since = time();
+						log('notice', (change == 'down')
+							? sprintf('track: %s does not answer - its policies fall back until it does', h.name)
+							: sprintf('track: %s answers again - its policies are back on it', h.name));
+						state.alive[h.name] = h.alive;
+						changed = true;
+					}
+				}
+
+				h.got = false;
+				h.seq = (h.seq + 1) & 0xffff;
+				h.sent = true;
+
+				// The device behind the name changed on an interface event.
+				if (h.rebind) {
+					h.rebind = false;
+					close_sock(h, '4');
+					close_sock(h, '6');
+				}
+
+				for (let fam in [ '4', '6' ]) {
+					if (!length(tg[fam]))
+						continue;
+
+					if (!h.socks[fam]) {
+						let o = track_open(sock, h.dev, fam, h.mark);
+
+						if (!o.s) {
+							if (h.err != o.err)
+								debug(sprintf('track: %s: %s', h.dev, o.err));
+							h.err = o.err;
+							continue;
+						}
+
+						h.err = null;
+
+						// Each handler closes over its own entry and family.
+						let s = o.s, f = fam, hh = h;
+
+						h.socks[fam] = { s, handle: uloop.handle(s, () => {
+							let d;
+
+							while ((d = s.recv(1500, sock.MSG_DONTWAIT)) != null)
+								if (track_reply(f, d) == hh.seq)
+									hh.got = true;
+						}, uloop.ULOOP_READ) };
+					}
+
+					for (let a in tg[fam]) {
+						let ok = h.socks[fam].s.send(track_echo(fam, h.seq), 0, {
+							family: (fam == '4') ? sock.AF_INET : sock.AF_INET6,
+							address: a });
+
+						// A device that went away or came back under a new
+						// index fails the send; the next round binds afresh.
+						if (ok == null) {
+							close_sock(h, fam);
+							break;
+						}
+					}
+				}
+			}
+
+			if (changed)
+				apply_dead(state, wq, true);
+		}
+
+		round();
+		uloop.interval(TRACK.interval * 1000, round);
+
+		log('info', sprintf('track: %s, %d target(s) every %ds',
+			join(', ', map(tracked, (h) => h.name)),
+			length(state.cfg.global.track_ips), TRACK.interval));
+	}
+
+	stats.track = tracked;
+
+	log('notice', sprintf('started: %d polic%s, mask 0x%08x',
+		length(state.nft.marks), length(state.nft.marks) == 1 ? 'y' : 'ies',
+		0xff000000));
+
+	uloop.run();
+
+	log('notice', 'stopping');
+	if (!learned_save(LEARNED, cache.dump(mono()),
+			learned_fps(state.cfg.policies, state.nft.learn)))
+		log('warn', sprintf('cannot write %s: %s', LEARNED, fs_error()));
+	for (let sock in socks)
+		sock.close();
+	for (let h in tracked)
+		for (let fam in keys(h.socks))
+			h.socks[fam].s.close();
+	flush(state);
+
+	return 0;
+}
+
+// Asks the running daemon to re-read its list files. Without a daemon
+// there is nothing to refresh and nothing lost: the next start reads them.
+function refresh() {
+	let c = null;
+
+	try {
+		c = require('ubus').connect();
+	}
+	catch (e) {
+		c = null;
+	}
+
+	if (!c) {
+		warn('ubus unavailable - cannot reach the daemon\n');
+		return 1;
+	}
+
+	let r = c.call('shunt', 'refresh');
+
+	if (r == null) {
+		warn('shunt is not running - the files are read at start\n');
+		return 1;
+	}
+
+	if (r.error) {
+		warn(sprintf('refresh failed: %s\n', r.error));
+		return 1;
+	}
+
+	printf('files:    %d file(s), %d pattern(s), %d address(es)\n',
+		r.files, r.entries, r.addresses ?? 0);
+
+	for (let i in r.issues)
+		printf('issue:    %J\n', i);
+
+	return 0;
+}
+
+function check() {
+	verbose = true;
+
+	let state = build_state();
+	if (!state)
+		return 2;
+
+	printf('global:   %.2J\n', state.cfg.global);
+	printf('policies: %d accepted, %d mark(s)\n',
+		length(state.cfg.policies), length(state.nft.marks));
+
+	// A bypass policy has none of the three - printing them would render
+	// its nulls as a mark of 0 in table 0. A policy with several interfaces
+	// has a line for each.
+	let many = {};
+
+	for (let m in state.nft.marks)
+		if (m.member > 0)
+			many[m.name] = true;
+
+	for (let m in state.nft.marks)
+		if (m.action == 'bypass')
+			printf('  %-16s bypass\n', m.name);
+		else if (m.action == 'tproxy')
+			printf('  %-16s mark 0x%08x  table %d  pref %d  tproxy :%d\n',
+				m.name, m.mark, m.rt_table, m.rt_prio, m.port);
+		else
+			printf('  %-16s mark 0x%08x  table %d  pref %d%s\n',
+				m.name, m.mark, m.rt_table, m.rt_prio,
+				many[m.name] ? sprintf('  interface %d: %s', m.member + 1, m.iface) : '');
+
+	let total = length(state.files.issues) + length(state.matcher.issues) +
+		length(state.nft.issues) + length(state.route.issues);
+
+	printf('issues:   %d (see above)\n', total);
+	printf('files:    %d file(s), %d pattern(s), %d address(es)\n',
+		state.files.files, state.files.entries, state.files.addresses);
+	printf('poll:     %d name(s)\n', length(poll_names(state.cfg.policies)));
+
+	for (let pr in state.nft.probes)
+		printf('track:    %-16s mark 0x%08x  table %d  pref %d\n',
+			pr.dev, pr.mark, pr.rt_table, pr.rt_prio);
+
+	return length(state.nft.marks) ? 0 : 2;
+}
+
+let cmd = null;
+
+for (let a in ARGV) {
+	if (a == '-v')
+		verbose = dbg = true;
+	else if (cmd == null)
+		cmd = a;
+}
+
+switch (cmd) {
+case 'run':
+	exit(run());
+case 'check':
+	exit(check());
+case 'flush':
+	flush(build_state(true));
+	exit(0);
+case 'refresh':
+	exit(refresh());
+default:
+	warn('usage: shunt [-v] run|check|flush|refresh\n');
+	exit(2);
+}

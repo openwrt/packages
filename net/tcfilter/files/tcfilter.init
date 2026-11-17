@@ -1,0 +1,272 @@
+#!/bin/sh /etc/rc.common
+# SPDX-License-Identifier: GPL-2.0-only
+
+USE_PROCD=1
+START=99
+STOP=10
+
+extra_command "show" "Dump tc filters on every configured device"
+extra_command "reapply_dev" "<device>  Re-apply the rules bound to one device"
+
+. /lib/functions.sh
+
+TC=tc
+TAG=tcfilter
+STATE=/var/run/tcfilter.state
+LOCK=/var/run/tcfilter.lock
+
+_log() {
+	logger -t "$TAG" "$@"
+}
+
+# Serialise everything that mutates $STATE. The init.d actions
+# (start/stop/reload) and the hotplug-driven "start" / "reapply_dev" can
+# otherwise interleave and corrupt the file. fd 9 stays open for the life
+# of this script process, so the lock is dropped when the action returns.
+_lock() {
+	exec 9>"$LOCK"
+	flock 9
+}
+
+# Record a (device, pref) pair we installed so a later stop/reload can tear
+# the filter down even after its config section is gone. $1 = device,
+# $2 = pref; both must be non-empty. Deduplicated against the state file.
+_state_record() {
+	local device="$1"
+	local pref="$2"
+
+	[ -n "$device" ] && [ -n "$pref" ] || return
+
+	# -q: no output, -x: match the whole line, -F: plain string not a regexp
+	grep -qxF "$device $pref" "$STATE" 2>/dev/null && return
+
+	echo "$device $pref" >> "$STATE"
+}
+
+# Remove the ingress filter at pref $2 from device $1, if the device exists.
+_del_filter() {
+	local device="$1"
+	local pref="$2"
+
+	[ -e "/sys/class/net/$device" ] || return
+
+	$TC filter del dev "$device" ingress pref "$pref" 2>/dev/null && _log "removed $device pref $pref"
+}
+
+# config_foreach helper for _all_pairs: emit "device pref" for one rule
+# section if both are set. $1 = config section name.
+_cfg_pair() {
+	local cfg="$1"
+
+	local device pref
+
+	config_get device "$cfg" device
+	config_get pref "$cfg" pref
+
+	[ -n "$device" ] && [ -n "$pref" ] && echo "$device $pref"
+}
+
+# "device pref" lines: the union of what we installed (state file) and what
+# the config currently lists, deduplicated.
+_all_pairs() {
+	{
+		[ -f "$STATE" ] && cat "$STATE"
+		config_foreach _cfg_pair rule
+	} 2>/dev/null | sort -u
+}
+
+# Install one rule section on its device. $1 = config section name.
+_rule_apply() {
+	local cfg="$1"
+
+	local device pref spec enabled label desc err
+
+	config_get device "$cfg" device
+	config_get pref "$cfg" pref
+	config_get spec "$cfg" spec
+	config_get label "$cfg" label
+	config_get_bool enabled "$cfg" enabled 1
+
+	desc="${label:-$cfg}"
+
+	[ "$enabled" = 1 ] || return
+
+	if [ -z "$device" ] || [ -z "$spec" ]; then
+		_log "rule $desc: 'device' and 'spec' are required"
+		return
+	fi
+
+	if [ -z "$pref" ]; then
+		_log "rule $desc: 'pref' is required (needed to remove the rule again)"
+		return
+	fi
+
+	if [ ! -e "/sys/class/net/$device" ]; then
+		_log "rule $desc: device '$device' not present, skipped"
+		return
+	fi
+
+	# already installed (e.g. re-run from a hotplug event) - just track it
+	if $TC filter show dev "$device" ingress pref "$pref" 2>/dev/null | grep -q .; then
+		_state_record "$device" "$pref"
+		return
+	fi
+
+	# add the clsact qdisc if it is not already there; never 'replace',
+	# that would flush filters installed by anything else
+	$TC qdisc add dev "$device" clsact 2>/dev/null
+
+	# turn the spec string into argv for tc: split it on whitespace into
+	# positional parameters. "set -f" disables globbing first so a shell
+	# metacharacter in the spec (e.g. "*") is passed through verbatim;
+	# "set +f" restores it afterwards.
+	set -f
+	# shellcheck disable=SC2086  # deliberate word-split of the tc spec
+	set -- $spec
+	set +f
+
+	if err=$($TC filter add dev "$device" ingress pref "$pref" "$@" 2>&1); then
+		_state_record "$device" "$pref"
+		_log "rule $desc: added on $device (pref $pref)"
+	else
+		# tc dumps its whole usage on a parse error - keep the first line only
+		err=$(printf '%s\n' "$err" | sed -n '1p' | cut -c1-200)
+		_log "rule $desc: tc rejected the spec: ${err:-unknown error}"
+	fi
+}
+
+# config_foreach helper for reapply_dev: apply section $1 only if its device
+# equals $2 (target_dev).
+_reapply_one() {
+	local cfg="$1"
+	local target_dev="$2"
+
+	local device
+
+	config_get device "$cfg" device
+
+	[ "$device" = "$target_dev" ] || return
+
+	_rule_apply "$cfg"
+}
+
+# config_foreach helper for show: collect each rule's device into TCF_DEVS
+# without duplicates. $1 = config section name.
+_collect_dev() {
+	local cfg="$1"
+
+	local device
+
+	config_get device "$cfg" device
+
+	[ -n "$device" ] || return
+
+	case " $TCF_DEVS " in
+	*" $device "*) ;;
+	*) TCF_DEVS="$TCF_DEVS $device" ;;
+	esac
+}
+
+start_service() {
+	local enabled
+
+	_lock
+
+	config_load tcfilter
+	config_get_bool enabled global enabled 1
+
+	if [ "$enabled" != 1 ]; then
+		_log "disabled via tcfilter.global.enabled=0"
+		return
+	fi
+
+	# create if missing, but never truncate: records of rules that have
+	# meanwhile been removed from the config are needed by a later
+	# stop/reload to tear the filters down. The file also doubles as the
+	# "service is up" marker for the ifup hotplug.
+	[ -f "$STATE" ] || touch "$STATE"
+
+	config_foreach _rule_apply rule
+}
+
+stop_service() {
+	local device pref
+
+	_lock
+
+	config_load tcfilter
+
+	_all_pairs | while read -r device pref; do
+		[ -n "$device" ] && [ -n "$pref" ] && _del_filter "$device" "$pref"
+	done
+
+	rm -f "$STATE"
+}
+
+reload_service() {
+	stop_service
+	start_service
+}
+
+service_triggers() {
+	procd_add_reload_trigger tcfilter
+}
+
+reapply_dev() {
+	local target_dev="$1"
+
+	local device pref enabled tmp
+
+	if [ -z "$target_dev" ]; then
+		echo "usage: $initscript reapply_dev <device>" >&2
+		return 1
+	fi
+
+	_lock
+
+	config_load tcfilter
+	config_get_bool enabled global enabled 1
+	# an extra_command's return value is the script's exit status, so a
+	# clean "globally disabled, nothing to do" must be 0
+	[ "$enabled" = 1 ] || return 0
+
+	_all_pairs | while read -r device pref; do
+		[ "$device" = "$target_dev" ] && _del_filter "$device" "$pref"
+	done
+
+	# rewrite the state file without this device's lines, keeping the rest.
+	# truncate tmp to empty (a stale $STATE.$$ from an interrupted run with
+	# the same pid must not be appended to) so the mv still works when every
+	# line belonged to target_dev.
+	if [ -f "$STATE" ]; then
+		tmp="$STATE.$$"
+		printf '' > "$tmp"
+		while read -r device pref; do
+			[ "$device" = "$target_dev" ] || echo "$device $pref" >> "$tmp"
+		done < "$STATE"
+		mv "$tmp" "$STATE"
+	fi
+
+	config_foreach _reapply_one rule "$target_dev"
+}
+
+show() {
+	local device
+
+	TCF_DEVS=""
+
+	config_load tcfilter
+	config_foreach _collect_dev rule
+
+	for device in $TCF_DEVS; do
+		if [ ! -e "/sys/class/net/$device" ]; then
+			echo "== $device (absent) =="
+			echo
+			continue
+		fi
+
+		echo "== $device ingress =="
+		$TC -s filter show dev "$device" ingress
+		echo
+	done
+}

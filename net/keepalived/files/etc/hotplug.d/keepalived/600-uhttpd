@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# shellcheck source=/dev/null
+. /lib/functions/keepalived/hotplug.sh
+
+set_service_name uhttpd
+
+set_restart_if_sync
+
+add_sync_file /etc/config/uhttpd
+add_sync_file /etc/uhttpd.crt
+add_sync_file /etc/uhttpd.key
+
+keepalived_hotplug

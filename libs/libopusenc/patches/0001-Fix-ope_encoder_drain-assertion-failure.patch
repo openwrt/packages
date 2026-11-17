@@ -1,0 +1,27 @@
+From 205552370e058d99452fd34983942e10f2db6dff Mon Sep 17 00:00:00 2001
+From: Mark Harris <mark.hsj@gmail.com>
+Date: Mon, 28 Dec 2020 12:58:17 -0800
+Subject: [PATCH] Fix ope_encoder_drain() assertion failure
+
+If the stream is drained without writing any audio and the frame size is
+smaller than the encoder latency, the assertion (enc->streams == NULL)
+would fail because pad_samples was computed using an incorrect value of
+enc->global_granule_offset before it was set in init_stream(), causing
+the padding to be insufficient to drain the stream.
+---
+ src/opusenc.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/src/opusenc.c
++++ b/src/opusenc.c
+@@ -808,9 +808,9 @@ int ope_encoder_drain(OggOpusEnc *enc) {
+   if (enc->unrecoverable) return enc->unrecoverable;
+   /* Check if it's already been drained. */
+   if (enc->streams == NULL) return OPE_TOO_LATE;
++  if (!enc->streams->stream_is_init) init_stream(enc);
+   if (enc->re) resampler_drain = speex_resampler_get_output_latency(enc->re);
+   pad_samples = MAX(LPC_PADDING, enc->global_granule_offset + enc->frame_size + resampler_drain + 1);
+-  if (!enc->streams->stream_is_init) init_stream(enc);
+   shift_buffer(enc);
+   assert(enc->buffer_end + pad_samples <= BUFFER_SAMPLES);
+   memset(&enc->buffer[enc->channels*enc->buffer_end], 0, pad_samples*enc->channels*sizeof(enc->buffer[0]));

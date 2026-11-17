@@ -1,0 +1,30 @@
+The krb5 build process tries to install the setuid-bit program ksu such
+that it is owned by root. This fails when the build executes as a normal
+user, which is usually the case when building OpenWrt. This patch fixes
+this. Here is the symptom:
+
+making install in clients/ksu...
+make[6]: Entering directory '.../build_dir/target-x86_64_musl/krb5-1.22/src/clients/ksu'
+for f in ksu; do \
+  .../staging_dir/host/bin/ginstall -c  -m 4755 -o root $f \
+        .../build_dir/target-x86_64_musl/krb5-1.22/ipkg-install/usr/bin/`echo $f|sed 's&$&&;s&^&&'`; \
+done
+ginstall: invalid user 'root'
+make[6]: [Makefile:640: install] Error 1 (ignored)
+
+As of publication, Fedora applies a similar
+patch for the same reason. Their patch, which can be
+found in the repository for their krb5 package, is named
+0010-downstream-Do-not-set-root-as-ksu-file-owner.patch.
+
+--- a/src/config/pre.in
++++ b/src/config/pre.in
+@@ -185,7 +185,7 @@ INSTALL_PROGRAM=@INSTALL_PROGRAM@ $(INST
+ INSTALL_SCRIPT=@INSTALL_PROGRAM@
+ INSTALL_DATA=@INSTALL_DATA@
+ INSTALL_SHLIB=@INSTALL_SHLIB@
+-INSTALL_SETUID=$(INSTALL) $(INSTALL_STRIP) -m 4755 -o root
++INSTALL_SETUID=$(INSTALL) $(INSTALL_STRIP) -m 4755
+ ## This is needed because autoconf will sometimes define @exec_prefix@ to be
+ ## ${prefix}.
+ prefix=@prefix@

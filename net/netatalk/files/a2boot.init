@@ -1,0 +1,23 @@
+#!/bin/sh /etc/rc.common
+
+START=94
+
+USE_PROCD=1
+PROG=/usr/sbin/a2boot
+
+start_service() {
+	config_load a2boot
+
+	config_get disabled a2boot disabled '0'
+	[ "$disabled" == "0" ] || { 
+		logger -p info -t a2boot "Disabled by config" && exit 
+	}
+
+	config_get nbpname a2boot nbpname
+	[ -z "$nbpname" ] || nbpname="-n $nbpname"
+
+	procd_open_instance
+	procd_set_param command $PROG -d $nbpname
+	procd_set_param respawn
+	procd_close_instance
+}

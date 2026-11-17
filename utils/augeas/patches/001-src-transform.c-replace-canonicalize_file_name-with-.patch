@@ -1,0 +1,51 @@
+From 44e8dede0c88bf4644891055276751dde81023fe Mon Sep 17 00:00:00 2001
+From: Christian Marangi <ansuelsmth@gmail.com>
+Date: Sat, 22 Nov 2025 21:36:51 +0100
+Subject: [PATCH] * src/transform.c replace canonicalize_file_name with
+ real_path
+
+This fix compilation error with implicit declaration of function
+canonicalize_file_name:
+
+transform.c: In function 'transform_save':
+transform.c:1192:21: error: implicit declaration of function 'canonicalize_file_name' [-Wimplicit-function-declaration]
+ 1192 |     augorig_canon = canonicalize_file_name(augorig);
+      |                     ^~~~~~~~~~~~~~~~~~~~~~
+transform.c:1192:21: warning: nested extern declaration of 'canonicalize_file_name' [-Wnested-externs]
+transform.c:1192:19: error: assignment to 'char *' from 'int' makes pointer from integer without a cast [-Wint-conversion]
+ 1192 |     augorig_canon = canonicalize_file_name(augorig);
+      |                   ^
+transform.c: In function 'remove_file':
+transform.c:1476:19: error: assignment to 'char *' from 'int' makes pointer from integer without a cast [-Wint-conversion]
+ 1476 |     augorig_canon = canonicalize_file_name(augorig);
+      |                   ^
+
+canonicalize_file_name is a GNU extension, to address the error and not
+having to declare GNU extention support, use the more portable version
+real_path that does directly replace canonicalize_file_name.
+
+Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
+---
+ src/transform.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/src/transform.c
++++ b/src/transform.c
+@@ -1189,7 +1189,7 @@ int transform_save(struct augeas *aug, s
+         goto done;
+     }
+ 
+-    augorig_canon = canonicalize_file_name(augorig);
++    augorig_canon = realpath(augorig, NULL);
+     augorig_exists = 1;
+     if (augorig_canon == NULL) {
+         if (errno == ENOENT) {
+@@ -1473,7 +1473,7 @@ int remove_file(struct augeas *aug, stru
+         goto error;
+     }
+ 
+-    augorig_canon = canonicalize_file_name(augorig);
++    augorig_canon = realpath(augorig, NULL);
+     if (augorig_canon == NULL) {
+         if (errno == ENOENT) {
+             goto done;

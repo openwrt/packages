@@ -1,0 +1,20 @@
+--- a/src/openssl/tls.c
++++ b/src/openssl/tls.c
+@@ -872,7 +872,7 @@ _getdns_tls_x509* _getdns_tls_connection
+ 	if (!conn || !conn->ssl)
+ 		return NULL;
+ 
+-	return _getdns_tls_x509_new(mfs, SSL_get_peer_certificate(conn->ssl));
++	return _getdns_tls_x509_new(mfs, SSL_get1_peer_certificate(conn->ssl));
+ }
+ 
+ getdns_return_t _getdns_tls_connection_is_session_reused(_getdns_tls_connection* conn)
+@@ -990,7 +990,7 @@ getdns_return_t _getdns_tls_connection_c
+ #if defined(USE_DANESSL)
+ 	{
+ 		getdns_return_t res = GETDNS_RETURN_GOOD;
+-		X509* peer_cert = SSL_get_peer_certificate(conn->ssl);
++		X509* peer_cert = SSL_get1_peer_certificate(conn->ssl);
+ 		if (peer_cert) {
+ 			if (conn->auth_name[0] &&
+ 			    X509_check_host(peer_cert,

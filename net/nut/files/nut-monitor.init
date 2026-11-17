@@ -1,0 +1,225 @@
+#!/bin/sh /etc/rc.common
+
+# In recent (relevant) versions of shellcheck busybox is a valid shell type
+# shellcheck shell=busybox
+
+# shellcheck disable=SC2034
+START=82
+STOP=28
+USE_PROCD=1
+
+# IPKG_INSTROOT is intentionally only set when building an image and
+# is intentionally empty on a live OpenWrt device
+
+# Shellcheck source paths intentionally point to the location of files of
+# the scripts in the development environment (where shellcheck is used), not
+# on the live OpenWrt device
+
+# shellcheck source=net/nut/files/functions.sh.functions
+. "${IPKG_INSTROOT}"/lib/functions.sh || {
+	# Before our sourcing error logging definitions are sourced
+	logger -t nut-monitor[$$] "Unable to source 'functions.sh' in 'nut-monitor'. Bailing"
+	exit 1
+}
+
+# 'shellcheck' complains about nut-common.sh due to a case pattern it does not understand, even
+# though it is correctly POSIX compliant
+# shellcheck disable=SC1094
+# shellcheck source=net/nut/files/nut-common.sh.functions
+. "${IPKG_INSTROOT}"/lib/functions/nut/nut-common.sh || {
+	# Before our sourcing error logging definitions are sourced
+	logger -t nut-monitor[$$] "Unable to source 'nut-common.sh' in 'nut-monitor'. Bailing"
+	exit 1
+}
+
+# shellcheck source=/dev/null
+. "${IPKG_INSTROOT}"/usr/share/libubox/jshn.sh || {
+	log_source_error "jshn.sh" "nut-monitor" "nut-monitor"
+	exit 1
+}
+
+# shellcheck source=net/nut/files/nut-service.sh.functions
+. "${IPKG_INSTROOT}"/lib/functions/nut/nut-service.sh || {
+	log_source_error "nut-service.sh" "nut-monitor" "nut-monitor"
+	exit 1
+}
+
+# /lib/functions/network.sh exists on live OpenWrt systems (base-files), but
+# not our development environment. We do not run the script in a development
+# environment as it depends on cross-compiled binaries and files being in
+# location and having live target names.
+# shellcheck disable=SC1091
+# shellcheck source=/dev/null
+. "${IPKG_INSTROOT}"/lib/functions/network.sh || {
+	log_source_error "network.sh" "nut-monitor" "nut-monitor"
+	exit 1
+}
+
+# defines NUT_EVENT_TYPES PIDFILE UPSMON_C
+# shellcheck source=net/nut/files/nut-monitor-config.sh.functions
+. "${IPKG_INSTROOT}"/lib/functions/nut/nut-monitor-config.sh || {
+	log_source_error "nut-monitor-config.sh" "nut-monitor" "nut-monitor"
+	exit 1
+}
+
+restore_umask_on_exit
+
+service_preconditions() {
+	local action="$1"
+	# action can be one of start, stop, or reload
+
+	case "$action" in
+	start | reload)
+		# NUT_KILLPOWER is an external sentinel that indicates a forced shutdown
+		if [ -f "$NUT_KILLPOWER" ]; then
+			return 1
+		fi
+
+		config_load nut_monitor || {
+			log_config_load_error "nut_monitor" "nut-monitor" "nut-monitor"
+			exit 1
+		}
+
+		if have_section_named "upsmon" "upsmon"; then
+			# Find the RUNAS user for upsmon
+			RUNAS="$(find_runas "upsmon" "nut_monitor" "nutmon")" || {
+				log_error_exit "Failed to determine RUNAS user" "nut-monitor" "nut-monitor"
+			}
+		else
+			# If we do not have a 'upsmon' section in nut_monitor, use defaults
+			log_msg "No upsmon section so no RUNAS user, falling back to nutmon" "nut-monitor" "nut-monitor" "notice"
+			RUNAS=nutmon
+		fi
+
+		build_config || return 1
+		check_interface_up "upsmon" || return 1
+		return 0
+		;;
+	*)
+		return 0
+		;;
+	esac
+}
+
+start_monitor_instance() {
+	procd_open_instance upsmon
+	procd_set_param respawn
+	procd_set_param stderr 1
+	procd_set_param stdout 1
+	procd_set_param env NUT_QUIET_INIT_UPSNOTIFY=true
+	procd_set_param env NUT_DEBUG_SYSLOG="stderr"
+	procd_set_param reload_signal HUP
+	procd_set_param command /usr/sbin/upsmon
+	procd_append_param command -FF
+	# upsmon needs root for some actions (like
+	# shutting down the system), but forks
+	# and drops root for most of its operation
+	procd_append_param command -u "$RUNAS"
+	procd_close_instance
+}
+
+perform_instance_action() {
+	local active_upsmon_action="$1"
+	shift || true
+	local active_upsmon_signal="$1"
+	shift || true
+	local action_command="$1"
+	shift || true
+	local action_arg="$1"
+	shift || true
+	local active_upsmon_secondary_command="$1"
+	shift || true
+
+	# If nut-monitor is running but has no instances (even upsmon)
+	if service_active_no_instances "nut-monitor"; then
+		log_msg "nut-monitor active with no instances" "nut-monitor" "nut-monitor" "info"
+		if [ -n "$action_command" ]; then
+			"$action_command" "$action_arg"
+		fi
+	# The only possible instance of nut-monitor in this package is a single
+	# upsmon instance. Therefore we do not need to check for other instances
+	elif procd_running nut-monitor upsmon; then
+		# If nut-monitor has an active upsmon instance
+		signal_instance "upsmon" \
+			"upsmon" \
+			"$active_upsmon_action" \
+			"$active_upsmon_signal" "$PIDFILE" "" \
+			"nut-monitor" \
+			"$active_upsmon_secondary_command" \
+			"$@"
+	fi
+}
+
+manage_service() {
+	local action="$1"
+
+	# We only support one instance of upsmon, and its UCI
+	# section must be named 'upsmon'
+
+	service_preconditions "$action" || return 1
+	case "$action" in
+	start)
+		start_monitor_instance
+		;;
+	reload)
+		# We need to use rpc_procd to start an instance from service_reload
+		perform_instance_action "reload" "HUP" "rc_procd" "start_monitor_instance"
+		;;
+	stop)
+		# Note that the middle procd_kill is *without* upsmon which stops the procd
+		# service entirely, not just the instances (so reload triggers will have
+		# no effect until the service is started again).
+		perform_instance_action "stop" "TERM" "procd_kill" "nut-monitor" "procd_kill" "nut-monitor" "upsmon"
+		rm -f "$UPSMON_C"
+		;;
+	stop-instance)
+		# Stop the upsmon instance but leave nut-monitor procd service active
+		perform_instance_action "stop" "TERM" "" "" "procd_kill" "nut-monitor" "upsmon"
+		rm -f "$UPSMON_C"
+		;;
+	*)
+		# Do not abort on unknown $action, but log it.
+		log_error "Unknown action: '$action'" "nut-monitor" nut-monitor
+		;;
+	esac
+}
+
+stop_and_cleanup_on_error() {
+	manage_service stop-instance
+	rm -f "$UPSMON_C.new"
+}
+
+start_service() {
+	manage_service start || stop_and_cleanup_on_error
+}
+
+reload_service() {
+	manage_service reload || stop_and_cleanup_on_error
+}
+
+stop_service() {
+	manage_service stop
+}
+
+service_triggers() {
+	local val interface_reload_delay
+
+	# No config, or error loading config is fatal
+	config_load nut_monitor || {
+		log_config_load_error "nut_monitor" "nut-monitor" "nut-monitor"
+		exit 1
+	}
+
+	config_get interface_reload_delay upsmon interface_reload_delay $DEFAULT_PROCD_INTERFACE_RELOAD_DELAY
+	if ! check_unsigned_int "$interface_reload_delay" || [ -z "$interface_reload_delay" ]; then
+		log_msg "interface_reload_delay must be an unsigned integer" nut-monitor nut-monitor warn
+		interface_reload_delay="$DEFAULT_PROCD_INTERFACE_RELOAD_DELAY"
+	fi
+
+	# We do not pass a variadic instance name as the nut-monitor initscript does
+	# not need an additional instance name argument, only the initscript name
+	add_interface_triggers "upsmon" "$interface_reload_delay" "nut-monitor" || {
+		log_error "Failed to add interface triggers" nut-monitor nut-monitor
+	}
+	procd_add_reload_trigger "nut_monitor"
+}

@@ -1,0 +1,48 @@
+From ecb2456d6357bfd3b2965aafe2f2021d1ced5b72 Mon Sep 17 00:00:00 2001
+From: Chet Ramey <chet.ramey@case.edu>
+Date: Wed, 3 Jun 2026 10:21:45 -0400
+Subject: Bash-5.3 patch 12: fix subshells inappropriately running the EXIT
+ trap if they receive a fatal signal before resetting traps
+
+--- a/execute_cmd.c
++++ b/execute_cmd.c
+@@ -1643,13 +1643,13 @@ execute_in_subshell (COMMAND *command, i
+ 
+   if (user_subshell)
+     {
+-      subshell_environment = SUBSHELL_PAREN;	/* XXX */
++      subshell_environment = SUBSHELL_PAREN|SUBSHELL_IGNTRAP;	/* XXX */
+       if (asynchronous)
+ 	subshell_environment |= SUBSHELL_ASYNC;
+     }
+   else
+     {
+-      subshell_environment = 0;			/* XXX */
++      subshell_environment = SUBSHELL_IGNTRAP;			/* XXX */
+       if (asynchronous)
+ 	subshell_environment |= SUBSHELL_ASYNC;
+       if (pipe_in != NO_PIPE || pipe_out != NO_PIPE)
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 11
++#define PATCHLEVEL 12
+ 
+ #endif /* _PATCHLEVEL_H_ */
+--- a/sig.c
++++ b/sig.c
+@@ -638,7 +638,10 @@ termsig_handler (int sig)
+   interrupt_execution = retain_fifos = executing_funsub = 0;
+   comsub_ignore_return = return_catch_flag = wait_intr_flag = 0;
+ 
+-  run_exit_trap ();	/* XXX - run exit trap possibly in signal context? */
++  /* Don't run the exit trap if we're supposed to be ignoring traps in a
++     subshell environment. */
++  if ((subshell_environment & SUBSHELL_IGNTRAP) == 0)
++    run_exit_trap ();	/* XXX - run exit trap possibly in signal context? */
+ 
+   kill_shell (sig);
+ }

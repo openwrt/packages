@@ -1,0 +1,33 @@
+name: LLM Review
+
+on:
+  schedule:
+    - cron: '0 5 * * *'
+  workflow_dispatch:
+    inputs:
+      max_prs:
+        description: 'Max PRs to review in this nightly run'
+        required: false
+        type: number
+        default: 24
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-nightly
+  cancel-in-progress: false
+
+jobs:
+  nightly:
+    if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && github.repository_owner == 'openwrt'
+    permissions:
+      pull-requests: read
+    uses: openwrt/actions-shared-workflows/.github/workflows/reusable_llm-nightly-digest.yml@main
+    with:
+      routine_id: ${{ vars.LLM_ROUTINE_ID_NIGHTLY }}
+      # Packages PRs can touch various system integrations, build system targets,
+      # or interface with LuCI apps.
+      extra_repos: openwrt/openwrt:main,openwrt/luci:master
+      max_prs: ${{ fromJSON(github.event.inputs.max_prs || '24') }}
+    secrets:
+      llm_routine_token: ${{ secrets.LLM_ROUTINE_TOKEN_NIGHTLY }}

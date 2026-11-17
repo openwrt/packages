@@ -1,0 +1,11 @@
+--- a/meson.build
++++ b/meson.build
+@@ -39,7 +39,7 @@ zlib = dependency('zlib')
+ threads = dependency('threads')
+ jansson = dependency('jansson', version: '>=2.10')
+ libcrypto = dependency('libcrypto', version: '>=1.0.2')
+-a2x = find_program('a2x', required: false)
++a2x = disabler()
+ 
+ mans = []
+ 

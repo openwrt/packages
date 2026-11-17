@@ -1,0 +1,35 @@
+From: Jeronimo Pellegrini <j_p@aleph0.info>
+Date Thu, 20 Nov 2025 00:00:00 -0300
+Subject: [PATCH] chicken-scheme: fix compiler behavior
+
+Chicken is a Scheme interpreter and compiler. csi is the interpreter,
+and csc is the compiler, which translates Scheme into C and calls gcc.
+
+This patch changes the compiler, csc.
+
+The Chicken build system will dynamically build the file chicken-config.h,
+and for OpenWRT this is done *inside the buildroot*. But then, the values
+in that file are hardcoded into the csc binary, and they don't work well
+in the target device:
+1. -ldl is passed to ld
+2. -fmacro-prefix-map=... is passed to gcc, with the original path from the
+   buildroot
+and these two will not work on OpenWRT (and are not needed anyway), so the
+patch included actually modifies the build system to remove those two flags.
+Then csc works on the target device!
+
+Signed-off-by: Jeronimo Pellegrini <j_p@aleph0.info>
+---
+ defaults.make | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/defaults.make
++++ b/defaults.make
+@@ -506,6 +506,7 @@ else
+ endif
+ 	$(call echo, >>, $@,#endif)
+ 	$(call echo, >>, $@,/* END OF FILE */)
++	sed -i -e's/\-fmacro-prefix-map[^ ]*//' -e's/\-ldl//' $@
+ 
+ chicken-install.rc:
+ 	$(call echo, >, $@,/* GENERATED */)

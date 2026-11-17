@@ -1,0 +1,20 @@
+--- a/vala/valacodecontext.c
++++ b/vala/valacodecontext.c
+@@ -2666,7 +2666,7 @@ vala_code_context_get_file_path (ValaCodeContext* self,
+ 	if (data_dir != NULL) {
+ 		gchar** _tmp3_;
+ 		gchar** _tmp4_;
+-		_tmp4_ = _tmp3_ = g_get_system_data_dirs ();
++		_tmp4_ = _tmp3_ = (gchar**)g_get_system_data_dirs ();
+ 		{
+ 			gchar** dir_collection = NULL;
+ 			gint dir_collection_length1 = 0;
+@@ -2697,7 +2697,7 @@ vala_code_context_get_file_path (ValaCodeContext* self,
+ 	if (versioned_data_dir != NULL) {
+ 		gchar** _tmp8_;
+ 		gchar** _tmp9_;
+-		_tmp9_ = _tmp8_ = g_get_system_data_dirs ();
++		_tmp9_ = _tmp8_ = (gchar**)g_get_system_data_dirs ();
+ 		{
+ 			gchar** dir_collection = NULL;
+ 			gint dir_collection_length1 = 0;

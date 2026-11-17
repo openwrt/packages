@@ -1,0 +1,40 @@
+#!/bin/sh
+
+changed=0
+
+if uci -q get dhcp.@dnsmasq[0] >/dev/null; then
+	case " $(uci -q get dhcp.@dnsmasq[0].notinterface) " in
+	*" podman* "*) ;;
+	*)
+		uci add_list dhcp.@dnsmasq[0].notinterface='podman*'
+		uci commit dhcp
+		changed=1
+		;;
+	esac
+fi
+
+if ! uci -q get firewall.podman >/dev/null; then
+	uci -q batch <<-UCI
+		set firewall.podman=zone
+		set firewall.podman.name='podman'
+		add_list firewall.podman.device='podman+'
+		set firewall.podman.input='REJECT'
+		set firewall.podman.output='ACCEPT'
+		set firewall.podman.forward='REJECT'
+		set firewall.podman_wan=forwarding
+		set firewall.podman_wan.src='podman'
+		set firewall.podman_wan.dest='wan'
+		set firewall.podman_dns=rule
+		set firewall.podman_dns.name='Allow-DNS-podman'
+		set firewall.podman_dns.src='podman'
+		set firewall.podman_dns.proto='tcp udp'
+		set firewall.podman_dns.dest_port='53'
+		set firewall.podman_dns.target='ACCEPT'
+		commit firewall
+	UCI
+	changed=1
+fi
+
+[ "$changed" = 1 ] && reload_config
+
+exit 0

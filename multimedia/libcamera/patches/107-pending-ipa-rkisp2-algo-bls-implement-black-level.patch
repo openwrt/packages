@@ -1,0 +1,229 @@
+From b802fc2ac1ced7de2bf7a5b40b4a0a103652f282 Mon Sep 17 00:00:00 2001
+From: Paul Elder <paul.elder@ideasonboard.com>
+Date: Tue, 30 Jun 2026 11:59:03 +0900
+Subject: [PATCH] ipa: rkisp2: algo: bls: Implement black level subtraction
+
+Implement a static black level subtraction algorithm for the rkisp2 IPA.
+
+Signed-off-by: Paul Elder <paul.elder@ideasonboard.com>
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+No change in v2
+---
+ src/ipa/rkisp2/algorithms/bls.cpp     | 154 ++++++++++++++++++++++++++
+ src/ipa/rkisp2/algorithms/bls.h       |  41 +++++++
+ src/ipa/rkisp2/algorithms/meson.build |   1 +
+ 3 files changed, 196 insertions(+)
+ create mode 100644 src/ipa/rkisp2/algorithms/bls.cpp
+ create mode 100644 src/ipa/rkisp2/algorithms/bls.h
+
+--- /dev/null
++++ b/src/ipa/rkisp2/algorithms/bls.cpp
+@@ -0,0 +1,154 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2026, Ideas On Board
++ *
++ * RkISP2 Black Level Subtraction control
++ */
++
++#include "bls.h"
++
++#include <linux/videodev2.h>
++
++#include <libcamera/base/log.h>
++
++#include <libcamera/control_ids.h>
++
++/**
++ * \file bls.h
++ */
++
++namespace libcamera {
++
++namespace ipa::rkisp2::algorithms {
++
++/**
++ * \class BlackLevelSubtraction
++ * \brief RkISP2 Black Level Subtraction control
++ *
++ * The pixels output by the camera normally include a black level, because
++ * sensors do not always report a signal level of '0' for black. Pixels at or
++ * below this level should be considered black. To achieve that, the RkISP2 BLS
++ * algorithm subtracts a configurable offset from all pixels.
++ *
++ * The black level can be measured at runtime from an optical dark region of the
++ * camera sensor, or measured during the camera tuning process. The first option
++ * isn't currently supported.
++ *
++ * \todo Add support for black level in the metadata so that we can capture
++ * proper raw images for tuning
++ */
++
++LOG_DEFINE_CATEGORY(RkISP2Bls)
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::init
++ */
++int BlackLevelSubtraction::init(IPAContext &context, const ValueNode &tuningData)
++{
++	std::optional<int16_t> levelRed = tuningData["R"].get<int16_t>();
++	std::optional<int16_t> levelGreenR = tuningData["Gr"].get<int16_t>();
++	std::optional<int16_t> levelGreenB = tuningData["Gb"].get<int16_t>();
++	std::optional<int16_t> levelBlue = tuningData["B"].get<int16_t>();
++	bool tuningHasLevels = levelRed && levelGreenR && levelGreenB && levelBlue;
++
++	auto blackLevel = context.camHelper->blackLevel();
++	if (!blackLevel) {
++		/*
++		 * Not all camera sensor helpers have been updated with black
++		 * levels. Print a warning and fall back to the levels from the
++		 * tuning data to preserve backward compatibility. This should
++		 * be removed once all helpers provide the data.
++		 */
++		LOG(RkISP2Bls, Warning)
++			<< "No black levels provided by camera sensor helper"
++			<< ", please fix";
++
++		blackLevelRed_ = levelRed.value_or(4096);
++		blackLevelGreenR_ = levelGreenR.value_or(4096);
++		blackLevelGreenB_ = levelGreenB.value_or(4096);
++		blackLevelBlue_ = levelBlue.value_or(4096);
++	} else if (tuningHasLevels) {
++		/*
++		 * If black levels are provided in the tuning file, use them to
++		 * avoid breaking existing camera tuning. This is deprecated and
++		 * will be removed.
++		 */
++		LOG(RkISP2Bls, Warning)
++			<< "Deprecated: black levels overwritten by tuning file";
++
++		blackLevelRed_ = *levelRed;
++		blackLevelGreenR_ = *levelGreenR;
++		blackLevelGreenB_ = *levelGreenB;
++		blackLevelBlue_ = *levelBlue;
++	} else {
++		blackLevelRed_ = *blackLevel;
++		blackLevelGreenR_ = *blackLevel;
++		blackLevelGreenB_ = *blackLevel;
++		blackLevelBlue_ = *blackLevel;
++	}
++
++	LOG(RkISP2Bls, Debug)
++		<< "Black levels: red " << blackLevelRed_
++		<< ", green (red) " << blackLevelGreenR_
++		<< ", green (blue) " << blackLevelGreenB_
++		<< ", blue " << blackLevelBlue_;
++
++	return 0;
++}
++
++int BlackLevelSubtraction::configure([[maybe_unused]] IPAContext &context,
++				     [[maybe_unused]] const IPACameraSensorInfo &configInfo)
++{
++	/* \todo Save the cfa */
++
++	return 0;
++}
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::prepare
++ */
++void BlackLevelSubtraction::prepare(IPAContext &context,
++				    const uint32_t frame,
++				    [[maybe_unused]] IPAFrameContext &frameContext,
++				    RkISP2Params *params)
++{
++	if (context.configuration.raw)
++		return;
++
++	if (frame > 1)
++		return;
++
++	auto config = params->block<RkISP2ParamsBlocks::Bls>();
++	config.setEnabled(true);
++
++	config->enable_auto = 0;
++
++	/* Scale down to the 12-bit black levels used by the BLS block. */
++	/* \todo Handle cfa properly */
++	config->bls_fixed_val.a = blackLevelRed_ >> 4;
++	config->bls_fixed_val.b = blackLevelGreenR_ >> 4;
++	config->bls_fixed_val.c = blackLevelGreenB_ >> 4;
++	config->bls_fixed_val.d = blackLevelBlue_ >> 4;
++}
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::process
++ */
++void BlackLevelSubtraction::process([[maybe_unused]] IPAContext &context,
++				    [[maybe_unused]] const uint32_t frame,
++				    [[maybe_unused]] IPAFrameContext &frameContext,
++				    [[maybe_unused]] const RkISP2Stats *stats,
++				    ControlList &metadata)
++{
++	metadata.set(controls::SensorBlackLevels,
++		     { static_cast<int32_t>(blackLevelRed_),
++		       static_cast<int32_t>(blackLevelGreenR_),
++		       static_cast<int32_t>(blackLevelGreenB_),
++		       static_cast<int32_t>(blackLevelBlue_) });
++}
++
++REGISTER_IPA_ALGORITHM(BlackLevelSubtraction, "BlackLevelSubtraction")
++
++} /* namespace ipa::rkisp2::algorithms */
++
++} /* namespace libcamera */
+--- /dev/null
++++ b/src/ipa/rkisp2/algorithms/bls.h
+@@ -0,0 +1,41 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2026, Ideas On Board
++ *
++ * RkISP2 Black Level Subtraction control
++ */
++
++#pragma once
++
++#include "algorithm.h"
++
++namespace libcamera {
++
++namespace ipa::rkisp2::algorithms {
++
++class BlackLevelSubtraction : public Algorithm
++{
++public:
++	BlackLevelSubtraction() = default;
++	~BlackLevelSubtraction() = default;
++
++	int init(IPAContext &context, const ValueNode &tuningData) override;
++	int configure(IPAContext &context,
++		      const IPACameraSensorInfo &configInfo) override;
++	void prepare(IPAContext &context, const uint32_t frame,
++		     IPAFrameContext &frameContext,
++		     RkISP2Params *params) override;
++	void process(IPAContext &context, const uint32_t frame,
++		     IPAFrameContext &frameContext,
++		     const RkISP2Stats *stats,
++		     ControlList &metadata) override;
++
++private:
++	int16_t blackLevelRed_;
++	int16_t blackLevelGreenR_;
++	int16_t blackLevelGreenB_;
++	int16_t blackLevelBlue_;
++};
++
++} /* namespace ipa::rkisp2::algorithms */
++} /* namespace libcamera */
+--- a/src/ipa/rkisp2/algorithms/meson.build
++++ b/src/ipa/rkisp2/algorithms/meson.build
+@@ -1,5 +1,6 @@
+ # SPDX-License-Identifier: CC0-1.0
+ 
+ rkisp2_ipa_algorithms = files([
++    'bls.cpp',
+ ])
+ 

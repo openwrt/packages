@@ -1,0 +1,89 @@
+From 80a6f3d954412ed1c2d9a05c07df150bb500ac20 Mon Sep 17 00:00:00 2001
+From: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Date: Thu, 2 Jul 2026 14:16:43 +0200
+Subject: [PATCH] ipa: libipa: lsc_polynomial: Remove sensorSize_
+
+The sensorSize_ field is only used during the init() function and is
+provided to LscPolynomial using the LscDescriptor type.
+
+There is no need to store it as a class member and to pass it in
+at class construction time.
+
+Remove it and move the \todo comment in the LscDescriptor type
+documentation.
+
+Signed-off-by: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Reviewed-by: Kieran Bingham <kieran.bingham@ideasonboard.com>
+Reviewed-by: Stefan Klug <stefan.klug@ideasonboard.com>
+---
+ src/ipa/libipa/lsc.cpp            | 6 +-----
+ src/ipa/libipa/lsc_base.cpp       | 3 +++
+ src/ipa/libipa/lsc_polynomial.cpp | 7 -------
+ src/ipa/libipa/lsc_polynomial.h   | 6 ------
+ 4 files changed, 4 insertions(+), 18 deletions(-)
+
+--- a/src/ipa/libipa/lsc.cpp
++++ b/src/ipa/libipa/lsc.cpp
+@@ -215,11 +215,7 @@ int LscAlgorithm::init(const ValueNode &
+ 		impl_ = std::make_unique<LscTable>();
+ 		LOG(Lsc, Debug) << "Using table-based Lsc";
+ 	} else if (type == "polynomial") {
+-		/*
+-		 * \todo Most likely the reference frame should be native_size.
+-		 * Let's wait how the internal discussions progress.
+-		 */
+-		impl_ = std::make_unique<LscPolynomial>(descriptor.sensorSize);
++		impl_ = std::make_unique<LscPolynomial>();
+ 		polynomial_ = true;
+ 		LOG(Lsc, Debug) << "Using polynomial Lsc";
+ 	} else {
+--- a/src/ipa/libipa/lsc_base.cpp
++++ b/src/ipa/libipa/lsc_base.cpp
+@@ -78,6 +78,9 @@ void Interpolator<lsc::Components>::
+  * \var LscDescriptor::sensorSize
+  * \brief The physical sensor size. This is the largest frame size used to
+  * generate the LSC table. Only used by the polynomial LSC algorithm
++ *
++ * \todo: Most likely the reference frame should be native_size.
++ * Let's wait how the internal discussions progress.
+  */
+ 
+ /**
+--- a/src/ipa/libipa/lsc_polynomial.cpp
++++ b/src/ipa/libipa/lsc_polynomial.cpp
+@@ -124,13 +124,6 @@ void Polynomial::setReferenceImageSize(c
+  */
+ 
+ /**
+- * \fn LscPolynomial::LscPolynomial
+- * \param[in] sensorSize The physical sensor size
+- *
+- * Construct an LscPolynomial
+- */
+-
+-/**
+  * \brief Parse polynomial LSC data
+  * \param[in] sets The tuning file content
+  * \param[in] descriptor The LSC engine descriptor
+--- a/src/ipa/libipa/lsc_polynomial.h
++++ b/src/ipa/libipa/lsc_polynomial.h
+@@ -57,11 +57,6 @@ private:
+ 	using PolynomialComponentsMap = std::map<unsigned int, PolynomialComponents>;
+ 
+ public:
+-	LscPolynomial(const Size &sensorSize)
+-		: sensorSize_(sensorSize)
+-	{
+-	}
+-
+ 	int parseLscData(const ValueNode &sets,
+ 			 const LscDescriptor &descriptor) override;
+ 
+@@ -75,7 +70,6 @@ private:
+ 					       Span<const double> yPositions,
+ 					       const Rectangle &cropRectangle);
+ 	PolynomialComponentsMap lscData_;
+-	Size sensorSize_;
+ };
+ 
+ } /* namespace ipa */

@@ -1,0 +1,28 @@
+From db480e205cd1634e196c429264e42d3351d8bcd5 Mon Sep 17 00:00:00 2001
+From: Florian Fainelli <florian@openwrt.org>
+Date: Sat, 31 Jul 2010 11:39:13 +0000
+Subject: [PATCH] tinyproxy: fix creation of pid and log (#7641)
+
+SVN-Revision: 22431
+---
+
+--- a/etc/tinyproxy.conf.in
++++ b/etc/tinyproxy.conf.in
+@@ -93,7 +93,7 @@ StatFile "@pkgdatadir@/stats.html"
+ # exclusive. If neither Syslog nor LogFile are specified, output goes
+ # to stdout.
+ #
+-#LogFile "@localstatedir@/log/tinyproxy/tinyproxy.log"
++LogFile "@localstatedir@/log/tinyproxy.log"
+ 
+ #
+ # Syslog: Tell tinyproxy to use syslog instead of a logfile.  This
+@@ -124,7 +124,7 @@ LogLevel Info
+ # can be used for signalling purposes.
+ # If not specified, no pidfile will be written.
+ #
+-#PidFile "@runstatedir@/tinyproxy/tinyproxy.pid"
++PidFile "@localstatedir@/tinyproxy.pid"
+ 
+ #
+ # XTinyproxy: Tell Tinyproxy to include the X-Tinyproxy header, which

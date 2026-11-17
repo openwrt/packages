@@ -1,0 +1,9 @@
+{
+	"name": "udmedia.de",
+	"ipv4": {
+		"url": "https://[USERNAME]:[PASSWORD]@www.udmedia.de/nic/update?myip=[IP]"
+	},
+	"ipv6": {
+		"url": "https://[USERNAME]:[PASSWORD]@www.udmedia.de/nic/update?myip=[IP]"
+	}
+}

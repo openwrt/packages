@@ -1,0 +1,52 @@
+From fc938914c104ee551daf39cea027f760d8b6113d Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 6 Nov 2026 15:09:43 +0000
+Subject: [PATCH] ipa: rkisp2: agc: Measure the histogram over the whole frame
+
+The big histogram is configured for a 5x5 grid (window_num 0), but it
+is given the block size of a 15x15 grid. The hardware takes the window
+size as the size of one block, as the Rockchip ISP2x driver programs it
+in isp_rawhstbig_config(), so the histogram covers only the top-left
+ninth of the frame. The histogram constraint then misses highlights
+elsewhere in the picture and holds the exposure up in scenes that
+clip. Use the 5x5 measurement window that the AE-lite grid already
+uses, and drop the 15x15 window that nothing else reads.
+
+Assisted-by: LLM
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ src/ipa/rkisp2/algorithms/agc.cpp | 5 +----
+ src/ipa/rkisp2/ipa_context.h      | 1 -
+ 2 files changed, 1 insertion(+), 5 deletions(-)
+
+--- a/src/ipa/rkisp2/algorithms/agc.cpp
++++ b/src/ipa/rkisp2/algorithms/agc.cpp
+@@ -84,9 +84,6 @@ int Agc::configure(IPAContext &context,
+ 	 */
+ 	context.configuration.agc.measureWindow.v_size = (configInfo.outputSize.height / 5) - 2;
+ 
+-	context.configuration.agc.measureWindow15.h_size = (configInfo.outputSize.width / 15);
+-	context.configuration.agc.measureWindow15.v_size = (configInfo.outputSize.height / 15) - 2;
+-
+ 	/* Configure the default exposure and gain. */
+ 	context.activeState.agc.automatic.gain = context.configuration.sensor.minAnalogueGain;
+ 	context.activeState.agc.automatic.exposure =
+@@ -283,7 +280,7 @@ void Agc::prepare(IPAContext &context, [
+ 	hstConfig->coeffs.g = 0x86;
+ 	hstConfig->coeffs.b = 0x0d;
+ 
+-	hstConfig->meas_window = context.configuration.agc.measureWindow15;
++	hstConfig->meas_window = context.configuration.agc.measureWindow;
+ 
+ 	/* \todo Support configuring the weights */
+ 	for (size_t i = 0; i < RKISP2_ISP_HIST_WEIGHT_GRIDS_SIZE_BIG; i++)
+--- a/src/ipa/rkisp2/ipa_context.h
++++ b/src/ipa/rkisp2/ipa_context.h
+@@ -58,7 +58,6 @@ struct RKISP2AwbSession {
+ struct IPASessionConfiguration {
+ 	struct {
+ 		struct rkisp2_isp_window measureWindow;
+-		struct rkisp2_isp_window measureWindow15;
+ 	} agc;
+ 
+ 	struct RKISP2AwbSession awb;

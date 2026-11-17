@@ -1,0 +1,74 @@
+From d7111e73e0886af1f848912758285d4ac32baf45 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 28 Aug 2026 08:38:35 +0100
+Subject: [PATCH] messages: Parse the forwarding bind port as the uint32 it is
+ on the wire
+Message-ID: <apE6-yLX4akEHi6S@makrotopia.org>
+To: libssh@libssh.org
+Cc: John Crispin <john@phrozen.org>
+
+ssh_packet_global_request() unpacked the "tcpip-forward" and
+"cancel-tcpip-forward" bind port with the "d" format directly into the
+uint16_t bind_port field. "d" stores a full uint32_t through the given
+pointer, so the two bytes following the field were overwritten and the
+field itself received only the most significant half of the value:
+zero, on big-endian platforms, for any valid port.
+
+A server offering -R forwarding on a big-endian host therefore saw
+every requested bind port as a wildcard, bound an ephemeral port
+instead of the requested one and reported success, while the client
+kept waiting on the port it had asked for, since the chosen port is
+only reported back to the client for an actual wildcard request. The
+forwarding therefore never carried a connection.
+
+Unpack into a uint32_t local and assign it to the field, as the
+direct-tcpip and forwarded-tcpip channel-open parsers already do.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+Found on OpenWrt (mips_24kc, big-endian, musl), where a client's -R
+forwarding request through a libssh server bound the wrong port.
+Verified on a big-endian build: before this patch the server binds an
+ephemeral port instead of the requested one and the forwarding never
+carries a connection, with it the requested port is bound and -R
+forwarding works end to end. No changes in testsuite results.
+
+ src/messages.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+--- a/src/messages.c
++++ b/src/messages.c
+@@ -1799,6 +1799,7 @@ SSH_PACKET_CALLBACK(ssh_packet_global_re
+     ssh_message msg = NULL;
+     char *request = NULL;
+     uint8_t want_reply;
++    uint32_t bind_port = 0;
+     int rc = SSH_PACKET_USED;
+     int r;
+ 
+@@ -1829,10 +1830,11 @@ SSH_PACKET_CALLBACK(ssh_packet_global_re
+         r = ssh_buffer_unpack(packet,
+                               "sd",
+                               &msg->global_request.bind_address,
+-                              &msg->global_request.bind_port);
++                              &bind_port);
+         if (r != SSH_OK){
+             goto reply_with_failure;
+         }
++        msg->global_request.bind_port = (uint16_t)bind_port;
+         msg->global_request.type = SSH_GLOBAL_REQUEST_TCPIP_FORWARD;
+         msg->global_request.want_reply = want_reply;
+ 
+@@ -1870,10 +1872,11 @@ SSH_PACKET_CALLBACK(ssh_packet_global_re
+         r = ssh_buffer_unpack(packet,
+                               "sd",
+                               &msg->global_request.bind_address,
+-                              &msg->global_request.bind_port);
++                              &bind_port);
+         if (r != SSH_OK){
+             goto reply_with_failure;
+         }
++        msg->global_request.bind_port = (uint16_t)bind_port;
+         msg->global_request.type = SSH_GLOBAL_REQUEST_CANCEL_TCPIP_FORWARD;
+         msg->global_request.want_reply = want_reply;
+ 

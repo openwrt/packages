@@ -1,0 +1,36 @@
+#!/bin/sh /etc/rc.common
+
+START=50
+STOP=50
+
+USE_PROCD=1
+PROG=/usr/sbin/mdns-repeater
+
+start_service() {
+	config_load mdns_repeater
+	local interfaces
+	config_get interfaces main interface
+	procd_open_instance
+	procd_set_param respawn
+	procd_set_param command $PROG -f $interfaces
+	# -f generates a lot of debug output
+	# no forwarding of stderr to logs
+	procd_set_param file /etc/config/mdns_repeater
+	procd_close_instance
+}
+
+reload_service() {
+	restart
+}
+
+interface_trigger() {
+	procd_add_reload_interface_trigger "$1"
+}
+
+service_triggers() {
+	procd_add_reload_trigger "mdns_repeater"
+
+	config_load mdns_repeater
+	config_list_foreach main interface interface_trigger
+}
+

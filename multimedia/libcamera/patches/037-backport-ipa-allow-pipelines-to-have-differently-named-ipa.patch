@@ -1,0 +1,114 @@
+From 95a69b4be21b08c5fb055172bc6c341c83f286d7 Mon Sep 17 00:00:00 2001
+From: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Date: Tue, 18 Aug 2026 16:05:43 +0200
+Subject: [PATCH] ipa: Allow pipelines to have differently named IPA
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Right now the build system assumes a 1-to-1 matching between a pipeline
+handler name and an IPA module.
+
+This, as also acknowledged by a \todo comment, is quite a rigid
+requirement and only allows a 1-to-1 matching between pipeline and IPA
+names. The more platforms libcamera supports, the more it is likely that
+a pipeline handler could re-use an IPA module. This is particularly
+relevant for the softISP IPA module which could theoretically be plugged
+to any pipeline.
+
+When building IPAs, the build system iterates the list of enabled
+pipeline handlers and for each of them tries to verify if the 'ipas'
+list contains a corresponding entry for it. The 'ipas' meson options is
+an array option and, as no default value is specified for it, it
+contains by default all its possible choices.
+
+In this way if no value is specified for the 'ipas' option, compiling
+the pipeline handlers ['X','Y', 'Z'] will compile the ['X', 'Y', 'Z']
+IPAs. If instead the user specifies '-Dipas=X' during the configuration
+then only IPA module ['X'] will be built, regardless of which pipeline is
+enabled. Building an IPA module will anyway require to build a
+corresponding pipeline with the same name.
+
+Relax the 1-to-1 'pipeline'-'IPA' naming requirement by introducing a
+dictionary that associates pipelines with IPA modules.
+
+For each enabled pipeline:
+1) Make sure an IPA module exists for it
+2) Make sure the IPA module is enabled by the 'ipas' option
+3) Make sure the IPA is compiled once only
+
+This will require every new pipeline to add an entry to the dictionary
+and specify which IPA module they would like to use.
+
+Reviewed-by: Hans de Goede <johannes.goede@oss.qualcomm.com>
+Reviewed-by: Barnabás Pőcze <barnabas.pocze@ideasonboard.com>
+Signed-off-by: Hans de Goede <johannes.goede@oss.qualcomm.com>
+Signed-off-by: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+---
+ src/ipa/meson.build | 40 ++++++++++++++++++++++++++++++----------
+ 1 file changed, 30 insertions(+), 10 deletions(-)
+
+--- a/src/ipa/meson.build
++++ b/src/ipa/meson.build
+@@ -24,6 +24,16 @@ subdir('libipa')
+ 
+ ipa_sign = files('ipa-sign.sh')
+ 
++supported_ipas = {
++    'ipu3':       'ipu3',
++    'mali-c55':   'mali-c55',
++    'rkisp1':     'rkisp1',
++    'rpi/pisp':   'rpi/pisp',
++    'rpi/vc4':    'rpi/vc4',
++    'simple':     'simple',
++    'vimc':       'vimc'
++}
++
+ ipa_modules = get_option('ipas')
+ 
+ # Tests require the vimc IPA, similar to vimc pipline-handler for their
+@@ -39,24 +49,34 @@ ipa_names = []
+ 
+ subdirs = []
+ foreach pipeline : pipelines
+-    # The current implementation expects the IPA module name to match the
+-    # pipeline name.
+-    # \todo Make the IPA naming scheme more flexible.
+-    if not ipa_modules.contains(pipeline)
++    # Make sure an IPA exists for the pipeline
++    if not supported_ipas.has_key(pipeline)
++        continue
++    endif
++
++    ipa = supported_ipas.get(pipeline)
++
++    # Only build IPAs specified with '-Dipas'
++    if not ipa_modules.contains(ipa)
++        continue
++    endif
++
++    # If enabled already do not add it twice
++    if enabled_ipa_names.contains(ipa)
+         continue
+     endif
+-    enabled_ipa_names += pipeline
++    enabled_ipa_names += ipa
+ 
+     # Allow multi-level directory structuring for the IPAs if needed.
+-    pipeline = pipeline.split('/')[0]
+-    if pipeline in subdirs
++    ipa = ipa.split('/')[0]
++    if ipa in subdirs
+         continue
+     endif
+ 
+-    subdirs += pipeline
+-    subdir(pipeline)
++    subdirs += ipa
++    subdir(ipa)
+ 
+-    # Don't reuse the pipeline variable below, the subdirectory may have
++    # Don't reuse the ipa variable below, the subdirectory may have
+     # overwritten it.
+ endforeach
+ 

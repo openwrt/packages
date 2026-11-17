@@ -1,0 +1,91 @@
+From 60c504b98f27ac9c26c077705ba07e03953db320 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Wed, 4 Nov 2026 11:58:18 +0000
+Subject: [PATCH] ipa: rkisp2: goc: Take the tone curve from the tuning file
+
+A pure power curve has no toe and lifts the shadows while flattening
+the mid-tones. Let the tuning file provide a tone curve as a piecewise
+linear 16-bit function (the `curve` key, in the Raspberry Pi
+gamma_curve format), used while the Gamma control stays at its default;
+a different Gamma value falls back to the power curve.
+
+Assisted-by: LLM
+---
+ src/ipa/rkisp2/algorithms/goc.cpp | 25 +++++++++++++++++++++++--
+ src/ipa/rkisp2/algorithms/goc.h   |  3 +++
+ 2 files changed, 26 insertions(+), 2 deletions(-)
+
+--- a/src/ipa/rkisp2/algorithms/goc.cpp
++++ b/src/ipa/rkisp2/algorithms/goc.cpp
+@@ -32,6 +32,12 @@ namespace ipa::rkisp2::algorithms {
+  * This algorithm implements the gamma out curve for the RkISP2. It defaults to
+  * a gamma value of 2.2.
+  *
++ * A tuning file may instead provide a tone curve as a piecewise linear
++ * function of 16-bit input and output values (the \c curve key, in the format
++ * of the Raspberry Pi \c gamma_curve). The curve is used as long as the Gamma
++ * control stays at its default value; setting a different gamma switches to
++ * the power function.
++ *
+  * As gamma is internally represented as a piecewise linear function with only
+  * 17 knots, the difference between gamma=2.2 and sRGB gamma is minimal.
+  * Therefore sRGB gamma was not implemented as special case.
+@@ -56,6 +62,13 @@ int GammaOutCorrection::init(IPAContext
+ 	defaultGamma_ = tuningData["gamma"].get<double>(kDefaultGamma);
+ 	context.ctrlMap[&controls::Gamma] = ControlInfo(0.1f, 10.0f, defaultGamma_);
+ 
++	curve_ = tuningData["curve"].get<ipa::Pwl>(ipa::Pwl{});
++	if (!curve_.empty() && curve_.domain().end < 65535.0) {
++		LOG(RkISP2Gamma, Error)
++			<< "'curve' does not span the 16-bit input range";
++		return -EINVAL;
++	}
++
+ 	return 0;
+ }
+ 
+@@ -115,15 +128,23 @@ void GammaOutCorrection::prepare([[maybe
+ 		512, 512, 512, 512
+ 	};
+ 
++	bool useCurve = !curve_.empty() &&
++			frameContext.goc.gamma == defaultGamma_;
++
+ 	auto config = params->block<RkISP2ParamsBlocks::Goc>();
+ 	config.setEnabled(true);
+ 
+ 	unsigned x = 0;
+ 	for (const auto [i, size] : utils::enumerate(segments)) {
++		double y;
++
+ 		x += size;
+-		unsigned int y = std::lround(std::pow(x / 4096.0, 1.0 / frameContext.goc.gamma) * 4096.0);
++		if (useCurve)
++			y = curve_.eval(std::min(x * 16.0, 65535.0)) / 16.0;
++		else
++			y = std::pow(x / 4096.0, 1.0 / frameContext.goc.gamma) * 4096.0;
+ 
+-		config->gamma_y[i] = std::min(y, kGammaOutMax);
++		config->gamma_y[i] = std::min<unsigned int>(std::lround(y), kGammaOutMax);
+ 	}
+ 	config->gamma_y[segments.size()] = kGammaOutMax;
+ 
+--- a/src/ipa/rkisp2/algorithms/goc.h
++++ b/src/ipa/rkisp2/algorithms/goc.h
+@@ -7,6 +7,8 @@
+ 
+ #pragma once
+ 
++#include "libipa/pwl.h"
++
+ #include "algorithm.h"
+ 
+ namespace libcamera {
+@@ -36,6 +38,7 @@ public:
+ 
+ private:
+ 	float defaultGamma_;
++	ipa::Pwl curve_;
+ };
+ 
+ } /* namespace ipa::rkisp2::algorithms */

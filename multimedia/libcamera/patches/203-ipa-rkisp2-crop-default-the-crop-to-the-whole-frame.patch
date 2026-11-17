@@ -1,0 +1,63 @@
+From d47dc4db45f307f9469ae8baeef73341a8ee6530 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 16 Oct 2026 13:09:27 +0100
+Subject: [PATCH] ipa: rkisp2: crop: Default the crop to the whole frame
+
+The ScalerCrop control advertises the whole sensor frame as its default,
+but the crop algorithm only sends a crop block once an application sets
+the control, so the stream starts with the crop the driver initialises,
+which on the ISP 2.0 driver is the output size at the top left corner of
+the frame rather than the whole field of view scaled to the output.
+
+Initialise the active crop to the whole frame and send it with the
+first frame.
+
+Assisted-by: LLM
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ src/ipa/rkisp2/algorithms/crop.cpp | 15 ++++++++++++++-
+ src/ipa/rkisp2/algorithms/crop.h   |  2 ++
+ 2 files changed, 16 insertions(+), 1 deletion(-)
+
+--- a/src/ipa/rkisp2/algorithms/crop.cpp
++++ b/src/ipa/rkisp2/algorithms/crop.cpp
+@@ -39,14 +39,27 @@ namespace ipa::rkisp2::algorithms {
+ LOG_DEFINE_CATEGORY(RkISP2Crop)
+ 
+ /**
++ * \copydoc libcamera::ipa::Algorithm::configure
++ */
++int Crop::configure(IPAContext &context,
++		    const IPACameraSensorInfo &configInfo)
++{
++	/* The default crop is the whole frame, as advertised by ScalerCrop. */
++	context.activeState.crop.crop = Rectangle(configInfo.outputSize);
++
++	return 0;
++}
++
++/**
+  * \copydoc libcamera::ipa::Algorithm::queueRequest
+  */
+ void Crop::queueRequest(IPAContext &context,
+-			[[maybe_unused]] const uint32_t frame,
++			const uint32_t frame,
+ 			IPAFrameContext &frameContext,
+ 			const ControlList &controls)
+ {
+ 	frameContext.crop.crop = context.activeState.crop.crop;
++	frameContext.crop.set = frame == 0;
+ 
+ 	const auto &scalerCrop = controls.get(controls::ScalerCrop);
+ 	if (!scalerCrop)
+--- a/src/ipa/rkisp2/algorithms/crop.h
++++ b/src/ipa/rkisp2/algorithms/crop.h
+@@ -19,6 +19,8 @@ public:
+ 	Crop() = default;
+ 	~Crop() = default;
+ 
++	int configure(IPAContext &context,
++		      const IPACameraSensorInfo &configInfo) override;
+ 	void queueRequest(IPAContext &context,
+ 			  const uint32_t frame,
+ 			  IPAFrameContext &frameContext,

@@ -1,0 +1,5 @@
+	config GENSIO_SSHD
+		depends on PACKAGE_gensio-bin
+		select GENSIO_SSL
+		bool "Build gtlsshd"
+		default n

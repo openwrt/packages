@@ -1,0 +1,39 @@
+#!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2025-2026 Chester A. Unal <chester.a.unal@arinc9.com>
+
+# Only run if a cdc_ether, r8152, rndis_host, or ipheth network interface is
+# being added.
+[ "$ACTION" = "add" ] && grep -E '^DRIVER=(cdc_ether|r8152|rndis_host|ipheth)$' /sys${DEVPATH%/*/*}/uevent || exit
+
+# UCI section names must only contain [a-zA-Z0-9_]. Replace any other character
+# with an underscore.
+sec_name=$(echo "$DEVICENAME" | sed 's/[^a-zA-Z0-9_]/_/g')
+
+# Exit if a network with the same name already exists.
+uci get network.wan_"$sec_name" && exit
+
+# Decide on the metric value. Start from 1 and work up to 8.
+uci_network=$(uci show network)
+metric=1
+while [ $metric -le 8 ]; do
+	# Break if this metric isn't in use.
+	echo "$uci_network" | grep -q ".metric='$metric'" || break
+
+	# Add 1 to metric if another network uses this metric.
+	metric=$((metric + 1))
+done
+# Exit if there are no available metrics.
+[ "$metric" -gt 8 ] && exit
+
+uci set network.wan_"$sec_name"=interface
+uci set network.wan_"$sec_name".device="$DEVICENAME"
+uci set network.wan_"$sec_name".proto='dhcp'
+uci set network.wan_"$sec_name".metric="$metric"
+
+# Add wan network entry to firewall wan zone.
+fw_section=$(uci show firewall | grep "name='wan'" | cut -d. -f2)
+[ -n "$fw_section" ] && uci add_list firewall.$fw_section.network="wan_$sec_name"
+
+uci commit
+ifup wan_"$sec_name"

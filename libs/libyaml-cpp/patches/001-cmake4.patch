@@ -1,0 +1,35 @@
+From c9371de7836d113c0b14bfa15ca70f00ebb3ac6f Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Christoph=20Gr=C3=BCninger?= <foss@grueninger.de>
+Date: Mon, 24 Mar 2025 08:32:25 +0100
+Subject: [PATCH] [cmake] Require minimum CMake version 3.5
+
+Soon CMake 4.0 will be released. It requires that projects
+set a minimum required CMake version of 3.5. There is a
+workaround with an additional flag, but it would is better
+to increase the minimum required version.
+---
+ CMakeLists.txt      | 6 +++---
+ test/CMakeLists.txt | 1 -
+ 2 files changed, 3 insertions(+), 4 deletions(-)
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,5 +1,6 @@
+-# 3.5 is actually available almost everywhere, but this a good minimum
+-cmake_minimum_required(VERSION 3.4)
++# 3.5 is actually available almost everywhere.
++# 3.30 as the upper policy limit avoids CMake deprecation warnings.
++cmake_minimum_required(VERSION 3.5...3.30)
+ 
+ # enable MSVC_RUNTIME_LIBRARY target property
+ # see https://cmake.org/cmake/help/latest/policy/CMP0091.html
+--- a/test/CMakeLists.txt
++++ b/test/CMakeLists.txt
+@@ -2,7 +2,6 @@ find_package(Threads REQUIRED)
+ 
+ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+ set(BUILD_MOCK ON CACHE BOOL "" FORCE)
+-set(CMAKE_POLICY_DEFAULT_CMP0048 NEW)
+ 
+ add_subdirectory(
+   "${CMAKE_CURRENT_SOURCE_DIR}/gtest-1.11.0"

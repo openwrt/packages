@@ -1,0 +1,318 @@
+From 6e053190d60d8a940ffd27580c9c04fdfc4198c0 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Mon, 21 Sep 2026 12:11:44 +0100
+Subject: [PATCH] validation: check the device rules by trying them
+
+The unified hierarchy applies the same device rules cgroup v1 did, but it
+publishes no list to read them back from, so linux_cgroups_devices has
+nothing to compare against and is skipped there. The rules are still in
+force; only this test's way of looking at them is gone.
+
+Look at them from inside the container instead. The three rules the test
+already configures name no device that the bundle puts in the container,
+so add a node the first of them allows and one that only the generator's
+leading deny-all covers. The rules themselves are untouched, which leaves
+the cgroup v1 path reading exactly what it read before.
+
+runtimetest works out what the list permits by applying the entries in
+the listed order, as a runtime is required to, and compares that with
+what opening the node does. Only EPERM means the device controller
+refused, and it is reported before the driver behind the node is
+consulted, so nothing has to be loaded for the answer to be meaningful.
+The open does not block, and only character and block devices are
+compared, since the device controller governs nothing else; a FIFO in
+linux.devices would otherwise hold the test up waiting for a writer.
+Devices a runtime must supply are left alone, since runtimes add rules of
+their own for those.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ cmd/runtimetest/main.go                       | 103 ++++++++++++++++++
+ cmd/runtimetest/main_test.go                  | 100 +++++++++++++++++
+ .../linux_cgroups_devices.go                  |  39 ++++++-
+ 3 files changed, 236 insertions(+), 6 deletions(-)
+ create mode 100644 cmd/runtimetest/main_test.go
+
+--- a/cmd/runtimetest/main.go
++++ b/cmd/runtimetest/main.go
+@@ -663,6 +663,108 @@ func (c *complianceTester) validateLinux
+ 	return nil
+ }
+ 
++func isDefaultDevicePath(path string) bool {
++	for _, device := range defaultDevices {
++		if device.Path == path {
++			return true
++		}
++	}
++
++	return false
++}
++
++func deviceRuleMatches(rule rspec.LinuxDeviceCgroup, devType string, major int64, minor int64) bool {
++	if rule.Type != "" && rule.Type != "a" && rule.Type != devType {
++		return false
++	}
++	if rule.Major != nil && *rule.Major != major {
++		return false
++	}
++	if rule.Minor != nil && *rule.Minor != minor {
++		return false
++	}
++
++	return rule.Access == "" || strings.Contains(rule.Access, "r")
++}
++
++// deviceReadAllowed applies the entries in the listed order, as a runtime
++// is required to, and reports what the last one to match has to say. A
++// device that no entry matches carries no restriction.
++func deviceReadAllowed(rules []rspec.LinuxDeviceCgroup, devType string, major int64, minor int64) bool {
++	allowed := true
++	for _, rule := range rules {
++		if deviceRuleMatches(rule, devType, major, minor) {
++			allowed = rule.Allow
++		}
++	}
++
++	return allowed
++}
++
++// deviceCgroupType maps a linux.devices type onto the type the device
++// controller knows, which covers character and block devices only.
++func deviceCgroupType(devType string) (string, bool) {
++	switch devType {
++	case "c", "u":
++		return "c", true
++	case "b":
++		return "b", true
++	}
++
++	return "", false
++}
++
++// deviceDeniedByCgroup opens a device node to find out whether the device
++// controller refuses it. EPERM comes back before the driver behind the
++// node is consulted, so a node with nothing behind it answers the question
++// just as well as one that could be read. The open does not block, so a
++// driver that waits for a peer cannot hold the test up.
++func deviceDeniedByCgroup(path string) bool {
++	f, err := os.OpenFile(path, os.O_RDONLY|syscall.O_NONBLOCK, 0)
++	if err == nil {
++		f.Close()
++		return false
++	}
++
++	return errors.Is(err, syscall.EPERM)
++}
++
++func (c *complianceTester) validateLinuxResourcesDevices(spec *rspec.Spec) error {
++	if spec.Linux == nil || spec.Linux.Resources == nil || len(spec.Linux.Resources.Devices) == 0 {
++		c.harness.Skip(1, "linux.resources.devices is not set")
++		return nil
++	}
++
++	for _, device := range spec.Linux.Devices {
++		// Runtimes add rules of their own for the devices they are
++		// required to supply, so those say nothing about the list that
++		// was configured.
++		if isDefaultDevicePath(device.Path) {
++			continue
++		}
++		devType, ok := deviceCgroupType(device.Type)
++		if !ok {
++			continue
++		}
++		expected := !deviceReadAllowed(spec.Linux.Resources.Devices, devType, device.Major, device.Minor)
++		denied := deviceDeniedByCgroup(device.Path)
++		rfcError, err := c.Ok(denied == expected, specerror.DevicesApplyInOrder, spec.Version,
++			fmt.Sprintf("access to %s follows linux.resources.devices", device.Path))
++		if err != nil {
++			return err
++		}
++		_ = c.harness.YAML(map[string]string{
++			"level":     rfcError.Level.String(),
++			"reference": rfcError.Reference,
++			"device":    fmt.Sprintf("%s %d:%d", device.Type, device.Major, device.Minor),
++			"expected":  fmt.Sprintf("denied: %t", expected),
++			"actual":    fmt.Sprintf("denied: %t", denied),
++		})
++	}
++
++	return nil
++}
++
+ func (c *complianceTester) validateDevice(device *rspec.LinuxDevice, condition specerror.Code, version string, description string) (err error) {
+ 	var exists bool
+ 	fi, err := os.Stat(device.Path)
+@@ -1297,6 +1399,7 @@ func run(context *cli.Context) error {
+ 		c.validateDefaultFS,
+ 		c.validateDefaultDevices,
+ 		c.validateLinuxDevices,
++		c.validateLinuxResourcesDevices,
+ 		c.validateLinuxProcess,
+ 		c.validateMaskedPaths,
+ 		c.validateOOMScoreAdj,
+--- /dev/null
++++ b/cmd/runtimetest/main_test.go
+@@ -0,0 +1,100 @@
++package main
++
++import (
++	"path/filepath"
++	"syscall"
++	"testing"
++
++	rspec "github.com/opencontainers/runtime-spec/specs-go"
++)
++
++func devicePtr(v int64) *int64 {
++	return &v
++}
++
++func TestDeviceReadAllowed(t *testing.T) {
++	// The list linux_cgroups_devices builds: the generator's leading
++	// deny-all followed by the three rules the test adds.
++	rules := []rspec.LinuxDeviceCgroup{
++		{Allow: false, Access: "rwm"},
++		{Allow: true, Type: "c", Major: devicePtr(10), Minor: devicePtr(229), Access: "rwm"},
++		{Allow: true, Type: "b", Major: devicePtr(8), Minor: devicePtr(20), Access: "rw"},
++		{Allow: true, Type: "b", Major: devicePtr(10), Minor: devicePtr(200), Access: "r"},
++	}
++
++	for _, test := range []struct {
++		description string
++		devType     string
++		rules       []rspec.LinuxDeviceCgroup
++		major       int64
++		minor       int64
++		expected    bool
++	}{
++		{description: "explicitly allowed", rules: rules, devType: "c", major: 10, minor: 229, expected: true},
++		{description: "a minor the allow does not cover", rules: rules, devType: "c", major: 10, minor: 230, expected: false},
++		{description: "right numbers, wrong type", rules: rules, devType: "b", major: 10, minor: 229, expected: false},
++		{description: "allowed block device", rules: rules, devType: "b", major: 8, minor: 20, expected: true},
++		{description: "read-only allow still permits reading", rules: rules, devType: "b", major: 10, minor: 200, expected: true},
++		{description: "covered only by the deny-all", rules: rules, devType: "c", major: 1, minor: 3, expected: false},
++		{description: "no rules at all", rules: nil, devType: "c", major: 1, minor: 3, expected: true},
++		{
++			description: "a deny that does not mention read",
++			rules:       []rspec.LinuxDeviceCgroup{{Allow: false, Access: "w"}},
++			devType:     "c", major: 1, minor: 3, expected: true,
++		},
++		{
++			description: "a later rule overrides an earlier one",
++			rules: []rspec.LinuxDeviceCgroup{
++				{Allow: true, Access: "rwm"},
++				{Allow: false, Type: "c", Major: devicePtr(10), Minor: devicePtr(229), Access: "rwm"},
++			},
++			devType: "c", major: 10, minor: 229, expected: false,
++		},
++	} {
++		got := deviceReadAllowed(test.rules, test.devType, test.major, test.minor)
++		if got != test.expected {
++			t.Errorf("%s: %s %d:%d allowed == %t, expected %t",
++				test.description, test.devType, test.major, test.minor, got, test.expected)
++		}
++	}
++}
++
++func TestIsDefaultDevicePath(t *testing.T) {
++	if !isDefaultDevicePath("/dev/null") {
++		t.Error("/dev/null is a default device")
++	}
++	if isDefaultDevicePath("/dev/denied") {
++		t.Error("/dev/denied is not a default device")
++	}
++}
++
++func TestDeviceCgroupType(t *testing.T) {
++	for _, test := range []struct {
++		devType  string
++		expected string
++		governed bool
++	}{
++		{devType: "c", expected: "c", governed: true},
++		{devType: "u", expected: "c", governed: true},
++		{devType: "b", expected: "b", governed: true},
++		{devType: "p", governed: false},
++	} {
++		got, governed := deviceCgroupType(test.devType)
++		if got != test.expected || governed != test.governed {
++			t.Errorf("%s: type == %q governed == %t, expected %q %t",
++				test.devType, got, governed, test.expected, test.governed)
++		}
++	}
++}
++
++func TestDeviceDeniedByCgroupFifo(t *testing.T) {
++	fifo := filepath.Join(t.TempDir(), "fifo")
++	if err := syscall.Mkfifo(fifo, 0o600); err != nil {
++		t.Fatal(err)
++	}
++	// Opening a FIFO without a writer blocks unless the open is
++	// non-blocking.
++	if deviceDeniedByCgroup(fifo) {
++		t.Error("a FIFO outside any device rule was reported as denied")
++	}
++}
+--- a/validation/linux_cgroups_devices/linux_cgroups_devices.go
++++ b/validation/linux_cgroups_devices/linux_cgroups_devices.go
+@@ -4,17 +4,28 @@ import (
+ 	"os"
+ 
+ 	"github.com/mndrix/tap-go"
++	rspec "github.com/opencontainers/runtime-spec/specs-go"
+ 	"github.com/opencontainers/runtime-tools/cgroups"
+ 	"github.com/opencontainers/runtime-tools/validation/util"
+ )
+ 
+-func main() {
+-	var major1, minor1, major2, minor2, major3, minor3 int64 = 10, 229, 8, 20, 10, 200
++func deviceNode(path string, major int64, minor int64) rspec.LinuxDevice {
++	mode := os.FileMode(0o666)
++	owner := uint32(0)
+ 
+-	if util.UnifiedCgroups() {
+-		util.Skip("cgroup v1 specific linux.resources.devices test", nil)
+-		os.Exit(0)
++	return rspec.LinuxDevice{
++		Path:     path,
++		Type:     "c",
++		Major:    major,
++		Minor:    minor,
++		FileMode: &mode,
++		UID:      &owner,
++		GID:      &owner,
+ 	}
++}
++
++func main() {
++	var major1, minor1, major2, minor2, major3, minor3 int64 = 10, 229, 8, 20, 10, 200
+ 
+ 	t := tap.New()
+ 	t.Header(0)
+@@ -28,7 +39,23 @@ func main() {
+ 	g.AddLinuxResourcesDevice(true, "c", &major1, &minor1, "rwm")
+ 	g.AddLinuxResourcesDevice(true, "b", &major2, &minor2, "rw")
+ 	g.AddLinuxResourcesDevice(true, "b", &major3, &minor3, "r")
+-	err = util.RuntimeOutsideValidate(g, t, util.ValidateLinuxResourcesDevices)
++
++	// The rules above name no device that the bundle puts in the
++	// container, so nothing about them can be observed from the inside.
++	// Add a node the first rule allows and one that only the leading
++	// deny-all covers, which leaves the rules themselves untouched.
++	g.AddDevice(deviceNode("/dev/allowed", major1, minor1))
++	g.AddDevice(deviceNode("/dev/denied", major1, minor1+1))
++
++	// Reading the rules back is a cgroup v1 affair. The unified hierarchy
++	// applies the same rules but publishes no list to compare against, so
++	// there they are checked by trying the two nodes above.
++	if util.UnifiedCgroups() {
++		g.AddAnnotation("TestName", "check linux.resources.devices")
++		err = util.RuntimeInsideValidate(g, t, nil)
++	} else {
++		err = util.RuntimeOutsideValidate(g, t, util.ValidateLinuxResourcesDevices)
++	}
+ 	if err != nil {
+ 		t.Fail(err.Error())
+ 	}

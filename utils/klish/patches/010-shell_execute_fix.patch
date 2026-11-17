@@ -1,0 +1,20 @@
+--- a/clish/shell/shell_execute.c
++++ b/clish/shell/shell_execute.c
+@@ -20,7 +20,7 @@
+ #include <fcntl.h>
+ 
+ /* Empty signal handler to ignore signal but don't use SIG_IGN. */
+-static void sigignore(int signo)
++static void sigignore2(int signo)
+ {
+ 	signo = signo; /* Happy compiler */
+ 	return;
+@@ -361,7 +361,7 @@ int clish_shell_exec_action(clish_contex
+ 	 */
+ 	sa.sa_flags = 0;
+ 	sigemptyset(&sa.sa_mask);
+-	sa.sa_handler = sigignore; /* Empty signal handler */
++	sa.sa_handler = sigignore2; /* Empty signal handler */
+ 	sigaction(SIGINT, &sa, &old_sigint);
+ 	sigaction(SIGQUIT, &sa, &old_sigquit);
+ 	sigaction(SIGHUP, &sa, &old_sighup);

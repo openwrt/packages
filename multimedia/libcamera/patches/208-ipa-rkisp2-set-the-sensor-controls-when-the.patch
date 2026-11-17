@@ -1,0 +1,51 @@
+From 61edd3972a2f893d3b2ee2263807567581ef3573 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 16 Oct 2026 14:50:12 +0100
+Subject: [PATCH] ipa: rkisp2: Set the sensor controls when the parameters are
+ computed
+
+The sensor controls are emitted from processStats() with the exposure
+and gain prepared for the frame whose statistics have just been
+processed. That frame has already been captured, so the pipeline queues
+the controls one index late and DelayedControls writes them a frame
+after they were meant to take effect, while the metadata reports the
+values the IPA intended. Emit the controls from computeParams(), with
+the values prepared for the frame, as the rkisp1 IPA does, so that the
+pipeline pushes them for the frame they belong to.
+
+Assisted-by: LLM
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ src/ipa/rkisp2/rkisp2.cpp | 9 ++-------
+ 1 file changed, 2 insertions(+), 7 deletions(-)
+
+--- a/src/ipa/rkisp2/rkisp2.cpp
++++ b/src/ipa/rkisp2/rkisp2.cpp
+@@ -295,6 +295,8 @@ void IPARkISP2::computeParams(const uint
+ 	for (const auto &algo : algorithms())
+ 		algo->prepare(context_, frame, frameContext, &params);
+ 
++	setControls(frame, frameContext);
++
+ 	paramsComputed.emit(frame, bufferId, params.bytesused());
+ }
+ 
+@@ -315,18 +317,11 @@ void IPARkISP2::processStats(const uint3
+ 	for (const auto &algo : algorithms())
+ 		algo->process(context_, frame, frameContext, &stats, metadata);
+ 
+-	setControls(frame, frameContext);
+-
+ 	metadataReady.emit(metadata);
+ }
+ 
+ void IPARkISP2::setControls(unsigned int frame, const IPAFrameContext &frameContext)
+ {
+-	/*
+-	 * \todo The frame number is most likely wrong here, we need to take
+-	 * internal sensor delays and other timing parameters into account.
+-	 */
+-
+ 	uint32_t exposure = frameContext.agc.exposure;
+ 	uint32_t gain = context_.camHelper->gainCode(frameContext.agc.gain);
+ 	uint32_t vblank = frameContext.agc.vblank;

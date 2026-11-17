@@ -1,0 +1,13 @@
+--- a/app/consapp/rnx2rtkp/gcc/makefile
++++ b/app/consapp/rnx2rtkp/gcc/makefile
+@@ -8,8 +8,8 @@ OPTS    = -DTRACE -DENAGLO -DENAQZS -DEN
+ 
+ # for no lapack
+ CFLAGS  = -Wall -O3 -ansi -pedantic -Wno-unused-but-set-variable -I$(SRC) $(OPTS) -g
+-#LDLIBS  = -lm -lrt
+-LDLIBS  = ../../../../lib/iers/gcc/iers.a -lgfortran -lm -lrt
++LDLIBS  = -lm -lrt
++#LDLIBS  = ../../../../lib/iers/gcc/iers.a -lgfortran -lm -lrt
+ 
+ #CFLAGS  = -Wall -O3 -ansi -pedantic -Wno-unused-but-set-variable -I$(SRC) -DLAPACK $(OPTS)
+ #LDLIBS  = -lm -lrt -llapack -lblas

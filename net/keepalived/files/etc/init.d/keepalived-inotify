@@ -1,0 +1,65 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+USE_PROCD=1
+PROG="/usr/bin/keepalived-rsync-inotify"
+
+KEEPALIVED_USER=keepalived
+KEEPALIVED_HOME=$(awk -F: "/^$KEEPALIVED_USER/{print \$6}" /etc/passwd)
+
+start_instance() {
+	local cfg=$1
+	local vrrp_instance=$2
+	local peer=$3
+
+	config_get name $cfg name
+	[ -z "$name" ] && return
+
+	[ "$name" != "$peer" ] && return
+
+	config_get sync $cfg sync 0
+	[ "$sync" = "0" ] && return
+
+	config_get sync_mode $cfg sync_mode
+	[ "$sync_mode" != "receive" ] && return
+
+	config_get sync_dir $cfg sync_dir $KEEPALIVED_HOME
+	[ -z "$sync_dir" ] && return
+
+	[ ! -d "$sync_dir" ] && mkdir -m 755 -p "$sync_dir"
+
+	procd_open_instance "$name"
+	procd_set_param command /bin/sh "$PROG" "$vrrp_instance" "$name" "$sync_dir"
+	procd_set_param pidfile /var/run/keepalived-inotify-$name.pid
+	procd_close_instance
+}
+
+process_unicast_peer() {
+	local peer=$1
+	local vrrp_instance=$2
+
+	config_foreach start_instance peer "$vrrp_instance" "$peer"
+}
+
+process_vrrp_instance() {
+	local cfg=$1
+	local peer_instance=$2
+	local name unicast_peer
+
+	config_get name $cfg name
+	config_get unicast_peer $cfg unicast_peer
+
+	if [ -n "$peer_instance" ]; then
+		list_contains unicast_peer "$peer_instance" || return
+		process_unicast_peer "$peer_instance" "$name"
+	else
+		config_list_foreach $cfg unicast_peer process_unicast_peer "$name"
+	fi
+}
+
+start_service() {
+	local peer_instance=$1
+
+	config_load keepalived
+	config_foreach process_vrrp_instance vrrp_instance "$peer_instance"
+}

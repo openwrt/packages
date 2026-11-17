@@ -1,0 +1,11 @@
+--- a/auto/make
++++ b/auto/make
+@@ -623,7 +623,7 @@ END
+ modules:	$ngx_obj
+ 
+ $ngx_obj:	$ngx_deps$ngx_spacer
+-	\$(LINK) $ngx_long_start$ngx_binout$ngx_obj$ngx_long_cont$ngx_objs$ngx_libs$ngx_link$ngx_module_link
++	\$(LINK) $ngx_pic_opt $ngx_long_start$ngx_binout$ngx_obj$ngx_long_cont$ngx_objs$ngx_libs$ngx_link$ngx_module_link
+ $ngx_long_end
+ 
+ $ngx_modules_obj:	\$(CORE_DEPS)$ngx_cont$ngx_modules_c

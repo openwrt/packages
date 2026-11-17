@@ -1,0 +1,112 @@
+From ca16950875eb0a63febdfa2189c3585c92301983 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Tue, 20 Oct 2026 16:48:51 +0100
+Subject: [PATCH] cgroups: rename GetSubsystemPath to GetV1SubsystemPath
+
+The function looks a controller up by name in /proc/<pid>/cgroup, which
+only means something for the cgroup v1 hierarchies; the unified
+hierarchy has a single entry with an empty controller list. Name it
+for what it does so that a cgroup v2 lookup can sit next to it.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ cgroups/cgroups.go    |  4 ++--
+ cgroups/cgroups_v1.go | 18 +++++++++---------
+ 2 files changed, 11 insertions(+), 11 deletions(-)
+
+--- a/cgroups/cgroups.go
++++ b/cgroups/cgroups.go
+@@ -76,8 +76,8 @@ func FindCgroup() (Cgroup, error) {
+ 	return nil, fmt.Errorf("cgroup is not found")
+ }
+ 
+-// GetSubsystemPath gets path of subsystem
+-func GetSubsystemPath(pid int, subsystem string) (string, error) {
++// GetV1SubsystemPath gets the path of a cgroup v1 subsystem
++func GetV1SubsystemPath(pid int, subsystem string) (string, error) {
+ 	contents, err := os.ReadFile(fmt.Sprintf("/proc/%d/cgroup", pid))
+ 	if err != nil {
+ 		return "", err
+--- a/cgroups/cgroups_v1.go
++++ b/cgroups/cgroups_v1.go
+@@ -52,7 +52,7 @@ func (cg *CgroupV1) GetBlockIOData(pid i
+ 		fileName := strings.Join([]string{"blkio", name}, ".")
+ 		filePath := filepath.Join(cg.MountPath, "blkio", cgPath, fileName)
+ 		if !filepath.IsAbs(cgPath) {
+-			subPath, err := GetSubsystemPath(pid, "blkio")
++			subPath, err := GetV1SubsystemPath(pid, "blkio")
+ 			if err != nil {
+ 				return nil, err
+ 			}
+@@ -227,7 +227,7 @@ func (cg *CgroupV1) GetCPUData(pid int,
+ 		fileName := strings.Join([]string{"cpu", name}, ".")
+ 		filePath := filepath.Join(cg.MountPath, "cpu", cgPath, fileName)
+ 		if !filepath.IsAbs(cgPath) {
+-			subPath, err := GetSubsystemPath(pid, "cpu")
++			subPath, err := GetV1SubsystemPath(pid, "cpu")
+ 			if err != nil {
+ 				return nil, err
+ 			}
+@@ -294,7 +294,7 @@ func (cg *CgroupV1) GetCPUData(pid int,
+ 		fileName := strings.Join([]string{"cpuset", name}, ".")
+ 		filePath := filepath.Join(cg.MountPath, "cpuset", cgPath, fileName)
+ 		if !filepath.IsAbs(cgPath) {
+-			subPath, err := GetSubsystemPath(pid, "cpuset")
++			subPath, err := GetV1SubsystemPath(pid, "cpuset")
+ 			if err != nil {
+ 				return nil, err
+ 			}
+@@ -324,7 +324,7 @@ func (cg *CgroupV1) GetDevicesData(pid i
+ 	fileName := strings.Join([]string{"devices", "list"}, ".")
+ 	filePath := filepath.Join(cg.MountPath, "devices", cgPath, fileName)
+ 	if !filepath.IsAbs(cgPath) {
+-		subPath, err := GetSubsystemPath(pid, "devices")
++		subPath, err := GetV1SubsystemPath(pid, "devices")
+ 		if err != nil {
+ 			return nil, err
+ 		}
+@@ -447,7 +447,7 @@ func (cg *CgroupV1) GetHugepageLimitData
+ 		maxUsage := strings.Join([]string{"hugetlb", pageSize, "limit_in_bytes"}, ".")
+ 		filePath := filepath.Join(cg.MountPath, "hugetlb", cgPath, maxUsage)
+ 		if !filepath.IsAbs(cgPath) {
+-			subPath, err := GetSubsystemPath(pid, "hugetlb")
++			subPath, err := GetV1SubsystemPath(pid, "hugetlb")
+ 			if err != nil {
+ 				return lh, err
+ 			}
+@@ -494,7 +494,7 @@ func (cg *CgroupV1) GetMemoryData(pid in
+ 		fileName := strings.Join([]string{"memory", name}, ".")
+ 		filePath := filepath.Join(cg.MountPath, "memory", cgPath, fileName)
+ 		if !filepath.IsAbs(cgPath) {
+-			subPath, err := GetSubsystemPath(pid, "memory")
++			subPath, err := GetV1SubsystemPath(pid, "memory")
+ 			if err != nil {
+ 				return nil, err
+ 			}
+@@ -587,7 +587,7 @@ func (cg *CgroupV1) GetNetworkData(pid i
+ 	fileName := strings.Join([]string{"net_cls", "classid"}, ".")
+ 	filePath := filepath.Join(cg.MountPath, "net_cls", cgPath, fileName)
+ 	if !filepath.IsAbs(cgPath) {
+-		subPath, err := GetSubsystemPath(pid, "net_cls")
++		subPath, err := GetV1SubsystemPath(pid, "net_cls")
+ 		if err != nil {
+ 			return nil, err
+ 		}
+@@ -614,7 +614,7 @@ func (cg *CgroupV1) GetNetworkData(pid i
+ 	fileName = strings.Join([]string{"net_prio", "ifpriomap"}, ".")
+ 	filePath = filepath.Join(cg.MountPath, "net_prio", cgPath, fileName)
+ 	if !filepath.IsAbs(cgPath) {
+-		subPath, err := GetSubsystemPath(pid, "net_prio")
++		subPath, err := GetV1SubsystemPath(pid, "net_prio")
+ 		if err != nil {
+ 			return nil, err
+ 		}
+@@ -658,7 +658,7 @@ func (cg *CgroupV1) GetPidsData(pid int,
+ 	fileName := strings.Join([]string{"pids", "max"}, ".")
+ 	filePath := filepath.Join(cg.MountPath, "pids", cgPath, fileName)
+ 	if !filepath.IsAbs(cgPath) {
+-		subPath, err := GetSubsystemPath(pid, "pids")
++		subPath, err := GetV1SubsystemPath(pid, "pids")
+ 		if err != nil {
+ 			return nil, err
+ 		}

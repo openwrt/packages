@@ -1,0 +1,100 @@
+From ef2adc3e464d9b774794b23bbd0d591ba32e998c Mon Sep 17 00:00:00 2001
+From: Moritz Warning <moritzwarning@web.de>
+Date: Wed, 29 May 2024 09:16:08 +0200
+Subject: [PATCH] mbedtls: fix compilation with 3.0.0
+
+Signed-off-by: Moritz Warning <moritzwarning@web.de>
+---
+ gatling.h |  5 +++++
+ pssl.c    | 23 +++++++++++++++++++----
+ 2 files changed, 24 insertions(+), 4 deletions(-)
+
+--- a/gatling.h
++++ b/gatling.h
+@@ -112,7 +112,12 @@ extern int init_serverside_tls(SSL** ssl
+ 
+ #ifdef USE_POLARSSL
+ /* in pssl.c */
++#include "mbedtls/version.h"
++#if (MBEDTLS_VERSION_NUMBER >= 0x03000000)
++#include <mbedtls/mbedtls_config.h>
++#else
+ #include <mbedtls/config.h>
++#endif
+ #include <mbedtls/platform.h>
+ #include <mbedtls/ssl.h>
+ #include <mbedtls/net_sockets.h>
+--- a/pssl.c
++++ b/pssl.c
+@@ -6,12 +6,18 @@
+ #include <sys/poll.h>
+ #include <netdb.h>
+ #include <fcntl.h>
++#include <mbedtls/version.h>
++#if (MBEDTLS_VERSION_NUMBER >= 0x03000000)
++#include <mbedtls/mbedtls_config.h>
++#include <mbedtls/psa_util.h>
++#else
+ #include <mbedtls/config.h>
++#include <mbedtls/certs.h>
++#endif
+ #include <mbedtls/platform.h>
+ #include <mbedtls/ssl.h>
+ #include <mbedtls/entropy.h>
+ #include <mbedtls/ctr_drbg.h>
+-#include <mbedtls/certs.h>
+ #include <mbedtls/x509.h>
+ #include <mbedtls/x509_crt.h>
+ #include <mbedtls/ssl_cache.h>
+@@ -56,7 +62,9 @@ int ciphersuites[] =
+   MBEDTLS_TLS_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA,
+   MBEDTLS_TLS_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA256,
+   MBEDTLS_TLS_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA,
++#if (MBEDTLS_VERSION_NUMBER < 0x03000000)
+   MBEDTLS_TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA,
++#endif
+   MBEDTLS_TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384,
+   MBEDTLS_TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,
+   MBEDTLS_TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+@@ -73,7 +81,9 @@ int ciphersuites[] =
+   MBEDTLS_TLS_RSA_WITH_AES_128_CBC_SHA,
+   MBEDTLS_TLS_RSA_WITH_CAMELLIA_128_CBC_SHA256,
+   MBEDTLS_TLS_RSA_WITH_CAMELLIA_128_CBC_SHA,
++#if (MBEDTLS_VERSION_NUMBER < 0x03000000)
+   MBEDTLS_TLS_RSA_WITH_3DES_EDE_CBC_SHA,
++#endif
+ //  TLS_RSA_WITH_RC4_128_SHA,
+ //  TLS_RSA_WITH_RC4_128_MD5,
+   0
+@@ -85,7 +95,12 @@ static int parse_cert( const char* filen
+   mbedtls_pk_init(key);
+ 
+   if ((r=mbedtls_x509_crt_parse_file(srvcert,filename)) ||
+-      (r=mbedtls_pk_parse_keyfile(key,filename,NULL)))
++#if (MBEDTLS_VERSION_NUMBER >= 0x03000000)
++      (r=mbedtls_pk_parse_keyfile(key,filename,NULL,mbedtls_psa_get_random,NULL))
++#else
++      (r=mbedtls_pk_parse_keyfile(key,filename,NULL))
++#endif
++    )
+     return r;
+   return 0;
+ }
+@@ -179,7 +194,7 @@ int init_serverside_tls(struct ssl_data*
+   mbedtls_ssl_conf_dh_param_ctx(&d->conf, &d->dhm);
+ //  debug_set_threshold(65535);
+ 
+-  mbedtls_ssl_conf_min_version(&d->conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_1);	/* demand at least TLS 1.0 */
++  mbedtls_ssl_conf_min_version(&d->conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_3);	/* demand at least TLS 1.2 */
+ //  ssl_set_dh_param( ssl, "CD95C1B9959B0A135B9D306D53A87518E8ED3EA8CBE6E3A338D9DD3167889FC809FE1AD59B38C98D1A8FCE47E46DF5FB56B8EA3B03B2132C249A99209F62A1AD63511BD08A60655B0463B6F1BB79BEC9D17C71BD269C6B50CF0EDDAAB83290B4C697A7F641FBD21EE0E7B57C698AFEED8DA3AB800525E6887215A61CA62DC437", "04" );
+ 
+   if ((r=mbedtls_ssl_setup(&d->ssl,&d->conf)))
+@@ -210,7 +225,7 @@ int init_clientside_tls(struct ssl_data*
+   mbedtls_ssl_conf_ca_chain( &d->conf, d->crt.next, NULL );
+   mbedtls_ssl_conf_rng( &d->conf, mbedtls_ctr_drbg_random, &ctr_drbg );
+   mbedtls_ssl_conf_dbg( &d->conf, my_debug, NULL );
+-  mbedtls_ssl_conf_min_version(&d->conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_1);	/* demand at least TLS 1.0 */
++  mbedtls_ssl_conf_min_version(&d->conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_3);	/* demand at least TLS 1.2 */
+   if ((r=mbedtls_ssl_setup(&d->ssl,&d->conf)))
+     return r;
+   if ((r=mbedtls_ssl_set_hostname(&d->ssl, hostname)))

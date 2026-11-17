@@ -1,0 +1,93 @@
+# From https://git.openembedded.org/meta-openembedded/tree/meta-oe/recipes-devtools/abseil-cpp
+From f9607924225ca59fb6c60222e6424b84e6f70029 Mon Sep 17 00:00:00 2001
+From: Khem Raj <raj.khem@gmail.com>
+Date: Sat, 21 Sep 2024 20:53:06 +0800
+Subject: [PATCH] abseil: ppc fixes
+
+An all-in-one patch that fixes several issues:
+
+1) UnscaledCycleClock not fully implemented for ppc*-musl (disabled on musl)
+2) powerpc stacktrace implementation only works on glibc (disabled on musl)
+3) powerpc stacktrace implementation has ppc64 assumptions (fixed)
+4) examine_stack.cpp makes glibc assumptions on powerpc (fixed)
+
+Sourced from void linux
+
+Upstream-Status: Pending
+
+Signed-off-by: Khem Raj <raj.khem@gmail.com>
+---
+ absl/base/internal/unscaledcycleclock.cc       | 4 ++--
+ absl/base/internal/unscaledcycleclock_config.h | 3 ++-
+ absl/debugging/internal/examine_stack.cc       | 8 +++++++-
+ absl/debugging/internal/stacktrace_config.h    | 2 +-
+ 4 files changed, 12 insertions(+), 5 deletions(-)
+
+--- a/absl/base/internal/unscaledcycleclock.cc
++++ b/absl/base/internal/unscaledcycleclock.cc
+@@ -20,7 +20,7 @@
+ #include <intrin.h>
+ #endif
+ 
+-#if defined(__powerpc__) || defined(__ppc__)
++#if (defined(__powerpc__) || defined(__ppc__)) && defined(__GLIBC__)
+ #ifdef __GLIBC__
+ #include <sys/platform/ppc.h>
+ #elif defined(__FreeBSD__)
+@@ -58,7 +58,7 @@ double UnscaledCycleClock::Frequency() {
+   return base_internal::NominalCPUFrequency();
+ }
+ 
+-#elif defined(__powerpc__) || defined(__ppc__)
++#elif (defined(__powerpc__) || defined(__ppc__)) && defined(__GLIBC__)
+ 
+ int64_t UnscaledCycleClock::Now() {
+ #ifdef __GLIBC__
+--- a/absl/base/internal/unscaledcycleclock_config.h
++++ b/absl/base/internal/unscaledcycleclock_config.h
+@@ -21,7 +21,8 @@
+ 
+ // The following platforms have an implementation of a hardware counter.
+ #if defined(__i386__) || defined(__x86_64__) || defined(__aarch64__) || \
+-    defined(__powerpc__) || defined(__ppc__) || defined(_M_IX86) ||     \
++    ((defined(__powerpc__) || defined(__ppc__)) && defined(__GLIBC__)) || \
++    defined(_M_IX86) ||     \
+     (defined(_M_X64) && !defined(_M_ARM64EC))
+ #define ABSL_HAVE_UNSCALED_CYCLECLOCK_IMPLEMENTATION 1
+ #else
+--- a/absl/debugging/internal/examine_stack.cc
++++ b/absl/debugging/internal/examine_stack.cc
+@@ -36,6 +36,10 @@
+ #include <csignal>
+ #include <cstdio>
+ 
++#if defined(__powerpc__)
++#include <asm/ptrace.h>
++#endif
++
+ #include "absl/base/attributes.h"
+ #include "absl/base/internal/raw_logging.h"
+ #include "absl/base/macros.h"
+@@ -177,8 +181,10 @@ void* GetProgramCounter(void* const vuc)
+     return reinterpret_cast<void*>(context->uc_mcontext.pc);
+ #elif defined(__powerpc64__)
+     return reinterpret_cast<void*>(context->uc_mcontext.gp_regs[32]);
+-#elif defined(__powerpc__)
++#elif defined(__powerpc__) && defined(__GLIBC__)
+     return reinterpret_cast<void*>(context->uc_mcontext.uc_regs->gregs[32]);
++#elif defined(__powerpc__)
++    return reinterpret_cast<void*>((context->uc_regs)->gregs[32]);
+ #elif defined(__riscv)
+     return reinterpret_cast<void*>(context->uc_mcontext.__gregs[REG_PC]);
+ #elif defined(__s390__) && !defined(__s390x__)
+--- a/absl/debugging/internal/stacktrace_config.h
++++ b/absl/debugging/internal/stacktrace_config.h
+@@ -60,7 +60,7 @@
+ #elif defined(__i386__) || defined(__x86_64__)
+ #define ABSL_STACKTRACE_INL_HEADER \
+   "absl/debugging/internal/stacktrace_x86-inl.inc"
+-#elif defined(__ppc__) || defined(__PPC__)
++#elif (defined(__ppc__) || defined(__PPC__)) && defined(__GLIBC__)
+ #define ABSL_STACKTRACE_INL_HEADER \
+   "absl/debugging/internal/stacktrace_powerpc-inl.inc"
+ #elif defined(__aarch64__)

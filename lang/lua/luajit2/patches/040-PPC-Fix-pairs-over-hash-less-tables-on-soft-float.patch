@@ -1,0 +1,44 @@
+From 0abde25c632e6b3343d07d978d9cc4209fe05f58 Mon Sep 17 00:00:00 2001
+From: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Date: Sat, 15 Aug 2026 09:11:08 +0200
+Subject: [PATCH] PPC: Fix pairs() over hash-less tables on soft-float targets
+
+BC_ITERN checks the itype of the node value in RB to skip empty slots
+in the hash part. Upstream loads RB unconditionally before the FPU
+split; commit 2763a421 ("Patch for PPC64 support") moved that load
+into the FPU branch only. On soft-float builds, RB still contains
+RC*8 from the hash-part setup, so the nil check never succeeds and
+iterating a table whose hash part is empty yields one extra
+(nil, nil) pair.
+
+Check CARG1 instead, which the soft-float branch already loads with
+the itype. The FPU branch is left untouched. Upstream LuaJIT is
+unaffected.
+
+Reproducer on Turris 1.x (e500v2, 32-bit big-endian, soft-float):
+
+  $ luajit -e 'for k,v in pairs({7,8,9}) do print(k,v) end'
+  1    7
+  2    8
+  3    9
+  nil  nil     -- spurious
+
+Signed-off-by: Josef Schlehofer <pepe.schlehofer@gmail.com>
+---
+ src/vm_ppc.dasc | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+--- a/src/vm_ppc.dasc
++++ b/src/vm_ppc.dasc
+@@ -5807,7 +5807,11 @@ static void build_ins(BuildCtx *ctx, BCO
+     |  lwz CARG2, 4(CARG3)
+     |   add NODE:TMP3, TMP2, TMP3
+     |.endif
++    |.if FPU
+     |  checknil RB
++    |.else
++    |  checknil CARG1
++    |.endif
+     |     lwz INS, -4(PC)
+     |  beq >7
+     |.if FPU

@@ -1,0 +1,50 @@
+#!/bin/sh
+
+set -e
+
+SYSREPOCFG=$(which sysrepocfg)
+
+SERVER_CONFIG=$($SYSREPOCFG -X -x "/ietf-netconf-server:netconf-server/listen/endpoints/endpoint | /ietf-netconf-server:netconf-server/call-home/netconf-client")
+if [ -n "$SERVER_CONFIG" ]; then
+	exit 0
+fi
+
+CONFIG="<netconf-server xmlns=\"urn:ietf:params:xml:ns:yang:ietf-netconf-server\">
+    <listen>
+        <endpoints>
+            <endpoint>
+                <name>default-ssh</name>
+                <ssh>
+                    <tcp-server-parameters>
+                        <local-bind>
+                            <local-address>::</local-address>
+                        </local-bind>
+                    </tcp-server-parameters>
+                    <ssh-server-parameters>
+                        <server-identity>
+                            <host-key>
+                                <name>default-key</name>
+                                <public-key>
+                                    <central-keystore-reference>genkey</central-keystore-reference>
+                                </public-key>
+                            </host-key>
+                        </server-identity>
+                        <client-authentication>
+                            <users>
+                                <user>
+                                    <name>root</name>
+                                    <keyboard-interactive xmlns=\"urn:cesnet:libnetconf2-netconf-server\">
+                                        <use-system-auth/>
+                                    </keyboard-interactive>
+                                </user>
+                            </users>
+                        </client-authentication>
+                    </ssh-server-parameters>
+                </ssh>
+            </endpoint>
+        </endpoints>
+    </listen>
+</netconf-server>"
+
+echo "$CONFIG" | $SYSREPOCFG --edit -d startup -f xml -m ietf-netconf-server -v2
+$SYSREPOCFG -C startup -m ietf-netconf-server -v2

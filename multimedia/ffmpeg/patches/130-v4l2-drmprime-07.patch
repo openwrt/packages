@@ -1,0 +1,65 @@
+From 62530c259e5b04f2eeb9284d2b0271e9c61e7444 Mon Sep 17 00:00:00 2001
+From: Lukas Rusak <lorusak@gmail.com>
+Date: Wed, 6 May 2020 11:12:58 -0700
+Subject: [PATCH 7/9] libavcodec: v4l2m2m: add option to specify pixel format
+ used by the decoder
+
+---
+ libavcodec/v4l2_context.c | 9 +++++++++
+ libavcodec/v4l2_m2m.h     | 2 ++
+ libavcodec/v4l2_m2m_dec.c | 1 +
+ 3 files changed, 12 insertions(+)
+
+--- a/libavcodec/v4l2_context.c
++++ b/libavcodec/v4l2_context.c
+@@ -522,6 +522,8 @@ static inline int v4l2_try_raw_format(V4
+ 
+ static int v4l2_get_raw_format(V4L2Context* ctx, enum AVPixelFormat *p)
+ {
++    V4L2m2mContext* s = ctx_to_m2mctx(ctx);
++    V4L2m2mPriv *priv = s->avctx->priv_data;
+     enum AVPixelFormat pixfmt = ctx->av_pix_fmt;
+     struct v4l2_fmtdesc fdesc;
+     int ret;
+@@ -540,6 +542,13 @@ static int v4l2_get_raw_format(V4L2Conte
+         if (ret)
+             return AVERROR(EINVAL);
+ 
++        if (priv->pix_fmt != AV_PIX_FMT_NONE) {
++            if (fdesc.pixelformat != ff_v4l2_format_avfmt_to_v4l2(priv->pix_fmt)) {
++                fdesc.index++;
++                continue;
++            }
++        }
++
+         pixfmt = ff_v4l2_format_v4l2_to_avfmt(fdesc.pixelformat, AV_CODEC_ID_RAWVIDEO);
+         ret = v4l2_try_raw_format(ctx, pixfmt);
+         if (ret){
+--- a/libavcodec/v4l2_m2m.h
++++ b/libavcodec/v4l2_m2m.h
+@@ -30,6 +30,7 @@
+ #include <linux/videodev2.h>
+ 
+ #include "libavcodec/avcodec.h"
++#include "libavutil/pixfmt.h"
+ #include "v4l2_context.h"
+ 
+ #define container_of(ptr, type, member) ({ \
+@@ -80,6 +81,7 @@ typedef struct V4L2m2mPriv {
+ 
+     int num_output_buffers;
+     int num_capture_buffers;
++    enum AVPixelFormat pix_fmt;
+ } V4L2m2mPriv;
+ 
+ /**
+--- a/libavcodec/v4l2_m2m_dec.c
++++ b/libavcodec/v4l2_m2m_dec.c
+@@ -261,6 +261,7 @@ static const AVOption options[] = {
+     V4L_M2M_DEFAULT_OPTS,
+     { "num_capture_buffers", "Number of buffers in the capture context",
+         OFFSET(num_capture_buffers), AV_OPT_TYPE_INT, {.i64 = 20}, 2, INT_MAX, FLAGS },
++    { "pixel_format", "Pixel format to be used by the decoder", OFFSET(pix_fmt), AV_OPT_TYPE_PIXEL_FMT, {.i64 = AV_PIX_FMT_NONE}, AV_PIX_FMT_NONE, AV_PIX_FMT_NB, FLAGS },
+     { NULL},
+ };
+ 

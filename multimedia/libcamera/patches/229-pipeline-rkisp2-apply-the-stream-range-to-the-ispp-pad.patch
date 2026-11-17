@@ -1,0 +1,53 @@
+From 9a5c09086a4acdd30ea44dc46d4c003290eeebad Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Wed, 4 Nov 2026 13:53:35 +0000
+Subject: [PATCH] pipeline: rkisp2: Apply the stream range to the ISPP pad
+
+The ISPP pipe configures the ISP sink only and leaves the ISP output
+pad towards the ISPP at its full-range default, while the IPA programs
+the colour space conversion for the range of the stream. A limited
+range stream then comes out unoffset, black at 0 and white near 225,
+and the colour processing block, told its input is limited, wraps the
+pixels below 16 to near white.
+
+Set the stream colour space on that pad, which selects the conversion
+range, and hand the IPA the range the pad takes.
+
+Assisted-by: LLM
+---
+ src/libcamera/pipeline/rkisp2/rkisp2.cpp | 24 ++++++++++++++++++++++++
+ 1 file changed, 24 insertions(+)
+
+--- a/src/libcamera/pipeline/rkisp2/rkisp2.cpp
++++ b/src/libcamera/pipeline/rkisp2/rkisp2.cpp
+@@ -1216,6 +1216,30 @@ int PipelineHandlerRkISP2::configureIspp
+ 	if (ret)
+ 		return ret;
+ 
++	/*
++	 * The ISP output pad towards the ISPP selects the quantization range
++	 * of the colour space conversion; the IPA programs the matrix and the
++	 * colour processing for the range the pad takes.
++	 */
++	V4L2SubdeviceFormat ispFormat;
++	ret = isp_->getFormat(kRkISP2IspPadSourceIspp, &ispFormat);
++	if (ret)
++		return ret;
++
++	ispFormat.colorSpace = cfg.colorSpace;
++	ret = isp_->setFormat(kRkISP2IspPadSourceIspp, &ispFormat);
++	if (ret)
++		return ret;
++
++	if (cfg.colorSpace && ispFormat.colorSpace &&
++	    ispFormat.colorSpace->range != cfg.colorSpace->range) {
++		LOG(RkISP2, Warning)
++			<< "ISP output takes the "
++			<< ColorSpace::toString(ispFormat.colorSpace)
++			<< " range for " << ColorSpace::toString(cfg.colorSpace);
++		cfg.colorSpace->range = ispFormat.colorSpace->range;
++	}
++
+ 	/* The ISPP input follows the ISP output pad, the query syncs them. */
+ 	V4L2SubdeviceFormat isppFormat;
+ 	ret = isppSubdev_->getFormat(0, &isppFormat);

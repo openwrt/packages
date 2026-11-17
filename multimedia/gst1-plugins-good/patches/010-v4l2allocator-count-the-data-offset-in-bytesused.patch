@@ -1,0 +1,37 @@
+From 54d5bbcec34d76ecfa80c9fe7432b94f9ed4beb2 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Thu, 29 Oct 2026 12:39:17 +0000
+Subject: [PATCH] v4l2allocator: Count the data offset in bytesused
+
+An imported dmabuf memory can start at an offset inside the dmabuf,
+which the import stores as the plane's data_offset and as the memory
+offset. At QBUF the allocator rewrites bytesused from the memory size
+alone, so for a chroma plane that shares its luma's dmabuf bytesused
+ends below data_offset and the kernel rejects the buffer with EINVAL.
+Add the memory offset back, as the import did: bytesused counts from
+the start of the plane buffer.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ sys/v4l2/gstv4l2allocator.c | 10 +++++++---
+ 1 file changed, 7 insertions(+), 3 deletions(-)
+
+--- a/sys/v4l2/gstv4l2allocator.c
++++ b/sys/v4l2/gstv4l2allocator.c
+@@ -1265,9 +1265,13 @@ gst_v4l2_allocator_qbuf (GstV4l2Allocato
+ 
+   /* update sizes */
+   if (V4L2_TYPE_IS_MULTIPLANAR (obj->type)) {
+-    for (i = 0; i < group->n_mem; i++)
+-      group->planes[i].bytesused =
+-          gst_memory_get_sizes (group->mem[i], NULL, NULL);
++    for (i = 0; i < group->n_mem; i++) {
++      gsize size, offset;
++
++      /* bytesused counts from the start of the plane, data_offset included */
++      size = gst_memory_get_sizes (group->mem[i], &offset, NULL);
++      group->planes[i].bytesused = size + offset;
++    }
+   } else {
+     group->buffer.bytesused = gst_memory_get_sizes (group->mem[0], NULL, NULL);
+   }

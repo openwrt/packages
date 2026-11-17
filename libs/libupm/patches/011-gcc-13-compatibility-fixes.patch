@@ -1,0 +1,26 @@
+--- a/src/mcp9808/mcp9808.hpp
++++ b/src/mcp9808/mcp9808.hpp
+@@ -30,6 +30,10 @@
+ #include <string>
+ #include <interfaces/iTemperature.hpp>
+ 
++#ifndef uint8_t
++#include <cstdint>
++#endif
++
+ #define MCP9808_REG_CONFIG  0x01
+ #define MCP9808_REG_AMBIENT_TEMP 0x05
+ #define MCP9808_REG_MANUF_ID 0x06
+--- a/src/micsv89/micsv89.hpp
++++ b/src/micsv89/micsv89.hpp
+@@ -27,6 +27,10 @@
+ #include <iostream>
+ #include <string>
+ 
++#ifndef uint8_t
++#include <cstdint>
++#endif
++
+ #include <interfaces/iGas.hpp>
+ 
+ namespace mraa { class I2c;}

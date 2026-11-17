@@ -1,0 +1,183 @@
+From 56ff832069b0f8678fed2d39e329ba854d463073 Mon Sep 17 00:00:00 2001
+From: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Date: Tue, 30 Jun 2026 17:05:51 +0200
+Subject: [PATCH] ipa: libipa: lsc_polynomial: Rename LscPolynomial
+
+In order to prepare to introduce the LscPolynomial class move the
+existing implementation of the polynomial representation LscPolynomial
+to lsc::Polynomial.
+
+Signed-off-by: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Reviewed-by: Kieran Bingham <kieran.bingham@ideasonboard.com>
+Reviewed-by: Stefan Klug <stefan.klug@ideasonboard.com>
+---
+ src/ipa/libipa/lsc_polynomial.cpp | 20 ++++++++++++--------
+ src/ipa/libipa/lsc_polynomial.h   | 12 ++++++++----
+ src/ipa/rkisp1/algorithms/lsc.cpp | 22 +++++++++++-----------
+ 3 files changed, 31 insertions(+), 23 deletions(-)
+
+--- a/src/ipa/libipa/lsc_polynomial.cpp
++++ b/src/ipa/libipa/lsc_polynomial.cpp
+@@ -20,8 +20,10 @@ LOG_DEFINE_CATEGORY(LscPolynomial)
+ 
+ namespace ipa {
+ 
++namespace lsc {
++
+ /**
+- * \class LscPolynomial
++ * \class Polynomial
+  * \brief Class for handling even polynomials used in lens shading correction
+  *
+  * Shading artifacts of camera lenses can be modeled using even radial
+@@ -31,7 +33,7 @@ namespace ipa {
+  */
+ 
+ /**
+- * \fn LscPolynomial::LscPolynomial(double cx = 0.0, double cy = 0.0, double k0 = 0.0,
++ * \fn Polynomial::Polynomial(double cx = 0.0, double cy = 0.0, double k0 = 0.0,
+ 		      double k1 = 0.0, double k2 = 0.0, double k3 = 0.0,
+ 		      double k4 = 0.0)
+  * \brief Construct a polynomial using the given coefficients
+@@ -45,7 +47,7 @@ namespace ipa {
+  */
+ 
+ /**
+- * \fn LscPolynomial::sampleAtNormalizedPixelPos(double x, double y)
++ * \fn Polynomial::sampleAtNormalizedPixelPos(double x, double y)
+  * \brief Sample the polynomial at the given normalized pixel position
+  *
+  * This functions samples the polynomial at the given pixel position divided by
+@@ -57,7 +59,7 @@ namespace ipa {
+  */
+ 
+ /**
+- * \fn LscPolynomial::getM()
++ * \fn Polynomial::getM()
+  * \brief Get the value m as described in the dng specification
+  *
+  * Returns m according to dng spec. m represents the Euclidean distance
+@@ -68,7 +70,7 @@ namespace ipa {
+  */
+ 
+ /**
+- * \fn LscPolynomial::setReferenceImageSize(const Size &size)
++ * \fn Polynomial::setReferenceImageSize(const Size &size)
+  * \brief Set the reference image size
+  *
+  * Set the reference image size that is used for subsequent calls to getM() and
+@@ -77,12 +79,14 @@ namespace ipa {
+  * \param size The size of the reference image
+  */
+ 
++} /* namespace lsc */
++
+ } /* namespace ipa */
+ 
+ #ifndef __DOXYGEN__
+ template<>
+-std::optional<ipa::LscPolynomial>
+-ValueNode::Accessor<ipa::LscPolynomial>::get(const ValueNode &obj) const
++std::optional<ipa::lsc::Polynomial>
++ValueNode::Accessor<ipa::lsc::Polynomial>::get(const ValueNode &obj) const
+ {
+ 	std::optional<double> cx = obj["cx"].get<double>();
+ 	std::optional<double> cy = obj["cy"].get<double>();
+@@ -98,7 +102,7 @@ ValueNode::Accessor<ipa::LscPolynomial>:
+ 		return std::nullopt;
+ 	}
+ 
+-	return ipa::LscPolynomial(*cx, *cy, *k0, *k1, *k2, *k3, *k4);
++	return ipa::lsc::Polynomial(*cx, *cy, *k0, *k1, *k2, *k3, *k4);
+ }
+ #endif /* __DOXYGEN__ */
+ 
+--- a/src/ipa/libipa/lsc_polynomial.h
++++ b/src/ipa/libipa/lsc_polynomial.h
+@@ -24,12 +24,14 @@ LOG_DECLARE_CATEGORY(LscPolynomial)
+ 
+ namespace ipa {
+ 
+-class LscPolynomial
++namespace lsc {
++
++class Polynomial
+ {
+ public:
+-	LscPolynomial(double cx = 0.0, double cy = 0.0, double k0 = 0.0,
+-		      double k1 = 0.0, double k2 = 0.0, double k3 = 0.0,
+-		      double k4 = 0.0)
++	Polynomial(double cx = 0.0, double cy = 0.0, double k0 = 0.0,
++		   double k1 = 0.0, double k2 = 0.0, double k3 = 0.0,
++		   double k4 = 0.0)
+ 		: cx_(cx), cy_(cy), cnx_(0), cny_(0),
+ 		  coefficients_({ k0, k1, k2, k3, k4 })
+ 	{
+@@ -78,6 +80,8 @@ private:
+ 	Size imageSize_;
+ };
+ 
++} /* namespace lsc */
++
+ } /* namespace ipa */
+ 
+ } /* namespace libcamera */
+--- a/src/ipa/rkisp1/algorithms/lsc.cpp
++++ b/src/ipa/rkisp1/algorithms/lsc.cpp
+@@ -65,10 +65,10 @@ class LscPolynomialImpl : public LscImpl
+ {
+ private:
+ 	struct PolynomialComponents {
+-		LscPolynomial pr;
+-		LscPolynomial pgr;
+-		LscPolynomial pgb;
+-		LscPolynomial pb;
++		lsc::Polynomial pr;
++		lsc::Polynomial pgr;
++		lsc::Polynomial pgb;
++		lsc::Polynomial pb;
+ 	};
+ 	using PolynomialComponentsMap = std::map<unsigned int, PolynomialComponents>;
+ 
+@@ -87,7 +87,7 @@ public:
+ 
+ private:
+ 	std::vector<double> sizesListToPositions(Span<const double> sizes);
+-	std::vector<uint16_t> samplePolynomial(const LscPolynomial &poly,
++	std::vector<uint16_t> samplePolynomial(const lsc::Polynomial &poly,
+ 					       Span<const double> xPositions,
+ 					       Span<const double> yPositions,
+ 					       const Rectangle &cropRectangle);
+@@ -98,7 +98,7 @@ private:
+ int LscPolynomialImpl::parseLscData(const ValueNode &sets)
+ {
+ 	for (const auto &set : sets.asList()) {
+-		std::optional<LscPolynomial> pr, pgr, pgb, pb;
++		std::optional<lsc::Polynomial> pr, pgr, pgb, pb;
+ 		uint32_t ct = set["ct"].get<uint32_t>(0);
+ 
+ 		if (lscData_.count(ct)) {
+@@ -108,10 +108,10 @@ int LscPolynomialImpl::parseLscData(cons
+ 			return -EINVAL;
+ 		}
+ 
+-		pr = set["r"].get<LscPolynomial>();
+-		pgr = set["gr"].get<LscPolynomial>();
+-		pgb = set["gb"].get<LscPolynomial>();
+-		pb = set["b"].get<LscPolynomial>();
++		pr = set["r"].get<lsc::Polynomial>();
++		pgr = set["gr"].get<lsc::Polynomial>();
++		pgb = set["gb"].get<lsc::Polynomial>();
++		pb = set["b"].get<lsc::Polynomial>();
+ 
+ 		if (!(pr || pgr || pgb || pb)) {
+ 			LOG(RkISP1Lsc, Error)
+@@ -161,7 +161,7 @@ LscPolynomialImpl::sampleForCrop(const R
+ }
+ 
+ std::vector<uint16_t>
+-LscPolynomialImpl::samplePolynomial(const LscPolynomial &poly,
++LscPolynomialImpl::samplePolynomial(const lsc::Polynomial &poly,
+ 				    Span<const double> xPositions,
+ 				    Span<const double> yPositions,
+ 				    const Rectangle &cropRectangle)

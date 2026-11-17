@@ -1,0 +1,630 @@
+--- a/src/parsetime.c
++++ b/src/parsetime.c
+@@ -715,7 +715,7 @@ day(struct rrd_time_value *ptv)
+ 	    tlen = strlen(sc_token);
+ 	    mon = atol(sc_token);
+             if (mon > 10*365*24*60*60) {
+-                montime = mon;
++                montime = (time_t) mon;
+                 ptv->tm=*localtime(&montime);
+ 		token();
+ 		break;
+@@ -914,8 +914,11 @@ parsetime(char *tspec, struct rrd_time_v
+ 
+ int proc_start_end (struct rrd_time_value *start_tv, 
+ 		    struct rrd_time_value *end_tv, 
+-		    time_t *start, 
+-		    time_t *end){
++		    TIME_INT *start,
++		    TIME_INT *end){
++
++    time_t end_t, start_t;
++
+     if (start_tv->type == RELATIVE_TO_END_TIME  && /* same as the line above */
+ 	end_tv->type == RELATIVE_TO_START_TIME) {
+ 	rrd_set_error("the start and end times cannot be specified "
+@@ -935,25 +938,27 @@ int proc_start_end (struct rrd_time_valu
+ 
+     if( start_tv->type == RELATIVE_TO_END_TIME) {
+ 	struct tm tmtmp;
+-	*end = mktime(&(end_tv->tm)) + end_tv->offset;    
+-	tmtmp = *localtime(end); /* reinit end including offset */
++	end_t = mktime(&(end_tv->tm)) + end_tv->offset;
++	*end = (TIME_INT) end_t;
++	tmtmp = *localtime(&end_t); /* reinit end including offset */
+ 	tmtmp.tm_mday += start_tv->tm.tm_mday;
+ 	tmtmp.tm_mon += start_tv->tm.tm_mon;
+ 	tmtmp.tm_year += start_tv->tm.tm_year;	
+-	*start = mktime(&tmtmp) + start_tv->offset;
++	*start = (TIME_INT) mktime(&tmtmp) + start_tv->offset;
+     } else {
+-	*start = mktime(&(start_tv->tm)) + start_tv->offset;
++	*start = (TIME_INT) mktime(&(start_tv->tm)) + start_tv->offset;
+     }
+     if (end_tv->type == RELATIVE_TO_START_TIME) {
+ 	struct tm tmtmp;
+-	*start = mktime(&(start_tv->tm)) + start_tv->offset;
+-	tmtmp = *localtime(start);
++	start_t = mktime(&(start_tv->tm)) + start_tv->offset;
++	*start = (TIME_INT) start_t;
++	tmtmp = *localtime(&start_t);
+ 	tmtmp.tm_mday += end_tv->tm.tm_mday;
+ 	tmtmp.tm_mon += end_tv->tm.tm_mon;
+ 	tmtmp.tm_year += end_tv->tm.tm_year;	
+-	*end = mktime(&tmtmp) + end_tv->offset;
++	*end = (TIME_INT) mktime(&tmtmp) + end_tv->offset;
+     } else {
+-	*end = mktime(&(end_tv->tm)) + end_tv->offset;
++	*end = (TIME_INT) mktime(&(end_tv->tm)) + end_tv->offset;
+     }    
+     return 0;
+ } /* proc_start_end */
+--- a/src/rrd_cgi.c
++++ b/src/rrd_cgi.c
+@@ -352,7 +352,7 @@ int main(int argc, char *argv[]) {
+ 			time_t now;
+ 			now = time(NULL);
+ 			printf("Last-Modified: %s\n", http_time(&now));
+-			now += labs(goodfor);
++			now += (time_t) labs(goodfor);
+ 			printf("Expires: %s\n", http_time(&now));
+ 			if (goodfor < 0) {
+ 				printf("Refresh: %ld\n", labs(goodfor));
+@@ -491,6 +491,7 @@ char* printstrftime(long argc, char **ar
+ 	char	formatted[MAX_STRFTIME_SIZE];
+ 	struct tm *the_tm;
+ 	time_t	start_tmp, end_tmp;
++	TIME_INT start_tmp_t, end_tmp_t;
+ 
+ 	/* Make sure that we were given the right number of args */
+ 	if( argc != 4) {
+@@ -511,15 +512,17 @@ char* printstrftime(long argc, char **ar
+ 		rrd_set_error( "end time: %s", parsetime_error);
+ 		return (char *) -1;
+ 	}
+-	if( proc_start_end( &start_tv, &end_tv, &start_tmp, &end_tmp) == -1) {
++	if( proc_start_end( &start_tv, &end_tv, &start_tmp_t, &end_tmp_t) == -1) {
+ 		return (char *) -1;
+ 	}
+ 
+ 	/* Do we do the start or end */
+ 	if( strcasecmp( args[0], "START") == 0) {
++		start_tmp = (time_t) start_tmp_t;
+ 		the_tm = localtime( &start_tmp);
+ 	}
+ 	else if( strcasecmp( args[0], "END") == 0) {
++		end_tmp = (time_t) end_tmp_t;
+ 		the_tm = localtime( &end_tmp);
+ 	}
+ 	else {
+@@ -726,7 +729,7 @@ char* printtimelast(long argc, char **ar
+     if (buf == NULL){	
+ 	return stralloc("[ERROR: allocating strftime buffer]");
+     };
+-    last = rrd_last(argc+1, args-1); 
++    last = (time_t) rrd_last(argc+1, args-1);
+     if (rrd_test_error()) {
+       char *err = malloc((strlen(rrd_get_error())+DS_NAM_SIZE)*sizeof(char));
+       sprintf(err, "[ERROR: %s]",rrd_get_error());
+--- a/src/rrd_create.c
++++ b/src/rrd_create.c
+@@ -12,12 +12,12 @@ rrd_create(int argc, char **argv)
+ {
+     rrd_t          rrd;
+     long                i,long_tmp;
+-    time_t             last_up;
++    TIME_INT             last_up;
+     struct rrd_time_value last_up_tv;
+     char *parsetime_error = NULL;
+ 
+     /* init last_up */
+-    last_up = time(NULL)-10;
++    last_up = (TIME_INT) time(NULL)-10;
+     /* init rrd clean */
+     rrd_init(&rrd);
+     /* static header */
+@@ -74,7 +74,7 @@ rrd_create(int argc, char **argv)
+ 		return(-1);
+ 	    }
+ 
+-	    last_up = mktime(&last_up_tv.tm) + last_up_tv.offset;
++	    last_up = (TIME_INT) mktime(&last_up_tv.tm) + last_up_tv.offset;
+ 	    
+ 	    if (last_up < 3600*24*365*10){
+ 		rrd_set_error("the first entry to the RRD should be after 1980");
+--- a/src/rrd_dump.c
++++ b/src/rrd_dump.c
+@@ -24,6 +24,7 @@ rrd_dump(int argc, char **argv)
+     long         rra_base, rra_start, rra_next;
+     FILE                  *in_file;
+     rrd_t             rrd;
++    time_t       lastup_t;
+ 
+ 
+     if(rrd_open(argv[1],&in_file,&rrd, RRD_READONLY)==-1){
+@@ -34,8 +35,9 @@ rrd_dump(int argc, char **argv)
+     printf("\t<version> %s </version>\n",rrd.stat_head->version);
+     printf("\t<step> %lu </step> <!-- Seconds -->\n",rrd.stat_head->pdp_step);
+ #if HAVE_STRFTIME
++    lastup_t = (time_t) rrd.live_head->last_up;
+     strftime(somestring,200,"%Y-%m-%d %H:%M:%S %Z",
+-	     localtime(&rrd.live_head->last_up));
++	     localtime(&lastup_t));
+ #else
+ # error "Need strftime"
+ #endif
+@@ -115,10 +117,10 @@ rrd_dump(int argc, char **argv)
+ 		fseek(in_file,rra_start,SEEK_SET);
+ 		ii=0; /* wrap if max row cnt is reached */
+ 	    }
+-	    now = (rrd.live_head->last_up 
++	    now = (time_t) ((rrd.live_head->last_up
+ 		   - rrd.live_head->last_up 
+ 		   % (rrd.rra_def[i].pdp_cnt*rrd.stat_head->pdp_step)) 
+-		+ (timer*rrd.rra_def[i].pdp_cnt*rrd.stat_head->pdp_step);
++		+ (timer*rrd.rra_def[i].pdp_cnt*rrd.stat_head->pdp_step));
+ 
+ 	    timer++;
+ #if HAVE_STRFTIME
+--- a/src/rrd_fetch.c
++++ b/src/rrd_fetch.c
+@@ -16,8 +16,8 @@
+ int
+ rrd_fetch(int argc, 
+ 	  char **argv,
+-	  time_t         *start,
+-	  time_t         *end,       /* which time frame do you want ?
++	  TIME_INT         *start,
++	  TIME_INT         *end,       /* which time frame do you want ?
+ 				      * will be changed to represent reality */
+ 	  unsigned long  *step,      /* which stepsize do you want? 
+ 				      * will be changed to represent reality */
+@@ -28,7 +28,7 @@ rrd_fetch(int argc,
+ 
+ 
+     long     step_tmp =1;
+-    time_t   start_tmp=0, end_tmp=0;
++    TIME_INT   start_tmp=0, end_tmp=0;
+     enum     cf_en cf_idx;
+ 
+     struct rrd_time_value start_tv, end_tv;
+@@ -119,8 +119,8 @@ int
+ rrd_fetch_fn(
+     char           *filename,  /* name of the rrd */
+     enum cf_en     cf_idx,         /* which consolidation function ?*/
+-    time_t         *start,
+-    time_t         *end,       /* which time frame do you want ?
++    TIME_INT         *start,
++    TIME_INT         *end,       /* which time frame do you want ?
+ 			        * will be changed to represent reality */
+     unsigned long  *step,      /* which stepsize do you want? 
+ 				* will be changed to represent reality */
+@@ -130,7 +130,7 @@ rrd_fetch_fn(
+ {
+     long           i,ii;
+     FILE           *in_file;
+-    time_t         cal_start,cal_end, rra_start_time,rra_end_time;
++    TIME_INT         cal_start,cal_end, rra_start_time,rra_end_time;
+     long  best_full_rra=0, best_part_rra=0, chosen_rra=0, rra_pointer=0;
+     long  best_step_diff=0, tmp_step_diff=0, tmp_match=0, best_match=0;
+     long  full_match, rra_base;
+--- a/src/rrd_first.c
++++ b/src/rrd_first.c
+@@ -8,13 +8,13 @@
+ 
+ #include "rrd_tool.h"
+ 
+-time_t
++TIME_INT
+ rrd_first(int argc, char **argv)    
+ {   
+     long rra_start,
+          timer;
+     unsigned long target_rraindex=0;
+-    time_t then;
++    TIME_INT then;
+     char *endptr;
+     FILE *in_file;
+     rrd_t rrd;
+--- a/src/rrd_format.h
++++ b/src/rrd_format.h
+@@ -200,7 +200,7 @@ typedef struct rra_def_t {
+  ****************************************************************************/
+ 
+ typedef struct live_head_t {
+-    time_t           last_up;            /* when was rrd last updated */
++    TIME_INT           last_up;            /* when was rrd last updated */
+ } live_head_t;
+ 
+ 
+--- a/src/rrd_graph.c
++++ b/src/rrd_graph.c
+@@ -123,7 +123,7 @@ col_trip_t graph_col[] = { /* default co
+ 		* ((double)(x) - im->start)+0.5) */
+ /* initialize with xtr(im,0); */
+ int
+-xtr(image_desc_t *im,time_t mytime){
++xtr(image_desc_t *im,TIME_INT mytime){
+     static double pixie;
+     if (mytime==0){
+ 	pixie = (double) im->xsize / (double)(im->end - im->start);
+@@ -486,8 +486,8 @@ void
+ reduce_data(
+     enum cf_en     cf,         /* which consolidation function ?*/
+     unsigned long  cur_step,   /* step the data currently is in */
+-    time_t         *start,     /* start, end and step as requested ... */
+-    time_t         *end,       /* ... by the application will be   ... */
++    TIME_INT         *start,     /* start, end and step as requested ... */
++    TIME_INT         *end,       /* ... by the application will be   ... */
+     unsigned long  *step,      /* ... adjusted to represent reality    */
+     unsigned long  *ds_cnt,    /* number of data sources in file */
+     rrd_value_t    **data)     /* two dimensional array containing the data */
+@@ -853,18 +853,20 @@ str2rpn(image_desc_t *im,char *expr){
+    time was. Return it in seconds */
+ 
+ int
+-tzoffset( time_t now ){
++tzoffset( TIME_INT now ){
+   int gm_sec, gm_min, gm_hour, gm_yday, gm_year,
+     l_sec, l_min, l_hour, l_yday, l_year;
+   struct tm *t;
+   int off;
+-  t = gmtime(&now);
++  time_t now_t;
++  now_t = (time_t) now;
++  t = gmtime(&now_t);
+   gm_sec = t->tm_sec;
+   gm_min = t->tm_min;
+   gm_hour = t->tm_hour;
+   gm_yday = t->tm_yday;
+   gm_year = t->tm_year;
+-  t = localtime(&now);
++  t = localtime(&now_t);
+   l_sec = t->tm_sec;
+   l_min = t->tm_min;
+   l_hour = t->tm_hour;
+@@ -893,7 +895,7 @@ data_calc( image_desc_t *im){
+     int       dataidx;
+     long      *steparray;
+     int       stepcnt;
+-    time_t    now;
++    TIME_INT    now;
+     double    *stack = NULL;
+     long      dc_stacksize = 0;
+ 
+@@ -1433,14 +1435,16 @@ data_proc( image_desc_t *im ){
+ 
+ /* identify the point where the first gridline, label ... gets placed */
+ 
+-time_t
++TIME_INT
+ find_first_time(
+-    time_t   start, /* what is the initial time */
++    TIME_INT   start_t, /* what is the initial time */
+     enum tmt_en baseint,  /* what is the basic interval */
+     long     basestep /* how many if these do we jump a time */
+     )
+ {
+     struct tm tm;
++    time_t start;
++    start = (time_t) start_t;
+     tm = *localtime(&start);
+     switch(baseint){
+     case TMT_SECOND:
+@@ -1485,15 +1489,17 @@ find_first_time(
+     return mktime(&tm);
+ }
+ /* identify the point where the next gridline, label ... gets placed */
+-time_t 
++TIME_INT
+ find_next_time(
+-    time_t   current, /* what is the initial time */
++    TIME_INT   current_t, /* what is the initial time */
+     enum tmt_en baseint,  /* what is the basic interval */
+     long     basestep /* how many if these do we jump a time */
+     )
+ {
+     struct tm tm;
+-    time_t madetime;
++    time_t current;
++    current = (time_t) current_t;
++    TIME_INT madetime;
+     tm = *localtime(&current);
+     do {
+ 	switch(baseint){
+@@ -2143,7 +2149,8 @@ vertical_grid(
+     image_desc_t   *im )
+ {   
+     int xlab_sel;		/* which sort of label and grid ? */
+-    time_t ti, tilab;
++    TIME_INT ti, tilab;
++    time_t tilab_t;
+     long factor;
+     char graph_label[100];
+     gdPoint polyPoints[4];	 /* points for filled graph and more*/
+@@ -2231,9 +2238,10 @@ vertical_grid(
+ 	){
+ 	int gr_pos,width;
+         tilab= ti + im->xlab_user.precis/2; /* correct time for the label */
++        tilab_t = (time_t) tilab;
+ 
+ #if HAVE_STRFTIME
+-	strftime(graph_label,99,im->xlab_user.stst,localtime(&tilab));
++	strftime(graph_label,99,im->xlab_user.stst,localtime(&tilab_t));
+ #else
+ # error "your libc has no strftime I guess we'll abort the exercise here."
+ #endif
+@@ -2487,7 +2495,7 @@ int lazy_check(image_desc_t *im){
+       return 0; /* can't stat */
+     /* one pixel in the existing graph is more then what we would
+        change here ... */
+-    if (time(NULL) - gifstat.st_mtime > 
++    if ((TIME_INT) time(NULL) - gifstat.st_mtime >
+ 	(im->end - im->start) / im->xsize) 
+       return 0;
+     if ((fd = fopen(im->graphfile,"rb")) == NULL) 
+@@ -2881,7 +2889,7 @@ rrd_graph(int argc, char **argv, char **
+     image_desc_t   im;
+     int            i;
+     long           long_tmp;
+-    time_t	   start_tmp=0,end_tmp=0;
++    TIME_INT	   start_tmp=0,end_tmp=0;
+     char           scan_gtm[12],scan_mtm[12],scan_ltm[12],col_nam[12];
+     char           symname[100];
+     unsigned int            col_red,col_green,col_blue;
+--- a/src/rrd_graph.h
++++ b/src/rrd_graph.h
+@@ -90,11 +90,11 @@ typedef  struct graph_desc_t {
+     char           legend[FMT_LEG_LEN+5]; /* legend*/
+     gdPoint        legloc;     /* location of legend */   
+     double         yrule;      /* value for y rule line */
+-    time_t         xrule;      /* value for x rule line */
++    TIME_INT         xrule;      /* value for x rule line */
+     rpnp_t         *rpnp;     /* instructions for CDEF function */
+ 
+     /* description of data fetched for the graph element */
+-    time_t         start,end; /* timestaps for first and last data element */
++    TIME_INT         start,end; /* timestaps for first and last data element */
+     unsigned long  step;      /* time between samples */
+     unsigned long  ds_cnt; /* how many data sources are there in the fetch */
+     long           data_first; /* first pointer to this data */
+@@ -121,7 +121,7 @@ typedef struct image_desc_t {
+     double         ygridstep;      /* user defined step for y grid */
+     int            ylabfact;       /* every how many y grid shall a label be written ? */
+ 
+-    time_t         start,end;      /* what time does the graph cover */
++    TIME_INT         start,end;      /* what time does the graph cover */
+     unsigned long           step;           /* any preference for the default step ? */
+     rrd_value_t    minval,maxval;  /* extreme values in the data */
+     int            rigid;          /* do not expand range even with 
+@@ -160,7 +160,7 @@ typedef struct image_desc_t {
+ } image_desc_t;
+ 
+ /* Prototypes */
+-int xtr(image_desc_t *,time_t);
++int xtr(image_desc_t *,TIME_INT);
+ int ytr(image_desc_t *, double);
+ enum gf_en gf_conv(char *);
+ enum if_en if_conv(char *);
+@@ -170,16 +170,16 @@ int im_free(image_desc_t *);
+ void auto_scale( image_desc_t *,  double *, char **, double *);
+ void si_unit( image_desc_t *);
+ void expand_range(image_desc_t *);
+-void reduce_data( enum cf_en,  unsigned long,  time_t *, time_t *,  unsigned long *,  unsigned long *,  rrd_value_t **);
++void reduce_data( enum cf_en,  unsigned long,  TIME_INT *, TIME_INT *,  unsigned long *,  unsigned long *,  rrd_value_t **);
+ int data_fetch( image_desc_t *);
+ long find_var(image_desc_t *, char *);
+ long lcd(long *);
+ int data_calc( image_desc_t *);
+ int data_proc( image_desc_t *);
+-time_t find_first_time( time_t,  enum tmt_en,  long);
+-time_t find_next_time( time_t,  enum tmt_en,  long);
++TIME_INT find_first_time( TIME_INT,  enum tmt_en,  long);
++TIME_INT find_next_time( TIME_INT,  enum tmt_en,  long);
+ void gator( gdImagePtr, int, int);
+-int tzoffset(time_t);
++int tzoffset(TIME_INT);
+ int print_calc(image_desc_t *, char ***);
+ int leg_place(image_desc_t *);
+ int horizontal_grid(gdImagePtr, image_desc_t *);
+--- a/src/rrd.h
++++ b/src/rrd.h
+@@ -17,6 +17,9 @@ extern "C" {
+ #define _RRDLIB_H
+ 
+ #include <time.h>
++#include <stdint.h>
++
++#define TIME_INT long
+ 
+ /* Transplanted from rrd_format.h */
+ typedef double       rrd_value_t;         /* the data storage type is
+@@ -27,15 +30,15 @@ typedef double       rrd_value_t;
+ int    rrd_create(int, char **);
+ int    rrd_update(int, char **);
+ int    rrd_graph(int, char **, char ***, int *, int *);
+-int    rrd_fetch(int, char **, time_t *, time_t *, unsigned long *,
++int    rrd_fetch(int, char **, TIME_INT *, TIME_INT *, unsigned long *,
+ 		 unsigned long *, char ***, rrd_value_t **);
+ int    rrd_restore(int, char **);
+ int    rrd_dump(int, char **);
+ int    rrd_tune(int, char **);
+-time_t rrd_last(int, char **);
+-time_t rrd_first(int, char **);
++TIME_INT rrd_last(int, char **);
++TIME_INT rrd_first(int, char **);
+ int    rrd_resize(int, char **);
+-int    rrd_xport(int, char **, int *, time_t *, time_t *,
++int    rrd_xport(int, char **, int *, TIME_INT *, TIME_INT *,
+ 		 unsigned long *, unsigned long *,
+ 		 char ***, rrd_value_t **);
+ 
+@@ -57,7 +60,7 @@ struct rrd_time_value {
+ char *parsetime(char *spec, struct rrd_time_value *ptv);
+ /* END parsetime.h */
+ 
+-int proc_start_end (struct rrd_time_value *,  struct rrd_time_value *, time_t *, time_t *);
++int proc_start_end (struct rrd_time_value *,  struct rrd_time_value *, TIME_INT *, TIME_INT *);
+ 
+ /* HELPER FUNCTIONS */
+ void rrd_set_error(char *,...);
+--- a/src/rrd_last.c
++++ b/src/rrd_last.c
+@@ -8,11 +8,11 @@
+ 
+ #include "rrd_tool.h"
+ 
+-time_t
++TIME_INT
+ rrd_last(int argc, char **argv)
+ {
+     FILE	*in_file;
+-    time_t       lastup;
++    TIME_INT       lastup;
+ 
+     rrd_t	 rrd;
+ 
+--- a/src/rrd_tool.c
++++ b/src/rrd_tool.c
+@@ -343,7 +343,7 @@ int HandleInputLine(int argc, char **arg
+     else if (strcmp("update", argv[1]) == 0)
+ 	rrd_update(argc-1, &argv[1]);
+     else if (strcmp("fetch", argv[1]) == 0) {
+-	time_t        start,end;
++	TIME_INT        start,end;
+ 	unsigned long step, ds_cnt,i,ii;
+ 	rrd_value_t   *data,*datai;
+ 	char          **ds_namv;
+@@ -367,7 +367,7 @@ int HandleInputLine(int argc, char **arg
+     } else if (strcmp("xport", argv[1]) == 0) {
+ 	int xxsize;
+ 	int j;
+-	time_t        i,start,end;
++	TIME_INT        i,start,end;
+ 	unsigned long step, col_cnt,row_cnt;
+ 	rrd_value_t   *data,*ptr;
+ 	char          **legend_v;
+--- a/src/rrd_tool.h
++++ b/src/rrd_tool.h
+@@ -134,7 +134,7 @@ void gdImagePng(gdImagePtr im, FILE *out
+ 
+ int rrd_create_fn(char *file_name, rrd_t *rrd);
+ int rrd_fetch_fn(char *filename, enum cf_en cf_idx,
+-		 time_t *start,time_t *end,
++		 TIME_INT *start,TIME_INT *end,
+ 		 unsigned long *step,
+ 		 unsigned long *ds_cnt,
+ 		 char        ***ds_namv,
+--- a/src/rrd_update.c
++++ b/src/rrd_update.c
+@@ -91,7 +91,7 @@ rrd_update(int argc, char **argv)
+ 
+     FILE             *rrd_file;
+     rrd_t            rrd;
+-    time_t           current_time = time(NULL);
++    TIME_INT           current_time = (TIME_INT) time(NULL);
+     char             **updvals;
+     int              wrote_to_file = 0;
+     char             *template = NULL;          
+@@ -273,7 +273,7 @@ rrd_update(int argc, char **argv)
+ 	
+         /* get the time from the reading ... handle N */
+ 	if (strcmp(updvals[0],"N")==0){
+-	    current_time = time(NULL);
++	    current_time = (TIME_INT) time(NULL);
+ 	} else {
+             errno = 0;
+ 	    current_time = strtol(updvals[0],&endptr,10);
+--- a/src/rrd_xport.c
++++ b/src/rrd_xport.c
+@@ -15,12 +15,12 @@
+ 
+ 
+ int rrd_xport(int, char **, int *,
+-	      time_t *, time_t *,
++	      TIME_INT *, TIME_INT *,
+ 	      unsigned long *, unsigned long *,
+ 	      char ***, rrd_value_t **);
+ 
+ int rrd_xport_fn(image_desc_t *,
+-		 time_t *, time_t *,
++		 TIME_INT *, TIME_INT *,
+ 		 unsigned long *, unsigned long *,
+ 		 char ***, rrd_value_t **);
+ 
+@@ -29,8 +29,8 @@ int rrd_xport_fn(image_desc_t *,
+ /* mostly rrd_graph(), just pushed a bit here and stretched a bit there */	
+ int 
+ rrd_xport(int argc, char **argv, int *xsize,
+-	  time_t         *start,
+-	  time_t         *end,        /* which time frame do you want ?
++	  TIME_INT         *start,
++	  TIME_INT         *end,        /* which time frame do you want ?
+ 				       * will be changed to represent reality */
+ 	  unsigned long  *step,       /* which stepsize do you want? 
+ 				       * will be changed to represent reality */
+@@ -42,7 +42,7 @@ rrd_xport(int argc, char **argv, int *xs
+     image_desc_t   im;
+     int            i;
+     long           long_tmp;
+-    time_t	   start_tmp=0,end_tmp=0;
++    TIME_INT	   start_tmp=0,end_tmp=0;
+     char           symname[100];
+     long           scancount;
+     struct rrd_time_value start_tv, end_tv;
+@@ -286,8 +286,8 @@ rrd_xport(int argc, char **argv, int *xs
+ 
+ int
+ rrd_xport_fn(image_desc_t *im,
+-	     time_t         *start,
+-	     time_t         *end,        /* which time frame do you want ?
++	     TIME_INT         *start,
++	     TIME_INT         *end,        /* which time frame do you want ?
+ 					  * will be changed to represent reality */
+ 	     unsigned long  *step,       /* which stepsize do you want? 
+ 					  * will be changed to represent reality */
+@@ -307,9 +307,9 @@ rrd_xport_fn(image_desc_t *im,
+     char **legend_list;
+     int ii = 0;
+ 
+-    time_t start_tmp = 0;
+-    time_t end_tmp = 0;
+-    time_t curr_ts;
++    TIME_INT start_tmp = 0;
++    TIME_INT end_tmp = 0;
++    TIME_INT curr_ts;
+     unsigned long step_tmp = 1;
+ 
+     int dataIndex;
+--- a/contrib/trytime/trytime.c
++++ b/contrib/trytime/trytime.c
+@@ -24,7 +24,8 @@ int main ( int ac, char **av )
+   int option_index = 0;
+   int opt;
+    
+-  time_t start_tmp, end_tmp, Now = time(NULL);
++  time_t start_time, end_time, Now = time(NULL);
++  TIME_INT start_tmp, end_tmp;
+   char tim_b[200];
+   
+   struct rrd_time_value start_tv, end_tv;
+@@ -80,7 +81,8 @@ int main ( int ac, char **av )
+       exit(1);
+   }
+   
+-  strftime(tim_b,100,"%c %Z",localtime(&start_tmp));
++  start_time = (time_t) start_tmp;
++  strftime(tim_b,100,"%c %Z",localtime(&start_time));
+   if( *soption )
+       printf( "Start time was specified as: '%s',\n"
+ 	      "for me this means: %s (or %ld sec since epoch)\n\n", 
+@@ -90,7 +92,8 @@ int main ( int ac, char **av )
+ 	      "for me this means: %s (or %ld sec since epoch)\n\n",
+ 	      tim_b, start_tmp );
+     
+-  strftime(tim_b,100,"%c %Z",localtime(&end_tmp));
++  end_time = (time_t) end_tmp;
++  strftime(tim_b,100,"%c %Z",localtime(&end_time));
+   if( *eoption )
+       printf( "End time was specified as: '%s',\n"
+ 	      "for me this means: %s (or %ld sec since epoch)\n", 

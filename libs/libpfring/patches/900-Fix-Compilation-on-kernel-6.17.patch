@@ -1,0 +1,50 @@
+From f6e8cb42a891ab3cf1eb2ecb52ae38a2af1096eb Mon Sep 17 00:00:00 2001
+From: Alfredo Cardigliano <cardigliano@ntop.org>
+Date: Mon, 22 Dec 2025 11:31:07 +0100
+Subject: [PATCH] Fix compilation on kernel 6.17 (fix #1009)
+
+---
+ kernel/pf_ring.c | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+
+--- a/kernel/pf_ring.c
++++ b/kernel/pf_ring.c
+@@ -5468,7 +5468,12 @@ static int is_netdev_promisc(struct net_
+   debug_printk(1, "checking promisc for %s\n", netdev->name);
+ 
+   rtnl_lock();
++
++#if(LINUX_VERSION_CODE < KERNEL_VERSION(6,17,0))
+   if_flags = (short) dev_get_flags(netdev);
++#else
++  if_flags = (short) netif_get_flags(netdev);
++#endif
+   rtnl_unlock();
+ 
+   return !!(if_flags & IFF_PROMISC);
+@@ -5483,7 +5488,12 @@ static void set_netdev_promisc(struct ne
+ 
+   rtnl_lock();
+ 
++#if(LINUX_VERSION_CODE < KERNEL_VERSION(6,17,0))
+   if_flags = (short) dev_get_flags(netdev);
++#else
++  if_flags = (short) netif_get_flags(netdev);
++#endif
++
+   if(!(if_flags & IFF_PROMISC)) {
+     if_flags |= IFF_PROMISC;
+ #if(LINUX_VERSION_CODE < KERNEL_VERSION(5,0,0) && \
+@@ -5506,7 +5516,12 @@ static void unset_netdev_promisc(struct
+ 
+   rtnl_lock();
+ 
++#if(LINUX_VERSION_CODE < KERNEL_VERSION(6,17,0))
+   if_flags = (short) dev_get_flags(netdev);
++#else
++  if_flags = (short) netif_get_flags(netdev);
++#endif
++
+   if(if_flags & IFF_PROMISC) {
+     if_flags &= ~IFF_PROMISC;
+ #if(LINUX_VERSION_CODE < KERNEL_VERSION(5,0,0) && \

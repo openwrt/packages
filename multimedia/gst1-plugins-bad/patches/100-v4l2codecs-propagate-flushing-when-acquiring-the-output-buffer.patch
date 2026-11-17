@@ -1,0 +1,321 @@
+From ca2995c3cf9c887ff1605cc07ac6bb4bacfc0797 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Thu, 29 Oct 2026 18:51:46 +0200
+Subject: [PATCH] v4l2codecs: propagate flushing when acquiring the output
+ buffer
+
+When a flush, such as the one a seek performs, reaches a stateless
+decoder while its streaming thread is between the slice decode and
+end_picture, acquiring the output buffer from the src pool returns
+GST_FLOW_FLUSHING. The h264, h265 and mpeg2 decoders passed that through
+the gboolean ensure_output_buffer() and submit_bitstream() as a plain
+FALSE, and decode_slice() and end_picture() turned it into
+GST_FLOW_ERROR. gst_*_decoder_handle_frame() posts GST_VIDEO_DECODER_ERROR
+only for GST_FLOW_ERROR, so a flush arriving mid-frame was reported as a
+fatal "Failed to decode data" and playback stopped. A looping video that
+seeks while frames are still in flight triggers this on hardware;
+software decoders, idle at the seek, and the av1, vp8 and vp9 decoders
+here, which already return the acquire flow, are unaffected.
+
+Make ensure_output_buffer() and submit_bitstream() return GstFlowReturn
+and propagate it through decode_slice() and end_picture(), so
+GST_FLOW_FLUSHING reaches the base class, which completes the flush.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ sys/v4l2codecs/gstv4l2codech264dec.c  | 35 +++++++++++++++------------
+ sys/v4l2codecs/gstv4l2codech265dec.c  | 35 +++++++++++++++------------
+ sys/v4l2codecs/gstv4l2codecmpeg2dec.c | 26 ++++++++++----------
+ 3 files changed, 51 insertions(+), 45 deletions(-)
+
+--- a/sys/v4l2codecs/gstv4l2codech264dec.c
++++ b/sys/v4l2codecs/gstv4l2codech264dec.c
+@@ -1179,7 +1179,7 @@ gst_v4l2_codec_h264_dec_reset_picture (G
+   self->num_slices = 0;
+ }
+ 
+-static gboolean
++static GstFlowReturn
+ gst_v4l2_codec_h264_dec_ensure_output_buffer (GstV4l2CodecH264Dec * self,
+     GstVideoCodecFrame * frame)
+ {
+@@ -1187,7 +1187,7 @@ gst_v4l2_codec_h264_dec_ensure_output_bu
+   GstFlowReturn flow_ret;
+ 
+   if (frame->output_buffer)
+-    return TRUE;
++    return GST_FLOW_OK;
+ 
+   flow_ret = gst_buffer_pool_acquire_buffer (GST_BUFFER_POOL (self->src_pool),
+       &buffer, NULL);
+@@ -1197,20 +1197,20 @@ gst_v4l2_codec_h264_dec_ensure_output_bu
+     else
+       GST_ELEMENT_ERROR (self, RESOURCE, WRITE,
+           ("No more picture buffer available."), (NULL));
+-    return FALSE;
++    return flow_ret;
+   }
+ 
+   frame->output_buffer = buffer;
+-  return TRUE;
++  return GST_FLOW_OK;
+ }
+ 
+-static gboolean
++static GstFlowReturn
+ gst_v4l2_codec_h264_dec_submit_bitstream (GstV4l2CodecH264Dec * self,
+     GstH264Picture * picture, guint flags)
+ {
+   GstV4l2Request *prev_request, *request = NULL;
+   gsize bytesused;
+-  gboolean ret = FALSE;
++  GstFlowReturn ret = GST_FLOW_ERROR;
+   guint num_controls = 0;
+ 
+   /* *INDENT-OFF* */
+@@ -1238,13 +1238,16 @@ gst_v4l2_codec_h264_dec_submit_bitstream
+   } else {
+     GstVideoCodecFrame *frame;
+     guint32 system_frame_number = GST_CODEC_PICTURE_FRAME_NUMBER (picture);
++    GstFlowReturn flow_ret;
+ 
+     frame = gst_video_decoder_get_frame (GST_VIDEO_DECODER (self),
+         system_frame_number);
+-    g_return_val_if_fail (frame, FALSE);
++    g_return_val_if_fail (frame, GST_FLOW_ERROR);
+ 
+-    if (!gst_v4l2_codec_h264_dec_ensure_output_buffer (self, frame)) {
++    flow_ret = gst_v4l2_codec_h264_dec_ensure_output_buffer (self, frame);
++    if (flow_ret != GST_FLOW_OK) {
+       gst_video_codec_frame_unref (frame);
++      ret = flow_ret;
+       goto done;
+     }
+ 
+@@ -1321,7 +1324,7 @@ gst_v4l2_codec_h264_dec_submit_bitstream
+ 
+   gst_h264_picture_set_user_data (picture, g_steal_pointer (&request),
+       (GDestroyNotify) gst_v4l2_request_unref);
+-  ret = TRUE;
++  ret = GST_FLOW_OK;
+ 
+ done:
+   if (request)
+@@ -1344,11 +1347,14 @@ gst_v4l2_codec_h264_dec_decode_slice (Gs
+ 
+   if (is_slice_based (self)) {
+     if (self->bitstream_map.size) {
++      GstFlowReturn flow_ret;
+       /* In slice mode, we submit the pending slice asking the accelerator to
+        * hold on the picture */
+-      if (!gst_v4l2_codec_h264_dec_submit_bitstream (self, picture,
+-              V4L2_BUF_FLAG_M2M_HOLD_CAPTURE_BUF)
+-          || !gst_v4l2_codec_h264_dec_ensure_bitstream (self))
++      flow_ret = gst_v4l2_codec_h264_dec_submit_bitstream (self, picture,
++          V4L2_BUF_FLAG_M2M_HOLD_CAPTURE_BUF);
++      if (flow_ret != GST_FLOW_OK)
++        return flow_ret;
++      if (!gst_v4l2_codec_h264_dec_ensure_bitstream (self))
+         return GST_FLOW_ERROR;
+     }
+ 
+@@ -1404,10 +1410,7 @@ gst_v4l2_codec_h264_dec_end_picture (Gst
+   if (picture->field != GST_H264_PICTURE_FIELD_FRAME && !picture->second_field)
+     flags = V4L2_BUF_FLAG_M2M_HOLD_CAPTURE_BUF;
+ 
+-  if (!gst_v4l2_codec_h264_dec_submit_bitstream (self, picture, flags))
+-    return GST_FLOW_ERROR;
+-
+-  return GST_FLOW_OK;
++  return gst_v4l2_codec_h264_dec_submit_bitstream (self, picture, flags);
+ }
+ 
+ static GstFlowReturn
+--- a/sys/v4l2codecs/gstv4l2codech265dec.c
++++ b/sys/v4l2codecs/gstv4l2codech265dec.c
+@@ -1421,7 +1421,7 @@ gst_v4l2_codec_h265_dec_reset_picture (G
+   g_array_set_size (self->entry_point_offsets, 0);
+ }
+ 
+-static gboolean
++static GstFlowReturn
+ gst_v4l2_codec_h265_dec_ensure_output_buffer (GstV4l2CodecH265Dec * self,
+     GstVideoCodecFrame * frame)
+ {
+@@ -1429,7 +1429,7 @@ gst_v4l2_codec_h265_dec_ensure_output_bu
+   GstFlowReturn flow_ret;
+ 
+   if (frame->output_buffer)
+-    return TRUE;
++    return GST_FLOW_OK;
+ 
+   flow_ret = gst_buffer_pool_acquire_buffer (GST_BUFFER_POOL (self->src_pool),
+       &buffer, NULL);
+@@ -1439,20 +1439,20 @@ gst_v4l2_codec_h265_dec_ensure_output_bu
+     else
+       GST_ELEMENT_ERROR (self, RESOURCE, WRITE,
+           ("No more picture buffer available."), (NULL));
+-    return FALSE;
++    return flow_ret;
+   }
+ 
+   frame->output_buffer = buffer;
+-  return TRUE;
++  return GST_FLOW_OK;
+ }
+ 
+-static gboolean
++static GstFlowReturn
+ gst_v4l2_codec_h265_dec_submit_bitstream (GstV4l2CodecH265Dec * self,
+     GstH265Picture * picture, guint flags)
+ {
+   GstV4l2Request *prev_request, *request = NULL;
+   gsize bytesused;
+-  gboolean ret = FALSE;
++  GstFlowReturn ret = GST_FLOW_ERROR;
+   gint num_controls = 0;
+ 
+   /* *INDENT-OFF* */
+@@ -1482,13 +1482,16 @@ gst_v4l2_codec_h265_dec_submit_bitstream
+   } else {
+     GstVideoCodecFrame *frame;
+     guint32 system_frame_number = GST_CODEC_PICTURE_FRAME_NUMBER (picture);
++    GstFlowReturn flow_ret;
+ 
+     frame = gst_video_decoder_get_frame (GST_VIDEO_DECODER (self),
+         system_frame_number);
+-    g_return_val_if_fail (frame, FALSE);
++    g_return_val_if_fail (frame, GST_FLOW_ERROR);
+ 
+-    if (!gst_v4l2_codec_h265_dec_ensure_output_buffer (self, frame)) {
++    flow_ret = gst_v4l2_codec_h265_dec_ensure_output_buffer (self, frame);
++    if (flow_ret != GST_FLOW_OK) {
+       gst_video_codec_frame_unref (frame);
++      ret = flow_ret;
+       goto done;
+     }
+ 
+@@ -1588,7 +1591,7 @@ gst_v4l2_codec_h265_dec_submit_bitstream
+ 
+   gst_h265_picture_set_user_data (picture, g_steal_pointer (&request),
+       (GDestroyNotify) gst_v4l2_request_unref);
+-  ret = TRUE;
++  ret = GST_FLOW_OK;
+ 
+ done:
+   if (request)
+@@ -1612,11 +1615,14 @@ gst_v4l2_codec_h265_dec_decode_slice (Gs
+   if (!is_frame_based (self)) {
+     if (is_slice_based (self)) {
+       if (self->bitstream_map.size) {
++        GstFlowReturn flow_ret;
+         /* In slice mode, we submit the pending slice asking the accelerator to
+          * hold on the picture */
+-        if (!gst_v4l2_codec_h265_dec_submit_bitstream (self, picture,
+-                V4L2_BUF_FLAG_M2M_HOLD_CAPTURE_BUF)
+-            || !gst_v4l2_codec_h265_dec_ensure_bitstream (self))
++        flow_ret = gst_v4l2_codec_h265_dec_submit_bitstream (self, picture,
++            V4L2_BUF_FLAG_M2M_HOLD_CAPTURE_BUF);
++        if (flow_ret != GST_FLOW_OK)
++          return flow_ret;
++        if (!gst_v4l2_codec_h265_dec_ensure_bitstream (self))
+           return GST_FLOW_ERROR;
+       }
+     }
+@@ -1669,10 +1675,7 @@ gst_v4l2_codec_h265_dec_end_picture (Gst
+ {
+   GstV4l2CodecH265Dec *self = GST_V4L2_CODEC_H265_DEC (decoder);
+ 
+-  if (!gst_v4l2_codec_h265_dec_submit_bitstream (self, picture, 0))
+-    return GST_FLOW_ERROR;
+-
+-  return GST_FLOW_OK;
++  return gst_v4l2_codec_h265_dec_submit_bitstream (self, picture, 0);
+ }
+ 
+ static guint
+--- a/sys/v4l2codecs/gstv4l2codecmpeg2dec.c
++++ b/sys/v4l2codecs/gstv4l2codecmpeg2dec.c
+@@ -808,7 +808,7 @@ gst_v4l2_codec_mpeg2_dec_reset_picture (
+   }
+ }
+ 
+-static gboolean
++static GstFlowReturn
+ gst_v4l2_codec_mpeg2_dec_ensure_output_buffer (GstV4l2CodecMpeg2Dec * self,
+     GstVideoCodecFrame * frame)
+ {
+@@ -816,7 +816,7 @@ gst_v4l2_codec_mpeg2_dec_ensure_output_b
+   GstFlowReturn flow_ret;
+ 
+   if (frame->output_buffer)
+-    return TRUE;
++    return GST_FLOW_OK;
+ 
+   flow_ret = gst_buffer_pool_acquire_buffer (GST_BUFFER_POOL (self->src_pool),
+       &buffer, NULL);
+@@ -826,20 +826,20 @@ gst_v4l2_codec_mpeg2_dec_ensure_output_b
+     else
+       GST_ELEMENT_ERROR (self, RESOURCE, WRITE,
+           ("No more picture buffer available."), (NULL));
+-    return FALSE;
++    return flow_ret;
+   }
+ 
+   frame->output_buffer = buffer;
+-  return TRUE;
++  return GST_FLOW_OK;
+ }
+ 
+-static gboolean
++static GstFlowReturn
+ gst_v4l2_codec_mpeg2_dec_submit_bitstream (GstV4l2CodecMpeg2Dec * self,
+     GstMpeg2Picture * picture)
+ {
+   GstV4l2Request *prev_request = NULL, *request = NULL;
+   gsize bytesused;
+-  gboolean ret = FALSE;
++  GstFlowReturn ret = GST_FLOW_ERROR;
+   guint count = 0;
+   guint flags = 0;
+ 
+@@ -871,13 +871,16 @@ gst_v4l2_codec_mpeg2_dec_submit_bitstrea
+   } else {
+     GstVideoCodecFrame *frame;
+     guint32 system_frame_number = GST_CODEC_PICTURE_FRAME_NUMBER (picture);
++    GstFlowReturn flow_ret;
+ 
+     frame = gst_video_decoder_get_frame (GST_VIDEO_DECODER (self),
+         system_frame_number);
+-    g_return_val_if_fail (frame, FALSE);
++    g_return_val_if_fail (frame, GST_FLOW_ERROR);
+ 
+-    if (!gst_v4l2_codec_mpeg2_dec_ensure_output_buffer (self, frame)) {
++    flow_ret = gst_v4l2_codec_mpeg2_dec_ensure_output_buffer (self, frame);
++    if (flow_ret != GST_FLOW_OK) {
+       gst_video_codec_frame_unref (frame);
++      ret = flow_ret;
+       goto done;
+     }
+ 
+@@ -929,7 +932,7 @@ gst_v4l2_codec_mpeg2_dec_submit_bitstrea
+   gst_mpeg2_picture_set_user_data (picture, g_steal_pointer (&request),
+       (GDestroyNotify) gst_v4l2_request_unref);
+ 
+-  ret = TRUE;
++  ret = GST_FLOW_OK;
+ 
+ done:
+   if (request)
+@@ -969,10 +972,7 @@ gst_v4l2_codec_mpeg2_dec_end_picture (Gs
+ {
+   GstV4l2CodecMpeg2Dec *self = GST_V4L2_CODEC_MPEG2_DEC (decoder);
+   /* FIXME might need to make this lazier in case we get an unpaired field */
+-  if (!gst_v4l2_codec_mpeg2_dec_submit_bitstream (self, picture))
+-    return GST_FLOW_ERROR;
+-
+-  return GST_FLOW_OK;
++  return gst_v4l2_codec_mpeg2_dec_submit_bitstream (self, picture);
+ }
+ 
+ static void

@@ -1,0 +1,35 @@
+if PACKAGE_emailrelay
+
+comment "SSL support (SSMTP is supported)"
+
+choice
+	prompt "Select TSL library"
+	default EMAILRELAY_SSL
+
+	config EMAILRELAY_SSL
+		bool "OpenSSL"
+		select PACKAGE_libopenssl
+		help
+			Builds the package with OpenSSL.
+
+	config EMAILRELAY_SSL_MBEDTLS
+		bool "MbedTLS"
+		select PACKAGE_libmbedtls
+		select MBEDTLS_DEBUG_C
+		select MBEDTLS_VERSION_C
+		select MBEDTLS_VERSION_FEATURES
+		select MBEDTLS_SSL_RENEGOTIATION
+		help
+			Builds the package with MbedTLS.
+
+	config EMAILRELAY_NOSSL
+		bool "No TLS support"
+endchoice
+
+config EMAILRELAY_SUPPORT_VERBOSE_DBG
+	bool "Enable support for extended logging"
+	default n
+	help
+		Enables support for extended logging (must also be explicitly enabled by using command line switch --debug when starting emailrelay)
+
+endif

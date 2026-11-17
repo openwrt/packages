@@ -1,0 +1,12 @@
+--- a/src/PosixSerialPort.cpp
++++ b/src/PosixSerialPort.cpp
+@@ -39,6 +39,9 @@
+ 
+ #include <string>
+ 
++/* __MUSL__ */
++#include <sys/select.h>
++
+ #ifndef B460800
+ #define B460800 460800
+ #endif

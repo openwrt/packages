@@ -1,0 +1,40 @@
+From 42caf4814d8b7dfe21d55012597d81f98fb5cf01 Mon Sep 17 00:00:00 2001
+From: Natanael Copa <ncopa@alpinelinux.org>
+Date: Mon, 2 Jan 2017 14:39:27 +0000
+Subject: [PATCH] use posix strerror_r unless gnu
+
+---
+ lib/err/errPosix.c        | 8 +++++---
+ vgauth/common/VGAuthLog.c | 2 +-
+ 2 files changed, 6 insertions(+), 4 deletions(-)
+
+--- a/lib/err/errPosix.c
++++ b/lib/err/errPosix.c
+@@ -63,11 +63,13 @@ ErrErrno2String(Err_Number errorNumber,
+ {
+    char *p;
+ 
+-#if defined(__linux__) && !defined(__ANDROID__)
++#if defined(__GLIBC__)
+    p = strerror_r(errorNumber, buf, bufSize);
+ #else
+-   p = strerror(errorNumber);
+-#endif
++   if (strerror_r(errorNumber, buf, bufSize) != 0)
++      snprintf(buf, bufSize, "unknown error %i", errorNumber);
++   p = buf;
++#endif /* defined __GLIBC__ */
+    ASSERT(p != NULL);
+    return p;
+ }
+--- a/vgauth/common/VGAuthLog.c
++++ b/vgauth/common/VGAuthLog.c
+@@ -210,7 +210,7 @@ LogErrorPosixCodeV(int code,
+    g_vsnprintf(buf, sizeof buf, fmt, args);
+    buf[sizeof buf - 1] = '\0';
+ 
+-#ifdef sun
++#if !defined(__GLIBC__)
+    strerror_r(code, errMsg, sizeof errMsg);
+    g_warning("[function %s, file %s, line %d], %s, [errno = %d], %s\n",
+              func, file, line, buf, code, errMsg);

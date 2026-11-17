@@ -1,0 +1,38 @@
+From 0c6b5b0ab5a60b83eaffab2e1b5006b77377bcb1 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Sun, 20 Sep 2026 20:03:48 +0100
+Subject: [PATCH] validation: compare the pids limit by value
+
+LinuxPids.Limit became a pointer when commit b521900d186b ("go.{mod,sum}:
+bump runtime-spec to v1.3.0.") moved to runtime-spec v1.3.0, and the
+check turned into a comparison of two pointers that are never equal. The
+pids limit check has failed for every runtime since, and the diagnostic
+printed two addresses instead of the limits.
+
+Dereference both sides, and report a limit that is missing on either of
+them as a diagnostic rather than dereferencing a nil pointer.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ validation/util/linux_resources_pids.go | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+--- a/validation/util/linux_resources_pids.go
++++ b/validation/util/linux_resources_pids.go
+@@ -22,8 +22,14 @@ func ValidateLinuxResourcesPids(config *
+ 		return nil
+ 	}
+ 
+-	t.Ok(lpd.Limit == config.Linux.Resources.Pids.Limit, "pids limit is set correctly")
+-	t.Diagnosticf("expect: %d, actual: %d", config.Linux.Resources.Pids.Limit, lpd.Limit)
++	expected := config.Linux.Resources.Pids.Limit
++	if expected == nil || lpd.Limit == nil {
++		t.Diagnosticf("unable to get pids limit: expect: %v, actual: %v", expected, lpd.Limit)
++		return nil
++	}
++
++	t.Ok(*lpd.Limit == *expected, "pids limit is set correctly")
++	t.Diagnosticf("expect: %d, actual: %d", *expected, *lpd.Limit)
+ 
+ 	return nil
+ }

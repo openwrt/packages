@@ -1,0 +1,23 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Alexandru Ardelean <alex@shruggie.ro>
+Date: Wed, 3 Jun 2026 01:48:03 +0300
+Subject: [PATCH] configure: assume __thread TLS works when cross-compiling
+
+OpenWrt cross-compiles with gcc on musl, which supports __thread. The
+AC_RUN_IFELSE check in fr_tls.m4 defaults to "no" for cross builds, so
+TLS_STORAGE_CLASS is never defined, __THREAD is never set, and threads.h
+falls through to '#error unsupported' (added in 3.2.9).
+
+Signed-off-by: Alexandru Ardelean <alex@shruggie.ro>
+---
+--- a/configure
++++ b/configure
+@@ -12625,7 +12625,7 @@ fi
+ printf %s "checking for __thread support in compiler... " >&6; }
+   if test "$cross_compiling" = yes
+ then :
+-  have_tls=no
++  have_tls=yes
+ else $as_nop
+   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ /* end confdefs.h.  */

@@ -1,0 +1,159 @@
+#!/bin/bash
+# shunit2 tests for the nftset add_dnsmasq_element branch of pbr.
+
+. "$(dirname "${BASH_SOURCE[0]}")/../lib/setup.sh"
+
+oneTimeTearDown() { rm -rf "${MOCK_ROOT:-}"; }
+
+setUp() {
+	: > "$packageDnsmasqFile"
+	ipv6_enabled=""
+}
+
+# nftset signature: command iface target type uid comment param
+# nftset4 resolves to: ${nftPrefix}_${iface}_4_dst_ip
+_add() {
+	local iface="${1:-policyA}"
+	local comment="${2:-$iface}"
+	local param="${3:-example.com}"
+	nftset add_dnsmasq_element "$iface" "dst" "ip" "" "$comment" "$param"
+}
+
+# ---------------------------------------------------------------------------
+# 1. First write: domain not yet present → new line written
+# ---------------------------------------------------------------------------
+
+testFirstWriteCreatesNewLine() {
+	_add policyA
+
+	lineCount=$(grep -c "^nftset=/example\.com/" "$packageDnsmasqFile")
+	assertEquals "one line should be written" 1 "$lineCount"
+
+	grep -q "4#inet#fw4#pbr_policyA_4_dst_ip" "$packageDnsmasqFile"
+	assertTrue "spec should be present" $?
+
+	grep -q "# policyA" "$packageDnsmasqFile"
+	assertTrue "comment should be present" $?
+}
+
+# ---------------------------------------------------------------------------
+# 2. Idempotency: calling again with the same set must not duplicate it
+# ---------------------------------------------------------------------------
+
+testIdempotentCallDoesNotDuplicateSpec() {
+	_add policyA
+	_add policyA
+
+	lineCount=$(grep -c "^nftset=/example\.com/" "$packageDnsmasqFile")
+	assertEquals "still exactly one line" 1 "$lineCount"
+
+	specCount=$(grep -o "pbr_policyA_4_dst_ip" "$packageDnsmasqFile" | wc -l)
+	assertEquals "set spec must not be duplicated" 1 "$specCount"
+}
+
+# ---------------------------------------------------------------------------
+# 3. Second policy on same domain → specs merged onto one line
+# ---------------------------------------------------------------------------
+
+testSecondPolicyMergedOntoExistingLine() {
+	_add policyA
+	_add policyB
+
+	lineCount=$(grep -c "^nftset=/example\.com/" "$packageDnsmasqFile")
+	assertEquals "must remain one line after merge" 1 "$lineCount"
+
+	line=$(grep "^nftset=/example\.com/" "$packageDnsmasqFile")
+
+	echo "$line" | grep -q "pbr_policyA_4_dst_ip"
+	assertTrue "policyA spec must still be present" $?
+
+	echo "$line" | grep -q "pbr_policyB_4_dst_ip"
+	assertTrue "policyB spec must be appended" $?
+}
+
+# ---------------------------------------------------------------------------
+# 4. Comment accumulation: both policy names must appear in the comment
+# ---------------------------------------------------------------------------
+
+testBothPolicyNamesInCommentAfterMerge() {
+	_add policyA
+	_add policyB
+
+	line=$(grep "^nftset=/example\.com/" "$packageDnsmasqFile")
+
+	echo "$line" | grep -q "policyA"
+	assertTrue "policyA should be in comment" $?
+
+	echo "$line" | grep -q "policyB"
+	assertTrue "policyB should be in comment" $?
+}
+
+# ---------------------------------------------------------------------------
+# 5. IPv6 + IPv4 first write includes both specs
+# ---------------------------------------------------------------------------
+
+testFirstWriteWithIpv6IncludesBothSpecs() {
+	ipv6_enabled=1
+	_add policyA
+
+	line=$(grep "^nftset=/example\.com/" "$packageDnsmasqFile")
+
+	echo "$line" | grep -q "4#inet#fw4#pbr_policyA_4_dst_ip"
+	assertTrue "IPv4 spec should be written" $?
+
+	echo "$line" | grep -q "6#inet#fw4#pbr_policyA_6_dst_ip"
+	assertTrue "IPv6 spec should be written" $?
+}
+
+# ---------------------------------------------------------------------------
+# 6. IPv6 already present: only IPv4 part appended (no v6 duplicate)
+# ---------------------------------------------------------------------------
+
+testAppendOnlyIpv4WhenIpv6AlreadyPresent() {
+	echo "nftset=/example.com/6#inet#fw4#pbr_policyA_6_dst_ip # policyA" \
+		> "$packageDnsmasqFile"
+
+	ipv6_enabled=1
+	_add policyA
+
+	specCount=$(grep -o "pbr_policyA_6_dst_ip" "$packageDnsmasqFile" | wc -l)
+	assertEquals "IPv6 spec must not be duplicated" 1 "$specCount"
+
+	grep -q "4#inet#fw4#pbr_policyA_4_dst_ip" "$packageDnsmasqFile"
+	assertTrue "IPv4 spec should be appended" $?
+}
+
+# ---------------------------------------------------------------------------
+# 7. Prefix-safety: a set whose name is a prefix of another must not be
+#    falsely treated as already present (anchored-match regression)
+# ---------------------------------------------------------------------------
+
+testSetNamePrefixNotMistakeForExistingSet() {
+	_add policyA_extra policyC
+	_add policyA      policyA
+
+	line=$(grep "^nftset=/example\.com/" "$packageDnsmasqFile")
+
+	echo "$line" | grep -qE "4#inet#fw4#pbr_policyA_4_dst_ip(,| |$)"
+	assertTrue "policyA_4 should be added even though policyA_extra_4 exists" $?
+}
+
+# ---------------------------------------------------------------------------
+# 8. Different domains: each gets its own independent line
+# ---------------------------------------------------------------------------
+
+testDifferentDomainsGetSeparateLines() {
+	_add policyA policyA example.com
+	_add policyB policyB other.com
+
+	lineCount=$(grep -c "^nftset=/" "$packageDnsmasqFile")
+	assertEquals "two domains should produce two lines" 2 "$lineCount"
+
+	grep -q "^nftset=/example\.com/" "$packageDnsmasqFile"
+	assertTrue "example.com line should exist" $?
+
+	grep -q "^nftset=/other\.com/" "$packageDnsmasqFile"
+	assertTrue "other.com line should exist" $?
+}
+
+. shunit2

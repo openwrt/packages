@@ -1,0 +1,5 @@
+#!/bin/sh
+
+if [ "$ACTION" = add ] && [ "$DEVICENAME" = event0 ]; then
+	/etc/init.d/acpid start
+fi

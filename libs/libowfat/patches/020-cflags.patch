@@ -1,0 +1,13 @@
+--- a/Makefile
++++ b/Makefile
+@@ -42,8 +42,8 @@ OPT_PLUS=-O3 $(NATIVE)
+ 
+ DEFINE=-D_REENTRANT
+ 
+-CFLAGS=-pipe $(WARN) $(DEFINE) $(OPT_REG)
+-CFLAGS_OPT=-pipe $(WARN) $(DEFINE) $(OPT_PLUS)
++CFLAGS+=-pipe $(WARN) $(DEFINE) $(OPT_REG)
++CFLAGS_OPT+=-pipe $(WARN) $(DEFINE) $(OPT_PLUS)
+ 
+ #CFLAGS=-pipe -Os -march=pentiumpro -mcpu=pentiumpro -fomit-frame-pointer -fschedule-insns2 -Wall
+ 

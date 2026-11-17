@@ -1,0 +1,27 @@
+From c31cd58e6c4d24cec178e9dc6d26a768b4ecbd1d Mon Sep 17 00:00:00 2001
+From: Chet Ramey <chet.ramey@case.edu>
+Date: Wed, 26 Nov 2025 12:49:17 -0500
+Subject: Bash-5.3 patch 6: fix issues with range expressions and non-ascii
+ characters in glob patterns when globasciiranges is enabled
+
+--- a/lib/glob/smatch.c
++++ b/lib/glob/smatch.c
+@@ -390,7 +390,7 @@ charcmp_wc (wint_t c1, wint_t c2, int fo
+   if (c1 == c2)
+     return 0;
+ 
+-  if (forcecoll == 0 && glob_asciirange && c1 <= UCHAR_MAX && c2 <= UCHAR_MAX)
++  if (forcecoll == 0 && glob_asciirange)
+     return ((int)(c1 - c2));
+ 
+   s1[0] = c1;
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 5
++#define PATCHLEVEL 6
+ 
+ #endif /* _PATCHLEVEL_H_ */

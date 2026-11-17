@@ -1,0 +1,25 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Alexandru Ardelean <alex@shruggie.ro>
+Date: Sat, 11 Oct 2026 10:00:00 +0300
+Subject: [PATCH] drop the tomlkit dependency
+
+tomlkit is imported lazily by src/hatchling/cli/version/__init__.py and
+is only reached by "hatchling version <new>", which rewrites a version in
+pyproject.toml. The PEP 517 backend entry points never touch it, and the
+feed packages hatchling only as a build backend, so the declared
+dependency just blocks the host build.
+
+Upstream-Status: Inappropriate [OpenWrt packages the build backend only]
+
+Signed-off-by: Alexandru Ardelean <alex@shruggie.ro>
+---
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -38,7 +38,6 @@
+   "packaging>=24.2",
+   "pathspec>=0.10.1",
+   "pluggy>=1.0.0",
+-  "tomlkit>=0.11.1",
+   "tomli>=1.2.2; python_version < '3.11'",
+   "trove-classifiers",
+ ]

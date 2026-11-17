@@ -1,0 +1,658 @@
+From 7c118ab0ba127c56845a7a9e5ed0ee230436e9ee Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Wed, 4 Nov 2026 14:19:46 +0000
+Subject: [PATCH] ipa: rkisp2: Add the wide dynamic range algorithm
+
+Port the RkISP1 wide dynamic range algorithm to the RkISP2 IPA. It runs
+the WDR block of the ISP 2.0 in global mode, with the tone curve the
+WdrMode, WdrStrength and WdrMaxBrightPixels controls select, takes its
+histogram from the HIST_BIG0 statistics the AGC uses, and adds its
+bright pixel constraint to the AGC while WDR is on. The block mode
+settings are written with their hardware reset values.
+
+List the algorithm in the imx415 tuning, off by default, with the
+exposure constraint of the RkISP1 default.
+
+Assisted-by: LLM
+---
+ src/ipa/rkisp2/algorithms/agc.cpp     |   7 +-
+ src/ipa/rkisp2/algorithms/meson.build |   1 +
+ src/ipa/rkisp2/algorithms/wdr.cpp     | 509 ++++++++++++++++++++++++++
+ src/ipa/rkisp2/algorithms/wdr.h       |  61 +++
+ src/ipa/rkisp2/data/imx415.yaml       |   4 +
+ src/ipa/rkisp2/params.h               |   2 +
+ 6 files changed, 583 insertions(+), 1 deletion(-)
+ create mode 100644 src/ipa/rkisp2/algorithms/wdr.cpp
+ create mode 100644 src/ipa/rkisp2/algorithms/wdr.h
+
+--- a/src/ipa/rkisp2/algorithms/agc.cpp
++++ b/src/ipa/rkisp2/algorithms/agc.cpp
+@@ -431,7 +431,12 @@ void Agc::process([[maybe_unused]] IPACo
+ 		maxAnalogueGain = frameContext.agc.gain;
+ 	}
+ 
+-	setLimits(minExposureTime, maxExposureTime, minAnalogueGain, maxAnalogueGain, {});
++	std::vector<AgcMeanLuminance::AgcConstraint> additionalConstraints;
++	if (context.activeState.wdr.mode != controls::WdrOff)
++		additionalConstraints.push_back(context.activeState.wdr.constraint);
++
++	setLimits(minExposureTime, maxExposureTime, minAnalogueGain, maxAnalogueGain,
++		  std::move(additionalConstraints));
+ 
+ 	/*
+ 	 * The Agc algorithm needs to know the effective exposure value that was
+--- a/src/ipa/rkisp2/algorithms/meson.build
++++ b/src/ipa/rkisp2/algorithms/meson.build
+@@ -12,5 +12,6 @@ rkisp2_ipa_algorithms = files([
+     'goc.cpp',
+     'ispp.cpp',
+     'lsc.cpp',
++    'wdr.cpp',
+ ])
+ 
+--- /dev/null
++++ b/src/ipa/rkisp2/algorithms/wdr.cpp
+@@ -0,0 +1,509 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2025, Ideas On Board
++ *
++ * RkISP2 Wide Dynamic Range control
++ */
++
++#include "wdr.h"
++
++#include <linux/media/rockchip/rkisp2-config.h>
++
++#include <libcamera/base/log.h>
++#include <libcamera/base/utils.h>
++
++#include "libcamera/internal/value_node.h"
++
++#include <libipa/agc_mean_luminance.h>
++#include <libipa/histogram.h>
++#include <libipa/pwl.h>
++
++/**
++ * \file wdr.h
++ */
++
++namespace libcamera {
++
++namespace ipa::rkisp2::algorithms {
++
++/**
++ * \class WideDynamicRange
++ * \brief RkISP2 Wide Dynamic Range algorithm
++ *
++ * This algorithm implements automatic global tone mapping for the RkISP2.
++ * Global tone mapping is done by the WDR hardware block in global mode and applies
++ * a global tone mapping curve to the image to increase the perceived dynamic
++ * range. Imagine an indoor scene with bright outside visible through the
++ * windows. With normal exposure settings, the windows will be completely
++ * saturated and no structure (sky/clouds) will be visible because the AEGC has
++ * to increase overall exposure to reach a certain level of mean brightness. In
++ * WDR mode, the algorithm will artifically reduce the exposure time so that the
++ * texture and colours become visible in the formerly saturated areas. Then the
++ * global tone mapping curve is applied to mitigate the loss of brightness.
++ *
++ * Calculating that tone mapping curve is the most difficult part. This
++ * algorithm implements four tone mapping strategies:
++ * - Linear: The tone mapping curve is a combination of two linear functions
++ *   with one kneepoint
++ * - Power: The tone mapping curve follows a power function
++ * - Exponential: The tone mapping curve follows an exponential function
++ * - HistogramEqualization: The tone mapping curve tries to equalize the
++ *   histogram
++ *
++ * The overall strategy is the same in all cases: Add a constraint to the AEGC
++ * regulation so that the number of nearly saturated pixels goes below a given
++ * threshold (default 2%). This threshold can either be specified in the tuning
++ * file or set via the WdrMaxBrightPixels control.
++ *
++ * The global tone mapping curve is then calculated so that it accounts for the
++ * reduction of brightness due to the exposure constraint. We'll call this the
++ * WDR-gain. As the result of tone mapping is very difficult to quantize and is
++ * by definition a lossy process there is not a single "correct" solution on how
++ * this curve should look like.
++ *
++ * The approach taken here is based on a simple linear model. Consider a pixel
++ * that was originally 50% grey. It will have its exposure pushed down by the
++ * WDR's initial exposure compensation. This value then needs to be pushed back
++ * up by the tone mapping curve so that it is 50% grey again. This point serves
++ * as our kneepoint. To get to this kneepoint, this pixel and all darker pixels
++ * (to the left of the kneepoint on the tone mapping curve) will simply have the
++ * exposure compensation undone by WDR-gain. This cancels out the
++ * original exposure compensation, which was 1/WDR-gain. The remaining
++ * brigher pixels (to the right of the kneepoint on the tone mapping curve) will
++ * be compressed. The WdrStrength control adjusts the gain of the left part of
++ * the tone mapping curve.
++ *
++ * In the Power and Exponential modes, the curves are calculated so that they
++ * pass through that kneepoint.
++ *
++ * The histogram equalization mode tries to equalize the histogram of the
++ * image and acts independently of the calculated exposure value.
++ *
++ * \code{.unparsed}
++ * algorithms:
++ *   - WideDynamicRange:
++ *       ExposureConstraint:
++ *         MaxBrightPixels: 0.02
++ *         yTarget: 0.95
++ * \endcode
++ */
++
++LOG_DEFINE_CATEGORY(RkISP2Wdr)
++
++static constexpr unsigned int kTonecurveXIntervals = RKISP2_ISP_WDR_CURVE_NUM_INTERV;
++
++/*
++ * Increasing interval sizes. The intervals are crafted so that they sum
++ * up to 4096. This results in better fitting curves than the constant intervals
++ * (all entries are 4)
++ */
++static constexpr std::array<int, kTonecurveXIntervals> kLoglikeIntervals = {
++	{ 0, 0, 0, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4,
++	  4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 6, 6 }
++};
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::init
++ */
++int WideDynamicRange::init([[maybe_unused]] IPAContext &context,
++			   [[maybe_unused]] const ValueNode &tuningData)
++{
++	toneCurveIntervalValues_ = kLoglikeIntervals;
++
++	/* Calculate a list of normed x values */
++	toneCurveX_[0] = 0.0;
++	int lastValue = 0;
++	for (unsigned int i = 1; i < toneCurveX_.size(); i++) {
++		lastValue += std::pow(2, toneCurveIntervalValues_[i - 1] + 3);
++		lastValue = std::min(lastValue, 4096);
++		toneCurveX_[i] = lastValue / 4096.0;
++	}
++
++	exposureConstraintMaxBrightPixels_ = 0.02;
++	exposureConstraintY_ = 0.95;
++
++	const auto &constraint = tuningData["ExposureConstraint"];
++	if (!constraint.isDictionary()) {
++		LOG(RkISP2Wdr, Warning)
++			<< "ExposureConstraint not found in tuning data."
++			   "Using default values MaxBrightPixels: "
++			<< exposureConstraintMaxBrightPixels_
++			<< " yTarget: " << exposureConstraintY_;
++	} else {
++		exposureConstraintMaxBrightPixels_ =
++			constraint["MaxBrightPixels"]
++				.get<double>()
++				.value_or(exposureConstraintMaxBrightPixels_);
++		exposureConstraintY_ =
++			constraint["yTarget"]
++				.get<double>()
++				.value_or(exposureConstraintY_);
++	}
++
++	context.ctrlMap[&controls::WdrMode] =
++		ControlInfo(controls::WdrModeValues, controls::WdrOff);
++	context.ctrlMap[&controls::WdrStrength] =
++		ControlInfo(0.0f, 2.0f, 1.0f);
++	context.ctrlMap[&controls::WdrMaxBrightPixels] =
++		ControlInfo(0.0f, 1.0f, static_cast<float>(exposureConstraintMaxBrightPixels_));
++
++	applyCompensationLinear(1.0, 0.0);
++
++	return 0;
++}
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::configure
++ */
++int WideDynamicRange::configure(IPAContext &context,
++				[[maybe_unused]] const IPACameraSensorInfo &configInfo)
++{
++	context.activeState.wdr.mode = controls::WdrOff;
++	context.activeState.wdr.gain = 1.0;
++	context.activeState.wdr.strength = 1.0;
++	auto &constraint = context.activeState.wdr.constraint;
++	constraint.bound = AgcMeanLuminance::AgcConstraint::Bound::Upper;
++	constraint.qHi = 1.0;
++	constraint.qLo = 1.0 - exposureConstraintMaxBrightPixels_;
++	constraint.yTarget.clear();
++	constraint.yTarget.append(0, exposureConstraintY_);
++	return 0;
++}
++
++void WideDynamicRange::applyHistogramEqualization(double strength)
++{
++	if (hist_.empty())
++		return;
++
++	/*
++	 * Apply a factor on strength, so that it roughly matches the optical
++	 * impression that is produced by the other algorithms. The goal is that
++	 * the user can switch algorithms for different looks but similar
++	 * "strength".
++	 */
++	strength *= 0.65;
++
++	/*
++	 * In a fully equalized histogram, all bins have the same value. Try
++	 * to equalize the histogram by applying a gain or damping depending on
++	 * the distance of the actual bin value from that norm.
++	 */
++	std::vector<double> gains;
++	gains.resize(hist_.size());
++	double sum = 0;
++	double norm = 1.0 / (gains.size());
++	for (unsigned i = 0; i < hist_.size(); i++) {
++		double diff = 1.0 + strength * (hist_[i] - norm) / norm;
++		gains[i] = diff;
++		sum += diff;
++	}
++
++	/* Never amplify the last entry. */
++	gains.back() = std::max(gains.back(), 1.0);
++
++	double scale = gains.size() / sum;
++	for (auto &v : gains)
++		v *= scale;
++
++	Pwl pwl;
++	double step = 1.0 / gains.size();
++	double lastX = 0;
++	double lastY = 0;
++
++	pwl.append(lastX, lastY);
++	for (unsigned int i = 0; i < gains.size() - 1; i++) {
++		lastY += gains[i] * step;
++		lastX += step;
++		pwl.append(lastX, lastY);
++	}
++	pwl.append(1.0, 1.0);
++
++	for (unsigned int i = 0; i < toneCurveX_.size(); i++)
++		toneCurveY_[i] = pwl.eval(toneCurveX_[i]);
++}
++
++Vector<double, 2> WideDynamicRange::kneePoint(double gain, double strength)
++{
++	gain = std::pow(gain, strength);
++	double y = 0.5;
++	double x = y / gain;
++
++	return { { x, y } };
++}
++
++void WideDynamicRange::applyCompensationLinear(double gain, double strength)
++{
++	auto kp = kneePoint(gain, strength);
++	double g1 = kp.y() / kp.x();
++	double g2 = (kp.y() - 1) / (kp.x() - 1);
++
++	for (unsigned int i = 0; i < toneCurveX_.size(); i++) {
++		double x = toneCurveX_[i];
++		double y;
++		if (x <= kp.x()) {
++			y = g1 * x;
++		} else {
++			y = g2 * x + 1 - g2;
++		}
++		toneCurveY_[i] = y;
++	}
++}
++
++void WideDynamicRange::applyCompensationPower(double gain, double strength)
++{
++	double e = 1.0;
++	if (strength > 1e-6) {
++		auto kp = kneePoint(gain, strength);
++		/* Calculate an exponent to go through the knee point. */
++		e = log(kp.y()) / log(kp.x());
++	}
++
++	/*
++	 * The power function tends to be extremely steep at the beginning. This
++	 * leads to noise and image artifacts in the dark areas. To mitigate
++	 * that, we add a short linear section at the beginning of the curve.
++	 * The connection between linear and power is the point where the linear
++	 * section reaches the y level yLin. The power curve is then scaled so
++	 * that it starts at the connection point with the steepness it would
++	 * have at y=yLin but still goes through 1,1
++	 */
++	double yLin = 0.1;
++	/* x position of the connection point */
++	double xb = yLin / gain;
++	/* x offset for the scaled power function */
++	double q = xb - std::exp(std::log(yLin) / e);
++
++	for (unsigned int i = 0; i < toneCurveX_.size(); i++) {
++		double x = toneCurveX_[i];
++		if (x < xb) {
++			toneCurveY_[i] = x * gain;
++		} else {
++			x = (x - q) / (1 - q);
++			toneCurveY_[i] = std::pow(x, e);
++		}
++	}
++}
++
++void WideDynamicRange::applyCompensationExponential(double gain, double strength)
++{
++	double k = 0.1;
++	auto kp = kneePoint(gain, strength);
++	double kx = kp.x();
++	double ky = kp.y();
++
++	if (kx > ky) {
++		LOG(RkISP2Wdr, Warning) << "Invalid knee point: " << kp;
++		kx = ky;
++	}
++
++	/*
++	 * The exponential curve is based on the function proposed by Glozman
++	 * et al. in
++	 * S. Glozman, T. Kats, and O. Yadid-Pecht, "Exponent Operator Based
++	 * Tone Mapping Algorithm for Color Wide Dynamic Range Images," 2011.
++	 *
++	 * That function uses a k factor as parameter for the WDR compression
++	 * curve:
++	 * k=0: maximum compression
++	 * k=infinity: linear curve
++	 *
++	 * To calculate a k factor that results in a curve that passes through
++	 * the kneepoint, the equation needs to be solved for k after inserting
++	 * the kneepoint.  This can be formulated as search for a zero point.
++	 * Unfortunately there is no closed solution for that transformation.
++	 * Using newton's method to approximate the value is numerically
++	 * unstable.
++	 *
++	 * Luckily the function only crosses the x axis once and for the set of
++	 * possible kneepoints, a negative and a positive point can be guessed.
++	 * The approximation is then implemented using bisection.
++	 */
++	if (std::abs(kx - ky) < 0.001) {
++		k = 1e8;
++	} else {
++		double kl = 0.0001;
++		double kh = 1000;
++
++		auto fk = [=](double v) {
++			return std::exp(-kx / v) -
++			       ky * std::exp(-1.0 / v) + ky - 1.0;
++		};
++
++		ASSERT(fk(kl) < 0);
++		ASSERT(fk(kh) > 0);
++
++		k = kh / 10.0;
++		while (fk(k) > 0) {
++			kh = k;
++			k /= 10.0;
++		}
++
++		do {
++			k = (kl + kh) / 2;
++			if (fk(k) < 0)
++				kl = k;
++			else
++				kh = k;
++		} while (std::abs(kh - kl) > 1e-3);
++	}
++
++	double a = 1.0 / (1.0 - std::exp(-1.0 / k));
++	for (unsigned int i = 0; i < toneCurveX_.size(); i++)
++		toneCurveY_[i] = a * (1.0 - std::exp(-toneCurveX_[i] / k));
++}
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::queueRequest
++ */
++void WideDynamicRange::queueRequest([[maybe_unused]] IPAContext &context,
++				    [[maybe_unused]] const uint32_t frame,
++				    IPAFrameContext &frameContext,
++				    const ControlList &controls)
++{
++	auto &activeState = context.activeState;
++
++	const auto &mode = controls.get(controls::WdrMode);
++	if (mode)
++		activeState.wdr.mode = static_cast<controls::WdrModeEnum>(*mode);
++
++	const auto &brightPixels = controls.get(controls::WdrMaxBrightPixels);
++	if (brightPixels)
++		activeState.wdr.constraint.qLo = 1.0 - *brightPixels;
++
++	const auto &strength = controls.get(controls::WdrStrength);
++	if (strength)
++		activeState.wdr.strength = *strength;
++
++	frameContext.wdr.mode = activeState.wdr.mode;
++	frameContext.wdr.strength = activeState.wdr.strength;
++}
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::prepare
++ */
++void WideDynamicRange::prepare(IPAContext &context,
++			       [[maybe_unused]] const uint32_t frame,
++			       IPAFrameContext &frameContext,
++			       RkISP2Params *params)
++{
++	if (!params) {
++		LOG(RkISP2Wdr, Warning) << "Params is null";
++		return;
++	}
++
++	auto mode = frameContext.wdr.mode;
++
++	auto config = params->block<RkISP2ParamsBlocks::Wdr>();
++	config.setEnabled(mode != controls::WdrOff);
++
++	/* Calculate how much EV we need to compensate with the WDR curve. */
++	double gain = context.activeState.wdr.gain;
++	frameContext.wdr.gain = gain;
++
++	if (mode == controls::WdrOff) {
++		applyCompensationLinear(1.0, 0.0);
++	} else if (mode == controls::WdrLinear) {
++		applyCompensationLinear(gain, frameContext.wdr.strength);
++	} else if (mode == controls::WdrPower) {
++		applyCompensationPower(gain, frameContext.wdr.strength);
++	} else if (mode == controls::WdrExponential) {
++		applyCompensationExponential(gain, frameContext.wdr.strength);
++	} else if (mode == controls::WdrHistogramEqualization) {
++		applyHistogramEqualization(frameContext.wdr.strength);
++	}
++
++	/*
++	 * Global mode with the block mode settings at their hardware defaults;
++	 * the curve output is used in global mode only.
++	 */
++	config->ctrl = 0;
++	config->offset = 0;
++	config->deltamin = 0;
++	config->ctrl0 = RKISP2_ISP_WDR_CTRL0_PYM_CC(3) |
++			RKISP2_ISP_WDR_CTRL0_EPSILON(0xc) |
++			RKISP2_ISP_WDR_CTRL0_LVL_EN(0xf);
++	config->ctrl1 = RKISP2_ISP_WDR_CTRL1_GAIN_MAX_CLIP_EN |
++			RKISP2_ISP_WDR_CTRL1_GAIN_MAX(0x40) |
++			RKISP2_ISP_WDR_CTRL1_BAVG_CLIP(3) |
++			RKISP2_ISP_WDR_CTRL1_NONL_OPEN |
++			RKISP2_ISP_WDR_CTRL1_FLT_SEL;
++	config->blkoff0 = 0xc0;
++	config->avgclip = RKISP2_ISP_WDR_AVGCLIP_BESTLIGHT(0xcc) |
++			  RKISP2_ISP_WDR_AVGCLIP_NOISERATIO(0xe);
++	config->coe[0] = 0x36;
++	config->coe[1] = 0xb7;
++	config->coe[2] = 0x12;
++	config->coe_off = 0;
++
++	for (unsigned int i = 0; i < RKISP2_ISP_WDR_CURVE_NUM_DY_REGS; i++)
++		config->dy[i] = 0;
++	for (unsigned int i = 0; i < kTonecurveXIntervals; i++) {
++		int v = toneCurveIntervalValues_[i];
++		config->dy[i / 8] |= (v & 0x0f) << ((i % 8) * 4);
++	}
++
++	/*
++	 * Fix the curve to adhere to the hardware constraints. Don't apply a
++	 * constraint on the first element, which is most likely zero anyways.
++	 */
++	int lastY = toneCurveY_[0] * 4096.0;
++	for (unsigned int i = 0; i < toneCurveX_.size(); i++) {
++		int diff = static_cast<int>(toneCurveY_[i] * 4096.0) - lastY;
++		diff = std::clamp(diff, -2048, 2048);
++		lastY = std::clamp(lastY + diff, 0, 4096);
++		config->global_y[i] = lastY;
++		config->block_y[i] = 0;
++	}
++}
++
++void WideDynamicRange::process(IPAContext &context, [[maybe_unused]] const uint32_t frame,
++			       IPAFrameContext &frameContext,
++			       const RkISP2Stats *stats,
++			       ControlList &metadata)
++{
++	auto mode = frameContext.wdr.mode;
++	metadata.set(controls::WdrMode, mode);
++
++	auto histBig = stats ? stats->block<RkISP2StatsBlocks::HistBig0>() : nullptr;
++	if (!histBig) {
++		LOG(RkISP2Wdr, Warning) << "No histogram data in statistics";
++		return;
++	}
++
++	/* The lower 5 bits are fractional and meant to be discarded. */
++	Histogram cumHist({ histBig->hist_bins, RKISP2_ISP_HIST_BIN_N_MAX },
++			  [](uint32_t x) { return x >> 5; });
++
++	/* Calculate the gain needed to reach the requested yTarget. */
++	double value = cumHist.interQuantileMean(0, 1.0) / cumHist.bins();
++	double gain = context.activeState.agc.automatic.yTarget / value;
++	gain = std::max(gain, 1.0);
++
++	double speed = 0.2;
++	gain = gain * speed + context.activeState.wdr.gain * (1.0 - speed);
++
++	context.activeState.wdr.gain = gain;
++
++	std::vector<double> hist;
++	double sum = 0;
++	for (unsigned i = 0; i < RKISP2_ISP_HIST_BIN_N_MAX; i++) {
++		double v = histBig->hist_bins[i] >> 5;
++		hist.push_back(v);
++		sum += v;
++	}
++
++	if (sum == 0)
++		return;
++
++	/* Scale so that the entries sum up to 1. */
++	double scale = 1.0 / sum;
++	for (auto &v : hist)
++		v *= scale;
++	hist_.swap(hist);
++}
++
++REGISTER_IPA_ALGORITHM(WideDynamicRange, "WideDynamicRange")
++
++} /* namespace ipa::rkisp2::algorithms */
++
++} /* namespace libcamera */
+--- /dev/null
++++ b/src/ipa/rkisp2/algorithms/wdr.h
+@@ -0,0 +1,61 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2025, Ideas On Board
++ *
++ * RkISP2 Wide Dynamic Range control
++ */
++
++#pragma once
++
++#include <array>
++#include <vector>
++
++#include <libcamera/control_ids.h>
++
++#include "libcamera/internal/vector.h"
++
++#include "algorithm.h"
++
++namespace libcamera {
++
++namespace ipa::rkisp2::algorithms {
++
++class WideDynamicRange : public Algorithm
++{
++public:
++	WideDynamicRange() = default;
++	~WideDynamicRange() = default;
++
++	int init(IPAContext &context, const ValueNode &tuningData) override;
++	int configure(IPAContext &context, const IPACameraSensorInfo &configInfo) override;
++
++	void queueRequest(IPAContext &context, const uint32_t frame,
++			  IPAFrameContext &frameContext,
++			  const ControlList &controls) override;
++	void prepare(IPAContext &context, const uint32_t frame,
++		     IPAFrameContext &frameContext,
++		     RkISP2Params *params) override;
++	void process(IPAContext &context, const uint32_t frame,
++		     IPAFrameContext &frameContext,
++		     const RkISP2Stats *stats,
++		     ControlList &metadata) override;
++
++private:
++	Vector<double, 2> kneePoint(double gain, double strength);
++	void applyCompensationLinear(double gain, double strength);
++	void applyCompensationPower(double gain, double strength);
++	void applyCompensationExponential(double gain, double strength);
++	void applyHistogramEqualization(double strength);
++
++	double exposureConstraintMaxBrightPixels_;
++	double exposureConstraintY_;
++
++	std::vector<double> hist_;
++
++	std::array<int, RKISP2_ISP_WDR_CURVE_NUM_INTERV> toneCurveIntervalValues_;
++	std::array<double, RKISP2_ISP_WDR_CURVE_NUM_COEFF> toneCurveX_;
++	std::array<double, RKISP2_ISP_WDR_CURVE_NUM_COEFF> toneCurveY_;
++};
++
++} /* namespace ipa::rkisp2::algorithms */
++} /* namespace libcamera */
+--- a/src/ipa/rkisp2/data/imx415.yaml
++++ b/src/ipa/rkisp2/data/imx415.yaml
+@@ -151,5 +151,9 @@ algorithms:
+                28672, 52698, 30720, 53796, 32768, 54876, 36864, 57012, 40960, 58656, 45056, 59954, 49152, 61183,
+                53248, 62355, 57344, 63419, 61440, 64476, 65535, 65535 ]
+   - ColorProcessing:
++  - WideDynamicRange:
++      ExposureConstraint:
++        MaxBrightPixels: 0.02
++        yTarget: 0.95
+   - ColorSpaceConversion:
+ ...
+--- a/src/ipa/rkisp2/params.h
++++ b/src/ipa/rkisp2/params.h
+@@ -34,6 +34,7 @@ enum class RkISP2ParamsBlocks : uint16_t
+ 	AwbMeas,
+ 	Dpcc,
+ 	Cproc,
++	Wdr,
+ };
+ 
+ namespace details {
+@@ -65,6 +66,7 @@ RkISP2_DEFINE_PARAMS_BLOCK_TYPE(HistBig2
+ RkISP2_DEFINE_PARAMS_BLOCK_TYPE(AwbMeas,	awb_meas,	AWB_MEAS);
+ RkISP2_DEFINE_PARAMS_BLOCK_TYPE(Dpcc,		dpcc,		DPCC);
+ RkISP2_DEFINE_PARAMS_BLOCK_TYPE(Cproc,		cproc,		CPROC);
++RkISP2_DEFINE_PARAMS_BLOCK_TYPE(Wdr,		wdr,		WDR);
+ 
+ struct param_traits {
+ 	using id_type = RkISP2ParamsBlocks;

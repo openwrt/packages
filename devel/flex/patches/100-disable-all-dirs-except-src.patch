@@ -1,0 +1,16 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -42,12 +42,7 @@ EXTRA_DIST = \
+ 	autogen.sh
+ 
+ SUBDIRS = \
+-	src \
+-	doc \
+-	examples \
+-	po \
+-	tests \
+-	tools
++	src
+ 
+ # Create the ChangeLog, but only if we're inside a git working directory
+ 

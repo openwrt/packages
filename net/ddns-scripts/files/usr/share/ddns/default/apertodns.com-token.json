@@ -1,0 +1,11 @@
+{
+	"name": "apertodns.com-token",
+	"ipv4": {
+		"url": "https://[PASSWORD]:[PASSWORD]@api.apertodns.com/nic/update?hostname=[DOMAIN]&myip=[IP]",
+		"answer": "good|nochg"
+	},
+	"ipv6": {
+		"url": "https://[PASSWORD]:[PASSWORD]@api.apertodns.com/nic/update?hostname=[DOMAIN]&myip=[IP]",
+		"answer": "good|nochg"
+	}
+}

@@ -1,0 +1,15 @@
+--- a/Makefile.SH
++++ b/Makefile.SH
+@@ -175,6 +175,12 @@ EOT
+ 		;;
+ 	esac
+ 
++	case "$usecrosscompile$perl" in
++	define?*)
++	        ldlibpth=''
++		;;
++	esac
++
+ 	;;
+ 
+ *)	pldlflags=''

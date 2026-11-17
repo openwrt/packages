@@ -1,0 +1,389 @@
+From f72675beb5835b4ac31d7476de1580be767209d8 Mon Sep 17 00:00:00 2001
+From: swananan <jt26wzz@gmail.com>
+Date: Thu, 31 Aug 2023 00:12:07 +0800
+Subject: [PATCH] feature: support pcre2
+
+---
+ .travis.yml              | 26 +++++++++++++-----------
+ lib/resty/core/regex.lua | 43 ++++++++++++++++++++++++++++++----------
+ t/re-base.t              | 25 +++++++++++++++++------
+ t/re-gmatch.t            | 10 +++++++---
+ t/re-match.t             |  7 +++++--
+ t/re-opt.t               |  9 +++++++--
+ t/stream/re-base.t       | 27 +++++++++++++++++++------
+ t/stream/re-gmatch.t     | 10 +++++++---
+ t/stream/re-match.t      |  7 +++++--
+ t/stream/re-opt.t        |  9 +++++++--
+ 10 files changed, 125 insertions(+), 48 deletions(-)
+
+--- a/nginx-mod-lua-resty-core/.travis.yml
++++ b/nginx-mod-lua-resty-core/.travis.yml
+@@ -34,9 +34,13 @@ env:
+     - LUA_INCLUDE_DIR=$LUAJIT_INC
+     - LUA_CMODULE_DIR=/lib
+     - PCRE_VER=8.45
++    - PCRE2_VER=10.37
+     - PCRE_PREFIX=/opt/pcre
++    - PCRE2_PREFIX=/opt/pcre2
+     - PCRE_LIB=$PCRE_PREFIX/lib
++    - PCRE2_LIB=$PCRE2_PREFIX/lib
+     - PCRE_INC=$PCRE_PREFIX/include
++    - PCRE2_INC=$PCRE2_PREFIX/include
+     - OPENSSL_PREFIX=/opt/ssl
+     - OPENSSL_LIB=$OPENSSL_PREFIX/lib
+     - OPENSSL_INC=$OPENSSL_PREFIX/include
+@@ -45,7 +49,7 @@ env:
+     - TEST_NGINX_RANDOMIZE=1
+     - LUACHECK_VER=0.21.1
+   matrix:
+-    - NGINX_VERSION=1.25.1 OPENSSL_VER=1.1.1u OPENSSL_PATCH_VER=1.1.1f
++    - NGINX_VERSION=1.25.1 OPENSSL_VER=1.1.1u OPENSSL_PATCH_VER=1.1.1f USE_PCRE2=Y
+     - NGINX_VERSION=1.21.4 OPENSSL_VER=1.1.1u OPENSSL_PATCH_VER=1.1.1f
+ 
+ services:
+@@ -61,11 +65,12 @@ before_install:
+ install:
+   - if [ ! -d download-cache ]; then mkdir download-cache; fi
+   - if [ ! -f download-cache/openssl-$OPENSSL_VER.tar.gz ]; then wget -P download-cache https://www.openssl.org/source/openssl-$OPENSSL_VER.tar.gz || wget -P download-cache https://www.openssl.org/source/old/${OPENSSL_VER//[a-z]/}/openssl-$OPENSSL_VER.tar.gz; fi
+-  - if [ ! -f download-cache/pcre-$PCRE_VER.tar.gz ]; then wget -P download-cache http://ftp.cs.stanford.edu/pub/exim/pcre/pcre-$PCRE_VER.tar.gz; fi
++  - if [ "$USE_PCRE2" != "Y" ] && [ ! -f download-cache/pcre-$PCRE_VER.tar.gz ]; then wget -P download-cache http://ftp.cs.stanford.edu/pub/exim/pcre/pcre-$PCRE_VER.tar.gz; fi
++  - if [ "$USE_PCRE2" = "Y" ] && [ ! -f download-cache/pcre2-$PCRE2_VER.tar.gz ]; then wget -P download-cache https://downloads.sourceforge.net/project/pcre/pcre2/${PCRE2_VER}/pcre2-${PCRE2_VER}.tar.gz; fi
+   - git clone https://github.com/openresty/openresty.git ../openresty
+   - git clone https://github.com/openresty/openresty-devel-utils.git
+   - git clone https://github.com/simpl/ngx_devel_kit.git ../ndk-nginx-module
+-  - git clone https://github.com/openresty/lua-nginx-module.git ../lua-nginx-module
++  - git clone https://github.com/swananan/lua-nginx-module.git -b support_pcre2 ../lua-nginx-module
+   - git clone https://github.com/openresty/no-pool-nginx.git ../no-pool-nginx
+   - git clone https://github.com/openresty/echo-nginx-module.git ../echo-nginx-module
+   - git clone https://github.com/openresty/lua-resty-lrucache.git
+@@ -73,8 +78,8 @@ install:
+   - git clone -b v2.1-agentzh https://github.com/openresty/luajit2.git luajit2
+   - git clone https://github.com/openresty/set-misc-nginx-module.git ../set-misc-nginx-module
+   - git clone https://github.com/openresty/mockeagain.git
+-  - git clone https://github.com/openresty/test-nginx.git
+-  - git clone https://github.com/openresty/stream-lua-nginx-module.git ../stream-lua-nginx-module
++  - git clone https://github.com/swananan/test-nginx.git -b support_pcre2
++  - git clone https://github.com/swananan/stream-lua-nginx-module.git -b support_pcre2 ../stream-lua-nginx-module
+ 
+ script:
+   - cd luajit2/
+@@ -89,12 +94,8 @@ script:
+   - make -j$JOBS > build.log 2>&1 || (cat build.log && exit 1)
+   - sudo make PATH=$PATH install_sw > build.log 2>&1 || (cat build.log && exit 1)
+   - cd ../mockeagain/ && make CC=$CC -j$JOBS && cd ..
+-  - tar zxf download-cache/pcre-$PCRE_VER.tar.gz
+-  - cd pcre-$PCRE_VER/
+-  - ./configure --prefix=$PCRE_PREFIX --enable-jit --enable-utf --enable-unicode-properties > build.log 2>&1 || (cat build.log && exit 1)
+-  - make -j$JOBS > build.log 2>&1 || (cat build.log && exit 1)
+-  - sudo PATH=$PATH make install > build.log 2>&1 || (cat build.log && exit 1)
+-  - cd ..
++  - if [ "$USE_PCRE2" != "Y" ]; then tar zxf download-cache/pcre-$PCRE_VER.tar.gz; cd pcre-$PCRE_VER/; ./configure --prefix=$PCRE_PREFIX --enable-jit --enable-utf --enable-unicode-properties > build.log 2>&1 || (cat build.log && exit 1); make -j$JOBS > build.log 2>&1 || (cat build.log && exit 1); sudo PATH=$PATH make install > build.log 2>&1 || (cat build.log && exit 1); cd ..; fi
++  - if [ "$USE_PCRE2" = "Y" ]; then tar zxf download-cache/pcre2-$PCRE2_VER.tar.gz; cd pcre2-$PCRE2_VER/; ./configure --prefix=$PCRE2_PREFIX --enable-jit --enable-utf > build.log 2>&1 || (cat build.log && exit 1); make -j$JOBS > build.log 2>&1 || (cat build.log && exit 1); sudo PATH=$PATH make install > build.log 2>&1 || (cat build.log && exit 1); cd ..; fi
+   - export PATH=$PWD/work/nginx/sbin:$PWD/openresty-devel-utils:$PATH
+   - export LD_PRELOAD=$PWD/mockeagain/mockeagain.so
+   - export LD_LIBRARY_PATH=$PWD/mockeagain:$LD_LIBRARY_PATH
+@@ -104,7 +105,8 @@ script:
+   - export disable_pcre2=--without-pcre2
+   - answer=`util/ver-ge "$NGINX_VERSION" 1.25.1`
+   - if [ "$OPENSSL_VER" = "1.1.0l" ] || [ "$answer" = "N" ]; then add_http3_module=""; fi
+-  - if [ "$answer" = "N" ]; then disable_pcre2=""; fi
++  - if [ "$answer" = "N" ] || [ "$USE_PCRE2" = "Y" ]; then disable_pcre2=""; fi
++  - if [ "$USE_PCRE2" = "Y" ]; then PCRE_INC=$PCRE2_INC; PCRE_LIB=$PCRE2_LIB; fi
+   - ngx-build $NGINX_VERSION --with-ipv6 $disable_pcre2 $add_http3_module --with-http_realip_module --with-http_ssl_module --with-pcre-jit --with-cc-opt="-I$OPENSSL_INC -I$PCRE_INC" --with-ld-opt="-L$OPENSSL_LIB -Wl,-rpath,$OPENSSL_LIB -L$PCRE_LIB -Wl,-rpath,$PCRE_LIB" --add-module=../ndk-nginx-module --add-module=../echo-nginx-module --add-module=../set-misc-nginx-module --add-module=../headers-more-nginx-module --add-module=../lua-nginx-module --with-debug --with-stream_ssl_module --with-stream --with-ipv6 --add-module=../stream-lua-nginx-module > build.log 2>&1 || (cat build.log && exit 1)
+   - nginx -V
+   - ldd `which nginx`|grep -E 'luajit|ssl|pcre'
+--- a/nginx-mod-lua-resty-core/lib/resty/core/regex.lua
++++ b/nginx-mod-lua-resty-core/lib/resty/core/regex.lua
+@@ -82,7 +82,7 @@ if not pcall(function() pcre_ver = ffi_s
+ end
+ 
+ 
+-local MAX_ERR_MSG_LEN = 128
++local MAX_ERR_MSG_LEN = 256
+ 
+ 
+ local FLAG_COMPILE_ONCE  = 0x01
+@@ -102,6 +102,7 @@ local PCRE_DUPNAMES          = 0x0080000
+ local PCRE_JAVASCRIPT_COMPAT = 0x2000000
+ 
+ 
++-- PCRE2_ERROR_NOMATCH uses the same value
+ local PCRE_ERROR_NOMATCH = -1
+ 
+ 
+@@ -135,22 +136,44 @@ local ngx_lua_ffi_script_eval_data
+ -- TODO: improve this workaround when PCRE allows for unspecifying the MAP_JIT
+ -- option.
+ local no_jit_in_init
++local pcre_ver_num
+ 
+-if jit.os == "OSX" then
+-    local maj, min = string.match(pcre_ver, "^(%d+)%.(%d+)")
+-    if maj and min then
+-        local pcre_ver_num = tonumber(maj .. min)
+-
+-        if pcre_ver_num >= 843 then
+-            no_jit_in_init = true
+-        end
++local maj, min = string.match(pcre_ver, "^(%d+)%.(%d+)")
++if maj and min then
++    pcre_ver_num = tonumber(maj .. min)
++end
+ 
+-    else
++if jit.os == "OSX" then
++    if pcre_ver_num == nil then
+         -- assume this version is faulty as well
+         no_jit_in_init = true
++
++    -- PCRE2 is also subject to this issue on macOS
++    elseif pcre_ver_num >= 843 then
++        no_jit_in_init = true
+     end
+ end
+ 
++-- pcre2
++if pcre_ver_num > 845 then
++    -- option
++    PCRE_CASELESS          = 0x00000008
++    PCRE_MULTILINE         = 0x00000400
++    PCRE_DOTALL            = 0x00000020
++    PCRE_EXTENDED          = 0x00000080
++    PCRE_ANCHORED          = 0x80000000
++    PCRE_UTF8              = 0x00080000
++    PCRE_DUPNAMES          = 0x00000040
++    -- In the pcre2, The PCRE_JAVASCRIPT_COMPAT option has been split into
++    -- independent functional options PCRE2_ALT_BSUX, PCRE2_ALLOW_EMPTY_CLASS,
++    -- and PCRE2_MATCH_UNSET_BACKREF.
++    local PCRE2_ALT_BSUX            = 0x00000002
++    local PCRE2_ALLOW_EMPTY_CLASS   = 0x00000001
++    local PCRE2_MATCH_UNSET_BACKREF = 0x00000200
++    PCRE_JAVASCRIPT_COMPAT = bor(PCRE2_ALT_BSUX, PCRE2_ALLOW_EMPTY_CLASS)
++    PCRE_JAVASCRIPT_COMPAT = bor(PCRE2_MATCH_UNSET_BACKREF,
++                                 PCRE_JAVASCRIPT_COMPAT)
++end
+ 
+ if subsystem == 'http' then
+     ffi.cdef[[
+--- a/nginx-mod-lua-resty-core/t/re-base.t
++++ b/nginx-mod-lua-resty-core/t/re-base.t
+@@ -26,8 +26,11 @@ __DATA__
+     }
+ --- request
+     GET /re
+---- response_body
+-error: pcre_compile() failed: missing ) in "(abc"
++--- response_body eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"error: pcre2_compile() failed: missing closing parenthesis in \"(abc\"\n"
++:
++"error: pcre_compile() failed: missing ) in \"(abc\"\n"
+ --- no_error_log
+ [error]
+ 
+@@ -63,8 +66,11 @@ error: pcre_compile() failed: missing )
+     }
+ --- request
+ GET /t
+---- response_body_like chop
+-error: pcre_exec\(\) failed: -10
++--- response_body eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"error: pcre_exec\(\) failed: -4\n"
++:
++"error: pcre_exec\(\) failed: -10\n"
+ 
+ --- no_error_log
+ [error]
+@@ -128,6 +134,7 @@ probe process("$LIBPCRE_PATH").function(
+     printf("exec opts: %x\n", $options)
+ }
+ 
++# TODO: PCRE2 use different option values from PCRE
+ --- stap_out
+ compile opts: 800
+ exec opts: 0
+@@ -172,8 +179,14 @@ end
+ 
+ --- request
+     GET /re
+---- response_body
+-error: pcre_exec() failed: -8
++--- response_body eval
++# lua_regex_match_limit uses pcre_extra->match_limit in the PCRE,
++# but PCRE2 replaces this with pcre2_set_match_limit interface,
++# which has different effects.
++$Test::Nginx::Util::PcreVersion == 2 ?
++"failed to match\n"
++:
++"error: pcre_exec() failed: -8\n"
+ 
+ 
+ 
+--- a/nginx-mod-lua-resty-core/t/re-gmatch.t
++++ b/nginx-mod-lua-resty-core/t/re-gmatch.t
+@@ -446,9 +446,13 @@ matched: nil
+     }
+ --- request
+ GET /re
+---- response_body
+-error: pcre_exec() failed: -10
+-not matched
++--- response_body eval
++# PCRE2_ERROR_UTF8_ERR2 (-4)
++# PCRE_ERROR_BADUTF8 (-10)
++$Test::Nginx::Util::PcreVersion == 2 ?
++"error: pcre_exec\(\) failed: -4\nnot matched\n"
++:
++"error: pcre_exec\(\) failed: -10\nnot matched\n"
+ --- no_error_log
+ [error]
+ 
+--- a/nginx-mod-lua-resty-core/t/re-match.t
++++ b/nginx-mod-lua-resty-core/t/re-match.t
+@@ -306,8 +306,11 @@ NYI
+     }
+ --- request
+     GET /re
+---- response_body_like chop
+-error: pcre_compile\(\) failed: two named subpatterns have the same name
++--- response_body eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"error: pcre2_compile\(\) failed: two named subpatterns have the same name \(PCRE2_DUPNAMES not set\) in \"\(\?<first>[a-z])\(\?<first>[a-z]+\), [0-9]+\" at \"[a-z]+\), [0-9]+\"\n"
++:
++"error: pcre_compile\(\) failed: two named subpatterns have the same name in \"\(\?<first>[a-z])\(\?<first>[a-z]+\), [0-9]+\" at \">[a-z]+\), [0-9]+\"\n"
+ 
+ --- error_log eval
+ qr/\[TRACE\s+\d+/
+--- a/nginx-mod-lua-resty-core/t/re-opt.t
++++ b/nginx-mod-lua-resty-core/t/re-opt.t
+@@ -39,8 +39,13 @@ __DATA__
+     }
+ --- request
+     GET /re
+---- response_body
+-error: pcre_exec() failed: -27
++--- response_body eval
++# PCRE2_ERROR_JIT_STACKLIMIT (-46)
++# PCRE_ERROR_JIT_STACKLIMIT  (-27)
++$Test::Nginx::Util::PcreVersion == 2 ?
++"error: pcre_exec\(\) failed: -46\n"
++:
++"error: pcre_exec\(\) failed: -27\n"
+ --- no_error_log
+ [error]
+ --- timeout: 10
+--- a/nginx-mod-lua-resty-core/t/stream/re-base.t
++++ b/nginx-mod-lua-resty-core/t/stream/re-base.t
+@@ -22,8 +22,11 @@ __DATA__
+             ngx.say("error: ", err)
+         end
+     }
+---- stream_response
+-error: pcre_compile() failed: missing ) in "(abc"
++--- stream_response eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"error: pcre2_compile() failed: missing closing parenthesis in \"(abc\"\n"
++:
++"error: pcre_compile() failed: missing ) in \"(abc\"\n"
+ --- no_error_log
+ [error]
+ 
+@@ -55,12 +58,17 @@ error: pcre_compile() failed: missing )
+             ngx.say("not matched")
+         end
+     }
+---- stream_response_like chop
+-error: pcre_exec\(\) failed: -10
++--- stream_response eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"error: pcre_exec\(\) failed: -4\n"
++:
++"error: pcre_exec\(\) failed: -10\n"
+ 
+ --- no_error_log
+ [error]
+ 
++--- ONLY
++
+ 
+ 
+ === TEST 3: UTF-8 mode without UTF-8 sequence checks
+@@ -114,6 +122,7 @@ probe process("$LIBPCRE_PATH").function(
+     printf("exec opts: %x\n", $options)
+ }
+ 
++# TODO: PCRE2 use different option values from PCRE
+ --- stap_out
+ compile opts: 800
+ exec opts: 0
+@@ -152,8 +161,14 @@ if not res then
+     return
+ end
+ 
+---- stream_response
+-error: pcre_exec() failed: -8
++--- stream_response eval
++# lua_regex_match_limit uses pcre_extra->match_limit in the PCRE,
++# but PCRE2 replaces this with pcre2_set_match_limit interface,
++# which has different effects.
++$Test::Nginx::Util::PcreVersion == 2 ?
++"failed to match\n"
++:
++"error: pcre_exec() failed: -8\n"
+ 
+ 
+ 
+--- a/nginx-mod-lua-resty-core/t/stream/re-gmatch.t
++++ b/nginx-mod-lua-resty-core/t/stream/re-gmatch.t
+@@ -394,9 +394,13 @@ matched: nil
+             ngx.say("not matched")
+         end
+     }
+---- stream_response
+-error: pcre_exec() failed: -10
+-not matched
++--- stream_response eval
++# PCRE2_ERROR_UTF8_ERR2 (-4)
++# PCRE_ERROR_BADUTF8 (-10)
++$Test::Nginx::Util::PcreVersion == 2 ?
++"error: pcre_exec\(\) failed: -4\nnot matched\n"
++:
++"error: pcre_exec\(\) failed: -10\nnot matched\n"
+ --- no_error_log
+ [error]
+ 
+--- a/nginx-mod-lua-resty-core/t/stream/re-match.t
++++ b/nginx-mod-lua-resty-core/t/stream/re-match.t
+@@ -268,8 +268,11 @@ NYI
+             ngx.say("not matched!")
+         end
+     }
+---- stream_response_like chop
+-error: pcre_compile\(\) failed: two named subpatterns have the same name
++--- stream_response eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"error: pcre2_compile\(\) failed: two named subpatterns have the same name \(PCRE2_DUPNAMES not set\) in \"\(\?<first>[a-z])\(\?<first>[a-z]+\), [0-9]+\" at \"[a-z]+\), [0-9]+\"\n"
++:
++"error: pcre_compile\(\) failed: two named subpatterns have the same name in \"\(\?<first>[a-z])\(\?<first>[a-z]+\), [0-9]+\" at \">[a-z]+\), [0-9]+\"\n"
+ 
+ --- error_log eval
+ qr/\[TRACE\s+\d+/
+--- a/nginx-mod-lua-resty-core/t/stream/re-opt.t
++++ b/nginx-mod-lua-resty-core/t/stream/re-opt.t
+@@ -36,8 +36,13 @@ __DATA__
+             ngx.say("not matched!")
+         end
+     }
+---- stream_response
+-error: pcre_exec() failed: -27
++--- stream_response eval
++# PCRE2_ERROR_JIT_STACKLIMIT (-46)
++# PCRE_ERROR_JIT_STACKLIMIT  (-27)
++$Test::Nginx::Util::PcreVersion == 2 ?
++"error: pcre_exec\(\) failed: -46\n"
++:
++"error: pcre_exec\(\) failed: -27\n"
+ --- no_error_log
+ [error]
+ --- timeout: 10

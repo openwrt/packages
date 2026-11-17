@@ -1,0 +1,2009 @@
+From 26b48c5a9d1b35990064ddcd686f587c663b6048 Mon Sep 17 00:00:00 2001
+From: swananan <jt26wzz@gmail.com>
+Date: Tue, 5 Sep 2023 18:42:20 +0800
+Subject: [PATCH 1/4] feature: support pcre2
+
+---
+ .travis.yml                |  23 +-
+ src/ngx_http_lua_common.h  |  10 +-
+ src/ngx_http_lua_module.c  |  14 +
+ src/ngx_http_lua_pcrefix.c |  89 +++++-
+ src/ngx_http_lua_pcrefix.h |   9 +-
+ src/ngx_http_lua_regex.c   | 538 +++++++++++++++++++++++++++++++------
+ t/028-req-header.t         |   1 -
+ t/034-match.t              |  32 ++-
+ t/035-gmatch.t             |  24 +-
+ t/036-sub.t                |  24 +-
+ t/037-gsub.t               |  17 +-
+ t/038-match-o.t            |   7 +-
+ t/047-match-jit.t          |  18 +-
+ t/049-gmatch-jit.t         |   7 +-
+ t/050-gmatch-dfa.t         |   7 +-
+ t/051-sub-jit.t            |  14 +-
+ t/052-sub-dfa.t            |  14 +-
+ t/053-gsub-jit.t           |  14 +-
+ t/054-gsub-dfa.t           |  14 +-
+ t/120-re-find.t            |  25 +-
+ util/build-with-dd.sh      |   6 +-
+ util/build-without-ssl.sh  |   6 +-
+ util/build.sh              |   6 +-
+ 23 files changed, 764 insertions(+), 155 deletions(-)
+
+--- a/nginx-mod-lua/.travis.yml
++++ b/nginx-mod-lua/.travis.yml
+@@ -38,9 +38,13 @@ env:
+     - LUAJIT_INC=$LUAJIT_PREFIX/include/luajit-2.1
+     - LUA_INCLUDE_DIR=$LUAJIT_INC
+     - PCRE_VER=8.45
++    - PCRE2_VER=10.37
+     - PCRE_PREFIX=/opt/pcre
++    - PCRE2_PREFIX=/opt/pcre2
+     - PCRE_LIB=$PCRE_PREFIX/lib
++    - PCRE2_LIB=$PCRE2_PREFIX/lib
+     - PCRE_INC=$PCRE_PREFIX/include
++    - PCRE2_INC=$PCRE2_PREFIX/include
+     - OPENSSL_PREFIX=/opt/ssl
+     - OPENSSL_LIB=$OPENSSL_PREFIX/lib
+     - OPENSSL_INC=$OPENSSL_PREFIX/include
+@@ -55,7 +59,7 @@ env:
+     - NGINX_VERSION=1.21.4 OPENSSL_VER=1.1.0l OPENSSL_PATCH_VER=1.1.0d
+     - NGINX_VERSION=1.21.4 OPENSSL_VER=1.1.1s OPENSSL_PATCH_VER=1.1.1f
+     - NGINX_VERSION=1.25.1 OPENSSL_VER=1.1.0l OPENSSL_PATCH_VER=1.1.0d
+-    - NGINX_VERSION=1.25.1 OPENSSL_VER=1.1.1s OPENSSL_PATCH_VER=1.1.1f
++    - NGINX_VERSION=1.25.1 OPENSSL_VER=1.1.1s OPENSSL_PATCH_VER=1.1.1f USE_PCRE2=Y
+ 
+ services:
+   - memcached
+@@ -71,9 +75,10 @@ before_install:
+   - pyenv global 2.7
+ install:
+   - if [ ! -f download-cache/drizzle7-$DRIZZLE_VER.tar.gz ]; then wget -P download-cache http://openresty.org/download/drizzle7-$DRIZZLE_VER.tar.gz; fi
+-  - if [ ! -f download-cache/pcre-$PCRE_VER.tar.gz ]; then wget -P download-cache https://downloads.sourceforge.net/project/pcre/pcre/${PCRE_VER}/pcre-${PCRE_VER}.tar.gz; fi
++  - if [ "$USE_PCRE2" != "Y" ] && [ ! -f download-cache/pcre-$PCRE_VER.tar.gz ]; then wget -P download-cache https://downloads.sourceforge.net/project/pcre/pcre/${PCRE_VER}/pcre-${PCRE_VER}.tar.gz; fi
++  - if [ "$USE_PCRE2" = "Y" ] && [ ! -f download-cache/pcre2-$PCRE2_VER.tar.gz ]; then wget -P download-cache https://downloads.sourceforge.net/project/pcre/pcre2/${PCRE2_VER}/pcre2-${PCRE2_VER}.tar.gz; fi
+   - if [ ! -f download-cache/openssl-$OPENSSL_VER.tar.gz ]; then wget -P download-cache https://www.openssl.org/source/openssl-$OPENSSL_VER.tar.gz || wget -P download-cache https://www.openssl.org/source/old/${OPENSSL_VER//[a-z]/}/openssl-$OPENSSL_VER.tar.gz; fi
+-  - git clone https://github.com/openresty/test-nginx.git
++  - git clone https://github.com/swananan/test-nginx.git -b support_pcre2
+   - git clone https://github.com/openresty/openresty.git ../openresty
+   - git clone https://github.com/openresty/no-pool-nginx.git ../no-pool-nginx
+   - git clone https://github.com/openresty/openresty-devel-utils.git
+@@ -91,12 +96,12 @@ install:
+   - git clone https://github.com/openresty/rds-json-nginx-module.git ../rds-json-nginx-module
+   - git clone https://github.com/openresty/srcache-nginx-module.git ../srcache-nginx-module
+   - git clone https://github.com/openresty/redis2-nginx-module.git ../redis2-nginx-module
+-  - git clone https://github.com/openresty/lua-resty-core.git ../lua-resty-core
++  - git clone https://github.com/swananan/lua-resty-core.git -b support_pcre2 ../lua-resty-core
+   - git clone https://github.com/openresty/lua-resty-lrucache.git ../lua-resty-lrucache
+   - git clone https://github.com/openresty/lua-resty-mysql.git ../lua-resty-mysql
+   - git clone https://github.com/spacewander/lua-resty-rsa.git ../lua-resty-rsa
+   - git clone https://github.com/openresty/lua-resty-string.git ../lua-resty-string
+-  - git clone https://github.com/openresty/stream-lua-nginx-module.git ../stream-lua-nginx-module
++  - git clone https://github.com/swananan/stream-lua-nginx-module.git -b support_pcre2 ../stream-lua-nginx-module
+   - git clone -b v2.1-agentzh https://github.com/openresty/luajit2.git luajit2
+ 
+ before_script:
+@@ -121,12 +126,8 @@ script:
+   - sudo make install-libdrizzle-1.0 > build.log 2>&1 || (cat build.log && exit 1)
+   - cd ../mockeagain/ && make CC=$CC -j$JOBS && cd ..
+   - cd lua-cjson/ && make -j$JOBS && sudo make install && cd ..
+-  - tar zxf download-cache/pcre-$PCRE_VER.tar.gz
+-  - cd pcre-$PCRE_VER/
+-  - ./configure --prefix=$PCRE_PREFIX --enable-jit --enable-utf --enable-unicode-properties > build.log 2>&1 || (cat build.log && exit 1)
+-  - make -j$JOBS > build.log 2>&1 || (cat build.log && exit 1)
+-  - sudo PATH=$PATH make install > build.log 2>&1 || (cat build.log && exit 1)
+-  - cd ..
++  - if [ "$USE_PCRE2" != "Y" ]; then tar zxf download-cache/pcre-$PCRE_VER.tar.gz; cd pcre-$PCRE_VER/; ./configure --prefix=$PCRE_PREFIX --enable-jit --enable-utf --enable-unicode-properties > build.log 2>&1 || (cat build.log && exit 1); make -j$JOBS > build.log 2>&1 || (cat build.log && exit 1); sudo PATH=$PATH make install > build.log 2>&1 || (cat build.log && exit 1); cd ..; fi
++  - if [ "$USE_PCRE2" = "Y" ]; then tar zxf download-cache/pcre2-$PCRE2_VER.tar.gz; cd pcre2-$PCRE2_VER/; ./configure --prefix=$PCRE2_PREFIX --enable-jit --enable-utf > build.log 2>&1 || (cat build.log && exit 1); make -j$JOBS > build.log 2>&1 || (cat build.log && exit 1); sudo PATH=$PATH make install > build.log 2>&1 || (cat build.log && exit 1); cd ..; fi
+   - tar zxf download-cache/openssl-$OPENSSL_VER.tar.gz
+   - cd openssl-$OPENSSL_VER/
+   - patch -p1 < ../../openresty/patches/openssl-$OPENSSL_PATCH_VER-sess_set_get_cb_yield.patch
+--- a/nginx-mod-lua/src/ngx_http_lua_common.h
++++ b/nginx-mod-lua/src/ngx_http_lua_common.h
+@@ -63,6 +63,10 @@ typedef struct {
+ #   endif
+ #endif
+ 
++#if (NGX_PCRE2)
++#   define LUA_HAVE_PCRE_JIT 1
++#endif
++
+ 
+ #if (nginx_version < 1006000)
+ #   error at least nginx 1.6.0 is required but found an older version
+@@ -217,11 +221,13 @@ struct ngx_http_lua_main_conf_s {
+ 
+     ngx_hash_t           builtin_headers_out;
+ 
+-#if (NGX_PCRE)
++#if (NGX_PCRE || NGX_PCRE2)
+     ngx_int_t            regex_cache_entries;
+     ngx_int_t            regex_cache_max_entries;
+     ngx_int_t            regex_match_limit;
+-#   if (LUA_HAVE_PCRE_JIT)
++#if (NGX_PCRE2)
++    pcre2_jit_stack     *jit_stack;
++#elif (LUA_HAVE_PCRE_JIT)
+     pcre_jit_stack      *jit_stack;
+ #   endif
+ #endif
+--- a/nginx-mod-lua/src/ngx_http_lua_module.c
++++ b/nginx-mod-lua/src/ngx_http_lua_module.c
+@@ -59,6 +59,9 @@ static char *ngx_http_lua_ssl_conf_comma
+ #endif
+ static char *ngx_http_lua_malloc_trim(ngx_conf_t *cf, ngx_command_t *cmd,
+     void *conf);
++#if (NGX_PCRE2)
++extern void ngx_http_lua_regex_cleanup(void *data);
++#endif
+ 
+ 
+ static ngx_conf_post_t  ngx_http_lua_lowat_post =
+@@ -855,6 +858,17 @@ ngx_http_lua_init(ngx_conf_t *cf)
+     cln->data = lmcf;
+     cln->handler = ngx_http_lua_sema_mm_cleanup;
+ 
++#if (NGX_PCRE2)
++    /* add the cleanup of pcre2 regex */
++    cln = ngx_pool_cleanup_add(cf->pool, 0);
++    if (cln == NULL) {
++        return NGX_ERROR;
++    }
++
++    cln->data = lmcf;
++    cln->handler = ngx_http_lua_regex_cleanup;
++#endif
++
+ #ifdef HAVE_NGX_LUA_PIPE
+     ngx_http_lua_pipe_init();
+ #endif
+--- a/nginx-mod-lua/src/ngx_http_lua_pcrefix.c
++++ b/nginx-mod-lua/src/ngx_http_lua_pcrefix.c
+@@ -14,19 +14,65 @@
+ #include "ngx_http_lua_pcrefix.h"
+ #include "stdio.h"
+ 
+-#if (NGX_PCRE)
++#if (NGX_PCRE || NGX_PCRE2)
+ 
+ static ngx_pool_t *ngx_http_lua_pcre_pool = NULL;
+ 
++
++#if (NGX_PCRE2)
++static ngx_uint_t  ngx_regex_direct_alloc;
++#else
+ static void *(*old_pcre_malloc)(size_t);
+ static void (*old_pcre_free)(void *ptr);
++#endif
+ 
+ 
+ /* XXX: work-around to nginx regex subsystem, must init a memory pool
+  * to use PCRE functions. As PCRE still has memory-leaking problems,
+  * and nginx overwrote pcre_malloc/free hooks with its own static
+  * functions, so nobody else can reuse nginx regex subsystem... */
+-static void *
++#if (NGX_PCRE2)
++
++void *
++ngx_http_lua_pcre_malloc(size_t size, void *data)
++{
++    dd("lua pcre pool is %p", ngx_http_lua_pcre_pool);
++
++    if (ngx_http_lua_pcre_pool) {
++        return ngx_palloc(ngx_http_lua_pcre_pool, size);
++    }
++
++    if (ngx_regex_direct_alloc) {
++        return ngx_alloc(size, ngx_cycle->log);
++    }
++
++    fprintf(stderr, "error: lua pcre malloc failed due to empty pcre pool");
++
++    return NULL;
++}
++
++
++void
++ngx_http_lua_pcre_free(void *ptr, void *data)
++{
++    dd("lua pcre pool is %p", ngx_http_lua_pcre_pool);
++
++    if (ngx_http_lua_pcre_pool) {
++        ngx_pfree(ngx_http_lua_pcre_pool, ptr);
++        return;
++    }
++
++    if (ngx_regex_direct_alloc) {
++        ngx_free(ptr);
++        return;
++    }
++
++    fprintf(stderr, "error: lua pcre free failed due to empty pcre pool");
++}
++
++#else
++
++void *
+ ngx_http_lua_pcre_malloc(size_t size)
+ {
+     dd("lua pcre pool is %p", ngx_http_lua_pcre_pool);
+@@ -54,6 +100,41 @@ ngx_http_lua_pcre_free(void *ptr)
+     fprintf(stderr, "error: lua pcre free failed due to empty pcre pool");
+ }
+ 
++#endif
++
++
++#if (NGX_PCRE2)
++
++ngx_pool_t *
++ngx_http_lua_pcre_malloc_init(ngx_pool_t *pool)
++{
++    ngx_pool_t          *old_pool;
++
++    dd("lua pcre pool was %p", ngx_http_lua_pcre_pool);
++
++    ngx_regex_direct_alloc = (pool == NULL) ? 1 : 0;
++
++    old_pool = ngx_http_lua_pcre_pool;
++    ngx_http_lua_pcre_pool = pool;
++
++    dd("lua pcre pool is %p", ngx_http_lua_pcre_pool);
++
++    return old_pool;
++}
++
++
++void
++ngx_http_lua_pcre_malloc_done(ngx_pool_t *old_pool)
++{
++    dd("lua pcre pool was %p", ngx_http_lua_pcre_pool);
++
++    ngx_http_lua_pcre_pool = old_pool;
++    ngx_regex_direct_alloc = 0;
++
++    dd("lua pcre pool is %p", ngx_http_lua_pcre_pool);
++}
++
++#else
+ 
+ ngx_pool_t *
+ ngx_http_lua_pcre_malloc_init(ngx_pool_t *pool)
+@@ -101,6 +182,7 @@ ngx_http_lua_pcre_malloc_done(ngx_pool_t
+     }
+ }
+ 
+-#endif /* NGX_PCRE */
++#endif
++#endif /* NGX_PCRE || NGX_PCRE2 */
+ 
+ /* vi:set ft=c ts=4 sw=4 et fdm=marker: */
+--- a/nginx-mod-lua/src/ngx_http_lua_pcrefix.h
++++ b/nginx-mod-lua/src/ngx_http_lua_pcrefix.h
+@@ -12,9 +12,16 @@
+ #include "ngx_http_lua_common.h"
+ 
+ 
+-#if (NGX_PCRE)
++#if (NGX_PCRE || NGX_PCRE2)
++
+ ngx_pool_t *ngx_http_lua_pcre_malloc_init(ngx_pool_t *pool);
+ void ngx_http_lua_pcre_malloc_done(ngx_pool_t *old_pool);
++
++#if NGX_PCRE2
++void *ngx_http_lua_pcre_malloc(size_t size, void *data);
++void ngx_http_lua_pcre_free(void *ptr, void *data);
++#endif
++
+ #endif
+ 
+ 
+--- a/nginx-mod-lua/src/ngx_http_lua_regex.c
++++ b/nginx-mod-lua/src/ngx_http_lua_regex.c
+@@ -9,21 +9,31 @@
+ #endif
+ #include "ddebug.h"
+ 
+-
+-#if (NGX_PCRE)
++#if (NGX_PCRE || NGX_PCRE2)
+ 
+ #include "ngx_http_lua_pcrefix.h"
+ #include "ngx_http_lua_script.h"
+ #include "ngx_http_lua_util.h"
+ 
+ 
+-#if (PCRE_MAJOR >= 6)
++#if (PCRE_MAJOR >= 6 || NGX_PCRE2)
+ #   define LUA_HAVE_PCRE_DFA 1
+ #else
+ #   define LUA_HAVE_PCRE_DFA 0
+ #endif
+ 
+ 
++#if (NGX_PCRE2)
++static pcre2_compile_context  *ngx_regex_compile_context;
++static pcre2_match_context    *ngx_regex_match_context;
++static pcre2_match_data       *ngx_regex_match_data;
++static ngx_uint_t              ngx_regex_match_data_size = 0;
++
++#define PCRE2_VERSION_SIZE     64
++static char                    ngx_pcre2_version[PCRE2_VERSION_SIZE];
++#endif
++
++
+ #define NGX_LUA_RE_MODE_DFA          (1<<1)
+ #define NGX_LUA_RE_MODE_JIT          (1<<2)
+ #define NGX_LUA_RE_NO_UTF8_CHECK     (1<<4)
+@@ -42,8 +52,17 @@ typedef struct {
+     int                           ncaptures;
+     int                          *captures;
+ 
++#if (NGX_PCRE2)
++    pcre2_code                   *regex;
++    /*
++     * pcre2 doesn't use pcre_extra any more,
++     * just for keeping same memory layout in the lua ffi cdef
++     */
++    void                         *regex_sd;
++#else
+     pcre                         *regex;
+     pcre_extra                   *regex_sd;
++#endif
+ 
+     ngx_http_lua_complex_value_t *replace;
+ 
+@@ -57,7 +76,11 @@ typedef struct {
+     ngx_pool_t   *pool;
+     ngx_int_t     options;
+ 
++#if (NGX_PCRE2)
++    pcre2_code   *regex;
++#else
+     pcre         *regex;
++#endif
+     int           captures;
+     ngx_str_t     err;
+ } ngx_http_lua_regex_compile_t;
+@@ -65,8 +88,12 @@ typedef struct {
+ 
+ typedef struct {
+     ngx_http_request_t      *request;
++#if (NGX_PCRE2)
++    pcre2_code              *regex;
++#else
+     pcre                    *regex;
+     pcre_extra              *regex_sd;
++#endif
+     int                      ncaptures;
+     int                     *captures;
+     int                      captures_len;
+@@ -74,8 +101,6 @@ typedef struct {
+ } ngx_http_lua_regex_ctx_t;
+ 
+ 
+-static void ngx_http_lua_regex_free_study_data(ngx_pool_t *pool,
+-    pcre_extra *sd);
+ static ngx_int_t ngx_http_lua_regex_compile(ngx_http_lua_regex_compile_t *rc);
+ 
+ 
+@@ -91,21 +116,155 @@ static ngx_int_t ngx_http_lua_regex_comp
+ 
+ 
+ static void
+-ngx_http_lua_regex_free_study_data(ngx_pool_t *pool, pcre_extra *sd)
++ngx_http_lua_regex_free_study_data(ngx_pool_t *pool, ngx_http_lua_regex_t *re)
+ {
+-    ngx_pool_t              *old_pool;
++    ngx_pool_t  *old_pool;
+ 
+-    old_pool = ngx_http_lua_pcre_malloc_init(pool);
++#if (NGX_PCRE2)
++    if (re && re->regex) {
++        old_pool = ngx_http_lua_pcre_malloc_init(pool);
++
++        pcre2_code_free(re->regex);
++
++        ngx_http_lua_pcre_malloc_done(old_pool);
+ 
++        re->regex = NULL;
++    }
++#else
++    if (re && re->regex_sd) {
++        old_pool = ngx_http_lua_pcre_malloc_init(pool);
+ #if LUA_HAVE_PCRE_JIT
+-    pcre_free_study(sd);
++        pcre_free_study(re->regex_sd);
+ #else
+-    pcre_free(sd);
++        pcre_free(re->regex_sd);
++#endif
++        ngx_http_lua_pcre_malloc_done(old_pool);
++
++        re->regex_sd = NULL;
++    }
+ #endif
++}
++
++
++#if (NGX_PCRE2)
++static ngx_int_t
++ngx_http_lua_regex_compile(ngx_http_lua_regex_compile_t *rc)
++{
++    int                     n, errcode;
++    char                   *p;
++    size_t                  erroff;
++    u_char                  errstr[128];
++    pcre2_code             *re;
++    ngx_pool_t             *old_pool;
++    pcre2_general_context  *gctx;
++    pcre2_compile_context  *cctx;
++
++    ngx_http_lua_main_conf_t    *lmcf;
++
++    if (ngx_regex_compile_context == NULL) {
++        /*
++         * Allocate a compile context if not yet allocated.  This uses
++         * direct allocations from heap, so the result can be cached
++         * even at runtime.
++         */
++
++        old_pool = ngx_http_lua_pcre_malloc_init(NULL);
++
++        gctx = pcre2_general_context_create(ngx_http_lua_pcre_malloc,
++                                            ngx_http_lua_pcre_free,
++                                            NULL);
++        if (gctx == NULL) {
++            ngx_http_lua_pcre_malloc_done(old_pool);
++            goto nomem;
++        }
++
++        cctx = pcre2_compile_context_create(gctx);
++        if (cctx == NULL) {
++            pcre2_general_context_free(gctx);
++            ngx_http_lua_pcre_malloc_done(old_pool);
++            goto nomem;
++        }
++
++        ngx_regex_compile_context = cctx;
++
++        ngx_regex_match_context = pcre2_match_context_create(gctx);
++        if (ngx_regex_match_context == NULL) {
++            pcre2_general_context_free(gctx);
++            ngx_http_lua_pcre_malloc_done(old_pool);
++            goto nomem;
++        }
++
++        lmcf = ngx_http_cycle_get_module_main_conf(ngx_cycle,
++                                                   ngx_http_lua_module);
++        if (lmcf && lmcf->regex_match_limit > 0) {
++            pcre2_set_match_limit(ngx_regex_match_context,
++                                  lmcf->regex_match_limit);
++        }
++
++        pcre2_general_context_free(gctx);
++        ngx_http_lua_pcre_malloc_done(old_pool);
++    }
++
++    old_pool = ngx_http_lua_pcre_malloc_init(rc->pool);
++
++    re = pcre2_compile(rc->pattern.data,
++                       rc->pattern.len, rc->options,
++                       &errcode, &erroff, ngx_regex_compile_context);
+ 
+     ngx_http_lua_pcre_malloc_done(old_pool);
++
++    if (re == NULL) {
++        pcre2_get_error_message(errcode, errstr, 128);
++
++        if ((size_t) erroff == rc->pattern.len) {
++            rc->err.len = ngx_snprintf(rc->err.data, rc->err.len,
++                                       "pcre2_compile() failed: %s in \"%V\"",
++                                       errstr, &rc->pattern)
++                          - rc->err.data;
++
++        } else {
++            rc->err.len = ngx_snprintf(rc->err.data, rc->err.len,
++                                       "pcre2_compile() failed: %s in "
++                                       "\"%V\" at \"%s\"", errstr, &rc->pattern,
++                                       rc->pattern.data + erroff)
++                          - rc->err.data;
++        }
++
++        return NGX_ERROR;
++    }
++
++    rc->regex = re;
++
++    n = pcre2_pattern_info(re, PCRE2_INFO_CAPTURECOUNT, &rc->captures);
++    if (n < 0) {
++        p = "pcre2_pattern_info(\"%V\", PCRE_INFO_CAPTURECOUNT) failed: %d";
++        goto failed;
++    }
++
++#if (NGX_DEBUG)
++    ngx_log_debug3(NGX_LOG_DEBUG_HTTP, ngx_cycle->log, 0,
++                   "pcre2_compile: pattern[%V], options 0x%08Xd, ncaptures %d",
++                   &rc->pattern, rc->options, rc->captures);
++#endif
++
++    return NGX_OK;
++
++failed:
++
++    rc->err.len = ngx_snprintf(rc->err.data, rc->err.len, p, &rc->pattern, n)
++                  - rc->err.data;
++    return NGX_ERROR;
++
++nomem:
++
++    rc->err.len = ngx_snprintf(rc->err.data, rc->err.len,
++                               "regex \"%V\" compilation failed: no memory",
++                               &rc->pattern)
++                  - rc->err.data;
++    return NGX_ERROR;
+ }
+ 
++#else
+ 
+ static ngx_int_t
+ ngx_http_lua_regex_compile(ngx_http_lua_regex_compile_t *rc)
+@@ -159,13 +318,14 @@ failed:
+                   - rc->err.data;
+     return NGX_OK;
+ }
++#endif
+ 
+ 
+ ngx_int_t
+ ngx_http_lua_ffi_set_jit_stack_size(int size, u_char *errstr,
+     size_t *errstr_size)
+ {
+-#if LUA_HAVE_PCRE_JIT
++#if (NGX_PCRE2 || LUA_HAVE_PCRE_JIT)
+ 
+     ngx_http_lua_main_conf_t    *lmcf;
+     ngx_pool_t                  *pool, *old_pool;
+@@ -186,15 +346,24 @@ ngx_http_lua_ffi_set_jit_stack_size(int
+     if (lmcf->jit_stack) {
+         old_pool = ngx_http_lua_pcre_malloc_init(pool);
+ 
++#if (NGX_PCRE2)
++        pcre2_jit_stack_free(lmcf->jit_stack);
++#else
+         pcre_jit_stack_free(lmcf->jit_stack);
++#endif
+ 
+         ngx_http_lua_pcre_malloc_done(old_pool);
+     }
+ 
+     old_pool = ngx_http_lua_pcre_malloc_init(pool);
+ 
++#if (NGX_PCRE2)
++    lmcf->jit_stack = pcre2_jit_stack_create(NGX_LUA_RE_MIN_JIT_STACK_SIZE,
++                                             size, NULL);
++#else
+     lmcf->jit_stack = pcre_jit_stack_alloc(NGX_LUA_RE_MIN_JIT_STACK_SIZE,
+                                            size);
++#endif
+ 
+     ngx_http_lua_pcre_malloc_done(old_pool);
+ 
+@@ -214,8 +383,148 @@ ngx_http_lua_ffi_set_jit_stack_size(int
+                    - errstr;
+     return NGX_ERROR;
+ 
++#endif
++}
++
++
++#if (NGX_PCRE2)
++static void
++ngx_http_lua_regex_jit_compile(ngx_http_lua_regex_t *re, int flags,
++    ngx_pool_t *pool, ngx_http_lua_main_conf_t *lmcf,
++    ngx_http_lua_regex_compile_t *re_comp)
++{
++    ngx_int_t    ret;
++    ngx_pool_t  *old_pool;
++
++    if (flags & NGX_LUA_RE_MODE_JIT) {
++        old_pool = ngx_http_lua_pcre_malloc_init(pool);
++        ret = pcre2_jit_compile(re_comp->regex, PCRE2_JIT_COMPLETE);
++
++        if (ret != 0) {
++            ngx_log_error(NGX_LOG_INFO, ngx_cycle->log, 0,
++                          "pcre2_jit_compile() failed: %d in \"%V\", "
++                          "ignored",
++                          ret, &re_comp->pattern);
++
++#if (NGX_DEBUG)
++
++        } else {
++            ngx_log_debug0(NGX_LOG_DEBUG_HTTP, ngx_cycle->log, 0,
++                           "pcre2 JIT compiled successfully");
++#   endif /* !(NGX_DEBUG) */
++        }
++
++        ngx_http_lua_pcre_malloc_done(old_pool);
++
++    }
++
++    if (lmcf && lmcf->jit_stack) {
++        pcre2_jit_stack_assign(ngx_regex_match_context, NULL,
++                               lmcf->jit_stack);
++    }
++
++    return;
++}
++
++#else
++
++static void
++ngx_http_lua_regex_jit_compile(ngx_http_lua_regex_t *re, int flags,
++    ngx_pool_t *pool, ngx_http_lua_main_conf_t *lmcf,
++    ngx_http_lua_regex_compile_t *re_comp)
++{
++    const char  *msg;
++    pcre_extra  *sd = NULL;
++    ngx_pool_t  *old_pool;
++
++
++#if (LUA_HAVE_PCRE_JIT)
++    if (flags & NGX_LUA_RE_MODE_JIT) {
++        old_pool = ngx_http_lua_pcre_malloc_init(pool);
++        sd = pcre_study(re_comp->regex, PCRE_STUDY_JIT_COMPILE, &msg);
++        ngx_http_lua_pcre_malloc_done(old_pool);
++
++#   if (NGX_DEBUG)
++        if (msg != NULL) {
++            ngx_log_debug2(NGX_LOG_DEBUG_HTTP, ngx_cycle->log, 0,
++                           "pcre study failed with PCRE_STUDY_JIT_COMPILE: "
++                           "%s (%p)", msg, sd);
++        }
++
++        if (sd != NULL) {
++            int         jitted;
++
++            old_pool = ngx_http_lua_pcre_malloc_init(pool);
++
++            pcre_fullinfo(re_comp->regex, sd, PCRE_INFO_JIT, &jitted);
++
++            ngx_http_lua_pcre_malloc_done(old_pool);
++
++            ngx_log_debug1(NGX_LOG_DEBUG_HTTP, ngx_cycle->log, 0,
++                           "pcre JIT compiling result: %d", jitted);
++        }
++#   endif /* !(NGX_DEBUG) */
++
++    } else {
++        old_pool = ngx_http_lua_pcre_malloc_init(pool);
++        sd = pcre_study(re_comp->regex, 0, &msg);
++        ngx_http_lua_pcre_malloc_done(old_pool);
++    }
++
++    if (sd && lmcf && lmcf->jit_stack) {
++        pcre_assign_jit_stack(sd, NULL, lmcf->jit_stack);
++    }
++
++    if (sd
++        && lmcf && lmcf->regex_match_limit > 0
++        && !(flags & NGX_LUA_RE_MODE_DFA))
++    {
++        sd->flags |= PCRE_EXTRA_MATCH_LIMIT;
++        sd->match_limit = lmcf->regex_match_limit;
++    }
++
+ #endif /* LUA_HAVE_PCRE_JIT */
++
++    re->regex_sd = sd;
++}
++#endif
++
++
++#if (NGX_PCRE2)
++void
++ngx_http_lua_regex_cleanup(void *data)
++{
++    ngx_pool_t                *old_pool;
++    ngx_http_lua_main_conf_t  *lmcf;
++
++    lmcf = data;
++
++    if (ngx_regex_compile_context) {
++        old_pool = ngx_http_lua_pcre_malloc_init(NULL);
++        pcre2_compile_context_free(ngx_regex_compile_context);
++        ngx_regex_compile_context = NULL;
++        ngx_http_lua_pcre_malloc_done(old_pool);
++    }
++
++    if (lmcf && lmcf->jit_stack) {
++        old_pool = ngx_http_lua_pcre_malloc_init(NULL);
++
++        pcre2_jit_stack_free(lmcf->jit_stack);
++        lmcf->jit_stack = NULL;
++
++        ngx_http_lua_pcre_malloc_done(old_pool);
++    }
++
++    if (ngx_regex_match_data) {
++        old_pool = ngx_http_lua_pcre_malloc_init(NULL);
++        pcre2_match_data_free(ngx_regex_match_data);
++        ngx_regex_match_data = NULL;
++        ngx_regex_match_data_size = 0;
++        ngx_http_lua_pcre_malloc_done(old_pool);
++    }
++
+ }
++#endif
+ 
+ 
+ ngx_http_lua_regex_t *
+@@ -228,8 +537,7 @@ ngx_http_lua_ffi_compile_regex(const uns
+     ngx_int_t                rc;
+     const char              *msg;
+     ngx_pool_t              *pool, *old_pool;
+-    pcre_extra              *sd = NULL;
+-    ngx_http_lua_regex_t    *re;
++    ngx_http_lua_regex_t    *re = NULL;
+ 
+     ngx_http_lua_main_conf_t         *lmcf;
+     ngx_http_lua_regex_compile_t      re_comp;
+@@ -251,6 +559,8 @@ ngx_http_lua_ffi_compile_regex(const uns
+     }
+ 
+     re->pool = pool;
++    re->regex = NULL;
++    re->regex_sd = NULL;
+ 
+     re_comp.options      = pcre_opts;
+     re_comp.pattern.data = (u_char *) pat;
+@@ -274,54 +584,7 @@ ngx_http_lua_ffi_compile_regex(const uns
+ 
+     ngx_http_lua_assert(lmcf != NULL);
+ 
+-#if (LUA_HAVE_PCRE_JIT)
+-
+-    if (flags & NGX_LUA_RE_MODE_JIT) {
+-
+-        old_pool = ngx_http_lua_pcre_malloc_init(pool);
+-        sd = pcre_study(re_comp.regex, PCRE_STUDY_JIT_COMPILE, &msg);
+-        ngx_http_lua_pcre_malloc_done(old_pool);
+-
+-#   if (NGX_DEBUG)
+-        if (msg != NULL) {
+-            ngx_log_debug2(NGX_LOG_DEBUG_HTTP, ngx_cycle->log, 0,
+-                           "pcre study failed with PCRE_STUDY_JIT_COMPILE: "
+-                           "%s (%p)", msg, sd);
+-        }
+-
+-        if (sd != NULL) {
+-            int         jitted;
+-
+-            old_pool = ngx_http_lua_pcre_malloc_init(pool);
+-
+-            pcre_fullinfo(re_comp.regex, sd, PCRE_INFO_JIT, &jitted);
+-
+-            ngx_http_lua_pcre_malloc_done(old_pool);
+-
+-            ngx_log_debug1(NGX_LOG_DEBUG_HTTP, ngx_cycle->log, 0,
+-                           "pcre JIT compiling result: %d", jitted);
+-        }
+-#   endif /* !(NGX_DEBUG) */
+-
+-    } else {
+-        old_pool = ngx_http_lua_pcre_malloc_init(pool);
+-        sd = pcre_study(re_comp.regex, 0, &msg);
+-        ngx_http_lua_pcre_malloc_done(old_pool);
+-    }
+-
+-    if (sd && lmcf->jit_stack) {
+-        pcre_assign_jit_stack(sd, NULL, lmcf->jit_stack);
+-    }
+-
+-#endif /* LUA_HAVE_PCRE_JIT */
+-
+-    if (sd
+-        && lmcf && lmcf->regex_match_limit > 0
+-        && !(flags & NGX_LUA_RE_MODE_DFA))
+-    {
+-        sd->flags |= PCRE_EXTRA_MATCH_LIMIT;
+-        sd->match_limit = lmcf->regex_match_limit;
+-    }
++    ngx_http_lua_regex_jit_compile(re, flags, pool, lmcf, &re_comp);
+ 
+     if (flags & NGX_LUA_RE_MODE_DFA) {
+         ovecsize = 2;
+@@ -339,6 +602,31 @@ ngx_http_lua_ffi_compile_regex(const uns
+         goto error;
+     }
+ 
++#if (NGX_PCRE2)
++    if (pcre2_pattern_info(re_comp.regex, PCRE2_INFO_NAMECOUNT,
++                           &re->name_count) < 0)
++    {
++        msg = "cannot acquire named subpattern count";
++        goto error;
++    }
++
++    if (re->name_count > 0) {
++        if (pcre2_pattern_info(re_comp.regex, PCRE2_INFO_NAMEENTRYSIZE,
++                               &re->name_entry_size) != 0)
++        {
++            msg = "cannot acquire named subpattern entry size";
++            goto error;
++        }
++
++        if (pcre2_pattern_info(re_comp.regex, PCRE2_INFO_NAMETABLE,
++                               &re->name_table) != 0)
++        {
++            msg = "cannot acquire named subpattern table";
++            goto error;
++        }
++    }
++
++#else
+     if (pcre_fullinfo(re_comp.regex, NULL, PCRE_INFO_NAMECOUNT,
+                       &re->name_count) != 0)
+     {
+@@ -361,9 +649,9 @@ ngx_http_lua_ffi_compile_regex(const uns
+             goto error;
+         }
+     }
++#endif
+ 
+     re->regex = re_comp.regex;
+-    re->regex_sd = sd;
+     re->ncaptures = re_comp.captures;
+     re->captures = cap;
+     re->replace = NULL;
+@@ -379,9 +667,7 @@ error:
+     p = ngx_snprintf(errstr, errstr_size - 1, "%s", msg);
+     *p = '\0';
+ 
+-    if (sd) {
+-        ngx_http_lua_regex_free_study_data(pool, sd);
+-    }
++    ngx_http_lua_regex_free_study_data(pool, re);
+ 
+     if (pool) {
+         ngx_destroy_pool(pool);
+@@ -391,6 +677,103 @@ error:
+ }
+ 
+ 
++#if (NGX_PCRE2)
++int
++ngx_http_lua_ffi_exec_regex(ngx_http_lua_regex_t *re, int flags,
++    const u_char *s, size_t len, int pos)
++{
++    int          rc, exec_opts = 0;
++    size_t      *ov;
++    ngx_uint_t   ovecsize, n, i;
++    ngx_pool_t  *old_pool;
++
++    if (flags & NGX_LUA_RE_MODE_DFA) {
++        ovecsize = 2;
++        re->ncaptures = 0;
++
++    } else {
++        ovecsize = (re->ncaptures + 1) * 3;
++    }
++
++    old_pool = ngx_http_lua_pcre_malloc_init(NULL);
++
++    if (ngx_regex_match_data == NULL
++        || ovecsize > ngx_regex_match_data_size)
++    {
++        /*
++         * Allocate a match data if not yet allocated or smaller than
++         * needed.
++         */
++
++        if (ngx_regex_match_data) {
++            pcre2_match_data_free(ngx_regex_match_data);
++        }
++
++        ngx_regex_match_data_size = ovecsize;
++        ngx_regex_match_data = pcre2_match_data_create(ovecsize / 3, NULL);
++
++        if (ngx_regex_match_data == NULL) {
++            rc = PCRE2_ERROR_NOMEMORY;
++            goto failed;
++        }
++    }
++
++    if (flags & NGX_LUA_RE_NO_UTF8_CHECK) {
++        exec_opts = PCRE2_NO_UTF_CHECK;
++
++    } else {
++        exec_opts = 0;
++    }
++
++    if (flags & NGX_LUA_RE_MODE_DFA) {
++        int ws[NGX_LUA_RE_DFA_MODE_WORKSPACE_COUNT];
++        rc = pcre2_dfa_match(re->regex, s, len, pos, exec_opts,
++                             ngx_regex_match_data, ngx_regex_match_context,
++                             ws, sizeof(ws) / sizeof(ws[0]));
++
++
++    } else {
++        rc = pcre2_match(re->regex, s, len, pos, exec_opts,
++                         ngx_regex_match_data, ngx_regex_match_context);
++    }
++
++    if (rc < 0) {
++#if (NGX_DEBUG)
++        ngx_log_debug4(NGX_LOG_DEBUG_HTTP, ngx_cycle->log, 0,
++                       "pcre2_match failed: flags 0x%05Xd, options 0x%08Xd, "
++                       "rc %d, ovecsize %ui", flags, exec_opts, rc, ovecsize);
++#endif
++
++        goto failed;
++    }
++
++    n = pcre2_get_ovector_count(ngx_regex_match_data);
++    ov = pcre2_get_ovector_pointer(ngx_regex_match_data);
++
++#if (NGX_DEBUG)
++    ngx_log_debug5(NGX_LOG_DEBUG_HTTP, ngx_cycle->log, 0,
++                   "pcre2_match: flags 0x%05Xd, options 0x%08Xd, rc %d, "
++                   "n %ui, ovecsize %ui", flags, exec_opts, rc, n, ovecsize);
++#endif
++
++    if (!(flags & NGX_LUA_RE_MODE_DFA) && n > ovecsize / 3) {
++        n = ovecsize / 3;
++    }
++
++    for (i = 0; i < n; i++) {
++        re->captures[i * 2] = ov[i * 2];
++        re->captures[i * 2 + 1] = ov[i * 2 + 1];
++    }
++
++failed:
++
++    ngx_http_lua_pcre_malloc_done(old_pool);
++
++    return rc;
++}
++
++#else
++
+ int
+ ngx_http_lua_ffi_exec_regex(ngx_http_lua_regex_t *re, int flags,
+     const u_char *s, size_t len, int pos)
+@@ -427,7 +810,8 @@ ngx_http_lua_ffi_exec_regex(ngx_http_lua
+         int ws[NGX_LUA_RE_DFA_MODE_WORKSPACE_COUNT];
+         rc = ngx_http_lua_regex_dfa_exec(re->regex, sd, &subj,
+                                          (int) pos, cap, ovecsize, ws,
+-                                         sizeof(ws)/sizeof(ws[0]), exec_opts);
++                                         sizeof(ws) / sizeof(ws[0]),
++                                         exec_opts);
+ 
+ #else
+ 
+@@ -443,28 +827,19 @@ ngx_http_lua_ffi_exec_regex(ngx_http_lua
+     return rc;
+ }
+ 
++#endif
++
+ 
+ void
+ ngx_http_lua_ffi_destroy_regex(ngx_http_lua_regex_t *re)
+ {
+-    ngx_pool_t                  *old_pool;
+-
+     dd("destroy regex called");
+ 
+     if (re == NULL || re->pool == NULL) {
+         return;
+     }
+ 
+-    if (re->regex_sd) {
+-        old_pool = ngx_http_lua_pcre_malloc_init(re->pool);
+-#if LUA_HAVE_PCRE_JIT
+-        pcre_free_study(re->regex_sd);
+-#else
+-        pcre_free(re->regex_sd);
+-#endif
+-        ngx_http_lua_pcre_malloc_done(old_pool);
+-        re->regex_sd = NULL;
+-    }
++    ngx_http_lua_regex_free_study_data(re->pool, re);
+ 
+     ngx_destroy_pool(re->pool);
+ }
+@@ -592,11 +967,17 @@ ngx_http_lua_ffi_max_regex_cache_size(vo
+ const char *
+ ngx_http_lua_ffi_pcre_version(void)
+ {
++#if (NGX_PCRE2)
++    pcre2_config(PCRE2_CONFIG_VERSION, ngx_pcre2_version);
++
++    return ngx_pcre2_version;
++#else
+     return pcre_version();
++#endif
+ }
+ 
+ 
+-#endif /* NGX_PCRE */
++#endif /* NGX_PCRE || NGX_PCRE2 */
+ 
+ 
+ /* vi:set ft=c ts=4 sw=4 et fdm=marker: */
+--- a/nginx-mod-lua/t/028-req-header.t
++++ b/nginx-mod-lua/t/028-req-header.t
+@@ -275,7 +275,6 @@ Content-Type:
+ GET /bar
+ --- response_body eval
+ # Since nginx version 1.23.0, nginx combines same $http_* variable together
+-# wtf
+ $Test::Nginx::Util::NginxVersion >= 1.023000 ?
+ 
+ "Foo: a, b\n"
+--- a/nginx-mod-lua/t/034-match.t
++++ b/nginx-mod-lua/t/034-match.t
+@@ -361,8 +361,11 @@ he
+     }
+ --- request
+     GET /re
+---- response_body
+-error: pcre_compile() failed: missing ) in "(abc"
++--- response_body eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"error: pcre2_compile() failed: missing closing parenthesis in \"(abc\"\n"
++:
++"error: pcre_compile() failed: missing ) in \"(abc\"\n"
+ --- no_error_log
+ [error]
+ 
+@@ -648,8 +651,12 @@ regex: (?:>[\w\s]*</?\w{2,}>)
+     }
+ --- request
+     GET /re
+---- response_body
+-error: pcre_compile() failed: missing ) in "([0-9]+"
++--- response_body eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"error: pcre2_compile\(\) failed: missing closing parenthesis in \"\([0-9]+\"\n"
++:
++"error: pcre_compile\(\) failed: missing \) in \"\([0-9]+\"\n"
++
+ 
+ --- no_error_log
+ [error]
+@@ -939,8 +946,11 @@ nil
+     }
+ --- request
+ GET /t
+---- response_body_like chop
+-^error: pcre_exec\(\) failed: -10$
++--- response_body eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"error: pcre_exec\(\) failed: -4\n"
++:
++"error: pcre_exec\(\) failed: -10\n"
+ 
+ --- no_error_log
+ [error]
+@@ -1050,8 +1060,14 @@ end
+ 
+ --- request
+     GET /re
+---- response_body
+-error: pcre_exec() failed: -8
++--- response_body eval
++# lua_regex_match_limit uses pcre_extra->match_limit in the PCRE,
++# but PCRE2 replaces this with pcre2_set_match_limit interface,
++# which has different effects.
++$Test::Nginx::Util::PcreVersion == 2 ?
++"failed to match\n"
++:
++"error: pcre_exec() failed: -8\n"
+ 
+ 
+ 
+--- a/nginx-mod-lua/t/035-gmatch.t
++++ b/nginx-mod-lua/t/035-gmatch.t
+@@ -698,8 +698,11 @@ not matched!
+     }
+ --- request
+     GET /re
+---- response_body
+-error: pcre_compile() failed: missing ) in "(abc"
++--- response_body eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"error: pcre2_compile() failed: missing closing parenthesis in \"(abc\"\n"
++:
++"error: pcre_compile() failed: missing ) in \"(abc\"\n"
+ --- no_error_log
+ [error]
+ 
+@@ -735,8 +738,11 @@ error: pcre_compile() failed: missing )
+     }
+ --- request
+ GET /t
+---- response_body_like chop
+-error: pcre_exec\(\) failed: -10
++--- response_body eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"error: pcre_exec\(\) failed: -4\n"
++:
++"error: pcre_exec\(\) failed: -10\n"
+ 
+ --- no_error_log
+ [error]
+@@ -854,8 +860,14 @@ end
+ 
+ --- request
+     GET /re
+---- response_body
+-error: pcre_exec() failed: -8
++--- response_body eval
++# lua_regex_match_limit uses pcre_extra->match_limit in the PCRE,
++# but PCRE2 replaces this with pcre2_set_match_limit interface,
++# which has different effects.
++$Test::Nginx::Util::PcreVersion == 2 ?
++"failed to match\n"
++:
++"error: pcre_exec() failed: -8\n"
+ 
+ 
+ 
+--- a/nginx-mod-lua/t/036-sub.t
++++ b/nginx-mod-lua/t/036-sub.t
+@@ -480,8 +480,11 @@ a [b c] [b] [c] [] [] d
+     }
+ --- request
+     GET /re
+---- response_body
+-error: pcre_compile() failed: missing ) in "(abc"
++--- response_body eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"error: pcre2_compile() failed: missing closing parenthesis in \"(abc\"\n"
++:
++"error: pcre_compile() failed: missing ) in \"(abc\"\n"
+ --- no_error_log
+ [error]
+ 
+@@ -506,8 +509,11 @@ error: pcre_compile() failed: missing )
+     }
+ --- request
+ GET /t
+---- response_body_like chop
+-error: pcre_exec\(\) failed: -10
++--- response_body eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"error: pcre_exec\(\) failed: -4\n"
++:
++"error: pcre_exec\(\) failed: -10\n"
+ 
+ --- no_error_log
+ [error]
+@@ -610,8 +616,14 @@ ngx.say("sub: ", cnt)
+ 
+ --- request
+     GET /re
+---- response_body
+-error: pcre_exec() failed: -8
++--- response_body eval
++# lua_regex_match_limit uses pcre_extra->match_limit in the PCRE,
++# but PCRE2 replaces this with pcre2_set_match_limit interface,
++# which has different effects.
++$Test::Nginx::Util::PcreVersion == 2 ?
++"sub: 0\n"
++:
++"error: pcre_exec() failed: -8\n"
+ 
+ 
+ 
+--- a/nginx-mod-lua/t/037-gsub.t
++++ b/nginx-mod-lua/t/037-gsub.t
+@@ -423,8 +423,11 @@ n: 1
+     }
+ --- request
+ GET /t
+---- response_body_like chop
+-error: pcre_exec\(\) failed: -10
++--- response_body eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"error: pcre_exec\(\) failed: -4\n"
++:
++"error: pcre_exec\(\) failed: -10\n"
+ 
+ --- no_error_log
+ [error]
+@@ -531,8 +534,14 @@ ngx.say("gsub: ", cnt)
+ 
+ --- request
+     GET /re
+---- response_body
+-error: pcre_exec() failed: -8
++--- response_body eval
++# lua_regex_match_limit uses pcre_extra->match_limit in the PCRE,
++# but PCRE2 replaces this with pcre2_set_match_limit interface,
++# which has different effects.
++$Test::Nginx::Util::PcreVersion == 2 ?
++"gsub: 0\n"
++:
++"error: pcre_exec() failed: -8\n"
+ 
+ 
+ 
+--- a/nginx-mod-lua/t/038-match-o.t
++++ b/nginx-mod-lua/t/038-match-o.t
+@@ -336,8 +336,11 @@ he
+     }
+ --- request
+     GET /re
+---- response_body
+-error: pcre_compile() failed: missing ) in "(abc"
++--- response_body eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"error: pcre2_compile() failed: missing closing parenthesis in \"(abc\"\n"
++:
++"error: pcre_compile() failed: missing ) in \"(abc\"\n"
+ --- no_error_log
+ [error]
+ 
+--- a/nginx-mod-lua/t/047-match-jit.t
++++ b/nginx-mod-lua/t/047-match-jit.t
+@@ -32,8 +32,11 @@ __DATA__
+     GET /re
+ --- response_body
+ 1234
+---- error_log
+-pcre JIT compiling result: 1
++--- error_log eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"pcre2 JIT compiled successfully\n"
++:
++"pcre JIT compiling result: 1\n"
+ 
+ 
+ 
+@@ -53,8 +56,11 @@ pcre JIT compiling result: 1
+     GET /re
+ --- response_body
+ not matched!
+---- error_log
+-pcre JIT compiling result: 1
++--- error_log eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"pcre2 JIT compiled successfully\n"
++:
++"pcre JIT compiling result: 1\n"
+ 
+ 
+ 
+@@ -76,9 +82,15 @@ pcre JIT compiling result: 1
+ 1234
+ 
+ --- grep_error_log eval
+-qr/pcre JIT compiling result: \d+/
++$Test::Nginx::Util::PcreVersion == 2 ?
++"pcre2 JIT compiled successfully"
++:
++"pcre JIT compiling result: 1"
+ 
+ --- grep_error_log_out eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++["pcre2 JIT compiled successfully\n", ""]
++:
+ ["pcre JIT compiling result: 1\n", ""]
+ 
+ 
+@@ -101,9 +113,15 @@ qr/pcre JIT compiling result: \d+/
+ not matched!
+ 
+ --- grep_error_log eval
+-qr/pcre JIT compiling result: \d+/
++$Test::Nginx::Util::PcreVersion == 2 ?
++"pcre2 JIT compiled successfully"
++:
++"pcre JIT compiling result: 1"
+ 
+ --- grep_error_log_out eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++["pcre2 JIT compiled successfully\n", ""]
++:
+ ["pcre JIT compiling result: 1\n", ""]
+ 
+ 
+@@ -128,8 +146,11 @@ qr/pcre JIT compiling result: \d+/
+     }
+ --- request
+     GET /re
+---- response_body
+-error: pcre_compile() failed: missing ) in "(abc"
++--- response_body eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"error: pcre2_compile() failed: missing closing parenthesis in \"(abc\"\n"
++:
++"error: pcre_compile() failed: missing ) in \"(abc\"\n"
+ --- no_error_log
+ [error]
+ 
+@@ -170,8 +191,15 @@ end
+ 
+ --- request
+     GET /re
+---- response_body
+-error: pcre_exec() failed: -8
++--- response_body eval
++# lua_regex_match_limit uses pcre_extra->match_limit in the PCRE,
++# but PCRE2 replaces this with pcre2_set_match_limit interface,
++# which has different effects.
++$Test::Nginx::Util::PcreVersion == 2 ?
++# PCRE2_ERROR_MATCHLIMIT  (-47)
++"error: pcre_exec() failed: -47\n"
++:
++"error: pcre_exec() failed: -8\n"
+ 
+ 
+ 
+--- a/nginx-mod-lua/t/049-gmatch-jit.t
++++ b/nginx-mod-lua/t/049-gmatch-jit.t
+@@ -34,8 +34,11 @@ __DATA__
+ --- response_body
+ hello
+ world
+---- error_log
+-pcre JIT compiling result: 1
++--- error_log eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"pcre2 JIT compiled successfully\n"
++:
++"pcre JIT compiling result: 1\n"
+ 
+ 
+ 
+@@ -60,8 +63,11 @@ pcre JIT compiling result: 1
+ nil
+ nil
+ nil
+---- error_log
+-pcre JIT compiling result: 1
++--- error_log eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"pcre2 JIT compiled successfully\n"
++:
++"pcre JIT compiling result: 1\n"
+ 
+ 
+ 
+@@ -77,8 +83,11 @@ pcre JIT compiling result: 1
+     GET /re
+ --- response_body
+ done
+---- error_log
+-pcre JIT compiling result: 1
++--- error_log eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"pcre2 JIT compiled successfully\n"
++:
++"pcre JIT compiling result: 1\n"
+ 
+ 
+ 
+@@ -99,8 +108,11 @@ pcre JIT compiling result: 1
+     GET /re
+ --- response_body
+ hello
+---- error_log
+-pcre JIT compiling result: 1
++--- error_log eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"pcre2 JIT compiled successfully\n"
++:
++"pcre JIT compiling result: 1\n"
+ 
+ 
+ 
+@@ -124,9 +136,15 @@ hello
+ world
+ 
+ --- grep_error_log eval
+-qr/pcre JIT compiling result: \d+/
++$Test::Nginx::Util::PcreVersion == 2 ?
++"pcre2 JIT compiled successfully"
++:
++"pcre JIT compiling result: 1"
+ 
+ --- grep_error_log_out eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++["pcre2 JIT compiled successfully\n", ""]
++:
+ ["pcre JIT compiling result: 1\n", ""]
+ 
+ 
+@@ -154,9 +172,15 @@ nil
+ nil
+ 
+ --- grep_error_log eval
+-qr/pcre JIT compiling result: \d+/
++$Test::Nginx::Util::PcreVersion == 2 ?
++"pcre2 JIT compiled successfully"
++:
++"pcre JIT compiling result: 1"
+ 
+ --- grep_error_log_out eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++["pcre2 JIT compiled successfully\n", ""]
++:
+ ["pcre JIT compiling result: 1\n", ""]
+ 
+ 
+@@ -175,9 +199,15 @@ qr/pcre JIT compiling result: \d+/
+ done
+ 
+ --- grep_error_log eval
+-qr/pcre JIT compiling result: \d+/
++$Test::Nginx::Util::PcreVersion == 2 ?
++"pcre2 JIT compiled successfully"
++:
++"pcre JIT compiling result: 1"
+ 
+ --- grep_error_log_out eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++["pcre2 JIT compiled successfully\n", ""]
++:
+ ["pcre JIT compiling result: 1\n", ""]
+ 
+ 
+@@ -201,9 +231,15 @@ qr/pcre JIT compiling result: \d+/
+ hello
+ 
+ --- grep_error_log eval
+-qr/pcre JIT compiling result: \d+/
++$Test::Nginx::Util::PcreVersion == 2 ?
++"pcre2 JIT compiled successfully"
++:
++"pcre JIT compiling result: 1"
+ 
+ --- grep_error_log_out eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++["pcre2 JIT compiled successfully\n", ""]
++:
+ ["pcre JIT compiling result: 1\n", ""]
+ 
+ 
+@@ -222,7 +258,10 @@ qr/pcre JIT compiling result: \d+/
+     }
+ --- request
+     GET /re
+---- response_body
+-error: pcre_compile() failed: missing ) in "(abc"
++--- response_body eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"error: pcre2_compile() failed: missing closing parenthesis in \"(abc\"\n"
++:
++"error: pcre_compile() failed: missing ) in \"(abc\"\n"
+ --- no_error_log
+ [error]
+--- a/nginx-mod-lua/t/050-gmatch-dfa.t
++++ b/nginx-mod-lua/t/050-gmatch-dfa.t
+@@ -214,8 +214,11 @@ hello
+     }
+ --- request
+     GET /re
+---- response_body
+-error: pcre_compile() failed: missing ) in "(abc"
++--- response_body eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"error: pcre2_compile() failed: missing closing parenthesis in \"(abc\"\n"
++:
++"error: pcre_compile() failed: missing ) in \"(abc\"\n"
+ --- no_error_log
+ [error]
+ 
+--- a/nginx-mod-lua/t/051-sub-jit.t
++++ b/nginx-mod-lua/t/051-sub-jit.t
+@@ -32,8 +32,11 @@ __DATA__
+     GET /re
+ --- response_body
+ hello, world 5678: 1
+---- error_log
+-pcre JIT compiling result: 1
++--- error_log eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"pcre2 JIT compiled successfully\n"
++:
++"pcre JIT compiling result: 1\n"
+ 
+ 
+ 
+@@ -53,8 +56,11 @@ pcre JIT compiling result: 1
+     GET /re
+ --- response_body
+ hello, world: 0
+---- error_log
+-pcre JIT compiling result: 1
++--- error_log eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"pcre2 JIT compiled successfully\n"
++:
++"pcre JIT compiling result: 1\n"
+ 
+ 
+ 
+@@ -76,9 +82,15 @@ pcre JIT compiling result: 1
+ hello, world 5678: 1
+ 
+ --- grep_error_log eval
+-qr/pcre JIT compiling result: \d+/
++$Test::Nginx::Util::PcreVersion == 2 ?
++"pcre2 JIT compiled successfully"
++:
++"pcre JIT compiling result: 1"
+ 
+ --- grep_error_log_out eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++["pcre2 JIT compiled successfully\n", ""]
++:
+ ["pcre JIT compiling result: 1\n", ""]
+ 
+ 
+@@ -101,9 +113,15 @@ qr/pcre JIT compiling result: \d+/
+ hello, world: 0
+ 
+ --- grep_error_log eval
+-qr/pcre JIT compiling result: \d+/
++$Test::Nginx::Util::PcreVersion == 2 ?
++"pcre2 JIT compiled successfully"
++:
++"pcre JIT compiling result: 1"
+ 
+ --- grep_error_log_out eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++["pcre2 JIT compiled successfully\n", ""]
++:
+ ["pcre JIT compiling result: 1\n", ""]
+ 
+ 
+@@ -122,8 +140,11 @@ qr/pcre JIT compiling result: \d+/
+     }
+ --- request
+     GET /re
+---- response_body
+-error: pcre_compile() failed: missing ) in "(abc"
++--- response_body eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"error: pcre2_compile() failed: missing closing parenthesis in \"(abc\"\n"
++:
++"error: pcre_compile() failed: missing ) in \"(abc\"\n"
+ --- no_error_log
+ [error]
+ 
+@@ -143,7 +164,10 @@ error: pcre_compile() failed: missing )
+     }
+ --- request
+     GET /re
+---- response_body
+-error: pcre_compile() failed: missing ) in "(abc"
++--- response_body eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"error: pcre2_compile() failed: missing closing parenthesis in \"(abc\"\n"
++:
++"error: pcre_compile() failed: missing ) in \"(abc\"\n"
+ --- no_error_log
+ [error]
+--- a/nginx-mod-lua/t/052-sub-dfa.t
++++ b/nginx-mod-lua/t/052-sub-dfa.t
+@@ -107,8 +107,11 @@ hello, world: 0
+     }
+ --- request
+     GET /re
+---- response_body
+-error: pcre_compile() failed: missing ) in "(abc"
++--- response_body eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"error: pcre2_compile() failed: missing closing parenthesis in \"(abc\"\n"
++:
++"error: pcre_compile() failed: missing ) in \"(abc\"\n"
+ --- no_error_log
+ [error]
+ 
+@@ -129,8 +132,11 @@ error: pcre_compile() failed: missing )
+     }
+ --- request
+     GET /re
+---- response_body
+-error: pcre_compile() failed: missing ) in "(abc"
++--- response_body eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"error: pcre2_compile() failed: missing closing parenthesis in \"(abc\"\n"
++:
++"error: pcre_compile() failed: missing ) in \"(abc\"\n"
+ --- no_error_log
+ [error]
+ 
+--- a/nginx-mod-lua/t/053-gsub-jit.t
++++ b/nginx-mod-lua/t/053-gsub-jit.t
+@@ -32,8 +32,11 @@ __DATA__
+     GET /re
+ --- response_body
+ hello, world world: 2
+---- error_log
+-pcre JIT compiling result: 1
++--- error_log eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"pcre2 JIT compiled successfully\n"
++:
++"pcre JIT compiling result: 1\n"
+ 
+ 
+ 
+@@ -53,8 +56,11 @@ pcre JIT compiling result: 1
+     GET /re
+ --- response_body
+ hello, world: 0
+---- error_log
+-pcre JIT compiling result: 1
++--- error_log eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"pcre2 JIT compiled successfully\n"
++:
++"pcre JIT compiling result: 1\n"
+ 
+ 
+ 
+@@ -76,9 +82,15 @@ pcre JIT compiling result: 1
+ hello, world world: 2
+ 
+ --- grep_error_log eval
+-qr/pcre JIT compiling result: \d+/
++$Test::Nginx::Util::PcreVersion == 2 ?
++"pcre2 JIT compiled successfully"
++:
++"pcre JIT compiling result: 1"
+ 
+ --- grep_error_log_out eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++["pcre2 JIT compiled successfully\n", ""]
++:
+ ["pcre JIT compiling result: 1\n", ""]
+ 
+ 
+@@ -101,9 +113,15 @@ qr/pcre JIT compiling result: \d+/
+ hello, world: 0
+ 
+ --- grep_error_log eval
+-qr/pcre JIT compiling result: \d+/
++$Test::Nginx::Util::PcreVersion == 2 ?
++"pcre2 JIT compiled successfully"
++:
++"pcre JIT compiling result: 1"
+ 
+ --- grep_error_log_out eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++["pcre2 JIT compiled successfully\n", ""]
++:
+ ["pcre JIT compiling result: 1\n", ""]
+ 
+ 
+@@ -122,8 +140,11 @@ qr/pcre JIT compiling result: \d+/
+     }
+ --- request
+     GET /re
+---- response_body
+-error: pcre_compile() failed: missing ) in "(abc"
++--- response_body eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"error: pcre2_compile() failed: missing closing parenthesis in \"(abc\"\n"
++:
++"error: pcre_compile() failed: missing ) in \"(abc\"\n"
+ --- no_error_log
+ [error]
+ 
+@@ -143,7 +164,10 @@ error: pcre_compile() failed: missing )
+     }
+ --- request
+     GET /re
+---- response_body
+-error: pcre_compile() failed: missing ) in "(abc"
++--- response_body eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"error: pcre2_compile() failed: missing closing parenthesis in \"(abc\"\n"
++:
++"error: pcre_compile() failed: missing ) in \"(abc\"\n"
+ --- no_error_log
+ [error]
+--- a/nginx-mod-lua/t/054-gsub-dfa.t
++++ b/nginx-mod-lua/t/054-gsub-dfa.t
+@@ -107,8 +107,11 @@ hello, world: 0
+     }
+ --- request
+     GET /re
+---- response_body
+-error: pcre_compile() failed: missing ) in "(abc"
++--- response_body eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"error: pcre2_compile() failed: missing closing parenthesis in \"(abc\"\n"
++:
++"error: pcre_compile() failed: missing ) in \"(abc\"\n"
+ 
+ 
+ 
+@@ -126,8 +129,11 @@ error: pcre_compile() failed: missing )
+     }
+ --- request
+     GET /re
+---- response_body
+-error: pcre_compile() failed: missing ) in "(abc"
++--- response_body eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"error: pcre2_compile() failed: missing closing parenthesis in \"(abc\"\n"
++:
++"error: pcre_compile() failed: missing ) in \"(abc\"\n"
+ --- no_error_log
+ [error]
+ 
+--- a/nginx-mod-lua/t/120-re-find.t
++++ b/nginx-mod-lua/t/120-re-find.t
+@@ -354,8 +354,11 @@ matched: he
+     }
+ --- request
+     GET /re
+---- response_body
+-error: pcre_compile() failed: missing ) in "(abc"
++--- response_body eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"error: pcre2_compile() failed: missing closing parenthesis in \"(abc\"\n"
++:
++"error: pcre_compile() failed: missing ) in \"(abc\"\n"
+ --- no_error_log
+ [error]
+ 
+@@ -562,8 +565,11 @@ matched: hello, 1234
+     }
+ --- request
+ GET /t
+---- response_body_like chop
+-^error: pcre_exec\(\) failed: -10$
++--- response_body eval
++$Test::Nginx::Util::PcreVersion == 2 ?
++"error: pcre_exec\(\) failed: -4\n"
++:
++"error: pcre_exec\(\) failed: -10\n"
+ 
+ --- no_error_log
+ [error]
+@@ -587,6 +593,7 @@ GET /t
+         ';
+     }
+ --- stap
++# TODO: PCRE2 use different option values from PCRE
+ probe process("$LIBPCRE_PATH").function("pcre_compile") {
+     printf("compile opts: %x\n", $options)
+ }
+@@ -645,8 +652,14 @@ end
+ 
+ --- request
+     GET /re
+---- response_body
+-error: pcre_exec() failed: -8
++--- response_body eval
++# lua_regex_match_limit uses pcre_extra->match_limit in the PCRE,
++# but PCRE2 replaces this with pcre2_set_match_limit interface,
++# which has different effects.
++$Test::Nginx::Util::PcreVersion == 2 ?
++"failed to match.\n"
++:
++"error: pcre_exec() failed: -8\n"
+ --- no_error_log
+ [error]
+ 
+--- a/nginx-mod-lua/util/build-with-dd.sh
++++ b/nginx-mod-lua/util/build-with-dd.sh
+@@ -20,9 +20,13 @@ fi
+ 
+ disable_pcre2=--without-pcre2
+ answer=`$root/util/ver-ge "$NGINX_VERSION" 1.25.1`
+-if [ "$answer" = "N" ]; then
++if [ "$answer" = "N" ] || [ "$USE_PCRE2" = "Y" ]; then
+     disable_pcre2=""
+ fi
++if [ "$USE_PCRE2" = "Y" ]; then
++    PCRE_INC=$PCRE2_INC
++    PCRE_LIB=$PCRE2_LIB
++fi
+ 
+ time ngx-build $force $version \
+             --with-threads \
+--- a/nginx-mod-lua/util/build-without-ssl.sh
++++ b/nginx-mod-lua/util/build-without-ssl.sh
+@@ -26,9 +26,13 @@ add_fake_shm_module="--add-module=$root/
+ 
+ disable_pcre2=--without-pcre2
+ answer=`$root/util/ver-ge "$NGINX_VERSION" 1.25.1`
+-if [ "$answer" = "N" ]; then
++if [ "$answer" = "N" ] || [ "$USE_PCRE2" = "Y" ]; then
+     disable_pcre2=""
+ fi
++if [ "$USE_PCRE2" = "Y" ]; then
++    PCRE_INC=$PCRE2_INC
++    PCRE_LIB=$PCRE2_LIB
++fi
+ 
+ time ngx-build $force $version \
+             --with-threads \
+--- a/nginx-mod-lua/util/build.sh
++++ b/nginx-mod-lua/util/build.sh
+@@ -32,9 +32,13 @@ fi
+ 
+ disable_pcre2=--without-pcre2
+ answer=`$root/util/ver-ge "$NGINX_VERSION" 1.25.1`
+-if [ "$answer" = "N" ]; then
++if [ "$answer" = "N" ] || [ "$USE_PCRE2" = "Y" ]; then
+     disable_pcre2=""
+ fi
++if [ "$USE_PCRE2" = "Y" ]; then
++    PCRE_INC=$PCRE2_INC
++    PCRE_LIB=$PCRE2_LIB
++fi
+ 
+ time ngx-build $force $version \
+             --with-threads \
+--- a/nginx-mod-lua/valgrind.suppress
++++ b/nginx-mod-lua/valgrind.suppress
+@@ -234,3 +234,73 @@
+    fun:ngx_pass_open_channel
+    fun:ngx_start_privileged_agent_processes
+ }
++{
++   <insert_a_suppression_name_here>
++   Memcheck:Leak
++   match-leak-kinds: definite
++   fun:malloc
++   fun:ngx_alloc
++   fun:ngx_regex_malloc
++   fun:pcre2_compile_context_create_8
++   fun:ngx_regex_compile
++   fun:ngx_http_regex_compile
++   fun:ngx_http_core_regex_location
++   fun:ngx_http_core_location
++   fun:ngx_conf_handler
++   fun:ngx_conf_parse
++   fun:ngx_http_core_server
++   fun:ngx_conf_handler
++   fun:ngx_conf_parse
++   fun:ngx_http_block
++   fun:ngx_conf_handler
++   fun:ngx_conf_parse
++   fun:ngx_init_cycle
++   fun:main
++}
++{
++   <insert_a_suppression_name_here>
++   Memcheck:Leak
++   match-leak-kinds: definite
++   fun:malloc
++   fun:ngx_alloc
++   fun:ngx_regex_malloc
++   fun:pcre2_compile_context_create_8
++   fun:ngx_regex_compile
++   fun:ngx_http_regex_compile
++   fun:ngx_http_rewrite
++   fun:ngx_conf_handler
++   fun:ngx_conf_parse
++   fun:ngx_http_core_location
++   fun:ngx_conf_handler
++   fun:ngx_conf_parse
++   fun:ngx_http_core_server
++   fun:ngx_conf_handler
++   fun:ngx_conf_parse
++   fun:ngx_http_block
++   fun:ngx_conf_handler
++   fun:ngx_conf_parse
++   fun:ngx_init_cycle
++   fun:main
++}
++{
++   <insert_a_suppression_name_here>
++   Memcheck:Leak
++   match-leak-kinds: definite
++   fun:malloc
++   fun:ngx_alloc
++   fun:ngx_regex_malloc
++   fun:pcre2_compile_context_create_8
++   fun:ngx_regex_compile
++   fun:ngx_http_regex_compile
++   fun:ngx_http_rewrite
++   fun:ngx_conf_handler
++   fun:ngx_conf_parse
++   fun:ngx_http_core_server
++   fun:ngx_conf_handler
++   fun:ngx_conf_parse
++   fun:ngx_http_block
++   fun:ngx_conf_handler
++   fun:ngx_conf_parse
++   fun:ngx_init_cycle
++   fun:main
++}
+--- a/nginx-mod-lua/t/cert/test.crt
++++ b/nginx-mod-lua/t/cert/test.crt
+@@ -1,17 +1,22 @@
+ -----BEGIN CERTIFICATE-----
+-MIICqTCCAhICCQClDm1WkreW4jANBgkqhkiG9w0BAQUFADCBlzELMAkGA1UEBhMC
+-VVMxEzARBgNVBAgMCkNhbGlmb3JuaWExFjAUBgNVBAcMDVNhbiBGcmFuY2lzY28x
+-EjAQBgNVBAoMCU9wZW5SZXN0eTESMBAGA1UECwwJT3BlblJlc3R5MREwDwYDVQQD
+-DAh0ZXN0LmNvbTEgMB4GCSqGSIb3DQEJARYRYWdlbnR6aEBnbWFpbC5jb20wIBcN
+-MTQwNzIxMDMyMzQ3WhgPMjE1MTA2MTMwMzIzNDdaMIGXMQswCQYDVQQGEwJVUzET
+-MBEGA1UECAwKQ2FsaWZvcm5pYTEWMBQGA1UEBwwNU2FuIEZyYW5jaXNjbzESMBAG
+-A1UECgwJT3BlblJlc3R5MRIwEAYDVQQLDAlPcGVuUmVzdHkxETAPBgNVBAMMCHRl
+-c3QuY29tMSAwHgYJKoZIhvcNAQkBFhFhZ2VudHpoQGdtYWlsLmNvbTCBnzANBgkq
+-hkiG9w0BAQEFAAOBjQAwgYkCgYEA6P18zUvtmaKQK2xePy8ZbFwSyTLw+jW6t9eZ
+-aiTec8X3ibN9WemrxHzkTRikxP3cAQoITRuZiQvF4Q7DO6wMkz/b0zwfgX5uedGq
+-047AJP6n/mwlDOjGSNomBLoXQzo7tVe60ikEm3ZyDUqnJPJMt3hImO5XSop4MPMu
+-Za9WhFcCAwEAATANBgkqhkiG9w0BAQUFAAOBgQA4OBb9bOyWB1//93nSXX1mdENZ
+-IQeyTK0Dd6My76lnZxnZ4hTWrvvd0b17KLDU6JnS2N5ee3ATVkojPidRLWLIhnh5
+-0eXrcKalbO2Ce6nShoFvQCQKXN2Txmq2vO/Mud2bHAWwJALg+qi1Iih/gVYB9sct
+-FLg8zFOzRlYiU+6Mmw==
++MIIDtzCCAp8CFCJnLifDCaXjYb2ARKBBhs+aAgYOMA0GCSqGSIb3DQEBCwUAMIGX
++MQswCQYDVQQGEwJVUzETMBEGA1UECAwKQ2FsaWZvcm5pYTEWMBQGA1UEBwwNU2Fu
++IEZyYW5jaXNjbzESMBAGA1UECgwJT3BlblJlc3R5MRIwEAYDVQQLDAlPcGVuUmVz
++dHkxETAPBgNVBAMMCHRlc3QuY29tMSAwHgYJKoZIhvcNAQkBFhFhZ2VudHpoQGdt
++YWlsLmNvbTAeFw0yMzA5MDUwNDE5MjhaFw0zMzA5MDIwNDE5MjhaMIGXMQswCQYD
++VQQGEwJVUzETMBEGA1UECAwKQ2FsaWZvcm5pYTEWMBQGA1UEBwwNU2FuIEZyYW5j
++aXNjbzESMBAGA1UECgwJT3BlblJlc3R5MRIwEAYDVQQLDAlPcGVuUmVzdHkxETAP
++BgNVBAMMCHRlc3QuY29tMSAwHgYJKoZIhvcNAQkBFhFhZ2VudHpoQGdtYWlsLmNv
++bTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAJzRMFoLDuYOwJ8szrS4
++nOibtiimiXZJGx3I/RcFZxaH4nL/WcEb1fwftMQxx73IBJnqnDYkDOzUmzItPMn0
++t2WrNYesC5GqLNRm87m6PVt010tZvq/WxTn6+9qruiGm1PhFxzLQfrClpEeOshlG
++UeoQjPOMrhCmofDM2NQo3D4wIQT0kCJxIPq6wCZt22/Yqz1EmR0UnF/R3ZtiB8O+
++SQGcsUKy4se3919xq+ZkzBdMxLneO5sofUiDC9MgRfiU960tbHPGX9I9P+kLK89S
++yajPEYaRUkSBFjV5kdDK3+L6XckdMbY2pvwhAnVXSmd13Bf2V9XisUrX2Mr4YlnS
++sy0CAwEAATANBgkqhkiG9w0BAQsFAAOCAQEAVPY/z6Mvjg5EGHzU8bXyuXqxrx8Q
++GBwf3PY25aDF6ofRrTCzMdIhthv8eRtGwHinkpgaK34D7hI/dPB7aswQTzED5c+l
++S2au5OzzCj454oXdhSRA5Rt0mu/+pxmQ+iNk+7XJxgTN0mk1dYQqodyZ+vC4NIYb
++javMlU4zDm4JPtwDs0Mz/d7gf14MU60jppF2vl6AYFHKYBLMHBmqxjy6H9YHjRjQ
++oe4TNpn0zxJAPu5LqMkfB2+eLOe6ced7DcLLbbeVJ4Xtqj6Y5KsAyVojWQxrk4vW
++3WO/953pHofO5F2ricS/rsf+5ivTmfiP8mQYTtp7k3T11sIZ4DOmtNwO4A==
+ -----END CERTIFICATE-----
+--- a/nginx-mod-lua/t/cert/test.key
++++ b/nginx-mod-lua/t/cert/test.key
+@@ -1,15 +1,28 @@
+------BEGIN RSA PRIVATE KEY-----
+-MIICXgIBAAKBgQDo/XzNS+2ZopArbF4/LxlsXBLJMvD6Nbq315lqJN5zxfeJs31Z
+-6avEfORNGKTE/dwBCghNG5mJC8XhDsM7rAyTP9vTPB+Bfm550arTjsAk/qf+bCUM
+-6MZI2iYEuhdDOju1V7rSKQSbdnINSqck8ky3eEiY7ldKingw8y5lr1aEVwIDAQAB
+-AoGBANgB66sKMga2SKN5nQdHS3LDCkevCutu1OWM5ZcbB4Kej5kC57xsf+tzPtab
+-emeIVGhCPOAALqB4YcT+QtMX967oM1MjcFbtH7si5oq6UYyp3i0G9Si6jIoVHz3+
+-8yOUaqwKbK+bRX8VS0YsHZmBsPK5ryN50iUwsU08nemoA94BAkEA9GS9Q5OPeFkM
+-tFxsIQ1f2FSsZAuN/1cpZgJqY+YaAN7MSPGTWyfd7nWG/Zgk3GO9/2ihh4gww+7B
+-To09GkmW4QJBAPQOHC2V+t2TA98+6Lj6+TYwcGEkhOENfVpH25mQ+kXgF/1Bd6rA
+-nosT1bdAY+SnmWXbSw6Kv5C20Em+bEX8WjcCQCSRRjhsRdVODbaW9Z7kb2jhEoJN
+-sEt6cTlQNzcHYPCsZYisjM3g4zYg47fiIfHQAsfKkhDDcfh/KvFj9LaQOEECQQCH
+-eBWYEDpSJ7rsfqT7mQQgWj7nDThdG/nK1TxGP71McBmg0Gg2dfkLRhVJRQqt74Is
+-kc9V4Rp4n6F6baL4Lh19AkEA6pZZer0kg3Kv9hjhaITIKUYdfIp9vYnDRWbQlBmR
+-atV8V9u9q2ETZvqfHpN+9Lu6NYR4yXIEIRf1bnIZ/mr9eQ==
+------END RSA PRIVATE KEY-----
++-----BEGIN PRIVATE KEY-----
++MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCc0TBaCw7mDsCf
++LM60uJzom7Yopol2SRsdyP0XBWcWh+Jy/1nBG9X8H7TEMce9yASZ6pw2JAzs1Jsy
++LTzJ9LdlqzWHrAuRqizUZvO5uj1bdNdLWb6v1sU5+vvaq7ohptT4Rccy0H6wpaRH
++jrIZRlHqEIzzjK4QpqHwzNjUKNw+MCEE9JAicSD6usAmbdtv2Ks9RJkdFJxf0d2b
++YgfDvkkBnLFCsuLHt/dfcavmZMwXTMS53jubKH1IgwvTIEX4lPetLWxzxl/SPT/p
++CyvPUsmozxGGkVJEgRY1eZHQyt/i+l3JHTG2Nqb8IQJ1V0pnddwX9lfV4rFK19jK
+++GJZ0rMtAgMBAAECggEABjaOkcllis1o/yrVZMPPabLpAHV6tZ5MuKfNiUOMSPr+
++HfF1OFQL7MxCdfyFQ1prqOp/9nAut+puMgp99wAfDQ7qanNGq7vgQKkfPSD+dy4V
++rUquELBJH6nh9SZqfpSqKaJgHlNe6vehHuRYikJRkrJwVzegGjuekm3B+y6Zl/gc
++e0p5Ha3MTLTFjocwYzgTjJlxD40wlbjpuVnmzKjo8AKNv1F1azMaqBmt1VfPiDn0
++Xyq4SPEsWKnEAl2kZdaIBR6zIx7Z3zNUwkfb32QwNoSyo8wS7lCgf2GVS7r1Eul6
++iiCE/Gd7w10alW4Pu96shVqkvKn7ROF2nBP9xOSPwQKBgQDCuD6mlNpA07iOX364
++aAzIAYookceVA0I9L/fbOQW7RgpvYpM8lxr31TQ3fBDkXSgjzMMYjnk4kz+xN+BB
++WFdjb4raUBtrvip8Q8QZ53DVQK/LodHh0XhipbOxZrDm+6o5nQD0fTqHCBIHSVFF
++tXX2Y90t1cxWMMleRhfNEuzkQQKBgQDOK0rs7mf04Xhc4ZIRIxOtNFnthGp4Kqp7
++SD8VQpbPOLV8iqZEtXIy/hvoTpfQW30c1931KgDQ3Pv5MZYpI7PLqrqkj4tGCQ91
++DJ03GWkSXcMwlPmJRbvgWIeCLgShU5PLxmQu3mH2DP+uGFUBq5/6miDDVjF9z6vb
++BwYlG66j7QKBgA0n/bOrowN2SqXz9c/n19U7pWYQU3fR/Iu9zfVV6Pk6RkI4WtJh
++M0VDdn+5Njr3wFqK3zOtjKsx57/FkrVXjq/9PVh6yR+CfcRfn8RQSuNdt4L+r/ud
++95BSuc1mrtUsc9for8PVIjs1ZGJxpbgcBphbLvqF04SPT0u7WKhWewMBAoGAcJO/
++RAUiitsbaExcADORKQDvIf0uThOuJ8dZevhzdQ/YOftTsy0JAMM05fMUfteWR8uw
++DZE0BNjGVlo3TpuKL+o4JGele0azRAzxRAcCEt9UGBEg+U40utpclD8glB8ZEypv
++xg/0mfCbJKtwr4rRvnuu7DsCp1pg0ybQui6VfDkCgYBXHwcrZwmv7kgr4pUG6oZj
++fzjFenQFqibvb2h7QESyCW13O885GxU13DKv4zg1yi6EqPIopz16qCiUNCvWr5Us
++6sI74wEVI3MzmzG0Htgl29q5yWpeY+7libC/fbZYG8GFgdINq58ko9be1u/8644S
++t2hoKM9/vrVFh9p9qGzckg==
++-----END PRIVATE KEY-----

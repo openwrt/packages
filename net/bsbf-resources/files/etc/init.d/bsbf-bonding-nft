@@ -1,0 +1,9 @@
+#!/bin/sh /etc/rc.common
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Chester A. Unal <chester.a.unal@arinc9.com>
+
+START=99
+
+boot() {
+	/usr/sbin/nft -f /usr/share/bsbf/bsbf_bonding.nft
+}

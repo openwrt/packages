@@ -1,0 +1,11 @@
+{
+	"name": "strato.com",
+	"ipv4": {
+		"url": "https://[USERNAME]:[PASSWORD]@dyndns.strato.com/nic/update?hostname=[DOMAIN]&myip=[IP]",
+		"answer": "good|nochg"
+	},
+	"ipv6": {
+		"url": "https://[USERNAME]:[PASSWORD]@dyndns.strato.com/nic/update?hostname=[DOMAIN]&myip=[IP]",
+		"answer": "good|nochg"
+	}
+}

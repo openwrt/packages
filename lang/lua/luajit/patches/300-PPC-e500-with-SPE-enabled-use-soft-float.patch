@@ -1,0 +1,58 @@
+From 2c8b9d5807a515a0ff859899065f512beabcbaed Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=C5=A0imon=20Bo=C5=99ek?= <simon.borek@nic.cz>
+Date: Sat, 16 Jul 2022 18:39:55 +0200
+Subject: [PATCH] PPC/e500 with SPE enabled: use soft float instead of failing
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+This allows building LuaJit for systems with Power ISA SPE
+extension[^1] support by using soft float on LuaJit side.
+
+While e500 CPU cores support SPE instruction set extension
+allowing them to perform floating point arithmetic natively,
+this isn't required. They can function with software floating
+point to integer arithmetic translation as well,
+just like FPU-less PowerPC CPUs without SPE support.
+
+Therefore I see no need to prevent them from running LuaJit
+explicitly.
+
+[^1]: https://www.nxp.com/docs/en/reference-manual/SPEPEM.pdf
+
+Signed-off-by: Pali Rohár <pali@kernel.org>
+Signed-off-by: Šimon Bořek <simon.borek@nic.cz>
+---
+ src/lj_arch.h | 7 ++-----
+ 1 file changed, 2 insertions(+), 5 deletions(-)
+
+--- a/src/lj_arch.h
++++ b/src/lj_arch.h
+@@ -256,7 +256,7 @@
+ #define LJ_ARCH_NAME		"ppc"
+ 
+ #if !defined(LJ_ARCH_HASFPU)
+-#if defined(_SOFT_FLOAT) || defined(_SOFT_DOUBLE)
++#if defined(_SOFT_FLOAT) || defined(_SOFT_DOUBLE) || defined(__NO_FPRS__)
+ #define LJ_ARCH_HASFPU		0
+ #else
+ #define LJ_ARCH_HASFPU		1
+@@ -264,7 +264,7 @@
+ #endif
+ 
+ #if !defined(LJ_ABI_SOFTFP)
+-#if defined(_SOFT_FLOAT) || defined(_SOFT_DOUBLE)
++#if defined(_SOFT_FLOAT) || defined(_SOFT_DOUBLE) || defined(__NO_FPRS__)
+ #define LJ_ABI_SOFTFP		1
+ #else
+ #define LJ_ABI_SOFTFP		0
+@@ -442,9 +442,6 @@
+ #if LJ_ARCH_PPC64
+ #error "No support for PowerPC 64 bit mode (yet)"
+ #endif
+-#if defined(__NO_FPRS__) && !defined(_SOFT_FLOAT)
+-#error "No support for PPC/e500 anymore (use LuaJIT 2.0)"
+-#endif
+ #elif LJ_TARGET_MIPS32
+ #if !((defined(_MIPS_SIM_ABI32) && _MIPS_SIM == _MIPS_SIM_ABI32) || (defined(_ABIO32) && _MIPS_SIM == _ABIO32))
+ #error "Only o32 ABI supported for MIPS32"

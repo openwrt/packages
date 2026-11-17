@@ -1,0 +1,28 @@
+From 6e6c8e5b02c56e2d67a97155db80e1e44d54ec2d Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Tue, 20 Oct 2026 17:33:00 +0100
+Subject: [PATCH] validation/misc_props: run a process the bundle contains
+
+The unknown annotation case keeps the default process of the generator,
+/runtimetest, but misc_props only unpacks the root filesystem into its
+bundle and never copies runtimetest there. A runtime that reports a
+failed entrypoint from start therefore fails the case, although the
+annotation was accepted; one that only notices later passes it. Run
+true like the unknown property case does, so that the case tests the
+annotation alone.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ validation/misc_props/misc_props.go | 1 +
+ 1 file changed, 1 insertion(+)
+
+--- a/validation/misc_props/misc_props.go
++++ b/validation/misc_props/misc_props.go
+@@ -48,6 +48,7 @@ func main() {
+ 	if err != nil {
+ 		util.Fatal(err)
+ 	}
++	annotationConfig.SetProcessArgs([]string{"true"})
+ 	annotationConfig.AddAnnotation(fmt.Sprintf("org.%s", containerID), "")
+ 	invalidConfig, err := util.GetDefaultGenerator()
+ 	if err != nil {

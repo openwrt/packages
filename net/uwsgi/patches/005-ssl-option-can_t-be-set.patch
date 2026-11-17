@@ -1,0 +1,23 @@
+From b55d659c2ef6fb80b3b5d70192b1271992c393fc Mon Sep 17 00:00:00 2001
+From: Mathieu Lacage <mathieu.lacage@gmail.com>
+Date: Tue, 30 Oct 2018 17:08:19 +0100
+Subject: [PATCH] ssl-option can't be set
+
+The ssl-option variable can't be set: it is designed to take a numeric argument but is specified as a "no_argument" option which results in an error when trying to set this option. This changeset sets the proper type.
+
+Given the changeset which introduced this option with the ssl-enable3 option which is of type no_argument, I suspect someone copy/pasted the ssl-enable3 configuration file without testing the change.
+---
+ core/uwsgi.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/core/uwsgi.c
++++ b/core/uwsgi.c
+@@ -679,7 +679,7 @@ static struct uwsgi_option uwsgi_base_op
+ 	{"ssl-enable3", no_argument, 0, "enable SSLv3 (insecure)", uwsgi_opt_true, &uwsgi.sslv3, 0},
+ 	{"ssl-enable-sslv3", no_argument, 0, "enable SSLv3 (insecure)", uwsgi_opt_true, &uwsgi.sslv3, 0},
+ 	{"ssl-enable-tlsv1", no_argument, 0, "enable TLSv1 (insecure)", uwsgi_opt_true, &uwsgi.tlsv1, 0},
+-	{"ssl-option", no_argument, 0, "set a raw ssl option (numeric value)", uwsgi_opt_add_string_list, &uwsgi.ssl_options, 0},
++	{"ssl-option", required_argument, 0, "set a raw ssl option (numeric value)", uwsgi_opt_add_string_list, &uwsgi.ssl_options, 0},
+ #if defined(UWSGI_PCRE) || defined(UWSGI_PCRE2)
+ 	{"sni-regexp", required_argument, 0, "add an SNI-governed SSL context (the key is a regexp)", uwsgi_opt_sni, NULL, 0},
+ #endif

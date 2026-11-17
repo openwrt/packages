@@ -1,0 +1,58 @@
+Test that subdomain dedup removes child domains when parent exists.
+Parent domains are in domains.txt, children are in hosts.txt.
+
+-- Testcase --
+import adb from 'adblock-fast';
+import { readfile } from 'fs';
+let ti = adb._test_internals;
+
+adb.env.load_config();
+ti.set_cfg('dns', 'dnsmasq.servers');
+ti.set_cfg('dnsmasq_sanity_check', false);
+ti.set_cfg('dnsmasq_validity_check', false);
+ti.set_cfg('heartbeat_domain', null);
+ti.set_cfg('config_update_enabled', false);
+ti.set_cfg('update_config_sizes', false);
+ti.env.dns_set_output_values('dnsmasq.servers');
+ti.append_urls();
+
+let ok = ti.download_lists();
+if (!ok) {
+	print('download_lists failed\n');
+} else {
+	let content = readfile(ti.dns_output.file) || '';
+
+	// Parents must exist
+	let parents = [
+		'parent-dedup-1.test.example.com',
+		'parent-dedup-2.test.example.com',
+		'parent-dedup-3.test.example.com',
+	];
+	// Children must be removed
+	let children = [
+		'child.parent-dedup-1.test.example.com',
+		'sub.child.parent-dedup-2.test.example.com',
+		'deep.sub.parent-dedup-3.test.example.com',
+	];
+
+	let results = [];
+	for (let p in parents) {
+		let found = index(content, 'server=/' + p + '/') >= 0;
+		push(results, sprintf('parent %s: %s', p, found ? 'PRESENT' : 'MISSING'));
+	}
+	for (let c in children) {
+		let found = index(content, 'server=/' + c + '/') >= 0;
+		push(results, sprintf('child %s: %s', c, found ? 'PRESENT (BAD)' : 'REMOVED'));
+	}
+	print(join('\n', results) + '\n');
+}
+-- End --
+
+-- Expect stdout --
+parent parent-dedup-1.test.example.com: PRESENT
+parent parent-dedup-2.test.example.com: PRESENT
+parent parent-dedup-3.test.example.com: PRESENT
+child child.parent-dedup-1.test.example.com: REMOVED
+child sub.child.parent-dedup-2.test.example.com: REMOVED
+child deep.sub.parent-dedup-3.test.example.com: REMOVED
+-- End --

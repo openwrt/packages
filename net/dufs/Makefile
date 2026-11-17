@@ -1,0 +1,57 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# Copyright (C) 2024-2025 ImmortalWrt.org
+
+include $(TOPDIR)/rules.mk
+
+PKG_NAME:=dufs
+PKG_VERSION:=0.47.0
+PKG_RELEASE:=2
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-vendor.tar.zst
+PKG_SOURCE_URL:=@OPENWRT
+PKG_SOURCE_PROTO:=cargo-vendor-github
+PKG_VENDOR_REPO:=sigoden/dufs
+PKG_VENDOR_TAG:=v$(PKG_VERSION)
+PKG_VENDOR_HASH:=bab9d4fa1654adc6c88523b61bb8697f575334248cf554282e1f87e2329c0569
+PKG_HASH:=33b7618c4050e247afcb00f8a8ba346081bede821cb466be7ebfda82dc1c6c8a
+
+PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
+PKG_LICENSE:=Apache-2.0 MIT
+PKG_LICENSE_FILES:=LICENSE-APACHE LICENSE-MIT
+
+PKG_BUILD_PARALLEL:=1
+
+include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/rust-package.mk
+
+define Package/dufs
+  SECTION:=net
+  CATEGORY:=Network
+  SUBMENU:=Web Servers/Proxies
+  TITLE:=A distinctive utility file server
+  URL:=https://github.com/sigoden/dufs
+  DEPENDS:=$(RUST_PKG_DEPENDS) @!(i386||mips64) +liblzma
+endef
+
+define Package/dufs/description
+  Dufs is a distinctive utility file server that supports static
+  serving, uploading, searching, accessing control, webdav...
+endef
+
+define Package/dufs/conffiles
+/etc/config/dufs
+endef
+
+define Package/dufs/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/dufs $(1)/usr/bin/
+
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) $(CURDIR)/files/dufs.config $(1)/etc/config/dufs
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) $(CURDIR)/files/dufs.init $(1)/etc/init.d/dufs
+endef
+
+$(eval $(call RustBinPackage,dufs))
+$(eval $(call BuildPackage,dufs))

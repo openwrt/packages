@@ -1,0 +1,55 @@
+From b2c073a8f373e40c475aa130e8a9ca0814c080dd Mon Sep 17 00:00:00 2001
+From: Godfrey Chung <godfrey.chung@acs.com.hk>
+Date: Mon, 7 Sep 2020 14:57:28 +0800
+Subject: [PATCH] towitoko: do not use "bool" type.
+
+Merge from ccid 1.4.33.
+---
+ src/towitoko/atr.h     | 2 +-
+ src/towitoko/defines.h | 4 ----
+ src/towitoko/pps.c     | 4 ++--
+ 3 files changed, 3 insertions(+), 7 deletions(-)
+
+--- a/src/towitoko/atr.h
++++ b/src/towitoko/atr.h
+@@ -82,7 +82,7 @@ typedef struct
+   struct
+   {
+     BYTE value;
+-    bool present;
++    int present;
+   }
+   ib[ATR_MAX_PROTOCOLS][ATR_MAX_IB], TCK;
+   unsigned pn;
+--- a/src/towitoko/defines.h
++++ b/src/towitoko/defines.h
+@@ -48,9 +48,5 @@
+ 
+ #include <wintypes.h>
+ 
+-#ifndef __cplusplus
+-typedef int                bool;
+-#endif
+-
+ #endif /* DEFINES_H */
+ 
+--- a/src/towitoko/pps.c
++++ b/src/towitoko/pps.c
+@@ -41,7 +41,7 @@
+  * Not exported funtions declaration
+  */
+ 
+-static bool PPS_Match (BYTE * request, unsigned len_request, BYTE * reply, unsigned len_reply);
++static int PPS_Match (BYTE * request, unsigned len_request, BYTE * reply, unsigned len_reply);
+ 
+ static unsigned PPS_GetLength (BYTE * block);
+ 
+@@ -91,7 +91,7 @@ PPS_Exchange (int lun, BYTE * params, un
+   return ret;
+ }
+ 
+-static bool
++static int
+ PPS_Match (BYTE * request, unsigned len_request, BYTE * confirm, unsigned len_confirm)
+ {
+   /* See if the reply differs from request */

@@ -1,0 +1,33 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2009-2026 OpenWrt.org
+
+START=99
+STOP=80
+
+USE_PROCD=1
+
+HAPROXY_BIN="/usr/sbin/haproxy"
+HAPROXY_CONFIG="/etc/haproxy.cfg"
+
+start_service() {
+	procd_open_instance
+	procd_set_param respawn
+	procd_set_param file "$HAPROXY_CONFIG"
+	procd_set_param reload_signal USR2
+	procd_set_param command $HAPROXY_BIN -q -W -db -f "$HAPROXY_CONFIG"
+	procd_close_instance
+}
+
+extra_command "force_reload" "Forcibly reload configuration files"
+force_reload() {
+	procd_send_signal haproxy '*' USR2
+}
+
+extra_command "check" "Check haproxy config"
+check() {
+	$HAPROXY_BIN -c -q -V -f $HAPROXY_CONFIG
+}
+
+service_triggers() {
+	procd_add_raw_trigger acme.renew 5000 /etc/init.d/haproxy force_reload
+}

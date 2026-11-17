@@ -1,0 +1,32 @@
+From 15f0efab1c95eafa76e960b64f11df2d18a10ea6 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 10 Oct 2025 01:19:01 +0100
+Subject: [PATCH 6/8] meson: allow not building and installing handbook
+
+Introduce meson option exclude-handbook to not build and install the
+GNUnet handbook.
+---
+ doc/meson.build | 4 +++-
+ meson.options   | 1 +
+ 2 files changed, 4 insertions(+), 1 deletion(-)
+
+--- a/doc/meson.build
++++ b/doc/meson.build
+@@ -1,4 +1,6 @@
+-subdir('handbook')
++if false == get_option('exclude-handbook')
++    subdir('handbook')
++endif
+ if false == get_option('exclude-manpages')
+     subdir('man')
+ endif
+--- a/meson.options
++++ b/meson.options
+@@ -2,6 +2,7 @@
+ option('monolith', type : 'boolean', value : false, description: 'Build a single, monolithic libgnunet shlib')
+ option('testbed', type : 'boolean', value : false, description: 'Build the testbed')
+ option('exclude-manpages', type : 'boolean', value : false, description: 'Do not install manpages')
++option('exclude-handbook', type : 'boolean', value : false, description: 'Do not install handbook')
+ option('experimental', type : 'boolean', value : false, description: 'Build experimental components')
+ option('malicious', type : 'boolean', value : false, description: 'Enable malicious code paths')
+ option('benchmarks', type : 'boolean', value : false, description: 'Enable benchmarking')

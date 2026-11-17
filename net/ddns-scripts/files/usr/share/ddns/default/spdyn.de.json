@@ -1,0 +1,11 @@
+{
+	"name": "spdyn.de",
+	"ipv4": {
+		"url": "https://update.spdyn.de/nic/update?hostname=[DOMAIN]&myip=[IP]&user=[USERNAME]&pass=[PASSWORD]",
+		"answer": "good|nochg"
+	},
+	"ipv6": {
+		"url": "https://update.spdyn.de/nic/update?hostname=[DOMAIN]&myip=[IP]&user=[USERNAME]&pass=[PASSWORD]",
+		"answer": "good|nochg"
+	}
+}

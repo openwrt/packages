@@ -1,0 +1,46 @@
+From 3fabaeec684fae934055b85c2f91c1bd700c71b0 Mon Sep 17 00:00:00 2001
+From: Alexandru Ardelean <alex@shruggie.ro>
+Date: Tue, 11 Aug 2026 10:30:00 +0300
+Subject: [PATCH] setup.py: drop the pybind11 build dependency
+
+pybind11 is only used for pybind11.setup_helpers.ParallelCompile, a
+build-time helper that parallelises the C extension compilation. Pillow
+ships no pybind11 bindings, so remove the import, the ParallelCompile
+call and the pybind11 build-system requirement; the C extensions are
+then compiled serially.
+
+Signed-off-by: Alexandru Ardelean <alex@shruggie.ro>
+---
+ pyproject.toml | 1 -
+ setup.py       | 3 ---
+ 2 files changed, 4 deletions(-)
+
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -1,7 +1,6 @@
+ [build-system]
+ build-backend = "backend"
+ requires = [
+-  "pybind11",
+   "setuptools>=77",
+ ]
+ backend-path = [
+--- a/setup.py
++++ b/setup.py
+@@ -17,7 +17,6 @@ import sys
+ import warnings
+ from collections.abc import Iterator
+ 
+-from pybind11.setup_helpers import ParallelCompile
+ from setuptools import Extension, setup
+ from setuptools.command.build_ext import build_ext
+ 
+@@ -32,8 +31,6 @@ while sys.argv[-1].startswith("--pillow-
+     _, key, value = sys.argv.pop().split("=", 2)
+     configuration.setdefault(key, []).append(value)
+ 
+-default = int(configuration.get("parallel", ["0"])[-1])
+-ParallelCompile("MAX_CONCURRENCY", default).install()
+ 
+ 
+ def get_version() -> str:

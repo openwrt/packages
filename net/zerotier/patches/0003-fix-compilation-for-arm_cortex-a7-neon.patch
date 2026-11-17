@@ -1,0 +1,20 @@
+From 02bd2334eb3d623f4af0afb5ec14e90410ad309b Mon Sep 17 00:00:00 2001
+From: Moritz Warning <moritzwarning@web.de>
+Date: Fri, 12 Sep 2025 10:35:32 +0200
+Subject: [PATCH 3/6] fix compilation for arm_cortex a7 neon
+
+---
+ node/Constants.hpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/node/Constants.hpp
++++ b/node/Constants.hpp
+@@ -118,7 +118,7 @@
+ #include <xmmintrin.h>
+ #endif
+ 
+-#if (defined(__ARM_NEON) || defined(__ARM_NEON__) || defined(ZT_ARCH_ARM_HAS_NEON))
++#if (defined(__aarch64__) || defined(ZT_ARCH_ARM_HAS_NEON))
+ #if (defined(__APPLE__) && ! defined(__LP64__)) || (defined(__ANDROID__) && defined(__arm__))
+ #ifdef ZT_ARCH_ARM_HAS_NEON
+ #undef ZT_ARCH_ARM_HAS_NEON

@@ -1,0 +1,79 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2007-2011 OpenWrt.org
+
+USE_PROCD=1
+START=80
+
+start_instance() {
+	local section="$1"
+	local forwarding
+
+	config_get_bool enabled     "$section" enabled 1
+	[ "$enabled" != "1" ] && return 0
+
+	config_get ssh              "$section" ssh
+	if [ -z "$ssh" ]; then
+		echo "autossh: ssh option is required"
+		return 1
+	fi
+
+	config_get localhost       "$section" localhost localhost
+	config_get localport       "$section" localport
+	config_get remotehost      "$section" remotehost
+	config_get remoteport      "$section" remoteport
+	config_get monitorport     "$section" monitorport 20000
+	config_get poll            "$section" poll 600
+	config_get gatetime        "$section" gatetime 30
+	config_get first_poll      "$section" first_poll 
+	config_get loglevel        "$section" loglevel
+	config_get logfile         "$section" logfile
+	config_get maxlifetime     "$section" maxlifetime
+	config_get maxstart        "$section" maxstart
+	config_get message         "$section" message
+	config_get_bool ntservice  "$section" ntservice 0
+	config_get path            "$section" path
+	config_get pidfile         "$section" pidfile
+
+	if [ -n "$localport" ] && [ -n "$remoteport" ]; then
+		if [ -n "$remotehost" ]; then
+			forwarding="-L ${localport}:${remotehost}:${remoteport}"
+		else
+			forwarding="-R ${remoteport}:${localhost}:${localport}"
+		fi
+	elif [ -n "$localport" ] || [ -n "$remoteport" ]; then
+		echo "autossh: both localport and remoteport options are required"
+		return 1
+	fi
+
+	procd_open_instance "$section"
+	procd_set_param command /usr/sbin/autossh ${forwarding} ${ssh}
+	procd_set_param respawn ${respawn_threshold:-3600} ${respawn_timeout:-5} ${respawn_retry:-5}
+	[ -n "$pidfile" ] && procd_set_param pidfile "$pidfile"
+
+	[ -n "$monitorport" ] && procd_append_param env "AUTOSSH_PORT=$monitorport"
+	[ -n "$poll" ] && procd_append_param env "AUTOSSH_POLL=$poll"
+	[ -n "$gatetime" ] && procd_append_param env "AUTOSSH_GATETIME=$gatetime"
+	[ -n "$first_poll" ] && procd_append_param env "AUTOSSH_FIRST_POLL=$first_poll"
+	[ -n "$loglevel" ] && procd_append_param env "AUTOSSH_LOGLEVEL=$loglevel"
+	[ -n "$logfile" ] && procd_append_param env "AUTOSSH_LOGFILE=$logfile"
+	[ -n "$maxlifetime" ] && procd_append_param env "AUTOSSH_MAXLIFETIME=$maxlifetime"
+	[ -n "$maxstart" ] && procd_append_param env "AUTOSSH_MAXSTART=$maxstart"
+	[ -n "$message" ] && procd_append_param env "AUTOSSH_MESSAGE=$message"
+	[ "$ntservice" == "1" ] && procd_append_param env "AUTOSSH_NTSERVICE=yes"
+	[ -n "$path" ] && procd_append_param env "AUTOSSH_PATH=$path"
+	[ -n "$pidfile" ] && procd_append_param env "AUTOSSH_PIDFILE=$pidfile"
+
+	procd_close_instance
+}
+
+start_service() {
+	local instance=$1
+
+	config_load 'autossh'
+
+	if [ -n "$instance" ]; then
+		start_instance "$1"
+	else
+		config_foreach start_instance 'autossh'
+	fi
+}

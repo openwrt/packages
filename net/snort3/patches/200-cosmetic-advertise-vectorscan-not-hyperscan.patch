@@ -1,0 +1,11 @@
+--- a/src/main/process.cc
++++ b/src/main/process.cc
+@@ -704,7 +704,7 @@ int DisplayBanner()
+     LogMessage("           Copyright (C) 1998-2013 Sourcefire, Inc., et al.\n");
+     LogMessage("           Using DAQ version %s\n", daq_version_string());
+ #ifdef HAVE_HYPERSCAN
+-    LogMessage("           Using Hyperscan version %s\n", hs_version());
++    LogMessage("           Using Vectorscan version %s\n", hs_version());
+ #endif
+ #ifdef HAVE_JEMALLOC
+     const char* jv;

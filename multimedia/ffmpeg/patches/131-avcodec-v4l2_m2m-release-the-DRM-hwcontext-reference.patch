@@ -1,0 +1,30 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 13 Nov 2026 15:11:35 +0000
+Subject: [PATCH] avcodec/v4l2_m2m: release the DRM hwcontext references
+
+v4l2_decode_init() allocates a DRM hwdevice context, and
+ff_v4l2_buffer_initialize() a hwframes context for the output and for
+the capture queue. Nothing drops them, so every decoder that is opened
+with DRM PRIME output leaks all three. Unreference them in
+v4l2_m2m_destroy_context(), which runs once the decoder is closed and
+the last exported frame is freed. A frame holds its own reference to
+the frames context, which in turn holds one to the device.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ libavcodec/v4l2_m2m.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+--- a/libavcodec/v4l2_m2m.c
++++ b/libavcodec/v4l2_m2m.c
+@@ -253,6 +253,9 @@ static void v4l2_m2m_destroy_context(AVR
+     V4L2m2mContext *s = context;
+ 
+     ff_v4l2_context_release(&s->capture);
++    av_buffer_unref(&s->capture.frames_ref);
++    av_buffer_unref(&s->output.frames_ref);
++    av_buffer_unref(&s->device_ref);
+     sem_destroy(&s->refsync);
+ 
+     if (s->fd >= 0)

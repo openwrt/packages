@@ -1,0 +1,15 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -59,7 +59,11 @@ find_package(Threads REQUIRED)
+ 
+ include(FindBoost)
+ find_package(Boost REQUIRED
+-             COMPONENTS filesystem system iostreams program_options regex)
++             COMPONENTS filesystem iostreams program_options regex)
++if(Boost_MAJOR_VERSION EQUAL 1 AND Boost_MINOR_VERSION LESS 69)
++  list(APPEND BOOST_REQUIRED_COMPONENTS system)
++  find_package(Boost REQUIRED COMPONENTS ${BOOST_REQUIRED_COMPONENTS})
++endif()
+ 
+ # HEADER CHECKS
+ include(CheckIncludeFileCXX)

@@ -1,0 +1,40 @@
+From 2b0b4f7fdb5fdefd13c5cbdeb159881da3098c96 Mon Sep 17 00:00:00 2001
+From: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Date: Sat, 15 Aug 2026 09:11:08 +0200
+Subject: [PATCH] PPC: Fix ipairs() on soft-float targets
+
+The soft-float branch of the ipairs_aux fast function loads the array
+slot value from WORD_HI instead of WORD_LO. On big-endian targets,
+WORD_HI contains the itype while the value word is in WORD_LO, so the
+itype is loaded twice and the actual value is never loaded.
+
+Every element therefore comes back carrying the itype in its payload.
+Numbers surface as -14, the LJ_TNUMX tag read as an int32. For GC
+types the payload is the GCref, so the tag becomes a fabricated
+pointer that tostring() then dereferences.
+
+The original soft-float code used a hardcoded 4(TMP1), which is
+WORD_LO on big-endian. Commit 2763a421 ("Patch for PPC64 support")
+rewrote it as WORD_HI. Upstream LuaJIT is unaffected.
+
+Reproducer on Turris 1.x (e500v2, 32-bit big-endian, soft-float):
+
+  $ luajit -e 'local s=0 for i,v in ipairs({10,20,30}) do s=s+v end print(s)'
+  -42     -- expected 60
+
+Signed-off-by: Josef Schlehofer <pepe.schlehofer@gmail.com>
+---
+ src/vm_ppc.dasc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/src/vm_ppc.dasc
++++ b/src/vm_ppc.dasc
+@@ -1833,7 +1833,7 @@ static void build_subroutines(BuildCtx *
+   |  lwz TMP2, WORD_HI(TMP1)
+   |.else
+   |  lwzux TMP2, TMP1, TMP3
+-  |  lwz TMP3, WORD_HI(TMP1)
++  |  lwz TMP3, WORD_LO(TMP1)
+   |.endif
+   |1:
+   |  checknil TMP2

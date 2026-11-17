@@ -1,0 +1,67 @@
+From f631da6379e6562e1a3b057d06554056cd59e33b Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 16 Oct 2026 12:30:07 +0100
+Subject: [PATCH] pipeline: rkisp2: Propagate the colour space to the ISP and
+ main path
+
+The colour space requested by the application is passed to the IPA,
+which selects the colour space conversion coefficients from it, but the
+ISP source pad and the main path keep their default colour space, so
+the kernel has no way to configure the output range to match and the
+formats reported down the pipeline are wrong.
+
+Validate the colour spaces of the configuration and set the stream colour
+space on the ISP source pad and on the main path video node.
+
+Assisted-by: LLM
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ src/libcamera/pipeline/rkisp2/rkisp2.cpp | 12 +++++++++++-
+ 1 file changed, 11 insertions(+), 1 deletion(-)
+
+--- a/src/libcamera/pipeline/rkisp2/rkisp2.cpp
++++ b/src/libcamera/pipeline/rkisp2/rkisp2.cpp
+@@ -519,11 +519,13 @@ CameraConfiguration::Status RkISP2Camera
+ {
+ 	const CameraSensor *sensor = data_->sensor_;
+ 	std::vector<unsigned int> mbusCodes;
+-	Status status = Valid;
++	Status status;
+ 
+ 	if (config_.empty())
+ 		return Invalid;
+ 
++	status = validateColorSpaces(ColorSpaceFlag::StreamsShareColorSpace);
++
+ 	/*
+ 	 * Make sure that if a sensor configuration has been requested it
+ 	 * is valid.
+@@ -779,6 +781,7 @@ int PipelineHandlerRkISP2::configure(Cam
+ 
+ 	format.code = formatToMediaBus.at(cfg.pixelFormat);
+ 	format.size = cfg.size;
++	format.colorSpace = cfg.colorSpace;
+ 	LOG(RkISP2, Debug) << "Configuring ISP output with: " << format;
+ 	ret = isp_->setFormat(5, &format);
+ 	if (ret)
+@@ -787,6 +790,7 @@ int PipelineHandlerRkISP2::configure(Cam
+ 	V4L2DeviceFormat outputFormat;
+ 	outputFormat.fourcc = mainPath_->toV4L2PixelFormat(cfg.pixelFormat);
+ 	outputFormat.size = cfg.size;
++	outputFormat.colorSpace = cfg.colorSpace;
+ 
+ 	LOG(RkISP2, Debug) << "Configuring main path with: " << outputFormat;
+ 	ret = mainPath_->setFormat(&outputFormat);
+@@ -800,6 +804,12 @@ int PipelineHandlerRkISP2::configure(Cam
+ 		return -EINVAL;
+ 	}
+ 
++	if (outputFormat.colorSpace != cfg.colorSpace)
++		LOG(RkISP2, Debug)
++			<< "Main path reports colour space "
++			<< ColorSpace::toString(outputFormat.colorSpace)
++			<< " for " << ColorSpace::toString(cfg.colorSpace);
++
+ 	cfg.setStream(&data->stream_);
+ 	cfg.stride = outputFormat.planes[0].bpl;
+ 

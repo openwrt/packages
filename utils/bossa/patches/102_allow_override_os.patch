@@ -1,0 +1,18 @@
+commit 7b1ee33f339bd0d69a7295facda7b3d2b4b55d1a
+Author: Sergey V. Lobanov <sergey@lobanov.in>
+Date:   Sat Jan 8 14:22:21 2022 +0300
+
+    allow override OS to support cross-compile compilation if build OS
+    host OS are different (e.g. build on MacOS for Linux)
+
+--- a/Makefile
++++ b/Makefile
+@@ -28,7 +28,7 @@ INSTALLDIR=install
+ #
+ # Determine OS
+ #
+-OS:=$(shell uname -s | cut -c -7)
++OS?=$(shell uname -s | cut -c -7)
+ 
+ #
+ # Windows rules

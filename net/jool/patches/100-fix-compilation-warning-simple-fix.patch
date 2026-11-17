@@ -1,0 +1,22 @@
+--- a/src/mod/common/xlator.c
++++ b/src/mod/common/xlator.c
+@@ -891,7 +891,7 @@ void xlator_put(struct xlator *jool)
+ static bool offset_equals(struct instance_entry_usr *offset,
+ 		struct jool_instance *instance)
+ {
+-	return (offset->ns == ((PTR_AS_UINT_TYPE)instance->jool.ns & 0xFFFFFFFF))
++	return (offset->ns == ((uintptr_t)instance->jool.ns & 0xFFFFFFFF))
+ 			&& (strcmp(offset->iname, instance->jool.iname) == 0);
+ }
+ 
+--- a/src/mod/common/nl/instance.c
++++ b/src/mod/common/nl/instance.c
+@@ -38,7 +38,7 @@ static int serialize_instance(struct xla
+ 	if (!root)
+ 		return 1;
+ 
+-	error = nla_put_u32(skb, JNLAIE_NS, ((PTR_AS_UINT_TYPE)entry->ns) & 0xFFFFFFFF);
++	error = nla_put_u32(skb, JNLAIE_NS, ((uintptr_t)entry->ns) & 0xFFFFFFFF);
+ 	if (error)
+ 		goto cancel;
+ 	error = nla_put_u8(skb, JNLAIE_XF, xlator_flags2xf(entry->flags));

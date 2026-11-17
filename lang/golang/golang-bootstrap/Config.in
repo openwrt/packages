@@ -1,0 +1,47 @@
+menu "Configuration"
+
+config GOLANG_EXTERNAL_BOOTSTRAP_ROOT
+	string "External bootstrap Go root directory"
+	default ""
+	help
+	  Path to a working Go tree (>= Go 1.4), with bin, pkg, and src
+	  subdirectories and the Go compiler in bin/go.
+
+	  If set, the existing Go installation will be used to compile host
+	  (buildroot) Go.
+
+	  Leave blank to compile the default bootstrap Go.
+
+config GOLANG_BUILD_BOOTSTRAP
+	bool "Build bootstrap instead of using an external one"
+	default y
+	help
+	  When enabled, build the local bootstrap instead of using an external one
+	  for host Go. If 'External bootstrap Go root directory' is set, skip the
+	  initial 1.4 step.
+
+	  When disabled, let Go auto-detect the toolchain or use the toolchain
+	  specified in 'External bootstrap Go root directory' to skip building the
+	  bootstrap and build host Go using that toolchain directly. Configured
+	  toolchain must be compatible with the current version of Go.
+
+config GOLANG_BUILD_CACHE_DIR
+	string "Go build cache directory"
+	default ""
+	help
+	  Path where Go should store its build cache.
+
+	  If not set, uses '$(TMP_DIR)/go-build'.
+
+config GOLANG_MOD_CACHE_WORLD_READABLE
+	bool "Ensure Go module cache is world-readable"
+	default n
+
+config GOLANG_SPECTRE
+	bool "Enable Spectre mitigations"
+	default n
+	depends on x86_64
+	help
+	  Currently only available for x86-64 (amd64).
+
+endmenu

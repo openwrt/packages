@@ -1,0 +1,11 @@
+--- a/Makefile.PL
++++ b/Makefile.PL
+@@ -12,6 +12,8 @@ use File::Spec::Functions qw(catfile);
+ use Symbol qw(gensym);
+ use Text::Wrap;
+ 
++$ENV{OPENSSL_PREFIX} = $ENV{STAGING_PREFIX};
++
+ # According to http://cpanwiki.grango.org/wiki/CPANAuthorNotes, the ideal
+ # behaviour to exhibit when a prerequisite does not exist is to use exit code 0
+ # to ensure smoke testers stop immediately without reporting a FAIL; in all

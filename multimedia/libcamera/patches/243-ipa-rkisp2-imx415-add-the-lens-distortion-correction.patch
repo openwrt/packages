@@ -1,0 +1,28 @@
+From 9d5497cc9e8027aa8825dd184f2a7775f4f69180 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Thu, 5 Nov 2026 12:59:52 +0000
+Subject: [PATCH 243/243] ipa: rkisp2: imx415: Add the lens distortion
+ correction
+
+The lens of an IMX415 module depends on the board, so enable the
+DistortionCorrection algorithm without a lens model: the rkisp2 lens
+controls set the model at start.
+
+Assisted-by: LLM
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ src/ipa/rkisp2/data/imx415.yaml | 3 +++
+ 1 file changed, 3 insertions(+)
+
+--- a/src/ipa/rkisp2/data/imx415.yaml
++++ b/src/ipa/rkisp2/data/imx415.yaml
+@@ -1359,6 +1359,9 @@ algorithms:
+           dog-alpha: [ 0, 0, 0, 0, 0, 0, 0, 0 ]
+           direct-filter-coeff: [ 0, 0.4375, 0.125, 0.4375, 0 ]
+           dog-kernel: [ -0.0625, -0.109375, -0.140625, -0.109375, -0.0625, -0.109375, 0.078125, 0.234375, 0.078125, -0.109375, -0.140625, 0.234375, 0.4375, 0.234375, -0.140625, -0.109375, 0.078125, 0.234375, 0.078125, -0.109375, -0.0625, -0.109375, -0.140625, -0.109375, -0.0625 ]
++  - DistortionCorrection:
++      # the lens depends on the board; it comes with the rkisp2 Lens controls
++      model: none
+   - Awb:
+       algorithm: "grey"
+       AwbMode:

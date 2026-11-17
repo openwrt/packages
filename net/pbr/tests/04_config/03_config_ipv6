@@ -1,0 +1,31 @@
+#!/bin/bash
+# Test: IPv6 config variations
+. "$(dirname "$0")/../lib/setup.sh"
+
+oneTimeTearDown() { rm -rf "${MOCK_ROOT:-}"; }
+
+testIpv6Enabled() {
+	cp "$MOCK_ROOT/etc/config/pbr" "$MOCK_ROOT/etc/config/pbr.bak"
+	sed -i "s/option ipv6_enabled '0'/option ipv6_enabled '1'/" "$MOCK_ROOT/etc/config/pbr"
+
+	_CONFIG_LOADED_PKG=""
+	loadPackageConfigFlag=""
+	load_package_config
+
+	assertNotNull "ipv6_enabled is set" "${ipv6_enabled:-}"
+	assertEquals "uplink_interface6" "wan6" "${uplink_interface6:-}"
+	assertTrue "wan6 detected" "is_wan6 'wan6'"
+
+	cp "$MOCK_ROOT/etc/config/pbr.bak" "$MOCK_ROOT/etc/config/pbr"
+}
+
+testIpv6Disabled() {
+	_CONFIG_LOADED_PKG=""
+	loadPackageConfigFlag=""
+	load_package_config
+
+	assertNull "ipv6_enabled unset" "${ipv6_enabled:-}"
+	assertNull "uplink_interface6 unset" "${uplink_interface6:-}"
+}
+
+. shunit2

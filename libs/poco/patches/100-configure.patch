@@ -1,0 +1,15 @@
+--- a/configure
++++ b/configure
+@@ -249,9 +249,9 @@ while [ $# -ge 1 ]; do
+ 		;;
+ 
+ 	*)
+-		showhelp
+-		exit 1
+-		;;
++#		showhelp
++#		exit 1
++#		;;
+ 	esac
+ 
+  	shift

@@ -1,0 +1,40 @@
+From efb7a3f3dcde73d5a789d11743d02b26cfe671a2 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 16 Oct 2026 14:39:21 +0100
+Subject: [PATCH] ipa: proxy: Exit the worker when the IPC channel is closed
+
+An application that terminates without destroying its camera manager,
+for instance when it is killed by a signal, leaves its IPA proxy workers
+running with the buffers they have mapped. Stop the worker's event loop
+when the IPC socket reports that the other side has closed the channel.
+
+Assisted-by: LLM
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ .../libcamera_templates/module_ipa_proxy_worker.cpp.tmpl  | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+--- a/utils/codegen/ipc/generators/libcamera_templates/module_ipa_proxy_worker.cpp.tmpl
++++ b/utils/codegen/ipc/generators/libcamera_templates/module_ipa_proxy_worker.cpp.tmpl
+@@ -123,6 +123,13 @@ public:
+ 		}
+ 	}
+ 
++	void disconnected()
++	{
++		LOG({{proxy_worker_name}}, Warning)
++			<< "IPC channel closed by the pipeline handler, exiting";
++		exit_ = true;
++	}
++
+ 	int init(std::unique_ptr<IPAModule> &ipam, UniqueFD socketfd)
+ 	{
+ 		if (socket_.bind(std::move(socketfd)) < 0) {
+@@ -131,6 +138,7 @@ public:
+ 			return EXIT_FAILURE;
+ 		}
+ 		socket_.readyRead.connect(this, &{{proxy_worker_name}}::readyRead);
++		socket_.disconnected.connect(this, &{{proxy_worker_name}}::disconnected);
+ 
+ 		ipa_ = dynamic_cast<{{interface_name}} *>(ipam->createInterface());
+ 		if (!ipa_) {

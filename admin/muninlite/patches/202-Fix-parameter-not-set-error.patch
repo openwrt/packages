@@ -1,0 +1,21 @@
+From 903869d10cd58891c77e9a633ab1fc5eb2710abb Mon Sep 17 00:00:00 2001
+From: Daniel Alder <daald@users.noreply.github.com>
+Date: Wed, 13 Dec 2023 17:43:24 +0100
+Subject: [PATCH 202/204] Fix "parameter not set" error
+
+./muninlite: 651: INTERFACE_NAMES_OVERRIDE: parameter not set
+---
+ muninlite.in | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/muninlite.in
++++ b/muninlite.in
+@@ -78,7 +78,7 @@ RES=""
+ for PLUG in $PLUGINS; do
+   case "$PLUG" in
+     if_|if_err_)
+-      if [ -z "$INTERFACE_NAMES_OVERRIDE" ]; then
++      if [ -z "${INTERFACE_NAMES_OVERRIDE:-}" ]; then
+         interface_names=$(sed 's/^ *//; s/:.*$//; / /d; /^lo$/d' /proc/net/dev)
+       else
+         interface_names="$INTERFACE_NAMES_OVERRIDE"

@@ -1,0 +1,22 @@
+config ALFRED_NEEDS_lua
+	bool
+
+config ALFRED_NEEDS_libgps
+	bool
+
+config PACKAGE_ALFRED_VIS
+	bool "enable vis server for alfred"
+	depends on PACKAGE_alfred
+	default y
+
+config PACKAGE_ALFRED_BATHOSTS
+	bool "enable autogeneration of /etc/bat-hosts"
+	depends on PACKAGE_alfred
+	select ALFRED_NEEDS_lua
+	default n
+
+config PACKAGE_ALFRED_GPSD
+	bool "enable gpsd service for alfred"
+	depends on PACKAGE_alfred
+	select ALFRED_NEEDS_libgps
+	default n
