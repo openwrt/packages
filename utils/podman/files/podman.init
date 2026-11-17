@@ -87,13 +87,64 @@ graphroot_mounted() {
 	return 1
 }
 
+# Print the filesystem type of the mount on which graphroot is located.
+# graphroot might not exist yet, so use its nearest existing parent.
+graphroot_fstype() {
+	local path="$1"
+	local dev mountpoint type rest
+	local match=""
+	local fstype=""
+
+	# graphroot is created by podman on the first start. A directory that
+	# does not exist yet cannot be a mount point, it will be created on the
+	# filesystem of its parent. So strip the last path component until an
+	# existing directory is found. Stop on an empty path, as it does not
+	# get any shorter and would loop forever.
+	while [ -n "$path" ] && [ ! -d "$path" ]; do
+		path="${path%/*}"
+	done
+
+	# /proc/mounts contains the resolved paths, so resolve symlinks like
+	# /var -> /tmp. An empty path means that only / is left.
+	path="$(readlink -f "${path:-/}")"
+
+	# The order in /proc/mounts does not follow the path hierarchy, e.g.
+	# the root overlay is listed after /tmp. So the longest mount point
+	# which contains the path is the one on which it is located.
+	while read -r dev mountpoint type rest; do
+		case "${path}/" in
+		"${mountpoint%/}/"*)
+			if [ ${#mountpoint} -ge ${#match} ]; then
+				match="$mountpoint"
+				fstype="$type"
+			fi
+			;;
+		esac
+	done < /proc/mounts
+
+	echo "$fstype"
+}
+
 # Check graphroot of the uci storage config before podman is started.
 graphroot_ready() {
 	local graphroot
+	local fstype
 
 	config_get graphroot storage graphroot "$GRAPHROOT"
 
 	graphroot_mounted "$graphroot" || return 1
+
+	fstype="$(graphroot_fstype "$graphroot")"
+	case "$fstype" in
+	tmpfs)
+		logger -t "$NAME" -p daemon.warn \
+			"$graphroot is on tmpfs, containers are lost on reboot"
+		;;
+	*)
+		logger -t "$NAME" -p daemon.info \
+			"$graphroot is on $fstype, containers are persistent"
+		;;
+	esac
 
 	return 0
 }
