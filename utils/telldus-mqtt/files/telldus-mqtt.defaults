@@ -1,0 +1,24 @@
+#!/bin/sh
+# Copy the old settings to the UCI config telldus-mqtt. Safe to run again:
+# the scripts do nothing if the UCI config has the data already.
+# This script must not fail: the package install runs it.
+
+SCRIPTS=/usr/share/telldus-mqtt
+JSON=/etc/telldus-mqtt/telldus-mqtt.json
+IMPORT_PENDING=/etc/telldus-mqtt/tellstick-import-pending
+
+[ -f $JSON ] && ucode $SCRIPTS/telldus-mqtt-json2uci.uc $JSON /etc/config
+
+# The serial of this TellStick, if the new daemon ran before
+serial=$(jsonfilter -i /var/run/telldus-mqtt.json -e '@.gateway.serial' 2>/dev/null)
+
+# Without the serial the import can stop (more TellSticks with the same
+# switch ids). Then the init script tries again when it knows the serial.
+if ucode $SCRIPTS/telldus-mqtt-tellstick2uci.uc /etc/tellstick.conf /etc/config "$serial"; then
+	rm -f $IMPORT_PENDING
+else
+	mkdir -p /etc/telldus-mqtt
+	touch $IMPORT_PENDING
+fi
+
+exit 0
