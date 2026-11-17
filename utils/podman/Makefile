@@ -35,7 +35,7 @@ define Package/podman
   URL:=https://podman.io
   DEPENDS:=$(GO_ARCH_DEPENDS) +conmon +libgpgme +libseccomp +nsenter \
 	+zoneinfo-simple +kmod-veth +passt +netavark +aardvark-dns \
-	+catatonit +crun +PODMAN_SELINUX_SUPPORT:libselinux
+	+catatonit +crun +PODMAN_SELINUX_SUPPORT:libselinux +yq
 endef
 
 define Package/podman/description
@@ -58,6 +58,7 @@ define Package/podman/conffiles
 /etc/containers/registries.conf
 /etc/containers/containers.conf
 /etc/containers/networks/podman.json
+/etc/containers/kube/
 endef
 
 GO_PKG_TAGS:=seccomp exclude_graphdriver_devicemapper apparmor
@@ -104,6 +105,7 @@ define Package/podman/install
 	$(INSTALL_DATA) $(DL_DIR)/default-policy.json-362f70b056 $(1)/etc/containers/policy.json
 	$(INSTALL_DATA) ./files/default-registries.conf $(1)/etc/containers/registries.conf
 	$(INSTALL_DATA) ./files/containers.conf $(1)/etc/containers/containers.conf
+	$(INSTALL_DIR) $(1)/etc/containers/kube
 	$(INSTALL_DIR) $(1)/etc/containers/networks
 	$(INSTALL_CONF) ./files/podman.json $(1)/etc/containers/networks
 	$(INSTALL_DIR) $(1)/usr/share/containers

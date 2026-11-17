@@ -7,6 +7,7 @@ NAME=podman
 PROG=/usr/bin/podman
 CONF_DIR=/var/etc/containers
 GRAPHROOT=/var/lib/containers/storage
+KUBE_DIR=/etc/containers/kube
 
 toml_list_item() {
 	printf '  "%s",\n' "$1"
@@ -149,6 +150,63 @@ graphroot_ready() {
 	return 0
 }
 
+# Print the image of every container of a kube file which does not have
+# imagePullPolicy Never. Otherwise a missing image is pulled and an image
+# with the tag :latest or without a tag is always checked against the
+# registry. Both delay the start if the network is not available at boot.
+# Every map with the key image is a container, so all documents and
+# containers, initContainers and templates are covered.
+kube_pull_images() {
+	local file="$1"
+
+	yq eval --no-doc '.. | select(tag == "!!map") | select(has("image")) |
+		select(.imagePullPolicy != "Never") | .image' "$file"
+}
+
+# Create the pods of a kube section from <KUBE_DIR>/<section>.yaml.
+# --replace recreates existing pods, so that changes of the file are
+# applied. The writable layer of the containers is lost, volumes are
+# kept. A disabled section removes its pods, as they would otherwise be
+# started because of their restart policy always.
+# A file is only played if no image is pulled, see kube_pull_images().
+# So the images have to be loaded before with podman pull or podman load.
+play_kube_file() {
+	local section="$1"
+	local enabled
+	local file
+	local images
+
+	config_get_bool enabled "$section" enabled 0
+	file="$KUBE_DIR/$section.yaml"
+
+	if [ ! -f "$file" ]; then
+		logger -t "$NAME" -p daemon.warn "$file does not exist"
+		return
+	fi
+
+	# Close the procd lock fd 1000, see start_service().
+	if [ "$enabled" = 0 ]; then
+		${PROG} kube down "$file" >/dev/null 2>&1 1000>&-
+		return
+	fi
+
+	if ! images="$(kube_pull_images "$file")"; then
+		logger -t "$NAME" -p daemon.err "failed to parse $file"
+		return
+	fi
+
+	if [ -n "$images" ]; then
+		logger -t "$NAME" -p daemon.err \
+			"$file is not played, imagePullPolicy is not Never:" \
+			$images
+		return
+	fi
+
+	if ! ${PROG} kube play --replace "$file" >/dev/null 1000>&-; then
+		logger -t "$NAME" -p daemon.err "failed to play $file"
+	fi
+}
+
 start_service() {
 	local use_uci
 
@@ -167,6 +225,10 @@ start_service() {
 	procd_set_param command "$PROG" system service --time=0
 	procd_append_param command $command
 	procd_close_instance
+
+	# The pods of kube files get the restart policy always. Create them
+	# first, otherwise they would be started below and then recreated.
+	config_foreach play_kube_file kube
 
 	# Close the procd lock fd 1000. Otherwise it is inherited by conmon,
 	# which keeps running and holds the lock of this init script forever.
