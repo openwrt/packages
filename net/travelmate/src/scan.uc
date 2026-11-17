@@ -18,7 +18,7 @@ function clean_ssid(s) {
 			out += substr(s, i, 1);
 	}
 
-	return trim(out, ' ');
+	return out;
 }
 
 // -100 dBm = 0 %, -50 dBm = 100 %
