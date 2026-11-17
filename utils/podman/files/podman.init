@@ -12,9 +12,13 @@ start_service() {
 	procd_set_param command "$PROG" system service --time=0
 	procd_append_param command $command
 	procd_close_instance
+
+	# Close the procd lock fd 1000. Otherwise it is inherited by conmon,
+	# which keeps running and holds the lock of this init script forever.
+	${PROG} start --all --filter restart-policy=always 1000>&-
 }
 
-shutdown() {
+stop_service() {
 	${PROG} pod stop -a
 	${PROG} container stop -a
 }
