@@ -31,6 +31,7 @@ export const OPTIONS = {
 	trm_mailtopic: [ 'string', '' ],
 	trm_mailprofile: [ 'string', 'trm_notify' ],
 	trm_mailtemplate: [ 'string', '/etc/travelmate/mail.template' ],
+	trm_hookscript: [ 'string', '' ],
 	trm_minquality: [ 'int', 35 ],
 	trm_maxretry: [ 'int', 3 ],
 	trm_maxwait: [ 'int', 30, 1 ],

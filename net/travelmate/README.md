@@ -189,6 +189,7 @@ A stopped service does not report a state at all, it truncates the runtime file 
 | trm_mailsender     | no-reply@travelmate                | e-mail sender address for travelmate notifications                                                    |
 | trm_mailtopic      | travelmate connection to '<sta>'   | topic for travelmate notification E-Mails                                                             |
 | trm_mailprofile    | trm_notify                         | profile used by 'msmtp' for travelmate notification E-Mails                                           |
+| trm_hookscript     | -, not set                         | executable in /etc/travelmate that is called on scan and disable events, see 'Event hook' below       |
 | trm_vpn            | 0, disabled                        | VPN connections will be managed by travelmate                                                         |
 | trm_vpnifacelist   | -, not set                         | limit vpn processing to these interfaces, default: all wireguard/openvpn and all referenced vpn ones  |
 | trm_stdvpniface    | -, not set                         | standard vpn interface which will be automatically added to new STA profiles                          |
@@ -247,6 +248,14 @@ password        zzz
 Finally enable e-mail support in travelmate and add a valid e-mail receiver address.
 
 The mail body is rendered from the ucode template `/etc/travelmate/mail.template` (option 'trm_mailtemplate'), which gets `banner`, `board` (ubus 'system board'), `status` (as printed by `/etc/init.d/travelmate status`) and `station_id` as variables. A custom template has to be located in `/etc/travelmate` as well, it is ucode that runs with the rights of the daemon.
+
+**Event hook**  
+With 'trm_hookscript' travelmate calls an external script on two events, e.g. to let another service follow the uplink handling. The script has to be executable and located in `/etc/travelmate`, it gets the event name and its context as arguments:
+
+* `scan <radio> <file>` after a scan of a radio, the file holds the ranked scan entries as JSON
+* `disabled <section> <radio> <ssid> <bssid>` after the retry limit disabled an uplink ('-' for an uplink without bssid)
+
+The script only observes: travelmate ignores its exit code and output, and a script that runs longer than 10 seconds is killed. If it changes something, it does so via uci and the usual reload, like LuCI.
 
 **Captive portal auto-logins**  
 For automated captive portal logins you can reference an external ucode script per uplink. All login scripts have to be executable and located in `/etc/travelmate` with the extension `.uc`, shell scripts (formerly `.login`) are no longer supported. On upgrade, an uplink that still references one of the shipped `.login` scripts is switched to the `.uc` script of the same name. A login script signals its result via the exit code: `0` means the login succeeded, any other value means it failed. Only `0` makes travelmate re-check the connectivity right away, every other value is just logged. A script that runs longer than 90 seconds is killed. The package ships multiple ready to run auto-login scripts:

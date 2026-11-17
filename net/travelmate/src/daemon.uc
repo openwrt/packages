@@ -26,6 +26,7 @@ export const FILES = {
 	scanfile: RUNDIR + '/travelmate.scan',
 	rtfile: RUNDIR + '/travelmate.runtime.json',
 	revivefile: RUNDIR + '/travelmate.revive',
+	hookfile: RUNDIR + '/travelmate.hook.json',
 	rebindfile: RUNDIR + '/travelmate.rebind',
 	actionfile: RUNDIR + '/travelmate.action'
 };
@@ -80,6 +81,9 @@ const NOTED_MAX = 64;
 
 // seconds a captive portal login script may run, the daemon waits for it
 const LOGIN_TIMEOUT = 90;
+
+// seconds an event hook script may run, the daemon waits for it
+const HOOK_TIMEOUT = 10;
 
 function dash(v) {
 	return length('' + (v ?? '')) ? '' + v : '-';
@@ -797,6 +801,44 @@ export function create(io, files) {
 		unlink(files.rebindfile);
 	}
 
+	// event hook: 'trm_hookscript', executable in /etc/travelmate, called with
+	// the event name and its context. It only observes, a change goes through
+	// uci and the usual reload like any other, the exit code is ignored.
+	//   scan <radio> <file>                  the ranked scan entries as JSON
+	//   disabled <section> <radio> <essid> <bssid>  the retry limit disabled it
+	function hook(event, args, data) {
+		let script = cfg('hookscript');
+
+		if (!length(script))
+			return;
+
+		script = realpath(script) ?? '';
+
+		if (substr(script, 0, 16) != '/etc/travelmate/' || !is_file(script) || access(script, 'x') != true) {
+			if (!T.noted['hook'])
+				log('info', 'event hook script rejected, it has to be an executable in /etc/travelmate');
+
+			T.noted['hook'] = true;
+			return;
+		}
+
+		if (data != null) {
+			let tmp = files.hookfile + '.tmp';
+
+			if (writefile(tmp, sprintf('%J\n', data)) == null || !rename(tmp, files.hookfile))
+				return;
+
+			push(args, files.hookfile);
+		}
+
+		let rc = io.exec([ script, event, ...args ], HOOK_TIMEOUT);
+
+		if (rc == -9)
+			log('info', sprintf("event hook script for '%s' has been killed, it ran longer than %d seconds", event, HOOK_TIMEOUT));
+
+		log('debug', sprintf('f_hook      ::: event: %s, rc: %s', event, '' + rc));
+	}
+
 	// login script: '/etc/travelmate/*.uc', executable, credentials as args
 	function login(domain) {
 		let script = getval('script');
@@ -1241,6 +1283,9 @@ export function create(io, files) {
 
 				log('info', sprintf("uplink has been disabled '%s' (%d/%s)%s", sta, retry, retry_display, hint));
 
+				if (length(T.uplinkcfg))
+					hook('disabled', [ T.uplinkcfg, ctx.radio, ctx.essid, dash(ctx.bssid) ]);
+
 				return false;
 			}
 
@@ -1323,7 +1368,13 @@ export function create(io, files) {
 					radio, stalist: T.stalist,
 					current: (T.conn && length(cur.radio)) ? cur : null,
 					cfg: select_cfg(), ifaces: select_ifaces(),
-					scan: () => scan_rank(io.ubus()?.call('iwinfo', 'scan', { device: radio })?.results)
+					scan: () => {
+						let r = scan_rank(io.ubus()?.call('iwinfo', 'scan', { device: radio })?.results);
+
+						hook('scan', [ radio ], r ?? []);
+
+						return r;
+					}
 				});
 				let ctx = { section: '', radio: '', bssid: '', essid: '' }, skip = false;
 
