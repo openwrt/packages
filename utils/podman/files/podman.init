@@ -71,6 +71,33 @@ link_storage_conf() {
 	fi
 }
 
+# Check that all fstab mount points and uvol volumes below which graphroot
+# is located are ready. Without them the containers would end up on the
+# tmpfs.
+graphroot_mounted() {
+	local graphroot="$1"
+
+	if procd_mountpoints_ready "$graphroot"; then
+		return 0
+	fi
+
+	logger -t "$NAME" -p daemon.warn \
+		"mount points of $graphroot are not ready, start delayed"
+
+	return 1
+}
+
+# Check graphroot of the uci storage config before podman is started.
+graphroot_ready() {
+	local graphroot
+
+	config_get graphroot storage graphroot "$GRAPHROOT"
+
+	graphroot_mounted "$graphroot" || return 1
+
+	return 0
+}
+
 start_service() {
 	local use_uci
 
@@ -81,6 +108,7 @@ start_service() {
 
 	if [ "$use_uci" = 1 ]; then
 		generate_storage_conf
+		graphroot_ready || return 0
 	fi
 
 	[ -d /run/podman ] || mkdir -p /run/podman
@@ -106,5 +134,16 @@ reload_service() {
 }
 
 service_triggers() {
+	local use_uci
+	local graphroot
+
+	config_load podman
+	config_get_bool use_uci storage use_uci 0
+	config_get graphroot storage graphroot "$GRAPHROOT"
+
 	procd_add_reload_trigger podman
+
+	if [ "$use_uci" = 1 ]; then
+		procd_add_restart_mount_trigger "$graphroot"
+	fi
 }
