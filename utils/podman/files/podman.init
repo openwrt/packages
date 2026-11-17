@@ -5,8 +5,84 @@ STOP=10
 USE_PROCD=1
 NAME=podman
 PROG=/usr/bin/podman
+CONF_DIR=/var/etc/containers
+GRAPHROOT=/var/lib/containers/storage
+
+toml_list_item() {
+	printf '  "%s",\n' "$1"
+}
+
+generate_storage_conf() {
+	local conf="$CONF_DIR/storage.conf"
+	local driver runroot graphroot imagestore mountopt
+
+	config_get driver storage driver overlay
+	config_get runroot storage runroot /run/containers/storage
+	config_get graphroot storage graphroot "$GRAPHROOT"
+	config_get imagestore storage imagestore
+	config_get mountopt storage mountopt nodev
+
+	mkdir -p "$CONF_DIR"
+	{
+		echo "[storage]"
+		echo "driver = \"$driver\""
+		echo "runroot = \"$runroot\""
+		echo "graphroot = \"$graphroot\""
+		if [ -n "$imagestore" ]; then
+			echo "imagestore = \"$imagestore\""
+		fi
+		echo
+		echo "[storage.options]"
+		echo "additionalimagestores = ["
+		config_list_foreach storage additionalimagestores toml_list_item
+		echo "]"
+		echo
+		echo "[storage.options.overlay]"
+		echo "mountopt = \"$mountopt\""
+	} > "$conf.tmp"
+	mv "$conf.tmp" "$conf"
+}
+
+# podman only reads the generated storage.conf, if it is linked from
+# /etc/containers. A storage.conf which is not our link is never touched,
+# as it was created by the user.
+link_storage_conf() {
+	local use_uci="$1"
+	local link=/etc/containers/storage.conf
+	local conf="$CONF_DIR/storage.conf"
+
+	if [ "$(readlink "$link")" = "$conf" ]; then
+		if [ "$use_uci" = 0 ]; then
+			rm -f "$link"
+		fi
+		return
+	fi
+
+	if [ -e "$link" ] || [ -L "$link" ]; then
+		if [ "$use_uci" = 1 ]; then
+			logger -t "$NAME" -p daemon.warn \
+				"$link is not ours, uci config is ignored"
+		fi
+		return
+	fi
+
+	if [ "$use_uci" = 1 ]; then
+		ln -s "$conf" "$link"
+	fi
+}
 
 start_service() {
+	local use_uci
+
+	config_load podman
+	config_get_bool use_uci storage use_uci 0
+
+	link_storage_conf "$use_uci"
+
+	if [ "$use_uci" = 1 ]; then
+		generate_storage_conf
+	fi
+
 	[ -d /run/podman ] || mkdir -p /run/podman
 	procd_open_instance "podman"
 	procd_set_param command "$PROG" system service --time=0
@@ -21,4 +97,14 @@ start_service() {
 stop_service() {
 	${PROG} pod stop -a
 	${PROG} container stop -a
+}
+
+# The storage configuration is only read when podman starts, so a reload
+# has to restart the service including all containers.
+reload_service() {
+	restart
+}
+
+service_triggers() {
+	procd_add_reload_trigger podman
 }

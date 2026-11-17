@@ -35,6 +35,52 @@ if ! uci -q get firewall.podman >/dev/null; then
 	changed=1
 fi
 
+storage_conf_get() {
+	sed -n "s/^$1 = \"\(.*\)\"$/\1/p" "$2"
+}
+
+# Print the strings of a TOML list, one per line. The list may span several
+# lines.
+storage_conf_list() {
+	awk "/^[[:space:]]*$1[[:space:]]*=/,/]/" "$2" |
+		sed 's/#.*//' | grep -o '"[^"]*"' | tr -d '"'
+}
+
+# Take over the settings of a storage.conf from an older package version.
+# The init script then replaces it with the link to the file generated
+# from uci.
+migrate_storage_conf() {
+	local conf=/etc/containers/storage.conf
+	local key value
+
+	[ -L "$conf" ] && return
+
+	# Without the uci section the settings would be lost, so keep the file.
+	uci -q get podman.storage >/dev/null || return
+
+	if [ -f "$conf" ]; then
+		for key in driver runroot graphroot imagestore mountopt; do
+			value="$(storage_conf_get "$key" "$conf")"
+			if [ -n "$value" ]; then
+				uci set podman.storage.$key="$value"
+			fi
+		done
+		storage_conf_list additionalimagestores "$conf" |
+		while read -r value; do
+			uci add_list \
+				podman.storage.additionalimagestores="$value"
+		done
+		uci commit podman
+		mv "$conf" "$conf.old"
+		logger -t podman "$conf migrated to uci, the original" \
+			"was kept as $conf.old. Only driver, runroot," \
+			"graphroot, imagestore, additionalimagestores and" \
+			"mountopt were taken over."
+	fi
+}
+
+migrate_storage_conf
+
 [ "$changed" = 1 ] && reload_config
 
 exit 0
