@@ -80,11 +80,12 @@ scan() {
 		rsn     = $4
 		cipher  = $5
 		auth    = $6
-		ssid = ""
-		for (i=7; i<=NF; i++) {
-			ssid = ssid $i " "
+		# the ssid is the rest of the line as it is, joining the fields
+		# again would collapse the spaces of the name
+		ssid = $0
+		for (i=1; i<=6; i++) {
+			sub(/^[^ ]+ /, "", ssid)
 		}
-		sub(/[ \t]+$/, "", ssid)
 		printf "%3s %3s %17s %-12s %-10s %-10s %s\n",
 			quality, channel, bssid, rsn, cipher, auth, ssid
 	}' | "${trm_sortcmd}" -rn >"${trm_tmpfile}"

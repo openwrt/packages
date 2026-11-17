@@ -1382,12 +1382,11 @@ f_scan() {
 		json_get_var signal signal
 		json_get_var channel channel
 
-		# clean up ssid from control characters and trim whitespace, then quote it (empty ssids are marked as 'hidden')
+		# clean up ssid from control characters, then quote it (empty ssids are marked as 'hidden');
+		# spaces stay, also leading and trailing ones, they are part of the name the station is configured with
 		#
 		ssid="$(printf "%s" "${ssid}" | "${trm_awkcmd}" '{
 			gsub(/[[:cntrl:]]/, "");
-			sub(/^[ \t]+/, "");
-			sub(/[ \t]+$/, "");
 			print
 		}')"
 		if [ -z "${ssid}" ]; then
