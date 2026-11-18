@@ -1,0 +1,34 @@
+From 7813293917d8a4e0bfebe66ca9cfa2c375cfab9a Mon Sep 17 00:00:00 2001
+From: Shon Sebastian <fluffball3@proton.me>
+Date: Tue, 22 Sep 2026 03:30:43 +0530
+Subject: [PATCH] vmlinux fallback
+
+Falls back to vmlinux_aarch64.h if no vmlinux.h is found.
+
+Signed-off-by: Shon Sebastian <fluffball3@proton.me>
+---
+ include/bpftune/bpftune.bpf.h | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/include/bpftune/bpftune.bpf.h b/include/bpftune/bpftune.bpf.h
+index 42466a6..23e3039 100644
+--- a/include/bpftune/bpftune.bpf.h
++++ b/include/bpftune/bpftune.bpf.h
+@@ -30,12 +30,13 @@
+ 	__builtin_preserve_access_index(&obj->field)
+ #endif
+ 
++// select atleast one vmlinux.h file
+ #ifdef VMLINUX_H
+ #include <vmlinux.h>
+ #else
+ #if defined(__TARGET_ARCH_x86)
+ #include <bpftune/vmlinux_x86_64.h>
+-#elif defined(__TARGET_ARCH_arm64)
++#else
+ #include <bpftune/vmlinux_aarch64.h>
+ #endif
+ #endif /* VMLIMUX_H */
+-- 
+2.55.0
+
