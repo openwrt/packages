@@ -1,4 +1,12 @@
 menu "Modify features for non-core variants"
+	config ZABBIX_ENABLE_AGENT_COMPRESSION
+		bool "Agent active checks compression"
+		default y
+		help
+			Enable zlib compression for agent active checks. When disabled,
+			the agent drops its zlib dependency, unless another selected
+			Zabbix package makes the shared build link zlib anyway.
+
 	config ZABBIX_CURL
 		bool "cURL support (default SSL)"
 		default y
