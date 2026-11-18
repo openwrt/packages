@@ -1,0 +1,23 @@
+#!/bin/sh
+
+# Carry a configuration from before sendspin-cli 0.4.0 over
+migrate_player() {
+	# The state directory used to default to RAM, which now loses the
+	# player's identity and pairings at every reboot
+	[ "$(uci -q get "sendspin-cli.$1.state_dir")" = /var/lib/sendspin-cli ] &&
+		uci set "sendspin-cli.$1.state_dir=/etc/sendspin-cli"
+
+	# static_delay is what output_delay was called before sendspin-cli 0.4.0
+	local delay
+	delay="$(uci -q get "sendspin-cli.$1.static_delay")" || return 0
+	uci -q get "sendspin-cli.$1.output_delay" > /dev/null ||
+		uci set "sendspin-cli.$1.output_delay=$delay"
+	uci delete "sendspin-cli.$1.static_delay"
+}
+
+. /lib/functions.sh
+config_load sendspin-cli
+config_foreach migrate_player player
+uci commit sendspin-cli
+
+exit 0
