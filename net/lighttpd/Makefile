@@ -90,7 +90,7 @@ endef
 define Package/lighttpd
   $(call Package/lighttpd/Default)
   MENU:=1
-  DEPENDS:=+libpthread +LIGHTTPD_LOGROTATE:logrotate \
+  DEPENDS:=+USE_GLIBC:libcrypt-compat +libpthread +LIGHTTPD_LOGROTATE:logrotate \
            +LIGHTTPD_PCRE2:libpcre2 \
            $(cryptolibdep)
   TITLE:=A flexible and lightweight web server
