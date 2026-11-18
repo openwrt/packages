@@ -3,7 +3,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=luajit2
 PKG_SOURCE_DATE:=2026-07-31
 PKG_VERSION:=2.1.$(subst -,.,$(PKG_SOURCE_DATE))
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/openresty/luajit2
@@ -37,15 +37,9 @@ define Package/luajit2/description
  OpenResty's maintained branch of LuaJIT, a Just-In-Time (JIT) compiler for the Lua programming language
 endef
 
-ifeq ($(HOST_ARCH),$(filter $(HOST_ARCH), x86_64 mips64))
-  ifeq ($(CONFIG_ARCH_64BIT),)
-    HOST_BITS := -m32
-  endif
-endif
-
 define Build/Compile
 	$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR) \
-		HOST_CC="$(HOSTCC) $(HOST_CFLAGS) $(HOST_BITS)" \
+		HOST_CC="$(HOSTCC) $(HOST_CFLAGS)" \
 		CROSS="$(TARGET_CROSS)" \
 		DESTDIR=$(PKG_INSTALL_DIR) \
 		PREFIX=/usr \
@@ -81,14 +75,14 @@ endef
 
 define Host/Compile
 	$(MAKE) $(HOST_JOBS) -C $(HOST_BUILD_DIR) \
-		DPREFIX=$(STAGING_DIR_HOSTPKG) \
+		PREFIX=$(STAGING_DIR_HOSTPKG) \
 		TARGET_CFLAGS="$(HOST_CFLAGS)" \
 		TARGET_LDFLAGS="$(HOST_LDFLAGS)"
 endef
 
 define Host/Install
 	$(MAKE) $(HOST_JOBS) -C $(HOST_BUILD_DIR) \
-		DPREFIX=$(STAGING_DIR_HOSTPKG) \
+		PREFIX=$(STAGING_DIR_HOSTPKG) \
 		install
 	$(CP) $(STAGING_DIR_HOSTPKG)/bin/luajit-* $(STAGING_DIR_HOSTPKG)/bin/$(PKG_NAME)
 endef
