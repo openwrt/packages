@@ -1,0 +1,102 @@
+#!/bin/sh /etc/rc.common
+# Copyright 2026 51DDNS
+# SPDX-License-Identifier: Apache-2.0
+
+START=95
+STOP=10
+USE_PROCD=1
+
+SERVICE_USER="ddns51"
+SERVICE_GROUP="ddns51"
+RUNTIME_DIR="/var/lib/51ddns"
+SECRET_DIR="/etc/51ddns"
+
+start_service() {
+	local enabled control_url account_token device_id refresh_seconds
+	local start_delay_seconds max_active_relays oem_voucher_file
+	local go_memory_limit
+
+	if ! uci_validate_section 51ddns agent main \
+		'enabled:bool:0' \
+		'control_url:string:https://api.51ddns.com' \
+		'account_token:string' \
+		'device_id:string' \
+		'refresh_seconds:uinteger:30' \
+		'start_delay_seconds:uinteger:0' \
+		'max_active_relays:uinteger:0' \
+		'oem_voucher_file:string:/etc/51ddns/oem.voucher'; then
+		logger -t 51ddns-agent "invalid configuration; service not started"
+		return 1
+	fi
+
+	[ "$enabled" -eq 1 ] || return 0
+	if [ -z "$account_token" ]; then
+		logger -t 51ddns-agent "account token is not configured; service not started"
+		return 1
+	fi
+
+	go_memory_limit='128MiB'
+	case "$(uname -m 2>/dev/null)" in
+		mips*)
+			[ "$max_active_relays" -gt 0 ] || max_active_relays=1
+			go_memory_limit='48MiB'
+			;;
+	esac
+
+	mkdir -p "$SECRET_DIR" "$RUNTIME_DIR"
+	chown -R "$SERVICE_USER:$SERVICE_GROUP" "$SECRET_DIR" "$RUNTIME_DIR"
+	chmod 0700 "$SECRET_DIR" "$RUNTIME_DIR"
+	umask 077
+	printf '%s\n' "$account_token" > "$SECRET_DIR/device.token"
+	if [ -n "$device_id" ]; then
+		printf '%s\n' "$device_id" > "$SECRET_DIR/device.id"
+	elif [ ! -e "$SECRET_DIR/device.id" ]; then
+		: > "$SECRET_DIR/device.id"
+	fi
+	chown "$SERVICE_USER:$SERVICE_GROUP" \
+		"$SECRET_DIR/device.token" "$SECRET_DIR/device.id"
+	chmod 0400 "$SECRET_DIR/device.token"
+	chmod 0600 "$SECRET_DIR/device.id"
+
+	procd_open_instance 51ddns-agent
+	procd_set_param command /usr/libexec/51ddns-agent-start \
+		/usr/bin/51ddns-agent \
+		--device-token-file "$SECRET_DIR/device.token" \
+		--device-id-file "$SECRET_DIR/device.id" \
+		--installation-id-file "$SECRET_DIR/install.id" \
+		--oem-voucher-file "$oem_voucher_file" \
+		--control-api-url "$control_url" \
+		--frpc-path /usr/bin/frpc \
+		--config-path "$RUNTIME_DIR/frpc.toml"
+	procd_set_param env CONFIG_REFRESH_SECONDS="$refresh_seconds" \
+		MAX_ACTIVE_RELAYS="$max_active_relays" \
+		START_DELAY_SECONDS="$start_delay_seconds" \
+		GOMEMLIMIT="$go_memory_limit" \
+		GOMAXPROCS="1"
+	procd_set_param respawn 3600 5 5
+	procd_set_param term_timeout 10
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_set_param user "$SERVICE_USER"
+	procd_set_param group "$SERVICE_GROUP"
+	procd_set_param no_new_privs 1
+	procd_set_param file /etc/config/51ddns
+
+	procd_add_jail 51ddns-agent log
+	procd_add_jail_mount /etc/hosts
+	procd_add_jail_mount /etc/resolv.conf
+	procd_add_jail_mount /etc/ssl/certs
+	procd_add_jail_mount /etc/TZ
+	procd_add_jail_mount /etc/openwrt_release
+	procd_add_jail_mount /bin/sleep
+	procd_add_jail_mount /usr/bin/51ddns-agent
+	procd_add_jail_mount /usr/bin/frpc
+	procd_add_jail_mount /usr/bin/logger
+	procd_add_jail_mount_rw "$SECRET_DIR"
+	procd_add_jail_mount_rw "$RUNTIME_DIR"
+	procd_close_instance
+}
+
+service_triggers() {
+	procd_add_reload_trigger 51ddns
+}
