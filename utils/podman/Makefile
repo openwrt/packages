@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=podman
 PKG_VERSION:=6.1.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/podman-container-tools/podman/archive/v$(PKG_VERSION)
@@ -53,6 +53,7 @@ define Package/podman/config
 endef
 
 define Package/podman/conffiles
+/etc/config/podman
 /etc/containers/policy.json
 /etc/containers/storage.conf
 /etc/containers/registries.conf
@@ -111,9 +112,17 @@ define Package/podman/install
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/vendor/go.podman.io/common/pkg/seccomp/seccomp.json $(1)/usr/share/containers/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/podman.init $(1)/etc/init.d/podman
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/podman.config $(1)/etc/config/podman
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/podman.defaults $(1)/etc/uci-defaults/90-podman
-	$(SED) 's/driver = \"\"/driver = \"overlay\"/g' $(1)/etc/containers/storage.conf
+	# Leave driver empty so driver_priority takes effect. The default
+	# overlay driver cannot be stacked on OpenWrt's overlayfs rootfs,
+	# and with no explicit priority list containers/storage never
+	# falls back to vfs (drivers/driver.go skips vfs unless it is
+	# listed in driver_priority).
+	$(SED) 's/^#[[:space:]]*driver[[:space:]]*=.*/driver = ""/' $(1)/etc/containers/storage.conf
+	$(SED) 's/^#[[:space:]]*driver_priority[[:space:]]*=.*/driver_priority = ["overlay", "btrfs", "vfs"]/' $(1)/etc/containers/storage.conf
 endef
 
 $(eval $(call BuildPackage,podman))
