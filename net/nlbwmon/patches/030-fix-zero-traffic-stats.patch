@@ -1,0 +1,30 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Felix Liu <admin@ob-buff.dev>
+Date: Sat, 29 Aug 2026 23:10:00 -0400
+Subject: [PATCH] nfnetlink: insert missing records during refresh
+
+Insert a record if the refresh update cannot find it.
+
+Signed-off-by: Felix Liu <admin@ob-buff.dev>
+---
+--- a/nfnetlink.c
++++ b/nfnetlink.c
+@@ -80,6 +80,14 @@ database_insert_immediately(struct record *r)
+ {
+-	if (r->count != 0)
+-		database_insert(gdbh, r);
+-	else
+-		database_update(gdbh, r);
++	int err;
++
++	if (r->count != 0) {
++		database_insert(gdbh, r);
++		return;
++	}
++
++	err = database_update(gdbh, r);
++	if (err == -ENOENT) {
++		r->count = htobe64(1);
++		database_insert(gdbh, r);
++	}
+ }
