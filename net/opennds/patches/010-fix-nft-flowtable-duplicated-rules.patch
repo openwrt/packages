@@ -1,0 +1,16 @@
+From 8b5a23f000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: BlueWave Projects and Services <bluewave@blue-wave.net>
+Date: Thu, 16 Oct 2025 12:00:00 +0000
+Subject: [PATCH] Fix duplicated flowtable rules with nftables 1.1.x
+
+--- a/forward_authentication_service/libs/libopennds.sh
++++ b/forward_authentication_service/libs/libopennds.sh
+@@ -2493,7 +2493,7 @@
+ 		handle=$(nft -a list flowtables | grep -w "ndsftINC" | awk -F "handle " '{printf "%s", $2}')
+ 
+ 		if [ ! -z "$handle" ]; then
+-			ftdevices=$(nft -a list flowtables | grep -w -A 4 "ndsftINC" | awk -F "devices = " 'NF>1 {printf "%s", $2}')
++			ftdevices=$(nft -a list flowtables | grep -w -A 4 "ndsftINC" | awk -F "devices = " 'NF>1 {printf "%s", $2}' | tr -d "\"")
+ 
+ 			if [ "$ftdevices" != "{ $wandevices }" ]; then
+ 
