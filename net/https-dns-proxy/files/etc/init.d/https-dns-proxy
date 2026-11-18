@@ -428,9 +428,20 @@ start_service() {
 	else
 		notrack_nft remove
 	fi
-#	if ! is_resolver_working; then
-#		rc_procd stop_service 'on_failed_health_check' && service_stopped 'on_failed_health_check'
-#	fi
+	# Deferred: start_service() runs inside the outer rc_procd transaction, and
+	# its pending instance JSON is only handed to procd after this function
+	# returns. Calling is_resolver_working()/rc_procd here would both test a
+	# proxy procd hasn't started yet and, via the nested rc_procd's
+	# _procd_open_service, wipe that pending JSON before it is submitted -
+	# silently dropping every instance. Run the check in the background,
+	# after procd has had a chance to actually start them, and fall back
+	# through a fresh top-level invocation instead of a nested rc_procd call.
+	(
+		if ! is_resolver_working; then
+			logger -t "$packageName" "Health check failed, falling back to plain DNS"
+			"${IPKG_INSTROOT}/etc/init.d/${packageName}" stop 'on_failed_health_check' >/dev/null 2>&1
+		fi
+	) &
 }
 
 stop_service() {
