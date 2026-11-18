@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=keepalived
 PKG_VERSION:=2.3.3
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.keepalived.org/software
@@ -48,6 +48,7 @@ endef
 # The +kmod-nf-ipvs line should be +KEEPALIVED_LVS:kmod-nf-ipvs,
 # but make menuconfig then reports :error: recursive dependency detected!
 # !!FIXME DEPENDS:= +KEEPALIVED_LVS:kmod-nf-ipvs
+# VMAC related nftables rules use nft-dup-inet to prevent duplicate IGMP/MLD packets
 define Package/keepalived
   SECTION:=net
   CATEGORY:=Network
@@ -59,6 +60,7 @@ define Package/keepalived
     +libkmod \
     +kmod-nf-ipvs \
     +libjson-c \
+    +KEEPALIVED_NFTABLES:kmod-nft-dup-inet \
     +KEEPALIVED_NFTABLES:libnftnl \
     +KEEPALIVED_VRRP:kmod-macvlan \
     +KEEPALIVED_VRRP:libnl-route \
