@@ -1,0 +1,100 @@
+From 131be8514da8985b15b74150521afedbf9cc4ea3 Mon Sep 17 00:00:00 2001
+From: Roman Arutyunyan <arut@nginx.com>
+Date: Tue, 2 Jun 2026 19:37:17 +0400
+Subject: Upstream: limit header length for HTTP/2 and gRPC
+Origin: https://github.com/nginx/nginx/commit/131be8514da8985b15b74150521afedbf9cc4ea3
+Bug-Debian: https://bugs.debian.org/1140359
+Bug-Debian-Security: https://security-tracker.debian.org/tracker/CVE-2026-42055
+
+The change applies the HTTP/2 header length limits to avoid buffer
+overflow.  See 58a7bc3406ac for details.
+
+Reported by Mufeed VH of Winfunc Research.
+[Salvatore Bonaccorso: Drop changes for HTTP/2 proxy module which only got
+added in release-1.29.4]
+---
+ src/http/modules/ngx_http_grpc_module.c     | 44 +++++++++++++++++++++
+ src/http/modules/ngx_http_proxy_v2_module.c | 44 +++++++++++++++++++++
+ 2 files changed, 88 insertions(+)
+
+--- a/src/http/modules/ngx_http_grpc_module.c
++++ b/src/http/modules/ngx_http_grpc_module.c
+@@ -740,6 +740,12 @@ ngx_http_grpc_create_request(ngx_http_re
+         tmp_len = 0;
+ 
+     } else {
++        if (r->method_name.len > NGX_HTTP_V2_MAX_FIELD) {
++            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
++                          "too long http2 method: \"%V\"", &r->method_name);
++            return NGX_ERROR;
++        }
++
+         len += 1 + NGX_HTTP_V2_INT_OCTETS + r->method_name.len;
+         tmp_len = r->method_name.len;
+     }
+@@ -760,6 +766,12 @@ ngx_http_grpc_create_request(ngx_http_re
+         uri_len = r->uri.len + escape + sizeof("?") - 1 + r->args.len;
+     }
+ 
++    if (uri_len > NGX_HTTP_V2_MAX_FIELD) {
++        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
++                      "too long http2 URI");
++        return NGX_ERROR;
++    }
++
+     len += 1 + NGX_HTTP_V2_INT_OCTETS + uri_len;
+ 
+     if (tmp_len < uri_len) {
+@@ -769,6 +781,12 @@ ngx_http_grpc_create_request(ngx_http_re
+     /* :authority header */
+ 
+     if (!glcf->host_set) {
++        if (ctx->host.len > NGX_HTTP_V2_MAX_FIELD) {
++            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
++                          "too long http2 host: \"%V\"", &ctx->host);
++            return NGX_ERROR;
++        }
++
+         len += 1 + NGX_HTTP_V2_INT_OCTETS + ctx->host.len;
+ 
+         if (tmp_len < ctx->host.len) {
+@@ -799,6 +817,18 @@ ngx_http_grpc_create_request(ngx_http_re
+             continue;
+         }
+ 
++        if (key_len > NGX_HTTP_V2_MAX_FIELD) {
++            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
++                          "too long http2 header name");
++            return NGX_ERROR;
++        }
++
++        if (val_len > NGX_HTTP_V2_MAX_FIELD) {
++            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
++                          "too long http2 header value");
++            return NGX_ERROR;
++        }
++
+         len += 1 + NGX_HTTP_V2_INT_OCTETS + key_len
+                  + NGX_HTTP_V2_INT_OCTETS + val_len;
+ 
+@@ -833,6 +863,20 @@ ngx_http_grpc_create_request(ngx_http_re
+                 continue;
+             }
+ 
++            if (header[i].key.len > NGX_HTTP_V2_MAX_FIELD) {
++                ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
++                              "too long http2 header name: \"%V\"",
++                              &header[i].key);
++                return NGX_ERROR;
++            }
++
++            if (header[i].value.len > NGX_HTTP_V2_MAX_FIELD) {
++                ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
++                              "too long http2 header value: \"%V: %V\"",
++                              &header[i].key, &header[i].value);
++                return NGX_ERROR;
++            }
++
+             len += 1 + NGX_HTTP_V2_INT_OCTETS + header[i].key.len
+                      + NGX_HTTP_V2_INT_OCTETS + header[i].value.len;
+ 

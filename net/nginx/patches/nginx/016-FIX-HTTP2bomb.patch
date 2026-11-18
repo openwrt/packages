@@ -1,0 +1,303 @@
+From 365694160a85229a7cb006738de9260d49ff5fa2 Mon Sep 17 00:00:00 2001
+From: Maxim Dounin <mdounin@mdounin.ru>
+Date: Fri, 24 May 2024 00:20:01 +0300
+Subject: [PATCH] Added max_headers directive.
+
+The directive limits the number of request headers accepted from clients.
+While the total amount of headers is believed to be sufficiently limited
+by the existing buffer size limits (client_header_buffer_size and
+large_client_header_buffers), the additional limit on the number of headers
+might be beneficial to better protect backend servers.
+
+Requested by Maksim Yevmenkin.
+
+The original patch was modified so that the header count and the limit are
+stored in a separate module, ngx_http_header_count_module, instead of the
+core module. This allows to avoid changing the size of existing structures
+and thus avoid potential ABI breakage and keep all the 3rd party modules
+compatible with the new version of nginx without recompilation.
+
+Signed-off-by: Elijah Zupancic <e.zupancic@f5.com>
+Origin: <https://freenginx.org/hg/nginx/rev/199dc0d6b05be814b5c811876c20af58cd361fea>
+---
+ auto/modules                      |  1 +
+ src/http/ngx_http_core_module.c   | 73 +++++++++++++++++++++++++++++++++++++++
+ src/http/ngx_http_header_count.hh | 14 ++++++++
+ src/http/ngx_http_request.c       | 24 +++++++++++++
+ src/http/v2/ngx_http_v2.c         | 14 ++++++++
+ src/http/v3/ngx_http_v3_request.c | 14 ++++++++
+ 6 files changed, 140 insertions(+)
+ create mode 100644 src/http/ngx_http_header_count.hh
+
+--- a/auto/modules
++++ b/auto/modules
+@@ -67,6 +67,7 @@ if [ $HTTP = YES ]; then
+         ngx_module_name="ngx_http_module \
+                          ngx_http_core_module \
+                          ngx_http_log_module \
++                         ngx_http_header_count_module \
+                          ngx_http_upstream_module"
+         ngx_module_incs="src/http src/http/modules"
+         ngx_module_deps="src/http/ngx_http.h \
+--- a/src/http/ngx_http_core_module.c
++++ b/src/http/ngx_http_core_module.c
+@@ -8,6 +8,7 @@
+ #include <ngx_config.h>
+ #include <ngx_core.h>
+ #include <ngx_http.h>
++#include <ngx_http_header_count.hh>
+ 
+ 
+ typedef struct {
+@@ -39,6 +40,10 @@ static void *ngx_http_core_create_loc_co
+ static char *ngx_http_core_merge_loc_conf(ngx_conf_t *cf,
+     void *parent, void *child);
+ 
++static void *ngx_http_header_count_create_srv_conf(ngx_conf_t *cf);
++static char *ngx_http_header_count_merge_srv_conf(ngx_conf_t *cf,
++    void *parent, void *child);
++
+ static char *ngx_http_core_server(ngx_conf_t *cf, ngx_command_t *cmd,
+     void *dummy);
+ static char *ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd,
+@@ -812,6 +817,48 @@ ngx_module_t  ngx_http_core_module = {
+     NGX_MODULE_V1_PADDING
+ };
+ 
++static ngx_command_t  ngx_http_header_count_commands[] = {
++
++    { ngx_string("max_headers"),
++      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_CONF_TAKE1,
++      ngx_conf_set_num_slot,
++      NGX_HTTP_SRV_CONF_OFFSET,
++      offsetof(ngx_http_header_count_conf_t, max_headers),
++      NULL },
++
++      ngx_null_command
++};
++
++static ngx_http_module_t  ngx_http_header_count_module_ctx = {
++    NULL,                                  /* preconfiguration */
++    NULL,                                  /* postconfiguration */
++
++    NULL,                                  /* create main configuration */
++    NULL,                                  /* init main configuration */
++
++    ngx_http_header_count_create_srv_conf, /* create server configuration */
++    ngx_http_header_count_merge_srv_conf,  /* merge server configuration */
++
++    NULL,                                  /* create location configuration */
++    NULL                                   /* merge location configuration */
++};
++
++
++ngx_module_t ngx_http_header_count_module = {
++    NGX_MODULE_V1,
++    &ngx_http_header_count_module_ctx,     /* module context */
++    ngx_http_header_count_commands,        /* module directives */
++    NGX_HTTP_MODULE,                       /* module type */
++    NULL,                                  /* init master */
++    NULL,                                  /* init module */
++    NULL,                                  /* init process */
++    NULL,                                  /* init thread */
++    NULL,                                  /* exit thread */
++    NULL,                                  /* exit process */
++    NULL,                                  /* exit master */
++    NGX_MODULE_V1_PADDING
++};
++
+ 
+ ngx_str_t  ngx_http_core_get_method = { 3, (u_char *) "GET" };
+ 
+@@ -3653,6 +3700,32 @@ ngx_http_core_create_loc_conf(ngx_conf_t
+ }
+ 
+ 
++static void *
++ngx_http_header_count_create_srv_conf(ngx_conf_t *cf)
++{
++    ngx_http_header_count_conf_t  *hccf;
++
++    hccf = ngx_pcalloc(cf->pool, sizeof(ngx_http_header_count_conf_t));
++    if (hccf == NULL) {
++        return NULL;
++    }
++
++    hccf->max_headers = NGX_CONF_UNSET_UINT;
++    return hccf;
++}
++
++static char *
++ngx_http_header_count_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
++{
++    ngx_http_header_count_conf_t *prev = parent;
++    ngx_http_header_count_conf_t *conf = child;
++
++    ngx_conf_merge_uint_value(conf->max_headers, prev->max_headers, 1000);
++
++    return NGX_CONF_OK;
++}
++
++
+ static ngx_str_t  ngx_http_core_text_html_type = ngx_string("text/html");
+ static ngx_str_t  ngx_http_core_image_gif_type = ngx_string("image/gif");
+ static ngx_str_t  ngx_http_core_image_jpeg_type = ngx_string("image/jpeg");
+--- /dev/null
++++ b/src/http/ngx_http_header_count.hh
+@@ -0,0 +1,14 @@
++#ifndef _NGX_HTTP_HEADER_COUNT_H_INCLUDED_
++#define _NGX_HTTP_HEADER_COUNT_H_INCLUDED_
++
++typedef struct {
++    ngx_uint_t count;
++} ngx_http_header_count_t;
++
++typedef struct {
++    ngx_uint_t max_headers;
++} ngx_http_header_count_conf_t;
++
++extern ngx_module_t  ngx_http_header_count_module;
++
++#endif /* _NGX_HTTP_HEADER_COUNT_H_INCLUDED_ */
+--- a/src/http/ngx_http_request.c
++++ b/src/http/ngx_http_request.c
+@@ -8,6 +8,7 @@
+ #include <ngx_config.h>
+ #include <ngx_core.h>
+ #include <ngx_http.h>
++#include <ngx_http_header_count.hh>
+ 
+ 
+ static void ngx_http_wait_request_handler(ngx_event_t *ev);
+@@ -565,6 +566,7 @@ ngx_http_alloc_request(ngx_connection_t
+     ngx_http_connection_t      *hc;
+     ngx_http_core_srv_conf_t   *cscf;
+     ngx_http_core_main_conf_t  *cmcf;
++    ngx_http_header_count_t    *hc_ctx;
+ 
+     hc = c->data;
+ 
+@@ -626,6 +628,13 @@ ngx_http_alloc_request(ngx_connection_t
+         return NULL;
+     }
+ 
++    hc_ctx = ngx_pcalloc(r->pool, sizeof(ngx_http_header_count_t));
++    if (hc_ctx == NULL) {
++        ngx_destroy_pool(r->pool);
++        return NULL;
++    }
++    ngx_http_set_ctx(r, hc_ctx, ngx_http_header_count_module);
++
+ #if (NGX_HTTP_SSL)
+     if (c->ssl && !c->ssl->sendfile) {
+         r->main_filter_need_in_memory = 1;
+@@ -1399,6 +1408,8 @@ ngx_http_process_request_headers(ngx_eve
+     ngx_http_request_t         *r;
+     ngx_http_core_srv_conf_t   *cscf;
+     ngx_http_core_main_conf_t  *cmcf;
++    ngx_http_header_count_conf_t *hccf;
++    ngx_http_header_count_t    *hc_ctx;
+ 
+     c = rev->data;
+     r = c->data;
+@@ -1472,6 +1483,10 @@ ngx_http_process_request_headers(ngx_eve
+         rc = ngx_http_parse_header_line(r, r->header_in,
+                                         cscf->underscores_in_headers);
+ 
++
++        hccf = ngx_http_get_module_srv_conf(r, ngx_http_header_count_module);
++        hc_ctx = ngx_http_get_module_ctx(r, ngx_http_header_count_module);
++
+         if (rc == NGX_OK) {
+ 
+             r->request_length += r->header_in->pos - r->header_name_start;
+@@ -1489,6 +1504,15 @@ ngx_http_process_request_headers(ngx_eve
+ 
+             /* a header line has been parsed successfully */
+ 
++            if (hc_ctx->count++ >= hccf->max_headers) {
++                r->lingering_close = 1;
++                ngx_log_error(NGX_LOG_INFO, c->log, 0,
++                              "client sent too many header lines");
++                ngx_http_finalize_request(r,
++                                          NGX_HTTP_REQUEST_HEADER_TOO_LARGE);
++                break;
++            }
++
+             h = ngx_list_push(&r->headers_in.headers);
+             if (h == NULL) {
+                 ngx_http_close_request(r, NGX_HTTP_INTERNAL_SERVER_ERROR);
+--- a/src/http/v2/ngx_http_v2.c
++++ b/src/http/v2/ngx_http_v2.c
+@@ -9,6 +9,7 @@
+ #include <ngx_core.h>
+ #include <ngx_http.h>
+ #include <ngx_http_v2_module.h>
++#include <ngx_http_header_count.hh>
+ 
+ 
+ /* errors */
+@@ -1712,6 +1713,8 @@ ngx_http_v2_state_process_header(ngx_htt
+     ngx_http_v2_header_t       *header;
+     ngx_http_core_srv_conf_t   *cscf;
+     ngx_http_core_main_conf_t  *cmcf;
++    ngx_http_header_count_conf_t *hccf;
++    ngx_http_header_count_t    *hc_ctx;
+ 
+     static ngx_str_t cookie = ngx_string("cookie");
+ 
+@@ -1817,6 +1820,17 @@ ngx_http_v2_state_process_header(ngx_htt
+         }
+ 
+     } else {
++        cscf = ngx_http_get_module_srv_conf(r, ngx_http_core_module);
++        hccf = ngx_http_get_module_srv_conf(r, ngx_http_header_count_module);
++        hc_ctx = ngx_http_get_module_ctx(r, ngx_http_header_count_module);
++
++        if (hc_ctx->count++ >= hccf->max_headers) {
++            ngx_log_error(NGX_LOG_INFO, r->connection->log, 0,
++                          "client sent too many header lines");
++            ngx_http_finalize_request(r, NGX_HTTP_REQUEST_HEADER_TOO_LARGE);
++            goto error;
++        }
++
+         h = ngx_list_push(&r->headers_in.headers);
+         if (h == NULL) {
+             return ngx_http_v2_connection_error(h2c,
+--- a/src/http/v3/ngx_http_v3_request.c
++++ b/src/http/v3/ngx_http_v3_request.c
+@@ -8,6 +8,7 @@
+ #include <ngx_config.h>
+ #include <ngx_core.h>
+ #include <ngx_http.h>
++#include <ngx_http_header_count.hh>
+ 
+ 
+ static void ngx_http_v3_init_request_stream(ngx_connection_t *c);
+@@ -618,6 +619,8 @@ ngx_http_v3_process_header(ngx_http_requ
+     ngx_http_header_t          *hh;
+     ngx_http_core_srv_conf_t   *cscf;
+     ngx_http_core_main_conf_t  *cmcf;
++    ngx_http_header_count_conf_t *hccf;
++    ngx_http_header_count_t    *hc_ctx;
+ 
+     static ngx_str_t cookie = ngx_string("cookie");
+ 
+@@ -665,6 +668,17 @@ ngx_http_v3_process_header(ngx_http_requ
+         }
+ 
+     } else {
++        cscf = ngx_http_get_module_srv_conf(r, ngx_http_core_module);
++        hccf = ngx_http_get_module_srv_conf(r, ngx_http_header_count_module);
++        hc_ctx = ngx_http_get_module_ctx(r, ngx_http_header_count_module);
++
++        if (hc_ctx->count++ >= hccf->max_headers) {
++            ngx_log_error(NGX_LOG_INFO, r->connection->log, 0,
++                          "client sent too many header lines");
++            ngx_http_finalize_request(r, NGX_HTTP_REQUEST_HEADER_TOO_LARGE);
++            return NGX_ERROR;
++        }
++
+         h = ngx_list_push(&r->headers_in.headers);
+         if (h == NULL) {
+             ngx_http_close_request(r, NGX_HTTP_INTERNAL_SERVER_ERROR);
