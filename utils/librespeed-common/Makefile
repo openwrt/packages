@@ -21,7 +21,7 @@ define Package/librespeed-common
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=LibreSpeed measurement orchestration
-  DEPENDS:=librespeed-cli +rpcd-mod-ucode +jsonfilter +ucode +ucode-mod-fs \
+  DEPENDS:=+librespeed-cli +rpcd-mod-ucode +jsonfilter +ucode +ucode-mod-fs \
 	+ucode-mod-uci +jshn
   PKGARCH:=all
 endef
