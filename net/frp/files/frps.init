@@ -689,6 +689,7 @@ service_triggers() {
 
 start_service() {
 	local init_cfg=
+	local enabled=0
 	local stdout=1
 	local stderr=1
 	local respawn=1
@@ -696,13 +697,18 @@ start_service() {
 	local run_group=
 	local old_umask
 
-	mkdir -p /var/etc
-	_TOML_ERR=0
-	_ALLOW_UNSAFE_TOKEN_SOURCE_EXEC=0
-
 	config_load "$NAME"
 
 	config_foreach _find_init_section init
+
+	if [ -n "$init_cfg" ]; then
+		config_get_bool enabled "$init_cfg" enabled 0
+	fi
+	[ "$enabled" -eq 1 ] || return 0
+
+	mkdir -p /var/etc
+	_TOML_ERR=0
+	_ALLOW_UNSAFE_TOKEN_SOURCE_EXEC=0
 
 	old_umask="$(umask)"
 	umask 077
@@ -727,6 +733,7 @@ start_service() {
 
 	if [ -n "$init_cfg" ]; then
 		config_list_foreach "$init_cfg" conf_inc _append_conf_file
+		[ "$_TOML_ERR" = "0" ] || return 1
 
 		config_get_bool stdout "$init_cfg" stdout 1
 		config_get_bool stderr "$init_cfg" stderr 1
