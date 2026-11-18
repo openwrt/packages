@@ -1,0 +1,36 @@
+# Kea Run Script Hook (libdhcp_run_script.so)
+
+This directory is intended for custom user scripts triggered by the Kea DHCP 
+Run Script Hook library. This hook allows external scripts to be executed 
+at various points in the DHCP lease lifecycle.
+
+## Configuration
+
+To enable a script, add the following to the "hooks-libraries" section of 
+your /etc/kea/kea-dhcp4.conf or /etc/kea/kea-dhcp6.conf file:
+
+"hooks-libraries": [
+    {
+        "library": "libdhcp_run_script.so",
+        "parameters": {
+            "name": "/etc/kea/scripts/your-script.sh",
+            "sync": false
+        }
+    }
+]
+
+## Usage Notes
+
+1. Permissions: Scripts must be executable (e.g., chmod +x /etc/kea/scripts/your-script.sh).
+2. Environment Variables: Kea passes DHCP data to the script via environment 
+   variables. Based on the current build, useful variables include:
+   - LEASE4_ADDRESS / LEASE6_ADDRESS: The IP address being assigned.
+   - LEASE4_HOSTNAME: The hostname associated with the lease.
+   - QUERY4_TYPE: The type of DHCP packet (e.g., DHCPREQUEST).
+   - QUERY4_HWADDR: The MAC address of the requesting client.
+3. Exit Codes: Scripts should generally exit with 0. A non-zero exit code 
+   may affect packet processing depending on your Kea configuration.
+
+## Official Documentation
+
+https://kea.readthedocs.io/en/kea-3.0.2/arm/hooks.html#libdhcp-run-script-so-run-script-support-for-external-hook-scripts
