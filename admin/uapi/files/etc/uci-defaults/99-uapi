@@ -1,0 +1,41 @@
+#!/bin/sh
+
+# The package ships no token store: apk would write the shipped copy as .apk-new at each upgrade.
+# Up to 3.2.0, uapi-token create made a missing store 0644, and libuci keeps the mode at each commit.
+# ln refuses a store that uapi-token create made after the test, which a cp would overwrite.
+if [ -e /etc/config/uapi ]; then
+	chmod 600 /etc/config/uapi
+else
+	tmp=/etc/config/.uapi.$$
+	( umask 077 && cp /usr/share/uapi/config.template "$tmp" ) && ln "$tmp" /etc/config/uapi 2>/dev/null
+	rm -f "$tmp"
+fi
+
+# v3 mounts at /api/v3/. On a fresh install we just add it. On an upgrade we strip every
+# older mount, because uhttpd would otherwise serve the same main.uc under two prefixes and
+# the removed v2 surface would appear to still exist while answering with v3 semantics.
+NEW='/api/v3=/usr/share/uapi/main.uc'
+OLD='/api/v2=/usr/share/uapi/main.uc /api/v1=/usr/share/uapi/main.uc'
+
+CHANGED=0
+
+for old in $OLD; do
+	if uci -q show uhttpd.main.ucode_prefix 2>/dev/null | grep -qF "$old"; then
+		uci -q del_list uhttpd.main.ucode_prefix="$old"
+		CHANGED=1
+	fi
+done
+
+if ! uci -q show uhttpd.main.ucode_prefix 2>/dev/null | grep -qF "$NEW"; then
+	uci add_list uhttpd.main.ucode_prefix="$NEW"
+	CHANGED=1
+fi
+
+if [ "$CHANGED" = "1" ]; then
+	uci commit uhttpd
+	# reload and restart both start a stopped uhttpd, which the operator may have
+	# disabled because another web server owns the ports.
+	/etc/init.d/uhttpd enabled && /etc/init.d/uhttpd reload
+fi
+
+exit 0

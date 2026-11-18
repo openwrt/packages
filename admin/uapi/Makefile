@@ -61,13 +61,13 @@ define Package/uapi/install
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/src/main.uc $(PKG_BUILD_DIR)/src/raw.uc \
 		$(1)/usr/share/uapi/
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/openapi.json $(PKG_BUILD_DIR)/VERSION \
-		$(PKG_BUILD_DIR)/files/usr/share/uapi/config.template $(1)/usr/share/uapi/
+		./files/usr/share/uapi/config.template $(1)/usr/share/uapi/
 
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cli/uapi-token $(1)/usr/bin/
 
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/etc/uci-defaults/99-uapi $(1)/etc/uci-defaults/
+	$(INSTALL_BIN) ./files/etc/uci-defaults/99-uapi $(1)/etc/uci-defaults/
 endef
 
 define Package/uapi/postinst
