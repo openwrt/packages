@@ -1,8 +1,0 @@
-{
-	"name": "system-ns.com",
-
-	"ipv4": {
-		"url": "http://system-ns.com/api?type=dynamic&command=set&domain=[DOMAIN]&token=[PASSWORD]&ip=[IP]",
-		"answer": "0"
-	}
-}
