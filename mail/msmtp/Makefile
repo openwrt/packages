@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=msmtp
 PKG_VERSION:=1.8.34
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://marlam.de/msmtp/releases
@@ -89,7 +89,7 @@ endef
 
 define Package/msmtp-queue
 $(call Package/msmtp/Default)
-  DEPENDS+= +bash +msmtp
+  DEPENDS+= +bash +coreutils-pr +grep +msmtp +uuidgen
   TITLE+= (queue scripts)
 endef
 
