@@ -22,7 +22,7 @@
  #define GSSD_DEFAULT_KEYTAB_FILE		"/etc/krb5.keytab"
 --- a/utils/statd/sm-notify.c
 +++ b/utils/statd/sm-notify.c
-@@ -913,7 +913,7 @@ static int record_pid(void)
+@@ -986,7 +986,7 @@ static int record_pid(void)
  	int fd;
  
  	(void)snprintf(pid, sizeof(pid), "%d\n", (int)getpid());
