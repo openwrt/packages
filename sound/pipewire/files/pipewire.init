@@ -1,0 +1,52 @@
+#!/bin/sh /etc/rc.common
+USE_PROCD=1
+START=60
+STOP=20
+
+RUNDIR="/var/run/pipewire"
+PW_USER="pipewire"
+
+start_service() {
+	# Runtime directory shared by the PipeWire services. Socket access follows
+	# the system-wide PulseAudio daemon, which is built with access_group=audio:
+	# the services run as the pipewire user with primary group audio (procd
+	# 'group' below), so the sockets and directories they create belong to
+	# group audio and are reachable by the members of that group, whichever
+	# sound server is installed. RUNDIR itself is group audio, so that members
+	# can reach the sockets in it.
+	#
+	# This service starts first and is the only one setting up RUNDIR;
+	# pipewire-pulse and wireplumber leave it unchanged.
+	mkdir -p "${RUNDIR}"
+	chown "${PW_USER}:audio" "${RUNDIR}"
+	chmod 0750 "${RUNDIR}"
+
+	# umask 007: the native socket is created with mode 0770 instead of 0755,
+	# so members of group audio can connect to it while other users cannot.
+	# procd starts the command with its own umask, so it is set in the shell
+	# that executes pipewire.
+	procd_open_instance
+	procd_set_param command /bin/sh -c 'umask 007; exec /usr/bin/pipewire'
+	procd_set_param respawn 3600 5 5
+	procd_set_param user "${PW_USER}"
+	# primary group audio, so created sockets belong to group audio (see above)
+	procd_set_param group audio
+	procd_set_param env \
+		XDG_RUNTIME_DIR="${RUNDIR}" \
+		PIPEWIRE_RUNTIME_DIR="${RUNDIR}" \
+		HOME="${RUNDIR}" \
+		PW_LOG=2
+	# rtprio (RLIMIT_RTPRIO) lets module-rt make the data threads realtime;
+	# without it they run as SCHED_OTHER and audio crackles under CPU load.
+	# nice (RLIMIT_NICE, allows nice values down to 20 - 40 = -20) lets
+	# module-rt set the main thread's nice level of -11. If either fails,
+	# module-rt falls back to RTKit in builds with D-Bus support, which
+	# OpenWrt does not provide, and realtime priority is lost (see
+	# 20-openwrt-rt.conf).
+	# All limits in one call: a second 'procd_set_param limits' replaces the
+	# first one.
+	procd_set_param limits nofile="8192 8192" rtprio="95 95" nice="40 40"
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_close_instance
+}
