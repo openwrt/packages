@@ -9,6 +9,8 @@ CONF_DIR=/var/etc/containers
 GRAPHROOT=/var/lib/containers/storage
 KUBE_DIR=/etc/containers/kube
 
+extra_command "kube" "<start|stop> [section...] Play or remove kube pods"
+
 toml_list_item() {
 	printf '  "%s",\n' "$1"
 }
@@ -163,6 +165,21 @@ kube_pull_images() {
 		select(.imagePullPolicy != "Never") | .image' "$file"
 }
 
+# Remove the pods of a kube section, volumes are kept. Errors are
+# ignored, as the pods might not exist.
+down_kube_file() {
+	local section="$1"
+	local file="$KUBE_DIR/$section.yaml"
+
+	if [ ! -f "$file" ]; then
+		logger -t "$NAME" -p daemon.warn "$file does not exist"
+		return
+	fi
+
+	# Close the procd lock fd 1000, see start_service().
+	${PROG} kube down "$file" >/dev/null 2>&1 1000>&-
+}
+
 # Create the pods of a kube section from <KUBE_DIR>/<section>.yaml.
 # --replace recreates existing pods, so that changes of the file are
 # applied. The writable layer of the containers is lost, volumes are
@@ -184,9 +201,8 @@ play_kube_file() {
 		return
 	fi
 
-	# Close the procd lock fd 1000, see start_service().
 	if [ "$enabled" = 0 ]; then
-		${PROG} kube down "$file" >/dev/null 2>&1 1000>&-
+		down_kube_file "$section"
 		return
 	fi
 
@@ -202,9 +218,73 @@ play_kube_file() {
 		return
 	fi
 
+	# Close the procd lock fd 1000, see start_service().
 	if ! ${PROG} kube play --replace "$file" >/dev/null 1000>&-; then
 		logger -t "$NAME" -p daemon.err "failed to play $file"
 	fi
+}
+
+# Play the kube files without restarting the service, so the other
+# containers keep running. Without arguments all kube sections are
+# played, otherwise only the given ones. As on start, disabled sections
+# are removed. The service has to be running, as it checks the graphroot
+# before. Otherwise the containers could end up on the tmpfs.
+kube_start() {
+	local section
+
+	if ! service_running; then
+		echo "$NAME is not running" >&2
+		return 1
+	fi
+
+	config_load podman
+
+	if [ $# -eq 0 ]; then
+		config_foreach play_kube_file kube
+		return 0
+	fi
+
+	for section in "$@"; do
+		play_kube_file "$section"
+	done
+}
+
+# Remove the pods of all or only the given kube sections, regardless of
+# whether they are enabled. The other containers keep running.
+kube_stop() {
+	local section
+
+	config_load podman
+
+	if [ $# -eq 0 ]; then
+		config_foreach down_kube_file kube
+		return 0
+	fi
+
+	for section in "$@"; do
+		down_kube_file "$section"
+	done
+}
+
+kube() {
+	local action="$1"
+
+	if [ $# -gt 0 ]; then
+		shift
+	fi
+
+	case "$action" in
+	start)
+		kube_start "$@"
+		;;
+	stop)
+		kube_stop "$@"
+		;;
+	*)
+		echo "Usage: $initscript kube <start|stop> [section...]" >&2
+		return 1
+		;;
+	esac
 }
 
 start_service() {
