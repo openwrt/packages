@@ -897,7 +897,14 @@ config_connection() {
 
 	swanctl_xappend2 "children {"
 
-	config_list_foreach "$conf" child config_child
+	case "$config_mode" in
+	simple)
+		config_connection_simple_child "$conf"
+		;;
+	*)
+		config_list_foreach "$conf" child config_child
+		;;
+	esac
 
 	swanctl_xappend2 "}"
 
@@ -987,6 +994,41 @@ config_connection_simple_round() {
 	swanctl_xappend3 "auth = psk"
 	[ -n "$id" ] && swanctl_xappend3 "id = \"$id\""
 	swanctl_xappend2 "}"
+}
+
+# In the simple configuration mode, the connection has one child in tunnel
+# mode, named like the connection, with the networks set on the connection.
+config_connection_simple_child() {
+	local conf="$1"
+
+	local local_ts
+	local remote_ts
+	local start_action
+	local if_id
+
+	config_list_foreach "$conf" local_ts append_var local_ts ","
+	config_list_foreach "$conf" remote_ts append_var remote_ts ","
+	config_get start_action "$conf" start_action "none"
+	config_get if_id "$conf" if_id ""
+
+	case "$start_action" in
+	none|trap|start)
+		;;
+	*)
+		fatal "start_action '$start_action' unknown"
+		start_action=
+		;;
+	esac
+
+	swanctl_xappend3 "$conf {"
+	[ -n "$local_ts" ] && swanctl_xappend4 "local_ts = $local_ts"
+	[ -n "$remote_ts" ] && swanctl_xappend4 "remote_ts = $remote_ts"
+	[ -n "$if_id" ] && \
+		swanctl_xappend4 "if_id_in = $if_id" "if_id_out = $if_id"
+	[ -n "$start_action" ] && [ "$start_action" != "none" ] && \
+		swanctl_xappend4 "start_action = $start_action"
+	swanctl_xappend4 "mode = tunnel"
+	swanctl_xappend3 "}"
 }
 
 # The pre-shared key is bound to the local and remote identifier of the
