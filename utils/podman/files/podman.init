@@ -9,7 +9,7 @@ CONF_DIR=/var/etc/containers
 GRAPHROOT=/var/lib/containers/storage
 KUBE_DIR=/etc/containers/kube
 
-extra_command "kube" "<start|stop> [section...] Play or remove kube pods"
+extra_command "kube" "<start|stop|pull|rmi> [section...] Manage kube pods"
 
 toml_list_item() {
 	printf '  "%s",\n' "$1"
@@ -165,6 +165,68 @@ kube_pull_images() {
 		select(.imagePullPolicy != "Never") | .image' "$file"
 }
 
+# Print every image of a kube section once, regardless of the
+# imagePullPolicy.
+kube_images() {
+	local section="$1"
+	local file="$KUBE_DIR/$section.yaml"
+	local images
+
+	if [ ! -f "$file" ]; then
+		logger -t "$NAME" -p daemon.warn "$file does not exist"
+		return 1
+	fi
+
+	if ! images="$(yq eval --no-doc '.. | select(tag == "!!map") |
+			select(has("image")) | .image' "$file")"; then
+		logger -t "$NAME" -p daemon.err "failed to parse $file"
+		return 1
+	fi
+
+	echo "$images" | sort -u
+}
+
+# Download the images of a kube section from the registry. Print which
+# image is pulled. podman shows the progress of the download on stderr.
+pull_kube_images() {
+	local section="$1"
+	local images
+	local image
+	local count=0
+	local total
+
+	images="$(kube_images "$section")" || return
+
+	total="$(echo "$images" | grep -c .)"
+
+	for image in $images; do
+		count=$((count + 1))
+		echo "$section: pulling $image ($count/$total)"
+
+		if ! ${PROG} pull "$image" >/dev/null; then
+			logger -t "$NAME" -p daemon.err "failed to pull $image"
+			echo "$section: failed to pull $image" >&2
+		fi
+	done
+}
+
+# Remove the images of a kube section. An image which is still used by
+# a container is not removed, so the pods have to be removed before.
+rmi_kube_images() {
+	local section="$1"
+	local images
+	local image
+
+	images="$(kube_images "$section")" || return
+
+	for image in $images; do
+		if ! ${PROG} rmi "$image" >/dev/null; then
+			logger -t "$NAME" -p daemon.err \
+				"failed to remove $image"
+		fi
+	done
+}
+
 # Remove the pods of a kube section, volumes are kept. Errors are
 # ignored, as the pods might not exist.
 down_kube_file() {
@@ -266,6 +328,50 @@ kube_stop() {
 	done
 }
 
+# Download the images of all or only the given kube sections. The
+# service has to be running, as it checks the graphroot before.
+# Otherwise the images could end up on the tmpfs.
+kube_pull() {
+	local section
+
+	if ! service_running; then
+		echo "$NAME is not running" >&2
+		return 1
+	fi
+
+	# Release the procd lock fd 1000, see start_service(). Otherwise every
+	# other call of this init script waits until all images are pulled.
+	# podman locks its storage itself.
+	exec 1000>&-
+
+	config_load podman
+
+	if [ $# -eq 0 ]; then
+		config_foreach pull_kube_images kube
+		return 0
+	fi
+
+	for section in "$@"; do
+		pull_kube_images "$section"
+	done
+}
+
+# Remove the images of all or only the given kube sections.
+kube_rmi() {
+	local section
+
+	config_load podman
+
+	if [ $# -eq 0 ]; then
+		config_foreach rmi_kube_images kube
+		return 0
+	fi
+
+	for section in "$@"; do
+		rmi_kube_images "$section"
+	done
+}
+
 kube() {
 	local action="$1"
 
@@ -280,8 +386,15 @@ kube() {
 	stop)
 		kube_stop "$@"
 		;;
+	pull)
+		kube_pull "$@"
+		;;
+	rmi)
+		kube_rmi "$@"
+		;;
 	*)
-		echo "Usage: $initscript kube <start|stop> [section...]" >&2
+		echo "Usage: $initscript kube <start|stop|pull|rmi>" \
+			"[section...]" >&2
 		return 1
 		;;
 	esac
