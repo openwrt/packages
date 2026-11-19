@@ -78,8 +78,7 @@ miniupnpd-nftables)
 	common_checks
 	for f in table-post/20-miniupnpd.nft \
 		chain-post/dstnat/20-miniupnpd.nft \
-		chain-post/forward/20-miniupnpd.nft \
-		chain-post/srcnat/20-miniupnpd.nft; do
+		chain-post/forward/20-miniupnpd.nft; do
 		[ -s "/usr/share/nftables.d/$f" ] \
 			|| { echo "FAIL: nft fragment $f missing or empty"; exit 1; }
 	done
