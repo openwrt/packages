@@ -1,0 +1,6 @@
+. /lib/functions.sh
+
+profile_d_retire 50-openvpn-easy-rsa.sh \
+	e5188dc87dafce6cab1fc8d7a2ae3900b2dedb2391c96d24aa66f6328b793253
+
+exit 0
