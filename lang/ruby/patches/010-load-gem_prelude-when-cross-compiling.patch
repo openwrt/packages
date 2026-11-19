@@ -1,0 +1,107 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Date: Thu, 19 Nov 2026 12:49:22 +0100
+Subject: [PATCH] Load gem_prelude when builtin binaries are not available
+
+Since f3f70323bb ("Skip loading gem_prelude in wasm environment") and
+2622d79296, Init_builtin_features() loads gem_prelude.rb only when
+BUILTIN_BINARY_SIZE is defined. configure disables builtin binaries
+when cross compiling, and builtin.c then includes mini_builtin.c, whose
+rb_define_gem_modules() and rb_load_gem_prelude() are empty because
+miniruby does not load RubyGems.
+
+As a result, a cross-compiled ruby starts without RubyGems,
+error_highlight, did_you_mean and syntax_suggest, even with
+--enable-gems, and bundled gems such as net-imap cannot be required
+unless rubygems is required first. Ruby 3.4 loaded gem_prelude.rb from
+its embedded source in this case.
+
+Keep the empty functions for miniruby, and let ruby compile
+gem_prelude.rb from the embedded source when there are no builtin
+binaries.
+
+Signed-off-by: Josef Schlehofer <pepe.schlehofer@gmail.com>
+---
+ builtin.c      | 31 +++++++++++++++++--------------
+ mini_builtin.c |  2 ++
+ 2 files changed, 19 insertions(+), 14 deletions(-)
+
+--- a/builtin.c
++++ b/builtin.c
+@@ -9,8 +9,17 @@
+ #ifndef BUILTIN_BINARY_SIZE
+ 
+ #define BUILTIN_LOADED(feature_name, iseq) ((void)0)
++#define BUILTIN_LOAD_GEM_PRELUDE 1
+ #include "mini_builtin.c"
+ 
++// Without builtin binaries (cross compiling), compile gem_prelude.rb from
++// its embedded source like the other builtin features.
++void
++rb_load_gem_prelude(VALUE box)
++{
++    rb_iseq_eval(builtin_iseq_load("gem_prelude", NULL), (const rb_box_t *)box);
++}
++
+ #else
+ 
+ static const unsigned char *
+@@ -84,6 +93,14 @@ rb_load_with_builtin_functions(const cha
+     load_with_builtin_functions(feature_name, table, rb_root_box());
+ }
+ 
++void
++rb_load_gem_prelude(VALUE box)
++{
++    load_with_builtin_functions("gem_prelude", NULL, (const rb_box_t *)box);
++}
++
++#endif
++
+ VALUE
+ rb_define_gem_modules(VALUE flags_value, VALUE _)
+ {
+@@ -106,14 +123,6 @@ rb_define_gem_modules(VALUE flags_value,
+ }
+ 
+ void
+-rb_load_gem_prelude(VALUE box)
+-{
+-    load_with_builtin_functions("gem_prelude", NULL, (const rb_box_t *)box);
+-}
+-
+-#endif
+-
+-void
+ rb_free_loaded_builtin_table(void)
+ {
+     // do nothing
+@@ -128,13 +137,7 @@ Init_builtin(void)
+ void
+ Init_builtin_features(void)
+ {
+-
+-#ifdef BUILTIN_BINARY_SIZE
+-
+     rb_load_gem_prelude((VALUE)rb_root_box());
+ 
+     rb_load_gem_prelude((VALUE)rb_main_box());
+-
+-#endif
+-
+ }
+--- a/mini_builtin.c
++++ b/mini_builtin.c
+@@ -103,6 +103,7 @@ rb_load_with_builtin_functions(const cha
+     rb_iseq_eval(iseq, rb_root_box());
+ }
+ 
++#ifndef BUILTIN_LOAD_GEM_PRELUDE
+ VALUE
+ rb_define_gem_modules(VALUE _a, VALUE _b)
+ {
+@@ -115,3 +116,4 @@ rb_load_gem_prelude(VALUE _)
+ {
+     // do nothing - miniruby doesn't support loading RubyGems.
+ }
++#endif
