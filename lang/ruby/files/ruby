@@ -2,4 +2,11 @@
 if ! [ -r "@RUBY_LIBPATH@/rubygems.rb" ]; then
 	exec @RUBY_BINPATH@ --disable-gems "$@"
 fi
+disable=
+[ -r "@RUBY_LIBPATH@/error_highlight.rb" ] || disable="$disable,error_highlight"
+[ -r "@RUBY_LIBPATH@/did_you_mean.rb" ] || disable="$disable,did_you_mean"
+[ -r "@RUBY_LIBPATH@/syntax_suggest/core_ext.rb" ] || disable="$disable,syntax_suggest"
+if [ -n "$disable" ]; then
+	exec @RUBY_BINPATH@ --disable="${disable#,}" "$@"
+fi
 exec @RUBY_BINPATH@ "$@"
