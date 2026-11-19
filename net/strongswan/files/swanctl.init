@@ -1005,11 +1005,15 @@ config_connection_simple_child() {
 	local remote_ts
 	local start_action
 	local if_id
+	local crypto=""
 
 	config_list_foreach "$conf" local_ts append_var local_ts ","
 	config_list_foreach "$conf" remote_ts append_var remote_ts ","
 	config_get start_action "$conf" start_action "none"
 	config_get if_id "$conf" if_id ""
+
+	# The crypto_proposal option of a connection holds the IKE proposals.
+	config_list_foreach "$conf" esp_proposal config_esp_proposal
 
 	case "$start_action" in
 	none|trap|start)
@@ -1027,6 +1031,7 @@ config_connection_simple_child() {
 		swanctl_xappend4 "if_id_in = $if_id" "if_id_out = $if_id"
 	[ -n "$start_action" ] && [ "$start_action" != "none" ] && \
 		swanctl_xappend4 "start_action = $start_action"
+	[ -n "$crypto" ] && swanctl_xappend4 "esp_proposals = $crypto"
 	swanctl_xappend4 "mode = tunnel"
 	swanctl_xappend3 "}"
 }
