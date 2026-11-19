@@ -1,0 +1,25 @@
+# tmhi notification hook (example). Installed as
+# /etc/hotplug.d/tmhi/50-example. Every file in /etc/hotplug.d/tmhi/ is
+# sourced by /sbin/hotplug-call when tmhi has something to report, so this
+# one does nothing until you uncomment it. Kept across sysupgrade, along with
+# any other script you add to this directory. Try it with: tmhi notify-test
+#
+# Variables:
+#   ACTION    reboot-recommended | recovered | auto-reboot | auto-reboot-done | test
+#   MESSAGE   one line for a person to read
+#   LEVEL     health now: ok | degraded | reboot | down
+#   BAND      what the gateway is on, e.g. "n25 20 MHz"
+#   WHY       why it isn't healthy (empty when ok)
+#   DURATION  seconds degraded, when it applies
+#
+# The internet goes through the gateway, so a message can't get out while the
+# gateway is down; these events all happen while it's up.
+
+# Push to ntfy (https://ntfy.sh, or your own server). Pick a topic nobody
+# will guess: anyone who knows it can read the messages.
+#case "$ACTION" in
+#reboot-recommended | recovered | auto-reboot | auto-reboot-done | test)
+#	curl -s -m 10 -H "Title: Cellular gateway" -d "$MESSAGE" \
+#		https://ntfy.sh/your-topic-here >/dev/null 2>&1
+#	;;
+#esac
