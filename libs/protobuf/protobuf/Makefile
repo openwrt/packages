@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=protobuf
 PKG_VERSION:=29.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/google/protobuf/releases/download/v$(PKG_VERSION)
@@ -34,11 +34,24 @@ endef
 
 define Package/protobuf
   $(call Package/protobuf/Default)
-  DEPENDS+=+protobuf-lite
+  DEPENDS+=+libutf8-range
 endef
 
 define Package/protobuf-lite
   $(call Package/protobuf/Default)
+  DEPENDS+=+libutf8-range
+endef
+
+define Package/libprotoc
+  $(call Package/protobuf/Default)
+  TITLE:=Protocol Buffers compiler library
+  DEPENDS:=+libatomic +libstdcpp +protobuf
+endef
+
+define Package/libutf8-range
+  $(call Package/protobuf/Default)
+  TITLE:=UTF-8 validation libraries of Protocol Buffers
+  DEPENDS:=+libatomic +libstdcpp
 endef
 
 define Package/protobuf/description/Default
@@ -50,14 +63,29 @@ endef
 define Package/protobuf/description
   $(call Package/protobuf/description/Default)
 
-  This package provides the libprotoc, libprotobuf, and libprotobuf-lite
-  libraries. For a much smaller protobuf package, see "protobuf-lite".
+  This package provides the libprotobuf library. For a much smaller
+  protobuf package, see "protobuf-lite". The libprotoc library is in the
+  "libprotoc" package.
 endef
 
 define Package/protobuf-lite/description
  $(call Package/protobuf/description/Default)
 
  This package provides the libprotobuf-lite library.
+endef
+
+define Package/libprotoc/description
+  $(call Package/protobuf/description/Default)
+
+  This package provides the libprotoc library, which the protoc compiler
+  and its plugins use. Programs that only read and write messages do not
+  need it.
+endef
+
+define Package/libutf8-range/description
+  This package provides the libutf8_range and libutf8_validity libraries,
+  which are built with Protocol Buffers and used by libprotobuf and
+  libprotobuf-lite.
 endef
 
 CMAKE_HOST_OPTIONS += \
@@ -93,16 +121,26 @@ endef
 define Package/protobuf-lite/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libprotobuf-lite.so.* $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libutf8_range.so* $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libutf8_validity.so* $(1)/usr/lib/
 endef
 
 define Package/protobuf/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libprotobuf.so.* $(1)/usr/lib/
+endef
+
+define Package/libprotoc/install
+	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libprotoc.so.* $(1)/usr/lib/
+endef
+
+define Package/libutf8-range/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libutf8_range.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libutf8_validity.so* $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,protobuf))
 $(eval $(call BuildPackage,protobuf-lite))
+$(eval $(call BuildPackage,libprotoc))
+$(eval $(call BuildPackage,libutf8-range))
 $(eval $(call HostBuild))
