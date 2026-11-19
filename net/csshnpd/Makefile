@@ -4,12 +4,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=csshnpd
-PKG_VERSION:=1.1.1
+PKG_VERSION:=1.2.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-c$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/atsign-foundation/noports/releases/download/c$(PKG_VERSION)
-PKG_HASH:=5535badb78cd26607945ec5ee0f4c6db0fee595e2ae6f2cd4996da164d682665
+PKG_HASH:=61e2142992a58fb232d4f194be90c324cd568ee9013d7ef9c3b70d75fccb5bac
 
 PKG_MAINTAINER:=Chris Swan <chris@atsign.com>
 PKG_LICENSE:=BSD-3-Clause
@@ -38,7 +38,7 @@ define Package/csshnpd
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=SSH
-  DEPENDS:=+libmbedtls +cJSON
+  DEPENDS:=+libcurl +libmbedtls +cJSON
   TITLE:=NoPorts Daemon
   URL:=https://noports.com
 endef
