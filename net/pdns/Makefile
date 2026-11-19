@@ -4,7 +4,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pdns
 PKG_VERSION:=4.9.17
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://downloads.powerdns.com/releases/
@@ -21,7 +21,7 @@ PKG_INSTALL:=1
 
 PKG_BUILD_PARALLEL:=1
 
-PKG_BUILD_DEPENDS:=unixodbc/host protobuf-c/host
+PKG_BUILD_DEPENDS:=unixodbc/host
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -66,7 +66,7 @@ endef
 define Package/pdns-tools
   $(call Package/pdns/Default)
   TITLE:=Tools for DNS debugging by PowerDNS
-  DEPENDS+=+boost +boost-program_options +libcurl +libmbedtls +libopenssl +p11-kit +protobuf
+  DEPENDS+=+boost +boost-program_options +libcurl +libmbedtls +libopenssl +p11-kit
 endef
 
 define Package/pdns-tools/description
@@ -93,7 +93,7 @@ endef
 define Package/pdns-ixfrdist
   $(call Package/pdns/Default)
   TITLE:=Redistribute zones via AXFR and IXFR
-  DEPENDS+=+boost +boost-program_options +libopenssl +libyaml-cpp +p11-kit +protobuf
+  DEPENDS+=+boost +boost-program_options +libopenssl +libyaml-cpp +p11-kit
 endef
 
 define Package/pdns-ixfrdist/description
