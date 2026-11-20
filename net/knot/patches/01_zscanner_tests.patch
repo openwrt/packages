@@ -1,3 +1,8 @@
+From f64675271cb9ba914bad9139233111b751d224c0 Mon Sep 17 00:00:00 2001
+From: Daniel Salzman <daniel.salzman@nic.cz>
+Date: Thu, 22 Oct 2026 09:44:18 +0200
+Subject: [PATCH] tests: patch for OWRT
+
 --- a/tests/libzscanner/test_zscanner.in
 +++ b/tests/libzscanner/test_zscanner.in
 @@ -3,16 +3,15 @@
@@ -20,5 +25,5 @@
 -ZSCANNER_TOOL="$BUILD"/zscanner-tool
 +ZSCANNER_TOOL="$SOURCE"/zscanner-tool
  
- plan 90
+ plan 91
  

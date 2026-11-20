@@ -1,0 +1,42 @@
+From 8e7dac58df2a8847e4cfd21ad714d119a367667d Mon Sep 17 00:00:00 2001
+From: Hans de Goede <johannes.goede@oss.qualcomm.com>
+Date: Tue, 18 Aug 2026 16:05:44 +0200
+Subject: [PATCH] pipeline: rpi: Explictly pass pipe()->name() when creating
+ IPA
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Switch to explicitly specifying the pipeline-name as the name of the IPA
+to create.
+
+This is a preparation patch for switching the default IPA creation to
+matching IPA by IPA proxy type, which does not work for rpi because
+the same IPAProxyRPi type is used for both the rpi/vc4 and rpi/pisp
+pipeline handlers.
+
+Reviewed-by: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Reviewed-by: Barnabás Pőcze <barnabas.pocze@ideasonboard.com>
+Signed-off-by: Hans de Goede <johannes.goede@oss.qualcomm.com>
+Signed-off-by: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+---
+ src/libcamera/pipeline/rpi/common/pipeline_base.cpp | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+--- a/src/libcamera/pipeline/rpi/common/pipeline_base.cpp
++++ b/src/libcamera/pipeline/rpi/common/pipeline_base.cpp
+@@ -1165,7 +1165,13 @@ int CameraData::loadIPA(ipa::RPi::InitRe
+ {
+ 	int ret;
+ 
+-	ipa_ = pipe()->createIPA<ipa::RPi::IPAProxyRPi>(1, 1);
++	/*
++	 * Explicitly pass pipe()->name() to select the IPA to create.
++	 * The default behavior of creating the IPA by the IPA proxy type name
++	 * does not work because the same IPAProxyRPi type is used for both
++	 * the rpi/vc4 and rpi/pisp pipeline handlers.
++	 */
++	ipa_ = pipe()->createIPA<ipa::RPi::IPAProxyRPi>(pipe()->name(), 1, 1);
+ 
+ 	if (!ipa_)
+ 		return -ENOENT;

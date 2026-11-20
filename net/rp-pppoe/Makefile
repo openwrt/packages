@@ -90,18 +90,6 @@ $(call Package/rp-pppoe/Default/description)
  This package contains pppoe-server.
 endef
 
-define Package/rp-pppoe-sniff
-  $(call Package/rp-pppoe/Default)
-  DEPENDS:=+ppp @BROKEN
-  TITLE+= sniffer
-endef
-
-define Package/rp-pppoe-sniff/description
-$(call Package/rp-pppoe/Default/description)
-
- This package contains pppoe-sniff.
-endef
-
 TARGET_CFLAGS += -I$(PKG_BUILD_DIR)/src/libevent -isystem $(PKG_BUILD_DIR)/missing-headers -D_BSD_SOURCE
 CONFIGURE_PATH := ./src
 CONFIGURE_ARGS += ac_cv_path_PPPD=/usr/sbin/pppd --enable-plugin=$(STAGING_DIR)/usr/include/
@@ -138,12 +126,6 @@ define Package/rp-pppoe-server/install
 	$(INSTALL_DATA) ./files/pppoe-server.default $(1)/etc/uci-defaults/
 endef
 
-define Package/rp-pppoe-sniff/install
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/pppoe-sniff $(1)/usr/sbin/
-endef
-
 $(eval $(call BuildPackage,rp-pppoe-common))
 $(eval $(call BuildPackage,rp-pppoe-relay))
 $(eval $(call BuildPackage,rp-pppoe-server))
-$(eval $(call BuildPackage,rp-pppoe-sniff))

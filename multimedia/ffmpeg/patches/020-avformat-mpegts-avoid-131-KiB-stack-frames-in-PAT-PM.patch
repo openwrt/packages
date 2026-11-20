@@ -1,0 +1,144 @@
+From 6edbe0d5af28c31f97a7a9ae4aee94a8b9d102ce Mon Sep 17 00:00:00 2001
+From: Jun Zhao <barryjzhao@tencent.com>
+Date: Thu, 12 Nov 2026 07:33:32 +0800
+Subject: [PATCH] avformat/mpegts: avoid ~131 KiB stack frames in PAT/PMT
+ callbacks
+
+5a75d905cb24 added stream_groups[MAX_STREAMS_PER_PROGRAM] to struct
+Program, making it 134688 bytes on 64-bit targets.  Two callbacks keep a
+whole struct Program on the stack: FFSWAP() in pat_cb() creates a
+by-value temporary, and pmt_cb() has a local struct Program old_program.
+GCC -fstack-usage reports 134800 bytes for pat_cb() and 136368 bytes for
+pmt_cb().
+
+The ffmpeg CLI demuxes each input in a thread created by task_start()
+with default attributes; musl's default thread stack is 131072 bytes.
+Both callbacks overflow it as soon as a PAT or PMT is parsed in that
+thread, so ffmpeg dies with SIGSEGV on every MPEG-TS input.  This is not
+musl specific: any thread with a stack below ~140 KiB is affected.
+
+Swap the two programs member by member in a helper whose largest
+temporary is one struct StreamGroup (1040 bytes).  A plain assignment is
+not equivalent: pat_cb() compacts the active programs while ts->nb_prg
+still holds the old value, so all old entries must remain findable.
+
+pmt_cb() only needs the old program's stream list, which
+find_matching_stream() reads through nb_streams and streams[].  Save just
+the active entries in a new struct ProgramStreams (1028 bytes) before
+clear_program(prg) and the PMT loop overwrite prg->streams[] in place.
+
+Measured with -fstack-usage on arm64: pat_cb() 134848 -> 1200 bytes,
+pmt_cb() 136400 -> 2752 bytes, both now below configure's
+-Wstack-usage=122880 threshold.
+
+Fixes: https://code.ffmpeg.org/FFmpeg/FFmpeg/issues/25937
+Signed-off-by: Jun Zhao <barryjzhao@tencent.com>
+---
+ libavformat/mpegts.c | 50 +++++++++++++++++++++++++++++++++++++-------
+ 1 file changed, 42 insertions(+), 8 deletions(-)
+
+--- a/libavformat/mpegts.c
++++ b/libavformat/mpegts.c
+@@ -129,6 +129,7 @@ struct StreamGroup {
+     AVStream *streams[MAX_STREAMS_PER_PROGRAM];
+ };
+ 
++/* Keep program_swap() in sync when adding fields. */
+ struct Program {
+     unsigned int id; // program id/service id
+     unsigned int nb_pids;
+@@ -142,6 +143,13 @@ struct Program {
+     int pmt_found;
+ };
+ 
++/* Subset of struct Program needed by find_matching_stream().  Keeping this
++ * small avoids a ~131 KiB stack frame in pmt_cb(). */
++struct ProgramStreams {
++    unsigned int nb_streams;
++    struct Stream streams[MAX_STREAMS_PER_PROGRAM];
++};
++
+ struct MpegTSContext {
+     const AVClass *class;
+     /* user data */
+@@ -332,6 +340,31 @@ static void clear_program(struct Program
+     p->pmt_found = 0;
+ }
+ 
++/* Swap two programs without a struct Program-sized stack temporary. */
++static void program_swap(struct Program *a, struct Program *b)
++{
++    int n;
++
++    FFSWAP(unsigned int, a->id, b->id);
++
++    n = FFMAX(a->nb_pids, b->nb_pids);
++    FFSWAP(unsigned int, a->nb_pids, b->nb_pids);
++    for (int i = 0; i < n; i++)
++        FFSWAP(unsigned int, a->pids[i], b->pids[i]);
++
++    n = FFMAX(a->nb_streams, b->nb_streams);
++    FFSWAP(unsigned int, a->nb_streams, b->nb_streams);
++    for (int i = 0; i < n; i++)
++        FFSWAP(struct Stream, a->streams[i], b->streams[i]);
++
++    n = FFMAX(a->nb_stream_groups, b->nb_stream_groups);
++    FFSWAP(unsigned int, a->nb_stream_groups, b->nb_stream_groups);
++    for (int i = 0; i < n; i++)
++        FFSWAP(struct StreamGroup, a->stream_groups[i], b->stream_groups[i]);
++
++    FFSWAP(int, a->pmt_found, b->pmt_found);
++}
++
+ static void clear_programs(MpegTSContext *ts)
+ {
+     av_freep(&ts->prg);
+@@ -2545,7 +2578,8 @@ int ff_parse_mpeg2_descriptor(AVFormatCo
+ }
+ 
+ static AVStream *find_matching_stream(MpegTSContext *ts, int pid, unsigned int programid,
+-                                      int stream_identifier, int pmt_stream_idx, struct Program *p)
++                                      int stream_identifier, int pmt_stream_idx,
++                                      const struct ProgramStreams *p)
+ {
+     AVFormatContext *s = ts->stream;
+     AVStream *found = NULL;
+@@ -2741,7 +2775,7 @@ static void pmt_cb(MpegTSFilter *filter,
+ {
+     MpegTSContext *ts = filter->u.section_filter.opaque;
+     MpegTSSectionFilter *tssf = &filter->u.section_filter;
+-    struct Program old_program;
++    struct ProgramStreams old_program;
+     SectionHeader h1, *h = &h1;
+     PESContext *pes;
+     AVStream *st;
+@@ -2777,15 +2811,15 @@ static void pmt_cb(MpegTSFilter *filter,
+         return;
+ 
+     prg = get_program(ts, h->id);
+-    if (prg)
+-        old_program = *prg;
+-    else
+-        clear_program(&old_program);
+-
+     if (ts->skip_unknown_pmt && !prg)
+         return;
+     if (prg && prg->nb_pids && prg->pids[0] != ts->current_pid)
+         return;
++    old_program.nb_streams = prg ? prg->nb_streams : 0;
++    if (old_program.nb_streams)
++        memcpy(old_program.streams, prg->streams,
++               old_program.nb_streams * sizeof(*old_program.streams));
++
+     if (!ts->skip_clear)
+         clear_avprogram(ts, h->id);
+     clear_program(prg);
+@@ -3033,7 +3067,7 @@ static void pat_cb(MpegTSFilter *filter,
+                     clear_program(prg);
+                 add_pid_to_program(prg, pmt_pid);
+                 if (prg_idx > nb_prg)
+-                    FFSWAP(struct Program, ts->prg[nb_prg], ts->prg[prg_idx]);
++                    program_swap(&ts->prg[nb_prg], &ts->prg[prg_idx]);
+                 if (prg_idx >= nb_prg)
+                     nb_prg++;
+             } else

@@ -1,0 +1,28 @@
+From 4d10314d784cd4cef1d279b3e302256f20288eab Mon Sep 17 00:00:00 2001
+From: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Date: Wed, 7 Oct 2026 08:25:33 +0200
+Subject: [PATCH] ripe-atlas: support non-RSA SSH public keys
+
+hash_ssh_pubkey() only extracts the key material from RSA public keys.
+This causes Ed25519 keys to be hashed incorrectly.
+
+Extract the key material independently of the key type.
+
+Fixes: d4d22baa ("changed: ed25519 keys for Debian and RHEL")
+Upstream-Status: Submitted [https://github.com/RIPE-NCC/ripe-atlas-software-probe/pull/155]
+Signed-off-by: Josef Schlehofer <pepe.schlehofer@gmail.com>
+---
+ bin/arch/linux/linux-functions.sh | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/bin/arch/linux/linux-functions.sh
++++ b/bin/arch/linux/linux-functions.sh
+@@ -227,7 +227,7 @@ do_buddyinfo()
+ }
+ hash_ssh_pubkey()
+ {
+-	hash=$(sed < "$1" 's/^ssh-rsa *\([^ ]*\).*/\1/' |
++	hash=$(sed < "$1" 's/^[^ ]* *\([^ ]*\).*/\1/' |
+ 		tr -d '\n' | sha256sum)
+ 	expr "$hash" : "\(.\{16\}\)"
+ }

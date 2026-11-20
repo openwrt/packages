@@ -22,7 +22,7 @@
  #define GSSD_DEFAULT_KEYTAB_FILE		"/etc/krb5.keytab"
 --- a/utils/statd/sm-notify.c
 +++ b/utils/statd/sm-notify.c
-@@ -913,7 +913,7 @@ static int record_pid(void)
+@@ -986,7 +986,7 @@ static int record_pid(void)
  	int fd;
  
  	(void)snprintf(pid, sizeof(pid), "%d\n", (int)getpid());
@@ -33,7 +33,7 @@
  
 --- a/utils/statd/statd.c
 +++ b/utils/statd/statd.c
-@@ -161,7 +161,7 @@ usage(void)
+@@ -163,7 +163,7 @@ usage(void)
  	fprintf(stderr,"      -H                   Specify a high-availability callout program.\n");
  }
  

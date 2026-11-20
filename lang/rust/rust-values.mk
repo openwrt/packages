@@ -98,8 +98,9 @@ endif
 RUSTC_TARGET_UPPER = $(subst -,_,$(call toupper,$(RUSTC_TARGET_ARCH)))
 RUSTC_TARGET_CARGO_RUSTFLAGS = CARGO_TARGET_$(RUSTC_TARGET_UPPER)_RUSTFLAGS
 
-# Support only a subset for now.
-RUST_ARCH_DEPENDS:=@(aarch64||arm||i386||loongarch64||mips||mips64||mips64el||mipsel||powerpc||powerpc64||riscv64||x86_64)
+# Support only a subset for now. The Rust toolchain of the build system, when
+# selected, replaces rust/host.
+RUST_ARCH_DEPENDS:=@(aarch64||arm||i386||loongarch64||mips||mips64||mips64el||mipsel||powerpc||powerpc64||riscv64||x86_64) @!USE_RUST_TOOLCHAIN
 
 ifneq ($(CONFIG_RUST_SCCACHE),)
   RUST_SCCACHE_DIR:=$(if $(call qstrip,$(CONFIG_RUST_SCCACHE_DIR)),$(call qstrip,$(CONFIG_RUST_SCCACHE_DIR)),$(TOPDIR)/.sccache)

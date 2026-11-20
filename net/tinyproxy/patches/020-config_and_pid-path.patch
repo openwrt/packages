@@ -1,3 +1,11 @@
+From db480e205cd1634e196c429264e42d3351d8bcd5 Mon Sep 17 00:00:00 2001
+From: Florian Fainelli <florian@openwrt.org>
+Date: Sat, 31 Jul 2010 11:39:13 +0000
+Subject: [PATCH] tinyproxy: fix creation of pid and log (#7641)
+
+SVN-Revision: 22431
+---
+
 --- a/etc/tinyproxy.conf.in
 +++ b/etc/tinyproxy.conf.in
 @@ -93,7 +93,7 @@ StatFile "@pkgdatadir@/stats.html"
@@ -13,7 +21,7 @@
  # can be used for signalling purposes.
  # If not specified, no pidfile will be written.
  #
--#PidFile "@localstatedir@/run/tinyproxy/tinyproxy.pid"
+-#PidFile "@runstatedir@/tinyproxy/tinyproxy.pid"
 +PidFile "@localstatedir@/tinyproxy.pid"
  
  #

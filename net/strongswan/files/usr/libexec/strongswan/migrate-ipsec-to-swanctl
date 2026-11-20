@@ -242,9 +242,9 @@ migrate_dpd_action_value() {
 	}
 
 	# * 'none' is the default value for the *old* dpdaction. This value
-	#   is no longer available in the new 'dpd_action'. It should be
-	#   converted to 'dpd_delay=0' and 'dpd_action=clear' to restore the
-	#   old behavior.
+	#   is no longer available in the new 'dpd_action'. It is converted
+	#   to 'dpd_delay=0s' on the remote section, see
+	#   migrate_dpd_delay_remote, and 'dpd_action=clear'.
 	# * 'clear' is default value if 'dpd_action' is not specified
 	#   This option does not need to be migrated, as it is the default
 	#   for the *new* option.
@@ -252,8 +252,32 @@ migrate_dpd_action_value() {
 	uci -q delete ipsec.${cfg}.dpdaction
 }
 
+# 'dpddelay' of the remote section becomes 'dpd_delay'. The old config
+# disabled DPD with dpddelay=0s if any child had dpdaction 'none', which was
+# also the default. Otherwise the default of dpddelay was 30s, while the
+# default of dpd_delay is 0s, so the old default has to be set explicitly.
+# This has to run before the dpdaction of the children is migrated.
+migrate_dpd_delay_remote() {
+	local cfg="$1"
+
+	local value children child dpdaction
+
+	config_get value "$cfg" dpddelay ""
+	uci -q delete "ipsec.${cfg}.dpddelay"
+	[ -n "$value" ] || value="30s"
+
+	config_get children "$cfg" child ""
+	for child in $children; do
+		config_get dpdaction "$child" dpdaction "none"
+		[ "$dpdaction" = "none" ] && value="0s"
+	done
+
+	uci -q set "ipsec.${cfg}.dpd_delay=${value}"
+}
+
 migrate_dpd_action() {
 	config_load ipsec
+	config_foreach migrate_dpd_delay_remote remote
 	config_foreach migrate_dpd_action_value child
 }
 
@@ -363,21 +387,49 @@ migrate_option_remote_values() {
 		uci -q rename "ipsec.${cfg}.rekeytime=rekey_time"
 	}
 
+	# keyingtries '%forever' becomes 0, which means unlimited in swanctl.
+	# The default of keyingtries was 3, the default in swanctl is 1, so the
+	# old default has to be set explicitly.
+	config_get value "$cfg" keyingtries ""
+	case "$value" in
+	"%forever")
+		uci -q set "ipsec.${cfg}.keyingtries=0"
+		;;
+	"")
+		uci -q set "ipsec.${cfg}.keyingtries=3"
+		;;
+	esac
+
 	config_get value "$cfg" overtime ""
 	[ -z "$value" ] || {
 		uci -q rename "ipsec.${cfg}.overtime=over_time"
 	}
+}
 
-	config_get value "$cfg" dpddelay ""
-	[ -z "$value" ] || {
-		uci -q rename "ipsec.${cfg}.dpddelay=dpd_delay"
-	}
+# 'inactivity' was an option of the remote section, but is an option of the
+# child section in swanctl. Move it to all children of the remote section.
+migrate_inactivity_remote() {
+	local cfg="$1"
+
+	local value children child
+
+	config_get value "$cfg" inactivity ""
+	[ -n "$value" ] || return 0
+
+	config_get children "$cfg" child ""
+	for child in $children; do
+		[ -n "$(uci -q get "ipsec.${child}.inactivity")" ] ||
+			uci -q set "ipsec.${child}.inactivity=${value}"
+	done
+
+	uci -q delete "ipsec.${cfg}.inactivity"
 }
 
 migrate_options() {
 	config_load ipsec
 	config_foreach migrate_option_child_values child
 	config_foreach migrate_option_remote_values remote
+	config_foreach migrate_inactivity_remote remote
 }
 
 migrate_remote_to_connection() {

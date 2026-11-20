@@ -1,0 +1,818 @@
+From 894032dfd6d345948bc6e5f1c1cd490c7aa0bfed Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Thu, 5 Nov 2026 12:59:52 +0000
+Subject: [PATCH 241/243] ipa: rkisp2: Add the lens distortion correction
+
+The ISPP FEC stage resamples the picture through a mesh of source
+positions loaded on its mesh device, which no algorithm generated.
+
+Add a DistortionCorrection algorithm that generates the mesh from the
+OCamCalib or OpenCV fisheye model given by the tuning file or the
+rkisp2 lens controls, with an output focal length that keeps the image
+edge nearest to the optical centre so that no blank area appears, and
+enables the FEC stage while a model is set. The level blends linearly
+between the uncorrected and the fully corrected source position. The
+IPA fills a mesh buffer on request from the pipeline handler, and
+reports lens control changes so that the pipeline handler can have a
+new mesh computed. The FEC block moves out of the static Ispp
+parameters.
+
+For the OCamCalib lens of the vendor IQ files the generated mesh is
+within 1.2 pixels of the one of the Rockchip mesh generator.
+
+Assisted-by: LLM
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ include/libcamera/ipa/rkisp2.mojom     |   5 +
+ src/ipa/rkisp2/algorithms/algorithm.h  |  19 ++
+ src/ipa/rkisp2/algorithms/fec.cpp      | 273 +++++++++++++++++++++++++
+ src/ipa/rkisp2/algorithms/fec.h        |  44 ++++
+ src/ipa/rkisp2/algorithms/fec_mesh.cpp | 193 +++++++++++++++++
+ src/ipa/rkisp2/algorithms/fec_mesh.h   |  52 +++++
+ src/ipa/rkisp2/algorithms/ispp.cpp     |  24 +--
+ src/ipa/rkisp2/algorithms/ispp.h       |   1 -
+ src/ipa/rkisp2/algorithms/meson.build  |   2 +
+ src/ipa/rkisp2/ipa_context.h           |   4 +
+ src/ipa/rkisp2/rkisp2.cpp              |  34 +++
+ 11 files changed, 631 insertions(+), 20 deletions(-)
+ create mode 100644 src/ipa/rkisp2/algorithms/fec.cpp
+ create mode 100644 src/ipa/rkisp2/algorithms/fec.h
+ create mode 100644 src/ipa/rkisp2/algorithms/fec_mesh.cpp
+ create mode 100644 src/ipa/rkisp2/algorithms/fec_mesh.h
+
+--- a/include/libcamera/ipa/rkisp2.mojom
++++ b/include/libcamera/ipa/rkisp2.mojom
+@@ -37,6 +37,9 @@ interface IPARkISP2Interface {
+ 	[async] computeParams(uint32 frame, uint32 bufferId);
+ 	[async] computeIsppParams(uint32 frame, uint32 bufferId);
+ 	primeIsppParams(uint32 frame, uint32 bufferId) => (uint32 bytesused);
++	primeFecMesh(uint32 bufferId, uint32 width, uint32 height,
++		     libcamera.ControlList controls) => (uint32 bytesused);
++	[async] computeFecMesh(uint32 bufferId, uint32 width, uint32 height);
+ 	[async] processStats(uint32 frame, uint32 bufferId,
+ 			     libcamera.ControlList sensorControls);
+ };
+@@ -46,5 +49,7 @@ interface IPARkISP2EventInterface {
+ 	isppParamsComputed(uint32 frame, uint32 bufferId, uint32 bytesused);
+ 	setSensorControls(uint32 frame, libcamera.ControlList sensorControls);
+ 	metadataReady(libcamera.ControlList metadata);
++	fecMeshChanged();
++	fecMeshComputed(uint32 bufferId, uint32 bytesused);
+ };
+ 
+--- a/src/ipa/rkisp2/algorithms/algorithm.h
++++ b/src/ipa/rkisp2/algorithms/algorithm.h
+@@ -7,8 +7,15 @@
+ 
+ #pragma once
+ 
++#include <stddef.h>
++#include <stdint.h>
++
+ #include <linux/media/rockchip/rkisp2-config.h>
+ 
++#include <libcamera/base/span.h>
++
++#include <libcamera/geometry.h>
++
+ #include <libipa/algorithm.h>
+ 
+ #include "module.h"
+@@ -29,6 +36,18 @@ public:
+ 				 [[maybe_unused]] RkISPPParams *params)
+ 	{
+ 	}
++
++	/*
++	 * Fill a FEC mesh buffer after applying the controls; return the bytes
++	 * used, 0 without a mesh.
++	 */
++	virtual size_t computeFecMesh([[maybe_unused]] IPAContext &context,
++				      [[maybe_unused]] Span<uint8_t> buffer,
++				      [[maybe_unused]] const Size &size,
++				      [[maybe_unused]] const ControlList &controls)
++	{
++		return 0;
++	}
+ };
+ 
+ } /* namespace ipa::rkisp2 */
+--- /dev/null
++++ b/src/ipa/rkisp2/algorithms/fec.cpp
+@@ -0,0 +1,273 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2026, Daniel Golle
++ *
++ * RkISP2 lens distortion correction
++ */
++
++#include "fec.h"
++
++#include <algorithm>
++#include <errno.h>
++#include <limits>
++#include <optional>
++#include <string.h>
++#include <string>
++#include <vector>
++
++#include <linux/media/rockchip/rkisp2-config.h>
++
++#include <libcamera/base/log.h>
++
++#include <libcamera/control_ids.h>
++
++#include "libcamera/internal/value_node.h"
++
++#include "fec_mesh.h"
++
++/**
++ * \file fec.h
++ */
++
++namespace libcamera {
++
++namespace ipa::rkisp2::algorithms {
++
++/**
++ * \class DistortionCorrection
++ * \brief RkISP2 lens distortion correction by the ISPP FEC
++ *
++ * The ISPP FEC stage resamples the picture through a mesh that holds, for a
++ * grid over the output, the source position to sample. The algorithm
++ * generates the mesh from a lens model, the OCamCalib omnidirectional model
++ * or the OpenCV fisheye model, and the pipeline handler loads it on the mesh
++ * device before streaming starts and whenever the lens controls change it.
++ * The output is a pinhole view whose focal length keeps the image edge
++ * nearest to the optical centre, so that the corrected picture has no blank
++ * area.
++ *
++ * \code{.unparsed}
++ * algorithms:
++ *   - DistortionCorrection:
++ *       model: ocamcalib
++ *       centre: [ 1956.39, 1140.64 ]
++ *       coefficients: [ -2819.41, 3.161e-5, 6.884e-8, -1.307e-11 ]
++ *       level: 255
++ * \endcode
++ *
++ * The fisheye model takes k1 to k4 as coefficients and a focal-length list
++ * of the horizontal and vertical focal length in pixels. The rkisp2
++ * LensModel, LensCentre, LensCoefficients, LensFocalLength and
++ * LensCorrectionLevel controls override the tuning file.
++ */
++
++LOG_DEFINE_CATEGORY(RkISP2Fec)
++
++namespace {
++
++constexpr int32_t kLevelMax = 255;
++constexpr size_t kTableAlign = 16;
++
++size_t alignTable(size_t offset)
++{
++	return (offset + kTableAlign - 1) / kTableAlign * kTableAlign;
++}
++
++template<size_t N>
++bool readList(const ValueNode &node, const char *key, std::array<float, N> &out)
++{
++	std::optional<std::vector<double>> v = node[key].get<std::vector<double>>();
++
++	if (!v || v->size() != N) {
++		LOG(RkISP2Fec, Error) << key << " needs " << N << " values";
++		return false;
++	}
++
++	std::copy(v->begin(), v->end(), out.begin());
++	return true;
++}
++
++template<typename T, size_t N>
++bool update(std::array<T, N> &dst, const std::optional<Span<const T, N>> &src)
++{
++	if (!src || std::equal(dst.begin(), dst.end(), src->begin()))
++		return false;
++
++	std::copy(src->begin(), src->end(), dst.begin());
++	return true;
++}
++
++template<typename T>
++bool update(T &dst, const std::optional<T> &src)
++{
++	if (!src || dst == *src)
++		return false;
++
++	dst = *src;
++	return true;
++}
++
++std::array<double, 4> toDouble(const std::array<float, 4> &v)
++{
++	return { v[0], v[1], v[2], v[3] };
++}
++
++} /* namespace */
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::init
++ */
++int DistortionCorrection::init(IPAContext &context, const ValueNode &tuningData)
++{
++	std::string model = tuningData["model"].get<std::string>("none");
++	constexpr float kMax = std::numeric_limits<float>::max();
++	constexpr float kMin = std::numeric_limits<float>::lowest();
++
++	centre_ = {};
++	coefficients_ = {};
++	focal_ = {};
++	level_ = std::clamp(tuningData["level"].get<int32_t>(kLevelMax), 0, kLevelMax);
++
++	if (model == "ocamcalib") {
++		model_ = controls::rkisp2::LensModelOcamCalib;
++	} else if (model == "fisheye") {
++		model_ = controls::rkisp2::LensModelFisheye;
++		if (!readList(tuningData, "focal-length", focal_))
++			return -EINVAL;
++	} else if (model == "none") {
++		model_ = controls::rkisp2::LensModelNone;
++	} else {
++		LOG(RkISP2Fec, Error) << "Unknown lens model " << model;
++		return -EINVAL;
++	}
++
++	if (model_ != controls::rkisp2::LensModelNone &&
++	    (!readList(tuningData, "centre", centre_) ||
++	     !readList(tuningData, "coefficients", coefficients_)))
++		return -EINVAL;
++
++	context.ctrlMap[&controls::rkisp2::LensModel] =
++		ControlInfo(controls::rkisp2::LensModelValues, ControlValue(model_));
++	context.ctrlMap[&controls::rkisp2::LensCentre] = ControlInfo(kMin, kMax);
++	context.ctrlMap[&controls::rkisp2::LensCoefficients] = ControlInfo(kMin, kMax);
++	context.ctrlMap[&controls::rkisp2::LensFocalLength] = ControlInfo(kMin, kMax);
++	context.ctrlMap[&controls::rkisp2::LensCorrectionLevel] =
++		ControlInfo(0, kLevelMax, level_);
++
++	return 0;
++}
++
++bool DistortionCorrection::applyControls(const ControlList &controls)
++{
++	const auto &level = controls.get(controls::rkisp2::LensCorrectionLevel);
++	bool changed = false;
++
++	changed |= update(model_, controls.get(controls::rkisp2::LensModel));
++	changed |= update(centre_, controls.get(controls::rkisp2::LensCentre));
++	changed |= update(coefficients_,
++			  controls.get(controls::rkisp2::LensCoefficients));
++	changed |= update(focal_, controls.get(controls::rkisp2::LensFocalLength));
++	if (level)
++		changed |= update(level_, std::optional<int32_t>(
++						  std::clamp(*level, 0, kLevelMax)));
++
++	return changed;
++}
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::queueRequest
++ */
++void DistortionCorrection::queueRequest(IPAContext &context,
++					[[maybe_unused]] const uint32_t frame,
++					[[maybe_unused]] IPAFrameContext &frameContext,
++					const ControlList &controls)
++{
++	if (applyControls(controls))
++		context.activeState.fec.meshChanged = true;
++}
++
++/**
++ * \brief Enable the FEC stage while a lens model is set
++ * \param[in] context The shared IPA context
++ * \param[in] frame The ISPP frame number
++ * \param[out] params The ISPP parameters buffer
++ */
++void DistortionCorrection::prepareIspp([[maybe_unused]] IPAContext &context,
++				       [[maybe_unused]] const uint32_t frame,
++				       RkISPPParams *params)
++{
++	auto block = params->block<RkISPPParamsBlocks::Fec>();
++
++	block.setEnabled(model_ != controls::rkisp2::LensModelNone);
++}
++
++/**
++ * \brief Generate the FEC mesh for a picture size
++ * \param[in] context The shared IPA context
++ * \param[out] buffer The mesh buffer of the mesh device
++ * \param[in] size The ISPP output size
++ * \param[in] controls The lens controls to apply first
++ *
++ * \return The number of bytes used, or 0 without a lens model
++ */
++size_t DistortionCorrection::computeFecMesh([[maybe_unused]] IPAContext &context,
++					    Span<uint8_t> buffer, const Size &size,
++					    const ControlList &controls)
++{
++	struct rkispp_fec_mesh header = {};
++	std::array<double, 4> coefficients;
++	fecmesh::Mesh mesh;
++	size_t n, end;
++
++	applyControls(controls);
++	coefficients = toDouble(coefficients_);
++
++	if (model_ == controls::rkisp2::LensModelOcamCalib) {
++		fecmesh::OcamLens lens{ centre_[0], centre_[1], coefficients };
++
++		mesh = fecmesh::generate(lens, size.width, size.height, level_);
++	} else if (model_ == controls::rkisp2::LensModelFisheye) {
++		fecmesh::FisheyeLens lens{ focal_[0], focal_[1], centre_[0],
++					   centre_[1], coefficients };
++
++		mesh = fecmesh::generate(lens, size.width, size.height, level_);
++	} else {
++		return 0;
++	}
++
++	n = mesh.xi.size();
++	header.width = size.width;
++	header.height = size.height;
++	header.density = RKISPP_FEC_MESH_COARSE;
++	header.mesh_size = n;
++	header.xint_offset = alignTable(sizeof(header));
++	header.xfra_offset = alignTable(header.xint_offset + 2 * n);
++	header.yint_offset = alignTable(header.xfra_offset + n);
++	header.yfra_offset = alignTable(header.yint_offset + 2 * n);
++	end = header.yfra_offset + n;
++
++	if (end > buffer.size()) {
++		LOG(RkISP2Fec, Error)
++			<< "Mesh of " << end << " bytes exceeds the buffer of "
++			<< buffer.size();
++		return 0;
++	}
++
++	memcpy(buffer.data(), &header, sizeof(header));
++	memcpy(buffer.data() + header.xint_offset, mesh.xi.data(), 2 * n);
++	memcpy(buffer.data() + header.xfra_offset, mesh.xf.data(), n);
++	memcpy(buffer.data() + header.yint_offset, mesh.yi.data(), 2 * n);
++	memcpy(buffer.data() + header.yfra_offset, mesh.yf.data(), n);
++
++	LOG(RkISP2Fec, Debug)
++		<< "Mesh for " << size << ", model " << model_ << ", level "
++		<< level_ << ", " << n << " vertices";
++
++	return end;
++}
++
++REGISTER_IPA_ALGORITHM(DistortionCorrection, "DistortionCorrection")
++
++} /* namespace ipa::rkisp2::algorithms */
++
++} /* namespace libcamera */
+--- /dev/null
++++ b/src/ipa/rkisp2/algorithms/fec.h
+@@ -0,0 +1,44 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2026, Daniel Golle
++ *
++ * RkISP2 lens distortion correction
++ */
++
++#pragma once
++
++#include <array>
++
++#include "algorithm.h"
++
++namespace libcamera {
++
++namespace ipa::rkisp2::algorithms {
++
++class DistortionCorrection : public Algorithm
++{
++public:
++	DistortionCorrection() = default;
++	~DistortionCorrection() = default;
++
++	int init(IPAContext &context, const ValueNode &tuningData) override;
++	void queueRequest(IPAContext &context, const uint32_t frame,
++			  IPAFrameContext &frameContext,
++			  const ControlList &controls) override;
++	void prepareIspp(IPAContext &context, const uint32_t frame,
++			 RkISPPParams *params) override;
++	size_t computeFecMesh(IPAContext &context, Span<uint8_t> buffer,
++			      const Size &size, const ControlList &controls) override;
++
++private:
++	bool applyControls(const ControlList &controls);
++
++	int32_t model_;
++	std::array<float, 2> centre_;
++	std::array<float, 4> coefficients_;
++	std::array<float, 2> focal_;
++	int32_t level_;
++};
++
++} /* namespace ipa::rkisp2::algorithms */
++} /* namespace libcamera */
+--- /dev/null
++++ b/src/ipa/rkisp2/algorithms/fec_mesh.cpp
+@@ -0,0 +1,193 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2026, Daniel Golle
++ *
++ * RkISPP FEC correction mesh generator
++ */
++
++#include "fec_mesh.h"
++
++#include <algorithm>
++#include <cmath>
++#include <functional>
++#include <utility>
++
++namespace libcamera {
++
++namespace ipa::rkisp2::fecmesh {
++
++namespace {
++
++/* coarse mesh geometry of cal_fec_mesh() in the ISPP driver */
++constexpr unsigned int kAlign = 32;
++constexpr unsigned int kStepX = 32;
++constexpr unsigned int kStepY = 16;
++constexpr unsigned int kStrip = 128;
++
++constexpr unsigned int kLevelMax = 255;
++constexpr int kFracBits = 8;
++
++/* the engine stalls on source positions 0 and w - 1 or beyond */
++constexpr double kClampLow = 1.0;
++constexpr double kClampHighMargin = 3.0;
++
++/* halves the bracket each step: 64 steps reach double precision */
++constexpr unsigned int kBisectSteps = 64;
++
++/* output focal search bracket, natural log around the edge distance */
++constexpr double kFocalLogRange = 10.0;
++
++using SourceMap = std::function<std::pair<double, double>(double, double)>;
++
++unsigned int alignUp(unsigned int v)
++{
++	return (v + kAlign - 1) / kAlign * kAlign;
++}
++
++/* Output positions of the vertices, in the order the engine reads them */
++std::vector<std::pair<unsigned int, unsigned int>>
++vertices(unsigned int width, unsigned int height)
++{
++	unsigned int w = alignUp(width), h = alignUp(height);
++	unsigned int cols = w / kStepX + 1;
++	unsigned int strips = (h + kStrip - 1) / kStrip;
++	unsigned int lastRows = ((h % kStrip) ? h % kStrip : kStrip) / kStepY + 1;
++	std::vector<std::pair<unsigned int, unsigned int>> out;
++
++	for (unsigned int s = 0; s < strips; s++) {
++		unsigned int rows = s + 1 < strips ? kStrip / kStepY + 1 : lastRows;
++
++		for (unsigned int c = 0; c < cols; c++)
++			for (unsigned int r = 0; r < rows; r++)
++				out.emplace_back(c * kStepX, s * kStrip + r * kStepY);
++	}
++
++	return out;
++}
++
++/* Find x in [lo, hi] with f(x) = target for f increasing */
++double bisect(const std::function<double(double)> &f, double target,
++	      double lo, double hi)
++{
++	for (unsigned int i = 0; i < kBisectSteps; i++) {
++		double mid = (lo + hi) / 2;
++
++		if (f(mid) < target)
++			lo = mid;
++		else
++			hi = mid;
++	}
++
++	return (lo + hi) / 2;
++}
++
++double nearestEdge(double cx, double cy, unsigned int width, unsigned int height)
++{
++	return std::min({ cx, width - 1 - cx, cy, height - 1 - cy });
++}
++
++void encode(double p, double max, uint16_t &integer, uint8_t &fraction)
++{
++	long fixed;
++
++	p = std::clamp(p, kClampLow, max);
++	fixed = std::lround(p * (1 << kFracBits));
++	integer = fixed >> kFracBits;
++	fraction = fixed & ((1 << kFracBits) - 1);
++}
++
++Mesh build(const SourceMap &map, unsigned int width, unsigned int height,
++	   unsigned int level)
++{
++	double k = static_cast<double>(std::min(level, kLevelMax)) / kLevelMax;
++	auto order = vertices(width, height);
++	Mesh mesh;
++
++	mesh.width = width;
++	mesh.height = height;
++	mesh.xi.resize(order.size());
++	mesh.xf.resize(order.size());
++	mesh.yi.resize(order.size());
++	mesh.yf.resize(order.size());
++
++	for (size_t n = 0; n < order.size(); n++) {
++		double u = order[n].first, v = order[n].second;
++		auto [x, y] = map(u, v);
++
++		encode(u + (x - u) * k, width - kClampHighMargin,
++		       mesh.xi[n], mesh.xf[n]);
++		encode(v + (y - v) * k, height - kClampHighMargin,
++		       mesh.yi[n], mesh.yf[n]);
++	}
++
++	return mesh;
++}
++
++} /* namespace */
++
++unsigned int meshSize(unsigned int width, unsigned int height)
++{
++	return vertices(width, height).size();
++}
++
++/*
++ * The output is a pinhole view whose focal length maps the image edge nearest
++ * to the centre onto itself, so that the corrected picture has no blank area.
++ */
++Mesh generate(const OcamLens &lens, unsigned int width, unsigned int height,
++	      unsigned int level)
++{
++	const auto &a = lens.a;
++	auto z = [&a](double r) {
++		return a[0] + a[1] * r * r + a[2] * r * r * r + a[3] * r * r * r * r;
++	};
++	double focal = -z(nearestEdge(lens.cx, lens.cy, width, height));
++	double diag = std::hypot(width, height);
++
++	SourceMap map = [&](double u, double v) {
++		double ro = std::hypot(u - lens.cx, v - lens.cy);
++		double rs, s;
++
++		if (ro == 0.0)
++			return std::make_pair(u, v);
++
++		rs = bisect([&](double r) { return focal * r / -z(r); }, ro, 0.0, diag);
++		s = rs / ro;
++		return std::make_pair(lens.cx + (u - lens.cx) * s,
++				      lens.cy + (v - lens.cy) * s);
++	};
++
++	return build(map, width, height, level);
++}
++
++Mesh generate(const FisheyeLens &lens, unsigned int width, unsigned int height,
++	      unsigned int level)
++{
++	const auto &k = lens.k;
++	auto distort = [&k](double theta) {
++		double t2 = theta * theta;
++
++		return theta * (1 + t2 * (k[0] + t2 * (k[1] + t2 * (k[2] + t2 * k[3]))));
++	};
++	double edge = nearestEdge(lens.cx, lens.cy, width, height);
++	/* source radius of the edge point decreases as the output focal grows */
++	double focal = std::exp(bisect(
++		[&](double lf) { return -lens.fx * distort(std::atan(edge / std::exp(lf))); },
++		-edge, std::log(edge) - kFocalLogRange,
++		std::log(edge) + kFocalLogRange));
++
++	SourceMap map = [&](double u, double v) {
++		double a = (u - lens.cx) / focal, b = (v - lens.cy) / focal;
++		double r = std::hypot(a, b);
++		double s = r > 0.0 ? distort(std::atan(r)) / r : 1.0;
++
++		return std::make_pair(lens.cx + lens.fx * a * s,
++				      lens.cy + lens.fy * b * s);
++	};
++
++	return build(map, width, height, level);
++}
++
++} /* namespace ipa::rkisp2::fecmesh */
++
++} /* namespace libcamera */
+--- /dev/null
++++ b/src/ipa/rkisp2/algorithms/fec_mesh.h
+@@ -0,0 +1,52 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2026, Daniel Golle
++ *
++ * RkISPP FEC correction mesh generator
++ */
++
++#pragma once
++
++#include <array>
++#include <stdint.h>
++#include <vector>
++
++namespace libcamera {
++
++namespace ipa::rkisp2::fecmesh {
++
++/* OCamCalib (Scaramuzza) model: z(rho) = a0 + a2 rho^2 + a3 rho^3 + a4 rho^4 */
++struct OcamLens {
++	double cx;
++	double cy;
++	std::array<double, 4> a;
++};
++
++/* OpenCV fisheye model: theta_d = theta (1 + k1 t^2 + k2 t^4 + k3 t^6 + k4 t^8) */
++struct FisheyeLens {
++	double fx;
++	double fy;
++	double cx;
++	double cy;
++	std::array<double, 4> k;
++};
++
++struct Mesh {
++	unsigned int width;
++	unsigned int height;
++	std::vector<uint16_t> xi;
++	std::vector<uint8_t> xf;
++	std::vector<uint16_t> yi;
++	std::vector<uint8_t> yf;
++};
++
++unsigned int meshSize(unsigned int width, unsigned int height);
++
++Mesh generate(const OcamLens &lens, unsigned int width, unsigned int height,
++	      unsigned int level);
++Mesh generate(const FisheyeLens &lens, unsigned int width, unsigned int height,
++	      unsigned int level);
++
++} /* namespace ipa::rkisp2::fecmesh */
++
++} /* namespace libcamera */
+--- a/src/ipa/rkisp2/algorithms/ispp.cpp
++++ b/src/ipa/rkisp2/algorithms/ispp.cpp
+@@ -32,9 +32,9 @@ namespace ipa::rkisp2::algorithms {
+  * \class Ispp
+  * \brief RkISPP module parameters from the tuning file
+  *
+- * The ISPP post-processor (FEC lens distortion correction and ORB feature
+- * detection) takes its parameters through its own params node; the temporal
+- * and spatial noise reduction and the sharpening have algorithms of their
++ * The ISPP post-processor (ORB feature detection) takes its parameters
++ * through its own params node; the temporal and spatial noise reduction, the
++ * sharpening and the lens distortion correction have algorithms of their
+  * own. This algorithm sends the modules configured in the tuning file with
+  * every frame, each tuning dictionary filling the fields of the corresponding
+  * UAPI block by name:
+@@ -42,8 +42,8 @@ namespace ipa::rkisp2::algorithms {
+  * \code{.unparsed}
+  * algorithms:
+  *   - Ispp:
+- *       Fec:
+- *         crop_en: 0
++ *       Orb:
++ *         limit_value: 0
+  * \endcode
+  *
+  * A module absent from the tuning file is not sent and keeps the driver's
+@@ -86,12 +86,6 @@ constexpr bool fieldSigned()
+ 	  fieldSize<decltype(type::name)>(),				\
+ 	  fieldSigned<decltype(type::name)>() }
+ 
+-constexpr Field fecFields[] = {
+-	ISPP_FIELD(rkispp_params_fec, crop_en),
+-	ISPP_FIELD(rkispp_params_fec, crop_width),
+-	ISPP_FIELD(rkispp_params_fec, crop_height),
+-};
+-
+ constexpr Field orbFields[] = {
+ 	ISPP_FIELD(rkispp_params_orb, limit_value),
+ 	ISPP_FIELD(rkispp_params_orb, max_feature),
+@@ -212,12 +206,6 @@ void sendBlock(V4L2ParamsBlock<T> block,
+  */
+ int Ispp::init([[maybe_unused]] IPAContext &context, const ValueNode &tuningData)
+ {
+-	int ret;
+-
+-	ret = loadBlock(tuningData, "Fec", fecFields, fec_);
+-	if (ret)
+-		return ret;
+-
+ 	return loadBlock(tuningData, "Orb", orbFields, orb_);
+ }
+ 
+@@ -231,8 +219,6 @@ void Ispp::prepareIspp([[maybe_unused]]
+ 		       [[maybe_unused]] const uint32_t frame,
+ 		       RkISPPParams *params)
+ {
+-	if (fec_)
+-		sendBlock(params->block<RkISPPParamsBlocks::Fec>(), *fec_);
+ 	if (orb_)
+ 		sendBlock(params->block<RkISPPParamsBlocks::Orb>(), *orb_);
+ }
+--- a/src/ipa/rkisp2/algorithms/ispp.h
++++ b/src/ipa/rkisp2/algorithms/ispp.h
+@@ -28,7 +28,6 @@ public:
+ 			 RkISPPParams *params) override;
+ 
+ private:
+-	std::optional<struct rkispp_params_fec> fec_;
+ 	std::optional<struct rkispp_params_orb> orb_;
+ };
+ 
+--- a/src/ipa/rkisp2/algorithms/meson.build
++++ b/src/ipa/rkisp2/algorithms/meson.build
+@@ -10,6 +10,8 @@ rkisp2_ipa_algorithms = files([
+     'crop.cpp',
+     'csm.cpp',
+     'dpcc.cpp',
++    'fec.cpp',
++    'fec_mesh.cpp',
+     'goc.cpp',
+     'ispp.cpp',
+     'lsc.cpp',
+--- a/src/ipa/rkisp2/ipa_context.h
++++ b/src/ipa/rkisp2/ipa_context.h
+@@ -150,6 +150,10 @@ struct IPAActiveState {
+ 		double ratio;
+ 		bool localGain;
+ 	} noiseGain;
++
++	struct {
++		bool meshChanged;
++	} fec;
+ };
+ 
+ struct IPAFrameContext : public FrameContext {
+--- a/src/ipa/rkisp2/rkisp2.cpp
++++ b/src/ipa/rkisp2/rkisp2.cpp
+@@ -68,6 +68,11 @@ public:
+ 	void computeParams(const uint32_t frame, const uint32_t bufferId) override;
+ 	void computeIsppParams(const uint32_t frame, const uint32_t bufferId) override;
+ 	uint32_t primeIsppParams(const uint32_t frame, const uint32_t bufferId) override;
++	uint32_t primeFecMesh(const uint32_t bufferId, const uint32_t width,
++			      const uint32_t height,
++			      const ControlList &controls) override;
++	void computeFecMesh(const uint32_t bufferId, const uint32_t width,
++			    const uint32_t height) override;
+ 	void initializeFrameContext(IPAFrameContext &frameContext,
+ 				    const ControlList &controls);
+ 	void processStats(const uint32_t frame, const uint32_t bufferId,
+@@ -277,6 +282,35 @@ void IPARkISP2::queueRequest(const uint3
+ 	context_.debugMetadata.enableByControl(controls);
+ 
+ 	context_.frameContexts.getOrInitContext(frame, controls);
++
++	if (context_.activeState.fec.meshChanged) {
++		context_.activeState.fec.meshChanged = false;
++		fecMeshChanged.emit();
++	}
++}
++
++void IPARkISP2::computeFecMesh(const uint32_t bufferId, const uint32_t width,
++			       const uint32_t height)
++{
++	fecMeshComputed.emit(bufferId,
++			     primeFecMesh(bufferId, width, height, ControlList()));
++}
++
++uint32_t IPARkISP2::primeFecMesh(const uint32_t bufferId, const uint32_t width,
++				 const uint32_t height, const ControlList &controls)
++{
++	Span<uint8_t> buffer = mappedBuffers_.at(bufferId).planes()[0];
++	Size size(width, height);
++
++	for (const auto &a : algorithms()) {
++		Algorithm *algo = static_cast<Algorithm *>(a.get());
++		size_t bytes = algo->computeFecMesh(context_, buffer, size, controls);
++
++		if (bytes)
++			return bytes;
++	}
++
++	return 0;
+ }
+ 
+ void IPARkISP2::initializeFrameContext(IPAFrameContext &frameContext,

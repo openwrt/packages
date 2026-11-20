@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libshout
 PKG_VERSION:=2.4.6
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://downloads.xiph.org/releases/libshout/
@@ -37,12 +37,15 @@ define Package/libshout
   TITLE+= (no theora)
   DEPENDS+= +libopenssl
   VARIANT:=notheora
+  DEFAULT_VARIANT:=1
+  CONFLICTS:=libshout-nossl libshout-full
 endef
 
 define Package/libshout-nossl
   $(call Package/libshout/default)
   TITLE+= (no ssl/theora)
   VARIANT:=nossl
+  PROVIDES:=libshout
 endef
 
 define Package/libshout-full
@@ -50,6 +53,8 @@ define Package/libshout-full
   TITLE+=(full)
   DEPENDS+= +libtheora +libopenssl
   VARIANT:=full
+  PROVIDES:=libshout
+  CONFLICTS:=libshout-nossl
 endef
 
 define Package/libshout/description/default

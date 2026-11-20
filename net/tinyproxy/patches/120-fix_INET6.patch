@@ -1,3 +1,11 @@
+From 699af6ef6fc5d11fdfea17516e43afa8b846df44 Mon Sep 17 00:00:00 2001
+From: Jo-Philipp Wich <jow@openwrt.org>
+Date: Sun, 24 Jan 2010 20:47:39 +0000
+Subject: [PATCH] tinyproxy: update to v1.8.0 (#6563)
+
+SVN-Revision: 19319
+---
+
 --- a/src/sock.c
 +++ b/src/sock.c
 @@ -63,7 +63,7 @@ static const char * family_string (int a

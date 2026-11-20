@@ -55,12 +55,31 @@ boot() {
 }
 
 start_service() {
-	local status backend blocklist
+	local status backend blocklist repcfg
 
 	if "${adb_init}" enabled; then
 		if [ "${action}" = "boot" ]; then
 			[ -n "$(uci_get adblock global adb_trigger)" ] && return 0
 		fi
+
+		# start the reporting capture if enabled and tcpdump is available
+		#
+		if [ "$(uci_get adblock global adb_report "0")" = "1" ] && command -v tcpdump >/dev/null 2>&1; then
+			repcfg="$(uci_get adblock global adb_repiface)|$(uci_get adblock global adb_repport)|$(uci_get adblock global adb_repfilter)|$(uci_get adblock global adb_repchunksize)|$(uci_get adblock global adb_repchunkcnt)|$(uci_get adblock global adb_reportdir)"
+
+			procd_open_instance "report"
+			procd_set_param command "${adb_script}" dump
+			procd_set_param env adb_repcfg="${repcfg}"
+			procd_set_param respawn
+			procd_set_param stdout 0
+			procd_set_param stderr 1
+			procd_close_instance
+		elif ubus -S call service list '{"name":"adblock"}' 2>/dev/null | jsonfilter -q -e '@.adblock.instances.report' >/dev/null; then
+			ubus -S call service delete '{"name":"adblock","instance":"report"}' >/dev/null 2>&1
+		fi
+
+		# on refresh check if adblock is enabled and a blocklist is available
+		#
 		if [ "${1}" = "refresh" ]; then
 			json_init
 			json_load_file "${adb_rtfile}" >/dev/null 2>&1
@@ -74,6 +93,8 @@ start_service() {
 			fi
 		fi
 
+		# start adblock instance
+		#
 		procd_open_instance "adblock"
 		procd_set_param command "${adb_script}" "${action}"
 		procd_set_param pidfile "${adb_pidfile}"

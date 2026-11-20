@@ -1,0 +1,42 @@
+From 0e246dac9c7468360b06b52ca82f2d247545d456 Mon Sep 17 00:00:00 2001
+From: Stefan Klug <stefan.klug@ideasonboard.com>
+Date: Wed, 25 Mar 2026 16:13:37 +0100
+Subject: [PATCH] libcamera: delayed_controls: Add maxDelay() function
+
+Add a maxDelay() function to be able to query the maximum delay of
+the sensor.
+
+Signed-off-by: Stefan Klug <stefan.klug@ideasonboard.com>
+Reviewed-by: Paul Elder <paul.elder@ideasonboard.com>
+---
+ include/libcamera/internal/delayed_controls.h | 2 ++
+ src/libcamera/delayed_controls.cpp            | 7 +++++++
+ 2 files changed, 9 insertions(+)
+
+--- a/include/libcamera/internal/delayed_controls.h
++++ b/include/libcamera/internal/delayed_controls.h
+@@ -35,6 +35,8 @@ public:
+ 	bool push(uint32_t sequence, const ControlList &controls);
+ 	ControlList get(uint32_t sequence);
+ 
++	uint32_t maxDelay() const { return maxDelay_; }
++
+ 	void applyControls(uint32_t sequence);
+ 
+ private:
+--- a/src/libcamera/delayed_controls.cpp
++++ b/src/libcamera/delayed_controls.cpp
+@@ -259,6 +259,13 @@ ControlList DelayedControls::get(uint32_
+ }
+ 
+ /**
++ * \fn DelayedControls::maxDelay()
++ * \brief Get the maximum delay of the sensor
++ *
++ * \return The maximum delay of the sensor
++ */
++
++/**
+  * \brief Inform DelayedControls of the start of a new frame
+  * \param[in] sequence Sequence number of the frame that started
+  *

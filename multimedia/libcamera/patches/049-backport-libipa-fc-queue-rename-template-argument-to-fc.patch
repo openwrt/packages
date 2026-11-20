@@ -1,0 +1,75 @@
+From fda29f22c1b872c0658cf8a2831101f5d0e78aa4 Mon Sep 17 00:00:00 2001
+From: Stefan Klug <stefan.klug@ideasonboard.com>
+Date: Wed, 25 Mar 2026 16:13:39 +0100
+Subject: [PATCH] libipa: fc_queue: Rename template argument to FC
+
+The FCQueue has a template argument called FrameContext which is easily
+confused with the class FrameContext defined in the same file.
+
+Reduce that confusion by renaming the template argument to FC.
+
+Signed-off-by: Stefan Klug <stefan.klug@ideasonboard.com>
+Reviewed-by: Paul Elder <paul.elder@ideasonboard.com>
+---
+ src/ipa/libipa/fc_queue.h | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
+
+--- a/src/ipa/libipa/fc_queue.h
++++ b/src/ipa/libipa/fc_queue.h
+@@ -28,7 +28,7 @@ private:
+ 	bool initialised = false;
+ };
+ 
+-template<typename FrameContext>
++template<typename FC>
+ class FCQueue
+ {
+ public:
+@@ -39,15 +39,15 @@ public:
+ 
+ 	void clear()
+ 	{
+-		for (FrameContext &ctx : contexts_) {
++		for (FC &ctx : contexts_) {
+ 			ctx.initialised = false;
+ 			ctx.frame = 0;
+ 		}
+ 	}
+ 
+-	FrameContext &alloc(const uint32_t frame)
++	FC &alloc(const uint32_t frame)
+ 	{
+-		FrameContext &frameContext = contexts_[frame % contexts_.size()];
++		FC &frameContext = contexts_[frame % contexts_.size()];
+ 
+ 		/*
+ 		 * Do not re-initialise if a get() call has already fetched this
+@@ -69,9 +69,9 @@ public:
+ 		return frameContext;
+ 	}
+ 
+-	FrameContext &get(uint32_t frame)
++	FC &get(uint32_t frame)
+ 	{
+-		FrameContext &frameContext = contexts_[frame % contexts_.size()];
++		FC &frameContext = contexts_[frame % contexts_.size()];
+ 
+ 		/*
+ 		 * If the IPA algorithms try to access a frame context slot which
+@@ -122,14 +122,14 @@ public:
+ 	}
+ 
+ private:
+-	void init(FrameContext &frameContext, const uint32_t frame)
++	void init(FC &frameContext, const uint32_t frame)
+ 	{
+ 		frameContext = {};
+ 		frameContext.frame = frame;
+ 		frameContext.initialised = true;
+ 	}
+ 
+-	std::vector<FrameContext> contexts_;
++	std::vector<FC> contexts_;
+ };
+ 
+ } /* namespace ipa */

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ulogd
 PKG_VERSION:=2.0.9
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://netfilter.org/pub/ulogd/
@@ -25,7 +25,6 @@ PKG_BUILD_PARALLEL:=1
 
 PKG_BUILD_DEPENDS:=libnetfilter-acct libnetfilter-conntrack libnetfilter-log
 PKG_CONFIG_DEPENDS:= \
-	CONFIG_PACKAGE_ulogd-mod-dbi \
 	CONFIG_PACKAGE_ulogd-mod-mysql \
 	CONFIG_PACKAGE_ulogd-mod-pgsql \
 	CONFIG_PACKAGE_ulogd-mod-sqlite
@@ -47,12 +46,6 @@ endef
 
 define Package/ulogd/conffiles
 /etc/ulogd.conf
-endef
-
-define Package/ulogd-mod-dbi
-  $(call Package/ulogd/Default)
-  DEPENDS:=ulogd +PACKAGE_ulogd-mod-dbi:libdbi
-  TITLE:=Output plugin for logging to a database using libdbi
 endef
 
 define Package/ulogd-mod-json
@@ -126,11 +119,7 @@ CONFIGURE_ARGS += \
 	--enable-nfct \
 	--enable-nflog
 
-ifneq ($(DEVELOPER)$(CONFIG_PACKAGE_ulogd-mod-dbi),)
-	CONFIGURE_ARGS += --enable-dbi
-else
-	CONFIGURE_ARGS += --disable-dbi
-endif
+CONFIGURE_ARGS += --disable-dbi
 
 ifneq ($(DEVELOPER)$(CONFIG_PACKAGE_ulogd-mod-mysql),)
 	CONFIGURE_ARGS += --enable-mysql \
@@ -190,7 +179,6 @@ ULOGD_EXTRA_PLUGINS:= \
 	output_OPRINT \
 
 $(eval $(call BuildPackage,ulogd))
-$(eval $(call BuildPlugin,dbi,output_DBI))
 $(eval $(call BuildPlugin,json,output_JSON))
 $(eval $(call BuildPlugin,mysql,output_MYSQL))
 $(eval $(call BuildPlugin,nfacct,inpflow_NFACCT))

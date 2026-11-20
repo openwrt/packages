@@ -20,8 +20,8 @@
  # Generate full paths for scripts distributed in the bin directory.  Appends
  # the .com extension to scripts on VMS, unless they already have the .PL
  # extension.
-@@ -49,7 +62,7 @@ sub dist_version {
- #          (Scalar) Space-separated relative paths from top of distribution
+@@ -48,7 +61,7 @@ sub dist_version {
+ # Returns: List of relative paths from top of distribution
  sub scripts {
      my (@scripts) = @_;
 -    my @paths = map { File::Spec->catfile('scripts', $_) } @scripts;
@@ -29,7 +29,7 @@
      if ($^O eq 'VMS') {
          @paths = map { m{ [.] PL \z }xms ? $_ : $_ . '.com' } @paths;
      }
-@@ -101,8 +114,8 @@ my %metadata = (
+@@ -98,8 +111,8 @@ my %metadata = (
  
      # Override the files that generate section 1 man pages.
      MAN1PODS => {

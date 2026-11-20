@@ -1,0 +1,922 @@
+From 45c06ae7dff71c03c04cbf9df26d56ef53f60ee4 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Thu, 5 Nov 2026 10:41:21 +0000
+Subject: [PATCH 239/239] ipa: rkisp2: imx415: Add the noise reduction and
+ sharpening calibration
+
+Enable the spatial noise reduction and the sharpening with the YNR,
+UVNR, SHARP and EDGEFILTER calibrations of the Rockchip IQ file for
+this sensor (normal mode, LSNR setting), converted with nr-iq2yaml.py.
+The edge filter kernels and direction minimum, which the AIQ sets in
+code, are carried over as tuning values.
+
+Assisted-by: LLM
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ src/ipa/rkisp2/data/imx415.yaml | 895 ++++++++++++++++++++++++++++++++
+ 1 file changed, 895 insertions(+)
+
+--- a/src/ipa/rkisp2/data/imx415.yaml
++++ b/src/ipa/rkisp2/data/imx415.yaml
+@@ -464,6 +464,901 @@ algorithms:
+           lvl1-gfsigma: [ 0.125, 0.10938, 0.10938 ]
+           lvl2-gfsigma: [ 0.125, 0.10938, 0.10938 ]
+           lvl3-gfsigma: [ 0.125, 0.10938, 0.10938 ]
++  - NoiseReduction:
++      # converted from the vendor IQ YNR and UVNR normal/LSNR
++      # settings by nr-iq2yaml.py; gain = iso / 50
++      luma:
++        - iso: 50
++          sigma-curve: [ -1.08097064118e-12, 1.01241568527e-08, -3.39654575524e-05, 0.0430931083487, 11.4384162926 ]
++          ynr-lci: [ 1.0288, 0.767, 0.4966, 0.2957 ]
++          ynr-lhci: [ 0.7416, 1.2922, 1.1543, 0.7838 ]
++          ynr-hlci: [ 0.7052, 1.1315, 0.9849, 0.6998 ]
++          ynr-hhci: [ 0.7901, 1.7467, 1.6339, 1.2194 ]
++          lo-lumapoint: [ 0, 32, 64, 128, 192, 256 ]
++          lo-lumaratio: [ 1.1, 1.2, 1.2, 1, 1, 1 ]
++          lo-directionstrength: 0.5
++          lo-bfscale: [ 1, 1, 1.6, 1.6 ]
++          imerge-ratio: 0.4
++          denoise-weight: [ 0.6, 0.6, 0.7, 0.7 ]
++          hi-lumapoint: [ 0, 32, 64, 128, 192, 256 ]
++          hi-lumaratio: [ 1.1, 1.2, 1.2, 1, 1, 1 ]
++          hi-bfscale: [ 2, 2, 2, 1.5 ]
++          hwith-d: [ 2, 2, 1.2, 1.2 ]
++          hi-denoisestrength: 1
++          hi-detailminadjdnw: 0.2
++          hi-denoiseweight: [ 0.4, 0.4, 0.4, 0.4 ]
++          hgrad-y-level1: [ 1, 0.67, 0.67, 0.67, 0.67, 0.67 ]
++          hgrad-y-level2: [ 1, 0.67, 0.67, 0.67, 0.67, 0.67 ]
++          hgrad-y-level3: [ 1, 0.57, 0.57, 0.57, 0.57, 0.57 ]
++          hgrad-y-level4: [ 1, 0.5, 0.5, 0.4, 0.3, 0.2 ]
++          hi-soft-thresh-scale: [ 0.11, 0.11, 0.1, 0.1 ]
++        - iso: 100
++          sigma-curve: [ -1.42643494505e-12, 1.34890885238e-08, -4.57067447826e-05, 0.0584140906109, 15.3080175136 ]
++          ynr-lci: [ 1.0311, 0.7468, 0.4726, 0.2662 ]
++          ynr-lhci: [ 0.7363, 1.2222, 1.0467, 0.6595 ]
++          ynr-hlci: [ 0.7176, 1.1074, 0.9059, 0.5959 ]
++          ynr-hhci: [ 0.7821, 1.7362, 1.5249, 1.0927 ]
++          lo-lumapoint: [ 0, 32, 64, 128, 192, 256 ]
++          lo-lumaratio: [ 1.1, 1.2, 1.2, 1, 1, 1 ]
++          lo-directionstrength: 0.5
++          lo-bfscale: [ 1, 1, 1.5, 1.5 ]
++          imerge-ratio: 0.4
++          denoise-weight: [ 0.3, 0.3, 0.3, 0.3 ]
++          hi-lumapoint: [ 0, 32, 64, 128, 192, 256 ]
++          hi-lumaratio: [ 1.1, 1.2, 1.2, 1, 1, 1 ]
++          hi-bfscale: [ 2, 2, 1.5, 1.5 ]
++          hwith-d: [ 2, 2, 1.2, 1.2 ]
++          hi-denoisestrength: 1
++          hi-detailminadjdnw: 0.2
++          hi-denoiseweight: [ 0.6, 0.6, 0.6, 0.5 ]
++          hgrad-y-level1: [ 1, 0.5, 0.5, 0.5, 0.5, 0.5 ]
++          hgrad-y-level2: [ 1, 0.5, 0.5, 0.5, 0.5, 0.5 ]
++          hgrad-y-level3: [ 1, 0.5, 0.5, 0.5, 0.5, 0.5 ]
++          hgrad-y-level4: [ 1, 0.5, 0.5, 0.4, 0.3, 0.2 ]
++          hi-soft-thresh-scale: [ 0.11, 0.11, 0.1, 0.1 ]
++        - iso: 200
++          sigma-curve: [ -1.92489788527e-12, 1.83133699063e-08, -6.28272056364e-05, 0.0816138655195, 20.494600962 ]
++          ynr-lci: [ 1.0366, 0.7486, 0.4676, 0.2666 ]
++          ynr-lhci: [ 0.7094, 1.1528, 0.9302, 0.5924 ]
++          ynr-hlci: [ 0.7099, 1.0778, 0.8637, 0.5622 ]
++          ynr-hhci: [ 0.7677, 1.7011, 1.4501, 1.0186 ]
++          lo-lumapoint: [ 0, 32, 64, 128, 192, 256 ]
++          lo-lumaratio: [ 1.2, 1.2, 1.2, 1.2, 1, 1 ]
++          lo-directionstrength: 0.5
++          lo-bfscale: [ 0.7, 0.7, 1.5, 1.5 ]
++          imerge-ratio: 0.3
++          denoise-weight: [ 0.3, 0.3, 0.3, 0.3 ]
++          hi-lumapoint: [ 0, 32, 64, 128, 192, 256 ]
++          hi-lumaratio: [ 1.1, 1.1, 1.2, 1, 1, 1 ]
++          hi-bfscale: [ 2, 2, 2, 1.5 ]
++          hwith-d: [ 4, 4, 2, 1.2 ]
++          hi-denoisestrength: 1
++          hi-detailminadjdnw: 0.2
++          hi-denoiseweight: [ 0.5, 0.5, 0.5, 0.5 ]
++          hgrad-y-level1: [ 1, 0.5, 0.5, 0.5, 0.5, 0.5 ]
++          hgrad-y-level2: [ 1, 0.5, 0.5, 0.5, 0.5, 0.5 ]
++          hgrad-y-level3: [ 1, 0.5, 0.5, 0.5, 0.5, 0.5 ]
++          hgrad-y-level4: [ 1, 0.5, 0.5, 0.4, 0.3, 0.2 ]
++          hi-soft-thresh-scale: [ 0.12, 0.12, 0.1, 0.1 ]
++        - iso: 400
++          sigma-curve: [ -2.92316241432e-12, 2.75250206713e-08, -9.32202602113e-05, 0.119250987692, 29.1180509503 ]
++          ynr-lci: [ 1.0479, 0.7713, 0.4942, 0.2871 ]
++          ynr-lhci: [ 0.6709, 1.1068, 0.8738, 0.5623 ]
++          ynr-hlci: [ 0.6824, 1.0662, 0.8464, 0.5398 ]
++          ynr-hhci: [ 0.7468, 1.6695, 1.4201, 0.989 ]
++          lo-lumapoint: [ 0, 32, 64, 128, 192, 256 ]
++          lo-lumaratio: [ 1.2, 1.2, 1.2, 1, 1, 1 ]
++          lo-directionstrength: 0.5
++          lo-bfscale: [ 0.6, 0.7, 1.5, 1.5 ]
++          imerge-ratio: 0.35
++          denoise-weight: [ 0.35, 0.35, 0.35, 0.35 ]
++          hi-lumapoint: [ 0, 32, 64, 128, 192, 256 ]
++          hi-lumaratio: [ 1.1, 1.2, 1.2, 1.2, 1, 1 ]
++          hi-bfscale: [ 2.2, 2.2, 2.2, 1.7 ]
++          hwith-d: [ 6, 6, 4, 2 ]
++          hi-denoisestrength: 0.9
++          hi-detailminadjdnw: 0.2
++          hi-denoiseweight: [ 0.6, 0.6, 0.6, 0.6 ]
++          hgrad-y-level1: [ 1, 0.5, 0.5, 0.5, 0.5, 0.3 ]
++          hgrad-y-level2: [ 1, 0.5, 0.5, 0.5, 0.5, 0.3 ]
++          hgrad-y-level3: [ 1, 0.51, 0.51, 0.51, 0.51, 0.3 ]
++          hgrad-y-level4: [ 1, 0.5, 0.5, 0.4, 0.3, 0.2 ]
++          hi-soft-thresh-scale: [ 0.13, 0.13, 0.1, 0.1 ]
++        - iso: 800
++          sigma-curve: [ -3.66919679355e-12, 3.40534546077e-08, -0.000114675923701, 0.14507808339, 53.0572121429 ]
++          ynr-lci: [ 1.0484, 0.7722, 0.4959, 0.2933 ]
++          ynr-lhci: [ 0.6707, 1.0796, 0.8458, 0.5469 ]
++          ynr-hlci: [ 0.684, 1.0556, 0.8258, 0.5209 ]
++          ynr-hhci: [ 0.7418, 1.6515, 1.3885, 0.9759 ]
++          lo-lumapoint: [ 0, 32, 64, 128, 192, 256 ]
++          lo-lumaratio: [ 1, 1, 1, 1, 1, 1 ]
++          lo-directionstrength: 0.3
++          lo-bfscale: [ 0.3, 0.4, 0.8, 0.8 ]
++          imerge-ratio: 0.35
++          denoise-weight: [ 0.3, 0.4, 0.4, 0.4 ]
++          hi-lumapoint: [ 0, 32, 64, 128, 192, 256 ]
++          hi-lumaratio: [ 1, 1, 1, 1, 1, 1 ]
++          hi-bfscale: [ 2.2, 2.2, 2.2, 1.7 ]
++          hwith-d: [ 6, 6, 4, 2 ]
++          hi-denoisestrength: 0.7
++          hi-detailminadjdnw: 0.2
++          hi-denoiseweight: [ 0.45, 0.45, 0.45, 0.45 ]
++          hgrad-y-level1: [ 1, 0.5, 0.4, 0.35, 0.3, 0.2 ]
++          hgrad-y-level2: [ 1, 0.5, 0.4, 0.35, 0.3, 0.2 ]
++          hgrad-y-level3: [ 1, 0.5, 0.4, 0.35, 0.3, 0.2 ]
++          hgrad-y-level4: [ 1, 0.5, 0.4, 0.35, 0.3, 0.2 ]
++          hi-soft-thresh-scale: [ 0.1, 0.1, 0.1, 0.1 ]
++        - iso: 1600
++          sigma-curve: [ -6.88500038533e-12, 6.28952567479e-08, -0.000206166706955, 0.256322540496, 58.7093336455 ]
++          ynr-lci: [ 1.037, 0.7514, 0.471, 0.2726 ]
++          ynr-lhci: [ 0.703, 1.0702, 0.8065, 0.5151 ]
++          ynr-hlci: [ 0.7147, 1.0547, 0.7988, 0.4938 ]
++          ynr-hhci: [ 0.752, 1.6516, 1.367, 0.9291 ]
++          lo-lumapoint: [ 0, 32, 64, 128, 192, 256 ]
++          lo-lumaratio: [ 1, 1, 1, 1, 1, 1 ]
++          lo-directionstrength: 0.2
++          lo-bfscale: [ 0.3, 0.7, 0.7, 0.3 ]
++          imerge-ratio: 0.3
++          denoise-weight: [ 0.3, 0.6, 0.6, 0.8 ]
++          hi-lumapoint: [ 0, 32, 64, 128, 192, 256 ]
++          hi-lumaratio: [ 1, 1, 1, 1, 1, 1 ]
++          hi-bfscale: [ 2.2, 2.2, 2.2, 1.7 ]
++          hwith-d: [ 6, 6, 4, 2 ]
++          hi-denoisestrength: 0.7
++          hi-detailminadjdnw: 0.2
++          hi-denoiseweight: [ 0.5, 0.5, 0.5, 0.5 ]
++          hgrad-y-level1: [ 1, 0.5, 0.4, 0.35, 0.3, 0.2 ]
++          hgrad-y-level2: [ 1, 0.5, 0.4, 0.35, 0.3, 0.2 ]
++          hgrad-y-level3: [ 1, 0.5, 0.4, 0.35, 0.3, 0.2 ]
++          hgrad-y-level4: [ 1, 0.5, 0.4, 0.35, 0.3, 0.2 ]
++          hi-soft-thresh-scale: [ 0.1, 0.2, 0.2, 0.1 ]
++        - iso: 3200
++          sigma-curve: [ -9.464965e-12, 8.72810970505e-08, -0.000290638086962, 0.366968609966, 82.1710507886 ]
++          ynr-lci: [ 1.0388, 0.7594, 0.4671, 0.2638 ]
++          ynr-lhci: [ 0.7067, 1.0717, 0.8083, 0.5003 ]
++          ynr-hlci: [ 0.7152, 1.0464, 0.8022, 0.502 ]
++          ynr-hhci: [ 0.756, 1.6484, 1.3763, 0.9423 ]
++          lo-lumapoint: [ 0, 32, 64, 128, 192, 256 ]
++          lo-lumaratio: [ 1, 1, 1, 1, 1, 1 ]
++          lo-directionstrength: 0.2
++          lo-bfscale: [ 0.5, 0.5, 0.5, 0.5 ]
++          imerge-ratio: 0.3
++          denoise-weight: [ 0.5, 0.6, 0.6, 0.6 ]
++          hi-lumapoint: [ 0, 32, 64, 128, 192, 256 ]
++          hi-lumaratio: [ 1, 1, 1, 1, 1, 1 ]
++          hi-bfscale: [ 2.2, 2.2, 2.2, 1.7 ]
++          hwith-d: [ 6, 6, 4, 2 ]
++          hi-denoisestrength: 0.7
++          hi-detailminadjdnw: 0.2
++          hi-denoiseweight: [ 0.6, 0.7, 0.7, 0.6 ]
++          hgrad-y-level1: [ 1, 0.65, 0.55, 0.45, 0.3, 0.2 ]
++          hgrad-y-level2: [ 1, 0.65, 0.55, 0.45, 0.3, 0.2 ]
++          hgrad-y-level3: [ 1, 0.65, 0.55, 0.45, 0.3, 0.2 ]
++          hgrad-y-level4: [ 1, 0.65, 0.55, 0.45, 0.3, 0.2 ]
++          hi-soft-thresh-scale: [ 0.2, 0.2, 0.2, 0 ]
++        - iso: 6400
++          sigma-curve: [ -1.30178255978e-11, 1.23199356009e-07, -0.000429366291333, 0.578668286916, 75.3975737482 ]
++          ynr-lci: [ 1.0477, 0.7698, 0.4802, 0.2679 ]
++          ynr-lhci: [ 0.6902, 1.0727, 0.8224, 0.5202 ]
++          ynr-hlci: [ 0.7086, 1.06, 0.8163, 0.5094 ]
++          ynr-hhci: [ 0.7582, 1.6318, 1.3924, 0.9582 ]
++          lo-lumapoint: [ 0, 32, 64, 128, 192, 256 ]
++          lo-lumaratio: [ 1, 1, 1, 1, 1, 1 ]
++          lo-directionstrength: 0.2
++          lo-bfscale: [ 0.5, 0.5, 0.5, 0.5 ]
++          imerge-ratio: 0.15
++          denoise-weight: [ 0.5, 0.5, 0.5, 0.5 ]
++          hi-lumapoint: [ 0, 32, 64, 128, 192, 256 ]
++          hi-lumaratio: [ 1, 1, 1, 1, 1, 1 ]
++          hi-bfscale: [ 1.5, 2.2, 2.2, 1.5 ]
++          hwith-d: [ 6, 6, 4, 2 ]
++          hi-denoisestrength: 0.7
++          hi-detailminadjdnw: 0.2
++          hi-denoiseweight: [ 0.7, 0.7, 0.7, 0.7 ]
++          hgrad-y-level1: [ 1, 0.65, 0.55, 0.45, 0.3, 0.2 ]
++          hgrad-y-level2: [ 1, 0.65, 0.55, 0.45, 0.3, 0.2 ]
++          hgrad-y-level3: [ 1, 0.65, 0.55, 0.45, 0.3, 0.2 ]
++          hgrad-y-level4: [ 1, 0.65, 0.55, 0.45, 0.3, 0.2 ]
++          hi-soft-thresh-scale: [ 0.2, 0.2, 0.2, 0.1 ]
++        - iso: 12800
++          sigma-curve: [ -1.06902659849e-11, 1.01044089872e-07, -0.000390330176439, 0.618080545783, 124.273449663 ]
++          ynr-lci: [ 1.0298, 0.7548, 0.4694, 0.267 ]
++          ynr-lhci: [ 0.7207, 1.0508, 0.8038, 0.5216 ]
++          ynr-hlci: [ 0.733, 1.0444, 0.7992, 0.5114 ]
++          ynr-hhci: [ 0.763, 1.5805, 1.3473, 0.9288 ]
++          lo-lumapoint: [ 0, 32, 64, 128, 192, 256 ]
++          lo-lumaratio: [ 1, 1, 1, 1, 1, 1 ]
++          lo-directionstrength: 0.2
++          lo-bfscale: [ 0.5, 0.5, 0.5, 0.5 ]
++          imerge-ratio: 0.15
++          denoise-weight: [ 0.5, 0.5, 0.6, 0.6 ]
++          hi-lumapoint: [ 0, 32, 64, 128, 192, 256 ]
++          hi-lumaratio: [ 1, 1, 1, 1, 1, 1 ]
++          hi-bfscale: [ 1.5, 2.2, 2.2, 1.5 ]
++          hwith-d: [ 6, 6, 4, 2 ]
++          hi-denoisestrength: 0.7
++          hi-detailminadjdnw: 0.2
++          hi-denoiseweight: [ 0.7, 0.7, 0.7, 0.7 ]
++          hgrad-y-level1: [ 1, 0.65, 0.55, 0.45, 0.3, 0.2 ]
++          hgrad-y-level2: [ 1, 0.65, 0.55, 0.45, 0.3, 0.2 ]
++          hgrad-y-level3: [ 1, 0.65, 0.55, 0.45, 0.3, 0.2 ]
++          hgrad-y-level4: [ 1, 0.65, 0.55, 0.45, 0.3, 0.2 ]
++          hi-soft-thresh-scale: [ 0.26, 0.3, 0.3, 0.1 ]
++        - iso: 25600
++          sigma-curve: [ -1.06902659849e-11, 1.01044089872e-07, -0.000390330176439, 0.618080545783, 124.273449663 ]
++          ynr-lci: [ 1.0298, 0.7548, 0.4694, 0.267 ]
++          ynr-lhci: [ 0.7207, 1.0508, 0.8038, 0.5216 ]
++          ynr-hlci: [ 0.733, 1.0444, 0.7992, 0.5114 ]
++          ynr-hhci: [ 0.763, 1.5805, 1.3473, 0.9288 ]
++          lo-lumapoint: [ 0, 32, 64, 128, 192, 256 ]
++          lo-lumaratio: [ 1, 1, 1.5, 1.5, 1, 1 ]
++          lo-directionstrength: 0.2
++          lo-bfscale: [ 0.5, 0.5, 0.5, 0.5 ]
++          imerge-ratio: 0.15
++          denoise-weight: [ 0.8, 0.85, 0.7, 0.7 ]
++          hi-lumapoint: [ 0, 32, 64, 128, 192, 256 ]
++          hi-lumaratio: [ 1.5, 1.5, 1.5, 1.5, 1.3, 1.2 ]
++          hi-bfscale: [ 1.5, 2.2, 2.2, 1.5 ]
++          hwith-d: [ 6, 6, 4, 2 ]
++          hi-denoisestrength: 1.2
++          hi-detailminadjdnw: 0.2
++          hi-denoiseweight: [ 0.85, 0.85, 0.76, 0.76 ]
++          hgrad-y-level1: [ 1, 0.65, 0.55, 0.45, 0.3, 0.2 ]
++          hgrad-y-level2: [ 1, 0.65, 0.55, 0.45, 0.3, 0.2 ]
++          hgrad-y-level3: [ 1, 0.65, 0.55, 0.45, 0.3, 0.2 ]
++          hgrad-y-level4: [ 1, 0.65, 0.55, 0.45, 0.3, 0.2 ]
++          hi-soft-thresh-scale: [ 0.15, 0.6, 0.6, 0.12 ]
++        - iso: 51200
++          sigma-curve: [ -2.35581884731e-11, 1.55685371261e-07, -0.000452079932134, 0.788144215984, 204.57332096 ]
++          ynr-lci: [ 0.9896, 0.757, 0.4563, 0.182 ]
++          ynr-lhci: [ 0.7285, 1.0224, 0.7836, 0.4887 ]
++          ynr-hlci: [ 0.7305, 1.0156, 0.7603, 0.5563 ]
++          ynr-hhci: [ 0.6922, 1.4114, 1.3231, 0.6804 ]
++          lo-lumapoint: [ 0, 32, 64, 128, 192, 256 ]
++          lo-lumaratio: [ 1, 1, 1.5, 1.5, 1, 1 ]
++          lo-directionstrength: 0.2
++          lo-bfscale: [ 1, 1, 3, 1 ]
++          imerge-ratio: 0.15
++          denoise-weight: [ 0.3, 0.85, 0.3, 0.3 ]
++          hi-lumapoint: [ 0, 32, 64, 128, 192, 256 ]
++          hi-lumaratio: [ 2, 2.5, 1.5, 1.5, 1, 1 ]
++          hi-bfscale: [ 1.2, 1.1, 0.86, 0.86 ]
++          hwith-d: [ 6, 6, 4, 2 ]
++          hi-denoisestrength: 1.2
++          hi-detailminadjdnw: 0.2
++          hi-denoiseweight: [ 0.75, 0.7, 0.66, 0.36 ]
++          hgrad-y-level1: [ 1, 0.65, 0.55, 0.45, 0.3, 0.2 ]
++          hgrad-y-level2: [ 1, 0.65, 0.55, 0.45, 0.3, 0.2 ]
++          hgrad-y-level3: [ 1, 0.65, 0.55, 0.45, 0.3, 0.2 ]
++          hgrad-y-level4: [ 1, 0.65, 0.55, 0.45, 0.3, 0.2 ]
++          hi-soft-thresh-scale: [ 0.13, 0.3, 0.3, 0.1 ]
++        - iso: 102400
++          sigma-curve: [ -5.24186459287e-12, 4.83761295342e-08, -0.000158009865774, 0.205697200837, -24.6859972726 ]
++          ynr-lci: [ 0.936182, 0.654274, 0.45586, 0.403902 ]
++          ynr-lhci: [ 0.855909, 0.979829, 0.691382, 0.538871 ]
++          ynr-hlci: [ 0.885451, 0.981653, 0.701294, 0.551322 ]
++          ynr-hhci: [ 0.706894, 1.463291, 1.102797, 0.741516 ]
++          lo-lumapoint: [ 0, 32, 64, 128, 192, 256 ]
++          lo-lumaratio: [ 1, 1, 1.5, 1.5, 1, 1 ]
++          lo-directionstrength: 0.2
++          lo-bfscale: [ 1, 1, 3, 1 ]
++          imerge-ratio: 0.15
++          denoise-weight: [ 0.3, 0.85, 0.3, 0.3 ]
++          hi-lumapoint: [ 0, 32, 64, 128, 192, 256 ]
++          hi-lumaratio: [ 2, 2.5, 1.5, 1.5, 1, 1 ]
++          hi-bfscale: [ 1.2, 1.1, 0.86, 0.86 ]
++          hwith-d: [ 6, 6, 4, 2 ]
++          hi-denoisestrength: 1.2
++          hi-detailminadjdnw: 0.2
++          hi-denoiseweight: [ 0.75, 0.7, 0.66, 0.36 ]
++          hgrad-y-level1: [ 1, 0.65, 0.55, 0.45, 0.3, 0.2 ]
++          hgrad-y-level2: [ 1, 0.65, 0.55, 0.45, 0.3, 0.2 ]
++          hgrad-y-level3: [ 1, 0.65, 0.55, 0.45, 0.3, 0.2 ]
++          hgrad-y-level4: [ 1, 0.65, 0.55, 0.45, 0.3, 0.2 ]
++          hi-soft-thresh-scale: [ 0.13, 0.3, 0.3, 0.1 ]
++        - iso: 204800
++          sigma-curve: [ -5.24186459287e-12, 4.83761295342e-08, -0.000158009865774, 0.205697200837, -24.6859972726 ]
++          ynr-lci: [ 0.936182, 0.654274, 0.45586, 0.403902 ]
++          ynr-lhci: [ 0.855909, 0.979829, 0.691382, 0.538871 ]
++          ynr-hlci: [ 0.885451, 0.981653, 0.701294, 0.551322 ]
++          ynr-hhci: [ 0.706894, 1.463291, 1.102797, 0.741516 ]
++          lo-lumapoint: [ 0, 32, 64, 128, 192, 256 ]
++          lo-lumaratio: [ 1, 1, 1.5, 1.5, 1, 1 ]
++          lo-directionstrength: 0.2
++          lo-bfscale: [ 1, 1, 3, 1 ]
++          imerge-ratio: 0.15
++          denoise-weight: [ 0.3, 0.85, 0.3, 0.3 ]
++          hi-lumapoint: [ 0, 32, 64, 128, 192, 256 ]
++          hi-lumaratio: [ 2, 2.5, 1.5, 1.5, 1, 1 ]
++          hi-bfscale: [ 1.2, 1.1, 0.86, 0.86 ]
++          hwith-d: [ 6, 6, 4, 2 ]
++          hi-denoisestrength: 1.2
++          hi-detailminadjdnw: 0.2
++          hi-denoiseweight: [ 0.75, 0.7, 0.66, 0.36 ]
++          hgrad-y-level1: [ 1, 0.65, 0.55, 0.45, 0.3, 0.2 ]
++          hgrad-y-level2: [ 1, 0.65, 0.55, 0.45, 0.3, 0.2 ]
++          hgrad-y-level3: [ 1, 0.65, 0.55, 0.45, 0.3, 0.2 ]
++          hgrad-y-level4: [ 1, 0.65, 0.55, 0.45, 0.3, 0.2 ]
++          hi-soft-thresh-scale: [ 0.13, 0.3, 0.3, 0.1 ]
++      chroma:
++        kernel-3x3: [ 1, 0.8825, 0.7788 ]
++        kernel-5x5: [ 1, 0.8825, 0.7788, 0.6065, 0.3679 ]
++        kernel-9x9: [ 1, 0.8825, 0.7788, 0.6065, 0.3679, 0.1969, 0.1353, 0.0439 ]
++        kernel-9x9-num: 0
++        settings:
++          - iso: 50
++            step0-uvgrad-ratio: 40
++            step0-uvgrad-offset: 0.8
++            step1-median-ratio: 0.3
++            step2-median-ratio: 0.2
++            step1-bf-sigmar: 8.24
++            step2-bf-sigmar: 5.12
++            step3-bf-sigmar: 3.413
++            step1-bf-uvgain: 1.5
++            step2-bf-uvgain: 2
++            step3-bf-uvgain: 4
++            step1-bf-ratio: 0
++            step3-bf-ratio: 1
++          - iso: 100
++            step0-uvgrad-ratio: 40
++            step0-uvgrad-offset: 0.8
++            step1-median-ratio: 0.4
++            step2-median-ratio: 0.2
++            step1-bf-sigmar: 8.24
++            step2-bf-sigmar: 6.4
++            step3-bf-sigmar: 4.267
++            step1-bf-uvgain: 1.5
++            step2-bf-uvgain: 2
++            step3-bf-uvgain: 4
++            step1-bf-ratio: 0
++            step3-bf-ratio: 1
++          - iso: 200
++            step0-uvgrad-ratio: 40
++            step0-uvgrad-offset: 0.8
++            step1-median-ratio: 0.5
++            step2-median-ratio: 0.3
++            step1-bf-sigmar: 8.24
++            step2-bf-sigmar: 8.53
++            step3-bf-sigmar: 5.689
++            step1-bf-uvgain: 1.5
++            step2-bf-uvgain: 2
++            step3-bf-uvgain: 4
++            step1-bf-ratio: 0
++            step3-bf-ratio: 1
++          - iso: 400
++            step0-uvgrad-ratio: 40
++            step0-uvgrad-offset: 0.8
++            step1-median-ratio: 0.6
++            step2-median-ratio: 0.4
++            step1-bf-sigmar: 8.24
++            step2-bf-sigmar: 10.24
++            step3-bf-sigmar: 7.11
++            step1-bf-uvgain: 1.5
++            step2-bf-uvgain: 2
++            step3-bf-uvgain: 3
++            step1-bf-ratio: 0
++            step3-bf-ratio: 1
++          - iso: 800
++            step0-uvgrad-ratio: 60
++            step0-uvgrad-offset: 0.8
++            step1-median-ratio: 0.8
++            step2-median-ratio: 0.5
++            step1-bf-sigmar: 12.8
++            step2-bf-sigmar: 12.24
++            step3-bf-sigmar: 7
++            step1-bf-uvgain: 1.2
++            step2-bf-uvgain: 2
++            step3-bf-uvgain: 3
++            step1-bf-ratio: 0
++            step3-bf-ratio: 1
++          - iso: 1600
++            step0-uvgrad-ratio: 60
++            step0-uvgrad-offset: 0.8
++            step1-median-ratio: 0.8
++            step2-median-ratio: 0.6
++            step1-bf-sigmar: 28.8
++            step2-bf-sigmar: 12.8
++            step3-bf-sigmar: 8.4
++            step1-bf-uvgain: 1
++            step2-bf-uvgain: 2
++            step3-bf-uvgain: 2.5
++            step1-bf-ratio: 1
++            step3-bf-ratio: 1
++          - iso: 3200
++            step0-uvgrad-ratio: 60
++            step0-uvgrad-offset: 0.8
++            step1-median-ratio: 0.8
++            step2-median-ratio: 0.7
++            step1-bf-sigmar: 42.3
++            step2-bf-sigmar: 18
++            step3-bf-sigmar: 9.8
++            step1-bf-uvgain: 0.4
++            step2-bf-uvgain: 1.5
++            step3-bf-uvgain: 1.8
++            step1-bf-ratio: 1
++            step3-bf-ratio: 1
++          - iso: 6400
++            step0-uvgrad-ratio: 60
++            step0-uvgrad-offset: 0.8
++            step1-median-ratio: 0.8
++            step2-median-ratio: 0.8
++            step1-bf-sigmar: 58.6
++            step2-bf-sigmar: 28
++            step3-bf-sigmar: 11
++            step1-bf-uvgain: 0.4
++            step2-bf-uvgain: 1.2
++            step3-bf-uvgain: 1
++            step1-bf-ratio: 0
++            step3-bf-ratio: 1
++          - iso: 12800
++            step0-uvgrad-ratio: 60
++            step0-uvgrad-offset: 0.8
++            step1-median-ratio: 0.8
++            step2-median-ratio: 0.8
++            step1-bf-sigmar: 64
++            step2-bf-sigmar: 32
++            step3-bf-sigmar: 11
++            step1-bf-uvgain: 0.3
++            step2-bf-uvgain: 0.8
++            step3-bf-uvgain: 0.8
++            step1-bf-ratio: 0
++            step3-bf-ratio: 1
++          - iso: 25600
++            step0-uvgrad-ratio: 60
++            step0-uvgrad-offset: 0.8
++            step1-median-ratio: 0.8
++            step2-median-ratio: 0.8
++            step1-bf-sigmar: 64
++            step2-bf-sigmar: 32
++            step3-bf-sigmar: 11
++            step1-bf-uvgain: 0.3
++            step2-bf-uvgain: 0.6
++            step3-bf-uvgain: 0.6
++            step1-bf-ratio: 0
++            step3-bf-ratio: 1
++          - iso: 51200
++            step0-uvgrad-ratio: 60
++            step0-uvgrad-offset: 0.8
++            step1-median-ratio: 1
++            step2-median-ratio: 0.8
++            step1-bf-sigmar: 64
++            step2-bf-sigmar: 32
++            step3-bf-sigmar: 11
++            step1-bf-uvgain: 0.3
++            step2-bf-uvgain: 0.6
++            step3-bf-uvgain: 0.6
++            step1-bf-ratio: 0
++            step3-bf-ratio: 1
++          - iso: 102400
++            step0-uvgrad-ratio: 60
++            step0-uvgrad-offset: 0.8
++            step1-median-ratio: 1
++            step2-median-ratio: 0.8
++            step1-bf-sigmar: 64
++            step2-bf-sigmar: 32
++            step3-bf-sigmar: 11
++            step1-bf-uvgain: 0.3
++            step2-bf-uvgain: 0.6
++            step3-bf-uvgain: 0.6
++            step1-bf-ratio: 0
++            step3-bf-ratio: 1
++          - iso: 204800
++            step0-uvgrad-ratio: 60
++            step0-uvgrad-offset: 0.8
++            step1-median-ratio: 1
++            step2-median-ratio: 1
++            step1-bf-sigmar: 64
++            step2-bf-sigmar: 32
++            step3-bf-sigmar: 11
++            step1-bf-uvgain: 0.3
++            step2-bf-uvgain: 0.6
++            step3-bf-uvgain: 0.6
++            step1-bf-ratio: 0
++            step3-bf-ratio: 1
++  - Sharpen:
++      # converted from the vendor IQ SHARP and EDGEFILTER
++      # normal/LSNR settings by nr-iq2yaml.py; gain = iso / 50
++      luma-point: [ 0, 16, 32, 64, 96, 160, 224, 256 ]
++      pbf-coeff: [ 0.15625, 0.25, 0.15625, 0.25, 0.375, 0.25, 0.15625, 0.25, 0.15625 ]
++      rf-m-coeff: [ 0.023438, 0.03125, 0.039063, 0.03125, 0.023438, 0.03125, 0.046875, 0.054688, 0.046875, 0.03125, 0.039063, 0.054688, 0.09375, 0.054688, 0.039063, 0.03125, 0.046875, 0.054688, 0.046875, 0.03125, 0.023438, 0.03125, 0.039063, 0.03125, 0.023438 ]
++      mbf-coeff: [ 0, 0, 0, 0, 0.40625, 0, 0, 0, 0, 0, 0, 0, 0.40625, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.34375, 0, 0.328125, 0, 0.34375, 0, 0, 0, 0, 0, 0, 0, 0, 0.40625, 0, 0.359375, 0, 0, 0, 0, 0, 0, 0, 0.359375, 0, 0.40625, 0, 0, 0, 0, 0, 0, 0, 0.296875, 0, 0.234375, 0, 0.234375, 0, 0.296875, 0, 0, 0, 0, 0, 0, 0.40625, 0, 0.34375, 0, 0, 0, 0, 0.171875, 0, 0, 0, 0, 0.34375, 0, 0.40625, 0, 0, 0, 0, 0, 0, 0.234375, 0, 0.140625, 0.109375, 0.140625, 0, 0.234375, 0, 0, 0, 0, 0, 0.4375, 0, 0, 0.328125, 0, 0, 0.171875, 0.109375, 0, 0.109375, 0.171875, 0, 0, 0.328125, 0, 0, 0.4375, 0, 0, 0, 0, 0, 0.234375, 0, 0.140625, 0.109375, 0.140625, 0, 0.234375, 0, 0, 0, 0, 0, 0, 0.40625, 0, 0.34375, 0, 0, 0, 0, 0.171875, 0, 0, 0, 0, 0.34375, 0, 0.40625, 0, 0, 0, 0, 0, 0, 0.296875, 0, 0.234375, 0, 0.234375, 0, 0.296875, 0, 0, 0, 0, 0, 0, 0, 0.40625, 0, 0.359375, 0, 0, 0, 0, 0, 0, 0, 0.359375, 0, 0.40625, 0, 0, 0, 0, 0, 0, 0, 0, 0.34375, 0, 0.328125, 0, 0.34375, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.40625, 0, 0, 0, 0, 0, 0, 0, 0.40625, 0, 0, 0, 0 ]
++      rf-h-coeff: [ 0, 0.015625, 0.023438, 0.015625, 0, 0.015625, 0.0625, 0.101563, 0.0625, 0.015625, 0.023438, 0.101563, 0.125, 0.101563, 0.023438, 0.015625, 0.0625, 0.101563, 0.0625, 0.015625, 0, 0.015625, 0.023438, 0.015625, 0 ]
++      hbf-coeff: [ 0.15625, 0.25, 0.15625, 0.25, 0.375, 0.25, 0.15625, 0.25, 0.15625 ]
++      edge-hf-coeff: [ 0, 0, 0, 0, 0, 0, 0.0625, 0.125, 0.0625, 0, 0, 0.125, 0.25, 0.125, 0, 0, 0.0625, 0.125, 0.0625, 0, 0, 0, 0, 0, 0 ]
++      edge-guide-coeff: [ -0.0625, -0.125, -0.0625, -0.125, 1.75, -0.125, -0.0625, -0.125, -0.0625 ]
++      edge-dir-min: 0.94
++      sharp:
++        - iso: 50
++          lratio: 0.3
++          hratio: 1.8
++          mf-sharp-ratio: 2.5
++          hf-sharp-ratio: 7.5
++          pbf-gain: 0.7
++          pbf-ratio: 0.7
++          pbf-add: 2
++          mbf-gain: 0.7
++          hbf-gain: 0.9
++          hbf-ratio: 0.8
++          mbf-add: 3
++          hbf-add: 1.5
++          luma-sigma: [ 2, 3, 4, 4, 6, 5, 4, 4 ]
++          mf-clip-pos: [ 8, 16, 20, 32, 40, 40, 40, 30 ]
++          mf-clip-neg: [ -0.3, -0.4, -0.5, -0.6, -0.8, -0.8, -0.6, -0.4 ]
++          hf-clip: [ 14, 30, 32, 42, 52, 52, 46, 42 ]
++          local-sharp-strength: 64
++        - iso: 100
++          lratio: 0.3
++          hratio: 1.8
++          mf-sharp-ratio: 2.5
++          hf-sharp-ratio: 6.5
++          pbf-gain: 0.7
++          pbf-ratio: 0.7
++          pbf-add: 2
++          mbf-gain: 0.7
++          hbf-gain: 0.9
++          hbf-ratio: 0.8
++          mbf-add: 3
++          hbf-add: 1.5
++          luma-sigma: [ 3, 4, 5, 6, 6, 5, 4, 3 ]
++          mf-clip-pos: [ 8, 16, 20, 32, 40, 40, 40, 30 ]
++          mf-clip-neg: [ -0.3, -0.4, -0.5, -0.6, -0.8, -0.8, -0.6, -0.4 ]
++          hf-clip: [ 14, 30, 32, 42, 52, 52, 46, 42 ]
++          local-sharp-strength: 64
++        - iso: 200
++          lratio: 0.35
++          hratio: 1.8
++          mf-sharp-ratio: 2.5
++          hf-sharp-ratio: 6.5
++          pbf-gain: 0.7
++          pbf-ratio: 1
++          pbf-add: 3
++          mbf-gain: 0.7
++          hbf-gain: 0.9
++          hbf-ratio: 0.9
++          mbf-add: 4
++          hbf-add: 3.5
++          luma-sigma: [ 3, 4, 5, 6, 6, 5, 4, 3 ]
++          mf-clip-pos: [ 8, 16, 20, 24, 32, 32, 32, 26 ]
++          mf-clip-neg: [ -0.3, -0.4, -0.5, -0.6, -0.8, -0.8, -0.6, -0.4 ]
++          hf-clip: [ 14, 30, 32, 42, 50, 50, 46, 42 ]
++          local-sharp-strength: 64
++        - iso: 400
++          lratio: 0.35
++          hratio: 1.8
++          mf-sharp-ratio: 4
++          hf-sharp-ratio: 5
++          pbf-gain: 0.7
++          pbf-ratio: 1
++          pbf-add: 5
++          mbf-gain: 0.7
++          hbf-gain: 0.9
++          hbf-ratio: 1
++          mbf-add: 7
++          hbf-add: 5
++          luma-sigma: [ 3, 4, 5, 6, 6, 5, 4, 3 ]
++          mf-clip-pos: [ 2, 4, 10, 20, 36, 36, 28, 24 ]
++          mf-clip-neg: [ -0.2, -0.3, -0.4, -0.4, -0.4, -0.4, -0.3, -0.2 ]
++          hf-clip: [ 8, 16, 20, 30, 36, 36, 30, 24 ]
++          local-sharp-strength: 42
++        - iso: 800
++          lratio: 0.2
++          hratio: 1.8
++          mf-sharp-ratio: 5
++          hf-sharp-ratio: 4
++          pbf-gain: 0.7
++          pbf-ratio: 0.8
++          pbf-add: 5
++          mbf-gain: 0.8
++          hbf-gain: 1
++          hbf-ratio: 1
++          mbf-add: 8
++          hbf-add: 6
++          luma-sigma: [ 4, 5, 6, 8, 8, 8, 7, 6 ]
++          mf-clip-pos: [ 2, 4, 10, 20, 36, 36, 28, 24 ]
++          mf-clip-neg: [ -0.1, -0.2, -0.3, -0.4, -0.4, -0.4, -0.35, -0.2 ]
++          hf-clip: [ 8, 16, 24, 36, 40, 40, 36, 32 ]
++          local-sharp-strength: 32
++        - iso: 1600
++          lratio: 0.2
++          hratio: 2
++          mf-sharp-ratio: 6
++          hf-sharp-ratio: 4
++          pbf-gain: 0.8
++          pbf-ratio: 0.8
++          pbf-add: 6
++          mbf-gain: 0.8
++          hbf-gain: 1
++          hbf-ratio: 1
++          mbf-add: 10
++          hbf-add: 7
++          luma-sigma: [ 5, 5, 6, 8, 9, 8, 8, 7 ]
++          mf-clip-pos: [ 2, 4, 10, 20, 36, 36, 28, 24 ]
++          mf-clip-neg: [ -0.1, -0.2, -0.3, -0.4, -0.4, -0.3, -0.2, -0.1 ]
++          hf-clip: [ 8, 16, 24, 36, 40, 40, 36, 32 ]
++          local-sharp-strength: 24
++        - iso: 3200
++          lratio: 0.1
++          hratio: 2
++          mf-sharp-ratio: 6
++          hf-sharp-ratio: 3
++          pbf-gain: 0.8
++          pbf-ratio: 0.8
++          pbf-add: 6
++          mbf-gain: 0.8
++          hbf-gain: 1
++          hbf-ratio: 1
++          mbf-add: 10
++          hbf-add: 7
++          luma-sigma: [ 8, 10, 10, 12, 14, 12, 12, 10 ]
++          mf-clip-pos: [ 2, 6, 16, 24, 34, 36, 34, 30 ]
++          mf-clip-neg: [ -0, -0.15, -0.3, -0.4, -0.5, -0.4, -0.2, -0.1 ]
++          hf-clip: [ 2, 6, 12, 18, 32, 32, 24, 16 ]
++          local-sharp-strength: 24
++        - iso: 6400
++          lratio: 0
++          hratio: 2
++          mf-sharp-ratio: 6
++          hf-sharp-ratio: 2
++          pbf-gain: 0.8
++          pbf-ratio: 0.8
++          pbf-add: 6
++          mbf-gain: 0.8
++          hbf-gain: 1.2
++          hbf-ratio: 1
++          mbf-add: 10
++          hbf-add: 7
++          luma-sigma: [ 8, 10, 10, 12, 14, 12, 12, 10 ]
++          mf-clip-pos: [ 4, 6, 12, 24, 34, 34, 32, 30 ]
++          mf-clip-neg: [ -0, -0.1, -0.2, -0.2, -0.22, -0.2, -0.12, -0.05 ]
++          hf-clip: [ 3, 5, 7, 10, 10, 12, 10, 10 ]
++          local-sharp-strength: 24
++        - iso: 12800
++          lratio: 0
++          hratio: 2
++          mf-sharp-ratio: 6
++          hf-sharp-ratio: 2
++          pbf-gain: 0.8
++          pbf-ratio: 0.8
++          pbf-add: 7
++          mbf-gain: 0.8
++          hbf-gain: 1.2
++          hbf-ratio: 1
++          mbf-add: 12
++          hbf-add: 8
++          luma-sigma: [ 8, 10, 10, 12, 14, 12, 12, 10 ]
++          mf-clip-pos: [ 4, 6, 12, 24, 34, 34, 32, 30 ]
++          mf-clip-neg: [ -0.5, -0.5, -0.5, -0.4, -0.4, -0.4, -0.35, -0.2 ]
++          hf-clip: [ 2, 5, 7, 10, 10, 12, 10, 10 ]
++          local-sharp-strength: 24
++        - iso: 25600
++          lratio: 0
++          hratio: 2
++          mf-sharp-ratio: 6
++          hf-sharp-ratio: 2
++          pbf-gain: 0.8
++          pbf-ratio: 0.8
++          pbf-add: 7
++          mbf-gain: 0.8
++          hbf-gain: 1.2
++          hbf-ratio: 1
++          mbf-add: 12
++          hbf-add: 8
++          luma-sigma: [ 8, 10, 10, 12, 14, 12, 12, 10 ]
++          mf-clip-pos: [ 1, 2, 6, 8, 12, 16, 16, 10 ]
++          mf-clip-neg: [ -0.5, -0.5, -0.5, -0.4, -0.4, -0.4, -0.35, -0.2 ]
++          hf-clip: [ 2, 5, 7, 10, 10, 12, 10, 10 ]
++          local-sharp-strength: 16
++        - iso: 51200
++          lratio: 0.67
++          hratio: 1.7
++          mf-sharp-ratio: 1
++          hf-sharp-ratio: 1
++          pbf-gain: 1
++          pbf-ratio: 0.9
++          pbf-add: 16
++          mbf-gain: 1
++          hbf-gain: 1
++          hbf-ratio: 0.9
++          mbf-add: 24
++          hbf-add: 24
++          luma-sigma: [ 8, 10, 10, 12, 14, 12, 12, 10 ]
++          mf-clip-pos: [ 1, 2, 4, 6, 10, 16, 16, 10 ]
++          mf-clip-neg: [ -0.5, -0.5, -0.5, -0.4, -0.4, -0.4, -0.35, -0.2 ]
++          hf-clip: [ 1, 4, 6, 10, 24, 32, 32, 24 ]
++          local-sharp-strength: 12
++        - iso: 102400
++          lratio: 0.67
++          hratio: 1.5
++          mf-sharp-ratio: 3
++          hf-sharp-ratio: 2.5
++          pbf-gain: 1
++          pbf-ratio: 1
++          pbf-add: 0
++          mbf-gain: 1
++          hbf-gain: 1
++          hbf-ratio: 0.9
++          mbf-add: 2
++          hbf-add: 1
++          luma-sigma: [ 6, 8, 10, 12, 14, 12, 12, 10 ]
++          mf-clip-pos: [ 4, 6, 8, 8, 10, 8, 4, 0 ]
++          mf-clip-neg: [ -1, -0.5, -0.25, -0.25, -0.2, -0.2, -0.1, -0 ]
++          hf-clip: [ 6, 10, 12, 16, 20, 20, 8, 0 ]
++          local-sharp-strength: 10
++        - iso: 204800
++          lratio: 0.67
++          hratio: 1.5
++          mf-sharp-ratio: 3
++          hf-sharp-ratio: 2.5
++          pbf-gain: 1
++          pbf-ratio: 1
++          pbf-add: 0
++          mbf-gain: 1
++          hbf-gain: 1
++          hbf-ratio: 0.9
++          mbf-add: 2
++          hbf-add: 1
++          luma-sigma: [ 6, 8, 10, 12, 14, 12, 12, 10 ]
++          mf-clip-pos: [ 4, 6, 8, 8, 10, 8, 4, 0 ]
++          mf-clip-neg: [ -1, -0.5, -0.25, -0.25, -0.2, -0.2, -0.1, -0 ]
++          hf-clip: [ 6, 10, 12, 16, 20, 20, 8, 0 ]
++          local-sharp-strength: 10
++      edge:
++        - iso: 50
++          edge-thed: 8
++          src-wgt: 0
++          alpha-adp-en: 0
++          local-alpha: 0
++          global-alpha: 0.1
++          noise-clip: [ 2, 6, 8, 10, 16, 16, 14, 10 ]
++          dog-clip-pos: [ 3, 4, 4, 5, 6, 5, 5, 4 ]
++          dog-clip-neg: [ 3, 4, 4, 5, 6, 5, 5, 4 ]
++          dog-alpha: [ 0, 0, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1 ]
++          direct-filter-coeff: [ 0.1, 0.2, 0.4, 0.2, 0.1 ]
++          dog-kernel: [ -0.0625, -0.109375, -0.140625, -0.109375, -0.0625, -0.109375, 0.078125, 0.234375, 0.078125, -0.109375, -0.140625, 0.234375, 0.4375, 0.234375, -0.140625, -0.109375, 0.078125, 0.234375, 0.078125, -0.109375, -0.0625, -0.109375, -0.140625, -0.109375, -0.0625 ]
++        - iso: 100
++          edge-thed: 8
++          src-wgt: 0
++          alpha-adp-en: 0
++          local-alpha: 0
++          global-alpha: 0.15
++          noise-clip: [ 2, 6, 8, 10, 16, 16, 14, 10 ]
++          dog-clip-pos: [ 3, 4, 4, 5, 6, 5, 5, 4 ]
++          dog-clip-neg: [ 3, 4, 4, 5, 6, 5, 5, 4 ]
++          dog-alpha: [ 0, 0, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1 ]
++          direct-filter-coeff: [ 0.1, 0.2, 0.4, 0.2, 0.1 ]
++          dog-kernel: [ -0.0625, -0.109375, -0.140625, -0.109375, -0.0625, -0.109375, 0.078125, 0.234375, 0.078125, -0.109375, -0.140625, 0.234375, 0.4375, 0.234375, -0.140625, -0.109375, 0.078125, 0.234375, 0.078125, -0.109375, -0.0625, -0.109375, -0.140625, -0.109375, -0.0625 ]
++        - iso: 200
++          edge-thed: 10
++          src-wgt: 0
++          alpha-adp-en: 0
++          local-alpha: 0
++          global-alpha: 0.2
++          noise-clip: [ 4, 8, 16, 24, 24, 16, 16, 16 ]
++          dog-clip-pos: [ 3, 4, 4, 5, 6, 5, 5, 4 ]
++          dog-clip-neg: [ 3, 4, 4, 5, 6, 5, 5, 4 ]
++          dog-alpha: [ 0, 0, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1 ]
++          direct-filter-coeff: [ 0.1, 0.2, 0.4, 0.2, 0.1 ]
++          dog-kernel: [ -0.0625, -0.109375, -0.140625, -0.109375, -0.0625, -0.109375, 0.078125, 0.234375, 0.078125, -0.109375, -0.140625, 0.234375, 0.4375, 0.234375, -0.140625, -0.109375, 0.078125, 0.234375, 0.078125, -0.109375, -0.0625, -0.109375, -0.140625, -0.109375, -0.0625 ]
++        - iso: 400
++          edge-thed: 14
++          src-wgt: 0
++          alpha-adp-en: 0
++          local-alpha: 0
++          global-alpha: 0.3
++          noise-clip: [ 4, 8, 16, 32, 32, 24, 16, 16 ]
++          dog-clip-pos: [ 3, 4, 4, 5, 6, 5, 5, 4 ]
++          dog-clip-neg: [ 3, 4, 4, 5, 6, 5, 5, 4 ]
++          dog-alpha: [ 0, 0, 0, 0, 0, 0, 0, 0 ]
++          direct-filter-coeff: [ 0.1, 0.2, 0.4, 0.2, 0.1 ]
++          dog-kernel: [ -0.0625, -0.109375, -0.140625, -0.109375, -0.0625, -0.109375, 0.078125, 0.234375, 0.078125, -0.109375, -0.140625, 0.234375, 0.4375, 0.234375, -0.140625, -0.109375, 0.078125, 0.234375, 0.078125, -0.109375, -0.0625, -0.109375, -0.140625, -0.109375, -0.0625 ]
++        - iso: 800
++          edge-thed: 20
++          src-wgt: 0
++          alpha-adp-en: 0
++          local-alpha: 0
++          global-alpha: 0.5
++          noise-clip: [ 4, 8, 16, 32, 32, 24, 16, 16 ]
++          dog-clip-pos: [ 3, 4, 4, 5, 6, 5, 5, 4 ]
++          dog-clip-neg: [ 3, 4, 4, 5, 6, 5, 5, 4 ]
++          dog-alpha: [ 0, 0, 0, 0, 0, 0, 0, 0 ]
++          direct-filter-coeff: [ 0.1, 0.2, 0.4, 0.2, 0.1 ]
++          dog-kernel: [ -0.0625, -0.109375, -0.140625, -0.109375, -0.0625, -0.109375, 0.078125, 0.234375, 0.078125, -0.109375, -0.140625, 0.234375, 0.4375, 0.234375, -0.140625, -0.109375, 0.078125, 0.234375, 0.078125, -0.109375, -0.0625, -0.109375, -0.140625, -0.109375, -0.0625 ]
++        - iso: 1600
++          edge-thed: 20
++          src-wgt: 0
++          alpha-adp-en: 0
++          local-alpha: 0
++          global-alpha: 0.5
++          noise-clip: [ 4, 8, 16, 24, 24, 16, 16, 16 ]
++          dog-clip-pos: [ 2, 3, 4, 6, 5, 4, 4, 3 ]
++          dog-clip-neg: [ 2, 3, 4, 6, 5, 4, 4, 3 ]
++          dog-alpha: [ 0, 0, 0, 0, 0, 0, 0, 0 ]
++          direct-filter-coeff: [ 0.1, 0.2, 0.4, 0.2, 0.1 ]
++          dog-kernel: [ -0.0232, -0.0334, -0.0366, -0.0334, -0.0232, -0.0334, -0.0218, 0.0541, -0.0218, -0.0334, -0.0366, 0.0541, 0.3775, 0.0541, -0.0366, -0.0334, -0.0218, 0.0541, -0.0218, -0.0334, -0.0232, -0.0334, -0.0366, -0.0334, -0.0232 ]
++        - iso: 3200
++          edge-thed: 26
++          src-wgt: 0
++          alpha-adp-en: 0
++          local-alpha: 0
++          global-alpha: 0.5
++          noise-clip: [ 8, 10, 16, 24, 24, 16, 16, 16 ]
++          dog-clip-pos: [ 2, 3, 4, 6, 5, 4, 4, 3 ]
++          dog-clip-neg: [ 2, 3, 4, 6, 5, 4, 4, 3 ]
++          dog-alpha: [ 0, 0, 0, 0, 0, 0, 0, 0 ]
++          direct-filter-coeff: [ 0.1, 0.2, 0.4, 0.2, 0.1 ]
++          dog-kernel: [ -0.0232, -0.0334, -0.0366, -0.0334, -0.0232, -0.0334, -0.0218, 0.0541, -0.0218, -0.0334, -0.0366, 0.0541, 0.3775, 0.0541, -0.0366, -0.0334, -0.0218, 0.0541, -0.0218, -0.0334, -0.0232, -0.0334, -0.0366, -0.0334, -0.0232 ]
++        - iso: 6400
++          edge-thed: 26
++          src-wgt: 0
++          alpha-adp-en: 0
++          local-alpha: 0
++          global-alpha: 0.5
++          noise-clip: [ 4, 8, 16, 24, 24, 16, 16, 16 ]
++          dog-clip-pos: [ 2, 3, 4, 6, 5, 4, 4, 3 ]
++          dog-clip-neg: [ 2, 3, 4, 6, 5, 4, 4, 3 ]
++          dog-alpha: [ 0, 0, 0, 0.3, 0.3, 0.3, 0.3, 0.3 ]
++          direct-filter-coeff: [ 0.1, 0.2, 0.4, 0.2, 0.1 ]
++          dog-kernel: [ -0.0232, -0.0334, -0.0366, -0.0334, -0.0232, -0.0334, -0.0218, 0.0541, -0.0218, -0.0334, -0.0366, 0.0541, 0.3775, 0.0541, -0.0366, -0.0334, -0.0218, 0.0541, -0.0218, -0.0334, -0.0232, -0.0334, -0.0366, -0.0334, -0.0232 ]
++        - iso: 12800
++          edge-thed: 32
++          src-wgt: 0
++          alpha-adp-en: 0
++          local-alpha: 0
++          global-alpha: 0.5
++          noise-clip: [ 4, 8, 16, 24, 24, 16, 16, 16 ]
++          dog-clip-pos: [ 3, 4, 4, 5, 6, 5, 5, 4 ]
++          dog-clip-neg: [ 3, 4, 4, 5, 6, 5, 5, 4 ]
++          dog-alpha: [ 0, 0, 0, 0.2, 0.2, 0.2, 0.2, 0.2 ]
++          direct-filter-coeff: [ 0.1, 0.2, 0.4, 0.2, 0.1 ]
++          dog-kernel: [ -0.0232, -0.0334, -0.0366, -0.0334, -0.0232, -0.0334, -0.0218, 0.0541, -0.0218, -0.0334, -0.0366, 0.0541, 0.3775, 0.0541, -0.0366, -0.0334, -0.0218, 0.0541, -0.0218, -0.0334, -0.0232, -0.0334, -0.0366, -0.0334, -0.0232 ]
++        - iso: 25600
++          edge-thed: 48
++          src-wgt: 0
++          alpha-adp-en: 0
++          local-alpha: 1
++          global-alpha: 0.5
++          noise-clip: [ 4, 8, 16, 24, 24, 16, 16, 16 ]
++          dog-clip-pos: [ 3, 4, 4, 5, 6, 5, 5, 4 ]
++          dog-clip-neg: [ 3, 4, 4, 5, 6, 5, 5, 4 ]
++          dog-alpha: [ 0, 0, 0, 0.2, 0.2, 0.2, 0.2, 0.2 ]
++          direct-filter-coeff: [ 0.125, 0.3125, 0.125, 0.3125, 0.125 ]
++          dog-kernel: [ 0, -0.25, -0.375, -0.25, 0, -0.25, 0.25, 0.5625, 0.25, -0.25, -0.375, 0.5625, 0.25, 0.5625, -0.375, -0.25, 0.25, 0.5625, 0.25, -0.25, 0, -0.25, -0.375, -0.25, 0 ]
++        - iso: 51200
++          edge-thed: 32
++          src-wgt: 0
++          alpha-adp-en: 0
++          local-alpha: 1
++          global-alpha: 1
++          noise-clip: [ 4, 8, 16, 24, 24, 16, 16, 16 ]
++          dog-clip-pos: [ 3, 4, 4, 5, 6, 5, 5, 4 ]
++          dog-clip-neg: [ 3, 4, 4, 5, 6, 5, 5, 4 ]
++          dog-alpha: [ 0, 0, 0, 0, 0, 0, 0, 0 ]
++          direct-filter-coeff: [ 0.125, 0.3125, 0.125, 0.3125, 0.125 ]
++          dog-kernel: [ 0, -0.25, -0.375, -0.25, 0, -0.25, 0.25, 0.5625, 0.25, -0.25, -0.375, 0.5625, 0.25, 0.5625, -0.375, -0.25, 0.25, 0.5625, 0.25, -0.25, 0, -0.25, -0.375, -0.25, 0 ]
++        - iso: 102400
++          edge-thed: 30
++          src-wgt: 0
++          alpha-adp-en: 0
++          local-alpha: 1
++          global-alpha: 1
++          noise-clip: [ 4, 8, 16, 24, 24, 16, 16, 16 ]
++          dog-clip-pos: [ 0, 2, 2, 3, 3, 3, 2, 2 ]
++          dog-clip-neg: [ 0, 2, 2, 3, 3, 3, 2, 2 ]
++          dog-alpha: [ 0, 0, 0, 0, 0, 0, 0, 0 ]
++          direct-filter-coeff: [ 0, 0.4375, 0.125, 0.4375, 0 ]
++          dog-kernel: [ -0.0625, -0.109375, -0.140625, -0.109375, -0.0625, -0.109375, 0.078125, 0.234375, 0.078125, -0.109375, -0.140625, 0.234375, 0.4375, 0.234375, -0.140625, -0.109375, 0.078125, 0.234375, 0.078125, -0.109375, -0.0625, -0.109375, -0.140625, -0.109375, -0.0625 ]
++        - iso: 204800
++          edge-thed: 30
++          src-wgt: 0
++          alpha-adp-en: 0
++          local-alpha: 1
++          global-alpha: 1
++          noise-clip: [ 4, 8, 16, 24, 24, 16, 16, 16 ]
++          dog-clip-pos: [ 0, 2, 2, 3, 3, 3, 2, 2 ]
++          dog-clip-neg: [ 0, 2, 2, 3, 3, 3, 2, 2 ]
++          dog-alpha: [ 0, 0, 0, 0, 0, 0, 0, 0 ]
++          direct-filter-coeff: [ 0, 0.4375, 0.125, 0.4375, 0 ]
++          dog-kernel: [ -0.0625, -0.109375, -0.140625, -0.109375, -0.0625, -0.109375, 0.078125, 0.234375, 0.078125, -0.109375, -0.140625, 0.234375, 0.4375, 0.234375, -0.140625, -0.109375, 0.078125, 0.234375, 0.078125, -0.109375, -0.0625, -0.109375, -0.140625, -0.109375, -0.0625 ]
+   - Awb:
+       algorithm: "grey"
+       AwbMode:

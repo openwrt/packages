@@ -16,7 +16,7 @@ Also remove references to NCAT_CA_CERTS_FILE and NCAT_CA_CERTS_PATH in order to 
 
 --- a/ncat/Makefile.in
 +++ b/ncat/Makefile.in
-@@ -80,7 +80,6 @@ DATAFILES =
+@@ -84,7 +84,6 @@ DATAFILES =
  ifneq ($(HAVE_OPENSSL),)
  SRCS += http_digest.c
  OBJS += http_digest.o
@@ -26,7 +26,7 @@ Also remove references to NCAT_CA_CERTS_FILE and NCAT_CA_CERTS_PATH in order to 
  ifneq ($(NOLUA),yes)
 --- a/ncat/ncat_posix.c
 +++ b/ncat/ncat_posix.c
-@@ -433,28 +433,17 @@ void set_lf_mode(void)
+@@ -440,28 +440,17 @@ void set_lf_mode(void)
  
  #ifdef HAVE_OPENSSL
  

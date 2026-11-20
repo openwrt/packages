@@ -21,7 +21,7 @@ define Package/libmanette
   CATEGORY:=Libraries
   TITLE:=The simple GObject game controller library.
   URL:=https://gitlab.gnome.org/GNOME/libmanette
-  DEPENDS:=+glib2 +libgudev +hidapi
+  DEPENDS:=+glib2 +libevdev +libgudev +hidapi
 endef
 
 define Package/libmanette/description

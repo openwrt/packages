@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lighttpd
 PKG_VERSION:=1.4.85
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 # release candidate ~rcX testing; remove for release
 #PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
@@ -24,7 +24,6 @@ PKG_CPE_ID:=cpe:/a:lighttpd:lighttpd
 
 # list config packages affecting MESON_ARGS
 REBUILD_MODULES:= \
-  authn_dbi \
   authn_gssapi \
   authn_ldap \
   authn_pam \
@@ -36,7 +35,6 @@ REBUILD_MODULES:= \
   mbedtls \
   nss \
   openssl \
-  vhostdb_dbi \
   vhostdb_ldap \
   vhostdb_mysql \
   vhostdb_pgsql \
@@ -166,7 +164,7 @@ endef
 MESON_ARGS += \
 	-Dwith_brotli=disabled \
 	-Dwith_bzip=disabled \
-	-Dwith_dbi=$(if $(CONFIG_PACKAGE_lighttpd-mod-authn_dbi)$(CONFIG_PACKAGE_lighttpd-mod-vhostdb_dbi),enabled,disabled) \
+	-Dwith_dbi=disabled \
 	-Dwith_fam=disabled \
 	-Dwith_gnutls=$(if $(CONFIG_PACKAGE_lighttpd-mod-gnutls)$(CONFIG_LIGHTTPD_CRYPTOLIB_GNUTLS),true,false) \
 	-Dwith_krb5=$(if $(CONFIG_PACKAGE_lighttpd-mod-authn_gssapi),enabled,disabled) \
@@ -254,7 +252,6 @@ endef
 $(eval $(call BuildPackage,lighttpd))
 
 $(eval $(call BuildPlugin,auth,Authentication,$(cryptolibdep),20))
-$(eval $(call BuildPlugin,authn_dbi,DBI-based authentication,lighttpd-mod-auth +PACKAGE_lighttpd-mod-authn_dbi:libdbi $(cryptolibdep),20))
 $(eval $(call BuildPlugin,authn_file,File-based authentication,lighttpd-mod-auth $(cryptolibdep),20))
 $(eval $(call BuildPlugin,authn_gssapi,Kerberos-based authentication,lighttpd-mod-auth +PACKAGE_lighttpd-mod-authn_gssapi:krb5-libs $(cryptolibdep),20))
 $(eval $(call BuildPlugin,authn_ldap,LDAP-based authentication,lighttpd-mod-auth +PACKAGE_lighttpd-mod-authn_ldap:libopenldap,20))
@@ -279,7 +276,6 @@ $(eval $(call BuildPlugin,ssi,SSI,,30))
 $(eval $(call BuildPlugin,status,Server status display,,30))
 $(eval $(call BuildPlugin,userdir,User directory,,30))
 $(eval $(call BuildPlugin,vhostdb,Virtual Host Database,,30))
-$(eval $(call BuildPlugin,vhostdb_dbi,Virtual Host Database (DBI),lighttpd-mod-vhostdb +PACKAGE_lighttpd-mod-vhostdb_dbi:libdbi,30))
 $(eval $(call BuildPlugin,vhostdb_ldap,Virtual Host Database (LDAP),lighttpd-mod-vhostdb +PACKAGE_lighttpd-mod-vhostdb_ldap:libopenldap,30))
 $(eval $(call BuildPlugin,vhostdb_mysql,Virtual Host Database (MariaDB),lighttpd-mod-vhostdb +PACKAGE_lighttpd-mod-vhostdb_mysql:libmariadb,30))
 $(eval $(call BuildPlugin,vhostdb_pgsql,Virtual Host Database (PostgreSQL),lighttpd-mod-vhostdb +PACKAGE_lighttpd-mod-vhostdb_pgsql:libpq,30))

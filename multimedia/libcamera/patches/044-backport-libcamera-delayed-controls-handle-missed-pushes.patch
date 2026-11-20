@@ -1,0 +1,32 @@
+From df043b5b90dbd34143af35c8de0a206d6892c553 Mon Sep 17 00:00:00 2001
+From: Stefan Klug <stefan.klug@ideasonboard.com>
+Date: Wed, 25 Mar 2026 16:13:34 +0100
+Subject: [PATCH] libcamera: delayed_controls: Handle missed pushes
+
+In unstable systems it can happen, that some sequence numbers are missed
+in the IPA. Gracefully handle that situation by queuing no-ops.
+
+Signed-off-by: Stefan Klug <stefan.klug@ideasonboard.com>
+Reviewed-by: Paul Elder <paul.elder@ideasonboard.com>
+---
+ src/libcamera/delayed_controls.cpp | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+--- a/src/libcamera/delayed_controls.cpp
++++ b/src/libcamera/delayed_controls.cpp
+@@ -178,6 +178,15 @@ bool DelayedControls::push(uint32_t sequ
+ 			<< " current queue index: " << queueCount_;
+ 	}
+ 
++	while (sequence > queueCount_) {
++		LOG(DelayedControls, Warning)
++			<< "Missed push for sequence " << queueCount_
++			<< " Auto queue no-op.";
++		push(queueCount_, {});
++	}
++
++	ASSERT(sequence == queueCount_);
++
+ 	/* Copy state from previous frame. */
+ 	for (auto &ctrl : values_) {
+ 		Info &info = ctrl.second[queueCount_];

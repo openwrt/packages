@@ -99,6 +99,7 @@ ban_devup=""
 ban_fetchcmd=""
 ban_fetchparm=""
 ban_fetchinsecure=""
+ban_authkey=""
 ban_fetchretry="5"
 ban_rdapparm=""
 ban_etagparm=""
@@ -938,6 +939,45 @@ f_getelements() {
 	[ -s "${file}" ] && printf '%s' "elements={ $("${ban_catcmd}" "${file}" 2>>"${ban_errorlog}") };"
 }
 
+# count the elements of a Set,
+#
+f_setcnt() {
+	local set="${1}"
+
+	"${ban_nftcmd}" list set inet banIP "${set}" 2>>"${ban_errorlog}" |
+		"${ban_awkcmd}" '/elements = \{/{f=1;e++}f{n+=gsub(/,/,"")}f&&/\}/{f=0}END{printf "%d",n+e}'
+}
+
+# list the Set elements with packet hits
+#
+f_sethits() {
+	local set="${1}"
+
+	"${ban_nftcmd}" list set inet banIP "${set}" 2>>"${ban_errorlog}" |
+		"${ban_awkcmd}" '
+		function js(v, a) {
+			if (index(v, "-")) { split(v, a, "-"); return "{ \"range\": [ \"" a[1] "\", \"" a[2] "\" ] }" }
+			if (index(v, "/")) { split(v, a, "/"); return "{ \"prefix\": { \"addr\": \"" a[1] "\", \"len\": " a[2] " } }" }
+			return "\"" v "\""
+		}
+		/elements = \{/ { f = 1; sub(/.*elements = \{/, "") }
+		f {
+			e = sub(/\}.*/, "")
+			n = split($0, item, ",")
+			for (i = 1; i <= n; i++) {
+				m = split(item[i], w, " ")
+				pk = 0
+				for (j = 2; j < m; j++) if (w[j] == "packets") { pk = w[j + 1]; break }
+				if (pk + 0 <= 0) continue
+				if (w[2] == ".") val = "{ \"concat\": [ \"" w[1] "\", " js(w[3]) " ] }"
+				else if (index(w[1], "-") || index(w[1], "/")) val = js(w[1])
+				else val = w[1]
+				print pk "\t" val
+			}
+			if (e) f = 0
+		}'
+}
+
 # resolve the chain direction of a feed,
 # an explicitly configured direction always wins over the feed default
 #
@@ -1001,7 +1041,7 @@ f_skipfeed() {
 	return 0
 }
 
-# build a country/asn feed url from a template
+# build a feed url from a template (country, asn, authkey)
 #
 f_feedurl() {
 	local url="${1}" key="${2}" value="${3}"
@@ -1014,6 +1054,7 @@ f_feedurl() {
 		case "${key}" in
 		"country") printf '%s%s-aggregated.zone' "${url}" "${value}" ;;
 		"asn") printf '%sAS%s' "${url}" "${value}" ;;
+		*) printf '%s' "${url}" ;;
 		esac
 		;;
 	esac
@@ -1350,10 +1391,10 @@ f_down() {
 		feed_target="drop"
 	fi
 
-	# set nft counter flag
+	# set nft counter flags
 	#
+	nft_cnt="counter"
 	if [ "${ban_nftcount}" = "1" ]; then
-		nft_cnt="counter"
 		nft_setcnt="; counter"
 	fi
 
@@ -1896,7 +1937,7 @@ f_down() {
 				# element count for the debug log only, a full Set listing is expensive with large Sets
 				#
 				if [ "${ban_debug}" = "1" ]; then
-					cnt_set="$("${ban_nftcmd}" -j list set inet banIP "${feed}" 2>/dev/null | "${ban_jsoncmd}" -qe '@.nftables[*].set.elem[*]' | "${ban_wccmd}" -l 2>/dev/null)"
+					cnt_set="$(f_setcnt "${feed}")"
 				fi
 			fi
 		else
@@ -2069,7 +2110,7 @@ f_genstatus() {
 		table="$("${ban_nftcmd}" -tj list table inet banIP 2>>"${ban_errorlog}")"
 		table_sets="$(printf '%s' "${table}" | "${ban_jsoncmd}" -qe '@.nftables[@.set.family="inet"].set.name')"
 		for object in ${table_sets}; do
-			element_cnt="$((element_cnt + $("${ban_nftcmd}" -j list set inet banIP "${object}" 2>>"${ban_errorlog}" | "${ban_jsoncmd}" -qe '@.nftables[*].set.elem[*]' | "${ban_wccmd}" -l 2>>"${ban_errorlog}")))"
+			element_cnt="$((element_cnt + $(f_setcnt "${object}")))"
 		done
 		chain_cnt="$(printf '%s' "${table}" | "${ban_jsoncmd}" -qe '@.nftables[*].chain.name' | "${ban_wccmd}" -l 2>>"${ban_errorlog}")"
 		set_cnt="$(printf '%s' "${table}" | "${ban_jsoncmd}" -qe '@.nftables[*].set.name' | "${ban_wccmd}" -l 2>>"${ban_errorlog}")"
@@ -2296,7 +2337,7 @@ f_lookup() {
 f_report() {
 	local report_jsn report_txt tmp_val table_json item sep table_sets set_cnt set_inbound set_outbound set_cntinbound set_cntoutbound set_proto set_dport set_details
 	local cnt ip expr detail jsnval timestamp autoadd_allow autoadd_block sum_sets sum_setinbound sum_setoutbound sum_cntelements sum_cntinbound sum_cntoutbound
-	local jsn table_jsn set_jsn map_jsn map_ts map_lookup geo_ts geo_now geo_skip chunk_no chunk_skip rsp_no chain set_elements uplink_ip sum_setelements sum_synflood sum_udpflood sum_icmpflood sum_ctinvalid sum_tcpinvalid sum_setports sum_bcp38 output="${1}"
+	local jsn table_jsn map_jsn map_ts map_lookup geo_ts geo_now geo_skip chunk_no chunk_skip rsp_no chain set_elements uplink_ip sum_setelements sum_synflood sum_udpflood sum_icmpflood sum_ctinvalid sum_tcpinvalid sum_setports sum_bcp38 output="${1}"
 
 	f_conf
 	f_mkdir "${ban_reportdir}"
@@ -2342,9 +2383,7 @@ f_report() {
 		cnt="1"
 		for item in ${table_sets}; do
 			(
-				set_jsn="${ban_rundir}/report.set.jsn.${item}"
-				"${ban_nftcmd}" -j list set inet banIP "${item}" 2>>"${ban_errorlog}" >"${set_jsn}"
-				set_cnt="$("${ban_jsoncmd}" -i "${set_jsn}" -qe '@.nftables[*].set.elem[*]' | "${ban_wccmd}" -l 2>>"${ban_errorlog}")"
+				set_cnt="$(f_setcnt "${item}")"
 				set_cntinbound=""
 				set_cntoutbound=""
 				set_inbound=""
@@ -2378,9 +2417,7 @@ f_report() {
 					set_dport="${set_proto}: $(f_trim "${set_dport}")"
 				fi
 				if [ "${ban_nftcount}" = "1" ]; then
-					"${ban_jsoncmd}" -i "${set_jsn}" -qe '@.nftables[*].set.elem[*][@.counter.packets>0].counter.packets' >"${set_jsn}.cnt"
-					"${ban_jsoncmd}" -i "${set_jsn}" -qe '@.nftables[*].set.elem[*][@.counter.packets>0].val' >"${set_jsn}.val"
-					set_elements="$("${ban_awkcmd}" 'NR==FNR{p[FNR]=$0;next}{print p[FNR]"\t"$0}' "${set_jsn}.cnt" "${set_jsn}.val" |
+					set_elements="$(f_sethits "${item}" |
 						"${ban_sortcmd}" -k1,1nr ${ban_srtopts} |
 						"${ban_awkcmd}" -F '\t' 'NR<=50{split($2,a,/[ ,]/);ORS=" ";if(a[2]=="\"range\":"||a[2]=="\"concat\":")printf"%s, ",a[4];else if(a[2]=="\"prefix\":")printf"%s, ",a[5];else printf"\"%s\", ",a[1]}')"
 				fi
@@ -2404,7 +2441,6 @@ f_report() {
 					\"port\": \"${set_dport:-"-"}\", \
 					\"set_elements\": [ ${set_elements%%??} ] \
 				}" >"${report_jsn}.${item}"
-				"${ban_rmcmd}" -f "${set_jsn}"*
 			) &
 			[ "${cnt}" -ge "${ban_cores}" ] && wait -n
 			cnt="$((cnt + 1))"
@@ -2981,12 +3017,28 @@ f_monitor() {
 				;;
 			esac
 		} | ban_logterm_map="${ban_logterm_map}" "${ban_awkcmd}" -v threshold="${ban_logcount}" -v limit=5000 '
-			function pick_ip(s, mode, m, res) {
+			function valid_ip(c, n) {
+				if (c ~ /\./) return 1
+				if (c !~ /[A-Fa-f0-9]/ || c ~ /:::/ || c ~ /::.*::/) return 0
+				n = gsub(/:/, ":", c)
+				return (c ~ /::/) ? (n <= 7) : (n == 7)
+			}
+			function pick_ip(s, mode, m, res, c, pre, last) {
 				res = ""
+				last = " "
 				while (match(s, /([0-9]{1,3}\.){3}[0-9]{1,3}|([A-Fa-f0-9]{0,4}:){2,7}[A-Fa-f0-9]{0,4}/, m)) {
-					res = m[0]
-					if (mode == "first") break
+					c = m[0]
+					pre = (RSTART > 1) ? substr(s, RSTART - 1, 1) : last
+					last = substr(c, length(c), 1)
 					s = substr(s, RSTART + RLENGTH)
+					if (c ~ /^:[^:]/) {
+						c = substr(c, 2)
+						pre = ":"
+					}
+					if (c ~ /[^:]:$/) c = substr(c, 1, length(c) - 1)
+					if (pre ~ /[A-Za-z0-9_]/ || !valid_ip(c)) continue
+					res = c
+					if (mode == "first") break
 				}
 				return res
 			}
@@ -3008,7 +3060,7 @@ f_monitor() {
 			}
 			{
 				pos = all_last ? "last" : anchor_for($0)
-				$0 = gensub(/(([0-9]{1,3}\.){3}[0-9]{1,3}):[0-9]+/, "\\1", "g", $0)
+				$0 = gensub(/(^|[^A-Fa-f0-9:])::[Ff]{4}:(([0-9]{1,3}\.){3}[0-9]{1,3})/, "\\1\\2", "g", $0)
 				sub(/\]:[0-9]+/, "]", $0)
 				gsub(/[<>[\]]/, "", $0)
 				ip = ""
@@ -3020,8 +3072,7 @@ f_monitor() {
 						proto = ".v4"
 					}
 				} else if (cand ~ /:/) {
-					sub(/%.*/, "", cand)
-					if (cand !~ /^[0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}$/ && cand !~ /^([A-Fa-f0-9]{2}:){5}[A-Fa-f0-9]{2}$/) {
+					if (cand !~ /^[0:]*(:0*1)?$/) {
 						ip = cand
 						proto = ".v6"
 					}

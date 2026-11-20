@@ -1283,6 +1283,20 @@ endef
 $(eval $(call BuildPackage,perlbase-sort))
 
 
+define Package/perlbase-source
+$(call Package/perlbase-template)
+TITLE:=source perl module
+DEPENDS+=+perlbase-essential +perlbase-utf8
+endef
+
+define Package/perlbase-source/install
+$(call perlmod/Install,$(1),source,)
+$(call perlmod/InstallBaseTests,$(1),lib/source/source_encoding.t)
+endef
+
+$(eval $(call BuildPackage,perlbase-source))
+
+
 define Package/perlbase-storable
 $(call Package/perlbase-template)
 TITLE:=Storable perl module

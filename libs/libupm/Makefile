@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libupm
 PKG_VERSION:=2.0.0
-PKG_RELEASE:=7
+PKG_RELEASE:=8
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/intel-iot-devkit/upm/tar.gz/v$(PKG_VERSION)?
@@ -102,9 +102,7 @@ define Package/libupm/install/Default-python3
 endef
 
 define Package/libupm/install
-	$(foreach module, $(UPM_MODULES), \
-		$(call Package/libupm/install/Default,$(1),$(module)) \
-		$(call Package/libupm/install/Default-python3,$(1),$(module)))
+	true
 endef
 
 define UpmPackage

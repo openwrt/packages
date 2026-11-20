@@ -4,5 +4,4 @@ set linenumbers         # show line numbers Alt+N to toggle
 
 ## Syntax highlighting ##
 include /usr/share/nano/*.nanorc
-include /usr/share/nano/extra/*.nanorc
 

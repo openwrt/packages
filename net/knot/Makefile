@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=knot
-PKG_VERSION:=3.5.7
-PKG_RELEASE:=2
+PKG_VERSION:=3.6.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://secure.nic.cz/files/knot-dns/
-PKG_HASH:=0e363e9160895e2b83d02b0a7488c3a566b605b92edac85d03be3ebce94b8214
+PKG_SOURCE_URL:=https://knot-dns.nic.cz/release/
+PKG_HASH:=2916ac117ac77d1f2341a6562e47d797493521b791b414960a382cb5bc113e21
 
 PKG_MAINTAINER:=Daniel Salzman <daniel.salzman@nic.cz>
 PKG_LICENSE:=GPL-2.0-or-later LGPL-2.0-or-later MIT ISC BSD-3-Clause
@@ -183,9 +183,6 @@ define Build/InstallDev
 	$(INSTALL_DIR)						$(1)/usr/include/libknot
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/libknot/*		$(1)/usr/include/libknot/
 
-	$(INSTALL_DIR)						$(1)/usr/include/libdnssec
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/libdnssec/*	$(1)/usr/include/libdnssec/
-
 	$(INSTALL_DIR)						$(1)/usr/include/libzscanner
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/libzscanner/*	$(1)/usr/include/libzscanner/
 
@@ -196,7 +193,6 @@ endif
 
 define Package/knot-libs/install
 	$(INSTALL_DIR) 						$(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdnssec.so.*		$(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libknot.so.*		$(1)/usr/lib/
 endef
 
@@ -258,7 +254,7 @@ define Package/knot-tests/install
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/tests/libzscanner/TESTS		$(1)/usr/share/knot/tests/
 	cp -a $(PKG_BUILD_DIR)/tests/libzscanner/data				$(1)/usr/share/knot/tests/
 
-	for module in contrib knot libdnssec libknot modules utils; do \
+	for module in contrib knot libknot modules utils; do \
 		find $(PKG_BUILD_DIR)/tests/$$$${module}/.libs -maxdepth 1 -executable -type f | \
 			xargs -I{} basename {} | \
 			xargs -I{} $(INSTALL_BIN) -T $(PKG_BUILD_DIR)/tests/$$$${module}/.libs/{} \

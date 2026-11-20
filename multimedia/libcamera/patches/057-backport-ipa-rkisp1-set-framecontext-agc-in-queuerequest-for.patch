@@ -1,0 +1,39 @@
+From 008f13da1e6268086b59b7babf6748b010f7cce3 Mon Sep 17 00:00:00 2001
+From: Stefan Klug <stefan.klug@ideasonboard.com>
+Date: Wed, 25 Mar 2026 16:13:47 +0100
+Subject: [PATCH] ipa: rkisp1: Set frameContext.agc in queueRequest for auto
+ mode also
+
+If the agc is in auto mode, exposure time and gain used to be set in the
+frame context within prepare(). As exposure time and gain are used by
+getSensorControls(0) from within start() that is too late (prepare()
+hasn't run yet). Also prepare() is documented as the place to initialize
+the params buffer, not the frame context. From the pipeline point of
+view, prepare() gets called immediately after queueRequest(). Therefore
+we can safely move setting the frame context into queueRequest() to fix
+the sensor controls for start().
+
+Signed-off-by: Stefan Klug <stefan.klug@ideasonboard.com>
+Reviewed-by: Paul Elder <paul.elder@ideasonboard.com>
+---
+ src/ipa/rkisp1/algorithms/agc.cpp | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+--- a/src/ipa/rkisp1/algorithms/agc.cpp
++++ b/src/ipa/rkisp1/algorithms/agc.cpp
+@@ -284,9 +284,13 @@ void Agc::queueRequest(IPAContext &conte
+ 	frameContext.agc.autoExposureEnabled = agc.autoExposureEnabled;
+ 	frameContext.agc.autoGainEnabled = agc.autoGainEnabled;
+ 
+-	if (!frameContext.agc.autoExposureEnabled)
++	if (frameContext.agc.autoExposureEnabled)
++		frameContext.agc.exposure = context.activeState.agc.automatic.exposure;
++	else
+ 		frameContext.agc.exposure = agc.manual.exposure;
+-	if (!frameContext.agc.autoGainEnabled)
++	if (frameContext.agc.autoGainEnabled)
++		frameContext.agc.gain = context.activeState.agc.automatic.gain;
++	else
+ 		frameContext.agc.gain = agc.manual.gain;
+ 
+ 	if (!frameContext.agc.autoExposureEnabled &&

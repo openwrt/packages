@@ -7,8 +7,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ddns-scripts
-PKG_VERSION:=2.8.4
-PKG_RELEASE:=11
+PKG_VERSION:=2.8.6
+PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0
 
@@ -246,22 +246,6 @@ define Package/ddns-scripts-route53/description
 endef
 
 
-define Package/ddns-scripts-cnkuai
-  $(call Package/ddns-scripts/Default)
-  TITLE:=CnKuai API
-  DEPENDS:=ddns-scripts +curl +giflib-utils
-  PROVIDES:=ddns-scripts_cnkuai_cn
-endef
-
-define Package/ddns-scripts-cnkuai/description
-  Dynamic DNS Client scripts extension for 'cnkuai.cn'.
-  It requires:
-  'option username' to be a valid CnKuai control panel id
-  'option password' to be the matching CnKuai control panel password
-  'option domain' to contain the domain
-endef
-
-
 define Package/ddns-scripts-gandi
   $(call Package/ddns-scripts/Default)
   TITLE:=Gandi API (Deprecated)
@@ -408,6 +392,24 @@ define Package/ddns-scripts-porkbun/description
 	'option domain' to be the FQDN for which to configure DDNS
 endef
 
+define Package/ddns-scripts-dnsimple
+  $(call Package/ddns-scripts/Default)
+  TITLE:=Extension for dnsimple.com API v2
+  DEPENDS:=ddns-scripts +curl
+  PROVIDES:=ddns-scripts_dnsimple.com-v2
+endef
+
+define Package/ddns-scripts-dnsimple/description
+  Dynamic DNS Client scripts extension for dnsimple.com API v2 (requires curl)
+  Required:
+  'option lookup_host' to be your hostname to update e.g. my.host.example.com
+  'option username' to be your DNSimple numerical account ID
+  'option password' to be a DNSimple API token
+  'option domain' to be the DNSimple DNS Zone ID e.g. example.com
+  Optional Parameters:
+  'option param_opt' must be an existing DNS record ID, saves 1 API call
+endef
+
 define Package/ddns-scripts-huaweicloud
   $(call Package/ddns-scripts/Default)
   TITLE:=Extension for huaweicloud.com API
@@ -500,7 +502,6 @@ define Package/ddns-scripts-services/install
 	rm $(1)/usr/share/ddns/default/bind-nsupdate.json
 	rm $(1)/usr/share/ddns/default/blazingfast.io.json
 	rm $(1)/usr/share/ddns/default/route53-v1.json
-	rm $(1)/usr/share/ddns/default/cnkuai.cn.json
 	rm $(1)/usr/share/ddns/default/gandi.net.json
 	rm $(1)/usr/share/ddns/default/gandi.net-v2.json
 	rm $(1)/usr/share/ddns/default/beget.com.json
@@ -510,6 +511,7 @@ define Package/ddns-scripts-services/install
 	rm $(1)/usr/share/ddns/default/ns1.com.json
 	rm $(1)/usr/share/ddns/default/one.com.json
 	rm $(1)/usr/share/ddns/default/porkbun.com-v3.json
+	rm $(1)/usr/share/ddns/default/dnsimple.com-v2.json
 	rm $(1)/usr/share/ddns/default/huaweicloud.com.json
 	rm $(1)/usr/share/ddns/default/aliyun.com.json
 	rm $(1)/usr/share/ddns/default/servercow.de.json
@@ -805,25 +807,6 @@ exit 0
 endef
 
 
-define Package/ddns-scripts-cnkuai/install
-	$(INSTALL_DIR) $(1)/usr/lib/ddns
-	$(INSTALL_BIN) ./files/usr/lib/ddns/update_cnkuai_cn.sh \
-		$(1)/usr/lib/ddns
-
-	$(INSTALL_DIR) $(1)/usr/share/ddns/default
-	$(INSTALL_DATA) ./files/usr/share/ddns/default/cnkuai.cn.json \
-		$(1)/usr/share/ddns/default
-endef
-
-define Package/ddns-scripts-cnkuai/prerm
-#!/bin/sh
-if [ -z "$${IPKG_INSTROOT}" ]; then
-	/etc/init.d/ddns stop
-fi
-exit 0
-endef
-
-
 define Package/ddns-scripts-gandi/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_gandi_net.sh \
@@ -992,6 +975,25 @@ exit 0
 endef
 
 
+define Package/ddns-scripts-dnsimple/install
+	$(INSTALL_DIR) $(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/update_dnsimple_v2.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/dnsimple.com-v2.json \
+		$(1)/usr/share/ddns/default/
+endef
+
+define Package/ddns-scripts-dnsimple/prerm
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
+endef
+
+
 define Package/ddns-scripts-huaweicloud/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_huaweicloud_com.sh \
@@ -1063,7 +1065,6 @@ $(eval $(call BuildPackage,ddns-scripts-dnspod-v3))
 $(eval $(call BuildPackage,ddns-scripts-noip))
 $(eval $(call BuildPackage,ddns-scripts-nsupdate))
 $(eval $(call BuildPackage,ddns-scripts-route53))
-$(eval $(call BuildPackage,ddns-scripts-cnkuai))
 $(eval $(call BuildPackage,ddns-scripts-gandi))
 $(eval $(call BuildPackage,ddns-scripts-gandi-v2))
 $(eval $(call BuildPackage,ddns-scripts-beget))
@@ -1074,6 +1075,7 @@ $(eval $(call BuildPackage,ddns-scripts-transip))
 $(eval $(call BuildPackage,ddns-scripts-ns1))
 $(eval $(call BuildPackage,ddns-scripts-one))
 $(eval $(call BuildPackage,ddns-scripts-porkbun))
+$(eval $(call BuildPackage,ddns-scripts-dnsimple))
 $(eval $(call BuildPackage,ddns-scripts-huaweicloud))
 $(eval $(call BuildPackage,ddns-scripts-aliyun))
 $(eval $(call BuildPackage,ddns-scripts-servercow))

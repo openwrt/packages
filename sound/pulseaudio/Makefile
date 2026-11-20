@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=pulseaudio
 # last release tag reachable from PKG_SOURCE_VERSION
 PKG_VERSION:=17.0
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://gitlab.freedesktop.org/pulseaudio/pulseaudio.git
@@ -206,10 +206,9 @@ define Package/pulseaudio-daemon/install
 	$(INSTALL_DIR) $(1)/usr/lib $(1)/usr/lib/pulseaudio/modules
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pulseaudio/libpulsecore-*.so $(1)/usr/lib/pulseaudio/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pulseaudio/libpulsedsp.so $(1)/usr/lib/pulseaudio/
-	# module helper libraries (libprotocol-*, libalsa-util, libcli, librtp, ...):
-	# the dlopened modules DT_NEEDED these and carry no RUNPATH, so they must be
-	# installed into a default library search path
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pulseaudio/modules/lib*.so $(1)/usr/lib/
+	# module helper libraries (libprotocol-*, libalsa-util, libcli, librtp, ...)
+	# stay in the module directory, which is in the RPATH of the modules
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pulseaudio/modules/lib*.so $(1)/usr/lib/pulseaudio/modules/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pulseaudio/modules/module*.so $(1)/usr/lib/pulseaudio/modules/
 
 	$(INSTALL_DIR) $(1)/usr/share/dbus-1/system.d

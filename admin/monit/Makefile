@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=monit
 PKG_VERSION:=6.0.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://mmonit.com/monit/dist/
@@ -53,6 +53,7 @@ define Package/monit-nossl
 $(call Package/monit/Default)
   TITLE+= (without SSL support)
   VARIANT:=nossl
+  CONFLICTS:=monit
 endef
 
 define Package/monit-nossl/description

@@ -3,22 +3,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adguardhome
-PKG_VERSION:=0.107.79
+PKG_VERSION:=1.0.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/AdguardTeam/AdGuardHome/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=5f4fa119f24ea741bb8cecfa74203165fe6b86b904cef05ff429fb227b07d425
+PKG_HASH:=fb7b67a40bcd81063cf0f7fbc5c27cd5ae71cc6434a4b5342885ebb3e51586d6
 PKG_BUILD_DIR:=$(BUILD_DIR)/AdGuardHome-$(PKG_VERSION)
 
 FRONTEND_DEST:=$(PKG_NAME)-frontend-$(PKG_VERSION).tar.gz
 FRONTEND_URL:=https://github.com/AdguardTeam/AdGuardHome/releases/download/v$(PKG_VERSION)/
-FRONTEND_HASH:=30184c157d4aefe5371b575a43c0ab5a7314aef039a820cc421ea67bab994ce8
+FRONTEND_HASH:=70537426c7438ccce1f0997843676042bd01a7fa09cd5cd1a464bcb9e65152c5
 
 PKG_LICENSE:=GPL-3.0-only
 PKG_LICENSE_FILES:=LICENSE.txt
 PKG_CPE_ID:=cpe:/a:adguard:adguardhome
-PKG_MAINTAINER:=Dobroslaw Kijowski <dobo90@gmail.com>, George Sapkin <george@sapk.in>
+PKG_MAINTAINER:=George Sapkin <george@sapk.in>
 
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
@@ -29,21 +29,21 @@ GO_PKG_BUILD_PKG:=github.com/AdguardTeam/AdGuardHome
 
 AGH_VERSION_PKG:=github.com/AdguardTeam/AdGuardHome/internal/version
 GO_PKG_LDFLAGS_X:=$(AGH_VERSION_PKG).channel=release \
-	$(AGH_VERSION_PKG).version=$(PKG_VERSION) \
-	$(AGH_VERSION_PKG).committime=$(SOURCE_DATE_EPOCH) \
-	$(AGH_VERSION_PKG).goarm=$(GO_ARM) \
-	$(AGH_VERSION_PKG).gomips=$(GO_MIPS)
+  $(AGH_VERSION_PKG).committime=$(SOURCE_DATE_EPOCH) \
+  $(AGH_VERSION_PKG).goarm=$(GO_ARM) \
+  $(AGH_VERSION_PKG).gomips=$(GO_MIPS) \
+  $(AGH_VERSION_PKG).version=$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
 
 define Package/adguardhome
-	SECTION:=net
-	CATEGORY:=Network
-	TITLE:=Network-wide ads and trackers blocking DNS server
-	URL:=https://github.com/AdguardTeam/AdGuardHome
-	DEPENDS:=$(GO_ARCH_DEPENDS) +ca-bundle
-	USERID:=adguardhome=853:adguardhome=853
+  SECTION:=net
+  CATEGORY:=Network
+  TITLE:=Network-wide ads and trackers blocking DNS server
+  URL:=https://github.com/AdguardTeam/AdGuardHome
+  DEPENDS:=$(GO_ARCH_DEPENDS) +ca-bundle
+  USERID:=adguardhome=853:adguardhome=853
 endef
 
 define Package/adguardhome/conffiles
@@ -52,14 +52,15 @@ define Package/adguardhome/conffiles
 endef
 
 define Package/adguardhome/description
-Free and open source, powerful network-wide ads and trackers blocking DNS server.
+  Free and open source, powerful network-wide ads and trackers blocking DNS
+  server.
 endef
 
 define Download/adguardhome-frontend
-	URL:=$(FRONTEND_URL)
-	URL_FILE:=AdGuardHome_frontend.tar.gz
-	FILE:=$(FRONTEND_DEST)
-	HASH:=$(FRONTEND_HASH)
+  URL:=$(FRONTEND_URL)
+  URL_FILE:=AdGuardHome_frontend.tar.gz
+  FILE:=$(FRONTEND_DEST)
+  HASH:=$(FRONTEND_HASH)
 endef
 
 define Build/Prepare

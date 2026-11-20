@@ -5,7 +5,7 @@ Subject: [PATCH] Do not run profile task during cross build
 
 --- a/Makefile.pre.in
 +++ b/Makefile.pre.in
-@@ -856,6 +856,7 @@ profile-gen-stamp: profile-clean-stamp
+@@ -859,6 +859,7 @@ profile-gen-stamp: profile-clean-stamp
  
  # Run task with profile generation build to create profile information.
  profile-run-stamp:
@@ -13,7 +13,7 @@ Subject: [PATCH] Do not run profile task during cross build
  	@echo "Running code to generate profile data (this can take a while):"
  	# First, we need to create a clean build with profile generation
  	# enabled.
-@@ -869,6 +870,7 @@ profile-run-stamp:
+@@ -872,6 +873,7 @@ profile-run-stamp:
  	# This is an expensive target to build and it does not have proper
  	# makefile dependency information.  So, we create a "stamp" file
  	# to record its completion and avoid re-running it.
@@ -23,7 +23,7 @@ Subject: [PATCH] Do not run profile task during cross build
  # Compile Python binary with profile guided optimization.
 --- a/configure.ac
 +++ b/configure.ac
-@@ -1862,7 +1862,7 @@ fi
+@@ -1872,7 +1872,7 @@ fi
  
  AC_ARG_VAR([PROFILE_TASK], [Python args for PGO generation task])
  AC_MSG_CHECKING([PROFILE_TASK])

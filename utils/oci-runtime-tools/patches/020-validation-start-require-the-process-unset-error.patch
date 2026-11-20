@@ -1,0 +1,43 @@
+From 1c9a6cfb7606ca43d880bb54b916f4e1513cbc62 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Sun, 20 Sep 2026 20:03:08 +0100
+Subject: [PATCH] validation/start: require the process unset error
+
+The test asserts that `start` succeeds on a container created without a
+`process`, while the requirement it reports under is the opposite one:
+runtime.md says the operation MUST generate an error if `process` was not
+set, and the command line interface requires a non-zero exit code on
+errors. A runtime that refuses the start is marked as failing, and one
+that quietly returns success passes.
+
+Expect the error. The container is then left in whichever state the
+runtime chose, and neither document says how to dispose of a container
+that has no `process` to signal, so clean up without asserting on the
+way out.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ validation/start/start.go | 14 ++++++--------
+ 1 file changed, 6 insertions(+), 8 deletions(-)
+
+--- a/validation/start/start.go
++++ b/validation/start/start.go
+@@ -109,12 +109,10 @@ func main() {
+ 	}
+ 
+ 	err = r.Start()
+-	util.SpecErrorOK(t, err == nil, specerror.NewError(specerror.StartWithProcUnsetGenError, fmt.Errorf("`start` operation MUST generate an error if `process` was not set"), rspecs.Version), err)
+-	err = util.WaitingForStatus(r, util.LifecycleStatusStopped, time.Second*10, time.Second*1)
+-	if err == nil {
+-		err = r.Delete()
+-	}
+-	if err != nil {
+-		t.Fail(err.Error())
+-	}
++	util.SpecErrorOK(t, err != nil, specerror.NewError(specerror.StartWithProcUnsetGenError, fmt.Errorf("`start` operation MUST generate an error if `process` was not set"), rspecs.Version), err)
++
++	// The container never ran, and nothing in the spec says how to dispose
++	// of one that has no `process` to signal, so tear it down without
++	// holding the runtime to a particular way out.
++	r.Clean()
+ }

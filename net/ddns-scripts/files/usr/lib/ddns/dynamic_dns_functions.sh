@@ -86,7 +86,6 @@ LUCI_HELPER=$(printf %s "$MYPROG" | grep -i "luci")
 BIND_HOST=$(command -v host)
 KNOT_HOST=$(command -v khost)
 DRILL=$(command -v drill)
-HOSTIP=$(command -v hostip)
 NSLOOKUP=$(command -v nslookup)
 RESOLVEIP=$(command -v resolveip)
 jsonfilter=$(command -v jsonfilter)
@@ -622,8 +621,14 @@ do_transfer() {
 	local __CNT=0	# error counter
 	local __PROG  __RUNPROG
 	local __FALLBACK_RUNPROG __FALLBACK_DESC
+	local __HTTPS=$use_https
 
 	[ $# -ne 1 ] && write_log 12 "Error in 'do_transfer()' - wrong number of parameters"
+
+	# an https:// URL needs HTTPS support and the cacert settings even without use_https
+	case "$__URL" in
+		https://*) __HTTPS=1 ;;
+	esac
 
 	# Use ip_network as default for bind_network if not separately specified
 	[ -z "$bind_network" ] && [ "$ip_source" = "network" ] && [ "$ip_network" ] && bind_network="$ip_network"
@@ -646,7 +651,7 @@ do_transfer() {
 			[ $use_ipv6 -eq 0 ] && __PROG="$__PROG -4" || __PROG="$__PROG -6"	# force IPv4/IPv6
 		fi
 		# set certificate parameters
-		if [ $use_https -eq 1 ]; then
+		if [ $__HTTPS -eq 1 ]; then
 			if [ "$cacert" = "IGNORE" ]; then	# idea from Ticket #15327 to ignore server cert
 				__PROG="$__PROG --no-check-certificate"
 			elif [ -f "$cacert" ]; then
@@ -675,7 +680,7 @@ do_transfer() {
 	elif [ -n "$CURL" ]; then
 		__PROG="$CURL -RsS -o $DATFILE --stderr $ERRFILE"
 		# check HTTPS support
-		[ -z "$CURL_SSL" -a $use_https -eq 1 ] && \
+		[ -z "$CURL_SSL" -a $__HTTPS -eq 1 ] && \
 			write_log 13 "cURL: libcurl compiled without https support"
 		# force network/interface-device to use for communication
 		if [ -n "$bind_network" ]; then
@@ -696,7 +701,7 @@ do_transfer() {
 			[ $use_ipv6 -eq 0 ] && __PROG="$__PROG -4" || __PROG="$__PROG -6"	# force IPv4/IPv6
 		fi
 		# set certificate parameters
-		if [ $use_https -eq 1 ]; then
+		if [ $__HTTPS -eq 1 ]; then
 			if [ "$cacert" = "IGNORE" ]; then	# idea from Ticket #15327 to ignore server cert
 				__PROG="$__PROG --insecure"	# but not empty better to use "IGNORE"
 			elif [ -f "$cacert" ]; then
@@ -734,12 +739,12 @@ do_transfer() {
 			[ $use_ipv6 -eq 0 ] && __PROG="$__PROG -4" || __PROG="$__PROG -6"       # force IPv4/IPv6
 		fi
 		# https possibly not supported
-		[ $use_https -eq 1 -a -z "$UCLIENT_FETCH_SSL" ] && \
+		[ $__HTTPS -eq 1 -a -z "$UCLIENT_FETCH_SSL" ] && \
 			write_log 14 "uclient-fetch: no HTTPS support! Additional install one of ustream-ssl packages"
 		# proxy support
 		[ -z "$proxy" ] && __PROG="$__PROG -Y off" || __PROG="$__PROG -Y on"
 		# https & certificates
-		if [ $use_https -eq 1 ]; then
+		if [ $__HTTPS -eq 1 ]; then
 			if [ "$cacert" = "IGNORE" ]; then
 				__PROG="$__PROG --no-check-certificate"
 			elif [ -f "$cacert" ]; then
@@ -761,7 +766,7 @@ do_transfer() {
 		[ $force_ipversion -eq 1 ] && \
 			write_log 14 "BusyBox Wget: Force connecting to IPv4 or IPv6 addresses not supported"
 		# https not supported
-		[ $use_https -eq 1 ] && \
+		[ $__HTTPS -eq 1 ] && \
 			write_log 14 "BusyBox Wget: no HTTPS support"
 		# disable proxy if no set (there might be .wgetrc or .curlrc or wrong environment set)
 		[ -z "$proxy" ] && __PROG="$__PROG -Y off"
@@ -882,7 +887,7 @@ get_current_ip () {
 			[ -z "$ip_interface" ] && { write_log 12 "get_current_ip: 'ip_interface' not set for source 'interface'"; return 2; }
 			# Test for alias interfaces e.g. "@wan6"; get the effective layer 3 interface
 			[ "${ip_interface#*'@'}" != "$ip_interface" ] && network_get_device ip_interface "$ip_interface"
-			write_log 7 "#> ip -o -br -js addr show dev '$ip_interface' scope global | $jsonfilter -e '@[0].addr_info[0].local'"
+			write_log 7 "#> ip -o -$((use_ipv6 ? 6 : 4)) -br -js addr show dev '$ip_interface' scope global | $jsonfilter -e '@[0].addr_info[0].local'"
 			[ "$use_ipv6" -eq 0 ] && data=$(ip -o -4 -br -js addr show dev "$ip_interface" scope global | "$jsonfilter" -e '@[0].addr_info[0].local')
 			[ "$use_ipv6" -eq 1 ] && data=$(ip -o -6 -br -js addr show dev "$ip_interface" scope global | "$jsonfilter" -e '@[0].addr_info[0].local')
 			[ -n "$data" ] && write_log 7 "Current IP '$data' detected on interface '$ip_interface'"
@@ -1013,38 +1018,15 @@ get_registered_ip() {
 
 		__RUNPROG="$__PROG >$DATFILE 2>$ERRFILE"
 		__PROG="drill"
-	elif [ -n "$HOSTIP" ]; then	# hostip package installed
-		__PROG="$HOSTIP"
-		[ $force_dnstcp -ne 0 ] && \
-			write_log 14 "hostip - no support for 'DNS over TCP'"
-
-		# is IP given as dns_server ?
-		__IP=$(echo $dns_server | grep -m 1 -o "$IPV4_REGEX")
-		[ -z "$__IP" ] && __IP=$(echo $dns_server | grep -m 1 -o "$IPV6_REGEX")
-
-		# we got NO ip for dns_server, so build command
-		[ -z "$__IP" -a -n "$dns_server" ] && {
-			__IP="\`$HOSTIP"
-			[ $use_ipv6 -eq 1 -a $force_ipversion -eq 1 ] && __IP="$__IP -6"
-			__IP="$__IP $dns_server | grep -m 1 -o"
-			[ $use_ipv6 -eq 1 -a $force_ipversion -eq 1 ] \
-				&& __IP="$__IP '$IPV6_REGEX'" \
-				|| __IP="$__IP '$IPV4_REGEX'"
-			__IP="$__IP \`"
-		}
-
-		[ $use_ipv6 -eq 1 ] && __PROG="$__PROG -6"
-		[ -n "$dns_server" ] && __PROG="$__PROG -r $__IP"
-		__RUNPROG="$__PROG $lookup_host >$DATFILE 2>$ERRFILE"
-		__PROG="hostip"
 	elif [ -n "$NSLOOKUP" ]; then	# last use BusyBox nslookup
+		[ $use_ipv6 -eq 1 ] && lookup_type="-type=aaaa" || lookup_type="-type=a"
 		NSLOOKUP_MUSL=$($(command -v nslookup) localhost 2>&1 | grep -F "(null)")	# not empty busybox compiled with musl
 		[ $force_dnstcp -ne 0 ] && \
 			write_log 14 "Busybox nslookup - no support for 'DNS over TCP'"
 		[ -n "$NSLOOKUP_MUSL" -a -n "$dns_server" ] && \
 			write_log 14 "Busybox compiled with musl - nslookup don't support the use of DNS Server"
 
-		__RUNPROG="$NSLOOKUP $lookup_host $dns_server >$DATFILE 2>$ERRFILE"
+		__RUNPROG="$NSLOOKUP $lookup_type $lookup_host $dns_server >$DATFILE 2>$ERRFILE"
 		__PROG="BusyBox nslookup"
 	else	# there must be an error
 		write_log 12 "Error in 'get_registered_ip()' - no supported Name Server lookup software accessible"
@@ -1066,8 +1048,6 @@ get_registered_ip() {
 				fi
 			elif [ -n "$DRILL" ]; then
 				__DATA=$(cat $DATFILE | awk '/^'"$lookup_host"'/ {print $5; exit}' )
-			elif [ -n "$HOSTIP" ]; then
-				__DATA=$(cat $DATFILE | grep -om1 "$__REGEX")
 			elif [ -n "$NSLOOKUP" ]; then
 				__DATA=$(cat $DATFILE | sed -ne "/^Name:/,\$ { s/^Address[0-9 ]\{0,\}: \($__REGEX\).*$/\\1/p }" )
 			fi

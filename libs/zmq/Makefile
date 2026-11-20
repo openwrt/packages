@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zeromq
 PKG_VERSION:=4.3.5
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/zeromq/libzmq/releases/download/v$(PKG_VERSION)
@@ -46,7 +46,9 @@ endef
 define Package/libzmq-nc
   $(call Package/libzmq/default)
   VARIANT:=nc
+  DEFAULT_VARIANT:=1
   DEPENDS+=+LIBZMQ_NC_WITH_OPENPGM:openpgm
+  CONFLICTS:=libzmq-curve
 endef
 
 define Package/libzmq-curve

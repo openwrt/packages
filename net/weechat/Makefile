@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=weechat
-PKG_VERSION:=4.10.1
+PKG_VERSION:=4.10.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://weechat.org/files/src/
-PKG_HASH:=b8744c6f5dc5543062791f563e0516dbc96a36161e1a03c468b3b7dcc8be5aff
+PKG_HASH:=9b67a869330f34498f08dcab49edc1c54e9a8af136188d30d5ed1fb8257106da
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -63,6 +63,7 @@ define Package/weechat-minimal
   VARIANT:=minimal
   DEFAULT_VARIANT:=1
   PROVIDES:=weechat
+  CONFLICTS:=weechat-full
 endef
 
 define Package/weechat-minimal/description
@@ -76,7 +77,6 @@ define Package/weechat-full
   DEPENDS+= +libncurses
   VARIANT:=full
   PROVIDES:=weechat
-  CONFLICTS:=weechat-minimal
 endef
 
 define Package/weechat-full/description

@@ -1,0 +1,54 @@
+From de7bd986561a5d32f4d5004aaa6a29b6751405b9 Mon Sep 17 00:00:00 2001
+From: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Date: Wed, 5 Aug 2026 15:38:17 +0200
+Subject: [PATCH] ipa: libipa: lsc: Specialize Interpolator for uint8_t
+
+Specialize Interpolator<>::interpolate() for uint8_t register size.
+
+Some platforms (Mali, Simple) use an 8 bit register size. Provide
+a specialization for the that type of Interpolator<>::interpolate().
+
+Signed-off-by: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Reviewed-by: Kieran Bingham <kieran.bingham@ideasonboard.com>
+Reviewed-by: Stefan Klug <stefan.klug@ideasonboard.com>
+---
+ src/ipa/libipa/lsc.cpp | 11 +++++++++++
+ src/ipa/libipa/lsc.h   |  7 +++++++
+ 2 files changed, 18 insertions(+)
+
+--- a/src/ipa/libipa/lsc.cpp
++++ b/src/ipa/libipa/lsc.cpp
+@@ -102,6 +102,17 @@ void Interpolator<lsc::Components<uint16
+ 	for (auto const &[k, v] : a)
+ 		interpolateVector(v, b.at(k), dest[k], lambda);
+ }
++
++template<>
++void Interpolator<lsc::Components<uint8_t>>::
++	interpolate(const lsc::Components<uint8_t> &a,
++		    const lsc::Components<uint8_t> &b,
++		    lsc::Components<uint8_t> &dest,
++		    double lambda)
++{
++	for (auto const &[k, v] : a)
++		interpolateVector(v, b.at(k), dest[k], lambda);
++}
+ #endif
+ 
+ /**
+--- a/src/ipa/libipa/lsc.h
++++ b/src/ipa/libipa/lsc.h
+@@ -48,6 +48,13 @@ void Interpolator<lsc::Components<uint16
+ 		    const lsc::Components<uint16_t> &b,
+ 		    lsc::Components<uint16_t> &dest,
+ 		    double lambda);
++
++template<>
++void Interpolator<lsc::Components<uint8_t>>::
++	interpolate(const lsc::Components<uint8_t> &a,
++		    const lsc::Components<uint8_t> &b,
++		    lsc::Components<uint8_t> &dest,
++		    double lambda);
+ #endif /* __DOXYGEN__ */
+ 
+ class LscAlgorithmBase

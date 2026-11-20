@@ -1,7 +1,7 @@
 {
 	"name":"opendns.com",
 	"ipv4": {
-		"url": "http://[USERNAME]:[PASSWORD]@updates.opendns.com/nic/update?hostname=[DOMAIN]&myip=[IP]",
+		"url": "https://[USERNAME]:[PASSWORD]@updates.opendns.com/nic/update?hostname=[DOMAIN]&myip=[IP]",
 		"answer": "good|nochg"
 	}
 }

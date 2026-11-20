@@ -1,0 +1,89 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+USE_PROCD=1
+
+camera_start() {
+	local section="$1"
+	local pipeline namespace keys key argument
+
+	pipeline="$(/usr/bin/ucode /usr/share/gst-rtsp/pipeline.uc camera-argv "$section")" || return 1
+	json_set_namespace gst_rtsp_capture_ namespace
+	if ! json_load "$pipeline" || ! json_select command; then
+		json_cleanup
+		json_set_namespace "$namespace"
+		return 1
+	fi
+	json_get_keys keys
+	set --
+	for key in $keys; do
+		json_get_var argument "$key"
+		set -- "$@" "$argument"
+	done
+	json_cleanup
+	json_set_namespace "$namespace"
+	[ "$#" -gt 0 ] || return 0
+	procd_open_instance "capture_$section"
+	procd_set_param command "$@"
+	procd_set_param file /etc/config/gst-rtsp
+	procd_set_param stderr 1
+	procd_set_param respawn
+	procd_close_instance
+}
+
+stream_start() {
+	local section="$1"
+	local enabled port mount pipeline
+
+	config_get_bool enabled "$section" enabled 0
+	[ "$enabled" = 1 ] || return 0
+
+	config_get port "$section" port 8554
+	config_get mount "$section" mount /test
+
+	case "$port" in
+		''|*[!0-9]*) return 1 ;;
+	esac
+	[ "$port" -ge 1 ] && [ "$port" -le 65535 ] || return 1
+	case "$mount" in
+		/*) ;;
+		*) return 1 ;;
+	esac
+
+	pipeline="$(/usr/bin/ucode /usr/share/gst-rtsp/pipeline.uc "$section")" || return 1
+
+	procd_open_instance "stream_$section"
+	procd_set_param command /usr/bin/gst-rtsp-launch -p "$port" -m "$mount" "$pipeline"
+	procd_set_param file /etc/config/gst-rtsp
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_set_param respawn
+	procd_close_instance
+}
+
+start_service() {
+	procd_open_instance discovery
+	procd_set_param command /usr/bin/ucode /usr/share/gst-rtsp/discover.uc
+	procd_set_param stderr 1
+	procd_set_param respawn
+	procd_close_instance
+	config_load gst-rtsp
+	config_foreach camera_start camera
+	config_foreach stream_start stream
+}
+
+service_started() {
+	[ -x /etc/init.d/onvif-simple-server ] || return 0
+	/usr/bin/ucode /usr/share/gst-rtsp/onvif.uc
+	/etc/init.d/onvif-simple-server reload
+}
+
+service_stopped() {
+	[ -x /etc/init.d/onvif-simple-server ] || return 0
+	/usr/bin/ucode /usr/share/gst-rtsp/onvif.uc stop
+	/etc/init.d/onvif-simple-server stop
+}
+
+service_triggers() {
+	procd_add_reload_trigger gst-rtsp onvif-simple-server uhttpd
+}

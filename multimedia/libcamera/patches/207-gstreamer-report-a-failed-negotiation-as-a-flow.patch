@@ -1,0 +1,32 @@
+From c9e83fcf0ad0c165650ac077c121cc1c60385e86 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 16 Oct 2026 14:39:21 +0100
+Subject: [PATCH] gstreamer: Report a failed negotiation as a flow error
+
+When pushing a buffer returns GST_FLOW_NOT_NEGOTIATED and no source pad
+requests a reconfiguration, the task is stopped and the camera stopped,
+but no error is posted on the bus. The pipeline then stays in the
+PLAYING state with no data flowing and no indication of the failure to
+the application. Post the flow error before stopping the task, as is
+done for the other flow errors.
+
+Assisted-by: LLM
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ src/gstreamer/gstlibcamerasrc.cpp | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+--- a/src/gstreamer/gstlibcamerasrc.cpp
++++ b/src/gstreamer/gstlibcamerasrc.cpp
+@@ -419,8 +419,10 @@ int GstLibcameraSrcState::processRequest
+ 		}
+ 
+ 		/* If no pads need a reconfiguration something went wrong. */
+-		if (!reconfigure)
++		if (!reconfigure) {
++			GST_ELEMENT_FLOW_ERROR(src_, ret);
+ 			err = -EPIPE;
++		}
+ 
+ 		break;
+ 	}

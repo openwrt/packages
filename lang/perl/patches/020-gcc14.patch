@@ -1,6 +1,6 @@
 --- a/ext/POSIX/POSIX.xs
 +++ b/ext/POSIX/POSIX.xs
-@@ -28,11 +28,7 @@ static int not_here(const char *s);
+@@ -47,11 +47,7 @@ static int not_here(const char *s);
  #include <sys/errno2.h>
  #endif
  #include <float.h>
@@ -12,7 +12,7 @@
  #include <limits.h>
  #include <locale.h>
  #include <math.h>
-@@ -182,7 +178,7 @@ static int not_here(const char *s);
+@@ -201,7 +197,7 @@ static int not_here(const char *s);
  #endif
  
  /* We will have an emulation. */

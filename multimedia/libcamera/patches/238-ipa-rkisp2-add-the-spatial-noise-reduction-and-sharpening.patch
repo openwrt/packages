@@ -1,0 +1,1473 @@
+From d52cf1c86a6d3834cb9001a43663cc6ace03986d Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Thu, 5 Nov 2026 10:41:06 +0000
+Subject: [PATCH 238/239] ipa: rkisp2: Add the spatial noise reduction and
+ sharpening
+
+The ISPP NR and SHP stages run on whatever the static Ispp parameters
+hold, which for every tuning so far is nothing: both stages process
+each frame with all-zero parameters.
+
+Add a NoiseReduction algorithm for the luma wavelet (YNR) and chroma
+(UVNR) filters of the NR block and a Sharpen algorithm for the
+sharpening and edge filters of the SHP block. Both interpolate a per
+ISO step calibration at the gain of the latest ISP frame and convert
+it the way the Rockchip AIQ does, at unity strength, so that the IQ
+calibration of a sensor applies as is. NoiseReduction follows the
+gain ratio and gain map use of TemporalNoiseReduction. The NR and SHP
+blocks move out of the static Ispp parameters.
+
+Assisted-by: LLM
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ src/ipa/rkisp2/algorithms/ispp.cpp    | 126 +-----
+ src/ipa/rkisp2/algorithms/ispp.h      |   2 -
+ src/ipa/rkisp2/algorithms/meson.build |   2 +
+ src/ipa/rkisp2/algorithms/nr.cpp      | 552 ++++++++++++++++++++++++++
+ src/ipa/rkisp2/algorithms/nr.h        | 104 +++++
+ src/ipa/rkisp2/algorithms/sharpen.cpp | 484 ++++++++++++++++++++++
+ src/ipa/rkisp2/algorithms/sharpen.h   | 104 +++++
+ 7 files changed, 1254 insertions(+), 120 deletions(-)
+ create mode 100644 src/ipa/rkisp2/algorithms/nr.cpp
+ create mode 100644 src/ipa/rkisp2/algorithms/nr.h
+ create mode 100644 src/ipa/rkisp2/algorithms/sharpen.cpp
+ create mode 100644 src/ipa/rkisp2/algorithms/sharpen.h
+
+--- a/src/ipa/rkisp2/algorithms/ispp.cpp
++++ b/src/ipa/rkisp2/algorithms/ispp.cpp
+@@ -32,22 +32,18 @@ namespace ipa::rkisp2::algorithms {
+  * \class Ispp
+  * \brief RkISPP module parameters from the tuning file
+  *
+- * The ISPP post-processor (noise reduction, sharpening, FEC lens distortion
+- * correction and ORB feature detection) takes its parameters through its own
+- * params node; the temporal noise reduction has an algorithm of its own. This
+- * algorithm sends the modules configured in the tuning file with every frame,
+- * each tuning dictionary filling the fields of the corresponding UAPI block by
+- * name:
++ * The ISPP post-processor (FEC lens distortion correction and ORB feature
++ * detection) takes its parameters through its own params node; the temporal
++ * and spatial noise reduction and the sharpening have algorithms of their
++ * own. This algorithm sends the modules configured in the tuning file with
++ * every frame, each tuning dictionary filling the fields of the corresponding
++ * UAPI block by name:
+  *
+  * \code{.unparsed}
+  * algorithms:
+  *   - Ispp:
+- *       Shp:
+- *         tile_xcnt: 18
+- *         tile_ycnt: 121
+- *         pbf_k: [ 2, 1, 0 ]
+- *       Nr:
+- *         uvnr_step1_en: 1
++ *       Fec:
++ *         crop_en: 0
+  * \endcode
+  *
+  * A module absent from the tuning file is not sent and keeps the driver's
+@@ -90,100 +86,6 @@ constexpr bool fieldSigned()
+ 	  fieldSize<decltype(type::name)>(),				\
+ 	  fieldSigned<decltype(type::name)>() }
+ 
+-constexpr Field nrFields[] = {
+-	ISPP_FIELD(rkispp_params_nr, uvnr_step1_en),
+-	ISPP_FIELD(rkispp_params_nr, uvnr_step2_en),
+-	ISPP_FIELD(rkispp_params_nr, nr_gain_en),
+-	ISPP_FIELD(rkispp_params_nr, uvnr_sd32_self_en),
+-	ISPP_FIELD(rkispp_params_nr, uvnr_nobig_en),
+-	ISPP_FIELD(rkispp_params_nr, uvnr_big_en),
+-	ISPP_FIELD(rkispp_params_nr, uvnr_gain_1sigma),
+-	ISPP_FIELD(rkispp_params_nr, uvnr_gain_offset),
+-	ISPP_FIELD(rkispp_params_nr, uvnr_gain_t2gen),
+-	ISPP_FIELD(rkispp_params_nr, uvnr_gain_iso),
+-	ISPP_FIELD(rkispp_params_nr, uvnr_t1gen_m3alpha),
+-	ISPP_FIELD(rkispp_params_nr, uvnr_t1flt_mode),
+-	ISPP_FIELD(rkispp_params_nr, uvnr_t1flt_wtp),
+-	ISPP_FIELD(rkispp_params_nr, uvnr_t2gen_m3alpha),
+-	ISPP_FIELD(rkispp_params_nr, uvnr_t2gen_wtp),
+-	ISPP_FIELD(rkispp_params_nr, uvnr_gain_uvgain),
+-	ISPP_FIELD(rkispp_params_nr, uvnr_t1flt_wtq),
+-	ISPP_FIELD(rkispp_params_nr, uvnr_t2gen_wtq),
+-	ISPP_FIELD(rkispp_params_nr, uvnr_t2flt_wtp),
+-	ISPP_FIELD(rkispp_params_nr, uvnr_t2flt_wt),
+-	ISPP_FIELD(rkispp_params_nr, ynr_sgm_dx),
+-	ISPP_FIELD(rkispp_params_nr, ynr_lci),
+-	ISPP_FIELD(rkispp_params_nr, ynr_lgain_min),
+-	ISPP_FIELD(rkispp_params_nr, ynr_lgain_max),
+-	ISPP_FIELD(rkispp_params_nr, ynr_lmerge_bound),
+-	ISPP_FIELD(rkispp_params_nr, ynr_lmerge_ratio),
+-	ISPP_FIELD(rkispp_params_nr, ynr_lweit_flt),
+-	ISPP_FIELD(rkispp_params_nr, ynr_hlci),
+-	ISPP_FIELD(rkispp_params_nr, ynr_lhci),
+-	ISPP_FIELD(rkispp_params_nr, ynr_hhci),
+-	ISPP_FIELD(rkispp_params_nr, ynr_hgain_sgm),
+-	ISPP_FIELD(rkispp_params_nr, ynr_hweit_d),
+-	ISPP_FIELD(rkispp_params_nr, ynr_hgrad_y),
+-	ISPP_FIELD(rkispp_params_nr, ynr_hmax_adjust),
+-	ISPP_FIELD(rkispp_params_nr, ynr_hstrength),
+-	ISPP_FIELD(rkispp_params_nr, ynr_lweit_cmp),
+-	ISPP_FIELD(rkispp_params_nr, ynr_lmaxgain_lv4),
+-	ISPP_FIELD(rkispp_params_nr, uvnr_t1flt_msigma),
+-	ISPP_FIELD(rkispp_params_nr, uvnr_t2gen_msigma),
+-	ISPP_FIELD(rkispp_params_nr, uvnr_t2flt_msigma),
+-	ISPP_FIELD(rkispp_params_nr, ynr_lsgm_y),
+-	ISPP_FIELD(rkispp_params_nr, ynr_hsgm_y),
+-	ISPP_FIELD(rkispp_params_nr, ynr_hweit),
+-	ISPP_FIELD(rkispp_params_nr, ynr_hstv_y),
+-	ISPP_FIELD(rkispp_params_nr, ynr_st_scale),
+-};
+-
+-constexpr Field shpFields[] = {
+-	ISPP_FIELD(rkispp_params_shp, rotation),
+-	ISPP_FIELD(rkispp_params_shp, scl_down_v),
+-	ISPP_FIELD(rkispp_params_shp, scl_down_h),
+-	ISPP_FIELD(rkispp_params_shp, tile_ycnt),
+-	ISPP_FIELD(rkispp_params_shp, tile_xcnt),
+-	ISPP_FIELD(rkispp_params_shp, alpha_adp_en),
+-	ISPP_FIELD(rkispp_params_shp, yin_flt_en),
+-	ISPP_FIELD(rkispp_params_shp, edge_avg_en),
+-	ISPP_FIELD(rkispp_params_shp, ehf_th),
+-	ISPP_FIELD(rkispp_params_shp, pbf_ratio),
+-	ISPP_FIELD(rkispp_params_shp, edge_thed),
+-	ISPP_FIELD(rkispp_params_shp, dir_min),
+-	ISPP_FIELD(rkispp_params_shp, pbf_shf_bits),
+-	ISPP_FIELD(rkispp_params_shp, mbf_shf_bits),
+-	ISPP_FIELD(rkispp_params_shp, hbf_shf_bits),
+-	ISPP_FIELD(rkispp_params_shp, m_ratio),
+-	ISPP_FIELD(rkispp_params_shp, h_ratio),
+-	ISPP_FIELD(rkispp_params_shp, pbf_k),
+-	ISPP_FIELD(rkispp_params_shp, mrf_k),
+-	ISPP_FIELD(rkispp_params_shp, mbf_k),
+-	ISPP_FIELD(rkispp_params_shp, hrf_k),
+-	ISPP_FIELD(rkispp_params_shp, hbf_k),
+-	ISPP_FIELD(rkispp_params_shp, eg_coef),
+-	ISPP_FIELD(rkispp_params_shp, eg_smoth),
+-	ISPP_FIELD(rkispp_params_shp, eg_gaus),
+-	ISPP_FIELD(rkispp_params_shp, dog_k),
+-	ISPP_FIELD(rkispp_params_shp, lum_point),
+-	ISPP_FIELD(rkispp_params_shp, pbf_sigma),
+-	ISPP_FIELD(rkispp_params_shp, lum_clp_m),
+-	ISPP_FIELD(rkispp_params_shp, lum_min_m),
+-	ISPP_FIELD(rkispp_params_shp, mbf_sigma),
+-	ISPP_FIELD(rkispp_params_shp, lum_clp_h),
+-	ISPP_FIELD(rkispp_params_shp, hbf_sigma),
+-	ISPP_FIELD(rkispp_params_shp, edge_lum_thed),
+-	ISPP_FIELD(rkispp_params_shp, clamp_pos),
+-	ISPP_FIELD(rkispp_params_shp, clamp_neg),
+-	ISPP_FIELD(rkispp_params_shp, detail_alpha),
+-	ISPP_FIELD(rkispp_params_shp, hbf_ratio),
+-	ISPP_FIELD(rkispp_params_shp, smoth_th4),
+-	ISPP_FIELD(rkispp_params_shp, l_alpha),
+-	ISPP_FIELD(rkispp_params_shp, g_alpha),
+-	ISPP_FIELD(rkispp_params_shp, rfl_ratio),
+-	ISPP_FIELD(rkispp_params_shp, rfh_ratio),
+-};
+-
+ constexpr Field fecFields[] = {
+ 	ISPP_FIELD(rkispp_params_fec, crop_en),
+ 	ISPP_FIELD(rkispp_params_fec, crop_width),
+@@ -312,14 +214,6 @@ int Ispp::init([[maybe_unused]] IPAConte
+ {
+ 	int ret;
+ 
+-	ret = loadBlock(tuningData, "Nr", nrFields, nr_);
+-	if (ret)
+-		return ret;
+-
+-	ret = loadBlock(tuningData, "Shp", shpFields, shp_);
+-	if (ret)
+-		return ret;
+-
+ 	ret = loadBlock(tuningData, "Fec", fecFields, fec_);
+ 	if (ret)
+ 		return ret;
+@@ -337,10 +231,6 @@ void Ispp::prepareIspp([[maybe_unused]]
+ 		       [[maybe_unused]] const uint32_t frame,
+ 		       RkISPPParams *params)
+ {
+-	if (nr_)
+-		sendBlock(params->block<RkISPPParamsBlocks::Nr>(), *nr_);
+-	if (shp_)
+-		sendBlock(params->block<RkISPPParamsBlocks::Shp>(), *shp_);
+ 	if (fec_)
+ 		sendBlock(params->block<RkISPPParamsBlocks::Fec>(), *fec_);
+ 	if (orb_)
+--- a/src/ipa/rkisp2/algorithms/ispp.h
++++ b/src/ipa/rkisp2/algorithms/ispp.h
+@@ -28,8 +28,6 @@ public:
+ 			 RkISPPParams *params) override;
+ 
+ private:
+-	std::optional<struct rkispp_params_nr> nr_;
+-	std::optional<struct rkispp_params_shp> shp_;
+ 	std::optional<struct rkispp_params_fec> fec_;
+ 	std::optional<struct rkispp_params_orb> orb_;
+ };
+--- a/src/ipa/rkisp2/algorithms/meson.build
++++ b/src/ipa/rkisp2/algorithms/meson.build
+@@ -13,6 +13,8 @@ rkisp2_ipa_algorithms = files([
+     'goc.cpp',
+     'ispp.cpp',
+     'lsc.cpp',
++    'nr.cpp',
++    'sharpen.cpp',
+     'tnr.cpp',
+     'wdr.cpp',
+ ])
+--- /dev/null
++++ b/src/ipa/rkisp2/algorithms/nr.cpp
+@@ -0,0 +1,552 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2026, Daniel Golle
++ *
++ * RkISP2 spatial noise reduction
++ */
++
++#include "nr.h"
++
++#include <algorithm>
++#include <cmath>
++#include <errno.h>
++#include <stddef.h>
++#include <stdint.h>
++#include <string.h>
++
++#include <linux/media/rockchip/rkisp2-config.h>
++#include <linux/media/v4l2-isp.h>
++
++#include <libcamera/base/log.h>
++
++#include "libcamera/internal/value_node.h"
++
++#include "calibration.h"
++
++/**
++ * \file nr.h
++ */
++
++namespace libcamera {
++
++namespace ipa::rkisp2::algorithms {
++
++/**
++ * \class NoiseReduction
++ * \brief RkISP2 spatial noise reduction of the ISPP
++ *
++ * The ISPP NR stage denoises the luma with a four level wavelet filter (YNR)
++ * and the chroma with median and bilateral filters on two downscaled copies
++ * (UVNR), both steered by a luminance dependent noise sigma curve and by the
++ * ISP gain map of the frame.
++ *
++ * The calibration is per ISO step, ISO 50 being unity gain. For each frame
++ * the algorithm interpolates it at the gain of the latest ISP frame and
++ * converts it to the NR block following the Rockchip AIQ
++ * (select_ynr_params_by_ISO(), ynr_fix_transfer(),
++ * select_uvnr_params_by_ISO() and uvnr_fix_transfer() of
++ * camera_engine_rkaiq) at unity strength, so that its IQ calibration can be
++ * used as is. The calibration is converted from an IQ file with
++ * nr-iq2yaml.py.
++ *
++ * \code{.unparsed}
++ * algorithms:
++ *   - NoiseReduction:
++ *       luma:
++ *         - iso: 50
++ *           sigma-curve: [ ... ]
++ *           ...
++ *       chroma:
++ *         kernel-3x3: [ ... ]
++ *         ...
++ *         settings:
++ *           - iso: 50
++ *             step0-uvgrad-ratio: 40
++ *             ...
++ * \endcode
++ *
++ * The gain ratio and the use of the gain map come from the
++ * TemporalNoiseReduction algorithm, which programs the gain map; without it
++ * the NR runs on the global gain.
++ */
++
++LOG_DEFINE_CATEGORY(RkISP2Nr)
++
++namespace {
++
++using calibration::lerp;
++using calibration::readArray;
++using calibration::readScalar;
++using calibration::roundF;
++
++/* calibration and processing bit depths of the YNR sigma curve */
++constexpr unsigned int kCalBits = 12;
++constexpr unsigned int kSigmaBits = 10;
++constexpr unsigned int kCurveStepBits = 4;
++constexpr double kSigmaDiv = 1 << (kCalBits - kSigmaBits);
++constexpr double kLumaPointScale = 1 << (kSigmaBits - 8);
++
++/* fractional bits of the YNR register fields, from the AIQ */
++constexpr int kFracCi = 5;
++constexpr int kFracSigma = 5;
++constexpr int kFracWeight = 7;
++constexpr int kFracBfScale = 4;
++constexpr int kFracSoftness = 7;
++constexpr int kFracGrad = 4;
++constexpr int kFracStrength = 4;
++constexpr int kFracSoftThreshold = 8;
++constexpr int kFracExpLut = 7;
++constexpr int kFracLv4Gain = 4;
++constexpr long kSigmaMax = (1 << (kFracSigma + 9)) - 1;
++
++/* ynr_fix_transfer(): fixed low frequency weight comparison */
++constexpr double kWeightCompare = 0.1;
++
++/* squared distances of the five YNR high frequency edge weight taps */
++constexpr std::array<int, 5> kEdgeDist2 = { 1, 2, 4, 5, 8 };
++
++/* fractional bits of the UVNR register fields, from the AIQ */
++constexpr int kFracUvOffset = 4;
++constexpr int kFracUvGain = 4;
++constexpr int kFracUvMedian = 4;
++constexpr int kFracUvKernel = 7;
++constexpr int kFracUvBfRatio = 7;
++constexpr int kFracUvGainIso = 7;
++constexpr long kUvGainMax = 0x7f;
++constexpr long kUvGainIsoMin = 0x8;
++constexpr long kUvGainIsoMax = 0x80;
++constexpr long kUvSigmaMax = 8191;
++
++/* uvnr_fix_transfer(): log2(e) scaling of the inverse bilateral sigma */
++constexpr double kUvLog2e = 0.8493;
++constexpr int kUvLog2eBits = 6;
++constexpr int kUvImgBits = 8;
++
++long clampMax(long v, long max)
++{
++	return std::min(v, max);
++}
++
++double lumaPoint(unsigned int i)
++{
++	return i == NoiseReduction::kCurvePoints - 1
++		       ? 1 << kSigmaBits
++		       : i << (kSigmaBits - kCurveStepBits);
++}
++
++/* The luma curve ratio at \a x, linear between the curve points */
++double curveRate(double x, const NoiseReduction::Curve &pts,
++		 const NoiseReduction::Curve &ratios)
++{
++	unsigned int j = 0;
++	double t;
++
++	while (j < pts.size() && x > pts[j])
++		j++;
++
++	if (j == 0)
++		return ratios[0];
++	if (j >= pts.size())
++		return ratios.back();
++
++	t = (x - pts[j - 1]) / (pts[j] - pts[j - 1]);
++	return ratios[j - 1] + t * (ratios[j] - ratios[j - 1]);
++}
++
++unsigned int topOnePos(unsigned int v)
++{
++	unsigned int pos = 0;
++
++	while (v) {
++		pos++;
++		v >>= 1;
++	}
++
++	return pos;
++}
++
++} /* namespace */
++
++int NoiseReduction::parseLuma(const ValueNode &tuningData)
++{
++	if (!tuningData["luma"].isList()) {
++		LOG(RkISP2Nr, Error) << "No luma settings";
++		return -EINVAL;
++	}
++
++	for (const auto &node : tuningData["luma"].asList()) {
++		std::array<double, 5> curve;
++		bool ok = true;
++		Luma s;
++
++		ok &= readScalar(node, "iso", s.iso);
++		ok &= readArray(node, "sigma-curve", curve);
++		ok &= readArray(node, "ynr-lci", s.lci);
++		ok &= readArray(node, "ynr-lhci", s.lhci);
++		ok &= readArray(node, "ynr-hlci", s.hlci);
++		ok &= readArray(node, "ynr-hhci", s.hhci);
++		ok &= readArray(node, "lo-lumapoint", s.loPoint);
++		ok &= readArray(node, "lo-lumaratio", s.loRatio);
++		ok &= readScalar(node, "lo-directionstrength", s.loDirection);
++		ok &= readArray(node, "lo-bfscale", s.loBfScale);
++		ok &= readScalar(node, "imerge-ratio", s.mergeRatio);
++		ok &= readArray(node, "denoise-weight", s.loWeight);
++		ok &= readArray(node, "hi-lumapoint", s.hiPoint);
++		ok &= readArray(node, "hi-lumaratio", s.hiRatio);
++		ok &= readArray(node, "hi-bfscale", s.hiBfScale);
++		ok &= readArray(node, "hwith-d", s.hiSoftness);
++		ok &= readScalar(node, "hi-denoisestrength", s.hiStrength);
++		ok &= readScalar(node, "hi-detailminadjdnw", s.minAdjust);
++		ok &= readArray(node, "hi-denoiseweight", s.hiWeight);
++		ok &= readArray(node, "hgrad-y-level1", s.grad[0]);
++		ok &= readArray(node, "hgrad-y-level2", s.grad[1]);
++		ok &= readArray(node, "hgrad-y-level3", s.grad[2]);
++		ok &= readArray(node, "hgrad-y-level4", s.grad[3]);
++		ok &= readArray(node, "hi-soft-thresh-scale", s.softThreshold);
++		if (!ok)
++			return -EINVAL;
++
++		/* the sigma polynomial is calibrated over 12-bit luma */
++		for (unsigned int i = 0; i < kCurvePoints; i++) {
++			double x = lumaPoint(i) * (1 << (kCalBits - kSigmaBits));
++			double y = curve[4];
++			double xp = 1.0;
++
++			for (unsigned int o = 1; o <= 4; o++) {
++				xp *= x;
++				y += xp * curve[4 - o];
++			}
++			s.sigma[i] = std::max(y, 0.0);
++		}
++
++		if (!luma_.empty() && s.iso <= luma_.back().iso) {
++			LOG(RkISP2Nr, Error) << "Luma settings not sorted by iso";
++			return -EINVAL;
++		}
++		lumaIsos_.push_back(s.iso);
++		luma_.push_back(s);
++	}
++
++	if (luma_.size() < 2) {
++		LOG(RkISP2Nr, Error) << "Need two luma settings at least";
++		return -EINVAL;
++	}
++
++	return 0;
++}
++
++int NoiseReduction::parseChroma(const ValueNode &tuningData)
++{
++	const ValueNode &chroma = tuningData["chroma"];
++	bool ok = true;
++
++	ok &= readArray(chroma, "kernel-3x3", kernel3_);
++	ok &= readArray(chroma, "kernel-5x5", kernel5_);
++	ok &= readArray(chroma, "kernel-9x9", kernel9_);
++	ok &= readScalar(chroma, "kernel-9x9-num", kernel9Mode_);
++	if (!ok)
++		return -EINVAL;
++
++	if (!chroma["settings"].isList()) {
++		LOG(RkISP2Nr, Error) << "No chroma settings";
++		return -EINVAL;
++	}
++
++	for (const auto &node : chroma["settings"].asList()) {
++		Chroma s;
++
++		ok &= readScalar(node, "iso", s.iso);
++		ok &= readScalar(node, "step0-uvgrad-ratio", s.gradRatio);
++		ok &= readScalar(node, "step0-uvgrad-offset", s.gradOffset);
++		ok &= readScalar(node, "step1-median-ratio", s.median1);
++		ok &= readScalar(node, "step2-median-ratio", s.median2);
++		ok &= readScalar(node, "step1-bf-sigmar", s.sigmaR1);
++		ok &= readScalar(node, "step2-bf-sigmar", s.sigmaR2);
++		ok &= readScalar(node, "step3-bf-sigmar", s.sigmaR3);
++		ok &= readScalar(node, "step1-bf-uvgain", s.uvgain1);
++		ok &= readScalar(node, "step2-bf-uvgain", s.uvgain2);
++		ok &= readScalar(node, "step3-bf-uvgain", s.uvgain3);
++		ok &= readScalar(node, "step1-bf-ratio", s.bfRatio1);
++		ok &= readScalar(node, "step3-bf-ratio", s.bfRatio3);
++		if (!ok)
++			return -EINVAL;
++
++		if (s.sigmaR1 <= 0 || s.sigmaR2 <= 0 || s.sigmaR3 <= 0) {
++			LOG(RkISP2Nr, Error) << "Chroma sigmas must be positive";
++			return -EINVAL;
++		}
++
++		if (!chroma_.empty() && s.iso <= chroma_.back().iso) {
++			LOG(RkISP2Nr, Error) << "Chroma settings not sorted by iso";
++			return -EINVAL;
++		}
++		chromaIsos_.push_back(s.iso);
++		chroma_.push_back(s);
++	}
++
++	if (chroma_.size() < 2) {
++		LOG(RkISP2Nr, Error) << "Need two chroma settings at least";
++		return -EINVAL;
++	}
++
++	return 0;
++}
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::init
++ */
++int NoiseReduction::init([[maybe_unused]] IPAContext &context,
++			 const ValueNode &tuningData)
++{
++	int ret;
++
++	ret = parseLuma(tuningData);
++	if (ret)
++		return ret;
++
++	return parseChroma(tuningData);
++}
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::configure
++ */
++int NoiseReduction::configure([[maybe_unused]] IPAContext &context,
++			      [[maybe_unused]] const IPACameraSensorInfo &configInfo)
++{
++	nr_.reset();
++
++	return 0;
++}
++
++/**
++ * \brief Convert the luma calibration at an ISO to the YNR fields
++ * \param[in] iso The ISO, 50 times the gain
++ * \param[in] ratio The gain ratio of the gain map
++ * \param[out] nr The NR block
++ *
++ * Port of the AIQ select_ynr_params_by_ISO() and ynr_fix_transfer().
++ */
++void NoiseReduction::fixLuma(double iso, double ratio,
++			     struct rkispp_params_nr *nr) const
++{
++	calibration::IsoInterval in = calibration::isoInterval(lumaIsos_, iso);
++	const Luma &L = luma_[in.lo];
++	const Luma &H = luma_[in.hi];
++	double div = kSigmaDiv * std::sqrt(ratio);
++	std::array<double, kCurvePoints> sigma;
++	double r = in.r;
++	double gf;
++
++	Lvl lci = calibration::lerp(r, L.lci, H.lci);
++	Lvl lhci = calibration::lerp(r, L.lhci, H.lhci);
++	Lvl hlci = calibration::lerp(r, L.hlci, H.hlci);
++	Lvl hhci = calibration::lerp(r, L.hhci, H.hhci);
++	Lvl loBf = calibration::lerp(r, L.loBfScale, H.loBfScale);
++	Lvl loW = calibration::lerp(r, L.loWeight, H.loWeight);
++	Lvl hiBf = calibration::lerp(r, L.hiBfScale, H.hiBfScale);
++	Lvl hiSoft = calibration::lerp(r, L.hiSoftness, H.hiSoftness);
++	Lvl hiW = calibration::lerp(r, L.hiWeight, H.hiWeight);
++	Lvl sts = calibration::lerp(r, L.softThreshold, H.softThreshold);
++	Curve loPt = calibration::lerp(r, L.loPoint, H.loPoint);
++	Curve loRatio = calibration::lerp(r, L.loRatio, H.loRatio);
++	Curve hiPt = calibration::lerp(r, L.hiPoint, H.hiPoint);
++	Curve hiRatio = calibration::lerp(r, L.hiRatio, H.hiRatio);
++	double mergeRatio = lerp(r, L.mergeRatio, H.mergeRatio);
++	double mergeBound = 1.0 / mergeRatio / 2;
++	double direction = lerp(r, L.loDirection, H.loDirection);
++	double hiStrength = lerp(r, L.hiStrength, H.hiStrength);
++	double minAdjust = lerp(r, L.minAdjust, H.minAdjust);
++
++	for (double &v : loPt)
++		v *= kLumaPointScale;
++	for (double &v : hiPt)
++		v *= kLumaPointScale;
++
++	/* the AIQ halves the noise ci where the sigma gain drops below 1/2 */
++	gf = std::sqrt(calibration::kIsoUnity / iso);
++	if (gf < 0.5) {
++		for (Lvl *ci : { &lci, &lhci, &hlci, &hhci })
++			for (double &v : *ci)
++				v /= 2;
++		gf *= 2;
++	}
++	for (unsigned int i = 0; i < kCurvePoints; i++)
++		sigma[i] = lerp(r, L.sigma[i], H.sigma[i]) * gf;
++
++	for (unsigned int i = 0; i < kCurvePoints - 1; i++)
++		nr->ynr_sgm_dx[i] = topOnePos(lumaPoint(i + 1) - lumaPoint(i)) - 2;
++
++	for (unsigned int i = 0; i < kCurvePoints; i++) {
++		long base = static_cast<long>(sigma[i] * (1 << kFracSigma));
++		long lo = static_cast<long>(base * curveRate(lumaPoint(i), loPt, loRatio));
++		long hi = static_cast<long>(base * curveRate(lumaPoint(i), hiPt, hiRatio));
++
++		nr->ynr_lsgm_y[i] = std::min<double>(lo / div, kSigmaMax);
++		nr->ynr_hsgm_y[i] = std::min<double>(hi / div, kSigmaMax);
++		nr->ynr_hstv_y[i] = std::min<double>(base / div, UINT16_MAX);
++	}
++
++	for (unsigned int i = 0; i < kLevels; i++) {
++		nr->ynr_lci[i] = clampMax(lci[i] * (1 << kFracCi), 0xff);
++		nr->ynr_lhci[i] = clampMax(lhci[i] * (1 << kFracCi), 0xff);
++		nr->ynr_hlci[i] = clampMax(hlci[i] * (1 << kFracCi), 0xff);
++		nr->ynr_hhci[i] = clampMax(hhci[i] * (1 << kFracCi), 0xff);
++		nr->ynr_lgain_min[i] = clampMax(loBf[i] * (1 << kFracBfScale), 0xff);
++		nr->ynr_hgain_sgm[i] = clampMax(hiBf[i] * (1 << kFracBfScale), 0xff);
++		nr->ynr_lweit_flt[i] = std::min<uint8_t>(
++			static_cast<uint8_t>(loW[i] * (1 << kFracWeight)), 0x80);
++		nr->ynr_hweit[i] = std::min<uint16_t>(
++			static_cast<uint16_t>(hiW[i] * (1 << kFracWeight)), 0x1ff);
++	}
++
++	nr->ynr_lgain_max = static_cast<uint8_t>(direction * (1 << kFracBfScale));
++	nr->ynr_lmerge_bound = static_cast<uint8_t>(mergeBound * (1 << kFracStrength));
++	nr->ynr_lmerge_ratio = static_cast<uint8_t>(mergeRatio * (1 << kFracStrength));
++
++	for (unsigned int i = 0; i < kLevels; i++) {
++		long e = static_cast<long>(hiSoft[i] * (1 << kFracSoftness));
++
++		for (unsigned int k = 0; k < kEdgeDist2.size(); k++) {
++			double d = kEdgeDist2[k] * (1 << (2 * kFracSoftness));
++
++			nr->ynr_hweit_d[k * kLevels + i] = static_cast<uint8_t>(
++				std::exp(-d / (2.0 * e * e)) * (1 << kFracExpLut));
++		}
++	}
++
++	for (unsigned int i = 0; i < kLumaPoints; i++)
++		for (unsigned int l = 0; l < kLevels; l++)
++			nr->ynr_hgrad_y[i * kLevels + l] = static_cast<uint8_t>(
++				lerp(r, L.grad[l][i], H.grad[l][i]) * (1 << kFracGrad));
++
++	nr->ynr_hmax_adjust = static_cast<uint8_t>(minAdjust * (1 << kFracGrad));
++	nr->ynr_hstrength = clampMax(hiStrength * (1 << kFracStrength), 0xff);
++	nr->ynr_lweit_cmp[0] = roundF(kWeightCompare * (1 << kFracExpLut));
++	nr->ynr_lweit_cmp[1] = nr->ynr_lweit_cmp[0];
++	nr->ynr_lmaxgain_lv4 = clampMax(
++		roundF(std::sqrt(iso / calibration::kIsoUnity) * (1 << kFracLv4Gain)),
++		0xff);
++
++	for (unsigned int i = 0; i < RKISPP_NR_YNR_ST_SCALE_SIZE; i++)
++		nr->ynr_st_scale[i] =
++			static_cast<uint16_t>(sts[i] * (1 << kFracSoftThreshold));
++}
++
++/**
++ * \brief Convert the chroma calibration at an ISO to the UVNR fields
++ * \param[in] iso The ISO, 50 times the gain
++ * \param[in] ratio The gain ratio of the gain map
++ * \param[in] localGain True if the NR takes the gain from the gain map
++ * \param[out] nr The NR block
++ *
++ * Port of the AIQ select_uvnr_params_by_ISO() and uvnr_fix_transfer().
++ */
++void NoiseReduction::fixChroma(double iso, double ratio, bool localGain,
++			       struct rkispp_params_nr *nr) const
++{
++	calibration::IsoInterval in = calibration::isoInterval(chromaIsos_, iso);
++	const Chroma &L = chroma_[in.lo];
++	const Chroma &H = chroma_[in.hi];
++	double log2e = static_cast<long>(kUvLog2e * (1 << kUvLog2eBits)) *
++		       (1 << kUvImgBits);
++	double r = in.r;
++
++	auto li = [&](double Chroma::*m) { return lerp(r, L.*m, H.*m); };
++	auto msigma = [&](double sigma) {
++		return clampMax(static_cast<uint16_t>(log2e / sigma), kUvSigmaMax);
++	};
++	auto kernel = [](double v) {
++		return static_cast<uint8_t>(v * (1 << kFracUvKernel));
++	};
++
++	nr->uvnr_step1_en = 1;
++	nr->uvnr_step2_en = 1;
++	nr->nr_gain_en = !localGain;
++	nr->uvnr_nobig_en = 0;
++	nr->uvnr_big_en = 0;
++	nr->uvnr_sd32_self_en = 1;
++
++	nr->uvnr_gain_1sigma = static_cast<uint8_t>(li(&Chroma::gradRatio));
++	nr->uvnr_gain_offset =
++		static_cast<uint8_t>(li(&Chroma::gradOffset) * (1 << kFracUvOffset));
++	nr->uvnr_gain_uvgain[0] = clampMax(
++		static_cast<uint8_t>(li(&Chroma::uvgain1) * (1 << kFracUvGain)),
++		kUvGainMax);
++	nr->uvnr_gain_uvgain[1] = clampMax(
++		static_cast<uint8_t>(li(&Chroma::uvgain3) * (1 << kFracUvGain)),
++		kUvGainMax);
++	nr->uvnr_gain_t2gen = clampMax(
++		static_cast<uint8_t>(li(&Chroma::uvgain2) * (1 << kFracUvGain)),
++		kUvGainMax);
++	nr->uvnr_gain_iso = std::clamp<long>(
++		std::sqrt(calibration::kIsoUnity / (iso * ratio)) *
++			(1 << kFracUvGainIso),
++		kUvGainIsoMin, kUvGainIsoMax);
++
++	nr->uvnr_t1gen_m3alpha =
++		static_cast<uint8_t>(li(&Chroma::median1) * (1 << kFracUvMedian));
++	nr->uvnr_t1flt_mode = static_cast<uint8_t>(kernel9Mode_);
++	nr->uvnr_t1flt_msigma = msigma(li(&Chroma::sigmaR1));
++	nr->uvnr_t1flt_wtp =
++		static_cast<uint8_t>(li(&Chroma::bfRatio1) * (1 << kFracUvBfRatio));
++	for (unsigned int i = 0; i < kernel9_.size(); i++)
++		nr->uvnr_t1flt_wtq[i] = kernel(kernel9_[i]);
++
++	nr->uvnr_t2gen_m3alpha =
++		static_cast<uint8_t>(li(&Chroma::median2) * (1 << kFracUvMedian));
++	nr->uvnr_t2gen_msigma = msigma(li(&Chroma::sigmaR2));
++	nr->uvnr_t2gen_wtp = kernel(kernel5_[0]);
++	for (unsigned int i = 0; i < RKISPP_NR_UVNR_T2GEN_WTQ_SIZE; i++)
++		nr->uvnr_t2gen_wtq[i] = kernel(kernel5_[i + 1]);
++
++	nr->uvnr_t2flt_msigma = msigma(li(&Chroma::sigmaR3));
++	nr->uvnr_t2flt_wtp =
++		static_cast<uint8_t>(li(&Chroma::bfRatio3) * (1 << kFracUvBfRatio));
++	for (unsigned int i = 0; i < kernel3_.size(); i++)
++		nr->uvnr_t2flt_wt[i] = kernel(kernel3_[i]);
++}
++
++/**
++ * \brief Send the NR block for the gain of the latest ISP frame
++ * \param[in] context The shared IPA context
++ * \param[in] frame The ISPP frame number
++ * \param[out] params The ISPP parameters buffer
++ */
++void NoiseReduction::prepareIspp(IPAContext &context,
++				 [[maybe_unused]] const uint32_t frame,
++				 RkISPPParams *params)
++{
++	constexpr size_t header = sizeof(struct v4l2_isp_params_block_header);
++	const auto &noiseGain = context.activeState.noiseGain;
++	double gain = noiseGain.gain > 0.0 ? noiseGain.gain : 1.0;
++	double ratio = noiseGain.ratio > 0.0 ? noiseGain.ratio : 1.0;
++
++	if (!nr_ || ratio != nrRatio_ ||
++	    std::abs(gain - nrGain_) > calibration::kGainTolerance * nrGain_) {
++		struct rkispp_params_nr nr = {};
++		double iso = gain * calibration::kIsoUnity;
++
++		fixChroma(iso, ratio, noiseGain.localGain, &nr);
++		fixLuma(iso, ratio, &nr);
++		nr_ = nr;
++		nrGain_ = gain;
++		nrRatio_ = ratio;
++
++		LOG(RkISP2Nr, Debug)
++			<< "gain " << gain << " ratio " << ratio << " lsgm "
++			<< nr.ynr_lsgm_y[8] << " uv gain iso "
++			<< static_cast<unsigned int>(nr.uvnr_gain_iso);
++	}
++
++	auto block = params->block<RkISPPParamsBlocks::Nr>();
++	memcpy(reinterpret_cast<uint8_t *>(&*block) + header,
++	       reinterpret_cast<const uint8_t *>(&*nr_) + header,
++	       sizeof(*nr_) - header);
++	block.setEnabled(true);
++}
++
++REGISTER_IPA_ALGORITHM(NoiseReduction, "NoiseReduction")
++
++} /* namespace ipa::rkisp2::algorithms */
++
++} /* namespace libcamera */
+--- /dev/null
++++ b/src/ipa/rkisp2/algorithms/nr.h
+@@ -0,0 +1,104 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2026, Daniel Golle
++ *
++ * RkISP2 spatial noise reduction
++ */
++
++#pragma once
++
++#include <array>
++#include <optional>
++#include <vector>
++
++#include <linux/media/rockchip/rkisp2-config.h>
++
++#include "algorithm.h"
++
++namespace libcamera {
++
++namespace ipa::rkisp2::algorithms {
++
++class NoiseReduction : public Algorithm
++{
++public:
++	NoiseReduction() = default;
++	~NoiseReduction() = default;
++
++	int init(IPAContext &context, const ValueNode &tuningData) override;
++	int configure(IPAContext &context,
++		      const IPACameraSensorInfo &configInfo) override;
++	void prepareIspp(IPAContext &context, const uint32_t frame,
++			 RkISPPParams *params) override;
++
++	static constexpr unsigned int kLevels = 4;
++	static constexpr unsigned int kCurvePoints = 17;
++	static constexpr unsigned int kLumaPoints = 6;
++
++	using Lvl = std::array<double, kLevels>;
++	using Curve = std::array<double, kLumaPoints>;
++
++	struct Luma {
++		double iso;
++		std::array<double, kCurvePoints> sigma;
++		Lvl lci;
++		Lvl lhci;
++		Lvl hlci;
++		Lvl hhci;
++		Curve loPoint;
++		Curve loRatio;
++		double loDirection;
++		Lvl loBfScale;
++		double mergeRatio;
++		Lvl loWeight;
++		Curve hiPoint;
++		Curve hiRatio;
++		Lvl hiBfScale;
++		Lvl hiSoftness;
++		double hiStrength;
++		double minAdjust;
++		Lvl hiWeight;
++		std::array<Curve, kLevels> grad;
++		Lvl softThreshold;
++	};
++
++	struct Chroma {
++		double iso;
++		double gradRatio;
++		double gradOffset;
++		double median1;
++		double median2;
++		double sigmaR1;
++		double sigmaR2;
++		double sigmaR3;
++		double uvgain1;
++		double uvgain2;
++		double uvgain3;
++		double bfRatio1;
++		double bfRatio3;
++	};
++
++	void fixLuma(double iso, double ratio, struct rkispp_params_nr *nr) const;
++	void fixChroma(double iso, double ratio, bool localGain,
++		       struct rkispp_params_nr *nr) const;
++
++private:
++	int parseLuma(const ValueNode &tuningData);
++	int parseChroma(const ValueNode &tuningData);
++
++	std::vector<Luma> luma_;
++	std::vector<double> lumaIsos_;
++	std::vector<Chroma> chroma_;
++	std::vector<double> chromaIsos_;
++	std::array<double, 3> kernel3_;
++	std::array<double, 5> kernel5_;
++	std::array<double, 8> kernel9_;
++	double kernel9Mode_;
++
++	std::optional<struct rkispp_params_nr> nr_;
++	double nrGain_;
++	double nrRatio_;
++};
++
++} /* namespace ipa::rkisp2::algorithms */
++} /* namespace libcamera */
+--- /dev/null
++++ b/src/ipa/rkisp2/algorithms/sharpen.cpp
+@@ -0,0 +1,484 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2026, Daniel Golle
++ *
++ * RkISP2 sharpening
++ */
++
++#include "sharpen.h"
++
++#include <algorithm>
++#include <climits>
++#include <cmath>
++#include <errno.h>
++#include <stddef.h>
++#include <stdint.h>
++#include <string.h>
++
++#include <linux/media/rockchip/rkisp2-config.h>
++#include <linux/media/v4l2-isp.h>
++
++#include <libcamera/base/log.h>
++
++#include "libcamera/internal/value_node.h"
++
++#include "calibration.h"
++
++/**
++ * \file sharpen.h
++ */
++
++namespace libcamera {
++
++namespace ipa::rkisp2::algorithms {
++
++/**
++ * \class Sharpen
++ * \brief RkISP2 sharpening of the ISPP
++ *
++ * The ISPP SHP stage sharpens the luma in a medium and a high frequency band,
++ * each through a bilateral filter with a luminance dependent sigma and
++ * clipping, and enhances edges with a difference of gaussians along the local
++ * edge direction.
++ *
++ * The calibration is per ISO step, ISO 50 being unity gain. For each frame
++ * the algorithm interpolates it at the gain of the latest ISP frame and
++ * converts it to the SHP block following the Rockchip AIQ
++ * (select_rk_sharpen_hw_params_by_ISO(), rk_Sharp_V1_fix_transfer(),
++ * select_edgefilter_params_by_ISO() and edgefilter_fix_transfer() of
++ * camera_engine_rkaiq) at unity strength, so that its IQ calibration can be
++ * used as is. The calibration is converted from an IQ file with
++ * nr-iq2yaml.py.
++ *
++ * \code{.unparsed}
++ * algorithms:
++ *   - Sharpen:
++ *       luma-point: [ 0, 16, 32, 64, 96, 160, 224, 256 ]
++ *       pbf-coeff: [ ... ]
++ *       ...
++ *       sharp:
++ *         - iso: 50
++ *           lratio: 0.2
++ *           ...
++ *       edge:
++ *         - iso: 50
++ *           edge-thed: 8
++ *           ...
++ * \endcode
++ */
++
++LOG_DEFINE_CATEGORY(RkISP2Sharpen)
++
++namespace {
++
++using calibration::lerp;
++using calibration::readArray;
++using calibration::readScalar;
++using calibration::roundF;
++
++/* fractional bits of the SHP register fields, from the AIQ */
++constexpr int kFracLratio = 8;
++constexpr int kFracHratio = 8;
++constexpr int kFracMHRatio = 2;
++constexpr int kFracPbfRatio = 7;
++constexpr int kFracLumMinM = 4;
++constexpr int kFracHbfRatio = 8;
++constexpr int kFracPbfCoeff = 6;
++constexpr int kFracMrfCoeff = 7;
++constexpr int kFracMbfCoeff = 6;
++constexpr int kFracHrfCoeff = 7;
++constexpr int kFracHbfCoeff = 6;
++constexpr int kFracDirMin = 6;
++constexpr int kFracAlpha = 8;
++constexpr int kFracDetailAlpha = 6;
++constexpr int kFracSmoothCoeff = 6;
++constexpr int kFracGausCoeff = 6;
++constexpr int kFracGuideCoeff = 4;
++constexpr int kFracDogCoeff = 6;
++constexpr int kFracSmooth4 = 8;
++
++/* rk_Sharp_V1_fix_transfer(): inverse sigma tables and their shift */
++constexpr int kSigmaDeciBits = 7;
++constexpr int kSigmaShiftOffset = 5;
++constexpr double kMaxLumaClip = 8.0;
++constexpr double kMaxFilterGain = 2.0;
++constexpr double kMaxFilterAdd = 255.0;
++constexpr long kLumMinMMin = -32;
++
++/* coefficient taps of each kernel register, in the AIQ order */
++constexpr std::array<unsigned int, 3> kTaps3 = { 4, 1, 0 };
++constexpr std::array<unsigned int, 6> kTaps5 = { 12, 7, 6, 2, 1, 0 };
++constexpr std::array<unsigned int, 12> kTapsMbf = {
++	110, 93, 92, 76, 58, 56, 25, 23, 38, 4, 69, 102
++};
++constexpr std::array<unsigned int, 3> kTapsSmooth = { 12, 11, 10 };
++
++/* row 2 of the 5x5 directional smoothing kernel */
++constexpr unsigned int kSmoothRow = 2 * 5;
++
++/*
++ * Quantise the register taps of a kernel; the first takes up the rounding of
++ * the whole kernel so that the fixed point sum matches the real one.
++ */
++template<size_t N, size_t T>
++std::array<long, T> kernelFix(const std::array<double, N> &coef,
++			      const std::array<unsigned int, T> &taps, int bits)
++{
++	std::array<long, T> out;
++	double sum = 0.0;
++	long fixSum = 0;
++
++	for (unsigned int t = 0; t < T; t++)
++		out[t] = roundF(coef[taps[t]] * (1 << bits));
++
++	for (double c : coef) {
++		sum += c;
++		fixSum += roundF(c * (1 << bits));
++	}
++
++	out[0] += static_cast<long>(sum * (1 << bits)) - fixSum;
++
++	return out;
++}
++
++/* The inverse sigma table of a bilateral filter and its shift */
++uint8_t sigmaTable(const Sharpen::Luma &lumaSigma, double gain, double add,
++		   uint8_t *table)
++{
++	long minVal = LONG_MAX;
++	int bits;
++
++	for (double ls : lumaSigma)
++		minVal = std::min(minVal, static_cast<long>(std::floor(ls * gain + add)));
++
++	bits = kSigmaDeciBits +
++	       static_cast<int>(std::floor(std::log2(std::max(minVal, 1L))));
++
++	for (unsigned int i = 0; i < lumaSigma.size(); i++)
++		table[i] = static_cast<uint8_t>(
++			roundF(1.0 / (lumaSigma[i] * gain + add) * (1 << bits)));
++
++	return bits - kSigmaShiftOffset;
++}
++
++} /* namespace */
++
++int Sharpen::parseSharp(const ValueNode &tuningData)
++{
++	if (!tuningData["sharp"].isList()) {
++		LOG(RkISP2Sharpen, Error) << "No sharp settings";
++		return -EINVAL;
++	}
++
++	for (const auto &node : tuningData["sharp"].asList()) {
++		bool ok = true;
++		SharpSetting s;
++
++		ok &= readScalar(node, "iso", s.iso);
++		ok &= readScalar(node, "lratio", s.lratio);
++		ok &= readScalar(node, "hratio", s.hratio);
++		ok &= readScalar(node, "mf-sharp-ratio", s.mRatio);
++		ok &= readScalar(node, "hf-sharp-ratio", s.hRatio);
++		ok &= readArray(node, "luma-sigma", s.lumaSigma);
++		ok &= readScalar(node, "pbf-gain", s.pbfGain);
++		ok &= readScalar(node, "pbf-ratio", s.pbfRatio);
++		ok &= readScalar(node, "pbf-add", s.pbfAdd);
++		ok &= readArray(node, "mf-clip-pos", s.clipPosM);
++		ok &= readArray(node, "mf-clip-neg", s.clipNegM);
++		ok &= readArray(node, "hf-clip", s.clipH);
++		ok &= readScalar(node, "mbf-gain", s.mbfGain);
++		ok &= readScalar(node, "hbf-gain", s.hbfGain);
++		ok &= readScalar(node, "hbf-ratio", s.hbfRatio);
++		ok &= readScalar(node, "mbf-add", s.mbfAdd);
++		ok &= readScalar(node, "hbf-add", s.hbfAdd);
++		ok &= readScalar(node, "local-sharp-strength", s.localStrength);
++		if (!ok)
++			return -EINVAL;
++
++		if (!sharp_.empty() && s.iso <= sharp_.back().iso) {
++			LOG(RkISP2Sharpen, Error) << "Sharp settings not sorted by iso";
++			return -EINVAL;
++		}
++		sharpIsos_.push_back(s.iso);
++		sharp_.push_back(s);
++	}
++
++	if (sharp_.size() < 2) {
++		LOG(RkISP2Sharpen, Error) << "Need two sharp settings at least";
++		return -EINVAL;
++	}
++
++	return 0;
++}
++
++int Sharpen::parseEdge(const ValueNode &tuningData)
++{
++	if (!tuningData["edge"].isList()) {
++		LOG(RkISP2Sharpen, Error) << "No edge settings";
++		return -EINVAL;
++	}
++
++	for (const auto &node : tuningData["edge"].asList()) {
++		bool ok = true;
++		EdgeSetting s;
++
++		ok &= readScalar(node, "iso", s.iso);
++		ok &= readScalar(node, "edge-thed", s.edgeThed);
++		ok &= readScalar(node, "src-wgt", s.srcWeight);
++		ok &= readScalar(node, "alpha-adp-en", s.alphaAdaptive);
++		ok &= readScalar(node, "local-alpha", s.localAlpha);
++		ok &= readScalar(node, "global-alpha", s.globalAlpha);
++		ok &= readArray(node, "noise-clip", s.noiseClip);
++		ok &= readArray(node, "dog-clip-pos", s.dogClipPos);
++		ok &= readArray(node, "dog-clip-neg", s.dogClipNeg);
++		ok &= readArray(node, "dog-alpha", s.dogAlpha);
++		ok &= readArray(node, "direct-filter-coeff", s.directFilter);
++		ok &= readArray(node, "dog-kernel", s.dogKernel);
++		if (!ok)
++			return -EINVAL;
++
++		if (!edge_.empty() && s.iso <= edge_.back().iso) {
++			LOG(RkISP2Sharpen, Error) << "Edge settings not sorted by iso";
++			return -EINVAL;
++		}
++		edgeIsos_.push_back(s.iso);
++		edge_.push_back(s);
++	}
++
++	if (edge_.size() < 2) {
++		LOG(RkISP2Sharpen, Error) << "Need two edge settings at least";
++		return -EINVAL;
++	}
++
++	return 0;
++}
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::init
++ */
++int Sharpen::init([[maybe_unused]] IPAContext &context,
++		  const ValueNode &tuningData)
++{
++	bool ok = true;
++	int ret;
++
++	ok &= readArray(tuningData, "luma-point", lumaPoint_);
++	ok &= readArray(tuningData, "pbf-coeff", pbfCoeff_);
++	ok &= readArray(tuningData, "rf-m-coeff", rfMCoeff_);
++	ok &= readArray(tuningData, "mbf-coeff", mbfCoeff_);
++	ok &= readArray(tuningData, "rf-h-coeff", rfHCoeff_);
++	ok &= readArray(tuningData, "hbf-coeff", hbfCoeff_);
++	ok &= readArray(tuningData, "edge-hf-coeff", edgeHfCoeff_);
++	ok &= readArray(tuningData, "edge-guide-coeff", edgeGuideCoeff_);
++	ok &= readScalar(tuningData, "edge-dir-min", edgeDirMin_);
++	if (!ok)
++		return -EINVAL;
++
++	ret = parseSharp(tuningData);
++	if (ret)
++		return ret;
++
++	return parseEdge(tuningData);
++}
++
++/**
++ * \copydoc libcamera::ipa::Algorithm::configure
++ */
++int Sharpen::configure([[maybe_unused]] IPAContext &context,
++		       [[maybe_unused]] const IPACameraSensorInfo &configInfo)
++{
++	shp_.reset();
++
++	return 0;
++}
++
++/**
++ * \brief Convert the sharpening calibration at an ISO to the SHP fields
++ * \param[in] iso The ISO, 50 times the gain
++ * \param[out] shp The SHP block
++ *
++ * Port of the AIQ select_rk_sharpen_hw_params_by_ISO() and
++ * rk_Sharp_V1_fix_transfer().
++ */
++void Sharpen::fixSharp(double iso, struct rkispp_params_shp *shp) const
++{
++	calibration::IsoInterval in = calibration::isoInterval(sharpIsos_, iso);
++	const SharpSetting &L = sharp_[in.lo];
++	const SharpSetting &H = sharp_[in.hi];
++	double r = in.r;
++
++	auto li = [&](double SharpSetting::*m) { return lerp(r, L.*m, H.*m); };
++
++	Luma lumaSigma = calibration::lerp(r, L.lumaSigma, H.lumaSigma);
++	Luma clipPosM = calibration::lerp(r, L.clipPosM, H.clipPosM);
++	Luma clipNegM = calibration::lerp(r, L.clipNegM, H.clipNegM);
++	Luma clipH = calibration::lerp(r, L.clipH, H.clipH);
++	double mRatio = li(&SharpSetting::mRatio);
++	double hRatio = li(&SharpSetting::hRatio);
++	double mClip = mRatio > kMaxLumaClip ? mRatio / kMaxLumaClip : 1.0;
++	double hClip = hRatio > kMaxLumaClip ? hRatio / kMaxLumaClip : 1.0;
++	double pbfGain = std::min(li(&SharpSetting::pbfGain), kMaxFilterGain);
++	double pbfAdd = std::min(li(&SharpSetting::pbfAdd), kMaxFilterAdd);
++	double mbfGain = std::min(li(&SharpSetting::mbfGain), kMaxFilterGain);
++	double mbfAdd = std::min(li(&SharpSetting::mbfAdd), kMaxFilterAdd);
++	double hbfGain = std::min(li(&SharpSetting::hbfGain), kMaxFilterGain);
++	double hbfAdd = std::min(li(&SharpSetting::hbfAdd), kMaxFilterAdd);
++	long ehf = roundF(li(&SharpSetting::localStrength));
++
++	shp->yin_flt_en = 1;
++	shp->edge_avg_en = 1;
++	shp->hbf_ratio = std::min(roundF(li(&SharpSetting::hbfRatio) *
++					 (1 << kFracHbfRatio)),
++				  0x100L);
++	shp->ehf_th = std::min(ehf, 0xffL);
++	shp->pbf_ratio = std::min(roundF(li(&SharpSetting::pbfRatio) *
++					 (1 << kFracPbfRatio)),
++				  0x80L);
++
++	std::array<long, 3> pbf = kernelFix(pbfCoeff_, kTaps3, kFracPbfCoeff);
++	std::array<long, 6> mrf = kernelFix(rfMCoeff_, kTaps5, kFracMrfCoeff);
++	std::array<long, 12> mbf = kernelFix(mbfCoeff_, kTapsMbf, kFracMbfCoeff);
++	std::array<long, 6> hrf = kernelFix(rfHCoeff_, kTaps5, kFracHrfCoeff);
++	std::array<long, 3> hbf = kernelFix(hbfCoeff_, kTaps3, kFracHbfCoeff);
++	std::copy(pbf.begin(), pbf.end(), shp->pbf_k);
++	std::copy(mrf.begin(), mrf.end(), shp->mrf_k);
++	std::copy(mbf.begin(), mbf.end(), shp->mbf_k);
++	std::copy(hrf.begin(), hrf.end(), shp->hrf_k);
++	std::copy(hbf.begin(), hbf.end(), shp->hbf_k);
++
++	for (unsigned int i = 0; i < RKISPP_SHP_LUM_POINT_SIZE; i++)
++		shp->lum_point[i] = roundF(lumaPoint_[i + 1]);
++
++	shp->pbf_shf_bits = sigmaTable(lumaSigma, pbfGain, pbfAdd, shp->pbf_sigma);
++	shp->mbf_shf_bits = sigmaTable(lumaSigma, mbfGain, mbfAdd, shp->mbf_sigma);
++	shp->hbf_shf_bits = sigmaTable(lumaSigma, hbfGain, hbfAdd, shp->hbf_sigma);
++
++	for (unsigned int i = 0; i < kLumaPoints; i++) {
++		shp->lum_clp_m[i] = std::min(
++			static_cast<long>(roundF(clipPosM[i]) * mClip), 0xffL);
++		shp->lum_min_m[i] = std::max(
++			roundF(clipNegM[i] * mClip * (1 << kFracLumMinM)),
++			kLumMinMMin);
++		shp->lum_clp_h[i] = std::min(
++			static_cast<long>(roundF(clipH[i]) * hClip), 0xffL);
++	}
++
++	shp->rfl_ratio = std::min(roundF(li(&SharpSetting::lratio) *
++					 (1 << kFracLratio)),
++				  0x100L);
++	shp->rfh_ratio = std::clamp(roundF(li(&SharpSetting::hratio) *
++					   (1 << kFracHratio)),
++				    0x100L, 0x3ffL);
++	shp->m_ratio = std::min<uint8_t>(roundF(mRatio * (1 << kFracMHRatio)), 0x1f);
++	shp->h_ratio = std::min<uint8_t>(roundF(hRatio * (1 << kFracMHRatio)), 0x1f);
++}
++
++/**
++ * \brief Convert the edge filter calibration at an ISO to the SHP fields
++ * \param[in] iso The ISO, 50 times the gain
++ * \param[out] shp The SHP block
++ *
++ * Port of the AIQ select_edgefilter_params_by_ISO() and
++ * edgefilter_fix_transfer(). Like the AIQ, the difference of gaussians kernel
++ * is the one of the ISO step below, not interpolated.
++ */
++void Sharpen::fixEdge(double iso, struct rkispp_params_shp *shp) const
++{
++	calibration::IsoInterval in = calibration::isoInterval(edgeIsos_, iso);
++	const EdgeSetting &L = edge_[in.lo];
++	const EdgeSetting &H = edge_[in.hi];
++	double r = in.r;
++	Kernel5 smooth = {};
++	double dogSum = 0.0;
++
++	auto li = [&](double EdgeSetting::*m) { return lerp(r, L.*m, H.*m); };
++
++	Luma noiseClip = calibration::lerp(r, L.noiseClip, H.noiseClip);
++	Luma clipPos = calibration::lerp(r, L.dogClipPos, H.dogClipPos);
++	Luma clipNeg = calibration::lerp(r, L.dogClipNeg, H.dogClipNeg);
++	Luma dogAlpha = calibration::lerp(r, L.dogAlpha, H.dogAlpha);
++	std::array<double, 5> direct =
++		calibration::lerp(r, L.directFilter, H.directFilter);
++
++	shp->alpha_adp_en = static_cast<uint8_t>(li(&EdgeSetting::alphaAdaptive));
++	shp->edge_thed = std::min(roundF(li(&EdgeSetting::edgeThed)), 0xffL);
++	shp->dir_min = roundF(edgeDirMin_ * (1 << kFracDirMin));
++	shp->smoth_th4 = std::min(roundF(li(&EdgeSetting::srcWeight) *
++					 (1 << kFracSmooth4)),
++				  0xffL);
++	shp->l_alpha = std::min(roundF(li(&EdgeSetting::localAlpha) *
++				       (1 << kFracAlpha)),
++				0x1ffL);
++	shp->g_alpha = std::min(roundF(li(&EdgeSetting::globalAlpha) *
++				       (1 << kFracAlpha)),
++				0x1ffL);
++
++	std::array<long, 3> guide =
++		kernelFix(edgeGuideCoeff_, kTaps3, kFracGuideCoeff);
++	std::copy(guide.begin(), guide.end(), shp->eg_coef);
++
++	std::copy(direct.begin(), direct.end(), smooth.begin() + kSmoothRow);
++	std::array<long, 3> sm = kernelFix(smooth, kTapsSmooth, kFracSmoothCoeff);
++	std::copy(sm.begin(), sm.end(), shp->eg_smoth);
++
++	std::array<long, 6> gaus = kernelFix(edgeHfCoeff_, kTaps5, kFracGausCoeff);
++	std::copy(gaus.begin(), gaus.end(), shp->eg_gaus);
++
++	/* at unity strength the AIQ adds the whole kernel sum to the centre tap */
++	for (unsigned int t = 0; t < kTaps5.size(); t++)
++		shp->dog_k[t] = roundF(L.dogKernel[kTaps5[t]] * (1 << kFracDogCoeff));
++	for (double c : L.dogKernel)
++		dogSum += c;
++	shp->dog_k[0] += static_cast<long>(dogSum * (1 << kFracDogCoeff));
++
++	for (unsigned int i = 0; i < kLumaPoints; i++) {
++		shp->edge_lum_thed[i] = std::min(roundF(noiseClip[i]), 0xffL);
++		shp->clamp_pos[i] = std::min(roundF(clipPos[i]), 0xffL);
++		shp->clamp_neg[i] = std::min(roundF(clipNeg[i]), 0xffL);
++		shp->detail_alpha[i] =
++			std::min(roundF(dogAlpha[i] * (1 << kFracDetailAlpha)), 0xffL);
++	}
++}
++
++/**
++ * \brief Send the SHP block for the gain of the latest ISP frame
++ * \param[in] context The shared IPA context
++ * \param[in] frame The ISPP frame number
++ * \param[out] params The ISPP parameters buffer
++ */
++void Sharpen::prepareIspp(IPAContext &context,
++			  [[maybe_unused]] const uint32_t frame,
++			  RkISPPParams *params)
++{
++	constexpr size_t header = sizeof(struct v4l2_isp_params_block_header);
++	const auto &noiseGain = context.activeState.noiseGain;
++	double gain = noiseGain.gain > 0.0 ? noiseGain.gain : 1.0;
++
++	if (!shp_ ||
++	    std::abs(gain - shpGain_) > calibration::kGainTolerance * shpGain_) {
++		struct rkispp_params_shp shp = {};
++		double iso = gain * calibration::kIsoUnity;
++
++		fixSharp(iso, &shp);
++		fixEdge(iso, &shp);
++		shp_ = shp;
++		shpGain_ = gain;
++
++		LOG(RkISP2Sharpen, Debug)
++			<< "gain " << gain << " m_ratio "
++			<< static_cast<unsigned int>(shp.m_ratio) << " h_ratio "
++			<< static_cast<unsigned int>(shp.h_ratio);
++	}
++
++	auto block = params->block<RkISPPParamsBlocks::Shp>();
++	memcpy(reinterpret_cast<uint8_t *>(&*block) + header,
++	       reinterpret_cast<const uint8_t *>(&*shp_) + header,
++	       sizeof(*shp_) - header);
++	block.setEnabled(true);
++}
++
++REGISTER_IPA_ALGORITHM(Sharpen, "Sharpen")
++
++} /* namespace ipa::rkisp2::algorithms */
++
++} /* namespace libcamera */
+--- /dev/null
++++ b/src/ipa/rkisp2/algorithms/sharpen.h
+@@ -0,0 +1,104 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2026, Daniel Golle
++ *
++ * RkISP2 sharpening
++ */
++
++#pragma once
++
++#include <array>
++#include <optional>
++#include <vector>
++
++#include <linux/media/rockchip/rkisp2-config.h>
++
++#include "algorithm.h"
++
++namespace libcamera {
++
++namespace ipa::rkisp2::algorithms {
++
++class Sharpen : public Algorithm
++{
++public:
++	Sharpen() = default;
++	~Sharpen() = default;
++
++	int init(IPAContext &context, const ValueNode &tuningData) override;
++	int configure(IPAContext &context,
++		      const IPACameraSensorInfo &configInfo) override;
++	void prepareIspp(IPAContext &context, const uint32_t frame,
++			 RkISPPParams *params) override;
++
++	static constexpr unsigned int kLumaPoints = 8;
++
++	using Luma = std::array<double, kLumaPoints>;
++	using Kernel3 = std::array<double, 3 * 3>;
++	using Kernel5 = std::array<double, 5 * 5>;
++	using KernelMbf = std::array<double, 13 * 17>;
++
++	struct SharpSetting {
++		double iso;
++		double lratio;
++		double hratio;
++		double mRatio;
++		double hRatio;
++		Luma lumaSigma;
++		double pbfGain;
++		double pbfRatio;
++		double pbfAdd;
++		Luma clipPosM;
++		Luma clipNegM;
++		Luma clipH;
++		double mbfGain;
++		double hbfGain;
++		double hbfRatio;
++		double mbfAdd;
++		double hbfAdd;
++		double localStrength;
++	};
++
++	struct EdgeSetting {
++		double iso;
++		double edgeThed;
++		double srcWeight;
++		double alphaAdaptive;
++		double localAlpha;
++		double globalAlpha;
++		Luma noiseClip;
++		Luma dogClipPos;
++		Luma dogClipNeg;
++		Luma dogAlpha;
++		std::array<double, 5> directFilter;
++		Kernel5 dogKernel;
++	};
++
++	void fixSharp(double iso, struct rkispp_params_shp *shp) const;
++	void fixEdge(double iso, struct rkispp_params_shp *shp) const;
++
++private:
++	int parseSharp(const ValueNode &tuningData);
++	int parseEdge(const ValueNode &tuningData);
++
++	Luma lumaPoint_;
++	Kernel3 pbfCoeff_;
++	Kernel5 rfMCoeff_;
++	KernelMbf mbfCoeff_;
++	Kernel5 rfHCoeff_;
++	Kernel3 hbfCoeff_;
++	Kernel5 edgeHfCoeff_;
++	Kernel3 edgeGuideCoeff_;
++	double edgeDirMin_;
++
++	std::vector<SharpSetting> sharp_;
++	std::vector<double> sharpIsos_;
++	std::vector<EdgeSetting> edge_;
++	std::vector<double> edgeIsos_;
++
++	std::optional<struct rkispp_params_shp> shp_;
++	double shpGain_;
++};
++
++} /* namespace ipa::rkisp2::algorithms */
++} /* namespace libcamera */

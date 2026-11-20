@@ -1,0 +1,41 @@
+From d31798cd332902b1d425c9b9cf0a951bfdc57b51 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Sun, 20 Sep 2026 20:03:15 +0100
+Subject: [PATCH] validation/pidfile: do not kill a stopped container
+
+The container runs `true`, so it has already exited by the time the test
+tears it down. The teardown waits for it to be `running`, ignores the
+timeout it gets instead, kills it anyway and then reports the kill error
+as the result of the pid file check. Signalling a container that is
+neither `created` nor `running` MUST generate an error, so every runtime
+that gets that right fails a test about `--pid-file`.
+
+This is also the assertion kill.t case four makes, and no runtime could
+satisfy both. Wait for the process to exit on its own instead, which is
+all the teardown needs.
+
+Fixes #805
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ validation/pidfile/pidfile.go | 9 ++++-----
+ 1 file changed, 4 insertions(+), 5 deletions(-)
+
+--- a/validation/pidfile/pidfile.go
++++ b/validation/pidfile/pidfile.go
+@@ -56,11 +56,10 @@ func main() {
+ 			return nil
+ 		},
+ 		PreDelete: func(r *util.Runtime) error {
+-			util.WaitingForStatus(*r, util.LifecycleStatusRunning, time.Second*10, time.Second*1)
+-			err = r.Kill("KILL")
+-			// wait before the container been deleted
+-			util.WaitingForStatus(*r, util.LifecycleStatusStopped, time.Second*10, time.Second*1)
+-			return err
++			// The container process is `true`, so it exits on its own and
++			// signalling it afterwards is an error the runtime is required
++			// to generate.
++			return util.WaitingForStatus(*r, util.LifecycleStatusStopped, time.Second*10, time.Second*1)
+ 		},
+ 	}
+ 

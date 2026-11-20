@@ -1,0 +1,359 @@
+From 1e23b90e85d7d32cf492195607d7f3ff317da8cc Mon Sep 17 00:00:00 2001
+From: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Date: Tue, 30 Jun 2026 16:28:03 +0200
+Subject: [PATCH] ipa: libipa: Introduce lsc_base.h
+
+Provide a header and implementation for the base definitions of common
+lens shading calibration data types, and move re-usable code out from
+the RkISP1 lsc algorithm.
+
+Signed-off-by: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Reviewed-by: Kieran Bingham <kieran.bingham@ideasonboard.com>
+Reviewed-by: Stefan Klug <stefan.klug@ideasonboard.com>
+---
+ src/ipa/libipa/lsc_base.cpp       | 95 +++++++++++++++++++++++++++++++
+ src/ipa/libipa/lsc_base.h         | 53 +++++++++++++++++
+ src/ipa/libipa/meson.build        |  2 +
+ src/ipa/rkisp1/algorithms/lsc.cpp | 28 ++++-----
+ src/ipa/rkisp1/algorithms/lsc.h   | 29 +---------
+ 5 files changed, 167 insertions(+), 40 deletions(-)
+ create mode 100644 src/ipa/libipa/lsc_base.cpp
+ create mode 100644 src/ipa/libipa/lsc_base.h
+
+--- /dev/null
++++ b/src/ipa/libipa/lsc_base.cpp
+@@ -0,0 +1,95 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2026 Ideas on Board Oy
++ *
++ * Base classes and types for LSC algorithm implementations
++ */
++
++#include "lsc_base.h"
++
++/**
++ * \file lsc_base.h
++ * \brief Base types and definitions for LscImplementation class hierarchy
++ */
++
++namespace libcamera {
++
++namespace ipa {
++
++namespace lsc {
++
++/**
++ * \struct Components
++ * \brief Associate colour components with a list of gains
++ *
++ * LSC tables are defined as a list of gain values associated to a colour
++ * component.
++ *
++ * \var Components::r
++ * \brief The list of gains for the Red colour component
++ *
++ * \var Components::gr
++ * \brief The list of gains for the Green/Red colour component
++ *
++ * \var Components::gb
++ * \brief The list of gains for the Green/Blue colour component
++ *
++ * \var Components::b
++ * \brief The list of gains for the Blue colour component
++ */
++
++/**
++ * \typedef ComponentsMap
++ * \brief Associate a colour temperature to a LSC table
++ *
++ * An LSC table is generated during the tuning phase for a specific colour
++ * temperature, and a tuning file usually contains LSC tables generated for
++ * several different colour temperatures.
++ */
++
++} /* namespace lsc */
++
++/**
++ * \class LscImplementation
++ * \brief Pure virtual base class for LSC algorithm implementations
++ *
++ * Defines the interface for the LSC algorithm implementation.
++ */
++
++/**
++ * \fn LscImplementation::~LscImplementation
++ * \brief Virtual class destructor
++ */
++
++/**
++ * \fn LscImplementation::parseLscData
++ * \brief Parse \a tuningData
++ * \param[in] tuningData The tuning data
++ *
++ * \return 0 on success, a negative error number otherwise
++ */
++
++/**
++ * \fn LscImplementation::sampleForCrop
++ * \brief Re-sample the LSC components for \a cropRectangle
++ * \param[in] cropRectangle The sensor analogue crop rectangle
++ * \param[in] xSizes List of horizontal positions of the LSC grid nodes
++ * \param[in] ySizes List of vertical positions of the LSC grid nodes
++ *
++ * LSC tables have to be re-sampled every time a new sensor configuration is
++ * used, as each streaming session might use a different sensor crop rectangle
++ * \a cropRectangle.
++ *
++ * \a cropRectangle represents the size of the frame on which the LSC tables
++ * have to be re-sampled on.
++ *
++ * \a xSizes and \a ySizes represent the position of the grid nodes vertexes in
++ * the [0, 1] interval. For example an equally spaced grid of 16 nodes will have
++ * each segment of size 0.0625 and the list of nodes position will be
++ * [0, 0.0625, 0.125, 0.1875, ... , 1]. It is expected that the first position
++ * is 0 and the last position is 1.
++ */
++
++} /* namespace ipa */
++
++} /* namespace libcamera */
+--- /dev/null
++++ b/src/ipa/libipa/lsc_base.h
+@@ -0,0 +1,53 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2026 Ideas on Board Oy
++ *
++ * Base classes and types for LSC algorithm implementations
++ */
++
++#pragma once
++
++#include <map>
++#include <stdint.h>
++#include <string>
++#include <vector>
++
++#include <libcamera/base/span.h>
++
++#include <libcamera/geometry.h>
++
++#include "libcamera/internal/value_node.h"
++
++namespace libcamera {
++
++namespace ipa {
++
++namespace lsc {
++
++struct Components {
++	std::vector<uint16_t> r;
++	std::vector<uint16_t> gr;
++	std::vector<uint16_t> gb;
++	std::vector<uint16_t> b;
++};
++
++using ComponentsMap = std::map<unsigned int, Components>;
++
++} /* namespace lsc */
++
++class LscImplementation
++{
++public:
++	virtual ~LscImplementation() {}
++
++	virtual int parseLscData(const ValueNode &tuningData) = 0;
++
++	virtual lsc::ComponentsMap
++	sampleForCrop(const Rectangle &cropRectangle,
++		      Span<const double> xSizes,
++		      Span<const double> ySizes) = 0;
++};
++
++} /* namespace ipa */
++
++} /* namespace libcamera */
+--- a/src/ipa/libipa/meson.build
++++ b/src/ipa/libipa/meson.build
+@@ -14,6 +14,7 @@ libipa_headers = files([
+     'fixedpoint.h',
+     'histogram.h',
+     'interpolator.h',
++    'lsc_base.h',
+     'lsc_polynomial.h',
+     'lux.h',
+     'module.h',
+@@ -37,6 +38,7 @@ libipa_sources = files([
+     'fixedpoint.cpp',
+     'histogram.cpp',
+     'interpolator.cpp',
++    'lsc_base.cpp',
+     'lsc_polynomial.cpp',
+     'lux.cpp',
+     'module.cpp',
+--- a/src/ipa/rkisp1/algorithms/lsc.cpp
++++ b/src/ipa/rkisp1/algorithms/lsc.cpp
+@@ -38,10 +38,10 @@ void interpolateVector(const std::vector
+ }
+ 
+ template<>
+-void Interpolator<rkisp1::algorithms::LensShadingCorrection::Components>::
+-	interpolate(const rkisp1::algorithms::LensShadingCorrection::Components &a,
+-		    const rkisp1::algorithms::LensShadingCorrection::Components &b,
+-		    rkisp1::algorithms::LensShadingCorrection::Components &dest,
++void Interpolator<lsc::Components>::
++	interpolate(const lsc::Components &a,
++		    const lsc::Components &b,
++		    lsc::Components &dest,
+ 		    double lambda)
+ {
+ 	interpolateVector(a.r, b.r, dest.r, lambda);
+@@ -80,7 +80,7 @@ public:
+ 
+ 	int parseLscData(const ValueNode &sets) override;
+ 
+-	LensShadingCorrection::ComponentsMap
++	lsc::ComponentsMap
+ 	sampleForCrop(const Rectangle &cropRectangle,
+ 		      Span<const double> xSizes,
+ 		      Span<const double> ySizes) override;
+@@ -138,7 +138,7 @@ int LscPolynomialImpl::parseLscData(cons
+ 	return 0;
+ }
+ 
+-LensShadingCorrection::ComponentsMap
++lsc::ComponentsMap
+ LscPolynomialImpl::sampleForCrop(const Rectangle &cropRectangle,
+ 				 Span<const double> xSizes,
+ 				 Span<const double> ySizes)
+@@ -146,7 +146,7 @@ LscPolynomialImpl::sampleForCrop(const R
+ 	std::vector<double> xPos = sizesListToPositions(xSizes);
+ 	std::vector<double> yPos = sizesListToPositions(ySizes);
+ 
+-	LensShadingCorrection::ComponentsMap components;
++	lsc::ComponentsMap components;
+ 
+ 	for (const auto &[k, p] : lscData_) {
+ 		components[k] = {
+@@ -226,7 +226,7 @@ class LscTableImpl : public LscImplement
+ public:
+ 	int parseLscData(const ValueNode &sets) override;
+ 
+-	LensShadingCorrection::ComponentsMap
++	lsc::ComponentsMap
+ 	sampleForCrop([[maybe_unused]] const Rectangle &cropRectangle,
+ 		      [[maybe_unused]] Span<const double> xSizes,
+ 		      [[maybe_unused]] Span<const double> ySizes) override
+@@ -240,7 +240,7 @@ private:
+ 	std::vector<uint16_t> parseTable(const ValueNode &tuningData,
+ 					 const char *prop);
+ 
+-	LensShadingCorrection::ComponentsMap lscData_;
++	lsc::ComponentsMap lscData_;
+ };
+ 
+ int LscTableImpl::parseLscData(const ValueNode &sets)
+@@ -255,7 +255,7 @@ int LscTableImpl::parseLscData(const Val
+ 			return -EINVAL;
+ 		}
+ 
+-		LensShadingCorrection::Components components;
++		lsc::Components components;
+ 		components.r = parseTable(set, "r");
+ 		components.gr = parseTable(set, "gr");
+ 		components.gb = parseTable(set, "gb");
+@@ -435,8 +435,8 @@ int LensShadingCorrection::configure(IPA
+ 	}
+ 
+ 	LOG(RkISP1Lsc, Debug) << "Sample LSC data for " << configInfo.analogCrop;
+-	ComponentsMap shadingData = algo_->sampleForCrop(configInfo.analogCrop,
+-							 xSize_, ySize_);
++	lsc::ComponentsMap shadingData = algo_->sampleForCrop(configInfo.analogCrop,
++							      xSize_, ySize_);
+ 	sets_.setData(std::move(shadingData));
+ 
+ 	context.activeState.lsc.enabled = true;
+@@ -452,7 +452,7 @@ void LensShadingCorrection::setParameter
+ }
+ 
+ void LensShadingCorrection::copyTable(rkisp1_cif_isp_lsc_config &config,
+-				      const Components &set)
++				      const lsc::Components &set)
+ {
+ 	std::copy(set.r.begin(), set.r.end(), &config.r_data_tbl[0][0]);
+ 	std::copy(set.gr.begin(), set.gr.end(), &config.gr_data_tbl[0][0]);
+@@ -518,7 +518,7 @@ void LensShadingCorrection::prepare([[ma
+ 
+ 	setParameters(*config);
+ 
+-	const Components &set = sets_.getInterpolated(quantizedCt);
++	const lsc::Components &set = sets_.getInterpolated(quantizedCt);
+ 	copyTable(*config, set);
+ 
+ 	lastAppliedCt_ = ct;
+--- a/src/ipa/rkisp1/algorithms/lsc.h
++++ b/src/ipa/rkisp1/algorithms/lsc.h
+@@ -11,6 +11,7 @@
+ #include <memory>
+ 
+ #include "libipa/interpolator.h"
++#include "libipa/lsc_base.h"
+ 
+ #include "algorithm.h"
+ 
+@@ -18,20 +19,9 @@ namespace libcamera {
+ 
+ namespace ipa::rkisp1::algorithms {
+ 
+-class LscImplementation;
+-
+ class LensShadingCorrection : public Algorithm
+ {
+ public:
+-	struct Components {
+-		std::vector<uint16_t> r;
+-		std::vector<uint16_t> gr;
+-		std::vector<uint16_t> gb;
+-		std::vector<uint16_t> b;
+-	};
+-
+-	using ComponentsMap = std::map<unsigned int, Components>;
+-
+ 	LensShadingCorrection();
+ 	~LensShadingCorrection() = default;
+ 
+@@ -49,7 +39,7 @@ public:
+ 		     ControlList &metadata) override;
+ private:
+ 	void setParameters(rkisp1_cif_isp_lsc_config &config);
+-	void copyTable(rkisp1_cif_isp_lsc_config &config, const Components &set0);
++	void copyTable(rkisp1_cif_isp_lsc_config &config, const lsc::Components &set0);
+ 
+ 	std::vector<double> xSize_;
+ 	std::vector<double> ySize_;
+@@ -61,23 +51,10 @@ private:
+ 	unsigned int lastAppliedCt_;
+ 	unsigned int lastAppliedQuantizedCt_;
+ 
+-	ipa::Interpolator<Components> sets_;
++	ipa::Interpolator<lsc::Components> sets_;
+ 
+ 	std::unique_ptr<LscImplementation> algo_;
+ };
+ 
+-class LscImplementation
+-{
+-public:
+-	virtual ~LscImplementation() {}
+-
+-	virtual int parseLscData(const ValueNode &sets) = 0;
+-
+-	virtual LensShadingCorrection::ComponentsMap
+-	sampleForCrop(const Rectangle &cropRectangle,
+-		      Span<const double> xSizes,
+-		      Span<const double> ySizes) = 0;
+-};
+-
+ } /* namespace ipa::rkisp1::algorithms */
+ } /* namespace libcamera */

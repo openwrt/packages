@@ -1,0 +1,146 @@
+From ff46b61f2014a691d0086639e53ecaea3fbe97bc Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Thu, 5 Nov 2026 15:57:02 +0000
+Subject: [PATCH] pipeline: rkisp2: Take the VICAP raw frames as 16-bit Bayer
+
+The VICAP writes unpacked RAW10 and RAW12 samples MSB-justified in
+16-bit words, the layout the ISP readback takes, and its video node
+advertises that layout as the 16-bit Bayer formats.
+
+Offer the raw stream in the 16-bit format of the sensor's Bayer order,
+pick the deepest sensor code behind it unless a sensor configuration
+names the depth, and configure the VICAP node with it. The readback
+node keeps the format of the sensor's sample depth.
+
+Assisted-by: LLM
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ src/libcamera/pipeline/rkisp2/rkisp2.cpp | 77 +++++++++++++++++++++---
+ 1 file changed, 67 insertions(+), 10 deletions(-)
+
+--- a/src/libcamera/pipeline/rkisp2/rkisp2.cpp
++++ b/src/libcamera/pipeline/rkisp2/rkisp2.cpp
+@@ -25,6 +25,7 @@
+ #include <libcamera/ipa/rkisp2_ipa_interface.h>
+ #include <libcamera/ipa/rkisp2_ipa_proxy.h>
+ 
++#include "libcamera/internal/bayer_format.h"
+ #include "libcamera/internal/buffer_queue.h"
+ #include "libcamera/internal/camera.h"
+ #include "libcamera/internal/camera_manager.h"
+@@ -76,6 +77,48 @@ const std::map<PixelFormat, uint32_t> ra
+ 
+ LOG_DEFINE_CATEGORY(RkISP2)
+ 
++/*
++ * The VICAP writes unpacked samples MSB-justified in 16-bit words, the layout
++ * the ISP readback takes.
++ */
++static PixelFormat vicapRawFormat(unsigned int mbusCode)
++{
++	BayerFormat bayer = BayerFormat::fromMbusCode(mbusCode);
++
++	if (bayer.bitDepth > 8)
++		bayer.bitDepth = 16;
++
++	return bayer.toPixelFormat();
++}
++
++static unsigned int rawMbusCode(const CameraSensor *sensor,
++				const PixelFormat &pixelFormat,
++				unsigned int bitDepth)
++{
++	const std::vector<unsigned int> codes = sensor->mbusCodes();
++	unsigned int mbusCode = 0;
++	unsigned int depth = 0;
++
++	for (const auto &value : rawFormats) {
++		unsigned int code = value.second;
++		const BayerFormat &bayer = BayerFormat::fromMbusCode(code);
++
++		if (std::find(codes.begin(), codes.end(), code) == codes.end())
++			continue;
++		if (pixelFormat.isValid() && vicapRawFormat(code) != pixelFormat)
++			continue;
++		if (bitDepth && bayer.bitDepth != bitDepth)
++			continue;
++		if (bayer.bitDepth <= depth)
++			continue;
++
++		mbusCode = code;
++		depth = bayer.bitDepth;
++	}
++
++	return mbusCode;
++}
++
+ static V4L2PixelFormat mainPathFormat(V4L2VideoDevice *video,
+ 				      const PixelFormat &pixelFormat)
+ {
+@@ -452,10 +495,10 @@ PixelFormat RkISP2CameraData::getSensorF
+ 	const auto &ret = std::find_if(rawFormats.begin(), rawFormats.end(),
+ 				       [format](const auto &value) { return value.second == format.code; });
+ 	if (ret != rawFormats.end())
+-		return (*ret).first;
++		return vicapRawFormat(format.code);
+ 
+ 	LOG(RkISP2, Error) << "No raw format supported by sensor";
+-	return formats::SRGGB10;
++	return formats::SRGGB16;
+ }
+ 
+ PipelineHandlerRkISP2 *RkISP2CameraData::pipe()
+@@ -928,12 +971,21 @@ CameraConfiguration::Status RkISP2Camera
+ 	const Size &maxSize = usingIsp ? ispMaxSize : vicapMaxSize;
+ 
+ 	if (!usingIsp) {
+-		if (!rawFormats.count(cfg.pixelFormat)) {
+-			cfg.pixelFormat = formats::SRGGB10;
++		unsigned int bitDepth = sensorConfig ? sensorConfig->bitDepth : 0;
++		unsigned int mbusCode = rawMbusCode(sensor, cfg.pixelFormat,
++						    bitDepth);
++
++		if (!mbusCode) {
++			mbusCode = rawMbusCode(sensor, PixelFormat(), bitDepth);
++			if (!mbusCode) {
++				LOG(RkISP2, Error) << "No raw format supported by sensor";
++				return Invalid;
++			}
++
++			cfg.pixelFormat = vicapRawFormat(mbusCode);
+ 			status = Adjusted;
+ 		}
+ 
+-		unsigned int mbusCode = rawFormats.at(cfg.pixelFormat);
+ 		auto sizes = sensor->sizes(mbusCode);
+ 
+ 		Size bestSize;
+@@ -1154,9 +1206,8 @@ PipelineHandlerRkISP2::generateConfigura
+ 	std::transform(formatToMediaBus.begin(), formatToMediaBus.end(),
+ 		       std::inserter(streamFormats, streamFormats.end()),
+ 		       makeStream);
+-	std::transform(rawFormats.begin(), rawFormats.end(),
+-		       std::inserter(streamFormats, streamFormats.end()),
+-		       makeStream);
++	for (const auto &value : rawFormats)
++		streamFormats[vicapRawFormat(value.second)] = sizes;
+ 
+ 	StreamFormats formats(streamFormats);
+ 	StreamConfiguration cfg(formats);
+@@ -1273,8 +1324,14 @@ int PipelineHandlerRkISP2::configure(Cam
+ 	 * \todo Figure out if these should go in the pipeline handler
+ 	 * or camera data
+ 	 */
+-	LOG(RkISP2, Debug) << "Configuring rawrd0 with: " << vicapOutputFormat;
+-	ret = rawrd_->setFormat(&vicapOutputFormat);
++	V4L2DeviceFormat rawrdFormat;
++	PixelFormat rawrdPixelFormat =
++		BayerFormat::fromMbusCode(format.code).toPixelFormat();
++	rawrdFormat.fourcc = rawrd_->toV4L2PixelFormat(rawrdPixelFormat);
++	rawrdFormat.size = format.size;
++
++	LOG(RkISP2, Debug) << "Configuring rawrd0 with: " << rawrdFormat;
++	ret = rawrd_->setFormat(&rawrdFormat);
+ 	if (ret)
+ 		return ret;
+ 

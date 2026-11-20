@@ -1,0 +1,92 @@
+From d9f2521f994a489200ce6eeab2c1152eb9822b1d Mon Sep 17 00:00:00 2001
+From: Stefan Klug <stefan.klug@ideasonboard.com>
+Date: Wed, 25 Mar 2026 16:13:50 +0100
+Subject: [PATCH] libipa: algorithm: Update docs
+
+Update the algorithm documentation to reflect the changed timing model.
+
+Signed-off-by: Stefan Klug <stefan.klug@ideasonboard.com>
+---
+ src/ipa/libipa/algorithm.cpp | 41 ++++++++++++++++++++++--------------
+ 1 file changed, 25 insertions(+), 16 deletions(-)
+
+--- a/src/ipa/libipa/algorithm.cpp
++++ b/src/ipa/libipa/algorithm.cpp
+@@ -76,11 +76,13 @@ namespace ipa {
+  *
+  * This function is called for each request queued to the camera. It provides
+  * the controls stored in the request to the algorithm. The \a frame number
+- * is the Request sequence number and identifies the desired corresponding
++ * is the sensor sequence number and identifies the desired corresponding
+  * frame to target for the controls to take effect.
+  *
+  * Algorithms shall read the applicable controls and store their value for later
+- * use during frame processing.
++ * use during frame processing. All values that are already known (like exposure
++ * time/gain in manual mode) shall be updated in \a frameContext to support
++ * cases where prepare() is never called (like in raw mode).
+  */
+ 
+ /**
+@@ -92,20 +94,29 @@ namespace ipa {
+  * \param[out] params The ISP specific parameters
+  *
+  * This function is called for every frame when the camera is running before it
+- * is processed by the ISP to prepare the ISP processing parameters for that
+- * frame.
++ * is processed by the ISP to prepare the ISP processing parameters and the
++ * sensor parameters for that frame.
+  *
+  * Algorithms shall fill in the parameter structure fields appropriately to
+  * configure the ISP processing blocks that they are responsible for. This
+  * includes setting fields and flags that enable those processing blocks.
++ *
++ * Additionally \a frameContext shall be updated with the most up to date values
++ * necessary to configure the sensor. After prepare() the \a frameContext for
++ * this frame shall be treated read only.
++ *
++ * \todo: For offline ISPs there might be use cases where it is beneficial to
++ * separate the calculation of sensor parameters from the calculation of ISP
++ * paremeters. This is currently not supported.
+  */
+ 
+ /**
+  * \fn Algorithm::process()
+  * \brief Process ISP statistics, and run algorithm operations
+  * \param[in] context The shared IPA context
+- * \param[in] frame The frame context sequence number
+- * \param[in] frameContext The current frame's context
++ * \param[in] frame The frame sequence number that produces the stats
++ * \param[in] frameContext The frame context for the frame that produced the
++ * stats
+  * \param[in] stats The IPA statistics and ISP results
+  * \param[out] metadata Metadata for the frame, to be filled by the algorithm
+  *
+@@ -118,19 +129,17 @@ namespace ipa {
+  * computationally expensive calculations or operations must be handled
+  * asynchronously in a separate thread.
+  *
+- * Algorithms can store state in their respective IPAFrameContext structures,
+- * and reference state from the IPAFrameContext of other algorithms.
+- *
+- * \todo Historical data may be required as part of the processing.
+- * Either the previous frame, or the IPAFrameContext state of the frame
+- * that generated the statistics for this operation may be required for
+- * some advanced algorithms to prevent oscillations or support control
+- * loops correctly. Only a single IPAFrameContext is available currently,
+- * and so any data stored may represent the results of the previously
+- * completed operations.
++ * Care must be taken to ensure that the frameContext is only updated in cases
++ * where the frame was not processed yet. This usually differs between offline
++ * and inline ISPs. In an inline ISP the stats are received after processing the
++ * frame. In this case the frame context *must not* be updated. Algorithms
++ * typically update the active state which is then picked up in prepare().
+  *
+  * Care shall be taken to ensure the ordering of access to the information
+  * such that the algorithms use up to date state as required.
++ *
++ * The \a stats parameter can be null in which case only the frame metadata
++ * shall be filled with the data from frameContext.
+  */
+ 
+ /**

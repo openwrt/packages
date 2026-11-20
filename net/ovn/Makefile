@@ -9,13 +9,13 @@ include $(INCLUDE_DIR)/kernel.mk
 include ../openvswitch/openvswitch.mk
 
 PKG_NAME:=ovn
-PKG_VERSION:=22.03.5
+PKG_VERSION:=26.03.2
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/ovn-org/ovn.git
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_MIRROR_HASH:=5236f459dccdf3d4ccfaabfdb075dbec4b332821ac8ebb86fcfa9a7c9b3d80f7
+PKG_MIRROR_HASH:=46d68085b9b7533d5d69687e3df02e0ec9ad96261443f119f77e2d10296d3d4d
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE

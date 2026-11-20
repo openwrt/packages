@@ -35,7 +35,7 @@ define Package/cryptsetup
   SUBMENU:=Encryption
   TITLE:=Cryptsetup
   DEPENDS:=$(ICONV_DEPENDS) $(INTL_DEPENDS) +libblkid +libuuid +libpopt +lvm2 \
-           +libdevmapper +libjson-c +@KERNEL_DIRECT_IO +kmod-crypto-user +libopenssl
+           +libdevmapper +libjson-c +kmod-crypto-user +libopenssl
   URL:=https://gitlab.com/cryptsetup/cryptsetup/
 endef
 

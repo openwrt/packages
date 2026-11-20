@@ -1,0 +1,347 @@
+From 921b9d3b3a76c5daa6d67f0d9c86f036089addf8 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Thu, 5 Nov 2026 12:59:52 +0000
+Subject: [PATCH 242/243] pipeline: rkisp2: Load the FEC mesh
+
+The ISPP driver enables its FEC stage only with a correction mesh
+loaded on the rkispp_fec_mesh device when streaming starts.
+
+Open the mesh device where the ISPP has one, share two mesh buffers
+with the IPA, have the IPA fill one with the start controls applied
+and queue it before the ISPP starts, and queue a regenerated mesh
+whenever the IPA reports a lens control change. A lens model set only
+after the start takes effect at the next start.
+
+Assisted-by: LLM
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ src/libcamera/pipeline/rkisp2/rkisp2.cpp | 173 ++++++++++++++++++++++-
+ 1 file changed, 170 insertions(+), 3 deletions(-)
+
+--- a/src/libcamera/pipeline/rkisp2/rkisp2.cpp
++++ b/src/libcamera/pipeline/rkisp2/rkisp2.cpp
+@@ -6,6 +6,7 @@
+  */
+ 
+ #include <algorithm>
++#include <array>
+ #include <deque>
+ #include <memory>
+ #include <set>
+@@ -149,7 +150,7 @@ public:
+ 		 V4L2VideoDevice *mainPath, V4L2VideoDevice *param,
+ 		 V4L2VideoDevice *stat, V4L2Subdevice *isppSubdev,
+ 		 V4L2VideoDevice *isppMain, V4L2VideoDevice *isppScale,
+-		 V4L2VideoDevice *isppParam);
++		 V4L2VideoDevice *isppParam, V4L2VideoDevice *isppMesh);
+ 	PixelFormat getSensorFormat(unsigned int mbusCode, const Size &size,
+ 				    const Size &maxSize);
+ 
+@@ -160,6 +161,7 @@ public:
+ 	void computeParamBuffers(unsigned int frame);
+ 	void computeIsppParamBuffer(FrameBuffer *buffer);
+ 	int primeIsppParamBuffer(FrameBuffer *buffer);
++	int primeFecMesh(const ControlList *controls);
+ 
+ 	void tryCompleteRequest(Request *request, FrameBuffer *buffer);
+ 	void tryCompleteRequest(const ControlList &metadata);
+@@ -171,11 +173,14 @@ public:
+ 	void isppScaleBufferReady(FrameBuffer *buffer);
+ 	void statBufferReady(FrameBuffer *buffer);
+ 	void isppParamBufferReady(FrameBuffer *buffer);
++	void isppMeshBufferReady(FrameBuffer *buffer);
+ 
+ 	void paramsComputed(unsigned int frame, unsigned int bufferId, unsigned int bytesused);
+ 	void isppParamsComputed(unsigned int frame, unsigned int bufferId, unsigned int bytesused);
+ 	void setSensorControls(unsigned int frame, const ControlList &sensorControls);
+ 	void metadataReady(const ControlList &metadata);
++	void fecMeshChanged();
++	void fecMeshComputed(unsigned int bufferId, unsigned int bytesused);
+ 
+ 	/* These are the buffers that go between the vicap and the isp */
+ 	std::vector<std::unique_ptr<FrameBuffer>> internalBuffers_;
+@@ -190,6 +195,15 @@ public:
+ 	std::vector<std::unique_ptr<FrameBuffer>> isppParamBuffers_;
+ 	unsigned int isppFrame_;
+ 
++	/*
++	 * The FEC mesh is loaded before streaming starts and replaced when the
++	 * lens controls change; the driver returns a buffer once it holds a copy.
++	 */
++	std::vector<std::unique_ptr<FrameBuffer>> isppMeshBuffers_;
++	std::vector<FrameBuffer *> isppMeshFree_;
++	Size isppMeshSize_;
++	bool isppMeshActive_;
++
+ 	std::unique_ptr<DelayedControls> delayedCtrls_;
+ 
+ 	/*
+@@ -227,6 +241,7 @@ public:
+ 	V4L2VideoDevice *isppMain_;
+ 	V4L2VideoDevice *isppScale_;
+ 	V4L2VideoDevice *isppParam_;
++	V4L2VideoDevice *isppMesh_;
+ 	Stream stream_;
+ 	Stream scaleStream_;
+ 	bool scaleActive_;
+@@ -278,6 +293,8 @@ namespace {
+  * pairs) ensures that the pipeline runs smoothly, without frame drops.
+  */
+ static constexpr unsigned int kRkISP2MinBufferCount = 4;
++/* One mesh loaded in the driver and one being regenerated */
++static constexpr unsigned int kRkISP2FecMeshBufferCount = 2;
+ 
+ /*
+  * A request completes a frame after the VICAP capture, the readback and the
+@@ -366,6 +383,7 @@ private:
+ 	std::unique_ptr<V4L2VideoDevice> isppMain_;
+ 	std::unique_ptr<V4L2VideoDevice> isppScale_;
+ 	std::unique_ptr<V4L2VideoDevice> isppParam_;
++	std::unique_ptr<V4L2VideoDevice> isppMesh_;
+ };
+ 
+ int RkISP2CameraData::init(bool usingIsp, CameraSensor *sensor,
+@@ -374,7 +392,7 @@ int RkISP2CameraData::init(bool usingIsp
+ 			   V4L2VideoDevice *mainPath, V4L2VideoDevice *param,
+ 			   V4L2VideoDevice *stat, V4L2Subdevice *isppSubdev,
+ 			   V4L2VideoDevice *isppMain, V4L2VideoDevice *isppScale,
+-			   V4L2VideoDevice *isppParam)
++			   V4L2VideoDevice *isppParam, V4L2VideoDevice *isppMesh)
+ {
+ 	usingIsp_ = usingIsp;
+ 	usingIspp_ = usingIsp && isppMain;
+@@ -389,6 +407,8 @@ int RkISP2CameraData::init(bool usingIsp
+ 	isppMain_ = isppMain;
+ 	isppScale_ = isppScale;
+ 	isppParam_ = isppParam;
++	isppMesh_ = isppMesh;
++	isppMeshActive_ = false;
+ 	isppFrame_ = 0;
+ 	scaleActive_ = false;
+ 
+@@ -416,6 +436,8 @@ int RkISP2CameraData::init(bool usingIsp
+ 		if (isppScale_)
+ 			isppScale_->bufferReady.connect(this, &RkISP2CameraData::isppScaleBufferReady);
+ 		isppParam_->bufferReady.connect(this, &RkISP2CameraData::isppParamBufferReady);
++		if (isppMesh_)
++			isppMesh_->bufferReady.connect(this, &RkISP2CameraData::isppMeshBufferReady);
+ 	}
+ 
+ 	return 0;
+@@ -456,6 +478,8 @@ int RkISP2CameraData::loadIPA()
+ 	ipa_->isppParamsComputed.connect(this, &RkISP2CameraData::isppParamsComputed);
+ 	ipa_->setSensorControls.connect(this, &RkISP2CameraData::setSensorControls);
+ 	ipa_->metadataReady.connect(this, &RkISP2CameraData::metadataReady);
++	ipa_->fecMeshChanged.connect(this, &RkISP2CameraData::fecMeshChanged);
++	ipa_->fecMeshComputed.connect(this, &RkISP2CameraData::fecMeshComputed);
+ 
+ 	/* The IPA tuning file is made from the sensor name. */
+ 	std::string ipaTuningFile =
+@@ -548,6 +572,113 @@ void RkISP2CameraData::isppParamBufferRe
+ 	computeIsppParamBuffer(buffer);
+ }
+ 
++/*
++ * The driver enables the FEC stage only with a mesh loaded at stream start,
++ * so the start controls apply to it and a lens model set later takes effect
++ * at the next start.
++ */
++int RkISP2CameraData::primeFecMesh(const ControlList *controls)
++{
++	static const std::array<const ControlId *, 5> lensControls = {
++		&controls::rkisp2::LensModel,
++		&controls::rkisp2::LensCentre,
++		&controls::rkisp2::LensCoefficients,
++		&controls::rkisp2::LensFocalLength,
++		&controls::rkisp2::LensCorrectionLevel,
++	};
++	ControlList lens(controls::controls);
++	FrameBuffer *buffer;
++	unsigned int bytesused;
++	int ret;
++
++	for (const ControlId *id : lensControls) {
++		if (controls && controls->contains(id->id()))
++			lens.set(id->id(), controls->get(id->id()));
++	}
++
++	isppMeshActive_ = false;
++	isppMeshFree_.clear();
++	for (const std::unique_ptr<FrameBuffer> &b : isppMeshBuffers_)
++		isppMeshFree_.push_back(b.get());
++
++	if (!isppMesh_ || isppMeshFree_.empty())
++		return 0;
++
++	buffer = isppMeshFree_.back();
++	bytesused = ipa_->primeFecMesh(buffer->cookie(), isppMeshSize_.width,
++				       isppMeshSize_.height, lens);
++	if (!bytesused)
++		return 0;
++
++	ret = isppMesh_->streamOn();
++	if (ret)
++		return ret;
++
++	buffer->_d()->metadata().planes()[0].bytesused = bytesused;
++	ret = isppMesh_->queueBuffer(buffer);
++	if (ret) {
++		isppMesh_->streamOff();
++		return ret;
++	}
++
++	isppMeshFree_.pop_back();
++	isppMeshActive_ = true;
++
++	return 0;
++}
++
++void RkISP2CameraData::isppMeshBufferReady(FrameBuffer *buffer)
++{
++	isppMeshFree_.push_back(buffer);
++}
++
++void RkISP2CameraData::fecMeshChanged()
++{
++	FrameBuffer *buffer;
++
++	if (!isppMeshActive_) {
++		LOG(RkISP2, Warning) << "Lens correction changes apply at the next start";
++		return;
++	}
++
++	if (isppMeshFree_.empty()) {
++		LOG(RkISP2, Warning) << "No free FEC mesh buffer";
++		return;
++	}
++
++	buffer = isppMeshFree_.back();
++	isppMeshFree_.pop_back();
++	ipa_->computeFecMesh(buffer->cookie(), isppMeshSize_.width,
++			     isppMeshSize_.height);
++}
++
++void RkISP2CameraData::fecMeshComputed(unsigned int bufferId,
++				       unsigned int bytesused)
++{
++	auto it = std::find_if(isppMeshBuffers_.begin(), isppMeshBuffers_.end(),
++			       [bufferId](const std::unique_ptr<FrameBuffer> &b) {
++				       return b->cookie() == bufferId;
++			       });
++	FrameBuffer *buffer;
++	int ret;
++
++	if (it == isppMeshBuffers_.end())
++		return;
++
++	buffer = it->get();
++	if (!bytesused) {
++		isppMeshFree_.push_back(buffer);
++		return;
++	}
++
++	buffer->_d()->metadata().planes()[0].bytesused = bytesused;
++	ret = isppMesh_->queueBuffer(buffer);
++	if (ret < 0) {
++		LOG(RkISP2, Error) << "Failed to queue the FEC mesh: " << strerror(-ret);
++		isppMeshFree_.push_back(buffer);
++	}
++}
++
+ void RkISP2CameraData::vicapBufferReady(FrameBuffer *buffer)
+ {
+ 	Request *request = buffer->request();
+@@ -1247,6 +1378,7 @@ int PipelineHandlerRkISP2::configureIspp
+ 		return ret;
+ 
+ 	LOG(RkISP2, Debug) << "ISPP input: " << isppFormat;
++	data->isppMeshSize_ = isppFormat.size;
+ 
+ 	V4L2DeviceFormat outputFormat;
+ 	outputFormat.fourcc = mainPathFormat(isppMain_.get(), cfg.pixelFormat);
+@@ -1427,6 +1559,17 @@ int PipelineHandlerRkISP2::startIspp(Cam
+ 	}
+ 	actions += [&]() { data->param_->streamOff(); };
+ 
++	/* The FEC block of the ISPP parameters takes effect only with a mesh */
++	ret = data->primeFecMesh(controls);
++	if (ret) {
++		LOG(RkISP2, Error) << "Failed to load the FEC mesh " << camera->id();
++		return ret;
++	}
++	actions += [&]() {
++		if (data->isppMeshActive_)
++			data->isppMesh_->streamOff();
++	};
++
+ 	for (const std::unique_ptr<FrameBuffer> &buffer : data->isppParamBuffers_) {
+ 		ret = data->primeIsppParamBuffer(buffer.get());
+ 		if (ret < 0) {
+@@ -1522,6 +1665,10 @@ void PipelineHandlerRkISP2::stopIspp(Cam
+ 	data->stat_->releaseBuffers();
+ 
+ 	data->isppParam_->streamOff();
++	if (data->isppMeshActive_) {
++		data->isppMesh_->streamOff();
++		data->isppMeshActive_ = false;
++	}
+ 	data->param_->streamOff();
+ 
+ 	data->statBuffers_.clear();
+@@ -1782,7 +1929,7 @@ bool PipelineHandlerRkISP2::createCamera
+ 	if (data->init(usingIsp, sensor_.get(), video_.get(), rawrd_.get(),
+ 		       isp_.get(), mainPath_.get(), param_.get(), stat_.get(),
+ 		       isppSubdev_.get(), isppMain_.get(), isppScale_.get(),
+-		       isppParam_.get())) {
++		       isppParam_.get(), isppMesh_.get())) {
+ 		LOG(RkISP2, Error) << "Failed to initialize data";
+ 		return false;
+ 	}
+@@ -2011,6 +2158,11 @@ bool PipelineHandlerRkISP2::match(Device
+ 		return false;
+ 	}
+ 
++	/* Without the mesh device the FEC stage stays off. */
++	isppMesh_ = V4L2VideoDevice::fromEntityName(isppMedia_.get(), "rkispp_fec_mesh");
++	if (isppMesh_ && isppMesh_->open() < 0)
++		isppMesh_.reset();
++
+ 	/* The first scaler output carries a second, scaled stream. */
+ 	isppScale_ = V4L2VideoDevice::fromEntityName(isppMedia_.get(), "rkispp_scale0");
+ 	if (isppScale_ && isppScale_->open() < 0) {
+@@ -2065,6 +2217,15 @@ int PipelineHandlerRkISP2::allocateBuffe
+ 			return ret;
+ 
+ 		actions += [&]() { data->isppParam_->releaseBuffers(); };
++
++		if (data->isppMesh_) {
++			ret = data->isppMesh_->allocateBuffers(kRkISP2FecMeshBufferCount,
++							       &data->isppMeshBuffers_);
++			if (ret < 0)
++				return ret;
++
++			actions += [&]() { data->isppMesh_->releaseBuffers(); };
++		}
+ 	}
+ 
+ 	auto pushBuffers = [&](const std::vector<std::unique_ptr<FrameBuffer>> &buffers) {
+@@ -2081,6 +2242,7 @@ int PipelineHandlerRkISP2::allocateBuffe
+ 	pushBuffers(data->paramQueue_->buffers());
+ 	pushBuffers(data->statBuffers_);
+ 	pushBuffers(data->isppParamBuffers_);
++	pushBuffers(data->isppMeshBuffers_);
+ 
+ 	data->ipa_->mapBuffers(data->ipaBuffers_);
+ 
+@@ -2104,6 +2266,11 @@ int PipelineHandlerRkISP2::freeBuffers(C
+ 	if (data->usingIspp_) {
+ 		data->isppParamBuffers_.clear();
+ 		data->isppParam_->releaseBuffers();
++		if (data->isppMesh_) {
++			data->isppMeshFree_.clear();
++			data->isppMeshBuffers_.clear();
++			data->isppMesh_->releaseBuffers();
++		}
+ 	}
+ 
+ 	return 0;

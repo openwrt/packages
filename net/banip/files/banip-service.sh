@@ -86,6 +86,21 @@ for feed in allowlist ${ban_monitorfeed} ${ban_feed} blocklist; do
 	done
 	json_select ..
 
+	# resolve the auth-key placeholder, skip the feed without a valid key
+	#
+	case "${feed_url_4}${feed_url_6}" in
+	*"{authkey}"*)
+		case "${ban_authkey}" in
+		"" | *[!A-Za-z0-9_-]*)
+			f_log "info" "skip feed '${feed}', no valid auth-key set"
+			continue
+			;;
+		esac
+		feed_url_4="$(f_feedurl "${feed_url_4}" "authkey" "${ban_authkey}")"
+		feed_url_6="$(f_feedurl "${feed_url_6}" "authkey" "${ban_authkey}")"
+		;;
+	esac
+
 	# skip incomplete feeds
 	#
 	if { [ -z "${feed_url_4}" ] && [ -z "${feed_url_6}" ]; } ||
@@ -160,6 +175,15 @@ for feed in allowlist ${ban_monitorfeed} ${ban_feed} blocklist; do
 	fi
 done
 wait
+
+# mask the auth-key in the debug error log (download utilities may print the full url)
+#
+case "${ban_authkey}" in
+"" | *[!A-Za-z0-9_-]*) ;;
+*)
+	[ -s "${ban_errorlog}" ] && "${ban_sedcmd}" -i "s/${ban_authkey}/<authkey>/g" "${ban_errorlog}"
+	;;
+esac
 f_rmset
 f_genstatus "active"
 

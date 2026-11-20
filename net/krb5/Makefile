@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=krb5
-PKG_VERSION:=1.22.2
+PKG_VERSION:=1.22.3
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
@@ -19,7 +19,7 @@ PKG_CPE_ID:=cpe:/a:mit:kerberos_5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://web.mit.edu/kerberos/dist/krb5/1.22
-PKG_HASH:=3243ffbc8ea4d4ac22ddc7dd2a1dc54c57874c40648b60ff97009763554eaf13
+PKG_HASH:=fe90af8441ad9fa9b064b8e53077cefb782a96f8a68276b031dc54af1789ff0b
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -64,7 +64,7 @@ define Package/krb5-client
 endef
 
 define Package/krb5/description
-  Kerberos is a network authentication protocol. 
+  Kerberos is a network authentication protocol.
   It is designed to provide strong authentication for client/server applications by using secret-key cryptography.
 endef
 

@@ -1,0 +1,77 @@
+From 38d55657471d3eca74ca56ba2fcb43d4b4eb27ac Mon Sep 17 00:00:00 2001
+From: Stefan Klug <stefan.klug@ideasonboard.com>
+Date: Wed, 25 Mar 2026 16:13:36 +0100
+Subject: [PATCH] libcamera: delayed_controls: Queue noop when needed, not
+ before
+
+A no-op is queued when DelayedControls runs out of controls at the end
+of applyControls(). But these controls are only needed on the next call
+to applyControls(), so there is still time for a proper push. To fix
+that, move the no-op push to the beginning of applyContols().
+
+Drop writeCount_ as it is no longer needed.
+
+Signed-off-by: Stefan Klug <stefan.klug@ideasonboard.com>
+---
+ include/libcamera/internal/delayed_controls.h |  1 -
+ src/libcamera/delayed_controls.cpp            | 18 ++++++++----------
+ 2 files changed, 8 insertions(+), 11 deletions(-)
+
+--- a/include/libcamera/internal/delayed_controls.h
++++ b/include/libcamera/internal/delayed_controls.h
+@@ -76,7 +76,6 @@ private:
+ 	unsigned int maxDelay_;
+ 
+ 	uint32_t queueCount_;
+-	uint32_t writeCount_;
+ 	/* \todo Evaluate if we should index on ControlId * or unsigned int */
+ 	std::unordered_map<const ControlId *, ControlRingBuffer> values_;
+ };
+--- a/src/libcamera/delayed_controls.cpp
++++ b/src/libcamera/delayed_controls.cpp
+@@ -116,7 +116,6 @@ DelayedControls::DelayedControls(V4L2Dev
+ void DelayedControls::reset()
+ {
+ 	queueCount_ = 1;
+-	writeCount_ = 0;
+ 
+ 	/* Retrieve control as reported by the device. */
+ 	std::vector<uint32_t> ids;
+@@ -272,6 +271,13 @@ void DelayedControls::applyControls(uint
+ {
+ 	LOG(DelayedControls, Debug) << "frame " << sequence << " started";
+ 
++	while (queueCount_ - 1 < sequence) {
++		LOG(DelayedControls, Warning)
++			<< "Queue is empty, auto queue no-op for sequence "
++			<< queueCount_;
++		push(queueCount_, {});
++	}
++
+ 	/*
+ 	 * Create control list peeking ahead in the value queue to ensure
+ 	 * values are set in time to satisfy the sensor delay.
+@@ -280,7 +286,7 @@ void DelayedControls::applyControls(uint
+ 	for (auto &ctrl : values_) {
+ 		const ControlId *id = ctrl.first;
+ 		unsigned int delayDiff = maxDelay_ - controlParams_[id].delay;
+-		unsigned int index = std::max<int>(0, writeCount_ - delayDiff);
++		unsigned int index = std::max<int>(0, sequence - delayDiff);
+ 		Info &info = ctrl.second[index];
+ 
+ 		if (info.updated) {
+@@ -310,14 +316,6 @@ void DelayedControls::applyControls(uint
+ 		}
+ 	}
+ 
+-	writeCount_ = sequence + 1;
+-
+-	while (writeCount_ > queueCount_) {
+-		LOG(DelayedControls, Warning)
+-			<< "Queue is empty, auto queue no-op.";
+-		push(queueCount_, {});
+-	}
+-
+ 	device_->setControls(&out);
+ }
+ 

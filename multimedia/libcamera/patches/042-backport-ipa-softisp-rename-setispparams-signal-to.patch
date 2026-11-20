@@ -1,0 +1,76 @@
+From 0c10a6755270e499fb720d7145cdfe24657c815b Mon Sep 17 00:00:00 2001
+From: Hans de Goede <johannes.goede@oss.qualcomm.com>
+Date: Tue, 18 Aug 2026 16:05:48 +0200
+Subject: [PATCH] ipa: softisp: Rename setIspParams signal to paramsComputed
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Rename the softisp IPA setIspParams signal to paramsComputed and pass
+the frame-number as argument to make the softisp IPA behavior consistent
+with other IPA implementations.
+
+Reviewed-by: Kieran Bingham <kieran.bingham@ideasonboard.com>
+Reviewed-by: Barnabás Pőcze <barnabas.pocze@ideasonboard.com>
+Reviewed-by: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Signed-off-by: Hans de Goede <johannes.goede@oss.qualcomm.com>
+Signed-off-by: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+---
+ include/libcamera/internal/software_isp/software_isp.h | 2 +-
+ include/libcamera/ipa/softisp.mojom                    | 2 +-
+ src/ipa/softisp/softisp.cpp                            | 2 +-
+ src/libcamera/software_isp/software_isp.cpp            | 4 ++--
+ 4 files changed, 5 insertions(+), 5 deletions(-)
+
+--- a/include/libcamera/internal/software_isp/software_isp.h
++++ b/include/libcamera/internal/software_isp/software_isp.h
+@@ -89,7 +89,7 @@ public:
+ 	Signal<const ControlList &> setSensorControls;
+ 
+ private:
+-	void saveIspParams();
++	void saveIspParams(uint32_t frame);
+ 	void setSensorCtrls(const ControlList &sensorControls);
+ 	void statsReady(uint32_t frame, uint32_t bufferId);
+ 	void inputReady(FrameBuffer *input);
+--- a/include/libcamera/ipa/softisp.mojom
++++ b/include/libcamera/ipa/softisp.mojom
+@@ -33,6 +33,6 @@ interface IPASoftIspInterface {
+ 
+ interface IPASoftIspEventInterface {
+ 	setSensorControls(libcamera.ControlList sensorControls);
+-	setIspParams();
++	paramsComputed(uint32 frame);
+ 	metadataReady(uint32 frame, libcamera.ControlList metadata);
+ };
+--- a/src/ipa/softisp/softisp.cpp
++++ b/src/ipa/softisp/softisp.cpp
+@@ -292,7 +292,7 @@ void IPASoftIsp::computeParams(const uin
+ 		algo->prepare(context_, frame, frameContext, params_);
+ 	params_->combinedMatrix = context_.activeState.combinedMatrix;
+ 
+-	setIspParams.emit();
++	paramsComputed.emit(frame);
+ }
+ 
+ void IPASoftIsp::processStats(const uint32_t frame,
+--- a/src/libcamera/software_isp/software_isp.cpp
++++ b/src/libcamera/software_isp/software_isp.cpp
+@@ -170,7 +170,7 @@ SoftwareIsp::SoftwareIsp(PipelineHandler
+ 		return;
+ 	}
+ 
+-	ipa_->setIspParams.connect(this, &SoftwareIsp::saveIspParams);
++	ipa_->paramsComputed.connect(this, &SoftwareIsp::saveIspParams);
+ 	ipa_->metadataReady.connect(this,
+ 				    [this](uint32_t frame, const ControlList &metadata) {
+ 					    metadataReady.emit(frame, metadata);
+@@ -431,7 +431,7 @@ void SoftwareIsp::process(uint32_t frame
+ 			       ConnectionTypeQueued, frame, input, output, debayerParams_);
+ }
+ 
+-void SoftwareIsp::saveIspParams()
++void SoftwareIsp::saveIspParams([[maybe_unused]] uint32_t frame)
+ {
+ 	debayerParams_ = *sharedParams_;
+ }

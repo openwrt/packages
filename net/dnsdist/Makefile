@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dnsdist
 PKG_VERSION:=2.1.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://downloads.powerdns.com/releases/
@@ -71,6 +71,7 @@ endef
 
 define Package/dnsdist
   $(call Package/dnsdist/Default,mini,- minimal version with a restricted feature set)
+  CONFLICTS:=dnsdist-full
   DEPENDS+= \
 	  +DNSDIST_LIBEDIT:libedit \
 	  +DNSDIST_DNSTAP:libfstrm \

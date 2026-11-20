@@ -223,10 +223,10 @@
 		"flag": "gz"
 	},
 	"urlhaus":{
-		"url_4": "https://urlhaus.abuse.ch/downloads/ids/",
-		"rule": "suricata 1",
+		"url_4": "https://urlhaus-api.abuse.ch/v2/files/exports/{authkey}/urls_recent.txt",
+		"rule": "feed 4 /|:",
 		"chain": "out",
-		"descr": "urlhaus IDS IPs",
+		"descr": "urlhaus malware IPs",
 		"flag": "tcp udp 80 443"
 	},
 	"urlvir":{

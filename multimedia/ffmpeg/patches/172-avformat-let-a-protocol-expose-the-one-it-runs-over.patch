@@ -1,0 +1,227 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Thu, 17 Sep 2026 23:11:18 +0100
+Subject: [PATCH] avformat: let a protocol expose the one it runs over
+
+Options of a nested protocol cannot be read back from the enclosing one.
+A URLContext offers its own private context as an AVOptions child, so a
+lookup on an http connection reaches the HTTP options and stops there,
+while the TCP options underneath, among them the local bind address,
+stay out of reach. Exposing the nested context as another AVOptions
+child would not do: it would change lookup precedence for URLContext
+options such as rw_timeout, because children are searched before the
+object itself.
+
+Add url_get_nested() and implement it for http and tls, which lets a
+caller walk the chain deliberately. It has no user yet.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+Link: https://code.ffmpeg.org/FFmpeg/FFmpeg/pulls/24565
+---
+ libavformat/avio.c                |  7 +++++++
+ libavformat/http.c                |  8 ++++++++
+ libavformat/tls.c                 |  7 +++++++
+ libavformat/tls.h                 |  2 ++
+ libavformat/tls_gnutls.c          |  2 ++
+ libavformat/tls_libtls.c          |  1 +
+ libavformat/tls_mbedtls.c         |  2 ++
+ libavformat/tls_openssl.c         |  2 ++
+ libavformat/tls_schannel.c        |  2 ++
+ libavformat/tls_securetransport.c |  1 +
+ libavformat/url.h                 | 12 ++++++++++++
+ 11 files changed, 46 insertions(+)
+
+--- a/libavformat/avio.c
++++ b/libavformat/avio.c
+@@ -850,6 +850,13 @@ int ffurl_get_short_seek(void *urlcontex
+     return h->prot->url_get_short_seek(h);
+ }
+ 
++URLContext *ffurl_get_nested(URLContext *h)
++{
++    if (!h || !h->prot || !h->prot->url_get_nested)
++        return NULL;
++    return h->prot->url_get_nested(h);
++}
++
+ int ffurl_shutdown(URLContext *h, int flags)
+ {
+     if (!h || !h->prot || !h->prot->url_shutdown)
+--- a/libavformat/http.c
++++ b/libavformat/http.c
+@@ -2219,6 +2219,12 @@ static int http_get_short_seek(URLContex
+     return ffurl_get_short_seek(s->hd);
+ }
+ 
++static URLContext *http_get_nested(URLContext *h)
++{
++    HTTPContext *s = h->priv_data;
++    return s->hd;
++}
++
+ #define HTTP_CLASS(flavor)                          \
+ static const AVClass flavor ## _context_class = {   \
+     .class_name = # flavor,                         \
+@@ -2241,6 +2247,7 @@ const URLProtocol ff_http_protocol = {
+     .url_close           = http_close,
+     .url_get_file_handle = http_get_file_handle,
+     .url_get_short_seek  = http_get_short_seek,
++    .url_get_nested      = http_get_nested,
+     .url_shutdown        = http_shutdown,
+     .priv_data_size      = sizeof(HTTPContext),
+     .priv_data_class     = &http_context_class,
+@@ -2261,6 +2268,7 @@ const URLProtocol ff_https_protocol = {
+     .url_close           = http_close,
+     .url_get_file_handle = http_get_file_handle,
+     .url_get_short_seek  = http_get_short_seek,
++    .url_get_nested      = http_get_nested,
+     .url_shutdown        = http_shutdown,
+     .priv_data_size      = sizeof(HTTPContext),
+     .priv_data_class     = &https_context_class,
+--- a/libavformat/tls.c
++++ b/libavformat/tls.c
+@@ -51,6 +51,13 @@ int ff_tls_parse_host(TLSShared *s, char
+     return 0;
+ }
+ 
++URLContext *ff_tls_get_nested(URLContext *h)
++{
++    TLSShared *c = h->priv_data;
++
++    return c->is_dtls ? c->udp : c->tcp;
++}
++
+ int ff_tls_open_underlying(TLSShared *c, URLContext *parent, const char *uri, AVDictionary **options)
+ {
+     int port;
+--- a/libavformat/tls.h
++++ b/libavformat/tls.h
+@@ -112,6 +112,8 @@ int ff_tls_parse_host(TLSShared *s, char
+ 
+ int ff_tls_open_underlying(TLSShared *c, URLContext *parent, const char *uri, AVDictionary **options);
+ 
++URLContext *ff_tls_get_nested(URLContext *h);
++
+ int ff_url_read_all(const char *url, AVBPrint *bp);
+ 
+ int ff_tls_set_external_socket(URLContext *h, URLContext *sock);
+--- a/libavformat/tls_gnutls.c
++++ b/libavformat/tls_gnutls.c
+@@ -776,6 +776,7 @@ const URLProtocol ff_tls_protocol = {
+     .url_close      = tls_close,
+     .url_get_file_handle = tls_get_file_handle,
+     .url_get_short_seek  = tls_get_short_seek,
++    .url_get_nested      = ff_tls_get_nested,
+     .priv_data_size = sizeof(TLSContext),
+     .flags          = URL_PROTOCOL_FLAG_NETWORK,
+     .priv_data_class = &tls_class,
+@@ -797,6 +798,7 @@ const URLProtocol ff_dtls_protocol = {
+     .url_close      = tls_close,
+     .url_get_file_handle = tls_get_file_handle,
+     .url_get_short_seek  = tls_get_short_seek,
++    .url_get_nested      = ff_tls_get_nested,
+     .priv_data_size = sizeof(TLSContext),
+     .flags          = URL_PROTOCOL_FLAG_NETWORK,
+     .priv_data_class = &dtls_class,
+--- a/libavformat/tls_libtls.c
++++ b/libavformat/tls_libtls.c
+@@ -211,6 +211,7 @@ const URLProtocol ff_tls_protocol = {
+     .url_close      = ff_tls_close,
+     .url_get_file_handle = tls_get_file_handle,
+     .url_get_short_seek  = tls_get_short_seek,
++    .url_get_nested      = ff_tls_get_nested,
+     .priv_data_size = sizeof(TLSContext),
+     .flags          = URL_PROTOCOL_FLAG_NETWORK,
+     .priv_data_class = &tls_class,
+--- a/libavformat/tls_mbedtls.c
++++ b/libavformat/tls_mbedtls.c
+@@ -854,6 +854,7 @@ const URLProtocol ff_tls_protocol = {
+     .url_close      = tls_close,
+     .url_get_file_handle = tls_get_file_handle,
+     .url_get_short_seek  = tls_get_short_seek,
++    .url_get_nested      = ff_tls_get_nested,
+     .priv_data_size = sizeof(TLSContext),
+     .flags          = URL_PROTOCOL_FLAG_NETWORK,
+     .priv_data_class = &tls_class,
+@@ -875,6 +876,7 @@ const URLProtocol ff_dtls_protocol = {
+     .url_close      = tls_close,
+     .url_get_file_handle = tls_get_file_handle,
+     .url_get_short_seek  = tls_get_short_seek,
++    .url_get_nested      = ff_tls_get_nested,
+     .priv_data_size = sizeof(TLSContext),
+     .flags          = URL_PROTOCOL_FLAG_NETWORK,
+     .priv_data_class = &dtls_class,
+--- a/libavformat/tls_openssl.c
++++ b/libavformat/tls_openssl.c
+@@ -1007,6 +1007,7 @@ const URLProtocol ff_tls_protocol = {
+     .url_close      = tls_close,
+     .url_get_file_handle = tls_get_file_handle,
+     .url_get_short_seek  = tls_get_short_seek,
++    .url_get_nested      = ff_tls_get_nested,
+     .priv_data_size = sizeof(TLSContext),
+     .flags          = URL_PROTOCOL_FLAG_NETWORK,
+     .priv_data_class = &tls_class,
+@@ -1028,6 +1029,7 @@ const URLProtocol ff_dtls_protocol = {
+     .url_write      = tls_write,
+     .url_get_file_handle = tls_get_file_handle,
+     .url_get_short_seek  = tls_get_short_seek,
++    .url_get_nested      = ff_tls_get_nested,
+     .priv_data_size = sizeof(TLSContext),
+     .flags          = URL_PROTOCOL_FLAG_NETWORK,
+     .priv_data_class = &dtls_class,
+--- a/libavformat/tls_schannel.c
++++ b/libavformat/tls_schannel.c
+@@ -1472,6 +1472,7 @@ const URLProtocol ff_tls_protocol = {
+     .url_close      = tls_close,
+     .url_get_file_handle = tls_get_file_handle,
+     .url_get_short_seek  = tls_get_short_seek,
++    .url_get_nested      = ff_tls_get_nested,
+     .priv_data_size = sizeof(TLSContext),
+     .flags          = URL_PROTOCOL_FLAG_NETWORK,
+     .priv_data_class = &tls_class,
+@@ -1495,6 +1496,7 @@ const URLProtocol ff_dtls_protocol = {
+     .url_write      = tls_write,
+     .url_get_file_handle = tls_get_file_handle,
+     .url_get_short_seek  = tls_get_short_seek,
++    .url_get_nested      = ff_tls_get_nested,
+     .priv_data_size = sizeof(TLSContext),
+     .flags          = URL_PROTOCOL_FLAG_NETWORK,
+     .priv_data_class = &dtls_class,
+--- a/libavformat/tls_securetransport.c
++++ b/libavformat/tls_securetransport.c
+@@ -422,6 +422,7 @@ const URLProtocol ff_tls_protocol = {
+     .url_close      = tls_close,
+     .url_get_file_handle = tls_get_file_handle,
+     .url_get_short_seek  = tls_get_short_seek,
++    .url_get_nested      = ff_tls_get_nested,
+     .priv_data_size = sizeof(TLSContext),
+     .flags          = URL_PROTOCOL_FLAG_NETWORK,
+     .priv_data_class = &tls_class,
+--- a/libavformat/url.h
++++ b/libavformat/url.h
+@@ -83,6 +83,10 @@ typedef struct URLProtocol {
+     int (*url_get_multi_file_handle)(URLContext *h, int **handles,
+                                      int *numhandles);
+     int (*url_get_short_seek)(URLContext *h);
++    /**
++     * Return the protocol this one runs over, NULL while not connected.
++     */
++    URLContext *(*url_get_nested)(URLContext *h);
+     int (*url_shutdown)(URLContext *h, int flags);
+     const AVClass *priv_data_class;
+     int priv_data_size;
+@@ -264,6 +268,14 @@ int ffurl_get_multi_file_handle(URLConte
+ int ffurl_get_short_seek(void *urlcontext);
+ 
+ /**
++ * Return the protocol this URL runs over, for example the TCP connection
++ * carrying an HTTP request.
++ *
++ * @return the nested resource, or NULL if there is none.
++ */
++URLContext *ffurl_get_nested(URLContext *h);
++
++/**
+  * Signal the URLContext that we are done reading or writing the stream.
+  *
+  * @param h pointer to the resource

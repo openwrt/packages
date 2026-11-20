@@ -1,0 +1,29 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Wed, 11 Nov 2026 18:03:29 +0000
+Subject: [PATCH] v4l2codecs: decoder: Make the probed caps writable before
+ filtering
+
+When none of the driver's capture formats maps to a known format, the
+intersection with the template caps is empty, and
+gst_caps_intersect_full() returns a reference to the shared
+GST_CAPS_NONE. gst_v4l2_decoder_enum_src_formats_full() then filters
+and appends to it in place, which fails the writability assertions of
+gst_caps_filter_and_map_in_place() and gst_caps_append(). Seen with the
+Raspberry Pi HEVC decoder on 10-bit streams, whose column formats
+v4l2codecs did not know.
+---
+ sys/v4l2codecs/gstv4l2decoder.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+--- a/sys/v4l2codecs/gstv4l2decoder.c
++++ b/sys/v4l2codecs/gstv4l2decoder.c
+@@ -599,6 +599,8 @@ gst_v4l2_decoder_enum_src_formats_full (
+   gst_caps_unref (tmp);
+   gst_caps_unref (filter);
+ 
++  /* An empty intersection is the shared GST_CAPS_NONE */
++  caps = gst_caps_make_writable (caps);
+   tmp = gst_caps_copy (caps);
+   gst_caps_filter_and_map_in_place (caps, filter_only_dmabuf_caps, NULL);
+   gst_caps_filter_and_map_in_place (tmp, filter_non_dmabuf_caps, NULL);

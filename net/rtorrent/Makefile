@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtorrent
 PKG_VERSION:=0.15.5
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/rakshasa/rtorrent
@@ -56,6 +56,7 @@ endef
 define Package/rtorrent-rpc
 $(call Package/rtorrent/Default)
   VARIANT:=rpc
+  CONFLICTS:=rtorrent
   DEPENDS+=+xmlrpc-c-server
   TITLE+=(with rpc support)
 endef

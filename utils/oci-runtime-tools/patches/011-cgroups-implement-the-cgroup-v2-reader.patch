@@ -1,0 +1,838 @@
+From 128fb1c4c627c0669715c3d72a8e59816a7e6320 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Tue, 20 Oct 2026 16:57:29 +0100
+Subject: [PATCH] cgroups: implement the cgroup v2 reader
+
+FindCgroup() refused to work on a host that only mounts the unified
+hierarchy, and CgroupV2 was a stub whose methods carried no receivers,
+so the type never satisfied the Cgroup interface. Every validation test
+that reads resource limits back out of the cgroup filesystem failed with
+"cgroupv2 is not supported yet" on any current distribution.
+
+The unified hierarchy is always mounted at /sys/fs/cgroup, so
+FindCgroup() recognises it by the filesystem type statfs(2) reports
+there and only parses mountinfo for the cgroup v1 controllers.
+GetCgroupV2Path() reads a process's place in the hierarchy from the
+"0::" entry of /proc/<pid>/cgroup.
+
+Read the unified control files: memory.{max,low,swap.max}, cpu.max,
+cpuset.{cpus,mems}, pids.max, hugetlb.<size>.max and io.max.
+memory.swap.max limits swap alone while the configuration field covers
+memory plus swap, so the memory limit is added back. cpuset files fall
+back to the effective set, which is where the unified hierarchy reports
+an inherited value.
+
+Values the unified hierarchy does not carry are left unset rather than
+guessed, so that a caller can tell them apart from a real zero. That
+covers swappiness, disableOOMKiller, useHierarchy, kernel, kernelTCP
+and the block IO weights, and also cpu.shares, which runtimes map onto
+cpu.weight through a lossy conversion the runtime-spec does not define.
+The devices and network controllers have no unified counterpart at all:
+device access is enforced by an eBPF program that cannot be read back,
+and net_cls and net_prio were never ported, so both report that rather
+than a missing file.
+
+The tests read and write a real cgroup below /sys/fs/cgroup and are
+skipped on a host without cgroup v2 or without the permission to create
+one. Version() lets a caller ask which hierarchy it is talking to.
+
+Relates to #807.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ cgroups/cgroups.go         |  39 +++-
+ cgroups/cgroups_v1.go      |   5 +
+ cgroups/cgroups_v2.go      | 277 ++++++++++++++++++++++++++--
+ cgroups/cgroups_v2_test.go | 368 +++++++++++++++++++++++++++++++++++++
+ 4 files changed, 666 insertions(+), 23 deletions(-)
+ create mode 100644 cgroups/cgroups_v2_test.go
+
+--- a/cgroups/cgroups.go
++++ b/cgroups/cgroups.go
+@@ -2,6 +2,7 @@ package cgroups
+ 
+ import (
+ 	"bufio"
++	"errors"
+ 	"fmt"
+ 	"os"
+ 	"path/filepath"
+@@ -9,6 +10,7 @@ import (
+ 	"strings"
+ 
+ 	rspec "github.com/opencontainers/runtime-spec/specs-go"
++	"golang.org/x/sys/unix"
+ )
+ 
+ var (
+@@ -20,6 +22,7 @@ var (
+ 
+ // Cgroup represents interfaces for cgroup validation
+ type Cgroup interface {
++	Version() int
+ 	GetBlockIOData(pid int, cgPath string) (*rspec.LinuxBlockIO, error)
+ 	GetCPUData(pid int, cgPath string) (*rspec.LinuxCPU, error)
+ 	GetDevicesData(pid int, cgPath string) ([]rspec.LinuxDeviceCgroup, error)
+@@ -31,13 +34,18 @@ type Cgroup interface {
+ 
+ // FindCgroup gets cgroup root mountpoint
+ func FindCgroup() (Cgroup, error) {
++	var st unix.Statfs_t
++
++	if err := unix.Statfs(unifiedPath, &st); err == nil && st.Type == unix.CGROUP2_SUPER_MAGIC {
++		return &CgroupV2{}, nil
++	}
++
+ 	f, err := os.Open("/proc/self/mountinfo")
+ 	if err != nil {
+ 		return nil, err
+ 	}
+ 	defer f.Close()
+ 
+-	cgroupv2 := false
+ 	scanner := bufio.NewScanner(f)
+ 	for scanner.Scan() {
+ 		text := scanner.Text()
+@@ -59,10 +67,6 @@ func FindCgroup() (Cgroup, error) {
+ 				MountPath: filepath.Dir(fields[4]),
+ 			}
+ 			return cg, nil
+-		} else if postSeparatorFields[0] == "cgroup2" {
+-			cgroupv2 = true
+-			continue
+-			// TODO cgroupv2 unimplemented
+ 		}
+ 	}
+ 
+@@ -70,9 +74,6 @@ func FindCgroup() (Cgroup, error) {
+ 		return nil, err
+ 	}
+ 
+-	if cgroupv2 {
+-		return nil, fmt.Errorf("cgroupv2 is not supported yet")
+-	}
+ 	return nil, fmt.Errorf("cgroup is not found")
+ }
+ 
+@@ -97,3 +98,25 @@ func GetV1SubsystemPath(pid int, subsyst
+ 
+ 	return "", fmt.Errorf("subsystem %s not found", subsystem)
+ }
++
++// GetCgroupV2Path gets the path of a process in the unified hierarchy
++func GetCgroupV2Path(pid int) (string, error) {
++	f, err := os.Open(fmt.Sprintf("/proc/%d/cgroup", pid))
++	if err != nil {
++		return "", err
++	}
++	defer f.Close()
++
++	s := bufio.NewScanner(f)
++	for s.Scan() {
++		// "0::/user.slice/user-1001.slice/session-1.scope"
++		if path, ok := strings.CutPrefix(s.Text(), "0::"); ok {
++			return path, nil
++		}
++	}
++	if err := s.Err(); err != nil {
++		return "", err
++	}
++
++	return "", errors.New("cgroup v2 path not found")
++}
+--- a/cgroups/cgroups_v1.go
++++ b/cgroups/cgroups_v1.go
+@@ -17,6 +17,11 @@ type CgroupV1 struct {
+ 	MountPath string
+ }
+ 
++// Version returns the hierarchy version this implementation reads
++func (cg *CgroupV1) Version() int {
++	return 1
++}
++
+ // HugePageSizeUnitList is a list of the units used by the linux kernel when
+ // naming the HugePage control files.
+ // https://www.kernel.org/doc/Documentation/cgroup-v1/hugetlb.txt
+--- a/cgroups/cgroups_v2.go
++++ b/cgroups/cgroups_v2.go
+@@ -2,46 +2,293 @@ package cgroups
+ 
+ import (
+ 	"fmt"
++	"math"
++	"os"
++	"path/filepath"
++	"strconv"
++	"strings"
+ 
+ 	rspec "github.com/opencontainers/runtime-spec/specs-go"
++	"github.com/opencontainers/runtime-tools/specerror"
+ )
+ 
+ // CgroupV2 used for cgroupv2 validation
+-type CgroupV2 struct {
+-	MountPath string
++type CgroupV2 struct{}
++
++// unifiedPath is where the unified hierarchy is mounted.
++const unifiedPath = "/sys/fs/cgroup"
++
++// unlimited is how the unified hierarchy spells "no limit".
++const unlimited = "max"
++
++func attachError() error {
++	return specerror.NewError(specerror.CgroupsPathAttach, fmt.Errorf("The runtime MUST consistently attach to the same place in the cgroups hierarchy given the same value of `cgroupsPath`"), rspec.Version)
++}
++
++func parseLimit(value string) (int64, error) {
++	if value == unlimited {
++		return -1, nil
++	}
++	return strconv.ParseInt(value, 10, 64)
++}
++
++// Version returns the hierarchy version this implementation reads
++func (cg *CgroupV2) Version() int {
++	return 2
++}
++
++func (cg *CgroupV2) dir(pid int, cgPath string) (string, error) {
++	if filepath.IsAbs(cgPath) {
++		path := filepath.Join(unifiedPath, cgPath)
++		if _, err := os.Stat(path); err != nil {
++			if os.IsNotExist(err) {
++				return "", specerror.NewError(specerror.CgroupsAbsPathRelToMount, fmt.Errorf("In the case of an absolute path, the runtime MUST take the path to be relative to the cgroups mount point"), rspec.Version)
++			}
++			return "", err
++		}
++		return path, nil
++	}
++
++	subPath, err := GetCgroupV2Path(pid)
++	if err != nil {
++		return "", err
++	}
++	if !strings.Contains(subPath, cgPath) {
++		return "", fmt.Errorf("cgroup %s is not mounted as expected", cgPath)
++	}
++
++	return filepath.Join(unifiedPath, subPath), nil
++}
++
++// readValue returns the trimmed contents of a control file, or an empty
++// string if the controller does not provide it.
++func (cg *CgroupV2) readValue(pid int, cgPath string, name string) (string, error) {
++	dir, err := cg.dir(pid, cgPath)
++	if err != nil {
++		return "", err
++	}
++
++	contents, err := os.ReadFile(filepath.Join(dir, name))
++	if err != nil {
++		if os.IsNotExist(err) {
++			return "", nil
++		}
++		return "", err
++	}
++
++	return strings.TrimSpace(string(contents)), nil
++}
++
++func (cg *CgroupV2) readLimit(pid int, cgPath string, name string) (int64, error) {
++	value, err := cg.readValue(pid, cgPath, name)
++	if err != nil {
++		return 0, err
++	}
++	if value == "" {
++		return 0, attachError()
++	}
++
++	return parseLimit(value)
++}
++
++// readCPUSet falls back to the effective set because the unified hierarchy
++// leaves the configured file empty while the cgroup inherits its parent.
++func (cg *CgroupV2) readCPUSet(pid int, cgPath string, name string) (string, error) {
++	value, err := cg.readValue(pid, cgPath, name)
++	if err != nil || value != "" {
++		return value, err
++	}
++
++	return cg.readValue(pid, cgPath, name+".effective")
+ }
+ 
+ // GetBlockIOData gets cgroup blockio data
+-func GetBlockIOData(pid int, cgPath string) (*rspec.LinuxBlockIO, error) {
+-	return nil, fmt.Errorf("unimplemented yet")
++func (cg *CgroupV2) GetBlockIOData(pid int, cgPath string) (*rspec.LinuxBlockIO, error) {
++	value, err := cg.readValue(pid, cgPath, "io.max")
++	if err != nil {
++		return nil, err
++	}
++
++	lb := &rspec.LinuxBlockIO{}
++	if value == "" {
++		return lb, nil
++	}
++
++	for _, line := range strings.Split(value, "\n") {
++		if err := addThrottleDevices(lb, line); err != nil {
++			return nil, err
++		}
++	}
++
++	return lb, nil
++}
++
++func addThrottleDevices(lb *rspec.LinuxBlockIO, line string) error {
++	fields := strings.Fields(line)
++	if len(fields) < 2 {
++		return nil
++	}
++
++	major, minor, err := getDeviceID(fields[0])
++	if err != nil {
++		return err
++	}
++
++	for _, field := range fields[1:] {
++		key, value, found := strings.Cut(field, "=")
++		if !found || value == unlimited {
++			continue
++		}
++		rate, err := strconv.ParseUint(value, 10, 64)
++		if err != nil {
++			return err
++		}
++		ltd := rspec.LinuxThrottleDevice{}
++		ltd.Major = major
++		ltd.Minor = minor
++		ltd.Rate = rate
++		switch key {
++		case "rbps":
++			lb.ThrottleReadBpsDevice = append(lb.ThrottleReadBpsDevice, ltd)
++		case "wbps":
++			lb.ThrottleWriteBpsDevice = append(lb.ThrottleWriteBpsDevice, ltd)
++		case "riops":
++			lb.ThrottleReadIOPSDevice = append(lb.ThrottleReadIOPSDevice, ltd)
++		case "wiops":
++			lb.ThrottleWriteIOPSDevice = append(lb.ThrottleWriteIOPSDevice, ltd)
++		}
++	}
++
++	return nil
+ }
+ 
+ // GetCPUData gets cgroup cpus data
+-func GetCPUData(pid int, cgPath string) (*rspec.LinuxCPU, error) {
+-	return nil, fmt.Errorf("unimplemented yet")
++func (cg *CgroupV2) GetCPUData(pid int, cgPath string) (*rspec.LinuxCPU, error) {
++	value, err := cg.readValue(pid, cgPath, "cpu.max")
++	if err != nil {
++		return nil, err
++	}
++	if value == "" {
++		return nil, attachError()
++	}
++	fields := strings.Fields(value)
++	if len(fields) != 2 {
++		return nil, fmt.Errorf("unexpected cpu.max content %q", value)
++	}
++	quota, err := parseLimit(fields[0])
++	if err != nil {
++		return nil, err
++	}
++	period, err := strconv.ParseUint(fields[1], 10, 64)
++	if err != nil {
++		return nil, err
++	}
++
++	cpus, err := cg.readCPUSet(pid, cgPath, "cpuset.cpus")
++	if err != nil {
++		return nil, err
++	}
++	mems, err := cg.readCPUSet(pid, cgPath, "cpuset.mems")
++	if err != nil {
++		return nil, err
++	}
++
++	// cpu.shares has no unified equivalent: runtimes map it onto cpu.weight
++	// with a lossy conversion that the runtime-spec does not define, so the
++	// requested share cannot be recovered.
++	return &rspec.LinuxCPU{
++		Quota:  &quota,
++		Period: &period,
++		Cpus:   cpus,
++		Mems:   mems,
++	}, nil
+ }
+ 
+ // GetDevicesData gets cgroup devices data
+-func GetDevicesData(pid int, cgPath string) ([]rspec.LinuxDeviceCgroup, error) {
+-	return nil, fmt.Errorf("unimplemented yet")
++func (cg *CgroupV2) GetDevicesData(pid int, cgPath string) ([]rspec.LinuxDeviceCgroup, error) {
++	return nil, fmt.Errorf("the unified hierarchy has no devices controller, access is governed by an eBPF program that cannot be read back")
+ }
+ 
+ // GetHugepageLimitData gets cgroup hugetlb data
+-func GetHugepageLimitData(pid int, cgPath string) ([]rspec.LinuxHugepageLimit, error) {
+-	return nil, fmt.Errorf("unimplemented yet")
++func (cg *CgroupV2) GetHugepageLimitData(pid int, cgPath string) ([]rspec.LinuxHugepageLimit, error) {
++	pageSizes, err := GetHugePageSize()
++	if err != nil {
++		return nil, err
++	}
++
++	lh := []rspec.LinuxHugepageLimit{}
++	for _, pageSize := range pageSizes {
++		value, err := cg.readValue(pid, cgPath, strings.Join([]string{"hugetlb", pageSize, "max"}, "."))
++		if err != nil {
++			return nil, err
++		}
++		if value == "" {
++			continue
++		}
++		limit := uint64(math.MaxUint64)
++		if value != unlimited {
++			limit, err = strconv.ParseUint(value, 10, 64)
++			if err != nil {
++				return nil, err
++			}
++		}
++		pageLimit := rspec.LinuxHugepageLimit{}
++		pageLimit.Pagesize = pageSize
++		pageLimit.Limit = limit
++		lh = append(lh, pageLimit)
++	}
++
++	return lh, nil
+ }
+ 
+ // GetMemoryData gets cgroup memory data
+ func (cg *CgroupV2) GetMemoryData(pid int, cgPath string) (*rspec.LinuxMemory, error) {
+-	return nil, fmt.Errorf("unimplemented yet")
++	limit, err := cg.readLimit(pid, cgPath, "memory.max")
++	if err != nil {
++		return nil, err
++	}
++	reservation, err := cg.readLimit(pid, cgPath, "memory.low")
++	if err != nil {
++		return nil, err
++	}
++
++	lm := &rspec.LinuxMemory{
++		Limit:       &limit,
++		Reservation: &reservation,
++	}
++
++	value, err := cg.readValue(pid, cgPath, "memory.swap.max")
++	if err != nil {
++		return nil, err
++	}
++	if value == "" {
++		return lm, nil
++	}
++	swap, err := parseLimit(value)
++	if err != nil {
++		return nil, err
++	}
++	// memory.swap.max limits swap alone while memory.swap is memory plus
++	// swap, so the memory limit has to be added back.
++	if swap >= 0 && limit >= 0 {
++		swap += limit
++	}
++	lm.Swap = &swap
++
++	return lm, nil
+ }
+ 
+ // GetNetworkData gets cgroup network data
+-func GetNetworkData(pid int, cgPath string) (*rspec.LinuxNetwork, error) {
+-	return nil, fmt.Errorf("unimplemented yet")
++func (cg *CgroupV2) GetNetworkData(pid int, cgPath string) (*rspec.LinuxNetwork, error) {
++	return nil, fmt.Errorf("the unified hierarchy has no net_cls or net_prio controller")
+ }
+ 
+ // GetPidsData gets cgroup pid ints data
+-func GetPidsData(pid int, cgPath string) (*rspec.LinuxPids, error) {
+-	return nil, fmt.Errorf("unimplemented yet")
++func (cg *CgroupV2) GetPidsData(pid int, cgPath string) (*rspec.LinuxPids, error) {
++	limit, err := cg.readLimit(pid, cgPath, "pids.max")
++	if err != nil {
++		return nil, err
++	}
++
++	return &rspec.LinuxPids{Limit: &limit}, nil
+ }
+--- /dev/null
++++ b/cgroups/cgroups_v2_test.go
+@@ -0,0 +1,368 @@
++package cgroups
++
++import (
++	"errors"
++	"os"
++	"path/filepath"
++	"slices"
++	"strings"
++	"testing"
++
++	"golang.org/x/sys/unix"
++)
++
++var _ Cgroup = (*CgroupV2)(nil)
++
++func requireCgroupV2(t *testing.T) {
++	t.Helper()
++
++	var st unix.Statfs_t
++	if err := unix.Statfs(unifiedPath, &st); err != nil || st.Type != unix.CGROUP2_SUPER_MAGIC {
++		t.Skip("cgroup v2 is not mounted at " + unifiedPath)
++	}
++}
++
++// newTestCgroup creates a cgroup right below the root of the unified
++// hierarchy, where the controllers are enabled, and returns it as an
++// absolute cgroupsPath.
++func newTestCgroup(t *testing.T, controllers ...string) string {
++	t.Helper()
++	requireCgroupV2(t)
++
++	subtreeControl := filepath.Join(unifiedPath, "cgroup.subtree_control")
++	enabled, err := os.ReadFile(subtreeControl)
++	if err != nil {
++		t.Skip(err)
++	}
++	for _, controller := range controllers {
++		controller := controller
++		if slices.Contains(strings.Fields(string(enabled)), controller) {
++			continue
++		}
++		if err := os.WriteFile(subtreeControl, []byte("+"+controller), 0o644); err != nil {
++			t.Skipf("cannot enable the %s controller at %s: %v", controller, unifiedPath, err)
++		}
++		t.Cleanup(func() {
++			if err := os.WriteFile(subtreeControl, []byte("-"+controller), 0o644); err != nil {
++				t.Logf("cannot disable the %s controller again: %v", controller, err)
++			}
++		})
++	}
++
++	dir, err := os.MkdirTemp(unifiedPath, "runtime-tools-test-")
++	if errors.Is(err, os.ErrPermission) || errors.Is(err, unix.EROFS) {
++		t.Skipf("cannot create a cgroup: %v", err)
++	}
++	if err != nil {
++		t.Fatal(err)
++	}
++	t.Cleanup(func() {
++		if err := os.Remove(dir); err != nil {
++			t.Error(err)
++		}
++	})
++
++	return "/" + filepath.Base(dir)
++}
++
++func writeControl(t *testing.T, cgPath string, name string, value string) {
++	t.Helper()
++
++	if err := os.WriteFile(filepath.Join(unifiedPath, cgPath, name), []byte(value), 0o644); err != nil {
++		t.Fatal(err)
++	}
++}
++
++func readControl(t *testing.T, cgPath string, name string) string {
++	t.Helper()
++
++	contents, err := os.ReadFile(filepath.Join(unifiedPath, cgPath, name))
++	if err != nil {
++		t.Fatal(err)
++	}
++
++	return strings.TrimSpace(string(contents))
++}
++
++func TestCgroupV2Version(t *testing.T) {
++	cg := &CgroupV2{}
++	if cg.Version() != 2 {
++		t.Errorf("Version() == %d, expected 2", cg.Version())
++	}
++}
++
++func TestFindCgroupV2(t *testing.T) {
++	requireCgroupV2(t)
++
++	cg, err := FindCgroup()
++	if err != nil {
++		t.Fatal(err)
++	}
++	if cg.Version() != 2 {
++		t.Errorf("FindCgroup() found a version %d hierarchy, expected 2", cg.Version())
++	}
++}
++
++func TestGetCgroupV2Path(t *testing.T) {
++	requireCgroupV2(t)
++
++	path, err := GetCgroupV2Path(os.Getpid())
++	if err != nil {
++		t.Fatal(err)
++	}
++	if !filepath.IsAbs(path) {
++		t.Fatalf("cgroup path %q is not absolute", path)
++	}
++	if _, err := os.Stat(filepath.Join(unifiedPath, path)); err != nil {
++		t.Error(err)
++	}
++}
++
++func TestCgroupV2RelativePath(t *testing.T) {
++	requireCgroupV2(t)
++
++	path, err := GetCgroupV2Path(os.Getpid())
++	if err != nil {
++		t.Fatal(err)
++	}
++	if _, err := os.Stat(filepath.Join(unifiedPath, path, "pids.max")); err != nil {
++		t.Skipf("the pids controller is not enabled for %s", path)
++	}
++
++	cg := &CgroupV2{}
++	lp, err := cg.GetPidsData(os.Getpid(), filepath.Base(path))
++	if err != nil {
++		t.Fatal(err)
++	}
++	expected, err := parseLimit(readControl(t, path, "pids.max"))
++	if err != nil {
++		t.Fatal(err)
++	}
++	if *lp.Limit != expected {
++		t.Errorf("limit == %d, expected %d", *lp.Limit, expected)
++	}
++}
++
++func TestCgroupV2MissingCgroup(t *testing.T) {
++	requireCgroupV2(t)
++
++	cg := &CgroupV2{}
++	if _, err := cg.GetPidsData(0, "/runtime-tools-test-missing"); err == nil {
++		t.Error("expected an error for a cgroup that was never created")
++	}
++}
++
++func TestCgroupV2GetPidsData(t *testing.T) {
++	cgPath := newTestCgroup(t, "pids")
++	cg := &CgroupV2{}
++
++	for _, test := range []struct {
++		value    string
++		expected int64
++	}{
++		{value: "1000", expected: 1000},
++		{value: "max", expected: -1},
++	} {
++		writeControl(t, cgPath, "pids.max", test.value)
++		lp, err := cg.GetPidsData(0, cgPath)
++		if err != nil {
++			t.Fatal(err)
++		}
++		if *lp.Limit != test.expected {
++			t.Errorf("pids.max %q: limit == %d, expected %d", test.value, *lp.Limit, test.expected)
++		}
++	}
++}
++
++func TestCgroupV2GetMemoryData(t *testing.T) {
++	cgPath := newTestCgroup(t, "memory")
++	cg := &CgroupV2{}
++	_, err := os.Stat(filepath.Join(unifiedPath, cgPath, "memory.swap.max"))
++	swapAccounting := err == nil
++
++	for _, test := range []struct {
++		description string
++		max         string
++		low         string
++		swapMax     string
++		limit       int64
++		reservation int64
++		swap        int64
++	}{
++		{
++			description: "limits in bytes",
++			max:         "50593792",
++			low:         "33554432",
++			swapMax:     "16515072",
++			limit:       50593792,
++			reservation: 33554432,
++			swap:        67108864,
++		},
++		{
++			description: "unlimited memory and swap",
++			max:         "max",
++			low:         "0",
++			swapMax:     "max",
++			limit:       -1,
++			reservation: 0,
++			swap:        -1,
++		},
++	} {
++		writeControl(t, cgPath, "memory.max", test.max)
++		writeControl(t, cgPath, "memory.low", test.low)
++		if swapAccounting {
++			writeControl(t, cgPath, "memory.swap.max", test.swapMax)
++		}
++
++		lm, err := cg.GetMemoryData(0, cgPath)
++		if err != nil {
++			t.Fatalf("%s: %v", test.description, err)
++		}
++		if *lm.Limit != test.limit {
++			t.Errorf("%s: limit == %d, expected %d", test.description, *lm.Limit, test.limit)
++		}
++		if *lm.Reservation != test.reservation {
++			t.Errorf("%s: reservation == %d, expected %d", test.description, *lm.Reservation, test.reservation)
++		}
++		if swapAccounting != (lm.Swap != nil) {
++			t.Fatalf("%s: swap reported == %t, expected %t", test.description, lm.Swap != nil, swapAccounting)
++		}
++		if swapAccounting && *lm.Swap != test.swap {
++			t.Errorf("%s: swap == %d, expected %d", test.description, *lm.Swap, test.swap)
++		}
++		if lm.Swappiness != nil || lm.DisableOOMKiller != nil || lm.KernelTCP != nil {
++			t.Errorf("%s: reported a value the unified hierarchy does not have", test.description)
++		}
++	}
++}
++
++func TestCgroupV2GetCPUData(t *testing.T) {
++	cgPath := newTestCgroup(t, "cpu", "cpuset")
++	cg := &CgroupV2{}
++
++	writeControl(t, cgPath, "cpu.max", "50000 100000")
++	writeControl(t, cgPath, "cpuset.cpus", "0")
++	writeControl(t, cgPath, "cpuset.mems", "0")
++	lc, err := cg.GetCPUData(0, cgPath)
++	if err != nil {
++		t.Fatal(err)
++	}
++	if *lc.Quota != 50000 || *lc.Period != 100000 {
++		t.Errorf("quota/period == %d/%d, expected 50000/100000", *lc.Quota, *lc.Period)
++	}
++	if lc.Cpus != "0" || lc.Mems != "0" {
++		t.Errorf("cpus/mems == %q/%q, expected \"0\"/\"0\"", lc.Cpus, lc.Mems)
++	}
++	if lc.Shares != nil {
++		t.Error("reported shares, which cannot be recovered from cpu.weight")
++	}
++
++	writeControl(t, cgPath, "cpu.max", "max 100000")
++	writeControl(t, cgPath, "cpuset.cpus", "")
++	writeControl(t, cgPath, "cpuset.mems", "")
++	lc, err = cg.GetCPUData(0, cgPath)
++	if err != nil {
++		t.Fatal(err)
++	}
++	if *lc.Quota != -1 {
++		t.Errorf("quota == %d, expected -1", *lc.Quota)
++	}
++	if cpus := readControl(t, cgPath, "cpuset.cpus.effective"); lc.Cpus != cpus {
++		t.Errorf("inherited cpus == %q, expected %q", lc.Cpus, cpus)
++	}
++	if mems := readControl(t, cgPath, "cpuset.mems.effective"); lc.Mems != mems {
++		t.Errorf("inherited mems == %q, expected %q", lc.Mems, mems)
++	}
++}
++
++func TestCgroupV2GetBlockIOData(t *testing.T) {
++	cgPath := newTestCgroup(t, "io")
++	cg := &CgroupV2{}
++
++	devices, err := filepath.Glob("/sys/block/*/dev")
++	if err != nil {
++		t.Fatal(err)
++	}
++	device := ""
++	for _, dev := range devices {
++		contents, err := os.ReadFile(dev)
++		if err != nil {
++			continue
++		}
++		candidate := strings.TrimSpace(string(contents))
++		limit := candidate + " rbps=102400 wbps=204800 wiops=1000"
++		if os.WriteFile(filepath.Join(unifiedPath, cgPath, "io.max"), []byte(limit), 0o644) == nil {
++			device = candidate
++			break
++		}
++	}
++	if device == "" {
++		t.Skip("no block device accepts an io.max limit")
++	}
++
++	lb, err := cg.GetBlockIOData(0, cgPath)
++	if err != nil {
++		t.Fatal(err)
++	}
++	if len(lb.ThrottleReadBpsDevice) != 1 || lb.ThrottleReadBpsDevice[0].Rate != 102400 {
++		t.Errorf("read bps devices == %v, expected a single 102400 entry", lb.ThrottleReadBpsDevice)
++	}
++	if len(lb.ThrottleWriteBpsDevice) != 1 || lb.ThrottleWriteBpsDevice[0].Rate != 204800 {
++		t.Errorf("write bps devices == %v, expected a single 204800 entry", lb.ThrottleWriteBpsDevice)
++	}
++	if len(lb.ThrottleReadIOPSDevice) != 0 {
++		t.Errorf("read iops devices == %v, expected none", lb.ThrottleReadIOPSDevice)
++	}
++	if len(lb.ThrottleWriteIOPSDevice) != 1 || lb.ThrottleWriteIOPSDevice[0].Rate != 1000 {
++		t.Errorf("write iops devices == %v, expected a single 1000 entry", lb.ThrottleWriteIOPSDevice)
++	}
++	if len(lb.ThrottleReadBpsDevice) == 1 {
++		major, minor, err := getDeviceID(device)
++		if err != nil {
++			t.Fatal(err)
++		}
++		if lb.ThrottleReadBpsDevice[0].Major != major || lb.ThrottleReadBpsDevice[0].Minor != minor {
++			t.Errorf("read bps device == %d:%d, expected %s", lb.ThrottleReadBpsDevice[0].Major, lb.ThrottleReadBpsDevice[0].Minor, device)
++		}
++	}
++	if lb.Weight != nil || lb.LeafWeight != nil {
++		t.Error("reported a weight, which is written to a scheduler dependent file")
++	}
++}
++
++func TestCgroupV2GetHugepageLimitData(t *testing.T) {
++	pageSizes, err := GetHugePageSize()
++	if err != nil || len(pageSizes) == 0 {
++		t.Skip("no hugepage sizes on this host")
++	}
++	cgPath := newTestCgroup(t, "hugetlb")
++	cg := &CgroupV2{}
++
++	var limit uint64 = 2 * (1 << 30)
++	writeControl(t, cgPath, "hugetlb."+pageSizes[0]+".max", "2147483648")
++	lh, err := cg.GetHugepageLimitData(0, cgPath)
++	if err != nil {
++		t.Fatal(err)
++	}
++
++	for _, pageLimit := range lh {
++		if pageLimit.Pagesize != pageSizes[0] {
++			continue
++		}
++		if pageLimit.Limit != limit {
++			t.Errorf("hugepage limit == %d, expected %d", pageLimit.Limit, limit)
++		}
++		return
++	}
++	t.Errorf("hugepage limits == %v, expected an entry for %s", lh, pageSizes[0])
++}
++
++func TestCgroupV2UnreadableControllers(t *testing.T) {
++	cg := &CgroupV2{}
++	if _, err := cg.GetDevicesData(0, AbsCgroupPath); err == nil {
++		t.Error("expected an error for the devices controller")
++	}
++	if _, err := cg.GetNetworkData(0, AbsCgroupPath); err == nil {
++		t.Error("expected an error for the network controllers")
++	}
++}

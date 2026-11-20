@@ -11,7 +11,7 @@ RUN=/usr/libexec/librespeed-run
 AGG=/usr/libexec/librespeed-aggregate
 
 # Builds the cron time fields from UCI. For sub-daily intervals `hours`
-# restricts when measurements may run; for a daily one it is the window a
+# restricts when measurements may run; for 1d or 7d it is the window a
 # random time is drawn from, drawn here at sync time. That keeps the herd
 # apart -- every router lands on its own minute -- without any process
 # sleeping through the night, at the cost of re-drawing on every reload.
@@ -20,6 +20,8 @@ AGG=/usr/libexec/librespeed-aggregate
 # dashes.
 valid_field() {
 	local val="$1" max="$2" part a b oifs="$IFS"
+	# Splitting drops a trailing empty part, which cron then fails to parse.
+	case "$val" in *,) return 1 ;; esac
 	IFS=','
 	for part in $val; do
 		IFS="$oifs"
@@ -35,20 +37,24 @@ valid_field() {
 	return 0
 }
 
+# $4 is the section's place in the sync: all calls of one sync share the
+# seed, so each skips the draws of those before it. $5 is its line's slot.
 cron_expr() {
-	local interval="$1" days="$2" hours="$3"
+	local interval="$1" days="$2" hours="$3" salt="${4:-0}" prev="$5"
 	local start end m h v
 
 	case "$interval" in
 	*m)
 		v=${interval%m}
-		case "$v" in ''|0|*[!0-9]*) return 1 ;; esac
+		# A leading zero is refused: '00' would pass as non-zero, and cron
+		# reads a zero step as the first value only.
+		case "$v" in ''|0*|*[!0-9]*) return 1 ;; esac
 		[ "$v" -le 59 ] || return 1
 		echo "*/$v ${hours:-*} * * $days"
 		;;
 	*h)
 		v=${interval%h}
-		case "$v" in ''|0|*[!0-9]*) return 1 ;; esac
+		case "$v" in ''|0*|*[!0-9]*) return 1 ;; esac
 		[ "$v" -le 23 ] || return 1
 		if [ -n "$hours" ]; then
 			echo "0 $hours/$v * * $days"
@@ -56,7 +62,7 @@ cron_expr() {
 			echo "0 */$v * * $days"
 		fi
 		;;
-	1d|24h)
+	1d|7d)
 		start=${hours%-*}; end=${hours#*-}
 		[ -n "$hours" ] || { start=0; end=23; }
 		# A window wrapping midnight (22-4) is not supported; treat it as the
@@ -64,11 +70,37 @@ cron_expr() {
 		[ "$end" -ge "$start" ] 2>/dev/null || end=$start
 		# Time xor pid as the seed: seconds-granular srand() alone would give
 		# two syncs in the same second the same draw.
-		set -- $(awk -v a="$start" -v b="$end" -v s="$(( $(date +%s) ^ $$ ))" 'BEGIN {
+		# A weekly test draws its day last (so a daily line keeps its draw)
+		# and keeps its line's slot while that still fits: redrawn on every
+		# sync, a week could lose its test or get two.
+		set -- $(awk -v a="$start" -v b="$end" -v s="$(( $(date +%s) ^ $$ ))" \
+			-v skip="$salt" -v iv="$interval" -v days="$days" -v prev="$prev" 'BEGIN {
 			srand(s)
-			printf "%d %d", int(rand() * 60), a + int(rand() * (b - a + 1))
+			for (i = 0; i < skip * 3; i++)
+				rand()
+			m = int(rand() * 60)
+			h = a + int(rand() * (b - a + 1))
+			if (iv != "7d") {
+				printf "%d %d", m, h
+				exit
+			}
+			# Each part is a day or a range: "3" + 0 and "3-5" + 0 are 3.
+			k = split(days == "*" ? "0-6" : days, part, ",")
+			for (i = 1; i <= k; i++)
+				for (x = part[i] + 0; x <= substr(part[i], index(part[i], "-") + 1) + 0; x++) {
+					day[++n] = x
+					ok[x] = 1
+				}
+			d = day[1 + int(rand() * n)]
+			if (split(prev, p, " ") == 3 && p[1] ~ /^[0-9]+$/ && p[1] < 60 &&
+			    p[2] ~ /^[0-9]+$/ && p[2] >= a && p[2] <= b && p[3] ~ /^[0-6]$/ && (p[3] in ok)) {
+				m = p[1]
+				h = p[2]
+				d = p[3]
+			}
+			printf "%d %d %d", m, h, d
 		}')
-		echo "$1 $2 * * $days"
+		echo "$1 $2 * * ${3:-$days}"
 		;;
 	*)
 		return 1
@@ -84,16 +116,35 @@ restart_cron() {
 	return 0
 }
 
-sync_cron() {
-	local enabled interval days hours expr hist_enabled archive_path
+# Appends the cron line of one schedule section (uses sync_cron's locals). The
+# first enabled section of an interface whose interval is valid wins, the
+# legacy 'schedule' first.
+sync_schedule() {
+	local section="$1" enabled iface interval days hours expr old=""
 
-	config_load librespeed
-	config_get_bool enabled schedule enabled 0
-	config_get interval schedule interval 1d
-	config_get days schedule days '*'
-	config_get hours schedule hours ''
-	config_get_bool hist_enabled history enabled 1
-	config_get archive_path history archive_path ''
+	config_get_bool enabled "$section" enabled 0
+	[ "$enabled" = 1 ] || return 0
+	config_get iface "$section" interface ''
+	config_get interval "$section" interval 1d
+	config_get days "$section" days '*'
+	config_get hours "$section" hours ''
+
+	# Only the legacy section may name none; its line stays bare, as before.
+	if [ -z "$iface" ] && [ "$section" != schedule ]; then
+		logger -t librespeed "skipped an automatic test that names no interface"
+		return 0
+	fi
+	# The name lands in root's crontab: a bad one is skipped, not replaced.
+	case "$iface" in *[!A-Za-z0-9_]*)
+		logger -t librespeed "skipped an automatic test of invalid interface '$iface'"
+		return 0
+		;;
+	esac
+	case " $seen " in *" ${iface:-$main_iface} "*)
+		logger -t librespeed "skipped a second automatic test of ${iface:-$main_iface}"
+		return 0
+		;;
+	esac
 
 	# These end up verbatim in root's crontab, so anything unexpected becomes
 	# the harmless default rather than a cron field it was not meant to be.
@@ -108,8 +159,29 @@ sync_cron() {
 		hours=''
 	fi
 
+	# Its line's minute, hour and day, kept by 7d (the legacy line is bare).
+	[ "$interval" = 7d ] && old=$(printf '%s\n' "$prev" | awk -v run="$RUN" -v arg="$iface" \
+		'$3 == "*" && $4 == "*" && $6 == run && $7 == arg && NF == 6 + (arg != "") { print $1, $2, $5; exit }')
+	if expr=$(cron_expr "$interval" "$days" "$hours" "$salt" "$old"); then
+		echo "$expr $RUN${iface:+ $iface}" >> "$CRONTAB"
+		seen="$seen ${iface:-$main_iface}"
+	else
+		logger -t librespeed "unsupported schedule interval '$interval' for ${iface:-$main_iface}"
+	fi
+	salt=$((salt + 1))
+}
+
+sync_cron() {
+	local hist_enabled archive_path main_iface seen="" salt=0 prev
+
+	config_load librespeed
+	config_get main_iface main interface wan
+	config_get_bool hist_enabled history enabled 1
+	config_get archive_path history archive_path ''
+
 	mkdir -p "${CRONTAB%/*}"
 	touch "$CRONTAB"
+	prev=$(grep -F "$RUN" "$CRONTAB")
 	sed -i "\\#$RUN#d;\\#$AGG#d" "$CRONTAB"
 
 	# The day completes at midnight; five past, it is reduced to one archive
@@ -119,13 +191,8 @@ sync_cron() {
 		echo "5 0 * * * $AGG" >> "$CRONTAB"
 	fi
 
-	if [ "$enabled" = 1 ]; then
-		if expr=$(cron_expr "$interval" "$days" "$hours"); then
-			echo "$expr $RUN" >> "$CRONTAB"
-		else
-			logger -t librespeed "unsupported schedule interval '$interval'"
-		fi
-	fi
+	sync_schedule schedule
+	config_foreach sync_schedule schedule
 
 	restart_cron
 }

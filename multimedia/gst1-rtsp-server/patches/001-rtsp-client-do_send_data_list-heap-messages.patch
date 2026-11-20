@@ -1,0 +1,36 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Sat, 17 Oct 2026 03:10:00 +0100
+Subject: [PATCH] rtsp-client: allocate the data list messages on the heap
+
+do_send_data_list() allocates one GstRTSPMessage per buffer of the list
+on the stack. The list holds all RTP packets of a video frame, which are
+several hundred for a 4K frame, and the send thread then goes through
+gst_rtsp_watch_send_messages() and gst_rtsp_watch_write_serialized_messages()
+which allocate their arrays on the stack as well. On systems whose
+default thread stack is small, such as musl with 128 KiB, a large frame
+overflows the stack and the server crashes. Use the heap.
+
+Link: https://gitlab.freedesktop.org/gstreamer/gstreamer/-/work_items/5358
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+--- a/gst/rtsp-server/rtsp-client.c
++++ b/gst/rtsp-server/rtsp-client.c
+@@ -1289,8 +1289,7 @@ do_send_data_list (GstBufferList * buffe
+     return FALSE;
+   }
+ 
+-  messages = g_newa (GstRTSPMessage, n);
+-  memset (messages, 0, sizeof (GstRTSPMessage) * n);
++  messages = g_new0 (GstRTSPMessage, n);
+   for (i = 0; i < n; i++) {
+     GstBuffer *buffer = gst_buffer_list_get (buffer_list, i);
+     gst_rtsp_message_init_data (&messages[i], channel);
+@@ -1312,6 +1311,7 @@ do_send_data_list (GstBufferList * buffe
+   for (i = 0; i < n; i++) {
+     gst_rtsp_message_unset (&messages[i]);
+   }
++  g_free (messages);
+ 
+   if (!ret) {
+     GSource *idle_src;

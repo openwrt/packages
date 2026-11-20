@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django
-PKG_VERSION:=6.1.2
+PKG_VERSION:=6.1.3
 PKG_RELEASE:=1
 
 PYPI_NAME:=django
-PKG_HASH:=a1e92451ccb8b514e91bbb3b6d186d20b4030558f116b5d9de6535455ff210b7
+PKG_HASH:=b5d2d9e35295065d13b1927b3f19a59bd119f737aa6299def14ccca1ae3c8c0d
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>, Peter Stadler <peter.stadler@student.uibk.ac.at>
 PKG_LICENSE:=BSD-3-Clause
@@ -34,7 +34,7 @@ define Package/python3-django
 endef
 
 define Package/python3-django/description
-    The web framework for perfectionists with deadlines.
+  The web framework for perfectionists with deadlines.
 endef
 
 define Py3Package/python3-django/install

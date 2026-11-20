@@ -1,0 +1,180 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Dave Stevenson <dave.stevenson@raspberrypi.com>
+Date: Tue, 29 Apr 2025 18:51:39 +0100
+Subject: [PATCH] video: Add GST_VIDEO_FORMAT_NV12_128C8 for Broadcom SAND 8bit
+ format
+
+Adds the new format GST_VIDEO_FORMAT_NV12_128C8 as a column-striped
+NV12 used on the Raspberry Pi HEVC decoder.
+
+Link: https://gitlab.freedesktop.org/gstreamer/gstreamer/-/merge_requests/9247
+---
+ gst-libs/gst/video/video-converter.c |  1 +
+ gst-libs/gst/video/video-format.c    |  4 ++++
+ gst-libs/gst/video/video-format.h    | 24 +++++++++++++++++-------
+ gst-libs/gst/video/video-info-dma.c  |  1 +
+ gst-libs/gst/video/video-info.c      |  1 +
+ gst-libs/gst/video/video-tile.c      |  3 +++
+ gst-libs/gst/video/video-tile.h      | 10 ++++++++++
+ tests/check/libs/video.c             |  1 +
+ 8 files changed, 38 insertions(+), 7 deletions(-)
+
+--- a/gst-libs/gst/video/video-converter.c
++++ b/gst-libs/gst/video/video-converter.c
+@@ -7916,6 +7916,7 @@ get_scale_format (GstVideoFormat format,
+     case GST_VIDEO_FORMAT_NV16_10LE32:
+     case GST_VIDEO_FORMAT_NV12_10LE40:
+     case GST_VIDEO_FORMAT_NV16_10LE40:
++    case GST_VIDEO_FORMAT_NV12_128C8:
+     case GST_VIDEO_FORMAT_BGR10A2_LE:
+     case GST_VIDEO_FORMAT_RGB10A2_LE:
+     case GST_VIDEO_FORMAT_BGR10x2_LE:
+--- a/gst-libs/gst/video/video-format.c
++++ b/gst-libs/gst/video/video-format.c
+@@ -7897,6 +7897,7 @@ typedef struct
+ #define TILE_32x32(mode) GST_VIDEO_TILE_MODE_ ##mode, 5, 5, { {32, 32, 32, 1024}, {16, 32, 32, 1024}, }
+ #define TILE_64x32(mode) GST_VIDEO_TILE_MODE_ ##mode, 6, 5, { {64, 32, 64, 2048}, {32, 32, 64, 2048}, }
+ #define TILE_8x128(mode) GST_VIDEO_TILE_MODE_ ##mode, 3, 7, { {8, 128, 8, 1024}, {4, 128, 8, 1024}, }
++#define TILE_128x8(mode) GST_VIDEO_TILE_MODE_ ##mode, 7, 3, { {128, 8, 128, 1024}, {64, 4, 128, 512}, }
+ #define TILE_10bit_16x32s(mode) GST_VIDEO_TILE_MODE_ ##mode, 4, 5, { {16, 32, 20, 640}, {8, 16, 20, 320}, }
+ #define TILE_10bit_8x128(mode) GST_VIDEO_TILE_MODE_ ##mode, 3, 7, { {0, 128, 8, 1024}, {0, 128, 8, 1024}, }
+ #define TILE_10bit_4x4(mode) GST_VIDEO_TILE_MODE_ ##mode, 2, 2, { {4, 4, 5, 20}, {2, 4, 5, 20}, }
+@@ -8269,6 +8270,9 @@ static const VideoFormat formats[] = {
+       PLANE0, OFFS0, SUB4444, PACK_BGR10A2_LE),
+   MAKE_RGB_LE_FORMAT (RGB10x2_LE, "raw video", DPTH10_10_10, PSTR444,
+       PLANE0, OFFS0, SUB4444, PACK_RGB10A2_LE),
++  MAKE_YUV_ST_FORMAT (NV12_128C8, "raw video",
++      GST_MAKE_FOURCC ('N', 'c', '1', '2'), DPTH888, PSTR122, PLANE011,
++      OFFS001, SUB420, PACK_NV12_TILED, TILE_128x8 (COLUMN)),
+ };
+ 
+ G_GNUC_END_IGNORE_DEPRECATIONS;
+--- a/gst-libs/gst/video/video-format.h
++++ b/gst-libs/gst/video/video-format.h
+@@ -177,6 +177,7 @@ G_BEGIN_DECLS
+  * @GST_VIDEO_FORMAT_NV16_10LE40: Fully packed variant of NV16_10LE32 (Since: 1.28)
+  * @GST_VIDEO_FORMAT_BGR10x2_LE: packed 4:4:4 RGB (B-G-R-x), 10 bits for R/G/B channel and MSB 2 bits for padding (Since: 1.28)
+  * @GST_VIDEO_FORMAT_RGB10x2_LE: packed 4:4:4 RGB (R-G-B-x), 10 bits for R/G/B channel and MSB 2 bits for padding (Since: 1.28)
++ * @GST_VIDEO_FORMAT_NV12_128C8: NV12 split as 128pixel wide columns (Since: 1.30)
+  *
+  * Enum value describing the most common video formats.
+  *
+@@ -701,6 +702,15 @@ typedef enum {
+    */
+   GST_VIDEO_FORMAT_RGB10x2_LE,
+ 
++  /**
++   * GST_VIDEO_FORMAT_NV12_128C8:
++   *
++   * NV12 tiled as 128 pixel wide columns
++   *
++   * Since: 1.30
++   */
++  GST_VIDEO_FORMAT_NV12_128C8,
++
+   /* Update GST_VIDEO_FORMAT_LAST below when adding more formats here */
+ } GstVideoFormat;
+ 
+@@ -711,7 +721,7 @@ typedef enum {
+  *
+  * Since: 1.26
+  */
+-#define GST_VIDEO_FORMAT_LAST (GST_VIDEO_FORMAT_RGB10x2_LE + 1)
++#define GST_VIDEO_FORMAT_LAST (GST_VIDEO_FORMAT_NV12_128C8 + 1)
+ 
+ #define GST_VIDEO_MAX_PLANES 4
+ #define GST_VIDEO_MAX_COMPONENTS 4
+@@ -1195,9 +1205,9 @@ gconstpointer  gst_video_format_get_pale
+     "NV12_10BE_8L128, NV12_10LE40_4L4, P010_10LE, NV12_10LE40, NV12_10LE32, " \
+     "Y444, BGRP, GBR, RGBP, NV24, v308, IYU2, RGBx, xRGB, BGRx, xBGR, RGB, " \
+     "BGR, Y42B, NV16, NV61, YUY2, YVYU, UYVY, VYUY, I420, YV12, NV12, NV21, " \
+-    "NV12_16L32S, NV12_32L32, NV12_4L4, NV12_64Z32, NV12_8L128, Y41B, IYU1, " \
+-    "YUV9, YVU9, BGR16, RGB16, BGR15, RGB15, RGB8P, GRAY16_BE, GRAY16_LE, " \
+-    "GRAY10_LE16, GRAY10_LE32, GRAY8"
++    "NV12_128C8, NV12_16L32S, NV12_32L32, NV12_4L4, NV12_64Z32, NV12_8L128, " \
++    "Y41B, IYU1, YUV9, YVU9, BGR16, RGB16, BGR15, RGB15, RGB8P, GRAY16_BE, " \
++    "GRAY16_LE, GRAY10_LE16, GRAY10_LE32, GRAY8"
+ #elif G_BYTE_ORDER == G_LITTLE_ENDIAN
+ #define GST_VIDEO_FORMATS_ALL_STR "A444_16LE, A444_16BE, Y416_LE, AYUV64, " \
+     "RGBA64_LE, ARGB64, ARGB64_LE, BGRA64_LE, ABGR64_LE, Y416_BE, RGBA64_BE, " \
+@@ -1215,9 +1225,9 @@ gconstpointer  gst_video_format_get_pale
+     "P010_10BE, MT2110R, MT2110T, NV12_10BE_8L128, NV12_10LE40_4L4, Y444, " \
+     "BGRP, GBR, RGBP, NV24, v308, IYU2, RGBx, xRGB, BGRx, xBGR, RGB, BGR, " \
+     "Y42B, NV16, NV61, YUY2, YVYU, UYVY, VYUY, I420, YV12, NV12, NV21, " \
+-    "NV12_16L32S, NV12_32L32, NV12_4L4, NV12_64Z32, NV12_8L128, Y41B, IYU1, " \
+-    "YUV9, YVU9, BGR16, RGB16, BGR15, RGB15, RGB8P, GRAY16_LE, GRAY16_BE, " \
+-    "GRAY10_LE16, GRAY10_LE32, GRAY8"
++    "NV12_128C8, NV12_16L32S, NV12_32L32, NV12_4L4, NV12_64Z32, NV12_8L128, " \
++    "Y41B, IYU1, YUV9, YVU9, BGR16, RGB16, BGR15, RGB15, RGB8P, GRAY16_LE, " \
++    "GRAY16_BE, GRAY10_LE16, GRAY10_LE32, GRAY8"
+ #endif
+ 
+ /**
+--- a/gst-libs/gst/video/video-info-dma.c
++++ b/gst-libs/gst/video/video-info-dma.c
+@@ -596,6 +596,7 @@ static const struct FormatMap
+   {GST_VIDEO_FORMAT_GRAY16_BE, DRM_FORMAT_R16 | DRM_FORMAT_BIG_ENDIAN, DRM_FORMAT_MOD_LINEAR},
+   {GST_VIDEO_FORMAT_NV16_10LE40, DRM_FORMAT_NV20, DRM_FORMAT_MOD_LINEAR},
+   {GST_VIDEO_FORMAT_P016_LE, DRM_FORMAT_P016, DRM_FORMAT_MOD_LINEAR},
++  {GST_VIDEO_FORMAT_NV12_128C8, DRM_FORMAT_NV12, DRM_FORMAT_MOD_BROADCOM_SAND128},
+ };
+ /* *INDENT-ON* */
+ 
+--- a/gst-libs/gst/video/video-info.c
++++ b/gst-libs/gst/video/video-info.c
+@@ -1206,6 +1206,7 @@ fill_planes (GstVideoInfo * info, gsize
+       break;
+     }
+     case GST_VIDEO_FORMAT_NV12_16L32S:
++    case GST_VIDEO_FORMAT_NV12_128C8:
+     {
+       const gsize y_tile_size =
+           GST_VIDEO_FORMAT_INFO_TILE_SIZE (info->finfo, 0);
+--- a/gst-libs/gst/video/video-tile.c
++++ b/gst-libs/gst/video/video-tile.c
+@@ -102,6 +102,9 @@ gst_video_tile_get_index (GstVideoTileMo
+     case GST_VIDEO_TILE_MODE_LINEAR:
+       offset = y * x_tiles + x;
+       break;
++    case GST_VIDEO_TILE_MODE_COLUMN:
++      offset = y + x * y_tiles;
++      break;
+     default:
+       offset = 0;
+       break;
+--- a/gst-libs/gst/video/video-tile.h
++++ b/gst-libs/gst/video/video-tile.h
+@@ -117,6 +117,8 @@ typedef struct _GstVideoTileInfo GstVide
+  * @GST_VIDEO_TILE_MODE_LINEAR: Tiles are in row order. (Since: 1.18)
+  * @GST_VIDEO_TILE_MODE_LINEAR_SUBSAMPLED: Tiles are in row order, with
+  *   variable tile size according to subsampling. (Since: 1.20)
++ * @GST_VIDEO_TILE_MODE_COLUMN: Tiles are a full column of the image
++ *   (Since: 1.28)
+  *
+  * Enum value describing the available tiling modes.
+  */
+@@ -132,6 +134,14 @@ typedef enum
+    * Since: 1.18
+    */
+   GST_VIDEO_TILE_MODE_LINEAR = GST_VIDEO_TILE_MAKE_MODE (2, INDEXED),
++  /**
++   * GST_VIDEO_TILE_MODE_COLUMN:
++   *
++   * Tiles are in column order.
++   *
++   * Since: 1.28
++   */
++  GST_VIDEO_TILE_MODE_COLUMN = GST_VIDEO_TILE_MAKE_MODE (3, INDEXED),
+ } GstVideoTileMode;
+ 
+ 
+--- a/tests/check/libs/video.c
++++ b/tests/check/libs/video.c
+@@ -3292,6 +3292,7 @@ GST_START_TEST (test_video_formats_pstri
+         || fmt == GST_VIDEO_FORMAT_NV12_8L128
+         || fmt == GST_VIDEO_FORMAT_NV12_10BE_8L128
+         || fmt == GST_VIDEO_FORMAT_NV12_10LE40_4L4
++        || fmt == GST_VIDEO_FORMAT_NV12_128C8
+         || fmt == GST_VIDEO_FORMAT_DMA_DRM
+         || fmt == GST_VIDEO_FORMAT_MT2110T || fmt == GST_VIDEO_FORMAT_MT2110R) {
+       fmt++;

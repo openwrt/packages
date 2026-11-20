@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=oci-runtime-tools
 PKG_VERSION:=1.3.0.20260316
-PKG_RELEASE:=3
+PKG_RELEASE:=6
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
@@ -119,7 +119,9 @@ define Package/oci-runtime-tests/install
 		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/$$$${testbin} \
 			$(1)/usr/libexec/oci-runtime-test/$$$${testbin}.t ; \
 	done )
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/$(ROOTFS_ARCHIVE) $(1)/usr/libexec/oci-runtime-test
+	$(INSTALL_DIR) $(1)/usr/share/oci-runtime-test
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/$(ROOTFS_ARCHIVE) $(1)/usr/share/oci-runtime-test/
+	$(LN) ../../share/oci-runtime-test/$(ROOTFS_ARCHIVE) $(1)/usr/libexec/oci-runtime-test/
 endef
 
 $(eval $(call GoBinPackage,oci-runtime-tools))

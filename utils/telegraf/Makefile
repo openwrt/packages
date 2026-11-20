@@ -3,12 +3,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=telegraf
-PKG_VERSION:=1.40.2
+PKG_VERSION:=1.40.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/influxdata/telegraf/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=519fbd63603acdd23f924f36c49b3f31917f9d2469c17f0d8c584be3be29092b
+PKG_HASH:=27bfeaf8c56cbcffc289065623ff7e3b0ff9e48c1d9c00e2278ed453900a0e66
 
 PKG_MAINTAINER:=Niklas Thorild <niklas@thorild.se>
 PKG_LICENSE:=MIT
@@ -66,22 +66,23 @@ include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
 
 define Package/telegraf/Default
-	SECTION:=utils
-	CATEGORY:=Utilities
-	TITLE:=Telegraf
-	DEPENDS:=$(GO_ARCH_DEPENDS)
+  SECTION:=utils
+  CATEGORY:=Utilities
+  TITLE:=Telegraf
+  DEPENDS:=$(GO_ARCH_DEPENDS)
 endef
 
 define Package/telegraf-full
-	$(call Package/telegraf/Default)
-	TITLE+= (Full)
-	VARIANT:=full
+  $(call Package/telegraf/Default)
+  TITLE+= (Full)
+  VARIANT:=full
+  CONFLICTS:=telegraf
 endef
 
 define Package/telegraf
-	$(call Package/telegraf/Default)
-	TITLE+= (Small)
-	VARIANT:=small
+  $(call Package/telegraf/Default)
+  TITLE+= (Small)
+  VARIANT:=small
 endef
 
 define Package/telegraf/description/Default

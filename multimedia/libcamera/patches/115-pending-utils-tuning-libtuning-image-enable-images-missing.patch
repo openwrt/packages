@@ -1,0 +1,63 @@
+From 919c023b2d7ddc267d93b8ae615db4a0608a536d Mon Sep 17 00:00:00 2001
+From: Paul Elder <paul.elder@ideasonboard.com>
+Date: Fri, 22 May 2026 12:10:36 +0200
+Subject: [PATCH] utils: tuning: libtuning: image: Enable images missing some
+ metadata
+
+Some pipeline handlers, like the rkisp2 pipeline handler, are capable of
+taking raw images but cannot set:
+- exposure time
+- gain
+- black level
+yet as they have not been implemented for raw mode yet. Arguably black
+mode will never be supported in raw mode as it bypasses the ISP
+completely and black level subtraction is in the ISP.
+
+This prevents the images from being used for tuning in the current
+libtuning-based tuning scripts as it requires exposure time and iso and
+black level, so modify libtuning to allow images with no exposure time
+and iso and black level.
+
+Signed-off-by: Paul Elder <paul.elder@ideasonboard.com>
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+No change in v2
+---
+ utils/tuning/libtuning/image.py | 25 ++++++++++++++++++++-----
+ 1 file changed, 20 insertions(+), 5 deletions(-)
+
+--- a/utils/tuning/libtuning/image.py
++++ b/utils/tuning/libtuning/image.py
+@@ -70,12 +70,27 @@ class Image:
+         white = metadata[f'Exif.{subimage}.WhiteLevel'].value
+         self.sigbits = int(white).bit_length()
+         self.fmt = (self.sigbits - 4) // 2
+-        self.exposure = int(metadata[f'Exif.{photo}.ExposureTime'].value * 1000000)
+-        self.againQ8 = metadata[f'Exif.{photo}.ISOSpeedRatings'].value * 256 / 100
+-        self.againQ8_norm = self.againQ8 / 256
++
++        self.exposure = None
++        exposure_key = f'Exif.{photo}.ExposureTime'
++        if exposure_key in metadata:
++            self.exposure = int(metadata[exposure_key].value * 1000000)
++
++        self.againQ8 = None
++        self.againQ8_norm = None
++        iso_key = f'Exif.{photo}.ISOSpeedRatings'
++        if iso_key in metadata:
++            self.againQ8 = metadata[iso_key].value * 256 / 100
++            self.againQ8_norm = self.againQ8 / 256
++
++        self.blacklevel = 0
++        self.blacklevel_16 = 0
++        bl_key = f'Exif.{subimage}.BlackLevel'
++        if bl_key in metadata:
++            self.blacklevel = int(metadata[bl_key].value[0])
++            self.blacklevel_16 = self.blacklevel << (16 - self.sigbits)
++
+         self.camName = metadata['Exif.Image.Model'].value
+-        self.blacklevel = int(metadata[f'Exif.{subimage}.BlackLevel'].value[0])
+-        self.blacklevel_16 = self.blacklevel << (16 - self.sigbits)
+ 
+         # Channel order depending on bayer pattern
+         # The key is the order given by exif, where 0 is R, 1 is G, and 2 is B

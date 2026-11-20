@@ -1,0 +1,67 @@
+From 14f62ee22977971fbe1bfa9d342cdd47a57d6905 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 16 Oct 2026 19:08:02 +0100
+Subject: [PATCH] pipeline: rkisp2: Prefer the multi-planar main path formats
+
+The main path advertises both the contiguous and the non-contiguous
+variant of the NV12 family, and the first one in the table, the
+contiguous one, gets selected. The frame buffers then have a single
+dmabuf with offsets for the chroma plane, which dmabuf consumers like
+the V4L2 hardware encoders cannot import through the GStreamer v4l2
+plugin: it passes the plane offset as data_offset, which vb2 rejects.
+Select the non-contiguous variant when the node supports it, so that
+every plane is a dmabuf of its own.
+
+Assisted-by: LLM
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ src/libcamera/pipeline/rkisp2/rkisp2.cpp | 24 ++++++++++++++++++++++--
+ 1 file changed, 22 insertions(+), 2 deletions(-)
+
+--- a/src/libcamera/pipeline/rkisp2/rkisp2.cpp
++++ b/src/libcamera/pipeline/rkisp2/rkisp2.cpp
+@@ -75,6 +75,26 @@ const std::map<PixelFormat, uint32_t> ra
+ 
+ LOG_DEFINE_CATEGORY(RkISP2)
+ 
++static V4L2PixelFormat mainPathFormat(V4L2VideoDevice *video,
++				      const PixelFormat &pixelFormat)
++{
++	const auto supported = video->formats();
++	V4L2PixelFormat fourcc;
++
++	/*
++	 * Prefer the non-contiguous variant, the last one in the list, so that
++	 * every plane of a frame is a separate dmabuf which consumers such as
++	 * the hardware encoders can import plane by plane.
++	 */
++	for (const V4L2PixelFormat &candidate :
++	     V4L2PixelFormat::fromPixelFormat(pixelFormat)) {
++		if (supported.count(candidate))
++			fourcc = candidate;
++	}
++
++	return fourcc;
++}
++
+ class PipelineHandlerRkISP2;
+ 
+ struct RkISP2FrameInfo {
+@@ -803,7 +823,7 @@ int PipelineHandlerRkISP2::configure(Cam
+ 		return ret;
+ 
+ 	V4L2DeviceFormat outputFormat;
+-	outputFormat.fourcc = mainPath_->toV4L2PixelFormat(cfg.pixelFormat);
++	outputFormat.fourcc = mainPathFormat(mainPath_.get(), cfg.pixelFormat);
+ 	outputFormat.size = cfg.size;
+ 	outputFormat.colorSpace = cfg.colorSpace;
+ 
+@@ -813,7 +833,7 @@ int PipelineHandlerRkISP2::configure(Cam
+ 		return ret;
+ 
+ 	if (outputFormat.size != cfg.size ||
+-	    outputFormat.fourcc != data->mainPath_->toV4L2PixelFormat(cfg.pixelFormat)) {
++	    outputFormat.fourcc != mainPathFormat(data->mainPath_, cfg.pixelFormat)) {
+ 		LOG(RkISP2, Error)
+ 			<< "Unable to configure capture in " << cfg.toString();
+ 		return -EINVAL;

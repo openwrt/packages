@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 PKG_NAME:=frr
 PKG_VERSION:=10.7.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/FRRouting/frr/tar.gz/$(PKG_NAME)-$(PKG_VERSION)?
@@ -131,6 +131,12 @@ define BuildDaemon
 	TITLE:= $(1) routing engine
 ifeq ($(1),bgpd)
 	KCONFIG:=CONFIG_TCP_MD5SIG=y
+endif
+ifeq ($(1),babeld)
+	CONFLICTS:=babeld
+endif
+ifeq ($(1),bfdd)
+	CONFLICTS:=bfdd
 endif
 	DEPENDS+=$(2) +frr-watchfrr +frr-zebra
     endef

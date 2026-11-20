@@ -1,0 +1,204 @@
+From 30b245983df0a4db800117a38cb6bef1e131c248 Mon Sep 17 00:00:00 2001
+From: Kieran Bingham <kieran.bingham@ideasonboard.com>
+Date: Wed, 20 May 2026 23:52:35 +0200
+Subject: [PATCH] ipa: simple: Port to use libipa CcmAlgorithm
+
+Now that libipa provides a common CCM algorithm implementation,
+replace the custom handling with the common Ccm.
+
+Signed-off-by: Kieran Bingham <kieran.bingham@ideasonboard.com>
+Signed-off-by: Jacopo Mondi <jacopo.mondi@ideasonboard.com>
+Tested-by: Robert Mader <robert.mader@collabora.com>
+Reviewed-by: Milan Zamazal <mzamazal@redhat.com>
+Tested-by: Milan Zamazal <mzamazal@redhat.com>
+---
+ src/ipa/simple/algorithms/ccm.cpp | 74 ++++++++++++++++++-------------
+ src/ipa/simple/algorithms/ccm.h   | 22 +++++----
+ src/ipa/simple/ipa_context.h      |  5 ++-
+ 3 files changed, 58 insertions(+), 43 deletions(-)
+
+--- a/src/ipa/simple/algorithms/ccm.cpp
++++ b/src/ipa/simple/algorithms/ccm.cpp
+@@ -8,54 +8,64 @@
+ 
+ #include "ccm.h"
+ 
+-#include <libcamera/base/log.h>
+-#include <libcamera/base/utils.h>
+-
+-#include <libcamera/control_ids.h>
+-
+ #include "libcamera/internal/matrix.h"
+ 
+-namespace {
+-
+-constexpr unsigned int kTemperatureThreshold = 100;
+-
+-}
+-
+ namespace libcamera {
+ 
+ namespace ipa::soft::algorithms {
+ 
+ LOG_DEFINE_CATEGORY(IPASoftCcm)
+ 
+-int Ccm::init([[maybe_unused]] IPAContext &context, const ValueNode &tuningData)
++/**
++ * \copydoc libcamera::ipa::Algorithm::init
++ */
++int Ccm::init(IPAContext &context, const ValueNode &tuningData)
+ {
+-	int ret = ccm_.readYaml(tuningData["ccms"], "ct", "ccm");
+-	if (ret < 0) {
+-		LOG(IPASoftCcm, Error)
+-			<< "Failed to parse 'ccm' parameter from tuning file.";
+-		return ret;
+-	}
+-
++	/* Informs the 'adjust' component that CCM is available to apply Saturation */
+ 	context.ccmEnabled = true;
+ 
+-	return 0;
++	return ccmAlgo_.init(tuningData, context.ctrlMap);
+ }
+ 
+-void Ccm::prepare(IPAContext &context, [[maybe_unused]] const uint32_t frame,
+-		  IPAFrameContext &frameContext, [[maybe_unused]] DebayerParams *params)
++/**
++ * \copydoc libcamera::ipa::Algorithm::configure
++ */
++int Ccm::configure(IPAContext &context,
++		   [[maybe_unused]] const IPAConfigInfo &configInfo)
+ {
+-	const unsigned int ct = frameContext.awb.colourTemperature;
++	return ccmAlgo_.configure(context.activeState.ccm,
++				  context.activeState.awb.automatic.colourTemperature);
++}
+ 
+-	/* Change CCM only on bigger temperature changes. */
+-	if (!currentCcm_ ||
+-	    utils::abs_diff(ct, lastCt_) >= kTemperatureThreshold) {
+-		currentCcm_ = ccm_.getInterpolated(ct);
+-		lastCt_ = ct;
+-	}
++/**
++ * \copydoc libcamera::ipa::Algorithm::queueRequest
++ */
++void Ccm::queueRequest(IPAContext &context,
++		       [[maybe_unused]] const uint32_t frame,
++		       IPAFrameContext &frameContext,
++		       const ControlList &controls)
++{
++	/* Nothing to do here, the ccm will be calculated in prepare() */
++	if (frameContext.awb.autoEnabled)
++		return;
+ 
++	ccmAlgo_.queueRequest(context.activeState.ccm, frameContext.ccm, controls);
++}
++
++void Ccm::prepare(IPAContext &context, const uint32_t frame,
++		  IPAFrameContext &frameContext, [[maybe_unused]] DebayerParams *params)
++{
++	if (frameContext.awb.autoEnabled)
++		ccmAlgo_.prepare(context.activeState.ccm, frameContext.ccm,
++				 frame, frameContext.awb.colourTemperature);
++
++	/*
++	 * \todo: Split out combined matrix into individual parameters in
++	 * DebayerParams and perform any pre-multiplication combination in the
++	 * SoftISP component directly.
++	 */
+ 	context.activeState.combinedMatrix =
+-		currentCcm_.value() * context.activeState.combinedMatrix;
+-	frameContext.ccm = currentCcm_.value();
++		frameContext.ccm.ccm * context.activeState.combinedMatrix;
+ }
+ 
+ void Ccm::process([[maybe_unused]] IPAContext &context,
+@@ -64,7 +74,7 @@ void Ccm::process([[maybe_unused]] IPACo
+ 		  [[maybe_unused]] const SwIspStats *stats,
+ 		  ControlList &metadata)
+ {
+-	metadata.set(controls::ColourCorrectionMatrix, frameContext.ccm.data());
++	ccmAlgo_.process(frameContext.ccm, metadata);
+ }
+ 
+ REGISTER_IPA_ALGORITHM(Ccm, "Ccm")
+--- a/src/ipa/simple/algorithms/ccm.h
++++ b/src/ipa/simple/algorithms/ccm.h
+@@ -7,13 +7,15 @@
+ 
+ #pragma once
+ 
+-#include <optional>
++#include <libcamera/controls.h>
+ 
+-#include "libcamera/internal/matrix.h"
++#include "libcamera/internal/value_node.h"
+ 
+-#include <libipa/interpolator.h>
++#include "libipa/ccm.h"
++#include "libipa/fixedpoint.h"
+ 
+ #include "algorithm.h"
++#include "ipa_context.h"
+ 
+ namespace libcamera {
+ 
+@@ -22,10 +24,14 @@ namespace ipa::soft::algorithms {
+ class Ccm : public Algorithm
+ {
+ public:
+-	Ccm() = default;
+-	~Ccm() = default;
+-
+ 	int init(IPAContext &context, const ValueNode &tuningData) override;
++
++	int configure(IPAContext &context, const IPAConfigInfo &configInfo) override;
++
++	void queueRequest(IPAContext &context, const uint32_t frame,
++			  IPAFrameContext &frameContext,
++			  const ControlList &controls) override;
++
+ 	void prepare(IPAContext &context,
+ 		     const uint32_t frame,
+ 		     IPAFrameContext &frameContext,
+@@ -36,9 +42,7 @@ public:
+ 		     ControlList &metadata) override;
+ 
+ private:
+-	unsigned int lastCt_;
+-	Interpolator<Matrix<float, 3, 3>> ccm_;
+-	std::optional<Matrix<float, 3, 3>> currentCcm_;
++	CcmAlgorithm<Q<4, 16>> ccmAlgo_;
+ };
+ 
+ } /* namespace ipa::soft::algorithms */
+--- a/src/ipa/simple/ipa_context.h
++++ b/src/ipa/simple/ipa_context.h
+@@ -17,6 +17,7 @@
+ #include "libcamera/internal/vector.h"
+ 
+ #include <libipa/awb.h>
++#include <libipa/ccm.h>
+ #include <libipa/fc_queue.h>
+ 
+ #include "core_ipa_interface.h"
+@@ -38,6 +39,7 @@ struct IPASessionConfiguration {
+ 
+ struct IPAActiveState {
+ 	ipa::awb::ActiveState awb;
++	ipa::ccm::ActiveState ccm;
+ 
+ 	struct {
+ 		int32_t exposure;
+@@ -63,8 +65,7 @@ struct IPAActiveState {
+ 
+ struct IPAFrameContext : public FrameContext {
+ 	ipa::awb::FrameContext awb;
+-
+-	Matrix<float, 3, 3> ccm;
++	ipa::ccm::FrameContext ccm;
+ 
+ 	struct {
+ 		int32_t exposure;

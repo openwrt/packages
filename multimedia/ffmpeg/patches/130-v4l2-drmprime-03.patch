@@ -1,0 +1,25 @@
+From 4a9624af38be52c53f7bc568c93992080b0e9cba Mon Sep 17 00:00:00 2001
+From: Lukas Rusak <lorusak@gmail.com>
+Date: Thu, 16 Aug 2018 21:10:13 -0700
+Subject: [PATCH 3/9] libavcodec: v4l2m2m: set format_modifier to
+ DRM_FORMAT_MOD_LINEAR
+
+---
+ libavcodec/v4l2_buffers.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+--- a/libavcodec/v4l2_buffers.c
++++ b/libavcodec/v4l2_buffers.c
+@@ -352,10 +352,12 @@ static int v4l2_buffer_export_drm(V4L2Bu
+             /* drm frame */
+             avbuf->drm_frame.objects[i].size = avbuf->buf.m.planes[i].length;
+             avbuf->drm_frame.objects[i].fd = expbuf.fd;
++            avbuf->drm_frame.objects[i].format_modifier = DRM_FORMAT_MOD_LINEAR;
+         } else {
+             /* drm frame */
+             avbuf->drm_frame.objects[0].size = avbuf->buf.length;
+             avbuf->drm_frame.objects[0].fd = expbuf.fd;
++            avbuf->drm_frame.objects[0].format_modifier = DRM_FORMAT_MOD_LINEAR;
+         }
+     }
+ 

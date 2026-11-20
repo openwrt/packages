@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dhtd
-PKG_VERSION:=1.0.5
+PKG_VERSION:=1.0.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/mwarning/dhtd/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=2b88977c474f35b611124bed226648dfc7fb98fd0e922360e8b8d42443028fa5
+PKG_HASH:=67024a7fbd8aef0c99635b1a1f02cc835f6f4c08b6aeb97d2db55caeb3716c6f
 
 PKG_MAINTAINER:=Moritz Warning <moritzwarning@web.de>
 PKG_LICENSE:=MIT
@@ -19,8 +19,8 @@ include $(INCLUDE_DIR)/package.mk
 define Package/dhtd
   SECTION:=net
   CATEGORY:=Network
-  SUBMENU:=IP Addresses and Names
-  TITLE:=DHT Daemon
+  SUBMENU:=BitTorrent
+  TITLE:=BitTorrent DHT Server
   URL:=https://github.com/mwarning/dhtd
 endef
 

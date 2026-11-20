@@ -1,0 +1,39 @@
+From 71832a3f09cfe3152f8e8c80b1f893239f50ebe0 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 6 Nov 2026 00:19:06 +0000
+Subject: [PATCH] ipa: rkisp2: ccm: Program the matrix relative to the identity
+
+The RkISP2 colour correction adds the identity matrix to the programmed
+coefficients, so the diagonal registers hold the coefficient minus one,
+as the Rockchip AIQ isp20 CCM configuration writes them. Commit eec470d
+("ipa: rkisp2: algo: ccm: Implement color correction matrix") writes the
+full matrix, which applies M + I: grey doubles in brightness and colours
+reach half the calibrated saturation. Subtract the identity before
+quantising the coefficients.
+
+Assisted-by: LLM
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ src/ipa/rkisp2/algorithms/ccm.cpp | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
+
+--- a/src/ipa/rkisp2/algorithms/ccm.cpp
++++ b/src/ipa/rkisp2/algorithms/ccm.cpp
+@@ -70,11 +70,14 @@ void Ccm::setParameters(RkISP2Params *pa
+ 
+ 	/*
+ 	 * 4 bit integer and 7 bit fractional, ranging from -8 (0x400) to
+-	 * +7.9921875 (0x3ff)
++	 * +7.9921875 (0x3ff); the hardware adds the identity matrix
+ 	 */
+ 	for (unsigned int i = 0; i < 3; i++) {
+-		for (unsigned int j = 0; j < 3; j++)
+-			config->coeff[i][j] = Q<4, 7>(matrix[i][j]).quantized();
++		for (unsigned int j = 0; j < 3; j++) {
++			float coeff = matrix[i][j] - (i == j ? 1.0f : 0.0f);
++
++			config->coeff[i][j] = Q<4, 7>(coeff).quantized();
++		}
+ 	}
+ 
+ 	for (unsigned int i = 0; i < 3; i++)

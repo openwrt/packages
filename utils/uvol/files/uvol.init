@@ -6,9 +6,17 @@ NAME=uvol
 PROG=/usr/sbin/uvol
 
 start_service() {
-	local ready
+	local status ready
 
-	ready=$(ubus call block status 2>/dev/null | jsonfilter -e '@.ready')
+	ubus -S list block >/dev/null 2>&1 || return 0
+
+	status=$(ubus call block status 2>/dev/null)
+	if [ -z "$status" ]; then
+		logger -t uvol "ubus method 'block status' not available"
+		return 0
+	fi
+
+	ready=$(jsonfilter -s "$status" -e '@.ready')
 	[ "$ready" = "true" ] && "$PROG" boot
 }
 

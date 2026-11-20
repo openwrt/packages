@@ -1,7 +1,7 @@
-From 6724bfac7fd7c8b3fa31233983ac6979d0c3954d Mon Sep 17 00:00:00 2001
+From a427431ae3d25a004cdbb012d5655eac198fa506 Mon Sep 17 00:00:00 2001
 From: Boris Brezillon <boris.brezillon@collabora.com>
 Date: Wed, 22 May 2019 14:46:58 +0200
-Subject: [PATCH 09/13] avcodec: Add V4L2 Request API vp8 hwaccel
+Subject: [PATCH 09/11] avcodec: Add V4L2 Request API vp8 hwaccel
 
 Add a V4L2 Request API hwaccel for VP8.
 
@@ -13,6 +13,7 @@ Signed-off-by: Ezequiel Garcia <ezequiel@collabora.com>
 Signed-off-by: Boris Brezillon <boris.brezillon@collabora.com>
 Co-developed-by: Jonas Karlman <jonas@kwiboo.se>
 Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
+(cherry picked from commit f6ee000e55d332bf10e5521b10b6cdbdfde51a25)
 ---
  configure                     |   3 +
  libavcodec/Makefile           |   1 +

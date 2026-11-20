@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gperftools
-PKG_VERSION:=2.17.2
-PKG_RELEASE:=4
+PKG_VERSION:=2.19.3
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/gperftools/gperftools/tar.gz/$(PKG_NAME)-$(PKG_VERSION)?
-PKG_HASH:=885dbbf1f25a922de0cdc78b0703c3ab93c43850e1d2f7c889e41be7c824c53d
+PKG_HASH:=96fab688bb7b16f44ef1e270b0e5274594efb9dd1f389a20406e4a5d4fd0a49b
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_MAINTAINER:=John Audia <therealgraysky@proton.me>

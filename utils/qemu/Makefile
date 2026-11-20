@@ -9,11 +9,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=qemu
-PKG_VERSION:=11.1.1
+PKG_VERSION:=11.1.3
 PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://download.qemu.org/
-PKG_HASH:=079ffbff8a7111bbc89022107cbabf3bbfd614d5fc9d7cc675991196aca12482
+PKG_HASH:=5a8289c7940dc77d3873c81a6c29ba3afe1446fc9d36e77fa1658cdbecb84b22
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=LICENSE tcg/LICENSE
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
@@ -31,8 +31,8 @@ include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python3-host.mk
 
-QEMU_DEPS_IN_GUEST :=@(TARGET_x86_64||TARGET_armsr||TARGET_malta)
-QEMU_DEPS_IN_HOST :=@(TARGET_x86_64||TARGET_armsr_armv8||TARGET_sunxi||TARGET_rockchip)
+QEMU_DEPS_IN_GUEST :=@(TARGET_x86_64||TARGET_armsr_armv8||TARGET_malta_le64||TARGET_malta_be64)
+QEMU_DEPS_IN_HOST :=@(TARGET_x86_64||TARGET_armsr_armv8||TARGET_sunxi_cortexa53||TARGET_rockchip_armv8)
 QEMU_DEPS_IN_HOST +=+libstdcpp
 QEMU_DEPS_IN_HOST +=$(ICONV_DEPENDS)
 

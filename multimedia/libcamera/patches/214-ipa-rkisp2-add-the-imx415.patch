@@ -1,0 +1,158 @@
+From d38be16c1658564da75d53f63a2319e8e950fdfb Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 16 Oct 2026 23:59:29 +0100
+Subject: [PATCH] ipa: rkisp2: Add the IMX415
+
+Add the IMX415 to the rkisp2 IPA. The sensor helper provides the black
+level of 0x32 at 10 bits from the data sheet, which the kernel driver
+programs as the default BLKLEVEL, so that the IPAs subtract it without
+a tuning file entry. The tuning file uses auto exposure, grey world
+white balance, black level subtraction, gamma and colour space
+conversion, and the libipa defaults for the AGC targets, a mean of 0.16
+and a lower bound of 0.5 on the highlights. The colour correction
+matrices, the colour temperature gain curve and the white balance modes
+are converted from the Raspberry Pi tuning file of the IMX415, which
+describes the sensor and is not specific to a camera board. There is no
+lens shading calibration yet.
+
+The exposure and gain written to the IMX415 at the start of a frame take
+effect in the next frame. With a delay of two frames the IPA believed
+the values to be in effect one frame later than they are, and the AGC
+regulated on a luminance that does not correspond to the exposure it
+accounted for. Measured on an RV1126 with the rkisp2 pipeline, which
+writes the controls when the VICAP completes the previous frame, the
+measured luminance follows a change of exposure or gain one frame before
+the frame the metadata reports it for. The blanking delays are left as
+they are, they were not measured.
+
+Assisted-by: LLM
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ src/ipa/libipa/camera_sensor_helper.cpp       |  2 +
+ src/ipa/rkisp2/data/imx415.yaml               | 84 +++++++++++++++++++
+ src/ipa/rkisp2/data/meson.build               |  1 +
+ .../sensor/camera_sensor_properties.cpp       |  4 +-
+ 4 files changed, 89 insertions(+), 2 deletions(-)
+ create mode 100644 src/ipa/rkisp2/data/imx415.yaml
+
+--- a/src/ipa/libipa/camera_sensor_helper.cpp
++++ b/src/ipa/libipa/camera_sensor_helper.cpp
+@@ -622,6 +622,8 @@ class CameraSensorHelperImx415 : public
+ public:
+ 	CameraSensorHelperImx415()
+ 	{
++		/* From datasheet: 0x32 at 10bits. */
++		blackLevel_ = 3200;
+ 		gain_ = AnalogueGainExp{ 1.0, expGainDb(0.3) };
+ 	}
+ };
+--- /dev/null
++++ b/src/ipa/rkisp2/data/imx415.yaml
+@@ -0,0 +1,84 @@
++# SPDX-License-Identifier: CC0-1.0
++%YAML 1.1
++---
++version: 1
++algorithms:
++  - Crop:
++  - Agc:
++      AeMeteringMode:
++        MeteringCentreWeighted: [0, 0, 0, 0, 0, 0, 6, 8, 6, 0, 0, 8, 16, 8, 0, 0, 6, 8, 6, 0, 0, 0, 0, 0, 0]
++        MeteringSpot: [0, 0, 0, 0, 0, 0, 2, 4, 2, 0, 0, 4, 16, 4, 0, 0, 2, 4, 2, 0, 0, 0, 0, 0, 0]
++        MeteringMatrix: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
++      AeExposureMode:
++        ExposureNormal:
++          exposureTime: [ 100, 10000, 30000, 60000, 120000 ]
++          gain: [ 1.0, 2.0, 4.0, 6.0, 6.0 ]
++        ExposureShort:
++          exposureTime: [ 100, 5000, 10000, 20000, 120000 ]
++          gain: [ 1.0, 2.0, 4.0, 6.0, 6.0 ]
++  - Awb:
++      algorithm: "grey"
++      AwbMode:
++        AwbAuto:
++          lo: 2500
++          hi: 8000
++        AwbIncandescent:
++          lo: 2500
++          hi: 3000
++        AwbTungsten:
++          lo: 3000
++          hi: 3500
++        AwbFluorescent:
++          lo: 4000
++          hi: 4700
++        AwbIndoor:
++          lo: 3000
++          hi: 5000
++        AwbDaylight:
++          lo: 5500
++          hi: 6500
++        AwbCloudy:
++          lo: 7000
++          hi: 8600
++      colourGains:
++        - ct: 2698
++          gains: [ 1.30192, 4.93583 ]
++        - ct: 2930
++          gains: [ 1.33067, 4.72590 ]
++        - ct: 3643
++          gains: [ 1.57357, 3.49895 ]
++        - ct: 4605
++          gains: [ 2.00321, 2.47466 ]
++        - ct: 5658
++          gains: [ 2.22321, 2.18627 ]
++  - BlackLevelSubtraction:
++  - Ccm:
++      ccms:
++        - ct: 2698
++          ccm: [
++                 1.57227, -0.32596, -0.24631, -0.61264, 1.70791, -0.09526, -0.43254, 0.48489,
++                 0.94765,
++               ]
++        - ct: 2930
++          ccm: [
++                 1.69455, -0.52724, -0.16731, -0.67131, 1.78468, -0.11338, -0.41609, 0.54693,
++                 0.86916,
++               ]
++        - ct: 3643
++          ccm: [
++                 1.74041, -0.77553, 0.03512, -0.44073, 1.34131, 0.09943, -0.11035, -0.93919,
++                 2.04954,
++               ]
++        - ct: 4605
++          ccm: [
++                 1.49865, -0.41638, -0.08227, -0.39445, 1.70114, -0.30669, 0.01319, -0.88009,
++                 1.86689,
++               ]
++        - ct: 5658
++          ccm: [
++                 1.38601, -0.23128, -0.15472, -0.37641, 1.70444, -0.32803, -0.01575, -0.71466,
++                 1.73041,
++               ]
++  - GammaOutCorrection:
++  - ColorSpaceConversion:
++...
+--- a/src/ipa/rkisp2/data/meson.build
++++ b/src/ipa/rkisp2/data/meson.build
+@@ -2,6 +2,7 @@
+ 
+ conf_files = files([
+     'imx219.yaml',
++    'imx415.yaml',
+     'imx708.yaml',
+     'uncalibrated.yaml',
+ ])
+--- a/src/libcamera/sensor/camera_sensor_properties.cpp
++++ b/src/libcamera/sensor/camera_sensor_properties.cpp
+@@ -265,8 +265,8 @@ const CameraSensorProperties *CameraSens
+ 			.unitCellSize = { 1450, 1450 },
+ 			.testPatternModes = {},
+ 			.sensorDelays = {
+-				.exposureDelay = 2,
+-				.gainDelay = 2,
++				.exposureDelay = 1,
++				.gainDelay = 1,
+ 				.vblankDelay = 2,
+ 				.hblankDelay = 2
+ 			},

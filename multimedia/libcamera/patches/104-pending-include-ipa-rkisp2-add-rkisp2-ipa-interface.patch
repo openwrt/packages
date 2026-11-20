@@ -1,0 +1,81 @@
+From f53ee306812a2e96e4d133b42d910b0de5dd2fe4 Mon Sep 17 00:00:00 2001
+From: Paul Elder <paul.elder@ideasonboard.com>
+Date: Tue, 30 Jun 2026 11:52:54 +0900
+Subject: [PATCH] include: ipa: rkisp2: Add rkisp2 ipa interface
+
+Add the IPA interface for the rkisp2. It is based on and is nearly
+identical to the rkisp1 IPA interface.
+
+Signed-off-by: Paul Elder <paul.elder@ideasonboard.com>
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+This is also split into a separate patch to make the other patches
+smaller and easier to review.
+
+No change in v2
+---
+ include/libcamera/ipa/meson.build  |  1 +
+ include/libcamera/ipa/rkisp2.mojom | 47 ++++++++++++++++++++++++++++++
+ 2 files changed, 48 insertions(+)
+ create mode 100644 include/libcamera/ipa/rkisp2.mojom
+
+--- a/include/libcamera/ipa/meson.build
++++ b/include/libcamera/ipa/meson.build
+@@ -66,6 +66,7 @@ pipeline_ipa_mojom_mapping = {
+     'ipu3': 'ipu3.mojom',
+     'mali-c55': 'mali-c55.mojom',
+     'rkisp1': 'rkisp1.mojom',
++    'rkisp2': 'rkisp2.mojom',
+     'rpi/pisp': 'raspberrypi.mojom',
+     'rpi/vc4': 'raspberrypi.mojom',
+     'simple': 'softisp.mojom',
+--- /dev/null
++++ b/include/libcamera/ipa/rkisp2.mojom
+@@ -0,0 +1,47 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++
++/*
++ * \todo Document the interface and remove the related EXCLUDE_PATTERNS entry.
++ */
++
++module ipa.rkisp2;
++
++import "include/libcamera/ipa/core.mojom";
++
++/*
++ * colorSpaceEncoding comes from libcamera::ColorSpace::YcbcrEncoding; -1 for invalid
++ * colorSpaceRange comes from libcamera::ColorSpace::Range; -1 for invalid
++ */
++struct IPAConfigInfo {
++	libcamera.IPACameraSensorInfo sensorInfo;
++	libcamera.ControlInfoMap sensorControls;
++	int32 colorSpaceEncoding;
++	int32 colorSpaceRange;
++};
++
++interface IPARkISP2Interface {
++	init(libcamera.IPASettings settings,
++	     libcamera.IPACameraSensorInfo sensorInfo,
++	     libcamera.ControlInfoMap sensorControls)
++		=> (int32 ret, libcamera.ControlInfoMap ipaControls);
++	start() => (int32 ret);
++	stop();
++
++	configure(IPAConfigInfo configInfo)
++		=> (int32 ret, libcamera.ControlInfoMap ipaControls);
++
++	mapBuffers(array<libcamera.IPABuffer> buffers);
++	unmapBuffers(array<uint32> ids);
++
++	[async] queueRequest(uint32 frame, libcamera.ControlList reqControls);
++	[async] computeParams(uint32 frame, uint32 bufferId);
++	[async] processStats(uint32 frame, uint32 bufferId,
++			     libcamera.ControlList sensorControls);
++};
++
++interface IPARkISP2EventInterface {
++	paramsComputed(uint32 frame, uint32 bufferId, uint32 bytesused);
++	setSensorControls(uint32 frame, libcamera.ControlList sensorControls);
++	metadataReady(libcamera.ControlList metadata);
++};
++

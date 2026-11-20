@@ -19,7 +19,7 @@ Signed-off-by: Josef Schlehofer <pepe.schlehofer@gmail.com>
 ---
 --- a/configure
 +++ b/configure
-@@ -6802,7 +6802,7 @@ elif enabled parisc; then
+@@ -6803,7 +6803,7 @@ elif enabled parisc; then
  
  elif enabled ppc; then
  

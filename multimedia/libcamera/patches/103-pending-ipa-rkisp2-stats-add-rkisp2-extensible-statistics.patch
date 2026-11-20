@@ -1,0 +1,89 @@
+From f11e930268f1e18c0a02c0dbb7b781191ddd6817 Mon Sep 17 00:00:00 2001
+From: Paul Elder <paul.elder@ideasonboard.com>
+Date: Sat, 22 Aug 2026 20:46:09 +0900
+Subject: [PATCH] ipa: rkisp2: stats: Add rkisp2 extensible statistics wrapper
+
+Add the libipa wrapper for extensible statistics for the rkisp2. This
+wraps the extensible statistics in the rkisp2 uapi to make them easier
+to use within libcamera.
+
+Signed-off-by: Paul Elder <paul.elder@ideasonboard.com>
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+This is in a separate patch to reduce the size of the other patches to
+make them easier to review.
+
+New in v2
+---
+ src/ipa/rkisp2/stats.h | 65 ++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 65 insertions(+)
+ create mode 100644 src/ipa/rkisp2/stats.h
+
+--- /dev/null
++++ b/src/ipa/rkisp2/stats.h
+@@ -0,0 +1,65 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/*
++ * Copyright (C) 2026, Ideas On Board
++ *
++ * RkISP2 ISP Statistics
++ */
++
++#pragma once
++
++#include <stdint.h>
++
++#include <linux/media/rockchip/rkisp2-config.h>
++#include <linux/videodev2.h>
++
++#include <libipa/v4l2_stats.h>
++
++namespace libcamera {
++
++namespace ipa::rkisp2 {
++
++enum class RkISP2StatsBlocks : uint16_t {
++	AeLite,
++	HistLite,
++	HistBig0,
++	HistBig1,
++	HistBig2,
++	Awb,
++};
++
++template<RkISP2StatsBlocks B>
++struct block_type {
++};
++
++#define RKISP2_DEFINE_STATS_BLOCK_TYPE(id, cfgType, blkType)		\
++template<>								\
++struct block_type<RkISP2StatsBlocks::id> {				\
++	using type = struct rkisp2_stats_##cfgType;			\
++	static constexpr rkisp2_stats_block_type blockType = 		\
++		rkisp2_stats_block_type::RKISP2_STATS_BLOCK_##blkType;	\
++}
++
++RKISP2_DEFINE_STATS_BLOCK_TYPE(AeLite,		ae_lite,	AE_LITE);
++RKISP2_DEFINE_STATS_BLOCK_TYPE(HistLite,	hist,		HIST_LITE);
++RKISP2_DEFINE_STATS_BLOCK_TYPE(HistBig0,	hist,		HIST_BIG0);
++RKISP2_DEFINE_STATS_BLOCK_TYPE(HistBig1,	hist,		HIST_BIG1);
++RKISP2_DEFINE_STATS_BLOCK_TYPE(HistBig2,	hist,		HIST_BIG2);
++RKISP2_DEFINE_STATS_BLOCK_TYPE(Awb,		awb,		AWB);
++
++struct stats_traits {
++	using id_type = RkISP2StatsBlocks;
++	template<id_type Id> using id_to_details = block_type<Id>;
++};
++
++class RkISP2Stats : public V4L2Stats<stats_traits>
++{
++public:
++	RkISP2Stats(Span<uint8_t> data)
++		: V4L2Stats(data, V4L2_ISP_VERSION_V1)
++	{
++	}
++};
++
++} /* namespace ipa::rkisp2 */
++
++} /* namespace libcamera */

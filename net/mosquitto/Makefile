@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mosquitto
-PKG_VERSION:=2.0.22
-PKG_RELEASE:=2
+PKG_VERSION:=2.0.23
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://mosquitto.org/files/source/
-PKG_HASH:=2f752589ef7db40260b633fbdb536e9a04b446a315138d64a7ff3c14e2de6b68
+PKG_HASH:=47d66fc98d9f8714bdc700dfe690dbe80c9fbe93c00a21b04dc61d00e1667b34
 
 PKG_LICENSE:=EPL-2.0
 PKG_LICENSE_FILES:=LICENSE.txt
@@ -39,6 +39,7 @@ define Package/mosquitto-ssl
     DEPENDS+= +libopenssl +MOSQUITTO_LWS:libwebsockets-openssl +MOSQUITTO_DYNAMIC_SECURITY:cJSON
     VARIANT:=ssl
     PROVIDES:=mosquitto
+  CONFLICTS:=mosquitto-nossl
 endef
 
 define Package/mosquitto-nossl
@@ -83,6 +84,7 @@ define Package/mosquitto-client-ssl
     TITLE+= (With SSL support)
     DEPENDS+=+libmosquitto-ssl
     VARIANT:=ssl
+  CONFLICTS:=mosquitto-client-nossl
 endef
 define Package/mosquitto-client-nossl
     $(call Package/mosquitto-client/default)
@@ -120,6 +122,7 @@ define Package/libmosquitto-ssl
     TITLE+= (With SSL Support)
     DEPENDS+= +libopenssl
     VARIANT=ssl
+  CONFLICTS:=libmosquitto-nossl
 endef
 define Package/libmosquitto-nossl
     $(call Package/libmosquitto/default)

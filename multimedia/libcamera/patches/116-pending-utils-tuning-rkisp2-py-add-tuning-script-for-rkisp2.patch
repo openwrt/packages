@@ -1,0 +1,64 @@
+From 3dd12d6d070446181bbe199f920b97f67d2dd929 Mon Sep 17 00:00:00 2001
+From: Paul Elder <paul.elder@ideasonboard.com>
+Date: Fri, 22 May 2026 12:29:44 +0200
+Subject: [PATCH] utils: tuning: rkisp2.py: Add tuning script for rkisp2
+
+Add a tuning script for the rkisp2. It is based on the rkisp1 tuning
+script.
+
+Signed-off-by: Paul Elder <paul.elder@ideasonboard.com>
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+lsc is not output currently as it needs a bit more investigation.
+
+No change in v2
+---
+ utils/tuning/rkisp2.py | 42 ++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 42 insertions(+)
+ create mode 100755 utils/tuning/rkisp2.py
+
+--- /dev/null
++++ b/utils/tuning/rkisp2.py
+@@ -0,0 +1,42 @@
++#!/usr/bin/env python3
++# SPDX-License-Identifier: GPL-2.0-or-later
++#
++# Copyright (C) 2026, Paul Elder <paul.elder@ideasonboard.com>
++# Copyright (C) 2026, Ideas On Board
++#
++# Tuning script for rkisp2, based on rkisp1
++
++import logging
++import sys
++
++import coloredlogs
++import libtuning as lt
++from libtuning.generators import YamlOutput
++from libtuning.modules.agc import AGCRkISP1
++from libtuning.modules.awb import AWBRkISP1
++from libtuning.modules.ccm import CCMRkISP1
++from libtuning.modules.lsc import LSCRkISP1
++from libtuning.modules.lux import LuxRkISP1
++from libtuning.modules.static import StaticModule
++from libtuning.parsers import YamlParser
++
++coloredlogs.install(level=logging.INFO, fmt='%(name)s %(levelname)s %(message)s')
++
++csm = StaticModule('ColorSpaceConversion')
++agc = AGCRkISP1(debug=[lt.Debug.Plot])
++awb = AWBRkISP1(debug=[lt.Debug.Plot])
++bls = StaticModule('BlackLevelSubtraction')
++ccm = CCMRkISP1(debug=[lt.Debug.Plot])
++goc = StaticModule('GammaOutCorrection', {'gamma': 2.2})
++
++tuner = lt.Tuner('RkISP2')
++tuner.add([csm, agc, awb, bls, ccm, goc])
++tuner.set_input_parser(YamlParser())
++tuner.set_output_formatter(YamlOutput())
++
++# Bayesian AWB uses the lux value, so insert the lux algorithm before AWB.
++# Compress is parameterized by others, so add it at the end.
++tuner.set_output_order([csm, agc, awb, bls, ccm, goc])
++
++if __name__ == '__main__':
++    sys.exit(tuner.run(sys.argv))
