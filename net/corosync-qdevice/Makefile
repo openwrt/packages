@@ -27,8 +27,7 @@ CONFIGURE_ARGS += \
 	--disable-qdevices \
 	--enable-qnetd \
 	--enable-install-qnetd-in-sbin \
-	--disable-systemd \
-	--sysconfdir=/etc
+	--disable-systemd
 
 define Package/corosync-qnetd
   SECTION:=net

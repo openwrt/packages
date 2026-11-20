@@ -34,17 +34,24 @@ cleanup() {
 			restore_service_state || echo "Could not restart QNetd after failed rotation" >&2
 			;;
 		rollback)
-			if [ -d "$SWAP_DIR" ]; then
-				if [ -d "$ACTIVE_DIR" ] && [ ! -d "$ROLLBACK_DIR" ]; then
-					mv "$ACTIVE_DIR" "$ROLLBACK_DIR"
-				fi
-				[ -d "$ACTIVE_DIR" ] || mv "$SWAP_DIR" "$ACTIVE_DIR"
+			if recover_rollback; then
+				restore_service_state || echo "Could not restart QNetd after failed rollback" >&2
+			else
+				echo "Could not restore the previous QNetd certificate database after failed rollback" >&2
 			fi
-			[ ! -d "$ACTIVE_DIR" ] || fix_permissions
-			restore_service_state
 			;;
 	esac
 	rmdir "$LOCK_DIR" 2>/dev/null || true
+}
+
+recover_rollback() {
+	if [ -d "$SWAP_DIR" ]; then
+		if [ -d "$ACTIVE_DIR" ] && [ ! -d "$ROLLBACK_DIR" ]; then
+			mv "$ACTIVE_DIR" "$ROLLBACK_DIR" || return 1
+		fi
+		[ -d "$ACTIVE_DIR" ] || mv "$SWAP_DIR" "$ACTIVE_DIR" || return 1
+	fi
+	[ -d "$ACTIVE_DIR" ] && fix_permissions
 }
 
 lock() {
