@@ -1,0 +1,37 @@
+From cfa2eac7512a62bf959eeb7e5ac9de8a6e34862a Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Sun, 18 Oct 2026 00:51:02 +0100
+Subject: [PATCH 01/15] fix: accept constant response parameters
+
+The dispatcher passes constant method names. Mark the response namespace
+and method arguments read-only to preserve their qualifiers.
+
+Fixes: 68661430fcdb ("Replace error with empty message when method is not supported")
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ fault.c | 2 +-
+ fault.h | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+--- a/fault.c
++++ b/fault.c
+@@ -25,7 +25,7 @@
+ 
+ extern service_context_t service_ctx;
+ 
+-int send_empty_response(char *ns, char *method)
++int send_empty_response(const char *ns, const char *method)
+ {
+     int ret;
+     char *response = (char *) malloc(strlen(ns) + strlen(method) + 10);
+--- a/fault.h
++++ b/fault.h
+@@ -17,7 +17,7 @@
+ #ifndef FAULT_H
+ #define FAULT_H
+ 
+-int send_empty_response(char *ns, char *method);
++int send_empty_response(const char *ns, const char *method);
+ int send_fault(char *service, char *rec_send, char *subcode, char *subcode_ex, char *reason, char *detail);
+ int send_pull_messages_fault(char *timeout, char *message_limit);
+ int send_action_failed_fault(char *service, int code);

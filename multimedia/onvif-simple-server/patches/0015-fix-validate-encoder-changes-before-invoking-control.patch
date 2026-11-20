@@ -1,0 +1,443 @@
+From 973144da3b43ce26330899a58f22050c76009802 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Sun, 18 Oct 2026 11:59:44 +0100
+Subject: [PATCH 15/15] fix: validate encoder changes before invoking control
+ helpers
+
+Reject unsupported metadata and coding changes, validate token and scalar limits, and preserve live settings when optional fields are omitted.
+
+Fixes: 135cec8b6b04 ("feat: delegate encoder configuration to external helpers")
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ CONTROL_HELPERS.md     |   3 +
+ README.md              |   7 ++
+ conf.c                 |  10 ++-
+ control_helper.c       |   4 +-
+ device_advertisement.c |  27 +++++---
+ encoder_control.c      | 148 ++++++++++++++++++++++++++++++++++++-----
+ media_profiles.c       |   3 +-
+ onvif_simple_server.h  |   1 +
+ test/test_cgi.py       |  32 +++++++++
+ 9 files changed, 207 insertions(+), 28 deletions(-)
+
+--- a/CONTROL_HELPERS.md
++++ b/CONTROL_HELPERS.md
+@@ -56,6 +56,9 @@ effective `configuration` after applying
+ true, as required by the current Media specification; Media2 also persists
+ encoder changes. Rejected changes must leave the camera unchanged. Setters
+ remain unavailable when no encoder helper is configured.
++Omitted optional rate-control and GOP/profile members retain live values.
++Name, use count, multicast and session metadata remain read-only. Requests
++to change these or unsupported coding features return a fault.
+ 
+ ## Imaging operations
+ 
+--- a/README.md
++++ b/README.md
+@@ -396,6 +396,13 @@ Usage: /tmp/sd/yi-hack/bin/onvif_notify_
+ | debug | debug level from 0 to 5 | 0 |
+ 
+ ## Compatibility
++Profile names derive encoder tokens by appending `_VideoEncoderToken`.
++Keep names within 46 UTF-8 bytes so the generated token fits ONVIF's
++64-character ReferenceToken limit. H265 profiles use `Main` or `Main10`.
++Optional camera controls and their generic helper protocol are described in
++[CONTROL_HELPERS.md](CONTROL_HELPERS.md). Host protocol tests are described in
++[test/README.md](test/README.md).
++
+ I tested this program with the following clients:
+ - Onvif Device Manager (Windows)
+ - Synology Surveillance Station (DSM 6.x and 7.x)
+--- a/conf.c
++++ b/conf.c
+@@ -25,6 +25,7 @@
+ #include <errno.h>
+ #include <net/if.h>
+ #include <math.h>
++#include <float.h>
+ 
+ #include <json-c/json.h>
+ #include "conf.h"
+@@ -66,11 +67,13 @@ static int profiles_validate(void)
+         return -2;
+     for (i = 0; i < service_ctx.profiles_num; i++) {
+         profile = &service_ctx.profiles[i];
+-        if (!profile->name || !*profile->name || profile->width <= 0 ||
++        if (!profile->name || !*profile->name ||
++            strlen(profile->name) + strlen("_VideoEncoderToken") > ONVIF_TOKEN_MAX_LENGTH ||
++            profile->width <= 0 ||
+             profile->height <= 0 || profile->framerate <= 0 ||
+             profile->framerate_den <= 0 || profile->bitrate < 0 ||
+             profile->gov_length <= 0 || profile->encoding_interval <= 0 ||
+-            !isfinite(profile->quality) || profile->quality < 0)
++            !isfinite(profile->quality) || profile->quality < 0 || profile->quality > FLT_MAX)
+             return -2;
+         for (j = 0; j < i; j++)
+             if (!strcmp(profile->name, service_ctx.profiles[j].name))
+@@ -82,6 +85,9 @@ static int profiles_validate(void)
+             strcmp(profile->encoding_profile, "Extended") &&
+             strcmp(profile->encoding_profile, "High"))
+             return -2;
++        if (profile->type == H265 && strcmp(profile->encoding_profile, "Main") &&
++            strcmp(profile->encoding_profile, "Main10"))
++            return -2;
+     }
+     return 0;
+ }
+--- a/control_helper.c
++++ b/control_helper.c
+@@ -184,7 +184,9 @@ static int helper_exchange(const char *p
+ enum helper_status helper_call(const char *path, const char *operation,
+                                json_object *data, json_object **result)
+ {
+-    static const char *statuses[] = { "ok", "unsupported", "not_found", "invalid", "busy", "failed" };
++    static const char *statuses[] = {
++        "ok", "unsupported", "not_found", "invalid", "busy", "failed"
++    };
+     char response[HELPER_MESSAGE_SIZE + 1];
+     struct json_tokener *tokener;
+     json_object *request, *reply, *value;
+--- a/device_advertisement.c
++++ b/device_advertisement.c
+@@ -98,13 +98,19 @@ int device_advertisement_send(int servic
+     port[0] = '\0';
+     if (service_ctx.port != 80)
+         snprintf(port, sizeof(port), ":%d", service_ctx.port);
+-    snprintf(device, sizeof(device), "http://%s%s/onvif/device_service", service_ctx.address_url, port);
+-    snprintf(media, sizeof(media), "http://%s%s/onvif/media_service", service_ctx.address_url, port);
+-    snprintf(media2, sizeof(media2), "http://%s%s/onvif/media2_service", service_ctx.address_url, port);
++    snprintf(device, sizeof(device), "http://%s%s/onvif/device_service",
++             service_ctx.address_url, port);
++    snprintf(media, sizeof(media), "http://%s%s/onvif/media_service",
++             service_ctx.address_url, port);
++    snprintf(media2, sizeof(media2), "http://%s%s/onvif/media2_service",
++             service_ctx.address_url, port);
+     snprintf(ptz, sizeof(ptz), "http://%s%s/onvif/ptz_service", service_ctx.address_url, port);
+-    snprintf(events, sizeof(events), "http://%s%s/onvif/events_service", service_ctx.address_url, port);
+-    snprintf(deviceio, sizeof(deviceio), "http://%s%s/onvif/deviceio_service", service_ctx.address_url, port);
+-    snprintf(imaging, sizeof(imaging), "http://%s%s/onvif/imaging_service", service_ctx.address_url, port);
++    snprintf(events, sizeof(events), "http://%s%s/onvif/events_service",
++             service_ctx.address_url, port);
++    snprintf(deviceio, sizeof(deviceio), "http://%s%s/onvif/deviceio_service",
++             service_ctx.address_url, port);
++    snprintf(imaging, sizeof(imaging), "http://%s%s/onvif/imaging_service",
++             service_ctx.address_url, port);
+     audio_input = 0;
+     audio_output = 0;
+     for (i = 0; i < service_ctx.profiles_num; i++) {
+@@ -114,7 +120,8 @@ int device_advertisement_send(int servic
+     snprintf(audio_sources, sizeof(audio_sources), "%d", audio_input);
+     snprintf(audio_outputs, sizeof(audio_outputs), "%d", audio_output);
+     snprintf(relay_outputs, sizeof(relay_outputs), "%d", service_ctx.relay_outputs_num);
+-    if (service_ctx.events_enable == EVENTS_BASESUBSCRIPTION || service_ctx.events_enable == EVENTS_BOTH)
++    if (service_ctx.events_enable == EVENTS_BASESUBSCRIPTION ||
++        service_ctx.events_enable == EVENTS_BOTH)
+         values[6].value = "true";
+     if (service_ctx.events_enable == EVENTS_PULLPOINT || service_ctx.events_enable == EVENTS_BOTH)
+         values[7].value = "true";
+@@ -142,9 +149,11 @@ int device_advertisement_send(int servic
+     } else if (!strcmp(category, "Device") || !strcmp(category, "Media") ||
+                !strcmp(category, "Events") ||
+                (!strcmp(category, "PTZ") && service_ctx.ptz_node.enable)) {
+-        snprintf(filename, sizeof(filename), "device_service_files/Get%sCapabilities.xml", category);
++        snprintf(filename, sizeof(filename), "device_service_files/Get%sCapabilities.xml",
++                 category);
+     } else {
+-        return send_fault("device_service", "Receiver", "ter:ActionNotSupported", "ter:NoSuchService",
++        return send_fault("device_service", "Receiver", "ter:ActionNotSupported",
++                          "ter:NoSuchService",
+                           "No such service", "The requested service category is unavailable");
+     }
+     envelope = soap_template_load(filename);
+--- a/encoder_control.c
++++ b/encoder_control.c
+@@ -1,5 +1,6 @@
+ /* SPDX-License-Identifier: GPL-3.0-only */
+ #include <limits.h>
++#include <float.h>
+ #include <math.h>
+ #include <stdio.h>
+ #include <string.h>
+@@ -66,7 +67,8 @@ static int profile_update(stream_profile
+         integer_get(object, "bitrate", &candidate.bitrate, 0) ||
+         number_get(object, "frame_rate", &candidate.frame_rate) ||
+         candidate.frame_rate <= 0 || candidate.frame_rate > INT_MAX ||
+-        number_get(object, "quality", &candidate.quality) || candidate.quality < 0)
++        number_get(object, "quality", &candidate.quality) || candidate.quality < 0 ||
++        candidate.quality > FLT_MAX)
+         return -1;
+     encoding_profile = profile->encoding_profile;
+     if (candidate.type != JPEG) {
+@@ -143,6 +145,9 @@ static int option_add(ezxml_t response,
+         return -1;
+     if (version == 1 && !strcmp(codec, "H265"))
+         return 0;
++    if (version == 1 && !strcmp(codec, "JPEG") &&
++        get_element_in_element_ptr("H264", common))
++        return -1;
+     options = version == 1 ? common : soap_member_add(response, version, "Options");
+     if (range_get(object, "quality", &minimum, &maximum, version == 1))
+         return -1;
+@@ -262,7 +267,8 @@ static enum helper_status encoder_option
+ 
+     configuration_token = get_element("ConfigurationToken", "Body");
+     profile_token = get_element("ProfileToken", "Body");
+-    if ((configuration_token && media_profile_find(configuration_token, "_VideoEncoderToken") < 0) ||
++    if ((configuration_token &&
++         media_profile_find(configuration_token, "_VideoEncoderToken") < 0) ||
+         (profile_token && media_profile_find(profile_token, "") < 0))
+         return HELPER_NOT_FOUND;
+     request = json_object_new_object();
+@@ -380,7 +386,7 @@ static int xml_number_add(json_object *o
+     return 0;
+ }
+ 
+-static json_object *configuration_parse(ezxml_t node, int version)
++static json_object *configuration_parse(ezxml_t node, int version, stream_profile_t *profile)
+ {
+     const char *encoding_profile;
+     const char *codec;
+@@ -395,34 +401,46 @@ static json_object *configuration_parse(
+     codec = get_element_in_element("Encoding", node);
+     resolution = get_element_in_element_ptr("Resolution", node);
+     rate = get_element_in_element_ptr("RateControl", node);
+-    if (!codec || !resolution || !rate)
++    if (!codec || !resolution)
+         return NULL;
+     object = json_object_new_object();
+     json_object_object_add(object, "type", json_object_new_string(codec));
+     if (xml_number_add(object, "width", resolution, "Width", 1) ||
+         xml_number_add(object, "height", resolution, "Height", 1) ||
+-        xml_number_add(object, "bitrate", rate, "BitrateLimit", 1) ||
+-        xml_number_add(object, "frame_rate", rate, "FrameRateLimit", version == 1) ||
+         xml_number_add(object, "quality", node, "Quality", 0))
+         goto invalid;
+-    if (version == 1 && xml_number_add(object, "encoding_interval", rate,
+-                                      "EncodingInterval", 1))
++    if (rate && (xml_number_add(object, "bitrate", rate, "BitrateLimit", 1) ||
++                 xml_number_add(object, "frame_rate", rate, "FrameRateLimit", version == 1)))
++        goto invalid;
++    if (!rate) {
++        json_object_object_add(object, "bitrate", json_object_new_int(profile->bitrate));
++        json_object_object_add(object, "frame_rate",
++                               json_object_new_double(media_profile_framerate(profile)));
++    }
++    if (version == 1 && rate && xml_number_add(object, "encoding_interval", rate,
++                                              "EncodingInterval", 1))
+         goto invalid;
+     if (!strcmp(codec, "JPEG"))
+         return object;
+     h264 = get_element_in_element_ptr("H264", node);
+     if (version == 1) {
+-        encoding_profile = get_element_in_element("H264Profile", h264);
+-        if (strcmp(codec, "H264") || !encoding_profile ||
+-            xml_number_add(object, "gov_length", h264, "GovLength", 1))
++        if (strcmp(codec, "H264"))
+             goto invalid;
++        encoding_profile = h264 ? get_element_in_element("H264Profile", h264) :
++                           profile->encoding_profile;
++        if (h264 && xml_number_add(object, "gov_length", h264, "GovLength", 1))
++            goto invalid;
++        if (!h264)
++            json_object_object_add(object, "gov_length", json_object_new_int(profile->gov_length));
+     } else {
+         encoding_profile = get_attribute(node, "Profile");
++        if (!encoding_profile)
++            encoding_profile = profile->encoding_profile;
+         gov = get_attribute(node, "GovLength");
+-        if (!gov || !*gov)
++        if (gov && !*gov)
+             goto invalid;
+-        length = strtol(gov, &end, 10);
+-        if (*end || length < 1 || length > INT_MAX)
++        length = gov ? strtol(gov, &end, 10) : profile->gov_length;
++        if ((gov && *end) || length < 1 || length > INT_MAX)
+             goto invalid;
+         json_object_object_add(object, "gov_length", json_object_new_int(length));
+     }
+@@ -435,6 +453,99 @@ invalid:
+     return NULL;
+ }
+ 
++static int children_supported(ezxml_t node, const char *const *names)
++{
++    const char *namespace;
++    const char *name;
++    ezxml_t child;
++    ezxml_t sibling;
++    int i;
++
++    for (child = node ? node->child : NULL; child; child = child->ordered) {
++        namespace = xml_namespace_get(child);
++        if (!namespace || strcmp(namespace, "http://www.onvif.org/ver10/schema"))
++            return 0;
++        name = strchr(child->name, ':');
++        name = name ? name + 1 : child->name;
++        for (i = 0; names[i] && strcmp(names[i], name); i++)
++            ;
++        if (!names[i])
++            return 0;
++        for (sibling = child->ordered; sibling; sibling = sibling->ordered) {
++            name = strchr(sibling->name, ':');
++            name = name ? name + 1 : sibling->name;
++            if (!strcmp(names[i], name))
++                return 0;
++        }
++    }
++    return 1;
++}
++
++static int configuration_supported(ezxml_t node, int index, int version)
++{
++    static const char *const names[] = {
++        "Name", "UseCount", "Encoding", "Resolution", "Quality", "RateControl",
++        "H264", "Multicast", "SessionTimeout", NULL
++    };
++    static const char *const rate_names[] = {
++        "FrameRateLimit", "EncodingInterval", "BitrateLimit", NULL
++    };
++    static const char *const resolution_names[] = { "Width", "Height", NULL };
++    static const char *const h264_names[] = { "GovLength", "H264Profile", NULL };
++    const char *value;
++    const char *attribute;
++    ezxml_t multicast;
++    ezxml_t rate;
++    int i;
++
++    if (version == 1 && service_ctx.profiles[index].type == H265)
++        return 0;
++    if (!children_supported(node, names) ||
++        !children_supported(get_element_in_element_ptr("Resolution", node), resolution_names) ||
++        !children_supported(get_element_in_element_ptr("H264", node), h264_names))
++        return 0;
++    for (i = 0; node->attr[i]; i += 2) {
++        attribute = node->attr[i];
++        if (!strcmp(attribute, "token") || !strncmp(attribute, "xmlns", strlen("xmlns")) ||
++            (version == 2 && (!strcmp(attribute, "GovLength") || !strcmp(attribute, "Profile"))))
++            continue;
++        return 0;
++    }
++    value = get_element_in_element("Name", node);
++    if (value && strcmp(value, service_ctx.profiles[index].name))
++        return 0;
++    value = get_element_in_element("UseCount", node);
++    if (value && strcmp(value, "1"))
++        return 0;
++    value = get_element_in_element("SessionTimeout", node);
++    if (value && strcmp(value, "PT0S"))
++        return 0;
++    rate = get_element_in_element_ptr("RateControl", node);
++    if (!children_supported(rate, rate_names))
++        return 0;
++    for (i = 0; rate && rate->attr[i]; i += 2)
++        if (strncmp(rate->attr[i], "xmlns", strlen("xmlns")))
++            return 0;
++    multicast = get_element_in_element_ptr("Multicast", node);
++    if (!multicast)
++        return 1;
++    value = get_element_in_element("AutoStart", multicast);
++    if (!value || (strcmp(value, "false") && strcmp(value, "0")))
++        return 0;
++    value = get_element_in_element("Port", multicast);
++    if (!value || strcmp(value, "0"))
++        return 0;
++    value = get_element_in_element("TTL", multicast);
++    if (!value || strcmp(value, "0"))
++        return 0;
++    multicast = get_element_in_element_ptr("Address", multicast);
++    value = get_element_in_element("Type", multicast);
++    if (!value || strcmp(value, "IPv4"))
++        return 0;
++    value = get_element_in_element("IPv4Address", multicast);
++    return value && !strcmp(value, "0.0.0.0");
++}
++
+ static enum helper_status encoder_set(int version)
+ {
+     stream_profile_t candidate;
+@@ -450,7 +561,9 @@ static enum helper_status encoder_set(in
+     index = media_profile_find(token, "_VideoEncoderToken");
+     if (index < 0)
+         return HELPER_NOT_FOUND;
+-    configuration = configuration_parse(node, version);
++    if (!configuration_supported(node, index, version))
++        return HELPER_INVALID;
++    configuration = configuration_parse(node, version, &service_ctx.profiles[index]);
+     if (!configuration)
+         return HELPER_INVALID;
+     candidate = service_ctx.profiles[index];
+@@ -507,6 +620,11 @@ int encoder_control_dispatch(const char
+         return 1;
+     }
+     if (setter) {
++        status = encoder_refresh();
++        if (status != HELPER_OK && status != HELPER_UNSUPPORTED) {
++            helper_fault(service, status);
++            return 1;
++        }
+         status = encoder_set(version);
+         if (status == HELPER_OK)
+             soap_response_send(soap_response_create(version, operation));
+--- a/media_profiles.c
++++ b/media_profiles.c
+@@ -304,7 +304,8 @@ int media_profiles_dispatch(const char *
+             (!strcmp(operation, "GetStreamUri") &&
+              (!service_ctx.profiles[index].url || !*service_ctx.profiles[index].url))) {
+             ezxml_free(response->parent->parent);
+-            send_fault((char *)service, "Sender", "ter:InvalidArgVal", "ter:IncompleteConfiguration",
++            send_fault((char *)service, "Sender", "ter:InvalidArgVal",
++                       "ter:IncompleteConfiguration",
+                        "Missing URI", "The requested profile has no configured URI");
+             return 1;
+         }
+--- a/onvif_simple_server.h
++++ b/onvif_simple_server.h
+@@ -16,6 +16,7 @@
+ 
+ #ifndef ONVIF_SIMPLE_SERVER_H
+ #define ONVIF_SIMPLE_SERVER_H
++#define ONVIF_TOKEN_MAX_LENGTH 64
+ 
+ #define DAEMON_NO_CHDIR          01 /* Don't chdir ("/") */
+ #define DAEMON_NO_CLOSE_FILES    02 /* Don't close all open files */
+--- a/test/test_cgi.py
++++ b/test/test_cgi.py
+@@ -235,6 +235,38 @@ class CGITests(unittest.TestCase):
+         for service in ['media', 'media2']:
+             self.assertEqual(request(service, 'GetSnapshotUri',
+                                      '<ProfileToken>Profile_0</ProfileToken>')[0], 500)
++
++    def test_encoder_rejects_unsupported_changes(self):
++        with helper_configuration() as (config, path):
++            status, root = request('media2', 'GetVideoEncoderConfigurations',
++                                   '<ConfigurationToken>Profile_0_VideoEncoderToken</ConfigurationToken>', config)
++            self.assertEqual(status, 200)
++            node = root.find('.//tr2:Configurations', NS)
++            node.tag = 'Configuration'
++            original = ET.tostring(node).decode()
++            for content in [original.replace('Profile_0</', 'Renamed</'),
++                            original.replace('AutoStart>false', 'AutoStart>true'),
++                            original.replace('<Configuration ', '<Configuration Signed="true" '),
++                            original.replace('</Configuration>', '<tt:Unknown/></Configuration>')]:
++                self.assertEqual(request('media2', 'SetVideoEncoderConfiguration', content, config)[0], 500)
++                self.assertNotIn('last_set', json.loads(path.read_text()))
++            node.remove(node.find('tt:RateControl', NS))
++            del node.attrib['GovLength']
++            del node.attrib['Profile']
++            self.assertEqual(request('media2', 'SetVideoEncoderConfiguration',
++                                     ET.tostring(node).decode(), config)[0], 200)
++            applied = json.loads(path.read_text())['last_set']['configuration']
++            self.assertEqual(applied['bitrate'], 4567)
++            self.assertEqual(applied['frame_rate'], 29.97)
++            self.assertEqual(applied['gov_length'], 57)
++
++    def test_encoder_option_failure(self):
++        with helper_configuration() as (config, path):
++            state = json.loads(path.read_text())
++            state['options'][0]['frame_rates'] = [15, 30]
++            path.write_text(json.dumps(state))
++            for service in ['media', 'media2']:
++                self.assertEqual(request(service, 'GetVideoEncoderConfigurationOptions', config=config)[0], 500)
+     def test_operation_namespace(self):
+         status, root = request('media', 'GetProfiles', namespace='urn:unrelated')
+         self.assertEqual(status, 500)

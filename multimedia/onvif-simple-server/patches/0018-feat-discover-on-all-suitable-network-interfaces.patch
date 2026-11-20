@@ -1,0 +1,1458 @@
+From 1c8c946367f85387610ed9e0a9fb08f760d31566 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Sun, 18 Oct 2026 17:24:53 +0100
+Subject: [PATCH 18/19] feat: discover on all suitable network interfaces
+
+Join discovery groups on active multicast-capable interfaces and send
+announcements from each usable IPv4 and IPv6 address. Track Linux link
+and address notifications to maintain memberships after network changes.
+Use packet metadata for probe replies so the selected interface and
+advertised address match the path through which the device was reached.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ Makefile                     |   8 +-
+ Makefile.static              |   2 +-
+ README.md                    |  27 +-
+ discovery_net.c              | 495 +++++++++++++++++++++++++++++++++++
+ discovery_net.h              |  36 +++
+ test/README.md               |   5 +
+ test/test_discovery.py       |  89 +++++++
+ test/test_discovery_netns.py |  94 +++++++
+ wsd_simple_server.c          | 469 ++++++++++-----------------------
+ 9 files changed, 875 insertions(+), 350 deletions(-)
+ create mode 100644 discovery_net.c
+ create mode 100644 discovery_net.h
+ create mode 100644 test/test_discovery.py
+ create mode 100644 test/test_discovery_netns.py
+
+--- a/Makefile
++++ b/Makefile
+@@ -3,7 +3,7 @@
+ 
+ OBJECTS_O = media_capabilities.o device_advertisement.o imaging_service.o encoder_control.o control_helper.o media_options.o soap.o media_profiles.o onvif_simple_server.o device_service.o media_service.o media2_service.o ptz_service.o events_service.o deviceio_service.o fault.o conf.o utils_zlib.o log.o ezxml_wrapper.o ezxml/ezxml.o
+ OBJECTS_N = onvif_notify_server.o conf.o utils.o log.o ezxml_wrapper.o ezxml/ezxml.o
+-OBJECTS_W = wsd_simple_server.o utils.o log.o ezxml_wrapper.o ezxml/ezxml.o
++OBJECTS_W = wsd_simple_server.o discovery_net.o utils.o log.o ezxml_wrapper.o ezxml/ezxml.o
+ ifdef HAVE_WOLFSSL
+ INCLUDE = -DHAVE_WOLFSSL -ffunction-sections -fdata-sections
+ LIBS_O = -Wl,--gc-sections -lwolfssl -lz -ljson-c -lpthread -lrt
+@@ -53,7 +53,11 @@ wsd_simple_server: $(OBJECTS_W)
+ 	$(CC) $(OBJECTS_W) $(LIBS_W) -fPIC -Os -o $@
+ 	$(STRIP) $@
+ 
+-.PHONY: all clean test test-cgi
++.PHONY: all clean test test-cgi test-discovery
++
++test-discovery: wsd_simple_server
++	python3 test/test_discovery.py
++	unshare -Urn python3 test/test_discovery_netns.py
+ 
+ test-cgi: onvif_simple_server
+ 	python3 test/test_cgi.py
+--- a/Makefile.static
++++ b/Makefile.static
+@@ -3,7 +3,7 @@
+ 
+ OBJECTS_O = media_capabilities.o device_advertisement.o imaging_service.o encoder_control.o control_helper.o media_options.o soap.o media_profiles.o onvif_simple_server.o device_service.o media_service.o media2_service.o ptz_service.o events_service.o deviceio_service.o fault.o conf.o utils_zlib.o log.o ezxml_wrapper.o ezxml/ezxml.o
+ OBJECTS_N = onvif_notify_server.o conf.o utils.o log.o ezxml_wrapper.o ezxml/ezxml.o
+-OBJECTS_W = wsd_simple_server.o utils.o log.o ezxml_wrapper.o ezxml/ezxml.o
++OBJECTS_W = wsd_simple_server.o discovery_net.o utils.o log.o ezxml_wrapper.o ezxml/ezxml.o
+ ifdef HAVE_WOLFSSL
+ INCLUDE = -DHAVE_WOLFSSL -Iextras/wolfssl -Iextras/zlib -Iextras/json-c/build/_install/include -Iextras -ffunction-sections -fdata-sections -lrt
+ LIBS_O = -Wl,--gc-sections extras/wolfssl/src/.libs/libwolfssl.a extras/zlib/libz.a extras/json-c/build/libjson-c.a -lpthread -lrt
+--- a/README.md
++++ b/README.md
+@@ -323,7 +323,7 @@ each device instance. Omitting it retain
+ Usage: /tmp/sd/yi-hack/bin/wsd_simple_server [-i INTERFACE] -x XADDR [-m MODEL] [-n MANUFACTURER] -p PID_FILE [-u UUID] [-t TEMPLATE_DIR] [-f] [-d LEVEL]
+ 
+         -i, --if_name
+-                network interface (auto-detected; use -i to force a specific interface)
++                network interface restriction (default: all suitable interfaces)
+         -x, --xaddr
+                 resource address template (use %s as placeholder for the detected IP;
+                 IPv6 is auto-detected and the address is bracketed automatically)
+@@ -346,7 +346,7 @@ Usage: /tmp/sd/yi-hack/bin/wsd_simple_se
+ ```
+ | Option | Description | Example |
+ | --- | --- | --- |
+-| if_name | network interface (optional; auto-detected if omitted) | eth0 |
++| if_name | optional restriction to one kernel network interface | eth0 |
+ | xaddr | resource address for the ONVIF server | http://%s/onvif/device_service |
+ | pid_file | is the pid file created by the daemon | /var/run/wsd_simple_server.pid |
+ | template_dir | the folder containing template files | /etc/wsd_simple_server |
+@@ -357,18 +357,17 @@ Usage: /tmp/sd/yi-hack/bin/wsd_simple_se
+ 
+ #### IPv6 / dual-stack WS-Discovery
+ 
+-IPv6 is auto-detected.
+-
+-- Uses a single `AF_INET6` dual-stack UDP socket (`IPV6_V6ONLY=0`) bound to `:::3702`
+-- Joins the IPv4 WSD multicast group `239.255.255.250:3702` via `MCAST_JOIN_GROUP` (RFC 3678)
+-- Joins the IPv6 WSD multicast group `FF02::C:3702` (WS-Discovery 1.1)
+-- Each incoming Probe is dispatched by address family: IPv4-mapped senders (`::ffff:x.x.x.x`) get the IPv4 xaddr; native IPv6 senders get the IPv6 xaddr6
+-
+-IPv6 is gracefully degraded: if the IPv6 multicast join fails, the server continues in IPv4-only mode.
+-
+-Auto-detection for IPv6 scans interfaces via `getifaddrs`, preferring a global unicast address over link-local. The routing-table connect trick used for IPv4 does not work here: Linux requires `sin6_scope_id != 0` for link-local multicast destinations such as `FF02::C`. On multi-homed systems use `-i`.
+-
+-Note: `onvif_simple_server` IPv6 advertising is tracked separately.
++Discovery joins the IPv4 and IPv6 multicast groups on every active,
++multicast-capable interface, excluding loopback. Each usable address sends
++an announcement with the shared device UUID. Linux routing notifications
++update memberships and announce newly usable addresses, including addresses
++that complete IPv6 duplicate-address detection after startup.
++
++Probe replies use packet metadata to select the receiving interface and
++local address. Unicast probes retain their destination address; multicast
++probes use a local address on the receiving interface. IPv6 addresses in
++service URLs are bracketed. CGI service URLs use the HTTP connection's
++`SERVER_ADDR`, supplied by the web server.
+ 
+ ### onvif_notify_server
+ onvif_notify_server checks the files related to the events and sends the notify message when an event is fired.
+--- /dev/null
++++ b/discovery_net.c
+@@ -0,0 +1,495 @@
++#define _GNU_SOURCE
++#include <sys/select.h>
++#include <sys/socket.h>
++#include <linux/rtnetlink.h>
++#include <arpa/inet.h>
++#include <netinet/in.h>
++#include <net/if.h>
++#include <ifaddrs.h>
++#include <stdlib.h>
++#include <string.h>
++#include <unistd.h>
++#include <errno.h>
++
++#include "discovery_net.h"
++
++#define DISCOVERY_PORT 3702
++#define DISCOVERY_IPV4 "239.255.255.250"
++#define DISCOVERY_IPV6 "ff02::c"
++
++struct discovery_network {
++    struct discovery_address *addresses;
++    char *interface;
++    int ipv4;
++    int ipv6;
++    int events;
++};
++
++static void addresses_free(struct discovery_address *address)
++{
++    struct discovery_address *next;
++
++    while (address) {
++        next = address->next;
++        free(address);
++        address = next;
++    }
++}
++
++void discovery_network_close(struct discovery_network *network)
++{
++    if (network->ipv4 >= 0)
++        close(network->ipv4);
++    if (network->ipv6 >= 0)
++        close(network->ipv6);
++    if (network->events >= 0)
++        close(network->events);
++    addresses_free(network->addresses);
++    free(network->interface);
++    free(network);
++}
++
++static int socket_open(int family)
++{
++    const struct sockaddr *address;
++    struct sockaddr_in6 ipv6;
++    struct sockaddr_in ipv4;
++    socklen_t length;
++    int enabled = 1;
++    int descriptor;
++    int saved;
++
++    descriptor = socket(family, SOCK_DGRAM | SOCK_CLOEXEC, 0);
++    if (descriptor < 0)
++        return -1;
++    if (setsockopt(descriptor, SOL_SOCKET, SO_REUSEADDR, &enabled, sizeof(enabled)))
++        goto error;
++    if (family == AF_INET) {
++        memset(&ipv4, 0, sizeof(ipv4));
++        ipv4.sin_family = AF_INET;
++        ipv4.sin_port = htons(DISCOVERY_PORT);
++        address = (struct sockaddr *)&ipv4;
++        length = sizeof(ipv4);
++        if (setsockopt(descriptor, IPPROTO_IP, IP_PKTINFO, &enabled, sizeof(enabled)))
++            goto error;
++    } else {
++        memset(&ipv6, 0, sizeof(ipv6));
++        ipv6.sin6_family = AF_INET6;
++        ipv6.sin6_port = htons(DISCOVERY_PORT);
++        address = (struct sockaddr *)&ipv6;
++        length = sizeof(ipv6);
++        if (setsockopt(descriptor, IPPROTO_IPV6, IPV6_V6ONLY, &enabled, sizeof(enabled)) ||
++            setsockopt(descriptor, IPPROTO_IPV6, IPV6_RECVPKTINFO, &enabled, sizeof(enabled)))
++            goto error;
++    }
++    if (bind(descriptor, address, length))
++        goto error;
++    return descriptor;
++
++error:
++    saved = errno;
++    close(descriptor);
++    errno = saved;
++    return -1;
++}
++
++struct discovery_network *discovery_network_open(const char *interface)
++{
++    struct discovery_network *network;
++    struct sockaddr_nl address;
++    int saved;
++
++    network = calloc(1, sizeof(*network));
++    if (!network)
++        return NULL;
++    network->ipv4 = -1;
++    network->ipv6 = -1;
++    network->events = -1;
++    if (interface) {
++        network->interface = strdup(interface);
++        if (!network->interface)
++            goto error;
++    }
++    network->ipv4 = socket_open(AF_INET);
++    if (network->ipv4 < 0 && errno != EAFNOSUPPORT && errno != EPROTONOSUPPORT)
++        goto error;
++    network->ipv6 = socket_open(AF_INET6);
++    if (network->ipv6 < 0 && errno != EAFNOSUPPORT && errno != EPROTONOSUPPORT)
++        goto error;
++    if (network->ipv4 < 0 && network->ipv6 < 0)
++        goto error;
++    network->events = socket(AF_NETLINK, SOCK_RAW | SOCK_CLOEXEC, NETLINK_ROUTE);
++    if (network->events < 0)
++        goto error;
++    memset(&address, 0, sizeof(address));
++    address.nl_family = AF_NETLINK;
++    address.nl_groups = RTMGRP_LINK | RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR;
++    if (bind(network->events, (struct sockaddr *)&address, sizeof(address)))
++        goto error;
++    return network;
++
++error:
++    saved = errno;
++    discovery_network_close(network);
++    errno = saved;
++    return NULL;
++}
++
++static int address_present(const struct discovery_address *list,
++                           const struct discovery_address *address, int membership)
++{
++    const struct sockaddr_in6 *ipv6;
++    const struct sockaddr_in *ipv4;
++    const void *candidate;
++    const void *wanted;
++    size_t length;
++
++    if (address->address.ss_family == AF_INET) {
++        ipv4 = (const struct sockaddr_in *)&address->address;
++        wanted = &ipv4->sin_addr;
++        length = sizeof(ipv4->sin_addr);
++    } else {
++        ipv6 = (const struct sockaddr_in6 *)&address->address;
++        wanted = &ipv6->sin6_addr;
++        length = sizeof(ipv6->sin6_addr);
++    }
++    for (; list; list = list->next) {
++        if (list->interface != address->interface ||
++            list->address.ss_family != address->address.ss_family)
++            continue;
++        if (membership)
++            return 1;
++        if (list->address.ss_family == AF_INET) {
++            ipv4 = (const struct sockaddr_in *)&list->address;
++            candidate = &ipv4->sin_addr;
++        } else {
++            ipv6 = (const struct sockaddr_in6 *)&list->address;
++            candidate = &ipv6->sin6_addr;
++        }
++        if (!memcmp(wanted, candidate, length))
++            return 1;
++    }
++    return 0;
++}
++
++static int address_ready(const struct sockaddr *address)
++{
++    const struct sockaddr_in6 *ipv6;
++    const struct sockaddr_in *ipv4;
++    int descriptor;
++    int status;
++    int saved;
++
++    if (address->sa_family == AF_INET) {
++        ipv4 = (const struct sockaddr_in *)address;
++        return ipv4->sin_addr.s_addr != INADDR_ANY &&
++               ipv4->sin_addr.s_addr != INADDR_BROADCAST &&
++               !IN_MULTICAST(ntohl(ipv4->sin_addr.s_addr));
++    }
++    ipv6 = (const struct sockaddr_in6 *)address;
++    if (IN6_IS_ADDR_UNSPECIFIED(&ipv6->sin6_addr) || IN6_IS_ADDR_MULTICAST(&ipv6->sin6_addr))
++        return 0;
++    descriptor = socket(AF_INET6, SOCK_DGRAM | SOCK_CLOEXEC, 0);
++    if (descriptor < 0)
++        return -1;
++    status = bind(descriptor, address, sizeof(*ipv6));
++    saved = errno;
++    close(descriptor);
++    errno = saved;
++    if (!status)
++        return 1;
++    return errno == EADDRNOTAVAIL || errno == ENODEV ? 0 : -1;
++}
++
++static int addresses_read(struct discovery_network *network, struct discovery_address **result)
++{
++    struct discovery_address *address;
++    struct discovery_address *list;
++    struct ifaddrs *interfaces;
++    struct ifaddrs *interface;
++    int family;
++    int ready;
++    int saved;
++
++    if (getifaddrs(&interfaces))
++        return -1;
++    list = NULL;
++    for (interface = interfaces; interface; interface = interface->ifa_next) {
++        if (!interface->ifa_addr || !(interface->ifa_flags & IFF_UP) ||
++            !(interface->ifa_flags & IFF_MULTICAST) || (interface->ifa_flags & IFF_LOOPBACK))
++            continue;
++        if (network->interface && strcmp(network->interface, interface->ifa_name))
++            continue;
++        family = interface->ifa_addr->sa_family;
++        if ((family != AF_INET && family != AF_INET6) ||
++            (family == AF_INET && network->ipv4 < 0) ||
++            (family == AF_INET6 && network->ipv6 < 0))
++            continue;
++        ready = address_ready(interface->ifa_addr);
++        if (ready < 0)
++            goto error;
++        if (!ready)
++            continue;
++        address = calloc(1, sizeof(*address));
++        if (!address)
++            goto error;
++        memcpy(&address->address, interface->ifa_addr,
++               family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
++        address->interface = if_nametoindex(interface->ifa_name);
++        if (!address->interface) {
++            free(address);
++            continue;
++        }
++        address->next = list;
++        list = address;
++    }
++    freeifaddrs(interfaces);
++    *result = list;
++    return 0;
++
++error:
++    saved = errno;
++    freeifaddrs(interfaces);
++    addresses_free(list);
++    errno = saved;
++    return -1;
++}
++
++static int membership_set(struct discovery_network *network,
++                          const struct discovery_address *address, int join)
++{
++    struct ipv6_mreq ipv6;
++    struct ip_mreqn ipv4;
++
++    if (address->address.ss_family == AF_INET) {
++        memset(&ipv4, 0, sizeof(ipv4));
++        inet_pton(AF_INET, DISCOVERY_IPV4, &ipv4.imr_multiaddr);
++        ipv4.imr_ifindex = address->interface;
++        return setsockopt(network->ipv4, IPPROTO_IP,
++                          join ? IP_ADD_MEMBERSHIP : IP_DROP_MEMBERSHIP, &ipv4, sizeof(ipv4));
++    }
++    memset(&ipv6, 0, sizeof(ipv6));
++    inet_pton(AF_INET6, DISCOVERY_IPV6, &ipv6.ipv6mr_multiaddr);
++    ipv6.ipv6mr_interface = address->interface;
++    return setsockopt(network->ipv6, IPPROTO_IPV6,
++                      join ? IPV6_JOIN_GROUP : IPV6_LEAVE_GROUP, &ipv6, sizeof(ipv6));
++}
++
++int discovery_network_refresh(struct discovery_network *network,
++                              discovery_announce_fn announce, void *data)
++{
++    struct discovery_address *addresses;
++    struct discovery_address *address;
++    struct discovery_address *old;
++
++    if (addresses_read(network, &addresses))
++        return -1;
++    old = network->addresses;
++    for (address = old; address; address = address->next) {
++        if (address_present(address->next, address, 1) || address_present(addresses, address, 1))
++            continue;
++        if (membership_set(network, address, 0) && errno != ENODEV && errno != EADDRNOTAVAIL) {
++            addresses_free(addresses);
++            return -1;
++        }
++    }
++    for (address = addresses; address; address = address->next) {
++        if (address_present(address->next, address, 1) || address_present(old, address, 1))
++            continue;
++        if (membership_set(network, address, 1)) {
++            addresses_free(addresses);
++            return -1;
++        }
++    }
++    network->addresses = addresses;
++    for (address = addresses; address; address = address->next)
++        if (!address_present(old, address, 0))
++            announce(network, address, data);
++    addresses_free(old);
++    return 0;
++}
++
++void discovery_network_announce(struct discovery_network *network,
++                                discovery_announce_fn announce, void *data)
++{
++    const struct discovery_address *address;
++
++    for (address = network->addresses; address; address = address->next)
++        announce(network, address, data);
++}
++
++int discovery_network_send(struct discovery_network *network,
++                           const struct discovery_address *local,
++                           const struct sockaddr *destination, socklen_t length,
++                           const char *buffer, size_t size)
++{
++    union {
++        char data[CMSG_SPACE(sizeof(struct in6_pktinfo)) + CMSG_SPACE(sizeof(struct in_pktinfo))];
++        struct cmsghdr alignment;
++    } control;
++    const struct sockaddr_in6 *ipv6;
++    const struct sockaddr_in *ipv4;
++    struct in6_pktinfo *info6;
++    struct in_pktinfo *info4;
++    struct cmsghdr *header;
++    struct msghdr message;
++    struct iovec vector;
++    int descriptor;
++
++    memset(&message, 0, sizeof(message));
++    memset(&control, 0, sizeof(control));
++    vector.iov_base = (void *)buffer;
++    vector.iov_len = size;
++    message.msg_name = (void *)destination;
++    message.msg_namelen = length;
++    message.msg_iov = &vector;
++    message.msg_iovlen = 1;
++    message.msg_control = control.data;
++    if (local->address.ss_family == AF_INET) {
++        descriptor = network->ipv4;
++        message.msg_controllen = CMSG_SPACE(sizeof(*info4));
++        header = CMSG_FIRSTHDR(&message);
++        header->cmsg_level = IPPROTO_IP;
++        header->cmsg_type = IP_PKTINFO;
++        header->cmsg_len = CMSG_LEN(sizeof(*info4));
++        info4 = (struct in_pktinfo *)CMSG_DATA(header);
++        ipv4 = (const struct sockaddr_in *)&local->address;
++        info4->ipi_ifindex = local->interface;
++        info4->ipi_spec_dst = ipv4->sin_addr;
++    } else {
++        descriptor = network->ipv6;
++        message.msg_controllen = CMSG_SPACE(sizeof(*info6));
++        header = CMSG_FIRSTHDR(&message);
++        header->cmsg_level = IPPROTO_IPV6;
++        header->cmsg_type = IPV6_PKTINFO;
++        header->cmsg_len = CMSG_LEN(sizeof(*info6));
++        info6 = (struct in6_pktinfo *)CMSG_DATA(header);
++        ipv6 = (const struct sockaddr_in6 *)&local->address;
++        info6->ipi6_ifindex = local->interface;
++        info6->ipi6_addr = ipv6->sin6_addr;
++    }
++    return sendmsg(descriptor, &message, 0) < 0 ? -1 : 0;
++}
++
++static int packet_address_set(struct discovery_network *network,
++                              struct discovery_packet *packet, const struct msghdr *message)
++{
++    const struct discovery_address *candidate;
++    const struct discovery_address *selected;
++    const struct sockaddr_in6 *peer;
++    struct sockaddr_in6 *ipv6;
++    struct sockaddr_in *ipv4;
++    const struct in6_pktinfo *info6;
++    const struct in_pktinfo *info4;
++    struct cmsghdr *header;
++
++    for (header = CMSG_FIRSTHDR(message); header;
++         header = CMSG_NXTHDR((struct msghdr *)message, header)) {
++        if (header->cmsg_level == IPPROTO_IP && header->cmsg_type == IP_PKTINFO &&
++            header->cmsg_len >= CMSG_LEN(sizeof(*info4))) {
++            info4 = (const struct in_pktinfo *)CMSG_DATA(header);
++            ipv4 = (struct sockaddr_in *)&packet->local.address;
++            ipv4->sin_family = AF_INET;
++            ipv4->sin_addr = IN_MULTICAST(ntohl(info4->ipi_addr.s_addr)) ?
++                            info4->ipi_spec_dst : info4->ipi_addr;
++            packet->local.interface = info4->ipi_ifindex;
++            return 0;
++        }
++        if (header->cmsg_level != IPPROTO_IPV6 || header->cmsg_type != IPV6_PKTINFO ||
++            header->cmsg_len < CMSG_LEN(sizeof(*info6)))
++            continue;
++        info6 = (const struct in6_pktinfo *)CMSG_DATA(header);
++        ipv6 = (struct sockaddr_in6 *)&packet->local.address;
++        ipv6->sin6_family = AF_INET6;
++        ipv6->sin6_addr = info6->ipi6_addr;
++        packet->local.interface = info6->ipi6_ifindex;
++        if (!IN6_IS_ADDR_MULTICAST(&ipv6->sin6_addr))
++            return 0;
++        peer = (const struct sockaddr_in6 *)&packet->peer;
++        selected = NULL;
++        for (candidate = network->addresses; candidate; candidate = candidate->next) {
++            if (candidate->interface != packet->local.interface ||
++                candidate->address.ss_family != AF_INET6)
++                continue;
++            if (!selected)
++                selected = candidate;
++            ipv6 = (struct sockaddr_in6 *)&candidate->address;
++            if (!!IN6_IS_ADDR_LINKLOCAL(&ipv6->sin6_addr) ==
++                !!IN6_IS_ADDR_LINKLOCAL(&peer->sin6_addr)) {
++                selected = candidate;
++                break;
++            }
++        }
++        if (!selected)
++            return -1;
++        packet->local = *selected;
++        packet->local.next = NULL;
++        return 0;
++    }
++    return -1;
++}
++
++int discovery_network_receive(struct discovery_network *network, char *buffer,
++                              size_t length, struct discovery_packet *packet)
++{
++    union {
++        char data[CMSG_SPACE(sizeof(struct in6_pktinfo)) + CMSG_SPACE(sizeof(struct in_pktinfo))];
++        struct cmsghdr alignment;
++    } control;
++    struct msghdr message;
++    struct iovec vector;
++    ssize_t received;
++    fd_set descriptors;
++    int descriptor;
++    int maximum;
++    int status;
++
++    FD_ZERO(&descriptors);
++    FD_SET(network->events, &descriptors);
++    maximum = network->events;
++    if (network->ipv4 >= 0) {
++        FD_SET(network->ipv4, &descriptors);
++        if (network->ipv4 > maximum)
++            maximum = network->ipv4;
++    }
++    if (network->ipv6 >= 0) {
++        FD_SET(network->ipv6, &descriptors);
++        if (network->ipv6 > maximum)
++            maximum = network->ipv6;
++    }
++    status = select(maximum + 1, &descriptors, NULL, NULL, NULL);
++    if (status < 0)
++        return -1;
++    if (FD_ISSET(network->events, &descriptors)) {
++        received = recv(network->events, buffer, length, 0);
++        if (received < 0 && errno != ENOBUFS)
++            return -1;
++        return 0;
++    }
++    descriptor = network->ipv4 >= 0 && FD_ISSET(network->ipv4, &descriptors) ?
++                 network->ipv4 : network->ipv6;
++    memset(packet, 0, sizeof(*packet));
++    memset(&message, 0, sizeof(message));
++    vector.iov_base = buffer;
++    vector.iov_len = length - 1;
++    message.msg_name = &packet->peer;
++    message.msg_namelen = sizeof(packet->peer);
++    message.msg_iov = &vector;
++    message.msg_iovlen = 1;
++    message.msg_control = control.data;
++    message.msg_controllen = sizeof(control);
++    received = recvmsg(descriptor, &message, 0);
++    if (received < 0)
++        return -1;
++    if (message.msg_flags & (MSG_TRUNC | MSG_CTRUNC)) {
++        errno = EMSGSIZE;
++        return -1;
++    }
++    buffer[received] = '\0';
++    packet->peer_length = message.msg_namelen;
++    if (packet_address_set(network, packet, &message)) {
++        errno = EADDRNOTAVAIL;
++        return -1;
++    }
++    return 1;
++}
+--- /dev/null
++++ b/discovery_net.h
+@@ -0,0 +1,36 @@
++#ifndef DISCOVERY_NET_H
++#define DISCOVERY_NET_H
++
++#include <sys/socket.h>
++
++struct discovery_network;
++
++struct discovery_address {
++    struct sockaddr_storage address;
++    unsigned int interface;
++    struct discovery_address *next;
++};
++
++struct discovery_packet {
++    struct sockaddr_storage peer;
++    struct discovery_address local;
++    socklen_t peer_length;
++};
++
++typedef void (*discovery_announce_fn)(struct discovery_network *,
++                                    const struct discovery_address *, void *);
++
++void discovery_network_close(struct discovery_network *network);
++struct discovery_network *discovery_network_open(const char *interface);
++int discovery_network_refresh(struct discovery_network *network,
++                              discovery_announce_fn announce, void *data);
++void discovery_network_announce(struct discovery_network *network,
++                                discovery_announce_fn announce, void *data);
++int discovery_network_receive(struct discovery_network *network, char *buffer,
++                              size_t length, struct discovery_packet *packet);
++int discovery_network_send(struct discovery_network *network,
++                           const struct discovery_address *local,
++                           const struct sockaddr *destination, socklen_t length,
++                           const char *buffer, size_t size);
++
++#endif
+--- a/test/README.md
++++ b/test/README.md
+@@ -33,5 +33,10 @@ The test starts an isolated server on a
+ CGI wrappers and checks profile enumeration and SOAP HTTP fault status.
+ No camera or RTSP server is required by these protocol tests.
+ 
++Run `make test-discovery` for IPv4 and IPv6 discovery checks. The network
++tests require Linux user/network namespaces and iproute2. They create
++multicast-capable dummy interfaces inside an isolated namespace and verify
++announcements, probe replies and dynamic interface/address changes.
++
+ After building with `USE_ZLIB=1`, run `python3 test/test_compressed.py` to
+ check capability responses with only gzip-compressed templates available.
+--- /dev/null
++++ b/test/test_discovery.py
+@@ -0,0 +1,89 @@
++from collections import deque
++from pathlib import Path
++import socket
++import subprocess
++import tempfile
++import threading
++import unittest
++import uuid
++import xml.etree.ElementTree as ET
++
++ROOT = Path(__file__).resolve().parent.parent
++IDENTITY = 'b47bd8ea-7b8b-58c7-8354-88dbaddf57aa'
++
++
++class DiscoveryTests(unittest.TestCase):
++    @classmethod
++    def setUpClass(cls):
++        cls.directory = tempfile.TemporaryDirectory()
++        cls.addClassCleanup(cls.directory.cleanup)
++        cls.messages = deque(maxlen=100)
++        cls.ready = threading.Event()
++        cls.server = subprocess.Popen(
++            [str(ROOT / 'wsd_simple_server'), '-f', '-d', '5', '-u', IDENTITY,
++             '-p', str(Path(cls.directory.name) / 'pid'), '-t', str(ROOT / 'wsd_files'),
++             '-x', 'http://%s:8080/onvif/device_service'],
++            stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
++        cls.addClassCleanup(cls.stop_server)
++        cls.reader = threading.Thread(target=cls.messages_read, daemon=True)
++        cls.reader.start()
++        cls.ready.wait()
++        if cls.server.poll() is not None:
++            raise AssertionError(list(cls.messages))
++
++    @classmethod
++    def messages_read(cls):
++        for message in cls.server.stderr:
++            cls.messages.append(message)
++            if 'Starting main loop.' in message:
++                cls.ready.set()
++        cls.ready.set()
++
++    @classmethod
++    def stop_server(cls):
++        cls.server.terminate()
++        cls.server.wait()
++        cls.reader.join()
++        cls.server.stderr.close()
++
++    def probe(self, family, address, host, group=None, interface=None):
++        identifier = 'urn:uuid:' + str(uuid.uuid4())
++        body = (
++            '<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope" '
++            'xmlns:a="http://schemas.xmlsoap.org/ws/2004/08/addressing" '
++            'xmlns:d="http://schemas.xmlsoap.org/ws/2005/04/discovery">'
++            f'<s:Header><a:MessageID>{identifier}</a:MessageID>'
++            '<a:To>urn:schemas-xmlsoap-org:ws:2005:04:discovery</a:To>'
++            '<a:Action>http://schemas.xmlsoap.org/ws/2005/04/discovery/Probe</a:Action>'
++            '</s:Header><s:Body><d:Probe/></s:Body></s:Envelope>')
++        with socket.socket(family, socket.SOCK_DGRAM) as client:
++            destination = (address, 3702)
++            if group is not None:
++                client.bind((address, 0))
++                if family == socket.AF_INET:
++                    client.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_IF,
++                                      socket.inet_aton(address))
++                    destination = (group, 3702)
++                else:
++                    client.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_MULTICAST_IF, interface)
++                    destination = (group, 3702, 0, interface)
++            client.sendto(body.encode(), destination)
++            data, peer = client.recvfrom(65535)
++        root = ET.fromstring(data)
++        self.assertEqual(peer[0], address)
++        self.assertEqual(root.findtext('.//{*}RelatesTo'), identifier)
++        self.assertEqual(root.findtext('.//{*}XAddrs'),
++                         f'http://{host}:8080/onvif/device_service')
++        self.assertEqual(root.findtext('.//{*}EndpointReference/{*}Address'),
++                         'urn:uuid:' + IDENTITY)
++
++    def test_ipv4_connection_addresses(self):
++        for address in ['127.0.0.1', '127.0.0.2']:
++            self.probe(socket.AF_INET, address, address)
++
++    def test_ipv6_connection_address(self):
++        self.probe(socket.AF_INET6, '::1', '[::1]')
++
++
++if __name__ == '__main__':
++    unittest.main()
+--- /dev/null
++++ b/test/test_discovery_netns.py
+@@ -0,0 +1,94 @@
++from pathlib import Path
++import os
++import select
++import socket
++import struct
++import subprocess
++import unittest
++import xml.etree.ElementTree as ET
++
++import test_discovery
++
++
++class NetworkDiscoveryTests(test_discovery.DiscoveryTests):
++    @classmethod
++    def command(cls, *arguments):
++        subprocess.run(['ip', *arguments], check=True, capture_output=True)
++
++    @classmethod
++    def interface_add(cls, name, ipv4, ipv6):
++        cls.command('link', 'add', name, 'type', 'dummy')
++        cls.command('link', 'set', name, 'multicast', 'on')
++        cls.command('address', 'add', ipv4 + '/24', 'dev', name)
++        cls.command('-6', 'address', 'add', ipv6 + '/64', 'dev', name, 'nodad')
++        cls.membership_add(name)
++        cls.command('link', 'set', name, 'up')
++
++    @classmethod
++    def membership_add(cls, name):
++        index = socket.if_nametoindex(name)
++        cls.observer4.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP,
++                                 struct.pack('=4s4si', socket.inet_aton('239.255.255.250'),
++                                             socket.inet_aton('0.0.0.0'), index))
++        cls.observer6.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_JOIN_GROUP,
++                                 struct.pack('=16sI', socket.inet_pton(socket.AF_INET6, 'ff02::c'),
++                                             index))
++
++    @classmethod
++    def setUpClass(cls):
++        mapping = Path('/proc/self/uid_map').read_text().split()
++        assert os.getuid() == 0 and int(mapping[1]) != 0, 'Run inside unshare -Urn'
++        cls.command('link', 'set', 'lo', 'up')
++        cls.observer4 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
++        cls.observer6 = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
++        cls.addClassCleanup(cls.observer4.close)
++        cls.addClassCleanup(cls.observer6.close)
++        for observer in [cls.observer4, cls.observer6]:
++            observer.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
++        cls.observer6.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1)
++        cls.observer4.bind(('0.0.0.0', 3702))
++        cls.observer6.bind(('::', 3702))
++        cls.interface_add('camera_one', '192.0.2.1', '2001:db8:1::1')
++        cls.interface_add('camera_two', '198.51.100.1', '2001:db8:2::1')
++        super().setUpClass()
++
++    def announcements_receive(self, addresses):
++        remaining = set(addresses)
++        while remaining:
++            ready, _, _ = select.select([self.observer4, self.observer6], [], [])
++            for observer in ready:
++                data, peer = observer.recvfrom(65535)
++                root = ET.fromstring(data)
++                if root.find('.//{*}Hello') is None:
++                    continue
++                self.assertEqual(root.findtext('.//{*}EndpointReference/{*}Address'),
++                                 'urn:uuid:' + test_discovery.IDENTITY)
++                address = peer[0]
++                host = f'[{address}]' if ':' in address else address
++                self.assertEqual(root.findtext('.//{*}XAddrs'),
++                                 f'http://{host}:8080/onvif/device_service')
++                remaining.discard(address)
++
++    def test_all_interfaces_announced(self):
++        self.announcements_receive(['192.0.2.1', '198.51.100.1',
++                                    '2001:db8:1::1', '2001:db8:2::1'])
++
++    def test_dynamic_addresses_and_interfaces(self):
++        self.interface_add('camera_three', '203.0.113.1', '2001:db8:3::1')
++        self.announcements_receive(['203.0.113.1', '2001:db8:3::1'])
++        self.command('-6', 'address', 'add', '2001:db8:1::2/64', 'dev', 'camera_one')
++        self.announcements_receive(['2001:db8:1::2'])
++        self.command('link', 'delete', 'camera_three')
++        self.probe(socket.AF_INET, '192.0.2.1', '192.0.2.1')
++
++    def test_multicast_probe_ingress(self):
++        for name, ipv4, ipv6 in [('camera_one', '192.0.2.1', '2001:db8:1::1'),
++                                 ('camera_two', '198.51.100.1', '2001:db8:2::1')]:
++            self.probe(socket.AF_INET, ipv4, ipv4, '239.255.255.250',
++                       socket.if_nametoindex(name))
++            self.probe(socket.AF_INET6, ipv6, f'[{ipv6}]', 'ff02::c',
++                       socket.if_nametoindex(name))
++
++
++if __name__ == '__main__':
++    unittest.main()
+--- a/wsd_simple_server.c
++++ b/wsd_simple_server.c
+@@ -36,6 +36,7 @@
+ #include "utils.h"
+ #include "log.h"
+ #include "ezxml_wrapper.h"
++#include "discovery_net.h"
+ 
+ #define MULTICAST_ADDRESS    "239.255.255.250"
+ #define MULTICAST_ADDRESS_V6 "FF02::C"
+@@ -60,24 +61,13 @@
+ int debug;
+ FILE *fLog;
+ char template_file[1024];
+-/* Service socket: dual-stack AF_INET6 (IPV6_V6ONLY=0) when an IPv6 address is
+- * present, else a plain AF_INET socket (IPv4-only, e.g. kernels without IPv6). */
+-int sock;
+-int sock_family;
+-/* IPv4 */
+-char address[16], netmask[16];
+-struct sockaddr_storage addr_mcast4; /* IPv4 WSD mcast dest; family per sock_family */
+-socklen_t addr_mcast4_len;
+-char xaddr[1024];
+-/* IPv6 (auto-detected at startup) */
+-char address6[INET6_ADDRSTRLEN];
+-struct sockaddr_in6 addr_mcast6; /* [FF02::C]:3702 */
+-char xaddr6[1024];
++struct discovery_network *network;
++const char *xaddr_format;
+ 
+ char *message;
+ char *message_loop;
+ char template_dir[1024];
+-int exit_main;
++volatile sig_atomic_t exit_main;
+ int msg_number;
+ char uuid[UUID_LEN + 1];
+ char msg_uuid[UUID_LEN + 1];
+@@ -86,38 +76,6 @@ char model[64];
+ char hardware[64];
+ 
+ /* -------------------------------------------------------------------------
+- * IPv4 interface auto-detection: connect a UDP socket (no packet sent) to
+- * the WSD multicast group and read back the kernel's chosen source address.
+- * Returns 0 on success, -1 on failure.
+- * ---------------------------------------------------------------------- */
+-static int detect_outbound_address(char *addr_str)
+-{
+-    int fd;
+-    struct sockaddr_in dst, src;
+-    socklen_t src_len = sizeof(src);
+-
+-    fd = socket(AF_INET, SOCK_DGRAM, 0);
+-    if (fd < 0) return -1;
+-
+-    memset(&dst, 0, sizeof(dst));
+-    dst.sin_family      = AF_INET;
+-    inet_pton(AF_INET, MULTICAST_ADDRESS, &dst.sin_addr);
+-    dst.sin_port        = htons(PORT);
+-
+-    if (connect(fd, (struct sockaddr *)&dst, sizeof(dst)) < 0) { close(fd); return -1; }
+-
+-    memset(&src, 0, sizeof(src));
+-    if (getsockname(fd, (struct sockaddr *)&src, &src_len) < 0) { close(fd); return -1; }
+-    close(fd);
+-
+-    if (src.sin_addr.s_addr == htonl(INADDR_ANY)) return -1;
+-
+-    strncpy(addr_str, inet_ntoa(src.sin_addr), 15);
+-    addr_str[15] = 0;
+-    return 0;
+-}
+-
+-/* -------------------------------------------------------------------------
+  * Daemon / PID helpers
+  * ---------------------------------------------------------------------- */
+ int daemonize(int flags)
+@@ -171,48 +129,101 @@ int create_pid(char *file_name)
+ /* -------------------------------------------------------------------------
+  * WSD message helpers
+  * ---------------------------------------------------------------------- */
+-static int send_wsd_msg(int s, const char *buf, size_t len,
+-                        const struct sockaddr *dst, socklen_t dst_len)
++static void identity_resolve(const struct discovery_address *local)
++{
++    char interface[IFNAMSIZ];
++    uint8_t mac[6];
++
++    if (uuid[0])
++        return;
++    if (if_indextoname(local->interface, interface) && !get_mac_by_ifname(interface, mac))
++        gen_uuid_v5_mac(uuid, mac);
++    else
++        gen_uuid(uuid);
++}
++
++static int local_url(const struct discovery_address *local, char *url, size_t length)
+ {
+-    return (sendto(s, buf, len, 0, dst, dst_len) < 0) ? -1 : 0;
++    char host[INET6_ADDRSTRLEN + sizeof("[]")];
++    char address[INET6_ADDRSTRLEN];
++    const struct sockaddr_in6 *ipv6;
++    const struct sockaddr_in *ipv4;
++    int size;
++
++    if (local->address.ss_family == AF_INET) {
++        ipv4 = (const struct sockaddr_in *)&local->address;
++        if (!inet_ntop(AF_INET, &ipv4->sin_addr, address, sizeof(address)))
++            return -1;
++        snprintf(host, sizeof(host), "%s", address);
++    } else {
++        ipv6 = (const struct sockaddr_in6 *)&local->address;
++        if (!inet_ntop(AF_INET6, &ipv6->sin6_addr, address, sizeof(address)))
++            return -1;
++        snprintf(host, sizeof(host), "[%s]", address);
++    }
++    size = snprintf(url, length, xaddr_format, host);
++    return size < 0 || (size_t)size >= length ? -1 : 0;
+ }
+ 
+-static void send_bye(int s, const struct sockaddr *dst, socklen_t dst_len,
+-                     const char *xaddr_str)
++static void announcement_send(struct discovery_network *context,
++                              const struct discovery_address *local, void *data)
+ {
++    struct sockaddr_in6 destination6;
++    struct sockaddr_in destination4;
++    const struct sockaddr *destination;
++    char xaddr_str[1024];
+     char s_tmp[32];
++    socklen_t destination_length;
++    const char *kind = data;
+     long size;
+ 
++    if (local_url(local, xaddr_str, sizeof(xaddr_str)))
++        return;
++    identity_resolve(local);
++    if (local->address.ss_family == AF_INET) {
++        memset(&destination4, 0, sizeof(destination4));
++        destination4.sin_family = AF_INET;
++        destination4.sin_port = htons(PORT);
++        inet_pton(AF_INET, MULTICAST_ADDRESS, &destination4.sin_addr);
++        destination = (struct sockaddr *)&destination4;
++        destination_length = sizeof(destination4);
++    } else {
++        memset(&destination6, 0, sizeof(destination6));
++        destination6.sin6_family = AF_INET6;
++        destination6.sin6_port = htons(PORT);
++        destination6.sin6_scope_id = local->interface;
++        inet_pton(AF_INET6, MULTICAST_ADDRESS_V6, &destination6.sin6_addr);
++        destination = (struct sockaddr *)&destination6;
++        destination_length = sizeof(destination6);
++    }
+     msg_number++;
+     snprintf(s_tmp, sizeof(s_tmp), "%d", msg_number);
+     gen_uuid(msg_uuid);
+-
+-    snprintf(template_file, sizeof(template_file), "%s/Bye.xml", template_dir);
++    snprintf(template_file, sizeof(template_file), "%s/%s.xml", template_dir, kind);
+     size = cat(NULL, template_file, 12,
+                "%MSG_UUID%", msg_uuid, "%MSG_NUMBER%", s_tmp, "%UUID%", uuid,
+                "%HARDWARE%", hardware, "%NAME%", model, "%ADDRESS%", xaddr_str);
+-    message = (char *) malloc((size + 1) * sizeof(char));
+-    if (!message) { log_fatal("Malloc error."); return; }
++    if (size < 0)
++        return;
++    message = malloc(size + 1);
++    if (!message) {
++        log_error("Cannot allocate announcement.");
++        return;
++    }
+     cat(message, template_file, 12,
+         "%MSG_UUID%", msg_uuid, "%MSG_NUMBER%", s_tmp, "%UUID%", uuid,
+         "%HARDWARE%", hardware, "%NAME%", model, "%ADDRESS%", xaddr_str);
+-
+-    if (send_wsd_msg(s, message, strlen(message), dst, dst_len) < 0)
+-        log_fatal("Error sending Bye message.");
++    if (discovery_network_send(context, local, destination, destination_length,
++                               message, strlen(message)))
++        log_error("Cannot send %s: %s", kind, strerror(errno));
+     else
+-        log_info("Bye sent.");
++        log_info("%s sent on interface %u: %s", kind, local->interface, xaddr_str);
+     free(message);
+ }
+ 
+ void signal_handler(int signal)
+ {
+-    log_info("Sending Bye message(s).");
+-    if (sock >= 0) {
+-        send_bye(sock, (struct sockaddr *)&addr_mcast4, sizeof(addr_mcast4), xaddr);
+-        if (xaddr6[0])
+-            send_bye(sock, (struct sockaddr *)&addr_mcast6, sizeof(addr_mcast6), xaddr6);
+-        shutdown(sock, SHUT_RDWR); close(sock); sock = -1;
+-    }
++    (void)signal;
+     exit_main = 1;
+ }
+ 
+@@ -221,10 +232,10 @@ void print_usage(char *progname)
+     fprintf(stderr, "\nUsage: %s [-i INTERFACE] -x XADDR [-m MODEL] [-n MANUFACTURER] "
+             "-p PID_FILE [-u UUID] [-t TEMPLATE_DIR] [-f] [-d LEVEL]\n\n", progname);
+     fprintf(stderr, "\t-i, --if_name\n");
+-    fprintf(stderr, "\t\tnetwork interface (auto-detected; use -i to force a specific interface)\n");
++    fprintf(stderr, "\t\tnetwork interface restriction (default: all suitable interfaces)\n");
+     fprintf(stderr, "\t-x, --xaddr\n");
+     fprintf(stderr, "\t\tresource address template (use %%s as placeholder for the detected IP;\n");
+-    fprintf(stderr, "\t\tIPv6 is auto-detected and the address is bracketed automatically)\n");
++    fprintf(stderr, "\t\tIPv6 addresses are bracketed automatically)\n");
+     fprintf(stderr, "\t-m, --model\n");
+     fprintf(stderr, "\t\tmodel name\n");
+     fprintf(stderr, "\t-n, --hardware\n");
+@@ -243,18 +254,22 @@ void print_usage(char *progname)
+     fprintf(stderr, "\t\tprint this help\n");
+ }
+ 
+-static void handle_probe(int s, struct sockaddr *dst, socklen_t dst_len,
+-                         char *buf, const char *xaddr_str)
++static void handle_probe(struct discovery_network *context,
++                         const struct discovery_packet *packet, char *buf)
+ {
+     const char *relates_to_uuid;
++    const char *method;
++    char xaddr_str[1024];
+     char s_tmp[32];
+     long size;
+ 
+-    if (strstr(buf, "XAddrs") != NULL) return;
++    if (strstr(buf, "XAddrs") != NULL || local_url(&packet->local, xaddr_str, sizeof(xaddr_str)))
++        return;
++    identity_resolve(&packet->local);
+ 
+     log_debug("%s", buf);
+     init_xml(buf, strlen(buf));
+-    const char *method = get_method(1);
++    method = get_method(1);
+     if (!method || strcasecmp("Probe", method) != 0) {
+         log_debug("This is not a Probe message");
+         close_xml(); return;
+@@ -267,7 +282,6 @@ static void handle_probe(int s, struct s
+ 
+     relates_to_uuid = get_element("MessageID", "Header");
+     if (!relates_to_uuid) { log_error("Cannot find MessageID."); close_xml(); return; }
+-    close_xml();
+ 
+     log_info("Sending ProbeMatches message.");
+     snprintf(template_file, sizeof(template_file), "%s/ProbeMatches.xml", template_dir);
+@@ -276,17 +290,20 @@ static void handle_probe(int s, struct s
+                "%MSG_NUMBER%", s_tmp, "%UUID%", uuid,
+                "%HARDWARE%", hardware, "%NAME%", model, "%ADDRESS%", xaddr_str);
+     message_loop = (char *) malloc((size + 1) * sizeof(char));
+-    if (!message_loop) { log_error("Malloc error."); return; }
++    if (!message_loop) { log_error("Malloc error."); close_xml(); return; }
+     cat(message_loop, template_file, 14,
+         "%MSG_UUID%", msg_uuid, "%REL_TO_UUID%", relates_to_uuid,
+         "%MSG_NUMBER%", s_tmp, "%UUID%", uuid,
+         "%HARDWARE%", hardware, "%NAME%", model, "%ADDRESS%", xaddr_str);
+ 
+-    if (send_wsd_msg(s, message_loop, strlen(message_loop), dst, dst_len) < 0)
++    if (discovery_network_send(context, &packet->local,
++                               (const struct sockaddr *)&packet->peer, packet->peer_length,
++                               message_loop, strlen(message_loop)) < 0)
+         log_error("Error sending ProbeMatches message.");
+     else
+         log_info("Sent.");
+     free(message_loop);
++    close_xml();
+ }
+ 
+ /* -------------------------------------------------------------------------
+@@ -298,11 +315,9 @@ int main(int argc, char **argv)
+     char *endptr;
+     int c, ret;
+     char *if_name, *pid_file, *xaddr_s;
+-    unsigned int if6_idx = 0;
+-    int have_v4 = 0;
+-    int foreground, no = 0;
+-    char s_tmp[32];
+-    long size;
++    struct discovery_packet packet;
++    const char *log_file;
++    int foreground;
+     char recv_buffer[RECV_BUFFER_LEN];
+ 
+     if_name = pid_file = xaddr_s = NULL;
+@@ -311,7 +326,6 @@ int main(int argc, char **argv)
+     snprintf(template_dir, sizeof(template_dir), "%s", DEFAULT_TEMPLATE_DIR);
+     foreground = 0;
+     debug = 5;
+-    sock = -1;
+ 
+     while (1) {
+         static struct option long_options[] = {
+@@ -381,7 +395,12 @@ int main(int argc, char **argv)
+         if (ret) { fprintf(stderr, "Error starting daemon.\n"); exit(EXIT_FAILURE); }
+     }
+ 
+-    fLog = fopen(DEFAULT_LOG_FILE, "w");
++    log_file = foreground ? "-" : DEFAULT_LOG_FILE;
++    fLog = strcmp(log_file, "-") == 0 ? stderr : fopen(log_file, "w");
++    if (!fLog) {
++        fprintf(stderr, "Cannot open log file %s\n", log_file);
++        exit(EXIT_FAILURE);
++    }
+     log_add_fp(fLog, debug);
+     log_set_level(debug);
+     log_set_quiet(1);
+@@ -410,263 +429,47 @@ int main(int argc, char **argv)
+         closedir(dirptr);
+     }
+ 
+-    srand((unsigned int) time(NULL));
+-
+-    /* ---- IPv4 address detection ---------------------------------------- */
+-    if (if_name) {
+-        get_ip_address(address, netmask, if_name);
+-        have_v4 = (address[0] != '\0');
+-    } else {
+-        if (detect_outbound_address(address) == 0) {
+-            have_v4 = 1;
+-            log_info("Auto-detected outbound IPv4 address: %s", address);
+-        } else {
+-            log_warn("Cannot auto-detect outbound IPv4 address; will try IPv6.");
+-        }
+-    }
+-    if (have_v4) log_debug("IPv4 address = %s", address);
+-
+-    /* ---- IPv6 address detection (always attempted) --------------------- */
+-    memset(address6, 0, sizeof(address6));
+-    xaddr6[0] = '\0';
+-    {
+-        int v6_ok;
+-        if (if_name)
+-            v6_ok = (get_ip6_address(address6, sizeof(address6), if_name) == 0);
+-        else
+-            v6_ok = (detect_outbound_address_v6(address6, sizeof(address6), &if6_idx) == 0);
+-        if (v6_ok) {
+-            char tmp6[INET6_ADDRSTRLEN + 4];
+-            log_info("IPv6 address: %s", address6);
+-            snprintf(tmp6, sizeof(tmp6), "[%s]", address6);
+-            snprintf(xaddr6, sizeof(xaddr6), xaddr_s, tmp6);
+-        } else {
+-            log_debug("No global IPv6 address found; IPv6 WSD disabled.");
+-        }
++    xaddr_format = xaddr_s;
++    network = discovery_network_open(if_name);
++    if (!network) {
++        log_error("Cannot open discovery sockets: %s", strerror(errno));
++        unlink(pid_file);
++        return EXIT_FAILURE;
+     }
+-
+-    if (!have_v4 && !xaddr6[0]) {
+-        log_fatal("No usable IPv4 or IPv6 address found. Use -i <interface> or check network.");
+-        fclose(fLog); exit(EXIT_FAILURE);
+-    }
+-
+-    if (!uuid[0]) {
+-        uint8_t mac[6] = {0};
+-        int mac_ok;
+-        if (if_name) {
+-            mac_ok = (get_mac_by_ifname(if_name, mac) == 0);
+-        } else if (have_v4) {
+-            mac_ok = (get_mac_by_ip(address, mac) == 0);
+-        } else {
+-            /* IPv6-only: derive interface name from if6_idx */
+-            char if6_name[IF_NAMESIZE] = {0};
+-            mac_ok = (if6_idx && if_indextoname(if6_idx, if6_name) &&
+-                      get_mac_by_ifname(if6_name, mac) == 0);
+-        }
+-        if (mac_ok) {
+-            gen_uuid_v5_mac(uuid, mac);
+-            log_info("Device UUID (stable, MAC-based): %s", uuid);
+-        } else {
+-            gen_uuid(uuid);
+-            log_info("Device UUID (random, MAC unavailable): %s", uuid);
+-        }
++    exit_main = 0;
++    if (discovery_network_refresh(network, announcement_send, "Hello")) {
++        log_error("Cannot initialise discovery interfaces: %s", strerror(errno));
++        discovery_network_close(network);
++        unlink(pid_file);
++        return EXIT_FAILURE;
+     }
+-
+-    /* ---- Service socket: dual-stack AF_INET6, or AF_INET (IPv4-only) ------- */
+-    /* Family follows the IPv6 detection result: dual-stack only when there is
+-     * an IPv6 address to serve, else plain AF_INET -- so WSD still runs on
+-     * kernels built without IPv6, where socket(AF_INET6) fails. */
+-    {
+-        int yes = 1;
+-        sock_family = xaddr6[0] ? AF_INET6 : AF_INET;
+-
+-        if ((sock = socket(sock_family, SOCK_DGRAM, 0)) < 0) {
+-            /* v6 detected but AF_INET6 unavailable: drop to IPv4-only. */
+-            if (sock_family == AF_INET6) {
+-                log_warn("AF_INET6 socket unavailable (%s); falling back to IPv4-only.", strerror(errno));
+-                sock_family = AF_INET;
+-                xaddr6[0] = '\0';
+-                sock = socket(AF_INET, SOCK_DGRAM, 0);
+-            }
+-            if (sock < 0) {
+-                log_fatal("Unable to create socket: %s", strerror(errno));
+-                fclose(fLog); exit(EXIT_FAILURE);
+-            }
+-        }
+-
+-        /* IPV6_V6ONLY=0: the dual-stack socket also receives IPv4 (::ffff:x.x.x.x). */
+-        if (sock_family == AF_INET6)
+-            setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, &no, sizeof(no));
+-        setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
+-
+-        if (sock_family == AF_INET6) {
+-            struct sockaddr_in6 bind6;
+-            memset(&bind6, 0, sizeof(bind6));
+-            bind6.sin6_family = AF_INET6; bind6.sin6_port = htons(PORT);
+-            bind6.sin6_addr = in6addr_any;
+-            if (bind(sock, (struct sockaddr *)&bind6, sizeof(bind6)) < 0) {
+-                log_fatal("Unable to bind socket: %s", strerror(errno));
+-                close(sock); fclose(fLog); exit(EXIT_FAILURE);
+-            }
+-        } else {
+-            struct sockaddr_in bind4;
+-            memset(&bind4, 0, sizeof(bind4));
+-            bind4.sin_family = AF_INET; bind4.sin_port = htons(PORT);
+-            bind4.sin_addr.s_addr = INADDR_ANY;
+-            if (bind(sock, (struct sockaddr *)&bind4, sizeof(bind4)) < 0) {
+-                log_fatal("Unable to bind socket: %s", strerror(errno));
+-                close(sock); fclose(fLog); exit(EXIT_FAILURE);
+-            }
+-        }
+-
+-        /* Join the IPv4 WSD multicast group. IP_ADD_MEMBERSHIP with ip_mreq
+-         * works on a plain AF_INET socket and, via IPV6_V6ONLY=0, on the
+-         * dual-stack AF_INET6 socket too (MCAST_JOIN_GROUP with IPPROTO_IPV6
+-         * does not, because the kernel IPv6 mc path rejects AF_INET groups). */
+-        if (have_v4) {
+-            struct ip_mreq mreq4;
+-            memset(&mreq4, 0, sizeof(mreq4));
+-            inet_pton(AF_INET, MULTICAST_ADDRESS, &mreq4.imr_multiaddr);
+-            mreq4.imr_interface.s_addr = INADDR_ANY;
+-            if (setsockopt(sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq4, sizeof(mreq4)) < 0) {
+-                log_fatal("Error joining IPv4 multicast group: %s", strerror(errno));
+-                close(sock); fclose(fLog); exit(EXIT_FAILURE);
++    log_info("Starting main loop.");
++    while (!exit_main) {
++        ret = discovery_network_receive(network, recv_buffer, sizeof(recv_buffer), &packet);
++        if (ret < 0) {
++            if (errno == EINTR)
++                continue;
++            if (errno == EMSGSIZE || errno == EADDRNOTAVAIL) {
++                log_warn("Discarded discovery datagram: %s", strerror(errno));
++                continue;
+             }
++            log_error("Cannot receive discovery messages: %s", strerror(errno));
++            break;
+         }
+-
+-        /* IPv4 mcast destination: IPv4-mapped on the dual-stack socket, real IPv4 on AF_INET. */
+-        memset(&addr_mcast4, 0, sizeof(addr_mcast4));
+-        if (sock_family == AF_INET6) {
+-            struct sockaddr_in6 *m = (struct sockaddr_in6 *)&addr_mcast4;
+-            m->sin6_family = AF_INET6; m->sin6_port = htons(PORT);
+-            inet_pton(AF_INET6, "::ffff:" MULTICAST_ADDRESS, &m->sin6_addr);
+-            addr_mcast4_len = sizeof(struct sockaddr_in6);
+-        } else {
+-            struct sockaddr_in *m = (struct sockaddr_in *)&addr_mcast4;
+-            m->sin_family = AF_INET; m->sin_port = htons(PORT);
+-            inet_pton(AF_INET, MULTICAST_ADDRESS, &m->sin_addr);
+-            addr_mcast4_len = sizeof(struct sockaddr_in);
+-        }
+-    }
+-
+-    /* ---- IPv6 multicast (when IPv6 address was detected) ----------------- */
+-    if (xaddr6[0]) {
+-        struct ipv6_mreq mr6;
+-        unsigned int if_idx = if_name ? if_nametoindex(if_name) : if6_idx;
+-
+-        /* if_idx must be non-zero for link-local multicast (FF02::). */
+-        memset(&mr6, 0, sizeof(mr6));
+-        inet_pton(AF_INET6, MULTICAST_ADDRESS_V6, &mr6.ipv6mr_multiaddr);
+-        mr6.ipv6mr_interface = if_idx;
+-        if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mr6, sizeof(mr6)) < 0) {
+-            log_warn("Cannot join IPv6 multicast group; IPv6 WSD disabled: %s", strerror(errno));
+-            xaddr6[0] = '\0';
+-        } else {
+-            if (if_idx) setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_IF, &if_idx, sizeof(if_idx));
+-            memset(&addr_mcast6, 0, sizeof(addr_mcast6));
+-            addr_mcast6.sin6_family = AF_INET6; addr_mcast6.sin6_port = htons(PORT);
+-            inet_pton(AF_INET6, MULTICAST_ADDRESS_V6, &addr_mcast6.sin6_addr);
+-            addr_mcast6.sin6_scope_id = if_idx;
+-            log_info("IPv6 WSD multicast joined (FF02::C, if_idx=%u).", if_idx);
+-        }
+-    }
+-
+-    /* ---- Build xaddr strings ------------------------------------------- */
+-    if (have_v4) snprintf(xaddr, sizeof(xaddr), xaddr_s, address);
+-
+-    /* ---- Send Hello ---------------------------------------------------- */
+-    msg_number = 1;
+-    snprintf(s_tmp, sizeof(s_tmp), "%d", msg_number);
+-    gen_uuid(msg_uuid);
+-
+-    if (have_v4) {
+-        snprintf(template_file, sizeof(template_file), "%s/Hello.xml", template_dir);
+-        size = cat(NULL, template_file, 12,
+-                   "%MSG_UUID%", msg_uuid, "%MSG_NUMBER%", s_tmp, "%UUID%", uuid,
+-                   "%HARDWARE%", hardware, "%NAME%", model, "%ADDRESS%", xaddr);
+-        message = (char *) malloc((size + 1) * sizeof(char));
+-        if (!message) {
+-            log_fatal("Malloc error."); close(sock); fclose(fLog); exit(EXIT_FAILURE);
+-        }
+-        cat(message, template_file, 12,
+-            "%MSG_UUID%", msg_uuid, "%MSG_NUMBER%", s_tmp, "%UUID%", uuid,
+-            "%HARDWARE%", hardware, "%NAME%", model, "%ADDRESS%", xaddr);
+-        if (send_wsd_msg(sock, message, strlen(message),
+-                         (struct sockaddr *)&addr_mcast4, addr_mcast4_len) < 0) {
+-            log_fatal("Error sending Hello (IPv4).");
+-            free(message); close(sock); fclose(fLog); exit(EXIT_FAILURE);
+-        }
+-        free(message);
+-        log_info("Hello (IPv4) sent.");
+-    }
+-
+-    if (xaddr6[0]) {
+-        msg_number++;
+-        snprintf(s_tmp, sizeof(s_tmp), "%d", msg_number);
+-        gen_uuid(msg_uuid);
+-        snprintf(template_file, sizeof(template_file), "%s/Hello.xml", template_dir);
+-        size = cat(NULL, template_file, 12,
+-                   "%MSG_UUID%", msg_uuid, "%MSG_NUMBER%", s_tmp, "%UUID%", uuid,
+-                   "%HARDWARE%", hardware, "%NAME%", model, "%ADDRESS%", xaddr6);
+-        message = (char *) malloc((size + 1) * sizeof(char));
+-        if (message) {
+-            cat(message, template_file, 12,
+-                "%MSG_UUID%", msg_uuid, "%MSG_NUMBER%", s_tmp, "%UUID%", uuid,
+-                "%HARDWARE%", hardware, "%NAME%", model, "%ADDRESS%", xaddr6);
+-            if (send_wsd_msg(sock, message, strlen(message),
+-                             (struct sockaddr *)&addr_mcast6, sizeof(addr_mcast6)) < 0)
+-                log_warn("Error sending Hello (IPv6).");
+-            else
+-                log_info("Hello (IPv6) sent.");
+-            free(message);
+-        }
+-    }
+-
+-    sleep(1);
+-
+-    /* ---- Main loop ----------------------------------------------------- */
+-    if (have_v4 && xaddr6[0])
+-        log_info("Starting main loop (IPv4 + IPv6).");
+-    else if (have_v4)
+-        log_info("Starting main loop (IPv4 only).");
+-    else
+-        log_info("Starting main loop (IPv6 only).");
+-    exit_main = 0;
+-
+-    while (!exit_main) {
+-        struct sockaddr_storage sender;
+-        socklen_t slen = sizeof(sender);
+-        const char *probe_xaddr;
+-        int is_v4;
+-        fd_set rfds;
+-        FD_ZERO(&rfds);
+-        FD_SET(sock, &rfds);
+-        if (select(sock + 1, &rfds, NULL, NULL, NULL) <= 0) continue;
+-
+-        memset(recv_buffer, 0, RECV_BUFFER_LEN);
+-        if (recvfrom(sock, recv_buffer, RECV_BUFFER_LEN, 0,
+-                     (struct sockaddr *)&sender, &slen) <= 0) continue;
+-
+-        /* Native IPv4 (AF_INET socket) or IPv4-mapped IPv6 (dual-stack socket). */
+-        is_v4 = (sender.ss_family == AF_INET) ||
+-                ((sender.ss_family == AF_INET6) &&
+-                 IN6_IS_ADDR_V4MAPPED(&((struct sockaddr_in6 *)&sender)->sin6_addr));
+-        if (is_v4) {
+-            if (!have_v4) { log_debug("IPv4 probe received but IPv4 WSD not active; ignoring."); continue; }
+-            probe_xaddr = xaddr;
+-        } else if (xaddr6[0]) {
+-            probe_xaddr = xaddr6;
+-        } else {
+-            log_debug("IPv6 probe received but IPv6 WSD not configured; ignoring.");
++        if (ret > 0) {
++            handle_probe(network, &packet, recv_buffer);
+             continue;
+         }
+-        handle_probe(sock, (struct sockaddr *)&sender, slen, recv_buffer, probe_xaddr);
++        if (discovery_network_refresh(network, announcement_send, "Hello")) {
++            log_error("Cannot update discovery interfaces: %s", strerror(errno));
++            break;
++        }
+     }
+-
+-    if (sock >= 0) { shutdown(sock, SHUT_RDWR); close(sock); }
+-
+-    log_info("Terminating program.");
+-    fclose(fLog);
++    discovery_network_announce(network, announcement_send, "Bye");
++    discovery_network_close(network);
+     unlink(pid_file);
+-    return 0;
++    log_info("Terminating program.");
++    if (fLog != stderr)
++        fclose(fLog);
++    return exit_main ? EXIT_SUCCESS : EXIT_FAILURE;
+ }
