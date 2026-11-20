@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zerotier
 PKG_VERSION:=1.16.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/zerotier/ZeroTierOne/tar.gz/$(PKG_VERSION)?
@@ -21,7 +21,7 @@ PKG_CPE_ID:=cpe:/a:zerotier:zerotierone
 
 PKG_ASLR_PIE:=0
 PKG_BUILD_PARALLEL:=1
-PKG_BUILD_FLAGS:=gc-sections
+PKG_BUILD_FLAGS:=gc-sections no-mips16
 
 include $(INCLUDE_DIR)/package.mk
 
