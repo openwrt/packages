@@ -126,8 +126,7 @@
 		"url_4": "https://raw.githubusercontent.com/hagezi/dns-blocklists/refs/heads/main/ips/tif.txt",
 		"rule": "feed 1",
 		"chain": "out",
-		"descr": "Threat IP blocklist",
-		"flag": "tcp udp 80 443"
+		"descr": "Threat IP blocklist"
 	},
 	"ipblackhole":{
 		"url_4": "https://blackhole.monster/blackhole-today",
@@ -226,15 +225,7 @@
 		"url_4": "https://urlhaus-api.abuse.ch/v2/files/exports/{authkey}/urls_recent.txt",
 		"rule": "feed 4 /|:",
 		"chain": "out",
-		"descr": "urlhaus malware IPs",
-		"flag": "tcp udp 80 443"
-	},
-	"urlvir":{
-		"url_4": "https://iplists.firehol.org/files/urlvir.ipset",
-		"rule": "feed 1",
-		"chain": "out",
-		"descr": "malware related IPs",
-		"flag": "tcp udp 80 443"
+		"descr": "urlhaus malware IPs"
 	},
 	"voip":{
 		"url_4": "https://voipbl.org/update/",
@@ -258,7 +249,6 @@
 		"url_4": "https://iplists.firehol.org/files/firehol_webclient.netset",
 		"rule": "feed 1",
 		"chain": "out",
-		"descr": "malware related IPs",
-		"flag": "tcp udp 80 443"
+		"descr": "malware related IPs"
 	}
 }

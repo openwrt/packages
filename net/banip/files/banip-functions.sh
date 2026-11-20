@@ -82,7 +82,6 @@ ban_feed=""
 ban_feedin=""
 ban_feedout=""
 ban_feedinout=""
-ban_feedcomplete=""
 ban_feedreset=""
 ban_blockpolicy="drop"
 ban_protov4="0"
@@ -329,48 +328,42 @@ f_conf() {
 
 	config_cb() {
 		option_cb() {
-			local option="${1}" value="${2//\"/\\\"}"
+			local option="${1}"
 
 			case "${option}" in
 			*[!a-zA-Z0-9_]*) ;;
 
 			*)
-				[ -n "${value}" ] && eval "${option}=\"\${value}\""
+				[ -n "${2}" ] && eval "${option}=\"\${2}\""
 				;;
 			esac
 		}
 		list_cb() {
-			local anchor pat append option="${1}" value="${2//\"/\\\"}"
+			local anchor pat option="${1}"
 
 			case "${option}" in
 			*[!a-zA-Z0-9_]*) ;;
 
 			"ban_logterm")
-				case "${value}" in
+				case "${2}" in
 				first:*)
 					anchor="first"
-					pat="${value#first:}"
+					pat="${2#first:}"
 					;;
 				last:*)
 					anchor="last"
-					pat="${value#last:}"
+					pat="${2#last:}"
 					;;
 				*)
 					anchor="last"
-					pat="${value}"
+					pat="${2}"
 					;;
 				esac
-				eval "append=\"\${${option}}\""
-				if [ -n "${append}" ]; then
-					eval "${option}=\"\${append}\\|${pat}\""
-				else
-					eval "${option}=\"${pat}\""
-				fi
+				ban_logterm="${ban_logterm:+${ban_logterm}\\|}${pat}"
 				ban_logterm_map="${ban_logterm_map}${anchor}$(printf '\037')${pat}$(printf '\036')"
 				;;
 			*)
-				eval "append=\"\${${option}}\""
-				eval "${option}=\"\${append}\${value} \""
+				eval "${option}=\"\${${option}}\${2} \""
 				;;
 			esac
 		}
@@ -397,6 +390,71 @@ f_conf() {
 			fi
 		done <"${ban_countryfile}"
 	done
+}
+
+# shared awk functions for the IPv4/IPv6 validation
+#
+ban_awkvalid='
+	function valid4(a, n, i, O) {
+		n = split(a, O, ".")
+		if (n != 4) return 0
+		for (i = 1; i <= 4; i++) {
+			if (O[i] !~ /^(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])$/) return 0
+		}
+		return 1
+	}
+	function valid6(a, dc, l, r, nl, nr, L, R, i) {
+		if (a !~ /^[0-9a-f:]+$/ || a ~ /:::/) return 0
+		dc = gsub(/::/, "&", a)
+		if (dc > 1) return 0
+		if (dc == 0) {
+			if (split(a, L, ":") != 8) return 0
+			for (i = 1; i <= 8; i++) {
+				if (L[i] !~ /^[0-9a-f]{1,4}$/) return 0
+			}
+			return 1
+		}
+		l = substr(a, 1, index(a, "::") - 1)
+		r = substr(a, index(a, "::") + 2)
+		nl = (l == "") ? 0 : split(l, L, ":")
+		nr = (r == "") ? 0 : split(r, R, ":")
+		if (nl + nr > 7) return 0
+		for (i = 1; i <= nl; i++) {
+			if (L[i] !~ /^[0-9a-f]{1,4}$/) return 0
+		}
+		for (i = 1; i <= nr; i++) {
+			if (R[i] !~ /^[0-9a-f]{1,4}$/) return 0
+		}
+		return 1
+	}
+'
+
+# MAC/IPv4 and MAC/IPv6 validation for the local allow- and blocklist,
+# format: 'MAC[/mask] [IP[/mask]] [# comment]', a missing IP defaults to 0.0.0.0/0 or ::/0
+#
+f_chkmac() {
+	local ipv="${1}" file="${2}"
+
+	"${ban_awkcmd}" -v ipv="${ipv}" "${ban_awkvalid}"'
+	{
+		gsub(/\r/, "")
+		sub(/[[:space:]]*#.*$/, "")
+		$0 = $0
+		if (NF < 1 || NF > 2) next
+		mac = tolower($1)
+		if (mac !~ /^([0-9a-f]{2}:){5}[0-9a-f]{2}(\/([0-9]|[1-3][0-9]|4[0-8]))?$/) next
+		if (NF == 1) {
+			ip = (ipv == "4") ? "0.0.0.0/0" : "::/0"
+		} else {
+			ip = (ipv == "4") ? $2 : tolower($2)
+			n = split(ip, C, "/")
+			if (n > 2) next
+			if (n == 2 && (C[2] !~ /^[0-9]+$/ || C[2] + 0 > ((ipv == "4") ? 32 : 128))) next
+			if (ipv == "4" && !valid4(C[1])) next
+			if (ipv == "6" && !valid6(C[1])) next
+		}
+		if (!seen[mac]++) printf "%s . %s, ", mac, ip
+	}' "${file}"
 }
 
 # IPv4/IPv6 validation
@@ -436,7 +494,7 @@ f_chkip() {
 		separator="${4:-[[:space:]]+}"
 		;;
 	esac
-	"${ban_awkcmd}" -v ipv="${ipv}" -v type="${type}" -v pre="${prefix}" -v col1="${col1}" -v col2="${col2}" -F "${separator}" '
+	"${ban_awkcmd}" -v ipv="${ipv}" -v type="${type}" -v pre="${prefix}" -v col1="${col1}" -v col2="${col2}" -F "${separator}" "${ban_awkvalid}"'
 	{
 		# suricata pre-processing
 		if (type == "suricata") {
@@ -513,7 +571,7 @@ f_chkip() {
 			}
 			# IPv6 CIDR
 			if (ipv == "6") {
-				if (base ~ /^[0-9a-f:]+$/ && base ~ /:/) {
+				if (valid6(base)) {
 					if (mask > 128) next
 					if (base == "::1" || base == "::") next
 					if (base ~ /^fe80:/) next
@@ -539,7 +597,7 @@ f_chkip() {
 		}
 		# IPv6 check
 		if (ipv == "6") {
-			if (lowip ~ /^[0-9a-f:]+$/ && lowip ~ /:/) {
+			if (valid6(lowip)) {
 				# reject loopback and unspecified addresses
 				if (lowip == "::1" || lowip == "::") next
 				# reject link-local addresses
@@ -1134,17 +1192,26 @@ f_etag() {
 # load file in nftset
 #
 f_nftload() {
-	local cnt="1" max_cnt="${ban_nftretry:-"3"}" load_rc="4" file="${1}" errmsg="${2}"
+	local cnt="1" max_cnt="${ban_nftretry:-"3"}" load_rc="4" nft_err file="${1}" errmsg="${2}"
 
 	while [ "${load_rc}" != "0" ]; do
-		"${ban_nftcmd}" -f "${file}" >/dev/null 2>&1
+		nft_err="$("${ban_nftcmd}" -f "${file}" 2>&1 >/dev/null)"
 		load_rc="${?}"
 		if [ "${load_rc}" = "0" ]; then
 			break
-		elif [ "${cnt}" = "${max_cnt}" ]; then
+		fi
+
+		# a syntax or element error can't be solved by a retry
+		#
+		case "${nft_err}" in
+		*"syntax error"* | *"Could not resolve"*)
+			cnt="${max_cnt}"
+			;;
+		esac
+		if [ "${cnt}" -ge "${max_cnt}" ]; then
 			[ ! -d "${ban_errordir}" ] && f_mkdir "${ban_errordir}"
 			"${ban_catcmd}" "${file}" 2>>"${ban_errorlog}" >"${ban_errordir}/err.${file##*/}"
-			f_log "info" "${errmsg}"
+			f_log "info" "${errmsg} (${nft_err%%[[:cntrl:]]*})"
 			break
 		fi
 		cnt="$((cnt + 1))"
@@ -1357,7 +1424,7 @@ f_nftinit() {
 #
 f_down() {
 	local log_inbound log_outbound start_ts end_ts tmp_raw tmp_load tmp_file split_file chain_json handles handle etag_rc etag_cnt nft_cnt nft_setcnt tmp_allow feed_name
-	local expr cnt_set cnt_dl restore_rc feed_direction feed_policy feed_rc feed_comp feed_complete feed_target feed_dport chain flag tmp_flush tmp_nft
+	local expr cnt_set cnt_dl restore_rc feed_direction feed_policy feed_rc feed_comp feed_target feed_dport chain flag tmp_flush tmp_nft dedup_key dedup_file
 	local tmp_split tmp_proto tmp_port asn country feed="${1}" feed_ipv="${2}" feed_url="${3}" feed_rule="${4}" feed_chain="${5}" feed_flag="${6}"
 
 	# get feed start timestamp and prepare temporary file names based on feed name and type
@@ -1397,14 +1464,6 @@ f_down() {
 	if [ "${ban_nftcount}" = "1" ]; then
 		nft_setcnt="; counter"
 	fi
-
-	# set feed complete flag
-	#
-	case " ${ban_feedcomplete} " in
-	*" ${feed%%.*} "*)
-		feed_complete="true"
-		;;
-	esac
 
 	# set feed direction
 	#
@@ -1606,12 +1665,12 @@ f_down() {
 			[ -s "${tmp_flush}" ] && "${ban_catcmd}" "${tmp_flush}"
 			case "${feed_ipv}" in
 			"4MAC")
-				"${ban_awkcmd}" '{gsub(/\r/,"")}/^([0-9A-f]{2}:){5}[0-9A-f]{2}(\/([0-9]|[1-3][0-9]|4[0-8]))?([[:space:]]+([1-9][0-9]?[0-9]?\.){1}([0-9]{1,3}\.){2}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\/(1?[0-9]|2?[0-9]|3?[0-2]))?([[:space:]]+#.*$|[[:space:]]*$)|[[:space:]]+#.*$|$)/{if(!$2||$2~/#/)$2="0.0.0.0/0";if(!seen[$1]++)printf "%s . %s, ",tolower($1),$2}' "${tmp_allow}" >"${tmp_file}"
+				f_chkmac "4" "${tmp_allow}" >"${tmp_file}"
 				printf '%s\n' "add set inet banIP ${feed} { type ether_addr . ipv4_addr; flags interval; auto-merge; policy ${ban_nftpolicy}${nft_setcnt}; $(f_getelements "${tmp_file}") }"
 				[ -z "${feed_direction##*outbound*}" ] && printf '%s\n' "add rule inet banIP _outbound ether saddr . ip saddr @${feed} ${nft_cnt} accept"
 				;;
 			"6MAC")
-				"${ban_awkcmd}" '{gsub(/\r/,"")}/^([0-9A-f]{2}:){5}[0-9A-f]{2}(\/([0-9]|[1-3][0-9]|4[0-8]))?([[:space:]]+([0-9A-f]{0,4}:){1,7}[0-9A-f]{0,4}:?(\/(1?[0-2][0-8]|[0-9][0-9]))?([[:space:]]+#.*$|[[:space:]]*$)|[[:space:]]+#.*$|$)/{if(!$2||$2~/#/)$2="::/0";if(!seen[$1]++)printf "%s . %s, ",tolower($1),$2}' "${tmp_allow}" >"${tmp_file}"
+				f_chkmac "6" "${tmp_allow}" >"${tmp_file}"
 				printf '%s\n' "add set inet banIP ${feed} { type ether_addr . ipv6_addr; flags interval; auto-merge; policy ${ban_nftpolicy}${nft_setcnt}; $(f_getelements "${tmp_file}") }"
 				[ -z "${feed_direction##*outbound*}" ] && printf '%s\n' "add rule inet banIP _outbound ether saddr . ip6 saddr @${feed} ${nft_cnt} accept"
 				;;
@@ -1673,7 +1732,7 @@ f_down() {
 			[ -s "${tmp_flush}" ] && "${ban_catcmd}" "${tmp_flush}"
 			case "${feed_ipv}" in
 			"4MAC")
-				"${ban_awkcmd}" '{gsub(/\r/,"")}/^([0-9A-f]{2}:){5}[0-9A-f]{2}(\/([0-9]|[1-3][0-9]|4[0-8]))?([[:space:]]+([1-9][0-9]?[0-9]?\.){1}([0-9]{1,3}\.){2}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\/(1?[0-9]|2?[0-9]|3?[0-2]))?([[:space:]]+#.*$|[[:space:]]*$)|[[:space:]]+#.*$|$)/{if(!$2||$2~/#/)$2="0.0.0.0/0";if(!seen[$1]++)printf "%s . %s, ",tolower($1),$2}' "${ban_blocklist}" >"${tmp_file}"
+				f_chkmac "4" "${ban_blocklist}" >"${tmp_file}"
 				printf '%s\n' "add set inet banIP ${feed} { type ether_addr . ipv4_addr; flags interval; auto-merge; policy ${ban_nftpolicy}${nft_setcnt}; $(f_getelements "${tmp_file}") }"
 				if [ -z "${feed_direction##*outbound*}" ]; then
 					if [ "${ban_logoutbound}" = "1" ]; then
@@ -1683,7 +1742,7 @@ f_down() {
 				fi
 				;;
 			"6MAC")
-				"${ban_awkcmd}" '{gsub(/\r/,"")}/^([0-9A-f]{2}:){5}[0-9A-f]{2}(\/([0-9]|[1-3][0-9]|4[0-8]))?([[:space:]]+([0-9A-f]{0,4}:){1,7}[0-9A-f]{0,4}:?(\/(1?[0-2][0-8]|[0-9][0-9]))?([[:space:]]+#.*$|[[:space:]]*$)|[[:space:]]+#.*$|$)/{if(!$2||$2~/#/)$2="::/0";if(!seen[$1]++)printf "%s . %s, ",tolower($1),$2}' "${ban_blocklist}" >"${tmp_file}"
+				f_chkmac "6" "${ban_blocklist}" >"${tmp_file}"
 				printf '%s\n' "add set inet banIP ${feed} { type ether_addr . ipv6_addr; flags interval; auto-merge; policy ${ban_nftpolicy}${nft_setcnt}; $(f_getelements "${tmp_file}") }"
 				if [ -z "${feed_direction##*outbound*}" ]; then
 					if [ "${ban_logoutbound}" = "1" ]; then
@@ -1822,13 +1881,16 @@ f_down() {
 	#
 	if [ "${feed_rc}" = "0" ] && [ ! -s "${tmp_nft}" ]; then
 
-		# deduplicate Sets
+		# deduplicate Sets, only across feeds with the same direction and port limitation
 		#
-		if [ "${ban_deduplicate}" = "1" ] && [ "${feed_url}" != "local" ] && [ -z "${feed_complete}" ]; then
+		if [ "${ban_deduplicate}" = "1" ] && [ "${feed_url}" != "local" ]; then
+			dedup_key="${feed_policy}${feed_dport:+".${feed_dport//[^[:alnum:]-]/_}"}"
+			dedup_file="${ban_tmpfile}.deduplicate.${dedup_key}"
 			f_chkip ${feed_ipv} ${feed_rule} <"${tmp_load}" >"${tmp_raw}"
 			{
 				"${ban_flockcmd}" -x 8
-				"${ban_awkcmd}" 'NR==FNR{member[$0];next}!($0 in member)' "${ban_tmpfile}.deduplicate" "${tmp_raw}" 2>>"${ban_errorlog}" | tee -a "${ban_tmpfile}.deduplicate" >"${tmp_split}"
+				[ ! -f "${dedup_file}" ] && printf '\n' >"${dedup_file}"
+				"${ban_awkcmd}" 'NR==FNR{member[$0];next}!($0 in member)' "${dedup_file}" "${tmp_raw}" 2>>"${ban_errorlog}" >"${tmp_split}"
 				feed_rc="${?}"
 			} 8>"${ban_deduplock}"
 		else
@@ -1909,7 +1971,6 @@ f_down() {
 			cnt_dl="$("${ban_awkcmd}" 'END{printf "%d",NR}' "${ban_blocklist}" 2>>"${ban_errorlog}")"
 		else
 			cnt_dl="$("${ban_awkcmd}" 'END{printf "%d",NR}' "${tmp_split}" 2>>"${ban_errorlog}")"
-			: >"${tmp_split}"
 		fi
 		if [ "${cnt_dl:-"0"}" -gt "0" ] || [ "${feed%%.*}" = "allowlist" ] || [ "${feed%%.*}" = "blocklist" ]; then
 
@@ -1934,6 +1995,15 @@ f_down() {
 					fi
 				done
 
+				# add the loaded IPs to the deduplication file, only after a successful load
+				#
+				if [ "${feed_rc}" = "0" ] && [ -n "${dedup_file}" ]; then
+					{
+						"${ban_flockcmd}" -x 8
+						"${ban_catcmd}" "${tmp_split}" >>"${dedup_file}"
+					} 8>"${ban_deduplock}"
+				fi
+
 				# element count for the debug log only, a full Set listing is expensive with large Sets
 				#
 				if [ "${ban_debug}" = "1" ]; then
@@ -1944,11 +2014,11 @@ f_down() {
 			f_log "info" "skip empty feed '${feed}'"
 		fi
 	fi
-	: >"${tmp_nft}"
+	: >"${tmp_nft}" >"${tmp_split}"
 	read -r end_ts _ <"/proc/uptime"
 	end_ts="${end_ts%%.*}"
 
-	f_log "debug" "f_down    ::: feed: ${feed}, policy: ${feed_policy}, complete: ${feed_complete:-"-"}, cnt_dl: ${cnt_dl:-"-"}, cnt_set: ${cnt_set:-"-"}, split_size: ${ban_splitsize:-"-"}, time: $((end_ts - start_ts)), rc: ${feed_rc:-"-"}"
+	f_log "debug" "f_down    ::: feed: ${feed}, policy: ${feed_policy}, dedup: ${dedup_key:-"-"}, cnt_dl: ${cnt_dl:-"-"}, cnt_set: ${cnt_set:-"-"}, split_size: ${ban_splitsize:-"-"}, time: $((end_ts - start_ts)), rc: ${feed_rc:-"-"}"
 }
 
 # backup feeds
@@ -2955,7 +3025,7 @@ f_monitor() {
 
 		# determine nft timeout expression and cache interval
 		#
-		if printf '%s' "${ban_nftexpiry}" | grep -qE '^([1-9][0-9]*(ms|s|m|h|d))+$'; then
+		if printf '%s' "${ban_nftexpiry}" | "${ban_grepcmd}" -qE '^([1-9][0-9]*(ms|s|m|h|d))+$'; then
 			nft_expiry="timeout ${ban_nftexpiry}"
 			cache_interval="$(printf '%s' "${ban_nftexpiry}" | "${ban_awkcmd}" '{
 				s = 0
@@ -3016,27 +3086,25 @@ f_monitor() {
 				"${ban_logreadcmd}" -fe "${ban_logterm}" 2>/dev/null
 				;;
 			esac
-		} | ban_logterm_map="${ban_logterm_map}" "${ban_awkcmd}" -v threshold="${ban_logcount}" -v limit=5000 '
-			function valid_ip(c, n) {
-				if (c ~ /\./) return 1
-				if (c !~ /[A-Fa-f0-9]/ || c ~ /:::/ || c ~ /::.*::/) return 0
-				n = gsub(/:/, ":", c)
-				return (c ~ /::/) ? (n <= 7) : (n == 7)
+		} | ban_logterm_map="${ban_logterm_map}" "${ban_awkcmd}" -v threshold="${ban_logcount}" -v limit=5000 "${ban_awkvalid}"'
+			function valid_ip(c) {
+				return (c ~ /\./) ? valid4(c) : valid6(tolower(c))
 			}
-			function pick_ip(s, mode, m, res, c, pre, last) {
+			function pick_ip(s, mode, m, res, c, pre, post, last) {
 				res = ""
 				last = " "
 				while (match(s, /([0-9]{1,3}\.){3}[0-9]{1,3}|([A-Fa-f0-9]{0,4}:){2,7}[A-Fa-f0-9]{0,4}/, m)) {
 					c = m[0]
 					pre = (RSTART > 1) ? substr(s, RSTART - 1, 1) : last
 					last = substr(c, length(c), 1)
+					post = substr(s, RSTART + RLENGTH, 2)
 					s = substr(s, RSTART + RLENGTH)
 					if (c ~ /^:[^:]/) {
 						c = substr(c, 2)
 						pre = ":"
 					}
 					if (c ~ /[^:]:$/) c = substr(c, 1, length(c) - 1)
-					if (pre ~ /[A-Za-z0-9_]/ || !valid_ip(c)) continue
+					if (pre ~ /[A-Za-z0-9_]/ || post ~ /^[A-Za-z0-9_]/ || (c ~ /\./ && post ~ /^\.[0-9]/) || !valid_ip(c)) continue
 					res = c
 					if (mode == "first") break
 				}
@@ -3061,6 +3129,7 @@ f_monitor() {
 			{
 				pos = all_last ? "last" : anchor_for($0)
 				$0 = gensub(/(^|[^A-Fa-f0-9:])::[Ff]{4}:(([0-9]{1,3}\.){3}[0-9]{1,3})/, "\\1\\2", "g", $0)
+				$0 = gensub(/\[AF_INET6?\]([^ ]+):[0-9]+/, " \\1", "g", $0)
 				sub(/\]:[0-9]+/, "]", $0)
 				gsub(/[<>[\]]/, "", $0)
 				ip = ""
