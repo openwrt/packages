@@ -1,0 +1,13 @@
+# /etc/config/uapi
+#
+# Token store managed by the `uapi-token` CLI. Do not edit by hand.
+#
+# To create a token:
+#   uapi-token create --name <label> --scope <scope> [--scope <scope>...]
+#
+# Example (commented; not active):
+#
+# config token 'example'
+#	option salt 'random_hex_bytes'
+#	option hash 'sha256_hex_of_salt_colon_bearer'
+#	list scopes '*:rw'
