@@ -1,0 +1,89 @@
+From 202fa8e7d0db54dd1550c13cc0a6e0733544a78b Mon Sep 17 00:00:00 2001
+From: Keith Packard <keithp@keithp.com>
+Date: Thu, 5 Jun 2025 15:17:35 +0000
+Subject: [PATCH] Avoid invalid gcc 14.3 warning about array bounds in
+ mbedtls_xor
+
+The combination of the multi-byte loop with the single byte loop
+confuses GCC 14.3's array bounds checker. When the loop size is
+constant, check to see if it is a multiple of the multi-byte size and
+bail early. As this will be evaluated at compile time, there should be
+no run-time cost.
+
+This change uses the __builtin_constant_p compile-time operation. To
+check if that is supported, the change uses the existing
+MBEDTLS_HAS_BUILTIN macro. That macro was defined later in
+library/common.h than is needed for this change, so it was moved up to
+join some other macros that looked similar.
+
+Signed-off-by: Keith Packard <keithp@keithp.com>
+(cherry picked from commit 292b96c0a69016a6d99ce324837a9e96d59e21f6)
+---
+ .../third_party/mbedtls/repo/library/common.h | 28 +++++++++++++++----
+ 1 file changed, 22 insertions(+), 6 deletions(-)
+
+--- a/third_party/openthread/repo/third_party/mbedtls/repo/library/common.h
++++ b/third_party/openthread/repo/third_party/mbedtls/repo/library/common.h
+@@ -99,6 +99,13 @@ extern void (*mbedtls_test_hook_test_fai
+  * fall back to the unsafe implementation. */
+ #define ARRAY_LENGTH(array) ARRAY_LENGTH_UNSAFE(array)
+ #endif
++
++#if defined(__has_builtin)
++#define MBEDTLS_HAS_BUILTIN(x) __has_builtin(x)
++#else
++#define MBEDTLS_HAS_BUILTIN(x) 0
++#endif
++
+ /** Allow library to access its structs' private members.
+  *
+  * Although structs defined in header files are publicly available,
+@@ -208,6 +215,11 @@ static inline void mbedtls_xor(unsigned
+         return;
+     }
+ #endif
++#if defined(MBEDTLS_COMPILER_IS_GCC) && MBEDTLS_HAS_BUILTIN(__builtin_constant_p)
++    if (__builtin_constant_p(n) && n % 16 == 0) {
++        return;
++    }
++#endif
+ #elif defined(MBEDTLS_ARCH_IS_X64) || defined(MBEDTLS_ARCH_IS_ARM64)
+     /* This codepath probably only makes sense on architectures with 64-bit registers */
+     for (; (i + 8) <= n; i += 8) {
+@@ -219,6 +231,11 @@ static inline void mbedtls_xor(unsigned
+         return;
+     }
+ #endif
++#if defined(MBEDTLS_COMPILER_IS_GCC) && MBEDTLS_HAS_BUILTIN(__builtin_constant_p)
++    if (__builtin_constant_p(n) && n % 8 == 0) {
++        return;
++    }
++#endif
+ #else
+     for (; (i + 4) <= n; i += 4) {
+         uint32_t x = mbedtls_get_unaligned_uint32(a + i) ^ mbedtls_get_unaligned_uint32(b + i);
+@@ -229,6 +246,11 @@ static inline void mbedtls_xor(unsigned
+         return;
+     }
+ #endif
++#if defined(MBEDTLS_COMPILER_IS_GCC) && MBEDTLS_HAS_BUILTIN(__builtin_constant_p)
++    if (__builtin_constant_p(n) && n % 4 == 0) {
++        return;
++    }
++#endif
+ #endif
+ #endif
+     for (; i < n; i++) {
+@@ -367,12 +389,6 @@ static inline void mbedtls_xor_no_simd(u
+     struct ISO_C_does_not_allow_extra_semicolon_outside_of_a_function
+ #endif
+ 
+-#if defined(__has_builtin)
+-#define MBEDTLS_HAS_BUILTIN(x) __has_builtin(x)
+-#else
+-#define MBEDTLS_HAS_BUILTIN(x) 0
+-#endif
+-
+ /* Define compiler branch hints */
+ #if MBEDTLS_HAS_BUILTIN(__builtin_expect)
+ #define MBEDTLS_LIKELY(x)       __builtin_expect(!!(x), 1)
