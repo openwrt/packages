@@ -1,0 +1,93 @@
+From dcf3add96bd6e117435c568e78be59bb7ecad701 Mon Sep 17 00:00:00 2001
+From: KJ Tsanaktsidis <ktsanaktsidis@zendesk.com>
+Date: Tue, 22 Oct 2024 15:20:17 +1100
+Subject: [PATCH] Delete reserve_stack code
+
+This code was working around a bug in the Linux kernel. It was
+previously possible for the kernel to place heap pages in a region where
+the stack was allowed to grow into, and then therefore run out of usable
+stack memory before RLIMIT_STACK was reached.
+
+This bug was fixed in Linux commit
+https://github.com/torvalds/linux/commit/c204d21f2232d875e36b8774c36ffd027dc1d606
+for kernel 4.13 in 2017. Therefore, in 2024, we should be safe to delete
+this workaround.
+
+[Bug #20804]
+---
+ thread_pthread.c | 57 ------------------------------------------------
+ 1 file changed, 57 deletions(-)
+
+--- a/thread_pthread.c
++++ b/thread_pthread.c
+@@ -1917,62 +1917,6 @@ space_size(size_t stack_size)
+     }
+ }
+ 
+-#ifdef __linux__
+-static __attribute__((noinline)) void
+-reserve_stack(volatile char *limit, size_t size)
+-{
+-# ifdef C_ALLOCA
+-#   error needs alloca()
+-# endif
+-    struct rlimit rl;
+-    volatile char buf[0x100];
+-    enum {stack_check_margin = 0x1000}; /* for -fstack-check */
+-
+-    STACK_GROW_DIR_DETECTION;
+-
+-    if (!getrlimit(RLIMIT_STACK, &rl) && rl.rlim_cur == RLIM_INFINITY)
+-        return;
+-
+-    if (size < stack_check_margin) return;
+-    size -= stack_check_margin;
+-
+-    size -= sizeof(buf); /* margin */
+-    if (IS_STACK_DIR_UPPER()) {
+-        const volatile char *end = buf + sizeof(buf);
+-        limit += size;
+-        if (limit > end) {
+-            /* |<-bottom (=limit(a))                                     top->|
+-             * | .. |<-buf 256B |<-end                          | stack check |
+-             * |  256B  |              =size=                   | margin (4KB)|
+-             * |              =size=         limit(b)->|  256B  |             |
+-             * |                |       alloca(sz)     |        |             |
+-             * | .. |<-buf      |<-limit(c)    [sz-1]->0>       |             |
+-             */
+-            size_t sz = limit - end;
+-            limit = alloca(sz);
+-            limit[sz-1] = 0;
+-        }
+-    }
+-    else {
+-        limit -= size;
+-        if (buf > limit) {
+-            /* |<-top (=limit(a))                                     bottom->|
+-             * | .. | 256B buf->|                               | stack check |
+-             * |  256B  |              =size=                   | margin (4KB)|
+-             * |              =size=         limit(b)->|  256B  |             |
+-             * |                |       alloca(sz)     |        |             |
+-             * | .. |      buf->|           limit(c)-><0>       |             |
+-             */
+-            size_t sz = buf - limit;
+-            limit = alloca(sz);
+-            limit[0] = 0;
+-        }
+-    }
+-}
+-#else
+-# define reserve_stack(limit, size) ((void)(limit), (void)(size))
+-#endif
+-
+ #undef ruby_init_stack
+ void
+ ruby_init_stack(volatile VALUE *addr)
+@@ -1987,7 +1931,6 @@ ruby_init_stack(volatile VALUE *addr)
+         if (get_main_stack(&stackaddr, &size) == 0) {
+             native_main_thread.stack_maxsize = size;
+             native_main_thread.stack_start = stackaddr;
+-            reserve_stack(stackaddr, size);
+             goto bound_check;
+         }
+     }
