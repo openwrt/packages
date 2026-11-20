@@ -8,7 +8,7 @@ include $(INCLUDE_DIR)/nls.mk
 
 PKG_NAME:=atop
 PKG_VERSION:=2.12.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.atoptool.nl/download/
@@ -20,7 +20,6 @@ PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:atop_project:atop
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/nls.mk
 
 define Package/atop
   SECTION:=admin
@@ -49,6 +48,17 @@ endef
 define Package/atop/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/atop $(1)/usr/bin/
+	$(LN) atop $(1)/usr/bin/atopsar
+	$(INSTALL_DIR) $(1)/usr/libexec
+	$(INSTALL_BIN) ./files/atop-daily $(1)/usr/libexec/atop-daily
+	$(INSTALL_DIR) $(1)/etc/default
+	$(INSTALL_CONF) ./files/atop.default $(1)/etc/default/atop
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/atop.init $(1)/etc/init.d/atop
+endef
+
+define Package/atop/conffiles
+/etc/default/atop
 endef
 
 $(eval $(call BuildPackage,atop))
