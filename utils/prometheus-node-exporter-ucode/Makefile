@@ -4,7 +4,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=prometheus-node-exporter-ucode
 PKG_VERSION:=2026.10.28
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=Andre Heider <a.heider@gmail.com>
 PKG_LICENSE:=Apache-2.0
@@ -73,6 +73,7 @@ $(eval $(call Collector,odhcp6c,odhcp6c statistics collector,@odhcp6c))
 $(eval $(call Collector,openwrt,OpenWrt collector,))
 $(eval $(call Collector,realtek-poe,RealTek PoE collector,@realtek-poe))
 $(eval $(call Collector,snmp6,snmp6 collector,))
+$(eval $(call Collector,textfile,textfile collector,))
 $(eval $(call Collector,thermal,thermal collector,))
 $(eval $(call Collector,uci_dhcp_host,UCI DHCP host collector,))
 $(eval $(call Collector,watchdog,Watchdog collector,))

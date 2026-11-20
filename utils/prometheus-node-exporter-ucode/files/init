@@ -11,9 +11,9 @@ _log() {
 start_service() {
 	. /lib/functions/network.sh
 
-	local interface port bind4 bind6
+	local interface port bind4 bind6 tf_dir tf_disabled
 
-	config_load prometheus-node-exporter-ucode.main
+	config_load prometheus-node-exporter-ucode
 	config_get interface "main" listen_interface "loopback"
 	config_get port "main" listen_port 9101
 	config_get keepalive "main" http_keepalive 70
@@ -48,6 +48,17 @@ start_service() {
 	procd_add_jail_mount "/usr/share/ucode/node-exporter"
 	procd_add_jail_mount "/etc/config"
 
+	# the textfile collector reads the metric files of other services
+	if [ -f /usr/share/ucode/node-exporter/lib/textfile.uc ]; then
+		config_get tf_dir "textfile" directory "/var/run/prometheus/textfile"
+		config_get_bool tf_disabled "textfile" disabled 0
+
+		if [ "$tf_disabled" -eq 0 ]; then
+			mkdir -p "$tf_dir"
+			procd_add_jail_mount "$tf_dir"
+		fi
+	fi
+
 	# TODO breaks the dsl collector?
 	#procd_set_param user nobody
 	#procd_set_param group nogroup
@@ -66,7 +77,7 @@ service_triggers()
 
 	procd_add_reload_trigger "prometheus-node-exporter-ucode"
 
-	config_load prometheus-node-exporter-ucode.main
+	config_load prometheus-node-exporter-ucode
 	config_get interface "main" listen_interface "loopback"
 
 	[ "$interface" = "*" ] || procd_add_reload_interface_trigger "$interface"

@@ -5,3 +5,6 @@ config prometheus-node-exporter-ucode 'main'
 
 config collector 'wifi'
 	option stations '1'
+
+config collector 'textfile'
+	option directory '/var/run/prometheus/textfile'
