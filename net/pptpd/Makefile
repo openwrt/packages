@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pptpd
 PKG_VERSION:=1.5.0
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/poptop
@@ -42,6 +42,8 @@ CONFIGURE_VARS += \
 MAKE_FLAGS += \
 	COPTS="$(TARGET_CFLAGS)" \
 	INSTALL="install" \
+
+TARGET_CFLAGS += -std=gnu17
 
 define Package/pptpd/conffiles
 /etc/pptpd.conf
