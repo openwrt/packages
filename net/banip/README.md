@@ -69,7 +69,7 @@ For a typical setup these few steps are enough to get banIP up and running — s
 | firehol3            | firehol level 3 compilation    |    x    |          |                   | [Link](https://iplists.firehol.org/?ipset=firehol_level3)    |
 | firehol4            | firehol level 4 compilation    |    x    |          |                   | [Link](https://iplists.firehol.org/?ipset=firehol_level4)    |
 | greensnow           | suspicious server IPs          |    x    |          |                   | [Link](https://greensnow.co)                                 |
-| hagezi              | Threat IP blocklist            |         |    x     | tcp, udp: 80, 443 | [Link](https://github.com/hagezi/dns-blocklists)             |
+| hagezi              | Threat IP blocklist            |         |    x     |                   | [Link](https://github.com/hagezi/dns-blocklists)             |
 | ipblackhole         | blackhole IPs                  |    x    |          |                   | [Link](https://github.com/BlackHoleMonster/IP-BlackHole)     |
 | ipexdbl             | IPEX dynamic blocklists        |    x    |          |                   | [Link](https://github.com/ZEROF/ipextractor)                 |
 | ipsum               | malicious IPs                  |    x    |          |                   | [Link](https://github.com/stamparm/ipsum)                    |
@@ -84,9 +84,8 @@ For a typical setup these few steps are enough to get banIP up and running — s
 | uceprotect1         | spam protection level 1        |    x    |          |                   | [Link](https://www.uceprotect.net/en/index.php)              |
 | uceprotect2         | spam protection level 2        |    x    |          |                   | [Link](https://www.uceprotect.net/en/index.php)              |
 | uceprotect3         | spam protection level 3        |    x    |          |                   | [Link](https://www.uceprotect.net/en/index.php)              |
-| urlhaus             | urlhaus malware IPs            |         |    x     | tcp, udp: 80, 443 | [Link](https://urlhaus.abuse.ch)                             |
-| urlvir              | malware related IPs            |         |    x     | tcp, udp: 80, 443 | [Link](https://iplists.firehol.org/?ipset=urlvir)            |
-| webclient           | malware related IPs            |         |    x     | tcp, udp: 80, 443 | [Link](https://iplists.firehol.org/?ipset=firehol_webclient) |
+| urlhaus             | urlhaus malware IPs            |         |    x     |                   | [Link](https://urlhaus.abuse.ch)                             |
+| webclient           | malware related IPs            |         |    x     |                   | [Link](https://iplists.firehol.org/?ipset=firehol_webclient) |
 | voip                | VoIP fraud blocklist           |    x    |          |                   | [Link](https://voipbl.org)                                   |
 | vpn                 | vpn IPs                        |    x    |    x     |                   | [Link](https://github.com/X4BNet/lists_vpn)                  |
 | vpndc               | vpn datacenter IPs             |    x    |    x     |                   | [Link](https://github.com/X4BNet/lists_vpn)                  |
@@ -114,7 +113,7 @@ For a typical setup these few steps are enough to get banIP up and running — s
 * Optionally screens the allowed IP segments in `allowlist only` mode as well, i.e. the log monitor may ban attackers from an explicitly allowed segment while the local allowlist entries stay exempt (see `ban_monitorallowed`)
 * Supports external allowlist URLs to reference additional IPv4/IPv6 feeds
 * Optionally always allow certain protocols/destination ports in the inbound chain
-* Deduplicate IPs across all Sets (single IPs only, no intervals)
+* Deduplicate IPs across all Sets with the same direction and port limitation (single IPs only, no intervals)
 * Implements BCP38 ingress filtering to prevent IP address spoofing
 * Provides comprehensive runtime information
 * Provides a detailed Set report, incl. a map that shows the geolocation of your own uplink addresses (in green) and the location of potential attackers (in red), drawn from local country outlines without any tile service
@@ -222,7 +221,7 @@ The `report` sub-command accepts an output mode: `text` (default, human-readable
 | ban_vlanblock           | list   | -                             | always block certain VLAN forwards, e.g. br-lan.10                                                                |
 | ban_trigger             | list   | -                             | logical reload trigger interface(s), e.g. `wan` and `wan6`                                                        |
 | ban_triggerdelay        | option | 20                            | trigger timeout during interface reload and boot                                                                  |
-| ban_deduplicate         | option | 1                             | deduplicate IP addresses across all active Sets (see optional feed flag `dup` below)                              |
+| ban_deduplicate         | option | 1                             | deduplicate IP addresses across all active Sets with the same direction and port limitation                       |
 | ban_splitsize           | option | 0                             | split the processing/loading of Sets in chunks of n lines/members (saves RAM)                                     |
 | ban_cores               | option | - / autodetect                | limit the cpu cores used by banIP; only auto-detection is memory-capped                                           |
 | ban_nftloglevel         | option | warn                          | nft loglevel, values: emerg, alert, crit, err, warn, notice, info, debug                                          |
@@ -245,7 +244,6 @@ The `report` sub-command accepts an output mode: `text` (default, human-readable
 | ban_feedout             | list   | -                             | limit the selected feeds to the outbound chain (lan-forward)                                                      |
 | ban_feedinout           | list   | -                             | set the selected feeds to the inbound and outbound chain (lan-forward)                                            |
 | ban_feedreset           | list   | -                             | override the default feed configuration and remove existing port/protocol limitations                             |
-| ban_feedcomplete        | list   | -                             | opt out the selected feeds from the deduplication process                                                         |
 | ban_fetchcmd            | option | - / autodetect                | `uclient-fetch`, `wget` or `curl`                                                                                 |
 | ban_fetchparm           | option | - / autodetect                | set the config options for the selected download utility                                                          |
 | ban_fetchretry          | option | 5                             | number of download attempts in case of an error (not supported by uclient-fetch)                                  |
@@ -296,9 +294,9 @@ The `report` sub-command accepts an output mode: `text` (default, human-readable
     dns.v6               | 251          | -                     | ON: 0                 | tcp, udp: 53, 853     |
     doh.v4               | 1663         | -                     | ON: 0                 | tcp, udp: 80, 443     |
     doh.v6               | 1204         | -                     | ON: 0                 | tcp, udp: 80, 443     |
-    hagezi.v4            | 39535        | -                     | ON: 0                 | tcp, udp: 80, 443     |
+    hagezi.v4            | 39535        | -                     | ON: 0                 | -                     |
     ---------------------+--------------+-----------------------+-----------------------+-----------------------+------------------------
-    13                   | 138155       | 4 (362)               | 13 (2851)             | 10                    | 5
+    13                   | 138155       | 4 (362)               | 13 (2851)             | 8                     | 5
 ```
 
 **banIP runtime information**  
@@ -401,7 +399,7 @@ This is the single most common source of confusion, so it's worth understanding 
 banIP filters on the **connection level** (source/destination IP), not on content. The default chain of a feed therefore has to match **who initiates the unwanted connection**:
 
 * **Inbound** (WAN-Input + WAN-Forward): blocks connections that come **from the internet towards you**. This is the right direction for the large majority of reputation feeds, which list the **source** IPs of attackers, scanners, brute-forcers and spam senders (`cinsscore`, `debl`, `dshield`, `firehol*`, `bruteforceblock`, `uceprotect*`, …). A fail2ban-style feed only makes sense inbound.
-* **Outbound** (LAN-Forward): blocks connections your **own LAN clients initiate towards** a listed IP. This is the right direction for feeds that list destinations your devices should never reach: malware-download hosts, command-and-control servers, DoH/DNS bypass endpoints and threat IPs (`doh`, `dns`, `hagezi`, `feodo`, `urlhaus`, `urlvir`, `webclient`).
+* **Outbound** (LAN-Forward): blocks connections your **own LAN clients initiate towards** a listed IP. This is the right direction for feeds that list destinations your devices should never reach: malware-download hosts, command-and-control servers, DoH/DNS bypass endpoints and threat IPs (`doh`, `dns`, `hagezi`, `feodo`, `urlhaus`, `webclient`).
 * **Both**: feeds where the risk genuinely exists in both directions default to `inout` (`spamhaus`, `threat`, `threatview`, `tor`, `proxy`, `vpn`, `vpndc`).
 
 The classic mistake: enabling a malware-URL / C2 feed like `urlhaus` in the **inbound** chain and expecting it to stop a LAN client from downloading malware. It won't — the client is the one opening the connection, so only the **outbound** chain can intercept it. These feeds ship with sensible defaults (outbound or both), but if you maintain your own custom feeds, keep this rule of thumb in mind.
@@ -430,9 +428,9 @@ dropbear : 'Exit before auth from'
 LuCI     : 'luci: failed login'
 sshd1    : 'error: maximum authentication attempts exceeded'
 sshd2    : 'sshd.*Connection closed by.*\[preauth\]'
-asterisk : 'SecurityEvent=\"InvalidAccountID\".*RemoteAddress='
-openvpn  : 'TLS Error: could not determine wrapping from \[AF_INET\]'
-AdGuard  : 'AdGuardHome.*\[error\].*/control/login: from ip'
+asterisk : 'SecurityEvent="InvalidAccountID".*RemoteAddress='
+openvpn  : 'TLS Error: could not determine wrapping from \[AF_INET'
+AdGuard  : 'AdGuardHome.*\[error\].*url=/control/login status=40[13] ip='
 Remote   : 'received a suspicious remote IP'
 ```
 
@@ -442,13 +440,15 @@ For every matched line banIP picks the attacker's address out of the log entry. 
 Some formats instead lead with the source IP — most notably web-server access logs, where the client address is the first field. For those, prefix the term with `first:`:
 
 ```
-nginx    : 'first:"[A-Z]+ /wp-login\.php[^"]*" 40[13]'
-haproxy1 : 'first:haproxy .* SSL handshake failure .*error:.*:wrong version number'
-haproxy2 : 'first:haproxy .* SSL handshake failure .*error:.*:http request'
-haproxy3 : 'first:haproxy .* SSL handshake failure .*error:.*:unsupported protocol'
-haproxy4 : 'first:haproxy .* SSL handshake failure .*error:.*:no shared cipher'
-haproxy5 : 'first:haproxy .* SSL handshake failure .*error:.*:bad key share'
+nginx    : 'first:"[A-Z][A-Z]* /wp-login\.php[^"]*" 40[13]'
+haproxy1 : 'first:haproxy\[.* SSL handshake failure .*error:.*:wrong version number'
+haproxy2 : 'first:haproxy\[.* SSL handshake failure .*error:.*:http request'
+haproxy3 : 'first:haproxy\[.* SSL handshake failure .*error:.*:unsupported protocol'
+haproxy4 : 'first:haproxy\[.* SSL handshake failure .*error:.*:no shared cipher'
+haproxy5 : 'first:haproxy\[.* SSL handshake failure .*error:.*:bad key share'
 ```
+
+Please note: the log terms are POSIX basic regular expressions (as used by `logread -e`), i.e. `+`, `?`, `|` and `{}` are plain characters - use e.g. `[A-Z][A-Z]*` instead of `[A-Z]+`. haproxy logs IPv6 client addresses without brackets (`<ip>:<port>`), so the port can't be separated reliably from the address - with haproxy only IPv4 client addresses are extracted reliably.
 
 The `first:`/`last:` prefix is parsed off before matching and applies only to that single term, so terms with different anchors can be mixed freely.
 
@@ -547,15 +547,13 @@ The basemap is no longer pulled from a tile service. CARTO started to require an
 
 **Optional: a higher detail basemap**
 
-The shipped 1:110m outlines are coarse around Scandinavia, the Greek islands and the smaller island states. If you want sharper coastlines, build the 1:50m variant with [mapshaper](https://github.com/mbloch/mapshaper) and drop it next to the shipped file. LuCI looks for it on every map run and falls back to the shipped outlines when it is missing, no config option is involved:
+The shipped 1:110m outlines are coarse around Scandinavia, the Greek islands and the smaller island states. For sharper coastlines, prebuilt 1:50m variants are available at [json-basemaps](https://github.com/dibdot/json-basemaps): `normal` (~325 kB, larger islands) and `fine` (~750 kB, nearly all smaller islands). LuCI looks for the optional `world-50m.json` next to the shipped file on every map run and falls back to the shipped outlines when it is missing, no config option is involved. To install e.g. the `normal` variant, run on the router:
 
 ```
-curl -sSLo ne50.geojson https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/geojson/ne_50m_admin_0_countries.geojson
-mapshaper ne50.geojson -filter-fields -simplify 5% keep-shapes -o force precision=0.01 format=geojson world-50m.json
-scp world-50m.json root@openwrt:/www/luci-static/resources/view/banip/
+uclient-fetch -O /www/luci-static/resources/view/banip/world-50m.json https://raw.githubusercontent.com/dibdot/json-basemaps/main/normal/world-50m.json
 ```
 
-The result is roughly 105 kB, about three times the shipped file. Please note: this file is not part of any package, so it is removed on sysupgrade unless you add its path to `/etc/sysupgrade.conf`, and it stays behind when `luci-app-banip` is uninstalled.
+For the `fine` variant replace `normal` with `fine` in the URL, to go back to the shipped outlines simply remove the file. Please note: this file is not part of any package, so it is removed on sysupgrade unless you add its path to `/etc/sysupgrade.conf`, and it stays behind when `luci-app-banip` is uninstalled.
 
 Please note: the free ip-api.com batch endpoint is rate limited to 15 requests per minute per source IP. Requests beyond that limit are throttled with HTTP 429, and constantly exceeding the limit gets the IP banned for an hour — in both cases the affected part of the map stays empty and banIP logs an info message. To stay below the limit banIP collects the top listed elements of all Sets, deduplicates them and resolves them in batch requests of 100 IPs each (the maximum the endpoint accepts), capped at 15 requests per report run. Elements beyond ~1500 are left out of the map and banIP logs an info message. A report regenerated within 60 seconds of the last geo lookup reuses its map data instead of querying the service again. Please note that other clients behind the same public IP count against the same limit.
 
@@ -693,7 +691,7 @@ A space separated list of extra options:
 * `gz`: the source is gzip-compressed and will be decompressed before parsing (e.g. `backscatterer`, `ipthreat`, `uceprotect*`)
 * protocol/port limitation — one or both of `tcp` / `udp` followed by one or more destination ports or port ranges. This restricts the feed's rules to those destination ports, which is mainly useful for outbound feeds to cut false positives.  
 Examples:  
-  * `tcp udp 80 443`: limit to HTTP/HTTPS (e.g. `doh`, `hagezi`, `feodo`, `urlhaus`, `urlvir`, `webclient`)
+  * `tcp udp 80 443`: limit to HTTP/HTTPS (e.g. `doh`)
   * `tcp udp 53 853`: limit to plain DNS and DNS-over-TLS (e.g. `dns`)
   * `tcp 22`: limit to SSH
   * `tcp 5060-5061 udp 5060`: mix of single ports and ranges
