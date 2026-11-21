@@ -1,0 +1,28 @@
+From ddac1cf8e78c5e6c4ea2ec33d48c506939fd2f57 Mon Sep 17 00:00:00 2001
+From: Dmitry Volyntsev <xeioex@nginx.com>
+Date: Mon, 5 May 2025 08:53:19 -0700
+Subject: [PATCH] HTTP: fixed GCC 15 build with
+ -Wunterminated-string-initialization.
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+ngx_http_js_module.c:936:22: error: initializer-string for array of ‘char’ truncates NUL terminator
+ but destination lacks ‘nonstring’ attribute (16 chars into 15 available) [-Werror=unterminated-string-initialization]
+  936 |             .value = "PeriodicSession",
+      |                      ^~~~~~~~~~~~~~~~~
+---
+ src/njs.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/nginx-mod-njs/src/njs.h
++++ b/nginx-mod-njs/src/njs.h
+@@ -177,7 +177,7 @@ struct njs_external_s {
+ 
+     union {
+         struct {
+-            const char              value[15]; /* NJS_STRING_SHORT + 1. */
++            const char              *value;
+             njs_prop_handler_t      handler;
+             uint16_t                magic16;
+             uint32_t                magic32;

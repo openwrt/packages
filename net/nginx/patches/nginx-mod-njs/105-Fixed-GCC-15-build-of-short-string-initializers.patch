@@ -1,0 +1,45 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Date: Sat, 21 Nov 2026 13:18:41 +0100
+Subject: [PATCH] Fixed GCC 15 build of short string initializers.
+
+The short_string.start array holds NJS_STRING_SHORT bytes and has a
+separate size field, so an initializer may fill it without a trailing
+NUL. GCC 15 warns about that with -Wunterminated-string-initialization
+unless the array has the nonstring attribute.
+---
+ src/njs_clang.h | 11 +++++++++++
+ src/njs_value.h |  2 +-
+ 2 files changed, 12 insertions(+), 1 deletion(-)
+
+--- a/nginx-mod-njs/src/njs_clang.h
++++ b/nginx-mod-njs/src/njs_clang.h
+@@ -146,6 +146,17 @@ njs_leading_zeros64(uint64_t x)
+ #endif
+ 
+ 
++#if defined(__has_attribute)
++#if __has_attribute(nonstring)
++#define NJS_NONSTRING      __attribute__((nonstring))
++#endif
++#endif
++
++#ifndef NJS_NONSTRING
++#define NJS_NONSTRING
++#endif
++
++
+ #if (NJS_HAVE_GCC_ATTRIBUTE_FALLTHROUGH)
+ #define NJS_FALLTHROUGH    __attribute__((fallthrough))
+ 
+--- a/nginx-mod-njs/src/njs_value.h
++++ b/nginx-mod-njs/src/njs_value.h
+@@ -147,7 +147,7 @@ union njs_value_s {
+         uint8_t                       size:4;
+         uint8_t                       length:4;
+ 
+-        u_char                        start[NJS_STRING_SHORT];
++        u_char                        start[NJS_STRING_SHORT] NJS_NONSTRING;
+     } short_string;
+ 
+     struct {
