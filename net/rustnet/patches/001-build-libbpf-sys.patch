@@ -1,0 +1,36 @@
+From 7ddcfb1ef81e11eca6202bbdde5091d0590ad0a8 Mon Sep 17 00:00:00 2001
+From: Jonir Rings <i@jonirrings.com>
+Date: Sun, 30 Aug 2026 11:03:56 +0800
+Subject: [PATCH] fix libbpf-sys build failure
+
+---
+ crates/rustnet-host/Cargo.toml | 13 +-
+ 1 file changed, 13 insertion(+), 1 deletion(-)
+
+--- a/crates/rustnet-host/Cargo.toml
++++ b/crates/rustnet-host/Cargo.toml
+@@ -19,7 +19,13 @@
+
+ [features]
+ # eBPF-based process attribution on Linux (libbpf). No effect on other platforms.
+-ebpf = ["dep:bitflags", "dep:libbpf-rs", "dep:libbpf-cargo"]
++# dep:libbpf-sys additionally forces libbpf-sys's vendored-libelf feature for
++# the build-script (host) dependency graph specifically - libbpf-cargo pulls
++# in libbpf-sys only transitively via libbpf-rs, and cargo's resolver keeps
++# host-side (build-dependency) and target-side (normal dependency) feature
++# unification separate, so enabling vendoring via the target-side libbpf-rs
++# dependency alone does not reach the build script's own link step.
++ebpf = ["dep:bitflags", "dep:libbpf-rs", "dep:libbpf-cargo", "dep:libbpf-sys"]
+
+ [dependencies]
+ rustnet-core.workspace = true
+@@ -48,3 +54,9 @@ anyhow.workspace = true
+
+ [target.'cfg(target_os = "linux")'.build-dependencies]
+ libbpf-cargo = { version = "0.27", optional = true }
++# Forces vendored-libelf for the build-script's own copy of libbpf-sys (see
++# the ebpf feature comment above). Not used directly by build.rs; its sole
++# purpose is feature unification within the build-dependency graph.
++libbpf-sys = { version = "1.7", optional = true, default-features = false, features = [
++    "vendored-libelf",
++] }
