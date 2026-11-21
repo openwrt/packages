@@ -1,0 +1,44 @@
+Testing forwarding.disable() is a no-op when the service is disabled.
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+// Capture every system() command so we can assert no sysctl is issued.
+let sys_calls = [];
+let _orig_system = global.system;
+global.system = function(cmd, timeout) {
+	push(sys_calls, cmd);
+	return _orig_system(cmd, timeout);
+};
+
+pbr.forwarding.disable();
+
+let sysctl_calls = filter(sys_calls, c => index(c, 'sysctl') >= 0);
+printf("sysctl_calls: %d\n", length(sysctl_calls));
+-- End --
+
+-- File uci/pbr.json --
+{
+	"pbr": [
+		{
+			".name": "config",
+			"enabled": "0",
+			"fw_mask": "00ff0000",
+			"ipv6_enabled": "0",
+			"strict_enforcement": "1",
+			"uplink_interface": "wan",
+			"uplink_interface6": "wan6",
+			"uplink_ip_rules_priority": "30000",
+			"uplink_mark": "00010000",
+			"verbosity": "2",
+			"lan_device": ["br-lan"],
+			"resolver_instance": ["*"]
+		}
+	]
+}
+-- End --
+
+-- Expect stdout --
+sysctl_calls: 0
+-- End --

@@ -1,0 +1,47 @@
+Testing that 'ignore' interface policies generate 'return' rules.
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+let result = pbr.start_service(['on_start']);
+
+let nft_content = global.mocklib.read_captured('/var/run/pbr.nft');
+let checks = [];
+
+if (nft_content) {
+	// The "Ignore Local" policy should generate return rules
+	// for dest 192.168.1.0/24 and 10.0.0.0/8
+	let lines = split(nft_content, '\n');
+	let ignore_rules = filter(lines, l => index(l, '"Ignore Local"') >= 0);
+
+	push(checks, ['has_ignore_rules', length(ignore_rules) > 0]);
+
+	for (let rule in ignore_rules) {
+		push(checks, ['rule_has_return', index(rule, 'return') >= 0]);
+		push(checks, ['rule_has_daddr',  index(rule, 'daddr') >= 0]);
+	}
+
+	// Verify specific destinations are in the rules
+	let all_ignore = join('\n', ignore_rules);
+	push(checks, ['has_192_168_1',  index(all_ignore, '192.168.1.0/24') >= 0]);
+	push(checks, ['has_10_0_0',     index(all_ignore, '10.0.0.0/8') >= 0]);
+} else {
+	push(checks, ['nft_file_written', false]);
+}
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("policy_ignore: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+policy_ignore: 5/5 passed
+-- End --

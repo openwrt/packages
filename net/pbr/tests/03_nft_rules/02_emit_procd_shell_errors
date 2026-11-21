@@ -1,0 +1,44 @@
+Testing emit_procd_shell() includes errors and warnings.
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+let data = {
+	packageCompat: 26,
+	gateways: [],
+	status: {},
+	errors: [
+		{ code: 'errorNoGateways', info: '' },
+		{ code: 'errorConfigValidation', info: '/etc/config/pbr' },
+	],
+	warnings: [
+		{ code: 'warningUplinkDown', info: '' },
+	],
+	mode: null,
+};
+
+let shell_output = pbr.emit_procd_shell(data);
+
+let checks = [
+	['has_error_code_1',  index(shell_output, "json_add_string code '\\''errorNoGateways'\\''") >= 0],
+	['has_error_code_2',  index(shell_output, "json_add_string code '\\''errorConfigValidation'\\''") >= 0],
+	['has_error_info',    index(shell_output, "json_add_string info '\\''/etc/config/pbr'\\''") >= 0],
+	['has_warning_code',  index(shell_output, "json_add_string code '\\''warningUplinkDown'\\''") >= 0],
+];
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("emit_procd_shell_errors: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+emit_procd_shell_errors: 4/4 passed
+-- End --

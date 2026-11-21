@@ -1,0 +1,115 @@
+sh.try_cmd() is the last place in sys.uc that builds a shell command line out
+of caller-supplied words. Unlike sh.ip(), it cannot hand system() an argument
+array: run() suppresses the command's output with `>/dev/null 2>&1`, system()
+has no fd redirection, and the suppression is not incidental -- every caller is
+an `ip route replace` whose failure is routine, on an interface that has no
+gateway yet.
+
+So the shell stays and each element is quote()d instead. That is the same rule
+#167 applied to the calls it could not convert: a value carrying a space stays
+one argv word, and a metacharacter in an interface or device name is inert.
+
+The error pushed onto state.errors keeps the UNQUOTED join -- it is shown to the
+user in `service pbr status`, not executed, and a line of shell quoting there
+would be noise.
+
+-- Testcase --
+import create_sys from 'sys';
+import pkgmod from 'pkg';
+
+let mocklib = global.mocklib;
+let pkg = pkgmod.pkg;
+let sh = create_sys(require('fs'), pkg);
+
+// mocklib's system() stub returns 0, so try_cmd takes the success path; the
+// failure path is exercised separately below by asking for a command that the
+// stub is told to fail.
+let errors = [];
+
+// ── a device name with a space stays one argv word ──────────────────
+mocklib.clear_commands();
+sh.try_cmd(errors, pkg.ip_full, '-4', 'route', 'replace', 'default',
+	'dev', 'my dev', 'table', '100');
+let a = mocklib.commands()[0] || '';
+
+// ── metacharacters are quoted, not interpreted ──────────────────────
+mocklib.clear_commands();
+sh.try_cmd(errors, pkg.ip_full, '-6', 'route', 'replace', 'default',
+	'dev', 'br0;touch /tmp/pbr_pwned', 'table', '100');
+let b = mocklib.commands()[0] || '';
+
+// ── a single quote in the value is escaped, not terminated ──────────
+// quote() wraps in single quotes and rewrites each ' as '\'' -- which only
+// holds if replace() with a string needle is global. A value with TWO quotes
+// is the case that would break out if it were not.
+mocklib.clear_commands();
+sh.try_cmd(errors, pkg.ip_full, '-4', 'route', 'replace', 'default',
+	'dev', "O'Connor", 'table', "a'b'c");
+let q = mocklib.commands()[0] || '';
+
+// ── a numeric argument survives coercion and quoting ────────────────
+mocklib.clear_commands();
+sh.try_cmd(errors, pkg.ip_full, '-4', 'rule', 'add', 'lookup', 'main',
+	'suppress_prefixlength', 1, 'pref', 30000);
+let c = mocklib.commands()[0] || '';
+
+let checks = [
+	// the redirect is what forces the shell to stay; losing it would send
+	// routine failures to the log
+	['keeps_redirect',      index(a, '>/dev/null 2>&1') >= 0],
+
+	// every word is quoted, argv0 included
+	['argv0_quoted',        index(a, "'" + pkg.ip_full + "' '-4'") >= 0],
+	['space_arg_quoted',    index(a, "'dev' 'my dev'") >= 0],
+	// and the bare, re-splittable form is gone
+	['space_arg_not_bare',  index(a, "dev my dev") < 0],
+
+	// the payload is one word inside quotes, so the shell cannot act on the ;
+	['metachar_quoted',     index(b, "'br0;touch /tmp/pbr_pwned'") >= 0],
+	['metachar_not_bare',   index(b, "dev br0;touch") < 0],
+
+	// one embedded quote, and two in the same value, both survive as data.
+	// Verified against a real /bin/sh: 'O'\''Connor' echoes back O'Connor.
+	['single_quote_escaped', index(q, "'dev' 'O'\\''Connor'") >= 0],
+	['two_quotes_escaped',   index(q, "'table' 'a'\\''b'\\''c'") >= 0],
+	// the naive rendering -- the quote left as data inside the quotes -- is
+	// what would hand the shell an unterminated string
+	['no_naive_quoting',     index(q, "'O'Connor'") < 0],
+
+	// numbers are coerced by quote() rather than reaching the shell bare
+	['number_quoted',       index(c, "'suppress_prefixlength' '1' 'pref' '30000'") >= 0],
+
+	// nothing was recorded as an error: the stub returns 0
+	['no_errors_on_success', length(errors) == 0],
+];
+
+// ── the failure path records the command in readable form ───────────
+mocklib.clear_commands();
+// note the needle is a bare word: it still matches, because it appears
+// inside the quoting the command now carries ('route' 'replace')
+mocklib.fail_command('route');
+let ok = sh.try_cmd(errors, pkg.ip_full, '-4', 'route', 'replace', 'default',
+	'dev', 'my dev', 'table', '100');
+
+push(checks, ['failure_returns_false', ok == false]);
+push(checks, ['failure_recorded',      length(errors) == 1]);
+push(checks, ['error_code',            errors[0]?.code == 'errorTryFailed']);
+// the user-facing string is the plain command, not the quoted one
+push(checks, ['error_info_unquoted',
+	errors[0]?.info == pkg.ip_full + ' -4 route replace default dev my dev table 100']);
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("sh_try_cmd_quoted: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+sh_try_cmd_quoted: 15/15 passed
+-- End --

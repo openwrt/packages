@@ -1,0 +1,45 @@
+{
+	"interface": [
+		{
+			".name": "loopback",
+			"device": "lo",
+			"proto": "static",
+			"ipaddr": "127.0.0.1",
+			"netmask": "255.0.0.0"
+		},
+		{
+			".name": "lan",
+			"device": "br-lan",
+			"proto": "static",
+			"ipaddr": "192.168.1.1/24"
+		},
+		{
+			".name": "wan",
+			"device": "eth1",
+			"proto": "dhcp"
+		},
+		{
+			".name": "wan6",
+			"device": "eth1",
+			"proto": "dhcpv6"
+		},
+		{
+			".name": "vpn",
+			"device": "tun0",
+			"proto": "openvpn",
+			"dns": ["10.8.0.1"]
+		},
+		{
+			".name": "wg0",
+			"proto": "wireguard",
+			"listen_port": "51820",
+			"private_key": "mockkey"
+		},
+		{
+			".name": "vpnserver",
+			"proto": "wireguard",
+			"listen_port": "51821",
+			"device": "wg1"
+		}
+	]
+}

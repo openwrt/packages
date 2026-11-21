@@ -1,0 +1,100 @@
+Testing that a Tor policy on a box with no torrc is rejected cleanly instead of
+poisoning the ruleset.
+
+Without a torrc there are no ports to redirect to, so the policy cannot produce
+a usable rule however the interface was listed. is_supported_interface() now
+answers false for 'tor' in that state, so the policy is rejected the same way
+any other unavailable interface is -- pbr starts, the ruleset stays valid, and
+every other policy keeps routing.
+
+Previously is_tunnel() called 'tor' supported unconditionally, the policy was
+accepted, and the emitter produced 'redirect to :' with an empty port.
+
+There is deliberately no torrc fixture here.
+
+-- File uci/pbr.json --
+{
+	"pbr": [
+		{
+			".name": "config",
+			"enabled": "1",
+			"fw_mask": "00ff0000",
+			"ipv6_enabled": "0",
+			"resolver_set": "dnsmasq.nftset",
+			"uplink_interface": "wan",
+			"uplink_interface6": "wan6",
+			"uplink_ip_rules_priority": "30000",
+			"uplink_mark": "00010000",
+			"verbosity": "2",
+			"lan_device": ["br-lan"],
+			"resolver_instance": ["*"]
+		}
+	],
+	"policy": [
+		{
+			".name": "policy_tor",
+			"name": "Tor Clients",
+			"enabled": "1",
+			"interface": "tor",
+			"src_addr": "192.168.1.50",
+			"dest_addr": "",
+			"src_port": "",
+			"dest_port": "",
+			"proto": "",
+			"chain": ""
+		},
+		{
+			".name": "policy_wan",
+			"name": "Plain Wan",
+			"enabled": "1",
+			"interface": "wan",
+			"src_addr": "192.168.1.51",
+			"dest_addr": "",
+			"src_port": "",
+			"dest_port": "",
+			"proto": "",
+			"chain": ""
+		}
+	]
+}
+-- End --
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+let result = pbr.start_service(['on_start']);
+let errors = map(result.errors || [], e => e.code);
+let nft = global.mocklib.read_captured('/var/run/pbr.nft') || '';
+
+let checks = [
+	// rejected, and named so the user can find it
+	['tor_policy_rejected', index(errors, 'errorPolicyUnknownInterface') >= 0],
+	['names_the_policy',    length(filter(result.errors || [], e =>
+		e.code == 'errorPolicyUnknownInterface' && e.info == 'Tor Clients')) == 1],
+	// nothing tor-shaped reaches the ruleset
+	['no_redirect_rule',    index(nft, 'redirect to') < 0],
+	// the pbr_dstnat chain is created unconditionally; what must not exist is
+	// a rule in it
+	['no_dstnat_rule',      length(filter(split(nft, '\n'),
+		l => index(l, 'add rule') >= 0 && index(l, 'pbr_dstnat') >= 0)) == 0],
+	// the rest of the ruleset survives -- this is the whole point of rejecting
+	// the policy rather than emitting a rule nft will refuse
+	['wan_policy_routed',   index(nft, '192.168.1.51') >= 0],
+];
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("tor_policy_without_torrc: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+tor_policy_without_torrc: 5/5 passed
+-- End --

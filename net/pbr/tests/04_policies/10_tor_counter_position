@@ -1,0 +1,74 @@
+Tor counters must follow family, address, protocol and port matches.
+
+-- File uci/pbr.json --
+{
+  "pbr": [
+    {
+      ".name": "config",
+      "enabled": "1",
+      "fw_mask": "00ff0000",
+      "ipv6_enabled": "1",
+      "nft_rule_counter": "1",
+      "resolver_set": "none",
+      "uplink_interface": "wan",
+      "uplink_interface6": "wan6",
+      "uplink_ip_rules_priority": "30000",
+      "uplink_mark": "00010000",
+      "verbosity": "2",
+      "lan_device": [
+        "br-lan"
+      ],
+      "resolver_instance": [
+        "*"
+      ]
+    }
+  ],
+  "policy": [
+    {
+      ".name": "policy_tor",
+      "name": "Tor Counters",
+      "enabled": "1",
+      "interface": "tor",
+      "dest_addr": "192.0.2.10 2001:db8::10"
+    }
+  ]
+}
+-- End --
+
+-- File fs/open~_etc_tor_torrc.txt --
+TransPort 0.0.0.0:9040
+DNSPort 0.0.0.0:9053
+-- End --
+
+-- File fs/stat~_etc_tor_torrc.json --
+{ "type": "file", "size": 100 }
+-- End --
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+let result = pbr.start_service(['on_start']);
+let nft = global.mocklib.read_captured('/var/run/pbr.nft') || '';
+let rules = filter(split(nft, '\n'), l => index(l, 'comment "Tor-') >= 0);
+
+let checks = [
+	['ten_rules', length(rules) == 10],
+	['five_ipv4', length(filter(rules, l => index(l, 'meta nfproto ipv4') >= 0)) == 5],
+	['five_ipv6', length(filter(rules, l => index(l, 'meta nfproto ipv6') >= 0)) == 5],
+	['accepted', length(result.errors || []) == 0],
+];
+for (let r in rules) {
+	push(checks, ['counter_after_every_match', !!match(r, / (udp|tcp) dport (53|80|443) counter redirect to :[0-9]+ /)]);
+	push(checks, ['one_counter', length(split(r, ' counter ')) == 2]);
+}
+let pass = 0;
+for (let c in checks) {
+	if (c[1]) pass++;
+	else printf("FAIL: %s\n", c[0]);
+}
+printf("tor_counter_position: %d/%d passed\n", pass, length(checks));
+-- End --
+
+-- Expect stdout --
+tor_counter_position: 24/24 passed
+-- End --

@@ -1,0 +1,67 @@
+Testing that when the uplink is down at start time, service_started does not write the lock file, and does not print FAILED TO START.
+
+-- File ubus/network.interface.wan~status.json --
+{
+	"up": false,
+	"pending": false,
+	"available": true,
+	"autostart": true,
+	"dynamic": false,
+	"uptime": 0,
+	"l3_device": "eth1",
+	"device": "eth1",
+	"proto": "dhcp",
+	"ipv4-address": [],
+	"route": [],
+	"dns-server": []
+}
+-- End --
+
+-- File ubus/network.interface.wan6~status.json --
+{
+	"up": false,
+	"pending": false,
+	"available": true,
+	"autostart": true,
+	"dynamic": false,
+	"uptime": 0,
+	"l3_device": "eth1",
+	"device": "eth1",
+	"proto": "dhcpv6",
+	"ipv6-address": [],
+	"route": []
+}
+-- End --
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+let result = pbr.start_service(['on_start']);
+
+// The wrapper script now passes deferred_to_boot='1' instead of relying on pbr.boot
+
+// Call service_started with deferred_to_boot='1' just like init.d/pbr now does
+pbr.service_started('on_start', '1');
+
+let checks = [
+	['start_service_returns_partial', type(result) == 'object'],
+	['deferred_to_boot_set',          result?.deferredToBoot == true],
+	['no_lock_file_created',          !global.mocklib.has_captured('/var/run/pbr.lock')],
+];
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("deferred_boot_no_lock: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+deferred_boot_no_lock: 3/3 passed
+-- End --

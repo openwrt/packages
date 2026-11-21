@@ -1,0 +1,196 @@
+Testing that negated src_addr/dest_addr entries land on the same rule as the
+policy's positive matches instead of getting rules of their own.
+
+nft has no OR between the match expressions of a rule, so a policy's positive
+address types need one rule each -- that is what makes src_addr/dest_addr a
+union of sources. Negated entries are AND terms and belong ON those rules. Given
+a rule of its own, '!10.0.0.22' compiles to 'ip saddr != 10.0.0.22 goto ...',
+which matches every packet that is not from that one host: a catch-all that
+routes the whole network and swallows the traffic the policy meant to skip.
+
+An interface or MAC match reads the same for both families, so it is normally
+emitted once. Adding a family-specific exclusion to it splits it in two, and the
+copies then have to be pinned with 'meta nfproto' -- otherwise the IPv6 copy,
+carrying no IPv4 exclusion, would re-admit the very packets the IPv4 copy just
+filtered out.
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+pbr.start_service(['on_start']);
+
+let nft_content = global.mocklib.read_captured('/var/run/pbr.nft');
+let dnsmasq = global.mocklib.read_captured('/var/run/pbr.dnsmasq') || '';
+let checks = [];
+
+if (nft_content) {
+	let lines = split(nft_content, '\n');
+	let rules_for = (comment) => filter(lines, l => index(l, ' rule ') >= 0 &&
+		index(l, '"' + comment + '"') >= 0);
+	let has = (rules, needle) => length(filter(rules, l => index(l, needle) >= 0));
+
+	// ── policy_mixed: three positive types, a MAC exclusion and an IPv4 one ──
+	let mixed = rules_for('Mixed');
+
+	// One rule per positive group, with the family-agnostic ones (@br-lan and
+	// the MAC) split per family because an IPv4 exclusion applies to only one.
+	push(checks, ['mixed_rule_count', length(mixed) == 5]);
+
+	// Every rule the policy emits carries a positive match. A rule holding
+	// nothing but exclusions would be the catch-all this test exists to stop.
+	let positives = filter(mixed, l => index(l, 'iifname { br-lan }') >= 0 ||
+		index(l, 'ether saddr { 98:B8:BC:8B:3F:9E }') >= 0 ||
+		index(l, 'ip saddr { 192.168.9.0/24, 10.0.0.0/24 }') >= 0);
+	push(checks, ['mixed_every_rule_has_a_positive', length(positives) == length(mixed)]);
+
+	// The MAC exclusion is family-agnostic, so it rides on all five.
+	push(checks, ['mixed_mac_exclusion_on_every_rule',
+		has(mixed, 'ether saddr != { 11:22:33:44:55:66 }') == 5]);
+
+	// The IPv4 exclusion only belongs on the rules that can carry it: the two
+	// IPv4 copies and the IPv4-only positive group.
+	push(checks, ['mixed_ipv4_exclusion_count', has(mixed, 'ip saddr != { 10.0.0.22 }') == 3]);
+	let v6 = filter(mixed, l => index(l, 'meta nfproto ipv6') >= 0);
+	push(checks, ['mixed_v6_copies', length(v6) == 2]);
+	push(checks, ['mixed_v6_has_no_ipv4_exclusion', has(v6, 'ip saddr != ') == 0]);
+
+	// The split copies must be pinned to a family, or the IPv6 copy would match
+	// the IPv4 packets the IPv4 copy excluded.
+	let agnostic = filter(mixed, l => index(l, 'iifname { br-lan }') >= 0 ||
+		index(l, 'ether saddr { 98:B8:BC:8B:3F:9E }') >= 0);
+	push(checks, ['mixed_agnostic_copies_pinned',
+		length(filter(agnostic, l => index(l, 'meta nfproto ') >= 0)) == 4]);
+
+	// A purely IPv4 positive group already implies its family through
+	// 'ip saddr', so it must not pick up a redundant guard.
+	let v4_group = filter(mixed, l => index(l, 'ip saddr { 192.168.9.0/24') >= 0);
+	push(checks, ['mixed_ipv4_group_not_pinned',
+		length(v4_group) == 1 && index(v4_group[0], 'meta nfproto') < 0]);
+
+	// ── policy_negonly: src_addr is a single exclusion and nothing else ──
+	// It still describes one rule -- "every source but this one" -- and only
+	// for the family that has an exclusion.
+	let negonly = rules_for('NegOnly');
+	push(checks, ['negonly_single_rule', length(negonly) == 1]);
+	push(checks, ['negonly_carries_exclusion', has(negonly, 'ip saddr != { 10.0.0.99 }') == 1]);
+	push(checks, ['negonly_not_pinned', index(negonly[0], 'meta nfproto') < 0]);
+
+	// ── policy_dest: the exclusion is on dest_addr, not src_addr ──
+	let destneg = rules_for('DestNeg');
+	push(checks, ['destneg_single_rule', length(destneg) == 1]);
+	push(checks, ['destneg_positive_and_exclusion',
+		index(destneg[0], 'ip daddr { 10.10.0.0/16 }') >= 0 &&
+		index(destneg[0], 'ip daddr != { 10.10.5.5 }') >= 0]);
+
+	// ── policy_domain: a negated domain name, so a resolver set is involved ──
+	// It gets a set of its own, and the set the rule points at has to be the
+	// one that actually gets created and populated.
+	let domneg = rules_for('DomainNeg');
+	push(checks, ['domainneg_single_rule', length(domneg) == 1]);
+	push(checks, ['domainneg_refs_neg_set',
+		index(domneg[0], 'ip daddr != @pbr_wan_4_dst_ip_policy_domain_neg') >= 0]);
+	push(checks, ['domainneg_neg_set_created',
+		index(nft_content, 'add set inet fw4 pbr_wan_4_dst_ip_policy_domain_neg ') >= 0]);
+	push(checks, ['domainneg_neg_set_populated',
+		index(dnsmasq, 'nftset=/blocked.example.com/4#inet#fw4#pbr_wan_4_dst_ip_policy_domain_neg') >= 0]);
+	push(checks, ['domainneg_positive_set_separate',
+		index(dnsmasq, 'nftset=/example.com/4#inet#fw4#pbr_wan_4_dst_ip_policy_domain,') >= 0]);
+
+	// Nothing anywhere may be a bare exclusion rule.
+	let bare = filter(lines, l => index(l, ' rule ') >= 0 && index(l, ' != ') >= 0 &&
+		index(l, 'saddr { ') < 0 && index(l, 'daddr { ') < 0 &&
+		index(l, 'iifname { ') < 0 && index(l, 'meta mark') < 0 &&
+		index(l, '@pbr_') < 0 && index(l, 'dport') < 0 && index(l, 'sport') < 0);
+	push(checks, ['no_bare_exclusion_rule_except_negonly', length(bare) == 1]);
+} else {
+	push(checks, ['nft_file_written', false]);
+}
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("negation_on_same_rule: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- File fs/stat~_sys_class_net_br-lan.json --
+{ "type": "link" }
+-- End --
+
+-- File uci/pbr.json --
+{
+	"pbr": [
+		{
+			".name": "config",
+			"enabled": "1",
+			"fw_mask": "00ff0000",
+			"ipv6_enabled": "1",
+			"resolver_set": "dnsmasq.nftset",
+			"strict_enforcement": "1",
+			"uplink_interface": "wan",
+			"uplink_interface6": "wan6",
+			"uplink_ip_rules_priority": "30000",
+			"uplink_mark": "00010000",
+			"verbosity": "2",
+			"lan_device": ["br-lan"],
+			"resolver_instance": ["*"],
+			"debug_performance": "0",
+			"nft_set_auto_merge": "1",
+			"nft_set_flags_interval": "1",
+			"nft_set_flags_timeout": "0",
+			"nft_set_policy": "performance",
+			"ignored_interface": ["vpnserver"]
+		}
+	],
+	"policy": [
+		// Positive entries of three different types plus two exclusions, one
+		// family-agnostic (MAC) and one IPv4-only.
+		{
+			".name": "policy_mixed",
+			"name": "Mixed",
+			"enabled": "1",
+			"interface": "wan",
+			"src_addr": "192.168.9.0/24 98:B8:BC:8B:3F:9E @br-lan !11:22:33:44:55:66 10.0.0.0/24 !10.0.0.22",
+			"chain": "prerouting"
+		},
+		// The documented standalone form: an exclusion with nothing to exclude
+		// it from still means "everything but this".
+		{
+			".name": "policy_negonly",
+			"name": "NegOnly",
+			"enabled": "1",
+			"interface": "wan",
+			"src_addr": "!10.0.0.99",
+			"chain": "prerouting"
+		},
+		{
+			".name": "policy_dest",
+			"name": "DestNeg",
+			"enabled": "1",
+			"interface": "wan",
+			"src_addr": "192.168.5.0/24",
+			"dest_addr": "10.10.0.0/16 !10.10.5.5",
+			"chain": "prerouting"
+		},
+		{
+			".name": "policy_domain",
+			"name": "DomainNeg",
+			"enabled": "1",
+			"interface": "wan",
+			"src_addr": "192.168.6.0/24",
+			"dest_addr": "example.com !blocked.example.com",
+			"chain": "prerouting"
+		}
+	]
+}
+-- End --
+
+-- Expect stdout --
+negation_on_same_rule: 19/19 passed
+-- End --

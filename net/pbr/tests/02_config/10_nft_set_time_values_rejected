@@ -1,0 +1,101 @@
+The companion to 09_nft_set_time_values: what happens to a value nft would
+refuse.
+
+UCI declares nft_set_timeout and nft_set_gc_interval free strings, so anything
+can be in them. `1w` looks reasonable and is rejected by nft (weeks are not a
+unit it knows); a bare `60` is rejected too. Emitting either one costs the user
+the WHOLE ruleset, not just the option, because nft_file.apply() validates the
+generated file in one `nft -c -f`.
+
+So an unusable value is dropped at load time instead. The set then carries no
+timeout, which is what pbr did before anyone touched these options -- a far
+better outcome than no policy routing at all. The same check incidentally closes
+the injection route these unquoted values would otherwise open.
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+pbr.start_service(['on_start']);
+
+let nft_content = global.mocklib.read_captured('/var/run/pbr.nft') || '';
+let sets = filter(split(nft_content, '\n'), l => index(l, 'add set ') == 0);
+let checks = [];
+
+push(checks, ['sets_emitted', length(sets) > 0]);
+
+// `1w` is not an nft time unit, so it must not reach the declaration.
+push(checks, ['bad_timeout_dropped',
+	length(filter(sets, l => index(l, 'timeout 1w') >= 0)) == 0]);
+
+// Nothing is left behind as a value-less `timeout ;` either.
+push(checks, ['no_empty_timeout',
+	length(filter(sets, l => index(l, 'timeout ;') >= 0)) == 0]);
+
+// The flags string is independent of the value and stays.
+push(checks, ['timeout_flag_kept',
+	length(filter(sets, l => index(l, 'flags interval, timeout;') >= 0)) == length(sets)]);
+
+// gc-interval carries a payload that would inject nft statements of its own.
+push(checks, ['bad_gc_interval_dropped',
+	length(filter(sets, l => index(l, 'gc-interval') >= 0)) == 0]);
+push(checks, ['no_injected_statement',
+	index(nft_content, 'pbr_pwned') < 0]);
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("nft_set_time_values_rejected: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- File fs/stat~_sys_class_net_br-lan.json --
+{ "type": "link" }
+-- End --
+
+-- File uci/pbr.json --
+{
+	"pbr": [
+		{
+			".name": "config",
+			"enabled": "1",
+			"fw_mask": "00ff0000",
+			"ipv6_enabled": "0",
+			"strict_enforcement": "1",
+			"uplink_interface": "wan",
+			"uplink_interface6": "",
+			"uplink_ip_rules_priority": "30000",
+			"uplink_mark": "00010000",
+			"verbosity": "2",
+			"lan_device": ["br-lan"],
+			"debug_performance": "0",
+			"nft_set_auto_merge": "1",
+			"nft_set_counter": "1",
+			"nft_set_flags_interval": "1",
+			"nft_set_flags_timeout": "1",
+			"nft_set_timeout": "1w",
+			"nft_set_gc_interval": "60; elements = { 1.2.3.4 } # pbr_pwned",
+			"nft_set_policy": "performance"
+		}
+	],
+	"policy": [
+		{
+			".name": "policy_a",
+			"name": "timeout probe",
+			"enabled": "1",
+			"interface": "wan",
+			"src_addr": "192.168.9.0/24",
+			"chain": "prerouting"
+		}
+	]
+}
+-- End --
+
+-- Expect stdout --
+nft_set_time_values_rejected: 6/6 passed
+-- End --

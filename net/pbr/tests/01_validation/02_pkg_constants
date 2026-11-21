@@ -1,0 +1,37 @@
+Testing package constants and file path definitions.
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+let checks = [
+	['config_file',       pbr.pkg.config_file == '/etc/config/pbr'],
+	['lock_file',         pbr.pkg.lock_file == '/var/run/pbr.lock'],
+	['dnsmasq_file',      pbr.pkg.dnsmasq_file == '/var/run/pbr.dnsmasq'],
+	['nft_temp_file',     pbr.pkg.nft_temp_file == '/var/run/pbr.nft'],
+	['nft_main_file',     pbr.pkg.nft_main_file == '/usr/share/nftables.d/ruleset-post/30-pbr.nft'],
+	['nft_netifd_file',   pbr.pkg.nft_netifd_file == '/usr/share/nftables.d/ruleset-post/20-pbr-netifd.nft'],
+	['ip_full',           pbr.pkg.ip_full == '/usr/libexec/ip-full'],
+	['ip_table_prefix',   pbr.pkg.ip_table_prefix == 'pbr'],
+	['rt_tables_file',    pbr.pkg.rt_tables_file == '/etc/iproute2/rt_tables'],
+	['chains_list',       pbr.pkg.chains_list == 'forward output prerouting'],
+	['nft_ipv4_flag',     pbr.pkg.nft_ipv4_flag == 'ip'],
+	['nft_ipv6_flag',     pbr.pkg.nft_ipv6_flag == 'ip6'],
+	['service_name',      index(pbr.pkg.service_name, 'pbr') == 0],
+];
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("pkg_constants: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+pkg_constants: 13/13 passed
+-- End --

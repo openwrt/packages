@@ -1,0 +1,69 @@
+Testing network.get_ipaddr4/get_ipaddr6: interface address discovery for gateway-less (point-to-point) links.
+
+-- Testcase --
+import create_network from 'network';
+
+// ubus network.interface.<iface> status fixtures
+let status = {
+	'vpn':  { 'ipv4-address': [ { address: '10.9.9.9', mask: 32 } ] },
+	'wg':   {},  // no address in ubus -> fall back to `ip` output
+	'wan6': { 'ipv6-address': [ { address: '2001:db8::1', mask: 64 } ] },
+};
+
+let config = {
+	cfg: { ipv6_enabled: true, uplink_interface4: 'wan', uplink_interface6: 'wan6' },
+	ubus_call: function(obj, method) {
+		let iface = replace(obj, 'network.interface.', '');
+		return status[iface];
+	},
+	uci_ctx: function() { return { get: function() { return null; } }; },
+};
+
+let sh = {
+	quote: function(s) { return "'" + s + "'"; },
+	exec: function(cmd) {
+		// emulate `ip -4 -o addr show dev wg0`
+		if (index(cmd, '-4 -o addr show dev') >= 0 && index(cmd, 'wg0') >= 0)
+			return "9: wg0    inet 192.0.2.5/32 scope global wg0\\       valid_lft forever preferred_lft forever\n";
+		return '';
+	},
+};
+
+let fs_mod = { readfile: function() { return null; }, stat: function() { return null; }, lsdir: function() { return []; } };
+let pkg = { ip_full: 'ip' };
+let platform = { env: {} };
+
+let net = create_network(fs_mod, config, sh, pkg, platform, {});
+
+let checks = [];
+// IPv4 address taken from ubus status
+push(checks, ['v4_from_ubus',      net.get_ipaddr4('vpn', 'tun0') == '10.9.9.9']);
+// IPv4 falls back to `ip -o addr show dev` when ubus has none
+push(checks, ['v4_from_ip_cmd',    net.get_ipaddr4('wg', 'wg0') == '192.0.2.5']);
+// IPv6 address taken from ubus status
+push(checks, ['v6_from_ubus',      net.get_ipaddr6('wan6', 'eth1') == '2001:db8::1']);
+
+// IPv6 disabled -> always null
+let config6off = {
+	cfg: { ipv6_enabled: false, uplink_interface4: 'wan', uplink_interface6: 'wan6' },
+	ubus_call: config.ubus_call,
+	uci_ctx: config.uci_ctx,
+};
+let net6off = create_network(fs_mod, config6off, sh, pkg, platform, {});
+push(checks, ['v6_disabled_null',  net6off.get_ipaddr6('wan6', 'eth1') == null]);
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("get_ipaddr_fallback: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+get_ipaddr_fallback: 4/4 passed
+-- End --

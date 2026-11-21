@@ -1,0 +1,99 @@
+Testing that a name inside a rule's comment is never taken for a chain or set,
+and that nft_call() quotes any argument a shell would interpret.
+
+A policy's name ends up in `comment "..."` on its rules, and the name is
+free text. get_nft_sets() and get_mark_nft_chains() used to match
+`set <name>` / `chain <name>` anywhere on a line, so a policy named, say,
+`x set pbr_foo;true;#` produced a set name `pbr_foo;true;#"`. The orphan-set
+reap then handed that to nft_call(), which joined its arguments unquoted into
+a command line run by /bin/sh -- so the text after the `;` ran as a command,
+as root, on every full start.
+
+Two independent fixes, both asserted here: the getters read declaration lines
+only, and nft_call() quotes any argument that is not a plain word. The live
+table below carries one real orphan set, so the reap is known to have run.
+
+-- File fs/popen~nft_list_table_inet_fw4_2_dev_null.txt --
+table inet fw4 {
+	set pbr_wan_4_dst_ip_policy_gone {
+		type ipv4_addr
+		elements = { 203.0.113.7 }
+	}
+
+	chain pbr_prerouting {
+		ip daddr 198.51.100.1 goto pbr_mark_0x010000 comment "x set pbr_from_comment;true;#"
+		ip daddr 198.51.100.2 goto pbr_mark_0x010000 comment "y chain pbr_mark_from_comment;true;#"
+	}
+
+	chain pbr_mark_0x010000 {
+		meta mark set meta mark & 0xff00ffff | 0x00010000
+		return
+	}
+}
+-- End --
+
+-- Testcase --
+import create_pbr from 'pbr';
+import create_nft from 'nft';
+import create_sys from 'sys';
+import pkgmod from 'pkg';
+
+let mocklib = global.mocklib;
+
+// ── 1. a full start reads names from declarations only ─────────────────
+mocklib.clear_commands();
+let pbr = create_pbr();
+pbr.start_service(['on_start']);
+
+let reaped = mocklib.commands('delete set inet fw4 pbr_wan_4_dst_ip_policy_gone');
+let set_from_comment = mocklib.has_command('pbr_from_comment');
+
+// ── 2. nft_call() quotes whatever is not a plain word ──────────────────
+let pkg = pkgmod.pkg;
+let sh = create_sys(require('fs'), pkg);
+let nft = create_nft(require('fs'), { cfg: {} }, sh, null, pkg, { env: {} }, null, null, null);
+
+// A start only tests the chain list for emptiness, so read both lists here.
+let chains = nft.get_mark_nft_chains();
+let sets = nft.get_nft_sets();
+
+mocklib.clear_commands();
+nft.nft_call('delete', 'set', 'inet', 'fw4', 'pbr_plain_name');
+nft.nft_call('delete', 'set', 'inet', 'fw4', 'pbr_x;true;#"');
+nft.nft_call('delete', 'set', 'inet', 'fw4', "it's");
+nft.nft_call('-c', '-f', '/var/run/pbr.nft.tmp');
+let cmds = mocklib.commands();
+
+let checks = [
+	// the reap ran, or the check after it passes vacuously
+	['orphan_reaped',         length(reaped) == 1],
+	// nothing read out of a comment is acted on
+	['comment_set_ignored',   !set_from_comment],
+	// and neither list holds anything but the declared names
+	['chains_declared_only',  chains == 'pbr_mark_0x010000'],
+	['sets_declared_only',    sets == 'pbr_wan_4_dst_ip_policy_gone'],
+	// a plain word reaches the shell exactly as before
+	['plain_unchanged',       cmds[0] == 'nft delete set inet fw4 pbr_plain_name >/dev/null 2>&1'],
+	// shell metacharacters are quoted into one inert argument
+	['metachars_quoted',      cmds[1] == "nft delete set inet fw4 'pbr_x;true;#\"' >/dev/null 2>&1"],
+	// and an embedded quote cannot close the quoting early
+	['quote_escaped',         cmds[2] == "nft delete set inet fw4 'it'\\''s' >/dev/null 2>&1"],
+	// the options and paths pbr passes itself are plain words too
+	['check_unchanged',       cmds[3] == 'nft -c -f /var/run/pbr.nft.tmp >/dev/null 2>&1'],
+];
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("names_from_rule_comments: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+names_from_rule_comments: 8/8 passed
+-- End --

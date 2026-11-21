@@ -1,0 +1,34 @@
+Testing start() returns ifacesTriggers and emit_procd_shell() emits shell variable.
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+let result = pbr.start_service(['on_start']);
+
+let shell_output = pbr.emit_procd_shell(result);
+
+let checks = [
+	['result_not_null',            result != null],
+	['has_ifaces_triggers',        type(result.ifacesTriggers) == 'string'],
+	['triggers_has_wan',           index(result.ifacesTriggers, 'wan') >= 0],
+	['triggers_has_vpn',           index(result.ifacesTriggers, 'vpn') >= 0],
+	['shell_has_ifaces_var',       index(shell_output, "_pbr_ifaces_triggers=") >= 0],
+	['shell_has_wan',              index(shell_output, "wan") >= 0],
+];
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("network_trigger_info: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+network_trigger_info: 6/6 passed
+-- End --

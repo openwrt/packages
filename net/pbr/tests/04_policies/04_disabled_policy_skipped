@@ -1,0 +1,35 @@
+Testing that disabled policies are not included in nft rules.
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+let result = pbr.start_service(['on_start']);
+
+let nft_content = global.mocklib.read_captured('/var/run/pbr.nft');
+let checks = [];
+
+if (nft_content) {
+	// "Disabled Policy" (enabled=0) should NOT appear in rules
+	push(checks, ['no_disabled_policy', index(nft_content, '"Disabled Policy"') < 0]);
+	// "Route via VPN" (enabled=1) should appear
+	push(checks, ['has_enabled_policy', index(nft_content, '"Route via VPN"') >= 0]);
+} else {
+	push(checks, ['nft_file_written', false]);
+}
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("disabled_policy_skipped: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+disabled_policy_skipped: 2/2 passed
+-- End --

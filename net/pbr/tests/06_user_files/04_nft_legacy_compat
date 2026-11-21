@@ -1,0 +1,91 @@
+Testing that api.nft() still works for backwards compatibility with existing user scripts.
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+// Override loadstring so user file code is actually evaluated
+global.loadstring = global._orig_loadstring;
+
+// User file using legacy api.nft() (not nft4/nft6)
+global.mocklib.capture('/usr/share/pbr/legacy_user.uc',
+	"return function(api) {\n" +
+	"	api.nft('add element inet fw4 pbr_wan_4_dst_ip_user { 192.168.100.0/24 }');\n" +
+	"	api.nft('add element inet fw4 pbr_wan_4_dst_ip_user { 192.168.200.0/24 }');\n" +
+	"};\n"
+);
+
+let result = pbr.start_service(['on_start']);
+
+let nft_content = global.mocklib.read_captured('/var/run/pbr.nft');
+let checks = [];
+
+if (nft_content) {
+	push(checks, ['nft_legacy1', index(nft_content, 'add element inet fw4 pbr_wan_4_dst_ip_user { 192.168.100.0/24 }') >= 0]);
+	push(checks, ['nft_legacy2', index(nft_content, 'add element inet fw4 pbr_wan_4_dst_ip_user { 192.168.200.0/24 }') >= 0]);
+} else {
+	push(checks, ['nft_file_written', false]);
+}
+
+// No errors should have been generated
+if (result && result.errors) {
+	let user_errs = filter(result.errors, e => index(e.code, 'errorUserFile') >= 0);
+	push(checks, ['no_user_errors', length(user_errs) == 0]);
+} else {
+	push(checks, ['result_ok', result != null]);
+}
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("nft_legacy_compat: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- File uci/pbr.json --
+{
+	"pbr": [
+		{
+			".name": "config",
+			"enabled": "1",
+			"fw_mask": "00ff0000",
+			"ipv6_enabled": "0",
+			"strict_enforcement": "1",
+			"uplink_interface": "wan",
+			"uplink_interface6": "wan6",
+			"uplink_ip_rules_priority": "30000",
+			"uplink_mark": "00010000",
+			"verbosity": "2",
+			"lan_device": ["br-lan"],
+			"resolver_instance": ["*"],
+			"debug_performance": "0",
+			"nft_set_auto_merge": "1",
+			"nft_set_flags_interval": "1",
+			"nft_set_flags_timeout": "0",
+			"nft_set_policy": "performance",
+			"ignored_interface": ["vpnserver"]
+		}
+	],
+	"policy": [],
+	"include": [
+		{
+			".name": "user_legacy",
+			"enabled": "1",
+			"path": "/usr/share/pbr/legacy_user.uc"
+		}
+	]
+}
+-- End --
+
+-- File fs/stat~_usr_share_pbr_legacy_user_uc.json --
+{ "type": "file", "size": 100 }
+-- End --
+
+-- Expect stdout --
+nft_legacy_compat: 3/3 passed
+-- End --

@@ -1,0 +1,207 @@
+Testing that a policy left with no usable address on a side is skipped.
+
+An entry that is neither an address, a domain, a device nor a MAC is reported as
+errorPolicyProcessUnknownEntry. But the rule used to be written first, with that
+side left empty, and a side with no address matches every address. So one typo in
+src_addr gave a rule with no match at all: all traffic went down that interface,
+and pbr carried on as if the policy were merely reported.
+
+A side that was never configured stays what it always was, so 'Port Only' keeps
+its rule. A side that keeps at least one good entry keeps its rule too, with the
+bad entry reported. dns_policy reported nothing at all for a bad entry; it now
+reports the same error.
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+let result = pbr.start_service(['on_start']);
+let nft = global.mocklib.read_captured('/var/run/pbr.nft') || '';
+let dnsmasq = global.mocklib.read_captured('/var/run/pbr.dnsmasq') || '';
+
+function rules_for(n) {
+	return filter(split(nft, '\n'), l => index(l, 'comment "' + n + '"') >= 0);
+}
+function errors_for(info) {
+	return filter(result.errors || [],
+		e => e.code == 'errorPolicyProcessUnknownEntry' && '' + e.info == info);
+}
+
+let checks = [];
+for (let p in [
+	['Bad Src', '192.168.0.09'], ['Bad Prefix', '1.2.3.4/33'],
+	['Bad Octal Prefix', '1.2.3.4/08'], ['Bad Dest', '1.2.3.08'],
+	['Bad Src Good Dest', '192.168.0.09'], ['Good Src Bad Dest', '256.1.1.1'],
+	['Bad Negated', '!192.168.0.09'], ['Bad With Port', '192.168.0.09'],
+	['Dns Bad', '192.168.0.09'],
+]) {
+	push(checks, [p[0] + ': no rule', length(rules_for(p[0])) == 0]);
+	push(checks, [p[0] + ': reported once', length(errors_for(p[0] + ': ' + p[1])) == 1]);
+}
+
+let mixed = rules_for('Mixed Src');
+let dns_mixed = rules_for('Dns Mixed');
+push(checks,
+	['mixed keeps the good entry', length(mixed) > 0 &&
+		length(filter(mixed, l => index(l, '192.168.0.8') >= 0)) == length(mixed)],
+	['mixed drops the bad entry', index(nft, '192.168.0.09') < 0],
+	['mixed reported', length(errors_for('Mixed Src: 192.168.0.09')) == 1],
+	['dns mixed keeps the good entry', length(dns_mixed) > 0],
+	['dns mixed reported', length(errors_for('Dns Mixed: 192.168.0.09')) == 1],
+	['port only keeps its rule', length(rules_for('Port Only')) > 0],
+	['good policy kept', length(rules_for('Good')) > 0],
+	['good dns policy kept', length(rules_for('Dns Good')) > 0],
+	['no error for a good policy', length(filter(result.errors || [],
+		e => index('' + e.info, 'Good:') >= 0 || index('' + e.info, 'Port Only') >= 0)) == 0],
+	['nothing sent to dnsmasq', index(dnsmasq, '1.2.3.08') < 0 && index(dnsmasq, '256.1.1.1') < 0]
+);
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("unusable_address_skips_policy: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- File fs/stat~_sys_class_net_br-lan.json --
+{ "type": "link" }
+-- End --
+
+-- File uci/pbr.json --
+{
+	"pbr": [
+		{
+			".name": "config",
+			"enabled": "1",
+			"fw_mask": "00ff0000",
+			"ipv6_enabled": "0",
+			"resolver_set": "dnsmasq.nftset",
+			"uplink_interface": "wan",
+			"uplink_interface6": "wan6",
+			"uplink_ip_rules_priority": "30000",
+			"uplink_mark": "00010000",
+			"verbosity": "2",
+			"lan_device": ["br-lan"]
+		}
+	],
+	"policy": [
+		{
+			".name": "p0",
+			"name": "Bad Src",
+			"enabled": "1",
+			"interface": "wan",
+			"src_addr": "192.168.0.09"
+		},
+		{
+			".name": "p1",
+			"name": "Bad Prefix",
+			"enabled": "1",
+			"interface": "wan",
+			"src_addr": "1.2.3.4/33"
+		},
+		{
+			".name": "p2",
+			"name": "Bad Octal Prefix",
+			"enabled": "1",
+			"interface": "wan",
+			"src_addr": "1.2.3.4/08"
+		},
+		{
+			".name": "p3",
+			"name": "Bad Dest",
+			"enabled": "1",
+			"interface": "wan",
+			"dest_addr": "1.2.3.08"
+		},
+		{
+			".name": "p4",
+			"name": "Bad Src Good Dest",
+			"enabled": "1",
+			"interface": "wan",
+			"src_addr": "192.168.0.09",
+			"dest_addr": "203.0.113.9"
+		},
+		{
+			".name": "p5",
+			"name": "Good Src Bad Dest",
+			"enabled": "1",
+			"interface": "wan",
+			"src_addr": "192.168.0.5",
+			"dest_addr": "256.1.1.1"
+		},
+		{
+			".name": "p6",
+			"name": "Bad Negated",
+			"enabled": "1",
+			"interface": "wan",
+			"src_addr": "!192.168.0.09"
+		},
+		{
+			".name": "p7",
+			"name": "Bad With Port",
+			"enabled": "1",
+			"interface": "wan",
+			"src_addr": "192.168.0.09",
+			"dest_port": "443"
+		},
+		{
+			".name": "p8",
+			"name": "Mixed Src",
+			"enabled": "1",
+			"interface": "wan",
+			"src_addr": "192.168.0.8 192.168.0.09"
+		},
+		{
+			".name": "p9",
+			"name": "Port Only",
+			"enabled": "1",
+			"interface": "wan",
+			"dest_port": "8443"
+		},
+		{
+			".name": "p10",
+			"name": "Good",
+			"enabled": "1",
+			"interface": "wan",
+			"src_addr": "192.168.0.7"
+		}
+	],
+	"dns_policy": [
+		{
+			".name": "d0",
+			"name": "Dns Bad",
+			"enabled": "1",
+			"src_addr": "192.168.0.09",
+			"dest_dns": "1.1.1.1",
+			"dest_dns_port": "53"
+		},
+		{
+			".name": "d1",
+			"name": "Dns Mixed",
+			"enabled": "1",
+			"src_addr": "192.168.0.8 192.168.0.09",
+			"dest_dns": "1.1.1.1",
+			"dest_dns_port": "53"
+		},
+		{
+			".name": "d2",
+			"name": "Dns Good",
+			"enabled": "1",
+			"src_addr": "192.168.0.7",
+			"dest_dns": "1.1.1.1",
+			"dest_dns_port": "53"
+		}
+	],
+	"include": [
+	]
+}
+-- End --
+
+-- Expect stdout --
+unusable_address_skips_policy: 28/28 passed
+-- End --

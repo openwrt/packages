@@ -1,0 +1,87 @@
+Testing that IPv6 rules are generated when ipv6_enabled=1.
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+let result = pbr.start_service(['on_start']);
+
+let nft_content = global.mocklib.read_captured('/var/run/pbr.nft');
+let checks = [];
+
+if (nft_content) {
+	// When IPv6 is enabled, we should see ip6-flavored rules
+	let lines = split(nft_content, '\n');
+
+	// Check for IPv6 rules (ip6 saddr/daddr)
+	let ip6_rules = filter(lines, l => index(l, 'ip6') >= 0);
+	push(checks, ['has_ip6_rules', length(ip6_rules) > 0]);
+
+	// Check that IPv6 gateway appears in result (wan6 carries the gw6)
+	if (result && result.gateways) {
+		for (let gw in result.gateways) {
+			if (gw.name == 'wan6') {
+				push(checks, ['wan6_has_gw6', gw.gateway_ipv6 == '2001:db8::ffff']);
+			}
+		}
+	}
+} else {
+	push(checks, ['nft_file_written', false]);
+}
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("ipv6_enabled: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- File uci/pbr.json --
+{
+	"pbr": [
+		{
+			".name": "config",
+			"enabled": "1",
+			"fw_mask": "00ff0000",
+			"ipv6_enabled": "1",
+			"strict_enforcement": "1",
+			"uplink_interface": "wan",
+			"uplink_interface6": "wan6",
+			"uplink_ip_rules_priority": "30000",
+			"uplink_mark": "00010000",
+			"verbosity": "2",
+			"lan_device": ["br-lan"],
+			"resolver_instance": ["*"],
+			"debug_performance": "0",
+			"nft_set_auto_merge": "1",
+			"nft_set_flags_interval": "1",
+			"nft_set_flags_timeout": "0",
+			"nft_set_policy": "performance",
+			"ignored_interface": ["vpnserver"]
+		}
+	],
+	"policy": [
+		{
+			".name": "policy_vpn",
+			"name": "Route via VPN",
+			"enabled": "1",
+			"interface": "vpn",
+			"src_addr": "192.168.1.0/24",
+			"dest_addr": "",
+			"src_port": "",
+			"dest_port": "",
+			"proto": "",
+			"chain": "prerouting"
+		}
+	]
+}
+-- End --
+
+-- Expect stdout --
+ipv6_enabled: 2/2 passed
+-- End --

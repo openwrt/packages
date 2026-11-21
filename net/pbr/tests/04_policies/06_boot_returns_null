@@ -1,0 +1,18 @@
+Testing start() with on_boot parameter returns null (deferred start).
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+let result = pbr.start_service(['on_boot']);
+
+// on_boot should return null — actual start happens via trigger
+if (result == null)
+	printf("boot_deferred: OK\n");
+else
+	printf("boot_deferred: FAIL (got %J)\n", result);
+-- End --
+
+-- Expect stdout --
+boot_deferred: OK
+-- End --

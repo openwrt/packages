@@ -1,0 +1,90 @@
+Testing api.nft4() adds rules and api.nft6() drops rules when ipv6 is disabled.
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+// Override loadstring so user file code is actually evaluated
+global.loadstring = global._orig_loadstring;
+
+// Pre-populate the mock user file content via captured readfile
+global.mocklib.capture('/usr/share/pbr/test_user.uc',
+	"return function(api) {\n" +
+	"	api.nft4('add element inet fw4 pbr_wan_4_dst_ip_user { 10.0.0.0/8 }');\n" +
+	"	api.nft4('add element inet fw4 pbr_wan_4_dst_ip_user { 172.16.0.0/12 }');\n" +
+	"	api.nft6('add element inet fw4 pbr_wan_6_dst_ip_user { 2001:db8::/32 }');\n" +
+	"	api.nft6('add element inet fw4 pbr_wan_6_dst_ip_user { fd00::/8 }');\n" +
+	"};\n"
+);
+
+let result = pbr.start_service(['on_start']);
+
+let nft_content = global.mocklib.read_captured('/var/run/pbr.nft');
+let checks = [];
+
+if (nft_content) {
+	// nft4 rules should be present (ipv4 always works)
+	push(checks, ['nft4_prefix1', index(nft_content, 'add element inet fw4 pbr_wan_4_dst_ip_user { 10.0.0.0/8 }') >= 0]);
+	push(checks, ['nft4_prefix2', index(nft_content, 'add element inet fw4 pbr_wan_4_dst_ip_user { 172.16.0.0/12 }') >= 0]);
+
+	// nft6 rules should NOT be present (ipv6_enabled=0)
+	push(checks, ['nft6_dropped1', index(nft_content, '2001:db8::/32') < 0]);
+	push(checks, ['nft6_dropped2', index(nft_content, 'fd00::/8') < 0]);
+} else {
+	push(checks, ['nft_file_written', false]);
+}
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("nft4_nft6_ipv6_disabled: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- File uci/pbr.json --
+{
+	"pbr": [
+		{
+			".name": "config",
+			"enabled": "1",
+			"fw_mask": "00ff0000",
+			"ipv6_enabled": "0",
+			"strict_enforcement": "1",
+			"uplink_interface": "wan",
+			"uplink_interface6": "wan6",
+			"uplink_ip_rules_priority": "30000",
+			"uplink_mark": "00010000",
+			"verbosity": "2",
+			"lan_device": ["br-lan"],
+			"resolver_instance": ["*"],
+			"debug_performance": "0",
+			"nft_set_auto_merge": "1",
+			"nft_set_flags_interval": "1",
+			"nft_set_flags_timeout": "0",
+			"nft_set_policy": "performance",
+			"ignored_interface": ["vpnserver"]
+		}
+	],
+	"policy": [],
+	"include": [
+		{
+			".name": "user_test",
+			"enabled": "1",
+			"path": "/usr/share/pbr/test_user.uc"
+		}
+	]
+}
+-- End --
+
+-- File fs/stat~_usr_share_pbr_test_user_uc.json --
+{ "type": "file", "size": 100 }
+-- End --
+
+-- Expect stdout --
+nft4_nft6_ipv6_disabled: 4/4 passed
+-- End --

@@ -1,0 +1,89 @@
+Testing a split uplink with no other interface to own the second uplink's mark.
+
+This is the severe form of the same bug. ensure_mark_chain() dedupes on the mark,
+not on the chain name, so the second uplink of a split uplink -- which shares the
+first's mark -- returns early and never creates a chain under its own stale name.
+Where another interface happens to own that mark the result is a silent misroute;
+where nothing owns it, as on a plain wan + wan6 router with no tunnels, the name
+belongs to no chain at all.
+
+The ruleset then carries a goto at a chain that is never created, which fails the
+'nft -c -f' check in nft_file.apply(), so pbr installs no rules whatsoever and all
+policy routing stops. Two config options reach it and no policy is needed.
+
+nft does accept a goto at a chain declared later in the same batch -- confirmed on
+a router -- so file ordering alone is not the problem. The chain has to be absent.
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+pbr.start_service(['on_start']);
+
+let nft_content = global.mocklib.read_captured('/var/run/pbr.nft') || '';
+let lines = split(nft_content, '\n');
+let checks = [];
+
+let created = {};
+for (let l in lines) {
+	let m = match(l, /^add chain inet fw4 (\S+)/);
+	if (m) created[m[1]] = true;
+}
+
+// Only wan and wan6 are left, and they share a mark, so exactly one pbr_mark_
+// chain should exist.
+let mark_chains = filter(keys(created), c => index(c, 'pbr_mark_') == 0);
+push(checks, ['one_mark_chain_only', length(mark_chains) == 1]);
+
+// Every goto target must exist. This is the assertion that fails when the
+// second uplink keeps a chain name nobody creates.
+let dangling = [];
+for (let l in lines) {
+	let m = match(l, /goto (pbr_mark_\S+)/);
+	if (m && !created[m[1]]) push(dangling, m[1]);
+}
+push(checks, ['no_dangling_goto', length(dangling) == 0]);
+
+// The rules that get there without any policy.
+let dscp = filter(lines, l => index(l, 'dscp 10') >= 0);
+push(checks, ['dscp_rules_emitted', length(dscp) == 2]);
+push(checks, ['dscp_targets_a_created_chain',
+	length(filter(dscp, l => {
+		let m = match(l, /goto (pbr_mark_\S+)/);
+		return m && created[m[1]];
+	})) == 2]);
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) {
+		pass++;
+	} else {
+		fail++;
+		printf("FAIL: %s\n", c[0]);
+	}
+}
+printf("split_uplink_no_dangling_chain: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- File uci/pbr.json --
+{
+	"pbr": [
+		{
+			".name": "config", "enabled": "1", "fw_mask": "00ff0000", "ipv6_enabled": "1",
+			"resolver_set": "none", "strict_enforcement": "1",
+			"uplink_interface": "wan", "uplink_interface6": "wan6",
+			"wan6_dscp": "10",
+			"uplink_ip_rules_priority": "30000", "uplink_mark": "00010000", "verbosity": "2",
+			"lan_device": ["br-lan"], "resolver_instance": ["*"], "debug_performance": "0",
+			"nft_set_auto_merge": "1", "nft_set_flags_interval": "1", "nft_set_flags_timeout": "0",
+			"nft_set_policy": "performance",
+			"ignored_interface": ["vpnserver", "vpn", "wg0"]
+		}
+	],
+	"policy": []
+}
+-- End --
+
+-- Expect stdout --
+split_uplink_no_dangling_chain: 4/4 passed
+-- End --

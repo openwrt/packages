@@ -1,0 +1,83 @@
+Testing that if on_interface_reload is triggered but PBR hasn't successfully completed a full start (no gateways in service data), it processes all interfaces when service data is empty.
+
+-- File ubus/service~list~name-pbr.json --
+{
+	"pbr": {
+		"data": {
+		}
+	}
+}
+-- End --
+
+-- File fs/popen~nft_list_table_inet_fw4_2_dev_null.txt --
+table inet fw4 {
+	chain pbr_mark_0x010000 { }
+}
+-- End --
+
+-- File uci/network.json --
+{
+	"interface": [
+		{
+			".name": "wan",
+			"device": "eth1",
+			"proto": "dhcp"
+		},
+		{
+			".name": "wg0",
+			"proto": "wireguard"
+		}
+	]
+}
+-- End --
+
+-- File uci/pbr.json --
+{
+	"pbr": [
+		{
+			".name": "config",
+			"enabled": "1",
+			"uplink_interface": "wan",
+			"verbosity": "2"
+		}
+	]
+}
+-- End --
+
+-- Testcase --
+import create_pbr from 'pbr';
+let pbr = create_pbr();
+
+// wg0 is live
+let orig_read_json = global.mocklib.read_json_file;
+global.mocklib.read_json_file = function(path) {
+	if (path == 'ubus/network.interface.wg0~status.json') {
+		return { up: true, l3_device: "wg0-live", device: "wg0-live", proto: "wireguard" };
+	}
+	return orig_read_json(path);
+};
+
+// We trigger a reload of 'wan', but because PBR data is empty,
+// it processes all interfaces. Thus it will ALSO build routes
+// for 'wg0'. If it were a partial reload, wg0 would be skipped
+// and gw.action would be 'skip_interface' or it wouldn't even
+// appear if not in the cached registry.
+let result = pbr.start_service(['on_interface_reload', 'wan']);
+
+let checks = [];
+let wg0_gw = filter(result.gateways, g => g.name == 'wg0')[0];
+
+push(checks, ['wg0_processed', wg0_gw != null]);
+push(checks, ['wg0_action_create', wg0_gw?.action == 'create']);
+push(checks, ['wg0_dev4_populated', wg0_gw?.device_ipv4 == 'wg0-live']);
+
+let pass = 0, fail = 0;
+for (let c in checks) {
+	if (c[1]) pass++; else { fail++; printf("FAIL: %s\n", c[0]); }
+}
+printf("reload_degraded_upgrades_to_start: %d/%d passed\n", pass, pass + fail);
+-- End --
+
+-- Expect stdout --
+reload_degraded_upgrades_to_start: 3/3 passed
+-- End --
