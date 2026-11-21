@@ -1,0 +1,71 @@
+From e3cfb4f70e203866c1bd06e5fb28fcdc7dd967f8 Mon Sep 17 00:00:00 2001
+From: Dmitry Volyntsev <xeioex@nginx.com>
+Date: Thu, 1 May 2025 17:05:56 -0700
+Subject: [PATCH] Fixed GCC 15 build with -Wunterminated-string-initialization.
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+In file included from src/njs_main.h:48,
+                 from src/njs_diyfp.c:12:
+src/njs_string.h: In function ‘njs_string_encode’:
+src/njs_string.h:229:36: error: initializer-string for array of ‘unsigned char’
+	truncates NUL terminator but destination lacks ‘nonstring’ attribute (
+	17 chars into 16 available) [-Werror=unterminated-string-initialization]
+  229 |     static const u_char  hex[16] = "0123456789ABCDEF";
+
+[ backport: leave out the hunk for external/qjs_query_string_module.c,
+  which njs 0.8.6 does not have ]
+---
+ src/njs_sprintf.c | 4 ++--
+ src/njs_string.c  | 2 +-
+ src/njs_string.h  | 2 +-
+ src/qjs_buffer.c  | 2 +-
+ 4 files changed, 5 insertions(+), 5 deletions(-)
+
+--- a/nginx-mod-njs/src/njs_sprintf.c
++++ b/nginx-mod-njs/src/njs_sprintf.c
+@@ -95,8 +95,8 @@ njs_vsprintf(u_char *buf, u_char *end, c
+     njs_bool_t     sign;
+     njs_sprintf_t  spf;
+ 
+-    static const u_char  hexadecimal[16] = "0123456789abcdef";
+-    static const u_char  HEXADECIMAL[16] = "0123456789ABCDEF";
++    static const u_char  hexadecimal[] = "0123456789abcdef";
++    static const u_char  HEXADECIMAL[] = "0123456789ABCDEF";
+     static const u_char  nan[] = "[nan]";
+     static const u_char  infinity[] = "[infinity]";
+ 
+--- a/nginx-mod-njs/src/njs_string.c
++++ b/nginx-mod-njs/src/njs_string.c
+@@ -361,7 +361,7 @@ njs_encode_hex(njs_str_t *dst, const njs
+     size_t        i, len;
+     const u_char  *start;
+ 
+-    static const u_char  hex[16] = "0123456789abcdef";
++    static const u_char  hex[] = "0123456789abcdef";
+ 
+     len = src->length;
+     start = src->start;
+--- a/nginx-mod-njs/src/njs_string.h
++++ b/nginx-mod-njs/src/njs_string.h
+@@ -212,7 +212,7 @@ njs_string_encode(const uint32_t *escape
+     u_char *dst)
+ {
+     uint8_t              byte;
+-    static const u_char  hex[16] = "0123456789ABCDEF";
++    static const u_char  hex[] = "0123456789ABCDEF";
+ 
+     do {
+         byte = *src++;
+--- a/nginx-mod-njs/src/qjs_buffer.c
++++ b/nginx-mod-njs/src/qjs_buffer.c
+@@ -2387,7 +2387,7 @@ qjs_hex_encode(JSContext *ctx, const njs
+     size_t        i, len;
+     const u_char  *start;
+ 
+-    static const u_char  hex[16] = "0123456789abcdef";
++    static const u_char  hex[] = "0123456789abcdef";
+ 
+     len = src->length;
+     start = src->start;
