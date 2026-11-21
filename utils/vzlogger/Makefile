@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vzlogger
-PKG_VERSION:=0.8.9
+PKG_VERSION:=0.8.10
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/volkszaehler/vzlogger/tar.gz/v${PKG_VERSION}?
-PKG_HASH:=734fcd78ef5e1a41913fdef627b8382d9c0c04cb99fe023cdb50dc2ad2d972a4
+PKG_HASH:=11c0762093fd237beb2d32b6d84a321ac26d54cd42e27bb8377c26c5cd75bd2f
 
 PKG_MAINTAINER:=Andy Voigt <a.voigt@mailbox.org>
 PKG_LICENSE:=GPL-3.0-or-later
