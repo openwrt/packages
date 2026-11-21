@@ -1,0 +1,81 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Hauke Mehrtens <hauke@hauke-m.de>
+Date: Sat, 21 Nov 2026 16:34:03 +0100
+Subject: [PATCH] python: fix wrapper build with SWIG 4.5
+
+SWIG 4.5 dropped its Python 2 compatibility macros. Use the Python 3
+integer API in the buffer-length typemaps.
+
+Include the existing declaration of lang_func at file scope. An include
+inside %init declares an anonymous struct type local to SWIG's module
+initialization function, which cannot match the definition in libmraa.
+Declare the Python ISR callback at file scope with C linkage as well.
+
+Upstream-Status: Pending https://github.com/eclipse-mraa/mraa/pull/1165
+Assisted-by: LLM
+Signed-off-by: Hauke Mehrtens <hauke@hauke-m.de>
+
+---
+--- a/src/python/mraapython.i
++++ b/src/python/mraapython.i
+@@ -65,11 +65,11 @@ class Spi;
+ // Uart::read()
+ 
+ %typemap(in) (char* data, int length) {
+-   if (!PyInt_Check($input)) {
++   if (!PyLong_Check($input)) {
+        PyErr_SetString(PyExc_ValueError, "Expecting an integer");
+        return NULL;
+    }
+-   $2 = PyInt_AsLong($input);
++   $2 = PyLong_AsLong($input);
+    if ($2 < 0) {
+        PyErr_SetString(PyExc_ValueError, "Positive integer expected");
+        return NULL;
+@@ -92,11 +92,11 @@ class Spi;
+ // I2c::read()
+ 
+ %typemap(in) (uint8_t *data, int length) {
+-   if (!PyInt_Check($input)) {
++   if (!PyLong_Check($input)) {
+        PyErr_SetString(PyExc_ValueError, "Expecting an integer");
+        return NULL;
+    }
+-   $2 = PyInt_AsLong($input);
++   $2 = PyLong_AsLong($input);
+    if ($2 < 0) {
+        PyErr_SetString(PyExc_ValueError, "Positive integer expected");
+        return NULL;
+@@ -119,11 +119,11 @@ class Spi;
+ // Spi::transfer()
+ 
+ %typemap(in) (uint8_t* txBuf, uint8_t* rxBuf, int length) {
+-   if (!PyInt_Check($input)) {
++   if (!PyLong_Check($input)) {
+        PyErr_SetString(PyExc_ValueError, "Expecting an integer");
+        return NULL;
+    }
+-   $3 = PyInt_AsLong($input);
++   $3 = PyLong_AsLong($input);
+    if ($3 < 0) {
+        PyErr_SetString(PyExc_ValueError, "Positive integer expected");
+        return NULL;
+@@ -144,10 +144,15 @@ class Spi;
+ 
+ %include ../mraa.i
+ 
++%{
++#include "mraa_internal.h"
++
++extern "C" {
++#include "python/mraapy.h"
++}
++%}
++
+ %init %{
+-    #include "python/mraapy.h"
+-    #include "mraa_lang_func.h"
+-    extern mraa_lang_func_t* lang_func;
+     // Initialise python threads, this allows use to grab the GIL when we are
+     // required to do so
+     Py_InitializeEx(0);
