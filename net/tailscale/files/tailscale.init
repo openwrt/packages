@@ -10,11 +10,16 @@ START=80
 export TS_NO_LOGS_NO_SUPPORT=true
 
 start_service() {
+  local enabled
   local state_file
   local port
   local std_err std_out
 
   config_load tailscale
+
+  config_get_bool enabled "settings" enabled 1
+  [ "$enabled" -eq 1 ] || return 0
+
   config_get_bool std_out "settings" log_stdout 1
   config_get_bool std_err "settings" log_stderr 1
   config_get port "settings" port 41641
