@@ -1,0 +1,23 @@
+From ac34642c49f88b641e44edf782d5927c993a38f7 Mon Sep 17 00:00:00 2001
+From: Alex T <alext.mkrs@gmail.com>
+Date: Sun, 7 Dec 2025 22:20:28 +0100
+Subject: [PATCH] swig/python: fix compilation with newer CMake
+
+Upstream-Status: Backport [https://github.com/eclipse-mraa/mraa/commit/ac34642c49f88b641e44edf782d5927c993a38f7]
+
+Signed-off-by: Alex T <alext.mkrs@gmail.com>
+---
+ src/python/python3/CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/src/python/python3/CMakeLists.txt
++++ b/src/python/python3/CMakeLists.txt
+@@ -24,7 +24,7 @@ if (DOXYGEN_FOUND AND PYTHON3_EXECUTABLE
+ endif ()
+ 
+ set_target_properties (${SWIG_MODULE_python3-mraa_REAL_NAME} PROPERTIES
+-  OUTPUT_NAME _mraa
++  OUTPUT_NAME mraa
+   COMPILE_FLAGS "${CMAKE_C_FLAGS} -DSWIGPYTHON=${SWIG_FOUND} -DSWIGPYTHON3=${SWIG_FOUND}"
+ )
+ 
