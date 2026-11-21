@@ -30,6 +30,10 @@ glinet_panel_boot_preinit() {
 		ACTION=add SUBSYSTEM=drm DEVNAME=dri/card0 /sbin/hotplug-call drm
 	}
 
+	# The overlay is not mounted yet: this is the image's default rotation,
+	# not one set later with uci.
+	export LVGL_ROTATION="$(uci -q get glinet_panel.@panel[0].rotation)"
+
 	# ucode has no getpid(), so the pid file is written from here
 	/usr/bin/ucode /usr/share/ucode/glinet-panel-ui/boot.uc &
 	echo $! > "$GLINET_PANEL_BOOT_PID"

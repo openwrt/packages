@@ -13,6 +13,12 @@ config panel
 	# 10 to 100. the brightness page writes this back
 	option brightness '100'
 
+	# 0, 90, 180 or 270: how the picture is turned, for a router standing
+	# upside down or on its side. 90 and 270 lay the pages out for 240x320.
+	# Takes a restart of the service; the boot splash follows the image's
+	# default only
+	#option rotation '0'
+
 	# 1 to 8, the gradients in /usr/share/glinet-panel-ui/backgrounds. 0 or
 	# absent leaves the panel black
 	option background '7'

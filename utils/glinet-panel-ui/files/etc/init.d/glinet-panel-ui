@@ -37,9 +37,10 @@ boot_release() {
 }
 
 start_service() {
-	local touch
+	local touch rotation
 
 	touch="$(touch_device)"
+	rotation="$(uci -q get glinet_panel.@panel[0].rotation)"
 
 	boot_release
 
@@ -47,7 +48,8 @@ start_service() {
 	procd_set_param command /usr/bin/ucode /usr/share/ucode/glinet-panel-ui/panel.uc
 	# one call: env is a table, so a second call would replace the first
 	procd_set_param env GLINET_PANEL_BOOT_PID="$BOOT_PID" \
-		${touch:+PANEL_TOUCH_DEVICE="$touch"}
+		${touch:+PANEL_TOUCH_DEVICE="$touch"} \
+		${rotation:+LVGL_ROTATION="$rotation"}
 	procd_set_param respawn
 	procd_set_param stderr 1
 	procd_close_instance
