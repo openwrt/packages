@@ -1,0 +1,9 @@
+#!/bin/sh
+# Moves the Telegram notification options of releases up to 1.30.x
+# (trafficctl.telegram.notify_new_device, notify_known_device,
+# notify_template) to the notification layout: a 'notify' section and a
+# 'notify_telegram' sender with the same events and template. It runs once,
+# only while the 'notify' section is missing, so a config saved in the new
+# layout is never touched. See `trafficctl notify migrate`.
+[ -x /usr/sbin/trafficctl ] && /usr/sbin/trafficctl notify migrate >/dev/null 2>&1
+exit 0

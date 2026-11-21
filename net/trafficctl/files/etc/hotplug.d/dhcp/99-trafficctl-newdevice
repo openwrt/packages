@@ -1,0 +1,17 @@
+#!/bin/sh
+# SPDX-License-Identifier: Apache-2.0
+# shellcheck shell=dash
+# Triggered by dnsmasq on DHCP events (add/old/del), with ACTION, MACADDR,
+# IPADDR and HOSTNAME in the environment: the new-device notification
+# (`trafficctl notify dhcp`) and the default limit for a device seen for the first time.
+# `trafficctl newdevice` (trafficctl.ctl) does both. hotplug-call sources this
+# in a subshell, so the variables are handed on explicitly.
+
+[ "$ACTION" = "add" ] || exit 0
+[ -n "$MACADDR" ] || exit 0
+
+# HOSTNAME comes from the dnsmasq dhcp hotplug environment, not a POSIX shell
+# builtin; shellcheck's SC3028 is a false positive.
+# shellcheck disable=SC3028
+exec env ACTION="$ACTION" MACADDR="$MACADDR" IPADDR="$IPADDR" HOSTNAME="$HOSTNAME" \
+    /usr/sbin/trafficctl newdevice >/dev/null 2>&1

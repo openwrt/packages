@@ -1,0 +1,18 @@
+#!/bin/sh
+# SPDX-License-Identifier: Apache-2.0
+# shellcheck shell=dash
+# Restore persistent rules after LAN interface comes up
+
+[ "$ACTION" = "ifup" ] && [ "$INTERFACE" = "lan" ] || exit 0
+
+# `trafficctl restore` waits up to 10 seconds for the LAN device and for fw4,
+# which at boot can load its ruleset after ifup lan, then puts back the saved
+# blocks, rate limits and port controls (persist_rules), every shape
+# (shapes.json, always saved) and a global cut engaged with "keep after
+# reboot". A limit or a shape still live from before (an ifup without a
+# reboot) is replaced; each record it could not put back is logged.
+#
+# TCTL_NOTIFY=0: it puts back what was there before, so no "Limit applied" or
+# "Internet blocked" notification per device on every boot or ifup.
+# hotplug-call sources this in a subshell, so the exec ends only that.
+exec env TCTL_NOTIFY=0 /usr/sbin/trafficctl restore >/dev/null 2>&1

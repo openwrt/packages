@@ -1,0 +1,288 @@
+#!/usr/bin/env ucode
+// SPDX-License-Identifier: Apache-2.0
+'use strict';
+
+// trafficctl <command> [args]: the backend's single entry point, for users,
+// init scripts, hotplug, the metrics CGI and the rpcd plugin. Commands print
+// JSON on stdout.
+
+import * as lib from 'trafficctl.lib';
+import * as net from 'trafficctl.net';
+import * as ctl from 'trafficctl.ctl';
+import * as limit from 'trafficctl.limit';
+import * as shape from 'trafficctl.shape';
+import * as report from 'trafficctl.report';
+import * as notify from 'trafficctl.notify';
+import * as cut from 'trafficctl.cut';
+import * as portfw from 'trafficctl.portfw';
+import * as history from 'trafficctl.history';
+
+function out(v) {
+	print(lib.to_json(v), '\n');
+}
+
+function result(r) {
+	out(r);
+	return r.ok ? 0 : 1;
+}
+
+const NOTIFY_USAGE = 'usage: trafficctl notify emit <event> [key=value...]|dispatch <event> [key=value...]|' +
+	'scan|watch|wanted|dhcp <mac> [ip] [name]|migrate|test <sender>';
+// { reply, rc } of a command that may print nothing (cut restore, tick,
+// keeper) or exit non-zero after a reply (cut tick's 2).
+function reply(r) {
+	if (r.reply != null)
+		out(r.reply);
+	return r.rc;
+}
+// A command that keeps its script's exit status: { reply, rc }.
+function replied(r) {
+	out(r.reply);
+	return r.rc;
+}
+
+const NAMES_USAGE = 'usage: trafficctl names list|set <ip> <name>|remove <ip>';
+// The script's own wording: the rpcd plugin and the view show it as it is.
+const RULES_USAGE = 'usage: trafficctl rules [list]';
+
+const commands = {
+	subnets: () => {
+		out(net.subnets());
+		return 0;
+	},
+
+	ifaces: () => {
+		out(net.ifaces());
+		return 0;
+	},
+
+	bytes: () => {
+		out(net.bytes());
+		return 0;
+	},
+
+	totals: (args) => {
+		out(net.totals(args[0] == '--all'));
+		return 0;
+	},
+
+	names: (args) => {
+		switch (args[0]) {
+		case 'list':
+			out(lib.names_list());
+			return 0;
+		case 'set':
+			return result(lib.names_set(args[1], args[2]));
+		case 'remove':
+			return result(lib.names_remove(args[1]));
+		default:
+			return result({ ok: false, msg: NAMES_USAGE });
+		}
+	},
+
+	rdns: (args) => {
+		let r = net.rdns(args[0]);
+		out(r ?? { ip: args[0] ?? '', host: '' });
+		return r ? 0 : 1;
+	},
+
+	'rdns-refresh': (args) => {
+		net.rdns_refresh(args);
+		return 0;
+	},
+
+	'ratelimit-stats': () => {
+		out(ctl.ratelimit_stats());
+		return 0;
+	},
+
+	'shape-stats': () => {
+		out(ctl.shape_stats());
+		return 0;
+	},
+
+	rules: (args) => {
+		if (args[0] != null && args[0] != '' && args[0] != 'list')
+			return result({ ok: false, msg: RULES_USAGE });
+		out(ctl.rules_list());
+		return 0;
+	},
+
+	summary: () => {
+		out(report.summary());
+		return 0;
+	},
+
+	device: (args) => {
+		let r = report.device(args);
+		out(r.reply);
+		return r.rc;
+	},
+
+	metrics: () => {
+		print(report.metrics());
+		return 0;
+	},
+
+	block: (args) => replied(ctl.block(args[0], args[1])),
+
+	unblock: (args) => replied(ctl.unblock(args[0], args[1])),
+
+	'macfilter-add': (args) => replied(ctl.macfilter('add', args[0])),
+
+	'macfilter-remove': (args) => replied(ctl.macfilter('remove', args[0])),
+
+	// The DHCP hotplug hook: dnsmasq's event in the environment. Prints
+	// nothing; what it did goes to syslog and the activity log.
+	newdevice: () => ctl.newdevice({ ACTION: getenv('ACTION'), MACADDR: getenv('MACADDR'),
+		IPADDR: getenv('IPADDR'), HOSTNAME: getenv('HOSTNAME') }),
+
+	ratelimit: (args) => replied(limit.ratelimit(args)),
+
+	shape: (args) => replied(shape.main(args)),
+
+	// The iface hotplug hook on ifup lan: the saved blocks, the saved limits,
+	// the shapes and the paused or limited ports, then a global cut kept
+	// across the reboot. Counted together; each failure is in syslog. Each
+	// part on its own: an error in the blocks must not leave every limit and
+	// shape off until the next ifup. Nothing here is announced: it puts back
+	// what was there.
+	restore: () => {
+		// The LAN device can still be coming up (up to 10 seconds).
+		let dev = net.lan_device();
+		for (let i = 0; i < 20 && lib.sh('tc qdisc show dev ' + lib.q(dev)) != 0; i++)
+			sleep(500);
+		let r = { ok: true, restored: 0, failed: 0 };
+		for (let half in [ [ 'blocks', ctl.restore ], [ 'limits', limit.restore ], [ 'shapes', shape.restore ],
+		                   [ 'ports', portfw.restore ] ]) {
+			try {
+				let h = half[1]();
+				r.restored += h.restored;
+				r.failed += h.failed;
+			}
+			catch (e) {
+				r.failed++;
+				lib.logger(sprintf('restore: %s failed: %s', half[0], e.message));
+			}
+		}
+		// The cut's own opt-in, not persist_rules: only a cut engaged with
+		// "keep after reboot" leaves this file, and a persistent internet
+		// kill must not follow from the flag that keeps rate limits. The cut
+		// is not a record: only its failure counts.
+		if (lib.is_file('/etc/trafficctl/cut.state')) {
+			let rc;
+			try {
+				rc = cut.main([ 'restore' ]).rc;
+			}
+			catch (e) {
+				rc = 1;
+			}
+			if (rc != 0) {
+				r.failed++;
+				lib.logger('Failed to restore the global internet cut');
+			}
+		}
+		r.ok = (r.failed == 0);
+		return result(r);
+	},
+
+	netify: (args) => {
+		let r = report.netify(args);
+		if (type(r.out) == 'string')
+			print(r.out);
+		else
+			out(r.out);
+		return r.rc;
+	},
+
+	notify: (args) => {
+		let sub = shift(args);
+		switch (sub) {
+		case 'emit':
+			return result(notify.emit(args[0], notify.parse_kv(slice(args, 1))));
+		case 'dispatch': {
+			let f = notify.parse_kv(slice(args, 1));
+			out(notify.dispatch(args[0], f, lib.valid_int(f.time ?? '', 0)));
+			return 0;
+		}
+		case 'scan':
+			out({ ok: true, ...notify.scan() });
+			return 0;
+		case 'watch':
+			notify.watch();
+			return 0;
+		case 'wanted': {
+			let w = notify.scan_wanted();
+			out({ ok: w });
+			return w ? 0 : 1;
+		}
+		case 'dhcp':
+			return result(notify.dhcp(args[0], args[1], args[2]));
+		case 'migrate':
+			return result(notify.migrate());
+		case 'test':
+			return result(notify.test(args[0]));
+		default:
+			return result({ ok: false, msg: NOTIFY_USAGE });
+		}
+	},
+
+	// Always exit 0, as the script did: the reply says what happened.
+	'telegram-test': (args) => {
+		out(notify.telegram_test(args));
+		return 0;
+	},
+
+	// The bot is its own process in package trafficctl-telegram (see the
+	// file): run it in the foreground, as the init script does.
+	telegram: (args) => {
+		let bot = '/usr/libexec/trafficctl/trafficctl-telegram.uc';
+		if (!lib.is_file(bot))
+			return result({ ok: false, msg: 'trafficctl-telegram is not installed' });
+		return lib.passthru([ lib.path(bot), ...args ]);
+	},
+
+	cut: (args) => reply(cut.main(args)),
+
+	portfw: (args) => reply(portfw.main(args)),
+
+	history: (args) => {
+		let r = history.main(args);
+		if (type(r.out) == 'string')
+			print(r.out);
+		else if (r.out != null)
+			out(r.out);
+		return r.rc;
+	},
+};
+
+// What a caller expecting this command's shape can still parse.
+function fallback(cmd, args, msg) {
+	if (index([ 'subnets', 'ifaces', 'bytes', 'totals', 'ratelimit-stats', 'shape-stats', 'summary' ], cmd) >= 0 ||
+	    (cmd == 'names' && args[0] == 'list') ||
+	    (cmd == 'portfw' && args[0] == 'list'))
+		return [];
+	if (cmd == 'rdns')
+		return { ip: args[0] ?? '', host: '' };
+	return { ok: false, msg };
+}
+
+let cmd = shift(ARGV);
+if (!exists(commands, cmd)) {
+	out({ ok: false, msg: 'usage: trafficctl <' + join('|', sort(keys(commands))) + '> [args]' });
+	exit(2);
+}
+let rc;
+try {
+	rc = commands[cmd](ARGV);
+}
+catch (e) {
+	warn(sprintf('trafficctl %s: %s\n%s\n', cmd, e.message, e.stacktrace?.[0]?.context ?? ''));
+	// The metrics CGI has already sent an OpenMetrics Content-Type, so a JSON
+	// body would fail the whole scrape; an empty one is a scrape with no
+	// series, and the error is on stderr (syslog under uhttpd).
+	if (cmd != 'metrics')
+		out(fallback(cmd, ARGV, 'internal error: ' + e.message));
+	rc = 1;
+}
+exit(rc);
