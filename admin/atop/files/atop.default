@@ -1,0 +1,8 @@
+LOGOPTS=""
+LOGINTERVAL=600
+LOGGENERATIONS=28
+LOGPATH=/var/log/atop
+
+# /var is tmpfs on OpenWrt: set LOGPATH to persistent storage, then
+# set ENABLED=1 and run /etc/init.d/atop restart
+ENABLED=0
