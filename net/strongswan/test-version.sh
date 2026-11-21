@@ -7,10 +7,6 @@ strongswan-charon-cmd)
 	charon-cmd --version 2>&1 | grep -F "$PKG_VERSION"
 	;;
 
-strongswan-ipsec)
-	ipsec --version 2>&1 | grep -F "$PKG_VERSION"
-	;;
-
 strongswan-pki)
 	pki --help 2>&1 | grep -F "$PKG_VERSION"
 	;;
@@ -33,7 +29,6 @@ strongswan-mod-aes|\
 strongswan-mod-agent|\
 strongswan-mod-attr|\
 strongswan-mod-attr-sql|\
-strongswan-mod-blowfish|\
 strongswan-mod-ccm|\
 strongswan-mod-chapoly|\
 strongswan-mod-cmac|\
@@ -47,7 +42,6 @@ strongswan-mod-des|\
 strongswan-mod-dhcp|\
 strongswan-mod-dnskey|\
 strongswan-mod-drbg|\
-strongswan-mod-duplicheck|\
 strongswan-mod-eap-dynamic|\
 strongswan-mod-eap-identity|\
 strongswan-mod-eap-md5|\
@@ -58,7 +52,6 @@ strongswan-mod-farp|\
 strongswan-mod-fips-prf|\
 strongswan-mod-forecast|\
 strongswan-mod-gcm|\
-strongswan-mod-gcrypt|\
 strongswan-mod-gmp|\
 strongswan-mod-gmpdh|\
 strongswan-mod-ha|\
@@ -67,7 +60,6 @@ strongswan-mod-kdf|\
 strongswan-mod-kernel-libipsec|\
 strongswan-mod-kernel-netlink|\
 strongswan-mod-ldap|\
-strongswan-mod-led|\
 strongswan-mod-load-tester|\
 strongswan-mod-lookip|\
 strongswan-mod-md4|\
@@ -90,13 +82,11 @@ strongswan-mod-revocation|\
 strongswan-mod-sha1|\
 strongswan-mod-sha2|\
 strongswan-mod-sha3|\
-strongswan-mod-smp|\
 strongswan-mod-socket-default|\
 strongswan-mod-socket-dynamic|\
 strongswan-mod-sql|\
 strongswan-mod-sqlite|\
 strongswan-mod-sshkey|\
-strongswan-mod-stroke|\
 strongswan-mod-test-vectors|\
 strongswan-mod-unity|\
 strongswan-mod-updown|\
