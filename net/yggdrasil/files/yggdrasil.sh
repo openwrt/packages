@@ -264,12 +264,16 @@ EOF
 		proto_yggdrasil_generate_jumper_config "$config" "$ygg_sock" "$ygg_cfg" > "$jumper_cfg"
 
 		config_get jumper_loglevel "$config" "jumper_loglevel"
-		sh -c "sleep 2 && exec /usr/sbin/yggdrasil-jumper --loglevel \"${jumper_loglevel:-info}\" --config \"$jumper_cfg\" 2&>1 | logger -t \"${config}-jumper\"" &
+		# Only the latest setup may start a jumper: one started for an earlier setup would
+		# otherwise wake up next to this daemon and run alongside its own jumper.
+		echo "$$" > "${jumper_cfg}.owner"
+		sh -c "sleep 2 && [ \"\$(cat \"${jumper_cfg}.owner\" 2>/dev/null)\" = \"$$\" ] && exec /usr/sbin/yggdrasil-jumper --loglevel \"${jumper_loglevel:-info}\" --config \"$jumper_cfg\" 2>&1 | logger -t \"${config}-jumper\"" &
 	fi
 }
 
 proto_yggdrasil_teardown() {
 	local interface="$1"
+	rm -f "/tmp/yggdrasil/${interface}-jumper.conf.owner"
 	proto_kill_command "$interface"
 }
 
