@@ -13,6 +13,8 @@ PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=LICENSE.txt
 PKG_MAINTAINER:=John Crispin <john@phrozen.org>
 
+PKG_FLAGS:=nonshared
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/glinet-panel-ui
