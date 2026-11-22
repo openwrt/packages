@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=LVM2
 PKG_VERSION:=2.03.44
 PKG_VERSION_DM:=1.02.218
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME).$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=https://sourceware.org/pub/lvm2 \
@@ -108,6 +108,7 @@ CONFIGURE_ARGS += \
 	--with-default-run-dir=/var/run/lvm \
 	--with-default-locking-dir=/var/lock/lvm \
 	--without-libnvme \
+	--without-liburing \
 	--disable-readline \
 	--disable-libedit \
 	--$(if $(findstring selinux,$(BUILD_VARIANT)),en,dis)able-selinux
