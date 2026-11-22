@@ -5,6 +5,7 @@ const metric_temp_celsius = gauge("node_hwmon_temp_celsius", "Hardware monitor f
 const metric_temp_crit_alarm_celsius = gauge("node_hwmon_temp_crit_alarm_celsius", "Hardware monitor for temperature (crit_alarm)");
 const metric_temp_crit_celsius = gauge("node_hwmon_temp_crit_celsius", "Hardware monitor for temperature (crit)");
 const metric_temp_max_celsius = gauge("node_hwmon_temp_max_celsius", "Hardware monitor for temperature (max)");
+const metric_fan_rpm = gauge("node_hwmon_fan_rpm", "Hardware monitor for fan revolutions per minute (input)");
 const metric_pwm = gauge("node_hwmon_pwm", "Pulse Width Modulation control");
 
 const hwmon_paths = [];
@@ -97,6 +98,15 @@ map(hwmon_paths, function(path, index) {
 		suffix: "_max",
 		metric: metric_temp_max_celsius,
 		transform: v => v * 0.001,
+	}, chip_names[index]);
+});
+
+map(hwmon_paths, function(path, index) {
+	check_sensor_type(path, {
+		regex: /^fan\d+_input$/,
+		suffix: "_input",
+		metric: metric_fan_rpm,
+		transform: v => v,
 	}, chip_names[index]);
 });
 
