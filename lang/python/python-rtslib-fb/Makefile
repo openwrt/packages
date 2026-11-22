@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-rtslib-fb
 PKG_VERSION:=2.2.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=rtslib-fb
 PYPI_SOURCE_NAME:=rtslib_fb
