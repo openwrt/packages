@@ -38,21 +38,21 @@ adb_mailtext="$(
 	printf '\n%s\n' "<strong>++
 ++ System Information ++
 ++</strong>"
-	printf '%s\n' "${sys_info:-"-"}"
+	f_html "${sys_info:-"-"}"
 	printf '\n%s\n' "<strong>++
 ++ Adblock Information ++
 ++</strong>"
-	printf '%s\n' "${adb_info:-"-"}"
+	f_html "${adb_info:-"-"}"
 	if [ -n "${rep_info}" ]; then
 		printf '\n%s\n' "<strong>++
 ++ Report Information ++
 ++</strong>"
-		printf '%s\n' "${rep_info}"
+		f_html "${rep_info}"
 	fi
 	printf '\n%s\n' "<strong>++
 ++ Logfile Information ++
 ++</strong>"
-	printf '%s\n' "${log_info:-"-"}"
+	f_html "${log_info:-"-"}"
 	printf '%s\n' "</pre></body></html>"
 )"
 
@@ -60,7 +60,10 @@ adb_mailtext="$(
 #
 if [ -x "${adb_mailcmd}" ]; then
 	adb_mailhead="From: ${adb_mailsender}\nTo: ${adb_mailreceiver}\nSubject: ${adb_mailtopic}\nReply-to: ${adb_mailsender}\nMime-Version: 1.0\nContent-Type: text/html;charset=utf-8\nContent-Disposition: inline\n\n"
-	printf '%b' "${adb_mailhead}${adb_mailtext}" 2>/dev/null | "${adb_mailcmd}" ${debug} -a "${adb_mailprofile}" "${adb_mailreceiver}" 2>>"${adb_errorlog}"
+	{
+		printf '%b' "${adb_mailhead}"
+		printf '%s\n' "${adb_mailtext}"
+	} 2>/dev/null | "${adb_mailcmd}" ${debug} -a "${adb_mailprofile}" "${adb_mailreceiver}" 2>>"${adb_errorlog}"
 	mail_rc="${?}"
 	if [ "${mail_rc}" = "0" ]; then
 		f_log "info" "mail successfully sent to '${adb_mailreceiver}'"

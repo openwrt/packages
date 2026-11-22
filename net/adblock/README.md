@@ -44,22 +44,19 @@ Support of the following fully pre-configured domain blocklist feeds (free for p
 
 | Feed                | Enabled | Size | Focus            | Information                                                                       |
 | :------------------ | :-----: | :--- | :--------------- | :-------------------------------------------------------------------------------- |
-| 1Hosts              |         | VAR  | compilation      | [Link](https://github.com/badmojr/1Hosts)                                         |
 | adguard             |    x    | L    | general          | [Link](https://adguard.com)                                                       |
 | adguard_tracking    |    x    | L    | tracking         | [Link](https://github.com/AdguardTeam/cname-trackers)                             |
-| android_tracking    |         | S    | tracking         | [Link](https://github.com/Perflyst/PiHoleBlocklist)                               |
 | andryou             |         | L    | compilation      | [Link](https://gitlab.com/andryou/block/-/blob/master/readme.md)                  |
 | anti_ad             |         | L    | compilation      | [Link](https://github.com/privacy-protection-tools/anti-AD/blob/master/README.md) |
-| anudeep             |         | M    | compilation      | [Link](https://github.com/anudeepND/blacklist)                                    |
 | bitcoin             |         | S    | mining           | [Link](https://github.com/hoshsadiq/adblock-nocoin-list)                          |
 | certpl              |    x    | L    | phishing         | [Link](https://cert.pl/en/warning-list/)                                          |
 | cpbl                |         | XL   | compilation      | [Link](https://github.com/bongochong/CombinedPrivacyBlockLists)                   |
 | disconnect          |         | S    | general          | [Link](https://disconnect.me)                                                     |
 | divested            |         | XXL  | compilation      | [Link](https://divested.dev/pages/dnsbl)                                          |
 | doh_blocklist       |         | S    | doh_server       | [Link](https://github.com/dibdot/DoH-IP-blocklists)                               |
-| firetv_tracking     |         | S    | tracking         | [Link](https://github.com/Perflyst/PiHoleBlocklist)                               |
 | games_tracking      |         | S    | tracking         | [Link](https://www.gameindustry.eu)                                               |
 | hagezi              |         | VAR  | compilation      | [Link](https://github.com/hagezi/dns-blocklists)                                  |
+| hagezi_nrd          |         | XXL  | dga              | [Link](https://github.com/hagezi/nrd)                                             |
 | hblock              |         | XL   | compilation      | [Link](https://hblock.molinero.dev)                                               |
 | ipfire_dbl          |         | VAR  | compilation      | [Link](https://www.ipfire.org/dbl)                                                |
 | oisd_big            |         | XXL  | general          | [Link](https://oisd.nl)                                                           |
@@ -68,7 +65,6 @@ Support of the following fully pre-configured domain blocklist feeds (free for p
 | oisd_small          |         | L    | general          | [Link](https://oisd.nl)                                                           |
 | phishing_army       |         | S    | phishing         | [Link](https://phishing.army)                                                     |
 | smarttv_tracking    |         | S    | tracking         | [Link](https://github.com/Perflyst/PiHoleBlocklist)                               |
-| spam404             |         | S    | general          | [Link](https://github.com/Dawsey21)                                               |
 | stevenblack         |         | VAR  | compilation      | [Link](https://github.com/StevenBlack/hosts)                                      |
 | stopforumspam       |         | S    | spam             | [Link](https://www.stopforumspam.com)                                             |
 | utcapitole          |         | VAR  | general          | [Link](https://dsi.ut-capitole.fr/blacklists/index_en.php)                        |
@@ -77,7 +73,8 @@ Support of the following fully pre-configured domain blocklist feeds (free for p
 | winspy              |         | S    | win_telemetry    | [Link](https://github.com/crazy-max/WindowsSpyBlocker)                            |
 | yoyo                |         | S    | general          | [Link](https://pgl.yoyo.org/adservers)                                            |
 
-**Please note:** Feeds marked with size **VAR** (`1Hosts`, `hagezi`, `ipfire_dbl`, `stevenblack`, `utcapitole`) additionally require a category selection via the options `adb_hst_feed`, `adb_hag_feed`, `adb_ipf_feed`, `adb_stb_feed` and `adb_utc_feed` (or via the LuCI feed configuration). Without a category the feed is skipped during processing.  
+**Please note:** Feeds marked with size **VAR** (`hagezi`, `ipfire_dbl`, `stevenblack`, `utcapitole`) additionally require a category selection via the options `adb_hag_feed`, `adb_ipf_feed`, `adb_stb_feed` and `adb_utc_feed` (or via the LuCI feed configuration). Without a category the feed is skipped during processing.  
+**Please note:** The `hagezi_nrd` feed is fixed to the entropy NRD/DGA list of the past 7 days (newly registered domains generated by Domain Generation Algorithms, ~600k entries), it is only suitable for x86 or comparable devices.  
 
 * List of supported and fully pre-configured adblock sources, already active sources are pre-selected.
   <b><em>To avoid OOM errors, please do not select too many lists!</em></b>
@@ -237,7 +234,6 @@ The `report` sub-command accepts an output mode: `cli` (default, human-readable 
 | adb_nftbridge        | -, not set                         | enables a temporary DNS bridge to an external DNS resolver during local DNS restarts               |
 | adb_bridgednsv4	     | -, not set                         | external IPv4 DNS resolver used during bridging                                                    |
 | adb_bridgednsv6	     | -, not set                         | external IPv6 DNS resolver used during bridging                                                    |
-| adb_hst_feed         | -, not set                         | category selection for the `1hosts` feed (required to enable it)                                   |
 | adb_hag_feed         | -, not set                         | category selection for the `hagezi` feed (required to enable it)                                   |
 | adb_ipf_feed         | -, not set                         | category selection for the `ipfire_dbl` feed (required to enable it)                               |
 | adb_stb_feed         | -, not set                         | category selection for the `stevenblack` feed (required to enable it)                              |
@@ -285,7 +281,7 @@ root@blackhole:~# /etc/init.d/adblock status
   + frontend_ver    : 4.5.2-r4
   + backend_ver     : 4.5.2-r4
   + blocked_domains : 888 135
-  + active_feeds    : 1hosts, adguard, adguard_tracking, bitcoin, certpl, doh_blocklist, hagezi, ipfire_dbl, phishing_army, smarttv_tracking, stevenblack, winspy
+  + active_feeds    : adguard, adguard_tracking, bitcoin, certpl, doh_blocklist, hagezi, ipfire_dbl, phishing_army, smarttv_tracking, stevenblack, winspy
   + dns_backend     : unbound (1.24.2-r1), /mnt/data/adblock/backup, 346.57 MB
   + run_ifaces      : trigger: wan, report: br-lan
   + run_information : base: /mnt/data/adblock, dns: /var/lib/unbound, backup: /mnt/data/adblock/backup, report: /mnt/data/adblock/report, error: /dev/null
@@ -361,19 +357,19 @@ To make this work, adblock uses the following external components:
 * [Leaflet](https://leafletjs.com/) is a lightweight open-source JavaScript library for interactive maps
 * The free and quite fast [IP Geolocation API](https://ip-api.com/) to resolve the required IP/geolocation information (max. 45 blocked Domains per request)
 
+Please note: the free tier of ip-api.com is only available via plain HTTP, so your uplink IPs and the blocked domains are transmitted unencrypted to this third party service. Invalid or failed lookups are skipped.
+
 The basemap is no longer pulled from a tile service. CARTO started to require an API key for the raster basemaps at basemaps.cartocdn.com and watermarks every unauthenticated tile request, and a key is bound to a single customer, so it cannot be shipped with a package that lands on every installation. adblock therefore draws the basemap from country outlines that come with `luci-app-adblock`: [Natural Earth](https://www.naturalearthdata.com) 1:110m, public domain and stripped of all attributes. The map page issues no request to a third party, works without a WAN connection and leaks no part of the admin session to a CDN. The outlines are enough to locate an IP, so the map does not zoom in beyond level 6 and labels the continents rather than the countries.
 
 **Optional: a higher detail basemap**
 
-The shipped 1:110m outlines are coarse around Scandinavia, the Greek islands and the smaller island states. If you want sharper coastlines, build the 1:50m variant with [mapshaper](https://github.com/mbloch/mapshaper) and drop it next to the shipped file. LuCI looks for it on every map run and falls back to the shipped outlines when it is missing, no config option is involved:
+The shipped 1:110m outlines are coarse around Scandinavia, the Greek islands and the smaller island states. For sharper coastlines, prebuilt 1:50m variants are available at [json-basemaps](https://github.com/dibdot/json-basemaps): `normal` (~325 kB, larger islands) and `fine` (~750 kB, nearly all smaller islands). LuCI looks for the optional `world-50m.json` next to the shipped file on every map run and falls back to the shipped outlines when it is missing, no config option is involved. To install e.g. the `normal` variant, run on the router:
 
 ```
-curl -sSLo ne50.geojson https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/geojson/ne_50m_admin_0_countries.geojson
-mapshaper ne50.geojson -filter-fields -simplify 5% keep-shapes -o force precision=0.01 format=geojson world-50m.json
-scp world-50m.json root@openwrt:/www/luci-static/resources/view/adblock/
+uclient-fetch -O /www/luci-static/resources/view/adblock/world-50m.json https://raw.githubusercontent.com/dibdot/json-basemaps/main/normal/world-50m.json
 ```
 
-The result is roughly 105 kB, about three times the shipped file. This file is not part of any package, so it is removed on sysupgrade unless you add its path to `/etc/sysupgrade.conf`, and it stays behind when `luci-app-adblock` is uninstalled.
+For the `fine` variant replace `normal` with `fine` in the URL, to go back to the shipped outlines simply remove the file. This file is not part of any package, so it is removed on sysupgrade unless you add its path to `/etc/sysupgrade.conf`, and it stays behind when `luci-app-adblock` is uninstalled.
 
 **DNS reporting, limit the tcpdump capture**  
 `adb_repfilter` takes a regular tcpdump/BPF expression which is logically ANDed to the internal reporting port filter. It narrows the capture for every `adb_repiface` setting, not just for `any`, e.g. to skip a single noisy client or to limit the report to certain network segments.
@@ -536,7 +532,7 @@ Examples:
 * `feed 1 ,` — comma-separated source, domain in the first field
 
 **Category-based feeds (size `VAR`)**  
-The feeds marked `VAR` in the feed table (`1hosts`, `hagezi`, `ipfire_dbl`, `stevenblack`, `utcapitole`) are built-in feeds that require an additional category selection via the dedicated options `adb_hst_feed`, `adb_hag_feed`, `adb_ipf_feed`, `adb_stb_feed` and `adb_utc_feed` (or the LuCI feed configuration). For these, the `url` is a **base URL** to which the selected category is appended at download time. This category mechanism is wired to those specific feed names in the backend, so it cannot be reused for arbitrary new feeds — a custom feed you add yourself should point `url` at a single, complete list URL.
+The feeds marked `VAR` in the feed table (`hagezi`, `ipfire_dbl`, `stevenblack`, `utcapitole`) are built-in feeds that require an additional category selection via the dedicated options `adb_hag_feed`, `adb_ipf_feed`, `adb_stb_feed` and `adb_utc_feed` (or the LuCI feed configuration). For these, the `url` is a **base URL** to which the selected category is appended at download time. This category mechanism is wired to those specific feed names in the backend, so it cannot be reused for arbitrary new feeds — a custom feed you add yourself should point `url` at a single, complete list URL.
 
 After editing `/etc/adblock/adblock.custom.feeds`, reload adblock (`/etc/init.d/adblock reload`) and check the `Log View` tab (or `logread -e adblock-`). With `adb_debug` enabled, a malformed JSON object or a wrong column/separator typically shows up there as a feed that produces zero domains.
 

@@ -219,6 +219,12 @@ f_dump() {
 	fi
 }
 
+# escape html special characters, the output ends with a newline
+#
+f_html() {
+	printf '%s\n' "${1}" | "${adb_sedcmd}" 's/&/\&amp;/g;s/</\&lt;/g;s/>/\&gt;/g'
+}
+
 # check & set environment
 #
 f_env() {
@@ -1995,13 +2001,6 @@ f_main() {
 		# category handling for feeds with fixed categories
 		#
 		case "${src_name}" in
-		"1hosts")
-			src_cat="${adb_hst_feed}"
-			if [ -z "${src_cat}" ]; then
-				f_log "info" "feed '${src_name}' requires category configuration, skipping"
-				continue
-			fi
-			;;
 		"hagezi")
 			src_cat="${adb_hag_feed}"
 			if [ -z "${src_cat}" ]; then
@@ -2103,15 +2102,17 @@ f_main() {
 						src_rc="${?}"
 						if [ "${src_rc}" = "0" ] && [ -s "${src_tmparchive}" ]; then
 							src_suffix="${adb_src_suffix_utcapitole:-"domains"}"
-							src_entries="$(tar -tzf "${src_tmparchive}" 2>>"${adb_errorlog}" | "${adb_awkcmd}" \
+							src_entries="${src_tmparchive}.list"
+							tar -tzf "${src_tmparchive}" 2>>"${adb_errorlog}" | "${adb_awkcmd}" \
 								-v cats="${src_cat}" -v sfx="${src_suffix}" '
 									BEGIN { n = split(cats, c, " ") }
-									{ for (i = 1; i <= n; i++) if ($0 ~ "(^|/)" c[i] "/" sfx "$") print }')"
-							if [ -n "${src_entries}" ]; then
-								tar -xOzf "${src_tmparchive}" ${src_entries} 2>>"${adb_errorlog}" >"${src_tmpload}"
+									/^-/ { next }
+									{ for (i = 1; i <= n; i++) if ($0 ~ "(^|/)" c[i] "/" sfx "$") print }' >"${src_entries}"
+							if [ -s "${src_entries}" ]; then
+								tar -xOzf "${src_tmparchive}" -T "${src_entries}" 2>>"${adb_errorlog}" >"${src_tmpload}"
 								src_rc="${?}"
 							fi
-							: >"${src_tmparchive}"
+							: >"${src_tmparchive}" >"${src_entries}"
 						fi
 					fi
 				else
@@ -2156,6 +2157,17 @@ f_main() {
 		f_log "err" "dns backend restart with adblock blocklist failed"
 	fi
 	f_rmtemp
+}
+
+# geoip lookup for the map, only a valid json object with a successful lookup is passed through
+#
+f_geo() {
+	local geo feed="${1}" query="${2}"
+
+	geo="$("${adb_fetchcmd}" ${adb_geoparm} "${adb_geourl}/${query}" 2>>"${adb_errorlog}")"
+	if [ "$(printf '%s' "${geo}" | "${adb_jsoncmd}" -ql1 -e '@.status' 2>>"${adb_errorlog}")" = "success" ]; then
+		printf ',{"%s": %s}\n' "${feed}" "${geo}"
+	fi
 }
 
 # trace dns queries via tcpdump and prepare a report
@@ -2435,8 +2447,7 @@ f_report() {
 			printf '%s' ",[{}" >"${map_jsn}"
 			for ip in ${ip_v4} ${ip_v6}; do
 				(
-					"${adb_fetchcmd}" ${adb_geoparm} "${adb_geourl}/${ip}" 2>>"${adb_errorlog}" |
-						"${adb_awkcmd}" -v feed="homeIP" '{printf ",{\"%s\": %s}\n",feed,$0}' >"${map_jsn}.${cnt}"
+					f_geo "homeIP" "${ip}" >"${map_jsn}.${cnt}"
 				) &
 				[ "${cnt}" -ge "${adb_cores}" ] && wait -n
 				cnt="$((cnt + 1))"
@@ -2459,8 +2470,7 @@ f_report() {
 							*)
 								map_seen="${map_seen} ${domain} "
 								(
-									"${adb_fetchcmd}" ${adb_geoparm} "${adb_geourl}/${domain}" 2>>"${adb_errorlog}" |
-										"${adb_awkcmd}" -v feed="${domain}" '{printf ",{\"%s\": %s}\n",feed,$0}' >"${map_jsn}.${cnt}"
+									f_geo "${domain}" "${domain}" >"${map_jsn}.${cnt}"
 								) &
 								[ "${cnt}" -ge "${adb_cores}" ] && wait -n
 								cnt="$((cnt + 1))"

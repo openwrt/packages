@@ -16,18 +16,9 @@ nft_authorized="0"
 # parse query
 #
 query_str="${QUERY_STRING}"
-query_mac="${query_str#*mac=}"
-query_mac="${query_mac%%&*}"
 query_mode="${query_str#*mode=}"
 query_mode="${query_mode%%&*}"
-[ "${query_mac}" = "${query_str}" ] && query_mac=""
 [ "${query_mode}" = "${query_str}" ] && query_mode=""
-
-# URL decode helper
-#
-urldecode() {
-	printf '%b' "${1//%/\\x}"
-}
 
 # lowercase helper
 #
@@ -43,14 +34,10 @@ tolower() {
 	printf '%s' "${low}"
 }
 
-# determine MAC if not provided
+# determine the MAC of the requesting device, never trust a MAC from the query string
 #
-if [ -z "${query_mac}" ]; then
-	query_ip="${REMOTE_ADDR}"
-	query_mac="$(ip neigh show 2>/dev/null | awk -v ip="${query_ip}" '$1==ip {print $5; exit}' 2>/dev/null)"
-else
-	query_mac="$(urldecode "${query_mac}")"
-fi
+query_ip="${REMOTE_ADDR}"
+query_mac="$(ip neigh show 2>/dev/null | awk -v ip="${query_ip}" '$1==ip {print $5; exit}' 2>/dev/null)"
 
 # validate MAC address
 #
@@ -231,7 +218,7 @@ if [ -z "${query_mode}" ] && [ -z "${remaining}" ]; then
 	printf '%s\n' "<script>stopRefresh();</script>
 		<div class=\"msg ok\">
 			This device currently does not bypass ad blocking<br>
-			<a class=\"btn\" href=\"?mac=${query_mac}&mode=renew\">Bypass</a>
+			<a class=\"btn\" href=\"?mode=renew\">Bypass</a>
 		</div>
 	</div></body></html>"
 	exit 0
@@ -247,7 +234,7 @@ if [ -z "${remaining}" ] && [ "${query_mode}" = "renew" ]; then
 		</div>
 	</div></body></html>"
 	nft add element inet adblock mac_remote "{ ${query_mac//[!0-9a-f:]/} }" >/dev/null 2>&1
-	printf '%s\n' "<script>window.location.href='?mac=${query_mac}';</script>"
+	printf '%s\n' "<script>window.location.href='?';</script>"
 	exit 0
 fi
 
