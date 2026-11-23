@@ -87,5 +87,9 @@ assert calls, "mount_configfs() did not try to mount configfs"
 cmd = calls[0] if isinstance(calls[0], str) else " ".join(calls[0])
 assert "{" not in cmd and "/sys/kernel/config" in cmd, f"Bad mount command: {cmd!r}"
 
+# RTSRoot() needs /etc/target as its dbroot; the package creates it.
+import os
+assert os.path.isdir("/etc/target"), "/etc/target is missing"
+
 sys.exit(0)
 EOF
