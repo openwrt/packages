@@ -28,8 +28,8 @@ Assisted-by: LLM
 Signed-off-by: Arun Iyengar <aiyengar1990@gmail.com>
 Link: https://code.ffmpeg.org/FFmpeg/FFmpeg/pulls/20847#issuecomment-83194
 ---
- libavcodec/v4l2_request.c | 65 ++++++++++++++++++++++++++++++++++++---
- libavcodec/v4l2_request.h |  3 ++
+ libavcodec/v4l2_request.c | 65 ++++++++++++++++++++++++++++++++++++++++++----
+ libavcodec/v4l2_request.h |  3 +++
  2 files changed, 63 insertions(+), 5 deletions(-)
 
 --- a/libavcodec/v4l2_request.c

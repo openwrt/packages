@@ -1,0 +1,1816 @@
+From f5058c6f7cb499c5ce392673531c6972f84d7d9d Mon Sep 17 00:00:00 2001
+From: Jernej Skrabec <jernej.skrabec@gmail.com>
+Date: Wed, 7 Oct 2026 20:19:00 +0200
+Subject: [PATCH 5/5] avcodec: add V4L2 Request API VC-1/WMV3 hwaccel
+
+Add a stateless V4L2 Request API hwaccel for VC-1 and WMV3 (SMPTE 421M
+Simple, Main and Advanced profiles), for the V4L2_PIX_FMT_VC1_SLICE
+pixel format and the VC-1 stateless controls:
+
+  V4L2_CID_STATELESS_VC1_SEQUENCE
+  V4L2_CID_STATELESS_VC1_ENTRYPOINT_HEADER
+  V4L2_CID_STATELESS_VC1_PICTURE_LAYER
+  V4L2_CID_STATELESS_VC1_BITPLANES
+  V4L2_CID_STATELESS_VC1_SLICE_PARAMS (if the driver has it)
+
+One request is queued per coded picture, that is, per frame or per
+field of a field-interlaced frame. The output buffer holds the picture
+as in the bitstream: with its start codes and emulation prevention
+bytes for the Advanced profile, as carried by the container for the
+Simple and Main profiles.
+
+The controls describe the reference pictures explicitly (picture types,
+frame coding mode, range reduction, and the intensity compensation
+which earlier pictures applied to each reference field). The decoder
+only keeps the intensity compensation as look-up tables, so the hwaccel
+tracks the syntax elements itself, next to the controls of each picture.
+
+Skipped pictures are not queued: the frame is made to share the buffers
+of its reference, which is thereby output again. Each picture of a
+packet is queued without the BDUs which follow it.
+
+Streams of the pre-release bitstream formats which STRUCT_C announces
+(RES_X8, a clear RES_FASTTX) are refused; RES_RTM is passed as a flag
+and left to the driver.
+
+Streams which need range expansion (Main profile RANGERED) or range
+mapping (Advanced profile) are left to software, because the capture
+buffer holds the picture before those output processes and nothing
+applies them yet.
+
+A reduced resolution (RESPIC) picture of a MULTIRES sequence is decoded
+at its coded size into the top-left corner of the frame, as the kernel
+API specifies; its bitplanes are passed at that size. Upsampling it,
+which SMPTE 421M leaves to the implementation, is not done yet (the
+software decoder does not handle RESPIC at all).
+
+The controls are not part of the kernel headers yet: a private copy of
+their definitions is in v4l2-stateless-vc1.h.
+
+Signed-off-by: Jernej Skrabec <jernej.skrabec@gmail.com>
+---
+OpenWrt: patch 5/5 of LibreELEC's
+packages/multimedia/ffmpeg/patches/v4l2-request/0002-v4l2-request-vc1.patch
+(LibreELEC commit d38b323eea). Not in FFmpeg 9.1.
+
+ configure                       |    3 +
+ libavcodec/Makefile             |    3 +-
+ libavcodec/hwaccels.h           |    2 +
+ libavcodec/v4l2-stateless-vc1.h |  552 +++++++++++++++++++
+ libavcodec/v4l2_request_vc1.c   | 1105 ++++++++++++++++++++++++++++++++++++++
+ libavcodec/vc1dec.c             |    9 +
+ 6 files changed, 1673 insertions(+), 1 deletion(-)
+ create mode 100644 libavcodec/v4l2-stateless-vc1.h
+ create mode 100644 libavcodec/v4l2_request_vc1.c
+
+--- a/configure
++++ b/configure
+@@ -3502,6 +3502,8 @@ vc1_nvdec_hwaccel_deps="nvdec"
+ vc1_nvdec_hwaccel_select="vc1_decoder"
+ vc1_nvdec_cuarray_hwaccel_deps="nvdec ffnvcodec_cuarray"
+ vc1_nvdec_cuarray_hwaccel_select="vc1_decoder"
++vc1_v4l2request_hwaccel_deps="v4l2_request"
++vc1_v4l2request_hwaccel_select="vc1_decoder"
+ vc1_vaapi_hwaccel_deps="vaapi"
+ vc1_vaapi_hwaccel_select="vc1_decoder"
+ vc1_vdpau_hwaccel_deps="vdpau"
+@@ -3544,6 +3546,7 @@ wmv3_d3d12va_hwaccel_select="vc1_d3d12va
+ wmv3_dxva2_hwaccel_select="vc1_dxva2_hwaccel"
+ wmv3_nvdec_hwaccel_select="vc1_nvdec_hwaccel"
+ wmv3_nvdec_cuarray_hwaccel_select="vc1_nvdec_cuarray_hwaccel"
++wmv3_v4l2request_hwaccel_select="vc1_v4l2request_hwaccel"
+ wmv3_vaapi_hwaccel_select="vc1_vaapi_hwaccel"
+ wmv3_vdpau_hwaccel_select="vc1_vdpau_hwaccel"
+ 
+--- a/libavcodec/Makefile
++++ b/libavcodec/Makefile
+@@ -1115,6 +1115,7 @@ OBJS-$(CONFIG_VC1_D3D12VA_HWACCEL)
+ OBJS-$(CONFIG_VC1_NVDEC_HWACCEL)          += nvdec_vc1.o
+ OBJS-$(CONFIG_VC1_NVDEC_CUARRAY_HWACCEL)  += nvdec_vc1.o
+ OBJS-$(CONFIG_VC1_QSV_HWACCEL)            += qsvdec.o
++OBJS-$(CONFIG_VC1_V4L2REQUEST_HWACCEL)    += v4l2_request_vc1.o
+ OBJS-$(CONFIG_VC1_VAAPI_HWACCEL)          += vaapi_vc1.o
+ OBJS-$(CONFIG_VC1_VDPAU_HWACCEL)          += vdpau_vc1.o
+ OBJS-$(CONFIG_VP8_NVDEC_HWACCEL)          += nvdec_vp8.o
+@@ -1387,7 +1388,7 @@ SKIPHEADERS-$(CONFIG_VIDEOTOOLBOX)     +
+ SKIPHEADERS-$(CONFIG_VULKAN)           += ffv1_vulkan.h prores_vulkan.h vulkan_video.h \
+                                           vulkan_encode.h vulkan_decode.h
+ SKIPHEADERS-$(CONFIG_V4L2_M2M)         += v4l2_buffers.h v4l2_context.h v4l2_m2m.h
+-SKIPHEADERS-$(CONFIG_V4L2_REQUEST)     += v4l2_request.h
++SKIPHEADERS-$(CONFIG_V4L2_REQUEST)     += v4l2_request.h v4l2-stateless-vc1.h
+ SKIPHEADERS-$(CONFIG_ZLIB)             += zlib_wrapper.h
+ 
+ TESTPROGS = avcodec                                                     \
+--- a/libavcodec/hwaccels.h
++++ b/libavcodec/hwaccels.h
+@@ -88,6 +88,7 @@ extern const struct FFHWAccel ff_vc1_d3d
+ extern const struct FFHWAccel ff_vc1_dxva2_hwaccel;
+ extern const struct FFHWAccel ff_vc1_nvdec_hwaccel;
+ extern const struct FFHWAccel ff_vc1_nvdec_cuarray_hwaccel;
++extern const struct FFHWAccel ff_vc1_v4l2request_hwaccel;
+ extern const struct FFHWAccel ff_vc1_vaapi_hwaccel;
+ extern const struct FFHWAccel ff_vc1_vdpau_hwaccel;
+ extern const struct FFHWAccel ff_vp8_nvdec_hwaccel;
+@@ -112,6 +113,7 @@ extern const struct FFHWAccel ff_wmv3_d3
+ extern const struct FFHWAccel ff_wmv3_dxva2_hwaccel;
+ extern const struct FFHWAccel ff_wmv3_nvdec_hwaccel;
+ extern const struct FFHWAccel ff_wmv3_nvdec_cuarray_hwaccel;
++extern const struct FFHWAccel ff_wmv3_v4l2request_hwaccel;
+ extern const struct FFHWAccel ff_wmv3_vaapi_hwaccel;
+ extern const struct FFHWAccel ff_wmv3_vdpau_hwaccel;
+ 
+--- /dev/null
++++ b/libavcodec/v4l2-stateless-vc1.h
+@@ -0,0 +1,552 @@
++/* SPDX-License-Identifier: ((GPL-2.0+ WITH Linux-syscall-note) OR BSD-3-Clause) */
++/*
++ * Stateless VC-1 decoder controls (SMPTE 421M Simple, Main and Advanced profiles).
++ *
++ * Private copy of the definitions proposed for include/uapi/linux/videodev2.h
++ * and include/uapi/linux/v4l2-controls.h, for use until they are part of the
++ * kernel headers. It must be kept in sync with the kernel patches. Everything
++ * here is skipped when the kernel headers already provide the definitions.
++ */
++
++#ifndef AVCODEC_V4L2_STATELESS_VC1_H
++#define AVCODEC_V4L2_STATELESS_VC1_H
++
++#include <linux/videodev2.h>
++
++#ifndef V4L2_PIX_FMT_VC1_SLICE
++#define V4L2_PIX_FMT_VC1_SLICE v4l2_fourcc('S', 'V', 'C', '1') /* VC-1 parsed slice data */
++#endif
++
++#ifndef V4L2_CID_STATELESS_VC1_SEQUENCE
++
++#define V4L2_CTRL_TYPE_VC1_SEQUENCE		0x0290
++#define V4L2_CTRL_TYPE_VC1_ENTRYPOINT_HEADER	0x0291
++#define V4L2_CTRL_TYPE_VC1_PICTURE_LAYER	0x0292
++#define V4L2_CTRL_TYPE_VC1_BITPLANES		0x0293
++#define V4L2_CTRL_TYPE_VC1_SLICE_PARAMS		0x0294
++
++/* Stateless VC-1 controls */
++
++#define V4L2_VC1_PROFILE_SIMPLE				0
++#define V4L2_VC1_PROFILE_MAIN				1
++#define V4L2_VC1_PROFILE_COMPLEX			2
++#define V4L2_VC1_PROFILE_ADVANCED			3
++
++#define V4L2_VC1_SEQUENCE_FLAG_PULLDOWN			0x0001
++#define V4L2_VC1_SEQUENCE_FLAG_INTERLACE		0x0002
++#define V4L2_VC1_SEQUENCE_FLAG_TFCNTRFLAG		0x0004
++#define V4L2_VC1_SEQUENCE_FLAG_FINTERPFLAG		0x0008
++#define V4L2_VC1_SEQUENCE_FLAG_PSF			0x0010
++#define V4L2_VC1_SEQUENCE_FLAG_MULTIRES			0x0020
++#define V4L2_VC1_SEQUENCE_FLAG_SYNCMARKER		0x0040
++#define V4L2_VC1_SEQUENCE_FLAG_RANGERED			0x0080
++#define V4L2_VC1_SEQUENCE_FLAG_POSTPROCFLAG		0x0100
++#define V4L2_VC1_SEQUENCE_FLAG_RES_RTM			0x0200
++
++#define V4L2_CID_STATELESS_VC1_SEQUENCE	(V4L2_CID_CODEC_STATELESS_BASE + 600)
++/**
++ * struct v4l2_ctrl_vc1_sequence - VC-1 sequence layer parameters
++ *
++ * For the Advanced profile the members match the syntax elements of the
++ * sequence layer, as specified by section 6.1 "Sequence-level Syntax and
++ * Semantics" of SMPTE 421M. For the Simple and Main profiles there is no
++ * sequence layer in the bitstream and the members are taken from the
++ * STRUCT_C and STRUCT_A sequence layer data structures specified by Annex J
++ * and Annex L of SMPTE 421M.
++ *
++ * @profile: PROFILE syntax element, see V4L2_VC1_PROFILE_{}.
++ * @level: LEVEL syntax element. Advanced profile only, zero otherwise.
++ * @colordiff_format: COLORDIFF_FORMAT syntax element. The only value defined
++ * by SMPTE 421M is 1 (4:2:0), which shall also be used for the Simple and Main
++ * profiles.
++ * @maxbframes: MAXBFRAMES syntax element. Simple and Main profiles only, zero
++ * otherwise.
++ * @frmrtq_postproc: FRMRTQ_POSTPROC syntax element.
++ * @bitrtq_postproc: BITRTQ_POSTPROC syntax element.
++ * @max_coded_width: maximum coded width of the pictures of the sequence, in
++ * luma samples. For the Advanced profile this is (MAX_CODED_WIDTH + 1) * 2,
++ * for the Simple and Main profiles this is HORIZ_SIZE of STRUCT_A.
++ * @max_coded_height: maximum coded height of the pictures of the sequence, in
++ * luma samples. For the Advanced profile this is (MAX_CODED_HEIGHT + 1) * 2,
++ * for the Simple and Main profiles this is VERT_SIZE of STRUCT_A.
++ * @reserved: padding field. Should be zeroed by applications.
++ * @flags: see V4L2_VC1_SEQUENCE_FLAG_{}. V4L2_VC1_SEQUENCE_FLAG_RES_RTM is the
++ * last bit of STRUCT_C (Simple and Main profiles): it is 1 in the bitstreams
++ * which conform to SMPTE 421M and 0 in pre-release bitstreams, whose
++ * macroblock layer is coded differently.
++ */
++struct v4l2_ctrl_vc1_sequence {
++	__u8	profile;
++	__u8	level;
++	__u8	colordiff_format;
++	__u8	maxbframes;
++	__u8	frmrtq_postproc;
++	__u8	bitrtq_postproc;
++	__u16	max_coded_width;
++	__u16	max_coded_height;
++	__u8	reserved[2];
++	__u32	flags;
++};
++
++#define V4L2_VC1_QUANTIZER_IMPLICIT			0
++#define V4L2_VC1_QUANTIZER_EXPLICIT			1
++#define V4L2_VC1_QUANTIZER_NON_UNIFORM			2
++#define V4L2_VC1_QUANTIZER_UNIFORM			3
++
++#define V4L2_VC1_ENTRYPOINT_HEADER_FLAG_BROKEN_LINK	0x001
++#define V4L2_VC1_ENTRYPOINT_HEADER_FLAG_CLOSED_ENTRY	0x002
++#define V4L2_VC1_ENTRYPOINT_HEADER_FLAG_PANSCAN		0x004
++#define V4L2_VC1_ENTRYPOINT_HEADER_FLAG_REFDIST		0x008
++#define V4L2_VC1_ENTRYPOINT_HEADER_FLAG_LOOPFILTER	0x010
++#define V4L2_VC1_ENTRYPOINT_HEADER_FLAG_FASTUVMC	0x020
++#define V4L2_VC1_ENTRYPOINT_HEADER_FLAG_EXTENDED_MV	0x040
++#define V4L2_VC1_ENTRYPOINT_HEADER_FLAG_VSTRANSFORM	0x080
++#define V4L2_VC1_ENTRYPOINT_HEADER_FLAG_OVERLAP		0x100
++#define V4L2_VC1_ENTRYPOINT_HEADER_FLAG_EXTENDED_DMV	0x200
++#define V4L2_VC1_ENTRYPOINT_HEADER_FLAG_RANGE_MAPY	0x400
++#define V4L2_VC1_ENTRYPOINT_HEADER_FLAG_RANGE_MAPUV	0x800
++
++#define V4L2_CID_STATELESS_VC1_ENTRYPOINT_HEADER (V4L2_CID_CODEC_STATELESS_BASE + 601)
++/**
++ * struct v4l2_ctrl_vc1_entrypoint_header - VC-1 entry-point header parameters
++ *
++ * For the Advanced profile the members match the syntax elements of the
++ * entry-point header, as specified by section 6.2 "Entry-point Header Syntax
++ * and Semantics" of SMPTE 421M, and apply to all the pictures of the
++ * entry-point segment. For the Simple and Main profiles there is no entry-point
++ * layer; the members carry the equivalent syntax elements of STRUCT_C and the
++ * coded picture size of STRUCT_A (Annex J and Annex L of SMPTE 421M), and the
++ * Advanced profile only members and flags shall be zero.
++ *
++ * @dquant: DQUANT syntax element.
++ * @quantizer: QUANTIZER syntax element, see V4L2_VC1_QUANTIZER_{}.
++ * @coded_width: coded width of the pictures, in luma samples. For the Advanced
++ * profile this is (CODED_WIDTH + 1) * 2 if CODED_SIZE_FLAG is set, the maximum
++ * coded width of the sequence otherwise.
++ * @coded_height: coded height of the pictures, in luma samples. For the
++ * Advanced profile this is (CODED_HEIGHT + 1) * 2 if CODED_SIZE_FLAG is set,
++ * the maximum coded height of the sequence otherwise.
++ * @range_mapy: RANGE_MAPY syntax element. Advanced profile only, valid if
++ * V4L2_VC1_ENTRYPOINT_HEADER_FLAG_RANGE_MAPY is set.
++ * @range_mapuv: RANGE_MAPUV syntax element. Advanced profile only, valid if
++ * V4L2_VC1_ENTRYPOINT_HEADER_FLAG_RANGE_MAPUV is set.
++ * @flags: see V4L2_VC1_ENTRYPOINT_HEADER_FLAG_{}.
++ */
++struct v4l2_ctrl_vc1_entrypoint_header {
++	__u8	dquant;
++	__u8	quantizer;
++	__u16	coded_width;
++	__u16	coded_height;
++	__u8	range_mapy;
++	__u8	range_mapuv;
++	__u32	flags;
++};
++
++#define V4L2_VC1_DQPROFILE_ALL_FOUR_EDGES		0
++#define V4L2_VC1_DQPROFILE_DOUBLE_EDGES			1
++#define V4L2_VC1_DQPROFILE_SINGLE_EDGE			2
++#define V4L2_VC1_DQPROFILE_ALL_MBS			3
++
++#define V4L2_VC1_VOPDQUANT_FLAG_DQUANTFRM		0x1
++#define V4L2_VC1_VOPDQUANT_FLAG_DQBILEVEL		0x2
++
++/**
++ * struct v4l2_vc1_vopdquant - VC-1 VOPDQUANT parameters
++ *
++ * The members match the VOPDQUANT syntax elements of the picture layer, as
++ * specified by section 7.1.1.31 of SMPTE 421M. All members are zero if
++ * VOPDQUANT is not present in the picture header.
++ *
++ * @altpquant: alternative picture quantizer scale ALTPQUANT, derived from the
++ * PQDIFF and ABSPQ syntax elements.
++ * @dqprofile: DQPROFILE syntax element, see V4L2_VC1_DQPROFILE_{}.
++ * @dqsbedge: DQSBEDGE syntax element, valid if @dqprofile is
++ * V4L2_VC1_DQPROFILE_SINGLE_EDGE.
++ * @dqdbedge: DQDBEDGE syntax element, valid if @dqprofile is
++ * V4L2_VC1_DQPROFILE_DOUBLE_EDGES.
++ * @flags: see V4L2_VC1_VOPDQUANT_FLAG_{}.
++ * @reserved: padding field. Should be zeroed by applications.
++ */
++struct v4l2_vc1_vopdquant {
++	__u8	altpquant;
++	__u8	dqprofile;
++	__u8	dqsbedge;
++	__u8	dqdbedge;
++	__u8	flags;
++	__u8	reserved[3];
++};
++
++#define V4L2_VC1_PICTURE_TYPE_I				0
++#define V4L2_VC1_PICTURE_TYPE_P				1
++#define V4L2_VC1_PICTURE_TYPE_B				2
++#define V4L2_VC1_PICTURE_TYPE_BI			3
++/* Only used to describe a reference picture, see struct v4l2_vc1_reference */
++#define V4L2_VC1_PICTURE_TYPE_SKIPPED			4
++
++#define V4L2_VC1_FPTYPE_I_I				0
++#define V4L2_VC1_FPTYPE_I_P				1
++#define V4L2_VC1_FPTYPE_P_I				2
++#define V4L2_VC1_FPTYPE_P_P				3
++#define V4L2_VC1_FPTYPE_B_B				4
++#define V4L2_VC1_FPTYPE_B_BI				5
++#define V4L2_VC1_FPTYPE_BI_B				6
++#define V4L2_VC1_FPTYPE_BI_BI				7
++
++#define V4L2_VC1_FCM_PROGRESSIVE			0
++#define V4L2_VC1_FCM_FRAME_INTERLACE			1
++#define V4L2_VC1_FCM_FIELD_INTERLACE			2
++
++#define V4L2_VC1_MVMODE_1MV_HPEL_BILIN			0
++#define V4L2_VC1_MVMODE_1MV				1
++#define V4L2_VC1_MVMODE_1MV_HPEL			2
++#define V4L2_VC1_MVMODE_MIXED_MV			3
++#define V4L2_VC1_MVMODE_INTENSITY_COMP			4
++
++#define V4L2_VC1_INTCOMPFIELD_BOTH			0
++#define V4L2_VC1_INTCOMPFIELD_TOP			1
++#define V4L2_VC1_INTCOMPFIELD_BOTTOM			2
++
++#define V4L2_VC1_CONDOVER_NONE				0
++#define V4L2_VC1_CONDOVER_ALL				1
++#define V4L2_VC1_CONDOVER_SELECT			2
++
++#define V4L2_VC1_TTFRM_8X8				0
++#define V4L2_VC1_TTFRM_8X4				1
++#define V4L2_VC1_TTFRM_4X8				2
++#define V4L2_VC1_TTFRM_4X4				3
++
++/* Number of entries of Table 40 "BFRACTION VLC Table" that code a fraction */
++#define V4L2_VC1_BFRACTION_NUM				21
++
++#define V4L2_VC1_PICTURE_LAYER_FLAG_RANGEREDFRM		0x0001
++#define V4L2_VC1_PICTURE_LAYER_FLAG_HALFQP		0x0002
++#define V4L2_VC1_PICTURE_LAYER_FLAG_PQUANTIZER		0x0004
++#define V4L2_VC1_PICTURE_LAYER_FLAG_TRANSDCTAB		0x0008
++#define V4L2_VC1_PICTURE_LAYER_FLAG_TFF			0x0010
++#define V4L2_VC1_PICTURE_LAYER_FLAG_RNDCTRL		0x0020
++#define V4L2_VC1_PICTURE_LAYER_FLAG_TTMBF		0x0040
++#define V4L2_VC1_PICTURE_LAYER_FLAG_4MVSWITCH		0x0080
++#define V4L2_VC1_PICTURE_LAYER_FLAG_INTCOMP		0x0100
++#define V4L2_VC1_PICTURE_LAYER_FLAG_NUMREF		0x0200
++#define V4L2_VC1_PICTURE_LAYER_FLAG_REFFIELD		0x0400
++#define V4L2_VC1_PICTURE_LAYER_FLAG_SECOND_FIELD	0x0800
++#define V4L2_VC1_PICTURE_LAYER_FLAG_RFF			0x1000
++#define V4L2_VC1_PICTURE_LAYER_FLAG_INTERPFRM		0x2000
++#define V4L2_VC1_PICTURE_LAYER_FLAG_UVSAMP		0x4000
++
++#define V4L2_VC1_RAW_CODING_FLAG_MVTYPEMB		0x01
++#define V4L2_VC1_RAW_CODING_FLAG_DIRECTMB		0x02
++#define V4L2_VC1_RAW_CODING_FLAG_SKIPMB			0x04
++#define V4L2_VC1_RAW_CODING_FLAG_FIELDTX		0x08
++#define V4L2_VC1_RAW_CODING_FLAG_FORWARDMB		0x10
++#define V4L2_VC1_RAW_CODING_FLAG_ACPRED			0x20
++#define V4L2_VC1_RAW_CODING_FLAG_OVERFLAGS		0x40
++
++/* Number of intensity compensations a reference field can accumulate */
++#define V4L2_VC1_REFERENCE_NUM_INTCOMP			2
++
++/**
++ * struct v4l2_vc1_intcomp - VC-1 intensity compensation parameters
++ *
++ * @lumscale: LUMSCALE syntax element.
++ * @lumshift: LUMSHIFT syntax element.
++ */
++struct v4l2_vc1_intcomp {
++	__u8	lumscale;
++	__u8	lumshift;
++};
++
++#define V4L2_VC1_REFERENCE_FLAG_RANGEREDFRM		0x01
++#define V4L2_VC1_REFERENCE_FLAG_TFF			0x02
++
++/**
++ * struct v4l2_vc1_reference - VC-1 reference picture description
++ *
++ * State of a reference picture which the decoding of the current picture
++ * depends on. It is taken from the headers of the reference picture and of
++ * the pictures decoded since, so that drivers do not have to remember anything
++ * from one decode request to the next. In the arrays, index 0 is the top field
++ * and index 1 the bottom field of the reference frame; for a reference which
++ * is a progressive or frame-interlaced picture both elements are equal.
++ *
++ * @fcm: frame coding mode of the reference, see V4L2_VC1_FCM_{}.
++ * @ptype: picture type of each field of the reference, see
++ * V4L2_VC1_PICTURE_TYPE_{}. V4L2_VC1_PICTURE_TYPE_SKIPPED designates a
++ * skipped picture: it was not decoded, the capture buffer is the one of the
++ * picture which the skipped picture repeats and its motion vectors, as used by
++ * the direct mode, are zero.
++ * @refdist: REFDIST syntax element of the reference. Field-interlaced
++ * references only.
++ * @flags: see V4L2_VC1_REFERENCE_FLAG_{}.
++ * @num_intcomp: number of valid elements of @intcomp for each field of the
++ * reference.
++ * @reserved: padding field. Should be zeroed by applications.
++ * @intcomp: intensity compensations which the pictures decoded before the
++ * current one have applied to each field of the reference, in the order in
++ * which they are applied when the field is read. The intensity compensation
++ * signalled by the current picture is not included: it is applied last.
++ */
++struct v4l2_vc1_reference {
++	__u8	fcm;
++	__u8	ptype[2];
++	__u8	refdist;
++	__u8	flags;
++	__u8	num_intcomp[2];
++	__u8	reserved;
++	struct v4l2_vc1_intcomp intcomp[2][V4L2_VC1_REFERENCE_NUM_INTCOMP];
++};
++
++#define V4L2_VC1_BITPLANE_FLAG_MVTYPEMB			0x01
++#define V4L2_VC1_BITPLANE_FLAG_DIRECTMB			0x02
++#define V4L2_VC1_BITPLANE_FLAG_SKIPMB			0x04
++#define V4L2_VC1_BITPLANE_FLAG_FIELDTX			0x08
++#define V4L2_VC1_BITPLANE_FLAG_FORWARDMB		0x10
++#define V4L2_VC1_BITPLANE_FLAG_ACPRED			0x20
++#define V4L2_VC1_BITPLANE_FLAG_OVERFLAGS		0x40
++
++#define V4L2_CID_STATELESS_VC1_PICTURE_LAYER (V4L2_CID_CODEC_STATELESS_BASE + 602)
++/**
++ * struct v4l2_ctrl_vc1_picture_layer - VC-1 picture layer parameters
++ *
++ * The members match the syntax elements of the picture layer of the coded
++ * picture (a progressive frame, an interlaced frame or one field of a pair of
++ * interlaced fields) held by the OUTPUT buffer, as specified by sections 7.1
++ * and 9.1 of SMPTE 421M. The two fields of a field-interlaced frame are two
++ * decode requests, each with its own complete control: for a field the
++ * members are a combination of the frame-level syntax elements, which the
++ * bitstream only carries in front of the first field, and of the field-level
++ * syntax elements.
++ * Syntax elements which are not present in the picture header shall be set
++ * to zero, unless stated otherwise. Skipped pictures have no macroblock layer
++ * and are not submitted for decoding: the application repeats their reference
++ * picture.
++ *
++ * @backward_ref_ts: timestamp of the V4L2 capture buffer to use as backward
++ * reference, used with B-coded pictures.
++ * @forward_ref_ts: timestamp of the V4L2 capture buffer to use as forward
++ * reference, used with P-coded and B-coded pictures. These timestamps refer
++ * to the timestamp field in struct v4l2_buffer. Use v4l2_timeval_to_ns() to
++ * convert the struct timeval to a __u64. The first field of the frame being
++ * decoded is never referred to by timestamp: a reference to it is implied
++ * when decoding the second field.
++ * @data_bit_offset: offset in bits from the first bit of the picture layer
++ * (for the Advanced profile the bit following the 32-bit frame or field start
++ * code which begins the OUTPUT buffer, for the Simple and Main profiles the
++ * first bit of the OUTPUT buffer) to the first bit of the first macroblock
++ * layer. The offset is counted on the unescaped bitstream: the emulation
++ * prevention bytes are not counted. The position of that bit in the OUTPUT
++ * buffer of an Advanced profile picture is therefore
++ * 32 + @data_bit_offset + 8 * @header_emulation_bytes bits.
++ * @flags: see V4L2_VC1_PICTURE_LAYER_FLAG_{}.
++ * @header_emulation_bytes: number of emulation prevention bytes present in the
++ * OUTPUT buffer between the start code and the byte holding the first bit of
++ * the first macroblock layer. Always zero for the Simple and Main profiles.
++ * @ptype: picture type of the frame or of the field being decoded, see
++ * V4L2_VC1_PICTURE_TYPE_{}. V4L2_VC1_PICTURE_TYPE_SKIPPED is not allowed.
++ * @fptype: FPTYPE syntax element of the frame the field belongs to, see
++ * V4L2_VC1_FPTYPE_{}. Field-interlaced frames only.
++ * @fcm: frame coding mode, see V4L2_VC1_FCM_{}. Always progressive for the
++ * Simple and Main profiles.
++ * @pqindex: PQINDEX syntax element.
++ * @pquant: picture quantizer scale PQUANT derived from @pqindex and from the
++ * QUANTIZER syntax element as specified by section 7.1.1.6 of SMPTE 421M.
++ * @mvrange: MVRANGE syntax element.
++ * @dmvrange: DMVRANGE syntax element.
++ * @respic: RESPIC syntax element. Simple and Main profiles only, coded in I
++ * and P pictures; B and BI pictures take the value of the last I or P picture.
++ * Bit 0 halves the coded width, bit 1 the coded height.
++ * @transacfrm: TRANSACFRM syntax element.
++ * @transacfrm2: TRANSACFRM2 syntax element.
++ * @bfraction: index of the BFRACTION syntax element in Table 40 "BFRACTION
++ * VLC Table" of SMPTE 421M, in the range 0 to V4L2_VC1_BFRACTION_NUM - 1.
++ * The indices 0 to 20 stand for the fractions 1/2, 1/3, 2/3, 1/4, 3/4, 1/5,
++ * 2/5, 3/5, 4/5, 1/6, 5/6, 1/7, 2/7, 3/7, 4/7, 5/7, 6/7, 1/8, 3/8, 5/8 and
++ * 7/8.
++ * @mvmode: MVMODE syntax element, see V4L2_VC1_MVMODE_{}.
++ * @mvmode2: MVMODE2 syntax element, see V4L2_VC1_MVMODE_{}. Valid if @mvmode
++ * is V4L2_VC1_MVMODE_INTENSITY_COMP.
++ * @lumscale: LUMSCALE syntax element of a progressive or frame-interlaced
++ * picture, LUMSCALE1 syntax element of a field picture.
++ * @lumshift: LUMSHIFT syntax element of a progressive or frame-interlaced
++ * picture, LUMSHIFT1 syntax element of a field picture.
++ * @lumscale2: LUMSCALE2 syntax element. Field pictures only.
++ * @lumshift2: LUMSHIFT2 syntax element. Field pictures only.
++ * @intcompfield: INTCOMPFIELD syntax element, see V4L2_VC1_INTCOMPFIELD_{}.
++ * Field pictures only, valid if @mvmode is V4L2_VC1_MVMODE_INTENSITY_COMP.
++ * @mvtab: MVTAB syntax element.
++ * @cbptab: CBPTAB syntax element.
++ * @mbmodetab: MBMODETAB syntax element.
++ * @imvtab: IMVTAB syntax element.
++ * @icbptab: ICBPTAB syntax element.
++ * @twomvbptab: 2MVBPTAB syntax element.
++ * @fourmvbptab: 4MVBPTAB syntax element.
++ * @ttfrm: TTFRM syntax element, see V4L2_VC1_TTFRM_{}.
++ * @refdist: REFDIST syntax element. B-coded field pictures do not carry it:
++ * the REFDIST which their decoding uses is the one of @backward_ref.
++ * @condover: CONDOVER syntax element, see V4L2_VC1_CONDOVER_{}. It is not
++ * coded when PQUANT is 9 or more: overlap smoothing then applies to all the
++ * macroblocks of the I, BI and P pictures of a sequence with OVERLAP set.
++ * @postproc: POSTPROC syntax element.
++ * @rptfrm: RPTFRM syntax element.
++ * @raw_coding_flags: bitplanes of the picture which are coded in raw mode,
++ * that is, at the macroblock layer. See V4L2_VC1_RAW_CODING_FLAG_{}.
++ * @bitplane_flags: bitplanes of the picture which are coded in the picture
++ * header and passed, decoded, through struct v4l2_ctrl_vc1_bitplanes. See
++ * V4L2_VC1_BITPLANE_FLAG_{}. A bitplane is never both raw coded and passed
++ * through the control.
++ * @reserved: padding field. Should be zeroed by applications.
++ * @vopdquant: see struct v4l2_vc1_vopdquant.
++ * @forward_ref: description of the forward reference, see struct
++ * v4l2_vc1_reference. Used with P-coded and B-coded pictures.
++ * @backward_ref: description of the backward reference, see struct
++ * v4l2_vc1_reference. Used with B-coded pictures.
++ */
++struct v4l2_ctrl_vc1_picture_layer {
++	__u64	backward_ref_ts;
++	__u64	forward_ref_ts;
++	__u32	data_bit_offset;
++	__u32	flags;
++	__u16	header_emulation_bytes;
++	__u8	ptype;
++	__u8	fptype;
++	__u8	fcm;
++	__u8	pqindex;
++	__u8	pquant;
++	__u8	mvrange;
++	__u8	dmvrange;
++	__u8	respic;
++	__u8	transacfrm;
++	__u8	transacfrm2;
++	__u8	bfraction;
++	__u8	mvmode;
++	__u8	mvmode2;
++	__u8	lumscale;
++	__u8	lumshift;
++	__u8	lumscale2;
++	__u8	lumshift2;
++	__u8	intcompfield;
++	__u8	mvtab;
++	__u8	cbptab;
++	__u8	mbmodetab;
++	__u8	imvtab;
++	__u8	icbptab;
++	__u8	twomvbptab;
++	__u8	fourmvbptab;
++	__u8	ttfrm;
++	__u8	refdist;
++	__u8	condover;
++	__u8	postproc;
++	__u8	rptfrm;
++	__u8	raw_coding_flags;
++	__u8	bitplane_flags;
++	__u8	reserved[6];
++	struct v4l2_vc1_vopdquant vopdquant;
++	struct v4l2_vc1_reference forward_ref;
++	struct v4l2_vc1_reference backward_ref;
++};
++
++/* Size in bytes of a bitplane: one bit per macroblock, up to 16384 macroblocks */
++#define V4L2_VC1_BITPLANE_SIZE				2048
++
++#define V4L2_CID_STATELESS_VC1_BITPLANES (V4L2_CID_CODEC_STATELESS_BASE + 603)
++/**
++ * struct v4l2_ctrl_vc1_bitplanes - VC-1 decoded bitplanes
++ *
++ * Bitplanes of the picture layer, decoded as specified by section 8.7
++ * "Bitplane Coding" of SMPTE 421M. Each bitplane holds one bit per macroblock
++ * of the picture (of the field, for field pictures) in raster scan order
++ * without any padding between macroblock rows: the bit of macroblock n is
++ * bit (n % 8) of byte (n / 8), bit 0 being the least significant bit. Unused
++ * bits shall be zero.
++ *
++ * A bitplane is valid if the matching flag is set in
++ * &v4l2_ctrl_vc1_picture_layer.bitplane_flags, which is the case if it is
++ * present in the picture header and not coded in raw mode. The content of the
++ * other bitplanes is ignored. This control only needs to be set for the
++ * pictures which have at least one valid bitplane.
++ *
++ * @mvtypemb: MVTYPEMB bitplane.
++ * @directmb: DIRECTMB bitplane.
++ * @skipmb: SKIPMB bitplane.
++ * @fieldtx: FIELDTX bitplane.
++ * @forwardmb: FORWARDMB bitplane.
++ * @acpred: ACPRED bitplane.
++ * @overflags: OVERFLAGS bitplane.
++ */
++struct v4l2_ctrl_vc1_bitplanes {
++	__u8	mvtypemb[V4L2_VC1_BITPLANE_SIZE];
++	__u8	directmb[V4L2_VC1_BITPLANE_SIZE];
++	__u8	skipmb[V4L2_VC1_BITPLANE_SIZE];
++	__u8	fieldtx[V4L2_VC1_BITPLANE_SIZE];
++	__u8	forwardmb[V4L2_VC1_BITPLANE_SIZE];
++	__u8	acpred[V4L2_VC1_BITPLANE_SIZE];
++	__u8	overflags[V4L2_VC1_BITPLANE_SIZE];
++};
++
++#define V4L2_VC1_SLICE_PARAMS_FLAG_PIC_HEADER		0x01
++
++#define V4L2_CID_STATELESS_VC1_SLICE_PARAMS (V4L2_CID_CODEC_STATELESS_BASE + 604)
++/**
++ * struct v4l2_ctrl_vc1_slice_params - VC-1 slice parameters
++ *
++ * Location of a slice of the coded picture held by the OUTPUT buffer. This
++ * control is a dynamically sized array with one element per slice of the
++ * picture, in bitstream order. The first element describes the slice which
++ * begins with the picture layer. The following elements describe the slices
++ * which begin with a slice start code, as specified by section 7.1.2 "Slice
++ * Layer" of SMPTE 421M. Drivers which expose this control need it to be set
++ * with every request, also for pictures with a single slice.
++ *
++ * @offset: offset in bytes from the beginning of the OUTPUT buffer to the
++ * first byte of the start code of the slice. Zero for the first slice.
++ * @size: size in bytes of the slice, including its start code and its
++ * emulation prevention bytes.
++ * @data_bit_offset: offset in bits from the bit following the start code of
++ * the slice to the first bit of the first macroblock layer of the slice, that
++ * is, the size in bits of the slice header including the picture header it
++ * carries if V4L2_VC1_SLICE_PARAMS_FLAG_PIC_HEADER is set. The offset is
++ * counted on the unescaped bitstream: the emulation prevention bytes are not
++ * counted. The position of that bit in the OUTPUT buffer is therefore
++ * 8 * @offset + 32 + @data_bit_offset + 8 * @header_emulation_bytes bits.
++ * For the first slice this is equal to
++ * &v4l2_ctrl_vc1_picture_layer.data_bit_offset.
++ * @header_emulation_bytes: number of emulation prevention bytes present in the
++ * OUTPUT buffer between the start code of the slice and the byte holding the
++ * first bit of its first macroblock layer.
++ * @slice_addr: SLICE_ADDR syntax element. Zero for the first slice.
++ * @flags: see V4L2_VC1_SLICE_PARAMS_FLAG_{}.
++ * @reserved: padding field. Should be zeroed by applications.
++ */
++struct v4l2_ctrl_vc1_slice_params {
++	__u32	offset;
++	__u32	size;
++	__u32	data_bit_offset;
++	__u16	header_emulation_bytes;
++	__u16	slice_addr;
++	__u8	flags;
++	__u8	reserved[3];
++};
++
++#endif /* V4L2_CID_STATELESS_VC1_SEQUENCE */
++
++#ifndef V4L2_CID_MPEG_VIDEO_VC1_PROFILE
++#define V4L2_CID_MPEG_VIDEO_VC1_PROFILE	(V4L2_CID_CODEC_BASE + 658)
++enum v4l2_mpeg_video_vc1_profile {
++	V4L2_MPEG_VIDEO_VC1_PROFILE_SIMPLE	= 0,
++	V4L2_MPEG_VIDEO_VC1_PROFILE_MAIN	= 1,
++	V4L2_MPEG_VIDEO_VC1_PROFILE_ADVANCED	= 2,
++};
++#define V4L2_CID_MPEG_VIDEO_VC1_LEVEL	(V4L2_CID_CODEC_BASE + 659)
++enum v4l2_mpeg_video_vc1_level {
++	V4L2_MPEG_VIDEO_VC1_LEVEL_LOW		= 0,
++	V4L2_MPEG_VIDEO_VC1_LEVEL_MEDIUM	= 1,
++	V4L2_MPEG_VIDEO_VC1_LEVEL_HIGH		= 2,
++	V4L2_MPEG_VIDEO_VC1_LEVEL_0		= 3,
++	V4L2_MPEG_VIDEO_VC1_LEVEL_1		= 4,
++	V4L2_MPEG_VIDEO_VC1_LEVEL_2		= 5,
++	V4L2_MPEG_VIDEO_VC1_LEVEL_3		= 6,
++	V4L2_MPEG_VIDEO_VC1_LEVEL_4		= 7,
++};
++#endif /* V4L2_CID_MPEG_VIDEO_VC1_PROFILE */
++
++#endif /* AVCODEC_V4L2_STATELESS_VC1_H */
+--- /dev/null
++++ b/libavcodec/v4l2_request_vc1.c
+@@ -0,0 +1,1105 @@
++/*
++ * V4L2 Request API VC-1/WMV3 hwaccel
++ *
++ * Based on the VC-1 hwaccel of Jernej Skrabec's vc1-v3 branch, adapted to the
++ * split VC-1 stateless controls (sequence, entry-point header, picture layer,
++ * bitplanes, slice parameters), with an explicit description of the reference
++ * pictures.
++ *
++ * This file is part of FFmpeg.
++ *
++ * FFmpeg is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * FFmpeg is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with FFmpeg; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++ */
++
++#include "config.h"
++#include "config_components.h"
++
++#include "libavutil/intreadwrite.h"
++
++#include "hwaccel_internal.h"
++#include "hwconfig.h"
++#include "internal.h"
++#include "v4l2_request.h"
++#include "v4l2-stateless-vc1.h"
++#include "vc1.h"
++#include "vc1_common.h"
++#include "vc1data.h"
++
++/* The controls use the numbering of the decoder for these enumerations. */
++_Static_assert(MV_PMODE_1MV_HPEL_BILIN == V4L2_VC1_MVMODE_1MV_HPEL_BILIN &&
++               MV_PMODE_1MV            == V4L2_VC1_MVMODE_1MV            &&
++               MV_PMODE_1MV_HPEL       == V4L2_VC1_MVMODE_1MV_HPEL       &&
++               MV_PMODE_MIXED_MV       == V4L2_VC1_MVMODE_MIXED_MV       &&
++               MV_PMODE_INTENSITY_COMP == V4L2_VC1_MVMODE_INTENSITY_COMP,
++               "MVMODE numbering");
++_Static_assert(PROGRESSIVE == V4L2_VC1_FCM_PROGRESSIVE &&
++               ILACE_FRAME == V4L2_VC1_FCM_FRAME_INTERLACE &&
++               ILACE_FIELD == V4L2_VC1_FCM_FIELD_INTERLACE, "FCM numbering");
++_Static_assert(CONDOVER_NONE == V4L2_VC1_CONDOVER_NONE &&
++               CONDOVER_ALL == V4L2_VC1_CONDOVER_ALL &&
++               CONDOVER_SELECT == V4L2_VC1_CONDOVER_SELECT, "CONDOVER numbering");
++_Static_assert(DQPROFILE_FOUR_EDGES == V4L2_VC1_DQPROFILE_ALL_FOUR_EDGES &&
++               DQPROFILE_DOUBLE_EDGES == V4L2_VC1_DQPROFILE_DOUBLE_EDGES &&
++               DQPROFILE_SINGLE_EDGE == V4L2_VC1_DQPROFILE_SINGLE_EDGE &&
++               DQPROFILE_ALL_MBS == V4L2_VC1_DQPROFILE_ALL_MBS, "DQPROFILE numbering");
++
++/* One slice per macroblock row at most; SLICE_ADDR is a 9-bit row address. */
++#define VC1_MAX_SLICES 256
++
++typedef struct V4L2RequestContextVC1 {
++    V4L2RequestContext base;
++    /* Size of the SLICE_PARAMS array of the driver, 0 if it has no such control. */
++    unsigned int max_slice_params;
++} V4L2RequestContextVC1;
++
++/* Intensity compensations in effect on one field, in order of application */
++typedef struct VC1IntCompList {
++    uint8_t nb;
++    struct v4l2_vc1_intcomp ic[V4L2_VC1_REFERENCE_NUM_INTCOMP + 1];
++} VC1IntCompList;
++
++/*
++ * What a later picture has to say about this picture when it uses it as a
++ * reference (struct v4l2_vc1_reference). Arrays are indexed by field parity:
++ * 0 top, 1 bottom.
++ */
++typedef struct VC1ReferenceState {
++    uint8_t fcm;
++    uint8_t ptype[2];
++    uint8_t refdist;
++    uint8_t rangeredfrm;
++    uint8_t tff;
++    /* applied to a field of this frame by the second field of this frame */
++    VC1IntCompList self_ic[2];
++    /* applied by this picture to the fields of its forward reference */
++    VC1IntCompList fwd_ic[2];
++} VC1ReferenceState;
++
++typedef struct V4L2RequestControlsVC1 {
++    V4L2RequestPictureContext pic;
++    VC1ReferenceState state;
++    int skipped;
++    struct v4l2_ctrl_vc1_sequence sequence;
++    struct v4l2_ctrl_vc1_entrypoint_header entrypoint;
++    struct v4l2_ctrl_vc1_picture_layer picture;
++    struct v4l2_ctrl_vc1_bitplanes bitplanes;
++    struct v4l2_ctrl_vc1_slice_params slices[VC1_MAX_SLICES];
++    unsigned int nb_slices;
++} V4L2RequestControlsVC1;
++
++static inline int vc1_is_p(const VC1Context *v)
++{
++    return v->s.pict_type == AV_PICTURE_TYPE_P && !v->p_frame_skipped;
++}
++
++static inline int vc1_is_b(const VC1Context *v)
++{
++    return v->s.pict_type == AV_PICTURE_TYPE_B && !v->bi_type;
++}
++
++static inline int vc1_is_i_or_bi(const VC1Context *v)
++{
++    return v->s.pict_type == AV_PICTURE_TYPE_I ||
++           (v->s.pict_type == AV_PICTURE_TYPE_B && v->bi_type);
++}
++
++static int vc1_get_ptype(const VC1Context *v)
++{
++    switch (v->s.pict_type) {
++    case AV_PICTURE_TYPE_I:
++        return V4L2_VC1_PICTURE_TYPE_I;
++    case AV_PICTURE_TYPE_P:
++        return V4L2_VC1_PICTURE_TYPE_P;
++    case AV_PICTURE_TYPE_B:
++        return v->bi_type ? V4L2_VC1_PICTURE_TYPE_BI : V4L2_VC1_PICTURE_TYPE_B;
++    }
++    return V4L2_VC1_PICTURE_TYPE_I;
++}
++
++/* MVMODE only exists in progressive and field P/B pictures. */
++static int vc1_has_mvmode(const VC1Context *v)
++{
++    return v->fcm != ILACE_FRAME && (vc1_is_p(v) || vc1_is_b(v));
++}
++
++/* Intensity compensation signalled through MVMODE (progressive and field P). */
++static int vc1_has_mvmode_intcomp(const VC1Context *v)
++{
++    return v->fcm != ILACE_FRAME && vc1_is_p(v) &&
++           v->mv_mode == MV_PMODE_INTENSITY_COMP;
++}
++
++/* The MV mode in effect, used to tell which tables and bitplanes exist. */
++static int vc1_effective_mvmode(const VC1Context *v)
++{
++    return vc1_has_mvmode_intcomp(v) ? v->mv_mode2 : v->mv_mode;
++}
++
++/*
++ * The decoder keeps the intensity compensation parameters per reference field:
++ * (lumscale, lumshift) for the top field and (lumscale2, lumshift2) for the
++ * bottom field, with intcompfield as a bit mask (1 = top, 2 = bottom). The
++ * control wants the syntax elements: LUMSCALE1/LUMSHIFT1 is the first pair of
++ * the bitstream, which applies to the bottom field when INTCOMPFIELD selects
++ * the bottom field only.
++ */
++static void vc1_fill_intcomp(const VC1Context *v,
++                             struct v4l2_ctrl_vc1_picture_layer *pic)
++{
++    if (!vc1_is_p(v))
++        return;
++
++    if (v->fcm == ILACE_FRAME) {
++        if (v->intcomp) {
++            pic->flags |= V4L2_VC1_PICTURE_LAYER_FLAG_INTCOMP;
++            pic->lumscale = v->lumscale;
++            pic->lumshift = v->lumshift;
++        }
++        return;
++    }
++
++    if (v->mv_mode != MV_PMODE_INTENSITY_COMP)
++        return;
++
++    if (v->fcm == PROGRESSIVE) {
++        pic->lumscale = v->lumscale;
++        pic->lumshift = v->lumshift;
++        return;
++    }
++
++    switch (v->intcompfield) {
++    case 1:
++        pic->intcompfield = V4L2_VC1_INTCOMPFIELD_TOP;
++        pic->lumscale = v->lumscale;
++        pic->lumshift = v->lumshift;
++        break;
++    case 2:
++        pic->intcompfield = V4L2_VC1_INTCOMPFIELD_BOTTOM;
++        pic->lumscale = v->lumscale2;
++        pic->lumshift = v->lumshift2;
++        break;
++    default:
++        pic->intcompfield = V4L2_VC1_INTCOMPFIELD_BOTH;
++        pic->lumscale  = v->lumscale;
++        pic->lumshift  = v->lumshift;
++        pic->lumscale2 = v->lumscale2;
++        pic->lumshift2 = v->lumshift2;
++        break;
++    }
++}
++
++static int vc1_get_ttfrm(const VC1Context *v)
++{
++    switch (v->ttfrm) {
++    case TT_8X8: return V4L2_VC1_TTFRM_8X8;
++    case TT_8X4: return V4L2_VC1_TTFRM_8X4;
++    case TT_4X8: return V4L2_VC1_TTFRM_4X8;
++    case TT_4X4: return V4L2_VC1_TTFRM_4X4;
++    }
++    return V4L2_VC1_TTFRM_8X8;
++}
++
++/*
++ * Presence of the bitplanes in the picture header, as in vaapi_vc1.c. A
++ * bitplane which is present is either raw coded (its bits are in the
++ * macroblock layer) or decoded by vc1.c and passed through the control.
++ */
++static int vc1_bitplanes_present(const VC1Context *v)
++{
++    int flags = 0;
++
++    if (vc1_is_i_or_bi(v)) {
++        if (v->profile == PROFILE_ADVANCED) {
++            flags |= V4L2_VC1_BITPLANE_FLAG_ACPRED;
++            if (v->overlap && v->pq <= 8 && v->condover == CONDOVER_SELECT)
++                flags |= V4L2_VC1_BITPLANE_FLAG_OVERFLAGS;
++            if (v->fcm == ILACE_FRAME)
++                flags |= V4L2_VC1_BITPLANE_FLAG_FIELDTX;
++        }
++    } else if (vc1_is_p(v)) {
++        if (v->fcm == PROGRESSIVE &&
++            vc1_effective_mvmode(v) == MV_PMODE_MIXED_MV)
++            flags |= V4L2_VC1_BITPLANE_FLAG_MVTYPEMB;
++        if (v->fcm != ILACE_FIELD)
++            flags |= V4L2_VC1_BITPLANE_FLAG_SKIPMB;
++    } else if (vc1_is_b(v)) {
++        if (v->fcm == ILACE_FIELD)
++            flags |= V4L2_VC1_BITPLANE_FLAG_FORWARDMB;
++        else
++            flags |= V4L2_VC1_BITPLANE_FLAG_DIRECTMB |
++                     V4L2_VC1_BITPLANE_FLAG_SKIPMB;
++    }
++
++    return flags;
++}
++
++static int vc1_bitplanes_raw(const VC1Context *v)
++{
++    int flags = 0;
++
++    if (v->mv_type_is_raw)
++        flags |= V4L2_VC1_RAW_CODING_FLAG_MVTYPEMB;
++    if (v->dmb_is_raw)
++        flags |= V4L2_VC1_RAW_CODING_FLAG_DIRECTMB;
++    if (v->skip_is_raw)
++        flags |= V4L2_VC1_RAW_CODING_FLAG_SKIPMB;
++    if (v->fieldtx_is_raw)
++        flags |= V4L2_VC1_RAW_CODING_FLAG_FIELDTX;
++    if (v->fmb_is_raw)
++        flags |= V4L2_VC1_RAW_CODING_FLAG_FORWARDMB;
++    if (v->acpred_is_raw)
++        flags |= V4L2_VC1_RAW_CODING_FLAG_ACPRED;
++    if (v->overflg_is_raw)
++        flags |= V4L2_VC1_RAW_CODING_FLAG_OVERFLAGS;
++
++    return flags;
++}
++
++/* One bit per macroblock, raster order, LSB first, no row padding. */
++static void vc1_pack_bitplane(uint8_t *dst, const uint8_t *src,
++                              const VC1Context *v)
++{
++    const MpegEncContext *s = &v->s;
++    int mb_height = s->mb_height >> v->field_mode;
++    int mb_width = s->mb_width;
++    int n = 0;
++
++    /* RESPIC: Simple/Main picture coded at half width and/or height */
++    if (v->profile < PROFILE_ADVANCED && v->multires) {
++        if (v->respic & 1)
++            mb_width  = (s->width  / 2 + 15) >> 4;
++        if (v->respic & 2)
++            mb_height = (s->height / 2 + 15) >> 4;
++    }
++
++    memset(dst, 0, V4L2_VC1_BITPLANE_SIZE);
++
++    for (int y = 0; y < mb_height; y++)
++        for (int x = 0; x < mb_width; x++, n++)
++            dst[n >> 3] |= (src[y * s->mb_stride + x] & 1) << (n & 7);
++}
++
++/*
++ * Number of emulation prevention bytes in front of the byte which holds bit
++ * `bit_offset` of the unescaped payload (same rule as vc1_unescape_buffer()).
++ */
++static int vc1_count_emulation_bytes(const uint8_t *buf, int size,
++                                     int bit_offset)
++{
++    int target = bit_offset >> 3, unescaped = 0, count = 0;
++
++    for (int i = 0; i < size; i++) {
++        if (i >= 2 && buf[i] == 3 && !buf[i - 1] && !buf[i - 2] &&
++            i < size - 1 && buf[i + 1] < 4) {
++            count++;
++            continue;
++        }
++        if (unescaped == target)
++            break;
++        unescaped++;
++    }
++
++    return count;
++}
++
++static void vc1_fill_sequence(const VC1Context *v,
++                              struct v4l2_ctrl_vc1_sequence *seq)
++{
++    const AVCodecContext *avctx = v->s.avctx;
++    int advanced = v->profile == PROFILE_ADVANCED;
++
++    *seq = (struct v4l2_ctrl_vc1_sequence) {
++        .profile          = v->profile,
++        .level            = advanced ? v->level : 0,
++        .colordiff_format = 1,
++        .maxbframes       = advanced ? 0 : avctx->max_b_frames,
++        .frmrtq_postproc  = v->frmrtq_postproc,
++        .bitrtq_postproc  = v->bitrtq_postproc,
++        .max_coded_width  = advanced ? v->max_coded_width  : avctx->coded_width,
++        .max_coded_height = advanced ? v->max_coded_height : avctx->coded_height,
++    };
++
++    if (v->finterpflag)
++        seq->flags |= V4L2_VC1_SEQUENCE_FLAG_FINTERPFLAG;
++
++    if (advanced) {
++        if (v->broadcast)
++            seq->flags |= V4L2_VC1_SEQUENCE_FLAG_PULLDOWN;
++        if (v->interlace)
++            seq->flags |= V4L2_VC1_SEQUENCE_FLAG_INTERLACE;
++        if (v->tfcntrflag)
++            seq->flags |= V4L2_VC1_SEQUENCE_FLAG_TFCNTRFLAG;
++        if (v->psf)
++            seq->flags |= V4L2_VC1_SEQUENCE_FLAG_PSF;
++        if (v->postprocflag)
++            seq->flags |= V4L2_VC1_SEQUENCE_FLAG_POSTPROCFLAG;
++    } else {
++        if (v->res_rtm_flag)
++            seq->flags |= V4L2_VC1_SEQUENCE_FLAG_RES_RTM;
++        if (v->multires)
++            seq->flags |= V4L2_VC1_SEQUENCE_FLAG_MULTIRES;
++        if (v->resync_marker)
++            seq->flags |= V4L2_VC1_SEQUENCE_FLAG_SYNCMARKER;
++        if (v->rangered)
++            seq->flags |= V4L2_VC1_SEQUENCE_FLAG_RANGERED;
++    }
++}
++
++static void vc1_fill_entrypoint(const VC1Context *v,
++                                struct v4l2_ctrl_vc1_entrypoint_header *ep)
++{
++    const AVCodecContext *avctx = v->s.avctx;
++    int advanced = v->profile == PROFILE_ADVANCED;
++
++    *ep = (struct v4l2_ctrl_vc1_entrypoint_header) {
++        .dquant       = v->dquant,
++        .quantizer    = v->quantizer_mode,
++        .coded_width  = avctx->coded_width,
++        .coded_height = avctx->coded_height,
++    };
++
++    /* Common to STRUCT_C and to the entry-point header. */
++    if (v->loop_filter)
++        ep->flags |= V4L2_VC1_ENTRYPOINT_HEADER_FLAG_LOOPFILTER;
++    if (v->fastuvmc)
++        ep->flags |= V4L2_VC1_ENTRYPOINT_HEADER_FLAG_FASTUVMC;
++    if (v->extended_mv)
++        ep->flags |= V4L2_VC1_ENTRYPOINT_HEADER_FLAG_EXTENDED_MV;
++    if (v->vstransform)
++        ep->flags |= V4L2_VC1_ENTRYPOINT_HEADER_FLAG_VSTRANSFORM;
++    if (v->overlap)
++        ep->flags |= V4L2_VC1_ENTRYPOINT_HEADER_FLAG_OVERLAP;
++
++    if (!advanced)
++        return;
++
++    if (v->broken_link)
++        ep->flags |= V4L2_VC1_ENTRYPOINT_HEADER_FLAG_BROKEN_LINK;
++    if (v->closed_entry)
++        ep->flags |= V4L2_VC1_ENTRYPOINT_HEADER_FLAG_CLOSED_ENTRY;
++    if (v->panscanflag)
++        ep->flags |= V4L2_VC1_ENTRYPOINT_HEADER_FLAG_PANSCAN;
++    if (v->refdist_flag)
++        ep->flags |= V4L2_VC1_ENTRYPOINT_HEADER_FLAG_REFDIST;
++    if (v->extended_mv && v->extended_dmv)
++        ep->flags |= V4L2_VC1_ENTRYPOINT_HEADER_FLAG_EXTENDED_DMV;
++    if (v->range_mapy_flag) {
++        ep->flags |= V4L2_VC1_ENTRYPOINT_HEADER_FLAG_RANGE_MAPY;
++        ep->range_mapy = v->range_mapy;
++    }
++    if (v->range_mapuv_flag) {
++        ep->flags |= V4L2_VC1_ENTRYPOINT_HEADER_FLAG_RANGE_MAPUV;
++        ep->range_mapuv = v->range_mapuv;
++    }
++}
++
++static void vc1_fill_vopdquant(const VC1Context *v,
++                               struct v4l2_vc1_vopdquant *dq)
++{
++    /* VOPDQUANT: P and B pictures, and I/BI pictures of the Advanced profile */
++    if (!v->dquant ||
++        (vc1_is_i_or_bi(v) && v->profile != PROFILE_ADVANCED))
++        return;
++
++    if (v->dquant == 2) {
++        /* Only PQDIFF/ABSPQ are coded: ALTPQUANT applies to the four edges. */
++        dq->flags     = V4L2_VC1_VOPDQUANT_FLAG_DQUANTFRM;
++        dq->dqprofile = V4L2_VC1_DQPROFILE_ALL_FOUR_EDGES;
++        dq->altpquant = v->altpq;
++        return;
++    }
++
++    if (!v->dquantfrm)
++        return;
++
++    dq->flags     = V4L2_VC1_VOPDQUANT_FLAG_DQUANTFRM;
++    dq->dqprofile = v->dqprofile;
++    dq->altpquant = v->altpq;
++
++    switch (v->dqprofile) {
++    case DQPROFILE_SINGLE_EDGE:
++        dq->dqsbedge = v->dqsbedge;
++        break;
++    case DQPROFILE_DOUBLE_EDGES:
++        dq->dqdbedge = v->dqsbedge;
++        break;
++    case DQPROFILE_ALL_MBS:
++        if (v->dqbilevel)
++            dq->flags |= V4L2_VC1_VOPDQUANT_FLAG_DQBILEVEL;
++        else
++            dq->altpquant = 0; /* no PQDIFF: MQUANT is coded per macroblock */
++        break;
++    }
++}
++
++static void vc1_fill_picture(const VC1Context *v,
++                             struct v4l2_ctrl_vc1_picture_layer *pic)
++{
++    const MpegEncContext *s = &v->s;
++    int advanced = v->profile == PROFILE_ADVANCED;
++    int inter = vc1_is_p(v) || vc1_is_b(v);
++    int interlaced = v->fcm != PROGRESSIVE;
++    int has_tff = advanced && v->broadcast && v->interlace && !v->psf;
++
++    *pic = (struct v4l2_ctrl_vc1_picture_layer) {
++        .ptype   = vc1_get_ptype(v),
++        .fptype  = v->field_mode ? v->fptype : 0,
++        .fcm     = v->fcm,
++        /* B fields do not code REFDIST: it is in the backward reference */
++        .refdist = v->field_mode && s->pict_type != AV_PICTURE_TYPE_B ?
++                   v->refdist : 0,
++        .rptfrm  = advanced && v->broadcast && !has_tff ? v->rptfrm : 0,
++    };
++
++    /* Reference pictures, as for MPEG-2. */
++    switch (s->pict_type) {
++    case AV_PICTURE_TYPE_B:
++        if (s->next_pic.ptr)
++            pic->backward_ref_ts =
++                ff_v4l2_request_get_capture_timestamp(s->next_pic.ptr->f);
++        /* fall through */
++    case AV_PICTURE_TYPE_P:
++        if (s->last_pic.ptr)
++            pic->forward_ref_ts =
++                ff_v4l2_request_get_capture_timestamp(s->last_pic.ptr->f);
++    }
++
++    /* The top field is first unless TFF is coded and says otherwise. */
++    if (!has_tff || v->tff)
++        pic->flags |= V4L2_VC1_PICTURE_LAYER_FLAG_TFF;
++    if (has_tff && v->rff)
++        pic->flags |= V4L2_VC1_PICTURE_LAYER_FLAG_RFF;
++    if (v->second_field)
++        pic->flags |= V4L2_VC1_PICTURE_LAYER_FLAG_SECOND_FIELD;
++
++    pic->pqindex = v->pqindex;
++    pic->pquant  = v->pq;
++    pic->transacfrm  = v->c_ac_table_index;
++    pic->transacfrm2 = vc1_is_i_or_bi(v) ? v->y_ac_table_index : 0;
++    pic->postproc = advanced && v->postprocflag ? v->postproc : 0;
++    pic->respic   = !advanced && v->multires ? v->respic : 0;
++    pic->condover = advanced && vc1_is_i_or_bi(v) ? v->condover : 0;
++
++    if (s->pict_type == AV_PICTURE_TYPE_B && (vc1_is_b(v) || v->field_mode) &&
++        v->bfraction_lut_index < V4L2_VC1_BFRACTION_NUM)
++        pic->bfraction = v->bfraction_lut_index;
++
++    if (v->rangered && v->rangeredfrm)
++        pic->flags |= V4L2_VC1_PICTURE_LAYER_FLAG_RANGEREDFRM;
++    if (v->halfpq)
++        pic->flags |= V4L2_VC1_PICTURE_LAYER_FLAG_HALFQP;
++    if (v->pquantizer)
++        pic->flags |= V4L2_VC1_PICTURE_LAYER_FLAG_PQUANTIZER;
++    if (v->dc_table_index)
++        pic->flags |= V4L2_VC1_PICTURE_LAYER_FLAG_TRANSDCTAB;
++    if (v->rnd)
++        pic->flags |= V4L2_VC1_PICTURE_LAYER_FLAG_RNDCTRL;
++    if (v->finterpflag && v->interpfrm)
++        pic->flags |= V4L2_VC1_PICTURE_LAYER_FLAG_INTERPFRM;
++    if (advanced && v->interlace && v->uvsamp)
++        pic->flags |= V4L2_VC1_PICTURE_LAYER_FLAG_UVSAMP;
++
++    /* MVRANGE: every Simple/Main profile picture, Advanced profile P and B */
++    if (v->extended_mv && (inter || !advanced))
++        pic->mvrange = v->mvrange;
++
++    if (inter) {
++        if (vc1_has_mvmode(v)) {
++            pic->mvmode = v->mv_mode;
++            if (vc1_has_mvmode_intcomp(v))
++                pic->mvmode2 = v->mv_mode2;
++        }
++        vc1_fill_intcomp(v, pic);
++
++        /* TTMBF = 1 with an 8x8 TTFRM stands for VSTRANSFORM = 0. */
++        if (v->ttmbf) {
++            pic->flags |= V4L2_VC1_PICTURE_LAYER_FLAG_TTMBF;
++            pic->ttfrm = vc1_get_ttfrm(v);
++        }
++
++        if (!interlaced) {
++            pic->mvtab  = v->mv_table_index;
++            pic->cbptab = v->cbptab;
++        } else {
++            pic->dmvrange  = v->extended_mv && v->extended_dmv ? v->dmvrange : 0;
++            pic->mbmodetab = v->mbmodetab;
++            pic->imvtab    = v->imvtab;
++            pic->icbptab   = v->icbptab;
++        }
++
++        if (v->fcm == ILACE_FRAME) {
++            pic->twomvbptab = v->twomvbptab;
++            if (vc1_is_b(v) || v->fourmvswitch)
++                pic->fourmvbptab = v->fourmvbptab;
++            if (vc1_is_p(v) && v->fourmvswitch)
++                pic->flags |= V4L2_VC1_PICTURE_LAYER_FLAG_4MVSWITCH;
++        } else if (v->fcm == ILACE_FIELD) {
++            if (vc1_effective_mvmode(v) == MV_PMODE_MIXED_MV)
++                pic->fourmvbptab = v->fourmvbptab;
++            /* B field pictures always use two reference fields. */
++            if (v->numref || vc1_is_b(v))
++                pic->flags |= V4L2_VC1_PICTURE_LAYER_FLAG_NUMREF;
++            else if (v->reffield)
++                pic->flags |= V4L2_VC1_PICTURE_LAYER_FLAG_REFFIELD;
++        }
++    }
++
++    vc1_fill_vopdquant(v, &pic->vopdquant);
++
++    pic->bitplane_flags   = vc1_bitplanes_present(v);
++    pic->raw_coding_flags = vc1_bitplanes_raw(v) & pic->bitplane_flags;
++    pic->bitplane_flags  &= ~pic->raw_coding_flags;
++}
++
++static void vc1_fill_bitplanes(const VC1Context *v, int flags,
++                               struct v4l2_ctrl_vc1_bitplanes *bp)
++{
++    if (flags & V4L2_VC1_BITPLANE_FLAG_MVTYPEMB)
++        vc1_pack_bitplane(bp->mvtypemb, v->mv_type_mb_plane, v);
++    if (flags & V4L2_VC1_BITPLANE_FLAG_DIRECTMB)
++        vc1_pack_bitplane(bp->directmb, v->direct_mb_plane, v);
++    if (flags & V4L2_VC1_BITPLANE_FLAG_SKIPMB)
++        vc1_pack_bitplane(bp->skipmb, v->s.mbskip_table, v);
++    if (flags & V4L2_VC1_BITPLANE_FLAG_FIELDTX)
++        vc1_pack_bitplane(bp->fieldtx, v->fieldtx_plane, v);
++    if (flags & V4L2_VC1_BITPLANE_FLAG_FORWARDMB)
++        vc1_pack_bitplane(bp->forwardmb, v->forward_mb_plane, v);
++    if (flags & V4L2_VC1_BITPLANE_FLAG_ACPRED)
++        vc1_pack_bitplane(bp->acpred, v->acpred_plane, v);
++    if (flags & V4L2_VC1_BITPLANE_FLAG_OVERFLAGS)
++        vc1_pack_bitplane(bp->overflags, v->over_flags_plane, v);
++}
++
++/*
++ * Reference state.
++ *
++ * The decoding of a picture depends on state of its references which is not in
++ * its own header. The decoder has it in a form which suits software (look-up
++ * tables for the intensity compensation); the controls want it as the syntax
++ * elements which produced it, so it is tracked here, per picture, next to the
++ * controls of the picture.
++ */
++
++static void vc1_ic_add(VC1IntCompList *list, int lumscale, int lumshift)
++{
++    if (list->nb < FF_ARRAY_ELEMS(list->ic))
++        list->ic[list->nb++] = (struct v4l2_vc1_intcomp) { lumscale, lumshift };
++}
++
++static void vc1_ic_append(VC1IntCompList *list, const VC1IntCompList *src)
++{
++    for (int i = 0; i < src->nb; i++)
++        vc1_ic_add(list, src->ic[i].lumscale, src->ic[i].lumshift);
++}
++
++static const VC1ReferenceState *vc1_reference_state(const MPVWorkPicture *pic)
++{
++    static const VC1ReferenceState none;
++    const V4L2RequestControlsVC1 *controls;
++
++    if (!pic->ptr || !pic->ptr->hwaccel_picture_private)
++        return &none;
++
++    controls = pic->ptr->hwaccel_picture_private;
++    return &controls->state;
++}
++
++static int vc1_fill_reference(struct v4l2_vc1_reference *ref,
++                              const VC1ReferenceState *st,
++                              const VC1IntCompList ic[2])
++{
++    *ref = (struct v4l2_vc1_reference) {
++        .fcm     = st->fcm,
++        .ptype   = { st->ptype[0], st->ptype[1] },
++        .refdist = st->refdist,
++    };
++
++    if (st->rangeredfrm)
++        ref->flags |= V4L2_VC1_REFERENCE_FLAG_RANGEREDFRM;
++    if (st->tff)
++        ref->flags |= V4L2_VC1_REFERENCE_FLAG_TFF;
++
++    for (int field = 0; field < 2; field++) {
++        /* More than the controls can describe: cannot happen in a stream
++         * which keeps its field order, see FFMPEG.md. */
++        if (ic[field].nb > V4L2_VC1_REFERENCE_NUM_INTCOMP)
++            return AVERROR_PATCHWELCOME;
++
++        ref->num_intcomp[field] = ic[field].nb;
++        for (int i = 0; i < ic[field].nb; i++)
++            ref->intcomp[field][i] = ic[field].ic[i];
++    }
++
++    return 0;
++}
++
++/*
++ * Describe the references of the current picture. Must be called before
++ * vc1_update_state(): the intensity compensation which the current picture
++ * signals is not part of the description.
++ */
++static int vc1_fill_references(const VC1Context *v,
++                               const VC1ReferenceState *cur,
++                               struct v4l2_ctrl_vc1_picture_layer *pic)
++{
++    const MpegEncContext *s = &v->s;
++    const VC1ReferenceState *fwd = vc1_reference_state(&s->last_pic);
++    const VC1ReferenceState *bwd = vc1_reference_state(&s->next_pic);
++    VC1IntCompList ic[2];
++    int ret;
++
++    if (s->pict_type != AV_PICTURE_TYPE_P && s->pict_type != AV_PICTURE_TYPE_B)
++        return 0;
++
++    /*
++     * Forward reference: what its own second field did to its first field,
++     * then what the P picture which followed it did to it. For a P picture
++     * that is the first field of the picture itself (when this is the second
++     * field); for a B picture it is the backward reference, decoded earlier.
++     */
++    for (int field = 0; field < 2; field++) {
++        ic[field] = fwd->self_ic[field];
++        if (s->pict_type == AV_PICTURE_TYPE_B)
++            vc1_ic_append(&ic[field], &bwd->fwd_ic[field]);
++        else if (v->second_field)
++            vc1_ic_append(&ic[field], &cur->fwd_ic[field]);
++    }
++    ret = vc1_fill_reference(&pic->forward_ref, fwd, ic);
++    if (ret)
++        return ret;
++
++    if (s->pict_type == AV_PICTURE_TYPE_B)
++        ret = vc1_fill_reference(&pic->backward_ref, bwd, bwd->self_ic);
++
++    return ret;
++}
++
++/* Record what later pictures will have to say about the current one. */
++static void vc1_update_state(const VC1Context *v, VC1ReferenceState *st)
++{
++    int has_tff = v->profile == PROFILE_ADVANCED && v->broadcast &&
++                  v->interlace && !v->psf;
++    int ptype = vc1_get_ptype(v);
++
++    if (!v->second_field)
++        memset(st, 0, sizeof(*st));
++
++    st->fcm         = v->fcm;
++    st->refdist     = v->field_mode ? v->refdist : 0;
++    st->rangeredfrm = v->rangered && v->rangeredfrm;
++    st->tff         = !has_tff || v->tff;
++
++    if (v->field_mode)
++        st->ptype[v->cur_field_type] = ptype;
++    else
++        st->ptype[0] = st->ptype[1] = ptype;
++
++    if (!vc1_is_p(v))
++        return;
++
++    if (v->fcm == ILACE_FRAME ? v->intcomp :
++                                v->mv_mode == MV_PMODE_INTENSITY_COMP) {
++        /*
++         * As in ff_vc1_parse_frame_header_adv(): (lumscale, lumshift) is for
++         * the top reference field, (lumscale2, lumshift2) for the bottom one.
++         * The second field of a frame refers to the first field of the frame
++         * and to the field of its own parity of the forward reference.
++         */
++        int mask = v->field_mode ? v->intcompfield : 3;
++        int lumscale2 = v->field_mode ? v->lumscale2 : v->lumscale;
++        int lumshift2 = v->field_mode ? v->lumshift2 : v->lumshift;
++
++        if (!v->second_field) {
++            if (mask & 1)
++                vc1_ic_add(&st->fwd_ic[0], v->lumscale, v->lumshift);
++            if (mask & 2)
++                vc1_ic_add(&st->fwd_ic[1], lumscale2, lumshift2);
++        } else if (v->cur_field_type) {
++            if (mask & 1)
++                vc1_ic_add(&st->self_ic[0], v->lumscale, v->lumshift);
++            if (mask & 2)
++                vc1_ic_add(&st->fwd_ic[1], lumscale2, lumshift2);
++        } else {
++            if (mask & 2)
++                vc1_ic_add(&st->self_ic[1], lumscale2, lumshift2);
++            if (mask & 1)
++                vc1_ic_add(&st->fwd_ic[0], v->lumscale, v->lumshift);
++        }
++    }
++}
++
++/*
++ * The capture buffer holds the picture as decoded. Range expansion (Main
++ * profile) and range mapping (Advanced profile) are output processes which
++ * nothing applies to a DRM PRIME frame yet: leave such streams to software.
++ */
++static int vc1_needs_output_process(const VC1Context *v)
++{
++    if (v->profile == PROFILE_ADVANCED)
++        return v->range_mapy_flag || v->range_mapuv_flag;
++
++    return v->rangered;
++}
++
++/*
++ * Pre-release WMV9 bitstreams with the X8 intra frames or with the earlier
++ * transform (reserved bits of STRUCT_C, which SMPTE 421M fixes) are a
++ * different bitstream, which the controls do not describe.
++ */
++static int vc1_is_prerelease(const VC1Context *v)
++{
++    return v->profile != PROFILE_ADVANCED && (v->res_x8 || !v->res_fasttx);
++}
++
++/*
++ * A skipped picture has no macroblock layer and is not queued: the decoded
++ * picture is its reference picture. Make the current frame share the buffers
++ * of the reference frame, so that it is output again and so that the pictures
++ * which refer to the skipped picture are given the capture buffer which holds
++ * its content.
++ */
++static int v4l2_request_vc1_repeat_reference(AVCodecContext *avctx)
++{
++    VC1Context *v = avctx->priv_data;
++    MpegEncContext *s = &v->s;
++    V4L2RequestControlsVC1 *controls = s->cur_pic.ptr->hwaccel_picture_private;
++    const VC1ReferenceState *ref = vc1_reference_state(&s->last_pic);
++    AVFrame *cur = s->cur_pic.ptr->f, *last;
++    int ret;
++
++    if (!s->last_pic.ptr)
++        return AVERROR_INVALIDDATA;
++    last = s->last_pic.ptr->f;
++
++    for (int i = 0; i < FF_ARRAY_ELEMS(cur->buf); i++) {
++        ret = av_buffer_replace(&cur->buf[i], last->buf[i]);
++        if (ret < 0)
++            return ret;
++    }
++    for (int i = 0; i < AV_NUM_DATA_POINTERS; i++) {
++        cur->data[i]     = last->data[i];
++        cur->linesize[i] = last->linesize[i];
++    }
++    for (int i = 0; i < MPV_MAX_PLANES; i++) {
++        s->cur_pic.data[i]     = cur->data[i];
++        s->cur_pic.linesize[i] = cur->linesize[i];
++    }
++
++    /*
++     * Nothing is queued for this picture. This only makes the output of the
++     * frame wait for the decoding of the buffer it now shares (it also takes
++     * an output buffer from the ring, which is simply not used).
++     */
++    ret = ff_v4l2_request_start_frame(avctx, &controls->pic, cur);
++    if (ret)
++        return ret;
++
++    /*
++     * As a reference the skipped picture is its reference: same samples, same
++     * structure and the same intensity compensation pending on its fields. It
++     * has no motion, which the picture type tells, and has compensated nothing.
++     */
++    controls->state = *ref;
++    controls->state.ptype[0] = controls->state.ptype[1] =
++        V4L2_VC1_PICTURE_TYPE_SKIPPED;
++    memset(controls->state.fwd_ic, 0, sizeof(controls->state.fwd_ic));
++    controls->skipped = 1;
++
++    return 0;
++}
++
++static int v4l2_request_vc1_start_frame(AVCodecContext *avctx,
++                                        av_unused const AVBufferRef *buf_ref,
++                                        av_unused const uint8_t *buffer,
++                                        av_unused uint32_t size)
++{
++    const VC1Context *v = avctx->priv_data;
++    const MpegEncContext *s = &v->s;
++    V4L2RequestControlsVC1 *controls = s->cur_pic.ptr->hwaccel_picture_private;
++    int ret;
++
++    if (vc1_needs_output_process(v) || vc1_is_prerelease(v))
++        return AVERROR(ENOSYS);
++
++    if (v->p_frame_skipped)
++        return v4l2_request_vc1_repeat_reference(avctx);
++    controls->skipped = 0;
++
++    /*
++     * Called once per coded picture: per frame, or per field of a field pair.
++     * The second field is a second request which decodes to the capture
++     * buffer of the first one: only a new output buffer is needed.
++     */
++    if (v->second_field)
++        ret = ff_v4l2_request_reset_picture(avctx, &controls->pic);
++    else
++        ret = ff_v4l2_request_start_frame(avctx, &controls->pic,
++                                          s->cur_pic.ptr->f);
++    if (ret)
++        return ret;
++
++    vc1_fill_sequence(v, &controls->sequence);
++    vc1_fill_entrypoint(v, &controls->entrypoint);
++    vc1_fill_picture(v, &controls->picture);
++    if (controls->picture.bitplane_flags)
++        vc1_fill_bitplanes(v, controls->picture.bitplane_flags,
++                           &controls->bitplanes);
++    controls->nb_slices = 0;
++
++    ret = vc1_fill_references(v, &controls->state, &controls->picture);
++    if (ret)
++        return ret;
++    vc1_update_state(v, &controls->state);
++
++    return 0;
++}
++
++static int v4l2_request_vc1_decode_slice(AVCodecContext *avctx,
++                                         const uint8_t *buffer, uint32_t size)
++{
++    static const uint8_t frame_start_code[4] = { 0, 0, 1, 0x0d };
++    const VC1Context *v = avctx->priv_data;
++    const MpegEncContext *s = &v->s;
++    V4L2RequestControlsVC1 *controls = s->cur_pic.ptr->hwaccel_picture_private;
++    int advanced = v->profile == PROFILE_ADVANCED;
++    int has_marker = advanced && size >= 4 && IS_MARKER(AV_RB32(buffer));
++    int first = !controls->nb_slices;
++    /*
++     * vc1dec.c has parsed the picture header (first slice) or the slice
++     * header, from the unescaped payload which follows the start code.
++     */
++    int bit_offset = get_bits_count(&v->gb);
++    int emulation = 0;
++    uint32_t offset;
++    int ret;
++
++    if (controls->skipped)
++        return 0;
++    offset = controls->pic.output->bytesused;
++
++    /*
++     * vc1dec.c hands over everything up to the next slice, the next field or
++     * the end of the packet. Only the BDU of the picture or of the slice goes
++     * in the output buffer: stop at the next start code, which leaves out the
++     * user data BDUs (and whatever else) that may follow it.
++     */
++    if (advanced && size > 4) {
++        const uint8_t *next = find_next_marker(buffer + 4 * has_marker,
++                                               buffer + size);
++        size = next - buffer;
++    }
++
++    if (advanced) {
++        emulation = vc1_count_emulation_bytes(buffer + 4 * has_marker,
++                                              size - 4 * has_marker,
++                                              bit_offset);
++
++        /*
++         * Advanced profile frames always carry their start codes in the
++         * output buffer. A container may omit the frame start code of a
++         * single-BDU packet (and of the first field of a field pair).
++         */
++        if (!has_marker) {
++            if (!first)
++                return AVERROR_INVALIDDATA;
++            ret = ff_v4l2_request_append_output(avctx, &controls->pic,
++                                                frame_start_code,
++                                                sizeof(frame_start_code));
++            if (ret)
++                return ret;
++        }
++    }
++
++    ret = ff_v4l2_request_append_output(avctx, &controls->pic, buffer, size);
++    if (ret)
++        return ret;
++
++    if (first) {
++        controls->picture.data_bit_offset        = bit_offset;
++        controls->picture.header_emulation_bytes = emulation;
++    }
++
++    if (controls->nb_slices < VC1_MAX_SLICES) {
++        controls->slices[controls->nb_slices++] =
++            (struct v4l2_ctrl_vc1_slice_params) {
++                .offset                 = offset,
++                .size                   = controls->pic.output->bytesused - offset,
++                .data_bit_offset        = bit_offset,
++                .header_emulation_bytes = emulation,
++                /* vc1dec.c sets mb_y to SLICE_ADDR before calling us. */
++                .slice_addr             = first ? 0 : s->mb_y,
++                .flags                  = !first && v->pic_header_flag ?
++                                          V4L2_VC1_SLICE_PARAMS_FLAG_PIC_HEADER : 0,
++            };
++    }
++
++    return 0;
++}
++
++static int v4l2_request_vc1_end_frame(AVCodecContext *avctx)
++{
++    const VC1Context *v = avctx->priv_data;
++    const MpegEncContext *s = &v->s;
++    V4L2RequestContextVC1 *ctx = avctx->internal->hwaccel_priv_data;
++    V4L2RequestControlsVC1 *controls = s->cur_pic.ptr->hwaccel_picture_private;
++    struct v4l2_ext_control control[5] = {
++        {
++            .id = V4L2_CID_STATELESS_VC1_SEQUENCE,
++            .ptr = &controls->sequence,
++            .size = sizeof(controls->sequence),
++        },
++        {
++            .id = V4L2_CID_STATELESS_VC1_ENTRYPOINT_HEADER,
++            .ptr = &controls->entrypoint,
++            .size = sizeof(controls->entrypoint),
++        },
++        {
++            .id = V4L2_CID_STATELESS_VC1_PICTURE_LAYER,
++            .ptr = &controls->picture,
++            .size = sizeof(controls->picture),
++        },
++    };
++    int count = 3;
++
++    /* Skipped picture: the reference is repeated, nothing is decoded. */
++    if (controls->skipped)
++        return 0;
++
++    /* Only sent when the picture has decoded bitplanes: it is 14 KiB. */
++    if (controls->picture.bitplane_flags) {
++        control[count++] = (struct v4l2_ext_control) {
++            .id = V4L2_CID_STATELESS_VC1_BITPLANES,
++            .ptr = &controls->bitplanes,
++            .size = sizeof(controls->bitplanes),
++        };
++    }
++
++    if (ctx->max_slice_params) {
++        if (controls->nb_slices > ctx->max_slice_params)
++            return AVERROR(ENOSYS);
++
++        control[count++] = (struct v4l2_ext_control) {
++            .id = V4L2_CID_STATELESS_VC1_SLICE_PARAMS,
++            .ptr = controls->slices,
++            .size = sizeof(controls->slices[0]) * controls->nb_slices,
++        };
++    }
++
++    /*
++     * The first field of a field pair must keep the capture buffer for the
++     * second one: this is the multi-slice path of the common code, which sets
++     * V4L2_BUF_FLAG_M2M_HOLD_CAPTURE_BUF on all but the last output buffer,
++     * or dequeues and queues the capture buffer again between the two fields
++     * when the driver cannot hold capture buffers.
++     */
++    if (v->field_mode)
++        return ff_v4l2_request_decode_slice(avctx, &controls->pic, control,
++                                            count, !v->second_field,
++                                            v->second_field);
++
++    return ff_v4l2_request_decode_frame(avctx, &controls->pic, control, count);
++}
++
++static int v4l2_request_vc1_post_frames_ctx(AVCodecContext *avctx)
++{
++    V4L2RequestContextVC1 *ctx = avctx->internal->hwaccel_priv_data;
++    struct v4l2_query_ext_ctrl slice_params = {
++        .id = V4L2_CID_STATELESS_VC1_SLICE_PARAMS,
++    };
++
++    if (!ff_v4l2_request_query_control(avctx, &slice_params))
++        ctx->max_slice_params = FFMIN(FFMAX(slice_params.dims[0], 1),
++                                      VC1_MAX_SLICES);
++    else
++        ctx->max_slice_params = 0;
++
++    // TODO: check V4L2_CID_MPEG_VIDEO_VC1_PROFILE and V4L2_CID_MPEG_VIDEO_VC1_LEVEL
++
++    return 0;
++}
++
++static int v4l2_request_vc1_init(AVCodecContext *avctx)
++{
++    const VC1Context *v = avctx->priv_data;
++    struct v4l2_ctrl_vc1_sequence sequence;
++    struct v4l2_ctrl_vc1_entrypoint_header entrypoint;
++    struct v4l2_ext_control control[] = {
++        {
++            .id = V4L2_CID_STATELESS_VC1_SEQUENCE,
++            .ptr = &sequence,
++            .size = sizeof(sequence),
++        },
++        {
++            .id = V4L2_CID_STATELESS_VC1_ENTRYPOINT_HEADER,
++            .ptr = &entrypoint,
++            .size = sizeof(entrypoint),
++        },
++    };
++
++    if (vc1_needs_output_process(v) || vc1_is_prerelease(v))
++        return AVERROR(ENOSYS);
++
++    /* Lets the driver refuse the profile or the coded size before decoding. */
++    vc1_fill_sequence(v, &sequence);
++    vc1_fill_entrypoint(v, &entrypoint);
++
++    return ff_v4l2_request_init(avctx, control, FF_ARRAY_ELEMS(control),
++                                v4l2_request_vc1_post_frames_ctx);
++}
++
++static int v4l2_request_vc1_frame_params(AVCodecContext *avctx,
++                                         AVBufferRef *hw_frames_ctx)
++{
++    return ff_v4l2_request_frame_params(avctx, hw_frames_ctx,
++                                        V4L2_PIX_FMT_VC1_SLICE, 8);
++}
++
++#if CONFIG_WMV3_V4L2REQUEST_HWACCEL
++const FFHWAccel ff_wmv3_v4l2request_hwaccel = {
++    .p.name             = "wmv3_v4l2request",
++    .p.type             = AVMEDIA_TYPE_VIDEO,
++    .p.id               = AV_CODEC_ID_WMV3,
++    .p.pix_fmt          = AV_PIX_FMT_DRM_PRIME,
++    .start_frame        = v4l2_request_vc1_start_frame,
++    .decode_slice       = v4l2_request_vc1_decode_slice,
++    .end_frame          = v4l2_request_vc1_end_frame,
++    .flush              = ff_v4l2_request_flush,
++    .frame_priv_data_size = sizeof(V4L2RequestControlsVC1),
++    .init               = v4l2_request_vc1_init,
++    .uninit             = ff_v4l2_request_uninit,
++    .priv_data_size     = sizeof(V4L2RequestContextVC1),
++    .frame_params       = v4l2_request_vc1_frame_params,
++    .caps_internal      = HWACCEL_CAP_ASYNC_SAFE,
++};
++#endif
++
++#if CONFIG_VC1_V4L2REQUEST_HWACCEL
++const FFHWAccel ff_vc1_v4l2request_hwaccel = {
++    .p.name             = "vc1_v4l2request",
++    .p.type             = AVMEDIA_TYPE_VIDEO,
++    .p.id               = AV_CODEC_ID_VC1,
++    .p.pix_fmt          = AV_PIX_FMT_DRM_PRIME,
++    .start_frame        = v4l2_request_vc1_start_frame,
++    .decode_slice       = v4l2_request_vc1_decode_slice,
++    .end_frame          = v4l2_request_vc1_end_frame,
++    .flush              = ff_v4l2_request_flush,
++    .frame_priv_data_size = sizeof(V4L2RequestControlsVC1),
++    .init               = v4l2_request_vc1_init,
++    .uninit             = ff_v4l2_request_uninit,
++    .priv_data_size     = sizeof(V4L2RequestContextVC1),
++    .frame_params       = v4l2_request_vc1_frame_params,
++    .caps_internal      = HWACCEL_CAP_ASYNC_SAFE,
++};
++#endif
+--- a/libavcodec/vc1dec.c
++++ b/libavcodec/vc1dec.c
+@@ -66,6 +66,9 @@ static const enum AVPixelFormat vc1_hwac
+ #if CONFIG_VC1_NVDEC_HWACCEL
+     AV_PIX_FMT_CUDA,
+ #endif
++#if CONFIG_VC1_V4L2REQUEST_HWACCEL
++    AV_PIX_FMT_DRM_PRIME,
++#endif
+ #if CONFIG_VC1_VAAPI_HWACCEL
+     AV_PIX_FMT_VAAPI,
+ #endif
+@@ -1389,6 +1392,9 @@ const FFCodec ff_vc1_decoder = {
+ #if CONFIG_VC1_NVDEC_CUARRAY_HWACCEL
+                         HWACCEL_NVDEC_CUARRAY(vc1),
+ #endif
++#if CONFIG_VC1_V4L2REQUEST_HWACCEL
++                        HWACCEL_V4L2REQUEST(vc1),
++#endif
+ #if CONFIG_VC1_VAAPI_HWACCEL
+                         HWACCEL_VAAPI(vc1),
+ #endif
+@@ -1431,6 +1437,9 @@ const FFCodec ff_wmv3_decoder = {
+ #if CONFIG_WMV3_NVDEC_CUARRAY_HWACCEL
+                         HWACCEL_NVDEC_CUARRAY(wmv3),
+ #endif
++#if CONFIG_WMV3_V4L2REQUEST_HWACCEL
++                        HWACCEL_V4L2REQUEST(wmv3),
++#endif
+ #if CONFIG_WMV3_VAAPI_HWACCEL
+                         HWACCEL_VAAPI(wmv3),
+ #endif

@@ -7,13 +7,13 @@ Signed-off-by: Alex Bee <knaerzche@gmail.com>
 ---
  libavfilter/Makefile                 |    1 +
  libavfilter/allfilters.c             |    1 +
- libavfilter/vf_deinterlace_v4l2m2m.c | 1015 ++++++++++++++++++++++++++
- 3 files changed, 1017 insertions(+)
+ libavfilter/vf_deinterlace_v4l2m2m.c | 1042 +++++++++++++++++++++++++++++++++
+ 3 files changed, 1044 insertions(+)
  create mode 100644 libavfilter/vf_deinterlace_v4l2m2m.c
 
 --- a/libavfilter/Makefile
 +++ b/libavfilter/Makefile
-@@ -279,6 +279,7 @@ OBJS-$(CONFIG_DEFLICKER_FILTER)
+@@ -280,6 +280,7 @@ OBJS-$(CONFIG_DEFLICKER_FILTER)
  OBJS-$(CONFIG_DEINTERLACE_D3D12_FILTER)      += vf_deinterlace_d3d12.o
  OBJS-$(CONFIG_DEINTERLACE_QSV_FILTER)        += vf_vpp_qsv.o
  OBJS-$(CONFIG_DEINTERLACE_VAAPI_FILTER)      += vf_deinterlace_vaapi.o vaapi_vpp.o
@@ -33,7 +33,7 @@ Signed-off-by: Alex Bee <knaerzche@gmail.com>
  extern const FFFilter ff_vf_delogo;
 --- /dev/null
 +++ b/libavfilter/vf_deinterlace_v4l2m2m.c
-@@ -0,0 +1,1015 @@
+@@ -0,0 +1,1042 @@
 +/*
 + * This file is part of FFmpeg.
 + *
@@ -104,6 +104,12 @@ Signed-off-by: Alex Bee <knaerzche@gmail.com>
 +    int num_planes;
 +    V4L2PlaneInfo plane_info[VIDEO_MAX_PLANES];
 +    AVDRMFrameDescriptor drm_frame;
++    /*
++     * Input frame backing an OUTPUT queue buffer. Deinterlacers keep the
++     * frames they use as temporal references queued, and return a buffer
++     * only once they are done with it, so the frame is held until then.
++     */
++    AVFrame *frame;
 +    V4L2Queue *q;
 +} V4L2Buffer;
 +
@@ -622,6 +628,7 @@ Signed-off-by: Alex Bee <knaerzche@gmail.com>
 +        avbuf = &queue->buffers[buf.index];
 +        avbuf->enqueued = 0;
 +        avbuf->buffer = buf;
++        av_frame_free(&avbuf->frame);
 +        if (V4L2_TYPE_IS_MULTIPLANAR(queue->format.type)) {
 +            memcpy(avbuf->planes, planes, sizeof(planes));
 +            avbuf->buffer.m.planes = avbuf->planes;
@@ -648,7 +655,7 @@ Signed-off-by: Alex Bee <knaerzche@gmail.com>
 +{
 +    AVDRMFrameDescriptor *drm_desc = (AVDRMFrameDescriptor *)frame->data[0];
 +    V4L2Buffer *buf;
-+    int i;
++    int i, ret;
 +
 +    if (V4L2_TYPE_IS_OUTPUT(queue->format.type))
 +        while (deint_v4l2m2m_dequeue_buffer(queue, 0));
@@ -656,6 +663,12 @@ Signed-off-by: Alex Bee <knaerzche@gmail.com>
 +    buf = deint_v4l2m2m_find_free_buf(queue);
 +    if (!buf)
 +        return AVERROR(ENOMEM);
++
++    if (V4L2_TYPE_IS_OUTPUT(queue->format.type)) {
++        buf->frame = av_frame_clone(frame);
++        if (!buf->frame)
++            return AVERROR(ENOMEM);
++    }
 +
 +    if (V4L2_TYPE_IS_MULTIPLANAR(buf->buffer.type)) {
 +        for (i = 0; i < drm_desc->nb_objects; i++) {
@@ -667,7 +680,11 @@ Signed-off-by: Alex Bee <knaerzche@gmail.com>
 +        buf->buffer.bytesused = buf->plane_info[0].length;
 +    }
 +
-+    return deint_v4l2m2m_enqueue_buffer(buf);
++    ret = deint_v4l2m2m_enqueue_buffer(buf);
++    if (ret)
++        av_frame_free(&buf->frame);
++
++    return ret;
 +}
 +
 +static void deint_v4l2m2m_destroy_context(DeintV4L2M2MContextShared *ctx)
@@ -690,6 +707,11 @@ Signed-off-by: Alex Bee <knaerzche@gmail.com>
 +                if (capture->buffers[i].fd >= 0)
 +                    close(capture->buffers[i].fd);
 +            }
++
++        /* STREAMOFF above returned every buffer the driver still held */
++        if (output->buffers)
++            for (i = 0; i < output->num_buffers; i++)
++                av_frame_free(&output->buffers[i].frame);
 +
 +	if (ctx->cur_in_frame)
 +		av_frame_free(&ctx->cur_in_frame);
@@ -939,38 +961,38 @@ Signed-off-by: Alex Bee <knaerzche@gmail.com>
 +                                       ctx->orig_width, ctx->orig_height,
 +                                       ctx->drm_in_format);
 +        if (ret)
-+            return ret;
++            goto fail;
 +
 +	ret = deint_v4l2m2m_set_format(capture, V4L2_FIELD_NONE,
 +	                               ctx->orig_width, ctx->orig_height,
 +	                               ctx->drm_out_format);
 +        if (ret)
-+            return ret;
++            goto fail;
 +
 +        ret = deint_v4l2m2m_allocate_buffers(capture);
 +        if (ret)
-+            return ret;
++            goto fail;
 +
 +        ret = deint_v4l2m2m_streamon(capture);
 +        if (ret)
-+            return ret;
++            goto fail;
 +
 +        ret = deint_v4l2m2m_allocate_buffers(output);
 +        if (ret)
-+            return ret;
++            goto fail;
 +
 +        ret = deint_v4l2m2m_streamon(output);
 +        if (ret)
-+            return ret;
++            goto fail;
 +    }
 +
 +    ret = deint_v4l2m2m_enqueue(output, in);
 +    if (ret)
-+        return ret;
++        goto fail;
 +
 +    ret = deint_v4l2m2m_dequeue(avctx, in);
 +    if (ret)
-+        return ret;
++        goto fail;
 +
 +    if (ctx->prev_in_frame)
 +	av_frame_free(&ctx->prev_in_frame);
@@ -979,6 +1001,11 @@ Signed-off-by: Alex Bee <knaerzche@gmail.com>
 +    ctx->cur_in_frame = NULL;
 +
 +    return 0;
++
++fail:
++    ctx->cur_in_frame = NULL;
++    av_frame_free(&in);
++    return ret;
 +}
 +
 +static av_cold int deint_v4l2m2m_init(AVFilterContext *avctx)

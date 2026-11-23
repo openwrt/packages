@@ -27,7 +27,7 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
 
 --- a/libavcodec/h264_slice.c
 +++ b/libavcodec/h264_slice.c
-@@ -1702,7 +1702,7 @@ static int h264_slice_header_parse(const
+@@ -1744,7 +1744,7 @@ static int h264_slice_header_parse(const
      unsigned int slice_type, tmp, i;
      int field_pic_flag, bottom_field_flag;
      int first_slice = sl == h->slice_ctx && !h->current_slice;
@@ -36,7 +36,7 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
  
      if (first_slice)
          av_assert0(!h->setup_finished);
-@@ -1793,6 +1793,7 @@ static int h264_slice_header_parse(const
+@@ -1835,6 +1835,7 @@ static int h264_slice_header_parse(const
  
      sl->poc_lsb = 0;
      sl->delta_poc_bottom = 0;
@@ -44,7 +44,7 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
      if (sps->poc_type == 0) {
          sl->poc_lsb = get_bits(&sl->gb, sps->log2_max_poc_lsb);
  
-@@ -1807,6 +1808,7 @@ static int h264_slice_header_parse(const
+@@ -1849,6 +1850,7 @@ static int h264_slice_header_parse(const
          if (pps->pic_order_present == 1 && picture_structure == PICT_FRAME)
              sl->delta_poc[1] = get_se_golomb(&sl->gb);
      }
@@ -52,7 +52,7 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
  
      sl->redundant_pic_count = 0;
      if (pps->redundant_pic_cnt_present)
-@@ -1846,9 +1848,11 @@ static int h264_slice_header_parse(const
+@@ -1888,9 +1890,11 @@ static int h264_slice_header_parse(const
  
      sl->explicit_ref_marking = 0;
      if (nal->ref_idc) {
@@ -66,7 +66,7 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
      if (sl->slice_type_nos != AV_PICTURE_TYPE_I && pps->cabac) {
 --- a/libavcodec/h264dec.h
 +++ b/libavcodec/h264dec.h
-@@ -322,6 +322,7 @@ typedef struct H264SliceContext {
+@@ -331,6 +331,7 @@ typedef struct H264SliceContext {
      MMCO mmco[H264_MAX_MMCO_COUNT];
      int  nb_mmco;
      int explicit_ref_marking;
@@ -74,7 +74,7 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
  
      int frame_num;
      int idr_pic_id;
-@@ -330,6 +331,7 @@ typedef struct H264SliceContext {
+@@ -339,6 +340,7 @@ typedef struct H264SliceContext {
      int delta_poc[2];
      int curr_pic_num;
      int max_pic_num;

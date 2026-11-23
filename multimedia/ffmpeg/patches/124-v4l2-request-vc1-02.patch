@@ -1,0 +1,67 @@
+From f4cee765dde1edf1f979a6850d948428a855d1fe Mon Sep 17 00:00:00 2001
+From: Jernej Skrabec <jernej.skrabec@gmail.com>
+Date: Wed, 7 Oct 2026 17:27:19 +0200
+Subject: [PATCH 2/5] avcodec/vc1_pred: pull back the co-located MV of
+ Simple/Main direct mode
+
+For Simple and Main profile B pictures, the co-located motion vector of
+direct mode macroblocks is pulled back like a chroma vector before it
+is scaled (SMPTE 421M 8.4.5.5, vc1DERIVEMV_DirectMV() and
+vc1CROPMV_ChromaPullBack() of the reference decoder). Without it, direct
+macroblocks at the picture edges predict from the wrong place.
+
+Fixes the B pictures of the SMM0005 conformance stream, which now match
+the SMPTE reference decoder.
+
+Signed-off-by: Jernej Skrabec <jernej.skrabec@gmail.com>
+---
+OpenWrt: patch 2/5 of LibreELEC's
+packages/multimedia/ffmpeg/patches/v4l2-request/0002-v4l2-request-vc1.patch
+(LibreELEC commit d38b323eea). Not in FFmpeg 9.1.
+
+ libavcodec/vc1_pred.c | 34 ++++++++++++++++++++++++++++++----
+ 1 file changed, 30 insertions(+), 4 deletions(-)
+
+--- a/libavcodec/vc1_pred.c
++++ b/libavcodec/vc1_pred.c
+@@ -722,10 +722,36 @@ void ff_vc1_pred_b_mv(VC1Context *v, int
+     if (direct && s->next_pic.ptr->field_picture)
+         av_log(s->avctx, AV_LOG_WARNING, "Mixed frame/field direct mode not supported\n");
+ 
+-    s->mv[0][0][0] = scale_mv(s->next_pic.motion_val[1][xy][0], v->bfraction, 0, s->quarter_sample);
+-    s->mv[0][0][1] = scale_mv(s->next_pic.motion_val[1][xy][1], v->bfraction, 0, s->quarter_sample);
+-    s->mv[1][0][0] = scale_mv(s->next_pic.motion_val[1][xy][0], v->bfraction, 1, s->quarter_sample);
+-    s->mv[1][0][1] = scale_mv(s->next_pic.motion_val[1][xy][1], v->bfraction, 1, s->quarter_sample);
++    {
++        int col_x = s->next_pic.motion_val[1][xy][0];
++        int col_y = s->next_pic.motion_val[1][xy][1];
++
++        /*
++         * Simple/Main profile: the co-located motion vector is pulled back
++         * like a chroma vector before it is scaled (SMPTE reference decoder,
++         * vc1DERIVEMV_DirectMV() -> vc1CROPMV_ChromaPullBack()).
++         */
++        if (v->profile < PROFILE_ADVANCED) {
++            int ix = s->mb_x * 8 + (col_x >> 2);
++            int iy = s->mb_y * 8 + (col_y >> 2);
++            int w  = s->mb_width  * 8;
++            int h  = s->mb_height * 8;
++
++            if (ix < -8)
++                col_x -= 4 * (ix + 8);
++            else if (ix > w)
++                col_x -= 4 * (ix - w);
++            if (iy < -8)
++                col_y -= 4 * (iy + 8);
++            else if (iy > h)
++                col_y -= 4 * (iy - h);
++        }
++
++        s->mv[0][0][0] = scale_mv(col_x, v->bfraction, 0, s->quarter_sample);
++        s->mv[0][0][1] = scale_mv(col_y, v->bfraction, 0, s->quarter_sample);
++        s->mv[1][0][0] = scale_mv(col_x, v->bfraction, 1, s->quarter_sample);
++        s->mv[1][0][1] = scale_mv(col_y, v->bfraction, 1, s->quarter_sample);
++    }
+ 
+     /* Pullback predicted motion vectors as specified in 8.4.5.4 */
+     s->mv[0][0][0] = av_clip(s->mv[0][0][0], -60 - (s->mb_x << 6), (s->mb_width  << 6) - 4 - (s->mb_x << 6));

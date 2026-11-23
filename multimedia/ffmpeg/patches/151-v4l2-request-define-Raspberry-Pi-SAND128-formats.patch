@@ -19,9 +19,9 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
 
 --- a/libavutil/hwcontext_v4l2request.c
 +++ b/libavutil/hwcontext_v4l2request.c
-@@ -34,6 +34,14 @@
- #include "hwcontext_v4l2request_internal.h"
- #include "mem.h"
+@@ -46,6 +46,14 @@
+ #define V4L2_PIX_FMT_YUV420_10_AFBC_16X16_SPLIT v4l2_fourcc('A', 'S', '0', '1')
+ #endif
  
 +#ifndef V4L2_PIX_FMT_NV12MT_COL128
 +#define V4L2_PIX_FMT_NV12MT_COL128              v4l2_fourcc('N', 'c', '1', '2')

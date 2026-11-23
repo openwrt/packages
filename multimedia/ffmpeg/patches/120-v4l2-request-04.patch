@@ -40,13 +40,13 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
 ---
  configure                 |   3 +-
  libavcodec/hwconfig.h     |   2 +
- libavcodec/v4l2_request.c | 537 +++++++++++++++++++++++++++++++++++++-
- libavcodec/v4l2_request.h |  41 +++
+ libavcodec/v4l2_request.c | 537 ++++++++++++++++++++++++++++++++++++++++++++-
+ libavcodec/v4l2_request.h |  41 ++++
  4 files changed, 581 insertions(+), 2 deletions(-)
 
 --- a/configure
 +++ b/configure
-@@ -3403,7 +3403,7 @@ dxva2_deps="dxva2api_h DXVA2_ConfigPictu
+@@ -3351,7 +3351,7 @@ dxva2_deps="dxva2api_h DXVA2_ConfigPictu
  ffnvcodec_deps_any="libdl LoadLibrary"
  mediacodec_deps="android mediandk pthreads"
  nvdec_deps="ffnvcodec"
@@ -55,7 +55,7 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
  v4l2_request_suggest="libdrm libudev"
  vaapi_x11_deps="xlib_x11"
  videotoolbox_hwaccel_deps="videotoolbox pthreads"
-@@ -7662,6 +7662,7 @@ if enabled v4l2_m2m; then
+@@ -7571,6 +7571,7 @@ if enabled v4l2_m2m; then
  fi
  
  if enabled v4l2_request; then
@@ -65,7 +65,7 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
      v4l2_request_extralibs="$libudev_extralibs"
 --- a/libavcodec/hwconfig.h
 +++ b/libavcodec/hwconfig.h
-@@ -79,6 +79,8 @@ void ff_hwaccel_uninit(AVCodecContext *a
+@@ -81,6 +81,8 @@ void ff_hwaccel_uninit(AVCodecContext *a
      HW_CONFIG_HWACCEL(0, 0, 1, D3D11VA_VLD,  NONE,         ff_ ## codec ## _d3d11va_hwaccel)
  #define HWACCEL_D3D12VA(codec) \
      HW_CONFIG_HWACCEL(1, 1, 0, D3D12,        D3D12VA,      ff_ ## codec ## _d3d12va_hwaccel)

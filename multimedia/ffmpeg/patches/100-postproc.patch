@@ -21,11 +21,11 @@ Signed-off-by: Matthias Reichl <hias@horus.com>
  libavutil/avutil.h                         |    1 +
  libpostproc/Makefile                       |   23 +
  libpostproc/libpostproc.v                  |    7 +
- libpostproc/postprocess.c                  |  992 ++++++
+ libpostproc/postprocess.c                  |  992 ++++++++
  libpostproc/postprocess.h                  |  109 +
- libpostproc/postprocess_altivec_template.c | 1214 ++++++++
+ libpostproc/postprocess_altivec_template.c | 1214 ++++++++++
  libpostproc/postprocess_internal.h         |  185 ++
- libpostproc/postprocess_template.c         | 3293 ++++++++++++++++++++
+ libpostproc/postprocess_template.c         | 3293 +++++++++++++++++++++++++++
  libpostproc/postprocres.rc                 |   55 +
  libpostproc/tests/.gitignore               |    3 +
  libpostproc/tests/blocktest.c              |  113 +
@@ -39,7 +39,7 @@ Signed-off-by: Matthias Reichl <hias@horus.com>
  tests/Makefile                             |    1 +
  tests/fate/filter-video.mak                |   16 +
  tests/fate/libpostproc.mak                 |   14 +
- tests/ref/fate/blocktest                   | 1800 +++++++++++
+ tests/ref/fate/blocktest                   | 1800 +++++++++++++++
  tests/ref/fate/filter-pp                   |   10 +
  tests/ref/fate/filter-pp1                  |    1 +
  tests/ref/fate/filter-pp2                  |    1 +
@@ -49,7 +49,7 @@ Signed-off-by: Matthias Reichl <hias@horus.com>
  tests/ref/fate/filter-pp6                  |    1 +
  tests/ref/fate/filter-qp                   |    1 +
  tests/ref/fate/stripetest                  |  360 +++
- tests/ref/fate/temptest                    |  336 ++
+ tests/ref/fate/temptest                    |  336 +++
  tools/gen-rc                               |    1 +
  43 files changed, 9344 insertions(+), 1 deletion(-)
  create mode 100644 libavfilter/vf_pp.c
@@ -103,7 +103,7 @@ Signed-off-by: Matthias Reichl <hias@horus.com>
      - `vf_repeatfields.c`
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -139,6 +139,8 @@ Generic Parts:
+@@ -155,6 +155,8 @@ Generic Parts:
      ratecontrol.c                   [2] Michael Niedermayer
    simple IDCT:
      simple_idct.c, simple_idct.h    [2] Michael Niedermayer
@@ -140,7 +140,7 @@ Signed-off-by: Matthias Reichl <hias@horus.com>
    --disable-avfilter       disable libavfilter build
    --disable-pthreads       disable pthreads [autodetect]
    --disable-w32threads     disable Win32 threads [autodetect]
-@@ -2229,6 +2230,7 @@ LIBRARY_LIST="
+@@ -2206,6 +2207,7 @@ LIBRARY_LIST="
      avdevice
      avfilter
      swscale
@@ -148,7 +148,7 @@ Signed-off-by: Matthias Reichl <hias@horus.com>
      avformat
      avcodec
      swresample
-@@ -4242,6 +4244,7 @@ pan_filter_deps="swresample"
+@@ -4223,6 +4225,7 @@ pan_filter_deps="swresample"
  perspective_filter_deps="gpl"
  phase_filter_deps="gpl"
  pp7_filter_deps="gpl"
@@ -156,7 +156,7 @@ Signed-off-by: Matthias Reichl <hias@horus.com>
  prewitt_opencl_filter_deps="opencl"
  procamp_vaapi_filter_deps="vaapi"
  program_opencl_filter_deps="opencl"
-@@ -4363,6 +4366,8 @@ avfilter_suggest="libm stdatomic zlib"
+@@ -4345,6 +4348,8 @@ avfilter_suggest="libm stdatomic zlib"
  avformat_deps="avcodec avutil"
  avformat_suggest="libm network zlib stdatomic"
  avutil_suggest="amf clock_gettime ffnvcodec gcrypt libm zlib libdrm libmfx opencl openssl user32 vaapi vulkan videotoolbox corefoundation corevideo coremedia bcrypt stdatomic"
@@ -165,8 +165,8 @@ Signed-off-by: Matthias Reichl <hias@horus.com>
  swresample_deps="avutil"
  swresample_suggest="libm libsoxr stdatomic"
  swscale_deps="avutil"
-@@ -7992,7 +7997,7 @@ void (^block)(void);
- EOF
+@@ -7889,7 +7894,7 @@ check_disable_warning_headers -Wno-depre
+ check_disable_warning_headers -Wno-unused-variable
  
  # add some linker flags
 -check_ldflags -Wl,-rpath-link=:libswresample:libswscale:libavfilter:libavdevice:libavformat:libavcodec:libavutil
@@ -174,7 +174,7 @@ Signed-off-by: Matthias Reichl <hias@horus.com>
  enabled rpath && add_ldexeflags -Wl,-rpath,$libdir && add_ldsoflags -Wl,-rpath,$libdir
  test_ldflags -Wl,-Bsymbolic && append SHFLAGS -Wl,-Bsymbolic
  
-@@ -8374,6 +8379,7 @@ enabled fsync_filter        && prepend a
+@@ -8230,6 +8235,7 @@ enabled fsync_filter        && prepend a
  enabled mcdeint_filter      && prepend avfilter_deps "avcodec"
  enabled movie_filter        && prepend avfilter_deps "avformat avcodec"
  enabled pan_filter          && prepend avfilter_deps "swresample"
@@ -182,7 +182,7 @@ Signed-off-by: Matthias Reichl <hias@horus.com>
  enabled qrencode_filter     && prepend avfilter_deps "swscale"
  enabled qrencodesrc_filter  && prepend avfilter_deps "swscale"
  enabled removelogo_filter   && prepend avfilter_deps "avformat avcodec swscale"
-@@ -8425,6 +8431,9 @@ expand_deps(){
+@@ -8282,6 +8288,9 @@ expand_deps(){
      reorder_by ${1}_deps LIBRARY_LIST  # linking order is expected later
  }
  
@@ -192,7 +192,7 @@ Signed-off-by: Matthias Reichl <hias@horus.com>
  map 'expand_deps $v' $LIBRARY_LIST
  
  if test "$quiet" != "yes"; then
-@@ -8522,6 +8531,7 @@ echo "optimize for size         ${small-
+@@ -8378,6 +8387,7 @@ echo "optimize for size         ${small-
  echo "optimizations             ${optimizations-no}"
  echo "static                    ${static-no}"
  echo "shared                    ${shared-no}"
@@ -200,7 +200,7 @@ Signed-off-by: Matthias Reichl <hias@horus.com>
  echo "network support           ${network-no}"
  echo "threading support         ${thread_type-no}"
  echo "safe bitstream reader     ${safe_bitstream_reader-no}"
-@@ -8986,6 +8996,7 @@ extralibs_avcodec="$avcodec_extralibs"
+@@ -8843,6 +8853,7 @@ extralibs_avcodec="$avcodec_extralibs"
  extralibs_avformat="$avformat_extralibs"
  extralibs_avdevice="$avdevice_extralibs"
  extralibs_avfilter="$avfilter_extralibs"
@@ -210,7 +210,7 @@ Signed-off-by: Matthias Reichl <hias@horus.com>
  EOF
 --- a/doc/filters.texi
 +++ b/doc/filters.texi
-@@ -20089,6 +20089,181 @@ Set window Y position, relative offset o
+@@ -20540,6 +20540,181 @@ Set window Y position, relative offset o
  
  This filter supports same @ref{commands} as options.
  
@@ -394,7 +394,7 @@ Signed-off-by: Matthias Reichl <hias@horus.com>
  similar to spp = 6 with 7 point DCT, where only the center sample is
 --- a/fftools/ffprobe.c
 +++ b/fftools/ffprobe.c
-@@ -64,6 +64,8 @@
+@@ -65,6 +65,8 @@
  #include "libswscale/version.h"
  #include "libswresample/swresample.h"
  #include "libswresample/version.h"
@@ -403,7 +403,7 @@ Signed-off-by: Matthias Reichl <hias@horus.com>
  #include "libavfilter/version.h"
  #include "textformat/avtextformat.h"
  #include "cmdutils.h"
-@@ -2830,6 +2832,7 @@ static void ffprobe_show_library_version
+@@ -3035,6 +3037,7 @@ static void ffprobe_show_library_version
      SHOW_LIB_VERSION(avfilter,   AVFILTER);
      SHOW_LIB_VERSION(swscale,    SWSCALE);
      SHOW_LIB_VERSION(swresample, SWRESAMPLE);
@@ -432,7 +432,7 @@ Signed-off-by: Matthias Reichl <hias@horus.com>
  static void print_program_info(int flags, int level)
 --- a/libavfilter/Makefile
 +++ b/libavfilter/Makefile
-@@ -440,6 +440,7 @@ OBJS-$(CONFIG_PHOTOSENSITIVITY_FILTER)
+@@ -444,6 +444,7 @@ OBJS-$(CONFIG_PHOTOSENSITIVITY_FILTER)
  OBJS-$(CONFIG_PIXDESCTEST_FILTER)            += vf_pixdesctest.o
  OBJS-$(CONFIG_PIXELIZE_FILTER)               += vf_pixelize.o
  OBJS-$(CONFIG_PIXSCOPE_FILTER)               += vf_datascope.o
@@ -442,7 +442,7 @@ Signed-off-by: Matthias Reichl <hias@horus.com>
  OBJS-$(CONFIG_PREMULTIPLY_FILTER)            += vf_premultiply.o framesync.o
 --- a/libavfilter/allfilters.c
 +++ b/libavfilter/allfilters.c
-@@ -412,6 +412,7 @@ extern const FFFilter ff_vf_photosensiti
+@@ -415,6 +415,7 @@ extern const FFFilter ff_vf_photosensiti
  extern const FFFilter ff_vf_pixdesctest;
  extern const FFFilter ff_vf_pixelize;
  extern const FFFilter ff_vf_pixscope;
@@ -7113,7 +7113,7 @@ Signed-off-by: Matthias Reichl <hias@horus.com>
 +#endif /* POSTPROC_VERSION_MAJOR_H */
 --- a/tests/Makefile
 +++ b/tests/Makefile
-@@ -216,6 +216,7 @@ include $(SRC_PATH)/tests/fate/libavform
+@@ -230,6 +230,7 @@ include $(SRC_PATH)/tests/fate/libavform
  include $(SRC_PATH)/tests/fate/libavutil.mak
  include $(SRC_PATH)/tests/fate/libswresample.mak
  include $(SRC_PATH)/tests/fate/libswscale.mak
@@ -7123,7 +7123,7 @@ Signed-off-by: Matthias Reichl <hias@horus.com>
  include $(SRC_PATH)/tests/fate/matroska.mak
 --- a/tests/fate/filter-video.mak
 +++ b/tests/fate/filter-video.mak
-@@ -584,6 +584,19 @@ fate-filter-idet: CMD = framecrc -flags
+@@ -693,6 +693,19 @@ fate-filter-idet: CMD = framecrc -flags
  FATE_FILTER_VSYNTH_VIDEO_FILTER-$(CONFIG_PAD_FILTER) += fate-filter-pad
  fate-filter-pad: CMD = video_filter "pad=iw*1.5:ih*1.5:iw*0.3:ih*0.2"
  
@@ -7143,7 +7143,7 @@ Signed-off-by: Matthias Reichl <hias@horus.com>
  FATE_FILTER_VSYNTH1_MPEG4_QPRD-$(call FILTERDEMDEC, PP7, AVI, MPEG4) += pp7
  fate-filter-pp7: CMD = framecrc -flags bitexact -export_side_data venc_params -idct simple -i $(TARGET_PATH)/tests/data/fate/vsynth1-mpeg4-qprd.avi -frames:v 5 -flags +bitexact -vf "pp7"
  
-@@ -601,6 +614,9 @@ FATE_FILTER_VSYNTH-yes += $(FATE_FILTER_
+@@ -710,6 +723,9 @@ FATE_FILTER_VSYNTH-yes += $(FATE_FILTER_
  $(FATE_FILTER_VSYNTH1_MPEG4_QPRD): fate-vsynth1-mpeg4-qprd
  fate-vsynth1-mpeg4-qprd: KEEP_FILES ?= 1
  

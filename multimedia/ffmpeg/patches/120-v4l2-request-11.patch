@@ -15,22 +15,22 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
  libavcodec/Makefile           |   1 +
  libavcodec/av1dec.c           |  10 +
  libavcodec/hwaccels.h         |   1 +
- libavcodec/v4l2_request_av1.c | 636 ++++++++++++++++++++++++++++++++++
+ libavcodec/v4l2_request_av1.c | 636 +++++++++++++++++++++++++++++++++++++++++
  5 files changed, 651 insertions(+)
  create mode 100644 libavcodec/v4l2_request_av1.c
 
 --- a/configure
 +++ b/configure
-@@ -3424,6 +3424,8 @@ av1_dxva2_hwaccel_deps="dxva2 DXVA_PicPa
- av1_dxva2_hwaccel_select="av1_decoder"
- av1_nvdec_hwaccel_deps="nvdec CUVIDAV1PICPARAMS"
+@@ -3378,6 +3378,8 @@ av1_nvdec_hwaccel_deps="nvdec CUVIDAV1PI
  av1_nvdec_hwaccel_select="av1_decoder"
+ av1_nvdec_cuarray_hwaccel_deps="nvdec ffnvcodec_cuarray CUVIDAV1PICPARAMS"
+ av1_nvdec_cuarray_hwaccel_select="av1_decoder"
 +av1_v4l2request_hwaccel_deps="v4l2_request av1_v4l2_request"
 +av1_v4l2request_hwaccel_select="av1_decoder"
  av1_vaapi_hwaccel_deps="vaapi VADecPictureParameterBufferAV1_bit_depth_idx"
  av1_vaapi_hwaccel_select="av1_decoder"
  av1_vdpau_hwaccel_deps="vdpau VdpPictureInfoAV1"
-@@ -7673,6 +7675,7 @@ if enabled v4l2_m2m; then
+@@ -7582,6 +7584,7 @@ if enabled v4l2_m2m; then
  fi
  
  if enabled v4l2_request; then
@@ -40,25 +40,25 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
      check_cc mpeg2_v4l2_request linux/videodev2.h "int i = V4L2_CID_STATELESS_MPEG2_SEQUENCE"
 --- a/libavcodec/Makefile
 +++ b/libavcodec/Makefile
-@@ -1049,6 +1049,7 @@ OBJS-$(CONFIG_AV1_D3D11VA_HWACCEL)
- OBJS-$(CONFIG_AV1_DXVA2_HWACCEL)          += dxva2_av1.o
+@@ -1058,6 +1058,7 @@ OBJS-$(CONFIG_AV1_DXVA2_HWACCEL)
  OBJS-$(CONFIG_AV1_D3D12VA_HWACCEL)        += dxva2_av1.o d3d12va_av1.o
  OBJS-$(CONFIG_AV1_NVDEC_HWACCEL)          += nvdec_av1.o
+ OBJS-$(CONFIG_AV1_NVDEC_CUARRAY_HWACCEL)  += nvdec_av1.o
 +OBJS-$(CONFIG_AV1_V4L2REQUEST_HWACCEL)    += v4l2_request_av1.o
  OBJS-$(CONFIG_AV1_VAAPI_HWACCEL)          += vaapi_av1.o
  OBJS-$(CONFIG_AV1_VDPAU_HWACCEL)          += vdpau_av1.o
  OBJS-$(CONFIG_AV1_VIDEOTOOLBOX_HWACCEL)   += videotoolbox_av1.o
 --- a/libavcodec/av1dec.c
 +++ b/libavcodec/av1dec.c
-@@ -543,6 +543,7 @@ static int get_pixel_format(AVCodecConte
-                      CONFIG_AV1_D3D11VA_HWACCEL * 2 + \
+@@ -547,6 +547,7 @@ static int get_pixel_format(AVCodecConte
                       CONFIG_AV1_D3D12VA_HWACCEL + \
                       CONFIG_AV1_NVDEC_HWACCEL + \
+                      CONFIG_AV1_NVDEC_CUARRAY_HWACCEL + \
 +                     CONFIG_AV1_V4L2REQUEST_HWACCEL + \
                       CONFIG_AV1_VAAPI_HWACCEL + \
                       CONFIG_AV1_VDPAU_HWACCEL + \
                       CONFIG_AV1_VIDEOTOOLBOX_HWACCEL + \
-@@ -579,6 +580,9 @@ static int get_pixel_format(AVCodecConte
+@@ -586,6 +587,9 @@ static int get_pixel_format(AVCodecConte
  #if CONFIG_AV1_VULKAN_HWACCEL
          *fmtp++ = AV_PIX_FMT_VULKAN;
  #endif
@@ -68,7 +68,7 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
          break;
      case AV_PIX_FMT_YUV420P10:
  #if CONFIG_AV1_DXVA2_HWACCEL
-@@ -606,6 +610,9 @@ static int get_pixel_format(AVCodecConte
+@@ -616,6 +620,9 @@ static int get_pixel_format(AVCodecConte
  #if CONFIG_AV1_VULKAN_HWACCEL
          *fmtp++ = AV_PIX_FMT_VULKAN;
  #endif
@@ -77,8 +77,8 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
 +#endif
          break;
      case AV_PIX_FMT_YUV420P12:
- #if CONFIG_AV1_VULKAN_HWACCEL
-@@ -1567,6 +1574,9 @@ const FFCodec ff_av1_decoder = {
+ #if CONFIG_AV1_D3D11VA_HWACCEL
+@@ -1615,6 +1622,9 @@ const FFCodec ff_av1_decoder = {
  #if CONFIG_AV1_VULKAN_HWACCEL
          HWACCEL_VULKAN(av1),
  #endif
@@ -90,10 +90,10 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
      },
 --- a/libavcodec/hwaccels.h
 +++ b/libavcodec/hwaccels.h
-@@ -25,6 +25,7 @@ extern const struct FFHWAccel ff_av1_d3d
- extern const struct FFHWAccel ff_av1_d3d12va_hwaccel;
+@@ -26,6 +26,7 @@ extern const struct FFHWAccel ff_av1_d3d
  extern const struct FFHWAccel ff_av1_dxva2_hwaccel;
  extern const struct FFHWAccel ff_av1_nvdec_hwaccel;
+ extern const struct FFHWAccel ff_av1_nvdec_cuarray_hwaccel;
 +extern const struct FFHWAccel ff_av1_v4l2request_hwaccel;
  extern const struct FFHWAccel ff_av1_vaapi_hwaccel;
  extern const struct FFHWAccel ff_av1_vdpau_hwaccel;

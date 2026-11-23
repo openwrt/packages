@@ -28,8 +28,8 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
  libavutil/hwcontext.c                      |   4 +
  libavutil/hwcontext.h                      |   1 +
  libavutil/hwcontext_internal.h             |   1 +
- libavutil/hwcontext_v4l2request.c          | 617 +++++++++++++++++++++
- libavutil/hwcontext_v4l2request.h          |  70 +++
+ libavutil/hwcontext_v4l2request.c          | 617 ++++++++++++++++++++++++++++
+ libavutil/hwcontext_v4l2request.h          |  70 ++++
  libavutil/hwcontext_v4l2request_internal.h |  67 +++
  9 files changed, 773 insertions(+)
  create mode 100644 libavutil/hwcontext_v4l2request.c
@@ -38,7 +38,7 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
 
 --- a/.forgejo/CODEOWNERS
 +++ b/.forgejo/CODEOWNERS
-@@ -178,6 +178,7 @@ libavutil/film_grain.* @haasn
+@@ -183,6 +183,7 @@ libavutil/film_grain.* @haasn
  libavutil/dovi_meta.* @haasn
  libavutil/hwcontext_oh.* @quink
  libavutil/hwcontext_mediacodec.* @quink
@@ -48,7 +48,7 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
  libavutil/integer.* @michaelni
 --- a/configure
 +++ b/configure
-@@ -365,6 +365,7 @@ External library support:
+@@ -367,6 +367,7 @@ External library support:
    --disable-nvenc          disable Nvidia video encoding code [autodetect]
    --enable-rkmpp           enable Rockchip Media Process Platform code [no]
    --disable-v4l2-m2m       disable V4L2 mem2mem code [autodetect]
@@ -56,7 +56,7 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
    --disable-vaapi          disable Video Acceleration API (mainly Unix/Intel) code [autodetect]
    --disable-vdpau          disable Nvidia Video Decode and Presentation API for Unix code [autodetect]
    --disable-videotoolbox   disable VideoToolbox code [autodetect]
-@@ -2201,6 +2202,7 @@ HWACCEL_LIBRARY_LIST="
+@@ -2178,6 +2179,7 @@ HWACCEL_LIBRARY_LIST="
      libvpl
      mmal
      opencl
@@ -64,7 +64,7 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
  "
  
  DOCUMENT_LIST="
-@@ -3400,6 +3402,8 @@ dxva2_deps="dxva2api_h DXVA2_ConfigPictu
+@@ -3348,6 +3350,8 @@ dxva2_deps="dxva2api_h DXVA2_ConfigPictu
  ffnvcodec_deps_any="libdl LoadLibrary"
  mediacodec_deps="android mediandk pthreads"
  nvdec_deps="ffnvcodec"
@@ -73,7 +73,7 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
  vaapi_x11_deps="xlib_x11"
  videotoolbox_hwaccel_deps="videotoolbox pthreads"
  videotoolbox_hwaccel_extralibs="-framework QuartzCore"
-@@ -7656,6 +7660,10 @@ if enabled v4l2_m2m; then
+@@ -7565,6 +7569,10 @@ if enabled v4l2_m2m; then
      check_cc vp9_v4l2_m2m linux/videodev2.h "int i = V4L2_PIX_FMT_VP9;"
  fi
  
@@ -86,7 +86,7 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
  
 --- a/libavutil/Makefile
 +++ b/libavutil/Makefile
-@@ -52,6 +52,7 @@ HEADERS = adler32.h
+@@ -53,6 +53,7 @@ HEADERS = adler32.h
            hwcontext_mediacodec.h                                        \
            hwcontext_opencl.h                                            \
            hwcontext_oh.h                                                \
@@ -94,7 +94,7 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
            hwcontext_vaapi.h                                             \
            hwcontext_videotoolbox.h                                      \
            hwcontext_vdpau.h                                             \
-@@ -216,6 +217,7 @@ OBJS-$(CONFIG_MEDIACODEC)
+@@ -218,6 +219,7 @@ OBJS-$(CONFIG_MEDIACODEC)
  OBJS-$(CONFIG_OHCODEC)                  += hwcontext_oh.o
  OBJS-$(CONFIG_OPENCL)                   += hwcontext_opencl.o
  OBJS-$(CONFIG_QSV)                      += hwcontext_qsv.o
@@ -102,7 +102,7 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
  OBJS-$(CONFIG_VAAPI)                    += hwcontext_vaapi.o
  OBJS-$(CONFIG_VIDEOTOOLBOX)             += hwcontext_videotoolbox.o
  OBJS-$(CONFIG_VDPAU)                    += hwcontext_vdpau.o
-@@ -247,6 +249,8 @@ SKIPHEADERS-$(CONFIG_AMF)              +
+@@ -250,6 +252,8 @@ SKIPHEADERS-$(CONFIG_AMF)              +
                                            hwcontext_amf_internal.h
  SKIPHEADERS-$(CONFIG_QSV)              += hwcontext_qsv.h
  SKIPHEADERS-$(CONFIG_OPENCL)           += hwcontext_opencl.h
@@ -113,7 +113,7 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
  SKIPHEADERS-$(CONFIG_VDPAU)            += hwcontext_vdpau.h
 --- a/libavutil/hwcontext.c
 +++ b/libavutil/hwcontext.c
-@@ -72,6 +72,9 @@ static const HWContextType * const hw_ta
+@@ -73,6 +73,9 @@ static const HWContextType * const hw_ta
  #if CONFIG_OHCODEC
      &ff_hwcontext_type_oh,
  #endif
@@ -123,7 +123,7 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
      NULL,
  };
  
-@@ -83,6 +86,7 @@ static const char *const hw_type_names[]
+@@ -84,6 +87,7 @@ static const char *const hw_type_names[]
      [AV_HWDEVICE_TYPE_D3D12VA] = "d3d12va",
      [AV_HWDEVICE_TYPE_OPENCL] = "opencl",
      [AV_HWDEVICE_TYPE_QSV]    = "qsv",
@@ -143,7 +143,7 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
  /**
 --- a/libavutil/hwcontext_internal.h
 +++ b/libavutil/hwcontext_internal.h
-@@ -158,6 +158,7 @@ extern const HWContextType ff_hwcontext_
+@@ -175,6 +175,7 @@ extern const HWContextType ff_hwcontext_
  extern const HWContextType ff_hwcontext_type_dxva2;
  extern const HWContextType ff_hwcontext_type_opencl;
  extern const HWContextType ff_hwcontext_type_qsv;

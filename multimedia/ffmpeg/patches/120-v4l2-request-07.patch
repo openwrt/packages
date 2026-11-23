@@ -19,22 +19,22 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
  libavcodec/h264_slice.c        |   7 +
  libavcodec/h264dec.c           |   3 +
  libavcodec/hwaccels.h          |   1 +
- libavcodec/v4l2_request_h264.c | 532 +++++++++++++++++++++++++++++++++
+ libavcodec/v4l2_request_h264.c | 532 ++++++++++++++++++++++++++++++++++++++++
  6 files changed, 547 insertions(+)
  create mode 100644 libavcodec/v4l2_request_h264.c
 
 --- a/configure
 +++ b/configure
-@@ -3449,6 +3449,8 @@ h264_dxva2_hwaccel_deps="dxva2"
- h264_dxva2_hwaccel_select="h264_decoder"
- h264_nvdec_hwaccel_deps="nvdec"
+@@ -3405,6 +3405,8 @@ h264_nvdec_hwaccel_deps="nvdec"
  h264_nvdec_hwaccel_select="h264_decoder"
+ h264_nvdec_cuarray_hwaccel_deps="nvdec ffnvcodec_cuarray"
+ h264_nvdec_cuarray_hwaccel_select="h264_decoder"
 +h264_v4l2request_hwaccel_deps="v4l2_request h264_v4l2_request"
 +h264_v4l2request_hwaccel_select="h264_decoder"
  h264_vaapi_hwaccel_deps="vaapi"
  h264_vaapi_hwaccel_select="h264_decoder"
  h264_vdpau_hwaccel_deps="vdpau"
-@@ -7664,6 +7666,7 @@ if enabled v4l2_m2m; then
+@@ -7573,6 +7575,7 @@ if enabled v4l2_m2m; then
  fi
  
  if enabled v4l2_request; then
@@ -44,9 +44,9 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
      check_func_headers "linux/media.h linux/videodev2.h" v4l2_timeval_to_ns
 --- a/libavcodec/Makefile
 +++ b/libavcodec/Makefile
-@@ -1062,6 +1062,7 @@ OBJS-$(CONFIG_H264_DXVA2_HWACCEL)
- OBJS-$(CONFIG_H264_D3D12VA_HWACCEL)       += dxva2_h264.o d3d12va_h264.o
+@@ -1072,6 +1072,7 @@ OBJS-$(CONFIG_H264_D3D12VA_HWACCEL)
  OBJS-$(CONFIG_H264_NVDEC_HWACCEL)         += nvdec_h264.o
+ OBJS-$(CONFIG_H264_NVDEC_CUARRAY_HWACCEL) += nvdec_h264.o
  OBJS-$(CONFIG_H264_QSV_HWACCEL)           += qsvdec.o
 +OBJS-$(CONFIG_H264_V4L2REQUEST_HWACCEL)   += v4l2_request_h264.o
  OBJS-$(CONFIG_H264_VAAPI_HWACCEL)         += vaapi_h264.o
@@ -54,17 +54,17 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
  OBJS-$(CONFIG_H264_VIDEOTOOLBOX_HWACCEL)  += videotoolbox.o
 --- a/libavcodec/h264_slice.c
 +++ b/libavcodec/h264_slice.c
-@@ -790,6 +790,7 @@ static enum AVPixelFormat get_pixel_form
-                      (CONFIG_H264_D3D11VA_HWACCEL * 2) + \
+@@ -804,6 +804,7 @@ static enum AVPixelFormat get_pixel_form
                       CONFIG_H264_D3D12VA_HWACCEL + \
                       CONFIG_H264_NVDEC_HWACCEL + \
+                      CONFIG_H264_NVDEC_CUARRAY_HWACCEL + \
 +                     CONFIG_H264_V4L2REQUEST_HWACCEL + \
                       CONFIG_H264_VAAPI_HWACCEL + \
                       CONFIG_H264_VIDEOTOOLBOX_HWACCEL + \
                       CONFIG_H264_VDPAU_HWACCEL + \
-@@ -819,6 +820,9 @@ static enum AVPixelFormat get_pixel_form
- #if CONFIG_H264_NVDEC_HWACCEL
-         *fmt++ = AV_PIX_FMT_CUDA;
+@@ -836,6 +837,9 @@ static enum AVPixelFormat get_pixel_form
+ #if CONFIG_H264_NVDEC_CUARRAY_HWACCEL
+         *fmt++ = AV_PIX_FMT_CUARRAY;
  #endif
 +#if CONFIG_H264_V4L2REQUEST_HWACCEL
 +        *fmt++ = AV_PIX_FMT_DRM_PRIME;
@@ -72,7 +72,7 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
          if (CHROMA444(h)) {
              if (h->avctx->colorspace == AVCOL_SPC_RGB) {
                  *fmt++ = AV_PIX_FMT_GBRP10;
-@@ -875,6 +879,9 @@ static enum AVPixelFormat get_pixel_form
+@@ -895,6 +899,9 @@ static enum AVPixelFormat get_pixel_form
          if (h->avctx->colorspace != AVCOL_SPC_RGB)
              *fmt++ = AV_PIX_FMT_VIDEOTOOLBOX;
  #endif
@@ -84,7 +84,7 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
                  *fmt++ = AV_PIX_FMT_GBRP;
 --- a/libavcodec/h264dec.c
 +++ b/libavcodec/h264dec.c
-@@ -1146,6 +1146,9 @@ const FFCodec ff_h264_decoder = {
+@@ -1239,6 +1239,9 @@ const FFCodec ff_h264_decoder = {
  #if CONFIG_H264_VULKAN_HWACCEL
                                 HWACCEL_VULKAN(h264),
  #endif
@@ -96,10 +96,10 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
      .caps_internal         = FF_CODEC_CAP_EXPORTS_CROPPING |
 --- a/libavcodec/hwaccels.h
 +++ b/libavcodec/hwaccels.h
-@@ -38,6 +38,7 @@ extern const struct FFHWAccel ff_h264_d3
- extern const struct FFHWAccel ff_h264_d3d12va_hwaccel;
+@@ -40,6 +40,7 @@ extern const struct FFHWAccel ff_h264_d3
  extern const struct FFHWAccel ff_h264_dxva2_hwaccel;
  extern const struct FFHWAccel ff_h264_nvdec_hwaccel;
+ extern const struct FFHWAccel ff_h264_nvdec_cuarray_hwaccel;
 +extern const struct FFHWAccel ff_h264_v4l2request_hwaccel;
  extern const struct FFHWAccel ff_h264_vaapi_hwaccel;
  extern const struct FFHWAccel ff_h264_vdpau_hwaccel;

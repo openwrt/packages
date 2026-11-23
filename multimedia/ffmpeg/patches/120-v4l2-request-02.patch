@@ -24,12 +24,12 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
 (cherry picked from commit b61e532f75d0b5937d010f65c1df099cc5a5983c)
 ---
  configure                         |   9 +-
- libavutil/hwcontext_v4l2request.c | 513 +++++++++++++++++++++++++++++-
+ libavutil/hwcontext_v4l2request.c | 513 ++++++++++++++++++++++++++++++++++++-
  2 files changed, 517 insertions(+), 5 deletions(-)
 
 --- a/configure
 +++ b/configure
-@@ -2138,6 +2138,7 @@ EXTERNAL_LIBRARY_LIST="
+@@ -2116,6 +2116,7 @@ EXTERNAL_LIBRARY_LIST="
      libtorch
      libtwolame
      libuavs3d
@@ -37,7 +37,7 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
      libv4l2
      libvmaf
      libvorbis
-@@ -3402,8 +3403,8 @@ dxva2_deps="dxva2api_h DXVA2_ConfigPictu
+@@ -3350,8 +3351,8 @@ dxva2_deps="dxva2api_h DXVA2_ConfigPictu
  ffnvcodec_deps_any="libdl LoadLibrary"
  mediacodec_deps="android mediandk pthreads"
  nvdec_deps="ffnvcodec"
@@ -48,7 +48,7 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
  vaapi_x11_deps="xlib_x11"
  videotoolbox_hwaccel_deps="videotoolbox pthreads"
  videotoolbox_hwaccel_extralibs="-framework QuartzCore"
-@@ -4380,7 +4381,7 @@ shader_compression_suggest="zlib"
+@@ -4362,7 +4363,7 @@ shader_compression_suggest="zlib"
  
  avcodec_extralibs="pthreads_extralibs iconv_extralibs dxva2_extralibs liblcevc_dec_extralibs lcms2_extralibs"
  avfilter_extralibs="pthreads_extralibs"
@@ -57,7 +57,7 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
  
  # programs
  ffmpeg_deps="avcodec avfilter avformat threads"
-@@ -7662,6 +7663,8 @@ fi
+@@ -7571,6 +7572,8 @@ fi
  
  if enabled v4l2_request; then
      check_func_headers "linux/media.h linux/videodev2.h" v4l2_timeval_to_ns
