@@ -1,6 +1,6 @@
-From e00e8aaa56093d8d1a5f89b7fa7dd1c09dc7a4c1 Mon Sep 17 00:00:00 2001
+From 163788f6ca77e5ed5157b4dbadb3833bac584f43 Mon Sep 17 00:00:00 2001
 From: gns <wangbingzhen.riscv@isrc.iscas.ac.cn>
-Date: Tue, 16 Jun 2026 09:10:36 +0000
+Date: Tue, 25 Aug 2026 20:02:41 +0800
 Subject: [PATCH] Add RISC-V 64 support
 
 This backports RISC-V 64 support from openresty/luajit2 PR #236.
@@ -14,6 +14,10 @@ The patch adds comprehensive RISC-V64 JIT implementation including:
 Refreshed against the current state of the pull request, which adapts
 asm_tail_prep() to the TraceNo argument added by openresty/luajit2 commit
 68354f44 and so restores the build on riscv64.
+
+Refreshed again against the current state of the pull request, which
+implements the bit operator bytecodes added by openresty/luajit2 commit
+a2ce8114 and so fixes "undefined opcode BC_BNOT" on riscv64.
 
 Original work by gns from PLCT Lab, ISCAS.
 See: https://github.com/openresty/luajit2/pull/236
@@ -6750,7 +6754,7 @@ Co-authored-by: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
    uint32_t y, ua, ub;
 --- /dev/null
 +++ b/src/vm_riscv64.dasc
-@@ -0,0 +1,4857 @@
+@@ -0,0 +1,4931 @@
 +|// Low-level VM code for RISC-V 64 CPUs.
 +|// Bytecode interpreter, fast functions and helper functions.
 +|// Copyright (C) 2022-2026 ISRC, ISCAS. See Copyright Notice in luajit.h
@@ -7855,6 +7859,26 @@ Co-authored-by: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
 +  |   mv BASE, CRET1
 +  |  li NARGS8:RC, 16                  // 2 args for func(o1, o2).
 +  |  j ->vm_call_dispatch
++  |
++  |//-- Bit operator metamethods -------------------------------------------
++  |
++  |->vmeta_bnot:
++  |  mv CARG3, RB			// rb = &src
++  |  mv CARG4, CARG3			// rc = &src
++  |  j >1
++  |
++  |->vmeta_bitop:
++  |  mv CARG3, RB			// rb = &src1
++  |   mv CARG4, RC			// rc = &src2
++  |1:
++  |  mv CARG1, L
++  |   sd BASE, L->base
++  |  mv CARG2, RA			// ra = &dst
++  |   sd PC, SAVE_PC(sp)
++  |  decode_OP1 CARG5, INS
++  |  // (lua_State *L, TValue *ra,*rb,*rc, BCReg op)
++  |  call_intern vmeta_bitop, lj_meta_bitop
++  |  j ->cont_nop
 +  |
 +  |->vmeta_len:
 +  |  // CARG2 already set by BC_LEN.
@@ -10135,6 +10159,60 @@ Co-authored-by: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
 +    |   add RA, BASE, RA
 +    |  sd TMP0, 0(RA)
 +    |  ins_next
++    break;
++
++  /* -- Bit ops ----------------------------------------------------------- */
++
++  case BC_BNOT:
++    |  // RA = dst*8, RD = src*8
++    |  add RB, BASE, RD
++    |   add RA, BASE, RA
++    |  ld CARG1, 0(RB)
++    |  checkint CARG1, ->vmeta_bnot
++    |  not CARG1, CARG1
++    |  zext.w CARG1, CARG1
++    |  ins_next1
++    |  settp_b CARG1, TISNUM
++    |  sd CARG1, 0(RA)
++    |  ins_next2
++    break;
++
++    |.macro ins_bitop, ins
++    |  // RA = dst*8, RB = src1*8, RC = src2*8
++    |  decode_RB8 RB, INS
++    |   decode_RDtoRC8 RC, RD
++    |  add RB, BASE, RB
++    |   add RC, BASE, RC
++    |  add RA, BASE, RA
++    |  ld CARG1, 0(RB)
++    |   ld CARG2, 0(RC)
++    |  checkint CARG1, ->vmeta_bitop
++    |   checkint CARG2, ->vmeta_bitop
++    |  ins CRET1, CARG1, CARG2
++    |  zext.w CRET1, CRET1
++    |  ins_next1
++    |  settp_b CRET1, TISNUM
++    |  sd CRET1, 0(RA)
++    |  ins_next2
++    |.endmacro
++
++  case BC_BAND:
++    |  ins_bitop and
++    break;
++  case BC_BOR:
++    |  ins_bitop or
++    break;
++  case BC_BXOR:
++    |  ins_bitop xor
++    break;
++  case BC_BSHL:
++    |  ins_bitop sllw
++    break;
++  case BC_BSHR:
++    |  ins_bitop srlw
++    break;
++  case BC_BSAR:
++    |  ins_bitop sraw
 +    break;
 +
 +  /* -- Constant ops ------------------------------------------------------ */
