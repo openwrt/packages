@@ -532,7 +532,8 @@ dhcp_backup() {
 			fi
 			uci_set 'dhcp' "$cfg" 'noresolv' 1
 		fi
-		if [ -z "$(uci_get 'dhcp' "$cfg" 'doh_backup_server')" ]; then
+		# an empty server list is backed up as one empty entry
+		if ! uci_get 'dhcp' "$cfg" 'doh_backup_server' >/dev/null 2>&1; then
 			if [ -z "$(uci_get 'dhcp' "$cfg" 'server')" ]; then
 				uci_add_list 'dhcp' "$cfg" 'doh_backup_server' ""
 			fi

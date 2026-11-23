@@ -493,6 +493,27 @@ dhcp_backup 'restore'
 val="$(uci_get "dhcp" "cfg01" "noresolv")"
 assert_eq "dhcp_backup restore: noresolv=1 preserved" "1" "$val"
 
+# Test: a second start (procd triggers start the service again) keeps the backup of an empty
+# server list, so that the restore does not leave the proxy servers in dnsmasq
+rm -f "$__uci_store"/*
+uci_set "dhcp" "cfg01" ".type" "dnsmasq"
+uci_set "dhcp" "cfg01" "port" "53"
+dnsmasq_config_update="*"
+force_dns=""
+canaryDomains=""
+
+dhcp_backup 'create'
+dnsmasq_doh_server "cfg01" "add" "127.0.0.1" "5053"
+dhcp_backup 'create'
+
+val="$(uci_get "dhcp" "cfg01" "doh_backup_server")"
+assert_eq "dhcp_backup create twice: backup of an empty server list kept" "" "$val"
+
+dhcp_backup 'restore'
+
+val="$(uci_get "dhcp" "cfg01" "server")"
+assert_eq "dhcp_backup restore: no proxy server left in dnsmasq" "" "$val"
+
 printf "\n##\n## 06: dnsmasq_instance_append_force_dns_port\n##\n\n"
 
 rm -f "$__uci_store"/*
