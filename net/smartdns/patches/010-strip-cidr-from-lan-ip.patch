@@ -1,0 +1,40 @@
+From c12a926642682b387f5fa45eea981fa69c0b9d35 Mon Sep 17 00:00:00 2001
+From: Suraj Velip <technicalbean@gmail.com>
+Date: Sat, 14 Nov 2026 00:08:25 +0530
+Subject: [PATCH] smartdns: strip CIDR suffix from LAN IP in DHCP option 6
+
+On DSA-based systems network.lan.ipaddr returns CIDR notation
+(192.168.1.1/24). set_main_dns() appends it verbatim to
+dhcp.lan.dhcp_option, producing invalid entries like
+'6,192.168.1.1/24' that break DNS assignment for DHCP clients.
+
+Strip the suffix with POSIX parameter expansion in both
+set_main_dns() and stop_main_dns() so the del_list cleanup keeps
+matching the stored value.
+
+Backport of the fix already present in upstream releases >= 47.1.
+
+Signed-off-by: Suraj Velip <technicalbean@gmail.com>
+---
+ package/openwrt/files/etc/init.d/smartdns | 2 ++
+ 1 file changed, 2 insertions(+)
+
+--- a/package/openwrt/files/etc/init.d/smartdns
++++ b/package/openwrt/files/etc/init.d/smartdns
+@@ -88,6 +88,7 @@ set_main_dns()
+ {
+ 	local hostip
+ 	hostip="$(uci -q get network.lan.ipaddr)"
++	hostip="${hostip%%/*}"
+ 	dnsmasq_port="$(uci -q get dhcp.@dnsmasq[0].port)"
+ 	[ -z "$dnsmasq_port" ] && dnsmasq_port="53"
+ 	
+@@ -112,6 +113,7 @@ stop_main_dns()
+ {
+ 	local norestart="$1"
+ 	hostip="$(uci -q get network.lan.ipaddr)"
++	hostip="${hostip%%/*}"
+ 	dnsmasq_port="$(uci -q get dhcp.@dnsmasq[0].port)"
+ 	redir_dns="$(uci -q get dhcp.@dnsmasq[0].old_dns_redirect)"
+ 	[ "$dnsmasq_port" != "0" ] && return
+
