@@ -1,0 +1,24 @@
+#!/bin/sh /etc/rc.common
+
+USE_PROCD=1
+# After unbound (START=19), since the generator restarts unbound when a
+# file changes.
+START=92
+
+GENERATOR=/usr/lib/unbound-uci-ext/generator.sh
+
+start_service() {
+	"$GENERATOR" apply
+}
+
+stop_service() {
+	"$GENERATOR" clear
+}
+
+reload_service() {
+	"$GENERATOR" apply
+}
+
+service_triggers() {
+	procd_add_reload_trigger "unbound_srv" "unbound_ext"
+}
