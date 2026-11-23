@@ -288,7 +288,10 @@ snmpd_snmpv3_add() {
 		return 0
 	}
 
+	config_get auth_type "$cfg" auth_type
 	config_get auth_pass "$cfg" auth_pass
+	config_get privacy_type "$cfg" privacy_type
+	config_get privacy_pass "$cfg" privacy_pass
 	config_get oid "$cfg" RestrictedOID
 	config_get_bool allow_write "$cfg" allow_write 0
 	local useraccess="rouser"
@@ -305,14 +308,11 @@ snmpd_snmpv3_add() {
 		return 0
 	}
 
-	config_get auth_type "$cfg" auth_type
 	[ -z "$auth_type" ] && {
 		echo "skipping section '$cfg' 'auth_type' missing"
 		return 0
 	}
 
-	config_get privacy_type "$cfg" privacy_type
-	config_get privacy_pass "$cfg" privacy_pass
 	if [ -n "$privacy_type" ] && [ -n "$privacy_pass" ]; then
 
 		[ "${#privacy_pass}" -lt 8 ] && {
