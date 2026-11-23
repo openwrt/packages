@@ -1,0 +1,37 @@
+From 6b994ecb7b72e8cc0c31bda2cc9d27f734e919e9 Mon Sep 17 00:00:00 2001
+From: Jernej Skrabec <jernej.skrabec@gmail.com>
+Date: Wed, 7 Oct 2026 17:27:19 +0200
+Subject: [PATCH 1/5] avcodec/vc1_mc: fix FASTUVMC rounding of interpolated
+ backward chroma MVs
+
+With FASTUVMC set, chroma motion vectors are rounded to the nearest
+half-pel position towards zero (SMPTE 421M 8.3.5.4.5). ff_vc1_mc_1mv()
+and ff_vc1_mc_4mv_chroma() do that, but ff_vc1_interp_mc() rounds the
+backward chroma vector of interpolated B macroblocks away from zero,
+which shifts their chroma by a quarter pel whenever the vector is odd.
+
+Use the same rounding as the other two functions. Decoded B pictures
+now match the SMPTE reference decoder.
+
+Signed-off-by: Jernej Skrabec <jernej.skrabec@gmail.com>
+---
+OpenWrt: patch 1/5 of LibreELEC's
+packages/multimedia/ffmpeg/patches/v4l2-request/0002-v4l2-request-vc1.patch
+(LibreELEC commit d38b323eea). Not in FFmpeg 9.1.
+
+ libavcodec/vc1_mc.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/libavcodec/vc1_mc.c
++++ b/libavcodec/vc1_mc.c
+@@ -1027,8 +1027,8 @@ void ff_vc1_interp_mc(VC1Context *v)
+         uvmy = uvmy - 2 + 4 * v->cur_field_type;
+     }
+     if (v->fastuvmc) {
+-        uvmx = uvmx + ((uvmx < 0) ? -(uvmx & 1) : (uvmx & 1));
+-        uvmy = uvmy + ((uvmy < 0) ? -(uvmy & 1) : (uvmy & 1));
++        uvmx = uvmx + ((uvmx < 0) ? (uvmx & 1) : -(uvmx & 1));
++        uvmy = uvmy + ((uvmy < 0) ? (uvmy & 1) : -(uvmy & 1));
+     }
+     srcY = s->next_pic.data[0];
+     srcU = s->next_pic.data[1];

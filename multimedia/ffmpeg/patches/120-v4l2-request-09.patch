@@ -18,23 +18,23 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
  configure                     |   3 +
  libavcodec/Makefile           |   1 +
  libavcodec/hwaccels.h         |   1 +
- libavcodec/v4l2_request_vp8.c | 242 ++++++++++++++++++++++++++++++++++
+ libavcodec/v4l2_request_vp8.c | 242 +++++++++++++++++++++++++++++++++++++++++
  libavcodec/vp8.c              |   6 +
  5 files changed, 253 insertions(+)
  create mode 100644 libavcodec/v4l2_request_vp8.c
 
 --- a/configure
 +++ b/configure
-@@ -3540,6 +3540,8 @@ vc1_vdpau_hwaccel_deps="vdpau"
- vc1_vdpau_hwaccel_select="vc1_decoder"
- vp8_nvdec_hwaccel_deps="nvdec"
+@@ -3508,6 +3508,8 @@ vp8_nvdec_hwaccel_deps="nvdec"
  vp8_nvdec_hwaccel_select="vp8_decoder"
+ vp8_nvdec_cuarray_hwaccel_deps="nvdec ffnvcodec_cuarray"
+ vp8_nvdec_cuarray_hwaccel_select="vp8_decoder"
 +vp8_v4l2request_hwaccel_deps="v4l2_request vp8_v4l2_request"
 +vp8_v4l2request_hwaccel_select="vp8_decoder"
  vp8_vaapi_hwaccel_deps="vaapi"
  vp8_vaapi_hwaccel_select="vp8_decoder"
  vp9_d3d11va_hwaccel_deps="d3d11va DXVA_PicParams_VP9"
-@@ -7673,6 +7675,7 @@ if enabled v4l2_request; then
+@@ -7582,6 +7584,7 @@ if enabled v4l2_request; then
      check_cc hevc_v4l2_request linux/videodev2.h "int i = V4L2_CID_STATELESS_HEVC_SPS"
      check_cc mpeg2_v4l2_request linux/videodev2.h "int i = V4L2_CID_STATELESS_MPEG2_SEQUENCE"
      check_cc v4l2_m2m_hold_capture_buf linux/videodev2.h "int i = V4L2_BUF_FLAG_M2M_HOLD_CAPTURE_BUF"
@@ -44,20 +44,20 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
      check_struct linux/videodev2.h "struct v4l2_ctrl_hevc_decode_params" num_delta_pocs_of_ref_rps_idx
 --- a/libavcodec/Makefile
 +++ b/libavcodec/Makefile
-@@ -1102,6 +1102,7 @@ OBJS-$(CONFIG_VC1_QSV_HWACCEL)
- OBJS-$(CONFIG_VC1_VAAPI_HWACCEL)          += vaapi_vc1.o
+@@ -1118,6 +1118,7 @@ OBJS-$(CONFIG_VC1_VAAPI_HWACCEL)
  OBJS-$(CONFIG_VC1_VDPAU_HWACCEL)          += vdpau_vc1.o
  OBJS-$(CONFIG_VP8_NVDEC_HWACCEL)          += nvdec_vp8.o
+ OBJS-$(CONFIG_VP8_NVDEC_CUARRAY_HWACCEL)  += nvdec_vp8.o
 +OBJS-$(CONFIG_VP8_V4L2REQUEST_HWACCEL)    += v4l2_request_vp8.o
  OBJS-$(CONFIG_VP8_VAAPI_HWACCEL)          += vaapi_vp8.o
  OBJS-$(CONFIG_VP9_D3D11VA_HWACCEL)        += dxva2_vp9.o
  OBJS-$(CONFIG_VP9_DXVA2_HWACCEL)          += dxva2_vp9.o
 --- a/libavcodec/hwaccels.h
 +++ b/libavcodec/hwaccels.h
-@@ -83,6 +83,7 @@ extern const struct FFHWAccel ff_vc1_nvd
- extern const struct FFHWAccel ff_vc1_vaapi_hwaccel;
+@@ -91,6 +91,7 @@ extern const struct FFHWAccel ff_vc1_vaa
  extern const struct FFHWAccel ff_vc1_vdpau_hwaccel;
  extern const struct FFHWAccel ff_vp8_nvdec_hwaccel;
+ extern const struct FFHWAccel ff_vp8_nvdec_cuarray_hwaccel;
 +extern const struct FFHWAccel ff_vp8_v4l2request_hwaccel;
  extern const struct FFHWAccel ff_vp8_vaapi_hwaccel;
  extern const struct FFHWAccel ff_vp9_d3d11va_hwaccel;
@@ -309,9 +309,9 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
 +};
 --- a/libavcodec/vp8.c
 +++ b/libavcodec/vp8.c
-@@ -186,6 +186,9 @@ static enum AVPixelFormat get_pixel_form
- #if CONFIG_VP8_NVDEC_HWACCEL
-         AV_PIX_FMT_CUDA,
+@@ -190,6 +190,9 @@ static enum AVPixelFormat get_pixel_form
+ #if CONFIG_VP8_NVDEC_CUARRAY_HWACCEL
+         AV_PIX_FMT_CUARRAY,
  #endif
 +#if CONFIG_VP8_V4L2REQUEST_HWACCEL
 +        AV_PIX_FMT_DRM_PRIME,
@@ -319,9 +319,9 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
          AV_PIX_FMT_YUV420P,
          AV_PIX_FMT_NONE,
      };
-@@ -2977,6 +2980,9 @@ const FFCodec ff_vp8_decoder = {
- #if CONFIG_VP8_NVDEC_HWACCEL
-                                HWACCEL_NVDEC(vp8),
+@@ -3011,6 +3014,9 @@ const FFCodec ff_vp8_decoder = {
+ #if CONFIG_VP8_NVDEC_CUARRAY_HWACCEL
+                                HWACCEL_NVDEC_CUARRAY(vp8),
  #endif
 +#if CONFIG_VP8_V4L2REQUEST_HWACCEL
 +                               HWACCEL_V4L2REQUEST(vp8),

@@ -33,7 +33,7 @@ Link: https://code.ffmpeg.org/FFmpeg/FFmpeg/pulls/24565
  #include <stdarg.h>
  
  #define IO_BUFFER_SIZE 32768
-@@ -991,23 +992,40 @@ void ffio_write_lines(AVIOContext *s, co
+@@ -959,23 +960,40 @@ void ffio_write_lines(AVIOContext *s, co
      }
  }
  
@@ -59,8 +59,8 @@ Link: https://code.ffmpeg.org/FFmpeg/FFmpeg/pulls/24565
  int ffio_copy_url_options(AVIOContext* pb, AVDictionary** avio_opts)
  {
      const char *opts[] = {
--        "headers", "user_agent", "cookies", "http_proxy", "referer", "rw_timeout", "icy", NULL };
-+        "headers", "user_agent", "cookies", "http_proxy", "referer", "rw_timeout", "icy",
+-        "headers", "user_agent", "cookies", "http_proxy", "referer", "rw_timeout", "icy", "prefer_libcurl", NULL };
++        "headers", "user_agent", "cookies", "http_proxy", "referer", "rw_timeout", "icy", "prefer_libcurl",
 +        "local_addr", NULL };
      const char **opt = opts;
      uint8_t *buf = NULL;

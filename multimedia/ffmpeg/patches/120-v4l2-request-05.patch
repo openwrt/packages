@@ -17,13 +17,13 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
  libavcodec/Makefile             |   1 +
  libavcodec/hwaccels.h           |   1 +
  libavcodec/mpeg12dec.c          |   6 ++
- libavcodec/v4l2_request_mpeg2.c | 184 ++++++++++++++++++++++++++++++++
+ libavcodec/v4l2_request_mpeg2.c | 184 +++++++++++++++++++++++++++++++++++++++
  5 files changed, 197 insertions(+), 2 deletions(-)
  create mode 100644 libavcodec/v4l2_request_mpeg2.c
 
 --- a/configure
 +++ b/configure
-@@ -365,7 +365,7 @@ External library support:
+@@ -367,7 +367,7 @@ External library support:
    --disable-nvenc          disable Nvidia video encoding code [autodetect]
    --enable-rkmpp           enable Rockchip Media Process Platform code [no]
    --disable-v4l2-m2m       disable V4L2 mem2mem code [autodetect]
@@ -32,7 +32,7 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
    --disable-vaapi          disable Video Acceleration API (mainly Unix/Intel) code [autodetect]
    --disable-vdpau          disable Nvidia Video Decode and Presentation API for Unix code [autodetect]
    --disable-videotoolbox   disable VideoToolbox code [autodetect]
-@@ -2183,6 +2183,7 @@ HWACCEL_AUTODETECT_LIBRARY_LIST="
+@@ -2160,6 +2160,7 @@ HWACCEL_AUTODETECT_LIBRARY_LIST="
      videotoolbox
      vulkan
      v4l2_m2m
@@ -40,7 +40,7 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
  "
  
  # catchall list of things that require external libs to link
-@@ -2203,7 +2204,6 @@ HWACCEL_LIBRARY_LIST="
+@@ -2180,7 +2181,6 @@ HWACCEL_LIBRARY_LIST="
      libvpl
      mmal
      opencl
@@ -48,16 +48,16 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
  "
  
  DOCUMENT_LIST="
-@@ -3495,6 +3495,8 @@ mpeg2_dxva2_hwaccel_deps="dxva2"
- mpeg2_dxva2_hwaccel_select="mpeg2video_decoder"
- mpeg2_nvdec_hwaccel_deps="nvdec"
+@@ -3457,6 +3457,8 @@ mpeg2_nvdec_hwaccel_deps="nvdec"
  mpeg2_nvdec_hwaccel_select="mpeg2video_decoder"
+ mpeg2_nvdec_cuarray_hwaccel_deps="nvdec ffnvcodec_cuarray"
+ mpeg2_nvdec_cuarray_hwaccel_select="mpeg2video_decoder"
 +mpeg2_v4l2request_hwaccel_deps="v4l2_request mpeg2_v4l2_request"
 +mpeg2_v4l2request_hwaccel_select="mpeg2video_decoder"
  mpeg2_vaapi_hwaccel_deps="vaapi"
  mpeg2_vaapi_hwaccel_select="mpeg2video_decoder"
  mpeg2_vdpau_hwaccel_deps="vdpau"
-@@ -7662,6 +7664,7 @@ if enabled v4l2_m2m; then
+@@ -7571,6 +7573,7 @@ if enabled v4l2_m2m; then
  fi
  
  if enabled v4l2_request; then
@@ -67,9 +67,9 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
      check_pkg_config libudev libudev libudev.h udev_new
 --- a/libavcodec/Makefile
 +++ b/libavcodec/Makefile
-@@ -1084,6 +1084,7 @@ OBJS-$(CONFIG_MPEG2_DXVA2_HWACCEL)
- OBJS-$(CONFIG_MPEG2_D3D12VA_HWACCEL)      += dxva2_mpeg2.o d3d12va_mpeg2.o
+@@ -1097,6 +1097,7 @@ OBJS-$(CONFIG_MPEG2_D3D12VA_HWACCEL)
  OBJS-$(CONFIG_MPEG2_NVDEC_HWACCEL)        += nvdec_mpeg12.o
+ OBJS-$(CONFIG_MPEG2_NVDEC_CUARRAY_HWACCEL) += nvdec_mpeg12.o
  OBJS-$(CONFIG_MPEG2_QSV_HWACCEL)          += qsvdec.o
 +OBJS-$(CONFIG_MPEG2_V4L2REQUEST_HWACCEL)  += v4l2_request_mpeg2.o
  OBJS-$(CONFIG_MPEG2_VAAPI_HWACCEL)        += vaapi_mpeg2.o
@@ -77,17 +77,17 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
  OBJS-$(CONFIG_MPEG2_VIDEOTOOLBOX_HWACCEL) += videotoolbox.o
 --- a/libavcodec/hwaccels.h
 +++ b/libavcodec/hwaccels.h
-@@ -61,6 +61,7 @@ extern const struct FFHWAccel ff_mpeg2_d
- extern const struct FFHWAccel ff_mpeg2_d3d12va_hwaccel;
+@@ -66,6 +66,7 @@ extern const struct FFHWAccel ff_mpeg2_d
  extern const struct FFHWAccel ff_mpeg2_dxva2_hwaccel;
  extern const struct FFHWAccel ff_mpeg2_nvdec_hwaccel;
+ extern const struct FFHWAccel ff_mpeg2_nvdec_cuarray_hwaccel;
 +extern const struct FFHWAccel ff_mpeg2_v4l2request_hwaccel;
  extern const struct FFHWAccel ff_mpeg2_vaapi_hwaccel;
  extern const struct FFHWAccel ff_mpeg2_vdpau_hwaccel;
  extern const struct FFHWAccel ff_mpeg2_videotoolbox_hwaccel;
 --- a/libavcodec/mpeg12dec.c
 +++ b/libavcodec/mpeg12dec.c
-@@ -821,6 +821,9 @@ static const enum AVPixelFormat mpeg2_hw
+@@ -827,6 +827,9 @@ static const enum AVPixelFormat mpeg2_hw
  #if CONFIG_MPEG2_VIDEOTOOLBOX_HWACCEL
      AV_PIX_FMT_VIDEOTOOLBOX,
  #endif
@@ -97,7 +97,7 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
      AV_PIX_FMT_YUV420P,
      AV_PIX_FMT_NONE
  };
-@@ -2728,6 +2731,9 @@ const FFCodec ff_mpeg2video_decoder = {
+@@ -2742,6 +2745,9 @@ const FFCodec ff_mpeg2video_decoder = {
  #if CONFIG_MPEG2_VIDEOTOOLBOX_HWACCEL
                          HWACCEL_VIDEOTOOLBOX(mpeg2),
  #endif

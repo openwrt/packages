@@ -22,13 +22,13 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
  libavcodec/Makefile            |   1 +
  libavcodec/hevc/hevcdec.c      |  10 +
  libavcodec/hwaccels.h          |   1 +
- libavcodec/v4l2_request_hevc.c | 752 +++++++++++++++++++++++++++++++++
+ libavcodec/v4l2_request_hevc.c | 752 ++++++++++++++++++++++++++++++++++++++++
  5 files changed, 769 insertions(+)
  create mode 100644 libavcodec/v4l2_request_hevc.c
 
 --- a/configure
 +++ b/configure
-@@ -2698,6 +2698,7 @@ TYPES_LIST="
+@@ -2639,6 +2639,7 @@ TYPES_LIST="
      struct_sockaddr_sa_len
      struct_sockaddr_storage
      struct_stat_st_mtim_tv_nsec
@@ -36,16 +36,16 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
      struct_v4l2_frmivalenum_discrete
      struct_mfxConfigInterface
  "
-@@ -3469,6 +3470,8 @@ hevc_dxva2_hwaccel_deps="dxva2 DXVA_PicP
- hevc_dxva2_hwaccel_select="hevc_decoder"
- hevc_nvdec_hwaccel_deps="nvdec"
+@@ -3427,6 +3428,8 @@ hevc_nvdec_hwaccel_deps="nvdec"
  hevc_nvdec_hwaccel_select="hevc_decoder"
+ hevc_nvdec_cuarray_hwaccel_deps="nvdec ffnvcodec_cuarray"
+ hevc_nvdec_cuarray_hwaccel_select="hevc_decoder"
 +hevc_v4l2request_hwaccel_deps="v4l2_request hevc_v4l2_request"
 +hevc_v4l2request_hwaccel_select="hevc_decoder"
  hevc_vaapi_hwaccel_deps="vaapi VAPictureParameterBufferHEVC"
  hevc_vaapi_hwaccel_select="hevc_decoder"
  hevc_vdpau_hwaccel_deps="vdpau VdpPictureInfoHEVC"
-@@ -7667,10 +7670,12 @@ fi
+@@ -7576,10 +7579,12 @@ fi
  
  if enabled v4l2_request; then
      check_cc h264_v4l2_request linux/videodev2.h "int i = V4L2_CID_STATELESS_H264_DECODE_MODE"
@@ -60,9 +60,9 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
  
 --- a/libavcodec/Makefile
 +++ b/libavcodec/Makefile
-@@ -1072,6 +1072,7 @@ OBJS-$(CONFIG_HEVC_DXVA2_HWACCEL)
- OBJS-$(CONFIG_HEVC_D3D12VA_HWACCEL)       += dxva2_hevc.o d3d12va_hevc.o
+@@ -1083,6 +1083,7 @@ OBJS-$(CONFIG_HEVC_D3D12VA_HWACCEL)
  OBJS-$(CONFIG_HEVC_NVDEC_HWACCEL)         += nvdec_hevc.o
+ OBJS-$(CONFIG_HEVC_NVDEC_CUARRAY_HWACCEL) += nvdec_hevc.o
  OBJS-$(CONFIG_HEVC_QSV_HWACCEL)           += qsvdec.o
 +OBJS-$(CONFIG_HEVC_V4L2REQUEST_HWACCEL)   += v4l2_request_hevc.o
  OBJS-$(CONFIG_HEVC_VAAPI_HWACCEL)         += vaapi_hevc.o h265_profile_level.o
@@ -70,15 +70,15 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
  OBJS-$(CONFIG_HEVC_VULKAN_HWACCEL)        += vulkan_decode.o vulkan_hevc.o
 --- a/libavcodec/hevc/hevcdec.c
 +++ b/libavcodec/hevc/hevcdec.c
-@@ -566,6 +566,7 @@ static enum AVPixelFormat get_format(HEV
-                      CONFIG_HEVC_D3D11VA_HWACCEL * 2 + \
+@@ -584,6 +584,7 @@ static enum AVPixelFormat get_format(HEV
                       CONFIG_HEVC_D3D12VA_HWACCEL + \
                       CONFIG_HEVC_NVDEC_HWACCEL + \
+                      CONFIG_HEVC_NVDEC_CUARRAY_HWACCEL + \
 +                     CONFIG_HEVC_V4L2REQUEST_HWACCEL + \
                       CONFIG_HEVC_VAAPI_HWACCEL + \
                       CONFIG_HEVC_VIDEOTOOLBOX_HWACCEL + \
                       CONFIG_HEVC_VDPAU_HWACCEL + \
-@@ -605,6 +606,9 @@ static enum AVPixelFormat get_format(HEV
+@@ -626,6 +627,9 @@ static enum AVPixelFormat get_format(HEV
  #if CONFIG_HEVC_VULKAN_HWACCEL
          *fmt++ = AV_PIX_FMT_VULKAN;
  #endif
@@ -88,9 +88,9 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
          break;
      case AV_PIX_FMT_YUV420P10:
  #if CONFIG_HEVC_DXVA2_HWACCEL
-@@ -632,6 +636,9 @@ static enum AVPixelFormat get_format(HEV
- #if CONFIG_HEVC_NVDEC_HWACCEL
-         *fmt++ = AV_PIX_FMT_CUDA;
+@@ -656,6 +660,9 @@ static enum AVPixelFormat get_format(HEV
+ #if CONFIG_HEVC_NVDEC_CUARRAY_HWACCEL
+         *fmt++ = AV_PIX_FMT_CUARRAY;
  #endif
 +#if CONFIG_HEVC_V4L2REQUEST_HWACCEL
 +        *fmt++ = AV_PIX_FMT_DRM_PRIME;
@@ -98,7 +98,7 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
          break;
      case AV_PIX_FMT_YUV444P:
  #if CONFIG_HEVC_VAAPI_HWACCEL
-@@ -4274,6 +4281,9 @@ const FFCodec ff_hevc_decoder = {
+@@ -4554,6 +4561,9 @@ const FFCodec ff_hevc_decoder = {
  #if CONFIG_HEVC_VULKAN_HWACCEL
                                 HWACCEL_VULKAN(hevc),
  #endif
@@ -110,10 +110,10 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
  };
 --- a/libavcodec/hwaccels.h
 +++ b/libavcodec/hwaccels.h
-@@ -48,6 +48,7 @@ extern const struct FFHWAccel ff_hevc_d3
- extern const struct FFHWAccel ff_hevc_d3d12va_hwaccel;
+@@ -51,6 +51,7 @@ extern const struct FFHWAccel ff_hevc_d3
  extern const struct FFHWAccel ff_hevc_dxva2_hwaccel;
  extern const struct FFHWAccel ff_hevc_nvdec_hwaccel;
+ extern const struct FFHWAccel ff_hevc_nvdec_cuarray_hwaccel;
 +extern const struct FFHWAccel ff_hevc_v4l2request_hwaccel;
  extern const struct FFHWAccel ff_hevc_vaapi_hwaccel;
  extern const struct FFHWAccel ff_hevc_vdpau_hwaccel;

@@ -21,7 +21,7 @@ Link: https://code.ffmpeg.org/FFmpeg/FFmpeg/pulls/26065
 
 --- a/doc/protocols.texi
 +++ b/doc/protocols.texi
-@@ -2019,6 +2019,11 @@ Local IP address of a network interface
+@@ -2258,6 +2258,11 @@ Local IP address of a network interface
  @item local_port=@var{port}
  Local port used for tcp socket connect.
  
@@ -35,10 +35,10 @@ Link: https://code.ffmpeg.org/FFmpeg/FFmpeg/pulls/26065
  
 --- a/libavformat/aviobuf.c
 +++ b/libavformat/aviobuf.c
-@@ -1015,7 +1015,7 @@ int ffio_copy_url_options(AVIOContext* p
+@@ -983,7 +983,7 @@ int ffio_copy_url_options(AVIOContext* p
  {
      const char *opts[] = {
-         "headers", "user_agent", "cookies", "http_proxy", "referer", "rw_timeout", "icy",
+         "headers", "user_agent", "cookies", "http_proxy", "referer", "rw_timeout", "icy", "prefer_libcurl",
 -        "local_addr", NULL };
 +        "local_addr", "local_dev", NULL };
      const char **opt = opts;

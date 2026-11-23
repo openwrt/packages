@@ -31,7 +31,7 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
  #define get_cabac_inline get_cabac_inline_mips
  static av_always_inline int get_cabac_inline_mips(CABACContext *c,
                                                    uint8_t * const state){
-@@ -226,5 +226,5 @@ static av_always_inline int get_cabac_by
+@@ -269,5 +269,5 @@ static av_always_inline int get_cabac_by
  
      return res;
  }

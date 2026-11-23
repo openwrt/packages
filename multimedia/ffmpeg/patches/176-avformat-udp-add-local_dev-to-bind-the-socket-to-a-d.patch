@@ -15,12 +15,12 @@ Link: https://code.ffmpeg.org/FFmpeg/FFmpeg/pulls/26065
 ---
  doc/protocols.texi     |  8 +++++
  libavformat/rtpproto.c |  8 +++++
- libavformat/udp.c      | 77 +++++++++++++++++++++++++++++++++++++-----
+ libavformat/udp.c      | 77 +++++++++++++++++++++++++++++++++++++++++++------
  3 files changed, 84 insertions(+), 9 deletions(-)
 
 --- a/doc/protocols.texi
 +++ b/doc/protocols.texi
-@@ -1225,6 +1225,10 @@ set to 1) or to a default remote address
+@@ -1427,6 +1427,10 @@ set to 1) or to a default remote address
  Local IP address of a network interface used for sending packets or joining
  multicast groups.
  
@@ -31,7 +31,7 @@ Link: https://code.ffmpeg.org/FFmpeg/FFmpeg/pulls/26065
  @item timeout=@var{n}
  Set timeout (in microseconds) of socket I/O operations to @var{n}.
  @end table
-@@ -2258,6 +2262,10 @@ Override the local UDP port to bind with
+@@ -2497,6 +2501,10 @@ Override the local UDP port to bind with
  Local IP address of a network interface used for sending packets or joining
  multicast groups.
  
@@ -227,7 +227,7 @@ Link: https://code.ffmpeg.org/FFmpeg/FFmpeg/pulls/26065
      memcpy(addr, res->ai_addr, res->ai_addrlen);
      *addr_len = res->ai_addrlen;
  
-@@ -853,7 +910,8 @@ static int udp_open(URLContext *h, const
+@@ -857,7 +914,8 @@ static int udp_open(URLContext *h, const
                      goto fail;
              } else {
                  if ((ret = udp_join_multicast_group(udp_fd, (struct sockaddr *)&s->dest_addr,
@@ -237,13 +237,13 @@ Link: https://code.ffmpeg.org/FFmpeg/FFmpeg/pulls/26065
                      goto fail;
              }
              if (s->filters.nb_exclude_addrs) {
-@@ -1107,7 +1165,8 @@ static int udp_close(URLContext *h)
+@@ -1125,7 +1183,8 @@ static int udp_close(URLContext *h)
  
      if (s->is_multicast && (h->flags & AVIO_FLAG_READ))
          udp_leave_multicast_group(s->udp_fd, (struct sockaddr *)&s->dest_addr,
 -                                  (struct sockaddr *)&s->local_addr_storage, h);
 +                                  (struct sockaddr *)&s->local_addr_storage,
 +                                  udp_local_ifindex(s), h);
- #if HAVE_PTHREAD_CANCEL
+ #if HAVE_THREADS
      if (s->thread_started) {
          int ret;
