@@ -1,5 +1,18 @@
---- a/scons-local-4.10.1/SCons/Platform/__init__.py
-+++ b/scons-local-4.10.1/SCons/Platform/__init__.py
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Roberto Andrei Bolda <rbolda@taladin.ro>
+Date: Mon, 23 Nov 2026 12:00:00 +0200
+Subject: [PATCH] SCons/Platform: allow overriding the platform with $PLATFORM
+
+Let the PLATFORM environment variable select the SCons platform, so a
+cross build can use "posix" regardless of the build host.
+
+Signed-off-by: Roberto Andrei Bolda <rbolda@taladin.ro>
+---
+ scons-local-4.11.1/SCons/Platform/__init__.py | 2 ++
+ 1 file changed, 2 insertions(+)
+
+--- a/scons-local-4.11.1/SCons/Platform/__init__.py
++++ b/scons-local-4.11.1/SCons/Platform/__init__.py
 @@ -69,6 +69,8 @@ def platform_default():
      care about the machine architecture.
      """
