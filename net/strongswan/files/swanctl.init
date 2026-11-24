@@ -58,6 +58,7 @@ seconds2time() {
 }
 
 file_reset() {
+	mkdir -p "${1%/*}"
 	: > "$1"
 }
 
