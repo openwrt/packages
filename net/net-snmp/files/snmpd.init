@@ -263,6 +263,53 @@ snmpd_sink_add() {
 	echo "$section $host$port $community" >> $CONFIGFILE
 }
 
+snmpd_snmpv3_add_with_security_level() {
+	case "$security_level" in
+		noAuthNoPriv)
+			echo "createUser $username" >> "$CONFIGFILE"
+			echo "$useraccess $username noauth $oid" >> "$CONFIGFILE"
+			;;
+		authNoPriv)
+			[ -z "$auth_type" ] && {
+				echo "skipping section '$cfg' 'auth_type' missing"
+				return
+			}
+
+			[ "${#auth_pass}" -lt 8 ] && {
+				echo "skipping section '$cfg' 'auth_pass' requires a min length of 8"
+				return
+			}
+
+			echo "createUser $username $auth_type \"$auth_pass\"" >> "$CONFIGFILE"
+			echo "$useraccess $username auth $oid" >> "$CONFIGFILE"
+			;;
+		authPriv)
+			[ -z "$auth_type" ] && {
+				echo "skipping section '$cfg' 'auth_type' missing"
+				return
+			}
+
+			[ "${#auth_pass}" -lt 8 ] && {
+				echo "skipping section '$cfg' 'auth_pass' requires a min length of 8"
+				return
+			}
+
+			[ -z "$privacy_type" ] && {
+				echo "skipping section '$cfg' 'privacy_type' missing"
+				return 0
+			}
+
+			[ "${#privacy_pass}" -lt 8 ] && {
+				echo "skipping section '$cfg' 'privacy_pass' requires a min length of 8"
+				return 0
+			}
+
+			echo "createUser $username $auth_type \"$auth_pass\" $privacy_type \"$privacy_pass\"" >> "$CONFIGFILE"
+			echo "$useraccess $username priv $oid" >> "$CONFIGFILE"
+			;;
+	esac
+}
+
 snmpd_snmpv3_add() {
 	local cfg="$1"
 	local cfg2="$2"
@@ -275,6 +322,7 @@ snmpd_snmpv3_add() {
 	local privacy_pass
 	local allow_write
 	local oid
+	local security_level
 
 	config_get version "$cfg2" snmp_version
 	if [ "$version" != "v1/v2c/v3" ] && [ "$version" != "v3" ]; then
@@ -292,10 +340,25 @@ snmpd_snmpv3_add() {
 	config_get auth_pass "$cfg" auth_pass
 	config_get privacy_type "$cfg" privacy_type
 	config_get privacy_pass "$cfg" privacy_pass
+	config_get security_level "$cfg" security_level
 	config_get oid "$cfg" RestrictedOID
 	config_get_bool allow_write "$cfg" allow_write 0
 	local useraccess="rouser"
 	[ "$allow_write" -eq 1 ] && useraccess="rwuser"
+
+	case "$security_level" in
+		"")
+			#Fallthrough if not set and use behaviour as before
+			;;
+		noAuthNoPriv|authPriv|authNoPriv)
+			snmpd_snmpv3_add_with_security_level
+			return
+			;;
+		*)
+			echo "skipping section '$cfg' wrong 'security_level=$security_level' configured"
+			return
+			;;
+	esac
 
 	if [ -z "$auth_pass" ]; then
 		echo "createUser $username" >> "$CONFIGFILE"
