@@ -1,0 +1,74 @@
+#!/bin/sh
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Pierre Gaufillet <pierre.gaufillet@bergamote.eu>
+# Migrates /etc/config/ha-cluster to sync_group sections, the global
+# lease_sync switch, vrrp_only peers and a named advanced section, and
+# drops the lease-sync persist interval. Idempotent.
+
+. /lib/functions.sh
+
+CONFIG="${UCI_CONFIG_DIR:-/etc/config}/ha-cluster"
+[ -f "$CONFIG" ] || exit 0
+
+# Section type only: keeps anonymous sections anonymous
+sed -i -E \
+	-e "s/^([[:space:]]*config[[:space:]]+)service([[:space:]]|$)/\1sync_group\2/" \
+	-e "s/^([[:space:]]*config[[:space:]]+)'service'/\1'sync_group'/" \
+	-e "s/^([[:space:]]*config[[:space:]]+)\"service\"/\1\"sync_group\"/" \
+	"$CONFIG"
+
+config_load ha-cluster
+
+# Only the dhcp group's switch was read
+migrate_sync_leases() {
+	local section="$1"
+	local value
+
+	config_get value "$section" sync_leases
+	[ -z "$value" ] && return 0
+
+	if [ "$section" = "dhcp" ] && [ -z "$(uci -q get ha-cluster.config.lease_sync)" ]; then
+		config_get_bool value "$section" sync_leases 0
+		uci -q set ha-cluster.config.lease_sync="$value"
+	fi
+	uci -q delete "ha-cluster.$section.sync_leases"
+}
+config_foreach migrate_sync_leases sync_group
+
+# Any sync_method other than owsync turned file sync off
+disable_sync_group() {
+	uci -q set "ha-cluster.$1.enabled=0"
+}
+sync_method="$(uci -q get ha-cluster.config.sync_method)"
+if [ -n "$sync_method" ] && [ "$sync_method" != "owsync" ]; then
+	config_foreach disable_sync_group sync_group
+	uci -q delete ha-cluster.config.sync_method
+fi
+
+migrate_peer() {
+	local section="$1"
+	local value
+
+	config_get value "$section" sync_enabled
+	[ -z "$value" ] && return 0
+
+	config_get_bool value "$section" sync_enabled 1
+	[ "$value" -eq 0 ] && uci -q set "ha-cluster.$section.vrrp_only=1"
+	uci -q delete "ha-cluster.$section.sync_enabled"
+}
+config_foreach migrate_peer peer
+
+# The backend reads the advanced section by name: the first anonymous
+# one takes it, unless a section already has it
+if [ -z "$(uci -q get ha-cluster.advanced)" ]; then
+	section="$(uci -q show ha-cluster |
+		sed -n 's/^ha-cluster\.\(@advanced\[[0-9]*\]\)=advanced$/\1/p' |
+		head -n 1)"
+	[ -n "$section" ] && uci -q rename "ha-cluster.$section=advanced"
+fi
+
+# Never implemented by lease-sync
+uci -q delete ha-cluster.advanced.lease_sync_persist_interval
+
+uci -q commit ha-cluster
+exit 0
