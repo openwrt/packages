@@ -1,0 +1,68 @@
+#!/bin/bash
+# import-bash CONFIG_FILE OPTION...
+#
+# Reads CONFIG_FILE, a cake-autorate style Bash configuration, for the
+# importer and prints what it defines, one line each: "s NAME=VALUE" for each
+# OPTION it sets as a scalar, "R" once when it defines the reflectors array,
+# then "r VALUE" for each reflector, and "E" last, so a file that exits early
+# is refused. enabled, interface and config_file are never taken from the
+# file. Anything the file itself prints goes to stderr, never into this output.
+
+set -euo pipefail
+set -f
+
+fail() {
+	printf 'cake-adapt configuration import: %s\n' "$1" >&2
+	"${LOGGER:-logger}" -t cake-adapt -p daemon.err "configuration import: $1" || :
+	exit 1
+}
+
+single_line() {
+	[[ $1 != *$'\n'* && $1 != *$'\r'* ]] || fail "$2 contains a line break"
+}
+
+(( $# >= 1 )) || fail "usage: $0 CONFIG_FILE OPTION..."
+# Read-only, so the sourced configuration cannot change it.
+readonly config_path=$1
+shift
+readonly -a option_names=("$@")
+# The output for the importer goes to descriptor 3; the file's own to stderr.
+exec 3>&1 1>&2
+
+"$BASH" -n "$config_path" || fail "invalid shell syntax"
+# The configuration is executable Bash. Run it only in this child process
+# so its variables and shell settings cannot alter procd's init shell.
+# shellcheck source=/dev/null
+. "$config_path"
+set -euo pipefail
+set -f
+IFS=$' \t\n'
+
+for name in "${option_names[@]}"; do
+	# Never taken from the file, even malformed; the reflectors follow on their own lines.
+	case $name in
+	enabled|interface|config_file|reflectors)
+		continue
+		;;
+	esac
+	[[ -v $name ]] || continue
+	case $(declare -p "$name") in
+	"declare -a "*|"declare -A "*)
+		fail "$name must be a scalar value"
+		;;
+	esac
+	single_line "${!name}" "$name"
+	printf 's %s=%s\n' "$name" "${!name}" >&3
+done
+
+if reflector_declaration=$(declare -p reflectors 2> /dev/null); then
+	[[ $reflector_declaration == "declare -a "* ]] ||
+		fail "reflectors must be an indexed array"
+	(( ${#reflectors[@]} > 0 )) || fail "reflectors is empty"
+	printf 'R\n' >&3
+	for reflector in "${reflectors[@]}"; do
+		single_line "$reflector" reflector
+		printf 'r %s\n' "$reflector" >&3
+	done
+fi
+printf 'E\n' >&3

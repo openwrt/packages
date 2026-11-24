@@ -1,0 +1,282 @@
+#!/bin/sh /etc/rc.common
+
+USE_PROCD=1
+START=95
+STOP=10
+
+PROG=${PROG:-/usr/sbin/cake-adapt}
+IMPORTER=${IMPORTER:-/usr/libexec/cake-adapt/import}
+RUNTIME_DIR=${RUNTIME_DIR:-/var/run/cake-adapt}
+
+log_error() {
+	logger -t cake-adapt -p daemon.err "$1"
+}
+
+log_notice() {
+	logger -t cake-adapt -p daemon.notice "$1"
+}
+
+# A UCI section name, safe as a file name and a procd instance name.
+valid_name() {
+	case "$1" in
+		''|*[!A-Za-z0-9_-]*) return 1 ;;
+	esac
+}
+
+# Each instance runs from $RUNTIME_DIR/<section>.uci, holding only its
+# own section: the importer copies it from UCI with uci get and set, filling
+# unset options from the instance's shell configuration (config_file in
+# /etc/cake-adapt/exec, the root-only file the importer reads it from; procd
+# does not watch that file, so a change there needs a reload). The file is built and
+# validated in a private staging directory, then moved into place, so a
+# configuration the daemon refuses never replaces the one an instance runs.
+generate_runtime_config() {
+	local section="$1"
+	local runtime_config="$2"
+	local stage
+
+	stage="$(mktemp -d "$RUNTIME_DIR/.stage.$section.XXXXXX")" || return 1
+	mkdir "$stage/.uci" &&
+		: > "$stage/cake-adapt" &&
+		"$IMPORTER" "$stage" "$PROG" "$section" &&
+		"$PROG" -C "$stage/cake-adapt" -S "$section" -V &&
+		chmod 0600 "$stage/cake-adapt" &&
+		mv -f "$stage/cake-adapt" "$runtime_config"
+	local status=$?
+	rm -rf "$stage"
+	return $status
+}
+
+# Logs why an instance does not start and counts it as failed.
+skip_instance() {
+	log_error "$1; not starting instance '$section'"
+	failed_instances=$((failed_instances + 1))
+}
+
+# During a restart an instance is stopped once its new configuration has been
+# checked, except one that keeps its previous configuration: registered
+# unchanged, procd would leave it running. ubus is called directly, as
+# procd_kill would reset the registration start_service is building and
+# hides ubus's status. An instance procd does not run gives Not found (-4,
+# 252 as an exit status); any other failure leaves the instance running and
+# fails the restart. TERM is ignored while stopping, as in rc.common.
+stop_restarted_instance() {
+	local status
+
+	[ -n "${restarting:-}" ] || return 0
+	trap '' TERM
+	ubus call service delete "{\"name\":\"$service_name\",\"instance\":\"$1\"}" \
+		>/dev/null 2>&1
+	status=$?
+	trap - TERM
+	case "$status" in
+		0|252) return 0 ;;
+	esac
+	log_error "could not stop instance '$1' for restart (ubus status $status); it keeps running"
+	stop_failures=$((stop_failures + 1))
+}
+
+# A named restart of a section that is no longer configured, or disabled,
+# stops its instance and removes its runtime file, as stop would.
+stop_unregistered_restart() {
+	[ -n "${restarting:-}" ] && valid_name "$requested_instance" || return 0
+	case " $registered_instances " in
+		*" $requested_instance "*) return 0 ;;
+	esac
+	stop_restarted_instance "$requested_instance"
+	rm -f "$RUNTIME_DIR/$requested_instance.uci"
+}
+
+# Whether the section was asked for: every one, or the instance named on the
+# command line (/etc/init.d/cake-adapt start <section>).
+requested() {
+	[ -z "$requested_instance" ] || [ "$1" = "$requested_instance" ]
+}
+
+# Registers the instance with procd, which watches its runtime file, as
+# dnsmasq does with its generated configuration. On a reload procd restarts
+# a running instance only when the command or that file's content changed.
+register_instance() {
+	local section="$1"
+	local runtime_config="$RUNTIME_DIR/$section.uci"
+
+	procd_open_instance "$section"
+	procd_set_param command "$PROG" -C "$runtime_config" -S "$section"
+	# Never give up: retry 0 is unlimited. An exit within an hour counts
+	# as a failure, and procd waits 5 s before each new start.
+	procd_set_param respawn 3600 5 0
+	procd_set_param term_timeout 5
+	procd_set_param file "$runtime_config"
+	procd_close_instance
+	started_instances=$((started_instances + 1))
+	registered_instances="$registered_instances $section"
+}
+
+# An instance whose new configuration is refused keeps the runtime file it
+# runs from: registered unchanged, procd leaves it running. The file exists
+# only while the instance is registered, so a first start does not start.
+keep_instance() {
+	local section="$1"
+
+	log_error "instance '$section' keeps its previous configuration $RUNTIME_DIR/$section.uci"
+	register_instance "$section"
+}
+
+start_instance() {
+	local section="$1"
+	local enabled
+	local runtime_config="$RUNTIME_DIR/$section.uci"
+
+	requested "$section" || return 0
+	configured_instances=$((configured_instances + 1))
+	config_get_bool enabled "$section" 'enabled' 0
+	if [ "$enabled" -ne 1 ]; then
+		log_notice "instance '$section' disabled by configuration; not starting"
+		return 0
+	fi
+	enabled_instances=$((enabled_instances + 1))
+
+	if ! valid_name "$section"; then
+		skip_instance "invalid instance name"
+		return 0
+	fi
+	if [ -L "$runtime_config" ] || [ -d "$runtime_config" ]; then
+		skip_instance "runtime configuration path $runtime_config is not a regular file"
+		return 0
+	fi
+	if generate_runtime_config "$section" "$runtime_config"; then
+		stop_restarted_instance "$section"
+		register_instance "$section"
+		return 0
+	fi
+	if [ ! -f "$runtime_config" ]; then
+		skip_instance "could not generate $runtime_config"
+		return 0
+	fi
+	log_error "configuration of instance '$section' refused"
+	failed_instances=$((failed_instances + 1))
+	keep_instance "$section"
+}
+
+# Calls $1 with the section of each runtime file in $RUNTIME_DIR.
+foreach_runtime_config() {
+	local runtime_config
+	local section
+
+	for runtime_config in "$RUNTIME_DIR"/*.uci; do
+		[ -f "$runtime_config" ] && [ ! -L "$runtime_config" ] || continue
+		section="${runtime_config##*/}"
+		section="${section%.uci}"
+		valid_name "$section" || continue
+		"$1" "$section"
+	done
+}
+
+# With /etc/config/cake-adapt unreadable or the runtime directory not
+# prepared, each requested instance that has a runtime file keeps it.
+keep_requested_instance() {
+	requested "$1" && keep_instance "$1"
+	return 0
+}
+
+# A runtime file of a section that is no longer registered goes, so that a
+# refused configuration cannot later revive it.
+remove_unregistered_config() {
+	case " $registered_instances " in
+		*" $1 "*) ;;
+		*) rm -f "$RUNTIME_DIR/$1.uci" ;;
+	esac
+}
+
+# Without an argument every instance is registered, and procd stops the
+# running ones that are not; with a section name only that one, and procd
+# leaves the others alone.
+start_service() {
+	local requested_instance="${1:-}"
+	local configured_instances=0
+	local enabled_instances=0
+	local failed_instances=0
+	local started_instances=0
+	local registered_instances=''
+
+	# mkdir -p below fails on any other non-directory. A symbolic link is
+	# never read through, so no runtime file is kept and procd stops every
+	# instance it runs.
+	if [ -L "$RUNTIME_DIR" ]; then
+		log_error "runtime configuration path $RUNTIME_DIR is a symbolic link; not starting, running instances stop"
+		return 1
+	fi
+	if ! config_load 'cake-adapt'; then
+		log_error "configuration /etc/config/cake-adapt could not be loaded; not starting"
+		foreach_runtime_config keep_requested_instance
+		return 1
+	fi
+	umask 077
+	if ! mkdir -p "$RUNTIME_DIR" || ! chmod 0700 "$RUNTIME_DIR"; then
+		log_error "could not prepare runtime configuration directory $RUNTIME_DIR; not starting"
+		foreach_runtime_config keep_requested_instance
+		return 1
+	fi
+
+	config_foreach start_instance 'cake_adapt'
+	[ -n "$requested_instance" ] || foreach_runtime_config remove_unregistered_config
+	stop_unregistered_restart
+	if [ "$configured_instances" -eq 0 ]; then
+		if [ -n "$requested_instance" ]; then
+			log_error "no cake_adapt instance '$requested_instance' configured; not starting"
+		else
+			log_error "no cake_adapt instances configured; not starting"
+		fi
+		return 1
+	fi
+	if [ "$enabled_instances" -eq 0 ]; then
+		log_notice "no cake-adapt instances are enabled; not starting"
+		return 0
+	fi
+	# Fails only when nothing could start.
+	[ "$started_instances" -ne 0 ] || [ "$failed_instances" -eq 0 ]
+}
+
+# A stopped instance loses its runtime file, so its next start uses only a
+# configuration that passes validation.
+stop_service() {
+	local requested_instance="${1:-}"
+
+	[ -z "$requested_instance" ] || valid_name "$requested_instance" || return 0
+	foreach_runtime_config remove_requested_config
+}
+
+remove_requested_config() {
+	requested "$1" && rm -f "$RUNTIME_DIR/$1.uci"
+	return 0
+}
+
+service_triggers() {
+	procd_add_reload_trigger 'cake-adapt'
+}
+
+# As dnsmasq: no stop. procd compares the new registrations with the running
+# instances, restarts only those whose command or runtime file changed and
+# stops those no longer registered. An instance whose new configuration is
+# refused keeps running the previous one.
+reload_service() {
+	rc_procd start_service "$@"
+}
+
+# Replaces rc.common's stop then start. Each requested instance's new
+# configuration is checked first: a valid one stops the instance and starts
+# it again, even when unchanged; a refused one keeps it running its previous
+# configuration, as on a reload. Without a section, procd stops the instances
+# no longer registered, as on a reload. Fails when an instance could not be
+# stopped.
+restart() {
+	local restarting=1
+	local stop_failures=0
+	local service_name
+
+	service_name="$(basename "${basescript:-$initscript}")"
+	# One init action for this service at a time, as rc.common's stop and reload.
+	procd_lock
+	rc_procd start_service "$@" || return 1
+	[ "$stop_failures" -eq 0 ]
+}

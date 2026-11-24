@@ -1,0 +1,134 @@
+#!/bin/sh
+# import UCI_DIRECTORY CAKE_ADAPT_BINARY UCI_SECTION
+#
+# Builds one instance's runtime configuration in UCI_DIRECTORY/cake-adapt, an
+# empty file: the instance's section with every option cake-adapt knows. Each
+# value comes from the system UCI section when it sets the option, and
+# otherwise from the instance's config_file, a cake-autorate style Bash
+# configuration, when it defines it: UCI wins. Values are read with uci get and
+# written with uci set, never parsed by hand.
+#
+# config_file, ping_prefix_string, ping_extra_args and log_file_path_override
+# make root run a file or a program, choose its arguments or choose where it
+# writes, so they are read only from the instance's section in
+# /etc/cake-adapt/exec, which root alone may change (the LuCI app has no access
+# to it). Any of them set in /etc/config/cake-adapt, which LuCI can write,
+# refuses the import.
+#
+# Bash is not a package dependency: it runs only to read a config_file, and an
+# instance with a config_file is refused when Bash is not installed.
+
+set -eu
+set -f
+
+fail() {
+	printf 'cake-adapt configuration import: %s\n' "$1" >&2
+	"${LOGGER:-logger}" -t cake-adapt -p daemon.err "configuration import: $1" || :
+	exit 1
+}
+
+[ "$#" -eq 3 ] || fail "usage: $0 UCI_DIRECTORY CAKE_ADAPT_BINARY UCI_SECTION"
+uci_directory=$1 program=$2 section=$3
+uci_command=${UCI:-/sbin/uci} section_reference="cake-adapt.$3"
+exec_directory=${EXEC_DIRECTORY:-/etc/cake-adapt}
+exec_config=$exec_directory/exec exec_reference="exec.$3"
+bash_program=${BASH_PROGRAM:-bash}
+bash_reader=${BASH_READER:-/usr/libexec/cake-adapt/import-bash}
+
+case $section in
+'' | *[!A-Za-z0-9_-]*) fail "invalid UCI section '$section'" ;;
+esac
+[ -x "$program" ] || fail "cannot execute $program"
+[ -x "$uci_command" ] || fail "cannot execute $uci_command"
+[ -d "$uci_directory/.uci" ] || fail "missing UCI staging directory"
+
+# The system UCI, where the instance is configured.
+system_uci() {
+	"$uci_command" -q "$@"
+}
+
+# The runtime configuration, with its changes kept in .uci until the commit.
+runtime_uci() {
+	"$uci_command" -q -c "$uci_directory" -t "$uci_directory/.uci" "$@"
+}
+
+single_line() {
+	case $1 in *'
+'* | *"$(printf '\r')"*) fail "$2 contains a line break" ;; esac
+}
+
+# The root-only file, as UCI package "exec" in its own directory. Like every
+# package, it is read with root's uncommitted changes in /tmp/.uci (mode 0700),
+# which libuci always applies.
+exec_uci() {
+	"$uci_command" -q -c "$exec_directory" "$@"
+}
+
+# The options that run something, choose its arguments or where it writes.
+root_only_options='config_file log_file_path_override ping_extra_args ping_prefix_string'
+
+# Prints the instance's value of option $1, from where that option is read.
+read_option() {
+	case " $root_only_options " in
+	*" $1 "*) exec_uci get "$exec_reference.$1" ;;
+	*) system_uci get "$section_reference.$1" ;;
+	esac
+}
+
+options=$("$program" -L) || fail "could not query supported cake-adapt options"
+[ -n "$options" ] || fail "cake-adapt returned no supported options"
+
+# An unreadable exec file would read as unset options: refuse it instead.
+[ ! -e "$exec_config" ] || exec_uci show exec > /dev/null ||
+	fail "could not parse $exec_config"
+for name in $root_only_options; do
+	! system_uci get "$section_reference.$name" > /dev/null ||
+		fail "option '$name' is refused in /etc/config/cake-adapt, which LuCI can change; move it to $exec_config (section '$section')"
+done
+config_path=$(read_option config_file) || config_path=
+
+file_values=
+if [ -n "$config_path" ]; then
+	case $config_path in /*) ;; *) fail "configuration path must be absolute" ;; esac
+	[ -r "$config_path" ] || fail "cannot read $config_path"
+	command -v "$bash_program" > /dev/null 2>&1 ||
+		fail "cannot read Bash file $config_path: bash is not installed"
+	# A separate Bash process reads the file and prints what it defines.
+	# shellcheck disable=SC2086 # option names are single words
+	file_values=$("$bash_program" "$bash_reader" "$config_path" $options) ||
+		fail "could not read $config_path"
+	# The reader's last line: a file that exits early is not half-imported.
+	[ "${file_values##*
+}" = E ] || fail "$config_path ended the import early"
+fi
+
+runtime_uci set "$section_reference=cake_adapt"
+for name in $options; do
+	# Whether to run, where, and which file: never taken from the file itself.
+	case $name in
+	enabled | interface | config_file) file_name= ;;
+	*) file_name=$name ;;
+	esac
+	if value=$(read_option "$name"); then
+		:
+	elif [ -n "$file_name" ] && printf '%s\n' "$file_values" | grep -q "^s $file_name="; then
+		value=$(printf '%s\n' "$file_values" | sed -n "s/^s $file_name=//p")
+	else
+		continue
+	fi
+	single_line "$value" "$name"
+	runtime_uci set "$section_reference.$name=$value"
+done
+
+# Reflectors are a list: UCI's as a whole, or else the file's array.
+if uci_reflectors=$(system_uci get "$section_reference.reflectors"); then
+	for reflector in $uci_reflectors; do
+		runtime_uci add_list "$section_reference.reflectors=$reflector"
+	done
+elif printf '%s\n' "$file_values" | grep -qx R; then
+	printf '%s\n' "$file_values" | sed -n 's/^r //p' | while IFS= read -r reflector; do
+		runtime_uci add_list "$section_reference.reflectors=$reflector"
+	done
+fi
+
+runtime_uci commit cake-adapt
