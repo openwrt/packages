@@ -1,0 +1,22 @@
+From b4ab97cbfbc740a25517292ffdd5b9a3843c2b9e Mon Sep 17 00:00:00 2001
+From: Lucian CRISTIAN <lucian.cristian@gmail.com>
+Date: Tue, 24 Nov 2026 06:18:26 +0200
+Subject: [PATCH] mariadb: fix wsrep-lib build with GCC 15
+
+The provider_options.hpp header uses int64_t without including
+the corresponding standard C++ header.
+
+Explicitly include <cstdint> to fix compilation with GCC 15.
+
+Signed-off-by: Lucian CRISTIAN <lucian.cristian@gmail.com>
+---
+--- a/wsrep-lib/include/wsrep/provider_options.hpp
++++ b/wsrep-lib/include/wsrep/provider_options.hpp
+@@ -28,6 +28,7 @@
+ #include "provider.hpp"
+ 
+ #include <functional>
++#include <cstdint>
+ #include <map>
+ #include <memory>
+ #include <string>
