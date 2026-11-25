@@ -204,6 +204,7 @@ CONFIGURE_ARGS += \
 	--enable-static \
 	--without-nss \
 	--without-librtmp \
+	--without-brotli \
 	--without-ca-path \
 	--without-libpsl \
 	--without-zstd \
