@@ -191,6 +191,7 @@ endef
 
 define Package/mariadb/install/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/$(2) $(1)/usr/bin
+	[ $(2) = $(subst mysql,mariadb,$(subst _,-,$(2))) ] || ln -s $(2) $(1)/usr/bin/$(subst mysql,mariadb,$(subst _,-,$(2)))
 	[ $(2) = $(subst mysql,mariadb,$(2)) ] || ln -s $(2) $(1)/usr/bin/$(subst mysql,mariadb,$(2))
 	[ $(2) = $(subst mariadb,mysql,$(2)) ] || ln -s $(2) $(1)/usr/bin/$(subst mariadb,mysql,$(2))
 endef
