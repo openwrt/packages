@@ -15,8 +15,7 @@ TABLE="crowdsec"
 TABLE6="crowdsec6"
 
 service_triggers() {
-	procd_add_reload_trigger crowdsec-firewall-bouncer
-	procd_add_config_trigger "config.change" "crowdsec" /etc/init.d/crowdsec-firewall-bouncer reload
+	procd_add_reload_trigger crowdsec
 }
 
 init_yaml() {
@@ -29,6 +28,7 @@ init_yaml() {
 	local log_level
 	local api_url
 	local api_key
+	local insecure_skip_verify
 	local ipv6
 	local deny_action
 	local deny_log
@@ -46,6 +46,7 @@ init_yaml() {
 	config_get log_level $section log_level 'info'
 	config_get api_url $section api_url "http://127.0.0.1:8080"
 	config_get api_key $section api_key "API_KEY"
+	config_get_bool insecure_skip_verify $section insecure_skip_verify '0'
 	config_get_bool ipv6 $section ipv6 '1'
 	config_get deny_action $section deny_action "drop"
 	config_get_bool deny_log $section deny_log '0'
@@ -62,12 +63,14 @@ init_yaml() {
 	if [ ! -d "${VARCONFIGDIR}" ]; then
 		mkdir -m 0755 -p "${VARCONFIGDIR}"
 	fi;
+	
+	umask 077
+	: >> "$VARCONFIG"
+	chmod 600 "$VARCONFIG"
 
-	cat > $VARCONFIG <<-EOM
+	cat > "$VARCONFIG" <<-EOM
 	mode: nftables
-	pid_dir: /var/run/
 	update_frequency: $update_frequency
-	daemonize: true
 	log_mode: file
 	log_dir: /var/log/
 	log_level: $log_level
@@ -78,7 +81,7 @@ init_yaml() {
 	api_url: $api_url
 	api_key: $api_key
 	retry_initial_connect: bool($retry_initial_connect)
-	insecure_skip_verify: true
+	insecure_skip_verify: bool($insecure_skip_verify)
 	disable_ipv6: boolnot($ipv6)
 	deny_action: $deny_action
 	deny_log: bool($deny_log)
@@ -123,12 +126,11 @@ init_yaml() {
 	  listen_port: 60601
 	EOM
 
-	sed -i "s/bool(1)/true/g" $VARCONFIG
-	sed -i "s/bool(0)/false/g" $VARCONFIG
-	sed -i "s/boolnot(1)/false/g" $VARCONFIG
-	sed -i "s/boolnot(0)/true/g" $VARCONFIG
-	sed -i "s,^\(\s*api_url\s*:\s*\).*\$,\1$api_url," $VARCONFIG
-	sed -i "s,^\(\s*api_key\s*:\s*\).*\$,\1$api_key," $VARCONFIG 	
+	sed -i "s/bool(1)/true/g" "$VARCONFIG"
+	sed -i "s/bool(0)/false/g" "$VARCONFIG"
+	sed -i "s/boolnot(1)/false/g" "$VARCONFIG"
+	sed -i "s/boolnot(0)/true/g" "$VARCONFIG"
+	chmod 600 "$VARCONFIG"
 }
 
 init_nftables() {
@@ -164,7 +166,7 @@ init_nftables() {
 		local log_term="log prefix \"${log_prefix}\""
 	fi
 
-	local interface="${interface// /, }"
+	interface="$(printf '%s\n' "$interface" | sed 's/[[:space:]][[:space:]]*/, /g')"
 
 	#as of kernel 3.18 we can delete a table without need to flush it
 	nft delete table ip crowdsec 2>/dev/null
@@ -222,6 +224,7 @@ run_bouncer() {
 		procd_set_param stdout 1
 		procd_set_param stderr 1
 		procd_set_param nice 10
+		procd_set_param respawn 3600 5 5
 		if [ -x "/sbin/ujail" ]; then
 			procd_add_jail cs-bouncer log
 			procd_add_jail_mount $VARCONFIG
@@ -240,7 +243,7 @@ start_service() {
 
 service_stopped() {
 
-	rm $VARCONFIG
+	rm -f "$VARCONFIG"
 
 	nft delete table ip crowdsec 2>/dev/null
 	nft delete table ip6 crowdsec6 2>/dev/null
