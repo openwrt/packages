@@ -65,7 +65,7 @@ download_rules() {
 			# value below (for example, installed is 31600 then use 31470):
 
 			#snortver=$(snort --version | awk '/Version/ {print gensub("\\.", "", "", $NF)}')
-			snortver=31470
+			snortver=3900
 
 			log "Downloading subscription rules..."
 			url="https://www.snort.org/rules/snortrules-snapshot-$snortver.tar.gz?oinkcode=$oinkcode"
