@@ -7,14 +7,54 @@ NAME=podman
 PROG=/usr/bin/podman
 
 start_service() {
+	config_load podman
+
+	local enabled graphroot conf
+	config_get_bool enabled main enabled 0
+	[ "$enabled" = "1" ] || {
+		logger -t podman "podman disabled in /etc/config/podman, not starting"
+		return 0
+	}
+
+	# /opt is persistent storage on OpenWrt (cf. dockerd's
+	# /opt/docker/); the upstream default /var/lib/containers
+	# lives on /tmp (RAM) and loses images on reboot.
+	config_get graphroot main graphroot "/opt/podman/storage"
+	conf=/etc/containers/storage.conf
+
+	[ -f "$conf" ] || {
+		logger -t podman "storage.conf not found: $conf, aborting"
+		return 1
+	}
+
+	[ -d "$graphroot" ] || mkdir -p "$graphroot"
+
+	# driver is managed by the package (see Makefile), not here:
+	# only graphroot is written at runtime so the path stays
+	# configurable without editing storage.conf by hand.
+	if grep -qE "^[[:space:]]*graphroot[[:space:]]*=" "$conf"; then
+		sed -i -E "s|^[[:space:]]*graphroot[[:space:]]*=.*|graphroot = \"${graphroot}\"|" "$conf"
+	else
+		sed -i "/^\[storage\]/a graphroot = \"${graphroot}\"" "$conf"
+	fi
+
 	[ -d /run/podman ] || mkdir -p /run/podman
 	procd_open_instance "podman"
 	procd_set_param command "$PROG" system service --time=0
-	procd_append_param command $command
+	procd_set_param respawn
 	procd_close_instance
 }
 
 shutdown() {
 	${PROG} pod stop -a
 	${PROG} container stop -a
+}
+
+reload_service() {
+	stop
+	start
+}
+
+service_triggers() {
+	procd_add_reload_trigger 'podman'
 }
