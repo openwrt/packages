@@ -8,6 +8,7 @@ local function scrape()
   local metric_chip_names = metric("node_hwmon_chip_names", "gauge")
   local metric_sensor_label = metric("node_hwmon_sensor_label", "gauge")
   local metric_temp_celsius = metric("node_hwmon_temp_celsius", "gauge")
+  local metric_fan_rpm = metric("node_hwmon_fan_rpm", "gauge")
   local metric_pwm = metric("node_hwmon_pwm", "gauge")
 
   for hwmon_path in fs.glob("/sys/class/hwmon/hwmon*") do
@@ -40,6 +41,13 @@ local function scrape()
       local sensor = string.gsub(fs.basename(sensor_path), "_input$", "")
       local temp = get_contents(sensor_path) / 1000
       metric_temp_celsius({chip=chip, sensor=sensor}, temp)
+    end
+
+    -- Produce node_hwmon_fan_rpm
+    for sensor_path in fs.glob(hwmon_path .. "/fan*_input") do
+      local sensor = string.gsub(fs.basename(sensor_path), "_input$", "")
+      local rpm = rtrim(get_contents(sensor_path))
+      metric_fan_rpm({chip=chip, sensor=sensor}, rpm)
     end
 
     -- Produce node_hwmon_pwm
