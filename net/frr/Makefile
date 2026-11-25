@@ -81,7 +81,8 @@ endef
 define Package/frr
   $(call Package/frr/Default)
   DEPENDS:=+librt +libatomic +libcap +libncurses +libjson-c +libreadline \
-    +libyang-legacy +libprotobuf-c +FRR_OPENSSL:libopenssl +FRR_SNMP:libnetsnmp +more
+    +libyang-legacy +libprotobuf-c +FRR_OPENSSL:libopenssl +FRR_SNMP:libnetsnmp +more \
+    +USE_GLIBC:libcrypt-compat
   TITLE:=The FRRouting (FRR) Software Routing Suite
   MENU:=1
 endef
