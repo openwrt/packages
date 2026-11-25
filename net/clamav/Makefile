@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=clamav
 PKG_VERSION:=1.4.3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.clamav.net/downloads/production/
@@ -21,11 +21,11 @@ PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING*
 PKG_CPE_ID:=cpe:/a:clamav:clamav
 
-PKG_BUILD_DEPENDS:=ncurses rust/host
+PKG_BUILD_DEPENDS:=ncurses
 PKG_BUILD_FLAGS:=gc-sections lto
 
 include $(INCLUDE_DIR)/package.mk
-include ../../lang/rust/rust-values.mk
+include $(INCLUDE_DIR)/rust-values.mk
 include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/cmake.mk
 
@@ -33,7 +33,7 @@ define Package/clamav/Default
   SECTION:=net
   DEPENDS:=+check +libstdcpp +libpthread +zlib +libbz2 +libxml2 \
     +libcurl +libjson-c +libmilter-sendmail +libopenssl +libltdl \
-    +libpcre2 $(ICONV_DEPENDS) $(RUST_ARCH_DEPENDS)
+    +libpcre2 $(ICONV_DEPENDS) $(RUST_PKG_DEPENDS)
   CATEGORY:=Network
   SUBMENU:=Web Servers/Proxies
   TITLE:=ClamAV
@@ -74,6 +74,9 @@ CMAKE_OPTIONS += \
 	-DENABLE_UNRAR=OFF \
 	-DENABLE_SYSTEMD=OFF \
 	-DRUST_COMPILER_TARGET=$(RUSTC_TARGET_ARCH) \
+	-Dcargo_EXECUTABLE=$(CARGO) \
+	-Drustc_EXECUTABLE=$(RUSTC) \
+	-DRUSTFLAGS="$(CARGO_RUSTFLAGS)" \
 	-DHAVE_SYSTEM_LFS_FTS=O$(if $(CONFIG_USE_GLIBC),N,FF)
 
 TARGET_CXXFLAGS += -fno-rtti
