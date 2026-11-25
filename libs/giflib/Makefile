@@ -22,8 +22,10 @@ PKG_CPE_ID:=cpe:/a:giflib_project:giflib
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_FLAGS:=gc-sections
+HOST_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 
 define Package/giflib
   SECTION:=libs
@@ -80,5 +82,31 @@ define Package/giflib-utils/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin
 endef
 
+define Host/Prepare
+	$(call Host/Prepare/Default)
+	touch $(HOST_BUILD_DIR)/doc/giflib-logo.gif
+endef
+
+define Host/Configure
+endef
+
+define Host/Compile
+	+$(MAKE) $(HOST_JOBS) -C $(HOST_BUILD_DIR) \
+		CFLAGS="$(HOST_CFLAGS) $(HOST_FPIC)" \
+		LDFLAGS="$(HOST_LDFLAGS)" \
+		PREFIX="$(HOST_BUILD_PREFIX)"
+endef
+
+define Host/Install
+	$(MAKE) -C $(HOST_BUILD_DIR) install-include install-lib \
+		PREFIX="$(HOST_BUILD_PREFIX)"
+endef
+
+define Host/Uninstall
+	$(MAKE) -C $(HOST_BUILD_DIR) uninstall \
+		PREFIX="$(HOST_BUILD_PREFIX)" || true
+endef
+
+$(eval $(call HostBuild))
 $(eval $(call BuildPackage,giflib))
 $(eval $(call BuildPackage,giflib-utils))
