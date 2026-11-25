@@ -5,7 +5,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=open-iscsi
 PKG_VERSION:=2.1.10
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/open-iscsi/open-iscsi
@@ -47,7 +47,8 @@ define Build/Prepare
 endef
 
 MESON_ARGS += \
-	-Dno_systemd=true
+	-Dno_systemd=true \
+	-Ddbroot=/etc/iscsi
 
 define Package/open-iscsi/conffiles
 /etc/iscsi/
