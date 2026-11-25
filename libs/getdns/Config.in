@@ -1,5 +1,5 @@
 menu "Configuration"
-	depends on PACKAGE_getdns
+	depends on PACKAGE_getdns-openssl || PACKAGE_getdns-mbedtls
 
 config GETDNS_BUILD_LIBEVENT2
 	bool "Use libevent2-based event loop"
