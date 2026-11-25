@@ -15,7 +15,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SAVANNAH/oath-toolkit
 PKG_HASH:=8ad24aa9ff13c0edf3efc2573d90e85cf8b5ce7e82c08042574c1591f9d91eaa
 
-PKG_MAINTAINER:=Fam Zheng <fam@euphon.net>
+PKG_MAINTAINER:=Ivan Mas <avenger_msoft@mail.ru>
 PKG_LICENSE:=LGPL-2.0-or-later GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:nongnu:oath_toolkit
