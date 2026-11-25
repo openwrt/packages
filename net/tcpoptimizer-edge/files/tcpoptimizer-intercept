@@ -1,0 +1,142 @@
+#!/bin/sh
+
+# Packaged form of scripts/openwrt-intercept.sh.
+
+set -u
+
+ACTION="${1:-}"
+[ "$#" -eq 0 ] || shift
+NFT_ROOT="${TCPO_NFT_ROOT:-/usr/share/nftables.d}"
+BACKUP_ROOT="${TCPO_INTERCEPT_BACKUPS:-/etc/tcpoptimizer/firewall-backups}"
+FW_INIT="${TCPO_FIREWALL_INIT:-/etc/init.d/firewall}"
+DNAT_FILE="$NFT_ROOT/chain-pre/dstnat/50-tcpoptimizer-edge.nft"
+INPUT_FILE="$NFT_ROOT/chain-pre/input/50-tcpoptimizer-edge.nft"
+FW3_SCRIPT="${TCPO_FW3_SCRIPT:-/etc/tcpoptimizer/firewall3-intercept.sh}"
+STATE_FILE="${TCPO_INTERCEPT_STATE:-/etc/tcpoptimizer/intercept.state}"
+FW3_SECTION="tcpoptimizer_edge"
+
+usage() {
+	cat <<'EOF'
+Usage:
+  tcpoptimizer-intercept install --lan-device DEV --destination-cidr CIDR [--destination-cidr CIDR ...] [--listen-port 18080]
+  tcpoptimizer-intercept remove
+  tcpoptimizer-intercept status
+
+Only TCP from the specified LAN device to the explicit destination CIDRs is
+redirected to the split-proxy listener. UDP, including HTTP/3 and RDP UDP,
+continues over the normal WireGuard route. Both firewall4/nftables and
+firewall3/iptables OpenWrt are supported.
+EOF
+}
+
+die() { printf 'error: %s\n' "$*" >&2; exit 1; }
+is_uint() { case "$1" in ''|*[!0-9]*) return 1 ;; *) return 0 ;; esac; }
+valid_name() { case "$1" in ''|*[!A-Za-z0-9_.-]*) return 1 ;; *) return 0 ;; esac; }
+valid_cidr() {
+	case "$1" in */*) ;; *) return 1 ;; esac
+	case "$1" in ''|*[!A-Fa-f0-9:./]*) return 1 ;; *) return 0 ;; esac
+}
+
+reload_firewall() {
+	[ -x "$FW_INIT" ] || return 1
+	if command -v fw4 >/dev/null 2>&1; then fw4 check >/dev/null 2>&1 || return 1; fi
+	"$FW_INIT" reload
+}
+
+write_state() {
+	mode="$1"
+	umask 077
+	{
+		printf 'mode=%s\n' "$mode"
+		printf 'lan_device=%s\n' "$LAN_DEVICE"
+		printf 'listen_port=%s\n' "$LISTEN_PORT"
+		for cidr in $DESTINATION_CIDRS; do printf 'destination_cidr=%s\n' "$cidr"; done
+	} >"$STATE_FILE"
+}
+
+install_fw4() {
+	mkdir -p "${DNAT_FILE%/*}" "${INPUT_FILE%/*}"
+	: >"$DNAT_FILE"
+	for cidr in $DESTINATION_CIDRS; do
+		case "$cidr" in *:*) family=ip6 ;; *) family=ip ;; esac
+		printf 'iifname "%s" %s daddr %s meta l4proto tcp redirect to :%s comment "tcpoptimizer-edge scoped TCP"\n' "$LAN_DEVICE" "$family" "$cidr" "$LISTEN_PORT" >>"$DNAT_FILE"
+	done
+	printf 'iifname "%s" meta l4proto tcp th dport %s accept comment "tcpoptimizer-edge local listener"\n' "$LAN_DEVICE" "$LISTEN_PORT" >"$INPUT_FILE"
+	chmod 0644 "$DNAT_FILE" "$INPUT_FILE"
+	write_state fw4
+}
+
+install_fw3() {
+	mkdir -p "${FW3_SCRIPT%/*}"
+	{
+		printf '%s\n' '#!/bin/sh' 'iptables -t nat -N TCPOPTIMIZER 2>/dev/null || iptables -t nat -F TCPOPTIMIZER' 'while iptables -t nat -D PREROUTING -j TCPOPTIMIZER 2>/dev/null; do :; done' 'iptables -t nat -I PREROUTING 1 -j TCPOPTIMIZER'
+		v6_init=0
+		for cidr in $DESTINATION_CIDRS; do
+			case "$cidr" in
+				*:*)
+					if [ "$v6_init" -eq 0 ]; then
+						printf '%s\n' 'ip6tables -t nat -S >/dev/null 2>&1 || exit 1' 'ip6tables -t nat -N TCPOPTIMIZER 2>/dev/null || ip6tables -t nat -F TCPOPTIMIZER' 'while ip6tables -t nat -D PREROUTING -j TCPOPTIMIZER 2>/dev/null; do :; done' 'ip6tables -t nat -I PREROUTING 1 -j TCPOPTIMIZER'
+						v6_init=1
+					fi
+					printf 'ip6tables -t nat -A TCPOPTIMIZER -i %s -d %s -p tcp -j REDIRECT --to-ports %s\n' "$LAN_DEVICE" "$cidr" "$LISTEN_PORT"
+					;;
+				*) printf 'iptables -t nat -A TCPOPTIMIZER -i %s -d %s -p tcp -j REDIRECT --to-ports %s\n' "$LAN_DEVICE" "$cidr" "$LISTEN_PORT" ;;
+			esac
+		done
+		printf '%s\n' 'iptables -N TCPOPTIMIZER_INPUT 2>/dev/null || iptables -F TCPOPTIMIZER_INPUT' 'while iptables -D INPUT -j TCPOPTIMIZER_INPUT 2>/dev/null; do :; done' 'iptables -I INPUT 1 -j TCPOPTIMIZER_INPUT'
+		printf 'iptables -A TCPOPTIMIZER_INPUT -i %s -p tcp --dport %s -j ACCEPT\n' "$LAN_DEVICE" "$LISTEN_PORT"
+	} >"$FW3_SCRIPT"
+	chmod 0700 "$FW3_SCRIPT"
+	uci -q delete "firewall.$FW3_SECTION"
+	uci set "firewall.$FW3_SECTION=include"
+	uci set "firewall.$FW3_SECTION.path=$FW3_SCRIPT"
+	uci set "firewall.$FW3_SECTION.reload=1"
+	uci commit firewall
+	write_state fw3
+}
+
+remove_files() {
+	rm -f "$DNAT_FILE" "$INPUT_FILE" "$FW3_SCRIPT" "$STATE_FILE"
+	if command -v uci >/dev/null 2>&1; then uci -q delete "firewall.$FW3_SECTION" && uci commit firewall || true; fi
+}
+
+case "$ACTION" in
+	install)
+		LAN_DEVICE=""; LISTEN_PORT=18080; DESTINATION_CIDRS=""
+		while [ "$#" -gt 0 ]; do
+			case "$1" in
+				--lan-device) [ "$#" -ge 2 ] || die "--lan-device needs a value"; LAN_DEVICE="$2"; shift ;;
+				--destination-cidr) [ "$#" -ge 2 ] || die "--destination-cidr needs a value"; valid_cidr "$2" || die "invalid destination CIDR"; DESTINATION_CIDRS="$DESTINATION_CIDRS $2"; shift ;;
+				--listen-port) [ "$#" -ge 2 ] || die "--listen-port needs a value"; LISTEN_PORT="$2"; shift ;;
+				*) die "unknown option: $1" ;;
+			esac
+			shift
+		done
+		valid_name "$LAN_DEVICE" || die "invalid LAN device"
+		[ -n "$DESTINATION_CIDRS" ] || die "at least one --destination-cidr is required"
+		is_uint "$LISTEN_PORT" && [ "$LISTEN_PORT" -ge 1024 ] && [ "$LISTEN_PORT" -le 65535 ] || die "invalid listener port"
+		[ "$(id -u)" -eq 0 ] || die "install must run as root"
+		if ! command -v fw4 >/dev/null 2>&1; then
+			for cidr in $DESTINATION_CIDRS; do
+				case "$cidr" in *:*) ip6tables -t nat -S >/dev/null 2>&1 || die "IPv6 destination CIDRs require ip6tables NAT support (ip6tables-mod-nat)" ;; esac
+			done
+		fi
+		[ ! -e "$STATE_FILE" ] && [ ! -e "$DNAT_FILE" ] && [ ! -e "$INPUT_FILE" ] && [ ! -e "$FW3_SCRIPT" ] || die "interception already installed; remove it first"
+		command -v fw4 >/dev/null 2>&1 || ! uci -q get "firewall.$FW3_SECTION" >/dev/null || die "firewall UCI section $FW3_SECTION already exists"
+		timestamp="$(date -u +%Y%m%dT%H%M%SZ)"; backup="$BACKUP_ROOT/$timestamp"; umask 077
+		mkdir -p "$backup" "${STATE_FILE%/*}"; : >"$backup/previously-absent"
+		if command -v fw4 >/dev/null 2>&1; then install_fw4; else install_fw3; fi
+		if ! reload_firewall; then remove_files; "$FW_INIT" reload >/dev/null 2>&1 || true; die "interception was not installed"; fi
+		printf 'installed destination-scoped transparent TCP interception\nbackup marker: %s\n' "$backup"
+		;;
+	remove)
+		[ "$#" -eq 0 ] || die "remove takes no options"; [ "$(id -u)" -eq 0 ] || die "remove must run as root"
+		remove_files; reload_firewall || die "files were removed, but firewall validation or reload failed"; printf 'removed transparent TCP interception\n'
+		;;
+	status)
+		[ "$#" -eq 0 ] || die "status takes no options"
+		if [ -f "$STATE_FILE" ]; then printf 'installed\n'; sed 's/^/  /' "$STATE_FILE"; else printf 'not installed\n'; exit 1; fi
+		;;
+	help|-h|--help|'') usage ;;
+	*) usage >&2; die "unknown action: $ACTION" ;;
+esac
