@@ -2,27 +2,30 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=aardvark-dns
 PKG_VERSION:=2.1.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/containers/aardvark-dns/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=daf871488603e659b0501224cf0731ac317809b1d1701fc061cb4f6ae39a894f
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-vendor.tar.zst
+PKG_SOURCE_URL:=@OPENWRT
+PKG_SOURCE_PROTO:=cargo-vendor-github
+PKG_VENDOR_REPO:=containers/aardvark-dns
+PKG_VENDOR_TAG:=v$(PKG_VERSION)
+PKG_VENDOR_HASH:=daf871488603e659b0501224cf0731ac317809b1d1701fc061cb4f6ae39a894f
+PKG_HASH:=c684039725b4aed5c22856bd6b376e1c4d6a97db69d2d46dded8361c59bca1b0
 
 PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:containers:aardvark-dns
 
-PKG_BUILD_DEPENDS:=rust/host
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
-include ../../lang/rust/rust-package.mk
+include $(INCLUDE_DIR)/rust-package.mk
 
 define Package/aardvark-dns
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=$(RUST_ARCH_DEPENDS)
+  DEPENDS:=$(RUST_PKG_DEPENDS)
   TITLE:=authoritative dns server for container records
   URL:=https://github.com/containers/aardvark-dns
 endef
