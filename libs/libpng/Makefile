@@ -20,7 +20,10 @@ PKG_LICENSE:=Libpng GPL-2.0-or-later BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE contrib/gregbook/COPYING contrib/gregbook/LICENSE
 PKG_CPE_ID:=cpe:/a:libpng:libpng
 
+HOST_BUILD_PARALLEL:=1
+
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/cmake.mk
 
 define Package/libpng
@@ -44,6 +47,13 @@ CMAKE_OPTIONS += \
 	-DPNG_POWERPC_VSX=off \
 	-Dld-version-script=OFF
 
+CMAKE_HOST_OPTIONS += \
+	-DPNG_TOOLS=OFF \
+	-DPNG_TESTS=OFF \
+	-DPNG_FRAMEWORK=OFF \
+	-DPNG_SHARED=OFF \
+	-DPNG_STATIC=ON
+
 define Build/InstallDev
 	$(call Build/InstallDev/cmake,$(1))
 	$(SED) 's,^\(prefix\|exec_prefix\)=.*,\1=$(STAGING_DIR)/usr,g' $(1)/usr/bin/libpng{,16}-config
@@ -63,4 +73,5 @@ define Package/libpng/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpng.so $(1)/usr/lib/
 endef
 
+$(eval $(call HostBuild))
 $(eval $(call BuildPackage,libpng))
