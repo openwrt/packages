@@ -1,0 +1,12 @@
+{
+	"user": "apmond",
+	"publish": [ "apmond" ],
+	"access": {
+		"network.wireless": {
+			"methods": [ "status" ]
+		},
+		"network.interface.*": {
+			"methods": [ "status" ]
+		}
+	}
+}
