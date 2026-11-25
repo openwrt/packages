@@ -54,6 +54,8 @@ start_service() {
 			return
 		fi
 
+		# Ensure the parent directory exists (e.g. /var/lib)
+		mkdir -p "$(dirname "${CONFIG_PATH}")"
 		if [ ${copy_config_path} -eq 1 ]; then
 			cp -r "${config_path}" "${CONFIG_PATH}"
 		else
