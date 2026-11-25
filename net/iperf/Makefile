@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=iperf
 PKG_VERSION:=2.2.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_HASH:=4008e1dc7cdeb68605747e11e954a5b25f4646ab6d71207d979acec5de7d385a
@@ -54,6 +54,10 @@ CONFIGURE_ARGS += \
 
 TARGET_CXXFLAGS += -fno-rtti -static-libstdc++ -std=c++11
 TARGET_LDFLAGS += $(if $(CONFIG_USE_GLIBC),-lpthread -lm)
+
+MAKE_FLAGS += \
+	CFLAGS="$(TARGET_CFLAGS)" \
+	CXXFLAGS="$(TARGET_CXXFLAGS)"
 
 define Package/iperf/install
 	$(INSTALL_DIR) $(1)/usr/bin
