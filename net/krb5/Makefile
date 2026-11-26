@@ -56,6 +56,10 @@ define Package/krb5-server
 	TITLE:=Kerberos 5 Server
 endef
 
+define Package/krb5-server/conffiles
+/etc/krb5kdc/
+endef
+
 define Package/krb5-server-extras
 	$(call Package/krb5/Default)
 	DEPENDS:=+krb5-libs +libpthread
