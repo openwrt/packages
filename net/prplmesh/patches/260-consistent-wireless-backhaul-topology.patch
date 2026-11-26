@@ -1,0 +1,193 @@
+From 7ccc19b57d5bebcbd0a919aaf85cc503c8070224 Mon Sep 17 00:00:00 2001
+From: Shi Jiayang <shi05275@163.com>
+Date: Tue, 10 Nov 2026 20:26:28 +0800
+Subject: [PATCH] controller: retain consistent wireless backhaul parents
+
+Stations created from a topology response or re-created after reconnect
+can retain the default Ethernet type despite being attached to a BSS.
+BML then labels the active wireless backhaul as Ethernet. A later radio
+placeholder can also overwrite the selected backhaul in the BML record.
+
+Keep interface type and parent binding consistent, recover bSTA bindings
+from Device Information, preserve confirmed prplMesh parents when reports
+arrive out of order, and serialize only the selected backhaul.
+
+Upstream-Status: Pending
+
+Signed-off-by: Shi Jiayang <shi05275@163.com>
+---
+--- a/controller/src/beerocks/master/db/station.cpp
++++ b/controller/src/beerocks/master/db/station.cpp
+@@ -9,6 +9,7 @@
+ #include "station.h"
+ 
+ #include <bcl/beerocks_defines.h>
++#include <bcl/beerocks_utils.h>
+ #include <chrono>
+ #include <easylogging++.h>
+ 
+@@ -151,6 +152,12 @@ void Station::set_bss(std::shared_ptr<Ag
+ {
+     m_previous_bss = m_bss;
+     m_bss          = bss;
++    if (bss) {
++        m_eth_switch.reset();
++        if (!beerocks::utils::is_device_wireless(iface_type)) {
++            iface_type = beerocks::IFACE_TYPE_WIFI_UNSPECIFIED;
++        }
++    }
+ }
+ 
+ std::shared_ptr<Agent::sRadio::sBss> Station::get_bss() { return m_bss.lock(); }
+@@ -160,6 +167,14 @@ void Station::clear_sta_stats_info() { s
+ bool Station::is_bSta() { return m_is_bSta; }
+ void Station::set_eth_switch(std::shared_ptr<Agent::sEthSwitch> eth_switch)
+ {
++    if (eth_switch) {
++        if (auto bss = get_bss()) {
++            bss->connected_stations.erase(mac);
++        }
++        m_previous_bss = m_bss;
++        m_bss.reset();
++        iface_type = beerocks::IFACE_TYPE_ETHERNET;
++    }
+     m_eth_switch = eth_switch;
+ }
+ std::shared_ptr<Agent::sEthSwitch> Station::get_eth_switch() { return m_eth_switch.lock(); }
+--- a/controller/src/beerocks/master/tasks/topology_task.cpp
++++ b/controller/src/beerocks/master/tasks/topology_task.cpp
+@@ -119,19 +119,9 @@ bool topology_task::handle_topology_resp
+         }
+     }
+ 
+-    // Set agent backhaul link as etherent and parent as empty for external Agents
+-    // According to wireless interface connections, parameters are updated.
+-    // Default backhaul interface mac is bridge MAC (al_mac) for wired devices.
+-    //TODO: Wired parent link will be detected at the end of Topology Response (PPM-2043)
+-    if (!agent->is_gateway) {
+-        agent->backhaul.backhaul_iface_type = beerocks::IFACE_TYPE_ETHERNET;
+-
+-        //TODO: if needed, parse Device Bridge Capability (PPM-133)
+-        agent->backhaul.backhaul_interface = al_mac;
+-        agent->backhaul.parent_agent.reset();
+-        agent->backhaul.parent_interface        = beerocks::net::network_utils::ZERO_MAC;
+-        agent->backhaul.wireless_backhaul_radio = nullptr;
+-    }
++    // A response can arrive before the association notification. Retain the
++    // last confirmed parent until this response supplies a replacement.
++    bool reports_wireless_backhaul = false;
+ 
+     std::vector<sMacAddr> interface_macs{};
+ 
+@@ -209,35 +199,27 @@ bool topology_task::handle_topology_resp
+             if (iface_role == ieee1905_1::eRole::NON_AP_NON_PCP_STA &&
+                 media_info->network_membership != beerocks::net::network_utils::ZERO_MAC) {
+ 
+-                // Search parent/connected agent
++                reports_wireless_backhaul = true;
+                 auto parent_agent = database.get_agent_by_bssid(media_info->network_membership);
+-                if (!parent_agent) {
+-                    LOG(ERROR) << "Parent agent is not found on database";
++                auto parent_bss = database.get_bss(media_info->network_membership);
++                if (!parent_agent || !parent_bss || parent_agent == agent) {
++                    LOG(WARNING) << "Wireless backhaul parent is not yet available, bssid="
++                                 << media_info->network_membership;
+                     continue;
+                 }
+ 
+-                auto backhaul_sta = database.get_station(iface_mac);
++                // Device Information is an authoritative association report;
++                // recover a missing/stale bSTA without waiting for a JOIN event.
++                auto backhaul_sta = database.add_backhaul_station(
++                    iface_mac, media_info->network_membership, al_mac);
+                 if (!backhaul_sta) {
+-                    LOG(ERROR) << "Backhaul station is not found on database";
+-                    continue;
+-                }
+-
+-                auto parent_bss = backhaul_sta->get_bss();
+-                if (!parent_bss) {
+-                    LOG(ERROR) << "Connected BSS of the station is not found, sta mac="
+-                               << backhaul_sta->mac;
+-                    continue;
+-                }
+-
+-                // Network Membership verification from database
+-                // This case could occur, if we can topology response before topology notification
+-                // with JOIN notification for that station.
+-                if (media_info->network_membership != parent_bss->bssid) {
+-                    LOG(INFO) << "Network membership does not align with database, parent_bssid="
+-                              << parent_bss->bssid
+-                              << ", network_membership=" << media_info->network_membership;
++                    LOG(ERROR) << "Failed to register backhaul station " << iface_mac;
+                     continue;
+                 }
++                database.set_sta_backhaul_iface_type(iface_mac,
++                                                      beerocks::IFACE_TYPE_WIFI_UNSPECIFIED);
++                database.set_sta_state(tlvf::mac_to_string(iface_mac), beerocks::STATE_CONNECTED);
++                agent->parent_mac = iface_mac;
+ 
+                 LOG(DEBUG) << "Wireless BH Link is reported for agent=" << agent->al_mac
+                            << " parent agent=" << parent_agent->al_mac
+@@ -257,6 +239,17 @@ bool topology_task::handle_topology_resp
+         }
+     }
+ 
++    // Reset wired hierarchy only when no active wireless membership was
++    // reported. A missing association event must not turn a wireless link
++    // into Ethernet; real wired transitions still use graph inference.
++    if (!agent->is_gateway && !reports_wireless_backhaul) {
++        agent->backhaul.backhaul_iface_type = beerocks::IFACE_TYPE_ETHERNET;
++        agent->backhaul.backhaul_interface = al_mac;
++        agent->backhaul.parent_agent.reset();
++        agent->backhaul.parent_interface = network_utils::ZERO_MAC;
++        agent->backhaul.wireless_backhaul_radio = nullptr;
++    }
++
+     // Update external agents multi ap backhaul datamodel
+     if (!agent->is_gateway) {
+         database.dm_set_device_multi_ap_backhaul(*agent);
+--- a/controller/src/beerocks/master/db/network_map.cpp
++++ b/controller/src/beerocks/master/db/network_map.cpp
+@@ -353,10 +353,19 @@ std::ptrdiff_t network_map::fill_bml_age
+     node->status =
+         (now - agent_last_contacted) > std::chrono::seconds(DEFAULT_AGENT_INACTIVITY_TIMEOUT);
+ 
+-    // remote bridge
+-    tlvf::mac_from_string(node->data.gw_ire.backhaul_mac, tlvf::mac_to_string(agent->parent_mac));
+-
+-    process_backhaul(database, database.get_station(agent->parent_mac), node, agent->is_gateway);
++    // Resolve the selected backhaul once. A radio UID can also name an
++    // unrelated placeholder station and must not overwrite a confirmed link.
++    auto backhaul = database.get_station(agent->parent_mac);
++    if (agent->backhaul.backhaul_iface_type != beerocks::IFACE_TYPE_ETHERNET &&
++        !agent->backhaul.parent_agent.expired()) {
++        auto selected = database.get_station(agent->backhaul.backhaul_interface);
++        if (selected) {
++            backhaul = selected;
++        }
++    }
++    tlvf::mac_to_array(backhaul ? backhaul->mac : agent->parent_mac,
++                       node->data.gw_ire.backhaul_mac);
++    process_backhaul(database, backhaul, node, agent->is_gateway);
+ 
+     network_utils::ipv4_from_string(node->ip_v4, agent->ipv4);
+     string_utils::copy_string(node->name, agent->name.c_str(), sizeof(node->name));
+@@ -368,8 +377,15 @@ std::ptrdiff_t network_map::fill_bml_age
+             break;
+         }
+         tlvf::mac_to_array(radio.first, node->data.gw_ire.radio[i].radio_mac);
+-        //Useful for scenarios where radio mac address and the station interface mac address are same.
+-        process_backhaul(database, database.get_station(radio.first), node, agent->is_gateway);
++        // Legacy agents may use the radio UID as their backhaul STA address.
++        if (!backhaul) {
++            auto candidate = database.get_station(radio.first);
++            if (candidate && candidate->is_bSta() && candidate->al_mac == agent->al_mac) {
++                backhaul = candidate;
++                tlvf::mac_to_array(backhaul->mac, node->data.gw_ire.backhaul_mac);
++                process_backhaul(database, backhaul, node, agent->is_gateway);
++            }
++        }
+ 
+         unsigned vap_id = 0;
+         for (const auto &bss : radio.second->bsses) {

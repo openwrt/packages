@@ -1,0 +1,30 @@
+From 5b1fb2f9dec9c9d7e7e998485b5d1c762d567feb Mon Sep 17 00:00:00 2001
+From: Shi Jiayang <shi05275@163.com>
+Date: Tue, 10 Nov 2026 20:26:28 +0800
+Subject: [PATCH] controller: synchronize the backhaul station parent address
+
+add_backhaul_station updated its BSS pointer but left parent_mac stale.
+After a zero-BSSID association report, handle_completed_connection then
+mistook the current AP for the previous AP and sent DISASSOCIATE tx=0 to
+the live backhaul. Update both representations after resolving a valid
+wireless or wired parent, including reports received before association.
+
+Upstream-Status: Pending
+
+Signed-off-by: Shi Jiayang <shi05275@163.com>
+---
+--- a/controller/src/beerocks/master/db/db.cpp
++++ b/controller/src/beerocks/master/db/db.cpp
+@@ -571,10 +571,12 @@ std::shared_ptr<Station> db::add_backhau
+     std::shared_ptr<Agent::sRadio::sBss> parent_bss = get_bss(parent_mac);
+     if (parent_bss) {
+         set_station_bss(station, parent_bss);
++        station->parent_mac = tlvf::mac_to_string(parent_mac);
+     } else {
+         std::shared_ptr<Agent::sEthSwitch> parent_switch = get_eth_switch(parent_mac);
+         if (parent_switch) {
+             station->set_eth_switch(parent_switch);
++            station->parent_mac = tlvf::mac_to_string(parent_mac);
+         }
+     }
+     if (al_mac != beerocks::net::network_utils::ZERO_MAC) {
