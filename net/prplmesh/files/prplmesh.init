@@ -16,8 +16,11 @@ mesh_enabled() {
 register_process() {
 	local name="$1"; shift
 	procd_open_instance "$name"
-	procd_set_param command "$@"
+	procd_set_param command /bin/sh "$PRPLMESH_DIR/scripts/prplmesh_wait.sh" "$name" "$@"
 	procd_set_param env PRPLMESH_DIR="$PRPLMESH_DIR"
+	# Re-entering start_service with the same command otherwise keeps the
+	# existing process, which still holds the previous radio/bridge settings.
+	procd_set_param file /etc/config/prplmesh /etc/config/wireless /etc/config/network
 	procd_set_param respawn 3600 5 5
 	procd_set_param stdout 1
 	procd_set_param stderr 1
@@ -39,6 +42,37 @@ register_log_roller() {
 	procd_set_param stdout 1
 	procd_set_param stderr 1
 	procd_close_instance
+}
+
+restore_managed_ap() {
+	local section="$1" interface device config_file
+	config_get interface "$section" hostap_iface
+	case "$interface" in
+	''|*[!a-zA-Z0-9_.-]*) return ;;
+	esac
+	[ -S "/var/run/hostapd/$interface" ] && return
+	[ -e "/sys/class/net/$interface" ] || return
+	config_get device "$section" wireless_device "$section"
+	case "$device" in
+	''|*[!a-zA-Z0-9_.-]*) return ;;
+	esac
+	[ "$(uci -q get "wireless.$device")" = wifi-device ] || return
+
+	# A previous Agent teardown can remove the primary BSS and its control
+	# socket from native hostapd. Regenerate that radio from UCI; merely
+	# reloading the disabled runtime file leaves startup waiting forever.
+	for config_file in /var/run/hostapd-*.conf; do
+		[ -f "$config_file" ] || continue
+		if awk -F= -v interface="$interface" '
+			$1 == "interface" || $1 == "bss" { selected = ($2 == interface) }
+			selected && $1 == "start_disabled" && $2 == "1" { disabled = 1 }
+			END { exit !disabled }
+		' "$config_file"; then
+			logger -t prplmesh "restoring managed AP $interface through netifd"
+			/sbin/wifi reconf "$device" >/dev/null 2>&1
+			return
+		fi
+	done
 }
 
 start_service() {
@@ -82,6 +116,8 @@ start_service() {
 			logger -t prplmesh "mandatory_interfaces not set; agent left stopped"
 			return 1
 		}
+		config_load prplmesh
+		config_foreach restore_managed_ap wifi-device
 	fi
 
 	if [ "$log_roller" = 1 ] && [ ! -e /var/run/prplmesh.boot_roll ]; then
@@ -107,24 +143,7 @@ start_service() {
 	fi
 
 	if [ "$need_agent" = 1 ]; then
-		# hostapd recreates its control sockets on boot and on wireless
-		# reloads, so wait for them under procd supervision instead of
-		# failing the whole start on a transient race.
-		# shellcheck disable=SC2016
-		register_process agent /bin/sh -c '
-			while :; do
-				ok=1
-				IFS=","
-				for interface in $(uci -q get prplmesh.config.mandatory_interfaces); do
-					unset IFS
-					[ -n "$interface" ] || continue
-					[ -S "/var/run/hostapd/$interface" ] || { ok=0; break; }
-				done
-				unset IFS
-				[ "$ok" = 1 ] && break
-				sleep 5
-			done
-			exec "$PRPLMESH_DIR/bin/beerocks_agent"'
+		register_process agent "$PRPLMESH_DIR/bin/beerocks_agent"
 	fi
 }
 

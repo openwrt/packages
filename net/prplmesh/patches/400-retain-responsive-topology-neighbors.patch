@@ -1,0 +1,48 @@
+From b1fb3e547ebc3b48f1c1f41260398240820137f3 Mon Sep 17 00:00:00 2001
+From: Shi Jiayang <shi05275@163.com>
+Date: Tue, 10 Nov 2026 20:26:28 +0800
+Subject: [PATCH] controller: retain and renew responsive topology neighbors
+
+Native bridge and AP/VLAN neighbors can disappear temporarily from an
+Agent's optional IEEE1905 neighbor graph during reload or re-onboarding.
+Do not delete another enrolled Agent that still sends control messages.
+Use the same 65-second inactivity window as BML, and continue to age
+unresponsive Agents instead of refreshing their last contact locally.
+
+When discovering an unknown Agent after a Controller restart, unicast
+the configuration renew to that neighbor. A link-local multicast renew
+can reach only the Controller's local Agent on a native DSA bridge,
+leaving the wired Agent responding to queries but never re-enrolled.
+
+Upstream-Status: Pending
+
+Signed-off-by: Shi Jiayang <shi05275@163.com>
+---
+--- a/controller/src/beerocks/master/tasks/topology_task.cpp
++++ b/controller/src/beerocks/master/tasks/topology_task.cpp
+@@ -497,7 +497,7 @@ bool topology_task::handle_topology_resp
+             }
+ 
+             // Notify the neighbor to send AP-Autoconfiguration WSC message
+-            if (!son_actions::send_ap_config_renew_msg(cmdu_tx, database)) {
++            if (!son_actions::send_ap_config_renew_msg(cmdu_tx, database, reported_neighbor_mac)) {
+                 LOG(WARNING) << "Failed to send AP-AutoConfiguration Renew";
+             }
+         }
+@@ -1003,6 +1003,16 @@ void topology_task::handle_dead_neighbor
+             LOG(ERROR) << "Failed to get neighbor instance";
+             continue;
+         }
++        // A reload or a dynamic AP/VLAN can temporarily omit a live Agent
++        // from this optional graph. Its own control messages are stronger
++        // evidence of liveness than another Agent's missing neighbor entry.
++        const auto inactivity_timeout = std::chrono::seconds(
++            beerocks::ieee1905_1_consts::DISCOVERY_NOTIFICATION_TIMEOUT_SEC + 5);
++        if (database.get_agent_last_contact_time(neighbor->al_mac) + inactivity_timeout >=
++            std::chrono::system_clock::now()) {
++            LOG(DEBUG) << "Retaining recently contacted neighbor " << neighbor->al_mac;
++            continue;
++        }
+         std::shared_ptr<Station> neighbor_bh_sta = database.get_station(neighbor->parent_mac);
+         if (!neighbor_bh_sta) {
+             LOG(ERROR) << "Failed to get neighbor station instance";
