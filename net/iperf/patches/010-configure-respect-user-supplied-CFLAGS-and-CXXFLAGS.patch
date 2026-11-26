@@ -1,0 +1,69 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Florian Eckert <fe@dev.tdt.de>
+Date: Thu, 26 Nov 2026 09:13:18 +0000
+Subject: [PATCH] configure: respect user supplied CFLAGS and CXXFLAGS
+
+Since 2.2.2 configure unconditionally overwrites CFLAGS and CXXFLAGS
+with its own defaults. This drops all flags set by the user or the
+build system, e.g. -fPIC for PIE builds, and linking fails on x86_64:
+
+  relocation R_X86_64_32 against symbol `warn_compat_and_peer_exchange'
+  can not be used when making a PIE object; recompile with -fPIE
+
+Only use the defaults if CFLAGS or CXXFLAGS were not set by the user.
+The flags required by --enable-debug-symbols (-g3 -O0) and by Android
+(-fPIE) are still appended in any case.
+
+Upstream status: not yet submitted.
+
+Signed-off-by: Florian Eckert <fe@dev.tdt.de>
+---
+ configure.ac | 22 ++++++++++++++++------
+ 1 file changed, 16 insertions(+), 6 deletions(-)
+
+--- a/configure.ac
++++ b/configure.ac
+@@ -7,6 +7,11 @@ dnl ====================================
+ AC_PREREQ([2.71])
+ AC_INIT([Iperf],[2.2.2])
+ AC_CONFIG_HEADERS([config.h])
++
++dnl Remember if the user set CFLAGS/CXXFLAGS, before AC_PROG_CC (pulled
++dnl in early by AC_USE_SYSTEM_EXTENSIONS) assigns its own defaults.
++iperf_user_cflags=${CFLAGS+set}
++iperf_user_cxxflags=${CXXFLAGS+set}
+ AM_INIT_AUTOMAKE()
+ 
+ dnl The end user may not have autotools
+@@ -197,20 +202,25 @@ dnl same implicit default arriving *afte
+ dnl line - a real gdb backtrace needs -O0 to actually win, not just be
+ dnl requested.
+ if test x"$debug_symbols" = x"true"; then
+-    default_optflags="-g3 -O0"
++    default_optflags=""
++    required_optflags="-g3 -O0"
+ else
+     default_optflags="-O2"
++    required_optflags=""
+ fi
+ case "$ac_cv_host" in
+ *-android)
+-    CFLAGS="$default_optflags -fPIE"
+-    CXXFLAGS="$default_optflags -fPIE"
++    required_optflags="$required_optflags -fPIE"
+     ;;
+-*)
++esac
++if test x"$iperf_user_cflags" != x"set"; then
+     CFLAGS="$default_optflags"
++fi
++if test x"$iperf_user_cxxflags" != x"set"; then
+     CXXFLAGS="$default_optflags"
+-    ;;
+-esac
++fi
++CFLAGS="$CFLAGS $required_optflags"
++CXXFLAGS="$CXXFLAGS $required_optflags"
+ 
+ dnl Older C++ compilers (e.g. the aarch64-linux-android gcc 4.9
+ dnl toolchain) default to C++98 and refuse <atomic> outright, and
