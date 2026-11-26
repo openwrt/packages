@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=clixon
 PKG_VERSION:=7.8.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/clicon/$(PKG_NAME)/tar.gz/$(PKG_VERSION)?
@@ -30,7 +30,7 @@ define Package/clixon
   URL:=https://www.clicon.org
   TITLE:=YANG-based toolchain
   DEPENDS:=+cligen +libopenssl +libnghttp2 +libcurl \
-	 @(PACKAGE_openssh-server||PACKAGE_openssh-server-pam)
+	 @(PACKAGE_openssh-server||PACKAGE_openssh-server-pam||PACKAGE_openssh-server-gssapi||PACKAGE_openssh-server-pam-gssapi)
   USERID:=clicon=61:clicon=61
 endef
 

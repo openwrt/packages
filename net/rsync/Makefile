@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rsync
 PKG_VERSION:=3.5.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.samba.org/pub/$(PKG_NAME)/src
@@ -78,7 +78,7 @@ define Package/rrsync
   CATEGORY:=Network
   SUBMENU:=File Transfer
   TITLE:=Restricted rsync script
-  DEPENDS:=+rsync python3-light @(PACKAGE_openssh-server||PACKAGE_openssh-server-pam||(PACKAGE_dropbear&&DROPBEAR_SVR_PUBKEY_OPTIONS))
+  DEPENDS:=+rsync python3-light @(PACKAGE_openssh-server||PACKAGE_openssh-server-pam||PACKAGE_openssh-server-gssapi||PACKAGE_openssh-server-pam-gssapi||(PACKAGE_dropbear&&DROPBEAR_SVR_PUBKEY_OPTIONS))
   URL:=https://www.samba.org/ftp/unpacked/rsync/support/rrsync
 endef
 

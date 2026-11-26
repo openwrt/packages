@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pppossh
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 PKG_LICENSE:=GPL-2.0-only
 
@@ -18,7 +18,7 @@ define Package/pppossh
   SECTION:=net
   CATEGORY:=Network
   TITLE:=PPPoSSH (Point-to-Point Protocol over SSH)
-  DEPENDS:=+ppp +resolveip @(DROPBEAR_DBCLIENT||PACKAGE_openssh-client)
+  DEPENDS:=+ppp +resolveip @(DROPBEAR_DBCLIENT||PACKAGE_openssh-client||PACKAGE_openssh-client-gssapi)
   PKGARCH:=all
 endef
 

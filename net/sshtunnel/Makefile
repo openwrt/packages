@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sshtunnel
 PKG_VERSION:=5
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_LICENSE:=GPL-2.0-or-later
 
 PKG_MAINTAINER:=Nuno Goncalves <nunojpg@gmail.com>
@@ -21,7 +21,7 @@ define Package/sshtunnel
   CATEGORY:=Network
   SUBMENU:=SSH
   TITLE:=Manages local and remote openssh ssh(1) tunnels
-  DEPENDS:=@(DROPBEAR_DBCLIENT||PACKAGE_openssh-client)
+  DEPENDS:=@(DROPBEAR_DBCLIENT||PACKAGE_openssh-client||PACKAGE_openssh-client-gssapi)
   PKGARCH:=all
 endef
 
