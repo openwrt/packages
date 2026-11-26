@@ -1,0 +1,76 @@
+From 00f916717774edb6ab6b5843204749686cc40aca Mon Sep 17 00:00:00 2001
+From: Shi Jiayang <shi05275@163.com>
+Date: Tue, 10 Nov 2026 20:26:28 +0800
+Subject: [PATCH] agent: preserve bootstrap backhaul on legacy M2 updates
+
+An early-capability race can produce M2 with the legacy BACKHAUL_STA bit
+and no separate M8. The Agent ignored those bSTA credentials and disabled
+the endpoint carrying its Controller connection, causing repeat disconnects
+immediately after each onboarding attempt. Apply the authenticated M2
+credentials through the existing bSTA path. An AP-only M2 must also retain
+the selected wireless bootstrap endpoint; unselected endpoints still stop.
+
+Upstream-Status: Pending
+
+Signed-off-by: Shi Jiayang <shi05275@163.com>
+---
+--- a/agent/src/beerocks/slave/tasks/ap_autoconfiguration_task.cpp
++++ b/agent/src/beerocks/slave/tasks/ap_autoconfiguration_task.cpp
+@@ -1605,6 +1605,21 @@ void ApAutoConfigurationTask::handle_ap_
+         return;
+     }
+ 
++    // Controllers without bSTA reconfiguration support carry the bSTA
++    // credentials in M2 instead of a separate M8. Honor that legacy form.
++    bool has_bsta_configuration = static_cast<bool>(m8);
++    if (!has_bsta_configuration) {
++        for (const auto &info : bss_infos) {
++            const auto type = info.payload_config.bss_type;
++            if ((type & WSC::eWscVendorExtSubelementBssType::BACKHAUL_STA) &&
++                !(type & WSC::eWscVendorExtSubelementBssType::TEARDOWN)) {
++                bsta_info.payload_config = info.payload_config;
++                has_bsta_configuration = true;
++                break;
++            }
++        }
++    }
++
+     // MLD
+     if (!handle_bsta_mld_configuration_tlv(cmdu_rx, ruid->radio_uid())) {
+         LOG(ERROR) << "handle_bsta_mld_configuration_tlv has failed!";
+@@ -1671,10 +1686,22 @@ void ApAutoConfigurationTask::handle_ap_
+             early_ap_capability = db->controller_info.early_ap_capability;
+         }
+ 
+-        if (m8) {
++        if (has_bsta_configuration) {
+             send_bsta_configuration(radio_iface_mac, bsta_info);
+         } else if (early_ap_capability) {
+-            send_enable_disable_endpoint(radio_iface_mac, false);
++            auto db = AgentDB::get();
++            auto radio = db->radio(radio_iface_name);
++            const bool selected_wireless =
++                db->backhaul.connection_type == AgentDB::sBackhaul::eConnectionType::Wireless &&
++                radio && !radio->back.iface_name.empty() &&
++                radio->back.iface_name == db->backhaul.selected_iface_name;
++            // An AP-only update is not an instruction to disconnect the
++            // very bootstrap link carrying it. Unselected endpoints may stop.
++            if (!selected_wireless) {
++                send_enable_disable_endpoint(radio_iface_mac, false);
++            } else {
++                LOG(INFO) << "Retaining selected wireless backhaul during AP configuration";
++            }
+         }
+ 
+         // Populate mld_id in bss_infos
+@@ -2230,9 +2257,8 @@ bool ApAutoConfigurationTask::handle_wsc
+             continue;
+         }
+ 
+-        // BACKHAUL_STA bit is not expected to be set
+         if (bSTA) {
+-            LOG(WARNING) << "Unexpected backhaul STA bit";
++            LOG(DEBUG) << "M2 also carries legacy backhaul STA credentials";
+         }
+ 
+         if (misconfigured_ssids.find(info.payload_config.ssid) != misconfigured_ssids.end()) {

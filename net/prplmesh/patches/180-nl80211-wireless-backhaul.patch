@@ -1,0 +1,532 @@
+From 1add303f85edbd1f0fb76dbe59b3bb0b02c5056d Mon Sep 17 00:00:00 2001
+From: Shi Jiayang <shi05275@163.com>
+Date: Tue, 10 Nov 2026 20:26:28 +0800
+Subject: [PATCH] nl80211: implement stock wireless backhaul station operations
+
+Use supplicant scans and parse escaped SSIDs, configure SAE/PMF and the
+Multi-AP station role, apply real four-address mode through nl80211, and
+propagate kernel failures. Fix null reply output pointers and stop logging
+network credentials when control requests fail. Keep netifd-owned networks
+while removing temporary HAL-owned networks on reconnect.
+
+Upstream-Status: Pending
+
+Signed-off-by: Shi Jiayang <shi05275@163.com>
+---
+--- /dev/null
++++ b/common/beerocks/bwl/nl80211/sta_wpa_utils.h
+@@ -0,0 +1,139 @@
++/* SPDX-License-Identifier: BSD-2-Clause-Patent */
++#ifndef BWL_STA_WPA_UTILS_H
++#define BWL_STA_WPA_UTILS_H
++
++#include <algorithm>
++#include <cerrno>
++#include <cstdlib>
++#include <sstream>
++#include <string>
++#include <vector>
++
++namespace bwl {
++namespace nl80211 {
++namespace sta_wpa_utils {
++
++inline int hex_digit(char c)
++{
++    if (c >= '0' && c <= '9') return c - '0';
++    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
++    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
++    return -1;
++}
++
++inline bool parse_number(const std::string &s, int min, int max, int &value)
++{
++    if (s.empty()) return false;
++    char *end = nullptr;
++    errno = 0;
++    auto n = std::strtol(s.c_str(), &end, 10);
++    if (errno || end != s.c_str() + s.size() || n < min || n > max) return false;
++    value = static_cast<int>(n);
++    return true;
++}
++
++inline bool valid_bssid(const std::string &s)
++{
++    if (s.size() != 17) return false;
++    for (size_t i = 0; i < s.size(); ++i) {
++        if (i % 3 == 2 ? s[i] != ':' : hex_digit(s[i]) < 0) return false;
++    }
++    // An AP BSSID must be a nonzero unicast address.
++    return !(hex_digit(s[1]) & 1) && s != "00:00:00:00:00:00";
++}
++
++// wpa_supplicant's SCAN_RESULTS uses printf_encode(), including escaped UTF-8 octets.
++inline bool decode_ssid(const std::string &s, std::string &out)
++{
++    out.clear();
++    for (size_t i = 0; i < s.size(); ++i) {
++        auto c = s[i];
++        if (c == '\\') {
++            if (++i == s.size()) return false;
++            switch (s[i]) {
++            case '\\': c = '\\'; break;
++            case '"': c = '"'; break;
++            case 'n': c = '\n'; break;
++            case 'r': c = '\r'; break;
++            case 't': c = '\t'; break;
++            case 'e': c = '\x1b'; break;
++            case 'x':
++                if (i + 2 >= s.size() || hex_digit(s[i + 1]) < 0 || hex_digit(s[i + 2]) < 0)
++                    return false;
++                c = static_cast<char>((hex_digit(s[i + 1]) << 4) | hex_digit(s[i + 2]));
++                i += 2;
++                break;
++            default: return false;
++            }
++        }
++        out.push_back(c);
++    }
++    return out.size() <= 32;
++}
++
++struct scan_result {
++    std::string bssid;
++    int frequency;
++    int rssi;
++    std::string ssid;
++};
++
++inline std::vector<scan_result> parse_scan_results(const std::string &reply,
++                                                  const std::string &ssid)
++{
++    std::vector<scan_result> results;
++    std::istringstream input(reply);
++    std::string line;
++    while (std::getline(input, line)) {
++        // Ignore a potentially truncated last row, never select a partial SSID.
++        if (input.eof() && (reply.empty() || reply.back() != '\n')) break;
++        std::vector<std::string> fields;
++        size_t start = 0;
++        for (int column = 0; column < 4; ++column) {
++            auto end = line.find('\t', start);
++            if (end == std::string::npos) break;
++            fields.push_back(line.substr(start, end - start));
++            start = end + 1;
++        }
++        if (fields.size() != 4) continue;
++        scan_result result{};
++        if (!valid_bssid(fields[0]) ||
++            !parse_number(fields[1], 1, 71000, result.frequency) ||
++            !parse_number(fields[2], -127, 0, result.rssi) ||
++            !decode_ssid(line.substr(start), result.ssid) || result.ssid != ssid) continue;
++        result.bssid = fields[0];
++        results.push_back(result);
++    }
++    return results;
++}
++
++inline std::string hex_string(const std::string &s)
++{
++    static const char digits[] = "0123456789abcdef";
++    std::string out;
++    for (unsigned char c : s) {
++        out.push_back(digits[c >> 4]);
++        out.push_back(digits[c & 15]);
++    }
++    return out;
++}
++
++inline bool valid_passphrase(const std::string &pass, bool sae)
++{
++    if (pass.find_first_of(std::string("\r\n\0", 3)) != std::string::npos) return false;
++    if (pass.size() >= 8 && pass.size() <= 63) return true;
++    return !sae && pass.size() == 64 &&
++           std::all_of(pass.begin(), pass.end(), [](char c) { return hex_digit(c) >= 0; });
++}
++
++// SET_NETWORK's PSK parser strips the outer quotes; inner quotes and backslashes
++// are literal bytes. Do not shell-escape or printf-escape a control socket value.
++inline std::string psk_value(const std::string &pass)
++{
++    return pass.size() == 64 ? pass : '"' + pass + '"';
++}
++
++} // namespace sta_wpa_utils
++} // namespace nl80211
++} // namespace bwl
++#endif
+--- a/common/beerocks/bwl/nl80211/sta_wlan_hal_nl80211.cpp
++++ b/common/beerocks/bwl/nl80211/sta_wlan_hal_nl80211.cpp
+@@ -7,11 +7,15 @@
+  */
+ 
+ #include "sta_wlan_hal_nl80211.h"
++#include "sta_wpa_utils.h"
+ 
+ #include <bcl/beerocks_utils.h>
+ #include <bcl/network/network_utils.h>
+ 
+ #include <easylogging++.h>
++#include <linux/nl80211.h>
++#include <netlink/genl/genl.h>
++#include <netlink/msg.h>
+ 
+ namespace bwl {
+ namespace nl80211 {
+@@ -32,6 +36,10 @@ static std::string nl80211_security_val(
+         return "WPA-PSK";
+     case WiFiSec::WPA_WPA2_PSK:
+         return "WPA-PSK";
++    case WiFiSec::WPA2_WPA3_PSK:
++        return "WPA-PSK SAE";
++    case WiFiSec::WPA3_PSK:
++        return "SAE";
+ 
+     default:
+         return "INVALID";
+@@ -65,7 +73,7 @@ sta_wlan_hal_nl80211::sta_wlan_hal_nl802
+ 
+ sta_wlan_hal_nl80211::~sta_wlan_hal_nl80211() { sta_wlan_hal_nl80211::detach(); }
+ 
+-bool sta_wlan_hal_nl80211::detach() { return true; }
++bool sta_wlan_hal_nl80211::detach() { return base_wlan_hal_nl80211::detach(); }
+ 
+ bool sta_wlan_hal_nl80211::start_wps_pbc()
+ {
+@@ -78,7 +86,13 @@ bool sta_wlan_hal_nl80211::start_wps_pbc
+     return true;
+ }
+ 
+-bool sta_wlan_hal_nl80211::initiate_scan() { return true; }
++bool sta_wlan_hal_nl80211::initiate_scan()
++{
++    char *reply = nullptr;
++    // An already pending scan will still deliver CTRL-EVENT-SCAN-RESULTS.
++    return wpa_ctrl_send_msg("SCAN", &reply) ||
++           (reply && std::string(reply).find("FAIL-BUSY") == 0);
++}
+ 
+ bool sta_wlan_hal_nl80211::scan_bss(const sMacAddr &bssid, uint8_t channel,
+                                     beerocks::eFreqType freq_type)
+@@ -104,7 +118,21 @@ bool sta_wlan_hal_nl80211::scan_bss(cons
+ int sta_wlan_hal_nl80211::get_scan_results(const std::string &ssid, std::vector<sScanResult> &list,
+                                            bool parse_vsie)
+ {
+-    return 0;
++    list.clear();
++    char *reply = nullptr;
++    if (!wpa_ctrl_send_msg("SCAN_RESULTS", &reply) || !reply) return -1;
++
++    for (const auto &entry : sta_wpa_utils::parse_scan_results(reply, ssid)) {
++        auto band = son::wireless_utils::which_freq_type(entry.frequency);
++        if (band == beerocks::eFreqType::FREQ_UNKNOWN) continue;
++        bwl::sScanResult result;
++        result.bssid     = tlvf::mac_from_string(entry.bssid);
++        result.channel   = son::wireless_utils::freq_to_channel(entry.frequency);
++        result.freq_type = band;
++        result.rssi      = static_cast<int8_t>(entry.rssi);
++        if (result.channel) list.push_back(result);
++    }
++    return static_cast<int>(list.size());
+ }
+ 
+ bool sta_wlan_hal_nl80211::connect(const std::string &ssid, const std::string &pass, WiFiSec sec,
+@@ -116,7 +144,9 @@ bool sta_wlan_hal_nl80211::connect(const
+                << ", freq type = " << channel.second << ", Sec = " << nl80211_security_val(sec)
+                << ", mem_only_psk=" << int(mem_only_psk);
+ 
+-    if (ssid.empty() || bssid.empty() || sec == WiFiSec::Invalid) {
++    if (ssid.empty() || ssid.size() > 32 ||
++        (!bssid.empty() && !sta_wpa_utils::valid_bssid(bssid)) ||
++        nl80211_security_val(sec) == "INVALID") {
+         LOG(ERROR) << "Invalid params!";
+         return false;
+     }
+@@ -139,6 +169,7 @@ bool sta_wlan_hal_nl80211::connect(const
+ 
+     // Update network parameters
+     if (!set_network_params(network_id, ssid, bssid, sec, mem_only_psk, pass, hidden_ssid, freq)) {
++        wpa_ctrl_send_msg("REMOVE_NETWORK " + std::to_string(network_id));
+         LOG(ERROR) << "Failed setting network id = " << network_id
+                    << " on interface: " << get_iface_name();
+         return false;
+@@ -146,6 +177,7 @@ bool sta_wlan_hal_nl80211::connect(const
+ 
+     // Enable the network
+     if (!enable_network(network_id)) {
++        wpa_ctrl_send_msg("REMOVE_NETWORK " + std::to_string(network_id));
+         LOG(ERROR) << "Failed enabling network id = " << network_id
+                    << " on interface: " << get_iface_name();
+         return false;
+@@ -175,29 +207,12 @@ bool sta_wlan_hal_nl80211::disconnect()
+         return false;
+     }
+ 
+-    // Return gracefully if network state is not connected
+-    if (!is_connected(connection_status.wpa_state)) {
+-        LOG(DEBUG) << "Active network is not connected";
+-        return true;
+-    }
+-
+-    // Return gracefully if no network is connected
+-    if (m_active_network_id < 0) {
+-        LOG(DEBUG) << "Active network does not exist";
+-        return true;
+-    }
+-
+-    // Connection status id must be the same as the active network id
+-    if (m_active_network_id != connection_status.id) {
+-        LOG(ERROR) << "Network id mismatch: m_active_network_id(" << m_active_network_id << ") != "
+-                   << "connection_status.id(" << connection_status.id << ")";
+-        return false;
+-    }
+-
+-    const std::string cmd = "REMOVE_NETWORK " + std::to_string(m_active_network_id);
+-    if (!wpa_ctrl_send_msg(cmd)) {
+-        LOG(ERROR) << "WPA command '" << cmd << "' failed";
+-    }
++    // Also stop netifd's initial association. Only remove networks added by this
++    // HAL, not the persistent network owned by netifd.
++    if (!wpa_ctrl_send_msg("DISCONNECT")) return false;
++    if (m_owned_network_id >= 0 &&
++        !wpa_ctrl_send_msg("REMOVE_NETWORK " + std::to_string(m_owned_network_id))) return false;
++    m_owned_network_id = -1;
+ 
+     // Clear state
+     m_active_ssid       = "";
+@@ -243,9 +258,34 @@ bool sta_wlan_hal_nl80211::roam(const sM
+     return true;
+ }
+ 
+-bool sta_wlan_hal_nl80211::get_4addr_mode() { return true; }
+-
+-bool sta_wlan_hal_nl80211::set_4addr_mode(bool enable) { return true; }
++bool sta_wlan_hal_nl80211::get_4addr_mode()
++{
++    bool enabled = false;
++    bool found = false;
++    auto success = send_nl80211_msg(NL80211_CMD_GET_INTERFACE, 0,
++        [](struct nl_msg *) { return true; },
++        [&](struct nl_msg *msg) {
++            struct nlattr *attrs[NL80211_ATTR_MAX + 1] = {};
++            auto header = static_cast<struct genlmsghdr *>(nlmsg_data(nlmsg_hdr(msg)));
++            if (nla_parse(attrs, NL80211_ATTR_MAX, genlmsg_attrdata(header, 0),
++                          genlmsg_attrlen(header, 0), nullptr) < 0) return false;
++            if (attrs[NL80211_ATTR_4ADDR]) {
++                found = true;
++                enabled = nla_get_u8(attrs[NL80211_ATTR_4ADDR]) != 0;
++            }
++            return true;
++        });
++    return success && found && enabled;
++}
++
++bool sta_wlan_hal_nl80211::set_4addr_mode(bool enable)
++{
++    if (enable && get_4addr_mode()) return true;
++    return send_nl80211_msg(NL80211_CMD_SET_INTERFACE, 0,
++        [enable](struct nl_msg *msg) {
++            return nla_put_u8(msg, NL80211_ATTR_4ADDR, enable ? 1 : 0) == 0;
++        }, [](struct nl_msg *) { return true; });
++}
+ 
+ bool sta_wlan_hal_nl80211::set_3addr_mcast(bool enable) { return true; }
+ 
+@@ -285,7 +325,10 @@ std::string sta_wlan_hal_nl80211::get_wi
+     return mac;
+ }
+ 
+-bool sta_wlan_hal_nl80211::enable_disable_ep(bool enable) { return true; }
++bool sta_wlan_hal_nl80211::enable_disable_ep(bool enable)
++{
++    return wpa_ctrl_send_msg(enable ? "RECONNECT" : "DISCONNECT");
++}
+ 
+ sMacAddr sta_wlan_hal_nl80211::get_bsta_mld_mac()
+ {
+@@ -407,7 +450,7 @@ bool sta_wlan_hal_nl80211::set_network(i
+ {
+     const std::string cmd = "SET_NETWORK " + std::to_string(network_id) + " " + param + " " + value;
+     if (!wpa_ctrl_send_msg(cmd)) {
+-        LOG(ERROR) << "WPA command '" << cmd << "' failed";
++        LOG(ERROR) << "SET_NETWORK failed for parameter " << param;
+         ;
+         return false;
+     }
+@@ -420,13 +463,13 @@ bool sta_wlan_hal_nl80211::set_network_p
+                                               bool hidden_ssid, int freq)
+ {
+     // Set SSID
+-    if (!set_network(network_id, "ssid", "\"" + ssid + "\"")) {
++    if (!set_network(network_id, "ssid", sta_wpa_utils::hex_string(ssid))) {
+         LOG(ERROR) << "Failed setting ssid on interface " << get_iface_name();
+         return false;
+     }
+ 
+     // Set BSSID
+-    if (!set_network(network_id, "bssid", bssid)) {
++    if (!bssid.empty() && !set_network(network_id, "bssid", bssid)) {
+         LOG(ERROR) << "Failed setting bssid on interface " << get_iface_name();
+         return false;
+     }
+@@ -443,6 +486,15 @@ bool sta_wlan_hal_nl80211::set_network_p
+         return false;
+     }
+ 
++    const bool sae = sec == WiFiSec::WPA3_PSK || sec == WiFiSec::WPA2_WPA3_PSK;
++    if (!set_network(network_id, "multi_ap_backhaul_sta", "1") ||
++        !set_network(network_id, "ieee80211w", sec == WiFiSec::WPA3_PSK ? "2" : sae ? "1" : "0"))
++        return false;
++    if (sae && !wpa_ctrl_send_msg("SET sae_pwe 2")) return false;
++    if (sec != WiFiSec::None && !sta_wpa_utils::valid_passphrase(pass, sae)) return false;
++    if (sae && !set_network(network_id, "sae_password", sta_wpa_utils::hex_string(pass)))
++        return false;
++
+     // Optional: set hidden-ssid
+     if (hidden_ssid && (!set_network(network_id, "scan_ssid", "1"))) {
+         LOG(ERROR) << "Failed setting scan_ssid on interface " << get_iface_name();
+@@ -460,7 +512,9 @@ bool sta_wlan_hal_nl80211::set_network_p
+             LOG(ERROR) << "Failed setting mem_only_psk on interface " << get_iface_name();
+             return false;
+         }
+-    } else if ((!pass.empty()) && (!set_network(network_id, "psk", "\"" + pass + "\""))) {
++    }
++    if (sec != WiFiSec::None && sec != WiFiSec::WPA3_PSK &&
++        !set_network(network_id, "psk", sta_wpa_utils::psk_value(pass))) {
+         LOG(ERROR) << "Failed setting psk on interface " << get_iface_name();
+         return false;
+     }
+@@ -470,13 +524,14 @@ bool sta_wlan_hal_nl80211::set_network_p
+ 
+ bool sta_wlan_hal_nl80211::enable_network(int network_id)
+ {
+-    const std::string cmd = "ENABLE_NETWORK " + std::to_string(network_id);
++    const std::string cmd = "SELECT_NETWORK " + std::to_string(network_id);
+     if (!wpa_ctrl_send_msg(cmd)) {
+         LOG(ERROR) << "WPA command '" << cmd << "' failed";
+         ;
+         return false;
+     }
+ 
++    m_owned_network_id = network_id;
+     return true;
+ }
+ 
+--- a/common/beerocks/bwl/nl80211/sta_wlan_hal_nl80211.h
++++ b/common/beerocks/bwl/nl80211/sta_wlan_hal_nl80211.h
+@@ -12,7 +12,7 @@
+ #include "base_wlan_hal_nl80211.h"
+ #include <bwl/sta_wlan_hal.h>
+ 
+-#define BUFFER_SIZE 4096
++#define BUFFER_SIZE 65536
+ 
+ namespace bwl {
+ namespace nl80211 {
+@@ -86,6 +86,7 @@ protected:
+     }
+ 
+ private:
++    int m_owned_network_id = -1;
+     /**
+      * @brief Connection status information.
+      *
+--- a/common/beerocks/bwl/nl80211/base_wlan_hal_nl80211.cpp
++++ b/common/beerocks/bwl/nl80211/base_wlan_hal_nl80211.cpp
+@@ -578,12 +578,12 @@ bool base_wlan_hal_nl80211::wpa_ctrl_sen
+ 
+     if (!wpa_ctrl_cmd->request(cmd, buffer, m_wpa_ctrl_buffer_size)) {
+         LOG(ERROR) << "can't send wpa_ctrl_request";
+-        LOG(ERROR) << "failed cmd: " << cmd;
++        LOG(ERROR) << "failed command: " << cmd.substr(0, cmd.find(' '));
+         return false;
+     }
+ 
+     if ((!strncmp(buffer, "FAIL", 4)) || (!strncmp(buffer, "UNKNOWN", 7))) {
+-        LOG(DEBUG) << std::endl << "cmd failed: " << cmd;
++        LOG(DEBUG) << "command failed: " << cmd.substr(0, cmd.find(' '));
+         LOG(WARNING) << std::endl << "reply: " << buffer;
+         return false;
+     }
+@@ -627,18 +627,14 @@ bool base_wlan_hal_nl80211::wpa_ctrl_sen
+ bool base_wlan_hal_nl80211::wpa_ctrl_send_msg(const std::string &cmd, char **reply,
+                                               const std::string &ifname)
+ {
+-    if (!reply || !(*reply)) {
++    if (!reply) {
+         LOG(ERROR) << "Invalid reply pointer!";
+         return false;
+     }
+ 
+-    if (!wpa_ctrl_send_msg(cmd, ifname)) {
+-        return false;
+-    }
+-
+     *reply = m_wpa_ctrl_buffer.get();
+-
+-    return true;
++    (*reply)[0] = '\0';
++    return wpa_ctrl_send_msg(cmd, ifname);
+ }
+ 
+ bool base_wlan_hal_nl80211::process_nl_events()
+@@ -1110,10 +1106,12 @@ bool base_wlan_hal_nl80211::send_nl80211
+     //       The file descriptor can be extracted by calling the
+     //       nl_socket_get_fd() function.
+     while (err > 0) {
+-        nl_recvmsgs(m_nl80211_sock.get(), nl_callback.get());
++        auto result = nl_recvmsgs(m_nl80211_sock.get(), nl_callback.get());
++        if (result < 0) return false;
+     }
+ 
+-    return true;
++    if (err < 0) LOG(ERROR) << "nl80211 command " << int(command) << " failed: " << err;
++    return err == 0;
+ }
+ 
+ bool base_wlan_hal_nl80211::get_channel_utilization(uint8_t &channel_utilization)
+--- a/common/beerocks/bwl/nl80211/wpa_ctrl_client.cpp
++++ b/common/beerocks/bwl/nl80211/wpa_ctrl_client.cpp
+@@ -79,7 +79,7 @@ bool wpa_ctrl_socket_cmd::request(const
+     } while (result == -2 && ++try_cnt < WPA_CTRL_READ_RETRY_MAX);
+ 
+     if (result < 0) {
+-        LOG(ERROR) << "can't send wpa_ctrl_request with cmd: " << cmd;
++        LOG(ERROR) << "can't send wpa_ctrl_request: " << cmd.substr(0, cmd.find(' '));
+         return false;
+     }
+ 
+--- a/agent/src/beerocks/slave/backhaul_manager/backhaul_manager.cpp
++++ b/agent/src/beerocks/slave/backhaul_manager/backhaul_manager.cpp
+@@ -2339,19 +2339,27 @@ bool BackhaulManager::backhaul_fsm_wirel
+     }
+     case EState::WIRELESS_CONFIG_4ADDR_MODE: {
+ 
++        bool configured = true;
+         // Disconnect is necessary before changing 4addr mode, to make sure wpa_supplicant is not using the iface
+         if (hidden_ssid) {
+             for (auto &radios_info : m_radios_info) {
+                 if (!radios_info->sta_wlan_hal || radios_info->sta_iface.empty())
+                     continue;
+                 std::string iface = radios_info->sta_iface;
+-                radios_info->sta_wlan_hal->disconnect();
+-                radios_info->sta_wlan_hal->set_4addr_mode(true);
++                if (!radios_info->sta_wlan_hal->disconnect() ||
++                    !radios_info->sta_wlan_hal->set_4addr_mode(true)) {
++                    configured = false;
++                    break;
++                }
+             }
+         } else {
+             auto active_hal = get_wireless_hal();
+-            active_hal->disconnect();
+-            active_hal->set_4addr_mode(true);
++            configured = active_hal && active_hal->disconnect() && active_hal->set_4addr_mode(true);
++        }
++        if (!configured) {
++            LOG(ERROR) << "Failed to configure four-address wireless backhaul";
++            FSM_MOVE_STATE(RESTART);
++            break;
+         }
+         FSM_MOVE_STATE(WIRELESS_ASSOCIATE_4ADDR);
+         skip_select = true;
