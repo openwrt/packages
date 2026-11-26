@@ -1,0 +1,26 @@
+From 0a40ad9e7ef9f449f815a45b601a4dbd5147d9b9 Mon Sep 17 00:00:00 2001
+From: xy2 <kto.3decb@gmail.com>
+Date: Mon, 23 Mar 2026 00:03:33 +0300
+Subject: [PATCH] Add missing f-string in configfs mount cmd
+
+Without the f prefix mount receives the literal string "{config_dir}" instead
+of /sys/kernel/config, so RTSRoot() can never mount configfs by itself.
+
+Backport of the upstream fix by xy2 <kto.3decb@gmail.com>.
+Upstream: https://github.com/open-iscsi/rtslib-fb/commit/0a40ad9e7ef9f449f815a45b601a4dbd5147d9b9
+Signed-off-by: Andreas Hirschauer <andi@linux.com>
+---
+ rtslib/utils.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/rtslib/utils.py
++++ b/rtslib/utils.py
+@@ -430,7 +430,7 @@ def mount_configfs():
+     config_dir = "/sys/kernel/config"
+     config_path = Path(config_dir)
+     if not config_path.is_mount():
+-        cmdline = ["mount -t configfs none {config_dir}"]
++        cmdline = [f"mount -t configfs none {config_dir}"]
+         out = subprocess.run(cmdline, shell=True, capture_output=True, check=False)  # noqa: S602
+         if out.returncode != 0 and not config_path.is_mount():
+             raise RTSLibError("Cannot mount configfs")

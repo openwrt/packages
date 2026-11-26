@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-rtslib-fb
 PKG_VERSION:=2.2.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=rtslib-fb
 PYPI_SOURCE_NAME:=rtslib_fb
@@ -42,6 +42,14 @@ endef
 
 define Package/python3-rtslib-fb/description
  rtslib-fb is a Python object API for configuring the Linux LIO target subsystem.
+endef
+
+# RTSRoot() sets the target dbroot to /etc/target and fails if the directory is
+# missing. An empty directory in the package would be removed by
+# Python3/DeleteEmptyDirs, so create it at install time.
+define Package/python3-rtslib-fb/postinst
+#!/bin/sh
+mkdir -p "$${IPKG_INSTROOT}/etc/target"
 endef
 
 $(eval $(call Py3Package,python3-rtslib-fb))

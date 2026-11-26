@@ -61,5 +61,35 @@ except RTSLibError as e:
 # RTSLibNotInCFSError is a subclass of RTSLibError
 assert issubclass(RTSLibNotInCFSError, RTSLibError)
 
+# Regression test: mount_configfs() must expand the mount point in the command
+# it runs. Version 2.2.4 passed a literal "{config_dir}" to mount because of a
+# missing f-string, so RTSRoot() could never mount configfs on its own.
+import subprocess
+import rtslib_fb.utils as rtsutils
+
+calls = []
+
+def fake_run(cmdline, **kwargs):
+    calls.append(cmdline)
+    return subprocess.CompletedProcess(cmdline, 0, b"", b"")
+
+orig_run = rtsutils.subprocess.run
+orig_is_mount = rtsutils.Path.is_mount
+rtsutils.subprocess.run = fake_run
+rtsutils.Path.is_mount = lambda self: False
+try:
+    rtsutils.mount_configfs()
+finally:
+    rtsutils.subprocess.run = orig_run
+    rtsutils.Path.is_mount = orig_is_mount
+
+assert calls, "mount_configfs() did not try to mount configfs"
+cmd = calls[0] if isinstance(calls[0], str) else " ".join(calls[0])
+assert "{" not in cmd and "/sys/kernel/config" in cmd, f"Bad mount command: {cmd!r}"
+
+# RTSRoot() needs /etc/target as its dbroot; the package creates it.
+import os
+assert os.path.isdir("/etc/target"), "/etc/target is missing"
+
 sys.exit(0)
 EOF
