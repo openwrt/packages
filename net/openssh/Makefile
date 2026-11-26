@@ -43,7 +43,7 @@ define Package/openssh-moduli
 endef
 
 define Package/openssh-moduli/description
-OpenSSH server moduli file.
+  OpenSSH server moduli file.
 endef
 
 define Package/openssh-client
@@ -56,7 +56,7 @@ define Package/openssh-client
 endef
 
 define Package/openssh-client/description
-OpenSSH client.
+  OpenSSH client.
 endef
 
 define Package/openssh-client/conffiles
@@ -70,7 +70,7 @@ define Package/openssh-client-utils
 endef
 
 define Package/openssh-client-utils/description
-OpenSSH client utilities.
+  OpenSSH client utilities.
 endef
 
 define Package/openssh-keygen
@@ -81,7 +81,7 @@ define Package/openssh-keygen
 endef
 
 define Package/openssh-keygen/description
-OpenSSH keygen.
+  OpenSSH keygen.
 endef
 
 define Package/openssh-server
@@ -93,7 +93,7 @@ define Package/openssh-server
 endef
 
 define Package/openssh-server/description
-OpenSSH server.
+  OpenSSH server.
 endef
 
 define Package/openssh-server/conffiles
@@ -118,7 +118,7 @@ define Package/openssh-server-pam
 endef
 
 define Package/openssh-server-pam/description
-OpenSSH server (with PAM support).
+  OpenSSH server (with PAM support).
 endef
 
 define Package/openssh-server-pam/conffiles
@@ -133,7 +133,7 @@ define Package/openssh-sftp-client
 endef
 
 define Package/openssh-sftp-client/description
-OpenSSH SFTP client.
+  OpenSSH SFTP client.
 endef
 
 define Package/openssh-sftp-server
@@ -142,7 +142,7 @@ define Package/openssh-sftp-server
 endef
 
 define Package/openssh-sftp-server/description
-OpenSSH SFTP server.
+  OpenSSH SFTP server.
 endef
 
 define Package/openssh-sftp-avahi-service
@@ -152,8 +152,8 @@ define Package/openssh-sftp-avahi-service
 endef
 
 define Package/openssh-sftp-avahi-service/description
- This package contains the service definition for announcing
- SFTP support via mDNS/DNS-SD.
+  This package contains the service definition for announcing
+  SFTP support via mDNS/DNS-SD.
 endef
 
 define Package/openssh-sftp-avahi-service/conffiles
@@ -167,9 +167,9 @@ define Package/openssh-sk-helper
 endef
 
 define Package/openssh-sk-helper/description
-OpenSSH helper that can be used by openssh-client, openssh-sftp-client,
-and openssh-keygen to access `ecdsa_sk` and `ed25519_sk keys
-provided by a FIDO U2F or FIDO2 hardware token over USB.
+  OpenSSH helper that can be used by openssh-client, openssh-sftp-client,
+  and openssh-keygen to access `ecdsa_sk` and `ed25519_sk keys
+  provided by a FIDO U2F or FIDO2 hardware token over USB.
 endef
 
 CONFIGURE_ARGS += \
