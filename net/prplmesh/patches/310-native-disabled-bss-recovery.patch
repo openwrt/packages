@@ -1,0 +1,94 @@
+From 323ae501e16bbc874572cd0d01ef70193d3054b9 Mon Sep 17 00:00:00 2001
+From: Shi Jiayang <shi05275@163.com>
+Date: Tue, 10 Nov 2026 20:26:28 +0800
+Subject: [PATCH] nl80211: apply native credentials to disabled BSSes
+
+A backhaul recovery can tear down the primary AP. Waiting for that AP
+to be enabled before applying M2 prevents the configuration that would
+restore it, blocking the AP manager for 100 seconds. Native ubus reload
+can restore a disabled BSS directly. Apply M2 without this precondition,
+propagate write failures, and check actual hostapd readiness before ACK.
+Avoid the legacy pre-disable around a native channel configuration.
+
+Upstream-Status: Pending
+
+Signed-off-by: Shi Jiayang <shi05275@163.com>
+---
+--- a/agent/src/beerocks/fronthaul_manager/CMakeLists.txt
++++ b/agent/src/beerocks/fronthaul_manager/CMakeLists.txt
+@@ -37,6 +37,9 @@ if(${_feature_pre_association_steering_i
+ endif()
+ 
+ add_executable(${PROJECT_NAME} ${fronthaul_manager_sources})
++if (PRPLMESH_STOCK_OPENWRT_UCI)
++    target_compile_definitions(${PROJECT_NAME} PRIVATE BWL_OPENWRT_NATIVE_HOSTAPD)
++endif()
+ set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "-Wl,-z,defs")
+ target_link_libraries(${PROJECT_NAME} bcl btlvf rt dl tlvf elpp bwl mapfcommon ${LIBS})
+ 
+--- a/agent/src/beerocks/fronthaul_manager/ap_manager/ap_manager.cpp
++++ b/agent/src/beerocks/fronthaul_manager/ap_manager/ap_manager.cpp
+@@ -1276,7 +1276,7 @@ void ApManager::handle_cmdu(ieee1905_1::
+ 
+         response->success() = true;
+ 
+-#ifndef USE_PRPLMESH_WHM
++#if !defined(USE_PRPLMESH_WHM) && !defined(BWL_OPENWRT_NATIVE_HOSTAPD)
+         // Disable the radio interface to make hostapd to consider the new configuration.
+         if (!ap_wlan_hal->disable()) {
+             LOG(DEBUG) << "ap disable() failed!, the interface might be already disabled or down";
+@@ -2030,6 +2030,11 @@ void ApManager::handle_cmdu(ieee1905_1::
+             break;
+         }
+ 
++#ifdef BWL_OPENWRT_NATIVE_HOSTAPD
++        // Native hostapd can recreate a disabled primary BSS from its file.
++        // Waiting for that same BSS before writing M2 is a recovery deadlock.
++        const bool perform_update = !radio_state_lock;
++#else
+         // Before updating vap credentials we need to make sure hostapd is enabled.
+         // Entering blocking state until radio is enabled again.
+         auto timeout = std::chrono::steady_clock::now() +
+@@ -2048,10 +2053,15 @@ void ApManager::handle_cmdu(ieee1905_1::
+             UTILS_SLEEP_MSEC(500);
+         }
+ 
++#endif
++
+         // Enabling VAPs and MLDs takes time to apply to the driver
+         if (perform_update && !bss_info_conf_list.empty()) {
+-            ap_wlan_hal->update_vap_credentials(bss_info_conf_list, backhaul_wps_ssid,
+-                                                backhaul_wps_passphrase, bridge_name);
++            if (!ap_wlan_hal->update_vap_credentials(bss_info_conf_list, backhaul_wps_ssid,
++                                                    backhaul_wps_passphrase, bridge_name)) {
++                LOG(ERROR) << "Failed applying VAP credentials";
++                return;
++            }
+ 
+             auto vap_timeout = std::chrono::steady_clock::now() + wait_for_vaps_enable_timeout_sec;
+             bool all_vaps_enabled = false, all_mld_updated = false;
+--- a/common/beerocks/bwl/nl80211/base_wlan_hal_nl80211.cpp
++++ b/common/beerocks/bwl/nl80211/base_wlan_hal_nl80211.cpp
+@@ -804,6 +804,22 @@ bool base_wlan_hal_nl80211::refresh_radi
+ bool base_wlan_hal_nl80211::get_vap_status(
+     const std::list<son::wireless_utils::sBssInfoConf> &bss_info_conf_list)
+ {
++#ifdef BWL_OPENWRT_NATIVE_HOSTAPD
++    for (const auto &bss : bss_info_conf_list) {
++        if (bss.teardown) {
++            continue;
++        }
++        auto vap_id = get_vap_id_with_mac(tlvf::mac_to_string(bss.bssid));
++        if (vap_id < 0) {
++            return false;
++        }
++        parsed_obj_map_t reply;
++        const auto &iface = m_radio_info.available_vaps.at(vap_id).bss;
++        if (!wpa_ctrl_send_msg("STATUS", reply, iface) || reply["state"] != "ENABLED") {
++            return false;
++        }
++    }
++#endif
+     return true;
+ }
+ bool base_wlan_hal_nl80211::update_mld_status(

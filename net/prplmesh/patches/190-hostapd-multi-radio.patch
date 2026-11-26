@@ -1,0 +1,64 @@
+From 2bb9ed1c0262ba34ec1099b49b01e3092635c5b6 Mon Sep 17 00:00:00 2001
+From: Shi Jiayang <shi05275@163.com>
+Date: Tue, 10 Nov 2026 20:26:28 +0800
+Subject: [PATCH] nl80211: support separate Mesh BSSs on multi-radio Wi-Fi 7 devices
+
+Discover per-radio files such as hostapd-phy0.0.conf instead of assuming
+one wiphy per band. Preserve the existing configuration and only update
+the selected VAP. Avoid printing Wi-Fi credentials in autoconfiguration logs.
+Keep the global control socket available when limiting the managed BSS list.
+
+Upstream-Status: Pending
+
+Signed-off-by: Shi Jiayang <shi05275@163.com>
+---
+--- a/common/beerocks/bwl/nl80211/ap_wlan_hal_nl80211.cpp
++++ b/common/beerocks/bwl/nl80211/ap_wlan_hal_nl80211.cpp
+@@ -16,6 +16,7 @@
+ #include <cmath>
+ #include <easylogging++.h>
+ #include <hostapd/configuration.h>
++#include <glob.h>
+ #include <linux/nl80211.h>
+ #include <netlink/genl/ctrl.h>
+ #include <netlink/genl/family.h>
+@@ -130,6 +131,17 @@ static prplmesh::hostapd::Configuration
+         "/nvram/hostapd3.conf",       "/nvram/hostapd4.conf",       "/nvram/hostapd5.conf",
+         "/nvram/hostapd6.conf",       "/nvram/hostapd7.conf"};
+ 
++    // A multi-radio wiphy uses one hostapd configuration per radio, e.g.
++    // hostapd-phy0.0.conf and hostapd-phy0.1.conf. Keep the traditional paths
++    // for older netifd implementations and discover the stock OpenWrt names.
++    glob_t configs{};
++    if (glob("/var/run/hostapd-phy*.conf", 0, nullptr, &configs) == 0) {
++        for (size_t i = 0; i < configs.gl_pathc; ++i) {
++            hostapd_cfg_names.emplace_back(configs.gl_pathv[i]);
++        }
++    }
++    globfree(&configs);
++
+     for (const auto &try_fname : hostapd_cfg_names) {
+         LOG(DEBUG) << "Trying to load " << try_fname << "...";
+ 
+@@ -974,7 +986,7 @@ bool ap_wlan_hal_nl80211::update_vap_cre
+         }
+ 
+         LOG(DEBUG) << "Autoconfiguration for ssid: " << bss_it.ssid << " auth_type: " << auth_type
+-                   << " encr_type: " << enc_type << " network_key: " << bss_it.network_key
++                   << " encr_type: " << enc_type
+                    << " fronthaul: " << beerocks::string_utils::bool_str(bss_it.fronthaul)
+                    << " backhaul: " << beerocks::string_utils::bool_str(bss_it.backhaul);
+ 
+--- a/common/beerocks/bwl/nl80211/base_wlan_hal_nl80211.cpp
++++ b/common/beerocks/bwl/nl80211/base_wlan_hal_nl80211.cpp
+@@ -1139,7 +1139,9 @@ bool base_wlan_hal_nl80211::register_wpa
+     case HALType::Monitor: {
+ 
+         // If configured, allow only BSSs to be monitored.
+-        if ((!m_hal_conf.monitored_BSSs.empty()) &&
++        // The global control endpoint is not a BSS and is required to attach.
++        if (interface != global_iface &&
++            (!m_hal_conf.monitored_BSSs.empty()) &&
+             (m_hal_conf.monitored_BSSs.find(interface) == m_hal_conf.monitored_BSSs.end())) {
+             return false;
+         }
