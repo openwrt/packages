@@ -1,0 +1,36 @@
+#!/bin/sh /etc/rc.common
+# SPDX-License-Identifier: GPL-2.0-or-later
+
+START=95
+USE_PROCD=1
+
+PROG=/usr/sbin/openwrt-snmp-agent
+
+AGENTX_SOCKET=/var/run/agentx.sock
+
+agentx_socket() {
+	local sock
+
+	config_get sock "$1" agentxsocket
+	[ -n "$sock" ] && AGENTX_SOCKET="$sock"
+}
+
+start_service() {
+	if ! /etc/init.d/snmpd enabled; then
+		logger -t openwrt-snmp-agent -p daemon.notice "snmpd is not enabled, not starting"
+		return 0
+	fi
+
+	config_load snmpd
+	config_foreach agentx_socket agentx
+
+	procd_open_instance
+	procd_set_param command "$PROG" -f -x "$AGENTX_SOCKET"
+	procd_set_param respawn
+	procd_set_param stderr 1
+	procd_close_instance
+}
+
+service_triggers() {
+	procd_add_reload_trigger "snmpd"
+}
