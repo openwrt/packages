@@ -64,6 +64,7 @@ define Package/libwebsockets-openssl
   TITLE += (OpenSSL)
   DEPENDS += +libopenssl
   VARIANT:=openssl
+  DEFAULT_VARIANT:=1
   CONFLICTS:=libwebsockets-full
 endef
 
@@ -72,6 +73,7 @@ define Package/libwebsockets-mbedtls
   TITLE += (mbedTLS)
   DEPENDS += +libmbedtls
   VARIANT:=mbedtls
+  DEFAULT_VARIANT:=1
   PROVIDES:=libwebsockets
   CONFLICTS:=libwebsockets-openssl libwebsockets-full
 endef
