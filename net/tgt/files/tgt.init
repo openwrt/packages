@@ -141,13 +141,28 @@ bind_account_to_target() {
 validate_target_section() {
 	uci_load_validate tgt target "$1" "$2" \
 		'name:string:iqn.2012-06.org.openwrt' \
-		'allow_address:list(string):ALL' \
-		'allow_name:list(string)'
+		'allow_address:or(string, list(string))' \
+		'allow_name:or(string, list(string))'
+}
+
+bind_name() {
+	$_tgtadm --op bind --tid "$section" --initiator-name "$1" || {
+		$logger "Failed to set allow $1 to connect to target $section"
+		return 1
+	}
+}
+
+bind_address() {
+	$_tgtadm --op bind --tid "$section" --initiator-address "$1" || {
+		$logger "Failed to set allow $1 to connect to target $section"
+		return 1
+	}
 }
 
 handle_target() {
 	local tgtid=$1
 	local _tgtadm="$tgtadm --mode target"
+	local is_list_name is_list_addr
 
 	[ "$tgtid" -ge 0 ] || return 1
 	[ "$2" = 0 ] || {
@@ -158,19 +173,22 @@ handle_target() {
 		$logger "Failed to create target $tgtid"
 		return 1
 	}
-	local i
-	for i in $allow_address; do
-		$_tgtadm --op bind --tid "$tgtid" --initiator-address "$i" || {
-			$logger "Failed to set allow $i to connect to target $tgtid"
-			return 1
-		}
-	done
-	for i in $allow_name; do
-		$_tgtadm --op bind --tid "$tgtid" --initiator-name "$i" || {
-			$logger "Failed to set allow $i to connect to target $tgtid"
-			return 1
-		}
-	done
+	config_get is_list_name "$tgtid" allow_name_LENGTH
+	config_get is_list_addr "$tgtid" allow_address_LENGTH
+	if [ -z "$is_list_name$is_list_addr$allow_name$allow_address" ]; then
+		bind_address ALL || return 1
+	else
+		if [ -z "$is_list_name" ] && [ "$allow_name" ]; then
+			bind_name "$allow_name"
+		else
+			config_list_foreach "$tgtid" allow_name bind_name
+		fi
+		if [ -z "$is_list_addr" ] && [ "$allow_address" ]; then
+			bind_address "$allow_address"
+		else
+			config_list_foreach "$tgtid" allow_address bind_address
+		fi
+	fi
 	config_foreach validate_lun_section lun handle_lun || return 1
 	config_foreach validate_account_section account bind_account_to_target || return 1
 }
