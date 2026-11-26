@@ -1,0 +1,61 @@
+From 4b2447a462a463c0cf354cfa510cbff7b2588ca2 Mon Sep 17 00:00:00 2001
+From: Shi Jiayang <shi05275@163.com>
+Date: Tue, 10 Nov 2026 20:26:28 +0800
+Subject: [PATCH] backhaul: decode combined WSC authentication modes
+
+Mixed WPA2/SAE M8 credentials contain both authentication bits. The old
+switch selected only a single-bit case, making the nested mixed-mode
+checks unreachable and rejecting valid controller credentials. Match the
+combined values explicitly while retaining rejection of unknown modes.
+
+Upstream-Status: Pending
+
+Signed-off-by: Shi Jiayang <shi05275@163.com>
+---
+--- a/agent/src/beerocks/slave/backhaul_manager/backhaul_manager.cpp
++++ b/agent/src/beerocks/slave/backhaul_manager/backhaul_manager.cpp
+@@ -2512,33 +2512,29 @@ bool BackhaulManager::backhaul_fsm_wirel
+ 
+ bwl::WiFiSec BackhaulManager::wsc_to_bwl_authentication(WSC::eWscAuth authtype)
+ {
+-    switch (authtype) {
++    // Authentication is a bitmask. Combined modes must be matched before
++    // interpreting individual values; a switch on WPA2 alone cannot see SAE.
++    switch (static_cast<uint16_t>(authtype)) {
++    case WSC::eWscAuth(WSC::eWscAuth::WSC_AUTH_WPAPSK | WSC::eWscAuth::WSC_AUTH_WPA2PSK):
++        return bwl::WiFiSec::WPA_WPA2_PSK;
++    case WSC::eWscAuth(WSC::eWscAuth::WSC_AUTH_WPA2PSK | WSC::eWscAuth::WSC_AUTH_SAE):
++        return bwl::WiFiSec::WPA2_WPA3_PSK;
++    case WSC::eWscAuth(WSC::eWscAuth::WSC_AUTH_WPA | WSC::eWscAuth::WSC_AUTH_WPA2):
++        return bwl::WiFiSec::WPA_WPA2_ENTERPRISE;
++    case WSC::eWscAuth(WSC::eWscAuth::WSC_AUTH_WPA2 | WSC::eWscAuth::WSC_AUTH_SAE):
++        return bwl::WiFiSec::OWE;
+     case WSC::eWscAuth::WSC_AUTH_WPAPSK:
+-        if (authtype & WSC::eWscAuth::WSC_AUTH_WPA2PSK) {
+-            return bwl::WiFiSec::WPA_WPA2_PSK;
+-        }
+         return bwl::WiFiSec::WPA_PSK;
+     case WSC::eWscAuth::WSC_AUTH_WPA2PSK:
+-        if (authtype & WSC::eWscAuth::WSC_AUTH_SAE) {
+-            return bwl::WiFiSec::WPA2_WPA3_PSK;
+-        }
+         return bwl::WiFiSec::WPA2_PSK;
+     case WSC::eWscAuth::WSC_AUTH_WPA:
+-        if (authtype & WSC::eWscAuth::WSC_AUTH_WPA2) {
+-            return bwl::WiFiSec::WPA_WPA2_ENTERPRISE;
+-        }
+         return bwl::WiFiSec::WPA_ENTERPRISE;
+     case WSC::eWscAuth::WSC_AUTH_WPA2:
+-        if (authtype & WSC::eWscAuth::WSC_AUTH_SAE) {
+-            return bwl::WiFiSec::OWE;
+-        }
+         return bwl::WiFiSec::WPA2_ENTERPRISE;
+     case WSC::eWscAuth::WSC_AUTH_SAE:
+         return bwl::WiFiSec::WPA3_PSK;
+     case WSC::eWscAuth::WSC_AUTH_OPEN:
+         return bwl::WiFiSec::None;
+-    case WSC::eWscAuth::WSC_AUTH_INVALID:
+-        return bwl::WiFiSec::Invalid;
+     default:
+         return bwl::WiFiSec::Invalid;
+     }

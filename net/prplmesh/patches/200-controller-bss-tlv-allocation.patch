@@ -1,0 +1,39 @@
+From 69891b0206b6d26f2ceda8bb3246a651d9fb5777 Mon Sep 17 00:00:00 2001
+From: Shi Jiayang <shi05275@163.com>
+Date: Tue, 10 Nov 2026 20:26:28 +0800
+Subject: [PATCH] controller: skip unset BSS advertisement before allocating TLV
+
+Creating a nested TLV and then skipping it leaves an uncommitted child.
+The following profile cannot be allocated, which breaks the M2 response
+when the stock UCI backend supplies multiple profiles with unset hidden_ssid.
+
+Upstream-Status: Pending
+
+Signed-off-by: Shi Jiayang <shi05275@163.com>
+---
+--- a/controller/src/beerocks/master/controller.cpp
++++ b/controller/src/beerocks/master/controller.cpp
+@@ -1338,17 +1338,18 @@ static bool add_bss_advanced_configurati
+     LOG(DEBUG) << "Adding BSS Advanced configuration tlv for radio " << ruid;
+     bss_advanced_configuration_radio->ruid() = ruid;
+     for (auto &bss_info_conf : bss_info_confs) {
+-        auto bss_advanced_configuration_bss = bss_advanced_configuration_radio->create_bsss();
+-        if (!bss_advanced_configuration_bss) {
+-            LOG(ERROR) << "Failed creating bss_advanced_configuration_bss";
+-            return false;
+-        }
+         if (bss_info_conf.hidden_ssid == WSC::eWscVendorExtHiddenSsid::UNSET) {
+             LOG(DEBUG) << "hidden_ssid is set to UNSET, skipping BSS, BSSID="
+                        << bss_info_conf.bssid;
+             continue;
+         }
+ 
++        auto bss_advanced_configuration_bss = bss_advanced_configuration_radio->create_bsss();
++        if (!bss_advanced_configuration_bss) {
++            LOG(ERROR) << "Failed creating bss_advanced_configuration_bss";
++            return false;
++        }
++
+         bss_advanced_configuration_bss->bssid()     = beerocks::net::network_utils::ZERO_MAC;
+         bss_advanced_configuration_bss->bss_index() = bss_info_conf.bss_index;
+         bss_advanced_configuration_bss->bss_infos().ssid_advertisement =
