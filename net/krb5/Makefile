@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=krb5
 PKG_VERSION:=1.22.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -45,10 +45,19 @@ define Package/krb5-libs
 	URL:=https://web.mit.edu/kerberos/
 endef
 
+define Package/krb5-libs/conffiles
+/etc/krb5.conf
+/etc/krb5.keytab
+endef
+
 define Package/krb5-server
 	$(call Package/krb5/Default)
 	DEPENDS:=+krb5-libs +libpthread
 	TITLE:=Kerberos 5 Server
+endef
+
+define Package/krb5-server/conffiles
+/etc/krb5kdc/
 endef
 
 define Package/krb5-server-extras
