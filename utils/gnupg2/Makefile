@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnupg
 PKG_VERSION:=2.5.21
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://gnupg.org/ftp/gcrypt/gnupg
@@ -59,7 +59,7 @@ endef
 
 define Package/gnupg2-utils
   $(call Package/gnupg2/Default)
-  DEPENDS:=gnupg2 +libcurl
+  DEPENDS:=+gnupg2 +libcurl
   TITLE:=Key management utilities for GnuPG (version 2)
   PROVIDES:=gnupg-utils
 endef
