@@ -113,6 +113,19 @@ a version bump has to fix.
 - **Add `test.sh` for custom tests.** A `test.sh` script can be added for custom runtime tests. Note that because generic tests are forced by default in CI, `test-version.sh` is still required if the executables fail the generic version check.
 - **Avoid quiet mode in grep.** Do not use `grep -q` (or `--quiet`) in `test.sh` or `test-version.sh` scripts when checking output or version strings. Leaving the matched lines in the output ensures that the printed version or status is logged and visible in CI/CD build logs.
 
+  ```formality-rule
+  files: **/test.sh
+  files: **/test-version.sh
+  added: grep -q
+  added: grep -aq
+  added: grep -Eq
+  added: grep -Fq
+  added: grep -iq
+  added: grep -sq
+  added: grep --quiet
+  message: Drop `-q` from `grep` so that the matched line shows up in the CI log.
+  ```
+
 ## Init Scripts
 
 - **Use procd.** Service/init scripts (installed to `/etc/init.d/`) must use the procd process management system. They must include `USE_PROCD=1` and define `start_service()`.
