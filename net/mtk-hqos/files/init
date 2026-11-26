@@ -1,0 +1,20 @@
+#!/bin/sh /etc/rc.common
+USE_PROCD=1
+START=96
+STOP=09
+
+start_service() {
+	flock -w 15 /var/lock/mtk-hqos.lock /usr/libexec/mtk-hqos apply
+}
+
+reload_service() {
+	start_service
+}
+
+stop_service() {
+	flock -w 15 /var/lock/mtk-hqos.lock /usr/libexec/mtk-hqos stop
+}
+
+service_triggers() {
+	procd_add_reload_trigger mtk_hqos
+}

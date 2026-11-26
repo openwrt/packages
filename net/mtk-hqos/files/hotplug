@@ -1,0 +1,4 @@
+#!/bin/sh
+case "$ACTION" in
+	ifup|ifupdate) /etc/init.d/mtk-hqos reload ;;
+esac
