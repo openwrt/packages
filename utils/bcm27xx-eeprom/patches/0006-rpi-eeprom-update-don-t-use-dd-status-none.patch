@@ -1,0 +1,31 @@
+From 0d9b69c3c0b971f059551a8bfd27470537b5dc8d Mon Sep 17 00:00:00 2001
+From: Joshua Covington <joshuacov@gmail.com>
+Date: Sun, 15 Nov 2026 20:38:21 +0000
+Subject: [PATCH] rpi-eeprom-update: don't use dd status=none
+
+OpenWrt's BusyBox is built without FEATURE_DD_STATUS by default,
+so dd does not understand status=none. It prints its usage text
+and returns no data, so isABCapableImage() always fails. On a
+Pi 5, rpi-eeprom-update then disables the immediate A/B update
+and falls back to staging pieeprom.upd and recovery.bin for the
+next reboot.
+
+Send dd's stderr to /dev/null instead of using status=none.
+This works with both BusyBox and GNU dd.
+
+Signed-off-by: Joshua Covington <joshuacov@gmail.com>
+---
+ rpi-eeprom-update | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/rpi-eeprom-update
++++ b/rpi-eeprom-update
+@@ -230,7 +230,7 @@ isABCapableImage() {
+    offset=0x10008
+    count=8
+    bootsys="bootsys"
+-   filename=$(dd if="${TMP_EEPROM_IMAGE}" bs=1 skip=$((offset)) count=$((count)) status=none | strings)
++   filename=$(dd if="${TMP_EEPROM_IMAGE}" bs=1 skip=$((offset)) count=$((count)) 2>/dev/null | strings)
+    if [ "${filename}" = "${bootsys}" ]; then
+       return 0
+    fi

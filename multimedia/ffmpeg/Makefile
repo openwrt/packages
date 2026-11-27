@@ -24,12 +24,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
-PKG_VERSION:=9.0.1
-PKG_RELEASE:=3
+PKG_VERSION:=9.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ffmpeg.org/releases/
-PKG_HASH:=cf38e0e28c7e5605942c4a77755349b0145804a397af37eb1fb4c77cb237f635
+PKG_HASH:=1a4d394ae63d190a526cd052eb4415c156b5c5e2df37efab41a7de0b8fde2433
 PKG_MAINTAINER:=Mirko Vogt <mirko-openwrt@nanl.de>, \
 		Daniel Golle <daniel@makrotopia.org>
 
@@ -407,7 +407,8 @@ FFMPEG_CONFIGURE:= \
 	--disable-libdrm \
 	--disable-v4l2-m2m \
 	--disable-v4l2-request \
-	--disable-libudev
+	--disable-libudev \
+	--disable-libcurl
 # Everything configure would autodetect on a Linux host is switched off
 # explicitly above. --disable-autodetect already implies this; the explicit
 # list documents the intent and is independent of changes to configure's

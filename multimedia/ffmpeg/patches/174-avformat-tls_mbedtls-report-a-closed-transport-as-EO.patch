@@ -1,0 +1,34 @@
+From 09574ab31c8c08a3a079f0f59e89d30d6e48351c Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Thu, 24 Sep 2026 14:47:47 +0100
+Subject: [PATCH] avformat/tls_mbedtls: report a closed transport as EOF
+
+mbedtls_ssl_read() returns 0 when the read end of the transport was
+closed without a CloseNotify, which is a plain end of stream and is
+documented as distinct from MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY. It is
+not > 0, so it reaches handle_tls_error(), which has no case for it and
+falls through to the default, logging "mbedtls_ssl_read returned -0x0"
+and returning AVERROR(EIO).
+
+http_read_stream() then sees an I/O error rather than an end of stream,
+so neither reconnect nor reconnect_at_eof applies and an endless stream
+whose server drops the connection ends instead of reconnecting. Return
+AVERROR_EOF for that case, as the CloseNotify case already does.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ libavformat/tls_mbedtls.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+--- a/libavformat/tls_mbedtls.c
++++ b/libavformat/tls_mbedtls.c
+@@ -801,6 +801,9 @@ static int tls_read(URLContext *h, uint8
+         return ret;
+     }
+ 
++    if (!ret)
++        return AVERROR_EOF;
++
+     return handle_tls_error(h, "mbedtls_ssl_read", ret);
+ }
+ 

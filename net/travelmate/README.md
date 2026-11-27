@@ -52,6 +52,7 @@ For a typical setup these few steps are enough to get travelmate up and running 
 * Captive portal detection with a 'heartbeat' function to keep the uplink connection up and running
 * Captive portal hook for auto-login configured via uci/LuCI, using an external ucode script (see the examples below)
 * VPN hook handles VPN (re)connections automatically, for 'wireguard', 'openvpn' and every other vpn protocol netifd brings up, e.g. 'openconnect' or 'vpnc'
+* Uplink services: take down local services per uplink that get in the way of a captive portal login, e.g. encrypted DNS or a mesh VPN, and bring them up again afterwards
 * E-mail hook via 'msmtp' sends notification e-mails after every successful uplink connect
 * Proactively scan and switch to a higher priority uplink, replacing an existing connection
 * Check router subnet vs. uplink subnet, to show conflicts with the router LAN network
@@ -191,6 +192,7 @@ A stopped service does not report a state at all, it truncates the runtime file 
 | trm_mailprofile    | trm_notify                         | profile used by 'msmtp' for travelmate notification E-Mails                                           |
 | trm_vpn            | 0, disabled                        | VPN connections will be managed by travelmate                                                         |
 | trm_vpnifacelist   | -, not set                         | limit vpn processing to these interfaces, default: all wireguard/openvpn and all referenced vpn ones  |
+| trm_uplinkservices | -, not set                         | init services the uplinks may take down for a captive portal login, '<service>' or '<service>:<down>:<up>' |
 | trm_stdvpniface    | -, not set                         | standard vpn interface which will be automatically added to new STA profiles                          |
 
 **Please note:** 'trm_netcheck' is evaluated independently of 'trm_captive'. A detected captive portal does not count as an error as long as 'trm_captive' is enabled - such an uplink stays connected so that a manual or script based portal login is still possible. With 'trm_captive' disabled travelmate can neither allowlist the portal domain nor run a login script, so a detected portal is treated like a failed connectivity check. Only a failed connectivity check counts, and it is confirmed by a second probe before it is acted on. Such a failure is then handled like a failed connection attempt: after 'trm_maxretry' tries the affected uplink gets disabled in the travelmate config. A longer lasting outage of your upstream provider may therefore disable all configured uplinks, which have to be re-enabled manually.
@@ -200,7 +202,7 @@ A stopped service does not report a state at all, it truncates the runtime file 
 | Option             | Default                            | Description/Valid Values                                                                              |
 | :----------------- | :--------------------------------- | :---------------------------------------------------------------------------------------------------- |
 | enabled            | 1, enabled                         | enable or disable the uplink, automatically set if the retry limit was reached                        |
-| revive             | 0, disabled                        | re-enable this uplink after n run cycles if the retry limit disabled it, minimum '10'                 |
+| revive             | 0, disabled                        | re-enable this uplink after n run cycles (or once it is back in range) if the retry limit disabled it, minimum '10' |
 | device             | -, not set                         | match the 'device' in the wireless config section                                                     |
 | ssid               | -, not set                         | match the 'ssid' in the wireless config section                                                       |
 | bssid              | -, not set                         | match the 'bssid' in the wireless config section                                                      |
@@ -209,6 +211,18 @@ A stopped service does not report a state at all, it truncates the runtime file 
 | macaddr            | -, not set                         | use a specified MAC address for the uplink                                                            |
 | vpn                | 0, disabled                        | automatically handle VPN (re-) connections                                                            |
 | vpniface           | -, not set                         | the logical vpn interface, e.g. 'wg0'                                                                 |
+| uplink_services    | -, not set                         | services out of 'trm_uplinkservices' to take down for a captive portal login (list)                   |
+
+**Uplink services**  
+Local services like encrypted DNS ('https-dns-proxy', 'stubby'), DNS-based ad-blocking or a mesh VPN ('tailscale') can prevent a captive portal login. Travelmate can take such services down before the login and bring them up again afterwards, once per uplink connection:
+
+* The global option 'trm_uplinkservices' lists the only services travelmate may touch at all, empty by default. An entry is the name of an init script in '/etc/init.d' (a plain file, no symlink), called with 'stop' and 'start'. With '<service>:<down>:<up>' the actions are set explicitly, e.g. 'adblock:suspend:resume'. Travelmate itself can't be listed.
+* Per uplink, the option 'uplink_services' selects services by name out of that list. Names that are not listed globally are skipped.
+* The services are taken down in reverse order of 'trm_uplinkservices' if the first internet check of a connection doesn't find internet or finds a captive portal. A service with the default actions is only stopped if it is running, a service with explicit actions is always called. Afterwards travelmate checks again; if there's still no internet and no captive portal, the services are brought up again right away.
+* After a successful login the vpn connection comes up first, then the services in the order of 'trm_uplinkservices'. Without a successful login they come up again after about 5 minutes or as soon as the uplink connection ends. A new connection to the uplink starts over.
+* During the captive portal login all DNS queries of the router and its clients go to the resolver of the hotspot.
+
+**Please note:** A service that redirects dnsmasq has to take that back on stop itself, like 'https-dns-proxy' does. With 'stubby' or 'dnscrypt-proxy2' dnsmasq usually forwards to a local port ('server' option plus 'noresolv'), which stays unchanged when the service stops - the captive portal can't be resolved then and travelmate logs a warning.
 
 <a id="examples"></a>
 ## Examples
@@ -292,7 +306,7 @@ If your router has more than one radio, keep the AP and the uplink on separate r
 **Retry behaviour**  
 `trm_maxretry` (default 3) limits the connection attempts per uplink. When the limit is reached, the affected uplink is disabled in the travelmate config and has to be re-enabled manually - which is intentional for permanently broken credentials, but worth keeping in mind in combination with `trm_netcheck`. Set `trm_maxretry` to '0' for unlimited retries if you never want an uplink to be disabled automatically. The disable shows up in the log as `uplink has been disabled '<radio>/<ssid>/<bssid>' (3/3)`, re-enable the uplink with the **On/Off** button in the LuCI station list or via `uci set travelmate.<section>.enabled='1'` and `uci commit travelmate`. With only one configured uplink, consider `revive` (see below), otherwise a longer outage or a slow radio after a wifi reload leaves you without uplink until you step in.
 
-Per uplink, `revive` softens that. With a value of n, an uplink disabled by the retry limit is set back to 'enabled' after n run cycles, so a network that was only temporarily unavailable comes back on its own. Values below 10 are raised to 10, since a run cycle is roughly `trm_timeout` seconds long and shorter intervals only produce needless reconnect attempts. The number of revivals is capped by the global `trm_maxretry`, which also means that `revive` has no effect with `trm_maxretry` set to '0'. The cycle and round counters are kept in the runtime file '/var/run/travelmate/travelmate.revive', they are never written to the config and are cleared when the service is stopped or restarted, e.g. by a config change, so an uplink switched off by hand stays off. A successful connection clears the counters of that uplink. The enable and disable itself is still recorded in the travelmate config, so the LuCI station list always shows the real state.
+Per uplink, `revive` softens that. With a value of n, an uplink disabled by the retry limit is set back to 'enabled' after n run cycles, so a network that was only temporarily unavailable comes back on its own. It comes back earlier if it leaves the range and shows up again: once a scan of its radio misses it (or sees it below `trm_minquality`) and a later scan sees it again, it is re-enabled right away and tried with the next run cycle. While a revival is pending, travelmate scans that radio even if no other uplink is enabled there. Values below 10 are raised to 10, since a run cycle is roughly `trm_timeout` seconds long and shorter intervals only produce needless reconnect attempts. The number of revivals is capped by the global `trm_maxretry`, which also means that `revive` has no effect with `trm_maxretry` set to '0'. The cycle and round counters are kept in the runtime file '/var/run/travelmate/travelmate.revive', they are never written to the config and are cleared when the service is stopped or restarted, e.g. by a config change, so an uplink switched off by hand stays off. A successful connection clears the counters of that uplink. The enable and disable itself is still recorded in the travelmate config, so the LuCI station list always shows the real state.
 
 **Open uplinks**  
 `trm_autoadd` adds open networks to your wireless config on the fly, which is handy in hotels and on trains. Keep `trm_maxautoadd` at a sane value so that a busy location doesn't flood your config, and use `trm_ssidfilter` to skip the usual noise, e.g. `Chromecast*` or printer and camera SSIDs.
@@ -304,7 +318,7 @@ Per uplink, `revive` softens that. With a value of n, an uplink disabled by the 
 `trm_maxwait` (default 30s) is the budget for a single connection attempt (association and DHCP) and scales the internal wait times, the curl requests use a fixed timeout of 5s per attempt with one retry. Some drivers need 30s and more to associate after a wifi reload, if attempts regularly time out ('uplink connection could not be established after ... seconds'), raise it to 45-60s. Lowering it makes travelmate give up on weak candidates faster. `trm_triggerdelay` adds a delay before processing starts after an ifup event, which is useful if your uplink needs a moment to settle.
 
 **Subnet conflicts**  
-Travelmate compares the uplink subnet against your router LAN network and logs a warning if both overlap. If you run into this frequently, change your LAN network to something uncommon, e.g. `10.200.1.0/24`, because most hotel networks use `192.168.0.0/24` or `192.168.1.0/24`.
+Travelmate compares the uplink subnet against your router LAN network and logs a warning if both overlap, also with different prefix lengths (e.g. a LAN `192.168.0.0/16` and an uplink `192.168.1.0/24`). The status shows both networks with their prefix length. If you run into this frequently, change your LAN network to something uncommon, e.g. `10.200.1.0/24`, because most hotel networks use `192.168.0.0/24` or `192.168.1.0/24`.
 
 <a id="troubleshooting-and-debug-options"></a>
 ## Troubleshooting & debug options

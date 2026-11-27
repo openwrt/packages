@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=minizip-ng
 PKG_VERSION:=4.2.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/zlib-ng/minizip-ng/tar.gz/$(PKG_VERSION)?
@@ -34,6 +34,8 @@ CMAKE_OPTIONS += \
 	-DMZ_LZMA=OFF \
 	-DMZ_OPENSSL=OFF \
 	-DMZ_PKCRYPT=OFF \
+	-DMZ_PPMD=OFF \
+	-DMZ_ZLIB_FLAVOR=zlib \
 	-DMZ_ZSTD=OFF
 
 define Package/minizip

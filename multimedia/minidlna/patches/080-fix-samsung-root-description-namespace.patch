@@ -1,0 +1,26 @@
+From 7cd6b95c9d842a7c62d01b536a16ca23af6910f4 Mon Sep 17 00:00:00 2001
+From: Jakub Skoczen <skoczko@gmail.com>
+Date: Mon, 26 Oct 2026 16:00:00 +0100
+Subject: [PATCH] Fix missing Samsung XML namespace in device description
+
+The Samsung-specific root device description uses sec:ProductCap and
+sec:X_ProductCap without declaring the sec namespace, producing invalid
+XML. Declare the namespace on the Samsung-specific root element only.
+
+Upstream-Status: Submitted https://sourceforge.net/p/minidlna/git/merge-requests/65/
+Signed-off-by: Jakub Skoczen <skoczko@gmail.com>
+---
+ upnpdescgen.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+--- a/upnpdescgen.c
++++ b/upnpdescgen.c
+@@ -563,6 +563,8 @@ genRootDescSamsung(int * len)
+ 	memcpy(str, xmlver, *len + 1);
+ 	/* Replace the optional modelURL and manufacturerURL fields with Samsung foo */
+ 	memcpy(&samsungRootDesc, &rootDesc, sizeof(rootDesc));
++	samsungRootDesc[0].eltname =
++		"root xmlns=\"urn:schemas-upnp-org:device-1-0\" xmlns:sec=\"http://www.sec.co.kr/dlna\"";
+ 	samsungRootDesc[8].eltname = "/sec:ProductCap";
+ 	samsungRootDesc[8].data = "smi,DCM10,getMediaInfo.sec,getCaptionInfo.sec";
+ 	samsungRootDesc[12].eltname = "/sec:X_ProductCap";

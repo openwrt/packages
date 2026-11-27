@@ -1,14 +1,14 @@
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -71,7 +71,7 @@ else
+@@ -82,7 +82,7 @@ else
  libsane_hpaio_la_LDFLAGS = -version-info 1:0:0
  endif
  # The following is a interlibrary dependency that must be compiled first.
 -libsane_hpaio_la_LIBADD = libhpip.la libhpmud.la libhpipp.la $(DBUS_LIBS) -lcups -ldl
 +libsane_hpaio_la_LIBADD = libhpip.la libhpmud.la libhpipp.la $(DBUS_LIBS) -ldl
  #libsane_hpaio_la_CFLAGS = -DWITH_NONAMESPACES -DSOAP_DEBUG
- libsane_hpaio_la_CFLAGS = $(DBUS_CFLAGS) -Iprotocol
- 
+ libsane_hpaio_la_CFLAGS = $(DBUS_CFLAGS) -Iprotocol $(SECURITY_CFLAGS)
+ libsane_hpaio_la_LDFLAGS += $(SECURITY_LDFLAGS)
 --- a/scan/sane/hpaio.c
 +++ b/scan/sane/hpaio.c
 @@ -34,7 +34,6 @@

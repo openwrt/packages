@@ -18,23 +18,23 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
  configure                     |   3 +
  libavcodec/Makefile           |   1 +
  libavcodec/hwaccels.h         |   1 +
- libavcodec/v4l2_request_vp9.c | 530 ++++++++++++++++++++++++++++++++++
+ libavcodec/v4l2_request_vp9.c | 530 +++++++++++++++++++++++++++++++++++++++++
  libavcodec/vp9.c              |   7 +
  5 files changed, 542 insertions(+)
  create mode 100644 libavcodec/v4l2_request_vp9.c
 
 --- a/configure
 +++ b/configure
-@@ -3554,6 +3554,8 @@ vp9_dxva2_hwaccel_deps="dxva2 DXVA_PicPa
- vp9_dxva2_hwaccel_select="vp9_decoder"
- vp9_nvdec_hwaccel_deps="nvdec"
+@@ -3524,6 +3524,8 @@ vp9_nvdec_hwaccel_deps="nvdec"
  vp9_nvdec_hwaccel_select="vp9_decoder"
+ vp9_nvdec_cuarray_hwaccel_deps="nvdec ffnvcodec_cuarray"
+ vp9_nvdec_cuarray_hwaccel_select="vp9_decoder"
 +vp9_v4l2request_hwaccel_deps="v4l2_request vp9_v4l2_request"
 +vp9_v4l2request_hwaccel_select="vp9_decoder"
  vp9_vaapi_hwaccel_deps="vaapi VADecPictureParameterBufferVP9_bit_depth"
  vp9_vaapi_hwaccel_select="vp9_decoder"
  vp9_vdpau_hwaccel_deps="vdpau VdpPictureInfoVP9"
-@@ -7676,6 +7678,7 @@ if enabled v4l2_request; then
+@@ -7585,6 +7587,7 @@ if enabled v4l2_request; then
      check_cc mpeg2_v4l2_request linux/videodev2.h "int i = V4L2_CID_STATELESS_MPEG2_SEQUENCE"
      check_cc v4l2_m2m_hold_capture_buf linux/videodev2.h "int i = V4L2_BUF_FLAG_M2M_HOLD_CAPTURE_BUF"
      check_cc vp8_v4l2_request linux/videodev2.h "int i = V4L2_CID_STATELESS_VP8_FRAME"
@@ -44,20 +44,20 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
      check_struct linux/videodev2.h "struct v4l2_ctrl_hevc_decode_params" num_delta_pocs_of_ref_rps_idx
 --- a/libavcodec/Makefile
 +++ b/libavcodec/Makefile
-@@ -1108,6 +1108,7 @@ OBJS-$(CONFIG_VP9_D3D11VA_HWACCEL)
- OBJS-$(CONFIG_VP9_DXVA2_HWACCEL)          += dxva2_vp9.o
+@@ -1125,6 +1125,7 @@ OBJS-$(CONFIG_VP9_DXVA2_HWACCEL)
  OBJS-$(CONFIG_VP9_D3D12VA_HWACCEL)        += dxva2_vp9.o d3d12va_vp9.o
  OBJS-$(CONFIG_VP9_NVDEC_HWACCEL)          += nvdec_vp9.o
+ OBJS-$(CONFIG_VP9_NVDEC_CUARRAY_HWACCEL)  += nvdec_vp9.o
 +OBJS-$(CONFIG_VP9_V4L2REQUEST_HWACCEL)    += v4l2_request_vp9.o
  OBJS-$(CONFIG_VP9_VAAPI_HWACCEL)          += vaapi_vp9.o
  OBJS-$(CONFIG_VP9_VDPAU_HWACCEL)          += vdpau_vp9.o
  OBJS-$(CONFIG_VP9_VIDEOTOOLBOX_HWACCEL)   += videotoolbox_vp9.o
 --- a/libavcodec/hwaccels.h
 +++ b/libavcodec/hwaccels.h
-@@ -90,6 +90,7 @@ extern const struct FFHWAccel ff_vp9_d3d
- extern const struct FFHWAccel ff_vp9_d3d12va_hwaccel;
+@@ -99,6 +99,7 @@ extern const struct FFHWAccel ff_vp9_d3d
  extern const struct FFHWAccel ff_vp9_dxva2_hwaccel;
  extern const struct FFHWAccel ff_vp9_nvdec_hwaccel;
+ extern const struct FFHWAccel ff_vp9_nvdec_cuarray_hwaccel;
 +extern const struct FFHWAccel ff_vp9_v4l2request_hwaccel;
  extern const struct FFHWAccel ff_vp9_vaapi_hwaccel;
  extern const struct FFHWAccel ff_vp9_vdpau_hwaccel;
@@ -597,15 +597,15 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
 +};
 --- a/libavcodec/vp9.c
 +++ b/libavcodec/vp9.c
-@@ -168,6 +168,7 @@ static int update_size(AVCodecContext *a
-                      CONFIG_VP9_D3D11VA_HWACCEL * 2 + \
+@@ -175,6 +175,7 @@ static int update_size(AVCodecContext *a
                       CONFIG_VP9_D3D12VA_HWACCEL + \
                       CONFIG_VP9_NVDEC_HWACCEL + \
+                      CONFIG_VP9_NVDEC_CUARRAY_HWACCEL + \
 +                     CONFIG_VP9_V4L2REQUEST_HWACCEL + \
                       CONFIG_VP9_VAAPI_HWACCEL + \
                       CONFIG_VP9_VDPAU_HWACCEL + \
                       CONFIG_VP9_VIDEOTOOLBOX_HWACCEL + \
-@@ -214,6 +215,9 @@ static int update_size(AVCodecContext *a
+@@ -224,6 +225,9 @@ static int update_size(AVCodecContext *a
  #if CONFIG_VP9_VULKAN_HWACCEL
              *fmtp++ = AV_PIX_FMT_VULKAN;
  #endif
@@ -615,7 +615,7 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
              break;
          case AV_PIX_FMT_YUV420P12:
  #if CONFIG_VP9_NVDEC_HWACCEL
-@@ -1959,6 +1963,9 @@ const FFCodec ff_vp9_decoder = {
+@@ -2005,6 +2009,9 @@ const FFCodec ff_vp9_decoder = {
  #if CONFIG_VP9_VULKAN_HWACCEL
                                 HWACCEL_VULKAN(vp9),
  #endif

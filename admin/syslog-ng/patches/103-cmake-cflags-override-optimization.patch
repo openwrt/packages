@@ -1,0 +1,18 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Date: Fri, 20 Nov 2026 09:35:25 +0100
+Subject: [PATCH] cmake: let CFLAGS override the default optimization level
+
+Upstream-Status: Submitted [https://github.com/syslog-ng/syslog-ng/pull/5856]
+---
+--- a/cmake/set_debug_options.cmake
++++ b/cmake/set_debug_options.cmake
+@@ -30,6 +30,6 @@ IF(CMAKE_BUILD_TYPE MATCHES Debug OR CMA
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fno-omit-frame-pointer")
+ ELSE()
+   set(SYSLOG_NG_ENABLE_DEBUG OFF)
+-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2 -g")
+-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -g")
++  set(CMAKE_C_FLAGS "-O2 -g ${CMAKE_C_FLAGS}")
++  set(CMAKE_CXX_FLAGS "-O2 -g ${CMAKE_CXX_FLAGS}")
+ ENDIF()

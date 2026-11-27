@@ -50,6 +50,7 @@ For a typical setup these few steps are enough to get banIP up and running — s
 
 | Feed                | Focus                          | Inbound | Outbound | Proto/Port        | Information                                                  |
 | :------------------ | :----------------------------- | :-----: | :------: | :---------------: | :----------------------------------------------------------- |
+| abuseipdb           | AbuseIPDB worst offenders      |    x    |          |                   | [Link](https://github.com/borestad/blocklist-abuseipdb)      |
 | asn                 | ASN segments                   |    x    |          |                   | [Link](https://asn.ipinfo.app)                               |
 | backscatterer       | backscatterer IPs              |    x    |          |                   | [Link](https://www.uceprotect.net/en/index.php)              |
 | becyber             | malicious attacker IPs         |    x    |          |                   | [Link](https://github.com/duggytuxy/malicious_ip_addresses)  |
@@ -78,6 +79,7 @@ For a typical setup these few steps are enough to get banIP up and running — s
 | proxy               | open proxies                   |    x    |    x     |                   | [Link](https://iplists.firehol.org/?ipset=proxylists)        |
 | spamhaus            | Spamhaus DROP                  |    x    |    x     |                   | [Link](https://www.spamhaus.org/blocklists/)                 |
 | threat              | emerging threats               |    x    |    x     |                   | [Link](https://rules.emergingthreats.net)                    |
+| threatfox           | ThreatFox IOC IPs              |         |    x     |                   | [Link](https://threatfox.abuse.ch)                           |
 | threatview          | malicious IPs                  |    x    |    x     |                   | [Link](https://threatview.io)                                |
 | tor                 | tor exit nodes                 |    x    |    x     |                   | [Link](https://www.dan.me.uk)                                |
 | turris              | turris sentinel blocklist      |    x    |          |                   | [Link](https://view.sentinel.turris.cz)                      |
@@ -195,6 +197,9 @@ The `report` sub-command accepts an output mode: `text` (default, human-readable
 | ban_icmplimit           | option | 25                            | threshold in number of packets to detect icmp DoS in prerouting chain. A value of `0` disables this safeguard     |
 | ban_synlimit            | option | 10                            | threshold in number of packets to detect syn DoS in prerouting chain. A value of `0` disables this safeguard      |
 | ban_udplimit            | option | 100                           | threshold in number of packets to detect udp DoS in prerouting chain. A value of `0` disables this safeguard      |
+| ban_icmpburstlimit      | option | 5                             | burst size in packets for the icmp DoS threshold, short spikes up to this size pass before the threshold applies  |
+| ban_synburstlimit       | option | 5                             | burst size in packets for the syn DoS threshold, short spikes up to this size pass before the threshold applies   |
+| ban_udpburstlimit       | option | 5                             | burst size in packets for the udp DoS threshold, short spikes up to this size pass before the threshold applies   |
 | ban_logprerouting       | option | 0                             | log suspicious packets in the prerouting chain                                                                    |
 | ban_loginbound          | option | 0                             | log suspicious packets in the inbound chain (wan-input and wan-forward)                                           |
 | ban_logoutbound         | option | 0                             | log suspicious packets in the outbound chain (lan-forward)                                                        |
@@ -238,7 +243,7 @@ The `report` sub-command accepts an output mode: `text` (default, human-readable
 | ban_region              | list   | -                             | Regional Internet Registry (RIR) country selection. Supported regions are: AFRINIC, ARIN, APNIC, LACNIC and RIPE  |
 | ban_country             | list   | -                             | country iso codes for the `country` feed, e.g. `ru`                                                               |
 | ban_countrysplit        | option | -                             | the selected countries are stored in separate Sets                                                                |
-| ban_authkey             | option | -                             | auth-key for feeds with an `{authkey}` URL placeholder, e.g. the abuse.ch key for `urlhaus`                       |
+| ban_authkey             | option | -                             | auth-key for feeds with an `{authkey}` URL placeholder, e.g. the abuse.ch key for `urlhaus` and `threatfox`       |
 | ban_blockpolicy         | option | drop                          | `drop` packets silently on input and forwardwan chains or actively `reject` the traffic                           |
 | ban_feedin              | list   | -                             | limit the selected feeds to the inbound chain (wan-input and wan-forward)                                         |
 | ban_feedout             | list   | -                             | limit the selected feeds to the outbound chain (lan-forward)                                                      |
@@ -386,6 +391,9 @@ nftables supports the atomic loading of firewall rules (incl. elements), which i
 * set `ban_splitsize` e.g. to `1024` to split the load of an external Set after every 1024 lines/elements
 * set `ban_nftcount` to `0` to deactivate the CPU- and memory-intensive creation of counter elements at Set level and the counters of the base chain rules. The feed rule counters and the DoS protection counters (`syn-flood`, `udp-flood`, `icmp-flood`, etc.) are always enabled, so the Set Reporting still shows the packet totals per Set.
 
+**DoS protection thresholds and burst limits**  
+The ICMP, SYN and UDP flood safeguards in the prerouting chain use nft rate limits with a token bucket: `ban_icmplimit`, `ban_synlimit` and `ban_udplimit` set the sustained rate in packets per second, `ban_icmpburstlimit`, `ban_synburstlimit` and `ban_udpburstlimit` set the bucket size in packets (default `5`). Each limiter is shared across all matching WAN traffic of its protocol, not tracked per peer or port. Increasing the burst limit permits a larger short spike, it does not change the sustained rate. Note that UDP packets of a flow remain in conntrack state `new` until the first reply is seen, so a client that sends several packets before the first reply consumes several tokens at once. VPN protocols with junk/padding packets prior to the handshake (e.g. AmneziaWG) may exceed the default burst of `5`, in this case raise `ban_udpburstlimit` accordingly, e.g. to `32`. Empty, zero or non-numeric burst values fall back to `5`.
+
 **Sensible choice of blocklists**  
 The following feeds are just my personal recommendation as an initial setup:
 * cinsscore, debl, turris and doh in their default chains
@@ -399,7 +407,7 @@ This is the single most common source of confusion, so it's worth understanding 
 banIP filters on the **connection level** (source/destination IP), not on content. The default chain of a feed therefore has to match **who initiates the unwanted connection**:
 
 * **Inbound** (WAN-Input + WAN-Forward): blocks connections that come **from the internet towards you**. This is the right direction for the large majority of reputation feeds, which list the **source** IPs of attackers, scanners, brute-forcers and spam senders (`cinsscore`, `debl`, `dshield`, `firehol*`, `bruteforceblock`, `uceprotect*`, …). A fail2ban-style feed only makes sense inbound.
-* **Outbound** (LAN-Forward): blocks connections your **own LAN clients initiate towards** a listed IP. This is the right direction for feeds that list destinations your devices should never reach: malware-download hosts, command-and-control servers, DoH/DNS bypass endpoints and threat IPs (`doh`, `dns`, `hagezi`, `feodo`, `urlhaus`, `webclient`).
+* **Outbound** (LAN-Forward): blocks connections your **own LAN clients initiate towards** a listed IP. This is the right direction for feeds that list destinations your devices should never reach: malware-download hosts, command-and-control servers, DoH/DNS bypass endpoints and threat IPs (`doh`, `dns`, `hagezi`, `feodo`, `urlhaus`, `threatfox`, `webclient`).
 * **Both**: feeds where the risk genuinely exists in both directions default to `inout` (`spamhaus`, `threat`, `threatview`, `tor`, `proxy`, `vpn`, `vpndc`).
 
 The classic mistake: enabling a malware-URL / C2 feed like `urlhaus` in the **inbound** chain and expecting it to stop a LAN client from downloading malware. It won't — the client is the one opening the connection, so only the **outbound** chain can intercept it. These feeds ship with sensible defaults (outbound or both), but if you maintain your own custom feeds, keep this rule of thumb in mind.
@@ -667,7 +675,7 @@ Pointing `url_4` and `url_6` at the same file is the dual-stack case described a
 
 Keep in mind that alternative sources come with their own license terms, which you have to check yourself, and that they differ in semantics (geolocation vs. RIR allocation), granularity (set sizes and memory footprint may grow considerably) and code coverage (a missing country file only logs a download failure for that code).
 
-Some feed sources require a personal API or auth-key in the download URL. Set the key with the `ban_authkey` option (LuCI: Feed Selection tab), banIP replaces the `{authkey}` placeholder in the feed URL with this key, so it can be used in custom feeds as well. As long as no valid key is set (allowed characters: `A-Z a-z 0-9 _ -`), feeds with this placeholder are skipped with an info message in the log. Download utilities may print the full URL in the debug error log, so banIP masks the key there as `<authkey>`. Only one key is supported, so all feeds with this placeholder share it. The shipped `urlhaus` feed uses this mechanism and requires a free abuse.ch Auth-Key, available at https://auth.abuse.ch - the same key also works for other abuse.ch services like ThreatFox.
+Some feed sources require a personal API or auth-key in the download URL. Set the key with the `ban_authkey` option (LuCI: Feed Selection tab), banIP replaces the `{authkey}` placeholder in the feed URL with this key, so it can be used in custom feeds as well. As long as no valid key is set (allowed characters: `A-Z a-z 0-9 _ -`), feeds with this placeholder are skipped with an info message in the log. Download utilities may print the full URL in the debug error log, so banIP masks the key there as `<authkey>`. Only one key is supported, so all feeds with this placeholder share it. The shipped `urlhaus` and `threatfox` feeds use this mechanism and require a free abuse.ch Auth-Key, available at https://auth.abuse.ch - one key works for both.
 
 **The `rule` field**  
 The rule consists of max. 4 individual, space separated parameters:

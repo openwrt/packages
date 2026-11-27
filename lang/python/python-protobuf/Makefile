@@ -4,7 +4,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-protobuf
 PKG_VERSION:=7.36.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=protobuf
 PKG_HASH:=497d0463ff3316681da6c0b9e8d06cb465d61abce00b613ab42226175644d1bb
@@ -14,7 +14,7 @@ PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:google:protobuf
 
-PKG_BUILD_DEPENDS:=protobuf/host python-setuptools/host
+PKG_BUILD_DEPENDS:=python-setuptools/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -26,10 +26,7 @@ define Package/python3-protobuf
   SUBMENU:=Python
   TITLE:=Protobuf support for Python
   URL:=https://github.com/protocolbuffers/protobuf
-  DEPENDS:= \
-    +protobuf \
-    +python3-ctypes \
-    +python3-light
+  DEPENDS:=+python3-light
 endef
 
 define Package/python3-protobuf/description

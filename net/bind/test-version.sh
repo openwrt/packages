@@ -2,7 +2,7 @@
 
 # shellcheck shell=busybox
 
-case "$PKG_NAME" in
+case "${PKG_NAME%-gssapi}" in
 bind-check)
 	named-checkconf -v 2>&1 | grep -F "$PKG_VERSION"
 	named-checkzone -v 2>&1 | grep -F "$PKG_VERSION"
@@ -10,6 +10,10 @@ bind-check)
 
 bind-client)
 	nsupdate -V 2>&1 | grep -F "$PKG_VERSION"
+	;;
+
+bind-delv)
+	delv -v 2>&1 | grep -F "$PKG_VERSION"
 	;;
 
 bind-dig)
@@ -38,13 +42,9 @@ bind-server)
 	named -v 2>&1 | grep -F "$PKG_VERSION"
 	;;
 
-bind-tools)
-	delv -v 2>&1 | grep -F "$PKG_VERSION"
-	;;
-
 bind-ddns-confgen|\
 bind-libs|\
-bind-server-filter-aaaa)
+bind-tools)
 	exit 0
 	;;
 

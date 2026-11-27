@@ -48,10 +48,27 @@
  #endif
  }
  
-@@ -211,19 +185,8 @@ std::string TelldusCore::wideToString(co
+@@ -194,36 +168,8 @@ std::string TelldusCore::wideToString(co
+ 	return retval;
+ 
  #else
- 	char *inPointer = inString;
- #endif
+-	size_t wideSize = sizeof(wchar_t)*input.length();
+-	// We cannot know how many wide character there is yet
+-	size_t outbytesLeft = wideSize+sizeof(char);  // NOLINT(runtime/sizeof)
+-
+-	// Copy the instring
+-	char *inString = reinterpret_cast<char*>(new wchar_t[input.length()+1]);
+-	memcpy(inString, input.c_str(), wideSize+sizeof(wchar_t));
+-
+-	// Create buffer for output
+-	char *outString = new char[outbytesLeft];
+-	memset(outString, 0, sizeof(*outString)*(outbytesLeft));
+-
+-#ifdef _FREEBSD
+-	const char *inPointer = inString;
+-#else
+-	char *inPointer = inString;
+-#endif
 -	char *outPointer = outString;
 -
 -	iconv_t convDesc = iconv_open("UTF-8", WCHAR_T_ENCODING);

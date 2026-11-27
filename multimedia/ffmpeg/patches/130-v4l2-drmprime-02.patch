@@ -10,7 +10,7 @@ Subject: [PATCH 2/9] libavcodec: v4l2m2m: depends on libdrm
 
 --- a/configure
 +++ b/configure
-@@ -4078,6 +4078,7 @@ sndio_indev_deps="sndio"
+@@ -4058,6 +4058,7 @@ sndio_indev_deps="sndio"
  sndio_outdev_deps="sndio"
  v4l2_indev_deps_any="linux_videodev2_h sys_videoio_h"
  v4l2_indev_suggest="libv4l2"

@@ -20,7 +20,7 @@ Signed-off-by: Mirko Vogt <foss@mirko.in>
 ---
 --- a/configure
 +++ b/configure
-@@ -3099,7 +3099,7 @@ faanidct_select="idctdsp"
+@@ -3045,7 +3045,7 @@ faanidct_select="idctdsp"
  h264dsp_select="startcode"
  h264parse_select="golomb"
  h264_sei_select="golomb itut_t35"

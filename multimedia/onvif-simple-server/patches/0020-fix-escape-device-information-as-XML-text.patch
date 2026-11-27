@@ -1,0 +1,240 @@
+From 629527e5ff80139230b0909f48da9a0a0417f2ee Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Sun, 18 Oct 2026 23:38:45 +0100
+Subject: [PATCH] fix: escape device information as XML text
+
+Identity values containing XML metacharacters produce malformed device
+information responses. Render identity templates through the shared XML
+substitution helper so values retain their literal text and the renderer
+escapes them during serialisation. Preserve compressed template support
+and literal placeholder strings in identity values.
+
+Fixes: e1c34ca6dd91 ("First commit")
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ device_advertisement.c  | 26 ++------------------------
+ device_service.c        | 33 ++++++++++++++++++---------------
+ soap.c                  | 24 ++++++++++++++++++++++++
+ soap.h                  |  6 ++++++
+ test/test_cgi.py        | 24 ++++++++++++++++++++++++
+ test/test_compressed.py | 12 +++++++++---
+ 6 files changed, 83 insertions(+), 42 deletions(-)
+
+--- a/device_advertisement.c
++++ b/device_advertisement.c
+@@ -12,28 +12,6 @@
+ 
+ extern service_context_t service_ctx;
+ 
+-struct template_value {
+-    const char *key;
+-    const char *value;
+-};
+-
+-static void template_fill(ezxml_t node, const struct template_value *values)
+-{
+-    ezxml_t child;
+-    int i;
+-    int j;
+-
+-    for (i = 0; values[i].key; i++) {
+-        if (!strcmp(node->txt, values[i].key))
+-            ezxml_set_txt_d(node, values[i].value);
+-        for (j = 0; node->attr[j]; j += 2)
+-            if (!strcmp(node->attr[j + 1], values[i].key))
+-                ezxml_set_attr_d(node, node->attr[j], values[i].value);
+-    }
+-    for (child = node->child; child; child = child->ordered)
+-        template_fill(child, values);
+-}
+-
+ static void imaging_service_add(ezxml_t response, const char *address, int include)
+ {
+     ezxml_t service;
+@@ -80,7 +58,7 @@ int device_advertisement_send(int servic
+     int audio_output;
+     int include;
+     int i;
+-    struct template_value values[] = {
++    struct soap_template_value values[] = {
+         { "%DEVICE_SERVICE_ADDRESS%", device },
+         { "%MEDIA_SERVICE_ADDRESS%", media },
+         { "%MEDIA2_SERVICE_ADDRESS%", media2 },
+@@ -161,7 +139,7 @@ int device_advertisement_send(int servic
+         ezxml_free(envelope);
+         return send_action_failed_fault("device_service", -1);
+     }
+-    template_fill(envelope, values);
++    soap_template_fill(envelope, values);
+     media_capabilities_update(envelope);
+     response = envelope->child->child;
+     if (service_ctx.imaging_helper) {
+--- a/device_service.c
++++ b/device_service.c
+@@ -24,6 +24,7 @@
+ 
+ #include "device_service.h"
+ #include "device_advertisement.h"
++#include "soap.h"
+ #include "fault.h"
+ #include "utils.h"
+ #include "log.h"
+@@ -48,21 +49,23 @@ int device_get_service_capabilities()
+ 
+ int device_get_device_information()
+ {
+-    long size = cat(NULL, "device_service_files/GetDeviceInformation.xml", 10,
+-            "%MANUFACTURER%", service_ctx.manufacturer,
+-            "%MODEL%", service_ctx.model,
+-            "%FIRMWARE_VERSION%", service_ctx.firmware_ver,
+-            "%SERIAL_NUMBER%", service_ctx.serial_num,
+-            "%HARDWARE_ID%", service_ctx.hardware_id);
+-
+-    output_http_headers(size);
+-
+-    return cat("stdout", "device_service_files/GetDeviceInformation.xml", 10,
+-            "%MANUFACTURER%", service_ctx.manufacturer,
+-            "%MODEL%", service_ctx.model,
+-            "%FIRMWARE_VERSION%", service_ctx.firmware_ver,
+-            "%SERIAL_NUMBER%", service_ctx.serial_num,
+-            "%HARDWARE_ID%", service_ctx.hardware_id);
++    struct soap_template_value values[] = {
++        { "%MANUFACTURER%", service_ctx.manufacturer },
++        { "%MODEL%", service_ctx.model },
++        { "%FIRMWARE_VERSION%", service_ctx.firmware_ver },
++        { "%SERIAL_NUMBER%", service_ctx.serial_num },
++        { "%HARDWARE_ID%", service_ctx.hardware_id },
++        { NULL, NULL }
++    };
++    ezxml_t envelope;
++
++    envelope = soap_template_load("device_service_files/GetDeviceInformation.xml");
++    if (!envelope || *ezxml_error(envelope)) {
++        ezxml_free(envelope);
++        return send_action_failed_fault("device_service", -1);
++    }
++    soap_template_fill(envelope, values);
++    return soap_response_send(envelope);
+ }
+ 
+ int device_get_system_date_and_time()
+--- a/soap.c
++++ b/soap.c
+@@ -59,6 +59,30 @@ ezxml_t soap_response_create(int version
+     return soap_member_add(body, version, name);
+ }
+ 
++void soap_template_fill(ezxml_t node, const struct soap_template_value *values)
++{
++    ezxml_t child;
++    int i;
++    int j;
++
++    for (i = 0; values[i].key; i++) {
++        if (strcmp(node->txt, values[i].key))
++            continue;
++        ezxml_set_txt_d(node, values[i].value);
++        break;
++    }
++    for (j = 0; node->attr[j]; j += 2) {
++        for (i = 0; values[i].key; i++) {
++            if (strcmp(node->attr[j + 1], values[i].key))
++                continue;
++            ezxml_set_attr_d(node, node->attr[j], values[i].value);
++            break;
++        }
++    }
++    for (child = node->child; child; child = child->ordered)
++        soap_template_fill(child, values);
++}
++
+ ezxml_t soap_template_load(char *filename)
+ {
+     ezxml_t document;
+--- a/soap.h
++++ b/soap.h
+@@ -4,12 +4,18 @@
+ 
+ #include "ezxml/ezxml.h"
+ 
++struct soap_template_value {
++    const char *key;
++    const char *value;
++};
++
+ ezxml_t soap_child_add(ezxml_t parent, const char *name, const char *text);
+ ezxml_t soap_number_add(ezxml_t parent, const char *name, double value);
+ void soap_range_add(ezxml_t parent, const char *name, double minimum, double maximum);
+ ezxml_t soap_member_add(ezxml_t parent, int version, const char *name);
+ ezxml_t soap_response_create(int version, const char *operation);
+ ezxml_t soap_template_load(char *filename);
++void soap_template_fill(ezxml_t node, const struct soap_template_value *values);
+ int soap_response_send(ezxml_t response);
+ 
+ #endif
+--- a/test/test_cgi.py
++++ b/test/test_cgi.py
+@@ -83,6 +83,30 @@ def helper_configuration():
+ 
+ 
+ class CGITests(unittest.TestCase):
++    def test_device_information_xml_text(self):
++        fields = {
++            'manufacturer': ('Manufacturer', 'Vendor & Partners'),
++            'model': ('Model', 'Camera <one> "special"'),
++            'firmware_ver': ('FirmwareVersion', 'OS > 1 & < 2'),
++            'serial_num': ('SerialNumber', 'serial&<123>'),
++            'hardware_id': ('HardwareId', 'board_%MODEL% & "revision"'),
++        }
++        config = configuration(1)
++        config.update({key: value for key, (name, value) in fields.items()})
++        text = ('ifs=lo\nname=Profile_0\nwidth=640\nheight=480\ntype=H264\n'
++                'audio_encoder=NONE\n' +
++                ''.join(f'{key}={value}\n' for key, (name, value) in fields.items()))
++        for settings in [config, text]:
++            status, root = request('device', 'GetDeviceInformation', config=settings)
++            self.assertEqual(status, 200)
++            for name, value in fields.values():
++                self.assertEqual(root.findtext('.//{*}' + name), value)
++        config.update(manufacturer='%MODEL%', model='%HARDWARE_ID%')
++        status, root = request('device', 'GetDeviceInformation', config=config)
++        self.assertEqual(status, 200)
++        self.assertEqual(root.findtext('.//{*}Manufacturer'), '%MODEL%')
++        self.assertEqual(root.findtext('.//{*}Model'), '%HARDWARE_ID%')
++
+     def test_configured_device_identity(self):
+         identifier = 'b47bd8ea-7b8b-58c7-8354-88dbaddf57aa'
+         config = configuration(1)
+--- a/test/test_compressed.py
++++ b/test/test_compressed.py
+@@ -3,7 +3,7 @@ from pathlib import Path
+ import tempfile
+ import unittest
+ 
+-from test_cgi import request, ROOT
++from test_cgi import configuration, request, ROOT
+ 
+ 
+ class CompressedTests(unittest.TestCase):
+@@ -14,13 +14,19 @@ class CompressedTests(unittest.TestCase)
+                 target.parent.mkdir(exist_ok=True)
+                 target.with_suffix('.xml.gz').write_bytes(gzip.compress(source.read_bytes()))
+             for service, operation, content in [
++                ('device', 'GetDeviceInformation', ''),
+                 ('device', 'GetServices', '<IncludeCapability>true</IncludeCapability>'),
+                 ('device', 'GetCapabilities', ''),
+                 ('media', 'GetServiceCapabilities', ''),
+                 ('media2', 'GetServiceCapabilities', '')]:
+                 with self.subTest(service=service, operation=operation):
+-                    self.assertEqual(request(service, operation, content,
+-                                             template_dir=directory)[0], 200)
++                    config = configuration()
++                    config['model'] = 'Camera & <node>'
++                    status, root = request(service, operation, content,
++                                           config=config, template_dir=directory)
++                    self.assertEqual(status, 200)
++                    if operation == 'GetDeviceInformation':
++                        self.assertEqual(root.findtext('.//{*}Model'), config['model'])
+ 
+ 
+ if __name__ == '__main__':

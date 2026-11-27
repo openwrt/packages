@@ -3,7 +3,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=tac_plus
 PKG_VERSION:=4.0.4.28
 PKG_REV:=259251e6f1c2d5c98081a43c6f66d9eb2989cfd8
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE_VERSION:=$(PKG_REV)
 PKG_SOURCE_DATE:=2019.02.11
@@ -24,6 +24,8 @@ CONFIGURE_PATH:=$(PKG_BUILD_SUBDIR)
 CONFIGURE_ARGS += \
 	--disable-shared \
 	--without-libwrap
+
+TARGET_CFLAGS += -std=gnu17
 
 ifeq ($(BUILD_VARIANT),without-pam)
 CONFIGURE_VARS += \

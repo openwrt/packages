@@ -1,5 +1,9 @@
 #!/bin/sh
 
-grep -q "utf-force" "/etc/profile.d/btop.sh" && sed -i "s,utf-force,force-utf,g" "/etc/profile.d/btop.sh"
+. /lib/functions.sh
+
+profile_d_retire btop.sh \
+	7d732bba2f8cc6a84765242d7e755dad7d94f325345d4e06f4487d3ac2a0b03a \
+	cd6e9404430d0afdeaf60299fbc3d5f7ab1f75f7f46aa6a5d2f996281671f9d2
 
 exit 0

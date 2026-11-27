@@ -8,25 +8,23 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=kmod
-PKG_VERSION:=32
+PKG_VERSION:=34.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/utils/kernel/kmod
-PKG_HASH:=630ed0d92275a88cb9a7bf68f5700e911fdadaf02e051cf2e4680ff8480bd492
+PKG_HASH:=985554de49c21a58abd68c6cda2251384e1e5bb08b3b14c7f02b51f4c90c2958
 
 PKG_MAINTAINER:=Jeff Waugh <jdub@bethesignal.org>
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:kernel:kmod
 
-PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
-
-CONFIGURE_ARGS += --with-zlib
+include $(INCLUDE_DIR)/meson.mk
 
 define Package/kmod/Default
   SECTION:=utils
@@ -68,6 +66,12 @@ $(call Package/kmod/Default)
   TITLE+= (library)
 endef
 
+MESON_ARGS += \
+	-Dmanpages=false \
+	-Dopenssl=disabled \
+	-Dxz=disabled \
+	-Dzstd=disabled
+
 define Package/libkmod/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libkmod.so.* $(1)/usr/lib/
@@ -79,7 +83,7 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/include $(1)/usr/
 
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libkmod.{so*,la} $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libkmod.so* $(1)/usr/lib/
 
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libkmod.pc $(1)/usr/lib/pkgconfig/

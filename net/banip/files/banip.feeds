@@ -1,4 +1,10 @@
 {
+	"abuseipdb":{
+		"url_4": "https://raw.githubusercontent.com/borestad/blocklist-abuseipdb/main/abuseipdb-s100-7d.ipv4",
+		"rule": "feed 1",
+		"chain": "in",
+		"descr": "AbuseIPDB worst offenders"
+	},
 	"asn":{
 		"url_4": "https://asn.ipinfo.app/api/text/list/AS{asn}",
 		"url_6": "https://asn.ipinfo.app/api/text/list/AS{asn}",
@@ -178,6 +184,12 @@
 		"rule": "feed 1",
 		"chain": "inout",
 		"descr": "emerging threats"
+	},
+	"threatfox":{
+		"url_4": "https://threatfox-api.abuse.ch/v2/files/exports/{authkey}/ip_port_recent.csv",
+		"rule": "feed 8 \"|:",
+		"chain": "out",
+		"descr": "ThreatFox IOC IPs"
 	},
 	"threatview":{
 		"url_4": "https://threatview.io/Downloads/IP-High-Confidence-Feed.txt",
