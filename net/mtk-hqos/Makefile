@@ -39,16 +39,4 @@ define Package/mtk-hqos/install
 	$(INSTALL_DATA) ./files/core.uc $(1)/usr/share/ucode/mtk_hqos/core.uc
 endef
 
-define Package/mtk-hqos/postinst
-#!/bin/sh
-[ -n "$${IPKG_INSTROOT}" ] || /etc/init.d/mtk-hqos enable
-exit 0
-endef
-
-define Package/mtk-hqos/prerm
-#!/bin/sh
-[ -n "$${IPKG_INSTROOT}" ] || /etc/init.d/mtk-hqos stop
-exit 0
-endef
-
 $(eval $(call BuildPackage,mtk-hqos))

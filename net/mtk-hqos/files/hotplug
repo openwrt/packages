@@ -1,4 +1,8 @@
 #!/bin/sh
 case "$ACTION" in
-	ifup|ifupdate) /etc/init.d/mtk-hqos reload ;;
+	ifup|ifupdate)
+		if /etc/init.d/mtk-hqos enabled; then
+			/etc/init.d/mtk-hqos reload
+		fi
+		;;
 esac
