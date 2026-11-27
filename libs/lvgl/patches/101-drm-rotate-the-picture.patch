@@ -1,0 +1,154 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mattheus Happe <mail@tioan.org>
+Date: Thu, 19 Nov 2026 20:06:52 +0100
+Subject: [PATCH] drm: rotate the picture
+
+The driver renders in DIRECT mode straight into the scanout buffers,
+which LVGL cannot rotate. A rotated display now renders into a buffer of
+its own, and every flush turns the whole frame into the next scanout
+buffer with lv_draw_sw_rotate(). LVGL's pointer transform follows the
+same rotation, so touch and picture agree.
+
+Signed-off-by: Mattheus Happe <mail@tioan.org>
+---
+ src/drivers/display/drm/lv_linux_drm.c | 84 ++++++++++++++++++++++++++
+ src/drivers/display/drm/lv_linux_drm.h | 14 +++++
+ 2 files changed, 98 insertions(+)
+
+--- a/src/drivers/display/drm/lv_linux_drm.c
++++ b/src/drivers/display/drm/lv_linux_drm.c
+@@ -24,6 +24,10 @@
+ 
+ #include "../../../stdlib/lv_sprintf.h"
+ #include "../../../draw/lv_draw_buf.h"
++#include "../../../draw/sw/lv_draw_sw_utils.h"
++#include "../../../core/lv_obj.h"
++#include "../../../stdlib/lv_mem.h"
++#include "../../../stdlib/lv_string.h"
+ 
+ #if LV_LINUX_DRM_GBM_BUFFERS
+ 
+@@ -80,6 +84,12 @@ typedef struct {
+     drmModePropertyPtr conn_props[128];
+     drm_buffer_t drm_bufs[BUFFER_CNT];
+     drm_buffer_t * act_buf;
++    /* While rotated LVGL renders into rot_buf, and drm_flush() turns each
++     * frame into drm_bufs[back]; rot_mem is the unaligned allocation. */
++    lv_display_rotation_t rotation;
++    void * rot_mem;
++    uint8_t * rot_buf;
++    int back;
+ } drm_dev_t;
+ 
+ /**********************
+@@ -259,6 +269,58 @@ int lv_linux_drm_get_fd(lv_display_t * d
+     return drm_dev ? drm_dev->fd : -1;
+ }
+ 
++int lv_linux_drm_set_rotation(lv_display_t * disp, lv_display_rotation_t rotation)
++{
++    drm_dev_t * drm_dev = lv_display_get_driver_data(disp);
++
++    if(drm_dev == NULL || drm_dev->fd < 0 || drm_dev->drm_bufs[0].map == NULL)
++        return -1;
++
++    lv_color_format_t cf = lv_display_get_color_format(disp);
++
++    /* Before the buffers: it swaps the logical resolution they are sized by. */
++    lv_display_set_rotation(disp, rotation);
++
++    if(rotation == LV_DISPLAY_ROTATION_0) {
++        size_t buf_size = LV_MIN(drm_dev->drm_bufs[1].size, drm_dev->drm_bufs[0].size);
++
++        lv_display_set_buffers(disp, drm_dev->drm_bufs[1].map, drm_dev->drm_bufs[0].map, buf_size,
++                               LV_DISPLAY_RENDER_MODE_DIRECT);
++        lv_free(drm_dev->rot_mem);
++        drm_dev->rot_mem = NULL;
++        drm_dev->rot_buf = NULL;
++    }
++    else {
++        int32_t w = lv_display_get_horizontal_resolution(disp);
++        int32_t h = lv_display_get_vertical_resolution(disp);
++        size_t size = (size_t)lv_draw_buf_width_to_stride(w, cf) * h;
++        /* The buffer outlives rotation changes, and rows are padded to
++         * LV_DRAW_BUF_STRIDE_ALIGN, so size it for both orientations. */
++        size_t alloc = LV_MAX(size, (size_t)lv_draw_buf_width_to_stride(h, cf) * w);
++
++        if(drm_dev->rot_mem == NULL) {
++            drm_dev->rot_mem = lv_malloc(alloc + LV_DRAW_BUF_ALIGN);
++            if(drm_dev->rot_mem == NULL) {
++                lv_display_set_rotation(disp, drm_dev->rotation);
++                return -1;
++            }
++            drm_dev->rot_buf = lv_draw_buf_align(drm_dev->rot_mem, cf);
++        }
++
++        lv_memzero(drm_dev->rot_buf, size);
++        lv_display_set_buffers(disp, drm_dev->rot_buf, NULL, size, LV_DISPLAY_RENDER_MODE_DIRECT);
++    }
++
++    drm_dev->rotation = rotation;
++    drm_dev->act_buf = NULL;
++
++    /* DIRECT mode only redraws what changed, and nothing on the new buffer
++     * has been drawn yet. */
++    lv_obj_invalidate(lv_display_get_screen_active(disp));
++
++    return 0;
++}
++
+ /**********************
+  *   STATIC FUNCTIONS
+  **********************/
+@@ -1049,6 +1111,28 @@ static void drm_flush(lv_display_t * dis
+     LV_UNUSED(px_map);
+     drm_dev_t * drm_dev = lv_display_get_driver_data(disp);
+ 
++    if(drm_dev->rotation != LV_DISPLAY_ROTATION_0) {
++        /* The whole frame each time: rot_buf holds all of it in DIRECT mode,
++         * and the target buffer last held the frame before the previous one.
++         * LVGL waits for the previous flip before the next flush, so the
++         * target is no longer on the glass. */
++        drm_buffer_t * dst = &drm_dev->drm_bufs[drm_dev->back];
++        lv_color_format_t cf = lv_display_get_color_format(disp);
++        int32_t w = lv_display_get_horizontal_resolution(disp);
++        int32_t h = lv_display_get_vertical_resolution(disp);
++
++        lv_draw_sw_rotate(drm_dev->rot_buf, dst->map, w, h, lv_draw_buf_width_to_stride(w, cf),
++                          dst->pitch, drm_dev->rotation, cf);
++
++        if(drm_dmabuf_set_plane(drm_dev, dst)) {
++            LV_LOG_ERROR("Flush fail");
++            return;
++        }
++
++        drm_dev->back = (drm_dev->back + 1) % BUFFER_CNT;
++        return;
++    }
++
+     LV_ASSERT(drm_dev->act_buf != NULL);
+ 
+     if(drm_dmabuf_set_plane(drm_dev, drm_dev->act_buf)) {
+--- a/src/drivers/display/drm/lv_linux_drm.h
++++ b/src/drivers/display/drm/lv_linux_drm.h
+@@ -40,6 +40,20 @@ void lv_linux_drm_set_file(lv_display_t
+  */
+ int lv_linux_drm_get_fd(lv_display_t * disp);
+ 
++/**
++ * Turn the picture on the panel, for a panel mounted the other way round or on
++ * its side. The driver renders in DIRECT mode straight into the scanout
++ * buffers, which LVGL cannot rotate, so a rotated display renders into a
++ * buffer of its own and every flush turns the whole frame into the next
++ * scanout buffer. LVGL's pointer transform follows lv_display_set_rotation(),
++ * so touch and picture agree. Call after lv_linux_drm_set_file().
++ * @param disp      a display from lv_linux_drm_create()
++ * @param rotation  LV_DISPLAY_ROTATION_0/90/180/270; 90 and 270 swap the
++ *                  logical resolution
++ * @return          0, or -1 when the display has no buffers or memory ran out
++ */
++int lv_linux_drm_set_rotation(lv_display_t * disp, lv_display_rotation_t rotation);
++
+ /**********************
+  *      MACROS
+  **********************/
