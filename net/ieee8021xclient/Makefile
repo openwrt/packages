@@ -18,7 +18,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/ieee8021xclient
   SECTION:=net
   CATEGORY:=Network
-  MAINTAINER:=David Yang <mmyangfl@gmail.com>
+  MAINTAINER:=David Yang <mmyangfl@gmail.com>, Zhao Kunyu <kunxiaodan@gmail.com>
   TITLE:=Wired 802.1x client config support
   DEPENDS:=@(PACKAGE_wpa-supplicant||PACKAGE_wpad)
   PKGARCH:=all
