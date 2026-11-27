@@ -1,0 +1,19 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Abe <github@mab.wien>
+Date: Sat, 12 Sep 2026 00:00:00 +0200
+Subject: [PATCH] accelcomp ccflags bridge
+
+--- a/quickassist/utilities/downloader/Target_CoreLibs/halAe/accelcomp/Makefile
++++ b/quickassist/utilities/downloader/Target_CoreLibs/halAe/accelcomp/Makefile
+@@ -82,6 +82,11 @@ ifeq ($(CCMODE),DEBUG)
+ EXTRA_CFLAGS += -g -D_DBG_PRINT
+ endif
+ 
++# Modern Kbuild (~6.13+) no longer folds the legacy EXTRA_CFLAGS name into
++# ccflags-y automatically, and this Makefile doesn't include the central
++# env file that bridges it elsewhere - bridge it explicitly here too.
++ccflags-y += $(EXTRA_CFLAGS)
++
+ lib-y := halAeChip.o \
+          ../icp_firml_interface.o ../halAeDrv.o ../halAe.o ../halAeHw.o ../halOSKern.o ../halMemScrub.o\
+          ../../uclo/uclo_exp.o ../../uclo/uclo.o ../../uclo/uclo_hw.o \
