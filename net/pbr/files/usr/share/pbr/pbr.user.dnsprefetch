@@ -1,21 +1,236 @@
 #!/bin/sh
 # When using pbr with dnsmasq's nft set support, a domain-based policy will not take effect until
 # the remote domain name has been resolved by dnsmasq. Resolve all domain names in pbr policies in advance.
+#
+# REQUIRES THE UCODE IMPLEMENTATION OF PBR (1.2.3 AND LATER). It will not work
+# on the shell implementation (1.2.2 and earlier), which ships its own copy of
+# this file -- use that one there.
+#
+# WHEN IT RUNS: once per full pbr run -- start, restart and reload. Not on the
+# on_boot pass, not on a start deferred because the uplink is down, and not on
+# stop. Overlapping runs are harmless: each detached copy makes its own
+# $$-suffixed fifo.
+#
+# An interface event (a wan flap) does NOT run it. That path reloads the
+# interfaces and returns; user files, the ruleset rewrite and the resolver step
+# all sit in the branch it skips. It only prefetches when pbr promotes the event
+# to a full start, which it does when its ruleset is not installed, when procd
+# reports no gateways, or when the last run recorded errors. So the sets are
+# refilled after the reload that follows a flap, not by the flap itself.
+#
+# There is no timer of its own. Nothing re-resolves a name once its TTL expires
+# and dnsmasq drops it from the cache, so a set keeps the addresses it got
+# until the next pbr run. That is inherent to a prefetch rather than a
+# refresher -- see REFRESHING ON A TIMER below if a domain rotates its
+# addresses faster than you reload pbr.
+#
+# ---------------------------------------------------------------------------
+# REFRESHING ON A TIMER (cron)
+# ---------------------------------------------------------------------------
+# Run this file from cron to rebuild the sets periodically. Once a night, at an
+# hour nobody is using the network, is the sensible default:
+#
+#   0 4 * * * PBR_DNSPREFETCH_MODE=standalone /bin/sh /usr/share/pbr/pbr.user.dnsprefetch
+#
+# Use a shorter interval only if your domains rotate faster than that, and see
+# the note on the gap below before putting one in the middle of the working
+# day -- `0 */6 * * *` would run at 06:00, 12:00 and 18:00 as well as at
+# midnight.
+#
+# PBR_DNSPREFETCH_MODE=standalone is required, and is what makes the file
+# runnable on its own: without it the script waits for a pbr run that is not
+# happening -- it watches pbr's ruleset file for a rewrite, gives up after
+# about three minutes and resolves nothing. It also flushes dnsmasq's cache,
+# which a run outside pbr has to do itself: dnsmasq only writes to an nft set
+# when it takes an answer from upstream, so lookups served from its cache would
+# add nothing at all. A standalone run takes a second or two.
+#
+# The variable says how the script is being RUN, not what it does to the sets;
+# rebuilding them is the separate option below.
+#
+# On its own a standalone run only TOPS UP the sets. An address dnsmasq added
+# is never removed by another lookup, so a domain that has changed address
+# leaves the old one behind and the set only grows: harmless until that address
+# is reused by somebody else, at which point traffic to it still takes this
+# policy's route. To have each run rebuild the sets from the answers that are
+# current now, set _dnsprefetch_flush_sets='1' where it is defined further down
+# in this file. That empties the domain sets immediately before resolving them
+# again. It touches ONLY the sets dnsmasq populates -- the names are read from
+# pbr's own dnsmasq file -- never the pbr_*_user sets, which hold whatever your
+# other custom user files put there and which nothing here would put back. It
+# takes effect in standalone mode only: a start or a reload deliberately keeps
+# each set's addresses unless that policy's domain list changed, so that a
+# client still holding a cached answer is not de-routed by a reload it did not
+# ask for.
+#
+# Note what a rebuild costs on a policy that leans on subdomain matching. A set
+# also holds addresses for names you never listed, because dnsmasq matches by
+# suffix: a policy on example.com picks up www.example.com the moment a client
+# resolves it. The rebuild clears those too, and only the names you listed are
+# re-resolved, so they come back when a client next asks for them and not
+# before. If a particular subdomain matters, add it to the policy next to the
+# parent: it is then resolved in advance like any other listed name and comes
+# back with the rest. Otherwise nft_set_timeout is the gentler tool there -- it
+# ages such entries out on their own clock rather than clearing them all at
+# once.
+#
+# For the second or two between the flush and the lookups that refill the sets,
+# a domain policy matches nothing and new connections take the default route.
+# Connections already established keep the route they have. It is a small gap,
+# but it is a real one: a connection opened in that window goes out of the
+# wrong interface and stays there for its lifetime. That is why a quiet hour is
+# worth more than a short interval -- at 04:00 nobody notices, at 14:00 someone
+# might. There is no point running it faster than the records actually change.
+#
+# This pairs with the nft_set_timeout option rather than replacing it. Elements
+# a rebuild puts back are new, so their timeout starts again -- which a plain
+# re-add does NOT do, as nft ignores the timeout on an add that lands on an
+# element already in the set. With a rebuild on a timer, nft_set_timeout is a
+# backstop for whatever it misses rather than the thing doing the work.
+#
+# pbr sources this file from a bare shell that exports none of the service's
+# internal variables, so everything needed is defined below. In particular do
+# not reintroduce $packageName, $packageDnsmasqFile or $resolverSetSupported:
+# they are unset here and the script would silently do nothing. (The shell
+# implementation sourced user files into its own shell, where they were in
+# scope; the ucode service runs them in a child process, which drops them.)
 # shellcheck disable=SC3043
 
-(
+# pbr waits for every process this file leaves running -- a plain "&" is not
+# enough, and a background job that waits for pbr to finish deadlocks it (a 60s
+# wait here made "/etc/init.d/pbr reload" take 62s instead of 3s). So the first
+# pass records the pbr ucode worker's pid, re-executes this file in its own
+# session and returns immediately. The detached copy waits for that worker to
+# exit: only then have fw4 reload, set cleanup and pbr's resolver restart/cache
+# flush request all completed. dnsmasq may still be applying that request, so
+# its readiness is probed below. Watching the nft file is too early because pbr
+# copies it before running fw4; a fixed delay raced dnsmasq on large setups.
+#
+# The service sources this file, so it cannot discover its own path ($0 is the
+# sourcing shell). Update this if you install it somewhere else.
+
+_dnsprefetch_self='/usr/share/pbr/pbr.user.dnsprefetch'
+
+# Optional: empty pbr's domain sets before re-resolving, so the run rebuilds
+# them from the answers that are current now instead of adding to whatever is
+# already there. Off by default: a prefetch is additive and cannot remove an
+# address, which is why a domain set otherwise only grows. Set to '1' to
+# enable.
+#
+# It takes effect in standalone mode ONLY (see PBR_DNSPREFETCH_MODE below). A
+# start or a reload deliberately keeps each set's addresses unless that
+# policy's own domain list changed, so that a client still holding a cached
+# answer is not de-routed by a reload it did not ask for; flushing there would
+# undo that. A timed run is the opposite case: it exists to rebuild the sets
+# and it re-resolves every name immediately.
+
+_dnsprefetch_flush_sets='0'
+
+# Standalone mode, for a cron job -- see REFRESHING ON A TIMER above. This says
+# how the script is being run; it does not by itself rebuild anything:
+#   0 4 * * * PBR_DNSPREFETCH_MODE=standalone /bin/sh /usr/share/pbr/pbr.user.dnsprefetch
+# There is no pbr run to wait for and nothing is waiting on us, so act as the
+# detached child straight away and skip the barrier below. Without this the
+# script falls back to waiting for pbr's ruleset file to be rewritten, which
+# never happens outside a pbr run: it spins for ~180s and aborts having
+# resolved nothing.
+[ "$PBR_DNSPREFETCH_MODE" = 'standalone' ] && PBR_DNSPREFETCH_CHILD='1'
+
+if [ -z "$PBR_DNSPREFETCH_CHILD" ]; then
+	if [ -f "$_dnsprefetch_self" ]; then
+		# $PPID is pbr's ucode worker: the service hands the user-file wrapper
+		# to /bin/sh -c, so the shell sourcing this file is a direct child of the
+		# worker, and sourcing does not fork. Confirm it rather than trust it --
+		# run by hand, $PPID is a login shell that may never exit.
+		_dnsprefetch_parent="$PPID"
+		tr '\0' ' ' < "/proc/$PPID/cmdline" 2>/dev/null |
+			grep -q '/lib/pbr/cli\.uc' || _dnsprefetch_parent=''
+		PBR_DNSPREFETCH_CHILD=1 \
+		PBR_DNSPREFETCH_PARENT_PID="$_dnsprefetch_parent" \
+		setsid /bin/sh "$_dnsprefetch_self" </dev/null >/dev/null 2>&1 &
+	else
+		# The only failure this script cannot report from the detached copy,
+		# since there is nothing to detach. pbr logs that it ran the file but
+		# never what the file did, so without this line a prefetch that was
+		# installed somewhere else is skipped in silence -- which is exactly
+		# how this script used to fail.
+		logger -t "pbr [$$]" "WARNING: $_dnsprefetch_self not found, domain names in policies not resolved [✗]"
+	fi
+else
+	packageName='pbr'
+	packageDnsmasqFile="/var/run/${packageName}.dnsmasq"
+	packageNftFile="/usr/share/nftables.d/ruleset-post/30-${packageName}.nft"
 	pipe_nslookup="/var/run/${packageName}.nslookup.$$"
+	_WARNING_='WARNING:'
+	__OK__='[✓]'
+	__FAIL__='[✗]'
 
 	output() {
 		local msg="$*"
 
 		msg="$(printf '%b' "$msg" | sed 's/\x1b\[[0-9;]*m//g')"
-		# shellcheck disable=SC2154
 		logger -t "$packageName [$$]" "$(printf '%b' "$msg")"
 	}
 
+	# Every timeout below is an iteration count, not a wall-clock second: each
+	# turn costs its own work plus the 1s sleep, so a failing nslookup makes a
+	# turn cost several seconds. They are sized for the slowest router that
+	# might run this, and being generous is free -- each loop returns the
+	# moment its condition is met, so a fast router never spends the budget.
+	# Only a genuine failure waits it out, and then the abort is logged.
+	pbr_run_finished() {
+		local timeout_pbr_run='300'
+		local pbr_pid="$1"
+
+		case "$pbr_pid" in
+			''|*[!0-9]*|0|1) return 2 ;;
+		esac
+
+		output "Waiting for $packageName run (pid $pbr_pid) to finish..."
+		while kill -0 "$pbr_pid" 2>/dev/null; do
+			[ "$timeout_pbr_run" -eq '0' ] && return 1
+			sleep '1' && timeout_pbr_run="$((timeout_pbr_run - 1))"
+		done
+	}
+
+	# The mtime fallback is used only when there is no usable pbr worker pid to
+	# follow, such as an explicitly forced child invocation. Normal service starts
+	# never take this path. Return the ruleset's modification time, or the empty
+	# string before the first one exists.
+	nft_stamp() {
+		[ -f "$packageNftFile" ] || return 0
+		date -r "$packageNftFile" +%s 2>/dev/null
+	}
+
+	# nft_file.apply('main') rewrites the ruleset on every start and reload, so
+	# its mtime changing means pbr has installed the new generation and the sets
+	# are live. The lock file looks like a tidier signal but is useless here:
+	# reload_service() never calls service_started(), so it keeps the pid it was
+	# given at boot. Waiting on a dnsmasq restart is no good either -- a reload
+	# only restarts dnsmasq when /var/run/pbr.dnsmasq changed, and takes the
+	# quieter SIGHUP cache flush otherwise.
+	nft_file_installed() {
+		local timeout_nft_file='180'
+		local stamp_before="$1"
+
+		while [ "$(nft_stamp)" = "$stamp_before" ]; do
+			[ "$timeout_nft_file" -eq '0' ] && return 1
+			sleep '1' && timeout_nft_file="$((timeout_nft_file - 1))"
+		done
+	}
+
+	pbr_ruleset_fallback_finished() {
+		local settle='15'
+		local stamp_before
+
+		output "$packageName worker pid unavailable, using ruleset fallback..."
+		stamp_before="$(nft_stamp)"
+		nft_file_installed "$stamp_before" || return 1
+		sleep "$settle"
+	}
+
 	nft_ready() {
-		local timeout_nft='10'
+		local timeout_nft='30'
 
 		while ! /usr/sbin/nft list sets 'inet' | grep -q "pbr"; do
 			[ "$timeout_nft" -eq '0' ] && {
@@ -25,82 +240,218 @@
 		done
 	}
 
+	# A SIGHUP delivered before dnsmasq installs its handler terminates it --
+	# that is the default action for the signal -- and pbr may still be
+	# restarting it when we get here. Answering a query proves it is past
+	# initialisation and safe to signal.
+	#
+	# The budget has to cover a boot, not a reload. On a boot pbr can spend
+	# tens of seconds between installing the ruleset (which releases the wait
+	# below) and restarting dnsmasq last of all -- a policy that fetches a URL
+	# is enough to do it. One observed boot spent 33s of a 30-iteration budget
+	# here and only got through because a failing nslookup costs more than the
+	# 1s sleep. Waiting longer is free: the loop exits as soon as dnsmasq
+	# answers, and nothing else is waiting on it.
+	#
+	# Any reply proves that, including a negative one -- so do not test the exit
+	# status. busybox nslookup returns 1 for NXDOMAIN exactly as it does for a
+	# resolver that never answered, and 'localhost' comes from /etc/hosts, which
+	# dnsmasq does not read when its nohosts option is set. Waiting for rc=0
+	# would then never succeed and the prefetch would abort against a perfectly
+	# healthy resolver. A DNS response code in the output means dnsmasq is
+	# serving; a resolver that is not there prints 'Connection refused' and
+	# 'connection timed out' instead, with no response code, so the match stays
+	# case-sensitive.
+	dnsmasq_ready() {
+		local timeout_dnsmasq='90'
+		local reply
+
+		while :; do
+			reply="$(nslookup 'localhost' 127.0.0.1 2>&1)" && return 0
+			printf '%s' "$reply" | grep -qE 'NXDOMAIN|SERVFAIL|REFUSED' && return 0
+			[ "$timeout_dnsmasq" -eq '0' ] && return 1
+			sleep '1' && timeout_dnsmasq="$((timeout_dnsmasq - 1))"
+		done
+	}
+
+	# Empty the sets that the lookups below will refill, and only those. The
+	# names come out of the same file those lookups are driven from, so this
+	# cannot reach a set dnsmasq does not populate -- in particular not the
+	# per-interface pbr_*_user sets, which hold whatever a custom user file put
+	# there and which nothing here would put back.
+	#
+	#   nftset=/example.com/4#inet#fw4#pbr_wan_4_dst_ip_cfgXXXXXX,6#inet#fw4#...
+	#
+	# One spec per comma-separated field, optionally prefixed 4#/6#, so table
+	# and set are always the last two '#'-separated fields. The line ends in
+	# ' # <policy name>' -- several names on a line pbr has merged -- and a
+	# name may contain a slash ('Plex/Emby Remote Servers' ships in the default
+	# config). So the comment has to go FIRST: stripping to the last '/' before
+	# it would cut inside the name and lose every set on the line. A spec has
+	# no space before its '#', so ' #' can only start the comment.
+	#
+	# FLUSH, never delete: the set object has to survive, or dnsmasq's nftset=
+	# target no longer exists and every add it attempts fails until pbr
+	# rewrites the ruleset.
+	#
+	# The window between this and the lookups that refill the sets is a few
+	# seconds in which a domain policy matches nothing and new connections take
+	# the default route, so the caller runs the two back to back. Established
+	# connections keep their existing route.
+	flush_pbr_sets() {
+		local entry flushed='0' name sets table
+		local IFS='
+'
+
+		sets="$(sed 's| #.*$||; s|.*/||; s|[[:space:]].*$||' "$packageDnsmasqFile" 2>/dev/null |
+			tr ',' '\n' |
+			awk -F'#' 'NF >= 3 && $NF != "" { print $(NF - 1)" "$NF }' |
+			sort -u)"
+
+		[ -z "$sets" ] && {
+			output "$_WARNING_ No $packageName domain sets found to flush"
+			return 1
+		}
+
+		# Deliberately not a 'while read' fed by a pipeline: that runs in a
+		# subshell and the count never comes back.
+		for entry in $sets; do
+			table="${entry%% *}"
+			name="${entry#* }"
+			/usr/sbin/nft flush set 'inet' "$table" "$name" 2>/dev/null &&
+				flushed="$((flushed + 1))"
+		done
+
+		output "Flushed $flushed $packageName domain set(s) before resolving"
+	}
+
 	run_nslookup() {
 		local output reason
 
 		output="$(nslookup "$1" 127.0.0.1)" && { echo '0' > "$pipe_nslookup"; return; }
 		reason="$(printf '%s' "$output" | grep -Eo -m 1 'NXDOMAIN|SERVFAIL|timed out')" && \
-		output "$_WARNING_ Lookup failed for $domain ($reason)"
-		echo '1' > "$pipe_nslookup"
+		output "$_WARNING_ Lookup failed for $1 ($reason)"
+		[ "$reason" = 'NXDOMAIN' ] && echo '2' > "$pipe_nslookup" || echo '1' > "$pipe_nslookup"
 	}
 
 	nslookup_tracker() {
-		local entries errors
+		local entries errors hard_errors result
 
 		while read -r rc; do
 			entries="$((entries + 1))"
-			[ "$rc" -eq '1' ] && errors="$((errors + 1))"
+			[ "$rc" -ne '0' ] && errors="$((errors + 1))"
+			[ "$rc" -eq '1' ] && hard_errors="$((hard_errors + 1))"
 		done < "$pipe_nslookup"
 
-		output "Finished resolving $entries domain names in policies (${errors:-0} failed) $__OK__"
+		# NXDOMAIN is a valid DNS reply and may be permanent or intentional. Keep
+		# counting it without failing a partly successful run. Timeouts, SERVFAIL
+		# and other hard errors fail immediately; an all-NXDOMAIN run also fails
+		# because it did not resolve a single domain into a set.
+		result="$__OK__"
+		[ "${hard_errors:-0}" -ne '0' ] && result="$__FAIL__"
+		[ "${entries:-0}" -gt '0' ] && [ "${errors:-0}" -eq "$entries" ] && result="$__FAIL__"
+		output "Finished resolving $entries domain names in policies (${errors:-0} failed) $result"
 	}
 
 	main() {
-		local pipe_ubus="/var/run/${packageName}.ubus.$$"
-		local timeout_dnsmasq='20'
 		local msg_abort='domain names in policies not resolved'
-		local dnsmasq_restarted ubus_listen_pid event domain entries
+		local barrier_rc='2'
+		local flush_dns_cache='0'
+		local domain
 		local rc='0'
 
-		[ -n "$resolverSetSupported" ] || {
+		# $resolverSetSupported is not available here; read the setting pbr
+		# itself acts on instead. Anything but dnsmasq.nftset means there are
+		# no sets for a prefetch to fill.
+		[ "$(uci -q get "${packageName}.config.resolver_set")" = 'dnsmasq.nftset' ] || {
 			output "Resolver set support disabled, $msg_abort $__FAIL__"
-			rc='1'
-			return "$rc"
+			return 1
 		}
-		mkfifo "$pipe_ubus"
-		mkfifo "$pipe_nslookup"
-		# The subshell may be necessary for "$!" to expand to a correct value
-		( exec ubus listen -m 'ubus.object.add' > "$pipe_ubus" ) &
-		ubus_listen_pid="$!"
 
-		# shellcheck disable=SC3045
-		while read -t "$timeout_dnsmasq" -r event; do
-			echo "$event" | grep -q "dnsmasq.dns" || continue
-			dnsmasq_restarted='1'
-			# shellcheck disable=SC2154
-			[ -f "$packageDnsmasqFile" ] || {
-				output "File $packageDnsmasqFile not found, $msg_abort $__FAIL__"
+		# Nothing else cleans this up if the prefetch is killed part-way.
+		trap 'rm -f "$pipe_nslookup"' EXIT HUP INT TERM
+		mkfifo "$pipe_nslookup"
+
+		if [ "$PBR_DNSPREFETCH_MODE" = 'standalone' ]; then
+			# Nothing to wait for: no pbr run is in progress, the ruleset is
+			# already installed and its mtime will not move. The cache flush
+			# below is not optional here -- see the comment on it.
+			barrier_rc='0'
+			flush_dns_cache='1'
+		elif [ -n "$PBR_DNSPREFETCH_PARENT_PID" ]; then
+			pbr_run_finished "$PBR_DNSPREFETCH_PARENT_PID"
+			barrier_rc="$?"
+		fi
+
+		case "$barrier_rc" in
+			0) ;;
+			2)
+				flush_dns_cache='1'
+				pbr_ruleset_fallback_finished || {
+					output "Timed out waiting for $packageName to install its ruleset, $msg_abort $__FAIL__"
+					rc='1'
+				}
+				;;
+			*)
+				output "Timed out waiting for $packageName to finish its run, $msg_abort $__FAIL__"
 				rc='1'
-				break
-			}
-			nft_ready || {
-				output "Pbr's nft sets not found, $msg_abort $__FAIL__"
+				;;
+		esac
+
+		[ "$rc" -eq '0' ] && [ ! -f "$packageDnsmasqFile" ] && {
+			output "File $packageDnsmasqFile not found, $msg_abort $__FAIL__"
+			rc='1'
+		}
+		[ "$rc" -eq '0' ] && ! nft_ready && {
+			output "Pbr's nft sets not found, $msg_abort $__FAIL__"
+			rc='1'
+		}
+
+		[ "$rc" -eq '0' ] && ! dnsmasq_ready && {
+			output "Dnsmasq is not answering, $msg_abort $__FAIL__"
+			rc='1'
+		}
+
+		# On the parent-pid path pbr has already restarted dnsmasq or sent the
+		# cache-flushing HUP before its worker exited, so repeating it is redundant.
+		# The fallback cannot make that guarantee, so retain the flush there. A
+		# standalone run ALWAYS needs it: dnsmasq adds to an nftset only when it
+		# receives a reply from upstream (extract_addresses(), called from
+		# process_reply()), never when it answers from its own cache. Without the
+		# flush the lookups below return cached answers and add nothing at all --
+		# which with set flushing enabled would leave the sets empty. Wait
+		# one second before probing to ensure the first answer cannot race ahead of
+		# dnsmasq handling the signal.
+		[ "$rc" -eq '0' ] && [ "$flush_dns_cache" -eq '1' ] && {
+			killall -q -s HUP dnsmasq
+			sleep '1'
+			! dnsmasq_ready && {
+				output "Dnsmasq is not answering after cache flush, $msg_abort $__FAIL__"
 				rc='1'
-				break
 			}
+		}
+
+		# Flushing takes out the addresses that are still correct as well, so it
+		# must be immediately followed by the lookups that put them back.
+		# Standalone mode only -- see the option's own comment at the top.
+		[ "$rc" -eq '0' ] && [ "$_dnsprefetch_flush_sets" = '1' ] &&
+			[ "$PBR_DNSPREFETCH_MODE" = 'standalone' ] && flush_pbr_sets
+
+		[ "$rc" -eq '0' ] && {
 			nslookup_tracker & exec 3>"$pipe_nslookup"
 			(
 				output "Resolving domain names in policies..."
 				while IFS='/' read -r _ domain _; do
 					[ -n "$domain" ] && run_nslookup "$domain" &
-					entries="$((entries + 1))"
 				done < "$packageDnsmasqFile"
 				wait
 			)
 			exec 3>&-
-			break
-		done < "$pipe_ubus"
-
-		[ -n "$dnsmasq_restarted" ] || {
-			output "Dnsmasq hasn't restarted, $msg_abort $__FAIL__"
-			rc='1'
 		}
-		kill "$ubus_listen_pid"
-		rm -f "$pipe_ubus"
+
 		rm -f "$pipe_nslookup"
 		return "$rc"
 	}
-	
+
 	main
-	return "$?"
-) &
+fi
