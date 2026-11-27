@@ -250,6 +250,19 @@ proto_ieee8021xclient_setup() {
 		return 1
 	fi
 
+	# Up means "supplicant configured", not "port authorized": the EAP
+	# exchange runs after config_add, and a bad password, an untrusted
+	# certificate or a re-authentication failure still leaves the link up.
+	proto_init_update "$ifname" 1
+	if ! proto_send_update "$cfg"; then
+		# Nothing retries the update, so undo the setup.
+		_ieee8021xclient_config_remove "$ifname" ||
+			_ieee8021xclient_log "cannot remove $ifname after a failed proto_send_update (interface $cfg)"
+		_ieee8021xclient_setup_failed "$cfg" 'PROTO_UPDATE_FAILED' \
+			"cannot report $ifname up (interface $cfg)"
+		return 1
+	fi
+
 	# Record the device only after everything succeeded.
 	if [ -n "$cfg" ]; then
 		echo "$ifname" > "/var/run/ieee8021xclient-$cfg.ifname"
