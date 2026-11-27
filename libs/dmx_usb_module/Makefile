@@ -10,7 +10,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=dmx_usb_module
 PKG_VERSION:=19.12.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/lowlander/dmx_usb_module/tar.gz/V$(PKG_VERSION)?
@@ -38,18 +38,8 @@ define KernelPackage/usb-serial-dmx_usb_module/description
 	design and produce its own USB DMX Dongle without paying any licenses.
 endef
 
-DMX_MAKE_OPTS:= -C $(PKG_BUILD_DIR) \
-	PATH="$(TARGET_PATH)" \
-	ARCH="$(LINUX_KARCH)" \
-	CROSS_COMPILE="$(TARGET_CROSS)" \
-	TARGET="$(HAL_TARGET)" \
-	TOOLPREFIX="$(KERNEL_CROSS)" \
-	TOOLPATH="$(KERNEL_CROSS)" \
-	KERNELPATH="$(LINUX_DIR)" \
-	LDOPTS=" "
-
 define Build/Compile
-  $(MAKE) $(DMX_MAKE_OPTS) M=$(PKG_BUILD_DIR)
+	$(KERNEL_MAKE) M="$(PKG_BUILD_DIR)" modules
 endef
 
 $(eval $(call KernelPackage,usb-serial-dmx_usb_module))
