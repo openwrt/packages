@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (c) 2016-2026 Dirk Brenken <dev@brenken.org>
 
-import { readfile, writefile, rename, unlink, stat, access, mkdir, realpath, popen, open } from 'fs';
+import { readfile, writefile, rename, unlink, stat, lstat, access, mkdir, realpath, popen, open } from 'fs';
 import { cursor } from 'uci';
 import { connect as ubus_connect } from 'ubus';
 import { RUNDIR, FETCH_TIMEOUT, global as cfg_global, typed, words, fetch_args, capture, have } from 'travelmate.common';
@@ -27,6 +27,7 @@ export const FILES = {
 	rtfile: RUNDIR + '/travelmate.runtime.json',
 	revivefile: RUNDIR + '/travelmate.revive',
 	rebindfile: RUNDIR + '/travelmate.rebind',
+	servicesfile: RUNDIR + '/travelmate.services',
 	actionfile: RUNDIR + '/travelmate.action'
 };
 
@@ -80,6 +81,11 @@ const NOTED_MAX = 64;
 
 // seconds a captive portal login script may run, the daemon waits for it
 const LOGIN_TIMEOUT = 90;
+
+// uplink services: seconds per init script call, seconds they stay down at
+// most while the captive portal login is pending
+const SERVICES_TIMEOUT = 30;
+const SERVICES_HOLD = 300;
 
 function dash(v) {
 	return length('' + (v ?? '')) ? '' + v : '-';
@@ -139,6 +145,39 @@ function network_of(cidr) {
 	}
 
 	return join('.', out);
+}
+
+// an ipv4 network 'a.b.c.d/len' as [ number, prefix length ], null if none
+function ip4_net(cidr) {
+	let m = match(cidr ?? '', /^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)\/([0-9]+)$/);
+
+	if (!m || +m[5] > 32)
+		return null;
+
+	let n = 0;
+
+	for (let i = 1; i <= 4; i++) {
+		if (+m[i] > 255)
+			return null;
+
+		n = n * 256 + +m[i];
+	}
+
+	return [ n, +m[5] ];
+}
+
+// two ipv4 networks overlap if the shorter prefix covers both of them,
+// e.g. a lan /16 and an uplink /24 inside of it
+export function overlaps(a, b) {
+	let x = ip4_net(a), y = ip4_net(b);
+
+	if (!x || !y)
+		return false;
+
+	let len = min(x[1], y[1]);
+	let mask = len ? ((0xffffffff << (32 - len)) & 0xffffffff) : 0;
+
+	return (x[0] & mask) == (y[0] & mask);
 }
 
 export function create(io, files) {
@@ -552,7 +591,7 @@ export function create(io, files) {
 			if (i.interface == iface) {
 				let a = i['ipv4-address']?.[0];
 
-				return (a?.address != null) ? network_of(a.address + '/' + a.mask) : '';
+				return (a?.address != null) ? network_of(a.address + '/' + a.mask) + '/' + a.mask : '';
 			}
 
 		return '';
@@ -570,8 +609,8 @@ export function create(io, files) {
 		if (!length(T.lannet))
 			T.lannet = subnet_of(dump, length(cfg('laniface')) ? cfg('laniface') : 'lan');
 
-		if (length(T.lannet) && length(wan) && T.lannet == wan)
-			log('info', sprintf("uplink network '%s' conflicts with router LAN network, please adjust your network settings", wan));
+		if (overlaps(T.lannet, wan))
+			log('warn', sprintf("uplink network '%s' overlaps with router LAN network '%s', please adjust your network settings", wan, T.lannet));
 
 		T.subnet = sprintf('%s (lan: %s)', dash(wan), dash(T.lannet));
 		T.subnet_last = conn_state;
@@ -824,9 +863,228 @@ export function create(io, files) {
 		return rc;
 	}
 
+	// a message that is logged as info only once, then as debug
+	function log_once(msg) {
+		if (T.noted[msg]) {
+			log('debug', msg);
+			return;
+		}
+
+		if (length(T.noted) >= NOTED_MAX)
+			T.noted = {};
+
+		T.noted[msg] = true;
+		log('info', msg);
+	}
+
+	// the init script of an uplink service: a plain executable file in
+	// /etc/init.d, no symlink that could point anywhere else
+	function init_script(name) {
+		let path = '/etc/init.d/' + name;
+
+		if (!match(name ?? '', /^[A-Za-z0-9_.-]+$/) || lstat(path)?.type != 'file' || access(path, 'x') != true)
+			return null;
+
+		return path;
+	}
+
+	// services the uplinks may take down, 'trm_uplinkservices' entries
+	// '<service>' or '<service>:<down action>:<up action>' in list order;
+	// travelmate itself never, its stop would kill the calling daemon
+	function services_allowed() {
+		let out = [];
+
+		for (let e in cfg('uplinkservices')) {
+			let p = split(e, ':'), name = p[0], custom = (length(p) == 3);
+			let down = custom ? p[1] : 'stop', up = custom ? p[2] : 'start', msg = null;
+
+			if ((length(p) != 1 && !custom) || !match(name, /^[A-Za-z0-9_.-]+$/) ||
+			    !match(down, /^[a-z_]+$/) || !match(up, /^[a-z_]+$/))
+				msg = 'invalid entry';
+			else if (name == 'travelmate')
+				msg = 'service not allowed';
+			else if (!init_script(name))
+				msg = 'no init script (or a symlink)';
+
+			if (msg) {
+				log_once(sprintf("uplink service '%s' skipped, %s", e, msg));
+				continue;
+			}
+
+			push(out, { name, down, up, custom });
+		}
+
+		return out;
+	}
+
+	// uplink services of the current uplink: its selection out of the allowed
+	// ones, in the order of 'trm_uplinkservices'
+	function services_list() {
+		let raw = null;
+
+		for (let u in uplinks())
+			if (u['.name'] == T.uplinkcfg)
+				raw = u.uplink_services;
+
+		let sel = filter((type(raw) == 'array') ? raw : words(raw), length);
+
+		if (!length(sel))
+			return [];
+
+		let allowed = services_allowed();
+
+		for (let n in sel)
+			if (!length(filter(allowed, (e) => e.name == n)))
+				log_once(sprintf("uplink service '%s' skipped, not listed in 'trm_uplinkservices'", n));
+
+		return filter(allowed, (e) => e.name in sel);
+	}
+
+	// a procd service with a running instance
+	function service_running(name) {
+		let s = io.ubus()?.call('service', 'list', { name })?.[name];
+
+		for (let k, i in s?.instances ?? {})
+			if (i?.running)
+				return true;
+
+		return false;
+	}
+
+	function services_text(list, action) {
+		return join(' ', map(list, (e) => e.custom ? sprintf('%s(%s)', e.name, e[action]) : e.name));
+	}
+
+	// state of the uplink services of the current connection, null if none
+	function services_read() {
+		let s = null;
+
+		try { s = json(readfile(files.servicesfile) ?? ''); } catch (e) { }
+
+		return (type(s) == 'object') ? s : null;
+	}
+
+	function services_write(s) {
+		writefile(files.servicesfile, sprintf('%J\n', s));
+	}
+
+	// a dnsmasq instance that still forwards to local resolvers only can't
+	// resolve the captive portal, e.g. with a stopped stubby
+	function services_dns_check() {
+		let local = false;
+
+		cursor().foreach('dhcp', 'dnsmasq', (s) => {
+			if (s.noresolv != '1')
+				return;
+
+			let srv = filter((type(s.server) == 'array') ? s.server : words(s.server), (v) => substr(v, 0, 1) != '/');
+
+			if (!length(filter(srv, (v) => !match(v, /^(127\.|::1)/))))
+				local = true;
+		});
+
+		if (local)
+			log('info', 'dnsmasq still forwards to a local resolver only, captive portal dns may fail');
+	}
+
+	// before the captive portal login: take down the running uplink services
+	// in reverse list order, once per uplink connection; true if any went down
+	function services_down(sta_id) {
+		if (services_read() != null)
+			return false;
+
+		let list = services_list(), down = [];
+
+		if (!length(list))
+			return false;
+
+		for (let i = length(list) - 1; i >= 0; i--) {
+			let e = list[i];
+
+			// a custom action is called as configured, stop only if running
+			if (!e.custom && !service_running(e.name))
+				continue;
+
+			let path = init_script(e.name);
+
+			if (!path)
+				continue;
+
+			let rc = io.exec([ path, e.down ], SERVICES_TIMEOUT);
+
+			if (rc != 0)
+				log('info', sprintf("uplink service '%s' action '%s' returned rc '%d'", e.name, e.down, rc));
+
+			unshift(down, e);
+		}
+
+		services_write({ state: length(down) ? 'down' : 'done', uplink: T.uplinkcfg, sta_id, since: io.now(), services: down });
+
+		if (!length(down))
+			return false;
+
+		log('info', sprintf("uplink services taken down for the captive portal login '%s': %s", sta_id, services_text(down, 'down')));
+		services_dns_check();
+
+		return true;
+	}
+
+	// bring the uplink services up again in list order, why: the reason
+	function services_up(why) {
+		let s = services_read();
+
+		if (s?.state != 'down')
+			return;
+
+		// the state file is checked like the config, an entry that doesn't
+		// pass is dropped
+		let up = filter(s.services ?? [], (e) => init_script(e?.name) && match(e?.up ?? '', /^[a-z_]+$/));
+
+		for (let e in up) {
+			let rc = io.exec([ init_script(e.name), e.up ], SERVICES_TIMEOUT);
+
+			if (rc != 0)
+				log('info', sprintf("uplink service '%s' action '%s' returned rc '%d'", e.name, e.up, rc));
+		}
+
+		s.state = 'done';
+		services_write(s);
+		log('info', sprintf("uplink services brought up again (%s): %s", why, services_text(up, 'up')));
+	}
+
+	// every run cycle, after the vpn handling: up again once the uplink has
+	// internet, or after SERVICES_HOLD seconds without
+	function services_check() {
+		let s = services_read();
+
+		if (s?.state != 'down')
+			return;
+
+		if (conn_net() == 'net ok')
+			services_up('captive portal login done');
+		else if (io.now() - (s.since ?? 0) >= SERVICES_HOLD)
+			services_up(sprintf('captive portal login not completed within %d minutes', SERVICES_HOLD / 60));
+	}
+
+	// the uplink connection ended: services up again, a new connection gets
+	// a new chance
+	function services_drop(why) {
+		services_up(why);
+		unlink(files.servicesfile);
+	}
+
 	// the net and captive portal check of an up uplink, ends the poll
 	function check_net(status, sta_id, quality) {
 		let r = net();
+
+		// no internet or a captive portal: take the uplink services down and
+		// probe again; still no portal means they were not the cause
+		if (r.net != 'ok' && services_down(sta_id)) {
+			r = net();
+
+			if (r.net == 'nok')
+				services_up('no captive portal');
+		}
 
 		if (cfg('captive')) {
 			let domain;
@@ -948,7 +1206,7 @@ export function create(io, files) {
 				case 'probe': ifname = s.ifname; quality = s.quality; break;
 				case 'ifstatus': T.ifstatus = s.value; break;
 				case 'log': log(s.class, s.msg); break;
-				case 'vpn': vpn_handle('disable'); break;
+				case 'vpn': vpn_handle('disable'); services_drop('uplink connection lost'); break;
 				case 'conn': T.conn = null; break;
 				case 'genstatus': genstatus(); break;
 				case 'sleep': io.sleep(s.s); break;
@@ -1010,11 +1268,14 @@ export function create(io, files) {
 				else {
 					e.cnt = revive;
 				}
+
+				// it was just tried, so it is in range
+				e.gone = false;
 			}
 		}
 
 		if (!found)
-			push(list, { cnt: revive, rounds: 1, radio, bssid, essid });
+			push(list, { cnt: revive, rounds: 1, radio, bssid, essid, gone: false });
 
 		revive_write(list);
 
@@ -1044,6 +1305,23 @@ export function create(io, files) {
 			revive_write(out);
 	}
 
+	// set a revive entry's uplink back to 'enabled', false if it is gone
+	function revive_enable(e, why) {
+		getcfg(e.radio, e.essid, e.bssid);
+
+		if (!length(T.uplinkcfg))
+			return false;
+
+		if (getval('enabled') == '0') {
+			uci_set('travelmate', T.uplinkcfg, 'enabled', '1');
+			uci_commit('travelmate');
+			touch_once(files.refreshfile, 'cfg_reload');
+			log('info', sprintf("uplink has been re-enabled '%s/%s/%s'%s (%d/%d)", e.radio, e.essid, dash(e.bssid), why, e.rounds, cfg('maxretry')));
+		}
+
+		return true;
+	}
+
 	function revive() {
 		let list = revive_read(), out = [];
 
@@ -1051,24 +1329,55 @@ export function create(io, files) {
 			return;
 
 		for (let e in list) {
-			if (e.cnt > 0 && --e.cnt == 0) {
-				getcfg(e.radio, e.essid, e.bssid);
-
-				if (!length(T.uplinkcfg))
-					continue;
-
-				if (getval('enabled') == '0') {
-					uci_set('travelmate', T.uplinkcfg, 'enabled', '1');
-					uci_commit('travelmate');
-					touch_once(files.refreshfile, 'cfg_reload');
-					log('info', sprintf("uplink has been re-enabled '%s/%s/%s' (%d/%d)", e.radio, e.essid, dash(e.bssid), e.rounds, cfg('maxretry')));
-				}
-			}
+			if (e.cnt > 0 && --e.cnt == 0 && !revive_enable(e, ''))
+				continue;
 
 			push(out, e);
 		}
 
 		revive_write(out);
+	}
+
+	// a revive entry of this radio still counts down
+	function revive_pending(radio) {
+		return length(filter(revive_read(), (e) => e.radio == radio && e.cnt > 0)) > 0;
+	}
+
+	// the scan of a radio: an uplink waiting for its revive that left the
+	// range and is back now gets re-enabled right away; out of range means
+	// not in the scan or below 'trm_minquality'. The revive rounds still cap
+	// the number of revivals.
+	function revive_seen(radio, scan) {
+		let list = revive_read(), changed = false, out = [];
+
+		for (let e in list) {
+			if (e.radio != radio || !(e.cnt > 0)) {
+				push(out, e);
+				continue;
+			}
+
+			let bssid = normbssid(e.bssid ?? '');
+			let seen = length(filter(scan ?? [], (s) => s.quality >= cfg('minquality') &&
+				(length(bssid) ? (normbssid(s.bssid) == bssid && (s.hidden || s.raw == e.essid)) : (!s.hidden && s.raw == e.essid)))) > 0;
+
+			if (!seen) {
+				changed ||= !e.gone;
+				e.gone = true;
+			}
+			else if (e.gone) {
+				changed = true;
+				e.gone = false;
+				e.cnt = 0;
+
+				if (!revive_enable(e, ', back in range'))
+					continue;
+			}
+
+			push(out, e);
+		}
+
+		if (changed)
+			revive_write(out);
 	}
 
 	function setdev(radio) {
@@ -1200,6 +1509,7 @@ export function create(io, files) {
 		}
 
 		rebind_drop();
+		services_drop('uplink switch');
 
 		let maxretry = cfg('maxretry'), retry_display = (maxretry == 0) ? '-' : '' + maxretry;
 		let sta = sprintf('%s/%s/%s', ctx.radio, ctx.essid, dash(ctx.bssid));
@@ -1221,6 +1531,7 @@ export function create(io, files) {
 				log('info', sprintf("connected to uplink '%s' with mac '%s' (%d/%s)", sta, dash(mac), retry, retry_display));
 				revive_drop(ctx.radio, ctx.essid, ctx.bssid);
 				vpn_handle('enable');
+				services_check();
 
 				return true;
 			}
@@ -1282,6 +1593,8 @@ export function create(io, files) {
 		if (!proactive)
 			vpn_handle((conn_net() == 'net ok') ? 'enable_keep' : 'disable');
 
+		services_check();
+
 		log('debug', sprintf('f_main-1    ::: status: %s, connection: %s, proactive: %s',
 			st_text(T.ifstatus), conn_net(), b(proactive)));
 
@@ -1316,15 +1629,23 @@ export function create(io, files) {
 				dash(join(' ', T.radiolist)), dash(join(' ', map(T.stalist, (s) => s.section + '-' + s.radio)))));
 
 			for (let radio in T.radiolist) {
-				if (!length(filter(T.stalist, (s) => s.radio == radio)) && !cfg('autoadd'))
+				let pending = revive_pending(radio);
+
+				if (!length(filter(T.stalist, (s) => s.radio == radio)) && !cfg('autoadd') && !pending)
 					continue;
 
+				let scanned = null;
+				let scan = () => (scanned ??= scan_rank(io.ubus()?.call('iwinfo', 'scan', { device: radio })?.results));
 				let steps = select_plan({
 					radio, stalist: T.stalist,
 					current: (T.conn && length(cur.radio)) ? cur : null,
-					cfg: select_cfg(), ifaces: select_ifaces(),
-					scan: () => scan_rank(io.ubus()?.call('iwinfo', 'scan', { device: radio })?.results)
+					cfg: select_cfg(), ifaces: select_ifaces(), scan
 				});
+
+				// takes effect with the next run cycle, like the cycle countdown
+				if (pending)
+					revive_seen(radio, scan());
+
 				let ctx = { section: '', radio: '', bssid: '', essid: '' }, skip = false;
 
 				for (let s in steps) {
@@ -1480,7 +1801,7 @@ export function create(io, files) {
 	}
 
 	return {
-		T, startup, conf, main, getgw, log, genstatus, rebind_drop, revive_prune,
+		T, startup, conf, main, getgw, log, genstatus, rebind_drop, revive_prune, services_drop,
 		scan: (radio) => scan_report(io.ubus()?.call('iwinfo', 'scan', { device: radio })?.results),
 		status_text: getstatus_text
 	};

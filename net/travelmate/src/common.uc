@@ -41,6 +41,7 @@ export const OPTIONS = {
 	trm_revradio: [ 'bool', false ],
 	trm_ssidfilter: [ 'list', [] ],
 	trm_vpnifacelist: [ 'list', [] ],
+	trm_uplinkservices: [ 'list', [] ],
 	trm_stdvpniface: [ 'string', '' ],
 	trm_captiveurl: [ 'string', 'http://detectportal.firefox.com' ],
 	trm_useragent: [ 'string', 'Mozilla/5.0 (X11; Linux x86_64; rv:144.0) Gecko/20100101 Firefox/144.0' ]

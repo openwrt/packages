@@ -39,7 +39,7 @@ function log_line(class, tag, msg) {
 		syslog_tag = tag;
 	}
 
-	l.syslog({ debug: l.LOG_DEBUG, info: l.LOG_INFO, err: l.LOG_ERR, emerg: l.LOG_EMERG }[class] ?? l.LOG_NOTICE, '%s', msg);
+	l.syslog({ debug: l.LOG_DEBUG, info: l.LOG_INFO, warn: l.LOG_WARNING, err: l.LOG_ERR, emerg: l.LOG_EMERG }[class] ?? l.LOG_NOTICE, '%s', msg);
 }
 
 function make_io() {
@@ -66,6 +66,7 @@ function make_io() {
 // what a stopped service leaves behind: an empty runtime file tells LuCI
 // that travelmate is not running
 function cleanup(d) {
+	d.services_drop('service stop');
 	d.rebind_drop();
 	d.revive_prune();
 	writefile(FILES.rtfile, '');
@@ -105,6 +106,9 @@ function run(action) {
 
 	signal('SIGHUP', () => { hup = true; });
 	d.startup(length(action) ? action : 'start');
+
+	// left behind by a crash: no uplink connection belongs to it anymore
+	d.services_drop('service start');
 
 	if (!d.conf())
 		stop_service(d);
