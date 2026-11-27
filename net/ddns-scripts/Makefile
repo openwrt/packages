@@ -7,7 +7,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ddns-scripts
-PKG_VERSION:=2.8.6
+PKG_VERSION:=2.8.7
 PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0
