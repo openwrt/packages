@@ -132,10 +132,12 @@ swanctl_xappend4() {
 
 warning() {
 	echo "WARNING: $@" >&2
+	logger -t ipsec -p user.warn "$*"
 }
 
 fatal() {
 	echo "ERROR: $@" >&2
+	logger -t ipsec -p user.err "$*"
 	CONFIG_FAIL=1
 }
 
