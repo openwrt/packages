@@ -1,0 +1,45 @@
+From 8ebf2b31ce37aa537df2c0007756c930022f950a Mon Sep 17 00:00:00 2001
+From: Shi Jiayang <shi05275@163.com>
+Date: Tue, 10 Nov 2026 20:26:28 +0800
+Subject: [PATCH] nl80211: retain primary BSS identity across hostapd reload
+
+OpenWrt uses the same wlanN name for the radio-facing primary BSS. Its
+STATUS entry resolves to VAP 0. Reclassifying this as a radio event drops
+AP-ENABLED and leaves the Controller missing its parent BSS after a reload,
+so downstream Agents are repeatedly rejected. Forward the resolved BSS ID
+for both disable and enable events.
+
+Upstream-Status: Pending
+
+Signed-off-by: Shi Jiayang <shi05275@163.com>
+---
+--- a/common/beerocks/bwl/nl80211/ap_wlan_hal_nl80211.cpp
++++ b/common/beerocks/bwl/nl80211/ap_wlan_hal_nl80211.cpp
+@@ -1943,10 +1943,9 @@ bool ap_wlan_hal_nl80211::process_nl8021
+             return false;
+         }
+ 
+-        // Case of boards where main VAP and radio have same name
+-        if (vap_id == 0 && iface_ids.vap_id == beerocks::IFACE_RADIO_ID) {
+-            vap_id = beerocks::IFACE_RADIO_ID;
+-        }
++        // STATUS maps the native primary AP to VAP 0 even when its
++        // interface also names the radio. Keep that BSS identity so a
++        // reload produces matching disable and enable notifications.
+         if (vap_id == beerocks::IFACE_ID_INVALID) {
+             LOG(ERROR) << "Invalid vap_id " << vap_id;
+             return false;
+@@ -1963,10 +1962,9 @@ bool ap_wlan_hal_nl80211::process_nl8021
+ 
+         memset(msg_buff.get(), 0, sizeof(sHOSTAP_ENABLED_NOTIFICATION));
+ 
+-        // Case of boards where main VAP and radio have same name
+-        if (vap_id == 0 && iface_ids.vap_id == beerocks::IFACE_RADIO_ID) {
+-            vap_id = beerocks::IFACE_RADIO_ID;
+-        }
++        // STATUS maps the native primary AP to VAP 0 even when its
++        // interface also names the radio. Keep that BSS identity so a
++        // reload produces matching disable and enable notifications.
+         if (vap_id == beerocks::IFACE_ID_INVALID) {
+             LOG(ERROR) << "Invalid vap_id " << vap_id;
+             return false;

@@ -1,0 +1,145 @@
+From de6a5728c06356c15b35319b44c46a72bef30aa7 Mon Sep 17 00:00:00 2001
+From: Shi Jiayang <shi05275@163.com>
+Date: Tue, 10 Nov 2026 20:26:28 +0800
+Subject: [PATCH] nl80211: apply stock hostapd credentials and retain concurrent channels
+
+Resolve implicit OpenWrt BSSIDs from managed runtime interfaces, use the
+native RELOAD command, and read the active channel through nl80211 rather
+than ACS placeholders. Keep a backhaul AP on its already working channel
+instead of reloading it with the bootstrap's default 20 MHz width.
+Avoid logging the resulting configuration, which contains credentials.
+
+Upstream-Status: Pending
+
+Signed-off-by: Shi Jiayang <shi05275@163.com>
+---
+--- a/common/beerocks/bwl/nl80211/base_wlan_hal_nl80211.cpp
++++ b/common/beerocks/bwl/nl80211/base_wlan_hal_nl80211.cpp
+@@ -770,6 +770,25 @@ bool base_wlan_hal_nl80211::refresh_radi
+             }
+         }
+ 
++        // OpenWrt can keep ACS placeholders in the generated configuration.
++        // Read the actual AP channel/width after AP+STA concurrency has settled.
++        // In particular, VHT segment indices are not valid 2.4 GHz frequencies.
++        nl80211_client::interface_info actual;
++        if (m_nl80211_client->get_interface_info(get_iface_name(), actual) && actual.frequency) {
++            m_radio_info.channel = actual.channel;
++            m_radio_info.frequency_band = son::wireless_utils::which_freq_type(actual.frequency);
++            m_radio_info.vht_center_freq = actual.frequency_center1 ? actual.frequency_center1
++                                                                   : actual.frequency;
++            switch (actual.bandwidth) {
++            case 20: m_radio_info.bandwidth = beerocks::BANDWIDTH_20; break;
++            case 40: m_radio_info.bandwidth = beerocks::BANDWIDTH_40; break;
++            case 80: m_radio_info.bandwidth = beerocks::BANDWIDTH_80; break;
++            case 160: m_radio_info.bandwidth = beerocks::BANDWIDTH_160; break;
++            default: break;
++            }
++            m_radio_info.is_5ghz = m_radio_info.frequency_band == beerocks::FREQ_5G;
++        }
++
+         // If the VAPs map is empty, refresh it as well
+         // TODO: update on every refresh?
+         if (!m_radio_info.available_vaps.size()) {
+--- a/common/beerocks/bwl/nl80211/ap_wlan_hal_nl80211.cpp
++++ b/common/beerocks/bwl/nl80211/ap_wlan_hal_nl80211.cpp
+@@ -584,6 +584,13 @@ bool ap_wlan_hal_nl80211::set_channel(in
+         return true;
+     }
+ 
++    // The backhaul bootstrap supplies a default 20 MHz width. Netifd has
++    // already aligned a concurrent AP with its STA; retain that working
++    // channel and width instead of reloading hostapd and dropping the STA.
++    if (refresh_radio_info() && m_radio_info.channel == chan) {
++        return true;
++    }
++
+     // Load hostapd config for the radio
+     prplmesh::hostapd::Configuration conf = load_hostapd_config(m_radio_info.iface_name);
+     if (!conf) {
+@@ -645,7 +652,7 @@ bool ap_wlan_hal_nl80211::set_channel(in
+     }
+ 
+     // make hostapd reload its configuration file:
+-    const std::string cmd{"UPDATE "};
++    const std::string cmd{"RELOAD"};
+     if (!wpa_ctrl_send_msg(cmd)) {
+         LOG(ERROR) << "'" << cmd << "' command to hostapd failed";
+         return false;
+@@ -917,9 +924,27 @@ bool ap_wlan_hal_nl80211::update_vap_cre
+     // decalre a function for iterating over bss-conf and ap-vaps
+     bool abort = false;
+     for (const auto &bss_it : bss_info_conf_list) {
+-        const auto &vap_id = conf.get_vap_by_bssid(tlvf::mac_to_string(bss_it.bssid));
++        // OpenWrt normally omits explicit bssid= entries. Resolve only
++        // managed BSSes against the runtime MAC and verify the config name.
++        const std::string bssid = tlvf::mac_to_string(bss_it.bssid);
++        const auto vap_iter = std::find_if(
++            m_radio_info.available_vaps.begin(), m_radio_info.available_vaps.end(),
++            [&bssid](const std::pair<int, bwl::VAPElement> &elem) {
++                return beerocks::string_utils::case_insensitive_compare(elem.second.mac, bssid);
++            });
++        if (vap_iter == m_radio_info.available_vaps.end()) {
++            LOG(ERROR) << "Autoconfiguration: unmanaged BSS " << bss_it.bssid;
++            abort = true;
++            break;
++        }
++        const std::string bss = vap_iter->second.bss;
++        std::string vap_id = conf.get_vap_by_bssid(bssid);
+         if (vap_id.empty()) {
+-            LOG(ERROR) << "Could not find BSS " << bss_it.bssid;
++            vap_id = bss;
++        }
++        if (conf.get_vap_value(vap_id, "bss") != bss &&
++            conf.get_vap_value(vap_id, "interface") != bss) {
++            LOG(ERROR) << "Autoconfiguration: no configuration for managed BSS " << bss;
+             abort = true;
+             break;
+         }
+@@ -951,29 +976,6 @@ bool ap_wlan_hal_nl80211::update_vap_cre
+             break;
+         }
+ 
+-        // escape III
+-        std::string bss   = conf.get_vap_value(vap_id, "bss"),
+-                    bssid = conf.get_vap_value(vap_id, "bssid");
+-        // check explicit bssid value only in case of Multiple BSSID support
+-        if ((!bss.empty()) && bssid.empty()) {
+-            LOG(ERROR) << "Failed to get BSSID for vap: " << vap_id;
+-            abort = true;
+-            break;
+-        }
+-
+-        // escape IV
+-        const auto vap_iter =
+-            std::find_if(m_radio_info.available_vaps.begin(), m_radio_info.available_vaps.end(),
+-                         [&bssid](const std::pair<int, bwl::VAPElement> &elem) {
+-                             return (elem.second.mac == bssid);
+-                         });
+-        // check bssid exists in available vaps since bssids should not change.
+-        if (vap_iter == m_radio_info.available_vaps.end()) {
+-            LOG(ERROR) << "Vap is not found in existing vaps";
+-            abort = true;
+-            break;
+-        }
+-
+         if (!assign_auth_encr_parameters(conf, vap_id, bss_it)) {
+             LOG(ERROR) << "Failed to set the authentication/encryption parameters!";
+             abort = true;
+@@ -1059,14 +1061,14 @@ bool ap_wlan_hal_nl80211::update_vap_cre
+             return false;
+         }
+ 
+-        const std::string cmd("UPDATE ");
++        const std::string cmd("RELOAD");
+         if (!wpa_ctrl_send_msg(cmd)) {
+             LOG(ERROR) << "Autoconfiguration: \"" << cmd << "\" command to hostapd has failed";
+             return false;
+         }
+     }
+ 
+-    LOG(DEBUG) << "Autoconfiguration: done:\n" << conf;
++    LOG(DEBUG) << "Autoconfiguration: done";
+     return true;
+ }
+ 

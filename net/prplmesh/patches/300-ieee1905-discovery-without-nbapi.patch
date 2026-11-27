@@ -1,0 +1,42 @@
+From f482a699de69f799808f013206bdcdae9f79b824 Mon Sep 17 00:00:00 2001
+From: Shi Jiayang <shi05275@163.com>
+Date: Tue, 10 Nov 2026 20:26:28 +0800
+Subject: [PATCH] controller: keep IEEE1905 discovery working without NBAPI
+
+The stock OpenWrt build disables NBAPI. Rejecting the local topology
+response when the dummy model cannot allocate a path prevents parsing
+its neighbors and scheduling remote AL queries. Agents then become stale
+in BML despite a working data link. Treat disabled model writes as no-ops
+and track the first local response using its pending discovery deadline,
+independently of optional model paths.
+
+Upstream-Status: Pending
+
+Signed-off-by: Shi Jiayang <shi05275@163.com>
+---
+--- a/controller/src/beerocks/master/tasks/ieee1905_task.cpp
++++ b/controller/src/beerocks/master/tasks/ieee1905_task.cpp
+@@ -475,6 +475,12 @@ static const std::string InterfaceList
+ 
+ bool ieee1905_task::ensure_al_in_dm(const sMacAddr &al_mac)
+ {
++    // IEEE1905 discovery also maintains the live topology without NBAPI.
++    // The dummy model cannot create paths; that must not abort discovery.
++    if (!NBAPI_ON) {
++        return true;
++    }
++
+     auto db_al_it = database.ieee1905_network->al.find(al_mac);
+     if (db_al_it == database.ieee1905_network->al.end()) {
+         LOG(ERROR) << "Failed to add AL " << al_mac << " to DM: AL DB entry is missing";
+@@ -926,7 +932,9 @@ bool ieee1905_task::handle_topology_resp
+     auto &al    = al_it->second;
+     auto &db_al = database.ieee1905_network->al[al_mac];
+ 
+-    const bool first_local_response = (al_mac == database.get_local_bridge_mac()) && !db_al.dm_path;
++    const bool first_local_response =
++        (al_mac == database.get_local_bridge_mac()) &&
++        al.first_topology_query_deadline != time_point::max();
+     if (first_local_response) {
+         if (!materialize_local_al()) {
+             return false;

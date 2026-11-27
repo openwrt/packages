@@ -1,0 +1,276 @@
+From 82bb5858c0b870185f72eea043b8ffd7c16d42eb Mon Sep 17 00:00:00 2001
+From: Shi Jiayang <shi05275@163.com>
+Date: Tue, 10 Nov 2026 20:26:28 +0800
+Subject: [PATCH] stock: prefer wired backhaul and recover on link loss
+
+DSA ports use their conduit as iflink, so treating iflink != ifindex as
+virtual excludes the LAN ports from automatic wired backhaul discovery.
+Recognize the kernel DSA device type and restart backhaul selection when
+the selected wired port loses its link. Isolate standby STAs from the LAN
+bridge before wired onboarding to prevent a parallel forwarding loop.
+
+Keep normal discovery replies in the Agent's M1/M2 flow. Only use runtime
+probes from the enrolled controller to promote a wireless uplink, and do
+not replace a selected wired backhaul with standby STA traffic. Reply to
+Ethernet discovery through the bridge: raw DSA port unicast TX can report
+success without reaching the peer. Keep the wired backhaul station when
+its Ethernet port shares the Agent's AL MAC. Disambiguate wired parents
+from radio BSSIDs that collide with the synthetic Ethernet switch MAC.
+Preserve enrolled Agent parents when answering runtime discovery probes.
+
+Upstream-Status: Pending
+
+Signed-off-by: Shi Jiayang <shi05275@163.com>
+---
+--- a/agent/src/beerocks/slave/backhaul_manager/backhaul_manager.cpp
++++ b/agent/src/beerocks/slave/backhaul_manager/backhaul_manager.cpp
+@@ -318,7 +318,7 @@ bool BackhaulManager::thread_init()
+     broker_client_handlers.on_cmdu_received = [&](uint32_t iface_index, const sMacAddr &dst_mac,
+                                                   const sMacAddr &src_mac,
+                                                   ieee1905_1::CmduMessageRx &cmdu_rx) {
+-        if (handle_wired_autoconfiguration_response(iface_index, cmdu_rx)) {
++        if (handle_wired_autoconfiguration_response(iface_index, src_mac, cmdu_rx)) {
+             return;
+         }
+         handle_cmdu_from_broker(iface_index, dst_mac, src_mac, cmdu_rx);
+@@ -956,6 +956,18 @@ void BackhaulManager::handle_wan_monitor
+                << " link_state=" << int(event.link_state)
+                << ", bridge_member=" << int(it->second.bridge_member);
+ 
++    if (db->backhaul.connection_type == AgentDB::sBackhaul::eConnectionType::Wired &&
++        db->backhaul.selected_iface_name == event.iface_name &&
++        (!it->second.up_and_running || !it->second.bridge_member)) {
++        LOG(INFO) << "Selected wired backhaul " << event.iface_name
++                  << " is unavailable, selecting another backhaul";
++        m_preferred_wired_candidate_iface.clear();
++        m_skip_wired_backhaul              = false;
++        m_teardown_fronthaul_on_disconnect = false;
++        FSM_MOVE_STATE(RESTART);
++        return;
++    }
++
+     if (event.link_state != wan_monitor::ELinkState::eUp ||
+         db->device_conf.management_mode == BPL_MGMT_MODE_MULTIAP_CONTROLLER ||
+         db->backhaul.connection_type != AgentDB::sBackhaul::eConnectionType::Wireless) {
+@@ -1017,25 +1029,8 @@ bool BackhaulManager::handle_wired_contr
+ 
+     auto iface_info = classify_loop_iface(iface_index);
+     if (iface_info.iface_type == eLoopIfaceType::WirelessEndpoint) {
+-        if (db->backhaul.connection_type == AgentDB::sBackhaul::eConnectionType::Wired) {
+-            LOG(INFO) << "Controller AP-Autoconfiguration Response received on wireless "
+-                         "backhaul iface "
+-                      << iface_name
+-                      << " while selected wired backhaul iface=" << db->backhaul.selected_iface_name
+-                      << ". Correcting active backhaul type to wireless.";
+-
+-            db->backhaul.connection_type     = AgentDB::sBackhaul::eConnectionType::Wireless;
+-            db->backhaul.selected_iface_name = iface_name;
+-
+-            if (auto iface_hal = get_wireless_hal(iface_name)) {
+-                db->backhaul.backhaul_bssid = tlvf::mac_from_string(iface_hal->get_bssid());
+-            }
+-        } else {
+-            LOG(DEBUG) << "Controller AP-Autoconfiguration Response received on wireless "
+-                          "backhaul iface "
+-                       << iface_name;
+-        }
+-
++        // A standby STA may remain associated while detached from the bridge.
++        // Its control frames must not replace an established wired backhaul.
+         return false;
+     }
+ 
+@@ -1103,6 +1098,7 @@ bool BackhaulManager::handle_wired_contr
+ }
+ 
+ bool BackhaulManager::handle_wired_autoconfiguration_response(uint32_t iface_index,
++                                                              const sMacAddr &src_mac,
+                                                               ieee1905_1::CmduMessageRx &cmdu_rx)
+ {
+     if (cmdu_rx.getMessageType() !=
+@@ -1110,6 +1106,15 @@ bool BackhaulManager::handle_wired_autoc
+         return false;
+     }
+ 
++    auto db = AgentDB::get();
++    // Let the Agent validate normal discovery and complete wired onboarding.
++    // Consuming replies on an already selected wired port prevents M1/M2.
++    // Runtime probes can only promote the controller that already enrolled us.
++    if (db->backhaul.connection_type != AgentDB::sBackhaul::eConnectionType::Wireless ||
++        db->controller_info.bridge_mac == net::network_utils::ZERO_MAC ||
++        src_mac != db->controller_info.bridge_mac) {
++        return false;
++    }
+     return handle_wired_controller_detected(iface_index);
+ }
+ 
+@@ -1810,6 +1815,13 @@ bool BackhaulManager::backhaul_fsm_main(
+         bool wired_backhaul =
+             db->backhaul.connection_type == AgentDB::sBackhaul::eConnectionType::Wired;
+ 
++        if (wired_backhaul && !remove_wireless_backhaul_ifaces_from_bridge()) {
++            LOG(ERROR) << "Cannot isolate standby wireless backhaul from the wired bridge";
++            m_skip_wired_backhaul = true;
++            FSM_MOVE_STATE(RESTART);
++            break;
++        }
++
+         // In certification mode we want to wait till dev_set_config is received (wired backhaul)
+         // or start_wps_registration (wireless backhaul).
+         if (db->device_conf.certification_mode && wired_backhaul &&
+--- a/agent/src/beerocks/slave/backhaul_manager/backhaul_manager.h
++++ b/agent/src/beerocks/slave/backhaul_manager/backhaul_manager.h
+@@ -449,7 +449,7 @@ private:
+     bool handle_wan_monitor_events();
+     void handle_wan_monitor_event(const wan_monitor::LinkEvent &event);
+     bool handle_wired_controller_detected(uint32_t iface_index);
+-    bool handle_wired_autoconfiguration_response(uint32_t iface_index,
++    bool handle_wired_autoconfiguration_response(uint32_t iface_index, const sMacAddr &src_mac,
+                                                  ieee1905_1::CmduMessageRx &cmdu_rx);
+ 
+     wan_monitor wan_mon;
+--- a/common/beerocks/bcl/source/network/network_utils.cpp
++++ b/common/beerocks/bcl/source/network/network_utils.cpp
+@@ -1937,8 +1937,19 @@ bool network_utils::linux_iface_is_physi
+         return false;
+     }
+ 
+-    /* Physical interfaces have the same 'iflink' and 'ifindex' values */
+-    return (iflink == ifindex) ? true : false;
++    // DSA user ports refer to their conduit through iflink. They are still physical
++    // Ethernet ports, and must be included in LAN/backhaul discovery.
++    if (iflink == ifindex) {
++        return true;
++    }
++    std::ifstream uevent("/sys/class/net/" + iface + "/uevent");
++    std::string line;
++    while (std::getline(uevent, line)) {
++        if (line == "DEVTYPE=dsa") {
++            return true;
++        }
++    }
++    return false;
+ }
+ 
+ std::vector<std::string> network_utils::linux_get_non_physical_bridge_interfaces()
+--- a/controller/src/beerocks/cli/beerocks_cli_bml.cpp
++++ b/controller/src/beerocks/cli/beerocks_cli_bml.cpp
+@@ -125,7 +125,8 @@ static std::string node_type_to_conn_map
+ 
+ static void bml_utils_dump_conn_map(
+     std::unordered_multimap<std::string, std::shared_ptr<cli_bml::conn_map_node_t>> &conn_map_nodes,
+-    const std::string &parent_bssid, const std::string &ind, std::stringstream &ss)
++    const std::string &parent_bssid, const std::string &ind, std::stringstream &ss,
++    bool wireless_parent = false)
+ {
+     std::string ind_str = ind;
+ 
+@@ -135,6 +136,12 @@ static void bml_utils_dump_conn_map(
+     for (auto it = range.first; it != range.second; it++) {
+         auto node = it->second;
+ 
++        // A synthetic Ethernet switch MAC can equal a radio BSSID. Use the
++        // backhaul type to print an Agent under its actual parent only once.
++        if (node->type == BML_NODE_TYPE_IRE && bool(node->isWiFiBH) != wireless_parent) {
++            continue;
++        }
++
+         // ss << "***" << " node mac: " << node->mac << "***" << std::endl;
+ 
+         // CLIENT
+@@ -228,7 +235,7 @@ static void bml_utils_dump_conn_map(
+                            << " bssid: " << (*vap)->bssid << ", ssid: " << (*vap)->ssid
+                            << std::endl;
+                         // add clients which are connected to the vap
+-                        bml_utils_dump_conn_map(conn_map_nodes, (*vap)->bssid, ind_str, ss);
++                        bml_utils_dump_conn_map(conn_map_nodes, (*vap)->bssid, ind_str, ss, true);
+                         j++;
+                     }
+                 }
+--- a/controller/src/beerocks/master/controller.cpp
++++ b/controller/src/beerocks/master/controller.cpp
+@@ -32,6 +32,7 @@
+ #include "tasks/dynamic_channel_selection_task.h"
+ 
+ #include <bcl/beerocks_backport.h>
++#include <bcl/beerocks_os_utils.h>
+ #include <bcl/beerocks_utils.h>
+ #include <bcl/beerocks_version.h>
+ #include <bcl/beerocks_wifi_channel.h>
+@@ -885,17 +886,34 @@ bool Controller::handle_cmdu_1905_autoco
+         }
+     }
+ 
++    // Bridged Ethernet unicast must use the bridge's egress path. In particular,
++    // some DSA switches accept raw port TX without delivering it on the wire.
++    // cfg80211 exposes phy80211 on wireless netdevs, including the AP/VLAN
++    // interfaces used for four-address stations.
++    if (!ingress_iface.empty() &&
++        !beerocks::os_utils::file_exists("/sys/class/net/" + ingress_iface + "/phy80211") &&
++        beerocks::net::network_utils::linux_iface_is_physical(ingress_iface)) {
++        const auto bridge =
++            beerocks::net::network_utils::linux_iface_get_host_bridge(ingress_iface);
++        if (!bridge.empty()) {
++            ingress_iface = bridge;
++        }
++    }
++
+     LOG(DEBUG) << "sending autoconfig response message"
+                << (ingress_iface.empty() ? " using transport-selected path"
+                                          : " on ingress iface " + ingress_iface);
+ 
+     if (tlvProfile2MultiApProfileAgent) {
+-        std::shared_ptr<Agent> agent;
+-        // if al_mac is same as local bridge mac then add node it as GW else as IRE node
+-        if (database.get_local_bridge_mac() == al_mac) {
+-            agent = database.add_gateway(al_mac);
+-        } else {
+-            agent = database.add_agent(al_mac);
++        // Runtime probes also use Search. Preserve the parent of an enrolled
++        // Agent instead of resetting it through add_agent's default parent.
++        auto agent = database.get_agent(al_mac);
++        if (!agent) {
++            if (database.get_local_bridge_mac() == al_mac) {
++                agent = database.add_gateway(al_mac);
++            } else {
++                agent = database.add_agent(al_mac);
++            }
+         }
+         if (!agent) {
+             LOG(ERROR) << "Failed adding agent: " << al_mac;
+@@ -3233,9 +3251,9 @@ bool Controller::handle_intel_slave_join
+         database.set_sta_state(previous_backhaul, beerocks::STATE_DISCONNECTED);
+     }
+ 
+-    // bridge_mac sta may have been created from DHCP/ARP event, if so delete it
+-    // this may only occur once
+-    if (database.has_station(bridge_mac)) {
++    // Remove a bridge station learned from DHCP/ARP, but retain a wired
++    // backhaul station when the Ethernet port shares the bridge's MAC.
++    if (backhaul_mac != bridge_mac_str && database.has_station(bridge_mac)) {
+         database.remove_sta(bridge_mac);
+     }
+     // add new GW/IRE bridge_mac
+--- a/controller/src/beerocks/master/db/db.cpp
++++ b/controller/src/beerocks/master/db/db.cpp
+@@ -567,13 +567,17 @@ std::shared_ptr<Station> db::add_backhau
+     LOG(TRACE) << "Setting bSta for: " << mac;
+     station->set_bSta(true);
+ 
+-    // Save stations's parent
+-    std::shared_ptr<Agent::sRadio::sBss> parent_bss = get_bss(parent_mac);
++    // Wired callers supply a switch without a radio's AL MAC. Its synthetic
++    // address may equal a BSSID; attaching it as a Wi-Fi client would let the
++    // next associated-client report delete the active wired backhaul.
++    auto parent_switch = get_eth_switch(parent_mac);
++    auto parent_bss = parent_switch && al_mac == network_utils::ZERO_MAC
++                          ? nullptr
++                          : get_bss(parent_mac);
+     if (parent_bss) {
+         set_station_bss(station, parent_bss);
+         station->parent_mac = tlvf::mac_to_string(parent_mac);
+     } else {
+-        std::shared_ptr<Agent::sEthSwitch> parent_switch = get_eth_switch(parent_mac);
+         if (parent_switch) {
+             station->set_eth_switch(parent_switch);
+             station->parent_mac = tlvf::mac_to_string(parent_mac);

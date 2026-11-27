@@ -1,0 +1,28 @@
+From b922e2b833745b58b144899db67053794fa20938 Mon Sep 17 00:00:00 2001
+From: Shi Jiayang <shi05275@163.com>
+Date: Tue, 10 Nov 2026 20:26:28 +0800
+Subject: [PATCH] nl80211: report the actual BSS without an association frame
+
+Native hostapd can report AP-STA-CONNECTED without a cached association
+frame. Use the event's resolved BSS as the initial BSSID so the Controller
+does not register an all-zero parent or attempt to clear the live link
+when that client is subsequently identified as a backhaul station.
+
+Upstream-Status: Pending
+
+Signed-off-by: Shi Jiayang <shi05275@163.com>
+---
+--- a/common/beerocks/bwl/nl80211/ap_wlan_hal_nl80211.cpp
++++ b/common/beerocks/bwl/nl80211/ap_wlan_hal_nl80211.cpp
+@@ -1791,6 +1791,11 @@ bool ap_wlan_hal_nl80211::process_nl8021
+         std::string src_mac      = parsed_obj[bwl::EVENT_KEYLESS_PARAM_MAC];
+         msg->params.vap_id       = vap_id;
+         msg->params.mac          = tlvf::mac_from_string(src_mac);
++        // Native hostapd may omit association management frames, notably
++        // for clients already present when the HAL attaches. The event's
++        // BSS remains authoritative even when capabilities are unavailable.
++        msg->params.bssid =
++            tlvf::mac_from_string(m_radio_info.available_vaps.at(vap_id).mac);
+         msg->params.capabilities = {};
+ 
+         //init the freq band cap with the target radio freq band info

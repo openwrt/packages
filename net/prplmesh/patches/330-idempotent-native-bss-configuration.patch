@@ -1,0 +1,46 @@
+From cce329f0902b247a1b2e2d3c52a50bb37c575fa1 Mon Sep 17 00:00:00 2001
+From: Shi Jiayang <shi05275@163.com>
+Date: Tue, 10 Nov 2026 20:26:28 +0800
+Subject: [PATCH] hostapd: retain unchanged native BSS configurations
+
+Every VAP setter previously marked an update even when its value was
+unchanged, including removal of already absent keys. Repeated M2 messages
+therefore reloaded native hostapd on an AP/STA radio and disrupted the
+backhaul. Preserve unchanged values so configuration renewals are
+idempotent. Real changes and disabled BSS restoration still reload.
+
+Look up the Agent backhaul radio by its STA address, not the parent BSSID.
+
+Upstream-Status: Pending
+
+Signed-off-by: Shi Jiayang <shi05275@163.com>
+---
+--- a/common/beerocks/hostapd/source/configuration.cpp
++++ b/common/beerocks/hostapd/source/configuration.cpp
+@@ -246,6 +246,15 @@ bool Configuration::set_create_vap_value
+         existing_vap->begin(), existing_vap->end(),
+         [&key_eq, this](const std::string &line) -> bool { return is_key_in_line(line, key_eq); });
+ 
++    // Reapplying the same M2 must not reload native hostapd or disturb an
++    // associated backhaul. Deleting an absent key is also a no-op.
++    if ((line_iter == existing_vap->end() && value.empty()) ||
++        (line_iter != existing_vap->end() && !value.empty() &&
++         line_iter->substr(line_iter->find('=') + 1) == value)) {
++        m_ok = true;
++        return *this;
++    }
++
+     // we first delete the key, and if the requested value is non empty
+     // we push it to the end of the array
+ 
+--- a/controller/src/beerocks/master/tasks/topology_task.cpp
++++ b/controller/src/beerocks/master/tasks/topology_task.cpp
+@@ -254,7 +254,7 @@ bool topology_task::handle_topology_resp
+                 agent->backhaul.backhaul_interface = iface_mac;
+                 agent->backhaul.parent_interface   = media_info->network_membership;
+                 agent->backhaul.wireless_backhaul_radio =
+-                    database.get_radio_by_backhaul_cap(media_info->network_membership);
++                    database.get_radio_by_backhaul_cap(iface_mac);
+             }
+         }
+     }

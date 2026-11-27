@@ -1,0 +1,81 @@
+From 0d67a1325a008a4e4b9eb8ffde63afe52c61ac52 Mon Sep 17 00:00:00 2001
+From: Shi Jiayang <shi05275@163.com>
+Date: Tue, 10 Nov 2026 20:26:28 +0800
+Subject: [PATCH] nl80211: recover native BSS control across wireless restarts
+
+Native hostapd and supplicant can replace individual UNIX control sockets
+without exiting. Reopen a command socket once after a failed send to its
+old peer, so subsequent STATUS and configuration requests can recover.
+
+Keep disabled native BSSes configured with start_disabled instead of
+removing their SSID. Dropping a primary SSID removes its control socket
+and prevents an internal Agent reset from attaching to restore it.
+
+Upstream-Status: Pending
+
+Signed-off-by: Shi Jiayang <shi05275@163.com>
+---
+--- a/common/beerocks/bwl/nl80211/wpa_ctrl_client.cpp
++++ b/common/beerocks/bwl/nl80211/wpa_ctrl_client.cpp
+@@ -9,6 +9,7 @@
+ #include "wpa_ctrl_client.h"
+ 
+ #include <easylogging++.h>
++#include <cerrno>
+ 
+ extern "C" {
+ #include <wpa_ctrl.h>
+@@ -66,16 +67,32 @@ bool wpa_ctrl_socket_cmd::disconnect(boo
+ 
+ bool wpa_ctrl_socket_cmd::request(const std::string &cmd, char *buffer, size_t buff_size)
+ {
+-    if (!m_ctx) {
++    if (!m_ctx && !connect()) {
+         LOG(ERROR) << "Control socket not available!";
+         return false;
+     }
+ 
+     int result;
+     int try_cnt         = 0;
++    bool reopened       = false;
+     auto buff_size_copy = buff_size;
+     do {
++        buff_size_copy = buff_size;
+         result = wpa_ctrl_request(m_ctx, cmd.c_str(), cmd.size(), buffer, &buff_size_copy, NULL);
++        // Native hostapd/supplicant may replace a BSS socket while keeping
++        // the daemon alive. A failed send to the old UNIX socket must not
++        // leave this HAL permanently unable to read STATUS or apply M2.
++        // Retry once only for errors that mean the command was not sent.
++        if (result == -1 && !reopened &&
++            (errno == ECONNREFUSED || errno == ENOENT || errno == ENOTCONN)) {
++            disconnect(true);
++            reopened = true;
++            if (!connect()) {
++                return false;
++            }
++            buff_size_copy = buff_size;
++            result = wpa_ctrl_request(m_ctx, cmd.c_str(), cmd.size(), buffer, &buff_size_copy, NULL);
++        }
+     } while (result == -2 && ++try_cnt < WPA_CTRL_READ_RETRY_MAX);
+ 
+     if (result < 0) {
+--- a/common/beerocks/bwl/nl80211/ap_wlan_hal_nl80211.cpp
++++ b/common/beerocks/bwl/nl80211/ap_wlan_hal_nl80211.cpp
+@@ -1015,7 +1015,17 @@ bool ap_wlan_hal_nl80211::update_vap_cre
+         if (bss_it.teardown) {
+             // BSS is flagged for teardown
+             LOG(DEBUG) << "Disabling VAP " << vap_id;
++#ifdef BWL_OPENWRT_NATIVE_HOSTAPD
++            // Removing the primary SSID makes native hostapd drop its
++            // control socket. Keep the BSS configured but stop beaconing,
++            // so an internal Agent reset can attach and apply the next M2.
++            if (!conf.set_create_vap_value(vap_id, "start_disabled", "1")) {
++                abort = true;
++                break;
++            }
++#else
+             conf.disable_vap(vap_id);
++#endif
+             // Continue to the next BSS
+             continue;
+         }

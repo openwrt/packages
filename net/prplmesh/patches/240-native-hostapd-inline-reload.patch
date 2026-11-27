@@ -1,0 +1,182 @@
+From 28765280d5dae27dfda089f715dc5bda429c123a Mon Sep 17 00:00:00 2001
+From: Shi Jiayang <shi05275@163.com>
+Date: Tue, 10 Nov 2026 20:26:28 +0800
+Subject: [PATCH] nl80211: reload inline OpenWrt hostapd configurations through ubus
+
+OpenWrt hostapd keeps a ucode-owned inline configuration. Control-socket
+RELOAD reuses its old values and RELOAD_CONFIG rereads the same inline
+snapshot. Ask the native ubus owner to reread the generated file for
+only the affected PHY/radio, including single-PHY multiple-radio devices.
+Remove the old netifd ssid2 entry when applying controller credentials.
+Propagate reload failures instead of reporting a successful application.
+
+Upstream-Status: Pending
+
+Signed-off-by: Shi Jiayang <shi05275@163.com>
+---
+--- a/common/beerocks/bwl/CMakeLists.txt
++++ b/common/beerocks/bwl/CMakeLists.txt
+@@ -173,6 +173,11 @@ elseif(BWL_TYPE STREQUAL "NL80211")
+ 
+     list(APPEND BWL_LIBS prplmesh_hostapd)
+ 
++    if(PRPLMESH_STOCK_OPENWRT_UCI)
++        add_definitions(-DBWL_OPENWRT_NATIVE_HOSTAPD)
++        list(APPEND BWL_LIBS ubus ubox)
++    endif()
++
+ elseif(BWL_TYPE STREQUAL "DUMMY")
+ 
+     set(bwl_platform_sources
+--- a/common/beerocks/bwl/nl80211/ap_wlan_hal_nl80211.h
++++ b/common/beerocks/bwl/nl80211/ap_wlan_hal_nl80211.h
+@@ -136,6 +136,8 @@ public:
+ 
+     // Protected methods:
+ protected:
++    bool reload_hostapd_config(const std::string &config_path);
++
+     virtual bool process_nl80211_event(parsed_obj_map_t &parsed_obj) override;
+ 
+     // Overload for AP events
+--- a/common/beerocks/bwl/nl80211/ap_wlan_hal_nl80211.cpp
++++ b/common/beerocks/bwl/nl80211/ap_wlan_hal_nl80211.cpp
+@@ -26,6 +26,17 @@
+ #include <sstream>
+ #include <type_traits>
+ 
++#ifdef BWL_OPENWRT_NATIVE_HOSTAPD
++#include <regex>
++extern "C" {
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-parameter"
++#include <libubox/blobmsg.h>
++#include <libubus.h>
++#pragma GCC diagnostic pop
++}
++#endif
++
+ //////////////////////////////////////////////////////////////////////////////
+ ////////////////////////// Local Module Definitions //////////////////////////
+ //////////////////////////////////////////////////////////////////////////////
+@@ -122,7 +133,8 @@ static uint8_t wpa_bw_to_beerocks_bw(con
+ 
+ /// @brief figures out hostapd config file name by the
+ //  interface name and loads its content
+-static prplmesh::hostapd::Configuration load_hostapd_config(const std::string &radio_iface_name)
++static prplmesh::hostapd::Configuration load_hostapd_config(const std::string &radio_iface_name,
++                                                        std::string *config_path = nullptr)
+ {
+     std::vector<std::string> hostapd_cfg_names = {
+         "/tmp/run/hostapd-phy0.conf", "/tmp/run/hostapd-phy1.conf", "/var/run/hostapd-phy0.conf",
+@@ -168,6 +180,9 @@ static prplmesh::hostapd::Configuration
+         }
+ 
+         // all is good, return the conf
++        if (config_path) {
++            *config_path = try_fname;
++        }
+         return hostapd_conf;
+     }
+ 
+@@ -574,6 +589,47 @@ bool ap_wlan_hal_nl80211::disable()
+     return true;
+ }
+ 
++bool ap_wlan_hal_nl80211::reload_hostapd_config(const std::string &config_path)
++{
++#ifdef BWL_OPENWRT_NATIVE_HOSTAPD
++    // Modern OpenWrt keeps an inline configuration in hostapd's ucode layer.
++    // Control-socket RELOAD/RELOAD_CONFIG cannot reread netifd's changed file.
++    // Reload only the matching PHY/radio through the native ubus owner.
++    static const std::regex filename(
++        R"((^|/)hostapd-(phy[0-9]+)(?:\.([0-9]+))?\.conf$)");
++    std::smatch match;
++    if (!std::regex_search(config_path, match, filename)) {
++        LOG(ERROR) << "Unsupported OpenWrt hostapd configuration path";
++        return false;
++    }
++    const std::string phy = match[2].str();
++    const int radio = match[3].matched ? beerocks::string_utils::stoi(match[3].str()) : -1;
++    auto *ctx = ubus_connect(nullptr);
++    if (!ctx) {
++        LOG(ERROR) << "Cannot connect to hostapd ubus";
++        return false;
++    }
++    uint32_t id = 0;
++    int ret = ubus_lookup_id(ctx, "hostapd", &id);
++    if (!ret) {
++        struct blob_buf request{};
++        blob_buf_init(&request, 0);
++        blobmsg_add_string(&request, "phy", phy.c_str());
++        blobmsg_add_u32(&request, "radio", radio);
++        ret = ubus_invoke(ctx, id, "reload", request.head, nullptr, nullptr, 5000);
++        blob_buf_free(&request);
++    }
++    ubus_free(ctx);
++    if (ret) {
++        LOG(ERROR) << "Native hostapd reload failed: " << ubus_strerror(ret);
++        return false;
++    }
++    return true;
++#else
++    return wpa_ctrl_send_msg("RELOAD_CONFIG");
++#endif
++}
++
+ bool ap_wlan_hal_nl80211::set_channel(int chan, beerocks::eWiFiBandwidth bw, int center_channel)
+ {
+     if (chan < 0) {
+@@ -597,7 +653,9 @@ bool ap_wlan_hal_nl80211::set_channel(in
+     }
+ 
+     // Load hostapd config for the radio
+-    prplmesh::hostapd::Configuration conf = load_hostapd_config(m_radio_info.iface_name);
++    std::string config_path;
++    prplmesh::hostapd::Configuration conf =
++        load_hostapd_config(m_radio_info.iface_name, &config_path);
+     if (!conf) {
+         LOG(ERROR) << "Unable to load hostapd config for interface " << m_radio_info.iface_name;
+         return false;
+@@ -657,9 +715,7 @@ bool ap_wlan_hal_nl80211::set_channel(in
+     }
+ 
+     // make hostapd reload its configuration file:
+-    const std::string cmd{"RELOAD"};
+-    if (!wpa_ctrl_send_msg(cmd)) {
+-        LOG(ERROR) << "'" << cmd << "' command to hostapd failed";
++    if (!reload_hostapd_config(config_path)) {
+         return false;
+     }
+ 
+@@ -914,7 +970,9 @@ bool ap_wlan_hal_nl80211::update_vap_cre
+     const std::string &bridge_ifname)
+ {
+     // Load hostapd config for the radio
+-    prplmesh::hostapd::Configuration conf = load_hostapd_config(m_radio_info.iface_name);
++    std::string config_path;
++    prplmesh::hostapd::Configuration conf =
++        load_hostapd_config(m_radio_info.iface_name, &config_path);
+     if (!conf) {
+         LOG(ERROR) << "Autoconfiguration: no hostapd config to apply configuration!";
+         return false;
+@@ -997,6 +1055,8 @@ bool ap_wlan_hal_nl80211::update_vap_cre
+                    << " fronthaul: " << beerocks::string_utils::bool_str(bss_it.fronthaul)
+                    << " backhaul: " << beerocks::string_utils::bool_str(bss_it.backhaul);
+ 
++        // Netifd uses ssid2; do not leave a conflicting old SSID in the BSS.
++        conf.set_create_vap_value(vap_id, "ssid2", "");
+         conf.set_create_vap_value(vap_id, "ssid", bss_it.ssid);
+         conf.set_create_vap_value(vap_id, "wps_state", bss_it.fronthaul ? "2" : "");
+         conf.set_create_vap_value(vap_id, "wps_independent", "0");
+@@ -1066,9 +1126,7 @@ bool ap_wlan_hal_nl80211::update_vap_cre
+             return false;
+         }
+ 
+-        const std::string cmd("RELOAD");
+-        if (!wpa_ctrl_send_msg(cmd)) {
+-            LOG(ERROR) << "Autoconfiguration: \"" << cmd << "\" command to hostapd has failed";
++        if (!reload_hostapd_config(config_path)) {
+             return false;
+         }
+     }

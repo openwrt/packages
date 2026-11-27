@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=prplmesh
 PKG_VERSION:=6.2.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=prplMesh-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://gitlab.com/prpl-foundation/prplmesh/prplMesh/-/archive/$(PKG_VERSION)/
@@ -70,6 +70,7 @@ define Package/prplmesh/install
 	$(LN) ../../share/prplmesh/config $(1)/usr/libexec/prplmesh/config
 	$(CP) $(PKG_INSTALL_DIR)/usr/libexec/prplmesh/lib/*.so* $(1)/usr/lib/
 	$(INSTALL_BIN) ./files/prplmesh.init $(1)/etc/init.d/prplmesh
+	$(INSTALL_BIN) ./files/prplmesh_wait.sh $(1)/usr/libexec/prplmesh/scripts/prplmesh_wait.sh
 	$(INSTALL_CONF) ./files/prplmesh.config $(1)/etc/config/prplmesh
 endef
 

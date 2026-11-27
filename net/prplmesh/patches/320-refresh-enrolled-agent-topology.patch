@@ -1,0 +1,56 @@
+From 5f0de25201590d659fe7bc975ed869fbd0bf416d Mon Sep 17 00:00:00 2001
+From: Shi Jiayang <shi05275@163.com>
+Date: Tue, 10 Nov 2026 20:26:28 +0800
+Subject: [PATCH] controller: refresh enrolled Agents without optional neighbor graph
+
+A native four-address AP/VLAN is a dynamic interface and may not be
+represented in the IEEE1905 neighbor graph. Keep known Agents queried
+every 15 seconds in builds without NBAPI so M2 completion and last-contact
+state remain current after reconnect. Missing responses still expire;
+do not infer activity from the presence of a cached station.
+
+Upstream-Status: Pending
+
+Signed-off-by: Shi Jiayang <shi05275@163.com>
+---
+--- a/controller/src/beerocks/master/tasks/topology_task.cpp
++++ b/controller/src/beerocks/master/tasks/topology_task.cpp
+@@ -44,7 +44,27 @@ topology_task::topology_task(db &databas
+ {
+ }
+ 
+-void topology_task::work() {}
++void topology_task::work()
++{
++    if (NBAPI_ON) {
++        return;
++    }
++    const auto now = std::chrono::steady_clock::now();
++    if (now < next_topology_query) {
++        return;
++    }
++    next_topology_query = now + std::chrono::seconds(15);
++
++    // Per-STA AP/VLANs need not appear in the optional IEEE1905 neighbor
++    // graph. Keep already enrolled Agents queried independently of it.
++    for (const auto &entry : database.m_agents) {
++        if (!cmdu_tx.create(0, ieee1905_1::eMessageType::TOPOLOGY_QUERY_MESSAGE)) {
++            LOG(ERROR) << "Failed building periodic topology query";
++            return;
++        }
++        son_actions::send_cmdu_to_agent(entry.first, cmdu_tx, database);
++    }
++}
+ 
+ bool topology_task::handle_ieee1905_1_msg(const sMacAddr &src_mac,
+                                           ieee1905_1::CmduMessageRx &cmdu_rx)
+--- a/controller/src/beerocks/master/tasks/topology_task.h
++++ b/controller/src/beerocks/master/tasks/topology_task.h
+@@ -99,6 +99,7 @@ private:
+      */
+     bool handle_associated_clients_tlv(ieee1905_1::CmduMessageRx &cmdu_rx, Agent &agent);
+ 
++    std::chrono::steady_clock::time_point next_topology_query{};
+     db &database;
+     ieee1905_1::CmduMessageTx &cmdu_tx;
+     task_pool &tasks;

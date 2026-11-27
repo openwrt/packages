@@ -1,0 +1,83 @@
+From 6a6cde969024daebbc1d6e3255e1a76d6b7cf9ff Mon Sep 17 00:00:00 2001
+From: Shi Jiayang <shi05275@163.com>
+Date: Tue, 10 Nov 2026 20:26:28 +0800
+Subject: [PATCH] nl80211: keep single-link backhaul off same-name fronthaul MLDs
+
+Allow a Mesh MLO fronthaul to use the Mesh SSID without making the stock
+single-link backhaul select that MLD by signal strength. Inspect BSS data
+and its Basic Multi-Link element before returning a backhaul candidate.
+Leave Multi-AP role verification to the association exchange, since the
+Multi-AP role is not generally advertised in beacon/probe response IEs.
+
+Upstream-Status: Pending
+
+Signed-off-by: Shi Jiayang <shi05275@163.com>
+---
+--- a/common/beerocks/bwl/nl80211/sta_wpa_utils.h
++++ b/common/beerocks/bwl/nl80211/sta_wpa_utils.h
+@@ -107,6 +107,45 @@ inline std::vector<scan_result> parse_sc
+     return results;
+ }
+ 
++// The stock backhaul HAL is single-link. An AP MLD with the same SSID is a
++// fronthaul candidate, not a supported backhaul parent for this backend.
++// Check both the supplicant's decoded MLD address and raw Basic Multi-Link IE
++// so a non-EHT supplicant can still reject an MLD advertisement.
++inline bool single_link_bss(const std::string &reply)
++{
++    std::istringstream input(reply);
++    std::string line;
++    bool found_ie = false;
++    while (std::getline(input, line)) {
++        if (line.compare(0, 12, "ap_mld_addr=") == 0 &&
++            valid_bssid(line.substr(12))) return false;
++        size_t offset;
++        if (line.compare(0, 3, "ie=") == 0) offset = 3;
++        else if (line.compare(0, 10, "beacon_ie=") == 0) offset = 10;
++        else continue;
++        // The BSS command may return a truncated control reply.
++        const auto hex = line.substr(offset);
++        if (hex.empty() || hex.size() % 2) return false;
++        std::vector<unsigned char> bytes;
++        for (size_t i = 0; i < hex.size(); i += 2) {
++            int high = hex_digit(hex[i]), low = hex_digit(hex[i + 1]);
++            if (high < 0 || low < 0) return false;
++            bytes.push_back(static_cast<unsigned char>((high << 4) | low));
++        }
++        for (size_t pos = 0; pos < bytes.size();) {
++            if (pos + 2 > bytes.size()) return false;
++            size_t end = pos + 2 + bytes[pos + 1];
++            if (end > bytes.size()) return false;
++            // EID Extension 107, Basic type in Multi-Link Control bits 0..2.
++            if (bytes[pos] == 255 && bytes[pos + 1] >= 3 &&
++                bytes[pos + 2] == 107 && (bytes[pos + 3] & 7) == 0) return false;
++            pos = end;
++        }
++        found_ie = true;
++    }
++    return found_ie;
++}
++
+ inline std::string hex_string(const std::string &s)
+ {
+     static const char digits[] = "0123456789abcdef";
+--- a/common/beerocks/bwl/nl80211/sta_wlan_hal_nl80211.cpp
++++ b/common/beerocks/bwl/nl80211/sta_wlan_hal_nl80211.cpp
+@@ -122,7 +122,16 @@ int sta_wlan_hal_nl80211::get_scan_resul
+     char *reply = nullptr;
+     if (!wpa_ctrl_send_msg("SCAN_RESULTS", &reply) || !reply) return -1;
+ 
+-    for (const auto &entry : sta_wpa_utils::parse_scan_results(reply, ssid)) {
++    // SCAN_RESULTS and BSS share the control reply buffer; copy the parsed
++    // list before issuing another control request for each candidate.
++    const auto candidates = sta_wpa_utils::parse_scan_results(reply, ssid);
++    for (const auto &entry : candidates) {
++        char *details = nullptr;
++        if (!wpa_ctrl_send_msg("BSS " + entry.bssid, &details) || !details ||
++            !sta_wpa_utils::single_link_bss(details)) {
++            LOG(DEBUG) << "Skipping unavailable or MLD backhaul candidate " << entry.bssid;
++            continue;
++        }
+         auto band = son::wireless_utils::which_freq_type(entry.frequency);
+         if (band == beerocks::eFreqType::FREQ_UNKNOWN) continue;
+         bwl::sScanResult result;
