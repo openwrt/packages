@@ -40,32 +40,32 @@ DM_LIST_FWD_ZONES=""
 
 create_local_zone() {
   local target="$1"
-  local partial domain found
+  local partial zone
 
-  case $DM_LIST_TRN_ZONES in
-    *"${target}"*)
-      found=1
+  case $target in
+    [A-Za-z0-9]*.[A-Za-z0-9]*)
       ;;
 
-    *)
-      case $target in
-        [A-Za-z0-9]*.[A-Za-z0-9]*)
-          found=0
-          ;;
-
-        *) # no dots
-          found=1
-          ;;
-      esac
+    *) # no dots
+      return
+      ;;
   esac
 
 
-  if [ $found -eq 0 ] ; then
-    # New Zone! Bundle local-zones: by first two name tiers "abcd.tld."
-    partial=$( echo "$target" | awk -F. '{ j=NF ; i=j-1; print $i"."$j }' )
-    DM_LIST_TRN_ZONES="$DM_LIST_TRN_ZONES $partial"
-    DM_LIST_KNOWN_ZONES="$DM_LIST_KNOWN_ZONES $partial"
-  fi
+  for zone in $DM_LIST_KNOWN_ZONES ; do
+    case $target in
+      "$zone"|*".$zone")
+        # covered by a zone declared here or by unbound.sh
+        return
+        ;;
+    esac
+  done
+
+
+  # New Zone! Bundle local-zones: by first two name tiers "abcd.tld."
+  partial=$( echo "$target" | awk -F. '{ j=NF ; i=j-1; print $i"."$j }' )
+  DM_LIST_TRN_ZONES="$DM_LIST_TRN_ZONES $partial"
+  DM_LIST_KNOWN_ZONES="$DM_LIST_KNOWN_ZONES $partial"
 }
 
 ##############################################################################
@@ -204,6 +204,18 @@ create_cname_record() {
       # Add CNAME at the beginning
       record="$cname@@CNAME@@$target."
       DM_LIST_PRZ_DATA="$record $DM_LIST_PRZ_DATA"
+
+      # local-zone is answered before rpz, so let this name pass through
+      # if it is inside a static zone (e.g. the router domain)
+      case " $DM_LIST_KNOWN_ZONES " in
+        *" $cname "*)
+          ;;
+
+        *)
+          DM_LIST_TRN_ZONES="$DM_LIST_TRN_ZONES $cname"
+          DM_LIST_KNOWN_ZONES="$DM_LIST_KNOWN_ZONES $cname"
+          ;;
+      esac
     fi
   fi
 }
