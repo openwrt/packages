@@ -17,7 +17,7 @@
  const char *_snd_module_pcm_shm = "";
 --- a/src/ucm/ucm_local.h
 +++ b/src/ucm/ucm_local.h
-@@ -61,6 +61,14 @@
+@@ -56,6 +56,14 @@
  #define SEQUENCE_ELEMENT_TYPE_DEV_DISABLE_SEQ	14
  #define SEQUENCE_ELEMENT_TYPE_DEV_DISABLE_ALL	15
  
@@ -30,5 +30,5 @@
 +#endif
 +
  struct ucm_value {
-         struct list_head list;
-         char *name;
+ 	struct list_head list;
+ 	char *name;
