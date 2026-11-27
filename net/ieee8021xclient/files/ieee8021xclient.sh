@@ -11,6 +11,77 @@ cfg_format() {
 	echo "$1" | sed -r 's/^[[:blank:]]+//;/^[[:space:]]*$/d'
 }
 
+_ieee8021xclient_field() {
+	local key="$1"
+	local value="$2"
+	local escaped
+
+	[ -n "$value" ] || return 0
+
+	escaped=$(printf '%s' "$value" | tr -d '\r\n' | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g')
+	# P"..." makes wpa_supplicant decode backslash escapes.
+	printf '\t%s=P"%s"\n' "$key" "$escaped"
+}
+
+# eap is a space separated list; refuse characters outside the method
+# name alphabet so a typo such as P@EAP cannot silently become PEAP.
+_ieee8021xclient_eaplist() {
+	local key="$1"
+	local value="$2"
+	local clean invalid
+
+	[ -n "$value" ] || return 0
+
+	invalid=$(printf '%s' "$value" | tr -d ',;\t\r\n' | tr -d "A-Za-z0-9 _.'-")
+	if [ -n "$invalid" ]; then
+		_ieee8021xclient_log "invalid character in $key: $value"
+		return 1
+	fi
+
+	clean=$(printf '%s' "$value" | tr ',;\t\r\n' '     ' |
+		tr -s ' ' | sed -e 's/^ //' -e 's/ $//')
+	[ -n "$clean" ] || return 1
+
+	printf '\t%s=%s\n' "$key" "$clean"
+}
+
+# wpa_supplicant reads hash:/ext: from the raw value before string parsing,
+# so P"..." would turn the prefix into a literal password. ext: also needs
+# CONFIG_EXT_PASSWORD (off in OpenWrt). Malformed prefixes are rejected.
+_ieee8021xclient_password() {
+	local value="$1"
+
+	case "$value" in
+	hash:?*)
+		case "${value#hash:}" in
+		*[!0-9a-fA-F]*)
+			_ieee8021xclient_log "password: hash: form is not a hex string"
+			return 1
+			;;
+		esac
+		printf '\tpassword=%s\n' "$value"
+		return $?
+		;;
+	ext:?*)
+		# ext: names are stored verbatim; only control characters matter.
+		case "${value#ext:}" in
+		*[[:cntrl:]]*)
+			_ieee8021xclient_log "password: ext: name has a control character"
+			return 1
+			;;
+		esac
+		printf '\tpassword=%s\n' "$value"
+		return $?
+		;;
+	hash:*|ext:*)
+		_ieee8021xclient_log "password: empty hash: or ext: form"
+		return 1
+		;;
+	esac
+
+	_ieee8021xclient_field password "$value"
+}
+
 ieee8021xclient_exitcode_tostring() {
 	local errorcode=$1
 	[ -n "$errorcode" ] || errorcode=5
@@ -48,32 +119,36 @@ proto_ieee8021xclient_setup() {
 
 	# launch
 	local _config _pid
+	local old_umask
 	_wpa_supplicant_common "$ifname"
 
-	cat > "${_config}" << EOF
-${eapol_version:+eapol_version=${eapol_version}}
-network={
-	${eap:+eap=${eap}}
-	${identity:+identity=${identity}}
-	${anonymous_identity:+anonymous_identity=${anonymous_identity}}
-	${password:+password=${password}}
-	${ca_cert:+ca_cert=${ca_cert}}
-	${client_cert:+client_cert=${client_cert}}
-	${private_key:+private_key=${private_key}}
-	${private_key_passwd:+private_key_passwd=${private_key_passwd}}
-	${dh_file:+dh_file=${dh_file}}
-	${subject_match:+subject_match=${subject_match}}
-	${phase1:+phase1=${phase1}}
-	${phase2:+phase2=${phase2}}
-	${ca_cert2:+ca_cert2=${ca_cert2}}
-	${client_cert2:+client_cert2=${client_cert2}}
-	${private_key2:+private_key2=${private_key2}}
-	${private_key_passwd2:+private_key_passwd2=${private_key_passwd2}}
-	${dh_file2:+dh_file2=${dh_file2}}
-	${subject_match2:+subject_match2=${subject_match2}}
-	${eap_workaround:+eap_workaround=1}
-}
-EOF
+	old_umask=$(umask)
+	umask 077
+	{
+		[ -n "$eapol_version" ] && printf 'eapol_version=%s\n' "$eapol_version"
+		printf 'network={\n'
+		_ieee8021xclient_field identity "$identity"
+		_ieee8021xclient_field anonymous_identity "$anonymous_identity"
+		_ieee8021xclient_password "$password"
+		_ieee8021xclient_field ca_cert "$ca_cert"
+		_ieee8021xclient_field client_cert "$client_cert"
+		_ieee8021xclient_field private_key "$private_key"
+		_ieee8021xclient_field private_key_passwd "$private_key_passwd"
+		_ieee8021xclient_field dh_file "$dh_file"
+		_ieee8021xclient_field subject_match "$subject_match"
+		_ieee8021xclient_field phase1 "$phase1"
+		_ieee8021xclient_field phase2 "$phase2"
+		_ieee8021xclient_field ca_cert2 "$ca_cert2"
+		_ieee8021xclient_field client_cert2 "$client_cert2"
+		_ieee8021xclient_field private_key2 "$private_key2"
+		_ieee8021xclient_field private_key2_passwd "$private_key_passwd2"
+		_ieee8021xclient_field dh_file2 "$dh_file2"
+		_ieee8021xclient_field subject_match2 "$subject_match2"
+		_ieee8021xclient_eaplist eap "$eap"
+		[ -n "$eap_workaround" ] && printf '\teap_workaround=%s\n' "$eap_workaround"
+		printf '}\n'
+	} > "$_config" || { rm -f "$_config"; umask "$old_umask"; return 1; }
+	umask "$old_umask"
 
 	# The file carries the 802.1X identity and password, so keep it private.
 	# wpa_supplicant drops privileges and runs as the "network" user since
