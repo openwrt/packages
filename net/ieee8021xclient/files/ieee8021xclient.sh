@@ -107,14 +107,18 @@ proto_ieee8021xclient_setup() {
 
 	local eapol_version
 	local identity anonymous_identity password
-	local ca_cert client_cert private_key private_key_passwd dh_file subject_match
-	local phase1 phase2 ca_cert2 client_cert2 private_key2 private_key_passwd2 dh_file2 subject_match2
+	local ca_cert ca_path client_cert private_key private_key_passwd dh_file
+	local subject_match altsubject_match domain_suffix_match domain_match
+	local phase1 phase2 ca_cert2 ca_path2 client_cert2 private_key2 private_key_passwd2
+	local dh_file2 subject_match2 altsubject_match2 domain_suffix_match2 domain_match2
 	local eap
 	local eap_workaround
 	json_get_vars eapol_version
 	json_get_vars identity anonymous_identity password
-	json_get_vars ca_cert client_cert private_key private_key_passwd dh_file subject_match
-	json_get_vars phase1 phase2 ca_cert2 client_cert2 private_key2 private_key_passwd2 dh_file2 subject_match2
+	json_get_vars ca_cert ca_path client_cert private_key private_key_passwd dh_file
+	json_get_vars subject_match altsubject_match domain_suffix_match domain_match
+	json_get_vars phase1 phase2 ca_cert2 ca_path2 client_cert2 private_key2 private_key_passwd2
+	json_get_vars dh_file2 subject_match2 altsubject_match2 domain_suffix_match2 domain_match2
 	json_get_vars eap eap_workaround
 
 	# launch
@@ -126,24 +130,35 @@ proto_ieee8021xclient_setup() {
 	umask 077
 	{
 		[ -n "$eapol_version" ] && printf 'eapol_version=%s\n' "$eapol_version"
+		printf 'ap_scan=0\n'
 		printf 'network={\n'
+		printf '\tkey_mgmt=IEEE8021X\n'
+		printf '\teapol_flags=0\n'
 		_ieee8021xclient_field identity "$identity"
 		_ieee8021xclient_field anonymous_identity "$anonymous_identity"
 		_ieee8021xclient_password "$password"
 		_ieee8021xclient_field ca_cert "$ca_cert"
+		_ieee8021xclient_field ca_path "$ca_path"
 		_ieee8021xclient_field client_cert "$client_cert"
 		_ieee8021xclient_field private_key "$private_key"
 		_ieee8021xclient_field private_key_passwd "$private_key_passwd"
 		_ieee8021xclient_field dh_file "$dh_file"
 		_ieee8021xclient_field subject_match "$subject_match"
+		_ieee8021xclient_field altsubject_match "$altsubject_match"
+		_ieee8021xclient_field domain_suffix_match "$domain_suffix_match"
+		_ieee8021xclient_field domain_match "$domain_match"
 		_ieee8021xclient_field phase1 "$phase1"
 		_ieee8021xclient_field phase2 "$phase2"
 		_ieee8021xclient_field ca_cert2 "$ca_cert2"
+		_ieee8021xclient_field ca_path2 "$ca_path2"
 		_ieee8021xclient_field client_cert2 "$client_cert2"
 		_ieee8021xclient_field private_key2 "$private_key2"
 		_ieee8021xclient_field private_key2_passwd "$private_key_passwd2"
 		_ieee8021xclient_field dh_file2 "$dh_file2"
 		_ieee8021xclient_field subject_match2 "$subject_match2"
+		_ieee8021xclient_field altsubject_match2 "$altsubject_match2"
+		_ieee8021xclient_field domain_suffix_match2 "$domain_suffix_match2"
+		_ieee8021xclient_field domain_match2 "$domain_match2"
 		_ieee8021xclient_eaplist eap "$eap"
 		[ -n "$eap_workaround" ] && printf '\teap_workaround=%s\n' "$eap_workaround"
 		printf '}\n'
@@ -193,19 +208,27 @@ proto_ieee8021xclient_init_config() {
 	proto_config_add_string anonymous_identity
 	proto_config_add_string password
 	proto_config_add_string 'ca_cert:file'
+	proto_config_add_string ca_path
 	proto_config_add_string 'client_cert:file'
 	proto_config_add_string 'private_key:file'
 	proto_config_add_string private_key_passwd
 	proto_config_add_string 'dh_file:file'
 	proto_config_add_string subject_match
+	proto_config_add_string altsubject_match
+	proto_config_add_string domain_suffix_match
+	proto_config_add_string domain_match
 	proto_config_add_string phase1
 	proto_config_add_string phase2
 	proto_config_add_string 'ca_cert2:file'
+	proto_config_add_string ca_path2
 	proto_config_add_string 'client_cert2:file'
 	proto_config_add_string 'private_key2:file'
 	proto_config_add_string private_key_passwd2
 	proto_config_add_string 'dh_file2:file'
 	proto_config_add_string subject_match2
+	proto_config_add_string altsubject_match2
+	proto_config_add_string domain_suffix_match2
+	proto_config_add_string domain_match2
 	proto_config_add_string eap
 	proto_config_add_boolean eap_workaround
 
