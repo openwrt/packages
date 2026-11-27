@@ -5,16 +5,451 @@ STOP=10
 USE_PROCD=1
 NAME=podman
 PROG=/usr/bin/podman
+CONF_DIR=/var/etc/containers
+GRAPHROOT=/var/lib/containers/storage
+KUBE_DIR=/etc/containers/kube
+
+extra_command "kube" "<start|stop|pull|rmi> [section...] Manage kube pods"
+
+toml_list_item() {
+	printf '  "%s",\n' "$1"
+}
+
+generate_storage_conf() {
+	local conf="$CONF_DIR/storage.conf"
+	local driver runroot graphroot imagestore mountopt
+
+	config_get driver storage driver overlay
+	config_get runroot storage runroot /run/containers/storage
+	config_get graphroot storage graphroot "$GRAPHROOT"
+	config_get imagestore storage imagestore
+	config_get mountopt storage mountopt nodev
+
+	mkdir -p "$CONF_DIR"
+	{
+		echo "[storage]"
+		echo "driver = \"$driver\""
+		echo "runroot = \"$runroot\""
+		echo "graphroot = \"$graphroot\""
+		if [ -n "$imagestore" ]; then
+			echo "imagestore = \"$imagestore\""
+		fi
+		echo
+		echo "[storage.options]"
+		echo "additionalimagestores = ["
+		config_list_foreach storage additionalimagestores toml_list_item
+		echo "]"
+		echo
+		echo "[storage.options.overlay]"
+		echo "mountopt = \"$mountopt\""
+	} > "$conf.tmp"
+	mv "$conf.tmp" "$conf"
+}
+
+# podman only reads the generated storage.conf, if it is linked from
+# /etc/containers. A storage.conf which is not our link is never touched,
+# as it was created by the user.
+link_storage_conf() {
+	local use_uci="$1"
+	local link=/etc/containers/storage.conf
+	local conf="$CONF_DIR/storage.conf"
+
+	if [ "$(readlink "$link")" = "$conf" ]; then
+		if [ "$use_uci" = 0 ]; then
+			rm -f "$link"
+		fi
+		return
+	fi
+
+	if [ -e "$link" ] || [ -L "$link" ]; then
+		if [ "$use_uci" = 1 ]; then
+			logger -t "$NAME" -p daemon.warn \
+				"$link is not ours, uci config is ignored"
+		fi
+		return
+	fi
+
+	if [ "$use_uci" = 1 ]; then
+		ln -s "$conf" "$link"
+	fi
+}
+
+# Check that all fstab mount points and uvol volumes below which graphroot
+# is located are ready. Without them the containers would end up on the
+# tmpfs.
+graphroot_mounted() {
+	local graphroot="$1"
+
+	if procd_mountpoints_ready "$graphroot"; then
+		return 0
+	fi
+
+	logger -t "$NAME" -p daemon.warn \
+		"mount points of $graphroot are not ready, start delayed"
+
+	return 1
+}
+
+# Print the filesystem type of the mount on which graphroot is located.
+# graphroot might not exist yet, so use its nearest existing parent.
+graphroot_fstype() {
+	local path="$1"
+	local dev mountpoint type rest
+	local match=""
+	local fstype=""
+
+	# graphroot is created by podman on the first start. A directory that
+	# does not exist yet cannot be a mount point, it will be created on the
+	# filesystem of its parent. So strip the last path component until an
+	# existing directory is found. Stop on an empty path, as it does not
+	# get any shorter and would loop forever.
+	while [ -n "$path" ] && [ ! -d "$path" ]; do
+		path="${path%/*}"
+	done
+
+	# /proc/mounts contains the resolved paths, so resolve symlinks like
+	# /var -> /tmp. An empty path means that only / is left.
+	path="$(readlink -f "${path:-/}")"
+
+	# The order in /proc/mounts does not follow the path hierarchy, e.g.
+	# the root overlay is listed after /tmp. So the longest mount point
+	# which contains the path is the one on which it is located.
+	while read -r dev mountpoint type rest; do
+		case "${path}/" in
+		"${mountpoint%/}/"*)
+			if [ ${#mountpoint} -ge ${#match} ]; then
+				match="$mountpoint"
+				fstype="$type"
+			fi
+			;;
+		esac
+	done < /proc/mounts
+
+	echo "$fstype"
+}
+
+# Check graphroot of the uci storage config before podman is started.
+graphroot_ready() {
+	local graphroot
+	local fstype
+
+	config_get graphroot storage graphroot "$GRAPHROOT"
+
+	graphroot_mounted "$graphroot" || return 1
+
+	fstype="$(graphroot_fstype "$graphroot")"
+	case "$fstype" in
+	tmpfs)
+		logger -t "$NAME" -p daemon.warn \
+			"$graphroot is on tmpfs, containers are lost on reboot"
+		;;
+	*)
+		logger -t "$NAME" -p daemon.info \
+			"$graphroot is on $fstype, containers are persistent"
+		;;
+	esac
+
+	return 0
+}
+
+# Print the image of every container of a kube file which does not have
+# imagePullPolicy Never. Otherwise a missing image is pulled and an image
+# with the tag :latest or without a tag is always checked against the
+# registry. Both delay the start if the network is not available at boot.
+# Every map with the key image is a container, so all documents and
+# containers, initContainers and templates are covered.
+kube_pull_images() {
+	local file="$1"
+
+	yq eval --no-doc '.. | select(tag == "!!map") | select(has("image")) |
+		select(.imagePullPolicy != "Never") | .image' "$file"
+}
+
+# Print every image of a kube section once, regardless of the
+# imagePullPolicy.
+kube_images() {
+	local section="$1"
+	local file="$KUBE_DIR/$section.yaml"
+	local images
+
+	if [ ! -f "$file" ]; then
+		logger -t "$NAME" -p daemon.warn "$file does not exist"
+		return 1
+	fi
+
+	if ! images="$(yq eval --no-doc '.. | select(tag == "!!map") |
+			select(has("image")) | .image' "$file")"; then
+		logger -t "$NAME" -p daemon.err "failed to parse $file"
+		return 1
+	fi
+
+	echo "$images" | sort -u
+}
+
+# Download the images of a kube section from the registry. Print which
+# image is pulled. podman shows the progress of the download on stderr.
+pull_kube_images() {
+	local section="$1"
+	local images
+	local image
+	local count=0
+	local total
+
+	images="$(kube_images "$section")" || return
+
+	total="$(echo "$images" | grep -c .)"
+
+	for image in $images; do
+		count=$((count + 1))
+		echo "$section: pulling $image ($count/$total)"
+
+		if ! ${PROG} pull "$image" >/dev/null; then
+			logger -t "$NAME" -p daemon.err "failed to pull $image"
+			echo "$section: failed to pull $image" >&2
+		fi
+	done
+}
+
+# Remove the images of a kube section. An image which is still used by
+# a container is not removed, so the pods have to be removed before.
+rmi_kube_images() {
+	local section="$1"
+	local images
+	local image
+
+	images="$(kube_images "$section")" || return
+
+	for image in $images; do
+		if ! ${PROG} rmi "$image" >/dev/null; then
+			logger -t "$NAME" -p daemon.err \
+				"failed to remove $image"
+		fi
+	done
+}
+
+# Remove the pods of a kube section, volumes are kept. Errors are
+# ignored, as the pods might not exist.
+down_kube_file() {
+	local section="$1"
+	local file="$KUBE_DIR/$section.yaml"
+
+	if [ ! -f "$file" ]; then
+		logger -t "$NAME" -p daemon.warn "$file does not exist"
+		return
+	fi
+
+	# Close the procd lock fd 1000, see start_service().
+	${PROG} kube down "$file" >/dev/null 2>&1 1000>&-
+}
+
+# Create the pods of a kube section from <KUBE_DIR>/<section>.yaml.
+# --replace recreates existing pods, so that changes of the file are
+# applied. The writable layer of the containers is lost, volumes are
+# kept. A disabled section removes its pods, as they would otherwise be
+# started because of their restart policy always.
+# A file is only played if no image is pulled, see kube_pull_images().
+# So the images have to be loaded before with podman pull or podman load.
+play_kube_file() {
+	local section="$1"
+	local enabled
+	local file
+	local images
+
+	config_get_bool enabled "$section" enabled 0
+	file="$KUBE_DIR/$section.yaml"
+
+	if [ ! -f "$file" ]; then
+		logger -t "$NAME" -p daemon.warn "$file does not exist"
+		return
+	fi
+
+	if [ "$enabled" = 0 ]; then
+		down_kube_file "$section"
+		return
+	fi
+
+	if ! images="$(kube_pull_images "$file")"; then
+		logger -t "$NAME" -p daemon.err "failed to parse $file"
+		return
+	fi
+
+	if [ -n "$images" ]; then
+		logger -t "$NAME" -p daemon.err \
+			"$file is not played, imagePullPolicy is not Never:" \
+			$images
+		return
+	fi
+
+	# Close the procd lock fd 1000, see start_service().
+	if ! ${PROG} kube play --replace "$file" >/dev/null 1000>&-; then
+		logger -t "$NAME" -p daemon.err "failed to play $file"
+	fi
+}
+
+# Play the kube files without restarting the service, so the other
+# containers keep running. Without arguments all kube sections are
+# played, otherwise only the given ones. As on start, disabled sections
+# are removed. The service has to be running, as it checks the graphroot
+# before. Otherwise the containers could end up on the tmpfs.
+kube_start() {
+	local section
+
+	if ! service_running; then
+		echo "$NAME is not running" >&2
+		return 1
+	fi
+
+	config_load podman
+
+	if [ $# -eq 0 ]; then
+		config_foreach play_kube_file kube
+		return 0
+	fi
+
+	for section in "$@"; do
+		play_kube_file "$section"
+	done
+}
+
+# Remove the pods of all or only the given kube sections, regardless of
+# whether they are enabled. The other containers keep running.
+kube_stop() {
+	local section
+
+	config_load podman
+
+	if [ $# -eq 0 ]; then
+		config_foreach down_kube_file kube
+		return 0
+	fi
+
+	for section in "$@"; do
+		down_kube_file "$section"
+	done
+}
+
+# Download the images of all or only the given kube sections. The
+# service has to be running, as it checks the graphroot before.
+# Otherwise the images could end up on the tmpfs.
+kube_pull() {
+	local section
+
+	if ! service_running; then
+		echo "$NAME is not running" >&2
+		return 1
+	fi
+
+	# Release the procd lock fd 1000, see start_service(). Otherwise every
+	# other call of this init script waits until all images are pulled.
+	# podman locks its storage itself.
+	exec 1000>&-
+
+	config_load podman
+
+	if [ $# -eq 0 ]; then
+		config_foreach pull_kube_images kube
+		return 0
+	fi
+
+	for section in "$@"; do
+		pull_kube_images "$section"
+	done
+}
+
+# Remove the images of all or only the given kube sections.
+kube_rmi() {
+	local section
+
+	config_load podman
+
+	if [ $# -eq 0 ]; then
+		config_foreach rmi_kube_images kube
+		return 0
+	fi
+
+	for section in "$@"; do
+		rmi_kube_images "$section"
+	done
+}
+
+kube() {
+	local action="$1"
+
+	if [ $# -gt 0 ]; then
+		shift
+	fi
+
+	case "$action" in
+	start)
+		kube_start "$@"
+		;;
+	stop)
+		kube_stop "$@"
+		;;
+	pull)
+		kube_pull "$@"
+		;;
+	rmi)
+		kube_rmi "$@"
+		;;
+	*)
+		echo "Usage: $initscript kube <start|stop|pull|rmi>" \
+			"[section...]" >&2
+		return 1
+		;;
+	esac
+}
 
 start_service() {
+	local use_uci
+
+	config_load podman
+	config_get_bool use_uci storage use_uci 0
+
+	link_storage_conf "$use_uci"
+
+	if [ "$use_uci" = 1 ]; then
+		generate_storage_conf
+		graphroot_ready || return 0
+	fi
+
 	[ -d /run/podman ] || mkdir -p /run/podman
 	procd_open_instance "podman"
 	procd_set_param command "$PROG" system service --time=0
 	procd_append_param command $command
 	procd_close_instance
+
+	# The pods of kube files get the restart policy always. Create them
+	# first, otherwise they would be started below and then recreated.
+	config_foreach play_kube_file kube
+
+	# Close the procd lock fd 1000. Otherwise it is inherited by conmon,
+	# which keeps running and holds the lock of this init script forever.
+	${PROG} start --all --filter restart-policy=always 1000>&-
 }
 
-shutdown() {
+stop_service() {
 	${PROG} pod stop -a
 	${PROG} container stop -a
+}
+
+# The storage configuration is only read when podman starts, so a reload
+# has to restart the service including all containers.
+reload_service() {
+	restart
+}
+
+service_triggers() {
+	local use_uci
+	local graphroot
+
+	config_load podman
+	config_get_bool use_uci storage use_uci 0
+	config_get graphroot storage graphroot "$GRAPHROOT"
+
+	procd_add_reload_trigger podman
+
+	if [ "$use_uci" = 1 ]; then
+		procd_add_restart_mount_trigger "$graphroot"
+	fi
 }

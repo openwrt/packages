@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=podman
 PKG_VERSION:=6.1.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/podman-container-tools/podman/archive/v$(PKG_VERSION)
@@ -35,7 +35,7 @@ define Package/podman
   URL:=https://podman.io
   DEPENDS:=$(GO_ARCH_DEPENDS) +conmon +libgpgme +libseccomp +nsenter \
 	+zoneinfo-simple +kmod-veth +passt +netavark +aardvark-dns \
-	+catatonit +crun +PODMAN_SELINUX_SUPPORT:libselinux
+	+catatonit +crun +PODMAN_SELINUX_SUPPORT:libselinux +yq
 endef
 
 define Package/podman/description
@@ -54,10 +54,11 @@ endef
 
 define Package/podman/conffiles
 /etc/containers/policy.json
-/etc/containers/storage.conf
+/etc/config/podman
 /etc/containers/registries.conf
 /etc/containers/containers.conf
 /etc/containers/networks/podman.json
+/etc/containers/kube/
 endef
 
 GO_PKG_TAGS:=seccomp exclude_graphdriver_devicemapper apparmor
@@ -103,17 +104,20 @@ define Package/podman/install
 	$(INSTALL_DIR) $(1)/etc/containers
 	$(INSTALL_DATA) $(DL_DIR)/default-policy.json-362f70b056 $(1)/etc/containers/policy.json
 	$(INSTALL_DATA) ./files/default-registries.conf $(1)/etc/containers/registries.conf
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/vendor/go.podman.io/storage/storage.conf $(1)/etc/containers/storage.conf
 	$(INSTALL_DATA) ./files/containers.conf $(1)/etc/containers/containers.conf
+	$(INSTALL_DIR) $(1)/etc/containers/kube
 	$(INSTALL_DIR) $(1)/etc/containers/networks
 	$(INSTALL_CONF) ./files/podman.json $(1)/etc/containers/networks
 	$(INSTALL_DIR) $(1)/usr/share/containers
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/vendor/go.podman.io/common/pkg/seccomp/seccomp.json $(1)/usr/share/containers/
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/vendor/go.podman.io/storage/storage.conf $(1)/usr/share/containers/storage.conf
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/podman.config $(1)/etc/config/podman
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/podman.init $(1)/etc/init.d/podman
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/podman.defaults $(1)/etc/uci-defaults/90-podman
-	$(SED) 's/driver = \"\"/driver = \"overlay\"/g' $(1)/etc/containers/storage.conf
+	$(SED) 's/driver = \"\"/driver = \"overlay\"/g' $(1)/usr/share/containers/storage.conf
 endef
 
 $(eval $(call BuildPackage,podman))
