@@ -115,12 +115,12 @@ Signed-off-by: Toni Uhlig <matzeton@googlemail.com>
  }
  EOF
  
--	$CC -o $TMPDIR/pcaptest $TMPDIR/pcaptest.c -lpcap >> config.log 2>&1
-+	$CC $CFLAGS $LDFLAGS -o $TMPDIR/pcaptest $TMPDIR/pcaptest.c -lpcap >> config.log 2>&1
+-	$CC -o $TMPDIR/pcaptest $TMPDIR/pcaptest.c \
++	$CC $CFLAGS $LDFLAGS -o $TMPDIR/pcaptest $TMPDIR/pcaptest.c \
+ 		$($PKG_CONFIG --libs libpcap 2>> config.log) \
+ 		>> config.log 2>&1
  	if [ ! -x $TMPDIR/pcaptest ] ; then
- 		echo "[NO]"
- 		echo "CONFIG_LIBPCAP=0" >> Config
-@@ -638,7 +638,7 @@ int main(void)
+@@ -640,7 +640,7 @@ int main(void)
  }
  EOF
  
@@ -129,7 +129,7 @@ Signed-off-by: Toni Uhlig <matzeton@googlemail.com>
  	if [ ! -x $TMPDIR/hwtstest ] ; then
  		echo "[NO]"
  		echo "CONFIG_HWTSTAMP=0" >> Config
-@@ -663,7 +663,7 @@ int main(void)
+@@ -665,7 +665,7 @@ int main(void)
  }
  EOF
  
@@ -138,7 +138,7 @@ Signed-off-by: Toni Uhlig <matzeton@googlemail.com>
  	if [ ! -x $TMPDIR/clitest ] ; then
  		echo "[NO]"
  		MISSING_DEFS=1
-@@ -687,7 +687,7 @@ int main(void)
+@@ -689,7 +689,7 @@ int main(void)
  }
  EOF
  

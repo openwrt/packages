@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netsniff-ng
-PKG_VERSION:=0.6.8
-PKG_RELEASE:=3
+PKG_VERSION:=0.6.9
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/netsniff-ng/netsniff-ng/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=4bbd8e286aee929d5f71788d226938e0ad6a7873f882412221a240faa2439a45
+PKG_HASH:=6a15bd176457d7f08ad19bb0b8f01cbe83d22231d6ecfe8e89b228a36b74dac9
 
 PKG_MAINTAINER:=Toni Uhlig <matzeton@googlemail.com>
 PKG_LICENSE:=GPL-2.0-or-later

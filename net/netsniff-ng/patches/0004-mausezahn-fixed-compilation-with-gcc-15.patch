@@ -1,0 +1,30 @@
+From 1af7ae33e3e8178ab5c649c3a52838d4375c4228 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Jaroslav=20=C5=A0karvada?= <jskarvad@redhat.com>
+Date: Tue, 10 Jun 2025 14:47:54 +0200
+Subject: [PATCH] mausezahn: fixed compilation with gcc-15
+
+gcc-15 by default uses C23 standard which is more strict on forward
+declarations.
+
+Original report: https://bugzilla.redhat.com/show_bug.cgi?id=2340924
+
+Signed-off-by: Jaroslav Škarvada <jskarvad@redhat.com>
+---
+ staging/mops.h | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+--- a/staging/mops.h
++++ b/staging/mops.h
+@@ -940,9 +940,9 @@ int mops_direct(char* dev, int mops_type
+ 
+ 
+ struct automops * automops_init(void);
+-struct automops * automops_alloc_protocol();
+-struct automops * automops_delete_protocol();
+-struct automops * automops_search_protocol();
++struct automops * automops_alloc_protocol(struct automops *cur);
++struct automops * automops_delete_protocol(struct automops *cur);
++struct automops * automops_search_protocol(struct automops *list, char *name);
+ int               automops_dump_all (struct automops* list);
+ void              automops_set_defaults(struct automops * cur);
+ struct fields *   automops_add_field (struct automops *amp);
