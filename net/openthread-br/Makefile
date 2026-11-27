@@ -4,15 +4,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openthread-br
-PKG_VERSION:=2026.10.0
+PKG_VERSION:=2026.11.0
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=https://github.com/openthread/ot-br-posix.git
-PKG_MIRROR_HASH:=6f6d065f304e9a30de85c012cc0e075ec542183c4713b677d43b393c74e01693
+PKG_MIRROR_HASH:=bf049340f4a1372c9ba44cf6debedd735824baa538d1e96f043c25ed8fb5b429
 
-PKG_MAINTAINER:=Stijn Tintel <stijn@linux-ipv6.be>
+PKG_MAINTAINER:=Stijn Tintel <stijn@linux-ipv6.be>, Christian Glombek <c.glombek@cosa.systems>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 
@@ -71,11 +71,14 @@ TARGET_CFLAGS += -DOPENTHREAD_POSIX_CONFIG_DAEMON_SOCKET_BASENAME=\\\"/var/run/o
 
 define Package/openthread-br/install
 	$(INSTALL_DIR) \
+		$(1)/etc/hotplug.d/usb \
 		$(1)/etc/init.d \
 		$(1)/lib/netifd/proto \
 		$(1)/usr/sbin \
 		$(1)/usr/share/otbr
 	$(INSTALL_BIN) ./files/openthread-proto.sh $(1)/lib/netifd/proto/openthread.sh
+	$(INSTALL_BIN) ./files/otbr-rcp $(1)/usr/sbin
+	$(INSTALL_DATA) ./files/otbr-rcp.hotplug $(1)/etc/hotplug.d/usb/50-otbr-rcp
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/* $(1)/usr/sbin
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/otbr/nftables-backend \
 		$(1)/usr/share/otbr
