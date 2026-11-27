@@ -133,6 +133,9 @@ proto_ieee8021xclient_init_config() {
 	proto_config_add_string subject_match2
 	proto_config_add_string eap
 	proto_config_add_boolean eap_workaround
+
+	# setup only calls ubus and starts no proto task.
+	no_proto_task=1
 }
 
 [ -n "$INCLUDE_ONLY" ] || add_protocol ieee8021xclient
