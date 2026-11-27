@@ -25,7 +25,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
 PKG_VERSION:=9.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ffmpeg.org/releases/
@@ -321,8 +321,9 @@ $(call Package/libffmpeg/Default)
   #	+FFMPEG_VAAPI:libva
   #	+FFMPEG_LIBDAV1D:libdav1d
   VARIANT:=default
+  # libffmpeg is a superset of libffmpeg-mini, so let it provide that and
   # transitional aliases for packages still depending on the now gone ones
-  PROVIDES:=libffmpeg-full libffmpeg-audio-dec
+  PROVIDES:=libffmpeg-mini libffmpeg-full libffmpeg-audio-dec
 endef
 
 # The menu is not guarded by PACKAGE_libffmpeg: its options pull their
