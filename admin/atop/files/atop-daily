@@ -1,0 +1,25 @@
+#!/bin/sh
+
+LOGOPTS=""
+LOGINTERVAL=600
+LOGGENERATIONS=28
+LOGPATH=/var/log/atop
+
+[ -f /etc/default/atop ] && . /etc/default/atop
+
+case "$LOGINTERVAL" in
+	''|*[!0-9]*|0) echo "atop: invalid LOGINTERVAL" >&2; exit 1 ;;
+esac
+case "$LOGGENERATIONS" in
+	''|*[!0-9]*) echo "atop: invalid LOGGENERATIONS" >&2; exit 1 ;;
+esac
+
+mkdir -p "$LOGPATH" || exit 1
+find "$LOGPATH" -name 'atop_*' -mtime +"$LOGGENERATIONS" -exec rm {} \;
+
+# take samples until just past midnight, procd respawns for the next day
+set -- $(date '+%Y%m%d %H %M %S')
+secs=$((86400 - ${2#0} * 3600 - ${3#0} * 60 - ${4#0}))
+
+exec /usr/bin/atop $LOGOPTS -w "$LOGPATH/atop_$1" "$LOGINTERVAL" \
+	$((secs / LOGINTERVAL + 2))
