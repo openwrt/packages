@@ -7,6 +7,7 @@ extra_command "show" "Show current configuration of tgtd"
 NAME=tgt
 PROG=/usr/sbin/tgtd
 USE_PROCD=1
+TARGET_ERROR=false
 
 tgtadm="/usr/sbin/tgtadm --lld iscsi"
 logger="logger -p daemon.err -s -t $NAME"
@@ -80,6 +81,7 @@ handle_lun() {
 	}
 	$_tgtadm --op update --param $params || {
 		$logger "Failed to update lun $tgt_lun"
+		$_tgtadm --op delete
 		return 1
 	}
 }
@@ -122,7 +124,7 @@ bind_account_to_target() {
 
 	[ "$2" = 0 ] || {
 		$logger "Validation failed for account ${user:-$1}"
-		return 1
+		TARGET_ERROR=true
 	}
 
 	[ "$outgoing" -ne 0 ] && outgoing=--outgoing || outgoing=""
@@ -131,7 +133,7 @@ bind_account_to_target() {
 		[ "$t" -eq "$tgtid" ] && {
 			$_tgtadm --op bind --tid "$tgtid" --user "$user" $outgoing || {
 				$logger "Failed to bind user $username to target $tgtid"
-				return 1
+				TARGET_ERROR=true
 			}
 		}
 	done
@@ -146,16 +148,18 @@ validate_target_section() {
 }
 
 bind_name() {
-	$_tgtadm --op bind --tid "$section" --initiator-name "$1" || {
-		$logger "Failed to set allow $1 to connect to target $section"
-		return 1
+	local name=$1 tgtid=$2
+	$_tgtadm --op bind --tid "$tgtid" --initiator-name "$name" || {
+		$logger "Failed to set allow $name to connect to target $tgtid"
+		TARGET_ERROR=true
 	}
 }
 
 bind_address() {
-	$_tgtadm --op bind --tid "$section" --initiator-address "$1" || {
-		$logger "Failed to set allow $1 to connect to target $section"
-		return 1
+	local addr=$1 tgtid=$2
+	$_tgtadm --op bind --tid "$tgtid" --initiator-address "$addr" || {
+		$logger "Failed to set allow $addr to connect to target $tgtid"
+		TARGET_ERROR=true
 	}
 }
 
@@ -163,6 +167,7 @@ handle_target() {
 	local tgtid=$1
 	local _tgtadm="$tgtadm --mode target"
 	local is_list_name is_list_addr
+	TARGET_ERROR=false
 
 	[ "$tgtid" -ge 0 ] || return 1
 	[ "$2" = 0 ] || {
@@ -176,21 +181,22 @@ handle_target() {
 	config_get is_list_name "$tgtid" allow_name_LENGTH
 	config_get is_list_addr "$tgtid" allow_address_LENGTH
 	if [ -z "$is_list_name$is_list_addr$allow_name$allow_address" ]; then
-		bind_address ALL || return 1
+		bind_address ALL "$tgtid"
 	else
 		if [ -z "$is_list_name" ] && [ "$allow_name" ]; then
-			bind_name "$allow_name"
+			bind_name "$allow_name" "$tgtid"
 		else
-			config_list_foreach "$tgtid" allow_name bind_name
+			config_list_foreach "$tgtid" allow_name bind_name "$tgtid"
 		fi
 		if [ -z "$is_list_addr" ] && [ "$allow_address" ]; then
-			bind_address "$allow_address"
+			bind_address "$allow_address" "$tgtid"
 		else
-			config_list_foreach "$tgtid" allow_address bind_address
+			config_list_foreach "$tgtid" allow_address bind_address "$tgtid"
 		fi
 	fi
-	config_foreach validate_lun_section lun handle_lun || return 1
-	config_foreach validate_account_section account bind_account_to_target || return 1
+	config_foreach validate_account_section account bind_account_to_target
+	config_foreach validate_lun_section lun handle_lun
+	"$TARGET_ERROR" && $_tgtadm --op delete --force --tid "$tgtid"
 }
 
 configure() {
@@ -199,8 +205,8 @@ configure() {
 		$logger "Failed to set system state to Offline"
 		return 1
 	}
-	config_foreach validate_account_section account handle_account || return 1
-	config_foreach validate_target_section target handle_target || return 1
+	config_foreach validate_account_section account handle_account
+	config_foreach validate_target_section target handle_target
 	$tgtadm --mode sys --op update --name State -v ready || {
 		$logger "Failed to set system state to Ready"
 		return 1
