@@ -274,11 +274,17 @@ iptables_add_blocking_rule() {
 		# Wait for a maximum of 10 second per command, retrying every millisecond
 		local iptables_wait_args="--wait 10 --wait-interval 1000"
 
+		# Reject only new connections from the blocked interface: replies to
+		# connections the containers opened themselves must still get in
+		local conntrack_args="--match conntrack ! --ctstate RELATED,ESTABLISHED"
+
 		# Ignore errors as it might already be present
 		iptables ${iptables_wait_args} --table filter --new DOCKER-USER 2>/dev/null
-		if ! iptables ${iptables_wait_args} --table filter --check DOCKER-USER --in-interface "${inbound}" --out-interface "${outbound}" ${extra_iptables_args} --jump REJECT 2>/dev/null; then
-			logger -t "dockerd-init" -p notice "Drop traffic from ${inbound} to ${outbound}"
-			iptables ${iptables_wait_args} --table filter --insert DOCKER-USER --in-interface "${inbound}" --out-interface "${outbound}" ${extra_iptables_args} --jump REJECT
+		# Remove the rule older versions added, which also rejected replies
+		iptables ${iptables_wait_args} --table filter --delete DOCKER-USER --in-interface "${inbound}" --out-interface "${outbound}" ${extra_iptables_args} --jump REJECT 2>/dev/null
+		if ! iptables ${iptables_wait_args} --table filter --check DOCKER-USER --in-interface "${inbound}" --out-interface "${outbound}" ${conntrack_args} ${extra_iptables_args} --jump REJECT 2>/dev/null; then
+			logger -t "dockerd-init" -p notice "Drop new connections from ${inbound} to ${outbound}"
+			iptables ${iptables_wait_args} --table filter --insert DOCKER-USER --in-interface "${inbound}" --out-interface "${outbound}" ${conntrack_args} ${extra_iptables_args} --jump REJECT
 		fi
 	}
 
