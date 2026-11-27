@@ -53,6 +53,9 @@ ban_bcp38="0"
 ban_icmplimit="25"
 ban_synlimit="10"
 ban_udplimit="100"
+ban_icmpburstlimit="5"
+ban_synburstlimit="5"
+ban_udpburstlimit="5"
 ban_loglimit="100"
 ban_logratelimit="10"
 ban_logburstlimit="5"
@@ -322,7 +325,7 @@ f_log() {
 # load config
 #
 f_conf() {
-	local rir ccode region country
+	local rir ccode region country option value
 
 	[ "${ban_confload}" = "1" ] && return 0
 
@@ -371,12 +374,27 @@ f_conf() {
 	config_load banip
 	ban_confload="1"
 
+	# set default burst limits for ICMP, SYN and UDP if not set or invalid
+	#
+	for option in ban_icmpburstlimit ban_synburstlimit ban_udpburstlimit; do
+		eval "value=\"\${${option}}\""
+		case "${value}" in
+		"" | 0* | *[!0-9]*)
+			eval "${option}=\"5\""
+			;;
+		esac
+	done
+
+	# set default log daemon
+	#
 	if [ -f "${ban_logreadfile}" ]; then
 		ban_logreadcmd="$(command -v tail)"
 	else
 		ban_logreadcmd="$(command -v logread)"
 	fi
 
+	# derive country codes from region codes
+	#
 	for rir in ${ban_region}; do
 		while read -r ccode region country; do
 			if [ "${rir}" = "${region}" ]; then
@@ -1327,24 +1345,24 @@ f_nftinit() {
 		#
 		if [ "${ban_icmplimit}" -gt "0" ]; then
 			[ "${ban_logprerouting}" = "1" ] &&
-				printf '%s\n' "add rule inet banIP pre-routing meta nfproto . meta l4proto { ipv4 . icmp , ipv6 . icmpv6 } limit rate over ${ban_icmplimit}/second ${log_icmp}"
-			printf '%s\n' "add rule inet banIP pre-routing meta nfproto . meta l4proto { ipv4 . icmp , ipv6 . icmpv6 } limit rate over ${ban_icmplimit}/second counter name cnt_icmpflood drop"
+				printf '%s\n' "add rule inet banIP pre-routing meta nfproto . meta l4proto { ipv4 . icmp , ipv6 . icmpv6 } limit rate over ${ban_icmplimit}/second burst ${ban_icmpburstlimit} packets ${log_icmp}"
+			printf '%s\n' "add rule inet banIP pre-routing meta nfproto . meta l4proto { ipv4 . icmp , ipv6 . icmpv6 } limit rate over ${ban_icmplimit}/second burst ${ban_icmpburstlimit} packets counter name cnt_icmpflood drop"
 		fi
 
 		# UDP Flood
 		#
 		if [ "${ban_udplimit}" -gt "0" ]; then
 			[ "${ban_logprerouting}" = "1" ] &&
-				printf '%s\n' "add rule inet banIP pre-routing meta l4proto udp ct state new limit rate over ${ban_udplimit}/second ${log_udp}"
-			printf '%s\n' "add rule inet banIP pre-routing meta l4proto udp ct state new limit rate over ${ban_udplimit}/second counter name cnt_udpflood drop"
+				printf '%s\n' "add rule inet banIP pre-routing meta l4proto udp ct state new limit rate over ${ban_udplimit}/second burst ${ban_udpburstlimit} packets ${log_udp}"
+			printf '%s\n' "add rule inet banIP pre-routing meta l4proto udp ct state new limit rate over ${ban_udplimit}/second burst ${ban_udpburstlimit} packets counter name cnt_udpflood drop"
 		fi
 
 		# SYN Flood
 		#
 		if [ "${ban_synlimit}" -gt "0" ]; then
 			[ "${ban_logprerouting}" = "1" ] &&
-				printf '%s\n' "add rule inet banIP pre-routing tcp flags & (fin|syn|rst|ack) == syn limit rate over ${ban_synlimit}/second ${log_syn}"
-			printf '%s\n' "add rule inet banIP pre-routing tcp flags & (fin|syn|rst|ack) == syn limit rate over ${ban_synlimit}/second counter name cnt_synflood drop"
+				printf '%s\n' "add rule inet banIP pre-routing tcp flags & (fin|syn|rst|ack) == syn limit rate over ${ban_synlimit}/second burst ${ban_synburstlimit} packets ${log_syn}"
+			printf '%s\n' "add rule inet banIP pre-routing tcp flags & (fin|syn|rst|ack) == syn limit rate over ${ban_synlimit}/second burst ${ban_synburstlimit} packets counter name cnt_synflood drop"
 		fi
 
 		# TCP Invalid
@@ -1415,7 +1433,7 @@ f_nftinit() {
 	feed_rc="${?}"
 	[ "${feed_rc}" = "0" ] && f_log "info" "initialize banIP nftables namespace"
 
-	f_log "debug" "f_nftinit ::: wan_dev: ${wan_dev}, vlan_allow: ${vlan_allow:-"-"}, vlan_block: ${vlan_block:-"-"}, allowed_dports: ${allow_dport:-"-"}, priority: ${ban_nftpriority}, policy: ${ban_nftpolicy}, icmp_limit: ${ban_icmplimit}, syn_limit: ${ban_synlimit}, udp_limit: ${ban_udplimit}, loglevel: ${ban_nftloglevel}, rc: ${feed_rc:-"-"}"
+	f_log "debug" "f_nftinit ::: wan_dev: ${wan_dev}, vlan_allow: ${vlan_allow:-"-"}, vlan_block: ${vlan_block:-"-"}, allowed_dports: ${allow_dport:-"-"}, priority: ${ban_nftpriority}, policy: ${ban_nftpolicy}, icmp_limit: ${ban_icmplimit}/${ban_icmpburstlimit}, syn_limit: ${ban_synlimit}/${ban_synburstlimit}, udp_limit: ${ban_udplimit}/${ban_udpburstlimit}, loglevel: ${ban_nftloglevel}, rc: ${feed_rc:-"-"}"
 	: >"${file}"
 	return "${feed_rc}"
 }
@@ -2255,7 +2273,7 @@ f_genstatus() {
 		json_add_string "${object}" "${object}"
 	done
 	json_close_array
-	json_add_string "nft_info" "ver: ${nft_ver:-"-"}, priority: ${ban_nftpriority}, policy: ${ban_nftpolicy}, loglevel: ${ban_nftloglevel}, expiry: ${ban_nftexpiry:-"-"}, limit (icmp/syn/udp): ${ban_icmplimit}/${ban_synlimit}/${ban_udplimit}, loglimit (rate/burst): ${ban_logratelimit}/${ban_logburstlimit}"
+	json_add_string "nft_info" "ver: ${nft_ver:-"-"}, priority: ${ban_nftpriority}, policy: ${ban_nftpolicy}, loglevel: ${ban_nftloglevel}, expiry: ${ban_nftexpiry:-"-"}, limit (icmp/syn/udp): ${ban_icmplimit}/${ban_synlimit}/${ban_udplimit}, burst (icmp/syn/udp): ${ban_icmpburstlimit}/${ban_synburstlimit}/${ban_udpburstlimit}, loglimit (rate/burst): ${ban_logratelimit}/${ban_logburstlimit}"
 	json_add_string "run_info" "base: ${ban_basedir}, backup: ${ban_backupdir}, report: ${ban_reportdir}, error: ${ban_errordir}"
 	json_add_string "run_flags" "auto: ${s_auto}, proto (4/6): ${s_v4}/${s_v6}, bcp38: ${s_bcp}, log (pre/in/out): ${s_lpre}/${s_lin}/${s_lout}, count: ${s_cnt}, dedup: ${s_dedup}, split: ${s_split}, custom feed: ${s_cf}, allowed only: ${s_allow}, debug: ${s_dbg}"
 	json_add_string "last_run" "${runtime:-"-"}"
