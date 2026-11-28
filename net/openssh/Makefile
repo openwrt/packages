@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=openssh
 PKG_REALVERSION:=10.6p2
 PKG_VERSION:=10.6_p2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_REALVERSION).tar.gz
 PKG_SOURCE_URL:=https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/ \
@@ -43,7 +43,7 @@ define Package/openssh-moduli
 endef
 
 define Package/openssh-moduli/description
-OpenSSH server moduli file.
+  OpenSSH server moduli file.
 endef
 
 define Package/openssh-client
@@ -53,14 +53,35 @@ define Package/openssh-client
   ALTERNATIVES:=\
   	200:/usr/bin/ssh:/usr/libexec/ssh-openssh \
   	200:/usr/bin/scp:/usr/libexec/scp-openssh
+  VARIANT:=without-pam
+  DEFAULT_VARIANT:=1
+  CONFLICTS:=openssh-client-gssapi
 endef
 
 define Package/openssh-client/description
-OpenSSH client.
+  OpenSSH client.
 endef
 
 define Package/openssh-client/conffiles
 /etc/ssh/ssh_config
+endef
+
+define Package/openssh-client-gssapi
+  $(call Package/openssh-client)
+  DEPENDS+= +krb5-libs
+  TITLE+= (with GSSAPI support)
+  VARIANT:=with-gssapi
+  DEFAULT_VARIANT:=
+  CONFLICTS:=
+  PROVIDES:=openssh-client
+endef
+
+define Package/openssh-client-gssapi/description
+  OpenSSH client (with GSSAPI support).
+endef
+
+define Package/openssh-client-gssapi/conffiles
+$(Package/openssh-client/conffiles)
 endef
 
 define Package/openssh-client-utils
@@ -70,7 +91,7 @@ define Package/openssh-client-utils
 endef
 
 define Package/openssh-client-utils/description
-OpenSSH client utilities.
+  OpenSSH client utilities.
 endef
 
 define Package/openssh-keygen
@@ -81,7 +102,7 @@ define Package/openssh-keygen
 endef
 
 define Package/openssh-keygen/description
-OpenSSH keygen.
+  OpenSSH keygen.
 endef
 
 define Package/openssh-server
@@ -90,10 +111,12 @@ define Package/openssh-server
   TITLE+= server
   USERID:=sshd=22:sshd=22
   VARIANT:=without-pam
+  DEFAULT_VARIANT:=1
+  CONFLICTS:=openssh-server-gssapi openssh-server-pam-gssapi
 endef
 
 define Package/openssh-server/description
-OpenSSH server.
+  OpenSSH server.
 endef
 
 define Package/openssh-server/conffiles
@@ -113,12 +136,13 @@ define Package/openssh-server-pam
   DEPENDS+= +USE_GLIBC:libcrypt-compat +libopenssl +zlib +libpthread +openssh-keygen +libpam
   TITLE+= server (with PAM support)
   VARIANT:=with-pam
-  CONFLICTS:=openssh-server
+  DEFAULT_VARIANT:=1
+  CONFLICTS:=openssh-server openssh-server-gssapi openssh-server-pam-gssapi
   USERID:=sshd=22:sshd=22
 endef
 
 define Package/openssh-server-pam/description
-OpenSSH server (with PAM support).
+  OpenSSH server (with PAM support).
 endef
 
 define Package/openssh-server-pam/conffiles
@@ -127,13 +151,51 @@ define Package/openssh-server-pam/conffiles
 $(Package/openssh-server/conffiles)
 endef
 
+define Package/openssh-server-gssapi
+  $(call Package/openssh-server)
+  DEPENDS+= +krb5-libs +libcomerr
+  TITLE+= (with GSSAPI support)
+  VARIANT:=with-gssapi
+  DEFAULT_VARIANT:=
+  CONFLICTS:=openssh-server-pam-gssapi
+  PROVIDES:=openssh-server
+endef
+
+define Package/openssh-server-gssapi/description
+  OpenSSH server (with GSSAPI support).
+endef
+
+define Package/openssh-server-gssapi/conffiles
+$(Package/openssh-server/conffiles)
+/root/.k5login
+endef
+
+define Package/openssh-server-pam-gssapi
+  $(call Package/openssh-server-pam)
+  DEPENDS+= +krb5-libs +libcomerr
+  TITLE:=OpenSSH server (with PAM and GSSAPI support)
+  VARIANT:=with-pam-gssapi
+  DEFAULT_VARIANT:=
+  CONFLICTS:=
+  PROVIDES:=openssh-server-pam
+endef
+
+define Package/openssh-server-pam-gssapi/description
+  OpenSSH server (with PAM and GSSAPI support).
+endef
+
+define Package/openssh-server-pam-gssapi/conffiles
+$(Package/openssh-server-pam/conffiles)
+/root/.k5login
+endef
+
 define Package/openssh-sftp-client
   $(call Package/openssh/Default)
   TITLE+= SFTP client
 endef
 
 define Package/openssh-sftp-client/description
-OpenSSH SFTP client.
+  OpenSSH SFTP client.
 endef
 
 define Package/openssh-sftp-server
@@ -142,7 +204,7 @@ define Package/openssh-sftp-server
 endef
 
 define Package/openssh-sftp-server/description
-OpenSSH SFTP server.
+  OpenSSH SFTP server.
 endef
 
 define Package/openssh-sftp-avahi-service
@@ -152,8 +214,8 @@ define Package/openssh-sftp-avahi-service
 endef
 
 define Package/openssh-sftp-avahi-service/description
- This package contains the service definition for announcing
- SFTP support via mDNS/DNS-SD.
+  This package contains the service definition for announcing
+  SFTP support via mDNS/DNS-SD.
 endef
 
 define Package/openssh-sftp-avahi-service/conffiles
@@ -167,9 +229,9 @@ define Package/openssh-sk-helper
 endef
 
 define Package/openssh-sk-helper/description
-OpenSSH helper that can be used by openssh-client, openssh-sftp-client,
-and openssh-keygen to access `ecdsa_sk` and `ed25519_sk keys
-provided by a FIDO U2F or FIDO2 hardware token over USB.
+  OpenSSH helper that can be used by openssh-client, openssh-sftp-client,
+  and openssh-keygen to access `ecdsa_sk` and `ed25519_sk keys
+  provided by a FIDO U2F or FIDO2 hardware token over USB.
 endef
 
 CONFIGURE_ARGS += \
@@ -184,13 +246,12 @@ CONFIGURE_ARGS += \
 	--disable-wtmp \
 	--disable-wtmpx \
 	--without-bsd-auth \
-	--without-kerberos5 \
 	--with-stackprotect \
 	--with$(if $(CONFIG_OPENSSL_ENGINE),,out)-ssl-engine \
 	--with$(if $(CONFIG_PACKAGE_openssh-sk-helper),,out)-security-key-builtin \
 	--with-cflags-after=-fzero-call-used-regs=skip
 
-ifeq ($(BUILD_VARIANT),with-pam)
+ifneq ($(filter with-pam with-pam-gssapi,$(BUILD_VARIANT)),)
 CONFIGURE_ARGS += \
 	--with-pam
 else
@@ -198,9 +259,17 @@ CONFIGURE_ARGS += \
 	--without-pam
 endif
 
+ifneq ($(filter %-gssapi,$(BUILD_VARIANT)),)
+CONFIGURE_ARGS += \
+	--with-kerberos5=$(STAGING_DIR)/usr
+else
+CONFIGURE_ARGS += \
+	--without-kerberos5
+endif
+
 CONFIGURE_VARS += LD="$(TARGET_CC)" PATH_PASSWD_PROG="/bin/passwd"
 
-ifeq ($(BUILD_VARIANT),with-pam)
+ifneq ($(filter with-pam with-pam-gssapi,$(BUILD_VARIANT)),)
 TARGET_LDFLAGS += -lpthread
 endif
 
@@ -223,6 +292,8 @@ define Package/openssh-client/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ssh $(1)/usr/libexec/ssh-openssh
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/scp $(1)/usr/libexec/scp-openssh
 endef
+
+Package/openssh-client-gssapi/install=$(Package/openssh-client/install)
 
 define Package/openssh-client-utils/install
 	$(INSTALL_DIR) $(1)/usr/bin
@@ -264,6 +335,10 @@ define Package/openssh-server-pam/install
 	$(INSTALL_DATA) ./files/sshd.pam-access $(1)/etc/security/access-sshd-local.conf
 endef
 
+Package/openssh-server-gssapi/install=$(Package/openssh-server/install)
+
+Package/openssh-server-pam-gssapi/install=$(Package/openssh-server-pam/install)
+
 define Package/openssh-sftp-client/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/sftp $(1)/usr/bin/
@@ -282,12 +357,15 @@ define Package/openssh-sftp-avahi-service/install
 endef
 
 $(eval $(call BuildPackage,openssh-client))
+$(eval $(call BuildPackage,openssh-client-gssapi))
 $(eval $(call BuildPackage,openssh-moduli))
 $(eval $(call BuildPackage,openssh-client-utils))
 $(eval $(call BuildPackage,openssh-keygen))
 $(eval $(call BuildPackage,openssh-sk-helper))
 $(eval $(call BuildPackage,openssh-server))
 $(eval $(call BuildPackage,openssh-server-pam))
+$(eval $(call BuildPackage,openssh-server-gssapi))
+$(eval $(call BuildPackage,openssh-server-pam-gssapi))
 $(eval $(call BuildPackage,openssh-sftp-client))
 $(eval $(call BuildPackage,openssh-sftp-server))
 $(eval $(call BuildPackage,openssh-sftp-avahi-service))
