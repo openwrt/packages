@@ -861,10 +861,14 @@ send_update() {
 
 get_current_ip () {
 	# $1	Name of Variable to store current IP
-	local ip_var data retries
+	local ip_var data retries flags skip_re
 	ip_var="$1"
 	data=""
 	retries=0
+	# skip f000::/4 unless non-public IPs are allowed
+	skip_re="^f"
+	[ "$use_ipv6" = 1 ] && flags="-deprecated"
+	[ "$upd_privateip" = 1 ] && skip_re="^$"
 
 	# Validate input
 	if [ -z "$ip_var" ]; then
@@ -887,9 +891,8 @@ get_current_ip () {
 			[ -z "$ip_interface" ] && { write_log 12 "get_current_ip: 'ip_interface' not set for source 'interface'"; return 2; }
 			# Test for alias interfaces e.g. "@wan6"; get the effective layer 3 interface
 			[ "${ip_interface#*'@'}" != "$ip_interface" ] && network_get_device ip_interface "$ip_interface"
-			write_log 7 "#> ip -o -$((use_ipv6 ? 6 : 4)) -br -js addr show dev '$ip_interface' scope global | $jsonfilter -e '@[0].addr_info[0].local'"
-			[ "$use_ipv6" -eq 0 ] && data=$(ip -o -4 -br -js addr show dev "$ip_interface" scope global | "$jsonfilter" -e '@[0].addr_info[0].local')
-			[ "$use_ipv6" -eq 1 ] && data=$(ip -o -6 -br -js addr show dev "$ip_interface" scope global | "$jsonfilter" -e '@[0].addr_info[0].local')
+			write_log 7 "#> ip -o -$((use_ipv6 ? 6 : 4)) -br -js addr show dev '$ip_interface' scope global $flags | $jsonfilter -e '@[0].addr_info[*].local' | grep -vi '$skip_re' | head -n 1"
+			data=$(ip -o -$((use_ipv6 ? 6 : 4)) -br -js addr show dev "$ip_interface" scope global $flags | "$jsonfilter" -e '@[0].addr_info[*].local' | grep -vi "$skip_re" | head -n 1)
 			[ -n "$data" ] && write_log 7 "Current IP '$data' detected on interface '$ip_interface'"
 			;;
 		"script")
