@@ -63,6 +63,7 @@ define Package/tor-basic
 $(call Package/tor/Default)
   TITLE+= (no bridge/relay support)
   VARIANT:=basic
+  DEFAULT_VARIANT:=1
 endef
 
 define Package/tor-basic/description
