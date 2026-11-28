@@ -1,0 +1,72 @@
+From bc423f99db6f1a8becacd2f5835cf2ac4b7887e6 Mon Sep 17 00:00:00 2001
+From: Rongliang Hu <hurongliang@gmail.com>
+Date: Fri, 27 Nov 2026 13:44:06 +0800
+Subject: [PATCH] util: rename va_list overloads to avoid char* to void*
+ mismatch on 32-bit MIPS
+
+On 32-bit MIPS (o32 ABI), va_list is typedef'd to void *. Having both
+nd_printf(const char *, ...) and nd_printf(const char *, va_list) causes
+C++ overload resolution to prefer the va_list overload whenever a single
+non-const char * argument is passed (implicit char * -> void * conversion
+outranks ellipsis).
+
+When any client connects to /var/run/netifyd/netifyd.sock, src/netifyd.cpp
+executes:
+
+  nd_printf("Unhandled signal: %s\n", strsignal(sig));
+
+Because strsignal() returns char *, mipsel builds resolve this call to
+nd_printf(const char *, va_list), passing the string "RT35" directly as
+va_list into vsyslog(). vsyslog() then dereferences the bytes of "RT35"
+(0x35335452) as a char * pointer and immediately crashes with SIGSEGV.
+
+Rename the va_list overloads to nd_vprintf() and nd_vdprintf() so variadic
+callers unambiguously bind to nd_printf() / nd_dprintf() on all ABIs.
+
+Upstream-Status: Pending
+Signed-off-by: Rongliang Hu <hurongliang@gmail.com>
+
+--- a/include/nd-util.h
++++ b/include/nd-util.h
+@@ -54,9 +54,9 @@ public:
+ };
+ 
+ void nd_printf(const char *format, ...);
+-void nd_printf(const char *format, va_list ap);
++void nd_vprintf(const char *format, va_list ap);
+ void nd_dprintf(const char *format, ...);
+-void nd_dprintf(const char *format, va_list ap);
++void nd_vdprintf(const char *format, va_list ap);
+ void nd_flow_printf(const char *format, ...);
+ 
+ #ifdef NDPI_ENABLE_DEBUG_MESSAGES
+--- a/src/nd-util.cpp
++++ b/src/nd-util.cpp
+@@ -150,11 +150,11 @@ void nd_printf(const char *format, ...)
+ 
+     va_list ap;
+     va_start(ap, format);
+-    nd_printf(format, ap);
++    nd_vprintf(format, ap);
+     va_end(ap);
+ }
+ 
+-void nd_printf(const char *format, va_list ap)
++void nd_vprintf(const char *format, va_list ap)
+ {
+     if (ND_QUIET) return;
+ 
+@@ -169,11 +169,11 @@ void nd_dprintf(const char *format, ...)
+ 
+     va_list ap;
+     va_start(ap, format);
+-    nd_dprintf(format, ap);
++    nd_vdprintf(format, ap);
+     va_end(ap);
+ }
+ 
+-void nd_dprintf(const char *format, va_list ap)
++void nd_vdprintf(const char *format, va_list ap)
+ {
+     if (! ND_DEBUG) return;
+ 
