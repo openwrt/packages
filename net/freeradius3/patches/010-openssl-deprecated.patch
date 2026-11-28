@@ -39,8 +39,8 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
  
  #if OPENSSL_VERSION_NUMBER >= 0x30000000L
  #  include <openssl/provider.h>
-@@ -2985,7 +2986,7 @@ int cbtls_verify(int ok, X509_STORE_CTX
- 	int		my_ok = ok;
+@@ -3076,7 +3077,7 @@ int cbtls_verify(int ok, X509_STORE_CTX
+ 	bool		ocsp_skipped = false;
  
  	ASN1_INTEGER	*sn = NULL;
 -	ASN1_TIME	*asn_time = NULL;
@@ -48,25 +48,25 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
  	VALUE_PAIR	**certs;
  	char **identity;
  #ifdef HAVE_OPENSSL_OCSP_H
-@@ -3077,7 +3078,7 @@ int cbtls_verify(int ok, X509_STORE_CTX
+@@ -3170,7 +3171,7 @@ int cbtls_verify(int ok, X509_STORE_CTX
  	 *	Get the Expiration Date
  	 */
  	buf[0] = '\0';
 -	asn_time = X509_get_notAfter(client_cert);
 +	asn_time = X509_get0_notAfter(client_cert);
  	if (certs && (lookup <= 1) && asn_time &&
- 	    (asn_time->length < (int) sizeof(buf))) {
- 		memcpy(buf, (char*) asn_time->data, asn_time->length);
-@@ -3090,7 +3091,7 @@ int cbtls_verify(int ok, X509_STORE_CTX
+ 	    (ASN1_STRING_length(asn_time) < (int) sizeof(buf))) {
+ 		int time_len = ASN1_STRING_length(asn_time);
+@@ -3185,7 +3186,7 @@ int cbtls_verify(int ok, X509_STORE_CTX
  	 *	Get the Valid Since Date
  	 */
  	buf[0] = '\0';
 -	asn_time = X509_get_notBefore(client_cert);
 +	asn_time = X509_get0_notBefore(client_cert);
  	if (certs && (lookup <= 1) && asn_time &&
- 	    (asn_time->length < (int) sizeof(buf))) {
- 		memcpy(buf, (char*) asn_time->data, asn_time->length);
-@@ -3697,10 +3698,12 @@ static int set_ecdh_curve(SSL_CTX *ctx,
+ 	    (ASN1_STRING_length(asn_time) < (int) sizeof(buf))) {
+ 		int time_len = ASN1_STRING_length(asn_time);
+@@ -3816,10 +3817,12 @@ static int set_ecdh_curve(SSL_CTX *ctx,
   */
  int tls_global_init(TLS_UNUSED bool spawn_flag, TLS_UNUSED bool check)
  {
@@ -79,7 +79,7 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
  
  #if OPENSSL_VERSION_NUMBER >= 0x30000000L
  	EVP_set_default_properties(NULL, "-fips");
-@@ -3806,6 +3809,7 @@ int tls_global_version_check(char const
+@@ -3925,6 +3928,7 @@ int tls_global_version_check(char const
   */
  void tls_global_cleanup(void)
  {
@@ -87,7 +87,7 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
  #if OPENSSL_VERSION_NUMBER < 0x10000000L
  	ERR_remove_state(0);
  #elif OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
-@@ -3833,6 +3837,7 @@ void tls_global_cleanup(void)
+@@ -3952,6 +3956,7 @@ void tls_global_cleanup(void)
  	ERR_free_strings();
  	EVP_cleanup();
  	CRYPTO_cleanup_all_ex_data();
