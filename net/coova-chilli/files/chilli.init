@@ -79,9 +79,26 @@ start_service() {
 }
 
 stop_service() {
-	for undofile in /var/run/chilli.tun*.sh; do
-		sh $undofile >& /dev/null
-	done
+	local f tun
+	. /usr/share/coova-chilli/fw4.sh
+	# Revoke every registration under the same lock as up/down and the include.
+	{
+		flock -x 8
+		flock -x 9
+		for f in "$CHILLI_FW4_DIR"/*.state; do
+			[ -f "$f" ] || continue
+			tun="${f##*/}"
+			chilli_fw4_unregister "${tun%.state}" || chilli_fw4_warn 'cannot unregister chilli firewall instance'
+		done
+		chilli_fw4_sync || chilli_fw4_warn 'cannot synchronize chilli firewall stop'
+	} 8>/var/run/fw4.lock 9>/tmp/.chilli-flock
+	# fw4 holds its lock while invoking our include, which acquires chilli's.
+	chilli_fw4_reload
+	{
+		flock -x 8
+		flock -x 9
+		chilli_fw4_cleanup || chilli_fw4_warn 'coova drops retained after chilli stop'
+	} 8>/var/run/fw4.lock 9>/tmp/.chilli-flock
 	rm -f /var/run/chilli_*
 }
 
