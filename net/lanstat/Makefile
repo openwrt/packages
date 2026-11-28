@@ -53,35 +53,6 @@ define Package/lanstat/install
 	$(INSTALL_CONF) ./files/lanstat.config $(1)/etc/config/lanstat
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/lanstat.init $(1)/etc/init.d/lanstat
-	$(INSTALL_DIR) $(1)/usr/share/luci/menu.d
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/openwrt/usr/share/luci/menu.d/lanstat.json $(1)/usr/share/luci/menu.d/lanstat.json
-	$(INSTALL_DIR) $(1)/usr/share/rpcd/acl.d
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/openwrt/usr/share/rpcd/acl.d/lanstat.json $(1)/usr/share/rpcd/acl.d/lanstat.json
-	$(INSTALL_DIR) $(1)/www/luci-static/resources/view
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/openwrt/www/luci-static/resources/view/lanstat.js $(1)/www/luci-static/resources/view/lanstat.js
-	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/i18n
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/openwrt/usr/lib/lua/luci/i18n/lanstat.zh-cn.lmo $(1)/usr/lib/lua/luci/i18n/lanstat.zh-cn.lmo
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/openwrt/usr/lib/lua/luci/i18n/lanstat.zh-tw.lmo $(1)/usr/lib/lua/luci/i18n/lanstat.zh-tw.lmo
-endef
-
-define Package/lanstat/postinst
-#!/bin/sh
-[ -n "$${IPKG_INSTROOT}" ] || {
-	rm -f /tmp/luci-indexcache*
-	rm -rf /tmp/luci-modulecache/*
-	[ -x /etc/init.d/rpcd ] && /etc/init.d/rpcd reload >/dev/null 2>&1 || true
-}
-exit 0
-endef
-
-define Package/lanstat/postrm
-#!/bin/sh
-[ -n "$${IPKG_INSTROOT}" ] || {
-	rm -f /tmp/luci-indexcache*
-	rm -rf /tmp/luci-modulecache/*
-	[ -x /etc/init.d/rpcd ] && /etc/init.d/rpcd reload >/dev/null 2>&1 || true
-}
-exit 0
 endef
 
 $(eval $(call BuildPackage,lanstat))

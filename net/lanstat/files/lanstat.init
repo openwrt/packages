@@ -14,7 +14,7 @@ start_service() {
 	config_get_bool enabled main enabled 1
 	[ "$enabled" -eq 1 ] || return 0
 
-	config_get iface main interface "br-lan"
+	config_get iface main interface "lan"
 	network_get_device dev "$iface" || dev="$iface"
 	[ -n "$dev" ] || dev="$iface"
 	config_get bind main bind "0.0.0.0"
