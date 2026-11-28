@@ -1,0 +1,15 @@
+{
+	"chanmgr-agent": {
+		"description": "Remote chanmgr controller: measure and switch Wi-Fi channels",
+		"read": {
+			"ubus": {
+				"chanmgr": [ "agent_info", "agent_survey", "agent_scan", "agent_job", "agent_guard_status" ]
+			}
+		},
+		"write": {
+			"ubus": {
+				"chanmgr": [ "agent_switch", "agent_confirm", "agent_guard_start", "agent_guard_confirm", "agent_guard_abort" ]
+			}
+		}
+	}
+}
