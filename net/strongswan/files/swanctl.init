@@ -19,6 +19,9 @@ WAIT_FOR_INTF=0
 
 CONFIG_FAIL=0
 
+# Simple mode connections with a pre-shared key but without identifiers
+SIMPLE_PSK_NO_ID=""
+
 time2seconds() {
 	local timestring="$1"
 	local multiplier number suffix
@@ -130,10 +133,12 @@ swanctl_xappend4() {
 
 warning() {
 	echo "WARNING: $@" >&2
+	logger -t ipsec -p user.warn "$*"
 }
 
 fatal() {
 	echo "ERROR: $@" >&2
+	logger -t ipsec -p user.err "$*"
 	CONFIG_FAIL=1
 }
 
@@ -741,6 +746,7 @@ config_remote() {
 	local pubkeys
 	local pubkey
 	local eap_id
+	local revocation
 	local suffix
 
 	config_get auth "$conf" auth "pubkey"
@@ -748,6 +754,15 @@ config_remote() {
 	config_list_foreach "$conf" cacerts append_var cacerts ","
 	config_list_foreach "$conf" pubkeys append_var pubkeys ","
 	config_get eap_id "$conf" eap_id "%any"
+	config_get revocation "$conf" revocation ""
+
+	case "$revocation" in
+	""|strict|ifuri|relaxed)
+		;;
+	*)
+		fatal "remote revocation \'$revocation\' is invalid"
+		;;
+	esac
 
 	if [ "$auth" = "pubkey" ] && [ -n "$pubkeys" ]; then
 		for pubkey in $(echo "$pubkeys" | tr ',' ' '); do
@@ -767,6 +782,7 @@ config_remote() {
 	[ -n "$cacerts" ] && swanctl_xappend3 "cacerts = \"$cacerts\""
 	[ "$auth" = "pubkey" ] && [ -n "$pubkeys" ] && \
 		swanctl_xappend3 "pubkeys = \"$pubkeys\""
+	[ -n "$revocation" ] && swanctl_xappend3 "revocation = $revocation"
 	case "$auth" in
 	eap-mschapv2|eap-tls)
 		swanctl_xappend3 "eap_id = $eap_id"
@@ -800,9 +816,13 @@ config_connection() {
 	local remote_addrs
 	local vips
 	local pools
+	local config_mode
 
 	config_get_bool enabled "$conf" enabled 0
 	[ $enabled -eq 0 ] && return
+
+	# Connections without the option use the local and remote sections.
+	config_get config_mode "$conf" config_mode "advanced"
 
 	config_get keyingtries "$conf" keyingtries
 	config_get dpd_delay "$conf" dpd_delay
@@ -841,6 +861,14 @@ config_connection() {
 		;;
 	esac
 
+	case "$config_mode" in
+	simple|advanced)
+		;;
+	*)
+		fatal "Configuration mode $config_mode not supported"
+		;;
+	esac
+
 	local ike_proposal
 	iter_ike_proposal "$conf" ike_proposal
 
@@ -856,15 +884,30 @@ config_connection() {
 	[ -n "$pools" ] && swanctl_xappend2 "pools = $pools"
 	[ $pull -eq 0 ] && swanctl_xappend2 "pull = no"
 
-	LOCAL_ROUND=0
-	config_list_foreach "$conf" local config_local
+	case "$config_mode" in
+	simple)
+		config_connection_simple_round "$conf" local
+		config_connection_simple_round "$conf" remote
+		;;
+	*)
+		LOCAL_ROUND=0
+		config_list_foreach "$conf" local config_local
 
-	REMOTE_ROUND=0
-	config_list_foreach "$conf" remote config_remote
+		REMOTE_ROUND=0
+		config_list_foreach "$conf" remote config_remote
+		;;
+	esac
 
 	swanctl_xappend2 "children {"
 
-	config_list_foreach "$conf" child config_child
+	case "$config_mode" in
+	simple)
+		config_connection_simple_child "$conf"
+		;;
+	*)
+		config_list_foreach "$conf" child config_child
+		;;
+	esac
 
 	swanctl_xappend2 "}"
 
@@ -933,7 +976,122 @@ config_connection() {
 	swanctl_xappend1 "}"
 	swanctl_xappend0 "}"
 
+	if [ "$config_mode" = "simple" ]; then
+		config_connection_simple_secret "$conf"
+	fi
+
 	swanctl_xappend0 ""
+}
+
+# In the simple configuration mode, both sides authenticate with the
+# pre-shared key of the connection.
+config_connection_simple_round() {
+	local conf="$1"
+	local side="$2"
+
+	local id
+
+	config_get id "$conf" "${side}_id" ""
+
+	swanctl_xappend2 "${side} {"
+	swanctl_xappend3 "auth = psk"
+	[ -n "$id" ] && swanctl_xappend3 "id = \"$id\""
+	swanctl_xappend2 "}"
+}
+
+# In the simple configuration mode, the connection has one child in tunnel
+# mode, named like the connection, with the networks set on the connection.
+config_connection_simple_child() {
+	local conf="$1"
+
+	local local_ts
+	local remote_ts
+	local start_action
+	local if_id
+	local crypto=""
+
+	config_list_foreach "$conf" local_ts append_var local_ts ","
+	config_list_foreach "$conf" remote_ts append_var remote_ts ","
+	config_get start_action "$conf" start_action "none"
+	config_get if_id "$conf" if_id ""
+
+	# The crypto_proposal option of a connection holds the IKE proposals.
+	config_list_foreach "$conf" esp_proposal config_esp_proposal
+
+	case "$start_action" in
+	none|trap|start)
+		;;
+	*)
+		fatal "start_action '$start_action' unknown"
+		start_action=
+		;;
+	esac
+
+	swanctl_xappend3 "$conf {"
+	[ -n "$local_ts" ] && swanctl_xappend4 "local_ts = $local_ts"
+	[ -n "$remote_ts" ] && swanctl_xappend4 "remote_ts = $remote_ts"
+	[ -n "$if_id" ] && \
+		swanctl_xappend4 "if_id_in = $if_id" "if_id_out = $if_id"
+	[ -n "$start_action" ] && [ "$start_action" != "none" ] && \
+		swanctl_xappend4 "start_action = $start_action"
+	[ -n "$crypto" ] && swanctl_xappend4 "esp_proposals = $crypto"
+	swanctl_xappend4 "mode = tunnel"
+	swanctl_xappend3 "}"
+}
+
+# The pre-shared key is bound to the local and remote identifier of the
+# connection. Without identifiers, it matches every peer. Without a pre-shared
+# key, strongSwan looks up the secret in the global secrets section.
+config_connection_simple_secret() {
+	local conf="$1"
+
+	local psk
+	local local_id
+	local remote_id
+	local index=1
+
+	config_get psk "$conf" psk ""
+	config_get local_id "$conf" local_id ""
+	config_get remote_id "$conf" remote_id ""
+
+	if [ -z "$psk" ]; then
+		warning "PSK of $conf is not set, using global secrets"
+		return
+	fi
+
+	if [ -z "$local_id" ] && [ -z "$remote_id" ]; then
+		append SIMPLE_PSK_NO_ID "$conf"
+	fi
+
+	swanctl_xappend0 ""
+	swanctl_xappend0 "secrets {"
+	swanctl_xappend1 "ike-${conf} {"
+	if [ -n "$local_id" ]; then
+		swanctl_xappend2 "id${index} = \"$local_id\""
+		index=$((index + 1))
+	fi
+	if [ -n "$remote_id" ]; then
+		swanctl_xappend2 "id${index} = \"$remote_id\""
+	fi
+	swanctl_xappend2 "secret = \"$psk\""
+	swanctl_xappend1 "}"
+	swanctl_xappend0 "}"
+}
+
+# A pre-shared key without identifiers matches every peer. With more than one
+# of them, strongSwan may use the pre-shared key of another connection.
+config_connection_simple_secret_check() {
+	local conf
+	local count=0
+
+	for conf in $SIMPLE_PSK_NO_ID; do
+		count=$((count + 1))
+	done
+
+	if [ $count -gt 1 ]; then
+		warning "PSKs of $SIMPLE_PSK_NO_ID have no identities," \
+			"a peer may use the PSK of another connection"
+	fi
 }
 
 config_shunt() {
@@ -1205,6 +1363,17 @@ config_charon_common_aggressive() {
 		swan_xappend1 "i_dont_care_about_security_and_use_aggressive_mode_psk = yes"
 }
 
+config_charon_common_cache_crls() {
+	local conf="$1"
+
+	local cache_crls
+
+	config_get_bool cache_crls "$conf" cache_crls 0
+	[ $cache_crls -eq 1 ] && cache_crls=yes || cache_crls=no
+
+	swan_xappend1 "cache_crls = $cache_crls"
+}
+
 config_charon_common() {
 	local conf="$1"
 
@@ -1213,6 +1382,7 @@ config_charon_common() {
 	config_charon_common_ignore_routing_tables "$conf"
 	config_charon_common_install_routes "$conf"
 	config_charon_common_aggressive "$conf"
+	config_charon_common_cache_crls "$conf"
 }
 
 config_strongswan_generate() {
@@ -1240,6 +1410,7 @@ prepare_env() {
 	swanctl_reset
 	swanctl_xappend0 "# generated by /etc/init.d/swanctl"
 	config_foreach config_connection connection
+	config_connection_simple_secret_check
 	config_foreach config_shunt shunt
 	
 	swanctl_xappend0 "# Global config"
