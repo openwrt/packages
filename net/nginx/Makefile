@@ -243,18 +243,18 @@ define Package/nginx-mod-lua-resty-core
 endef
 
 define Package/nginx-mod-lua-resty-lrucache/install
-	$(INSTALL_DIR) $(1)/usr/lib/lua/resty/lrucache
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/nginx-mod-lua-resty-lrucache/lib/resty/*.lua $(1)/usr/lib/lua/resty
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/nginx-mod-lua-resty-lrucache/lib/resty/lrucache/*.lua $(1)/usr/lib/lua/resty/lrucache
+	$(INSTALL_DIR) $(1)/usr/share/lua/resty/lrucache
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/nginx-mod-lua-resty-lrucache/lib/resty/*.lua $(1)/usr/share/lua/resty
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/nginx-mod-lua-resty-lrucache/lib/resty/lrucache/*.lua $(1)/usr/share/lua/resty/lrucache
 endef
 
 define Package/nginx-mod-lua-resty-core/install
-	$(INSTALL_DIR) $(1)/usr/lib/lua/ngx/ssl
-	$(INSTALL_DIR) $(1)/usr/lib/lua/resty/core
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/nginx-mod-lua-resty-core/lib/ngx/*.lua $(1)/usr/lib/lua/ngx
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/nginx-mod-lua-resty-core/lib/ngx/ssl/*.lua $(1)/usr/lib/lua/ngx/ssl
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/nginx-mod-lua-resty-core/lib/resty/*.lua $(1)/usr/lib/lua/resty
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/nginx-mod-lua-resty-core/lib/resty/core/*.lua $(1)/usr/lib/lua/resty/core
+	$(INSTALL_DIR) $(1)/usr/share/lua/ngx/ssl
+	$(INSTALL_DIR) $(1)/usr/share/lua/resty/core
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/nginx-mod-lua-resty-core/lib/ngx/*.lua $(1)/usr/share/lua/ngx
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/nginx-mod-lua-resty-core/lib/ngx/ssl/*.lua $(1)/usr/share/lua/ngx/ssl
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/nginx-mod-lua-resty-core/lib/resty/*.lua $(1)/usr/share/lua/resty
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/nginx-mod-lua-resty-core/lib/resty/core/*.lua $(1)/usr/share/lua/resty/core
 endef
 
 define Download/nginx-mod-headers-more
