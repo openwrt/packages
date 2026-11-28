@@ -39,6 +39,7 @@ proto_openthread_init_config() {
 	proto_config_add_string backbone_network
 	proto_config_add_string dataset
 	proto_config_add_string radio_url
+	proto_config_add_string rest_listen_address
 	proto_config_add_string foobar
 
 	available=1
@@ -76,6 +77,11 @@ proto_openthread_setup() {
 	[ "$verbose" -eq 0 ] || append opts -v
 	append opts "-I$device"
 	append opts "-B$backbone_ifname"
+	if json_get_var rest_listen_address rest_listen_address; then
+		/sbin/validate_data ipaddr "$rest_listen_address" 2>/dev/null ||
+			proto_openthread_setup_error "$interface" INVALID_REST_LISTEN_ADDRESS
+		append opts "--rest-listen-address=$rest_listen_address"
+	fi
 	append opts "$radio_url"
 	append opts "trel://$backbone_ifname"
 	# run in subshell to prevent wiping json data needed for prefixes
