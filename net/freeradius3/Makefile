@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=freeradius3
-PKG_VERSION:=3.2.10
+PKG_VERSION:=3.2.11
 PKG_VERSION_UNDERSCORE:=$(subst .,_,${PKG_VERSION})
-PKG_RELEASE:=2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=freeradius-server-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/FreeRADIUS/freeradius-server/releases/download/release_$(PKG_VERSION_UNDERSCORE)/
-PKG_HASH:=40e0cdfdcceb22cf0acb79bc29cf7c32995466a61fda09445ce5220608a55afd
+PKG_HASH:=6cc6be535ca33ad13080b7d4114b75f810a946f11ae0788f54557a271066b114
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=GPL-2.0
@@ -536,17 +536,6 @@ endef
 
 define Package/freeradius3-mod-rest/conffiles
 /etc/freeradius3/mods-available/rest
-endef
-
-define Package/freeradius3-mod-soh
-  $(call Package/freeradius3/Default)
-  DEPENDS:=freeradius3
-  TITLE:=SoH module
-endef
-
-define Package/freeradius3-mod-soh/conffiles
-/etc/freeradius3/mods-available/soh
-/etc/freeradius3/sites-available/soh
 endef
 
 define Package/freeradius3-mod-sometimes
@@ -1104,7 +1093,6 @@ $(eval $(call BuildPlugin,freeradius3-mod-redis,rlm_redis,))
 $(eval $(call BuildPlugin,freeradius3-mod-rediswho,rlm_rediswho,))
 $(eval $(call BuildPlugin,freeradius3-mod-replicate,rlm_replicate,))
 $(eval $(call BuildPlugin,freeradius3-mod-rest,rlm_rest,))
-$(eval $(call BuildPlugin,freeradius3-mod-soh,rlm_soh,))
 $(eval $(call BuildPlugin,freeradius3-mod-sometimes,rlm_sometimes,))
 $(eval $(call BuildPlugin,freeradius3-mod-sql,rlm_sql,))
 $(eval $(call BuildPlugin,freeradius3-mod-sql-map,rlm_sql_map,))
