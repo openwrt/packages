@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=minidlna
 PKG_VERSION:=1.3.3
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/minidlna
@@ -32,7 +32,7 @@ define Package/minidlna
   CATEGORY:=Multimedia
   TITLE:=UPnP A/V & DLNA Media Server
   URL:=https://minidlna.sourceforge.net/
-  DEPENDS:= +libpthread +libexif +libjpeg +libsqlite3 +libffmpeg \
+  DEPENDS:=+libpthread +libexif +libjpeg +libsqlite3 +libffmpeg-mini \
   	+libid3tag +libflac +libvorbis $(ICONV_DEPENDS) $(INTL_DEPENDS)
   USERID:=minidlna:minidlna
 endef
