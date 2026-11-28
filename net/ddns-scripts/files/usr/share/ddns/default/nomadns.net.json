@@ -1,0 +1,11 @@
+{
+	"name": "nomadns.net",
+	"ipv4": {
+		"url": "https://[USERNAME]:[PASSWORD]@api.nomadns.net/nic/update?hostname=[DOMAIN]&myip=[IP]",
+		"answer": "good|nochg"
+	},
+	"ipv6": {
+		"url": "https://[USERNAME]:[PASSWORD]@api.nomadns.net/nic/update?hostname=[DOMAIN]&myip=[IP]",
+		"answer": "good|nochg"
+	}
+}
