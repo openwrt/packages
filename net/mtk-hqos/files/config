@@ -1,0 +1,2 @@
+config global 'main'
+	option enabled '0'
